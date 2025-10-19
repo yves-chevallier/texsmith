@@ -1,0 +1,54 @@
+site_name: Demo
+site_author: Yves Chevallier
+theme:
+  language: en
+  name: material
+  features:
+    - navigation.instant
+    - navigation.tabs
+    - navigation.top
+    - navigation.indexes
+    - navigation.tracking
+    - navigation.expand
+    - navigation.sections
+    - toc.follow
+    - content.code.copy
+    - content.code.annotate
+    - content.tabs.link
+    - search.highlight
+    - search.share
+    - search.suggest
+markdown_extensions:
+  - admonition
+  - attr_list
+  - def_list
+  - footnotes
+  - md_in_html
+  - pymdownx.betterem
+  - pymdownx.blocks.html
+  - pymdownx.caret
+  - pymdownx.critic
+  - pymdownx.details
+  - pymdownx.emoji
+  - pymdownx.fancylists
+  - pymdownx.inlinehilite
+  - pymdownx.keys:
+      camel_case: true
+  - pymdownx.magiclink
+  - pymdownx.mark
+  - pymdownx.saneheaders
+  - pymdownx.smartsymbols
+  - pymdownx.superfences
+  - pymdownx.tabbed
+  - pymdownx.tasklist
+  - pymdownx.tilde
+  - toc:
+      permalink: null
+
+plugins:
+  - search
+nav:
+  - Home: index.md
+  - Formatting: formatting.md
+  - Headings: headings.md
+  - Code: code.md

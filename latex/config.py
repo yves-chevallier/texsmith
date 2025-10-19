@@ -1,4 +1,4 @@
-"""Configuration models used by the LaTeX plugin."""
+"""Configuration models used by the LaTeX renderer."""
 
 from __future__ import annotations
 

@@ -1,0 +1,150 @@
+import hashlib
+import sys
+import unittest
+from pathlib import Path
+from tempfile import TemporaryDirectory
+from urllib.parse import urlparse
+
+from bs4 import BeautifulSoup
+
+ROOT = Path(__file__).resolve().parents[1]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+
+try:  # pragma: no cover - optional dependency for this suite
+    from mkdocs.commands.build import build as mkdocs_build
+    from mkdocs.config import load_config
+except ModuleNotFoundError:  # pragma: no cover - graceful degradation
+    mkdocs_build = None  # type: ignore[assignment]
+    load_config = None  # type: ignore[assignment]
+
+from latex.config import BookConfig
+from latex.renderer import LaTeXRenderer
+from latex.transformers import register_converter, registry
+
+
+class _StubConverter:
+    """Simple converter that writes deterministic PDF placeholders."""
+
+    def __init__(self, name: str) -> None:
+        self.name = name
+
+    def __call__(self, source, *, output_dir: Path, **_: object) -> Path:
+        output_dir = Path(output_dir)
+        output_dir.mkdir(parents=True, exist_ok=True)
+
+        if isinstance(source, Path):
+            stem = source.stem or self.name
+        else:
+            payload = str(source)
+            parsed = urlparse(payload)
+            if parsed.scheme and parsed.netloc:
+                stem_candidate = Path(parsed.path or "").stem
+                stem = stem_candidate or self.name
+            else:
+                digest = hashlib.sha256(payload.encode("utf-8")).hexdigest()[:12]
+                stem = f"{self.name}-{digest}"
+
+        target = output_dir / f"{stem}.pdf"
+        target.write_text(f"stub {self.name}", encoding="utf-8")
+        return target
+
+
+@unittest.skipIf(mkdocs_build is None, "MkDocs is not installed; skipping integration test.")
+class MkDocsToLatexIntegrationTests(unittest.TestCase):
+    converters = ("drawio", "mermaid", "fetch-image")
+
+    def setUp(self) -> None:
+        self.tmp = TemporaryDirectory()
+        self.tmp_path = Path(self.tmp.name)
+        self.original_converters = {
+            key: registry.get(key) for key in self.converters
+        }
+        for key in self.converters:
+            register_converter(key, _StubConverter(key))
+
+    def tearDown(self) -> None:
+        for key, original in self.original_converters.items():
+            register_converter(key, original)
+        self.tmp.cleanup()
+
+    def test_full_document_conversion(self) -> None:
+        config_path = ROOT / "tests" / "test_mkdocs" / "mkdocs.yml"
+        site_dir = self.tmp_path / "site"
+
+        config = load_config(
+            config_file=str(config_path),
+            site_dir=str(site_dir),
+            docs_dir=str(config_path.parent / "docs"),
+        )
+        mkdocs_build(config)
+
+        html_path = site_dir / "index.html"
+        self.assertTrue(html_path.exists(), "MkDocs build did not produce index.html")
+
+        html = html_path.read_text(encoding="utf-8")
+        soup = BeautifulSoup(html, "html.parser")
+        article = soup.select_one("article.md-content__inner")
+        self.assertIsNotNone(article, "Unable to locate main article content in HTML")
+        content_html = article.decode_contents()
+        renderer = LaTeXRenderer(
+            config=BookConfig(project_dir=site_dir),
+            output_root=self.tmp_path / "latex-build",
+            parser="html.parser",
+        )
+
+        latex_output = renderer.render(
+            content_html,
+            runtime={
+                "source_dir": site_dir,
+                "document_path": html_path,
+                "base_level": 0,
+                "numbered": True,
+            },
+        )
+
+        self.assertTrue(latex_output.strip(), "Rendered LaTeX output is empty.")
+
+        expectations = [
+            r"\chapter{MkDocs test document}",
+            r"\section{Plain \textbf{Markdown} \emph{Features}}",
+            r"\begin{itemize}",
+            r"\begin{enumerate}",
+            r'\texttt{print("Hello~World!")}',
+            r"\href{https://www.mkdocs.org/}{MkDocs website}",
+            r"\caption[MkDocs Logo]{MkDocs Logo}",
+            r"\caption[Algorithme de calcul du PGCD d'Euclide]{Algorithme de calcul du PGCD d'Euclide}",
+            r"\caption[Influences des langages de programmation]{Influences des langages de programmation}",
+            r"\textbf{Python}\par",
+            r"\textbf{JavaScript}\par",
+            r"\begin{description}",
+            r"\begin{tabular}{ll}",
+            r"\subsubsection{Heading Level 4}\label{custom-id}",
+            r"\paragraph{Heading Level 5}\label{heading-level-5}\mbox{}\\",
+            r"\hl{vulputate erat efficitur}",
+            r"\sout{Deleted text}",
+            r"H\textsubscript{2}O",
+            r"X\textsuperscript{2}",
+            r"\correctchoice",
+            r"\choice",
+            r"\keystroke{Ctrl}+\keystroke{S}",
+            r"\keystroke{⌘}",
+            r"\begin{callout}[callout note]{A Simple Note}",
+            r"\begin{callout}[callout info]{Information Box}",
+            r"\begin{callout}[callout warning]{Warning}",
+            r"\begin{callout}[callout success]{Success}",
+        ]
+
+        for snippet in expectations:
+            with self.subTest(snippet=snippet):
+                self.assertIn(snippet, latex_output)
+
+        self.assertIn('print(f"Hello, \\{name\\}!")', latex_output)
+        self.assertIn("def greet(name):", latex_output)
+        self.assertRegex(latex_output, r"\\footnote\{.*footnote")
+        self.assertIn(r"\begin{callout}[callout note]{Expandable Section}", latex_output)
+        self.assertIn(r"\includegraphics[width=1em]{", latex_output)
+
+
+if __name__ == "__main__":
+    unittest.main()

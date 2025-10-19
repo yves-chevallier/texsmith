@@ -1,0 +1,366 @@
+"""Concrete converter strategies with caching and error handling."""
+
+from __future__ import annotations
+
+from io import BytesIO
+import os
+import shutil
+import subprocess
+from pathlib import Path
+from typing import Any
+
+from ..exceptions import TransformerExecutionError
+from ..utils import points_to_mm
+from .base import CachedConversionStrategy
+
+
+class SvgToPdfStrategy(CachedConversionStrategy):
+    """Convert inline SVG payloads or files to PDF using CairoSVG."""
+
+    def __init__(self) -> None:
+        super().__init__("svg")
+
+    def _perform_conversion(
+        self,
+        source: Path | str,
+        *,
+        target: Path,
+        cache_dir: Path,
+        **options: Any,
+    ) -> Path:
+        svg_text = _read_text(source)
+
+        try:
+            import cairosvg  # type: ignore[import]
+        except ImportError as exc:  # pragma: no cover - optional dependency
+            msg = "cairosvg is required to convert SVG assets. Install 'cairosvg' or provide a custom converter."
+            raise TransformerExecutionError(msg) from exc
+
+        target.parent.mkdir(parents=True, exist_ok=True)
+        cairosvg.svg2pdf(bytestring=svg_text.encode("utf-8"), write_to=str(target))
+        return target
+
+
+class ImageToPdfStrategy(CachedConversionStrategy):
+    """Convert bitmap images to PDF using Pillow."""
+
+    def __init__(self) -> None:
+        super().__init__("image")
+
+    def _perform_conversion(
+        self,
+        source: Path | str,
+        *,
+        target: Path,
+        cache_dir: Path,
+        **options: Any,
+    ) -> Path:
+        image_path = Path(source)
+        if not image_path.exists():
+            msg = f"Image file '{image_path}' does not exist"
+            raise TransformerExecutionError(msg)
+
+        try:
+            from PIL import Image  # type: ignore[import]
+        except ImportError as exc:  # pragma: no cover - optional dependency
+            msg = "Pillow is required to convert images. Install 'Pillow' or provide a custom converter."
+            raise TransformerExecutionError(msg) from exc
+
+        with Image.open(image_path) as image:
+            pdf_ready = image.convert("RGB")
+            pdf_ready.save(target, "PDF")
+
+        return target
+
+
+class FetchImageStrategy(CachedConversionStrategy):
+    """Fetch a remote image, normalise it to PDF, and cache the result."""
+
+    def __init__(self, timeout: float = 10.0) -> None:
+        super().__init__("fetch-image")
+        self.timeout = timeout
+
+    def _perform_conversion(
+        self,
+        source: Path | str,
+        *,
+        target: Path,
+        cache_dir: Path,
+        **options: Any,
+    ) -> Path:
+        url = str(source)
+
+        try:
+            import requests  # type: ignore[import]
+        except ImportError as exc:  # pragma: no cover - optional dependency
+            msg = "requests is required to fetch remote images."
+            raise TransformerExecutionError(msg) from exc
+
+        try:
+            response = requests.get(url, timeout=self.timeout)
+        except requests.exceptions.RequestException as exc:  # pragma: no cover - network
+            msg = f"Failed to fetch image '{url}': {exc}"
+            raise TransformerExecutionError(msg) from exc
+        if not response.ok:
+            raise TransformerExecutionError(
+                f"Failed to fetch image '{url}': HTTP {response.status_code}"
+            )
+
+        content_type = response.headers.get("Content-Type", "")
+        mimetype = content_type.split(";", 1)[0].strip().lower()
+
+        if mimetype in ("image/svg+xml", "text/svg", "application/svg+xml"):
+            try:
+                import cairosvg  # type: ignore[import]
+            except ImportError as exc:  # pragma: no cover - optional dependency
+                msg = "cairosvg is required to convert remote SVG assets."
+                raise TransformerExecutionError(msg) from exc
+
+            cairosvg.svg2pdf(bytestring=response.content, write_to=str(target))
+            return target
+
+        try:
+            from PIL import Image  # type: ignore[import]
+        except ImportError as exc:  # pragma: no cover - optional dependency
+            msg = "Pillow is required to normalise remote images."
+            raise TransformerExecutionError(msg) from exc
+
+        with Image.open(BytesIO(response.content)) as image:
+            pdf_ready = image.convert("RGB")
+            pdf_ready.save(target, "PDF")
+
+        return target
+
+
+class PdfMetadataStrategy:
+    """Inspect PDF files and expose structural metadata."""
+
+    def __call__(
+        self,
+        source: Path | str,
+        *,
+        output_dir: Path,
+        **options: Any,
+    ) -> dict[str, Any]:
+        pdf_path = Path(source)
+        if not pdf_path.exists():
+            msg = f"PDF file '{pdf_path}' does not exist"
+            raise TransformerExecutionError(msg)
+
+        try:
+            import pypdf  # type: ignore[import]
+        except ImportError as exc:  # pragma: no cover - optional dependency
+            msg = "pypdf is required to inspect PDF metadata."
+            raise TransformerExecutionError(msg) from exc
+
+        reader = pypdf.PdfReader(pdf_path)
+        pages: list[dict[str, Any]] = []
+        for page in reader.pages:
+            media_box = page.mediabox
+            pages.append(
+                {
+                    "width": points_to_mm(float(media_box.width)),
+                    "height": points_to_mm(float(media_box.height)),
+                }
+            )
+        return {"pages": pages}
+
+
+class NotConfiguredStrategy:
+    """Strategy used to signal that a converter must be provided by the host."""
+
+    def __init__(self, name: str) -> None:
+        self.name = name
+
+    def __call__(
+        self,
+        source: Path | str,
+        *,
+        output_dir: Path,
+        **_: Any,
+    ):
+        msg = (
+            f"No converter configured for '{self.name}'. "
+            f"Register a strategy via 'register_converter(\"{self.name}\", strategy)'."
+        )
+        raise TransformerExecutionError(msg)
+
+
+def _read_text(source: Path | str) -> str:
+    if isinstance(source, Path):
+        return source.read_text("utf-8")
+    if Path(source).exists():
+        return Path(source).read_text("utf-8")
+    return str(source)
+
+
+def _docker_command(workdir: Path) -> list[str]:
+    """Build the docker command prefix ensuring UID/GID parity."""
+
+    if shutil.which("docker") is None:
+        raise TransformerExecutionError("Docker is required for this converter but was not found on PATH.")
+
+    return [
+        "docker",
+        "run",
+        "--rm",
+        "-u",
+        f"{os.getuid()}:{os.getgid()}",
+        "-e",
+        "HOME=/data/home",
+        "-w",
+        "/data",
+        "-v",
+        f"{workdir}:/data",
+    ]
+
+
+class MermaidToPdfStrategy(CachedConversionStrategy):
+    """Render Mermaid diagrams to PDF using the official CLI image."""
+
+    def __init__(
+        self,
+        image: str = "minlag/mermaid-cli",
+        *,
+        default_theme: str = "neutral",
+    ) -> None:
+        super().__init__("mermaid")
+        self.image = image
+        self.default_theme = default_theme
+
+    def _perform_conversion(
+        self,
+        source: Path | str,
+        *,
+        target: Path,
+        cache_dir: Path,
+        **options: Any,
+    ) -> Path:
+        working_dir = cache_dir / "mermaid"
+        working_dir.mkdir(parents=True, exist_ok=True)
+
+        content = _read_text(source)
+        input_name = options.get("input_name") or "diagram.mmd"
+        output_name = options.get("output_name") or "diagram.pdf"
+        theme = options.get("theme", self.default_theme)
+
+        input_path = working_dir / input_name
+        input_path.write_text(content, encoding="utf-8")
+
+        extra_args: list[str] = []
+        config_path = options.get("config_filename") or options.get("config_path")
+        if config_path:
+            config_data = Path(config_path).read_text("utf-8")
+            config_file = working_dir / "mermaid-config.json"
+            config_file.write_text(config_data, encoding="utf-8")
+            extra_args.extend(["-c", config_file.name])
+
+        if "backgroundColor" in options:
+            extra_args.extend(["-b", str(options["backgroundColor"])])
+
+        extra_args.extend(options.get("cli_args", []))
+
+        produced = working_dir / output_name
+        if produced.exists():
+            produced.unlink()
+
+        command = _docker_command(working_dir) + [
+            self.image,
+            "-i",
+            input_path.name,
+            "-o",
+            output_name,
+            "-f",
+            "-t",
+            str(theme),
+            *extra_args,
+        ]
+
+        result = subprocess.run(
+            command,
+            check=False,
+            capture_output=True,
+            text=True,
+        )
+        if result.returncode != 0:
+            raise TransformerExecutionError(
+                f"Mermaid CLI failed with code {result.returncode}: {result.stderr.strip()}"
+            )
+
+        if not produced.exists():
+            raise TransformerExecutionError("Mermaid CLI did not produce the expected PDF artifact.")
+
+        target.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(produced, target)
+        return target
+
+
+class DrawioToPdfStrategy(CachedConversionStrategy):
+    """Convert draw.io diagrams to PDF using the headless desktop image."""
+
+    def __init__(
+        self,
+        image: str = "rlespinasse/drawio-desktop-headless",
+    ) -> None:
+        super().__init__("drawio")
+        self.image = image
+
+    def _perform_conversion(
+        self,
+        source: Path | str,
+        *,
+        target: Path,
+        cache_dir: Path,
+        **options: Any,
+    ) -> Path:
+        source_path = Path(source)
+        if not source_path.exists():
+            raise TransformerExecutionError(f"Draw.io file '{source_path}' does not exist.")
+
+        working_dir = cache_dir / "drawio"
+        working_dir.mkdir(parents=True, exist_ok=True)
+
+        diagram_name = source_path.name
+        working_source = working_dir / diagram_name
+        shutil.copy2(source_path, working_source)
+
+        output_name = options.get("output_name") or f"{working_source.stem}.pdf"
+        produced = working_dir / output_name
+        if produced.exists():
+            produced.unlink()
+
+        command = _docker_command(working_dir) + [
+            self.image,
+            "--export",
+            "--format",
+            "pdf",
+            "--output",
+            ".",
+        ]
+
+        if options.get("crop", False):
+            command.extend(["--crop"])
+
+        dpi = options.get("dpi")
+        if dpi:
+            command.extend(["--quality", str(dpi)])
+
+        command.append(working_source.name)
+
+        result = subprocess.run(
+            command,
+            check=False,
+            capture_output=True,
+            text=True,
+        )
+        if result.returncode != 0:
+            raise TransformerExecutionError(
+                f"draw.io export failed with code {result.returncode}: {result.stderr.strip()}"
+            )
+
+        if not produced.exists():
+            raise TransformerExecutionError("draw.io CLI did not produce the expected PDF artifact.")
+
+        target.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(produced, target)
+        return target
