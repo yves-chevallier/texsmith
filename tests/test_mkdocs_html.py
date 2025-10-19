@@ -1,9 +1,10 @@
-import sys
-import unittest
 from pathlib import Path
+import sys
 from tempfile import TemporaryDirectory
+import unittest
 
 from bs4 import BeautifulSoup
+
 
 ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
@@ -17,7 +18,9 @@ except ModuleNotFoundError:  # pragma: no cover - graceful degradation
     load_config = None  # type: ignore[assignment]
 
 
-@unittest.skipIf(mkdocs_build is None, "MkDocs is not installed; skipping HTML integration tests.")
+@unittest.skipIf(
+    mkdocs_build is None, "MkDocs is not installed; skipping HTML integration tests."
+)
 class MkDocsHTMLTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
@@ -41,7 +44,9 @@ class MkDocsHTMLTests(unittest.TestCase):
 
     def _load_soup(self, slug: str) -> BeautifulSoup:
         target = self.site_dir / slug / "index.html"
-        self.assertTrue(target.exists(), f"Expected HTML file {target} was not generated.")
+        self.assertTrue(
+            target.exists(), f"Expected HTML file {target} was not generated."
+        )
         html = target.read_text(encoding="utf-8")
         return BeautifulSoup(html, "html.parser")
 
@@ -97,7 +102,9 @@ class MkDocsHTMLTests(unittest.TestCase):
         block_texts = [" ".join(block.stripped_strings) for block in highlight_blocks]
         inline_code = soup.find("code", string="sum(range(10))")
 
-        self.assertTrue(highlight_blocks, "Expected highlighted code blocks were not generated.")
+        self.assertTrue(
+            highlight_blocks, "Expected highlighted code blocks were not generated."
+        )
         self.assertTrue(any("def add" in text for text in block_texts))
         self.assertTrue(any('echo "shell block"' in text for text in block_texts))
         self.assertTrue(any('{"valid": true' in text for text in block_texts))

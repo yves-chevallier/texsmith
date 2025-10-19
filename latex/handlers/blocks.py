@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-import re
 from pathlib import Path
+import re
 from typing import Iterable
 
 from bs4 import NavigableString, Tag
@@ -59,7 +59,9 @@ def _figure_template_for(element: Tag, context: RenderContext) -> str:
     return context.runtime.get("figure_template", "figure")
 
 
-@renders("div", phase=RenderPhase.PRE, priority=120, name="tabbed_content", auto_mark=False)
+@renders(
+    "div", phase=RenderPhase.PRE, priority=120, name="tabbed_content", auto_mark=False
+)
 def render_tabbed_content(element: Tag, context: RenderContext) -> None:
     """Unwrap MkDocs tabbed content structures."""
 
@@ -94,7 +96,9 @@ def render_tabbed_content(element: Tag, context: RenderContext) -> None:
     if tabbed_content is None:
         raise InvalidNodeError("Missing tabbed-content container inside tabbed-set")
 
-    for index, block in enumerate(tabbed_content.find_all("div", class_="tabbed-block")):
+    for index, block in enumerate(
+        tabbed_content.find_all("div", class_="tabbed-block")
+    ):
         title = titles[index] if index < len(titles) else ""
         heading = NavigableString(f"\n\\textbf{{{title}}}\\par\n")
         block.insert_before(heading)
@@ -104,7 +108,9 @@ def render_tabbed_content(element: Tag, context: RenderContext) -> None:
     element.unwrap()
 
 
-@renders("blockquote", phase=RenderPhase.POST, priority=10, name="epigraphs", nestable=False)
+@renders(
+    "blockquote", phase=RenderPhase.POST, priority=10, name="epigraphs", nestable=False
+)
 def render_epigraph(element: Tag, context: RenderContext) -> None:
     classes = element.get("class") or []
     if "epigraph" not in classes:
@@ -122,7 +128,13 @@ def render_epigraph(element: Tag, context: RenderContext) -> None:
     element.replace_with(node)
 
 
-@renders("blockquote", phase=RenderPhase.POST, priority=20, name="blockquotes", nestable=False)
+@renders(
+    "blockquote",
+    phase=RenderPhase.POST,
+    priority=20,
+    name="blockquotes",
+    nestable=False,
+)
 def render_blockquotes(element: Tag, context: RenderContext) -> None:
     classes = element.get("class") or []
     if "epigraph" in classes:
@@ -242,7 +254,9 @@ def render_paragraphs(element: Tag, context: RenderContext) -> None:
     element.replace_with(node)
 
 
-@renders("div", phase=RenderPhase.POST, priority=60, name="multicolumns", nestable=False)
+@renders(
+    "div", phase=RenderPhase.POST, priority=60, name="multicolumns", nestable=False
+)
 def render_columns(element: Tag, context: RenderContext) -> None:
     classes = element.get("class") or []
     if "two-column-list" in classes:
@@ -277,6 +291,16 @@ def render_figures(element: Tag, context: RenderContext) -> None:
 
     width = image.get("width")
     alt_text = image.get("alt") or None
+    if not context.runtime.get("copy_assets", True):
+        caption_node = element.find("figcaption")
+        caption_text = (
+            caption_node.get_text(strip=False).strip() if caption_node else None
+        )
+        placeholder = caption_text or alt_text or "[figure]"
+        node = NavigableString(placeholder)
+        setattr(node, "processed", True)
+        element.replace_with(node)
+        return
 
     if is_valid_url(src):
         artefact = fetch_image(src, output_dir=context.assets.output_root)
@@ -358,7 +382,9 @@ def render_tables(element: Tag, context: RenderContext) -> None:
         table_rows.append(row_values)
         styles.append(row_styles)
 
-        stripped = "".join(re.sub(r"\\href\{[^\}]+?\}|\\\w{3,}|[\{\}|]", "", col) for col in row_values)
+        stripped = "".join(
+            re.sub(r"\\href\{[^\}]+?\}|\\\w{3,}|[\{\}|]", "", col) for col in row_values
+        )
         if len(stripped) > 50:
             is_large = True
 

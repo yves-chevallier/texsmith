@@ -1,25 +1,26 @@
 """This module contains functions to convert various formats to PDF."""
 
+from hashlib import sha256
+from io import BytesIO
 import logging
+from math import ceil
 import mimetypes
 import os
+from pathlib import Path
 import re
 import subprocess
 import tempfile
-from hashlib import sha256
-from io import BytesIO
-from math import ceil
-from pathlib import Path
 from typing import Union
 
 import cairosvg
+from PIL import Image
 
 # import pillow_avif  # noqa
 import pypdf
 import requests
-from PIL import Image
 
 from .utils import points_to_mm
+
 
 log = logging.getLogger("mkdocs")
 

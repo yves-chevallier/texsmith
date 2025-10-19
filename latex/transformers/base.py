@@ -2,10 +2,10 @@
 
 from __future__ import annotations
 
-import json
-import time
 from hashlib import sha256
+import json
 from pathlib import Path
+import time
 from typing import Any, Callable, Protocol
 
 from ..exceptions import TransformerExecutionError
@@ -14,8 +14,9 @@ from ..exceptions import TransformerExecutionError
 class ConverterStrategy(Protocol):
     """Protocol implemented by concrete converter strategies."""
 
-    def __call__(self, source: Path | str, *, output_dir: Path, **options: Any) -> Any:
-        ...
+    def __call__(
+        self, source: Path | str, *, output_dir: Path, **options: Any
+    ) -> Any: ...
 
 
 def exponential_backoff(
@@ -67,9 +68,8 @@ class CachedConversionStrategy:
                 )
             except Exception as exc:  # pragma: no cover - defensive
                 last_error = exc
-                should_retry = (
-                    attempt < self.max_attempts
-                    and not isinstance(exc, TransformerExecutionError)
+                should_retry = attempt < self.max_attempts and not isinstance(
+                    exc, TransformerExecutionError
                 )
                 if not should_retry:
                     break
@@ -77,7 +77,10 @@ class CachedConversionStrategy:
                 if delay > 0:
                     time.sleep(delay)
 
-        message = f"Conversion failed for '{self.namespace}' after {self.max_attempts} attempts"
+        message = (
+            f"Conversion failed for '{self.namespace}' "
+            f"after {self.max_attempts} attempts"
+        )
         raise TransformerExecutionError(message) from last_error
 
     # --------------------------------------------------------------------- helpers
@@ -123,8 +126,12 @@ class CachedConversionStrategy:
         return source.encode("utf-8")
 
     def _serialise_options(self, options: dict[str, Any]) -> bytes:
-        normalised = {key: self._normalise_option(value) for key, value in options.items()}
-        return json.dumps(normalised, sort_keys=True, separators=(",", ":")).encode("utf-8")
+        normalised = {
+            key: self._normalise_option(value) for key, value in options.items()
+        }
+        return json.dumps(normalised, sort_keys=True, separators=(",", ":")).encode(
+            "utf-8"
+        )
 
     def _normalise_option(self, value: Any) -> Any:
         match value:

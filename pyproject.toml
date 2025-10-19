@@ -31,3 +31,17 @@ dev = [
 [tool.uv]
 default-groups = ["dev"]
 package = true
+
+[tool.ruff]
+extend-exclude = ["old-code-base"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I"]   # E/F (pycodestyle/pyflakes) et I (isort)
+
+[tool.ruff.lint.isort]
+# options utiles
+combine-as-imports = true
+force-sort-within-sections = true
+known-first-party = ["latex"]
+section-order = ["future","standard-library","third-party","first-party","local-folder"]
+lines-after-imports = 2

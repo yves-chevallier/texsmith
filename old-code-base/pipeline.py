@@ -5,9 +5,10 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from enum import Enum, auto
 from pathlib import Path
-from typing import Any, Callable, Dict, Iterable, List, Protocol, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Callable, Dict, Iterable, List, Protocol
 
 from bs4.element import Tag
+
 
 if TYPE_CHECKING:  # pragma: no cover - typing only
     from .config import BookConfig
@@ -27,8 +28,7 @@ class StageCallable(Protocol):
 
     def __call__(
         self, soup: Tag, context: "RenderingContext", **runtime: Any
-    ) -> Tag | None:
-        ...
+    ) -> Tag | None: ...
 
 
 @dataclass
@@ -121,7 +121,9 @@ class RenderPipeline:
             if isinstance(definition, StageDefinition):
                 self.registry.register(definition.bind(handler))
 
-    def run_phase(self, phase: RenderPhase, soup: Tag, context: RenderingContext) -> None:
+    def run_phase(
+        self, phase: RenderPhase, soup: Tag, context: RenderingContext
+    ) -> None:
         """Run all stages registered for a given phase."""
 
         for stage in self.registry.iter_phase(phase):
@@ -135,7 +137,9 @@ def render_stage(
 
     def decorator(handler: StageCallable) -> StageCallable:
         stage_name = name or handler.__name__
-        setattr(handler, "__render_stage__", StageDefinition(stage_name, phase, priority))
+        setattr(
+            handler, "__render_stage__", StageDefinition(stage_name, phase, priority)
+        )
         return handler
 
     return decorator

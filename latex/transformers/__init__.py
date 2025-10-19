@@ -8,13 +8,12 @@ from typing import Any
 from ..exceptions import TransformerExecutionError
 from .base import ConverterStrategy
 from .strategies import (
+    DrawioToPdfStrategy,
     FetchImageStrategy,
     ImageToPdfStrategy,
-    NotConfiguredStrategy,
+    MermaidToPdfStrategy,
     PdfMetadataStrategy,
     SvgToPdfStrategy,
-    MermaidToPdfStrategy,
-    DrawioToPdfStrategy,
 )
 
 
@@ -31,7 +30,9 @@ class ConverterRegistry:
         try:
             return self._strategies[name]
         except KeyError as exc:  # pragma: no cover - defensive
-            raise TransformerExecutionError(f"No converter registered for '{name}'") from exc
+            raise TransformerExecutionError(
+                f"No converter registered for '{name}'"
+            ) from exc
 
     def convert(
         self,
@@ -95,7 +96,9 @@ def fetch_image(url: str, output_dir: Path, **options: Any) -> Path:
 def get_pdf_page_sizes(source: Path | str, **options: Any) -> dict[str, Any]:
     """Inspect a PDF and return structured metadata."""
 
-    output_dir = options.pop("output_dir", Path(source).parent if isinstance(source, Path) else Path.cwd())
+    output_dir = options.pop(
+        "output_dir", Path(source).parent if isinstance(source, Path) else Path.cwd()
+    )
     return registry.convert("pdf-metadata", source, output_dir=output_dir, **options)
 
 

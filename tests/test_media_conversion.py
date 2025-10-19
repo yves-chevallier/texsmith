@@ -1,11 +1,6 @@
-import sys
-import unittest
 from pathlib import Path
 from tempfile import TemporaryDirectory
-
-ROOT = Path(__file__).resolve().parents[1]
-if str(ROOT) not in sys.path:
-    sys.path.insert(0, str(ROOT))
+import unittest
 
 from latex.config import BookConfig
 from latex.renderer import LaTeXRenderer
@@ -21,7 +16,11 @@ class _StubConverter:
         output_dir = Path(output_dir)
         output_dir.mkdir(parents=True, exist_ok=True)
         artefact = output_dir / f"{self.name}.pdf"
-        data = self.payload.encode("utf-8") if isinstance(self.payload, str) else self.payload
+        data = (
+            self.payload.encode("utf-8")
+            if isinstance(self.payload, str)
+            else self.payload
+        )
         artefact.write_bytes(data)
         return artefact
 

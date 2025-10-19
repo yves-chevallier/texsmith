@@ -1,7 +1,7 @@
 """Utility functions for LaTeX processing."""
 
-import re
 from pathlib import Path
+import re
 from urllib.parse import quote, urlparse, urlunparse
 
 import unidecode

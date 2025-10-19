@@ -59,7 +59,8 @@ def render_unicode_link(element: Tag, context: RenderContext) -> None:
         return
 
     code = element.get_text(strip=True)
-    href = element.get("href", "")
+    href_attr = element.get("href")
+    href = href_attr if isinstance(href_attr, str) else ""
     latex = context.formatter.href(text=f"U+{code}", url=safe_quote(href))
     node = NavigableString(latex)
     setattr(node, "processed", True)
@@ -79,7 +80,8 @@ def render_regex_link(element: Tag, context: RenderContext) -> None:
         code = code_tag.get_text(strip=False)
     code = code.replace("&", "\\&").replace("#", "\\#")
 
-    href = element.get("href", "")
+    href_attr = element.get("href")
+    href = href_attr if isinstance(href_attr, str) else ""
     latex = context.formatter.regex(code, url=safe_quote(href))
     node = NavigableString(latex)
     setattr(node, "processed", True)
@@ -89,7 +91,9 @@ def render_regex_link(element: Tag, context: RenderContext) -> None:
 def _extract_code_text(element: Tag) -> str:
     classes = element.get("class") or []
     if any(cls.startswith("language-") for cls in classes) or "highlight" in classes:
-        return "".join(child.get_text(strip=False) for child in element.find_all("span"))
+        return "".join(
+            child.get_text(strip=False) for child in element.find_all("span")
+        )
     return element.get_text(strip=False)
 
 
@@ -135,7 +139,9 @@ def render_math_block(element: Tag, context: RenderContext) -> None:
     element.replace_with(node)
 
 
-@renders("abbr", phase=RenderPhase.INLINE, priority=30, name="abbreviation", nestable=False)
+@renders(
+    "abbr", phase=RenderPhase.INLINE, priority=30, name="abbreviation", nestable=False
+)
 def render_abbreviation(element: Tag, context: RenderContext) -> None:
     """Register and render abbreviations."""
 
@@ -150,7 +156,9 @@ def render_abbreviation(element: Tag, context: RenderContext) -> None:
     element.replace_with(node)
 
 
-@renders("span", phase=RenderPhase.INLINE, priority=40, name="keystrokes", nestable=False)
+@renders(
+    "span", phase=RenderPhase.INLINE, priority=40, name="keystrokes", nestable=False
+)
 def render_keystrokes(element: Tag, context: RenderContext) -> None:
     """Render keyboard shortcut markup."""
 
@@ -178,12 +186,20 @@ def render_keystrokes(element: Tag, context: RenderContext) -> None:
     element.replace_with(node)
 
 
-@renders("img", phase=RenderPhase.INLINE, priority=20, name="twemoji_images", nestable=False)
+@renders(
+    "img", phase=RenderPhase.INLINE, priority=20, name="twemoji_images", nestable=False
+)
 def render_twemoji_image(element: Tag, context: RenderContext) -> None:
     """Render Twitter emoji images as inline icons."""
 
     classes = element.get("class") or []
     if not {"twemoji", "emojione"}.intersection(classes):
+        return
+    if not context.runtime.get("copy_assets", True):
+        placeholder = element.get("alt") or element.get("title") or ""
+        node = NavigableString(placeholder)
+        setattr(node, "processed", True)
+        element.replace_with(node)
         return
 
     src = element.get("src")
@@ -214,6 +230,12 @@ def render_twemoji_span(element: Tag, context: RenderContext) -> None:
 
     classes = element.get("class") or []
     if "twemoji" not in classes:
+        return
+    if not context.runtime.get("copy_assets", True):
+        placeholder = element.get("title") or element.get_text(strip=True) or ""
+        node = NavigableString(placeholder)
+        setattr(node, "processed", True)
+        element.replace_with(node)
         return
 
     svg = element.find("svg")
@@ -363,7 +385,9 @@ def render_critic_substitution(element: Tag, context: RenderContext) -> None:
     deleted = element.find("del")
     inserted = element.find("ins")
     if deleted is None or inserted is None:
-        raise InvalidNodeError("Critic substitution requires both <del> and <ins> children")
+        raise InvalidNodeError(
+            "Critic substitution requires both <del> and <ins> children"
+        )
 
     original = deleted.get_text(strip=False)
     replacement = inserted.get_text(strip=False)

@@ -2,11 +2,13 @@
 
 from __future__ import annotations
 
-from bs4 import NavigableString, Tag
+from bs4 import Tag
+from bs4.element import NavigableString
 
 from ..context import RenderContext
 from ..exceptions import InvalidNodeError
 from ..rules import RenderPhase, renders
+
 
 MERMAID_KEYWORDS = {
     "graph ",
@@ -25,6 +27,8 @@ MERMAID_KEYWORDS = {
 def _looks_like_mermaid(diagram: str) -> bool:
     lower = diagram.lstrip().lower()
     return any(keyword in lower for keyword in MERMAID_KEYWORDS)
+
+
 def _extract_language(element: Tag) -> str:
     classes = element.get("class") or []
     for cls in classes:
@@ -36,7 +40,10 @@ def _extract_language(element: Tag) -> str:
 
 
 def _is_ascii_art(payload: str) -> bool:
-    return any(char in payload for char in ("┌", "┬", "─", "┐"))
+    return any(
+        char in payload
+        for char in ("┌", "┬", "─", "┐", "│", "├", "┼", "┤", "└", "┴", "┘")
+    )
 
 
 @renders("div", phase=RenderPhase.PRE, priority=40, name="code_blocks", nestable=False)
@@ -69,7 +76,9 @@ def render_code_blocks(element: Tag, context: RenderContext) -> None:
     listing: list[str] = []
     highlight: list[int] = []
 
-    spans = code_element.find_all("span", id=lambda value: bool(value and value.startswith("__")))
+    spans = code_element.find_all(
+        "span", id=lambda value: bool(value and value.startswith("__"))
+    )
     if spans:
         for index, span in enumerate(spans, start=1):
             highlight_span = span.find("span", class_="hll")

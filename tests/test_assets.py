@@ -1,11 +1,6 @@
-import sys
-import unittest
 from pathlib import Path
 from tempfile import TemporaryDirectory
-
-ROOT = Path(__file__).resolve().parents[1]
-if str(ROOT) not in sys.path:
-    sys.path.insert(0, str(ROOT))
+import unittest
 
 from latex.context import AssetRegistry, DocumentState
 from latex.exceptions import AssetMissingError
@@ -32,7 +27,9 @@ class AssetRegistryTests(unittest.TestCase):
 class DocumentStateTests(unittest.TestCase):
     def test_acronym_tracking(self) -> None:
         state = DocumentState()
-        state.remember_acronym("laser", "LASER", "Light Amplification by Stimulated Emission of Radiation")
+        state.remember_acronym(
+            "laser", "LASER", "Light Amplification by Stimulated Emission of Radiation"
+        )
         self.assertIn("laser", state.acronyms)
         short, expanded = state.acronyms["laser"]
         self.assertEqual(short, "LASER")

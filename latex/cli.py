@@ -1,8 +1,8 @@
 from __future__ import annotations
 
 import hashlib
-import shutil
 from pathlib import Path
+import shutil
 from typing import Any, Callable, Optional
 
 from bs4 import BeautifulSoup, FeatureNotFound
@@ -13,7 +13,18 @@ from .exceptions import LatexRenderingError, TransformerExecutionError
 from .renderer import LaTeXRenderer
 from .transformers import register_converter
 
-app = typer.Typer(help="Convert MkDocs HTML fragments into LaTeX.")
+
+app = typer.Typer(
+    help="Convert MkDocs HTML fragments into LaTeX.",
+    context_settings={"help_option_names": ["--help"]},
+)
+
+
+@app.callback()
+def _app_root() -> None:
+    """Top-level CLI entry point to enable subcommands."""
+    # Intentionally empty; required so Typer treats the app as a command group.
+    return None
 
 
 @app.command(name="convert")
@@ -49,6 +60,16 @@ def convert(
         "--base-level",
         help="Shift detected heading levels by this offset.",
     ),
+    heading_level: int = typer.Option(
+        0,
+        "--heading-level",
+        "-h",
+        min=0,
+        help=(
+            "Indent all headings by the selected depth "
+            "(e.g. 1 turns sections into subsections)."
+        ),
+    ),
     drop_title: bool = typer.Option(
         False,
         "--drop-title/--keep-title",
@@ -67,7 +88,18 @@ def convert(
     disable_fallback_converters: bool = typer.Option(
         False,
         "--no-fallback-converters",
-        help="Disable registration of placeholder converters when Docker is unavailable.",
+        help=(
+            "Disable registration of placeholder converters when Docker is unavailable."
+        ),
+    ),
+    copy_assets: bool = typer.Option(
+        True,
+        "--copy-assets/--no-copy-assets",
+        "-a/-A",
+        help=(
+            "Control whether asset files are generated "
+            "and copied to the output directory."
+        ),
     ),
 ) -> None:
     """Convert an MkDocs HTML page to LaTeX."""
@@ -87,16 +119,21 @@ def convert(
 
     config = BookConfig(project_dir=html_path.parent)
 
-    renderer_kwargs: dict[str, Any] = {"output_root": output_dir}
+    renderer_kwargs: dict[str, Any] = {
+        "output_root": output_dir,
+        "copy_assets": copy_assets,
+    }
     renderer_kwargs["parser"] = parser or "html.parser"
 
-    renderer_factory = lambda: LaTeXRenderer(config=config, **renderer_kwargs)
+    def renderer_factory() -> LaTeXRenderer:
+        return LaTeXRenderer(config=config, **renderer_kwargs)
 
     runtime: dict[str, object] = {
-        "base_level": base_level,
+        "base_level": base_level + heading_level,
         "numbered": numbered,
         "source_dir": html_path.parent,
         "document_path": html_path,
+        "copy_assets": copy_assets,
     }
     if drop_title:
         runtime["drop_title"] = True

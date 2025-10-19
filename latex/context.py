@@ -5,9 +5,10 @@ from __future__ import annotations
 from collections import defaultdict
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, DefaultDict, Dict, Iterable, MutableMapping, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, DefaultDict, Dict, Iterable, MutableMapping
 
 from .exceptions import AssetMissingError
+
 
 if TYPE_CHECKING:  # pragma: no cover - typing only
     from .config import BookConfig
@@ -56,13 +57,17 @@ class AssetRegistry:
 
     output_root: Path
     assets_map: MutableMapping[str, Path] = field(default_factory=dict)
+    copy_assets: bool = True
 
     def register(self, key: str, artefact: Path | str) -> Path:
         """Register a generated artefact and return its resolved path."""
 
         path = Path(artefact)
         if not path.is_absolute():
-            path = (self.output_root / path).resolve()
+            if self.copy_assets:
+                path = (self.output_root / path).resolve()
+            else:
+                path = Path(path)
         self.assets_map[key] = path
         return path
 
@@ -114,7 +119,7 @@ class RenderContext:
     def mark_processed(self, node: Any, *, phase: "RenderPhase | None" = None) -> None:
         """Flag a node as already transformed for the selected phase."""
 
-        label = (phase or self.phase)
+        label = phase or self.phase
         if label is None:
             return
         self._processed_nodes[label.value].add(id(node))
@@ -122,12 +127,14 @@ class RenderContext:
     def is_processed(self, node: Any, *, phase: "RenderPhase | None" = None) -> bool:
         """Check whether a node has been processed in the given phase."""
 
-        label = (phase or self.phase)
+        label = phase or self.phase
         if label is None:
             return False
         return id(node) in self._processed_nodes[label.value]
 
-    def suppress_children(self, node: Any, *, phase: "RenderPhase | None" = None) -> None:
+    def suppress_children(
+        self, node: Any, *, phase: "RenderPhase | None" = None
+    ) -> None:
         """Prevent traversal of node children for the active phase."""
 
         label = phase or self.phase
@@ -135,7 +142,9 @@ class RenderContext:
             return
         self._skip_children[label.value].add(id(node))
 
-    def should_skip_children(self, node: Any, *, phase: "RenderPhase | None" = None) -> bool:
+    def should_skip_children(
+        self, node: Any, *, phase: "RenderPhase | None" = None
+    ) -> bool:
         """Check whether children should be skipped during traversal."""
 
         label = phase or self.phase

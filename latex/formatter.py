@@ -2,15 +2,16 @@
 
 from __future__ import annotations
 
-import glob
-import urllib.parse
 from collections.abc import Iterable
+import glob
 from pathlib import Path
 from typing import Any, Callable
+import urllib.parse
 
 from jinja2 import Environment, FileSystemLoader, Template
 
 from .utils import escape_latex_chars
+
 
 TEMPLATE_DIR = Path(__file__).parent / "templates"
 
@@ -84,7 +85,10 @@ class LaTeXFormatter:
             """Render the template with optional positional shorthand."""
 
             if len(args) > 1:
-                msg = f"Expected at most 1 argument, got {len(args)}, use keyword arguments instead"
+                msg = (
+                    "Expected at most 1 argument, "
+                    f"got {len(args)}, use keyword arguments instead"
+                )
                 raise ValueError(msg)
             if args:
                 kwargs["text"] = args[0]

@@ -23,16 +23,19 @@ class LaTeXRenderer:
         formatter: LaTeXFormatter | None = None,
         output_root: Path | str = Path("build"),
         parser: str = "lxml",
+        copy_assets: bool = True,
     ) -> None:
         self.config = config or BookConfig()
         self.formatter = formatter or LaTeXFormatter()
         self.parser_backend = parser
+        self.copy_assets = copy_assets
 
         self.output_root = Path(output_root)
         self.assets_root = (self.output_root / "assets").resolve()
-        self.assets_root.mkdir(parents=True, exist_ok=True)
+        if self.copy_assets:
+            self.assets_root.mkdir(parents=True, exist_ok=True)
 
-        self.assets = AssetRegistry(self.assets_root)
+        self.assets = AssetRegistry(self.assets_root, copy_assets=self.copy_assets)
 
         # Keep formatter in sync with runtime environment
         self.formatter.config = self.config  # type: ignore[assignment]
@@ -103,6 +106,7 @@ class LaTeXRenderer:
             state=document_state,
         )
 
+        context.attach_runtime(copy_assets=self.copy_assets)
         if runtime:
             context.attach_runtime(**runtime)
 

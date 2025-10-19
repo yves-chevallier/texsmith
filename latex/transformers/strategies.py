@@ -4,9 +4,9 @@ from __future__ import annotations
 
 from io import BytesIO
 import os
+from pathlib import Path
 import shutil
 import subprocess
-from pathlib import Path
 from typing import Any
 
 from ..exceptions import TransformerExecutionError
@@ -33,7 +33,10 @@ class SvgToPdfStrategy(CachedConversionStrategy):
         try:
             import cairosvg  # type: ignore[import]
         except ImportError as exc:  # pragma: no cover - optional dependency
-            msg = "cairosvg is required to convert SVG assets. Install 'cairosvg' or provide a custom converter."
+            msg = (
+                "cairosvg is required to convert SVG assets. "
+                "Install 'cairosvg' or provide a custom converter."
+            )
             raise TransformerExecutionError(msg) from exc
 
         target.parent.mkdir(parents=True, exist_ok=True)
@@ -63,7 +66,10 @@ class ImageToPdfStrategy(CachedConversionStrategy):
         try:
             from PIL import Image  # type: ignore[import]
         except ImportError as exc:  # pragma: no cover - optional dependency
-            msg = "Pillow is required to convert images. Install 'Pillow' or provide a custom converter."
+            msg = (
+                "Pillow is required to convert images. "
+                "Install 'Pillow' or provide a custom converter."
+            )
             raise TransformerExecutionError(msg) from exc
 
         with Image.open(image_path) as image:
@@ -98,7 +104,9 @@ class FetchImageStrategy(CachedConversionStrategy):
 
         try:
             response = requests.get(url, timeout=self.timeout)
-        except requests.exceptions.RequestException as exc:  # pragma: no cover - network
+        except (
+            requests.exceptions.RequestException
+        ) as exc:  # pragma: no cover - network
             msg = f"Failed to fetch image '{url}': {exc}"
             raise TransformerExecutionError(msg) from exc
         if not response.ok:
@@ -198,7 +206,9 @@ def _docker_command(workdir: Path) -> list[str]:
     """Build the docker command prefix ensuring UID/GID parity."""
 
     if shutil.which("docker") is None:
-        raise TransformerExecutionError("Docker is required for this converter but was not found on PATH.")
+        raise TransformerExecutionError(
+            "Docker is required for this converter but was not found on PATH."
+        )
 
     return [
         "docker",
@@ -284,11 +294,16 @@ class MermaidToPdfStrategy(CachedConversionStrategy):
         )
         if result.returncode != 0:
             raise TransformerExecutionError(
-                f"Mermaid CLI failed with code {result.returncode}: {result.stderr.strip()}"
+                (
+                    "Mermaid CLI failed with code "
+                    f"{result.returncode}: {result.stderr.strip()}"
+                )
             )
 
         if not produced.exists():
-            raise TransformerExecutionError("Mermaid CLI did not produce the expected PDF artifact.")
+            raise TransformerExecutionError(
+                "Mermaid CLI did not produce the expected PDF artifact."
+            )
 
         target.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(produced, target)
@@ -315,7 +330,9 @@ class DrawioToPdfStrategy(CachedConversionStrategy):
     ) -> Path:
         source_path = Path(source)
         if not source_path.exists():
-            raise TransformerExecutionError(f"Draw.io file '{source_path}' does not exist.")
+            raise TransformerExecutionError(
+                f"Draw.io file '{source_path}' does not exist."
+            )
 
         working_dir = cache_dir / "drawio"
         working_dir.mkdir(parents=True, exist_ok=True)
@@ -355,11 +372,16 @@ class DrawioToPdfStrategy(CachedConversionStrategy):
         )
         if result.returncode != 0:
             raise TransformerExecutionError(
-                f"draw.io export failed with code {result.returncode}: {result.stderr.strip()}"
+                (
+                    "draw.io export failed with code "
+                    f"{result.returncode}: {result.stderr.strip()}"
+                )
             )
 
         if not produced.exists():
-            raise TransformerExecutionError("draw.io CLI did not produce the expected PDF artifact.")
+            raise TransformerExecutionError(
+                "draw.io CLI did not produce the expected PDF artifact."
+            )
 
         target.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(produced, target)

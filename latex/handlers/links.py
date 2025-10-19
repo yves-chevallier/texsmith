@@ -10,7 +10,7 @@ from bs4 import NavigableString, Tag
 from ..context import RenderContext
 from ..exceptions import AssetMissingError, InvalidNodeError
 from ..rules import RenderPhase, renders
-from ..utils import escape_latex_chars, is_valid_url, resolve_asset_path, safe_quote
+from ..utils import escape_latex_chars, resolve_asset_path, safe_quote
 
 
 def _resolve_local_target(context: RenderContext, href: str) -> Path | None:
@@ -35,7 +35,13 @@ def _resolve_local_target(context: RenderContext, href: str) -> Path | None:
     return None
 
 
-@renders("autoref", phase=RenderPhase.INLINE, priority=10, name="autoref_tags", nestable=False)
+@renders(
+    "autoref",
+    phase=RenderPhase.INLINE,
+    priority=10,
+    name="autoref_tags",
+    nestable=False,
+)
 def render_autoref(element: Tag, context: RenderContext) -> None:
     """Render <autoref> custom tags."""
 
@@ -78,7 +84,8 @@ def render_autoref_spans(element: Tag, context: RenderContext) -> None:
 def render_links(element: Tag, context: RenderContext) -> None:
     """Render hyperlinks and internal references."""
 
-    href = element.get("href", "")
+    href_attr = element.get("href")
+    href = href_attr if isinstance(href_attr, str) else ""
     element_id = element.get("id")
     text = element.get_text(strip=False)
 

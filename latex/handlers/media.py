@@ -20,6 +20,7 @@ from ..transformers import (
 )
 from ..utils import is_valid_url, resolve_asset_path
 
+
 MERMAID_KEYWORDS = (
     "graph ",
     "graph\t",
@@ -110,6 +111,11 @@ def _render_mermaid_diagram(
     """Render a Mermaid diagram and return the resulting LaTeX node."""
 
     caption, body = _mermaid_caption(diagram)
+    if not context.runtime.get("copy_assets", True):
+        placeholder = caption or "Mermaid diagram"
+        node = NavigableString(placeholder)
+        setattr(node, "processed", True)
+        return node
     if not _looks_like_mermaid(body):
         return None
 
@@ -118,10 +124,14 @@ def _render_mermaid_diagram(
     if mermaid_config:
         project_dir = getattr(context.config, "project_dir", None)
         if project_dir is None:
-            raise AssetMissingError("Project directory required to render Mermaid diagrams")
+            raise AssetMissingError(
+                "Project directory required to render Mermaid diagrams"
+            )
         render_options["config_filename"] = Path(project_dir) / mermaid_config
 
-    artefact = mermaid2pdf(body, output_dir=context.assets.output_root, **render_options)
+    artefact = mermaid2pdf(
+        body, output_dir=context.assets.output_root, **render_options
+    )
 
     asset_key = f"mermaid::{hashlib.sha256(body.encode('utf-8')).hexdigest()}"
     stored_path = context.assets.register(asset_key, artefact)
@@ -134,6 +144,8 @@ def _render_mermaid_diagram(
         width=None,
         template=template,
     )
+
+
 def _mermaid_caption(diagram: str) -> tuple[str | None, str]:
     """Extract caption from the diagram comment header."""
 
@@ -155,6 +167,14 @@ def _looks_like_mermaid(diagram: str) -> bool:
 @renders("img", phase=RenderPhase.BLOCK, name="render_images", nestable=False)
 def render_images(element: Tag, context: RenderContext) -> None:
     """Convert <img> nodes into LaTeX figures and manage assets."""
+
+    if not context.runtime.get("copy_assets", True):
+        alt_text = element.get("alt") or element.get("title") or ""
+        placeholder = alt_text.strip() or "[image]"
+        node = NavigableString(placeholder)
+        setattr(node, "processed", True)
+        element.replace_with(node)
+        return
 
     src = element.get("src")
     if not src:

@@ -4,7 +4,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from enum import Enum, auto
-from typing import Any, Callable, Dict, Iterable, Protocol, Tuple, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Callable, Dict, Iterable, Protocol, Tuple
+
 
 if TYPE_CHECKING:  # pragma: no cover - typing only
     from bs4.element import Tag
@@ -27,8 +28,7 @@ RuleCallable = Callable[[Any, "RenderContext"], None]
 class RuleFactory(Protocol):
     """Protocol implemented by rule decorators."""
 
-    def bind(self, handler: RuleCallable) -> "RenderRule":
-        ...
+    def bind(self, handler: RuleCallable) -> "RenderRule": ...
 
 
 DOCUMENT_NODE = "__document__"
@@ -184,7 +184,9 @@ class RenderEngine:
             visitor = _DOMVisitor(phase, phase_rules, context)
             visitor.walk(root)
 
-    def _execute_rule(self, rule: RenderRule, node: Any, context: "RenderContext") -> None:
+    def _execute_rule(
+        self, rule: RenderRule, node: Any, context: "RenderContext"
+    ) -> None:
         """Execute a rule against a specific node applying bookkeeping."""
 
         if rule.auto_mark and context.is_processed(node):

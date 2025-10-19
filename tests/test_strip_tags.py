@@ -1,10 +1,4 @@
-import sys
 import unittest
-from pathlib import Path
-
-ROOT = Path(__file__).resolve().parents[1]
-if str(ROOT) not in sys.path:
-    sys.path.insert(0, str(ROOT))
 
 from latex.config import BookConfig
 from latex.renderer import LaTeXRenderer
@@ -30,7 +24,11 @@ class StripTagsTests(unittest.TestCase):
             html,
             runtime={
                 "base_level": 1,
-                "strip_tags": {"html": "unwrap", "body": "unwrap", "head": {"mode": "decompose"}},
+                "strip_tags": {
+                    "html": "unwrap",
+                    "body": "unwrap",
+                    "head": {"mode": "decompose"},
+                },
             },
         )
         self.assertNotIn("<head", latex)

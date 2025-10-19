@@ -1,15 +1,17 @@
 import hashlib
-import sys
-import unittest
 from pathlib import Path
 from tempfile import TemporaryDirectory
+import unittest
 from urllib.parse import urlparse
 
 from bs4 import BeautifulSoup
 
+from latex.config import BookConfig
+from latex.renderer import LaTeXRenderer
+from latex.transformers import register_converter, registry
+
+
 ROOT = Path(__file__).resolve().parents[1]
-if str(ROOT) not in sys.path:
-    sys.path.insert(0, str(ROOT))
 
 try:  # pragma: no cover - optional dependency for this suite
     from mkdocs.commands.build import build as mkdocs_build
@@ -17,10 +19,6 @@ try:  # pragma: no cover - optional dependency for this suite
 except ModuleNotFoundError:  # pragma: no cover - graceful degradation
     mkdocs_build = None  # type: ignore[assignment]
     load_config = None  # type: ignore[assignment]
-
-from latex.config import BookConfig
-from latex.renderer import LaTeXRenderer
-from latex.transformers import register_converter, registry
 
 
 class _StubConverter:
@@ -50,16 +48,16 @@ class _StubConverter:
         return target
 
 
-@unittest.skipIf(mkdocs_build is None, "MkDocs is not installed; skipping integration test.")
+@unittest.skipIf(
+    mkdocs_build is None, "MkDocs is not installed; skipping integration test."
+)
 class MkDocsToLatexIntegrationTests(unittest.TestCase):
     converters = ("drawio", "mermaid", "fetch-image")
 
     def setUp(self) -> None:
         self.tmp = TemporaryDirectory()
         self.tmp_path = Path(self.tmp.name)
-        self.original_converters = {
-            key: registry.get(key) for key in self.converters
-        }
+        self.original_converters = {key: registry.get(key) for key in self.converters}
         for key in self.converters:
             register_converter(key, _StubConverter(key))
 
@@ -113,8 +111,14 @@ class MkDocsToLatexIntegrationTests(unittest.TestCase):
             r'\texttt{print("Hello~World!")}',
             r"\href{https://www.mkdocs.org/}{MkDocs website}",
             r"\caption[MkDocs Logo]{MkDocs Logo}",
-            r"\caption[Algorithme de calcul du PGCD d'Euclide]{Algorithme de calcul du PGCD d'Euclide}",
-            r"\caption[Influences des langages de programmation]{Influences des langages de programmation}",
+            (
+                r"\caption[Algorithme de calcul du PGCD d'Euclide]"
+                r"{Algorithme de calcul du PGCD d'Euclide}"
+            ),
+            (
+                r"\caption[Influences des langages de programmation]"
+                r"{Influences des langages de programmation}"
+            ),
             r"\textbf{Python}\par",
             r"\textbf{JavaScript}\par",
             r"\begin{description}",
@@ -142,7 +146,9 @@ class MkDocsToLatexIntegrationTests(unittest.TestCase):
         self.assertIn('print(f"Hello, \\{name\\}!")', latex_output)
         self.assertIn("def greet(name):", latex_output)
         self.assertRegex(latex_output, r"\\footnote\{.*footnote")
-        self.assertIn(r"\begin{callout}[callout note]{Expandable Section}", latex_output)
+        self.assertIn(
+            r"\begin{callout}[callout note]{Expandable Section}", latex_output
+        )
         self.assertIn(r"\includegraphics[width=1em]{", latex_output)
 
 

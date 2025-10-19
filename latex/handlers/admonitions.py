@@ -9,6 +9,7 @@ from bs4 import NavigableString, Tag
 from ..context import RenderContext
 from ..rules import RenderPhase, renders
 
+
 IGNORED_CLASSES = {
     "admonition",
     "annotate",
@@ -54,7 +55,9 @@ def _gather_solutions(container: Tag) -> list[str]:
     return solutions
 
 
-def _render_admonition(element: Tag, context: RenderContext, *, classes: list[str], title: str) -> None:
+def _render_admonition(
+    element: Tag, context: RenderContext, *, classes: list[str], title: str
+) -> None:
     admonition_classes = [cls for cls in classes if cls not in IGNORED_CLASSES]
     admonition_type = admonition_classes[0] if admonition_classes else "note"
 
@@ -65,7 +68,11 @@ def _render_admonition(element: Tag, context: RenderContext, *, classes: list[st
         correct_value = gap.get("answer") or gap.get("value") or ""
         size_hint = gap.get("size")
         try:
-            width = max(int(size_hint), 3) if size_hint is not None else max(len(correct_value), 3)
+            width = (
+                max(int(size_hint), 3)
+                if size_hint is not None
+                else max(len(correct_value), 3)
+            )
         except ValueError:
             width = max(len(correct_value), 3)
         gap.replace_with(NavigableString(f"\\rule{{{width}ex}}{{0.4pt}}"))
@@ -120,7 +127,13 @@ def render_div_admonitions(element: Tag, context: RenderContext) -> None:
     _render_admonition(element, context, classes=classes, title=title)
 
 
-@renders("details", phase=RenderPhase.POST, priority=55, name="details_admonitions", nestable=False)
+@renders(
+    "details",
+    phase=RenderPhase.POST,
+    priority=55,
+    name="details_admonitions",
+    nestable=False,
+)
 def render_details_admonitions(element: Tag, context: RenderContext) -> None:
     classes = element.get("class") or []
     title = ""

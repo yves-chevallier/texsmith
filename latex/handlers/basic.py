@@ -7,6 +7,7 @@ from bs4 import NavigableString, Tag
 from ..context import RenderContext
 from ..rules import RenderPhase, renders
 
+
 UNWANTED_NODES: tuple[tuple[str, tuple[str, ...], str], ...] = (
     ("html", (), "unwrap"),
     ("head", (), "decompose"),
@@ -20,7 +21,9 @@ UNWANTED_NODES: tuple[tuple[str, tuple[str, ...], str], ...] = (
 )
 
 
-def _merge_strip_rules(context: RenderContext) -> list[tuple[str, tuple[str, ...], str]]:
+def _merge_strip_rules(
+    context: RenderContext,
+) -> list[tuple[str, tuple[str, ...], str]]:
     """Merge default strip rules with runtime overrides."""
 
     rules: dict[tuple[str, tuple[str, ...]], str] = {
@@ -88,7 +91,6 @@ def render_inline_underline(element: Tag, context: RenderContext) -> None:
     """Render ``<ins>`` tags using the formatter."""
 
     text = element.get_text(strip=False)
-    plain_text = element.get_text(strip=True)
     latex = context.formatter.underline(text=text)
     element.replace_with(NavigableString(latex))
 
@@ -138,7 +140,9 @@ def render_inline_subscript(element: Tag, context: RenderContext) -> None:
     element.replace_with(NavigableString(latex))
 
 
-@renders("sup", phase=RenderPhase.INLINE, name="inline_superscript", after_children=True)
+@renders(
+    "sup", phase=RenderPhase.INLINE, name="inline_superscript", after_children=True
+)
 def render_inline_superscript(element: Tag, context: RenderContext) -> None:
     """Render ``<sup>`` tags, skipping footnote references."""
 

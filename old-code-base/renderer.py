@@ -1,19 +1,19 @@
 """A LaTeX renderer that converts HTML elements to LaTeX using LaTeXFormatter."""
 
-import logging
-import re
 from hashlib import sha256
 from html import unescape
+import logging
 from pathlib import Path
+import re
 from typing import Any, Union, cast
 
-import yaml
 from bs4 import BeautifulSoup
 from bs4.element import NavigableString, PageElement, Tag
+import yaml
 
 from .config import BookConfig
 from .formatters import LaTeXFormatter
-from .pipeline import RenderPhase, RenderPipeline, RenderingContext, render_stage
+from .pipeline import RenderingContext, RenderPhase, RenderPipeline, render_stage
 from .transformers import (
     drawio2pdf,
     fetch_image,
@@ -23,6 +23,7 @@ from .transformers import (
     svg2pdf,
 )
 from .utils import escape_latex_chars, is_valid_url, resolve_asset_path, safe_quote
+
 
 log = logging.getLogger("mkdocs")
 
@@ -528,9 +529,7 @@ class LaTeXRenderer:
         return soup
 
     @render_stage(phase=RenderPhase.PRE, priority=60)
-    def render_math(
-        self, soup: Tag, context: RenderingContext | None = None, **_: Any
-    ):
+    def render_math(self, soup: Tag, context: RenderingContext | None = None, **_: Any):
         """Replace all math elements.
 
         <span class="arithmatex">...</span>
@@ -695,9 +694,7 @@ class LaTeXRenderer:
         return soup
 
     @render_stage(phase=RenderPhase.POST, priority=10)
-    def render_list(
-        self, soup: Tag, context: RenderingContext | None = None, **_: Any
-    ):
+    def render_list(self, soup: Tag, context: RenderingContext | None = None, **_: Any):
         """Extract lists from <ol> and <ul> elements."""
 
         def is_checkbox(item):
@@ -1212,18 +1209,14 @@ class LaTeXRenderer:
         return soup
 
     @render_stage(phase=RenderPhase.PRE, priority=10)
-    def render_hr(
-        self, soup: Tag, context: RenderingContext | None = None, **_: Any
-    ):
+    def render_hr(self, soup: Tag, context: RenderingContext | None = None, **_: Any):
         """Render horizontal rules."""
         for el in soup.find_all("hr"):
             el.extract()
         return soup
 
     @render_stage(phase=RenderPhase.PRE, priority=20)
-    def render_br(
-        self, soup: Tag, context: RenderingContext | None = None, **_: Any
-    ):
+    def render_br(self, soup: Tag, context: RenderingContext | None = None, **_: Any):
         """Render line breaks."""
         for el in soup.find_all("br"):
             node = NavigableString("\\")

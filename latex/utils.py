@@ -2,10 +2,11 @@
 
 from __future__ import annotations
 
+from pathlib import Path
 import re
 import unicodedata
-from pathlib import Path
 from urllib.parse import quote, urlparse, urlunparse
+
 
 try:  # pragma: no cover - graceful degradation
     import unidecode  # type: ignore[attr-defined]
