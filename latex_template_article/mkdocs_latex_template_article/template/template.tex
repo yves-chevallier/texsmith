@@ -6,12 +6,44 @@
 \usepackage{geometry}
 \usepackage{hyphenat}
 \usepackage{booktabs}
+\usepackage[many,minted]{tcolorbox}
+
+\setmonofont{CMU Typewriter Text}
+\usemintedstyle{bw}
+
+\newtcblisting[auto counter,number within=section,
+  list inside=mypyg]{code}[4][]{%
+  breakable,
+  listing only,
+  enhanced,
+  colback=white,
+  pad at break*=1mm,
+  toptitle=0.15em,
+  bottomtitle=0.1em,
+  boxrule=0mm,
+  frame hidden,
+  minted language=#2,
+  top=1mm,
+  bottom=1mm,
+  minted options={%
+      tabsize=4,
+      breaklines,
+      xleftmargin=-0.75em,
+      fontsize=\footnotesize,
+      highlightcolor=gray!30,
+      ignorelexererrors,
+      #4
+    },
+  title={#3},
+  list entry={\protect\numberline{\thetcbcounter}#3},
+  #1
+}
 
 \geometry{\VAR{geometry_options}}
 
-\title{\VAR{title}}
-\author{\VAR{author}}
-\date{\VAR{date}}
+\title{Article Title}
+\author{John Doe}
+\date{\today}
 
 \begin{document}
 
