@@ -1,0 +1,37 @@
+[compat]
+mkdocs_latex = ">=0.6,<1.0"
+
+[latex.template]
+name = "book"
+version = "0.1.0"
+engine = 'lualatex'
+shell_escape = true
+texlive_year = 2023
+tlmgr_packages = [
+    "babel-french",
+    "csquotes",
+    "fontspec",
+    "fancyvrb",
+    "geometry",
+    "hyperref",
+    "longtable",
+    "microtype",
+    "polyglossia",
+    "titlesec",
+    "titletoc",
+    "xcolor",
+    "xunicode",
+]
+override = ["codeblock.tex", "codeinline.tex"]
+
+[latex.template.attributes]
+
+title = "A LaTeX Book Template"
+subtitle = "An example of a book template for MkDocs LaTeX"
+author = "John Doe"
+email = "john.doe@acme.corp"
+date = "\\today"
+cover = "circles"
+glossary = true
+listoffigures = true
+listoftables = true

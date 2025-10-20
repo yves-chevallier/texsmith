@@ -1,0 +1,7 @@
+[project]
+name = "mkdocs-latex-template-book"
+version = "1.2.0"
+requires-python = ">=3.9"
+
+[project.entry-points."mkdocs_latex.templates"]
+book = "mkdocs_latex_template_book:get_template_path"

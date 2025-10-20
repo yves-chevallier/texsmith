@@ -19,28 +19,44 @@ theme:
     - search.share
     - search.suggest
 markdown_extensions:
+  - abbr
   - admonition
+  - table
   - attr_list
   - def_list
   - footnotes
   - md_in_html
+  - pymdownx.caption:
+      prepend: true
   - pymdownx.betterem
   - pymdownx.blocks.html
   - pymdownx.caret
   - pymdownx.critic
   - pymdownx.details
-  - pymdownx.emoji
+  - pymdownx.highlight:
+      linenums: true
+      use_pygments: false
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+  - pymdownx.blocks.caption
   - pymdownx.fancylists
   - pymdownx.inlinehilite
-  - pymdownx.keys:
-      camel_case: true
+  - pymdownx.arithmatex
+  - pymdownx.keys
   - pymdownx.magiclink
   - pymdownx.mark
+  - pymdownx.snippets
   - pymdownx.saneheaders
   - pymdownx.smartsymbols
-  - pymdownx.superfences
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
   - pymdownx.tabbed
-  - pymdownx.tasklist
+  - pymdownx.tasklist:
+    custom_checkbox: false
   - pymdownx.tilde
   - toc:
       permalink: null

@@ -1,0 +1,8 @@
+{
+  "project_name": "LaTeX Book Template",
+  "project_slug": "mkdocs-latex-template-book",
+  "package_name": "mkdocs_latex_template_book",
+  "author_name": "Yves Chevallier",
+  "license": "MIT",
+  "version": "0.1.0"
+}

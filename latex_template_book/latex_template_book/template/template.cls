@@ -7,8 +7,7 @@
 
 \definecolor{indigo(dye)}{rgb}{0.0, 0.25, 0.42}
 
-
-\makeglossaries
+\BLOCK{ if glossary }\makeglossaries\BLOCK{ endif }
 \makeindex
 
 \input{glossary}
@@ -16,7 +15,7 @@
 
 \begin{document}
 
-\input{cover}
+\input{covers/\VAR{cover}}
 
 \cleardoublepage
 \input{titlepage}
@@ -24,7 +23,6 @@
 \thispagestyle{empty}
 \input{imprint}
 
-% Avoid discusting pages
 \raggedbottom
 
 \frontmatter
@@ -40,19 +38,18 @@
 
 \backmatter
 
-\input{solutions.tex}
-
 \VAR{backmatter}
 
 \clearpage
-\listoffigures
+\BLOCK{ if listoffigures }\listoffigures\BLOCK{ endif }
 \clearpage
-\listoftables
+\BLOCK{ if listoftables }\listoftables\BLOCK{ endif }
 \clearpage
 
+\BLOCK{ if glossary }
 \printglossary[type=\acronymtype, title=Liste des acronymes]
 \printglossary[title=Termes et définitions]
-
+\BLOCK{ endif }
 \printindex
 
 \end{document}
