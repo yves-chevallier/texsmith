@@ -55,6 +55,17 @@ class InlineFormattingTests(unittest.TestCase):
         latex = self.renderer.render(html)
         self.assertIn('\\texttt{print("Hi")}', latex)
 
+    def test_unicode_superscript_conversion(self) -> None:
+        html = "<p>(0.1 s⁻¹, 1 s⁻¹, 10 s⁻¹)</p>"
+        latex = self.renderer.render(html)
+        self.assertIn("(0.1 s\\textsuperscript{-1}, 1 s\\textsuperscript{-1}, 10 s\\textsuperscript{-1})", latex)
+
+    def test_unicode_subscript_conversion(self) -> None:
+        html = "<p>H₂O and CO₂</p>"
+        latex = self.renderer.render(html)
+        self.assertIn("H\\textsubscript{2}O", latex)
+        self.assertIn("CO\\textsubscript{2}", latex)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -3,7 +3,7 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 import unittest
 
-from mkdocs_latex.templates import copy_template_assets, load_template
+from mkdocs_latex.templates import TemplateError, copy_template_assets, load_template
 
 
 class TemplateWrappingTests(unittest.TestCase):
@@ -97,6 +97,14 @@ class ArticleTemplateTests(unittest.TestCase):
         self.assertEqual(shortcut.info.name, self.template.info.name)
         slug = load_template("article")
         self.assertEqual(slug.info.name, self.template.info.name)
+
+    def test_rejects_invalid_paper_option(self) -> None:
+        with self.assertRaises(TemplateError):
+            self.template.wrap_document("", overrides={"paper": "iso"})
+
+    def test_rejects_invalid_orientation_option(self) -> None:
+        with self.assertRaises(TemplateError):
+            self.template.wrap_document("", overrides={"orientation": "diagonal"})
 
 
 if __name__ == "__main__":

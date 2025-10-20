@@ -5,7 +5,7 @@ from typing import Any
 
 from typer.testing import CliRunner
 
-from mkdocs_latex.cli import app
+from mkdocs_latex.cli import DEFAULT_MARKDOWN_EXTENSIONS, app
 
 
 def test_convert_command(tmp_path: Path) -> None:
@@ -119,6 +119,38 @@ def test_convert_markdown_file(tmp_path: Path, monkeypatch: Any) -> None:
     assert result.exit_code == 0, result.stdout
     assert "\\section{Intro}" in result.stdout
     assert "Paragraph text." in result.stdout
+
+
+def test_default_markdown_extensions(tmp_path: Path, monkeypatch: Any) -> None:
+    recorded: dict[str, list[str] | None] = {"extensions": None}
+
+    class DummyMarkdown:
+        def __init__(self, *args: object, **kwargs: object) -> None:
+            recorded["extensions"] = list(kwargs.get("extensions") or [])
+
+        def convert(self, _: str) -> str:
+            return "<p>content</p>"
+
+    monkeypatch.setitem(
+        sys.modules, "markdown", types.SimpleNamespace(Markdown=DummyMarkdown)
+    )
+
+    markdown_file = tmp_path / "doc.md"
+    markdown_file.write_text("plain text", encoding="utf-8")
+
+    runner = CliRunner()
+    result = runner.invoke(
+        app,
+        [
+            "convert",
+            str(markdown_file),
+            "--output-dir",
+            str(tmp_path / "output"),
+        ],
+    )
+
+    assert result.exit_code == 0, result.stdout
+    assert recorded["extensions"] == DEFAULT_MARKDOWN_EXTENSIONS
 
 
 def test_markdown_extensions_normalization(

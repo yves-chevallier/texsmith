@@ -17,7 +17,16 @@ from .templates import TemplateError, copy_template_assets, load_template
 from .transformers import register_converter
 
 
-DEFAULT_MARKDOWN_EXTENSIONS = ["pymdownx.arithmatex"]
+DEFAULT_MARKDOWN_EXTENSIONS = [
+    "extra",           # Tableaux, listes imbriquées, etc.
+    "abbr",            # Abréviations
+    "attr_list",       # Attributs sur les éléments HTML
+    "def_list",        # Listes de définitions
+    "fenced_code",     # Blocs de code délimités par ```
+    "smarty",          # SmartyPants
+    "tables",          # Tables
+    "mdx_math",        # Support des formules mathématiques
+]
 
 
 app = typer.Typer(

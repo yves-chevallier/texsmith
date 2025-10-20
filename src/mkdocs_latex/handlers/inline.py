@@ -25,6 +25,148 @@ _MATH_PAYLOAD_PATTERN = re.compile(
     re.DOTALL | re.VERBOSE,
 )
 
+_SUPERSCRIPT_MAP = {
+    "⁰": "0",
+    "¹": "1",
+    "²": "2",
+    "³": "3",
+    "⁴": "4",
+    "⁵": "5",
+    "⁶": "6",
+    "⁷": "7",
+    "⁸": "8",
+    "⁹": "9",
+    "⁺": "+",
+    "⁻": "-",
+    "⁼": "=",
+    "⁽": "(",
+    "⁾": ")",
+    "ⁿ": "n",
+    "ⁱ": "i",
+    "ᵃ": "a",
+    "ᵇ": "b",
+    "ᶜ": "c",
+    "ᵈ": "d",
+    "ᵉ": "e",
+    "ᶠ": "f",
+    "ᵍ": "g",
+    "ʰ": "h",
+    "ᶦ": "i",
+    "ʲ": "j",
+    "ᵏ": "k",
+    "ˡ": "l",
+    "ᵐ": "m",
+    "ᶰ": "n",
+    "ᵒ": "o",
+    "ᵖ": "p",
+    "ʳ": "r",
+    "ˢ": "s",
+    "ᵗ": "t",
+    "ᵘ": "u",
+    "ᵛ": "v",
+    "ʷ": "w",
+    "ˣ": "x",
+    "ʸ": "y",
+    "ᶻ": "z",
+    "ᴬ": "A",
+    "ᴮ": "B",
+    "ᴰ": "D",
+    "ᴱ": "E",
+    "ᴳ": "G",
+    "ᴴ": "H",
+    "ᴵ": "I",
+    "ᴶ": "J",
+    "ᴷ": "K",
+    "ᴸ": "L",
+    "ᴹ": "M",
+    "ᴺ": "N",
+    "ᴼ": "O",
+    "ᴾ": "P",
+    "ᴿ": "R",
+    "ᵀ": "T",
+    "ᵁ": "U",
+    "ⱽ": "V",
+    "ᵂ": "W",
+}
+
+_SUPERSCRIPT_PATTERN = re.compile(
+    f"([{''.join(re.escape(char) for char in _SUPERSCRIPT_MAP)}]+)"
+)
+
+_SUBSCRIPT_MAP = {
+    "₀": "0",
+    "₁": "1",
+    "₂": "2",
+    "₃": "3",
+    "₄": "4",
+    "₅": "5",
+    "₆": "6",
+    "₇": "7",
+    "₈": "8",
+    "₉": "9",
+    "₊": "+",
+    "₋": "-",
+    "₌": "=",
+    "₍": "(",
+    "₎": ")",
+    "ₐ": "a",
+    "ₑ": "e",
+    "ₒ": "o",
+    "ₔ": "ə",
+    "ₓ": "x",
+    "ₕ": "h",
+    "ₖ": "k",
+    "ₗ": "l",
+    "ₘ": "m",
+    "ₙ": "n",
+    "ₚ": "p",
+    "ₛ": "s",
+    "ₜ": "t",
+    "ᵢ": "i",
+    "ᵣ": "r",
+    "ᵤ": "u",
+    "ᵥ": "v",
+    "ᵦ": r"\beta",
+    "ᵧ": r"\gamma",
+    "ᵨ": r"\rho",
+    "ᵩ": r"\phi",
+    "ᵪ": r"\chi",
+}
+
+_SUBSCRIPT_PATTERN = re.compile(
+    f"([{''.join(re.escape(char) for char in _SUBSCRIPT_MAP)}]+)"
+)
+
+
+def _replace_unicode_scripts(
+    text: str, pattern: re.Pattern[str], mapping: dict[str, str], command: str
+) -> str:
+    if not text:
+        return text
+
+    def _normalize(match: re.Match[str]) -> str:
+        payload = match.group(0)
+        normalized = "".join(mapping.get(char, char) for char in payload)
+        return f"\\{command}{{{normalized}}}"
+
+    return pattern.sub(_normalize, text)
+
+
+def _replace_unicode_superscripts(text: str) -> str:
+    """Convert sequences of Unicode superscript characters to LaTeX text macros."""
+
+    return _replace_unicode_scripts(
+        text, _SUPERSCRIPT_PATTERN, _SUPERSCRIPT_MAP, "textsuperscript"
+    )
+
+
+def _replace_unicode_subscripts(text: str) -> str:
+    """Convert sequences of Unicode subscript characters to LaTeX text macros."""
+
+    return _replace_unicode_scripts(
+        text, _SUBSCRIPT_PATTERN, _SUBSCRIPT_MAP, "textsubscript"
+    )
+
 
 def _has_ancestor(node: NavigableString, *names: str) -> bool:
     parent = node.parent
@@ -36,9 +178,24 @@ def _has_ancestor(node: NavigableString, *names: str) -> bool:
 
 
 def _allow_hyphenation(text: str) -> str:
+    """
+    Allow hyphenation in long words.
+
+    TODO: This function is bad. Instead we should look into a dictionary
+    based hyphenation solution.
+    """
+    return text # Temporary disable hyphenation handling
+
     if len(text) < 50:
         return text
     return re.sub(r"(\b[^\W\d_]{2,}-)([^\W\d_]{7,})\b", r"\1\\allowhyphens \2", text)
+
+
+def _prepare_plain_text(text: str) -> str:
+    escaped = escape_latex_chars(text)
+    escaped = _allow_hyphenation(escaped)
+    escaped = _replace_unicode_superscripts(escaped)
+    return _replace_unicode_subscripts(escaped)
 
 
 @renders(phase=RenderPhase.PRE, name="escape_plain_text", auto_mark=False)
@@ -55,7 +212,7 @@ def escape_plain_text(root: Tag, context: RenderContext) -> None:
             continue
         matches = list(_MATH_PAYLOAD_PATTERN.finditer(text))
         if not matches:
-            escaped = _allow_hyphenation(escape_latex_chars(text))
+            escaped = _prepare_plain_text(text)
             if escaped != text:
                 replacement = NavigableString(escaped)
                 setattr(replacement, "processed", True)
@@ -68,14 +225,14 @@ def escape_plain_text(root: Tag, context: RenderContext) -> None:
             if match.start() > cursor:
                 segment = text[cursor : match.start()]
                 if segment:
-                    escaped = _allow_hyphenation(escape_latex_chars(segment))
+                    escaped = _prepare_plain_text(segment)
                     parts.append(escaped)
             parts.append(match.group(0))
             cursor = match.end()
         if cursor < len(text):
             tail = text[cursor:]
             if tail:
-                escaped = _allow_hyphenation(escape_latex_chars(tail))
+                escaped = _prepare_plain_text(tail)
                 parts.append(escaped)
 
         replacement = NavigableString("".join(parts))
@@ -134,10 +291,13 @@ def _extract_code_text(element: Tag) -> str:
 def render_inline_code(element: Tag, context: RenderContext) -> None:
     """Render inline code elements using the formatter."""
 
-    if element.find_parent("pre", class_="mermaid"):
+    if element.find_parent("pre"):
         return
 
     code = _extract_code_text(element)
+    if "\n" in code:
+        return
+
     code = escape_latex_chars(code).replace(" ", "~")
 
     latex = context.formatter.codeinlinett(code)

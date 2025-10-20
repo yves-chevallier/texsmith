@@ -4,9 +4,11 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from importlib import metadata
+import importlib.util
 import inspect
 from pathlib import Path
 import shutil
+import sys
 from typing import Any, Iterable, Mapping
 
 import tomllib
@@ -239,6 +241,47 @@ class WrappableTemplate(BaseTemplate):
             )
 
 
+def _load_path_template(path: Path) -> WrappableTemplate:
+    specialised = _load_specialised_template(path)
+    if specialised is not None:
+        return specialised
+    return WrappableTemplate(path)
+
+
+def _load_specialised_template(path: Path) -> WrappableTemplate | None:
+    init_path = path / "__init__.py"
+    if not init_path.exists():
+        return None
+
+    resolved_init = init_path.resolve()
+    module_name = f"_mkdocs_latex_template_{hash(resolved_init) & 0xFFFFFFFF:x}"
+    spec = importlib.util.spec_from_file_location(
+        module_name,
+        resolved_init,
+        submodule_search_locations=[str(path.resolve())],
+    )
+    if spec is None or spec.loader is None:  # pragma: no cover - defensive
+        return None
+
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[module_name] = module
+    try:
+        spec.loader.exec_module(module)
+    except Exception as exc:  # pragma: no cover - surface import errors
+        sys.modules.pop(module_name, None)
+        raise TemplateError(f"Failed to import template module at '{path}': {exc}") from exc
+
+    for attribute in ("Template", "template", "load_template", "get_template"):
+        candidate = getattr(module, attribute, None)
+        if candidate is None:
+            continue
+        specialised = _coerce_template(candidate)
+        if specialised is not None:
+            return specialised
+
+    return None
+
+
 @dataclass(slots=True)
 class ResolvedAsset:
     """Resolved template asset ready to be materialised."""
@@ -255,13 +298,13 @@ def load_template(identifier: str) -> WrappableTemplate:
 
     path_candidate = Path(identifier).expanduser()
     if path_candidate.exists():
-        return WrappableTemplate(path_candidate)
+        return _load_path_template(path_candidate)
 
     if not path_candidate.is_absolute():
         slug = _slug_from_identifier(identifier)
         for candidate in _iter_local_candidates(path_candidate, slug):
             if candidate.exists():
-                return WrappableTemplate(candidate)
+                return _load_path_template(candidate)
 
     entry_points = metadata.entry_points()
     group = entry_points.select(group="mkdocs_latex.templates")
