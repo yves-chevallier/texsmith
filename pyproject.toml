@@ -13,10 +13,12 @@ dependencies = [
     "pydantic>=2.7.0",
     "pypdf>=6.1.1",
     "pyyaml>=6.0.3",
+    "pymdown-extensions>=10.9",
     "requests>=2.32.5",
     "unidecode>=1.4.0",
     "typer>=0.12.5",
     "markdown>=3.7",
+    "python-markdown-math>=0.9",
 ]
 
 [build-system]

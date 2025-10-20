@@ -4,6 +4,7 @@ mkdocs_latex = ">=0.6,<1.0"
 [latex.template]
 name = "book"
 version = "0.1.0"
+entrypoint = "template/template.tex"
 engine = 'lualatex'
 shell_escape = true
 texlive_year = 2023
@@ -32,6 +33,22 @@ author = "John Doe"
 email = "john.doe@acme.corp"
 date = "\\today"
 cover = "circles"
-glossary = true
+glossary = false
 listoffigures = true
 listoftables = true
+
+[latex.template.assets.covers]
+source = "covers"
+
+[latex.template.assets."covers/circles.tex"]
+source = "covers/circles.tex"
+template = true
+
+[latex.template.assets."titlepage.tex"]
+source = "titlepage.tex"
+
+[latex.template.assets."imprint.tex"]
+source = "imprint.tex"
+
+[latex.template.assets."mkbook.cls"]
+source = "template/mkbook.cls"

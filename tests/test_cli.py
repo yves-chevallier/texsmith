@@ -171,3 +171,31 @@ def test_rejects_mkdocs_configuration(tmp_path: Path) -> None:
 
     assert result.exit_code == 1
     assert "configuration files are not supported" in result.stderr.lower()
+
+
+def test_mdx_math_extension_preserves_latex(tmp_path: Path) -> None:
+    runner = CliRunner()
+    markdown_file = tmp_path / "math.md"
+    markdown_file.write_text(
+        "# Math\n\nInline $E = mc^2$ example.\n\n$$\n\\nabla \\cdot \\mathbf{E} = 0\n$$\n",
+        encoding="utf-8",
+    )
+
+    output_dir = tmp_path / "output"
+    result = runner.invoke(
+        app,
+        [
+            "convert",
+            str(markdown_file),
+            "--output-dir",
+            str(output_dir),
+            "-e",
+            "mdx_math",
+        ],
+    )
+
+    assert result.exit_code == 0, result.stdout
+    assert "$E = mc^2$" in result.stdout
+    assert result.stdout.count("$$") == 2
+    assert "\\mathbf{E}" in result.stdout
+    assert "\\textbackslash" not in result.stdout

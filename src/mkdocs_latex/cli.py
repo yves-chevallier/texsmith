@@ -13,7 +13,11 @@ import typer
 from .config import BookConfig
 from .exceptions import LatexRenderingError, TransformerExecutionError
 from .renderer import LaTeXRenderer
+from .templates import TemplateError, copy_template_assets, load_template
 from .transformers import register_converter
+
+
+DEFAULT_MARKDOWN_EXTENSIONS = ["pymdownx.arithmatex"]
 
 
 app = typer.Typer(
@@ -135,6 +139,7 @@ def convert(
     """Convert an MkDocs HTML page to LaTeX."""
 
     try:
+        output_dir = output_dir.resolve()
         input_payload = input_path.read_text(encoding="utf-8")
     except OSError as exc:
         typer.secho(
@@ -143,6 +148,8 @@ def convert(
         raise typer.Exit(code=1) from exc
 
     normalized_extensions = _normalize_markdown_extensions(markdown_extensions)
+    if not normalized_extensions:
+        normalized_extensions = list(DEFAULT_MARKDOWN_EXTENSIONS)
 
     try:
         input_kind = _classify_input_source(input_path)
@@ -191,10 +198,18 @@ def convert(
     }
     if manifest:
         runtime["generate_manifest"] = True
-    if template:
-        runtime["template"] = template
     if drop_title:
         runtime["drop_title"] = True
+
+    template_instance = None
+    template_context: dict[str, Any] | None = None
+    if template:
+        try:
+            template_instance = load_template(template)
+        except TemplateError as exc:
+            typer.secho(str(exc), fg=typer.colors.RED, err=True)
+            raise typer.Exit(code=1) from exc
+        runtime["template"] = template_instance.info.name
 
     if not disable_fallback_converters:
         _ensure_fallback_converters()
@@ -208,6 +223,45 @@ def convert(
             err=True,
         )
         raise typer.Exit(code=1) from exc
+
+    if template_instance is not None:
+        try:
+            template_context = template_instance.prepare_context(latex_output)
+            latex_output = template_instance.wrap_document(
+                latex_output,
+                context=template_context,
+            )
+        except TemplateError as exc:
+            typer.secho(str(exc), fg=typer.colors.RED, err=True)
+            raise typer.Exit(code=1) from exc
+        try:
+            copy_template_assets(
+                template_instance,
+                output_dir,
+                context=template_context,
+            )
+        except TemplateError as exc:
+            typer.secho(str(exc), fg=typer.colors.RED, err=True)
+            raise typer.Exit(code=1) from exc
+
+    if template_instance is not None:
+        try:
+            output_dir.mkdir(parents=True, exist_ok=True)
+            output_file = output_dir / f"{input_path.stem}.tex"
+            output_file.write_text(latex_output, encoding="utf-8")
+        except OSError as exc:
+            typer.secho(
+                f"Failed to write LaTeX output to '{output_dir}': {exc}",
+                fg=typer.colors.RED,
+                err=True,
+            )
+            raise typer.Exit(code=1) from exc
+
+        typer.secho(
+            f"LaTeX document written to {output_file}",
+            fg=typer.colors.GREEN,
+        )
+        return
 
     typer.echo(latex_output)
 

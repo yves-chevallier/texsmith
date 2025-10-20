@@ -115,6 +115,37 @@ mkdocs-latex templates scaffold my-template # crée un dossier my-template avec 
 mkdocs-latex convert --template=./book/ # utilise la template locale book
 ```
 
+Lorsqu'une template est sélectionnée avec `--template`, le fragment LaTeX produit par le renderer est inséré dans la clé `mainmatter` du template. Les autres attributs restent définis par défaut via le `manifest.toml`, garantissant un document complet sans modifier le contenu généré.
+
+Le manifest peut également déclarer des entrées `[latex.template.assets.<destination>]` listant les fichiers ou dossiers à copier vers le dossier de sortie. Le CLI s'occupe de recopier ces ressources à l'endroit défini, ce qui garantit que les classes, couvertures et autres dépendances nécessaires à la compilation LaTeX soient disponibles. Lorsqu'un fichier doit être interprété par Jinja avant d'être déployé (par exemple `covers/circles.tex`), on peut ajouter `template = true` :
+
+```toml
+[latex.template.assets."covers/circles.tex"]
+source = "covers/circles.tex"
+template = true
+```
+
+Pour tester la template `book` incluse dans le dépôt :
+
+```bash
+uv run mkdocs_latex convert tests/test_mkdocs/docs/index.md --template=./book
+```
+
+Après installation du paquet dédié (`uv pip install -e latex_template_book` ou `uv add mkdocs-latex-template-book`), la même template est disponible via son entrée `book` :
+
+```bash
+uv run mkdocs_latex convert tests/test_mkdocs/docs/index.md --template=book
+```
+
+Une variante minimale est disponible avec la template `article`, pensée pour des documents courts. Elle expose uniquement les attributs `title`, `author`, `date`, ainsi que `paper` (converti en option `a4paper`, `a3paper`, etc.) et `orientation` (`portrait` ou `landscape`) qui ajustent directement `\documentclass`.
+
+```bash
+uv run mkdocs_latex convert tests/test_mkdocs/docs/index.md --template=./article
+uv run mkdocs_latex convert tests/test_mkdocs/docs/index.md --template=article
+```
+
+Lorsque `--template` est fourni, le convertisseur écrit automatiquement le résultat LaTeX complet dans le répertoire passé via `--output-dir` (par défaut `build/`) en utilisant le nom du fichier source avec l’extension `.tex` (`index.tex`, `test.tex`, etc.).
+
 Le convertisseur par défaut de MkDocs est Python Markdown. C'est également ce module utilisé en interne si le fichier d'entrée est du Markdown.
 
 Voici un exemple comment Python Markdown est utilisé en interne:

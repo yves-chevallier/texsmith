@@ -1,0 +1,25 @@
+[compat]
+mkdocs_latex = ">=0.6,<1.0"
+
+[latex.template]
+name = "article"
+version = "0.1.0"
+entrypoint = "template/template.tex"
+engine = "lualatex"
+shell_escape = false
+texlive_year = 2023
+tlmgr_packages = [
+    "geometry",
+    "hyperref",
+    "microtype",
+    "fontspec",
+]
+
+[latex.template.attributes]
+title = "Article Title"
+author = "John Doe"
+date = "\\today"
+paper = "a4"
+orientation = "portrait"
+frontmatter = ""
+backmatter = ""

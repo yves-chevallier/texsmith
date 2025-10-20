@@ -1,0 +1,7 @@
+[project]
+name = "mkdocs-latex-template-article"
+version = "0.1.0"
+requires-python = ">=3.9"
+
+[project.entry-points."mkdocs_latex.templates"]
+article = "mkdocs_latex_template_article:Template"

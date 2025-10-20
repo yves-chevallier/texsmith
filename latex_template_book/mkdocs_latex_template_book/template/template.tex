@@ -7,11 +7,12 @@
 
 \definecolor{indigo(dye)}{rgb}{0.0, 0.25, 0.42}
 
-\BLOCK{ if glossary }\makeglossaries\BLOCK{ endif }
+\BLOCK{ if glossary }\makeglossaries
+\input{glossary}
+\BLOCK{ endif }
 \makeindex
 
-\input{glossary}
-\input{acronyms}
+%\input{acronyms}
 
 \begin{document}
 

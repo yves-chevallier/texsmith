@@ -1,0 +1,46 @@
+\BLOCK{ set raw_paper = (paper | default("a4")) | lower }
+\BLOCK{ set paper_option = raw_paper }
+\BLOCK{ if paper_option and not paper_option.endswith("paper") }
+\BLOCK{ set paper_option = paper_option + "paper" }
+\BLOCK{ endif }
+\BLOCK{ set raw_orientation = (orientation | default("portrait")) | lower }
+\BLOCK{ set orientation_option = "landscape" if raw_orientation == "landscape" else "" }
+\BLOCK{ set options = [] }
+\BLOCK{ if paper_option }
+\BLOCK{ set options = options + [paper_option] }
+\BLOCK{ endif }
+\BLOCK{ if orientation_option }
+\BLOCK{ set options = options + [orientation_option] }
+\BLOCK{ endif }
+\documentclass\BLOCK{ if options }[\VAR{options|join(",")}]\BLOCK{ endif}{article}
+
+\usepackage{fontspec}
+\usepackage{microtype}
+\usepackage{hyperref}
+\usepackage{geometry}
+\usepackage{hyphenat}
+
+\BLOCK{ set geometry_options = ["margin=2.5cm"] }
+\BLOCK{ if paper_option }
+\BLOCK{ set geometry_options = geometry_options + [paper_option] }
+\BLOCK{ endif }
+\BLOCK{ if orientation_option == "landscape" }
+\BLOCK{ set geometry_options = geometry_options + ["landscape"] }
+\BLOCK{ endif }
+\geometry{\VAR{geometry_options|join(",")}}
+
+\title{\VAR{title}}
+\author{\VAR{author}}
+\date{\VAR{date}}
+
+\begin{document}
+
+\maketitle
+
+\BLOCK{ if frontmatter }\VAR{frontmatter}\BLOCK{ endif }
+
+\VAR{mainmatter}
+
+\BLOCK{ if backmatter }\VAR{backmatter}\BLOCK{ endif }
+
+\end{document}

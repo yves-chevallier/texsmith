@@ -1,4 +1,8 @@
-\def\covercolor{\VAR{color}}
+\BLOCK{if covercolor}
+\def\covercolor{\VAR{covercolor}}
+\BLOCK{else}
+\def\covercolor{indigo(dye)}
+\BLOCK{endif}
 
 \begin{tikzpicture}[remember picture,overlay]
     \fill[\covercolor] (current page.south west) rectangle (current page.north east);
@@ -47,5 +51,3 @@
     \BLOCK{endif}
 
   \end{tikzpicture}
-
-  \heiglogo[color=\covercolor!5]

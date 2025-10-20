@@ -34,7 +34,6 @@
 \RequirePackage{microtype}
 \RequirePackage[french]{babel}
 \RequirePackage{emptypage}
-\RequirePackage{heiglogo}
 
 \definecolor{linkcolor}{RGB}{34, 18, 104}
 \definecolor{urlcolor}{RGB}{104, 18, 55}

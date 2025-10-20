@@ -14,6 +14,17 @@ from ..rules import RenderPhase, renders
 from ..transformers import fetch_image, svg2pdf
 from ..utils import escape_latex_chars, is_valid_url, safe_quote
 
+_MATH_PAYLOAD_PATTERN = re.compile(
+    r"""
+    (?:\$\$.*?\$\$)                                 # display math $$...$$
+    |(?:\\\[.*?\\\])                                # display math \[...\]
+    |(?:\\\(.*?\\\))                                # inline math \(...\)
+    |(?:\\begin\{[a-zA-Z*]+\}.*?\\end\{[a-zA-Z*]+\})# LaTeX environments
+    |(?<!\\)\$(?!\$)(?!\s)(?:\\.|[^$])*?(?<!\\)\$   # inline math $...$
+    """,
+    re.DOTALL | re.VERBOSE,
+)
+
 
 def _has_ancestor(node: NavigableString, *names: str) -> bool:
     parent = node.parent
@@ -37,17 +48,39 @@ def escape_plain_text(root: Tag, context: RenderContext) -> None:
     for node in list(root.find_all(string=True)):
         if getattr(node, "processed", False):
             continue
-        if _has_ancestor(node, "code"):
+        if _has_ancestor(node, "code", "script"):
             continue
         text = str(node)
         if not text:
             continue
-        escaped = escape_latex_chars(text)
-        escaped = _allow_hyphenation(escaped)
-        if escaped != text:
-            replacement = NavigableString(escaped)
-            setattr(replacement, "processed", True)
-            node.replace_with(replacement)
+        matches = list(_MATH_PAYLOAD_PATTERN.finditer(text))
+        if not matches:
+            escaped = _allow_hyphenation(escape_latex_chars(text))
+            if escaped != text:
+                replacement = NavigableString(escaped)
+                setattr(replacement, "processed", True)
+                node.replace_with(replacement)
+            continue
+
+        parts: list[str] = []
+        cursor = 0
+        for match in matches:
+            if match.start() > cursor:
+                segment = text[cursor : match.start()]
+                if segment:
+                    escaped = _allow_hyphenation(escape_latex_chars(segment))
+                    parts.append(escaped)
+            parts.append(match.group(0))
+            cursor = match.end()
+        if cursor < len(text):
+            tail = text[cursor:]
+            if tail:
+                escaped = _allow_hyphenation(escape_latex_chars(tail))
+                parts.append(escaped)
+
+        replacement = NavigableString("".join(parts))
+        setattr(replacement, "processed", True)
+        node.replace_with(replacement)
 
 
 @renders("a", phase=RenderPhase.PRE, priority=80, name="unicode_links", nestable=False)
@@ -135,6 +168,35 @@ def render_math_block(element: Tag, context: RenderContext) -> None:
         return
     text = element.get_text(strip=False)
     node = NavigableString(f"\n{text}\n")
+    setattr(node, "processed", True)
+    element.replace_with(node)
+
+
+@renders(
+    "script", phase=RenderPhase.PRE, priority=65, name="math_script", nestable=False
+)
+def render_math_script(element: Tag, context: RenderContext) -> None:
+    """Preserve math payloads generated via script tags (e.g. mdx_math)."""
+
+    type_attr = element.get("type")
+    if not isinstance(type_attr, str):
+        return
+    if not type_attr.startswith("math/tex"):
+        return
+
+    payload = element.get_text(strip=False)
+    if payload is None:
+        payload = ""
+    payload = payload.strip()
+    is_display = "mode=display" in type_attr
+
+    if not payload:
+        node = NavigableString("")
+    elif is_display:
+        node = NavigableString(f"\n$$\n{payload}\n$$\n")
+    else:
+        node = NavigableString(f"${payload}$")
+
     setattr(node, "processed", True)
     element.replace_with(node)
 
