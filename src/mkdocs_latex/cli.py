@@ -1,10 +1,13 @@
 from __future__ import annotations
 
 import hashlib
+from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
 import re
 import shutil
+import subprocess
+import shlex
 from typing import Any, Callable, Mapping, Optional
 
 from bs4 import BeautifulSoup, FeatureNotFound
@@ -30,6 +33,16 @@ DEFAULT_MARKDOWN_EXTENSIONS = [
 ]
 
 
+@dataclass(slots=True)
+class ConversionResult:
+    """Artifacts produced during a CLI conversion."""
+
+    latex_output: str
+    tex_path: Path | None
+    template_engine: str | None
+    template_shell_escape: bool
+
+
 app = typer.Typer(
     help="Convert MkDocs HTML fragments into LaTeX.",
     context_settings={"help_option_names": ["--help"]},
@@ -41,6 +54,159 @@ def _app_root() -> None:
     """Top-level CLI entry point to enable subcommands."""
     # Intentionally empty; required so Typer treats the app as a command group.
     return None
+
+
+def _convert_document(
+    input_path: Path,
+    output_dir: Path,
+    selector: str,
+    full_document: bool,
+    base_level: int,
+    heading_level: int,
+    drop_title: bool,
+    numbered: bool,
+    parser: Optional[str],
+    disable_fallback_converters: bool,
+    copy_assets: bool,
+    manifest: bool,
+    template: Optional[str],
+    debug: bool,
+    markdown_extensions: list[str],
+) -> ConversionResult:
+    try:
+        output_dir = output_dir.resolve()
+        input_payload = input_path.read_text(encoding="utf-8")
+    except OSError as exc:
+        typer.secho(
+            f"Failed to read input document: {exc}", fg=typer.colors.RED, err=True
+        )
+        raise typer.Exit(code=1) from exc
+
+    normalized_extensions = _normalize_markdown_extensions(markdown_extensions)
+    if not normalized_extensions:
+        normalized_extensions = list(DEFAULT_MARKDOWN_EXTENSIONS)
+
+    try:
+        input_kind = _classify_input_source(input_path)
+    except UnsupportedInputError as exc:
+        typer.secho(str(exc), fg=typer.colors.RED, err=True)
+        raise typer.Exit(code=1) from exc
+
+    is_markdown = input_kind is InputKind.MARKDOWN
+
+    front_matter: dict[str, Any] = {}
+    if is_markdown:
+        try:
+            html, front_matter = _render_markdown(input_payload, normalized_extensions)
+        except MarkdownConversionError as exc:
+            typer.secho(str(exc), fg=typer.colors.RED, err=True)
+            raise typer.Exit(code=1) from exc
+    else:
+        html = input_payload
+
+    if not full_document and not is_markdown:
+        try:
+            html = _extract_content(html, selector)
+        except ValueError as exc:
+            typer.secho(str(exc), fg=typer.colors.RED, err=True)
+            raise typer.Exit(code=1) from exc
+
+    if debug:
+        _persist_debug_artifacts(output_dir, input_path, html)
+
+    config = BookConfig(project_dir=input_path.parent)
+
+    renderer_kwargs: dict[str, Any] = {
+        "output_root": output_dir,
+        "copy_assets": copy_assets,
+    }
+    renderer_kwargs["parser"] = parser or "html.parser"
+
+    def renderer_factory() -> LaTeXRenderer:
+        return LaTeXRenderer(config=config, **renderer_kwargs)
+
+    runtime: dict[str, object] = {
+        "base_level": base_level + heading_level,
+        "numbered": numbered,
+        "source_dir": input_path.parent,
+        "document_path": input_path,
+        "copy_assets": copy_assets,
+    }
+    if manifest:
+        runtime["generate_manifest"] = True
+    if drop_title:
+        runtime["drop_title"] = True
+
+    template_info_engine: str | None = None
+    template_requires_shell_escape = False
+    template_instance = None
+    template_context: dict[str, Any] | None = None
+    if template:
+        try:
+            template_instance = load_template(template)
+        except TemplateError as exc:
+            typer.secho(str(exc), fg=typer.colors.RED, err=True)
+            raise typer.Exit(code=1) from exc
+        runtime["template"] = template_instance.info.name
+        template_info_engine = template_instance.info.engine
+        template_requires_shell_escape = bool(template_instance.info.shell_escape)
+
+    if not disable_fallback_converters:
+        _ensure_fallback_converters()
+
+    try:
+        latex_output = _render_with_fallback(renderer_factory, html, runtime)
+    except LatexRenderingError as exc:
+        typer.secho(
+            _format_rendering_error(exc),
+            fg=typer.colors.RED,
+            err=True,
+        )
+        raise typer.Exit(code=1) from exc
+
+    tex_path: Path | None = None
+    if template_instance is not None:
+        overrides = _build_template_overrides(front_matter)
+        try:
+            template_context = template_instance.prepare_context(
+                latex_output,
+                overrides=overrides if overrides else None,
+            )
+            latex_output = template_instance.wrap_document(
+                latex_output,
+                context=template_context,
+            )
+        except TemplateError as exc:
+            typer.secho(str(exc), fg=typer.colors.RED, err=True)
+            raise typer.Exit(code=1) from exc
+        try:
+            copy_template_assets(
+                template_instance,
+                output_dir,
+                context=template_context,
+            )
+        except TemplateError as exc:
+            typer.secho(str(exc), fg=typer.colors.RED, err=True)
+            raise typer.Exit(code=1) from exc
+
+        try:
+            output_dir.mkdir(parents=True, exist_ok=True)
+            tex_path = output_dir / f"{input_path.stem}.tex"
+            tex_path.write_text(latex_output, encoding="utf-8")
+        except OSError as exc:
+            typer.secho(
+                f"Failed to write LaTeX output to '{output_dir}': {exc}",
+                fg=typer.colors.RED,
+                err=True,
+            )
+            raise typer.Exit(code=1) from exc
+
+    return ConversionResult(
+        latex_output=latex_output,
+        tex_path=tex_path,
+        template_engine=template_info_engine,
+        template_shell_escape=template_requires_shell_escape,
+    )
 
 
 @app.command(name="convert")
@@ -148,137 +314,247 @@ def convert(
 ) -> None:
     """Convert an MkDocs HTML page to LaTeX."""
 
+    result = _convert_document(
+        input_path=input_path,
+        output_dir=output_dir,
+        selector=selector,
+        full_document=full_document,
+        base_level=base_level,
+        heading_level=heading_level,
+        drop_title=drop_title,
+        numbered=numbered,
+        parser=parser,
+        disable_fallback_converters=disable_fallback_converters,
+        copy_assets=copy_assets,
+        manifest=manifest,
+        template=template,
+        debug=debug,
+        markdown_extensions=markdown_extensions,
+    )
+
+    if result.tex_path is not None:
+        typer.secho(
+            f"LaTeX document written to {result.tex_path}",
+            fg=typer.colors.GREEN,
+        )
+        return
+
+    typer.echo(result.latex_output)
+
+
+def _build_latexmk_command(engine: str | None, shell_escape: bool) -> list[str]:
+    engine_command = (engine or "pdflatex").strip()
+    if not engine_command:
+        engine_command = "pdflatex"
+
+    tokens = shlex.split(engine_command)
+    if not tokens:
+        tokens = ["pdflatex"]
+
+    if shell_escape and not any(
+        token in {"-shell-escape", "--shell-escape"} for token in tokens
+    ):
+        tokens.append("--shell-escape")
+
+    tokens.extend(["%O", "%S"])
+
+    return [
+        "latexmk",
+        "-pdf",
+        "-interaction=nonstopmode",
+        "-halt-on-error",
+        "-file-line-error",
+        f"-pdflatex={' '.join(tokens)}",
+    ]
+
+
+@app.command(name="build")
+def build(
+    input_path: Path = typer.Argument(
+        ...,
+        help="Path to the rendered MkDocs HTML file or Markdown source.",
+        exists=True,
+        file_okay=True,
+        dir_okay=False,
+        readable=True,
+        resolve_path=True,
+    ),
+    output_dir: Path = typer.Option(
+        Path("build"),
+        "--output-dir",
+        "-o",
+        help="Directory used to collect generated assets (if any).",
+    ),
+    selector: str = typer.Option(
+        "article.md-content__inner",
+        "--selector",
+        "-s",
+        help="CSS selector to extract the MkDocs article content.",
+    ),
+    full_document: bool = typer.Option(
+        False,
+        "--full-document",
+        help="Disable article extraction and render the entire HTML file.",
+    ),
+    base_level: int = typer.Option(
+        0,
+        "--base-level",
+        help="Shift detected heading levels by this offset.",
+    ),
+    heading_level: int = typer.Option(
+        0,
+        "--heading-level",
+        "-h",
+        min=0,
+        help=(
+            "Indent all headings by the selected depth "
+            "(e.g. 1 turns sections into subsections)."
+        ),
+    ),
+    drop_title: bool = typer.Option(
+        False,
+        "--drop-title/--keep-title",
+        help="Drop the first document title heading.",
+    ),
+    numbered: bool = typer.Option(
+        True,
+        "--numbered/--unnumbered",
+        help="Toggle numbered headings.",
+    ),
+    parser: Optional[str] = typer.Option(
+        None,
+        "--parser",
+        help='BeautifulSoup parser backend to use (defaults to "html.parser").',
+    ),
+    disable_fallback_converters: bool = typer.Option(
+        False,
+        "--no-fallback-converters",
+        help=(
+            "Disable registration of placeholder converters when Docker is unavailable."
+        ),
+    ),
+    copy_assets: bool = typer.Option(
+        True,
+        "--copy-assets/--no-copy-assets",
+        "-a/-A",
+        help=(
+            "Control whether asset files are generated "
+            "and copied to the output directory."
+        ),
+    ),
+    manifest: bool = typer.Option(
+        False,
+        "--manifest/--no-manifest",
+        "-m/-M",
+        help="Toggle generation of an asset manifest file (reserved).",
+    ),
+    template: Optional[str] = typer.Option(
+        None,
+        "--template",
+        "-t",
+        help=(
+            "Select a LaTeX template to use during conversion. "
+            "Accepts a local path or a registered template name."
+        ),
+    ),
+    debug: bool = typer.Option(
+        False,
+        "--debug/--no-debug",
+        help="Enable debug mode to persist intermediate artifacts.",
+    ),
+    markdown_extensions: list[str] = typer.Option(
+        [],
+        "--markdown-extensions",
+        "-e",
+        help=(
+            "Comma or space separated list of Python Markdown extensions to load."
+        ),
+    ),
+) -> None:
+    """Convert inputs and compile the rendered document with latexmk."""
+
+    conversion = _convert_document(
+        input_path=input_path,
+        output_dir=output_dir,
+        selector=selector,
+        full_document=full_document,
+        base_level=base_level,
+        heading_level=heading_level,
+        drop_title=drop_title,
+        numbered=numbered,
+        parser=parser,
+        disable_fallback_converters=disable_fallback_converters,
+        copy_assets=copy_assets,
+        manifest=manifest,
+        template=template,
+        debug=debug,
+        markdown_extensions=markdown_extensions,
+    )
+
+    if conversion.tex_path is None:
+        typer.secho(
+            "The build command requires a LaTeX template (--template).",
+            fg=typer.colors.RED,
+            err=True,
+        )
+        raise typer.Exit(code=1)
+
+    latexmk_path = shutil.which("latexmk")
+    if latexmk_path is None:
+        typer.secho(
+            "latexmk executable not found. Install TeX Live (or latexmk) to build PDFs.",
+            fg=typer.colors.RED,
+            err=True,
+        )
+        raise typer.Exit(code=1)
+
+    command = _build_latexmk_command(
+        conversion.template_engine,
+        conversion.template_shell_escape,
+    )
+    command[0] = latexmk_path
+    command.append(conversion.tex_path.name)
+
     try:
-        output_dir = output_dir.resolve()
-        input_payload = input_path.read_text(encoding="utf-8")
+        process = subprocess.run(
+            command,
+            check=False,
+            capture_output=True,
+            text=True,
+            cwd=conversion.tex_path.parent,
+        )
     except OSError as exc:
         typer.secho(
-            f"Failed to read input document: {exc}", fg=typer.colors.RED, err=True
-        )
-        raise typer.Exit(code=1) from exc
-
-    normalized_extensions = _normalize_markdown_extensions(markdown_extensions)
-    if not normalized_extensions:
-        normalized_extensions = list(DEFAULT_MARKDOWN_EXTENSIONS)
-
-    try:
-        input_kind = _classify_input_source(input_path)
-    except UnsupportedInputError as exc:
-        typer.secho(str(exc), fg=typer.colors.RED, err=True)
-        raise typer.Exit(code=1) from exc
-
-    is_markdown = input_kind is InputKind.MARKDOWN
-
-    front_matter: dict[str, Any] = {}
-    if is_markdown:
-        try:
-            html, front_matter = _render_markdown(input_payload, normalized_extensions)
-        except MarkdownConversionError as exc:
-            typer.secho(str(exc), fg=typer.colors.RED, err=True)
-            raise typer.Exit(code=1) from exc
-    else:
-        html = input_payload
-
-    if not full_document and not is_markdown:
-        try:
-            html = _extract_content(html, selector)
-        except ValueError as exc:
-            typer.secho(str(exc), fg=typer.colors.RED, err=True)
-            raise typer.Exit(code=1) from exc
-
-    if debug:
-        _persist_debug_artifacts(output_dir, input_path, html)
-
-    config = BookConfig(project_dir=input_path.parent)
-
-    renderer_kwargs: dict[str, Any] = {
-        "output_root": output_dir,
-        "copy_assets": copy_assets,
-    }
-    renderer_kwargs["parser"] = parser or "html.parser"
-
-    def renderer_factory() -> LaTeXRenderer:
-        return LaTeXRenderer(config=config, **renderer_kwargs)
-
-    runtime: dict[str, object] = {
-        "base_level": base_level + heading_level,
-        "numbered": numbered,
-        "source_dir": input_path.parent,
-        "document_path": input_path,
-        "copy_assets": copy_assets,
-    }
-    if manifest:
-        runtime["generate_manifest"] = True
-    if drop_title:
-        runtime["drop_title"] = True
-
-    template_instance = None
-    template_context: dict[str, Any] | None = None
-    if template:
-        try:
-            template_instance = load_template(template)
-        except TemplateError as exc:
-            typer.secho(str(exc), fg=typer.colors.RED, err=True)
-            raise typer.Exit(code=1) from exc
-        runtime["template"] = template_instance.info.name
-
-    if not disable_fallback_converters:
-        _ensure_fallback_converters()
-
-    try:
-        latex_output = _render_with_fallback(renderer_factory, html, runtime)
-    except LatexRenderingError as exc:
-        typer.secho(
-            _format_rendering_error(exc),
+            f"Failed to execute latexmk: {exc}",
             fg=typer.colors.RED,
             err=True,
         )
         raise typer.Exit(code=1) from exc
 
-    if template_instance is not None:
-        overrides = _build_template_overrides(front_matter)
-        try:
-            template_context = template_instance.prepare_context(
-                latex_output,
-                overrides=overrides if overrides else None,
-            )
-            latex_output = template_instance.wrap_document(
-                latex_output,
-                context=template_context,
-            )
-        except TemplateError as exc:
-            typer.secho(str(exc), fg=typer.colors.RED, err=True)
-            raise typer.Exit(code=1) from exc
-        try:
-            copy_template_assets(
-                template_instance,
-                output_dir,
-                context=template_context,
-            )
-        except TemplateError as exc:
-            typer.secho(str(exc), fg=typer.colors.RED, err=True)
-            raise typer.Exit(code=1) from exc
+    if process.stdout:
+        typer.echo(process.stdout.rstrip())
+    if process.stderr:
+        typer.echo(process.stderr.rstrip(), err=True)
 
-    if template_instance is not None:
-        try:
-            output_dir.mkdir(parents=True, exist_ok=True)
-            output_file = output_dir / f"{input_path.stem}.tex"
-            output_file.write_text(latex_output, encoding="utf-8")
-        except OSError as exc:
-            typer.secho(
-                f"Failed to write LaTeX output to '{output_dir}': {exc}",
-                fg=typer.colors.RED,
-                err=True,
-            )
-            raise typer.Exit(code=1) from exc
-
+    if process.returncode != 0:
         typer.secho(
-            f"LaTeX document written to {output_file}",
+            f"latexmk exited with status {process.returncode}",
+            fg=typer.colors.RED,
+            err=True,
+        )
+        raise typer.Exit(code=process.returncode)
+
+    pdf_path = conversion.tex_path.with_suffix(".pdf")
+    if pdf_path.exists():
+        typer.secho(
+            f"PDF document written to {pdf_path}",
             fg=typer.colors.GREEN,
         )
-        return
-
-    typer.echo(latex_output)
+    else:
+        typer.secho(
+            "latexmk completed without errors but the PDF file was not found.",
+            fg=typer.colors.YELLOW,
+        )
 
 
 def main() -> None:

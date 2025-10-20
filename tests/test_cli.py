@@ -5,7 +5,13 @@ from typing import Any
 
 from typer.testing import CliRunner
 
+import mkdocs_latex.cli as cli_module
 from mkdocs_latex.cli import DEFAULT_MARKDOWN_EXTENSIONS, app
+
+
+def _template_path(name: str) -> Path:
+    project_root = Path(__file__).resolve().parents[1]
+    return project_root / f"latex_template_{name}" / f"mkdocs_latex_template_{name}"
 
 
 def test_convert_command(tmp_path: Path) -> None:
@@ -231,3 +237,120 @@ def test_mdx_math_extension_preserves_latex(tmp_path: Path) -> None:
     assert result.stdout.count("$$") == 2
     assert "\\mathbf{E}" in result.stdout
     assert "\\textbackslash" not in result.stdout
+
+
+def test_build_requires_template(tmp_path: Path) -> None:
+    runner = CliRunner()
+    html_file = tmp_path / "index.html"
+    html_file.write_text(
+        "<article class='md-content__inner'><h2>Title</h2></article>",
+        encoding="utf-8",
+    )
+
+    result = runner.invoke(
+        app,
+        [
+            "build",
+            str(html_file),
+            "--output-dir",
+            str(tmp_path / "output"),
+        ],
+    )
+
+    assert result.exit_code == 1
+    assert "requires a LaTeX template" in result.stderr
+
+
+def test_build_invokes_latexmk(tmp_path: Path, monkeypatch: Any) -> None:
+    runner = CliRunner()
+    html_file = tmp_path / "index.html"
+    html_file.write_text(
+        "<article class='md-content__inner'><p>Body</p></article>",
+        encoding="utf-8",
+    )
+
+    output_dir = tmp_path / "output"
+    template_dir = _template_path("article")
+
+    calls: list[tuple[list[str], dict[str, Any]]] = []
+
+    def fake_which(name: str) -> str:
+        assert name == "latexmk"
+        return "/usr/bin/latexmk"
+
+    def fake_run(cmd: list[str], **kwargs: Any) -> types.SimpleNamespace:
+        calls.append((cmd, kwargs))
+        pdf_path = Path(kwargs["cwd"]) / "index.pdf"
+        pdf_path.write_text("%PDF-1.4", encoding="utf-8")
+        return types.SimpleNamespace(returncode=0, stdout="build ok\n", stderr="")
+
+    monkeypatch.setattr(cli_module.shutil, "which", fake_which)
+    monkeypatch.setattr(cli_module.subprocess, "run", fake_run)
+
+    result = runner.invoke(
+        app,
+        [
+            "build",
+            str(html_file),
+            "--output-dir",
+            str(output_dir),
+            "--template",
+            str(template_dir),
+        ],
+    )
+
+    assert result.exit_code == 0, result.stdout
+    assert calls, "latexmk was not invoked"
+    command, kwargs = calls[0]
+    assert command[0] == "/usr/bin/latexmk"
+    pdflatex_args = [arg for arg in command if arg.startswith("-pdflatex=")]
+    assert pdflatex_args and "lualatex" in pdflatex_args[0]
+    assert "--shell-escape" not in pdflatex_args[0]
+    assert command[-1] == "index.tex"
+    assert kwargs["cwd"] == output_dir
+    assert "build ok" in result.stdout
+    assert "PDF document written to" in result.stdout
+
+
+def test_build_respects_shell_escape(tmp_path: Path, monkeypatch: Any) -> None:
+    runner = CliRunner()
+    html_file = tmp_path / "index.html"
+    html_file.write_text(
+        "<article class='md-content__inner'><p>Body</p></article>",
+        encoding="utf-8",
+    )
+
+    output_dir = tmp_path / "output"
+    template_dir = _template_path("book")
+
+    def fake_which(name: str) -> str:
+        assert name == "latexmk"
+        return "/usr/bin/latexmk"
+
+    calls: list[list[str]] = []
+
+    def fake_run(cmd: list[str], **kwargs: Any) -> types.SimpleNamespace:
+        calls.append(cmd)
+        pdf_path = Path(kwargs["cwd"]) / "index.pdf"
+        pdf_path.write_text("%PDF-1.4", encoding="utf-8")
+        return types.SimpleNamespace(returncode=0, stdout="", stderr="")
+
+    monkeypatch.setattr(cli_module.shutil, "which", fake_which)
+    monkeypatch.setattr(cli_module.subprocess, "run", fake_run)
+
+    result = runner.invoke(
+        app,
+        [
+            "build",
+            str(html_file),
+            "--output-dir",
+            str(output_dir),
+            "--template",
+            str(template_dir),
+        ],
+    )
+
+    assert result.exit_code == 0, result.stdout
+    assert calls, "latexmk was not invoked"
+    pdflatex_args = [arg for arg in calls[0] if arg.startswith("-pdflatex=")]
+    assert pdflatex_args and "--shell-escape" in pdflatex_args[0]
