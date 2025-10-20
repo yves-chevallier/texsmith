@@ -2,8 +2,8 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 import unittest
 
-from latex.context import AssetRegistry, DocumentState
-from latex.exceptions import AssetMissingError
+from mkdocs_latex.context import AssetRegistry, DocumentState
+from mkdocs_latex.exceptions import AssetMissingError
 
 
 class AssetRegistryTests(unittest.TestCase):

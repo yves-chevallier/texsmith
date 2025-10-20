@@ -1,4 +1,4 @@
-from latex.renderer import LaTeXRenderer
+from mkdocs_latex.renderer import LaTeXRenderer
 
 
 def test_renderer_falls_back_to_builtin_parser() -> None:

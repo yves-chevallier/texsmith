@@ -1,8 +1,8 @@
 import unittest
 
-from latex.config import BookConfig
-from latex.context import DocumentState
-from latex.renderer import LaTeXRenderer
+from mkdocs_latex.config import BookConfig
+from mkdocs_latex.context import DocumentState
+from mkdocs_latex.renderer import LaTeXRenderer
 
 
 class HeadingRenderingTests(unittest.TestCase):

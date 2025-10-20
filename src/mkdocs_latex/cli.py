@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 import hashlib
+from enum import Enum
 from pathlib import Path
+import re
 import shutil
 from typing import Any, Callable, Optional
 
@@ -29,9 +31,9 @@ def _app_root() -> None:
 
 @app.command(name="convert")
 def convert(
-    html_path: Path = typer.Argument(
+    input_path: Path = typer.Argument(
         ...,
-        help="Path to the rendered MkDocs HTML file.",
+        help="Path to the rendered MkDocs HTML file or Markdown source.",
         exists=True,
         file_okay=True,
         dir_okay=False,
@@ -101,23 +103,75 @@ def convert(
             "and copied to the output directory."
         ),
     ),
+    manifest: bool = typer.Option(
+        False,
+        "--manifest/--no-manifest",
+        "-m/-M",
+        help="Toggle generation of an asset manifest file (reserved).",
+    ),
+    template: Optional[str] = typer.Option(
+        None,
+        "--template",
+        "-t",
+        help=(
+            "Select a LaTeX template to use during conversion. "
+            "Accepts a local path or a registered template name."
+        ),
+    ),
+    debug: bool = typer.Option(
+        False,
+        "--debug/--no-debug",
+        help="Enable debug mode to persist intermediate artifacts.",
+    ),
+    markdown_extensions: list[str] = typer.Option(
+        [],
+        "--markdown-extensions",
+        "-e",
+        help=(
+            "Comma or space separated list of Python Markdown extensions to load."
+        ),
+    ),
 ) -> None:
     """Convert an MkDocs HTML page to LaTeX."""
 
     try:
-        html = html_path.read_text(encoding="utf-8")
+        input_payload = input_path.read_text(encoding="utf-8")
     except OSError as exc:
-        typer.secho(f"Failed to read HTML input: {exc}", fg=typer.colors.RED, err=True)
+        typer.secho(
+            f"Failed to read input document: {exc}", fg=typer.colors.RED, err=True
+        )
         raise typer.Exit(code=1) from exc
 
-    if not full_document:
+    normalized_extensions = _normalize_markdown_extensions(markdown_extensions)
+
+    try:
+        input_kind = _classify_input_source(input_path)
+    except UnsupportedInputError as exc:
+        typer.secho(str(exc), fg=typer.colors.RED, err=True)
+        raise typer.Exit(code=1) from exc
+
+    is_markdown = input_kind is InputKind.MARKDOWN
+
+    if is_markdown:
+        try:
+            html = _render_markdown(input_payload, normalized_extensions)
+        except MarkdownConversionError as exc:
+            typer.secho(str(exc), fg=typer.colors.RED, err=True)
+            raise typer.Exit(code=1) from exc
+    else:
+        html = input_payload
+
+    if not full_document and not is_markdown:
         try:
             html = _extract_content(html, selector)
         except ValueError as exc:
             typer.secho(str(exc), fg=typer.colors.RED, err=True)
             raise typer.Exit(code=1) from exc
 
-    config = BookConfig(project_dir=html_path.parent)
+    if debug:
+        _persist_debug_artifacts(output_dir, input_path, html)
+
+    config = BookConfig(project_dir=input_path.parent)
 
     renderer_kwargs: dict[str, Any] = {
         "output_root": output_dir,
@@ -131,10 +185,14 @@ def convert(
     runtime: dict[str, object] = {
         "base_level": base_level + heading_level,
         "numbered": numbered,
-        "source_dir": html_path.parent,
-        "document_path": html_path,
+        "source_dir": input_path.parent,
+        "document_path": input_path,
         "copy_assets": copy_assets,
     }
+    if manifest:
+        runtime["generate_manifest"] = True
+    if template:
+        runtime["template"] = template
     if drop_title:
         runtime["drop_title"] = True
 
@@ -174,6 +232,12 @@ def _extract_content(html: str, selector: str) -> str:
     if element is None:
         raise ValueError(f"Unable to locate content using selector '{selector}'.")
     return element.decode_contents()
+
+
+def _persist_debug_artifacts(output_dir: Path, source: Path, html: str) -> None:
+    output_dir.mkdir(parents=True, exist_ok=True)
+    debug_path = output_dir / f"{source.stem}.debug.html"
+    debug_path.write_text(html, encoding="utf-8")
 
 
 def _render_with_fallback(
@@ -245,3 +309,65 @@ def _format_rendering_error(error: LatexRenderingError) -> str:
     if cause is None:
         return str(error)
     return f"LaTeX rendering failed: {cause}"
+
+
+def _normalize_markdown_extensions(values: list[str]) -> list[str]:
+    normalized: list[str] = []
+    for value in values:
+        chunks = re.split(r"[,\s\x00]+", value)
+        normalized.extend(chunk for chunk in chunks if chunk)
+    return normalized
+
+
+class MarkdownConversionError(Exception):
+    """Raised when the Markdown payload cannot be converted."""
+
+
+class UnsupportedInputError(Exception):
+    """Raised when the input path cannot be processed."""
+
+
+class InputKind(Enum):
+    MARKDOWN = "markdown"
+    HTML = "html"
+
+
+def _classify_input_source(path: Path) -> InputKind:
+    suffix = path.suffix.lower()
+    if suffix in {".md", ".markdown"}:
+        return InputKind.MARKDOWN
+    if suffix in {".html", ".htm"}:
+        return InputKind.HTML
+    if suffix in {".yaml", ".yml"}:
+        raise UnsupportedInputError(
+            "MkDocs configuration files are not supported as input. "
+            "Provide a Markdown source or an HTML document."
+        )
+    raise UnsupportedInputError(
+        f"Unsupported input file type '{suffix or '<none>'}'. "
+        "Provide a Markdown source (.md) or HTML document (.html)."
+    )
+
+
+def _render_markdown(source: str, extensions: list[str]) -> str:
+    try:
+        import markdown
+    except ModuleNotFoundError as exc:  # pragma: no cover - environment dependent
+        raise MarkdownConversionError(
+            "Python Markdown is required to process Markdown inputs; "
+            "install the 'markdown' package."
+        ) from exc
+
+    try:
+        md = markdown.Markdown(extensions=extensions)
+    except Exception as exc:  # pragma: no cover - library-controlled
+        raise MarkdownConversionError(
+            f"Failed to initialize Markdown processor: {exc}"
+        ) from exc
+
+    try:
+        return md.convert(source)
+    except Exception as exc:  # pragma: no cover - library-controlled
+        raise MarkdownConversionError(
+            f"Failed to convert Markdown source: {exc}"
+        ) from exc

@@ -1,7 +1,7 @@
 import unittest
 
-from latex.config import BookConfig
-from latex.renderer import LaTeXRenderer
+from mkdocs_latex.config import BookConfig
+from mkdocs_latex.renderer import LaTeXRenderer
 
 
 class StripTagsTests(unittest.TestCase):

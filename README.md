@@ -6,83 +6,6 @@ On va rajouter au cli mkdocs_latex :
 
 
 
-Les attributs propres à un document sont :
-
-- Titre
-- Sous-titre
-- Auteur(s)
-- Année
-
-
-
-
-tag
-  .where('classes': ('highlight'))
-  .where_not(classes=('~mermaid',))
-  .find('code', else=lambda: InvalidNodeError("Missing <code> element inside highlighted block"))
-  .
-
-
-J'aimerais ajouter le support pour un nouveau type de tag. J'aurais besoin de définir un nouveau renderer
-
-
-def render_code_blocks(element: Tag, context: RenderContext) -> None:
-    """Render MkDocs-highlighted code blocks."""
-
-    classes = element.get("class") or []
-    if "highlight" not in classes:
-        return
-    if "mermaid" in classes:
-        return
-
-    code_element = element.find("code")
-    if code_element is None:
-        raise InvalidNodeError("Missing <code> element inside highlighted block")
-    code_classes = code_element.get("class") or []
-    if any(cls in {"language-mermaid", "mermaid"} for cls in code_classes):
-        return
-
-    if _looks_like_mermaid(code_element.get_text(strip=False)):
-        return
-
-    language = _extract_language(code_element)
-    lineno = element.find(class_="linenos") is not None
-
-    filename = None
-    if filename_el := element.find(class_="filename"):
-        filename = filename_el.get_text(strip=True)
-
-    listing: list[str] = []
-    highlight: list[int] = []
-
-    spans = code_element.find_all("span", id=lambda value: bool(value and value.startswith("__")))
-    if spans:
-        for index, span in enumerate(spans, start=1):
-            highlight_span = span.find("span", class_="hll")
-            current = highlight_span or span
-            if highlight_span is not None:
-                highlight.append(index)
-            listing.append(current.get_text(strip=False))
-        code_text = "".join(listing)
-    else:
-        code_text = code_element.get_text(strip=False)
-
-    baselinestretch = 0.5 if _is_ascii_art(code_text) else None
-    code_text = code_text.replace("{", r"\{").replace("}", r"\}")
-
-    latex = context.formatter.codeblock(
-        code=code_text,
-        language=language,
-        lineno=lineno,
-        filename=filename,
-        highlight=highlight,
-        baselinestretch=baselinestretch,
-    )
-
-    node = NavigableString(latex)
-    setattr(node, "processed", True)
-    element.replace_with(node)
-
 Dans cette fonction il y a de la logique qu'on va toujours utiliser :
 
 - être sensible à un tag
@@ -163,43 +86,34 @@ Le code LaTeX généré ne contient pas de balises `\begin{document}` ni de pré
 
 Le templates sont des packets PIP nommés `mkdocs-latex-template-<nom>` ou des dossiers locaux contenant les fichiers nécessaires.
 
-Templates LaTeX
+Une template contient:
 
-On peut avoir des templates associables:
-- template.tex
-- classe.cls (et d'autres fichiers si nécessaire)
+- Des fichiers `.cls`, `.sty` ou `.tex` qui peuvent contenir la syntaxe Jinja2 (`\VAR{title}` ou `\BLOCK{if foo}\BLOCK{endif}`) pour insérer des variables dynamiques.
+- Des assets additionnels (images, logos, polices...).
+- Un fichier `manifest.toml` décrivant la template (nom, version, engine LaTeX, paquets tlmgr nécessaires, attributs de configuration...).
+- Des overrides des partials Jinja2 utilisés pour générer certains éléments (codeblock, figure...).
+- Un fichier `README.md` documentant la template.
+- Un `__init__.py` déclarant la classe de template pour le plugin MkDocs.
 
-Selon la template on ne va pas rendre certains éléments de la même manière:
-- Utiliser verbatim pour le code
-- Utiliser minted/listing...
-- Rendre les emoji fontawesome avec usepackage fontawesome
-- La manière d'insérer une figure (caption en haut, en bas...)
-- La numérotation ou non des chapitres
+La classe Template héritée de l'interface dans le package `latex` permet de:
 
-De manière modulaire on peut simplement imaginer qu'un "nouveau" template latex n'est qu'une collections de fichiers:
-- .cls, .sty
-- template.tex (jinja)
-- assets additionnels (image, logo...)
-- des fonts
-- une version de texlive
-- la liste des paquets tlmgr nécessaires
-- des override des templates du parseur (acronym.tex, add.tex...) (jinja)
+- Rendre la template en recevant les attributs passés par l'utilisateur (titre, auteur, couverture...).
+- Traiter les erreurs spécifiques à la template, mauvais attributs, valeurs invalides...
+- Fournir le chemin vers les fichiers de la template et l'accès au manifest via un schéma Pydantic propre.
+- Définir un Pre/Post hook pour copier les assets spécifiques à la template.
+- Override certaine éléments du Formatter ou du Renderer si nécessaire (support de balises supplémentaire, traitement de cas particulier).
 
-On peut avoir des hooks pré/post pour par exemple ne pas copier tous les assets: exemple de cover qui nécessite tel ou tel logo?
-
-Depuis le cli on pourrait avoir la possibilité de spécifier le thème latex utilisé soit :
-
-- en donnant un dossier contenant le template, la structure doit être rigide, mais il faut bien documenter
-- pip install mkdocs-latex-template-<nom>
-
+Gestion de la complate facile avec cookicutter pour créer une nouvelle template.
 Structure rigide avec cookiecutter, manifest simple...
-https://chatgpt.com/share/68f54264-3e78-800b-9f16-0db8bd5c892b
 
-------
+Au niveau du CLI on peut imaginer un :
 
-
-
-## Conversion Markdown/HTML
+```bash
+mkdocs-latex templates list # liste les templates installées (discover local et pip)
+mkdocs-latex templates info book # affiche les infos sur la template book
+mkdocs-latex templates scaffold my-template # crée un dossier my-template avec cookiecutter
+mkdocs-latex convert --template=./book/ # utilise la template locale book
+```
 
 Le convertisseur par défaut de MkDocs est Python Markdown. C'est également ce module utilisé en interne si le fichier d'entrée est du Markdown.
 
@@ -270,3 +184,10 @@ books: # On peut définir plusieurs documents de sortie pour une même documenta
          une section du toc c'est une page courte mais pas un chapitre
    index_is_foreword: true # l'index peut être considéré comme un foreword avant le début d'un chapitre
 ```
+
+## TO-DO
+
+- [ ] Utiliser verbatim pour le code par défaut, les templates peuvent overrider cela
+- [ ] Gérer les assets de manière centralisée (images, drawio, mermaid...)
+- [ ] Ajouter des tests unitaires et d'intégration pour le CLI et le plugin MkDocs
+- [ ] Documenter le processus de création de templates LaTeX personnalisées
