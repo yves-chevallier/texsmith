@@ -5,10 +5,11 @@ from enum import Enum
 from pathlib import Path
 import re
 import shutil
-from typing import Any, Callable, Optional
+from typing import Any, Callable, Mapping, Optional
 
 from bs4 import BeautifulSoup, FeatureNotFound
 import typer
+import yaml
 
 from .config import BookConfig
 from .exceptions import LatexRenderingError, TransformerExecutionError
@@ -168,9 +169,10 @@ def convert(
 
     is_markdown = input_kind is InputKind.MARKDOWN
 
+    front_matter: dict[str, Any] = {}
     if is_markdown:
         try:
-            html = _render_markdown(input_payload, normalized_extensions)
+            html, front_matter = _render_markdown(input_payload, normalized_extensions)
         except MarkdownConversionError as exc:
             typer.secho(str(exc), fg=typer.colors.RED, err=True)
             raise typer.Exit(code=1) from exc
@@ -234,8 +236,12 @@ def convert(
         raise typer.Exit(code=1) from exc
 
     if template_instance is not None:
+        overrides = _build_template_overrides(front_matter)
         try:
-            template_context = template_instance.prepare_context(latex_output)
+            template_context = template_instance.prepare_context(
+                latex_output,
+                overrides=overrides if overrides else None,
+            )
             latex_output = template_instance.wrap_document(
                 latex_output,
                 context=template_context,
@@ -412,7 +418,7 @@ def _classify_input_source(path: Path) -> InputKind:
     )
 
 
-def _render_markdown(source: str, extensions: list[str]) -> str:
+def _render_markdown(source: str, extensions: list[str]) -> tuple[str, dict[str, Any]]:
     try:
         import markdown
     except ModuleNotFoundError as exc:  # pragma: no cover - environment dependent
@@ -420,6 +426,8 @@ def _render_markdown(source: str, extensions: list[str]) -> str:
             "Python Markdown is required to process Markdown inputs; "
             "install the 'markdown' package."
         ) from exc
+
+    metadata, markdown_body = _split_front_matter(source)
 
     try:
         md = markdown.Markdown(extensions=extensions)
@@ -429,8 +437,59 @@ def _render_markdown(source: str, extensions: list[str]) -> str:
         ) from exc
 
     try:
-        return md.convert(source)
+        return md.convert(markdown_body), metadata
     except Exception as exc:  # pragma: no cover - library-controlled
         raise MarkdownConversionError(
             f"Failed to convert Markdown source: {exc}"
         ) from exc
+
+
+def _split_front_matter(source: str) -> tuple[dict[str, Any], str]:
+    candidate = source.lstrip("\ufeff")
+    prefix_len = len(source) - len(candidate)
+    lines = candidate.splitlines()
+    if not lines or lines[0].strip() != "---":
+        return {}, source
+
+    front_matter_lines: list[str] = []
+    closing_index: int | None = None
+    for idx, line in enumerate(lines[1:], start=1):
+        stripped = line.strip()
+        if stripped in {"---", "..."}:
+            closing_index = idx
+            break
+        front_matter_lines.append(line)
+
+    if closing_index is None:
+        return {}, source
+
+    raw_block = "\n".join(front_matter_lines)
+    try:
+        metadata = yaml.safe_load(raw_block) or {}
+    except yaml.YAMLError:
+        return {}, source
+
+    if not isinstance(metadata, dict):
+        metadata = {}
+
+    body_lines = lines[closing_index + 1 :]
+    body = "\n".join(body_lines)
+    if source.endswith("\n"):
+        body += "\n"
+
+    prefix = source[:prefix_len]
+    return metadata, prefix + body
+
+
+def _build_template_overrides(front_matter: Mapping[str, Any] | None) -> dict[str, Any]:
+    if not front_matter:
+        return {}
+
+    if not isinstance(front_matter, Mapping):
+        return {}
+
+    meta_section = front_matter.get("meta")
+    if isinstance(meta_section, Mapping):
+        return {"meta": dict(meta_section)}
+
+    return {"meta": dict(front_matter)}

@@ -18,6 +18,7 @@ tlmgr_packages = [
 [latex.template.attributes]
 title = "Article Title"
 author = "John Doe"
+subtitle = ""
 date = "\\today"
 paper = "a4"
 orientation = "portrait"

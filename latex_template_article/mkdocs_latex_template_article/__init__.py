@@ -2,10 +2,12 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterable
 from pathlib import Path
 from typing import Any, Mapping
 
 from mkdocs_latex.templates import TemplateError, WrappableTemplate
+from mkdocs_latex.utils import escape_latex_chars
 
 
 _PACKAGE_ROOT = Path(__file__).parent.resolve()
@@ -50,6 +52,7 @@ class Template(WrappableTemplate):
         overrides: Mapping[str, Any] | None = None,
     ) -> dict[str, Any]:
         context = super().prepare_context(latex_body, overrides=overrides)
+        self._apply_metadata(context)
 
         paper_option = self._normalise_paper_option(context.get("paper"))
         orientation_option = self._normalise_orientation_option(context.get("orientation"))
@@ -67,6 +70,90 @@ class Template(WrappableTemplate):
         context["geometry_options"] = ",".join(geometry_options)
 
         return context
+
+    def _apply_metadata(self, context: dict[str, Any]) -> None:
+        raw_meta = context.get("meta")
+        if not isinstance(raw_meta, Mapping):
+            return
+
+        nested_meta = raw_meta.get("meta") if isinstance(raw_meta.get("meta"), Mapping) else None
+        meta_payload: Mapping[str, Any] = nested_meta or raw_meta
+
+        title = self._coerce_string(meta_payload.get("title"))
+        if title:
+            context["title"] = escape_latex_chars(title)
+
+        subtitle = self._coerce_string(meta_payload.get("subtitle"))
+        if subtitle:
+            context["subtitle"] = escape_latex_chars(subtitle)
+
+        author_value = self._format_authors(meta_payload.get("authors"))
+        if author_value:
+            context["author"] = author_value
+        else:
+            fallback_author = self._coerce_string(meta_payload.get("author"))
+            if fallback_author:
+                context["author"] = escape_latex_chars(fallback_author)
+
+        date_value = self._coerce_string(meta_payload.get("date"))
+        if date_value:
+            context["date"] = escape_latex_chars(date_value)
+
+        context.pop("meta", None)
+        context.pop("authors", None)
+
+    def _coerce_string(self, value: Any) -> str | None:
+        if value is None:
+            return None
+        if isinstance(value, str):
+            candidate = value.strip()
+        else:
+            candidate = str(value).strip()
+        return candidate or None
+
+    def _format_authors(self, payload: Any) -> str | None:
+        if payload is None:
+            return None
+
+        if isinstance(payload, str):
+            author = payload.strip()
+            return escape_latex_chars(author) if author else None
+
+        candidates: list[Any]
+        if isinstance(payload, Mapping):
+            candidates = [payload]
+        elif isinstance(payload, Iterable) and not isinstance(payload, (str, bytes)):
+            candidates = list(payload)
+        else:
+            return None
+
+        formatted: list[str] = []
+        for item in candidates:
+            if isinstance(item, str):
+                author_name = item.strip()
+                if author_name:
+                    formatted.append(escape_latex_chars(author_name))
+                continue
+
+            if not isinstance(item, Mapping):
+                continue
+
+            name_value = self._coerce_string(item.get("name"))
+            if not name_value:
+                continue
+
+            name_tex = escape_latex_chars(name_value)
+            affiliation_value = self._coerce_string(item.get("affiliation"))
+            if affiliation_value:
+                affiliation_tex = escape_latex_chars(affiliation_value)
+                formatted.append(f"{name_tex}\\thanks{{{affiliation_tex}}}")
+            else:
+                formatted.append(name_tex)
+
+        if not formatted:
+            return None
+
+        return " \\and ".join(formatted)
 
     def _normalise_paper_option(self, value: Any) -> str:
         if value is None or value == "":
