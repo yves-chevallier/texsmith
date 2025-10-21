@@ -303,7 +303,7 @@ The **HTML**{#gls-html} is the standard markup language for web pages...
 - [x] Supporter la langue (babel) selon la configuration (polyglossia à venir)
 - [x] Permettre l'écritre d'extensions Renderer,formatter (demo counter)
 - [x] Support for index generation (makeindex, xindy)
-- [ ] Rename package texsmith et les templates texsmith-template-*
+- [x] Rename package texsmith et les templates texsmith-template-*
 - [ ] Utiliser verbatim par défaut, les templates peuvent overrider cela
 - [ ] Gérer les assets de manière centralisée (images, drawio, mermaid...)
 - [ ] Ajouter des tests unitaires et d'intégration pour le CLI et MkDocs
@@ -312,11 +312,50 @@ The **HTML**{#gls-html} is the standard markup language for web pages...
 - [ ] Find a way to have a solid and robust docker submodule/class
 - [ ] Convert some journals templates (Springer, Elsevier, IEEE...)
 - [ ] Support for bibliography (biblatex, natbib...)
-
 - [ ] Support for glossaries (glossaries package)
 - [ ] Support for cross-references (cleveref package)
+- [ ] Méthode pour extraire/injecter une section et ses sous-sections dans un autre entrypoint (frontmatter, abstract, appendix...)
 - [ ] Add more Markdown extensions (footnotes, definition lists, tables...)
 - [ ] Improve error handling and reporting during LaTeX compilation
 - [ ] Optimize asset conversion and caching mechanisms
 - [ ] Mkdocs Integration
   - [ ] Support extensions in other MkDocs plugin (add latex syntax, transformers...)
+
+## Entry point
+
+```md
+---
+meta:
+  title: Mechanical Stiffness and Malleability of Hard Cheese
+  subtitle: >
+    A Rheological Study on the Viscoelastic Properties of Aged Cheese Varieties
+  authors:
+    - name: Dr. Jane Q. Dairy
+      affiliation: Department of Food Mechanics, University of Edam, Netherlands
+    - name: Dr. John P. Curds
+      affiliation: Institute of Rheological Science, Swiss Cheese Laboratory
+  date: Octobrer 20, 2025
+  entrypoints:
+    - title: Abstract
+      target: abstract
+    - title: Introduction
+      target: mainmatter
+---
+## Abstract
+
+The mechanical behavior of hard cheese varieties is a critical factor determining their processing, texture, and consumer perception.
+
+## Introduction
+
+Lorem ipsum dolor sit amet, consectetur adipiscing elit.
+```
+
+Depuis la ligne de commande si on a plusieurs fichiers on peut spécifier l'entrypoint à utiliser:
+
+```bash
+texsmith convert
+    -e abstract abstract.md
+    -e mainmatter document.md
+    -e appendix appendix.md
+    -o output/
+```
