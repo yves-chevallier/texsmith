@@ -7,7 +7,7 @@ import re
 from typing import Iterable
 
 from bs4 import NavigableString, Tag
-from requests.utils import requote_url
+from requests.utils import requote_uri as requote_url
 
 from ..context import RenderContext
 from ..exceptions import InvalidNodeError

@@ -59,7 +59,10 @@ class InlineFormattingTests(unittest.TestCase):
         html = "<p>(0.1 s⁻¹, 1 s⁻¹, 10 s⁻¹)</p>"
         latex = self.renderer.render(html)
         self.assertIn(
-            "(0.1 s\\textsuperscript{-1}, 1 s\\textsuperscript{-1}, 10 s\\textsuperscript{-1})",
+            (
+                "(0.1 s\\textsuperscript{-1}, 1 s\\textsuperscript{-1}, "
+                "10 s\\textsuperscript{-1})"
+            ),
             latex,
         )
 

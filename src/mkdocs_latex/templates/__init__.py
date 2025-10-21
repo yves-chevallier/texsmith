@@ -217,20 +217,23 @@ class WrappableTemplate(BaseTemplate):
                 source_path = (self.root / source_path).resolve()
             if not source_path.exists():
                 raise TemplateError(
-                    f"Declared template asset '{asset.source}' is missing under {self.root}."
+                    "Declared template asset "
+                    f"'{asset.source}' is missing under {self.root}."
                 )
 
             template_name: str | None = None
             if asset.template:
                 if source_path.is_dir():
                     raise TemplateError(
-                        f"Templated assets must reference files, got directory '{asset.source}'."
+                        "Templated assets must reference files, "
+                        f"got directory '{asset.source}'."
                     )
                 try:
                     relative = source_path.relative_to(self.root)
                 except ValueError as exc:  # pragma: no cover - defensive
                     raise TemplateError(
-                        f"Templated asset '{asset.source}' must live inside the template root."
+                        "Templated asset "
+                        f"'{asset.source}' must live inside the template root."
                     ) from exc
                 template_name = relative.as_posix()
 

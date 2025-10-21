@@ -167,7 +167,8 @@ class Template(WrappableTemplate):
 
         if not isinstance(value, str):
             raise TemplateError(
-                f"Invalid paper option type '{type(value).__name__}' for article template."
+                "Invalid paper option type "
+                f"'{type(value).__name__}' for article template."
             )
 
         candidate = value.strip().lower()
@@ -182,7 +183,8 @@ class Template(WrappableTemplate):
                 sorted(f"{base}paper" for base in self._VALID_PAPER_BASES)
             )
             raise TemplateError(
-                f"Invalid paper option '{value}' for article template. Allowed values: {allowed}."
+                "Invalid paper option "
+                f"'{value}' for article template. Allowed values: {allowed}."
             )
 
         return f"{candidate}paper"
@@ -192,7 +194,8 @@ class Template(WrappableTemplate):
             default = self._DEFAULT_ORIENTATION
         elif not isinstance(value, str):
             raise TemplateError(
-                f"Invalid orientation type '{type(value).__name__}' for article template."
+                "Invalid orientation type "
+                f"'{type(value).__name__}' for article template."
             )
         else:
             default = value.strip().lower()

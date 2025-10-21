@@ -215,7 +215,10 @@ def test_mdx_math_extension_preserves_latex(tmp_path: Path) -> None:
     runner = CliRunner()
     markdown_file = tmp_path / "math.md"
     markdown_file.write_text(
-        "# Math\n\nInline $E = mc^2$ example.\n\n$$\n\\nabla \\cdot \\mathbf{E} = 0\n$$\n",
+        (
+            "# Math\n\nInline $E = mc^2$ example.\n\n"
+            "$$\n\\nabla \\cdot \\mathbf{E} = 0\n$$\n"
+        ),
         encoding="utf-8",
     )
 

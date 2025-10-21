@@ -6,12 +6,11 @@ from hashlib import sha256
 from pathlib import Path
 
 from bs4 import NavigableString, Tag
+from requests.utils import requote_uri as requote_url
 
 from ..context import RenderContext
 from ..exceptions import AssetMissingError, InvalidNodeError
 from ..rules import RenderPhase, renders
-from requests.utils import requote_url
-
 from ..utils import escape_latex_chars, resolve_asset_path
 
 

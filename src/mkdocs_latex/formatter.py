@@ -2,13 +2,13 @@
 
 from __future__ import annotations
 
-import glob
 from collections.abc import Iterable
+import glob
 from pathlib import Path
 from typing import Any, Callable
 
 from jinja2 import Environment, FileSystemLoader, Template
-from requests.utils import requote_url
+from requests.utils import requote_uri as requote_url
 
 from .utils import escape_latex_chars
 
@@ -50,6 +50,8 @@ class LaTeXFormatter:
             comment_end_string=r"}",
             loader=FileSystemLoader(template_dir),
         )
+        self.env.filters.setdefault("latex_escape", escape_latex_chars)
+        self.env.filters.setdefault("escape_latex", escape_latex_chars)
 
         template_paths: list[Path] = []
         for ext in (".tex", ".cls"):

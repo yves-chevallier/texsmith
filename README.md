@@ -208,8 +208,8 @@ books: # On peut définir plusieurs documents de sortie pour une même documenta
 ## TO-DO
 
 - [x] Remplacer safe_quote par requote_url de requests.utils
-- [ ] Remplacer fonctions helpers par package latexcodec
-- [ ] Remplacer to_kebab_case par python-slugify
+- [x] Remplacer fonctions helpers par package latexcodec
+- [x] Remplacer to_kebab_case par python-slugify
 - [ ] Documenter class RenderPhase(Enum): chaque état et pourquoi.
 - [ ] Utiliser verbatim pour le code par défaut, les templates peuvent overrider cela
 - [ ] Gérer les assets de manière centralisée (images, drawio, mermaid...)
@@ -218,3 +218,11 @@ books: # On peut définir plusieurs documents de sortie pour une même documenta
 - [ ] Supporter langue (babel, polyglossia) selon la langue de MkDocs
 - [ ] Declare solution/exercises in a plugin way
 - [ ] Find a way to have a solid and robust docker submodule/class
+- [ ] Convert some journals templates (Springer, Elsevier, IEEE...)
+- [ ] Support for bibliography (biblatex, natbib...)
+- [ ] Support for index generation (makeindex, xindy)
+- [ ] Support for glossaries (glossaries package)
+- [ ] Support for cross-references (cleveref package)
+- [ ] Add more Markdown extensions support (footnotes, definition lists, tables...)
+- [ ] Improve error handling and reporting during LaTeX compilation
+- [ ] Optimize asset conversion and caching mechanisms

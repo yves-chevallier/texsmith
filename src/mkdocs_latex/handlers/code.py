@@ -218,7 +218,7 @@ def render_code_blocks(element: Tag, context: RenderContext) -> None:
     phase=RenderPhase.PRE,
     priority=40,
     name="standalone_code_blocks",
-    nestable=False,
+    auto_mark=False,
 )
 def render_standalone_code_blocks(element: Tag, context: RenderContext) -> None:
     """Render <code> elements that include multiline content as block code."""
@@ -270,5 +270,8 @@ def render_standalone_code_blocks(element: Tag, context: RenderContext) -> None:
         and _is_only_meaningful_child(element)
     ):
         element.parent.replace_with(node)
+        context.mark_processed(element.parent)
     else:
         element.replace_with(node)
+    context.mark_processed(element)
+    context.suppress_children(element)

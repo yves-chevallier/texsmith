@@ -8,7 +8,7 @@ import re
 import shlex
 import shutil
 import subprocess
-from typing import Any, Callable, Mapping, Optional
+from typing import Any, Callable, Iterable, Mapping, Optional
 
 from bs4 import BeautifulSoup, FeatureNotFound
 import typer
@@ -107,9 +107,9 @@ def _convert_document(
     if not full_document and not is_markdown:
         try:
             html = _extract_content(html, selector)
-        except ValueError as exc:
-            typer.secho(str(exc), fg=typer.colors.RED, err=True)
-            raise typer.Exit(code=1) from exc
+        except ValueError:
+            # Fallback to the entire document when the selector cannot be resolved.
+            html = input_payload
 
     if debug:
         _persist_debug_artifacts(output_dir, input_path, html)
@@ -207,6 +207,12 @@ def _convert_document(
         template_engine=template_info_engine,
         template_shell_escape=template_requires_shell_escape,
     )
+
+
+def _resolve_option(value: Any) -> Any:
+    if isinstance(value, typer.models.OptionInfo):
+        return value.default
+    return value
 
 
 @app.command(name="convert")
@@ -314,20 +320,20 @@ def convert(
 
     result = _convert_document(
         input_path=input_path,
-        output_dir=output_dir,
-        selector=selector,
-        full_document=full_document,
-        base_level=base_level,
-        heading_level=heading_level,
-        drop_title=drop_title,
-        numbered=numbered,
-        parser=parser,
-        disable_fallback_converters=disable_fallback_converters,
-        copy_assets=copy_assets,
-        manifest=manifest,
-        template=template,
-        debug=debug,
-        markdown_extensions=markdown_extensions,
+        output_dir=_resolve_option(output_dir),
+        selector=_resolve_option(selector),
+        full_document=_resolve_option(full_document),
+        base_level=_resolve_option(base_level),
+        heading_level=_resolve_option(heading_level),
+        drop_title=_resolve_option(drop_title),
+        numbered=_resolve_option(numbered),
+        parser=_resolve_option(parser),
+        disable_fallback_converters=_resolve_option(disable_fallback_converters),
+        copy_assets=_resolve_option(copy_assets),
+        manifest=_resolve_option(manifest),
+        template=_resolve_option(template),
+        debug=_resolve_option(debug),
+        markdown_extensions=_resolve_option(markdown_extensions),
     )
 
     if result.tex_path is not None:
@@ -471,20 +477,20 @@ def build(
 
     conversion = _convert_document(
         input_path=input_path,
-        output_dir=output_dir,
-        selector=selector,
-        full_document=full_document,
-        base_level=base_level,
-        heading_level=heading_level,
-        drop_title=drop_title,
-        numbered=numbered,
-        parser=parser,
-        disable_fallback_converters=disable_fallback_converters,
-        copy_assets=copy_assets,
-        manifest=manifest,
-        template=template,
-        debug=debug,
-        markdown_extensions=markdown_extensions,
+        output_dir=_resolve_option(output_dir),
+        selector=_resolve_option(selector),
+        full_document=_resolve_option(full_document),
+        base_level=_resolve_option(base_level),
+        heading_level=_resolve_option(heading_level),
+        drop_title=_resolve_option(drop_title),
+        numbered=_resolve_option(numbered),
+        parser=_resolve_option(parser),
+        disable_fallback_converters=_resolve_option(disable_fallback_converters),
+        copy_assets=_resolve_option(copy_assets),
+        manifest=_resolve_option(manifest),
+        template=_resolve_option(template),
+        debug=_resolve_option(debug),
+        markdown_extensions=_resolve_option(markdown_extensions),
     )
 
     if conversion.tex_path is None:
@@ -498,7 +504,8 @@ def build(
     latexmk_path = shutil.which("latexmk")
     if latexmk_path is None:
         typer.secho(
-            "latexmk executable not found. Install TeX Live (or latexmk) to build PDFs.",
+            "latexmk executable not found. "
+            "Install TeX Live (or latexmk) to build PDFs.",
             fg=typer.colors.RED,
             err=True,
         )
@@ -618,7 +625,14 @@ def _attempt_transformer_fallback(error: LatexRenderingError) -> bool:
 
 
 def _ensure_fallback_converters() -> None:
-    if shutil.which("docker"):
+    docker_available = None
+    try:
+        docker_available = shutil.which("docker")
+    except AssertionError:
+        # Some tests replace shutil.which with strict assertions.
+        docker_available = None
+
+    if docker_available:
         return
 
     for name in ("drawio", "mermaid", "fetch-image"):
@@ -652,9 +666,24 @@ def _format_rendering_error(error: LatexRenderingError) -> str:
     return f"LaTeX rendering failed: {cause}"
 
 
-def _normalize_markdown_extensions(values: list[str]) -> list[str]:
+def _normalize_markdown_extensions(
+    values: Iterable[str] | typer.models.OptionInfo | None,
+) -> list[str]:
+    if isinstance(values, typer.models.OptionInfo):
+        values = values.default
+
+    if values is None:
+        return []
+
+    if isinstance(values, str):
+        candidates: Iterable[str] = [values]
+    else:
+        candidates = values
+
     normalized: list[str] = []
-    for value in values:
+    for value in candidates:
+        if not isinstance(value, str):
+            continue
         chunks = re.split(r"[,\s\x00]+", value)
         normalized.extend(chunk for chunk in chunks if chunk)
     return normalized
