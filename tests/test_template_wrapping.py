@@ -40,6 +40,26 @@ class TemplateWrappingTests(unittest.TestCase):
         self.assertIn("\\def\\title{A LaTeX Book Template}", wrapped)
         self.assertIn("\\tableofcontents", wrapped)
         self.assertNotIn("\\makeglossaries", wrapped)
+        self.assertNotIn("\\newacronym", wrapped)
+        self.assertNotIn("\\makeindex", wrapped)
+        self.assertNotIn("\\printindex", wrapped)
+
+    def test_wrap_document_includes_index_when_flag_true(self) -> None:
+        context = self.template.prepare_context("")
+        context["index_entries"] = True
+        wrapped = self.template.wrap_document("", context=context)
+        self.assertIn("\\makeindex", wrapped)
+        self.assertIn("\\printindex", wrapped)
+
+    def test_wrap_document_includes_acronyms_when_present(self) -> None:
+        context = self.template.prepare_context("")
+        context["acronyms"] = {"HTTP": "Hypertext Transfer Protocol"}
+        wrapped = self.template.wrap_document("", context=context)
+        self.assertIn("\\makeglossaries", wrapped)
+        self.assertIn(
+            "\\newacronym{HTTP}{HTTP}{Hypertext Transfer Protocol}", wrapped
+        )
+        self.assertIn("\\printglossary[type=\\acronymtype", wrapped)
 
     def test_copy_template_assets_materialises_payload(self) -> None:
         with TemporaryDirectory() as temp_dir:
@@ -82,6 +102,11 @@ class ArticleTemplateTests(unittest.TestCase):
         self.assertIn(r"\documentclass[a4paper]{article}", wrapped)
         self.assertNotIn("landscape]{article}", wrapped)
         self.assertIn(r"\geometry{margin=2.5cm,a4paper}", wrapped)
+        self.assertNotIn("\\usepackage{imakeidx}", wrapped)
+        self.assertNotIn("\\usepackage[acronym]{glossaries}", wrapped)
+        self.assertNotIn("\\makeindex", wrapped)
+        self.assertNotIn("\\printindex", wrapped)
+        self.assertNotIn("\\newacronym", wrapped)
 
     def test_documentclass_overrides(self) -> None:
         overrides = {
@@ -109,6 +134,25 @@ class ArticleTemplateTests(unittest.TestCase):
     def test_rejects_invalid_orientation_option(self) -> None:
         with self.assertRaises(TemplateError):
             self.template.wrap_document("", overrides={"orientation": "diagonal"})
+
+    def test_article_includes_index_when_flag_true(self) -> None:
+        context = self.template.prepare_context("")
+        context["index_entries"] = True
+        wrapped = self.template.wrap_document("", context=context)
+        self.assertIn("\\usepackage{imakeidx}", wrapped)
+        self.assertIn("\\makeindex", wrapped)
+        self.assertIn("\\printindex", wrapped)
+
+    def test_article_includes_acronyms_when_present(self) -> None:
+        context = self.template.prepare_context("")
+        context["acronyms"] = {"HTTP": "Hypertext Transfer Protocol"}
+        wrapped = self.template.wrap_document("", context=context)
+        self.assertIn("\\usepackage[acronym]{glossaries}", wrapped)
+        self.assertIn("\\makeglossaries", wrapped)
+        self.assertIn(
+            "\\newacronym{HTTP}{HTTP}{Hypertext Transfer Protocol}", wrapped
+        )
+        self.assertIn("\\printglossary[type=\\acronymtype", wrapped)
 
 
 if __name__ == "__main__":

@@ -7,10 +7,14 @@
 
 \definecolor{indigo(dye)}{rgb}{0.0, 0.25, 0.42}
 
-\BLOCK{ if glossary }\makeglossaries
-\input{glossary}
+\BLOCK{ if glossary or acronyms }\makeglossaries\BLOCK{ endif }
+\BLOCK{ if glossary }\input{glossary}\BLOCK{ endif }
+\BLOCK{ if acronyms }
+\BLOCK{ for term, definition in acronyms.items() }
+\newacronym{\VAR{term}}{\VAR{term|latex_escape}}{\VAR{definition|latex_escape}}
+\BLOCK{ endfor }
 \BLOCK{ endif }
-\makeindex
+\BLOCK{ if index_entries }\makeindex\BLOCK{ endif }
 
 %\input{acronyms}
 
@@ -47,10 +51,8 @@
 \BLOCK{ if listoftables }\listoftables\BLOCK{ endif }
 \clearpage
 
-\BLOCK{ if glossary }
-\printglossary[type=\acronymtype, title=Liste des acronymes]
-\printglossary[title=Termes et définitions]
-\BLOCK{ endif }
-\printindex
+\BLOCK{ if acronyms }\printglossary[type=\acronymtype, title=Liste des acronymes]\BLOCK{ endif }
+\BLOCK{ if glossary }\printglossary[title=Termes et définitions]\BLOCK{ endif }
+\BLOCK{ if index_entries }\printindex\BLOCK{ endif }
 
 \end{document}

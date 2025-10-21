@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import re
+import warnings
 from typing import Iterable
 
 from bs4 import NavigableString, Tag
@@ -368,12 +369,31 @@ def render_math_script(element: Tag, context: RenderContext) -> None:
 def render_abbreviation(element: Tag, context: RenderContext) -> None:
     """Register and render abbreviations."""
 
-    title = element.get("title", "")
-    short = element.get_text(strip=True)
-    tag = "acr:" + re.sub(r"[^a-zA-Z0-9]", "", short).lower()
+    title_attr = element.get("title")
+    description = title_attr.strip() if isinstance(title_attr, str) else ""
+    term = element.get_text(strip=True)
 
-    context.state.remember_acronym(tag, short, escape_latex_chars(title))
-    latex = context.formatter.acronym(tag)
+    if not term:
+        return
+
+    if not description:
+        latex_text = escape_latex_chars(term)
+        node = NavigableString(latex_text)
+        setattr(node, "processed", True)
+        element.replace_with(node)
+        return
+
+    existing = context.state.acronyms.get(term)
+    if existing is not None and existing != description:
+        warnings.warn(
+            f"Acronym '{term}' defined with conflicting descriptions: "
+            f"'{existing}' vs '{description}'",
+            stacklevel=2,
+        )
+    else:
+        context.state.remember_acronym(term, description)
+
+    latex = f"\\acrshort{{{term}}}"
     node = NavigableString(latex)
     setattr(node, "processed", True)
     element.replace_with(node)
@@ -512,6 +532,7 @@ def render_index_entry(element: Tag, context: RenderContext) -> None:
     latex = context.formatter.index(escaped_text, entry=escaped_entry, style=style_key)
     node = NavigableString(latex)
     setattr(node, "processed", True)
+    context.state.has_index_entries = True
     context.mark_processed(element)
     context.suppress_children(element)
     element.replace_with(node)

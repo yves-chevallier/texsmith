@@ -16,6 +16,7 @@ from jinja2 import Environment, FileSystemLoader, TemplateNotFound
 from pydantic import BaseModel, ConfigDict, Field, ValidationError, model_validator
 
 from ..exceptions import LatexRenderingError
+from ..utils import escape_latex_chars
 
 
 class TemplateError(LatexRenderingError):
@@ -118,7 +119,7 @@ def _resolve_manifest_path(root: Path) -> Path:
 
 def _build_environment(template_root: Path) -> Environment:
     loader = FileSystemLoader(str(template_root))
-    return Environment(
+    environment = Environment(
         loader=loader,
         autoescape=False,
         trim_blocks=True,
@@ -131,6 +132,9 @@ def _build_environment(template_root: Path) -> Environment:
         comment_start_string=r"\#{",
         comment_end_string="}",
     )
+    environment.filters.setdefault("latex_escape", escape_latex_chars)
+    environment.filters.setdefault("escape_latex", escape_latex_chars)
+    return environment
 
 
 class BaseTemplate:
@@ -180,6 +184,8 @@ class WrappableTemplate(BaseTemplate):
 
         context.setdefault("frontmatter", "")
         context.setdefault("backmatter", "")
+        context.setdefault("index_entries", False)
+        context.setdefault("acronyms", {})
         context["mainmatter"] = latex_body
         return context
 

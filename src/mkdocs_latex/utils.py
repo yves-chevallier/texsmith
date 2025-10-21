@@ -58,7 +58,7 @@ _SUBSCRIPT_CHARS = set("₀₁₂₃₄₅₆₇₈₉₊₋₌₍₎ₐₑₒ�
 
 
 _ACCENT_NEEDS_BRACES_PATTERN = re.compile(
-    r"\\([" + re.escape("`'^\"~=\\.Hrvuck") + r"])\s*([A-Za-z])"
+    r"\\([" + re.escape("`'^\"~=\\.Hrvuck") + r"])\s*([A-Za-z])(?![A-Za-z])"
 )
 
 

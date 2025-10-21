@@ -1,6 +1,7 @@
 import unittest
 
 from mkdocs_latex.config import BookConfig
+from mkdocs_latex.context import DocumentState
 from mkdocs_latex.renderer import LaTeXRenderer
 
 
@@ -72,6 +73,25 @@ class InlineFormattingTests(unittest.TestCase):
         self.assertIn("H\\textsubscript{2}O", latex)
         self.assertIn("CO\\textsubscript{2}", latex)
 
+    def test_abbreviation_renders_acronym(self) -> None:
+        html = '<p><abbr title="Hypertext Transfer Protocol">HTTP</abbr></p>'
+        latex = self.renderer.render(html)
+        self.assertIn("\\acrshort{HTTP}", latex)
+
+    def test_abbreviation_missing_title_falls_back_to_text(self) -> None:
+        html = "<p><abbr>HTTP</abbr></p>"
+        latex = self.renderer.render(html)
+        self.assertIn("HTTP", latex)
+        self.assertNotIn("\\acrshort", latex)
+
+    def test_abbreviation_conflicting_definitions_warn(self) -> None:
+        html = (
+            "<p><abbr title='Hypertext Transfer Protocol'>HTTP</abbr>"
+            " <abbr title='Different'>HTTP</abbr></p>"
+        )
+        with self.assertWarnsRegex(UserWarning, "conflicting descriptions"):
+            self.renderer.render(html)
+
     def test_index_span_with_bold_style(self) -> None:
         html = '<p><span data-tag-name="term" data-tag-style="b">Term</span></p>'
         latex = self.renderer.render(html)
@@ -96,6 +116,19 @@ class InlineFormattingTests(unittest.TestCase):
         html = '<p><span data-tag-name="first, second ,third">Nested</span></p>'
         latex = self.renderer.render(html)
         self.assertIn("Nested\\index{first!second!third}", latex)
+
+    def test_document_state_tracks_index_and_acronyms(self) -> None:
+        state = DocumentState()
+        html = (
+            "<p><span data-tag-name='term'>word</span> "
+            "<abbr title='Hypertext Transfer Protocol'>HTTP</abbr></p>"
+        )
+        self.renderer.render(html, state=state)
+        self.assertTrue(state.has_index_entries)
+        self.assertIn("HTTP", state.acronyms)
+        self.assertEqual(
+            state.acronyms["HTTP"], "Hypertext Transfer Protocol"
+        )
 
 
 if __name__ == "__main__":

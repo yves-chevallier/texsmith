@@ -9,6 +9,11 @@
 \usepackage{booktabs}
 \usepackage[many,minted]{tcolorbox}
 
+\BLOCK{ if acronyms }\usepackage[acronym]{glossaries}
+\makeglossaries
+\BLOCK{ endif }
+\BLOCK{ if index_entries }\usepackage{imakeidx}\BLOCK{ endif }
+
 \setmonofont{CMU Typewriter Text}
 \usemintedstyle{bw}
 
@@ -46,10 +51,21 @@
 \author{\VAR{author}}
 \date{\VAR{date}}
 
+\BLOCK{ if acronyms }
+\BLOCK{ for term, definition in acronyms.items() }
+\newacronym{\VAR{term}}{\VAR{term|latex_escape}}{\VAR{definition|latex_escape}}
+\BLOCK{ endfor }
+\BLOCK{ endif }
+
 \begin{document}
+
+\BLOCK{ if index_entries }\makeindex\BLOCK{ endif }
 
 \maketitle
 
 \VAR{mainmatter}
+
+\BLOCK{ if acronyms }\printglossary[type=\acronymtype, title=Liste des acronymes]\BLOCK{ endif }
+\BLOCK{ if index_entries }\printindex\BLOCK{ endif }
 
 \end{document}

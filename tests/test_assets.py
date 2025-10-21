@@ -28,12 +28,18 @@ class DocumentStateTests(unittest.TestCase):
     def test_acronym_tracking(self) -> None:
         state = DocumentState()
         state.remember_acronym(
-            "laser", "LASER", "Light Amplification by Stimulated Emission of Radiation"
+            "LASER", "Light Amplification by Stimulated Emission of Radiation"
         )
-        self.assertIn("laser", state.acronyms)
-        short, expanded = state.acronyms["laser"]
-        self.assertEqual(short, "LASER")
+        self.assertIn("LASER", state.acronyms)
+        expanded = state.acronyms["LASER"]
         self.assertTrue(expanded.startswith("Light"))
+
+    def test_acronym_conflict_emits_warning(self) -> None:
+        state = DocumentState()
+        state.remember_acronym("HTTP", "Hypertext Transfer Protocol")
+        with self.assertWarns(UserWarning):
+            state.remember_acronym("HTTP", "Different")
+        self.assertEqual(state.acronyms["HTTP"], "Hypertext Transfer Protocol")
 
     def test_solution_collection(self) -> None:
         state = DocumentState()

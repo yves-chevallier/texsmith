@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections import defaultdict
+import warnings
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, DefaultDict, Dict, Iterable, MutableMapping
@@ -21,15 +22,27 @@ class DocumentState:
     """In-memory state accumulated while rendering a document."""
 
     abbreviations: Dict[str, str] = field(default_factory=dict)
-    acronyms: Dict[str, tuple[str, str]] = field(default_factory=dict)
+    acronyms: Dict[str, str] = field(default_factory=dict)
     glossary: Dict[str, Dict[str, Any]] = field(default_factory=dict)
     snippets: Dict[str, Dict[str, Any]] = field(default_factory=dict)
     solutions: list[Dict[str, Any]] = field(default_factory=list)
     headings: list[Dict[str, Any]] = field(default_factory=list)
     exercise_counter: int = 0
+    has_index_entries: bool = False
+    counters: Dict[str, int] = field(default_factory=dict)
 
-    def remember_acronym(self, key: str, short: str, expanded: str) -> None:
-        self.acronyms[key] = (short, expanded)
+    def remember_acronym(self, key: str, description: str) -> None:
+        existing = self.acronyms.get(key)
+        if existing is None:
+            self.acronyms[key] = description
+            return
+
+        if existing != description:
+            warnings.warn(
+                f"Inconsistent acronym definition for '{key}': "
+                f"'{existing}' vs '{description}'",
+                stacklevel=2,
+            )
 
     def remember_abbreviation(self, key: str, text: str) -> None:
         self.abbreviations[key] = text
@@ -47,8 +60,20 @@ class DocumentState:
         self.headings.append({"level": level, "text": text, "ref": ref})
 
     def next_exercise(self) -> int:
-        self.exercise_counter += 1
-        return self.exercise_counter
+        counter = self.next_counter("exercise")
+        self.exercise_counter = counter
+        return counter
+
+    def next_counter(self, key: str = "default") -> int:
+        value = self.counters.get(key, 0) + 1
+        self.counters[key] = value
+        return value
+
+    def peek_counter(self, key: str = "default") -> int:
+        return self.counters.get(key, 0)
+
+    def reset_counter(self, key: str) -> None:
+        self.counters.pop(key, None)
 
 
 @dataclass(slots=True)

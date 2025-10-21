@@ -16,6 +16,7 @@ import yaml
 
 from .config import BookConfig
 from .exceptions import LatexRenderingError, TransformerExecutionError
+from .context import DocumentState
 from .renderer import LaTeXRenderer
 from .templates import TemplateError, copy_template_assets, load_template
 from .transformers import register_converter
@@ -203,7 +204,9 @@ def _convert_document(
         _ensure_fallback_converters()
 
     try:
-        latex_output = _render_with_fallback(renderer_factory, html, runtime)
+        latex_output, document_state = _render_with_fallback(
+            renderer_factory, html, runtime
+        )
     except LatexRenderingError as exc:
         typer.secho(
             _format_rendering_error(exc),
@@ -219,6 +222,8 @@ def _convert_document(
                 latex_output,
                 overrides=template_overrides if template_overrides else None,
             )
+            template_context["index_entries"] = document_state.has_index_entries
+            template_context["acronyms"] = dict(document_state.acronyms)
             latex_output = template_instance.wrap_document(
                 latex_output,
                 context=template_context,
@@ -653,16 +658,19 @@ def _render_with_fallback(
     renderer_factory: Callable[[], LaTeXRenderer],
     html: str,
     runtime: dict[str, object],
-) -> str:
+) -> tuple[str, DocumentState]:
     attempts = 0
+    state = DocumentState()
     while True:
         renderer = renderer_factory()
         try:
-            return renderer.render(html, runtime=runtime)
+            output = renderer.render(html, runtime=runtime, state=state)
+            return output, state
         except LatexRenderingError as exc:
             attempts += 1
             if attempts >= 5 or not _attempt_transformer_fallback(exc):
                 raise
+            state = DocumentState()
 
 
 def _attempt_transformer_fallback(error: LatexRenderingError) -> bool:

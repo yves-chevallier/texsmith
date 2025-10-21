@@ -227,7 +227,8 @@ transform should fire:
 
 Some features on printed documents are not handled by MkDocs or Python Markdown directly such as:
 
-- Index generation
+- [x] Index generation
+- [x] Acronyms
 - Glossaries
 - Bibliography management
 
@@ -258,6 +259,41 @@ Either way this syntax should be ignored in the HTML output but processed in the
 
 For this module as we parse HTML, we can define a new index handler on `<span data-index="term1" data-index-style="b">` or similar. It will be translatex into `\index{term1|textbf}` in LaTeX.
 
+### Glossary
+
+I found a MkDocs glossary plugin: [ezglossary](https://realtimeprojects.github.io/mkdocs-ezglossary) but the syntax is weird. Why the semicolon, how to manage spaced entries or formatted ones? Would be nice to have several way to see it in browser : popup, tooltip, link to definition...
+
+Moreover in LaTeX documents glossaries are often managed with the `glossaries` package which requires to define entries in the preamble with `\newglossaryentry`:
+
+```latex
+\newglossaryentry{clé}{
+  name={forme singulière},
+  plural={forme plurielle},
+  description={texte descriptif},
+  first={forme spéciale pour la première utilisation},
+  text={forme normale (si tu veux la forcer)},
+}
+```
+
+We can use `\gls` to use the standard form, `\Gls` to capitalize the first letter, `\glspl` for plural, `\Glspl` for capitalized plural. The first time the term is used it will use the `first` form if defined, otherwise the `name`. The description will be used in the glossary list. With markdown this is not possible. However, we can imagine a syntax to define glossary entries in markdown frontmatter:
+
+```yml
+glossary:
+  html:
+    name: HTML
+    plural: HTMLs
+    description: >
+        HyperText Markup Language, the standard markup language for
+        documents designed to be displayed in a web browser.
+    first: HyperText Markup Language (HTML)
+```
+
+Then we need an anchor base on the content where the term is defined:
+
+```markdown
+The **HTML**{#gls-html} is the standard markup language for web pages...
+```
+
 ## TO-DO
 
 - [x] Remplacer safe_quote par requote_url de requests.utils
@@ -265,6 +301,7 @@ For this module as we parse HTML, we can define a new index handler on `<span da
 - [x] Remplacer to_kebab_case par python-slugify
 - [x] Documenter class RenderPhase(Enum): chaque état et pourquoi.
 - [x] Supporter la langue (babel) selon la configuration (polyglossia à venir)
+- [x] Permettre l'écritre d'extensions Renderer,formatter (demo counter)
 - [ ] Utiliser verbatim par défaut, les templates peuvent overrider cela
 - [ ] Gérer les assets de manière centralisée (images, drawio, mermaid...)
 - [ ] Ajouter des tests unitaires et d'intégration pour le CLI et MkDocs
