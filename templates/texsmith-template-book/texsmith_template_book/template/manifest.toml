@@ -26,6 +26,7 @@ tlmgr_packages = [
 override = ["codeblock.tex", "codeinline.tex"]
 
 [latex.template.attributes]
+base_level = 0
 
 title = "A LaTeX Book Template"
 subtitle = "An example of a book template for MkDocs LaTeX"

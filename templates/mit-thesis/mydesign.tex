@@ -1,0 +1,74 @@
+% From mitthesis package
+% Documentation: https://ctan.org/pkg/mitthesis
+
+\ProvidesFile{mydesign.tex}[2024/06/28 v1.04 Typographic design options for thesis]
+
+%%%%%%%%%%  Color support  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%% Color package: xcolor.
+%% Change this if you prefer something else
+
+\usepackage[dvipsnames,svgnames,x11names]{xcolor}
+
+%% can add option [table] to xcolor to use color in tables (see xcolor documentation)
+
+
+%%%%%%%%%%  Hyperlink and line number colors  %%%%%%%%%%%%%%
+
+\AtBeginDocument{
+    % Using color names from xcolor package
+    \hypersetup{
+    	linkcolor=Blue3,
+    	citecolor=Blue3,
+    	urlcolor=violet,
+    	filecolor=red,
+    %	anchorcolor=yellow,%  not all pdf viewers recognize this field (although Firefox does): hyperref issues a warning
+    %	colorscheme=phelype,% overrides link, cite, url, file colors with a preset scheme, through \DocumentMetadata
+    	}
+    %
+    \ifmit@lineno
+	    \renewcommand{\linenumberfont}{\sffamily\mdseries\tiny\color{violet}}% line numbers will be sans-serif, medium weight, tiny, and violet
+	\fi
+}
+
+%%%%%%%%%  Caption support  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+% see documentation for details of how to customize captions
+
+\RequirePackage{caption}
+\RequirePackage{subcaption}
+
+
+%%%%%%%%%  Customize list environments  %%%%%%%%%%%%%%%%%%%%
+%
+% see documentation for details of how to customize lists
+
+%\RequirePackage{enumitem}
+
+
+%%%%%%%%%  Customize titles and section headings  %%%%%%%%%%
+%
+% see documentation for details of how to customize headings
+
+\RequirePackage{titlesec}
+
+% these titlesec commands just automate the bold math in some headings (rest follows default styles)
+\titleformat{\section}{\mathversion{bold}\normalfont\Large\bfseries}{\thesection }{1em}{}
+\titleformat{\subsection}{\mathversion{bold}\normalfont\large\bfseries}{\thesubsection}{1em}{}
+\titleformat{\subsubsection}{\mathversion{bold}\normalfont\normalsize\bfseries}{\thesubsubsection}{1em}{}
+
+% ==> NOT every font includes a bold math version, so you may need other math macros in the headings to get bold math <==
+
+
+%%%%%%%%%  Change page margins  %%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+% The default thesis margin is 1 inch all around. You may want different margins (e.g., to add a gutter for binding),
+% in which case you can use the \newgeometry command from the geometry package.  Refer to the package documentation
+% for details.
+%
+% mitthesis defaults: [top=1in,bottom=1in,left=1in,right=1in,marginparwidth=50pt,headsep=12pt,footskip=0.5in]
+%
+% The following tells the geometry package to use a two-sided layout with a 1 cm binding offset on the inside
+% 	and 1 inch margins all around, reducing textwidth slightly (by 0.7 cm). See geometry documentation, Section 8.2.
+%
+%\newgeometry{twoside, bindingoffset=1cm,margin=1in,marginparwidth=50pt,headsep=12pt,footskip=0.5in}

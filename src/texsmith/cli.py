@@ -164,31 +164,23 @@ def _convert_document(
     }
     renderer_kwargs["parser"] = parser or "html.parser"
 
-    def renderer_factory() -> LaTeXRenderer:
-        return LaTeXRenderer(config=config, **renderer_kwargs)
-
-    runtime: dict[str, object] = {
-        "base_level": base_level + heading_level,
-        "numbered": numbered,
-        "source_dir": input_path.parent,
-        "document_path": input_path,
-        "copy_assets": copy_assets,
-    }
-    runtime["language"] = resolved_language
-    if manifest:
-        runtime["generate_manifest"] = True
-    if drop_title:
-        runtime["drop_title"] = True
-
     template_overrides = _build_template_overrides(front_matter)
     template_overrides["language"] = resolved_language
     meta_section = template_overrides.get("meta")
     if isinstance(meta_section, dict):
         meta_section.setdefault("language", resolved_language)
 
+    try:
+        override_base_level = _extract_base_level_override(template_overrides)
+        template_base_level = _coerce_base_level(override_base_level)
+    except TemplateError as exc:
+        typer.secho(str(exc), fg=typer.colors.RED, err=True)
+        raise typer.Exit(code=1) from exc
+
     template_info_engine: str | None = None
     template_requires_shell_escape = False
     template_instance = None
+    template_name: str | None = None
     template_context: dict[str, Any] | None = None
     if template:
         try:
@@ -196,9 +188,39 @@ def _convert_document(
         except TemplateError as exc:
             typer.secho(str(exc), fg=typer.colors.RED, err=True)
             raise typer.Exit(code=1) from exc
-        runtime["template"] = template_instance.info.name
+
+        try:
+            template_default_base = _coerce_base_level(
+                template_instance.info.attributes.get("base_level")
+            )
+        except TemplateError as exc:
+            typer.secho(str(exc), fg=typer.colors.RED, err=True)
+            raise typer.Exit(code=1) from exc
+        if template_base_level is None:
+            template_base_level = template_default_base
+
+        template_name = template_instance.info.name
         template_info_engine = template_instance.info.engine
         template_requires_shell_escape = bool(template_instance.info.shell_escape)
+
+    effective_base_level = template_base_level or 0
+    runtime: dict[str, object] = {
+        "base_level": effective_base_level + base_level + heading_level,
+        "numbered": numbered,
+        "source_dir": input_path.parent,
+        "document_path": input_path,
+        "copy_assets": copy_assets,
+    }
+    runtime["language"] = resolved_language
+    if template_name is not None:
+        runtime["template"] = template_name
+    if manifest:
+        runtime["generate_manifest"] = True
+    if drop_title:
+        runtime["drop_title"] = True
+
+    def renderer_factory() -> LaTeXRenderer:
+        return LaTeXRenderer(config=config, **renderer_kwargs)
 
     if not disable_fallback_converters:
         _ensure_fallback_converters()
@@ -267,6 +289,51 @@ def _resolve_option(value: Any) -> Any:
     if isinstance(value, typer.models.OptionInfo):
         return value.default
     return value
+
+
+def _coerce_base_level(value: Any, *, allow_none: bool = True) -> int | None:
+    if value is None:
+        if allow_none:
+            return None
+        raise TemplateError("Base level value is missing.")
+
+    if isinstance(value, bool):
+        raise TemplateError("Base level must be an integer, booleans are not supported.")
+
+    if isinstance(value, (int, float)):
+        return int(value)
+
+    if isinstance(value, str):
+        candidate = value.strip()
+        if not candidate:
+            if allow_none:
+                return None
+            raise TemplateError("Base level value cannot be empty.")
+        try:
+            return int(candidate)
+        except ValueError as exc:  # pragma: no cover - defensive
+            raise TemplateError(
+                f"Invalid base level '{value}'. Expected an integer value."
+            ) from exc
+
+    raise TemplateError(
+        "Base level should be provided as an integer value, "
+        f"got type '{type(value).__name__}'."
+    )
+
+
+def _extract_base_level_override(overrides: Mapping[str, Any] | None) -> Any:
+    if not overrides:
+        return None
+
+    direct_candidate = overrides.get("base_level")
+    meta_section = overrides.get("meta")
+    meta_candidate = None
+    if isinstance(meta_section, Mapping):
+        meta_candidate = meta_section.get("base_level")
+
+    # Prefer explicit meta entry as it mirrors template attributes closely.
+    return meta_candidate if meta_candidate is not None else direct_candidate
 
 
 @app.command(name="convert")

@@ -1,0 +1,48 @@
+[compat]
+texsmith = ">=0.6,<1.0"
+
+[latex.template]
+name = "sn-article"
+version = "0.1.0"
+entrypoint = "template/template.tex"
+engine = "lualatex"
+shell_escape = true
+texlive_year = 2023
+tlmgr_packages = [
+    "hyperref",
+    "microtype",
+    "booktabs",
+    "tcolorbox",
+    "minted",
+    "algorithms",
+    "fontspec",
+]
+
+[latex.template.attributes]
+base_level = 1
+class_options = "sn-mathphys-num"
+title = "Article Title"
+short_title = ""
+subtitle = ""
+author = "Jane Doe"
+date = "\\today"
+abstract = ""
+keywords = ""
+bibliography = "sn-bibliography"
+bibliography_style = "sn-mathphys-num"
+frontmatter = ""
+backmatter = ""
+
+[latex.template.assets]
+"sn-jnl.cls" = { source = "assets/sn-jnl.cls" }
+"sn-bibliography.bib" = { source = "assets/sn-bibliography.bib" }
+"sn-apacite.bst" = { source = "assets/bst/sn-apacite.bst" }
+"sn-aps.bst" = { source = "assets/bst/sn-aps.bst" }
+"sn-basic.bst" = { source = "assets/bst/sn-basic.bst" }
+"sn-chicago.bst" = { source = "assets/bst/sn-chicago.bst" }
+"sn-mathphys-ay.bst" = { source = "assets/bst/sn-mathphys-ay.bst" }
+"sn-mathphys-num.bst" = { source = "assets/bst/sn-mathphys-num.bst" }
+"sn-nature.bst" = { source = "assets/bst/sn-nature.bst" }
+"sn-vancouver-ay.bst" = { source = "assets/bst/sn-vancouver-ay.bst" }
+"sn-vancouver-num.bst" = { source = "assets/bst/sn-vancouver-num.bst" }
+".latexmkrc" = { source = "assets/latexmkrc" }
