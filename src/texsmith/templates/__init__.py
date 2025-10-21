@@ -28,7 +28,7 @@ class CompatInfo(BaseModel):
 
     model_config = ConfigDict(extra="ignore")
 
-    mkdocs_latex: str | None = None
+    texsmith: str | None = None
 
 
 class TemplateAsset(BaseModel):
@@ -265,7 +265,7 @@ def _load_specialised_template(path: Path) -> WrappableTemplate | None:
         return None
 
     resolved_init = init_path.resolve()
-    module_name = f"_mkdocs_latex_template_{hash(resolved_init) & 0xFFFFFFFF:x}"
+    module_name = f"_texsmith_template_{hash(resolved_init) & 0xFFFFFFFF:x}"
     spec = importlib.util.spec_from_file_location(
         module_name,
         resolved_init,
@@ -320,7 +320,7 @@ def load_template(identifier: str) -> WrappableTemplate:
                 return _load_path_template(candidate)
 
     entry_points = metadata.entry_points()
-    group = entry_points.select(group="mkdocs_latex.templates")
+    group = entry_points.select(group="texsmith.templates")
 
     for entry_point in _match_entry_points(group, identifier):
         loaded = entry_point.load()
@@ -330,7 +330,7 @@ def load_template(identifier: str) -> WrappableTemplate:
 
     raise TemplateError(
         f"Unable to load template '{identifier}'. Provide a valid path or "
-        "install a package exposing a 'mkdocs_latex.templates' entry point."
+        "install a package exposing a 'texsmith.templates' entry point."
     )
 
 
@@ -422,21 +422,23 @@ def _iter_local_candidates(initial: Path, slug: str) -> Iterable[Path]:
     if str(initial) not in {slug, f"./{slug}", f".\\{slug}"}:
         candidates.append(initial)
 
-    slug_root = Path.cwd() / f"latex_template_{slug}"
-    search_roots = [
-        Path.cwd(),
-        Path.cwd() / "templates",
-        slug_root,
-        Path.cwd() / "latex_template_book",
-    ]
-    suffixes = [
-        Path(slug),
-        Path(f"mkdocs_latex_template_{slug}"),
-    ]
+    cwd = Path.cwd()
+    templates_root = cwd / "templates"
+    distribution_name = f"texsmith-template-{slug}"
+    package_name = f"texsmith_template_{slug}"
 
-    for root in search_roots:
-        for suffix in suffixes:
-            candidates.append(root / suffix)
+    candidates.extend(
+        [
+            cwd / slug,
+            cwd / package_name,
+            cwd / distribution_name / package_name,
+            templates_root / slug,
+            cwd / distribution_name,
+            templates_root / distribution_name / package_name,
+            templates_root / package_name,
+            templates_root / distribution_name,
+        ]
+    )
 
     seen: set[str] = set()
     for candidate in candidates:

@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from mkdocs_latex.templates import TemplateError, WrappableTemplate
+from texsmith.templates import TemplateError, WrappableTemplate
 
 
 _PACKAGE_ROOT = Path(__file__).parent.resolve()

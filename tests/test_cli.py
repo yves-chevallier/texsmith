@@ -5,13 +5,18 @@ from typing import Any
 
 from typer.testing import CliRunner
 
-import mkdocs_latex.cli as cli_module
-from mkdocs_latex.cli import DEFAULT_MARKDOWN_EXTENSIONS, app
+import texsmith.cli as cli_module
+from texsmith.cli import DEFAULT_MARKDOWN_EXTENSIONS, app
 
 
 def _template_path(name: str) -> Path:
     project_root = Path(__file__).resolve().parents[1]
-    return project_root / f"latex_template_{name}" / f"mkdocs_latex_template_{name}"
+    return (
+        project_root
+        / "templates"
+        / f"texsmith-template-{name}"
+        / f"texsmith_template_{name}"
+    )
 
 
 def test_convert_command(tmp_path: Path) -> None:

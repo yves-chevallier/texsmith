@@ -6,9 +6,9 @@ from urllib.parse import urlparse
 
 from bs4 import BeautifulSoup
 
-from mkdocs_latex.config import BookConfig
-from mkdocs_latex.renderer import LaTeXRenderer
-from mkdocs_latex.transformers import register_converter, registry
+from texsmith.config import BookConfig
+from texsmith.renderer import LaTeXRenderer
+from texsmith.transformers import register_converter, registry
 
 
 ROOT = Path(__file__).resolve().parents[1]

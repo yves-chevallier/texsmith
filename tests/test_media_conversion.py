@@ -2,9 +2,9 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 import unittest
 
-from mkdocs_latex.config import BookConfig
-from mkdocs_latex.renderer import LaTeXRenderer
-from mkdocs_latex.transformers import register_converter, registry
+from texsmith.config import BookConfig
+from texsmith.renderer import LaTeXRenderer
+from texsmith.transformers import register_converter, registry
 
 
 class _StubConverter:

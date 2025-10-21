@@ -1,4 +1,4 @@
-On va rajouter au cli mkdocs_latex :
+On va rajouter au cli texsmith :
 
 -h,--heading-level permettant d'indenter tous les niveau (section -> subsection) si le document intervient dans un document plus général
 -o,--output-dir répertoire de sortie ou sont également copiés les artefacts (téléchargement des images sur internet, conversion des svg, drawio, mermaid en pdf, toutes les images en png)
@@ -82,9 +82,9 @@ on peut récupérer le code mermaid?
 
 ## Templates LaTeX
 
-Le code LaTeX généré ne contient pas de balises `\begin{document}` ni de préambule `\documentclass{...}`. Cela permet d'insérer le contenu généré dans un document LaTeX plus large. Pour constuire un document complet, il est nécessaire de spécifier `--template` lors de l'appel à la commande `mkdocs_latex convert`.
+Le code LaTeX généré ne contient pas de balises `\begin{document}` ni de préambule `\documentclass{...}`. Cela permet d'insérer le contenu généré dans un document LaTeX plus large. Pour constuire un document complet, il est nécessaire de spécifier `--template` lors de l'appel à la commande `texsmith convert`.
 
-Le templates sont des packets PIP nommés `mkdocs-latex-template-<nom>` ou des dossiers locaux contenant les fichiers nécessaires.
+Le templates sont des packets PIP nommés `texsmith-template-<nom>` ou des dossiers locaux contenant les fichiers nécessaires.
 
 Une template contient:
 
@@ -109,10 +109,10 @@ Structure rigide avec cookiecutter, manifest simple...
 Au niveau du CLI on peut imaginer un :
 
 ```bash
-mkdocs-latex templates list # liste les templates installées (discover local et pip)
-mkdocs-latex templates info book # affiche les infos sur la template book
-mkdocs-latex templates scaffold my-template # crée un dossier my-template avec cookiecutter
-mkdocs-latex convert --template=./book/ # utilise la template locale book
+texsmith templates list # liste les templates installées (discover local et pip)
+texsmith templates info book # affiche les infos sur la template book
+texsmith templates scaffold my-template # crée un dossier my-template avec cookiecutter
+texsmith convert --template=./book/ # utilise la template locale book
 ```
 
 Lorsqu'une template est sélectionnée avec `--template`, le fragment LaTeX produit par le renderer est inséré dans la clé `mainmatter` du template. Les autres attributs restent définis par défaut via le `manifest.toml`, garantissant un document complet sans modifier le contenu généré.
@@ -128,20 +128,20 @@ template = true
 Pour tester la template `book` incluse dans le dépôt :
 
 ```bash
-uv run mkdocs_latex convert tests/test_mkdocs/docs/index.md --template=./book
+uv run texsmith convert tests/test_mkdocs/docs/index.md --template=templates/texsmith-template-book/texsmith_template_book
 ```
 
-Après installation du paquet dédié (`uv pip install -e latex_template_book` ou `uv add mkdocs-latex-template-book`), la même template est disponible via son entrée `book` :
+Après installation du paquet dédié (`uv pip install -e templates/texsmith-template-book` ou `uv add texsmith-template-book`), la même template est disponible via son entrée `book` :
 
 ```bash
-uv run mkdocs_latex convert tests/test_mkdocs/docs/index.md --template=book
+uv run texsmith convert tests/test_mkdocs/docs/index.md --template=book
 ```
 
 Une variante minimale est disponible avec la template `article`, pensée pour des documents courts. Elle expose uniquement les attributs `title`, `author`, `date`, ainsi que `paper` (converti en option `a4paper`, `a3paper`, etc.) et `orientation` (`portrait` ou `landscape`) qui ajustent directement `\documentclass`.
 
 ```bash
-uv run mkdocs_latex convert tests/test_mkdocs/docs/index.md --template=./article
-uv run mkdocs_latex convert tests/test_mkdocs/docs/index.md --template=article
+uv run texsmith convert tests/test_mkdocs/docs/index.md --template=templates/texsmith-template-article/texsmith_template_article
+uv run texsmith convert tests/test_mkdocs/docs/index.md --template=article
 ```
 
 Lorsque `--template` est fourni, le convertisseur écrit automatiquement le résultat LaTeX complet dans le répertoire passé via `--output-dir` (par défaut `build/`) en utilisant le nom du fichier source avec l’extension `.tex` (`index.tex`, `test.tex`, etc.).
@@ -154,11 +154,11 @@ Voici un exemple comment Python Markdown est utilisé en interne:
 
 ## CLI
 
-Le cli mkdocs_latex permet de convertir un fichier Markdown ou un fichier HTML issu de MkDocs ou Python Markdown en LaTeX.
+Le cli texsmith permet de convertir un fichier Markdown ou un fichier HTML issu de MkDocs ou Python Markdown en LaTeX.
 
 ```bash
-mkdocs_latex convert docs/index.md -o output/ # default is output/
-mkdocs_latex convert docs/index.html -o output/
+texsmith convert docs/index.md -o output/ # default is output/
+texsmith convert docs/index.html -o output/
 ```
 
 Les options possibles sont :
@@ -167,7 +167,7 @@ Les options possibles sont :
 - `-o,--output-dir` : répertoire de sortie où sont également copiés les artefacts (téléchargement des images sur internet, conversion des svg, drawio, mermaid en pdf, toutes les images en png).
 - `-a,--copy-assets` : Oui ou non copier et générer les assets (images, documents dans les hyperref).
 - `-m,--manifest` : Générer un fichier de manifeste des assets inclus.
-- `-t,--template` : Spécifier le template LaTeX à utiliser pour la conversion. Soit un chemin vers un dossier local, soit le nom du package PIP à utiliser i.e. `mkdocs-latex-template-foobar`, tu utilises `-t foobar`.
+- `-t,--template` : Spécifier le template LaTeX à utiliser pour la conversion. Soit un chemin vers un dossier local, soit le nom du package PIP à utiliser i.e. `texsmith-template-foobar`, tu utilises `-t foobar`.
 - `--debug` : Activer le mode debug pour sauvegarder les fichiers intermédiaires (HTML, logs, etc.).
 - `-e,--markdown-extensions` : Liste des extensions Markdown à utiliser lors de la conversion (séparées par des virgules ou des espaces, ou des caractères null) i.e. `-e pymdownx.superfences,pymdownx.highlight,caret`.
 
@@ -302,6 +302,8 @@ The **HTML**{#gls-html} is the standard markup language for web pages...
 - [x] Documenter class RenderPhase(Enum): chaque état et pourquoi.
 - [x] Supporter la langue (babel) selon la configuration (polyglossia à venir)
 - [x] Permettre l'écritre d'extensions Renderer,formatter (demo counter)
+- [x] Support for index generation (makeindex, xindy)
+- [ ] Rename package texsmith et les templates texsmith-template-*
 - [ ] Utiliser verbatim par défaut, les templates peuvent overrider cela
 - [ ] Gérer les assets de manière centralisée (images, drawio, mermaid...)
 - [ ] Ajouter des tests unitaires et d'intégration pour le CLI et MkDocs
@@ -310,7 +312,7 @@ The **HTML**{#gls-html} is the standard markup language for web pages...
 - [ ] Find a way to have a solid and robust docker submodule/class
 - [ ] Convert some journals templates (Springer, Elsevier, IEEE...)
 - [ ] Support for bibliography (biblatex, natbib...)
-- [ ] Support for index generation (makeindex, xindy)
+
 - [ ] Support for glossaries (glossaries package)
 - [ ] Support for cross-references (cleveref package)
 - [ ] Add more Markdown extensions (footnotes, definition lists, tables...)

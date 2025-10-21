@@ -5,7 +5,7 @@ import unittest
 
 
 try:
-    from mkdocs_latex.cli import convert  # type: ignore[attr-defined]
+    from texsmith.cli import convert  # type: ignore[attr-defined]
 except ModuleNotFoundError as exc:  # pragma: no cover - optional dependency guard
     if exc.name == "typer":
         convert = None  # type: ignore[assignment]

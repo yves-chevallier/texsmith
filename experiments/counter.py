@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-"""Minimal CLI showcasing a counter extension built on mkdocs-latex."""
+"""Minimal CLI showcasing a counter extension built on texsmith."""
 
 from __future__ import annotations
 
-from mkdocs_latex import DocumentState, LaTeXRenderer, RenderPhase, renders
+from texsmith import DocumentState, LaTeXRenderer, RenderPhase, renders
 
 
 COUNTER_CLASS = "data-counter"

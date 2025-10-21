@@ -1,5 +1,5 @@
 [compat]
-mkdocs_latex = ">=0.6,<1.0"
+texsmith = ">=0.6,<1.0"
 
 [latex.template]
 name = "article"

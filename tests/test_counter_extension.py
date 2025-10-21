@@ -11,7 +11,7 @@ for candidate in (PROJECT_ROOT, SRC_ROOT):
         sys.path.insert(0, candidate_str)
 
 from counter import COUNTER_KEY, build_renderer
-from mkdocs_latex import DocumentState
+from texsmith import DocumentState
 
 
 def test_counter_extension_renders_incremented_markers() -> None:

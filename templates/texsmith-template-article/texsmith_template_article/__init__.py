@@ -1,4 +1,4 @@
-"""Article template integration for mkdocs-latex."""
+"""Article template integration for texsmith."""
 
 from __future__ import annotations
 
@@ -6,8 +6,8 @@ from collections.abc import Iterable
 from pathlib import Path
 from typing import Any, Mapping
 
-from mkdocs_latex.templates import TemplateError, WrappableTemplate
-from mkdocs_latex.utils import escape_latex_chars
+from texsmith.templates import TemplateError, WrappableTemplate
+from texsmith.utils import escape_latex_chars
 
 
 _PACKAGE_ROOT = Path(__file__).parent.resolve()

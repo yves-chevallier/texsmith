@@ -3,7 +3,7 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 import unittest
 
-from mkdocs_latex.templates import TemplateError, copy_template_assets, load_template
+from texsmith.templates import TemplateError, copy_template_assets, load_template
 
 
 class TemplateWrappingTests(unittest.TestCase):
@@ -12,7 +12,10 @@ class TemplateWrappingTests(unittest.TestCase):
         self._previous_cwd = Path.cwd()
         os.chdir(project_root)
         self.template_path = (
-            project_root / "latex_template_book" / "mkdocs_latex_template_book"
+            project_root
+            / "templates"
+            / "texsmith-template-book"
+            / "texsmith_template_book"
         )
         self.template = load_template(str(self.template_path))
 
@@ -90,7 +93,10 @@ class ArticleTemplateTests(unittest.TestCase):
         self._previous_cwd = Path.cwd()
         os.chdir(project_root)
         self.template_path = (
-            project_root / "latex_template_article" / "mkdocs_latex_template_article"
+            project_root
+            / "templates"
+            / "texsmith-template-article"
+            / "texsmith_template_article"
         )
         self.template = load_template(str(self.template_path))
 

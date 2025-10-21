@@ -1,7 +1,7 @@
 import importlib.util
 import unittest
 
-from mkdocs_latex.utils import escape_latex_chars
+from texsmith.utils import escape_latex_chars
 
 
 LATEXCODEC_AVAILABLE = importlib.util.find_spec("latexcodec") is not None
