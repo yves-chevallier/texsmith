@@ -9,6 +9,7 @@ engine = 'lualatex'
 shell_escape = true
 texlive_year = 2023
 tlmgr_packages = [
+    "babel",
     "babel-french",
     "csquotes",
     "fontspec",
@@ -17,7 +18,6 @@ tlmgr_packages = [
     "hyperref",
     "longtable",
     "microtype",
-    "polyglossia",
     "titlesec",
     "titletoc",
     "xcolor",
@@ -32,6 +32,7 @@ subtitle = "An example of a book template for MkDocs LaTeX"
 author = "John Doe"
 email = "john.doe@acme.corp"
 date = "\\today"
+language = "english"
 cover = "circles"
 glossary = false
 listoffigures = true
@@ -52,3 +53,4 @@ source = "imprint.tex"
 
 [latex.template.assets."mkbook.cls"]
 source = "template/mkbook.cls"
+template = true

@@ -18,6 +18,7 @@ class CommonConfig(BaseModel):
     save_html: bool = False
     mermaid_config: Path | None = None
     project_dir: Path | None = None
+    language: str | None = None
 
 
 class CoverConfig(BaseModel):
@@ -68,7 +69,13 @@ class LaTeXConfig(CommonConfig):
     def propagate(self) -> "LaTeXConfig":
         """Propagate common values to nested book configurations."""
 
-        to_propagate = ("build_dir", "mermaid_config", "save_html", "project_dir")
+        to_propagate = (
+            "build_dir",
+            "mermaid_config",
+            "save_html",
+            "project_dir",
+            "language",
+        )
         for book in self.books:
             for key in to_propagate:
                 if getattr(book, key) is None:

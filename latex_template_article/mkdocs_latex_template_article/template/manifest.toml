@@ -9,6 +9,7 @@ engine = "lualatex"
 shell_escape = false
 texlive_year = 2023
 tlmgr_packages = [
+    "babel",
     "geometry",
     "hyperref",
     "microtype",
@@ -20,6 +21,7 @@ title = "Article Title"
 author = "John Doe"
 subtitle = ""
 date = "\\today"
+language = "english"
 paper = "a4"
 orientation = "portrait"
 frontmatter = ""

@@ -43,6 +43,12 @@ class CliConvertTests(unittest.TestCase):
             self.assertIn("\\mainmatter", content)
             self.assertIn("Titre", content)
 
+            class_file = output_dir / "mkbook.cls"
+            self.assertTrue(class_file.exists())
+            class_content = class_file.read_text(encoding="utf-8")
+            self.assertNotIn("\\VAR{", class_content)
+            self.assertIn("\\RequirePackage[english]{babel}", class_content)
+
             circles = output_dir / "covers" / "circles.tex"
             self.assertTrue(circles.exists())
             circles_content = circles.read_text(encoding="utf-8")
@@ -63,6 +69,7 @@ meta:
       affiliation: Example University
     - name: Bob Example
   date: 2024-10-20
+  language: fr
 ---
 
 # Introduction
@@ -89,6 +96,7 @@ Content here.
                 content,
             )
             self.assertIn(r"\date{2024-10-20}", content)
+            self.assertIn(r"\usepackage[french]{babel}", content)
 
 
 if __name__ == "__main__":

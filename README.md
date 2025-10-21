@@ -223,17 +223,52 @@ transform should fire:
   tasks that depend on previous passes such as heading numbering or emitting
   collected assets.
 
+## MkDocs integration
+
+Some features on printed documents are not handled by MkDocs or Python Markdown directly such as:
+
+- Index generation
+- Glossaries
+- Bibliography management
+
+### Index generation
+
+MkDocs generate a `search_index.json` consumed by lunr or wasabi to provide search capabilities in the generated HTML site. This index contains all words present in the documentation along with their locations. This is an automated way built dynamically on the browser side. However on LaTeX documents we need to generate a static index at compile time. In traditional LaTeX edition we use `\index{term}` commands scattered in the document, then we run `makeindex` or `xindy` to generate the index file included at the end of the document.
+
+One strategy would be to implement a similar indexing pipeline that performs linguistic-driven keyword extraction from Markdown sources by combining structural and statistical cues. During parsing, code blocks are stripped, custom `{index,...}` annotations are honored, and each section is passed through spaCy (FR/EN) to extract noun-phrase candidates — sequences containing at least one **NOUN/PROPN** and no functional words. Terms are normalized, lemmatized, and filtered using multilingual stoplists plus an optional project stopfile. Statistical weighting integrates local context boosts (headings, captions, early position), lexical cohesion via a **PMI** heuristic for multi-word expressions, and logarithmic frequency scaling, with additional bias for forced terms. The resulting lexicon — a ranked JSON index — approximates a LaTeX-style `\index{…}` but is generated automatically from linguistic salience rather than manual markup.
+
+In printed documents, index entries are often formatted typographically to indicate the relevance of a term in a given section:
+
+- Normal text: the term is discussed in that section (default)
+- Bold text: the term is the main topic of that section (topic)
+- Italic text: the term is mentioned but not discussed (mentionned)
+- Bold italic text: the term is both the main topic and mentioned elsewhere in the same section. (all)
+
+This can be achieved in LaTex with `\index{term|textbf}`, `\index{term|textit}`, `\index{term|textbfit}` modifiers.
+
+Either way a solution to manually add `\index{term}` in the LaTeX output or to generate automatically an index from the content is needed. We can combine this with tag generation for the search index in MkDocs. The chosen syntax could be:
+
+```markdown
+``{index,term1,term2,term3}
+[](){index,term1,term2,term3}
+[[term|index-term|b]], [[term|index-term|i]], [[term|index-term|bi]]
+```
+
+Either way this syntax should be ignored in the HTML output but processed in the LaTeX renderer to emit `\index{term1}`, `\index{term2|textbf}` etc. We can combine this into a mkdocs-plugin that generates index from this syntax and add tags in the search index for lunr/wasabi which can be cool. The renderer would detect this syntax and emit the corresponding LaTeX commands.
+
+For this module as we parse HTML, we can define a new index handler on `<span data-index="term1" data-index-style="b">` or similar. It will be translatex into `\index{term1|textbf}` in LaTeX.
+
 ## TO-DO
 
 - [x] Remplacer safe_quote par requote_url de requests.utils
- - [x] Remplacer fonctions helpers par package latexcodec
- - [x] Remplacer to_kebab_case par python-slugify
- - [x] Documenter class RenderPhase(Enum): chaque état et pourquoi.
-- [ ] Utiliser verbatim pour le code par défaut, les templates peuvent overrider cela
+- [x] Remplacer fonctions helpers par package latexcodec
+- [x] Remplacer to_kebab_case par python-slugify
+- [x] Documenter class RenderPhase(Enum): chaque état et pourquoi.
+- [x] Supporter la langue (babel) selon la configuration (polyglossia à venir)
+- [ ] Utiliser verbatim par défaut, les templates peuvent overrider cela
 - [ ] Gérer les assets de manière centralisée (images, drawio, mermaid...)
-- [ ] Ajouter des tests unitaires et d'intégration pour le CLI et le plugin MkDocs
+- [ ] Ajouter des tests unitaires et d'intégration pour le CLI et MkDocs
 - [ ] Documenter le processus de création de templates LaTeX personnalisées
-- [ ] Supporter langue (babel, polyglossia) selon la langue de MkDocs
 - [ ] Declare solution/exercises in a plugin way
 - [ ] Find a way to have a solid and robust docker submodule/class
 - [ ] Convert some journals templates (Springer, Elsevier, IEEE...)
@@ -241,6 +276,8 @@ transform should fire:
 - [ ] Support for index generation (makeindex, xindy)
 - [ ] Support for glossaries (glossaries package)
 - [ ] Support for cross-references (cleveref package)
-- [ ] Add more Markdown extensions support (footnotes, definition lists, tables...)
+- [ ] Add more Markdown extensions (footnotes, definition lists, tables...)
 - [ ] Improve error handling and reporting during LaTeX compilation
 - [ ] Optimize asset conversion and caching mechanisms
+- [ ] Mkdocs Integration
+  - [ ] Support extensions in other MkDocs plugin (add latex syntax, transformers...)

@@ -33,6 +33,43 @@ DEFAULT_MARKDOWN_EXTENSIONS = [
 ]
 
 
+DEFAULT_TEMPLATE_LANGUAGE = "english"
+
+_BABEL_LANGUAGE_ALIASES = {
+    "ad": "catalan",
+    "ca": "catalan",
+    "cs": "czech",
+    "da": "danish",
+    "de": "ngerman",
+    "de-de": "ngerman",
+    "en": "english",
+    "en-gb": "british",
+    "en-us": "english",
+    "en-au": "australian",
+    "en-ca": "canadian",
+    "es": "spanish",
+    "es-es": "spanish",
+    "es-mx": "mexican",
+    "fi": "finnish",
+    "fr": "french",
+    "fr-fr": "french",
+    "fr-ca": "canadien",
+    "it": "italian",
+    "nl": "dutch",
+    "nb": "norwegian",
+    "nn": "nynorsk",
+    "pl": "polish",
+    "pt": "portuguese",
+    "pt-br": "brazilian",
+    "ro": "romanian",
+    "ru": "russian",
+    "sk": "slovak",
+    "sl": "slovene",
+    "sv": "swedish",
+    "tr": "turkish",
+}
+
+
 @dataclass(slots=True)
 class ConversionResult:
     """Artifacts produced during a CLI conversion."""
@@ -41,6 +78,7 @@ class ConversionResult:
     tex_path: Path | None
     template_engine: str | None
     template_shell_escape: bool
+    language: str
 
 
 app = typer.Typer(
@@ -71,6 +109,7 @@ def _convert_document(
     manifest: bool,
     template: Optional[str],
     debug: bool,
+    language: Optional[str],
     markdown_extensions: list[str],
 ) -> ConversionResult:
     try:
@@ -114,7 +153,9 @@ def _convert_document(
     if debug:
         _persist_debug_artifacts(output_dir, input_path, html)
 
-    config = BookConfig(project_dir=input_path.parent)
+    resolved_language = _resolve_template_language(language, front_matter)
+
+    config = BookConfig(project_dir=input_path.parent, language=resolved_language)
 
     renderer_kwargs: dict[str, Any] = {
         "output_root": output_dir,
@@ -132,10 +173,17 @@ def _convert_document(
         "document_path": input_path,
         "copy_assets": copy_assets,
     }
+    runtime["language"] = resolved_language
     if manifest:
         runtime["generate_manifest"] = True
     if drop_title:
         runtime["drop_title"] = True
+
+    template_overrides = _build_template_overrides(front_matter)
+    template_overrides["language"] = resolved_language
+    meta_section = template_overrides.get("meta")
+    if isinstance(meta_section, dict):
+        meta_section.setdefault("language", resolved_language)
 
     template_info_engine: str | None = None
     template_requires_shell_escape = False
@@ -166,11 +214,10 @@ def _convert_document(
 
     tex_path: Path | None = None
     if template_instance is not None:
-        overrides = _build_template_overrides(front_matter)
         try:
             template_context = template_instance.prepare_context(
                 latex_output,
-                overrides=overrides if overrides else None,
+                overrides=template_overrides if template_overrides else None,
             )
             latex_output = template_instance.wrap_document(
                 latex_output,
@@ -184,6 +231,7 @@ def _convert_document(
                 template_instance,
                 output_dir,
                 context=template_context,
+                overrides=template_overrides if template_overrides else None,
             )
         except TemplateError as exc:
             typer.secho(str(exc), fg=typer.colors.RED, err=True)
@@ -206,6 +254,7 @@ def _convert_document(
         tex_path=tex_path,
         template_engine=template_info_engine,
         template_shell_escape=template_requires_shell_escape,
+        language=resolved_language,
     )
 
 
@@ -309,6 +358,11 @@ def convert(
         "--debug/--no-debug",
         help="Enable debug mode to persist intermediate artifacts.",
     ),
+    language: Optional[str] = typer.Option(
+        None,
+        "--language",
+        help="Language code passed to babel (defaults to metadata or english).",
+    ),
     markdown_extensions: list[str] = typer.Option(
         [],
         "--markdown-extensions",
@@ -333,6 +387,7 @@ def convert(
         manifest=_resolve_option(manifest),
         template=_resolve_option(template),
         debug=_resolve_option(debug),
+        language=_resolve_option(language),
         markdown_extensions=_resolve_option(markdown_extensions),
     )
 
@@ -466,6 +521,11 @@ def build(
         "--debug/--no-debug",
         help="Enable debug mode to persist intermediate artifacts.",
     ),
+    language: Optional[str] = typer.Option(
+        None,
+        "--language",
+        help="Language code passed to babel (defaults to metadata or english).",
+    ),
     markdown_extensions: list[str] = typer.Option(
         [],
         "--markdown-extensions",
@@ -490,6 +550,7 @@ def build(
         manifest=_resolve_option(manifest),
         template=_resolve_option(template),
         debug=_resolve_option(debug),
+        language=_resolve_option(language),
         markdown_extensions=_resolve_option(markdown_extensions),
     )
 
@@ -794,3 +855,69 @@ def _build_template_overrides(front_matter: Mapping[str, Any] | None) -> dict[st
         return {"meta": dict(meta_section)}
 
     return {"meta": dict(front_matter)}
+
+
+def _resolve_template_language(
+    explicit: str | None,
+    front_matter: Mapping[str, Any] | None,
+) -> str:
+    candidates = (
+        _normalise_template_language(explicit),
+        _normalise_template_language(
+            _extract_language_from_front_matter(front_matter)
+        ),
+    )
+
+    for candidate in candidates:
+        if candidate:
+            return candidate
+
+    return DEFAULT_TEMPLATE_LANGUAGE
+
+
+def _extract_language_from_front_matter(
+    front_matter: Mapping[str, Any] | None,
+) -> str | None:
+    if not isinstance(front_matter, Mapping):
+        return None
+
+    meta_entry = front_matter.get("meta")
+    containers: tuple[Mapping[str, Any] | None, ...] = (
+        meta_entry if isinstance(meta_entry, Mapping) else None,
+        front_matter,
+    )
+
+    for container in containers:
+        if not isinstance(container, Mapping):
+            continue
+        for key in ("language", "lang"):
+            value = container.get(key)
+            if isinstance(value, str):
+                stripped = value.strip()
+                if stripped:
+                    return stripped
+    return None
+
+
+def _normalise_template_language(value: str | None) -> str | None:
+    if value is None:
+        return None
+
+    stripped = value.strip()
+    if not stripped:
+        return None
+
+    lowered = stripped.lower().replace("_", "-")
+    alias = _BABEL_LANGUAGE_ALIASES.get(lowered)
+    if alias:
+        return alias
+
+    primary = lowered.split("-", 1)[0]
+    alias = _BABEL_LANGUAGE_ALIASES.get(primary)
+    if alias:
+        return alias
+
+    if lowered.isalpha():
+        return lowered
+
+    return None

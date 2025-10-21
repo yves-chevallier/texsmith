@@ -32,7 +32,7 @@
 \RequirePackage{adjustbox}
 \RequirePackage{caption}
 \RequirePackage{microtype}
-\RequirePackage[french]{babel}
+\RequirePackage[\VAR{language|default('english')}]{babel}
 \RequirePackage{emptypage}
 
 \definecolor{linkcolor}{RGB}{34, 18, 104}
