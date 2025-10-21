@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import hashlib
 import re
-import warnings
 from typing import Iterable
 
 from bs4 import NavigableString, Tag
@@ -383,17 +382,11 @@ def render_abbreviation(element: Tag, context: RenderContext) -> None:
         element.replace_with(node)
         return
 
-    existing = context.state.acronyms.get(term)
-    if existing is not None and existing != description:
-        warnings.warn(
-            f"Acronym '{term}' defined with conflicting descriptions: "
-            f"'{existing}' vs '{description}'",
-            stacklevel=2,
-        )
-    else:
-        context.state.remember_acronym(term, description)
+    key = context.state.remember_abbreviation(term, description)
+    if not key:
+        key = term
 
-    latex = f"\\acrshort{{{term}}}"
+    latex = f"\\acrshort{{{key}}}"
     node = NavigableString(latex)
     setattr(node, "processed", True)
     element.replace_with(node)

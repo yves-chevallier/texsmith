@@ -223,7 +223,7 @@ def _convert_document(
                 overrides=template_overrides if template_overrides else None,
             )
             template_context["index_entries"] = document_state.has_index_entries
-            template_context["acronyms"] = dict(document_state.acronyms)
+            template_context["acronyms"] = document_state.acronyms.copy()
             latex_output = template_instance.wrap_document(
                 latex_output,
                 context=template_context,

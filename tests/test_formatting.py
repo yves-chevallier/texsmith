@@ -89,7 +89,7 @@ class InlineFormattingTests(unittest.TestCase):
             "<p><abbr title='Hypertext Transfer Protocol'>HTTP</abbr>"
             " <abbr title='Different'>HTTP</abbr></p>"
         )
-        with self.assertWarnsRegex(UserWarning, "conflicting descriptions"):
+        with self.assertWarnsRegex(UserWarning, "Inconsistent acronym definition"):
             self.renderer.render(html)
 
     def test_index_span_with_bold_style(self) -> None:
@@ -125,9 +125,11 @@ class InlineFormattingTests(unittest.TestCase):
         )
         self.renderer.render(html, state=state)
         self.assertTrue(state.has_index_entries)
-        self.assertIn("HTTP", state.acronyms)
+        self.assertIn("HTTP", state.acronym_keys)
+        key = state.acronym_keys["HTTP"]
+        self.assertIn(key, state.acronyms)
         self.assertEqual(
-            state.acronyms["HTTP"], "Hypertext Transfer Protocol"
+            state.acronyms[key], ("HTTP", "Hypertext Transfer Protocol")
         )
 
 

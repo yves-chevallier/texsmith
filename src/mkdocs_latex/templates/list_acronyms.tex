@@ -1,4 +1,5 @@
 % Acronyms
-\BLOCK{for key, short, content in text -}
-\newacronym{\VAR{key}}{\VAR{short}}{\VAR{content}}
+\BLOCK{for key, entry in text -}
+\BLOCK{ set pair = entry if (entry is sequence and not entry is string) else [key, entry] }
+\newacronym{\VAR{key}}{\VAR{pair[0]}}{\VAR{pair[1]}}
 \BLOCK{endfor}
