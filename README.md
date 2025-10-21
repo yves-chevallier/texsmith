@@ -205,12 +205,30 @@ books: # On peut définir plusieurs documents de sortie pour une même documenta
    index_is_foreword: true # l'index peut être considéré comme un foreword avant le début d'un chapitre
 ```
 
+## Render engine phases
+
+The rendering pipeline walks the BeautifulSoup tree four times. Each pass maps
+to a value of `RenderPhase` so handlers can opt into the point where their
+transform should fire:
+
+- **`RenderPhase.PRE`** – Early normalisation. Use it to clean the DOM and
+  replace nodes before structural changes happen (e.g. unwrap unwanted tags,
+  turn inline `<code>` into LaTeX).
+- **`RenderPhase.BLOCK`** – Block-level transformations once the tree structure
+  is stable. Typical consumers convert paragraphs, lists, or blockquotes into
+  LaTeX environments.
+- **`RenderPhase.INLINE`** – Inline formatting where block layout is already
+  resolved. It is the right place for emphasis, inline math, or link handling.
+- **`RenderPhase.POST`** – Final pass after children are processed. Use it for
+  tasks that depend on previous passes such as heading numbering or emitting
+  collected assets.
+
 ## TO-DO
 
 - [x] Remplacer safe_quote par requote_url de requests.utils
-- [x] Remplacer fonctions helpers par package latexcodec
-- [x] Remplacer to_kebab_case par python-slugify
-- [ ] Documenter class RenderPhase(Enum): chaque état et pourquoi.
+ - [x] Remplacer fonctions helpers par package latexcodec
+ - [x] Remplacer to_kebab_case par python-slugify
+ - [x] Documenter class RenderPhase(Enum): chaque état et pourquoi.
 - [ ] Utiliser verbatim pour le code par défaut, les templates peuvent overrider cela
 - [ ] Gérer les assets de manière centralisée (images, drawio, mermaid...)
 - [ ] Ajouter des tests unitaires et d'intégration pour le CLI et le plugin MkDocs

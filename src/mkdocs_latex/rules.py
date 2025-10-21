@@ -14,12 +14,19 @@ if TYPE_CHECKING:  # pragma: no cover - typing only
 
 
 class RenderPhase(Enum):
-    """High-level phases executed by the rendering engine."""
+    """High-level passes executed by the rendering engine."""
 
     PRE = auto()
+    """DOM normalisation pass: strip/reshape nodes before structural work begins."""
+
     BLOCK = auto()
+    """Block transformation pass: convert paragraphs, lists, figures, etc."""
+
     INLINE = auto()
+    """Inline formatting pass: apply emphasis, links, inline math once blocks exist."""
+
     POST = auto()
+    """Finalisation pass: run cleanup that depends on earlier transformations."""
 
 
 RuleCallable = Callable[[Any, "RenderContext"], None]
