@@ -94,7 +94,9 @@ def _is_only_meaningful_child(node: Tag) -> bool:
     return True
 
 
-@renders("pre", phase=RenderPhase.PRE, priority=45, name="preformatted_code", nestable=False)
+@renders(
+    "pre", phase=RenderPhase.PRE, priority=45, name="preformatted_code", nestable=False
+)
 def render_preformatted_code(element: Tag, context: RenderContext) -> None:
     """Render plain <pre> blocks that wrap a <code> element."""
 
@@ -114,11 +116,17 @@ def render_preformatted_code(element: Tag, context: RenderContext) -> None:
     if any(cls in {"language-mermaid", "mermaid"} for cls in code_classes):
         return
 
-    if code_element is not None and _looks_like_mermaid(code_element.get_text(strip=False)):
+    if code_element is not None and _looks_like_mermaid(
+        code_element.get_text(strip=False)
+    ):
         return
 
     language = _extract_language(code_element) if code_element else "text"
-    code_text = code_element.get_text(strip=False) if code_element else element.get_text(strip=False)
+    code_text = (
+        code_element.get_text(strip=False)
+        if code_element
+        else element.get_text(strip=False)
+    )
 
     if not code_text.strip():
         return
@@ -205,7 +213,13 @@ def render_code_blocks(element: Tag, context: RenderContext) -> None:
     element.replace_with(node)
 
 
-@renders("code", phase=RenderPhase.PRE, priority=40, name="standalone_code_blocks", nestable=False)
+@renders(
+    "code",
+    phase=RenderPhase.PRE,
+    priority=40,
+    name="standalone_code_blocks",
+    nestable=False,
+)
 def render_standalone_code_blocks(element: Tag, context: RenderContext) -> None:
     """Render <code> elements that include multiline content as block code."""
 
@@ -250,7 +264,11 @@ def render_standalone_code_blocks(element: Tag, context: RenderContext) -> None:
     node = NavigableString(latex)
     setattr(node, "processed", True)
 
-    if element.parent and element.parent.name == "p" and _is_only_meaningful_child(element):
+    if (
+        element.parent
+        and element.parent.name == "p"
+        and _is_only_meaningful_child(element)
+    ):
         element.parent.replace_with(node)
     else:
         element.replace_with(node)

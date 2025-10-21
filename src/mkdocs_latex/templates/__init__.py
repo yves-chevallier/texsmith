@@ -9,9 +9,9 @@ import inspect
 from pathlib import Path
 import shutil
 import sys
+import tomllib
 from typing import Any, Iterable, Mapping
 
-import tomllib
 from jinja2 import Environment, FileSystemLoader, TemplateNotFound
 from pydantic import BaseModel, ConfigDict, Field, ValidationError, model_validator
 
@@ -91,7 +91,9 @@ class TemplateManifest(BaseModel):
         try:
             content = tomllib.loads(manifest_path.read_text(encoding="utf-8"))
         except FileNotFoundError as exc:  # pragma: no cover - sanity check
-            raise TemplateError(f"Template manifest is missing: {manifest_path}") from exc
+            raise TemplateError(
+                f"Template manifest is missing: {manifest_path}"
+            ) from exc
         except OSError as exc:  # pragma: no cover - IO failure
             raise TemplateError(f"Failed to read template manifest: {exc}") from exc
         except tomllib.TOMLDecodeError as exc:
@@ -269,7 +271,9 @@ def _load_specialised_template(path: Path) -> WrappableTemplate | None:
         spec.loader.exec_module(module)
     except Exception as exc:  # pragma: no cover - surface import errors
         sys.modules.pop(module_name, None)
-        raise TemplateError(f"Failed to import template module at '{path}': {exc}") from exc
+        raise TemplateError(
+            f"Failed to import template module at '{path}': {exc}"
+        ) from exc
 
     for attribute in ("Template", "template", "load_template", "get_template"):
         candidate = getattr(module, attribute, None)

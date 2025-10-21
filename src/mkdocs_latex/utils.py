@@ -2,10 +2,10 @@
 
 from __future__ import annotations
 
-from pathlib import Path
 import re
 import unicodedata
-from urllib.parse import quote, urlparse, urlunparse
+from pathlib import Path
+from urllib.parse import urlparse
 
 
 try:  # pragma: no cover - graceful degradation
@@ -60,25 +60,6 @@ def resolve_asset_path(file_path: Path, path: str | Path) -> Path | None:
         file_path = file_path.parent
     target = (file_path / path).resolve()
     return target if target.exists() else None
-
-
-def safe_quote(url: str) -> str:
-    """Percent-encode a URL, preserving reserved characters."""
-
-    parsed_url = urlparse(url)
-    encoded_path = quote(parsed_url.path)
-    encoded_query = quote(parsed_url.query)
-    encoded_fragment = quote(parsed_url.fragment)
-    return urlunparse(
-        (
-            parsed_url.scheme,
-            parsed_url.netloc,
-            encoded_path,
-            parsed_url.params,
-            encoded_query,
-            encoded_fragment,
-        )
-    )
 
 
 def is_valid_url(url: str) -> bool:

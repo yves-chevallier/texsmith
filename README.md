@@ -150,18 +150,7 @@ Le convertisseur par défaut de MkDocs est Python Markdown. C'est également ce 
 
 Voici un exemple comment Python Markdown est utilisé en interne:
 
-```python
-import markdown
 
-md = markdown.Markdown(extensions=[
-    'pymdownx.superfences',   # remplace fenced_code
-    'pymdownx.highlight',     # coloration + options sympas
-    # ... d’autres extensions si besoin
-])
-
-html = md.convert("```python\nprint('Hello')\n```")
-print(html)
-```
 
 ## CLI
 
@@ -218,7 +207,14 @@ books: # On peut définir plusieurs documents de sortie pour une même documenta
 
 ## TO-DO
 
+- [x] Remplacer safe_quote par requote_url de requests.utils
+- [ ] Remplacer fonctions helpers par package latexcodec
+- [ ] Remplacer to_kebab_case par python-slugify
+- [ ] Documenter class RenderPhase(Enum): chaque état et pourquoi.
 - [ ] Utiliser verbatim pour le code par défaut, les templates peuvent overrider cela
 - [ ] Gérer les assets de manière centralisée (images, drawio, mermaid...)
 - [ ] Ajouter des tests unitaires et d'intégration pour le CLI et le plugin MkDocs
 - [ ] Documenter le processus de création de templates LaTeX personnalisées
+- [ ] Supporter langue (babel, polyglossia) selon la langue de MkDocs
+- [ ] Declare solution/exercises in a plugin way
+- [ ] Find a way to have a solid and robust docker submodule/class

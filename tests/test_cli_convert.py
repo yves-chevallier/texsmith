@@ -3,6 +3,7 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 import unittest
 
+
 try:
     from mkdocs_latex.cli import convert  # type: ignore[attr-defined]
 except ModuleNotFoundError as exc:  # pragma: no cover - optional dependency guard
@@ -82,9 +83,7 @@ Content here.
             output_file = output_dir / "sample.tex"
             self.assertTrue(output_file.exists())
             content = output_file.read_text(encoding="utf-8")
-            self.assertIn(
-                r"\title{Sample Article\\\large Insights on Cheese}", content
-            )
+            self.assertIn(r"\title{Sample Article\\\large Insights on Cheese}", content)
             self.assertIn(
                 r"\author{Alice Example\thanks{Example University} \and Bob Example}",
                 content,

@@ -2,13 +2,13 @@
 
 from __future__ import annotations
 
-from collections.abc import Iterable
 import glob
+from collections.abc import Iterable
 from pathlib import Path
 from typing import Any, Callable
-import urllib.parse
 
 from jinja2 import Environment, FileSystemLoader, Template
+from requests.utils import requote_url
 
 from .utils import escape_latex_chars
 
@@ -122,7 +122,7 @@ class LaTeXFormatter:
     def url(self, text: str, url: str) -> str:
         """Render a URL, escaping special LaTeX characters."""
 
-        safe_url = escape_latex_chars(urllib.parse.quote(url, safe=":/?&="))
+        safe_url = escape_latex_chars(requote_url(url))
         return self.templates["url"].render(text=text, url=safe_url)
 
     def svg(self, svg: str | Path) -> str:

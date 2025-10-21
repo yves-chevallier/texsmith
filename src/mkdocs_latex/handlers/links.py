@@ -10,7 +10,9 @@ from bs4 import NavigableString, Tag
 from ..context import RenderContext
 from ..exceptions import AssetMissingError, InvalidNodeError
 from ..rules import RenderPhase, renders
-from ..utils import escape_latex_chars, resolve_asset_path, safe_quote
+from requests.utils import requote_url
+
+from ..utils import escape_latex_chars, resolve_asset_path
 
 
 def _resolve_local_target(context: RenderContext, href: str) -> Path | None:
@@ -94,7 +96,7 @@ def render_links(element: Tag, context: RenderContext) -> None:
         return
 
     if href.startswith("http"):
-        latex = context.formatter.href(text=text, url=safe_quote(href))
+        latex = context.formatter.href(text=text, url=requote_url(href))
     elif href.startswith("#"):
         latex = context.formatter.ref(text, ref=href[1:])
     elif href == "" and element_id:

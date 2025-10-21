@@ -4,7 +4,8 @@ from __future__ import annotations
 
 from contextlib import contextmanager
 
-from bs4 import NavigableString, Tag
+from bs4 import Tag
+from bs4.element import NavigableString
 
 from ..context import RenderContext
 from ..rules import RenderPhase, renders

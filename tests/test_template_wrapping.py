@@ -11,7 +11,9 @@ class TemplateWrappingTests(unittest.TestCase):
         project_root = Path(__file__).resolve().parents[1]
         self._previous_cwd = Path.cwd()
         os.chdir(project_root)
-        self.template_path = project_root / "latex_template_book" / "mkdocs_latex_template_book"
+        self.template_path = (
+            project_root / "latex_template_book" / "mkdocs_latex_template_book"
+        )
         self.template = load_template(str(self.template_path))
 
     def tearDown(self) -> None:
@@ -46,7 +48,7 @@ class TemplateWrappingTests(unittest.TestCase):
             copy_template_assets(self.template, destination_root, context=context)
 
             self.assertTrue((destination_root / "mkbook.cls").exists())
-            circles = (destination_root / "covers" / "circles.tex")
+            circles = destination_root / "covers" / "circles.tex"
             self.assertTrue(circles.exists())
             content = circles.read_text(encoding="utf-8")
             self.assertNotIn("\\VAR{", content)
@@ -67,7 +69,9 @@ class ArticleTemplateTests(unittest.TestCase):
         project_root = Path(__file__).resolve().parents[1]
         self._previous_cwd = Path.cwd()
         os.chdir(project_root)
-        self.template_path = project_root / "latex_template_article" / "mkdocs_latex_template_article"
+        self.template_path = (
+            project_root / "latex_template_article" / "mkdocs_latex_template_article"
+        )
         self.template = load_template(str(self.template_path))
 
     def tearDown(self) -> None:

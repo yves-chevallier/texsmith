@@ -7,12 +7,14 @@ import re
 from typing import Iterable
 
 from bs4 import NavigableString, Tag
+from requests.utils import requote_url
 
 from ..context import RenderContext
 from ..exceptions import InvalidNodeError
 from ..rules import RenderPhase, renders
 from ..transformers import fetch_image, svg2pdf
-from ..utils import escape_latex_chars, is_valid_url, safe_quote
+from ..utils import escape_latex_chars, is_valid_url
+
 
 _MATH_PAYLOAD_PATTERN = re.compile(
     r"""
@@ -184,7 +186,7 @@ def _allow_hyphenation(text: str) -> str:
     TODO: This function is bad. Instead we should look into a dictionary
     based hyphenation solution.
     """
-    return text # Temporary disable hyphenation handling
+    return text  # Temporary disable hyphenation handling
 
     if len(text) < 50:
         return text
@@ -251,7 +253,7 @@ def render_unicode_link(element: Tag, context: RenderContext) -> None:
     code = element.get_text(strip=True)
     href_attr = element.get("href")
     href = href_attr if isinstance(href_attr, str) else ""
-    latex = context.formatter.href(text=f"U+{code}", url=safe_quote(href))
+    latex = context.formatter.href(text=f"U+{code}", url=requote_url(href))
     node = NavigableString(latex)
     setattr(node, "processed", True)
     element.replace_with(node)
@@ -272,7 +274,7 @@ def render_regex_link(element: Tag, context: RenderContext) -> None:
 
     href_attr = element.get("href")
     href = href_attr if isinstance(href_attr, str) else ""
-    latex = context.formatter.regex(code, url=safe_quote(href))
+    latex = context.formatter.regex(code, url=requote_url(href))
     node = NavigableString(latex)
     setattr(node, "processed", True)
     element.replace_with(node)

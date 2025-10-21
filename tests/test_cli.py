@@ -103,7 +103,9 @@ def test_convert_markdown_file(tmp_path: Path, monkeypatch: Any) -> None:
                     html_parts.append(f"<p>{line.strip()}</p>")
             return "".join(html_parts)
 
-    monkeypatch.setitem(sys.modules, "markdown", types.SimpleNamespace(Markdown=DummyMarkdown))
+    monkeypatch.setitem(
+        sys.modules, "markdown", types.SimpleNamespace(Markdown=DummyMarkdown)
+    )
 
     runner = CliRunner()
     markdown_file = tmp_path / "index.md"
@@ -159,9 +161,7 @@ def test_default_markdown_extensions(tmp_path: Path, monkeypatch: Any) -> None:
     assert recorded["extensions"] == DEFAULT_MARKDOWN_EXTENSIONS
 
 
-def test_markdown_extensions_normalization(
-    tmp_path: Path, monkeypatch: Any
-) -> None:
+def test_markdown_extensions_normalization(tmp_path: Path, monkeypatch: Any) -> None:
     recorded: dict[str, list[str] | None] = {"extensions": None}
 
     class DummyMarkdown:

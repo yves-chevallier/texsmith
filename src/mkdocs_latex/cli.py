@@ -1,13 +1,13 @@
 from __future__ import annotations
 
-import hashlib
 from dataclasses import dataclass
 from enum import Enum
+import hashlib
 from pathlib import Path
 import re
+import shlex
 import shutil
 import subprocess
-import shlex
 from typing import Any, Callable, Mapping, Optional
 
 from bs4 import BeautifulSoup, FeatureNotFound
@@ -22,14 +22,14 @@ from .transformers import register_converter
 
 
 DEFAULT_MARKDOWN_EXTENSIONS = [
-    "extra",           # Tableaux, listes imbriquées, etc.
-    "abbr",            # Abréviations
-    "attr_list",       # Attributs sur les éléments HTML
-    "def_list",        # Listes de définitions
-    "fenced_code",     # Blocs de code délimités par ```
-    "smarty",          # SmartyPants
-    "tables",          # Tables
-    "mdx_math",        # Support des formules mathématiques
+    "extra",  # Tableaux, listes imbriquées, etc.
+    "abbr",  # Abréviations
+    "attr_list",  # Attributs sur les éléments HTML
+    "def_list",  # Listes de définitions
+    "fenced_code",  # Blocs de code délimités par ```
+    "smarty",  # SmartyPants
+    "tables",  # Tables
+    "mdx_math",  # Support des formules mathématiques
 ]
 
 
@@ -307,9 +307,7 @@ def convert(
         [],
         "--markdown-extensions",
         "-e",
-        help=(
-            "Comma or space separated list of Python Markdown extensions to load."
-        ),
+        help=("Comma or space separated list of Python Markdown extensions to load."),
     ),
 ) -> None:
     """Convert an MkDocs HTML page to LaTeX."""
@@ -466,9 +464,7 @@ def build(
         [],
         "--markdown-extensions",
         "-e",
-        help=(
-            "Comma or space separated list of Python Markdown extensions to load."
-        ),
+        help=("Comma or space separated list of Python Markdown extensions to load."),
     ),
 ) -> None:
     """Convert inputs and compile the rendered document with latexmk."""
