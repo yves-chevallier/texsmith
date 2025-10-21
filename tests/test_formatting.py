@@ -72,6 +72,31 @@ class InlineFormattingTests(unittest.TestCase):
         self.assertIn("H\\textsubscript{2}O", latex)
         self.assertIn("CO\\textsubscript{2}", latex)
 
+    def test_index_span_with_bold_style(self) -> None:
+        html = '<p><span data-tag-name="term" data-tag-style="b">Term</span></p>'
+        latex = self.renderer.render(html)
+        self.assertIn("Term\\index{\\textbf{term}}", latex)
+
+    def test_index_span_without_style(self) -> None:
+        html = '<p><span data-tag-name="Entry">Label</span></p>'
+        latex = self.renderer.render(html)
+        self.assertIn("Label\\index{Entry}", latex)
+
+    def test_index_span_with_italic_style(self) -> None:
+        html = '<p><span data-tag-name="horse" data-tag-style="i">Horse</span></p>'
+        latex = self.renderer.render(html)
+        self.assertIn("Horse\\index{\\textit{horse}}", latex)
+
+    def test_index_anchor_with_bold_italic_style(self) -> None:
+        html = '<p><a href="#" data-tag-name="complex" data-tag-style="bi"></a></p>'
+        latex = self.renderer.render(html)
+        self.assertIn("\\index{\\textbf{\\textit{complex}}}", latex)
+
+    def test_index_nested_entries(self) -> None:
+        html = '<p><span data-tag-name="first, second ,third">Nested</span></p>'
+        latex = self.renderer.render(html)
+        self.assertIn("Nested\\index{first!second!third}", latex)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -139,7 +139,6 @@ _SUBSCRIPT_PATTERN = re.compile(
     f"([{''.join(re.escape(char) for char in _SUBSCRIPT_MAP)}]+)"
 )
 
-
 def _replace_unicode_scripts(
     text: str, pattern: re.Pattern[str], mapping: dict[str, str], command: str
 ) -> str:
@@ -481,6 +480,7 @@ def render_twemoji_span(element: Tag, context: RenderContext) -> None:
 
 @renders(
     "span",
+    "a",
     phase=RenderPhase.INLINE,
     priority=45,
     name="index_entries",
@@ -488,21 +488,28 @@ def render_twemoji_span(element: Tag, context: RenderContext) -> None:
     auto_mark=False,
 )
 def render_index_entry(element: Tag, context: RenderContext) -> None:
-    """Render MkDocs index entries."""
+    """Render inline index term annotations."""
 
-    classes = element.get("class") or []
-    if "ycr-hashtag" not in classes:
+    tag_name = element.get("data-tag-name")
+    if not tag_name:
         return
 
-    tag = element.get("data-tag")
-    if not tag:
-        raise InvalidNodeError("Index entry missing data-tag attribute")
+    raw_entry = str(tag_name)
+    parts = [segment.strip() for segment in raw_entry.split(",") if segment.strip()]
+    if not parts:
+        return
 
-    text = element.get_text(strip=True)
-    entry = element.get("data-index-entry", text or tag)
-    entry = escape_latex_chars(entry)
+    escaped_fragments = [escape_latex_chars(part) for part in parts]
+    escaped_entry = "!".join(escaped_fragments)
+    style_value = element.get("data-tag-style")
+    style_key = str(style_value).strip().lower() if style_value else ""
+    if style_key not in {"b", "i", "bi"}:
+        style_key = ""
 
-    latex = context.formatter.index(text or tag, tag=tag, entry=entry)
+    display_text = element.get_text(strip=False) or ""
+    escaped_text = escape_latex_chars(display_text)
+
+    latex = context.formatter.index(escaped_text, entry=escaped_entry, style=style_key)
     node = NavigableString(latex)
     setattr(node, "processed", True)
     context.mark_processed(element)
