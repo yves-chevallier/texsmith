@@ -1,7 +1,9 @@
 from __future__ import annotations
 
+import copy
 from collections.abc import Callable, Iterable, Mapping
 from dataclasses import dataclass
+import dataclasses
 from enum import Enum
 import hashlib
 from pathlib import Path
@@ -11,7 +13,7 @@ import shutil
 import subprocess
 from typing import Any
 
-from bs4 import BeautifulSoup, FeatureNotFound
+from bs4 import BeautifulSoup, FeatureNotFound, NavigableString, Tag
 from rich import box
 from rich.console import Console
 from rich.panel import Panel
@@ -26,7 +28,7 @@ from .context import DocumentState
 from .exceptions import LatexRenderingError, TransformerExecutionError
 from .formatter import LaTeXFormatter
 from .renderer import LaTeXRenderer
-from .templates import TemplateError, copy_template_assets, load_template
+from .templates import TemplateError, TemplateSlot, copy_template_assets, load_template
 from .transformers import register_converter
 
 
@@ -110,6 +112,7 @@ class ConversionResult:
     template_engine: str | None
     template_shell_escape: bool
     language: str
+    has_bibliography: bool = False
 
 
 app = typer.Typer(
@@ -223,6 +226,7 @@ def _convert_document(
     template: str | None,
     debug: bool,
     language: str | None,
+    slot_overrides: Mapping[str, str] | None,
     markdown_extensions: list[str],
     bibliography_files: list[Path],
 ) -> ConversionResult:
@@ -263,6 +267,10 @@ def _convert_document(
         except ValueError:
             # Fallback to the entire document when the selector cannot be resolved.
             html = input_payload
+
+    slot_requests = _extract_front_matter_slots(front_matter)
+    if slot_overrides:
+        slot_requests.update(dict(slot_overrides))
 
     if debug:
         _persist_debug_artifacts(output_dir, input_path, html)
@@ -337,23 +345,69 @@ def _convert_document(
             typer.secho(str(exc), fg=typer.colors.RED, err=True)
             raise typer.Exit(code=1) from exc
 
+    if template_instance is not None:
+        try:
+            template_slots, default_slot = template_instance.info.resolve_slots()
+        except TemplateError as exc:
+            typer.secho(str(exc), fg=typer.colors.RED, err=True)
+            raise typer.Exit(code=1) from exc
+    else:
+        template_slots = {"mainmatter": TemplateSlot(default=True)}
+        default_slot = "mainmatter"
+        if slot_requests:
+            for slot_name in slot_requests:
+                typer.secho(
+                    f"warning: slot '{slot_name}' was requested but no template "
+                    "is selected; ignoring.",
+                    fg=typer.colors.YELLOW,
+                    err=True,
+                )
+            slot_requests = {}
+
     effective_base_level = template_base_level or 0
-    runtime: dict[str, object] = {
-        "base_level": effective_base_level + base_level + heading_level,
+    slot_base_levels: dict[str, int] = {
+        name: slot.resolve_level(effective_base_level)
+        for name, slot in template_slots.items()
+    }
+    runtime_common: dict[str, object] = {
         "numbered": numbered,
         "source_dir": input_path.parent,
         "document_path": input_path,
         "copy_assets": copy_assets,
+        "language": resolved_language,
     }
-    runtime["language"] = resolved_language
     if bibliography_map:
-        runtime["bibliography"] = bibliography_map
+        runtime_common["bibliography"] = bibliography_map
     if template_name is not None:
-        runtime["template"] = template_name
+        runtime_common["template"] = template_name
     if manifest:
-        runtime["generate_manifest"] = True
-    if drop_title:
-        runtime["drop_title"] = True
+        runtime_common["generate_manifest"] = True
+
+    active_slot_requests: dict[str, str] = {}
+    for slot_name, selector in slot_requests.items():
+        if slot_name not in template_slots:
+            template_hint = (
+                f"template '{template_name}'" if template_name else "the template"
+            )
+            typer.secho(
+                f"warning: slot '{slot_name}' is not defined by {template_hint}; "
+                f"content will remain in '{default_slot}'.",
+                fg=typer.colors.YELLOW,
+                err=True,
+            )
+            continue
+        active_slot_requests[slot_name] = selector
+
+    parser_backend = str(renderer_kwargs.get("parser", "html.parser"))
+    slot_fragments, missing_slots = _extract_slot_fragments(
+        html,
+        active_slot_requests,
+        default_slot,
+        slot_definitions=template_slots,
+        parser_backend=parser_backend,
+    )
+    for message in missing_slots:
+        typer.secho(f"warning: {message}", fg=typer.colors.YELLOW, err=True)
 
     def renderer_factory() -> LaTeXRenderer:
         formatter = LaTeXFormatter()
@@ -364,20 +418,42 @@ def _convert_document(
     if not disable_fallback_converters:
         _ensure_fallback_converters()
 
-    try:
-        latex_output, document_state = _render_with_fallback(
-            renderer_factory,
-            html,
-            runtime,
-            bibliography_map,
-        )
-    except LatexRenderingError as exc:
-        typer.secho(
-            _format_rendering_error(exc),
-            fg=typer.colors.RED,
-            err=True,
-        )
-        raise typer.Exit(code=1) from exc
+    slot_outputs: dict[str, str] = {}
+    document_state: DocumentState | None = None
+    drop_title_flag = bool(drop_title)
+    for fragment in slot_fragments:
+        runtime = dict(runtime_common)
+        base_value = slot_base_levels.get(fragment.name, effective_base_level)
+        runtime["base_level"] = base_value + base_level + heading_level
+        if drop_title_flag:
+            runtime["drop_title"] = True
+            drop_title_flag = False
+        try:
+            fragment_output, document_state = _render_with_fallback(
+                renderer_factory,
+                fragment.html,
+                runtime,
+                bibliography_map,
+                state=document_state,
+            )
+        except LatexRenderingError as exc:
+            typer.secho(
+                _format_rendering_error(exc),
+                fg=typer.colors.RED,
+                err=True,
+            )
+            raise typer.Exit(code=1) from exc
+        existing_fragment = slot_outputs.get(fragment.name, "")
+        slot_outputs[fragment.name] = f"{existing_fragment}{fragment_output}"
+
+    if document_state is None:
+        document_state = DocumentState(bibliography=dict(bibliography_map))
+
+    default_content = slot_outputs.get(default_slot)
+    if default_content is None:
+        default_content = ""
+        slot_outputs[default_slot] = default_content
+    latex_output = default_content
 
     citations = list(document_state.citations)
     bibliography_output: Path | None = None
@@ -403,6 +479,10 @@ def _convert_document(
                 latex_output,
                 overrides=template_overrides if template_overrides else None,
             )
+            for slot_name, fragment_output in slot_outputs.items():
+                if slot_name == default_slot:
+                    continue
+                template_context[slot_name] = fragment_output
             template_context["index_entries"] = document_state.has_index_entries
             template_context["acronyms"] = document_state.acronyms.copy()
             template_context["citations"] = citations
@@ -448,6 +528,7 @@ def _convert_document(
         template_engine=template_info_engine,
         template_shell_escape=template_requires_shell_escape,
         language=resolved_language,
+        has_bibliography=bool(citations),
     )
 
 
@@ -603,10 +684,19 @@ def convert(
         "--language",
         help="Language code passed to babel (defaults to metadata or english).",
     ),
+    slots: list[str] = typer.Option(
+        [],
+        "--slot",
+        "-e",
+        help=(
+            "Inject a document section into a template slot using 'slot:Section'. "
+            "Repeat to map multiple sections."
+        ),
+    ),
     markdown_extensions: list[str] = typer.Option(
         [],
         "--markdown-extensions",
-        "-e",
+        "-x",
         help=(
             "Additional Markdown extensions to enable "
             "(comma or space separated values are accepted)."
@@ -640,6 +730,10 @@ def convert(
         _resolve_option(markdown_extensions),
         _resolve_option(disable_markdown_extensions),
     )
+    try:
+        requested_slots = _parse_slot_option(_resolve_option(slots))
+    except ValueError as exc:
+        raise typer.BadParameter(str(exc)) from exc
 
     result = _convert_document(
         input_path=input_path,
@@ -657,6 +751,7 @@ def convert(
         template=_resolve_option(template),
         debug=_resolve_option(debug),
         language=_resolve_option(language),
+        slot_overrides=requested_slots,
         markdown_extensions=resolved_markdown_extensions,
         bibliography_files=list(_resolve_option(bibliography)),
     )
@@ -671,7 +766,9 @@ def convert(
     typer.echo(result.latex_output)
 
 
-def _build_latexmk_command(engine: str | None, shell_escape: bool) -> list[str]:
+def _build_latexmk_command(
+    engine: str | None, shell_escape: bool, force_bibtex: bool = False
+) -> list[str]:
     engine_command = (engine or "pdflatex").strip()
     if not engine_command:
         engine_command = "pdflatex"
@@ -687,7 +784,7 @@ def _build_latexmk_command(engine: str | None, shell_escape: bool) -> list[str]:
 
     tokens.extend(["%O", "%S"])
 
-    return [
+    command = [
         "latexmk",
         "-pdf",
         "-interaction=nonstopmode",
@@ -695,6 +792,9 @@ def _build_latexmk_command(engine: str | None, shell_escape: bool) -> list[str]:
         "-file-line-error",
         f"-pdflatex={' '.join(tokens)}",
     ]
+    if force_bibtex:
+        command.insert(2, "-bibtex")
+    return command
 
 
 @app.command(name="build")
@@ -796,10 +896,19 @@ def build(
         "--language",
         help="Language code passed to babel (defaults to metadata or english).",
     ),
+    slots: list[str] = typer.Option(
+        [],
+        "--slot",
+        "-e",
+        help=(
+            "Inject a document section into a template slot using 'slot:Section'. "
+            "Repeat to map multiple sections."
+        ),
+    ),
     markdown_extensions: list[str] = typer.Option(
         [],
         "--markdown-extensions",
-        "-e",
+        "-x",
         help=(
             "Additional Markdown extensions to enable "
             "(comma or space separated values are accepted)."
@@ -833,6 +942,10 @@ def build(
         _resolve_option(markdown_extensions),
         _resolve_option(disable_markdown_extensions),
     )
+    try:
+        requested_slots = _parse_slot_option(_resolve_option(slots))
+    except ValueError as exc:
+        raise typer.BadParameter(str(exc)) from exc
 
     conversion = _convert_document(
         input_path=input_path,
@@ -850,6 +963,7 @@ def build(
         template=_resolve_option(template),
         debug=_resolve_option(debug),
         language=_resolve_option(language),
+        slot_overrides=requested_slots,
         markdown_extensions=resolved_markdown_extensions,
         bibliography_files=list(_resolve_option(bibliography)),
     )
@@ -875,6 +989,7 @@ def build(
     command = _build_latexmk_command(
         conversion.template_engine,
         conversion.template_shell_escape,
+        force_bibtex=conversion.has_bibliography,
     )
     command[0] = latexmk_path
     command.append(conversion.tex_path.name)
@@ -931,6 +1046,210 @@ if __name__ == "__main__":
     main()
 
 
+@dataclass(slots=True)
+class SlotFragment:
+    """HTML fragment mapped to a template slot with position metadata."""
+
+    name: str
+    html: str
+    position: int
+
+
+def _parse_slot_option(values: Iterable[str] | None) -> dict[str, str]:
+    """Parse CLI slot overrides declared as 'slot:Section' pairs."""
+
+    overrides: dict[str, str] = {}
+    if not values:
+        return overrides
+
+    for raw in values:
+        if not isinstance(raw, str):
+            continue
+        entry = raw.strip()
+        if not entry:
+            continue
+        if ":" not in entry:
+            raise ValueError(
+                f"Invalid slot override '{raw}', expected format 'slot:Section'."
+            )
+        slot_name, selector = entry.split(":", 1)
+        slot_name = slot_name.strip()
+        selector = selector.strip()
+        if not slot_name or not selector:
+            raise ValueError(
+                f"Invalid slot override '{raw}', expected format 'slot:Section'."
+            )
+        overrides[slot_name] = selector
+
+    return overrides
+
+
+def _extract_front_matter_slots(front_matter: Mapping[str, Any]) -> dict[str, str]:
+    """Collect slot overrides defined in document front matter."""
+
+    overrides: dict[str, str] = {}
+    meta_section = front_matter.get("meta")
+    if not isinstance(meta_section, Mapping):
+        return overrides
+
+    raw_slots = meta_section.get("slots") or meta_section.get("entrypoints")
+
+    if isinstance(raw_slots, Mapping):
+        for slot_name, payload in raw_slots.items():
+            if not isinstance(slot_name, str):
+                continue
+            selector: str | None = None
+            if isinstance(payload, str):
+                selector = payload
+            elif isinstance(payload, Mapping):
+                label = payload.get("label")
+                title = payload.get("title")
+                candidate = label or title
+                if isinstance(candidate, str):
+                    selector = candidate
+            if selector:
+                slot_key = slot_name.strip()
+                slot_value = selector.strip()
+                if slot_key and slot_value:
+                    overrides[slot_key] = slot_value
+    elif isinstance(raw_slots, Iterable):
+        for entry in raw_slots:
+            if not isinstance(entry, Mapping):
+                continue
+            slot_name = entry.get("target") or entry.get("slot")
+            selector = entry.get("label") or entry.get("title")
+            if isinstance(slot_name, str) and isinstance(selector, str):
+                slot_key = slot_name.strip()
+                slot_value = selector.strip()
+                if slot_key and slot_value:
+                    overrides[slot_key] = slot_value
+
+    return overrides
+
+
+def _extract_slot_fragments(
+    html: str,
+    requests: Mapping[str, str],
+    default_slot: str,
+    *,
+    slot_definitions: Mapping[str, TemplateSlot],
+    parser_backend: str,
+) -> tuple[list[SlotFragment], list[str]]:
+    """Split the HTML document into fragments mapped to template slots."""
+
+    try:
+        soup = BeautifulSoup(html, parser_backend)
+    except FeatureNotFound:
+        soup = BeautifulSoup(html, "html.parser")
+
+    container = soup.body or soup
+    headings: list[tuple[int, Tag]] = []
+    for index, heading in enumerate(
+        container.find_all(re.compile(r"^h[1-6]$"), recursive=True)
+    ):
+        headings.append((index, heading))
+
+    matched: dict[str, tuple[int, Tag]] = {}
+    missing: list[str] = []
+    occupied_nodes: set[int] = set()
+
+    for slot_name, selector in requests.items():
+        if not selector:
+            continue
+        target_label = selector.lstrip("#")
+        matched_heading: tuple[int, Tag] | None = None
+        for index, heading in headings:
+            if id(heading) in occupied_nodes:
+                continue
+            node_id = heading.get("id")
+            if isinstance(node_id, str) and node_id == target_label:
+                matched_heading = (index, heading)
+                break
+        if matched_heading is None:
+            for index, heading in headings:
+                if id(heading) in occupied_nodes:
+                    continue
+                if heading.get_text(strip=True) == selector:
+                    matched_heading = (index, heading)
+                    break
+        if matched_heading is None:
+            missing.append(
+                f"unable to locate section '{selector}' for slot '{slot_name}'"
+            )
+            continue
+        matched_index, heading = matched_heading
+        occupied_nodes.add(id(heading))
+        matched[slot_name] = (matched_index, heading)
+
+    fragments: list[SlotFragment] = []
+
+    for slot_name, (order, heading) in sorted(matched.items(), key=lambda item: item[1][0]):
+        section_nodes = _collect_section_nodes(heading)
+        slot_config = slot_definitions.get(slot_name)
+        strip_heading = bool(slot_config.strip_heading) if slot_config else False
+        render_nodes = list(section_nodes)
+        if strip_heading and render_nodes:
+            render_nodes = render_nodes[1:]
+            while render_nodes and isinstance(render_nodes[0], NavigableString):
+                if str(render_nodes[0]).strip():
+                    break
+                render_nodes.pop(0)
+        html_fragment = "".join(str(node) for node in render_nodes)
+        fragments.append(SlotFragment(name=slot_name, html=html_fragment, position=order))
+        for node in section_nodes:
+            if hasattr(node, "extract"):
+                node.extract()
+
+    container = soup.body or soup
+    remainder_html = "".join(str(node) for node in container.contents)
+    remaining_positions = [index for index, heading in headings if heading.parent is not None]
+    if fragments:
+        remainder_position = min(fragment.position for fragment in fragments) - 1
+    else:
+        remainder_position = -1
+
+    fragments.append(
+        SlotFragment(name=default_slot, html=remainder_html, position=remainder_position)
+    )
+
+    fragments.sort(key=lambda fragment: fragment.position)
+    return fragments, missing
+
+
+def _collect_section_nodes(heading: Tag) -> list[Any]:
+    """Collect a heading node and its associated section content."""
+
+    nodes: list[Any] = [heading]
+    heading_level = _heading_level(heading)
+    for sibling in heading.next_siblings:
+        if isinstance(sibling, NavigableString):
+            nodes.append(sibling)
+            continue
+        if isinstance(sibling, Tag):
+            if re.fullmatch(r"h[1-6]", sibling.name or ""):
+                sibling_level = _heading_level(sibling)
+                if sibling_level <= heading_level:
+                    break
+            nodes.append(sibling)
+    return nodes
+
+
+def _heading_level(node: Tag) -> int:
+    """Return the numeric level of a heading element."""
+
+    name = node.name or ""
+    if not re.fullmatch(r"h[1-6]", name):
+        raise ValueError(f"Expected heading element, got '{name}'.")
+    return int(name[1])
+
+
+def _copy_document_state(target: DocumentState, source: DocumentState) -> None:
+    """Synchronise target ``DocumentState`` with a source instance."""
+
+    for field in dataclasses.fields(DocumentState):
+        setattr(target, field.name, copy.deepcopy(getattr(source, field.name)))
+
+
 def _extract_content(html: str, selector: str) -> str:
     try:
         soup = BeautifulSoup(html, "lxml")
@@ -954,19 +1273,34 @@ def _render_with_fallback(
     html: str,
     runtime: dict[str, object],
     bibliography: Mapping[str, dict[str, Any]] | None = None,
+    *,
+    state: DocumentState | None = None,
 ) -> tuple[str, DocumentState]:
     attempts = 0
-    state = DocumentState(bibliography=dict(bibliography or {}))
+    bibliography_payload = dict(bibliography or {})
+    base_state = state
+
     while True:
+        current_state = (
+            copy.deepcopy(base_state)
+            if base_state is not None
+            else DocumentState(bibliography=dict(bibliography_payload))
+        )
+
         renderer = renderer_factory()
         try:
-            output = renderer.render(html, runtime=runtime, state=state)
-            return output, state
+            output = renderer.render(html, runtime=runtime, state=current_state)
         except LatexRenderingError as exc:
             attempts += 1
             if attempts >= 5 or not _attempt_transformer_fallback(exc):
                 raise
-            state = DocumentState(bibliography=dict(bibliography or {}))
+            continue
+
+        if base_state is not None:
+            _copy_document_state(base_state, current_state)
+            return output, base_state
+
+        return output, current_state
 
 
 def _attempt_transformer_fallback(error: LatexRenderingError) -> bool:

@@ -243,9 +243,14 @@ def render_footnotes(root: Tag, context: RenderContext) -> None:
             footnotes[footnote_id] = li.get_text(strip=False).strip()
         container.decompose()
 
+    if footnotes:
+        context.state.footnotes.update(footnotes)
+
     for sup in root.find_all("sup", id=True):
         footnote_id = _normalise_footnote_id(sup.get("id"))
         payload = footnotes.get(footnote_id)
+        if payload is None:
+            payload = context.state.footnotes.get(footnote_id)
         if footnote_id and footnote_id in bibliography:
             if payload:
                 warnings.warn(
@@ -282,6 +287,11 @@ def render_footnotes(root: Tag, context: RenderContext) -> None:
             latex = context.formatter.citation(key=footnote_id)
             _replace_with_latex(placeholder, latex)
         else:
+            payload = context.state.footnotes.get(footnote_id)
+            if payload:
+                latex = context.formatter.footnote(payload)
+                _replace_with_latex(placeholder, latex)
+                continue
             warnings.warn(
                 f"Reference to '{footnote_id}' is not in your bibliography...",
                 stacklevel=2,

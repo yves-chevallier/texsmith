@@ -52,11 +52,6 @@ __all__ = [
 ]
 
 
-def main() -> None:
-    state = DocumentState()
-    renderer = build_renderer()
-    print(renderer.render(HTML, state=state))
-
-
-if __name__ == "__main__":  # pragma: no cover - convenience CLI
-    main()
+state = DocumentState()
+renderer = build_renderer()
+print(renderer.render(HTML, state=state))

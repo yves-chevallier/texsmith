@@ -1,3 +1,11 @@
+# TeXSmith
+
+TeXSmith is a Python package and CLI tool to convert **Markdown** or **HTML** documents into LaTeX format. It is designed to be extensible via templates and integrates with MkDocs for generating printable documents from documentation sites.
+
+![TeXSmith Logo](docs/logo.svg)
+
+## Features
+
 On va rajouter au cli texsmith :
 
 -h,--heading-level permettant d'indenter tous les niveau (section -> subsection) si le document intervient dans un document plus général
@@ -443,12 +451,16 @@ non-standard-fields:
 - [x] Support for bibliography (biblatex, natbib...)
 - [x] Support for footnotes
 - [x] Convert some journals templates
+- [x] Ajouter des tests unitaires et d'intégration pour le CLI et MkDocs
+- [x] Support for images (convertion to pdf...)
+- [ ] Manage figures captions
+- [ ] Manage table captions
+- [ ] Entrypoints (abstract, mainmatter, appendix...)
 
 ### Medium term
 
 - [ ] Documenter que par défaut, le renderer rends les blocs de code avec un wrapper générique, permettant de bind sur listing, verbatim ou minted.
 - [ ] Gérer les assets de manière centralisée (images, drawio, mermaid...)
-- [ ] Ajouter des tests unitaires et d'intégration pour le CLI et MkDocs
 - [ ] Documenter le processus de création de templates LaTeX personnalisées
 - [ ] Declare solution/exercises in a plugin way
 - [ ] Find a way to have a solid and robust docker submodule/class
@@ -456,7 +468,7 @@ non-standard-fields:
 - [ ] Support for glossaries (glossaries package)
 - [ ] Support for cross-references (cleveref package)
 - [ ] Méthode pour extraire/injecter une section et ses sous-sections dans un autre entrypoint (frontmatter, abstract, appendix...)
-- [ ] Add more Markdown extensions (footnotes, definition lists, tables...)
+- [ ] Add more Markdown extensions (definition lists, tables...)
 - [ ] Improve error handling and reporting during LaTeX compilation
 - [ ] Optimize asset conversion and caching mechanisms
 - [ ] Mkdocs Integration
