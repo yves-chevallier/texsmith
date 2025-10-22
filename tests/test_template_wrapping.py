@@ -14,8 +14,7 @@ class TemplateWrappingTests(unittest.TestCase):
         self.template_path = (
             project_root
             / "templates"
-            / "texsmith-template-book"
-            / "texsmith_template_book"
+            / "book"
         )
         self.template = load_template(str(self.template_path))
 
@@ -93,8 +92,7 @@ class ArticleTemplateTests(unittest.TestCase):
         self.template_path = (
             project_root
             / "templates"
-            / "texsmith-template-article"
-            / "texsmith_template_article"
+            / "article"
         )
         self.template = load_template(str(self.template_path))
 

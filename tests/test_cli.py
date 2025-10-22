@@ -11,12 +11,7 @@ from texsmith.cli import DEFAULT_MARKDOWN_EXTENSIONS, app
 
 def _template_path(name: str) -> Path:
     project_root = Path(__file__).resolve().parents[1]
-    return (
-        project_root
-        / "templates"
-        / f"texsmith-template-{name}"
-        / f"texsmith_template_{name}"
-    )
+    return project_root / "templates" / name
 
 
 def test_convert_command(tmp_path: Path) -> None:
@@ -493,7 +488,7 @@ def test_build_invokes_latexmk(tmp_path: Path, monkeypatch: Any) -> None:
     assert command[0] == "/usr/bin/latexmk"
     assert "-bibtex" not in command
     pdflatex_args = [arg for arg in command if arg.startswith("-pdflatex=")]
-    assert pdflatex_args and "lualatex" in pdflatex_args[0]
+    assert pdflatex_args and "xelatex" in pdflatex_args[0]
     assert "--shell-escape" in pdflatex_args[0]
     assert command[-1] == "index.tex"
     assert kwargs["cwd"] == output_dir

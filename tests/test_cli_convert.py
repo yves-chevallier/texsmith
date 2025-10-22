@@ -123,7 +123,7 @@ Content here.
             self.assertTrue(output_file.exists())
             content = output_file.read_text(encoding="utf-8")
             self.assertIn(r"\begin{tabular}{@{}ll@{}}", content)
-            self.assertIn(r"\caption{Overview}\label{tbl-sample}%", content)
+            self.assertIn(r"\caption{Overview}\label{tbl-sample}", content)
             self.assertIn(r"\botrule", content)
             self.assertNotIn(r"\textbf{Col 1}", content)
 

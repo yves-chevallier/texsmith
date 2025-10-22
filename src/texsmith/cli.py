@@ -6,6 +6,7 @@ import dataclasses
 from dataclasses import dataclass
 from enum import Enum
 import hashlib
+import os
 from pathlib import Path
 import re
 import shlex
@@ -533,6 +534,13 @@ def _convert_document(
 def _resolve_option(value: Any) -> Any:
     if isinstance(value, typer.models.OptionInfo):
         return value.default
+    if hasattr(typer.models, "ArgumentInfo") and isinstance(
+        value, typer.models.ArgumentInfo
+    ):
+        default = value.default
+        if default is Ellipsis:
+            return []
+        return default
     return value
 
 
@@ -639,6 +647,12 @@ def convert(
         dir_okay=False,
         readable=True,
         resolve_path=True,
+    ),
+    input_path: Path | None = typer.Option(
+        None,
+        "--input-path",
+        help="Internal helper used for programmatic invocation.",
+        hidden=True,
     ),
     output_dir: Path = typer.Option(
         Path("build"),
@@ -770,9 +784,17 @@ def convert(
     """Convert an MkDocs HTML page to LaTeX."""
 
     resolved_bibliography_option = list(_resolve_option(bibliography))
+    resolved_inputs = list(_resolve_option(inputs))
+
+    if input_path is not None:
+        if resolved_inputs:
+            raise typer.BadParameter(
+                "Provide either positional inputs or --input-path, not both."
+            )
+        resolved_inputs = [input_path]
     try:
         document_path, bibliography_files = _partition_input_resources(
-            inputs, resolved_bibliography_option
+            resolved_inputs, resolved_bibliography_option
         )
     except ValueError as exc:
         raise typer.BadParameter(str(exc)) from exc
@@ -1055,6 +1077,29 @@ def build(
     )
     command[0] = latexmk_path
     command.append(conversion.tex_path.name)
+
+    tex_cache_root = (conversion.tex_path.parent / '.texmf-cache').resolve()
+    tex_cache_root.mkdir(parents=True, exist_ok=True)
+    env = os.environ.copy()
+
+    texmf_home = tex_cache_root / 'texmf-home'
+    texmf_var = tex_cache_root / 'texmf-var'
+    luatex_cache = tex_cache_root / 'luatex-cache'
+
+    texmf_cache = tex_cache_root / 'texmf-cache'
+    texmf_config = tex_cache_root / 'texmf-config'
+    xdg_cache = tex_cache_root / 'xdg-cache'
+
+    for cache_path in (texmf_home, texmf_var, texmf_config, luatex_cache, texmf_cache, xdg_cache):
+        cache_path.mkdir(parents=True, exist_ok=True)
+
+    env['TEXMFHOME'] = str(texmf_home)
+    env['TEXMFVAR'] = str(texmf_var)
+    env['TEXMFCONFIG'] = str(texmf_config)
+    env['LUATEXCACHE'] = str(luatex_cache)
+    env['LUAOTFLOAD_CACHE'] = str(luatex_cache)
+    env['TEXMFCACHE'] = str(texmf_cache)
+    env.setdefault('XDG_CACHE_HOME', str(xdg_cache))
 
     try:
         process = subprocess.run(
