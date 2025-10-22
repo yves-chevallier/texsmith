@@ -251,6 +251,61 @@ class WrappableTemplate(BaseTemplate):
                 template_name=template_name,
             )
 
+    def iter_formatter_overrides(self) -> Iterable[tuple[str, Path]]:
+        """Yield formatter override templates declared by the manifest."""
+
+        if not self.info.override:
+            return ()
+
+        search_roots = [
+            self.root / "overrides",
+            self.root / "template" / "overrides",
+            self.root,
+            self.root.parent / "overrides",
+        ]
+
+        seen: set[str] = set()
+        overrides: list[tuple[str, Path]] = []
+
+        for entry in self.info.override:
+            if not isinstance(entry, str):
+                raise TemplateError(
+                    "Formatter override entries must be provided as string paths."
+                )
+            candidate = entry.strip()
+            if not candidate:
+                continue
+
+            relative_path = Path(candidate)
+            if relative_path.is_absolute() or any(
+                part == ".." for part in relative_path.parts
+            ):
+                raise TemplateError(
+                    f"Formatter override '{entry}' must be a relative path without '..'."
+                )
+
+            resolved_path: Path | None = None
+            for root in search_roots:
+                if not root.exists():
+                    continue
+                probe = (root / relative_path).resolve()
+                if probe.exists():
+                    resolved_path = probe
+                    break
+
+            if resolved_path is None:
+                raise TemplateError(
+                    f"Formatter override '{entry}' is missing under '{self.root}'."
+                )
+
+            key = relative_path.with_suffix("").as_posix().replace("/", "_")
+            if key in seen:
+                continue
+            seen.add(key)
+            overrides.append((key, resolved_path))
+
+        return overrides
+
 
 def _load_path_template(path: Path) -> WrappableTemplate:
     specialised = _load_specialised_template(path)

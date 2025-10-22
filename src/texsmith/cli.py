@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from collections.abc import Callable, Iterable, Mapping
 from dataclasses import dataclass
 from enum import Enum
 import hashlib
@@ -8,29 +9,51 @@ import re
 import shlex
 import shutil
 import subprocess
-from typing import Any, Callable, Iterable, Mapping, Optional
+from typing import Any
 
 from bs4 import BeautifulSoup, FeatureNotFound
 import typer
 import yaml
 
 from .config import BookConfig
-from .exceptions import LatexRenderingError, TransformerExecutionError
 from .context import DocumentState
+from .exceptions import LatexRenderingError, TransformerExecutionError
+from .formatter import LaTeXFormatter
 from .renderer import LaTeXRenderer
 from .templates import TemplateError, copy_template_assets, load_template
 from .transformers import register_converter
 
 
 DEFAULT_MARKDOWN_EXTENSIONS = [
-    "extra",  # Tableaux, listes imbriquées, etc.
-    "abbr",  # Abréviations
-    "attr_list",  # Attributs sur les éléments HTML
-    "def_list",  # Listes de définitions
-    "fenced_code",  # Blocs de code délimités par ```
-    "smarty",  # SmartyPants
-    "tables",  # Tables
-    "mdx_math",  # Support des formules mathématiques
+    "abbr",
+    "admonition",
+    "attr_list",
+    "def_list",
+    "footnotes",
+    "md_in_html",
+    "mdx_math",
+    "pymdownx.betterem",
+    "pymdownx.blocks.caption",
+    "pymdownx.blocks.html",
+    "pymdownx.caret",
+    "pymdownx.critic",
+    "pymdownx.details",
+    "pymdownx.emoji",
+    "pymdownx.fancylists",
+    "pymdownx.highlight",
+    "pymdownx.inlinehilite",
+    "pymdownx.keys",
+    "pymdownx.magiclink",
+    "pymdownx.mark",
+    "pymdownx.saneheaders",
+    "pymdownx.smartsymbols",
+    "pymdownx.snippets",
+    "pymdownx.superfences",
+    "pymdownx.tabbed",
+    "pymdownx.tasklist",
+    "pymdownx.tilde",
+    "tables",
+    "toc",
 ]
 
 
@@ -85,13 +108,25 @@ class ConversionResult:
 app = typer.Typer(
     help="Convert MkDocs HTML fragments into LaTeX.",
     context_settings={"help_option_names": ["--help"]},
+    invoke_without_command=True,
 )
 
 
 @app.callback()
-def _app_root() -> None:
+def _app_root(
+    list_extensions: bool = typer.Option(
+        False,
+        "--list-extensions",
+        help="List Markdown extensions enabled by default and exit.",
+    ),
+) -> None:
     """Top-level CLI entry point to enable subcommands."""
-    # Intentionally empty; required so Typer treats the app as a command group.
+
+    if list_extensions:
+        for extension in DEFAULT_MARKDOWN_EXTENSIONS:
+            typer.echo(extension)
+        raise typer.Exit(code=0)
+
     return None
 
 
@@ -104,13 +139,13 @@ def _convert_document(
     heading_level: int,
     drop_title: bool,
     numbered: bool,
-    parser: Optional[str],
+    parser: str | None,
     disable_fallback_converters: bool,
     copy_assets: bool,
     manifest: bool,
-    template: Optional[str],
+    template: str | None,
     debug: bool,
-    language: Optional[str],
+    language: str | None,
     markdown_extensions: list[str],
 ) -> ConversionResult:
     try:
@@ -182,6 +217,7 @@ def _convert_document(
     template_instance = None
     template_name: str | None = None
     template_context: dict[str, Any] | None = None
+    formatter_overrides: dict[str, Path] = {}
     if template:
         try:
             template_instance = load_template(template)
@@ -202,6 +238,11 @@ def _convert_document(
         template_name = template_instance.info.name
         template_info_engine = template_instance.info.engine
         template_requires_shell_escape = bool(template_instance.info.shell_escape)
+        try:
+            formatter_overrides = dict(template_instance.iter_formatter_overrides())
+        except TemplateError as exc:
+            typer.secho(str(exc), fg=typer.colors.RED, err=True)
+            raise typer.Exit(code=1) from exc
 
     effective_base_level = template_base_level or 0
     runtime: dict[str, object] = {
@@ -220,7 +261,10 @@ def _convert_document(
         runtime["drop_title"] = True
 
     def renderer_factory() -> LaTeXRenderer:
-        return LaTeXRenderer(config=config, **renderer_kwargs)
+        formatter = LaTeXFormatter()
+        for key, override_path in formatter_overrides.items():
+            formatter.override_template(key, override_path)
+        return LaTeXRenderer(config=config, formatter=formatter, **renderer_kwargs)
 
     if not disable_fallback_converters:
         _ensure_fallback_converters()
@@ -298,7 +342,9 @@ def _coerce_base_level(value: Any, *, allow_none: bool = True) -> int | None:
         raise TemplateError("Base level value is missing.")
 
     if isinstance(value, bool):
-        raise TemplateError("Base level must be an integer, booleans are not supported.")
+        raise TemplateError(
+            "Base level must be an integer, booleans are not supported."
+        )
 
     if isinstance(value, (int, float)):
         return int(value)
@@ -389,7 +435,7 @@ def convert(
         "--numbered/--unnumbered",
         help="Toggle numbered headings.",
     ),
-    parser: Optional[str] = typer.Option(
+    parser: str | None = typer.Option(
         None,
         "--parser",
         help='BeautifulSoup parser backend to use (defaults to "html.parser").',
@@ -416,7 +462,7 @@ def convert(
         "-m/-M",
         help="Toggle generation of an asset manifest file (reserved).",
     ),
-    template: Optional[str] = typer.Option(
+    template: str | None = typer.Option(
         None,
         "--template",
         "-t",
@@ -430,7 +476,7 @@ def convert(
         "--debug/--no-debug",
         help="Enable debug mode to persist intermediate artifacts.",
     ),
-    language: Optional[str] = typer.Option(
+    language: str | None = typer.Option(
         None,
         "--language",
         help="Language code passed to babel (defaults to metadata or english).",
@@ -439,10 +485,28 @@ def convert(
         [],
         "--markdown-extensions",
         "-e",
-        help=("Comma or space separated list of Python Markdown extensions to load."),
+        help=(
+            "Additional Markdown extensions to enable "
+            "(comma or space separated values are accepted)."
+        ),
+    ),
+    disable_markdown_extensions: list[str] = typer.Option(
+        [],
+        "--disable-markdown-extensions",
+        "--disable-extension",
+        "-d",
+        help=(
+            "Markdown extensions to disable. "
+            "Provide a comma separated list or repeat the option multiple times."
+        ),
     ),
 ) -> None:
     """Convert an MkDocs HTML page to LaTeX."""
+
+    resolved_markdown_extensions = _resolve_markdown_extensions(
+        _resolve_option(markdown_extensions),
+        _resolve_option(disable_markdown_extensions),
+    )
 
     result = _convert_document(
         input_path=input_path,
@@ -460,7 +524,7 @@ def convert(
         template=_resolve_option(template),
         debug=_resolve_option(debug),
         language=_resolve_option(language),
-        markdown_extensions=_resolve_option(markdown_extensions),
+        markdown_extensions=resolved_markdown_extensions,
     )
 
     if result.tex_path is not None:
@@ -552,7 +616,7 @@ def build(
         "--numbered/--unnumbered",
         help="Toggle numbered headings.",
     ),
-    parser: Optional[str] = typer.Option(
+    parser: str | None = typer.Option(
         None,
         "--parser",
         help='BeautifulSoup parser backend to use (defaults to "html.parser").',
@@ -579,7 +643,7 @@ def build(
         "-m/-M",
         help="Toggle generation of an asset manifest file (reserved).",
     ),
-    template: Optional[str] = typer.Option(
+    template: str | None = typer.Option(
         None,
         "--template",
         "-t",
@@ -593,7 +657,7 @@ def build(
         "--debug/--no-debug",
         help="Enable debug mode to persist intermediate artifacts.",
     ),
-    language: Optional[str] = typer.Option(
+    language: str | None = typer.Option(
         None,
         "--language",
         help="Language code passed to babel (defaults to metadata or english).",
@@ -602,10 +666,28 @@ def build(
         [],
         "--markdown-extensions",
         "-e",
-        help=("Comma or space separated list of Python Markdown extensions to load."),
+        help=(
+            "Additional Markdown extensions to enable "
+            "(comma or space separated values are accepted)."
+        ),
+    ),
+    disable_markdown_extensions: list[str] = typer.Option(
+        [],
+        "--disable-markdown-extensions",
+        "--disable-extension",
+        "-d",
+        help=(
+            "Markdown extensions to disable. "
+            "Provide a comma separated list or repeat the option multiple times."
+        ),
     ),
 ) -> None:
     """Convert inputs and compile the rendered document with latexmk."""
+
+    resolved_markdown_extensions = _resolve_markdown_extensions(
+        _resolve_option(markdown_extensions),
+        _resolve_option(disable_markdown_extensions),
+    )
 
     conversion = _convert_document(
         input_path=input_path,
@@ -623,7 +705,7 @@ def build(
         template=_resolve_option(template),
         debug=_resolve_option(debug),
         language=_resolve_option(language),
-        markdown_extensions=_resolve_option(markdown_extensions),
+        markdown_extensions=resolved_markdown_extensions,
     )
 
     if conversion.tex_path is None:
@@ -802,6 +884,43 @@ def _format_rendering_error(error: LatexRenderingError) -> str:
     return f"LaTeX rendering failed: {cause}"
 
 
+def _resolve_markdown_extensions(
+    requested: Iterable[str] | typer.models.OptionInfo | None,
+    disabled: Iterable[str] | typer.models.OptionInfo | None,
+) -> list[str]:
+    enabled = _normalize_markdown_extensions(requested)
+    disabled_normalized = {
+        extension.lower() for extension in _normalize_markdown_extensions(disabled)
+    }
+
+    combined = _deduplicate_markdown_extensions(
+        list(DEFAULT_MARKDOWN_EXTENSIONS) + enabled
+    )
+
+    if not disabled_normalized:
+        return combined
+
+    return [
+        extension
+        for extension in combined
+        if extension.lower() not in disabled_normalized
+    ]
+
+
+def _deduplicate_markdown_extensions(values: Iterable[str]) -> list[str]:
+    seen: set[str] = set()
+    result: list[str] = []
+    for value in values:
+        if not isinstance(value, str):
+            continue
+        key = value.lower()
+        if key in seen:
+            continue
+        seen.add(key)
+        result.append(value)
+    return result
+
+
 def _normalize_markdown_extensions(
     values: Iterable[str] | typer.models.OptionInfo | None,
 ) -> list[str]:
@@ -938,9 +1057,7 @@ def _resolve_template_language(
 ) -> str:
     candidates = (
         _normalise_template_language(explicit),
-        _normalise_template_language(
-            _extract_language_from_front_matter(front_matter)
-        ),
+        _normalise_template_language(_extract_language_from_front_matter(front_matter)),
     )
 
     for candidate in candidates:

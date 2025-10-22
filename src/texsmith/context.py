@@ -3,10 +3,11 @@
 from __future__ import annotations
 
 from collections import defaultdict
-import warnings
+from collections.abc import Iterable, MutableMapping
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, DefaultDict, Dict, Iterable, MutableMapping
+from typing import TYPE_CHECKING, Any
+import warnings
 
 from slugify import slugify
 
@@ -23,16 +24,16 @@ if TYPE_CHECKING:  # pragma: no cover - typing only
 class DocumentState:
     """In-memory state accumulated while rendering a document."""
 
-    abbreviations: Dict[str, str] = field(default_factory=dict)
-    acronym_keys: Dict[str, str] = field(default_factory=dict)
-    acronyms: Dict[str, tuple[str, str]] = field(default_factory=dict)
-    glossary: Dict[str, Dict[str, Any]] = field(default_factory=dict)
-    snippets: Dict[str, Dict[str, Any]] = field(default_factory=dict)
-    solutions: list[Dict[str, Any]] = field(default_factory=list)
-    headings: list[Dict[str, Any]] = field(default_factory=list)
+    abbreviations: dict[str, str] = field(default_factory=dict)
+    acronym_keys: dict[str, str] = field(default_factory=dict)
+    acronyms: dict[str, tuple[str, str]] = field(default_factory=dict)
+    glossary: dict[str, dict[str, Any]] = field(default_factory=dict)
+    snippets: dict[str, dict[str, Any]] = field(default_factory=dict)
+    solutions: list[dict[str, Any]] = field(default_factory=list)
+    headings: list[dict[str, Any]] = field(default_factory=list)
     exercise_counter: int = 0
     has_index_entries: bool = False
-    counters: Dict[str, int] = field(default_factory=dict)
+    counters: dict[str, int] = field(default_factory=dict)
 
     def remember_acronym(self, term: str, description: str) -> str:
         """Register an acronym definition keyed by a normalised identifier."""
@@ -78,13 +79,13 @@ class DocumentState:
             suffix += 1
         return candidate
 
-    def remember_glossary(self, key: str, entry: Dict[str, Any]) -> None:
+    def remember_glossary(self, key: str, entry: dict[str, Any]) -> None:
         self.glossary[key] = entry
 
-    def register_snippet(self, key: str, payload: Dict[str, Any]) -> None:
+    def register_snippet(self, key: str, payload: dict[str, Any]) -> None:
         self.snippets[key] = payload
 
-    def add_solution(self, solution: Dict[str, Any]) -> None:
+    def add_solution(self, solution: dict[str, Any]) -> None:
         self.solutions.append(solution)
 
     def add_heading(self, *, level: int, text: str, ref: str | None = None) -> None:
@@ -143,23 +144,23 @@ class AssetRegistry:
 class RenderContext:
     """Shared context passed to every handler during rendering."""
 
-    config: "BookConfig"
-    formatter: "LaTeXFormatter"
+    config: BookConfig
+    formatter: LaTeXFormatter
     document: Any
     assets: AssetRegistry
     state: DocumentState = field(default_factory=DocumentState)
-    runtime: Dict[str, Any] = field(default_factory=dict)
-    phase: "RenderPhase | None" = None
+    runtime: dict[str, Any] = field(default_factory=dict)
+    phase: RenderPhase | None = None
 
-    _processed_nodes: DefaultDict[int, set[int]] = field(
+    _processed_nodes: defaultdict[int, set[int]] = field(
         default_factory=lambda: defaultdict(set), init=False
     )
-    _skip_children: DefaultDict[int, set[int]] = field(
+    _skip_children: defaultdict[int, set[int]] = field(
         default_factory=lambda: defaultdict(set), init=False
     )
-    _persistent_runtime: Dict[str, Any] = field(default_factory=dict, init=False)
+    _persistent_runtime: dict[str, Any] = field(default_factory=dict, init=False)
 
-    def enter_phase(self, phase: "RenderPhase") -> None:
+    def enter_phase(self, phase: RenderPhase) -> None:
         """Mark the current phase and reset transient runtime data."""
 
         self.phase = phase
@@ -172,7 +173,7 @@ class RenderContext:
         self._persistent_runtime.update(runtime)
         self.runtime.update(runtime)
 
-    def mark_processed(self, node: Any, *, phase: "RenderPhase | None" = None) -> None:
+    def mark_processed(self, node: Any, *, phase: RenderPhase | None = None) -> None:
         """Flag a node as already transformed for the selected phase."""
 
         label = phase or self.phase
@@ -180,7 +181,7 @@ class RenderContext:
             return
         self._processed_nodes[label.value].add(id(node))
 
-    def is_processed(self, node: Any, *, phase: "RenderPhase | None" = None) -> bool:
+    def is_processed(self, node: Any, *, phase: RenderPhase | None = None) -> bool:
         """Check whether a node has been processed in the given phase."""
 
         label = phase or self.phase
@@ -188,9 +189,7 @@ class RenderContext:
             return False
         return id(node) in self._processed_nodes[label.value]
 
-    def suppress_children(
-        self, node: Any, *, phase: "RenderPhase | None" = None
-    ) -> None:
+    def suppress_children(self, node: Any, *, phase: RenderPhase | None = None) -> None:
         """Prevent traversal of node children for the active phase."""
 
         label = phase or self.phase
@@ -199,7 +198,7 @@ class RenderContext:
         self._skip_children[label.value].add(id(node))
 
     def should_skip_children(
-        self, node: Any, *, phase: "RenderPhase | None" = None
+        self, node: Any, *, phase: RenderPhase | None = None
     ) -> bool:
         """Check whether children should be skipped during traversal."""
 

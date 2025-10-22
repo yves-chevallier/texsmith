@@ -4,21 +4,25 @@ import sys
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 SRC_ROOT = PROJECT_ROOT / "src"
+EXAMPLES_ROOT = PROJECT_ROOT / "examples"
 
-for candidate in (PROJECT_ROOT, SRC_ROOT):
+for candidate in (PROJECT_ROOT, SRC_ROOT, EXAMPLES_ROOT):
     candidate_str = str(candidate)
     if candidate_str not in sys.path:
         sys.path.insert(0, candidate_str)
 
-from counter import COUNTER_KEY, build_renderer
-from texsmith import DocumentState
+from counter import COUNTER_KEY, build_renderer  # noqa: E402
+
+from texsmith import DocumentState  # noqa: E402
 
 
 def test_counter_extension_renders_incremented_markers() -> None:
     renderer = build_renderer()
     state = DocumentState()
 
-    html = '<p><span class="data-counter"></span> <span class="data-counter"></span></p>'
+    html = (
+        '<p><span class="data-counter"></span> <span class="data-counter"></span></p>'
+    )
     latex = renderer.render(html, state=state)
 
     assert "\\counter{1}" in latex

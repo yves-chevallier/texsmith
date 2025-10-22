@@ -50,7 +50,7 @@ class BookConfig(CommonConfig):
     cover: CoverConfig = Field(default_factory=CoverConfig)
 
     @model_validator(mode="after")
-    def set_folder(self) -> "BookConfig":
+    def set_folder(self) -> BookConfig:
         """Populate the output folder from the book title when missing."""
 
         if self.folder is None and self.title:
@@ -66,7 +66,7 @@ class LaTeXConfig(CommonConfig):
     clean_assets: bool = True
 
     @model_validator(mode="after")
-    def propagate(self) -> "LaTeXConfig":
+    def propagate(self) -> LaTeXConfig:
         """Propagate common values to nested book configurations."""
 
         to_propagate = (

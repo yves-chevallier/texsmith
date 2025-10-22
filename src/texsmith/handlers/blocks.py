@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterable
 from pathlib import Path
 import re
-from typing import Iterable
 
 from bs4 import NavigableString, Tag
 
@@ -84,7 +84,7 @@ def render_tabbed_content(element: Tag, context: RenderContext) -> None:
                     continue
                 formatted = context.formatter.strong(text=title)
                 heading = NavigableString(f"{formatted}\\par\n")
-                setattr(heading, "processed", True)
+                heading.processed = True
                 element.insert_before(heading)
         element.decompose()
         return
@@ -124,7 +124,7 @@ def render_epigraph(element: Tag, context: RenderContext) -> None:
     text = element.get_text(strip=False)
     latex = context.formatter.epigraph(text=text, source=source)
     node = NavigableString(latex)
-    setattr(node, "processed", True)
+    node.processed = True
     element.replace_with(node)
 
 
@@ -143,7 +143,7 @@ def render_blockquotes(element: Tag, context: RenderContext) -> None:
     text = element.get_text(strip=False)
     latex = context.formatter.blockquote(text)
     node = NavigableString(latex)
-    setattr(node, "processed", True)
+    node.processed = True
     element.replace_with(node)
 
 
@@ -181,13 +181,13 @@ def render_lists(root: Tag, context: RenderContext) -> None:
             latex = context.formatter.ordered_list(items=items)
         else:
             if has_checkbox:
-                choices = list(zip((c > 0 for c in checkboxes), items))
+                choices = list(zip((c > 0 for c in checkboxes), items, strict=False))
                 latex = context.formatter.choices(items=choices)
             else:
                 latex = context.formatter.unordered_list(items=items)
 
         node = NavigableString(latex)
-        setattr(node, "processed", True)
+        node.processed = True
         element.replace_with(node)
 
 
@@ -208,7 +208,7 @@ def render_description_lists(root: Tag, context: RenderContext) -> None:
 
         latex = context.formatter.description_list(items=items)
         node = NavigableString(latex)
-        setattr(node, "processed", True)
+        node.processed = True
         dl.replace_with(node)
 
 
@@ -233,7 +233,7 @@ def render_footnotes(root: Tag, context: RenderContext) -> None:
             continue
         latex = context.formatter.footnote(payload)
         node = NavigableString(latex)
-        setattr(node, "processed", True)
+        node.processed = True
         sup.replace_with(node)
 
 
@@ -250,7 +250,7 @@ def render_paragraphs(element: Tag, context: RenderContext) -> None:
         return
 
     node = NavigableString(f"{text}\n")
-    setattr(node, "processed", True)
+    node.processed = True
     element.replace_with(node)
 
 
@@ -269,7 +269,7 @@ def render_columns(element: Tag, context: RenderContext) -> None:
     text = element.get_text(strip=False)
     latex = context.formatter.multicolumn(text, columns=columns)
     node = NavigableString(latex)
-    setattr(node, "processed", True)
+    node.processed = True
     element.replace_with(node)
 
 
@@ -298,7 +298,7 @@ def render_figures(element: Tag, context: RenderContext) -> None:
         )
         placeholder = caption_text or alt_text or "[figure]"
         node = NavigableString(placeholder)
-        setattr(node, "processed", True)
+        node.processed = True
         element.replace_with(node)
         return
 
@@ -344,7 +344,7 @@ def render_figures(element: Tag, context: RenderContext) -> None:
     )
 
     node = NavigableString(latex)
-    setattr(node, "processed", True)
+    node.processed = True
     element.replace_with(node)
 
 
@@ -398,5 +398,5 @@ def render_tables(element: Tag, context: RenderContext) -> None:
     )
 
     node = NavigableString(latex)
-    setattr(node, "processed", True)
+    node.processed = True
     element.replace_with(node)

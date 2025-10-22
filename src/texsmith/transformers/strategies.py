@@ -294,10 +294,8 @@ class MermaidToPdfStrategy(CachedConversionStrategy):
         )
         if result.returncode != 0:
             raise TransformerExecutionError(
-                (
-                    "Mermaid CLI failed with code "
-                    f"{result.returncode}: {result.stderr.strip()}"
-                )
+                "Mermaid CLI failed with code "
+                f"{result.returncode}: {result.stderr.strip()}"
             )
 
         if not produced.exists():
@@ -372,10 +370,8 @@ class DrawioToPdfStrategy(CachedConversionStrategy):
         )
         if result.returncode != 0:
             raise TransformerExecutionError(
-                (
-                    "draw.io export failed with code "
-                    f"{result.returncode}: {result.stderr.strip()}"
-                )
+                "draw.io export failed with code "
+                f"{result.returncode}: {result.stderr.strip()}"
             )
 
         if not produced.exists():

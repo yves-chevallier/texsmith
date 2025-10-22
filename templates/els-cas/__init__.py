@@ -151,9 +151,7 @@ class Template(WrappableTemplate):
         if bibliography_value:
             context["bibliography"] = bibliography_value
 
-        bibliography_style = self._coerce_string(
-            meta_payload.get("bibliography_style")
-        )
+        bibliography_style = self._coerce_string(meta_payload.get("bibliography_style"))
         if bibliography_style:
             context["bibliography_style"] = bibliography_style
 
@@ -171,7 +169,10 @@ class Template(WrappableTemplate):
 
         title_note = self._coerce_string(meta_payload.get("title_note"))
         if title_note:
-            context["title_note"] = {"mark": "1", "text": escape_latex_chars(title_note)}
+            context["title_note"] = {
+                "mark": "1",
+                "text": escape_latex_chars(title_note),
+            }
 
         graphical = self._coerce_string(meta_payload.get("graphical_abstract"))
         if graphical:
@@ -231,7 +232,9 @@ class Template(WrappableTemplate):
             ]
         elif isinstance(payload, Iterable):
             candidates = [
-                self._coerce_string(item) for item in payload if self._coerce_string(item)
+                self._coerce_string(item)
+                for item in payload
+                if self._coerce_string(item)
             ]
         else:
             candidates = []
@@ -374,7 +377,9 @@ class Template(WrappableTemplate):
                 or item.get("correspondence_note")
             )
             if corresponding and not corresponding_note and email_value:
-                corresponding_note = f"Corresponding author: {escape_latex_chars(email_value)}"
+                corresponding_note = (
+                    f"Corresponding author: {escape_latex_chars(email_value)}"
+                )
 
             footnote_text = self._coerce_string(
                 item.get("footnote") or item.get("note") or item.get("author_note")
@@ -418,7 +423,9 @@ class Template(WrappableTemplate):
             author_entries.append(entry)
 
         affiliation_entries = [
-            affiliation_registry[key] for key in affiliation_order if key in affiliation_registry
+            affiliation_registry[key]
+            for key in affiliation_order
+            if key in affiliation_registry
         ]
 
         return (
@@ -442,7 +449,9 @@ class Template(WrappableTemplate):
                     continue
                 fields[normalised_key] = escape_latex_chars(coerced)
             if not fields:
-                text_value = self._coerce_string(payload.get("text") or payload.get("value"))
+                text_value = self._coerce_string(
+                    payload.get("text") or payload.get("value")
+                )
                 if text_value:
                     escaped = escape_latex_chars(text_value)
                     return (escaped, {"text": escaped})

@@ -169,7 +169,9 @@ Les options possibles sont :
 - `-m,--manifest` : Générer un fichier de manifeste des assets inclus.
 - `-t,--template` : Spécifier le template LaTeX à utiliser pour la conversion. Soit un chemin vers un dossier local, soit le nom du package PIP à utiliser i.e. `texsmith-template-foobar`, tu utilises `-t foobar`.
 - `--debug` : Activer le mode debug pour sauvegarder les fichiers intermédiaires (HTML, logs, etc.).
-- `-e,--markdown-extensions` : Liste des extensions Markdown à utiliser lors de la conversion (séparées par des virgules ou des espaces, ou des caractères null) i.e. `-e pymdownx.superfences,pymdownx.highlight,caret`.
+- `-e,--markdown-extensions` : Extensions Markdown supplémentaires à activer en plus du jeu par défaut (admonition, attr_list, footnotes, pymdownx.*, etc.). L'option accepte des valeurs séparées par des virgules ou des espaces et peut être répétée i.e. `-e markdown_include -e toc`.
+- `-d,--disable-markdown-extensions` : Désactiver une ou plusieurs extensions parmi celles activées par défaut. Peut être fournie plusieurs fois ou avec des valeurs séparées par des virgules i.e. `-d footnotes,pymdownx.magiclink`.
+- `--list-extensions` : Affiche la liste des extensions Markdown activées par défaut puis quitte.
 
 ## MkDocs plugin
 
@@ -304,7 +306,8 @@ The **HTML**{#gls-html} is the standard markup language for web pages...
 - [x] Permettre l'écritre d'extensions Renderer,formatter (demo counter)
 - [x] Support for index generation (makeindex, xindy)
 - [x] Rename package texsmith et les templates texsmith-template-*
-- [ ] Utiliser verbatim par défaut, les templates peuvent overrider cela
+- [ ] Activer toutes les extensions communes par défaut.
+- [ ] Documenter que par défaut, le renderer rends les blocs de code avec un wrapper générique, permettant de bind sur listing, verbatim ou minted.
 - [ ] Gérer les assets de manière centralisée (images, drawio, mermaid...)
 - [ ] Ajouter des tests unitaires et d'intégration pour le CLI et MkDocs
 - [ ] Documenter le processus de création de templates LaTeX personnalisées

@@ -44,9 +44,7 @@ class DocumentStateTests(unittest.TestCase):
         with self.assertWarnsRegex(UserWarning, "Inconsistent acronym definition"):
             duplicate_key = state.remember_acronym("HTTP", "Different")
         self.assertEqual(duplicate_key, key)
-        self.assertEqual(
-            state.acronyms[key], ("HTTP", "Hypertext Transfer Protocol")
-        )
+        self.assertEqual(state.acronyms[key], ("HTTP", "Hypertext Transfer Protocol"))
 
     def test_solution_collection(self) -> None:
         state = DocumentState()

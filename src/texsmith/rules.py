@@ -2,9 +2,10 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable, Iterable
 from dataclasses import dataclass, field
 from enum import Enum, auto
-from typing import TYPE_CHECKING, Any, Callable, Dict, Iterable, Protocol, Tuple
+from typing import TYPE_CHECKING, Any, Protocol
 
 
 if TYPE_CHECKING:  # pragma: no cover - typing only
@@ -35,7 +36,7 @@ RuleCallable = Callable[[Any, "RenderContext"], None]
 class RuleFactory(Protocol):
     """Protocol implemented by rule decorators."""
 
-    def bind(self, handler: RuleCallable) -> "RenderRule": ...
+    def bind(self, handler: RuleCallable) -> RenderRule: ...
 
 
 DOCUMENT_NODE = "__document__"
@@ -47,7 +48,7 @@ class RenderRule:
 
     priority: int
     phase: RenderPhase = field(compare=False)
-    tags: Tuple[str, ...] = field(compare=False)
+    tags: tuple[str, ...] = field(compare=False)
     name: str = field(compare=False)
     handler: RuleCallable = field(compare=False)
     auto_mark: bool = field(default=True, compare=False)
@@ -63,7 +64,7 @@ class RuleDefinition:
     """Descriptor installed on handler callables by the decorator."""
 
     phase: RenderPhase
-    tags: Tuple[str, ...]
+    tags: tuple[str, ...]
     priority: int = 0
     name: str | None = None
     auto_mark: bool = True
@@ -112,10 +113,9 @@ class RenderRegistry:
 
         buckets = self._rules.get(phase, {})
         for tag_rules in buckets.values():
-            for rule in tag_rules:
-                yield rule
+            yield from tag_rules
 
-    def rules_for_phase(self, phase: RenderPhase) -> Dict[str, tuple[RenderRule, ...]]:
+    def rules_for_phase(self, phase: RenderPhase) -> dict[str, tuple[RenderRule, ...]]:
         """Return the rule mapping for the requested phase."""
 
         phase_bucket = self._rules.get(phase, {})
@@ -145,7 +145,7 @@ def renders(
     )
 
     def decorator(handler: RuleCallable) -> RuleCallable:
-        setattr(handler, "__render_rule__", definition)
+        handler.__render_rule__ = definition
         return handler
 
     return decorator
@@ -177,7 +177,7 @@ class RenderEngine:
             raise TypeError(msg)
         self.registry.register(definition.bind(handler))
 
-    def run(self, root: "Tag", context: "RenderContext") -> None:
+    def run(self, root: Tag, context: RenderContext) -> None:
         """Execute all registered rules against the provided DOM root."""
 
         for phase in RenderPhase:
@@ -192,7 +192,7 @@ class RenderEngine:
             visitor.walk(root)
 
     def _execute_rule(
-        self, rule: RenderRule, node: Any, context: "RenderContext"
+        self, rule: RenderRule, node: Any, context: RenderContext
     ) -> None:
         """Execute a rule against a specific node applying bookkeeping."""
 
@@ -211,14 +211,14 @@ class _DOMVisitor:
     def __init__(
         self,
         phase: RenderPhase,
-        rules_by_tag: Dict[str, tuple[RenderRule, ...]],
-        context: "RenderContext",
+        rules_by_tag: dict[str, tuple[RenderRule, ...]],
+        context: RenderContext,
     ) -> None:
         self.phase = phase
         self.rules_by_tag = rules_by_tag
         self.context = context
 
-    def walk(self, node: "Tag") -> None:
+    def walk(self, node: Tag) -> None:
         """Traverse descendants depth-first and apply matching rules."""
 
         self._dispatch(node, after_children=False)
@@ -233,7 +233,7 @@ class _DOMVisitor:
 
         self._dispatch(node, after_children=True)
 
-    def _dispatch(self, node: "Tag", *, after_children: bool) -> None:
+    def _dispatch(self, node: Tag, *, after_children: bool) -> None:
         """Dispatch node to registered rules for its tag name."""
 
         tag_name = getattr(node, "name", None)

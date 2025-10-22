@@ -166,7 +166,9 @@ def test_default_markdown_extensions(tmp_path: Path, monkeypatch: Any) -> None:
     assert recorded["extensions"] == DEFAULT_MARKDOWN_EXTENSIONS
 
 
-def test_markdown_extensions_normalization(tmp_path: Path, monkeypatch: Any) -> None:
+def test_markdown_extensions_option_extends_defaults(
+    tmp_path: Path, monkeypatch: Any
+) -> None:
     recorded: dict[str, list[str] | None] = {"extensions": None}
 
     class DummyMarkdown:
@@ -191,12 +193,66 @@ def test_markdown_extensions_normalization(tmp_path: Path, monkeypatch: Any) -> 
             "--output-dir",
             str(tmp_path / "output"),
             "-e",
-            "fenced_code, tables",
+            "custom_extension,another_extension",
+            "-e",
+            "custom_extension",
         ],
     )
 
     assert result.exit_code == 0, result.stdout
-    assert recorded["extensions"] == ["fenced_code", "tables"]
+    assert recorded["extensions"] == [
+        *DEFAULT_MARKDOWN_EXTENSIONS,
+        "custom_extension",
+        "another_extension",
+    ]
+
+
+def test_disable_markdown_extensions_option(tmp_path: Path, monkeypatch: Any) -> None:
+    recorded: dict[str, list[str] | None] = {"extensions": None}
+
+    class DummyMarkdown:
+        def __init__(self, *args: object, **kwargs: object) -> None:
+            recorded["extensions"] = list(kwargs.get("extensions") or [])
+
+        def convert(self, _: str) -> str:
+            return "<p>content</p>"
+
+    dummy_module = types.SimpleNamespace(Markdown=DummyMarkdown)
+    monkeypatch.setitem(sys.modules, "markdown", dummy_module)
+
+    markdown_file = tmp_path / "doc.md"
+    markdown_file.write_text("plain text", encoding="utf-8")
+
+    runner = CliRunner()
+    result = runner.invoke(
+        app,
+        [
+            "convert",
+            str(markdown_file),
+            "--output-dir",
+            str(tmp_path / "output"),
+            "--disable-markdown-extensions",
+            "footnotes, pymdownx.details",
+            "--disable-markdown-extensions",
+            "pymdownx.magiclink",
+        ],
+    )
+
+    assert result.exit_code == 0, result.stdout
+    disabled = {"footnotes", "pymdownx.details", "pymdownx.magiclink"}
+    assert disabled.isdisjoint(set(recorded["extensions"] or []))
+    assert set(DEFAULT_MARKDOWN_EXTENSIONS) - disabled <= set(
+        recorded["extensions"] or []
+    )
+
+
+def test_list_extensions_option() -> None:
+    runner = CliRunner()
+    result = runner.invoke(app, ["--list-extensions"])
+
+    assert result.exit_code == 0, result.stdout
+    listed = [line for line in result.stdout.splitlines() if line]
+    assert listed == DEFAULT_MARKDOWN_EXTENSIONS
 
 
 def test_rejects_mkdocs_configuration(tmp_path: Path) -> None:
@@ -313,7 +369,7 @@ def test_build_invokes_latexmk(tmp_path: Path, monkeypatch: Any) -> None:
     assert command[0] == "/usr/bin/latexmk"
     pdflatex_args = [arg for arg in command if arg.startswith("-pdflatex=")]
     assert pdflatex_args and "lualatex" in pdflatex_args[0]
-    assert "--shell-escape" not in pdflatex_args[0]
+    assert "--shell-escape" in pdflatex_args[0]
     assert command[-1] == "index.tex"
     assert kwargs["cwd"] == output_dir
     assert "build ok" in result.stdout

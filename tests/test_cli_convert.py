@@ -98,6 +98,35 @@ Content here.
             self.assertIn(r"\date{2024-10-20}", content)
             self.assertIn(r"\usepackage[french]{babel}", content)
 
+    def test_nature_template_applies_table_override(self) -> None:
+        with TemporaryDirectory() as temp_dir:
+            temp_path = Path(temp_dir)
+            source = temp_path / "sample.html"
+            source.write_text(
+                """<table id="tbl-sample">
+<caption>Overview</caption>
+<tr><th>Col 1</th><th>Col 2</th></tr>
+<tr><td>Foo</td><td>Bar</td></tr>
+</table>""",
+                encoding="utf-8",
+            )
+            output_dir = temp_path / "build"
+
+            assert convert is not None  # for type checkers
+            convert(
+                input_path=source,
+                output_dir=output_dir,
+                template="./nature",
+            )
+
+            output_file = output_dir / "sample.tex"
+            self.assertTrue(output_file.exists())
+            content = output_file.read_text(encoding="utf-8")
+            self.assertIn(r"\begin{tabular}{@{}ll@{}}", content)
+            self.assertIn(r"\caption{Overview}\label{tbl-sample}%", content)
+            self.assertIn(r"\botrule", content)
+            self.assertNotIn(r"\textbf{Col 1}", content)
+
 
 if __name__ == "__main__":
     unittest.main()

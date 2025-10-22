@@ -114,7 +114,7 @@ def _render_admonition(
 
     latex = context.formatter.callout(content, title=title, type=admonition_type)
     node = NavigableString(latex)
-    setattr(node, "processed", True)
+    node.processed = True
     element.replace_with(node)
 
 

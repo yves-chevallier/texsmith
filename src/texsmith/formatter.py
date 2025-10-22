@@ -2,10 +2,10 @@
 
 from __future__ import annotations
 
-from collections.abc import Iterable
+from collections.abc import Callable, Iterable
 import glob
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any
 
 from jinja2 import Environment, FileSystemLoader, Template
 from requests.utils import requote_uri as requote_url
@@ -146,3 +146,17 @@ class LaTeXFormatter:
             **self.config.cover.model_dump(),  # type: ignore[attr-defined]
             **kwargs,
         )
+
+    def override_template(self, name: str, source: str | Path) -> None:
+        """Override a built-in template snippet using an external payload."""
+
+        if isinstance(source, Path):
+            template_source = source.read_text(encoding="utf-8")
+            template_name = source.as_posix()
+        else:
+            template_source = source
+            template_name = name
+
+        template = self.env.from_string(template_source)
+        template.name = template_name
+        self.templates[name] = template

@@ -59,9 +59,7 @@ class TemplateWrappingTests(unittest.TestCase):
         context["acronyms"] = {"HTTP": "Hypertext Transfer Protocol"}
         wrapped = self.template.wrap_document("", context=context)
         self.assertIn("\\makeglossaries", wrapped)
-        self.assertIn(
-            "\\newacronym{HTTP}{HTTP}{Hypertext Transfer Protocol}", wrapped
-        )
+        self.assertIn("\\newacronym{HTTP}{HTTP}{Hypertext Transfer Protocol}", wrapped)
         self.assertIn("\\printglossary[type=\\acronymtype", wrapped)
 
     def test_copy_template_assets_materialises_payload(self) -> None:
@@ -155,9 +153,7 @@ class ArticleTemplateTests(unittest.TestCase):
         wrapped = self.template.wrap_document("", context=context)
         self.assertIn("\\usepackage[acronym]{glossaries}", wrapped)
         self.assertIn("\\makeglossaries", wrapped)
-        self.assertIn(
-            "\\newacronym{HTTP}{HTTP}{Hypertext Transfer Protocol}", wrapped
-        )
+        self.assertIn("\\newacronym{HTTP}{HTTP}{Hypertext Transfer Protocol}", wrapped)
         self.assertIn("\\printglossary[type=\\acronymtype", wrapped)
 
 

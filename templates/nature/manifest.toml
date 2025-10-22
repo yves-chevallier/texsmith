@@ -17,6 +17,7 @@ tlmgr_packages = [
     "algorithms",
     "fontspec",
 ]
+override = ["table.tex"]
 
 [latex.template.attributes]
 base_level = 1

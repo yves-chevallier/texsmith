@@ -53,7 +53,7 @@ def render_autoref(element: Tag, context: RenderContext) -> None:
 
     latex = context.formatter.ref(text, ref=identifier)
     node = NavigableString(latex)
-    setattr(node, "processed", True)
+    node.processed = True
     element.replace_with(node)
 
 
@@ -75,7 +75,7 @@ def render_autoref_spans(element: Tag, context: RenderContext) -> None:
 
     latex = context.formatter.ref(text, ref=identifier)
     node = NavigableString(latex)
-    setattr(node, "processed", True)
+    node.processed = True
     context.mark_processed(element)
     context.suppress_children(element)
     element.replace_with(node)
@@ -120,5 +120,5 @@ def render_links(element: Tag, context: RenderContext) -> None:
         latex = escape_latex_chars(text)
 
     node = NavigableString(latex)
-    setattr(node, "processed", True)
+    node.processed = True
     element.replace_with(node)

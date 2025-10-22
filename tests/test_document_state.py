@@ -10,7 +10,7 @@ for candidate in (PROJECT_ROOT, SRC_ROOT):
     if candidate_str not in sys.path:
         sys.path.insert(0, candidate_str)
 
-from texsmith import DocumentState
+from texsmith import DocumentState  # noqa: E402
 
 
 def test_document_state_counters_track_values() -> None:

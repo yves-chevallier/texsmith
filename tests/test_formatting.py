@@ -128,9 +128,7 @@ class InlineFormattingTests(unittest.TestCase):
         self.assertIn("HTTP", state.acronym_keys)
         key = state.acronym_keys["HTTP"]
         self.assertIn(key, state.acronyms)
-        self.assertEqual(
-            state.acronyms[key], ("HTTP", "Hypertext Transfer Protocol")
-        )
+        self.assertEqual(state.acronyms[key], ("HTTP", "Hypertext Transfer Protocol"))
 
 
 if __name__ == "__main__":
