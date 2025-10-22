@@ -537,6 +537,19 @@ wheels = [
 ]
 
 [[package]]
+name = "pybtex"
+version = "0.25.1"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "latexcodec" },
+    { name = "pyyaml" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/5f/bc/c2be05ca72f8c103670e983df8be26d1e288bc6556f487fa8cccaa27779f/pybtex-0.25.1.tar.gz", hash = "sha256:9eaf90267c7e83e225af89fea65c370afbf65f458220d3946a9e3049e1eca491", size = 406157, upload-time = "2025-06-26T13:27:41.903Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/25/68/ceb5d6679baa326261f5d3e5113d9cfed6efef2810afd9f18bffb8ed312b/pybtex-0.25.1-py2.py3-none-any.whl", hash = "sha256:9053b0d619409a0a83f38abad5d9921de5f7b3ede00742beafcd9f10ad0d8c5c", size = 127437, upload-time = "2025-06-26T13:27:43.585Z" },
+]
+
+[[package]]
 name = "pycparser"
 version = "2.23"
 source = { registry = "https://pypi.org/simple" }
@@ -834,6 +847,7 @@ dependencies = [
     { name = "markdown" },
     { name = "mkdocs-material" },
     { name = "pillow" },
+    { name = "pybtex" },
     { name = "pydantic" },
     { name = "pygments" },
     { name = "pymdown-extensions" },
@@ -842,6 +856,7 @@ dependencies = [
     { name = "python-slugify" },
     { name = "pyyaml" },
     { name = "requests" },
+    { name = "rich" },
     { name = "typer" },
 ]
 
@@ -862,6 +877,7 @@ requires-dist = [
     { name = "markdown", specifier = ">=3.7" },
     { name = "mkdocs-material", specifier = ">=9.6.22" },
     { name = "pillow", specifier = ">=12.0.0" },
+    { name = "pybtex", specifier = ">=0.24.0" },
     { name = "pydantic", specifier = ">=2.7.0" },
     { name = "pygments", specifier = ">=2.18.0" },
     { name = "pymdown-extensions", specifier = ">=10.9" },
@@ -870,6 +886,7 @@ requires-dist = [
     { name = "python-slugify", specifier = ">=8.0.4" },
     { name = "pyyaml", specifier = ">=6.0.3" },
     { name = "requests", specifier = ">=2.32.5" },
+    { name = "rich", specifier = ">=13.9.0" },
     { name = "typer", specifier = ">=0.12.5" },
 ]
 

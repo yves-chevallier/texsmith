@@ -1,5 +1,6 @@
 """Modernised LaTeX rendering package."""
 
+from .bibliography import BibliographyCollection, BibliographyIssue
 from .config import BookConfig, LaTeXConfig
 from .context import AssetRegistry, DocumentState, RenderContext
 from .formatter import LaTeXFormatter
@@ -15,6 +16,8 @@ from .templates import (
 
 __all__ = [
     "AssetRegistry",
+    "BibliographyCollection",
+    "BibliographyIssue",
     "BookConfig",
     "DocumentState",
     "LaTeXConfig",

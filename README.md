@@ -296,7 +296,131 @@ Then we need an anchor base on the content where the term is defined:
 The **HTML**{#gls-html} is the standard markup language for web pages...
 ```
 
+## Bibliography
+
+This is a vast topic. In LaTeX we often use `biblatex` or `natbib` to manage bibliographies. The idea is to define references in a `.bib` file and cite them in the document with `\cite{key}` commands. The bibliography is then generated at the end of the document. Only the cited references are included.
+
+Journals often have their own bibliography style to render references and display them in the bibliography section.
+
+It is quite convenient when searching for an article to export the citation in BibTeX format and add it to the `.bib` file. However this format is not very human friendly and very verbose for simple references. Note that two versions exists: bibtex and biblatex which is an evolution of bibtex with more fields and better support for modern references (doi, url, etc.). For this project we will focus on biblatex format as it is more modern.
+
+Python modules exists such as bibtexparser and pybtex but all of them are poorly coded (legacy Python, no type hints, no schema...). BibTeX is also quite old and not very well suited for modern references (DOI, URL, etc.). The original source code of Oren Patashnik (1988) can be used as base, also some documentation [Alexandre Feder](http://www.bibtex.org/Format/) contains a good overview of the format.
+
+The CSL format (Citation Style Language) is a more modern approach to manage bibliographies. It is XML based and used by Zotero, Mendeley, etc. However it is more complex to parse and manipulate. The idea is to find a way to convert vintage `.bib` or `.biblatex` or `.bbl` files to a fully fledged format. Fuck this should be easier...
+
+Citations styles is another topic. For LaTeX, the template will manage the format and the style so we don't care in TeXSmith. Some template may offer to customize through a configuration option, but this is not our concern. On the MkDocs case, the future plugin would be able to specify the format of the bibliography, and the sort order (nty, nyt, anyvt...) In traditional LaTeX the most common used formats are: abbrv, acm, alpha, apalike, ieeetr, plain, siam, unsrt.
+
+Well what we want to achieve:
+
+1. Accept to use `.bib` files and other common formats in the project and parse them to extract references. Bibtexparser can be used for that, but the project is not very well developped: no v2 on pypi, no schema, API not very clean. We will rewrite this.
+2. Use doi2bib or similar services to fetch BibTeX entries from DOIs. DOIs are much easier to manage it is just a link such as `https://doi.org/10.1016/j.cub.2025.08.063`. The idea is to rely on several API services as fallback and implement a doi2bib function that fetches the BibTeX entry from a DOI.
+3. Rely on a well defined schema (Pydantic) for biblatex entries to validate them and have a clean API to manipulate them.
+4. Implement a two way conversion bib to python and python to bib.
+5. Use common Markdown syntax to cite references. We can use footnotes syntax in an extended way `[^smith2020deep]`. I don't think this is conflicting with standard footnotes as the content is just a key. The renderer will detect this syntax and replace it with `\cite{smith2020deep}` in LaTeX.
+6. If any citations is found we load any bibliography files passed to the renderer or on the CLI, parse them and collect the entries, we detect conflicts (same key different entry) and we generate the bibliography in the template  `\printbibliography`.
+7. If a citation is not found in the bibliography, warn at build time.
+8. Rely on a MkDocs plugin to manage bibliography on the project level and represent bibliography in the browser's documentation.
+
+### MkDocs
+
+I found few plugins. The most cited is mkdocs-bibtex which is no longer maintained. mdx_bib is a Markdown extension that use the `@<citekey>` syntax why not, but it is not a standard Markdown syntax. We could support both `[^citekey]` and `@citekey` syntaxes. The plugin should also manage bibliography files at the project level.
+
+So I think I will have to define my own... Piece of cake.
+
+### Bibtex structure
+
+```yml
+type:
+    article:
+      required: [author, title, journal, year]
+      optional: [volume, number, pages, month, note, doi, url, iss]
+    book:
+      required: [author|editor, title, publisher, year]
+      optional: [volume|number, series, address, edition, month, note, doi, url, isbn]
+    booklet:
+        required: [title]
+        optional: [author, howpublished, address, month, year, note, doi, url]
+    conference:
+        required: [author, title, booktitle, year]
+        optional: [editor, volume|number, series, pages, address, month, organization, publisher, note, doi, url]
+    inbook:
+        required: [author|editor, title, chapter|pages, publisher, year]
+        optional: [volume|number, series, type, address, edition, month, note, doi, url, isbn]
+    incollection:
+        required: [author, title, booktitle, publisher, year]
+        optional: [editor, volume|number, series, type, chapter, pages, address, edition, month, note, doi, url, isbn]
+    inproceedings:
+        required: [author, title, booktitle, year]
+        optional: [editor, volume|number, series, pages, address, month, organization, publisher, note, doi, url]
+    manual:
+        required: [title]
+        optional: [author, organization, address, edition, month, year, note, doi, url]
+    masterthesis:
+        required: [author, title, school, year]
+        optional: [type, address, month, note, doi, url]
+    misc:
+        required: []
+        optional: [author, title, howpublished, month, year, note, doi, url]
+    phdthesis:
+        required: [author, title, school, year]
+        optional: [type, address, month, note, doi, url]
+    proceedings:
+        required: [title, year]
+        optional: [editor, volume|number, series, address, month, organization, publisher, note, doi, url]
+    techreport:
+        required: [author, title, institution, year]
+        optional: [type, number, address, month, note, doi, url]
+    unpublished:
+        required: [author, title, note]
+        optional: [month, year, doi, url]
+
+
+citekey: |
+    Unique identifier in the form m/\b[a-zA-Z0-9_-]+\b/. A standard pattern is
+    authorYYYYTitleWord e.g. smith2020deep for an article by Smith in 2020 titled "Deep Learning for Cheese Analysis".
+fields:
+  address: Publisher address or the institution location.
+  annote: An annotation
+  author:
+    description: List of authors in the form "First Last and First Last and ...
+    type: list[str]
+    remarks: in bibtex the "and" separator is used to separate authors.
+  booktitle: Title of the book, conference proceedings, or collection.
+  chapter: Chapter number
+  edition: Edition of the book (e.g. "2nd").
+  editor: List of editors in the form "First Last and First Last and ..."
+  howpublished: How it was published (for misc type).
+  institution: Institution name (for techreport type).
+  journal: Journal name (for article type).
+  month:
+    description: Month of publication (e.g. "jan", "feb", etc.).
+    type: int
+    constraints: month >= 1 and month <= 12
+    remarks: In bibtex months are represented as three-letter abbreviations.
+  note: Additional notes.
+  number: Issue number (for articles) or report number (for techreports).
+  organization: Organization name (for conference type).
+  pages: Page range (e.g. "12-34").
+  publisher: Publisher name (for books).
+  school: School name (for theses).
+  series: Series name (for books that are part of a series).
+  title: Title of the work.
+  type: Type of report (for techreport type).
+  volume: Volume number (for journals or books in a series).
+  year:
+    description: "Year of publication (e.g. "2020")."
+    type: int
+    constraints: year > 0 and year <= current_year
+non-standard-fields:
+  doi: Digital Object Identifier (e.g. "10.1016/j.cub.2025.08.063").
+  url: URL to the online version of the work.
+  issn: International Standard Serial Number (for journals).
+  isbn: International Standard Book Number (for books).
+```
+
 ## TO-DO
+
+### Priority
 
 - [x] Remplacer safe_quote par requote_url de requests.utils
 - [x] Remplacer fonctions helpers par package latexcodec
@@ -306,7 +430,11 @@ The **HTML**{#gls-html} is the standard markup language for web pages...
 - [x] Permettre l'écritre d'extensions Renderer,formatter (demo counter)
 - [x] Support for index generation (makeindex, xindy)
 - [x] Rename package texsmith et les templates texsmith-template-*
-- [ ] Activer toutes les extensions communes par défaut.
+- [x] Activer toutes les extensions communes par défaut.
+- [ ] Support for bibliography (biblatex, natbib...)
+
+### Medium term
+
 - [ ] Documenter que par défaut, le renderer rends les blocs de code avec un wrapper générique, permettant de bind sur listing, verbatim ou minted.
 - [ ] Gérer les assets de manière centralisée (images, drawio, mermaid...)
 - [ ] Ajouter des tests unitaires et d'intégration pour le CLI et MkDocs
@@ -314,7 +442,6 @@ The **HTML**{#gls-html} is the standard markup language for web pages...
 - [ ] Declare solution/exercises in a plugin way
 - [ ] Find a way to have a solid and robust docker submodule/class
 - [ ] Convert some journals templates (Springer, Elsevier, IEEE...)
-- [ ] Support for bibliography (biblatex, natbib...)
 - [ ] Support for glossaries (glossaries package)
 - [ ] Support for cross-references (cleveref package)
 - [ ] Méthode pour extraire/injecter une section et ses sous-sections dans un autre entrypoint (frontmatter, abstract, appendix...)

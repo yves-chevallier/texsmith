@@ -12,9 +12,15 @@ import subprocess
 from typing import Any
 
 from bs4 import BeautifulSoup, FeatureNotFound
+from rich import box
+from rich.console import Console
+from rich.panel import Panel
+from rich.table import Table
+from rich.text import Text
 import typer
 import yaml
 
+from .bibliography import BibliographyCollection
 from .config import BookConfig
 from .context import DocumentState
 from .exceptions import LatexRenderingError, TransformerExecutionError
@@ -111,6 +117,13 @@ app = typer.Typer(
     invoke_without_command=True,
 )
 
+bibliography_app = typer.Typer(
+    help="Inspect and interact with BibTeX bibliography files.",
+    context_settings={"help_option_names": ["--help"]},
+)
+
+app.add_typer(bibliography_app, name="bibliography")
+
 
 @app.callback()
 def _app_root(
@@ -128,6 +141,69 @@ def _app_root(
         raise typer.Exit(code=0)
 
     return None
+
+
+@bibliography_app.command(name="list")
+def bibliography_list(
+    bib_files: list[Path] = typer.Argument(
+        ...,
+        metavar="BIBFILE",
+        help="One or more BibTeX files to inspect.",
+        exists=True,
+        file_okay=True,
+        dir_okay=False,
+        readable=True,
+        resolve_path=True,
+    ),
+) -> None:
+    """List references stored in one or more BibTeX files."""
+
+    collection = BibliographyCollection()
+    collection.load_files(bib_files)
+
+    console = Console()
+
+    stats = collection.file_stats
+    if stats:
+        stats_table = Table(
+            title="Bibliography Files",
+            box=box.SIMPLE,
+            show_edge=True,
+            header_style="bold cyan",
+        )
+        stats_table.add_column("File", overflow="fold")
+        stats_table.add_column("Entries", justify="right")
+        for file_path, entry_count in stats:
+            stats_table.add_row(str(file_path), str(entry_count))
+        console.print(stats_table)
+
+    if collection.issues:
+        issue_table = Table(
+            title="Warnings",
+            box=box.SIMPLE,
+            header_style="bold yellow",
+            show_edge=True,
+        )
+        issue_table.add_column("Key", style="yellow", no_wrap=True)
+        issue_table.add_column("Message", style="yellow")
+        issue_table.add_column("Source", style="yellow")
+        for issue in collection.issues:
+            issue_table.add_row(
+                issue.key or "—",
+                issue.message,
+                str(issue.source) if issue.source else "—",
+            )
+        console.print(issue_table)
+
+    references = collection.list_references()
+    if not references:
+        console.print("[dim]No references found.[/]")
+        raise typer.Exit(code=0)
+
+    for reference in references:
+        panel = _build_reference_panel(reference)
+        console.print(panel)
+        console.print()
 
 
 def _convert_document(
@@ -1113,3 +1189,99 @@ def _normalise_template_language(value: str | None) -> str | None:
         return lowered
 
     return None
+
+
+def _format_bibliography_person(person: Mapping[str, Any]) -> str:
+    """Render a bibliography person dictionary into a readable string."""
+
+    parts: list[str] = []
+    for field in ("first", "middle", "prelast", "last", "lineage"):
+        parts.extend(str(segment) for segment in person.get(field, []) if segment)
+
+    text = " ".join(part for part in parts if part)
+    return text or str(person.get("text", "")).strip()
+
+
+def _format_person_list(persons: Iterable[Mapping[str, Any]]) -> str:
+    names = [_format_bibliography_person(person) for person in persons]
+    return ", ".join(name for name in names if name)
+
+
+def _build_reference_panel(reference: Mapping[str, Any]) -> Panel:
+    fields = dict(reference.get("fields", {}))
+    grid = Table.grid(padding=(0, 1))
+    grid.add_column(style="bold green", no_wrap=True)
+    grid.add_column()
+
+    def _pop_field(*keys: str) -> str | None:
+        for key in keys:
+            value = fields.pop(key, None)
+            if value:
+                return value
+        return None
+
+    def _add_field(label: str, value: Any) -> None:
+        if value is None:
+            return
+        if isinstance(value, str) and not value.strip():
+            return
+        grid.add_row(label, value)
+
+    title = _pop_field("title")
+    _add_field("Title", title)
+
+    year = _pop_field("year")
+    _add_field("Year", year)
+
+    container = _pop_field("journal", "booktitle")
+    _add_field("Publication", container)
+
+    volume = _pop_field("volume")
+    number = _pop_field("number")
+    pages = _pop_field("pages")
+    _add_field("Volume", volume)
+    _add_field("Number", number)
+    _add_field("Pages", pages)
+
+    doi = _pop_field("doi")
+    url = _pop_field("url")
+    _add_field("DOI", doi)
+    _add_field("URL", url)
+
+    abstract = _pop_field("abstract")
+    if abstract:
+        abstract_text = Text(abstract.strip())
+        abstract_text.truncate(240, overflow="ellipsis")
+        _add_field("Abstract", abstract_text)
+
+    persons = reference.get("persons", {})
+    authors = persons.get("author") or []
+    if authors:
+        _add_field("Authors", _format_person_list(authors))
+
+    for role in sorted(persons):
+        if role == "author":
+            continue
+        _add_field(role.capitalize(), _format_person_list(persons[role]))
+
+    if fields:
+        for field_name in sorted(fields):
+            _add_field(field_name.capitalize(), fields[field_name])
+
+    sources = reference.get("source_files") or []
+    if sources:
+        _add_field("Sources", "\n".join(str(source) for source in sources))
+
+    header = Text(reference["key"], style="bold cyan")
+    entry_type = reference.get("type")
+    if entry_type:
+        header.append(f" ({entry_type})", style="magenta")
+
+    panel = Panel(
+        grid,
+        title=header,
+        border_style="cyan",
+        box=box.ROUNDED,
+        padding=(1, 2),
+    )
+    return panel
