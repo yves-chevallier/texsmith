@@ -3,6 +3,10 @@ import markdown
 
 TEST_MD = r"""
 Test [](){index,term1,term2} foobar.
+
+Foobar @<citekey> is a cheese [^citekey], and chocolate [^chocolate].
+
+[^citekey]: This is the bibliography entry for citekey.
 """
 
 extensions = [
