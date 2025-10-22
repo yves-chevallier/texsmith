@@ -538,6 +538,48 @@ def _resolve_option(value: Any) -> Any:
     return value
 
 
+_BIBLIOGRAPHY_SUFFIXES = {".bib", ".bibtex"}
+
+
+def _deduplicate_paths(values: Iterable[Path]) -> list[Path]:
+    seen: set[Path] = set()
+    result: list[Path] = []
+    for path in values:
+        if path in seen:
+            continue
+        seen.add(path)
+        result.append(path)
+    return result
+
+
+def _partition_input_resources(
+    inputs: Iterable[Path],
+    extra_bibliography: Iterable[Path],
+) -> tuple[Path, list[Path]]:
+    document_path: Path | None = None
+    inline_bibliography: list[Path] = []
+
+    for candidate in inputs:
+        suffix = candidate.suffix.lower()
+        if suffix in _BIBLIOGRAPHY_SUFFIXES:
+            inline_bibliography.append(candidate)
+            continue
+        if document_path is not None:
+            raise ValueError(
+                "Multiple document inputs provided. "
+                "Pass a single Markdown or HTML source document."
+            )
+        document_path = candidate
+
+    if document_path is None:
+        raise ValueError("Provide a Markdown (.md) or HTML (.html) source document.")
+
+    combined_bibliography = _deduplicate_paths(
+        [*inline_bibliography, *extra_bibliography]
+    )
+    return document_path, combined_bibliography
+
+
 def _coerce_base_level(value: Any, *, allow_none: bool = True) -> int | None:
     if value is None:
         if allow_none:
@@ -587,9 +629,13 @@ def _extract_base_level_override(overrides: Mapping[str, Any] | None) -> Any:
 
 @app.command(name="convert")
 def convert(
-    input_path: Path = typer.Argument(
+    inputs: list[Path] = typer.Argument(
         ...,
-        help="Path to the rendered MkDocs HTML file or Markdown source.",
+        metavar="INPUT...",
+        help=(
+            "Conversion inputs. Provide a Markdown/HTML source document and optionally "
+            "one or more BibTeX files."
+        ),
         exists=True,
         file_okay=True,
         dir_okay=False,
@@ -605,7 +651,6 @@ def convert(
     selector: str = typer.Option(
         "article.md-content__inner",
         "--selector",
-        "-s",
         help="CSS selector to extract the MkDocs article content.",
     ),
     full_document: bool = typer.Option(
@@ -687,7 +732,7 @@ def convert(
     slots: list[str] = typer.Option(
         [],
         "--slot",
-        "-e",
+        "-s",
         help=(
             "Inject a document section into a template slot using 'slot:Section'. "
             "Repeat to map multiple sections."
@@ -726,6 +771,14 @@ def convert(
 ) -> None:
     """Convert an MkDocs HTML page to LaTeX."""
 
+    resolved_bibliography_option = list(_resolve_option(bibliography))
+    try:
+        document_path, bibliography_files = _partition_input_resources(
+            inputs, resolved_bibliography_option
+        )
+    except ValueError as exc:
+        raise typer.BadParameter(str(exc)) from exc
+
     resolved_markdown_extensions = _resolve_markdown_extensions(
         _resolve_option(markdown_extensions),
         _resolve_option(disable_markdown_extensions),
@@ -736,7 +789,7 @@ def convert(
         raise typer.BadParameter(str(exc)) from exc
 
     result = _convert_document(
-        input_path=input_path,
+        input_path=document_path,
         output_dir=_resolve_option(output_dir),
         selector=_resolve_option(selector),
         full_document=_resolve_option(full_document),
@@ -753,7 +806,7 @@ def convert(
         language=_resolve_option(language),
         slot_overrides=requested_slots,
         markdown_extensions=resolved_markdown_extensions,
-        bibliography_files=list(_resolve_option(bibliography)),
+        bibliography_files=bibliography_files,
     )
 
     if result.tex_path is not None:
@@ -799,9 +852,13 @@ def _build_latexmk_command(
 
 @app.command(name="build")
 def build(
-    input_path: Path = typer.Argument(
+    inputs: list[Path] = typer.Argument(
         ...,
-        help="Path to the rendered MkDocs HTML file or Markdown source.",
+        metavar="INPUT...",
+        help=(
+            "Conversion inputs. Provide a Markdown/HTML source document and optionally "
+            "one or more BibTeX files."
+        ),
         exists=True,
         file_okay=True,
         dir_okay=False,
@@ -817,7 +874,6 @@ def build(
     selector: str = typer.Option(
         "article.md-content__inner",
         "--selector",
-        "-s",
         help="CSS selector to extract the MkDocs article content.",
     ),
     full_document: bool = typer.Option(
@@ -899,7 +955,7 @@ def build(
     slots: list[str] = typer.Option(
         [],
         "--slot",
-        "-e",
+        "-s",
         help=(
             "Inject a document section into a template slot using 'slot:Section'. "
             "Repeat to map multiple sections."
@@ -938,6 +994,14 @@ def build(
 ) -> None:
     """Convert inputs and compile the rendered document with latexmk."""
 
+    resolved_bibliography_option = list(_resolve_option(bibliography))
+    try:
+        document_path, bibliography_files = _partition_input_resources(
+            inputs, resolved_bibliography_option
+        )
+    except ValueError as exc:
+        raise typer.BadParameter(str(exc)) from exc
+
     resolved_markdown_extensions = _resolve_markdown_extensions(
         _resolve_option(markdown_extensions),
         _resolve_option(disable_markdown_extensions),
@@ -948,7 +1012,7 @@ def build(
         raise typer.BadParameter(str(exc)) from exc
 
     conversion = _convert_document(
-        input_path=input_path,
+        input_path=document_path,
         output_dir=_resolve_option(output_dir),
         selector=_resolve_option(selector),
         full_document=_resolve_option(full_document),
@@ -965,7 +1029,7 @@ def build(
         language=_resolve_option(language),
         slot_overrides=requested_slots,
         markdown_extensions=resolved_markdown_extensions,
-        bibliography_files=list(_resolve_option(bibliography)),
+        bibliography_files=bibliography_files,
     )
 
     if conversion.tex_path is None:
