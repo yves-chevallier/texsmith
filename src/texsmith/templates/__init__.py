@@ -41,6 +41,48 @@ class TemplateAsset(BaseModel):
     encoding: str | None = None
 
 
+LATEX_HEADING_LEVELS: dict[str, int] = {
+    "part": -1,
+    "chapter": 0,
+    "section": 1,
+    "subsection": 2,
+    "subsubsection": 3,
+    "paragraph": 4,
+    "subparagraph": 5,
+}
+
+
+class TemplateSlot(BaseModel):
+    """Configuration describing how content is injected into a template slot."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    base_level: int | None = None
+    depth: str | None = None
+    offset: int = 0
+    default: bool = False
+    strip_heading: bool = False
+
+    @model_validator(mode="after")
+    def _validate_depth(self) -> "TemplateSlot":
+        if self.depth is not None and self.depth not in LATEX_HEADING_LEVELS:
+            raise ValueError(
+                f"Unsupported slot depth '{self.depth}', "
+                f"expected one of {', '.join(LATEX_HEADING_LEVELS)}."
+            )
+        return self
+
+    def resolve_level(self, fallback: int) -> int:
+        """Return the base level applied to rendered headings for this slot."""
+
+        level = fallback
+        if self.base_level is not None:
+            level = self.base_level
+        elif self.depth is not None:
+            level = LATEX_HEADING_LEVELS[self.depth]
+        return level + self.offset
+
+
 class TemplateInfo(BaseModel):
     """Metadata describing the LaTeX template payload."""
 
@@ -56,6 +98,7 @@ class TemplateInfo(BaseModel):
     override: list[str] = Field(default_factory=list)
     attributes: dict[str, Any] = Field(default_factory=dict)
     assets: dict[str, TemplateAsset] = Field(default_factory=dict)
+    slots: dict[str, TemplateSlot] = Field(default_factory=dict)
 
     @model_validator(mode="before")
     @classmethod
@@ -71,6 +114,27 @@ class TemplateInfo(BaseModel):
             data = dict(data)
             data["assets"] = normalised
         return data
+
+    def resolve_slots(self) -> tuple[dict[str, TemplateSlot], str]:
+        """Return declared slots ensuring a single default sink exists."""
+
+        resolved = {
+            name: slot if isinstance(slot, TemplateSlot) else TemplateSlot.model_validate(slot)
+            for name, slot in self.slots.items()
+        }
+
+        if "mainmatter" not in resolved:
+            resolved["mainmatter"] = TemplateSlot(default=True)
+
+        defaults = [name for name, slot in resolved.items() if slot.default]
+        if not defaults:
+            resolved["mainmatter"] = resolved["mainmatter"].model_copy(update={"default": True})
+            defaults = ["mainmatter"]
+        elif len(defaults) > 1:
+            formatted = ", ".join(defaults)
+            raise TemplateError(f"Multiple default slots declared: {formatted}")
+
+        return resolved, defaults[0]
 
 
 class LatexSection(BaseModel):
@@ -189,7 +253,17 @@ class WrappableTemplate(BaseTemplate):
         context.setdefault("citations", [])
         context.setdefault("bibliography_entries", {})
         context.setdefault("bibliography_resource", None)
-        context["mainmatter"] = latex_body
+
+        slots, default_slot = self.info.resolve_slots()
+        for name in slots:
+            context.setdefault(name, "")
+
+        if default_slot == "mainmatter":
+            context["mainmatter"] = latex_body
+        else:
+            context.setdefault("mainmatter", "")
+            context[default_slot] = latex_body
+
         return context
 
     def wrap_document(
@@ -207,7 +281,14 @@ class WrappableTemplate(BaseTemplate):
             context = dict(context)
             context.setdefault("frontmatter", "")
             context.setdefault("backmatter", "")
-            context["mainmatter"] = latex_body
+            slots, default_slot = self.info.resolve_slots()
+            for name in slots:
+                context.setdefault(name, "")
+            if default_slot == "mainmatter":
+                context["mainmatter"] = latex_body
+            else:
+                context.setdefault("mainmatter", "")
+                context[default_slot] = latex_body
 
         return self.render_template(self.info.entrypoint, **context)
 

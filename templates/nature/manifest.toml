@@ -34,6 +34,20 @@ bibliography_style = "sn-mathphys-num"
 frontmatter = ""
 backmatter = ""
 
+[latex.template.slots.mainmatter]
+default = true
+depth = "section"
+
+[latex.template.slots.frontmatter]
+depth = "section"
+
+[latex.template.slots.backmatter]
+depth = "section"
+
+[latex.template.slots.abstract]
+depth = "section"
+strip_heading = true
+
 [latex.template.assets]
 "sn-jnl.cls" = { source = "assets/sn-jnl.cls" }
 "sn-bibliography.bib" = { source = "assets/sn-bibliography.bib" }

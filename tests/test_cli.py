@@ -192,9 +192,9 @@ def test_markdown_extensions_option_extends_defaults(
             str(markdown_file),
             "--output-dir",
             str(tmp_path / "output"),
-            "-e",
+            "-x",
             "custom_extension,another_extension",
-            "-e",
+            "-x",
             "custom_extension",
         ],
     )
@@ -291,7 +291,7 @@ def test_mdx_math_extension_preserves_latex(tmp_path: Path) -> None:
             str(markdown_file),
             "--output-dir",
             str(output_dir),
-            "-e",
+            "-x",
             "mdx_math",
         ],
     )
@@ -301,6 +301,130 @@ def test_mdx_math_extension_preserves_latex(tmp_path: Path) -> None:
     assert result.stdout.count("$$") == 2
     assert "\\mathbf{E}" in result.stdout
     assert "\\textbackslash" not in result.stdout
+
+
+def test_slot_injection_extracts_abstract(tmp_path: Path) -> None:
+    runner = CliRunner()
+    markdown_file = tmp_path / "paper.md"
+    markdown_file.write_text(
+        "## Abstract\n\nThis is the abstract.\n\n## Introduction\n\nBody text.",
+        encoding="utf-8",
+    )
+
+    project_root = Path(__file__).resolve().parents[1]
+    template_dir = project_root / "templates" / "nature"
+    output_dir = tmp_path / "out"
+    result = runner.invoke(
+        app,
+        [
+            "convert",
+            str(markdown_file),
+            "--output-dir",
+            str(output_dir),
+            "--template",
+            str(template_dir),
+            "--slot",
+            "abstract:Abstract",
+        ],
+    )
+
+    assert result.exit_code == 0, result.stderr
+    tex_path = output_dir / "paper.tex"
+    assert tex_path.exists()
+    content = tex_path.read_text(encoding="utf-8")
+    assert "\\abstract{" in content
+    assert "This is the abstract." in content
+    assert "\\subsection{Abstract}" not in content
+    assert "\\subsection{Introduction}" in content
+
+
+def test_slot_injection_matches_label(tmp_path: Path) -> None:
+    runner = CliRunner()
+    markdown_file = tmp_path / "paper.md"
+    markdown_file.write_text(
+        "## Abstract {#absSection}\n\nLabel abstract.\n\n## Body\n\nContent.",
+        encoding="utf-8",
+    )
+
+    project_root = Path(__file__).resolve().parents[1]
+    template_dir = project_root / "templates" / "nature"
+    output_dir = tmp_path / "out"
+    result = runner.invoke(
+        app,
+        [
+            "convert",
+            str(markdown_file),
+            "--output-dir",
+            str(output_dir),
+            "--template",
+            str(template_dir),
+            "--slot",
+            "abstract:#absSection",
+        ],
+    )
+
+    assert result.exit_code == 0, result.stderr
+    tex_path = output_dir / "paper.tex"
+    content = tex_path.read_text(encoding="utf-8")
+    assert "Label abstract." in content
+    assert "\\subsection{Abstract}" not in content
+
+
+def test_slot_injection_warns_unknown_slot(tmp_path: Path) -> None:
+    runner = CliRunner()
+    markdown_file = tmp_path / "paper.md"
+    markdown_file.write_text("## Abstract\n\nContent.", encoding="utf-8")
+
+    template_dir = _template_path("article")
+    output_dir = tmp_path / "out"
+    result = runner.invoke(
+        app,
+        [
+            "convert",
+            str(markdown_file),
+            "--output-dir",
+            str(output_dir),
+            "--template",
+            str(template_dir),
+            "--slot",
+            "abstract:Abstract",
+        ],
+    )
+
+    assert result.exit_code == 0, result.stderr
+    assert "slot 'abstract' is not defined" in result.stderr.lower()
+    tex_path = output_dir / "paper.tex"
+    assert tex_path.exists()
+    content = tex_path.read_text(encoding="utf-8")
+    assert "\\subsection{Abstract}" in content
+
+
+def test_slot_injection_preserves_footnotes(tmp_path: Path) -> None:
+    runner = CliRunner()
+    output_dir = tmp_path / "out"
+    result = runner.invoke(
+        app,
+        [
+            "convert",
+            "examples/cheese.md",
+            "--output-dir",
+            str(output_dir),
+            "--template",
+            "templates/nature",
+            "--slot",
+            "abstract:Abstract",
+            "--bibliography",
+            "examples/cheese.bib",
+        ],
+    )
+
+    assert result.exit_code == 0, result.stderr
+    assert "Reference to '1' is not in your bibliography" not in result.stderr
+    tex_path = output_dir / "cheese.tex"
+    assert tex_path.exists()
+    content = tex_path.read_text(encoding="utf-8")
+    assert "\\footnote{" in content
+    assert "Parmigiano-Reggiano" in content
 
 
 def test_build_requires_template(tmp_path: Path) -> None:
@@ -367,6 +491,7 @@ def test_build_invokes_latexmk(tmp_path: Path, monkeypatch: Any) -> None:
     assert calls, "latexmk was not invoked"
     command, kwargs = calls[0]
     assert command[0] == "/usr/bin/latexmk"
+    assert "-bibtex" not in command
     pdflatex_args = [arg for arg in command if arg.startswith("-pdflatex=")]
     assert pdflatex_args and "lualatex" in pdflatex_args[0]
     assert "--shell-escape" in pdflatex_args[0]
@@ -374,6 +499,64 @@ def test_build_invokes_latexmk(tmp_path: Path, monkeypatch: Any) -> None:
     assert kwargs["cwd"] == output_dir
     assert "build ok" in result.stdout
     assert "PDF document written to" in result.stdout
+
+
+def test_build_with_bibliography_forces_bibtex(
+    tmp_path: Path, monkeypatch: Any
+) -> None:
+    runner = CliRunner()
+    html_file = tmp_path / "index.html"
+    html_file.write_text(
+        (
+            "<article class='md-content__inner'>"
+            "<texsmith-missing-footnote data-footnote-id='Ref'></texsmith-missing-footnote>"
+            "</article>"
+        ),
+        encoding="utf-8",
+    )
+
+    bib_file = tmp_path / "refs.bib"
+    bib_file.write_text(
+        "@article{Ref, author={Doe, Jane}, title={Demo}, journal={Demo}, year={2024}}",
+        encoding="utf-8",
+    )
+
+    output_dir = tmp_path / "output"
+    template_dir = _template_path("article")
+
+    calls: list[tuple[list[str], dict[str, Any]]] = []
+
+    def fake_which(name: str) -> str:
+        assert name == "latexmk"
+        return "/usr/bin/latexmk"
+
+    def fake_run(cmd: list[str], **kwargs: Any) -> types.SimpleNamespace:
+        calls.append((cmd, kwargs))
+        pdf_path = Path(kwargs["cwd"]) / "index.pdf"
+        pdf_path.write_text("%PDF-1.4", encoding="utf-8")
+        return types.SimpleNamespace(returncode=0, stdout="build ok\n", stderr="")
+
+    monkeypatch.setattr(cli_module.shutil, "which", fake_which)
+    monkeypatch.setattr(cli_module.subprocess, "run", fake_run)
+
+    result = runner.invoke(
+        app,
+        [
+            "build",
+            str(html_file),
+            "--output-dir",
+            str(output_dir),
+            "--template",
+            str(template_dir),
+            "--bibliography",
+            str(bib_file),
+        ],
+    )
+
+    assert result.exit_code == 0, result.stdout
+    assert calls, "latexmk was not invoked"
+    command, _ = calls[0]
+    assert "-bibtex" in command
 
 
 def test_build_respects_shell_escape(tmp_path: Path, monkeypatch: Any) -> None:
