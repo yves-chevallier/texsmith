@@ -440,7 +440,9 @@ non-standard-fields:
 - [x] Support for index generation (makeindex, xindy)
 - [x] Rename package texsmith et les templates texsmith-template-*
 - [x] Activer toutes les extensions communes par défaut.
-- [ ] Support for bibliography (biblatex, natbib...)
+- [x] Support for bibliography (biblatex, natbib...)
+- [x] Support for footnotes
+- [x] Convert some journals templates
 
 ### Medium term
 
@@ -450,7 +452,7 @@ non-standard-fields:
 - [ ] Documenter le processus de création de templates LaTeX personnalisées
 - [ ] Declare solution/exercises in a plugin way
 - [ ] Find a way to have a solid and robust docker submodule/class
-- [ ] Convert some journals templates (Springer, Elsevier, IEEE...)
+
 - [ ] Support for glossaries (glossaries package)
 - [ ] Support for cross-references (cleveref package)
 - [ ] Méthode pour extraire/injecter une section et ses sous-sections dans un autre entrypoint (frontmatter, abstract, appendix...)

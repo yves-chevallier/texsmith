@@ -13,11 +13,11 @@ meta:
 ---
 ## Abstract
 
-The mechanical behavior of hard cheese varieties is a critical factor determining their processing, texture, and consumer perception. This paper explores the stiffness and malleability of hard cheese through theoretical modeling and empirical measurement. Using a viscoelastic model, we establish a relationship between strain rate, temperature, and cheese deformation. Experimental results demonstrate significant differences between Parmigiano-Reggiano, Comté, and aged Cheddar samples. Python-based data analysis is presented to illustrate the computational approach.
+The mechanical behavior of hard cheese varieties is a critical factor determining their processing, texture, and consumer perception. This paper explores the stiffness and malleability of hard cheese through theoretical modeling and empirical measurement. Using a viscoelastic model, we establish a relationship between strain rate, temperature, and cheese deformation. Experimental results demonstrate significant differences between Parmigiano-Reggiano [^1], Comté [^2], and aged Cheddar samples. Python-based data analysis is presented to illustrate the computational approach.
 
 ## Introduction
 
-Cheese is not only a culinary product but also a **viscoelastic material** with complex rheological properties. The *stiffness* (resistance to deformation) and *malleability* (ability to deform without fracture) of hard cheeses are governed by microstructural factors such as protein cross-linking, fat distribution, and moisture content [Smith et al., 2021].
+Cheese is not only a culinary product but also a **viscoelastic material** with complex rheological properties. The *stiffness* [^Prentice1993] (resistance to deformation) and *malleability* (ability to deform without fracture) of hard cheeses are governed by microstructural factors such as protein cross-linking, fat distribution, and moisture content [^Jaoac2019].
 
 Understanding these properties is essential for optimizing slicing, grating, and processing methods in the food industry. This work integrates experimental data with analytical modeling to quantify the mechanical response of cheese samples under stress.
 
@@ -43,6 +43,12 @@ M = \frac{1}{E(T, \dot{\varepsilon})}
 $$
 
 This simple formulation allows us to approximate the cheese’s flexibility under various thermal and mechanical conditions.
+
+## Melting Behavior
+
+The melting point of cheese is influenced by its fat content and moisture level. Hard cheeses typically exhibit a melting range between **50 °C and 70 °C**, depending on their composition. The melting behavior can be characterized using differential scanning calorimetry (DSC) to determine the onset and peak melting temperatures. The Mozzarella cheese, for instance, has a lower melting point due to its higher moisture content compared to aged hard cheeses like Parmigiano-Reggiano [^WADHWANI20111713].
+
+![Cheese melting behavior](mozzarella.jpg){ width=50% }
 
 ## Materials and Methods
 
@@ -103,3 +109,7 @@ plt.grid(True)
 plt.tight_layout()
 plt.show()
 ```
+
+[^1]: A kind of hard, granular cheese originating from Italy, known for its rich flavor and crystalline texture.
+
+[^2]: A French cheese with a firm texture and nutty taste, often aged for extended periods.

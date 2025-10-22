@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import hashlib
+import os
 from pathlib import Path
 from typing import Any
 
@@ -90,8 +91,21 @@ def _apply_figure_template(
 
     template_name = template or context.runtime.get("figure_template", "figure")
     formatter = getattr(context.formatter, template_name)
+    if path.is_absolute():
+        output_dir = context.assets.output_root.parent
+        try:
+            reference = path.relative_to(output_dir)
+        except ValueError:
+            try:
+                reference = Path(os.path.relpath(path, output_dir))
+            except ValueError:
+                reference = path
+    else:
+        reference = path
+
+    asset_path = reference.as_posix() if isinstance(reference, Path) else str(reference)
     latex = formatter(
-        path=path.name,
+        path=asset_path,
         caption=caption,
         shortcaption=caption,
         label=label,

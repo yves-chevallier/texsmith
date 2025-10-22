@@ -1,40 +1,45 @@
+# Python artifacts
 __pycache__/
-*.pyc
-*.pyo
-*.pyd
-*.swp
-*.swo
 .DS_Store
+.ruff_cache/
+.uv-cache/
+.venv
+*.egg-info/
+*.pyc
+*.pyd
+*.pyo
+*.swo
+*.swp
 
 # LaTeX artifacts
-*.aux
-*.fdb_latexmk
-*.fls
-*.glsdefs
-*.lol
-*.log
-*.mypyg
-*.synctex.gz
-*.xdv
 *_minted-*/
 *.acn
 *.acr
 *.alg
-*.glo
+*.aux
+*.bcf
+*.fdb_latexmk
+*.fls
 *.glg
+*.glo
 *.gls
+*.glsdefs
 *.idx
 *.ilg
 *.ind
 *.ist
 *.listing
+*.lof
+*.log
+*.lol
+*.lot
 *.maf
 *.mtc*
+*.mypyg
+*.run.xml
+*.synctex.gz
 *.toc
-*.egg-info/
-build/
+*.xdv
 
-.uv-cache/
-.ruff_cache/
-.venv
-*.egg-info/
+# Local build artifacts
+build/
