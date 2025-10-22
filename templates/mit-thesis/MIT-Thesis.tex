@@ -91,7 +91,7 @@
 % \usepackage[style=authoryear, maxbibnames=10]{biblatex}
 
 
-\addbibresource{mitthesis-sample.bib}%% <== change to YOUR bib file <= CHANGE
+\BLOCK{ if bibliography_resource }\addbibresource{\VAR{bibliography_resource}}\BLOCK{ else }\addbibresource{mitthesis-sample.bib}\BLOCK{ endif }%% <== change to YOUR bib file <= CHANGE
 
 %% to avoid split urls and stretched white space, you can set the bibliography ragged-right:
 %\appto{\bibsetup}{\raggedright}

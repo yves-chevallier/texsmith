@@ -7,6 +7,7 @@ from pathlib import Path
 import re
 
 from bs4 import NavigableString, Tag
+import warnings
 
 from ..context import RenderContext
 from ..exceptions import AssetMissingError, InvalidNodeError
@@ -217,24 +218,77 @@ def render_footnotes(root: Tag, context: RenderContext) -> None:
     """Extract and render footnote references."""
 
     footnotes: dict[str, str] = {}
+    bibliography = context.state.bibliography
+
+    def _normalise_footnote_id(value: str | None) -> str:
+        if not value:
+            return ""
+        text = str(value).strip()
+        if ":" in text:
+            prefix, suffix = text.split(":", 1)
+            if prefix.startswith("fnref") or prefix.startswith("fn"):
+                return suffix
+        return text or ""
+
+    def _replace_with_latex(node: Tag, latex: str) -> None:
+        replacement = NavigableString(latex)
+        replacement.processed = True
+        node.replace_with(replacement)
 
     for container in root.find_all("div", class_="footnote"):
         for li in container.find_all("li"):
-            footnote_id = re.sub(r"^fn:(\d+)", r"\1", str(li.get("id", "")))
+            footnote_id = _normalise_footnote_id(li.get("id"))
             if not footnote_id:
                 raise InvalidNodeError("Footnote item missing identifier")
             footnotes[footnote_id] = li.get_text(strip=False).strip()
         container.decompose()
 
     for sup in root.find_all("sup", id=True):
-        footnote_id = re.sub(r"^fnref:(\d+)", r"\1", str(sup.get("id", "")))
+        footnote_id = _normalise_footnote_id(sup.get("id"))
         payload = footnotes.get(footnote_id)
-        if payload is None:
+        if footnote_id and footnote_id in bibliography:
+            if payload:
+                warnings.warn(
+                    f"Conflicting bibliography definition for '{footnote_id}'.",
+                    stacklevel=2,
+                )
+            context.state.record_citation(footnote_id)
+            latex = context.formatter.citation(key=footnote_id)
+            _replace_with_latex(sup, latex)
             continue
+
+        if payload is None:
+            if footnote_id and footnote_id not in bibliography:
+                warnings.warn(
+                    f"Reference to '{footnote_id}' is not in your bibliography...",
+                    stacklevel=2,
+                )
+            continue
+
         latex = context.formatter.footnote(payload)
-        node = NavigableString(latex)
-        node.processed = True
-        sup.replace_with(node)
+        _replace_with_latex(sup, latex)
+
+    for placeholder in root.find_all("texsmith-missing-footnote"):
+        identifier = placeholder.get("data-footnote-id") or placeholder.get_text(
+            strip=True
+        )
+        footnote_id = identifier.strip() if identifier else ""
+        if not footnote_id:
+            placeholder.decompose()
+            continue
+
+        if footnote_id in bibliography:
+            context.state.record_citation(footnote_id)
+            latex = context.formatter.citation(key=footnote_id)
+            _replace_with_latex(placeholder, latex)
+        else:
+            warnings.warn(
+                f"Reference to '{footnote_id}' is not in your bibliography...",
+                stacklevel=2,
+            )
+            replacement = NavigableString(footnote_id)
+            replacement.processed = True
+            placeholder.replace_with(replacement)
 
 
 @renders("p", phase=RenderPhase.POST, priority=90, name="paragraphs", nestable=False)

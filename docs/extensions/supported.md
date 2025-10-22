@@ -479,147 +479,41 @@ _Paquet : `pymdown-extensions`_
 ```
 ````
 
+### EscapeAll
 
-### **EscapeAll**
 Forcer l’échappement de caractères spéciaux Markdown.
+
 _Extension : `pymdownx.escapeall`_
 _Paquet : `pymdown-extensions`_
 
----
 
-### **BetterEm**
+### BetterEm
+
 Meilleure gestion du gras / italique combiné (`***texte***`, etc.)
+
 _Extension : `pymdownx.betterem`_
 _Paquet : `pymdown-extensions`_
 
----
+```md
+***gras et italique***
+```
 
-### **InlineSyntaxHighlight**
-Coloration syntaxique du code inline, par langage.
-_Extension : `pymdownx.inlinehilite`_
-_Paquet : `pymdown-extensions`_
+> ***gras et italique***
 
----
+### InlineSyntaxHighlight
 
-### **StripHTML**
-Supprime les balises HTML dans le rendu.
-_Extension : `pymdownx.striphtml`_
-_Paquet : `pymdown-extensions`_
+### Long dash (—)
 
----
+Aucune extension n'existe aujourd'hui pour gérer automatiquement le long dash (em-dash) en Markdown. En LaTeX on utilise `--` pour un en-dash et `---` pour un em-dash. Le `---` peut preter à confusion en Markdown car il est aussi utilisé pour les lignes horizontales, néanmoins certains parseurs comme `markdown-it-py` le gèrent correctement dans le contexte. À tester...
 
-### **PathConverter**
-Permet de réécrire les chemins des liens et images.
-_Extension : `pymdownx.pathconverter`_
-_Paquet : `pymdown-extensions`_
+### Syntaxe supplémentaire
 
----
+```md
+> [!note] Ceci est une note.
+>    Utilisé sur Docusaurus, Obsidian, GitHub.
 
-### **Caret / Tilde / Mark (déjà cités)**
-Sont trois extensions distinctes pour les indices, exposants et surlignages.
-
----
-
-## 💡 Autres parseurs Markdown populaires
-
----
-
-### 🧱 **CommonMark / GitHub Flavored Markdown (GFM)**
-
-Inclus :
-
-| Fonctionnalité | Syntaxe | Paquet Python |
-|----------------|----------|---------------|
-| Tables | `|col|col|` | `markdown-it-py` ou `mistune` |
-| Task lists | `- [ ]` | idem |
-| Strikethrough | `~~texte~~` | idem |
-| Autolink (URLs auto) | `https://exemple.com` | idem |
-| Mentions (@user) | `@username` | dépend du moteur |
-| Issue references | `#123` | dépend du moteur |
-| Emoji | `:heart:` | `markdown-it-emoji` |
-
----
-
-### 🧪 **Pandoc Markdown**
-
-C’est le plus extensible de tous.
-Fonctions supplémentaires :
-
-| Fonction | Exemple | Extension |
-|-----------|----------|-----------|
-| Citations | `[@doe2020]` | Bibliography |
-| Cross-references | `\@fig:monimage` | `pandoc-crossref` |
-| Math | `$...$`, `$$...$$` | inclus |
-| Inline notes | `^[note]` | inclus |
-| Raw blocks | ```{=html} <span>``` | inclus |
-| Div blocks | `::: note ... :::` | inclus |
-| Spans avec attributs | `[mot]{.classe}` | inclus |
-| Inline includes | `!include fichier.md` | `pandoc-include` |
-| Figure captions | `![Titre](img.png){#fig:id}` | inclus |
-| Code attributes | ```{.python .numberLines}``` | inclus |
-| Smart quotes | `--`, `---` → tirets typographiques | inclus |
-
-_Paquet : `pip install pandoc` ou `pypandoc` (interface Python)_
-
----
-
-### 🐍 **Mistune**
-
-Parseur Markdown rapide et modulaire pour Python.
-Extensions disponibles :
-
-- `strikethrough`
-- `table`
-- `footnotes`
-- `def_list`
-- `plugin_math`
-- `plugin_task_lists`
-- `plugin_url`
-- `plugin_toc`
-- `plugin_abbr`
-
-_Paquet : `pip install mistune`_
-
----
-
-### 🧰 **Markdown-it-py (compatibilité GFM et plugins JS)**
-
-Plugins notables :
-
-- `markdown-it-attrs` → attributs `{#id .class}`
-- `markdown-it-admonition` → admonitions type `!!! note`
-- `markdown-it-footnote`
-- `markdown-it-task-lists`
-- `markdown-it-math`
-- `markdown-it-anchor`
-- `markdown-it-table-of-contents`
-- `markdown-it-container` (personnalisable)
-- `markdown-it-emoji`
-- `markdown-it-sub` / `markdown-it-sup`
-
-_Paquet : `pip install markdown-it-py[plugins]`_
-
----
-
-### 🧾 **Remark / MDX / Astro / Obsidian (écosystème JS)**
-
-Ces parseurs Markdown JS ajoutent encore d’autres syntaxes :
-
-| Fonction | Exemple | Extension / Source |
-|-----------|----------|--------------------|
-| Callouts / Admonitions | `> [!note] contenu` | Obsidian / Docusaurus |
-| YAML FrontMatter | `--- ... ---` | standard |
-| Inline math | `$a^2+b^2=c^2$` | KaTeX / MathJax |
-| Wiki links | `[[Note interne]]` | Obsidian, MkDocs |
-| Hashtags | `#motcle` | Obsidian |
-| Inline directives | `::directive{param}` | MDX, Astro |
-| JSX inside Markdown | `<Component />` | MDX |
-| Component slots | `<slot name="x" />` | Astro |
-| Auto TOC | `[TOC]` | Docusaurus / mkdocs |
-| Frontmatter-based metadata | `layout: post` | Astro / Next.js |
-| Diagrammes Mermaid / Graphviz | ```mermaid``` | Markdown renderers divers |
-
----
+::directive{param} Utilisé sur MDX, Astro
+```
 
 ### 🧱 **Autres dialectes rares**
 

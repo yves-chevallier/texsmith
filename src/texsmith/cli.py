@@ -36,6 +36,7 @@ DEFAULT_MARKDOWN_EXTENSIONS = [
     "attr_list",
     "def_list",
     "footnotes",
+    "texsmith.markdown_extensions.missing_footnotes:MissingFootnotesExtension",
     "md_in_html",
     "mdx_math",
     "pymdownx.betterem",
@@ -223,6 +224,7 @@ def _convert_document(
     debug: bool,
     language: str | None,
     markdown_extensions: list[str],
+    bibliography_files: list[Path],
 ) -> ConversionResult:
     try:
         output_dir = output_dir.resolve()
@@ -268,6 +270,21 @@ def _convert_document(
     resolved_language = _resolve_template_language(language, front_matter)
 
     config = BookConfig(project_dir=input_path.parent, language=resolved_language)
+
+    bibliography_collection: BibliographyCollection | None = None
+    bibliography_map: dict[str, dict[str, Any]] = {}
+    if bibliography_files:
+        bibliography_collection = BibliographyCollection()
+        bibliography_collection.load_files(bibliography_files)
+        bibliography_map = bibliography_collection.to_dict()
+        for issue in bibliography_collection.issues:
+            prefix = f"[{issue.key}] " if issue.key else ""
+            source_hint = f" ({issue.source})" if issue.source else ""
+            typer.secho(
+                f"warning: {prefix}{issue.message}{source_hint}",
+                fg=typer.colors.YELLOW,
+                err=True,
+            )
 
     renderer_kwargs: dict[str, Any] = {
         "output_root": output_dir,
@@ -329,6 +346,8 @@ def _convert_document(
         "copy_assets": copy_assets,
     }
     runtime["language"] = resolved_language
+    if bibliography_map:
+        runtime["bibliography"] = bibliography_map
     if template_name is not None:
         runtime["template"] = template_name
     if manifest:
@@ -347,7 +366,10 @@ def _convert_document(
 
     try:
         latex_output, document_state = _render_with_fallback(
-            renderer_factory, html, runtime
+            renderer_factory,
+            html,
+            runtime,
+            bibliography_map,
         )
     except LatexRenderingError as exc:
         typer.secho(
@@ -356,6 +378,23 @@ def _convert_document(
             err=True,
         )
         raise typer.Exit(code=1) from exc
+
+    citations = list(document_state.citations)
+    bibliography_output: Path | None = None
+    if citations and bibliography_collection is not None and bibliography_map:
+        try:
+            output_dir.mkdir(parents=True, exist_ok=True)
+            bibliography_output = output_dir / "texsmith-bibliography.bib"
+            bibliography_collection.write_bibtex(
+                bibliography_output, keys=citations
+            )
+        except OSError as exc:
+            typer.secho(
+                f"Failed to write bibliography file: {exc}",
+                fg=typer.colors.YELLOW,
+                err=True,
+            )
+            bibliography_output = None
 
     tex_path: Path | None = None
     if template_instance is not None:
@@ -366,6 +405,13 @@ def _convert_document(
             )
             template_context["index_entries"] = document_state.has_index_entries
             template_context["acronyms"] = document_state.acronyms.copy()
+            template_context["citations"] = citations
+            template_context["bibliography_entries"] = document_state.bibliography
+            if citations and bibliography_output is not None:
+                template_context["bibliography"] = bibliography_output.stem
+                template_context["bibliography_resource"] = bibliography_output.name
+                if not template_context.get("bibliography_style"):
+                    template_context["bibliography_style"] = "plain"
             latex_output = template_instance.wrap_document(
                 latex_output,
                 context=template_context,
@@ -576,6 +622,17 @@ def convert(
             "Provide a comma separated list or repeat the option multiple times."
         ),
     ),
+    bibliography: list[Path] = typer.Option(
+        [],
+        "--bibliography",
+        "-b",
+        help="BibTeX files merged and exposed to the renderer.",
+        exists=True,
+        file_okay=True,
+        dir_okay=False,
+        readable=True,
+        resolve_path=True,
+    ),
 ) -> None:
     """Convert an MkDocs HTML page to LaTeX."""
 
@@ -601,6 +658,7 @@ def convert(
         debug=_resolve_option(debug),
         language=_resolve_option(language),
         markdown_extensions=resolved_markdown_extensions,
+        bibliography_files=list(_resolve_option(bibliography)),
     )
 
     if result.tex_path is not None:
@@ -757,6 +815,17 @@ def build(
             "Provide a comma separated list or repeat the option multiple times."
         ),
     ),
+    bibliography: list[Path] = typer.Option(
+        [],
+        "--bibliography",
+        "-b",
+        help="BibTeX files merged and exposed to the renderer.",
+        exists=True,
+        file_okay=True,
+        dir_okay=False,
+        readable=True,
+        resolve_path=True,
+    ),
 ) -> None:
     """Convert inputs and compile the rendered document with latexmk."""
 
@@ -782,6 +851,7 @@ def build(
         debug=_resolve_option(debug),
         language=_resolve_option(language),
         markdown_extensions=resolved_markdown_extensions,
+        bibliography_files=list(_resolve_option(bibliography)),
     )
 
     if conversion.tex_path is None:
@@ -883,9 +953,10 @@ def _render_with_fallback(
     renderer_factory: Callable[[], LaTeXRenderer],
     html: str,
     runtime: dict[str, object],
+    bibliography: Mapping[str, dict[str, Any]] | None = None,
 ) -> tuple[str, DocumentState]:
     attempts = 0
-    state = DocumentState()
+    state = DocumentState(bibliography=dict(bibliography or {}))
     while True:
         renderer = renderer_factory()
         try:
@@ -895,7 +966,7 @@ def _render_with_fallback(
             attempts += 1
             if attempts >= 5 or not _attempt_transformer_fallback(exc):
                 raise
-            state = DocumentState()
+            state = DocumentState(bibliography=dict(bibliography or {}))
 
 
 def _attempt_transformer_fallback(error: LatexRenderingError) -> bool:

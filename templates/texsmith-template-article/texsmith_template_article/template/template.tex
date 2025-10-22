@@ -70,4 +70,26 @@
 \BLOCK{ if acronyms }\printglossary[type=\acronymtype, title=Liste des acronymes]\BLOCK{ endif }
 \BLOCK{ if index_entries }\printindex\BLOCK{ endif }
 
+\BLOCK{ if citations }
+\begin{thebibliography}{\VAR{citations|length}}
+\BLOCK{ for key in citations }
+\BLOCK{ set entry = bibliography_entries.get(key) }
+\bibitem{\VAR{key}}%
+\BLOCK{ if entry }
+\BLOCK{ set fields = entry['fields'] }
+\BLOCK{ set persons = entry['persons'] }
+\BLOCK{ set authors = persons.get('author', []) }
+\BLOCK{ if authors }\VAR{ authors | map(attribute='text') | join(', ') }\BLOCK{ endif }%
+\BLOCK{ if fields.get('title') } \textit{\VAR{fields['title']}}\BLOCK{ endif }%
+\BLOCK{ if fields.get('journal') } \VAR{fields['journal']}\BLOCK{ endif }%
+\BLOCK{ if fields.get('year') } (\VAR{fields['year']})\BLOCK{ endif }%
+\BLOCK{ if fields.get('url') }\\\url{\VAR{fields['url']}}\BLOCK{ endif }%
+\BLOCK{ if fields.get('doi') }\\\textsc{doi}: \VAR{fields['doi']}\BLOCK{ endif }
+\BLOCK{ else }
+Missing bibliography entry for \VAR{key}
+\BLOCK{ endif }
+\BLOCK{ endfor }
+\end{thebibliography}
+\BLOCK{ endif }
+
 \end{document}

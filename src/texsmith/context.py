@@ -34,6 +34,9 @@ class DocumentState:
     exercise_counter: int = 0
     has_index_entries: bool = False
     counters: dict[str, int] = field(default_factory=dict)
+    bibliography: dict[str, dict[str, Any]] = field(default_factory=dict)
+    citations: list[str] = field(default_factory=list)
+    _citation_index: set[str] = field(default_factory=set, init=False, repr=False)
 
     def remember_acronym(self, term: str, description: str) -> str:
         """Register an acronym definition keyed by a normalised identifier."""
@@ -106,6 +109,14 @@ class DocumentState:
 
     def reset_counter(self, key: str) -> None:
         self.counters.pop(key, None)
+
+    def record_citation(self, key: str) -> None:
+        """Track citation keys used throughout the document."""
+
+        if key in self._citation_index:
+            return
+        self._citation_index.add(key)
+        self.citations.append(key)
 
 
 @dataclass(slots=True)

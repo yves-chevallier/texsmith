@@ -186,6 +186,9 @@ class WrappableTemplate(BaseTemplate):
         context.setdefault("backmatter", "")
         context.setdefault("index_entries", False)
         context.setdefault("acronyms", {})
+        context.setdefault("citations", [])
+        context.setdefault("bibliography_entries", {})
+        context.setdefault("bibliography_resource", None)
         context["mainmatter"] = latex_body
         return context
 

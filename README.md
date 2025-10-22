@@ -321,6 +321,15 @@ Well what we want to achieve:
 7. If a citation is not found in the bibliography, warn at build time.
 8. Rely on a MkDocs plugin to manage bibliography on the project level and represent bibliography in the browser's documentation.
 
+What I need before coding:
+
+1. Find a Python package that can load, process a bib file. We will use pybtex.
+2. Ensure the syntax `[^citekey]` works.
+
+### Syntax
+
+The `[^citekey]` syntax seems natural and well appropriated for citations in Markdown it is converted into `<sup id="fnref:citekey"><a class="footnote-ref" href="#fn:citekey">1</a></sup>` in HTML. The renderer can detect this pattern and replace it with `\cite{citekey}` in LaTeX. However if the footnote-ref is not defined in the document, the tag is not parsed and we get `[^chocolate]` in the HTML which could be fine as it is not conflicting (not in code sections). Footnotes are treated by the `footnotes` extension defined in Python Markdown and the code shows that.
+
 ### MkDocs
 
 I found few plugins. The most cited is mkdocs-bibtex which is no longer maintained. mdx_bib is a Markdown extension that use the `@<citekey>` syntax why not, but it is not a standard Markdown syntax. We could support both `[^citekey]` and `@citekey` syntaxes. The plugin should also manage bibliography files at the project level.
