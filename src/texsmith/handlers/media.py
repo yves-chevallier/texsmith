@@ -98,7 +98,7 @@ def _apply_figure_template(
         width=width,
     )
     node = NavigableString(latex)
-    setattr(node, "processed", True)
+    node.processed = True
     return node
 
 
@@ -114,7 +114,7 @@ def _render_mermaid_diagram(
     if not context.runtime.get("copy_assets", True):
         placeholder = caption or "Mermaid diagram"
         node = NavigableString(placeholder)
-        setattr(node, "processed", True)
+        node.processed = True
         return node
     if not _looks_like_mermaid(body):
         return None
@@ -172,7 +172,7 @@ def render_images(element: Tag, context: RenderContext) -> None:
         alt_text = element.get("alt") or element.get("title") or ""
         placeholder = alt_text.strip() or "[image]"
         node = NavigableString(placeholder)
-        setattr(node, "processed", True)
+        node.processed = True
         element.replace_with(node)
         return
 

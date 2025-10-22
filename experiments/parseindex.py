@@ -20,18 +20,27 @@ Options:
     <input>              chemin du JSON ou "-" pour stdin
 """
 
-import sys, json, re, unicodedata, argparse
-from collections import defaultdict
+import argparse
+import json
+import re
+import sys
+import unicodedata
 
-FIG_RE = re.compile(r'(?i)\bfig(?:ure)?\b[ \t]*[:#\-\u00A0]*\s*([0-9][\d\.\-]*)?')
+
+FIG_RE = re.compile(r"(?i)\bfig(?:ure)?\b[ \t]*[:#\-\u00A0]*\s*([0-9][\d\.\-]*)?")
+
 
 def deaccent(s: str) -> str:
-    return "".join(c for c in unicodedata.normalize("NFD", s) if unicodedata.category(c) != "Mn")
+    return "".join(
+        c for c in unicodedata.normalize("NFD", s) if unicodedata.category(c) != "Mn"
+    )
+
 
 def normalize_term(s: str) -> str:
     s = (s or "").strip().lower()
     s = deaccent(s)
     return re.sub(r"\s+", " ", s)
+
 
 def detect_fig_labels(heading: str, snippet: str, anchor: str):
     """
@@ -46,9 +55,10 @@ def detect_fig_labels(heading: str, snippet: str, anchor: str):
                 labels.add(num)
             else:
                 labels.add("fig")
-    if anchor and re.search(r'(?i)\bfig(?:ure)?\b', anchor):
+    if anchor and re.search(r"(?i)\bfig(?:ure)?\b", anchor):
         labels.add(f"@{anchor}")
     return labels
+
 
 def compute_page(pos: int, cpp: int) -> int:
     if pos is None:
@@ -57,11 +67,13 @@ def compute_page(pos: int, cpp: int) -> int:
         pos = 0
     return (pos // cpp) + 1
 
+
 def load_entries(path: str):
     if path == "-":
         return json.load(sys.stdin)
     with open(path, "r", encoding="utf-8") as f:
         return json.load(f)
+
 
 def main():
     ap = argparse.ArgumentParser(add_help=False)
@@ -82,7 +94,7 @@ def main():
 
     for entry in data:
         term_display = entry.get("term") or ""
-        index_term   = entry.get("lemma") or normalize_term(term_display) or ""
+        index_term = entry.get("lemma") or normalize_term(term_display) or ""
         # Agrège pages/figures sur tous les documents présents (même si en pratique 1)
         pages = set()
         figs = set()
@@ -97,7 +109,7 @@ def main():
                 # Figures ?
                 heading = o.get("heading")
                 snippet = o.get("snippet")
-                anchor  = o.get("anchor")
+                anchor = o.get("anchor")
                 for lbl in detect_fig_labels(heading, snippet, anchor):
                     figs.add(lbl)
 
@@ -108,9 +120,14 @@ def main():
         # Format figures
         if figs:
             # sépare les numéros "propres" des ancres "@..." et de "fig" générique
-            num_like = sorted([x for x in figs if x and x[0].isdigit()], key=lambda s: [int(t) if t.isdigit() else t for t in re.split(r'(\d+)', s)])
-            at_like  = sorted([x[1:] for x in figs if x.startswith("@")])
-            generic  = ["fig"] if "fig" in figs else []
+            num_like = sorted(
+                [x for x in figs if x and x[0].isdigit()],
+                key=lambda s: [
+                    int(t) if t.isdigit() else t for t in re.split(r"(\d+)", s)
+                ],
+            )
+            at_like = sorted([x[1:] for x in figs if x.startswith("@")])
+            generic = ["fig"] if "fig" in figs else []
             fig_parts = []
             if num_like:
                 fig_parts.append("fig. " + ", ".join(num_like))
@@ -125,12 +142,16 @@ def main():
         # Ligne
         if args.format == "csv":
             # CSV simple, échapper basique
-            def q(s): return '"' + (s or "").replace('"', '""') + '"'
-            rows.append(f"{q(term_display)},{q(index_term)},{q(('p. ' + pages_str if pages_str else '') + figures_str)}")
+            def q(s):
+                return '"' + (s or "").replace('"', '""') + '"'
+
+            rows.append(
+                f"{q(term_display)},{q(index_term)},{q(('p. ' + pages_str if pages_str else '') + figures_str)}"
+            )
         else:
             # Texte
             left = term_display
-            mid  = index_term
+            mid = index_term
             right_parts = []
             if pages_str:
                 right_parts.append("p. " + pages_str)
@@ -140,10 +161,14 @@ def main():
             rows.append(f"{left} , {mid} , {right}")
 
     # Tri alphabétique par clé d'index (insensible aux accents/casse)
-    rows_sorted = sorted(rows, key=lambda line: normalize_term(line.split(",")[1] if "," in line else line))
+    rows_sorted = sorted(
+        rows,
+        key=lambda line: normalize_term(line.split(",")[1] if "," in line else line),
+    )
 
     for line in rows_sorted:
         sys.stdout.write(line.rstrip() + "\n")
+
 
 if __name__ == "__main__":
     main()

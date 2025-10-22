@@ -270,9 +270,7 @@ class Template(WrappableTemplate):
             email_value = self._coerce_string(
                 item.get("email") or item.get("mail") or item.get("contact")
             )
-            escaped_email = (
-                escape_latex_chars(email_value) if email_value else None
-            )
+            escaped_email = escape_latex_chars(email_value) if email_value else None
 
             corresponding_flag = (
                 item.get("corresponding")

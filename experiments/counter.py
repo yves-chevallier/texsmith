@@ -1,49 +1,22 @@
 #!/usr/bin/env python3
-"""Minimal CLI showcasing a counter extension built on texsmith."""
+"""Minimal CLI showcasing the counter extension built on texsmith."""
 
 from __future__ import annotations
 
-from texsmith import DocumentState, LaTeXRenderer, RenderPhase, renders
+from pathlib import Path
+import sys
 
 
-COUNTER_CLASS = "data-counter"
-COUNTER_KEY = "data-counter"
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+EXAMPLES_ROOT = PROJECT_ROOT / "examples"
+
+for candidate in (EXAMPLES_ROOT, PROJECT_ROOT):
+    candidate_str = str(candidate)
+    if candidate_str not in sys.path:
+        sys.path.insert(0, candidate_str)
+
+from counter import main  # type: ignore  # noqa: E402
 
 
-@renders("span", phase=RenderPhase.INLINE, name="inline_data_counter")
-def render_data_counter(element, context) -> None:
-    """Replace ``<span class="data-counter">`` nodes with an incrementing marker."""
-
-    classes = element.get("class") or []
-    if isinstance(classes, str):
-        tokens = {classes}
-    else:
-        tokens = set(classes)
-    if COUNTER_CLASS not in tokens:
-        return
-
-    counter_value = context.state.next_counter(COUNTER_KEY)
-    element.replace_with(f"\\counter{{{counter_value}}}")
-
-
-def build_renderer() -> LaTeXRenderer:
-    """Instantiate the renderer with the counter extension registered."""
-
-    renderer = LaTeXRenderer()
-    renderer.register(render_data_counter)
-    return renderer
-
-
-HTML = r"""
-<h1>Counter Example</h1>
-
-<p>
-This is item <span class="data-counter"></span> but we can also have another
-item <span class="data-counter"></span> and even more <span class="data-counter"></span>.
-</p>
-"""
-
-if __name__ == "__main__":
-    state = DocumentState()
-    renderer = build_renderer()
-    print(renderer.render(HTML, state=state))
+if __name__ == "__main__":  # pragma: no cover - convenience CLI
+    main()

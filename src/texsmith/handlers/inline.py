@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterable
 import hashlib
 import re
-from typing import Iterable
 
 from bs4 import NavigableString, Tag
 from requests.utils import requote_uri as requote_url
@@ -139,6 +139,7 @@ _SUBSCRIPT_PATTERN = re.compile(
     f"([{''.join(re.escape(char) for char in _SUBSCRIPT_MAP)}]+)"
 )
 
+
 def _replace_unicode_scripts(
     text: str, pattern: re.Pattern[str], mapping: dict[str, str], command: str
 ) -> str:
@@ -216,7 +217,7 @@ def escape_plain_text(root: Tag, context: RenderContext) -> None:
             escaped = _prepare_plain_text(text)
             if escaped != text:
                 replacement = NavigableString(escaped)
-                setattr(replacement, "processed", True)
+                replacement.processed = True
                 node.replace_with(replacement)
             continue
 
@@ -237,7 +238,7 @@ def escape_plain_text(root: Tag, context: RenderContext) -> None:
                 parts.append(escaped)
 
         replacement = NavigableString("".join(parts))
-        setattr(replacement, "processed", True)
+        replacement.processed = True
         node.replace_with(replacement)
 
 
@@ -254,7 +255,7 @@ def render_unicode_link(element: Tag, context: RenderContext) -> None:
     href = href_attr if isinstance(href_attr, str) else ""
     latex = context.formatter.href(text=f"U+{code}", url=requote_url(href))
     node = NavigableString(latex)
-    setattr(node, "processed", True)
+    node.processed = True
     element.replace_with(node)
 
 
@@ -275,7 +276,7 @@ def render_regex_link(element: Tag, context: RenderContext) -> None:
     href = href_attr if isinstance(href_attr, str) else ""
     latex = context.formatter.regex(code, url=requote_url(href))
     node = NavigableString(latex)
-    setattr(node, "processed", True)
+    node.processed = True
     element.replace_with(node)
 
 
@@ -303,7 +304,7 @@ def render_inline_code(element: Tag, context: RenderContext) -> None:
 
     latex = context.formatter.codeinlinett(code)
     node = NavigableString(latex)
-    setattr(node, "processed", True)
+    node.processed = True
     element.replace_with(node)
 
 
@@ -316,7 +317,7 @@ def render_math_inline(element: Tag, context: RenderContext) -> None:
         return
     text = element.get_text(strip=False)
     node = NavigableString(text)
-    setattr(node, "processed", True)
+    node.processed = True
     element.replace_with(node)
 
 
@@ -329,7 +330,7 @@ def render_math_block(element: Tag, context: RenderContext) -> None:
         return
     text = element.get_text(strip=False)
     node = NavigableString(f"\n{text}\n")
-    setattr(node, "processed", True)
+    node.processed = True
     element.replace_with(node)
 
 
@@ -358,7 +359,7 @@ def render_math_script(element: Tag, context: RenderContext) -> None:
     else:
         node = NavigableString(f"${payload}$")
 
-    setattr(node, "processed", True)
+    node.processed = True
     element.replace_with(node)
 
 
@@ -378,7 +379,7 @@ def render_abbreviation(element: Tag, context: RenderContext) -> None:
     if not description:
         latex_text = escape_latex_chars(term)
         node = NavigableString(latex_text)
-        setattr(node, "processed", True)
+        node.processed = True
         element.replace_with(node)
         return
 
@@ -388,7 +389,7 @@ def render_abbreviation(element: Tag, context: RenderContext) -> None:
 
     latex = f"\\acrshort{{{key}}}"
     node = NavigableString(latex)
-    setattr(node, "processed", True)
+    node.processed = True
     element.replace_with(node)
 
 
@@ -416,7 +417,7 @@ def render_keystrokes(element: Tag, context: RenderContext) -> None:
 
     latex = context.formatter.keystroke(keys)
     node = NavigableString(latex)
-    setattr(node, "processed", True)
+    node.processed = True
     context.mark_processed(element)
     context.suppress_children(element)
     element.replace_with(node)
@@ -434,7 +435,7 @@ def render_twemoji_image(element: Tag, context: RenderContext) -> None:
     if not context.runtime.get("copy_assets", True):
         placeholder = element.get("alt") or element.get("title") or ""
         node = NavigableString(placeholder)
-        setattr(node, "processed", True)
+        node.processed = True
         element.replace_with(node)
         return
 
@@ -449,7 +450,7 @@ def render_twemoji_image(element: Tag, context: RenderContext) -> None:
 
     latex = context.formatter.icon(stored_path.name)
     node = NavigableString(latex)
-    setattr(node, "processed", True)
+    node.processed = True
     element.replace_with(node)
 
 
@@ -470,7 +471,7 @@ def render_twemoji_span(element: Tag, context: RenderContext) -> None:
     if not context.runtime.get("copy_assets", True):
         placeholder = element.get("title") or element.get_text(strip=True) or ""
         node = NavigableString(placeholder)
-        setattr(node, "processed", True)
+        node.processed = True
         element.replace_with(node)
         return
 
@@ -485,7 +486,7 @@ def render_twemoji_span(element: Tag, context: RenderContext) -> None:
 
     latex = context.formatter.icon(stored_path.name)
     node = NavigableString(latex)
-    setattr(node, "processed", True)
+    node.processed = True
     context.mark_processed(element)
     context.suppress_children(element)
     element.replace_with(node)
@@ -524,7 +525,7 @@ def render_index_entry(element: Tag, context: RenderContext) -> None:
 
     latex = context.formatter.index(escaped_text, entry=escaped_entry, style=style_key)
     node = NavigableString(latex)
-    setattr(node, "processed", True)
+    node.processed = True
     context.state.has_index_entries = True
     context.mark_processed(element)
     context.suppress_children(element)
@@ -546,7 +547,7 @@ def render_critic_deletions(element: Tag, context: RenderContext) -> None:
     text = element.get_text(strip=False)
     latex = context.formatter.deletion(text=text)
     node = NavigableString(latex)
-    setattr(node, "processed", True)
+    node.processed = True
     context.mark_processed(element)
     context.suppress_children(element)
     element.replace_with(node)
@@ -567,7 +568,7 @@ def render_critic_additions(element: Tag, context: RenderContext) -> None:
     text = element.get_text(strip=False)
     latex = context.formatter.addition(text=text)
     node = NavigableString(latex)
-    setattr(node, "processed", True)
+    node.processed = True
     context.mark_processed(element)
     context.suppress_children(element)
     element.replace_with(node)
@@ -588,7 +589,7 @@ def render_critic_comments(element: Tag, context: RenderContext) -> None:
     text = element.get_text(strip=False)
     latex = context.formatter.comment(text=text)
     node = NavigableString(latex)
-    setattr(node, "processed", True)
+    node.processed = True
     context.mark_processed(element)
     context.suppress_children(element)
     element.replace_with(node)
@@ -609,7 +610,7 @@ def render_critic_highlight(element: Tag, context: RenderContext) -> None:
     text = element.get_text(strip=False)
     latex = context.formatter.highlight(text=text)
     node = NavigableString(latex)
-    setattr(node, "processed", True)
+    node.processed = True
     context.mark_processed(element)
     context.suppress_children(element)
     element.replace_with(node)
@@ -639,7 +640,7 @@ def render_critic_substitution(element: Tag, context: RenderContext) -> None:
 
     latex = context.formatter.substitution(original=original, replacement=replacement)
     node = NavigableString(latex)
-    setattr(node, "processed", True)
+    node.processed = True
     context.mark_processed(element)
     context.suppress_children(element)
     element.replace_with(node)

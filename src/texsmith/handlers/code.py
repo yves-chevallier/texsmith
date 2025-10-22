@@ -146,7 +146,7 @@ def render_preformatted_code(element: Tag, context: RenderContext) -> None:
     )
 
     node = NavigableString(latex)
-    setattr(node, "processed", True)
+    node.processed = True
     element.replace_with(node)
 
 
@@ -209,7 +209,7 @@ def render_code_blocks(element: Tag, context: RenderContext) -> None:
     )
 
     node = NavigableString(latex)
-    setattr(node, "processed", True)
+    node.processed = True
     element.replace_with(node)
 
 
@@ -262,7 +262,7 @@ def render_standalone_code_blocks(element: Tag, context: RenderContext) -> None:
     )
 
     node = NavigableString(latex)
-    setattr(node, "processed", True)
+    node.processed = True
 
     if (
         element.parent

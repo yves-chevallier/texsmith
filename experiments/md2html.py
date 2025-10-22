@@ -1,5 +1,5 @@
-
 import markdown
+
 
 TEST_MD = r"""
 Test [](){index,term1,term2} foobar.

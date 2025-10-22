@@ -82,7 +82,7 @@ def replace_line_breaks(element: Tag, context: RenderContext) -> None:
     """Convert ``<br>`` tags into explicit LaTeX line breaks."""
 
     node = NavigableString("\\")
-    setattr(node, "processed", True)
+    node.processed = True
     element.replace_with(node)
 
 
@@ -185,7 +185,7 @@ def render_headings(element: Tag, context: RenderContext) -> None:
         context.runtime["drop_title"] = False
         latex = context.formatter.pagestyle(text="plain")
         node = NavigableString(latex)
-        setattr(node, "processed", True)
+        node.processed = True
         element.replace_with(node)
         return
 
@@ -205,7 +205,7 @@ def render_headings(element: Tag, context: RenderContext) -> None:
     )
 
     node = NavigableString(latex)
-    setattr(node, "processed", True)
+    node.processed = True
     element.replace_with(node)
 
     context.state.add_heading(level=rendered_level, text=plain_text, ref=ref)

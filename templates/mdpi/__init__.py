@@ -32,9 +32,7 @@ class Template(WrappableTemplate):
         try:
             super().__init__(_PACKAGE_ROOT)
         except TemplateError as exc:
-            raise TemplateError(
-                f"Failed to initialise MDPI template: {exc}"
-            ) from exc
+            raise TemplateError(f"Failed to initialise MDPI template: {exc}") from exc
 
     def prepare_context(
         self,
@@ -490,9 +488,7 @@ class Template(WrappableTemplate):
             {
                 "id": affiliation_registry[key]["id"],
                 "text": affiliation_registry[key]["text"],
-                "emails": ", ".join(
-                    affiliation_registry[key].get("emails", [])
-                ),
+                "emails": ", ".join(affiliation_registry[key].get("emails", [])),
             }
             for key in affiliation_order
         ]

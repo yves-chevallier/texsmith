@@ -2,11 +2,12 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from hashlib import sha256
 import json
 from pathlib import Path
 import time
-from typing import Any, Callable, Protocol
+from typing import Any, Protocol
 
 from ..exceptions import TransformerExecutionError
 
