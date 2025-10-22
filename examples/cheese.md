@@ -10,6 +10,8 @@ meta:
     - name: Dr. John P. Curds
       affiliation: Institute of Rheological Science, Swiss Cheese Laboratory
   date: Octobrer 20, 2025
+  slots:
+    abstract: Abstract
 ---
 # Abstract
 

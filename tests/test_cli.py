@@ -422,6 +422,134 @@ def test_slot_injection_preserves_footnotes(tmp_path: Path) -> None:
     assert "Parmigiano-Reggiano" in content
 
 
+def test_front_matter_slots_mapping(tmp_path: Path) -> None:
+    runner = CliRunner()
+    markdown_file = tmp_path / "paper.md"
+    markdown_file.write_text(
+        """---
+meta:
+  slots:
+    abstract: Abstract
+---
+## Abstract
+
+Front matter abstract.
+
+## Body
+
+Main discussion.
+""",
+        encoding="utf-8",
+    )
+
+    template_dir = _template_path("nature")
+    output_dir = tmp_path / "out"
+    result = runner.invoke(
+        app,
+        [
+            "convert",
+            str(markdown_file),
+            "--output-dir",
+            str(output_dir),
+            "--template",
+            str(template_dir),
+        ],
+    )
+
+    assert result.exit_code == 0, result.stderr
+    tex_path = output_dir / "paper.tex"
+    content = tex_path.read_text(encoding="utf-8")
+    assert "\\abstract{" in content
+    assert "Front matter abstract." in content
+    assert "\\subsection{Abstract}" not in content
+
+
+def test_front_matter_slots_top_level_mapping(tmp_path: Path) -> None:
+    runner = CliRunner()
+    markdown_file = tmp_path / "paper.md"
+    markdown_file.write_text(
+        """---
+slots:
+  abstract: Abstract
+meta:
+  title: Demo
+---
+## Abstract
+
+Front matter abstract.
+
+## Body
+
+Main discussion.
+""",
+        encoding="utf-8",
+    )
+
+    template_dir = _template_path("nature")
+    output_dir = tmp_path / "out"
+    result = runner.invoke(
+        app,
+        [
+            "convert",
+            str(markdown_file),
+            "--output-dir",
+            str(output_dir),
+            "--template",
+            str(template_dir),
+        ],
+    )
+
+    assert result.exit_code == 0, result.stderr
+    tex_path = output_dir / "paper.tex"
+    content = tex_path.read_text(encoding="utf-8")
+    assert "\\abstract{" in content
+    assert "Front matter abstract." in content
+
+
+def test_cli_slot_overrides_front_matter(tmp_path: Path) -> None:
+    runner = CliRunner()
+    markdown_file = tmp_path / "paper.md"
+    markdown_file.write_text(
+        """---
+meta:
+  slots:
+    abstract: Abstract
+---
+## Abstract
+
+Front matter abstract.
+
+## Highlight
+
+Override from CLI.
+""",
+        encoding="utf-8",
+    )
+
+    template_dir = _template_path("nature")
+    output_dir = tmp_path / "out"
+    result = runner.invoke(
+        app,
+        [
+            "convert",
+            str(markdown_file),
+            "--output-dir",
+            str(output_dir),
+            "--template",
+            str(template_dir),
+            "--slot",
+            "abstract:Highlight",
+        ],
+    )
+
+    assert result.exit_code == 0, result.stderr
+    tex_path = output_dir / "paper.tex"
+    content = tex_path.read_text(encoding="utf-8")
+    assert "Override from CLI." in content
+    assert "Front matter abstract." in content
+    assert "\\subsection{Highlight}" not in content
+
+
 def test_build_requires_template(tmp_path: Path) -> None:
     runner = CliRunner()
     html_file = tmp_path / "index.html"
