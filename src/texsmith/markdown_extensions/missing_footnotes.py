@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
-import xml.etree.ElementTree as etree
 from types import MethodType
 from typing import Any
+import xml.etree.ElementTree as etree
 
 from markdown.extensions import Extension
 from markdown.extensions.footnotes import FootnoteExtension
@@ -109,7 +109,9 @@ class MissingFootnotesExtension(Extension):
         text = self.getConfig("text_template").format(id=identifier)
         if self.getConfig("link_to_list"):
             footnote_extension = self._get_footnotes_extension(pattern.md)
-            separator = footnote_extension.get_separator() if footnote_extension else ":"
+            separator = (
+                footnote_extension.get_separator() if footnote_extension else ":"
+            )
             anchor = etree.SubElement(node, "a")
             if css_class:
                 anchor.set("class", css_class)
@@ -125,4 +127,3 @@ def makeExtension(**kwargs: Any) -> MissingFootnotesExtension:
     """Entry point exposed to Python-Markdown."""
 
     return MissingFootnotesExtension(**kwargs)
-

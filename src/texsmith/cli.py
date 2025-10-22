@@ -1,9 +1,9 @@
 from __future__ import annotations
 
-import copy
 from collections.abc import Callable, Iterable, Mapping
-from dataclasses import dataclass
+import copy
 import dataclasses
+from dataclasses import dataclass
 from enum import Enum
 import hashlib
 from pathlib import Path
@@ -461,9 +461,7 @@ def _convert_document(
         try:
             output_dir.mkdir(parents=True, exist_ok=True)
             bibliography_output = output_dir / "texsmith-bibliography.bib"
-            bibliography_collection.write_bibtex(
-                bibliography_output, keys=citations
-            )
+            bibliography_collection.write_bibtex(bibliography_output, keys=citations)
         except OSError as exc:
             typer.secho(
                 f"Failed to write bibliography file: {exc}",
@@ -1247,7 +1245,9 @@ def _extract_slot_fragments(
 
     fragments: list[SlotFragment] = []
 
-    for slot_name, (order, heading) in sorted(matched.items(), key=lambda item: item[1][0]):
+    for slot_name, (order, heading) in sorted(
+        matched.items(), key=lambda item: item[1][0]
+    ):
         section_nodes = _collect_section_nodes(heading)
         slot_config = slot_definitions.get(slot_name)
         strip_heading = bool(slot_config.strip_heading) if slot_config else False
@@ -1259,21 +1259,25 @@ def _extract_slot_fragments(
                     break
                 render_nodes.pop(0)
         html_fragment = "".join(str(node) for node in render_nodes)
-        fragments.append(SlotFragment(name=slot_name, html=html_fragment, position=order))
+        fragments.append(
+            SlotFragment(name=slot_name, html=html_fragment, position=order)
+        )
         for node in section_nodes:
             if hasattr(node, "extract"):
                 node.extract()
 
     container = soup.body or soup
     remainder_html = "".join(str(node) for node in container.contents)
-    remaining_positions = [index for index, heading in headings if heading.parent is not None]
+
     if fragments:
         remainder_position = min(fragment.position for fragment in fragments) - 1
     else:
         remainder_position = -1
 
     fragments.append(
-        SlotFragment(name=default_slot, html=remainder_html, position=remainder_position)
+        SlotFragment(
+            name=default_slot, html=remainder_html, position=remainder_position
+        )
     )
 
     fragments.sort(key=lambda fragment: fragment.position)

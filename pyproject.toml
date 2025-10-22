@@ -57,6 +57,7 @@ texsmith = "texsmith.cli:main"
 [dependency-groups]
 dev = [
     "mkdocs>=1.6.1",
+    "mkdocs-material>=9.6.22",
     "pytest>=8.4.2",
     "ruff>=0.14.1",
 ]

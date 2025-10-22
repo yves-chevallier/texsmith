@@ -456,6 +456,7 @@ non-standard-fields:
 - [ ] Manage figures captions
 - [ ] Manage table captions
 - [ ] Entrypoints (abstract, mainmatter, appendix...)
+- [ ] Raw latex blocks (```latex { .texsmith } ... ```)
 
 ### Medium term
 
