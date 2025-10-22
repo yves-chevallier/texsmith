@@ -1191,45 +1191,83 @@ def _parse_slot_option(values: Iterable[str] | None) -> dict[str, str]:
     return overrides
 
 
+def _coerce_slot_selector(payload: Any) -> str | None:
+    """Normalise a selector definition coming from front matter."""
+
+    if isinstance(payload, str):
+        candidate = payload.strip()
+        return candidate or None
+    if isinstance(payload, Mapping):
+        for key in ("label", "title", "section"):
+            value = payload.get(key)
+            if isinstance(value, str) and value.strip():
+                return value.strip()
+    return None
+
+
+def _parse_slot_mapping(raw: Any) -> dict[str, str]:
+    """Parse slot mappings declared in front matter structures."""
+
+    overrides: dict[str, str] = {}
+    if not raw:
+        return overrides
+
+    if isinstance(raw, Mapping):
+        for slot_name, payload in raw.items():
+            if not isinstance(slot_name, str):
+                continue
+            selector = _coerce_slot_selector(payload)
+            if selector:
+                key = slot_name.strip()
+                if key:
+                    overrides[key] = selector
+        return overrides
+
+    if isinstance(raw, Iterable) and not isinstance(raw, (str, bytes)):
+        for entry in raw:
+            if not isinstance(entry, Mapping):
+                continue
+            slot_name = entry.get("target") or entry.get("slot")
+            if not isinstance(slot_name, str):
+                continue
+            selector = (
+                entry.get("label")
+                or entry.get("title")
+                or entry.get("section")
+            )
+            selector_value = _coerce_slot_selector(selector)
+            if not selector_value:
+                selector_value = _coerce_slot_selector(entry)
+            slot_key = slot_name.strip()
+            if slot_key and selector_value:
+                overrides[slot_key] = selector_value
+        return overrides
+
+    if isinstance(raw, str):
+        entry = raw.strip()
+        if entry and ":" in entry:
+            name, selector = entry.split(":", 1)
+            name = name.strip()
+            selector = selector.strip()
+            if name and selector:
+                overrides[name] = selector
+        return overrides
+
+    return overrides
+
+
 def _extract_front_matter_slots(front_matter: Mapping[str, Any]) -> dict[str, str]:
     """Collect slot overrides defined in document front matter."""
 
     overrides: dict[str, str] = {}
+
     meta_section = front_matter.get("meta")
-    if not isinstance(meta_section, Mapping):
-        return overrides
+    if isinstance(meta_section, Mapping):
+        meta_slots = meta_section.get("slots") or meta_section.get("entrypoints")
+        overrides.update(_parse_slot_mapping(meta_slots))
 
-    raw_slots = meta_section.get("slots") or meta_section.get("entrypoints")
-
-    if isinstance(raw_slots, Mapping):
-        for slot_name, payload in raw_slots.items():
-            if not isinstance(slot_name, str):
-                continue
-            selector: str | None = None
-            if isinstance(payload, str):
-                selector = payload
-            elif isinstance(payload, Mapping):
-                label = payload.get("label")
-                title = payload.get("title")
-                candidate = label or title
-                if isinstance(candidate, str):
-                    selector = candidate
-            if selector:
-                slot_key = slot_name.strip()
-                slot_value = selector.strip()
-                if slot_key and slot_value:
-                    overrides[slot_key] = slot_value
-    elif isinstance(raw_slots, Iterable):
-        for entry in raw_slots:
-            if not isinstance(entry, Mapping):
-                continue
-            slot_name = entry.get("target") or entry.get("slot")
-            selector = entry.get("label") or entry.get("title")
-            if isinstance(slot_name, str) and isinstance(selector, str):
-                slot_key = slot_name.strip()
-                slot_value = selector.strip()
-                if slot_key and slot_value:
-                    overrides[slot_key] = slot_value
+    root_slots = front_matter.get("slots") or front_matter.get("entrypoints")
+    overrides.update(_parse_slot_mapping(root_slots))
 
     return overrides
 

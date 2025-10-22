@@ -359,11 +359,14 @@ Avec Pandoc on peut faire:
 - [x] Support for images (convertion to pdf...)
 - [x] Manage figures captions
 - [x] Manage table captions
+- [x] Slots can be defined in the frontmatter.
+- [ ] Default paper, orientation option set in the template meta, can be overriden if available on the template.
 - [ ] Verbose in CLI more details.
 - [ ] Manage the figure (c.f.) how to manage that...
 - [ ] Entrypoints (abstract, mainmatter, appendix...)
 - [ ] Raw latex blocks (```latex { .texsmith } ... ```)
 - [ ] Table width (auto width, fixed width..., tabularx, tabulary or not)
+- [ ] Table orientation (large table landscape...)
 
 ### Medium term
 
