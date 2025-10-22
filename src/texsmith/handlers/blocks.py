@@ -5,9 +5,9 @@ from __future__ import annotations
 from collections.abc import Iterable
 from pathlib import Path
 import re
+import warnings
 
 from bs4 import NavigableString, Tag
-import warnings
 
 from ..context import RenderContext
 from ..exceptions import AssetMissingError, InvalidNodeError

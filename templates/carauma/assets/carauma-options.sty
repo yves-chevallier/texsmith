@@ -1,23 +1,67 @@
-\usepackage[
-    activate={true,nocompatibility},
-    final,
-    tracking=true,
-    kerning=true,
-    spacing=true,
-    factor=1100,
-    stretch=10,
-    shrink=10
-]{microtype}   % Better typography
+\providecommand{\authorname}{}
+\providecommand{\booktitle}{}
+\providecommand{\subtitle}{}
+\providecommand{\translatorname}{}
+\providecommand{\publisher}{}
+\providecommand{\editionyear}{}
+\providecommand{\isbn}{}
 
-\usepackage[brazilian]{babel} % language
-\addto\captionsbrazilian{\renewcommand{\contentsname}{Conteúdo}}
+\usepackage{iftex}
+\ifLuaTeX
+  \usepackage{microtype}
+\else
+  \usepackage[
+      activate={true,nocompatibility},
+      final,
+      tracking=true,
+      kerning=true,
+      spacing=true,
+      factor=1100,
+      stretch=10,
+      shrink=10
+  ]{microtype}
+\fi   % Better typography
 
 \usepackage{lettrine}   % Add drop caps to chapter openings
 \usepackage{graphicx}
 \usepackage{xcolor}
-\usepackage{ebgaramond}
+\usepackage{float}
+\usepackage{booktabs}
+\usepackage{minted}
+\usepackage[many,minted]{tcolorbox}
 \usepackage{tikz}
 \usetikzlibrary{positioning}
+\tcbuselibrary{skins, breakable, minted}
+
+\setminted{fontsize=\footnotesize, breaklines, autogobble, tabsize=4}
+\usemintedstyle{friendly}
+
+\newtcblisting[auto counter,number within=chapter,
+  list inside=caraumacodelist]{code}[4][]{%
+  breakable,
+  listing only,
+  enhanced,
+  colback=white,
+  pad at break*=1mm,
+  toptitle=0.15em,
+  bottomtitle=0.1em,
+  boxrule=0mm,
+  frame hidden,
+  minted language=#2,
+  top=1mm,
+  bottom=1mm,
+  minted options={%
+      breaklines,
+      tabsize=4,
+      autogobble,
+      fontsize=\footnotesize,
+      highlightcolor=yellow!20,
+      #4
+    },
+  title={#3},
+  list entry={\protect\numberline{\thetcbcounter}#3},
+  #1
+}
 
 \newcommand{\hsp}{\kern 1pt}    % for nested quotation marks
 

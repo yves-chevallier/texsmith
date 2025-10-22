@@ -60,6 +60,9 @@ _SUBSCRIPT_CHARS = set("₀₁₂₃₄₅₆₇₈₉₊₋₌₍₎ₐₑₒ�
 _ACCENT_NEEDS_BRACES_PATTERN = re.compile(
     r"\\([" + re.escape("`'^\"~=\\.Hrvuck") + r"])\s*([A-Za-z])(?![A-Za-z])"
 )
+_ACCENT_CONTROL_TARGET_PATTERN = re.compile(
+    r"\\([" + re.escape("`'^\"~=\\.Hrvuck") + r"])\s*(\\[ij])"
+)
 
 
 def _wrap_latexcodec_output(payload: str) -> str:
@@ -67,7 +70,13 @@ def _wrap_latexcodec_output(payload: str) -> str:
         command, char = match.groups()
         return f"\\{command}{{{char}}}"
 
-    return _ACCENT_NEEDS_BRACES_PATTERN.sub(_repl, payload)
+    payload = _ACCENT_NEEDS_BRACES_PATTERN.sub(_repl, payload)
+
+    def _repl_control(match: re.Match[str]) -> str:
+        command, control = match.groups()
+        return f"\\{command}{{{control}}}"
+
+    return _ACCENT_CONTROL_TARGET_PATTERN.sub(_repl_control, payload)
 
 
 def _escape_combining_character(char: str) -> str | None:

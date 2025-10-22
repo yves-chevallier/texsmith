@@ -14,7 +14,9 @@ from texsmith.renderer import LaTeXRenderer
 FIXTURE_BIB = Path(__file__).resolve().parent / "fixtures" / "bib" / "b.bib"
 
 
-def _render_markdown(source: str, bibliography: dict[str, dict[str, object]]) -> tuple[str, DocumentState]:
+def _render_markdown(
+    source: str, bibliography: dict[str, dict[str, object]]
+) -> tuple[str, DocumentState]:
     md = markdown.Markdown(extensions=DEFAULT_MARKDOWN_EXTENSIONS)
     html = md.convert(source)
     renderer = LaTeXRenderer(parser="html.parser")

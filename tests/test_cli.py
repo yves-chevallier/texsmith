@@ -509,7 +509,8 @@ def test_build_with_bibliography_forces_bibtex(
     html_file.write_text(
         (
             "<article class='md-content__inner'>"
-            "<texsmith-missing-footnote data-footnote-id='Ref'></texsmith-missing-footnote>"
+            "<texsmith-missing-footnote data-footnote-id='Ref'>"
+            "</texsmith-missing-footnote>"
             "</article>"
         ),
         encoding="utf-8",

@@ -1,8 +1,9 @@
 from __future__ import annotations
 
+from collections.abc import Iterable, Sequence
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Iterable, Sequence
+from typing import Any
 
 from pybtex.database import BibliographyData, Entry, Person
 from pybtex.database.input import bibtex
@@ -38,7 +39,9 @@ class BibliographyCollection:
     def file_stats(self) -> Sequence[tuple[Path, int]]:
         """Return (file, entry_count) pairs in the order files were processed."""
 
-        return tuple((path, self._file_entry_counts.get(path, 0)) for path in self._file_order)
+        return tuple(
+            (path, self._file_entry_counts.get(path, 0)) for path in self._file_order
+        )
 
     def load_files(self, files: Iterable[Path | str]) -> None:
         """Load BibTeX entries from one or more files."""
