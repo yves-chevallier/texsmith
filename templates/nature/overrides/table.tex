@@ -26,19 +26,19 @@
 \BLOCK{- endif}
 \toprule
 \BLOCK{for row in rows -}
-\BLOCK{- if loop.first -}
-\BLOCK{- for col in row -}
+\BLOCK{- if loop.first }
+\BLOCK{- for col in row }
 \VAR{col}\BLOCK{- if not loop.last} & \BLOCK{- else} \\
 \BLOCK{- endif}
 \BLOCK{- endfor}
 \BLOCK{- if has_data }\midrule
-\BLOCK{- endif -}
-\BLOCK{- else -}
-\BLOCK{- for col in row -}
+\BLOCK{- endif}
+\BLOCK{- else }
+\BLOCK{- for col in row }
 \VAR{col}\BLOCK{- if not loop.last} & \BLOCK{- else} \\
 \BLOCK{- endif}
-\BLOCK{- endfor -}
-\BLOCK{- endif -}
+\BLOCK{- endfor}
+\BLOCK{- endif}
 \BLOCK{- endfor}
 \botrule
 \BLOCK{- if is_large -}
