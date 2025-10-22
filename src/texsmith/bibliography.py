@@ -129,6 +129,27 @@ class BibliographyCollection:
             for key, entry in self._entries.items()
         }
 
+    def to_bibliography_data(
+        self, *, keys: Iterable[str] | None = None
+    ) -> BibliographyData:
+        """Return a BibliographyData object scoped to the selected keys."""
+
+        if keys is None:
+            entries = dict(self._entries)
+        else:
+            selected = {key for key in keys if key in self._entries}
+            entries = {key: self._entries[key] for key in selected}
+        return BibliographyData(entries=entries)
+
+    def write_bibtex(
+        self, target: Path | str, *, keys: Iterable[str] | None = None
+    ) -> None:
+        """Persist the bibliography to a BibTeX file."""
+
+        path = Path(target)
+        data = self.to_bibliography_data(keys=keys)
+        data.to_file(str(path))
+
     def _entries_equivalent(self, first: Entry, second: Entry) -> bool:
         return self._entry_signature(first) == self._entry_signature(second)
 
