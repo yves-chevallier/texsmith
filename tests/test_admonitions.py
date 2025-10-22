@@ -10,6 +10,9 @@ class AdmonitionRenderingTests(unittest.TestCase):
         self.renderer = LaTeXRenderer(config=BookConfig(), parser="html.parser")
 
     def test_fill_in_the_blank_solution_capture(self) -> None:
+        from texsmith.plugins import material
+
+        material.register(self.renderer)
         html = """
         <div class="admonition exercise">
             <p class="admonition-title">

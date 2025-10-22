@@ -6,180 +6,7 @@ TeXSmith is a Python package and CLI tool to convert **Markdown** or **HTML** do
 
 ## Features
 
-On va rajouter au cli texsmith :
 
--h,--heading-level permettant d'indenter tous les niveau (section -> subsection) si le document intervient dans un document plus général
--o,--output-dir répertoire de sortie ou sont également copiés les artefacts (téléchargement des images sur internet, conversion des svg, drawio, mermaid en pdf, toutes les images en png)
--a,--copy-assets Oui ou non copier et générer les assets (images, documents dans les hyperref)
-
-
-
-Dans cette fonction il y a de la logique qu'on va toujours utiliser :
-
-- être sensible à un tag
-- requirement sur les classes
-- process content
-- gather attributes
-- apply template with those attributes.
-
-Le context.formatter.codeblock(
-        code=code_text,
-        language=language,
-        lineno=lineno,
-        filename=filename,
-        highlight=highlight,
-        baselinestretch=baselinestretch,
-    ) me semble un peu superflu on passe certains attributs au formatter, il peut être sensible ou non à ces attributs, cela oblige  que le renderer ne soit défini.
-
-Mettons que j'aimerais ajouter le support pour
-
-
-Pour le moment on gère la logique d'application avec RenderPhase et priority mais
-
-Il convient de définir les logiques d'application. Les tags:
-
-del
-mark
-em
-strong
-sup
-sub
-ins
-
-Peuvent apparaitre dans
-
-p
-h1,h2,h3,h4,h5
-dl->dt, ul->li
-details->p, details->summary
-
-mais rien ne peut apparaitre dans:
-
-code
-
-
-
-Je pense qu'il serait bien de traiter les assets :
-- images (svg, png, webp, jpg...)
-- drawio (.drawio, .dio)
-- mermaid (.mmd, .mermaid, https://mermaid.live/edit#pako:eNpVjbFugz...)
-- GraphViz (.graphviz, .dot)
-- Plantuml (.plantuml, .puml
-
-De manière plus intelligente. En LaTeX tous ces assets seront converti en pdf inclus avec includegraphics, on retrouve donc pgcd.drawio dans un src par exemple qu'il faudra convertir en assets pgcd.drawio.pdf mais comme il peut y avoir un conflit de nom on sauve avec le hash assets/09a5ce2cd520c8895e8bd6b3d7e55596e570e075.pdf l'avantage est que si l'asset est généré on n'est pas obligé de le regénérer s'il existe déjà le hash va dépendre de la source. Si c'est un asset fixe on peut calculer le hash sur le nom et la taille du fichier mais si c'est un asset textuel (comme un svg, drawio, mmd... on peut calculer le hash sur le contenu.
-
-En amont si on utilise mkdocs pour produire le html, il aura copié les assets dans le répertoire site/ et on y aura directement accès.
-
-Je me dit qu'on pourrait centraliser la gestion des assets, générer un fichier de manifest avec la liste de tous les assets inclus (correspondance entre le nom du fichier (chemin relatif ou absolu ou url, le nom de l'asset compilée, le fichier dans lequel il apparait (path/file.tex).
-
-Donc dans un renderer quand on récupère le nom d'un asset (qu'on peut identifier avec une fonction), on peut récupérer de manière centralisée dans le package son hash pour remplacer le lien, vérifier l'existence du fichier, faire la conversion...
-
-Je ne sais pas comment c'est fait en ce moment mais peut-être qu'il y aurait moyen d'optimiser qu'en penses-tu ?
-
-Dans le HTML généré
-
-
-Extraction d'un url mermaid avec pako:
-
-data = url.split("#pako:")[1]
-decoded = base64.urlsafe_b64decode(data + "==")
-mermaid_code = zlib.decompress(decoded).decode("utf-8")
-
-on peut récupérer le code mermaid?
-
-
-## Templates LaTeX
-
-Le code LaTeX généré ne contient pas de balises `\begin{document}` ni de préambule `\documentclass{...}`. Cela permet d'insérer le contenu généré dans un document LaTeX plus large. Pour constuire un document complet, il est nécessaire de spécifier `--template` lors de l'appel à la commande `texsmith convert`.
-
-Le templates sont des packets PIP nommés `texsmith-template-<nom>` ou des dossiers locaux contenant les fichiers nécessaires.
-
-Une template contient:
-
-- Des fichiers `.cls`, `.sty` ou `.tex` qui peuvent contenir la syntaxe Jinja2 (`\VAR{title}` ou `\BLOCK{if foo}\BLOCK{endif}`) pour insérer des variables dynamiques.
-- Des assets additionnels (images, logos, polices...).
-- Un fichier `manifest.toml` décrivant la template (nom, version, engine LaTeX, paquets tlmgr nécessaires, attributs de configuration...).
-- Des overrides des partials Jinja2 utilisés pour générer certains éléments (codeblock, figure...).
-- Un fichier `README.md` documentant la template.
-- Un `__init__.py` déclarant la classe de template pour le plugin MkDocs.
-
-La classe Template héritée de l'interface dans le package `latex` permet de:
-
-- Rendre la template en recevant les attributs passés par l'utilisateur (titre, auteur, couverture...).
-- Traiter les erreurs spécifiques à la template, mauvais attributs, valeurs invalides...
-- Fournir le chemin vers les fichiers de la template et l'accès au manifest via un schéma Pydantic propre.
-- Définir un Pre/Post hook pour copier les assets spécifiques à la template.
-- Override certaine éléments du Formatter ou du Renderer si nécessaire (support de balises supplémentaire, traitement de cas particulier).
-
-Gestion de la complate facile avec cookicutter pour créer une nouvelle template.
-Structure rigide avec cookiecutter, manifest simple...
-
-Au niveau du CLI on peut imaginer un :
-
-```bash
-texsmith templates list # liste les templates installées (discover local et pip)
-texsmith templates info book # affiche les infos sur la template book
-texsmith templates scaffold my-template # crée un dossier my-template avec cookiecutter
-texsmith convert --template=./book/ # utilise la template locale book
-```
-
-Lorsqu'une template est sélectionnée avec `--template`, le fragment LaTeX produit par le renderer est inséré dans la clé `mainmatter` du template. Les autres attributs restent définis par défaut via le `manifest.toml`, garantissant un document complet sans modifier le contenu généré.
-
-Le manifest peut également déclarer des entrées `[latex.template.assets.<destination>]` listant les fichiers ou dossiers à copier vers le dossier de sortie. Le CLI s'occupe de recopier ces ressources à l'endroit défini, ce qui garantit que les classes, couvertures et autres dépendances nécessaires à la compilation LaTeX soient disponibles. Lorsqu'un fichier doit être interprété par Jinja avant d'être déployé (par exemple `covers/circles.tex`), on peut ajouter `template = true` :
-
-```toml
-[latex.template.assets."covers/circles.tex"]
-source = "covers/circles.tex"
-template = true
-```
-
-Pour tester la template `book` incluse dans le dépôt :
-
-```bash
-uv run texsmith convert tests/test_mkdocs/docs/index.md --template=templates/texsmith-template-book/texsmith_template_book
-```
-
-Après installation du paquet dédié (`uv pip install -e templates/texsmith-template-book` ou `uv add texsmith-template-book`), la même template est disponible via son entrée `book` :
-
-```bash
-uv run texsmith convert tests/test_mkdocs/docs/index.md --template=book
-```
-
-Une variante minimale est disponible avec la template `article`, pensée pour des documents courts. Elle expose uniquement les attributs `title`, `author`, `date`, ainsi que `paper` (converti en option `a4paper`, `a3paper`, etc.) et `orientation` (`portrait` ou `landscape`) qui ajustent directement `\documentclass`.
-
-```bash
-uv run texsmith convert tests/test_mkdocs/docs/index.md --template=templates/texsmith-template-article/texsmith_template_article
-uv run texsmith convert tests/test_mkdocs/docs/index.md --template=article
-```
-
-Lorsque `--template` est fourni, le convertisseur écrit automatiquement le résultat LaTeX complet dans le répertoire passé via `--output-dir` (par défaut `build/`) en utilisant le nom du fichier source avec l’extension `.tex` (`index.tex`, `test.tex`, etc.).
-
-Le convertisseur par défaut de MkDocs est Python Markdown. C'est également ce module utilisé en interne si le fichier d'entrée est du Markdown.
-
-Voici un exemple comment Python Markdown est utilisé en interne:
-
-
-
-## CLI
-
-Le cli texsmith permet de convertir un fichier Markdown ou un fichier HTML issu de MkDocs ou Python Markdown en LaTeX.
-
-```bash
-texsmith convert docs/index.md -o output/ # default is output/
-texsmith convert docs/index.html -o output/
-```
-
-Les options possibles sont :
-
-- `-h,--heading-level` : permet d'indenter tous les niveaux (section -> subsection) si le document intervient dans un document plus général.
-- `-o,--output-dir` : répertoire de sortie où sont également copiés les artefacts (téléchargement des images sur internet, conversion des svg, drawio, mermaid en pdf, toutes les images en png).
-- `-a,--copy-assets` : Oui ou non copier et générer les assets (images, documents dans les hyperref).
-- `-m,--manifest` : Générer un fichier de manifeste des assets inclus.
-- `-t,--template` : Spécifier le template LaTeX à utiliser pour la conversion. Soit un chemin vers un dossier local, soit le nom du package PIP à utiliser i.e. `texsmith-template-foobar`, tu utilises `-t foobar`.
-- `--debug` : Activer le mode debug pour sauvegarder les fichiers intermédiaires (HTML, logs, etc.).
-- `-e,--markdown-extensions` : Extensions Markdown supplémentaires à activer en plus du jeu par défaut (admonition, attr_list, footnotes, pymdownx.*, etc.). L'option accepte des valeurs séparées par des virgules ou des espaces et peut être répétée i.e. `-e markdown_include -e toc`.
-- `-d,--disable-markdown-extensions` : Désactiver une ou plusieurs extensions parmi celles activées par défaut. Peut être fournie plusieurs fois ou avec des valeurs séparées par des virgules i.e. `-d footnotes,pymdownx.magiclink`.
-- `--list-extensions` : Affiche la liste des extensions Markdown activées par défaut puis quitte.
 
 ## MkDocs plugin
 
@@ -435,6 +262,83 @@ non-standard-fields:
   isbn: International Standard Book Number (for books).
 ```
 
+## Figure caption
+
+Pour cela il faut aller voir du côté de MkDocs et de Pandoc. En MkDocs les modules sont:
+
+- mkdocs-caption
+- mkdocs-img2fig
+- mkdocs-img2figv2
+
+## PyMdown caption
+
+The good:
+
+
+- Position top or bottom
+- Rich text
+- Use figcaption
+- Auto numbering
+
+The bad:
+
+- Cumbersome syntax sensitive to indentation
+
+```
+Fruit      | Amount
+---------- | ------
+Apple      | 20
+Peach      | 10
+Banana     | 3
+Watermelon | 1
+
+/// caption
+Fruit Count
+///
+
+
+![Image](image.png)
+
+/// figure-caption
+    attrs: {id: static-id}
+Légende de l'image
+///
+```
+
+## Mkdocs-caption
+
+The good:
+
+- Simple syntax
+- Position top or bottom
+- Refernce text
+
+The bad:
+
+- Index, numbering directly hardcoded
+- No numbering relative to sections (unnumbered section in md)
+- Figures number restart to 1 on each page
+- No style management (caption cannot be bold, italic...)
+
+```markdown
+![This is the caption](image.png)
+
+See how easy [](#_figure-1 is defined)
+
+Table: table caption
+
+| heading 1| heading 2 |
+| - | - |
+| content 1 | content 2 |
+| content 3 | content 4 |
+
+```
+Avec Pandoc on peut faire:
+
+```markdown
+![This is the caption](image.png){#fig:label}
+```
+
 ## TO-DO
 
 ### Priority
@@ -453,13 +357,19 @@ non-standard-fields:
 - [x] Convert some journals templates
 - [x] Ajouter des tests unitaires et d'intégration pour le CLI et MkDocs
 - [x] Support for images (convertion to pdf...)
-- [ ] Manage figures captions
-- [ ] Manage table captions
+- [x] Manage figures captions
+- [x] Manage table captions
+- [ ] Verbose in CLI more details.
+- [ ] Manage the figure (c.f.) how to manage that...
 - [ ] Entrypoints (abstract, mainmatter, appendix...)
 - [ ] Raw latex blocks (```latex { .texsmith } ... ```)
+- [ ] Table width (auto width, fixed width..., tabularx, tabulary or not)
 
 ### Medium term
 
+texsmith templates list # liste les templates installées (discover local et pip)
+texsmith templates info book # affiche les infos sur la template book
+texsmith templates scaffold my-template # crée un dossier my-template avec cookiecutter
 - [ ] Documenter que par défaut, le renderer rends les blocs de code avec un wrapper générique, permettant de bind sur listing, verbatim ou minted.
 - [ ] Gérer les assets de manière centralisée (images, drawio, mermaid...)
 - [ ] Documenter le processus de création de templates LaTeX personnalisées
@@ -474,7 +384,11 @@ non-standard-fields:
 - [ ] Optimize asset conversion and caching mechanisms
 - [ ] Mkdocs Integration
   - [ ] Support extensions in other MkDocs plugin (add latex syntax, transformers...)
-
+- images (svg, png, webp, jpg...)
+- drawio (.drawio, .dio)
+- mermaid (.mmd, .mermaid, https://mermaid.live/edit#pako:eNpVjbFugz...)
+- GraphViz (.graphviz, .dot)
+- Plantuml (.plantuml, .puml
 ## Entry point
 
 ```md

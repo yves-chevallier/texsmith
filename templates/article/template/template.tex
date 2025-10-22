@@ -1,0 +1,282 @@
+\documentclass\VAR{documentclass_options}{article}
+
+\usepackage{fontspec}
+\usepackage{microtype}
+\usepackage{hyperref}
+\usepackage{geometry}
+\usepackage{hyphenat}
+\usepackage[\VAR{language|default('english')}]{babel}
+\usepackage{booktabs}
+\usepackage[many,minted]{tcolorbox}
+\usepackage{fontawesome5}
+
+\BLOCK{ if acronyms }
+\usepackage[acronym]{glossaries}
+\makeglossaries
+\BLOCK{ endif }
+\BLOCK{ if index_entries }\usepackage{imakeidx}\BLOCK{ endif }
+
+\setmonofont{Latin Modern Mono}
+\usemintedstyle{bw}
+
+\newtcblisting[auto counter,number within=section,
+  list inside=mypyg]{code}[4][]{%
+  breakable,
+  listing only,
+  enhanced,
+  colback=white,
+  pad at break*=1mm,
+  toptitle=0.15em,
+  bottomtitle=0.1em,
+  boxrule=0mm,
+  frame hidden,
+  minted language=#2,
+  top=1mm,
+  bottom=1mm,
+  minted options={%
+      tabsize=4,
+      breaklines,
+      xleftmargin=-0.75em,
+      fontsize=\footnotesize,
+      highlightcolor=gray!30,
+      ignorelexererrors,
+      #4
+    },
+  title={#3},
+  list entry={\protect\numberline{\thetcbcounter}#3},
+  #1
+}
+
+\geometry{\VAR{geometry_options}}
+%
+% Callouts
+%
+\definecolor{calloutNoteBg}{HTML}{ECF3FF}
+\definecolor{calloutNoteFrame}{HTML}{448AFF}
+
+\definecolor{calloutAbstractBg}{HTML}{E5F7FF}
+\definecolor{calloutAbstractFrame}{HTML}{00B0FF}
+
+\definecolor{calloutInfoBg}{HTML}{E5F8FB}
+\definecolor{calloutInfoFrame}{HTML}{00B8D4}
+
+\definecolor{calloutTipBg}{HTML}{E5F8F6}
+\definecolor{calloutTipFrame}{HTML}{00BFA5}
+
+\definecolor{calloutSuccessBg}{HTML}{E5F9ED}
+\definecolor{calloutSuccessFrame}{HTML}{00C853}
+
+\definecolor{calloutQuestionBg}{HTML}{EFFCE7}
+\definecolor{calloutQuestionFrame}{HTML}{64DD17}
+
+\definecolor{calloutWarningBg}{HTML}{FFF4E5}
+\definecolor{calloutWarningFrame}{HTML}{FF9E1D}
+
+\definecolor{calloutFailureBg}{HTML}{FFEDED}
+\definecolor{calloutFailureFrame}{HTML}{FF5252}
+
+\definecolor{calloutDangerBg}{HTML}{FFE7EC}
+\definecolor{calloutDangerFrame}{HTML}{FF1744}
+
+\definecolor{calloutBugBg}{HTML}{FEE5EE}
+\definecolor{calloutBugFrame}{HTML}{F50057}
+
+\definecolor{calloutExampleBg}{HTML}{F2EDFF}
+\definecolor{calloutExampleFrame}{HTML}{7C4DFF}
+
+\definecolor{calloutQuoteBg}{HTML}{F5F5F5}
+\definecolor{calloutQuoteFrame}{HTML}{9E9E9E}
+
+\definecolor{calloutExerciseBg}{HTML}{F5F5F5}
+\definecolor{calloutExerciseFrame}{HTML}{202020}
+
+\definecolor{calloutDefaultBg}{HTML}{F0F0F0}
+\definecolor{calloutDefaultFrame}{HTML}{808080}
+
+\newcounter{exercisecounter}
+\renewcommand{\theexercisecounter}{\arabic{exercisecounter}}
+
+\tcbset{
+  callout note/.style={
+      colbacktitle=calloutNoteBg,
+      colframe=calloutNoteFrame,
+      coltitle=calloutNoteFrame!80!black,
+      borderline west={0.3mm}{0mm}{calloutNoteFrame},
+      title={\makebox[1.3em][c]{\faBookmark}},
+    },
+  callout abstract/.style={
+      colbacktitle=calloutAbstractBg,
+      colframe=calloutAbstractFrame,
+      coltitle=calloutAbstractFrame!80!black,
+      borderline west={0.3mm}{0mm}{calloutAbstractFrame},
+      title={\makebox[1.3em][c]{\faLaptopCode}},
+    },
+  callout info/.style={
+      colbacktitle=calloutInfoBg,
+      colframe=calloutInfoFrame,
+      coltitle=calloutInfoFrame!80!black,
+      borderline west={0.3mm}{0mm}{calloutInfoFrame},
+      title={\makebox[1.3em][c]{\faComment}},
+    },
+  callout tip/.style={
+      colbacktitle=calloutTipBg,
+      colframe=calloutTipFrame,
+      coltitle=calloutTipFrame!80!black,
+      borderline west={0.3mm}{0mm}{calloutTipFrame},
+      title={\makebox[1.3em][c]{\faLightbulb}},
+    },
+  callout success/.style={
+      colbacktitle=calloutSuccessBg,
+      colframe=calloutSuccessFrame,
+      coltitle=calloutSuccessFrame!80!black,
+      borderline west={0.3mm}{0mm}{calloutSuccessFrame},
+      title={\makebox[1.3em][c]{\faCheck}},
+    },
+  callout warning/.style={
+      colbacktitle=calloutWarningBg,
+      colframe=calloutWarningFrame,
+      coltitle=calloutWarningFrame!80!black,
+      borderline west={0.3mm}{0mm}{calloutWarningFrame},
+      title={\makebox[1.3em][c]{\faBolt}},
+    },
+  callout failure/.style={
+      colbacktitle=calloutFailureBg,
+      colframe=calloutFailureFrame,
+      coltitle=calloutFailureFrame!80!black,
+      borderline west={0.3mm}{0mm}{calloutFailureFrame},
+      title={\makebox[1.3em][c]{\faExclamationTriangle}},
+    },
+  callout important/.style={
+      colbacktitle=calloutDangerBg,
+      colframe=calloutDangerFrame,
+      coltitle=calloutDangerFrame!80!black,
+      borderline west={0.3mm}{0mm}{calloutDangerFrame},
+      title={\makebox[1.3em][c]{\faExclamationTriangle}},
+    },
+  callout hint/.style={
+      colbacktitle=calloutTipBg,
+      colframe=calloutTipFrame,
+      coltitle=calloutTipFrame!80!black,
+      borderline west={0.3mm}{0mm}{calloutTipFrame},
+      title={\makebox[1.3em][c]{\faLightbulb}},
+    },
+  callout danger/.style={
+      colbacktitle=calloutDangerBg,
+      colframe=calloutDangerFrame,
+      coltitle=calloutDangerFrame!80!black,
+      borderline west={0.3mm}{0mm}{calloutDangerFrame},
+      title={\makebox[1.3em][c]{\faExclamationTriangle}},
+    },
+  callout bug/.style={
+      colbacktitle=calloutBugBg,
+      colframe=calloutBugFrame,
+      coltitle=calloutBugFrame!80!black,
+      borderline west={0.3mm}{0mm}{calloutBugFrame},
+      title={\makebox[1.3em][c]{\faBomb}},
+    },
+  callout example/.style={
+      colbacktitle=calloutExampleBg,
+      colframe=calloutExampleFrame,
+      coltitle=calloutExampleFrame!80!black,
+      borderline west={0.3mm}{0mm}{calloutExampleFrame},
+      title={\makebox[1.3em][c]{\faFlask}},
+    },
+  callout quote/.style={
+      colbacktitle=calloutQuoteBg,
+      colframe=calloutQuoteFrame,
+      coltitle=calloutQuoteFrame!80!black,
+      borderline west={0.3mm}{0mm}{calloutQuoteFrame},
+      title={\makebox[1.3em][c]{\faQuestionCircle}},
+    },
+  callout question/.style={
+      colbacktitle=calloutQuestionBg,
+      colframe=calloutQuestionFrame,
+      coltitle=calloutQuestionFrame!80!black,
+      borderline west={0.3mm}{0mm}{calloutQuestionFrame},
+      title={\makebox[1.3em][c]{\faQuestionCircle}},
+    },
+  callout exercise/.style={
+      colbacktitle=calloutExerciseBg,
+      colframe=calloutExerciseFrame,
+      coltitle=calloutExerciseFrame!80!black,
+      borderline west={0.3mm}{0mm}{calloutExerciseFrame},
+      title={\faChess
+          \refstepcounter{exercisecounter}
+          \textbf{Exercice \theexercisecounter:}
+        }
+    },
+  callout solution/.style={
+      colbacktitle=gray!40!white,
+      title={\textcolor{black}{\makebox[1.3em][l]{\faComment}}},
+    },
+  callout default/.style={
+      colbacktitle=calloutDefaultBg,
+      colframe=calloutDefaultFrame,
+      coltitle=calloutDefaultFrame!80!black,
+      borderline west={0.3mm}{0mm}{calloutDefaultFrame},
+      title={\textcolor{black}{\makebox[1.3em][l]{\faComment}}},
+    }
+}
+
+\newtcolorbox{callout}[2][]{%
+  breakable,
+  enhanced,
+  arc=0mm,
+  boxrule=0mm,
+  titlerule=0mm,
+  lefttitle=1mm,
+  leftupper=1mm,
+  colback=white,
+  parbox=false, % Allow paragraph breaks inside the box
+  frame hidden,
+  borderline west={0.3mm}{0mm}{black!70},
+  #1,
+  after title={~#2}
+}
+
+
+\title{\VAR{title}\BLOCK{ if subtitle }\\\large \VAR{subtitle}\BLOCK{ endif }}
+\author{\VAR{author}}
+\date{\VAR{date}}
+
+\BLOCK{ if acronyms }
+\BLOCK{ for key, entry in acronyms.items() }
+\BLOCK{ set pair = entry if (entry is sequence and not entry is string) else [key, entry] }
+\newacronym{\VAR{key}}{\VAR{pair[0]|latex_escape}}{\VAR{pair[1]|latex_escape}}
+\BLOCK{ endfor }
+\BLOCK{ endif }
+
+\begin{document}
+
+\BLOCK{ if index_entries }\makeindex\BLOCK{ endif }
+
+\maketitle
+
+\VAR{mainmatter}
+
+\BLOCK{ if acronyms }\printglossary[type=\acronymtype, title=Liste des acronymes]\BLOCK{ endif }
+\BLOCK{ if index_entries }\printindex\BLOCK{ endif }
+
+\BLOCK{ if citations }
+\begin{thebibliography}{\VAR{citations|length}}
+\BLOCK{ for key in citations }
+\BLOCK{ set entry = bibliography_entries.get(key) }
+\bibitem{\VAR{key}}%
+\BLOCK{ if entry }
+\BLOCK{ set fields = entry['fields'] }
+\BLOCK{ set persons = entry['persons'] }
+\BLOCK{ set authors = persons.get('author', []) }
+\BLOCK{ if authors }\VAR{ authors | map(attribute='text') | join(', ') }\BLOCK{ endif }%
+\BLOCK{ if fields.get('title') } \textit{\VAR{fields['title']}}\BLOCK{ endif }%
+\BLOCK{ if fields.get('journal') } \VAR{fields['journal']}\BLOCK{ endif }%
+\BLOCK{ if fields.get('year') } (\VAR{fields['year']})\BLOCK{ endif }%
+\BLOCK{ if fields.get('url') }\\\url{\VAR{fields['url']}}\BLOCK{ endif }%
+\BLOCK{ if fields.get('doi') }\\\textsc{doi}: \VAR{fields['doi']|latex_escape}\BLOCK{ endif }
+\BLOCK{ else }
+Missing bibliography entry for \VAR{key}
+\BLOCK{ endif }
+\BLOCK{ endfor }
+\end{thebibliography}
+\BLOCK{ endif }
+
+\end{document}

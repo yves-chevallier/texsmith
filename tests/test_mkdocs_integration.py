@@ -9,6 +9,7 @@ from bs4 import BeautifulSoup
 from texsmith.config import BookConfig
 from texsmith.renderer import LaTeXRenderer
 from texsmith.transformers import register_converter, registry
+from texsmith.plugins import material
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -90,6 +91,7 @@ class MkDocsToLatexIntegrationTests(unittest.TestCase):
             output_root=self.tmp_path / "latex-build",
             parser="html.parser",
         )
+        material.register(renderer)
 
         latex_output = renderer.render(
             content_html,

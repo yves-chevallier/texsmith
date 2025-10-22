@@ -82,6 +82,39 @@ flowchart LR
         finally:
             register_converter("mermaid", original)
 
+    def test_twemoji_image_conversion(self) -> None:
+        original = registry.get("fetch-image")
+        register_converter("fetch-image", _StubConverter("twemoji"))
+        try:
+            html = (
+                "<p><img class='twemoji' src='https://example.com/emoji.svg'"
+                " alt='rocket'></p>"
+            )
+            latex = self.renderer.render(html)
+            self.assertIn("\\includegraphics[width=1em]", latex)
+            assets = dict(self.renderer.assets.items())
+            self.assertIn("https://example.com/emoji.svg", assets)
+        finally:
+            register_converter("fetch-image", original)
+
+    def test_twemoji_inline_svg_conversion(self) -> None:
+        original = registry.get("svg")
+        register_converter("svg", _StubConverter("twemoji-inline"))
+        try:
+            html = """
+            <p>
+                <span class="twemoji" title="sparkles">
+                    <svg xmlns="http://www.w3.org/2000/svg"><path d="M0"/></svg>
+                </span>
+            </p>
+            """
+            latex = self.renderer.render(html)
+            self.assertIn("\\includegraphics[width=1em]", latex)
+            assets = dict(self.renderer.assets.items())
+            self.assertTrue(any(key.startswith("twemoji::") for key in assets))
+        finally:
+            register_converter("svg", original)
+
 
 if __name__ == "__main__":
     unittest.main()

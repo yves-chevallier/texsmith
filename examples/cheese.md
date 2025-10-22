@@ -52,15 +52,20 @@ This formalism provides a convenient means to estimate the flexibility of cheese
 
 The melting characteristics of cheese are governed primarily by **fat content**, **moisture level**, and the degree of **protein–fat network entanglement**. Hard cheeses typically display a melting range between **50 °C and 70 °C**, depending on composition and aging.
 
-Thermal analysis using **Differential Scanning Calorimetry (DSC)** allows the determination of onset and peak melting temperatures. In contrast, high-moisture cheeses such as Mozzarella [^1] exhibit lower melting points and greater stretchability due to reduced protein cross-link density [^WADHWANI20111713].
+Thermal analysis using **Differential Scanning Calorimetry (DSC)** allows the determination of onset and peak melting temperatures. In contrast, high-moisture cheeses such as Mozzarella [^1] exhibit lower melting points and greater stretchability due to reduced protein cross-link density [^WADHWANI20111713]. The figure [](#melting-behavior) illustrates the melting behavior of Mozzarella cheese, highlighting its unique rheological response upon heating.
 
 ![Cheese melting behavior](mozzarella.jpg){ width=50% }
+
+/// figure-caption
+    attrs: {id: melting-behavior}
+Melting behavior of high-moisture cheese (Mozzarella) illustrating stretchability upon heating
+///
 
 # Materials and Methods
 
 ## Samples Preparation
 
-Three commercial hard cheese types were selected for analysis (Table 1). Cylindrical specimens (20 mm diameter × 20 mm height) were extracted from the core regions and equilibrated at **10 °C** for 12 h prior to testing to minimize moisture gradients.
+Three commercial hard cheese types were selected for analysis [](#cheese-samples). Cylindrical specimens (20 mm diameter × 20 mm height) were extracted from the core regions and equilibrated at **10 °C** for 12 h prior to testing to minimize moisture gradients.
 
 | Cheese Type         | Age (months) | Moisture Content (%) | Fat Content (%) |
 |---------------------|--------------|----------------------|-----------------|
@@ -68,9 +73,14 @@ Three commercial hard cheese types were selected for analysis (Table 1). Cylindr
 | Comté               | 18           | 33                   | 30              |
 | Cheddar             | 12           | 36                   | 32              |
 
+/// table-caption
+    attrs: {id: cheese-samples}
+Characteristics of hard cheese samples used in the study
+///
+
 ## Mechanical Testing
 
-Compression tests were carried out using a **TA-XT2 texture analyzer** equipped with a 50 kg load cell. Specimens were compressed at three nominal strain rates (0.1, 1, and 10 s⁻¹) to 20 % strain. The **elastic modulus (E)** was obtained from the initial linear region (0–5 % strain) of the stress–strain curve.
+Compression tests were carried out using a **TA-XT2 texture analyzer** equipped with a 50 kg load cell. Specimens were compressed at three nominal strain rates (0.1, 1, and 10 s⁻¹) to 20 % strain. The **elastic modulus (E)** was obtained from the initial linear region (0–5 % strain) of the stress–strain curve. The table [](#mechanical-results) summarizes the measured moduli.
 
 | Cheese Type         | Strain Rate (s⁻¹) | Temperature (°C) | Elastic Modulus E (MPa) |
 |---------------------|------------------:|------------------:|------------------------:|
@@ -78,6 +88,11 @@ Compression tests were carried out using a **TA-XT2 texture analyzer** equipped 
 | Parmigiano-Reggiano | 10               | 10               | 66.8                   |
 | Comté               | 0.1              | 10               | 44.2                   |
 | Cheddar             | 0.1              | 10               | 38.7                   |
+
+/// table-caption
+    attrs: {id: mechanical-results}
+Measured elastic moduli of hard cheese samples at varying strain rates
+///
 
 The increasing modulus with strain rate reflects the time-dependent viscoelastic response typical of aged dairy matrices.
 

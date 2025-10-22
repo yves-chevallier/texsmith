@@ -5,6 +5,7 @@ from __future__ import annotations
 from collections import defaultdict
 from collections.abc import Iterable, MutableMapping
 from dataclasses import dataclass, field
+import os
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 import warnings
@@ -150,6 +151,24 @@ class AssetRegistry:
 
     def items(self) -> Iterable[tuple[str, Path]]:
         return ((k, Path(v)) for k, v in self.assets_map.items())
+
+    def latex_path(self, path: Path | str) -> str:
+        """Return a LaTeX-friendly path for an artefact."""
+
+        candidate = Path(path)
+        if not candidate.is_absolute():
+            return candidate.as_posix()
+
+        output_dir = self.output_root.parent
+        try:
+            reference = candidate.relative_to(output_dir)
+        except ValueError:
+            try:
+                reference = Path(os.path.relpath(candidate, output_dir))
+            except ValueError:
+                reference = candidate
+
+        return reference.as_posix()
 
 
 @dataclass

@@ -87,7 +87,7 @@ def render_tabbed_content(element: Tag, context: RenderContext) -> None:
                 heading = NavigableString(f"{formatted}\\par\n")
                 heading.processed = True
                 element.insert_before(heading)
-        element.decompose()
+        element.unwrap()
         return
 
     for input_node in element.find_all("input", recursive=False):
@@ -107,26 +107,6 @@ def render_tabbed_content(element: Tag, context: RenderContext) -> None:
 
     tabbed_content.unwrap()
     element.unwrap()
-
-
-@renders(
-    "blockquote", phase=RenderPhase.POST, priority=10, name="epigraphs", nestable=False
-)
-def render_epigraph(element: Tag, context: RenderContext) -> None:
-    classes = element.get("class") or []
-    if "epigraph" not in classes:
-        return
-
-    source = None
-    if footer := element.find("footer"):
-        source = footer.get_text(strip=True)
-        footer.decompose()
-
-    text = element.get_text(strip=False)
-    latex = context.formatter.epigraph(text=text, source=source)
-    node = NavigableString(latex)
-    node.processed = True
-    element.replace_with(node)
 
 
 @renders(
@@ -347,6 +327,20 @@ def render_figures(element: Tag, context: RenderContext) -> None:
 
     image = element.find("img")
     if image is None:
+        table = element.find("table")
+        if table is not None:
+            identifier = element.get("id")
+            if identifier and not table.get("id"):
+                table["id"] = identifier
+            figcaption = element.find("figcaption")
+            if figcaption is not None and table.find("caption") is None:
+                caption = context.document.new_tag("caption")
+                caption.string = figcaption.get_text(strip=False)
+                table.insert(0, caption)
+                figcaption.decompose()
+            render_tables(table, context)
+            element.unwrap()
+            return
         raise InvalidNodeError("Figure missing <img> element")
 
     src = image.get("src")
@@ -399,8 +393,9 @@ def render_figures(element: Tag, context: RenderContext) -> None:
 
     template_name = _figure_template_for(element, context)
     formatter = getattr(context.formatter, template_name)
+    asset_path = context.assets.latex_path(stored_path)
     latex = formatter(
-        path=stored_path.name,
+        path=asset_path,
         caption=caption_text or short_caption,
         shortcaption=short_caption,
         label=label,

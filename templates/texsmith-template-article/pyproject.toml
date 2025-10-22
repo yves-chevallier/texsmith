@@ -1,7 +1,0 @@
-[project]
-name = "texsmith-template-article"
-version = "0.1.0"
-requires-python = ">=3.9"
-
-[project.entry-points."texsmith.templates"]
-article = "texsmith_template_article:Template"

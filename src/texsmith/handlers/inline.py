@@ -447,8 +447,9 @@ def render_twemoji_image(element: Tag, context: RenderContext) -> None:
 
     artefact = fetch_image(src, output_dir=context.assets.output_root)
     stored_path = context.assets.register(src, artefact)
+    asset_path = context.assets.latex_path(stored_path)
 
-    latex = context.formatter.icon(stored_path.name)
+    latex = context.formatter.icon(asset_path)
     node = NavigableString(latex)
     node.processed = True
     element.replace_with(node)
@@ -483,8 +484,9 @@ def render_twemoji_span(element: Tag, context: RenderContext) -> None:
     artefact = svg2pdf(svg_payload, output_dir=context.assets.output_root)
     digest = hashlib.sha256(svg_payload.encode("utf-8")).hexdigest()
     stored_path = context.assets.register(f"twemoji::{digest}", artefact)
+    asset_path = context.assets.latex_path(stored_path)
 
-    latex = context.formatter.icon(stored_path.name)
+    latex = context.formatter.icon(asset_path)
     node = NavigableString(latex)
     node.processed = True
     context.mark_processed(element)

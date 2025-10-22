@@ -19,6 +19,11 @@ class InlineFormattingTests(unittest.TestCase):
         latex = self.renderer.render(html)
         self.assertEqual("\\emph{Italic}", latex.strip())
 
+    def test_strikethrough_tag_converted(self) -> None:
+        html = "<del>Removed</del>"
+        latex = self.renderer.render(html)
+        self.assertEqual("\\sout{Removed}", latex.strip())
+
     def test_underline_tag_converted(self) -> None:
         html = "<ins>Highlight</ins>"
         latex = self.renderer.render(html)
@@ -47,6 +52,11 @@ class InlineFormattingTests(unittest.TestCase):
         latex = self.renderer.render(html)
         self.assertIn("\\keystroke{Ctrl}+\\keystroke{S}", latex)
 
+    def test_mark_tag_converted(self) -> None:
+        html = "<p><mark>Important</mark></p>"
+        latex = self.renderer.render(html)
+        self.assertIn("\\hl{Important}", latex)
+
     def test_inline_highlight_code(self) -> None:
         html = (
             "<p>Say <code class='highlight'><span class='nb'>print</span>"
@@ -72,6 +82,16 @@ class InlineFormattingTests(unittest.TestCase):
         latex = self.renderer.render(html)
         self.assertIn("H\\textsubscript{2}O", latex)
         self.assertIn("CO\\textsubscript{2}", latex)
+
+    def test_subscript_tag_converted(self) -> None:
+        html = "<p>H<sub>2</sub>O</p>"
+        latex = self.renderer.render(html)
+        self.assertIn("H\\textsubscript{2}O", latex)
+
+    def test_superscript_tag_converted(self) -> None:
+        html = "<p>x<sup>2</sup></p>"
+        latex = self.renderer.render(html)
+        self.assertIn("x\\textsuperscript{2}", latex)
 
     def test_abbreviation_renders_acronym(self) -> None:
         html = '<p><abbr title="Hypertext Transfer Protocol">HTTP</abbr></p>'
@@ -129,6 +149,11 @@ class InlineFormattingTests(unittest.TestCase):
         key = state.acronym_keys["HTTP"]
         self.assertIn(key, state.acronyms)
         self.assertEqual(state.acronyms[key], ("HTTP", "Hypertext Transfer Protocol"))
+
+    def test_arithmatex_inline_preserved(self) -> None:
+        html = "<p>Inline math <span class='arithmatex'>\\(E = mc^2\\)</span></p>"
+        latex = self.renderer.render(html)
+        self.assertIn("Inline math \\(E = mc^2\\)", latex)
 
 
 if __name__ == "__main__":
