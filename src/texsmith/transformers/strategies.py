@@ -3,12 +3,11 @@
 from __future__ import annotations
 
 from io import BytesIO
-import os
 from pathlib import Path
 import shutil
-import subprocess
 from typing import Any
 
+from ..docker import DockerLimits, VolumeMount, run_container
 from ..exceptions import TransformerExecutionError
 from ..utils import points_to_mm
 from .base import CachedConversionStrategy
@@ -202,29 +201,6 @@ def _read_text(source: Path | str) -> str:
     return str(source)
 
 
-def _docker_command(workdir: Path) -> list[str]:
-    """Build the docker command prefix ensuring UID/GID parity."""
-
-    if shutil.which("docker") is None:
-        raise TransformerExecutionError(
-            "Docker is required for this converter but was not found on PATH."
-        )
-
-    return [
-        "docker",
-        "run",
-        "--rm",
-        "-u",
-        f"{os.getuid()}:{os.getgid()}",
-        "-e",
-        "HOME=/data/home",
-        "-w",
-        "/data",
-        "-v",
-        f"{workdir}:/data",
-    ]
-
-
 class MermaidToPdfStrategy(CachedConversionStrategy):
     """Render Mermaid diagrams to PDF using the official CLI image."""
 
@@ -274,8 +250,7 @@ class MermaidToPdfStrategy(CachedConversionStrategy):
         if produced.exists():
             produced.unlink()
 
-        command = _docker_command(working_dir) + [
-            self.image,
+        docker_args = [
             "-i",
             input_path.name,
             "-o",
@@ -283,20 +258,17 @@ class MermaidToPdfStrategy(CachedConversionStrategy):
             "-f",
             "-t",
             str(theme),
-            *extra_args,
         ]
+        docker_args.extend(extra_args)
 
-        result = subprocess.run(
-            command,
-            check=False,
-            capture_output=True,
-            text=True,
+        run_container(
+            self.image,
+            args=docker_args,
+            mounts=[VolumeMount(working_dir, "/data")],
+            environment={"HOME": "/data/home"},
+            workdir="/data",
+            limits=DockerLimits(cpus=1.0, memory="1g", pids_limit=512),
         )
-        if result.returncode != 0:
-            raise TransformerExecutionError(
-                "Mermaid CLI failed with code "
-                f"{result.returncode}: {result.stderr.strip()}"
-            )
 
         if not produced.exists():
             raise TransformerExecutionError(
@@ -344,8 +316,7 @@ class DrawioToPdfStrategy(CachedConversionStrategy):
         if produced.exists():
             produced.unlink()
 
-        command = _docker_command(working_dir) + [
-            self.image,
+        docker_args = [
             "--export",
             "--format",
             "pdf",
@@ -354,25 +325,23 @@ class DrawioToPdfStrategy(CachedConversionStrategy):
         ]
 
         if options.get("crop", False):
-            command.extend(["--crop"])
+            docker_args.extend(["--crop"])
 
         dpi = options.get("dpi")
         if dpi:
-            command.extend(["--quality", str(dpi)])
+            docker_args.extend(["--quality", str(dpi)])
 
-        command.append(working_source.name)
+        docker_args.append(working_source.name)
 
-        result = subprocess.run(
-            command,
-            check=False,
-            capture_output=True,
-            text=True,
+        run_container(
+            self.image,
+            args=docker_args,
+            mounts=[VolumeMount(working_dir, "/data")],
+            environment={"HOME": "/data/home"},
+            workdir="/data",
+            use_host_user=False,
+            limits=DockerLimits(cpus=1.0, memory="1g", pids_limit=512),
         )
-        if result.returncode != 0:
-            raise TransformerExecutionError(
-                "draw.io export failed with code "
-                f"{result.returncode}: {result.stderr.strip()}"
-            )
 
         if not produced.exists():
             raise TransformerExecutionError(

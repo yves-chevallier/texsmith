@@ -7,9 +7,9 @@ from urllib.parse import urlparse
 from bs4 import BeautifulSoup
 
 from texsmith.config import BookConfig
+from texsmith.plugins import material
 from texsmith.renderer import LaTeXRenderer
 from texsmith.transformers import register_converter, registry
-from texsmith.plugins import material
 
 
 ROOT = Path(__file__).resolve().parents[1]

@@ -9,6 +9,7 @@ from ..context import RenderContext
 from ..handlers import admonitions as base_admonitions
 from ..rules import RenderPhase, renders
 
+
 EXERCISE_IGNORED_CLASSES = {
     "admonition",
     "annotate",

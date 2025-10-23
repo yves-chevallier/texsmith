@@ -1,10 +1,14 @@
+import base64
 from pathlib import Path
 from tempfile import TemporaryDirectory
 import unittest
+import zlib
+
+from PIL import Image  # type: ignore[import]
 
 from texsmith.config import BookConfig
 from texsmith.renderer import LaTeXRenderer
-from texsmith.transformers import register_converter, registry
+from texsmith.transformers import image2pdf, register_converter, registry
 
 
 class _StubConverter:
@@ -114,6 +118,90 @@ flowchart LR
             self.assertTrue(any(key.startswith("twemoji::") for key in assets))
         finally:
             register_converter("svg", original)
+
+    def test_mermaid_image_from_file(self) -> None:
+        source_file = self.tmp_path / "diagram.mmd"
+        source_file.write_text(
+            "%% Local Diagram\nflowchart LR\n    A --> B\n", encoding="utf-8"
+        )
+
+        original = registry.get("mermaid")
+        register_converter("mermaid", _StubConverter("mermaid-file"))
+        try:
+            html = '<p><img src="diagram.mmd" alt="Alt caption"></p>'
+            latex = self.renderer.render(html, runtime={"source_dir": self.tmp_path})
+
+            self.assertIn("\\includegraphics", latex)
+            self.assertIn("mermaid-file.pdf", latex)
+            self.assertIn("Local Diagram", latex)
+
+            assets = dict(self.renderer.assets.items())
+            self.assertTrue(any(key.startswith("mermaid::") for key in assets))
+        finally:
+            register_converter("mermaid", original)
+
+    def test_mermaid_image_from_live_url(self) -> None:
+        original = registry.get("mermaid")
+        register_converter("mermaid", _StubConverter("mermaid-live"))
+        try:
+            diagram = "flowchart LR\n    A --> B\n"
+            compressed = zlib.compress(diagram.encode("utf-8"))
+            encoded = base64.urlsafe_b64encode(compressed).decode("ascii").rstrip("=")
+            url = f"https://mermaid.live/edit#pako:{encoded}"
+            html = f'<p><img src="{url}" alt="Flowchart diagram"></p>'
+
+            latex = self.renderer.render(html)
+
+            self.assertIn("\\includegraphics", latex)
+            self.assertIn("mermaid-live.pdf", latex)
+            self.assertIn("Flowchart diagram", latex)
+
+            assets = dict(self.renderer.assets.items())
+            self.assertTrue(any(key.startswith("mermaid::") for key in assets))
+        finally:
+            register_converter("mermaid", original)
+
+
+class ImageConversionTests(unittest.TestCase):
+    FORMATS = {
+        "tiff": "TIFF",
+        "webp": "WEBP",
+        "avif": "AVIF",
+        "gif": "GIF",
+        "png": "PNG",
+        "bmp": "BMP",
+    }
+
+    def setUp(self) -> None:
+        self.tmp = TemporaryDirectory()
+        self.tmp_path = Path(self.tmp.name)
+        self.output_dir = self.tmp_path / "build"
+
+    def tearDown(self) -> None:
+        self.tmp.cleanup()
+
+    def test_bitmap_formats_are_normalised_to_pdf(self) -> None:
+        produced: list[Path] = []
+        for suffix, pil_format in self.FORMATS.items():
+            source = self.tmp_path / f"fixture.{suffix}"
+            image = Image.new("RGB", (12, 12), color=(255, 0, 0))
+            image.save(source, format=pil_format)
+            image.close()
+
+            artefact = image2pdf(source, output_dir=self.output_dir)
+            self.assertTrue(artefact.exists(), f"{pil_format} failed to convert")
+            self.assertEqual(artefact.suffix, ".pdf")
+            produced.append(artefact)
+
+        self.assertEqual(
+            len({path.name for path in produced}),
+            len(self.FORMATS),
+            "Expected unique artefacts for each input format",
+        )
+        self.assertTrue(
+            all(path.stat().st_size > 0 for path in produced),
+            "Converted PDFs must not be empty",
+        )
 
 
 if __name__ == "__main__":

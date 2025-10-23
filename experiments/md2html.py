@@ -2,25 +2,55 @@ import markdown
 
 
 TEST_MD = r"""
-Test [](){index,term1,term2} foobar.
 
-Foobar @<citekey> is a cheese [^citekey], and chocolate [^chocolate].
+| abc | def | ghi |
+|-----|:---:|----:|
+|  1  |  2  |  3  |
+|  4  |     |  6  |
+|  7  |  8  |     |
 
-[^citekey]: This is the bibliography entry for citekey.
+/// table-caption
+This is a sample figure caption.
+///
+
 """
 
 extensions = [
-    "markdown.extensions.extra",
-    "markdown.extensions.attr_list",
-    "markdown.extensions.toc",
-    "markdown.extensions.smarty",
+    "abbr",
+    "admonition",
+    "attr_list",
+    "def_list",
+    "footnotes",
     "markdown.extensions.admonition",
-    "pymdownx.superfences",
+    "markdown.extensions.attr_list",
+    "markdown.extensions.extra",
+    "markdown.extensions.smarty",
+    "markdown.extensions.toc",
+    "md_in_html",
+    "mdx_math",
+    "pymdownx.betterem",
+    "pymdownx.blocks.caption",
+    "pymdownx.blocks.html",
+    "pymdownx.caret",
+    "pymdownx.critic",
+    "pymdownx.details",
+    "pymdownx.emoji",
+    "pymdownx.fancylists",
     "pymdownx.highlight",
     "pymdownx.inlinehilite",
-    "pymdownx.tasklist",
+    "pymdownx.keys",
     "pymdownx.magiclink",
-    "pymdownx.details",
+    "pymdownx.mark",
+    "pymdownx.saneheaders",
+    "pymdownx.smartsymbols",
+    "pymdownx.snippets",
+    "pymdownx.superfences",
+    "pymdownx.tabbed",
+    "pymdownx.tasklist",
+    "pymdownx.tilde",
+    "tables",
+    "texsmith.markdown_extensions.missing_footnotes:MissingFootnotesExtension",
+    "toc",
 ]
 
 extension_configs = {
