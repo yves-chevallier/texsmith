@@ -245,10 +245,12 @@ In scientific english we put "Figure" with a capital, but in french it is "figur
 - [x] .mmd, .mermaid, https://mermaid.live/edit#pako:eNpVjbFugz...
 - [x] Fonctionnement des emojis twemoji
 - [x] Images marchent avec (.tiff, .webp, .avif, .gif, .png, .bmp...)
-- [ ] Verbose in CLI more details et afficher joliment les warnings et erreurs
-- [ ] --debug pour afficher les exceptions complètes
+- [x] Verbose in CLI more details et afficher joliment les warnings et erreurs
+- [x] --debug pour afficher les exceptions complètes
+- [ ] Bibliographie sur doi dans frontmatter
 - [ ] Support multipages, je donnes plusieurs md ou html en entrée.
 - [ ] Manage the figure (c.f.) how to manage that...
+- [ ] Optimize bibliography management using bib instead of jinja
 - [ ] Raw latex blocks (`latex { .texsmith } ... `)
 - [ ] Table width (auto width, fixed width..., tabularx, tabulary or not)
 - [ ] Table orientation (large table landscape...)
@@ -311,3 +313,68 @@ books: # On peut définir plusieurs documents de sortie pour une même documenta
 ### MkDocs plugin TO-DO
 
 - [ ] Support extensions in other MkDocs plugin
+
+## Sandbox
+
+Pour la template article on veut sortir callout dans un callout.sty et faire quelque chose de propre
+
+Pareil pour la configuration de listing avec un code.sty qui importe le nécessaire et défini les commandes
+
+On veut ces fichiers robustes
+
+---
+
+POur la bibliographie, pour l'instant dans la template article tu as ceci:
+
+\begin{thebibliography}{\VAR{citations|length}}
+\BLOCK{ for key in citations }
+\BLOCK{ set entry = bibliography_entries.get(key) }
+\bibitem{\VAR{key}}%
+\BLOCK{ if entry }
+\BLOCK{ set fields = entry['fields'] }
+\BLOCK{ set persons = entry['persons'] }
+\BLOCK{ set authors = persons.get('author', []) }
+\BLOCK{ if authors }\VAR{ authors | map(attribute='text') | join(', ') }\BLOCK{ endif }%
+\BLOCK{ if fields.get('title') } \textit{\VAR{fields['title']}}\BLOCK{ endif }%
+\BLOCK{ if fields.get('journal') } \VAR{fields['journal']}\BLOCK{ endif }%
+\BLOCK{ if fields.get('year') } (\VAR{fields['year']})\BLOCK{ endif }%
+\BLOCK{ if fields.get('url') }\\\url{\VAR{fields['url']}}\BLOCK{ endif }%
+\BLOCK{ if fields.get('doi') }\\\textsc{doi}: \VAR{fields['doi']|latex_escape}\BLOCK{ endif }
+\BLOCK{ else }
+Missing bibliography entry for \VAR{key}
+\BLOCK{ endif }
+\BLOCK{ endfor }
+\end{thebibliography}
+
+Mais on pourrait passer par biber pour mieux gérer ça et passer par le .bib non ?
+
+
+---
+
+# Gestion multidocument
+
+L'objectif est de supporter la gestion multidocument c'est à dire que j'ai plusieurs fichiers que je donne dans le cli :
+
+texsmith foo.md bar.md baz.md
+
+Il crée une traduction de chaque élément foo.tex, bar.tex et baz.tex dans le répertoire de sortie
+Si je donne une template -t book il va insérer dedans l'import de chacun de ces fichiers
+\input{foo}
+\input{bar}
+\input{baz}
+
+Bien entendu je peux spécifier le slot de destination pour chaque fichier ou élément:
+
+texsmith *.md -s abstract:foo.md -s backmatter:bar.md:"section b"
+
+Il faut décider d'une stratégie si on passe par un \input ou si on copy/pase le fichier dans la destination.
+
+- S'il s'agit d'un fichier complet on utilise input
+- S'il s'agit d'une extraction d'une section ou d'une partie on copy/paste
+
+Autre point à considérer. Selon l'appel de texsmith:
+
+$ texsmith convert foo.md # Sortie sur STDOUT
+$ texsmith convert foo.md -o foo.tex # Sortie sur fichier
+$ texsmith convert foo.md bar.md -o foobar.tex # Pas d'\input mais tout concaténé, dans l'ordre des fichiers
+$ texsmith convert foo.md bar.md -t template # Répertoire par défaut `build` et \input utilisés
