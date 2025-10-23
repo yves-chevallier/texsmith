@@ -76,6 +76,32 @@ When writing LaTeX documents (articles, reports, books...) in Markdown, you may 
 - Placement of sections (frontmatter, mainmatter, appendix...)
 - Force a new page
 
+For these we have defined easy workarounds that is meant to not pollute the Markdown syntax too much.
+
+### Figure and Table Captions
+
+```md
+![This is a caption]{fig.png}
+
+
+| Header 1 | Header 2 |
+|----------|----------|
+| Cell 1   | Cell 2   |
+{: caption="This is a caption" }
+```
+
+### Bibliography Entries
+
+```md
+Einstein's relativity theory [^einstein1905] is a cornerstone of modern physics.
+```
+
+### Acronyms
+
+```md
+The CPU (Central Processing Unit) is the brain of the computer.
+
+
 ## Behind the hood
 
 TeXSmith is built using Python Markdown with the following extensions enabled by default: `abbr`, `admonition`, `attr_list`, `def_list`, `footnotes`, `md_in_html`, `mdx_math`, `pymdownx.betterem`, `pymdownx.blocks.caption`, `pymdownx.blocks.html`, `pymdownx.caret`, `pymdownx.critic`, `pymdownx.details`, `pymdownx.emoji`, `pymdownx.fancylists`, `pymdownx.highlight`, `pymdownx.inlinehilite`, `pymdownx.keys`, `pymdownx.magiclink`, `pymdownx.mark`, `pymdownx.saneheaders`, `pymdownx.smartsymbols`, `pymdownx.snippets`, `pymdownx.superfences`, `pymdownx.tabbed`, `pymdownx.tasklist`, `pymdownx.tilde`, `tables`, `toc`.
