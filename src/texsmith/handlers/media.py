@@ -2,9 +2,13 @@
 
 from __future__ import annotations
 
+import base64
+import binascii
 import hashlib
 from pathlib import Path
 from typing import Any
+from urllib.parse import urlparse
+import zlib
 
 from bs4 import NavigableString, Tag
 
@@ -33,6 +37,94 @@ MERMAID_KEYWORDS = (
     "erDiagram",
     "journey",
 )
+
+
+MERMAID_FILE_SUFFIXES = (".mmd", ".mermaid")
+
+
+def _decode_mermaid_pako(payload: str) -> str:
+    """Decode a Mermaid Live pako payload into plain text."""
+
+    token = payload.strip()
+    if not token:
+        raise InvalidNodeError("Mermaid payload is empty")
+
+    padding = (-len(token)) % 4
+    if padding:
+        token += "=" * padding
+
+    try:
+        compressed = base64.urlsafe_b64decode(token)
+    except (binascii.Error, ValueError) as exc:
+        raise InvalidNodeError("Mermaid payload is not valid base64") from exc
+
+    last_error: Exception | None = None
+    for wbits in (zlib.MAX_WBITS, -zlib.MAX_WBITS):
+        try:
+            data = zlib.decompress(compressed, wbits=wbits)
+            try:
+                return data.decode("utf-8")
+            except UnicodeDecodeError as exc:
+                raise InvalidNodeError("Mermaid payload is not UTF-8 text") from exc
+        except zlib.error as exc:
+            last_error = exc
+
+    raise InvalidNodeError("Unable to decompress Mermaid payload") from last_error
+
+
+def _extract_mermaid_live_diagram(src: str) -> str | None:
+    """Return Mermaid source encoded in a mermaid.live URL."""
+
+    try:
+        parsed = urlparse(src)
+    except ValueError:
+        return None
+
+    if not parsed.netloc or not parsed.scheme:
+        return None
+    if not parsed.netloc.endswith("mermaid.live"):
+        return None
+
+    fragment = (parsed.fragment or "").strip()
+    if not fragment:
+        return None
+
+    marker = fragment.find("pako:")
+    if marker == -1:
+        return None
+
+    payload = fragment[marker + len("pako:") :]
+    for delimiter in (";", "&"):
+        idx = payload.find(delimiter)
+        if idx != -1:
+            payload = payload[:idx]
+
+    if not payload:
+        raise InvalidNodeError("Mermaid URL is missing diagram payload")
+
+    return _decode_mermaid_pako(payload)
+
+
+def _load_mermaid_diagram(context: RenderContext, src: str) -> tuple[str, str] | None:
+    """Attempt to load a Mermaid diagram from a local file or URL."""
+
+    lowercase = src.lower()
+    if lowercase.endswith(MERMAID_FILE_SUFFIXES):
+        resolved = _resolve_source_path(context, src)
+        if resolved is None:
+            raise AssetMissingError(f"Unable to resolve Mermaid diagram '{src}'")
+        try:
+            return resolved.read_text(encoding="utf-8"), "file"
+        except OSError as exc:
+            raise AssetMissingError(
+                f"Unable to read Mermaid diagram '{resolved}'"
+            ) from exc
+
+    diagram = _extract_mermaid_live_diagram(src)
+    if diagram is not None:
+        return diagram, "url"
+
+    return None
 
 
 def _figure_template_for(element: Tag) -> str | None:
@@ -108,12 +200,14 @@ def _render_mermaid_diagram(
     diagram: str,
     *,
     template: str | None = None,
+    caption: str | None = None,
 ) -> NavigableString | None:
     """Render a Mermaid diagram and return the resulting LaTeX node."""
 
-    caption, body = _mermaid_caption(diagram)
+    extracted_caption, body = _mermaid_caption(diagram)
+    effective_caption = extracted_caption if extracted_caption is not None else caption
     if not context.runtime.get("copy_assets", True):
-        placeholder = caption or "Mermaid diagram"
+        placeholder = effective_caption or "Mermaid diagram"
         node = NavigableString(placeholder)
         node.processed = True
         return node
@@ -140,7 +234,7 @@ def _render_mermaid_diagram(
     return _apply_figure_template(
         context,
         path=stored_path,
-        caption=caption,
+        caption=effective_caption,
         label=None,
         width=None,
         template=template,
@@ -188,8 +282,27 @@ def render_images(element: Tag, context: RenderContext) -> None:
     if element.find_parent("figure"):
         return
 
-    alt_text = element.get("alt") or None
+    raw_alt = element.get("alt")
+    alt_text = raw_alt.strip() or None if raw_alt else None
     width = element.get("width") or None
+    template = _figure_template_for(element)
+
+    mermaid_payload = _load_mermaid_diagram(context, src)
+    if mermaid_payload is not None:
+        diagram, _ = mermaid_payload
+        figure_node = _render_mermaid_diagram(
+            context,
+            diagram,
+            template=template,
+            caption=alt_text,
+        )
+        if figure_node is None:
+            raise InvalidNodeError(
+                f"Mermaid source '{src}' does not contain a valid diagram"
+            )
+        element.replace_with(figure_node)
+        return
+
     asset_key = src
 
     if is_valid_url(src):
@@ -210,8 +323,6 @@ def render_images(element: Tag, context: RenderContext) -> None:
         asset_key = str(resolved)
 
     stored_path = context.assets.register(asset_key, artefact)
-
-    template = _figure_template_for(element)
 
     figure_node = _apply_figure_template(
         context,

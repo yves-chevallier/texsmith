@@ -4,10 +4,10 @@ from __future__ import annotations
 
 from hashlib import sha256
 from pathlib import Path
+from urllib.parse import urlparse
 
 from bs4 import NavigableString, Tag
 from requests.utils import requote_uri as requote_url
-from urllib.parse import urlparse
 
 from ..context import RenderContext
 from ..exceptions import AssetMissingError, InvalidNodeError
@@ -101,9 +101,7 @@ def render_links(element: Tag, context: RenderContext) -> None:
     if scheme in {"http", "https"}:
         latex = context.formatter.href(text=text, url=requote_url(href))
     elif scheme:
-        raise InvalidNodeError(
-            f"Unsupported link scheme '{scheme}' for '{href}'."
-        )
+        raise InvalidNodeError(f"Unsupported link scheme '{scheme}' for '{href}'.")
     elif href.startswith("#"):
         latex = context.formatter.ref(text, ref=href[1:])
     elif href == "" and element_id:

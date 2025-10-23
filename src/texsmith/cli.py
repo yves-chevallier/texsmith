@@ -3,7 +3,7 @@ from __future__ import annotations
 from collections.abc import Callable, Iterable, Mapping
 import copy
 import dataclasses
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import Enum
 import hashlib
 import os
@@ -20,14 +20,17 @@ from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
 from rich.text import Text
+from rich.traceback import Traceback
 import typer
 import yaml
 
 from .bibliography import BibliographyCollection
 from .config import BookConfig
 from .context import DocumentState
+from .docker import is_docker_available
 from .exceptions import LatexRenderingError, TransformerExecutionError
 from .formatter import LaTeXFormatter
+from .latex_log import stream_latexmk_output
 from .renderer import LaTeXRenderer
 from .templates import TemplateError, TemplateSlot, copy_template_assets, load_template
 from .transformers import register_converter
@@ -116,6 +119,94 @@ class ConversionResult:
     has_bibliography: bool = False
 
 
+@dataclass(slots=True)
+class CLIState:
+    """Shared state controlling CLI diagnostics."""
+
+    verbosity: int = 0
+    show_tracebacks: bool = False
+    console: Console = field(default_factory=Console)
+    err_console: Console = field(
+        default_factory=lambda: Console(stderr=True, highlight=False)
+    )
+
+
+_CLI_STATE = CLIState()
+
+
+def _get_cli_state() -> CLIState:
+    return _CLI_STATE
+
+
+def _set_cli_state(*, verbosity: int | None = None, debug: bool | None = None) -> None:
+    state = _get_cli_state()
+    if verbosity is not None:
+        state.verbosity = max(0, verbosity)
+    if debug is not None:
+        state.show_tracebacks = debug
+
+
+def _exception_chain(exc: Exception) -> list[str]:
+    chain: list[str] = []
+    visited: set[int] = set()
+    current = exc.__cause__ or exc.__context__
+    while current is not None and id(current) not in visited:
+        visited.add(id(current))
+        chain.append(f"{type(current).__name__}: {current}")
+        current = current.__cause__ or current.__context__
+    return chain
+
+
+def _render_message(
+    level: str,
+    message: str,
+    *,
+    exception: Exception | None = None,
+) -> None:
+    state = _get_cli_state()
+    style = "red" if level == "error" else "yellow"
+    label_style = f"bold {style}"
+    text = Text.assemble(
+        (f"{level}: ", label_style),
+        (message, style),
+    )
+
+    extra_lines: list[str] = []
+    if exception is not None and state.verbosity >= 1:
+        detail = str(exception).strip()
+        if detail and detail not in message:
+            extra_lines.append(detail)
+        extra_lines.append(f"type: {type(exception).__name__}")
+        if exception.__notes__:
+            extra_lines.extend(exception.__notes__)
+        if state.verbosity >= 2:
+            chain = _exception_chain(exception)
+            if chain:
+                extra_lines.append("caused by:")
+                extra_lines.extend(f"  {entry}" for entry in chain)
+        if state.verbosity >= 3:
+            extra_lines.append(f"repr: {exception!r}")
+
+    if extra_lines:
+        text.append("\n")
+        text.append("\n".join(extra_lines), style=style)
+
+    console = state.err_console if level != "info" else state.console
+    console.print(text)
+
+
+def _emit_warning(message: str, *, exception: Exception | None = None) -> None:
+    _render_message("warning", message, exception=exception)
+
+
+def _emit_error(message: str, *, exception: Exception | None = None) -> None:
+    _render_message("error", message, exception=exception)
+
+
+def _debug_enabled() -> bool:
+    return _get_cli_state().show_tracebacks
+
+
 app = typer.Typer(
     help="Convert MkDocs HTML fragments into LaTeX.",
     context_settings={"help_option_names": ["--help"]},
@@ -132,13 +223,31 @@ app.add_typer(bibliography_app, name="bibliography")
 
 @app.callback()
 def _app_root(
+    ctx: typer.Context,
     list_extensions: bool = typer.Option(
         False,
         "--list-extensions",
         help="List Markdown extensions enabled by default and exit.",
     ),
+    verbose: int = typer.Option(
+        0,
+        "--verbose",
+        "-v",
+        count=True,
+        help=(
+            "Increase CLI verbosity. Combine multiple times for additional diagnostics."
+        ),
+    ),
+    debug: bool = typer.Option(
+        False,
+        "--debug/--no-debug",
+        help="Show full tracebacks when an unexpected error occurs.",
+    ),
 ) -> None:
     """Top-level CLI entry point to enable subcommands."""
+
+    ctx.obj = _get_cli_state()
+    _set_cli_state(verbosity=verbose, debug=debug)
 
     if list_extensions:
         for extension in DEFAULT_MARKDOWN_EXTENSIONS:
@@ -225,7 +334,7 @@ def _convert_document(
     copy_assets: bool,
     manifest: bool,
     template: str | None,
-    debug: bool,
+    persist_debug_html: bool,
     language: str | None,
     slot_overrides: Mapping[str, str] | None,
     markdown_extensions: list[str],
@@ -235,9 +344,9 @@ def _convert_document(
         output_dir = output_dir.resolve()
         input_payload = input_path.read_text(encoding="utf-8")
     except OSError as exc:
-        typer.secho(
-            f"Failed to read input document: {exc}", fg=typer.colors.RED, err=True
-        )
+        if _debug_enabled():
+            raise
+        _emit_error(f"Failed to read input document: {exc}", exception=exc)
         raise typer.Exit(code=1) from exc
 
     normalized_extensions = _normalize_markdown_extensions(markdown_extensions)
@@ -247,7 +356,9 @@ def _convert_document(
     try:
         input_kind = _classify_input_source(input_path)
     except UnsupportedInputError as exc:
-        typer.secho(str(exc), fg=typer.colors.RED, err=True)
+        if _debug_enabled():
+            raise
+        _emit_error(str(exc), exception=exc)
         raise typer.Exit(code=1) from exc
 
     is_markdown = input_kind is InputKind.MARKDOWN
@@ -257,7 +368,9 @@ def _convert_document(
         try:
             html, front_matter = _render_markdown(input_payload, normalized_extensions)
         except MarkdownConversionError as exc:
-            typer.secho(str(exc), fg=typer.colors.RED, err=True)
+            if _debug_enabled():
+                raise
+            _emit_error(str(exc), exception=exc)
             raise typer.Exit(code=1) from exc
     else:
         html = input_payload
@@ -273,7 +386,7 @@ def _convert_document(
     if slot_overrides:
         slot_requests.update(dict(slot_overrides))
 
-    if debug:
+    if persist_debug_html:
         _persist_debug_artifacts(output_dir, input_path, html)
 
     resolved_language = _resolve_template_language(language, front_matter)
@@ -289,11 +402,7 @@ def _convert_document(
         for issue in bibliography_collection.issues:
             prefix = f"[{issue.key}] " if issue.key else ""
             source_hint = f" ({issue.source})" if issue.source else ""
-            typer.secho(
-                f"warning: {prefix}{issue.message}{source_hint}",
-                fg=typer.colors.YELLOW,
-                err=True,
-            )
+            _emit_warning(f"{prefix}{issue.message}{source_hint}")
 
     renderer_kwargs: dict[str, Any] = {
         "output_root": output_dir,
@@ -311,7 +420,9 @@ def _convert_document(
         override_base_level = _extract_base_level_override(template_overrides)
         template_base_level = _coerce_base_level(override_base_level)
     except TemplateError as exc:
-        typer.secho(str(exc), fg=typer.colors.RED, err=True)
+        if _debug_enabled():
+            raise
+        _emit_error(str(exc), exception=exc)
         raise typer.Exit(code=1) from exc
 
     template_info_engine: str | None = None
@@ -324,7 +435,9 @@ def _convert_document(
         try:
             template_instance = load_template(template)
         except TemplateError as exc:
-            typer.secho(str(exc), fg=typer.colors.RED, err=True)
+            if _debug_enabled():
+                raise
+            _emit_error(str(exc), exception=exc)
             raise typer.Exit(code=1) from exc
 
         try:
@@ -332,7 +445,9 @@ def _convert_document(
                 template_instance.info.attributes.get("base_level")
             )
         except TemplateError as exc:
-            typer.secho(str(exc), fg=typer.colors.RED, err=True)
+            if _debug_enabled():
+                raise
+            _emit_error(str(exc), exception=exc)
             raise typer.Exit(code=1) from exc
         if template_base_level is None:
             template_base_level = template_default_base
@@ -343,25 +458,26 @@ def _convert_document(
         try:
             formatter_overrides = dict(template_instance.iter_formatter_overrides())
         except TemplateError as exc:
-            typer.secho(str(exc), fg=typer.colors.RED, err=True)
+            if _debug_enabled():
+                raise
+            _emit_error(str(exc), exception=exc)
             raise typer.Exit(code=1) from exc
 
     if template_instance is not None:
         try:
             template_slots, default_slot = template_instance.info.resolve_slots()
         except TemplateError as exc:
-            typer.secho(str(exc), fg=typer.colors.RED, err=True)
+            if _debug_enabled():
+                raise
+            _emit_error(str(exc), exception=exc)
             raise typer.Exit(code=1) from exc
     else:
         template_slots = {"mainmatter": TemplateSlot(default=True)}
         default_slot = "mainmatter"
         if slot_requests:
             for slot_name in slot_requests:
-                typer.secho(
-                    f"warning: slot '{slot_name}' was requested but no template "
-                    "is selected; ignoring.",
-                    fg=typer.colors.YELLOW,
-                    err=True,
+                _emit_warning(
+                    f"slot '{slot_name}' was requested but no template is selected; ignoring."
                 )
             slot_requests = {}
 
@@ -390,11 +506,9 @@ def _convert_document(
             template_hint = (
                 f"template '{template_name}'" if template_name else "the template"
             )
-            typer.secho(
-                f"warning: slot '{slot_name}' is not defined by {template_hint}; "
-                f"content will remain in '{default_slot}'.",
-                fg=typer.colors.YELLOW,
-                err=True,
+            _emit_warning(
+                f"slot '{slot_name}' is not defined by {template_hint}; "
+                f"content will remain in '{default_slot}'."
             )
             continue
         active_slot_requests[slot_name] = selector
@@ -408,7 +522,7 @@ def _convert_document(
         parser_backend=parser_backend,
     )
     for message in missing_slots:
-        typer.secho(f"warning: {message}", fg=typer.colors.YELLOW, err=True)
+        _emit_warning(message)
 
     def renderer_factory() -> LaTeXRenderer:
         formatter = LaTeXFormatter()
@@ -438,11 +552,9 @@ def _convert_document(
                 state=document_state,
             )
         except LatexRenderingError as exc:
-            typer.secho(
-                _format_rendering_error(exc),
-                fg=typer.colors.RED,
-                err=True,
-            )
+            if _debug_enabled():
+                raise
+            _emit_error(_format_rendering_error(exc), exception=exc)
             raise typer.Exit(code=1) from exc
         existing_fragment = slot_outputs.get(fragment.name, "")
         slot_outputs[fragment.name] = f"{existing_fragment}{fragment_output}"
@@ -464,11 +576,9 @@ def _convert_document(
             bibliography_output = output_dir / "texsmith-bibliography.bib"
             bibliography_collection.write_bibtex(bibliography_output, keys=citations)
         except OSError as exc:
-            typer.secho(
-                f"Failed to write bibliography file: {exc}",
-                fg=typer.colors.YELLOW,
-                err=True,
-            )
+            if _debug_enabled():
+                raise
+            _emit_warning(f"Failed to write bibliography file: {exc}", exception=exc)
             bibliography_output = None
 
     tex_path: Path | None = None
@@ -496,7 +606,9 @@ def _convert_document(
                 context=template_context,
             )
         except TemplateError as exc:
-            typer.secho(str(exc), fg=typer.colors.RED, err=True)
+            if _debug_enabled():
+                raise
+            _emit_error(str(exc), exception=exc)
             raise typer.Exit(code=1) from exc
         try:
             copy_template_assets(
@@ -506,7 +618,9 @@ def _convert_document(
                 overrides=template_overrides if template_overrides else None,
             )
         except TemplateError as exc:
-            typer.secho(str(exc), fg=typer.colors.RED, err=True)
+            if _debug_enabled():
+                raise
+            _emit_error(str(exc), exception=exc)
             raise typer.Exit(code=1) from exc
 
         try:
@@ -514,10 +628,11 @@ def _convert_document(
             tex_path = output_dir / f"{input_path.stem}.tex"
             tex_path.write_text(latex_output, encoding="utf-8")
         except OSError as exc:
-            typer.secho(
+            if _debug_enabled():
+                raise
+            _emit_error(
                 f"Failed to write LaTeX output to '{output_dir}': {exc}",
-                fg=typer.colors.RED,
-                err=True,
+                exception=exc,
             )
             raise typer.Exit(code=1) from exc
 
@@ -731,10 +846,13 @@ def convert(
             "Accepts a local path or a registered template name."
         ),
     ),
-    debug: bool = typer.Option(
-        False,
-        "--debug/--no-debug",
-        help="Enable debug mode to persist intermediate artifacts.",
+    debug_html: bool | None = typer.Option(
+        None,
+        "--debug-html/--no-debug-html",
+        help=(
+            "Persist the intermediate HTML snapshot used during conversion. "
+            "Defaults to enabled when --debug is passed at the CLI root."
+        ),
     ),
     language: str | None = typer.Option(
         None,
@@ -808,6 +926,10 @@ def convert(
     except ValueError as exc:
         raise typer.BadParameter(str(exc)) from exc
 
+    debug_snapshot = _resolve_option(debug_html)
+    if debug_snapshot is None:
+        debug_snapshot = _debug_enabled()
+
     result = _convert_document(
         input_path=document_path,
         output_dir=_resolve_option(output_dir),
@@ -822,7 +944,7 @@ def convert(
         copy_assets=_resolve_option(copy_assets),
         manifest=_resolve_option(manifest),
         template=_resolve_option(template),
-        debug=_resolve_option(debug),
+        persist_debug_html=debug_snapshot,
         language=_resolve_option(language),
         slot_overrides=requested_slots,
         markdown_extensions=resolved_markdown_extensions,
@@ -962,10 +1084,21 @@ def build(
             "Accepts a local path or a registered template name."
         ),
     ),
-    debug: bool = typer.Option(
-        False,
-        "--debug/--no-debug",
-        help="Enable debug mode to persist intermediate artifacts.",
+    debug_html: bool | None = typer.Option(
+        None,
+        "--debug-html/--no-debug-html",
+        help=(
+            "Persist the intermediate HTML snapshot used during conversion. "
+            "Defaults to enabled when --debug is passed at the CLI root."
+        ),
+    ),
+    classic_output: bool = typer.Option(
+        True,
+        "--classic-output/--rich-output",
+        help=(
+            "Display raw latexmk output without parsing "
+            "(use --rich-output for structured logs)."
+        ),
     ),
     language: str | None = typer.Option(
         None,
@@ -1031,6 +1164,10 @@ def build(
     except ValueError as exc:
         raise typer.BadParameter(str(exc)) from exc
 
+    debug_snapshot = _resolve_option(debug_html)
+    if debug_snapshot is None:
+        debug_snapshot = _debug_enabled()
+
     conversion = _convert_document(
         input_path=document_path,
         output_dir=_resolve_option(output_dir),
@@ -1045,7 +1182,7 @@ def build(
         copy_assets=_resolve_option(copy_assets),
         manifest=_resolve_option(manifest),
         template=_resolve_option(template),
-        debug=_resolve_option(debug),
+        persist_debug_html=debug_snapshot,
         language=_resolve_option(language),
         slot_overrides=requested_slots,
         markdown_extensions=resolved_markdown_extensions,
@@ -1053,20 +1190,13 @@ def build(
     )
 
     if conversion.tex_path is None:
-        typer.secho(
-            "The build command requires a LaTeX template (--template).",
-            fg=typer.colors.RED,
-            err=True,
-        )
+        _emit_error("The build command requires a LaTeX template (--template).")
         raise typer.Exit(code=1)
 
     latexmk_path = shutil.which("latexmk")
     if latexmk_path is None:
-        typer.secho(
-            "latexmk executable not found. "
-            "Install TeX Live (or latexmk) to build PDFs.",
-            fg=typer.colors.RED,
-            err=True,
+        _emit_error(
+            "latexmk executable not found. Install TeX Live (or latexmk) to build PDFs."
         )
         raise typer.Exit(code=1)
 
@@ -1078,57 +1208,79 @@ def build(
     command[0] = latexmk_path
     command.append(conversion.tex_path.name)
 
-    tex_cache_root = (conversion.tex_path.parent / '.texmf-cache').resolve()
+    tex_cache_root = (conversion.tex_path.parent / ".texmf-cache").resolve()
     tex_cache_root.mkdir(parents=True, exist_ok=True)
     env = os.environ.copy()
 
-    texmf_home = tex_cache_root / 'texmf-home'
-    texmf_var = tex_cache_root / 'texmf-var'
-    luatex_cache = tex_cache_root / 'luatex-cache'
+    texmf_home = tex_cache_root / "texmf-home"
+    texmf_var = tex_cache_root / "texmf-var"
+    luatex_cache = tex_cache_root / "luatex-cache"
 
-    texmf_cache = tex_cache_root / 'texmf-cache'
-    texmf_config = tex_cache_root / 'texmf-config'
-    xdg_cache = tex_cache_root / 'xdg-cache'
+    texmf_cache = tex_cache_root / "texmf-cache"
+    texmf_config = tex_cache_root / "texmf-config"
+    xdg_cache = tex_cache_root / "xdg-cache"
 
-    for cache_path in (texmf_home, texmf_var, texmf_config, luatex_cache, texmf_cache, xdg_cache):
+    for cache_path in (
+        texmf_home,
+        texmf_var,
+        texmf_config,
+        luatex_cache,
+        texmf_cache,
+        xdg_cache,
+    ):
         cache_path.mkdir(parents=True, exist_ok=True)
 
-    env['TEXMFHOME'] = str(texmf_home)
-    env['TEXMFVAR'] = str(texmf_var)
-    env['TEXMFCONFIG'] = str(texmf_config)
-    env['LUATEXCACHE'] = str(luatex_cache)
-    env['LUAOTFLOAD_CACHE'] = str(luatex_cache)
-    env['TEXMFCACHE'] = str(texmf_cache)
-    env.setdefault('XDG_CACHE_HOME', str(xdg_cache))
+    env["TEXMFHOME"] = str(texmf_home)
+    env["TEXMFVAR"] = str(texmf_var)
+    env["TEXMFCONFIG"] = str(texmf_config)
+    env["LUATEXCACHE"] = str(luatex_cache)
+    env["LUAOTFLOAD_CACHE"] = str(luatex_cache)
+    env["TEXMFCACHE"] = str(texmf_cache)
+    env.setdefault("XDG_CACHE_HOME", str(xdg_cache))
 
-    try:
-        process = subprocess.run(
-            command,
-            check=False,
-            capture_output=True,
-            text=True,
-            cwd=conversion.tex_path.parent,
-        )
-    except OSError as exc:
-        typer.secho(
-            f"Failed to execute latexmk: {exc}",
-            fg=typer.colors.RED,
-            err=True,
-        )
-        raise typer.Exit(code=1) from exc
+    if classic_output:
+        try:
+            process = subprocess.run(
+                command,
+                check=False,
+                capture_output=True,
+                text=True,
+                cwd=conversion.tex_path.parent,
+                env=env,
+            )
+        except OSError as exc:
+            if _debug_enabled():
+                raise
+            _emit_error(f"Failed to execute latexmk: {exc}", exception=exc)
+            raise typer.Exit(code=1) from exc
 
-    if process.stdout:
-        typer.echo(process.stdout.rstrip())
-    if process.stderr:
-        typer.echo(process.stderr.rstrip(), err=True)
+        if process.stdout:
+            typer.echo(process.stdout.rstrip())
+        if process.stderr:
+            typer.echo(process.stderr.rstrip(), err=True)
 
-    if process.returncode != 0:
-        typer.secho(
-            f"latexmk exited with status {process.returncode}",
-            fg=typer.colors.RED,
-            err=True,
-        )
-        raise typer.Exit(code=process.returncode)
+        if process.returncode != 0:
+            _emit_error(f"latexmk exited with status {process.returncode}")
+            raise typer.Exit(code=process.returncode)
+    else:
+        console = _get_cli_state().console
+        console.print("[bold cyan]Running latexmk…[/]")
+        try:
+            result = stream_latexmk_output(
+                command,
+                cwd=str(conversion.tex_path.parent),
+                env=env,
+                console=console,
+            )
+        except OSError as exc:
+            if _debug_enabled():
+                raise
+            _emit_error(f"Failed to execute latexmk: {exc}", exception=exc)
+            raise typer.Exit(code=1) from exc
+
+        if result.returncode != 0:
+            _emit_error(f"latexmk exited with status {result.returncode}")
+            raise typer.Exit(code=result.returncode)
 
     pdf_path = conversion.tex_path.with_suffix(".pdf")
     if pdf_path.exists():
@@ -1137,16 +1289,36 @@ def build(
             fg=typer.colors.GREEN,
         )
     else:
-        typer.secho(
-            "latexmk completed without errors but the PDF file was not found.",
-            fg=typer.colors.YELLOW,
-        )
+        _emit_warning("latexmk completed without errors but the PDF file was not found.")
 
 
 def main() -> None:
     """Entry point compatible with console scripts."""
 
-    app()
+    try:
+        app()
+    except typer.Exit:
+        raise
+    except KeyboardInterrupt as exc:
+        if _debug_enabled():
+            raise
+        _emit_error("Operation cancelled by user.", exception=exc)
+        raise typer.Exit(code=1) from exc
+    except SystemExit:
+        raise
+    except Exception as exc:
+        state = _get_cli_state()
+        if state.show_tracebacks:
+            tb = Traceback.from_exception(
+                type(exc),
+                exc,
+                exc.__traceback__,
+                show_locals=state.verbosity >= 2,
+            )
+            state.err_console.print(tb)
+        else:
+            _emit_error(str(exc), exception=exc)
+        raise typer.Exit(code=1) from exc
 
 
 if __name__ == "__main__":
@@ -1230,11 +1402,7 @@ def _parse_slot_mapping(raw: Any) -> dict[str, str]:
             slot_name = entry.get("target") or entry.get("slot")
             if not isinstance(slot_name, str):
                 continue
-            selector = (
-                entry.get("label")
-                or entry.get("title")
-                or entry.get("section")
-            )
+            selector = entry.get("label") or entry.get("title") or entry.get("section")
             selector_value = _coerce_slot_selector(selector)
             if not selector_value:
                 selector_value = _coerce_slot_selector(entry)
@@ -1475,14 +1643,7 @@ def _attempt_transformer_fallback(error: LatexRenderingError) -> bool:
 
 
 def _ensure_fallback_converters() -> None:
-    docker_available = None
-    try:
-        docker_available = shutil.which("docker")
-    except AssertionError:
-        # Some tests replace shutil.which with strict assertions.
-        docker_available = None
-
-    if docker_available:
+    if is_docker_available():
         return
 
     for name in ("drawio", "mermaid", "fetch-image"):

@@ -11,11 +11,7 @@ class TemplateWrappingTests(unittest.TestCase):
         project_root = Path(__file__).resolve().parents[1]
         self._previous_cwd = Path.cwd()
         os.chdir(project_root)
-        self.template_path = (
-            project_root
-            / "templates"
-            / "book"
-        )
+        self.template_path = project_root / "templates" / "book"
         self.template = load_template(str(self.template_path))
 
     def tearDown(self) -> None:
@@ -89,11 +85,7 @@ class ArticleTemplateTests(unittest.TestCase):
         project_root = Path(__file__).resolve().parents[1]
         self._previous_cwd = Path.cwd()
         os.chdir(project_root)
-        self.template_path = (
-            project_root
-            / "templates"
-            / "article"
-        )
+        self.template_path = project_root / "templates" / "article"
         self.template = load_template(str(self.template_path))
 
     def tearDown(self) -> None:
