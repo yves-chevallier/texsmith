@@ -55,3 +55,10 @@ source = "imprint.tex"
 [latex.template.assets."mkbook.cls"]
 source = "template/mkbook.cls"
 template = true
+
+[latex.template.slots.mainmatter]
+default = true
+depth = "chapter"
+
+[latex.template.slots.backmatter]
+depth = "chapter"

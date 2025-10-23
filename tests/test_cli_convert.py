@@ -33,7 +33,7 @@ class CliConvertTests(unittest.TestCase):
             assert convert is not None  # for type checkers
             convert(
                 input_path=source,
-                output_dir=output_dir,
+                output=output_dir,
                 template="./book",
             )
 
@@ -83,7 +83,7 @@ Content here.
             assert convert is not None  # for type checkers
             convert(
                 input_path=source,
-                output_dir=output_dir,
+                output=output_dir,
                 template="./article",
             )
 
@@ -115,7 +115,7 @@ Content here.
             assert convert is not None  # for type checkers
             convert(
                 input_path=source,
-                output_dir=output_dir,
+                output=output_dir,
                 template="./nature",
             )
 

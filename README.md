@@ -9,12 +9,13 @@
 
 ![MkDocs](https://img.shields.io/badge/MkDocs-1.6+-blue.svg?logo=mkdocs)
 ![MkDocs Material](https://img.shields.io/badge/MkDocs%20Material-supported-success.svg?logo=materialdesign)
-![LaTeX](https://img.shields.io/badge/LaTeX-API-lightgrey.svg?logo=latex)
 ![Python](https://img.shields.io/badge/Python-typed-blue.svg?logo=python)
 
 TeXSmith is a [Python](https://www.python.org/) package and CLI tool to convert **Markdown** or **HTML** documents into LaTeX format. It is designed to be extensible via templates and integrates with [MkDocs](https://www.mkdocs.org/) for generating printable documents from documentation sites.
 
-![TeXSmith Logo](docs/logo.svg)
+<center>
+<img src="docs/logo.svg" width="70%" />
+</center>
 
 ## TL;DR
 
