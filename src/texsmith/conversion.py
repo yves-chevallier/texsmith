@@ -18,6 +18,7 @@ from bs4 import BeautifulSoup, FeatureNotFound, NavigableString, Tag
 from .bibliography import BibliographyCollection
 from .config import BookConfig
 from .context import DocumentState
+from .conversion_contexts import BinderContext, DocumentContext, GenerationStrategy, SegmentContext
 from .docker import is_docker_available
 from .exceptions import LatexRenderingError, TransformerExecutionError
 from .formatter import LaTeXFormatter
@@ -30,41 +31,47 @@ from .markdown import (
 )
 from .renderer import LaTeXRenderer
 from .templates import (
+    DEFAULT_TEMPLATE_LANGUAGE,
+    TemplateBinding,
     TemplateError,
     TemplateSlot,
-    WrappableTemplate,
+    TemplateRuntime,
+    build_template_overrides,
     copy_template_assets,
-    load_template,
+    load_template_runtime,
+    resolve_template_binding,
+    resolve_template_language,
 )
 from .transformers import register_converter
 
 
 __all__ = [
+    "BinderContext",
     "ConversionCallbacks",
     "ConversionError",
     "ConversionResult",
     "MarkdownConversionError",
+    "TemplateBinding",
     "TemplateRuntime",
     "UnsupportedInputError",
     "DEFAULT_TEMPLATE_LANGUAGE",
     "DOCUMENT_SELECTOR_SENTINEL",
+    "DocumentContext",
     "attempt_transformer_fallback",
-    "build_template_overrides",
-    "coerce_base_level",
     "coerce_slot_selector",
     "convert_document",
     "copy_document_state",
-    "extract_base_level_override",
+    "build_template_overrides",
     "extract_content",
     "extract_front_matter_slots",
-    "extract_language_from_front_matter",
     "extract_slot_fragments",
     "format_rendering_error",
     "heading_level_for",
     "load_template_runtime",
-    "normalise_template_language",
     "parse_slot_mapping",
     "persist_debug_artifacts",
+    "GenerationStrategy",
+    "SegmentContext",
     "ensure_fallback_converters",
     "render_with_fallback",
     "resolve_template_language",
@@ -72,43 +79,6 @@ __all__ = [
 
 
 logger = logging.getLogger(__name__)
-
-
-DEFAULT_TEMPLATE_LANGUAGE = "english"
-
-_BABEL_LANGUAGE_ALIASES = {
-    "ad": "catalan",
-    "ca": "catalan",
-    "cs": "czech",
-    "da": "danish",
-    "de": "ngerman",
-    "de-de": "ngerman",
-    "en": "english",
-    "en-gb": "british",
-    "en-us": "english",
-    "en-au": "australian",
-    "en-ca": "canadian",
-    "es": "spanish",
-    "es-es": "spanish",
-    "es-mx": "mexican",
-    "fi": "finnish",
-    "fr": "french",
-    "fr-fr": "french",
-    "fr-ca": "canadien",
-    "it": "italian",
-    "nl": "dutch",
-    "nb": "norwegian",
-    "nn": "nynorsk",
-    "pl": "polish",
-    "pt": "portuguese",
-    "pt-br": "brazilian",
-    "ro": "romanian",
-    "ru": "russian",
-    "sk": "slovak",
-    "sl": "slovene",
-    "sv": "swedish",
-    "tr": "turkish",
-}
 
 
 DOCUMENT_SELECTOR_SENTINEL = "@document"
@@ -138,6 +108,8 @@ class ConversionResult:
     document_state: DocumentState | None = None
     bibliography_path: Path | None = None
     template_overrides: dict[str, Any] = field(default_factory=dict)
+    document_context: DocumentContext | None = None
+    binder_context: BinderContext | None = None
 
 
 @dataclass(slots=True)
@@ -165,77 +137,6 @@ class UnsupportedInputError(Exception):
 class InputKind(Enum):
     MARKDOWN = "markdown"
     HTML = "html"
-
-
-def coerce_base_level(value: Any, *, allow_none: bool = True) -> int | None:
-    if value is None:
-        if allow_none:
-            return None
-        raise TemplateError("Base level value is missing.")
-
-    if isinstance(value, bool):
-        raise TemplateError(
-            "Base level must be an integer, booleans are not supported."
-        )
-
-    if isinstance(value, (int, float)):
-        return int(value)
-
-    if isinstance(value, str):
-        candidate = value.strip()
-        if not candidate:
-            if allow_none:
-                return None
-            raise TemplateError("Base level value cannot be empty.")
-        try:
-            return int(candidate)
-        except ValueError as exc:  # pragma: no cover - defensive
-            raise TemplateError(
-                f"Invalid base level '{value}'. Expected an integer value."
-            ) from exc
-
-    raise TemplateError(
-        "Base level should be provided as an integer value, "
-        f"got type '{type(value).__name__}'."
-    )
-
-
-def extract_base_level_override(overrides: Mapping[str, Any] | None) -> Any:
-    if not overrides:
-        return None
-
-    direct_candidate = overrides.get("base_level")
-    meta_section = overrides.get("meta")
-    meta_candidate = None
-    if isinstance(meta_section, Mapping):
-        meta_candidate = meta_section.get("base_level")
-
-    # Prefer explicit meta entry as it mirrors template attributes closely.
-    return meta_candidate if meta_candidate is not None else direct_candidate
-
-
-def load_template_runtime(template: str) -> TemplateRuntime:
-    """Resolve template metadata for repeated conversions."""
-
-    template_instance = load_template(template)
-
-    template_base = coerce_base_level(
-        template_instance.info.attributes.get("base_level"),
-    )
-
-    slots, default_slot = template_instance.info.resolve_slots()
-    formatter_overrides = dict(template_instance.iter_formatter_overrides())
-
-    return TemplateRuntime(
-        instance=template_instance,
-        name=template_instance.info.name,
-        engine=template_instance.info.engine,
-        requires_shell_escape=bool(template_instance.info.shell_escape),
-        slots=slots,
-        default_slot=default_slot,
-        formatter_overrides=formatter_overrides,
-        base_level=template_base,
-    )
 
 
 @dataclass(slots=True)
@@ -316,16 +217,81 @@ def convert_document(
             raise
         _fail(callbacks, f"Failed to read input document: {exc}", exc)
 
-    front_matter: dict[str, Any] = {}
+    strategy = GenerationStrategy(
+        copy_assets=copy_assets,
+        prefer_inputs=False,
+        persist_manifest=manifest,
+    )
+
+    document_context = _prepare_document_context(
+        input_path=input_path,
+        input_payload=input_payload,
+        input_format=input_format,
+        selector=selector,
+        full_document=full_document,
+        base_level=base_level,
+        heading_level=heading_level,
+        drop_title=drop_title,
+        numbered=numbered,
+        markdown_extensions=markdown_extensions,
+        callbacks=callbacks,
+    )
+
+    binder_context = _prepare_binder_context(
+        document_context=document_context,
+        template=template,
+        template_runtime=template_runtime,
+        requested_language=language,
+        bibliography_files=bibliography_files,
+        slot_overrides=slot_overrides,
+        output_dir=output_dir,
+        strategy=strategy,
+        callbacks=callbacks,
+    )
+
+    renderer_kwargs: dict[str, Any] = {
+        "output_root": output_dir,
+        "copy_assets": strategy.copy_assets,
+        "parser": parser or "html.parser",
+    }
+
+    return _render_document(
+        document_context=document_context,
+        binder_context=binder_context,
+        renderer_kwargs=renderer_kwargs,
+        strategy=strategy,
+        disable_fallback_converters=disable_fallback_converters,
+        persist_debug_html=persist_debug_html,
+        callbacks=callbacks,
+        initial_state=state,
+        wrap_document=wrap_document,
+    )
+
+
+def _prepare_document_context(
+    *,
+    input_path: Path,
+    input_payload: str,
+    input_format: InputKind,
+    selector: str,
+    full_document: bool,
+    base_level: int,
+    heading_level: int,
+    drop_title: bool,
+    numbered: bool,
+    markdown_extensions: list[str],
+    callbacks: ConversionCallbacks | None,
+) -> DocumentContext:
+    normalized_extensions = normalize_markdown_extensions(markdown_extensions)
     html = input_payload
-    is_markdown = input_format is InputKind.MARKDOWN
-    if is_markdown:
-        normalized_extensions = normalize_markdown_extensions(markdown_extensions)
+    front_matter: dict[str, Any] = {}
+
+    if input_format is InputKind.MARKDOWN:
         if not normalized_extensions:
             normalized_extensions = list(DEFAULT_MARKDOWN_EXTENSIONS)
         try:
             markdown_output: MarkdownDocument = render_markdown(
-                input_payload, normalized_extensions
+                input_payload, list(normalized_extensions)
             )
         except MarkdownConversionError as exc:
             if _debug_enabled(callbacks):
@@ -333,24 +299,55 @@ def convert_document(
             _fail(callbacks, str(exc), exc)
         html = markdown_output.html
         front_matter = markdown_output.front_matter
+    elif normalized_extensions:
+        normalized_extensions = list(normalized_extensions)
 
-    if not full_document and not is_markdown:
+    if not full_document and input_format is InputKind.HTML:
         try:
             html = extract_content(html, selector)
         except ValueError:
-            # Fallback to the entire document when the selector cannot be resolved.
             html = input_payload
 
     slot_requests = extract_front_matter_slots(front_matter)
-    if slot_overrides:
-        slot_requests.update(dict(slot_overrides))
 
-    if persist_debug_html:
-        persist_debug_artifacts(output_dir, input_path, html)
+    return DocumentContext(
+        name=input_path.stem,
+        source_path=input_path,
+        html=html,
+        base_level=base_level,
+        heading_level=heading_level,
+        numbered=numbered,
+        drop_title=drop_title,
+        input_format=input_format,
+        selector=selector,
+        full_document=full_document,
+        metadata=dict(front_matter),
+        front_matter=dict(front_matter),
+        slot_requests=slot_requests,
+        normalized_markdown_extensions=tuple(normalized_extensions),
+    )
 
-    resolved_language = resolve_template_language(language, front_matter)
 
-    config = BookConfig(project_dir=input_path.parent, language=resolved_language)
+def _prepare_binder_context(
+    *,
+    document_context: DocumentContext,
+    template: str | None,
+    template_runtime: TemplateRuntime | None,
+    requested_language: str | None,
+    bibliography_files: list[Path],
+    slot_overrides: Mapping[str, str] | None,
+    output_dir: Path,
+    strategy: GenerationStrategy,
+    callbacks: ConversionCallbacks | None,
+) -> BinderContext:
+    resolved_language = resolve_template_language(
+        requested_language, document_context.front_matter
+    )
+    document_context.language = resolved_language
+
+    config = BookConfig(
+        project_dir=document_context.source_path.parent, language=resolved_language
+    )
 
     bibliography_collection: BibliographyCollection | None = None
     bibliography_map: dict[str, dict[str, Any]] = {}
@@ -362,128 +359,134 @@ def convert_document(
             prefix = f"[{issue.key}] " if issue.key else ""
             source_hint = f" ({issue.source})" if issue.source else ""
             _emit_warning(callbacks, f"{prefix}{issue.message}{source_hint}")
+    document_context.bibliography = bibliography_map
 
-    renderer_kwargs: dict[str, Any] = {
-        "output_root": output_dir,
-        "copy_assets": copy_assets,
-    }
-    renderer_kwargs["parser"] = parser or "html.parser"
+    slot_requests = dict(document_context.slot_requests)
+    if slot_overrides:
+        slot_requests.update(dict(slot_overrides))
 
-    template_overrides = build_template_overrides(front_matter)
+    template_overrides = build_template_overrides(document_context.front_matter)
     template_overrides["language"] = resolved_language
     meta_section = template_overrides.get("meta")
     if isinstance(meta_section, dict):
         meta_section.setdefault("language", resolved_language)
 
     try:
-        override_base_level = extract_base_level_override(template_overrides)
-        template_base_level = coerce_base_level(override_base_level)
+        binding, active_slot_requests = resolve_template_binding(
+            template=template,
+            template_runtime=template_runtime,
+            template_overrides=template_overrides,
+            slot_requests=slot_requests,
+            warn=lambda message: _emit_warning(callbacks, message),
+        )
     except TemplateError as exc:
         if _debug_enabled(callbacks):
             raise
         _fail(callbacks, str(exc), exc)
 
-    template_info_engine: str | None = None
-    template_requires_shell_escape = False
-    template_instance: WrappableTemplate | None = None
-    template_name: str | None = None
-    formatter_overrides: dict[str, Path] = {}
-    runtime = template_runtime
-    if runtime is None and template:
-        try:
-            runtime = load_template_runtime(template)
-        except TemplateError as exc:
-            if _debug_enabled(callbacks):
-                raise
-            _fail(callbacks, str(exc), exc)
+    binder_context = BinderContext(
+        output_dir=output_dir,
+        config=config,
+        strategy=strategy,
+        language=resolved_language,
+        slot_requests=active_slot_requests,
+        template_overrides=dict(template_overrides),
+        bibliography_map=bibliography_map,
+        bibliography_collection=bibliography_collection,
+        template_binding=binding,
+    )
+    binder_context.documents.append(document_context)
 
-    if runtime is not None:
-        template_instance = runtime.instance
-        template_name = runtime.name
-        template_info_engine = runtime.engine
-        template_requires_shell_escape = runtime.requires_shell_escape
-        formatter_overrides = dict(runtime.formatter_overrides)
-        template_slots = runtime.slots
-        default_slot = runtime.default_slot
-        if template_base_level is None:
-            template_base_level = runtime.base_level
-    else:
-        template_slots = {"mainmatter": TemplateSlot(default=True)}
-        default_slot = "mainmatter"
-        if slot_requests:
-            for slot_name in slot_requests:
-                _emit_warning(
-                    callbacks,
-                    (
-                        f"slot '{slot_name}' was requested "
-                        "but no template is selected; "
-                        "ignoring."
-                    ),
-                )
-            slot_requests = {}
+    return binder_context
 
-    effective_base_level = template_base_level or 0
-    slot_base_levels: dict[str, int] = {
-        name: slot.resolve_level(effective_base_level)
-        for name, slot in template_slots.items()
-    }
+
+def _render_document(
+    *,
+    document_context: DocumentContext,
+    binder_context: BinderContext,
+    renderer_kwargs: dict[str, Any],
+    strategy: GenerationStrategy,
+    disable_fallback_converters: bool,
+    persist_debug_html: bool,
+    callbacks: ConversionCallbacks | None,
+    initial_state: DocumentState | None,
+    wrap_document: bool,
+) -> ConversionResult:
+    if persist_debug_html:
+        persist_debug_artifacts(
+            binder_context.output_dir,
+            document_context.source_path,
+            document_context.html,
+        )
+
+    binding = binder_context.template_binding
+    if binding is None:  # pragma: no cover - defensive safeguard
+        raise RuntimeError("BinderContext is missing a template binding.")
+
+    effective_base_level = binding.base_level or 0
+    slot_base_levels = binding.slot_levels()
+
     runtime_common: dict[str, object] = {
-        "numbered": numbered,
-        "source_dir": input_path.parent,
-        "document_path": input_path,
-        "copy_assets": copy_assets,
-        "language": resolved_language,
+        "numbered": document_context.numbered,
+        "source_dir": document_context.source_path.parent,
+        "document_path": document_context.source_path,
+        "copy_assets": strategy.copy_assets,
+        "language": binder_context.language,
     }
-    if bibliography_map:
-        runtime_common["bibliography"] = bibliography_map
-    if template_name is not None:
-        runtime_common["template"] = template_name
-    if manifest:
+    if binder_context.bibliography_map:
+        runtime_common["bibliography"] = binder_context.bibliography_map
+    if binding.name is not None:
+        runtime_common["template"] = binding.name
+    if strategy.persist_manifest:
         runtime_common["generate_manifest"] = True
 
-    active_slot_requests: dict[str, str] = {}
-    for slot_name, selector_value in slot_requests.items():
-        if slot_name not in template_slots:
-            template_hint = (
-                f"template '{template_name}'" if template_name else "the template"
-            )
-            _emit_warning(
-                callbacks,
-                (
-                    f"slot '{slot_name}' is not defined by {template_hint}; "
-                    f"content will remain in '{default_slot}'."
-                ),
-            )
-            continue
-        active_slot_requests[slot_name] = selector_value
+    active_slot_requests = dict(binder_context.slot_requests)
 
     parser_backend = str(renderer_kwargs.get("parser", "html.parser"))
     slot_fragments, missing_slots = extract_slot_fragments(
-        html,
+        document_context.html,
         active_slot_requests,
-        default_slot,
-        slot_definitions=template_slots,
+        binding.default_slot,
+        slot_definitions=binding.slots,
         parser_backend=parser_backend,
     )
     for message in missing_slots:
         _emit_warning(callbacks, message)
 
+    segment_registry: dict[str, list[SegmentContext]] = {}
+    for fragment in slot_fragments:
+        base_value = slot_base_levels.get(fragment.name, effective_base_level)
+        segment_registry.setdefault(fragment.name, []).append(
+            SegmentContext(
+                name=fragment.name,
+                html=fragment.html,
+                base_level=base_value + document_context.base_level,
+                metadata=document_context.metadata,
+                bibliography=binder_context.bibliography_map,
+            )
+        )
+
     def renderer_factory() -> LaTeXRenderer:
         formatter = LaTeXFormatter()
-        for key, override_path in formatter_overrides.items():
-            formatter.override_template(key, override_path)
-        return LaTeXRenderer(config=config, formatter=formatter, **renderer_kwargs)
+        binding.apply_formatter_overrides(formatter)
+        return LaTeXRenderer(
+            config=binder_context.config,
+            formatter=formatter,
+            **renderer_kwargs,
+        )
 
     if not disable_fallback_converters:
         ensure_fallback_converters()
 
     slot_outputs: dict[str, str] = {}
-    document_state: DocumentState | None = state
-    drop_title_flag = bool(drop_title)
+    document_state: DocumentState | None = initial_state
+    drop_title_flag = bool(document_context.drop_title)
     for fragment in slot_fragments:
         runtime_fragment = dict(runtime_common)
         base_value = slot_base_levels.get(fragment.name, effective_base_level)
-        runtime_fragment["base_level"] = base_value + base_level + heading_level
+        runtime_fragment["base_level"] = (
+            base_value + document_context.base_level + document_context.heading_level
+        )
         if drop_title_flag:
             runtime_fragment["drop_title"] = True
             drop_title_flag = False
@@ -492,7 +495,7 @@ def convert_document(
                 renderer_factory,
                 fragment.html,
                 runtime_fragment,
-                bibliography_map,
+                binder_context.bibliography_map,
                 state=document_state,
             )
         except LatexRenderingError as exc:
@@ -503,21 +506,28 @@ def convert_document(
         slot_outputs[fragment.name] = f"{existing_fragment}{fragment_output}"
 
     if document_state is None:
-        document_state = DocumentState(bibliography=dict(bibliography_map))
+        document_state = DocumentState(bibliography=dict(binder_context.bibliography_map))
 
-    default_content = slot_outputs.get(default_slot)
+    default_content = slot_outputs.get(binding.default_slot)
     if default_content is None:
         default_content = ""
-        slot_outputs[default_slot] = default_content
+        slot_outputs[binding.default_slot] = default_content
     latex_output = default_content
+
+    document_context.segments = segment_registry
+    for slot_name, segments in segment_registry.items():
+        binder_context.bound_segments.setdefault(slot_name, []).extend(segments)
 
     citations = list(document_state.citations)
     bibliography_output: Path | None = None
-    if citations and bibliography_collection is not None and bibliography_map:
+    if citations and binder_context.bibliography_collection is not None and binder_context.bibliography_map:
         try:
-            output_dir.mkdir(parents=True, exist_ok=True)
-            bibliography_output = output_dir / "texsmith-bibliography.bib"
-            bibliography_collection.write_bibtex(bibliography_output, keys=citations)
+            binder_context.output_dir.mkdir(parents=True, exist_ok=True)
+            bibliography_output = binder_context.output_dir / "texsmith-bibliography.bib"
+            binder_context.bibliography_collection.write_bibtex(
+                bibliography_output,
+                keys=citations,
+            )
         except OSError as exc:
             if _debug_enabled(callbacks):
                 raise
@@ -525,14 +535,17 @@ def convert_document(
             bibliography_output = None
 
     tex_path: Path | None = None
+    template_instance = binding.instance
     if template_instance is not None and wrap_document:
         try:
             template_context = template_instance.prepare_context(
                 latex_output,
-                overrides=template_overrides if template_overrides else None,
+                overrides=binder_context.template_overrides
+                if binder_context.template_overrides
+                else None,
             )
             for slot_name, fragment_output in slot_outputs.items():
-                if slot_name == default_slot:
+                if slot_name == binding.default_slot:
                     continue
                 template_context[slot_name] = fragment_output
             template_context["index_entries"] = document_state.has_index_entries
@@ -555,9 +568,11 @@ def convert_document(
         try:
             copy_template_assets(
                 template_instance,
-                output_dir,
+                binder_context.output_dir,
                 context=template_context,
-                overrides=template_overrides if template_overrides else None,
+                overrides=binder_context.template_overrides
+                if binder_context.template_overrides
+                else None,
             )
         except TemplateError as exc:
             if _debug_enabled(callbacks):
@@ -565,30 +580,32 @@ def convert_document(
             _fail(callbacks, str(exc), exc)
 
         try:
-            output_dir.mkdir(parents=True, exist_ok=True)
-            tex_path = output_dir / f"{input_path.stem}.tex"
+            binder_context.output_dir.mkdir(parents=True, exist_ok=True)
+            tex_path = binder_context.output_dir / f"{document_context.source_path.stem}.tex"
             tex_path.write_text(latex_output, encoding="utf-8")
         except OSError as exc:
             if _debug_enabled(callbacks):
                 raise
             _fail(
                 callbacks,
-                f"Failed to write LaTeX output to '{output_dir}': {exc}",
+                f"Failed to write LaTeX output to '{binder_context.output_dir}': {exc}",
                 exc,
             )
 
     return ConversionResult(
         latex_output=latex_output,
         tex_path=tex_path,
-        template_engine=template_info_engine,
-        template_shell_escape=template_requires_shell_escape,
-        language=resolved_language,
+        template_engine=binding.engine,
+        template_shell_escape=binding.requires_shell_escape,
+        language=binder_context.language,
         has_bibliography=bool(citations),
         slot_outputs=dict(slot_outputs),
-        default_slot=default_slot,
+        default_slot=binding.default_slot,
         document_state=document_state,
         bibliography_path=bibliography_output,
-        template_overrides=dict(template_overrides),
+        template_overrides=dict(binder_context.template_overrides),
+        document_context=document_context,
+        binder_context=binder_context,
     )
 
 
@@ -934,81 +951,3 @@ def format_rendering_error(error: LatexRenderingError) -> str:
     if cause is None:
         return str(error)
     return f"LaTeX rendering failed: {cause}"
-
-
-def build_template_overrides(front_matter: Mapping[str, Any] | None) -> dict[str, Any]:
-    if not front_matter:
-        return {}
-
-    if not isinstance(front_matter, Mapping):
-        return {}
-
-    meta_section = front_matter.get("meta")
-    if isinstance(meta_section, Mapping):
-        return {"meta": dict(meta_section)}
-
-    return {"meta": dict(front_matter)}
-
-
-def resolve_template_language(
-    explicit: str | None,
-    front_matter: Mapping[str, Any] | None,
-) -> str:
-    candidates = (
-        normalise_template_language(explicit),
-        normalise_template_language(extract_language_from_front_matter(front_matter)),
-    )
-
-    for candidate in candidates:
-        if candidate:
-            return candidate
-
-    return DEFAULT_TEMPLATE_LANGUAGE
-
-
-def extract_language_from_front_matter(
-    front_matter: Mapping[str, Any] | None,
-) -> str | None:
-    if not isinstance(front_matter, Mapping):
-        return None
-
-    meta_entry = front_matter.get("meta")
-    containers: tuple[Mapping[str, Any] | None, ...] = (
-        meta_entry if isinstance(meta_entry, Mapping) else None,
-        front_matter,
-    )
-
-    for container in containers:
-        if not isinstance(container, Mapping):
-            continue
-        for key in ("language", "lang"):
-            value = container.get(key)
-            if isinstance(value, str):
-                stripped = value.strip()
-                if stripped:
-                    return stripped
-    return None
-
-
-def normalise_template_language(value: str | None) -> str | None:
-    if value is None:
-        return None
-
-    stripped = value.strip()
-    if not stripped:
-        return None
-
-    lowered = stripped.lower().replace("_", "-")
-    alias = _BABEL_LANGUAGE_ALIASES.get(lowered)
-    if alias:
-        return alias
-
-    primary = lowered.split("-", 1)[0]
-    alias = _BABEL_LANGUAGE_ALIASES.get(primary)
-    if alias:
-        return alias
-
-    if lowered.isalpha():
-        return lowered
-
-    return None
