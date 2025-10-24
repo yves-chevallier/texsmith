@@ -2,13 +2,13 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterable
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Iterable
 
 import typer
 
-from ..conversion import DOCUMENT_SELECTOR_SENTINEL
+from ..conversion import DOCUMENT_SELECTOR_SENTINEL, InputKind, UnsupportedInputError
 
 
 @dataclass(slots=True)
@@ -93,6 +93,25 @@ def split_document_inputs(
     return documents, combined_bibliography
 
 
+def classify_input_source(path: Path) -> InputKind:
+    """Determine the document kind based on its filename suffix."""
+
+    suffix = path.suffix.lower()
+    if suffix in {".md", ".markdown"}:
+        return InputKind.MARKDOWN
+    if suffix in {".html", ".htm"}:
+        return InputKind.HTML
+    if suffix in {".yaml", ".yml"}:
+        raise UnsupportedInputError(
+            "MkDocs configuration files are not supported as input. "
+            "Provide a Markdown source or an HTML document."
+        )
+    raise UnsupportedInputError(
+        f"Unsupported input file type '{suffix or '<none>'}'. "
+        "Provide a Markdown source (.md) or HTML document (.html)."
+    )
+
+
 def build_unique_stem_map(documents: Iterable[Path]) -> dict[Path, str]:
     used: set[str] = set()
     counters: dict[str, int] = {}
@@ -162,12 +181,18 @@ def normalise_selector(selector: str | None) -> str | None:
     if selector is None:
         return None
     candidate = selector.strip()
-    if len(candidate) >= 2 and candidate[0] == candidate[-1] and candidate[0] in {'"', "'"}:
+    if (
+        len(candidate) >= 2
+        and candidate[0] == candidate[-1]
+        and candidate[0] in {'"', "'"}
+    ):
         candidate = candidate[1:-1].strip()
     return candidate or None
 
 
-def parse_cli_slot_tokens(values: Iterable[str] | None) -> list[tuple[str, str | None, str | None, str]]:
+def parse_cli_slot_tokens(
+    values: Iterable[str] | None,
+) -> list[tuple[str, str | None, str | None, str]]:
     tokens: list[tuple[str, str | None, str | None, str]] = []
     if not values:
         return tokens
@@ -180,14 +205,16 @@ def parse_cli_slot_tokens(values: Iterable[str] | None) -> list[tuple[str, str |
             continue
         if ":" not in entry:
             raise typer.BadParameter(
-                f"Invalid slot override '{raw}', expected format 'slot:selector' or 'slot:file[:selector]'."
+                f"Invalid slot override '{raw}', expected format "
+                f"'slot:selector' or 'slot:file[:selector]'."
             )
         slot_name, remainder = entry.split(":", 1)
         slot_name = slot_name.strip()
         remainder = remainder.strip()
         if not slot_name or not remainder:
             raise typer.BadParameter(
-                f"Invalid slot override '{raw}', expected format 'slot:selector' or 'slot:file[:selector]'."
+                f"Invalid slot override '{raw}', expected format "
+                f"'slot:selector' or 'slot:file[:selector]'."
             )
 
         path_hint: str | None
@@ -230,13 +257,18 @@ def resolve_slot_assignments(
                 target_doc = documents[0]
             else:
                 raise typer.BadParameter(
-                    f"slot override '{raw}' requires a document path when multiple inputs are provided."
+                    f"slot override '{raw}' requires a document "
+                    "path when multiple inputs are provided."
                 )
         else:
             candidate_path = Path(path_hint)
             resolved_candidate: Path | None = None
             try:
-                base = candidate_path if candidate_path.is_absolute() else Path.cwd() / candidate_path
+                base = (
+                    candidate_path
+                    if candidate_path.is_absolute()
+                    else Path.cwd() / candidate_path
+                )
                 resolved_candidate = base.resolve()
             except OSError:
                 resolved_candidate = None
@@ -249,7 +281,8 @@ def resolve_slot_assignments(
                     target_doc = matches[0]
                 elif len(matches) > 1:
                     raise typer.BadParameter(
-                        f"slot override '{raw}' is ambiguous; multiple documents match '{candidate_path.name}'."
+                        f"slot override '{raw}' is ambiguous; multiple "
+                        f"documents match '{candidate_path.name}'."
                     )
 
         if target_doc is None:
@@ -269,7 +302,9 @@ def resolve_slot_assignments(
                 selector_clean = DOCUMENT_SELECTOR_SENTINEL
 
         assignments[target_doc].append(
-            SlotAssignment(slot=slot_name, selector=selector_clean, full_document=full_document)
+            SlotAssignment(
+                slot=slot_name, selector=selector_clean, full_document=full_document
+            )
         )
 
     return assignments

@@ -3,25 +3,27 @@
 from __future__ import annotations
 
 import os
+from pathlib import Path
 import shlex
 import shutil
 import subprocess
-from pathlib import Path
 
 import typer
 
 from ...conversion import (
     ConversionCallbacks,
     ConversionError,
+    InputKind,
+    UnsupportedInputError,
     convert_document,
     load_template_runtime,
-    resolve_markdown_extensions,
 )
-from ...conversion import DEFAULT_MARKDOWN_EXTENSIONS
-from ...templates import TemplateError
 from ...latex_log import stream_latexmk_output
+from ...markdown import DEFAULT_MARKDOWN_EXTENSIONS, resolve_markdown_extensions
+from ...templates import TemplateError
 from ..state import debug_enabled, emit_error, emit_warning, get_cli_state
 from ..utils import (
+    classify_input_source,
     parse_slot_option,
     resolve_option,
     split_document_inputs,
@@ -214,7 +216,9 @@ def build(  # noqa: PLR0913, PLR0915 - command requires many options
     ),
 ) -> None:
     resolved_bibliography_option = list(resolve_option(bibliography))
-    documents, bibliography_files = split_document_inputs(inputs, resolved_bibliography_option)
+    documents, bibliography_files = split_document_inputs(
+        inputs, resolved_bibliography_option
+    )
     if len(documents) != 1:
         raise typer.BadParameter("Provide exactly one Markdown or HTML document.")
     document_path = documents[0]
@@ -254,6 +258,15 @@ def build(  # noqa: PLR0913, PLR0915 - command requires many options
     )
 
     try:
+        input_format: InputKind = classify_input_source(document_path)
+    except UnsupportedInputError as exc:
+        if callbacks.emit_error is not None:
+            callbacks.emit_error(str(exc), exc)
+        else:
+            emit_error(str(exc), exception=exc)
+        raise typer.Exit(code=1) from exc
+
+    try:
         conversion = convert_document(
             input_path=document_path,
             output_dir=resolve_option(output_dir),
@@ -271,10 +284,12 @@ def build(  # noqa: PLR0913, PLR0915 - command requires many options
             persist_debug_html=debug_snapshot,
             language=resolve_option(language),
             slot_overrides=requested_slots,
-            markdown_extensions=resolved_markdown_extensions or list(DEFAULT_MARKDOWN_EXTENSIONS),
+            markdown_extensions=resolved_markdown_extensions
+            or list(DEFAULT_MARKDOWN_EXTENSIONS),
             bibliography_files=bibliography_files,
             template_runtime=template_runtime,
             callbacks=callbacks,
+            input_format=input_format,
         )
     except ConversionError:
         raise typer.Exit(code=1)
@@ -379,6 +394,4 @@ def build(  # noqa: PLR0913, PLR0915 - command requires many options
             fg=typer.colors.GREEN,
         )
     else:
-        emit_warning(
-            "latexmk completed without errors but the PDF file was not found."
-        )
+        emit_warning("latexmk completed without errors but the PDF file was not found.")
