@@ -2,17 +2,12 @@
 
 from __future__ import annotations
 
-import codecs
 from pathlib import Path
 import re
 import unicodedata
 from urllib.parse import urlparse
 
-
-try:  # pragma: no cover - graceful degradation
-    import latexcodec  # type: ignore[import-not-found]
-except ImportError:  # pragma: no cover - optional dependency
-    latexcodec = None  # type: ignore[assignment]
+from pylatexenc.latexencode import unicode_to_latex
 
 
 _BASIC_LATEX_ESCAPE_MAP = {
@@ -28,35 +23,6 @@ _BASIC_LATEX_ESCAPE_MAP = {
     "\\": r"\textbackslash{}",
 }
 
-_ACCENT_COMMANDS = {
-    "\u0300": r"\`",  # grave
-    "\u0301": r"\'",  # acute
-    "\u0302": r"\^",  # circumflex
-    "\u0303": r"\~",  # tilde
-    "\u0304": r"\=",  # macron
-    "\u0306": r"\u",  # breve
-    "\u0307": r"\.",  # dot above
-    "\u0308": r"\"",  # diaeresis
-    "\u030a": r"\r",  # ring above
-    "\u030b": r"\H",  # double acute
-    "\u030c": r"\v",  # caron
-    "\u0327": r"\c",  # cedilla
-    "\u0328": r"\k",  # ogonek
-}
-
-_SYMBOL_LATEX_MAP = {
-    "–": r"\textendash{}",
-    "—": r"\textemdash{}",
-    "―": r"\textemdash{}",
-    "…": r"\ldots{}",
-}
-
-_SUPERSCRIPT_CHARS = set(
-    "⁰¹²³⁴⁵⁶⁷⁸⁹⁺⁻⁼⁽⁾ⁿⁱᵃᵇᶜᵈᵉᶠᵍʰᶦʲᵏˡᵐᶰᵒᵖʳˢᵗᵘᵛʷˣʸᶻᴬᴮᴰᴱᴳᴴᴵᴶᴷᴸᴹᴺᴼᴾᴿᵀᵁⱽᵂ"
-)
-_SUBSCRIPT_CHARS = set("₀₁₂₃₄₅₆₇₈₉₊₋₌₍₎ₐₑₒₔₓₕₖₗₘₙₚₛₜᵢᵣᵤᵥᵦᵧᵨᵩᵪ")
-
-
 _ACCENT_NEEDS_BRACES_PATTERN = re.compile(
     r"\\([" + re.escape("`'^\"~=\\.Hrvuck") + r"])\s*([A-Za-z])(?![A-Za-z])"
 )
@@ -65,7 +31,9 @@ _ACCENT_CONTROL_TARGET_PATTERN = re.compile(
 )
 
 
-def _wrap_latexcodec_output(payload: str) -> str:
+def _wrap_latex_output(payload: str) -> str:
+    """Ensure accent macros wrap their payload in braces."""
+
     def _repl(match: re.Match[str]) -> str:
         command, char = match.groups()
         return f"\\{command}{{{char}}}"
@@ -79,68 +47,43 @@ def _wrap_latexcodec_output(payload: str) -> str:
     return _ACCENT_CONTROL_TARGET_PATTERN.sub(_repl_control, payload)
 
 
-def _escape_combining_character(char: str) -> str | None:
-    normalized = unicodedata.normalize("NFD", char)
-    if len(normalized) <= 1:
-        return None
-
-    base = normalized[0]
-    combining = normalized[1:]
-    latex = _BASIC_LATEX_ESCAPE_MAP.get(base, base)
-
-    for mark in combining:
-        command = _ACCENT_COMMANDS.get(mark)
-        if command is None:
-            return None
-        latex = f"{command}{{{latex}}}"
-    return latex
-
-
-def _escape_character(char: str) -> str:
-    if char in _BASIC_LATEX_ESCAPE_MAP:
-        return _BASIC_LATEX_ESCAPE_MAP[char]
-
-    if char in _SYMBOL_LATEX_MAP:
-        return _SYMBOL_LATEX_MAP[char]
-
-    escaped = _escape_combining_character(char)
-    if escaped is not None:
-        return escaped
-
-    return char
-
-
 def escape_latex_chars(text: str) -> str:
-    """Escape LaTeX special characters leveraging latexcodec when available."""
+    """Escape LaTeX special characters leveraging pylatexenc."""
 
     if not text:
         return text
+    parts: list[str] = []
+    buffer: list[str] = []
 
-    if latexcodec is not None:
-        escaped_segments: list[str] = []
-        for char in text:
-            if char in _SYMBOL_LATEX_MAP:
-                escaped_segments.append(_SYMBOL_LATEX_MAP[char])
-                continue
+    def _encode_chunk(chunk: str) -> str:
+        escaped = "".join(_BASIC_LATEX_ESCAPE_MAP.get(char, char) for char in chunk)
+        encoded = unicode_to_latex(
+            escaped, non_ascii_only=True, unknown_char_warning=False
+        )
+        return _wrap_latex_output(encoded)
 
-            if char in _SUPERSCRIPT_CHARS or char in _SUBSCRIPT_CHARS:
-                escaped_segments.append(char)
-                continue
+    def _should_skip_encoding(char: str) -> bool:
+        try:
+            name = unicodedata.name(char)
+        except ValueError:
+            return False
+        if "SUPERSCRIPT" in name or "SUBSCRIPT" in name:
+            return True
+        return "MODIFIER LETTER" in name and ("SMALL" in name or "CAPITAL" in name)
 
-            try:
-                encoded = codecs.encode(char, "latex")
-            except Exception:  # pragma: no cover - fallback on unexpected errors
-                escaped_segments.append(_escape_character(char))
-                continue
+    for char in text:
+        if _should_skip_encoding(char):
+            if buffer:
+                parts.append(_encode_chunk("".join(buffer)))
+                buffer.clear()
+            parts.append(char)
+        else:
+            buffer.append(char)
 
-            piece = (
-                encoded.decode("utf-8") if isinstance(encoded, bytes) else str(encoded)
-            )
-            escaped_segments.append(_wrap_latexcodec_output(piece))
+    if buffer:
+        parts.append(_encode_chunk("".join(buffer)))
 
-        return "".join(escaped_segments)
-
-    return "".join(_escape_character(char) for char in text)
+    return "".join(parts)
 
 
 def points_to_mm(points: float) -> float:
