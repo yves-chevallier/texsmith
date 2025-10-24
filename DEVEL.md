@@ -248,6 +248,7 @@ In scientific english we put "Figure" with a capital, but in french it is "figur
 - [x] Verbose in CLI more details et afficher joliment les warnings et erreurs
 - [x] --debug pour afficher les exceptions complètes
 - [ ] Bibliographie sur doi dans frontmatter
+- [ ] Perf increase by converting html to xml and use lxml not htmlparser?
 - [ ] Support multipages, je donnes plusieurs md ou html en entrée.
 - [ ] Manage the figure (c.f.) how to manage that...
 - [ ] Optimize bibliography management using bib instead of jinja

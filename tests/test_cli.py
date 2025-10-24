@@ -19,7 +19,8 @@ def test_convert_command() -> None:
     with runner.isolated_filesystem():
         html_file = Path("index.html")
         html_file.write_text(
-            "<article class='md-content__inner'><h2 id='intro'>Introduction</h2></article>",
+            "<article class='md-content__inner'>"
+            "<h2 id='intro'>Introduction</h2></article>",
             encoding="utf-8",
         )
 
@@ -65,7 +66,8 @@ def test_copy_assets_disabled() -> None:
     with runner.isolated_filesystem():
         html_file = Path("index.html")
         html_file.write_text(
-            "<article class='md-content__inner'><img src='logo.png' alt='Logo'></article>",
+            "<article class='md-content__inner'>"
+            "<img src='logo.png' alt='Logo'></article>",
             encoding="utf-8",
         )
 

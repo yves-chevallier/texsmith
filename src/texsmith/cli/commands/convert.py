@@ -2,26 +2,29 @@
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from pathlib import Path
 from typing import Any
 
 import typer
 
+from ...context import DocumentState
 from ...conversion import (
     ConversionCallbacks,
     ConversionError,
+    InputKind,
     TemplateRuntime,
+    UnsupportedInputError,
     convert_document,
     load_template_runtime,
-    resolve_markdown_extensions,
 )
-from ...conversion import DEFAULT_MARKDOWN_EXTENSIONS
-from ...context import DocumentState
+from ...markdown import DEFAULT_MARKDOWN_EXTENSIONS, resolve_markdown_extensions
 from ...templates import TemplateError, copy_template_assets
 from ..state import debug_enabled, emit_error, emit_warning
 from ..utils import (
     SlotAssignment,
     build_unique_stem_map,
+    classify_input_source,
     determine_output_target,
     organise_slot_overrides,
     resolve_option,
@@ -197,7 +200,7 @@ def convert(  # noqa: PLR0913, PLR0915 - command with many options
             resolve_option(slots),
             documents,
         )
-    except typer.BadParameter as exc:
+    except typer.BadParameter:
         raise
     except ValueError as exc:
         raise typer.BadParameter(str(exc)) from exc
@@ -219,7 +222,9 @@ def convert(  # noqa: PLR0913, PLR0915 - command with many options
     if template_selected:
         try:
             template_runtime = load_template_runtime(template_name)
-        except TemplateError as exc:  # pragma: no cover - template errors handled upstream
+        except (
+            TemplateError
+        ) as exc:  # pragma: no cover - template errors handled upstream
             emit_error(str(exc), exception=exc)
             raise typer.Exit(code=1) from exc
 
@@ -252,6 +257,17 @@ def convert(  # noqa: PLR0913, PLR0915 - command with many options
         debug_enabled=debug_enabled(),
     )
 
+    try:
+        document_formats: dict[Path, InputKind] = {
+            path: classify_input_source(path) for path in documents
+        }
+    except UnsupportedInputError as exc:
+        if callbacks.emit_error is not None:
+            callbacks.emit_error(str(exc), exc)
+        else:
+            emit_error(str(exc), exception=exc)
+        raise ConversionError(str(exc)) from exc
+
     documents_count = len(documents)
 
     try:
@@ -276,6 +292,7 @@ def convert(  # noqa: PLR0913, PLR0915 - command with many options
                 markdown_extensions=resolved_markdown_extensions,
                 bibliography_files=bibliography_files,
                 callbacks=callbacks,
+                input_format=document_formats[documents[0]],
             )
             return
 
@@ -301,6 +318,7 @@ def convert(  # noqa: PLR0913, PLR0915 - command with many options
                 template_name=template_name,
                 template_runtime=template_runtime,
                 callbacks=callbacks,
+                input_format=document_formats[documents[0]],
             )
             return
 
@@ -325,6 +343,7 @@ def convert(  # noqa: PLR0913, PLR0915 - command with many options
                 markdown_extensions=resolved_markdown_extensions,
                 bibliography_files=bibliography_files,
                 callbacks=callbacks,
+                document_formats=document_formats,
             )
             return
 
@@ -350,6 +369,7 @@ def convert(  # noqa: PLR0913, PLR0915 - command with many options
             template_name=template_name,
             template_runtime=template_runtime,
             callbacks=callbacks,
+            document_formats=document_formats,
         )
     except ConversionError:
         raise typer.Exit(code=1)
@@ -376,6 +396,7 @@ def _convert_single_without_template(
     markdown_extensions: list[str],
     bibliography_files: list[Path],
     callbacks: ConversionCallbacks,
+    input_format: InputKind,
 ) -> None:
     if output_mode == "directory" and output_path is not None:
         conversion_output_dir = output_path
@@ -404,6 +425,7 @@ def _convert_single_without_template(
         markdown_extensions=markdown_extensions or list(DEFAULT_MARKDOWN_EXTENSIONS),
         bibliography_files=bibliography_files,
         callbacks=callbacks,
+        input_format=input_format,
     )
 
     if output_mode in {"stdout", "directory"}:
@@ -444,6 +466,7 @@ def _convert_single_with_template(
     template_name: str | None,
     template_runtime: TemplateRuntime | None,
     callbacks: ConversionCallbacks,
+    input_format: InputKind,
 ) -> None:
     result = convert_document(
         input_path=document_path,
@@ -466,6 +489,7 @@ def _convert_single_with_template(
         bibliography_files=bibliography_files,
         template_runtime=template_runtime,
         callbacks=callbacks,
+        input_format=input_format,
     )
 
     if result.tex_path is not None:
@@ -498,6 +522,7 @@ def _convert_multiple_without_template(
     markdown_extensions: list[str],
     bibliography_files: list[Path],
     callbacks: ConversionCallbacks,
+    document_formats: Mapping[Path, InputKind],
 ) -> None:
     pieces: list[str] = []
     unique_stems = build_unique_stem_map(documents)
@@ -527,9 +552,11 @@ def _convert_multiple_without_template(
             persist_debug_html=debug_snapshot,
             language=language,
             slot_overrides=slot_overrides.get(document_path),
-            markdown_extensions=markdown_extensions or list(DEFAULT_MARKDOWN_EXTENSIONS),
+            markdown_extensions=markdown_extensions
+            or list(DEFAULT_MARKDOWN_EXTENSIONS),
             bibliography_files=bibliography_files,
             callbacks=callbacks,
+            input_format=document_formats[document_path],
         )
 
         pieces.append(result.latex_output)
@@ -587,11 +614,14 @@ def _convert_multiple_with_template(
     template_name: str | None,
     template_runtime: TemplateRuntime | None,
     callbacks: ConversionCallbacks,
+    document_formats: Mapping[Path, InputKind],
 ) -> None:
     try:
         output_dir.mkdir(parents=True, exist_ok=True)
     except OSError as exc:
-        emit_error(f"Failed to prepare output directory '{output_dir}': {exc}", exception=exc)
+        emit_error(
+            f"Failed to prepare output directory '{output_dir}': {exc}", exception=exc
+        )
         raise typer.Exit(code=1) from exc
 
     assert template_runtime is not None  # for type checkers
@@ -622,12 +652,14 @@ def _convert_multiple_with_template(
             persist_debug_html=debug_snapshot,
             language=language,
             slot_overrides=slot_overrides.get(document_path),
-            markdown_extensions=markdown_extensions or list(DEFAULT_MARKDOWN_EXTENSIONS),
+            markdown_extensions=markdown_extensions
+            or list(DEFAULT_MARKDOWN_EXTENSIONS),
             bibliography_files=bibliography_files,
             state=shared_state,
             template_runtime=template_runtime,
             wrap_document=False,
             callbacks=callbacks,
+            input_format=document_formats[document_path],
         )
 
         shared_state = result.document_state
@@ -648,13 +680,17 @@ def _convert_multiple_with_template(
         )
 
         assignments = slot_assignments.get(document_path, [])
-        full_slots = {assignment.slot for assignment in assignments if assignment.full_document}
+        full_slots = {
+            assignment.slot for assignment in assignments if assignment.full_document
+        }
 
         fragment_reference = fragment_path.stem
         if default_slot_name not in aggregated_slots:
             aggregated_slots[default_slot_name] = []
         if default_slot_name not in full_slots and result.latex_output.strip():
-            aggregated_slots[default_slot_name].append(f"\\input{{{fragment_reference}}}")
+            aggregated_slots[default_slot_name].append(
+                f"\\input{{{fragment_reference}}}"
+            )
 
         for slot_name in full_slots:
             aggregated_slots.setdefault(slot_name, []).append(

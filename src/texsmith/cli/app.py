@@ -8,7 +8,7 @@ from rich.traceback import Traceback
 import typer
 
 from ..bibliography import BibliographyCollection
-from ..conversion import DEFAULT_MARKDOWN_EXTENSIONS
+from ..markdown import DEFAULT_MARKDOWN_EXTENSIONS
 from .bibliography import print_bibliography_overview
 from .commands.build import build
 from .commands.convert import convert

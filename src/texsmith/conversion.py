@@ -14,7 +14,6 @@ import re
 from typing import Any
 
 from bs4 import BeautifulSoup, FeatureNotFound, NavigableString, Tag
-import yaml
 
 from .bibliography import BibliographyCollection
 from .config import BookConfig
@@ -22,6 +21,13 @@ from .context import DocumentState
 from .docker import is_docker_available
 from .exceptions import LatexRenderingError, TransformerExecutionError
 from .formatter import LaTeXFormatter
+from .markdown import (
+    DEFAULT_MARKDOWN_EXTENSIONS,
+    MarkdownConversionError,
+    MarkdownDocument,
+    normalize_markdown_extensions,
+    render_markdown,
+)
 from .renderer import LaTeXRenderer
 from .templates import (
     TemplateError,
@@ -40,17 +46,14 @@ __all__ = [
     "MarkdownConversionError",
     "TemplateRuntime",
     "UnsupportedInputError",
-    "DEFAULT_MARKDOWN_EXTENSIONS",
     "DEFAULT_TEMPLATE_LANGUAGE",
     "DOCUMENT_SELECTOR_SENTINEL",
     "attempt_transformer_fallback",
     "build_template_overrides",
-    "classify_input_source",
     "coerce_base_level",
     "coerce_slot_selector",
     "convert_document",
     "copy_document_state",
-    "deduplicate_markdown_extensions",
     "extract_base_level_override",
     "extract_content",
     "extract_front_matter_slots",
@@ -63,50 +66,12 @@ __all__ = [
     "parse_slot_mapping",
     "persist_debug_artifacts",
     "ensure_fallback_converters",
-    "normalize_markdown_extensions",
-    "resolve_markdown_extensions",
-    "render_markdown",
     "render_with_fallback",
     "resolve_template_language",
-    "split_front_matter",
 ]
 
 
 logger = logging.getLogger(__name__)
-
-
-DEFAULT_MARKDOWN_EXTENSIONS = [
-    "abbr",
-    "admonition",
-    "attr_list",
-    "def_list",
-    "footnotes",
-    "texsmith.markdown_extensions.missing_footnotes:MissingFootnotesExtension",
-    "md_in_html",
-    "mdx_math",
-    "pymdownx.betterem",
-    "pymdownx.blocks.caption",
-    "pymdownx.blocks.html",
-    "pymdownx.caret",
-    "pymdownx.critic",
-    "pymdownx.details",
-    "pymdownx.emoji",
-    "pymdownx.fancylists",
-    "pymdownx.highlight",
-    "pymdownx.inlinehilite",
-    "pymdownx.keys",
-    "pymdownx.magiclink",
-    "pymdownx.mark",
-    "pymdownx.saneheaders",
-    "pymdownx.smartsymbols",
-    "pymdownx.snippets",
-    "pymdownx.superfences",
-    "pymdownx.tabbed",
-    "pymdownx.tasklist",
-    "pymdownx.tilde",
-    "tables",
-    "toc",
-]
 
 
 DEFAULT_TEMPLATE_LANGUAGE = "english"
@@ -191,10 +156,6 @@ class TemplateRuntime:
 
 class ConversionError(Exception):
     """Raised when a conversion fails and cannot recover."""
-
-
-class MarkdownConversionError(Exception):
-    """Raised when Markdown cannot be converted into HTML."""
 
 
 class UnsupportedInputError(Exception):
@@ -341,6 +302,7 @@ def convert_document(
     markdown_extensions: list[str],
     bibliography_files: list[Path],
     *,
+    input_format: InputKind,
     state: DocumentState | None = None,
     template_runtime: TemplateRuntime | None = None,
     wrap_document: bool = True,
@@ -354,29 +316,23 @@ def convert_document(
             raise
         _fail(callbacks, f"Failed to read input document: {exc}", exc)
 
-    normalized_extensions = normalize_markdown_extensions(markdown_extensions)
-    if not normalized_extensions:
-        normalized_extensions = list(DEFAULT_MARKDOWN_EXTENSIONS)
-
-    try:
-        input_kind = classify_input_source(input_path)
-    except UnsupportedInputError as exc:
-        if _debug_enabled(callbacks):
-            raise
-        _fail(callbacks, str(exc), exc)
-
-    is_markdown = input_kind is InputKind.MARKDOWN
-
     front_matter: dict[str, Any] = {}
+    html = input_payload
+    is_markdown = input_format is InputKind.MARKDOWN
     if is_markdown:
+        normalized_extensions = normalize_markdown_extensions(markdown_extensions)
+        if not normalized_extensions:
+            normalized_extensions = list(DEFAULT_MARKDOWN_EXTENSIONS)
         try:
-            html, front_matter = render_markdown(input_payload, normalized_extensions)
+            markdown_output: MarkdownDocument = render_markdown(
+                input_payload, normalized_extensions
+            )
         except MarkdownConversionError as exc:
             if _debug_enabled(callbacks):
                 raise
             _fail(callbacks, str(exc), exc)
-    else:
-        html = input_payload
+        html = markdown_output.html
+        front_matter = markdown_output.front_matter
 
     if not full_document and not is_markdown:
         try:
@@ -459,7 +415,8 @@ def convert_document(
                 _emit_warning(
                     callbacks,
                     (
-                        f"slot '{slot_name}' was requested but no template is selected; "
+                        f"slot '{slot_name}' was requested "
+                        "but no template is selected; "
                         "ignoring."
                     ),
                 )
@@ -633,63 +590,6 @@ def convert_document(
         bibliography_path=bibliography_output,
         template_overrides=dict(template_overrides),
     )
-
-
-def resolve_markdown_extensions(
-    requested: Iterable[str] | None,
-    disabled: Iterable[str] | None,
-) -> list[str]:
-    enabled = normalize_markdown_extensions(requested)
-    disabled_normalized = {
-        extension.lower() for extension in normalize_markdown_extensions(disabled)
-    }
-
-    combined = deduplicate_markdown_extensions(
-        list(DEFAULT_MARKDOWN_EXTENSIONS) + enabled
-    )
-
-    if not disabled_normalized:
-        return combined
-
-    return [
-        extension
-        for extension in combined
-        if extension.lower() not in disabled_normalized
-    ]
-
-
-def deduplicate_markdown_extensions(values: Iterable[str]) -> list[str]:
-    seen: set[str] = set()
-    result: list[str] = []
-    for value in values:
-        if not isinstance(value, str):
-            continue
-        key = value.lower()
-        if key in seen:
-            continue
-        seen.add(key)
-        result.append(value)
-    return result
-
-
-def normalize_markdown_extensions(
-    values: Iterable[str] | str | None,
-) -> list[str]:
-    if values is None:
-        return []
-
-    if isinstance(values, str):
-        candidates: Iterable[str] = [values]
-    else:
-        candidates = values
-
-    normalized: list[str] = []
-    for value in candidates:
-        if not isinstance(value, str):
-            continue
-        chunks = re.split(r"[,\s\x00]+", value)
-        normalized.extend(chunk for chunk in chunks if chunk)
-    return normalized
 
 
 def coerce_slot_selector(payload: Any) -> str | None:
@@ -1034,86 +934,6 @@ def format_rendering_error(error: LatexRenderingError) -> str:
     if cause is None:
         return str(error)
     return f"LaTeX rendering failed: {cause}"
-
-
-def classify_input_source(path: Path) -> InputKind:
-    suffix = path.suffix.lower()
-    if suffix in {".md", ".markdown"}:
-        return InputKind.MARKDOWN
-    if suffix in {".html", ".htm"}:
-        return InputKind.HTML
-    if suffix in {".yaml", ".yml"}:
-        raise UnsupportedInputError(
-            "MkDocs configuration files are not supported as input. "
-            "Provide a Markdown source or an HTML document."
-        )
-    raise UnsupportedInputError(
-        f"Unsupported input file type '{suffix or '<none>'}'. "
-        "Provide a Markdown source (.md) or HTML document (.html)."
-    )
-
-
-def render_markdown(source: str, extensions: list[str]) -> tuple[str, dict[str, Any]]:
-    try:
-        import markdown
-    except ModuleNotFoundError as exc:  # pragma: no cover - environment dependent
-        raise MarkdownConversionError(
-            "Python Markdown is required to process Markdown inputs; "
-            "install the 'markdown' package."
-        ) from exc
-
-    metadata, markdown_body = split_front_matter(source)
-
-    try:
-        md = markdown.Markdown(extensions=extensions)
-    except Exception as exc:  # pragma: no cover - library-controlled
-        raise MarkdownConversionError(
-            f"Failed to initialize Markdown processor: {exc}"
-        ) from exc
-
-    try:
-        return md.convert(markdown_body), metadata
-    except Exception as exc:  # pragma: no cover - library-controlled
-        raise MarkdownConversionError(
-            f"Failed to convert Markdown source: {exc}"
-        ) from exc
-
-
-def split_front_matter(source: str) -> tuple[dict[str, Any], str]:
-    candidate = source.lstrip("\ufeff")
-    prefix_len = len(source) - len(candidate)
-    lines = candidate.splitlines()
-    if not lines or lines[0].strip() != "---":
-        return {}, source
-
-    front_matter_lines: list[str] = []
-    closing_index: int | None = None
-    for idx, line in enumerate(lines[1:], start=1):
-        stripped = line.strip()
-        if stripped in {"---", "..."}:
-            closing_index = idx
-            break
-        front_matter_lines.append(line)
-
-    if closing_index is None:
-        return {}, source
-
-    raw_block = "\n".join(front_matter_lines)
-    try:
-        metadata = yaml.safe_load(raw_block) or {}
-    except yaml.YAMLError:
-        return {}, source
-
-    if not isinstance(metadata, dict):
-        metadata = {}
-
-    body_lines = lines[closing_index + 1 :]
-    body = "\n".join(body_lines)
-    if source.endswith("\n"):
-        body += "\n"
-
-    prefix = source[:prefix_len]
-    return metadata, prefix + body
 
 
 def build_template_overrides(front_matter: Mapping[str, Any] | None) -> dict[str, Any]:
