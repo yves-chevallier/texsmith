@@ -10,7 +10,7 @@ from pathlib import Path
 import shutil
 import sys
 import tomllib
-from typing import Any, Iterable, Mapping
+from typing import Any, Callable, Iterable, Mapping, TYPE_CHECKING
 
 from jinja2 import Environment, FileSystemLoader, TemplateNotFound
 from pydantic import BaseModel, ConfigDict, Field, ValidationError, model_validator
@@ -18,9 +18,49 @@ from pydantic import BaseModel, ConfigDict, Field, ValidationError, model_valida
 from ..exceptions import LatexRenderingError
 from ..utils import escape_latex_chars
 
+if TYPE_CHECKING:
+    from ..formatter import LaTeXFormatter
+
 
 class TemplateError(LatexRenderingError):
     """Raised when a LaTeX template cannot be loaded or rendered."""
+
+
+DEFAULT_TEMPLATE_LANGUAGE = "english"
+
+_BABEL_LANGUAGE_ALIASES = {
+    "ad": "catalan",
+    "ca": "catalan",
+    "cs": "czech",
+    "da": "danish",
+    "de": "ngerman",
+    "de-de": "ngerman",
+    "en": "english",
+    "en-gb": "british",
+    "en-us": "english",
+    "en-au": "australian",
+    "en-ca": "canadian",
+    "es": "spanish",
+    "es-es": "spanish",
+    "es-mx": "mexican",
+    "fi": "finnish",
+    "fr": "french",
+    "fr-fr": "french",
+    "fr-ca": "canadien",
+    "it": "italian",
+    "nl": "dutch",
+    "nb": "norwegian",
+    "nn": "nynorsk",
+    "pl": "polish",
+    "pt": "portuguese",
+    "pt-br": "brazilian",
+    "ro": "romanian",
+    "ru": "russian",
+    "sk": "slovak",
+    "sl": "slovene",
+    "sv": "swedish",
+    "tr": "turkish",
+}
 
 
 class CompatInfo(BaseModel):
@@ -586,3 +626,252 @@ def _iter_local_candidates(initial: Path, slug: str) -> Iterable[Path]:
             continue
         seen.add(key)
         yield candidate
+
+
+@dataclass(slots=True)
+class TemplateRuntime:
+    """Resolved template metadata reused across conversions."""
+
+    instance: WrappableTemplate
+    name: str
+    engine: str | None
+    requires_shell_escape: bool
+    slots: dict[str, TemplateSlot]
+    default_slot: str
+    formatter_overrides: dict[str, Path]
+    base_level: int | None
+
+
+@dataclass(slots=True)
+class TemplateBinding:
+    """Binding between slot requests and a LaTeX template."""
+
+    runtime: TemplateRuntime | None
+    instance: WrappableTemplate | None
+    name: str | None
+    engine: str | None
+    requires_shell_escape: bool
+    formatter_overrides: dict[str, Path]
+    slots: dict[str, TemplateSlot]
+    default_slot: str
+    base_level: int | None
+
+    def slot_levels(self, *, offset: int = 0) -> dict[str, int]:
+        """Return the resolved base level for each slot."""
+
+        base = (self.base_level or 0) + offset
+        return {
+            name: slot.resolve_level(base)
+            for name, slot in self.slots.items()
+        }
+
+    def apply_formatter_overrides(self, formatter: "LaTeXFormatter") -> None:
+        """Apply template-provided overrides to a formatter."""
+
+        for key, override_path in self.formatter_overrides.items():
+            formatter.override_template(key, override_path)
+
+
+def coerce_base_level(value: Any, *, allow_none: bool = True) -> int | None:
+    if value is None:
+        if allow_none:
+            return None
+        raise TemplateError("Base level value is missing.")
+
+    if isinstance(value, bool):
+        raise TemplateError("Base level must be an integer, booleans are not supported.")
+
+    if isinstance(value, (int, float)):
+        return int(value)
+
+    if isinstance(value, str):
+        candidate = value.strip()
+        if not candidate:
+            if allow_none:
+                return None
+            raise TemplateError("Base level value cannot be empty.")
+        try:
+            return int(candidate)
+        except ValueError as exc:  # pragma: no cover - defensive
+            raise TemplateError(
+                f"Invalid base level '{value}'. Expected an integer value."
+            ) from exc
+
+    raise TemplateError(
+        "Base level should be provided as an integer value, "
+        f"got type '{type(value).__name__}'."
+    )
+
+
+def extract_base_level_override(overrides: Mapping[str, Any] | None) -> Any:
+    if not overrides:
+        return None
+
+    direct_candidate = overrides.get("base_level")
+    meta_section = overrides.get("meta")
+    meta_candidate = None
+    if isinstance(meta_section, Mapping):
+        meta_candidate = meta_section.get("base_level")
+
+    return meta_candidate if meta_candidate is not None else direct_candidate
+
+
+def build_template_overrides(front_matter: Mapping[str, Any] | None) -> dict[str, Any]:
+    if not front_matter or not isinstance(front_matter, Mapping):
+        return {}
+
+    meta_section = front_matter.get("meta")
+    if isinstance(meta_section, Mapping):
+        return {"meta": dict(meta_section)}
+
+    return {"meta": dict(front_matter)}
+
+
+def extract_language_from_front_matter(
+    front_matter: Mapping[str, Any] | None,
+) -> str | None:
+    if not isinstance(front_matter, Mapping):
+        return None
+
+    meta_entry = front_matter.get("meta")
+    containers: tuple[Mapping[str, Any] | None, ...] = (
+        meta_entry if isinstance(meta_entry, Mapping) else None,
+        front_matter,
+    )
+
+    for container in containers:
+        if not isinstance(container, Mapping):
+            continue
+        for key in ("language", "lang"):
+            value = container.get(key)
+            if isinstance(value, str):
+                stripped = value.strip()
+                if stripped:
+                    return stripped
+    return None
+
+
+def normalise_template_language(value: str | None) -> str | None:
+    if value is None:
+        return None
+
+    stripped = value.strip()
+    if not stripped:
+        return None
+
+    lowered = stripped.lower().replace("_", "-")
+    alias = _BABEL_LANGUAGE_ALIASES.get(lowered)
+    if alias:
+        return alias
+
+    primary = lowered.split("-", 1)[0]
+    alias = _BABEL_LANGUAGE_ALIASES.get(primary)
+    if alias:
+        return alias
+
+    if lowered.isalpha():
+        return lowered
+
+    return None
+
+
+def resolve_template_language(
+    explicit: str | None,
+    front_matter: Mapping[str, Any] | None,
+) -> str:
+    candidates = (
+        normalise_template_language(explicit),
+        normalise_template_language(extract_language_from_front_matter(front_matter)),
+    )
+
+    for candidate in candidates:
+        if candidate:
+            return candidate
+
+    return DEFAULT_TEMPLATE_LANGUAGE
+
+
+def load_template_runtime(template: str) -> TemplateRuntime:
+    """Resolve template metadata for repeated conversions."""
+
+    template_instance = load_template(template)
+
+    template_base = coerce_base_level(
+        template_instance.info.attributes.get("base_level"),
+    )
+
+    slots, default_slot = template_instance.info.resolve_slots()
+    formatter_overrides = dict(template_instance.iter_formatter_overrides())
+
+    return TemplateRuntime(
+        instance=template_instance,
+        name=template_instance.info.name,
+        engine=template_instance.info.engine,
+        requires_shell_escape=bool(template_instance.info.shell_escape),
+        slots=slots,
+        default_slot=default_slot,
+        formatter_overrides=formatter_overrides,
+        base_level=template_base,
+    )
+
+
+def resolve_template_binding(
+    *,
+    template: str | None,
+    template_runtime: TemplateRuntime | None,
+    template_overrides: Mapping[str, Any],
+    slot_requests: Mapping[str, str],
+    warn: Callable[[str], None] | None = None,
+) -> tuple[TemplateBinding, dict[str, str]]:
+    runtime = template_runtime
+    if runtime is None and template:
+        runtime = load_template_runtime(template)
+
+    if runtime is not None:
+        binding = TemplateBinding(
+            runtime=runtime,
+            instance=runtime.instance,
+            name=runtime.name,
+            engine=runtime.engine,
+            requires_shell_escape=runtime.requires_shell_escape,
+            formatter_overrides=dict(runtime.formatter_overrides),
+            slots=runtime.slots,
+            default_slot=runtime.default_slot,
+            base_level=runtime.base_level,
+        )
+    else:
+        binding = TemplateBinding(
+            runtime=None,
+            instance=None,
+            name=None,
+            engine=None,
+            requires_shell_escape=False,
+            formatter_overrides={},
+            slots={"mainmatter": TemplateSlot(default=True)},
+            default_slot="mainmatter",
+            base_level=None,
+        )
+
+    base_override = coerce_base_level(extract_base_level_override(template_overrides))
+    if base_override is not None:
+        binding.base_level = base_override
+
+    filtered: dict[str, str] = {}
+    for slot_name, selector in slot_requests.items():
+        if slot_name not in binding.slots:
+            if warn is not None:
+                template_hint = f"template '{binding.name}'" if binding.name else "the template"
+                warn(
+                    f"slot '{slot_name}' is not defined by {template_hint}; "
+                    f"content will remain in '{binding.default_slot}'."
+                )
+            continue
+        if binding.runtime is None:
+            if warn is not None:
+                warn(
+                    f"slot '{slot_name}' was requested but no template is selected; ignoring."
+                )
+            continue
+        filtered[slot_name] = selector
+
+    return binding, filtered
