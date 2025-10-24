@@ -5,10 +5,24 @@ from __future__ import annotations
 from collections.abc import Iterable
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Any
 
 import typer
 
-from ..conversion import DOCUMENT_SELECTOR_SENTINEL, InputKind, UnsupportedInputError
+from ..conversion import (
+    DOCUMENT_SELECTOR_SENTINEL,
+    ConversionCallbacks,
+    ConversionError,
+    InputKind,
+    UnsupportedInputError,
+    build_document_context,
+    extract_content,
+)
+from ..markdown import (
+    DEFAULT_MARKDOWN_EXTENSIONS,
+    MarkdownConversionError,
+    render_markdown,
+)
 
 
 @dataclass(slots=True)
@@ -109,6 +123,65 @@ def classify_input_source(path: Path) -> InputKind:
     raise UnsupportedInputError(
         f"Unsupported input file type '{suffix or '<none>'}'. "
         "Provide a Markdown source (.md) or HTML document (.html)."
+    )
+
+
+def prepare_document_context(
+    *,
+    document_path: Path,
+    kind: InputKind,
+    selector: str,
+    full_document: bool,
+    base_level: int,
+    heading_level: int,
+    drop_title: bool,
+    numbered: bool,
+    markdown_extensions: list[str],
+    callbacks: ConversionCallbacks,
+    emit_error_callback: Any,
+) -> "DocumentContext":
+    try:
+        raw_payload = document_path.read_text(encoding="utf-8")
+    except OSError as exc:
+        message = f"Failed to read input document: {exc}"
+        if callbacks.emit_error is not None:
+            callbacks.emit_error(message, exc)
+        else:
+            emit_error_callback(message, exception=exc)
+        raise ConversionError(message) from exc
+
+    front_matter: dict[str, Any] = {}
+    html_payload = raw_payload
+
+    if kind is InputKind.MARKDOWN:
+        extensions = markdown_extensions or list(DEFAULT_MARKDOWN_EXTENSIONS)
+        try:
+            converted = render_markdown(raw_payload, extensions)
+        except MarkdownConversionError as exc:
+            message = f"Failed to convert Markdown source: {exc}"
+            if callbacks.emit_error is not None:
+                callbacks.emit_error(message, exc)
+            else:
+                emit_error_callback(message, exception=exc)
+            raise ConversionError(message) from exc
+        html_payload = converted.html
+        front_matter = converted.front_matter
+    else:
+        if not full_document:
+            try:
+                html_payload = extract_content(html_payload, selector)
+            except ValueError:
+                html_payload = raw_payload
+
+    return build_document_context(
+        name=document_path.stem,
+        source_path=document_path,
+        html=html_payload,
+        front_matter=front_matter,
+        base_level=base_level,
+        heading_level=heading_level,
+        drop_title=drop_title,
+        numbered=numbered,
     )
 
 

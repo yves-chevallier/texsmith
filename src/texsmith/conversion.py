@@ -22,13 +22,6 @@ from .conversion_contexts import BinderContext, DocumentContext, GenerationStrat
 from .docker import is_docker_available
 from .exceptions import LatexRenderingError, TransformerExecutionError
 from .formatter import LaTeXFormatter
-from .markdown import (
-    DEFAULT_MARKDOWN_EXTENSIONS,
-    MarkdownConversionError,
-    MarkdownDocument,
-    normalize_markdown_extensions,
-    render_markdown,
-)
 from .renderer import LaTeXRenderer
 from .templates import (
     DEFAULT_TEMPLATE_LANGUAGE,
@@ -57,6 +50,8 @@ __all__ = [
     "DEFAULT_TEMPLATE_LANGUAGE",
     "DOCUMENT_SELECTOR_SENTINEL",
     "DocumentContext",
+    "build_document_context",
+    "build_binder_context",
     "attempt_transformer_fallback",
     "coerce_slot_selector",
     "convert_document",
@@ -183,15 +178,36 @@ def _fail(
     raise ConversionError(message) from exc
 
 
-def convert_document(
-    input_path: Path,
-    output_dir: Path,
-    selector: str,
-    full_document: bool,
+def build_document_context(
+    *,
+    name: str,
+    source_path: Path,
+    html: str,
+    front_matter: Mapping[str, Any] | None,
     base_level: int,
     heading_level: int,
     drop_title: bool,
     numbered: bool,
+) -> DocumentContext:
+    metadata = dict(front_matter or {})
+    slot_requests = extract_front_matter_slots(metadata)
+
+    return DocumentContext(
+        name=name,
+        source_path=source_path,
+        html=html,
+        base_level=base_level,
+        heading_level=heading_level,
+        numbered=numbered,
+        drop_title=drop_title,
+        front_matter=metadata,
+        slot_requests=slot_requests,
+    )
+
+
+def convert_document(
+    document: DocumentContext,
+    output_dir: Path,
     parser: str | None,
     disable_fallback_converters: bool,
     copy_assets: bool,
@@ -200,45 +216,23 @@ def convert_document(
     persist_debug_html: bool,
     language: str | None,
     slot_overrides: Mapping[str, str] | None,
-    markdown_extensions: list[str],
     bibliography_files: list[Path],
     *,
-    input_format: InputKind,
     state: DocumentState | None = None,
     template_runtime: TemplateRuntime | None = None,
     wrap_document: bool = True,
     callbacks: ConversionCallbacks | None = None,
 ) -> ConversionResult:
-    try:
-        output_dir = output_dir.resolve()
-        input_payload = input_path.read_text(encoding="utf-8")
-    except OSError as exc:
-        if _debug_enabled(callbacks):
-            raise
-        _fail(callbacks, f"Failed to read input document: {exc}", exc)
-
     strategy = GenerationStrategy(
         copy_assets=copy_assets,
         prefer_inputs=False,
         persist_manifest=manifest,
     )
 
-    document_context = _prepare_document_context(
-        input_path=input_path,
-        input_payload=input_payload,
-        input_format=input_format,
-        selector=selector,
-        full_document=full_document,
-        base_level=base_level,
-        heading_level=heading_level,
-        drop_title=drop_title,
-        numbered=numbered,
-        markdown_extensions=markdown_extensions,
-        callbacks=callbacks,
-    )
+    output_dir = output_dir.resolve()
 
-    binder_context = _prepare_binder_context(
-        document_context=document_context,
+    binder_context = build_binder_context(
+        document_context=document,
         template=template,
         template_runtime=template_runtime,
         requested_language=language,
@@ -256,7 +250,7 @@ def convert_document(
     }
 
     return _render_document(
-        document_context=document_context,
+        document_context=document,
         binder_context=binder_context,
         renderer_kwargs=renderer_kwargs,
         strategy=strategy,
@@ -266,69 +260,7 @@ def convert_document(
         initial_state=state,
         wrap_document=wrap_document,
     )
-
-
-def _prepare_document_context(
-    *,
-    input_path: Path,
-    input_payload: str,
-    input_format: InputKind,
-    selector: str,
-    full_document: bool,
-    base_level: int,
-    heading_level: int,
-    drop_title: bool,
-    numbered: bool,
-    markdown_extensions: list[str],
-    callbacks: ConversionCallbacks | None,
-) -> DocumentContext:
-    normalized_extensions = normalize_markdown_extensions(markdown_extensions)
-    html = input_payload
-    front_matter: dict[str, Any] = {}
-
-    if input_format is InputKind.MARKDOWN:
-        if not normalized_extensions:
-            normalized_extensions = list(DEFAULT_MARKDOWN_EXTENSIONS)
-        try:
-            markdown_output: MarkdownDocument = render_markdown(
-                input_payload, list(normalized_extensions)
-            )
-        except MarkdownConversionError as exc:
-            if _debug_enabled(callbacks):
-                raise
-            _fail(callbacks, str(exc), exc)
-        html = markdown_output.html
-        front_matter = markdown_output.front_matter
-    elif normalized_extensions:
-        normalized_extensions = list(normalized_extensions)
-
-    if not full_document and input_format is InputKind.HTML:
-        try:
-            html = extract_content(html, selector)
-        except ValueError:
-            html = input_payload
-
-    slot_requests = extract_front_matter_slots(front_matter)
-
-    return DocumentContext(
-        name=input_path.stem,
-        source_path=input_path,
-        html=html,
-        base_level=base_level,
-        heading_level=heading_level,
-        numbered=numbered,
-        drop_title=drop_title,
-        input_format=input_format,
-        selector=selector,
-        full_document=full_document,
-        metadata=dict(front_matter),
-        front_matter=dict(front_matter),
-        slot_requests=slot_requests,
-        normalized_markdown_extensions=tuple(normalized_extensions),
-    )
-
-
-def _prepare_binder_context(
+def build_binder_context(
     *,
     document_context: DocumentContext,
     template: str | None,
@@ -440,7 +372,7 @@ def _render_document(
     if strategy.persist_manifest:
         runtime_common["generate_manifest"] = True
 
-    active_slot_requests = dict(binder_context.slot_requests)
+    active_slot_requests = binder_context.slot_requests
 
     parser_backend = str(renderer_kwargs.get("parser", "html.parser"))
     slot_fragments, missing_slots = extract_slot_fragments(
@@ -461,7 +393,7 @@ def _render_document(
                 name=fragment.name,
                 html=fragment.html,
                 base_level=base_value + document_context.base_level,
-                metadata=document_context.metadata,
+                metadata=document_context.front_matter,
                 bibliography=binder_context.bibliography_map,
             )
         )

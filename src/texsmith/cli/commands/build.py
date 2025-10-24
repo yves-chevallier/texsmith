@@ -19,11 +19,12 @@ from ...conversion import (
     load_template_runtime,
 )
 from ...latex_log import stream_latexmk_output
-from ...markdown import DEFAULT_MARKDOWN_EXTENSIONS, resolve_markdown_extensions
+from ...markdown import resolve_markdown_extensions
 from ...templates import TemplateError
 from ..state import debug_enabled, emit_error, emit_warning, get_cli_state
 from ..utils import (
     classify_input_source,
+    prepare_document_context,
     parse_slot_option,
     resolve_option,
     split_document_inputs,
@@ -266,30 +267,51 @@ def build(  # noqa: PLR0913, PLR0915 - command requires many options
             emit_error(str(exc), exception=exc)
         raise typer.Exit(code=1) from exc
 
+    resolved_selector = resolve_option(selector)
+    resolved_full_document = resolve_option(full_document)
+    resolved_base_level = resolve_option(base_level)
+    resolved_heading_level = resolve_option(heading_level)
+    resolved_drop_title = resolve_option(drop_title)
+    resolved_numbered = resolve_option(numbered)
+    resolved_parser = resolve_option(parser)
+    resolved_disable_fallback = resolve_option(disable_fallback_converters)
+    resolved_copy_assets = resolve_option(copy_assets)
+    resolved_manifest = resolve_option(manifest)
+    resolved_language = resolve_option(language)
+    resolved_output_dir = resolve_option(output_dir)
+
+    try:
+        document_context = prepare_document_context(
+            document_path=document_path,
+            kind=input_format,
+            selector=resolved_selector,
+            full_document=resolved_full_document,
+            base_level=resolved_base_level,
+            heading_level=resolved_heading_level,
+            drop_title=resolved_drop_title,
+            numbered=resolved_numbered,
+            markdown_extensions=resolved_markdown_extensions,
+            callbacks=callbacks,
+            emit_error_callback=emit_error,
+        )
+    except ConversionError:
+        raise typer.Exit(code=1)
+
     try:
         conversion = convert_document(
-            input_path=document_path,
-            output_dir=resolve_option(output_dir),
-            selector=resolve_option(selector),
-            full_document=resolve_option(full_document),
-            base_level=resolve_option(base_level),
-            heading_level=resolve_option(heading_level),
-            drop_title=resolve_option(drop_title),
-            numbered=resolve_option(numbered),
-            parser=resolve_option(parser),
-            disable_fallback_converters=resolve_option(disable_fallback_converters),
-            copy_assets=resolve_option(copy_assets),
-            manifest=resolve_option(manifest),
+            document=document_context,
+            output_dir=resolved_output_dir,
+            parser=resolved_parser,
+            disable_fallback_converters=resolved_disable_fallback,
+            copy_assets=resolved_copy_assets,
+            manifest=resolved_manifest,
             template=template_name,
             persist_debug_html=debug_snapshot,
-            language=resolve_option(language),
+            language=resolved_language,
             slot_overrides=requested_slots,
-            markdown_extensions=resolved_markdown_extensions
-            or list(DEFAULT_MARKDOWN_EXTENSIONS),
             bibliography_files=bibliography_files,
             template_runtime=template_runtime,
             callbacks=callbacks,
-            input_format=input_format,
         )
     except ConversionError:
         raise typer.Exit(code=1)

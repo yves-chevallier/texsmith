@@ -17,7 +17,40 @@
 \BLOCK{ endif }
 \BLOCK{ if index_entries }\usepackage{imakeidx}\BLOCK{ endif }
 
-\setmonofont{Latin Modern Mono}
+\directlua{luaotfload.add_fallback
+  ("fontfallback",
+  {
+      "NotoColorEmoji:mode=harf;",
+      "NotoNaskhArabic:mode=harf;",
+      "NotoSerifHebrew:mode=harf;",
+      "NotoSerifDevanagari:mode=harf;",
+      "NotoSerifTamil:mode=harf;",
+      "NotoSerifTibetan:mode=harf;",
+      "NotoSerifCJKkr:mode=harf;",
+      "NotoSans:mode=harf;",
+      "NotoSansSymbols2-Regular:mode=harf;",
+      "NotoSansMath-Regular:mode=harf;",
+      "NotoMusic-Regular:mode=harf;",
+    }
+  )}
+
+\setmainfont{Latin Modern Roman}[
+  Ligatures=TeX,
+  SmallCapsFont = Latin Modern Roman Caps,
+  RawFeature = {fallback=fontfallback},
+]
+
+\setsansfont{Latin Modern Sans}[
+  RawFeature={fallback=fontfallback}
+]
+
+\setmonofont{Noto Sans Mono}[
+  Scale=0.9,
+  ItalicFont=lmmono10-italic.otf,
+  BoldItalicFont=lmmonolt10-boldoblique.otf,
+  RawFeature={fallback=fontfallback}
+]
+
 \usemintedstyle{bw}
 
 \newtcblisting[auto counter,number within=section,
@@ -252,6 +285,10 @@
 \BLOCK{ if index_entries }\makeindex\BLOCK{ endif }
 
 \maketitle
+
+\begin{abstract}
+\VAR{abstract}
+\end{abstract}
 
 \VAR{mainmatter}
 
