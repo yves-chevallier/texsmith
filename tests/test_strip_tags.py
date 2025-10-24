@@ -1,64 +1,62 @@
-import unittest
+import pytest
 
 from texsmith.config import BookConfig
 from texsmith.renderer import LaTeXRenderer
 
 
-class StripTagsTests(unittest.TestCase):
-    def setUp(self) -> None:
-        self.renderer = LaTeXRenderer(config=BookConfig(), parser="html.parser")
+@pytest.fixture
+def renderer() -> LaTeXRenderer:
+    return LaTeXRenderer(config=BookConfig(), parser="html.parser")
 
-    def test_strip_default_html_structure(self) -> None:
-        html = """
-        <html>
-            <head>
-                <title>Should disappear</title>
-            </head>
-            <body>
-                <h1>Main</h1>
-                <p>Content</p>
-            </body>
-        </html>
-        """
-        latex = self.renderer.render(
-            html,
-            runtime={
-                "base_level": 1,
-                "strip_tags": {
-                    "html": "unwrap",
-                    "body": "unwrap",
-                    "head": {"mode": "decompose"},
-                },
-            },
-        )
-        self.assertNotIn("<head", latex)
-        self.assertNotIn("<body", latex)
-        self.assertNotIn("<html", latex)
-        self.assertIn("\\section{Main}", latex)
-        self.assertIn("Content", latex)
 
-    def test_strip_custom_class_rule(self) -> None:
-        html = """
+def test_strip_default_html_structure(renderer: LaTeXRenderer) -> None:
+    html = """
+    <html>
+        <head>
+            <title>Should disappear</title>
+        </head>
         <body>
-            <div class="keep">Keep me</div>
-            <div class="remove-me"><span>Drop me</span></div>
-            <h1>Heading</h1>
+            <h1>Main</h1>
+            <p>Content</p>
         </body>
-        """
-        latex = self.renderer.render(
-            html,
-            runtime={
-                "base_level": 1,
-                "strip_tags": {
-                    "body": "unwrap",
-                    "div": {"mode": "extract", "classes": ["remove-me"]},
-                },
+    </html>
+    """
+    latex = renderer.render(
+        html,
+        runtime={
+            "base_level": 1,
+            "strip_tags": {
+                "html": "unwrap",
+                "body": "unwrap",
+                "head": {"mode": "decompose"},
             },
-        )
-        self.assertIn("Keep me", latex)
-        self.assertNotIn("Drop me", latex)
-        self.assertIn("\\section{Heading}", latex)
+        },
+    )
+    assert "<head" not in latex
+    assert "<body" not in latex
+    assert "<html" not in latex
+    assert "\\section{Main}" in latex
+    assert "Content" in latex
 
 
-if __name__ == "__main__":
-    unittest.main()
+def test_strip_custom_class_rule(renderer: LaTeXRenderer) -> None:
+    html = """
+    <body>
+        <div class="keep">Keep me</div>
+        <div class="remove-me"><span>Drop me</span></div>
+        <h1>Heading</h1>
+    </body>
+    """
+    latex = renderer.render(
+        html,
+        runtime={
+            "base_level": 1,
+            "strip_tags": {
+                "body": "unwrap",
+                "div": {"mode": "extract", "classes": ["remove-me"]},
+            },
+        },
+    )
+    assert "Keep me" in latex
+    assert "Drop me" not in latex
+    assert "\\section{Heading}" in latex

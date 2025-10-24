@@ -49,7 +49,6 @@ def _wrap_latex_output(payload: str) -> str:
 
 def escape_latex_chars(text: str) -> str:
     """Escape LaTeX special characters leveraging pylatexenc."""
-
     if not text:
         return text
     parts: list[str] = []
@@ -57,9 +56,7 @@ def escape_latex_chars(text: str) -> str:
 
     def _encode_chunk(chunk: str) -> str:
         escaped = "".join(_BASIC_LATEX_ESCAPE_MAP.get(char, char) for char in chunk)
-        encoded = unicode_to_latex(
-            escaped, non_ascii_only=True, unknown_char_warning=False
-        )
+        encoded = unicode_to_latex(escaped, non_ascii_only=True, unknown_char_warning=False)
         return _wrap_latex_output(encoded)
 
     def _should_skip_encoding(char: str) -> bool:
@@ -88,13 +85,11 @@ def escape_latex_chars(text: str) -> str:
 
 def points_to_mm(points: float) -> float:
     """Convert points to millimetres."""
-
     return points * 25.4 / 72
 
 
 def resolve_asset_path(file_path: Path, path: str | Path) -> Path | None:
     """Resolve an asset path relative to a Markdown source file."""
-
     file_path = Path(file_path)
     if file_path.name == "index.md":
         file_path = file_path.parent
@@ -104,7 +99,6 @@ def resolve_asset_path(file_path: Path, path: str | Path) -> Path | None:
 
 def is_valid_url(url: str) -> bool:
     """Check whether a URL is valid."""
-
     try:
         result = urlparse(url)
         return bool(result.scheme and result.netloc)

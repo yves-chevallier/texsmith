@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
-from collections.abc import Iterable
+from collections.abc import Iterable, Mapping
 from pathlib import Path
-from typing import Any, Mapping
+from typing import Any
 
 from texsmith.templates import TemplateError, WrappableTemplate
 from texsmith.utils import escape_latex_chars
@@ -34,9 +34,7 @@ class Template(WrappableTemplate):
         try:
             super().__init__(_PACKAGE_ROOT)
         except TemplateError as exc:
-            raise TemplateError(
-                f"Failed to initialise SN article template: {exc}"
-            ) from exc
+            raise TemplateError(f"Failed to initialise SN article template: {exc}") from exc
 
     def prepare_context(
         self,
@@ -49,19 +47,13 @@ class Template(WrappableTemplate):
         context.setdefault("author_entries", [])
         context.setdefault("affiliation_entries", [])
 
-        class_options = list(
-            self._normalise_class_options(context.get("class_options"))
-        )
+        class_options = list(self._normalise_class_options(context.get("class_options")))
 
-        bibliography_style = self._normalise_reference_style(
-            context.get("bibliography_style")
-        )
+        bibliography_style = self._normalise_reference_style(context.get("bibliography_style"))
         if bibliography_style and bibliography_style not in class_options:
             class_options.append(bibliography_style)
 
-        context["class_options"] = ",".join(
-            option for option in class_options if option
-        )
+        context["class_options"] = ",".join(option for option in class_options if option)
         context["bibliography_style"] = bibliography_style
 
         bibliography = self._coerce_string(context.get("bibliography"))
@@ -74,9 +66,7 @@ class Template(WrappableTemplate):
         if not isinstance(raw_meta, Mapping):
             return
 
-        nested_meta = (
-            raw_meta.get("meta") if isinstance(raw_meta.get("meta"), Mapping) else None
-        )
+        nested_meta = raw_meta.get("meta") if isinstance(raw_meta.get("meta"), Mapping) else None
         meta_payload: Mapping[str, Any] = nested_meta or raw_meta
 
         title = self._coerce_string(meta_payload.get("title"))

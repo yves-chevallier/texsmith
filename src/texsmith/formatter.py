@@ -18,7 +18,6 @@ TEMPLATE_DIR = Path(__file__).parent / "templates"
 
 def optimize_list(numbers: Iterable[int]) -> list[str]:
     """Merge consecutive integers into human-readable ranges."""
-
     values = sorted(numbers)
     if not values:
         return []
@@ -56,21 +55,17 @@ class LaTeXFormatter:
         template_paths: list[Path] = []
         for ext in (".tex", ".cls"):
             template_paths.extend(
-                Path(path)
-                for path in glob.glob(f"{template_dir}/**/*{ext}", recursive=True)
+                Path(path) for path in glob.glob(f"{template_dir}/**/*{ext}", recursive=True)
             )
 
         templates = [path.relative_to(template_dir) for path in template_paths]
         self.templates: dict[str, Template] = {
-            str(filename.with_suffix("")).replace("/", "_"): self.env.get_template(
-                str(filename)
-            )
+            str(filename.with_suffix("")).replace("/", "_"): self.env.get_template(str(filename))
             for filename in templates
         }
 
     def __getattr__(self, method: str) -> Callable[..., str]:
         """Proxy calls to templates or custom handlers."""
-
         mangled = f"handle_{method}"
         try:
             handler = object.__getattribute__(self, mangled)
@@ -85,12 +80,8 @@ class LaTeXFormatter:
 
         def render_template(*args: Any, **kwargs: Any) -> str:
             """Render the template with optional positional shorthand."""
-
             if len(args) > 1:
-                msg = (
-                    "Expected at most 1 argument, "
-                    f"got {len(args)}, use keyword arguments instead"
-                )
+                msg = f"Expected at most 1 argument, got {len(args)}, use keyword arguments instead"
                 raise ValueError(msg)
             if args:
                 kwargs["text"] = args[0]
@@ -111,7 +102,6 @@ class LaTeXFormatter:
         **_: Any,
     ) -> str:
         """Render code blocks with optional line numbers and highlights."""
-
         highlight = list(highlight or [])
         return self.templates["codeblock"].render(
             code=code,
@@ -123,13 +113,11 @@ class LaTeXFormatter:
 
     def url(self, text: str, url: str) -> str:
         """Render a URL, escaping special LaTeX characters."""
-
         safe_url = escape_latex_chars(requote_url(url))
         return self.templates["url"].render(text=text, url=safe_url)
 
     def svg(self, svg: str | Path) -> str:
         """Render an SVG image by converting it to PDF first."""
-
         from .transformers import svg2pdf
 
         pdfpath = svg2pdf(svg, self.output_path)  # type: ignore[attr-defined]
@@ -149,7 +137,6 @@ class LaTeXFormatter:
 
     def override_template(self, name: str, source: str | Path) -> None:
         """Override a built-in template snippet using an external payload."""
-
         if isinstance(source, Path):
             template_source = source.read_text(encoding="utf-8")
             template_name = source.as_posix()

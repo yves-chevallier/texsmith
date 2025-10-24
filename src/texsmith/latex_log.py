@@ -110,7 +110,6 @@ class LatexLogParser:
 
     def process_line(self, line: str) -> list[LatexMessage]:
         """Process a log line and return messages that have just completed."""
-
         completed: list[LatexMessage] = []
         segments = self._consume_structure(line)
         if not segments:
@@ -160,7 +159,6 @@ class LatexLogParser:
 
     def finalize(self) -> list[LatexMessage]:
         """Flush any pending message."""
-
         return self._finalize_current()
 
     def _finalize_current(self) -> list[LatexMessage]:
@@ -183,11 +181,7 @@ class LatexLogParser:
         indent_for_segment = depth
 
         def flush() -> None:
-            nonlocal \
-                current_chars, \
-                message_started, \
-                message_paren_balance, \
-                indent_for_segment
+            nonlocal current_chars, message_started, message_paren_balance, indent_for_segment
             if current_chars:
                 payload = "".join(current_chars).strip()
                 if payload:
@@ -212,9 +206,7 @@ class LatexLogParser:
             if ch == "(":
                 if message_started:
                     next_ch = peek_next_nonspace(idx + 1)
-                    if message_paren_balance > 0 or (
-                        next_ch and next_ch not in {"/", ".", "\\"}
-                    ):
+                    if message_paren_balance > 0 or (next_ch and next_ch not in {"/", ".", "\\"}):
                         message_paren_balance += 1
                         current_chars.append(ch)
                     else:
@@ -271,9 +263,7 @@ class LatexLogParser:
             return False
         if stripped.startswith(("/", "./", "../")):
             return False
-        if stripped.startswith(
-            ("Package ", "Class ", "LaTeX ", "Document ", "Library ", "File ")
-        ):
+        if stripped.startswith(("Package ", "Class ", "LaTeX ", "Document ", "Library ", "File ")):
             return False
         if stripped.startswith(("! ", "*")):
             return False
@@ -318,9 +308,7 @@ class LatexLogParser:
 
         joiner = ""
         if summary and not summary.endswith((" ", "/", "-", "'", "(", "[")):
-            if text.startswith(tuple(".,;:!?)]")) or text[0] == "'":
-                joiner = ""
-            elif summary.endswith(tuple("0123456789")) and text[0].isdigit():
+            if text.startswith(tuple(".,;:!?)]")) or text[0] == "'" or (summary.endswith(tuple("0123456789")) and text[0].isdigit()):
                 joiner = ""
             else:
                 joiner = " "
@@ -331,9 +319,7 @@ class LatexLogParser:
     def _looks_like_soft_wrap(summary: str, fragment: str) -> bool:
         if not summary:
             return False
-        if fragment.startswith(
-            ("Run number", "Rule ", "Package", "Class", "LaTeX ", "Document ")
-        ):
+        if fragment.startswith(("Run number", "Rule ", "Package", "Class", "LaTeX ", "Document ")):
             return False
         if fragment.startswith(("(", "[", "---")):
             return False
@@ -343,9 +329,7 @@ class LatexLogParser:
             return False
         if fragment.startswith("! "):
             return False
-        if ":" in fragment and not fragment.startswith(
-            ("T:", "OT:", "pt:", "mm:", "in:")
-        ):
+        if ":" in fragment and not fragment.startswith(("T:", "OT:", "pt:", "mm:", "in:")):
             return False
 
         stripped = fragment.strip()
@@ -375,11 +359,7 @@ class LatexLogParser:
             return True
         if stripped.startswith("T:") and len(summary) >= 2 and summary[-2] == "/":
             return True
-        if (
-            stripped.startswith(("OT:", "LT:"))
-            and len(summary) >= 2
-            and summary[-2] == "/"
-        ):
+        if stripped.startswith(("OT:", "LT:")) and len(summary) >= 2 and summary[-2] == "/":
             return True
         if len(stripped) <= 6 and stripped.isalpha():
             return True
@@ -454,15 +434,9 @@ class LatexLogRenderer:
 
     def summarize(self) -> None:
         self._emit_pending(None)
-        warnings = sum(
-            1 for msg in self.messages if msg.severity is LatexMessageSeverity.WARNING
-        )
-        errors = sum(
-            1 for msg in self.messages if msg.severity is LatexMessageSeverity.ERROR
-        )
-        info = sum(
-            1 for msg in self.messages if msg.severity is LatexMessageSeverity.INFO
-        )
+        warnings = sum(1 for msg in self.messages if msg.severity is LatexMessageSeverity.WARNING)
+        errors = sum(1 for msg in self.messages if msg.severity is LatexMessageSeverity.ERROR)
+        info = sum(1 for msg in self.messages if msg.severity is LatexMessageSeverity.INFO)
         summary_parts = [
             f"errors: {errors}",
             f"warnings: {warnings}",
@@ -604,7 +578,6 @@ def stream_latexmk_output(
     console: Console,
 ) -> LatexStreamResult:
     """Execute latexmk and render output incrementally."""
-
     parser = LatexLogParser()
     renderer = LatexLogRenderer(console)
 

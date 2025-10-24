@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
-from collections.abc import Iterable
+from collections.abc import Iterable, Mapping
 from pathlib import Path
-from typing import Any, Mapping
+from typing import Any
 
 from texsmith.templates import TemplateError, WrappableTemplate
 from texsmith.utils import escape_latex_chars
@@ -41,9 +41,7 @@ class Template(WrappableTemplate):
         try:
             super().__init__(_PACKAGE_ROOT)
         except TemplateError as exc:
-            raise TemplateError(
-                f"Failed to initialise Elsevier CAS template: {exc}"
-            ) from exc
+            raise TemplateError(f"Failed to initialise Elsevier CAS template: {exc}") from exc
 
     def prepare_context(
         self,
@@ -85,9 +83,7 @@ class Template(WrappableTemplate):
 
         author_entries = context.get("author_entries") or []
         if isinstance(author_entries, list):
-            short_names = [
-                entry.get("short_name") or entry.get("name") for entry in author_entries
-            ]
+            short_names = [entry.get("short_name") or entry.get("name") for entry in author_entries]
             default_short_authors = ", ".join(filter(None, short_names))
         else:
             default_short_authors = ""
@@ -214,8 +210,7 @@ class Template(WrappableTemplate):
 
         allowed = ", ".join(sorted({"single", "double"}))
         raise TemplateError(
-            f"Invalid column mode '{value}' for Elsevier CAS template. "
-            f"Allowed values: {allowed}."
+            f"Invalid column mode '{value}' for Elsevier CAS template. Allowed values: {allowed}."
         )
 
     def _normalise_highlights(self, payload: Any) -> list[str]:
@@ -232,9 +227,7 @@ class Template(WrappableTemplate):
             ]
         elif isinstance(payload, Iterable):
             candidates = [
-                self._coerce_string(item)
-                for item in payload
-                if self._coerce_string(item)
+                self._coerce_string(item) for item in payload if self._coerce_string(item)
             ]
         else:
             candidates = []
@@ -363,9 +356,7 @@ class Template(WrappableTemplate):
                 item.get("url") or item.get("homepage") or item.get("website")
             )
             orcid_value = self._coerce_string(item.get("orcid"))
-            credit_value = self._coerce_string(
-                item.get("credit") or item.get("contribution")
-            )
+            credit_value = self._coerce_string(item.get("credit") or item.get("contribution"))
 
             corresponding_flag = item.get("corresponding")
             if corresponding_flag is None:
@@ -377,17 +368,13 @@ class Template(WrappableTemplate):
                 or item.get("correspondence_note")
             )
             if corresponding and not corresponding_note and email_value:
-                corresponding_note = (
-                    f"Corresponding author: {escape_latex_chars(email_value)}"
-                )
+                corresponding_note = f"Corresponding author: {escape_latex_chars(email_value)}"
 
             footnote_text = self._coerce_string(
                 item.get("footnote") or item.get("note") or item.get("author_note")
             )
 
-            short_name_value = self._coerce_string(
-                item.get("short_name") or item.get("initials")
-            )
+            short_name_value = self._coerce_string(item.get("short_name") or item.get("initials"))
 
             entry = {
                 "name": escaped_name,
@@ -415,17 +402,13 @@ class Template(WrappableTemplate):
             if footnote_text:
                 mark = str(footnote_counter)
                 entry["footnote_mark"] = mark
-                footnote_entries.append(
-                    {"mark": mark, "text": escape_latex_chars(footnote_text)}
-                )
+                footnote_entries.append({"mark": mark, "text": escape_latex_chars(footnote_text)})
                 footnote_counter += 1
 
             author_entries.append(entry)
 
         affiliation_entries = [
-            affiliation_registry[key]
-            for key in affiliation_order
-            if key in affiliation_registry
+            affiliation_registry[key] for key in affiliation_order if key in affiliation_registry
         ]
 
         return (
@@ -449,9 +432,7 @@ class Template(WrappableTemplate):
                     continue
                 fields[normalised_key] = escape_latex_chars(coerced)
             if not fields:
-                text_value = self._coerce_string(
-                    payload.get("text") or payload.get("value")
-                )
+                text_value = self._coerce_string(payload.get("text") or payload.get("value"))
                 if text_value:
                     escaped = escape_latex_chars(text_value)
                     return (escaped, {"text": escaped})

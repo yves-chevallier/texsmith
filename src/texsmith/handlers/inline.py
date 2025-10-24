@@ -91,9 +91,7 @@ _SUPERSCRIPT_MAP = {
     "ᵂ": "W",
 }
 
-_SUPERSCRIPT_PATTERN = re.compile(
-    f"([{''.join(re.escape(char) for char in _SUPERSCRIPT_MAP)}]+)"
-)
+_SUPERSCRIPT_PATTERN = re.compile(f"([{''.join(re.escape(char) for char in _SUPERSCRIPT_MAP)}]+)")
 
 _SUBSCRIPT_MAP = {
     "₀": "0",
@@ -135,9 +133,7 @@ _SUBSCRIPT_MAP = {
     "ᵪ": r"\chi",
 }
 
-_SUBSCRIPT_PATTERN = re.compile(
-    f"([{''.join(re.escape(char) for char in _SUBSCRIPT_MAP)}]+)"
-)
+_SUBSCRIPT_PATTERN = re.compile(f"([{''.join(re.escape(char) for char in _SUBSCRIPT_MAP)}]+)")
 
 
 def _replace_unicode_scripts(
@@ -156,18 +152,12 @@ def _replace_unicode_scripts(
 
 def _replace_unicode_superscripts(text: str) -> str:
     """Convert sequences of Unicode superscript characters to LaTeX text macros."""
-
-    return _replace_unicode_scripts(
-        text, _SUPERSCRIPT_PATTERN, _SUPERSCRIPT_MAP, "textsuperscript"
-    )
+    return _replace_unicode_scripts(text, _SUPERSCRIPT_PATTERN, _SUPERSCRIPT_MAP, "textsuperscript")
 
 
 def _replace_unicode_subscripts(text: str) -> str:
     """Convert sequences of Unicode subscript characters to LaTeX text macros."""
-
-    return _replace_unicode_scripts(
-        text, _SUBSCRIPT_PATTERN, _SUBSCRIPT_MAP, "textsubscript"
-    )
+    return _replace_unicode_scripts(text, _SUBSCRIPT_PATTERN, _SUBSCRIPT_MAP, "textsubscript")
 
 
 def _has_ancestor(node: NavigableString, *names: str) -> bool:
@@ -180,8 +170,7 @@ def _has_ancestor(node: NavigableString, *names: str) -> bool:
 
 
 def _allow_hyphenation(text: str) -> str:
-    """
-    Allow hyphenation in long words.
+    """Allow hyphenation in long words.
 
     TODO: This function is bad. Instead we should look into a dictionary
     based hyphenation solution.
@@ -203,7 +192,6 @@ def _prepare_plain_text(text: str) -> str:
 @renders(phase=RenderPhase.PRE, name="escape_plain_text", auto_mark=False)
 def escape_plain_text(root: Tag, context: RenderContext) -> None:
     """Escape LaTeX characters on plain text nodes outside code blocks."""
-
     for node in list(root.find_all(string=True)):
         if getattr(node, "processed", False):
             continue
@@ -245,7 +233,6 @@ def escape_plain_text(root: Tag, context: RenderContext) -> None:
 @renders("a", phase=RenderPhase.PRE, priority=80, name="unicode_links", nestable=False)
 def render_unicode_link(element: Tag, context: RenderContext) -> None:
     """Render Unicode helper links."""
-
     classes = element.get("class") or []
     if "ycr-unicode" not in classes:
         return
@@ -262,7 +249,6 @@ def render_unicode_link(element: Tag, context: RenderContext) -> None:
 @renders("a", phase=RenderPhase.PRE, priority=70, name="regex_links", nestable=False)
 def render_regex_link(element: Tag, context: RenderContext) -> None:
     """Render custom regex helper links."""
-
     classes = element.get("class") or []
     if "ycr-regex" not in classes:
         return
@@ -283,16 +269,13 @@ def render_regex_link(element: Tag, context: RenderContext) -> None:
 def _extract_code_text(element: Tag) -> str:
     classes = element.get("class") or []
     if any(cls.startswith("language-") for cls in classes) or "highlight" in classes:
-        return "".join(
-            child.get_text(strip=False) for child in element.find_all("span")
-        )
+        return "".join(child.get_text(strip=False) for child in element.find_all("span"))
     return element.get_text(strip=False)
 
 
 @renders("code", phase=RenderPhase.PRE, priority=50, name="inline_code", nestable=False)
 def render_inline_code(element: Tag, context: RenderContext) -> None:
     """Render inline code elements using the formatter."""
-
     if element.find_parent("pre"):
         return
 
@@ -311,7 +294,6 @@ def render_inline_code(element: Tag, context: RenderContext) -> None:
 @renders("span", phase=RenderPhase.PRE, priority=60, name="inline_math", nestable=False)
 def render_math_inline(element: Tag, context: RenderContext) -> None:
     """Preserve inline math payloads untouched."""
-
     classes = element.get("class") or []
     if "arithmatex" not in classes:
         return
@@ -324,7 +306,6 @@ def render_math_inline(element: Tag, context: RenderContext) -> None:
 @renders("div", phase=RenderPhase.PRE, priority=70, name="math_block", nestable=False)
 def render_math_block(element: Tag, context: RenderContext) -> None:
     """Preserve block math payloads."""
-
     classes = element.get("class") or []
     if "arithmatex" not in classes:
         return
@@ -334,12 +315,9 @@ def render_math_block(element: Tag, context: RenderContext) -> None:
     element.replace_with(node)
 
 
-@renders(
-    "script", phase=RenderPhase.PRE, priority=65, name="math_script", nestable=False
-)
+@renders("script", phase=RenderPhase.PRE, priority=65, name="math_script", nestable=False)
 def render_math_script(element: Tag, context: RenderContext) -> None:
     """Preserve math payloads generated via script tags (e.g. mdx_math)."""
-
     type_attr = element.get("type")
     if not isinstance(type_attr, str):
         return
@@ -363,12 +341,9 @@ def render_math_script(element: Tag, context: RenderContext) -> None:
     element.replace_with(node)
 
 
-@renders(
-    "abbr", phase=RenderPhase.INLINE, priority=30, name="abbreviation", nestable=False
-)
+@renders("abbr", phase=RenderPhase.INLINE, priority=30, name="abbreviation", nestable=False)
 def render_abbreviation(element: Tag, context: RenderContext) -> None:
     """Register and render abbreviations."""
-
     title_attr = element.get("title")
     description = title_attr.strip() if isinstance(title_attr, str) else ""
     term = element.get_text(strip=True)
@@ -393,12 +368,9 @@ def render_abbreviation(element: Tag, context: RenderContext) -> None:
     element.replace_with(node)
 
 
-@renders(
-    "span", phase=RenderPhase.INLINE, priority=40, name="keystrokes", nestable=False
-)
+@renders("span", phase=RenderPhase.INLINE, priority=40, name="keystrokes", nestable=False)
 def render_keystrokes(element: Tag, context: RenderContext) -> None:
     """Render keyboard shortcut markup."""
-
     classes = element.get("class") or []
     if "keys" not in classes:
         return
@@ -406,9 +378,7 @@ def render_keystrokes(element: Tag, context: RenderContext) -> None:
     keys: list[str] = []
     for key in element.find_all("kbd"):
         key_classes = key.get("class") or []
-        matched: Iterable[str] = (
-            cls[4:] for cls in key_classes if cls.startswith("key-")
-        )
+        matched: Iterable[str] = (cls[4:] for cls in key_classes if cls.startswith("key-"))
         value = next(matched, None)
         if value:
             keys.append(value)
@@ -423,12 +393,9 @@ def render_keystrokes(element: Tag, context: RenderContext) -> None:
     element.replace_with(node)
 
 
-@renders(
-    "img", phase=RenderPhase.INLINE, priority=20, name="twemoji_images", nestable=False
-)
+@renders("img", phase=RenderPhase.INLINE, priority=20, name="twemoji_images", nestable=False)
 def render_twemoji_image(element: Tag, context: RenderContext) -> None:
     """Render Twitter emoji images as inline icons."""
-
     classes = element.get("class") or []
     if not {"twemoji", "emojione"}.intersection(classes):
         return
@@ -465,7 +432,6 @@ def render_twemoji_image(element: Tag, context: RenderContext) -> None:
 )
 def render_twemoji_span(element: Tag, context: RenderContext) -> None:
     """Render inline SVG emoji payloads."""
-
     classes = element.get("class") or []
     if "twemoji" not in classes:
         return
@@ -505,7 +471,6 @@ def render_twemoji_span(element: Tag, context: RenderContext) -> None:
 )
 def render_index_entry(element: Tag, context: RenderContext) -> None:
     """Render inline index term annotations."""
-
     tag_name = element.get("data-tag-name")
     if not tag_name:
         return
@@ -633,9 +598,7 @@ def render_critic_substitution(element: Tag, context: RenderContext) -> None:
     deleted = element.find("del")
     inserted = element.find("ins")
     if deleted is None or inserted is None:
-        raise InvalidNodeError(
-            "Critic substitution requires both <del> and <ins> children"
-        )
+        raise InvalidNodeError("Critic substitution requires both <del> and <ins> children")
 
     original = deleted.get_text(strip=False)
     replacement = inserted.get_text(strip=False)

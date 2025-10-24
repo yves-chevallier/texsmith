@@ -1,7 +1,16 @@
 from pathlib import Path
 import textwrap
 
-from texsmith.bibliography import BibliographyCollection
+import pytest
+import requests
+
+from texsmith.bibliography import (
+    BibliographyCollection,
+    DoiBibliographyFetcher,
+    DoiLookupError,
+    bibliography_data_from_string,
+)
+from texsmith.conversion import extract_front_matter_bibliography
 
 
 def _write(
@@ -112,3 +121,83 @@ def test_bibliography_collection_reports_empty_file(tmp_path: Path) -> None:
     assert stats == ((empty.resolve(), 0),)
     assert not collection.list_references()
     assert any("No references found" in issue.message for issue in collection.issues)
+
+
+def test_bibliography_collection_load_data_merges_inline_entries(tmp_path: Path) -> None:
+    collection = BibliographyCollection()
+    payload = """
+    @article{ignored,
+        title = {Inline Source},
+        author = {Inline, Donna},
+    }
+    """
+    data = bibliography_data_from_string(payload, "frontref")
+    collection.load_data(data, source="frontmatter-inline.bib")
+
+    entry = collection.find("frontref")
+    assert entry is not None
+    assert entry["fields"]["title"] == "Inline Source"
+    stats = collection.file_stats
+    assert stats == ((Path("frontmatter-inline.bib"), 1),)
+
+
+def test_doi_bibliography_fetcher_uses_fallbacks() -> None:
+    class FakeResponse:
+        def __init__(self, status_code: int, text: str) -> None:
+            self.status_code = status_code
+            self.text = text
+
+    class FakeSession:
+        def __init__(self) -> None:
+            self.calls: list[str] = []
+
+        def get(self, url: str, headers: dict[str, str], timeout: float) -> FakeResponse:
+            self.calls.append(url)
+            if url.startswith("https://doi.org/"):
+                return FakeResponse(404, "")
+            if url.startswith("https://dx.doi.org/"):
+                raise requests.RequestException("temporary failure")
+            return FakeResponse(
+                200,
+                """
+                @article{demo,
+                    title = {Demo Reference},
+                }
+                """,
+            )
+
+    fetcher = DoiBibliographyFetcher(session=FakeSession(), timeout=0.1)
+    payload = fetcher.fetch("https://doi.org/10.1000/demo")
+
+    assert "Demo Reference" in payload
+    assert fetcher._session.calls[0].startswith("https://doi.org/10.1000/demo")
+    assert fetcher._session.calls[1].startswith("https://dx.doi.org/10.1000/demo")
+    assert fetcher._session.calls[2].startswith(
+        "https://api.crossref.org/works/10.1000/demo"
+    )
+
+    with pytest.raises(DoiLookupError):
+        fetcher.fetch("")
+
+
+def test_extract_front_matter_bibliography_merges_sections() -> None:
+    front_matter = {
+        "meta": {
+            "bibliography": {
+                "alpha": "https://doi.org/10.1/foo",
+                "ignore": 123,
+            },
+        },
+        "bibliography": {
+            "beta": {"doi": "10.2/bar"},
+            "alpha": "doi:10.3/baz",
+            "empty": "",
+        },
+    }
+
+    result = extract_front_matter_bibliography(front_matter)
+
+    assert result == {
+        "alpha": "doi:10.3/baz",
+        "beta": "10.2/bar",
+    }

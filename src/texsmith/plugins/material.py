@@ -45,11 +45,7 @@ def _render_exercise(
         correct_value = gap.get("answer") or gap.get("value") or ""
         size_hint = gap.get("size")
         try:
-            width = (
-                max(int(size_hint), 3)
-                if size_hint is not None
-                else max(len(correct_value), 3)
-            )
+            width = max(int(size_hint), 3) if size_hint is not None else max(len(correct_value), 3)
         except ValueError:
             width = max(len(correct_value), 3)
         gap.replace_with(NavigableString(f"\\rule{{{width}ex}}{{0.4pt}}"))
@@ -106,9 +102,7 @@ def render_exercise_div(element: Tag, context: RenderContext) -> None:
     if "admonition" not in classes or "exercise" not in classes:
         return
 
-    title = base_admonitions._extract_title(
-        element.find("p", class_="admonition-title")
-    )
+    title = base_admonitions._extract_title(element.find("p", class_="admonition-title"))
     _render_exercise(element, context, classes=classes, title=title)
 
 
@@ -161,7 +155,6 @@ def render_epigraph(element: Tag, context: RenderContext) -> None:
 
 def register(renderer) -> None:
     """Register Material-specific exercise and epigraph handlers."""
-
     renderer.register(render_exercise_div)
     renderer.register(render_exercise_details)
     renderer.register(render_epigraph)
@@ -169,7 +162,7 @@ def register(renderer) -> None:
 
 __all__ = [
     "register",
-    "render_exercise_div",
-    "render_exercise_details",
     "render_epigraph",
+    "render_exercise_details",
+    "render_exercise_div",
 ]

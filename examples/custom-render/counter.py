@@ -12,7 +12,6 @@ COUNTER_KEY = "data-counter"
 @renders("span", phase=RenderPhase.INLINE, name="inline_data_counter")
 def render_data_counter(element, context) -> None:
     """Replace ``<span class=\"data-counter\">`` nodes with an incrementing marker."""
-
     classes = element.get("class") or []
     if isinstance(classes, str):
         tokens = {classes}
@@ -27,7 +26,6 @@ def render_data_counter(element, context) -> None:
 
 def build_renderer() -> LaTeXRenderer:
     """Instantiate the renderer with the counter extension registered."""
-
     renderer = LaTeXRenderer()
     renderer.register(render_data_counter)
     return renderer

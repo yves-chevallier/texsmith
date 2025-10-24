@@ -42,10 +42,7 @@ def _extract_language(element: Tag) -> str:
 
 
 def _is_ascii_art(payload: str) -> bool:
-    return any(
-        char in payload
-        for char in ("┌", "┬", "─", "┐", "│", "├", "┼", "┤", "└", "┴", "┘")
-    )
+    return any(char in payload for char in ("┌", "┬", "─", "┐", "│", "├", "┼", "┤", "└", "┴", "┘"))
 
 
 _LANGUAGE_TOKEN = re.compile(r"^[A-Za-z0-9_+\-#.]+$")
@@ -94,12 +91,9 @@ def _is_only_meaningful_child(node: Tag) -> bool:
     return True
 
 
-@renders(
-    "pre", phase=RenderPhase.PRE, priority=45, name="preformatted_code", nestable=False
-)
+@renders("pre", phase=RenderPhase.PRE, priority=45, name="preformatted_code", nestable=False)
 def render_preformatted_code(element: Tag, context: RenderContext) -> None:
     """Render plain <pre> blocks that wrap a <code> element."""
-
     classes = element.get("class") or []
     if "mermaid" in classes:
         return
@@ -116,16 +110,12 @@ def render_preformatted_code(element: Tag, context: RenderContext) -> None:
     if any(cls in {"language-mermaid", "mermaid"} for cls in code_classes):
         return
 
-    if code_element is not None and _looks_like_mermaid(
-        code_element.get_text(strip=False)
-    ):
+    if code_element is not None and _looks_like_mermaid(code_element.get_text(strip=False)):
         return
 
     language = _extract_language(code_element) if code_element else "text"
     code_text = (
-        code_element.get_text(strip=False)
-        if code_element
-        else element.get_text(strip=False)
+        code_element.get_text(strip=False) if code_element else element.get_text(strip=False)
     )
 
     if not code_text.strip():
@@ -153,7 +143,6 @@ def render_preformatted_code(element: Tag, context: RenderContext) -> None:
 @renders("div", phase=RenderPhase.PRE, priority=40, name="code_blocks", nestable=False)
 def render_code_blocks(element: Tag, context: RenderContext) -> None:
     """Render MkDocs-highlighted code blocks."""
-
     classes = element.get("class") or []
     if "highlight" not in classes:
         return
@@ -180,9 +169,7 @@ def render_code_blocks(element: Tag, context: RenderContext) -> None:
     listing: list[str] = []
     highlight: list[int] = []
 
-    spans = code_element.find_all(
-        "span", id=lambda value: bool(value and value.startswith("__"))
-    )
+    spans = code_element.find_all("span", id=lambda value: bool(value and value.startswith("__")))
     if spans:
         for index, span in enumerate(spans, start=1):
             highlight_span = span.find("span", class_="hll")
@@ -222,7 +209,6 @@ def render_code_blocks(element: Tag, context: RenderContext) -> None:
 )
 def render_standalone_code_blocks(element: Tag, context: RenderContext) -> None:
     """Render <code> elements that include multiline content as block code."""
-
     if element.find_parent("pre"):
         return
 
@@ -264,11 +250,7 @@ def render_standalone_code_blocks(element: Tag, context: RenderContext) -> None:
     node = NavigableString(latex)
     node.processed = True
 
-    if (
-        element.parent
-        and element.parent.name == "p"
-        and _is_only_meaningful_child(element)
-    ):
+    if element.parent and element.parent.name == "p" and _is_only_meaningful_child(element):
         element.parent.replace_with(node)
         context.mark_processed(element.parent)
     else:

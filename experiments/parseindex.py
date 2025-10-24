@@ -1,8 +1,6 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 
-"""
-index_to_latex_lines.py — Convertit un index.json (du script 1) en lignes style index LaTeX.
+"""index_to_latex_lines.py — Convertit un index.json (du script 1) en lignes style index LaTeX.
 
 Sortie (texte par défaut) :
   terme_dans_le_texte , terme_dans_l'index , p. 2, 5, 7 ; fig. 1.2, 3
@@ -31,9 +29,7 @@ FIG_RE = re.compile(r"(?i)\bfig(?:ure)?\b[ \t]*[:#\-\u00A0]*\s*([0-9][\d\.\-]*)?
 
 
 def deaccent(s: str) -> str:
-    return "".join(
-        c for c in unicodedata.normalize("NFD", s) if unicodedata.category(c) != "Mn"
-    )
+    return "".join(c for c in unicodedata.normalize("NFD", s) if unicodedata.category(c) != "Mn")
 
 
 def normalize_term(s: str) -> str:
@@ -43,8 +39,7 @@ def normalize_term(s: str) -> str:
 
 
 def detect_fig_labels(heading: str, snippet: str, anchor: str):
-    """
-    Renvoie un set de labels de figure détectés (ex: {"1.2"} ou {"fig@installation"}).
+    """Renvoie un set de labels de figure détectés (ex: {"1.2"} ou {"fig@installation"}).
     """
     labels = set()
     for txt in (heading or "", snippet or ""):
@@ -71,7 +66,7 @@ def compute_page(pos: int, cpp: int) -> int:
 def load_entries(path: str):
     if path == "-":
         return json.load(sys.stdin)
-    with open(path, "r", encoding="utf-8") as f:
+    with open(path, encoding="utf-8") as f:
         return json.load(f)
 
 
@@ -122,9 +117,7 @@ def main():
             # sépare les numéros "propres" des ancres "@..." et de "fig" générique
             num_like = sorted(
                 [x for x in figs if x and x[0].isdigit()],
-                key=lambda s: [
-                    int(t) if t.isdigit() else t for t in re.split(r"(\d+)", s)
-                ],
+                key=lambda s: [int(t) if t.isdigit() else t for t in re.split(r"(\d+)", s)],
             )
             at_like = sorted([x[1:] for x in figs if x.startswith("@")])
             generic = ["fig"] if "fig" in figs else []

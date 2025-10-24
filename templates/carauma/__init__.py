@@ -2,8 +2,9 @@
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from pathlib import Path
-from typing import Any, Mapping
+from typing import Any
 
 from texsmith.templates import TemplateError, WrappableTemplate
 from texsmith.utils import escape_latex_chars
@@ -22,9 +23,7 @@ class Template(WrappableTemplate):
         try:
             super().__init__(_PACKAGE_ROOT)
         except TemplateError as exc:
-            raise TemplateError(
-                f"Failed to initialise Caraumã book template: {exc}"
-            ) from exc
+            raise TemplateError(f"Failed to initialise Caraumã book template: {exc}") from exc
 
     def prepare_context(
         self,
@@ -62,11 +61,7 @@ class Template(WrappableTemplate):
             self._ensure_defaults(context)
             return
 
-        payload = (
-            raw_meta.get("meta")
-            if isinstance(raw_meta.get("meta"), Mapping)
-            else raw_meta
-        )
+        payload = raw_meta.get("meta") if isinstance(raw_meta.get("meta"), Mapping) else raw_meta
 
         self._assign_if_missing(context, "title", payload, "title")
         self._assign_if_missing(context, "subtitle", payload, "subtitle")
@@ -74,9 +69,7 @@ class Template(WrappableTemplate):
         self._assign_if_missing(context, "translator", payload, "translator")
         self._assign_if_missing(context, "publisher", payload, "publisher")
         self._assign_if_missing(context, "edition_year", payload, "edition_year")
-        self._assign_if_missing(
-            context, "edition_statement", payload, "edition_statement"
-        )
+        self._assign_if_missing(context, "edition_statement", payload, "edition_statement")
         self._assign_if_missing(context, "isbn", payload, "isbn")
         self._assign_if_missing(context, "license_text", payload, "license")
         self._assign_if_missing(context, "preface_heading", payload, "preface_heading")
@@ -85,9 +78,7 @@ class Template(WrappableTemplate):
         self._assign_if_missing(context, "language", payload, "language")
         self._assign_if_missing(context, "contents_title", payload, "contents_title")
         self._assign_if_missing(context, "copyright_year", payload, "copyright_year")
-        self._assign_if_missing(
-            context, "copyright_holder", payload, "copyright_holder"
-        )
+        self._assign_if_missing(context, "copyright_holder", payload, "copyright_holder")
 
         if not self._coerce_string(context.get("edition_year")):
             date_candidate = self._coerce_string(payload.get("date"))

@@ -8,7 +8,7 @@ version = "0.1.0"
 description = "A Markdown to LaTeX converter."
 readme = "README.md"
 license = "MIT"
-requires-python = ">=3.13"
+requires-python = ">=3.12"
 authors = [
     { name = "Yves Chevallier", email = "yves.chevalier@heig-vd.ch" }
 ]
@@ -24,21 +24,21 @@ dependencies = [
     "cairosvg>=2.8.2",
     "emoji>=2.12.1",
     "jinja2>=3.1.6",
+    "markdown>=3.7",
     "mkdocs-material>=9.6.22",
     "pillow>=12.0.0",
-    "pydantic>=2.7.0",
     "pybtex>=0.24.0",
-    "pypdf>=6.1.1",
-    "pyyaml>=6.0.3",
-    "pymdown-extensions>=10.9",
-    "requests>=2.32.5",
-    "python-slugify>=8.0.4",
+    "pydantic>=2.7.0",
     "pygments>=2.18.0",
+    "pylatexenc>=2.10",
+    "pymdown-extensions>=10.9",
+    "pypdf>=6.1.1",
+    "python-markdown-math>=0.9",
+    "python-slugify>=8.0.4",
+    "pyyaml>=6.0.3",
+    "requests>=2.32.5",
     "rich>=13.9.0",
     "typer>=0.12.5",
-    "markdown>=3.7",
-    "python-markdown-math>=0.9",
-    "pylatexenc>=2.10",
 ]
 [project.urls]
 Homepage = "https://github.com/yves-chevallier/texsmith"
@@ -48,20 +48,21 @@ packages = ["src/texsmith"]
 
 [tool.hatch.build]
 exclude = [
-    ".uv-cache",
-    "build",
-    "examples",
-    "experiments",
-    "templates",
+    "/.uv-cache",
+    "/build",
+    "/examples",
+    "/experiments",
+    "/templates",
 ]
 
 [tool.hatch.build.targets.sdist]
 exclude = [
-    ".uv-cache",
-    "build",
-    "examples",
-    "experiments",
-    "templates",
+    "/.uv-cache",
+    "/build",
+    "/examples",
+    "/experiments",
+    "/templates",
+    "/mkdocs_latex"
 ]
 
 [project.scripts]
@@ -69,24 +70,51 @@ texsmith = "texsmith.cli:main"
 
 [dependency-groups]
 dev = [
-    "mkdocs>=1.6.1",
-    "mkdocs-material>=9.6.22",
     "pytest>=8.4.2",
     "ruff>=0.14.1",
 ]
+docs = [
+    "mkdocs-material>=9.6.22",
+    "mkdocstrings[python]>=0.21.2",
+    "mkdocs-awesome-nav>=3.1.0",
+    "mkdocs-drawio @ git+https://github.com/yves-chevallier/mkdocs-drawio.git@testounet",
+    "mkdocs-pills>=0.1.0",
+]
+
 
 [tool.uv]
 default-groups = ["dev"]
 package = true
 
 [tool.ruff]
-extend-exclude = ["old-code-base", "examples", "experiments", "templates"]
+line-length = 100
+target-version = "py311"
+extend-exclude = [
+  "mkdocs_latex",
+  ".venv",
+  "venv",
+  "build",
+  "dist",
+  "site",
+  "docs/_build",
+  "**/migrations",
+]
+# <-- Ces deux options doivent être ici
+fix = true
+unsafe-fixes = false
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+line-ending = "lf"
+docstring-code-format = true
+docstring-code-line-length = 100
 
 [tool.ruff.lint]
-select = ["E", "F", "I", "B", "UP"]
-
-[tool.ruff.lint.per-file-ignores]
-"src/texsmith/cli.py" = ["B008"]
+select = [
+  "E","F","I","B","UP",
+  "C90","N","D","ANN","C4","SIM","PTH","T20","ERA","ARG","G","TRY","DTZ","SLF","PT","RUF","A",
+]
 
 [tool.ruff.lint.isort]
 combine-as-imports = true
@@ -94,3 +122,20 @@ force-sort-within-sections = true
 known-first-party = ["texsmith"]
 section-order = ["future","standard-library","third-party","first-party","local-folder"]
 lines-after-imports = 2
+# required-imports = ["from __future__ import annotations"]  # optionnel
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.ruff.lint.flake8-annotations]
+mypy-init-return = true
+suppress-dummy-args = true
+suppress-none-returning = true
+
+[tool.ruff.lint.mccabe]
+max-complexity = 10
+
+[tool.ruff.lint.per-file-ignores]
+"src/texsmith/cli.py" = ["B008"]
+"**/__init__.py" = ["F401", "F403"]
+"tests/**" = ["D", "T20", "S101"]

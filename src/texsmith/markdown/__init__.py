@@ -77,18 +77,12 @@ def resolve_markdown_extensions(
         extension.lower() for extension in normalize_markdown_extensions(disabled)
     }
 
-    combined = deduplicate_markdown_extensions(
-        list(DEFAULT_MARKDOWN_EXTENSIONS) + enabled
-    )
+    combined = deduplicate_markdown_extensions(list(DEFAULT_MARKDOWN_EXTENSIONS) + enabled)
 
     if not disabled_normalized:
         return combined
 
-    return [
-        extension
-        for extension in combined
-        if extension.lower() not in disabled_normalized
-    ]
+    return [extension for extension in combined if extension.lower() not in disabled_normalized]
 
 
 def deduplicate_markdown_extensions(values: Iterable[str]) -> list[str]:
@@ -142,16 +136,12 @@ def render_markdown(
     try:
         md = markdown.Markdown(extensions=list(extensions or ()))
     except Exception as exc:  # pragma: no cover - library-controlled
-        raise MarkdownConversionError(
-            f"Failed to initialize Markdown processor: {exc}"
-        ) from exc
+        raise MarkdownConversionError(f"Failed to initialize Markdown processor: {exc}") from exc
 
     try:
         html = md.convert(markdown_body)
     except Exception as exc:  # pragma: no cover - library-controlled
-        raise MarkdownConversionError(
-            f"Failed to convert Markdown source: {exc}"
-        ) from exc
+        raise MarkdownConversionError(f"Failed to convert Markdown source: {exc}") from exc
 
     return MarkdownDocument(html=html, front_matter=metadata)
 

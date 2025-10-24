@@ -73,7 +73,6 @@ class RuleDefinition:
 
     def bind(self, handler: RuleCallable) -> RenderRule:
         """Create a concrete rule instance bound to the callable."""
-
         name = self.name or getattr(handler, "__name__", handler.__class__.__name__)
         return RenderRule(
             phase=self.phase,
@@ -95,7 +94,6 @@ class RenderRegistry:
 
     def register(self, rule: RenderRule) -> None:
         """Register a rule for later execution."""
-
         phase_bucket = self._rules.setdefault(rule.phase, {})
         if rule.applies_to_document():
             tag_bucket = phase_bucket.setdefault(DOCUMENT_NODE, [])
@@ -110,14 +108,12 @@ class RenderRegistry:
 
     def iter_phase(self, phase: RenderPhase) -> Iterable[RenderRule]:
         """Iterate over rules for the provided phase."""
-
         buckets = self._rules.get(phase, {})
         for tag_rules in buckets.values():
             yield from tag_rules
 
     def rules_for_phase(self, phase: RenderPhase) -> dict[str, tuple[RenderRule, ...]]:
         """Return the rule mapping for the requested phase."""
-
         phase_bucket = self._rules.get(phase, {})
         return {tag: tuple(rules) for tag, rules in phase_bucket.items()}
 
@@ -132,7 +128,6 @@ def renders(
     after_children: bool = False,
 ) -> Callable[[RuleCallable], RuleCallable]:
     """Decorator used to register element handlers."""
-
     selected_tags = tags or (DOCUMENT_NODE,)
     definition = RuleDefinition(
         phase=phase,
@@ -159,7 +154,6 @@ class RenderEngine:
 
     def collect_from(self, owner: Any) -> None:
         """Collect decorated callables from an object or module."""
-
         for attribute in dir(owner):
             handler = getattr(owner, attribute)
             definition = getattr(handler, "__render_rule__", None)
@@ -170,7 +164,6 @@ class RenderEngine:
 
     def register(self, handler: RuleCallable) -> None:
         """Register a standalone callable decorated with ``@renders``."""
-
         definition = getattr(handler, "__render_rule__", None)
         if not isinstance(definition, RuleDefinition):
             msg = "Handler must be decorated with @renders"
@@ -179,7 +172,6 @@ class RenderEngine:
 
     def run(self, root: Tag, context: RenderContext) -> None:
         """Execute all registered rules against the provided DOM root."""
-
         for phase in RenderPhase:
             context.enter_phase(phase)
             phase_rules = self.registry.rules_for_phase(phase)
@@ -191,11 +183,8 @@ class RenderEngine:
             visitor = _DOMVisitor(phase, phase_rules, context)
             visitor.walk(root)
 
-    def _execute_rule(
-        self, rule: RenderRule, node: Any, context: RenderContext
-    ) -> None:
+    def _execute_rule(self, rule: RenderRule, node: Any, context: RenderContext) -> None:
         """Execute a rule against a specific node applying bookkeeping."""
-
         if rule.auto_mark and context.is_processed(node):
             return
         rule.handler(node, context)
@@ -220,7 +209,6 @@ class _DOMVisitor:
 
     def walk(self, node: Tag) -> None:
         """Traverse descendants depth-first and apply matching rules."""
-
         self._dispatch(node, after_children=False)
         if self.context.should_skip_children(node, phase=self.phase):
             return
@@ -235,7 +223,6 @@ class _DOMVisitor:
 
     def _dispatch(self, node: Tag, *, after_children: bool) -> None:
         """Dispatch node to registered rules for its tag name."""
-
         tag_name = getattr(node, "name", None)
         if not tag_name:
             return

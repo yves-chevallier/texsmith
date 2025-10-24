@@ -19,8 +19,7 @@ def test_convert_command() -> None:
     with runner.isolated_filesystem():
         html_file = Path("index.html")
         html_file.write_text(
-            "<article class='md-content__inner'>"
-            "<h2 id='intro'>Introduction</h2></article>",
+            "<article class='md-content__inner'><h2 id='intro'>Introduction</h2></article>",
             encoding="utf-8",
         )
 
@@ -66,8 +65,7 @@ def test_copy_assets_disabled() -> None:
     with runner.isolated_filesystem():
         html_file = Path("index.html")
         html_file.write_text(
-            "<article class='md-content__inner'>"
-            "<img src='logo.png' alt='Logo'></article>",
+            "<article class='md-content__inner'><img src='logo.png' alt='Logo'></article>",
             encoding="utf-8",
         )
 
@@ -99,9 +97,7 @@ def test_convert_markdown_file(monkeypatch: Any) -> None:
                     html_parts.append(f"<p>{line.strip()}</p>")
             return "".join(html_parts)
 
-    monkeypatch.setitem(
-        sys.modules, "markdown", types.SimpleNamespace(Markdown=DummyMarkdown)
-    )
+    monkeypatch.setitem(sys.modules, "markdown", types.SimpleNamespace(Markdown=DummyMarkdown))
 
     runner = CliRunner()
     with runner.isolated_filesystem():
@@ -133,9 +129,7 @@ def test_default_markdown_extensions(monkeypatch: Any) -> None:
         def convert(self, _: str) -> str:
             return "<p>content</p>"
 
-    monkeypatch.setitem(
-        sys.modules, "markdown", types.SimpleNamespace(Markdown=DummyMarkdown)
-    )
+    monkeypatch.setitem(sys.modules, "markdown", types.SimpleNamespace(Markdown=DummyMarkdown))
 
     runner = CliRunner()
     with runner.isolated_filesystem():
@@ -226,9 +220,7 @@ def test_disable_markdown_extensions_option(tmp_path: Path, monkeypatch: Any) ->
     assert result.exit_code == 0, result.stdout
     disabled = {"footnotes", "pymdownx.details", "pymdownx.magiclink"}
     assert disabled.isdisjoint(set(recorded["extensions"] or []))
-    assert set(DEFAULT_MARKDOWN_EXTENSIONS) - disabled <= set(
-        recorded["extensions"] or []
-    )
+    assert set(DEFAULT_MARKDOWN_EXTENSIONS) - disabled <= set(recorded["extensions"] or [])
 
 
 def test_list_extensions_option() -> None:
@@ -262,10 +254,7 @@ def test_mdx_math_extension_preserves_latex() -> None:
     with runner.isolated_filesystem():
         markdown_file = Path("math.md")
         markdown_file.write_text(
-            (
-                "# Math\n\nInline $E = mc^2$ example.\n\n"
-                "$$\n\\nabla \\cdot \\mathbf{E} = 0\n$$\n"
-            ),
+            ("# Math\n\nInline $E = mc^2$ example.\n\n$$\n\\nabla \\cdot \\mathbf{E} = 0\n$$\n"),
             encoding="utf-8",
         )
 
@@ -755,9 +744,7 @@ def test_build_invokes_latexmk(tmp_path: Path, monkeypatch: Any) -> None:
     assert "PDF document written to" in result.stdout
 
 
-def test_build_with_bibliography_forces_bibtex(
-    tmp_path: Path, monkeypatch: Any
-) -> None:
+def test_build_with_bibliography_forces_bibtex(tmp_path: Path, monkeypatch: Any) -> None:
     runner = CliRunner()
     html_file = tmp_path / "index.html"
     html_file.write_text(

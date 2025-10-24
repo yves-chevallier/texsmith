@@ -22,7 +22,7 @@ docker_spec = importlib_util.spec_from_file_location(
     "texsmith.docker", SRC / "texsmith" / "docker.py"
 )
 assert docker_spec is not None and docker_spec.loader is not None
-docker_mod = importlib_util.module_from_spec(docker_spec)  # noqa: E402
+docker_mod = importlib_util.module_from_spec(docker_spec)
 sys.modules["texsmith.docker"] = docker_mod
 docker_spec.loader.exec_module(docker_mod)
 

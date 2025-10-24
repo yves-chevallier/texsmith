@@ -1,10 +1,11 @@
+from collections.abc import Iterator
 import hashlib
 from pathlib import Path
-from tempfile import TemporaryDirectory
-import unittest
+import re
 from urllib.parse import urlparse
 
 from bs4 import BeautifulSoup
+import pytest
 
 from texsmith.config import BookConfig
 from texsmith.plugins import material
@@ -28,7 +29,7 @@ class _StubConverter:
     def __init__(self, name: str) -> None:
         self.name = name
 
-    def __call__(self, source, *, output_dir: Path, **_: object) -> Path:
+    def __call__(self, source: str | Path, *, output_dir: Path, **_: object) -> Path:
         output_dir = Path(output_dir)
         output_dir.mkdir(parents=True, exist_ok=True)
 
@@ -49,110 +50,107 @@ class _StubConverter:
         return target
 
 
-@unittest.skipIf(
-    mkdocs_build is None, "MkDocs is not installed; skipping integration test."
+pytestmark = pytest.mark.skipif(
+    mkdocs_build is None, reason="MkDocs is not installed; skipping integration test."
 )
-class MkDocsToLatexIntegrationTests(unittest.TestCase):
+
+
+@pytest.fixture
+def stubbed_converters() -> Iterator[None]:
     converters = ("drawio", "mermaid", "fetch-image")
-
-    def setUp(self) -> None:
-        self.tmp = TemporaryDirectory()
-        self.tmp_path = Path(self.tmp.name)
-        self.original_converters = {key: registry.get(key) for key in self.converters}
-        for key in self.converters:
-            register_converter(key, _StubConverter(key))
-
-    def tearDown(self) -> None:
-        for key, original in self.original_converters.items():
+    originals = {key: registry.get(key) for key in converters}
+    for key in converters:
+        register_converter(key, _StubConverter(key))
+    try:
+        yield
+    finally:
+        for key, original in originals.items():
             register_converter(key, original)
-        self.tmp.cleanup()
-
-    def test_full_document_conversion(self) -> None:
-        config_path = ROOT / "tests" / "test_mkdocs" / "mkdocs.yml"
-        site_dir = self.tmp_path / "site"
-
-        config = load_config(
-            config_file=str(config_path),
-            site_dir=str(site_dir),
-            docs_dir=str(config_path.parent / "docs"),
-        )
-        mkdocs_build(config)
-
-        html_path = site_dir / "index.html"
-        self.assertTrue(html_path.exists(), "MkDocs build did not produce index.html")
-
-        html = html_path.read_text(encoding="utf-8")
-        soup = BeautifulSoup(html, "html.parser")
-        article = soup.select_one("article.md-content__inner")
-        self.assertIsNotNone(article, "Unable to locate main article content in HTML")
-        content_html = article.decode_contents()
-        renderer = LaTeXRenderer(
-            config=BookConfig(project_dir=site_dir),
-            output_root=self.tmp_path / "latex-build",
-            parser="html.parser",
-        )
-        material.register(renderer)
-
-        latex_output = renderer.render(
-            content_html,
-            runtime={
-                "source_dir": site_dir,
-                "document_path": html_path,
-                "base_level": 0,
-                "numbered": True,
-            },
-        )
-
-        self.assertTrue(latex_output.strip(), "Rendered LaTeX output is empty.")
-
-        expectations = [
-            r"\chapter{MkDocs test document}",
-            r"\section{Plain \textbf{Markdown} \emph{Features}}",
-            r"\begin{itemize}",
-            r"\begin{enumerate}",
-            r'\texttt{print("Hello~World!")}',
-            r"\href{https://www.mkdocs.org/}{MkDocs website}",
-            r"\caption[MkDocs Logo]{MkDocs Logo}",
-            (
-                r"\caption[Algorithme de calcul du PGCD d'Euclide]"
-                r"{Algorithme de calcul du PGCD d'Euclide}"
-            ),
-            (
-                r"\caption[Influences des langages de programmation]"
-                r"{Influences des langages de programmation}"
-            ),
-            r"\textbf{Python}\par",
-            r"\textbf{JavaScript}\par",
-            r"\begin{description}",
-            r"\begin{tabular}{ll}",
-            r"\subsubsection{Heading Level 4}\label{custom-id}",
-            r"\paragraph{Heading Level 5}\label{heading-level-5}\mbox{}\\",
-            r"\hl{vulputate erat efficitur}",
-            r"\sout{Deleted text}",
-            r"H\textsubscript{2}O",
-            r"X\textsuperscript{2}",
-            r"\correctchoice",
-            r"\choice",
-            r"\keystroke{Ctrl}+\keystroke{S}",
-            r"\keystroke{⌘}",
-            r"\begin{callout}[callout note]{A Simple Note}",
-            r"\begin{callout}[callout info]{Information Box}",
-            r"\begin{callout}[callout warning]{Warning}",
-            r"\begin{callout}[callout success]{Success}",
-        ]
-
-        for snippet in expectations:
-            with self.subTest(snippet=snippet):
-                self.assertIn(snippet, latex_output)
-
-        self.assertIn('print(f"Hello, \\{name\\}!")', latex_output)
-        self.assertIn("def greet(name):", latex_output)
-        self.assertRegex(latex_output, r"\\footnote\{.*footnote")
-        self.assertIn(
-            r"\begin{callout}[callout note]{Expandable Section}", latex_output
-        )
-        self.assertIn(r"\includegraphics[width=1em]{", latex_output)
 
 
-if __name__ == "__main__":
-    unittest.main()
+def test_full_document_conversion(tmp_path: Path, stubbed_converters: None) -> None:
+    del stubbed_converters
+    assert mkdocs_build is not None
+    assert load_config is not None
+
+    config_path = ROOT / "tests" / "test_mkdocs" / "mkdocs.yml"
+    site_dir = tmp_path / "site"
+
+    config = load_config(
+        config_file=str(config_path),
+        site_dir=str(site_dir),
+        docs_dir=str(config_path.parent / "docs"),
+    )
+    mkdocs_build(config)
+
+    html_path = site_dir / "index.html"
+    assert html_path.exists(), "MkDocs build did not produce index.html"
+
+    html = html_path.read_text(encoding="utf-8")
+    soup = BeautifulSoup(html, "html.parser")
+    article = soup.select_one("article.md-content__inner")
+    assert article is not None, "Unable to locate main article content in HTML"
+    content_html = article.decode_contents()
+    renderer = LaTeXRenderer(
+        config=BookConfig(project_dir=site_dir),
+        output_root=tmp_path / "latex-build",
+        parser="html.parser",
+    )
+    material.register(renderer)
+
+    latex_output = renderer.render(
+        content_html,
+        runtime={
+            "source_dir": site_dir,
+            "document_path": html_path,
+            "base_level": 0,
+            "numbered": True,
+        },
+    )
+
+    assert latex_output.strip(), "Rendered LaTeX output is empty."
+
+    expectations = [
+        r"\chapter{MkDocs test document}",
+        r"\section{Plain \textbf{Markdown} \emph{Features}}",
+        r"\begin{itemize}",
+        r"\begin{enumerate}",
+        r'\texttt{print("Hello~World!")}',
+        r"\href{https://www.mkdocs.org/}{MkDocs website}",
+        r"\caption[MkDocs Logo]{MkDocs Logo}",
+        (
+            r"\caption[Algorithme de calcul du PGCD d'Euclide]"
+            r"{Algorithme de calcul du PGCD d'Euclide}"
+        ),
+        (
+            r"\caption[Influences des langages de programmation]"
+            r"{Influences des langages de programmation}"
+        ),
+        r"\textbf{Python}\par",
+        r"\textbf{JavaScript}\par",
+        r"\begin{description}",
+        r"\begin{tabular}{ll}",
+        r"\subsubsection{Heading Level 4}\label{custom-id}",
+        r"\paragraph{Heading Level 5}\label{heading-level-5}\mbox{}\\",
+        r"\hl{vulputate erat efficitur}",
+        r"\sout{Deleted text}",
+        r"H\textsubscript{2}O",
+        r"X\textsuperscript{2}",
+        r"\correctchoice",
+        r"\choice",
+        r"\keystroke{Ctrl}+\keystroke{S}",
+        r"\keystroke{⌘}",
+        r"\begin{callout}[callout note]{A Simple Note}",
+        r"\begin{callout}[callout info]{Information Box}",
+        r"\begin{callout}[callout warning]{Warning}",
+        r"\begin{callout}[callout success]{Success}",
+    ]
+
+    for snippet in expectations:
+        assert snippet in latex_output, f"Expected to find snippet {snippet!r}"
+
+    assert 'print(f"Hello, \\{name\\}!")' in latex_output
+    assert "def greet(name):" in latex_output
+    assert re.search(r"\\footnote\{.*footnote", latex_output) is not None
+    assert r"\begin{callout}[callout note]{Expandable Section}" in latex_output
+    assert r"\includegraphics[width=1em]{" in latex_output

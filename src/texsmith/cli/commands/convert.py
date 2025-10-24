@@ -34,7 +34,7 @@ from ..utils import (
 )
 
 
-def convert(  # noqa: PLR0913, PLR0915 - command with many options
+def convert(
     inputs: list[Path] = typer.Argument(  # type: ignore[assignment]
         ...,
         metavar="INPUT...",
@@ -59,9 +59,7 @@ def convert(  # noqa: PLR0913, PLR0915 - command with many options
         "--output",
         "-o",
         "--output-dir",
-        help=(
-            "Output file or directory. Defaults to stdout unless a template is used."
-        ),
+        help=("Output file or directory. Defaults to stdout unless a template is used."),
     ),
     selector: str = typer.Option(
         "article.md-content__inner",
@@ -84,8 +82,7 @@ def convert(  # noqa: PLR0913, PLR0915 - command with many options
         "-h",
         min=0,
         help=(
-            "Indent all headings by the selected depth "
-            "(e.g. 1 turns sections into subsections)."
+            "Indent all headings by the selected depth (e.g. 1 turns sections into subsections)."
         ),
     ),
     drop_title: bool = typer.Option(
@@ -106,9 +103,7 @@ def convert(  # noqa: PLR0913, PLR0915 - command with many options
     disable_fallback_converters: bool = typer.Option(
         False,
         "--no-fallback-converters",
-        help=(
-            "Disable registration of placeholder converters when Docker is unavailable."
-        ),
+        help=("Disable registration of placeholder converters when Docker is unavailable."),
     ),
     copy_assets: bool = typer.Option(
         True,
@@ -182,9 +177,7 @@ def convert(  # noqa: PLR0913, PLR0915 - command with many options
 
     if input_path is not None:
         if resolved_inputs:
-            raise typer.BadParameter(
-                "Provide either positional inputs or --input-path, not both."
-            )
+            raise typer.BadParameter("Provide either positional inputs or --input-path, not both.")
         resolved_inputs = [input_path]
 
     documents, bibliography_files = split_document_inputs(
@@ -192,9 +185,7 @@ def convert(  # noqa: PLR0913, PLR0915 - command with many options
         resolved_bibliography_option,
     )
     if not documents:
-        raise typer.BadParameter(
-            "Provide a Markdown (.md) or HTML (.html) source document."
-        )
+        raise typer.BadParameter("Provide a Markdown (.md) or HTML (.html) source document.")
 
     try:
         cli_slot_overrides, cli_slot_assignments = organise_slot_overrides(
@@ -223,9 +214,7 @@ def convert(  # noqa: PLR0913, PLR0915 - command with many options
     if template_selected:
         try:
             template_runtime = load_template_runtime(template_name)
-        except (
-            TemplateError
-        ) as exc:  # pragma: no cover - template errors handled upstream
+        except TemplateError as exc:  # pragma: no cover - template errors handled upstream
             emit_error(str(exc), exception=exc)
             raise typer.Exit(code=1) from exc
 
@@ -249,12 +238,8 @@ def convert(  # noqa: PLR0913, PLR0915 - command with many options
     resolved_language = resolve_option(language)
 
     callbacks = ConversionCallbacks(
-        emit_warning=lambda message, exception=None: emit_warning(
-            message, exception=exception
-        ),
-        emit_error=lambda message, exception=None: emit_error(
-            message, exception=exception
-        ),
+        emit_warning=lambda message, exception=None: emit_warning(message, exception=exception),
+        emit_error=lambda message, exception=None: emit_error(message, exception=exception),
         debug_enabled=debug_enabled(),
     )
 
@@ -637,9 +622,7 @@ def _convert_multiple_with_template(
     try:
         output_dir.mkdir(parents=True, exist_ok=True)
     except OSError as exc:
-        emit_error(
-            f"Failed to prepare output directory '{output_dir}': {exc}", exception=exc
-        )
+        emit_error(f"Failed to prepare output directory '{output_dir}': {exc}", exception=exc)
         raise typer.Exit(code=1) from exc
 
     assert template_runtime is not None  # for type checkers
@@ -703,22 +686,16 @@ def _convert_multiple_with_template(
         )
 
         assignments = slot_assignments.get(document_path, [])
-        full_slots = {
-            assignment.slot for assignment in assignments if assignment.full_document
-        }
+        full_slots = {assignment.slot for assignment in assignments if assignment.full_document}
 
         fragment_reference = fragment_path.stem
         if default_slot_name not in aggregated_slots:
             aggregated_slots[default_slot_name] = []
         if default_slot_name not in full_slots and result.latex_output.strip():
-            aggregated_slots[default_slot_name].append(
-                f"\\input{{{fragment_reference}}}"
-            )
+            aggregated_slots[default_slot_name].append(f"\\input{{{fragment_reference}}}")
 
         for slot_name in full_slots:
-            aggregated_slots.setdefault(slot_name, []).append(
-                f"\\input{{{fragment_reference}}}"
-            )
+            aggregated_slots.setdefault(slot_name, []).append(f"\\input{{{fragment_reference}}}")
 
         for slot_name, fragment_content in result.slot_outputs.items():
             if not fragment_content:

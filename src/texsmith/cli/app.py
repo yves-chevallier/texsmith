@@ -30,7 +30,7 @@ app.add_typer(bibliography_app, name="bibliography")
 
 
 @app.callback()
-def _app_root(  # noqa: D401 - Typer callback
+def _app_root(
     ctx: typer.Context,
     list_extensions: bool = typer.Option(
         False,
@@ -42,9 +42,7 @@ def _app_root(  # noqa: D401 - Typer callback
         "--verbose",
         "-v",
         count=True,
-        help=(
-            "Increase CLI verbosity. Combine multiple times for additional diagnostics."
-        ),
+        help=("Increase CLI verbosity. Combine multiple times for additional diagnostics."),
     ),
     debug: bool = typer.Option(
         False,
@@ -85,7 +83,6 @@ app.command(name="build")(build)
 
 def main() -> None:
     """Entry point compatible with console scripts."""
-
     try:
         app()
     except typer.Exit:

@@ -247,7 +247,7 @@ In scientific english we put "Figure" with a capital, but in french it is "figur
 - [x] Images marchent avec (.tiff, .webp, .avif, .gif, .png, .bmp...)
 - [x] Verbose in CLI more details et afficher joliment les warnings et erreurs
 - [x] --debug pour afficher les exceptions complètes
-- [ ] Bibliographie sur doi dans frontmatter
+- [x] Bibliographie sur doi dans frontmatter
 - [ ] Perf increase by converting html to xml and use lxml not htmlparser?
 - [ ] Support multipages, je donnes plusieurs md ou html en entrée.
 - [ ] Manage the figure (c.f.) how to manage that...
@@ -269,6 +269,21 @@ In scientific english we put "Figure" with a capital, but in french it is "figur
 - [ ] Écrire documentation
 - [ ] Documentation complete de docstring dans le projet
 - [ ] Déployer sur PyPI
+
+### Front matter bibliography
+
+Document front matter now supports inline DOI references. Provide them under the
+`bibliography` key to fetch the corresponding BibTeX entries automatically:
+
+```yaml
+---
+bibliography:
+  Chep09: https://doi.org/10.1038/146796a0
+---
+```
+
+Front matter entries are merged with any external `.bib` files, and duplicate
+keys follow the usual `BibliographyCollection` validation rules.
 
 ## MkDocs plugin
 

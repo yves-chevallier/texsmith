@@ -1,7 +1,7 @@
-import os
 from pathlib import Path
 from tempfile import TemporaryDirectory
-import unittest
+
+import pytest
 
 
 try:
@@ -13,54 +13,54 @@ except ModuleNotFoundError as exc:  # pragma: no cover - optional dependency gua
         raise
 
 
-@unittest.skipIf(convert is None, "Typer dependency is not available.")
-class CliConvertTests(unittest.TestCase):
-    def setUp(self) -> None:
-        self.project_root = Path(__file__).resolve().parents[1]
-        self.previous_cwd = Path.cwd()
-        os.chdir(self.project_root)
+pytestmark = pytest.mark.skipif(convert is None, reason="Typer dependency is not available.")
 
-    def tearDown(self) -> None:
-        os.chdir(self.previous_cwd)
 
-    def test_convert_template_writes_file(self) -> None:
-        with TemporaryDirectory() as temp_dir:
-            temp_path = Path(temp_dir)
-            source = temp_path / "sample.html"
-            source.write_text("<h1>Titre</h1>", encoding="utf-8")
-            output_dir = temp_path / "build"
+@pytest.fixture(autouse=True)
+def change_to_project_root(monkeypatch: pytest.MonkeyPatch) -> None:
+    project_root = Path(__file__).resolve().parents[1]
+    monkeypatch.chdir(project_root)
 
-            assert convert is not None  # for type checkers
-            convert(
-                input_path=source,
-                output=output_dir,
-                template="./book",
-            )
 
-            output_file = output_dir / "sample.tex"
-            self.assertTrue(output_file.exists())
-            content = output_file.read_text(encoding="utf-8")
-            self.assertIn("\\mainmatter", content)
-            self.assertIn("Titre", content)
+def test_convert_template_writes_file() -> None:
+    with TemporaryDirectory() as temp_dir:
+        temp_path = Path(temp_dir)
+        source = temp_path / "sample.html"
+        source.write_text("<h1>Titre</h1>", encoding="utf-8")
+        output_dir = temp_path / "build"
 
-            class_file = output_dir / "mkbook.cls"
-            self.assertTrue(class_file.exists())
-            class_content = class_file.read_text(encoding="utf-8")
-            self.assertNotIn("\\VAR{", class_content)
-            self.assertIn("\\RequirePackage[english]{babel}", class_content)
+        assert convert is not None  # for type checkers
+        convert(
+            input_path=source,
+            output=output_dir,
+            template="./book",
+        )
 
-            circles = output_dir / "covers" / "circles.tex"
-            self.assertTrue(circles.exists())
-            circles_content = circles.read_text(encoding="utf-8")
-            self.assertNotIn("\\VAR{", circles_content)
-            self.assertIn("\\def\\covercolor{indigo(dye)}", circles_content)
+        output_file = output_dir / "sample.tex"
+        assert output_file.exists()
+        content = output_file.read_text(encoding="utf-8")
+        assert "\\mainmatter" in content
+        assert "Titre" in content
 
-    def test_convert_template_applies_markdown_metadata(self) -> None:
-        with TemporaryDirectory() as temp_dir:
-            temp_path = Path(temp_dir)
-            source = temp_path / "sample.md"
-            source.write_text(
-                """---
+        class_file = output_dir / "mkbook.cls"
+        assert class_file.exists()
+        class_content = class_file.read_text(encoding="utf-8")
+        assert "\\VAR{" not in class_content
+        assert "\\RequirePackage[english]{babel}" in class_content
+
+        circles = output_dir / "covers" / "circles.tex"
+        assert circles.exists()
+        circles_content = circles.read_text(encoding="utf-8")
+        assert "\\VAR{" not in circles_content
+        assert "\\def\\covercolor{indigo(dye)}" in circles_content
+
+
+def test_convert_template_applies_markdown_metadata() -> None:
+    with TemporaryDirectory() as temp_dir:
+        temp_path = Path(temp_dir)
+        source = temp_path / "sample.md"
+        source.write_text(
+            """---
 meta:
   title: Sample Article
   subtitle: Insights on Cheese
@@ -76,57 +76,54 @@ meta:
 
 Content here.
 """,
-                encoding="utf-8",
-            )
-            output_dir = temp_path / "build"
+            encoding="utf-8",
+        )
+        output_dir = temp_path / "build"
 
-            assert convert is not None  # for type checkers
-            convert(
-                input_path=source,
-                output=output_dir,
-                template="./article",
-            )
+        assert convert is not None  # for type checkers
+        convert(
+            input_path=source,
+            output=output_dir,
+            template="./article",
+        )
 
-            output_file = output_dir / "sample.tex"
-            self.assertTrue(output_file.exists())
-            content = output_file.read_text(encoding="utf-8")
-            self.assertIn(r"\title{Sample Article\\\large Insights on Cheese}", content)
-            self.assertIn(
-                r"\author{Alice Example\thanks{Example University} \and Bob Example}",
-                content,
-            )
-            self.assertIn(r"\date{2024-10-20}", content)
-            self.assertIn(r"\usepackage[french]{babel}", content)
+        output_file = output_dir / "sample.tex"
+        assert output_file.exists()
+        content = output_file.read_text(encoding="utf-8")
+        assert r"\title{Sample Article\\\large Insights on Cheese}" in content
+        assert (
+            r"\author{Alice Example\thanks{Example University} \and Bob Example}"
+            in content
+        )
+        assert r"\date{2024-10-20}" in content
+        assert r"\usepackage[french]{babel}" in content
 
-    def test_nature_template_applies_table_override(self) -> None:
-        with TemporaryDirectory() as temp_dir:
-            temp_path = Path(temp_dir)
-            source = temp_path / "sample.html"
-            source.write_text(
-                """<table id="tbl-sample">
+
+def test_nature_template_applies_table_override() -> None:
+    with TemporaryDirectory() as temp_dir:
+        temp_path = Path(temp_dir)
+        source = temp_path / "sample.html"
+        source.write_text(
+            """<table id="tbl-sample">
 <caption>Overview</caption>
 <tr><th>Col 1</th><th>Col 2</th></tr>
 <tr><td>Foo</td><td>Bar</td></tr>
 </table>""",
-                encoding="utf-8",
-            )
-            output_dir = temp_path / "build"
+            encoding="utf-8",
+        )
+        output_dir = temp_path / "build"
 
-            assert convert is not None  # for type checkers
-            convert(
-                input_path=source,
-                output=output_dir,
-                template="./nature",
-            )
+        assert convert is not None  # for type checkers
+        convert(
+            input_path=source,
+            output=output_dir,
+            template="./nature",
+        )
 
-            output_file = output_dir / "sample.tex"
-            self.assertTrue(output_file.exists())
-            content = output_file.read_text(encoding="utf-8")
-            self.assertIn(r"\begin{tabular}{@{}ll@{}}", content)
-            self.assertIn(r"\caption{Overview}\label{tbl-sample}", content)
-            self.assertIn(r"\botrule", content)
-            self.assertNotIn(r"\textbf{Col 1}", content)
-
-
-if __name__ == "__main__":
-    unittest.main()
+        output_file = output_dir / "sample.tex"
+        assert output_file.exists()
+        content = output_file.read_text(encoding="utf-8")
+        assert r"\begin{tabular}{@{}ll@{}}" in content
+        assert r"\caption{Overview}\label{tbl-sample}" in content
+        assert r"\botrule" in content
+        assert r"\textbf{Col 1}" not in content

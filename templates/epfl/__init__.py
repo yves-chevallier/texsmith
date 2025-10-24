@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
-from collections.abc import Iterable
+from collections.abc import Iterable, Mapping
 from pathlib import Path
-from typing import Any, Mapping
+from typing import Any
 
 from texsmith.templates import TemplateError, WrappableTemplate
 
@@ -30,9 +30,7 @@ class Template(WrappableTemplate):
         try:
             super().__init__(_PACKAGE_ROOT)
         except TemplateError as exc:  # pragma: no cover - defensive
-            raise TemplateError(
-                f"Failed to initialise EPFL thesis template: {exc}"
-            ) from exc
+            raise TemplateError(f"Failed to initialise EPFL thesis template: {exc}") from exc
 
     def prepare_context(
         self,

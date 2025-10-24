@@ -37,7 +37,6 @@ class MissingFootnotesExtension(Extension):
 
     def reset(self) -> None:
         """Reset cached state before each Markdown conversion."""
-
         self.missing_ids.clear()
 
     # -- internals ---------------------------------------------------------
@@ -53,7 +52,6 @@ class MissingFootnotesExtension(Extension):
 
     def extendMarkdown(self, md: Any) -> None:  # noqa: N802 - markdown hook
         """Patch the inline footnote processor to capture missing notes."""
-
         md.registerExtension(self)
         if self._patched_pattern:
             return
@@ -109,9 +107,7 @@ class MissingFootnotesExtension(Extension):
         text = self.getConfig("text_template").format(id=identifier)
         if self.getConfig("link_to_list"):
             footnote_extension = self._get_footnotes_extension(pattern.md)
-            separator = (
-                footnote_extension.get_separator() if footnote_extension else ":"
-            )
+            separator = footnote_extension.get_separator() if footnote_extension else ":"
             anchor = etree.SubElement(node, "a")
             if css_class:
                 anchor.set("class", css_class)
@@ -125,5 +121,4 @@ class MissingFootnotesExtension(Extension):
 
 def makeExtension(**kwargs: Any) -> MissingFootnotesExtension:
     """Entry point exposed to Python-Markdown."""
-
     return MissingFootnotesExtension(**kwargs)

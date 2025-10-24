@@ -83,9 +83,7 @@ class DockerRunner:
             )
         except FileNotFoundError as exc:
             self._cached_executable = None
-            raise TransformerExecutionError(
-                "Docker executable could not be located."
-            ) from exc
+            raise TransformerExecutionError("Docker executable could not be located.") from exc
         except OSError as exc:
             raise TransformerExecutionError(f"Failed to invoke Docker: {exc}") from exc
 
@@ -93,10 +91,7 @@ class DockerRunner:
             stderr = (result.stderr or "").strip()
             stdout = (result.stdout or "").strip()
             detail = stderr or stdout
-            message = (
-                f"Docker image '{request.image}' failed with exit code "
-                f"{result.returncode}"
-            )
+            message = f"Docker image '{request.image}' failed with exit code {result.returncode}"
             if detail:
                 message = f"{message}: {detail}"
             raise TransformerExecutionError(message)
@@ -114,9 +109,7 @@ class DockerRunner:
         if request.extra_args:
             command.extend(request.extra_args)
 
-        user = request.user or (
-            self._resolve_host_user() if request.use_host_user else None
-        )
+        user = request.user or (self._resolve_host_user() if request.use_host_user else None)
         if user:
             command.extend(["--user", user])
 
@@ -143,9 +136,7 @@ class DockerRunner:
         for mount in mounts:
             host = Path(mount.source).expanduser()
             if not host.exists():
-                raise TransformerExecutionError(
-                    f"Docker mount source '{host}' does not exist."
-                )
+                raise TransformerExecutionError(f"Docker mount source '{host}' does not exist.")
             try:
                 resolved = host.resolve(strict=True)
             except (OSError, RuntimeError):

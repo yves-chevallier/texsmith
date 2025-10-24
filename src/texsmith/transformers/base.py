@@ -15,9 +15,7 @@ from ..exceptions import TransformerExecutionError
 class ConverterStrategy(Protocol):
     """Protocol implemented by concrete converter strategies."""
 
-    def __call__(
-        self, source: Path | str, *, output_dir: Path, **options: Any
-    ) -> Any: ...
+    def __call__(self, source: Path | str, *, output_dir: Path, **options: Any) -> Any: ...
 
 
 def exponential_backoff(
@@ -78,10 +76,7 @@ class CachedConversionStrategy:
                 if delay > 0:
                     time.sleep(delay)
 
-        message = (
-            f"Conversion failed for '{self.namespace}' "
-            f"after {self.max_attempts} attempts"
-        )
+        message = f"Conversion failed for '{self.namespace}' after {self.max_attempts} attempts"
         raise TransformerExecutionError(message) from last_error
 
     # --------------------------------------------------------------------- helpers
@@ -95,7 +90,6 @@ class CachedConversionStrategy:
         **options: Any,
     ) -> Path:
         """Sub-classes must implement actual conversion logic."""
-
         raise NotImplementedError
 
     def _resolve_target_path(
@@ -110,7 +104,6 @@ class CachedConversionStrategy:
 
     def output_suffix(self, source: Any, options: dict[str, Any]) -> str:
         """Allow subclasses to customise the output suffix."""
-
         return self.suffix
 
     def _make_cache_key(self, source: Path | str, options: dict[str, Any]) -> str:
@@ -127,12 +120,8 @@ class CachedConversionStrategy:
         return source.encode("utf-8")
 
     def _serialise_options(self, options: dict[str, Any]) -> bytes:
-        normalised = {
-            key: self._normalise_option(value) for key, value in options.items()
-        }
-        return json.dumps(normalised, sort_keys=True, separators=(",", ":")).encode(
-            "utf-8"
-        )
+        normalised = {key: self._normalise_option(value) for key, value in options.items()}
+        return json.dumps(normalised, sort_keys=True, separators=(",", ":")).encode("utf-8")
 
     def _normalise_option(self, value: Any) -> Any:
         match value:

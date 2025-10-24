@@ -15,7 +15,6 @@ from ..bibliography import BibliographyCollection
 
 def format_bibliography_person(person: Mapping[str, object]) -> str:
     """Render a bibliography person dictionary into a readable string."""
-
     parts: list[str] = []
     for field in ("first", "middle", "prelast", "last", "lineage"):
         value = person.get(field)

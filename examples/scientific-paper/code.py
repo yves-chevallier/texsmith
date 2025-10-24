@@ -1,5 +1,6 @@
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
+
 
 # Constants
 E0 = 50.0  # Reference modulus (MPa)

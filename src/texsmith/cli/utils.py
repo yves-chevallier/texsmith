@@ -49,7 +49,6 @@ def resolve_option(value: object) -> object:
 
 def parse_slot_option(values: Iterable[str] | None) -> dict[str, str]:
     """Parse CLI slot overrides declared as 'slot:Section' pairs."""
-
     overrides: dict[str, str] = {}
     if not values:
         return overrides
@@ -61,16 +60,12 @@ def parse_slot_option(values: Iterable[str] | None) -> dict[str, str]:
         if not entry:
             continue
         if ":" not in entry:
-            raise ValueError(
-                f"Invalid slot override '{raw}', expected format 'slot:Section'."
-            )
+            raise ValueError(f"Invalid slot override '{raw}', expected format 'slot:Section'.")
         slot_name, selector = entry.split(":", 1)
         slot_name = slot_name.strip()
         selector = selector.strip()
         if not slot_name or not selector:
-            raise ValueError(
-                f"Invalid slot override '{raw}', expected format 'slot:Section'."
-            )
+            raise ValueError(f"Invalid slot override '{raw}', expected format 'slot:Section'.")
         overrides[slot_name] = selector
 
     return overrides
@@ -101,15 +96,12 @@ def split_document_inputs(
             continue
         documents.append(candidate)
 
-    combined_bibliography = deduplicate_paths(
-        [*inline_bibliography, *extra_bibliography]
-    )
+    combined_bibliography = deduplicate_paths([*inline_bibliography, *extra_bibliography])
     return documents, combined_bibliography
 
 
 def classify_input_source(path: Path) -> InputKind:
     """Determine the document kind based on its filename suffix."""
-
     suffix = path.suffix.lower()
     if suffix in {".md", ".markdown"}:
         return InputKind.MARKDOWN
@@ -139,7 +131,7 @@ def prepare_document_context(
     markdown_extensions: list[str],
     callbacks: ConversionCallbacks,
     emit_error_callback: Any,
-) -> "DocumentContext":
+) -> DocumentContext:
     try:
         raw_payload = document_path.read_text(encoding="utf-8")
     except OSError as exc:
@@ -254,11 +246,7 @@ def normalise_selector(selector: str | None) -> str | None:
     if selector is None:
         return None
     candidate = selector.strip()
-    if (
-        len(candidate) >= 2
-        and candidate[0] == candidate[-1]
-        and candidate[0] in {'"', "'"}
-    ):
+    if len(candidate) >= 2 and candidate[0] == candidate[-1] and candidate[0] in {'"', "'"}:
         candidate = candidate[1:-1].strip()
     return candidate or None
 
@@ -338,9 +326,7 @@ def resolve_slot_assignments(
             resolved_candidate: Path | None = None
             try:
                 base = (
-                    candidate_path
-                    if candidate_path.is_absolute()
-                    else Path.cwd() / candidate_path
+                    candidate_path if candidate_path.is_absolute() else Path.cwd() / candidate_path
                 )
                 resolved_candidate = base.resolve()
             except OSError:
@@ -359,9 +345,7 @@ def resolve_slot_assignments(
                     )
 
         if target_doc is None:
-            raise typer.BadParameter(
-                f"slot override '{raw}' does not match any provided document."
-            )
+            raise typer.BadParameter(f"slot override '{raw}' does not match any provided document.")
 
         selector_clean = selector_value
         full_document = False
@@ -375,9 +359,7 @@ def resolve_slot_assignments(
                 selector_clean = DOCUMENT_SELECTOR_SENTINEL
 
         assignments[target_doc].append(
-            SlotAssignment(
-                slot=slot_name, selector=selector_clean, full_document=full_document
-            )
+            SlotAssignment(slot=slot_name, selector=selector_clean, full_document=full_document)
         )
 
     return assignments
