@@ -449,14 +449,19 @@ def _render_document(
             )
         )
 
+    formatter = LaTeXFormatter()
+    binding.apply_formatter_overrides(formatter)
+    renderer: LaTeXRenderer | None = None
+
     def renderer_factory() -> LaTeXRenderer:
-        formatter = LaTeXFormatter()
-        binding.apply_formatter_overrides(formatter)
-        return LaTeXRenderer(
-            config=binder_context.config,
-            formatter=formatter,
-            **renderer_kwargs,
-        )
+        nonlocal renderer
+        if renderer is None:
+            renderer = LaTeXRenderer(
+                config=binder_context.config,
+                formatter=formatter,
+                **renderer_kwargs,
+            )
+        return renderer
 
     if not disable_fallback_converters:
         ensure_fallback_converters()

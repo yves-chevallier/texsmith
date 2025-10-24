@@ -55,11 +55,33 @@ class LaTeXFormatter:
         for ext in (".tex", ".cls"):
             template_paths.extend(template_dir.glob(f"**/*{ext}"))
 
-        templates = [path.relative_to(template_dir) for path in template_paths]
-        self.templates: dict[str, Template] = {
-            str(filename.with_suffix("")).replace("/", "_"): self.env.get_template(str(filename))
-            for filename in templates
-        }
+        self._template_names: dict[str, str] = {}
+        for path in template_paths:
+            relative = path.relative_to(template_dir)
+            key = self._normalise_key(relative.with_suffix("").as_posix())
+            self._template_names[key] = relative.as_posix()
+
+        self.templates: dict[str, Template] = {}
+
+    @staticmethod
+    def _normalise_key(name: str) -> str:
+        """Normalise template identifiers to align with loader expectations."""
+        return name.replace("/", "_")
+
+    def _get_template(self, key: str) -> Template:
+        """Return a cached template instance loading it on demand."""
+        normalised = self._normalise_key(key)
+        template = self.templates.get(normalised)
+        if template is not None:
+            return template
+
+        template_name = self._template_names.get(normalised)
+        if template_name is None:
+            raise KeyError(key)
+
+        template = self.env.get_template(template_name)
+        self.templates[normalised] = template
+        return template
 
     def __getattr__(self, method: str) -> Callable[..., str]:
         """Proxy calls to templates or custom handlers."""
@@ -71,8 +93,9 @@ class LaTeXFormatter:
         if handler is not None:
             return handler  # type: ignore[return-value]
 
-        template = self.templates.get(method)
-        if template is None:
+        try:
+            template = self._get_template(method)
+        except KeyError:
             raise AttributeError(f"Object has no template for '{method}'") from None
 
         def render_template(*args: Any, **kwargs: Any) -> str:
@@ -87,7 +110,7 @@ class LaTeXFormatter:
         return render_template
 
     def __getitem__(self, key: str) -> Callable[..., str]:
-        return self.templates[key].render
+        return self._get_template(key).render
 
     def handle_codeblock(
         self,
@@ -100,7 +123,7 @@ class LaTeXFormatter:
     ) -> str:
         """Render code blocks with optional line numbers and highlights."""
         highlight = list(highlight or [])
-        return self.templates["codeblock"].render(
+        return self._get_template("codeblock").render(
             code=code,
             language=language,
             linenos=lineno,
@@ -111,7 +134,7 @@ class LaTeXFormatter:
     def url(self, text: str, url: str) -> str:
         """Render a URL, escaping special LaTeX characters."""
         safe_url = escape_latex_chars(requote_url(url))
-        return self.templates["url"].render(text=text, url=safe_url)
+        return self._get_template("url").render(text=text, url=safe_url)
 
     def svg(self, svg: str | Path) -> str:
         """Render an SVG image by converting it to PDF first."""
@@ -121,7 +144,7 @@ class LaTeXFormatter:
         return f"\\includegraphics[width=1em]{{{pdfpath}}}"
 
     def get_cover(self, name: str, **kwargs: Any) -> str:
-        template = self.templates[f"cover/{name}"]
+        template = self._get_template(f"cover/{name}")
         return template.render(
             title=self.config.title,  # type: ignore[attr-defined]
             author=self.config.author,  # type: ignore[attr-defined]
@@ -143,8 +166,9 @@ class LaTeXFormatter:
 
         template = self.env.from_string(template_source)
         template.name = template_name
-        self.templates[name] = template
+        normalised = self._normalise_key(name)
+        self.templates[normalised] = template
+        self._template_names[normalised] = template_name
 
 
 __all__ = ["LaTeXFormatter", "optimize_list"]
-
