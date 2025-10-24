@@ -279,8 +279,8 @@ def build(
             callbacks=callbacks,
             emit_error_callback=emit_error,
         )
-    except ConversionError:
-        raise typer.Exit(code=1)
+    except ConversionError as exc:
+        raise typer.Exit(code=1) from exc
 
     try:
         conversion = convert_document(
@@ -298,8 +298,8 @@ def build(
             template_runtime=template_runtime,
             callbacks=callbacks,
         )
-    except ConversionError:
-        raise typer.Exit(code=1)
+    except ConversionError as exc:
+        raise typer.Exit(code=1) from exc
 
     if conversion.tex_path is None:
         emit_error("Template rendering failed to produce a LaTeX document.")

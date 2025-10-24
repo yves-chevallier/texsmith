@@ -48,10 +48,7 @@ def _figure_template_for(element: Tag, context: RenderContext) -> str:
     current = element
     while current is not None:
         classes = getattr(current, "get", lambda *_: None)("class") or []
-        if isinstance(classes, str):
-            class_list = classes.split()
-        else:
-            class_list = list(classes)
+        class_list = classes.split() if isinstance(classes, str) else list(classes)
         if any(cls in {"admonition", "exercise"} for cls in class_list):
             return "figure_tcolorbox"
         if getattr(current, "name", None) == "details":
@@ -270,7 +267,7 @@ def render_footnotes(root: Tag, context: RenderContext) -> None:
 
 
 @renders("p", phase=RenderPhase.POST, priority=90, name="paragraphs", nestable=False)
-def render_paragraphs(element: Tag, context: RenderContext) -> None:
+def render_paragraphs(element: Tag, _context: RenderContext) -> None:
     """Render plain paragraphs."""
     if element.get("class"):
         return

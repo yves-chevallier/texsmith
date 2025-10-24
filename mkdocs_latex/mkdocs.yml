@@ -1,0 +1,93 @@
+site_name: MkDocs LaTeX Plugin
+site_url: https://yves-chevallier.github.io/mkdocs-latex/
+site_author: Yves Chevallier
+repo_name: yves-chevallier/mkdocs-latex
+repo_url: https://github.com/yves-chevallier/mkdocs-latex
+copyright: Copyright &copy; 2025 Yves Chevallier
+theme:
+  language: fr
+  name: material
+  logo: images/latex-hummingbird.svg
+  font:
+    text: Source Sans 3
+  features:
+    - search
+    - navigation.instant
+    - navigation.tabs
+    - navigation.top
+    - navigation.indexes
+    - navigation.tracking
+    - navigation.expand
+    - navigation.sections
+    - toc.follow
+    - content.code.copy
+    - content.code.annotate
+    - content.tabs.link
+    - search.highlight
+    - search.share
+    - search.suggest
+  palette:
+    - scheme: default
+      media: "(prefers-color-scheme: light)"
+      primary: light blue
+      toggle:
+        icon: material/weather-night
+        name: Basculer en mode sombre
+    - scheme: slate
+      media: "(prefers-color-scheme: dark)"
+      primary: blue grey
+      toggle:
+        icon: material/weather-sunny
+        name: Basculer en mode clair
+  icon:
+    repo: fontawesome/brands/github
+extra:
+  version:
+    provider: mike
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/yves-chevallier/mkdocs-latex
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.critic
+  - pymdownx.inlinehilite
+  - pymdownx.caret
+  - pymdownx.keys
+  - pymdownx.mark
+  - pymdownx.tilde
+  - pymdownx.blocks.html
+  - toc:
+      permalink: true
+  - def_list
+  - footnotes
+  - attr_list
+  - md_in_html
+extra_css:
+  - css/pied-piper.css
+extra_javascript:
+  - https://unpkg.com/mathjax@3/es5/tex-mml-chtml.js
+  - https://cdn.jsdelivr.net/npm/vega@5
+  - https://cdn.jsdelivr.net/npm/vega-lite@5
+  - https://cdn.jsdelivr.net/npm/vega-embed@6
+
+plugins:
+  - search
+  - awesome-nav
+  - mkdocstrings:
+      default_handler: python
+      handlers:
+        python:
+          options:
+            show_source: true
+            show_docstring_description: true
+            show_signature_annotations: true
+            docstring_style: google
+            separate_signature: true
+            merge_init_into_class: true
+  - pills
+  - latex:
+      template: article
+      books:
+        - root: "MkDocs LaTeX Plugin"

@@ -6,6 +6,7 @@ from enum import Enum
 import re
 import selectors
 import subprocess
+from typing import ClassVar
 
 from rich.console import Console
 from rich.text import Text
@@ -308,7 +309,11 @@ class LatexLogParser:
 
         joiner = ""
         if summary and not summary.endswith((" ", "/", "-", "'", "(", "[")):
-            if text.startswith(tuple(".,;:!?)]")) or text[0] == "'" or (summary.endswith(tuple("0123456789")) and text[0].isdigit()):
+            if (
+                text.startswith(tuple(".,;:!?)]"))
+                or text[0] == "'"
+                or (summary.endswith(tuple("0123456789")) and text[0].isdigit())
+            ):
                 joiner = ""
             else:
                 joiner = " "
@@ -337,18 +342,10 @@ class LatexLogParser:
             return False
         if stripped.isdigit():
             trimmed_summary = summary.rstrip()
-            if trimmed_summary.endswith(tuple("0123456789")):
-                return True
-            if trimmed_summary.endswith("line"):
-                return True
-            return False
+            return trimmed_summary.endswith(tuple("0123456789")) or trimmed_summary.endswith("line")
         if stripped.replace(".", "").isdigit():
             trimmed_summary = summary.rstrip()
-            if trimmed_summary.endswith(tuple("0123456789")):
-                return True
-            if trimmed_summary.endswith("line"):
-                return True
-            return False
+            return trimmed_summary.endswith(tuple("0123456789")) or trimmed_summary.endswith("line")
         if len(stripped) <= 4 and stripped.islower():
             return True
         if len(stripped) <= 4 and stripped in {".", "..", "...", ",", ";", "pt", "pt."}:
@@ -361,9 +358,7 @@ class LatexLogParser:
             return True
         if stripped.startswith(("OT:", "LT:")) and len(summary) >= 2 and summary[-2] == "/":
             return True
-        if len(stripped) <= 6 and stripped.isalpha():
-            return True
-        return False
+        return len(stripped) <= 6 and stripped.isalpha()
 
     @staticmethod
     def _is_detail_line(line: str) -> bool:
@@ -375,22 +370,16 @@ class LatexLogParser:
             "*** ",
             "l.",
         )
-        if line.startswith(detail_prefixes):
-            return True
-        if line.startswith(" ") and line.strip():
-            return True
-        return False
+        return line.startswith(detail_prefixes) or (line.startswith(" ") and line.strip())
 
     @staticmethod
     def _should_ignore(line: str) -> bool:
         trimmed = line.strip()
-        if not trimmed:
-            return True
-        if trimmed.startswith("["):
-            return True
-        if trimmed in {"Output written on", "Transcript written on"}:
-            return True
-        return False
+        return (
+            not trimmed
+            or trimmed.startswith("[")
+            or trimmed in {"Output written on", "Transcript written on"}
+        )
 
     @staticmethod
     def _match_message(
@@ -409,12 +398,12 @@ class LatexLogParser:
 class LatexLogRenderer:
     """Render structured LaTeX messages to a Rich console."""
 
-    _SUMMARY_STYLE = {
+    _SUMMARY_STYLE: ClassVar[dict[LatexMessageSeverity, str]] = {
         LatexMessageSeverity.INFO: "cyan",
         LatexMessageSeverity.WARNING: "bold yellow",
         LatexMessageSeverity.ERROR: "bold red",
     }
-    _DETAIL_STYLE = {
+    _DETAIL_STYLE: ClassVar[dict[LatexMessageSeverity, str]] = {
         LatexMessageSeverity.INFO: "cyan",
         LatexMessageSeverity.WARNING: "yellow",
         LatexMessageSeverity.ERROR: "red",
@@ -471,7 +460,7 @@ class LatexLogRenderer:
         style = self._SUMMARY_STYLE.get(message.severity, "white")
         detail_style = self._DETAIL_STYLE.get(message.severity, "white")
         icon = {
-            LatexMessageSeverity.ERROR: "⨯",
+            LatexMessageSeverity.ERROR: "x",
             LatexMessageSeverity.WARNING: "▲",
         }.get(message.severity, "")
 

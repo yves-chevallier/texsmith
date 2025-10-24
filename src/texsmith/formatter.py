@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from collections.abc import Callable, Iterable
-import glob
 from pathlib import Path
 from typing import Any
 
@@ -54,9 +53,7 @@ class LaTeXFormatter:
 
         template_paths: list[Path] = []
         for ext in (".tex", ".cls"):
-            template_paths.extend(
-                Path(path) for path in glob.glob(f"{template_dir}/**/*{ext}", recursive=True)
-            )
+            template_paths.extend(template_dir.glob(f"**/*{ext}"))
 
         templates = [path.relative_to(template_dir) for path in template_paths]
         self.templates: dict[str, Template] = {

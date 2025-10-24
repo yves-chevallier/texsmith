@@ -5,7 +5,7 @@ texsmith = ">=0.6,<1.0"
 name = "article"
 version = "0.1.0"
 entrypoint = "template/template.tex"
-engine = "lualatex"
+engine = "xelatex"
 shell_escape = true # MUST BE TRUE for minted package
 texlive_year = 2023
 tlmgr_packages = [
@@ -31,7 +31,3 @@ backmatter = ""
 [latex.template.slots.mainmatter]
 default = true
 depth = "section"
-
-[latex.template.slots.abstract]
-depth = "section"
-strip_heading = true

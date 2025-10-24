@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+import sys
 
 from rich.console import Console
 from rich.text import Text
@@ -14,8 +15,20 @@ class CLIState:
 
     verbosity: int = 0
     show_tracebacks: bool = False
-    console: Console = field(default_factory=Console)
-    err_console: Console = field(default_factory=lambda: Console(stderr=True, highlight=False))
+    _console: Console | None = field(default=None, init=False, repr=False)
+    _err_console: Console | None = field(default=None, init=False, repr=False)
+
+    @property
+    def console(self) -> Console:
+        if self._console is None or self._console.file is not sys.stdout:
+            self._console = Console(file=sys.stdout)
+        return self._console
+
+    @property
+    def err_console(self) -> Console:
+        if self._err_console is None or self._err_console.file is not sys.stderr:
+            self._err_console = Console(file=sys.stderr, highlight=False)
+        return self._err_console
 
 
 _CLI_STATE = CLIState()

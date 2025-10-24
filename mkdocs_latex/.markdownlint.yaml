@@ -1,0 +1,4 @@
+MD046: false # Conflic between code and admonition blocks
+
+MD013:
+  line_length: 1000

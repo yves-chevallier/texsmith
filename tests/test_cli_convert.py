@@ -17,7 +17,7 @@ pytestmark = pytest.mark.skipif(convert is None, reason="Typer dependency is not
 
 
 @pytest.fixture(autouse=True)
-def change_to_project_root(monkeypatch: pytest.MonkeyPatch) -> None:
+def _change_to_project_root(monkeypatch: pytest.MonkeyPatch) -> None:
     project_root = Path(__file__).resolve().parents[1]
     monkeypatch.chdir(project_root)
 
@@ -91,10 +91,7 @@ Content here.
         assert output_file.exists()
         content = output_file.read_text(encoding="utf-8")
         assert r"\title{Sample Article\\\large Insights on Cheese}" in content
-        assert (
-            r"\author{Alice Example\thanks{Example University} \and Bob Example}"
-            in content
-        )
+        assert r"\author{Alice Example\thanks{Example University} \and Bob Example}" in content
         assert r"\date{2024-10-20}" in content
         assert r"\usepackage[french]{babel}" in content
 

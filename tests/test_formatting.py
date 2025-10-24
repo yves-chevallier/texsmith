@@ -53,9 +53,7 @@ def test_nested_emphasis_inside_underline(renderer: LaTeXRenderer) -> None:
 
 
 def test_keyboard_shortcut_rendering(renderer: LaTeXRenderer) -> None:
-    html = (
-        "<p>Press <span class='keys'><kbd class='key-control'>Ctrl</kbd><kbd>s</kbd></span></p>"
-    )
+    html = "<p>Press <span class='keys'><kbd class='key-control'>Ctrl</kbd><kbd>s</kbd></span></p>"
     latex = renderer.render(html)
     assert "\\keystroke{Ctrl}+\\keystroke{S}" in latex
 
@@ -80,8 +78,7 @@ def test_unicode_superscript_conversion(renderer: LaTeXRenderer) -> None:
     html = "<p>(0.1 s⁻¹, 1 s⁻¹, 10 s⁻¹)</p>"
     latex = renderer.render(html)
     assert (
-        "(0.1 s\\textsuperscript{-1}, 1 s\\textsuperscript{-1}, 10 s\\textsuperscript{-1})"
-        in latex
+        "(0.1 s\\textsuperscript{-1}, 1 s\\textsuperscript{-1}, 10 s\\textsuperscript{-1})" in latex
     )
 
 

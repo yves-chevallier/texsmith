@@ -1,0 +1,77 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "mkdocs-latex"
+version = "0.1.0"
+description = "Convert MkDocs documentation to LaTeX PDF."
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.13"
+authors = [
+    { name = "Yves Chevallier", email = "yves.chevalier@heig-vd.ch" }
+]
+keywords = [
+    "extensions",
+    "markdown",
+    "latex",
+    "mkdocs",
+    "convert"
+]
+dependencies = [
+    "mkdocs_latex>=0.1.0",
+]
+[project.urls]
+Homepage = "https://github.com/yves-chevallier/mkdocs-latex"
+
+[project.entry-points."mkdocs.plugins"]
+latex = "mkdocs_plugin_latex:LatexPlugin"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/mkdocs_plugin_latex"]
+
+[tool.hatch.build]
+exclude = [
+    ".uv-cache",
+    "build",
+    "site",
+]
+
+[tool.hatch.build.targets.sdist]
+exclude = [
+    ".uv-cache",
+    "build",
+    "site",
+]
+
+[dependency-groups]
+dev = [
+    "mkdocs>=1.6.1",
+    "mkdocs-awesome-nav>=3.2.0",
+    "mkdocs-material>=9.6.22",
+    "mkdocs-pills>=0.1.0",
+    "mkdocstrings-python>=1.18.2",
+    "pytest>=8.4.2",
+    "ruff>=0.14.1",
+]
+
+[tool.uv]
+default-groups = ["dev"]
+package = true
+
+[tool.ruff]
+extend-exclude = ["site"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP"]
+
+[tool.ruff.lint.per-file-ignores]
+"src/mkdocs_plugin_latex/cli.py" = ["B008"]
+
+[tool.ruff.lint.isort]
+combine-as-imports = true
+force-sort-within-sections = true
+known-first-party = ["mkdocs_plugin_latex"]
+section-order = ["future","standard-library","third-party","first-party","local-folder"]
+lines-after-imports = 2

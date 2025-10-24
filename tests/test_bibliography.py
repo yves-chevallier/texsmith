@@ -172,9 +172,7 @@ def test_doi_bibliography_fetcher_uses_fallbacks() -> None:
     assert "Demo Reference" in payload
     assert fetcher._session.calls[0].startswith("https://doi.org/10.1000/demo")
     assert fetcher._session.calls[1].startswith("https://dx.doi.org/10.1000/demo")
-    assert fetcher._session.calls[2].startswith(
-        "https://api.crossref.org/works/10.1000/demo"
-    )
+    assert fetcher._session.calls[2].startswith("https://api.crossref.org/works/10.1000/demo")
 
     with pytest.raises(DoiLookupError):
         fetcher.fetch("")

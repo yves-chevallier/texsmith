@@ -94,6 +94,9 @@ extend-exclude = [
   ".venv",
   "venv",
   "build",
+  "templates",
+  "examples",
+  "experiments",
   "dist",
   "site",
   "docs/_build",
@@ -114,6 +117,34 @@ docstring-code-line-length = 100
 select = [
   "E","F","I","B","UP",
   "C90","N","D","ANN","C4","SIM","PTH","T20","ERA","ARG","G","TRY","DTZ","SLF","PT","RUF","A",
+]
+ignore = [
+  "E501",  # line too long (handled by line-length)
+  "F403",  # 'from module import *' used; unable to detect undefined names
+  "F401",  # module imported but unused
+  "D107",  # missing docstring in __init__
+  "D202",  # No blank lines after function docstring
+  "D203",  # 1 blank line required before class docstring
+  "D212",  # Multi-line docstring summary should start at the first line
+  "D214",  # Multi-line docstring summary should start and end on triple quotes
+  "D100",  # missing docstring in public module
+  "D101",  # missing docstring in public class
+  "D102",  # missing docstring in public method
+  "D103",  # missing docstring in public function
+  "D104",  # missing docstring in public package
+  "D105",  # missing docstring in magic method
+  "D200",  # One-line docstring should fit on one line
+  "D205",  # Blank line required between summary line and description
+  "D301",  # Use raw string or escape the backslash
+  "D415",  # First line of docstring should end with punctuation
+  "ANN101",  # Missing type annotation for self in method
+  "ANN201",  # Missing return type annotation for public function
+  "ARG002",  # Unused argument
+  "B008",   # Function call in default argument (Typer pattern)
+  "S101",    # Use of assert detected
+  "TRY003",  # Catching too general exception Exception
+  "ANN401",  # Missing type annotation for function argument
+  "C901",  # Function is too complex
 ]
 
 [tool.ruff.lint.isort]
@@ -138,4 +169,4 @@ max-complexity = 10
 [tool.ruff.lint.per-file-ignores]
 "src/texsmith/cli.py" = ["B008"]
 "**/__init__.py" = ["F401", "F403"]
-"tests/**" = ["D", "T20", "S101"]
+"tests/**" = ["D", "T20", "S101", "ANN", "ARG002", "SLF001", "PT018", "ARG001", "TRY003"]

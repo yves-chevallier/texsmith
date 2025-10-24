@@ -104,7 +104,7 @@ def test_cli_front_matter_bibliography_fetches_doi(monkeypatch, tmp_path: Path) 
     calls: list[str] = []
 
     class DummyFetcher:
-        def __init__(self, *args, **kwargs) -> None:  # noqa: D401 - simple stub
+        def __init__(self, *args, **kwargs) -> None:
             pass
 
         def fetch(self, value: str) -> str:
