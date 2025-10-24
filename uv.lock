@@ -632,6 +632,12 @@ wheels = [
 ]
 
 [[package]]
+name = "pylatexenc"
+version = "2.10"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/5d/ab/34ec41718af73c00119d0351b7a2531d2ebddb51833a36448fc7b862be60/pylatexenc-2.10.tar.gz", hash = "sha256:3dd8fd84eb46dc30bee1e23eaab8d8fb5a7f507347b23e5f38ad9675c84f40d3", size = 162597, upload-time = "2021-04-06T07:56:07.854Z" }
+
+[[package]]
 name = "pymdown-extensions"
 version = "10.16.1"
 source = { registry = "https://pypi.org/simple" }
@@ -843,13 +849,13 @@ dependencies = [
     { name = "cairosvg" },
     { name = "emoji" },
     { name = "jinja2" },
-    { name = "latexcodec" },
     { name = "markdown" },
     { name = "mkdocs-material" },
     { name = "pillow" },
     { name = "pybtex" },
     { name = "pydantic" },
     { name = "pygments" },
+    { name = "pylatexenc" },
     { name = "pymdown-extensions" },
     { name = "pypdf" },
     { name = "python-markdown-math" },
@@ -874,13 +880,13 @@ requires-dist = [
     { name = "cairosvg", specifier = ">=2.8.2" },
     { name = "emoji", specifier = ">=2.12.1" },
     { name = "jinja2", specifier = ">=3.1.6" },
-    { name = "latexcodec", specifier = ">=2.0.1" },
     { name = "markdown", specifier = ">=3.7" },
     { name = "mkdocs-material", specifier = ">=9.6.22" },
     { name = "pillow", specifier = ">=12.0.0" },
     { name = "pybtex", specifier = ">=0.24.0" },
     { name = "pydantic", specifier = ">=2.7.0" },
     { name = "pygments", specifier = ">=2.18.0" },
+    { name = "pylatexenc", specifier = ">=2.10" },
     { name = "pymdown-extensions", specifier = ">=10.9" },
     { name = "pypdf", specifier = ">=6.1.1" },
     { name = "python-markdown-math", specifier = ">=0.9" },
