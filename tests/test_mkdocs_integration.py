@@ -56,7 +56,7 @@ pytestmark = pytest.mark.skipif(
 
 
 @pytest.fixture
-def stubbed_converters() -> Iterator[None]:
+def _stubbed_converters() -> Iterator[None]:
     converters = ("drawio", "mermaid", "fetch-image")
     originals = {key: registry.get(key) for key in converters}
     for key in converters:
@@ -68,8 +68,8 @@ def stubbed_converters() -> Iterator[None]:
             register_converter(key, original)
 
 
-def test_full_document_conversion(tmp_path: Path, stubbed_converters: None) -> None:
-    del stubbed_converters
+@pytest.mark.usefixtures("_stubbed_converters")
+def test_full_document_conversion(tmp_path: Path) -> None:
     assert mkdocs_build is not None
     assert load_config is not None
 

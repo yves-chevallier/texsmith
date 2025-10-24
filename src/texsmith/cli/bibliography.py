@@ -18,7 +18,7 @@ def format_bibliography_person(person: Mapping[str, object]) -> str:
     parts: list[str] = []
     for field in ("first", "middle", "prelast", "last", "lineage"):
         value = person.get(field)
-        if isinstance(value, Iterable) and not isinstance(value, (str, bytes)):
+        if isinstance(value, Iterable) and not isinstance(value, str | bytes):
             parts.extend(str(segment) for segment in value if segment)
         elif isinstance(value, str) and value.strip():
             parts.append(value.strip())

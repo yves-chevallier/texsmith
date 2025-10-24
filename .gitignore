@@ -31,6 +31,8 @@ __pycache__/
 *.listing
 *.lof
 *.log
+!test-mdpi.log
+!examples/latexmk-output.log
 *.lol
 *.lot
 *.maf

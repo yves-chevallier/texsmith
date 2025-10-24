@@ -69,13 +69,13 @@ def discard_unwanted(root: Tag, context: RenderContext) -> None:
 
 
 @renders("hr", phase=RenderPhase.PRE, name="remove_horizontal_rules")
-def remove_horizontal_rules(element: Tag, context: RenderContext) -> None:
+def remove_horizontal_rules(element: Tag, _context: RenderContext) -> None:
     """Remove ``<hr>`` nodes early during preprocessing."""
     element.extract()
 
 
 @renders("br", phase=RenderPhase.INLINE, name="line_breaks")
-def replace_line_breaks(element: Tag, context: RenderContext) -> None:
+def replace_line_breaks(element: Tag, _context: RenderContext) -> None:
     """Convert ``<br>`` tags into explicit LaTeX line breaks."""
     node = NavigableString("\\")
     node.processed = True
@@ -142,7 +142,7 @@ def render_inline_superscript(element: Tag, context: RenderContext) -> None:
 
 
 @renders("div", phase=RenderPhase.BLOCK, name="grid_cards", auto_mark=False)
-def unwrap_grid_cards(element: Tag, context: RenderContext) -> None:
+def unwrap_grid_cards(element: Tag, _context: RenderContext) -> None:
     """Unwrap ``div.grid-cards`` containers."""
     classes = element.get("class") or []
     if "grid-cards" in classes:

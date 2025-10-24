@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from typing import Any
+
 from bs4 import Tag
 from bs4.element import NavigableString
 
@@ -58,7 +60,7 @@ def _render_exercise(
             answers.append(note_text)
         note.decompose()
 
-    with base_admonitions._use_tcolorbox_figures(context):
+    with base_admonitions._use_tcolorbox_figures(context):  # noqa: SLF001
         content = element.get_text(strip=False).strip()
 
     if solutions or answers:
@@ -102,7 +104,9 @@ def render_exercise_div(element: Tag, context: RenderContext) -> None:
     if "admonition" not in classes or "exercise" not in classes:
         return
 
-    title = base_admonitions._extract_title(element.find("p", class_="admonition-title"))
+    title = base_admonitions._extract_title(  # noqa: SLF001
+        element.find("p", class_="admonition-title")
+    )
     _render_exercise(element, context, classes=classes, title=title)
 
 
@@ -153,7 +157,7 @@ def render_epigraph(element: Tag, context: RenderContext) -> None:
     element.replace_with(node)
 
 
-def register(renderer) -> None:
+def register(renderer: Any) -> None:
     """Register Material-specific exercise and epigraph handlers."""
     renderer.register(render_exercise_div)
     renderer.register(render_exercise_details)

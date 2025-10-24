@@ -11,7 +11,7 @@ import hashlib
 import logging
 from pathlib import Path
 import re
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from bs4 import BeautifulSoup, FeatureNotFound, NavigableString, Tag
 from pybtex.exceptions import PybtexError
@@ -59,7 +59,6 @@ __all__ = [
     "ConversionResult",
     "DocumentContext",
     "GenerationStrategy",
-    "MarkdownConversionError",
     "SegmentContext",
     "TemplateBinding",
     "TemplateRuntime",
@@ -118,20 +117,6 @@ class ConversionResult:
     template_overrides: dict[str, Any] = field(default_factory=dict)
     document_context: DocumentContext | None = None
     binder_context: BinderContext | None = None
-
-
-@dataclass(slots=True)
-class TemplateRuntime:
-    """Resolved template metadata reused across conversions."""
-
-    instance: WrappableTemplate
-    name: str
-    engine: str | None
-    requires_shell_escape: bool
-    slots: dict[str, TemplateSlot]
-    default_slot: str
-    formatter_overrides: dict[str, Path]
-    base_level: int | None
 
 
 class ConversionError(Exception):
@@ -641,7 +626,7 @@ def parse_slot_mapping(raw: Any) -> dict[str, str]:
                     overrides[key] = selector
         return overrides
 
-    if isinstance(raw, Iterable) and not isinstance(raw, (str, bytes)):
+    if isinstance(raw, Iterable) and not isinstance(raw, str | bytes):
         for entry in raw:
             if not isinstance(entry, Mapping):
                 continue
@@ -825,10 +810,7 @@ def extract_slot_fragments(
     else:
         remainder_html = "".join(str(node) for node in container.contents)
 
-    if fragments:
-        remainder_position = min(fragment.position for fragment in fragments) - 1
-    else:
-        remainder_position = -1
+    remainder_position = min(fragment.position for fragment in fragments) - 1 if fragments else -1
 
     fragments.append(
         SlotFragment(name=default_slot, html=remainder_html, position=remainder_position)
@@ -865,8 +847,8 @@ def heading_level_for(node: Tag) -> int:
 
 def copy_document_state(target: DocumentState, source: DocumentState) -> None:
     """Synchronise ``target`` with a source ``DocumentState`` instance."""
-    for field in dataclasses.fields(DocumentState):
-        setattr(target, field.name, copy.deepcopy(getattr(source, field.name)))
+    for metadata_field in dataclasses.fields(DocumentState):
+        setattr(target, metadata_field.name, copy.deepcopy(getattr(source, metadata_field.name)))
 
 
 def extract_content(html: str, selector: str) -> str:

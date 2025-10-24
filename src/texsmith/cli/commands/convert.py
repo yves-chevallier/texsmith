@@ -357,8 +357,8 @@ def convert(
             callbacks=callbacks,
             document_formats=document_formats,
         )
-    except ConversionError:
-        raise typer.Exit(code=1)
+    except ConversionError as exc:
+        raise typer.Exit(code=1) from exc
 
 
 def _convert_single_without_template(

@@ -129,10 +129,7 @@ class AssetRegistry:
         """Register a generated artefact and return its resolved path."""
         path = Path(artefact)
         if not path.is_absolute():
-            if self.copy_assets:
-                path = (self.output_root / path).resolve()
-            else:
-                path = Path(path)
+            path = (self.output_root / path).resolve() if self.copy_assets else Path(path)
         self.assets_map[key] = path
         return path
 

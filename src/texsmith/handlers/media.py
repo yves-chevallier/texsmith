@@ -127,10 +127,7 @@ def _figure_template_for(element: Tag) -> str | None:
     current = element
     while current is not None:
         classes = getattr(current, "get", lambda *_: None)("class") or []
-        if isinstance(classes, str):
-            class_list = classes.split()
-        else:
-            class_list = list(classes)
+        class_list = classes.split() if isinstance(classes, str) else list(classes)
         if any(cls in {"admonition", "exercise"} for cls in class_list):
             return "figure_tcolorbox"
         if getattr(current, "name", None) == "details":

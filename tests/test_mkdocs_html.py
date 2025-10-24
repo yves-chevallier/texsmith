@@ -55,7 +55,7 @@ def load_soup(mkdocs_site: Path) -> Callable[[str], BeautifulSoup]:
 
 
 def test_formatting_page_contains_inline_elements(
-    load_soup: Callable[[str], BeautifulSoup]
+    load_soup: Callable[[str], BeautifulSoup],
 ) -> None:
     soup = load_soup("formatting")
 
@@ -102,9 +102,7 @@ def test_headings_page_levels(load_soup: Callable[[str], BeautifulSoup]) -> None
     assert "Fifth Level Heading" in h5.get_text(strip=True)
 
 
-def test_code_page_has_syntax_highlighting(
-    load_soup: Callable[[str], BeautifulSoup]
-) -> None:
+def test_code_page_has_syntax_highlighting(load_soup: Callable[[str], BeautifulSoup]) -> None:
     soup = load_soup("code")
 
     highlight_blocks = soup.select("div.highlight")

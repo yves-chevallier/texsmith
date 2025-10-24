@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from types import MethodType
 from typing import Any
-import xml.etree.ElementTree as etree
+import xml.etree.ElementTree as ElementTree
 
 from markdown.extensions import Extension
 from markdown.extensions.footnotes import FootnoteExtension
@@ -73,7 +73,7 @@ class MissingFootnotesExtension(Extension):
 
             footnote_id = match.group(1)
             extension.missing_ids.add(footnote_id)
-            node = extension._build_placeholder(footnote_id, self_pattern)
+            node = extension.build_placeholder(footnote_id, self_pattern)
             return node, match.start(0), match.end(0)
 
         pattern.handleMatch = MethodType(patched_handle, pattern)
@@ -92,9 +92,9 @@ class MissingFootnotesExtension(Extension):
                 return None
         return None
 
-    def _build_placeholder(self, identifier: str, pattern: Any) -> etree.Element:
+    def build_placeholder(self, identifier: str, pattern: Any) -> ElementTree.Element:
         element_name = self.getConfig("element")
-        node = etree.Element(element_name)
+        node = ElementTree.Element(element_name)
 
         css_class = self.getConfig("css_class")
         if css_class:
@@ -108,7 +108,7 @@ class MissingFootnotesExtension(Extension):
         if self.getConfig("link_to_list"):
             footnote_extension = self._get_footnotes_extension(pattern.md)
             separator = footnote_extension.get_separator() if footnote_extension else ":"
-            anchor = etree.SubElement(node, "a")
+            anchor = ElementTree.SubElement(node, "a")
             if css_class:
                 anchor.set("class", css_class)
             anchor.set("href", f"#fn{separator}{identifier}")
@@ -119,6 +119,6 @@ class MissingFootnotesExtension(Extension):
         return node
 
 
-def makeExtension(**kwargs: Any) -> MissingFootnotesExtension:
+def makeExtension(**kwargs: Any) -> MissingFootnotesExtension:  # noqa: N802 - markdown hook
     """Entry point exposed to Python-Markdown."""
     return MissingFootnotesExtension(**kwargs)

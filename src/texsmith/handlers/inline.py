@@ -190,7 +190,7 @@ def _prepare_plain_text(text: str) -> str:
 
 
 @renders(phase=RenderPhase.PRE, name="escape_plain_text", auto_mark=False)
-def escape_plain_text(root: Tag, context: RenderContext) -> None:
+def escape_plain_text(root: Tag, _context: RenderContext) -> None:
     """Escape LaTeX characters on plain text nodes outside code blocks."""
     for node in list(root.find_all(string=True)):
         if getattr(node, "processed", False):
@@ -292,7 +292,7 @@ def render_inline_code(element: Tag, context: RenderContext) -> None:
 
 
 @renders("span", phase=RenderPhase.PRE, priority=60, name="inline_math", nestable=False)
-def render_math_inline(element: Tag, context: RenderContext) -> None:
+def render_math_inline(element: Tag, _context: RenderContext) -> None:
     """Preserve inline math payloads untouched."""
     classes = element.get("class") or []
     if "arithmatex" not in classes:
@@ -304,7 +304,7 @@ def render_math_inline(element: Tag, context: RenderContext) -> None:
 
 
 @renders("div", phase=RenderPhase.PRE, priority=70, name="math_block", nestable=False)
-def render_math_block(element: Tag, context: RenderContext) -> None:
+def render_math_block(element: Tag, _context: RenderContext) -> None:
     """Preserve block math payloads."""
     classes = element.get("class") or []
     if "arithmatex" not in classes:
@@ -316,7 +316,7 @@ def render_math_block(element: Tag, context: RenderContext) -> None:
 
 
 @renders("script", phase=RenderPhase.PRE, priority=65, name="math_script", nestable=False)
-def render_math_script(element: Tag, context: RenderContext) -> None:
+def render_math_script(element: Tag, _context: RenderContext) -> None:
     """Preserve math payloads generated via script tags (e.g. mdx_math)."""
     type_attr = element.get("type")
     if not isinstance(type_attr, str):

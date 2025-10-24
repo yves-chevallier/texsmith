@@ -27,9 +27,7 @@ def test_missing_asset_raises() -> None:
 
 def test_acronym_tracking() -> None:
     state = DocumentState()
-    key = state.remember_acronym(
-        "LASER", "Light Amplification by Stimulated Emission of Radiation"
-    )
+    key = state.remember_acronym("LASER", "Light Amplification by Stimulated Emission of Radiation")
     assert key
     assert "LASER" in state.acronym_keys
     assert state.acronym_keys["LASER"] == key

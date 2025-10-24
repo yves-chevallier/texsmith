@@ -261,7 +261,7 @@ def compute_pmi(term_tokens: list[str], unigram_counts: Counter, total_tokens: i
     def prob(tok):
         return unigram_counts[tok] / total_tokens if unigram_counts[tok] else 1e-12
 
-    pairs = list(zip(term_tokens, term_tokens[1:]))
+    pairs = list(zip(term_tokens, term_tokens[1:], strict=False))
     # estimation naïve: P(xy) ~= min(P(x), P(y)) / 5  (borne prudente)
     # on préfère un critère discriminant simple: somme log(P(xy)/(P(x)P(y))) avec P(xy) ~ min(Px,Py)/K
     pmi_vals = []
