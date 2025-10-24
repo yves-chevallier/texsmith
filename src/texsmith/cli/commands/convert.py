@@ -18,7 +18,7 @@ from ...conversion import (
     convert_document,
     load_template_runtime,
 )
-from ...markdown import DEFAULT_MARKDOWN_EXTENSIONS, resolve_markdown_extensions
+from ...markdown import resolve_markdown_extensions
 from ...templates import TemplateError, copy_template_assets
 from ..state import debug_enabled, emit_error, emit_warning
 from ..utils import (
@@ -27,6 +27,7 @@ from ..utils import (
     classify_input_source,
     determine_output_target,
     organise_slot_overrides,
+    prepare_document_context,
     resolve_option,
     split_document_inputs,
     write_output_file,
@@ -405,15 +406,23 @@ def _convert_single_without_template(
     else:
         conversion_output_dir = Path("build")
 
-    result = convert_document(
-        input_path=document_path,
-        output_dir=conversion_output_dir,
+    document_context = prepare_document_context(
+        document_path=document_path,
+        kind=input_format,
         selector=selector,
         full_document=full_document,
         base_level=base_level,
         heading_level=heading_level,
         drop_title=drop_title,
         numbered=numbered,
+        markdown_extensions=markdown_extensions,
+        callbacks=callbacks,
+        emit_error_callback=emit_error,
+    )
+
+    result = convert_document(
+        document=document_context,
+        output_dir=conversion_output_dir,
         parser=parser,
         disable_fallback_converters=disable_fallback_converters,
         copy_assets=copy_assets,
@@ -422,10 +431,8 @@ def _convert_single_without_template(
         persist_debug_html=debug_snapshot,
         language=language,
         slot_overrides=slot_overrides,
-        markdown_extensions=markdown_extensions or list(DEFAULT_MARKDOWN_EXTENSIONS),
         bibliography_files=bibliography_files,
         callbacks=callbacks,
-        input_format=input_format,
     )
 
     if output_mode in {"stdout", "directory"}:
@@ -468,15 +475,23 @@ def _convert_single_with_template(
     callbacks: ConversionCallbacks,
     input_format: InputKind,
 ) -> None:
-    result = convert_document(
-        input_path=document_path,
-        output_dir=output_dir,
+    document_context = prepare_document_context(
+        document_path=document_path,
+        kind=input_format,
         selector=selector,
         full_document=full_document,
         base_level=base_level,
         heading_level=heading_level,
         drop_title=drop_title,
         numbered=numbered,
+        markdown_extensions=markdown_extensions,
+        callbacks=callbacks,
+        emit_error_callback=emit_error,
+    )
+
+    result = convert_document(
+        document=document_context,
+        output_dir=output_dir,
         parser=parser,
         disable_fallback_converters=disable_fallback_converters,
         copy_assets=copy_assets,
@@ -485,11 +500,9 @@ def _convert_single_with_template(
         persist_debug_html=debug_snapshot,
         language=language,
         slot_overrides=slot_overrides,
-        markdown_extensions=markdown_extensions or list(DEFAULT_MARKDOWN_EXTENSIONS),
         bibliography_files=bibliography_files,
         template_runtime=template_runtime,
         callbacks=callbacks,
-        input_format=input_format,
     )
 
     if result.tex_path is not None:
@@ -535,15 +548,23 @@ def _convert_multiple_without_template(
         else:
             conversion_output_dir = Path("build")
 
-        result = convert_document(
-            input_path=document_path,
-            output_dir=conversion_output_dir,
+        document_context = prepare_document_context(
+            document_path=document_path,
+            kind=document_formats[document_path],
             selector=selector,
             full_document=full_document,
             base_level=base_level,
             heading_level=heading_level,
             drop_title=drop_title and index == 0,
             numbered=numbered,
+            markdown_extensions=markdown_extensions,
+            callbacks=callbacks,
+            emit_error_callback=emit_error,
+        )
+
+        result = convert_document(
+            document=document_context,
+            output_dir=conversion_output_dir,
             parser=parser,
             disable_fallback_converters=disable_fallback_converters,
             copy_assets=copy_assets,
@@ -552,11 +573,8 @@ def _convert_multiple_without_template(
             persist_debug_html=debug_snapshot,
             language=language,
             slot_overrides=slot_overrides.get(document_path),
-            markdown_extensions=markdown_extensions
-            or list(DEFAULT_MARKDOWN_EXTENSIONS),
             bibliography_files=bibliography_files,
             callbacks=callbacks,
-            input_format=document_formats[document_path],
         )
 
         pieces.append(result.latex_output)
@@ -635,15 +653,23 @@ def _convert_multiple_with_template(
     aggregated_slots.setdefault(default_slot_name, [])
 
     for index, document_path in enumerate(documents):
-        result = convert_document(
-            input_path=document_path,
-            output_dir=output_dir,
+        document_context = prepare_document_context(
+            document_path=document_path,
+            kind=document_formats[document_path],
             selector=selector,
             full_document=full_document,
             base_level=base_level,
             heading_level=heading_level,
             drop_title=drop_title and index == 0,
             numbered=numbered,
+            markdown_extensions=markdown_extensions,
+            callbacks=callbacks,
+            emit_error_callback=emit_error,
+        )
+
+        result = convert_document(
+            document=document_context,
+            output_dir=output_dir,
             parser=parser,
             disable_fallback_converters=disable_fallback_converters,
             copy_assets=copy_assets,
@@ -652,14 +678,11 @@ def _convert_multiple_with_template(
             persist_debug_html=debug_snapshot,
             language=language,
             slot_overrides=slot_overrides.get(document_path),
-            markdown_extensions=markdown_extensions
-            or list(DEFAULT_MARKDOWN_EXTENSIONS),
             bibliography_files=bibliography_files,
             state=shared_state,
             template_runtime=template_runtime,
             wrap_document=False,
             callbacks=callbacks,
-            input_format=document_formats[document_path],
         )
 
         shared_state = result.document_state

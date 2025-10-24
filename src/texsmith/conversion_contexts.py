@@ -4,16 +4,11 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Mapping, Sequence
+from typing import Any, Mapping
 
 from .bibliography import BibliographyCollection
 from .config import BookConfig
 from .templates import TemplateBinding
-
-from typing import TYPE_CHECKING
-
-if TYPE_CHECKING:
-    from .conversion import InputKind
 
 
 @dataclass(slots=True)
@@ -58,13 +53,8 @@ class DocumentContext:
     heading_level: int
     numbered: bool
     drop_title: bool
-    input_format: "InputKind"
-    selector: str
-    full_document: bool
-    metadata: dict[str, Any] = field(default_factory=dict)
     front_matter: dict[str, Any] = field(default_factory=dict)
     slot_requests: dict[str, str] = field(default_factory=dict)
-    normalized_markdown_extensions: Sequence[str] = field(default_factory=tuple)
     language: str | None = None
     bibliography: dict[str, Any] = field(default_factory=dict)
     assets: list[AssetMapping] = field(default_factory=list)
