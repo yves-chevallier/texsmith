@@ -56,9 +56,7 @@ def test_parser_extracts_error_and_context() -> None:
 
     messages = list(parser.messages)
     error_messages = [
-        message
-        for message in messages
-        if message.severity is LatexMessageSeverity.ERROR
+        message for message in messages if message.severity is LatexMessageSeverity.ERROR
     ]
     assert error_messages, "Expected to find at least one LaTeX error message"
 
@@ -70,9 +68,7 @@ def test_parser_extracts_error_and_context() -> None:
     assert "Emergency stop." in joined_details
     assert "l.2 \\Title" in joined_details
 
-    latex2e_messages = [
-        message for message in messages if message.summary.startswith("LaTeX2e")
-    ]
+    latex2e_messages = [message for message in messages if message.summary.startswith("LaTeX2e")]
     assert latex2e_messages, "Expected to capture LaTeX2e banner"
     assert latex2e_messages[0].indent > 0
 
@@ -104,8 +100,7 @@ def test_parser_merges_wrapped_paths() -> None:
 def test_parser_merges_wrapped_warning_numbers() -> None:
     parser = LatexLogParser()
     lines = [
-        "LaTeX Warning: Reference `melting-behavior' "
-        "on page 2 undefined on input line 2\n",
+        "LaTeX Warning: Reference `melting-behavior' on page 2 undefined on input line 2\n",
         "86.\n",
     ]
     for line in lines:

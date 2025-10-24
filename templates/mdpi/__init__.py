@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
-from collections.abc import Iterable
+from collections.abc import Iterable, Mapping
 from pathlib import Path
-from typing import Any, Mapping
+from typing import Any
 
 from texsmith.templates import TemplateError, WrappableTemplate
 from texsmith.utils import escape_latex_chars
@@ -419,9 +419,7 @@ class Template(WrappableTemplate):
                             affiliation_registry[key]["emails"].append(escaped_email)
 
             if corresponding and email_value:
-                correspondences.append(
-                    f"{escaped_name} ({escape_latex_chars(email_value)})"
-                )
+                correspondences.append(f"{escaped_name} ({escape_latex_chars(email_value)})")
             elif corresponding:
                 correspondences.append(escaped_name)
 
@@ -517,9 +515,7 @@ class Template(WrappableTemplate):
         for note_index, note in enumerate(notes[2:], start=2):
             if note_index >= len(self._NOTE_COMMANDS):
                 break
-            extra_notes.append(
-                {"command": f"\\{self._NOTE_COMMANDS[note_index]}", "text": note}
-            )
+            extra_notes.append({"command": f"\\{self._NOTE_COMMANDS[note_index]}", "text": note})
 
         return (
             author_block,

@@ -44,7 +44,6 @@ MERMAID_FILE_SUFFIXES = (".mmd", ".mermaid")
 
 def _decode_mermaid_pako(payload: str) -> str:
     """Decode a Mermaid Live pako payload into plain text."""
-
     token = payload.strip()
     if not token:
         raise InvalidNodeError("Mermaid payload is empty")
@@ -74,7 +73,6 @@ def _decode_mermaid_pako(payload: str) -> str:
 
 def _extract_mermaid_live_diagram(src: str) -> str | None:
     """Return Mermaid source encoded in a mermaid.live URL."""
-
     try:
         parsed = urlparse(src)
     except ValueError:
@@ -107,7 +105,6 @@ def _extract_mermaid_live_diagram(src: str) -> str | None:
 
 def _load_mermaid_diagram(context: RenderContext, src: str) -> tuple[str, str] | None:
     """Attempt to load a Mermaid diagram from a local file or URL."""
-
     lowercase = src.lower()
     if lowercase.endswith(MERMAID_FILE_SUFFIXES):
         resolved = _resolve_source_path(context, src)
@@ -116,9 +113,7 @@ def _load_mermaid_diagram(context: RenderContext, src: str) -> tuple[str, str] |
         try:
             return resolved.read_text(encoding="utf-8"), "file"
         except OSError as exc:
-            raise AssetMissingError(
-                f"Unable to read Mermaid diagram '{resolved}'"
-            ) from exc
+            raise AssetMissingError(f"Unable to read Mermaid diagram '{resolved}'") from exc
 
     diagram = _extract_mermaid_live_diagram(src)
     if diagram is not None:
@@ -129,7 +124,6 @@ def _load_mermaid_diagram(context: RenderContext, src: str) -> tuple[str, str] |
 
 def _figure_template_for(element: Tag) -> str | None:
     """Determine which figure template to use based on ancestor metadata."""
-
     current = element
     while current is not None:
         classes = getattr(current, "get", lambda *_: None)("class") or []
@@ -147,7 +141,6 @@ def _figure_template_for(element: Tag) -> str | None:
 
 def _resolve_source_path(context: RenderContext, src: str) -> Path | None:
     """Resolve a local asset path using runtime hints."""
-
     runtime_dir = context.runtime.get("source_dir")
     if runtime_dir is not None:
         candidate = Path(runtime_dir) / src
@@ -179,7 +172,6 @@ def _apply_figure_template(
     template: str | None = None,
 ) -> NavigableString:
     """Render the shared figure template and return a new node."""
-
     template_name = template or context.runtime.get("figure_template", "figure")
     formatter = getattr(context.formatter, template_name)
     asset_path = context.assets.latex_path(path)
@@ -203,7 +195,6 @@ def _render_mermaid_diagram(
     caption: str | None = None,
 ) -> NavigableString | None:
     """Render a Mermaid diagram and return the resulting LaTeX node."""
-
     extracted_caption, body = _mermaid_caption(diagram)
     effective_caption = extracted_caption if extracted_caption is not None else caption
     if not context.runtime.get("copy_assets", True):
@@ -219,14 +210,10 @@ def _render_mermaid_diagram(
     if mermaid_config:
         project_dir = getattr(context.config, "project_dir", None)
         if project_dir is None:
-            raise AssetMissingError(
-                "Project directory required to render Mermaid diagrams"
-            )
+            raise AssetMissingError("Project directory required to render Mermaid diagrams")
         render_options["config_filename"] = Path(project_dir) / mermaid_config
 
-    artefact = mermaid2pdf(
-        body, output_dir=context.assets.output_root, **render_options
-    )
+    artefact = mermaid2pdf(body, output_dir=context.assets.output_root, **render_options)
 
     asset_key = f"mermaid::{hashlib.sha256(body.encode('utf-8')).hexdigest()}"
     stored_path = context.assets.register(asset_key, artefact)
@@ -243,7 +230,6 @@ def _render_mermaid_diagram(
 
 def _mermaid_caption(diagram: str) -> tuple[str | None, str]:
     """Extract caption from the diagram comment header."""
-
     lines = diagram.splitlines()
     if lines and lines[0].strip().startswith("%%"):
         caption = lines[0].strip()[2:].strip() or None
@@ -254,7 +240,6 @@ def _mermaid_caption(diagram: str) -> tuple[str | None, str]:
 
 def _looks_like_mermaid(diagram: str) -> bool:
     """Heuristically detect Mermaid diagrams."""
-
     lower = diagram.lstrip().lower()
     return any(keyword in lower for keyword in MERMAID_KEYWORDS)
 
@@ -262,7 +247,6 @@ def _looks_like_mermaid(diagram: str) -> bool:
 @renders("img", phase=RenderPhase.BLOCK, name="render_images", nestable=False)
 def render_images(element: Tag, context: RenderContext) -> None:
     """Convert <img> nodes into LaTeX figures and manage assets."""
-
     if not context.runtime.get("copy_assets", True):
         alt_text = element.get("alt") or element.get("title") or ""
         placeholder = alt_text.strip() or "[image]"
@@ -297,9 +281,7 @@ def render_images(element: Tag, context: RenderContext) -> None:
             caption=alt_text,
         )
         if figure_node is None:
-            raise InvalidNodeError(
-                f"Mermaid source '{src}' does not contain a valid diagram"
-            )
+            raise InvalidNodeError(f"Mermaid source '{src}' does not contain a valid diagram")
         element.replace_with(figure_node)
         return
 
@@ -338,7 +320,6 @@ def render_images(element: Tag, context: RenderContext) -> None:
 @renders("div", phase=RenderPhase.BLOCK, name="render_mermaid", nestable=False)
 def render_mermaid(element: Tag, context: RenderContext) -> None:
     """Convert Mermaid code blocks inside highlight containers."""
-
     classes = element.get("class") or []
     if "highlight" not in classes and "mermaid" not in classes:
         return
@@ -359,7 +340,6 @@ def render_mermaid(element: Tag, context: RenderContext) -> None:
 @renders("pre", phase=RenderPhase.BLOCK, name="render_mermaid_pre", nestable=False)
 def render_mermaid_pre(element: Tag, context: RenderContext) -> None:
     """Handle <pre class=\"mermaid\"> blocks."""
-
     classes = element.get("class") or []
     if "mermaid" not in classes:
         return

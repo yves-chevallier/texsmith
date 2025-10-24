@@ -47,7 +47,6 @@ class LaTeXRenderer:
 
     def _register_builtin_handlers(self) -> None:
         """Register the initial set of handlers for the renderer."""
-
         from .handlers import (
             admonitions as admonition_handlers,
             basic as basic_handlers,
@@ -72,7 +71,6 @@ class LaTeXRenderer:
         Arguments can be callables decorated with :func:`renders` or modules/classes
         exposing decorated attributes.
         """
-
         definition = getattr(handler, "__render_rule__", None)
         if definition is not None:
             self.engine.register(handler)
@@ -88,7 +86,6 @@ class LaTeXRenderer:
         state: DocumentState | None = None,
     ) -> str:
         """Render an HTML fragment into LaTeX."""
-
         try:
             soup = BeautifulSoup(html, self.parser_backend)
         except FeatureNotFound:
@@ -120,12 +117,10 @@ class LaTeXRenderer:
 
     def _collect_output(self, soup: BeautifulSoup) -> str:
         """Extract the LaTeX output from the transformed soup."""
-
         return soup.get_text()
 
     def iter_registered_rules(self) -> Iterable[tuple[RenderPhase, str]]:
         """Expose currently registered rules for debugging/reporting."""
-
         for phase in RenderPhase:
             for rule in self.engine.registry.iter_phase(phase):
                 yield phase, rule.name

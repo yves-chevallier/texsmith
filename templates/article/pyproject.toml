@@ -1,0 +1,34 @@
+[build-system]
+requires = ["hatchling>=1.25.0"]
+build-backend = "hatchling.build"
+
+[project]
+name = "texsmith-template-article"
+version = "0.1.0"
+description = "Standard article template for Texsmith."
+readme = "README.md"
+license = { text = "MIT" }
+requires-python = ">=3.12"
+authors = [
+    { name = "Yves Chevallier", email = "yves.chevalier@heig-vd.ch" },
+]
+keywords = ["texsmith", "latex", "template", "article"]
+dependencies = ["texsmith>=0.1,<1.0"]
+
+[project.urls]
+Homepage = "https://github.com/yves-chevallier/texsmith"
+
+[project.entry-points."texsmith.templates"]
+article = "texsmith_template_article:Template"
+
+[tool.hatch.build.targets.wheel]
+exclude = ["__pycache__", "*.pyc"]
+
+[tool.hatch.build.targets.wheel.force-include]
+"." = "texsmith_template_article"
+
+[tool.hatch.build.targets.sdist]
+exclude = ["__pycache__", "*.pyc"]
+
+[tool.hatch.build.targets.sdist.force-include]
+"." = "texsmith_template_article"

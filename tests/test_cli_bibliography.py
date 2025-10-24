@@ -15,6 +15,11 @@ def _write(tmp_path: Path, name: str, content: str) -> Path:
     return path
 
 
+def _template_path(name: str) -> Path:
+    project_root = Path(__file__).resolve().parents[1]
+    return project_root / "templates" / name
+
+
 def test_cli_bibliography_list_outputs_entries(tmp_path: Path) -> None:
     bib_file = _write(
         tmp_path,
@@ -64,9 +69,7 @@ def test_cli_bibliography_list_reports_conflicts(tmp_path: Path) -> None:
     )
 
     runner = CliRunner()
-    result = runner.invoke(
-        app, ["bibliography", "list", str(original), str(conflicting)]
-    )
+    result = runner.invoke(app, ["bibliography", "list", str(original), str(conflicting)])
 
     assert result.exit_code == 0, result.stdout
     assert "Warnings" in result.stdout
@@ -84,9 +87,7 @@ def test_cli_bibliography_list_with_fixture_files() -> None:
     ]
 
     runner = CliRunner()
-    result = runner.invoke(
-        app, ["bibliography", "list", *(str(path) for path in fixture_files)]
-    )
+    result = runner.invoke(app, ["bibliography", "list", *(str(path) for path in fixture_files)])
 
     assert result.exit_code == 0, result.stdout
     assert "Bibliography Files" in result.stdout
@@ -97,3 +98,66 @@ def test_cli_bibliography_list_with_fixture_files() -> None:
     for key in ("LAWRENCE19841632", "BERESFORD2001259", "BEST20255106"):
         assert key in result.stdout
     assert result.stderr == ""
+
+
+def test_cli_front_matter_bibliography_fetches_doi(monkeypatch, tmp_path: Path) -> None:
+    calls: list[str] = []
+
+    class DummyFetcher:
+        def __init__(self, *args, **kwargs) -> None:  # noqa: D401 - simple stub
+            pass
+
+        def fetch(self, value: str) -> str:
+            calls.append(value)
+            return textwrap.dedent(
+                """
+                @article{any,
+                    title = {Inline Demonstration},
+                    author = {Doe, Jane},
+                }
+                """
+            )
+
+    monkeypatch.setattr("texsmith.conversion.DoiBibliographyFetcher", DummyFetcher)
+
+    markdown_file = _write(
+        tmp_path,
+        "paper.md",
+        """
+        ---
+        bibliography:
+          inline: https://doi.org/10.1038/146796a0
+        ---
+
+        Cheese[^inline]
+        """,
+    )
+
+    template_dir = _template_path("nature")
+    output_dir = tmp_path / "out"
+    runner = CliRunner()
+    result = runner.invoke(
+        app,
+        [
+            "convert",
+            str(markdown_file),
+            "--output-dir",
+            str(output_dir),
+            "--template",
+            str(template_dir),
+        ],
+    )
+
+    assert result.exit_code == 0, result.stderr
+    assert calls == ["https://doi.org/10.1038/146796a0"]
+
+    tex_path = output_dir / "paper.tex"
+    assert tex_path.exists()
+    content = tex_path.read_text(encoding="utf-8")
+    assert "\\cite{inline}" in content
+
+    bibliography_file = output_dir / "texsmith-bibliography.bib"
+    assert bibliography_file.exists()
+    bibliography_payload = bibliography_file.read_text(encoding="utf-8")
+    assert "@article{inline" in bibliography_payload
+    assert "Inline Demonstration" in bibliography_payload

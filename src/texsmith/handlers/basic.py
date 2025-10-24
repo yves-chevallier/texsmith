@@ -25,7 +25,6 @@ def _merge_strip_rules(
     context: RenderContext,
 ) -> list[tuple[str, tuple[str, ...], str]]:
     """Merge default strip rules with runtime overrides."""
-
     rules: dict[tuple[str, tuple[str, ...]], str] = {
         (tag, classes): mode for tag, classes, mode in UNWANTED_NODES
     }
@@ -56,7 +55,6 @@ def _merge_strip_rules(
 @renders(phase=RenderPhase.PRE, auto_mark=False, name="discard_unwanted")
 def discard_unwanted(root: Tag, context: RenderContext) -> None:
     """Discard or unwrap nodes that must not reach later phases."""
-
     for tag_name, classes, mode in _merge_strip_rules(context):
         kwargs: dict[str, object] = {}
         if classes:
@@ -73,14 +71,12 @@ def discard_unwanted(root: Tag, context: RenderContext) -> None:
 @renders("hr", phase=RenderPhase.PRE, name="remove_horizontal_rules")
 def remove_horizontal_rules(element: Tag, context: RenderContext) -> None:
     """Remove ``<hr>`` nodes early during preprocessing."""
-
     element.extract()
 
 
 @renders("br", phase=RenderPhase.INLINE, name="line_breaks")
 def replace_line_breaks(element: Tag, context: RenderContext) -> None:
     """Convert ``<br>`` tags into explicit LaTeX line breaks."""
-
     node = NavigableString("\\")
     node.processed = True
     element.replace_with(node)
@@ -89,7 +85,6 @@ def replace_line_breaks(element: Tag, context: RenderContext) -> None:
 @renders("ins", phase=RenderPhase.INLINE, name="inline_underline", after_children=True)
 def render_inline_underline(element: Tag, context: RenderContext) -> None:
     """Render ``<ins>`` tags using the formatter."""
-
     text = element.get_text(strip=False)
     latex = context.formatter.underline(text=text)
     element.replace_with(NavigableString(latex))
@@ -98,7 +93,6 @@ def render_inline_underline(element: Tag, context: RenderContext) -> None:
 @renders("strong", phase=RenderPhase.INLINE, name="inline_strong", after_children=True)
 def render_inline_strong(element: Tag, context: RenderContext) -> None:
     """Render ``<strong>`` tags using bold template."""
-
     text = element.get_text(strip=False)
     latex = context.formatter.strong(text=text)
     element.replace_with(NavigableString(latex))
@@ -107,7 +101,6 @@ def render_inline_strong(element: Tag, context: RenderContext) -> None:
 @renders("em", phase=RenderPhase.INLINE, name="inline_emphasis", after_children=True)
 def render_inline_emphasis(element: Tag, context: RenderContext) -> None:
     """Render ``<em>`` tags using emphasis template."""
-
     text = element.get_text(strip=False)
     latex = context.formatter.italic(text=text)
     element.replace_with(NavigableString(latex))
@@ -116,7 +109,6 @@ def render_inline_emphasis(element: Tag, context: RenderContext) -> None:
 @renders("del", phase=RenderPhase.INLINE, name="inline_deletion", after_children=True)
 def render_inline_deletion(element: Tag, context: RenderContext) -> None:
     """Render ``<del>`` tags using strikethrough template."""
-
     text = element.get_text(strip=False)
     latex = context.formatter.strikethrough(text=text)
     element.replace_with(NavigableString(latex))
@@ -125,7 +117,6 @@ def render_inline_deletion(element: Tag, context: RenderContext) -> None:
 @renders("mark", phase=RenderPhase.INLINE, name="inline_mark", after_children=True)
 def render_inline_mark(element: Tag, context: RenderContext) -> None:
     """Render ``<mark>`` tags using highlight template."""
-
     text = element.get_text(strip=False)
     latex = context.formatter.highlight(text=text)
     element.replace_with(NavigableString(latex))
@@ -134,18 +125,14 @@ def render_inline_mark(element: Tag, context: RenderContext) -> None:
 @renders("sub", phase=RenderPhase.INLINE, name="inline_subscript", after_children=True)
 def render_inline_subscript(element: Tag, context: RenderContext) -> None:
     """Render ``<sub>`` tags."""
-
     text = element.get_text(strip=False)
     latex = context.formatter.subscript(text=text)
     element.replace_with(NavigableString(latex))
 
 
-@renders(
-    "sup", phase=RenderPhase.INLINE, name="inline_superscript", after_children=True
-)
+@renders("sup", phase=RenderPhase.INLINE, name="inline_superscript", after_children=True)
 def render_inline_superscript(element: Tag, context: RenderContext) -> None:
     """Render ``<sup>`` tags, skipping footnote references."""
-
     if element.get("id"):
         return
 
@@ -157,7 +144,6 @@ def render_inline_superscript(element: Tag, context: RenderContext) -> None:
 @renders("div", phase=RenderPhase.BLOCK, name="grid_cards", auto_mark=False)
 def unwrap_grid_cards(element: Tag, context: RenderContext) -> None:
     """Unwrap ``div.grid-cards`` containers."""
-
     classes = element.get("class") or []
     if "grid-cards" in classes:
         element.unwrap()
@@ -175,7 +161,6 @@ def unwrap_grid_cards(element: Tag, context: RenderContext) -> None:
 )
 def render_headings(element: Tag, context: RenderContext) -> None:
     """Convert HTML headings to LaTeX sectioning commands."""
-
     # Drop anchor tags within headings
     for anchor in element.find_all("a"):
         anchor.unwrap()

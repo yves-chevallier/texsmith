@@ -1,5 +1,6 @@
 import importlib.util
-import unittest
+
+import pytest
 
 from texsmith.utils import escape_latex_chars
 
@@ -7,16 +8,13 @@ from texsmith.utils import escape_latex_chars
 PYLATEXENC_AVAILABLE = importlib.util.find_spec("pylatexenc") is not None
 
 
-@unittest.skipUnless(PYLATEXENC_AVAILABLE, "pylatexenc not installed")
-class EscapeLatexCharsTests(unittest.TestCase):
-    def test_unicode_characters_are_encoded(self) -> None:
-        payload = "café — 50%"
-        escaped = escape_latex_chars(payload)
-
-        self.assertIn("\\'{e}", escaped)
-        self.assertIn("\\textemdash", escaped)
-        self.assertIn("\\%", escaped)
+pytestmark = pytest.mark.skipif(not PYLATEXENC_AVAILABLE, reason="pylatexenc not installed")
 
 
-if __name__ == "__main__":
-    unittest.main()
+def test_unicode_characters_are_encoded() -> None:
+    payload = "café — 50%"
+    escaped = escape_latex_chars(payload)
+
+    assert "\\'{e}" in escaped
+    assert "\\textemdash" in escaped
+    assert "\\%" in escaped

@@ -1,8 +1,6 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 
-"""
-build_index_precis.py — Génère un index JSON de haute précision depuis un fichier Markdown.
+"""build_index_precis.py — Génère un index JSON de haute précision depuis un fichier Markdown.
 - Candidats = groupes nominaux (noun phrases) uniquement (POS constraints)
 - Lemmatisation (FR/EN) via spaCy, dé-accentuation et normalisation
 - Stopwords FR+EN + stoplist projet (stop_terms.txt) si présent
@@ -23,7 +21,6 @@ import os
 from pathlib import Path
 import re
 import sys
-from typing import List, Set, Tuple
 import unicodedata
 
 
@@ -78,18 +75,14 @@ TOKEN_ALPHA_RE = re.compile(r"[A-Za-zÀ-ÖØ-öø-ÿ]")
 FIG_RE = re.compile(r"(?i)\bfig(?:ure)?\b[ \t]*[:#\-\u00A0]*\s*([0-9][\d\.\-]*)?")
 
 FR_STOPWORDS = set(
-    """
-au aux avec ce ces dans de des du elle en et eux il je la le leur lui ma mais me même mes moi mon ne nos notre nous on ou par pas pour qu que qui sa se ses son sur ta te tes toi ton tu un une vos votre vous c d j l à m n s t y été étée étés étées étant étais était étions étiez étaient être eût fut furent éta fûmes fûtes eûtes eûmes eût eussent aient aurait aurais aura aurez aurons avons avez avaient avait avais avais ai as a ont suis es est sommes êtes sont serai seras sera serons serez seraient serais serait seraient étais étions étiez étaient étais était serions seriez seraient avais avait avions aviez avaient aurais aurait aurions auriez auraient ayant ayant eu avoir ceci cela ça çà ça-même chacun chacune chaque quelque quelques lequel laquelle lesquels lesquelles dont où
-""".split()
+    ["au", "aux", "avec", "ce", "ces", "dans", "de", "des", "du", "elle", "en", "et", "eux", "il", "je", "la", "le", "leur", "lui", "ma", "mais", "me", "même", "mes", "moi", "mon", "ne", "nos", "notre", "nous", "on", "ou", "par", "pas", "pour", "qu", "que", "qui", "sa", "se", "ses", "son", "sur", "ta", "te", "tes", "toi", "ton", "tu", "un", "une", "vos", "votre", "vous", "c", "d", "j", "l", "à", "m", "n", "s", "t", "y", "été", "étée", "étés", "étées", "étant", "étais", "était", "étions", "étiez", "étaient", "être", "eût", "fut", "furent", "éta", "fûmes", "fûtes", "eûtes", "eûmes", "eût", "eussent", "aient", "aurait", "aurais", "aura", "aurez", "aurons", "avons", "avez", "avaient", "avait", "avais", "avais", "ai", "as", "a", "ont", "suis", "es", "est", "sommes", "êtes", "sont", "serai", "seras", "sera", "serons", "serez", "seraient", "serais", "serait", "seraient", "étais", "étions", "étiez", "étaient", "étais", "était", "serions", "seriez", "seraient", "avais", "avait", "avions", "aviez", "avaient", "aurais", "aurait", "aurions", "auriez", "auraient", "ayant", "ayant", "eu", "avoir", "ceci", "cela", "ça", "çà", "ça-même", "chacun", "chacune", "chaque", "quelque", "quelques", "lequel", "laquelle", "lesquels", "lesquelles", "dont", "où"]
 )
 EN_STOPWORDS = set(
-    """
-a an and are as at be been being by for from has have having he her hers him his how i if in into is it its itself just me more most my myself no nor not of on once only or other our ours ourselves out over own same she should so some such than that the their theirs them themselves then there these they this those through to too under until up very was we were what when where which while who whom why with you your yours yourself yourselves
-""".split()
+    ["a", "an", "and", "are", "as", "at", "be", "been", "being", "by", "for", "from", "has", "have", "having", "he", "her", "hers", "him", "his", "how", "i", "if", "in", "into", "is", "it", "its", "itself", "just", "me", "more", "most", "my", "myself", "no", "nor", "not", "of", "on", "once", "only", "or", "other", "our", "ours", "ourselves", "out", "over", "own", "same", "she", "should", "so", "some", "such", "than", "that", "the", "their", "theirs", "them", "themselves", "then", "there", "these", "they", "this", "those", "through", "to", "too", "under", "until", "up", "very", "was", "we", "were", "what", "when", "where", "which", "while", "who", "whom", "why", "with", "you", "your", "yours", "yourself", "yourselves"]
 )
 
 
-def load_stoplist_file() -> Set[str]:
+def load_stoplist_file() -> set[str]:
     p = Path("stop_terms.txt")
     if p.exists():
         terms = [
@@ -105,9 +98,7 @@ USER_STOPLIST = set(map(lambda s: s.lower(), load_stoplist_file()))
 
 
 def deaccent(s: str) -> str:
-    return "".join(
-        c for c in unicodedata.normalize("NFD", s) if unicodedata.category(c) != "Mn"
-    )
+    return "".join(c for c in unicodedata.normalize("NFD", s) if unicodedata.category(c) != "Mn")
 
 
 def normalize_text(s: str) -> str:
@@ -128,8 +119,7 @@ def remove_fenced_code(md_text: str) -> str:
 
 
 def replace_index_annotations(md_text: str) -> str:
-    """
-    `terme`{index, text="Affiché"} -> <span class="idx" data-key="terme" data-text="Affiché">Affiché</span>
+    """`terme`{index, text="Affiché"} -> <span class="idx" data-key="terme" data-text="Affiché">Affiché</span>
     """
     pattern = re.compile(r"`([^`]+?)`\{index(?:,\s*text=\"([^\"]+)\")?\}")
 
@@ -199,9 +189,8 @@ DISALLOWED_POS = {
 
 def noun_phrase_candidates(
     nlp, text: str, max_len: int = 6
-) -> List[Tuple[str, List[str], List[str]]]:
-    """
-    Renvoie des candidats (surface, lemmas, pos) en respectant:
+) -> list[tuple[str, list[str], list[str]]]:
+    """Renvoie des candidats (surface, lemmas, pos) en respectant:
     - contient au moins un NOUN/PROPN
     - ne commence/termine pas par POS interdit
     - longueur <= max_len
@@ -238,9 +227,7 @@ def noun_phrase_candidates(
     # 2) fallback par motif POS (séquences autorisées)
     i = 0
     while i < len(doc):
-        if doc[i].pos_ in {"NOUN", "PROPN", "ADJ"} and TOKEN_ALPHA_RE.search(
-            doc[i].text
-        ):
+        if doc[i].pos_ in {"NOUN", "PROPN", "ADJ"} and TOKEN_ALPHA_RE.search(doc[i].text):
             j = i
             kept = []
             while (
@@ -253,10 +240,7 @@ def noun_phrase_candidates(
             if kept and len(kept) <= max_len:
                 pos_set = {t.pos_ for t in kept}
                 if "NOUN" in pos_set or "PROPN" in pos_set:
-                    if (
-                        kept[0].pos_ not in DISALLOWED_POS
-                        and kept[-1].pos_ not in DISALLOWED_POS
-                    ):
+                    if kept[0].pos_ not in DISALLOWED_POS and kept[-1].pos_ not in DISALLOWED_POS:
                         surface = " ".join(t.text for t in kept)
                         lemmas = [t.lemma_.lower() for t in kept]
                         pos = [t.pos_ for t in kept]
@@ -268,11 +252,8 @@ def noun_phrase_candidates(
 
 
 # --- PMI ---
-def compute_pmi(
-    term_tokens: List[str], unigram_counts: Counter, total_tokens: int
-) -> float:
-    """
-    PMI moyen adjacent pour bigrammes/trigrammes (tokens déjà normalisés).
+def compute_pmi(term_tokens: list[str], unigram_counts: Counter, total_tokens: int) -> float:
+    """PMI moyen adjacent pour bigrammes/trigrammes (tokens déjà normalisés).
     """
     if len(term_tokens) == 1 or total_tokens == 0:
         return 0.0
@@ -347,9 +328,7 @@ def build_index_precise(path: str, md_text: str):
         heading_boost = 1.6 if b["is_heading"] else 1.0
         caption_boost = 1.4 if b["is_caption"] else 1.0
         early_ratio = processed_chars / total_chars
-        early_boost = (
-            1.25 if early_ratio < 0.25 else (1.12 if early_ratio < 0.5 else 1.0)
-        )
+        early_boost = 1.25 if early_ratio < 0.25 else (1.12 if early_ratio < 0.5 else 1.0)
 
         cands = noun_phrase_candidates(nlp, b["text"], max_len=6)
         for surface, lemmas, pos in cands:
@@ -379,15 +358,11 @@ def build_index_precise(path: str, md_text: str):
                     "heading": b["heading"],
                     "anchor": b["anchor"],
                     "pos": b["char_start"],
-                    "snippet": (b["text"][:160] + "…")
-                    if len(b["text"]) > 160
-                    else b["text"],
+                    "snippet": (b["text"][:160] + "…") if len(b["text"]) > 160 else b["text"],
                     "weight": round(weight, 3),
                 }
             )
-            term_data[key]["len_tokens"] = max(
-                term_data[key]["len_tokens"], len(lem_norm)
-            )
+            term_data[key]["len_tokens"] = max(term_data[key]["len_tokens"], len(lem_norm))
 
         processed_chars += len(b["text"]) + 1
 
@@ -399,9 +374,7 @@ def build_index_precise(path: str, md_text: str):
         term_data[lem]["occurrences"].append(
             {"heading": None, "anchor": None, "pos": 0, "snippet": disp, "weight": 1.8}
         )
-        term_data[lem]["len_tokens"] = max(
-            term_data[lem]["len_tokens"], len(lem.split())
-        )
+        term_data[lem]["len_tokens"] = max(term_data[lem]["len_tokens"], len(lem.split()))
 
     # scoring global + PMI filter
     entries = []
@@ -419,9 +392,7 @@ def build_index_precise(path: str, md_text: str):
                 continue
 
         # PMI pour >1 token
-        pmi = (
-            compute_pmi(toks, unigram_counts, total_unigrams) if len(toks) > 1 else 0.0
-        )
+        pmi = compute_pmi(toks, unigram_counts, total_unigrams) if len(toks) > 1 else 0.0
         # seuil PMI (écarte collocations faibles)
         if len(toks) == 2 and pmi < 0.2 and data["forced"] == 0:
             continue
@@ -457,9 +428,7 @@ def build_index_precise(path: str, md_text: str):
         variants = [w for w, _ in data["raw_forms"].most_common(5) if w != display]
 
         # compactage occurrences
-        occs_sorted = sorted(
-            data["occurrences"], key=lambda o: (o["weight"]), reverse=True
-        )[:10]
+        occs_sorted = sorted(data["occurrences"], key=lambda o: (o["weight"]), reverse=True)[:10]
 
         entries.append(
             {

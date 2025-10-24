@@ -1,13 +1,14 @@
 from __future__ import annotations
 
+from collections.abc import Sequence
 from html import escape
+from typing import Any, Literal
 import warnings
-from typing import Any, List, Literal, Optional, Sequence, Union
 
-import markdown
-import yaml
 from bs4 import BeautifulSoup
+import markdown
 from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_validator, model_validator
+import yaml
 
 
 class TableConfigWarning(UserWarning):
@@ -32,8 +33,8 @@ def warn_extra_keys(cls: type[BaseModel], values: Any, context: str) -> Any:
 
 
 class TablePrintOptions(BaseModel):
-    orientation: Optional[str] = None
-    resize: Optional[bool] = None
+    orientation: str | None = None
+    resize: bool | None = None
 
     model_config = ConfigDict(extra="ignore")
 
@@ -44,8 +45,8 @@ class TablePrintOptions(BaseModel):
 
 
 class TableColumn(BaseModel):
-    alignment: Optional[str] = None
-    width: Optional[str] = None
+    alignment: str | None = None
+    width: str | None = None
 
     model_config = ConfigDict(extra="ignore")
 
@@ -56,9 +57,9 @@ class TableColumn(BaseModel):
 
 
 class TableRowSpec(BaseModel):
-    height: Optional[str] = None
-    alignment: Optional[str] = None
-    span: Optional[Sequence[Union[int, str]]] = None
+    height: str | None = None
+    alignment: str | None = None
+    span: Sequence[int | str] | None = None
 
     model_config = ConfigDict(extra="ignore")
 
@@ -70,7 +71,7 @@ class TableRowSpec(BaseModel):
 
 class TableData(BaseModel):
     type: Literal["embedded"] = "embedded"
-    data: List[List[Optional[Any]]]
+    data: list[list[Any | None]]
 
     model_config = ConfigDict(extra="ignore")
 
@@ -88,7 +89,7 @@ class TableData(BaseModel):
     def ensure_rows(cls, value: Any) -> Any:
         if not isinstance(value, list):
             raise TypeError("`data` must be a list of rows.")
-        coerced: List[List[Optional[Any]]] = []
+        coerced: list[list[Any | None]] = []
         for index, row in enumerate(value):
             if row is None:
                 coerced.append([])
@@ -100,13 +101,13 @@ class TableData(BaseModel):
 
 
 class TableSpec(BaseModel):
-    width: Optional[str] = None
-    caption: Optional[str] = None
-    label: Optional[str] = None
+    width: str | None = None
+    caption: str | None = None
+    label: str | None = None
     header: bool = False
-    print_options: Optional[TablePrintOptions] = Field(default=None, alias="print")
-    columns: List[TableColumn] = Field(default_factory=list)
-    rows: List[TableRowSpec] = Field(default_factory=list)
+    print_options: TablePrintOptions | None = Field(default=None, alias="print")
+    columns: list[TableColumn] = Field(default_factory=list)
+    rows: list[TableRowSpec] = Field(default_factory=list)
     data: TableData
 
     model_config = ConfigDict(validate_by_name=True, extra="forbid")
@@ -140,7 +141,7 @@ def markdown_inline_to_html(value: str) -> str:
 
 
 def apply_column_style(column: TableColumn) -> str:
-    style_parts: List[str] = []
+    style_parts: list[str] = []
     if column.alignment and column.alignment != "auto":
         style_parts.append(f"text-align: {column.alignment};")
     if column.width and column.width != "auto":
@@ -175,7 +176,7 @@ def render_table_html(spec: TableSpec) -> str:
             colgroup.append(col_tag)
         table_tag.append(colgroup)
 
-    caption_html: Optional[str] = None
+    caption_html: str | None = None
     if spec.caption:
         caption_tag = soup.new_tag("caption")
         caption_html = markdown_inline_to_html(spec.caption)
@@ -192,12 +193,18 @@ def render_table_html(spec: TableSpec) -> str:
         thead = soup.new_tag("thead")
         header_spec = spec.rows[0] if spec.rows else None
         for row in header_rows:
-            thead.append(render_table_row(soup, row, spec.columns, header=True, spec_row=header_spec))
+            thead.append(
+                render_table_row(soup, row, spec.columns, header=True, spec_row=header_spec)
+            )
         table_tag.append(thead)
 
     tbody = soup.new_tag("tbody")
     for index, row in enumerate(body_rows):
-        spec_row = spec.rows[index + (1 if header_rows else 0)] if index + (1 if header_rows else 0) < len(spec.rows) else None
+        spec_row = (
+            spec.rows[index + (1 if header_rows else 0)]
+            if index + (1 if header_rows else 0) < len(spec.rows)
+            else None
+        )
         tbody.append(render_table_row(soup, row, spec.columns, header=False, spec_row=spec_row))
     table_tag.append(tbody)
 
@@ -219,11 +226,11 @@ def render_table_html(spec: TableSpec) -> str:
 
 def render_table_row(
     soup: BeautifulSoup,
-    cells: List[Optional[Any]],
-    columns: List[TableColumn],
+    cells: list[Any | None],
+    columns: list[TableColumn],
     *,
     header: bool,
-    spec_row: Optional[TableRowSpec],
+    spec_row: TableRowSpec | None,
 ) -> Any:
     tag_name = "th" if header else "td"
     tr_tag = soup.new_tag("tr")
@@ -260,7 +267,9 @@ def render_table_row(
     return tr_tag
 
 
-def table_fence_format(source: str, language: str, css_class: str, options: dict, md: markdown.Markdown, **kwargs: Any) -> str:
+def table_fence_format(
+    source: str, language: str, css_class: str, options: dict, md: markdown.Markdown, **kwargs: Any
+) -> str:
     try:
         spec = parse_table_config(source)
     except ValueError as exc:

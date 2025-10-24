@@ -15,9 +15,7 @@ class CLIState:
     verbosity: int = 0
     show_tracebacks: bool = False
     console: Console = field(default_factory=Console)
-    err_console: Console = field(
-        default_factory=lambda: Console(stderr=True, highlight=False)
-    )
+    err_console: Console = field(default_factory=lambda: Console(stderr=True, highlight=False))
 
 
 _CLI_STATE = CLIState()

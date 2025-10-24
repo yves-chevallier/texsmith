@@ -1,0 +1,35 @@
+[build-system]
+requires = ["hatchling>=1.25.0"]
+build-backend = "hatchling.build"
+
+[project]
+name = "texsmith-template-carauma"
+version = "0.1.0"
+description = "Caraumã book template for Texsmith."
+readme = "README.md"
+license = { text = "MIT" }
+requires-python = ">=3.12"
+authors = [
+    { name = "Yves Chevallier", email = "yves.chevalier@heig-vd.ch" },
+]
+keywords = ["texsmith", "latex", "template", "book"]
+dependencies = ["texsmith>=0.1,<1.0"]
+
+[project.urls]
+Homepage = "https://github.com/yves-chevallier/texsmith"
+
+[project.entry-points."texsmith.templates"]
+carauma = "texsmith_template_carauma:Template"
+"carauma-book" = "texsmith_template_carauma:Template"
+
+[tool.hatch.build.targets.wheel]
+exclude = ["__pycache__", "*.pyc"]
+
+[tool.hatch.build.targets.wheel.force-include]
+"." = "texsmith_template_carauma"
+
+[tool.hatch.build.targets.sdist]
+exclude = ["__pycache__", "*.pyc"]
+
+[tool.hatch.build.targets.sdist.force-include]
+"." = "texsmith_template_carauma"

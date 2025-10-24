@@ -30,9 +30,7 @@ class ConverterRegistry:
         try:
             return self._strategies[name]
         except KeyError as exc:  # pragma: no cover - defensive
-            raise TransformerExecutionError(
-                f"No converter registered for '{name}'"
-            ) from exc
+            raise TransformerExecutionError(f"No converter registered for '{name}'") from exc
 
     def convert(
         self,
@@ -59,43 +57,36 @@ registry.register("mermaid", MermaidToPdfStrategy())
 
 def register_converter(name: str, strategy: ConverterStrategy) -> None:
     """Expose a helper to register external strategies."""
-
     registry.register(name, strategy)
 
 
 def svg2pdf(source: Path | str, output_dir: Path, **options: Any) -> Path:
     """Convert SVG assets to PDF."""
-
     return registry.convert("svg", source, output_dir=output_dir, **options)
 
 
 def image2pdf(source: Path | str, output_dir: Path, **options: Any) -> Path:
     """Convert bitmap images to PDF."""
-
     return registry.convert("image", source, output_dir=output_dir, **options)
 
 
 def drawio2pdf(source: Path | str, output_dir: Path, **options: Any) -> Path:
     """Convert draw.io diagrams to PDF."""
-
     return registry.convert("drawio", source, output_dir=output_dir, **options)
 
 
 def mermaid2pdf(source: Path | str, output_dir: Path, **options: Any) -> Path:
     """Convert Mermaid diagrams to PDF."""
-
     return registry.convert("mermaid", source, output_dir=output_dir, **options)
 
 
 def fetch_image(url: str, output_dir: Path, **options: Any) -> Path:
     """Fetch a remote image and normalise it to PDF."""
-
     return registry.convert("fetch-image", url, output_dir=output_dir, **options)
 
 
 def get_pdf_page_sizes(source: Path | str, **options: Any) -> dict[str, Any]:
     """Inspect a PDF and return structured metadata."""
-
     output_dir = options.pop(
         "output_dir", Path(source).parent if isinstance(source, Path) else Path.cwd()
     )
@@ -103,15 +94,15 @@ def get_pdf_page_sizes(source: Path | str, **options: Any) -> dict[str, Any]:
 
 
 __all__ = [
-    "ConverterStrategy",
     "ConverterRegistry",
-    "register_converter",
-    "svg2pdf",
-    "image2pdf",
-    "drawio2pdf",
-    "mermaid2pdf",
-    "fetch_image",
-    "get_pdf_page_sizes",
+    "ConverterStrategy",
     "DrawioToPdfStrategy",
     "MermaidToPdfStrategy",
+    "drawio2pdf",
+    "fetch_image",
+    "get_pdf_page_sizes",
+    "image2pdf",
+    "mermaid2pdf",
+    "register_converter",
+    "svg2pdf",
 ]

@@ -46,7 +46,6 @@ def _resolve_local_target(context: RenderContext, href: str) -> Path | None:
 )
 def render_autoref(element: Tag, context: RenderContext) -> None:
     """Render <autoref> custom tags."""
-
     identifier = element.get("identifier")
     if not identifier:
         raise InvalidNodeError("autoref tag missing identifier attribute")
@@ -68,7 +67,6 @@ def render_autoref(element: Tag, context: RenderContext) -> None:
 )
 def render_autoref_spans(element: Tag, context: RenderContext) -> None:
     """Render MkDocs autoref span placeholders."""
-
     identifier = element.get("data-autorefs-identifier")
     if not identifier:
         return
@@ -85,7 +83,6 @@ def render_autoref_spans(element: Tag, context: RenderContext) -> None:
 @renders("a", phase=RenderPhase.INLINE, priority=60, name="links", nestable=False)
 def render_links(element: Tag, context: RenderContext) -> None:
     """Render hyperlinks and internal references."""
-
     href_attr = element.get("href")
     href = href_attr if isinstance(href_attr, str) else ""
     element_id = element.get("id")

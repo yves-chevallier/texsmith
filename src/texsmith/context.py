@@ -42,12 +42,10 @@ class DocumentState:
 
     def remember_acronym(self, term: str, description: str) -> str:
         """Register an acronym definition keyed by a normalised identifier."""
-
         return self.remember_abbreviation(term=term, description=description)
 
     def remember_abbreviation(self, term: str, description: str) -> str:
         """Track abbreviation definitions while ensuring consistency."""
-
         normalised_term = term.strip()
         normalised_description = description.strip()
         if not normalised_term or not normalised_description:
@@ -73,7 +71,6 @@ class DocumentState:
 
     def _generate_acronym_key(self, term: str) -> str:
         """Produce a unique key suitable for the glossaries package."""
-
         slug = slugify(term, separator="", lowercase=False)
         if not slug:
             slug = "acronym"
@@ -114,7 +111,6 @@ class DocumentState:
 
     def record_citation(self, key: str) -> None:
         """Track citation keys used throughout the document."""
-
         if key in self._citation_index:
             return
         self._citation_index.add(key)
@@ -131,7 +127,6 @@ class AssetRegistry:
 
     def register(self, key: str, artefact: Path | str) -> Path:
         """Register a generated artefact and return its resolved path."""
-
         path = Path(artefact)
         if not path.is_absolute():
             if self.copy_assets:
@@ -143,7 +138,6 @@ class AssetRegistry:
 
     def get(self, key: str) -> Path:
         """Retrieve a previously registered artefact."""
-
         try:
             return Path(self.assets_map[key])
         except KeyError as exc:
@@ -154,7 +148,6 @@ class AssetRegistry:
 
     def latex_path(self, path: Path | str) -> str:
         """Return a LaTeX-friendly path for an artefact."""
-
         candidate = Path(path)
         if not candidate.is_absolute():
             return candidate.as_posix()
@@ -193,20 +186,17 @@ class RenderContext:
 
     def enter_phase(self, phase: RenderPhase) -> None:
         """Mark the current phase and reset transient runtime data."""
-
         self.phase = phase
         self.runtime = dict(self._persistent_runtime)
         self._skip_children[phase.value].clear()
 
     def attach_runtime(self, **runtime: Any) -> None:
         """Attach ad-hoc data visible to handlers for the running phase."""
-
         self._persistent_runtime.update(runtime)
         self.runtime.update(runtime)
 
     def mark_processed(self, node: Any, *, phase: RenderPhase | None = None) -> None:
         """Flag a node as already transformed for the selected phase."""
-
         label = phase or self.phase
         if label is None:
             return
@@ -214,7 +204,6 @@ class RenderContext:
 
     def is_processed(self, node: Any, *, phase: RenderPhase | None = None) -> bool:
         """Check whether a node has been processed in the given phase."""
-
         label = phase or self.phase
         if label is None:
             return False
@@ -222,17 +211,13 @@ class RenderContext:
 
     def suppress_children(self, node: Any, *, phase: RenderPhase | None = None) -> None:
         """Prevent traversal of node children for the active phase."""
-
         label = phase or self.phase
         if label is None:
             return
         self._skip_children[label.value].add(id(node))
 
-    def should_skip_children(
-        self, node: Any, *, phase: RenderPhase | None = None
-    ) -> bool:
+    def should_skip_children(self, node: Any, *, phase: RenderPhase | None = None) -> bool:
         """Check whether children should be skipped during traversal."""
-
         label = phase or self.phase
         if label is None:
             return False

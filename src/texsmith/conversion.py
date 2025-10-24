@@ -14,11 +14,23 @@ import re
 from typing import Any
 
 from bs4 import BeautifulSoup, FeatureNotFound, NavigableString, Tag
+from pybtex.exceptions import PybtexError
+from slugify import slugify
 
-from .bibliography import BibliographyCollection
+from .bibliography import (
+    BibliographyCollection,
+    DoiBibliographyFetcher,
+    DoiLookupError,
+    bibliography_data_from_string,
+)
 from .config import BookConfig
 from .context import DocumentState
-from .conversion_contexts import BinderContext, DocumentContext, GenerationStrategy, SegmentContext
+from .conversion_contexts import (
+    BinderContext,
+    DocumentContext,
+    GenerationStrategy,
+    SegmentContext,
+)
 from .docker import is_docker_available
 from .exceptions import LatexRenderingError, TransformerExecutionError
 from .formatter import LaTeXFormatter
@@ -27,8 +39,8 @@ from .templates import (
     DEFAULT_TEMPLATE_LANGUAGE,
     TemplateBinding,
     TemplateError,
-    TemplateSlot,
     TemplateRuntime,
+    TemplateSlot,
     build_template_overrides,
     copy_template_assets,
     load_template_runtime,
@@ -39,25 +51,29 @@ from .transformers import register_converter
 
 
 __all__ = [
+    "DEFAULT_TEMPLATE_LANGUAGE",
+    "DOCUMENT_SELECTOR_SENTINEL",
     "BinderContext",
     "ConversionCallbacks",
     "ConversionError",
     "ConversionResult",
+    "DocumentContext",
+    "GenerationStrategy",
     "MarkdownConversionError",
+    "SegmentContext",
     "TemplateBinding",
     "TemplateRuntime",
     "UnsupportedInputError",
-    "DEFAULT_TEMPLATE_LANGUAGE",
-    "DOCUMENT_SELECTOR_SENTINEL",
-    "DocumentContext",
-    "build_document_context",
-    "build_binder_context",
     "attempt_transformer_fallback",
+    "build_binder_context",
+    "build_document_context",
+    "build_template_overrides",
     "coerce_slot_selector",
     "convert_document",
     "copy_document_state",
-    "build_template_overrides",
+    "ensure_fallback_converters",
     "extract_content",
+    "extract_front_matter_bibliography",
     "extract_front_matter_slots",
     "extract_slot_fragments",
     "format_rendering_error",
@@ -65,9 +81,6 @@ __all__ = [
     "load_template_runtime",
     "parse_slot_mapping",
     "persist_debug_artifacts",
-    "GenerationStrategy",
-    "SegmentContext",
-    "ensure_fallback_converters",
     "render_with_fallback",
     "resolve_template_language",
 ]
@@ -169,6 +182,47 @@ def _debug_enabled(callbacks: ConversionCallbacks | None) -> bool:
     return bool(callbacks and callbacks.debug_enabled)
 
 
+def _load_inline_bibliography(
+    collection: BibliographyCollection,
+    entries: Mapping[str, str],
+    *,
+    source_label: str,
+    callbacks: ConversionCallbacks | None,
+    fetcher: DoiBibliographyFetcher | None = None,
+) -> None:
+    if not entries:
+        return
+
+    resolver = fetcher or DoiBibliographyFetcher()
+    source_path = _inline_bibliography_source_path(source_label)
+
+    for key, doi_value in entries.items():
+        try:
+            payload = resolver.fetch(doi_value)
+        except DoiLookupError as exc:
+            _emit_warning(
+                callbacks,
+                f"Failed to resolve DOI '{doi_value}' for '{key}': {exc}",
+            )
+            continue
+        try:
+            data = bibliography_data_from_string(payload, key)
+        except PybtexError as exc:
+            _emit_warning(
+                callbacks,
+                f"Failed to parse bibliography entry '{key}': {exc}",
+            )
+            continue
+        collection.load_data(data, source=source_path)
+
+
+def _inline_bibliography_source_path(label: str) -> Path:
+    slug = slugify(label, separator="-")
+    if not slug:
+        slug = "frontmatter"
+    return Path(f"frontmatter-{slug}.bib")
+
+
 def _fail(
     callbacks: ConversionCallbacks | None,
     message: str,
@@ -260,6 +314,8 @@ def convert_document(
         initial_state=state,
         wrap_document=wrap_document,
     )
+
+
 def build_binder_context(
     *,
     document_context: DocumentContext,
@@ -272,25 +328,35 @@ def build_binder_context(
     strategy: GenerationStrategy,
     callbacks: ConversionCallbacks | None,
 ) -> BinderContext:
-    resolved_language = resolve_template_language(
-        requested_language, document_context.front_matter
-    )
+    resolved_language = resolve_template_language(requested_language, document_context.front_matter)
     document_context.language = resolved_language
 
-    config = BookConfig(
-        project_dir=document_context.source_path.parent, language=resolved_language
-    )
+    config = BookConfig(project_dir=document_context.source_path.parent, language=resolved_language)
+
+    inline_bibliography = extract_front_matter_bibliography(document_context.front_matter)
 
     bibliography_collection: BibliographyCollection | None = None
     bibliography_map: dict[str, dict[str, Any]] = {}
-    if bibliography_files:
+
+    if bibliography_files or inline_bibliography:
         bibliography_collection = BibliographyCollection()
-        bibliography_collection.load_files(bibliography_files)
+        if bibliography_files:
+            bibliography_collection.load_files(bibliography_files)
+        if inline_bibliography:
+            _load_inline_bibliography(
+                bibliography_collection,
+                inline_bibliography,
+                source_label=document_context.source_path.stem,
+                callbacks=callbacks,
+            )
+
+    if bibliography_collection is not None:
         bibliography_map = bibliography_collection.to_dict()
         for issue in bibliography_collection.issues:
             prefix = f"[{issue.key}] " if issue.key else ""
             source_hint = f" ({issue.source})" if issue.source else ""
             _emit_warning(callbacks, f"{prefix}{issue.message}{source_hint}")
+
     document_context.bibliography = bibliography_map
 
     slot_requests = dict(document_context.slot_requests)
@@ -452,7 +518,11 @@ def _render_document(
 
     citations = list(document_state.citations)
     bibliography_output: Path | None = None
-    if citations and binder_context.bibliography_collection is not None and binder_context.bibliography_map:
+    if (
+        citations
+        and binder_context.bibliography_collection is not None
+        and binder_context.bibliography_map
+    ):
         try:
             binder_context.output_dir.mkdir(parents=True, exist_ok=True)
             bibliography_output = binder_context.output_dir / "texsmith-bibliography.bib"
@@ -543,7 +613,6 @@ def _render_document(
 
 def coerce_slot_selector(payload: Any) -> str | None:
     """Normalise a selector definition coming from front matter."""
-
     if isinstance(payload, str):
         candidate = payload.strip()
         return candidate or None
@@ -557,7 +626,6 @@ def coerce_slot_selector(payload: Any) -> str | None:
 
 def parse_slot_mapping(raw: Any) -> dict[str, str]:
     """Parse slot mappings declared in front matter structures."""
-
     overrides: dict[str, str] = {}
     if not raw:
         return overrides
@@ -604,7 +672,6 @@ def parse_slot_mapping(raw: Any) -> dict[str, str]:
 
 def extract_front_matter_slots(front_matter: Mapping[str, Any]) -> dict[str, str]:
     """Collect slot overrides defined in document front matter."""
-
     overrides: dict[str, str] = {}
 
     meta_section = front_matter.get("meta")
@@ -618,6 +685,45 @@ def extract_front_matter_slots(front_matter: Mapping[str, Any]) -> dict[str, str
     return overrides
 
 
+def extract_front_matter_bibliography(front_matter: Mapping[str, Any] | None) -> dict[str, str]:
+    """Return DOI mappings declared in the document front matter."""
+    if not isinstance(front_matter, Mapping):
+        return {}
+
+    bibliography: dict[str, str] = {}
+    containers: list[Any] = []
+    meta_section = front_matter.get("meta")
+    if isinstance(meta_section, Mapping):
+        containers.append(meta_section.get("bibliography"))
+    containers.append(front_matter.get("bibliography"))
+
+    for candidate in containers:
+        if not isinstance(candidate, Mapping):
+            continue
+        for key, value in candidate.items():
+            if not isinstance(key, str):
+                continue
+            doi = _coerce_bibliography_doi(value)
+            if not doi:
+                continue
+            bibliography[key] = doi
+
+    return bibliography
+
+
+def _coerce_bibliography_doi(value: Any) -> str | None:
+    if isinstance(value, str):
+        stripped = value.strip()
+        return stripped or None
+    if isinstance(value, Mapping):
+        candidate = value.get("doi")
+        if isinstance(candidate, str):
+            stripped = candidate.strip()
+            if stripped:
+                return stripped
+    return None
+
+
 def extract_slot_fragments(
     html: str,
     requests: Mapping[str, str],
@@ -627,7 +733,6 @@ def extract_slot_fragments(
     parser_backend: str,
 ) -> tuple[list[SlotFragment], list[str]]:
     """Split the HTML document into fragments mapped to template slots."""
-
     try:
         soup = BeautifulSoup(html, parser_backend)
     except FeatureNotFound:
@@ -653,9 +758,7 @@ def extract_slot_fragments(
         filtered_requests[slot_name] = selector
 
     headings: list[tuple[int, Tag]] = []
-    for index, heading in enumerate(
-        container.find_all(re.compile(r"^h[1-6]$"), recursive=True)
-    ):
+    for index, heading in enumerate(container.find_all(re.compile(r"^h[1-6]$"), recursive=True)):
         headings.append((index, heading))
 
     matched: dict[str, tuple[int, Tag]] = {}
@@ -682,9 +785,7 @@ def extract_slot_fragments(
                     matched_heading = (index, heading)
                     break
         if matched_heading is None:
-            missing.append(
-                f"unable to locate section '{selector}' for slot '{slot_name}'"
-            )
+            missing.append(f"unable to locate section '{selector}' for slot '{slot_name}'")
             continue
         matched_index, heading = matched_heading
         occupied_nodes.add(id(heading))
@@ -701,9 +802,7 @@ def extract_slot_fragments(
             )
         )
 
-    for slot_name, (order, heading) in sorted(
-        matched.items(), key=lambda item: item[1][0]
-    ):
+    for slot_name, (order, heading) in sorted(matched.items(), key=lambda item: item[1][0]):
         section_nodes = collect_section_nodes(heading)
         slot_config = slot_definitions.get(slot_name)
         strip_heading = bool(slot_config.strip_heading) if slot_config else False
@@ -715,9 +814,7 @@ def extract_slot_fragments(
                     break
                 render_nodes.pop(0)
         html_fragment = "".join(str(node) for node in render_nodes)
-        fragments.append(
-            SlotFragment(name=slot_name, html=html_fragment, position=order)
-        )
+        fragments.append(SlotFragment(name=slot_name, html=html_fragment, position=order))
         for node in section_nodes:
             if hasattr(node, "extract"):
                 node.extract()
@@ -734,9 +831,7 @@ def extract_slot_fragments(
         remainder_position = -1
 
     fragments.append(
-        SlotFragment(
-            name=default_slot, html=remainder_html, position=remainder_position
-        )
+        SlotFragment(name=default_slot, html=remainder_html, position=remainder_position)
     )
 
     fragments.sort(key=lambda fragment: fragment.position)
@@ -745,7 +840,6 @@ def extract_slot_fragments(
 
 def collect_section_nodes(heading: Tag) -> list[Any]:
     """Collect a heading node and its associated section content."""
-
     nodes: list[Any] = [heading]
     heading_level = heading_level_for(heading)
     for sibling in heading.next_siblings:
@@ -763,7 +857,6 @@ def collect_section_nodes(heading: Tag) -> list[Any]:
 
 def heading_level_for(node: Tag) -> int:
     """Return the numeric level of a heading element."""
-
     name = node.name or ""
     if not re.fullmatch(r"h[1-6]", name):
         raise ValueError(f"Expected heading element, got '{name}'.")
@@ -772,7 +865,6 @@ def heading_level_for(node: Tag) -> int:
 
 def copy_document_state(target: DocumentState, source: DocumentState) -> None:
     """Synchronise ``target`` with a source ``DocumentState`` instance."""
-
     for field in dataclasses.fields(DocumentState):
         setattr(target, field.name, copy.deepcopy(getattr(source, field.name)))
 

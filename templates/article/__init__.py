@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
-from collections.abc import Iterable
+from collections.abc import Iterable, Mapping
 from pathlib import Path
-from typing import Any, Mapping
+from typing import Any
 
 from texsmith.templates import TemplateError, WrappableTemplate
 from texsmith.utils import escape_latex_chars
@@ -43,9 +43,7 @@ class Template(WrappableTemplate):
         try:
             super().__init__(_PACKAGE_ROOT)
         except TemplateError as exc:
-            raise TemplateError(
-                f"Failed to initialise article template: {exc}"
-            ) from exc
+            raise TemplateError(f"Failed to initialise article template: {exc}") from exc
 
     def prepare_context(
         self,
@@ -57,9 +55,7 @@ class Template(WrappableTemplate):
         self._apply_metadata(context)
 
         paper_option = self._normalise_paper_option(context.get("paper"))
-        orientation_option = self._normalise_orientation_option(
-            context.get("orientation")
-        )
+        orientation_option = self._normalise_orientation_option(context.get("orientation"))
 
         options = [option for option in (paper_option, orientation_option) if option]
         geometry_options = ["margin=2.5cm"]
@@ -80,9 +76,7 @@ class Template(WrappableTemplate):
         if not isinstance(raw_meta, Mapping):
             return
 
-        nested_meta = (
-            raw_meta.get("meta") if isinstance(raw_meta.get("meta"), Mapping) else None
-        )
+        nested_meta = raw_meta.get("meta") if isinstance(raw_meta.get("meta"), Mapping) else None
         meta_payload: Mapping[str, Any] = nested_meta or raw_meta
 
         title = self._coerce_string(meta_payload.get("title"))
@@ -167,8 +161,7 @@ class Template(WrappableTemplate):
 
         if not isinstance(value, str):
             raise TemplateError(
-                "Invalid paper option type "
-                f"'{type(value).__name__}' for article template."
+                f"Invalid paper option type '{type(value).__name__}' for article template."
             )
 
         candidate = value.strip().lower()
@@ -179,12 +172,9 @@ class Template(WrappableTemplate):
             candidate = candidate[:-5]
 
         if candidate not in self._VALID_PAPER_BASES:
-            allowed = ", ".join(
-                sorted(f"{base}paper" for base in self._VALID_PAPER_BASES)
-            )
+            allowed = ", ".join(sorted(f"{base}paper" for base in self._VALID_PAPER_BASES))
             raise TemplateError(
-                "Invalid paper option "
-                f"'{value}' for article template. Allowed values: {allowed}."
+                f"Invalid paper option '{value}' for article template. Allowed values: {allowed}."
             )
 
         return f"{candidate}paper"
@@ -194,8 +184,7 @@ class Template(WrappableTemplate):
             default = self._DEFAULT_ORIENTATION
         elif not isinstance(value, str):
             raise TemplateError(
-                "Invalid orientation type "
-                f"'{type(value).__name__}' for article template."
+                f"Invalid orientation type '{type(value).__name__}' for article template."
             )
         else:
             default = value.strip().lower()

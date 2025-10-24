@@ -60,12 +60,9 @@ def _figure_template_for(element: Tag, context: RenderContext) -> str:
     return context.runtime.get("figure_template", "figure")
 
 
-@renders(
-    "div", phase=RenderPhase.PRE, priority=120, name="tabbed_content", auto_mark=False
-)
+@renders("div", phase=RenderPhase.PRE, priority=120, name="tabbed_content", auto_mark=False)
 def render_tabbed_content(element: Tag, context: RenderContext) -> None:
     """Unwrap MkDocs tabbed content structures."""
-
     classes = element.get("class") or []
     if "tabbed-set" not in classes:
         return
@@ -76,9 +73,7 @@ def render_tabbed_content(element: Tag, context: RenderContext) -> None:
             titles.append(label.get_text(strip=True))
         labels.extract()
     else:
-        fallback_titles = [
-            label.get_text(strip=True) for label in element.find_all("label")
-        ]
+        fallback_titles = [label.get_text(strip=True) for label in element.find_all("label")]
         if fallback_titles:
             for title in fallback_titles:
                 if not title:
@@ -97,9 +92,7 @@ def render_tabbed_content(element: Tag, context: RenderContext) -> None:
     if tabbed_content is None:
         raise InvalidNodeError("Missing tabbed-content container inside tabbed-set")
 
-    for index, block in enumerate(
-        tabbed_content.find_all("div", class_="tabbed-block")
-    ):
+    for index, block in enumerate(tabbed_content.find_all("div", class_="tabbed-block")):
         title = titles[index] if index < len(titles) else ""
         heading = NavigableString(f"\n\\textbf{{{title}}}\\par\n")
         block.insert_before(heading)
@@ -131,7 +124,6 @@ def render_blockquotes(element: Tag, context: RenderContext) -> None:
 @renders(phase=RenderPhase.POST, name="lists", auto_mark=False)
 def render_lists(root: Tag, context: RenderContext) -> None:
     """Render ordered and unordered lists."""
-
     for element in _iter_reversed(root.find_all(["ol", "ul"])):
         items: list[str] = []
         checkboxes: list[int] = []
@@ -175,7 +167,6 @@ def render_lists(root: Tag, context: RenderContext) -> None:
 @renders(phase=RenderPhase.POST, priority=15, name="description_lists", auto_mark=False)
 def render_description_lists(root: Tag, context: RenderContext) -> None:
     """Render <dl> elements."""
-
     for dl in _iter_reversed(root.find_all("dl")):
         items: list[tuple[str | None, str]] = []
         current_term: str | None = None
@@ -196,7 +187,6 @@ def render_description_lists(root: Tag, context: RenderContext) -> None:
 @renders(phase=RenderPhase.POST, priority=-10, name="footnotes", auto_mark=False)
 def render_footnotes(root: Tag, context: RenderContext) -> None:
     """Extract and render footnote references."""
-
     footnotes: dict[str, str] = {}
     bibliography = context.state.bibliography
 
@@ -254,9 +244,7 @@ def render_footnotes(root: Tag, context: RenderContext) -> None:
         _replace_with_latex(sup, latex)
 
     for placeholder in root.find_all("texsmith-missing-footnote"):
-        identifier = placeholder.get("data-footnote-id") or placeholder.get_text(
-            strip=True
-        )
+        identifier = placeholder.get("data-footnote-id") or placeholder.get_text(strip=True)
         footnote_id = identifier.strip() if identifier else ""
         if not footnote_id:
             placeholder.decompose()
@@ -284,7 +272,6 @@ def render_footnotes(root: Tag, context: RenderContext) -> None:
 @renders("p", phase=RenderPhase.POST, priority=90, name="paragraphs", nestable=False)
 def render_paragraphs(element: Tag, context: RenderContext) -> None:
     """Render plain paragraphs."""
-
     if element.get("class"):
         return
 
@@ -298,9 +285,7 @@ def render_paragraphs(element: Tag, context: RenderContext) -> None:
     element.replace_with(node)
 
 
-@renders(
-    "div", phase=RenderPhase.POST, priority=60, name="multicolumns", nestable=False
-)
+@renders("div", phase=RenderPhase.POST, priority=60, name="multicolumns", nestable=False)
 def render_columns(element: Tag, context: RenderContext) -> None:
     classes = element.get("class") or []
     if "two-column-list" in classes:
@@ -320,7 +305,6 @@ def render_columns(element: Tag, context: RenderContext) -> None:
 @renders("figure", phase=RenderPhase.POST, priority=30, name="figures", nestable=False)
 def render_figures(element: Tag, context: RenderContext) -> None:
     """Render <figure> elements and manage associated assets."""
-
     classes = element.get("class") or []
     if "mermaid-figure" in classes:
         return
@@ -351,9 +335,7 @@ def render_figures(element: Tag, context: RenderContext) -> None:
     alt_text = image.get("alt") or None
     if not context.runtime.get("copy_assets", True):
         caption_node = element.find("figcaption")
-        caption_text = (
-            caption_node.get_text(strip=False).strip() if caption_node else None
-        )
+        caption_text = caption_node.get_text(strip=False).strip() if caption_node else None
         placeholder = caption_text or alt_text or "[figure]"
         node = NavigableString(placeholder)
         node.processed = True
@@ -419,7 +401,6 @@ def _cell_alignment(cell: Tag) -> str:
 @renders("table", phase=RenderPhase.POST, priority=40, name="tables", nestable=False)
 def render_tables(element: Tag, context: RenderContext) -> None:
     """Render HTML tables to LaTeX."""
-
     caption = None
     if caption_node := element.find("caption"):
         caption = caption_node.get_text(strip=False).strip()

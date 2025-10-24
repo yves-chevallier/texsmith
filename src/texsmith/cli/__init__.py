@@ -7,10 +7,10 @@ from .commands.convert import convert
 
 
 __all__ = [
+    "DEFAULT_MARKDOWN_EXTENSIONS",
     "app",
     "bibliography_app",
     "build",
     "convert",
     "main",
-    "DEFAULT_MARKDOWN_EXTENSIONS",
 ]

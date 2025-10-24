@@ -4,7 +4,7 @@ import sys
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 SRC_ROOT = PROJECT_ROOT / "src"
-EXAMPLES_ROOT = PROJECT_ROOT / "examples"
+EXAMPLES_ROOT = PROJECT_ROOT / "examples" / "custom-render"
 
 for candidate in (PROJECT_ROOT, SRC_ROOT, EXAMPLES_ROOT):
     candidate_str = str(candidate)
@@ -20,9 +20,7 @@ def test_counter_extension_renders_incremented_markers() -> None:
     renderer = build_renderer()
     state = DocumentState()
 
-    html = (
-        '<p><span class="data-counter"></span> <span class="data-counter"></span></p>'
-    )
+    html = '<p><span class="data-counter"></span> <span class="data-counter"></span></p>'
     latex = renderer.render(html, state=state)
 
     assert "\\counter{1}" in latex

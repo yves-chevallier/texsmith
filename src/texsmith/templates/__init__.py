@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable, Iterable, Mapping
 from dataclasses import dataclass
 from importlib import metadata
 import importlib.util
@@ -10,13 +11,14 @@ from pathlib import Path
 import shutil
 import sys
 import tomllib
-from typing import Any, Callable, Iterable, Mapping, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from jinja2 import Environment, FileSystemLoader, TemplateNotFound
 from pydantic import BaseModel, ConfigDict, Field, ValidationError, model_validator
 
 from ..exceptions import LatexRenderingError
 from ..utils import escape_latex_chars
+
 
 if TYPE_CHECKING:
     from ..formatter import LaTeXFormatter
@@ -104,7 +106,7 @@ class TemplateSlot(BaseModel):
     strip_heading: bool = False
 
     @model_validator(mode="after")
-    def _validate_depth(self) -> "TemplateSlot":
+    def _validate_depth(self) -> TemplateSlot:
         if self.depth is not None and self.depth not in LATEX_HEADING_LEVELS:
             raise ValueError(
                 f"Unsupported slot depth '{self.depth}', "
@@ -114,7 +116,6 @@ class TemplateSlot(BaseModel):
 
     def resolve_level(self, fallback: int) -> int:
         """Return the base level applied to rendered headings for this slot."""
-
         level = fallback
         if self.base_level is not None:
             level = self.base_level
@@ -157,7 +158,6 @@ class TemplateInfo(BaseModel):
 
     def resolve_slots(self) -> tuple[dict[str, TemplateSlot], str]:
         """Return declared slots ensuring a single default sink exists."""
-
         resolved = {
             name: slot if isinstance(slot, TemplateSlot) else TemplateSlot.model_validate(slot)
             for name, slot in self.slots.items()
@@ -190,15 +190,12 @@ class TemplateManifest(BaseModel):
     latex: LatexSection
 
     @classmethod
-    def load(cls, manifest_path: Path) -> "TemplateManifest":
+    def load(cls, manifest_path: Path) -> TemplateManifest:
         """Load and validate a manifest from disk."""
-
         try:
             content = tomllib.loads(manifest_path.read_text(encoding="utf-8"))
         except FileNotFoundError as exc:  # pragma: no cover - sanity check
-            raise TemplateError(
-                f"Template manifest is missing: {manifest_path}"
-            ) from exc
+            raise TemplateError(f"Template manifest is missing: {manifest_path}") from exc
         except OSError as exc:  # pragma: no cover - IO failure
             raise TemplateError(f"Failed to read template manifest: {exc}") from exc
         except tomllib.TOMLDecodeError as exc:
@@ -256,12 +253,10 @@ class BaseTemplate:
 
     def default_context(self) -> dict[str, Any]:
         """Return a shallow copy of the manifest default attributes."""
-
         return dict(self.info.attributes)
 
     def render_template(self, template_name: str, **context: Any) -> str:
         """Render a template using the configured Jinja environment."""
-
         try:
             template = self.environment.get_template(template_name)
         except TemplateNotFound as exc:
@@ -281,7 +276,6 @@ class WrappableTemplate(BaseTemplate):
         overrides: Mapping[str, Any] | None = None,
     ) -> dict[str, Any]:
         """Build the rendering context shared by the template and its assets."""
-
         context = self.default_context()
         if overrides:
             context.update(overrides)
@@ -314,7 +308,6 @@ class WrappableTemplate(BaseTemplate):
         context: Mapping[str, Any] | None = None,
     ) -> str:
         """Render the template entry point using the provided LaTeX payload."""
-
         if context is None:
             context = self.prepare_context(latex_body, overrides=overrides)
         else:
@@ -332,9 +325,8 @@ class WrappableTemplate(BaseTemplate):
 
         return self.render_template(self.info.entrypoint, **context)
 
-    def iter_assets(self) -> Iterable["ResolvedAsset"]:
+    def iter_assets(self) -> Iterable[ResolvedAsset]:
         """Yield declared template assets."""
-
         for destination, asset in self.info.assets.items():
             dest_path = Path(destination)
             if dest_path.is_absolute():
@@ -347,23 +339,20 @@ class WrappableTemplate(BaseTemplate):
                 source_path = (self.root / source_path).resolve()
             if not source_path.exists():
                 raise TemplateError(
-                    "Declared template asset "
-                    f"'{asset.source}' is missing under {self.root}."
+                    f"Declared template asset '{asset.source}' is missing under {self.root}."
                 )
 
             template_name: str | None = None
             if asset.template:
                 if source_path.is_dir():
                     raise TemplateError(
-                        "Templated assets must reference files, "
-                        f"got directory '{asset.source}'."
+                        f"Templated assets must reference files, got directory '{asset.source}'."
                     )
                 try:
                     relative = source_path.relative_to(self.root)
                 except ValueError as exc:  # pragma: no cover - defensive
                     raise TemplateError(
-                        "Templated asset "
-                        f"'{asset.source}' must live inside the template root."
+                        f"Templated asset '{asset.source}' must live inside the template root."
                     ) from exc
                 template_name = relative.as_posix()
 
@@ -377,7 +366,6 @@ class WrappableTemplate(BaseTemplate):
 
     def iter_formatter_overrides(self) -> Iterable[tuple[str, Path]]:
         """Yield formatter override templates declared by the manifest."""
-
         if not self.info.override:
             return ()
 
@@ -393,17 +381,13 @@ class WrappableTemplate(BaseTemplate):
 
         for entry in self.info.override:
             if not isinstance(entry, str):
-                raise TemplateError(
-                    "Formatter override entries must be provided as string paths."
-                )
+                raise TemplateError("Formatter override entries must be provided as string paths.")
             candidate = entry.strip()
             if not candidate:
                 continue
 
             relative_path = Path(candidate)
-            if relative_path.is_absolute() or any(
-                part == ".." for part in relative_path.parts
-            ):
+            if relative_path.is_absolute() or any(part == ".." for part in relative_path.parts):
                 raise TemplateError(
                     f"Formatter override '{entry}' must be a relative path without '..'."
                 )
@@ -418,9 +402,7 @@ class WrappableTemplate(BaseTemplate):
                     break
 
             if resolved_path is None:
-                raise TemplateError(
-                    f"Formatter override '{entry}' is missing under '{self.root}'."
-                )
+                raise TemplateError(f"Formatter override '{entry}' is missing under '{self.root}'.")
 
             key = relative_path.with_suffix("").as_posix().replace("/", "_")
             if key in seen:
@@ -459,9 +441,7 @@ def _load_specialised_template(path: Path) -> WrappableTemplate | None:
         spec.loader.exec_module(module)
     except Exception as exc:  # pragma: no cover - surface import errors
         sys.modules.pop(module_name, None)
-        raise TemplateError(
-            f"Failed to import template module at '{path}': {exc}"
-        ) from exc
+        raise TemplateError(f"Failed to import template module at '{path}': {exc}") from exc
 
     for attribute in ("Template", "template", "load_template", "get_template"):
         candidate = getattr(module, attribute, None)
@@ -487,7 +467,6 @@ class ResolvedAsset:
 
 def load_template(identifier: str) -> WrappableTemplate:
     """Load a template selected by name or filesystem path."""
-
     path_candidate = Path(identifier).expanduser()
     if path_candidate.exists():
         return _load_path_template(path_candidate)
@@ -524,7 +503,6 @@ def _match_entry_points(
 
 def _coerce_template(value: Any) -> WrappableTemplate | None:
     """Coerce an entry point payload into a ``WrappableTemplate`` instance."""
-
     if isinstance(value, WrappableTemplate):
         return value
 
@@ -551,7 +529,6 @@ def copy_template_assets(
     overrides: Mapping[str, Any] | None = None,
 ) -> list[Path]:
     """Copy the template declared assets into the selected output directory."""
-
     output_dir = Path(output_dir).resolve()
     output_dir.mkdir(parents=True, exist_ok=True)
 
@@ -596,7 +573,6 @@ def _slug_from_identifier(identifier: str) -> str:
 
 def _iter_local_candidates(initial: Path, slug: str) -> Iterable[Path]:
     """Yield additional candidate locations for local templates."""
-
     candidates: list[Path] = []
     if str(initial) not in {slug, f"./{slug}", f".\\{slug}"}:
         candidates.append(initial)
@@ -658,16 +634,11 @@ class TemplateBinding:
 
     def slot_levels(self, *, offset: int = 0) -> dict[str, int]:
         """Return the resolved base level for each slot."""
-
         base = (self.base_level or 0) + offset
-        return {
-            name: slot.resolve_level(base)
-            for name, slot in self.slots.items()
-        }
+        return {name: slot.resolve_level(base) for name, slot in self.slots.items()}
 
-    def apply_formatter_overrides(self, formatter: "LaTeXFormatter") -> None:
+    def apply_formatter_overrides(self, formatter: LaTeXFormatter) -> None:
         """Apply template-provided overrides to a formatter."""
-
         for key, override_path in self.formatter_overrides.items():
             formatter.override_template(key, override_path)
 
@@ -698,8 +669,7 @@ def coerce_base_level(value: Any, *, allow_none: bool = True) -> int | None:
             ) from exc
 
     raise TemplateError(
-        "Base level should be provided as an integer value, "
-        f"got type '{type(value).__name__}'."
+        f"Base level should be provided as an integer value, got type '{type(value).__name__}'."
     )
 
 
@@ -793,7 +763,6 @@ def resolve_template_language(
 
 def load_template_runtime(template: str) -> TemplateRuntime:
     """Resolve template metadata for repeated conversions."""
-
     template_instance = load_template(template)
 
     template_base = coerce_base_level(
@@ -868,9 +837,7 @@ def resolve_template_binding(
             continue
         if binding.runtime is None:
             if warn is not None:
-                warn(
-                    f"slot '{slot_name}' was requested but no template is selected; ignoring."
-                )
+                warn(f"slot '{slot_name}' was requested but no template is selected; ignoring.")
             continue
         filtered[slot_name] = selector
 

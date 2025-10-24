@@ -12,7 +12,7 @@ theme:
     text: Source Sans 3
   features:
     - search
-    - navigation.instant
+    #- navigation.instant
     - navigation.tabs
     - navigation.top
     - navigation.indexes
@@ -64,13 +64,13 @@ markdown_extensions:
   - footnotes
   - attr_list
   - md_in_html
-extra_css:
-  - css/pied-piper.css
 extra_javascript:
   - https://unpkg.com/mathjax@3/es5/tex-mml-chtml.js
   - https://cdn.jsdelivr.net/npm/vega@5
   - https://cdn.jsdelivr.net/npm/vega-lite@5
   - https://cdn.jsdelivr.net/npm/vega-embed@6
+#   - https://viewer.diagrams.net/js/viewer-static.min.js
+#   - assets/js/auto-reload.js
 
 plugins:
   - search
@@ -87,3 +87,4 @@ plugins:
             separate_signature: true
             merge_init_into_class: true
   - pills
+  - drawio

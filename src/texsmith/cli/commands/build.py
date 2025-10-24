@@ -24,8 +24,8 @@ from ...templates import TemplateError
 from ..state import debug_enabled, emit_error, emit_warning, get_cli_state
 from ..utils import (
     classify_input_source,
-    prepare_document_context,
     parse_slot_option,
+    prepare_document_context,
     resolve_option,
     split_document_inputs,
 )
@@ -44,9 +44,7 @@ def build_latexmk_command(
     if not tokens:
         tokens = ["pdflatex"]
 
-    if shell_escape and not any(
-        token in {"-shell-escape", "--shell-escape"} for token in tokens
-    ):
+    if shell_escape and not any(token in {"-shell-escape", "--shell-escape"} for token in tokens):
         tokens.append("--shell-escape")
 
     tokens.extend(["%O", "%S"])
@@ -64,7 +62,7 @@ def build_latexmk_command(
     return command
 
 
-def build(  # noqa: PLR0913, PLR0915 - command requires many options
+def build(
     inputs: list[Path] = typer.Argument(  # type: ignore[assignment]
         ...,
         metavar="INPUT...",
@@ -105,8 +103,7 @@ def build(  # noqa: PLR0913, PLR0915 - command requires many options
         "-h",
         min=0,
         help=(
-            "Indent all headings by the selected depth "
-            "(e.g. 1 turns sections into subsections)."
+            "Indent all headings by the selected depth (e.g. 1 turns sections into subsections)."
         ),
     ),
     drop_title: bool = typer.Option(
@@ -127,18 +124,13 @@ def build(  # noqa: PLR0913, PLR0915 - command requires many options
     disable_fallback_converters: bool = typer.Option(
         False,
         "--no-fallback-converters",
-        help=(
-            "Disable registration of placeholder converters when Docker is unavailable."
-        ),
+        help=("Disable registration of placeholder converters when Docker is unavailable."),
     ),
     copy_assets: bool = typer.Option(
         True,
         "--copy-assets/--no-copy-assets",
         "-a/-A",
-        help=(
-            "Control whether asset files are generated "
-            "and copied to the output directory."
-        ),
+        help=("Control whether asset files are generated and copied to the output directory."),
     ),
     manifest: bool = typer.Option(
         False,
@@ -167,8 +159,7 @@ def build(  # noqa: PLR0913, PLR0915 - command requires many options
         True,
         "--classic-output/--rich-output",
         help=(
-            "Display raw latexmk output without parsing "
-            "(use --rich-output for structured logs)."
+            "Display raw latexmk output without parsing (use --rich-output for structured logs)."
         ),
     ),
     language: str | None = typer.Option(
@@ -217,9 +208,7 @@ def build(  # noqa: PLR0913, PLR0915 - command requires many options
     ),
 ) -> None:
     resolved_bibliography_option = list(resolve_option(bibliography))
-    documents, bibliography_files = split_document_inputs(
-        inputs, resolved_bibliography_option
-    )
+    documents, bibliography_files = split_document_inputs(inputs, resolved_bibliography_option)
     if len(documents) != 1:
         raise typer.BadParameter("Provide exactly one Markdown or HTML document.")
     document_path = documents[0]
@@ -249,12 +238,8 @@ def build(  # noqa: PLR0913, PLR0915 - command requires many options
         raise typer.Exit(code=1) from exc
 
     callbacks = ConversionCallbacks(
-        emit_warning=lambda message, exception=None: emit_warning(
-            message, exception=exception
-        ),
-        emit_error=lambda message, exception=None: emit_error(
-            message, exception=exception
-        ),
+        emit_warning=lambda message, exception=None: emit_warning(message, exception=exception),
+        emit_error=lambda message, exception=None: emit_error(message, exception=exception),
         debug_enabled=debug_enabled(),
     )
 
@@ -322,9 +307,7 @@ def build(  # noqa: PLR0913, PLR0915 - command requires many options
 
     latexmk_path = shutil.which("latexmk")
     if latexmk_path is None:
-        emit_error(
-            "latexmk executable not found. Install TeX Live (or latexmk) to build PDFs."
-        )
+        emit_error("latexmk executable not found. Install TeX Live (or latexmk) to build PDFs.")
         raise typer.Exit(code=1)
 
     command = build_latexmk_command(

@@ -103,9 +103,7 @@ class FetchImageStrategy(CachedConversionStrategy):
 
         try:
             response = requests.get(url, timeout=self.timeout)
-        except (
-            requests.exceptions.RequestException
-        ) as exc:  # pragma: no cover - network
+        except requests.exceptions.RequestException as exc:  # pragma: no cover - network
             msg = f"Failed to fetch image '{url}': {exc}"
             raise TransformerExecutionError(msg) from exc
         if not response.ok:
@@ -300,9 +298,7 @@ class DrawioToPdfStrategy(CachedConversionStrategy):
     ) -> Path:
         source_path = Path(source)
         if not source_path.exists():
-            raise TransformerExecutionError(
-                f"Draw.io file '{source_path}' does not exist."
-            )
+            raise TransformerExecutionError(f"Draw.io file '{source_path}' does not exist.")
 
         working_dir = cache_dir / "drawio"
         working_dir.mkdir(parents=True, exist_ok=True)
