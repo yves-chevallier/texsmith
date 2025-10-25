@@ -5,7 +5,7 @@ from __future__ import annotations
 from collections.abc import Callable, Iterable
 from dataclasses import dataclass, field
 from enum import Enum, auto
-from typing import TYPE_CHECKING, Any, Protocol
+from typing import TYPE_CHECKING, Any, Protocol, cast
 
 
 if TYPE_CHECKING:  # pragma: no cover - typing only
@@ -36,7 +36,9 @@ RuleCallable = Callable[[Any, "RenderContext"], None]
 class RuleFactory(Protocol):
     """Protocol implemented by rule decorators."""
 
-    def bind(self, handler: RuleCallable) -> RenderRule: ...
+    def bind(self, handler: RuleCallable) -> RenderRule:
+        """Create a concrete render rule for the decorated handler."""
+        ...
 
 
 DOCUMENT_NODE = "__document__"
@@ -56,6 +58,7 @@ class RenderRule:
     after_children: bool = field(default=False, compare=False)
 
     def applies_to_document(self) -> bool:
+        """Return True when the rule targets the synthetic document node."""
         return self.tags == (DOCUMENT_NODE,)
 
 
@@ -140,7 +143,7 @@ def renders(
     )
 
     def decorator(handler: RuleCallable) -> RuleCallable:
-        handler.__render_rule__ = definition
+        cast(Any, handler).__render_rule__ = definition
         return handler
 
     return decorator

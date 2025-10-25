@@ -2,10 +2,11 @@
 
 from __future__ import annotations
 
-from bs4 import NavigableString, Tag
+from bs4.element import NavigableString, Tag
 
 from ..context import RenderContext
 from ..rules import RenderPhase, renders
+from ._helpers import coerce_attribute, mark_processed
 
 
 UNWANTED_NODES: tuple[tuple[str, tuple[str, ...], str], ...] = (
@@ -56,10 +57,13 @@ def _merge_strip_rules(
 def discard_unwanted(root: Tag, context: RenderContext) -> None:
     """Discard or unwrap nodes that must not reach later phases."""
     for tag_name, classes, mode in _merge_strip_rules(context):
-        kwargs: dict[str, object] = {}
-        if classes:
-            kwargs["class_"] = list(classes)
-        for node in root.find_all(tag_name, **kwargs):
+        class_filter = list(classes)
+        candidates = (
+            root.find_all(tag_name, class_=class_filter)
+            if class_filter
+            else root.find_all(tag_name)
+        )
+        for node in candidates:
             if mode == "unwrap":
                 node.unwrap()
             elif mode == "extract":
@@ -77,9 +81,7 @@ def remove_horizontal_rules(element: Tag, _context: RenderContext) -> None:
 @renders("br", phase=RenderPhase.INLINE, name="line_breaks")
 def replace_line_breaks(element: Tag, _context: RenderContext) -> None:
     """Convert ``<br>`` tags into explicit LaTeX line breaks."""
-    node = NavigableString("\\")
-    node.processed = True
-    element.replace_with(node)
+    element.replace_with(mark_processed(NavigableString("\\")))
 
 
 @renders("ins", phase=RenderPhase.INLINE, name="inline_underline", after_children=True)
@@ -169,9 +171,7 @@ def render_headings(element: Tag, context: RenderContext) -> None:
     if drop_title:
         context.runtime["drop_title"] = False
         latex = context.formatter.pagestyle(text="plain")
-        node = NavigableString(latex)
-        node.processed = True
-        element.replace_with(node)
+        element.replace_with(mark_processed(NavigableString(latex)))
         return
 
     text = element.get_text(strip=False)
@@ -179,7 +179,7 @@ def render_headings(element: Tag, context: RenderContext) -> None:
     level = int(element.name[1:])
     base_level = context.runtime.get("base_level", 0)
     rendered_level = level + base_level - 1
-    ref = element.get("id")
+    ref = coerce_attribute(element.get("id"))
     numbered = context.runtime.get("numbered", True)
 
     latex = context.formatter.heading(
@@ -189,8 +189,6 @@ def render_headings(element: Tag, context: RenderContext) -> None:
         numbered=numbered,
     )
 
-    node = NavigableString(latex)
-    node.processed = True
-    element.replace_with(node)
+    element.replace_with(mark_processed(NavigableString(latex)))
 
     context.state.add_heading(level=rendered_level, text=plain_text, ref=ref)

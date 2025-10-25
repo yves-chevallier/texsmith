@@ -20,12 +20,14 @@ class CLIState:
 
     @property
     def console(self) -> Console:
+        """Return a lazily instantiated stdout console."""
         if self._console is None or self._console.file is not sys.stdout:
             self._console = Console(file=sys.stdout)
         return self._console
 
     @property
     def err_console(self) -> Console:
+        """Return a lazily instantiated stderr console."""
         if self._err_console is None or self._err_console.file is not sys.stderr:
             self._err_console = Console(file=sys.stderr, highlight=False)
         return self._err_console
@@ -35,10 +37,12 @@ _CLI_STATE = CLIState()
 
 
 def get_cli_state() -> CLIState:
+    """Return the singleton CLI state shared across commands."""
     return _CLI_STATE
 
 
 def set_cli_state(*, verbosity: int | None = None, debug: bool | None = None) -> None:
+    """Update the global CLI state with verbosity and debug flags."""
     state = get_cli_state()
     if verbosity is not None:
         state.verbosity = max(0, verbosity)
@@ -46,7 +50,7 @@ def set_cli_state(*, verbosity: int | None = None, debug: bool | None = None) ->
         state.show_tracebacks = debug
 
 
-def _exception_chain(exc: Exception) -> list[str]:
+def _exception_chain(exc: BaseException) -> list[str]:
     chain: list[str] = []
     visited: set[int] = set()
     current = exc.__cause__ or exc.__context__
@@ -61,8 +65,9 @@ def render_message(
     level: str,
     message: str,
     *,
-    exception: Exception | None = None,
+    exception: BaseException | None = None,
 ) -> None:
+    """Render a formatted message to the console, including optional diagnostics."""
     state = get_cli_state()
     style = "red" if level == "error" else "yellow"
     label_style = f"bold {style}"
@@ -95,13 +100,16 @@ def render_message(
     console.print(text)
 
 
-def emit_warning(message: str, *, exception: Exception | None = None) -> None:
+def emit_warning(message: str, *, exception: BaseException | None = None) -> None:
+    """Log a warning-level message to stderr respecting verbosity settings."""
     render_message("warning", message, exception=exception)
 
 
-def emit_error(message: str, *, exception: Exception | None = None) -> None:
+def emit_error(message: str, *, exception: BaseException | None = None) -> None:
+    """Log an error-level message to stderr respecting verbosity settings."""
     render_message("error", message, exception=exception)
 
 
 def debug_enabled() -> bool:
+    """Return whether full tracebacks should be displayed."""
     return get_cli_state().show_tracebacks

@@ -13,7 +13,8 @@ from pathlib import Path
 import re
 from typing import TYPE_CHECKING, Any
 
-from bs4 import BeautifulSoup, FeatureNotFound, NavigableString, Tag
+from bs4 import BeautifulSoup, FeatureNotFound
+from bs4.element import NavigableString, Tag
 from pybtex.exceptions import PybtexError
 from slugify import slugify
 
@@ -128,6 +129,8 @@ class UnsupportedInputError(Exception):
 
 
 class InputKind(Enum):
+    """Supported input modalities handled by the conversion pipeline."""
+
     MARKDOWN = "markdown"
     HTML = "html"
 
@@ -228,6 +231,7 @@ def build_document_context(
     drop_title: bool,
     numbered: bool,
 ) -> DocumentContext:
+    """Construct a document context enriched with metadata and slot requests."""
     metadata = dict(front_matter or {})
     slot_requests = extract_front_matter_slots(metadata)
 
@@ -262,6 +266,7 @@ def convert_document(
     wrap_document: bool = True,
     callbacks: ConversionCallbacks | None = None,
 ) -> ConversionResult:
+    """Orchestrate the full HTML-to-LaTeX conversion for a single document."""
     strategy = GenerationStrategy(
         copy_assets=copy_assets,
         prefer_inputs=False,
@@ -313,6 +318,7 @@ def build_binder_context(
     strategy: GenerationStrategy,
     callbacks: ConversionCallbacks | None,
 ) -> BinderContext:
+    """Prepare template bindings, bibliography data, and slot mappings."""
     resolved_language = resolve_template_language(requested_language, document_context.front_matter)
     document_context.language = resolved_language
 
@@ -354,6 +360,8 @@ def build_binder_context(
     if isinstance(meta_section, dict):
         meta_section.setdefault("language", resolved_language)
 
+    active_slot_requests: dict[str, str] = {}
+    binding: TemplateBinding | None = None
     try:
         binding, active_slot_requests = resolve_template_binding(
             template=template,
@@ -366,6 +374,8 @@ def build_binder_context(
         if _debug_enabled(callbacks):
             raise
         _fail(callbacks, str(exc), exc)
+    if binding is None:  # pragma: no cover - defensive
+        raise RuntimeError("Failed to resolve template binding.")
 
     binder_context = BinderContext(
         output_dir=output_dir,
@@ -478,6 +488,7 @@ def _render_document(
         if drop_title_flag:
             runtime_fragment["drop_title"] = True
             drop_title_flag = False
+        fragment_output = ""
         try:
             fragment_output, document_state = render_with_fallback(
                 renderer_factory,
@@ -529,6 +540,7 @@ def _render_document(
     tex_path: Path | None = None
     template_instance = binding.instance
     if template_instance is not None and wrap_document:
+        template_context: dict[str, Any] | None = None
         try:
             template_context = template_instance.prepare_context(
                 latex_output,
@@ -857,6 +869,7 @@ def copy_document_state(target: DocumentState, source: DocumentState) -> None:
 
 
 def extract_content(html: str, selector: str) -> str:
+    """Extract and return the inner HTML for the first element matching selector."""
     try:
         soup = BeautifulSoup(html, "lxml")
     except FeatureNotFound:
@@ -869,6 +882,7 @@ def extract_content(html: str, selector: str) -> str:
 
 
 def persist_debug_artifacts(output_dir: Path, source: Path, html: str) -> None:
+    """Persist intermediate HTML snapshots to aid debugging."""
     output_dir.mkdir(parents=True, exist_ok=True)
     debug_path = output_dir / f"{source.stem}.debug.html"
     debug_path.write_text(html, encoding="utf-8")
@@ -882,6 +896,7 @@ def render_with_fallback(
     *,
     state: DocumentState | None = None,
 ) -> tuple[str, DocumentState]:
+    """Render HTML to LaTeX, retrying with fallback converters when available."""
     attempts = 0
     bibliography_payload = dict(bibliography or {})
     base_state = state
@@ -910,6 +925,7 @@ def render_with_fallback(
 
 
 def attempt_transformer_fallback(error: LatexRenderingError) -> bool:
+    """Register placeholder converters when known transformers are unavailable."""
     cause = error.__cause__
     if not isinstance(cause, TransformerExecutionError):
         return False
@@ -930,6 +946,7 @@ def attempt_transformer_fallback(error: LatexRenderingError) -> bool:
 
 
 def ensure_fallback_converters() -> None:
+    """Install placeholder converters for optional transformer dependencies."""
     if is_docker_available():
         return
 
@@ -958,6 +975,7 @@ class _FallbackConverter:
 
 
 def format_rendering_error(error: LatexRenderingError) -> str:
+    """Format a human-readable rendering failure summary."""
     cause = error.__cause__
     if cause is None:
         return str(error)

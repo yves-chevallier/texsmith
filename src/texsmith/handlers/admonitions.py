@@ -4,11 +4,11 @@ from __future__ import annotations
 
 from contextlib import contextmanager
 
-from bs4 import Tag
-from bs4.element import NavigableString
+from bs4.element import NavigableString, Tag
 
 from ..context import RenderContext
 from ..rules import RenderPhase, renders
+from ._helpers import gather_classes, mark_processed
 
 
 IGNORED_CLASSES = {
@@ -58,9 +58,7 @@ def _render_admonition(
         content = element.get_text(strip=False).strip()
 
     latex = context.formatter.callout(content, title=title, type=admonition_type)
-    node = NavigableString(latex)
-    node.processed = True
-    element.replace_with(node)
+    element.replace_with(mark_processed(NavigableString(latex)))
 
 
 @renders(
@@ -73,7 +71,7 @@ def _render_admonition(
 )
 def render_div_admonitions(element: Tag, context: RenderContext) -> None:
     """Handle MkDocs Material admonition blocks."""
-    classes = element.get("class") or []
+    classes = gather_classes(element.get("class"))
     if "admonition" not in classes:
         return
     if "exercise" in classes:
@@ -93,7 +91,7 @@ def render_div_admonitions(element: Tag, context: RenderContext) -> None:
 )
 def render_details_admonitions(element: Tag, context: RenderContext) -> None:
     """Handle collapsible callouts converted from MkDocs Material's details blocks."""
-    classes = element.get("class") or []
+    classes = gather_classes(element.get("class"))
     if "exercise" in classes:
         return
 

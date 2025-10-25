@@ -5,9 +5,10 @@ from __future__ import annotations
 from collections.abc import Iterable
 from dataclasses import dataclass
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, TypeVar, cast
 
 import typer
+from typer.models import ArgumentInfo, OptionInfo
 
 from ..conversion import (
     DOCUMENT_SELECTOR_SENTINEL,
@@ -38,17 +39,19 @@ class SlotAssignment:
     full_document: bool = False
 
 
-def resolve_option(value: object) -> object:
-    if isinstance(value, typer.models.OptionInfo):
-        return value.default
-    if hasattr(typer.models, "ArgumentInfo") and isinstance(  # type: ignore[attr-defined]
-        value, typer.models.ArgumentInfo
-    ):
-        default = value.default  # type: ignore[attr-defined]
+_T = TypeVar("_T")
+
+
+def resolve_option(value: _T | OptionInfo | ArgumentInfo) -> _T:
+    """Extract the runtime value from Typer configuration helpers."""
+    if isinstance(value, OptionInfo):
+        return cast(_T, value.default)
+    if isinstance(value, ArgumentInfo):
+        default = cast(Any, value.default)
         if default is Ellipsis:
-            return []
-        return default
-    return value
+            return cast(_T, [])
+        return cast(_T, default)
+    return cast(_T, value)
 
 
 def parse_slot_option(values: Iterable[str] | None) -> dict[str, str]:
@@ -76,6 +79,7 @@ def parse_slot_option(values: Iterable[str] | None) -> dict[str, str]:
 
 
 def deduplicate_paths(values: Iterable[Path]) -> list[Path]:
+    """Return paths with duplicates removed while preserving order."""
     seen: set[Path] = set()
     result: list[Path] = []
     for path in values:
@@ -90,6 +94,7 @@ def split_document_inputs(
     inputs: Iterable[Path],
     extra_bibliography: Iterable[Path],
 ) -> tuple[list[Path], list[Path]]:
+    """Separate document inputs from bibliography files supplied to the CLI."""
     inline_bibliography: list[Path] = []
     documents: list[Path] = []
 
@@ -136,6 +141,7 @@ def prepare_document_context(
     callbacks: ConversionCallbacks,
     emit_error_callback: Any,
 ) -> DocumentContext:
+    """Load, normalise, and annotate the source document for conversion."""
     try:
         raw_payload = document_path.read_text(encoding="utf-8")
     except OSError as exc:
@@ -182,6 +188,7 @@ def prepare_document_context(
 
 
 def build_unique_stem_map(documents: Iterable[Path]) -> dict[Path, str]:
+    """Generate unique stem labels for each document to avoid filename clashes."""
     used: set[str] = set()
     counters: dict[str, int] = {}
     mapping: dict[Path, str] = {}
@@ -205,6 +212,7 @@ def determine_output_target(
     documents: list[Path],
     output_option: Path | None,
 ) -> tuple[str, Path | None]:
+    """Infer where conversion output should be written based on CLI arguments."""
     if template_selected:
         if output_option is None:
             return "template", Path("build")
@@ -227,6 +235,7 @@ def determine_output_target(
 
 
 def write_output_file(target: Path, content: str) -> None:
+    """Persist LaTeX content to disk, creating parent directories as needed."""
     try:
         target.parent.mkdir(parents=True, exist_ok=True)
         target.write_text(content, encoding="utf-8")
@@ -235,6 +244,7 @@ def write_output_file(target: Path, content: str) -> None:
 
 
 def looks_like_document_path(candidate: str) -> bool:
+    """Return True when the string has an extension resembling a document."""
     suffix = Path(candidate).suffix.lower()
     return bool(suffix) and suffix in {
         ".md",
@@ -247,6 +257,7 @@ def looks_like_document_path(candidate: str) -> bool:
 
 
 def normalise_selector(selector: str | None) -> str | None:
+    """Strip surrounding quotes and whitespace from user-provided selectors."""
     if selector is None:
         return None
     candidate = selector.strip()
@@ -258,6 +269,7 @@ def normalise_selector(selector: str | None) -> str | None:
 def parse_cli_slot_tokens(
     values: Iterable[str] | None,
 ) -> list[tuple[str, str | None, str | None, str]]:
+    """Tokenise slot overrides into (slot, path, selector, raw) tuples."""
     tokens: list[tuple[str, str | None, str | None, str]] = []
     if not values:
         return tokens
@@ -306,6 +318,7 @@ def resolve_slot_assignments(
     tokens: list[tuple[str, str | None, str | None, str]],
     documents: list[Path],
 ) -> dict[Path, list[SlotAssignment]]:
+    """Resolve parsed slot tokens against provided documents."""
     assignments: dict[Path, list[SlotAssignment]] = {doc: [] for doc in documents}
     if not tokens:
         return assignments
@@ -373,6 +386,7 @@ def organise_slot_overrides(
     values: Iterable[str] | None,
     documents: list[Path],
 ) -> tuple[dict[Path, dict[str, str]], dict[Path, list[SlotAssignment]]]:
+    """Produce slot selector overrides and assignments for downstream processing."""
     tokens = parse_cli_slot_tokens(values)
     assignments = resolve_slot_assignments(tokens, documents)
 

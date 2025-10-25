@@ -82,31 +82,39 @@ class DocumentState:
         return candidate
 
     def remember_glossary(self, key: str, entry: dict[str, Any]) -> None:
+        """Record a glossary entry keyed by its identifier."""
         self.glossary[key] = entry
 
     def register_snippet(self, key: str, payload: dict[str, Any]) -> None:
+        """Cache snippet metadata to render later in the pipeline."""
         self.snippets[key] = payload
 
     def add_solution(self, solution: dict[str, Any]) -> None:
+        """Append a solution block encountered during parsing."""
         self.solutions.append(solution)
 
     def add_heading(self, *, level: int, text: str, ref: str | None = None) -> None:
+        """Track heading metadata to power table-of-contents generation."""
         self.headings.append({"level": level, "text": text, "ref": ref})
 
     def next_exercise(self) -> int:
+        """Increment and return the exercise counter."""
         counter = self.next_counter("exercise")
         self.exercise_counter = counter
         return counter
 
     def next_counter(self, key: str = "default") -> int:
+        """Increment and return the named counter."""
         value = self.counters.get(key, 0) + 1
         self.counters[key] = value
         return value
 
     def peek_counter(self, key: str = "default") -> int:
+        """Return the current value of the named counter without modifying it."""
         return self.counters.get(key, 0)
 
     def reset_counter(self, key: str) -> None:
+        """Clear the named counter if it has been tracked."""
         self.counters.pop(key, None)
 
     def record_citation(self, key: str) -> None:
@@ -141,6 +149,7 @@ class AssetRegistry:
             raise AssetMissingError(f"Missing asset '{key}'") from exc
 
     def items(self) -> Iterable[tuple[str, Path]]:
+        """Iterate over registered assets yielding key/path pairs."""
         return ((k, Path(v)) for k, v in self.assets_map.items())
 
     def latex_path(self, path: Path | str) -> str:

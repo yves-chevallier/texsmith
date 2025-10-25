@@ -8,7 +8,7 @@ import importlib.util
 import inspect
 from pathlib import Path
 import sys
-from typing import Any
+from typing import Any, cast
 
 from jinja2 import Environment, FileSystemLoader, TemplateNotFound
 
@@ -233,13 +233,21 @@ class ResolvedAsset:
     template_name: str | None = None
 
 
-def _coerce_template(value: Any) -> "WrappableTemplate" | None:
+def _coerce_template(value: Any) -> WrappableTemplate | None:
     """Coerce an entry point payload into a ``WrappableTemplate`` instance."""
     if isinstance(value, WrappableTemplate):
         return value
 
     if inspect.isclass(value) and issubclass(value, WrappableTemplate):
-        return value()
+        template_cls = cast(type[Any], value)
+        try:
+            instance = template_cls()
+        except TypeError as exc:  # pragma: no cover - defensive
+            raise TemplateError(
+                "Specialised template classes exported via entry points must be ``WrappableTemplate`` "
+                "instances or be instantiable without arguments."
+            ) from exc
+        return cast(WrappableTemplate, instance)
 
     if callable(value):
         produced = value()

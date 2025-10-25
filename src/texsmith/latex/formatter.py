@@ -144,6 +144,7 @@ class LaTeXFormatter:
         return f"\\includegraphics[width=1em]{{{pdfpath}}}"
 
     def get_cover(self, name: str, **kwargs: Any) -> str:
+        """Render a named cover template populated with book metadata."""
         template = self._get_template(f"cover/{name}")
         return template.render(
             title=self.config.title,  # type: ignore[attr-defined]

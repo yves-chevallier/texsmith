@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
-from collections.abc import Iterable, Sequence
+from collections.abc import Iterable, Mapping, Sequence
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 from pybtex.database import BibliographyData, Entry, Person
 from pybtex.database.input import bibtex
@@ -170,24 +170,40 @@ class BibliographyCollection:
         return self._entry_signature(first) == self._entry_signature(second)
 
     def _entry_signature(self, entry: Entry) -> dict[str, Any]:
+        fields = {str(field_name): value for field_name, value in _iter_mapping_items(entry.fields)}
+        persons_payload: dict[str, list[tuple[tuple[str, ...], ...]]] = {}
+        for role_name, persons in _iter_mapping_items(entry.persons):
+            if not isinstance(persons, Iterable):
+                persons_payload[str(role_name)] = []
+                continue
+            relevant_people = [
+                self._person_signature(person) for person in persons if isinstance(person, Person)
+            ]
+            persons_payload[str(role_name)] = relevant_people
+
         return {
             "type": entry.type,
-            "fields": dict(entry.fields),
-            "persons": {
-                role: [self._person_signature(person) for person in persons]
-                for role, persons in sorted(entry.persons.items())
-            },
+            "fields": fields,
+            "persons": persons_payload,
         }
 
     def _portable_entry(self, key: str, entry: Entry, sources: set[Path]) -> dict[str, Any]:
+        fields = {str(field_name): value for field_name, value in _iter_mapping_items(entry.fields)}
+        persons_payload: dict[str, list[dict[str, Any]]] = {}
+        for role_name, persons in _iter_mapping_items(entry.persons):
+            if not isinstance(persons, Iterable):
+                persons_payload[str(role_name)] = []
+                continue
+            people_payload = [
+                self._person_payload(person) for person in persons if isinstance(person, Person)
+            ]
+            persons_payload[str(role_name)] = people_payload
+
         return {
             "key": key,
             "type": entry.type,
-            "fields": dict(entry.fields),
-            "persons": {
-                role: [self._person_payload(person) for person in persons]
-                for role, persons in sorted(entry.persons.items())
-            },
+            "fields": fields,
+            "persons": persons_payload,
             "source_files": sorted(str(path) for path in sources),
         }
 
@@ -219,3 +235,14 @@ class BibliographyCollection:
         payload["text"] = str(person)
         return payload
 
+
+def _iter_mapping_items(value: object) -> Iterable[tuple[object, object]]:
+    if isinstance(value, Mapping):
+        yield from value.items()
+        return
+
+    items = getattr(value, "items", None)
+    if callable(items):
+        result = items()
+        if isinstance(result, Iterable):
+            yield from cast(Iterable[tuple[object, object]], result)

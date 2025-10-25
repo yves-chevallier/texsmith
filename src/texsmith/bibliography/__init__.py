@@ -7,6 +7,7 @@ from .doi import DoiBibliographyFetcher, DoiLookupError
 from .issues import BibliographyIssue
 from .parsing import bibliography_data_from_string
 
+
 __all__ = [
     "BibliographyCollection",
     "BibliographyIssue",
@@ -14,4 +15,3 @@ __all__ = [
     "DoiLookupError",
     "bibliography_data_from_string",
 ]
-

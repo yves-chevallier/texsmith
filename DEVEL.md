@@ -1,5 +1,6 @@
+# Devel Notes
 
-### Index generation
+## Index generation
 
 MkDocs generate a `search_index.json` consumed by lunr or wasabi to provide search capabilities in the generated HTML site. This index contains all words present in the documentation along with their locations. This is an automated way built dynamically on the browser side. However on LaTeX documents we need to generate a static index at compile time. In traditional LaTeX edition we use `\index{term}` commands scattered in the document, then we run `makeindex` or `xindy` to generate the index file included at the end of the document.
 
@@ -74,14 +75,17 @@ Accronym : en html c'est plutôt abbr qui est utilisé
 
 C'est utilisé pour toujours utiliser l'accronyme sauf la première fois ou la valeur complète est utlisée sauf si on veut absolument la version short:
 
+```tex
 \gls nominal full première fois sinon courte
 \Gls avec capitale
 \acrshort uniquement court
 \acrlong uniquement long
 \acrfull version complète: Version Longue (VL)
+```
 
 Pour les entrées de glossaire:
 
+```tex
 \gls affiche le terme nominal
 \Gls terme avec première lettre majuscule
 \glspl le pluriel du terme
@@ -97,6 +101,7 @@ Pour les entrées de glossaire:
 }
 
 \newacronym{gcd}{GCD}{greatest common divisor}
+```
 
 -----
 
@@ -113,13 +118,13 @@ On implémente le support avec:
 5. Le jinja de la template si acronyms n'est pas vide boucle pour créer les entrées d'acronymes via \newacronym{key}{term}{description}
 6. On inclu dans les template conditionnellement : \usepackage[acronym]{glossaries} et \makeglossaries
 
----
+-----
 
 1. On veut renommer le package `texsmith` ainsi que l'exécutable. Renomme tout ce qu'il faut y compris les entrées de pyproject
 2. On veut également renommer toutes les templates déclarées en texsmith-template-*
 3. On veut déplacer les template dans un dossier templates
 
----
+-----
 
 Certaines templates commencent à part d'autres à chapter d'autres à sectin. Il faut indiquer dans toutes les templates le base_level de manière à ce qu'un `# foo` soit `part`, `chapter` ou `section` selon la template (documentclass). Ceci permet d'omettre de fixer le niveau à chaque appel en cli. On garde néanmoins la possibilité de faire un offset sur le document par exemple si on veut pas de part ou de chapter on peut shift de 2.
 
@@ -152,7 +157,6 @@ What I need before coding:
 
 1. Find a Python package that can load, process a bib file. We will use pybtex.
 2. Ensure the syntax `[^citekey]` works.
-
 
 ## Complex Tables
 
@@ -242,22 +246,22 @@ In scientific english we put "Figure" with a capital, but in french it is "figur
 - [x] Add more Markdown extensions (definition lists, tables...)
 - [x] drawio (.drawio, .dio)
 - [x] mermaid (inline)
-- [x] .mmd, .mermaid, https://mermaid.live/edit#pako:eNpVjbFugz...
+- [x] .mmd, .mermaid, `https://mermaid.live/edit#pako:eNpVjbFugz`...
 - [x] Fonctionnement des emojis twemoji
 - [x] Images marchent avec (.tiff, .webp, .avif, .gif, .png, .bmp...)
 - [x] Verbose in CLI more details et afficher joliment les warnings et erreurs
 - [x] --debug pour afficher les exceptions complètes
 - [x] Bibliographie sur doi dans frontmatter
-- [ ] Perf increase by converting html to xml and use lxml not htmlparser?
-- [ ] Support multipages, je donnes plusieurs md ou html en entrée.
+- [x] Perf increase by converting html to xml and use lxml not htmlparser?
+- [x] Support multipages, je donnes plusieurs md ou html en entrée.
+- [x] Improve error handling and reporting during LaTeX compilation
 - [ ] Manage the figure (c.f.) how to manage that...
 - [ ] Optimize bibliography management using bib instead of jinja
-- [ ] Raw latex blocks (`latex { .texsmith } ... `)
+- [ ] Raw latex blocks (`latex { .texsmith } ...`)
 - [ ] Table width (auto width, fixed width..., tabularx, tabulary or not)
 - [ ] Table orientation (large table landscape...)
 - [ ] Scaffolding de templates avec cookiecutter
 - [ ] Documenter le processus de création de templates LaTeX personnalisées
-- [ ] Improve error handling and reporting during LaTeX compilation
 - [ ] Listings, verbatim ou minted
 - [ ] Support for glossaries (glossaries package)
 - [ ] Support for cross-references (cleveref package)
@@ -338,10 +342,11 @@ Pareil pour la configuration de listing avec un code.sty qui importe le nécessa
 
 On veut ces fichiers robustes
 
----
+-----
 
 POur la bibliographie, pour l'instant dans la template article tu as ceci:
 
+```tex
 \begin{thebibliography}{\VAR{citations|length}}
 \BLOCK{ for key in citations }
 \BLOCK{ set entry = bibliography_entries.get(key) }
@@ -361,13 +366,13 @@ Missing bibliography entry for \VAR{key}
 \BLOCK{ endif }
 \BLOCK{ endfor }
 \end{thebibliography}
+```
 
 Mais on pourrait passer par biber pour mieux gérer ça et passer par le .bib non ?
 
+-----
 
----
-
-# Gestion multidocument
+## Gestion multidocument
 
 L'objectif est de supporter la gestion multidocument c'est à dire que j'ai plusieurs fichiers que je donne dans le cli :
 

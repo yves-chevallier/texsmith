@@ -93,6 +93,7 @@ class MissingFootnotesExtension(Extension):
         return None
 
     def build_placeholder(self, identifier: str, pattern: Any) -> ElementTree.Element:
+        """Construct the XML placeholder inserted for missing footnotes."""
         element_name = self.getConfig("element")
         node = ElementTree.Element(element_name)
 

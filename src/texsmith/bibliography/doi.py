@@ -90,4 +90,3 @@ class DoiBibliographyFetcher:
             f"https://api.crossref.org/works/{doi}/transform/application/x-bibtex",
             dict(base_headers),
         )
-
