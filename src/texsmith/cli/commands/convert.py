@@ -172,6 +172,7 @@ def convert(
         resolve_path=True,
     ),
 ) -> None:
+    """Convert MkDocs documents into LaTeX artefacts without invoking latexmk."""
     resolved_bibliography_option = list(resolve_option(bibliography))
     resolved_inputs = list(resolve_option(inputs))
 

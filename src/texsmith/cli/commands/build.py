@@ -36,6 +36,7 @@ def build_latexmk_command(
     shell_escape: bool,
     force_bibtex: bool = False,
 ) -> list[str]:
+    """Construct the latexmk command arguments respecting CLI options."""
     engine_command = (engine or "pdflatex").strip()
     if not engine_command:
         engine_command = "pdflatex"
@@ -207,8 +208,13 @@ def build(
         resolve_path=True,
     ),
 ) -> None:
+    """Orchestrate document conversion and compilation for the MkDocs workflow."""
+    resolved_inputs = list(resolve_option(inputs))
     resolved_bibliography_option = list(resolve_option(bibliography))
-    documents, bibliography_files = split_document_inputs(inputs, resolved_bibliography_option)
+    documents, bibliography_files = split_document_inputs(
+        resolved_inputs,
+        resolved_bibliography_option,
+    )
     if len(documents) != 1:
         raise typer.BadParameter("Provide exactly one Markdown or HTML document.")
     document_path = documents[0]

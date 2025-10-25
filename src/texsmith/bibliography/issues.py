@@ -13,4 +13,3 @@ class BibliographyIssue:
     message: str
     key: str | None = None
     source: Path | None = None
-

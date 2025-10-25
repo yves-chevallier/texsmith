@@ -5,5 +5,5 @@ from __future__ import annotations
 from .formatter import LaTeXFormatter
 from .renderer import LaTeXRenderer
 
-__all__ = ["LaTeXFormatter", "LaTeXRenderer"]
 
+__all__ = ["LaTeXFormatter", "LaTeXRenderer"]

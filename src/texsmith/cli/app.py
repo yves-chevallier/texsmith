@@ -72,6 +72,7 @@ def bibliography_list(
         resolve_path=True,
     ),
 ) -> None:
+    """Load the given BibTeX files and print a formatted overview table."""
     collection = BibliographyCollection()
     collection.load_files(bib_files)
     print_bibliography_overview(collection)

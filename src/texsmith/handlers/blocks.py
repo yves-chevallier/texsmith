@@ -7,13 +7,14 @@ from pathlib import Path
 import re
 import warnings
 
-from bs4 import NavigableString, Tag
+from bs4.element import NavigableString, Tag
 
 from ..context import RenderContext
 from ..exceptions import AssetMissingError, InvalidNodeError
 from ..rules import RenderPhase, renders
 from ..transformers import drawio2pdf, fetch_image, image2pdf, svg2pdf
 from ..utils import is_valid_url, resolve_asset_path
+from ._helpers import coerce_attribute, gather_classes, mark_processed
 
 
 def _iter_reversed(nodes: Iterable[Tag]) -> Iterable[Tag]:
@@ -47,8 +48,8 @@ def _resolve_source_path(context: RenderContext, src: str) -> Path | None:
 def _figure_template_for(element: Tag, context: RenderContext) -> str:
     current = element
     while current is not None:
-        classes = getattr(current, "get", lambda *_: None)("class") or []
-        class_list = classes.split() if isinstance(classes, str) else list(classes)
+        raw_classes = getattr(current, "get", lambda *_: None)("class")
+        class_list = gather_classes(raw_classes)
         if any(cls in {"admonition", "exercise"} for cls in class_list):
             return "figure_tcolorbox"
         if getattr(current, "name", None) == "details":
@@ -60,7 +61,7 @@ def _figure_template_for(element: Tag, context: RenderContext) -> str:
 @renders("div", phase=RenderPhase.PRE, priority=120, name="tabbed_content", auto_mark=False)
 def render_tabbed_content(element: Tag, context: RenderContext) -> None:
     """Unwrap MkDocs tabbed content structures."""
-    classes = element.get("class") or []
+    classes = gather_classes(element.get("class"))
     if "tabbed-set" not in classes:
         return
 
@@ -76,8 +77,7 @@ def render_tabbed_content(element: Tag, context: RenderContext) -> None:
                 if not title:
                     continue
                 formatted = context.formatter.strong(text=title)
-                heading = NavigableString(f"{formatted}\\par\n")
-                heading.processed = True
+                heading = mark_processed(NavigableString(f"{formatted}\\par\n"))
                 element.insert_before(heading)
         element.unwrap()
         return
@@ -91,7 +91,7 @@ def render_tabbed_content(element: Tag, context: RenderContext) -> None:
 
     for index, block in enumerate(tabbed_content.find_all("div", class_="tabbed-block")):
         title = titles[index] if index < len(titles) else ""
-        heading = NavigableString(f"\n\\textbf{{{title}}}\\par\n")
+        heading = mark_processed(NavigableString(f"\n\\textbf{{{title}}}\\par\n"))
         block.insert_before(heading)
         block.unwrap()
 
@@ -107,15 +107,14 @@ def render_tabbed_content(element: Tag, context: RenderContext) -> None:
     nestable=False,
 )
 def render_blockquotes(element: Tag, context: RenderContext) -> None:
+    """Convert blockquote elements into LaTeX blockquote environments."""
     classes = element.get("class") or []
     if "epigraph" in classes:
         return
 
     text = element.get_text(strip=False)
     latex = context.formatter.blockquote(text)
-    node = NavigableString(latex)
-    node.processed = True
-    element.replace_with(node)
+    element.replace_with(mark_processed(NavigableString(latex)))
 
 
 @renders(phase=RenderPhase.POST, name="lists", auto_mark=False)
@@ -156,9 +155,7 @@ def render_lists(root: Tag, context: RenderContext) -> None:
             else:
                 latex = context.formatter.unordered_list(items=items)
 
-        node = NavigableString(latex)
-        node.processed = True
-        element.replace_with(node)
+        element.replace_with(mark_processed(NavigableString(latex)))
 
 
 @renders(phase=RenderPhase.POST, priority=15, name="description_lists", auto_mark=False)
@@ -176,9 +173,7 @@ def render_description_lists(root: Tag, context: RenderContext) -> None:
                 items.append((current_term, content))
 
         latex = context.formatter.description_list(items=items)
-        node = NavigableString(latex)
-        node.processed = True
-        dl.replace_with(node)
+        dl.replace_with(mark_processed(NavigableString(latex)))
 
 
 @renders(phase=RenderPhase.POST, priority=-10, name="footnotes", auto_mark=False)
@@ -198,13 +193,12 @@ def render_footnotes(root: Tag, context: RenderContext) -> None:
         return text or ""
 
     def _replace_with_latex(node: Tag, latex: str) -> None:
-        replacement = NavigableString(latex)
-        replacement.processed = True
+        replacement = mark_processed(NavigableString(latex))
         node.replace_with(replacement)
 
     for container in root.find_all("div", class_="footnote"):
         for li in container.find_all("li"):
-            footnote_id = _normalise_footnote_id(li.get("id"))
+            footnote_id = _normalise_footnote_id(coerce_attribute(li.get("id")))
             if not footnote_id:
                 raise InvalidNodeError("Footnote item missing identifier")
             footnotes[footnote_id] = li.get_text(strip=False).strip()
@@ -214,7 +208,7 @@ def render_footnotes(root: Tag, context: RenderContext) -> None:
         context.state.footnotes.update(footnotes)
 
     for sup in root.find_all("sup", id=True):
-        footnote_id = _normalise_footnote_id(sup.get("id"))
+        footnote_id = _normalise_footnote_id(coerce_attribute(sup.get("id")))
         payload = footnotes.get(footnote_id)
         if payload is None:
             payload = context.state.footnotes.get(footnote_id)
@@ -241,7 +235,8 @@ def render_footnotes(root: Tag, context: RenderContext) -> None:
         _replace_with_latex(sup, latex)
 
     for placeholder in root.find_all("texsmith-missing-footnote"):
-        identifier = placeholder.get("data-footnote-id") or placeholder.get_text(strip=True)
+        identifier_attr = coerce_attribute(placeholder.get("data-footnote-id"))
+        identifier = identifier_attr or placeholder.get_text(strip=True)
         footnote_id = identifier.strip() if identifier else ""
         if not footnote_id:
             placeholder.decompose()
@@ -261,8 +256,7 @@ def render_footnotes(root: Tag, context: RenderContext) -> None:
                 f"Reference to '{footnote_id}' is not in your bibliography...",
                 stacklevel=2,
             )
-            replacement = NavigableString(footnote_id)
-            replacement.processed = True
+            replacement = mark_processed(NavigableString(footnote_id))
             placeholder.replace_with(replacement)
 
 
@@ -277,14 +271,13 @@ def render_paragraphs(element: Tag, _context: RenderContext) -> None:
         element.decompose()
         return
 
-    node = NavigableString(f"{text}\n")
-    node.processed = True
-    element.replace_with(node)
+    element.replace_with(mark_processed(NavigableString(f"{text}\n")))
 
 
 @renders("div", phase=RenderPhase.POST, priority=60, name="multicolumns", nestable=False)
 def render_columns(element: Tag, context: RenderContext) -> None:
-    classes = element.get("class") or []
+    """Render lists specially marked as multi-column blocks."""
+    classes = gather_classes(element.get("class"))
     if "two-column-list" in classes:
         columns = 2
     elif "three-column-list" in classes:
@@ -294,15 +287,13 @@ def render_columns(element: Tag, context: RenderContext) -> None:
 
     text = element.get_text(strip=False)
     latex = context.formatter.multicolumn(text, columns=columns)
-    node = NavigableString(latex)
-    node.processed = True
-    element.replace_with(node)
+    element.replace_with(mark_processed(NavigableString(latex)))
 
 
 @renders("figure", phase=RenderPhase.POST, priority=30, name="figures", nestable=False)
 def render_figures(element: Tag, context: RenderContext) -> None:
     """Render <figure> elements and manage associated assets."""
-    classes = element.get("class") or []
+    classes = gather_classes(element.get("class"))
     if "mermaid-figure" in classes:
         return
 
@@ -310,7 +301,7 @@ def render_figures(element: Tag, context: RenderContext) -> None:
     if image is None:
         table = element.find("table")
         if table is not None:
-            identifier = element.get("id")
+            identifier = coerce_attribute(element.get("id"))
             if identifier and not table.get("id"):
                 table["id"] = identifier
             figcaption = element.find("figcaption")
@@ -324,19 +315,17 @@ def render_figures(element: Tag, context: RenderContext) -> None:
             return
         raise InvalidNodeError("Figure missing <img> element")
 
-    src = image.get("src")
+    src = coerce_attribute(image.get("src"))
     if not src:
         raise InvalidNodeError("Figure image missing 'src' attribute")
 
-    width = image.get("width")
-    alt_text = image.get("alt") or None
+    width = coerce_attribute(image.get("width")) or None
+    alt_text = coerce_attribute(image.get("alt")) or None
     if not context.runtime.get("copy_assets", True):
         caption_node = element.find("figcaption")
         caption_text = caption_node.get_text(strip=False).strip() if caption_node else None
         placeholder = caption_text or alt_text or "[figure]"
-        node = NavigableString(placeholder)
-        node.processed = True
-        element.replace_with(node)
+        element.replace_with(mark_processed(NavigableString(placeholder)))
         return
 
     if is_valid_url(src):
@@ -368,7 +357,7 @@ def render_figures(element: Tag, context: RenderContext) -> None:
     if short_caption and caption_text and len(caption_text) > len(short_caption):
         short_caption = None
 
-    label = element.get("id")
+    label = coerce_attribute(element.get("id"))
 
     template_name = _figure_template_for(element, context)
     formatter = getattr(context.formatter, template_name)
@@ -381,13 +370,11 @@ def render_figures(element: Tag, context: RenderContext) -> None:
         width=width,
     )
 
-    node = NavigableString(latex)
-    node.processed = True
-    element.replace_with(node)
+    element.replace_with(mark_processed(NavigableString(latex)))
 
 
 def _cell_alignment(cell: Tag) -> str:
-    style = cell.get("style", "")
+    style = coerce_attribute(cell.get("style")) or ""
     if "text-align: right" in style:
         return "right"
     if "text-align: center" in style:
@@ -403,7 +390,7 @@ def render_tables(element: Tag, context: RenderContext) -> None:
         caption = caption_node.get_text(strip=False).strip()
         caption_node.decompose()
 
-    label = element.get("id")
+    label = coerce_attribute(element.get("id"))
 
     table_rows: list[list[str]] = []
     styles: list[list[str]] = []
@@ -434,6 +421,4 @@ def render_tables(element: Tag, context: RenderContext) -> None:
         is_large=is_large,
     )
 
-    node = NavigableString(latex)
-    node.processed = True
-    element.replace_with(node)
+    element.replace_with(mark_processed(NavigableString(latex)))

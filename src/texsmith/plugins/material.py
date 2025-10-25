@@ -4,11 +4,11 @@ from __future__ import annotations
 
 from typing import Any
 
-from bs4 import Tag
-from bs4.element import NavigableString
+from bs4.element import NavigableString, Tag
 
 from ..context import RenderContext
 from ..handlers import admonitions as base_admonitions
+from ..handlers._helpers import coerce_attribute, gather_classes, mark_processed
 from ..rules import RenderPhase, renders
 
 
@@ -44,15 +44,17 @@ def _render_exercise(
     answers: list[str] = []
 
     for gap in element.find_all("input", class_="text-with-gap"):
-        correct_value = gap.get("answer") or gap.get("value") or ""
-        size_hint = gap.get("size")
+        correct_value = (
+            coerce_attribute(gap.get("answer")) or coerce_attribute(gap.get("value")) or ""
+        )
+        size_hint = coerce_attribute(gap.get("size"))
         try:
             width = max(int(size_hint), 3) if size_hint is not None else max(len(correct_value), 3)
         except ValueError:
             width = max(len(correct_value), 3)
-        gap.replace_with(NavigableString(f"\\rule{{{width}ex}}{{0.4pt}}"))
+        gap.replace_with(mark_processed(NavigableString(f"\\rule{{{width}ex}}{{0.4pt}}")))
         if correct_value:
-            answers.append(str(correct_value))
+            answers.append(correct_value)
 
     if note := element.find("p", class_="align--right"):
         note_text = note.get_text(strip=True)
@@ -87,9 +89,7 @@ def _render_exercise(
         content = f"\\label{{{exercise_label}}}\n{content}"
 
     latex = context.formatter.callout(content, title=title, type=callout_type)
-    node = NavigableString(latex)
-    node.processed = True
-    element.replace_with(node)
+    element.replace_with(mark_processed(NavigableString(latex)))
 
 
 @renders(
@@ -100,7 +100,8 @@ def _render_exercise(
     nestable=False,
 )
 def render_exercise_div(element: Tag, context: RenderContext) -> None:
-    classes = element.get("class") or []
+    """Render Material exercise admonitions into LaTeX callouts."""
+    classes = gather_classes(element.get("class"))
     if "admonition" not in classes or "exercise" not in classes:
         return
 
@@ -118,7 +119,8 @@ def render_exercise_div(element: Tag, context: RenderContext) -> None:
     nestable=False,
 )
 def render_exercise_details(element: Tag, context: RenderContext) -> None:
-    classes = element.get("class") or []
+    """Render exercise blocks authored using <details> markup."""
+    classes = gather_classes(element.get("class"))
     if "exercise" not in classes:
         return
 
@@ -139,7 +141,8 @@ def render_exercise_details(element: Tag, context: RenderContext) -> None:
     auto_mark=False,
 )
 def render_epigraph(element: Tag, context: RenderContext) -> None:
-    classes = element.get("class") or []
+    """Render Material epigraph blockquotes using the LaTeX epigraph macro."""
+    classes = gather_classes(element.get("class"))
     if "epigraph" not in classes:
         return
 
@@ -150,8 +153,7 @@ def render_epigraph(element: Tag, context: RenderContext) -> None:
 
     text = element.get_text(strip=False)
     latex = context.formatter.epigraph(text=text, source=source)
-    node = NavigableString(latex)
-    node.processed = True
+    node = mark_processed(NavigableString(latex))
     context.mark_processed(element)
     context.suppress_children(element)
     element.replace_with(node)

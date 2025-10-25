@@ -10,7 +10,7 @@ from typing import Any
 from urllib.parse import urlparse
 import zlib
 
-from bs4 import NavigableString, Tag
+from bs4.element import NavigableString, Tag
 
 from ..context import RenderContext
 from ..exceptions import AssetMissingError, InvalidNodeError
@@ -23,6 +23,7 @@ from ..transformers import (
     svg2pdf,
 )
 from ..utils import is_valid_url, resolve_asset_path
+from ._helpers import coerce_attribute, gather_classes, mark_processed
 
 
 MERMAID_KEYWORDS = (
@@ -126,8 +127,8 @@ def _figure_template_for(element: Tag) -> str | None:
     """Determine which figure template to use based on ancestor metadata."""
     current = element
     while current is not None:
-        classes = getattr(current, "get", lambda *_: None)("class") or []
-        class_list = classes.split() if isinstance(classes, str) else list(classes)
+        raw_classes = getattr(current, "get", lambda *_: None)("class")
+        class_list = gather_classes(raw_classes)
         if any(cls in {"admonition", "exercise"} for cls in class_list):
             return "figure_tcolorbox"
         if getattr(current, "name", None) == "details":
@@ -179,9 +180,7 @@ def _apply_figure_template(
         label=label,
         width=width,
     )
-    node = NavigableString(latex)
-    node.processed = True
-    return node
+    return mark_processed(NavigableString(latex))
 
 
 def _render_mermaid_diagram(
@@ -196,9 +195,7 @@ def _render_mermaid_diagram(
     effective_caption = extracted_caption if extracted_caption is not None else caption
     if not context.runtime.get("copy_assets", True):
         placeholder = effective_caption or "Mermaid diagram"
-        node = NavigableString(placeholder)
-        node.processed = True
-        return node
+        return mark_processed(NavigableString(placeholder))
     if not _looks_like_mermaid(body):
         return None
 
@@ -245,27 +242,27 @@ def _looks_like_mermaid(diagram: str) -> bool:
 def render_images(element: Tag, context: RenderContext) -> None:
     """Convert <img> nodes into LaTeX figures and manage assets."""
     if not context.runtime.get("copy_assets", True):
-        alt_text = element.get("alt") or element.get("title") or ""
+        alt_text = (
+            coerce_attribute(element.get("alt")) or coerce_attribute(element.get("title")) or ""
+        )
         placeholder = alt_text.strip() or "[image]"
-        node = NavigableString(placeholder)
-        node.processed = True
-        element.replace_with(node)
+        element.replace_with(mark_processed(NavigableString(placeholder)))
         return
 
-    src = element.get("src")
+    src = coerce_attribute(element.get("src"))
     if not src:
         raise InvalidNodeError("Image tag without 'src' attribute")
 
-    classes = element.get("class") or []
+    classes = gather_classes(element.get("class"))
     if {"twemoji", "emojione"}.intersection(classes):
         return
 
     if element.find_parent("figure"):
         return
 
-    raw_alt = element.get("alt")
-    alt_text = raw_alt.strip() or None if raw_alt else None
-    width = element.get("width") or None
+    raw_alt = coerce_attribute(element.get("alt"))
+    alt_text = raw_alt.strip() if raw_alt else None
+    width = coerce_attribute(element.get("width")) or None
     template = _figure_template_for(element)
 
     mermaid_payload = _load_mermaid_diagram(context, src)
@@ -317,7 +314,7 @@ def render_images(element: Tag, context: RenderContext) -> None:
 @renders("div", phase=RenderPhase.BLOCK, name="render_mermaid", nestable=False)
 def render_mermaid(element: Tag, context: RenderContext) -> None:
     """Convert Mermaid code blocks inside highlight containers."""
-    classes = element.get("class") or []
+    classes = gather_classes(element.get("class"))
     if "highlight" not in classes and "mermaid" not in classes:
         return
 
@@ -337,7 +334,7 @@ def render_mermaid(element: Tag, context: RenderContext) -> None:
 @renders("pre", phase=RenderPhase.BLOCK, name="render_mermaid_pre", nestable=False)
 def render_mermaid_pre(element: Tag, context: RenderContext) -> None:
     """Handle <pre class=\"mermaid\"> blocks."""
-    classes = element.get("class") or []
+    classes = gather_classes(element.get("class"))
     if "mermaid" not in classes:
         return
 

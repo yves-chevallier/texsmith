@@ -137,7 +137,6 @@ ignore = [
   "D205",  # Blank line required between summary line and description
   "D301",  # Use raw string or escape the backslash
   "D415",  # First line of docstring should end with punctuation
-  "ANN101",  # Missing type annotation for self in method
   "ANN201",  # Missing return type annotation for public function
   "ARG002",  # Unused argument
   "B008",   # Function call in default argument (Typer pattern)

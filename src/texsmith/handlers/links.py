@@ -6,13 +6,14 @@ from hashlib import sha256
 from pathlib import Path
 from urllib.parse import urlparse
 
-from bs4 import NavigableString, Tag
+from bs4.element import NavigableString, Tag
 from requests.utils import requote_uri as requote_url
 
 from ..context import RenderContext
 from ..exceptions import AssetMissingError, InvalidNodeError
 from ..rules import RenderPhase, renders
 from ..utils import escape_latex_chars, resolve_asset_path
+from ._helpers import coerce_attribute, mark_processed
 
 
 def _resolve_local_target(context: RenderContext, href: str) -> Path | None:
@@ -46,15 +47,13 @@ def _resolve_local_target(context: RenderContext, href: str) -> Path | None:
 )
 def render_autoref(element: Tag, context: RenderContext) -> None:
     """Render <autoref> custom tags."""
-    identifier = element.get("identifier")
+    identifier = coerce_attribute(element.get("identifier"))
     if not identifier:
         raise InvalidNodeError("autoref tag missing identifier attribute")
     text = element.get_text(strip=False)
 
     latex = context.formatter.ref(text, ref=identifier)
-    node = NavigableString(latex)
-    node.processed = True
-    element.replace_with(node)
+    element.replace_with(mark_processed(NavigableString(latex)))
 
 
 @renders(
@@ -67,14 +66,13 @@ def render_autoref(element: Tag, context: RenderContext) -> None:
 )
 def render_autoref_spans(element: Tag, context: RenderContext) -> None:
     """Render MkDocs autoref span placeholders."""
-    identifier = element.get("data-autorefs-identifier")
+    identifier = coerce_attribute(element.get("data-autorefs-identifier"))
     if not identifier:
         return
     text = element.get_text(strip=False)
 
     latex = context.formatter.ref(text, ref=identifier)
-    node = NavigableString(latex)
-    node.processed = True
+    node = mark_processed(NavigableString(latex))
     context.mark_processed(element)
     context.suppress_children(element)
     element.replace_with(node)
@@ -83,9 +81,8 @@ def render_autoref_spans(element: Tag, context: RenderContext) -> None:
 @renders("a", phase=RenderPhase.INLINE, priority=60, name="links", nestable=False)
 def render_links(element: Tag, context: RenderContext) -> None:
     """Render hyperlinks and internal references."""
-    href_attr = element.get("href")
-    href = href_attr if isinstance(href_attr, str) else ""
-    element_id = element.get("id")
+    href = coerce_attribute(element.get("href")) or ""
+    element_id = coerce_attribute(element.get("id"))
     text = element.get_text(strip=False)
 
     # Already handled in preprocessing modules
@@ -122,6 +119,4 @@ def render_links(element: Tag, context: RenderContext) -> None:
     else:
         latex = escape_latex_chars(text)
 
-    node = NavigableString(latex)
-    node.processed = True
-    element.replace_with(node)
+    element.replace_with(mark_processed(NavigableString(latex)))

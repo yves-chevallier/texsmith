@@ -6,7 +6,7 @@ from collections.abc import Iterable
 import hashlib
 import re
 
-from bs4 import NavigableString, Tag
+from bs4.element import NavigableString, Tag
 from requests.utils import requote_uri as requote_url
 
 from ..context import RenderContext
@@ -14,6 +14,7 @@ from ..exceptions import InvalidNodeError
 from ..rules import RenderPhase, renders
 from ..transformers import fetch_image, svg2pdf
 from ..utils import escape_latex_chars, is_valid_url
+from ._helpers import coerce_attribute, gather_classes, mark_processed
 
 
 _MATH_PAYLOAD_PATTERN = re.compile(
@@ -204,8 +205,7 @@ def escape_plain_text(root: Tag, _context: RenderContext) -> None:
         if not matches:
             escaped = _prepare_plain_text(text)
             if escaped != text:
-                replacement = NavigableString(escaped)
-                replacement.processed = True
+                replacement = mark_processed(NavigableString(escaped))
                 node.replace_with(replacement)
             continue
 
@@ -225,31 +225,27 @@ def escape_plain_text(root: Tag, _context: RenderContext) -> None:
                 escaped = _prepare_plain_text(tail)
                 parts.append(escaped)
 
-        replacement = NavigableString("".join(parts))
-        replacement.processed = True
+        replacement = mark_processed(NavigableString("".join(parts)))
         node.replace_with(replacement)
 
 
 @renders("a", phase=RenderPhase.PRE, priority=80, name="unicode_links", nestable=False)
 def render_unicode_link(element: Tag, context: RenderContext) -> None:
     """Render Unicode helper links."""
-    classes = element.get("class") or []
+    classes = gather_classes(element.get("class"))
     if "ycr-unicode" not in classes:
         return
 
     code = element.get_text(strip=True)
-    href_attr = element.get("href")
-    href = href_attr if isinstance(href_attr, str) else ""
+    href = coerce_attribute(element.get("href")) or ""
     latex = context.formatter.href(text=f"U+{code}", url=requote_url(href))
-    node = NavigableString(latex)
-    node.processed = True
-    element.replace_with(node)
+    element.replace_with(mark_processed(NavigableString(latex)))
 
 
 @renders("a", phase=RenderPhase.PRE, priority=70, name="regex_links", nestable=False)
 def render_regex_link(element: Tag, context: RenderContext) -> None:
     """Render custom regex helper links."""
-    classes = element.get("class") or []
+    classes = gather_classes(element.get("class"))
     if "ycr-regex" not in classes:
         return
 
@@ -258,16 +254,13 @@ def render_regex_link(element: Tag, context: RenderContext) -> None:
         code = code_tag.get_text(strip=False)
     code = code.replace("&", "\\&").replace("#", "\\#")
 
-    href_attr = element.get("href")
-    href = href_attr if isinstance(href_attr, str) else ""
+    href = coerce_attribute(element.get("href")) or ""
     latex = context.formatter.regex(code, url=requote_url(href))
-    node = NavigableString(latex)
-    node.processed = True
-    element.replace_with(node)
+    element.replace_with(mark_processed(NavigableString(latex)))
 
 
 def _extract_code_text(element: Tag) -> str:
-    classes = element.get("class") or []
+    classes = gather_classes(element.get("class"))
     if any(cls.startswith("language-") for cls in classes) or "highlight" in classes:
         return "".join(child.get_text(strip=False) for child in element.find_all("span"))
     return element.get_text(strip=False)
@@ -286,40 +279,34 @@ def render_inline_code(element: Tag, context: RenderContext) -> None:
     code = escape_latex_chars(code).replace(" ", "~")
 
     latex = context.formatter.codeinlinett(code)
-    node = NavigableString(latex)
-    node.processed = True
-    element.replace_with(node)
+    element.replace_with(mark_processed(NavigableString(latex)))
 
 
 @renders("span", phase=RenderPhase.PRE, priority=60, name="inline_math", nestable=False)
 def render_math_inline(element: Tag, _context: RenderContext) -> None:
     """Preserve inline math payloads untouched."""
-    classes = element.get("class") or []
+    classes = gather_classes(element.get("class"))
     if "arithmatex" not in classes:
         return
     text = element.get_text(strip=False)
-    node = NavigableString(text)
-    node.processed = True
-    element.replace_with(node)
+    element.replace_with(mark_processed(NavigableString(text)))
 
 
 @renders("div", phase=RenderPhase.PRE, priority=70, name="math_block", nestable=False)
 def render_math_block(element: Tag, _context: RenderContext) -> None:
     """Preserve block math payloads."""
-    classes = element.get("class") or []
+    classes = gather_classes(element.get("class"))
     if "arithmatex" not in classes:
         return
     text = element.get_text(strip=False)
-    node = NavigableString(f"\n{text}\n")
-    node.processed = True
-    element.replace_with(node)
+    element.replace_with(mark_processed(NavigableString(f"\n{text}\n")))
 
 
 @renders("script", phase=RenderPhase.PRE, priority=65, name="math_script", nestable=False)
 def render_math_script(element: Tag, _context: RenderContext) -> None:
     """Preserve math payloads generated via script tags (e.g. mdx_math)."""
-    type_attr = element.get("type")
-    if not isinstance(type_attr, str):
+    type_attr = coerce_attribute(element.get("type"))
+    if type_attr is None:
         return
     if not type_attr.startswith("math/tex"):
         return
@@ -337,8 +324,7 @@ def render_math_script(element: Tag, _context: RenderContext) -> None:
     else:
         node = NavigableString(f"${payload}$")
 
-    node.processed = True
-    element.replace_with(node)
+    element.replace_with(mark_processed(node))
 
 
 @renders("abbr", phase=RenderPhase.INLINE, priority=30, name="abbreviation", nestable=False)
@@ -353,9 +339,7 @@ def render_abbreviation(element: Tag, context: RenderContext) -> None:
 
     if not description:
         latex_text = escape_latex_chars(term)
-        node = NavigableString(latex_text)
-        node.processed = True
-        element.replace_with(node)
+        element.replace_with(mark_processed(NavigableString(latex_text)))
         return
 
     key = context.state.remember_abbreviation(term, description)
@@ -363,21 +347,19 @@ def render_abbreviation(element: Tag, context: RenderContext) -> None:
         key = term
 
     latex = f"\\acrshort{{{key}}}"
-    node = NavigableString(latex)
-    node.processed = True
-    element.replace_with(node)
+    element.replace_with(mark_processed(NavigableString(latex)))
 
 
 @renders("span", phase=RenderPhase.INLINE, priority=40, name="keystrokes", nestable=False)
 def render_keystrokes(element: Tag, context: RenderContext) -> None:
     """Render keyboard shortcut markup."""
-    classes = element.get("class") or []
+    classes = gather_classes(element.get("class"))
     if "keys" not in classes:
         return
 
     keys: list[str] = []
     for key in element.find_all("kbd"):
-        key_classes = key.get("class") or []
+        key_classes = gather_classes(key.get("class"))
         matched: Iterable[str] = (cls[4:] for cls in key_classes if cls.startswith("key-"))
         value = next(matched, None)
         if value:
@@ -386,8 +368,7 @@ def render_keystrokes(element: Tag, context: RenderContext) -> None:
             keys.append(key.get_text(strip=True))
 
     latex = context.formatter.keystroke(keys)
-    node = NavigableString(latex)
-    node.processed = True
+    node = mark_processed(NavigableString(latex))
     context.mark_processed(element)
     context.suppress_children(element)
     element.replace_with(node)
@@ -396,17 +377,17 @@ def render_keystrokes(element: Tag, context: RenderContext) -> None:
 @renders("img", phase=RenderPhase.INLINE, priority=20, name="twemoji_images", nestable=False)
 def render_twemoji_image(element: Tag, context: RenderContext) -> None:
     """Render Twitter emoji images as inline icons."""
-    classes = element.get("class") or []
+    classes = gather_classes(element.get("class"))
     if not {"twemoji", "emojione"}.intersection(classes):
         return
     if not context.runtime.get("copy_assets", True):
-        placeholder = element.get("alt") or element.get("title") or ""
-        node = NavigableString(placeholder)
-        node.processed = True
-        element.replace_with(node)
+        placeholder = (
+            coerce_attribute(element.get("alt")) or coerce_attribute(element.get("title")) or ""
+        )
+        element.replace_with(mark_processed(NavigableString(placeholder)))
         return
 
-    src = element.get("src")
+    src = coerce_attribute(element.get("src"))
     if not src:
         raise InvalidNodeError("Twemoji image without 'src' attribute")
     if not is_valid_url(src):
@@ -417,9 +398,7 @@ def render_twemoji_image(element: Tag, context: RenderContext) -> None:
     asset_path = context.assets.latex_path(stored_path)
 
     latex = context.formatter.icon(asset_path)
-    node = NavigableString(latex)
-    node.processed = True
-    element.replace_with(node)
+    element.replace_with(mark_processed(NavigableString(latex)))
 
 
 @renders(
@@ -432,14 +411,12 @@ def render_twemoji_image(element: Tag, context: RenderContext) -> None:
 )
 def render_twemoji_span(element: Tag, context: RenderContext) -> None:
     """Render inline SVG emoji payloads."""
-    classes = element.get("class") or []
+    classes = gather_classes(element.get("class"))
     if "twemoji" not in classes:
         return
     if not context.runtime.get("copy_assets", True):
-        placeholder = element.get("title") or element.get_text(strip=True) or ""
-        node = NavigableString(placeholder)
-        node.processed = True
-        element.replace_with(node)
+        placeholder = coerce_attribute(element.get("title")) or element.get_text(strip=True) or ""
+        element.replace_with(mark_processed(NavigableString(placeholder)))
         return
 
     svg = element.find("svg")
@@ -453,8 +430,7 @@ def render_twemoji_span(element: Tag, context: RenderContext) -> None:
     asset_path = context.assets.latex_path(stored_path)
 
     latex = context.formatter.icon(asset_path)
-    node = NavigableString(latex)
-    node.processed = True
+    node = mark_processed(NavigableString(latex))
     context.mark_processed(element)
     context.suppress_children(element)
     element.replace_with(node)
@@ -471,7 +447,7 @@ def render_twemoji_span(element: Tag, context: RenderContext) -> None:
 )
 def render_index_entry(element: Tag, context: RenderContext) -> None:
     """Render inline index term annotations."""
-    tag_name = element.get("data-tag-name")
+    tag_name = coerce_attribute(element.get("data-tag-name"))
     if not tag_name:
         return
 
@@ -482,8 +458,8 @@ def render_index_entry(element: Tag, context: RenderContext) -> None:
 
     escaped_fragments = [escape_latex_chars(part) for part in parts]
     escaped_entry = "!".join(escaped_fragments)
-    style_value = element.get("data-tag-style")
-    style_key = str(style_value).strip().lower() if style_value else ""
+    style_value = coerce_attribute(element.get("data-tag-style"))
+    style_key = style_value.strip().lower() if style_value else ""
     if style_key not in {"b", "i", "bi"}:
         style_key = ""
 
@@ -491,8 +467,7 @@ def render_index_entry(element: Tag, context: RenderContext) -> None:
     escaped_text = escape_latex_chars(display_text)
 
     latex = context.formatter.index(escaped_text, entry=escaped_entry, style=style_key)
-    node = NavigableString(latex)
-    node.processed = True
+    node = mark_processed(NavigableString(latex))
     context.state.has_index_entries = True
     context.mark_processed(element)
     context.suppress_children(element)
@@ -507,14 +482,14 @@ def render_index_entry(element: Tag, context: RenderContext) -> None:
     auto_mark=False,
 )
 def render_critic_deletions(element: Tag, context: RenderContext) -> None:
-    classes = element.get("class") or []
+    """Convert critic-marked deletions into LaTeX review macros."""
+    classes = gather_classes(element.get("class"))
     if "critic" not in classes:
         return
 
     text = element.get_text(strip=False)
     latex = context.formatter.deletion(text=text)
-    node = NavigableString(latex)
-    node.processed = True
+    node = mark_processed(NavigableString(latex))
     context.mark_processed(element)
     context.suppress_children(element)
     element.replace_with(node)
@@ -528,14 +503,14 @@ def render_critic_deletions(element: Tag, context: RenderContext) -> None:
     auto_mark=False,
 )
 def render_critic_additions(element: Tag, context: RenderContext) -> None:
-    classes = element.get("class") or []
+    """Convert critic-marked insertions into LaTeX review macros."""
+    classes = gather_classes(element.get("class"))
     if "critic" not in classes:
         return
 
     text = element.get_text(strip=False)
     latex = context.formatter.addition(text=text)
-    node = NavigableString(latex)
-    node.processed = True
+    node = mark_processed(NavigableString(latex))
     context.mark_processed(element)
     context.suppress_children(element)
     element.replace_with(node)
@@ -549,14 +524,14 @@ def render_critic_additions(element: Tag, context: RenderContext) -> None:
     auto_mark=False,
 )
 def render_critic_comments(element: Tag, context: RenderContext) -> None:
-    classes = element.get("class") or []
+    """Render critic comments as inline LaTeX annotations."""
+    classes = gather_classes(element.get("class"))
     if "critic" not in classes or "comment" not in classes:
         return
 
     text = element.get_text(strip=False)
     latex = context.formatter.comment(text=text)
-    node = NavigableString(latex)
-    node.processed = True
+    node = mark_processed(NavigableString(latex))
     context.mark_processed(element)
     context.suppress_children(element)
     element.replace_with(node)
@@ -570,14 +545,14 @@ def render_critic_comments(element: Tag, context: RenderContext) -> None:
     auto_mark=False,
 )
 def render_critic_highlight(element: Tag, context: RenderContext) -> None:
-    classes = element.get("class") or []
+    """Render critic highlights using the formatter highlighting helper."""
+    classes = gather_classes(element.get("class"))
     if "critic" not in classes:
         return
 
     text = element.get_text(strip=False)
     latex = context.formatter.highlight(text=text)
-    node = NavigableString(latex)
-    node.processed = True
+    node = mark_processed(NavigableString(latex))
     context.mark_processed(element)
     context.suppress_children(element)
     element.replace_with(node)
@@ -591,7 +566,8 @@ def render_critic_highlight(element: Tag, context: RenderContext) -> None:
     auto_mark=False,
 )
 def render_critic_substitution(element: Tag, context: RenderContext) -> None:
-    classes = element.get("class") or []
+    """Render critic substitutions as paired deletion/addition markup."""
+    classes = gather_classes(element.get("class"))
     if "critic" not in classes or "subst" not in classes:
         return
 
@@ -604,8 +580,7 @@ def render_critic_substitution(element: Tag, context: RenderContext) -> None:
     replacement = inserted.get_text(strip=False)
 
     latex = context.formatter.substitution(original=original, replacement=replacement)
-    node = NavigableString(latex)
-    node.processed = True
+    node = mark_processed(NavigableString(latex))
     context.mark_processed(element)
     context.suppress_children(element)
     element.replace_with(node)

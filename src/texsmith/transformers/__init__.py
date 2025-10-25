@@ -24,9 +24,11 @@ class ConverterRegistry:
         self._strategies: dict[str, ConverterStrategy] = {}
 
     def register(self, name: str, strategy: ConverterStrategy) -> None:
+        """Register a converter strategy under a unique name."""
         self._strategies[name] = strategy
 
     def get(self, name: str) -> ConverterStrategy:
+        """Return a registered converter strategy or raise an execution error."""
         try:
             return self._strategies[name]
         except KeyError as exc:  # pragma: no cover - defensive
@@ -40,6 +42,7 @@ class ConverterRegistry:
         output_dir: Path,
         **options: Any,
     ) -> Any:
+        """Execute a converter strategy with the provided arguments."""
         strategy = self.get(name)
         return strategy(source, output_dir=output_dir, **options)
 

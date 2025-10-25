@@ -72,6 +72,7 @@ def resolve_markdown_extensions(
     requested: Iterable[str] | None,
     disabled: Iterable[str] | None,
 ) -> list[str]:
+    """Return the active Markdown extension list after applying overrides."""
     enabled = normalize_markdown_extensions(requested)
     disabled_normalized = {
         extension.lower() for extension in normalize_markdown_extensions(disabled)
@@ -86,6 +87,7 @@ def resolve_markdown_extensions(
 
 
 def deduplicate_markdown_extensions(values: Iterable[str]) -> list[str]:
+    """Remove duplicate extensions while preserving order and case."""
     seen: set[str] = set()
     result: list[str] = []
     for value in values:
@@ -102,6 +104,7 @@ def deduplicate_markdown_extensions(values: Iterable[str]) -> list[str]:
 def normalize_markdown_extensions(
     values: Iterable[str] | str | None,
 ) -> list[str]:
+    """Normalise extension names from CLI-friendly strings into a flat list."""
     if values is None:
         return []
 
@@ -123,6 +126,7 @@ def render_markdown(
     source: str,
     extensions: Sequence[str] | None = None,
 ) -> MarkdownDocument:
+    """Convert Markdown source into HTML while collecting front matter."""
     try:
         import markdown
     except ModuleNotFoundError as exc:  # pragma: no cover - environment dependent
@@ -147,6 +151,7 @@ def render_markdown(
 
 
 def split_front_matter(source: str) -> tuple[dict[str, Any], str]:
+    """Split YAML front matter from Markdown content, returning metadata and body."""
     candidate = source.lstrip("\ufeff")
     prefix_len = len(source) - len(candidate)
     lines = candidate.splitlines()

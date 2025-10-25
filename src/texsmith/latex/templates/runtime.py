@@ -60,6 +60,7 @@ class TemplateBinding:
 
 
 def coerce_base_level(value: Any, *, allow_none: bool = True) -> int | None:
+    """Normalise base-level metadata to an integer or ``None``."""
     if value is None:
         if allow_none:
             return None
@@ -90,6 +91,7 @@ def coerce_base_level(value: Any, *, allow_none: bool = True) -> int | None:
 
 
 def extract_base_level_override(overrides: Mapping[str, Any] | None) -> Any:
+    """Extract a base level override from template metadata overrides."""
     if not overrides:
         return None
 
@@ -103,6 +105,7 @@ def extract_base_level_override(overrides: Mapping[str, Any] | None) -> Any:
 
 
 def build_template_overrides(front_matter: Mapping[str, Any] | None) -> dict[str, Any]:
+    """Build template overrides from front matter while preserving metadata."""
     if not front_matter or not isinstance(front_matter, Mapping):
         return {}
 
@@ -116,6 +119,7 @@ def build_template_overrides(front_matter: Mapping[str, Any] | None) -> dict[str
 def extract_language_from_front_matter(
     front_matter: Mapping[str, Any] | None,
 ) -> str | None:
+    """Inspect front matter for language hints."""
     if not isinstance(front_matter, Mapping):
         return None
 
@@ -138,6 +142,7 @@ def extract_language_from_front_matter(
 
 
 def normalise_template_language(value: str | None) -> str | None:
+    """Normalise language codes and map them through babel aliases when available."""
     if value is None:
         return None
 
@@ -165,6 +170,7 @@ def resolve_template_language(
     explicit: str | None,
     front_matter: Mapping[str, Any] | None,
 ) -> str:
+    """Resolve the effective template language from CLI and front matter inputs."""
     candidates = (
         normalise_template_language(explicit),
         normalise_template_language(extract_language_from_front_matter(front_matter)),
@@ -208,6 +214,7 @@ def resolve_template_binding(
     slot_requests: Mapping[str, str],
     warn: Callable[[str], None] | None = None,
 ) -> tuple[TemplateBinding, dict[str, str]]:
+    """Resolve template runtime metadata and apply slot overrides."""
     runtime = template_runtime
     if runtime is None and template:
         runtime = load_template_runtime(template)
@@ -272,4 +279,3 @@ __all__ = [
     "resolve_template_binding",
     "resolve_template_language",
 ]
-

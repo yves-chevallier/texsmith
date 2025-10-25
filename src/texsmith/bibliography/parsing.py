@@ -25,4 +25,3 @@ def bibliography_data_from_string(payload: str, key: str) -> BibliographyData:
 
     _, entry = entries[0]
     return BibliographyData(entries={key: entry})
-

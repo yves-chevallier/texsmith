@@ -2,8 +2,9 @@
 
 from __future__ import annotations
 
-from collections.abc import Iterable, Mapping
+from collections.abc import Iterable, Mapping, Sequence
 from pathlib import Path
+from typing import Any, cast
 
 from rich import box
 from rich.console import Console
@@ -13,15 +14,25 @@ from rich.table import Table
 from ..bibliography import BibliographyCollection
 
 
+def _iterable_items(value: object) -> Iterable[object]:
+    if isinstance(value, Iterable) and not isinstance(value, (str, bytes)):
+        return value
+    return ()
+
+
 def format_bibliography_person(person: Mapping[str, object]) -> str:
     """Render a bibliography person dictionary into a readable string."""
     parts: list[str] = []
     for field in ("first", "middle", "prelast", "last", "lineage"):
         value = person.get(field)
-        if isinstance(value, Iterable) and not isinstance(value, str | bytes):
-            parts.extend(str(segment) for segment in value if segment)
-        elif isinstance(value, str) and value.strip():
-            parts.append(value.strip())
+        if isinstance(value, str):
+            text = value.strip()
+            if text:
+                parts.append(text)
+            continue
+        for segment in _iterable_items(value):
+            if segment:
+                parts.append(str(segment))
 
     text = " ".join(part for part in parts if part)
     if text:
@@ -31,12 +42,19 @@ def format_bibliography_person(person: Mapping[str, object]) -> str:
 
 
 def format_person_list(persons: Iterable[Mapping[str, object]]) -> str:
+    """Join a sequence of person dictionaries into a comma-separated string."""
     names = [format_bibliography_person(person) for person in persons]
     return ", ".join(name for name in names if name)
 
 
 def build_reference_panel(reference: Mapping[str, object]) -> Panel:
-    fields = dict(reference.get("fields", {}))
+    """Create a Rich panel that visualises a single bibliography entry."""
+    raw_fields = reference.get("fields")
+    fields: dict[str, Any]
+    if isinstance(raw_fields, Mapping):
+        fields = {str(key): value for key, value in raw_fields.items()}
+    else:
+        fields = {}
     grid = Table.grid(padding=(0, 1))
     grid.add_column(style="bold green", no_wrap=True)
     grid.add_column()
@@ -44,8 +62,16 @@ def build_reference_panel(reference: Mapping[str, object]) -> Panel:
     def _pop_field(*keys: str) -> str | None:
         for key in keys:
             value = fields.pop(key, None)
-            if value:
-                return value
+            if isinstance(value, bytes):
+                text = value.decode("utf-8", errors="ignore").strip()
+                if text:
+                    return text
+            elif isinstance(value, str):
+                text = value.strip()
+                if text:
+                    return text
+            elif value is not None:
+                return str(value)
         return None
 
     def _add_field(label: str, value: object) -> None:
@@ -64,13 +90,18 @@ def build_reference_panel(reference: Mapping[str, object]) -> Panel:
     journal = _pop_field("journal", "booktitle")
     _add_field("Journal", journal)
 
-    authors = reference.get("persons", {}).get("author")
-    if isinstance(authors, Iterable):
-        _add_field("Authors", format_person_list(authors))
+    persons_block = reference.get("persons")
+    if isinstance(persons_block, Mapping):
+        authors = persons_block.get("author")
+        if isinstance(authors, Iterable):
+            cast_authors = cast(Sequence[Mapping[str, object]], tuple(authors))
+            _add_field("Authors", format_person_list(cast_authors))
 
-    sources = reference.get("source_files")
-    if isinstance(sources, Iterable):
-        formatted_sources = ", ".join(str(Path(path)) for path in sources if path)
+    sources = [
+        str(Path(str(path))) for path in _iterable_items(reference.get("source_files")) if path
+    ]
+    if sources:
+        formatted_sources = ", ".join(sources)
         _add_field("Sources", formatted_sources)
 
     for key, value in sorted(fields.items()):
@@ -83,6 +114,7 @@ def build_reference_panel(reference: Mapping[str, object]) -> Panel:
 
 
 def print_bibliography_overview(collection: BibliographyCollection) -> None:
+    """Render a formatted summary of bibliography files, issues, and entries."""
     console = Console()
 
     stats = collection.file_stats

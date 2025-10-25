@@ -4,12 +4,12 @@ from __future__ import annotations
 
 import re
 
-from bs4 import Tag
-from bs4.element import NavigableString
+from bs4.element import NavigableString, Tag
 
 from ..context import RenderContext
 from ..exceptions import InvalidNodeError
 from ..rules import RenderPhase, renders
+from ._helpers import gather_classes, mark_processed
 
 
 MERMAID_KEYWORDS = {
@@ -32,7 +32,7 @@ def _looks_like_mermaid(diagram: str) -> bool:
 
 
 def _extract_language(element: Tag) -> str:
-    classes = element.get("class") or []
+    classes = gather_classes(element.get("class"))
     for cls in classes:
         if cls.startswith("language-"):
             return cls[len("language-") :] or "text"
@@ -94,19 +94,17 @@ def _is_only_meaningful_child(node: Tag) -> bool:
 @renders("pre", phase=RenderPhase.PRE, priority=45, name="preformatted_code", nestable=False)
 def render_preformatted_code(element: Tag, context: RenderContext) -> None:
     """Render plain <pre> blocks that wrap a <code> element."""
-    classes = element.get("class") or []
+    classes = gather_classes(element.get("class"))
     if "mermaid" in classes:
         return
 
     parent = element.parent
-    parent_classes = getattr(parent, "get", lambda *_: [])("class") or []
-    if isinstance(parent_classes, str):
-        parent_classes = parent_classes.split()
+    parent_classes = gather_classes(getattr(parent, "get", lambda *_: None)("class"))
     if any(cls in {"highlight", "codehilite"} for cls in parent_classes):
         return
 
     code_element = element.find("code", recursive=False)
-    code_classes = code_element.get("class") or [] if code_element else []
+    code_classes = gather_classes(code_element.get("class")) if code_element else []
     if any(cls in {"language-mermaid", "mermaid"} for cls in code_classes):
         return
 
@@ -135,15 +133,13 @@ def render_preformatted_code(element: Tag, context: RenderContext) -> None:
         baselinestretch=baselinestretch,
     )
 
-    node = NavigableString(latex)
-    node.processed = True
-    element.replace_with(node)
+    element.replace_with(mark_processed(NavigableString(latex)))
 
 
 @renders("div", phase=RenderPhase.PRE, priority=40, name="code_blocks", nestable=False)
 def render_code_blocks(element: Tag, context: RenderContext) -> None:
     """Render MkDocs-highlighted code blocks."""
-    classes = element.get("class") or []
+    classes = gather_classes(element.get("class"))
     if "highlight" not in classes:
         return
     if "mermaid" in classes:
@@ -152,7 +148,7 @@ def render_code_blocks(element: Tag, context: RenderContext) -> None:
     code_element = element.find("code")
     if code_element is None:
         raise InvalidNodeError("Missing <code> element inside highlighted block")
-    code_classes = code_element.get("class") or []
+    code_classes = gather_classes(code_element.get("class"))
     if any(cls in {"language-mermaid", "mermaid"} for cls in code_classes):
         return
 
@@ -195,9 +191,7 @@ def render_code_blocks(element: Tag, context: RenderContext) -> None:
         baselinestretch=baselinestretch,
     )
 
-    node = NavigableString(latex)
-    node.processed = True
-    element.replace_with(node)
+    element.replace_with(mark_processed(NavigableString(latex)))
 
 
 @renders(
@@ -247,8 +241,7 @@ def render_standalone_code_blocks(element: Tag, context: RenderContext) -> None:
         baselinestretch=baselinestretch,
     )
 
-    node = NavigableString(latex)
-    node.processed = True
+    node = mark_processed(NavigableString(latex))
 
     if element.parent and element.parent.name == "p" and _is_only_meaningful_child(element):
         element.parent.replace_with(node)

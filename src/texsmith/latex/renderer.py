@@ -127,4 +127,3 @@ class LaTeXRenderer:
 
 
 __all__ = ["LaTeXRenderer"]
-

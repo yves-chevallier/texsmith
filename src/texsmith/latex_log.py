@@ -1,3 +1,5 @@
+"""Utilities for parsing and presenting output from latexmk builds."""
+
 from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
@@ -6,7 +8,7 @@ from enum import Enum
 import re
 import selectors
 import subprocess
-from typing import ClassVar
+from typing import ClassVar, TextIO, cast
 
 from rich.console import Console
 from rich.text import Text
@@ -107,6 +109,7 @@ class LatexLogParser:
 
     @property
     def messages(self) -> Sequence[LatexMessage]:
+        """Return the messages accumulated so far."""
         return tuple(self._messages)
 
     def process_line(self, line: str) -> list[LatexMessage]:
@@ -370,7 +373,7 @@ class LatexLogParser:
             "*** ",
             "l.",
         )
-        return line.startswith(detail_prefixes) or (line.startswith(" ") and line.strip())
+        return line.startswith(detail_prefixes) or (line.startswith(" ") and bool(line.strip()))
 
     @staticmethod
     def _should_ignore(line: str) -> bool:
@@ -416,12 +419,14 @@ class LatexLogRenderer:
         self._branch_stack: list[bool] = []
 
     def consume(self, message: LatexMessage) -> None:
+        """Display a single message, queueing it for tree-aware formatting."""
         self.messages.append(message)
         next_indent = message.indent
         self._emit_pending(next_indent)
         self._pending = message
 
     def summarize(self) -> None:
+        """Print a summary of processed messages grouped by severity."""
         self._emit_pending(None)
         warnings = sum(1 for msg in self.messages if msg.severity is LatexMessageSeverity.WARNING)
         errors = sum(1 for msg in self.messages if msg.severity is LatexMessageSeverity.ERROR)
@@ -589,7 +594,11 @@ def stream_latexmk_output(
 
         while selector.get_map():
             for key, _ in selector.select():
-                stream = key.fileobj
+                stream_obj = key.fileobj
+                if isinstance(stream_obj, int) or not hasattr(stream_obj, "readline"):
+                    selector.unregister(stream_obj)
+                    continue
+                stream = cast(TextIO, stream_obj)
                 chunk = stream.readline()
                 if chunk:
                     for completed in parser.process_line(chunk):
