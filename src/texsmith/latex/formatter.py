@@ -9,7 +9,7 @@ from typing import Any
 from jinja2 import Environment, FileSystemLoader, Template
 from requests.utils import requote_uri as requote_url
 
-from ..utils import escape_latex_chars
+from .utils import escape_latex_chars
 
 
 TEMPLATE_DIR = Path(__file__).resolve().parent.parent / "templates"

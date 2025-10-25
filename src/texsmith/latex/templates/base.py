@@ -12,7 +12,7 @@ from typing import Any, cast
 
 from jinja2 import Environment, FileSystemLoader, TemplateNotFound
 
-from ...utils import escape_latex_chars
+from ..utils import escape_latex_chars
 from .manifest import TemplateError, TemplateManifest, TemplateSlot
 
 

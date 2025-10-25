@@ -13,8 +13,13 @@ from ..context import RenderContext
 from ..exceptions import AssetMissingError, InvalidNodeError
 from ..rules import RenderPhase, renders
 from ..transformers import drawio2pdf, fetch_image, image2pdf, svg2pdf
-from ..utils import is_valid_url, resolve_asset_path
-from ._helpers import coerce_attribute, gather_classes, mark_processed
+from ._helpers import (
+    coerce_attribute,
+    gather_classes,
+    is_valid_url,
+    mark_processed,
+    resolve_asset_path,
+)
 
 
 def _iter_reversed(nodes: Iterable[Tag]) -> Iterable[Tag]:
