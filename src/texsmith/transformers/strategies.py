@@ -9,7 +9,7 @@ from typing import Any
 
 from ..docker import DockerLimits, VolumeMount, run_container
 from ..exceptions import TransformerExecutionError
-from ..utils import points_to_mm
+from .utils import points_to_mm
 from .base import CachedConversionStrategy
 
 

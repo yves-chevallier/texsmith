@@ -22,8 +22,13 @@ from ..transformers import (
     mermaid2pdf,
     svg2pdf,
 )
-from ..utils import is_valid_url, resolve_asset_path
-from ._helpers import coerce_attribute, gather_classes, mark_processed
+from ._helpers import (
+    coerce_attribute,
+    gather_classes,
+    is_valid_url,
+    mark_processed,
+    resolve_asset_path,
+)
 
 
 MERMAID_KEYWORDS = (

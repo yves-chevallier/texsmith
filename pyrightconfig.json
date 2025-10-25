@@ -1,0 +1,16 @@
+{
+  "include": [
+    "src"
+  ],
+  "exclude": [
+    "build",
+    "builds-v0",
+    "docs",
+    "examples",
+    "experiments",
+    "mkdocs_latex",
+    "templates"
+  ],
+  "venvPath": ".",
+  "venv": ".venv"
+}

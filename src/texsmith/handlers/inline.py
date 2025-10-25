@@ -13,8 +13,8 @@ from ..context import RenderContext
 from ..exceptions import InvalidNodeError
 from ..rules import RenderPhase, renders
 from ..transformers import fetch_image, svg2pdf
-from ..utils import escape_latex_chars, is_valid_url
-from ._helpers import coerce_attribute, gather_classes, mark_processed
+from ..latex.utils import escape_latex_chars
+from ._helpers import coerce_attribute, gather_classes, is_valid_url, mark_processed
 
 
 _MATH_PAYLOAD_PATTERN = re.compile(
