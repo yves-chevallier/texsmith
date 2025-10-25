@@ -34,6 +34,10 @@ class ConverterRegistry:
         except KeyError as exc:  # pragma: no cover - defensive
             raise TransformerExecutionError(f"No converter registered for '{name}'") from exc
 
+    def is_registered(self, name: str) -> bool:
+        """Return True when a converter has been registered under the given name."""
+        return name in self._strategies
+
     def convert(
         self,
         name: str,
@@ -62,6 +66,10 @@ def register_converter(name: str, strategy: ConverterStrategy) -> None:
     """Expose a helper to register external strategies."""
     registry.register(name, strategy)
 
+
+def has_converter(name: str) -> bool:
+    """Return True when a converter strategy is currently registered."""
+    return registry.is_registered(name)
 
 def svg2pdf(source: Path | str, output_dir: Path, **options: Any) -> Path:
     """Convert SVG assets to PDF."""
@@ -103,6 +111,7 @@ __all__ = [
     "MermaidToPdfStrategy",
     "drawio2pdf",
     "fetch_image",
+    "has_converter",
     "get_pdf_page_sizes",
     "image2pdf",
     "mermaid2pdf",

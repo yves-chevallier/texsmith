@@ -48,7 +48,7 @@ from .templates import (
     resolve_template_binding,
     resolve_template_language,
 )
-from .transformers import register_converter
+from .transformers import has_converter, register_converter
 
 
 __all__ = [
@@ -934,12 +934,10 @@ def attempt_transformer_fallback(error: LatexRenderingError) -> bool:
     applied = False
 
     if "drawio" in message:
-        register_converter("drawio", _FallbackConverter("drawio"))
-        applied = True
+        return False
     if "mermaid" in message:
-        register_converter("mermaid", _FallbackConverter("mermaid"))
-        applied = True
-    if "fetch-image" in message or "fetch image" in message:
+        return False
+    if ("fetch-image" in message or "fetch image" in message) and not has_converter("fetch-image"):
         register_converter("fetch-image", _FallbackConverter("image"))
         applied = True
     return applied
@@ -950,8 +948,8 @@ def ensure_fallback_converters() -> None:
     if is_docker_available():
         return
 
-    for name in ("drawio", "mermaid", "fetch-image"):
-        register_converter(name, _FallbackConverter(name))
+    if not has_converter("fetch-image"):
+        register_converter("fetch-image", _FallbackConverter("image"))
 
 
 class _FallbackConverter:

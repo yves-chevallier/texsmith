@@ -198,6 +198,16 @@ def escape_plain_text(root: Tag, _context: RenderContext) -> None:
             continue
         if _has_ancestor(node, "code", "script"):
             continue
+        ancestor = getattr(node, "parent", None)
+        skip_plain_text = False
+        while ancestor is not None:
+            classes = gather_classes(getattr(ancestor, "get", lambda *_: None)("class"))
+            if "latex-raw" in classes:
+                skip_plain_text = True
+                break
+            ancestor = getattr(ancestor, "parent", None)
+        if skip_plain_text:
+            continue
         text = str(node)
         if not text:
             continue

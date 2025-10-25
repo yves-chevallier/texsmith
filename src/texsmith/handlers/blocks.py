@@ -265,6 +265,18 @@ def render_footnotes(root: Tag, context: RenderContext) -> None:
             placeholder.replace_with(replacement)
 
 
+@renders("p", phase=RenderPhase.POST, priority=100, name="latex_raw", nestable=False)
+def render_latex_raw(element: Tag, _context: RenderContext) -> None:
+    """Preserve raw LaTeX payloads embedded in hidden paragraphs."""
+    classes = gather_classes(element.get("class"))
+    if "latex-raw" not in classes:
+        return
+
+    text = element.get_text(strip=False)
+    replacement = mark_processed(NavigableString(text))
+    element.replace_with(replacement)
+
+
 @renders("p", phase=RenderPhase.POST, priority=90, name="paragraphs", nestable=False)
 def render_paragraphs(element: Tag, _context: RenderContext) -> None:
     """Render plain paragraphs."""

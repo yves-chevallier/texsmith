@@ -246,6 +246,19 @@ graph TD;
 >   A-->B;
 > ```
 
+### Raw LaTeX blocks (`/// latex`)
+
+Extension: `texsmith.markdown_extensions.latex_raw`
+Package: shipped with TeXSmith
+
+```md
+/// latex
+\newline\textbf{hidden}
+///
+```
+
+> The fence above becomes `<p class="latex-raw" style="display:none;">…</p>` in HTML, and the payload is inserted verbatim in the LaTeX output.
+
 ### Emoji
 
 _Extension : `pymdownx.emoji`_

@@ -109,3 +109,9 @@ def test_arithmatex_block_preserved(renderer: LaTeXRenderer) -> None:
     html = '<div class="arithmatex">$$\nE = mc^2\n$$</div>'
     latex = renderer.render(html)
     assert "$$\nE = mc^2\n$$" in latex
+
+
+def test_hidden_latex_block(renderer: LaTeXRenderer) -> None:
+    html = '<p class="latex-raw" style="display:none;">\\newline\\textbf{hidden}</p>'
+    latex = renderer.render(html)
+    assert "\\newline\\textbf{hidden}" in latex

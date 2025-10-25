@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 from collections.abc import Iterable
 from dataclasses import dataclass
 from pathlib import Path
@@ -24,6 +25,8 @@ from ..markdown import (
     MarkdownConversionError,
     render_markdown,
 )
+
+logger = logging.getLogger(__name__)
 
 
 if TYPE_CHECKING:
@@ -172,7 +175,15 @@ def prepare_document_context(
         if not full_document:
             try:
                 html_payload = extract_content(html_payload, selector)
-            except ValueError:
+            except ValueError as exc:
+                warning_message = (
+                    f"CSS selector '{selector}' was not found in '{document_path.name}'. "
+                    "Rendering the entire document instead."
+                )
+                if callbacks.emit_warning is not None:
+                    callbacks.emit_warning(warning_message, exc)
+                else:
+                    logger.warning(warning_message)
                 html_payload = raw_payload
 
     return build_document_context(

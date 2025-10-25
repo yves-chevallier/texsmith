@@ -7,12 +7,12 @@ copyright: Copyright &copy; 2025 Yves Chevallier
 theme:
   language: fr
   name: material
-  logo: logo.svg
+  logo: assets/logo.svg
   font:
     text: Source Sans 3
   features:
     - search
-    #- navigation.instant
+    - navigation.instant
     - navigation.tabs
     - navigation.top
     - navigation.indexes
@@ -29,13 +29,13 @@ theme:
   palette:
     - scheme: default
       media: "(prefers-color-scheme: light)"
-      primary: light blue
+      primary: blue
       toggle:
         icon: material/weather-night
         name: Basculer en mode sombre
     - scheme: slate
       media: "(prefers-color-scheme: dark)"
-      primary: blue grey
+      primary: blue
       toggle:
         icon: material/weather-sunny
         name: Basculer en mode clair
@@ -69,8 +69,6 @@ extra_javascript:
   - https://cdn.jsdelivr.net/npm/vega@5
   - https://cdn.jsdelivr.net/npm/vega-lite@5
   - https://cdn.jsdelivr.net/npm/vega-embed@6
-#   - https://viewer.diagrams.net/js/viewer-static.min.js
-#   - assets/js/auto-reload.js
 
 plugins:
   - search
