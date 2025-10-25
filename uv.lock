@@ -1127,29 +1127,29 @@ version = "0.1.0"
 source = { editable = "." }
 dependencies = [
     { name = "beautifulsoup4" },
-    { name = "cairosvg" },
     { name = "emoji" },
     { name = "jinja2" },
     { name = "markdown" },
-    { name = "mkdocs-material" },
-    { name = "pillow" },
     { name = "pybtex" },
     { name = "pydantic" },
     { name = "pygments" },
     { name = "pylatexenc" },
     { name = "pymdown-extensions" },
-    { name = "pypdf" },
     { name = "python-markdown-math" },
     { name = "python-slugify" },
     { name = "pyyaml" },
-    { name = "requests" },
     { name = "rich" },
     { name = "typer" },
 ]
 
 [package.dev-dependencies]
 dev = [
+    { name = "cairosvg" },
+    { name = "mkdocs-material" },
+    { name = "pillow" },
+    { name = "pypdf" },
     { name = "pytest" },
+    { name = "requests" },
     { name = "ruff" },
 ]
 docs = [
@@ -1163,29 +1163,29 @@ docs = [
 [package.metadata]
 requires-dist = [
     { name = "beautifulsoup4", specifier = ">=4.14.2" },
-    { name = "cairosvg", specifier = ">=2.8.2" },
     { name = "emoji", specifier = ">=2.12.1" },
     { name = "jinja2", specifier = ">=3.1.6" },
     { name = "markdown", specifier = ">=3.7" },
-    { name = "mkdocs-material", specifier = ">=9.6.22" },
-    { name = "pillow", specifier = ">=12.0.0" },
     { name = "pybtex", specifier = ">=0.24.0" },
     { name = "pydantic", specifier = ">=2.7.0" },
     { name = "pygments", specifier = ">=2.18.0" },
     { name = "pylatexenc", specifier = ">=2.10" },
     { name = "pymdown-extensions", specifier = ">=10.9" },
-    { name = "pypdf", specifier = ">=6.1.1" },
     { name = "python-markdown-math", specifier = ">=0.9" },
     { name = "python-slugify", specifier = ">=8.0.4" },
     { name = "pyyaml", specifier = ">=6.0.3" },
-    { name = "requests", specifier = ">=2.32.5" },
     { name = "rich", specifier = ">=13.9.0" },
     { name = "typer", specifier = ">=0.12.5" },
 ]
 
 [package.metadata.requires-dev]
 dev = [
+    { name = "cairosvg", specifier = ">=2.8.2" },
+    { name = "mkdocs-material", specifier = ">=9.6.22" },
+    { name = "pillow", specifier = ">=12.0.0" },
+    { name = "pypdf", specifier = ">=6.1.1" },
     { name = "pytest", specifier = ">=8.4.2" },
+    { name = "requests", specifier = ">=2.32.5" },
     { name = "ruff", specifier = ">=0.14.1" },
 ]
 docs = [

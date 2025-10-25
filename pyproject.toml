@@ -21,22 +21,17 @@ keywords = [
 ]
 dependencies = [
     "beautifulsoup4>=4.14.2",
-    "cairosvg>=2.8.2",
     "emoji>=2.12.1",
     "jinja2>=3.1.6",
     "markdown>=3.7",
-    "mkdocs-material>=9.6.22",
-    "pillow>=12.0.0",
     "pybtex>=0.24.0",
     "pydantic>=2.7.0",
     "pygments>=2.18.0",
     "pylatexenc>=2.10",
     "pymdown-extensions>=10.9",
-    "pypdf>=6.1.1",
     "python-markdown-math>=0.9",
     "python-slugify>=8.0.4",
     "pyyaml>=6.0.3",
-    "requests>=2.32.5",
     "rich>=13.9.0",
     "typer>=0.12.5",
 ]
@@ -72,6 +67,11 @@ texsmith = "texsmith.cli:main"
 dev = [
     "pytest>=8.4.2",
     "ruff>=0.14.1",
+    "cairosvg>=2.8.2",
+    "pillow>=12.0.0",
+    "pypdf>=6.1.1",
+    "requests>=2.32.5",
+    "mkdocs-material>=9.6.22",
 ]
 docs = [
     "mkdocs-material>=9.6.22",

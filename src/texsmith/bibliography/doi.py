@@ -3,8 +3,15 @@
 from __future__ import annotations
 
 from collections.abc import Iterable
+from typing import TYPE_CHECKING
 
-import requests
+if TYPE_CHECKING:  # pragma: no cover - typing only
+    import requests  # type: ignore[import]
+
+try:  # pragma: no cover - optional dependency
+    import requests  # type: ignore[import]
+except ImportError:  # pragma: no cover - optional dependency
+    requests = None  # type: ignore[assignment]
 
 
 class DoiLookupError(Exception):
@@ -20,21 +27,29 @@ class DoiBibliographyFetcher:
     def __init__(
         self,
         *,
-        session: requests.Session | None = None,
+        session: "requests.Session | None" = None,
         timeout: float = 10.0,
         user_agent: str | None = None,
     ) -> None:
-        self._session = session or requests.Session()
+        self._session = session
         self._timeout = timeout
         self._user_agent = user_agent or self._DEFAULT_USER_AGENT
 
     def fetch(self, value: str) -> str:
         """Return the BibTeX payload for a DOI, trying multiple providers."""
+        if requests is None:
+            msg = (
+                "Python 'requests' dependency is required to resolve DOIs. "
+                "Install it via 'pip install requests'."
+            )
+            raise DoiLookupError(msg)
+
         doi = self._normalise(value)
         attempts: list[str] = []
+        client = self._session or requests.Session()
         for url, headers in self._candidate_requests(doi):
             try:
-                response = self._session.get(url, headers=headers, timeout=self._timeout)
+                response = client.get(url, headers=headers, timeout=self._timeout)
             except requests.RequestException as exc:
                 attempts.append(f"{url}: {exc}")
                 continue

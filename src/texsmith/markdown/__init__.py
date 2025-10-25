@@ -28,6 +28,7 @@ DEFAULT_MARKDOWN_EXTENSIONS = [
     "attr_list",
     "def_list",
     "footnotes",
+    "texsmith.markdown_extensions.latex_raw:LatexRawExtension",
     "texsmith.markdown_extensions.missing_footnotes:MissingFootnotesExtension",
     "md_in_html",
     "mdx_math",

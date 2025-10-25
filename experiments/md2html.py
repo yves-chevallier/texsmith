@@ -12,6 +12,7 @@ TEST_MD = r"""
 /// table-caption
 This is a sample figure caption.
 ///
+<!-- foobar -->
 
 """
 

@@ -1,5 +1,60 @@
 # Devel Notes
 
+## TO-DO
+
+### TeXSmith Core
+
+- [x] Remplacer safe_quote par requote_url de requests.utils
+- [x] Remplacer fonctions helpers par package latexcodec
+- [x] Remplacer to_kebab_case par python-slugify
+- [x] Documenter class RenderPhase(Enum): chaque état et pourquoi.
+- [x] Supporter la langue (babel) selon la configuration (polyglossia à venir)
+- [x] Permettre l'écritre d'extensions Renderer,formatter (demo counter)
+- [x] Support for index generation (makeindex, xindy)
+- [x] Rename package texsmith et les templates texsmith-template-\*
+- [x] Activer toutes les extensions communes par défaut.
+- [x] Support for bibliography (biblatex, natbib...)
+- [x] Support for footnotes
+- [x] Convert some journals templates
+- [x] Ajouter des tests unitaires et d'intégration pour le CLI et MkDocs
+- [x] Support for images (convertion to pdf...)
+- [x] Manage figures captions
+- [x] Manage table captions
+- [x] Slots can be defined in the frontmatter.
+- [x] Find a way to have a solid and robust docker submodule/class
+- [x] Declare solution/exercises in a plugin way
+- [x] Add more Markdown extensions (definition lists, tables...)
+- [x] drawio (.drawio, .dio)
+- [x] mermaid (inline)
+- [x] .mmd, .mermaid, `https://mermaid.live/edit#pako:eNpVjbFugz`...
+- [x] Fonctionnement des emojis twemoji
+- [x] Images marchent avec (.tiff, .webp, .avif, .gif, .png, .bmp...)
+- [x] Verbose in CLI more details et afficher joliment les warnings et erreurs
+- [x] --debug pour afficher les exceptions complètes
+- [x] Bibliographie sur doi dans frontmatter
+- [x] Perf increase by converting html to xml and use lxml not htmlparser?
+- [x] Support multipages, je donnes plusieurs md ou html en entrée.
+- [x] Improve error handling and reporting during LaTeX compilation
+- [x] Raw latex input blocks (not visible in html)
+- [ ] Manage the figure (c.f.) how to manage that...
+- [ ] Optimize bibliography management using bib instead of jinja
+- [ ] Raw latex blocks (`latex { .texsmith } ...`)
+- [ ] Table width (auto width, fixed width..., tabularx, tabulary or not)
+- [ ] Table orientation (large table landscape...)
+- [ ] Scaffolding de templates avec cookiecutter
+- [ ] Documenter le processus de création de templates LaTeX personnalisées
+- [ ] Listings, verbatim ou minted
+- [ ] Support for glossaries (glossaries package)
+- [ ] Support for cross-references (cleveref package)
+- [ ] texsmith template create my-template
+- [ ] texsmith template info book
+- [ ] Index generation
+- [ ] Compilation avec Docker ou TeXlive (choix)
+- [ ] Créer CI/CD
+- [ ] Écrire documentation
+- [ ] Documentation complete de docstring dans le projet
+- [ ] Déployer sur PyPI
+
 ## Index generation
 
 MkDocs generate a `search_index.json` consumed by lunr or wasabi to provide search capabilities in the generated HTML site. This index contains all words present in the documentation along with their locations. This is an automated way built dynamically on the browser side. However on LaTeX documents we need to generate a static index at compile time. In traditional LaTeX edition we use `\index{term}` commands scattered in the document, then we run `makeindex` or `xindy` to generate the index file included at the end of the document.
@@ -220,59 +275,6 @@ L'éléphant montré en \cref{fig:elephant} est grand.
 
 In scientific english we put "Figure" with a capital, but in french it is "figure" with a lowercase.
 
-## TO-DO
-
-### TeXSmith Core
-
-- [x] Remplacer safe_quote par requote_url de requests.utils
-- [x] Remplacer fonctions helpers par package latexcodec
-- [x] Remplacer to_kebab_case par python-slugify
-- [x] Documenter class RenderPhase(Enum): chaque état et pourquoi.
-- [x] Supporter la langue (babel) selon la configuration (polyglossia à venir)
-- [x] Permettre l'écritre d'extensions Renderer,formatter (demo counter)
-- [x] Support for index generation (makeindex, xindy)
-- [x] Rename package texsmith et les templates texsmith-template-\*
-- [x] Activer toutes les extensions communes par défaut.
-- [x] Support for bibliography (biblatex, natbib...)
-- [x] Support for footnotes
-- [x] Convert some journals templates
-- [x] Ajouter des tests unitaires et d'intégration pour le CLI et MkDocs
-- [x] Support for images (convertion to pdf...)
-- [x] Manage figures captions
-- [x] Manage table captions
-- [x] Slots can be defined in the frontmatter.
-- [x] Find a way to have a solid and robust docker submodule/class
-- [x] Declare solution/exercises in a plugin way
-- [x] Add more Markdown extensions (definition lists, tables...)
-- [x] drawio (.drawio, .dio)
-- [x] mermaid (inline)
-- [x] .mmd, .mermaid, `https://mermaid.live/edit#pako:eNpVjbFugz`...
-- [x] Fonctionnement des emojis twemoji
-- [x] Images marchent avec (.tiff, .webp, .avif, .gif, .png, .bmp...)
-- [x] Verbose in CLI more details et afficher joliment les warnings et erreurs
-- [x] --debug pour afficher les exceptions complètes
-- [x] Bibliographie sur doi dans frontmatter
-- [x] Perf increase by converting html to xml and use lxml not htmlparser?
-- [x] Support multipages, je donnes plusieurs md ou html en entrée.
-- [x] Improve error handling and reporting during LaTeX compilation
-- [ ] Manage the figure (c.f.) how to manage that...
-- [ ] Optimize bibliography management using bib instead of jinja
-- [ ] Raw latex blocks (`latex { .texsmith } ...`)
-- [ ] Table width (auto width, fixed width..., tabularx, tabulary or not)
-- [ ] Table orientation (large table landscape...)
-- [ ] Scaffolding de templates avec cookiecutter
-- [ ] Documenter le processus de création de templates LaTeX personnalisées
-- [ ] Listings, verbatim ou minted
-- [ ] Support for glossaries (glossaries package)
-- [ ] Support for cross-references (cleveref package)
-- [ ] texsmith template create my-template
-- [ ] texsmith template info book
-- [ ] Index generation
-- [ ] Compilation avec Docker ou TeXlive (choix)
-- [ ] Créer CI/CD
-- [ ] Écrire documentation
-- [ ] Documentation complete de docstring dans le projet
-- [ ] Déployer sur PyPI
 
 ### Front matter bibliography
 

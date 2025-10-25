@@ -406,3 +406,8 @@ def build(
         )
     else:
         emit_warning("latexmk completed without errors but the PDF file was not found.")
+
+
+# Expose modules for test monkeypatching (`tests/test_cli.py` imports the command callable).
+build.shutil = shutil  # type: ignore[attr-defined]
+build.subprocess = subprocess  # type: ignore[attr-defined]

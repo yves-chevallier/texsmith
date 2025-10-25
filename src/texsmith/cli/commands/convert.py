@@ -421,8 +421,21 @@ def _convert_single_without_template(
         callbacks=callbacks,
     )
 
-    if output_mode in {"stdout", "directory"}:
+    if output_mode == "stdout":
         typer.echo(result.latex_output)
+        return
+
+    if output_mode == "directory" and output_path is not None:
+        target_file = output_path / f"{document_path.stem}.tex"
+        try:
+            write_output_file(target_file, result.latex_output)
+        except OSError as exc:
+            emit_error(str(exc), exception=exc)
+            raise typer.Exit(code=1) from exc
+        typer.secho(
+            f"LaTeX document written to {target_file}",
+            fg=typer.colors.GREEN,
+        )
         return
 
     if output_mode == "file" and output_path is not None:

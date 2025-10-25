@@ -1,0 +1,65 @@
+"""Markdown extension adding support for raw LaTeX fence blocks."""
+
+from __future__ import annotations
+
+from html import escape
+import re
+
+from markdown.extensions import Extension
+from markdown.preprocessors import Preprocessor
+
+
+class _LatexRawPreprocessor(Preprocessor):
+    """Transform custom `/// latex` fences into hidden HTML nodes."""
+
+    _START_RE = re.compile(r"^\s*///\s+latex\s*$")
+    _END_RE = re.compile(r"^\s*///\s*$")
+
+    def run(self, lines: list[str]) -> list[str]:
+        result: list[str] = []
+        index = 0
+        total = len(lines)
+
+        while index < total:
+            line = lines[index]
+            if not self._START_RE.match(line):
+                result.append(line)
+                index += 1
+                continue
+
+            start_index = index
+            index += 1
+            contents: list[str] = []
+
+            while index < total and not self._END_RE.match(lines[index]):
+                contents.append(lines[index])
+                index += 1
+
+            if index >= total:
+                # No closing fence; fall back to raw lines
+                result.extend(lines[start_index:])
+                break
+
+            escaped = escape("\n".join(contents), quote=False)
+            result.append(
+                f'<p class="latex-raw" style="display:none;">{escaped}</p>'
+            )
+            index += 1  # Skip closing fence
+
+        return result
+
+
+class LatexRawExtension(Extension):
+    """Register the raw LaTeX block preprocessor."""
+
+    def extendMarkdown(self, md):  # type: ignore[override]
+        md.preprocessors.register(
+            _LatexRawPreprocessor(md), "texsmith_latex_raw", priority=27
+        )
+
+
+def makeExtension(**_: object) -> LatexRawExtension:  # pragma: no cover - API hook
+    return LatexRawExtension()
+
+
+__all__ = ["LatexRawExtension", "makeExtension"]
