@@ -9,7 +9,7 @@ import pytest
 
 from texsmith.config import BookConfig
 from texsmith.plugins import material
-from texsmith.renderer import LaTeXRenderer
+from texsmith.latex import LaTeXRenderer
 from texsmith.transformers import register_converter, registry
 
 

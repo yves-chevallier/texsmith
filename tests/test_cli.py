@@ -421,7 +421,7 @@ def test_slot_injection_preserves_footnotes(tmp_path: Path) -> None:
         app,
         [
             "convert",
-            "examples/cheese.md",
+            "examples/scientific-paper/cheese.md",
             "--output-dir",
             str(output_dir),
             "--template",
@@ -429,7 +429,7 @@ def test_slot_injection_preserves_footnotes(tmp_path: Path) -> None:
             "--slot",
             "abstract:Abstract",
             "--bibliography",
-            "examples/cheese.bib",
+            "examples/scientific-paper/cheese.bib",
         ],
     )
 

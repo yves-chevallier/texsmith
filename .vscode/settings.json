@@ -1,0 +1,21 @@
+{
+  // Sélection de l'interpréteur
+  "python.defaultInterpreterPath": ".venv/bin/python",
+
+  // Pylance/Pyright
+  "python.languageServer": "Pylance",
+  "python.analysis.inlayHints.variableTypes": true,
+  "python.analysis.inlayHints.functionReturnTypes": true,
+
+  // Ruff = linter + (optionnel) formateur + organise imports
+  "ruff.enable": true,
+  "ruff.lint.enable": true,
+  "ruff.nativeServer": true,
+
+  "ruff.organizeImports": true,
+
+  "[python]": {
+    "editor.formatOnSave": true,
+    "editor.defaultFormatter": "charliermarsh.ruff"
+  }
+}

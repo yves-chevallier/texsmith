@@ -5,7 +5,7 @@ import pytest
 
 from texsmith.config import BookConfig
 from texsmith.context import DocumentState
-from texsmith.renderer import LaTeXRenderer
+from texsmith.latex import LaTeXRenderer
 
 
 @pytest.fixture

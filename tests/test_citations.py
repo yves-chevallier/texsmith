@@ -8,7 +8,7 @@ import pytest
 from texsmith.bibliography import BibliographyCollection
 from texsmith.cli import DEFAULT_MARKDOWN_EXTENSIONS
 from texsmith.context import DocumentState
-from texsmith.renderer import LaTeXRenderer
+from texsmith.latex import LaTeXRenderer
 
 
 FIXTURE_BIB = Path(__file__).resolve().parent / "fixtures" / "bib" / "b.bib"

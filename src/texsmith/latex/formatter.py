@@ -1,4 +1,4 @@
-"""Utilities for rendering LaTeX templates."""
+"""Utilities for rendering LaTeX partials (snippets)."""
 
 from __future__ import annotations
 
@@ -12,7 +12,7 @@ from requests.utils import requote_uri as requote_url
 from .utils import escape_latex_chars
 
 
-TEMPLATE_DIR = Path(__file__).resolve().parent.parent / "templates"
+TEMPLATE_DIR = Path(__file__).resolve().parent / "partials"
 
 
 def optimize_list(numbers: Iterable[int]) -> list[str]:

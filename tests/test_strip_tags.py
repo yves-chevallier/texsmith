@@ -1,7 +1,7 @@
 import pytest
 
 from texsmith.config import BookConfig
-from texsmith.renderer import LaTeXRenderer
+from texsmith.latex import LaTeXRenderer
 
 
 @pytest.fixture

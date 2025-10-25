@@ -9,8 +9,6 @@ from .bibliography import (
 )
 from .config import BookConfig, LaTeXConfig
 from .context import AssetRegistry, DocumentState, RenderContext
-from .formatter import LaTeXFormatter
-from .renderer import LaTeXRenderer
 from .rules import RenderPhase, renders
 from .templates import (
     TemplateError,
@@ -29,8 +27,6 @@ __all__ = [
     "DoiBibliographyFetcher",
     "DoiLookupError",
     "LaTeXConfig",
-    "LaTeXFormatter",
-    "LaTeXRenderer",
     "RenderContext",
     "RenderPhase",
     "TemplateError",

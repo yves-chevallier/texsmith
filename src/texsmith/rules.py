@@ -1,4 +1,24 @@
-"""Declarative rule registry and execution engine for LaTeX rendering."""
+"""Rule declaration and execution engine for the LaTeX renderer.
+
+This module implements the rule-based architecture that powers Texsmith's
+HTML-to-LaTeX pipeline. Handlers declare their intent via the ``@renders``
+decorator, which records structural metadata (phase, priority, targeted tags).
+At runtime the :class:`RenderEngine` collects those declarations, organises them
+per :class:`RenderPhase`, and walks the BeautifulSoup DOM ensuring that each
+pass is executed in a predictable, stable order.
+
+Architecture:
+    * Declaration layer – ``@renders`` stores a lightweight
+      :class:`RuleDefinition` on every handler.
+    * Registry layer – :class:`RenderRegistry` collates definitions into
+      sortable :class:`RenderRule` instances grouped by phase/tag.
+    * Execution layer – :class:`RenderEngine` coordinates multi-pass traversal
+      using the private :class:`_DOMVisitor` to apply handlers depth-first while
+      respecting auto-marking and child-suppression semantics.
+
+This separation keeps rule authors focused on transformations while the engine
+handles ordering, deduplication, and orchestration concerns.
+"""
 
 from __future__ import annotations
 
@@ -15,7 +35,24 @@ if TYPE_CHECKING:  # pragma: no cover - typing only
 
 
 class RenderPhase(Enum):
-    """High-level passes executed by the rendering engine."""
+    """Ordered passes executed while mutating the parsed HTML tree.
+
+    The renderer performs multiple sweeps over the DOM instead of a single
+    monolithic traversal. Each phase isolates a category of mutations so that
+    earlier transformations stabilise before later ones begin. This drastically
+    reduces coupling between handlers and makes ordering guarantees explicit.
+
+    Phases progress from coarse structural edits to fine-grained formatting:
+
+    * ``PRE`` – normalise the tree and discard unwanted nodes before any heavy
+      lifting occurs.
+    * ``BLOCK`` – build block-level LaTeX (paragraphs, lists, figures) once the
+      structure is stable.
+    * ``INLINE`` – apply inline formatting after blocks have established their
+      final shape.
+    * ``POST`` – run cleanup or bookkeeping steps that depend on previous
+      phases, such as final numbering, synthetic nodes, or state aggregation.
+    """
 
     PRE = auto()
     """DOM normalisation pass: strip/reshape nodes before structural work begins."""
@@ -34,7 +71,16 @@ RuleCallable = Callable[[Any, "RenderContext"], None]
 
 
 class RuleFactory(Protocol):
-    """Protocol implemented by rule decorators."""
+    """Protocol implemented by rule decorators.
+
+    Decorators return lightweight factory objects instead of immediately
+    constructing :class:`RenderRule` instances. This indirection lets us bind
+    metadata once (at decoration time) while deferring handler resolution until
+    the registry collects rules. The factory pattern keeps the decorator API
+    ergonomic, avoids premature instantiation, and allows the same definition
+    to be rebound for different callables (e.g. class/static methods) without
+    duplicating registration logic.
+    """
 
     def bind(self, handler: RuleCallable) -> RenderRule:
         """Create a concrete render rule for the decorated handler."""

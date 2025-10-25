@@ -17,7 +17,7 @@ from .exceptions import AssetMissingError
 
 if TYPE_CHECKING:  # pragma: no cover - typing only
     from .config import BookConfig
-    from .formatter import LaTeXFormatter
+    from .latex.formatter import LaTeXFormatter
     from .rules import RenderPhase
 
 

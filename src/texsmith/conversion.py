@@ -34,8 +34,8 @@ from .conversion_contexts import (
 )
 from .docker import is_docker_available
 from .exceptions import LatexRenderingError, TransformerExecutionError
-from .formatter import LaTeXFormatter
-from .renderer import LaTeXRenderer
+from .latex.formatter import LaTeXFormatter
+from .latex.renderer import LaTeXRenderer
 from .templates import (
     DEFAULT_TEMPLATE_LANGUAGE,
     TemplateBinding,

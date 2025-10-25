@@ -30,9 +30,8 @@ from texsmith.conversion import (
     extract_front_matter_bibliography,
     render_with_fallback,
 )
-from texsmith.formatter import LaTeXFormatter
+from texsmith.latex import LaTeXFormatter, LaTeXRenderer
 from texsmith.plugins import material
-from texsmith.renderer import LaTeXRenderer
 from texsmith.templates import (
     TemplateError,
     TemplateSlot,
