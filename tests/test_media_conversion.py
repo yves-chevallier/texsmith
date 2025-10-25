@@ -6,7 +6,7 @@ from PIL import Image  # type: ignore[import]
 import pytest
 
 from texsmith.config import BookConfig
-from texsmith.renderer import LaTeXRenderer
+from texsmith.latex import LaTeXRenderer
 from texsmith.transformers import image2pdf, register_converter, registry
 
 

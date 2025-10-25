@@ -18,7 +18,7 @@ from ...conversion import (
     convert_document,
     load_template_runtime,
 )
-from ...latex_log import stream_latexmk_output
+from ...latex.log import stream_latexmk_output
 from ...markdown import resolve_markdown_extensions
 from ...templates import TemplateError
 from ..state import debug_enabled, emit_error, emit_warning, get_cli_state

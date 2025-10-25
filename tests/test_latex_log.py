@@ -7,7 +7,7 @@ import types
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
-LATEX_LOG_PATH = PROJECT_ROOT / "src" / "texsmith" / "latex_log.py"
+LATEX_LOG_PATH = PROJECT_ROOT / "src" / "texsmith" / "latex" / "log.py"
 
 # Provide minimal stubs for optional dependencies required during import.
 if "rich.console" not in sys.modules:
@@ -36,7 +36,7 @@ if "rich.console" not in sys.modules:
     sys.modules["rich.console"] = rich_console_module
     sys.modules["rich.text"] = rich_text_module
 
-spec = importlib.util.spec_from_file_location("texsmith.latex_log", LATEX_LOG_PATH)
+spec = importlib.util.spec_from_file_location("texsmith.latex.log", LATEX_LOG_PATH)
 assert spec is not None and spec.loader is not None
 latex_log = importlib.util.module_from_spec(spec)
 sys.modules[spec.name] = latex_log
