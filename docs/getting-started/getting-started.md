@@ -44,4 +44,26 @@ With scientific documents you may want to include citations and a bibliography. 
 texsmith convert input.md references.bib -o output.pdf --template nature
 ```
 
+## Programmatic Usage
+
+Prefer to stay in Python?  The high-level API mirrors the CLI and handles all the boilerplate for you:
+
+```python
+from pathlib import Path
+
+from texsmith import Document, convert_documents
+
+bundle = convert_documents(
+    [
+        Document.from_markdown(Path("intro.md")),
+        Document.from_html(Path("appendix.html")),
+    ],
+    output_dir=Path("build"),
+)
+
+print("Combined LaTeX:\n", bundle.combined_output())
+```
+
+For template-centric workflows, reach for `texsmith.TemplateSession`.  The [API guide](../api/high-level.md) walks through end-to-end examples.
+
 [^pipx]: [pipx](https://pipx.pypa.io/stable/) is a recent tool used to leverage requirements of PEP 660 (i.e. install and run Python applications in isolated environments). It is very convenient to install command line tools without polluting your main Python environment.

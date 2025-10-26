@@ -4,14 +4,15 @@ from __future__ import annotations
 
 from collections.abc import Iterable, Mapping, Sequence
 from pathlib import Path
-from typing import Any, cast
+from typing import TYPE_CHECKING, Any, cast
 
-from rich import box
-from rich.console import Console
-from rich.panel import Panel
-from rich.table import Table
+import typer
 
 from ..bibliography import BibliographyCollection
+from .state import ensure_rich_compat, get_cli_state
+
+if TYPE_CHECKING:
+    from rich.panel import Panel
 
 
 def _iterable_items(value: object) -> Iterable[object]:
@@ -47,8 +48,12 @@ def format_person_list(persons: Iterable[Mapping[str, object]]) -> str:
     return ", ".join(name for name in names if name)
 
 
-def build_reference_panel(reference: Mapping[str, object]) -> Panel:
+def build_reference_panel(reference: Mapping[str, object]) -> "Panel":
     """Create a Rich panel that visualises a single bibliography entry."""
+    from rich import box
+    from rich.panel import Panel
+    from rich.table import Table
+
     raw_fields = reference.get("fields")
     fields: dict[str, Any]
     if isinstance(raw_fields, Mapping):
@@ -115,7 +120,16 @@ def build_reference_panel(reference: Mapping[str, object]) -> Panel:
 
 def print_bibliography_overview(collection: BibliographyCollection) -> None:
     """Render a formatted summary of bibliography files, issues, and entries."""
-    console = Console()
+    ensure_rich_compat()
+    try:
+        from rich import box
+        from rich.panel import Panel
+        from rich.table import Table
+    except ImportError:  # pragma: no cover - fallback when Rich is unavailable
+        _print_bibliography_plain(collection)
+        return
+
+    console = get_cli_state().console
 
     stats = collection.file_stats
     if stats:
@@ -158,3 +172,48 @@ def print_bibliography_overview(collection: BibliographyCollection) -> None:
         panel = build_reference_panel(reference)
         console.print(panel)
         console.print()
+
+
+def _print_bibliography_plain(collection: BibliographyCollection) -> None:
+    """Simple text fallback when Rich is not available."""
+    typer.echo("Bibliography Files:")
+    stats = collection.file_stats
+    if stats:
+        for file_path, entry_count in stats:
+            typer.echo(f"  - {file_path} ({entry_count} entries)")
+    else:
+        typer.echo("  - (none)")
+
+    if collection.issues:
+        typer.echo("Warnings:")
+        for issue in collection.issues:
+            key = issue.key or "-"
+            source = str(issue.source) if issue.source else "-"
+            typer.echo(f"  - [{key}] {issue.message} (source: {source})")
+
+    references = collection.list_references()
+    if not references:
+        typer.echo("No references found.")
+        return
+
+    typer.echo("Entries:")
+    typer.echo("References:")
+    for reference in references:
+        key = reference.get("key", "Reference")
+        entry_type = reference.get("type", "reference")
+        typer.echo(f"- {key} ({entry_type})")
+        persons_block = reference.get("persons")
+        if isinstance(persons_block, Mapping):
+            authors = persons_block.get("author")
+            if isinstance(authors, Iterable):
+                cast_authors = cast(Sequence[Mapping[str, object]], tuple(authors))
+                typer.echo(f"    Authors: {format_person_list(cast_authors)}")
+        fields = reference.get("fields")
+        if isinstance(fields, Mapping):
+            for field_key, field_value in sorted(fields.items()):
+                typer.echo(f"    {field_key.title()}: {field_value}")
+        sources = reference.get("source_files")
+        entries = [str(Path(str(path))) for path in _iterable_items(sources) if path]
+        if entries:
+            typer.echo(f"    Sources: {', '.join(entries)}")
+        typer.echo()

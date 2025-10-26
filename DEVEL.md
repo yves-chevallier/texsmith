@@ -36,9 +36,11 @@
 - [x] Support multipages, je donnes plusieurs md ou html en entrée.
 - [x] Improve error handling and reporting during LaTeX compilation
 - [x] Raw latex input blocks (not visible in html)
+- [x] Créer CI/CD
+- [ ] texsmith template info book
+- [ ] Raw latex inline blocks (`latex { .texsmith } ...`)
 - [ ] Manage the figure (c.f.) how to manage that...
 - [ ] Optimize bibliography management using bib instead of jinja
-- [ ] Raw latex blocks (`latex { .texsmith } ...`)
 - [ ] Table width (auto width, fixed width..., tabularx, tabulary or not)
 - [ ] Table orientation (large table landscape...)
 - [ ] Scaffolding de templates avec cookiecutter
@@ -47,10 +49,8 @@
 - [ ] Support for glossaries (glossaries package)
 - [ ] Support for cross-references (cleveref package)
 - [ ] texsmith template create my-template
-- [ ] texsmith template info book
 - [ ] Index generation
 - [ ] Compilation avec Docker ou TeXlive (choix)
-- [ ] Créer CI/CD
 - [ ] Écrire documentation
 - [ ] Documentation complete de docstring dans le projet
 - [ ] Déployer sur PyPI
