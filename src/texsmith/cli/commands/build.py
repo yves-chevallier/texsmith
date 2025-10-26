@@ -8,16 +8,13 @@ import shlex
 import shutil
 import subprocess
 
+import click
 import typer
 
-from ...conversion import (
-    ConversionCallbacks,
-    ConversionError,
-    InputKind,
-    UnsupportedInputError,
-    convert_document,
-    load_template_runtime,
-)
+from ...api import get_template
+from ...api.document import Document
+from ...api.pipeline import RenderSettings
+from ...conversion import ConversionCallbacks, ConversionError, InputKind, UnsupportedInputError
 from ...latex.log import stream_latexmk_output
 from ...markdown import resolve_markdown_extensions
 from ...templates import TemplateError
@@ -25,7 +22,6 @@ from ..state import debug_enabled, emit_error, emit_warning, get_cli_state
 from ..utils import (
     classify_input_source,
     parse_slot_option,
-    prepare_document_context,
     resolve_option,
     split_document_inputs,
 )
@@ -64,8 +60,8 @@ def build_latexmk_command(
 
 
 def build(
-    inputs: list[Path] = typer.Argument(  # type: ignore[assignment]
-        ...,
+    inputs: list[Path] | None = typer.Argument(  # type: ignore[assignment]
+        [],
         metavar="INPUT...",
         help=(
             "Conversion inputs. Provide a Markdown/HTML source document and optionally "
@@ -209,12 +205,24 @@ def build(
     ),
 ) -> None:
     """Orchestrate document conversion and compilation for the MkDocs workflow."""
-    resolved_inputs = list(resolve_option(inputs))
+
+    raw_inputs = resolve_option(inputs if inputs is not None else [])
+    if raw_inputs is None:
+        resolved_inputs: list[Path] = []
+    elif isinstance(raw_inputs, Path):
+        resolved_inputs = [raw_inputs]
+    else:
+        resolved_inputs = list(raw_inputs)
+
     resolved_bibliography_option = list(resolve_option(bibliography))
     documents, bibliography_files = split_document_inputs(
         resolved_inputs,
         resolved_bibliography_option,
     )
+    if not documents:
+        ctx = click.get_current_context()
+        typer.echo(ctx.command.get_help(ctx))
+        raise typer.Exit()
     if len(documents) != 1:
         raise typer.BadParameter("Provide exactly one Markdown or HTML document.")
     document_path = documents[0]
@@ -232,16 +240,10 @@ def build(
     if debug_snapshot is None:
         debug_snapshot = debug_enabled()
 
-    template_name = resolve_option(template)
-    if not template_name:
+    template_identifier = resolve_option(template)
+    if not template_identifier:
         emit_error("The build command requires a LaTeX template (--template).")
         raise typer.Exit(code=1)
-
-    try:
-        template_runtime = load_template_runtime(template_name)
-    except TemplateError as exc:
-        emit_error(str(exc), exception=exc)
-        raise typer.Exit(code=1) from exc
 
     callbacks = ConversionCallbacks(
         emit_warning=lambda message, exception=None: emit_warning(message, exception=exception),
@@ -250,7 +252,7 @@ def build(
     )
 
     try:
-        input_format: InputKind = classify_input_source(document_path)
+        input_kind: InputKind = classify_input_source(document_path)
     except UnsupportedInputError as exc:
         if callbacks.emit_error is not None:
             callbacks.emit_error(str(exc), exc)
@@ -269,47 +271,65 @@ def build(
     resolved_copy_assets = resolve_option(copy_assets)
     resolved_manifest = resolve_option(manifest)
     resolved_language = resolve_option(language)
-    resolved_output_dir = resolve_option(output_dir)
 
     try:
-        document_context = prepare_document_context(
-            document_path=document_path,
-            kind=input_format,
-            selector=resolved_selector,
-            full_document=resolved_full_document,
-            base_level=resolved_base_level,
-            heading_level=resolved_heading_level,
-            drop_title=resolved_drop_title,
-            numbered=resolved_numbered,
-            markdown_extensions=resolved_markdown_extensions,
-            callbacks=callbacks,
-            emit_error_callback=emit_error,
-        )
+        if input_kind is InputKind.MARKDOWN:
+            document = Document.from_markdown(
+                document_path,
+                extensions=resolved_markdown_extensions,
+                heading=resolved_heading_level,
+                base_level=resolved_base_level,
+                drop_title=resolved_drop_title,
+                numbered=resolved_numbered,
+                callbacks=callbacks,
+            )
+        else:
+            document = Document.from_html(
+                document_path,
+                selector=resolved_selector,
+                heading=resolved_heading_level,
+                base_level=resolved_base_level,
+                drop_title=resolved_drop_title,
+                numbered=resolved_numbered,
+                full_document=resolved_full_document,
+                callbacks=callbacks,
+            )
     except ConversionError as exc:
         raise typer.Exit(code=1) from exc
 
+    for slot_name, selector_value in requested_slots.items():
+        document.assign_slot(slot_name, selector=selector_value, include_document=False)
+
+    settings = RenderSettings(
+        parser=resolved_parser,
+        disable_fallback_converters=resolved_disable_fallback,
+        copy_assets=resolved_copy_assets,
+        manifest=resolved_manifest,
+        persist_debug_html=bool(debug_snapshot),
+        language=resolved_language,
+    )
+
     try:
-        conversion = convert_document(
-            document=document_context,
-            output_dir=resolved_output_dir,
-            parser=resolved_parser,
-            disable_fallback_converters=resolved_disable_fallback,
-            copy_assets=resolved_copy_assets,
-            manifest=resolved_manifest,
-            template=template_name,
-            persist_debug_html=debug_snapshot,
-            language=resolved_language,
-            slot_overrides=requested_slots,
-            bibliography_files=bibliography_files,
-            template_runtime=template_runtime,
+        session = get_template(
+            template_identifier,
+            settings=settings,
             callbacks=callbacks,
         )
-    except ConversionError as exc:
+    except TemplateError as exc:
+        emit_error(str(exc), exception=exc)
         raise typer.Exit(code=1) from exc
 
-    if conversion.tex_path is None:
-        emit_error("Template rendering failed to produce a LaTeX document.")
-        raise typer.Exit(code=1)
+    if bibliography_files:
+        session.add_bibliography(*bibliography_files)
+
+    session.add_document(document)
+
+    render_dir = resolve_option(output_dir).resolve()
+    try:
+        render_result = session.render(render_dir)
+    except (TemplateError, ConversionError) as exc:
+        emit_error(str(exc), exception=exc)
+        raise typer.Exit(code=1) from exc
 
     latexmk_path = shutil.which("latexmk")
     if latexmk_path is None:
@@ -317,14 +337,14 @@ def build(
         raise typer.Exit(code=1)
 
     command = build_latexmk_command(
-        conversion.template_engine,
-        conversion.template_shell_escape,
-        force_bibtex=conversion.has_bibliography,
+        render_result.template_engine,
+        render_result.requires_shell_escape,
+        force_bibtex=render_result.has_bibliography,
     )
     command[0] = latexmk_path
-    command.append(conversion.tex_path.name)
+    command.append(render_result.main_tex_path.name)
 
-    tex_cache_root = (conversion.tex_path.parent / ".texmf-cache").resolve()
+    tex_cache_root = (render_result.main_tex_path.parent / ".texmf-cache").resolve()
     tex_cache_root.mkdir(parents=True, exist_ok=True)
     env = os.environ.copy()
 
@@ -361,7 +381,7 @@ def build(
                 check=False,
                 capture_output=True,
                 text=True,
-                cwd=conversion.tex_path.parent,
+                cwd=render_result.main_tex_path.parent,
                 env=env,
             )
         except OSError as exc:
@@ -384,9 +404,8 @@ def build(
         try:
             result = stream_latexmk_output(
                 command,
-                cwd=str(conversion.tex_path.parent),
+                cwd=str(render_result.main_tex_path.parent),
                 env=env,
-                console=console,
             )
         except OSError as exc:
             if debug_enabled():
@@ -398,16 +417,10 @@ def build(
             emit_error(f"latexmk exited with status {result.returncode}")
             raise typer.Exit(code=result.returncode)
 
-    pdf_path = conversion.tex_path.with_suffix(".pdf")
-    if pdf_path.exists():
-        typer.secho(
-            f"PDF document written to {pdf_path}",
-            fg=typer.colors.GREEN,
-        )
-    else:
-        emit_warning("latexmk completed without errors but the PDF file was not found.")
+    pdf_path = render_result.main_tex_path.with_suffix(".pdf")
+    typer.secho(f"PDF document written to {pdf_path}", fg=typer.colors.GREEN)
 
 
-# Expose modules for test monkeypatching (`tests/test_cli.py` imports the command callable).
+# Expose runtime dependencies for test monkeypatching
 build.shutil = shutil  # type: ignore[attr-defined]
 build.subprocess = subprocess  # type: ignore[attr-defined]

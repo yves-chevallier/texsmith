@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import logging
 from collections.abc import Iterable
 from dataclasses import dataclass
 from pathlib import Path
@@ -11,26 +10,9 @@ from typing import TYPE_CHECKING, Any, TypeVar, cast
 import typer
 from typer.models import ArgumentInfo, OptionInfo
 
-from ..conversion import (
-    DOCUMENT_SELECTOR_SENTINEL,
-    ConversionCallbacks,
-    ConversionError,
-    InputKind,
-    UnsupportedInputError,
-    build_document_context,
-    extract_content,
-)
-from ..markdown import (
-    DEFAULT_MARKDOWN_EXTENSIONS,
-    MarkdownConversionError,
-    render_markdown,
-)
-
-logger = logging.getLogger(__name__)
-
 
 if TYPE_CHECKING:
-    from ..conversion_contexts import DocumentContext
+    from ..conversion import InputKind, UnsupportedInputError
 
 
 @dataclass(slots=True)
@@ -114,6 +96,8 @@ def split_document_inputs(
 
 def classify_input_source(path: Path) -> InputKind:
     """Determine the document kind based on its filename suffix."""
+    from ..conversion import InputKind, UnsupportedInputError
+
     suffix = path.suffix.lower()
     if suffix in {".md", ".markdown"}:
         return InputKind.MARKDOWN
@@ -128,94 +112,6 @@ def classify_input_source(path: Path) -> InputKind:
         f"Unsupported input file type '{suffix or '<none>'}'. "
         "Provide a Markdown source (.md) or HTML document (.html)."
     )
-
-
-def prepare_document_context(
-    *,
-    document_path: Path,
-    kind: InputKind,
-    selector: str,
-    full_document: bool,
-    base_level: int,
-    heading_level: int,
-    drop_title: bool,
-    numbered: bool,
-    markdown_extensions: list[str],
-    callbacks: ConversionCallbacks,
-    emit_error_callback: Any,
-) -> DocumentContext:
-    """Load, normalise, and annotate the source document for conversion."""
-    try:
-        raw_payload = document_path.read_text(encoding="utf-8")
-    except OSError as exc:
-        message = f"Failed to read input document: {exc}"
-        if callbacks.emit_error is not None:
-            callbacks.emit_error(message, exc)
-        else:
-            emit_error_callback(message, exception=exc)
-        raise ConversionError(message) from exc
-
-    front_matter: dict[str, Any] = {}
-    html_payload = raw_payload
-
-    if kind is InputKind.MARKDOWN:
-        extensions = markdown_extensions or list(DEFAULT_MARKDOWN_EXTENSIONS)
-        try:
-            converted = render_markdown(raw_payload, extensions)
-        except MarkdownConversionError as exc:
-            message = f"Failed to convert Markdown source: {exc}"
-            if callbacks.emit_error is not None:
-                callbacks.emit_error(message, exc)
-            else:
-                emit_error_callback(message, exception=exc)
-            raise ConversionError(message) from exc
-        html_payload = converted.html
-        front_matter = converted.front_matter
-    else:
-        if not full_document:
-            try:
-                html_payload = extract_content(html_payload, selector)
-            except ValueError as exc:
-                warning_message = (
-                    f"CSS selector '{selector}' was not found in '{document_path.name}'. "
-                    "Rendering the entire document instead."
-                )
-                if callbacks.emit_warning is not None:
-                    callbacks.emit_warning(warning_message, exc)
-                else:
-                    logger.warning(warning_message)
-                html_payload = raw_payload
-
-    return build_document_context(
-        name=document_path.stem,
-        source_path=document_path,
-        html=html_payload,
-        front_matter=front_matter,
-        base_level=base_level,
-        heading_level=heading_level,
-        drop_title=drop_title,
-        numbered=numbered,
-    )
-
-
-def build_unique_stem_map(documents: Iterable[Path]) -> dict[Path, str]:
-    """Generate unique stem labels for each document to avoid filename clashes."""
-    used: set[str] = set()
-    counters: dict[str, int] = {}
-    mapping: dict[Path, str] = {}
-
-    for path in documents:
-        base = path.stem
-        index = counters.get(base, 0)
-        candidate = base if index == 0 else f"{base}-{index + 1}"
-        while candidate in used:
-            index += 1
-            candidate = f"{base}-{index + 1}"
-        counters[base] = index + 1
-        used.add(candidate)
-        mapping[path] = candidate
-
-    return mapping
 
 
 def determine_output_target(
@@ -330,6 +226,8 @@ def resolve_slot_assignments(
     documents: list[Path],
 ) -> dict[Path, list[SlotAssignment]]:
     """Resolve parsed slot tokens against provided documents."""
+    from ..conversion import DOCUMENT_SELECTOR_SENTINEL
+
     assignments: dict[Path, list[SlotAssignment]] = {doc: [] for doc in documents}
     if not tokens:
         return assignments
