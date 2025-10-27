@@ -96,11 +96,14 @@ class TemplateRenderer:
                 aggregated_slots.setdefault(slot_name, []).append(latex)
 
             document_obj = getattr(fragment, "document", None)
-            slot_inclusions = (
-                set(getattr(document_obj, "slot_inclusions", set()))
-                if document_obj is not None
-                else set()
-            )
+            slot_inclusions: set[str] = set()
+            if document_obj is not None:
+                document_slots = getattr(document_obj, "slots", None)
+                if document_slots is not None and hasattr(document_slots, "includes"):
+                    slot_inclusions = set(document_slots.includes())
+                else:
+                    legacy_inclusions = getattr(document_obj, "slot_inclusions", set())
+                    slot_inclusions = set(legacy_inclusions)
             if slot_inclusions:
                 for slot_name in slot_inclusions:
                     aggregated_slots.setdefault(slot_name, [])

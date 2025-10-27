@@ -107,8 +107,49 @@ def test_prepare_documents_applies_slot_assignments(tmp_path: Path) -> None:
 
     prepared = service.prepare_documents(request)
     document = prepared.document_map[source]
-    assert document.slot_overrides["sidebar"] == "#Heading"
-    assert "main" in document.slot_inclusions
+    assert document.slots.selectors()["sidebar"] == "#Heading"
+    assert "main" in document.slots.includes()
+
+
+def test_document_slots_merge_front_matter_and_cli(tmp_path: Path) -> None:
+    service = ConversionService()
+    source = tmp_path / "doc.md"
+    source.write_text(
+        """---
+meta:
+  slots:
+    abstract: "*"
+slots:
+  backmatter: Appendix
+---
+
+# Introduction
+
+Body text.
+""",
+        encoding="utf-8",
+    )
+
+    request = ConversionRequest(
+        documents=[source],
+        bibliography_files=[],
+        slot_assignments={
+            source: [
+                SlotAssignment(slot="frontmatter", selector="#Introduction", include_document=False),
+                SlotAssignment(slot="mainmatter", selector=None, include_document=True),
+            ]
+        },
+        markdown_extensions=[],
+    )
+
+    prepared = service.prepare_documents(request)
+    document = prepared.document_map[source]
+    selectors = document.slots.selectors()
+    inclusions = document.slots.includes()
+    assert selectors["backmatter"] == "Appendix"
+    assert selectors["frontmatter"] == "#Introduction"
+    assert "abstract" in inclusions
+    assert "mainmatter" in inclusions
 
 
 def test_prepare_documents_rejects_unsupported_inputs(tmp_path: Path) -> None:

@@ -151,7 +151,16 @@ class ConversionService:
             documents.append(document)
             mapping[path] = document
 
-        self._apply_slot_assignments(mapping, request.slot_assignments)
+        for path, directives in request.slot_assignments.items():
+            document = mapping.get(path)
+            if document is None or not directives:
+                continue
+            for directive in directives:
+                document.assign_slot(
+                    directive.slot,
+                    selector=directive.selector,
+                    include_document=directive.include_document,
+                )
         bibliography = _deduplicate_paths(request.bibliography_files)
         return _PreparedBatch(
             documents=documents,
@@ -207,27 +216,6 @@ class ConversionService:
         )
 
     @staticmethod
-    def _apply_slot_assignments(
-        document_map: Mapping[Path, Document],
-        assignments: Mapping[Path, Sequence[SlotAssignment]],
-    ) -> None:
-        for path, directives in assignments.items():
-            document = document_map.get(path)
-            if document is None or not directives:
-                continue
-            for directive in directives:
-                if directive.selector is not None:
-                    document.assign_slot(
-                        directive.slot,
-                        selector=directive.selector,
-                        include_document=directive.include_document,
-                    )
-                else:
-                    document.assign_slot(
-                        directive.slot,
-                        include_document=True,
-                    )
-
     @staticmethod
     def _build_callbacks(request: ConversionRequest) -> ConversionCallbacks:
         return ConversionCallbacks(
