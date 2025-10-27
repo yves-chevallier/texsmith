@@ -8,14 +8,7 @@ from typing import Annotated
 import click
 import typer
 
-from texsmith.api.service import (
-    apply_slot_assignments,
-    build_callbacks,
-    build_render_settings,
-    execute_conversion,
-    prepare_documents,
-    split_document_inputs,
-)
+from texsmith.api.service import ConversionRequest, ConversionService
 from texsmith.core.conversion.debug import ConversionError
 from texsmith.core.conversion.inputs import UnsupportedInputError
 from texsmith.adapters.markdown import resolve_markdown_extensions
@@ -48,6 +41,8 @@ from .._options import (
     SlotsOption,
     TemplateOption,
 )
+
+_SERVICE = ConversionService()
 
 
 def _format_path_for_event(path: Path) -> str:
@@ -115,7 +110,7 @@ def convert(
             raise typer.BadParameter("Provide either positional inputs or --input-path, not both.")
         document_paths = [input_path]
 
-    document_paths, bibliography_files = split_document_inputs(document_paths, bibliography or [])
+    document_paths, bibliography_files = _SERVICE.split_inputs(document_paths, bibliography or [])
     if not document_paths:
         raise typer.BadParameter("Provide a Markdown (.md) or HTML (.html) source document.")
 
@@ -160,14 +155,19 @@ def convert(
     output_mode, output_target = determine_output_target(template_selected, document_paths, output)
     output_path = output_target.resolve() if output_target is not None else None
 
-    callbacks = build_callbacks(
-        emit_warning=lambda message, exception=None: emit_warning(message, exception=exception),
-        emit_error=lambda message, exception=None: emit_error(message, exception=exception),
-        debug_enabled=debug_enabled(),
-        record_event=state.record_event,
-    )
-
-    settings = build_render_settings(
+    request_render_dir = output_path if (template_selected or output_mode == "directory") else None
+    request = ConversionRequest(
+        documents=document_paths,
+        bibliography_files=bibliography_files,
+        slot_assignments=slot_assignments,
+        selector=selector,
+        full_document=full_document,
+        heading_level=heading_level,
+        base_level=base_level,
+        drop_title_all=False,
+        drop_title_first_document=drop_title,
+        numbered=numbered,
+        markdown_extensions=resolved_markdown_extensions,
         parser=parser,
         disable_fallback_converters=disable_fallback_converters,
         copy_assets=copy_assets,
@@ -175,6 +175,12 @@ def convert(
         persist_debug_html=bool(debug_snapshot),
         language=language,
         legacy_latex_accents=legacy_latex_accents,
+        template=template_identifier,
+        render_dir=request_render_dir,
+        emit_warning=lambda message, exception=None: emit_warning(message, exception=exception),
+        emit_error=lambda message, exception=None: emit_error(message, exception=exception),
+        record_event=state.record_event,
+        debug_enabled=debug_enabled(),
     )
     state.record_event(
         "conversion_settings",
@@ -187,40 +193,20 @@ def convert(
     )
 
     try:
-        prepared = prepare_documents(
-            document_paths,
-            selector=selector,
-            full_document=full_document,
-            heading_level=heading_level,
-            base_level=base_level,
-            drop_title_all=False,
-            drop_title_first_document=drop_title,
-            numbered=numbered,
-            markdown_extensions=resolved_markdown_extensions,
-            callbacks=callbacks,
-        )
+        prepared = _SERVICE.prepare_documents(request)
     except UnsupportedInputError as exc:
-        if callbacks.emit_error is not None:
-            callbacks.emit_error(str(exc), exc)
-        else:
-            emit_error(str(exc), exception=exc)
+        emit_error(str(exc), exception=exc)
         raise typer.Exit(code=1) from exc
     except ConversionError as exc:
         raise typer.Exit(code=1) from exc
 
-    apply_slot_assignments(prepared.document_map, slot_assignments)
-
     if not template_selected:
-        render_target = output_path if output_mode == "directory" else None
-        outcome = execute_conversion(
-            prepared.documents,
-            settings=settings,
-            callbacks=callbacks,
-            bibliography_files=bibliography_files,
-            template=None,
-            render_dir=render_target,
-        )
-        bundle = outcome.bundle
+        try:
+            response = _SERVICE.execute(request, prepared=prepared)
+        except ConversionError as exc:
+            emit_error(str(exc), exception=exc)
+            raise typer.Exit(code=1) from exc
+        bundle = response.bundle
         if bundle is None:  # pragma: no cover - defensive
             raise RuntimeError("Conversion bundle missing from service outcome.")
 
@@ -252,7 +238,7 @@ def convert(
                 state=state,
                 output_mode=output_mode,
                 bundle=bundle,
-                output_path=output_path,
+                output_path=request.render_dir,
                 render_result=None,
             )
             _flush_diagnostics()
@@ -260,21 +246,14 @@ def convert(
 
         raise RuntimeError(f"Unsupported output mode '{output_mode}'.")
 
-    render_dir = (output_path or Path("build")).resolve()
+    render_dir = (request.render_dir or Path("build")).resolve()
     try:
-        outcome = execute_conversion(
-            prepared.documents,
-            settings=settings,
-            callbacks=callbacks,
-            bibliography_files=bibliography_files,
-            template=template_identifier,
-            render_dir=render_dir,
-        )
+        response = _SERVICE.execute(request, prepared=prepared)
     except (TemplateError, ConversionError) as exc:
         emit_error(str(exc), exception=exc)
         raise typer.Exit(code=1) from exc
 
-    render_result = outcome.render_result
+    render_result = response.render_result
     if render_result is None:  # pragma: no cover - defensive
         raise RuntimeError("Template render result missing from service outcome.")
 

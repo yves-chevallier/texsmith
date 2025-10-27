@@ -40,16 +40,11 @@ from .document import (
 )
 from .pipeline import ConversionBundle, LaTeXFragment, RenderSettings, convert_documents
 from .service import (
-    ConversionOutcome,
-    DocumentPreparationResult,
+    ConversionRequest,
+    ConversionResponse,
+    ConversionService,
     SlotAssignment,
-    apply_slot_assignments,
-    build_callbacks,
-    build_render_settings,
     classify_input_source,
-    execute_conversion,
-    prepare_documents,
-    split_document_inputs,
 )
 from .templates import (
     TemplateOptions,
@@ -61,10 +56,11 @@ from .templates import (
 
 __all__ = [
     "ConversionBundle",
-    "ConversionOutcome",
+    "ConversionRequest",
+    "ConversionResponse",
+    "ConversionService",
     "Document",
     "DocumentRenderOptions",
-    "DocumentPreparationResult",
     "HeadingLevel",
     "LaTeXFragment",
     "RenderSettings",
@@ -72,14 +68,8 @@ __all__ = [
     "TemplateOptions",
     "TemplateRenderResult",
     "TemplateSession",
-    "apply_slot_assignments",
-    "build_callbacks",
-    "build_render_settings",
     "classify_input_source",
     "convert_documents",
-    "execute_conversion",
     "get_template",
-    "prepare_documents",
     "resolve_heading_level",
-    "split_document_inputs",
 ]
