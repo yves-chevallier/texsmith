@@ -5,10 +5,10 @@ from pathlib import Path
 import markdown
 import pytest
 
-from texsmith.bibliography import BibliographyCollection
-from texsmith.cli import DEFAULT_MARKDOWN_EXTENSIONS
-from texsmith.context import DocumentState
-from texsmith.latex import LaTeXRenderer
+from texsmith.adapters.latex import LaTeXRenderer
+from texsmith.core.bibliography import BibliographyCollection
+from texsmith.core.context import DocumentState
+from texsmith.ui.cli import DEFAULT_MARKDOWN_EXTENSIONS
 
 
 FIXTURE_BIB = Path(__file__).resolve().parent / "fixtures" / "bib" / "b.bib"

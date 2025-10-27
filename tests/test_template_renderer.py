@@ -5,7 +5,7 @@ import textwrap
 
 from texsmith.api.document import Document
 from texsmith.api.templates import TemplateSession
-from texsmith.templates import load_template_runtime
+from texsmith.core.templates import load_template_runtime
 
 
 FIXTURE_BIB = Path(__file__).resolve().parent / "fixtures" / "bib" / "b.bib"

@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from texsmith import DocumentState, RenderPhase, renders
-from texsmith.latex import LaTeXRenderer
+from texsmith.adapters.latex import LaTeXRenderer
 
 
 COUNTER_CLASS = "data-counter"

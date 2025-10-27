@@ -3,8 +3,8 @@ from tempfile import TemporaryDirectory
 
 import pytest
 
-from texsmith.context import AssetRegistry, DocumentState
-from texsmith.exceptions import AssetMissingError
+from texsmith.core.context import AssetRegistry, DocumentState
+from texsmith.core.exceptions import AssetMissingError
 
 
 def test_register_and_retrieve_asset() -> None:

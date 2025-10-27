@@ -1,21 +1,21 @@
 # LaTeX
 
-::: texsmith.latex
+::: texsmith.adapters.latex
 
-::: texsmith.latex.formatter
+::: texsmith.adapters.latex.formatter
 
-::: texsmith.latex.renderer
+::: texsmith.adapters.latex.renderer
 
-::: texsmith.latex.log
+::: texsmith.adapters.latex.log
 
-::: texsmith.latex.utils
+::: texsmith.adapters.latex.utils
 
-::: texsmith.latex.templates
+::: texsmith.core.templates
 
-::: texsmith.latex.templates.base
+::: texsmith.core.templates.base
 
-::: texsmith.latex.templates.loader
+::: texsmith.core.templates.loader
 
-::: texsmith.latex.templates.manifest
+::: texsmith.core.templates.manifest
 
-::: texsmith.latex.templates.runtime
+::: texsmith.core.templates.runtime

@@ -203,7 +203,9 @@ def resolve_slot_assignments(
                 selector_clean = None
 
         assignments[target_doc].append(
-            SlotAssignment(slot=slot_name, selector=selector_clean, include_document=include_document)
+            SlotAssignment(
+                slot=slot_name, selector=selector_clean, include_document=include_document
+            )
         )
 
     return assignments

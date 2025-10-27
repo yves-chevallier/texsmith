@@ -6,7 +6,7 @@ from collections.abc import Mapping
 from contextvars import ContextVar
 from dataclasses import dataclass, field
 import sys
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, cast
 
 import click
 import typer
@@ -46,22 +46,22 @@ def ensure_rich_compat() -> None:
         try:
             import typer.core as typer_core
 
-            setattr(typer_core, "HAS_RICH", False)
+            cast(Any, typer_core).HAS_RICH = False
         except ImportError:  # pragma: no cover - typer not available
             pass
         try:
             import typer.main as typer_main
 
-            setattr(typer_main, "HAS_RICH", False)
+            cast(Any, typer_main).HAS_RICH = False
         except ImportError:  # pragma: no cover - typer not available
             pass
 
     if not hasattr(rich_mod, "box"):
         box_module = types.ModuleType("rich.box")
-        setattr(box_module, "SQUARE", object())
-        setattr(box_module, "MINIMAL_DOUBLE_HEAD", object())
-        setattr(box_module, "SIMPLE", object())
-        setattr(rich_mod, "box", box_module)
+        cast(Any, box_module).SQUARE = object()
+        cast(Any, box_module).MINIMAL_DOUBLE_HEAD = object()
+        cast(Any, box_module).SIMPLE = object()
+        cast(Any, rich_mod).box = box_module
         _sys.modules.setdefault("rich.box", box_module)
 
 

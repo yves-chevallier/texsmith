@@ -58,7 +58,7 @@ from ..core.conversion.inputs import (
 )
 from ..core.conversion_contexts import DocumentContext
 from ..core.diagnostics import DiagnosticEmitter, NullEmitter
-from ..templates import LATEX_HEADING_LEVELS
+from ..core.templates import LATEX_HEADING_LEVELS
 
 
 __all__ = [

@@ -1,38 +1,11 @@
 from __future__ import annotations
 
-from importlib import util as importlib_util
 from pathlib import Path
-import sys
-import types
+from typing import Any
 
 import pytest
 
-
-ROOT = Path(__file__).resolve().parents[1]
-SRC = ROOT / "src"
-if str(SRC) not in sys.path:
-    sys.path.insert(0, str(SRC))
-
-if "texsmith" not in sys.modules:
-    texsmith_package = types.ModuleType("texsmith")
-    texsmith_package.__path__ = [str(SRC / "texsmith")]
-    sys.modules["texsmith"] = texsmith_package
-
-docker_spec = importlib_util.spec_from_file_location(
-    "texsmith.docker", SRC / "texsmith" / "docker.py"
-)
-assert docker_spec is not None and docker_spec.loader is not None
-docker_mod = importlib_util.module_from_spec(docker_spec)
-sys.modules["texsmith.docker"] = docker_mod
-docker_spec.loader.exec_module(docker_mod)
-
-exceptions_spec = importlib_util.spec_from_file_location(
-    "texsmith.exceptions", SRC / "texsmith" / "exceptions.py"
-)
-assert exceptions_spec is not None and exceptions_spec.loader is not None
-exceptions_mod = importlib_util.module_from_spec(exceptions_spec)
-sys.modules["texsmith.exceptions"] = exceptions_mod
-exceptions_spec.loader.exec_module(exceptions_mod)
+from texsmith.adapters import docker as docker_mod
 
 
 class _StubResult:
@@ -42,24 +15,14 @@ class _StubResult:
         self.stderr = stderr
 
 
-def test_run_container_builds_command(monkeypatch, tmp_path) -> None:
+def test_run_container_builds_command(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     recorded: dict[str, list[str]] = {}
 
     monkeypatch.setattr(docker_mod.shutil, "which", lambda _: "/usr/bin/docker")
-    monkeypatch.setattr(
-        docker_mod.os,
-        "getuid",
-        lambda: 501,
-        raising=False,
-    )
-    monkeypatch.setattr(
-        docker_mod.os,
-        "getgid",
-        lambda: 20,
-        raising=False,
-    )
+    monkeypatch.setattr(docker_mod.os, "getuid", lambda: 501, raising=False)
+    monkeypatch.setattr(docker_mod.os, "getgid", lambda: 20, raising=False)
 
-    def fake_run(cmd, **kwargs):  # type: ignore[no-untyped-def]
+    def fake_run(cmd: list[str], **kwargs: Any) -> _StubResult:
         recorded["command"] = cmd
         assert kwargs["capture_output"] is True
         assert kwargs["text"] is True
@@ -101,12 +64,14 @@ def test_run_container_builds_command(monkeypatch, tmp_path) -> None:
     ]
 
 
-def test_run_container_can_disable_host_user(monkeypatch, tmp_path) -> None:
+def test_run_container_can_disable_host_user(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
     recorded: dict[str, list[str]] = {}
 
     monkeypatch.setattr(docker_mod.shutil, "which", lambda _: "/usr/bin/docker")
 
-    def fake_run(cmd, **kwargs):  # type: ignore[no-untyped-def]
+    def fake_run(cmd: list[str], **kwargs: Any) -> _StubResult:
         recorded["command"] = cmd
         return _StubResult()
 
@@ -123,7 +88,7 @@ def test_run_container_can_disable_host_user(monkeypatch, tmp_path) -> None:
     assert "--user" not in recorded["command"]
 
 
-def test_run_container_missing_mount(monkeypatch, tmp_path) -> None:
+def test_run_container_missing_mount(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     monkeypatch.setattr(docker_mod.shutil, "which", lambda _: "/usr/bin/docker")
     docker_mod._default_runner.reset()
     missing = tmp_path / "missing"
@@ -135,7 +100,7 @@ def test_run_container_missing_mount(monkeypatch, tmp_path) -> None:
         )
 
 
-def test_is_docker_available_handles_lookup_error(monkeypatch) -> None:
+def test_is_docker_available_handles_lookup_error(monkeypatch: pytest.MonkeyPatch) -> None:
     def fail(_: str) -> None:
         raise AssertionError("no docker")
 

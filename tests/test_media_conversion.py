@@ -5,10 +5,10 @@ import zlib
 from PIL import Image  # type: ignore[import]
 import pytest
 
-from texsmith.config import BookConfig
-from texsmith.exceptions import TransformerExecutionError
-from texsmith.latex import LaTeXRenderer
-from texsmith.transformers import image2pdf, register_converter, registry
+from texsmith.adapters.latex import LaTeXRenderer
+from texsmith.adapters.transformers import image2pdf, register_converter, registry
+from texsmith.core.config import BookConfig
+from texsmith.core.exceptions import TransformerExecutionError
 
 
 class _StubConverter:

@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 from dataclasses import dataclass
-from importlib import import_module
 from pathlib import Path
 import re
 from typing import TYPE_CHECKING, Any
@@ -16,6 +15,7 @@ from slugify import slugify
 
 from ..bibliography import (
     BibliographyCollection,
+    DoiBibliographyFetcher,
     DoiLookupError,
     bibliography_data_from_string,
 )
@@ -327,9 +327,7 @@ def _inline_bibliography_source_path(label: str) -> Path:
 
 
 def _resolve_bibliography_fetcher() -> DoiBibliographyFetcher:
-    module = import_module("texsmith.conversion")
-    fetcher_cls = module.DoiBibliographyFetcher
-    return fetcher_cls()
+    return DoiBibliographyFetcher()
 
 
 __all__ = [

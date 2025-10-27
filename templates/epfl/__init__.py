@@ -6,7 +6,7 @@ from collections.abc import Iterable, Mapping
 from pathlib import Path
 from typing import Any
 
-from texsmith.templates import TemplateError, WrappableTemplate
+from texsmith.core.templates import TemplateError, WrappableTemplate
 
 
 _PACKAGE_ROOT = Path(__file__).parent.resolve()

@@ -1,7 +1,7 @@
 # Markdown Conversion
 
-::: texsmith.markdown
+::: texsmith.adapters.markdown
 
-::: texsmith.markdown_extensions
+::: texsmith.adapters.markdown_extensions
 
-::: texsmith.markdown_extensions.missing_footnotes
+::: texsmith.adapters.markdown_extensions.missing_footnotes

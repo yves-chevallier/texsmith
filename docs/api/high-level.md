@@ -4,7 +4,7 @@ title: High-Level Workflows
 
 # High-Level Workflows
 
-The new `texsmith.api` package provides a thin, expressive façade over the lower-level conversion primitives.  You can mix and match Markdown, HTML, and template-aware documents without touching the CLI or re-implementing the tedious glue code that used to live in `texsmith.cli`.
+The new `texsmith.api` package provides a thin, expressive façade over the lower-level conversion primitives.  You can mix and match Markdown, HTML, and template-aware documents without touching the CLI or re-implementing the tedious glue code that used to live in older CLI helpers.
 
 This page showcases the building blocks you are most likely to use in your own scripts, services, or notebooks.  All the examples assume `pip install texsmith` and any template packages you rely on.
 

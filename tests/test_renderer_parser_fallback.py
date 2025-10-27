@@ -1,4 +1,4 @@
-from texsmith.latex import LaTeXRenderer
+from texsmith.adapters.latex import LaTeXRenderer
 
 
 def test_renderer_falls_back_to_builtin_parser() -> None:

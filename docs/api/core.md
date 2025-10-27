@@ -1,19 +1,19 @@
 # Core
 
-::: texsmith
+::: texsmith.core.config
 
-::: texsmith.config
+::: texsmith.core.context
 
-::: texsmith.context
+::: texsmith.core.conversion_contexts
 
-::: texsmith.conversion_contexts
+::: texsmith.core.conversion
 
-::: texsmith.conversion
+::: texsmith.core.diagnostics
 
-::: texsmith.docker
+::: texsmith.core.exceptions
 
-::: texsmith.exceptions
+::: texsmith.core.rules
 
-::: texsmith.rules
+::: texsmith.core.utils
 
-::: texsmith.utils
+::: texsmith.adapters.docker

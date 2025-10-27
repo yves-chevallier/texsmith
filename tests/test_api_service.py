@@ -138,7 +138,9 @@ Body text.
         bibliography_files=[],
         slot_assignments={
             source: [
-                SlotAssignment(slot="frontmatter", selector="#Introduction", include_document=False),
+                SlotAssignment(
+                    slot="frontmatter", selector="#Introduction", include_document=False
+                ),
                 SlotAssignment(slot="mainmatter", selector=None, include_document=True),
             ]
         },

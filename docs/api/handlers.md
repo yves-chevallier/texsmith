@@ -1,19 +1,19 @@
 # Handlers
 
-::: texsmith.handlers
+::: texsmith.adapters.handlers
 
-::: texsmith.handlers._helpers
+::: texsmith.adapters.handlers._helpers
 
-::: texsmith.handlers.admonitions
+::: texsmith.adapters.handlers.admonitions
 
-::: texsmith.handlers.basic
+::: texsmith.adapters.handlers.basic
 
-::: texsmith.handlers.blocks
+::: texsmith.adapters.handlers.blocks
 
-::: texsmith.handlers.code
+::: texsmith.adapters.handlers.code
 
-::: texsmith.handlers.inline
+::: texsmith.adapters.handlers.inline
 
-::: texsmith.handlers.links
+::: texsmith.adapters.handlers.links
 
-::: texsmith.handlers.media
+::: texsmith.adapters.handlers.media

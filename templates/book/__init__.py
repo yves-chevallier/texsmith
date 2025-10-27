@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from texsmith.templates import TemplateError, WrappableTemplate
+from texsmith.core.templates import TemplateError, WrappableTemplate
 
 
 _PACKAGE_ROOT = Path(__file__).parent.resolve()

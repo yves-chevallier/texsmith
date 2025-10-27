@@ -1,46 +1,61 @@
-"""Modernised LaTeX rendering package."""
-# pyright: reportUnsupportedDunderAll=false
+"""Primary public API for TeXSmith."""
 
 from __future__ import annotations
 
-from importlib import import_module
-from typing import TYPE_CHECKING, Any
-
-
-if TYPE_CHECKING:  # pragma: no cover - typing only
-    from .api import (
-        Document,
-        DocumentRenderOptions,
-        TemplateOptions,
-        TemplateRenderResult,
-        TemplateSession,
-        convert_documents,
-        get_template,
-        resolve_heading_level,
-    )
-    from .core.bibliography import (
-        BibliographyCollection,
-        BibliographyIssue,
-        DoiBibliographyFetcher,
-        DoiLookupError,
-        bibliography_data_from_string,
-    )
-    from .core.config import BookConfig, LaTeXConfig
-    from .core.context import AssetRegistry, DocumentState, RenderContext
-    from .core.rules import RenderPhase, renders
-    from .core.templates import (
-        TemplateError,
-        WrappableTemplate,
-        copy_template_assets,
-        load_template,
-    )
+from texsmith.api import (
+    ConversionBundle,
+    ConversionRequest,
+    ConversionResponse,
+    ConversionService,
+    Document,
+    DocumentRenderOptions,
+    HeadingLevel,
+    LaTeXFragment,
+    RenderSettings,
+    SlotAssignment,
+    TemplateOptions,
+    TemplateRenderResult,
+    TemplateSession,
+    classify_input_source,
+    convert_documents,
+    get_template,
+    resolve_heading_level,
+)
+from texsmith.core.bibliography import (
+    BibliographyCollection,
+    BibliographyIssue,
+    DoiBibliographyFetcher,
+    DoiLookupError,
+    bibliography_data_from_string,
+)
+from texsmith.core.config import BookConfig, LaTeXConfig
+from texsmith.core.context import AssetRegistry, DocumentState, RenderContext
+from texsmith.core.rules import RenderPhase, renders
+from texsmith.core.templates import (
+    DEFAULT_TEMPLATE_LANGUAGE,
+    TemplateBinding,
+    TemplateError,
+    TemplateRuntime,
+    TemplateSlot,
+    WrappableTemplate,
+    build_template_overrides,
+    copy_template_assets,
+    load_template,
+    load_template_runtime,
+    resolve_template_language,
+)
 
 
 __all__ = [
+    "DEFAULT_TEMPLATE_LANGUAGE",
     "AssetRegistry",
     "BibliographyCollection",
     "BibliographyIssue",
     "BookConfig",
+    "ConversionBundle",
+    "ConversionRequest",
+    "ConversionResponse",
+    "ConversionService",
     "Document",
     "DocumentRenderOptions",
     "DocumentState",
@@ -48,64 +63,28 @@ __all__ = [
     "DoiLookupError",
     "HeadingLevel",
     "LaTeXConfig",
+    "LaTeXFragment",
     "RenderContext",
     "RenderPhase",
     "RenderSettings",
+    "SlotAssignment",
+    "TemplateBinding",
     "TemplateError",
     "TemplateOptions",
     "TemplateRenderResult",
+    "TemplateRuntime",
     "TemplateSession",
+    "TemplateSlot",
     "WrappableTemplate",
     "bibliography_data_from_string",
+    "build_template_overrides",
+    "classify_input_source",
     "convert_documents",
     "copy_template_assets",
     "get_template",
     "load_template",
+    "load_template_runtime",
     "renders",
     "resolve_heading_level",
+    "resolve_template_language",
 ]
-
-_EXPORTS: dict[str, tuple[str, str]] = {
-    "AssetRegistry": ("core.context", "AssetRegistry"),
-    "Document": ("api", "Document"),
-    "DocumentRenderOptions": ("api", "DocumentRenderOptions"),
-    "HeadingLevel": ("api", "HeadingLevel"),
-    "BibliographyCollection": ("core.bibliography", "BibliographyCollection"),
-    "BibliographyIssue": ("core.bibliography", "BibliographyIssue"),
-    "BookConfig": ("core.config", "BookConfig"),
-    "DocumentState": ("core.context", "DocumentState"),
-    "DoiBibliographyFetcher": ("core.bibliography", "DoiBibliographyFetcher"),
-    "DoiLookupError": ("core.bibliography", "DoiLookupError"),
-    "LaTeXConfig": ("core.config", "LaTeXConfig"),
-    "RenderContext": ("core.context", "RenderContext"),
-    "RenderPhase": ("core.rules", "RenderPhase"),
-    "RenderSettings": ("api", "RenderSettings"),
-    "TemplateError": ("core.templates", "TemplateError"),
-    "TemplateOptions": ("api", "TemplateOptions"),
-    "TemplateRenderResult": ("api", "TemplateRenderResult"),
-    "TemplateSession": ("api", "TemplateSession"),
-    "WrappableTemplate": ("core.templates", "WrappableTemplate"),
-    "bibliography_data_from_string": ("core.bibliography", "bibliography_data_from_string"),
-    "convert_documents": ("api", "convert_documents"),
-    "copy_template_assets": ("core.templates", "copy_template_assets"),
-    "get_template": ("api", "get_template"),
-    "load_template": ("core.templates", "load_template"),
-    "resolve_heading_level": ("api", "resolve_heading_level"),
-    "renders": ("core.rules", "renders"),
-}
-
-
-def __getattr__(name: str) -> Any:
-    try:
-        module_name, attribute = _EXPORTS[name]
-    except KeyError as exc:  # pragma: no cover - fallback for unexpected attribute access
-        raise AttributeError(f"module '{__name__}' has no attribute '{name}'") from exc
-
-    module = import_module(f".{module_name}", __name__)
-    value = getattr(module, attribute)
-    globals()[name] = value
-    return value
-
-
-def __dir__() -> list[str]:  # pragma: no cover - namespace helpers are tiny
-    return sorted(set(globals().keys()) | set(__all__))

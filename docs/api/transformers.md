@@ -1,9 +1,9 @@
 # Transformers
 
-::: texsmith.transformers
+::: texsmith.adapters.transformers
 
-::: texsmith.transformers.base
+::: texsmith.adapters.transformers.base
 
-::: texsmith.transformers.strategies
+::: texsmith.adapters.transformers.strategies
 
-::: texsmith.transformers.utils
+::: texsmith.adapters.transformers.utils

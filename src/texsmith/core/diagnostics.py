@@ -16,14 +16,11 @@ class DiagnosticEmitter(Protocol):
 
     debug_enabled: bool
 
-    def warning(self, message: str, exc: BaseException | None = None) -> None:
-        ...
+    def warning(self, message: str, exc: BaseException | None = None) -> None: ...
 
-    def error(self, message: str, exc: BaseException | None = None) -> None:
-        ...
+    def error(self, message: str, exc: BaseException | None = None) -> None: ...
 
-    def event(self, name: str, payload: Mapping[str, Any]) -> None:
-        ...
+    def event(self, name: str, payload: Mapping[str, Any]) -> None: ...
 
 
 class NullEmitter:
@@ -44,7 +41,9 @@ class NullEmitter:
 class LoggingEmitter:
     """Emitter that forwards diagnostics to the standard logging module."""
 
-    def __init__(self, *, logger_obj: logging.Logger | None = None, debug_enabled: bool = False) -> None:
+    def __init__(
+        self, *, logger_obj: logging.Logger | None = None, debug_enabled: bool = False
+    ) -> None:
         self._logger = logger_obj or logger
         self.debug_enabled = debug_enabled
 

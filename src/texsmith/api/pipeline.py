@@ -50,7 +50,8 @@ from .document import Document
 
 
 if TYPE_CHECKING:  # pragma: no cover - type checking only
-    from ..context import DocumentState
+    from texsmith.core.context import DocumentState
+
     from ..core.templates import TemplateRuntime
 
 

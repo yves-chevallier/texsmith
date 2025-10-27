@@ -61,7 +61,7 @@ exclude = [
 ]
 
 [project.scripts]
-texsmith = "texsmith.cli:main"
+texsmith = "texsmith.ui.cli.app:main"
 
 [dependency-groups]
 dev = [
