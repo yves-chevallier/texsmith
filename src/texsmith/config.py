@@ -19,6 +19,14 @@ CommonConfig
 : MkDocs project root used to resolve relative paths when copying additional
   assets.
 
+: BCP 47 language code forwarded to LaTeX for hyphenation, translations, and
+: metadata localisation.
+
+`legacy_latex_accents` (`bool`)
+: When `True`, escape accented characters, ligatures, and typographic punctuation
+  using legacy LaTeX macros. When `False`, keep Unicode glyphs compatible with
+  LuaLaTeX/XeLaTeX (default).
+
 `language` (`str | None`)
 : BCP 47 language code forwarded to LaTeX for hyphenation, translations, and
   metadata localisation.
@@ -115,6 +123,7 @@ class CommonConfig(BaseModel):
     mermaid_config: Path | None = None
     project_dir: Path | None = None
     language: str | None = None
+    legacy_latex_accents: bool = False
 
 
 class CoverConfig(BaseModel):

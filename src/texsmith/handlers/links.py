@@ -117,6 +117,7 @@ def render_links(element: Tag, context: RenderContext) -> None:
         )
         latex = context.formatter.ref(text or "extrait", ref=reference)
     else:
-        latex = escape_latex_chars(text)
+        legacy_latex_accents = getattr(context.config, "legacy_latex_accents", False)
+        latex = escape_latex_chars(text, legacy_accents=legacy_latex_accents)
 
     element.replace_with(mark_processed(NavigableString(latex)))

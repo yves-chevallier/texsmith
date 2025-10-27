@@ -57,6 +57,13 @@ DEFAULT_MARKDOWN_EXTENSIONS = [
 ]
 
 
+DEFAULT_EXTENSION_CONFIGS: dict[str, dict[str, object]] = {
+    "pymdownx.keys": {
+        "camel_case": True,
+    },
+}
+
+
 class MarkdownConversionError(Exception):
     """Raised when Markdown cannot be converted into HTML."""
 
@@ -138,8 +145,15 @@ def render_markdown(
 
     metadata, markdown_body = split_front_matter(source)
 
+    active_extensions = list(extensions or ())
+    extension_configs = {
+        name: dict(DEFAULT_EXTENSION_CONFIGS[name])
+        for name in active_extensions
+        if name in DEFAULT_EXTENSION_CONFIGS
+    }
+
     try:
-        md = markdown.Markdown(extensions=list(extensions or ()))
+        md = markdown.Markdown(extensions=active_extensions, extension_configs=extension_configs)
     except Exception as exc:  # pragma: no cover - library-controlled
         raise MarkdownConversionError(f"Failed to initialize Markdown processor: {exc}") from exc
 

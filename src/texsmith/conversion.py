@@ -260,6 +260,7 @@ def convert_document(
     language: str | None,
     slot_overrides: Mapping[str, str] | None,
     bibliography_files: list[Path],
+    legacy_latex_accents: bool,
     *,
     state: DocumentState | None = None,
     template_runtime: TemplateRuntime | None = None,
@@ -285,6 +286,7 @@ def convert_document(
         output_dir=output_dir,
         strategy=strategy,
         callbacks=callbacks,
+        legacy_latex_accents=legacy_latex_accents,
     )
 
     renderer_kwargs: dict[str, Any] = {
@@ -303,6 +305,7 @@ def convert_document(
         callbacks=callbacks,
         initial_state=state,
         wrap_document=wrap_document,
+        legacy_latex_accents=legacy_latex_accents,
     )
 
 
@@ -317,12 +320,17 @@ def build_binder_context(
     output_dir: Path,
     strategy: GenerationStrategy,
     callbacks: ConversionCallbacks | None,
+    legacy_latex_accents: bool,
 ) -> BinderContext:
     """Prepare template bindings, bibliography data, and slot mappings."""
     resolved_language = resolve_template_language(requested_language, document_context.front_matter)
     document_context.language = resolved_language
 
-    config = BookConfig(project_dir=document_context.source_path.parent, language=resolved_language)
+    config = BookConfig(
+        project_dir=document_context.source_path.parent,
+        language=resolved_language,
+        legacy_latex_accents=legacy_latex_accents,
+    )
 
     inline_bibliography = extract_front_matter_bibliography(document_context.front_matter)
 
@@ -404,6 +412,7 @@ def _render_document(
     callbacks: ConversionCallbacks | None,
     initial_state: DocumentState | None,
     wrap_document: bool,
+    legacy_latex_accents: bool,
 ) -> ConversionResult:
     if persist_debug_html:
         persist_debug_artifacts(
@@ -460,6 +469,7 @@ def _render_document(
         )
 
     formatter = LaTeXFormatter()
+    formatter.legacy_latex_accents = legacy_latex_accents
     binding.apply_formatter_overrides(formatter)
     renderer: LaTeXRenderer | None = None
 

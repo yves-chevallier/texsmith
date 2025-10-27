@@ -41,6 +41,7 @@ class LaTeXRenderer:
         # Keep formatter in sync with runtime environment
         self.formatter.config = self.config  # type: ignore[assignment]
         self.formatter.output_path = self.assets_root  # type: ignore[assignment]
+        self.formatter.legacy_latex_accents = self.config.legacy_latex_accents
 
         self.engine = RenderEngine()
         self._register_builtin_handlers()

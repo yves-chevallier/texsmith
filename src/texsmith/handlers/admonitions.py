@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from contextlib import contextmanager
+import re
 
 from bs4.element import NavigableString, Tag
 
@@ -20,6 +21,24 @@ IGNORED_CLASSES = {
     "right",
     "checkbox",
 }
+
+
+def _trim_paragraph_prefix(paragraph: Tag, length: int) -> None:
+    """Remove the first ``length`` characters from a paragraph in-place."""
+    remaining = length
+    for node in list(paragraph.descendants):
+        if not isinstance(node, NavigableString):
+            continue
+        text = str(node)
+        if remaining >= len(text):
+            remaining -= len(text)
+            node.extract()
+            if remaining == 0:
+                break
+            continue
+        node.replace_with(NavigableString(text[remaining:]))
+        remaining = 0
+        break
 
 
 @contextmanager
@@ -58,7 +77,13 @@ def _render_admonition(
         content = element.get_text(strip=False).strip()
 
     latex = context.formatter.callout(content, title=title, type=admonition_type)
-    element.replace_with(mark_processed(NavigableString(latex)))
+    parent = element.parent
+    replacement = mark_processed(NavigableString(latex))
+    if parent is None:
+        element.decompose()
+        context.document.append(replacement)
+    else:
+        element.replace_with(replacement)
 
 
 @renders(
@@ -79,6 +104,60 @@ def render_div_admonitions(element: Tag, context: RenderContext) -> None:
 
     title = _extract_title(element.find("p", class_="admonition-title"))
     _render_admonition(element, context, classes=classes, title=title)
+
+
+@renders(
+    "blockquote",
+    phase=RenderPhase.POST,
+    priority=15,
+    name="blockquote_callouts",
+    nestable=False,
+    auto_mark=False,
+)
+def render_blockquote_callouts(element: Tag, context: RenderContext) -> None:
+    """Handle Obsidian/Docusaurus style blockquote callouts."""
+    first_paragraph = element.find("p")
+    if first_paragraph is None:
+        return
+
+    first_text_node = next(
+        (child for child in first_paragraph.contents if isinstance(child, NavigableString)),
+        None,
+    )
+    if first_text_node is None:
+        return
+
+    raw_text = str(first_text_node)
+    stripped = raw_text.lstrip()
+    offset = len(raw_text) - len(stripped)
+    match = CALLOUT_PATTERN.match(stripped)
+    if not match:
+        return
+
+    callout_type = match.group("kind").lower()
+    remainder = match.group("content") or ""
+    remainder = remainder.lstrip()
+
+    first_text_node.replace_with(NavigableString(raw_text[:offset] + remainder))
+
+    lines_with_endings = remainder.splitlines(keepends=True)
+    lines = [line.strip() for line in remainder.splitlines() if line.strip()]
+    title = lines[0] if lines else callout_type.capitalize()
+
+    if len(lines_with_endings) > 1:
+        prefix_length = len(raw_text[:offset]) + len(lines_with_endings[0])
+        _trim_paragraph_prefix(first_paragraph, prefix_length)
+        first_text = next(
+            (child for child in first_paragraph.contents if isinstance(child, NavigableString)),
+            None,
+        )
+        if first_text is not None:
+            first_text.replace_with(NavigableString(str(first_text).lstrip()))
+    else:
+        first_paragraph.decompose()
+
+    _render_admonition(element, context, classes=[callout_type], title=title)
+    context.mark_processed(element, phase=RenderPhase.POST)
 
 
 @renders(
@@ -106,6 +185,8 @@ def render_details_admonitions(element: Tag, context: RenderContext) -> None:
 __all__ = [
     "_extract_title",
     "_use_tcolorbox_figures",
+    "render_blockquote_callouts",
     "render_details_admonitions",
     "render_div_admonitions",
 ]
+CALLOUT_PATTERN = re.compile(r"^\s*\[!(?P<kind>[A-Za-z0-9_-]+)\]\s*(?P<content>.*)$", re.DOTALL)

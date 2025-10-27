@@ -46,3 +46,14 @@ def test_details_callout_rendering(renderer: LaTeXRenderer) -> None:
     latex = renderer.render(html)
     assert "\\begin{callout}[callout note]{More info}" in latex
     assert "Hidden \\textbf{details}." in latex
+
+
+def test_blockquote_callout_rendering(renderer: LaTeXRenderer) -> None:
+    html = """
+    <blockquote>
+        <p>[!note] Ceci est une note.\n   Utilisé sur Docusaurus, Obsidian, GitHub.</p>
+    </blockquote>
+    """
+    latex = renderer.render(html)
+    assert "\\begin{callout}[callout note]{Ceci est une note.}" in latex
+    assert "Utilisé sur Docusaurus, Obsidian, GitHub." in latex

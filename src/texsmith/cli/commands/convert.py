@@ -126,6 +126,14 @@ def convert(
         "--language",
         help="Language code passed to babel (defaults to metadata or english).",
     ),
+    legacy_latex_accents: bool = typer.Option(
+        False,
+        "--legacy-latex-accents/--unicode-latex-accents",
+        help=(
+            "Escape accented characters and ligatures with legacy LaTeX macros instead of "
+            "emitting Unicode glyphs (defaults to Unicode output)."
+        ),
+    ),
     slots: list[str] = typer.Option(
         [],
         "--slot",
@@ -227,6 +235,7 @@ def convert(
     resolved_copy_assets = resolve_option(copy_assets)
     resolved_manifest = resolve_option(manifest)
     resolved_language = resolve_option(language)
+    resolved_legacy_latex_accents = bool(resolve_option(legacy_latex_accents))
 
     callbacks = ConversionCallbacks(
         emit_warning=lambda message, exception=None: emit_warning(message, exception=exception),
@@ -241,6 +250,7 @@ def convert(
         manifest=resolved_manifest,
         persist_debug_html=bool(debug_snapshot),
         language=resolved_language,
+        legacy_latex_accents=resolved_legacy_latex_accents,
     )
 
     documents: list[Document] = []
