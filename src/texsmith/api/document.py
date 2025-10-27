@@ -80,9 +80,7 @@ class HeadingLevel(int):
         key = value.strip().lower()
         if key not in LATEX_HEADING_LEVELS:
             allowed = ", ".join(sorted(LATEX_HEADING_LEVELS))
-            raise ValueError(
-                f"Unknown heading label '{value}'. Expected one of: {allowed}."
-            )
+            raise ValueError(f"Unknown heading label '{value}'. Expected one of: {allowed}.")
         return cls(LATEX_HEADING_LEVELS[key])
 
 
@@ -143,9 +141,7 @@ class Document:
         except (OSError, MarkdownConversionError) as exc:
             message = f"Failed to convert Markdown source '{path}': {exc}"
             if callbacks and callbacks.emit_error:
-                callbacks.emit_error(
-                    message, exc if isinstance(exc, Exception) else None
-                )
+                callbacks.emit_error(message, exc if isinstance(exc, Exception) else None)
             raise ConversionError(message) from (
                 exc if isinstance(exc, Exception) else ConversionError(message)
             )

@@ -11,6 +11,7 @@ from texsmith.cli import DEFAULT_MARKDOWN_EXTENSIONS, app
 from texsmith.cli.commands import build as build_cmd
 from texsmith.latex.log import LatexStreamResult
 
+
 build_module = importlib.import_module("texsmith.cli.commands.build")
 
 
@@ -407,12 +408,12 @@ def test_slot_injection_warns_unknown_slot(tmp_path: Path) -> None:
             "--template",
             str(template_dir),
             "--slot",
-            "abstract:Abstract",
+            "unknown:Abstract",
         ],
     )
 
     assert result.exit_code == 0, result.stderr
-    assert "slot 'abstract' is not defined" in result.stderr.lower()
+    assert "slot 'unknown' is not defined" in result.stderr.lower()
     tex_path = output_dir / "paper.tex"
     assert tex_path.exists()
     content = tex_path.read_text(encoding="utf-8")
