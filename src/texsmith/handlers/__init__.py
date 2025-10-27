@@ -1,6 +1,9 @@
-"""Built-in handler collections."""
+"""Compatibility package for :mod:`texsmith.adapters.handlers`."""
 
-from . import admonitions, basic, blocks, code, inline, links, media
+from __future__ import annotations
 
+import sys
 
-__all__ = ["admonitions", "basic", "blocks", "code", "inline", "links", "media"]
+from ..adapters import handlers as _handlers
+
+sys.modules[__name__] = _handlers

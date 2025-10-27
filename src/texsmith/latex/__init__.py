@@ -1,10 +1,9 @@
-"""LaTeX-specific utilities exposed by Texsmith."""
+"""Compatibility package for :mod:`texsmith.adapters.latex`."""
 
 from __future__ import annotations
 
-from .formatter import LaTeXFormatter, optimize_list
-from .renderer import LaTeXRenderer
-from .utils import escape_latex_chars
+import sys
 
+from ..adapters import latex as _latex
 
-__all__ = ["LaTeXFormatter", "LaTeXRenderer", "escape_latex_chars", "optimize_list"]
+sys.modules[__name__] = _latex

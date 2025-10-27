@@ -1,10 +1,8 @@
-"""Backwards-compatible re-exports for relocated helpers."""
+"""Compatibility shim for :mod:`texsmith.domain.utils`."""
 
 from __future__ import annotations
 
-from .handlers._helpers import is_valid_url, resolve_asset_path
-from .latex.utils import escape_latex_chars
-from .transformers.utils import points_to_mm
+from .domain import utils as _utils
+from .domain.utils import *  # noqa: F401,F403
 
-
-__all__ = ["escape_latex_chars", "is_valid_url", "points_to_mm", "resolve_asset_path"]
+__all__ = getattr(_utils, "__all__", [])

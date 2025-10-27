@@ -1,8 +1,9 @@
-"""Optional plugins that extend TeXSmith with non-core features."""
+"""Compatibility package for :mod:`texsmith.adapters.plugins`."""
 
 from __future__ import annotations
 
-from . import material
+import sys
 
+from ..adapters import plugins as _plugins
 
-__all__ = ["material"]
+sys.modules[__name__] = _plugins

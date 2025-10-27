@@ -1,19 +1,8 @@
-"""Custom exception hierarchy for the LaTeX rendering pipeline."""
+"""Compatibility shim for :mod:`texsmith.domain.exceptions`."""
 
 from __future__ import annotations
 
+from .domain import exceptions as _exceptions
+from .domain.exceptions import *  # noqa: F401,F403
 
-class LatexRenderingError(RuntimeError):
-    """Base exception for LaTeX rendering failures."""
-
-
-class AssetMissingError(LatexRenderingError):
-    """Raised when an expected asset cannot be located or generated."""
-
-
-class TransformerExecutionError(LatexRenderingError):
-    """Raised when an external converter fails to execute properly."""
-
-
-class InvalidNodeError(LatexRenderingError):
-    """Raised when a handler receives an unexpected DOM node shape."""
+__all__ = getattr(_exceptions, "__all__", [])

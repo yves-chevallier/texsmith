@@ -4,8 +4,8 @@ from __future__ import annotations
 
 from bs4.element import NavigableString, Tag
 
-from ..context import RenderContext
-from ..rules import RenderPhase, renders
+from texsmith.domain.context import RenderContext
+from texsmith.domain.rules import RenderPhase, renders
 from ._helpers import coerce_attribute, mark_processed
 
 

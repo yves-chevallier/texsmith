@@ -6,10 +6,10 @@ from typing import Any
 
 from bs4.element import NavigableString, Tag
 
-from ..context import RenderContext
+from texsmith.domain.context import RenderContext
 from ..handlers import admonitions as base_admonitions
 from ..handlers._helpers import coerce_attribute, gather_classes, mark_processed
-from ..rules import RenderPhase, renders
+from texsmith.domain.rules import RenderPhase, renders
 
 
 EXERCISE_IGNORED_CLASSES = {

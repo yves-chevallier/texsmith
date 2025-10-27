@@ -13,9 +13,9 @@ import zlib
 
 from bs4.element import NavigableString, Tag
 
-from ..context import RenderContext
-from ..exceptions import AssetMissingError, InvalidNodeError
-from ..rules import RenderPhase, renders
+from texsmith.domain.context import RenderContext
+from texsmith.domain.exceptions import AssetMissingError, InvalidNodeError
+from texsmith.domain.rules import RenderPhase, renders
 from ..transformers import (
     drawio2pdf,
     fetch_image,

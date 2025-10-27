@@ -6,9 +6,9 @@ import re
 
 from bs4.element import NavigableString, Tag
 
-from ..context import RenderContext
-from ..exceptions import InvalidNodeError
-from ..rules import RenderPhase, renders
+from texsmith.domain.context import RenderContext
+from texsmith.domain.exceptions import InvalidNodeError
+from texsmith.domain.rules import RenderPhase, renders
 from ._helpers import gather_classes, mark_processed
 
 

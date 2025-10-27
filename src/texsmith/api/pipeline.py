@@ -42,8 +42,8 @@ import copy
 from dataclasses import dataclass
 from pathlib import Path
 
-from ..conversion.core import ConversionResult, convert_document
-from ..conversion.debug import ConversionCallbacks
+from ..domain.conversion.core import ConversionResult, convert_document
+from ..domain.conversion.debug import ConversionCallbacks
 from ._utils import build_unique_stem_map
 from .document import Document
 

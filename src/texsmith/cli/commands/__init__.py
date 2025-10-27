@@ -1,15 +1,5 @@
-"""CLI command implementations exposed via `texsmith.cli`.
-
-This module exists primarily to make the `texsmith.cli.commands` package
-importable for documentation tools such as mkdocstrings. It re-exports the
-Typer command factories defined in the sibling modules so downstream code can
-import them using dotted paths (e.g. ``texsmith.cli.commands.build``).
-"""
+"""Compatibility package mapping to :mod:`texsmith.ui.cli.commands`."""
 
 from __future__ import annotations
 
-from .build import build, build_latexmk_command
-from .convert import convert
-
-
-__all__ = ["build", "build_latexmk_command", "convert"]
+from texsmith.ui.cli.commands import *  # noqa: F401,F403

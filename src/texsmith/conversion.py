@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from importlib import import_module as _import_module
 
-_facade = _import_module(".conversion", __package__)
+_facade = _import_module(".domain.conversion", __package__)
 
 __all__ = getattr(_facade, "__all__", [])
 

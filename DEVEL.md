@@ -50,10 +50,44 @@
 - [ ] Support for cross-references (cleveref package)
 - [ ] texsmith template create my-template
 - [ ] Index generation
+- [ ] Progressbar support
 - [ ] Compilation avec Docker ou TeXlive (choix)
 - [ ] Écrire documentation
 - [ ] Documentation complete de docstring dans le projet
 - [ ] Déployer sur PyPI
+
+## Progress Bar
+
+Utiliser le package progressbar pour convertir les barres de progresion
+https://facelessuser.github.io/pymdown-extensions/extensions/progressbar/#styling-with-css-preview
+
+```latex
+\usepackage{progressbar}
+
+{\progressbar[
+  width=9cm,
+  heighta=12pt,
+  roundnessr=0.1,
+  borderwidth=1pt,
+  linecolor=black,
+  filledcolor=black!60,
+  emptycolor=black!10
+]{0.73} Texte}
+```
+
+```md
+[=0%]{: .thin}
+```
+
+Si class .thin alors on divise le height par 2.
+
+```html
+<div class="progress progress-100plus">
+    <div class="progress-bar" style="width:100.00%">
+        <p class="progress-label">100%</p>
+    </div>
+</div>
+```
 
 ## Index generation
 

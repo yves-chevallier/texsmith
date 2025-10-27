@@ -7,8 +7,8 @@ import re
 
 from bs4.element import NavigableString, Tag
 
-from ..context import RenderContext
-from ..rules import RenderPhase, renders
+from texsmith.domain.context import RenderContext
+from texsmith.domain.rules import RenderPhase, renders
 from ._helpers import gather_classes, mark_processed
 
 
