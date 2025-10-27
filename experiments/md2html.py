@@ -3,11 +3,13 @@ import markdown
 
 TEST_MD = r"""
 
----
+> | Col1 | Col2 |
+> | ---- | ---- |
+> | Val1 | Val2 |
 
-***
-
-*****
+| Col1 | Col2 |
+| ---- | ---- |
+| Val1 | Val2 |
 
 """
 

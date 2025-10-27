@@ -1,5 +1,5 @@
 [compat]
-texsmith = ">=0.6,<1.0"
+texsmith = ">=0.1,<1.0"
 
 [latex.template]
 name = "article"
@@ -31,3 +31,11 @@ backmatter = ""
 [latex.template.slots.mainmatter]
 default = true
 depth = "section"
+
+[latex.template.slots.abstract]
+depth = "section"
+
+[latex.template.assets]
+"callouts.sty" = { source = "template/callouts.sty" }
+"todo.sty" = { source = "template/todo.sty" }
+"keystroke.sty" = { source = "template/keystroke.sty" }

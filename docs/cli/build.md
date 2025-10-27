@@ -32,7 +32,7 @@ The following table lists every option specific to `build`. Many options mirror 
 | `--template/-t PATH_OR_NAME` | **Required.** Selects the LaTeX template used for wrapping the generated content. \
 Without this option the build command aborts. |
 | `--debug-html / --no-debug-html` | Persists the intermediate HTML snapshot (`*.debug.html`). |
-| `--classic-output / --rich-output` | Chooses how `latexmk` output is displayed. Classic mode prints raw logs, while rich mode streams structured progress updates via Rich. |
+| `--classic-output / --rich-output` | Chooses how `latexmk` output is displayed. Rich mode (default) streams structured progress updates via Rich; classic mode prints raw logs. |
 | `--language TEXT` | Overrides the LaTeX language (BCP 47). |
 | `--slot/-s VALUE` | Maps sections to template slots, identical to the behaviour described in [`texsmith convert`](convert.md#options). |
 | `--markdown-extensions/-x VALUE` | Enables additional Markdown extensions. |
@@ -78,4 +78,4 @@ texsmith build docs/manual.md \
   --rich-output
 ```
 
-`--rich-output` provides progress bars and colourised logs while `latexmk` runs. Use `--classic-output` (the default) if you prefer raw terminal output or want to pipe logs elsewhere.
+`--rich-output` (the default) provides progress bars and colourised logs while `latexmk` runs. Pass `--classic-output` if you prefer raw terminal output or want to pipe logs elsewhere.

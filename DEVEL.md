@@ -37,8 +37,8 @@
 - [x] Improve error handling and reporting during LaTeX compilation
 - [x] Raw latex input blocks (not visible in html)
 - [x] Créer CI/CD
-- [ ] texsmith template info book
-- [ ] Raw latex inline blocks (`latex { .texsmith } ...`)
+- [x] texsmith template info book
+- [x] Raw latex blocks
 - [ ] Manage the figure (c.f.) how to manage that...
 - [ ] Optimize bibliography management using bib instead of jinja
 - [ ] Table width (auto width, fixed width..., tabularx, tabulary or not)

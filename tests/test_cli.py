@@ -1,3 +1,4 @@
+import importlib
 from pathlib import Path
 import sys
 import types
@@ -8,6 +9,9 @@ from typer.testing import CliRunner
 
 from texsmith.cli import DEFAULT_MARKDOWN_EXTENSIONS, app
 from texsmith.cli.commands import build as build_cmd
+from texsmith.latex.log import LatexStreamResult
+
+build_module = importlib.import_module("texsmith.cli.commands.build")
 
 
 def _template_path(name: str) -> Path:
@@ -693,6 +697,59 @@ def test_build_requires_template(tmp_path: Path) -> None:
     assert "requires a LaTeX template" in result.stderr
 
 
+def test_build_defaults_to_rich_output(tmp_path: Path, monkeypatch: Any) -> None:
+    runner = CliRunner()
+    html_file = tmp_path / "index.html"
+    html_file.write_text(
+        "<article class='md-content__inner'><p>Body</p></article>",
+        encoding="utf-8",
+    )
+
+    output_dir = tmp_path / "output"
+    template_dir = _template_path("article")
+
+    captured: dict[str, Any] = {}
+
+    def fake_which(name: str) -> str:
+        assert name == "latexmk"
+        return "/usr/bin/latexmk"
+
+    def fake_stream(
+        command: list[str],
+        *,
+        cwd: str,
+        env: dict[str, str],
+        console: Any,
+    ) -> LatexStreamResult:
+        captured["command"] = command
+        captured["cwd"] = cwd
+        captured["env"] = env
+        captured["console"] = console
+        return LatexStreamResult(returncode=0, messages=[])
+
+    monkeypatch.setattr(build_cmd.shutil, "which", fake_which)
+    monkeypatch.setattr(build_module, "stream_latexmk_output", fake_stream)
+
+    result = runner.invoke(
+        app,
+        [
+            "build",
+            str(html_file),
+            "--output-dir",
+            str(output_dir),
+            "--template",
+            str(template_dir),
+        ],
+    )
+
+    assert result.exit_code == 0, result.stdout
+    assert captured, "stream_latexmk_output was not called"
+    assert captured["command"][0] == "/usr/bin/latexmk"
+    assert captured["cwd"] == str(output_dir)
+    assert captured["console"] is not None
+    assert "Running latexmk…" in result.stdout
+
+
 def test_build_invokes_latexmk(tmp_path: Path, monkeypatch: Any) -> None:
     runner = CliRunner()
     html_file = tmp_path / "index.html"
@@ -728,6 +785,7 @@ def test_build_invokes_latexmk(tmp_path: Path, monkeypatch: Any) -> None:
             str(output_dir),
             "--template",
             str(template_dir),
+            "--classic-output",
         ],
     )
 
@@ -794,6 +852,7 @@ def test_build_with_bibliography_forces_bibtex(tmp_path: Path, monkeypatch: Any)
             str(template_dir),
             "--bibliography",
             str(bib_file),
+            "--classic-output",
         ],
     )
 
@@ -838,6 +897,7 @@ def test_build_respects_shell_escape(tmp_path: Path, monkeypatch: Any) -> None:
             str(output_dir),
             "--template",
             str(template_dir),
+            "--classic-output",
         ],
     )
 
