@@ -30,7 +30,13 @@ from ..templates import (
     resolve_template_binding,
     resolve_template_language,
 )
-from .debug import ConversionCallbacks, _debug_enabled, _emit_warning, _fail
+from .debug import (
+    ConversionCallbacks,
+    _debug_enabled,
+    _emit_warning,
+    _fail,
+    _record_event,
+)
 from .inputs import (
     DOCUMENT_SELECTOR_SENTINEL,
     extract_front_matter_bibliography,
@@ -310,6 +316,16 @@ def _load_inline_bibliography(
             )
             continue
         collection.load_data(data, source=source_path)
+        _record_event(
+            callbacks,
+            "doi_fetch",
+            {
+                "key": key,
+                "value": doi_value,
+                "source": source_label,
+                "resolved_source": str(source_path),
+            },
+        )
 
 
 def _inline_bibliography_source_path(label: str) -> Path:

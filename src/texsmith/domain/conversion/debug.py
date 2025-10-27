@@ -3,9 +3,10 @@
 from __future__ import annotations
 
 import logging
-from collections.abc import Callable
+from collections.abc import Callable, Mapping
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Any
 
 from ..exceptions import LatexRenderingError
 
@@ -19,6 +20,7 @@ class ConversionCallbacks:
     emit_warning: Callable[[str, Exception | None], None] | None = None
     emit_error: Callable[[str, Exception | None], None] | None = None
     debug_enabled: bool = False
+    record_event: Callable[[str, Mapping[str, Any]], None] | None = None
 
 
 class ConversionError(Exception):
@@ -60,6 +62,18 @@ def _fail(
     raise ConversionError(message) from exc
 
 
+def _record_event(
+    callbacks: ConversionCallbacks | None,
+    event: str,
+    payload: Mapping[str, Any],
+) -> None:
+    if callbacks and callbacks.record_event is not None:
+        try:
+            callbacks.record_event(event, dict(payload))
+        except Exception:  # pragma: no cover - defensive
+            logger.debug("Failed to record conversion event '%s'", event, exc_info=True)
+
+
 def persist_debug_artifacts(output_dir: Path, source: Path, html: str) -> None:
     """Persist intermediate HTML snapshots to aid debugging."""
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -78,6 +92,7 @@ def format_rendering_error(error: LatexRenderingError) -> str:
 __all__ = [
     "ConversionCallbacks",
     "ConversionError",
+    "_record_event",
     "format_rendering_error",
     "persist_debug_artifacts",
     "_debug_enabled",

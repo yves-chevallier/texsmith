@@ -1,0 +1,13 @@
+You are extracting template aggregation logic into a dedicated renderer that reuses conversion bundles.
+
+Tasks:
+1. Introduce a `TemplateRenderer` (or similarly named) component within the conversion core. It should accept a `TemplateRuntime`, a `ConversionBundle`, and slot directives, then produce a structured result (rendered slots, bibliography metadata, shared `DocumentState`).
+2. Rework `TemplateSession.render()` to delegate to the new renderer for both single- and multi-document flows. Eliminate the duplicated `convert_document` calls and manual `\input{}` string assembly.
+3. Ensure slot fragments come from a single code path that reuses `extract_slot_fragments` and the bundle’s metadata. Avoid writing temporary files unless the template explicitly requires them.
+4. Preserve compatibility features: bibliography emission, template overrides recording, shell-escape detection, and asset copying. Add targeted tests that verify these behaviours after the refactor.
+5. Document the main responsibilities of `TemplateSession` vs `TemplateRenderer` so future contributors know where to add features.
+
+Acceptance criteria:
+- `TemplateSession` becomes slim and focuses on session state management, not conversion loops.
+- There is only one place where slot aggregation and LaTeX wrapping happen, shared by both single-document and multi-document runs.
+- Existing CLI commands and API surfaces continue to work, with tests validating the new flow.

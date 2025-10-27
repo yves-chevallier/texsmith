@@ -220,6 +220,7 @@ def _render_document(
                 runtime_fragment,
                 binder_context.bibliography_map,
                 state=document_state,
+                callbacks=callbacks,
             )
         except LatexRenderingError as exc:
             if _debug_enabled(callbacks):
@@ -350,6 +351,7 @@ def render_with_fallback(
     bibliography: Mapping[str, dict[str, Any]] | None = None,
     *,
     state: DocumentState | None = None,
+    callbacks: ConversionCallbacks | None = None,
 ) -> tuple[str, DocumentState]:
     """Render HTML to LaTeX, retrying with fallback converters when available."""
     attempts = 0
@@ -365,7 +367,12 @@ def render_with_fallback(
 
         renderer = renderer_factory()
         try:
-            output = renderer.render(html, runtime=runtime, state=current_state)
+            output = renderer.render(
+                html,
+                runtime=runtime,
+                state=current_state,
+                callbacks=callbacks,
+            )
         except LatexRenderingError as exc:
             attempts += 1
             if attempts >= 5 or not attempt_transformer_fallback(exc):

@@ -5,6 +5,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Annotated
 
+import click
 import typer
 
 from texsmith.api.service import (
@@ -19,7 +20,8 @@ from texsmith.domain.conversion.debug import ConversionError
 from texsmith.domain.conversion.inputs import UnsupportedInputError
 from texsmith.adapters.markdown import resolve_markdown_extensions
 from texsmith.domain.templates import TemplateError
-from ..state import debug_enabled, emit_error, emit_warning
+from ..presenter import consume_event_diagnostics, present_conversion_summary
+from ..state import debug_enabled, emit_error, emit_warning, get_cli_state
 from ..utils import (
     determine_output_target,
     organise_slot_overrides,
@@ -46,6 +48,17 @@ from .._options import (
     SlotsOption,
     TemplateOption,
 )
+
+
+def _format_path_for_event(path: Path) -> str:
+    try:
+        resolved = path.resolve()
+    except OSError:
+        resolved = path
+    try:
+        return str(resolved.relative_to(Path.cwd()))
+    except ValueError:
+        return str(resolved)
 
 
 def convert(
@@ -89,6 +102,13 @@ def convert(
 ) -> None:
     """Convert MkDocs documents into LaTeX artefacts without invoking latexmk."""
 
+    state = get_cli_state()
+    ctx = click.get_current_context(silent=True)
+    verbosity = state.verbosity
+    if verbosity <= 0 and ctx is not None and ctx.parent is not None:
+        verbosity = int(ctx.parent.params.get("verbose", 0) or 0)
+        if verbosity > 0:
+            state.verbosity = verbosity
     document_paths = list(inputs or [])
     if input_path is not None:
         if document_paths:
@@ -104,10 +124,33 @@ def convert(
     except (typer.BadParameter, ValueError) as exc:
         raise typer.BadParameter(str(exc)) from exc
 
+    assignment_rows: list[dict[str, object]] = []
+    for doc_path, entries in slot_assignments.items():
+        for entry in entries:
+            assignment_rows.append(
+                {
+                    "document": _format_path_for_event(doc_path),
+                    "slot": entry.slot,
+                    "selector": entry.selector,
+                    "include_document": entry.include_document,
+                }
+            )
+    if assignment_rows:
+        state.record_event("slot_assignments", {"entries": assignment_rows})
+
     resolved_markdown_extensions = resolve_markdown_extensions(
         markdown_extensions,
         disable_markdown_extensions,
     )
+    extension_line = f"Extensions: {', '.join(resolved_markdown_extensions) or '(none)'}"
+
+    def _flush_diagnostics() -> None:
+        lines: list[str] = []
+        if verbosity >= 1:
+            lines.append(extension_line)
+        lines.extend(consume_event_diagnostics(state))
+        for line in lines:
+            typer.echo(line)
 
     debug_snapshot = debug_html if debug_html is not None else debug_enabled()
 
@@ -121,6 +164,7 @@ def convert(
         emit_warning=lambda message, exception=None: emit_warning(message, exception=exception),
         emit_error=lambda message, exception=None: emit_error(message, exception=exception),
         debug_enabled=debug_enabled(),
+        record_event=state.record_event,
     )
 
     settings = build_render_settings(
@@ -131,6 +175,15 @@ def convert(
         persist_debug_html=bool(debug_snapshot),
         language=language,
         legacy_latex_accents=legacy_latex_accents,
+    )
+    state.record_event(
+        "conversion_settings",
+        {
+            "parser": parser or "auto",
+            "copy_assets": copy_assets,
+            "manifest": manifest,
+            "fallback_converters_enabled": not disable_fallback_converters,
+        },
     )
 
     try:
@@ -173,6 +226,7 @@ def convert(
 
         if output_mode == "stdout":
             typer.echo(bundle.combined_output())
+            _flush_diagnostics()
             return
 
         if output_mode == "file":
@@ -183,19 +237,25 @@ def convert(
             except OSError as exc:
                 emit_error(str(exc), exception=exc)
                 raise typer.Exit(code=1) from exc
-            typer.secho(
-                f"LaTeX document written to {output_path}",
-                fg=typer.colors.GREEN,
+            present_conversion_summary(
+                state=state,
+                output_mode=output_mode,
+                bundle=bundle,
+                output_path=output_path,
+                render_result=None,
             )
+            _flush_diagnostics()
             return
 
         if output_mode == "directory":
-            for fragment in bundle.fragments:
-                if fragment.output_path is not None:
-                    typer.secho(
-                        f"LaTeX document written to {fragment.output_path}",
-                        fg=typer.colors.GREEN,
-                    )
+            present_conversion_summary(
+                state=state,
+                output_mode=output_mode,
+                bundle=bundle,
+                output_path=output_path,
+                render_result=None,
+            )
+            _flush_diagnostics()
             return
 
         raise RuntimeError(f"Unsupported output mode '{output_mode}'.")
@@ -218,13 +278,11 @@ def convert(
     if render_result is None:  # pragma: no cover - defensive
         raise RuntimeError("Template render result missing from service outcome.")
 
-    for fragment_path in render_result.fragment_paths:
-        typer.secho(
-            f"LaTeX fragment written to {fragment_path}",
-            fg=typer.colors.GREEN,
-        )
-
-    typer.secho(
-        f"LaTeX document written to {render_result.main_tex_path}",
-        fg=typer.colors.GREEN,
+    present_conversion_summary(
+        state=state,
+        output_mode="template",
+        bundle=None,
+        output_path=render_dir,
+        render_result=render_result,
     )
+    _flush_diagnostics()

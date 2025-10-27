@@ -1,0 +1,13 @@
+You are performing final integration cleanup after the refactors land.
+
+Tasks:
+1. Audit the codebase for straggling imports that reference removed modules (e.g., `texsmith.domain.*` or old service helpers). Fix or delete them.
+2. Run the full automated test suite, lint checks, and type checks (`pytest`, `ruff`/`flake8`, `pyright` if configured). Address any failures introduced by the refactors.
+3. Update documentation, changelog, and developer guides to describe the new architecture, the `ConversionService` API, the template rendering workflow, and the diagnostics interface. Include migration notes for external users.
+4. Ensure example scripts, mkdocs configuration, and templates still work END-TO-END by running at least one representative conversion example (markdown + template) and verifying the output.
+5. Prepare a release checklist: highlight breaking changes, new APIs, removed modules, and recommended upgrade path. Capture this in `DEVEL.md` or a new `UPGRADE.md` file.
+
+Acceptance criteria:
+- Repository is clean (no unused compatibility shims or outdated docs).
+- Quality gates (tests, lint, type check) pass locally.
+- Documentation clearly explains the new structure and gives guidance for downstream consumers.

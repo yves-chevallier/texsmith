@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Iterable, Mapping
 from pathlib import Path
-from typing import Any
+from typing import Any, TYPE_CHECKING
 
 from bs4 import BeautifulSoup, FeatureNotFound
 
@@ -13,6 +13,9 @@ from texsmith.domain.context import AssetRegistry, DocumentState, RenderContext
 from texsmith.domain.exceptions import LatexRenderingError
 from texsmith.domain.rules import RenderEngine, RenderPhase
 from .formatter import LaTeXFormatter
+
+if TYPE_CHECKING:  # pragma: no cover - typing only
+    from texsmith.domain.conversion.debug import ConversionCallbacks
 
 
 class LaTeXRenderer:
@@ -85,6 +88,7 @@ class LaTeXRenderer:
         *,
         runtime: Mapping[str, Any] | None = None,
         state: DocumentState | None = None,
+        callbacks: ConversionCallbacks | None = None,
     ) -> str:
         """Render an HTML fragment into LaTeX."""
         try:
@@ -93,6 +97,13 @@ class LaTeXRenderer:
             if self.parser_backend == "html.parser":
                 raise
             # Fall back to the built-in parser when the preferred backend is missing.
+            from texsmith.domain.conversion.debug import _record_event
+
+            _record_event(
+                callbacks,
+                "parser_fallback",
+                {"preferred": self.parser_backend, "fallback": "html.parser"},
+            )
             soup = BeautifulSoup(html, "html.parser")
             self.parser_backend = "html.parser"
         document_state = state or DocumentState()

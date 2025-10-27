@@ -67,12 +67,14 @@ def build_callbacks(
     emit_warning: Callable[[str, Exception | None], None] | None,
     emit_error: Callable[[str, Exception | None], None] | None,
     debug_enabled: bool,
+    record_event: Callable[[str, Mapping[str, Any]], None] | None = None,
 ) -> ConversionCallbacks:
     """Construct :class:`ConversionCallbacks` from callables."""
     return ConversionCallbacks(
         emit_warning=emit_warning,
         emit_error=emit_error,
         debug_enabled=debug_enabled,
+        record_event=record_event,
     )
 
 
