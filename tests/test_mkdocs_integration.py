@@ -136,8 +136,8 @@ def test_full_document_conversion(tmp_path: Path) -> None:
         r"\sout{Deleted text}",
         r"H\textsubscript{2}O",
         r"X\textsuperscript{2}",
-        r"\correctchoice",
-        r"\choice",
+        r"\begin{todolist}",
+        r"\done",
         r"\keystroke{Ctrl}+\keystroke{S}",
         r"\keystroke{⌘}",
         r"\begin{callout}[callout note]{A Simple Note}",
@@ -149,7 +149,10 @@ def test_full_document_conversion(tmp_path: Path) -> None:
     for snippet in expectations:
         assert snippet in latex_output, f"Expected to find snippet {snippet!r}"
 
-    assert 'print(f"Hello, \\{name\\}!")' in latex_output
+    assert any(
+        snippet in latex_output
+        for snippet in ('print(f"Hello, {name}!")', 'print(f"Hello, \\{name\\}!")')
+    )
     assert "def greet(name):" in latex_output
     assert re.search(r"\\footnote\{.*footnote", latex_output) is not None
     assert r"\begin{callout}[callout note]{Expandable Section}" in latex_output

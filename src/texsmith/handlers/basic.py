@@ -72,10 +72,11 @@ def discard_unwanted(root: Tag, context: RenderContext) -> None:
                 node.decompose()
 
 
-@renders("hr", phase=RenderPhase.PRE, name="remove_horizontal_rules")
-def remove_horizontal_rules(element: Tag, _context: RenderContext) -> None:
-    """Remove ``<hr>`` nodes early during preprocessing."""
-    element.extract()
+@renders("hr", phase=RenderPhase.BLOCK, name="render_horizontal_rule")
+def render_horizontal_rule(element: Tag, context: RenderContext) -> None:
+    """Render ``<hr>`` nodes as LaTeX horizontal rules."""
+    latex = context.formatter.horizontal_rule()
+    element.replace_with(mark_processed(NavigableString(latex)))
 
 
 @renders("br", phase=RenderPhase.INLINE, name="line_breaks")
