@@ -28,11 +28,11 @@ texsmith convert input.md input.bib -o article/ --template nature
 
 The source tree is organised around three top-level namespaces:
 
-- `texsmith.domain` contains the core conversion pipeline, document models, and template metadata.
+- `texsmith.core` contains the conversion pipeline, document models, and template metadata.
 - `texsmith.adapters` hosts infrastructure integrations such as Markdown parsing, LaTeX rendering, Docker helpers, and transformer utilities.
 - `texsmith.ui` provides end-user interfaces, including the Typer-powered CLI.
 
-Legacy module paths continue to work through compatibility shims, so imports like `texsmith.conversion` or `texsmith.latex` remain valid while you migrate to the new layout.
+Legacy module paths continue to resolve to the new modules, so imports like `texsmith.conversion` or `texsmith.latex` remain valid while you migrate to the refreshed layout.
 
 ## Render engine phases
 

@@ -9,9 +9,9 @@ import warnings
 
 from bs4.element import NavigableString, Tag
 
-from texsmith.domain.context import RenderContext
-from texsmith.domain.exceptions import AssetMissingError, InvalidNodeError
-from texsmith.domain.rules import RenderPhase, renders
+from texsmith.core.context import RenderContext
+from texsmith.core.exceptions import AssetMissingError, InvalidNodeError
+from texsmith.core.rules import RenderPhase, renders
 from ..transformers import drawio2pdf, fetch_image, image2pdf, svg2pdf
 from ._helpers import (
     coerce_attribute,

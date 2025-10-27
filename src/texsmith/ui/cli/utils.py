@@ -8,7 +8,7 @@ from pathlib import Path
 import typer
 
 from texsmith.api.service import SlotAssignment, classify_input_source, split_document_inputs
-from texsmith.domain.conversion.inputs import DOCUMENT_SELECTOR_SENTINEL
+from texsmith.core.conversion.inputs import DOCUMENT_SELECTOR_SENTINEL
 
 
 def parse_slot_option(values: Iterable[str] | None) -> dict[str, str]:

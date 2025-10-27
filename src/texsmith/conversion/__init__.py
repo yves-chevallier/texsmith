@@ -1,9 +1,14 @@
-"""Compatibility package for :mod:`texsmith.domain.conversion`."""
+"""Package-level access to the core conversion primitives."""
 
 from __future__ import annotations
 
-import sys
+from texsmith.core import conversion as _conversion
+from texsmith.core.conversion import *  # noqa: F401,F403
 
-from ..domain import conversion as _conversion
-
-sys.modules[__name__] = _conversion
+__all__ = list(getattr(_conversion, "__all__", []))
+if not __all__:
+    __all__ = [
+        name
+        for name in globals()
+        if not name.startswith("_") and name not in {"_conversion", "annotations"}
+    ]

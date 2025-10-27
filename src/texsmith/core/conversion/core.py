@@ -13,15 +13,15 @@ from typing import Any
 from texsmith.adapters.docker import is_docker_available
 from texsmith.adapters.latex.formatter import LaTeXFormatter
 from texsmith.adapters.latex.renderer import LaTeXRenderer
-from texsmith.domain.conversion_contexts import (
+from texsmith.core.conversion_contexts import (
     BinderContext,
     DocumentContext,
     GenerationStrategy,
     SegmentContext,
 )
-from texsmith.domain.context import DocumentState
-from texsmith.domain.exceptions import LatexRenderingError, TransformerExecutionError
-from texsmith.domain.templates import TemplateBinding, TemplateError, TemplateRuntime, copy_template_assets
+from texsmith.core.context import DocumentState
+from texsmith.core.exceptions import LatexRenderingError, TransformerExecutionError
+from texsmith.core.templates import TemplateBinding, TemplateError, TemplateRuntime, copy_template_assets
 from texsmith.adapters.transformers import has_converter, register_converter
 from .debug import (
     ConversionCallbacks,

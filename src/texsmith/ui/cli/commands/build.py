@@ -21,11 +21,11 @@ from texsmith.api.service import (
     prepare_documents,
     split_document_inputs,
 )
-from texsmith.domain.conversion.debug import ConversionError
-from texsmith.domain.conversion.inputs import UnsupportedInputError
+from texsmith.core.conversion.debug import ConversionError
+from texsmith.core.conversion.inputs import UnsupportedInputError
 from texsmith.adapters.latex.log import stream_latexmk_output
 from texsmith.adapters.markdown import resolve_markdown_extensions
-from texsmith.domain.templates import TemplateError
+from texsmith.core.templates import TemplateError
 from ..presenter import (
     consume_event_diagnostics,
     parse_latex_log,

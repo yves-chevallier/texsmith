@@ -9,10 +9,10 @@ from urllib.parse import urlparse
 from bs4.element import NavigableString, Tag
 from requests.utils import requote_uri as requote_url
 
-from texsmith.domain.context import RenderContext
-from texsmith.domain.exceptions import AssetMissingError, InvalidNodeError
+from texsmith.core.context import RenderContext
+from texsmith.core.exceptions import AssetMissingError, InvalidNodeError
 from ..latex.utils import escape_latex_chars
-from texsmith.domain.rules import RenderPhase, renders
+from texsmith.core.rules import RenderPhase, renders
 from ._helpers import coerce_attribute, mark_processed, resolve_asset_path
 
 

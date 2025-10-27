@@ -149,7 +149,7 @@ def bibliography_list(
         typer.echo(ctx.command.get_help(ctx))
         raise typer.Exit()
 
-    from texsmith.domain.bibliography import BibliographyCollection
+    from texsmith.core.bibliography import BibliographyCollection
     from texsmith.ui.cli.bibliography import print_bibliography_overview
 
     collection = BibliographyCollection()

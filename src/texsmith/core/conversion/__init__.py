@@ -1,10 +1,15 @@
-"""Shared re-exports for the conversion façade."""
+"""Public gateway into the low-level conversion engine."""
 
 from __future__ import annotations
 
-from ..bibliography import DoiBibliographyFetcher as DoiBibliographyFetcher  # backward compatibility
-from ..conversion_contexts import BinderContext, DocumentContext, GenerationStrategy, SegmentContext
-from ..templates import (
+from texsmith.core.bibliography import DoiBibliographyFetcher
+from texsmith.core.conversion_contexts import (
+    BinderContext,
+    DocumentContext,
+    GenerationStrategy,
+    SegmentContext,
+)
+from texsmith.core.templates import (
     DEFAULT_TEMPLATE_LANGUAGE,
     TemplateBinding,
     TemplateRuntime,
@@ -12,6 +17,7 @@ from ..templates import (
     load_template_runtime,
     resolve_template_language,
 )
+
 from .core import (
     ConversionResult,
     attempt_transformer_fallback,
@@ -37,21 +43,19 @@ from .inputs import (
     extract_front_matter_slots,
     parse_slot_mapping,
 )
-from .templates import (
-    build_binder_context,
-    extract_slot_fragments,
-    heading_level_for,
-)
+from .templates import build_binder_context, extract_slot_fragments, heading_level_for
+
 
 __all__ = [
-    "DEFAULT_TEMPLATE_LANGUAGE",
-    "DOCUMENT_SELECTOR_SENTINEL",
     "BinderContext",
     "ConversionCallbacks",
     "ConversionError",
     "ConversionResult",
+    "DEFAULT_TEMPLATE_LANGUAGE",
+    "DOCUMENT_SELECTOR_SENTINEL",
     "DocumentContext",
     "GenerationStrategy",
+    "InputKind",
     "SegmentContext",
     "TemplateBinding",
     "TemplateRuntime",
@@ -75,4 +79,5 @@ __all__ = [
     "persist_debug_artifacts",
     "render_with_fallback",
     "resolve_template_language",
+    "DoiBibliographyFetcher",
 ]

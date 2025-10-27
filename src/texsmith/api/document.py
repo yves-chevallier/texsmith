@@ -43,9 +43,9 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
-from ..domain.conversion.debug import ConversionCallbacks, ConversionError
-from ..domain.conversion.inputs import InputKind, build_document_context, extract_content
-from ..domain.conversion_contexts import DocumentContext
+from ..core.conversion.debug import ConversionCallbacks, ConversionError
+from ..core.conversion.inputs import InputKind, build_document_context, extract_content
+from ..core.conversion_contexts import DocumentContext
 from ..markdown import (
     DEFAULT_MARKDOWN_EXTENSIONS,
     MarkdownConversionError,

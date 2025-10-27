@@ -1,8 +1,14 @@
-"""Compatibility shim for :mod:`texsmith.domain.context`."""
+"""Context primitives preserved at the legacy import location."""
 
 from __future__ import annotations
 
-from .domain import context as _context
-from .domain.context import *  # noqa: F401,F403
+from texsmith.core import context as _context
+from texsmith.core.context import *  # noqa: F401,F403
 
-__all__ = getattr(_context, "__all__", [])
+__all__ = list(getattr(_context, "__all__", []))
+if not __all__:
+    __all__ = [
+        name
+        for name in globals()
+        if not name.startswith("_") and name not in {"_context", "annotations"}
+    ]

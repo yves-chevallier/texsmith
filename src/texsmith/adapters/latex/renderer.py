@@ -8,14 +8,14 @@ from typing import Any, TYPE_CHECKING
 
 from bs4 import BeautifulSoup, FeatureNotFound
 
-from texsmith.domain.config import BookConfig
-from texsmith.domain.context import AssetRegistry, DocumentState, RenderContext
-from texsmith.domain.exceptions import LatexRenderingError
-from texsmith.domain.rules import RenderEngine, RenderPhase
+from texsmith.core.config import BookConfig
+from texsmith.core.context import AssetRegistry, DocumentState, RenderContext
+from texsmith.core.exceptions import LatexRenderingError
+from texsmith.core.rules import RenderEngine, RenderPhase
 from .formatter import LaTeXFormatter
 
 if TYPE_CHECKING:  # pragma: no cover - typing only
-    from texsmith.domain.conversion.debug import ConversionCallbacks
+    from texsmith.core.conversion.debug import ConversionCallbacks
 
 
 class LaTeXRenderer:
@@ -97,7 +97,7 @@ class LaTeXRenderer:
             if self.parser_backend == "html.parser":
                 raise
             # Fall back to the built-in parser when the preferred backend is missing.
-            from texsmith.domain.conversion.debug import _record_event
+            from texsmith.core.conversion.debug import _record_event
 
             _record_event(
                 callbacks,

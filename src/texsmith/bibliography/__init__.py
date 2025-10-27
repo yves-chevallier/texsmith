@@ -1,9 +1,14 @@
-"""Compatibility package for :mod:`texsmith.domain.bibliography`."""
+"""Bibliography helpers exposed for public consumption."""
 
 from __future__ import annotations
 
-import sys
+from texsmith.core import bibliography as _bibliography
+from texsmith.core.bibliography import *  # noqa: F401,F403
 
-from ..domain import bibliography as _bibliography
-
-sys.modules[__name__] = _bibliography
+__all__ = list(getattr(_bibliography, "__all__", []))
+if not __all__:
+    __all__ = [
+        name
+        for name in globals()
+        if not name.startswith("_") and name not in {"_bibliography", "annotations"}
+    ]
