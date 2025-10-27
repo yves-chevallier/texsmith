@@ -76,8 +76,8 @@ def _app_root(
         help="Show full tracebacks when an unexpected error occurs.",
     ),
 ) -> None:
-    ctx.obj = get_cli_state()
-    set_cli_state(verbosity=verbose, debug=debug)
+    state = set_cli_state(ctx=ctx, verbosity=verbose, debug=debug)
+    ctx.obj = state
 
     if list_extensions:
         from ..markdown import DEFAULT_MARKDOWN_EXTENSIONS

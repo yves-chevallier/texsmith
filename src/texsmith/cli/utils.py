@@ -3,23 +3,14 @@
 from __future__ import annotations
 
 from collections.abc import Iterable
-from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, TypeVar, cast
 
 import typer
 from typer.models import ArgumentInfo, OptionInfo
 
-from ..conversion.inputs import DOCUMENT_SELECTOR_SENTINEL, InputKind, UnsupportedInputError
-
-
-@dataclass(slots=True)
-class SlotAssignment:
-    """Mapping of a template slot to a document slice."""
-
-    slot: str
-    selector: str | None
-    full_document: bool = False
+from ..api.service import SlotAssignment, classify_input_source, split_document_inputs
+from ..conversion.inputs import DOCUMENT_SELECTOR_SENTINEL
 
 
 _T = TypeVar("_T")
@@ -59,55 +50,6 @@ def parse_slot_option(values: Iterable[str] | None) -> dict[str, str]:
         overrides[slot_name] = selector
 
     return overrides
-
-
-def deduplicate_paths(values: Iterable[Path]) -> list[Path]:
-    """Return paths with duplicates removed while preserving order."""
-    seen: set[Path] = set()
-    result: list[Path] = []
-    for path in values:
-        if path in seen:
-            continue
-        seen.add(path)
-        result.append(path)
-    return result
-
-
-def split_document_inputs(
-    inputs: Iterable[Path],
-    extra_bibliography: Iterable[Path],
-) -> tuple[list[Path], list[Path]]:
-    """Separate document inputs from bibliography files supplied to the CLI."""
-    inline_bibliography: list[Path] = []
-    documents: list[Path] = []
-
-    for candidate in inputs:
-        suffix = candidate.suffix.lower()
-        if suffix in {".bib", ".bibtex"}:
-            inline_bibliography.append(candidate)
-            continue
-        documents.append(candidate)
-
-    combined_bibliography = deduplicate_paths([*inline_bibliography, *extra_bibliography])
-    return documents, combined_bibliography
-
-
-def classify_input_source(path: Path) -> InputKind:
-    """Determine the document kind based on its filename suffix."""
-    suffix = path.suffix.lower()
-    if suffix in {".md", ".markdown"}:
-        return InputKind.MARKDOWN
-    if suffix in {".html", ".htm"}:
-        return InputKind.HTML
-    if suffix in {".yaml", ".yml"}:
-        raise UnsupportedInputError(
-            "MkDocs configuration files are not supported as input. "
-            "Provide a Markdown source or an HTML document."
-        )
-    raise UnsupportedInputError(
-        f"Unsupported input file type '{suffix or '<none>'}'. "
-        "Provide a Markdown source (.md) or HTML document (.html)."
-    )
 
 
 def determine_output_target(
@@ -268,18 +210,17 @@ def resolve_slot_assignments(
             raise typer.BadParameter(f"slot override '{raw}' does not match any provided document.")
 
         selector_clean = selector_value
-        full_document = False
+        include_document = False
         if selector_clean is None:
-            full_document = True
-            selector_clean = DOCUMENT_SELECTOR_SENTINEL
+            include_document = True
         else:
             token_lower = selector_clean.strip().lower()
             if token_lower in {"*", DOCUMENT_SELECTOR_SENTINEL.lower()}:
-                full_document = True
-                selector_clean = DOCUMENT_SELECTOR_SENTINEL
+                include_document = True
+                selector_clean = None
 
         assignments[target_doc].append(
-            SlotAssignment(slot=slot_name, selector=selector_clean, full_document=full_document)
+            SlotAssignment(slot=slot_name, selector=selector_clean, include_document=include_document)
         )
 
     return assignments

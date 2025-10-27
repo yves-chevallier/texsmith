@@ -11,20 +11,24 @@ import subprocess
 import click
 import typer
 
-from ...api import get_template
-from ...api.document import Document
-from ...api.pipeline import RenderSettings
-from ...conversion.debug import ConversionCallbacks, ConversionError
-from ...conversion.inputs import InputKind, UnsupportedInputError
+from ...api.service import (
+    SlotAssignment,
+    apply_slot_assignments,
+    build_callbacks,
+    build_render_settings,
+    execute_conversion,
+    prepare_documents,
+    split_document_inputs,
+)
+from ...conversion import ConversionError
+from ...conversion.inputs import UnsupportedInputError
 from ...latex.log import stream_latexmk_output
 from ...markdown import resolve_markdown_extensions
 from ...templates import TemplateError
 from ..state import debug_enabled, emit_error, emit_warning, get_cli_state
 from ..utils import (
-    classify_input_source,
     parse_slot_option,
     resolve_option,
-    split_document_inputs,
 )
 
 
@@ -246,20 +250,11 @@ def build(
         emit_error("The build command requires a LaTeX template (--template).")
         raise typer.Exit(code=1)
 
-    callbacks = ConversionCallbacks(
+    callbacks = build_callbacks(
         emit_warning=lambda message, exception=None: emit_warning(message, exception=exception),
         emit_error=lambda message, exception=None: emit_error(message, exception=exception),
         debug_enabled=debug_enabled(),
     )
-
-    try:
-        input_kind: InputKind = classify_input_source(document_path)
-    except UnsupportedInputError as exc:
-        if callbacks.emit_error is not None:
-            callbacks.emit_error(str(exc), exc)
-        else:
-            emit_error(str(exc), exception=exc)
-        raise typer.Exit(code=1) from exc
 
     resolved_selector = resolve_option(selector)
     resolved_full_document = resolve_option(full_document)
@@ -274,63 +269,62 @@ def build(
     resolved_language = resolve_option(language)
 
     try:
-        if input_kind is InputKind.MARKDOWN:
-            document = Document.from_markdown(
-                document_path,
-                extensions=resolved_markdown_extensions,
-                heading=resolved_heading_level,
-                base_level=resolved_base_level,
-                drop_title=resolved_drop_title,
-                numbered=resolved_numbered,
-                callbacks=callbacks,
-            )
+        prepared = prepare_documents(
+            [document_path],
+            selector=resolved_selector,
+            full_document=resolved_full_document,
+            heading_level=resolved_heading_level,
+            base_level=resolved_base_level,
+            drop_title_all=resolved_drop_title,
+            drop_title_first_document=False,
+            numbered=resolved_numbered,
+            markdown_extensions=resolved_markdown_extensions,
+            callbacks=callbacks,
+        )
+    except UnsupportedInputError as exc:
+        if callbacks.emit_error is not None:
+            callbacks.emit_error(str(exc), exc)
         else:
-            document = Document.from_html(
-                document_path,
-                selector=resolved_selector,
-                heading=resolved_heading_level,
-                base_level=resolved_base_level,
-                drop_title=resolved_drop_title,
-                numbered=resolved_numbered,
-                full_document=resolved_full_document,
-                callbacks=callbacks,
-            )
+            emit_error(str(exc), exception=exc)
+        raise typer.Exit(code=1) from exc
     except ConversionError as exc:
         raise typer.Exit(code=1) from exc
 
-    for slot_name, selector_value in requested_slots.items():
-        document.assign_slot(slot_name, selector=selector_value, include_document=False)
+    assignments: dict[Path, list[SlotAssignment]] = {
+        document_path: [
+            SlotAssignment(slot=slot_name, selector=selector_value, include_document=False)
+            for slot_name, selector_value in requested_slots.items()
+        ]
+    }
+    apply_slot_assignments(prepared.document_map, assignments)
 
-    settings = RenderSettings(
+    settings = build_render_settings(
         parser=resolved_parser,
         disable_fallback_converters=resolved_disable_fallback,
         copy_assets=resolved_copy_assets,
         manifest=resolved_manifest,
         persist_debug_html=bool(debug_snapshot),
         language=resolved_language,
+        legacy_latex_accents=False,
     )
-
-    try:
-        session = get_template(
-            template_identifier,
-            settings=settings,
-            callbacks=callbacks,
-        )
-    except TemplateError as exc:
-        emit_error(str(exc), exception=exc)
-        raise typer.Exit(code=1) from exc
-
-    if bibliography_files:
-        session.add_bibliography(*bibliography_files)
-
-    session.add_document(document)
 
     render_dir = resolve_option(output_dir).resolve()
     try:
-        render_result = session.render(render_dir)
+        outcome = execute_conversion(
+            prepared.documents,
+            settings=settings,
+            callbacks=callbacks,
+            bibliography_files=bibliography_files,
+            template=template_identifier,
+            render_dir=render_dir,
+        )
     except (TemplateError, ConversionError) as exc:
         emit_error(str(exc), exception=exc)
         raise typer.Exit(code=1) from exc
+
+    render_result = outcome.render_result
+    if render_result is None:  # pragma: no cover - defensive
+        raise RuntimeError("Template render result missing from service outcome.")
 
     latexmk_path = shutil.which("latexmk")
     if latexmk_path is None:
