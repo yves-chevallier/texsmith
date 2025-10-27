@@ -2,76 +2,45 @@
 
 from __future__ import annotations
 
-import logging
-from collections.abc import Callable, Mapping
-from dataclasses import dataclass
+from collections.abc import Mapping
 from pathlib import Path
 from typing import Any
 
+from ..diagnostics import DiagnosticEmitter, LoggingEmitter, NullEmitter
 from ..exceptions import LatexRenderingError
-
-logger = logging.getLogger(__name__)
-
-
-@dataclass(slots=True)
-class ConversionCallbacks:
-    """Optional hooks used to surface conversion diagnostics."""
-
-    emit_warning: Callable[[str, Exception | None], None] | None = None
-    emit_error: Callable[[str, Exception | None], None] | None = None
-    debug_enabled: bool = False
-    record_event: Callable[[str, Mapping[str, Any]], None] | None = None
 
 
 class ConversionError(Exception):
     """Raised when a conversion fails and cannot recover."""
 
 
-def _emit_warning(
-    callbacks: ConversionCallbacks | None,
-    message: str,
-    exception: Exception | None = None,
-) -> None:
-    if callbacks and callbacks.emit_warning is not None:
-        callbacks.emit_warning(message, exception)
-    else:  # pragma: no cover - fallback logging
-        logger.warning(message)
+def ensure_emitter(emitter: DiagnosticEmitter | None) -> DiagnosticEmitter:
+    """Return a usable emitter, defaulting to the null implementation."""
+    return emitter if emitter is not None else NullEmitter()
 
 
-def _emit_error(
-    callbacks: ConversionCallbacks | None,
-    message: str,
-    exception: Exception | None = None,
-) -> None:
-    if callbacks and callbacks.emit_error is not None:
-        callbacks.emit_error(message, exception)
-    else:  # pragma: no cover - fallback logging
-        logger.error(message)
+def debug_enabled(emitter: DiagnosticEmitter | None) -> bool:
+    """Return whether debug mode is active for the given emitter."""
+    return bool(emitter and getattr(emitter, "debug_enabled", False))
 
 
-def _debug_enabled(callbacks: ConversionCallbacks | None) -> bool:
-    return bool(callbacks and callbacks.debug_enabled)
-
-
-def _fail(
-    callbacks: ConversionCallbacks | None,
+def raise_conversion_error(
+    emitter: DiagnosticEmitter | None,
     message: str,
     exc: Exception,
 ) -> None:
-    _emit_error(callbacks, message, exception=exc)
+    """Emit an error diagnostic before raising a conversion failure."""
+    ensure_emitter(emitter).error(message, exc)
     raise ConversionError(message) from exc
 
 
-def _record_event(
-    callbacks: ConversionCallbacks | None,
+def record_event(
+    emitter: DiagnosticEmitter | None,
     event: str,
     payload: Mapping[str, Any],
 ) -> None:
-    if callbacks and callbacks.record_event is not None:
-        try:
-            callbacks.record_event(event, dict(payload))
-        except Exception:  # pragma: no cover - defensive
-            logger.debug("Failed to record conversion event '%s'", event, exc_info=True)
+    """Forward a structured diagnostic event."""
+    ensure_emitter(emitter).event(event, payload)
 
 
 def persist_debug_artifacts(output_dir: Path, source: Path, html: str) -> None:
@@ -90,13 +59,14 @@ def format_rendering_error(error: LatexRenderingError) -> str:
 
 
 __all__ = [
-    "ConversionCallbacks",
     "ConversionError",
-    "_record_event",
+    "DiagnosticEmitter",
+    "LoggingEmitter",
+    "NullEmitter",
+    "debug_enabled",
+    "ensure_emitter",
     "format_rendering_error",
     "persist_debug_artifacts",
-    "_debug_enabled",
-    "_emit_error",
-    "_emit_warning",
-    "_fail",
+    "raise_conversion_error",
+    "record_event",
 ]

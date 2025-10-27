@@ -10,11 +10,11 @@ from typing import Any, TYPE_CHECKING
 from ..context import DocumentState
 from ..templates import TemplateError, TemplateRuntime, copy_template_assets
 
-from .debug import _debug_enabled, _fail, _record_event
+from .debug import debug_enabled, ensure_emitter, raise_conversion_error, record_event
+from ..diagnostics import DiagnosticEmitter
 
 if TYPE_CHECKING:  # pragma: no cover - typing helpers only
     from texsmith.api.pipeline import ConversionBundle, LaTeXFragment
-    from texsmith.core.conversion.debug import ConversionCallbacks
 
 
 def _merge_overrides(target: dict[str, Any], source: Mapping[str, Any]) -> None:
@@ -47,10 +47,10 @@ class TemplateRenderer:
         self,
         runtime: TemplateRuntime,
         *,
-        callbacks: "ConversionCallbacks | None" = None,
+        emitter: DiagnosticEmitter | None = None,
     ) -> None:
         self.runtime = runtime
-        self.callbacks = callbacks
+        self.emitter = ensure_emitter(emitter)
 
     def render(
         self,
@@ -178,14 +178,13 @@ class TemplateRenderer:
                 context=template_context,
             )
         except TemplateError as exc:
-            if _debug_enabled(self.callbacks):
+            if debug_enabled(self.emitter):
                 raise
-            _fail(self.callbacks, str(exc), exc)
-            raise
+            raise_conversion_error(self.emitter, str(exc), exc)
 
         if template_overrides:
-            _record_event(
-                self.callbacks,
+            record_event(
+                self.emitter,
                 "template_overrides",
                 {"values": dict(template_overrides)},
             )
@@ -199,10 +198,9 @@ class TemplateRenderer:
                     overrides=template_overrides if template_overrides else None,
                 )
             except TemplateError as exc:
-                if _debug_enabled(self.callbacks):
+                if debug_enabled(self.emitter):
                     raise
-                _fail(self.callbacks, str(exc), exc)
-                raise
+                raise_conversion_error(self.emitter, str(exc), exc)
 
         main_name = self._resolve_main_name(fragments)
         main_tex_path = output_dir / main_name

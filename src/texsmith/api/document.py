@@ -43,7 +43,8 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
-from ..core.conversion.debug import ConversionCallbacks, ConversionError
+from ..core.conversion.debug import ConversionError
+from ..core.diagnostics import DiagnosticEmitter, NullEmitter
 from ..core.conversion.inputs import (
     DOCUMENT_SELECTOR_SENTINEL,
     InputKind,
@@ -218,9 +219,11 @@ class Document:
         base_level: int = 0,
         drop_title: bool = False,
         numbered: bool = True,
-        callbacks: ConversionCallbacks | None = None,
+        emitter: DiagnosticEmitter | None = None,
     ) -> Document:
         """Create a document from a Markdown file."""
+        active_emitter = emitter or NullEmitter()
+
         try:
             rendered = render_markdown(
                 path.read_text(encoding="utf-8"),
@@ -228,8 +231,7 @@ class Document:
             )
         except (OSError, MarkdownConversionError) as exc:
             message = f"Failed to convert Markdown source '{path}': {exc}"
-            if callbacks and callbacks.emit_error:
-                callbacks.emit_error(message, exc if isinstance(exc, Exception) else None)
+            active_emitter.error(message, exc if isinstance(exc, Exception) else None)
             raise ConversionError(message) from (
                 exc if isinstance(exc, Exception) else ConversionError(message)
             )
@@ -262,15 +264,16 @@ class Document:
         drop_title: bool = False,
         numbered: bool = True,
         full_document: bool = False,
-        callbacks: ConversionCallbacks | None = None,
+        emitter: DiagnosticEmitter | None = None,
     ) -> Document:
         """Create a document from an HTML file."""
+        active_emitter = emitter or NullEmitter()
+
         try:
             payload = path.read_text(encoding="utf-8")
         except OSError as exc:
             message = f"Failed to read HTML document '{path}': {exc}"
-            if callbacks and callbacks.emit_error:
-                callbacks.emit_error(message, exc)
+            active_emitter.error(message, exc)
             raise ConversionError(message) from exc
 
         html = payload
@@ -282,8 +285,7 @@ class Document:
                     f"CSS selector '{selector}' was not found in '{path.name}'. "
                     "Falling back to the full document."
                 )
-                if callbacks and callbacks.emit_warning:
-                    callbacks.emit_warning(message, exc)
+                active_emitter.warning(message, exc)
 
         options = DocumentRenderOptions(
             base_level=base_level,

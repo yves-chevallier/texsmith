@@ -12,10 +12,11 @@ from texsmith.core.config import BookConfig
 from texsmith.core.context import AssetRegistry, DocumentState, RenderContext
 from texsmith.core.exceptions import LatexRenderingError
 from texsmith.core.rules import RenderEngine, RenderPhase
+from texsmith.core.diagnostics import DiagnosticEmitter, NullEmitter
 from .formatter import LaTeXFormatter
 
 if TYPE_CHECKING:  # pragma: no cover - typing only
-    from texsmith.core.conversion.debug import ConversionCallbacks
+    from texsmith.api.pipeline import ConversionBundle, LaTeXFragment
 
 
 class LaTeXRenderer:
@@ -88,19 +89,20 @@ class LaTeXRenderer:
         *,
         runtime: Mapping[str, Any] | None = None,
         state: DocumentState | None = None,
-        callbacks: ConversionCallbacks | None = None,
+        emitter: DiagnosticEmitter | None = None,
     ) -> str:
         """Render an HTML fragment into LaTeX."""
+        active_emitter = emitter or NullEmitter()
         try:
             soup = BeautifulSoup(html, self.parser_backend)
         except FeatureNotFound:
             if self.parser_backend == "html.parser":
                 raise
             # Fall back to the built-in parser when the preferred backend is missing.
-            from texsmith.core.conversion.debug import _record_event
+            from texsmith.core.conversion.debug import record_event
 
-            _record_event(
-                callbacks,
+            record_event(
+                active_emitter,
                 "parser_fallback",
                 {"preferred": self.parser_backend, "fallback": "html.parser"},
             )

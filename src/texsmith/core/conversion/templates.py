@@ -30,13 +30,8 @@ from ..templates import (
     resolve_template_binding,
     resolve_template_language,
 )
-from .debug import (
-    ConversionCallbacks,
-    _debug_enabled,
-    _emit_warning,
-    _fail,
-    _record_event,
-)
+from .debug import debug_enabled, ensure_emitter, raise_conversion_error, record_event
+from ..diagnostics import DiagnosticEmitter
 from .inputs import (
     DOCUMENT_SELECTOR_SENTINEL,
     extract_front_matter_bibliography,
@@ -66,10 +61,11 @@ def build_binder_context(
     slot_overrides: Mapping[str, str] | None,
     output_dir: Path,
     strategy: GenerationStrategy,
-    callbacks: ConversionCallbacks | None,
+    emitter: DiagnosticEmitter | None,
     legacy_latex_accents: bool,
 ) -> BinderContext:
     """Prepare template bindings, bibliography data, and slot mappings."""
+    emitter = ensure_emitter(emitter)
     resolved_language = resolve_template_language(requested_language, document_context.front_matter)
     document_context.language = resolved_language
 
@@ -93,7 +89,7 @@ def build_binder_context(
                 bibliography_collection,
                 inline_bibliography,
                 source_label=document_context.source_path.stem,
-                callbacks=callbacks,
+                emitter=emitter,
             )
 
     if bibliography_collection is not None:
@@ -101,7 +97,7 @@ def build_binder_context(
         for issue in bibliography_collection.issues:
             prefix = f"[{issue.key}] " if issue.key else ""
             source_hint = f" ({issue.source})" if issue.source else ""
-            _emit_warning(callbacks, f"{prefix}{issue.message}{source_hint}")
+            emitter.warning(f"{prefix}{issue.message}{source_hint}")
 
     document_context.bibliography = bibliography_map
 
@@ -123,12 +119,12 @@ def build_binder_context(
             template_runtime=template_runtime,
             template_overrides=template_overrides,
             slot_requests=slot_requests,
-            warn=lambda message: _emit_warning(callbacks, message),
+            warn=lambda message: emitter.warning(message),
         )
     except TemplateError as exc:
-        if _debug_enabled(callbacks):
+        if debug_enabled(emitter):
             raise
-        _fail(callbacks, str(exc), exc)
+        raise_conversion_error(emitter, str(exc), exc)
     if binding is None:  # pragma: no cover - defensive
         raise RuntimeError("Failed to resolve template binding.")
 
@@ -289,7 +285,7 @@ def _load_inline_bibliography(
     entries: Mapping[str, str],
     *,
     source_label: str,
-    callbacks: ConversionCallbacks | None,
+    emitter: DiagnosticEmitter,
     fetcher: "DoiBibliographyFetcher | None" = None,
 ) -> None:
     if not entries:
@@ -302,22 +298,16 @@ def _load_inline_bibliography(
         try:
             payload = resolver.fetch(doi_value)
         except DoiLookupError as exc:
-            _emit_warning(
-                callbacks,
-                f"Failed to resolve DOI '{doi_value}' for '{key}': {exc}",
-            )
+            emitter.warning(f"Failed to resolve DOI '{doi_value}' for '{key}': {exc}")
             continue
         try:
             data = bibliography_data_from_string(payload, key)
         except PybtexError as exc:
-            _emit_warning(
-                callbacks,
-                f"Failed to parse bibliography entry '{key}': {exc}",
-            )
+            emitter.warning(f"Failed to parse bibliography entry '{key}': {exc}")
             continue
         collection.load_data(data, source=source_path)
-        _record_event(
-            callbacks,
+        record_event(
+            emitter,
             "doi_fetch",
             {
                 "key": key,

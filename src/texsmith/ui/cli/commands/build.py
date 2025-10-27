@@ -18,6 +18,7 @@ from texsmith.core.conversion.inputs import UnsupportedInputError
 from texsmith.adapters.latex.log import stream_latexmk_output
 from texsmith.adapters.markdown import resolve_markdown_extensions
 from texsmith.core.templates import TemplateError
+from ..diagnostics import CliEmitter
 from ..presenter import (
     consume_event_diagnostics,
     parse_latex_log,
@@ -160,6 +161,8 @@ def build(
         emit_error("The build command requires a LaTeX template (--template).")
         raise typer.Exit(code=1)
 
+    emitter = CliEmitter(state=state, debug_enabled=debug_enabled())
+
     assignments: dict[Path, list[SlotAssignment]] = {
         document_path: [
             SlotAssignment(slot=slot_name, selector=selector_value, include_document=False)
@@ -203,10 +206,7 @@ def build(
         legacy_latex_accents=False,
         template=template_identifier,
         render_dir=output_dir.resolve(),
-        emit_warning=lambda message, exception=None: emit_warning(message, exception=exception),
-        emit_error=lambda message, exception=None: emit_error(message, exception=exception),
-        record_event=state.record_event,
-        debug_enabled=debug_enabled(),
+        emitter=emitter,
     )
 
     def _flush_diagnostics() -> None:

@@ -44,7 +44,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 from ..core.conversion.core import ConversionResult, convert_document
-from ..core.conversion.debug import ConversionCallbacks
+from ..core.diagnostics import DiagnosticEmitter, NullEmitter
 from ._utils import build_unique_stem_map
 from .document import Document
 
@@ -111,7 +111,7 @@ def convert_documents(
     *,
     output_dir: Path | None = None,
     settings: RenderSettings | None = None,
-    callbacks: ConversionCallbacks | None = None,
+    emitter: DiagnosticEmitter | None = None,
     bibliography_files: Iterable[Path] | None = None,
     template: str | None = None,
     template_runtime: "TemplateRuntime | None" = None,
@@ -129,6 +129,7 @@ def convert_documents(
     fragments: list[LaTeXFragment] = []
     should_write_fragments = write_fragments if write_fragments is not None else True
     state = shared_state
+    active_emitter = emitter or NullEmitter()
 
     for _index, document in enumerate(documents):
         context = document.to_context()
@@ -147,7 +148,7 @@ def convert_documents(
             slot_overrides=slot_overrides or None,
             bibliography_files=list(bibliography_files or []),
             legacy_latex_accents=settings.legacy_latex_accents,
-            callbacks=callbacks,
+            emitter=active_emitter,
             state=None if wrap_document else state,
             template_runtime=template_runtime,
             wrap_document=wrap_document,

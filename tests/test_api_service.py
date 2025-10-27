@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from collections.abc import Mapping
 from pathlib import Path
 
 from texsmith.api.service import (
@@ -150,6 +151,61 @@ Body text.
     assert selectors["frontmatter"] == "#Introduction"
     assert "abstract" in inclusions
     assert "mainmatter" in inclusions
+
+
+class RecordingEmitter:
+    debug_enabled = False
+
+    def __init__(self) -> None:
+        self.warnings: list[tuple[str, BaseException | None]] = []
+        self.errors: list[tuple[str, BaseException | None]] = []
+        self.events: list[tuple[str, dict[str, object]]] = []
+
+    def warning(self, message: str, exc: BaseException | None = None) -> None:
+        self.warnings.append((message, exc))
+
+    def error(self, message: str, exc: BaseException | None = None) -> None:
+        self.errors.append((message, exc))
+
+    def event(self, name: str, payload: Mapping[str, object]) -> None:
+        self.events.append((name, dict(payload)))
+
+
+def test_conversion_service_uses_emitter(tmp_path: Path) -> None:
+    service = ConversionService()
+    template_dir = _create_template(tmp_path)
+    source = tmp_path / "doc.md"
+    source.write_text(
+        """---
+meta:
+  title: Sample
+slots:
+  missing: Section
+---
+
+# Introduction
+
+Body text.
+""",
+        encoding="utf-8",
+    )
+
+    emitter = RecordingEmitter()
+    request = ConversionRequest(
+        documents=[source],
+        bibliography_files=[],
+        markdown_extensions=[],
+        template=str(template_dir),
+        render_dir=tmp_path / "build",
+        emitter=emitter,
+    )
+
+    prepared = service.prepare_documents(request)
+    response = service.execute(request, prepared=prepared)
+
+    assert response.render_result is not None
+    assert any("missing" in message for message, _ in emitter.warnings)
+    assert any(name == "template_overrides" for name, _ in emitter.events)
 
 
 def test_prepare_documents_rejects_unsupported_inputs(tmp_path: Path) -> None:
