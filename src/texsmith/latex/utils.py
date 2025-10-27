@@ -22,7 +22,7 @@ _BASIC_LATEX_ESCAPE_MAP = {
 }
 
 _ACCENT_NEEDS_BRACES_PATTERN = re.compile(
-    r"\\([" + re.escape("`'^\"~=\\.Hrvuck") + r"])\s*([A-Za-z])(?![A-Za-z])"
+    r"\\([" + re.escape("`'^\"~=\\.Hrvuck") + r"])\s*([A-Za-z])(?!\{)"
 )
 _ACCENT_CONTROL_TARGET_PATTERN = re.compile(
     r"\\([" + re.escape("`'^\"~=\\.Hrvuck") + r"])\s*(\\[ij])"
@@ -45,7 +45,7 @@ def _wrap_latex_output(payload: str) -> str:
     return _ACCENT_CONTROL_TARGET_PATTERN.sub(_repl_control, payload)
 
 
-def escape_latex_chars(text: str) -> str:
+def escape_latex_chars(text: str, *, legacy_accents: bool = False) -> str:
     """Escape LaTeX special characters leveraging pylatexenc."""
     if not text:
         return text
@@ -54,8 +54,10 @@ def escape_latex_chars(text: str) -> str:
 
     def _encode_chunk(chunk: str) -> str:
         escaped = "".join(_BASIC_LATEX_ESCAPE_MAP.get(char, char) for char in chunk)
-        encoded = unicode_to_latex(escaped, non_ascii_only=True, unknown_char_warning=False)
-        return _wrap_latex_output(encoded)
+        if legacy_accents:
+            encoded = unicode_to_latex(escaped, non_ascii_only=True, unknown_char_warning=False)
+            return _wrap_latex_output(encoded)
+        return escaped
 
     def _should_skip_encoding(char: str) -> bool:
         try:

@@ -6,6 +6,7 @@ from PIL import Image  # type: ignore[import]
 import pytest
 
 from texsmith.config import BookConfig
+from texsmith.exceptions import TransformerExecutionError
 from texsmith.latex import LaTeXRenderer
 from texsmith.transformers import image2pdf, register_converter, registry
 
@@ -77,6 +78,62 @@ flowchart LR
         assert any(key.startswith("mermaid::") for key in assets)
     finally:
         register_converter("mermaid", original)
+
+
+def test_mermaid_block_falls_back_when_converter_fails(
+    renderer: LaTeXRenderer, tmp_path: Path
+) -> None:
+    original = registry.get("mermaid")
+
+    def _failing_converter(*_args, **_kwargs):
+        raise TransformerExecutionError("docker missing")
+
+    register_converter("mermaid", _failing_converter)
+    try:
+        html = """
+        <div class="highlight">
+            <pre><code>%% Influence Graph
+flowchart LR
+    A --> B
+</code></pre>
+        </div>
+        """
+        latex = renderer.render(html, runtime={"source_dir": tmp_path})
+        assert "[Influence Graph unavailable]" in latex
+    finally:
+        register_converter("mermaid", original)
+
+
+def test_unicode_emoji_converts_to_icon(renderer: LaTeXRenderer, tmp_path: Path) -> None:
+    original = registry.get("fetch-image")
+    register_converter("fetch-image", _StubConverter("emoji-icon"))
+    try:
+        html = "<p>Math 🧮 icon</p>"
+        latex = renderer.render(html, runtime={"source_dir": tmp_path})
+        assert "\\includegraphics" in latex
+        assert "emoji-icon.pdf" in latex
+
+        assets = dict(renderer.assets.items())
+        assert any("twemoji.maxcdn.com" in key for key in assets)
+    finally:
+        register_converter("fetch-image", original)
+
+
+def test_renderer_emits_unicode_accents_by_default(renderer: LaTeXRenderer) -> None:
+    html = "<p>éclair — ligature œ</p>"
+    latex = renderer.render(html)
+
+    assert "éclair — ligature œ" in latex
+
+
+def test_renderer_supports_legacy_accent_mode(tmp_path: Path) -> None:
+    legacy_renderer = LaTeXRenderer(
+        config=BookConfig(project_dir=tmp_path, legacy_latex_accents=True),
+        output_root=tmp_path / "build-legacy",
+    )
+    latex = legacy_renderer.render("<p>éclair</p>")
+
+    assert "\\'{e}" in latex
 
 
 def test_twemoji_image_conversion(renderer: LaTeXRenderer) -> None:

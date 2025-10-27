@@ -5,12 +5,14 @@ from __future__ import annotations
 from collections.abc import Iterable
 import hashlib
 import re
+import warnings
 
 from bs4.element import NavigableString, Tag
+import emoji
 from requests.utils import requote_uri as requote_url
 
 from ..context import RenderContext
-from ..exceptions import InvalidNodeError
+from ..exceptions import InvalidNodeError, TransformerExecutionError
 from ..latex.utils import escape_latex_chars
 from ..rules import RenderPhase, renders
 from ..transformers import fetch_image, svg2pdf
@@ -183,16 +185,69 @@ def _allow_hyphenation(text: str) -> str:
     return re.sub(r"(\b[^\W\d_]{2,}-)([^\W\d_]{7,})\b", r"\1\\allowhyphens \2", text)
 
 
-def _prepare_plain_text(text: str) -> str:
-    escaped = escape_latex_chars(text)
+def _prepare_plain_text(text: str, *, legacy_latex_accents: bool) -> str:
+    escaped = escape_latex_chars(text, legacy_accents=legacy_latex_accents)
     escaped = _allow_hyphenation(escaped)
     escaped = _replace_unicode_superscripts(escaped)
     return _replace_unicode_subscripts(escaped)
 
 
+def _segment_text_with_emoji(text: str) -> list[tuple[str, str]]:
+    """Split text into plain fragments and emoji clusters."""
+    if not text:
+        return []
+    entries = emoji.emoji_list(text)
+    if not entries:
+        return [("text", text)]
+
+    segments: list[tuple[str, str]] = []
+    cursor = 0
+    for entry in entries:
+        start = entry["match_start"]
+        end = entry["match_end"]
+        if start > cursor:
+            segments.append(("text", text[cursor:start]))
+        token = text[start:end]
+        segments.append(("emoji", token))
+        cursor = end
+    if cursor < len(text):
+        segments.append(("text", text[cursor:]))
+    return segments
+
+
+def _emoji_twemoji_url(token: str) -> str:
+    codepoints = "-".join(f"{ord(char):x}" for char in token)
+    return f"https://twemoji.maxcdn.com/v/latest/svg/{codepoints}.svg"
+
+
+def _render_emoji(token: str, context: RenderContext) -> str:
+    url = _emoji_twemoji_url(token)
+    try:
+        artefact = fetch_image(url, output_dir=context.assets.output_root)
+    except TransformerExecutionError as exc:
+        warnings.warn(f"Failed to fetch emoji '{token}': {exc}", stacklevel=2)
+        return _prepare_plain_text(token)
+
+    stored_path = context.assets.register(url, artefact)
+    asset_path = context.assets.latex_path(stored_path)
+    return context.formatter.icon(asset_path)
+
+
+def _escape_text_segment(text: str, context: RenderContext, *, legacy_latex_accents: bool) -> str:
+    chunks: list[str] = []
+    for kind, payload in _segment_text_with_emoji(text):
+        if kind == "text":
+            if payload:
+                chunks.append(_prepare_plain_text(payload, legacy_latex_accents=legacy_latex_accents))
+        else:
+            chunks.append(_render_emoji(payload, context))
+    return "".join(chunks)
+
+
 @renders(phase=RenderPhase.PRE, name="escape_plain_text", auto_mark=False)
-def escape_plain_text(root: Tag, _context: RenderContext) -> None:
+def escape_plain_text(root: Tag, context: RenderContext) -> None:
     """Escape LaTeX characters on plain text nodes outside code blocks."""
+    legacy_latex_accents = getattr(context.config, "legacy_latex_accents", False)
     for node in list(root.find_all(string=True)):
         if getattr(node, "processed", False):
             continue
@@ -213,10 +268,9 @@ def escape_plain_text(root: Tag, _context: RenderContext) -> None:
             continue
         matches = list(_MATH_PAYLOAD_PATTERN.finditer(text))
         if not matches:
-            escaped = _prepare_plain_text(text)
+            escaped = _escape_text_segment(text, context, legacy_latex_accents=legacy_latex_accents)
             if escaped != text:
-                replacement = mark_processed(NavigableString(escaped))
-                node.replace_with(replacement)
+                node.replace_with(mark_processed(NavigableString(escaped)))
             continue
 
         parts: list[str] = []
@@ -225,14 +279,22 @@ def escape_plain_text(root: Tag, _context: RenderContext) -> None:
             if match.start() > cursor:
                 segment = text[cursor : match.start()]
                 if segment:
-                    escaped = _prepare_plain_text(segment)
+                    escaped = _escape_text_segment(
+                        segment,
+                        context,
+                        legacy_latex_accents=legacy_latex_accents,
+                    )
                     parts.append(escaped)
             parts.append(match.group(0))
             cursor = match.end()
         if cursor < len(text):
             tail = text[cursor:]
             if tail:
-                escaped = _prepare_plain_text(tail)
+                escaped = _escape_text_segment(
+                    tail,
+                    context,
+                    legacy_latex_accents=legacy_latex_accents,
+                )
                 parts.append(escaped)
 
         replacement = mark_processed(NavigableString("".join(parts)))
@@ -286,7 +348,8 @@ def render_inline_code(element: Tag, context: RenderContext) -> None:
     if "\n" in code:
         return
 
-    code = escape_latex_chars(code).replace(" ", "~")
+    legacy_latex_accents = getattr(context.config, "legacy_latex_accents", False)
+    code = escape_latex_chars(code, legacy_accents=legacy_latex_accents).replace(" ", "~")
 
     latex = context.formatter.codeinlinett(code)
     element.replace_with(mark_processed(NavigableString(latex)))
@@ -348,7 +411,8 @@ def render_abbreviation(element: Tag, context: RenderContext) -> None:
         return
 
     if not description:
-        latex_text = escape_latex_chars(term)
+        legacy_latex_accents = getattr(context.config, "legacy_latex_accents", False)
+        latex_text = escape_latex_chars(term, legacy_accents=legacy_latex_accents)
         element.replace_with(mark_processed(NavigableString(latex_text)))
         return
 
@@ -466,7 +530,10 @@ def render_index_entry(element: Tag, context: RenderContext) -> None:
     if not parts:
         return
 
-    escaped_fragments = [escape_latex_chars(part) for part in parts]
+    legacy_latex_accents = getattr(context.config, "legacy_latex_accents", False)
+    escaped_fragments = [
+        escape_latex_chars(part, legacy_accents=legacy_latex_accents) for part in parts
+    ]
     escaped_entry = "!".join(escaped_fragments)
     style_value = coerce_attribute(element.get("data-tag-style"))
     style_key = style_value.strip().lower() if style_value else ""
@@ -474,7 +541,7 @@ def render_index_entry(element: Tag, context: RenderContext) -> None:
         style_key = ""
 
     display_text = element.get_text(strip=False) or ""
-    escaped_text = escape_latex_chars(display_text)
+    escaped_text = escape_latex_chars(display_text, legacy_accents=legacy_latex_accents)
 
     latex = context.formatter.index(escaped_text, entry=escaped_entry, style=style_key)
     node = mark_processed(NavigableString(latex))

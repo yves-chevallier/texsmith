@@ -48,8 +48,9 @@ class LaTeXFormatter:
             comment_end_string=r"}",
             loader=FileSystemLoader(template_dir),
         )
-        self.env.filters.setdefault("latex_escape", escape_latex_chars)
-        self.env.filters.setdefault("escape_latex", escape_latex_chars)
+        self.legacy_latex_accents: bool = False
+        self.env.filters.setdefault("latex_escape", self._escape_latex)
+        self.env.filters.setdefault("escape_latex", self._escape_latex)
 
         template_paths: list[Path] = []
         for ext in (".tex", ".cls"):
@@ -133,8 +134,14 @@ class LaTeXFormatter:
 
     def url(self, text: str, url: str) -> str:
         """Render a URL, escaping special LaTeX characters."""
-        safe_url = escape_latex_chars(requote_url(url))
+        safe_url = escape_latex_chars(
+            requote_url(url), legacy_accents=self.legacy_latex_accents
+        )
         return self._get_template("url").render(text=text, url=safe_url)
+
+    def _escape_latex(self, value: str) -> str:
+        """Escape helper that honours the formatter legacy accent setting."""
+        return escape_latex_chars(value, legacy_accents=self.legacy_latex_accents)
 
     def svg(self, svg: str | Path) -> str:
         """Render an SVG image by converting it to PDF first."""

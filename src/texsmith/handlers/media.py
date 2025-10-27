@@ -9,11 +9,12 @@ from pathlib import Path
 from typing import Any
 from urllib.parse import urlparse
 import zlib
+import warnings
 
 from bs4.element import NavigableString, Tag
 
 from ..context import RenderContext
-from ..exceptions import AssetMissingError, InvalidNodeError
+from ..exceptions import AssetMissingError, InvalidNodeError, TransformerExecutionError
 from ..rules import RenderPhase, renders
 from ..transformers import (
     drawio2pdf,
@@ -212,7 +213,15 @@ def _render_mermaid_diagram(
             raise AssetMissingError("Project directory required to render Mermaid diagrams")
         render_options["config_filename"] = Path(project_dir) / mermaid_config
 
-    artefact = mermaid2pdf(body, output_dir=context.assets.output_root, **render_options)
+    try:
+        artefact = mermaid2pdf(body, output_dir=context.assets.output_root, **render_options)
+    except Exception as exc:  # pragma: no cover - safeguard
+        warnings.warn(
+            f"Mermaid rendering failed, falling back to code block: {exc}",
+            stacklevel=2,
+        )
+        placeholder = effective_caption or "Mermaid diagram"
+        return mark_processed(NavigableString(f"[{placeholder} unavailable]"))
 
     asset_key = f"mermaid::{hashlib.sha256(body.encode('utf-8')).hexdigest()}"
     stored_path = context.assets.register(asset_key, artefact)
@@ -329,7 +338,15 @@ def render_mermaid(element: Tag, context: RenderContext) -> None:
 
     diagram = code.get_text()
     template = _figure_template_for(element)
-    figure_node = _render_mermaid_diagram(context, diagram, template=template)
+    try:
+        figure_node = _render_mermaid_diagram(context, diagram, template=template)
+    except TransformerExecutionError as exc:  # pragma: no cover - defensive
+        warnings.warn(
+            f"Mermaid rendering failed, falling back to code block: {exc}",
+            stacklevel=2,
+        )
+        placeholder = "Mermaid diagram"
+        figure_node = mark_processed(NavigableString(f"[{placeholder} unavailable]"))
     if figure_node is None:
         return
 
@@ -345,7 +362,15 @@ def render_mermaid_pre(element: Tag, context: RenderContext) -> None:
 
     diagram = element.get_text()
     template = _figure_template_for(element)
-    figure_node = _render_mermaid_diagram(context, diagram, template=template)
+    try:
+        figure_node = _render_mermaid_diagram(context, diagram, template=template)
+    except TransformerExecutionError as exc:  # pragma: no cover - defensive
+        warnings.warn(
+            f"Mermaid rendering failed, falling back to code block: {exc}",
+            stacklevel=2,
+        )
+        placeholder = "Mermaid diagram"
+        figure_node = mark_processed(NavigableString(f"[{placeholder} unavailable]"))
     if figure_node is None:
         return
 
