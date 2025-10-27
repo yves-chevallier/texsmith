@@ -13,7 +13,7 @@ from typer.testing import CliRunner
 from texsmith.cli import DEFAULT_MARKDOWN_EXTENSIONS, app
 from texsmith.cli.commands import build as build_cmd
 from texsmith.cli import state as cli_state
-from texsmith.latex.log import LatexStreamResult
+from texsmith.latex.log import LatexMessage, LatexMessageSeverity, LatexStreamResult
 
 
 build_module = importlib.import_module("texsmith.cli.commands.build")
@@ -614,6 +614,34 @@ def test_multi_document_template_generates_inputs(tmp_path: Path) -> None:
     assert "\\input{chapter2}" in content
 
 
+def test_convert_template_outputs_summary(tmp_path: Path) -> None:
+    runner = CliRunner()
+    html_file = tmp_path / "index.html"
+    html_file.write_text(
+        "<article class='md-content__inner'><h2>Intro</h2></article>",
+        encoding="utf-8",
+    )
+
+    output_dir = tmp_path / "output"
+    template_dir = _template_path("article")
+
+    result = runner.invoke(
+        app,
+        [
+            "convert",
+            str(html_file),
+            "--template",
+            str(template_dir),
+            "--output-dir",
+            str(output_dir),
+        ],
+    )
+
+    assert result.exit_code == 0, result.stdout
+    assert "Template Conversion Summary" in result.stdout
+    assert "Main document" in result.stdout
+
+
 def test_slot_assignment_targets_specific_file(tmp_path: Path) -> None:
     runner = CliRunner()
     abstract_doc = tmp_path / "abstract.md"
@@ -678,6 +706,53 @@ def test_slot_assignment_extracts_section_from_file(tmp_path: Path) -> None:
     content = main_file.read_text(encoding="utf-8")
     assert "Appendix content." in content
     assert "\\input{chapter2}" in content
+
+
+def test_convert_verbose_emits_extension_diagnostics(tmp_path: Path) -> None:
+    runner = CliRunner()
+    html_file = tmp_path / "index.html"
+    html_file.write_text(
+        "<article class='md-content__inner'><p>Body</p></article>",
+        encoding="utf-8",
+    )
+
+    result = runner.invoke(
+        app,
+        [
+            "--verbose",
+            "convert",
+            str(html_file),
+        ],
+    )
+
+    assert result.exit_code == 0, result.stdout
+    assert "Extensions:" in result.stdout
+
+
+def test_convert_verbose_template_reports_overrides(tmp_path: Path) -> None:
+    runner = CliRunner()
+    markdown_file = tmp_path / "chapter.md"
+    markdown_file.write_text("# Heading\n\nBody", encoding="utf-8")
+    output_dir = tmp_path / "build"
+    template_dir = _template_path("article")
+
+    result = runner.invoke(
+        app,
+        [
+            "--verbose",
+            "--verbose",
+            "convert",
+            str(markdown_file),
+            "--template",
+            str(template_dir),
+            "--output-dir",
+            str(output_dir),
+        ],
+    )
+
+    assert result.exit_code == 0, result.stdout
+    assert "Template overrides:" in result.stdout
+    assert "Settings:" in result.stdout
 
 
 def test_build_requires_template(tmp_path: Path) -> None:
@@ -806,7 +881,8 @@ def test_build_invokes_latexmk(tmp_path: Path, monkeypatch: Any) -> None:
     assert command[-1] == "index.tex"
     assert kwargs["cwd"] == output_dir
     assert "build ok" in result.stdout
-    assert "PDF document written to" in result.stdout
+    assert "Build Outputs" in result.stdout
+    assert "PDF" in result.stdout
 
 
 def test_build_with_bibliography_forces_bibtex(tmp_path: Path, monkeypatch: Any) -> None:
@@ -910,6 +986,59 @@ def test_build_respects_shell_escape(tmp_path: Path, monkeypatch: Any) -> None:
     assert calls, "latexmk was not invoked"
     pdflatex_args = [arg for arg in calls[0] if arg.startswith("-pdflatex=")]
     assert pdflatex_args and "--shell-escape" in pdflatex_args[0]
+
+
+def test_build_failure_reports_summary(tmp_path: Path, monkeypatch: Any) -> None:
+    runner = CliRunner()
+    html_file = tmp_path / "index.html"
+    html_file.write_text(
+        "<article class='md-content__inner'><p>Body</p></article>",
+        encoding="utf-8",
+    )
+
+    output_dir = tmp_path / "output"
+    template_dir = _template_path("article")
+
+    def fake_which(name: str) -> str:
+        assert name == "latexmk"
+        return "/usr/bin/latexmk"
+
+    def fake_stream(
+        command: list[str],
+        *,
+        cwd: str,
+        env: dict[str, str],
+        console: Any,
+    ) -> LatexStreamResult:
+        log_path = Path(cwd) / "index.log"
+        log_path.write_text("! Undefined control sequence.\nl.42 \\unknowncmd\n", encoding="utf-8")
+        message = LatexMessage(
+            severity=LatexMessageSeverity.ERROR,
+            summary="! Undefined control sequence.",
+            details=["l.42 \\unknowncmd"],
+        )
+        return LatexStreamResult(returncode=1, messages=[message])
+
+    monkeypatch.setattr(build_cmd.shutil, "which", fake_which)
+    monkeypatch.setattr(build_module, "stream_latexmk_output", fake_stream)
+
+    result = runner.invoke(
+        app,
+        [
+            "build",
+            str(html_file),
+            "--output-dir",
+            str(output_dir),
+            "--template",
+            str(template_dir),
+        ],
+    )
+
+    assert result.exit_code == 1
+    assert "latexmk failure" in result.stderr
+    assert "Undefined control sequence" in result.stderr
+    assert "index.log" in result.stderr
+
 
 def test_cli_state_per_context_isolated() -> None:
     command = click.Command("dummy")

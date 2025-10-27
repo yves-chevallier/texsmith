@@ -11,6 +11,7 @@ from typer.core import TyperCommand
 from texsmith.cli.commands.build import build
 from texsmith.cli.commands.convert import convert
 from texsmith.cli.commands.templates import template_info
+from ._options import DIAGNOSTICS_PANEL
 from .state import debug_enabled, emit_error, ensure_rich_compat, get_cli_state, set_cli_state
 
 
@@ -61,6 +62,7 @@ def _app_root(
         False,
         "--list-extensions",
         help="List Markdown extensions enabled by default and exit.",
+        rich_help_panel=DIAGNOSTICS_PANEL,
     ),
     verbose: int = typer.Option(
         0,
@@ -68,11 +70,13 @@ def _app_root(
         "-v",
         count=True,
         help=("Increase CLI verbosity. Combine multiple times for additional diagnostics."),
+        rich_help_panel=DIAGNOSTICS_PANEL,
     ),
     debug: bool = typer.Option(
         False,
         "--debug/--no-debug",
         help="Show full tracebacks when an unexpected error occurs.",
+        rich_help_panel=DIAGNOSTICS_PANEL,
     ),
 ) -> None:
     state = set_cli_state(ctx=ctx, verbosity=verbose, debug=debug)

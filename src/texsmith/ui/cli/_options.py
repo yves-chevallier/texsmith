@@ -7,6 +7,13 @@ from typing import Annotated
 
 import typer
 
+INPUTS_PANEL = "Input Handling"
+STRUCTURE_PANEL = "Structure"
+RENDERING_PANEL = "Rendering"
+OUTPUT_PANEL = "Output"
+TEMPLATE_PANEL = "Template"
+DIAGNOSTICS_PANEL = "Diagnostics"
+
 InputPathArgument = Annotated[
     list[Path] | None,
     typer.Argument(
@@ -20,6 +27,7 @@ InputPathArgument = Annotated[
         dir_okay=False,
         readable=True,
         resolve_path=True,
+        rich_help_panel=INPUTS_PANEL,
     ),
 ]
 
@@ -28,6 +36,7 @@ SelectorOption = Annotated[
     typer.Option(
         "--selector",
         help="CSS selector to extract the MkDocs article content.",
+        rich_help_panel=INPUTS_PANEL,
     ),
 ]
 
@@ -36,6 +45,7 @@ FullDocumentOption = Annotated[
     typer.Option(
         "--full-document",
         help="Disable article extraction and render the entire HTML file.",
+        rich_help_panel=INPUTS_PANEL,
     ),
 ]
 
@@ -44,6 +54,7 @@ BaseLevelOption = Annotated[
     typer.Option(
         "--base-level",
         help="Shift detected heading levels by this offset.",
+        rich_help_panel=STRUCTURE_PANEL,
     ),
 ]
 
@@ -54,6 +65,7 @@ HeadingLevelOption = Annotated[
         "-h",
         min=0,
         help="Indent all headings by the selected depth (e.g. 1 turns sections into subsections).",
+        rich_help_panel=STRUCTURE_PANEL,
     ),
 ]
 
@@ -62,6 +74,7 @@ DropTitleOption = Annotated[
     typer.Option(
         "--drop-title/--keep-title",
         help="Drop the first document title heading.",
+        rich_help_panel=STRUCTURE_PANEL,
     ),
 ]
 
@@ -70,6 +83,7 @@ NumberedOption = Annotated[
     typer.Option(
         "--numbered/--unnumbered",
         help="Toggle numbered headings.",
+        rich_help_panel=STRUCTURE_PANEL,
     ),
 ]
 
@@ -78,6 +92,7 @@ ParserOption = Annotated[
     typer.Option(
         "--parser",
         help='BeautifulSoup parser backend to use (defaults to "html.parser").',
+        rich_help_panel=INPUTS_PANEL,
     ),
 ]
 
@@ -86,6 +101,7 @@ DisableFallbackOption = Annotated[
     typer.Option(
         "--no-fallback-converters",
         help="Disable registration of placeholder converters when Docker is unavailable.",
+        rich_help_panel=RENDERING_PANEL,
     ),
 ]
 
@@ -94,6 +110,7 @@ CopyAssetsOption = Annotated[
     typer.Option(
         "--copy-assets/--no-copy-assets",
         help="Toggle copying of remote assets to the output directory.",
+        rich_help_panel=RENDERING_PANEL,
     ),
 ]
 
@@ -103,6 +120,7 @@ CopyAssetsOptionWithShort = Annotated[
         "--copy-assets/--no-copy-assets",
         "-a/-A",
         help="Toggle copying of remote assets to the output directory.",
+        rich_help_panel=RENDERING_PANEL,
     ),
 ]
 
@@ -111,6 +129,7 @@ ManifestOption = Annotated[
     typer.Option(
         "--manifest/--no-manifest",
         help="Generate a manifest.json file alongside the LaTeX output.",
+        rich_help_panel=RENDERING_PANEL,
     ),
 ]
 
@@ -120,6 +139,7 @@ ManifestOptionWithShort = Annotated[
         "--manifest/--no-manifest",
         "-m/-M",
         help="Generate a manifest.json file alongside the LaTeX output.",
+        rich_help_panel=RENDERING_PANEL,
     ),
 ]
 
@@ -128,6 +148,7 @@ DebugHtmlOption = Annotated[
     typer.Option(
         "--debug-html/--no-debug-html",
         help="Persist intermediate HTML snapshots (inherits from --debug when omitted).",
+        rich_help_panel=DIAGNOSTICS_PANEL,
     ),
 ]
 
@@ -136,6 +157,7 @@ LanguageOption = Annotated[
     typer.Option(
         "--language",
         help="Language code passed to babel (defaults to metadata or english).",
+        rich_help_panel=RENDERING_PANEL,
     ),
 ]
 
@@ -149,6 +171,7 @@ SlotsOption = Annotated[
             "multiple sections."
         ),
         show_default=False,
+        rich_help_panel=TEMPLATE_PANEL,
     ),
 ]
 
@@ -161,6 +184,7 @@ MarkdownExtensionsOption = Annotated[
             "Additional Markdown extensions to enable (comma or space separated values are accepted)."
         ),
         show_default=False,
+        rich_help_panel=RENDERING_PANEL,
     ),
 ]
 
@@ -175,6 +199,7 @@ DisableMarkdownExtensionsOption = Annotated[
             "multiple times."
         ),
         show_default=False,
+        rich_help_panel=RENDERING_PANEL,
     ),
 ]
 
@@ -190,6 +215,7 @@ BibliographyOption = Annotated[
         readable=True,
         resolve_path=True,
         show_default=False,
+        rich_help_panel=TEMPLATE_PANEL,
     ),
 ]
 
@@ -201,6 +227,7 @@ OutputPathOption = Annotated[
         "--output-dir",
         help="Output file or directory. Defaults to stdout unless a template is used.",
         show_default=False,
+        rich_help_panel=OUTPUT_PANEL,
     ),
 ]
 
@@ -211,6 +238,7 @@ OutputDirOption = Annotated[
         "-o",
         help="Directory used to collect generated assets (if any).",
         resolve_path=True,
+        rich_help_panel=OUTPUT_PANEL,
     ),
 ]
 
@@ -223,5 +251,15 @@ TemplateOption = Annotated[
             "Select a LaTeX template to use during conversion. Accepts a local path or a registered "
             "template name."
         ),
+        rich_help_panel=TEMPLATE_PANEL,
+    ),
+]
+
+OpenLogOption = Annotated[
+    bool,
+    typer.Option(
+        "--open-log/--no-open-log",
+        help="Open the latexmk log with the system viewer when compilation fails.",
+        rich_help_panel=DIAGNOSTICS_PANEL,
     ),
 ]

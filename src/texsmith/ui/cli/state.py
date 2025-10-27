@@ -5,7 +5,7 @@ from __future__ import annotations
 from contextvars import ContextVar
 from dataclasses import dataclass, field
 import sys
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Mapping
 
 import click
 import typer
@@ -67,6 +67,7 @@ class CLIState:
 
     verbosity: int = 0
     show_tracebacks: bool = False
+    events: dict[str, list[dict[str, Any]]] = field(default_factory=dict, init=False)
     _console: Console | None = field(default=None, init=False, repr=False)
     _err_console: Console | None = field(default=None, init=False, repr=False)
 
@@ -96,6 +97,15 @@ class CLIState:
                 self._err_console = Console()
         return self._err_console
 
+    def record_event(self, name: str, payload: Mapping[str, Any] | None = None) -> None:
+        """Store a structured diagnostic event for later presentation."""
+        entry = dict(payload or {})
+        self.events.setdefault(name, []).append(entry)
+
+    def consume_events(self, name: str) -> list[dict[str, Any]]:
+        """Retrieve and clear events for the given name."""
+        return self.events.pop(name, [])
+
 
 _STATE_VAR: ContextVar[CLIState | None] = ContextVar("texsmith_cli_state", default=None)
 
@@ -115,10 +125,14 @@ def get_cli_state(
     state: CLIState | None = None
 
     if ctx is not None:
-        obj = getattr(ctx, "obj", None)
-        if isinstance(obj, CLIState):
-            state = obj
-        elif create:
+        current_ctx = ctx
+        while current_ctx is not None:
+            obj = getattr(current_ctx, "obj", None)
+            if isinstance(obj, CLIState):
+                state = obj
+                break
+            current_ctx = getattr(current_ctx, "parent", None)
+        if state is None and create:
             state = CLIState()
             ctx.obj = state
         if state is not None:
@@ -191,8 +205,9 @@ def render_message(
         if detail and detail not in message:
             extra_lines.append(detail)
         extra_lines.append(f"type: {type(exception).__name__}")
-        if exception.__notes__:
-            extra_lines.extend(exception.__notes__)
+        notes = getattr(exception, "__notes__", None)
+        if notes:
+            extra_lines.extend(str(note) for note in notes)
         if state.verbosity >= 2:
             chain = _exception_chain(exception)
             if chain:

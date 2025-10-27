@@ -52,7 +52,7 @@ from typing import Any
 
 from ..context import DocumentState
 from ..domain.conversion.core import convert_document
-from ..domain.conversion.debug import ConversionCallbacks
+from ..domain.conversion.debug import ConversionCallbacks, _record_event
 from ..domain.conversion_contexts import DocumentContext
 from ..templates import (
     TemplateError,
@@ -228,6 +228,13 @@ class TemplateSession:
             if result.tex_path is None:
                 raise TemplateError("Template rendering failed to produce a LaTeX document.")
 
+            if result.template_overrides:
+                _record_event(
+                    self.callbacks,
+                    "template_overrides",
+                    {"values": dict(result.template_overrides)},
+                )
+
             return TemplateRenderResult(
                 main_tex_path=result.tex_path,
                 fragment_paths=[],
@@ -310,6 +317,12 @@ class TemplateSession:
             shared_state = DocumentState()
         if template_overrides_master is None:
             template_overrides_master = self._options.to_dict()
+        if template_overrides_master:
+            _record_event(
+                self.callbacks,
+                "template_overrides",
+                {"values": dict(template_overrides_master)},
+            )
 
         aggregated_render = {
             slot: "\n\n".join(chunk for chunk in chunks if chunk)

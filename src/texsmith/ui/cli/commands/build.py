@@ -26,6 +26,12 @@ from texsmith.domain.conversion.inputs import UnsupportedInputError
 from texsmith.adapters.latex.log import stream_latexmk_output
 from texsmith.adapters.markdown import resolve_markdown_extensions
 from texsmith.domain.templates import TemplateError
+from ..presenter import (
+    consume_event_diagnostics,
+    parse_latex_log,
+    present_build_summary,
+    present_latexmk_failure,
+)
 from ..state import debug_enabled, emit_error, emit_warning, get_cli_state
 from ..utils import parse_slot_option
 from .._options import (
@@ -48,6 +54,7 @@ from .._options import (
     SelectorOption,
     SlotsOption,
     TemplateOption,
+    OpenLogOption,
 )
 
 
@@ -83,6 +90,17 @@ def build_latexmk_command(
     return command
 
 
+def _format_path_for_event(path: Path) -> str:
+    try:
+        resolved = path.resolve()
+    except OSError:
+        resolved = path
+    try:
+        return str(resolved.relative_to(Path.cwd()))
+    except ValueError:
+        return str(resolved)
+
+
 def build(
     inputs: InputPathArgument = None,
     output_dir: OutputDirOption = Path("build"),
@@ -112,9 +130,11 @@ def build(
     markdown_extensions: MarkdownExtensionsOption = None,
     disable_markdown_extensions: DisableMarkdownExtensionsOption = None,
     bibliography: BibliographyOption = None,
+    open_log: OpenLogOption = False,
 ) -> None:
     """Orchestrate document conversion and compilation for the MkDocs workflow."""
 
+    state = get_cli_state()
     resolved_inputs = list(inputs or [])
 
     documents, bibliography_files = split_document_inputs(
@@ -133,6 +153,7 @@ def build(
         markdown_extensions,
         disable_markdown_extensions,
     )
+    extension_line = f"Extensions: {', '.join(resolved_markdown_extensions) or '(none)'}"
     try:
         requested_slots = parse_slot_option(slots)
     except ValueError as exc:
@@ -149,6 +170,7 @@ def build(
         emit_warning=lambda message, exception=None: emit_warning(message, exception=exception),
         emit_error=lambda message, exception=None: emit_error(message, exception=exception),
         debug_enabled=debug_enabled(),
+        record_event=state.record_event,
     )
 
     try:
@@ -179,7 +201,30 @@ def build(
             for slot_name, selector_value in requested_slots.items()
         ]
     }
+    if requested_slots:
+        state.record_event(
+            "slot_assignments",
+            {
+                "entries": [
+                    {
+                        "document": _format_path_for_event(document_path),
+                        "slot": slot_name,
+                        "selector": selector_value,
+                        "include_document": False,
+                    }
+                    for slot_name, selector_value in requested_slots.items()
+                ]
+            },
+        )
     apply_slot_assignments(prepared.document_map, assignments)
+
+    def _flush_diagnostics() -> None:
+        lines: list[str] = []
+        if state.verbosity >= 1:
+            lines.append(extension_line)
+        lines.extend(consume_event_diagnostics(state))
+        for line in lines:
+            typer.echo(line)
 
     settings = build_render_settings(
         parser=parser,
@@ -189,6 +234,15 @@ def build(
         persist_debug_html=bool(debug_snapshot),
         language=language,
         legacy_latex_accents=False,
+    )
+    state.record_event(
+        "conversion_settings",
+        {
+            "parser": parser or "auto",
+            "copy_assets": copy_assets,
+            "manifest": manifest,
+            "fallback_converters_enabled": not disable_fallback_converters,
+        },
     )
 
     render_dir = output_dir.resolve()
@@ -274,10 +328,18 @@ def build(
             typer.echo(process.stderr.rstrip(), err=True)
 
         if process.returncode != 0:
+            log_path = render_result.main_tex_path.with_suffix(".log")
+            messages = parse_latex_log(log_path)
+            present_latexmk_failure(
+                state=state,
+                log_path=log_path,
+                messages=messages,
+                open_log=open_log,
+            )
             emit_error(f"latexmk exited with status {process.returncode}")
             raise typer.Exit(code=process.returncode)
     else:
-        console = get_cli_state().console
+        console = state.console
         console.print("[bold cyan]Running latexmk…[/]")
         try:
             result = stream_latexmk_output(
@@ -293,11 +355,20 @@ def build(
             raise typer.Exit(code=1) from exc
 
         if result.returncode != 0:
+            log_path = render_result.main_tex_path.with_suffix(".log")
+            messages = result.messages or parse_latex_log(log_path)
+            present_latexmk_failure(
+                state=state,
+                log_path=log_path,
+                messages=messages,
+                open_log=open_log,
+            )
             emit_error(f"latexmk exited with status {result.returncode}")
             raise typer.Exit(code=result.returncode)
 
     pdf_path = render_result.main_tex_path.with_suffix(".pdf")
-    typer.secho(f"PDF document written to {pdf_path}", fg=typer.colors.GREEN)
+    present_build_summary(state=state, render_result=render_result, pdf_path=pdf_path)
+    _flush_diagnostics()
 
 
 # Expose runtime dependencies for test monkeypatching
