@@ -1,9 +1,11 @@
 """Exception hierarchy kept available for existing importers."""
+# pyright: reportUnsupportedDunderAll=false
 
 from __future__ import annotations
 
 from texsmith.core import exceptions as _exceptions
-from texsmith.core.exceptions import *  # noqa: F401,F403
+from texsmith.core.exceptions import *
+
 
 __all__ = list(getattr(_exceptions, "__all__", []))
 if not __all__:

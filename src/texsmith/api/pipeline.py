@@ -48,6 +48,7 @@ from ..core.diagnostics import DiagnosticEmitter, NullEmitter
 from ._utils import build_unique_stem_map
 from .document import Document
 
+
 if TYPE_CHECKING:  # pragma: no cover - type checking only
     from ..context import DocumentState
     from ..core.templates import TemplateRuntime
@@ -114,9 +115,9 @@ def convert_documents(
     emitter: DiagnosticEmitter | None = None,
     bibliography_files: Iterable[Path] | None = None,
     template: str | None = None,
-    template_runtime: "TemplateRuntime | None" = None,
+    template_runtime: TemplateRuntime | None = None,
     wrap_document: bool = True,
-    shared_state: "DocumentState | None" = None,
+    shared_state: DocumentState | None = None,
     write_fragments: bool | None = None,
 ) -> ConversionBundle:
     """Convert one or more documents into LaTeX fragments."""

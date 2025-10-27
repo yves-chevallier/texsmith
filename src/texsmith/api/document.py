@@ -41,10 +41,14 @@ from collections.abc import Iterable, Mapping
 import copy
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any
+from typing import Any, ClassVar
 
+from ..adapters.markdown import (
+    DEFAULT_MARKDOWN_EXTENSIONS,
+    MarkdownConversionError,
+    render_markdown,
+)
 from ..core.conversion.debug import ConversionError
-from ..core.diagnostics import DiagnosticEmitter, NullEmitter
 from ..core.conversion.inputs import (
     DOCUMENT_SELECTOR_SENTINEL,
     InputKind,
@@ -53,11 +57,7 @@ from ..core.conversion.inputs import (
     extract_front_matter_slots,
 )
 from ..core.conversion_contexts import DocumentContext
-from ..markdown import (
-    DEFAULT_MARKDOWN_EXTENSIONS,
-    MarkdownConversionError,
-    render_markdown,
-)
+from ..core.diagnostics import DiagnosticEmitter, NullEmitter
 from ..templates import LATEX_HEADING_LEVELS
 
 
@@ -114,9 +114,9 @@ class DocumentRenderOptions:
 class DocumentSlots:
     """Container tracking slot selectors and inclusion directives."""
 
-    __slots__ = ("_selectors", "_inclusions")
+    __slots__ = ("_inclusions", "_selectors")
 
-    _WILDCARDS = {
+    _WILDCARDS: ClassVar[set[str]] = {
         DOCUMENT_SELECTOR_SENTINEL,
         DOCUMENT_SELECTOR_SENTINEL.lower(),
         "*",
@@ -314,6 +314,15 @@ class Document:
             options=self.options.copy(),
             slots=self.slots.copy(),
         )
+
+    @property
+    def front_matter(self) -> Mapping[str, Any]:
+        """Return a deep copy of the front-matter mapping."""
+        return copy.deepcopy(self._front_matter)
+
+    def set_front_matter(self, values: Mapping[str, Any]) -> None:
+        """Replace the stored front matter with a deep copy of the mapping."""
+        self._front_matter = copy.deepcopy(values)
 
     @property
     def drop_title(self) -> bool:

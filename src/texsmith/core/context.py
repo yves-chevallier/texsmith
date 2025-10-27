@@ -16,8 +16,9 @@ from .exceptions import AssetMissingError
 
 
 if TYPE_CHECKING:  # pragma: no cover - typing only
-    from .config import BookConfig
     from texsmith.adapters.latex.formatter import LaTeXFormatter
+
+    from .config import BookConfig
     from .rules import RenderPhase
 
 

@@ -5,14 +5,12 @@ import types
 from typing import Any
 
 import click
-
 import pytest
 import typer
 from typer.testing import CliRunner
 
-from texsmith.cli import DEFAULT_MARKDOWN_EXTENSIONS, app
+from texsmith.cli import DEFAULT_MARKDOWN_EXTENSIONS, app, state as cli_state
 from texsmith.cli.commands import build as build_cmd
-from texsmith.cli import state as cli_state
 from texsmith.latex.log import LatexMessage, LatexMessageSeverity, LatexStreamResult
 
 

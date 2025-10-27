@@ -2,8 +2,10 @@
 
 from __future__ import annotations
 
+from collections.abc import Sequence
+import contextlib
 from pathlib import Path
-from typing import Sequence
+from typing import TYPE_CHECKING, Any
 
 import typer
 
@@ -18,7 +20,11 @@ from texsmith.api.templates import TemplateRenderResult
 from .state import CLIState
 
 
-def _get_console(state: CLIState, *, stderr: bool = False):
+if TYPE_CHECKING:  # pragma: no cover - typing only
+    from rich.console import Console
+
+
+def _get_console(state: CLIState, *, stderr: bool = False) -> Console | None:
     try:
         console = state.err_console if stderr else state.console
     except Exception:  # pragma: no cover - fallback when Rich unavailable
@@ -28,16 +34,15 @@ def _get_console(state: CLIState, *, stderr: bool = False):
     return None
 
 
-def _rich_components():
+def _rich_components() -> tuple[Any, Any, Any, Any] | None:
     try:
         from rich import box
         from rich.panel import Panel
         from rich.table import Table
         from rich.text import Text
-
-        return box, Panel, Table, Text
     except ImportError:  # pragma: no cover - Rich absent
         return None
+    return box, Panel, Table, Text
 
 
 def _format_path(path: Path) -> str:
@@ -52,8 +57,8 @@ def _render_summary(state: CLIState, title: str, rows: Sequence[tuple[str, str, 
     console = _get_console(state)
     components = _rich_components()
     if console is not None and components is not None:
-        box, Panel, Table, Text = components
-        table = Table(box=box.SQUARE, header_style="bold cyan")
+        box_module, _panel_cls, table_cls, _text_cls = components
+        table = table_cls(box=box_module.SQUARE, header_style="bold cyan")
         table.title = title
         table.add_column("Artifact", style="cyan")
         table.add_column("Location", style="green")
@@ -167,11 +172,11 @@ def _render_failure_panel(
     console = _get_console(state, stderr=True)
     components = _rich_components()
     if console is not None and components is not None:
-        box, Panel, Table, Text = components
-        table = Table(box=box.SQUARE, show_header=False)
+        box_module, panel_cls, table_cls, text_cls = components
+        table = table_cls(box=box_module.SQUARE, show_header=False)
         for label, value in rows:
-            table.add_row(Text(label, style="bold red"), Text(value, style="yellow"))
-        console.print(Panel(table, box=box.SQUARE, title=title, border_style="red"))
+            table.add_row(text_cls(label, style="bold red"), text_cls(value, style="yellow"))
+        console.print(panel_cls(table, box=box_module.SQUARE, title=title, border_style="red"))
         return
 
     typer.echo(title, err=True)
@@ -210,11 +215,8 @@ def present_latexmk_failure(
     _render_failure_panel(state, "latexmk failure", rows)
 
     if open_log and log_path.exists():  # pragma: no cover - depends on platform
-        try:
+        with contextlib.suppress(Exception):
             typer.launch(str(log_path))
-        except Exception:
-            # Opening the log is best-effort; ignore failures to avoid masking original error.
-            pass
 
 
 def parse_latex_log(log_path: Path) -> list[LatexMessage]:
@@ -274,8 +276,7 @@ def consume_event_diagnostics(state: CLIState) -> list[str]:
             manifest = event.get("manifest")
             fallback_enabled = event.get("fallback_converters_enabled")
             output_lines.append(
-                "Settings: parser=%s, copy_assets=%s, manifest=%s, fallback_converters=%s"
-                % (parser, copy_assets, manifest, fallback_enabled)
+                f"Settings: parser={parser}, copy_assets={copy_assets}, manifest={manifest}, fallback_converters={fallback_enabled}"
             )
 
     state.events.clear()

@@ -1,9 +1,11 @@
 """Configuration objects reachable from the historic namespace."""
+# pyright: reportUnsupportedDunderAll=false
 
 from __future__ import annotations
 
 from texsmith.core import config as _config
-from texsmith.core.config import *  # noqa: F401,F403
+from texsmith.core.config import *
+
 
 __all__ = list(getattr(_config, "__all__", []))
 if not __all__:

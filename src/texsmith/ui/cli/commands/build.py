@@ -12,21 +12,13 @@ from typing import Annotated
 import click
 import typer
 
+from texsmith.adapters.latex.log import stream_latexmk_output
+from texsmith.adapters.markdown import resolve_markdown_extensions
 from texsmith.api.service import ConversionRequest, ConversionService, SlotAssignment
 from texsmith.core.conversion.debug import ConversionError
 from texsmith.core.conversion.inputs import UnsupportedInputError
-from texsmith.adapters.latex.log import stream_latexmk_output
-from texsmith.adapters.markdown import resolve_markdown_extensions
 from texsmith.core.templates import TemplateError
-from ..diagnostics import CliEmitter
-from ..presenter import (
-    consume_event_diagnostics,
-    parse_latex_log,
-    present_build_summary,
-    present_latexmk_failure,
-)
-from ..state import debug_enabled, emit_error, emit_warning, get_cli_state
-from ..utils import parse_slot_option
+
 from .._options import (
     BaseLevelOption,
     BibliographyOption,
@@ -42,13 +34,23 @@ from .._options import (
     ManifestOptionWithShort,
     MarkdownExtensionsOption,
     NumberedOption,
+    OpenLogOption,
     OutputDirOption,
     ParserOption,
     SelectorOption,
     SlotsOption,
     TemplateOption,
-    OpenLogOption,
 )
+from ..diagnostics import CliEmitter
+from ..presenter import (
+    consume_event_diagnostics,
+    parse_latex_log,
+    present_build_summary,
+    present_latexmk_failure,
+)
+from ..state import debug_enabled, emit_error, emit_warning, get_cli_state
+from ..utils import parse_slot_option
+
 
 _SERVICE = ConversionService()
 

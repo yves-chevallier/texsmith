@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import Any
 
 from texsmith.core.exceptions import TransformerExecutionError
+
 from .base import ConverterStrategy
 from .strategies import (
     DrawioToPdfStrategy,

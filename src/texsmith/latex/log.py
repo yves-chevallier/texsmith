@@ -2,4 +2,4 @@
 
 from __future__ import annotations
 
-from ..adapters.latex.log import *  # noqa: F401,F403
+from ..adapters.latex.log import *

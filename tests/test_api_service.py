@@ -3,6 +3,8 @@ from __future__ import annotations
 from collections.abc import Mapping
 from pathlib import Path
 
+import pytest
+
 from texsmith.api.service import (
     ConversionRequest,
     ConversionService,
@@ -218,12 +220,9 @@ def test_prepare_documents_rejects_unsupported_inputs(tmp_path: Path) -> None:
         bibliography_files=[],
     )
 
-    try:
+    with pytest.raises(UnsupportedInputError) as exc_info:
         service.prepare_documents(request)
-    except UnsupportedInputError as exc:
-        assert "MkDocs configuration files are not supported" in str(exc)
-    else:  # pragma: no cover - defensive
-        raise AssertionError("Unsupported input should raise UnsupportedInputError")
+    assert "MkDocs configuration files are not supported" in str(exc_info.value)
 
 
 def test_execute_without_template_returns_bundle(tmp_path: Path) -> None:

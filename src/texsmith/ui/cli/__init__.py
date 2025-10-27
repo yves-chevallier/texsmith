@@ -1,4 +1,5 @@
 """TeXSmith command-line interface package."""
+# pyright: reportUnsupportedDunderAll=false
 
 from __future__ import annotations
 

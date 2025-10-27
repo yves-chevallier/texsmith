@@ -21,6 +21,7 @@ from ..bibliography import (
 )
 from ..config import BookConfig
 from ..conversion_contexts import BinderContext, DocumentContext, GenerationStrategy
+from ..diagnostics import DiagnosticEmitter
 from ..templates import (
     TemplateBinding,
     TemplateError,
@@ -31,12 +32,12 @@ from ..templates import (
     resolve_template_language,
 )
 from .debug import debug_enabled, ensure_emitter, raise_conversion_error, record_event
-from ..diagnostics import DiagnosticEmitter
 from .inputs import (
     DOCUMENT_SELECTOR_SENTINEL,
     extract_front_matter_bibliography,
     extract_front_matter_slots,
 )
+
 
 if TYPE_CHECKING:  # pragma: no cover - typing only
     from ..bibliography import DoiBibliographyFetcher
@@ -286,7 +287,7 @@ def _load_inline_bibliography(
     *,
     source_label: str,
     emitter: DiagnosticEmitter,
-    fetcher: "DoiBibliographyFetcher | None" = None,
+    fetcher: DoiBibliographyFetcher | None = None,
 ) -> None:
     if not entries:
         return
@@ -325,9 +326,9 @@ def _inline_bibliography_source_path(label: str) -> Path:
     return Path(f"frontmatter-{slug}.bib")
 
 
-def _resolve_bibliography_fetcher() -> "DoiBibliographyFetcher":
+def _resolve_bibliography_fetcher() -> DoiBibliographyFetcher:
     module = import_module("texsmith.conversion")
-    fetcher_cls = getattr(module, "DoiBibliographyFetcher")
+    fetcher_cls = module.DoiBibliographyFetcher
     return fetcher_cls()
 
 

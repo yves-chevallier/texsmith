@@ -13,8 +13,9 @@ from requests.utils import requote_uri as requote_url
 
 from texsmith.core.context import RenderContext
 from texsmith.core.exceptions import InvalidNodeError, TransformerExecutionError
-from ..latex.utils import escape_latex_chars
 from texsmith.core.rules import RenderPhase, renders
+
+from ..latex.utils import escape_latex_chars
 from ..transformers import fetch_image, svg2pdf
 from ._helpers import coerce_attribute, gather_classes, is_valid_url, mark_processed
 
@@ -226,7 +227,8 @@ def _render_emoji(token: str, context: RenderContext) -> str:
         artefact = fetch_image(url, output_dir=context.assets.output_root)
     except TransformerExecutionError as exc:
         warnings.warn(f"Failed to fetch emoji '{token}': {exc}", stacklevel=2)
-        return _prepare_plain_text(token)
+        legacy = getattr(context.config, "legacy_latex_accents", False)
+        return _prepare_plain_text(token, legacy_latex_accents=legacy)
 
     stored_path = context.assets.register(url, artefact)
     asset_path = context.assets.latex_path(stored_path)

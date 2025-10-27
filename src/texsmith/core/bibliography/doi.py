@@ -3,11 +3,13 @@
 from __future__ import annotations
 
 from collections.abc import Iterable
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 
 if TYPE_CHECKING:  # pragma: no cover - typing only
-    import requests  # type: ignore[import]
+    from requests import Session as RequestsSession  # type: ignore[import]
+else:
+    RequestsSession = Any  # type: ignore[misc]
 
 try:  # pragma: no cover - optional dependency
     import requests  # type: ignore[import]
@@ -28,7 +30,7 @@ class DoiBibliographyFetcher:
     def __init__(
         self,
         *,
-        session: requests.Session | None = None,
+        session: RequestsSession | None = None,
         timeout: float = 10.0,
         user_agent: str | None = None,
     ) -> None:

@@ -1,5 +1,46 @@
 # Devel Notes
 
+## 2025 architecture recap
+
+- Core engine lives under `texsmith.core`. The old `texsmith.domain.*` modules are gone; compatibility wrappers forward to the new package.
+- `ConversionService` is the single orchestration entry point. It accepts a `ConversionRequest`, materialises document bundles via `prepare_documents()`, and runs the pipeline with `execute()`, returning a `ConversionResponse`.
+- `TemplateRenderer` owns slot aggregation, bibliography emission, and LaTeX assembly. `TemplateSession` now just manages runtime state (options, registered documents, bibliography files) before delegating to the renderer.
+- `DocumentSlots` unifies slot directives from front matter, CLI flags, and programmatic overrides. Any consumer can merge directives through the same API.
+- `DiagnosticEmitter` replaces the loose callback bag. Pass `CliEmitter` in the CLI, use `NullEmitter` in tests, or implement your own to capture warnings/events in other integrations.
+
+### Working with `ConversionService`
+
+```python
+from pathlib import Path
+
+from texsmith.api.service import ConversionRequest, ConversionService
+
+service = ConversionService()
+request = ConversionRequest(
+    documents=[Path("index.html")],
+    template="article",
+    render_dir=Path("build"),
+    emitter=None,  # defaults to NullEmitter
+)
+prepared = service.prepare_documents(request)
+response = service.execute(request, prepared=prepared)
+
+assert response.render_result is not None
+```
+
+`ConversionResponse` includes the render result, merged diagnostics, and the resolved slot map for downstream processing.
+
+### Template responsibilities
+
+- `TemplateSession`: holds runtime objects, exposes option APIs, tracks registered documents/bibliography files, and prepares `ConversionRequest`.
+- `TemplateRenderer`: consumes a `TemplateRuntime` plus a `ConversionBundle`, aggregates slots through `DocumentSlots`, renders LaTeX once, and returns structured results (slots, bibliography metadata, state).
+
+### Diagnostics pipeline
+
+- `DiagnosticEmitter.warning()` and `.error()` drive CLI output and optional debug raises.
+- `DiagnosticEmitter.event()` records structured payloads (CLI renders them in the diagnostics panel).
+- Provide a custom emitter in automation to capture or suppress output deterministically.
+
 ## TO-DO
 
 ### TeXSmith Core

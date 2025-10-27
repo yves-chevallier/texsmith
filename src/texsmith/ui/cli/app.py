@@ -3,14 +3,16 @@
 from __future__ import annotations
 
 from pathlib import Path
+from typing import Any
 
 import click
 import typer
 from typer.core import TyperCommand
 
-from texsmith.cli.commands.build import build
-from texsmith.cli.commands.convert import convert
-from texsmith.cli.commands.templates import template_info
+from texsmith.ui.cli.commands.build import build
+from texsmith.ui.cli.commands.convert import convert
+from texsmith.ui.cli.commands.templates import template_info
+
 from ._options import DIAGNOSTICS_PANEL
 from .state import debug_enabled, emit_error, ensure_rich_compat, get_cli_state, set_cli_state
 
@@ -18,7 +20,7 @@ from .state import debug_enabled, emit_error, ensure_rich_compat, get_cli_state,
 class HelpOnEmptyCommand(TyperCommand):
     """Typer command that disables positional argument enforcement."""
 
-    def __init__(self, *args: object, **kwargs: object) -> None:  # type: ignore[override]
+    def __init__(self, *args: Any, **kwargs: Any) -> None:  # type: ignore[override]
         super().__init__(*args, **kwargs)
         for param in self.params:
             if isinstance(param, click.Argument):

@@ -2,27 +2,34 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable, Mapping
 import copy
 import dataclasses
-import hashlib
-from collections.abc import Callable, Mapping
 from dataclasses import dataclass, field
+import hashlib
 from pathlib import Path
 from typing import Any
 
 from texsmith.adapters.docker import is_docker_available
 from texsmith.adapters.latex.formatter import LaTeXFormatter
 from texsmith.adapters.latex.renderer import LaTeXRenderer
+from texsmith.adapters.transformers import has_converter, register_converter
+from texsmith.core.context import DocumentState
 from texsmith.core.conversion_contexts import (
     BinderContext,
     DocumentContext,
     GenerationStrategy,
     SegmentContext,
 )
-from texsmith.core.context import DocumentState
 from texsmith.core.exceptions import LatexRenderingError, TransformerExecutionError
-from texsmith.core.templates import TemplateBinding, TemplateError, TemplateRuntime, copy_template_assets
-from texsmith.adapters.transformers import has_converter, register_converter
+from texsmith.core.templates import (
+    TemplateBinding,
+    TemplateError,
+    TemplateRuntime,
+    copy_template_assets,
+)
+
+from ..diagnostics import DiagnosticEmitter
 from .debug import (
     ConversionError,
     debug_enabled,
@@ -31,7 +38,6 @@ from .debug import (
     persist_debug_artifacts,
     raise_conversion_error,
 )
-from ..diagnostics import DiagnosticEmitter
 from .templates import build_binder_context, extract_slot_fragments
 
 

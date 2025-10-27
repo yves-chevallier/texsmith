@@ -6,5 +6,6 @@ import sys
 
 from .adapters import docker as _docker
 
+
 globals().update(vars(_docker))
 sys.modules[__name__] = _docker

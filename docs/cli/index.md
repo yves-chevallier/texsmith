@@ -49,3 +49,7 @@ texsmith bibliography list references/*.bib
 ```
 
 Refer to `texsmith COMMAND --help` whenever you need the most up-to-date option list, defaults, and environment-specific notes.
+
+## Diagnostics
+
+Every CLI command routes warnings, errors, and structured events through the new `DiagnosticEmitter` interface. The Typer apps instantiate a `CliEmitter`, so verbosity flags (`-v`) control how much detail reaches your terminal. Library consumers can provide their own emitter to capture the same diagnostics programmatically when embedding TeXSmith.
