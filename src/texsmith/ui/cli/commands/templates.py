@@ -112,7 +112,9 @@ def template_info(
     summary.add_row("Formatter overrides", _format_list(info.override))
 
     console.print(
-        RichPanel(summary, box=rich_box.SQUARE, title=f"Template: {identifier}", border_style="cyan")
+        RichPanel(
+            summary, box=rich_box.SQUARE, title=f"Template: {identifier}", border_style="cyan"
+        )
     )
 
     if info.attributes:

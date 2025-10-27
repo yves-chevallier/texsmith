@@ -2,7 +2,7 @@ import importlib.util
 
 import pytest
 
-from texsmith.latex.utils import escape_latex_chars
+from texsmith.adapters.latex.utils import escape_latex_chars
 
 
 PYLATEXENC_AVAILABLE = importlib.util.find_spec("pylatexenc") is not None

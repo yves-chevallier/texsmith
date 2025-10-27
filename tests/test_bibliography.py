@@ -4,13 +4,13 @@ import textwrap
 import pytest
 import requests
 
-from texsmith.bibliography import (
+from texsmith.core.bibliography import (
     BibliographyCollection,
     DoiBibliographyFetcher,
     DoiLookupError,
     bibliography_data_from_string,
 )
-from texsmith.conversion import extract_front_matter_bibliography
+from texsmith.core.conversion import extract_front_matter_bibliography
 
 
 def _write(

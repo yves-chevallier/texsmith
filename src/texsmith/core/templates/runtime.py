@@ -17,7 +17,7 @@ from .manifest import (
 )
 
 if TYPE_CHECKING:
-    from ..formatter import LaTeXFormatter
+    from texsmith.adapters.latex.formatter import LaTeXFormatter
 
 
 @dataclass(slots=True)

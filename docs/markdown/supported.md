@@ -248,7 +248,7 @@ graph TD;
 
 ### Raw LaTeX blocks (`/// latex`)
 
-Extension: `texsmith.markdown_extensions.latex_raw`
+Extension: `texsmith.adapters.markdown_extensions.latex_raw`
 Package: shipped with TeXSmith
 
 ```md

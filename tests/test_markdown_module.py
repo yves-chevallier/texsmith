@@ -1,4 +1,4 @@
-from texsmith.markdown import DEFAULT_MARKDOWN_EXTENSIONS, render_markdown
+from texsmith.adapters.markdown import DEFAULT_MARKDOWN_EXTENSIONS, render_markdown
 
 
 def test_keys_extension_supports_camel_case_sequences() -> None:

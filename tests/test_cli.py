@@ -9,12 +9,13 @@ import pytest
 import typer
 from typer.testing import CliRunner
 
-from texsmith.cli import DEFAULT_MARKDOWN_EXTENSIONS, app, state as cli_state
-from texsmith.cli.commands import build as build_cmd
-from texsmith.latex.log import LatexMessage, LatexMessageSeverity, LatexStreamResult
+from texsmith.adapters.latex.log import LatexMessage, LatexMessageSeverity, LatexStreamResult
+from texsmith.ui.cli import DEFAULT_MARKDOWN_EXTENSIONS, app
+from texsmith.ui.cli.commands import build as build_cmd
+import texsmith.ui.cli.state as cli_state
 
 
-build_module = importlib.import_module("texsmith.cli.commands.build")
+build_module = importlib.import_module("texsmith.ui.cli.commands.build")
 
 
 def _template_path(name: str) -> Path:

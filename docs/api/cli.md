@@ -1,13 +1,13 @@
 # CLI
 
-::: texsmith.cli
+::: texsmith.ui.cli
 
-::: texsmith.cli.app
+::: texsmith.ui.cli.app
 
-::: texsmith.cli.state
+::: texsmith.ui.cli.state
 
-::: texsmith.cli.utils
+::: texsmith.ui.cli.utils
 
-::: texsmith.cli.bibliography
+::: texsmith.ui.cli.bibliography
 
-::: texsmith.cli.commands
+::: texsmith.ui.cli.commands

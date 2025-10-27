@@ -1,11 +1,11 @@
 # Bibliography
 
-::: texsmith.bibliography
+::: texsmith.core.bibliography
 
-::: texsmith.bibliography.collection
+::: texsmith.core.bibliography.collection
 
-::: texsmith.bibliography.doi
+::: texsmith.core.bibliography.doi
 
-::: texsmith.bibliography.issues
+::: texsmith.core.bibliography.issues
 
-::: texsmith.bibliography.parsing
+::: texsmith.core.bibliography.parsing

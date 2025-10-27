@@ -3,7 +3,7 @@ import textwrap
 
 from typer.testing import CliRunner
 
-from texsmith.cli import app
+from texsmith.ui.cli import app
 
 
 FIXTURE_BIB_DIR = Path(__file__).resolve().parent / "fixtures" / "bib"
@@ -118,7 +118,7 @@ def test_cli_front_matter_bibliography_fetches_doi(monkeypatch, tmp_path: Path) 
                 """
             )
 
-    monkeypatch.setattr("texsmith.conversion.DoiBibliographyFetcher", DummyFetcher)
+    monkeypatch.setattr("texsmith.core.conversion.templates.DoiBibliographyFetcher", DummyFetcher)
 
     markdown_file = _write(
         tmp_path,

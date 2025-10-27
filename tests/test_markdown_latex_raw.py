@@ -1,6 +1,6 @@
 import markdown
 
-from texsmith.cli import DEFAULT_MARKDOWN_EXTENSIONS
+from texsmith.ui.cli import DEFAULT_MARKDOWN_EXTENSIONS
 
 
 def test_latex_raw_fence_converts_to_hidden_paragraph() -> None:

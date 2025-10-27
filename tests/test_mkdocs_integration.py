@@ -7,10 +7,10 @@ from urllib.parse import urlparse
 from bs4 import BeautifulSoup
 import pytest
 
-from texsmith.config import BookConfig
-from texsmith.latex import LaTeXRenderer
-from texsmith.plugins import material
-from texsmith.transformers import register_converter, registry
+from texsmith.adapters.latex import LaTeXRenderer
+from texsmith.adapters.plugins import material
+from texsmith.adapters.transformers import register_converter, registry
+from texsmith.core.config import BookConfig
 
 
 ROOT = Path(__file__).resolve().parents[1]

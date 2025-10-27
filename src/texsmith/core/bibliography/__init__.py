@@ -23,7 +23,7 @@ Implementation Rationale
 
 Usage Example
 :
-    >>> from texsmith.bibliography import BibliographyCollection, bibliography_data_from_string
+    >>> from texsmith.core.bibliography import BibliographyCollection, bibliography_data_from_string
     >>> collection = BibliographyCollection()
     >>> payload = \"\"\"@article{doe2023,
     ...   author = {Doe, Jane},

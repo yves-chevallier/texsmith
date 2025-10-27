@@ -17,22 +17,22 @@ from mkdocs.structure.nav import Navigation
 from mkdocs.utils import log
 from pybtex.exceptions import PybtexError
 from slugify import slugify
-from texsmith.bibliography import (
+from texsmith.core.bibliography import (
     BibliographyCollection,
     DoiBibliographyFetcher,
     DoiLookupError,
     bibliography_data_from_string,
 )
-from texsmith.config import BookConfig, LaTeXConfig
-from texsmith.context import DocumentState
-from texsmith.conversion import (
+from texsmith.core.config import BookConfig, LaTeXConfig
+from texsmith.core.context import DocumentState
+from texsmith.core.conversion import (
     ensure_fallback_converters,
     extract_front_matter_bibliography,
     render_with_fallback,
 )
-from texsmith.latex import LaTeXFormatter, LaTeXRenderer
-from texsmith.plugins import material
-from texsmith.templates import (
+from texsmith.adapters.latex import LaTeXFormatter, LaTeXRenderer
+from texsmith.adapters.plugins import material
+from texsmith.core.templates import (
     TemplateError,
     TemplateSlot,
     copy_template_assets,

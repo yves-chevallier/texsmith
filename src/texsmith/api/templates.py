@@ -24,7 +24,7 @@ Usage Example
 :
     >>> from types import SimpleNamespace
     >>> from texsmith.api.templates import TemplateSession
-    >>> from texsmith.templates import TemplateRuntime, TemplateSlot
+    >>> from texsmith.core.templates import TemplateRuntime, TemplateSlot
     >>> dummy_info = SimpleNamespace(attributes={"cover_color": "indigo"})
     >>> dummy_template = SimpleNamespace(info=dummy_info)
     >>> runtime = TemplateRuntime(
@@ -50,11 +50,12 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
-from ..context import DocumentState
+from texsmith.core.context import DocumentState
+from texsmith.core.templates import TemplateError, TemplateRuntime, load_template_runtime
+
 from ..core.conversion.debug import ensure_emitter
 from ..core.conversion.renderer import TemplateRenderer
 from ..core.diagnostics import DiagnosticEmitter
-from ..templates import TemplateError, TemplateRuntime, load_template_runtime
 from .document import Document
 from .pipeline import RenderSettings, convert_documents
 
@@ -160,7 +161,9 @@ class TemplateSession:
         current = self._options.to_dict()
         baseline = self._default_options.to_dict()
 
-        def _diff(current_map: Mapping[str, Any], baseline_map: Mapping[str, Any]) -> dict[str, Any]:
+        def _diff(
+            current_map: Mapping[str, Any], baseline_map: Mapping[str, Any]
+        ) -> dict[str, Any]:
             overrides: dict[str, Any] = {}
             for key, value in current_map.items():
                 baseline_value = baseline_map.get(key)

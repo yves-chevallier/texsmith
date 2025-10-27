@@ -2,7 +2,7 @@ from pathlib import Path
 
 import pytest
 
-from texsmith.templates import (
+from texsmith.core.templates import (
     TemplateError,
     WrappableTemplate,
     copy_template_assets,

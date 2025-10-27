@@ -1,8 +1,8 @@
 import pytest
 
-from texsmith.config import BookConfig
-from texsmith.context import DocumentState
-from texsmith.latex import LaTeXRenderer
+from texsmith.adapters.latex import LaTeXRenderer
+from texsmith.core.config import BookConfig
+from texsmith.core.context import DocumentState
 
 
 @pytest.fixture
@@ -11,7 +11,7 @@ def renderer() -> LaTeXRenderer:
 
 
 def test_fill_in_the_blank_solution_capture(renderer: LaTeXRenderer) -> None:
-    from texsmith.plugins import material
+    from texsmith.adapters.plugins import material
 
     material.register(renderer)
     html = """

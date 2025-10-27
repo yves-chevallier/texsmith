@@ -86,11 +86,7 @@ def _detect_assets(directory: Path) -> list[Path]:
 
 
 def _detect_manifests(directory: Path) -> list[Path]:
-    return sorted(
-        path
-        for path in directory.glob("*.json")
-        if "manifest" in path.name.lower()
-    )
+    return sorted(path for path in directory.glob("*.json") if "manifest" in path.name.lower())
 
 
 def present_conversion_summary(
@@ -121,7 +117,9 @@ def present_conversion_summary(
         rows.append(("LaTeX", _format_path(output_path), ""))
     elif output_mode == "directory" and bundle is not None:
         for fragment in bundle.fragments:
-            path = fragment.output_path or (output_path / f"{fragment.stem}.tex" if output_path else None)
+            path = fragment.output_path or (
+                output_path / f"{fragment.stem}.tex" if output_path else None
+            )
             if path is None:
                 continue
             rows.append(("Fragment", _format_path(Path(path)), ""))
