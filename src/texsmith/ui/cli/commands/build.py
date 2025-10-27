@@ -12,15 +12,7 @@ from typing import Annotated
 import click
 import typer
 
-from texsmith.api.service import (
-    SlotAssignment,
-    apply_slot_assignments,
-    build_callbacks,
-    build_render_settings,
-    execute_conversion,
-    prepare_documents,
-    split_document_inputs,
-)
+from texsmith.api.service import ConversionRequest, ConversionService, SlotAssignment
 from texsmith.core.conversion.debug import ConversionError
 from texsmith.core.conversion.inputs import UnsupportedInputError
 from texsmith.adapters.latex.log import stream_latexmk_output
@@ -56,6 +48,8 @@ from .._options import (
     TemplateOption,
     OpenLogOption,
 )
+
+_SERVICE = ConversionService()
 
 
 def build_latexmk_command(
@@ -137,7 +131,7 @@ def build(
     state = get_cli_state()
     resolved_inputs = list(inputs or [])
 
-    documents, bibliography_files = split_document_inputs(
+    documents, bibliography_files = _SERVICE.split_inputs(
         resolved_inputs,
         bibliography or [],
     )
@@ -166,35 +160,6 @@ def build(
         emit_error("The build command requires a LaTeX template (--template).")
         raise typer.Exit(code=1)
 
-    callbacks = build_callbacks(
-        emit_warning=lambda message, exception=None: emit_warning(message, exception=exception),
-        emit_error=lambda message, exception=None: emit_error(message, exception=exception),
-        debug_enabled=debug_enabled(),
-        record_event=state.record_event,
-    )
-
-    try:
-        prepared = prepare_documents(
-            [document_path],
-            selector=selector,
-            full_document=full_document,
-            heading_level=heading_level,
-            base_level=base_level,
-            drop_title_all=drop_title,
-            drop_title_first_document=False,
-            numbered=numbered,
-            markdown_extensions=resolved_markdown_extensions,
-            callbacks=callbacks,
-        )
-    except UnsupportedInputError as exc:
-        if callbacks.emit_error is not None:
-            callbacks.emit_error(str(exc), exc)
-        else:
-            emit_error(str(exc), exception=exc)
-        raise typer.Exit(code=1) from exc
-    except ConversionError as exc:
-        raise typer.Exit(code=1) from exc
-
     assignments: dict[Path, list[SlotAssignment]] = {
         document_path: [
             SlotAssignment(slot=slot_name, selector=selector_value, include_document=False)
@@ -216,7 +181,33 @@ def build(
                 ]
             },
         )
-    apply_slot_assignments(prepared.document_map, assignments)
+
+    request = ConversionRequest(
+        documents=[document_path],
+        bibliography_files=bibliography_files,
+        slot_assignments=assignments,
+        selector=selector,
+        full_document=full_document,
+        heading_level=heading_level,
+        base_level=base_level,
+        drop_title_all=drop_title,
+        drop_title_first_document=False,
+        numbered=numbered,
+        markdown_extensions=resolved_markdown_extensions,
+        parser=parser,
+        disable_fallback_converters=disable_fallback_converters,
+        copy_assets=copy_assets,
+        manifest=manifest,
+        persist_debug_html=bool(debug_snapshot),
+        language=language,
+        legacy_latex_accents=False,
+        template=template_identifier,
+        render_dir=output_dir.resolve(),
+        emit_warning=lambda message, exception=None: emit_warning(message, exception=exception),
+        emit_error=lambda message, exception=None: emit_error(message, exception=exception),
+        record_event=state.record_event,
+        debug_enabled=debug_enabled(),
+    )
 
     def _flush_diagnostics() -> None:
         lines: list[str] = []
@@ -226,15 +217,6 @@ def build(
         for line in lines:
             typer.echo(line)
 
-    settings = build_render_settings(
-        parser=parser,
-        disable_fallback_converters=disable_fallback_converters,
-        copy_assets=copy_assets,
-        manifest=manifest,
-        persist_debug_html=bool(debug_snapshot),
-        language=language,
-        legacy_latex_accents=False,
-    )
     state.record_event(
         "conversion_settings",
         {
@@ -245,21 +227,21 @@ def build(
         },
     )
 
-    render_dir = output_dir.resolve()
     try:
-        outcome = execute_conversion(
-            prepared.documents,
-            settings=settings,
-            callbacks=callbacks,
-            bibliography_files=bibliography_files,
-            template=template_identifier,
-            render_dir=render_dir,
-        )
+        prepared = _SERVICE.prepare_documents(request)
+    except UnsupportedInputError as exc:
+        emit_error(str(exc), exception=exc)
+        raise typer.Exit(code=1) from exc
+    except ConversionError as exc:
+        raise typer.Exit(code=1) from exc
+
+    try:
+        response = _SERVICE.execute(request, prepared=prepared)
     except (TemplateError, ConversionError) as exc:
         emit_error(str(exc), exception=exc)
         raise typer.Exit(code=1) from exc
 
-    render_result = outcome.render_result
+    render_result = response.render_result
     if render_result is None:  # pragma: no cover - defensive
         raise RuntimeError("Template render result missing from service outcome.")
 
