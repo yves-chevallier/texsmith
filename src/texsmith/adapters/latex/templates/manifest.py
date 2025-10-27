@@ -8,7 +8,7 @@ from typing import Any
 import tomllib
 from pydantic import BaseModel, ConfigDict, Field, ValidationError, model_validator
 
-from ...exceptions import LatexRenderingError
+from texsmith.domain.exceptions import LatexRenderingError
 
 
 class TemplateError(LatexRenderingError):

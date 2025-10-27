@@ -10,14 +10,19 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
-from ..conversion_contexts import BinderContext, DocumentContext, GenerationStrategy, SegmentContext
-from ..context import DocumentState
-from ..docker import is_docker_available
-from ..exceptions import LatexRenderingError, TransformerExecutionError
-from ..latex.formatter import LaTeXFormatter
-from ..latex.renderer import LaTeXRenderer
-from ..templates import TemplateBinding, TemplateError, TemplateRuntime, copy_template_assets
-from ..transformers import has_converter, register_converter
+from texsmith.adapters.docker import is_docker_available
+from texsmith.adapters.latex.formatter import LaTeXFormatter
+from texsmith.adapters.latex.renderer import LaTeXRenderer
+from texsmith.domain.conversion_contexts import (
+    BinderContext,
+    DocumentContext,
+    GenerationStrategy,
+    SegmentContext,
+)
+from texsmith.domain.context import DocumentState
+from texsmith.domain.exceptions import LatexRenderingError, TransformerExecutionError
+from texsmith.domain.templates import TemplateBinding, TemplateError, TemplateRuntime, copy_template_assets
+from texsmith.adapters.transformers import has_converter, register_converter
 from .debug import (
     ConversionCallbacks,
     ConversionError,

@@ -11,10 +11,10 @@ from bs4.element import NavigableString, Tag
 import emoji
 from requests.utils import requote_uri as requote_url
 
-from ..context import RenderContext
-from ..exceptions import InvalidNodeError, TransformerExecutionError
+from texsmith.domain.context import RenderContext
+from texsmith.domain.exceptions import InvalidNodeError, TransformerExecutionError
 from ..latex.utils import escape_latex_chars
-from ..rules import RenderPhase, renders
+from texsmith.domain.rules import RenderPhase, renders
 from ..transformers import fetch_image, svg2pdf
 from ._helpers import coerce_attribute, gather_classes, is_valid_url, mark_processed
 

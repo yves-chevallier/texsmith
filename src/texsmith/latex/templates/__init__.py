@@ -1,53 +1,9 @@
-"""Public interface for LaTeX template helpers."""
+"""Compatibility wrapper for :mod:`texsmith.adapters.latex.templates`."""
 
 from __future__ import annotations
 
-from .base import BaseTemplate, ResolvedAsset, WrappableTemplate
-from .loader import copy_template_assets, load_template
-from .manifest import (
-    DEFAULT_TEMPLATE_LANGUAGE,
-    LATEX_HEADING_LEVELS,
-    TemplateAsset,
-    TemplateError,
-    TemplateInfo,
-    TemplateManifest,
-    TemplateSlot,
-)
-from .runtime import (
-    TemplateBinding,
-    TemplateRuntime,
-    build_template_overrides,
-    coerce_base_level,
-    extract_base_level_override,
-    extract_language_from_front_matter,
-    load_template_runtime,
-    normalise_template_language,
-    resolve_template_binding,
-    resolve_template_language,
-)
+import sys
 
-__all__ = [
-    "BaseTemplate",
-    "DEFAULT_TEMPLATE_LANGUAGE",
-    "LATEX_HEADING_LEVELS",
-    "ResolvedAsset",
-    "TemplateAsset",
-    "TemplateBinding",
-    "TemplateError",
-    "TemplateInfo",
-    "TemplateManifest",
-    "TemplateRuntime",
-    "TemplateSlot",
-    "WrappableTemplate",
-    "build_template_overrides",
-    "coerce_base_level",
-    "copy_template_assets",
-    "extract_base_level_override",
-    "extract_language_from_front_matter",
-    "load_template",
-    "load_template_runtime",
-    "normalise_template_language",
-    "resolve_template_binding",
-    "resolve_template_language",
-]
+from ...adapters.latex import templates as _templates
 
+sys.modules[__name__] = _templates

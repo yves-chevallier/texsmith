@@ -1,10 +1,9 @@
-"""Internal modules supporting the document conversion pipeline."""
+"""Compatibility package for :mod:`texsmith.domain.conversion`."""
 
 from __future__ import annotations
 
-from . import _facade as _conversion_facade
-from ._facade import *  # noqa: F401,F403
+import sys
 
-__all__ = [*globals().get("__all__", [])]
+from ..domain import conversion as _conversion
 
-DoiBibliographyFetcher = _conversion_facade.DoiBibliographyFetcher
+sys.modules[__name__] = _conversion

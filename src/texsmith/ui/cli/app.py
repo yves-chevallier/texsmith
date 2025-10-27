@@ -8,11 +8,10 @@ import click
 import typer
 from typer.core import TyperCommand
 
-from .commands.build import build
-from .commands.convert import convert
-from .commands.templates import template_info
+from texsmith.cli.commands.build import build
+from texsmith.cli.commands.convert import convert
+from texsmith.cli.commands.templates import template_info
 from .state import debug_enabled, emit_error, ensure_rich_compat, get_cli_state, set_cli_state
-from .utils import resolve_option
 
 
 class HelpOnEmptyCommand(TyperCommand):
@@ -80,7 +79,7 @@ def _app_root(
     ctx.obj = state
 
     if list_extensions:
-        from ..markdown import DEFAULT_MARKDOWN_EXTENSIONS
+        from texsmith.adapters.markdown import DEFAULT_MARKDOWN_EXTENSIONS
 
         for extension in DEFAULT_MARKDOWN_EXTENSIONS:
             typer.echo(extension)
@@ -139,21 +138,15 @@ def bibliography_list(
     ),
 ) -> None:
     """Load the given BibTeX files and print a formatted overview table."""
-    raw_files = resolve_option(bib_files if bib_files is not None else [])
-    if raw_files is None:
-        resolved_files: list[Path] = []
-    elif isinstance(raw_files, Path):
-        resolved_files = [raw_files]
-    else:
-        resolved_files = list(raw_files)
+    resolved_files = list(bib_files or [])
 
     if not resolved_files:
         ctx = click.get_current_context()
         typer.echo(ctx.command.get_help(ctx))
         raise typer.Exit()
 
-    from ..bibliography import BibliographyCollection
-    from .bibliography import print_bibliography_overview
+    from texsmith.domain.bibliography import BibliographyCollection
+    from texsmith.ui.cli.bibliography import print_bibliography_overview
 
     collection = BibliographyCollection()
     collection.load_files(resolved_files)

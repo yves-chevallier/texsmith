@@ -9,7 +9,7 @@ from pathlib import Path
 import time
 from typing import Any, Protocol
 
-from ..exceptions import TransformerExecutionError
+from texsmith.domain.exceptions import TransformerExecutionError
 
 
 class ConverterStrategy(Protocol):
