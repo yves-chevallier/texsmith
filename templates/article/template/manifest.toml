@@ -5,7 +5,7 @@ texsmith = ">=0.6,<1.0"
 name = "article"
 version = "0.1.0"
 entrypoint = "template/template.tex"
-engine = "xelatex"
+engine = "lualatex" # For lua-specific features
 shell_escape = true # MUST BE TRUE for minted package
 texlive_year = 2023
 tlmgr_packages = [
