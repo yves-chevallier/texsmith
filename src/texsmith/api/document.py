@@ -44,7 +44,13 @@ from pathlib import Path
 from typing import Any
 
 from ..core.conversion.debug import ConversionCallbacks, ConversionError
-from ..core.conversion.inputs import InputKind, build_document_context, extract_content
+from ..core.conversion.inputs import (
+    DOCUMENT_SELECTOR_SENTINEL,
+    InputKind,
+    build_document_context,
+    extract_content,
+    extract_front_matter_slots,
+)
 from ..core.conversion_contexts import DocumentContext
 from ..markdown import (
     DEFAULT_MARKDOWN_EXTENSIONS,
@@ -57,6 +63,7 @@ from ..templates import LATEX_HEADING_LEVELS
 __all__ = [
     "Document",
     "DocumentRenderOptions",
+    "DocumentSlots",
     "HeadingLevel",
     "resolve_heading_level",
 ]
@@ -103,6 +110,93 @@ class DocumentRenderOptions:
         )
 
 
+class DocumentSlots:
+    """Container tracking slot selectors and inclusion directives."""
+
+    __slots__ = ("_selectors", "_inclusions")
+
+    _WILDCARDS = {
+        DOCUMENT_SELECTOR_SENTINEL,
+        DOCUMENT_SELECTOR_SENTINEL.lower(),
+        "*",
+    }
+
+    def __init__(
+        self,
+        selectors: Mapping[str, str] | None = None,
+        inclusions: Iterable[str] | None = None,
+    ) -> None:
+        self._selectors: dict[str, str] = dict(selectors or {})
+        self._inclusions: set[str] = {slot.strip() for slot in inclusions or [] if slot}
+
+    def copy(self) -> DocumentSlots:
+        return DocumentSlots(self._selectors, self._inclusions)
+
+    @classmethod
+    def from_mapping(cls, mapping: Mapping[str, str] | None) -> DocumentSlots:
+        slots = cls()
+        if not mapping:
+            return slots
+        for slot, selector in mapping.items():
+            slots.add(slot, selector=selector)
+        return slots
+
+    def merge(self, other: DocumentSlots) -> DocumentSlots:
+        if other is self:
+            return self
+        self._selectors.update(other._selectors)
+        self._inclusions.update(other._inclusions)
+        return self
+
+    def add(
+        self,
+        slot: str,
+        *,
+        selector: str | None = None,
+        include_document: bool | None = None,
+    ) -> DocumentSlots:
+        slot_name = slot.strip()
+        if not slot_name:
+            return self
+
+        token = selector.strip() if isinstance(selector, str) else None
+        include_flag = include_document
+
+        if token:
+            if token.lower() in self._WILDCARDS:
+                include_flag = True if include_document is not False else include_document
+                token = None
+            else:
+                self._selectors[slot_name] = token
+        elif selector is None and include_flag is None:
+            include_flag = True
+
+        if include_flag is True:
+            self._inclusions.add(slot_name)
+        elif include_flag is False:
+            self._inclusions.discard(slot_name)
+
+        if selector is None and include_flag is False:
+            self._selectors.pop(slot_name, None)
+
+        return self
+
+    def includes(self) -> set[str]:
+        return set(self._inclusions)
+
+    def selectors(self) -> dict[str, str]:
+        return dict(self._selectors)
+
+    def to_request_mapping(self) -> dict[str, str]:
+        mapping = dict(self._selectors)
+        for slot in self._inclusions:
+            mapping.setdefault(slot, DOCUMENT_SELECTOR_SENTINEL)
+        return mapping
+
+    def __bool__(self) -> bool:  # pragma: no cover - trivial
+        return bool(self._selectors or self._inclusions)
+
+
 @dataclass(slots=True)
 class Document:
     """Renderable document used by the high-level API."""
@@ -112,8 +206,7 @@ class Document:
     _html: str
     _front_matter: Mapping[str, Any]
     options: DocumentRenderOptions = field(default_factory=DocumentRenderOptions)
-    slot_overrides: dict[str, str] = field(default_factory=dict)
-    slot_inclusions: set[str] = field(default_factory=set)
+    slots: DocumentSlots = field(default_factory=DocumentSlots)
 
     @classmethod
     def from_markdown(
@@ -147,13 +240,16 @@ class Document:
             drop_title=drop_title,
             numbered=numbered,
         )
-        return cls(
+        document = cls(
             source_path=path,
             kind=InputKind.MARKDOWN,
             _html=rendered.html,
             _front_matter=rendered.front_matter,
             options=options,
+            slots=DocumentSlots(),
         )
+        document._initialise_slots_from_front_matter()
+        return document
 
     @classmethod
     def from_html(
@@ -195,13 +291,16 @@ class Document:
             drop_title=drop_title,
             numbered=numbered,
         )
-        return cls(
+        document = cls(
             source_path=path,
             kind=InputKind.HTML,
             _html=html,
             _front_matter={},
             options=options,
+            slots=DocumentSlots(),
         )
+        document._initialise_slots_from_front_matter()
+        return document
 
     def copy(self) -> Document:
         """Return a deep copy of the document."""
@@ -211,8 +310,7 @@ class Document:
             _html=self._html,
             _front_matter=copy.deepcopy(self._front_matter),
             options=self.options.copy(),
-            slot_overrides=dict(self.slot_overrides),
-            slot_inclusions=set(self.slot_inclusions),
+            slots=self.slots.copy(),
         )
 
     @property
@@ -247,14 +345,17 @@ class Document:
         include_document: bool | None = None,
     ) -> None:
         """Map the document or a selector subset into a template slot."""
-        if selector:
-            self.slot_overrides[slot] = selector
-        if include_document or (selector is None):
-            self.slot_inclusions.add(slot)
+        self.slots.add(slot, selector=selector, include_document=include_document)
+
+    def _initialise_slots_from_front_matter(self) -> None:
+        if isinstance(self._front_matter, Mapping):
+            base_mapping = extract_front_matter_slots(self._front_matter)
+            if base_mapping:
+                self.slots.merge(DocumentSlots.from_mapping(base_mapping))
 
     def to_context(self) -> DocumentContext:
         """Build a fresh DocumentContext for conversion."""
-        return build_document_context(
+        context = build_document_context(
             name=self.source_path.stem,
             source_path=self.source_path,
             html=self._html,
@@ -264,3 +365,19 @@ class Document:
             drop_title=self.options.drop_title,
             numbered=self.options.numbered,
         )
+        base_slots = DocumentSlots.from_mapping(context.slot_requests)
+        combined_slots = base_slots.copy().merge(self.slots)
+        self.slots = combined_slots.copy()
+        context.slot_requests = combined_slots.to_request_mapping()
+        context.slot_inclusions = combined_slots.includes()
+        return context
+
+    @property
+    def slot_inclusions(self) -> set[str]:
+        """Expose slot inclusions for compatibility with existing code paths."""
+        return self.slots.includes()
+
+    @property
+    def slot_overrides(self) -> dict[str, str]:
+        """Expose slot selectors for compatibility with existing code paths."""
+        return self.slots.selectors()

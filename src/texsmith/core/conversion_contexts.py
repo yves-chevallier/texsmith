@@ -56,6 +56,7 @@ class DocumentContext:
     drop_title: bool
     front_matter: dict[str, Any] = field(default_factory=dict)
     slot_requests: dict[str, str] = field(default_factory=dict)
+    slot_inclusions: set[str] = field(default_factory=set)
     language: str | None = None
     bibliography: dict[str, Any] = field(default_factory=dict)
     assets: list[AssetMapping] = field(default_factory=list)

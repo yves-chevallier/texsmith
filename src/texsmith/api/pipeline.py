@@ -133,6 +133,7 @@ def convert_documents(
     for _index, document in enumerate(documents):
         context = document.to_context()
         target_dir = Path(output_dir) if output_dir is not None else Path("build")
+        slot_overrides = document.slots.selectors()
         result = convert_document(
             document=context,
             output_dir=target_dir,
@@ -143,7 +144,7 @@ def convert_documents(
             template=template,
             persist_debug_html=settings.persist_debug_html,
             language=settings.language,
-            slot_overrides=document.slot_overrides or None,
+            slot_overrides=slot_overrides or None,
             bibliography_files=list(bibliography_files or []),
             legacy_latex_accents=settings.legacy_latex_accents,
             callbacks=callbacks,
