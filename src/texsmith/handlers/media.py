@@ -14,7 +14,7 @@ import warnings
 from bs4.element import NavigableString, Tag
 
 from ..context import RenderContext
-from ..exceptions import AssetMissingError, InvalidNodeError, TransformerExecutionError
+from ..exceptions import AssetMissingError, InvalidNodeError
 from ..rules import RenderPhase, renders
 from ..transformers import (
     drawio2pdf,
@@ -204,6 +204,8 @@ def _render_mermaid_diagram(
         return mark_processed(NavigableString(placeholder))
     if not _looks_like_mermaid(body):
         return None
+    if "```" in body or "~~~" in body:
+        return None
 
     render_options: dict[str, Any] = {}
     mermaid_config = getattr(context.config, "mermaid_config", None)
@@ -216,10 +218,7 @@ def _render_mermaid_diagram(
     try:
         artefact = mermaid2pdf(body, output_dir=context.assets.output_root, **render_options)
     except Exception as exc:  # pragma: no cover - safeguard
-        warnings.warn(
-            f"Mermaid rendering failed, falling back to code block: {exc}",
-            stacklevel=2,
-        )
+        _warn_mermaid_failure(exc)
         placeholder = effective_caption or "Mermaid diagram"
         return mark_processed(NavigableString(f"[{placeholder} unavailable]"))
 
@@ -338,15 +337,7 @@ def render_mermaid(element: Tag, context: RenderContext) -> None:
 
     diagram = code.get_text()
     template = _figure_template_for(element)
-    try:
-        figure_node = _render_mermaid_diagram(context, diagram, template=template)
-    except TransformerExecutionError as exc:  # pragma: no cover - defensive
-        warnings.warn(
-            f"Mermaid rendering failed, falling back to code block: {exc}",
-            stacklevel=2,
-        )
-        placeholder = "Mermaid diagram"
-        figure_node = mark_processed(NavigableString(f"[{placeholder} unavailable]"))
+    figure_node = _render_mermaid_diagram(context, diagram, template=template)
     if figure_node is None:
         return
 
@@ -362,16 +353,34 @@ def render_mermaid_pre(element: Tag, context: RenderContext) -> None:
 
     diagram = element.get_text()
     template = _figure_template_for(element)
-    try:
-        figure_node = _render_mermaid_diagram(context, diagram, template=template)
-    except TransformerExecutionError as exc:  # pragma: no cover - defensive
-        warnings.warn(
-            f"Mermaid rendering failed, falling back to code block: {exc}",
-            stacklevel=2,
-        )
-        placeholder = "Mermaid diagram"
-        figure_node = mark_processed(NavigableString(f"[{placeholder} unavailable]"))
+    figure_node = _render_mermaid_diagram(context, diagram, template=template)
     if figure_node is None:
         return
 
     element.replace_with(figure_node)
+def _warn_mermaid_failure(exc: Exception) -> None:
+    """Emit a CLI-friendly warning describing Mermaid rendering failures."""
+    cause_chain: list[str] = []
+    current = exc.__cause__
+    while current is not None:
+        cause_chain.append(str(current))
+        current = current.__cause__
+
+    details = ""
+    if cause_chain:
+        unique_messages = []
+        for msg in cause_chain:
+            if msg and msg not in unique_messages:
+                unique_messages.append(msg)
+        if unique_messages:
+            joined = "\n  - ".join(unique_messages)
+            details = f"\nDetails:\n  - {joined}"
+
+    message = (
+        "Mermaid diagram could not be rendered.\n"
+        f"Reason: {exc}{details}\n"
+        "TexSmith replaced the diagram with a text placeholder. Install Docker and the "
+        "`minlag/mermaid-cli` image (or register a custom Mermaid converter) to enable "
+        "diagram rendering."
+    )
+    warnings.warn(message, stacklevel=3)
