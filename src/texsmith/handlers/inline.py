@@ -11,9 +11,9 @@ from requests.utils import requote_uri as requote_url
 
 from ..context import RenderContext
 from ..exceptions import InvalidNodeError
+from ..latex.utils import escape_latex_chars
 from ..rules import RenderPhase, renders
 from ..transformers import fetch_image, svg2pdf
-from ..latex.utils import escape_latex_chars
 from ._helpers import coerce_attribute, gather_classes, is_valid_url, mark_processed
 
 

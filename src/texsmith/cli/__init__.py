@@ -5,15 +5,16 @@ from __future__ import annotations
 from importlib import import_module
 from typing import Any
 
+
 __all__ = ["DEFAULT_MARKDOWN_EXTENSIONS", "app", "bibliography_app", "build", "convert", "main"]
 
 
 def __getattr__(name: str) -> Any:
     if name == "DEFAULT_MARKDOWN_EXTENSIONS":
-        from ..markdown import DEFAULT_MARKDOWN_EXTENSIONS as extensions
+        from ..markdown import DEFAULT_MARKDOWN_EXTENSIONS
 
-        globals()[name] = extensions
-        return extensions
+        globals()[name] = DEFAULT_MARKDOWN_EXTENSIONS
+        return DEFAULT_MARKDOWN_EXTENSIONS
     if name in {"app", "bibliography_app", "main"}:
         module = import_module(".app", __name__)
         value = getattr(module, name)

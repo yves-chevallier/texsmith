@@ -1,4 +1,4 @@
-# Transformer Modules
+# Transformers
 
 ::: texsmith.transformers
 

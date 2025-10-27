@@ -4,7 +4,6 @@ import types
 from typing import Any
 
 import pytest
-
 from typer.testing import CliRunner
 
 from texsmith.cli import DEFAULT_MARKDOWN_EXTENSIONS, app
@@ -845,4 +844,3 @@ def test_build_respects_shell_escape(tmp_path: Path, monkeypatch: Any) -> None:
     assert calls, "latexmk was not invoked"
     pdflatex_args = [arg for arg in calls[0] if arg.startswith("-pdflatex=")]
     assert pdflatex_args and "--shell-escape" in pdflatex_args[0]
-

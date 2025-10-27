@@ -1,4 +1,4 @@
-# Bibliography Modules
+# Bibliography
 
 ::: texsmith.bibliography
 

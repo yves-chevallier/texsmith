@@ -1,26 +1,60 @@
-"""High-level conversion helpers built on top of the core engine."""
+"""Conversion helpers that expose a friendly façade over the core engine.
+
+Architecture
+: `RenderSettings` stores optional overrides for parser selection, asset
+  copying, manifest generation, and diagnostic outputs. A dedicated dataclass
+  keeps configuration immutable unless explicitly copied.
+: `LaTeXFragment` represents the output of a single document conversion and
+  records where it was written on disk, keeping post-processing logic decoupled
+  from the rendering pass.
+: `ConversionBundle` collects fragments and offers convenience methods like
+  `combined_output` for quick previews or testing.
+: `convert_documents` bridges `Document` inputs, renders them through the
+  conversion engine, and yields the populated bundle.
+
+Implementation Rationale
+: Splitting settings, fragments, and bundles into separate dataclasses keeps the
+  API explicit. Callers can introspect or extend the workflow without threading
+  ad-hoc dictionaries through their code.
+: Supporting multiple documents in a single call enables batch rendering and
+  powers template sessions. The helper ensures file names are deduplicated and
+  optional outputs, such as manifests, remain consistent.
+
+Usage Example
+:
+    >>> from pathlib import Path
+    >>> from tempfile import TemporaryDirectory
+    >>> from texsmith.api.document import Document
+    >>> from texsmith.api.pipeline import convert_documents
+    >>> with TemporaryDirectory() as tmpdir:
+    ...     source = Path(tmpdir) / "intro.md"
+    ...     _ = source.write_text("# Intro\\nContent")
+    ...     output_dir = Path(tmpdir) / "build"
+    ...     bundle = convert_documents([Document.from_markdown(source)], output_dir=output_dir)
+    ...     (output_dir / "intro.tex").exists()
+    True
+"""
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from collections.abc import Iterable, Sequence
 import copy
+from dataclasses import dataclass
 from pathlib import Path
-from typing import Iterable, List, Sequence
 
 from ..conversion import (
     ConversionCallbacks,
     ConversionResult,
     convert_document,
 )
-from ..templates import LATEX_HEADING_LEVELS
-from .document import Document
 from ._utils import build_unique_stem_map
+from .document import Document
 
 
 __all__ = [
-    "RenderSettings",
-    "LaTeXFragment",
     "ConversionBundle",
+    "LaTeXFragment",
+    "RenderSettings",
     "convert_documents",
 ]
 
@@ -36,7 +70,8 @@ class RenderSettings:
     persist_debug_html: bool = False
     language: str | None = None
 
-    def copy(self) -> "RenderSettings":
+    def copy(self) -> RenderSettings:
+        """Create a deep copy of the settings."""
         return copy.deepcopy(self)
 
 
@@ -61,11 +96,13 @@ class LaTeXFragment:
 class ConversionBundle:
     """Collection returned by :func:`convert_documents`."""
 
-    fragments: List[LaTeXFragment]
+    fragments: list[LaTeXFragment]
 
     def combined_output(self) -> str:
         """Concatenate all fragments separated by blank lines."""
-        return "\n\n".join(fragment.latex for fragment in self.fragments if fragment.latex)
+        return "\n\n".join(
+            fragment.latex for fragment in self.fragments if fragment.latex
+        )
 
 
 def convert_documents(
@@ -84,7 +121,7 @@ def convert_documents(
     unique_stems = build_unique_stem_map([doc.source_path for doc in documents])
 
     fragments: list[LaTeXFragment] = []
-    for index, document in enumerate(documents):
+    for _index, document in enumerate(documents):
         context = document.to_context()
         target_dir = Path(output_dir) if output_dir is not None else Path("build")
         result = convert_document(

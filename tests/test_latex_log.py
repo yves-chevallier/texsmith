@@ -121,3 +121,51 @@ def test_parser_merges_wrapped_input_line_suffix() -> None:
     parser.finalize()
     summaries = [message.summary for message in parser.messages]
     assert any(summary.endswith("line 321.") for summary in summaries)
+
+
+def test_parser_classifies_package_warning_with_details() -> None:
+    parser = LatexLogParser()
+    lines = [
+        "Package fancyhdr Warning: \\headheight is too small (12.0pt).\n",
+        "Type  <return> to proceed.\n",
+    ]
+    for line in lines:
+        parser.process_line(line)
+    parser.finalize()
+    assert len(parser.messages) == 1
+    warning = parser.messages[0]
+    assert warning.severity is LatexMessageSeverity.WARNING
+    assert warning.summary == "\\headheight is too small (12.0pt)."
+    assert "Type  <return> to proceed." in warning.details
+
+
+def test_parser_drops_progress_and_transcript_lines() -> None:
+    parser = LatexLogParser()
+    lines = [
+        "[1]\n",
+        "[2]\n",
+        "Output written on\n",
+        "Transcript written on\n",
+    ]
+    for line in lines:
+        parser.process_line(line)
+    parser.finalize()
+    assert list(parser.messages) == []
+
+
+def test_parser_classifies_latexmk_errors() -> None:
+    parser = LatexLogParser()
+    lines = [
+        "Latexmk: applying rule 'pdflatex'...\n",
+        "Latexmk: Rule 'pdflatex' has failed\n",
+        "Latexmk: Errors, so I did not complete processing of 'main.tex'\n",
+    ]
+    for line in lines:
+        parser.process_line(line)
+    parser.finalize()
+    severities = [message.severity for message in parser.messages]
+    assert severities == [
+        LatexMessageSeverity.INFO,
+        LatexMessageSeverity.ERROR,
+        LatexMessageSeverity.ERROR,
+    ]

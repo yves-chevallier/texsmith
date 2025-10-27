@@ -1,14 +1,57 @@
-"""Template orchestration helpers exposed by the API."""
+"""Template orchestration helpers exposed by the TeXSmith API.
+
+Architecture
+: `TemplateSession` owns lifecycle management: it accepts documents, ensures
+  metadata overrides are applied, and invokes the conversion engine either once
+  (single document) or repeatedly (multi-fragment projects).
+: `TemplateOptions` is a thin wrapper around a mutable mapping that keeps
+  user-supplied overrides isolated from the template defaults. Its API is
+  intentionally dictionary-like to integrate smoothly with CLI parsing.
+: `TemplateRenderResult` captures the products of a render pass, including
+  computed context, bibliography location, and shell-escape requirements so
+  downstream tools can decide how to compile the LaTeX output.
+
+Implementation Rationale
+: Templates often need to render multiple fragments into specific slots while
+  sharing state such as bibliography caches. The session abstraction keeps that
+  orchestration logic together and reduces duplication across the CLI,
+  pre-built commands, and programmatic usage.
+: Options are separated from documents to prevent accidental mutation of the
+  default template metadata. Copy semantics are explicit, enabling safe reuse of
+  sessions with different overrides.
+
+Usage Example
+:
+    >>> from types import SimpleNamespace
+    >>> from texsmith.api.templates import TemplateSession
+    >>> from texsmith.templates import TemplateRuntime, TemplateSlot
+    >>> dummy_info = SimpleNamespace(attributes={"cover_color": "indigo"})
+    >>> dummy_template = SimpleNamespace(info=dummy_info)
+    >>> runtime = TemplateRuntime(
+    ...     instance=dummy_template,
+    ...     name="demo",
+    ...     engine=None,
+    ...     requires_shell_escape=False,
+    ...     slots={"mainmatter": TemplateSlot(default=True)},
+    ...     default_slot="mainmatter",
+    ...     formatter_overrides={},
+    ...     base_level=None,
+    ... )
+    >>> session = TemplateSession(runtime=runtime)
+    >>> session.get_default_options().to_dict()["cover_color"]
+    'indigo'
+"""
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from collections.abc import Mapping, Sequence
 import copy
+from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Iterable, Mapping, Sequence
+from typing import Any
 
 from ..context import DocumentState
-from ..conversion import ConversionCallbacks, convert_document
+from ..conversion import ConversionCallbacks, DocumentContext, convert_document
 from ..templates import (
     TemplateError,
     TemplateRuntime,
@@ -50,7 +93,8 @@ class TemplateOptions:
         """Return a deep copy of the underlying values."""
         return copy.deepcopy(self._values)
 
-    def copy(self) -> "TemplateOptions":
+    def copy(self) -> TemplateOptions:
+        """Return a deep copy of the option set."""
         return TemplateOptions(self.to_dict())
 
     def update(self, values: Mapping[str, Any] | None = None, **extra: Any) -> None:
@@ -76,6 +120,7 @@ class TemplateRenderResult:
 
     @property
     def has_bibliography(self) -> bool:
+        """Indicate whether a bibliography was generated."""
         return bool(self.bibliography_path)
 
 
@@ -97,7 +142,7 @@ class TemplateSession:
         self.settings = settings.copy() if settings else RenderSettings()
         self.callbacks = callbacks
 
-    def _prepare_context(self, document: Document):
+    def _prepare_context(self, document: Document) -> DocumentContext:
         context = document.to_context()
         overrides_dict = self._options.to_dict()
         if overrides_dict:
@@ -119,7 +164,9 @@ class TemplateSession:
         else:
             self._options = TemplateOptions(dict(options))
 
-    def update_options(self, values: Mapping[str, Any] | None = None, **extra: Any) -> None:
+    def update_options(
+        self, values: Mapping[str, Any] | None = None, **extra: Any
+    ) -> None:
         """Update the current template overrides."""
         self._options.update(values, **extra)
 
@@ -147,6 +194,7 @@ class TemplateSession:
 
     @property
     def documents(self) -> Sequence[Document]:
+        """Return the registered documents."""
         return tuple(self._documents)
 
     def render(self, output_dir: Path) -> TemplateRenderResult:
@@ -177,7 +225,9 @@ class TemplateSession:
             )
 
             if result.tex_path is None:
-                raise TemplateError("Template rendering failed to produce a LaTeX document.")
+                raise TemplateError(
+                    "Template rendering failed to produce a LaTeX document."
+                )
 
             return TemplateRenderResult(
                 main_tex_path=result.tex_path,
@@ -190,7 +240,9 @@ class TemplateSession:
                 requires_shell_escape=result.template_shell_escape,
             )
 
-        unique_stems = build_unique_stem_map([doc.source_path for doc in self._documents])
+        unique_stems = build_unique_stem_map(
+            [doc.source_path for doc in self._documents]
+        )
         aggregated_slots: dict[str, list[str]] = {}
         default_slot = self.runtime.default_slot
         aggregated_slots.setdefault(default_slot, [])
@@ -202,7 +254,7 @@ class TemplateSession:
         template_engine: str | None = None
         requires_shell_escape = self.runtime.requires_shell_escape
 
-        for index, document in enumerate(self._documents):
+        for _index, document in enumerate(self._documents):
             context = self._prepare_context(document)
             result = convert_document(
                 document=context,
@@ -224,7 +276,9 @@ class TemplateSession:
 
             if template_engine is None:
                 template_engine = result.template_engine
-            requires_shell_escape = requires_shell_escape or result.template_shell_escape
+            requires_shell_escape = (
+                requires_shell_escape or result.template_shell_escape
+            )
 
             shared_state = result.document_state or shared_state
             bibliography_path = result.bibliography_path or bibliography_path
@@ -240,10 +294,14 @@ class TemplateSession:
             if default_slot not in aggregated_slots:
                 aggregated_slots[default_slot] = []
             if default_slot not in full_slots and result.latex_output.strip():
-                aggregated_slots[default_slot].append(f"\\input{{{fragment_path.stem}}}")
+                aggregated_slots[default_slot].append(
+                    f"\\input{{{fragment_path.stem}}}"
+                )
 
             for slot_name in full_slots:
-                aggregated_slots.setdefault(slot_name, []).append(f"\\input{{{fragment_path.stem}}}")
+                aggregated_slots.setdefault(slot_name, []).append(
+                    f"\\input{{{fragment_path.stem}}}"
+                )
 
             for slot_name, fragment_content in result.slot_outputs.items():
                 if not fragment_content:
@@ -294,7 +352,9 @@ class TemplateSession:
                 self.runtime.instance,
                 output_dir,
                 context=template_context,
-                overrides=template_overrides_master if template_overrides_master else None,
+                overrides=template_overrides_master
+                if template_overrides_master
+                else None,
             )
         except TemplateError as exc:
             message = str(exc)

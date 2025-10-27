@@ -1,4 +1,4 @@
-# Handler Modules
+# Handlers
 
 ::: texsmith.handlers
 
