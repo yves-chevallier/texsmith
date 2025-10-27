@@ -134,9 +134,7 @@ class LaTeXFormatter:
 
     def url(self, text: str, url: str) -> str:
         """Render a URL, escaping special LaTeX characters."""
-        safe_url = escape_latex_chars(
-            requote_url(url), legacy_accents=self.legacy_latex_accents
-        )
+        safe_url = escape_latex_chars(requote_url(url), legacy_accents=self.legacy_latex_accents)
         return self._get_template("url").render(text=text, url=safe_url)
 
     def _escape_latex(self, value: str) -> str:

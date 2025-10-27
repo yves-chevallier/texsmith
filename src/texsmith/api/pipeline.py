@@ -101,9 +101,7 @@ class ConversionBundle:
 
     def combined_output(self) -> str:
         """Concatenate all fragments separated by blank lines."""
-        return "\n\n".join(
-            fragment.latex for fragment in self.fragments if fragment.latex
-        )
+        return "\n\n".join(fragment.latex for fragment in self.fragments if fragment.latex)
 
 
 def convert_documents(

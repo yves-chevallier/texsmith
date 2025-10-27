@@ -16,6 +16,11 @@ tlmgr_packages = [
     "fontspec",
 ]
 
+# Attributes:
+# -----------
+# Declare attributes that can be customized when using the template.
+# These attributes will be available in the LaTeX template via variables.
+# They can be populated using the YAML front matter in the document source files.
 [latex.template.attributes]
 base_level = 1
 title = "Article Title"
@@ -25,9 +30,11 @@ date = "\\today"
 language = "english"
 paper = "a4"
 orientation = "portrait"
-frontmatter = ""
-backmatter = ""
 
+# Slots definition:
+# -----------------
+# Each slot represents a section of the document that can be filled with content.
+# The 'depth' parameter indicates the LaTeX sectioning command to use.
 [latex.template.slots.mainmatter]
 default = true
 depth = "section"
@@ -35,6 +42,10 @@ depth = "section"
 [latex.template.slots.abstract]
 depth = "section"
 
+# Additional Assets:
+# ------------------
+# All additional assets to be included in the template package.
+# They will be copied to the working directory when the template is used.
 [latex.template.assets]
 "callouts.sty" = { source = "template/callouts.sty" }
 "todo.sty" = { source = "template/todo.sty" }

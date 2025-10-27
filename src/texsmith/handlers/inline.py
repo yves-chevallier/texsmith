@@ -238,7 +238,9 @@ def _escape_text_segment(text: str, context: RenderContext, *, legacy_latex_acce
     for kind, payload in _segment_text_with_emoji(text):
         if kind == "text":
             if payload:
-                chunks.append(_prepare_plain_text(payload, legacy_latex_accents=legacy_latex_accents))
+                chunks.append(
+                    _prepare_plain_text(payload, legacy_latex_accents=legacy_latex_accents)
+                )
         else:
             chunks.append(_render_emoji(payload, context))
     return "".join(chunks)

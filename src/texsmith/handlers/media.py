@@ -8,8 +8,8 @@ import hashlib
 from pathlib import Path
 from typing import Any
 from urllib.parse import urlparse
-import zlib
 import warnings
+import zlib
 
 from bs4.element import NavigableString, Tag
 
@@ -358,6 +358,8 @@ def render_mermaid_pre(element: Tag, context: RenderContext) -> None:
         return
 
     element.replace_with(figure_node)
+
+
 def _warn_mermaid_failure(exc: Exception) -> None:
     """Emit a CLI-friendly warning describing Mermaid rendering failures."""
     cause_chain: list[str] = []
