@@ -71,6 +71,7 @@ def has_converter(name: str) -> bool:
     """Return True when a converter strategy is currently registered."""
     return registry.is_registered(name)
 
+
 def svg2pdf(source: Path | str, output_dir: Path, **options: Any) -> Path:
     """Convert SVG assets to PDF."""
     return registry.convert("svg", source, output_dir=output_dir, **options)
@@ -111,8 +112,8 @@ __all__ = [
     "MermaidToPdfStrategy",
     "drawio2pdf",
     "fetch_image",
-    "has_converter",
     "get_pdf_page_sizes",
+    "has_converter",
     "image2pdf",
     "mermaid2pdf",
     "register_converter",

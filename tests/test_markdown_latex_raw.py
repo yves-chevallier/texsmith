@@ -5,9 +5,7 @@ from texsmith.cli import DEFAULT_MARKDOWN_EXTENSIONS
 
 def test_latex_raw_fence_converts_to_hidden_paragraph() -> None:
     md = markdown.Markdown(extensions=DEFAULT_MARKDOWN_EXTENSIONS)
-    html = md.convert(
-        "Intro\n\n/// latex\n\\newline\\textbf{hidden}\n///\n\nOutro"
-    )
+    html = md.convert("Intro\n\n/// latex\n\\newline\\textbf{hidden}\n///\n\nOutro")
 
     assert '<p class="latex-raw" style="display:none;">\\newline\\textbf{hidden}</p>' in html
     assert "<p>Intro</p>" in html

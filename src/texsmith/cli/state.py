@@ -6,6 +6,7 @@ from dataclasses import dataclass, field
 import sys
 from typing import TYPE_CHECKING
 
+
 if TYPE_CHECKING:
     from rich.console import Console
     from rich.text import Text
@@ -53,7 +54,7 @@ def ensure_rich_compat() -> None:
     if not hasattr(rich_mod, "box"):
         box_module = types.ModuleType("rich.box")
         box_module.SQUARE = box_module.MINIMAL_DOUBLE_HEAD = box_module.SIMPLE = object()
-        setattr(rich_mod, "box", box_module)
+        rich_mod.box = box_module
         _sys.modules.setdefault("rich.box", box_module)
 
 

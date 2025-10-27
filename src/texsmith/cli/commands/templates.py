@@ -34,7 +34,10 @@ def template_info(
         from rich.pretty import Pretty
         from rich.table import Table
     except ImportError:  # pragma: no cover - fallback when Rich is stubbed
-        box = Panel = Pretty = Table = None  # type: ignore[assignment]
+        box = None
+        Panel = None  # type: ignore[assignment]  # noqa: N806
+        Pretty = None  # type: ignore[assignment]  # noqa: N806
+        Table = None  # type: ignore[assignment]  # noqa: N806
 
     from ...templates import TemplateError, load_template
 

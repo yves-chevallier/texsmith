@@ -11,6 +11,7 @@ import typer
 from ..bibliography import BibliographyCollection
 from .state import ensure_rich_compat, get_cli_state
 
+
 if TYPE_CHECKING:
     from rich.panel import Panel
 
@@ -48,7 +49,7 @@ def format_person_list(persons: Iterable[Mapping[str, object]]) -> str:
     return ", ".join(name for name in names if name)
 
 
-def build_reference_panel(reference: Mapping[str, object]) -> "Panel":
+def build_reference_panel(reference: Mapping[str, object]) -> Panel:
     """Create a Rich panel that visualises a single bibliography entry."""
     from rich import box
     from rich.panel import Panel

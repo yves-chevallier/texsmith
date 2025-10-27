@@ -8,8 +8,8 @@ from bs4 import BeautifulSoup
 import pytest
 
 from texsmith.config import BookConfig
-from texsmith.plugins import material
 from texsmith.latex import LaTeXRenderer
+from texsmith.plugins import material
 from texsmith.transformers import register_converter, registry
 
 

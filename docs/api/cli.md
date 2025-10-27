@@ -1,4 +1,4 @@
-# CLI Modules
+# CLI
 
 ::: texsmith.cli
 

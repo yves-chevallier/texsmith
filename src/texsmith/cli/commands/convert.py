@@ -10,9 +10,9 @@ from ...api import convert_documents, get_template
 from ...api.document import Document
 from ...api.pipeline import RenderSettings
 from ...conversion import (
+    DOCUMENT_SELECTOR_SENTINEL,
     ConversionCallbacks,
     ConversionError,
-    DOCUMENT_SELECTOR_SENTINEL,
     InputKind,
     UnsupportedInputError,
 )
@@ -372,4 +372,3 @@ def convert(
         f"LaTeX document written to {render_result.main_tex_path}",
         fg=typer.colors.GREEN,
     )
-

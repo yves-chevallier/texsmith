@@ -149,4 +149,3 @@ __all__ = [
     "copy_template_assets",
     "load_template",
 ]
-

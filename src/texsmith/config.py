@@ -1,69 +1,99 @@
 """Configuration models used by the LaTeX renderer.
 
-CommonConfig:
-    build_dir (Path | None): Répertoire de base pour les artefacts LaTeX.
-        Fournissez un chemin (absolu ou relatif au projet) pour changer
-        l'emplacement global d'export. Les livres héritent de cette valeur
-        lorsqu'ils n'en définissent pas.
-    save_html (bool): Conserve l'export HTML intermédiaire à côté du PDF.
-        Activez cette option pour inspecter ou déboguer le rendu HTML produit
-        avant la compilation LaTeX.
-    mermaid_config (Path | None): Fichier de configuration Mermaid.
-        Référencez un fichier `.json` ou `.mermaid` pour injecter des options
-        personnalisées lors de la conversion des diagrammes.
-    project_dir (Path | None): Répertoire racine du projet MkDocs.
-        Sert de base pour résoudre les chemins sources, notamment lors de la
-        copie de fichiers additionnels.
-    language (str | None): Code de langue BCP 47 utilisé par LaTeX.
-        Renseignez-le pour contrôler l'hyphénation, les traductions internes
-        et la localisation des métadonnées.
+CommonConfig
 
-CoverConfig:
-    name (str): Identifiant du gabarit de couverture à appliquer.
-        Utilisez une valeur déclarée dans vos modèles de couverture.
-    color (str | None): Couleur principale du gabarit.
-        Fixez-la pour harmoniser la palette de la couverture ou conserver
-        la valeur par défaut du template.
-    logo (str | None): Ressource logo à afficher.
-        Fournissez un chemin relatif au projet pour insérer un logo spécifique.
+`build_dir` (`Path | None`)
+: Base directory for LaTeX artifacts. Provide an absolute or project-relative
+  path to override the default export root that books inherit when they do not
+  specify one.
 
-BookConfig:
-    root (str | None): Titre de navigation servant de point de départ du livre.
-        Spécifiez-le si la section racine diffère de la première page MkDocs.
-    title (str | None): Titre du livre.
-        Laissez vide pour utiliser `site_name` ou fournissez un intitulé dédié.
-    subtitle (str | None): Sous-titre affiché sur la couverture et dans les
-        métadonnées.
-    author (str | None): Auteur principal du livre.
-        Peut être multi-auteurs en utilisant une chaîne formatée.
-    year (int | None): Année de publication.
-        Renseignez-la pour figer la date si `site_date` n'est pas défini.
-    email (str | None): Adresse de contact affichée dans les credits.
-    folder (Path | None): Dossier de sortie pour le livre.
-        Par défaut, un slug du titre est utilisé ; spécifiez un chemin pour
-        contrôler précisément la destination.
-    frontmatter (list[str]): Titres de sections forcées en front matter.
-        Listez les titres MkDocs à déplacer avant la matière principale.
-    backmatter (list[str]): Titres de sections placées en annexes.
-        Listez les titres MkDocs à déplacer après la matière principale.
-    base_level (int): Niveau de base des titres.
-        Ajustez ce niveau pour aligner la numérotation avec le gabarit LaTeX.
-    copy_files (dict[str, str]): Correspondance de fichiers supplémentaires.
-        Chaque clé est un motif glob relatif au projet ; la valeur indique où
-        copier les fichiers dans le dossier de sortie.
-    index_is_foreword (bool): Traite la page `index` comme avant-propos.
-        Activez-le pour retirer la numérotation de cette page d'ouverture.
-    drop_title_index (bool): Supprime le titre de la page `index` lorsqu'elle
-        est considérée comme avant-propos.
-    cover (CoverConfig): Paramètres de la couverture du livre.
+`save_html` (`bool`)
+: Persist the intermediate HTML render next to the PDF to aid troubleshooting
+  before LaTeX compilation.
 
-LaTeXConfig:
-    enabled (bool): Active ou désactive la génération LaTeX.
-        Mettez `False` pour conserver la configuration sans lancer l'export.
-    books (list[BookConfig]): Ensemble des livres à produire.
-        Ajoutez une entrée par livre souhaité ; hérite de CommonConfig.
-    clean_assets (bool): Nettoie les artefacts obsolètes dans `build_dir`.
-        Laissez actif pour éviter l'accumulation de ressources inutilisées.
+`mermaid_config` (`Path | None`)
+: Path to a Mermaid configuration file. Point to a `.json` or `.mermaid`
+  document to customise diagram rendering.
+
+`project_dir` (`Path | None`)
+: MkDocs project root used to resolve relative paths when copying additional
+  assets.
+
+`language` (`str | None`)
+: BCP 47 language code forwarded to LaTeX for hyphenation, translations, and
+  metadata localisation.
+
+CoverConfig
+
+`name` (`str`)
+: Identifier of the cover template to apply. The value must match a template
+  declared in the cover bundle.
+
+`color` (`str | None`)
+: Primary colour override applied by the cover template.
+
+`logo` (`str | None`)
+: Project-relative path to a logo asset displayed on the cover.
+
+BookConfig
+
+`root` (`str | None`)
+: Navigation entry treated as the starting point for the book. Use it when the
+  root differs from the first MkDocs page.
+
+`title` (`str | None`)
+: Title displayed on the cover and in output metadata. Falls back to `site_name`
+  when omitted.
+
+`subtitle` (`str | None`)
+: Optional subtitle appended to the cover and metadata.
+
+`author` (`str | None`)
+: Primary author string rendered in the book metadata.
+
+`year` (`int | None`)
+: Publication year to freeze in the output when `site_date` is not supplied.
+
+`email` (`str | None`)
+: Contact address printed in the credits.
+
+`folder` (`Path | None`)
+: Output directory for the rendered book. Defaults to a slug of the title when
+  not provided.
+
+`frontmatter` (`list[str]`)
+: MkDocs page titles moved before the main matter.
+
+`backmatter` (`list[str]`)
+: MkDocs page titles grouped into the appendices.
+
+`base_level` (`int`)
+: Heading offset applied to align section numbering with the template
+  expectations.
+
+`copy_files` (`dict[str, str]`)
+: Mapping of glob patterns to destination paths for copying additional assets
+  alongside the book.
+
+`index_is_foreword` (`bool`)
+: Treat the `index` page as a foreword, typically removing numbering.
+
+`drop_title_index` (`bool`)
+: Suppress the `index` page heading when it acts as a foreword.
+
+`cover` (`CoverConfig`)
+: Nested configuration controlling the book cover.
+
+LaTeXConfig
+
+`enabled` (`bool`)
+: Toggle LaTeX generation without discarding configuration.
+
+`books` (`list[BookConfig]`)
+: Collection of books to produce, inheriting defaults from `CommonConfig`.
+
+`clean_assets` (`bool`)
+: Remove stale assets from `build_dir` to avoid accumulating unused files.
 """
 
 from __future__ import annotations

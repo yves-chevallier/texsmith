@@ -5,6 +5,7 @@ from __future__ import annotations
 from html import escape
 import re
 
+from markdown import Markdown
 from markdown.extensions import Extension
 from markdown.preprocessors import Preprocessor
 
@@ -41,9 +42,7 @@ class _LatexRawPreprocessor(Preprocessor):
                 break
 
             escaped = escape("\n".join(contents), quote=False)
-            result.append(
-                f'<p class="latex-raw" style="display:none;">{escaped}</p>'
-            )
+            result.append(f'<p class="latex-raw" style="display:none;">{escaped}</p>')
             index += 1  # Skip closing fence
 
         return result
@@ -52,13 +51,11 @@ class _LatexRawPreprocessor(Preprocessor):
 class LatexRawExtension(Extension):
     """Register the raw LaTeX block preprocessor."""
 
-    def extendMarkdown(self, md):  # type: ignore[override]
-        md.preprocessors.register(
-            _LatexRawPreprocessor(md), "texsmith_latex_raw", priority=27
-        )
+    def extendMarkdown(self, md: Markdown) -> None:  # type: ignore[override]  # noqa: N802
+        md.preprocessors.register(_LatexRawPreprocessor(md), "texsmith_latex_raw", priority=27)
 
 
-def makeExtension(**_: object) -> LatexRawExtension:  # pragma: no cover - API hook
+def makeExtension(**_: object) -> LatexRawExtension:  # pragma: no cover - API hook  # noqa: N802
     return LatexRawExtension()
 
 

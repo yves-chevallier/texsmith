@@ -79,6 +79,7 @@ plugins:
         python:
           options:
             show_source: true
+            docstring_section_style: list
             show_docstring_description: true
             show_signature_annotations: true
             docstring_style: google

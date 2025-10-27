@@ -5,17 +5,18 @@ from __future__ import annotations
 from importlib import import_module
 from typing import Any
 
+
 __all__ = [
     "AssetRegistry",
-    "Document",
-    "DocumentRenderOptions",
-    "HeadingLevel",
     "BibliographyCollection",
     "BibliographyIssue",
     "BookConfig",
+    "Document",
+    "DocumentRenderOptions",
     "DocumentState",
     "DoiBibliographyFetcher",
     "DoiLookupError",
+    "HeadingLevel",
     "LaTeXConfig",
     "RenderContext",
     "RenderPhase",
@@ -30,8 +31,8 @@ __all__ = [
     "copy_template_assets",
     "get_template",
     "load_template",
-    "resolve_heading_level",
     "renders",
+    "resolve_heading_level",
 ]
 
 _EXPORTS: dict[str, tuple[str, str]] = {

@@ -1,11 +1,47 @@
-"""High-level document abstractions used by the TeXSmith public API."""
+"""Document abstractions consumed by the TeXSmith public API.
+
+Architecture
+: `Document` models inputs alongside slot overrides and rendering toggles.
+  Instances are intentionally lightweight so they can be duplicated when
+  entering template sessions without costly reparsing.
+: `DocumentRenderOptions` captures heading offsets, numbering, and other knobs
+  that influence the LaTeX output. Keeping these options separate from the core
+  document data allows caller-specific tweaks while preserving the original
+  source.
+: `HeadingLevel` and `resolve_heading_level` provide a friendly bridge between
+  human labels (for example `"section"`) and the numeric levels required by the
+  LaTeX engine. This mapping is shared across the CLI and programmatic surfaces
+  to guarantee consistent behaviour.
+
+Implementation Rationale
+: Conversions often need multiple passes over the same document, such as preview
+  and templated export. By storing canonicalised HTML and front-matter snapshots
+  we avoid repeated Markdown or HTML parsing.
+: A dedicated abstraction makes it easy to inspect or mutate front matter in
+  higher layers without leaking the underlying `DocumentContext` type used
+  deeper inside the conversion engine.
+
+Usage Example
+:
+    >>> from pathlib import Path
+    >>> from tempfile import TemporaryDirectory
+    >>> from texsmith.api.document import Document
+    >>> with TemporaryDirectory() as tmpdir:
+    ...     source = Path(tmpdir) / "chapter.md"
+    ...     _ = source.write_text("# Chapter\\nBody")
+    ...     doc = Document.from_markdown(source, heading="section")
+    ...     context = doc.to_context()
+    ...     context.name
+    'chapter'
+"""
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from collections.abc import Iterable, Mapping
 import copy
+from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Iterable, Mapping
+from typing import Any
 
 from ..conversion import (
     ConversionCallbacks,
@@ -15,7 +51,11 @@ from ..conversion import (
     build_document_context,
     extract_content,
 )
-from ..markdown import DEFAULT_MARKDOWN_EXTENSIONS, MarkdownConversionError, render_markdown
+from ..markdown import (
+    DEFAULT_MARKDOWN_EXTENSIONS,
+    MarkdownConversionError,
+    render_markdown,
+)
 from ..templates import LATEX_HEADING_LEVELS
 
 
@@ -31,7 +71,8 @@ class HeadingLevel(int):
     """Represents a LaTeX heading depth."""
 
     @classmethod
-    def from_label(cls, value: str | int | "HeadingLevel") -> "HeadingLevel":
+    def from_label(cls, value: str | int | HeadingLevel) -> HeadingLevel:
+        """Create a HeadingLevel from a label or numeric depth."""
         if isinstance(value, HeadingLevel):
             return value
         if isinstance(value, int):
@@ -39,7 +80,9 @@ class HeadingLevel(int):
         key = value.strip().lower()
         if key not in LATEX_HEADING_LEVELS:
             allowed = ", ".join(sorted(LATEX_HEADING_LEVELS))
-            raise ValueError(f"Unknown heading label '{value}'. Expected one of: {allowed}.")
+            raise ValueError(
+                f"Unknown heading label '{value}'. Expected one of: {allowed}."
+            )
         return cls(LATEX_HEADING_LEVELS[key])
 
 
@@ -57,7 +100,8 @@ class DocumentRenderOptions:
     drop_title: bool = False
     numbered: bool = True
 
-    def copy(self) -> "DocumentRenderOptions":
+    def copy(self) -> DocumentRenderOptions:
+        """Return a deep copy of the options."""
         return DocumentRenderOptions(
             base_level=self.base_level,
             heading_level=self.heading_level,
@@ -89,7 +133,7 @@ class Document:
         drop_title: bool = False,
         numbered: bool = True,
         callbacks: ConversionCallbacks | None = None,
-    ) -> "Document":
+    ) -> Document:
         """Create a document from a Markdown file."""
         try:
             rendered = render_markdown(
@@ -99,9 +143,11 @@ class Document:
         except (OSError, MarkdownConversionError) as exc:
             message = f"Failed to convert Markdown source '{path}': {exc}"
             if callbacks and callbacks.emit_error:
-                callbacks.emit_error(message, exc if isinstance(exc, Exception) else None)
-            raise ConversionError(message) from exc if isinstance(exc, Exception) else ConversionError(
-                message
+                callbacks.emit_error(
+                    message, exc if isinstance(exc, Exception) else None
+                )
+            raise ConversionError(message) from (
+                exc if isinstance(exc, Exception) else ConversionError(message)
             )
 
         options = DocumentRenderOptions(
@@ -130,7 +176,7 @@ class Document:
         numbered: bool = True,
         full_document: bool = False,
         callbacks: ConversionCallbacks | None = None,
-    ) -> "Document":
+    ) -> Document:
         """Create a document from an HTML file."""
         try:
             payload = path.read_text(encoding="utf-8")
@@ -166,7 +212,7 @@ class Document:
             options=options,
         )
 
-    def copy(self) -> "Document":
+    def copy(self) -> Document:
         """Return a deep copy of the document."""
         return Document(
             source_path=self.source_path,
@@ -180,18 +226,22 @@ class Document:
 
     @property
     def drop_title(self) -> bool:
+        """Indicate whether the document title should be dropped."""
         return self.options.drop_title
 
     @drop_title.setter
     def drop_title(self, value: bool) -> None:
+        """Set whether the document title should be dropped."""
         self.options.drop_title = bool(value)
 
     @property
     def numbered(self) -> bool:
+        """Indicate whether the document is numbered."""
         return self.options.numbered
 
     @numbered.setter
     def numbered(self, value: bool) -> None:
+        """Set whether the document is numbered."""
         self.options.numbered = bool(value)
 
     def set_heading(self, heading: str | int | HeadingLevel) -> None:

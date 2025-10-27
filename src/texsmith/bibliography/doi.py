@@ -5,6 +5,7 @@ from __future__ import annotations
 from collections.abc import Iterable
 from typing import TYPE_CHECKING
 
+
 if TYPE_CHECKING:  # pragma: no cover - typing only
     import requests  # type: ignore[import]
 
@@ -27,7 +28,7 @@ class DoiBibliographyFetcher:
     def __init__(
         self,
         *,
-        session: "requests.Session | None" = None,
+        session: requests.Session | None = None,
         timeout: float = 10.0,
         user_agent: str | None = None,
     ) -> None:

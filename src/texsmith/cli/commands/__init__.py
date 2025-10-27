@@ -8,7 +8,8 @@ import them using dotted paths (e.g. ``texsmith.cli.commands.build``).
 
 from __future__ import annotations
 
-from .build import build, build_latexmk_command  # noqa: F401
-from .convert import convert  # noqa: F401
+from .build import build, build_latexmk_command
+from .convert import convert
+
 
 __all__ = ["build", "build_latexmk_command", "convert"]

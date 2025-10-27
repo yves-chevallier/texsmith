@@ -62,4 +62,10 @@ def is_valid_url(url: str) -> bool:
     return bool(result.scheme and result.netloc)
 
 
-__all__ = ["coerce_attribute", "gather_classes", "is_valid_url", "mark_processed", "resolve_asset_path"]
+__all__ = [
+    "coerce_attribute",
+    "gather_classes",
+    "is_valid_url",
+    "mark_processed",
+    "resolve_asset_path",
+]
