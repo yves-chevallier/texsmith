@@ -7,8 +7,9 @@ from pathlib import Path
 import shutil
 from typing import Any
 
-from ..docker import DockerLimits, VolumeMount, run_container
 from texsmith.core.exceptions import TransformerExecutionError
+
+from ..docker import DockerLimits, VolumeMount, run_container
 from .base import CachedConversionStrategy
 from .utils import points_to_mm
 

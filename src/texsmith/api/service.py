@@ -8,8 +8,8 @@ from pathlib import Path
 from typing import Any
 
 from texsmith.core.conversion.debug import ensure_emitter
-from texsmith.core.diagnostics import DiagnosticEmitter
 from texsmith.core.conversion.inputs import InputKind, UnsupportedInputError
+from texsmith.core.diagnostics import DiagnosticEmitter
 
 from .document import Document
 from .pipeline import ConversionBundle, RenderSettings, convert_documents

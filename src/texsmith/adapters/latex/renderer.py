@@ -4,16 +4,18 @@ from __future__ import annotations
 
 from collections.abc import Iterable, Mapping
 from pathlib import Path
-from typing import Any, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from bs4 import BeautifulSoup, FeatureNotFound
 
 from texsmith.core.config import BookConfig
 from texsmith.core.context import AssetRegistry, DocumentState, RenderContext
+from texsmith.core.diagnostics import DiagnosticEmitter, NullEmitter
 from texsmith.core.exceptions import LatexRenderingError
 from texsmith.core.rules import RenderEngine, RenderPhase
-from texsmith.core.diagnostics import DiagnosticEmitter, NullEmitter
+
 from .formatter import LaTeXFormatter
+
 
 if TYPE_CHECKING:  # pragma: no cover - typing only
     from texsmith.api.pipeline import ConversionBundle, LaTeXFragment

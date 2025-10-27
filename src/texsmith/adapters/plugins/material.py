@@ -7,9 +7,10 @@ from typing import Any
 from bs4.element import NavigableString, Tag
 
 from texsmith.core.context import RenderContext
+from texsmith.core.rules import RenderPhase, renders
+
 from ..handlers import admonitions as base_admonitions
 from ..handlers._helpers import coerce_attribute, gather_classes, mark_processed
-from texsmith.core.rules import RenderPhase, renders
 
 
 EXERCISE_IGNORED_CLASSES = {

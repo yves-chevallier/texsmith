@@ -9,6 +9,7 @@ from bs4.element import NavigableString, Tag
 
 from texsmith.core.context import RenderContext
 from texsmith.core.rules import RenderPhase, renders
+
 from ._helpers import gather_classes, mark_processed
 
 

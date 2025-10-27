@@ -1,4 +1,5 @@
 """Template utilities available at the legacy package path."""
+# pyright: reportUnsupportedDunderAll=false
 
 from __future__ import annotations
 

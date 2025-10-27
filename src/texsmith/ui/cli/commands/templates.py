@@ -29,17 +29,14 @@ def template_info(
 
     ensure_rich_compat()
     try:
-        from rich import box
-        from rich.panel import Panel
-        from rich.pretty import Pretty
-        from rich.table import Table
+        from rich import box as rich_box
+        from rich.panel import Panel as RichPanel
+        from rich.pretty import Pretty as RichPretty
+        from rich.table import Table as RichTable
     except ImportError:  # pragma: no cover - fallback when Rich is stubbed
-        box = None
-        Panel = None  # type: ignore[assignment]  # noqa: N806
-        Pretty = None  # type: ignore[assignment]  # noqa: N806
-        Table = None  # type: ignore[assignment]  # noqa: N806
+        rich_box = RichPanel = RichPretty = RichTable = None  # type: ignore[assignment]  # noqa: N806
 
-    from ...templates import TemplateError, load_template
+    from texsmith.core.templates import TemplateError, load_template
 
     try:
         template = load_template(identifier)
@@ -50,7 +47,7 @@ def template_info(
     info = template.info
     console = get_cli_state().console
 
-    if Table is None:
+    if RichTable is None or RichPanel is None or RichPretty is None or rich_box is None:
         typer.echo(f"Template: {identifier}")
         typer.echo(f"Name: {info.name}")
         typer.echo(f"Version: {info.version}")
@@ -97,7 +94,13 @@ def template_info(
             )
         return
 
-    summary = Table.grid(padding=(0, 1))
+    # Rich is available beyond this point.
+    assert RichTable is not None
+    assert RichPanel is not None
+    assert RichPretty is not None
+    assert rich_box is not None
+
+    summary = RichTable.grid(padding=(0, 1))
     summary.add_row("Name", info.name)
     summary.add_row("Version", info.version)
     summary.add_row("Entrypoint", info.entrypoint)
@@ -109,26 +112,26 @@ def template_info(
     summary.add_row("Formatter overrides", _format_list(info.override))
 
     console.print(
-        Panel(summary, box=box.SQUARE, title=f"Template: {identifier}", border_style="cyan")
+        RichPanel(summary, box=rich_box.SQUARE, title=f"Template: {identifier}", border_style="cyan")
     )
 
     if info.attributes:
-        attrs = Table(
+        attrs = RichTable(
             title="Attributes",
-            box=box.MINIMAL_DOUBLE_HEAD,
+            box=rich_box.MINIMAL_DOUBLE_HEAD,
             header_style="bold cyan",
             show_lines=True,
         )
         attrs.add_column("Key", style="magenta")
         attrs.add_column("Value", style="green")
         for key, value in sorted(info.attributes.items()):
-            attrs.add_row(key, Pretty(value, indent_guides=True))
+            attrs.add_row(key, RichPretty(value, indent_guides=True))
         console.print(attrs)
 
     assets = list(template.iter_assets())
-    assets_table = Table(
+    assets_table = RichTable(
         title="Assets",
-        box=box.MINIMAL_DOUBLE_HEAD,
+        box=rich_box.MINIMAL_DOUBLE_HEAD,
         header_style="bold cyan",
     )
     assets_table.add_column("Destination", style="magenta")
@@ -153,9 +156,9 @@ def template_info(
     console.print(assets_table)
 
     slots, default_slot = info.resolve_slots()
-    slots_table = Table(
+    slots_table = RichTable(
         title="Slots",
-        box=box.MINIMAL_DOUBLE_HEAD,
+        box=rich_box.MINIMAL_DOUBLE_HEAD,
         header_style="bold cyan",
     )
     slots_table.add_column("Name", style="magenta")

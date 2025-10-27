@@ -2,13 +2,15 @@
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from contextvars import ContextVar
 from dataclasses import dataclass, field
 import sys
-from typing import TYPE_CHECKING, Any, Mapping
+from typing import TYPE_CHECKING, Any
 
 import click
 import typer
+
 
 if TYPE_CHECKING:
     from rich.console import Console
@@ -44,20 +46,22 @@ def ensure_rich_compat() -> None:
         try:
             import typer.core as typer_core
 
-            typer_core.HAS_RICH = False
+            setattr(typer_core, "HAS_RICH", False)
         except ImportError:  # pragma: no cover - typer not available
             pass
         try:
             import typer.main as typer_main
 
-            typer_main.HAS_RICH = False
+            setattr(typer_main, "HAS_RICH", False)
         except ImportError:  # pragma: no cover - typer not available
             pass
 
     if not hasattr(rich_mod, "box"):
         box_module = types.ModuleType("rich.box")
-        box_module.SQUARE = box_module.MINIMAL_DOUBLE_HEAD = box_module.SIMPLE = object()
-        rich_mod.box = box_module
+        setattr(box_module, "SQUARE", object())
+        setattr(box_module, "MINIMAL_DOUBLE_HEAD", object())
+        setattr(box_module, "SIMPLE", object())
+        setattr(rich_mod, "box", box_module)
         _sys.modules.setdefault("rich.box", box_module)
 
 
@@ -111,21 +115,23 @@ _STATE_VAR: ContextVar[CLIState | None] = ContextVar("texsmith_cli_state", defau
 
 
 def get_cli_state(
-    ctx: typer.Context | None = None,
+    ctx: typer.Context | click.Context | None = None,
     *,
     create: bool = True,
 ) -> CLIState:
     """Return the CLI state associated with the active Typer context."""
     if ctx is None:
         try:
-            ctx = click.get_current_context(silent=True)
+            candidate = click.get_current_context(silent=True)
         except RuntimeError:
-            ctx = None
+            candidate = None
+        if isinstance(candidate, typer.Context):
+            ctx = candidate
 
     state: CLIState | None = None
 
-    if ctx is not None:
-        current_ctx = ctx
+    if isinstance(ctx, typer.Context):
+        current_ctx: typer.Context | None = ctx
         while current_ctx is not None:
             obj = getattr(current_ctx, "obj", None)
             if isinstance(obj, CLIState):
@@ -134,7 +140,8 @@ def get_cli_state(
             current_ctx = getattr(current_ctx, "parent", None)
         if state is None and create:
             state = CLIState()
-            ctx.obj = state
+            current_ctx = ctx
+            current_ctx.obj = state
         if state is not None:
             _STATE_VAR.set(state)
 

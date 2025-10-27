@@ -7,6 +7,7 @@ from typing import Annotated
 
 import typer
 
+
 INPUTS_PANEL = "Input Handling"
 STRUCTURE_PANEL = "Structure"
 RENDERING_PANEL = "Rendering"

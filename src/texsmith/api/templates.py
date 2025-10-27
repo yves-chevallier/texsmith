@@ -52,8 +52,8 @@ from typing import Any
 
 from ..context import DocumentState
 from ..core.conversion.debug import ensure_emitter
-from ..core.diagnostics import DiagnosticEmitter
 from ..core.conversion.renderer import TemplateRenderer
+from ..core.diagnostics import DiagnosticEmitter
 from ..templates import TemplateError, TemplateRuntime, load_template_runtime
 from .document import Document
 from .pipeline import RenderSettings, convert_documents
@@ -146,13 +146,13 @@ class TemplateSession:
             return document.copy()
 
         prepared = document.copy()
-        front_matter = copy.deepcopy(prepared._front_matter)
+        front_matter: dict[str, Any] = dict(prepared.front_matter)
         template_section = front_matter.setdefault("template", {})
-        if isinstance(template_section, Mapping):
-            template_section.update(overrides_dict)
-        else:
-            front_matter["template"] = dict(overrides_dict)
-        prepared._front_matter = front_matter
+        if not isinstance(template_section, dict):
+            template_section = dict(template_section)
+            front_matter["template"] = template_section
+        template_section.update(overrides_dict)
+        prepared.set_front_matter(front_matter)
         return prepared
 
     def _collect_option_overrides(self) -> dict[str, Any]:

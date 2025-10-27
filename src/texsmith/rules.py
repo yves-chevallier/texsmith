@@ -1,9 +1,11 @@
 """Rendering rules exposed for ages-old imports."""
+# pyright: reportUnsupportedDunderAll=false
 
 from __future__ import annotations
 
 from texsmith.core import rules as _rules
-from texsmith.core.rules import *  # noqa: F401,F403
+from texsmith.core.rules import *
+
 
 __all__ = list(getattr(_rules, "__all__", []))
 if not __all__:

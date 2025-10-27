@@ -11,8 +11,9 @@ from requests.utils import requote_uri as requote_url
 
 from texsmith.core.context import RenderContext
 from texsmith.core.exceptions import AssetMissingError, InvalidNodeError
-from ..latex.utils import escape_latex_chars
 from texsmith.core.rules import RenderPhase, renders
+
+from ..latex.utils import escape_latex_chars
 from ._helpers import coerce_attribute, mark_processed, resolve_asset_path
 
 

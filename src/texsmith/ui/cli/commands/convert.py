@@ -8,19 +8,12 @@ from typing import Annotated
 import click
 import typer
 
+from texsmith.adapters.markdown import resolve_markdown_extensions
 from texsmith.api.service import ConversionRequest, ConversionService
 from texsmith.core.conversion.debug import ConversionError
 from texsmith.core.conversion.inputs import UnsupportedInputError
-from texsmith.adapters.markdown import resolve_markdown_extensions
 from texsmith.core.templates import TemplateError
-from ..presenter import consume_event_diagnostics, present_conversion_summary
-from ..diagnostics import CliEmitter
-from ..state import debug_enabled, emit_error, emit_warning, get_cli_state
-from ..utils import (
-    determine_output_target,
-    organise_slot_overrides,
-    write_output_file,
-)
+
 from .._options import (
     BaseLevelOption,
     BibliographyOption,
@@ -42,6 +35,15 @@ from .._options import (
     SlotsOption,
     TemplateOption,
 )
+from ..diagnostics import CliEmitter
+from ..presenter import consume_event_diagnostics, present_conversion_summary
+from ..state import debug_enabled, emit_error, emit_warning, get_cli_state
+from ..utils import (
+    determine_output_target,
+    organise_slot_overrides,
+    write_output_file,
+)
+
 
 _SERVICE = ConversionService()
 

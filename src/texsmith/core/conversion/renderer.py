@@ -5,13 +5,13 @@ from __future__ import annotations
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from ..context import DocumentState
-from ..templates import TemplateError, TemplateRuntime, copy_template_assets
-
-from .debug import debug_enabled, ensure_emitter, raise_conversion_error, record_event
 from ..diagnostics import DiagnosticEmitter
+from ..templates import TemplateError, TemplateRuntime, copy_template_assets
+from .debug import debug_enabled, ensure_emitter, raise_conversion_error, record_event
+
 
 if TYPE_CHECKING:  # pragma: no cover - typing helpers only
     from texsmith.api.pipeline import ConversionBundle, LaTeXFragment
@@ -54,7 +54,7 @@ class TemplateRenderer:
 
     def render(
         self,
-        bundle: "ConversionBundle",
+        bundle: ConversionBundle,
         *,
         output_dir: Path,
         overrides: Mapping[str, Any] | None = None,
@@ -154,6 +154,7 @@ class TemplateRenderer:
             override_dict = dict(overrides)
             _merge_overrides(template_overrides, override_dict)
 
+        final_output: str | None = None
         try:
             template_context = template_instance.prepare_context(
                 main_content,
@@ -181,6 +182,9 @@ class TemplateRenderer:
             if debug_enabled(self.emitter):
                 raise
             raise_conversion_error(self.emitter, str(exc), exc)
+
+        if final_output is None:  # pragma: no cover - safety
+            raise TemplateError("Template renderer produced no output.")
 
         if template_overrides:
             record_event(
@@ -226,7 +230,7 @@ class TemplateRenderer:
         )
 
     @staticmethod
-    def _resolve_main_name(fragments: Sequence["LaTeXFragment"]) -> str:
+    def _resolve_main_name(fragments: Sequence[LaTeXFragment]) -> str:
         if len(fragments) == 1:
             return f"{fragments[0].stem}.tex"
         first = fragments[0]

@@ -1,9 +1,11 @@
 """Utility helpers retained under the legacy module name."""
+# pyright: reportUnsupportedDunderAll=false
 
 from __future__ import annotations
 
 from texsmith.core import utils as _utils
-from texsmith.core.utils import *  # noqa: F401,F403
+from texsmith.core.utils import *
+
 
 __all__ = list(getattr(_utils, "__all__", []))
 if not __all__:

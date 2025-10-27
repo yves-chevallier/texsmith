@@ -16,6 +16,7 @@ from bs4.element import NavigableString, Tag
 from texsmith.core.context import RenderContext
 from texsmith.core.exceptions import AssetMissingError, InvalidNodeError
 from texsmith.core.rules import RenderPhase, renders
+
 from ..transformers import (
     drawio2pdf,
     fetch_image,

@@ -34,6 +34,38 @@ The source tree is organised around three top-level namespaces:
 
 Legacy module paths continue to resolve to the new modules, so imports like `texsmith.conversion` or `texsmith.latex` remain valid while you migrate to the refreshed layout.
 
+## Core architecture highlights
+
+- `ConversionService` encapsulates the orchestration that previously lived in `texsmith.api.service` helpers. Provide a `ConversionRequest` and receive a `ConversionResponse` with rendered bundles and diagnostics.
+- `TemplateRenderer` now owns slot aggregation and LaTeX assembly. `TemplateSession` focuses on session state, template options, and bibliography tracking.
+- `DocumentSlots` unify slot directives from front matter, CLI flags, and programmatic overrides. Every entry point now speaks the same data model.
+- `DiagnosticEmitter` replaces ad-hoc callback bags so warnings, errors, and structured events flow through a predictable interface (CLI uses `CliEmitter`; libraries can plug in their own).
+
+### Programmatic conversions with `ConversionService`
+
+```python
+from pathlib import Path
+
+from texsmith.api.service import ConversionRequest, ConversionService
+
+service = ConversionService()
+request = ConversionRequest(
+    documents=[Path("docs/index.html")],
+    bibliography_files=[Path("references.bib")],
+    template="article",
+    render_dir=Path("build"),
+)
+prepared = service.prepare_documents(request)
+response = service.execute(request, prepared=prepared)
+
+print("Main TeX:", response.render_result.main_tex_path)
+print("Diagnostics:", [event.name for event in response.diagnostics])
+```
+
+If you only need a quick conversion, the high-level helpers (`texsmith.Document`, `texsmith.convert_documents`, `texsmith.TemplateSession`) continue to work, but they now reuse the same ConversionService plumbing as the CLI.
+
+> Refer to `UPGRADE.md` for release notes and migration guidance from earlier builds.
+
 ## Render engine phases
 
 The rendering pipeline walks the BeautifulSoup tree four times. Each pass maps

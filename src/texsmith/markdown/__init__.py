@@ -6,4 +6,5 @@ import sys
 
 from ..adapters import markdown as _markdown
 
+
 sys.modules[__name__] = _markdown

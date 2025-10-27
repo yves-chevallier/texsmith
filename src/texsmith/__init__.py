@@ -1,9 +1,39 @@
 """Modernised LaTeX rendering package."""
+# pyright: reportUnsupportedDunderAll=false
 
 from __future__ import annotations
 
 from importlib import import_module
-from typing import Any
+from typing import TYPE_CHECKING, Any
+
+
+if TYPE_CHECKING:  # pragma: no cover - typing only
+    from .api import (
+        Document,
+        DocumentRenderOptions,
+        TemplateOptions,
+        TemplateRenderResult,
+        TemplateSession,
+        convert_documents,
+        get_template,
+        resolve_heading_level,
+    )
+    from .core.bibliography import (
+        BibliographyCollection,
+        BibliographyIssue,
+        DoiBibliographyFetcher,
+        DoiLookupError,
+        bibliography_data_from_string,
+    )
+    from .core.config import BookConfig, LaTeXConfig
+    from .core.context import AssetRegistry, DocumentState, RenderContext
+    from .core.rules import RenderPhase, renders
+    from .core.templates import (
+        TemplateError,
+        WrappableTemplate,
+        copy_template_assets,
+        load_template,
+    )
 
 
 __all__ = [
