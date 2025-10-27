@@ -1,16 +1,14 @@
-"""Compatibility façade that re-exports the conversion package symbols."""
+"""Public conversion engine surface maintained for backward compatibility."""
 
 from __future__ import annotations
 
-from importlib import import_module as _import_module
+from texsmith.core import conversion as _conversion
+from texsmith.core.conversion import *  # noqa: F401,F403
 
-_facade = _import_module(".domain.conversion", __package__)
-
-__all__ = getattr(_facade, "__all__", [])
-
-for name in __all__:
-    globals()[name] = getattr(_facade, name)
-
-# Preserve relaxed attribute access for compatibility with existing monkeypatches.
-if hasattr(_facade, "DoiBibliographyFetcher"):
-    DoiBibliographyFetcher = _facade.DoiBibliographyFetcher
+__all__ = list(getattr(_conversion, "__all__", []))
+if not __all__:
+    __all__ = [
+        name
+        for name in globals()
+        if not name.startswith("_") and name not in {"_conversion", "annotations"}
+    ]

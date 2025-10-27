@@ -16,10 +16,10 @@ from texsmith.api.service import (
     prepare_documents,
     split_document_inputs,
 )
-from texsmith.domain.conversion.debug import ConversionError
-from texsmith.domain.conversion.inputs import UnsupportedInputError
+from texsmith.core.conversion.debug import ConversionError
+from texsmith.core.conversion.inputs import UnsupportedInputError
 from texsmith.adapters.markdown import resolve_markdown_extensions
-from texsmith.domain.templates import TemplateError
+from texsmith.core.templates import TemplateError
 from ..presenter import consume_event_diagnostics, present_conversion_summary
 from ..state import debug_enabled, emit_error, emit_warning, get_cli_state
 from ..utils import (

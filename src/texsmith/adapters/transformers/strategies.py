@@ -8,7 +8,7 @@ import shutil
 from typing import Any
 
 from ..docker import DockerLimits, VolumeMount, run_container
-from texsmith.domain.exceptions import TransformerExecutionError
+from texsmith.core.exceptions import TransformerExecutionError
 from .base import CachedConversionStrategy
 from .utils import points_to_mm
 

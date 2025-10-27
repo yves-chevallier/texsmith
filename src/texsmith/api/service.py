@@ -7,8 +7,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from ..domain.conversion.debug import ConversionCallbacks
-from ..domain.conversion.inputs import InputKind, UnsupportedInputError
+from ..core.conversion.debug import ConversionCallbacks
+from ..core.conversion.inputs import InputKind, UnsupportedInputError
 from .document import Document
 from .pipeline import ConversionBundle, RenderSettings, convert_documents
 from .templates import TemplateRenderResult, TemplateSession, get_template

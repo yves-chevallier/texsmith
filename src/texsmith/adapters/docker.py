@@ -9,7 +9,7 @@ from pathlib import Path
 import shutil
 import subprocess
 
-from texsmith.domain.exceptions import TransformerExecutionError
+from texsmith.core.exceptions import TransformerExecutionError
 
 
 @dataclass(slots=True)

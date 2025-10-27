@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING, Any, cast
 
 import typer
 
-from texsmith.domain.bibliography import BibliographyCollection
+from texsmith.core.bibliography import BibliographyCollection
 from .state import ensure_rich_compat, get_cli_state
 
 

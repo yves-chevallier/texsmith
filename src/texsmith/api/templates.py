@@ -51,9 +51,9 @@ from pathlib import Path
 from typing import Any
 
 from ..context import DocumentState
-from ..domain.conversion.core import convert_document
-from ..domain.conversion.debug import ConversionCallbacks, _record_event
-from ..domain.conversion_contexts import DocumentContext
+from ..core.conversion.core import convert_document
+from ..core.conversion.debug import ConversionCallbacks, _record_event
+from ..core.conversion_contexts import DocumentContext
 from ..templates import (
     TemplateError,
     TemplateRuntime,
