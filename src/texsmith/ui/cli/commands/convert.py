@@ -14,6 +14,7 @@ from texsmith.core.conversion.inputs import UnsupportedInputError
 from texsmith.adapters.markdown import resolve_markdown_extensions
 from texsmith.core.templates import TemplateError
 from ..presenter import consume_event_diagnostics, present_conversion_summary
+from ..diagnostics import CliEmitter
 from ..state import debug_enabled, emit_error, emit_warning, get_cli_state
 from ..utils import (
     determine_output_target,
@@ -155,6 +156,8 @@ def convert(
     output_mode, output_target = determine_output_target(template_selected, document_paths, output)
     output_path = output_target.resolve() if output_target is not None else None
 
+    emitter = CliEmitter(state=state, debug_enabled=debug_enabled())
+
     request_render_dir = output_path if (template_selected or output_mode == "directory") else None
     request = ConversionRequest(
         documents=document_paths,
@@ -177,10 +180,7 @@ def convert(
         legacy_latex_accents=legacy_latex_accents,
         template=template_identifier,
         render_dir=request_render_dir,
-        emit_warning=lambda message, exception=None: emit_warning(message, exception=exception),
-        emit_error=lambda message, exception=None: emit_error(message, exception=exception),
-        record_event=state.record_event,
-        debug_enabled=debug_enabled(),
+        emitter=emitter,
     )
     state.record_event(
         "conversion_settings",

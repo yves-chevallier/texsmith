@@ -24,14 +24,14 @@ from texsmith.core.exceptions import LatexRenderingError, TransformerExecutionEr
 from texsmith.core.templates import TemplateBinding, TemplateError, TemplateRuntime, copy_template_assets
 from texsmith.adapters.transformers import has_converter, register_converter
 from .debug import (
-    ConversionCallbacks,
     ConversionError,
-    _debug_enabled,
-    _emit_warning,
-    _fail,
+    debug_enabled,
+    ensure_emitter,
     format_rendering_error,
     persist_debug_artifacts,
+    raise_conversion_error,
 )
+from ..diagnostics import DiagnosticEmitter
 from .templates import build_binder_context, extract_slot_fragments
 
 
@@ -71,9 +71,10 @@ def convert_document(
     state: DocumentState | None = None,
     template_runtime: TemplateRuntime | None = None,
     wrap_document: bool = True,
-    callbacks: ConversionCallbacks | None = None,
+    emitter: DiagnosticEmitter | None = None,
 ) -> ConversionResult:
     """Orchestrate the full HTML-to-LaTeX conversion for a single document."""
+    emitter = ensure_emitter(emitter)
     strategy = GenerationStrategy(
         copy_assets=copy_assets,
         prefer_inputs=False,
@@ -91,7 +92,7 @@ def convert_document(
         slot_overrides=slot_overrides,
         output_dir=output_dir,
         strategy=strategy,
-        callbacks=callbacks,
+        emitter=emitter,
         legacy_latex_accents=legacy_latex_accents,
     )
 
@@ -108,7 +109,7 @@ def convert_document(
         strategy=strategy,
         disable_fallback_converters=disable_fallback_converters,
         persist_debug_html=persist_debug_html,
-        callbacks=callbacks,
+        emitter=emitter,
         initial_state=state,
         wrap_document=wrap_document,
         legacy_latex_accents=legacy_latex_accents,
@@ -123,7 +124,7 @@ def _render_document(
     strategy: GenerationStrategy,
     disable_fallback_converters: bool,
     persist_debug_html: bool,
-    callbacks: ConversionCallbacks | None,
+    emitter: DiagnosticEmitter,
     initial_state: DocumentState | None,
     wrap_document: bool,
     legacy_latex_accents: bool,
@@ -167,7 +168,7 @@ def _render_document(
         parser_backend=parser_backend,
     )
     for message in missing_slots:
-        _emit_warning(callbacks, message)
+        emitter.warning(message)
 
     segment_registry: dict[str, list[SegmentContext]] = {}
     for fragment in slot_fragments:
@@ -220,12 +221,12 @@ def _render_document(
                 runtime_fragment,
                 binder_context.bibliography_map,
                 state=document_state,
-                callbacks=callbacks,
+                emitter=emitter,
             )
         except LatexRenderingError as exc:
-            if _debug_enabled(callbacks):
+            if debug_enabled(emitter):
                 raise
-            _fail(callbacks, format_rendering_error(exc), exc)
+            raise_conversion_error(emitter, format_rendering_error(exc), exc)
         existing_fragment = slot_outputs.get(fragment.name, "")
         slot_outputs[fragment.name] = f"{existing_fragment}{fragment_output}"
 
@@ -257,9 +258,9 @@ def _render_document(
                 keys=citations,
             )
         except OSError as exc:
-            if _debug_enabled(callbacks):
+            if debug_enabled(emitter):
                 raise
-            _emit_warning(callbacks, f"Failed to write bibliography file: {exc}")
+            emitter.warning(f"Failed to write bibliography file: {exc}")
             bibliography_output = None
 
     tex_path: Path | None = None
@@ -291,9 +292,9 @@ def _render_document(
                 context=template_context,
             )
         except TemplateError as exc:
-            if _debug_enabled(callbacks):
+            if debug_enabled(emitter):
                 raise
-            _fail(callbacks, str(exc), exc)
+            raise_conversion_error(emitter, str(exc), exc)
         try:
             copy_template_assets(
                 template_instance,
@@ -304,19 +305,19 @@ def _render_document(
                 else None,
             )
         except TemplateError as exc:
-            if _debug_enabled(callbacks):
+            if debug_enabled(emitter):
                 raise
-            _fail(callbacks, str(exc), exc)
+            raise_conversion_error(emitter, str(exc), exc)
 
         try:
             binder_context.output_dir.mkdir(parents=True, exist_ok=True)
             tex_path = binder_context.output_dir / f"{document_context.source_path.stem}.tex"
             tex_path.write_text(latex_output, encoding="utf-8")
         except OSError as exc:
-            if _debug_enabled(callbacks):
+            if debug_enabled(emitter):
                 raise
-            _fail(
-                callbacks,
+            raise_conversion_error(
+                emitter,
                 f"Failed to write LaTeX output to '{binder_context.output_dir}': {exc}",
                 exc,
             )
@@ -351,9 +352,10 @@ def render_with_fallback(
     bibliography: Mapping[str, dict[str, Any]] | None = None,
     *,
     state: DocumentState | None = None,
-    callbacks: ConversionCallbacks | None = None,
+    emitter: DiagnosticEmitter | None = None,
 ) -> tuple[str, DocumentState]:
     """Render HTML to LaTeX, retrying with fallback converters when available."""
+    emitter = ensure_emitter(emitter)
     attempts = 0
     bibliography_payload = dict(bibliography or {})
     base_state = state
@@ -371,7 +373,7 @@ def render_with_fallback(
                 html,
                 runtime=runtime,
                 state=current_state,
-                callbacks=callbacks,
+                emitter=emitter,
             )
         except LatexRenderingError as exc:
             attempts += 1

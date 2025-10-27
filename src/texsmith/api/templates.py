@@ -51,7 +51,8 @@ from pathlib import Path
 from typing import Any
 
 from ..context import DocumentState
-from ..core.conversion.debug import ConversionCallbacks
+from ..core.conversion.debug import ensure_emitter
+from ..core.diagnostics import DiagnosticEmitter
 from ..core.conversion.renderer import TemplateRenderer
 from ..templates import TemplateError, TemplateRuntime, load_template_runtime
 from .document import Document
@@ -127,7 +128,7 @@ class TemplateSession:
         runtime: TemplateRuntime,
         *,
         settings: RenderSettings | None = None,
-        callbacks: ConversionCallbacks | None = None,
+        emitter: DiagnosticEmitter | None = None,
     ) -> None:
         self.runtime = runtime
         attributes = runtime.instance.info.attributes if runtime.instance else {}
@@ -136,7 +137,7 @@ class TemplateSession:
         self._documents: list[Document] = []
         self._bibliography_files: list[Path] = []
         self.settings = settings.copy() if settings else RenderSettings()
-        self.callbacks = callbacks
+        self.emitter = ensure_emitter(emitter)
 
     def _prepare_document(self, document: Document) -> Document:
         """Return a document copy with template overrides applied."""
@@ -229,7 +230,7 @@ class TemplateSession:
             prepared_documents,
             output_dir=output_dir,
             settings=self.settings,
-            callbacks=self.callbacks,
+            emitter=self.emitter,
             bibliography_files=self._bibliography_files,
             template=self.runtime.name,
             template_runtime=self.runtime,
@@ -237,7 +238,7 @@ class TemplateSession:
             write_fragments=False,
         )
 
-        renderer = TemplateRenderer(self.runtime, callbacks=self.callbacks)
+        renderer = TemplateRenderer(self.runtime, emitter=self.emitter)
         try:
             rendered = renderer.render(
                 bundle,
@@ -247,8 +248,7 @@ class TemplateSession:
             )
         except TemplateError as exc:
             message = str(exc)
-            if self.callbacks and self.callbacks.emit_error:
-                self.callbacks.emit_error(message, exc)
+            self.emitter.error(message, exc)
             raise
 
         return TemplateRenderResult(
@@ -267,8 +267,10 @@ def get_template(identifier: str | Path, **kwargs: Any) -> TemplateSession:
     """Instantiate a :class:`TemplateSession` for the requested template."""
     runtime = load_template_runtime(str(identifier))
     settings = kwargs.pop("settings", None)
-    callbacks = kwargs.pop("callbacks", None)
+    emitter = kwargs.pop("emitter", None)
+    if "callbacks" in kwargs:
+        raise TypeError("'callbacks' is no longer supported; provide an emitter instead.")
     if kwargs:
         unexpected = ", ".join(sorted(kwargs))
         raise TypeError(f"Unexpected keyword arguments: {unexpected}")
-    return TemplateSession(runtime, settings=settings, callbacks=callbacks)
+    return TemplateSession(runtime, settings=settings, emitter=emitter)

@@ -2,12 +2,13 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable, Iterable, Mapping, Sequence
+from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
-from texsmith.core.conversion.debug import ConversionCallbacks
+from texsmith.core.conversion.debug import ensure_emitter
+from texsmith.core.diagnostics import DiagnosticEmitter
 from texsmith.core.conversion.inputs import InputKind, UnsupportedInputError
 
 from .document import Document
@@ -61,10 +62,7 @@ class ConversionRequest:
     template: str | None = None
     render_dir: Path | None = None
 
-    emit_warning: Callable[[str, Exception | None], None] | None = None
-    emit_error: Callable[[str, Exception | None], None] | None = None
-    record_event: Callable[[str, Mapping[str, Any]], None] | None = None
-    debug_enabled: bool = False
+    emitter: DiagnosticEmitter | None = None
 
 
 @dataclass(slots=True)
@@ -76,7 +74,7 @@ class ConversionResponse:
     bibliography_files: list[Path]
     bundle: ConversionBundle | None = None
     render_result: TemplateRenderResult | None = None
-    callbacks: ConversionCallbacks | None = None
+    emitter: DiagnosticEmitter | None = None
 
     @property
     def uses_template(self) -> bool:
@@ -88,7 +86,7 @@ class ConversionResponse:
 class _PreparedBatch:
     documents: list[Document]
     document_map: dict[Path, Document]
-    callbacks: ConversionCallbacks
+    emitter: DiagnosticEmitter
     bibliography_files: list[Path]
 
 
@@ -116,7 +114,7 @@ class ConversionService:
 
     def prepare_documents(self, request: ConversionRequest) -> _PreparedBatch:
         """Normalise input sources into :class:`Document` instances."""
-        callbacks = self._build_callbacks(request)
+        emitter = ensure_emitter(request.emitter)
         documents: list[Document] = []
         mapping: dict[Path, Document] = {}
 
@@ -134,7 +132,7 @@ class ConversionService:
                     base_level=request.base_level,
                     drop_title=effective_drop,
                     numbered=request.numbered,
-                    callbacks=callbacks,
+                    emitter=emitter,
                 )
             else:
                 document = Document.from_html(
@@ -145,7 +143,7 @@ class ConversionService:
                     drop_title=effective_drop,
                     numbered=request.numbered,
                     full_document=request.full_document,
-                    callbacks=callbacks,
+                    emitter=emitter,
                 )
 
             documents.append(document)
@@ -165,7 +163,7 @@ class ConversionService:
         return _PreparedBatch(
             documents=documents,
             document_map=mapping,
-            callbacks=callbacks,
+            emitter=emitter,
             bibliography_files=bibliography,
         )
 
@@ -178,13 +176,14 @@ class ConversionService:
         """Execute a conversion workflow and return a structured response."""
         batch = prepared or self.prepare_documents(request)
         settings = self._build_render_settings(request)
+        emitter = batch.emitter
 
         if request.template is None:
             bundle = convert_documents(
                 batch.documents,
                 output_dir=request.render_dir,
                 settings=settings,
-                callbacks=batch.callbacks,
+                emitter=emitter,
                 bibliography_files=batch.bibliography_files,
             )
             return ConversionResponse(
@@ -192,13 +191,13 @@ class ConversionService:
                 documents=batch.documents,
                 bibliography_files=batch.bibliography_files,
                 bundle=bundle,
-                callbacks=batch.callbacks,
+                emitter=emitter,
             )
 
         session = self._initialise_template_session(
             request.template,
             settings=settings,
-            callbacks=batch.callbacks,
+            emitter=emitter,
         )
         if batch.bibliography_files:
             session.add_bibliography(*batch.bibliography_files)
@@ -212,17 +211,7 @@ class ConversionService:
             documents=batch.documents,
             bibliography_files=batch.bibliography_files,
             render_result=render_result,
-            callbacks=batch.callbacks,
-        )
-
-    @staticmethod
-    @staticmethod
-    def _build_callbacks(request: ConversionRequest) -> ConversionCallbacks:
-        return ConversionCallbacks(
-            emit_warning=request.emit_warning,
-            emit_error=request.emit_error,
-            debug_enabled=request.debug_enabled,
-            record_event=request.record_event,
+            emitter=emitter,
         )
 
     @staticmethod
@@ -242,12 +231,12 @@ class ConversionService:
         template: str,
         *,
         settings: RenderSettings,
-        callbacks: ConversionCallbacks | None,
+        emitter: DiagnosticEmitter,
     ) -> TemplateSession:
         return get_template(
             template,
             settings=settings,
-            callbacks=callbacks,
+            emitter=emitter,
         )
 
 

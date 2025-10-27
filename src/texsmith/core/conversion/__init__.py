@@ -27,10 +27,16 @@ from .core import (
     render_with_fallback,
 )
 from .debug import (
-    ConversionCallbacks,
     ConversionError,
+    DiagnosticEmitter,
+    LoggingEmitter,
+    NullEmitter,
+    debug_enabled,
+    ensure_emitter,
     format_rendering_error,
     persist_debug_artifacts,
+    raise_conversion_error,
+    record_event,
 )
 from .inputs import (
     DOCUMENT_SELECTOR_SENTINEL,
@@ -49,7 +55,6 @@ from .renderer import TemplateRenderer, TemplateRendererResult
 
 __all__ = [
     "BinderContext",
-    "ConversionCallbacks",
     "ConversionError",
     "ConversionResult",
     "DEFAULT_TEMPLATE_LANGUAGE",
@@ -64,6 +69,7 @@ __all__ = [
     "TemplateRendererResult",
     "UnsupportedInputError",
     "attempt_transformer_fallback",
+    "debug_enabled",
     "build_binder_context",
     "build_document_context",
     "build_template_overrides",
@@ -80,7 +86,13 @@ __all__ = [
     "load_template_runtime",
     "parse_slot_mapping",
     "persist_debug_artifacts",
+    "record_event",
+    "ensure_emitter",
+    "raise_conversion_error",
     "render_with_fallback",
     "resolve_template_language",
     "DoiBibliographyFetcher",
+    "DiagnosticEmitter",
+    "LoggingEmitter",
+    "NullEmitter",
 ]
