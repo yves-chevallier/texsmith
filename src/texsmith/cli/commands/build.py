@@ -14,7 +14,8 @@ import typer
 from ...api import get_template
 from ...api.document import Document
 from ...api.pipeline import RenderSettings
-from ...conversion import ConversionCallbacks, ConversionError, InputKind, UnsupportedInputError
+from ...conversion.debug import ConversionCallbacks, ConversionError
+from ...conversion.inputs import InputKind, UnsupportedInputError
 from ...latex.log import stream_latexmk_output
 from ...markdown import resolve_markdown_extensions
 from ...templates import TemplateError
