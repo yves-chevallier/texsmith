@@ -9,10 +9,9 @@ import typer
 from ...api import convert_documents, get_template
 from ...api.document import Document
 from ...api.pipeline import RenderSettings
-from ...conversion import (
+from ...conversion.debug import ConversionCallbacks, ConversionError
+from ...conversion.inputs import (
     DOCUMENT_SELECTOR_SENTINEL,
-    ConversionCallbacks,
-    ConversionError,
     InputKind,
     UnsupportedInputError,
 )

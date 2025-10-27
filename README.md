@@ -14,7 +14,7 @@
 TeXSmith is a [Python](https://www.python.org/) package and CLI tool to convert **Markdown** or **HTML** documents into LaTeX format. It is designed to be extensible via templates and integrates with [MkDocs](https://www.mkdocs.org/) for generating printable documents from documentation sites.
 
 <center>
-<img src="docs/logo.svg" width="70%" />
+<img src="docs/assets/logo-full.svg" width="70%" />
 </center>
 
 ## TL;DR

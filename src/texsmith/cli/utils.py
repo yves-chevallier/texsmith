@@ -5,14 +5,12 @@ from __future__ import annotations
 from collections.abc import Iterable
 from dataclasses import dataclass
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, TypeVar, cast
+from typing import Any, TypeVar, cast
 
 import typer
 from typer.models import ArgumentInfo, OptionInfo
 
-
-if TYPE_CHECKING:
-    from ..conversion import InputKind, UnsupportedInputError
+from ..conversion.inputs import DOCUMENT_SELECTOR_SENTINEL, InputKind, UnsupportedInputError
 
 
 @dataclass(slots=True)
@@ -96,8 +94,6 @@ def split_document_inputs(
 
 def classify_input_source(path: Path) -> InputKind:
     """Determine the document kind based on its filename suffix."""
-    from ..conversion import InputKind, UnsupportedInputError
-
     suffix = path.suffix.lower()
     if suffix in {".md", ".markdown"}:
         return InputKind.MARKDOWN
@@ -226,8 +222,6 @@ def resolve_slot_assignments(
     documents: list[Path],
 ) -> dict[Path, list[SlotAssignment]]:
     """Resolve parsed slot tokens against provided documents."""
-    from ..conversion import DOCUMENT_SELECTOR_SENTINEL
-
     assignments: dict[Path, list[SlotAssignment]] = {doc: [] for doc in documents}
     if not tokens:
         return assignments
