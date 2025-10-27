@@ -4,11 +4,15 @@ import sys
 import types
 from typing import Any
 
+import click
+
 import pytest
+import typer
 from typer.testing import CliRunner
 
 from texsmith.cli import DEFAULT_MARKDOWN_EXTENSIONS, app
 from texsmith.cli.commands import build as build_cmd
+from texsmith.cli import state as cli_state
 from texsmith.latex.log import LatexStreamResult
 
 
@@ -906,3 +910,19 @@ def test_build_respects_shell_escape(tmp_path: Path, monkeypatch: Any) -> None:
     assert calls, "latexmk was not invoked"
     pdflatex_args = [arg for arg in calls[0] if arg.startswith("-pdflatex=")]
     assert pdflatex_args and "--shell-escape" in pdflatex_args[0]
+
+def test_cli_state_per_context_isolated() -> None:
+    command = click.Command("dummy")
+    ctx_a = typer.Context(command)
+    ctx_b = typer.Context(command)
+
+    state_a = cli_state.get_cli_state(ctx_a)
+    state_a.verbosity = 5
+
+    state_b = cli_state.get_cli_state(ctx_b)
+    assert state_b.verbosity == 0
+
+    state_b.verbosity = 2
+    # ensure fallback reflects most recent context state without mutating the first one
+    assert cli_state.get_cli_state(ctx_b).verbosity == 2
+    assert cli_state.get_cli_state(ctx_a).verbosity == 5

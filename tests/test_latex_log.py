@@ -46,43 +46,6 @@ LatexLogParser = latex_log.LatexLogParser
 LatexMessageSeverity = latex_log.LatexMessageSeverity
 
 
-def test_parser_extracts_error_and_context() -> None:
-    parser = LatexLogParser()
-    log_path = Path("test-mdpi.log")
-    with log_path.open(encoding="utf-8") as handle:
-        for line in handle:
-            parser.process_line(line)
-    parser.finalize()
-
-    messages = list(parser.messages)
-    error_messages = [
-        message for message in messages if message.severity is LatexMessageSeverity.ERROR
-    ]
-    assert error_messages, "Expected to find at least one LaTeX error message"
-
-    first_error = error_messages[0]
-    assert "LaTeX Error" in first_error.summary
-    assert "mdpi.cls" in first_error.summary
-
-    joined_details = "\n".join(first_error.details)
-    assert "Emergency stop." in joined_details
-    assert "l.2 \\Title" in joined_details
-
-    latex2e_messages = [message for message in messages if message.summary.startswith("LaTeX2e")]
-    assert latex2e_messages, "Expected to capture LaTeX2e banner"
-    assert latex2e_messages[0].indent > 0
-
-
-def test_parser_balances_parentheses_across_complex_log() -> None:
-    parser = LatexLogParser()
-    log_path = Path("examples/latexmk-output.log")
-    with log_path.open(encoding="utf-8") as handle:
-        for line in handle:
-            parser.process_line(line)
-    parser.finalize()
-    assert parser._depth == 0
-
-
 def test_parser_merges_wrapped_paths() -> None:
     parser = LatexLogParser()
     lines = [

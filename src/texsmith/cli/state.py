@@ -2,10 +2,13 @@
 
 from __future__ import annotations
 
+from contextvars import ContextVar
 from dataclasses import dataclass, field
 import sys
 from typing import TYPE_CHECKING
 
+import click
+import typer
 
 if TYPE_CHECKING:
     from rich.console import Console
@@ -94,21 +97,58 @@ class CLIState:
         return self._err_console
 
 
-_CLI_STATE = CLIState()
+_STATE_VAR: ContextVar[CLIState | None] = ContextVar("texsmith_cli_state", default=None)
 
 
-def get_cli_state() -> CLIState:
-    """Return the singleton CLI state shared across commands."""
-    return _CLI_STATE
+def get_cli_state(
+    ctx: typer.Context | None = None,
+    *,
+    create: bool = True,
+) -> CLIState:
+    """Return the CLI state associated with the active Typer context."""
+    if ctx is None:
+        try:
+            ctx = click.get_current_context(silent=True)
+        except RuntimeError:
+            ctx = None
+
+    state: CLIState | None = None
+
+    if ctx is not None:
+        obj = getattr(ctx, "obj", None)
+        if isinstance(obj, CLIState):
+            state = obj
+        elif create:
+            state = CLIState()
+            ctx.obj = state
+        if state is not None:
+            _STATE_VAR.set(state)
+
+    if state is None:
+        fallback = _STATE_VAR.get(None)
+        if fallback is None:
+            if not create:
+                raise RuntimeError("CLI state is not initialised for this context.")
+            fallback = CLIState()
+            _STATE_VAR.set(fallback)
+        state = fallback
+
+    return state
 
 
-def set_cli_state(*, verbosity: int | None = None, debug: bool | None = None) -> None:
-    """Update the global CLI state with verbosity and debug flags."""
-    state = get_cli_state()
+def set_cli_state(
+    *,
+    ctx: typer.Context | None = None,
+    verbosity: int | None = None,
+    debug: bool | None = None,
+) -> CLIState:
+    """Update the CLI state, returning the current instance."""
+    state = get_cli_state(ctx)
     if verbosity is not None:
         state.verbosity = max(0, verbosity)
     if debug is not None:
         state.show_tracebacks = debug
+    return state
 
 
 def _exception_chain(exc: BaseException) -> list[str]:
@@ -191,4 +231,7 @@ def emit_error(message: str, *, exception: BaseException | None = None) -> None:
 
 def debug_enabled() -> bool:
     """Return whether full tracebacks should be displayed."""
-    return get_cli_state().show_tracebacks
+    try:
+        return get_cli_state(create=False).show_tracebacks
+    except RuntimeError:
+        return False

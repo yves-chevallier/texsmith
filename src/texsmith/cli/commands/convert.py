@@ -6,24 +6,23 @@ from pathlib import Path
 
 import typer
 
-from ...api import convert_documents, get_template
-from ...api.document import Document
-from ...api.pipeline import RenderSettings
-from ...conversion.debug import ConversionCallbacks, ConversionError
-from ...conversion.inputs import (
-    DOCUMENT_SELECTOR_SENTINEL,
-    InputKind,
-    UnsupportedInputError,
+from ...api.service import (
+    apply_slot_assignments,
+    build_callbacks,
+    build_render_settings,
+    execute_conversion,
+    prepare_documents,
+    split_document_inputs,
 )
+from ...conversion import ConversionError
+from ...conversion.inputs import UnsupportedInputError
 from ...markdown import resolve_markdown_extensions
 from ...templates import TemplateError
 from ..state import debug_enabled, emit_error, emit_warning
 from ..utils import (
-    classify_input_source,
     determine_output_target,
     organise_slot_overrides,
     resolve_option,
-    split_document_inputs,
     write_output_file,
 )
 
@@ -236,13 +235,13 @@ def convert(
     resolved_language = resolve_option(language)
     resolved_legacy_latex_accents = bool(resolve_option(legacy_latex_accents))
 
-    callbacks = ConversionCallbacks(
+    callbacks = build_callbacks(
         emit_warning=lambda message, exception=None: emit_warning(message, exception=exception),
         emit_error=lambda message, exception=None: emit_error(message, exception=exception),
         debug_enabled=debug_enabled(),
     )
 
-    settings = RenderSettings(
+    settings = build_render_settings(
         parser=resolved_parser,
         disable_fallback_converters=resolved_disable_fallback,
         copy_assets=resolved_copy_assets,
@@ -252,72 +251,43 @@ def convert(
         legacy_latex_accents=resolved_legacy_latex_accents,
     )
 
-    documents: list[Document] = []
-    path_to_document: dict[Path, Document] = {}
+    try:
+        prepared = prepare_documents(
+            document_paths,
+            selector=resolved_selector,
+            full_document=resolved_full_document,
+            heading_level=resolved_heading_level,
+            base_level=resolved_base_level,
+            drop_title_all=False,
+            drop_title_first_document=resolved_drop_title,
+            numbered=resolved_numbered,
+            markdown_extensions=resolved_markdown_extensions,
+            callbacks=callbacks,
+        )
+    except UnsupportedInputError as exc:
+        if callbacks.emit_error is not None:
+            callbacks.emit_error(str(exc), exc)
+        else:
+            emit_error(str(exc), exception=exc)
+        raise typer.Exit(code=1) from exc
+    except ConversionError as exc:
+        raise typer.Exit(code=1) from exc
 
-    for index, document_path in enumerate(document_paths):
-        try:
-            input_kind = classify_input_source(document_path)
-        except UnsupportedInputError as exc:
-            if callbacks.emit_error is not None:
-                callbacks.emit_error(str(exc), exc)
-            else:
-                emit_error(str(exc), exception=exc)
-            raise typer.Exit(code=1) from exc
-
-        drop_current = resolved_drop_title and index == 0
-
-        try:
-            if input_kind is InputKind.MARKDOWN:
-                document = Document.from_markdown(
-                    document_path,
-                    extensions=resolved_markdown_extensions,
-                    heading=resolved_heading_level,
-                    base_level=resolved_base_level,
-                    drop_title=drop_current,
-                    numbered=resolved_numbered,
-                    callbacks=callbacks,
-                )
-            else:
-                document = Document.from_html(
-                    document_path,
-                    selector=resolved_selector,
-                    heading=resolved_heading_level,
-                    base_level=resolved_base_level,
-                    drop_title=drop_current,
-                    numbered=resolved_numbered,
-                    full_document=resolved_full_document,
-                    callbacks=callbacks,
-                )
-        except ConversionError as exc:
-            raise typer.Exit(code=1) from exc
-
-        documents.append(document)
-        path_to_document[document_path] = document
-
-    for path, assignments in slot_assignments.items():
-        document = path_to_document.get(path)
-        if document is None:
-            continue
-        for assignment in assignments:
-            selector = assignment.selector
-            if selector and selector != DOCUMENT_SELECTOR_SENTINEL:
-                document.assign_slot(
-                    assignment.slot,
-                    selector=selector,
-                    include_document=assignment.full_document,
-                )
-            else:
-                document.assign_slot(assignment.slot, include_document=True)
+    apply_slot_assignments(prepared.document_map, slot_assignments)
 
     if not template_selected:
-        bundle = convert_documents(
-            documents,
-            output_dir=output_path if output_mode == "directory" else None,
+        render_target = output_path if output_mode == "directory" else None
+        outcome = execute_conversion(
+            prepared.documents,
             settings=settings,
             callbacks=callbacks,
             bibliography_files=bibliography_files,
+            template=None,
+            render_dir=render_target,
         )
+        bundle = outcome.bundle
+        if bundle is None:  # pragma: no cover - defensive
+            raise RuntimeError("Conversion bundle missing from service outcome.")
 
         if output_mode == "stdout":
             typer.echo(bundle.combined_output())
@@ -348,28 +318,23 @@ def convert(
 
         raise RuntimeError(f"Unsupported output mode '{output_mode}'.")
 
-    try:
-        session = get_template(
-            template_identifier,
-            settings=settings,
-            callbacks=callbacks,
-        )
-    except TemplateError as exc:
-        emit_error(str(exc), exception=exc)
-        raise typer.Exit(code=1) from exc
-
-    if bibliography_files:
-        session.add_bibliography(*bibliography_files)
-
-    for document in documents:
-        session.add_document(document)
-
     render_dir = (output_path or Path("build")).resolve()
     try:
-        render_result = session.render(render_dir)
+        outcome = execute_conversion(
+            prepared.documents,
+            settings=settings,
+            callbacks=callbacks,
+            bibliography_files=bibliography_files,
+            template=template_identifier,
+            render_dir=render_dir,
+        )
     except (TemplateError, ConversionError) as exc:
         emit_error(str(exc), exception=exc)
         raise typer.Exit(code=1) from exc
+
+    render_result = outcome.render_result
+    if render_result is None:  # pragma: no cover - defensive
+        raise RuntimeError("Template render result missing from service outcome.")
 
     for fragment_path in render_result.fragment_paths:
         typer.secho(
