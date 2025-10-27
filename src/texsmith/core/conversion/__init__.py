@@ -44,6 +44,7 @@ from .inputs import (
     parse_slot_mapping,
 )
 from .templates import build_binder_context, extract_slot_fragments, heading_level_for
+from .renderer import TemplateRenderer, TemplateRendererResult
 
 
 __all__ = [
@@ -59,6 +60,8 @@ __all__ = [
     "SegmentContext",
     "TemplateBinding",
     "TemplateRuntime",
+    "TemplateRenderer",
+    "TemplateRendererResult",
     "UnsupportedInputError",
     "attempt_transformer_fallback",
     "build_binder_context",

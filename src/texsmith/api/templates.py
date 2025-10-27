@@ -1,9 +1,10 @@
 """Template orchestration helpers exposed by the TeXSmith API.
 
 Architecture
-: `TemplateSession` owns lifecycle management: it accepts documents, ensures
-  metadata overrides are applied, and invokes the conversion engine either once
-  (single document) or repeatedly (multi-fragment projects).
+: `TemplateSession` owns lifecycle management: it accepts documents, applies
+  metadata overrides, and delegates aggregation to :class:`TemplateRenderer`.
+: `TemplateRenderer` combines conversion bundles into slot-aware LaTeX output,
+  copies template assets, and prepares the final context consumed by wrappers.
 : `TemplateOptions` is a thin wrapper around a mutable mapping that keeps
   user-supplied overrides isolated from the template defaults. Its API is
   intentionally dictionary-like to integrate smoothly with CLI parsing.
@@ -12,10 +13,9 @@ Architecture
   downstream tools can decide how to compile the LaTeX output.
 
 Implementation Rationale
-: Templates often need to render multiple fragments into specific slots while
-  sharing state such as bibliography caches. The session abstraction keeps that
-  orchestration logic together and reduces duplication across the CLI,
-  pre-built commands, and programmatic usage.
+: Splitting lifecycle coordination (`TemplateSession`) from rendering concerns
+  (`TemplateRenderer`) keeps slot aggregation logic in a single place and
+  reduces duplication across front ends.
 : Options are separated from documents to prevent accidental mutation of the
   default template metadata. Copy semantics are explicit, enabling safe reuse of
   sessions with different overrides.
@@ -51,18 +51,11 @@ from pathlib import Path
 from typing import Any
 
 from ..context import DocumentState
-from ..core.conversion.core import convert_document
-from ..core.conversion.debug import ConversionCallbacks, _record_event
-from ..core.conversion_contexts import DocumentContext
-from ..templates import (
-    TemplateError,
-    TemplateRuntime,
-    copy_template_assets,
-    load_template_runtime,
-)
-from ._utils import build_unique_stem_map
+from ..core.conversion.debug import ConversionCallbacks
+from ..core.conversion.renderer import TemplateRenderer
+from ..templates import TemplateError, TemplateRuntime, load_template_runtime
 from .document import Document
-from .pipeline import RenderSettings
+from .pipeline import RenderSettings, convert_documents
 
 
 __all__ = [
@@ -127,7 +120,7 @@ class TemplateRenderResult:
 
 
 class TemplateSession:
-    """Encapsulates a template, documents, and rendering settings."""
+    """Manage template state while delegating rendering to :class:`TemplateRenderer`."""
 
     def __init__(
         self,
@@ -139,25 +132,50 @@ class TemplateSession:
         self.runtime = runtime
         attributes = runtime.instance.info.attributes if runtime.instance else {}
         self._options = TemplateOptions(copy.deepcopy(attributes))
+        self._default_options = TemplateOptions(copy.deepcopy(attributes))
         self._documents: list[Document] = []
         self._bibliography_files: list[Path] = []
         self.settings = settings.copy() if settings else RenderSettings()
         self.callbacks = callbacks
 
-    def _prepare_context(self, document: Document) -> DocumentContext:
-        context = document.to_context()
+    def _prepare_document(self, document: Document) -> Document:
+        """Return a document copy with template overrides applied."""
         overrides_dict = self._options.to_dict()
-        if overrides_dict:
-            template_section = context.front_matter.setdefault("template", {})
-            if isinstance(template_section, Mapping):
-                template_section.update(overrides_dict)
-            else:
-                context.front_matter["template"] = dict(overrides_dict)
-        return context
+        if not overrides_dict:
+            return document.copy()
+
+        prepared = document.copy()
+        front_matter = copy.deepcopy(prepared._front_matter)
+        template_section = front_matter.setdefault("template", {})
+        if isinstance(template_section, Mapping):
+            template_section.update(overrides_dict)
+        else:
+            front_matter["template"] = dict(overrides_dict)
+        prepared._front_matter = front_matter
+        return prepared
+
+    def _collect_option_overrides(self) -> dict[str, Any]:
+        """Compute overrides that differ from the template defaults."""
+        current = self._options.to_dict()
+        baseline = self._default_options.to_dict()
+
+        def _diff(current_map: Mapping[str, Any], baseline_map: Mapping[str, Any]) -> dict[str, Any]:
+            overrides: dict[str, Any] = {}
+            for key, value in current_map.items():
+                baseline_value = baseline_map.get(key)
+                if isinstance(value, Mapping) and isinstance(baseline_value, Mapping):
+                    nested = _diff(value, baseline_value)
+                    if nested:
+                        overrides[key] = nested
+                elif value != baseline_value:
+                    overrides[key] = value
+            return overrides
+
+        return _diff(current, baseline)
 
     def get_default_options(self) -> TemplateOptions:
         """Return a copy of the default template options."""
-        return self._options.copy()
+        return self._default_options.copy()
 
     def set_options(self, options: TemplateOptions | Mapping[str, Any]) -> None:
         """Replace the current template overrides."""
@@ -205,161 +223,27 @@ class TemplateSession:
         output_dir = output_dir.resolve()
         output_dir.mkdir(parents=True, exist_ok=True)
 
-        if len(self._documents) == 1:
-            context = self._prepare_context(self._documents[0])
-            result = convert_document(
-                document=context,
-                output_dir=output_dir,
-                parser=self.settings.parser,
-                disable_fallback_converters=self.settings.disable_fallback_converters,
-                copy_assets=self.settings.copy_assets,
-                manifest=self.settings.manifest,
-                template=self.runtime.name,
-                persist_debug_html=self.settings.persist_debug_html,
-                language=self.settings.language,
-                slot_overrides=self._documents[0].slot_overrides or None,
-                bibliography_files=list(self._bibliography_files),
-                legacy_latex_accents=self.settings.legacy_latex_accents,
-                template_runtime=self.runtime,
-                wrap_document=True,
-                callbacks=self.callbacks,
-            )
+        prepared_documents = [self._prepare_document(document) for document in self._documents]
 
-            if result.tex_path is None:
-                raise TemplateError("Template rendering failed to produce a LaTeX document.")
-
-            if result.template_overrides:
-                _record_event(
-                    self.callbacks,
-                    "template_overrides",
-                    {"values": dict(result.template_overrides)},
-                )
-
-            return TemplateRenderResult(
-                main_tex_path=result.tex_path,
-                fragment_paths=[],
-                context=result.template_overrides or {},
-                template_runtime=self.runtime,
-                document_state=result.document_state or DocumentState(),
-                bibliography_path=result.bibliography_path,
-                template_engine=result.template_engine,
-                requires_shell_escape=result.template_shell_escape,
-            )
-
-        unique_stems = build_unique_stem_map([doc.source_path for doc in self._documents])
-        aggregated_slots: dict[str, list[str]] = {}
-        default_slot = self.runtime.default_slot
-        aggregated_slots.setdefault(default_slot, [])
-
-        shared_state: DocumentState | None = None
-        bibliography_path: Path | None = None
-        template_overrides_master: dict[str, Any] | None = None
-        fragment_paths: list[Path] = []
-        template_engine: str | None = None
-        requires_shell_escape = self.runtime.requires_shell_escape
-
-        for _index, document in enumerate(self._documents):
-            context = self._prepare_context(document)
-            result = convert_document(
-                document=context,
-                output_dir=output_dir,
-                parser=self.settings.parser,
-                disable_fallback_converters=self.settings.disable_fallback_converters,
-                copy_assets=self.settings.copy_assets,
-                manifest=self.settings.manifest,
-                template=self.runtime.name,
-                persist_debug_html=self.settings.persist_debug_html,
-                language=self.settings.language,
-                slot_overrides=document.slot_overrides or None,
-                bibliography_files=list(self._bibliography_files),
-                legacy_latex_accents=self.settings.legacy_latex_accents,
-                state=shared_state,
-                template_runtime=self.runtime,
-                wrap_document=False,
-                callbacks=self.callbacks,
-            )
-
-            if template_engine is None:
-                template_engine = result.template_engine
-            requires_shell_escape = requires_shell_escape or result.template_shell_escape
-
-            shared_state = result.document_state or shared_state
-            bibliography_path = result.bibliography_path or bibliography_path
-            if template_overrides_master is None:
-                template_overrides_master = dict(result.template_overrides)
-
-            stem = unique_stems[document.source_path]
-            fragment_path = output_dir / f"{stem}.tex"
-            fragment_path.write_text(result.latex_output, encoding="utf-8")
-            fragment_paths.append(fragment_path)
-
-            full_slots = set(document.slot_inclusions)
-            if default_slot not in aggregated_slots:
-                aggregated_slots[default_slot] = []
-            if default_slot not in full_slots and result.latex_output.strip():
-                aggregated_slots[default_slot].append(f"\\input{{{fragment_path.stem}}}")
-
-            for slot_name in full_slots:
-                aggregated_slots.setdefault(slot_name, []).append(
-                    f"\\input{{{fragment_path.stem}}}"
-                )
-
-            for slot_name, fragment_content in result.slot_outputs.items():
-                if not fragment_content:
-                    continue
-                if slot_name == default_slot and slot_name not in full_slots:
-                    continue
-                if slot_name in full_slots:
-                    continue
-                aggregated_slots.setdefault(slot_name, []).append(fragment_content)
-
-        if shared_state is None:
-            shared_state = DocumentState()
-        if template_overrides_master is None:
-            template_overrides_master = self._options.to_dict()
-        if template_overrides_master:
-            _record_event(
-                self.callbacks,
-                "template_overrides",
-                {"values": dict(template_overrides_master)},
-            )
-
-        aggregated_render = {
-            slot: "\n\n".join(chunk for chunk in chunks if chunk)
-            for slot, chunks in aggregated_slots.items()
-        }
-
-        main_content = aggregated_render.get(default_slot, "")
-        template_context = self.runtime.instance.prepare_context(
-            main_content,
-            overrides=template_overrides_master if template_overrides_master else None,
+        bundle = convert_documents(
+            prepared_documents,
+            output_dir=output_dir,
+            settings=self.settings,
+            callbacks=self.callbacks,
+            bibliography_files=self._bibliography_files,
+            template=self.runtime.name,
+            template_runtime=self.runtime,
+            wrap_document=False,
+            write_fragments=False,
         )
 
-        for slot_name, content in aggregated_render.items():
-            if slot_name == default_slot:
-                continue
-            template_context[slot_name] = content
-
-        template_context["index_entries"] = shared_state.has_index_entries
-        template_context["acronyms"] = shared_state.acronyms.copy()
-        template_context["citations"] = list(shared_state.citations)
-        template_context["bibliography_entries"] = shared_state.bibliography
-        if shared_state.citations and bibliography_path is not None:
-            template_context["bibliography"] = bibliography_path.stem
-            template_context["bibliography_resource"] = bibliography_path.name
-            template_context.setdefault("bibliography_style", "plain")
-
-        final_output = self.runtime.instance.wrap_document(
-            main_content,
-            context=template_context,
-        )
-
+        renderer = TemplateRenderer(self.runtime, callbacks=self.callbacks)
         try:
-            copy_template_assets(
-                self.runtime.instance,
-                output_dir,
-                context=template_context,
-                overrides=template_overrides_master if template_overrides_master else None,
+            rendered = renderer.render(
+                bundle,
+                output_dir=output_dir,
+                overrides=self._collect_option_overrides(),
+                copy_assets=self.settings.copy_assets,
             )
         except TemplateError as exc:
             message = str(exc)
@@ -367,19 +251,15 @@ class TemplateSession:
                 self.callbacks.emit_error(message, exc)
             raise
 
-        first_stem = unique_stems[self._documents[0].source_path]
-        main_tex_path = output_dir / f"{first_stem}-collection.tex"
-        main_tex_path.write_text(final_output, encoding="utf-8")
-
         return TemplateRenderResult(
-            main_tex_path=main_tex_path,
-            fragment_paths=fragment_paths,
-            context=template_context,
+            main_tex_path=rendered.main_tex_path,
+            fragment_paths=rendered.fragment_paths,
+            context=rendered.template_context,
             template_runtime=self.runtime,
-            document_state=shared_state,
-            bibliography_path=bibliography_path,
-            template_engine=template_engine,
-            requires_shell_escape=requires_shell_escape,
+            document_state=rendered.document_state,
+            bibliography_path=rendered.bibliography_path,
+            template_engine=rendered.template_engine,
+            requires_shell_escape=rendered.requires_shell_escape,
         )
 
 

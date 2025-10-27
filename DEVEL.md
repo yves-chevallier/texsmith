@@ -8,6 +8,7 @@ The conversion engine, context models, templates, and bibliography tools now liv
 the `texsmith.core` package. Legacy imports still point there, but new work should
 reference the canonical module to avoid extra indirection.
 
+- [x] Extract template aggregation into TemplateRenderer and slim TemplateSession
 - [x] Remplacer safe_quote par requote_url de requests.utils
 - [x] Remplacer fonctions helpers par package latexcodec
 - [x] Remplacer to_kebab_case par python-slugify
