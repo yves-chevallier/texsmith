@@ -107,9 +107,10 @@ def render_tabbed_content(element: Tag, context: RenderContext) -> None:
 @renders(
     "blockquote",
     phase=RenderPhase.POST,
-    priority=20,
+    priority=200,
     name="blockquotes",
     nestable=False,
+    after_children=True,
 )
 def render_blockquotes(element: Tag, context: RenderContext) -> None:
     """Convert blockquote elements into LaTeX blockquote environments."""

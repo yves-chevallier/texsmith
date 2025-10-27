@@ -153,7 +153,7 @@ def build(
         ),
     ),
     classic_output: bool = typer.Option(
-        True,
+        False,
         "--classic-output/--rich-output",
         help=(
             "Display raw latexmk output without parsing (use --rich-output for structured logs)."
@@ -406,6 +406,7 @@ def build(
                 command,
                 cwd=str(render_result.main_tex_path.parent),
                 env=env,
+                console=console,
             )
         except OSError as exc:
             if debug_enabled():

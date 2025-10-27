@@ -111,7 +111,7 @@ def render_div_admonitions(element: Tag, context: RenderContext) -> None:
     phase=RenderPhase.POST,
     priority=15,
     name="blockquote_callouts",
-    nestable=False,
+    nestable=True,
     auto_mark=False,
 )
 def render_blockquote_callouts(element: Tag, context: RenderContext) -> None:
@@ -157,6 +157,7 @@ def render_blockquote_callouts(element: Tag, context: RenderContext) -> None:
         first_paragraph.decompose()
 
     _render_admonition(element, context, classes=[callout_type], title=title)
+    context.suppress_children(element, phase=RenderPhase.POST)
     context.mark_processed(element, phase=RenderPhase.POST)
 
 

@@ -23,6 +23,28 @@ def test_blockquote_rendering(renderer: LaTeXRenderer) -> None:
     assert "\\end{displayquote}" in latex
 
 
+def test_blockquote_with_nested_table(renderer: LaTeXRenderer) -> None:
+    html = """
+    <blockquote>
+        <table>
+            <tr>
+                <th>Col1</th>
+                <th>Col2</th>
+            </tr>
+            <tr>
+                <td>Val1</td>
+                <td>Val2</td>
+            </tr>
+        </table>
+    </blockquote>
+    """
+    latex = renderer.render(html)
+    assert "\\begin{displayquote}" in latex
+    assert "\\begin{center}" in latex
+    assert "\\begin{tabular}" in latex
+    assert latex.index("\\begin{displayquote}") < latex.index("\\begin{tabular}")
+
+
 def test_ordered_list_rendering(renderer: LaTeXRenderer) -> None:
     html = "<ol><li>First</li><li>Second</li></ol>"
     latex = renderer.render(html)
