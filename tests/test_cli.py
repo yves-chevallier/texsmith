@@ -603,15 +603,11 @@ def test_multi_document_template_generates_inputs(tmp_path: Path) -> None:
     )
 
     assert result.exit_code == 0, result.stderr
-    fragment_one = output_dir / "chapter1.tex"
-    fragment_two = output_dir / "chapter2.tex"
-    assert fragment_one.exists()
-    assert fragment_two.exists()
     main_file = output_dir / "chapter1-collection.tex"
     assert main_file.exists()
     content = main_file.read_text(encoding="utf-8")
-    assert "\\input{chapter1}" in content
-    assert "\\input{chapter2}" in content
+    assert "Chapter One" in content
+    assert "Chapter Two" in content
 
 
 def test_convert_template_outputs_summary(tmp_path: Path) -> None:
@@ -670,8 +666,8 @@ def test_slot_assignment_targets_specific_file(tmp_path: Path) -> None:
     main_file = output_dir / "abstract-collection.tex"
     assert main_file.exists()
     content = main_file.read_text(encoding="utf-8")
-    assert "\\abstract{\\input{abstract}}" in content
-    assert "\\input{body}" in content
+    assert "Summary." in content
+    assert "Content." in content
 
 
 def test_slot_assignment_extracts_section_from_file(tmp_path: Path) -> None:
@@ -705,7 +701,6 @@ def test_slot_assignment_extracts_section_from_file(tmp_path: Path) -> None:
     main_file = output_dir / "chapter1-collection.tex"
     content = main_file.read_text(encoding="utf-8")
     assert "Appendix content." in content
-    assert "\\input{chapter2}" in content
 
 
 def test_convert_verbose_emits_extension_diagnostics(tmp_path: Path) -> None:

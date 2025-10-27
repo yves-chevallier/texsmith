@@ -41,11 +41,16 @@ from collections.abc import Iterable, Sequence
 import copy
 from dataclasses import dataclass
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 from ..core.conversion.core import ConversionResult, convert_document
 from ..core.conversion.debug import ConversionCallbacks
 from ._utils import build_unique_stem_map
 from .document import Document
+
+if TYPE_CHECKING:  # pragma: no cover - type checking only
+    from ..context import DocumentState
+    from ..core.templates import TemplateRuntime
 
 
 __all__ = [
@@ -108,6 +113,11 @@ def convert_documents(
     settings: RenderSettings | None = None,
     callbacks: ConversionCallbacks | None = None,
     bibliography_files: Iterable[Path] | None = None,
+    template: str | None = None,
+    template_runtime: "TemplateRuntime | None" = None,
+    wrap_document: bool = True,
+    shared_state: "DocumentState | None" = None,
+    write_fragments: bool | None = None,
 ) -> ConversionBundle:
     """Convert one or more documents into LaTeX fragments."""
     if not documents:
@@ -117,6 +127,9 @@ def convert_documents(
     unique_stems = build_unique_stem_map([doc.source_path for doc in documents])
 
     fragments: list[LaTeXFragment] = []
+    should_write_fragments = write_fragments if write_fragments is not None else True
+    state = shared_state
+
     for _index, document in enumerate(documents):
         context = document.to_context()
         target_dir = Path(output_dir) if output_dir is not None else Path("build")
@@ -127,14 +140,20 @@ def convert_documents(
             disable_fallback_converters=settings.disable_fallback_converters,
             copy_assets=settings.copy_assets,
             manifest=settings.manifest,
-            template=None,
+            template=template,
             persist_debug_html=settings.persist_debug_html,
             language=settings.language,
             slot_overrides=document.slot_overrides or None,
             bibliography_files=list(bibliography_files or []),
             legacy_latex_accents=settings.legacy_latex_accents,
             callbacks=callbacks,
+            state=None if wrap_document else state,
+            template_runtime=template_runtime,
+            wrap_document=wrap_document,
         )
+
+        if not wrap_document:
+            state = result.document_state or state
 
         stem = unique_stems[document.source_path]
         fragment = LaTeXFragment(
@@ -143,7 +162,7 @@ def convert_documents(
             stem=stem,
             conversion=result,
         )
-        if output_dir is not None:
+        if output_dir is not None and should_write_fragments:
             target = target_dir / f"{stem}.tex"
             fragment.write_to(target)
         fragments.append(fragment)
