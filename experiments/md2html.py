@@ -3,16 +3,11 @@ import markdown
 
 TEST_MD = r"""
 
-| abc | def | ghi |
-|-----|:---:|----:|
-|  1  |  2  |  3  |
-|  4  |     |  6  |
-|  7  |  8  |     |
+---
 
-/// table-caption
-This is a sample figure caption.
-///
-<!-- foobar -->
+***
+
+*****
 
 """
 

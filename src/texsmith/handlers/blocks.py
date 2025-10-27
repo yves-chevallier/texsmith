@@ -148,7 +148,7 @@ def render_lists(root: Tag, context: RenderContext) -> None:
                     checkboxes.append(0)
             items.append(text)
 
-        has_checkbox = any(checkboxes)
+        has_checkbox = any(checkboxes) or bool(gather_classes(element.get("class")))
         latex: str
 
         if element.name == "ol":

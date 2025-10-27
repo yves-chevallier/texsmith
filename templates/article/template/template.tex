@@ -270,6 +270,45 @@
   after title={~#2}
 }
 
+%
+% Highlight
+%
+\usepackage{soul}
+
+%
+% Keyboard keys symbols
+%
+\usepackage{tikz}
+\usetikzlibrary{shadows}
+\newcommand*\keystroke[1]{%
+  \tikz[baseline=(key.base)]
+  \node[%
+    draw,
+    fill=gray!10,
+    drop shadow={shadow xshift=0.25ex,shadow yshift=-0.25ex,fill=black!70,opacity=0.75},
+    rectangle,
+    rounded corners=1.5pt,
+    inner ysep=0.1em,
+    inner xsep=0.5em,
+    line width=0.5pt,
+    font=\scriptsize\sffamily
+  ](key) {#1\strut}
+  ;
+}
+
+% To-do list
+\usepackage{enumitem,amssymb}
+\usepackage{pifont}
+
+\newlist{todolist}{itemize}{2}
+\setlist[todolist]{label=$\square$}
+
+\newcommand{\cmark}{\ding{51}}%
+\newcommand{\xmark}{\ding{55}}%
+\newcommand{\done}{\rlap{$\square$}{\raisebox{2pt}{\large\hspace{1pt}\cmark}}%
+\hspace{-2.5pt}}
+\newcommand{\wontfix}{\rlap{$\square$}{\large\hspace{1pt}\xmark}}
+
 
 \title{\VAR{title}\BLOCK{ if subtitle }\\\large \VAR{subtitle}\BLOCK{ endif }}
 \author{\VAR{author}}

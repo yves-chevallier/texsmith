@@ -120,7 +120,6 @@ def render_preformatted_code(element: Tag, context: RenderContext) -> None:
         return
 
     baselinestretch = 0.5 if _is_ascii_art(code_text) else None
-    code_text = code_text.replace("{", r"\{").replace("}", r"\}")
     if not code_text.endswith("\n"):
         code_text += "\n"
 
@@ -178,7 +177,6 @@ def render_code_blocks(element: Tag, context: RenderContext) -> None:
         code_text = code_element.get_text(strip=False)
 
     baselinestretch = 0.5 if _is_ascii_art(code_text) else None
-    code_text = code_text.replace("{", r"\{").replace("}", r"\}")
     if not code_text.endswith("\n"):
         code_text += "\n"
 

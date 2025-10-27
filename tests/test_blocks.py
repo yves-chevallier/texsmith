@@ -42,10 +42,9 @@ def test_unordered_list_with_formatting(renderer: LaTeXRenderer) -> None:
 def test_task_list_rendering(renderer: LaTeXRenderer) -> None:
     html = "<ul><li>[x] Completed task</li><li>[ ] Pending task</li></ul>"
     latex = renderer.render(html)
-    assert "\\begin{description}" in latex
-    assert "\\correctchoice" in latex
+    assert "\\begin{todolist}" in latex
+    assert "\\done" in latex
     assert "Completed task" in latex
-    assert "\\choice" in latex
     assert "Pending task" in latex
 
 
@@ -76,8 +75,7 @@ def test_horizontal_rule_removed(renderer: LaTeXRenderer) -> None:
     latex = renderer.render(html)
     assert "Before" in latex
     assert "After" in latex
-    assert "<hr" not in latex
-    assert "\\hrule" not in latex
+    assert "\\rule{\\textwidth}{0.4pt}" in latex
 
 
 def test_tabbed_content_rendering(renderer: LaTeXRenderer) -> None:
