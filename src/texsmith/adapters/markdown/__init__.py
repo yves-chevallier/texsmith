@@ -62,6 +62,11 @@ DEFAULT_EXTENSION_CONFIGS: dict[str, dict[str, object]] = {
     "pymdownx.keys": {
         "camel_case": True,
     },
+    "pymdownx.highlight": {
+        "anchor_linenums": True,
+        "line_spans": "__span",
+        "pygments_lang_class": True,
+    },
 }
 
 
