@@ -219,9 +219,9 @@ def test_disable_markdown_extensions_option(tmp_path: Path, monkeypatch: Any) ->
             str(markdown_file),
             "--output-dir",
             str(tmp_path / "output"),
-            "--disable-markdown-extensions",
+            "--disable-extension",
             "footnotes, pymdownx.details",
-            "--disable-markdown-extensions",
+            "--disable-extension",
             "pymdownx.magiclink",
         ],
     )

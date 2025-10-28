@@ -36,7 +36,7 @@ Without this option the build command aborts. |
 | `--language TEXT` | Overrides the LaTeX language (BCP 47). |
 | `--slot/-s VALUE` | Maps sections to template slots, identical to the behaviour described in [`texsmith convert`](convert.md#options). |
 | `--markdown-extensions/-x VALUE` | Enables additional Markdown extensions. |
-| `--disable-markdown-extensions/-d VALUE` | Disables default Markdown extensions. |
+| `--disable-extension/-d VALUE` | Disables default Markdown extensions. |
 | `--bibliography/-b PATH` | Merges external BibTeX files. |
 
 ## How the Build Pipeline Works
