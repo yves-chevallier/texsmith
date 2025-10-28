@@ -40,8 +40,10 @@ from __future__ import annotations
 from collections.abc import Iterable, Mapping
 import copy
 from dataclasses import dataclass, field
+from enum import Enum
 from pathlib import Path
 from typing import Any, ClassVar
+from bs4 import BeautifulSoup, FeatureNotFound
 
 from ..adapters.markdown import (
     DEFAULT_MARKDOWN_EXTENSIONS,
@@ -66,8 +68,46 @@ __all__ = [
     "DocumentRenderOptions",
     "DocumentSlots",
     "HeadingLevel",
+    "TitleStrategy",
     "resolve_heading_level",
 ]
+
+
+class TitleStrategy(str, Enum):
+    """Strategy describing how the first document heading should be handled."""
+
+    KEEP = "keep"
+    DROP = "drop"
+    PROMOTE_METADATA = "promote_metadata"
+
+
+def _resolve_title_strategy(
+    *,
+    explicit: TitleStrategy | None,
+    drop_title: bool,
+    title_from_heading: bool,
+) -> TitleStrategy:
+    """Determine the effective title strategy from legacy flags."""
+    if drop_title and title_from_heading:
+        raise ValueError("Cannot request both drop_title and title_from_heading.")
+
+    strategy = explicit or TitleStrategy.KEEP
+
+    if title_from_heading:
+        if explicit and explicit is not TitleStrategy.PROMOTE_METADATA:
+            raise ValueError(
+                "Conflicting title strategy overrides: title_from_heading requires "
+                "TitleStrategy.PROMOTE_METADATA."
+            )
+        strategy = TitleStrategy.PROMOTE_METADATA
+    elif drop_title:
+        if explicit and explicit is not TitleStrategy.DROP:
+            raise ValueError(
+                "Conflicting title strategy overrides: drop_title requires TitleStrategy.DROP."
+            )
+        strategy = TitleStrategy.DROP
+
+    return strategy
 
 
 class HeadingLevel(int):
@@ -98,7 +138,7 @@ class DocumentRenderOptions:
 
     base_level: int = 0
     heading_level: int = 0
-    drop_title: bool = False
+    title_strategy: TitleStrategy = TitleStrategy.KEEP
     numbered: bool = True
 
     def copy(self) -> DocumentRenderOptions:
@@ -106,7 +146,7 @@ class DocumentRenderOptions:
         return DocumentRenderOptions(
             base_level=self.base_level,
             heading_level=self.heading_level,
-            drop_title=self.drop_title,
+            title_strategy=self.title_strategy,
             numbered=self.numbered,
         )
 
@@ -217,7 +257,9 @@ class Document:
         extensions: Iterable[str] | None = None,
         heading: str | int | HeadingLevel = 0,
         base_level: int = 0,
+        title_strategy: TitleStrategy | None = None,
         drop_title: bool = False,
+        title_from_heading: bool = False,
         numbered: bool = True,
         emitter: DiagnosticEmitter | None = None,
     ) -> Document:
@@ -237,10 +279,16 @@ class Document:
                 exc if isinstance(exc, Exception) else ConversionError(message)
             )
 
+        strategy = _resolve_title_strategy(
+            explicit=title_strategy,
+            drop_title=drop_title,
+            title_from_heading=title_from_heading,
+        )
+
         options = DocumentRenderOptions(
             base_level=base_level,
             heading_level=resolve_heading_level(heading),
-            drop_title=drop_title,
+            title_strategy=strategy,
             numbered=numbered,
         )
         document = cls(
@@ -262,7 +310,9 @@ class Document:
         selector: str = "article.md-content__inner",
         heading: str | int | HeadingLevel = 0,
         base_level: int = 0,
+        title_strategy: TitleStrategy | None = None,
         drop_title: bool = False,
+        title_from_heading: bool = False,
         numbered: bool = True,
         full_document: bool = False,
         emitter: DiagnosticEmitter | None = None,
@@ -288,10 +338,16 @@ class Document:
                 )
                 active_emitter.warning(message, exc)
 
+        strategy = _resolve_title_strategy(
+            explicit=title_strategy,
+            drop_title=drop_title,
+            title_from_heading=title_from_heading,
+        )
+
         options = DocumentRenderOptions(
             base_level=base_level,
             heading_level=resolve_heading_level(heading),
-            drop_title=drop_title,
+            title_strategy=strategy,
             numbered=numbered,
         )
         document = cls(
@@ -328,12 +384,34 @@ class Document:
     @property
     def drop_title(self) -> bool:
         """Indicate whether the document title should be dropped."""
-        return self.options.drop_title
+        return self.options.title_strategy in {
+            TitleStrategy.DROP,
+            TitleStrategy.PROMOTE_METADATA,
+        }
 
     @drop_title.setter
     def drop_title(self, value: bool) -> None:
         """Set whether the document title should be dropped."""
-        self.options.drop_title = bool(value)
+        if value:
+            if self.options.title_strategy is TitleStrategy.PROMOTE_METADATA:
+                return
+            self.options.title_strategy = TitleStrategy.DROP
+        else:
+            if self.options.title_strategy is TitleStrategy.DROP:
+                self.options.title_strategy = TitleStrategy.KEEP
+
+    @property
+    def title_from_heading(self) -> bool:
+        """Indicate whether the title should be extracted from the first heading."""
+        return self.options.title_strategy is TitleStrategy.PROMOTE_METADATA
+
+    @title_from_heading.setter
+    def title_from_heading(self, value: bool) -> None:
+        """Set whether the title should be extracted from the first heading."""
+        if value:
+            self.options.title_strategy = TitleStrategy.PROMOTE_METADATA
+        elif self.options.title_strategy is TitleStrategy.PROMOTE_METADATA:
+            self.options.title_strategy = TitleStrategy.KEEP
 
     @property
     def numbered(self) -> bool:
@@ -365,17 +443,36 @@ class Document:
             if base_mapping:
                 self.slots.merge(DocumentSlots.from_mapping(base_mapping))
 
+    def _extract_title_from_heading(self) -> str | None:
+        try:
+            soup = BeautifulSoup(self._html, "lxml")
+        except FeatureNotFound:
+            soup = BeautifulSoup(self._html, "html.parser")
+        heading = soup.find(["h1", "h2", "h3", "h4", "h5", "h6"])
+        if heading is None:
+            return None
+        text = heading.get_text(strip=True)
+        return text or None
+
     def to_context(self) -> DocumentContext:
         """Build a fresh DocumentContext for conversion."""
+        strategy = self.options.title_strategy
+        promote_to_metadata = strategy is TitleStrategy.PROMOTE_METADATA
+        drop_title_flag = strategy is not TitleStrategy.KEEP
+        extracted_title = self._extract_title_from_heading() if promote_to_metadata else None
+        base_level = self.options.base_level - 1 if drop_title_flag else self.options.base_level
+
         context = build_document_context(
             name=self.source_path.stem,
             source_path=self.source_path,
             html=self._html,
             front_matter=copy.deepcopy(self._front_matter),
-            base_level=self.options.base_level,
+            base_level=base_level,
             heading_level=self.options.heading_level,
-            drop_title=self.options.drop_title,
+            drop_title=drop_title_flag,
             numbered=self.options.numbered,
+            title_from_heading=promote_to_metadata,
+            extracted_title=extracted_title,
         )
         base_slots = DocumentSlots.from_mapping(context.slot_requests)
         combined_slots = base_slots.copy().merge(self.slots)

@@ -794,11 +794,13 @@ def test_build_defaults_to_rich_output(tmp_path: Path, monkeypatch: Any) -> None
         cwd: str,
         env: dict[str, str],
         console: Any,
+        verbosity: int = 0,
     ) -> LatexStreamResult:
         captured["command"] = command
         captured["cwd"] = cwd
         captured["env"] = env
         captured["console"] = console
+        captured["verbosity"] = verbosity
         return LatexStreamResult(returncode=0, messages=[])
 
     monkeypatch.setattr(build_cmd.shutil, "which", fake_which)
@@ -821,6 +823,7 @@ def test_build_defaults_to_rich_output(tmp_path: Path, monkeypatch: Any) -> None
     assert captured["command"][0] == "/usr/bin/latexmk"
     assert captured["cwd"] == str(output_dir)
     assert captured["console"] is not None
+    assert captured["verbosity"] == 0
     assert "Running latexmk…" in result.stdout
 
 
@@ -1003,6 +1006,7 @@ def test_build_failure_reports_summary(tmp_path: Path, monkeypatch: Any) -> None
         cwd: str,
         env: dict[str, str],
         console: Any,
+        verbosity: int = 0,
     ) -> LatexStreamResult:
         log_path = Path(cwd) / "index.log"
         log_path.write_text("! Undefined control sequence.\nl.42 \\unknowncmd\n", encoding="utf-8")
@@ -1011,6 +1015,7 @@ def test_build_failure_reports_summary(tmp_path: Path, monkeypatch: Any) -> None
             summary="! Undefined control sequence.",
             details=["l.42 \\unknowncmd"],
         )
+        assert verbosity == 0
         return LatexStreamResult(returncode=1, messages=[message])
 
     monkeypatch.setattr(build_cmd.shutil, "which", fake_which)

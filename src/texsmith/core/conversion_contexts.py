@@ -54,6 +54,8 @@ class DocumentContext:
     heading_level: int
     numbered: bool
     drop_title: bool
+    title_from_heading: bool
+    extracted_title: str | None = None
     front_matter: dict[str, Any] = field(default_factory=dict)
     slot_requests: dict[str, str] = field(default_factory=dict)
     slot_inclusions: set[str] = field(default_factory=set)

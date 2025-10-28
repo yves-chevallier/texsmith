@@ -107,6 +107,10 @@ def build_binder_context(
         slot_requests.update(dict(slot_overrides))
 
     template_overrides = build_template_overrides(document_context.front_matter)
+    if document_context.extracted_title:
+        meta_section = template_overrides.setdefault("meta", {})
+        if isinstance(meta_section, dict):
+            meta_section.setdefault("title", document_context.extracted_title)
     template_overrides["language"] = resolved_language
     meta_section = template_overrides.get("meta")
     if isinstance(meta_section, dict):

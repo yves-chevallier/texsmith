@@ -4,6 +4,7 @@ import importlib.util
 from pathlib import Path
 import sys
 import types
+import importlib.machinery
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
@@ -35,6 +36,7 @@ if "rich.console" not in sys.modules:
     sys.modules["rich"] = rich_module
     sys.modules["rich.console"] = rich_console_module
     sys.modules["rich.text"] = rich_text_module
+    rich_module.__spec__ = importlib.machinery.ModuleSpec("rich", loader=None)
 
 spec = importlib.util.spec_from_file_location("texsmith.adapters.latex.log", LATEX_LOG_PATH)
 assert spec is not None and spec.loader is not None
@@ -44,6 +46,7 @@ spec.loader.exec_module(latex_log)
 
 LatexLogParser = latex_log.LatexLogParser
 LatexMessageSeverity = latex_log.LatexMessageSeverity
+LatexMessage = latex_log.LatexMessage
 
 
 def test_parser_merges_wrapped_paths() -> None:
@@ -132,3 +135,39 @@ def test_parser_classifies_latexmk_errors() -> None:
         LatexMessageSeverity.ERROR,
         LatexMessageSeverity.ERROR,
     ]
+
+
+def test_should_emit_message_filters_library_info() -> None:
+    quiet_message = LatexMessage(
+        severity=LatexMessageSeverity.INFO,
+        summary="Library (tcolorbox): 'tcbskins.code.tex' version '6.2.0'",
+    )
+    assert latex_log._should_emit_message(quiet_message, verbosity=0) is False
+    assert latex_log._should_emit_message(quiet_message, verbosity=1) is True
+
+    path_message = LatexMessage(
+        severity=LatexMessageSeverity.INFO,
+        summary="/usr/share/texlive/texmf-dist/tex/latex/pgf/frontendlayer/tikz.sty",
+    )
+    assert latex_log._should_emit_message(path_message, verbosity=0) is False
+    assert latex_log._should_emit_message(path_message, verbosity=1) is True
+
+    bracketed_path_message = LatexMessage(
+        severity=LatexMessageSeverity.INFO,
+        summary="<./assets/figure.pdf>",
+    )
+    assert latex_log._should_emit_message(bracketed_path_message, verbosity=0) is False
+    assert latex_log._should_emit_message(bracketed_path_message, verbosity=1) is True
+
+    fragment_message = LatexMessage(
+        severity=LatexMessageSeverity.INFO,
+        summary="texmf-dist/tex/latex/base/article.cls",
+    )
+    assert latex_log._should_emit_message(fragment_message, verbosity=0) is False
+    assert latex_log._should_emit_message(fragment_message, verbosity=1) is True
+
+    info_message = LatexMessage(
+        severity=LatexMessageSeverity.INFO,
+        summary="Document Class: article",
+    )
+    assert latex_log._should_emit_message(info_message, verbosity=0) is True

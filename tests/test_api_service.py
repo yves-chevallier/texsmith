@@ -5,12 +5,12 @@ from pathlib import Path
 
 import pytest
 
-from texsmith.api.service import (
-    ConversionRequest,
-    ConversionService,
-    SlotAssignment,
-)
+from texsmith.api.document import TitleStrategy
+from texsmith.api.service import ConversionRequest, ConversionService, SlotAssignment
+from texsmith.core.conversion_contexts import GenerationStrategy
+from texsmith.core.conversion.templates import build_binder_context
 from texsmith.core.conversion.inputs import UnsupportedInputError
+from texsmith.core.templates.runtime import load_template_runtime
 
 
 def _create_template(tmp_path: Path) -> Path:
@@ -86,9 +86,64 @@ def test_prepare_documents_handles_markdown_and_html(tmp_path: Path) -> None:
 
     assert len(prepared.documents) == 2
     assert prepared.documents[0].kind.name == "MARKDOWN"
-    assert prepared.documents[0].options.drop_title is True
+    assert prepared.documents[0].options.title_strategy is TitleStrategy.DROP
     assert prepared.documents[1].kind.name == "HTML"
-    assert prepared.documents[1].options.drop_title is False
+    assert prepared.documents[1].options.title_strategy is TitleStrategy.KEEP
+
+
+def test_document_context_records_title_from_heading(tmp_path: Path) -> None:
+    service = ConversionService()
+    source = tmp_path / "doc.md"
+    source.write_text("# Sample Title\n\nBody text.", encoding="utf-8")
+
+    request = ConversionRequest(
+        documents=[source],
+        bibliography_files=[],
+        title_from_heading=True,
+    )
+
+    prepared = service.prepare_documents(request)
+    document = prepared.documents[0]
+    context = document.to_context()
+
+    assert context.title_from_heading is True
+    assert context.extracted_title == "Sample Title"
+    assert context.drop_title is True
+    assert context.base_level == -1
+
+
+def test_binder_context_injects_template_title(tmp_path: Path) -> None:
+    service = ConversionService()
+    template_dir = _create_template(tmp_path)
+    source = tmp_path / "doc.md"
+    source.write_text("# Sample Title\nContent", encoding="utf-8")
+
+    request = ConversionRequest(
+        documents=[source],
+        bibliography_files=[],
+        template=str(template_dir),
+        title_from_heading=True,
+    )
+
+    prepared = service.prepare_documents(request)
+    document = prepared.documents[0]
+    context = document.to_context()
+
+    runtime = load_template_runtime(str(template_dir))
+    binder = build_binder_context(
+        document_context=context,
+        template=str(template_dir),
+        template_runtime=runtime,
+        requested_language=None,
+        bibliography_files=[],
+        slot_overrides=None,
+        output_dir=tmp_path,
+        strategy=GenerationStrategy(),
+        emitter=None,
+        legacy_latex_accents=False,
+    )
+
+    assert binder.template_overrides["meta"]["title"] == "Sample Title"
 
 
 def test_prepare_documents_applies_slot_assignments(tmp_path: Path) -> None:

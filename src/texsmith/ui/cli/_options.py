@@ -79,6 +79,15 @@ DropTitleOption = Annotated[
     ),
 ]
 
+TitleFromHeadingOption = Annotated[
+    bool,
+    typer.Option(
+        "--title-from-heading/--title-from-frontmatter",
+        help="Treat the first heading as the template title and remove it from the document.",
+        rich_help_panel=TEMPLATE_PANEL,
+    ),
+]
+
 NumberedOption = Annotated[
     bool,
     typer.Option(
