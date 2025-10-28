@@ -102,7 +102,7 @@ The increasing modulus with strain rate reflects the time-dependent viscoelastic
 
 To illustrate the relationship between stiffness, temperature, and deformation rate, the theoretical expression (Eq. 1) was implemented in **Python** as follows:
 
-```python
+``` python linenums="1"
 --8<-- "code.py"
 ```
 

@@ -156,6 +156,8 @@ def render_code_blocks(element: Tag, context: RenderContext) -> None:
         return
 
     language = _extract_language(code_element)
+    if language == "text":
+        language = _extract_language(element)
     lineno = element.find(class_="linenos") is not None
 
     filename = None
