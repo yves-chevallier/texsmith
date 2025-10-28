@@ -97,6 +97,7 @@ _HIGHLIGHT_PATTERN = re.compile(r"^\.*[A-Za-z0-9 ]+:")
 _TEX_ASSIGN_PATTERN = re.compile(r"\b\\[A-Za-z@]+")
 _STRING_LITERAL_PATTERN = re.compile(r"(['\"])(.*?)(\1)")
 _PATH_LINE_PATTERN = re.compile(r"^(?:\./|\../|/|[A-Za-z]:\\\\).+")
+_PATH_FRAGMENT_PATTERN = re.compile(r"^[A-Za-z0-9._:/\\-]+$")
 
 
 class LatexLogParser:
@@ -564,12 +565,42 @@ class LatexStreamResult:
     messages: list[LatexMessage]
 
 
+def _is_library_message(message: LatexMessage) -> bool:
+    if message.severity is not LatexMessageSeverity.INFO:
+        return False
+    summary = message.summary.strip()
+    return summary.startswith("Library (")
+
+
+def _is_quiet_info_message(message: LatexMessage) -> bool:
+    if message.severity is not LatexMessageSeverity.INFO:
+        return False
+    summary = message.summary.strip()
+    if summary.startswith("Library ("):
+        return True
+    candidate = summary
+    if candidate:
+        candidate = candidate.replace("<", "").replace(">", "").strip()
+    if _PATH_LINE_PATTERN.match(candidate):
+        return True
+    if "/" in candidate and _PATH_FRAGMENT_PATTERN.match(candidate):
+        return True
+    return False
+
+
+def _should_emit_message(message: LatexMessage, verbosity: int) -> bool:
+    if verbosity <= 0 and _is_quiet_info_message(message):
+        return False
+    return True
+
+
 def stream_latexmk_output(
     command: Sequence[str],
     *,
     cwd: str,
     env: Mapping[str, str],
     console: Console,
+    verbosity: int = 0,
 ) -> LatexStreamResult:
     """Execute latexmk and render output incrementally."""
     parser = LatexLogParser()
@@ -602,12 +633,14 @@ def stream_latexmk_output(
                 chunk = stream.readline()
                 if chunk:
                     for completed in parser.process_line(chunk):
-                        renderer.consume(completed)
+                        if _should_emit_message(completed, verbosity):
+                            renderer.consume(completed)
                 else:
                     selector.unregister(stream)
 
         for completed in parser.finalize():
-            renderer.consume(completed)
+            if _should_emit_message(completed, verbosity):
+                renderer.consume(completed)
 
         returncode = process.wait()
 

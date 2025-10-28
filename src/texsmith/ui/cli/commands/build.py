@@ -31,6 +31,7 @@ from .._options import (
     HeadingLevelOption,
     InputPathArgument,
     LanguageOption,
+    TitleFromHeadingOption,
     ManifestOptionWithShort,
     MarkdownExtensionsOption,
     NumberedOption,
@@ -106,6 +107,7 @@ def build(
     base_level: BaseLevelOption = 0,
     heading_level: HeadingLevelOption = 0,
     drop_title: DropTitleOption = False,
+    title_from_heading: TitleFromHeadingOption = False,
     numbered: NumberedOption = True,
     parser: ParserOption = None,
     disable_fallback_converters: DisableFallbackOption = False,
@@ -163,6 +165,11 @@ def build(
         emit_error("The build command requires a LaTeX template (--template).")
         raise typer.Exit(code=1)
 
+    if drop_title and title_from_heading:
+        raise typer.BadParameter(
+            "--drop-title and --title-from-heading cannot be combined."
+        )
+
     emitter = CliEmitter(state=state, debug_enabled=debug_enabled())
 
     assignments: dict[Path, list[SlotAssignment]] = {
@@ -198,6 +205,7 @@ def build(
         drop_title_all=drop_title,
         drop_title_first_document=False,
         numbered=numbered,
+        title_from_heading=title_from_heading,
         markdown_extensions=resolved_markdown_extensions,
         parser=parser,
         disable_fallback_converters=disable_fallback_converters,
@@ -331,6 +339,7 @@ def build(
                 cwd=str(render_result.main_tex_path.parent),
                 env=env,
                 console=console,
+                verbosity=state.verbosity,
             )
         except OSError as exc:
             if debug_enabled():

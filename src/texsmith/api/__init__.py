@@ -36,6 +36,7 @@ from .document import (
     Document,
     DocumentRenderOptions,
     HeadingLevel,
+    TitleStrategy,
     resolve_heading_level,
 )
 from .pipeline import ConversionBundle, LaTeXFragment, RenderSettings, convert_documents
@@ -62,6 +63,7 @@ __all__ = [
     "Document",
     "DocumentRenderOptions",
     "HeadingLevel",
+    "TitleStrategy",
     "LaTeXFragment",
     "RenderSettings",
     "SlotAssignment",

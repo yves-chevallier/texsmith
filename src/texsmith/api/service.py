@@ -11,7 +11,7 @@ from texsmith.core.conversion.debug import ensure_emitter
 from texsmith.core.conversion.inputs import InputKind, UnsupportedInputError
 from texsmith.core.diagnostics import DiagnosticEmitter
 
-from .document import Document
+from .document import Document, TitleStrategy
 from .pipeline import ConversionBundle, RenderSettings, convert_documents
 from .templates import TemplateRenderResult, TemplateSession, get_template
 
@@ -48,6 +48,7 @@ class ConversionRequest:
     base_level: int = 0
     drop_title_all: bool = False
     drop_title_first_document: bool = False
+    title_from_heading: bool = False
     numbered: bool = True
     markdown_extensions: Sequence[str] = field(default_factory=list)
 
@@ -120,9 +121,15 @@ class ConversionService:
 
         for index, path in enumerate(request.documents):
             input_kind = classify_input_source(path)
+            extract_title = request.title_from_heading and index == 0
             effective_drop = request.drop_title_all or (
                 request.drop_title_first_document and index == 0
             )
+            strategy: TitleStrategy | None = None
+            if extract_title:
+                strategy = TitleStrategy.PROMOTE_METADATA
+            elif effective_drop:
+                strategy = TitleStrategy.DROP
 
             if input_kind is InputKind.MARKDOWN:
                 document = Document.from_markdown(
@@ -130,7 +137,7 @@ class ConversionService:
                     extensions=list(request.markdown_extensions),
                     heading=request.heading_level,
                     base_level=request.base_level,
-                    drop_title=effective_drop,
+                    title_strategy=strategy,
                     numbered=request.numbered,
                     emitter=emitter,
                 )
@@ -140,7 +147,7 @@ class ConversionService:
                     selector=request.selector,
                     heading=request.heading_level,
                     base_level=request.base_level,
-                    drop_title=effective_drop,
+                    title_strategy=strategy,
                     numbered=request.numbered,
                     full_document=request.full_document,
                     emitter=emitter,

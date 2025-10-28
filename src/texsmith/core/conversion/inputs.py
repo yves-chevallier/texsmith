@@ -36,6 +36,8 @@ def build_document_context(
     heading_level: int,
     drop_title: bool,
     numbered: bool,
+    title_from_heading: bool = False,
+    extracted_title: str | None = None,
 ) -> DocumentContext:
     """Construct a document context enriched with metadata and slot requests."""
     metadata = dict(front_matter or {})
@@ -49,6 +51,8 @@ def build_document_context(
         heading_level=heading_level,
         numbered=numbered,
         drop_title=drop_title,
+        title_from_heading=title_from_heading,
+        extracted_title=extracted_title,
         front_matter=metadata,
         slot_requests=slot_requests,
     )
