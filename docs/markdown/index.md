@@ -28,3 +28,8 @@ When you need to insert LaTeX that must not appear in the HTML build, use the de
 ```
 
 The Markdown → HTML pass creates a hidden paragraph (`<p class="latex-raw" style="display:none;">…</p>`) so the fragment remains invisible online. During the HTML → LaTeX conversion, TeXSmith spots these blocks and drops the original payload straight into the final document. This makes it safe to declare macros, page tweaks, or any advanced snippet without impacting the web version.
+
+!!! seealso
+    - [Supported Markdown Syntax](supported.md) lists every extension TeXSmith enables by default with examples.
+    - [Mermaid Diagrams](mermaid.md) explains how to embed flowcharts, sequence diagrams, and Mermaid Live exports.
+    - [Diagram Converters](svgbob.md) covers Svgbob ASCII diagrams and CircuitTikZ snippets.

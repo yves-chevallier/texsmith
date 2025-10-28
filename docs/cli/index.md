@@ -14,10 +14,10 @@ These options must appear before the subcommand name and affect every command.
 
 | Option | Description |
 | ------ | ----------- |
-| `--list-extensions` | Prints the Markdown extensions enabled by default, then exits immediately. |
-| `-v / --verbose` | Increases logging verbosity. Repeat the flag (e.g. `-vv`) to surface progressively more diagnostic information. |
-| `--debug / --no-debug` | Enables full Python tracebacks so unexpected exceptions are not swallowed. Useful while customising converters or templates. |
-| `--help` | Displays contextual help for the CLI or a specific command. |
+| `--list-extensions` | Print the Markdown extensions enabled by default, then exit. |
+| `-v / --verbose` | Increase logging verbosity. Stack with `-vv` or more to surface richer diagnostics. |
+| `--debug / --no-debug` | Show full Python tracebacks when an unexpected exception occurs. |
+| `--help` | Display contextual help for the CLI or the selected subcommand. |
 
 Example:
 
@@ -36,16 +36,14 @@ Each command has its own options and usage examples on the linked pages.
 ## Quick Start
 
 ```bash
-# Generate a LaTeX file from Markdown
-texsmith convert docs/tutorial.md --output build/
+# Generate LaTeX fragments from Markdown
+texsmith convert intro.md --output build/
 
-# Compile the same document all the way to PDF
-texsmith build docs/tutorial.md \
-  --template texsmith/templates/article \
-  --output-dir build
+# Render with a template and latexmk
+texsmith build intro.md --template article --render-dir build/pdf
 
-# Audit bibliography files before conversion
-texsmith bibliography list references/*.bib
+# Inspect bibliography sources
+texsmith bibliography list references.bib
 ```
 
 Refer to `texsmith COMMAND --help` whenever you need the most up-to-date option list, defaults, and environment-specific notes.

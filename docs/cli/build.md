@@ -52,13 +52,20 @@ Without this option the build command aborts. |
 - `latexmk` must be available on the system `PATH` (install it via TeX Live, MikTeX, or a similar distribution).
 - Optional converters may require `cairosvg`, `pillow`, `requests`, Docker, or diagram CLI tools. Missing dependencies trigger explicit errors unless fallbacks are allowed.
 
+!!! tip "Inspect available templates"
+    Use `texsmith template info <template>` to inspect metadata for an installed
+    template package. Pair the output with your template documentation to learn
+    about slot layouts and engine requirements. The
+    [High-Level Workflows](../api/high-level.md) page dives deeper into template
+    management from Python.
+
 ## Usage Examples
 
 ### Produce a PDF with a template
 
 ```bash
 texsmith build docs/book.md \
-  --template texsmith/templates/article \
+  --template article \
   --output-dir build \
   --bibliography references/library.bib
 ```
@@ -73,7 +80,7 @@ Outputs include:
 
 ```bash
 texsmith build docs/manual.md \
-  --template texsmith/templates/handbook \
+  --template handbook \
   --output-dir build \
   --rich-output
 ```

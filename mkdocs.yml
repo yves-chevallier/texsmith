@@ -5,7 +5,7 @@ repo_name: yves-chevallier/texsmith
 repo_url: https://github.com/yves-chevallier/texsmith
 copyright: Copyright &copy; 2025 Yves Chevallier
 theme:
-  language: fr
+  language: en
   name: material
   logo: assets/logo.svg
   font:
@@ -32,13 +32,13 @@ theme:
       primary: blue
       toggle:
         icon: material/weather-night
-        name: Basculer en mode sombre
+        name: Switch to dark mode
     - scheme: slate
       media: "(prefers-color-scheme: dark)"
       primary: blue
       toggle:
         icon: material/weather-sunny
-        name: Basculer en mode clair
+        name: Switch to light mode
   icon:
     repo: fontawesome/brands/github
 extra:
@@ -47,10 +47,50 @@ extra:
   social:
     - icon: fontawesome/brands/github
       link: https://github.com/yves-chevallier/texsmith
+# Navigation groups mirror the English IA designed in phase 2.
+nav:
+  - Home: index.md
+  - Introduction:
+      - Overview: getting-started/overview.md
+      - Quick Start: getting-started/getting-started.md
+  - User Guide:
+      - CLI Reference:
+          - Command-line Overview: cli/index.md
+          - Convert Command: cli/convert.md
+          - Build Command: cli/build.md
+          - Bibliography Command: cli/bibliography.md
+      - Markdown Reference:
+          - Markdown Overview: markdown/index.md
+          - Syntax Directory: markdown/supported.md
+          - Admonitions: markdown/admonitions.md
+          - Abbreviations: markdown/abbr.md
+          - Code Highlighting: markdown/highlight.md
+          - Tables: markdown/tables.md
+          - Math Support: markdown/math.md
+          - Mermaid Diagrams: markdown/mermaid.md
+          - SVGbob Diagrams: markdown/svgbob.md
+          - Smarty Pants: markdown/smartypants.md
+          - Extra Extensions: markdown/extra.md
+          - Wiki Links: markdown/wikilinks.md
+  - API Reference:
+      - API Overview: api/index.md
+      - High-Level Workflows: api/high-level.md
+      - Core Engine: api/core.md
+      - Markdown API: api/markdown.md
+      - LaTeX Runtime: api/latex.md
+      - Transformers API: api/transformers.md
+      - Handlers API: api/handlers.md
+      - CLI API: api/cli.md
+      - Bibliography API: api/bibliography.md
+      - Plugin API: api/plugins.md
+  - Contributing:
+      - Contribution Guide: contribute/index.md
 markdown_extensions:
   - admonition
   - pymdownx.details
   - pymdownx.superfences
+  - pymdownx.tabbed:
+      alternate_style: true
   - pymdownx.critic
   - pymdownx.inlinehilite
   - pymdownx.caret
@@ -72,7 +112,6 @@ extra_javascript:
 
 plugins:
   - search
-  - awesome-nav
   - mkdocstrings:
       default_handler: python
       handlers:
@@ -87,3 +126,5 @@ plugins:
             merge_init_into_class: true
   - pills
   - drawio
+hooks:
+  - mkdocs_hooks.py  # helper hooks that patch missing anchors and plugin namespace
