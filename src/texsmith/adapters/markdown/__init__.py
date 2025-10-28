@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Iterable, Sequence
 from dataclasses import dataclass
+from pathlib import Path
 import re
 from typing import Any
 
@@ -133,6 +134,8 @@ def normalize_markdown_extensions(
 def render_markdown(
     source: str,
     extensions: Sequence[str] | None = None,
+    *,
+    base_path: str | Path | None = None,
 ) -> MarkdownDocument:
     """Convert Markdown source into HTML while collecting front matter."""
     try:
@@ -151,6 +154,27 @@ def render_markdown(
         for name in active_extensions
         if name in DEFAULT_EXTENSION_CONFIGS
     }
+    snippet_enabled = any(
+        extension.split(":", 1)[0].lower() == "pymdownx.snippets" for extension in active_extensions
+    )
+    if snippet_enabled and base_path is not None:
+        base_path_str = str(Path(base_path).resolve())
+        snippet_config = extension_configs.setdefault("pymdownx.snippets", {})
+        existing_paths: list[str]
+        existing_value = snippet_config.get("base_path")
+        if existing_value is None:
+            existing_paths = []
+        elif isinstance(existing_value, str):
+            existing_paths = [existing_value]
+        else:
+            try:
+                existing_paths = list(existing_value)  # type: ignore[arg-type]
+            except TypeError:
+                existing_paths = [str(existing_value)]
+        if base_path_str not in existing_paths:
+            existing_paths.append(base_path_str)
+        snippet_config["base_path"] = existing_paths
+        snippet_config.setdefault("encoding", "utf-8")
 
     try:
         md = markdown.Markdown(extensions=active_extensions, extension_configs=extension_configs)

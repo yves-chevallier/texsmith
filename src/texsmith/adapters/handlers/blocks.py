@@ -64,6 +64,16 @@ def _figure_template_for(element: Tag, context: RenderContext) -> str:
     return context.runtime.get("figure_template", "figure")
 
 
+def _strip_caption_prefix(node: Tag | None) -> None:
+    if node is None:
+        return
+
+    for span in list(node.find_all("span")):
+        classes = gather_classes(span.get("class"))
+        if "caption-prefix" in classes or "figure-prefix" in classes:
+            span.decompose()
+
+
 @renders("div", phase=RenderPhase.PRE, priority=120, name="tabbed_content", auto_mark=False)
 def render_tabbed_content(element: Tag, context: RenderContext) -> None:
     """Unwrap MkDocs tabbed content structures."""
@@ -326,6 +336,7 @@ def render_figures(element: Tag, context: RenderContext) -> None:
             figcaption = element.find("figcaption")
             if figcaption is not None and table.find("caption") is None:
                 caption = context.document.new_tag("caption")
+                _strip_caption_prefix(figcaption)
                 caption.string = figcaption.get_text(strip=False)
                 table.insert(0, caption)
                 figcaption.decompose()
@@ -370,6 +381,7 @@ def render_figures(element: Tag, context: RenderContext) -> None:
     short_caption = alt_text
 
     if figcaption := element.find("figcaption"):
+        _strip_caption_prefix(figcaption)
         caption_text = figcaption.get_text(strip=False).strip()
         figcaption.decompose()
 
@@ -406,6 +418,7 @@ def render_tables(element: Tag, context: RenderContext) -> None:
     """Render HTML tables to LaTeX."""
     caption = None
     if caption_node := element.find("caption"):
+        _strip_caption_prefix(caption_node)
         caption = caption_node.get_text(strip=False).strip()
         caption_node.decompose()
 
