@@ -103,7 +103,7 @@ The increasing modulus with strain rate reflects the time-dependent viscoelastic
 To illustrate the relationship between stiffness, temperature, and deformation rate, the theoretical expression (Eq. 1) was implemented in **Python** as follows:
 
 ```python
---8<-- code.py
+--8<-- "code.py"
 ```
 
 This computational approach allows the parametric exploration of cheese stiffness under varying conditions, offering predictive insight into texture control during processing.
