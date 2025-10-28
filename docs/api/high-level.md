@@ -4,9 +4,12 @@ title: High-Level Workflows
 
 # High-Level Workflows
 
-The new `texsmith.api` package provides a thin, expressive façade over the lower-level conversion primitives.  You can mix and match Markdown, HTML, and template-aware documents without touching the CLI or re-implementing the tedious glue code that used to live in older CLI helpers.
+The `texsmith.api` package provides a thin, expressive façade over the lower-level conversion primitives. Mix and match Markdown, HTML, and template-aware documents without touching the CLI or re-implementing glue code.
 
-This page showcases the building blocks you are most likely to use in your own scripts, services, or notebooks.  All the examples assume `pip install texsmith` and any template packages you rely on.
+This page showcases the building blocks you are most likely to use in scripts, services, or notebooks. All examples assume `pip install texsmith` (or `uv tool install texsmith`) plus any template packages you rely on.
+
+!!! tip "Run the snippets"
+    Save the examples into a file and execute them with `uv run python example.py`. The snippets rely only on fixtures you create alongside the script.
 
 ## Convert a handful of documents
 
@@ -15,12 +18,12 @@ Use `Document.from_markdown` / `Document.from_html` to normalise inputs, then ha
 ```python
 from pathlib import Path
 
-from texsmith import Document, HeadingLevel, RenderSettings, convert_documents
+from texsmith import Document, convert_documents
 
 docs = [
     Document.from_markdown(
         Path("foo.md"),
-        heading=HeadingLevel.section,  # named levels map to LaTeX sectioning commands
+        heading="section",  # named levels map to LaTeX sectioning commands
     ),
     Document.from_markdown(Path("bar.md"), heading=0),
     Document.from_html(Path("baz.html"), selector="main.article__content"),
@@ -102,6 +105,10 @@ Need bibliography support?  Register `.bib` files with `session.add_bibliography
 
 ## Reuse the same plumbing as the CLI
 
-Both `texsmith convert` and `texsmith build` now rely on these high-level primitives.  If you inspect the refactored CLI commands you will notice the same API surface shown above.  That means scripts and command line invocations stay perfectly aligned, and new features land in one place.
+Both `texsmith convert` and `texsmith build` rely on these high-level primitives. Inspect the CLI commands and you will notice the same API surface shown above. Scripts and command-line invocations stay aligned, and new features land in one place.
 
 For a complete reference, browse [`texsmith.api`](core.md#texsmithapi) in the API browser or explore the source directly in `src/texsmith/api/`.
+
+!!! seealso
+    - [Command-line Overview](../cli/index.md) explains how these APIs surface through Typer commands.
+    - [Core Engine](core.md) documents the lower-level modules if you need to plug into diagnostics or templating internals.

@@ -1,52 +1,67 @@
 # Getting Started
 
-## Install
+Use this guide to install TeXSmith, verify the CLI, and explore the Python API.
+Once you can render a single Markdown page, jump to the CLI or API sections for
+the deeper feature set.
 
-To install TeXSmith, you can use `pip` or even `pipx`[^pipx] if you only need the command line tool:
+## Prerequisites
 
-```bash
-pip install texsmith
-```
+- **Python 3.10+** – TeXSmith ships as a Python package. We recommend
+  [uv](https://github.com/astral-sh/uv) or `pipx` for isolated installs.
+- **LaTeX distribution** – Install TeX Live, MiKTeX, or MacTeX so `texsmith build`
+  can call `latexmk` and friends.
+- **Optional diagram tooling** – Mermaid-to-PDF conversion defaults to Docker
+  (`minlag/mermaid-cli`). Install Docker Desktop (with WSL integration on
+  Windows) or register your own converter if you rely on Mermaid diagrams.
 
-To generate beautiful LaTeX forged documents you will also need to have a LaTeX distribution installed on your system. Popular distributions include TeX Live (cross-platform), MiKTeX (Windows), and MacTeX (macOS). On Ubuntu if you are not too picky you can install the full TeX Live distribution with:
+!!! tip
+    Containerised TeX Live images work fine—mount your project into the
+    container and run `texsmith build` inside.
 
-```bash
-sudo apt install texlive-full
-```
+## Install TeXSmith
 
-!!! note
-    A Docker image of TeXLive would also work fine if you prefer containerized applications.
+=== "uv"
+    ```bash
+    uv tool install texsmith
+    ```
 
+=== "pip / pipx"
+    ```bash
+    pip install texsmith
+    # or
+    pipx install texsmith
+    ```
 
-Now you are almost ready to use TeXSmith. Yet you may need a template. TeXSmith is shipped with a default template, but you can also create your own or use TeXSmith templates shared by the community. Let's imagine you want to write a Nature article. You can install the `texsmith-template-nature` template from PyPI with:
+Optionally install template packages such as `texsmith-template-nature` from
+PyPI when you need layout presets tailored to journals or publishers.
 
-```bash
-pip install texsmith-template-nature
-```
-
-## Basic Usage
-
-Once TeXSmith is installed, you can convert a Markdown file to LaTeX by running the following command in your terminal:
-
-```bash
-texsmith convert input.md -o output.tex
-```
-
-With a template of your choice, you can specify it with the `--template` option:
-
-```bash
-texsmith convert input.md -o output.pdf --template nature
-```
-
-With scientific documents you may want to include citations and a bibliography. TeXSmith supports this feature using a BibTeX file. You can specify the bibliography file with the `--bibliography` option:
+## Try the CLI
 
 ```bash
-texsmith convert input.md references.bib -o output.pdf --template nature
+cat <<'EOF' > intro.md
+# Sample report
+
+Numbers appear in @tbl:summary.
+
+| Item | Value |
+|------|------:|
+| Foo  |  42.0 |
+| Bar  |   3.1 |
+{: #tbl:summary caption="Key metrics"}
+EOF
+
+texsmith convert intro.md --output build/
+ls build
 ```
 
-## Programmatic Usage
+You should see `intro.tex` in the `build/` directory. Add the `--template`
+option (and a template package) to emit complete LaTeX projects or PDFs:
 
-Prefer to stay in Python?  The high-level API mirrors the CLI and handles all the boilerplate for you:
+```bash
+texsmith build intro.md --template article --render-dir build/pdf
+```
+
+## Use the Python API
 
 ```python
 from pathlib import Path
@@ -54,16 +69,23 @@ from pathlib import Path
 from texsmith import Document, convert_documents
 
 bundle = convert_documents(
-    [
-        Document.from_markdown(Path("intro.md")),
-        Document.from_html(Path("appendix.html")),
-    ],
+    [Document.from_markdown(Path("intro.md"))],
     output_dir=Path("build"),
 )
 
-print("Combined LaTeX:\n", bundle.combined_output())
+print("Fragments:", [fragment.stem for fragment in bundle.fragments])
+print("Preview:", bundle.combined_output()[:120])
 ```
 
-For template-centric workflows, reach for `texsmith.TemplateSession`.  The [API guide](../api/high-level.md) walks through end-to-end examples.
+Run this snippet with `uv run python demo.py`. The API mirrors the CLI, so
+switch to `ConversionService` or `TemplateSession` whenever you need more
+control over slot assignments, diagnostic emitters, or template metadata.
 
-[^pipx]: [pipx](https://pipx.pypa.io/stable/) is a recent tool used to leverage requirements of PEP 660 (i.e. install and run Python applications in isolated environments). It is very convenient to install command line tools without polluting your main Python environment.
+## Next steps
+
+- Read the [Command-line overview](../cli/index.md) for every flag and
+  subcommand.
+- Explore [High-Level Workflows](../api/high-level.md) to orchestrate templates
+  programmatically.
+- Browse [Supported Markdown Syntax](../markdown/supported.md) to see exactly
+  which extensions TeXSmith enables by default.

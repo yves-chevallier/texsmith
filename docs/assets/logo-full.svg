@@ -11,6 +11,9 @@
         font-family: Ebrima, Ebrima;
       }
 
+      @media (prefers-color-scheme: dark) {
+        .cls-1, .cls-2 { fill: #ffffff; } /* blanc */
+      }
       .cls-3 {
         fill: #fffdfd;
       }

@@ -60,7 +60,7 @@ texsmith convert docs/overview.md --output build/
 
 ```bash
 texsmith convert docs/intro.md docs/chapter1.md \
-  --template texsmith/templates/article \
+  --template article \
   --output build/book \
   --slot frontmatter:docs/intro.md \
   --slot mainmatter:docs/chapter1.md

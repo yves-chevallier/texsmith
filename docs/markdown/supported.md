@@ -1,573 +1,162 @@
-# Syntaxes Markdown et Extensions
+# Supported Markdown Syntax
 
-## Base Markdown (Standard “vanilla”)
+TeXSmith bundles Python-Markdown together with a curated set of PyMdown
+extensions. The combination lets you author rich documentation while keeping
+output predictable for LaTeX conversion. This page summarises the syntax you can
+use out of the box and points to the extension behind each feature.
 
-### **Titres**
+!!! info "Renderer defaults"
+    The CLI and API both enable the exact same extension list defined in
+    `texsmith.adapters.markdown.DEFAULT_MARKDOWN_EXTENSIONS`. You can always
+    override the list with CLI flags or API options, but the features below are
+    available without additional configuration.
 
-```md
-# Titre 1
+## Core Markdown (Always On)
 
-Lorem ipsum dolor sit amet.
+```markdown
+# Heading 1
+## Heading 2
+### Heading 3
 
-## Titre 2
+**bold**, *italic*, ~~strikethrough~~, `inline code`
 
-Lorem ipsum dolor sit amet.
+[Links](https://www.example.com) and ![images](assets/logo.svg)
 
-### Titre 3
+> Blockquote text
 
-Lorem ipsum dolor sit amet.
+- Unordered item
+  - Nested item
+1. Ordered item
+2. Next item
 
-#### Titre 4
-
-Lorem ipsum dolor sit amet.
-
-##### Titre 5
-
-Lorem ipsum dolor sit amet.
-
-```
-
-#### Titre 4
-
-Lorem ipsum dolor sit amet.
-
-##### Titre 5
-
-Lorem ipsum dolor sit amet.
-
-### Mise en gras
-
-```md
-**texte** ou __texte__
-```
-
-> **texte** ou __texte__
-
-### Italique
-
-```md
-*texte* ou _texte_
-```
-
-> *texte* ou _texte_
-
-### Barré
-
-*Extension : `strikethrough` (selon le parser)*
-*Paquet : `pip install markdown` (si `Python-Markdown` >=3.3, incluse dans `extra`)*
-
-```md
-~~texte~~
-```
-
-> ~~texte~~
-
-### Souligné
-
-*(HTML pur – non Markdown standard)*
-*Aucune extension Markdown spécifique, pris en charge par HTML.*
-
-```md
-<u>texte</u>
-```
-
-> <u>texte</u>
-
-### Code inline / blocs
-
-*Extension `fenced_code` ou `superfences` selon le parser.*
-*Paquet : `pip install pymdown-extensions` (pour `superfences`).*
-
-````md
-
-This entry is inline `code`, or can be in a fenced code block:
-
-```python
-print("Hello")
-```
-````
-
-> This entry is inline `code`, or can be in a fenced code block:
->
-> ```python
-> print("Hello")
-> ```
-
-### Hyperliens
-
-```md
-[texte](https://exemple.com)
-```
-
-> [texte](https://exemple.com)
-
-### Images
-
-```md
-![alt](https://picsum.photos/500/200)
-```
-
-> ![alt](https://picsum.photos/500/200)
-
-### Listes
-
-```md
-- First
-- Second
-  - Subitem
-
-1. Numbered first
-2. Numbered second
-   1. Sub-numbered
-```
-
-> - First
-> - Second
->   - Subitem
->
-> 1. Numbered first
-> 2. Numbered second
->    1. Sub-numbered
-
-### Citations
-
-```md
-> Citation
-```
-
-> Citation
-
-### Lignes horizontales
-
-```md
+Horizontal rules:
 ---
-***
-___
 ```
 
-> ---
-> ***
-> ___
+All standard Markdown constructs—headings, emphasis, lists, code blocks,
+blockquotes, links, images, and horizontal rules—render exactly as you would
+expect. TeXSmith relies on fenced code blocks by default, so triple backticks
+(```` ``) are the recommended way to author code samples.
 
-## Extensions de syntaxe avancée (non standard)
+## Extension Cheat Sheet
 
-### Tables
+| Feature | Extension | Package | Example |
+| --- | --- | --- | --- |
+| Definition lists | `def_list` | `markdown` | <code>Term<br>: Definition</code> |
+| Footnotes | `footnotes` | `markdown` | <code>Footnote ref[^1]</code> |
+| Abbreviations | `abbr` | `markdown` | <code>*[HTML]: HyperText Markup Language</code> |
+| Admonitions | `admonition` | `markdown` | <code>!!! note<br>&nbsp;&nbsp;Body</code> |
+| Attribute lists | `attr_list` | `markdown` | `![Alt](image.png){ width="50%" }` |
+| Table of contents | `toc` | `markdown` | Produces `[[toc]]` outputs and anchors |
+| Tables | `tables` | `markdown` | Pipe-delimited tables |
+| Markdown in HTML | `md_in_html` | `markdown` | Markdown inside custom `<div>` blocks |
+| SmartyPants | `pymdownx.smartsymbols` | `pymdown-extensions` | Auto converts quotes/dashes |
+| Highlighted code | `pymdownx.highlight` | `pymdown-extensions` | Adds syntax highlighting + anchors |
+| Inline highlighting | `pymdownx.inlinehilite` | `pymdown-extensions` | <code>`#!py print("hi")`</code> |
+| Details/summary | `pymdownx.details` | `pymdown-extensions` | <code>???+ note "Title"</code> |
+| SuperFences | `pymdownx.superfences` | `pymdown-extensions` | Nest code fences safely |
+| Task lists | `pymdownx.tasklist` | `pymdown-extensions` | <code>- [x] Done</code> |
+| Better emphasis | `pymdownx.betterem` | `pymdown-extensions` | Fixes edge cases with underscores |
+| MagicLink | `pymdownx.magiclink` | `pymdown-extensions` | Autolinks URLs/issues |
+| Keys | `pymdownx.keys` | `pymdown-extensions` | <code>++ctrl+alt+del++</code> |
+| Tabbed content | `pymdownx.tabbed` | `pymdown-extensions` | Content tabs |
+| Snippets | `pymdownx.snippets` | `pymdown-extensions` | Include external Markdown snippets |
+| Caret mark-up | `pymdownx.caret` | `pymdown-extensions` | <code>^^insert^^</code> |
+| Mark (highlight) | `pymdownx.mark` | `pymdown-extensions` | <code>==highlight==</code> |
+| Tilde syntax | `pymdownx.tilde` | `pymdown-extensions` | Subscript / superscript |
+| Critic mark-up | `pymdownx.critic` | `pymdown-extensions` | Editorial annotations |
+| Emoji | `pymdownx.emoji` | `pymdown-extensions` | `:sparkles:` or `:fontawesome-regular-face-smile:` |
+| Fancy lists | `pymdownx.fancylists` | `pymdown-extensions` | Extended list markers |
+| Blocks caption | `pymdownx.blocks.caption` | `pymdown-extensions` | Captions for fenced blocks |
+| Blocks HTML | `pymdownx.blocks.html` | `pymdown-extensions` | Named block wrappers |
+| Snippets of LaTeX | `texsmith.adapters.markdown_extensions.latex_raw` | bundled | Raw LaTeX fence |
+| Missing footnotes guard | `texsmith.adapters.markdown_extensions.missing_footnotes` | bundled | Warns when references lack definitions |
 
-*Extension : `tables`*
-*Paquet : `markdown` (intégrée dans `Python-Markdown`)*
+Use the table above as a quick pointer. The following sections provide more
+context and runnable examples.
 
-```md
-| Col1 | Col2 |
-|------|------|
-| Val1 | Val2 |
+## Working with Admonitions
+
+```markdown
+!!! warning "LaTeX toolchain"
+    Remember to install TeX Live, MiKTeX, or MacTeX before running `texsmith build`.
 ```
 
-> | Col1 | Col2 |
-> |------|------|
-> | Val1 | Val2 |
+Admonitions render as highlighted callouts in HTML and as tcolorbox blocks in the
+LaTeX output. Combine them with tabs or details blocks to create layered
+walkthroughs.
 
-### Footnotes (notes de bas de page)
+## Tables and Definition Lists
 
-*Extension : `footnotes`*
-*Paquet : `markdown` (standard)*
+```markdown
+| Option | Description |
+| ------ | ----------- |
+| `--list-extensions` | Prints enabled Markdown extensions |
+| `--debug` | Shows full tracebacks |
 
-```md
-Texte avec note[^1].
-
-[^1]: Voici la note.
+Term
+: Definition content
 ```
 
-> Texte avec note[^1].
->
-> [^1]: Voici la note.
+Tables use the Python-Markdown `tables` extension while definition lists come
+from `def_list`. Both convert cleanly into LaTeX environments.
 
-### Abbreviations
+## Task Lists and Checkboxes
 
-*Extension : `abbr`*
-*Paquet : `markdown` (standard)*
-
-```md
-The HTML standard.
-
-*[HTML]: HyperText Markup Language
+```markdown
+- [x] Validate MkDocs navigation
+- [ ] Document template slots
 ```
 
-> The HTML standard.
->
-> *[HTML]: HyperText Markup Language
+Task lists automatically render checkboxes in HTML. In LaTeX they become custom
+itemize entries with inline symbols.
 
-### Définitions
+## Keyboard Shortcuts
 
-*Extension : `definition_lists`*
-*Paquet : `markdown` (standard)*
-
-```md
-Terme
-: Définition du terme
-
-Autre terme
-: Définition de l'autre terme
+```markdown
+Use ++ctrl+s++ to save changes and ++ctrl+shift+b++ to build the docs.
 ```
 
-> Terme
-> : Définition du terme
->
-> Autre terme
-> : Définition de l'autre terme
+The `pymdownx.keys` extension turns the markup above into keyboard glyphs, which
+carry across to PDFs through the TeXSmith formatter.
 
-### Admonitions (blocs d’alerte/info/tips)
+## Embedding Raw LaTeX
 
-*Extension : `admonition`*
-*Paquet : `pip install markdown` ou `pymdown-extensions` (pour styles avancés)*
+Use the `/// latex` fence when native LaTeX is required:
 
-```md
-!!! note
-    Ceci est une note.
-```
-
-> !!! note
->     Ceci est une note.
-
-
-### SuperFences (fenced code amélioré + blocs imbriqués)
-
-Extension : `pymdownx.superfences`
-Paquet : `pip install pymdown-extensions`
-
-````md
-```mermaid
-graph TD;
-  A-->B;
-```
-````
-
-> ```mermaid
-> graph TD;
->   A-->B;
-> ```
-
-### Raw LaTeX blocks (`/// latex`)
-
-Extension: `texsmith.adapters.markdown_extensions.latex_raw`
-Package: shipped with TeXSmith
-
-```md
+```markdown
 /// latex
-\newline\textbf{hidden}
+\begin{align}
+E &= mc^2 \\
+\nabla \cdot \vec{E} &= \frac{\rho}{\varepsilon_0}
+\end{align}
 ///
 ```
 
-> The fence above becomes `<p class="latex-raw" style="display:none;">…</p>` in HTML, and the payload is inserted verbatim in the LaTeX output.
+TeXSmith passes the block straight to the renderer, letting you mix handcrafted
+LaTeX with converted Markdown content.
 
-### Emoji
+## Snippet Includes
 
-_Extension : `pymdownx.emoji`_
-_Paquet : `pip install pymdown-extensions`_
+The `pymdownx.snippets` extension lets you avoid duplication:
 
-```md
-:smile:
-:heart:
+```markdown
+--8<-- "includes/built-in-tasks.md"
 ```
 
-> :smile:
-> :heart:
-
-### Task Lists
-
-_Extension : `pymdownx.tasklist`_
-_Paquet : `pip install pymdown-extensions`_
-
-```md
-* [x] Fait
-* [ ] À faire
-```
-
-> * [x] Fait
-> * [ ] À faire
-
-
-### Highlight / Marquage
-
-_Extension : `pymdownx.mark`_
-_Paquet : `pip install pymdown-extensions`_
-
-```md
-==texte surligné==
-```
-
-> ==texte surligné==
-
-### Tilde / Subscript / Superscript
-
-_Extension : `pymdownx.tilde`, `pymdownx.caret`_
-_Paquet : `pip install pymdown-extensions`_
-
-```md
-H~2~O
-E = mc^2^
-```
-
-### SmartSymbols
-
-Remplace automatiquement certains caractères typographiques (`--`, `...`, etc.)
-
-_Extension : `pymdownx.smartsymbols`_
-_Paquet : `pip install pymdown-extensions`_
-
-```md
-"Smart quotes", ellipses..., en-dash --, em-dash ---
-```
-
-> "Smart quotes", ellipses..., en-dash –, em-dash —
-
-### Inline Code Highlight
-
-Permet la coloration syntaxique inline, le langage est spécifié entre backticks.
-
-_Extension : `pymdownx.inlinehilite`_
-_Paquet : `pip install pymdown-extensions`_
-
-_Extension : `codehilite`_
-_Paquet : `markdown` (standard, nécessite `pip install Pygments`)_
-
-La différence entre `pymdownx.inlinehilite` et `codehilite` est que la première permet de spécifier le langage inline, tandis que la seconde colore les blocs de code entiers.
-
-````md
-```lisp
-(+ 1 2 3)
-```
-````
-
-### Better Math / LaTeX
-
-_Extension : `pymdownx.arithmatex`_
-_Paquet : `pip install pymdown-extensions`_
-_Pour rendu : dépend de KaTeX ou MathJax._
-
-```md
-Les équations de maxwell sous forme differentiale sont:
-
-$$
-\nabla \cdot \mathbf{E} = \frac{\rho}{\varepsilon_0} \\
-\nabla \cdot \mathbf{B} = 0 \\
-\nabla \times \mathbf{E} = -\frac{\partial \mathbf{B}{\partial t} \\
-\nabla \times \mathbf{B} = \mu_0 \mathbf{J} + \mu_0 \varepsilon_0 \frac{\partial \mathbf{E}}{\partial t}
-$$
-```
-
-> Les équations de maxwell sous forme differentiale sont:
-
-> $$
-> \nabla \cdot \mathbf{E} = \frac{\rho}{\varepsilon_0} \\
-> \nabla \cdot \mathbf{B} = 0 \\
-> \nabla \times \mathbf{E} = -\frac{\partial \mathbf{B}{\partial t} \\
-> \nabla \times \mathbf{B} = \mu_0 \mathbf{J} + \mu_0 \varepsilon_0
-> \frac{\partial \mathbf{E}}{\partial t}
-> $$
-
-### MagicLink (liens automatiques GitHub / issues / etc.)
-
-_Extension : `pymdownx.magiclink`_
-_Paquet : `pip install pymdown-extensions`_
-
-This extension convertit automatiquement les URLs, adresses email, références GitHub, issues, etc. en liens cliquables.
-
-```md
-https://github.com
-yves-chevallier/texsmith#1
-```
-
-> https://github.com
-> yves-chevallier/texsmith#1
-
-### ProgressBar
-
-_Extension : `pymdownx.progressbar`_
-_Paquet : `pip install pymdown-extensions`_
-
-```md
-[===>         ] 30%
-[====>       ] 40%
-```
-
-> [===>         ] 30%
-> [====>       ] 40%
-
-### Details / Collapsible
-
-_Extension : `pymdownx.details`_
-_Paquet : `pip install pymdown-extensions`_
-
-```md
-???+ note "Titre"
-    Contenu repliable.
-```
-
-> ???+ note "Titre"
->    Contenu repliable.
->
-
-### Keys (affichage clavier)
-
-_Extension : `pymdownx.keys`_
-_Paquet : `pip install pymdown-extensions`_
-
-```md
-++Ctrl+C++
-```
-
-> ++Ctrl+C++
-
-### Tab Blocks (onglets de contenu)
-
-_Extension : `pymdownx.tabbed`_
-_Paquet : `pip install pymdown-extensions`_
-
-```md
-=== "Windows"
-
-Windows is a Microsoft operating system.
-
-=== "Linux"
-
-Linux is an open-source operating system.
-```
-
-=== "Windows"
-
-Windows is a Microsoft operating system.
-
-=== "Linux"
-
-Linux is an open-source operating system.
-
-### Meta-Data / Front Matter
-
-*Extension : `meta`*
-*Paquet : `markdown` (standard)*
-
-```md
----
-Title: Mon document
-Author: Alice
----
-# Title
-```
-
-### Table of Contents (TOC)
-
-Génère une table des matières automatique.
-*Extension : `toc`*
-*Paquet : `markdown` (standard)*
-
-```md
-[TOC]
-```
-
-> [TOC]
-
-
-### Attr_list (attributs HTML sur éléments Markdown)
-
-Allows to attach HTML attributes (id, class, style) to various Markdown elements (headers, divs, spans, images, links, etc.). For TeXSmith it is very useful.
-
-*Extension : `attr_list`*
-*Paquet : `markdown` (standard)*
-
-```md
-### Mon Titre {#id .classe style="color:red"}
-```
-
-### Snippets
-
-Permet d’inclure du contenu d’autres fichiers Markdown.
-
-_Extension : `pymdownx.snippets`_
-_Paquet : `pymdown-extensions`_
-
-
-````md
-```python
---8<-- "foo.py"
-```
-````
-
-### EscapeAll
-
-Forcer l’échappement de caractères spéciaux Markdown.
-
-_Extension : `pymdownx.escapeall`_
-_Paquet : `pymdown-extensions`_
-
-
-### BetterEm
-
-Meilleure gestion du gras / italique combiné (`***texte***`, etc.)
-
-_Extension : `pymdownx.betterem`_
-_Paquet : `pymdown-extensions`_
-
-```md
-***gras et italique***
-```
-
-> ***gras et italique***
-
-### InlineSyntaxHighlight
-
-### Long dash (—)
-
-Aucune extension n'existe aujourd'hui pour gérer automatiquement le long dash (em-dash) en Markdown. En LaTeX on utilise `--` pour un en-dash et `---` pour un em-dash. Le `---` peut preter à confusion en Markdown car il est aussi utilisé pour les lignes horizontales, néanmoins certains parseurs comme `markdown-it-py` le gèrent correctement dans le contexte. À tester...
-
-### Syntaxe supplémentaire
-
-```md
-> [!note] Ceci est une note.
->    Utilisé sur Docusaurus, Obsidian, GitHub.
-
-::directive{param} Utilisé sur MDX, Astro
-```
-
-### 🧱 **Autres dialectes rares**
-
-| Dialecte | Particularités | Paquet |
-|-----------|----------------|--------|
-| **MultiMarkdown** | Tables, footnotes, citations, metadata étendue | `pip install multimarkdown` |
-| **RMarkdown** | Code exécutable (knitr), math, tables | `rmarkdown` (R) |
-| **kramdown** | Math, footnotes, block IAL, definition lists | (Ruby) |
-| **CommonMark Extended (cmarkgfm)** | GFM complet | `pip install cmarkgfm` |
-| **Ghost / Jekyll** | “Liquid tags” (`{% include %}`) | moteur Liquid |
-| **MkDocs Material** | Supporte PyMdownX complet + Snippets + Tabs + Admonitions | `pip install mkdocs-material` |
-
----
-
-## 🧮 Fonctions “meta” communes à plusieurs parseurs
-
-| Fonction | Exemple | Extension typique | Paquet |
-|-----------|----------|-------------------|---------|
-| Table des matières auto | `[TOC]` | `toc`, `markdown-it-toc` | — |
-| Ancrage automatique | titres → `id` | `markdown-it-anchor`, `toc` | — |
-| Numérotation de titres | `1.1`, `1.2` auto | `markdown-it-anchor` | — |
-| Conversion chemins | `pymdownx.pathconverter` | idem | — |
-| Include fichiers | `--8<-- "file.md"` | `snippets` | — |
-| Gestion de variables | `{{ var }}` | mkdocs-macros | `pip install mkdocs-macros-plugin` |
-| Filtres templates | `{{ var|upper }}` | Jinja2 (via MkDocs) | `pip install mkdocs` |
-
----
-
-## 💬 Résumé final : familles d’extensions Markdown connues
-
-| Famille | Exemples | Paquets principaux |
-|----------|-----------|--------------------|
-| **Markdown officiel (Python)** | abbr, def_list, footnotes, tables, toc, attr_list, meta | `markdown` |
-| **PyMdownX** | superfences, admonition, emoji, mark, caret, tilde, details, tabbed, snippets, magiclink, tasklist, progressbar | `pymdown-extensions` |
-| **CommonMark / GFM** | task lists, autolinks, tables, strikethrough | `markdown-it-py`, `mistune`, `cmarkgfm` |
-| **Pandoc Markdown** | citations, bibliographie, crossref, divs, spans, math, includes, raw HTML | `pandoc`, `pypandoc` |
-| **Obsidian / MkDocs / Docusaurus** | admonitions `[!note]`, callouts, wiki-links, tabs, mermaid | `mkdocs-material`, `obsidian` |
-| **RMarkdown** | code exécuté, output mixte (HTML/PDF) | `rmarkdown` |
-
----
-
-Souhaites-tu que je te compile tout ça dans un **tableau Markdown complet unique** (une ligne par fonctionnalité, avec colonnes : *Nom*, *Syntaxe*, *Extension*, *Paquet pip*) ?
-→ Ce serait comme une **cheatsheet universelle du Markdown** (80+ lignes).
-````
+Create an `includes` directory under `docs/` and share fragments across pages.
+The same mechanism can pull example Markdown from the samples used in automated
+tests, keeping docs and fixtures aligned.
+
+## When You Need More
+
+- Use `texsmith.ui.cli.app --list-extensions` to see the live extension list.
+- Disable or add extensions via the `--extensions` and `--disable-extension`
+  flags in `texsmith convert` or through `ConversionRequest.markdown_extensions`
+  in the API.
+- If a feature relies on a third-party executable (for example Mermaid to PDF),
+  make sure the binary is available on the build worker before running
+  `texsmith build`.
+
+With these extensions enabled, TeXSmith can faithfully render everything from
+simple README-style guides to complex, reference-heavy manuals.

@@ -1,42 +1,54 @@
-# Mermaid
+# Mermaid Diagrams
 
-TeXSmith prend en charge les diagrammes Mermaid lors de la conversion vers LaTeX. Suivez les sections ci-dessous pour choisir la forme la plus adaptée à votre contenu.
+TeXSmith can render [Mermaid](https://mermaid.js.org) diagrams directly into
+vector PDFs during the conversion pipeline. Use the style that best matches your
+authoring workflow.
 
-## Blocs de code
+## Fence the diagram inline
 
 ```markdown
 ```mermaid
-%% Diagramme d'exemple
+%% Example diagram caption
 flowchart LR
     A --> B
+    B --> C
 ```
 ```
 
-Le commentaire de première ligne (`%% …`) reste optionnel mais, lorsqu'il est présent, il devient la légende du diagramme dans le document LaTeX généré.
+- Place an optional caption comment (`%% ...`) at the top of the fence. TeXSmith
+  turns the comment into the figure caption in LaTeX.
+- Inline charts are perfect for quick design notes that live beside the prose.
 
-## Fichiers locaux `.mmd` / `.mermaid`
-
-Vous pouvez stocker le diagramme dans un fichier séparé et l'inclure comme une image :
+## Reference external `.mmd` / `.mermaid` files
 
 ```markdown
-![Processus de build](assets/ci.mmd)
+![Build pipeline](assets/ci.mmd)
 ```
 
-- Les extensions `.mmd` et `.mermaid` sont prises en charge.
-- L'attribut `alt` (ou le texte entre crochets) sert de légende si le fichier ne fournit pas déjà un commentaire `%% …`.
-- Les chemins sont résolus par rapport au document courant, puis à la racine du projet MkDocs.
+- The diagram is located relative to the current document first, then to the
+  MkDocs project root.
+- Supported extensions: `.mmd` and `.mermaid`.
+- The image alt text becomes the caption when the diagram file does not contain
+  a leading `%%` comment.
 
-## Liens Mermaid Live (`pako:`)
+## Embed Mermaid Live snippets (`pako:` URLs)
 
-Les exports Mermaid Live compressés sont également interprétés :
+Mermaid Live can export compressed URLs; TeXSmith decodes them automatically:
 
 ```markdown
 ![](https://mermaid.live/edit#pako:eNp...)
 ```
 
-La charge utile `pako:` est automatiquement décodée ; vous n'avez rien à télécharger manuellement. Utilisez l'attribut `alt` pour fournir une légende.
+- Keep the URL intact; TeXSmith downloads, inflates, and renders the diagram.
+- Provide alt text so the PDF output has a meaningful caption if the embedded
+  payload omits one.
 
-## Remarques
+## Rendering notes
 
-- Les diagrammes Mermaid sont rendus en PDF puis inclus via `\includegraphics`, ce qui leur permet de s'intégrer aux templates de figure.
-- Les artefacts produits sont mis en cache à l'aide d'une clé basée sur le contenu du diagramme afin d'éviter des conversions répétées inutiles.
+- All Mermaid diagrams are converted to PDF and included with `\includegraphics`
+  so they integrate cleanly with templates and LaTeX floats.
+- Rendered artefacts are cached using the diagram contents as a key. Repeated
+  builds skip conversion unless the source changes.
+- Ensure the `mermaid-cli` prerequisites are available on CI if you extend the
+  strategy. The built-in converter works out of the box inside the TeXSmith
+  runtime image.

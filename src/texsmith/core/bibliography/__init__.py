@@ -22,19 +22,21 @@ Implementation Rationale
   first.
 
 Usage Example
-:
-    >>> from texsmith.core.bibliography import BibliographyCollection, bibliography_data_from_string
-    >>> collection = BibliographyCollection()
-    >>> payload = \"\"\"@article{doe2023,
-    ...   author = {Doe, Jane},
-    ...   title = {A Minimal Example},
-    ...   year = {2023},
-    ... }\"\"\"
-    >>> inline = bibliography_data_from_string(payload, "doe2023")
-    >>> collection.load_data(inline, source="inline.bib")
-    >>> reference = collection.find("doe2023")
-    >>> reference["fields"]["title"]
-    'A Minimal Example'
+
+```pycon
+>>> from texsmith.core.bibliography import BibliographyCollection, bibliography_data_from_string
+>>> collection = BibliographyCollection()
+>>> payload = \"\"\"@article{doe2023,
+...   author = {Doe, Jane},
+...   title = {A Minimal Example},
+...   year = {2023},
+... }\"\"\"
+>>> inline = bibliography_data_from_string(payload, "doe2023")
+>>> collection.load_data(inline, source="inline.bib")
+>>> reference = collection.find("doe2023")
+>>> reference["fields"]["title"]
+'A Minimal Example'
+```
 """
 
 from __future__ import annotations
