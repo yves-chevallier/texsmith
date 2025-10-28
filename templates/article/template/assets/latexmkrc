@@ -1,0 +1,2 @@
+$ENV{'TEXMFCACHE'} = 'texmf-cache';
+$bibtex_use = 2;

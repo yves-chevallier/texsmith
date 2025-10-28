@@ -32,7 +32,7 @@ texsmith convert [OPTIONS] INPUT... [--bibliography BIBFILE...]
 | `--language TEXT` | Overrides the LaTeX language (BCP 47) passed to babel/polyglossia. Falls back to metadata or template defaults when omitted. |
 | `--slot/-s VALUE` | Maps documents or sections to template slots. Syntax: `slot:Selector` for a single document, or `slot:file[:section]` when converting multiple inputs. Selectors accept headings (by text or `#id`) as well as special tokens such as `@document` to inject the entire file. |
 | `--markdown-extensions/-x VALUE` | Enables additional Markdown extensions. Accepts comma-separated or space-separated lists, or multiple flag occurrences. |
-| `--disable-markdown-extensions/-d VALUE` | Disables default Markdown extensions. Uses the same notation as `--markdown-extensions`. |
+| `--disable-extension/-d VALUE` | Disables default Markdown extensions. Uses the same notation as `--markdown-extensions`. |
 | `--bibliography/-b PATH` | Adds explicit BibTeX files to the bibliography set. Combine with positional `.bib` inputs as needed. |
 
 ## Usage Examples

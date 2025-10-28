@@ -192,7 +192,6 @@ MarkdownExtensionsOption = Annotated[
 DisableMarkdownExtensionsOption = Annotated[
     list[str] | None,
     typer.Option(
-        "--disable-markdown-extensions",
         "--disable-extension",
         "-d",
         help=(

@@ -151,7 +151,7 @@ tests, keeping docs and fixtures aligned.
 ## When You Need More
 
 - Use `texsmith.ui.cli.app --list-extensions` to see the live extension list.
-- Disable or add extensions via the `--extensions` and `--disable-extension`
+- Disable or add extensions via the `--markdown-extensions` and `--disable-extension`
   flags in `texsmith convert` or through `ConversionRequest.markdown_extensions`
   in the API.
 - If a feature relies on a third-party executable (for example Mermaid to PDF),

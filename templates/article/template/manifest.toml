@@ -14,6 +14,7 @@ tlmgr_packages = [
     "hyperref",
     "microtype",
     "fontspec",
+    "biblatex",
 ]
 
 # Attributes:
@@ -30,6 +31,7 @@ date = "\\today"
 language = "english"
 paper = "a4"
 orientation = "portrait"
+bibliography_style = "numeric"
 
 # Slots definition:
 # -----------------
@@ -49,5 +51,6 @@ strip_heading = true
 # They will be copied to the working directory when the template is used.
 [latex.template.assets]
 "callouts.sty" = { source = "template/callouts.sty" }
-"todo.sty" = { source = "template/todo.sty" }
+"todolist.sty" = { source = "template/todolist.sty" }
 "keystroke.sty" = { source = "template/keystroke.sty" }
+".latexmkrc" = { source = "template/assets/latexmkrc" }
