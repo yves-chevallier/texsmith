@@ -28,14 +28,14 @@ theme:
     - search.suggest
   palette:
     - scheme: default
-      media: "(prefers-color-scheme: light)"
-      primary: blue
+      primary: custom
+      accent: blue
       toggle:
         icon: material/weather-night
         name: Switch to dark mode
     - scheme: slate
-      media: "(prefers-color-scheme: dark)"
-      primary: blue
+      primary: custom
+      accent: blue
       toggle:
         icon: material/weather-sunny
         name: Switch to light mode
@@ -109,7 +109,8 @@ extra_javascript:
   - https://cdn.jsdelivr.net/npm/vega@5
   - https://cdn.jsdelivr.net/npm/vega-lite@5
   - https://cdn.jsdelivr.net/npm/vega-embed@6
-
+extra_css:
+  - styles/brand.css
 plugins:
   - search
   - mkdocstrings:
@@ -127,4 +128,4 @@ plugins:
   - pills
   - drawio
 hooks:
-  - mkdocs_hooks.py  # helper hooks that patch missing anchors and plugin namespace
+  - docs/hooks/mkdocs_hooks.py  # helper hooks that patch missing anchors and plugin namespace

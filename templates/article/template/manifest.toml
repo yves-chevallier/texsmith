@@ -41,6 +41,7 @@ depth = "section"
 
 [latex.template.slots.abstract]
 depth = "section"
+strip_heading = true
 
 # Additional Assets:
 # ------------------

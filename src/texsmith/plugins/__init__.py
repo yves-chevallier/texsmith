@@ -10,4 +10,5 @@ from __future__ import annotations
 
 from texsmith.adapters.plugins import material
 
+
 __all__ = ["material"]
