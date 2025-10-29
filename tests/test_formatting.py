@@ -63,6 +63,11 @@ def test_mark_tag_converted(renderer: LaTeXRenderer) -> None:
     latex = renderer.render(html)
     assert "\\hl{Important}" in latex
 
+def test_latex_text_span_converted(renderer: LaTeXRenderer) -> None:
+    html = "<p><span class='latex-text'>LaTeX</span></p>"
+    latex = renderer.render(html)
+    assert "\\LaTeX{}" in latex
+
 
 def test_inline_highlight_code(renderer: LaTeXRenderer) -> None:
     html = (

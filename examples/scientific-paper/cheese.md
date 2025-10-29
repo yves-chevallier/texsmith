@@ -118,7 +118,7 @@ The modeling results align qualitatively with the empirical data, suggesting tha
 
 ## Disclaimer
 
-This paper is fictional and intended solely for illustrative purposes in demonstrating document formatting and structure. The data, authors, and affiliations are entirely fabricated and do not correspond to real individuals or institutions. Any resemblance to actual persons, organizations, or scientific studies is purely coincidental.
+This paper is fictional and intended solely for illustrative purposes in demonstrating document formatting and structure. The data, authors, and affiliations are entirely fabricated and do not correspond to real individuals or institutions. Any resemblance to actual persons, organizations, or scientific studies is purely coincidental. The purpose is to showcase the acurate conversion from Markdown to LaTeX format for scientific publications.
 
 ## Conclusions
 

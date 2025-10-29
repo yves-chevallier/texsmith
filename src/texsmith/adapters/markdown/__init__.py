@@ -31,6 +31,7 @@ DEFAULT_MARKDOWN_EXTENSIONS = [
     "footnotes",
     "texsmith.adapters.markdown_extensions.latex_raw:LatexRawExtension",
     "texsmith.adapters.markdown_extensions.missing_footnotes:MissingFootnotesExtension",
+    "texsmith.adapters.markdown_extensions.latex_text:LatexTextExtension",
     "md_in_html",
     "mdx_math",
     "pymdownx.betterem",
