@@ -11,7 +11,7 @@ from texsmith.core.exceptions import TransformerExecutionError
 
 from ..docker import DockerLimits, VolumeMount, run_container
 from .base import CachedConversionStrategy
-from .utils import points_to_mm
+from .utils import normalise_pdf_version, points_to_mm
 
 
 class SvgToPdfStrategy(CachedConversionStrategy):
@@ -41,6 +41,7 @@ class SvgToPdfStrategy(CachedConversionStrategy):
 
         target.parent.mkdir(parents=True, exist_ok=True)
         cairosvg.svg2pdf(bytestring=svg_text.encode("utf-8"), write_to=str(target))
+        normalise_pdf_version(target)
         return target
 
 
@@ -75,6 +76,8 @@ class ImageToPdfStrategy(CachedConversionStrategy):
         with Image.open(image_path) as image:
             pdf_ready = image.convert("RGB")
             pdf_ready.save(target, "PDF")
+
+        normalise_pdf_version(target)
 
         return target
 
@@ -123,6 +126,7 @@ class FetchImageStrategy(CachedConversionStrategy):
                 raise TransformerExecutionError(msg) from exc
 
             cairosvg.svg2pdf(bytestring=response.content, write_to=str(target))
+            normalise_pdf_version(target)
             return target
 
         try:
@@ -134,6 +138,8 @@ class FetchImageStrategy(CachedConversionStrategy):
         with Image.open(BytesIO(response.content)) as image:
             pdf_ready = image.convert("RGB")
             pdf_ready.save(target, "PDF")
+
+        normalise_pdf_version(target)
 
         return target
 
@@ -276,6 +282,7 @@ class MermaidToPdfStrategy(CachedConversionStrategy):
 
         target.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(produced, target)
+        normalise_pdf_version(target)
         return target
 
 
@@ -347,4 +354,5 @@ class DrawioToPdfStrategy(CachedConversionStrategy):
 
         target.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(produced, target)
+        normalise_pdf_version(target)
         return target

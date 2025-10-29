@@ -40,6 +40,6 @@ and store the `.tex` asset alongside your Markdown.
 
 - Keep diagram sources under version control so illustrations stay editable.
 - When running on CI, ensure any external binaries required by custom
-  transformers are installed before invoking `texsmith build`.
+  transformers are installed before invoking `texsmith render --build`.
 - Combine diagrams with the `figure` slot of your template for consistent
   placement and captions.

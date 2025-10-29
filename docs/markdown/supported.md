@@ -79,7 +79,7 @@ context and runnable examples.
 
 ```markdown
 !!! warning "LaTeX toolchain"
-    Remember to install TeX Live, MiKTeX, or MacTeX before running `texsmith build`.
+    Remember to install TeX Live, MiKTeX, or MacTeX before running `texsmith render --build`.
 ```
 
 Admonitions render as highlighted callouts in HTML and as tcolorbox blocks in the
@@ -152,11 +152,11 @@ tests, keeping docs and fixtures aligned.
 
 - Use `texsmith.ui.cli.app --list-extensions` to see the live extension list.
 - Disable or add extensions via the `--markdown-extensions` and `--disable-extension`
-  flags in `texsmith convert` or through `ConversionRequest.markdown_extensions`
+  flags in `texsmith render` or through `ConversionRequest.markdown_extensions`
   in the API.
 - If a feature relies on a third-party executable (for example Mermaid to PDF),
   make sure the binary is available on the build worker before running
-  `texsmith build`.
+  `texsmith render --build`.
 
 With these extensions enabled, TeXSmith can faithfully render everything from
 simple README-style guides to complex, reference-heavy manuals.

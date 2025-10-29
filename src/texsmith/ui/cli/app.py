@@ -9,8 +9,7 @@ import click
 import typer
 from typer.core import TyperCommand
 
-from texsmith.ui.cli.commands.build import build
-from texsmith.ui.cli.commands.convert import convert
+from texsmith.ui.cli.commands.render import render
 from texsmith.ui.cli.commands.templates import template_info
 
 from ._options import DIAGNOSTICS_PANEL
@@ -159,8 +158,7 @@ def bibliography_list(
     print_bibliography_overview(collection)
 
 
-app.command(name="convert", cls=HelpOnEmptyCommand)(convert)
-app.command(name="build", cls=HelpOnEmptyCommand)(build)
+app.command(name="render", cls=HelpOnEmptyCommand)(render)
 template_app.command(name="info", cls=HelpOnEmptyCommand)(template_info)
 
 

@@ -139,7 +139,7 @@ def test_cli_front_matter_bibliography_fetches_doi(monkeypatch, tmp_path: Path) 
     result = runner.invoke(
         app,
         [
-            "convert",
+            "render",
             str(markdown_file),
             "--output-dir",
             str(output_dir),

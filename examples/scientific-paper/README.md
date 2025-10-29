@@ -5,5 +5,5 @@ This examples demonstrates how to use Markdown to write a scientific paper inclu
 ## Building the Example
 
 ```bash
-texsmith build cheese.md cheese.bib --template ../../article
+texsmith render cheese.md cheese.bib --template ../../article --build
 ```

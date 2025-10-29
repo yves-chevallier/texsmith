@@ -1,12 +1,12 @@
-"""Implementation of the `texsmith build` command."""
+"""Implementation of the `texsmith render` command."""
 
 from __future__ import annotations
 
 import os
-from pathlib import Path
 import shlex
 import shutil
 import subprocess
+from pathlib import Path
 from typing import Annotated
 
 import click
@@ -14,7 +14,7 @@ import typer
 
 from texsmith.adapters.latex.log import stream_latexmk_output
 from texsmith.adapters.markdown import resolve_markdown_extensions
-from texsmith.api.service import ConversionRequest, ConversionService, SlotAssignment
+from texsmith.api.service import ConversionRequest, ConversionService
 from texsmith.core.conversion.debug import ConversionError
 from texsmith.core.conversion.inputs import UnsupportedInputError
 from texsmith.core.templates import TemplateError
@@ -31,26 +31,27 @@ from .._options import (
     HeadingLevelOption,
     InputPathArgument,
     LanguageOption,
-    TitleFromHeadingOption,
     ManifestOptionWithShort,
     MarkdownExtensionsOption,
     NumberedOption,
     OpenLogOption,
-    OutputDirOption,
+    OutputPathOption,
     ParserOption,
     SelectorOption,
     SlotsOption,
     TemplateOption,
+    TitleFromHeadingOption,
 )
 from ..diagnostics import CliEmitter
 from ..presenter import (
     consume_event_diagnostics,
     parse_latex_log,
     present_build_summary,
+    present_conversion_summary,
     present_latexmk_failure,
 )
-from ..state import debug_enabled, emit_error, emit_warning, get_cli_state
-from ..utils import parse_slot_option
+from ..state import debug_enabled, emit_error, get_cli_state
+from ..utils import determine_output_target, organise_slot_overrides, write_output_file
 
 
 _SERVICE = ConversionService()
@@ -99,9 +100,17 @@ def _format_path_for_event(path: Path) -> str:
         return str(resolved)
 
 
-def build(
+def render(
     inputs: InputPathArgument = None,
-    output_dir: OutputDirOption = Path("build"),
+    input_path: Annotated[
+        Path | None,
+        typer.Option(
+            "--input-path",
+            help="Internal helper used for programmatic invocation.",
+            hidden=True,
+        ),
+    ] = None,
+    output: OutputPathOption = None,
     selector: SelectorOption = "article.md-content__inner",
     full_document: FullDocumentOption = False,
     base_level: BaseLevelOption = 0,
@@ -124,88 +133,121 @@ def build(
             ),
         ),
     ] = False,
+    build_pdf: Annotated[
+        bool,
+        typer.Option(
+            "--build/--no-build",
+            help="Invoke latexmk after rendering to compile the resulting LaTeX project.",
+        ),
+    ] = False,
     language: LanguageOption = None,
+    legacy_latex_accents: Annotated[
+        bool,
+        typer.Option(
+            "--legacy-latex-accents/--unicode-latex-accents",
+            help=(
+                "Escape accented characters and ligatures with legacy LaTeX macros instead of "
+                "emitting Unicode glyphs (defaults to Unicode output)."
+            ),
+        ),
+    ] = False,
     slots: SlotsOption = None,
     markdown_extensions: MarkdownExtensionsOption = None,
     disable_markdown_extensions: DisableMarkdownExtensionsOption = None,
     bibliography: BibliographyOption = None,
     open_log: OpenLogOption = False,
 ) -> None:
-    """Orchestrate document conversion and compilation for the MkDocs workflow."""
+    """Convert MkDocs documents into LaTeX artefacts and optionally build PDFs."""
 
     state = get_cli_state()
-    resolved_inputs = list(inputs or [])
+    ctx = click.get_current_context(silent=True)
+    verbosity = state.verbosity
+    if verbosity <= 0 and ctx is not None and ctx.parent is not None:
+        verbosity = int(ctx.parent.params.get("verbose", 0) or 0)
+        if verbosity > 0:
+            state.verbosity = verbosity
 
-    documents, bibliography_files = _SERVICE.split_inputs(
-        resolved_inputs,
-        bibliography or [],
-    )
-    if not documents:
-        ctx = click.get_current_context()
-        typer.echo(ctx.command.get_help(ctx))
-        raise typer.Exit()
-    if len(documents) != 1:
-        raise typer.BadParameter("Provide exactly one Markdown or HTML document.")
-    document_path = documents[0]
+    document_paths = list(inputs or [])
+    if input_path is not None:
+        if document_paths:
+            raise typer.BadParameter("Provide either positional inputs or --input-path, not both.")
+        document_paths = [input_path]
+
+    document_paths, bibliography_files = _SERVICE.split_inputs(document_paths, bibliography or [])
+    if not document_paths:
+        raise typer.BadParameter("Provide a Markdown (.md) or HTML (.html) source document.")
+
+    if build_pdf and len(document_paths) != 1:
+        raise typer.BadParameter("Provide exactly one Markdown or HTML document when using --build.")
+
+    template_selected = bool(template)
+    if build_pdf and not template_selected:
+        emit_error("The --build flag requires a LaTeX template (--template).")
+        raise typer.Exit(code=1)
+
+    if drop_title and title_from_heading:
+        raise typer.BadParameter("--drop-title and --title-from-heading cannot be combined.")
+
+    if classic_output and not build_pdf:
+        raise typer.BadParameter("--classic-output can only be used together with --build.")
+
+    if open_log and not build_pdf:
+        raise typer.BadParameter("--open-log can only be used together with --build.")
+
+    try:
+        _, slot_assignments = organise_slot_overrides(slots, document_paths)
+    except (typer.BadParameter, ValueError) as exc:
+        raise typer.BadParameter(str(exc)) from exc
+
+    state_slot_rows: list[dict[str, object]] = []
+    for doc_path, entries in slot_assignments.items():
+        for entry in entries:
+            state_slot_rows.append(
+                {
+                    "document": _format_path_for_event(doc_path),
+                    "slot": entry.slot,
+                    "selector": entry.selector,
+                    "include_document": entry.include_document,
+                }
+            )
+    if state_slot_rows:
+        state.record_event("slot_assignments", {"entries": state_slot_rows})
 
     resolved_markdown_extensions = resolve_markdown_extensions(
         markdown_extensions,
         disable_markdown_extensions,
     )
     extension_line = f"Extensions: {', '.join(resolved_markdown_extensions) or '(none)'}"
-    try:
-        requested_slots = parse_slot_option(slots)
-    except ValueError as exc:
-        raise typer.BadParameter(str(exc)) from exc
+
+    def _flush_diagnostics() -> None:
+        lines: list[str] = []
+        if verbosity >= 1:
+            lines.append(extension_line)
+        lines.extend(consume_event_diagnostics(state))
+        for line in lines:
+            typer.echo(line)
 
     debug_snapshot = debug_html if debug_html is not None else debug_enabled()
 
-    template_identifier = template
-    if not template_identifier:
-        emit_error("The build command requires a LaTeX template (--template).")
-        raise typer.Exit(code=1)
-
-    if drop_title and title_from_heading:
-        raise typer.BadParameter(
-            "--drop-title and --title-from-heading cannot be combined."
-        )
+    output_mode, output_target = determine_output_target(template_selected, document_paths, output)
+    output_path = output_target.resolve() if output_target is not None else None
 
     emitter = CliEmitter(state=state, debug_enabled=debug_enabled())
 
-    assignments: dict[Path, list[SlotAssignment]] = {
-        document_path: [
-            SlotAssignment(slot=slot_name, selector=selector_value, include_document=False)
-            for slot_name, selector_value in requested_slots.items()
-        ]
-    }
-    if requested_slots:
-        state.record_event(
-            "slot_assignments",
-            {
-                "entries": [
-                    {
-                        "document": _format_path_for_event(document_path),
-                        "slot": slot_name,
-                        "selector": selector_value,
-                        "include_document": False,
-                    }
-                    for slot_name, selector_value in requested_slots.items()
-                ]
-            },
-        )
+    request_render_dir = output_path if (template_selected or output_mode == "directory") else None
 
     request = ConversionRequest(
-        documents=[document_path],
+        documents=document_paths,
         bibliography_files=bibliography_files,
-        slot_assignments=assignments,
+        slot_assignments=slot_assignments,
         selector=selector,
         full_document=full_document,
         heading_level=heading_level,
         base_level=base_level,
-        drop_title_all=drop_title,
-        drop_title_first_document=False,
-        numbered=numbered,
+        drop_title_all=drop_title if build_pdf else False,
+        drop_title_first_document=False if build_pdf else drop_title,
         title_from_heading=title_from_heading,
+        numbered=numbered,
         markdown_extensions=resolved_markdown_extensions,
         parser=parser,
         disable_fallback_converters=disable_fallback_converters,
@@ -213,20 +255,11 @@ def build(
         manifest=manifest,
         persist_debug_html=bool(debug_snapshot),
         language=language,
-        legacy_latex_accents=False,
-        template=template_identifier,
-        render_dir=output_dir.resolve(),
+        legacy_latex_accents=legacy_latex_accents,
+        template=template,
+        render_dir=request_render_dir,
         emitter=emitter,
     )
-
-    def _flush_diagnostics() -> None:
-        lines: list[str] = []
-        if state.verbosity >= 1:
-            lines.append(extension_line)
-        lines.extend(consume_event_diagnostics(state))
-        for line in lines:
-            typer.echo(line)
-
     state.record_event(
         "conversion_settings",
         {
@@ -251,9 +284,63 @@ def build(
         emit_error(str(exc), exception=exc)
         raise typer.Exit(code=1) from exc
 
+    if not template_selected:
+        bundle = response.bundle
+        if bundle is None:  # pragma: no cover - defensive
+            raise RuntimeError("Conversion bundle missing from service outcome.")
+
+        if output_mode == "stdout":
+            typer.echo(bundle.combined_output())
+            _flush_diagnostics()
+            return
+
+        if output_mode == "file":
+            if output_path is None:
+                raise typer.BadParameter("Output path is required when writing to a file.")
+            try:
+                write_output_file(output_path, bundle.combined_output())
+            except OSError as exc:
+                emit_error(str(exc), exception=exc)
+                raise typer.Exit(code=1) from exc
+            present_conversion_summary(
+                state=state,
+                output_mode=output_mode,
+                bundle=bundle,
+                output_path=output_path,
+                render_result=None,
+            )
+            _flush_diagnostics()
+            return
+
+        if output_mode == "directory":
+            present_conversion_summary(
+                state=state,
+                output_mode=output_mode,
+                bundle=bundle,
+                output_path=request.render_dir,
+                render_result=None,
+            )
+            _flush_diagnostics()
+            return
+
+        raise RuntimeError(f"Unsupported output mode '{output_mode}'.")
+
     render_result = response.render_result
     if render_result is None:  # pragma: no cover - defensive
         raise RuntimeError("Template render result missing from service outcome.")
+
+    render_dir = render_result.main_tex_path.parent.resolve()
+
+    if not build_pdf:
+        present_conversion_summary(
+            state=state,
+            output_mode="template",
+            bundle=None,
+            output_path=render_dir,
+            render_result=render_result,
+        )
+        _flush_diagnostics()
+        return
 
     latexmk_path = shutil.which("latexmk")
     if latexmk_path is None:
@@ -268,7 +355,7 @@ def build(
     command[0] = latexmk_path
     command.append(render_result.main_tex_path.name)
 
-    tex_cache_root = (render_result.main_tex_path.parent / ".texmf-cache").resolve()
+    tex_cache_root = (render_dir / ".texmf-cache").resolve()
     tex_cache_root.mkdir(parents=True, exist_ok=True)
     env = os.environ.copy()
 
@@ -298,14 +385,14 @@ def build(
     env["TEXMFCACHE"] = str(texmf_cache)
     env.setdefault("XDG_CACHE_HOME", str(xdg_cache))
 
-    if classic_output is True:
+    if classic_output:
         try:
             process = subprocess.run(
                 command,
                 check=False,
                 capture_output=True,
                 text=True,
-                cwd=render_result.main_tex_path.parent,
+                cwd=render_dir,
                 env=env,
             )
         except OSError as exc:
@@ -336,7 +423,7 @@ def build(
         try:
             result = stream_latexmk_output(
                 command,
-                cwd=str(render_result.main_tex_path.parent),
+                cwd=str(render_dir),
                 env=env,
                 console=console,
                 verbosity=state.verbosity,
@@ -365,5 +452,5 @@ def build(
 
 
 # Expose runtime dependencies for test monkeypatching
-build.shutil = shutil  # type: ignore[attr-defined]
-build.subprocess = subprocess  # type: ignore[attr-defined]
+render.shutil = shutil  # type: ignore[attr-defined]
+render.subprocess = subprocess  # type: ignore[attr-defined]

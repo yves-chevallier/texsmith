@@ -1,5 +1,5 @@
 ---
-meta:
+press:
   subtitle: >
     A Rheological Study on the Viscoelastic Properties of Aged Cheese Varieties
   authors:
@@ -56,7 +56,7 @@ The melting characteristics of cheese are governed primarily by **fat content**,
 
 Thermal analysis using **Differential Scanning Calorimetry (DSC)** allows the determination of onset and peak melting temperatures. In contrast, high-moisture cheeses such as Mozzarella [^1] exhibit lower melting points and greater stretchability due to reduced protein cross-link density [^WADHWANI20111713]. The figure [](#melting-behavior) illustrates the melting behavior of Mozzarella cheese, highlighting its unique rheological response upon heating.
 
-![Cheese melting behavior](mozzarella.jpg){ width=50% }
+![Cheese melting behavior](mozzarella.svg){ width=80% }
 
 /// figure-caption
     attrs: {id: melting-behavior}
