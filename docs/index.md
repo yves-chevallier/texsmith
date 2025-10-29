@@ -17,7 +17,7 @@ journals, or long-form review packages—without maintaining two sources of trut
 
 !!! note "LaTeX distribution"
     TeXSmith only generates LaTeX sources. Use TeX Live, MiKTeX, or MacTeX when
-    you need PDFs (`texsmith build` orchestrates `latexmk` for you).
+    you need PDFs (`texsmith render --build` orchestrates `latexmk` for you).
 
 ## Quick start
 
@@ -39,7 +39,7 @@ journals, or long-form review packages—without maintaining two sources of trut
     ```
     EOF
 
-    texsmith convert intro.md --output build/
+    texsmith render intro.md --output build/
     ````
 
 === "Python"
@@ -67,7 +67,7 @@ flag or `render_dir` to go straight to a print-ready project.
 
 - Markdown extensions mirror MkDocs Material out of the box. See
   [Supported Markdown Syntax](markdown/supported.md) for the full list.
-- CLI subcommands (`convert`, `build`, `bibliography`) map directly to pipeline
+- CLI subcommands (`render`, `bibliography`) map directly to pipeline
   primitives and include instant diagnostics (`--debug`, `--verbose`, and
   `--list-extensions`).
 - The Python API exposes the same runtime objects used internally, making it

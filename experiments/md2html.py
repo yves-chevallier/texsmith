@@ -3,14 +3,20 @@ import markdown
 
 TEST_MD = r"""
 
-> | Col1 | Col2 |
-> | ---- | ---- |
-> | Val1 | Val2 |
+$$
+\begin{equation}\label{eq:em}
+M = \frac{1}{E(T, \dot{\varepsilon})}
+\end{equation}
+$$
 
-| Col1 | Col2 |
-| ---- | ---- |
-| Val1 | Val2 |
+```math
+\begin{align}
+  a &= b + c \label{eq:abc}\\
+  d &= e + f
+\end{align}
+```
 
+On réfère ici : \eqref{eq:abc}.
 """
 
 extensions = [
@@ -25,7 +31,7 @@ extensions = [
     "markdown.extensions.smarty",
     "markdown.extensions.toc",
     "md_in_html",
-    "mdx_math",
+    #"mdx_math",
     "pymdownx.betterem",
     "pymdownx.blocks.caption",
     "pymdownx.blocks.html",
@@ -46,14 +52,25 @@ extensions = [
     "pymdownx.tabbed",
     "pymdownx.tasklist",
     "pymdownx.tilde",
+    "pymdownx.arithmatex",
     "tables",
-    "texsmith.markdown_extensions.missing_footnotes:MissingFootnotesExtension",
     "toc",
 ]
+
+from pymdownx.arithmatex import arithmatex_fenced_format
 
 extension_configs = {
     "pymdownx.highlight": {"linenums": False},
     "pymdownx.magiclink": {"repo_url_shortener": True},
+    "pymdownx.superfences": {
+        "custom_fences": [
+            {
+                "name": "math",
+                "class": "arithmatex",
+                "format": arithmatex_fenced_format,  # <— ici !
+            }
+        ]
+    }
 }
 
 md = markdown.Markdown(

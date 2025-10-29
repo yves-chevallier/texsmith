@@ -22,13 +22,12 @@ These options must appear before the subcommand name and affect every command.
 Example:
 
 ```bash
-texsmith --debug -vv convert docs/chapter.md
+texsmith --debug -vv render docs/chapter.md
 ```
 
 ## Available Commands
 
-- [`convert`](convert.md) – Convert Markdown/HTML documents to LaTeX fragments or template-aware outputs.
-- [`build`](build.md) – Convert documents and run `latexmk` to produce a finished PDF.
+- [`render`](render.md) – Convert Markdown/HTML documents to LaTeX fragments or template-aware outputs, optionally building PDFs.
 - [`bibliography`](bibliography.md) – Inspect BibTeX files and surface parsing issues.
 
 Each command has its own options and usage examples on the linked pages.
@@ -37,10 +36,10 @@ Each command has its own options and usage examples on the linked pages.
 
 ```bash
 # Generate LaTeX fragments from Markdown
-texsmith convert intro.md --output build/
+texsmith render intro.md --output build/
 
 # Render with a template and latexmk
-texsmith build intro.md --template article --render-dir build/pdf
+texsmith render intro.md --template article --output-dir build/pdf --build
 
 # Inspect bibliography sources
 texsmith bibliography list references.bib

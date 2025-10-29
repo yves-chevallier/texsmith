@@ -21,7 +21,7 @@ TeXSmith is a [Python](https://www.python.org/) package and CLI tool to convert 
 
 ```bash
 pip install texsmith
-texsmith convert input.md input.bib -o article/ --template nature
+texsmith render input.md input.bib -o article/ --template nature
 ```
 
 ## Project layout

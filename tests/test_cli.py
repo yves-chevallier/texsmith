@@ -11,11 +11,11 @@ from typer.testing import CliRunner
 
 from texsmith.adapters.latex.log import LatexMessage, LatexMessageSeverity, LatexStreamResult
 from texsmith.ui.cli import DEFAULT_MARKDOWN_EXTENSIONS, app
-from texsmith.ui.cli.commands import build as build_cmd
+from texsmith.ui.cli.commands import render as render_cmd
 import texsmith.ui.cli.state as cli_state
 
 
-build_module = importlib.import_module("texsmith.ui.cli.commands.build")
+render_module = importlib.import_module("texsmith.ui.cli.commands.render")
 
 
 def _template_path(name: str) -> Path:
@@ -35,7 +35,7 @@ def test_convert_command() -> None:
         result = runner.invoke(
             app,
             [
-                "convert",
+                "render",
                 str(html_file),
                 "--base-level",
                 "0",
@@ -58,7 +58,7 @@ def test_heading_level_option() -> None:
         result = runner.invoke(
             app,
             [
-                "convert",
+                "render",
                 str(html_file),
                 "-h",
                 "1",
@@ -81,7 +81,7 @@ def test_copy_assets_disabled() -> None:
         result = runner.invoke(
             app,
             [
-                "convert",
+                "render",
                 str(html_file),
                 "--no-copy-assets",
             ],
@@ -116,7 +116,7 @@ def test_convert_markdown_file(monkeypatch: Any) -> None:
         result = runner.invoke(
             app,
             [
-                "convert",
+                "render",
                 str(markdown_file),
                 "-h",
                 "1",
@@ -148,7 +148,7 @@ def test_default_markdown_extensions(monkeypatch: Any) -> None:
         result = runner.invoke(
             app,
             [
-                "convert",
+                "render",
                 str(markdown_file),
             ],
         )
@@ -178,7 +178,7 @@ def test_markdown_extensions_option_extends_defaults(monkeypatch: Any) -> None:
         result = runner.invoke(
             app,
             [
-                "convert",
+                "render",
                 str(markdown_file),
                 "-x",
                 "custom_extension,another_extension",
@@ -215,7 +215,7 @@ def test_disable_markdown_extensions_option(tmp_path: Path, monkeypatch: Any) ->
     result = runner.invoke(
         app,
         [
-            "convert",
+            "render",
             str(markdown_file),
             "--output-dir",
             str(tmp_path / "output"),
@@ -249,7 +249,7 @@ def test_rejects_mkdocs_configuration(tmp_path: Path) -> None:
     result = runner.invoke(
         app,
         [
-            "convert",
+            "render",
             str(config_file),
         ],
     )
@@ -270,7 +270,7 @@ def test_mdx_math_extension_preserves_latex() -> None:
         result = runner.invoke(
             app,
             [
-                "convert",
+                "render",
                 str(markdown_file),
                 "-x",
                 "mdx_math",
@@ -292,7 +292,7 @@ def test_multi_document_stdout_concat() -> None:
         second = Path("second.md")
         second.write_text("# Second\n\nBeta.", encoding="utf-8")
 
-        result = runner.invoke(app, ["convert", str(first), str(second)])
+        result = runner.invoke(app, ["render", str(first), str(second)])
 
     assert result.exit_code == 0, result.stdout
     assert "\\chapter{First}" in result.stdout
@@ -311,7 +311,7 @@ def test_multi_document_output_file(tmp_path: Path) -> None:
     result = runner.invoke(
         app,
         [
-            "convert",
+            "render",
             str(first),
             str(second),
             "--output",
@@ -341,7 +341,7 @@ def test_slot_injection_extracts_abstract(tmp_path: Path) -> None:
     result = runner.invoke(
         app,
         [
-            "convert",
+            "render",
             str(markdown_file),
             "--output-dir",
             str(output_dir),
@@ -376,7 +376,7 @@ def test_slot_injection_matches_label(tmp_path: Path) -> None:
     result = runner.invoke(
         app,
         [
-            "convert",
+            "render",
             str(markdown_file),
             "--output-dir",
             str(output_dir),
@@ -404,7 +404,7 @@ def test_slot_injection_warns_unknown_slot(tmp_path: Path) -> None:
     result = runner.invoke(
         app,
         [
-            "convert",
+            "render",
             str(markdown_file),
             "--output-dir",
             str(output_dir),
@@ -429,7 +429,7 @@ def test_slot_injection_preserves_footnotes(tmp_path: Path) -> None:
     result = runner.invoke(
         app,
         [
-            "convert",
+            "render",
             "examples/scientific-paper/cheese.md",
             "--output-dir",
             str(output_dir),
@@ -476,7 +476,7 @@ Main discussion.
     result = runner.invoke(
         app,
         [
-            "convert",
+            "render",
             str(markdown_file),
             "--output-dir",
             str(output_dir),
@@ -519,7 +519,7 @@ Main discussion.
     result = runner.invoke(
         app,
         [
-            "convert",
+            "render",
             str(markdown_file),
             "--output-dir",
             str(output_dir),
@@ -560,7 +560,7 @@ Override from CLI.
     result = runner.invoke(
         app,
         [
-            "convert",
+            "render",
             str(markdown_file),
             "--output-dir",
             str(output_dir),
@@ -591,7 +591,7 @@ def test_multi_document_template_generates_inputs(tmp_path: Path) -> None:
     result = runner.invoke(
         app,
         [
-            "convert",
+            "render",
             str(chapter1),
             str(chapter2),
             "--template",
@@ -623,7 +623,7 @@ def test_convert_template_outputs_summary(tmp_path: Path) -> None:
     result = runner.invoke(
         app,
         [
-            "convert",
+            "render",
             str(html_file),
             "--template",
             str(template_dir),
@@ -649,7 +649,7 @@ def test_slot_assignment_targets_specific_file(tmp_path: Path) -> None:
     result = runner.invoke(
         app,
         [
-            "convert",
+            "render",
             str(abstract_doc),
             str(body_doc),
             "--template",
@@ -684,7 +684,7 @@ def test_slot_assignment_extracts_section_from_file(tmp_path: Path) -> None:
     result = runner.invoke(
         app,
         [
-            "convert",
+            "render",
             str(chapter1),
             str(chapter2),
             "--template",
@@ -714,7 +714,7 @@ def test_convert_verbose_emits_extension_diagnostics(tmp_path: Path) -> None:
         app,
         [
             "--verbose",
-            "convert",
+            "render",
             str(html_file),
         ],
     )
@@ -735,7 +735,7 @@ def test_convert_verbose_template_reports_overrides(tmp_path: Path) -> None:
         [
             "--verbose",
             "--verbose",
-            "convert",
+            "render",
             str(markdown_file),
             "--template",
             str(template_dir),
@@ -760,10 +760,11 @@ def test_build_requires_template(tmp_path: Path) -> None:
     result = runner.invoke(
         app,
         [
-            "build",
+            "render",
             str(html_file),
             "--output-dir",
             str(tmp_path / "output"),
+            "--build",
         ],
     )
 
@@ -803,18 +804,19 @@ def test_build_defaults_to_rich_output(tmp_path: Path, monkeypatch: Any) -> None
         captured["verbosity"] = verbosity
         return LatexStreamResult(returncode=0, messages=[])
 
-    monkeypatch.setattr(build_cmd.shutil, "which", fake_which)
-    monkeypatch.setattr(build_module, "stream_latexmk_output", fake_stream)
+    monkeypatch.setattr(render_cmd.shutil, "which", fake_which)
+    monkeypatch.setattr(render_module, "stream_latexmk_output", fake_stream)
 
     result = runner.invoke(
         app,
         [
-            "build",
+            "render",
             str(html_file),
             "--output-dir",
             str(output_dir),
             "--template",
             str(template_dir),
+            "--build",
         ],
     )
 
@@ -850,19 +852,20 @@ def test_build_invokes_latexmk(tmp_path: Path, monkeypatch: Any) -> None:
         pdf_path.write_text("%PDF-1.4", encoding="utf-8")
         return types.SimpleNamespace(returncode=0, stdout="build ok\n", stderr="")
 
-    monkeypatch.setattr(build_cmd.shutil, "which", fake_which)
-    monkeypatch.setattr(build_cmd.subprocess, "run", fake_run)
+    monkeypatch.setattr(render_cmd.shutil, "which", fake_which)
+    monkeypatch.setattr(render_cmd.subprocess, "run", fake_run)
 
     result = runner.invoke(
         app,
         [
-            "build",
+            "render",
             str(html_file),
             "--output-dir",
             str(output_dir),
             "--template",
             str(template_dir),
             "--classic-output",
+            "--build",
         ],
     )
 
@@ -916,13 +919,13 @@ def test_build_with_bibliography_forces_bibtex(tmp_path: Path, monkeypatch: Any)
         pdf_path.write_text("%PDF-1.4", encoding="utf-8")
         return types.SimpleNamespace(returncode=0, stdout="build ok\n", stderr="")
 
-    monkeypatch.setattr(build_cmd.shutil, "which", fake_which)
-    monkeypatch.setattr(build_cmd.subprocess, "run", fake_run)
+    monkeypatch.setattr(render_cmd.shutil, "which", fake_which)
+    monkeypatch.setattr(render_cmd.subprocess, "run", fake_run)
 
     result = runner.invoke(
         app,
         [
-            "build",
+            "render",
             str(html_file),
             "--output-dir",
             str(output_dir),
@@ -931,6 +934,7 @@ def test_build_with_bibliography_forces_bibtex(tmp_path: Path, monkeypatch: Any)
             "--bibliography",
             str(bib_file),
             "--classic-output",
+            "--build",
         ],
     )
 
@@ -963,19 +967,20 @@ def test_build_respects_shell_escape(tmp_path: Path, monkeypatch: Any) -> None:
         pdf_path.write_text("%PDF-1.4", encoding="utf-8")
         return types.SimpleNamespace(returncode=0, stdout="", stderr="")
 
-    monkeypatch.setattr(build_cmd.shutil, "which", fake_which)
-    monkeypatch.setattr(build_cmd.subprocess, "run", fake_run)
+    monkeypatch.setattr(render_cmd.shutil, "which", fake_which)
+    monkeypatch.setattr(render_cmd.subprocess, "run", fake_run)
 
     result = runner.invoke(
         app,
         [
-            "build",
+            "render",
             str(html_file),
             "--output-dir",
             str(output_dir),
             "--template",
             str(template_dir),
             "--classic-output",
+            "--build",
         ],
     )
 
@@ -1018,18 +1023,19 @@ def test_build_failure_reports_summary(tmp_path: Path, monkeypatch: Any) -> None
         assert verbosity == 0
         return LatexStreamResult(returncode=1, messages=[message])
 
-    monkeypatch.setattr(build_cmd.shutil, "which", fake_which)
-    monkeypatch.setattr(build_module, "stream_latexmk_output", fake_stream)
+    monkeypatch.setattr(render_cmd.shutil, "which", fake_which)
+    monkeypatch.setattr(render_module, "stream_latexmk_output", fake_stream)
 
     result = runner.invoke(
         app,
         [
-            "build",
+            "render",
             str(html_file),
             "--output-dir",
             str(output_dir),
             "--template",
             str(template_dir),
+            "--build",
         ],
     )
 

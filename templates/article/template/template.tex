@@ -1,9 +1,7 @@
 \documentclass\VAR{documentclass_options}{article}
 
 \usepackage{fontspec}
-\usepackage{bookmark}
 \usepackage{microtype}
-\usepackage{hyperref}
 \usepackage{geometry}
 \usepackage{hyphenat}
 \usepackage[\VAR{language|default('english')}]{babel}
@@ -15,6 +13,9 @@
 \usepackage{soul} % Highlighting text with \hl{}
 \usepackage{keystroke} % Keystroke package
 \usepackage{todolist}
+\usepackage{float}
+\usepackage{hyperref}
+\usepackage{bookmark}
 
 \BLOCK{ if bibliography_resource }
 \usepackage[
@@ -57,10 +58,11 @@
   RawFeature={fallback=fontfallback}
 ]
 
-\setmonofont{Noto Sans Mono}[
+\setmonofont{FreeMono}[
   Scale=0.9,
-  ItalicFont=lmmono10-italic.otf,
-  BoldItalicFont=lmmonolt10-boldoblique.otf,
+  ItalicFont={* Oblique},
+  BoldFont={* Bold},
+  BoldItalicFont={* Bold Oblique},
   RawFeature={fallback=fontfallback}
 ]
 

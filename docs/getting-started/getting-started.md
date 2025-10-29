@@ -8,7 +8,7 @@ the deeper feature set.
 
 - **Python 3.10+** – TeXSmith ships as a Python package. We recommend
   [uv](https://github.com/astral-sh/uv) or `pipx` for isolated installs.
-- **LaTeX distribution** – Install TeX Live, MiKTeX, or MacTeX so `texsmith build`
+- **LaTeX distribution** – Install TeX Live, MiKTeX, or MacTeX so `texsmith render --build`
   can call `latexmk` and friends.
 - **Optional diagram tooling** – Mermaid-to-PDF conversion defaults to Docker
   (`minlag/mermaid-cli`). Install Docker Desktop (with WSL integration on
@@ -16,7 +16,7 @@ the deeper feature set.
 
 !!! tip
     Containerised TeX Live images work fine—mount your project into the
-    container and run `texsmith build` inside.
+    container and run `texsmith render --build` inside.
 
 ## Install TeXSmith
 
@@ -50,7 +50,7 @@ Numbers appear in @tbl:summary.
 {: #tbl:summary caption="Key metrics"}
 EOF
 
-texsmith convert intro.md --output build/
+texsmith render intro.md --output build/
 ls build
 ```
 
@@ -58,7 +58,7 @@ You should see `intro.tex` in the `build/` directory. Add the `--template`
 option (and a template package) to emit complete LaTeX projects or PDFs:
 
 ```bash
-texsmith build intro.md --template article --render-dir build/pdf
+texsmith render intro.md --template article --output-dir build/pdf --build
 ```
 
 ## Use the Python API

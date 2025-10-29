@@ -5,15 +5,15 @@ import pytest
 
 
 try:
-    from texsmith.ui.cli import convert  # type: ignore[attr-defined]
+    from texsmith.ui.cli import render  # type: ignore[attr-defined]
 except ModuleNotFoundError as exc:  # pragma: no cover - optional dependency guard
     if exc.name == "typer":
-        convert = None  # type: ignore[assignment]
+        render = None  # type: ignore[assignment]
     else:  # pragma: no cover - unexpected failure
         raise
 
 
-pytestmark = pytest.mark.skipif(convert is None, reason="Typer dependency is not available.")
+pytestmark = pytest.mark.skipif(render is None, reason="Typer dependency is not available.")
 
 
 @pytest.fixture(autouse=True)
@@ -22,15 +22,15 @@ def _change_to_project_root(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.chdir(project_root)
 
 
-def test_convert_template_writes_file() -> None:
+def test_render_template_writes_file() -> None:
     with TemporaryDirectory() as temp_dir:
         temp_path = Path(temp_dir)
         source = temp_path / "sample.html"
         source.write_text("<h1>Titre</h1>", encoding="utf-8")
         output_dir = temp_path / "build"
 
-        assert convert is not None  # for type checkers
-        convert(
+        assert render is not None  # for type checkers
+        render(
             input_path=source,
             output=output_dir,
             template="./book",
@@ -55,7 +55,7 @@ def test_convert_template_writes_file() -> None:
         assert "\\def\\covercolor{indigo(dye)}" in circles_content
 
 
-def test_convert_template_applies_markdown_metadata() -> None:
+def test_render_template_applies_markdown_metadata() -> None:
     with TemporaryDirectory() as temp_dir:
         temp_path = Path(temp_dir)
         source = temp_path / "sample.md"
@@ -80,8 +80,8 @@ Content here.
         )
         output_dir = temp_path / "build"
 
-        assert convert is not None  # for type checkers
-        convert(
+        assert render is not None  # for type checkers
+        render(
             input_path=source,
             output=output_dir,
             template="./article",
@@ -110,8 +110,8 @@ def test_nature_template_applies_table_override() -> None:
         )
         output_dir = temp_path / "build"
 
-        assert convert is not None  # for type checkers
-        convert(
+        assert render is not None  # for type checkers
+        render(
             input_path=source,
             output=output_dir,
             template="./nature",

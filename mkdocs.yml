@@ -56,8 +56,7 @@ nav:
   - User Guide:
       - CLI Reference:
           - Command-line Overview: cli/index.md
-          - Convert Command: cli/convert.md
-          - Build Command: cli/build.md
+          - Render Command: cli/render.md
           - Bibliography Command: cli/bibliography.md
       - Markdown Reference:
           - Markdown Overview: markdown/index.md
