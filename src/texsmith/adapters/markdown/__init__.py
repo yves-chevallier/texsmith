@@ -53,6 +53,7 @@ DEFAULT_MARKDOWN_EXTENSIONS = [
     "pymdownx.tabbed",
     "pymdownx.tasklist",
     "pymdownx.tilde",
+    "smarty",
     "tables",
     "toc",
 ]

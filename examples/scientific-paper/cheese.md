@@ -19,7 +19,7 @@ The mechanical behavior of hard cheese varieties is a key determinant of their p
 
 ## Introduction
 
-Cheese, though traditionally perceived as a food product, can also be regarded as a **soft viscoelastic solid**, whose rheological response depends on both time and temperature. The interplay between its **elastic stiffness**—resistance to deformation—and **malleability**—the capacity to deform without fracture—defines its sensory and functional attributes [^Prentice1993].
+Cheese, though traditionally perceived as a food product, can also be regarded as a **soft viscoelastic solid**, whose rheological response depends on both time and temperature. The interplay between its **elastic stiffness** --- resistance to deformation --- and **malleability** --- the capacity to deform without fracture --- defines its sensory and functional attributes [^Prentice1993].
 
 The mechanical performance of hard cheeses arises from their intricate **protein–fat–moisture matrix**. Protein cross-linking, crystalline calcium phosphate domains, and residual fat globules act as reinforcing or plasticizing agents depending on aging and composition [^Jaoac2019]. Understanding these parameters is crucial not only for consumer perception (texture, crumble, brittleness) but also for industrial operations such as slicing, shredding, and packaging.
 
@@ -112,9 +112,13 @@ This computational approach allows the parametric exploration of cheese stiffnes
 
 The results corroborate the expected hierarchy of stiffness among hard cheeses, with **Parmigiano-Reggiano** exhibiting the highest elastic modulus, consistent with its lower moisture and greater protein cross-linking. The **Comté** sample demonstrated intermediate stiffness, while **Cheddar**, being relatively younger and moister, showed greater malleability.
 
-The positive strain-rate dependence (via β > 0) implies that cheese behaves more elastically under rapid deformation, an important consideration for high-speed industrial slicing. Conversely, the temperature dependence (α > 0) highlights the need for strict temperature control during mechanical handling to maintain structural integrity.
+The positive strain-rate dependence (via $\beta > 0$) implies that cheese behaves more elastically under rapid deformation, an important consideration for high-speed industrial slicing. Conversely, the temperature dependence ($\alpha > 0$) highlights the need for strict temperature control during mechanical handling to maintain structural integrity.
 
 The modeling results align qualitatively with the empirical data, suggesting that the simplified rheological model captures the dominant trends despite the inherent complexity of cheese microstructure.
+
+## Disclaimer
+
+This paper is fictional and intended solely for illustrative purposes in demonstrating document formatting and structure. The data, authors, and affiliations are entirely fabricated and do not correspond to real individuals or institutions. Any resemblance to actual persons, organizations, or scientific studies is purely coincidental.
 
 ## Conclusions
 
