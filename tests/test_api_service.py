@@ -143,7 +143,7 @@ def test_binder_context_injects_template_title(tmp_path: Path) -> None:
         legacy_latex_accents=False,
     )
 
-    assert binder.template_overrides["meta"]["title"] == "Sample Title"
+    assert binder.template_overrides["press"]["title"] == "Sample Title"
 
 
 def test_prepare_documents_applies_slot_assignments(tmp_path: Path) -> None:
@@ -174,7 +174,7 @@ def test_document_slots_merge_front_matter_and_cli(tmp_path: Path) -> None:
     source = tmp_path / "doc.md"
     source.write_text(
         """---
-meta:
+press:
   slots:
     abstract: "*"
 slots:
@@ -236,7 +236,7 @@ def test_conversion_service_uses_emitter(tmp_path: Path) -> None:
     source = tmp_path / "doc.md"
     source.write_text(
         """---
-meta:
+press:
   title: Sample
 slots:
   missing: Section

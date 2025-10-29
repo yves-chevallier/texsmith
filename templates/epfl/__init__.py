@@ -73,15 +73,15 @@ class Template(WrappableTemplate):
         )
 
     def _apply_metadata(self, context: dict[str, Any]) -> None:
-        raw_meta = context.get("meta")
-        if not isinstance(raw_meta, Mapping):
+        raw_press = context.get("press")
+        if not isinstance(raw_press, Mapping):
             return
 
-        payload = raw_meta.get("meta")
+        payload = raw_press.get("press")
         if isinstance(payload, Mapping):
             meta = payload
         else:
-            meta = raw_meta
+            meta = raw_press
 
         context.setdefault("title", self._coerce_string(meta.get("title")))
         subtitle = self._coerce_string(meta.get("subtitle"))
@@ -120,8 +120,8 @@ class Template(WrappableTemplate):
                 context["jury"] = list(self._iter_jury(jury_payload))
 
             class_options = self._coerce_string(thesis_info.get("class_options"))
-            if class_options:
-                context["class_options"] = class_options
+        if class_options:
+            context["class_options"] = class_options
 
     def _normalise_title(self, context: dict[str, Any]) -> None:
         title_value = self._coerce_string(context.get("title"))

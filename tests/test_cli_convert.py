@@ -61,7 +61,7 @@ def test_render_template_applies_markdown_metadata() -> None:
         source = temp_path / "sample.md"
         source.write_text(
             """---
-meta:
+press:
   title: Sample Article
   subtitle: Insights on Cheese
   authors:

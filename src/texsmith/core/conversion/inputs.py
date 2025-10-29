@@ -121,9 +121,9 @@ def extract_front_matter_slots(front_matter: Mapping[str, Any]) -> dict[str, str
     """Collect slot overrides defined in document front matter."""
     overrides: dict[str, str] = {}
 
-    meta_section = front_matter.get("meta")
-    if isinstance(meta_section, Mapping):
-        meta_slots = meta_section.get("slots") or meta_section.get("entrypoints")
+    press_section = front_matter.get("press")
+    if isinstance(press_section, Mapping):
+        meta_slots = press_section.get("slots") or press_section.get("entrypoints")
         overrides.update(parse_slot_mapping(meta_slots))
 
     root_slots = front_matter.get("slots") or front_matter.get("entrypoints")
@@ -139,9 +139,9 @@ def extract_front_matter_bibliography(front_matter: Mapping[str, Any] | None) ->
 
     bibliography: dict[str, str] = {}
     containers: list[Any] = []
-    meta_section = front_matter.get("meta")
-    if isinstance(meta_section, Mapping):
-        containers.append(meta_section.get("bibliography"))
+    press_section = front_matter.get("press")
+    if isinstance(press_section, Mapping):
+        containers.append(press_section.get("bibliography"))
     containers.append(front_matter.get("bibliography"))
 
     for candidate in containers:
