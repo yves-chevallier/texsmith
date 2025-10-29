@@ -396,7 +396,7 @@ books: # On peut définir plusieurs documents de sortie pour une même documenta
        slots:
          abstract: abstract.md
          frontmatter: [frontmatter.md, Section Name]
-       meta:
+       press:
          title: Titre du livre
          subtitle: Sous-titre
          author: Auteur

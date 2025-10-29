@@ -101,9 +101,9 @@ class Template(WrappableTemplate):
         return context
 
     def _apply_metadata(self, context: dict[str, Any]) -> None:
-        raw_meta = context.get("meta")
-        if isinstance(raw_meta, Mapping):
-            meta_payload: Mapping[str, Any] = raw_meta.get("meta", raw_meta)
+        raw_press = context.get("press")
+        if isinstance(raw_press, Mapping):
+            meta_payload: Mapping[str, Any] = raw_press.get("press", raw_press)
         else:
             meta_payload = {}
 
@@ -190,7 +190,7 @@ class Template(WrappableTemplate):
             context["correspondence_entries"] = correspondence_entries
             context["footnote_entries"] = footnote_entries
 
-        context.pop("meta", None)
+        context.pop("press", None)
 
     def _normalise_column_mode(self, value: Any) -> str:
         if value is None:

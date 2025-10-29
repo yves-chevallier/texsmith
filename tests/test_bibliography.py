@@ -180,7 +180,7 @@ def test_doi_bibliography_fetcher_uses_fallbacks() -> None:
 
 def test_extract_front_matter_bibliography_merges_sections() -> None:
     front_matter = {
-        "meta": {
+        "press": {
             "bibliography": {
                 "alpha": "https://doi.org/10.1/foo",
                 "ignore": 123,

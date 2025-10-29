@@ -96,12 +96,12 @@ def extract_base_level_override(overrides: Mapping[str, Any] | None) -> Any:
         return None
 
     direct_candidate = overrides.get("base_level")
-    meta_section = overrides.get("meta")
-    meta_candidate = None
-    if isinstance(meta_section, Mapping):
-        meta_candidate = meta_section.get("base_level")
+    press_section = overrides.get("press")
+    press_candidate = None
+    if isinstance(press_section, Mapping):
+        press_candidate = press_section.get("base_level")
 
-    return meta_candidate if meta_candidate is not None else direct_candidate
+    return press_candidate if press_candidate is not None else direct_candidate
 
 
 def build_template_overrides(front_matter: Mapping[str, Any] | None) -> dict[str, Any]:
@@ -109,11 +109,11 @@ def build_template_overrides(front_matter: Mapping[str, Any] | None) -> dict[str
     if not front_matter or not isinstance(front_matter, Mapping):
         return {}
 
-    meta_section = front_matter.get("meta")
-    if isinstance(meta_section, Mapping):
-        return {"meta": dict(meta_section)}
+    press_section = front_matter.get("press")
+    if isinstance(press_section, Mapping):
+        return {"press": dict(press_section)}
 
-    return {"meta": dict(front_matter)}
+    return {"press": dict(front_matter)}
 
 
 def extract_language_from_front_matter(
@@ -123,9 +123,9 @@ def extract_language_from_front_matter(
     if not isinstance(front_matter, Mapping):
         return None
 
-    meta_entry = front_matter.get("meta")
+    press_entry = front_matter.get("press")
     containers: tuple[Mapping[str, Any] | None, ...] = (
-        meta_entry if isinstance(meta_entry, Mapping) else None,
+        press_entry if isinstance(press_entry, Mapping) else None,
         front_matter,
     )
 

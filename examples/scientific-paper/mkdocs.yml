@@ -1,0 +1,43 @@
+site_name: Cheese Article
+site_url: https://yves-chevallier.github.io/texsmith
+site_author: Yves Chevallier
+repo_name: yves-chevallier/texsmith
+
+theme:
+  language: en
+  name: material
+  features:
+    - search
+# nav:
+#   - Home: index.md
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.arithmatex:
+      generic: true
+  - pymdownx.critic
+  - pymdownx.inlinehilite
+  - pymdownx.caret
+  - pymdownx.keys
+  - pymdownx.mark
+  - pymdownx.tilde
+  - pymdownx.blocks.caption
+  - pymdownx.blocks.html
+  - toc:
+      permalink: true
+  - def_list
+  - footnotes
+  - attr_list
+  - md_in_html
+extra_javascript:
+  - https://unpkg.com/mathjax@3/es5/tex-mml-chtml.js
+  - https://cdn.jsdelivr.net/npm/vega@5
+  - https://cdn.jsdelivr.net/npm/vega-lite@5
+  - https://cdn.jsdelivr.net/npm/vega-embed@6
+extra_css:
+  - styles/brand.css
+plugins:
+  - search

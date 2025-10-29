@@ -72,12 +72,12 @@ class Template(WrappableTemplate):
         return context
 
     def _apply_metadata(self, context: dict[str, Any]) -> None:
-        raw_meta = context.get("meta")
-        if not isinstance(raw_meta, Mapping):
+        raw_press = context.get("press")
+        if not isinstance(raw_press, Mapping):
             return
 
-        nested_meta = raw_meta.get("meta") if isinstance(raw_meta.get("meta"), Mapping) else None
-        meta_payload: Mapping[str, Any] = nested_meta or raw_meta
+        nested_press = raw_press.get("press") if isinstance(raw_press.get("press"), Mapping) else None
+        meta_payload: Mapping[str, Any] = nested_press or raw_press
 
         title = self._coerce_string(meta_payload.get("title"))
         if title:
@@ -99,7 +99,7 @@ class Template(WrappableTemplate):
         if date_value:
             context["date"] = escape_latex_chars(date_value)
 
-        context.pop("meta", None)
+        context.pop("press", None)
         context.pop("authors", None)
 
     def _coerce_string(self, value: Any) -> str | None:

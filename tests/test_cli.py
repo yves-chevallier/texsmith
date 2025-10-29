@@ -456,7 +456,7 @@ def test_front_matter_slots_mapping(tmp_path: Path) -> None:
     markdown_file = tmp_path / "paper.md"
     markdown_file.write_text(
         """---
-meta:
+press:
   slots:
     abstract: Abstract
 ---
@@ -500,7 +500,7 @@ def test_front_matter_slots_top_level_mapping(tmp_path: Path) -> None:
         """---
 slots:
   abstract: Abstract
-meta:
+press:
   title: Demo
 ---
 ## Abstract
@@ -540,7 +540,7 @@ def test_cli_slot_overrides_front_matter(tmp_path: Path) -> None:
     markdown_file = tmp_path / "paper.md"
     markdown_file.write_text(
         """---
-meta:
+press:
   slots:
     abstract: Abstract
 ---

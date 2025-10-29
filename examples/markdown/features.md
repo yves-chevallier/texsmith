@@ -1,5 +1,4 @@
----
-meta:
+press:
   title: "Markdown Features"
   description: "Comprehensive overview of Markdown syntaxes and extensions."
   keywords: ["Markdown", "syntax", "extensions", "features", "cheatsheet"]
