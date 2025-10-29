@@ -416,12 +416,16 @@ class LatexLogRenderer:
     def __init__(self, console: Console) -> None:
         self.console = console
         self.messages: list[LatexMessage] = []
+        self._current_messages: list[LatexMessage] = []
         self._pending: LatexMessage | None = None
         self._branch_stack: list[bool] = []
 
     def consume(self, message: LatexMessage) -> None:
         """Display a single message, queueing it for tree-aware formatting."""
+        if self._is_run_boundary(message):
+            self._current_messages.clear()
         self.messages.append(message)
+        self._current_messages.append(message)
         next_indent = message.indent
         self._emit_pending(next_indent)
         self._pending = message
@@ -429,9 +433,15 @@ class LatexLogRenderer:
     def summarize(self) -> None:
         """Print a summary of processed messages grouped by severity."""
         self._emit_pending(None)
-        warnings = sum(1 for msg in self.messages if msg.severity is LatexMessageSeverity.WARNING)
-        errors = sum(1 for msg in self.messages if msg.severity is LatexMessageSeverity.ERROR)
-        info = sum(1 for msg in self.messages if msg.severity is LatexMessageSeverity.INFO)
+        warnings = sum(
+            1 for msg in self._current_messages if msg.severity is LatexMessageSeverity.WARNING
+        )
+        errors = sum(
+            1 for msg in self._current_messages if msg.severity is LatexMessageSeverity.ERROR
+        )
+        info = sum(
+            1 for msg in self._current_messages if msg.severity is LatexMessageSeverity.INFO
+        )
         summary_parts = [
             f"errors: {errors}",
             f"warnings: {warnings}",
@@ -514,8 +524,15 @@ class LatexLogRenderer:
             self._highlight_strings(detail_text)
             detail_line = Text()
             detail_line.append_text(detail_prefix)
-            detail_line.append_text(detail_text)
-            self.console.print(detail_line)
+        detail_line.append_text(detail_text)
+        self.console.print(detail_line)
+
+    @staticmethod
+    def _is_run_boundary(message: LatexMessage) -> bool:
+        if message.severity is not LatexMessageSeverity.INFO:
+            return False
+        summary = message.summary.strip()
+        return summary.startswith("Run number ") and " of rule " in summary
 
     @staticmethod
     def _highlight_strings(text: Text) -> None:
