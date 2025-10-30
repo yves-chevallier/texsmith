@@ -44,7 +44,7 @@ from __future__ import annotations
 from .collection import BibliographyCollection
 from .doi import DoiBibliographyFetcher, DoiLookupError
 from .issues import BibliographyIssue
-from .parsing import bibliography_data_from_string
+from .parsing import bibliography_data_from_inline_entry, bibliography_data_from_string
 
 
 __all__ = [
@@ -52,5 +52,6 @@ __all__ = [
     "BibliographyIssue",
     "DoiBibliographyFetcher",
     "DoiLookupError",
+    "bibliography_data_from_inline_entry",
     "bibliography_data_from_string",
 ]

@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 from collections.abc import Iterable, Mapping, Sequence
+import html
+import re
 from pathlib import Path
 from typing import Any, cast
 
@@ -105,6 +107,7 @@ class BibliographyCollection:
 
     def _merge_entries(self, data: BibliographyData, source: Path) -> None:
         for key, entry in data.entries.items():
+            self._sanitize_entry(entry)
             existing = self._entries.get(key)
 
             if existing is None:
@@ -128,6 +131,14 @@ class BibliographyCollection:
 
             # Matching duplicates still originate from multiple sources.
             self._sources[key].add(source)
+
+    def _sanitize_entry(self, entry: Entry) -> None:
+        for field_name, value in list(entry.fields.items()):
+            if not isinstance(value, str):
+                continue
+            sanitized = _sanitize_field_text(value)
+            if sanitized != value:
+                entry.fields[field_name] = sanitized
 
     def find(self, reference_key: str) -> dict[str, Any] | None:
         """Return the portable representation of a specific reference."""
@@ -234,6 +245,16 @@ class BibliographyCollection:
 
         payload["text"] = str(person)
         return payload
+
+
+_HTML_TAG_RE = re.compile(r"<[^>]+?>")
+
+
+def _sanitize_field_text(value: str) -> str:
+    """Strip lightweight HTML markup and unescape entities from bibliography fields."""
+    if "<" in value and ">" in value:
+        value = _HTML_TAG_RE.sub("", value)
+    return html.unescape(value)
 
 
 def _iter_mapping_items(value: object) -> Iterable[tuple[object, object]]:

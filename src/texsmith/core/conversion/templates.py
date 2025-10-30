@@ -17,6 +17,7 @@ from ..bibliography import (
     BibliographyCollection,
     DoiBibliographyFetcher,
     DoiLookupError,
+    bibliography_data_from_inline_entry,
     bibliography_data_from_string,
 )
 from ..config import BookConfig
@@ -34,6 +35,8 @@ from ..templates import (
 from .debug import debug_enabled, ensure_emitter, raise_conversion_error, record_event
 from .inputs import (
     DOCUMENT_SELECTOR_SENTINEL,
+    InlineBibliographyEntry,
+    InlineBibliographyValidationError,
     extract_front_matter_bibliography,
     extract_front_matter_slots,
 )
@@ -76,7 +79,10 @@ def build_binder_context(
         legacy_latex_accents=legacy_latex_accents,
     )
 
-    inline_bibliography = extract_front_matter_bibliography(document_context.front_matter)
+    try:
+        inline_bibliography = extract_front_matter_bibliography(document_context.front_matter)
+    except InlineBibliographyValidationError as exc:
+        raise_conversion_error(emitter, str(exc), exc)
 
     bibliography_collection: BibliographyCollection | None = None
     bibliography_map: dict[str, dict[str, Any]] = {}
@@ -287,7 +293,7 @@ def heading_level_for(node: Tag) -> int:
 
 def _load_inline_bibliography(
     collection: BibliographyCollection,
-    entries: Mapping[str, str],
+    entries: Mapping[str, InlineBibliographyEntry],
     *,
     source_label: str,
     emitter: DiagnosticEmitter,
@@ -296,30 +302,59 @@ def _load_inline_bibliography(
     if not entries:
         return
 
-    resolver = fetcher or _resolve_bibliography_fetcher()
+    resolver = fetcher
     source_path = _inline_bibliography_source_path(source_label)
 
-    for key, doi_value in entries.items():
-        try:
-            payload = resolver.fetch(doi_value)
-        except DoiLookupError as exc:
-            emitter.warning(f"Failed to resolve DOI '{doi_value}' for '{key}': {exc}")
+    for key, entry in entries.items():
+        if entry.doi:
+            if resolver is None:
+                resolver = _resolve_bibliography_fetcher()
+            doi_value = entry.doi
+            try:
+                payload = resolver.fetch(doi_value)
+            except DoiLookupError as exc:
+                emitter.warning(f"Failed to resolve DOI '{doi_value}' for '{key}': {exc}")
+                continue
+            try:
+                data = bibliography_data_from_string(payload, key)
+            except PybtexError as exc:
+                emitter.warning(f"Failed to parse bibliography entry '{key}': {exc}")
+                continue
+            collection.load_data(data, source=source_path)
+            record_event(
+                emitter,
+                "doi_fetch",
+                {
+                    "key": key,
+                    "value": doi_value,
+                    "mode": "doi",
+                    "source": source_label,
+                    "resolved_source": str(source_path),
+                },
+            )
             continue
-        try:
-            data = bibliography_data_from_string(payload, key)
-        except PybtexError as exc:
-            emitter.warning(f"Failed to parse bibliography entry '{key}': {exc}")
+
+        if entry.is_manual:
+            try:
+                data = bibliography_data_from_inline_entry(key, entry)
+            except (ValueError, PybtexError) as exc:
+                emitter.warning(f"Failed to materialise bibliography entry '{key}': {exc}")
+                continue
+            collection.load_data(data, source=source_path)
+            record_event(
+                emitter,
+                "inline_bibliography",
+                {
+                    "key": key,
+                    "mode": "manual",
+                    "source": source_label,
+                    "resolved_source": str(source_path),
+                },
+            )
             continue
-        collection.load_data(data, source=source_path)
-        record_event(
-            emitter,
-            "doi_fetch",
-            {
-                "key": key,
-                "value": doi_value,
-                "source": source_label,
-                "resolved_source": str(source_path),
-            },
+
+        emitter.warning(
+            f"Bibliography entry '{key}' does not provide a DOI or manual fields; skipping."
         )
 
 

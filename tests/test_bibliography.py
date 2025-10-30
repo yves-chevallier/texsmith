@@ -3,6 +3,7 @@ import textwrap
 
 import pytest
 import requests
+from datetime import date
 
 from texsmith.core.bibliography import (
     BibliographyCollection,
@@ -11,6 +12,12 @@ from texsmith.core.bibliography import (
     bibliography_data_from_string,
 )
 from texsmith.core.conversion import extract_front_matter_bibliography
+from texsmith.core.conversion.inputs import (
+    InlineBibliographyEntry,
+    InlineBibliographyValidationError,
+)
+from texsmith.core.conversion.templates import _load_inline_bibliography
+from texsmith.core.diagnostics import NullEmitter
 
 
 def _write(
@@ -183,19 +190,107 @@ def test_extract_front_matter_bibliography_merges_sections() -> None:
         "press": {
             "bibliography": {
                 "alpha": "https://doi.org/10.1/foo",
-                "ignore": 123,
             },
         },
         "bibliography": {
             "beta": {"doi": "10.2/bar"},
             "alpha": "doi:10.3/baz",
-            "empty": "",
         },
     }
 
     result = extract_front_matter_bibliography(front_matter)
 
-    assert result == {
-        "alpha": "doi:10.3/baz",
-        "beta": "10.2/bar",
+    assert set(result) == {"alpha", "beta"}
+    assert isinstance(result["alpha"], InlineBibliographyEntry)
+    assert result["alpha"].doi == "doi:10.3/baz"
+    assert result["beta"].doi == "10.2/bar"
+
+
+def test_extract_front_matter_bibliography_manual_entry() -> None:
+    front_matter = {
+        "bibliography": {
+            "CHE2025": {
+                "type": "misc",
+                "title": "Quiz-AI Automated Grading Pipeline",
+                "author": "Yves Chevallier",
+                "date": date(2025, 10, 20),
+                "url": "https://github.com/yves-chevallier/quiz-ai",
+            }
+        }
     }
+
+    result = extract_front_matter_bibliography(front_matter)
+
+    assert set(result) == {"CHE2025"}
+    entry = result["CHE2025"]
+    assert entry.entry_type == "misc"
+    assert entry.fields["title"] == "Quiz-AI Automated Grading Pipeline"
+    assert entry.fields["url"] == "https://github.com/yves-chevallier/quiz-ai"
+    assert entry.fields["year"] == "2025"
+    assert entry.fields["month"] == "10"
+    assert entry.fields["day"] == "20"
+    assert entry.persons["author"] == ["Yves Chevallier"]
+
+
+def test_extract_front_matter_bibliography_rejects_unknown_fields() -> None:
+    front_matter = {
+        "bibliography": {
+            "INVALID": {
+                "type": "misc",
+                "title": "Missing Fields",
+                "foo": "bar",
+            }
+        }
+    }
+
+    with pytest.raises(InlineBibliographyValidationError, match="unsupported field"):
+        extract_front_matter_bibliography(front_matter)
+
+
+def test_inline_manual_bibliography_merged_into_collection() -> None:
+    front_matter = {
+        "bibliography": {
+            "AI2027": {
+                "type": "misc",
+                "title": "AI 2027 Forecast",
+                "authors": ["Daniel Kokotajlo", "Scott Alexander"],
+                "date": date(2025, 4, 3),
+                "url": "https://example.com/ai-2027.pdf",
+            }
+        }
+    }
+    entries = extract_front_matter_bibliography(front_matter)
+
+    collection = BibliographyCollection()
+    _load_inline_bibliography(
+        collection,
+        entries,
+        source_label="ai2027",
+        emitter=NullEmitter(),
+    )
+
+    stored = collection.find("AI2027")
+    assert stored is not None
+    assert stored["fields"]["title"] == "AI 2027 Forecast"
+    assert stored["fields"]["year"] == "2025"
+    assert stored["fields"]["month"] == "04"
+    assert stored["persons"]["author"][0]["last"] == ["Kokotajlo"]
+    assert stored["persons"]["author"][1]["last"] == ["Alexander"]
+
+
+def test_bibliography_collection_sanitizes_html_markup() -> None:
+    collection = BibliographyCollection()
+    payload = """
+    @article{kofinas2025,
+        title = {The impact of generative <scp>AI</scp> on academic integrity},
+        year = {2025},
+    }
+    """
+    data = bibliography_data_from_string(payload, "kofinas2025")
+    collection.load_data(data, source="frontmatter-inline.bib")
+
+    entry = collection.find("kofinas2025")
+    assert entry is not None
+    title = entry["fields"]["title"]
+    assert "<" not in title and ">" not in title
+    assert "AI" in title

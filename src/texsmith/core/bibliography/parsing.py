@@ -4,9 +4,11 @@ from __future__ import annotations
 
 import io
 
-from pybtex.database import BibliographyData
+from pybtex.database import BibliographyData, Entry, Person
 from pybtex.database.input import bibtex
 from pybtex.exceptions import PybtexError
+
+from texsmith.core.conversion.inputs import InlineBibliographyEntry
 
 
 def bibliography_data_from_string(payload: str, key: str) -> BibliographyData:
@@ -25,3 +27,21 @@ def bibliography_data_from_string(payload: str, key: str) -> BibliographyData:
 
     _, entry = entries[0]
     return BibliographyData(entries={key: entry})
+
+
+def bibliography_data_from_inline_entry(
+    key: str,
+    entry: InlineBibliographyEntry,
+) -> BibliographyData:
+    """Create a BibliographyData instance from a manual inline entry."""
+    if not entry.is_manual or not entry.entry_type:
+        raise ValueError("Inline entry must define a manual type before conversion.")
+
+    persons_payload = {
+        role: [Person(name) for name in names]
+        for role, names in entry.persons.items()
+        if names
+    }
+
+    bib_entry = Entry(entry.entry_type, fields=dict(entry.fields), persons=persons_payload)
+    return BibliographyData(entries={key: bib_entry})
