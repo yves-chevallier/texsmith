@@ -85,12 +85,12 @@ reference the canonical module to avoid extra indirection.
 - [x] Créer CI/CD
 - [x] texsmith template info book
 - [x] Raw latex blocks
-- [ ] Manage the figure (c.f.) how to manage that...
-- [ ] Optimize bibliography management using bib instead of jinja
+- [x] Manage the figure (c.f.) how to manage that...
+- [x] Optimize bibliography management using bib instead of jinja
+- [ ] Documenter le processus de création de templates LaTeX personnalisées
 - [ ] Table width (auto width, fixed width..., tabularx, tabulary or not)
 - [ ] Table orientation (large table landscape...)
 - [ ] Scaffolding de templates avec cookiecutter
-- [ ] Documenter le processus de création de templates LaTeX personnalisées
 - [ ] Listings, verbatim ou minted
 - [ ] Support for glossaries (glossaries package)
 - [ ] Support for cross-references (cleveref package)

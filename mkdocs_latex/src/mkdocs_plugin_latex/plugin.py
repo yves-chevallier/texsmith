@@ -21,6 +21,7 @@ from texsmith.core.bibliography import (
     BibliographyCollection,
     DoiBibliographyFetcher,
     DoiLookupError,
+    bibliography_data_from_inline_entry,
     bibliography_data_from_string,
 )
 from texsmith.core.config import BookConfig, LaTeXConfig
@@ -29,6 +30,10 @@ from texsmith.core.conversion import (
     ensure_fallback_converters,
     extract_front_matter_bibliography,
     render_with_fallback,
+)
+from texsmith.core.conversion.inputs import (
+    InlineBibliographyEntry,
+    InlineBibliographyValidationError,
 )
 from texsmith.adapters.latex import LaTeXFormatter, LaTeXRenderer
 from texsmith.adapters.plugins import material
@@ -393,12 +398,22 @@ class LatexPlugin(BasePlugin):
                 material.register(renderer)
             return renderer
 
-        inline_bibliography_specs: list[tuple[str, str, dict[str, str]]] = []
+        inline_bibliography_specs: list[
+            tuple[str, str, dict[str, InlineBibliographyEntry]]
+        ] = []
         for entry in runtime.entries:
             if not entry.is_page or not entry.src_path:
                 continue
             page_meta = self._page_meta.get(entry.src_path) or {}
-            inline_map = extract_front_matter_bibliography(page_meta)
+            try:
+                inline_map = extract_front_matter_bibliography(page_meta)
+            except InlineBibliographyValidationError as exc:
+                log.warning(
+                    "Inline bibliography on page '%s' is invalid: %s",
+                    entry.title or entry.src_path,
+                    exc,
+                )
+                inline_map = {}
             if inline_map:
                 inline_bibliography_specs.append(
                     (entry.src_path, entry.title or entry.src_path, inline_map)
@@ -738,7 +753,7 @@ class LatexPlugin(BasePlugin):
     def _load_inline_bibliography(
         self,
         collection: BibliographyCollection,
-        entries: Mapping[str, str],
+        entries: Mapping[str, InlineBibliographyEntry],
         *,
         source_label: str,
         fetcher: DoiBibliographyFetcher,
@@ -747,27 +762,47 @@ class LatexPlugin(BasePlugin):
             return
 
         source_path = self._inline_bibliography_source_path(source_label)
-        for key, doi_value in entries.items():
-            try:
-                payload = fetcher.fetch(doi_value)
-            except DoiLookupError as exc:
-                log.warning(
-                    "Failed to resolve DOI '%s' for entry '%s': %s",
-                    doi_value,
-                    key,
-                    exc,
-                )
+        for key, entry in entries.items():
+            if entry.doi:
+                try:
+                    payload = fetcher.fetch(entry.doi)
+                except DoiLookupError as exc:
+                    log.warning(
+                        "Failed to resolve DOI '%s' for entry '%s': %s",
+                        entry.doi,
+                        key,
+                        exc,
+                    )
+                    continue
+                try:
+                    data = bibliography_data_from_string(payload, key)
+                except PybtexError as exc:
+                    log.warning(
+                        "Failed to parse bibliography entry '%s': %s",
+                        key,
+                        exc,
+                    )
+                    continue
+                collection.load_data(data, source=source_path)
                 continue
-            try:
-                data = bibliography_data_from_string(payload, key)
-            except PybtexError as exc:
-                log.warning(
-                    "Failed to parse bibliography entry '%s': %s",
-                    key,
-                    exc,
-                )
+
+            if entry.is_manual:
+                try:
+                    data = bibliography_data_from_inline_entry(key, entry)
+                except (ValueError, PybtexError) as exc:
+                    log.warning(
+                        "Failed to materialise bibliography entry '%s': %s",
+                        key,
+                        exc,
+                    )
+                    continue
+                collection.load_data(data, source=source_path)
                 continue
-            collection.load_data(data, source=source_path)
+
+            log.warning(
+                "Skipping bibliography entry '%s' because it defines neither a DOI nor manual fields.",
+                key,
+            )
 
     def _inline_bibliography_source_path(self, label: str) -> Path:
         slug = slugify(label, separator="-")

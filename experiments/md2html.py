@@ -3,20 +3,14 @@ import markdown
 
 TEST_MD = r"""
 
-$$
-\begin{equation}\label{eq:em}
-M = \frac{1}{E(T, \dot{\varepsilon})}
-\end{equation}
-$$
+Figure Caption Avec un chocolat violet qui sent la **vanille**  {#foobar}
+: ![A duck](duck.jpg){width=25%}
 
-```math
-\begin{align}
-  a &= b + c \label{eq:abc}\\
-  d &= e + f
-\end{align}
-```
-
-On réfère ici : \eqref{eq:abc}.
+Table Caption Avec une grosse famille de chats  {#bigcats}
+: | Cat Name    | Age | Color      |
+  | ----------- | ---:| ---------- |
+  | Whiskers    |  2  | Tabby      |
+  | Mittens     |  5  | Black      |
 """
 
 extensions = [
