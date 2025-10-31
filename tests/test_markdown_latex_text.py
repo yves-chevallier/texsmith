@@ -5,6 +5,7 @@ from texsmith.adapters.markdown import render_markdown
 from texsmith.core.config import BookConfig
 from texsmith.ui.cli import DEFAULT_MARKDOWN_EXTENSIONS
 
+
 markdown = pytest.importorskip("markdown")
 
 
@@ -31,7 +32,7 @@ def test_latex_text_skips_code_blocks_and_inline_code() -> None:
 def test_latex_text_inside_emphasis_is_replaced() -> None:
     html = _render("Une mise en évidence de *LaTeX* pour la démonstration.")
 
-    assert "<em><span class=\"latex-text\"" in html
+    assert '<em><span class="latex-text"' in html
 
 
 def test_latex_text_converts_to_latex_macro() -> None:

@@ -3,10 +3,10 @@
 from __future__ import annotations
 
 import os
+from pathlib import Path
 import shlex
 import shutil
 import subprocess
-from pathlib import Path
 from typing import Annotated
 
 import click
@@ -178,7 +178,9 @@ def render(
         raise typer.BadParameter("Provide a Markdown (.md) or HTML (.html) source document.")
 
     if build_pdf and len(document_paths) != 1:
-        raise typer.BadParameter("Provide exactly one Markdown or HTML document when using --build.")
+        raise typer.BadParameter(
+            "Provide exactly one Markdown or HTML document when using --build."
+        )
 
     template_selected = bool(template)
     if build_pdf and not template_selected:

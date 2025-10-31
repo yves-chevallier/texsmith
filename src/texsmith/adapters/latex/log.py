@@ -439,9 +439,7 @@ class LatexLogRenderer:
         errors = sum(
             1 for msg in self._current_messages if msg.severity is LatexMessageSeverity.ERROR
         )
-        info = sum(
-            1 for msg in self._current_messages if msg.severity is LatexMessageSeverity.INFO
-        )
+        info = sum(1 for msg in self._current_messages if msg.severity is LatexMessageSeverity.INFO)
         summary_parts = [
             f"errors: {errors}",
             f"warnings: {warnings}",
@@ -598,17 +596,14 @@ def _is_quiet_info_message(message: LatexMessage) -> bool:
     candidate = summary
     if candidate:
         candidate = candidate.replace("<", "").replace(">", "").strip()
-    if _PATH_LINE_PATTERN.match(candidate):
-        return True
-    if "/" in candidate and _PATH_FRAGMENT_PATTERN.match(candidate):
-        return True
-    return False
+    return bool(
+        _PATH_LINE_PATTERN.match(candidate)
+        or ("/" in candidate and _PATH_FRAGMENT_PATTERN.match(candidate))
+    )
 
 
 def _should_emit_message(message: LatexMessage, verbosity: int) -> bool:
-    if verbosity <= 0 and _is_quiet_info_message(message):
-        return False
-    return True
+    return not (verbosity <= 0 and _is_quiet_info_message(message))
 
 
 def stream_latexmk_output(

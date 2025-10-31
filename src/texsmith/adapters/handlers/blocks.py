@@ -213,12 +213,48 @@ def render_footnotes(root: Tag, context: RenderContext) -> None:
         replacement = mark_processed(NavigableString(latex))
         node.replace_with(replacement)
 
+    def _split_citation_keys(identifier: str) -> list[str]:
+        if not identifier or "," not in identifier:
+            return []
+        return [part.strip() for part in identifier.split(",") if part.strip()]
+
+    _citation_payload_pattern = re.compile(
+        r"^\s*([A-Za-z0-9_\-:]+(?:\s*,\s*[A-Za-z0-9_\-:]+)*)\s*$"
+    )
+
+    def _citation_keys_from_payload(text: str | None) -> list[str]:
+        if not text:
+            return []
+        match = _citation_payload_pattern.match(text)
+        if not match:
+            return []
+        keys = [part.strip() for part in match.group(1).split(",")]
+        return [key for key in keys if key]
+
+    def _render_citation(node: Tag, keys: list[str]) -> bool:
+        if not keys:
+            return False
+        missing = [key for key in keys if key not in bibliography]
+        if missing:
+            return False
+        for key in keys:
+            context.state.record_citation(key)
+        latex = context.formatter.citation(key=",".join(keys))
+        _replace_with_latex(node, latex)
+        return True
+
+    citation_footnotes: dict[str, list[str]] = {}
+
     for container in root.find_all("div", class_="footnote"):
         for li in container.find_all("li"):
             footnote_id = _normalise_footnote_id(coerce_attribute(li.get("id")))
             if not footnote_id:
                 raise InvalidNodeError("Footnote item missing identifier")
-            footnotes[footnote_id] = li.get_text(strip=False).strip()
+            text = li.get_text(strip=False).strip()
+            footnotes[footnote_id] = text
+            recovered = _citation_keys_from_payload(text)
+            if recovered:
+                citation_footnotes[footnote_id] = recovered
         container.decompose()
 
     if footnotes:
@@ -226,9 +262,17 @@ def render_footnotes(root: Tag, context: RenderContext) -> None:
 
     for sup in root.find_all("sup", id=True):
         footnote_id = _normalise_footnote_id(coerce_attribute(sup.get("id")))
+        citation_keys = citation_footnotes.get(footnote_id)
+        if citation_keys and _render_citation(sup, citation_keys):
+            continue
         payload = footnotes.get(footnote_id)
         if payload is None:
             payload = context.state.footnotes.get(footnote_id)
+        if payload is None:
+            citation_keys = _split_citation_keys(footnote_id)
+            if citation_keys and _render_citation(sup, citation_keys):
+                continue
+            # Fall back to default handling/warnings for unresolved citations.
         if footnote_id and footnote_id in bibliography:
             if payload:
                 warnings.warn(
@@ -258,6 +302,15 @@ def render_footnotes(root: Tag, context: RenderContext) -> None:
         if not footnote_id:
             placeholder.decompose()
             continue
+
+        citation_keys = citation_footnotes.get(footnote_id)
+        if citation_keys and _render_citation(placeholder, citation_keys):
+            continue
+
+        citation_keys = _split_citation_keys(footnote_id)
+        if citation_keys and _render_citation(placeholder, citation_keys):
+            continue
+        # Fall back to default handling for unresolved citations.
 
         if footnote_id in bibliography:
             context.state.record_citation(footnote_id)

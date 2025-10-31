@@ -38,9 +38,7 @@ def bibliography_data_from_inline_entry(
         raise ValueError("Inline entry must define a manual type before conversion.")
 
     persons_payload = {
-        role: [Person(name) for name in names]
-        for role, names in entry.persons.items()
-        if names
+        role: [Person(name) for name in names] for role, names in entry.persons.items() if names
     }
 
     bib_entry = Entry(entry.entry_type, fields=dict(entry.fields), persons=persons_payload)

@@ -31,7 +31,9 @@ def raise_conversion_error(
 ) -> None:
     """Emit an error diagnostic before raising a conversion failure."""
     ensure_emitter(emitter).error(message, exc)
-    raise ConversionError(message) from exc
+    error = ConversionError(message)
+    error._texsmith_logged = True  # noqa: SLF001
+    raise error from exc
 
 
 def record_event(

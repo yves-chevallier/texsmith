@@ -87,6 +87,7 @@ reference the canonical module to avoid extra indirection.
 - [x] Raw latex blocks
 - [x] Manage the figure (c.f.) how to manage that...
 - [x] Optimize bibliography management using bib instead of jinja
+- [ ] Textsc in Markdown
 - [ ] Documenter le processus de création de templates LaTeX personnalisées
 - [ ] Table width (auto width, fixed width..., tabularx, tabulary or not)
 - [ ] Table orientation (large table landscape...)

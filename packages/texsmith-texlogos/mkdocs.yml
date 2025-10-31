@@ -1,0 +1,13 @@
+site_name: TeXSmith Logos
+site_description: Demonstration site for the texsmith-texlogos extension.
+site_url: https://example.invalid/texsmith-texlogos
+nav:
+  - Home: index.md
+markdown_extensions:
+  - admonition
+  - toc
+  - texsmith_texlogos.markdown:TexLogosExtension
+plugins:
+  - texsmith
+watch:
+  - src/texsmith_texlogos

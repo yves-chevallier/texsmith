@@ -1,10 +1,10 @@
 from __future__ import annotations
 
+import importlib.machinery
 import importlib.util
 from pathlib import Path
 import sys
 import types
-import importlib.machinery
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]

@@ -452,7 +452,14 @@ def render_keystrokes(element: Tag, context: RenderContext) -> None:
     element.replace_with(node)
 
 
-@renders("span", phase=RenderPhase.INLINE, priority=30, name="latex_text", nestable=False)
+@renders(
+    "span",
+    phase=RenderPhase.INLINE,
+    priority=30,
+    name="latex_text",
+    nestable=False,
+    auto_mark=False,
+)
 def render_latex_text_span(element: Tag, context: RenderContext) -> None:
     """Render the custom ``latex-text`` span into canonical LaTeX."""
     classes = gather_classes(element.get("class"))

@@ -43,6 +43,7 @@ from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
 from typing import Any, ClassVar
+
 from bs4 import BeautifulSoup, FeatureNotFound
 
 from ..adapters.markdown import (

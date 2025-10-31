@@ -10,6 +10,7 @@ import typer
 from typer.testing import CliRunner
 
 from texsmith.adapters.latex.log import LatexMessage, LatexMessageSeverity, LatexStreamResult
+from texsmith.core.conversion.debug import ConversionError, raise_conversion_error
 from texsmith.ui.cli import DEFAULT_MARKDOWN_EXTENSIONS, app
 from texsmith.ui.cli.commands import render as render_cmd
 import texsmith.ui.cli.state as cli_state
@@ -21,6 +22,40 @@ render_module = importlib.import_module("texsmith.ui.cli.commands.render")
 def _template_path(name: str) -> Path:
     project_root = Path(__file__).resolve().parents[1]
     return project_root / "templates" / name
+
+
+def test_raise_conversion_error_marks_exception_logged() -> None:
+    class DummyEmitter:
+        def __init__(self) -> None:
+            self.messages: list[tuple[str, Exception]] = []
+
+        def error(self, message: str, exc: Exception) -> None:
+            self.messages.append((message, exc))
+
+    emitter = DummyEmitter()
+    with pytest.raises(ConversionError) as excinfo:
+        raise_conversion_error(emitter, "failed", ValueError("boom"))
+
+    assert getattr(excinfo.value, "_texsmith_logged", False) is True
+    assert emitter.messages and emitter.messages[0][0] == "failed"
+
+
+def test_emit_error_skips_logged_exception(monkeypatch: pytest.MonkeyPatch) -> None:
+    captured: list[tuple[str, str, BaseException | None]] = []
+
+    def fake_render(level: str, message: str, *, exception: BaseException | None = None) -> None:
+        captured.append((level, message, exception))
+
+    monkeypatch.setattr(cli_state, "render_message", fake_render)
+
+    logged_exc = Exception("already logged")
+    logged_exc._texsmith_logged = True
+    cli_state.emit_error("first", exception=logged_exc)
+    assert captured == []
+
+    fresh_exc = Exception("new")
+    cli_state.emit_error("second", exception=fresh_exc)
+    assert captured == [("error", "second", fresh_exc)]
 
 
 def test_convert_command() -> None:

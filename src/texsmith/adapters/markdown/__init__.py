@@ -29,6 +29,7 @@ DEFAULT_MARKDOWN_EXTENSIONS = [
     "attr_list",
     "def_list",
     "footnotes",
+    "texsmith.adapters.markdown_extensions.multi_citations:MultiCitationExtension",
     "texsmith.adapters.markdown_extensions.latex_raw:LatexRawExtension",
     "texsmith.adapters.markdown_extensions.missing_footnotes:MissingFootnotesExtension",
     "texsmith.adapters.markdown_extensions.latex_text:LatexTextExtension",
