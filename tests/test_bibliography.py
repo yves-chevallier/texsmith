@@ -1,9 +1,9 @@
+from datetime import date
 from pathlib import Path
 import textwrap
 
 import pytest
 import requests
-from datetime import date
 
 from texsmith.core.bibliography import (
     BibliographyCollection,
@@ -294,3 +294,31 @@ def test_bibliography_collection_sanitizes_html_markup() -> None:
     title = entry["fields"]["title"]
     assert "<" not in title and ">" not in title
     assert "AI" in title
+
+
+def test_bibliography_writer_preserves_url_underscores(tmp_path: Path) -> None:
+    front_matter = {
+        "bibliography": {
+            "HEIGPR": {
+                "type": "misc",
+                "title": "Principes",
+                "url": "https://intra.heig-vd.ch/academique/documents_ia/IA_principes.pdf",
+            }
+        }
+    }
+
+    entries = extract_front_matter_bibliography(front_matter)
+    collection = BibliographyCollection()
+    _load_inline_bibliography(
+        collection,
+        entries,
+        source_label="inline",
+        emitter=NullEmitter(),
+    )
+
+    bib_path = tmp_path / "inline.bib"
+    collection.write_bibtex(bib_path)
+
+    contents = bib_path.read_text(encoding="utf-8")
+    assert "\\_" not in contents
+    assert "documents_ia" in contents

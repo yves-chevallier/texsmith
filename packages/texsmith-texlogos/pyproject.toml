@@ -1,0 +1,56 @@
+[build-system]
+requires = ["hatchling>=1.26"]
+build-backend = "hatchling.build"
+
+[project]
+name = "texsmith-texlogos"
+version = "0.1.0"
+description = "Additional TeX logo commands for TeXSmith."
+readme = "README.md"
+requires-python = ">=3.12"
+license = { text = "MIT" }
+authors = [
+    { name = "TexSmith Contributors" }
+]
+dependencies = [
+    "texsmith>=0.1.0",
+]
+keywords = ["tex", "latex", "markdown", "mkdocs", "texsmith"]
+classifiers = [
+    "Framework :: MkDocs",
+    "Framework :: Sphinx",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Topic :: Text Processing :: Markup :: LaTeX",
+]
+
+[project.urls]
+Homepage = "https://github.com/yves-chevallier/texsmith"
+"Source" = "https://github.com/yves-chevallier/texsmith/tree/main/packages/texsmith-texlogos"
+
+[project.entry-points."markdown.extensions"]
+texsmith_texlogos = "texsmith_texlogos.markdown:TexLogosExtension"
+
+[project.entry-points."texsmith.renderers"]
+texsmith_texlogos = "texsmith_texlogos.renderer:register"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/texsmith_texlogos"]
+
+[tool.uv]
+package = true
+
+[tool.uv.sources]
+texsmith = { path = "../../" }
+mkdocs_texsmith = { path = "../mkdocs_texsmith" }
+
+[dependency-groups]
+dev = [
+    "pytest>=8.4.2",
+    "mkdocs>=1.6.1",
+    "mkdocs-material>=9.6.22",
+]
+docs = [
+    "mkdocs-texsmith>=0.1.0",
+]

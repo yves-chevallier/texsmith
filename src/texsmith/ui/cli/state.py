@@ -248,6 +248,8 @@ def emit_warning(message: str, *, exception: BaseException | None = None) -> Non
 
 def emit_error(message: str, *, exception: BaseException | None = None) -> None:
     """Log an error-level message to stderr respecting verbosity settings."""
+    if exception is not None and getattr(exception, "_texsmith_logged", False):
+        return
     render_message("error", message, exception=exception)
 
 

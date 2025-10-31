@@ -4,8 +4,8 @@ from __future__ import annotations
 
 from collections.abc import Iterable, Mapping, Sequence
 import html
-import re
 from pathlib import Path
+import re
 from typing import Any, cast
 
 from pybtex.database import BibliographyData, Entry, Person
@@ -136,7 +136,7 @@ class BibliographyCollection:
         for field_name, value in list(entry.fields.items()):
             if not isinstance(value, str):
                 continue
-            sanitized = _sanitize_field_text(value)
+            sanitized = _sanitize_field_text(value, field=field_name)
             if sanitized != value:
                 entry.fields[field_name] = sanitized
 
@@ -176,6 +176,17 @@ class BibliographyCollection:
         path = Path(target)
         data = self.to_bibliography_data(keys=keys)
         data.to_file(str(path))
+        try:
+            text = path.read_text(encoding="utf-8")
+        except OSError:
+            return
+        sanitized_lines = []
+        for line in text.splitlines():
+            stripped = line.lstrip().lower()
+            if stripped.startswith("url =") or stripped.startswith("doi ="):
+                line = line.replace(r"\_", "_")
+            sanitized_lines.append(line)
+        path.write_text("\n".join(sanitized_lines) + "\n", encoding="utf-8")
 
     def _entries_equivalent(self, first: Entry, second: Entry) -> bool:
         return self._entry_signature(first) == self._entry_signature(second)
@@ -250,11 +261,14 @@ class BibliographyCollection:
 _HTML_TAG_RE = re.compile(r"<[^>]+?>")
 
 
-def _sanitize_field_text(value: str) -> str:
+def _sanitize_field_text(value: str, *, field: str | None = None) -> str:
     """Strip lightweight HTML markup and unescape entities from bibliography fields."""
     if "<" in value and ">" in value:
         value = _HTML_TAG_RE.sub("", value)
-    return html.unescape(value)
+    value = html.unescape(value)
+    if field and field.lower() in {"url", "doi"}:
+        value = value.replace(r"\_", "_")
+    return value
 
 
 def _iter_mapping_items(value: object) -> Iterable[tuple[object, object]]:

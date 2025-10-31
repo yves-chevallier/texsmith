@@ -68,3 +68,14 @@ def test_regular_footnote_still_rendered() -> None:
     assert "\\footnote{" in latex
     assert "contains details" in latex
     assert state.citations == []
+
+
+def test_multiple_citations_are_combined() -> None:
+    bibliography = _bibliography_from([FIXTURE_BIB])
+    latex, state = _render_markdown(
+        "Both[^LAWRENCE19841632,BERESFORD2001259] references matter.",
+        bibliography,
+    )
+
+    assert "\\cite{LAWRENCE19841632,BERESFORD2001259}" in latex
+    assert state.citations == ["LAWRENCE19841632", "BERESFORD2001259"]

@@ -4,11 +4,11 @@ from __future__ import annotations
 
 from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass, field
+from datetime import date, datetime
 from enum import Enum
 from pathlib import Path
 import re
 from typing import Any
-from datetime import date, datetime
 
 from bs4 import BeautifulSoup, FeatureNotFound
 
@@ -283,8 +283,7 @@ def _parse_manual_bibliography_mapping(
     invalid_fields = sorted(
         field_name
         for field_name in payload
-        if field_name not in allowed_fields
-        and field_name not in _RESERVED_KEYS
+        if field_name not in allowed_fields and field_name not in _RESERVED_KEYS
     )
     if invalid_fields:
         raise InlineBibliographyValidationError(
@@ -465,9 +464,9 @@ def extract_content(html: str, selector: str) -> str:
 
 __all__ = [
     "DOCUMENT_SELECTOR_SENTINEL",
-    "InputKind",
     "InlineBibliographyEntry",
     "InlineBibliographyValidationError",
+    "InputKind",
     "UnsupportedInputError",
     "build_document_context",
     "coerce_slot_selector",

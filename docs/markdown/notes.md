@@ -1,6 +1,8 @@
 # Notes on TeXSmith Extensions
 
-TeXSmith extensions mostly uses empty links with custom attributes to add metadata to the HTML output, then process it in the LaTeX generation phase.
+TeXSmith is better to be used with some of its own extensions mostly to add LaTeX-specific missing features in Markdown documents. These extensions are also designed to be compatible with MkDocs and Mkdocs-Material for better in-browser rendering.
+
+mostly uses empty links with custom attributes to add metadata to the HTML output, then process it in the LaTeX generation phase.
 
 - Index entries also used to create tags for Lunr search on MkDocs site.
 - Glossary entries to define specific terms used in the documentation.
@@ -61,10 +63,10 @@ Bibliographic references can be added using two different methods:
 1. Use a `.bib` file and cite entries using `^[]` syntax.
 2. Use front matter to define references directly with DOIs or manual entries.
 
-```md
+```yaml
 ---
 bibliography:
-  EIN05: https://doi.org/10.1002/andp.19053221004
+  ein05: https://doi.org/10.1002/andp.19053221004
   KOFINAS2025:
     type: article
     title: "The impact of generative AI on academic integrity of authentic assessments within a higher education context"
@@ -80,7 +82,9 @@ bibliography:
     doi: 10.1111/bjet.13585
     url: https://doi.org/10.1111/bjet.13585
 ---
-We know that time is relative ^[EIN05] and recent work explores assessment ^[KOFINAS2025].
+We know that time is relative ^[ein05] and recent work explores
+assessment ^[KOFINAS2025]. You can also cite multiple
+references ^[ein05,KOFINAS2025].
 ```
 
 Or with the CLI:
@@ -105,6 +109,45 @@ response = service.execute(request)
 tex_path = response.render_result.main_tex_path
 print(f"LaTeX written to: {tex_path}")
 ```
+
+## Math
+
+Inline math can be written using standard Markdown syntax with dollar signs `$...$` or `\(...\)` for inline math and `$$...$$` or `\[...\]` for display math which is usually supported by most Markdown parsers.
+
+However numbered equations are not natively supported in Markdown. TeXSmith provides everything for it.
+
+```md
+{#eq:pythagoras}
+: $$a^2 + b^2 = c^2$$
+
+## Thorem
+
+We use admonitions to define theorems, lemmas, definitions, etc.
+
+```md
+!!! theorem "Pythagorean Theorem" {#thm:pythagoras}
+    This is a theorem about right triangles and can be summarised in the next
+    equation
+    $$ x^2 + y^2 = z^2 $$
+```
+
+It will be rendered as:
+
+```latex
+\begin{theorem}[Pythagorean theorem]
+\label{pythagorean}
+This is a theorem about right triangles and can be summarised in the next
+equation
+\[ x^2 + y^2 = z^2 \]
+\end{theorem}
+```
+
+TeXSmith automatically generates the foollowing admonition types:
+
+- Thorems (📐)
+- Corollary (🧾)
+- Lemma (📜)
+- Proof (🔍)
 
 ## Glossary
 
@@ -164,3 +207,17 @@ Table Caption Avec une grosse famille de chats  {#bigcats}
   | Whiskers    |  2  | Tabby      |
   | Mittens     |  5  | Black      |
 ```
+
+## Formatting
+
+- **Bold text**
+- *Italic text*
+- ***Bold italic text***
+- `Inline code (monospaced text)`
+- ==Highlighted text==
+- ~~Strikethrough text~~
+- ^^Insert Text^^
+- {++Inserted text++}
+- {~~Deleted text~~}
+- {==Highlighted text==}
+- §§Small Capitals§§

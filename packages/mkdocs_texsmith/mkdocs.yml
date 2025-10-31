@@ -87,7 +87,5 @@ plugins:
             separate_signature: true
             merge_init_into_class: true
   - pills
-  - latex:
+  - texsmith:
       template: article
-      books:
-        - root: "MkDocs LaTeX Plugin"

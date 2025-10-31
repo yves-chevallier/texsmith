@@ -3,14 +3,13 @@ import markdown
 
 TEST_MD = r"""
 
-Figure Caption Avec un chocolat violet qui sent la **vanille**  {#foobar}
-: ![A duck](duck.jpg){width=25%}
+{#eq:pythagoras}
+: $$a^2 + b^2
+  = c^2
+  $$
 
-Table Caption Avec une grosse famille de chats  {#bigcats}
-: | Cat Name    | Age | Color      |
-  | ----------- | ---:| ---------- |
-  | Whiskers    |  2  | Tabby      |
-  | Mittens     |  5  | Black      |
+
+$$a^2 + b^2 = c^2$$ {#test}
 """
 
 extensions = [

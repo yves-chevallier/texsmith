@@ -39,11 +39,9 @@ class _LatexTextTreeprocessor(Treeprocessor):
 
         parts = text.split(_TARGET)
         element.text = parts[0]
-        insert_pos = 0
-        for remainder in parts[1:]:
+        for insert_pos, remainder in enumerate(parts[1:]):
             fragment = self._build_fragment()
             element.insert(insert_pos, fragment)
-            insert_pos += 1
             if remainder:
                 fragment.tail = remainder
 
@@ -54,11 +52,10 @@ class _LatexTextTreeprocessor(Treeprocessor):
 
         parts = tail.split(_TARGET)
         child.tail = parts[0]
-        insert_pos = list(parent).index(child) + 1
-        for remainder in parts[1:]:
+        base_index = list(parent).index(child) + 1
+        for offset, remainder in enumerate(parts[1:]):
             fragment = self._build_fragment()
-            parent.insert(insert_pos, fragment)
-            insert_pos += 1
+            parent.insert(base_index + offset, fragment)
             if remainder:
                 fragment.tail = remainder
 
@@ -81,12 +78,7 @@ class _LatexTextTreeprocessor(Treeprocessor):
         lowered_a = ElementTree.SubElement(
             outer,
             "span",
-            {
-                "style": (
-                    "position: relative; top: 0.2em; left: -0.05em; "
-                    "font-size: 0.9em;"
-                )
-            },
+            {"style": ("position: relative; top: 0.2em; left: -0.05em; font-size: 0.9em;")},
         )
         lowered_a.text = "a"
         lowered_a.tail = "T"

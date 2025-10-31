@@ -3,12 +3,12 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "mkdocs-latex"
+name = "mkdocs-texsmith"
 version = "0.1.0"
 description = "Convert MkDocs documentation to LaTeX PDF."
 readme = "README.md"
 license = "MIT"
-requires-python = ">=3.13"
+requires-python = ">=3.12"
 authors = [
     { name = "Yves Chevallier", email = "yves.chevalier@heig-vd.ch" }
 ]
@@ -16,20 +16,21 @@ keywords = [
     "extensions",
     "markdown",
     "latex",
+    "texsmith",
     "mkdocs",
     "convert"
 ]
 dependencies = [
-    "mkdocs_latex>=0.1.0",
+    "mkdocs_texsmith>=0.1.0",
 ]
 [project.urls]
-Homepage = "https://github.com/yves-chevallier/mkdocs-latex"
+Homepage = "https://github.com/yves-chevallier/mkdocs-texsmith"
 
 [project.entry-points."mkdocs.plugins"]
-latex = "mkdocs_plugin_latex:LatexPlugin"
+texsmith = "mkdocs_plugin_texsmith:LatexPlugin"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/mkdocs_plugin_latex"]
+packages = ["src/mkdocs_plugin_texsmith"]
 
 [tool.hatch.build]
 exclude = [
@@ -60,6 +61,9 @@ dev = [
 default-groups = ["dev"]
 package = true
 
+[tool.uv.sources]
+texsmith = { path = "../../" }
+
 [tool.ruff]
 extend-exclude = ["site"]
 
@@ -72,6 +76,6 @@ select = ["E", "F", "I", "B", "UP"]
 [tool.ruff.lint.isort]
 combine-as-imports = true
 force-sort-within-sections = true
-known-first-party = ["mkdocs_plugin_latex"]
+known-first-party = ["mkdocs_plugin_texsmith"]
 section-order = ["future","standard-library","third-party","first-party","local-folder"]
 lines-after-imports = 2

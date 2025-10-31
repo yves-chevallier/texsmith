@@ -7,9 +7,9 @@ import pytest
 
 from texsmith.api.document import TitleStrategy
 from texsmith.api.service import ConversionRequest, ConversionService, SlotAssignment
-from texsmith.core.conversion_contexts import GenerationStrategy
-from texsmith.core.conversion.templates import build_binder_context
 from texsmith.core.conversion.inputs import UnsupportedInputError
+from texsmith.core.conversion.templates import build_binder_context
+from texsmith.core.conversion_contexts import GenerationStrategy
 from texsmith.core.templates.runtime import load_template_runtime
 
 
