@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Iterable, Mapping
+from importlib import metadata
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
@@ -22,6 +23,9 @@ if TYPE_CHECKING:  # pragma: no cover - typing only
 
 
 class LaTeXRenderer:
+    _ENTRY_POINT_GROUP = "texsmith.renderers"
+    _ENTRY_POINT_PAYLOADS: list[Any] | None = None
+
     """Convert HTML fragments to LaTeX using a modular pipeline."""
 
     def __init__(
@@ -51,6 +55,7 @@ class LaTeXRenderer:
 
         self.engine = RenderEngine()
         self._register_builtin_handlers()
+        self._register_entry_point_handlers()
 
     def _register_builtin_handlers(self) -> None:
         """Register the initial set of handlers for the renderer."""
@@ -84,6 +89,45 @@ class LaTeXRenderer:
             return
 
         self.engine.collect_from(handler)
+
+    @classmethod
+    def _iter_entry_point_payloads(cls) -> Iterable[Any]:
+        if cls._ENTRY_POINT_PAYLOADS is None:
+            payloads: list[Any] = []
+            try:
+                entry_points = metadata.entry_points()
+                group = entry_points.select(group=cls._ENTRY_POINT_GROUP)
+            except Exception:  # pragma: no cover - defensive
+                cls._ENTRY_POINT_PAYLOADS = []
+                return ()
+
+            for entry_point in group:
+                try:
+                    payloads.append(entry_point.load())
+                except Exception:  # pragma: no cover - defensive
+                    continue
+            cls._ENTRY_POINT_PAYLOADS = payloads
+        return cls._ENTRY_POINT_PAYLOADS
+
+    def _register_entry_point_handlers(self) -> None:
+        for payload in self._iter_entry_point_payloads():
+            self._apply_entry_point(payload)
+
+    def _apply_entry_point(self, payload: Any) -> None:
+        if callable(payload):
+            try:
+                payload(self)
+                return
+            except TypeError:
+                self.register(payload)
+                return
+
+        register = getattr(payload, "register", None)
+        if callable(register):
+            register(self)
+            return
+
+        self.register(payload)
 
     def render(
         self,

@@ -45,25 +45,11 @@ _SPECS: tuple[LogoSpec, ...] = (
         aliases=("LaTeX2e", "LaTeX2\u03b5", "LaTeXe"),
     ),
     LogoSpec(
-        command=r"\AmSLaTeX{}",
-        display="AmSLaTeX",
-        description="Version LaTeX avec les extensions de l'American Mathematical Society",
-        slug="amslatex",
-        aliases=("AmSLaTeX",),
-    ),
-    LogoSpec(
-        command=r"\BibTeX{}",
-        display="BibTeX",
-        description="Outil de gestion bibliographique",
-        slug="bibtex",
-        aliases=("BibTeX",),
-    ),
-    LogoSpec(
-        command=r"\SLiTeX{}",
-        display="SLiTeX",
-        description="Systeme de diaporamas historique base sur LaTeX",
-        slug="slitex",
-        aliases=("SLiTeX",),
+        command=r"\TeX{}\textsc{Smith}",
+        display="TeXSmith",
+        description="Extension Markdown TeXSmith pour des logos TeX harmonises",
+        slug="texsmith",
+        aliases=("TeXSmith",),
     ),
 )
 

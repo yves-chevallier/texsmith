@@ -9,13 +9,11 @@ Markdown paragraph:
 | `\TeX{}` | `TeX` | TeX |
 | `\LaTeX{}` | `LaTeX` | LaTeX |
 | `\LaTeXe{}` | `LaTeX2e` | LaTeX2ε |
-| `\AmSLaTeX{}` | `AmSLaTeX` | AmSLaTeX |
-| `\BibTeX{}` | `BibTeX` | BibTeX |
-| `\SLiTeX{}` | `SLiTeX` | SLiTeX |
+| `\TeX{}\textsc{Smith}` | `TeXSmith` | TeXSmith |
 
 > Tip: Hover the rendered logos to reveal their description tooltips.
 
 ```markdown
-TeX, LaTeX, LaTeX2e, AmSLaTeX, BibTeX, and SLiTeX are all rendered with their
+TeX, LaTeX, LaTeX2e, and TeXSmith are all rendered with their
 respective logo macros.
 ```
