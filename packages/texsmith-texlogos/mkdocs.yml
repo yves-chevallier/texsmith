@@ -8,6 +8,7 @@ markdown_extensions:
   - toc
   - texsmith_texlogos.markdown:TexLogosExtension
 plugins:
-  - texsmith
+  - texsmith:
+      template: ../../templates/article
 watch:
   - src/texsmith_texlogos

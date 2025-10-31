@@ -1,4 +1,4 @@
 $bibtex_use = 2;
-$pdflatex = 'lualatex --shell-escape %O %S';
+$lualatex   = 'lualatex --shell-escape %O %S';
 $biber = 'biber %O %B';
 $clean_ext .= ' %R.run.xml %R.blg';

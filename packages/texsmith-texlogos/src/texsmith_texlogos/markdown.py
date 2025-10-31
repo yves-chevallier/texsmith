@@ -201,25 +201,24 @@ def _build_latex2e(container: ElementTree.Element, spec: LogoSpec) -> None:
     lowered_e.tail = "X"
 
 
-def _build_amslatex(container: ElementTree.Element, spec: LogoSpec) -> None:
-    _build_latex_logo(container, spec, prefix="AmS")
-
-
-def _build_bibtex(container: ElementTree.Element, spec: LogoSpec) -> None:
-    _build_tex_logo(container, spec, prefix="Bib")
-
-
-def _build_slitex(container: ElementTree.Element, spec: LogoSpec) -> None:
-    _build_tex_logo(container, spec, prefix="SLi")
+def _build_texsmith(container: ElementTree.Element, spec: LogoSpec) -> None:
+    outer = ElementTree.SubElement(
+        container,
+        "span",
+        {
+            "class": "texsmith-word",
+            "style": "font-weight: 600; margin-left: 0.15em;",
+        },
+    )
+    outer.text = "Smith"
+    container.text = "TeX"
 
 
 _HTML_BUILDERS: Mapping[str, Callable[[ElementTree.Element, LogoSpec], None]] = {
     "tex": _build_tex_logo,
     "latex": _build_latex,
     "latex2e": _build_latex2e,
-    "amslatex": _build_amslatex,
-    "bibtex": _build_bibtex,
-    "slitex": _build_slitex,
+    "texsmith": _build_texsmith,
 }
 
 
