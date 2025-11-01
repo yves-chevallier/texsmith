@@ -1,11 +1,11 @@
 from __future__ import annotations
 
-from collections.abc import Iterable
+from collections.abc import Iterable, Mapping
 from dataclasses import dataclass, field
 import os
 from pathlib import Path
 import shutil
-from typing import Any, Mapping
+from typing import Any
 
 from mkdocs.config import config_options
 from mkdocs.config.defaults import MkDocsConfig
@@ -17,6 +17,8 @@ from mkdocs.structure.nav import Navigation
 from mkdocs.utils import log
 from pybtex.exceptions import PybtexError
 from slugify import slugify
+from texsmith.adapters.latex import LaTeXFormatter, LaTeXRenderer
+from texsmith.adapters.plugins import material
 from texsmith.core.bibliography import (
     BibliographyCollection,
     DoiBibliographyFetcher,
@@ -35,8 +37,6 @@ from texsmith.core.conversion.inputs import (
     InlineBibliographyEntry,
     InlineBibliographyValidationError,
 )
-from texsmith.adapters.latex import LaTeXFormatter, LaTeXRenderer
-from texsmith.adapters.plugins import material
 from texsmith.core.templates import (
     TemplateError,
     TemplateSlot,
@@ -287,7 +287,7 @@ class LatexPlugin(BasePlugin):
         nav = self._nav
         self._books.clear()
         for book_config, book_extra in zip(
-            self._latex_config.books, self._book_extras
+            self._latex_config.books, self._book_extras, strict=False
         ):
             self._prepare_book(book_config, book_extra, nav, self._mkdocs_config)
 
@@ -582,7 +582,9 @@ class LatexPlugin(BasePlugin):
             raise PluginError(f"Failed to wrap LaTeX document: {exc}") from exc
 
         folder = runtime.config.folder
-        stem = folder.name if isinstance(folder, Path) else folder if folder else "index"
+        stem = (
+            folder.name if isinstance(folder, Path) else folder if folder else "index"
+        )
         tex_path = output_root / f"{stem}.tex"
         tex_path.write_text(latex_document, encoding="utf-8")
         log.info("TeXSmith wrote '%s'.", tex_path.relative_to(self._build_root))
@@ -800,7 +802,7 @@ class LatexPlugin(BasePlugin):
                 continue
 
             log.warning(
-                "Skipping bibliography entry '%s' because it defines neither a DOI nor manual fields.",
+                "Skipping bibliography entry '%s': no DOI and no manual fields.",
                 key,
             )
 

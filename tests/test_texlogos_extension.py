@@ -2,20 +2,22 @@
 
 from __future__ import annotations
 
-import sys
 from pathlib import Path
+import sys
 
 from bs4 import BeautifulSoup
 from markdown import Markdown
+
 
 ROOT = Path(__file__).resolve().parents[1]
 EXT_SRC = ROOT / "packages" / "texsmith-texlogos" / "src"
 if str(EXT_SRC) not in sys.path:
     sys.path.insert(0, str(EXT_SRC))
 
-from texsmith.adapters.latex.renderer import LaTeXRenderer
-from texsmith_texlogos import iter_specs, register_renderer
-from texsmith_texlogos.markdown import TexLogosExtension
+from texsmith_texlogos import iter_specs, register_renderer  # noqa: E402
+from texsmith_texlogos.markdown import TexLogosExtension  # noqa: E402
+
+from texsmith.adapters.latex.renderer import LaTeXRenderer  # noqa: E402
 
 
 def _convert(text: str) -> BeautifulSoup:

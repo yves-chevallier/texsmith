@@ -62,7 +62,7 @@ class BaseTemplate:
 
     def default_context(self) -> dict[str, Any]:
         """Return a shallow copy of the manifest default attributes."""
-        return dict(self.info.attributes)
+        return self.info.attribute_defaults()
 
     def render_template(self, template_name: str, **context: Any) -> str:
         """Render a template using the configured Jinja environment."""
@@ -85,9 +85,13 @@ class WrappableTemplate(BaseTemplate):
         overrides: Mapping[str, Any] | None = None,
     ) -> dict[str, Any]:
         """Build the rendering context shared by the template and its assets."""
-        context = self.default_context()
+        attribute_context = self.info.resolve_attributes(overrides)
+        context = dict(attribute_context)
         if overrides:
-            context.update(overrides)
+            for key, value in overrides.items():
+                if key in context:
+                    continue
+                context[key] = value
 
         context.setdefault("frontmatter", "")
         context.setdefault("backmatter", "")

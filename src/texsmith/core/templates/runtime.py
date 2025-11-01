@@ -188,7 +188,7 @@ def load_template_runtime(template: str) -> TemplateRuntime:
     template_instance = load_template(template)
 
     template_base = coerce_base_level(
-        template_instance.info.attributes.get("base_level"),
+        template_instance.info.get_attribute_default("base_level"),
     )
 
     slots, default_slot = template_instance.info.resolve_slots()

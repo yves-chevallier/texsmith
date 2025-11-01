@@ -2,12 +2,22 @@
 
 from __future__ import annotations
 
+from collections.abc import Mapping, Sequence
+import copy
 from pathlib import Path
-from typing import Any
+from typing import Any, Callable, Literal
 
 import tomllib
-from pydantic import BaseModel, ConfigDict, Field, ValidationError, model_validator
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    PrivateAttr,
+    ValidationError,
+    model_validator,
+)
 
+from texsmith.adapters.latex.utils import escape_latex_chars
 from texsmith.core.exceptions import LatexRenderingError
 
 
@@ -110,6 +120,366 @@ class TemplateSlot(BaseModel):
         return level + self.offset
 
 
+AttributePrimitiveType = Literal["any", "string", "integer", "float", "boolean", "list", "mapping"]
+AttributeEscapeMode = Literal["latex"]
+
+
+_UNSET = object()
+
+
+def _lookup_path(container: Mapping[str, Any], path: str) -> tuple[Any, bool]:
+    """Return a value stored at ``path`` within ``container``."""
+    segments = [segment for segment in path.split(".") if segment]
+    current: Any = container
+    for index, segment in enumerate(segments):
+        if not isinstance(current, Mapping):
+            return (None, False)
+        if segment not in current:
+            return (None, False)
+        current = current[segment]
+        if current is None and index + 1 < len(segments):
+            return (None, False)
+    return (current, True)
+
+
+def _normalise_sources(payload: Any) -> list[str]:
+    if payload is None:
+        return []
+    if isinstance(payload, str):
+        candidate = payload.strip()
+        return [candidate] if candidate else []
+    if isinstance(payload, Sequence) and not isinstance(payload, (str, bytes)):
+        tokens: list[str] = []
+        for element in payload:
+            if isinstance(element, str) and element.strip():
+                tokens.append(element.strip())
+        return tokens
+    return []
+
+
+_ATTRIBUTE_NORMALISERS: dict[str, Callable[[Any, "TemplateAttributeSpec", Any], Any]] = {}
+
+
+def register_attribute_normaliser(
+    name: str,
+) -> Callable[[Callable[[Any, "TemplateAttributeSpec", Any], Any]], Callable[[Any, "TemplateAttributeSpec", Any], Any]]:
+    """Decorator used to register attribute normaliser callables."""
+
+    def decorator(
+        func: Callable[[Any, "TemplateAttributeSpec", Any], Any],
+    ) -> Callable[[Any, "TemplateAttributeSpec", Any], Any]:
+        _ATTRIBUTE_NORMALISERS[name] = func
+        return func
+
+    return decorator
+
+
+def _resolve_attribute_normaliser(
+    name: str,
+) -> Callable[[Any, "TemplateAttributeSpec", Any], Any]:
+    try:
+        return _ATTRIBUTE_NORMALISERS[name]
+    except KeyError as exc:  # pragma: no cover - defensive
+        raise TemplateError(f"Unknown attribute normaliser '{name}'.") from exc
+
+
+@register_attribute_normaliser("paper_option")
+def _normalise_paper_option(value: Any, spec: "TemplateAttributeSpec", fallback: Any) -> Any:
+    valid_bases = {
+        "a0",
+        "a1",
+        "a2",
+        "a3",
+        "a4",
+        "a5",
+        "a6",
+        "b0",
+        "b1",
+        "b2",
+        "b3",
+        "b4",
+        "b5",
+        "b6",
+        "letter",
+        "legal",
+        "executive",
+    }
+
+    if value is None or value == "":
+        return fallback
+    if not isinstance(value, str):
+        raise TemplateError(
+            f"Invalid paper option type '{type(value).__name__}' for attribute '{spec.name}'."
+        )
+
+    candidate = value.strip().lower()
+    if not candidate:
+        return fallback
+
+    if candidate.endswith("paper"):
+        candidate = candidate[:-5]
+
+    if candidate not in valid_bases:
+        allowed = ", ".join(sorted(f"{base}paper" for base in valid_bases))
+        raise TemplateError(
+            f"Invalid paper option '{value}' for attribute '{spec.name}'. Allowed values: {allowed}."
+        )
+
+    return f"{candidate}paper"
+
+
+@register_attribute_normaliser("orientation")
+def _normalise_orientation(value: Any, spec: "TemplateAttributeSpec", fallback: Any) -> Any:
+    valid_orientations = {"portrait", "landscape"}
+
+    if value is None or value == "":
+        return fallback
+
+    if isinstance(value, str):
+        candidate = value.strip().lower()
+    else:
+        raise TemplateError(
+            f"Invalid orientation type '{type(value).__name__}' for attribute '{spec.name}'."
+        )
+
+    if not candidate:
+        return fallback
+
+    if candidate not in valid_orientations:
+        allowed = ", ".join(sorted(valid_orientations))
+        raise TemplateError(
+            f"Invalid orientation option '{value}' for attribute '{spec.name}'. "
+            f"Allowed values: {allowed}."
+        )
+
+    return candidate
+
+
+@register_attribute_normaliser("babel_language")
+def _normalise_language(value: Any, spec: "TemplateAttributeSpec", fallback: Any) -> Any:
+    if value is None or value == "":
+        return fallback
+
+    if not isinstance(value, str):
+        candidate = str(value)
+    else:
+        candidate = value
+
+    mapped = _map_babel_language(candidate)
+    if mapped:
+        return mapped
+
+    if fallback is not None:
+        return fallback
+
+    raise TemplateError(
+        f"Attribute '{spec.name}' received unsupported language value '{value}'."
+    )
+
+
+class TemplateAttributeSpec(BaseModel):
+    """Typed attribute definition used to build template defaults."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    default: Any = None
+    type: AttributePrimitiveType | None = None
+    choices: list[Any] = Field(default_factory=list)
+    sources: list[str] = Field(default_factory=list)
+    escape: AttributeEscapeMode | None = None
+    normaliser: str | None = None
+    required: bool = False
+    allow_empty: bool = True
+
+    # Populated lazily after validation
+    name: str = ""
+
+    # Private caches
+    _default_cache: Any = PrivateAttr(default=_UNSET)
+
+    @model_validator(mode="before")
+    @classmethod
+    def _coerce_sources(cls, data: dict[str, Any]) -> dict[str, Any]:
+        if not isinstance(data, Mapping):
+            return data
+        coerced = dict(data)
+        coerced["sources"] = _normalise_sources(data.get("sources"))
+        return coerced
+
+    @model_validator(mode="after")
+    def _finalise(self) -> "TemplateAttributeSpec":
+        self._default_cache = self._coerce_value(
+            self.default,
+            from_override=False,
+            is_default=True,
+            fallback=None,
+        )
+        return self
+
+    def default_value(self) -> Any:
+        """Return a deep copy of the attribute default."""
+        return copy.deepcopy(self._default_cache)
+
+    def _effective_type(self) -> AttributePrimitiveType:
+        if self.type:
+            return self.type
+        default = self.default
+        if isinstance(default, bool):
+            return "boolean"
+        if isinstance(default, int) and not isinstance(default, bool):
+            return "integer"
+        if isinstance(default, float):
+            return "float"
+        if isinstance(default, str):
+            return "string"
+        if isinstance(default, Mapping):
+            return "mapping"
+        if isinstance(default, Sequence) and not isinstance(default, (str, bytes)):
+            return "list"
+        return "any"
+
+    def effective_sources(self) -> list[str]:
+        if self.sources:
+            return list(self.sources)
+        # Allow nested `press.press.*` to support legacy front matter.
+        return [
+            f"press.press.{self.name}",
+            f"press.{self.name}",
+            self.name,
+        ]
+
+    def fetch_override(
+        self,
+        overrides: Mapping[str, Any],
+    ) -> tuple[Any, bool]:
+        for path in self.effective_sources():
+            if not path:
+                continue
+            value, found = _lookup_path(overrides, path)
+            if found:
+                return (value, True)
+        return (_UNSET, False)
+
+    def coerce_value(self, value: Any, *, from_override: bool) -> Any:
+        fallback = self._default_cache if self._default_cache is not _UNSET else None
+        result = self._coerce_value(
+            value,
+            from_override=from_override,
+            is_default=False,
+            fallback=fallback,
+        )
+        if result is None and self.required:
+            raise TemplateError(f"Attribute '{self.name}' requires a value.")
+        return result
+
+    def _coerce_value(
+        self,
+        value: Any,
+        *,
+        from_override: bool,
+        is_default: bool,
+        fallback: Any,
+    ) -> Any:
+        target_type = self._effective_type()
+
+        if value is None:
+            result: Any = None
+        elif target_type == "string":
+            if isinstance(value, str):
+                result = value.strip()
+            else:
+                result = str(value).strip()
+            if not result and not self.allow_empty:
+                result = None
+        elif target_type == "integer":
+            try:
+                result = int(value)
+            except (TypeError, ValueError) as exc:
+                raise TemplateError(
+                    f"Attribute '{self.name}' expects an integer value."
+                ) from exc
+        elif target_type == "float":
+            try:
+                result = float(value)
+            except (TypeError, ValueError) as exc:
+                raise TemplateError(
+                    f"Attribute '{self.name}' expects a numeric value."
+                ) from exc
+        elif target_type == "boolean":
+            if isinstance(value, bool):
+                result = value
+            elif isinstance(value, str):
+                lowered = value.strip().lower()
+                if lowered in {"true", "yes", "1", "on"}:
+                    result = True
+                elif lowered in {"false", "no", "0", "off"}:
+                    result = False
+                else:
+                    raise TemplateError(
+                        f"Attribute '{self.name}' expects a boolean value."
+                    )
+            elif isinstance(value, (int, float)):
+                result = bool(value)
+            else:
+                raise TemplateError(
+                    f"Attribute '{self.name}' expects a boolean-compatible value."
+                )
+        elif target_type == "list":
+            if isinstance(value, Sequence) and not isinstance(value, (str, bytes)):
+                result = [copy.deepcopy(item) for item in value]
+            elif isinstance(value, str):
+                tokens = [item.strip() for item in value.split(",")]
+                result = [token for token in tokens if token]
+            else:
+                result = [value]
+        elif target_type == "mapping":
+            if isinstance(value, Mapping):
+                result = dict(value)
+            else:
+                raise TemplateError(f"Attribute '{self.name}' expects a mapping value.")
+        else:
+            result = copy.deepcopy(value)
+
+        if self.normaliser and result is not None:
+            normaliser = _resolve_attribute_normaliser(self.normaliser)
+            result = normaliser(result, self, fallback)
+
+        if self.choices and result is not None and result not in self.choices:
+            allowed = ", ".join(str(choice) for choice in self.choices)
+            raise TemplateError(
+                f"Attribute '{self.name}' value '{result}' is invalid. Expected one of: {allowed}."
+            )
+
+        if self.escape == "latex" and isinstance(result, str) and from_override and not is_default:
+            result = escape_latex_chars(result)
+
+        return copy.deepcopy(result)
+
+
+class TemplateAttributeResolver:
+    """Resolve attribute values from overrides using a typed specification."""
+
+    def __init__(self, specs: Mapping[str, TemplateAttributeSpec]):
+        self._specs = dict(specs)
+
+    def defaults(self) -> dict[str, Any]:
+        return {name: spec.default_value() for name, spec in self._specs.items()}
+
+    def merge(self, overrides: Mapping[str, Any] | None) -> dict[str, Any]:
+        resolved = self.defaults()
+        if not overrides:
+            return resolved
+
+        for name, spec in self._specs.items():
+            value, from_override = spec.fetch_override(overrides)
+            if value is _UNSET:
+                continue
+            coerced = spec.coerce_value(value, from_override=from_override)
+            resolved[name] = coerced
+
+        return resolved
+
+
 class TemplateInfo(BaseModel):
     """Metadata describing the LaTeX template payload."""
 
@@ -123,9 +493,12 @@ class TemplateInfo(BaseModel):
     texlive_year: int | None = None
     tlmgr_packages: list[str] = Field(default_factory=list)
     override: list[str] = Field(default_factory=list)
-    attributes: dict[str, Any] = Field(default_factory=dict)
+    attributes: dict[str, TemplateAttributeSpec] = Field(default_factory=dict)
     assets: dict[str, TemplateAsset] = Field(default_factory=dict)
     slots: dict[str, TemplateSlot] = Field(default_factory=dict)
+
+    _attribute_resolver: TemplateAttributeResolver = PrivateAttr()
+    _attribute_defaults: dict[str, Any] = PrivateAttr(default_factory=dict)
 
     @model_validator(mode="before")
     @classmethod
@@ -141,6 +514,37 @@ class TemplateInfo(BaseModel):
             data = dict(data)
             data["assets"] = normalised
         return data
+
+    @model_validator(mode="before")
+    @classmethod
+    def _normalise_attributes(cls, data: dict[str, Any]) -> dict[str, Any]:
+        attributes = data.get("attributes")
+        if not isinstance(attributes, Mapping):
+            return data
+
+        normalised: dict[str, Any] = {}
+        for name, payload in attributes.items():
+            if isinstance(payload, TemplateAttributeSpec):
+                normalised[name] = payload
+            elif isinstance(payload, Mapping):
+                if "default" not in payload and "type" not in payload:
+                    normalised[name] = {"default": payload}
+                else:
+                    normalised[name] = payload
+            else:
+                normalised[name] = {"default": payload}
+
+        updated = dict(data)
+        updated["attributes"] = normalised
+        return updated
+
+    @model_validator(mode="after")
+    def _bind_attribute_names(self) -> "TemplateInfo":
+        for name, spec in self.attributes.items():
+            spec.name = name
+        self._attribute_resolver = TemplateAttributeResolver(self.attributes)
+        self._attribute_defaults = self._attribute_resolver.defaults()
+        return self
 
     def resolve_slots(self) -> tuple[dict[str, TemplateSlot], str]:
         """Return declared slots ensuring a single default sink exists."""
@@ -161,6 +565,17 @@ class TemplateInfo(BaseModel):
             raise TemplateError(f"Multiple default slots declared: {formatted}")
 
         return resolved, defaults[0]
+
+    def attribute_defaults(self) -> dict[str, Any]:
+        """Return a deep copy of template attribute defaults."""
+        return copy.deepcopy(self._attribute_defaults)
+
+    def get_attribute_default(self, name: str, default: Any | None = None) -> Any:
+        return copy.deepcopy(self._attribute_defaults.get(name, default))
+
+    def resolve_attributes(self, overrides: Mapping[str, Any] | None = None) -> dict[str, Any]:
+        """Return defaults merged with overrides using the attribute specification."""
+        return self._attribute_resolver.merge(overrides)
 
 
 class LatexSection(BaseModel):
@@ -199,8 +614,24 @@ __all__ = [
     "LATEX_HEADING_LEVELS",
     "LatexSection",
     "TemplateAsset",
+    "TemplateAttributeSpec",
     "TemplateError",
     "TemplateInfo",
     "TemplateManifest",
     "TemplateSlot",
 ]
+def _map_babel_language(value: str | None) -> str | None:
+    if value is None:
+        return None
+    candidate = value.strip()
+    if not candidate:
+        return None
+    lowered = candidate.lower().replace("_", "-")
+    if lowered in _BABEL_LANGUAGE_ALIASES:
+        return _BABEL_LANGUAGE_ALIASES[lowered]
+    primary = lowered.split("-", 1)[0]
+    if primary in _BABEL_LANGUAGE_ALIASES:
+        return _BABEL_LANGUAGE_ALIASES[primary]
+    if lowered.isalpha():
+        return lowered
+    return None
