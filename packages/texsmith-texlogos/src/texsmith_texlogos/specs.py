@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterable, Mapping
 from dataclasses import dataclass
-from typing import Iterable, Mapping
 
 
 @dataclass(frozen=True, slots=True)
@@ -70,4 +70,4 @@ def alias_mapping() -> Mapping[str, LogoSpec]:
     return mapping
 
 
-__all__ = ["LogoSpec", "iter_specs", "alias_mapping"]
+__all__ = ["LogoSpec", "alias_mapping", "iter_specs"]

@@ -132,7 +132,9 @@ class TemplateSession:
         emitter: DiagnosticEmitter | None = None,
     ) -> None:
         self.runtime = runtime
-        attributes = runtime.instance.info.attributes if runtime.instance else {}
+        attributes = (
+            runtime.instance.info.attribute_defaults() if runtime.instance else {}
+        )
         self._options = TemplateOptions(copy.deepcopy(attributes))
         self._default_options = TemplateOptions(copy.deepcopy(attributes))
         self._documents: list[Document] = []

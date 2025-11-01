@@ -18,27 +18,6 @@ class Template(WrappableTemplate):
 
     _DEFAULT_PAPER_OPTION = "a4paper"
     _DEFAULT_ORIENTATION = "portrait"
-    _VALID_PAPER_BASES = {
-        "a0",
-        "a1",
-        "a2",
-        "a3",
-        "a4",
-        "a5",
-        "a6",
-        "b0",
-        "b1",
-        "b2",
-        "b3",
-        "b4",
-        "b5",
-        "b6",
-        "letter",
-        "legal",
-        "executive",
-    }
-    _VALID_ORIENTATIONS = {"portrait", "landscape"}
-
     def __init__(self) -> None:
         try:
             super().__init__(_PACKAGE_ROOT)
@@ -52,10 +31,31 @@ class Template(WrappableTemplate):
         overrides: Mapping[str, Any] | None = None,
     ) -> dict[str, Any]:
         context = super().prepare_context(latex_body, overrides=overrides)
-        self._apply_metadata(context)
 
-        paper_option = self._normalise_paper_option(context.get("paper"))
-        orientation_option = self._normalise_orientation_option(context.get("orientation"))
+        # Transform author metadata into a LaTeX-ready string while preserving defaults.
+        raw_authors = context.pop("authors", None)
+        author_value = self._format_authors(raw_authors)
+        if author_value:
+            context["author"] = author_value
+        else:
+            fallback_author = context.get("author") or self.info.get_attribute_default("author")
+            if isinstance(fallback_author, str):
+                candidate = fallback_author.strip()
+                context["author"] = candidate or self.info.get_attribute_default("author")
+
+        context.pop("press", None)
+
+        paper_option = (
+            context.get("paper")
+            or self.info.get_attribute_default("paper")
+            or self._DEFAULT_PAPER_OPTION
+        )
+        orientation_value = (
+            context.get("orientation")
+            or self.info.get_attribute_default("orientation")
+            or self._DEFAULT_ORIENTATION
+        )
+        orientation_option = "landscape" if orientation_value == "landscape" else ""
 
         options = [option for option in (paper_option, orientation_option) if option]
         geometry_options = ["margin=2.5cm"]
@@ -70,37 +70,6 @@ class Template(WrappableTemplate):
         context["geometry_options"] = ",".join(geometry_options)
 
         return context
-
-    def _apply_metadata(self, context: dict[str, Any]) -> None:
-        raw_press = context.get("press")
-        if not isinstance(raw_press, Mapping):
-            return
-
-        nested_press = raw_press.get("press") if isinstance(raw_press.get("press"), Mapping) else None
-        meta_payload: Mapping[str, Any] = nested_press or raw_press
-
-        title = self._coerce_string(meta_payload.get("title"))
-        if title:
-            context["title"] = escape_latex_chars(title)
-
-        subtitle = self._coerce_string(meta_payload.get("subtitle"))
-        if subtitle:
-            context["subtitle"] = escape_latex_chars(subtitle)
-
-        author_value = self._format_authors(meta_payload.get("authors"))
-        if author_value:
-            context["author"] = author_value
-        else:
-            fallback_author = self._coerce_string(meta_payload.get("author"))
-            if fallback_author:
-                context["author"] = escape_latex_chars(fallback_author)
-
-        date_value = self._coerce_string(meta_payload.get("date"))
-        if date_value:
-            context["date"] = escape_latex_chars(date_value)
-
-        context.pop("press", None)
-        context.pop("authors", None)
 
     def _coerce_string(self, value: Any) -> str | None:
         if value is None:
@@ -154,52 +123,6 @@ class Template(WrappableTemplate):
             return None
 
         return " \\and ".join(formatted)
-
-    def _normalise_paper_option(self, value: Any) -> str:
-        if value is None or value == "":
-            return self._DEFAULT_PAPER_OPTION
-
-        if not isinstance(value, str):
-            raise TemplateError(
-                f"Invalid paper option type '{type(value).__name__}' for article template."
-            )
-
-        candidate = value.strip().lower()
-        if not candidate:
-            return self._DEFAULT_PAPER_OPTION
-
-        if candidate.endswith("paper"):
-            candidate = candidate[:-5]
-
-        if candidate not in self._VALID_PAPER_BASES:
-            allowed = ", ".join(sorted(f"{base}paper" for base in self._VALID_PAPER_BASES))
-            raise TemplateError(
-                f"Invalid paper option '{value}' for article template. Allowed values: {allowed}."
-            )
-
-        return f"{candidate}paper"
-
-    def _normalise_orientation_option(self, value: Any) -> str:
-        if value is None or value == "":
-            default = self._DEFAULT_ORIENTATION
-        elif not isinstance(value, str):
-            raise TemplateError(
-                f"Invalid orientation type '{type(value).__name__}' for article template."
-            )
-        else:
-            default = value.strip().lower()
-
-        if not default:
-            default = self._DEFAULT_ORIENTATION
-
-        if default not in self._VALID_ORIENTATIONS:
-            allowed = ", ".join(sorted(self._VALID_ORIENTATIONS))
-            raise TemplateError(
-                "Invalid orientation option "
-                f"'{value}' for article template. Allowed values: {allowed}."
-            )
-
-        return "landscape" if default == "landscape" else ""
 
 
 __all__ = ["Template"]

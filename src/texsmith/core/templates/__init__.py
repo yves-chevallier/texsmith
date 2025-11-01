@@ -7,6 +7,7 @@ from .loader import copy_template_assets, load_template
 from .manifest import (
     DEFAULT_TEMPLATE_LANGUAGE,
     LATEX_HEADING_LEVELS,
+    TemplateAttributeSpec,
     TemplateAsset,
     TemplateError,
     TemplateInfo,
@@ -31,6 +32,7 @@ __all__ = [
     "DEFAULT_TEMPLATE_LANGUAGE",
     "LATEX_HEADING_LEVELS",
     "ResolvedAsset",
+    "TemplateAttributeSpec",
     "TemplateAsset",
     "TemplateBinding",
     "TemplateError",

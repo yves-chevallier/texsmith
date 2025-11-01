@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable, Iterator, Mapping
 import re
 import xml.etree.ElementTree as ElementTree
-from typing import Callable, Iterator, Mapping
 
 from markdown import Markdown
 from markdown.extensions import Extension
@@ -158,7 +158,9 @@ def _build_tex_logo(container: ElementTree.Element, _: LogoSpec, *, prefix: str 
     lowered_e.tail = "X"
 
 
-def _build_latex_logo(container: ElementTree.Element, _: LogoSpec, *, prefix: str = "") -> ElementTree.Element:
+def _build_latex_logo(
+    container: ElementTree.Element, _: LogoSpec, *, prefix: str = ""
+) -> ElementTree.Element:
     container.text = f"{prefix}L"
     raised_a = ElementTree.SubElement(
         container,
@@ -195,13 +197,15 @@ def _build_latex2e(container: ElementTree.Element, spec: LogoSpec) -> None:
     epsilon = ElementTree.SubElement(
         container,
         "span",
-        {"style": "position: relative; top: -0.2em; font-size: 0.7em; font-style: italic; margin-left: 0.02em;"},
+        {
+            "style": "position: relative; top: -0.2em; font-size: 0.7em; font-style: italic; margin-left: 0.02em;"
+        },
     )
     epsilon.text = "\u03b5"
     lowered_e.tail = "X"
 
 
-def _build_texsmith(container: ElementTree.Element, spec: LogoSpec) -> None:
+def _build_texsmith(container: ElementTree.Element, _: LogoSpec) -> None:
     outer = ElementTree.SubElement(
         container,
         "span",

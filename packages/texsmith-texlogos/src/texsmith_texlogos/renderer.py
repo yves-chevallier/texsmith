@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Mapping
+from collections.abc import Mapping
 
 from bs4 import NavigableString, Tag
 
@@ -74,4 +74,4 @@ def register(renderer: object) -> None:
     raise TypeError("Renderer object does not expose a 'register' method")
 
 
-__all__ = ["render_tex_logo_span", "register"]
+__all__ = ["register", "render_tex_logo_span"]

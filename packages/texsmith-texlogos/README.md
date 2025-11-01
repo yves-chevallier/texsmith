@@ -1,7 +1,6 @@
-# texsmith-texlogos
+# TeXSmith TeXlogos
 
-An optional TeXSmith extension that provides rich HTML rendering and LaTeX output for the
-classic logo commands: `\TeX`, `\LaTeX`, `\LaTeXe`, et `\TeX{}\textsc{Smith}`.
+An small TeXSmith extension that provides rich HTML rendering and LaTeX output for the classic logo commands: `\TeX`, `\LaTeX`, `\LaTeXe`, et `\TeX{}\textsc{Smith}`.
 
 ## Features
 

@@ -117,10 +117,11 @@ class LaTeXRenderer:
         if callable(payload):
             try:
                 payload(self)
-                return
             except TypeError:
                 self.register(payload)
+            else:
                 return
+            return
 
         register = getattr(payload, "register", None)
         if callable(register):

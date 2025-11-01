@@ -1,2 +1,4 @@
 press/
+build/
+.venv/
 __pycache__/

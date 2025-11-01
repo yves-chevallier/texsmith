@@ -11,7 +11,7 @@ Markdown paragraph:
 | `\LaTeXe{}` | `LaTeX2e` | LaTeX2ε |
 | `\TeX{}\textsc{Smith}` | `TeXSmith` | TeXSmith |
 
-> Tip: Hover the rendered logos to reveal their description tooltips.
+In Markdown simply type the names with the correct capitalization:
 
 ```markdown
 TeX, LaTeX, LaTeX2e, and TeXSmith are all rendered with their

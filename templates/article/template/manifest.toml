@@ -17,21 +17,58 @@ tlmgr_packages = [
     "biblatex",
 ]
 
-# Attributes:
-# -----------
-# Declare attributes that can be customized when using the template.
-# These attributes will be available in the LaTeX template via variables.
-# They can be populated using the YAML front matter in the document source files.
-[latex.template.attributes]
-base_level = 1
-title = "Article Title"
-author = "John Doe"
-subtitle = ""
-date = "\\today"
-language = "english"
-paper = "a4"
-orientation = "portrait"
-bibliography_style = "numeric"
+[latex.template.attributes.base_level]
+default = 1
+type = "integer"
+
+[latex.template.attributes.title]
+default = "Article Title"
+type = "string"
+escape = "latex"
+allow_empty = false
+
+[latex.template.attributes.subtitle]
+default = ""
+type = "string"
+escape = "latex"
+
+[latex.template.attributes.author]
+default = "John Doe"
+type = "string"
+escape = "latex"
+sources = ["press.author", "author"]
+
+[latex.template.attributes.authors]
+default = []
+type = "list"
+sources = ["press.authors", "press.author", "authors", "author"]
+
+[latex.template.attributes.date]
+default = "\\today"
+type = "string"
+escape = "latex"
+
+[latex.template.attributes.language]
+default = "english"
+type = "string"
+allow_empty = false
+normaliser = "babel_language"
+
+[latex.template.attributes.paper]
+default = "a4paper"
+type = "string"
+normaliser = "paper_option"
+allow_empty = false
+
+[latex.template.attributes.orientation]
+default = "portrait"
+type = "string"
+normaliser = "orientation"
+choices = ["portrait", "landscape"]
+
+[latex.template.attributes.bibliography_style]
+default = "numeric"
+type = "string"
 
 # Slots definition:
 # -----------------
