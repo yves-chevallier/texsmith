@@ -26,7 +26,7 @@ from texsmith.core.templates import (
     TemplateBinding,
     TemplateError,
     TemplateRuntime,
-    copy_template_assets,
+    wrap_template_document,
 )
 
 from ..diagnostics import DiagnosticEmitter
@@ -74,6 +74,7 @@ def convert_document(
     bibliography_files: list[Path],
     legacy_latex_accents: bool,
     *,
+    template_overrides: Mapping[str, Any] | None = None,
     state: DocumentState | None = None,
     template_runtime: TemplateRuntime | None = None,
     wrap_document: bool = True,
@@ -100,6 +101,7 @@ def convert_document(
         strategy=strategy,
         emitter=emitter,
         legacy_latex_accents=legacy_latex_accents,
+        session_overrides=template_overrides,
     )
 
     renderer_kwargs: dict[str, Any] = {
@@ -272,53 +274,26 @@ def _render_document(
     tex_path: Path | None = None
     template_instance = binding.instance
     if template_instance is not None and wrap_document:
-        template_context: dict[str, Any] | None = None
         try:
-            template_context = template_instance.prepare_context(
-                latex_output,
-                overrides=binder_context.template_overrides
-                if binder_context.template_overrides
-                else None,
+            wrap_result = wrap_template_document(
+                template=template_instance,
+                default_slot=binding.default_slot,
+                slot_outputs=slot_outputs,
+                document_state=document_state,
+                template_overrides=(
+                    binder_context.template_overrides if binder_context.template_overrides else None
+                ),
+                output_dir=binder_context.output_dir,
+                copy_assets=strategy.copy_assets,
+                output_name=f"{document_context.source_path.stem}.tex",
+                bibliography_path=bibliography_output,
             )
-            for slot_name, fragment_output in slot_outputs.items():
-                if slot_name == binding.default_slot:
-                    continue
-                template_context[slot_name] = fragment_output
-            template_context["index_entries"] = document_state.has_index_entries
-            template_context["acronyms"] = document_state.acronyms.copy()
-            template_context["citations"] = citations
-            template_context["bibliography_entries"] = document_state.bibliography
-            if citations and bibliography_output is not None:
-                template_context["bibliography"] = bibliography_output.stem
-                template_context["bibliography_resource"] = bibliography_output.name
-                if not template_context.get("bibliography_style"):
-                    template_context["bibliography_style"] = "plain"
-            latex_output = template_instance.wrap_document(
-                latex_output,
-                context=template_context,
-            )
+            latex_output = wrap_result.latex_output
+            tex_path = wrap_result.output_path
         except TemplateError as exc:
             if debug_enabled(emitter):
                 raise
             raise_conversion_error(emitter, str(exc), exc)
-        try:
-            copy_template_assets(
-                template_instance,
-                binder_context.output_dir,
-                context=template_context,
-                overrides=binder_context.template_overrides
-                if binder_context.template_overrides
-                else None,
-            )
-        except TemplateError as exc:
-            if debug_enabled(emitter):
-                raise
-            raise_conversion_error(emitter, str(exc), exc)
-
-        try:
-            binder_context.output_dir.mkdir(parents=True, exist_ok=True)
-            tex_path = binder_context.output_dir / f"{document_context.source_path.stem}.tex"
-            tex_path.write_text(latex_output, encoding="utf-8")
         except OSError as exc:
             if debug_enabled(emitter):
                 raise

@@ -262,7 +262,8 @@ Body text.
     prepared = service.prepare_documents(request)
     response = service.execute(request, prepared=prepared)
 
-    assert response.render_result is not None
+    assert response.is_template
+    assert response.render_result.main_tex_path.exists()
     assert any("missing" in message for message, _ in emitter.warnings)
     assert any(name == "template_overrides" for name, _ in emitter.events)
 
@@ -296,9 +297,9 @@ def test_execute_without_template_returns_bundle(tmp_path: Path) -> None:
 
     response = service.execute(request, prepared=prepared)
 
-    assert response.bundle is not None
-    assert response.render_result is None
-    assert response.bundle.fragments[0].stem == "doc"
+    assert not response.is_template
+    bundle = response.bundle
+    assert bundle.fragments[0].stem == "doc"
 
 
 def test_execute_with_template_returns_render_result(tmp_path: Path) -> None:
@@ -318,7 +319,6 @@ def test_execute_with_template_returns_render_result(tmp_path: Path) -> None:
     prepared = service.prepare_documents(request)
 
     response = service.execute(request, prepared=prepared)
+    assert response.is_template
     render_result = response.render_result
-
-    assert render_result is not None
     assert render_result.main_tex_path.exists()

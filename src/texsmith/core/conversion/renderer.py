@@ -1,28 +1,34 @@
-"""Template rendering utilities that aggregate conversion bundles."""
+"""Template rendering utilities that aggregate conversion fragments."""
 
 from __future__ import annotations
 
-from collections.abc import Mapping, Sequence
+from collections.abc import Mapping, MutableMapping, Sequence
+import copy
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
 from ..context import DocumentState
 from ..diagnostics import DiagnosticEmitter
-from ..templates import TemplateError, TemplateRuntime, copy_template_assets
+from ..templates import TemplateError, TemplateRuntime, wrap_template_document
 from .debug import debug_enabled, ensure_emitter, raise_conversion_error, record_event
 
 
-if TYPE_CHECKING:  # pragma: no cover - typing helpers only
-    from texsmith.api.pipeline import ConversionBundle, LaTeXFragment
+@dataclass(slots=True)
+class TemplateFragment:
+    """Contract describing the artefacts required by TemplateRenderer."""
 
-
-def _merge_overrides(target: dict[str, Any], source: Mapping[str, Any]) -> None:
-    for key, value in source.items():
-        if isinstance(value, Mapping) and isinstance(target.get(key), Mapping):
-            _merge_overrides(target[key], value)
-        else:
-            target[key] = value
+    stem: str
+    latex: str
+    default_slot: str
+    slot_outputs: Mapping[str, str]
+    slot_includes: set[str] = field(default_factory=set)
+    document_state: DocumentState | None = None
+    bibliography_path: Path | None = None
+    template_engine: str | None = None
+    requires_shell_escape: bool = False
+    template_overrides: Mapping[str, Any] | None = None
+    output_path: Path | None = None
 
 
 @dataclass(slots=True)
@@ -40,6 +46,39 @@ class TemplateRendererResult:
     template_overrides: dict[str, Any] = field(default_factory=dict)
 
 
+class FragmentOverrideError(TemplateError):
+    """Raised when fragment template overrides disagree."""
+
+
+def _merge_overrides(
+    target: MutableMapping[str, Any],
+    source: Mapping[str, Any],
+    *,
+    namespace: str = "",
+) -> None:
+    for key, value in source.items():
+        if key not in target:
+            target[key] = copy.deepcopy(value)
+            continue
+
+        existing = target[key]
+        if isinstance(existing, MutableMapping) and isinstance(value, Mapping):
+            _merge_overrides(
+                existing,
+                value,
+                namespace=f"{namespace}.{key}" if namespace else key,
+            )
+            continue
+
+        if existing == value:
+            continue
+
+        conflict_path = f"{namespace}.{key}" if namespace else key
+        raise FragmentOverrideError(
+            f"Conflicting template override for '{conflict_path}': {existing!r} vs {value!r}"
+        )
+
+
 class TemplateRenderer:
     """Aggregate conversion fragments and wrap them with a template."""
 
@@ -54,13 +93,12 @@ class TemplateRenderer:
 
     def render(
         self,
-        bundle: ConversionBundle,
+        fragments: Sequence[TemplateFragment],
         *,
         output_dir: Path,
         overrides: Mapping[str, Any] | None = None,
         copy_assets: bool = True,
     ) -> TemplateRendererResult:
-        fragments = list(getattr(bundle, "fragments", []))
         if not fragments:
             raise TemplateError("No fragments available for template rendering.")
 
@@ -79,59 +117,46 @@ class TemplateRenderer:
         requires_shell_escape = bool(self.runtime.requires_shell_escape)
 
         for fragment in fragments:
-            conversion = getattr(fragment, "conversion", None)
-            if conversion is None:
-                raise TemplateError(
-                    "Conversion bundle is missing conversion metadata for a fragment."
-                )
-
-            fragment_default_slot = conversion.default_slot or default_slot
-            slot_outputs = dict(conversion.slot_outputs)
+            fragment_default_slot = fragment.default_slot or default_slot
+            slot_outputs = dict(fragment.slot_outputs)
             if fragment_default_slot not in slot_outputs:
-                slot_outputs[fragment_default_slot] = conversion.latex_output
+                slot_outputs[fragment_default_slot] = fragment.latex
 
             for slot_name, latex in slot_outputs.items():
                 if not latex:
                     continue
                 aggregated_slots.setdefault(slot_name, []).append(latex)
 
-            document_obj = getattr(fragment, "document", None)
-            slot_inclusions: set[str] = set()
-            if document_obj is not None:
-                document_slots = getattr(document_obj, "slots", None)
-                if document_slots is not None and hasattr(document_slots, "includes"):
-                    slot_inclusions = set(document_slots.includes())
-                else:
-                    legacy_inclusions = getattr(document_obj, "slot_inclusions", set())
-                    slot_inclusions = set(legacy_inclusions)
+            slot_inclusions = set(fragment.slot_includes or set())
             if slot_inclusions:
                 for slot_name in slot_inclusions:
                     aggregated_slots.setdefault(slot_name, [])
                 for slot_name in slot_inclusions:
                     if slot_name == fragment_default_slot:
                         continue
-                    if conversion.latex_output:
-                        aggregated_slots[slot_name].append(conversion.latex_output)
+                    if fragment.latex:
+                        aggregated_slots[slot_name].append(fragment.latex)
                 if (
                     fragment_default_slot in slot_inclusions
                     and fragment_default_slot not in slot_outputs
-                    and conversion.latex_output
+                    and fragment.latex
                 ):
-                    aggregated_slots[fragment_default_slot].append(conversion.latex_output)
+                    aggregated_slots[fragment_default_slot].append(fragment.latex)
 
-            if conversion.template_overrides:
+            fragment_overrides = fragment.template_overrides
+            if fragment_overrides:
                 if template_overrides is None:
-                    template_overrides = dict(conversion.template_overrides)
+                    template_overrides = dict(fragment_overrides)
                 else:
-                    _merge_overrides(template_overrides, conversion.template_overrides)
+                    _merge_overrides(template_overrides, fragment_overrides)
 
-            if conversion.document_state is not None:
-                shared_state = conversion.document_state
-            if conversion.bibliography_path is not None:
-                bibliography_path = conversion.bibliography_path
-            if template_engine is None and conversion.template_engine is not None:
-                template_engine = conversion.template_engine
-            requires_shell_escape = requires_shell_escape or conversion.template_shell_escape
+            if fragment.document_state is not None:
+                shared_state = fragment.document_state
+            if fragment.bibliography_path is not None:
+                bibliography_path = fragment.bibliography_path
+            if template_engine is None and fragment.template_engine is not None:
+                template_engine = fragment.template_engine
+            requires_shell_escape = requires_shell_escape or fragment.requires_shell_escape
 
         if shared_state is None:
             shared_state = DocumentState()
@@ -141,9 +166,6 @@ class TemplateRenderer:
             for slot, content in aggregated_slots.items()
         }
 
-        main_content = slot_content.get(default_slot, "")
-
-        template_context: dict[str, Any] | None = None
         template_instance = self.runtime.instance
         if template_instance is None:  # pragma: no cover - defensive path
             raise TemplateError("Template runtime is missing an instance implementation.")
@@ -154,38 +176,6 @@ class TemplateRenderer:
             override_dict = dict(overrides)
             _merge_overrides(template_overrides, override_dict)
 
-        final_output: str | None = None
-        try:
-            template_context = template_instance.prepare_context(
-                main_content,
-                overrides=template_overrides if template_overrides else None,
-            )
-            for slot_name, content in slot_content.items():
-                if slot_name == default_slot:
-                    continue
-                template_context[slot_name] = content
-
-            template_context["index_entries"] = shared_state.has_index_entries
-            template_context["acronyms"] = shared_state.acronyms.copy()
-            template_context["citations"] = list(shared_state.citations)
-            template_context["bibliography_entries"] = shared_state.bibliography
-            if shared_state.citations and bibliography_path is not None:
-                template_context["bibliography"] = bibliography_path.stem
-                template_context["bibliography_resource"] = bibliography_path.name
-                template_context.setdefault("bibliography_style", "plain")
-
-            final_output = template_instance.wrap_document(
-                main_content,
-                context=template_context,
-            )
-        except TemplateError as exc:
-            if debug_enabled(self.emitter):
-                raise
-            raise_conversion_error(self.emitter, str(exc), exc)
-
-        if final_output is None:  # pragma: no cover - safety
-            raise TemplateError("Template renderer produced no output.")
-
         if template_overrides:
             record_event(
                 self.emitter,
@@ -193,22 +183,26 @@ class TemplateRenderer:
                 {"values": dict(template_overrides)},
             )
 
-        if copy_assets:
-            try:
-                copy_template_assets(
-                    template_instance,
-                    output_dir,
-                    context=template_context,
-                    overrides=template_overrides if template_overrides else None,
-                )
-            except TemplateError as exc:
-                if debug_enabled(self.emitter):
-                    raise
-                raise_conversion_error(self.emitter, str(exc), exc)
-
         main_name = self._resolve_main_name(fragments)
-        main_tex_path = output_dir / main_name
-        main_tex_path.write_text(final_output, encoding="utf-8")
+        try:
+            wrap_result = wrap_template_document(
+                template=template_instance,
+                default_slot=default_slot,
+                slot_outputs=slot_content,
+                document_state=shared_state,
+                template_overrides=template_overrides if template_overrides else None,
+                output_dir=output_dir,
+                copy_assets=copy_assets,
+                output_name=main_name,
+                bibliography_path=bibliography_path,
+            )
+        except TemplateError as exc:
+            if debug_enabled(self.emitter):
+                raise
+            raise_conversion_error(self.emitter, str(exc), exc)
+
+        template_context = wrap_result.template_context
+        main_tex_path = wrap_result.output_path or (output_dir / main_name)
 
         fragment_paths: list[Path] = [
             Path(fragment.output_path) for fragment in fragments if fragment.output_path
@@ -230,8 +224,11 @@ class TemplateRenderer:
         )
 
     @staticmethod
-    def _resolve_main_name(fragments: Sequence[LaTeXFragment]) -> str:
+    def _resolve_main_name(fragments: Sequence[TemplateFragment]) -> str:
         if len(fragments) == 1:
             return f"{fragments[0].stem}.tex"
         first = fragments[0]
         return f"{first.stem}-collection.tex"
+
+
+__all__ = ["TemplateFragment", "TemplateRenderer", "TemplateRendererResult"]

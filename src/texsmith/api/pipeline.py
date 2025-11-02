@@ -37,13 +37,14 @@ Usage Example
 
 from __future__ import annotations
 
-from collections.abc import Iterable, Sequence
+from collections.abc import Iterable, Mapping, Sequence
 import copy
 from dataclasses import dataclass
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from ..core.conversion.core import ConversionResult, convert_document
+from ..core.conversion.renderer import TemplateFragment
 from ..core.diagnostics import DiagnosticEmitter, NullEmitter
 from ._utils import build_unique_stem_map
 from .document import Document
@@ -60,6 +61,7 @@ __all__ = [
     "LaTeXFragment",
     "RenderSettings",
     "convert_documents",
+    "to_template_fragments",
 ]
 
 
@@ -117,6 +119,7 @@ def convert_documents(
     bibliography_files: Iterable[Path] | None = None,
     template: str | None = None,
     template_runtime: TemplateRuntime | None = None,
+    template_overrides: Mapping[str, Any] | None = None,
     wrap_document: bool = True,
     shared_state: DocumentState | None = None,
     write_fragments: bool | None = None,
@@ -151,6 +154,7 @@ def convert_documents(
             bibliography_files=list(bibliography_files or []),
             legacy_latex_accents=settings.legacy_latex_accents,
             emitter=active_emitter,
+            template_overrides=template_overrides,
             state=None if wrap_document else state,
             template_runtime=template_runtime,
             wrap_document=wrap_document,
@@ -172,3 +176,40 @@ def convert_documents(
         fragments.append(fragment)
 
     return ConversionBundle(fragments=fragments)
+
+
+def to_template_fragments(bundle: ConversionBundle) -> list[TemplateFragment]:
+    """Convert API fragments into the core template fragment contract."""
+    fragments: list[TemplateFragment] = []
+    for fragment in bundle.fragments:
+        conversion = fragment.conversion
+        if conversion is None:
+            raise ValueError("Template rendering requires conversion metadata for each fragment.")
+
+        document = fragment.document
+        slot_includes: set[str] = set()
+        if document is not None:
+            slots_obj = getattr(document, "slots", None)
+            if slots_obj is not None and hasattr(slots_obj, "includes"):
+                slot_includes = set(slots_obj.includes())
+            else:
+                legacy = getattr(document, "slot_inclusions", set())
+                if isinstance(legacy, set):
+                    slot_includes = set(legacy)
+
+        fragments.append(
+            TemplateFragment(
+                stem=fragment.stem,
+                latex=conversion.latex_output,
+                default_slot=conversion.default_slot or "mainmatter",
+                slot_outputs=dict(conversion.slot_outputs),
+                slot_includes=slot_includes,
+                document_state=conversion.document_state,
+                bibliography_path=conversion.bibliography_path,
+                template_engine=conversion.template_engine,
+                requires_shell_escape=conversion.template_shell_escape,
+                template_overrides=dict(conversion.template_overrides),
+                output_path=fragment.output_path,
+            )
+        )
+    return fragments

@@ -87,7 +87,7 @@ class MarkdownDocument:
 
 
 class _MarkdownCacheEntry:
-    __slots__ = ("processor", "lock")
+    __slots__ = ("lock", "processor")
 
     def __init__(self, processor: Any) -> None:
         self.processor = processor
@@ -188,7 +188,9 @@ def render_markdown(
     try:
         with entry.lock:
             processor = entry.processor
-            processor.reset()
+            reset_callback = getattr(processor, "reset", None)
+            if callable(reset_callback):
+                reset_callback()
             html = processor.convert(markdown_body)
     except MarkdownConversionError:
         raise

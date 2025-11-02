@@ -288,8 +288,6 @@ def render(
 
     if not template_selected:
         bundle = response.bundle
-        if bundle is None:  # pragma: no cover - defensive
-            raise RuntimeError("Conversion bundle missing from service outcome.")
 
         if output_mode == "stdout":
             typer.echo(bundle.combined_output())
@@ -328,8 +326,6 @@ def render(
         raise RuntimeError(f"Unsupported output mode '{output_mode}'.")
 
     render_result = response.render_result
-    if render_result is None:  # pragma: no cover - defensive
-        raise RuntimeError("Template render result missing from service outcome.")
 
     render_dir = render_result.main_tex_path.parent.resolve()
 

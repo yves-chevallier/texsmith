@@ -16,7 +16,6 @@ _PACKAGE_ROOT = Path(__file__).parent.resolve()
 class Template(WrappableTemplate):
     """Expose the MDPI template."""
 
-    _DEFAULT_OPTIONS = ["journal", "article", "submit", "pdftex", "moreauthors"]
     _NOTE_COMMANDS = [
         "firstnote",
         "secondnote",
@@ -72,8 +71,10 @@ class Template(WrappableTemplate):
         if author_block:
             context["author_block"] = author_block
         else:
-            fallback_author = self._coerce_string(context.get("author"))
-            context["author_block"] = escape_latex_chars(fallback_author or "John Doe")
+            fallback_author = self._coerce_string(context.get("author")) or self._coerce_string(
+                self.info.get_attribute_default("author")
+            )
+            context["author_block"] = escape_latex_chars(fallback_author or "")
 
         context["author_names"] = author_names
         context["author_citation"] = author_citation
@@ -98,7 +99,8 @@ class Template(WrappableTemplate):
         context["other_sections"] = other_sections
 
         bibliography_value = self._coerce_string(context.get("bibliography"))
-        context["bibliography"] = bibliography_value or "References/references"
+        default_bibliography = self._coerce_string(self.info.get_attribute_default("bibliography"))
+        context["bibliography"] = bibliography_value or default_bibliography or ""
 
         bibliography_style = self._coerce_string(context.get("bibliography_style"))
         context["bibliography_style"] = bibliography_style or ""
@@ -190,7 +192,9 @@ class Template(WrappableTemplate):
 
     def _build_documentclass_options(self, context: Mapping[str, Any]) -> list[str]:
         raw_options = self._split_options(context.get("class_options"))
-        options = [opt for opt in raw_options if opt]
+        options = [opt for opt in raw_options if opt] or self._split_options(
+            self.info.get_attribute_default("class_options")
+        )
 
         journal = self._coerce_string(context.get("journal"))
         if journal:

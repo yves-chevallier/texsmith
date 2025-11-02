@@ -16,8 +16,6 @@ _PACKAGE_ROOT = Path(__file__).parent.resolve()
 class Template(WrappableTemplate):
     """Expose the article template as a wrappable template instance."""
 
-    _DEFAULT_PAPER_OPTION = "a4paper"
-    _DEFAULT_ORIENTATION = "portrait"
     def __init__(self) -> None:
         try:
             super().__init__(_PACKAGE_ROOT)
@@ -45,16 +43,8 @@ class Template(WrappableTemplate):
 
         context.pop("press", None)
 
-        paper_option = (
-            context.get("paper")
-            or self.info.get_attribute_default("paper")
-            or self._DEFAULT_PAPER_OPTION
-        )
-        orientation_value = (
-            context.get("orientation")
-            or self.info.get_attribute_default("orientation")
-            or self._DEFAULT_ORIENTATION
-        )
+        paper_option = self._resolve_attribute(context, "paper")
+        orientation_value = self._resolve_attribute(context, "orientation")
         orientation_option = "landscape" if orientation_value == "landscape" else ""
 
         options = [option for option in (paper_option, orientation_option) if option]
@@ -123,6 +113,13 @@ class Template(WrappableTemplate):
             return None
 
         return " \\and ".join(formatted)
+
+    def _resolve_attribute(self, context: Mapping[str, Any], name: str) -> str | None:
+        value = self._coerce_string(context.get(name))
+        if value:
+            return value
+        default_value = self.info.get_attribute_default(name)
+        return self._coerce_string(default_value)
 
 
 __all__ = ["Template"]

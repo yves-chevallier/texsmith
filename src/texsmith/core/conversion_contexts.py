@@ -6,8 +6,10 @@ from collections.abc import Mapping
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
+
 from .config import BookConfig
 from .templates import TemplateBinding
+
 
 if TYPE_CHECKING:  # pragma: no cover - typing only
     from .bibliography.collection import BibliographyCollection
@@ -77,7 +79,7 @@ class BinderContext:
     slot_requests: dict[str, str]
     template_overrides: dict[str, Any]
     bibliography_map: dict[str, dict[str, Any]] = field(default_factory=dict)
-    bibliography_collection: "BibliographyCollection | None" = None
+    bibliography_collection: BibliographyCollection | None = None
     template_binding: TemplateBinding | None = None
     documents: list[DocumentContext] = field(default_factory=list)
     bound_segments: dict[str, list[SegmentContext]] = field(default_factory=dict)

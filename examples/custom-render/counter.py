@@ -1,8 +1,11 @@
-"""Example counter extension built on top of texsmith."""
-
 from __future__ import annotations
 
-from texsmith import DocumentState, RenderPhase, renders
+# Example counter extension built on top of texsmith.
+import sys
+
+from bs4.element import Tag
+
+from texsmith import DocumentState, RenderContext, RenderPhase, renders
 from texsmith.adapters.latex import LaTeXRenderer
 
 
@@ -11,13 +14,10 @@ COUNTER_KEY = "data-counter"
 
 
 @renders("span", phase=RenderPhase.INLINE, name="inline_data_counter")
-def render_data_counter(element, context) -> None:
+def render_data_counter(element: Tag, context: RenderContext) -> None:
     """Replace ``<span class=\"data-counter\">`` nodes with an incrementing marker."""
     classes = element.get("class") or []
-    if isinstance(classes, str):
-        tokens = {classes}
-    else:
-        tokens = set(classes)
+    tokens = {classes} if isinstance(classes, str) else set(classes)
     if COUNTER_CLASS not in tokens:
         return
 
@@ -51,6 +51,7 @@ __all__ = [
 ]
 
 
-state = DocumentState()
-renderer = build_renderer()
-print(renderer.render(HTML, state=state))
+if __name__ == "__main__":
+    state = DocumentState()
+    renderer = build_renderer()
+    sys.stdout.write(renderer.render(HTML, state=state))

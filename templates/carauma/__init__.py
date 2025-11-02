@@ -16,9 +16,6 @@ _PACKAGE_ROOT = Path(__file__).parent.resolve()
 class Template(WrappableTemplate):
     """Expose the Caraumã book template."""
 
-    _DEFAULT_LANGUAGE = "brazilian"
-    _DEFAULT_CONTENTS_TITLE = "Conteúdo"
-
     def __init__(self) -> None:
         try:
             super().__init__(_PACKAGE_ROOT)
@@ -94,9 +91,15 @@ class Template(WrappableTemplate):
 
     def _ensure_defaults(self, context: dict[str, Any]) -> None:
         if not self._coerce_string(context.get("language")):
-            context["language"] = self._DEFAULT_LANGUAGE
+            default_language = self._coerce_string(self.info.get_attribute_default("language"))
+            if default_language:
+                context["language"] = default_language
         if not self._coerce_string(context.get("contents_title")):
-            context["contents_title"] = self._DEFAULT_CONTENTS_TITLE
+            default_contents_title = self._coerce_string(
+                self.info.get_attribute_default("contents_title")
+            )
+            if default_contents_title:
+                context["contents_title"] = default_contents_title
 
     def _assign_if_missing(
         self,

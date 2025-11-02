@@ -26,6 +26,7 @@ from .runtime import (
     resolve_template_binding,
     resolve_template_language,
 )
+from .wrapper import TemplateWrapResult, wrap_template_document
 
 __all__ = [
     "BaseTemplate",
@@ -40,6 +41,7 @@ __all__ = [
     "TemplateManifest",
     "TemplateRuntime",
     "TemplateSlot",
+    "TemplateWrapResult",
     "WrappableTemplate",
     "build_template_overrides",
     "coerce_base_level",
@@ -49,6 +51,7 @@ __all__ = [
     "load_template",
     "load_template_runtime",
     "normalise_template_language",
+    "wrap_template_document",
     "resolve_template_binding",
     "resolve_template_language",
 ]

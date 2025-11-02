@@ -3,17 +3,17 @@
 from __future__ import annotations
 
 from collections.abc import Mapping
+import copy
 from dataclasses import dataclass
 from pathlib import Path
 import re
 from typing import TYPE_CHECKING, Any
 
-import yaml
-
 from bs4 import BeautifulSoup, FeatureNotFound
 from bs4.element import NavigableString, Tag
 from pybtex.exceptions import PybtexError
 from slugify import slugify
+import yaml
 
 from ..bibliography.collection import BibliographyCollection
 from ..bibliography.parsing import (
@@ -72,6 +72,7 @@ def build_binder_context(
     strategy: GenerationStrategy,
     emitter: DiagnosticEmitter | None,
     legacy_latex_accents: bool,
+    session_overrides: Mapping[str, Any] | None = None,
 ) -> BinderContext:
     """Prepare template bindings, bibliography data, and slot mappings."""
     emitter = ensure_emitter(emitter)
@@ -119,6 +120,8 @@ def build_binder_context(
         slot_requests.update(dict(slot_overrides))
 
     template_overrides = build_template_overrides(document_context.front_matter)
+    if session_overrides:
+        template_overrides = _merge_template_overrides(template_overrides, session_overrides)
     if document_context.extracted_title:
         press_section = template_overrides.setdefault("press", {})
         if isinstance(press_section, dict):
@@ -159,6 +162,25 @@ def build_binder_context(
     binder_context.documents.append(document_context)
 
     return binder_context
+
+
+def _merge_template_overrides(
+    base: Mapping[str, Any], overrides: Mapping[str, Any]
+) -> dict[str, Any]:
+    merged: dict[str, Any] = copy.deepcopy(dict(base))
+
+    def _merge(target: dict[str, Any], source: Mapping[str, Any]) -> None:
+        for key, value in source.items():
+            if isinstance(value, Mapping):
+                existing = target.get(key)
+                nested: dict[str, Any] = dict(existing) if isinstance(existing, Mapping) else {}
+                _merge(nested, value)
+                target[key] = nested
+            else:
+                target[key] = copy.deepcopy(value)
+
+    _merge(merged, overrides)
+    return merged
 
 
 def extract_slot_fragments(
@@ -320,11 +342,11 @@ def _load_inline_bibliography(
             if doi_support is None:
                 _, lookup_error_cls, normalise_doi_fn = _ensure_doi_support()
                 doi_support = (lookup_error_cls, normalise_doi_fn)
-            DoiLookupErrorType, normalise_doi_fn = doi_support
+            lookup_error_cls, normalise_doi_fn = doi_support
             doi_value = entry.doi
             try:
                 doi_key = normalise_doi_fn(doi_value)
-            except DoiLookupErrorType as exc:
+            except lookup_error_cls as exc:
                 emitter.warning(f"Failed to resolve DOI '{doi_value}' for '{key}': {exc}")
                 continue
 
@@ -336,7 +358,7 @@ def _load_inline_bibliography(
                     resolver = _resolve_bibliography_fetcher()
                 try:
                     payload = resolver.fetch(doi_value)
-                except DoiLookupErrorType as exc:
+                except lookup_error_cls as exc:
                     emitter.warning(f"Failed to resolve DOI '{doi_value}' for '{key}': {exc}")
                     continue
                 cache_entries[doi_key] = payload
@@ -486,7 +508,8 @@ def _ensure_doi_support() -> tuple[type[Any], type[Exception], Any]:
 
         DoiBibliographyFetcher = _Fetcher
 
-    assert _DOI_SUPPORT is not None and DoiBibliographyFetcher is not None
+    assert _DOI_SUPPORT is not None
+    assert DoiBibliographyFetcher is not None
     return (
         DoiBibliographyFetcher,
         _DOI_SUPPORT["lookup_error"],
