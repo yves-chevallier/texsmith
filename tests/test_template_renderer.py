@@ -3,8 +3,12 @@ from __future__ import annotations
 from pathlib import Path
 import textwrap
 
+import pytest
+
 from texsmith.api.document import Document
+from texsmith.api.pipeline import convert_documents, to_template_fragments
 from texsmith.api.templates import TemplateSession
+from texsmith.core.conversion.renderer import FragmentOverrideError, TemplateRenderer
 from texsmith.core.templates import load_template_runtime
 
 
@@ -94,3 +98,53 @@ def test_template_session_single_document_uses_renderer(tmp_path: Path) -> None:
     latex = result.main_tex_path.read_text(encoding="utf-8")
     assert "Overview" in latex
     assert result.fragment_paths == []
+
+
+def test_template_session_propagates_base_level(tmp_path: Path) -> None:
+    runtime = load_template_runtime(str(Path("templates") / "nature"))
+    session = TemplateSession(runtime=runtime)
+
+    doc_path = _write_markdown(
+        tmp_path,
+        "article.md",
+        """
+        # Heading
+        """,
+    )
+
+    session.add_document(Document.from_markdown(doc_path))
+    session.update_options({"base_level": 3})
+
+    build_dir = tmp_path / "base-level"
+    result = session.render(build_dir)
+
+    assert result.context.get("base_level") == 3
+
+
+def test_template_session_conflicting_overrides(tmp_path: Path) -> None:
+    runtime = load_template_runtime(str(Path("templates") / "nature"))
+    session = TemplateSession(runtime=runtime)
+
+    doc_path = _write_markdown(
+        tmp_path,
+        "article.md",
+        """
+        # Heading
+        """,
+    )
+    session.add_document(Document.from_markdown(doc_path))
+    session.add_document(Document.from_markdown(doc_path), slot="backmatter")
+
+    session.documents[1].slots.add("backmatter", include_document=True)
+
+    # Simulate conflicting overrides at the fragment layer.
+    bundle = convert_documents(session.documents, wrap_document=False)
+    fragments = to_template_fragments(bundle)
+    fragments[0].template_overrides = {"press": {"title": "First Title"}}
+    fragments[1].template_overrides = {"press": {"title": "Second Title"}}
+
+    build_dir = tmp_path / "conflict"
+    renderer = TemplateRenderer(runtime, emitter=session.emitter)
+    with pytest.raises(FragmentOverrideError) as excinfo:
+        renderer.render(fragments, output_dir=build_dir)
+    assert "press.title" in str(excinfo.value)

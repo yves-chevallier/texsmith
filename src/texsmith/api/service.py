@@ -73,14 +73,24 @@ class ConversionResponse:
     request: ConversionRequest
     documents: list[Document]
     bibliography_files: list[Path]
-    bundle: ConversionBundle | None = None
-    render_result: TemplateRenderResult | None = None
+    result: ConversionBundle | TemplateRenderResult
     emitter: DiagnosticEmitter | None = None
 
     @property
-    def uses_template(self) -> bool:
-        """Return True when a template workflow produced the response."""
-        return self.render_result is not None
+    def is_template(self) -> bool:
+        return isinstance(self.result, TemplateRenderResult)
+
+    @property
+    def bundle(self) -> ConversionBundle:
+        if isinstance(self.result, ConversionBundle):
+            return self.result
+        raise TypeError("ConversionResponse does not contain a ConversionBundle.")
+
+    @property
+    def render_result(self) -> TemplateRenderResult:
+        if isinstance(self.result, TemplateRenderResult):
+            return self.result
+        raise TypeError("ConversionResponse does not contain a TemplateRenderResult.")
 
 
 @dataclass(slots=True)
@@ -197,7 +207,7 @@ class ConversionService:
                 request=request,
                 documents=batch.documents,
                 bibliography_files=batch.bibliography_files,
-                bundle=bundle,
+                result=bundle,
                 emitter=emitter,
             )
 
@@ -217,7 +227,7 @@ class ConversionService:
             request=request,
             documents=batch.documents,
             bibliography_files=batch.bibliography_files,
-            render_result=render_result,
+            result=render_result,
             emitter=emitter,
         )
 

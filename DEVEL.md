@@ -87,14 +87,14 @@ reference the canonical module to avoid extra indirection.
 - [x] Raw latex blocks
 - [x] Manage the figure (c.f.) how to manage that...
 - [x] Optimize bibliography management using bib instead of jinja
+- [x] Documenter le processus de création de templates LaTeX personnalisées
+- [ ] Support for glossaries (glossaries package)
+- [ ] Support for cross-references (cleveref package)
+- [ ] Listings, verbatim ou minted
 - [ ] Textsc in Markdown
-- [ ] Documenter le processus de création de templates LaTeX personnalisées
 - [ ] Table width (auto width, fixed width..., tabularx, tabulary or not)
 - [ ] Table orientation (large table landscape...)
 - [ ] Scaffolding de templates avec cookiecutter
-- [ ] Listings, verbatim ou minted
-- [ ] Support for glossaries (glossaries package)
-- [ ] Support for cross-references (cleveref package)
 - [ ] texsmith template create my-template
 - [ ] Index generation
 - [ ] Progressbar support

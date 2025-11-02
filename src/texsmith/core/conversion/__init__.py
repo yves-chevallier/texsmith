@@ -48,7 +48,12 @@ from .inputs import (
     extract_front_matter_slots,
     parse_slot_mapping,
 )
-from .renderer import TemplateRenderer, TemplateRendererResult
+from .renderer import (
+    FragmentOverrideError,
+    TemplateFragment,
+    TemplateRenderer,
+    TemplateRendererResult,
+)
 from .templates import build_binder_context, extract_slot_fragments, heading_level_for
 
 
@@ -60,12 +65,14 @@ __all__ = [
     "ConversionResult",
     "DiagnosticEmitter",
     "DocumentContext",
+    "FragmentOverrideError",
     "GenerationStrategy",
     "InputKind",
     "LoggingEmitter",
     "NullEmitter",
     "SegmentContext",
     "TemplateBinding",
+    "TemplateFragment",
     "TemplateRenderer",
     "TemplateRendererResult",
     "TemplateRuntime",

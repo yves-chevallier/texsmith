@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import importlib
 from pathlib import Path
 import sys
 import types
@@ -8,13 +9,13 @@ import types
 if "bs4" not in sys.modules:
     bs4_stub = types.ModuleType("bs4")
 
-    class _FeatureNotFound(Exception):
+    class _FeatureNotFoundError(Exception):
         """Lightweight stand-in used during tests without BeautifulSoup."""
 
         pass
 
     bs4_stub.BeautifulSoup = object
-    bs4_stub.FeatureNotFound = _FeatureNotFound
+    bs4_stub.FeatureNotFound = _FeatureNotFoundError
     sys.modules["bs4"] = bs4_stub
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
@@ -30,8 +31,8 @@ if "texsmith" not in sys.modules:
     texsmith_stub.__path__ = [str((SRC_ROOT / "texsmith").resolve())]
     sys.modules["texsmith"] = texsmith_stub
 
-from templates.article import Template
-from texsmith.core.templates.manifest import TemplateManifest
+Template = importlib.import_module("templates.article").Template
+TemplateManifest = importlib.import_module("texsmith.core.templates.manifest").TemplateManifest
 
 
 def test_attribute_resolver_merges_press_metadata() -> None:

@@ -15,11 +15,6 @@ _PACKAGE_ROOT = Path(__file__).parent.resolve()
 class Template(WrappableTemplate):
     """Expose the EPFL thesis template."""
 
-    _DEFAULT_NOTICE = (
-        "This is a temporary title page. It will be replaced for the final print "
-        "by a version provided by the registrar's office."
-    )
-
     _ABSTRACT_SLOTS = {
         "abstract_en": {"language": "english", "title": "Abstract", "label": "English"},
         "abstract_fr": {"language": "french", "title": "Résumé", "label": "Français"},
@@ -138,7 +133,7 @@ class Template(WrappableTemplate):
 
         notice = self._coerce_string(context.get("title_notice"))
         if not notice:
-            notice = self._DEFAULT_NOTICE
+            notice = self._coerce_string(self.info.get_attribute_default("title_notice")) or ""
         context["title_notice"] = notice
 
         language = self._coerce_string(context.get("title_language"))

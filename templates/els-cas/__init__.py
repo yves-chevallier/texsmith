@@ -76,10 +76,12 @@ class Template(WrappableTemplate):
         context["highlights"] = highlights
 
         bibliography = self._coerce_string(context.get("bibliography"))
-        context["bibliography"] = bibliography or "cas-refs"
+        default_bibliography = self._coerce_string(self.info.get_attribute_default("bibliography"))
+        context["bibliography"] = bibliography or default_bibliography or ""
 
         bibliography_style = self._coerce_string(context.get("bibliography_style"))
-        context["bibliography_style"] = bibliography_style or "cas-model2-names"
+        default_style = self._coerce_string(self.info.get_attribute_default("bibliography_style"))
+        context["bibliography_style"] = bibliography_style or default_style or ""
 
         author_entries = context.get("author_entries") or []
         if isinstance(author_entries, list):
@@ -193,20 +195,28 @@ class Template(WrappableTemplate):
         context.pop("press", None)
 
     def _normalise_column_mode(self, value: Any) -> str:
-        if value is None:
-            return self._COLUMN_MODES["double"]
+        candidate: str | None
+        if isinstance(value, (int, float)):
+            numeric = int(value)
+            if numeric == 1:
+                candidate = "single"
+            elif numeric == 2:
+                candidate = "double"
+            else:
+                candidate = str(value)
+        else:
+            candidate = self._coerce_string(value)
 
-        if isinstance(value, str):
-            key = value.strip().lower()
+        if not candidate:
+            candidate = self._coerce_string(self.info.get_attribute_default("column_mode"))
+
+        if candidate:
+            key = candidate.strip().lower()
             mapped = self._COLUMN_MODES.get(key)
             if mapped:
                 return mapped
-        elif isinstance(value, (int, float)):
-            numeric = int(value)
-            if numeric == 1:
-                return self._COLUMN_MODES["single"]
-            if numeric == 2:
-                return self._COLUMN_MODES["double"]
+            if key in self._COLUMN_MODES.values():
+                return key
 
         allowed = ", ".join(sorted({"single", "double"}))
         raise TemplateError(

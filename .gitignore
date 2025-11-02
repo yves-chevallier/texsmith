@@ -42,5 +42,6 @@ __pycache__/
 *.xdv
 
 # Local build artifacts
-build/
+build*/
 *:Zone.Identifier
+tmp*

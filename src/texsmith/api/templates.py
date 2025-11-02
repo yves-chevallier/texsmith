@@ -57,7 +57,7 @@ from ..core.conversion.debug import ensure_emitter
 from ..core.conversion.renderer import TemplateRenderer
 from ..core.diagnostics import DiagnosticEmitter
 from .document import Document
-from .pipeline import RenderSettings, convert_documents
+from .pipeline import RenderSettings, convert_documents, to_template_fragments
 
 
 __all__ = [
@@ -132,11 +132,9 @@ class TemplateSession:
         emitter: DiagnosticEmitter | None = None,
     ) -> None:
         self.runtime = runtime
-        attributes = (
-            runtime.instance.info.attribute_defaults() if runtime.instance else {}
-        )
-        self._options = TemplateOptions(copy.deepcopy(attributes))
-        self._default_options = TemplateOptions(copy.deepcopy(attributes))
+        attributes = runtime.instance.info.attribute_defaults() if runtime.instance else {}
+        self._defaults: dict[str, Any] = copy.deepcopy(attributes)
+        self._overrides = TemplateOptions()
         self._documents: list[Document] = []
         self._bibliography_files: list[Path] = []
         self.settings = settings.copy() if settings else RenderSettings()
@@ -144,55 +142,26 @@ class TemplateSession:
 
     def _prepare_document(self, document: Document) -> Document:
         """Return a document copy with template overrides applied."""
-        overrides_dict = self._options.to_dict()
-        if not overrides_dict:
-            return document.copy()
-
-        prepared = document.copy()
-        front_matter: dict[str, Any] = dict(prepared.front_matter)
-        template_section = front_matter.setdefault("template", {})
-        if not isinstance(template_section, dict):
-            template_section = dict(template_section)
-            front_matter["template"] = template_section
-        template_section.update(overrides_dict)
-        prepared.set_front_matter(front_matter)
-        return prepared
+        return document.copy()
 
     def _collect_option_overrides(self) -> dict[str, Any]:
         """Compute overrides that differ from the template defaults."""
-        current = self._options.to_dict()
-        baseline = self._default_options.to_dict()
-
-        def _diff(
-            current_map: Mapping[str, Any], baseline_map: Mapping[str, Any]
-        ) -> dict[str, Any]:
-            overrides: dict[str, Any] = {}
-            for key, value in current_map.items():
-                baseline_value = baseline_map.get(key)
-                if isinstance(value, Mapping) and isinstance(baseline_value, Mapping):
-                    nested = _diff(value, baseline_value)
-                    if nested:
-                        overrides[key] = nested
-                elif value != baseline_value:
-                    overrides[key] = value
-            return overrides
-
-        return _diff(current, baseline)
+        return self._overrides.to_dict()
 
     def get_default_options(self) -> TemplateOptions:
         """Return a copy of the default template options."""
-        return self._default_options.copy()
+        return TemplateOptions(copy.deepcopy(self._defaults))
 
     def set_options(self, options: TemplateOptions | Mapping[str, Any]) -> None:
         """Replace the current template overrides."""
         if isinstance(options, TemplateOptions):
-            self._options = options.copy()
+            self._overrides = options.copy()
         else:
-            self._options = TemplateOptions(dict(options))
+            self._overrides = TemplateOptions(dict(options))
 
     def update_options(self, values: Mapping[str, Any] | None = None, **extra: Any) -> None:
         """Update the current template overrides."""
-        self._options.update(values, **extra)
+        self._overrides.update(values, **extra)
 
     def add_bibliography(self, *paths: Path) -> None:
         """Register bibliography files applied to all documents."""
@@ -230,6 +199,7 @@ class TemplateSession:
         output_dir.mkdir(parents=True, exist_ok=True)
 
         prepared_documents = [self._prepare_document(document) for document in self._documents]
+        option_overrides = self._collect_option_overrides()
 
         bundle = convert_documents(
             prepared_documents,
@@ -239,16 +209,18 @@ class TemplateSession:
             bibliography_files=self._bibliography_files,
             template=self.runtime.name,
             template_runtime=self.runtime,
+            template_overrides=option_overrides or None,
             wrap_document=False,
             write_fragments=False,
         )
+        fragments = to_template_fragments(bundle)
 
         renderer = TemplateRenderer(self.runtime, emitter=self.emitter)
         try:
             rendered = renderer.render(
-                bundle,
+                fragments,
                 output_dir=output_dir,
-                overrides=self._collect_option_overrides(),
+                overrides=option_overrides or None,
                 copy_assets=self.settings.copy_assets,
             )
         except TemplateError as exc:

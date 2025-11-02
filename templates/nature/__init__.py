@@ -16,7 +16,6 @@ _PACKAGE_ROOT = Path(__file__).parent.resolve()
 class Template(WrappableTemplate):
     """Expose the Springer Nature article template."""
 
-    _DEFAULT_CLASS_OPTIONS = ("sn-mathphys-num",)
     _REFERENCE_STYLES = {
         "sn-basic",
         "sn-mathphys-num",
@@ -28,7 +27,6 @@ class Template(WrappableTemplate):
         "sn-vancouver-ay",
         "sn-nature",
     }
-    _DEFAULT_REFERENCE_STYLE = "sn-mathphys-num"
 
     def __init__(self) -> None:
         try:
@@ -57,7 +55,8 @@ class Template(WrappableTemplate):
         context["bibliography_style"] = bibliography_style
 
         bibliography = self._coerce_string(context.get("bibliography"))
-        context["bibliography"] = bibliography or "sn-bibliography"
+        default_bibliography = self._coerce_string(self.info.get_attribute_default("bibliography"))
+        context["bibliography"] = bibliography or default_bibliography or ""
 
         return context
 
@@ -358,16 +357,19 @@ class Template(WrappableTemplate):
 
     def _normalise_class_options(self, value: Any) -> tuple[str, ...]:
         raw = self._stringify_options(value)
-        if not raw:
-            return self._DEFAULT_CLASS_OPTIONS
-
-        options = [token.strip() for token in raw.split(",") if token.strip()]
-        return tuple(dict.fromkeys(options))
+        if raw:
+            return self._tokenise_options(raw)
+        fallback = self._stringify_options(self.info.get_attribute_default("class_options"))
+        return self._tokenise_options(fallback)
 
     def _normalise_reference_style(self, value: Any) -> str:
-        candidate = self._coerce_string(value)
+        candidate = self._coerce_string(value) or self._coerce_string(
+            self.info.get_attribute_default("bibliography_style")
+        )
         if not candidate:
-            return self._DEFAULT_REFERENCE_STYLE
+            raise TemplateError(
+                "Bibliography style default is not configured for the SN article template."
+            )
 
         if candidate not in self._REFERENCE_STYLES:
             allowed = ", ".join(sorted(self._REFERENCE_STYLES))
@@ -376,6 +378,12 @@ class Template(WrappableTemplate):
                 f"'{candidate}' for SN article template. Allowed values: {allowed}."
             )
         return candidate
+
+    def _tokenise_options(self, raw: str | None) -> tuple[str, ...]:
+        if not raw:
+            return ()
+        options = [token.strip() for token in raw.split(",") if token.strip()]
+        return tuple(dict.fromkeys(options))
 
 
 __all__ = ["Template"]
