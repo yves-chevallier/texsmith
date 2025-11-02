@@ -2,6 +2,7 @@ from pathlib import Path
 import textwrap
 
 from typer.testing import CliRunner
+import yaml
 
 from texsmith.ui.cli import app
 
@@ -161,3 +162,77 @@ def test_cli_front_matter_bibliography_fetches_doi(monkeypatch, tmp_path: Path) 
     bibliography_payload = bibliography_file.read_text(encoding="utf-8")
     assert "@article{inline" in bibliography_payload
     assert "Inline Demonstration" in bibliography_payload
+
+
+def test_cli_front_matter_bibliography_uses_output_cache(monkeypatch, tmp_path: Path) -> None:
+    calls: list[str] = []
+
+    class DummyFetcher:
+        def __init__(self, *args, **kwargs) -> None:
+            pass
+
+        def fetch(self, value: str) -> str:
+            calls.append(value)
+            return textwrap.dedent(
+                """
+                @article{any,
+                    title = {Inline Demonstration},
+                    author = {Doe, Jane},
+                }
+                """
+            )
+
+    monkeypatch.setattr("texsmith.core.conversion.templates.DoiBibliographyFetcher", DummyFetcher)
+
+    markdown_file = _write(
+        tmp_path,
+        "paper.md",
+        """
+        ---
+        bibliography:
+          inline: https://doi.org/10.1038/146796a0
+        ---
+
+        Cheese[^inline]
+        """,
+    )
+
+    template_dir = _template_path("nature")
+    output_dir = tmp_path / "out"
+    runner = CliRunner()
+
+    result_first = runner.invoke(
+        app,
+        [
+            "render",
+            str(markdown_file),
+            "--output-dir",
+            str(output_dir),
+            "--template",
+            str(template_dir),
+        ],
+    )
+    assert result_first.exit_code == 0, result_first.stderr
+    assert calls == ["https://doi.org/10.1038/146796a0"]
+
+    cache_path = output_dir / "texsmith-doi-cache.yaml"
+    assert cache_path.exists()
+    cache_payload = yaml.safe_load(cache_path.read_text(encoding="utf-8"))
+    assert isinstance(cache_payload, dict)
+    entries = cache_payload.get("entries") if isinstance(cache_payload, dict) else None
+    if isinstance(entries, dict):
+        assert "10.1038/146796a0" in entries
+
+    result_second = runner.invoke(
+        app,
+        [
+            "render",
+            str(markdown_file),
+            "--output-dir",
+            str(output_dir),
+            "--template",
+            str(template_dir),
+        ],
+    )
+    assert result_second.exit_code == 0, result_second.stderr
+    assert calls == ["https://doi.org/10.1038/146796a0"]
