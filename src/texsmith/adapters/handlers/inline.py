@@ -197,6 +197,8 @@ def _segment_text_with_emoji(text: str) -> list[tuple[str, str]]:
     """Split text into plain fragments and emoji clusters."""
     if not text:
         return []
+    if text.isascii():
+        return [("text", text)]
     entries = emoji.emoji_list(text)
     if not entries:
         return [("text", text)]

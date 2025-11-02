@@ -6,6 +6,7 @@ from collections.abc import Iterable, Sequence
 from dataclasses import dataclass
 from pathlib import Path
 import re
+from threading import Lock
 from typing import Any
 
 import yaml
@@ -85,6 +86,21 @@ class MarkdownDocument:
     front_matter: dict[str, Any]
 
 
+class _MarkdownCacheEntry:
+    __slots__ = ("processor", "lock")
+
+    def __init__(self, processor: Any) -> None:
+        self.processor = processor
+        self.lock = Lock()
+
+
+_MARKDOWN_CACHE: dict[
+    tuple[tuple[str, ...], tuple[str, ...]],
+    _MarkdownCacheEntry,
+] = {}
+_MARKDOWN_CACHE_GUARD = Lock()
+
+
 def resolve_markdown_extensions(
     requested: Iterable[str] | None,
     disabled: Iterable[str] | None,
@@ -157,40 +173,25 @@ def render_markdown(
     metadata, markdown_body = split_front_matter(source)
 
     active_extensions = list(extensions or ())
-    extension_configs = {
-        name: dict(DEFAULT_EXTENSION_CONFIGS[name])
-        for name in active_extensions
-        if name in DEFAULT_EXTENSION_CONFIGS
-    }
+    extensions_key = tuple(active_extensions)
+
     snippet_enabled = any(
-        extension.split(":", 1)[0].lower() == "pymdownx.snippets" for extension in active_extensions
+        _normalise_extension_name(extension) == "pymdownx.snippets"
+        for extension in active_extensions
     )
+    snippet_paths: tuple[str, ...] = ()
     if snippet_enabled and base_path is not None:
-        base_path_str = str(Path(base_path).resolve())
-        snippet_config = extension_configs.setdefault("pymdownx.snippets", {})
-        existing_paths: list[str]
-        existing_value = snippet_config.get("base_path")
-        if existing_value is None:
-            existing_paths = []
-        elif isinstance(existing_value, str):
-            existing_paths = [existing_value]
-        else:
-            try:
-                existing_paths = list(existing_value)  # type: ignore[arg-type]
-            except TypeError:
-                existing_paths = [str(existing_value)]
-        if base_path_str not in existing_paths:
-            existing_paths.append(base_path_str)
-        snippet_config["base_path"] = existing_paths
-        snippet_config.setdefault("encoding", "utf-8")
+        snippet_paths = (str(Path(base_path).resolve()),)
+
+    entry = _resolve_markdown_entry(markdown, extensions_key, snippet_paths)
 
     try:
-        md = markdown.Markdown(extensions=active_extensions, extension_configs=extension_configs)
-    except Exception as exc:  # pragma: no cover - library-controlled
-        raise MarkdownConversionError(f"Failed to initialize Markdown processor: {exc}") from exc
-
-    try:
-        html = md.convert(markdown_body)
+        with entry.lock:
+            processor = entry.processor
+            processor.reset()
+            html = processor.convert(markdown_body)
+    except MarkdownConversionError:
+        raise
     except Exception as exc:  # pragma: no cover - library-controlled
         raise MarkdownConversionError(f"Failed to convert Markdown source: {exc}") from exc
 
@@ -233,3 +234,66 @@ def split_front_matter(source: str) -> tuple[dict[str, Any], str]:
 
     prefix = source[:prefix_len]
     return metadata, prefix + body
+
+
+def _resolve_markdown_entry(
+    markdown: Any,
+    extensions_key: tuple[str, ...],
+    snippet_paths: tuple[str, ...],
+) -> _MarkdownCacheEntry:
+    cache_key = (extensions_key, snippet_paths)
+    entry = _MARKDOWN_CACHE.get(cache_key)
+    if entry is not None:
+        return entry
+    with _MARKDOWN_CACHE_GUARD:
+        entry = _MARKDOWN_CACHE.get(cache_key)
+        if entry is None:
+            processor = _build_markdown_processor(markdown, extensions_key, snippet_paths)
+            entry = _MarkdownCacheEntry(processor)
+            _MARKDOWN_CACHE[cache_key] = entry
+    return entry
+
+
+def _build_markdown_processor(
+    markdown: Any,
+    extensions_key: tuple[str, ...],
+    snippet_paths: tuple[str, ...],
+) -> Any:
+    active_extensions = list(extensions_key)
+    extension_configs = {
+        name: dict(DEFAULT_EXTENSION_CONFIGS[name])
+        for name in active_extensions
+        if name in DEFAULT_EXTENSION_CONFIGS
+    }
+    snippet_enabled = any(
+        _normalise_extension_name(extension) == "pymdownx.snippets"
+        for extension in active_extensions
+    )
+    if snippet_enabled and snippet_paths:
+        snippet_config = extension_configs.setdefault("pymdownx.snippets", {})
+        existing_paths = _normalise_snippet_paths(snippet_config.get("base_path"))
+        for path in snippet_paths:
+            if path not in existing_paths:
+                existing_paths.append(path)
+        snippet_config["base_path"] = existing_paths
+        snippet_config.setdefault("encoding", "utf-8")
+
+    try:
+        return markdown.Markdown(extensions=active_extensions, extension_configs=extension_configs)
+    except Exception as exc:  # pragma: no cover - library-controlled
+        raise MarkdownConversionError(f"Failed to initialize Markdown processor: {exc}") from exc
+
+
+def _normalise_extension_name(value: str) -> str:
+    return value.split(":", 1)[0].lower()
+
+
+def _normalise_snippet_paths(value: Any) -> list[str]:
+    if value is None:
+        return []
+    if isinstance(value, str):
+        return [value]
+    try:
+        return [str(item) for item in value]  # type: ignore[arg-type]
+    except TypeError:
+        return [str(value)]

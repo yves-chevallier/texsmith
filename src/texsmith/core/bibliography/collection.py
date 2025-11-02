@@ -175,18 +175,24 @@ class BibliographyCollection:
         """Persist the bibliography to a BibTeX file."""
         path = Path(target)
         data = self.to_bibliography_data(keys=keys)
-        data.to_file(str(path))
-        try:
-            text = path.read_text(encoding="utf-8")
-        except OSError:
-            return
+        raw_text = data.to_string("bibtex")
         sanitized_lines = []
-        for line in text.splitlines():
+        for line in raw_text.splitlines():
             stripped = line.lstrip().lower()
             if stripped.startswith("url =") or stripped.startswith("doi ="):
                 line = line.replace(r"\_", "_")
             sanitized_lines.append(line)
-        path.write_text("\n".join(sanitized_lines) + "\n", encoding="utf-8")
+        payload = "\n".join(sanitized_lines).rstrip() + "\n"
+        try:
+            existing = path.read_text(encoding="utf-8")
+        except FileNotFoundError:
+            existing = None
+        except OSError:
+            existing = None
+        if existing == payload:
+            return
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(payload, encoding="utf-8")
 
     def _entries_equivalent(self, first: Entry, second: Entry) -> bool:
         return self._entry_signature(first) == self._entry_signature(second)

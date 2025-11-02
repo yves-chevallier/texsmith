@@ -41,10 +41,9 @@ from collections.abc import Iterable, Mapping
 import copy
 from dataclasses import dataclass, field
 from enum import Enum
+from html.parser import HTMLParser
 from pathlib import Path
 from typing import Any, ClassVar
-
-from bs4 import BeautifulSoup, FeatureNotFound
 
 from ..adapters.markdown import (
     DEFAULT_MARKDOWN_EXTENSIONS,
@@ -444,16 +443,48 @@ class Document:
             if base_mapping:
                 self.slots.merge(DocumentSlots.from_mapping(base_mapping))
 
+    _HEADING_TAGS: ClassVar[set[str]] = {"h1", "h2", "h3", "h4", "h5", "h6"}
+
+    class _HeadingExtractor(HTMLParser):
+        __slots__ = ("_depth", "_resolved", "parts")
+
+        def __init__(self) -> None:
+            super().__init__()
+            self._depth = 0
+            self._resolved = False
+            self.parts: list[str] = []
+
+        def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
+            tag_lower = tag.lower()
+            if self._resolved:
+                return
+            if self._depth:
+                self._depth += 1
+                return
+            if tag_lower in Document._HEADING_TAGS:
+                self._depth = 1
+
+        def handle_endtag(self, tag: str) -> None:
+            if not self._depth:
+                return
+            self._depth -= 1
+            if self._depth == 0:
+                self._resolved = True
+
+        def handle_data(self, data: str) -> None:
+            if self._depth and not self._resolved:
+                self.parts.append(data)
+
     def _extract_title_from_heading(self) -> str | None:
+        extractor = self._HeadingExtractor()
+        extract_text: str | None = None
         try:
-            soup = BeautifulSoup(self._html, "lxml")
-        except FeatureNotFound:
-            soup = BeautifulSoup(self._html, "html.parser")
-        heading = soup.find(["h1", "h2", "h3", "h4", "h5", "h6"])
-        if heading is None:
-            return None
-        text = heading.get_text(strip=True)
-        return text or None
+            extractor.feed(self._html)
+        finally:
+            extractor.close()
+            if extractor.parts:
+                extract_text = "".join(extractor.parts).strip()
+        return extract_text or None
 
     def to_context(self) -> DocumentContext:
         """Build a fresh DocumentContext for conversion."""

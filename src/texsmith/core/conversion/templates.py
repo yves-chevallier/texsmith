@@ -8,15 +8,15 @@ from pathlib import Path
 import re
 from typing import TYPE_CHECKING, Any
 
+import yaml
+
 from bs4 import BeautifulSoup, FeatureNotFound
 from bs4.element import NavigableString, Tag
 from pybtex.exceptions import PybtexError
 from slugify import slugify
 
-from ..bibliography import (
-    BibliographyCollection,
-    DoiBibliographyFetcher,
-    DoiLookupError,
+from ..bibliography.collection import BibliographyCollection
+from ..bibliography.parsing import (
     bibliography_data_from_inline_entry,
     bibliography_data_from_string,
 )
@@ -43,7 +43,12 @@ from .inputs import (
 
 
 if TYPE_CHECKING:  # pragma: no cover - typing only
-    from ..bibliography import DoiBibliographyFetcher
+    from ..bibliography.doi import DoiBibliographyFetcher, DoiLookupError
+
+
+_DOI_SUPPORT: dict[str, Any] | None = None
+# Exported for compatibility with existing monkeypatch patterns in tests.
+DoiBibliographyFetcher: type[Any] | None = None
 
 
 @dataclass(slots=True)
@@ -96,6 +101,7 @@ def build_binder_context(
                 bibliography_collection,
                 inline_bibliography,
                 source_label=document_context.source_path.stem,
+                output_dir=output_dir,
                 emitter=emitter,
             )
 
@@ -296,6 +302,7 @@ def _load_inline_bibliography(
     entries: Mapping[str, InlineBibliographyEntry],
     *,
     source_label: str,
+    output_dir: Path | None = None,
     emitter: DiagnosticEmitter,
     fetcher: DoiBibliographyFetcher | None = None,
 ) -> None:
@@ -304,21 +311,43 @@ def _load_inline_bibliography(
 
     resolver = fetcher
     source_path = _inline_bibliography_source_path(source_label)
+    cache_entries, cache_path = _initialise_doi_cache(output_dir)
+    cache_dirty = False
+    doi_support: tuple[type[Exception], Any] | None = None
 
     for key, entry in entries.items():
         if entry.doi:
-            if resolver is None:
-                resolver = _resolve_bibliography_fetcher()
+            if doi_support is None:
+                _, lookup_error_cls, normalise_doi_fn = _ensure_doi_support()
+                doi_support = (lookup_error_cls, normalise_doi_fn)
+            DoiLookupErrorType, normalise_doi_fn = doi_support
             doi_value = entry.doi
             try:
-                payload = resolver.fetch(doi_value)
-            except DoiLookupError as exc:
+                doi_key = normalise_doi_fn(doi_value)
+            except DoiLookupErrorType as exc:
                 emitter.warning(f"Failed to resolve DOI '{doi_value}' for '{key}': {exc}")
                 continue
+
+            payload = cache_entries.get(doi_key)
+            cache_mode = "doi_cache" if payload is not None else "doi"
+
+            if payload is None:
+                if resolver is None:
+                    resolver = _resolve_bibliography_fetcher()
+                try:
+                    payload = resolver.fetch(doi_value)
+                except DoiLookupErrorType as exc:
+                    emitter.warning(f"Failed to resolve DOI '{doi_value}' for '{key}': {exc}")
+                    continue
+                cache_entries[doi_key] = payload
+                cache_dirty = True
+
             try:
                 data = bibliography_data_from_string(payload, key)
             except PybtexError as exc:
                 emitter.warning(f"Failed to parse bibliography entry '{key}': {exc}")
+                if cache_mode == "doi":
+                    cache_entries.pop(doi_key, None)
                 continue
             collection.load_data(data, source=source_path)
             record_event(
@@ -327,7 +356,7 @@ def _load_inline_bibliography(
                 {
                     "key": key,
                     "value": doi_value,
-                    "mode": "doi",
+                    "mode": cache_mode,
                     "source": source_label,
                     "resolved_source": str(source_path),
                 },
@@ -357,6 +386,9 @@ def _load_inline_bibliography(
             f"Bibliography entry '{key}' does not provide a DOI or manual fields; skipping."
         )
 
+    if cache_dirty and cache_path is not None:
+        _write_doi_cache(cache_path, cache_entries)
+
 
 def _inline_bibliography_source_path(label: str) -> Path:
     slug = slugify(label, separator="-")
@@ -366,7 +398,100 @@ def _inline_bibliography_source_path(label: str) -> Path:
 
 
 def _resolve_bibliography_fetcher() -> DoiBibliographyFetcher:
-    return DoiBibliographyFetcher()
+    fetcher_cls, _, _ = _ensure_doi_support()
+    return fetcher_cls()
+
+
+_DOI_CACHE_FILENAME = "texsmith-doi-cache.yaml"
+
+
+def _initialise_doi_cache(output_dir: Path | None) -> tuple[dict[str, str], Path | None]:
+    if output_dir is None:
+        return {}, None
+
+    cache_path = output_dir / _DOI_CACHE_FILENAME
+    try:
+        raw_text = cache_path.read_text(encoding="utf-8")
+    except FileNotFoundError:
+        return {}, cache_path
+    except OSError:
+        return {}, cache_path
+
+    try:
+        payload = yaml.safe_load(raw_text) or {}
+    except yaml.YAMLError:
+        return {}, cache_path
+
+    entries_payload: Any
+    if isinstance(payload, dict) and isinstance(payload.get("entries"), dict):
+        entries_payload = payload["entries"]
+    elif isinstance(payload, dict):
+        entries_payload = payload
+    else:
+        entries_payload = {}
+
+    entries: dict[str, str] = {}
+    normalise_fn: Any | None = None
+    lookup_error_cls: type[Exception] | None = None
+    if isinstance(entries_payload, dict):
+        for key, value in entries_payload.items():
+            if not isinstance(key, str) or not isinstance(value, str):
+                continue
+            try:
+                if normalise_fn is None:
+                    _, lookup_error_cls, normalise_fn = _ensure_doi_support()
+                normalised = normalise_fn(key)
+            except Exception as exc:
+                if lookup_error_cls is not None and isinstance(exc, lookup_error_cls):
+                    continue
+                raise
+            entries[normalised] = value
+
+    return entries, cache_path
+
+
+def _write_doi_cache(path: Path, entries: dict[str, str]) -> None:
+    document = {
+        "version": 1,
+        "entries": {key: entries[key] for key in sorted(entries)},
+    }
+    try:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(
+            yaml.safe_dump(
+                document,
+                sort_keys=True,
+                default_flow_style=False,
+                encoding=None,
+            ),
+            encoding="utf-8",
+        )
+    except OSError:
+        return
+
+
+def _ensure_doi_support() -> tuple[type[Any], type[Exception], Any]:
+    """Lazily import DOI helpers to avoid pulling in requests unless required."""
+    global _DOI_SUPPORT, DoiBibliographyFetcher
+
+    if _DOI_SUPPORT is None:
+        from ..bibliography.doi import DoiLookupError, normalise_doi
+
+        _DOI_SUPPORT = {
+            "lookup_error": DoiLookupError,
+            "normalise": normalise_doi,
+        }
+    if DoiBibliographyFetcher is None:
+        from ..bibliography.doi import DoiBibliographyFetcher as _Fetcher
+
+        DoiBibliographyFetcher = _Fetcher
+
+    assert _DOI_SUPPORT is not None and DoiBibliographyFetcher is not None
+    return (
+        DoiBibliographyFetcher,
+        _DOI_SUPPORT["lookup_error"],
+        _DOI_SUPPORT["normalise"],
+    )
 
 
 __all__ = [

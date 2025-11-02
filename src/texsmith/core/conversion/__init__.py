@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from texsmith.core.bibliography import DoiBibliographyFetcher
 from texsmith.core.conversion_contexts import (
     BinderContext,
     DocumentContext,
@@ -61,7 +60,6 @@ __all__ = [
     "ConversionResult",
     "DiagnosticEmitter",
     "DocumentContext",
-    "DoiBibliographyFetcher",
     "GenerationStrategy",
     "InputKind",
     "LoggingEmitter",
