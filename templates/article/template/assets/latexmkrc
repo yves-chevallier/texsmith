@@ -1,4 +1,5 @@
 $bibtex_use = 2;
 $lualatex   = 'lualatex --shell-escape %O %S';
 $biber = 'biber %O %B';
+$makeindex = 'texindy %O -o %D %S';
 $clean_ext .= ' %R.run.xml %R.blg';

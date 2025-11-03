@@ -553,6 +553,17 @@ class LatexPlugin(BasePlugin):
         template_context["mainmatter"] = "\n\n".join(mainmatter)
         template_context["backmatter"] = "\n\n".join(backmatter)
         template_context["index_entries"] = final_state.has_index_entries
+        index_terms = list(dict.fromkeys(getattr(final_state, "index_entries", [])))
+        template_context["has_index"] = bool(index_terms)
+        template_context["index_terms"] = [tuple(term) for term in index_terms]
+        try:
+            from texsmith_index import get_registry
+        except ModuleNotFoundError:
+            template_context["index_registry"] = [tuple(term) for term in index_terms]
+        else:
+            template_context["index_registry"] = [
+                tuple(term) for term in sorted(get_registry().snapshot())
+            ]
         template_context["acronyms"] = final_state.acronyms.copy()
         template_context["glossary"] = final_state.glossary.copy()
         template_context["solutions"] = list(final_state.solutions)

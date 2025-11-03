@@ -1,0 +1,19 @@
+site_name: TeXSmith Index Demo
+theme:
+  name: material
+
+plugins:
+  - search
+  - texsmith_index
+  - texsmith:
+      template: article
+      build_dir: press
+      register_material: false
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - texsmith_index.markdown:TexsmithIndexExtension
+
+nav:
+  - Home: index.md

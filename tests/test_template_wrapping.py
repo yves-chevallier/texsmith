@@ -2,12 +2,14 @@ from pathlib import Path
 
 import pytest
 
+from texsmith.core.context import DocumentState
 from texsmith.core.templates import (
     TemplateError,
     WrappableTemplate,
     copy_template_assets,
     load_template,
 )
+from texsmith.core.templates.wrapper import wrap_template_document
 
 
 @pytest.fixture
@@ -63,6 +65,27 @@ def test_wrap_document_includes_index_when_flag_true(
     wrapped = book_template.wrap_document("", context=context)
     assert "\\makeindex" in wrapped
     assert "\\printindex" in wrapped
+
+
+def test_wrap_template_document_exposes_index_terms(
+    article_template: WrappableTemplate, tmp_path: Path
+) -> None:
+    state = DocumentState()
+    state.has_index_entries = True
+    state.index_entries.append(("Alpha", "Beta"))
+    result = wrap_template_document(
+        template=article_template,
+        default_slot="mainmatter",
+        slot_outputs={"mainmatter": ""},
+        document_state=state,
+        template_overrides=None,
+        output_dir=tmp_path,
+        copy_assets=False,
+    )
+
+    context = result.template_context
+    assert context["has_index"] is True
+    assert ("Alpha", "Beta") in context["index_terms"]
 
 
 def test_wrap_document_includes_acronyms_when_present(
@@ -152,7 +175,7 @@ def test_article_includes_index_when_flag_true(
     context = article_template.prepare_context("")
     context["index_entries"] = True
     wrapped = article_template.wrap_document("", context=context)
-    assert "\\usepackage{imakeidx}" in wrapped
+    assert "\\usepackage[xindy]{imakeidx}" in wrapped
     assert "\\makeindex" in wrapped
     assert "\\printindex" in wrapped
 
