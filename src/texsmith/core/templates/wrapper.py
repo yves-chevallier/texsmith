@@ -52,6 +52,18 @@ def wrap_template_document(
         template_context[slot_name] = content
 
     template_context["index_entries"] = document_state.has_index_entries
+    index_terms = list(dict.fromkeys(getattr(document_state, "index_entries", [])))
+    template_context["has_index"] = bool(index_terms)
+    template_context["index_terms"] = [tuple(term) for term in index_terms]
+
+    registry_entries = index_terms
+    try:  # pragma: no cover - optional dependency
+        from texsmith_index import get_registry
+    except ModuleNotFoundError:
+        template_context["index_registry"] = [tuple(term) for term in registry_entries]
+    else:
+        snapshot = sorted(get_registry().snapshot())
+        template_context["index_registry"] = [tuple(term) for term in snapshot]
     template_context["acronyms"] = document_state.acronyms.copy()
     template_context["citations"] = list(document_state.citations)
     template_context["bibliography_entries"] = document_state.bibliography

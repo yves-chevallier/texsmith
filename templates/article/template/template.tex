@@ -29,7 +29,7 @@
 \usepackage[acronym]{glossaries}
 \makeglossaries
 \BLOCK{ endif }
-\BLOCK{ if index_entries }\usepackage{imakeidx}\BLOCK{ endif }
+\BLOCK{ if has_index or index_entries }\usepackage[xindy]{imakeidx}\BLOCK{ endif }
 
 \directlua{luaotfload.add_fallback
   ("fontfallback",
@@ -98,8 +98,6 @@
 
 \geometry{\VAR{geometry_options}}
 
-
-
 \title{\VAR{title}\BLOCK{ if subtitle }\\\large \VAR{subtitle}\BLOCK{ endif }}
 \author{\VAR{author}}
 \date{\VAR{date}}
@@ -111,9 +109,9 @@
 \BLOCK{ endfor }
 \BLOCK{ endif }
 
-\begin{document}
+\BLOCK{ if has_index or index_entries }\makeindex\BLOCK{ endif }
 
-\BLOCK{ if index_entries }\makeindex\BLOCK{ endif }
+\begin{document}
 
 \maketitle
 
@@ -126,7 +124,7 @@
 \VAR{mainmatter}
 
 \BLOCK{ if acronyms }\printglossary[type=\acronymtype, title=Liste des acronymes]\BLOCK{ endif }
-\BLOCK{ if index_entries }\printindex\BLOCK{ endif }
+\BLOCK{ if has_index or index_entries }\printindex\BLOCK{ endif }
 
 \BLOCK{ if citations and bibliography_resource }
 \printbibliography
