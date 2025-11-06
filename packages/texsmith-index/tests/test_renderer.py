@@ -16,10 +16,11 @@ for candidate in (EXT_ROOT, SRC_ROOT):
 
 markdown = pytest.importorskip("markdown")
 
-from texsmith.adapters.latex import LaTeXRenderer
-from texsmith.core.config import BookConfig
-from texsmith.core.context import DocumentState
-from texsmith_index.renderer import register as register_index
+from texsmith_index.renderer import register as register_index  # noqa: E402
+
+from texsmith.adapters.latex import LaTeXRenderer  # noqa: E402
+from texsmith.core.config import BookConfig  # noqa: E402
+from texsmith.core.context import DocumentState  # noqa: E402
 
 
 EXTENSION = "texsmith_index.markdown:TexsmithIndexExtension"

@@ -88,6 +88,7 @@ reference the canonical module to avoid extra indirection.
 - [x] Manage the figure (c.f.) how to manage that...
 - [x] Optimize bibliography management using bib instead of jinja
 - [x] Documenter le processus de création de templates LaTeX personnalisées
+- [x] Support for index supported through texsmith-index
 - [ ] Support for glossaries (glossaries package)
 - [ ] Support for cross-references (cleveref package)
 - [ ] Listings, verbatim ou minted

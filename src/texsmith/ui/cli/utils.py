@@ -44,9 +44,12 @@ def determine_output_target(
     if template_selected:
         if output_option is None:
             return "template", Path("build")
+        suffix = output_option.suffix.lower()
+        if suffix == ".pdf":
+            return "template-pdf", output_option
         if output_option.exists() and output_option.is_file():
             raise typer.BadParameter("Template output must be a directory.")
-        if output_option.suffix:
+        if suffix:
             raise typer.BadParameter("Template output must be a directory path.")
         return "template", output_option
 
