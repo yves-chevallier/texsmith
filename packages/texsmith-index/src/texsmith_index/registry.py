@@ -2,12 +2,12 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterable, Iterator
 from dataclasses import dataclass, field
 from threading import Lock
-from typing import Iterable, Iterator, Tuple
 
 
-IndexEntry = Tuple[str, ...]
+IndexEntry = tuple[str, ...]
 
 
 @dataclass(slots=True)

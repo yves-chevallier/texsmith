@@ -51,11 +51,7 @@ def _normalise_style(value: str | None) -> str:
 
 
 def _escape_fragments(values: Iterable[str], *, legacy: bool) -> list[str]:
-    return [
-        escape_latex_chars(fragment, legacy_accents=legacy)
-        for fragment in values
-        if fragment
-    ]
+    return [escape_latex_chars(fragment, legacy_accents=legacy) for fragment in values if fragment]
 
 
 def _apply_style(fragment: str, style: str) -> str:

@@ -7,13 +7,15 @@ from pathlib import Path
 import shlex
 import shutil
 import subprocess
-from typing import Annotated
+import tempfile
+from typing import Annotated, Any, Mapping
 
 import click
+from click.core import ParameterSource
 import typer
 
 from texsmith.adapters.latex.log import stream_latexmk_output
-from texsmith.adapters.markdown import resolve_markdown_extensions
+from texsmith.adapters.markdown import resolve_markdown_extensions, split_front_matter
 from texsmith.api.service import ConversionRequest, ConversionService
 from texsmith.core.conversion.debug import ConversionError
 from texsmith.core.conversion.inputs import UnsupportedInputError
@@ -87,6 +89,75 @@ def build_latexmk_command(
     if force_bibtex:
         command.insert(2, "-bibtex")
     return command
+
+
+_MARKDOWN_SUFFIXES = {
+    ".md",
+    ".markdown",
+    ".mdown",
+    ".mkd",
+    ".mkdown",
+    ".mdtxt",
+    ".text",
+}
+
+
+def _load_front_matter(path: Path) -> Mapping[str, Any] | None:
+    """Return parsed Markdown front matter when available."""
+    suffix = path.suffix.lower()
+    if suffix not in _MARKDOWN_SUFFIXES:
+        return None
+    try:
+        metadata, _ = split_front_matter(path.read_text(encoding="utf-8"))
+    except OSError:
+        return None
+    return metadata if isinstance(metadata, dict) else {}
+
+
+def _extract_press_template(metadata: Mapping[str, Any] | None) -> str | None:
+    """Extract the template identifier declared in front matter."""
+    if not isinstance(metadata, Mapping):
+        return None
+
+    direct = metadata.get("press/template")
+    if isinstance(direct, str) and (candidate := direct.strip()):
+        return candidate
+
+    press_section = metadata.get("press")
+    if isinstance(press_section, Mapping):
+        candidate = press_section.get("template")
+        if isinstance(candidate, str):
+            candidate = candidate.strip()
+            if candidate:
+                return candidate
+
+    dotted = metadata.get("press.template")
+    if isinstance(dotted, str) and (candidate := dotted.strip()):
+        return candidate
+
+    return None
+
+
+def _front_matter_has_title(metadata: Mapping[str, Any] | None) -> bool:
+    """Return True when a title is declared in the front matter."""
+    if not isinstance(metadata, Mapping):
+        return False
+
+    title = metadata.get("title")
+    if isinstance(title, str) and title.strip():
+        return True
+
+    press_section = metadata.get("press")
+    if isinstance(press_section, Mapping):
+        press_title = press_section.get("title")
+        if isinstance(press_title, str) and press_title.strip():
+            return True
+
+    dotted = metadata.get("press.title")
+    if isinstance(dotted, str) and dotted.strip():
+        return True
+
+    return False
 
 
 def _format_path_for_event(path: Path) -> str:
@@ -177,12 +248,46 @@ def render(
     if not document_paths:
         raise typer.BadParameter("Provide a Markdown (.md) or HTML (.html) source document.")
 
+    primary_front_matter: Mapping[str, Any] | None = None
+    first_document = document_paths[0] if document_paths else None
+    if first_document is not None:
+        front_matter = _load_front_matter(first_document)
+        if front_matter:
+            primary_front_matter = front_matter
+
+    template_param_source = ctx.get_parameter_source("template") if ctx else None
+    title_param_source = ctx.get_parameter_source("title_from_heading") if ctx else None
+    if (
+        template_param_source in {None, ParameterSource.DEFAULT}
+        and template is None
+        and primary_front_matter is not None
+    ):
+        metadata_template = _extract_press_template(primary_front_matter)
+        if metadata_template:
+            template = metadata_template
+
+    template_selected = bool(template)
+
+    output_param_source = ctx.get_parameter_source("output") if ctx else None
+    pdf_output_requested = bool(output and output.suffix.lower() == ".pdf")
+    if pdf_output_requested and not build_pdf:
+        typer.echo("Enabling --build to produce PDF output.")
+        build_pdf = True
+
+    if (
+        template_selected
+        and not title_from_heading
+        and title_param_source in {None, ParameterSource.DEFAULT}
+        and not _front_matter_has_title(primary_front_matter)
+        and not drop_title
+    ):
+        title_from_heading = True
+
     if build_pdf and len(document_paths) != 1:
         raise typer.BadParameter(
             "Provide exactly one Markdown or HTML document when using --build."
         )
 
-    template_selected = bool(template)
     if build_pdf and not template_selected:
         emit_error("The --build flag requires a LaTeX template (--template).")
         raise typer.Exit(code=1)
@@ -232,11 +337,44 @@ def render(
     debug_snapshot = debug_html if debug_html is not None else debug_enabled()
 
     output_mode, output_target = determine_output_target(template_selected, document_paths, output)
-    output_path = output_target.resolve() if output_target is not None else None
+    resolved_output_target = output_target.resolve() if output_target is not None else None
+
+    temp_render_dir: Path | None = None
+    cleanup_render_dir = False
+    cleanup_render_dir_path: Path | None = None
+    final_pdf_target: Path | None = None
+
+    if template_selected:
+        if output_mode == "template-pdf":
+            temp_render_dir = Path(tempfile.mkdtemp(prefix="texsmith-")).resolve()
+            typer.echo(f"Using temporary output directory: {temp_render_dir}")
+            cleanup_render_dir = True
+            cleanup_render_dir_path = temp_render_dir
+            final_pdf_target = resolved_output_target
+        elif (
+            build_pdf
+            and output_mode == "template"
+            and output_param_source in {None, ParameterSource.DEFAULT}
+        ):
+            temp_render_dir = Path(tempfile.mkdtemp(prefix="texsmith-")).resolve()
+            typer.echo(f"Using temporary output directory: {temp_render_dir}")
+            cleanup_render_dir = True
+            cleanup_render_dir_path = temp_render_dir
+            primary_name = document_paths[0].stem if document_paths else "texsmith"
+            final_pdf_target = Path.cwd() / f"{primary_name}.pdf"
+
+    render_dir_path: Path | None = None
+    if template_selected:
+        render_dir_path = temp_render_dir or resolved_output_target
+    elif output_mode == "directory":
+        render_dir_path = resolved_output_target
+
+    if template_selected and render_dir_path is None:
+        raise typer.BadParameter("Unable to resolve template output directory.")
 
     emitter = CliEmitter(state=state, debug_enabled=debug_enabled())
 
-    request_render_dir = output_path if (template_selected or output_mode == "directory") else None
+    request_render_dir = render_dir_path
 
     request = ConversionRequest(
         documents=document_paths,
@@ -295,10 +433,10 @@ def render(
             return
 
         if output_mode == "file":
-            if output_path is None:
+            if resolved_output_target is None:
                 raise typer.BadParameter("Output path is required when writing to a file.")
             try:
-                write_output_file(output_path, bundle.combined_output())
+                write_output_file(resolved_output_target, bundle.combined_output())
             except OSError as exc:
                 emit_error(str(exc), exception=exc)
                 raise typer.Exit(code=1) from exc
@@ -306,7 +444,7 @@ def render(
                 state=state,
                 output_mode=output_mode,
                 bundle=bundle,
-                output_path=output_path,
+                output_path=resolved_output_target,
                 render_result=None,
             )
             _flush_diagnostics()
@@ -445,8 +583,27 @@ def render(
             raise typer.Exit(code=result.returncode)
 
     pdf_path = render_result.main_tex_path.with_suffix(".pdf")
-    present_build_summary(state=state, render_result=render_result, pdf_path=pdf_path)
+    final_pdf_path = pdf_path
+
+    if final_pdf_target is not None:
+        final_destination = final_pdf_target
+        try:
+            final_destination.parent.mkdir(parents=True, exist_ok=True)
+        except OSError as exc:
+            emit_error(f"Unable to create output directory '{final_destination.parent}': {exc}", exc)
+            raise typer.Exit(code=1) from exc
+        try:
+            shutil.copy2(pdf_path, final_destination)
+        except OSError as exc:
+            emit_error(f"Failed to write PDF to '{final_destination}': {exc}", exc)
+            raise typer.Exit(code=1) from exc
+        final_pdf_path = final_destination
+
+    present_build_summary(state=state, render_result=render_result, pdf_path=final_pdf_path)
     _flush_diagnostics()
+
+    if cleanup_render_dir and cleanup_render_dir_path is not None:
+        shutil.rmtree(cleanup_render_dir_path, ignore_errors=True)
 
 
 # Expose runtime dependencies for test monkeypatching

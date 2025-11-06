@@ -5,8 +5,8 @@ from __future__ import annotations
 from collections import defaultdict
 from collections.abc import Iterable
 import json
-import re
 from pathlib import Path
+import re
 from typing import Any
 
 from mkdocs import plugins
@@ -47,9 +47,7 @@ def _extract_tags(fragment: str) -> list[str]:
 class IndexPlugin(BasePlugin):
     """Collect hashtag spans and inject their tags into MkDocs search."""
 
-    config_scheme = (
-        ("inject_markdown_extension", config_options.Type(bool, default=True)),
-    )
+    config_scheme = (("inject_markdown_extension", config_options.Type(bool, default=True)),)
 
     def __init__(self) -> None:
         self._collected: dict[str, set[tuple[str, ...]]] = defaultdict(set)

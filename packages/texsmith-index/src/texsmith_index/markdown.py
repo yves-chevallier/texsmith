@@ -2,9 +2,8 @@
 
 from __future__ import annotations
 
-from collections.abc import Iterable
 import re
-import xml.etree.ElementTree as etree
+from xml.etree import ElementTree
 
 from markdown import Markdown
 from markdown.extensions import Extension
@@ -18,16 +17,16 @@ STYLE_PATTERN = re.compile(r"^[ibIB]{1,2}$")
 class _HashtagInlineProcessor(InlineProcessor):
     """Replace hash-tag syntax with tagged spans."""
 
-    def handleMatch(  # type: ignore[override]
+    def handleMatch(  # noqa: N802 - Markdown inline API requires camelCase
         self,
         match: re.Match[str],
         data: str,
-    ) -> tuple[etree.Element, int, int]:
+    ) -> tuple[ElementTree.Element, int, int]:  # type: ignore[override]
         del data
         tags = _extract_tags(match.group("payload"))
         style = _normalise_style(match.group("style"))
 
-        element = etree.Element("span")
+        element = ElementTree.Element("span")
         element.set("class", "ts-hashtag")
         for index, tag in enumerate(tags):
             key = "data-tag" if index == 0 else f"data-tag{index}"
@@ -71,7 +70,7 @@ class TexsmithIndexExtension(Extension):
         md.inlinePatterns.register(processor, "texsmith_index_hashtag", 180)
 
 
-def makeExtension(**kwargs: object) -> TexsmithIndexExtension:  # pragma: no cover - API hook
+def makeExtension(**kwargs: object) -> TexsmithIndexExtension:  # noqa: N802 - Markdown API hook; pragma: no cover
     return TexsmithIndexExtension(**kwargs)
 
 
