@@ -23,6 +23,13 @@ sudo apt install fonts-noto-cjk
 sudo apt install fonts-noto-extra
 ```
 
+For black and white emojis, the `Symbola` font is used. For example on Ubuntu:
+
+```bash
+sudo apt update
+sudo apt install fonts-symbola
+```
+
 ## Usage
 
 Invoke Texsmith with the registered entry point:

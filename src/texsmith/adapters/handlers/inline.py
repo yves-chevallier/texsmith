@@ -138,6 +138,26 @@ _SUBSCRIPT_MAP = {
 }
 
 _SUBSCRIPT_PATTERN = re.compile(f"([{''.join(re.escape(char) for char in _SUBSCRIPT_MAP)}]+)")
+_UNICODE_DASH_MAP = {
+    "–": "--",  # en dash
+    "‒": "--",  # figure dash
+    "—": "---",  # em dash
+    "―": "---",  # horizontal bar
+}
+_UNICODE_DASH_PATTERN = re.compile("[" + "".join(re.escape(k) for k in _UNICODE_DASH_MAP) + "]")
+
+_UNICODE_PUNCT_MAP = {
+    "’": "'",
+    "‘": "`",
+    "‚": ",",
+    "‛": "'",
+    "“": "``",
+    "”": "''",
+    "„": ",,",
+    "‟": "''",
+    "…": "...",
+}
+_UNICODE_PUNCT_PATTERN = re.compile("[" + "".join(re.escape(k) for k in _UNICODE_PUNCT_MAP) + "]")
 
 
 def _replace_unicode_scripts(
@@ -164,6 +184,38 @@ def _replace_unicode_subscripts(text: str) -> str:
     return _replace_unicode_scripts(text, _SUBSCRIPT_PATTERN, _SUBSCRIPT_MAP, "textsubscript")
 
 
+def _replace_unicode_dashes(text: str) -> str:
+    """Convert Unicode dash characters to LaTeX-friendly representations."""
+    if not text:
+        return text
+    return _UNICODE_DASH_PATTERN.sub(lambda match: _UNICODE_DASH_MAP.get(match.group(0), "-"), text)
+
+
+def _replace_unicode_punctuation(text: str) -> str:
+    """Replace curly quotes and ellipsis with LaTeX-friendly sequences."""
+    if not text:
+        return text
+    return _UNICODE_PUNCT_PATTERN.sub(
+        lambda match: _UNICODE_PUNCT_MAP.get(match.group(0), ""), text
+    )
+
+
+def _get_emoji_mode(context: RenderContext) -> str:
+    value = context.runtime.get("emoji_mode")
+    if isinstance(value, str):
+        candidate = value.strip().lower()
+        if candidate in {"artifact", "symbola", "color"}:
+            return candidate
+    return "artifact"
+
+
+def _get_emoji_command(context: RenderContext) -> str:
+    value = context.runtime.get("emoji_command")
+    if isinstance(value, str) and value.strip():
+        return value.strip()
+    return r"\texsmithEmoji"
+
+
 def _has_ancestor(node: NavigableString, *names: str) -> bool:
     parent = node.parent
     while parent is not None:
@@ -187,6 +239,8 @@ def _allow_hyphenation(text: str) -> str:
 
 
 def _prepare_plain_text(text: str, *, legacy_latex_accents: bool) -> str:
+    text = _replace_unicode_punctuation(text)
+    text = _replace_unicode_dashes(text)
     escaped = escape_latex_chars(text, legacy_accents=legacy_latex_accents)
     escaped = _allow_hyphenation(escaped)
     escaped = _replace_unicode_superscripts(escaped)
@@ -237,8 +291,16 @@ def _render_emoji(token: str, context: RenderContext) -> str:
     return context.formatter.icon(asset_path)
 
 
+def _render_font_emoji(token: str, command: str) -> str:
+    if not token:
+        return ""
+    return f"{command}{{{token}}}"
+
+
 def _escape_text_segment(text: str, context: RenderContext, *, legacy_latex_accents: bool) -> str:
     chunks: list[str] = []
+    emoji_mode = _get_emoji_mode(context)
+    emoji_command = _get_emoji_command(context)
     for kind, payload in _segment_text_with_emoji(text):
         if kind == "text":
             if payload:
@@ -246,7 +308,10 @@ def _escape_text_segment(text: str, context: RenderContext, *, legacy_latex_acce
                     _prepare_plain_text(payload, legacy_latex_accents=legacy_latex_accents)
                 )
         else:
-            chunks.append(_render_emoji(payload, context))
+            if emoji_mode == "artifact":
+                chunks.append(_render_emoji(payload, context))
+            else:
+                chunks.append(_render_font_emoji(payload, emoji_command))
     return "".join(chunks)
 
 
@@ -474,11 +539,26 @@ def render_latex_text_span(element: Tag, context: RenderContext) -> None:
     element.replace_with(latex)
 
 
+def _extract_emoji_token(element: Tag) -> str:
+    for attr in ("alt", "data-emoji"):
+        candidate = coerce_attribute(element.get(attr))
+        if candidate:
+            return candidate
+    fallback = coerce_attribute(element.get("title"))
+    return fallback or ""
+
+
 @renders("img", phase=RenderPhase.INLINE, priority=20, name="twemoji_images", nestable=False)
 def render_twemoji_image(element: Tag, context: RenderContext) -> None:
     """Render Twitter emoji images as inline icons."""
     classes = gather_classes(element.get("class"))
     if not {"twemoji", "emojione"}.intersection(classes):
+        return
+    emoji_mode = _get_emoji_mode(context)
+    if emoji_mode != "artifact":
+        token = _extract_emoji_token(element)
+        latex = _render_font_emoji(token, _get_emoji_command(context))
+        element.replace_with(mark_processed(NavigableString(latex)))
         return
     if not context.runtime.get("copy_assets", True):
         placeholder = (
@@ -513,6 +593,12 @@ def render_twemoji_span(element: Tag, context: RenderContext) -> None:
     """Render inline SVG emoji payloads."""
     classes = gather_classes(element.get("class"))
     if "twemoji" not in classes:
+        return
+    emoji_mode = _get_emoji_mode(context)
+    if emoji_mode != "artifact":
+        token = _extract_emoji_token(element)
+        latex = _render_font_emoji(token, _get_emoji_command(context))
+        element.replace_with(mark_processed(NavigableString(latex)))
         return
     if not context.runtime.get("copy_assets", True):
         placeholder = coerce_attribute(element.get("title")) or element.get_text(strip=True) or ""

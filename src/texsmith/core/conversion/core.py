@@ -60,6 +60,28 @@ class ConversionResult:
     binder_context: BinderContext | None = None
 
 
+_EMOJI_MODES = {"artifact", "symbola", "color"}
+
+
+def _coerce_emoji_mode(value: Any) -> str | None:
+    if not isinstance(value, str):
+        return None
+    candidate = value.strip().lower()
+    return candidate if candidate in _EMOJI_MODES else None
+
+
+def _extract_emoji_mode(mapping: Mapping[str, Any] | None) -> str | None:
+    if not isinstance(mapping, Mapping):
+        return None
+    direct = _coerce_emoji_mode(mapping.get("emoji"))
+    if direct:
+        return direct
+    press = mapping.get("press")
+    if isinstance(press, Mapping):
+        return _coerce_emoji_mode(press.get("emoji"))
+    return None
+
+
 def convert_document(
     document: DocumentContext,
     output_dir: Path,
@@ -165,6 +187,13 @@ def _render_document(
         runtime_common["template"] = binding.name
     if strategy.persist_manifest:
         runtime_common["generate_manifest"] = True
+    emoji_mode = _extract_emoji_mode(binder_context.template_overrides)
+    if not emoji_mode:
+        emoji_mode = _extract_emoji_mode(document_context.front_matter)
+    if emoji_mode:
+        runtime_common["emoji_mode"] = emoji_mode
+        if emoji_mode != "artifact":
+            runtime_common.setdefault("emoji_command", r"\texsmithEmoji")
 
     active_slot_requests = binder_context.slot_requests
 

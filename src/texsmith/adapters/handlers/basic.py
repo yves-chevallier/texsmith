@@ -7,7 +7,7 @@ from bs4.element import NavigableString, Tag
 from texsmith.core.context import RenderContext
 from texsmith.core.rules import RenderPhase, renders
 
-from ._helpers import coerce_attribute, mark_processed
+from ._helpers import coerce_attribute, gather_classes, mark_processed
 
 
 UNWANTED_NODES: tuple[tuple[str, tuple[str, ...], str], ...] = (
@@ -92,6 +92,18 @@ def render_inline_underline(element: Tag, context: RenderContext) -> None:
     text = element.get_text(strip=False)
     latex = context.formatter.underline(text=text)
     element.replace_with(NavigableString(latex))
+
+
+@renders("span", phase=RenderPhase.INLINE, name="inline_smallcaps", auto_mark=False)
+def render_inline_smallcaps(element: Tag, context: RenderContext) -> None:
+    """Render ``<span class=\"texsmith-smallcaps\">`` nodes as small capitals."""
+    classes = gather_classes(element.get("class"))
+    if "texsmith-smallcaps" not in classes:
+        return
+    text = element.get_text(strip=False)
+    latex = context.formatter.smallcaps(text=text)
+    element.replace_with(NavigableString(latex))
+    context.mark_processed(element)
 
 
 @renders("strong", phase=RenderPhase.INLINE, name="inline_strong", after_children=True)

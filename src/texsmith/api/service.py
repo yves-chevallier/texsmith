@@ -62,6 +62,7 @@ class ConversionRequest:
 
     template: str | None = None
     render_dir: Path | None = None
+    template_options: Mapping[str, Any] = field(default_factory=dict)
 
     emitter: DiagnosticEmitter | None = None
 
@@ -216,6 +217,8 @@ class ConversionService:
             settings=settings,
             emitter=emitter,
         )
+        if request.template_options:
+            session.update_options(request.template_options)
         if batch.bibliography_files:
             session.add_bibliography(*batch.bibliography_files)
         for document in batch.documents:

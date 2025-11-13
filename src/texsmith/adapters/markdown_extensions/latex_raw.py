@@ -15,14 +15,42 @@ class _LatexRawPreprocessor(Preprocessor):
 
     _START_RE = re.compile(r"^\s*///\s+latex\s*$")
     _END_RE = re.compile(r"^\s*///\s*$")
+    _FENCE_RE = re.compile(r"^\s{0,3}(`{3,}|~{3,})(.*)$")
 
     def run(self, lines: list[str]) -> list[str]:
         result: list[str] = []
         index = 0
         total = len(lines)
+        in_fence = False
+        fence_char: str | None = None
+        fence_len = 0
 
         while index < total:
             line = lines[index]
+
+            fence_match = self._FENCE_RE.match(line)
+            if fence_match:
+                fence_token = fence_match.group(1)
+                token_char = fence_token[0]
+                token_len = len(fence_token)
+                if not in_fence:
+                    in_fence = True
+                    fence_char = token_char
+                    fence_len = token_len
+                else:
+                    if token_char == fence_char and token_len >= fence_len:
+                        in_fence = False
+                        fence_char = None
+                        fence_len = 0
+                result.append(line)
+                index += 1
+                continue
+
+            if in_fence:
+                result.append(line)
+                index += 1
+                continue
+
             if not self._START_RE.match(line):
                 result.append(line)
                 index += 1

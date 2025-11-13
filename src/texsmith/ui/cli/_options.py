@@ -128,9 +128,19 @@ CopyAssetsOptionWithShort = Annotated[
     bool,
     typer.Option(
         "--copy-assets/--no-copy-assets",
-        "-a/-A",
         help="Toggle copying of remote assets to the output directory.",
         rich_help_panel=RENDERING_PANEL,
+    ),
+]
+
+TemplateAttributeOption = Annotated[
+    list[str] | None,
+    typer.Option(
+        "--attribute",
+        "-a",
+        help="Override template attributes as key=value pairs (e.g. -a emoji=color).",
+        show_default=False,
+        rich_help_panel=TEMPLATE_PANEL,
     ),
 ]
 
