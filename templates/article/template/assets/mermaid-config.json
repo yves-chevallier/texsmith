@@ -1,0 +1,17 @@
+{
+  "theme": "base",
+  "themeVariables": {
+    "primaryColor": "#ffffff",
+    "primaryTextColor": "#000000",
+    "primaryBorderColor": "#000000",
+    "secondaryColor": "#ffffff",
+    "secondaryTextColor": "#000000",
+    "tertiaryColor": "#ffffff",
+    "lineColor": "#000000",
+    "background": "#ffffff",
+    "clusterBkg": "#ffffff",
+    "clusterBorder": "#000000",
+    "fontFamily": "Latin Modern Roman, Computer Modern Serif, Times New Roman, serif",
+    "fontSize": "14px"
+  }
+}

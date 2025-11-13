@@ -1,10 +1,28 @@
+---
 press:
-  title: "Markdown Features"
+  author: Yves Chevallier
   description: "Comprehensive overview of Markdown syntaxes and extensions."
   keywords: ["Markdown", "syntax", "extensions", "features", "cheatsheet"]
+  slots:
+    abstract: Abstract
+  override:
+    preamble: |
+        \usepackage{xcolor}
+        \renewenvironment{displayquote}
+        {%
+            \begin{tcolorbox}[
+            enhanced, breakable, colback=gray!10,
+            boxrule=0pt,
+            borderline west={3pt}{0pt}{gray!70},
+            left=6pt, right=6pt, top=6pt, bottom=6pt]%
+        }
+        { \end{tcolorbox} }
 ---
+# TeXSmith Markdown Syntax
 
-# Markdown Syntaxes and Extensions
+## Abstract
+
+This document provides a comprehensive overview of Markdown syntax features and extensions supported by TeXSmith. It serves as a reference guide for users looking to leverage Markdown's capabilities in their documents. This is meant to be a cheatsheet of supported features and a test suite for custom templates.
 
 ## Core Markdown (Standard "Vanilla")
 

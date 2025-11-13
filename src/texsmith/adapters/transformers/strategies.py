@@ -5,13 +5,70 @@ from __future__ import annotations
 from io import BytesIO
 from pathlib import Path
 import shutil
-from typing import Any
+import subprocess
+from typing import Any, Sequence
+import warnings
 
 from texsmith.core.exceptions import TransformerExecutionError
 
 from ..docker import DockerLimits, VolumeMount, run_container
 from .base import CachedConversionStrategy
 from .utils import normalise_pdf_version, points_to_mm
+
+
+MERMAID_CLI_HINT_PATHS: tuple[Path, ...] = (Path("/snap/bin/mmdc"),)
+DRAWIO_CLI_HINT_PATHS: tuple[Path, ...] = (Path("/snap/bin/drawio"),)
+
+
+def _resolve_cli(names: Sequence[str], hints: Sequence[Path]) -> tuple[str | None, bool]:
+    """Return an executable path and whether it was discovered via $PATH."""
+    for name in names:
+        resolved = shutil.which(name)
+        if resolved:
+            return resolved, True
+    for candidate in hints:
+        if candidate and candidate.exists():
+            return str(candidate), False
+    return None, False
+
+
+def _warn_add_to_path(command: str, path: str) -> None:
+    """Emit a guidance warning when a CLI was found outside $PATH."""
+    message = (
+        f"Found '{command}' at '{path}'. Add this directory to PATH so TeXSmith can "
+        "detect it automatically."
+    )
+    warnings.warn(message, stacklevel=3)
+
+
+def _run_cli(command: list[str], *, cwd: Path, description: str) -> None:
+    """Execute a local CLI, raising a transformer error on failure."""
+    try:
+        result = subprocess.run(
+            command,
+            check=False,
+            capture_output=True,
+            text=True,
+            cwd=cwd,
+        )
+    except OSError as exc:
+        raise TransformerExecutionError(f"Failed to execute {description}: {exc}") from exc
+
+    if result.returncode != 0:
+        detail = (result.stderr or "").strip() or (result.stdout or "").strip()
+        message = f"{description} exited with status {result.returncode}"
+        if detail:
+            message = f"{message}: {detail}"
+        raise TransformerExecutionError(message)
+
+
+def _compose_fallback_error(tool: str, primary: Exception, fallback: Exception) -> TransformerExecutionError:
+    """Combine CLI and Docker failures into a single diagnostic."""
+    message = (
+        f"{tool} CLI failed: {primary}\n"
+        f"Docker fallback also failed: {fallback}"
+    )
+    return TransformerExecutionError(message)
 
 
 class SvgToPdfStrategy(CachedConversionStrategy):
@@ -255,25 +312,78 @@ class MermaidToPdfStrategy(CachedConversionStrategy):
         if produced.exists():
             produced.unlink()
 
-        docker_args = [
-            "-i",
-            input_path.name,
-            "-o",
-            output_name,
-            "-f",
-            "-t",
-            str(theme),
-        ]
-        docker_args.extend(extra_args)
+        cli_path, discovered_via_path = _resolve_cli(["mmdc"], MERMAID_CLI_HINT_PATHS)
+        cli_error: TransformerExecutionError | None = None
+        ran_local = False
+        docker_attempted = False
+        if cli_path:
+            if not discovered_via_path:
+                _warn_add_to_path("mmdc", cli_path)
+            try:
+                self._run_local_cli(
+                    cli_path,
+                    working_dir=working_dir,
+                    input_name=input_path.name,
+                    output_name=output_name,
+                    theme=theme,
+                    extra_args=extra_args,
+                )
+                ran_local = True
+            except TransformerExecutionError as exc:
+                cli_error = exc
 
-        run_container(
-            self.image,
-            args=docker_args,
-            mounts=[VolumeMount(working_dir, "/data")],
-            environment={"HOME": "/data/home"},
-            workdir="/data",
-            limits=DockerLimits(cpus=1.0, memory="1g", pids_limit=512),
-        )
+        if not ran_local:
+            docker_args = [
+                "-i",
+                input_path.name,
+                "-o",
+                output_name,
+                "-f",
+                "-t",
+                str(theme),
+            ]
+            docker_args.extend(extra_args)
+
+            try:
+                run_container(
+                    self.image,
+                    args=docker_args,
+                    mounts=[VolumeMount(working_dir, "/data")],
+                    environment={"HOME": "/data/home"},
+                    workdir="/data",
+                    limits=DockerLimits(cpus=1.0, memory="1g", pids_limit=512),
+                )
+                docker_attempted = True
+            except TransformerExecutionError as exc:
+                if cli_error is not None:
+                    raise _compose_fallback_error("Mermaid", cli_error, exc) from exc
+                raise
+        elif not produced.exists():
+            cli_error = cli_error or TransformerExecutionError(
+                "Mermaid CLI did not produce the expected PDF artifact."
+            )
+            docker_args = [
+                "-i",
+                input_path.name,
+                "-o",
+                output_name,
+                "-f",
+                "-t",
+                str(theme),
+            ]
+            docker_args.extend(extra_args)
+            try:
+                run_container(
+                    self.image,
+                    args=docker_args,
+                    mounts=[VolumeMount(working_dir, "/data")],
+                    environment={"HOME": "/data/home"},
+                    workdir="/data",
+                    limits=DockerLimits(cpus=1.0, memory="1g", pids_limit=512),
+                )
+                docker_attempted = True
+            except TransformerExecutionError as exc:
+                raise _compose_fallback_error("Mermaid", cli_error, exc) from exc
 
         if not produced.exists():
             raise TransformerExecutionError(
@@ -284,6 +394,29 @@ class MermaidToPdfStrategy(CachedConversionStrategy):
         shutil.copy2(produced, target)
         normalise_pdf_version(target)
         return target
+
+    def _run_local_cli(
+        self,
+        executable: str,
+        *,
+        working_dir: Path,
+        input_name: str,
+        output_name: str,
+        theme: str,
+        extra_args: list[str],
+    ) -> None:
+        command = [
+            executable,
+            "-i",
+            input_name,
+            "-o",
+            output_name,
+            "-f",
+            "-t",
+            str(theme),
+        ]
+        command.extend(extra_args)
+        _run_cli(command, cwd=working_dir, description="Mermaid CLI")
 
 
 class DrawioToPdfStrategy(CachedConversionStrategy):
@@ -320,32 +453,92 @@ class DrawioToPdfStrategy(CachedConversionStrategy):
         if produced.exists():
             produced.unlink()
 
-        docker_args = [
-            "--export",
-            "--format",
-            "pdf",
-            "--output",
-            ".",
-        ]
+        cli_path, discovered_via_path = _resolve_cli(["drawio", "draw.io"], DRAWIO_CLI_HINT_PATHS)
+        cli_error: TransformerExecutionError | None = None
+        ran_local = False
+        docker_attempted = False
+        if cli_path:
+            if not discovered_via_path:
+                _warn_add_to_path("drawio", cli_path)
+            try:
+                self._run_local_cli(
+                    cli_path,
+                    working_dir=working_dir,
+                    source_name=working_source.name,
+                    output_name=output_name,
+                    options=options,
+                )
+                ran_local = True
+            except TransformerExecutionError as exc:
+                cli_error = exc
 
-        if options.get("crop", False):
-            docker_args.extend(["--crop"])
+        if not ran_local:
+            docker_args = [
+                "--export",
+                "--format",
+                "pdf",
+                "--output",
+                ".",
+            ]
 
-        dpi = options.get("dpi")
-        if dpi:
-            docker_args.extend(["--quality", str(dpi)])
+            if options.get("crop", False):
+                docker_args.extend(["--crop"])
 
-        docker_args.append(working_source.name)
+            dpi = options.get("dpi")
+            if dpi:
+                docker_args.extend(["--quality", str(dpi)])
 
-        run_container(
-            self.image,
-            args=docker_args,
-            mounts=[VolumeMount(working_dir, "/data")],
-            environment={"HOME": "/data/home"},
-            workdir="/data",
-            use_host_user=False,
-            limits=DockerLimits(cpus=1.0, memory="1g", pids_limit=512),
-        )
+            docker_args.append(working_source.name)
+
+            try:
+                run_container(
+                    self.image,
+                    args=docker_args,
+                    mounts=[VolumeMount(working_dir, "/data")],
+                    environment={"HOME": "/data/home"},
+                    workdir="/data",
+                    use_host_user=False,
+                    limits=DockerLimits(cpus=1.0, memory="1g", pids_limit=512),
+                )
+                docker_attempted = True
+            except TransformerExecutionError as exc:
+                if cli_error is not None:
+                    raise _compose_fallback_error("draw.io", cli_error, exc) from exc
+                raise
+        elif not produced.exists():
+            cli_error = cli_error or TransformerExecutionError(
+                "draw.io CLI did not produce the expected PDF artifact."
+            )
+            docker_args = [
+                "--export",
+                "--format",
+                "pdf",
+                "--output",
+                ".",
+            ]
+
+            if options.get("crop", False):
+                docker_args.extend(["--crop"])
+
+            dpi = options.get("dpi")
+            if dpi:
+                docker_args.extend(["--quality", str(dpi)])
+
+            docker_args.append(working_source.name)
+
+            try:
+                run_container(
+                    self.image,
+                    args=docker_args,
+                    mounts=[VolumeMount(working_dir, "/data")],
+                    environment={"HOME": "/data/home"},
+                    workdir="/data",
+                    use_host_user=False,
+                    limits=DockerLimits(cpus=1.0, memory="1g", pids_limit=512),
+                )
+                docker_attempted = True
+            except TransformerExecutionError as exc:
+                raise _compose_fallback_error("draw.io", cli_error, exc) from exc
 
         if not produced.exists():
             raise TransformerExecutionError(
@@ -356,3 +549,31 @@ class DrawioToPdfStrategy(CachedConversionStrategy):
         shutil.copy2(produced, target)
         normalise_pdf_version(target)
         return target
+
+    def _run_local_cli(
+        self,
+        executable: str,
+        *,
+        working_dir: Path,
+        source_name: str,
+        output_name: str,
+        options: dict[str, Any],
+    ) -> None:
+        command = [
+            executable,
+            "--export",
+            source_name,
+            "--format",
+            "pdf",
+            "--output",
+            output_name,
+        ]
+
+        if options.get("crop", False):
+            command.append("--crop")
+
+        dpi = options.get("dpi")
+        if dpi:
+            command.extend(["--quality", str(dpi)])
+
+        _run_cli(command, cwd=working_dir, description="draw.io CLI")

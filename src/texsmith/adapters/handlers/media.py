@@ -14,7 +14,13 @@ import zlib
 from bs4.element import NavigableString, Tag
 
 from texsmith.core.context import RenderContext
-from texsmith.core.exceptions import AssetMissingError, InvalidNodeError
+from texsmith.core.diagnostics import DiagnosticEmitter
+from texsmith.core.exceptions import (
+    AssetMissingError,
+    InvalidNodeError,
+    exception_hint,
+    exception_messages,
+)
 from texsmith.core.rules import RenderPhase, renders
 
 from ..transformers import (
@@ -48,6 +54,14 @@ MERMAID_KEYWORDS = (
 
 
 MERMAID_FILE_SUFFIXES = (".mmd", ".mermaid")
+
+
+def _runtime_emitter(context: RenderContext) -> DiagnosticEmitter | None:
+    """Return the diagnostic emitter bound to the current runtime, if any."""
+    emitter = context.runtime.get("emitter")
+    if isinstance(emitter, DiagnosticEmitter):
+        return emitter
+    return None
 
 
 def _decode_mermaid_pako(payload: str) -> str:
@@ -219,7 +233,7 @@ def _render_mermaid_diagram(
     try:
         artefact = mermaid2pdf(body, output_dir=context.assets.output_root, **render_options)
     except Exception as exc:  # pragma: no cover - safeguard
-        _warn_mermaid_failure(exc)
+        _warn_mermaid_failure(context, exc)
         placeholder = effective_caption or "Mermaid diagram"
         return mark_processed(NavigableString(f"[{placeholder} unavailable]"))
 
@@ -361,29 +375,30 @@ def render_mermaid_pre(element: Tag, context: RenderContext) -> None:
     element.replace_with(figure_node)
 
 
-def _warn_mermaid_failure(exc: Exception) -> None:
+def _warn_mermaid_failure(context: RenderContext, exc: Exception) -> None:
     """Emit a CLI-friendly warning describing Mermaid rendering failures."""
-    cause_chain: list[str] = []
-    current = exc.__cause__
-    while current is not None:
-        cause_chain.append(str(current))
-        current = current.__cause__
-
-    details = ""
-    if cause_chain:
-        unique_messages = []
-        for msg in cause_chain:
-            if msg and msg not in unique_messages:
-                unique_messages.append(msg)
-        if unique_messages:
-            joined = "\n  - ".join(unique_messages)
-            details = f"\nDetails:\n  - {joined}"
-
-    message = (
-        "Mermaid diagram could not be rendered.\n"
-        f"Reason: {exc}{details}\n"
-        "TexSmith replaced the diagram with a text placeholder. Install Docker and the "
-        "`minlag/mermaid-cli` image (or register a custom Mermaid converter) to enable "
-        "diagram rendering."
+    emitter = _runtime_emitter(context)
+    guidance = (
+        "Install Docker and the 'minlag/mermaid-cli' image (or register a custom Mermaid "
+        "converter) to enable diagram rendering."
     )
-    warnings.warn(message, stacklevel=3)
+    summary = "Mermaid diagram could not be rendered. TexSmith inserted a placeholder instead."
+    hint = exception_hint(exc)
+
+    if emitter is None:
+        detail = f" ({hint})" if hint else ""
+        message = f"{summary}{detail}. {guidance}"
+        warnings.warn(message, stacklevel=3)
+        return
+
+    if emitter.debug_enabled:
+        chain = exception_messages(exc)
+        detail_block = ""
+        if chain:
+            detail_lines = "\n".join(f"- {line}" for line in chain)
+            detail_block = f"\nDetails:\n{detail_lines}"
+        emitter.warning(f"{summary}{detail_block}\n{guidance}", exc=exc)
+        return
+
+    detail = f" ({hint})" if hint else ""
+    emitter.warning(f"{summary}{detail}. {guidance} Run with --debug for technical details.")

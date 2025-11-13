@@ -150,6 +150,17 @@ def test_documentclass_overrides(article_template: WrappableTemplate) -> None:
     assert r"\author{Alice Example}" in wrapped
 
 
+def test_article_injects_custom_preamble_block(
+    article_template: WrappableTemplate,
+) -> None:
+    snippet = r"\usepackage{xcolor}"
+    overrides = {"press": {"override": {"preamble": snippet}}}
+
+    wrapped = article_template.wrap_document("", overrides=overrides)
+
+    assert snippet in wrapped
+
+
 def test_load_article_template_from_shortcut_path(
     article_template: WrappableTemplate,
 ) -> None:
@@ -190,3 +201,58 @@ def test_article_includes_acronyms_when_present(
     assert "\\makeglossaries" in wrapped
     assert "\\newacronym{HTTP}{HTTP}{Hypertext Transfer Protocol}" in wrapped
     assert "\\printglossary[type=\\acronymtype" in wrapped
+
+
+def test_article_prefers_pdflatex_for_latin_text(
+    article_template: WrappableTemplate,
+    tmp_path: Path,
+) -> None:
+    body = "Résumé avec des caractères comme œ et l’euro €."
+    state = DocumentState()
+    result = wrap_template_document(
+        template=article_template,
+        default_slot="mainmatter",
+        slot_outputs={"mainmatter": body},
+        document_state=state,
+        template_overrides=None,
+        output_dir=tmp_path,
+        copy_assets=False,
+    )
+
+    context = result.template_context
+    assert context["latex_engine"] == "pdflatex"
+    assert "€" in context["unicode_chars"]
+    assert context["unicode_problematic_chars"] == ""
+    assert "textcomp" in context["pdflatex_extra_packages"]
+
+    latex_output = result.latex_output
+    assert "\\usepackage[T1]{fontenc}" in latex_output
+    assert "\\usepackage{textcomp}" in latex_output
+    assert "\\usepackage{fontspec}" not in latex_output
+
+
+def test_article_switches_to_lualatex_for_non_latin_scripts(
+    article_template: WrappableTemplate,
+    tmp_path: Path,
+) -> None:
+    body = "Texte avec un caractère chinois 漢 et un emoji 😀."
+    state = DocumentState()
+    result = wrap_template_document(
+        template=article_template,
+        default_slot="mainmatter",
+        slot_outputs={"mainmatter": body},
+        document_state=state,
+        template_overrides=None,
+        output_dir=tmp_path,
+        copy_assets=False,
+    )
+
+    context = result.template_context
+    assert context["latex_engine"] == "lualatex"
+    assert "漢" in context["unicode_problematic_chars"]
+    assert "😀" in context["unicode_problematic_chars"]
+    assert context["pdflatex_extra_packages"] == []
+
+    latex_output = result.latex_output
+    assert "\\usepackage{fontspec}" in latex_output
+    assert "\\usepackage[T1]{fontenc}" not in latex_output

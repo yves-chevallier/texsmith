@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import Any
 
 from ..diagnostics import DiagnosticEmitter, LoggingEmitter, NullEmitter
-from ..exceptions import LatexRenderingError
+from ..exceptions import LatexRenderingError, exception_hint
 
 
 class ConversionError(Exception):
@@ -60,6 +60,18 @@ def format_rendering_error(error: LatexRenderingError) -> str:
     return f"LaTeX rendering failed: {cause}"
 
 
+def format_user_friendly_render_error(error: LatexRenderingError) -> str:
+    """Return a concise rendering failure summary suitable for end users."""
+    summary = "LaTeX rendering failed"
+    hint_source = error.__cause__ or error
+    hint = exception_hint(hint_source)
+    if hint:
+        summary = f"{summary}: {hint}"
+    if summary.endswith("."):
+        summary = summary.rstrip(".")
+    return f"{summary}. Re-run with --debug for technical details."
+
+
 __all__ = [
     "ConversionError",
     "DiagnosticEmitter",
@@ -68,6 +80,7 @@ __all__ = [
     "debug_enabled",
     "ensure_emitter",
     "format_rendering_error",
+    "format_user_friendly_render_error",
     "persist_debug_artifacts",
     "raise_conversion_error",
     "record_event",

@@ -34,7 +34,7 @@ from .debug import (
     ConversionError,
     debug_enabled,
     ensure_emitter,
-    format_rendering_error,
+    format_user_friendly_render_error,
     persist_debug_artifacts,
     raise_conversion_error,
 )
@@ -157,6 +157,7 @@ def _render_document(
         "document_path": document_context.source_path,
         "copy_assets": strategy.copy_assets,
         "language": binder_context.language,
+        "emitter": emitter,
     }
     if binder_context.bibliography_map:
         runtime_common["bibliography"] = binder_context.bibliography_map
@@ -212,13 +213,17 @@ def _render_document(
     slot_outputs: dict[str, str] = {}
     document_state: DocumentState | None = initial_state
     drop_title_flag = bool(document_context.drop_title)
+    base_level_offset = document_context.base_level
+    if drop_title_flag and document_context.slot_requests and not binder_context.slot_requests:
+        drop_title_flag = False
+        base_level_offset += 1
     for fragment in slot_fragments:
         runtime_fragment = dict(runtime_common)
         base_value = slot_base_levels.get(fragment.name, effective_base_level)
         runtime_fragment["base_level"] = (
-            base_value + document_context.base_level + document_context.heading_level
+            base_value + base_level_offset + document_context.heading_level
         )
-        if drop_title_flag:
+        if drop_title_flag and fragment.name == binding.default_slot:
             runtime_fragment["drop_title"] = True
             drop_title_flag = False
         fragment_output = ""
@@ -234,7 +239,8 @@ def _render_document(
         except LatexRenderingError as exc:
             if debug_enabled(emitter):
                 raise
-            raise_conversion_error(emitter, format_rendering_error(exc), exc)
+            message = format_user_friendly_render_error(exc)
+            raise_conversion_error(emitter, message, exc)
         existing_fragment = slot_outputs.get(fragment.name, "")
         slot_outputs[fragment.name] = f"{existing_fragment}{fragment_output}"
 

@@ -1,0 +1,102 @@
+[compat]
+texsmith = ">=0.6,<1.0"
+
+[latex.template]
+name = "formal-letter"
+version = "0.1.0"
+entrypoint = "template/template.tex"
+engine = "xelatex"
+shell_escape = false
+texlive_year = 2023
+tlmgr_packages = [
+    "babel",
+    "fontspec",
+    "microtype",
+    "koma-script",
+    "lettre",
+]
+
+[latex.template.attributes.cursive]
+default = false
+type = "boolean"
+sources = ["press.cursive"]
+
+[latex.template.attributes.language]
+default = "en-UK"
+type = "string"
+allow_empty = false
+sources = ["press.language"]
+
+[latex.template.attributes.date]
+default = "\\today"
+type = "string"
+escape = "latex"
+allow_empty = false
+sources = ["press.date"]
+
+[latex.template.attributes.object]
+default = ""
+type = "string"
+escape = "latex"
+sources = ["press.object"]
+
+[latex.template.attributes.from_name]
+default = ""
+type = "string"
+escape = "latex"
+allow_empty = false
+required = true
+sources = ["press.from.name", "press.author", "author"]
+
+[latex.template.attributes.from_address]
+default = []
+type = "list"
+sources = ["press.from.address"]
+
+[latex.template.attributes.from_location]
+default = ""
+type = "string"
+escape = "latex"
+sources = ["press.from.city", "press.from.location"]
+
+[latex.template.attributes.to_name]
+default = ""
+type = "string"
+escape = "latex"
+allow_empty = false
+required = true
+sources = ["press.to.name"]
+
+[latex.template.attributes.to_address]
+default = []
+type = "list"
+sources = ["press.to.address"]
+
+[latex.template.attributes.closing]
+default = ""
+type = "string"
+escape = "latex"
+sources = ["press.closing"]
+
+[latex.template.attributes.opening]
+default = ""
+type = "string"
+escape = "latex"
+sources = ["press.opening"]
+
+[latex.template.attributes.signature]
+default = ""
+type = "string"
+escape = "latex"
+sources = ["press.signature"]
+
+[latex.template.attributes.fold_marks]
+default = false
+type = "boolean"
+sources = ["press.fold_marks"]
+
+[latex.template.slots.mainmatter]
+default = true
+
+[latex.template.assets]
+"fonts/modernline.otf" = { source = "fonts/modernline.otf" }

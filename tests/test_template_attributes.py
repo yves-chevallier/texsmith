@@ -87,3 +87,12 @@ def test_article_template_applies_computed_options() -> None:
     assert "landscape" in context["geometry_options"]
     assert "\\thanks{" in context["author"]
     assert "press" not in context
+
+
+def test_article_template_accepts_preamble_override() -> None:
+    template = Template()
+    overrides = {"press": {"override": {"preamble": "\\usepackage{xcolor}"}}}
+
+    context = template.prepare_context("", overrides=overrides)
+
+    assert context["preamble_injection"] == "\\usepackage{xcolor}"

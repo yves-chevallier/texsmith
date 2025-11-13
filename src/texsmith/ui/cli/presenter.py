@@ -56,15 +56,20 @@ def _format_path(path: Path) -> str:
 def _render_summary(state: CLIState, title: str, rows: Sequence[tuple[str, str, str]]) -> None:
     console = _get_console(state)
     components = _rich_components()
+    has_details = any(bool(details) for _, _, details in rows)
     if console is not None and components is not None:
         box_module, _panel_cls, table_cls, _text_cls = components
         table = table_cls(box=box_module.SQUARE, header_style="bold cyan")
         table.title = title
         table.add_column("Artifact", style="cyan")
         table.add_column("Location", style="green")
-        table.add_column("Details", style="magenta")
+        if has_details:
+            table.add_column("Details", style="magenta")
         for artifact, location, details in rows:
-            table.add_row(artifact, location, details)
+            if has_details:
+                table.add_row(artifact, location, details)
+            else:
+                table.add_row(artifact, location)
         console.print(table)
         return
 

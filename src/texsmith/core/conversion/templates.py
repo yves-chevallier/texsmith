@@ -148,6 +148,11 @@ def build_binder_context(
     if binding is None:  # pragma: no cover - defensive
         raise RuntimeError("Failed to resolve template binding.")
 
+    if binding.runtime and binding.runtime.extras:
+        template_mermaid = binding.runtime.extras.get("mermaid_config")
+        if template_mermaid and not config.mermaid_config:
+            config.mermaid_config = Path(template_mermaid)
+
     binder_context = BinderContext(
         output_dir=output_dir,
         config=config,
@@ -284,7 +289,10 @@ def extract_slot_fragments(
     else:
         remainder_html = "".join(str(node) for node in container.contents)
 
-    remainder_position = min(fragment.position for fragment in fragments) - 1 if fragments else -1
+    if fragments:
+        remainder_position = max(fragment.position for fragment in fragments) + 1
+    else:
+        remainder_position = 0
 
     fragments.append(
         SlotFragment(name=default_slot, html=remainder_html, position=remainder_position)

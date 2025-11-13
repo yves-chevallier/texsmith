@@ -89,6 +89,9 @@ reference the canonical module to avoid extra indirection.
 - [x] Optimize bibliography management using bib instead of jinja
 - [x] Documenter le processus de création de templates LaTeX personnalisées
 - [x] Support for index supported through texsmith-index
+- [ ] Make all examples build
+- [ ] Add article template as "default" template part of TeXSmith
+- [ ] Finalize documentation
 - [ ] Support for glossaries (glossaries package)
 - [ ] Support for cross-references (cleveref package)
 - [ ] Listings, verbatim ou minted

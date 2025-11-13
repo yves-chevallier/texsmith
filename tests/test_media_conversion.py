@@ -1,5 +1,6 @@
 import base64
 from pathlib import Path
+import shutil
 import zlib
 
 from PIL import Image  # type: ignore[import]
@@ -7,6 +8,7 @@ import pytest
 
 from texsmith.adapters.latex import LaTeXRenderer
 from texsmith.adapters.transformers import image2pdf, register_converter, registry
+import texsmith.adapters.transformers.strategies as strategies
 from texsmith.core.config import BookConfig
 from texsmith.core.exceptions import TransformerExecutionError
 
@@ -23,6 +25,74 @@ class _StubConverter:
         data = self.payload.encode("utf-8") if isinstance(self.payload, str) else self.payload
         artefact.write_bytes(data)
         return artefact
+
+
+class _RecordingEmitter:
+    def __init__(self, *, debug_enabled: bool = False):
+        self.debug_enabled = debug_enabled
+        self.warnings: list[tuple[str, BaseException | None]] = []
+
+    def warning(self, message: str, exc: BaseException | None = None) -> None:
+        self.warnings.append((message, exc))
+
+    def error(self, message: str, exc: BaseException | None = None) -> None:  # pragma: no cover - unused
+        raise AssertionError(f"error emitted unexpectedly: {message}") from exc
+
+    def event(self, name: str, payload: dict) -> None:  # pragma: no cover - unused
+        raise AssertionError(f"event emitted unexpectedly: {name} -> {payload}")
+
+
+_FAKE_PDF = b"%PDF-1.4\n1 0 obj<<>>\nendobj\nxref\n0 1\n0000000000 65535 f \ntrailer<<>>\nstartxref\n9\n%%EOF"
+
+
+def _make_mermaid_cli(tmp_path: Path) -> Path:
+    script = tmp_path / "mmdc"
+    script.write_text(
+        "\n".join(
+            [
+                "#!/usr/bin/env python3",
+                "import sys",
+                "from pathlib import Path",
+                "args = sys.argv[1:]",
+                "target = None",
+                "for idx, arg in enumerate(args):",
+                "    if arg == '-o':",
+                "        target = args[idx + 1]",
+                "        break",
+                "if target is None:",
+                "    sys.exit(2)",
+                "Path(target).write_text('mermaid-pdf', encoding='utf-8')",
+            ]
+        ),
+        encoding="utf-8",
+    )
+    script.chmod(0o755)
+    return script
+
+
+def _make_drawio_cli(tmp_path: Path) -> Path:
+    script = tmp_path / "drawio"
+    script.write_text(
+        "\n".join(
+            [
+                "#!/usr/bin/env python3",
+                "import sys",
+                "from pathlib import Path",
+                "args = sys.argv[1:]",
+                "output = None",
+                "for idx, arg in enumerate(args):",
+                "    if arg == '--output':",
+                "        output = args[idx + 1]",
+                "        break",
+                "if output is None:",
+                "    sys.exit(2)",
+                "Path(output).write_text('drawio-pdf', encoding='utf-8')",
+            ]
+        ),
+        encoding="utf-8",
+    )
+    script.chmod(0o755)
+    return script
 
 
 @pytest.fixture
@@ -54,6 +124,103 @@ def test_drawio_image_conversion(renderer: LaTeXRenderer, tmp_path: Path) -> Non
     finally:
         register_converter("drawio", original)
 
+
+def test_drawio_prefers_local_cli(
+    monkeypatch: pytest.MonkeyPatch, renderer: LaTeXRenderer, tmp_path: Path
+) -> None:
+    script = _make_drawio_cli(tmp_path)
+    diagram = tmp_path / "diagram.drawio"
+    diagram.write_text("<mxfile />", encoding="utf-8")
+
+    monkeypatch.setattr(strategies, "normalise_pdf_version", lambda *_args, **_kwargs: None)
+
+    def _fail_docker(*_args, **_kwargs):
+        raise AssertionError("docker should not run when draw.io CLI is available")
+
+    monkeypatch.setattr(strategies, "run_container", _fail_docker)
+    real_which = shutil.which
+
+    def _fake_which(name: str) -> str | None:
+        if name in {"drawio", "draw.io"}:
+            return str(script)
+        return real_which(name)
+
+    monkeypatch.setattr(shutil, "which", _fake_which)
+
+    html = '<p><img src="diagram.drawio" alt="Graph"></p>'
+    latex = renderer.render(html, runtime={"source_dir": tmp_path})
+    assert "\\includegraphics" in latex
+
+
+def test_drawio_cli_warns_when_using_hint_path(
+    monkeypatch: pytest.MonkeyPatch, renderer: LaTeXRenderer, tmp_path: Path
+) -> None:
+    script_dir = tmp_path / "snap" / "bin"
+    script_dir.mkdir(parents=True, exist_ok=True)
+    script = _make_drawio_cli(script_dir)
+    diagram = tmp_path / "diagram.drawio"
+    diagram.write_text("<mxfile />", encoding="utf-8")
+
+    monkeypatch.setattr(strategies, "DRAWIO_CLI_HINT_PATHS", (script,))
+    monkeypatch.setattr(shutil, "which", lambda _name: None)
+
+    monkeypatch.setattr(strategies, "normalise_pdf_version", lambda *_args, **_kwargs: None)
+
+    def _fail_docker(*_args, **_kwargs):
+        raise AssertionError("docker should not run when hint executable is present")
+
+    monkeypatch.setattr(strategies, "run_container", _fail_docker)
+
+    html = '<p><img src="diagram.drawio" alt="Graph"></p>'
+    with pytest.warns(UserWarning, match="drawio"):
+        renderer.render(html, runtime={"source_dir": tmp_path})
+
+
+def test_drawio_cli_failure_falls_back_to_docker(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    strategy = strategies.DrawioToPdfStrategy()
+    source = tmp_path / "diagram.drawio"
+    source.write_text("<mxfile />", encoding="utf-8")
+
+    monkeypatch.setattr(strategies, "_resolve_cli", lambda *_: ("drawio-bin", True))
+
+    def _fail_local(self, *_, **__):
+        raise TransformerExecutionError("local draw.io failure")
+
+    monkeypatch.setattr(strategies.DrawioToPdfStrategy, "_run_local_cli", _fail_local)
+    monkeypatch.setattr(strategies, "normalise_pdf_version", lambda *_: None)
+
+    def _fake_run_container(*_, mounts, **__):
+        working_dir = Path(mounts[0].source)
+        (working_dir / "diagram.pdf").write_bytes(_FAKE_PDF)
+
+    monkeypatch.setattr(strategies, "run_container", _fake_run_container)
+
+    target = strategy(source, output_dir=tmp_path / "build")
+    assert target.exists()
+
+
+def test_drawio_cli_and_docker_failure(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    strategy = strategies.DrawioToPdfStrategy()
+    source = tmp_path / "diagram.drawio"
+    source.write_text("<mxfile />", encoding="utf-8")
+
+    monkeypatch.setattr(strategies, "_resolve_cli", lambda *_: ("drawio-bin", True))
+
+    def _fail_local(self, *_, **__):
+        raise TransformerExecutionError("local draw.io failure")
+
+    monkeypatch.setattr(strategies.DrawioToPdfStrategy, "_run_local_cli", _fail_local)
+
+    def _fail_docker(*_, **__):
+        raise TransformerExecutionError("docker unavailable")
+
+    monkeypatch.setattr(strategies, "run_container", _fail_docker)
+
+    with pytest.raises(TransformerExecutionError) as excinfo:
+        strategy(source, output_dir=tmp_path / "build")
+    message = str(excinfo.value)
+    assert "draw.io CLI failed" in message
+    assert "Docker fallback also failed" in message
 
 def test_mermaid_block_conversion(renderer: LaTeXRenderer, tmp_path: Path) -> None:
     original = registry.get("mermaid")
@@ -100,6 +267,162 @@ flowchart LR
         """
         latex = renderer.render(html, runtime={"source_dir": tmp_path})
         assert "[Influence Graph unavailable]" in latex
+    finally:
+        register_converter("mermaid", original)
+
+
+def test_mermaid_prefers_local_cli(monkeypatch: pytest.MonkeyPatch, renderer: LaTeXRenderer, tmp_path: Path) -> None:
+    script = _make_mermaid_cli(tmp_path)
+
+    monkeypatch.setattr(strategies, "normalise_pdf_version", lambda *_args, **_kwargs: None)
+
+    def _fail_docker(*_args, **_kwargs):
+        raise AssertionError("docker should not run when local CLI is available")
+
+    monkeypatch.setattr(strategies, "run_container", _fail_docker)
+    real_which = shutil.which
+
+    def _fake_which(name: str) -> str | None:
+        if name == "mmdc":
+            return str(script)
+        return real_which(name)
+
+    monkeypatch.setattr(shutil, "which", _fake_which)
+
+    html = """
+    <div class="highlight">
+        <pre><code>flowchart LR
+A --> B
+</code></pre>
+    </div>
+    """
+    latex = renderer.render(html, runtime={"source_dir": tmp_path})
+    assert "\\includegraphics" in latex
+
+
+def test_mermaid_cli_warns_when_using_hint_path(
+    monkeypatch: pytest.MonkeyPatch, renderer: LaTeXRenderer, tmp_path: Path
+) -> None:
+    script_dir = tmp_path / "snap" / "bin"
+    script_dir.mkdir(parents=True, exist_ok=True)
+    script = _make_mermaid_cli(script_dir)
+
+    monkeypatch.setattr(strategies, "MERMAID_CLI_HINT_PATHS", (script,))
+    monkeypatch.setattr(shutil, "which", lambda _name: None)
+
+    monkeypatch.setattr(strategies, "normalise_pdf_version", lambda *_args, **_kwargs: None)
+
+    def _fail_docker(*_args, **_kwargs):
+        raise AssertionError("docker should not run when hint executable is present")
+
+    monkeypatch.setattr(strategies, "run_container", _fail_docker)
+
+    html = """
+    <div class="highlight">
+        <pre><code>flowchart LR
+A --> B
+</code></pre>
+    </div>
+    """
+    with pytest.warns(UserWarning, match="mmdc"):
+        renderer.render(html, runtime={"source_dir": tmp_path})
+
+
+def test_mermaid_cli_failure_falls_back_to_docker(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    strategy = strategies.MermaidToPdfStrategy()
+    monkeypatch.setattr(strategies, "_resolve_cli", lambda *_: ("mmdc-bin", True))
+
+    def _fail_local(self, *_, **__):
+        raise TransformerExecutionError("local mermaid failure")
+
+    monkeypatch.setattr(strategies.MermaidToPdfStrategy, "_run_local_cli", _fail_local)
+    monkeypatch.setattr(strategies, "normalise_pdf_version", lambda *_: None)
+
+    def _fake_run_container(*_, mounts, args, **__):
+        working_dir = Path(mounts[0].source)
+        try:
+            output_name = args[args.index("-o") + 1]
+        except (ValueError, IndexError):
+            output_name = "diagram.pdf"
+        (working_dir / output_name).write_bytes(_FAKE_PDF)
+
+    monkeypatch.setattr(strategies, "run_container", _fake_run_container)
+
+    target = strategy("graph LR; A-->B", output_dir=tmp_path / "build")
+    assert target.exists()
+
+
+def test_mermaid_cli_and_docker_failure(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    strategy = strategies.MermaidToPdfStrategy()
+    monkeypatch.setattr(strategies, "_resolve_cli", lambda *_: ("mmdc-bin", True))
+
+    def _fail_local(self, *_, **__):
+        raise TransformerExecutionError("local mermaid failure")
+
+    monkeypatch.setattr(strategies.MermaidToPdfStrategy, "_run_local_cli", _fail_local)
+
+    def _fail_docker(*_, **__):
+        raise TransformerExecutionError("docker unavailable")
+
+    monkeypatch.setattr(strategies, "run_container", _fail_docker)
+
+    with pytest.raises(TransformerExecutionError) as excinfo:
+        strategy("graph LR; A-->B", output_dir=tmp_path / "build")
+    message = str(excinfo.value)
+    assert "Mermaid CLI failed" in message
+    assert "Docker fallback also failed" in message
+
+
+def test_mermaid_warning_uses_emitter(renderer: LaTeXRenderer, tmp_path: Path) -> None:
+    original = registry.get("mermaid")
+
+    def _failing_converter(*_args, **_kwargs):
+        raise TransformerExecutionError("Docker executable could not be located.")
+
+    register_converter("mermaid", _failing_converter)
+    emitter = _RecordingEmitter()
+
+    try:
+        html = """
+        <div class="highlight">
+            <pre><code>flowchart LR
+    A --> B
+</code></pre>
+        </div>
+        """
+        renderer.render(html, runtime={"source_dir": tmp_path, "emitter": emitter})
+        assert emitter.warnings, "expected warning to be emitted via emitter"
+        message, exc = emitter.warnings[-1]
+        assert "Mermaid diagram could not be rendered" in message
+        assert "Run with --debug" in message
+        assert "Docker executable could not be located" in message
+        assert exc is None
+    finally:
+        register_converter("mermaid", original)
+
+
+def test_mermaid_warning_includes_details_when_debug(renderer: LaTeXRenderer, tmp_path: Path) -> None:
+    original = registry.get("mermaid")
+
+    def _failing_converter(*_args, **_kwargs):
+        raise TransformerExecutionError("Docker executable could not be located.")
+
+    register_converter("mermaid", _failing_converter)
+    emitter = _RecordingEmitter(debug_enabled=True)
+
+    try:
+        html = """
+        <div class="highlight">
+            <pre><code>flowchart LR
+    A --> B
+</code></pre>
+        </div>
+        """
+        renderer.render(html, runtime={"source_dir": tmp_path, "emitter": emitter})
+        assert emitter.warnings, "expected warning to be emitted via emitter"
+        message, exc = emitter.warnings[-1]
+        assert "Details" in message
+        assert exc is not None
     finally:
         register_converter("mermaid", original)
 

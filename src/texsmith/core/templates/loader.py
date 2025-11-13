@@ -118,23 +118,33 @@ def _iter_local_candidates(initial: Path, slug: str) -> Iterable[Path]:
     if str(initial) not in {slug, f"./{slug}", f".\\{slug}"}:
         candidates.append(initial)
 
-    cwd = Path.cwd()
-    templates_root = cwd / "templates"
     distribution_name = f"texsmith-template-{slug}"
     package_name = f"texsmith_template_{slug}"
 
-    candidates.extend(
-        [
-            cwd / slug,
-            cwd / package_name,
-            cwd / distribution_name / package_name,
-            templates_root / slug,
-            cwd / distribution_name,
-            templates_root / distribution_name / package_name,
-            templates_root / package_name,
-            templates_root / distribution_name,
-        ]
-    )
+    def _extend_for_root(root: Path) -> None:
+        templates_root = root / "templates"
+        candidates.extend(
+            [
+                root / slug,
+                root / package_name,
+                root / distribution_name / package_name,
+                root / distribution_name,
+                templates_root / slug,
+                templates_root / package_name,
+                templates_root / distribution_name / package_name,
+                templates_root / distribution_name,
+            ]
+        )
+
+    cwd = Path.cwd().resolve()
+    visited_roots: set[Path] = set()
+    current = cwd
+    while current not in visited_roots:
+        visited_roots.add(current)
+        _extend_for_root(current)
+        if current.parent == current:
+            break
+        current = current.parent
 
     seen: set[str] = set()
     for candidate in candidates:

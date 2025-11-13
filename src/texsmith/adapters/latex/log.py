@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from enum import Enum
 import re
 import selectors
@@ -418,10 +418,32 @@ class LatexLogRenderer:
         self.messages: list[LatexMessage] = []
         self._current_messages: list[LatexMessage] = []
         self._pending: LatexMessage | None = None
+        self._pending_heading: bool = False
         self._branch_stack: list[bool] = []
+        self._heading_open = False
+        self._heading_next_bold = False
 
     def consume(self, message: LatexMessage) -> None:
         """Display a single message, queueing it for tree-aware formatting."""
+        heading_for_message = False
+        heading_state = self._split_heading_line(message.summary)
+        if heading_state is not None:
+            kind, remainder = heading_state
+            if kind == "rule":
+                self._heading_open = not self._heading_open
+                self._heading_next_bold = self._heading_open
+                return
+            if remainder:
+                heading_for_message = True
+                message = replace(message, summary=remainder)
+                if not self._heading_open:
+                    self._heading_open = True
+            self._heading_next_bold = False
+
+        if self._heading_next_bold:
+            heading_for_message = True
+            self._heading_next_bold = False
+
         if self._is_run_boundary(message):
             self._current_messages.clear()
         self.messages.append(message)
@@ -429,6 +451,7 @@ class LatexLogRenderer:
         next_indent = message.indent
         self._emit_pending(next_indent)
         self._pending = message
+        self._pending_heading = heading_for_message
 
     def summarize(self) -> None:
         """Print a summary of processed messages grouped by severity."""
@@ -453,6 +476,7 @@ class LatexLogRenderer:
         if self._pending is None:
             return
         message = self._pending
+        heading = self._pending_heading
         depth = message.indent
         connector = self._select_connector(depth, next_indent)
 
@@ -461,15 +485,17 @@ class LatexLogRenderer:
             branches_snapshot.append(False)
 
         prefix = self._build_prefix(depth, connector, branches_snapshot)
-        self._print_message(message, prefix, branches_snapshot)
+        self._print_message(message, prefix, branches_snapshot, heading)
         self._update_branch_stack(depth, connector, next_indent)
         self._pending = None
+        self._pending_heading = False
 
     def _print_message(
         self,
         message: LatexMessage,
         prefix: Text,
         branches_snapshot: list[bool],
+        heading: bool = False,
     ) -> None:
         style = self._SUMMARY_STYLE.get(message.severity, "white")
         detail_style = self._DETAIL_STYLE.get(message.severity, "white")
@@ -482,6 +508,8 @@ class LatexLogRenderer:
         header.append_text(prefix)
 
         summary_style = style
+        if heading:
+            summary_style = f"{summary_style} bold" if "bold" not in summary_style else summary_style
         if _HIGHLIGHT_PATTERN.match(message.summary):
             summary_style = f"{summary_style} bold" if summary_style else "bold"
         if message.severity is LatexMessageSeverity.INFO and _TEX_ASSIGN_PATTERN.search(
@@ -570,6 +598,23 @@ class LatexLogRenderer:
         if connector == "└":
             self._branch_stack[depth] = False
         del self._branch_stack[depth + 1 :]
+
+    @staticmethod
+    def _split_heading_line(summary: str) -> tuple[str, str | None] | None:
+        candidate = summary.strip()
+        if not candidate or candidate[0] != "-":
+            return None
+        dash_count = 0
+        for ch in candidate:
+            if ch != "-":
+                break
+            dash_count += 1
+        if dash_count < 5:
+            return None
+        remainder = candidate[dash_count:].strip()
+        if not remainder:
+            return ("rule", None)
+        return ("combined", remainder)
 
 
 @dataclass(slots=True)
