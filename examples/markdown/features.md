@@ -5,6 +5,7 @@ press:
   keywords: ["Markdown", "syntax", "extensions", "features", "cheatsheet"]
   slots:
     abstract: Abstract
+  toc: true
   override:
     preamble: |
         \usepackage{xcolor}
@@ -75,20 +76,20 @@ Shows how to emphasise text with bold weight. Simply translated to `\textbf{…}
 Applies emphasis for terminology or voice.
 
 ```md
-_text_
+This _text_ is italic.
 ```
 
-> _text_
+> This _text_ is italic.
 
 ### Strikethrough
 
 Marks text as deleted or obsolete.
 
 ```md
-~~text~~
+We ~~do not~~ want this. 
 ```
 
-> ~~text~~
+> We ~~do not~~ want this.
 
 ### Underline
 
@@ -100,17 +101,18 @@ With caret, mark and tilde extension from PyMdownX it is also possible to underl
 
 > ^^text^^
 
+
 ### Inline Code / Code Blocks
 
 ````md
-This entry is inline `code`, or can be in a fenced code block:
+This entry is `inline code`, or can be in a fenced code block:
 
 ```python
 print("Hello")
 ```
 ````
 
-> This entry is inline `code`, or can be in a fenced code block:
+> This entry is `inline code`, or can be in a fenced code block:
 >
 > ```python
 > print("Hello")
@@ -121,20 +123,22 @@ print("Hello")
 Creates external hyperlinks, in PDF converted to clickable links.
 
 ```md
-[text](https://example.com)
+The German-bord pysicist [Albert Einstein](https://en.wikipedia.org/wiki/Albert_Einstein) is famous for
+his nobel prize and the theory of relativity.
 ```
 
-> [text](https://example.com)
+> The German-bord pysicist [Albert Einstein](https://en.wikipedia.org/wiki/Albert_Einstein) is famous for
+> his nobel prize and the theory of relativity.
 
 ### Images
 
 Embeds remote or local images.
 
 ```md
-![alt](https://picsum.photos/500/200)
+![Random Picture](https://picsum.photos/500/200)
 ```
 
-> ![alt](https://picsum.photos/500/200)
+> ![Random Picture](https://picsum.photos/500/200)
 
 ### Lists
 
@@ -146,9 +150,9 @@ Embeds remote or local images.
     - Subitem
 ```
 
-- First
-- Second
-    - Subitem
+> - First
+> - Second
+>    - Subitem
 
 ### Enumerated Lists
 
@@ -161,12 +165,12 @@ Embeds remote or local images.
     2. Sub-numbered
 ```
 
-1. Numbered first
-2. Numbered second
-    1. Sub-numbered
-        a. Sub-sub-numbered
-        b. Sub-sub-numbered
-    2. Sub-numbered
+> 1. Numbered first
+> 2. Numbered second
+>     1. Sub-numbered
+>         a. Sub-sub-numbered
+>         b. Sub-sub-numbered
+>     2. Sub-numbered
 
 ### Blockquotes
 
@@ -183,38 +187,47 @@ Highlights quotations or cited text.
 Adds a visual separator between sections.
 
 ```md
----
-
----
-
----
+-----
 ```
 
-> ---
->
-> ---
->
-> ---
+> -----
+
+
+## TeXSmith Markdown Extensions
+
+TeXSmith features several custom Markdown extensions to enhance document authoring. 
+Below is a summary of the supported extensions along with their usage.
+
+### Small Capitals
+
+With standard Markdown `**` or `__` have the same effect as bold while the former is usually preferred. TeXSmith uses the latter for small capitals when the `texsmith.smallcaps`
+extension is enabled.
+
+```md
+This is __small capitals__.
+```
+
+> This is __small capitals__.
 
 ## Advanced Syntax Extensions (Non-Standard)
 
 ### Tables
 
 ```md
-| Col1 | Col2 |
+| Column 1 | Column 2 |
 | ---- | ---- |
-| Val1 | Val2 |
+| Value 1 | Value 2 |
+| Value 3 | Value 4 |
 ```
 
-> | Col1 | Col2 |
+> | Column 1 | Column 2 |
 > | ---- | ---- |
-> | Val1 | Val2 |
-
-| Col1 | Col2 |
-| ---- | ---- |
-| Val1 | Val2 |
+> | Value 1 | Value 2 |
+> | Value 3 | Value 4 |
 
 ### Footnotes
+
+A footnote[^2] is a note placed at the bottom of the page.
 
 ```md
 Text with note[^1].
@@ -225,6 +238,8 @@ Text with note[^1].
 > Text with note[^1].
 >
 > [^1]: Here is the note.
+
+[^2]: A footnote is a note placed at the bottom of the page.
 
 ### Abbreviations
 
@@ -256,11 +271,11 @@ Another term
 : Another definition
 ```
 
-Term
-: Definition of the term
-
-Another term
-: Another definition
+> Term
+> : Definition of the term
+> 
+> Another term
+> : Another definition
 
 ### Admonitions (Alert / Info / Tip Blocks)
 
@@ -271,13 +286,16 @@ _Description: Emphasises callouts such as notes and warnings._
 ```md
 !!! note
     This is a note.
-```
 
-> !!! note
->     This is a note.
+!!! warning
+    This is a warning.
+```
 
 !!! note
     This is a note.
+
+!!! warning
+    This is a warning.
 
 ### SuperFences (Enhanced Fenced Code + Nested Blocks)
 
@@ -361,10 +379,12 @@ _Description: Adds subscripts and superscripts._
 
 ```md
 H~2~O
+
 E = mc^2^
 ```
 
 > H~2~O
+>
 > E = mc^2^
 
 ### SmartSymbols
@@ -596,6 +616,12 @@ _Description: Notes how em-dashes are handled differently by parsers._
 
 No current extension automatically handles the em dash in Markdown. In LaTeX you use `--` for an en dash and `---` for an em dash. The `---` sequence can be confusing in Markdown because it is also used for horizontal rules; however, some parsers such as `markdown-it-py` interpret it contextually. Experiment as needed.
 
+```md
+Achiles -- the swifest runner -- was fast, but not as fast as the tortoise.
+```
+
+> Achiles -- the swifest runner -- was fast, but not as fast as the tortoise.
+
 ### Additional Syntax
 
 _Description: Highlights extra syntaxes such as callouts and directives._
@@ -607,15 +633,15 @@ _Description: Highlights extra syntaxes such as callouts and directives._
 ::directive{param} Used on MDX, Astro
 ```
 
-### 🧱 **Other, Less Common Dialects**
+### **Other, Less Common Dialects**
 
 _Description: Summarises less common Markdown dialects and their strengths._
 
-| Dialect                            | Highlights                                            | Package                       |
-| ---------------------------------- | ----------------------------------------------------- | ----------------------------- |
-| **MultiMarkdown**                  | Tables, footnotes, citations, extended metadata       | `pip install multimarkdown`   |
-| **RMarkdown**                      | Executable code (knitr), math, tables                 | `rmarkdown` (R)               |
-| **kramdown**                       | Math, footnotes, block IAL, definition lists          | (Ruby)                        |
-| **CommonMark Extended (cmarkgfm)** | Full GFM support                                      | `pip install cmarkgfm`        |
-| **Ghost / Jekyll**                 | “Liquid tags” (`{% include %}`)                       | Liquid engine                 |
-| **MkDocs Material**                | Full PyMdownX support + Snippets + Tabs + Admonitions | `pip install mkdocs-material` |
+| Dialect             | Highlights                                       | Package           |
+| ------------------- | ------------------------------------------------ | ----------------- |
+| **MultiMarkdown**   | Tables, footnotes, citations, extended metadata  | `multimarkdown`   |
+| **RMarkdown**       | Executable code (knitr), math, tables            | `rmarkdown` (R)   |
+| **kramdown**        | Math, footnotes, block IAL, definition lists     | (Ruby)            |
+| **CommonMark Ext.** | Full GFM support                                 | `cmarkgfm`        |
+| **Ghost / Jekyll**  | “Liquid tags” (`{% include %}`)                  | Liquid engine     |
+| **MkDocs Material** | PyMdownX support + Snippets + Tabs + Admonitions | `mkdocs-material` |

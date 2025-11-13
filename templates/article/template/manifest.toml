@@ -41,6 +41,17 @@ escape = "latex"
 allow_empty = true
 sources = ["press.author", "author"]
 
+[latex.template.attributes.emoji]
+default = "artifact"
+type = "string"
+choices = ["artifact", "symbola", "color"]
+sources = ["press.emoji", "emoji"]
+
+[latex.template.attributes.toc]
+default = false
+type = "boolean"
+sources = ["press.toc", "toc"]
+
 [latex.template.attributes.authors]
 default = []
 type = "list"

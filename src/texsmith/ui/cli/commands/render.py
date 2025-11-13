@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Mapping
+from collections.abc import Iterable, Mapping
 import os
 from pathlib import Path
 import shlex
@@ -43,6 +43,7 @@ from .._options import (
     ParserOption,
     SelectorOption,
     SlotsOption,
+    TemplateAttributeOption,
     TemplateOption,
     TitleFromHeadingOption,
 )
@@ -183,6 +184,45 @@ def _format_path_for_event(path: Path) -> str:
         return str(resolved)
 
 
+def _coerce_attribute_value(raw: str) -> Any:
+    candidate = raw.strip()
+    lowered = candidate.lower()
+    if lowered in {"true", "false"}:
+        return lowered == "true"
+    try:
+        if candidate.startswith(("0x", "0X")):
+            return int(candidate, 16)
+        return int(candidate)
+    except ValueError:
+        pass
+    try:
+        return float(candidate)
+    except ValueError:
+        pass
+    return candidate
+
+
+def _parse_template_attributes(values: Iterable[str] | None) -> dict[str, Any]:
+    overrides: dict[str, Any] = {}
+    if not values:
+        return overrides
+    for raw in values:
+        if not isinstance(raw, str) or not raw.strip():
+            continue
+        if "=" not in raw:
+            raise typer.BadParameter(f"Invalid attribute override '{raw}', expected key=value.")
+        key, value = raw.split("=", 1)
+        key = key.strip()
+        if not key:
+            raise typer.BadParameter(f"Invalid attribute override '{raw}', empty key.")
+        if "." in key:
+            raise typer.BadParameter(
+                f"Invalid attribute '{key}'. Nested attributes are not supported."
+            )
+        overrides[key] = _coerce_attribute_value(value)
+    return overrides
+
+
 def render(
     inputs: InputPathArgument = None,
     input_path: Annotated[
@@ -206,6 +246,7 @@ def render(
     copy_assets: CopyAssetsOptionWithShort = True,
     manifest: ManifestOptionWithShort = False,
     template: TemplateOption = None,
+    template_attributes: TemplateAttributeOption = None,
     debug_html: DebugHtmlOption = None,
     classic_output: Annotated[
         bool,
@@ -290,6 +331,12 @@ def render(
             template = metadata_template
 
     template_selected = bool(template)
+
+    attribute_overrides = _parse_template_attributes(template_attributes)
+    if attribute_overrides and not template_selected:
+        raise typer.BadParameter("--attribute can only be used together with --template.")
+    if attribute_overrides:
+        state.record_event("template_attributes", {"values": attribute_overrides})
 
     output_param_source = ctx.get_parameter_source("output") if ctx else None
     pdf_output_requested = bool(output and output.suffix.lower() == ".pdf")
@@ -421,6 +468,7 @@ def render(
         legacy_latex_accents=legacy_latex_accents,
         template=template,
         render_dir=request_render_dir,
+        template_options=attribute_overrides,
         emitter=emitter,
     )
     state.record_event(

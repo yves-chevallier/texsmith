@@ -28,6 +28,7 @@
 \usepackage{float}
 \usepackage{hyperref}
 \usepackage{bookmark}
+\providecommand{\texsmithEmoji}[1]{#1}
 
 \BLOCK{ if bibliography_resource }
 \usepackage[
@@ -44,21 +45,29 @@
 \BLOCK{ if has_index or index_entries }\usepackage[xindy]{imakeidx}\BLOCK{ endif }
 
 \BLOCK{ if latex_engine == "lualatex" }
+\BLOCK{ set base_font_fallbacks = [
+    "NotoColorEmoji:mode=harf;",
+    "NotoNaskhArabic:mode=harf;",
+    "NotoSerifHebrew:mode=harf;",
+    "NotoSerifDevanagari:mode=harf;",
+    "NotoSerifTamil:mode=harf;",
+    "NotoSerifTibetan:mode=harf;",
+    "NotoSerifCJKkr:mode=harf;",
+    "NotoSans:mode=harf;",
+    "NotoSansSymbols2-Regular:mode=harf;",
+    "NotoSansMath-Regular:mode=harf;",
+    "NotoMusic-Regular:mode=harf;",
+    "NotoSansSyriac-Regular:mode=harf;",
+    "NotoSansSyriacWestern-Regular:mode=harf;"
+] }
+\BLOCK{ set fallback_fonts = base_font_fallbacks + (extra_font_fallbacks or []) }
 \directlua{luaotfload.add_fallback
   ("fontfallback",
   {
-      "NotoColorEmoji:mode=harf;",
-      "NotoNaskhArabic:mode=harf;",
-      "NotoSerifHebrew:mode=harf;",
-      "NotoSerifDevanagari:mode=harf;",
-      "NotoSerifTamil:mode=harf;",
-      "NotoSerifTibetan:mode=harf;",
-      "NotoSerifCJKkr:mode=harf;",
-      "NotoSans:mode=harf;",
-      "NotoSansSymbols2-Regular:mode=harf;",
-      "NotoSansMath-Regular:mode=harf;",
-      "NotoMusic-Regular:mode=harf;",
-    }
+      \BLOCK{ for font in fallback_fonts }
+      "\VAR{font}"\BLOCK{ if not loop.last },\BLOCK{ endif }
+      \BLOCK{ endfor }
+  }
   )}
 
 \setmainfont{Latin Modern Roman}[
@@ -78,6 +87,22 @@
   BoldItalicFont={* Bold Oblique},
   RawFeature={fallback=fontfallback}
 ]
+\BLOCK{ set emoji_mode = (emoji | default('artifact') | lower) }
+\BLOCK{ if emoji_mode == "symbola" }
+\IfFontExistsTF{Symbola}{
+  \newfontfamily\texsmithEmojiFont{Symbola}[Scale=1.0]
+  \renewcommand{\texsmithEmoji}[1]{{\texsmithEmojiFont #1}}
+}{
+  \renewcommand{\texsmithEmoji}[1]{#1}
+}
+\BLOCK{ elif emoji_mode == "color" }
+\IfFontExistsTF{Noto Color Emoji}{
+  \newfontfamily\texsmithEmojiFont{Noto Color Emoji}[Renderer=Harfbuzz,Scale=1.1]
+  \renewcommand{\texsmithEmoji}[1]{{\texsmithEmojiFont #1}}
+}{
+  \renewcommand{\texsmithEmoji}[1]{#1}
+}
+\BLOCK{ endif }
 \BLOCK{ endif }
 
 \usemintedstyle{bw}
@@ -139,6 +164,9 @@
 \begin{abstract}
 \VAR{abstract}
 \end{abstract}
+\BLOCK{ endif }
+\BLOCK{ if toc }
+\tableofcontents
 \BLOCK{ endif }
 
 \VAR{mainmatter}
