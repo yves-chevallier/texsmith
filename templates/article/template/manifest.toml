@@ -5,7 +5,7 @@ texsmith = ">=0.1,<1.0"
 name = "article"
 version = "0.1.0"
 entrypoint = "template/template.tex"
-engine = "lualatex" # For lua-specific features
+engine = "lualatex"
 shell_escape = true # MUST BE TRUE for minted package
 texlive_year = 2023
 tlmgr_packages = [
@@ -13,6 +13,8 @@ tlmgr_packages = [
     "geometry",
     "hyperref",
     "microtype",
+    "lmodern",
+    "textcomp",
     "fontspec",
     "biblatex",
 ]
@@ -33,9 +35,10 @@ type = "string"
 escape = "latex"
 
 [latex.template.attributes.author]
-default = "John Doe"
+default = ""
 type = "string"
 escape = "latex"
+allow_empty = true
 sources = ["press.author", "author"]
 
 [latex.template.attributes.authors]
@@ -66,6 +69,12 @@ type = "string"
 normaliser = "orientation"
 choices = ["portrait", "landscape"]
 
+[latex.template.attributes.preamble_injection]
+default = ""
+type = "string"
+allow_empty = true
+sources = ["press.override.preamble", "press.preamble", "preamble"]
+
 [latex.template.attributes.bibliography_style]
 default = "numeric"
 type = "string"
@@ -90,4 +99,4 @@ strip_heading = true
 "callouts.sty" = { source = "template/callouts.sty" }
 "todolist.sty" = { source = "template/todolist.sty" }
 "keystroke.sty" = { source = "template/keystroke.sty" }
-".latexmkrc" = { source = "template/assets/latexmkrc" }
+".latexmkrc" = { source = "template/assets/latexmkrc", template = true }

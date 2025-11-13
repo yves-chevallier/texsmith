@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Iterable, Mapping
 from pathlib import Path
+import unicodedata
 from typing import Any
 
 from texsmith.core.templates import TemplateError, WrappableTemplate
@@ -16,11 +17,49 @@ _PACKAGE_ROOT = Path(__file__).parent.resolve()
 class Template(WrappableTemplate):
     """Expose the article template as a wrappable template instance."""
 
+    _LATIN_RANGE_LIMIT = 0x024F
+    _TEXTCOMP_CHARACTERS = {
+        "€",
+        "£",
+        "¥",
+        "§",
+        "¶",
+        "°",
+        "±",
+        "µ",
+        "×",
+        "÷",
+        "©",
+        "®",
+        "™",
+        "½",
+        "¼",
+        "¾",
+        "‰",
+    }
+    _ALLOWED_PUNCTUATION = {
+        "«",
+        "»",
+        "‹",
+        "›",
+        "„",
+        "“",
+        "”",
+        "’",
+        "‚",
+        "·",
+        "–",
+        "—",
+        "…",
+    }
+
     def __init__(self) -> None:
         try:
             super().__init__(_PACKAGE_ROOT)
         except TemplateError as exc:
             raise TemplateError(f"Failed to initialise article template: {exc}") from exc
+        config_path = (self.root / "template" / "assets" / "mermaid-config.json").resolve()
+        self.extras = {"mermaid_config": str(config_path)}
 
     def prepare_context(
         self,
@@ -36,10 +75,11 @@ class Template(WrappableTemplate):
         if author_value:
             context["author"] = author_value
         else:
-            fallback_author = context.get("author") or self.info.get_attribute_default("author")
-            if isinstance(fallback_author, str):
-                candidate = fallback_author.strip()
-                context["author"] = candidate or self.info.get_attribute_default("author")
+            fallback_author = self._coerce_string(context.get("author"))
+            if fallback_author:
+                context["author"] = fallback_author
+            else:
+                context.pop("author", None)
 
         context.pop("press", None)
 
@@ -58,6 +98,11 @@ class Template(WrappableTemplate):
         context["orientation_option"] = orientation_option
         context["documentclass_options"] = f"[{','.join(options)}]" if options else ""
         context["geometry_options"] = ",".join(geometry_options)
+        context.setdefault("latex_engine", "pdflatex")
+        context.setdefault("requires_unicode_engine", False)
+        context.setdefault("unicode_chars", "")
+        context.setdefault("unicode_problematic_chars", "")
+        context.setdefault("pdflatex_extra_packages", [])
 
         return context
 
@@ -120,6 +165,99 @@ class Template(WrappableTemplate):
             return value
         default_value = self.info.get_attribute_default(name)
         return self._coerce_string(default_value)
+
+    def wrap_document(
+        self,
+        latex_body: str,
+        *,
+        overrides: Mapping[str, Any] | None = None,
+        context: Mapping[str, Any] | None = None,
+    ) -> str:
+        if context is None:
+            prepared = self.prepare_context(latex_body, overrides=overrides)
+            context_ref: dict[str, Any] | None = prepared
+        else:
+            prepared = dict(context)
+            context_ref = context if isinstance(context, dict) else None
+
+        self._analyse_unicode_payload(prepared)
+
+        if context_ref is not prepared and context_ref is not None:
+            context_ref.clear()
+            context_ref.update(prepared)
+
+        return super().wrap_document(latex_body, overrides=overrides, context=prepared)
+
+    def _analyse_unicode_payload(self, context: dict[str, Any]) -> None:
+        unicode_chars = self._collect_unicode_characters(context)
+        problematic = []
+        extra_packages: set[str] = set()
+
+        for char in unicode_chars:
+            classification = self._classify_character(char)
+            if classification == "textcomp":
+                extra_packages.add("textcomp")
+            elif classification == "unsupported":
+                problematic.append(char)
+
+        context["unicode_chars"] = "".join(sorted(unicode_chars, key=ord))
+        context["unicode_problematic_chars"] = "".join(sorted(problematic, key=ord))
+        context["pdflatex_extra_packages"] = sorted(extra_packages)
+
+        requires_unicode_engine = bool(problematic)
+        context["requires_unicode_engine"] = requires_unicode_engine
+        context["latex_engine"] = "lualatex" if requires_unicode_engine else "pdflatex"
+
+    def _collect_unicode_characters(self, payload: Any) -> set[str]:
+        collected: set[str] = set()
+        visited: set[int] = set()
+
+        def _walk(value: Any) -> None:
+            if isinstance(value, str):
+                for char in value:
+                    if ord(char) > 0x7F:
+                        collected.add(char)
+                return
+
+            if isinstance(value, Mapping):
+                identifier = id(value)
+                if identifier in visited:
+                    return
+                visited.add(identifier)
+                for item in value.values():
+                    _walk(item)
+                return
+
+            if isinstance(value, Iterable) and not isinstance(value, (bytes, bytearray)):
+                identifier = id(value)
+                if identifier in visited:
+                    return
+                visited.add(identifier)
+                for item in value:
+                    _walk(item)
+
+        _walk(payload)
+        return collected
+
+    def _classify_character(self, char: str) -> str:
+        codepoint = ord(char)
+        if codepoint <= self._LATIN_RANGE_LIMIT:
+            return "latin"
+        if char in self._ALLOWED_PUNCTUATION:
+            return "punctuation"
+        if char in self._TEXTCOMP_CHARACTERS:
+            return "textcomp"
+
+        name: str | None
+        try:
+            name = unicodedata.name(char)
+        except ValueError:
+            name = None
+
+        if name and "LATIN" in name:
+            return "latin"
+
+        return "unsupported"
 
 
 __all__ = ["Template"]

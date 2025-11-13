@@ -1,23 +1,23 @@
-# Diagrams Integration
+# Diagram Integration
 
-We can include diagrams made with Draw.io or Mermaid directly in our Markdown files. This is particularly useful for technical documentation that requires visual representations. The package will automatically convert these diagrams into images that can be embedded in the final LaTeX document easily:
+You can embed Draw.io or Mermaid diagrams directly in Markdown. This keeps technical documentation close to the visuals it describes, and the package takes care of converting each diagram to an image that the final LaTeX document can reference automatically.
 
 ## Draw.io Diagram
 
-![PGCD Euclide](pgcd.drawio)
+![Euclidean GCD](pgcd.drawio)
 
 /// figure-caption
-Euclidean Algorithm for GCD
+Euclidean algorithm for the greatest common divisor
 ///
 
 ## Mermaid Diagram
 
 ```mermaid
-%% Algorithme de déterrage de légumes
+%% Vegetable harvesting algorithm
 flowchart LR
-    start(Début) --> pick[Déterrer]
-    pick --> if{Choux?}
-    if --Non--> step[Avancer de 1 pas]
+    start(Start) --> pick[Dig up]
+    pick --> if{Cabbages?}
+    if --No--> step[Move forward one step]
     step --> pick
-    if --Oui--> stop(Fin)
+    if --Yes--> stop(End)
 ```

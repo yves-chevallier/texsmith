@@ -14,3 +14,16 @@ This extension shows how to declare a custom render using the decorator:
 @renders("span", phase=RenderPhase.INLINE, name="inline_data_counter")
 def render_data_counter(element, context) -> None:
 ```
+
+## Demo
+
+You can run the example with:
+
+```tex
+$ uv run python counter.py
+
+\chapter{Counter Example}
+
+This is item \counter{1} but we can also have another
+item \counter{2} and even more \counter{3}.
+```

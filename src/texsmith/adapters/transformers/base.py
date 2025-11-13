@@ -71,10 +71,13 @@ class CachedConversionStrategy:
                     exc, TransformerExecutionError
                 )
                 if not should_retry:
-                    break
+                    raise
                 delay = self.backoff(attempt)
                 if delay > 0:
                     time.sleep(delay)
+
+        if isinstance(last_error, TransformerExecutionError):
+            raise last_error
 
         message = f"Conversion failed for '{self.namespace}' after {self.max_attempts} attempts"
         raise TransformerExecutionError(message) from last_error

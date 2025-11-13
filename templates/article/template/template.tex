@@ -1,6 +1,18 @@
 \documentclass\VAR{documentclass_options}{article}
 
+\BLOCK{ if latex_engine == "lualatex" }
 \usepackage{fontspec}
+\BLOCK{ else }
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\BLOCK{ if pdflatex_extra_packages }
+\BLOCK{ for package in pdflatex_extra_packages }
+\usepackage{\VAR{package}}
+\BLOCK{ endfor }
+\BLOCK{ endif }
+\BLOCK{ endif }
+
 \usepackage{microtype}
 \usepackage{geometry}
 \usepackage{hyphenat}
@@ -31,6 +43,7 @@
 \BLOCK{ endif }
 \BLOCK{ if has_index or index_entries }\usepackage[xindy]{imakeidx}\BLOCK{ endif }
 
+\BLOCK{ if latex_engine == "lualatex" }
 \directlua{luaotfload.add_fallback
   ("fontfallback",
   {
@@ -65,6 +78,7 @@
   BoldItalicFont={* Bold Oblique},
   RawFeature={fallback=fontfallback}
 ]
+\BLOCK{ endif }
 
 \usemintedstyle{bw}
 
@@ -77,7 +91,7 @@
   pad at break*=1mm,
   toptitle=0.15em,
   bottomtitle=0.1em,
-  %boxrule=0mm,
+  boxrule=0.1em,
   %frame hidden,
   minted language=#2,
   top=1mm,
@@ -96,10 +110,16 @@
   #1
 }
 
+\BLOCK{ if preamble_injection }
+% Custom document preamble injected from front matter overrides.
+\VAR{preamble_injection}
+
+\BLOCK{ endif }
+
 \geometry{\VAR{geometry_options}}
 
 \title{\VAR{title}\BLOCK{ if subtitle }\\\large \VAR{subtitle}\BLOCK{ endif }}
-\author{\VAR{author}}
+\BLOCK{ if author }\author{\VAR{author}}\BLOCK{ else }\author{}\BLOCK{ endif }
 \date{\VAR{date}}
 
 \BLOCK{ if acronyms }

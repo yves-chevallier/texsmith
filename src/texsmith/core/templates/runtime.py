@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Callable, Mapping
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
@@ -32,6 +32,7 @@ class TemplateRuntime:
     default_slot: str
     formatter_overrides: dict[str, Path]
     base_level: int | None
+    extras: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass(slots=True)
@@ -193,6 +194,8 @@ def load_template_runtime(template: str) -> TemplateRuntime:
 
     slots, default_slot = template_instance.info.resolve_slots()
     formatter_overrides = dict(template_instance.iter_formatter_overrides())
+    extras_payload = getattr(template_instance, "extras", {}) or {}
+    extras = {key: value for key, value in extras_payload.items()}
 
     return TemplateRuntime(
         instance=template_instance,
@@ -203,6 +206,7 @@ def load_template_runtime(template: str) -> TemplateRuntime:
         default_slot=default_slot,
         formatter_overrides=formatter_overrides,
         base_level=template_base,
+        extras=extras,
     )
 
 

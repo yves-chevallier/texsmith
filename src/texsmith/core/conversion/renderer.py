@@ -208,8 +208,21 @@ class TemplateRenderer:
             Path(fragment.output_path) for fragment in fragments if fragment.output_path
         ]
 
+        context_engine: str | None = None
+        if template_context:
+            raw_engine = template_context.get("latex_engine")
+            if isinstance(raw_engine, str):
+                stripped = raw_engine.strip()
+                if stripped:
+                    context_engine = stripped
+
+        template_engine = self.runtime.engine
+
+        if context_engine:
+            if context_engine.lower() != "pdflatex":
+                template_engine = context_engine
         if template_engine is None:
-            template_engine = self.runtime.engine
+            template_engine = context_engine or "pdflatex"
 
         return TemplateRendererResult(
             main_tex_path=main_tex_path,

@@ -2,13 +2,14 @@
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 import os
 from pathlib import Path
 import shlex
 import shutil
 import subprocess
 import tempfile
-from typing import Annotated, Any, Mapping
+from typing import Annotated, Any
 
 import click
 from click.core import ParameterSource
@@ -37,6 +38,7 @@ from .._options import (
     MarkdownExtensionsOption,
     NumberedOption,
     OpenLogOption,
+    OUTPUT_PANEL,
     OutputPathOption,
     ParserOption,
     SelectorOption,
@@ -89,6 +91,16 @@ def build_latexmk_command(
     if force_bibtex:
         command.insert(2, "-bibtex")
     return command
+
+
+def _shared_tex_cache_root() -> Path:
+    """Return the global cache directory used for TeX artefacts."""
+    xdg_cache = os.environ.get("XDG_CACHE_HOME")
+    if xdg_cache:
+        base = Path(xdg_cache).expanduser()
+    else:
+        base = Path.home() / ".cache"
+    return (base / "texsmith").resolve()
 
 
 _MARKDOWN_SUFFIXES = {
@@ -227,6 +239,17 @@ def render(
     disable_markdown_extensions: DisableMarkdownExtensionsOption = None,
     bibliography: BibliographyOption = None,
     open_log: OpenLogOption = False,
+    isolate_cache: Annotated[
+        bool,
+        typer.Option(
+            "--isolate",
+            help=(
+                "Use a per-render TeX cache inside the output directory instead of the shared "
+                "~/.cache/texsmith cache."
+            ),
+            rich_help_panel=OUTPUT_PANEL,
+        ),
+    ] = False,
 ) -> None:
     """Convert MkDocs documents into LaTeX artefacts and optionally build PDFs."""
 
@@ -491,7 +514,10 @@ def render(
     command[0] = latexmk_path
     command.append(render_result.main_tex_path.name)
 
-    tex_cache_root = (render_dir / ".texmf-cache").resolve()
+    if isolate_cache:
+        tex_cache_root = (render_dir / ".texmf-cache").resolve()
+    else:
+        tex_cache_root = _shared_tex_cache_root()
     tex_cache_root.mkdir(parents=True, exist_ok=True)
     env = os.environ.copy()
 
@@ -590,7 +616,9 @@ def render(
         try:
             final_destination.parent.mkdir(parents=True, exist_ok=True)
         except OSError as exc:
-            emit_error(f"Unable to create output directory '{final_destination.parent}': {exc}", exc)
+            emit_error(
+                f"Unable to create output directory '{final_destination.parent}': {exc}", exc
+            )
             raise typer.Exit(code=1) from exc
         try:
             shutil.copy2(pdf_path, final_destination)

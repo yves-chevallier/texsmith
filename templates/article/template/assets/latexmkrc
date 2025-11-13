@@ -1,5 +1,11 @@
 $bibtex_use = 2;
-$lualatex   = 'lualatex --shell-escape %O %S';
+
+\BLOCK{ if latex_engine == "lualatex" }
+$pdflatex = 'lualatex --shell-escape %O %S';
+\BLOCK{ else }
+$pdflatex = 'pdflatex --shell-escape %O %S';
+\BLOCK{ endif }
+
 $biber = 'biber %O %B';
 $makeindex = 'texindy %O -o %D %S';
 $clean_ext .= ' %R.run.xml %R.blg';

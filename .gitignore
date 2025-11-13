@@ -45,3 +45,5 @@ __pycache__/
 build*/
 *:Zone.Identifier
 tmp*
+.uv_cache/
+examples/diagrams/*.pdf
