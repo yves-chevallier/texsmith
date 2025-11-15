@@ -125,6 +125,8 @@ class Template(WrappableTemplate):
             context["latex_engine"] = "lualatex"
             context["requires_unicode_engine"] = True
 
+        context["callout_style"] = self._normalise_callout_style(context.get("callout_style"))
+
         return context
 
     def _coerce_string(self, value: Any) -> str | None:
@@ -191,6 +193,17 @@ class Template(WrappableTemplate):
 
         if candidate not in {"artifact", "symbola", "color"}:
             return "artifact"
+        return candidate
+
+    def _normalise_callout_style(self, value: Any) -> str:
+        candidate = self._coerce_string(value)
+        if candidate:
+            candidate = candidate.lower()
+        else:
+            candidate = "fancy"
+
+        if candidate not in {"fancy", "classic", "minimal"}:
+            return "fancy"
         return candidate
 
     def _detect_script_font(self, char: str) -> str | None:

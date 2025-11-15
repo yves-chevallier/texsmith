@@ -153,6 +153,7 @@ class Template(WrappableTemplate):
         context["foldmarks_option"] = "true" if fold_marks else "false"
 
         context.pop("press", None)
+        context["callout_style"] = self._normalise_callout_style(context.get("callout_style"))
 
         return context
 
@@ -259,3 +260,13 @@ class Template(WrappableTemplate):
         if closing_override:
             return closing_override
         return profile.fallback_closing
+
+    def _normalise_callout_style(self, value: Any) -> str:
+        candidate = self._coerce_string(value)
+        if candidate:
+            candidate = candidate.lower()
+        else:
+            candidate = "fancy"
+        if candidate not in {"fancy", "classic", "minimal"}:
+            return "fancy"
+        return candidate

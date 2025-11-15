@@ -98,3 +98,12 @@ def test_article_template_accepts_preamble_override() -> None:
     context = template.prepare_context("", overrides=overrides)
 
     assert context["preamble_injection"] == "\\usepackage{xcolor}"
+
+
+def test_article_template_normalises_callout_style() -> None:
+    template = Template()
+    overrides = {"press": {"callout_style": "CLASSIC"}}
+
+    context = template.prepare_context("Body", overrides=overrides)
+
+    assert context["callout_style"] == "classic"

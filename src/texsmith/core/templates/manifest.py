@@ -277,6 +277,47 @@ def _normalise_language(value: Any, spec: "TemplateAttributeSpec", fallback: Any
     )
 
 
+@register_attribute_normaliser("callout_style")
+def _normalise_callout_style_attribute(
+    value: Any, spec: "TemplateAttributeSpec", fallback: Any
+) -> Any:
+    allowed = {"fancy", "classic", "minimal"}
+    if value is None or value == "":
+        return fallback
+
+    if isinstance(value, str):
+        candidate = value.strip().lower()
+    else:
+        candidate = str(value).strip().lower()
+
+    if not candidate:
+        return fallback
+
+    if candidate not in allowed:
+        allowed_values = ", ".join(sorted(allowed))
+        raise TemplateError(
+            f"Attribute '{spec.name}' value '{value}' is invalid. Expected one of: {allowed_values}."
+        )
+
+    return candidate
+
+
+@register_attribute_normaliser("margin_style")
+def _normalise_margin_style(value: Any, spec: "TemplateAttributeSpec", fallback: Any) -> Any:
+    if value is None or value == "":
+        return fallback
+
+    if isinstance(value, str):
+        candidate = value.strip()
+    else:
+        candidate = str(value).strip()
+
+    lowered = candidate.lower()
+    if lowered in {"narrow", "default", "wide"}:
+        return lowered
+    return candidate
+
+
 class TemplateAttributeSpec(BaseModel):
     """Typed attribute definition used to build template defaults."""
 

@@ -21,6 +21,8 @@
 \usepackage[many,minted]{tcolorbox}
 \usepackage{csquotes}
 \usepackage[normalem]{ulem} % Strikethrough text with \sout{}
+\providecommand{\texsmithCalloutStyle}{fancy}
+\renewcommand{\texsmithCalloutStyle}{\VAR{callout_style|default('fancy')}}
 \usepackage{callouts} % Admonitions
 \usepackage{soul} % Highlighting text with \hl{}
 \usepackage{keystroke} % Keystroke package
@@ -141,11 +143,24 @@
 
 \BLOCK{ endif }
 
+\BLOCK{ set margin_style = margin|default('default')|lower }
+\BLOCK{ set margin_literal = margin_style not in ["narrow", "default", "wide"] }
+\BLOCK{ if margin_style == "narrow" }
+\geometry{margin=1.5cm}
+\BLOCK{ elif margin_style == "wide" }
+\geometry{margin=3.0cm}
+\BLOCK{ elif margin_literal }
+\geometry{margin=\VAR{margin}}
+\BLOCK{ else }
 \geometry{\VAR{geometry_options}}
+\BLOCK{ endif }
 
+\BLOCK{ set has_title_metadata = title|default('')|trim }
+\BLOCK{ if has_title_metadata }
 \title{\VAR{title}\BLOCK{ if subtitle }\\\large \VAR{subtitle}\BLOCK{ endif }}
 \BLOCK{ if author }\author{\VAR{author}}\BLOCK{ else }\author{}\BLOCK{ endif }
 \date{\VAR{date}}
+\BLOCK{ endif }
 
 \BLOCK{ if acronyms }
 \BLOCK{ for key, entry in acronyms.items() }
@@ -158,7 +173,14 @@
 
 \begin{document}
 
+\BLOCK{ if has_title_metadata }
 \maketitle
+\BLOCK{ endif }
+\BLOCK{ if not page_numbers }
+\pagenumbering{gobble}
+\thispagestyle{empty}
+\pagestyle{empty}
+\BLOCK{ endif }
 
 \BLOCK{ if abstract }
 \begin{abstract}

@@ -24,10 +24,10 @@ default = 1
 type = "integer"
 
 [latex.template.attributes.title]
-default = "Article Title"
+default = ""
 type = "string"
 escape = "latex"
-allow_empty = false
+allow_empty = true
 
 [latex.template.attributes.subtitle]
 default = ""
@@ -80,6 +80,24 @@ type = "string"
 normaliser = "orientation"
 choices = ["portrait", "landscape"]
 
+[latex.template.attributes.margin]
+default = "default"
+type = "string"
+normaliser = "margin_style"
+sources = ["press.margin", "margin"]
+
+[latex.template.attributes.page_numbers]
+default = true
+type = "boolean"
+sources = ["press.page_numbers", "page_numbers"]
+
+[latex.template.attributes.callout_style]
+default = "fancy"
+type = "string"
+choices = ["fancy", "classic", "minimal"]
+sources = ["press.callout_style", "press.callouts.style", "callout_style"]
+normaliser = "callout_style"
+
 [latex.template.attributes.preamble_injection]
 default = ""
 type = "string"
@@ -107,7 +125,7 @@ strip_heading = true
 # All additional assets to be included in the template package.
 # They will be copied to the working directory when the template is used.
 [latex.template.assets]
-"callouts.sty" = { source = "../common/callouts.sty" }
+"callouts.sty" = { source = "template/callouts.sty.jinja", template = true }
 "todolist.sty" = { source = "../common/todolist.sty" }
 "keystroke.sty" = { source = "../common/keystroke.sty" }
 ".latexmkrc" = { source = "template/assets/latexmkrc", template = true }
