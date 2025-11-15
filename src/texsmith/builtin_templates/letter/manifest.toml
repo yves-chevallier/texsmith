@@ -82,6 +82,13 @@ type = "string"
 escape = "latex"
 sources = ["press.closing"]
 
+[latex.template.attributes.callout_style]
+default = "fancy"
+type = "string"
+choices = ["fancy", "classic", "minimal"]
+sources = ["press.callout_style", "press.callouts.style", "callout_style"]
+normaliser = "callout_style"
+
 [latex.template.attributes.opening]
 default = ""
 type = "string"
@@ -99,8 +106,20 @@ default = false
 type = "boolean"
 sources = ["press.fold_marks"]
 
+[latex.template.attributes.margin]
+default = "default"
+type = "string"
+normaliser = "margin_style"
+sources = ["press.margin", "margin"]
+
+[latex.template.attributes.page_numbers]
+default = false
+type = "boolean"
+sources = ["press.page_numbers", "page_numbers"]
+
 [latex.template.slots.mainmatter]
 default = true
 
 [latex.template.assets]
 "fonts/modernline.otf" = { source = "fonts/modernline.otf" }
+"callouts.sty" = { source = "template/callouts.sty.jinja", template = true }

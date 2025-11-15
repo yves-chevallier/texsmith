@@ -44,3 +44,18 @@ def test_article_template_omits_author_when_not_set() -> None:
     template = runtime.instance
     context = template.prepare_context("Body")
     assert "author" not in context or not context["author"]
+
+
+def test_article_template_skips_maketitle_without_title() -> None:
+    runtime = load_template_runtime("article")
+    latex = runtime.instance.wrap_document("Body")
+    assert "\\maketitle" not in latex
+
+
+def test_article_template_renders_maketitle_with_title_override() -> None:
+    runtime = load_template_runtime("article")
+    latex = runtime.instance.wrap_document(
+        "Body",
+        overrides={"press": {"title": "Handbook"}},
+    )
+    assert "\\maketitle" in latex

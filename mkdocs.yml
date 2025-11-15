@@ -100,8 +100,8 @@ nav:
       - License: about/license.md
 markdown_extensions:
   - admonition
-  - pymdownx.details
   - pymdownx.superfences
+  - pymdownx.details
   - pymdownx.tabbed:
       alternate_style: true
   - pymdownx.critic

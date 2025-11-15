@@ -10,8 +10,24 @@
 \usepackage{fontspec}
 \usepackage[\VAR{babel_language|default('english')}]{babel}
 \usepackage{csquotes}
+\providecommand{\texsmithCalloutStyle}{fancy}
+\renewcommand{\texsmithCalloutStyle}{\VAR{callout_style|default('fancy')}}
+\usepackage{callouts}
 \LoadLetterOption{\VAR{letter_standard_option}}
 \KOMAoptions{foldmarks=\VAR{foldmarks_option}}
+\BLOCK{ set margin_style = margin|default('default')|lower }
+\BLOCK{ set margin_literal = margin_style not in ["narrow", "default", "wide"] }
+\BLOCK{ if margin_style == "narrow" }
+\KOMAoptions{fromalign=left, backaddress=false}
+\setlength{\oddsidemargin}{1cm}
+\BLOCK{ elif margin_style == "wide" }
+\KOMAoptions{fromalign=left, backaddress=false}
+\setlength{\oddsidemargin}{2cm}
+\BLOCK{ elif margin_literal }
+\KOMAoptions{fromalign=left, backaddress=false}
+\setlength{\oddsidemargin}{0cm}
+\addtolength{\textwidth}{-\VAR{margin}}
+\BLOCK{ endif }
 \BLOCK{ if use_cursive_signature }
 \setmainfont[Path=fonts/,Extension=.otf,Ligatures=Common,Mapping=]{modernline}
 \newcommand{\TexsmithLetterEndash}{\kern0.05em-\kern0.05em}
@@ -68,5 +84,10 @@
 }
 
 \end{letter}
+\BLOCK{ if not page_numbers }
+\pagenumbering{gobble}
+\thispagestyle{empty}
+\pagestyle{empty}
+\BLOCK{ endif }
 
 \end{document}
