@@ -1,83 +1,289 @@
-# `texsmith render`
+# TeXSmith render
 
-`texsmith render` is the primary entry point for turning Markdown or HTML into LaTeX. It can stream fragments to `stdout`, populate a directory with template-aware assets, and—when the `--build` flag is supplied—run `latexmk` to produce ready-to-share PDFs.
+`texsmith render` is the primary entry point for turning Markdown or HTML into LaTeX. 
+It can stream fragments to `stdout`, populate a directory with template-aware assets, 
+and—when the `--build` flag is supplied-run `latexmk` to produce ready-to-share PDFs.
 
 ```bash
-texsmith render [OPTIONS] INPUT... [--bibliography BIBFILE...]
+$ uv run texsmith render --help
+
+ Usage: texsmith render [OPTIONS] INPUT...
+
+ Convert MkDocs documents into LaTeX artefacts and optionally build PDFs.
+
+╭─ Input Handling ───────────────────────────────────────────────────────────────────╮
+│   inputs      INPUT...  Conversion inputs. Provide a Markdown/HTML source document │
+│                         and optionally one or more BibTeX files.                   │
+╰────────────────────────────────────────────────────────────────────────────────────╯
+╭─ Options ──────────────────────────────────────────────────────────────────────────╮
+│ --classic-output          --rich-output                Display raw latexmk output  │
+│                                                        without parsing (use        │
+│                                                        --rich-output for           │
+│                                                        structured logs).           │
+│                                                        [default: rich-output]      │
+│ --build                   --no-build                   Invoke latexmk after        │
+│                                                        rendering to compile the    │
+│                                                        resulting LaTeX project.    │
+│                                                        [default: no-build]         │
+│ --legacy-latex-accents    --unicode-latex-accents      Escape accented characters  │
+│                                                        and ligatures with legacy   │
+│                                                        LaTeX macros instead of     │
+│                                                        emitting Unicode glyphs     │
+│                                                        (defaults to Unicode        │
+│                                                        output).                    │
+│                                                        [default:                   │
+│                                                        unicode-latex-accents]      │
+│ --help                                                 Show this message and exit. │
+╰────────────────────────────────────────────────────────────────────────────────────╯
+╭─ Output ───────────────────────────────────────────────────────────────────────────╮
+│ --output,--output-dir  -o      PATH  Output file or directory. Defaults to stdout  │
+│                                      unless a template is used.                    │
+│ --isolate                            Use a per-render TeX cache inside the output  │
+│                                      directory instead of the shared               │
+│                                      ~/.cache/texsmith cache.                      │
+╰────────────────────────────────────────────────────────────────────────────────────╯
+╭─ Input Handling ───────────────────────────────────────────────────────────────────╮
+│ --selector             TEXT  CSS selector to extract the MkDocs article content.   │
+│                              [default: article.md-content__inner]                  │
+│ --full-document              Disable article extraction and render the entire HTML │
+│                              file.                                                 │
+│ --parser               TEXT  BeautifulSoup parser backend to use (defaults to      │
+│                              "html.parser").                                       │
+╰────────────────────────────────────────────────────────────────────────────────────╯
+╭─ Structure ────────────────────────────────────────────────────────────────────────╮
+│ --base-level                         INTEGER               Shift detected heading  │
+│                                                            levels by this offset.  │
+│                                                            [default: 0]            │
+│ --heading-level  -h                  INTEGER RANGE [x>=0]  Indent all headings by  │
+│                                                            the selected depth      │
+│                                                            (e.g. 1 turns sections  │
+│                                                            into subsections).      │
+│                                                            [default: 0]            │
+│ --drop-title         --keep-title                          Drop the first document │
+│                                                            title heading.          │
+│                                                            [default: keep-title]   │
+│ --numbered           --unnumbered                          Toggle numbered         │
+│                                                            headings.               │
+│                                                            [default: numbered]     │
+╰────────────────────────────────────────────────────────────────────────────────────╯
+╭─ Template ─────────────────────────────────────────────────────────────────────────╮
+│ --title-from-heading      --title-from-frontmat…          Treat the first heading  │
+│                                                           as the template title    │
+│                                                           and remove it from the   │
+│                                                           document.                │
+│                                                           [default:                │
+│                                                           title-from-frontmatter]  │
+│ --template            -t                            TEXT  Select a LaTeX template  │
+│                                                           to use during            │
+│                                                           conversion. Accepts a    │
+│                                                           local path or a          │
+│                                                           registered template      │
+│                                                           name.                    │
+│ --attribute           -a                            TEXT  Override template        │
+│                                                           attributes as key=value  │
+│                                                           pairs (e.g. -a           │
+│                                                           emoji=color).            │
+│ --slot                -s                            TEXT  Inject a document        │
+│                                                           section into a template  │
+│                                                           slot using               │
+│                                                           'slot:Section'. Repeat   │
+│                                                           to map multiple          │
+│                                                           sections.                │
+│ --bibliography        -b                            FILE  BibTeX files merged and  │
+│                                                           exposed to the renderer. │
+╰────────────────────────────────────────────────────────────────────────────────────╯
+╭─ Rendering ────────────────────────────────────────────────────────────────────────╮
+│ --no-fallback-converters                                  Disable registration of  │
+│                                                           placeholder converters   │
+│                                                           when Docker is           │
+│                                                           unavailable.             │
+│ --copy-assets                 --no-copy-assets            Toggle copying of remote │
+│                                                           assets to the output     │
+│                                                           directory.               │
+│                                                           [default: copy-assets]   │
+│ --manifest                -m  --no-manifest     -M        Generate a manifest.json │
+│                                                           file alongside the LaTeX │
+│                                                           output.                  │
+│                                                           [default: no-manifest]   │
+│ --language                                          TEXT  Language code passed to  │
+│                                                           babel (defaults to       │
+│                                                           metadata or english).    │
+│ --markdown-extensions     -x                        TEXT  Additional Markdown      │
+│                                                           extensions to enable     │
+│                                                           (comma or space          │
+│                                                           separated values are     │
+│                                                           accepted).               │
+│ --disable-extension       -d                        TEXT  Markdown extensions to   │
+│                                                           disable. Provide a comma │
+│                                                           separated list or repeat │
+│                                                           the option multiple      │
+│                                                           times.                   │
+╰────────────────────────────────────────────────────────────────────────────────────╯
+╭─ Diagnostics ──────────────────────────────────────────────────────────────────────╮
+│ --debug-html    --no-debug-html      Persist intermediate HTML snapshots (inherits │
+│                                      from --debug when omitted).                   │
+│ --open-log      --no-open-log        Open the latexmk log with the system viewer   │
+│                                      when compilation fails.                       │
+│                                      [default: no-open-log]                        │
+╰────────────────────────────────────────────────────────────────────────────────────╯
+```
+
+
+## TL;DR
+
+### Simple conversion to LaTeX fragment
+
+```text
+$ texsmith render hello.md
+\chapter{Hello}\label{hello}
+
+Hello, \textbf{world}! This is a sample \LaTeX{} document created with TeXSmith.
+```
+
+### Use a template
+
+```text
+$ texsmith render hello.md -tarticle
+    Template Conversion Summary
+┌───────────────┬─────────────────┐
+│ Artifact      │ Location        │
+├───────────────┼─────────────────┤
+│ Main document │ build/hello.tex │
+└───────────────┴─────────────────┘
+
+$ tree build
+build
+├── assets
+├── callouts.sty
+├── hello.tex
+├── keystroke.sty
+└── todolist.sty
+```
+
+### Compile a PDF
+
+```text
+$ uv run texsmith render hello.md -tarticle --build
+Using temporary output directory: /tmp/texsmith-czmi34j1
+Running latexmk…
+├─ Rc files read:
+├─ This is Latexmk, John Collins, 31 Jan. 2024. Version 4.83.
+├─ No existing .aux file, so I'll make a simple one, and require run of *latex.
+├─ applying rule 'pdflatex'...
+├─ Rule 'pdflatex':  Reasons for rerun
+├─ Category 'other':
+├─ Rerun of 'pdflatex' forced or previously required:
+├─ Reason or flag: 'Initial setup'
+├─ Run number 1 of rule 'pdflatex'
+├─ Running 'lualatex --shell-escape  -interaction=nonstopmode -halt-on-error
+-file-line-error -recorder  "hello.tex"'
+├─ LuaHBTeX, Version 1.17.0 (TeX Live 2023/Debian)
+├─ system commands enabled.
+│  ├─ LaTeX2e <2023-11-01> patch level 1
+│  ├─ L3 programming layer <2024-01-22>
+│  │  ├─ article 2023/05/17 v1.4n Standard LaTeX document class
+│  │  │     └─ For additional information on amsmath, use the `?' option.
+│  ├─ *geometry* driver: auto-detecting
+│  ├─ *geometry* detected driver: luatex
+│  └─ f/fonts/map/pdftex/updmap/pdftex.map}]
+├─ 1044 words of node memory still in use:
+├─ 23 hlist, 2 vlist, 10 rule, 2 glue, 4 kern, 2 glyph, 60 attribute, 53 glue_s
+├─ pec, 56 attribute_list, 2 write, 16 pdf_literal, 16 pdf_colorstack nodes
+├─ avail lists: 1:2,2:169,3:29,4:27,5:84,6:12,7:460,8:1,9:96,10:2,11:18
+├─ .otf>
+├─ Output written on hello.pdf (1 page, 14946 bytes).
+├─ Transcript written on hello.log.
+├─ Getting log file 'hello.log'
+├─ Examining 'hello.fls'
+├─ Examining 'hello.log'
+├─ Log file says output to 'hello.pdf'
+├─ applying rule 'pdflatex'...
+├─ Rule 'pdflatex':  Reasons for rerun
+├─ Changed files or newly in use/created:
+├─ hello.aux
+├─ Run number 2 of rule 'pdflatex'
+├─ Running 'lualatex --shell-escape  -interaction=nonstopmode -halt-on-error
+-file-line-error -recorder  "hello.tex"'
+├─ LuaHBTeX, Version 1.17.0 (TeX Live 2023/Debian)
+├─ system commands enabled.
+│  ├─ LaTeX2e <2023-11-01> patch level 1
+│  ├─ L3 programming layer <2024-01-22>
+│  │  ├─ article 2023/05/17 v1.4n Standard LaTeX document class
+│  │  │     └─ For additional information on amsmath, use the `?' option.
+│  ├─ *geometry* driver: auto-detecting
+│  ├─ *geometry* detected driver: luatex
+│  └─ f/fonts/map/pdftex/updmap/pdftex.map}]
+├─ 1044 words of node memory still in use:
+├─ 23 hlist, 2 vlist, 10 rule, 2 glue, 4 kern, 2 glyph, 60 attribute, 53 glue_s
+├─ pec, 56 attribute_list, 2 write, 16 pdf_literal, 16 pdf_colorstack nodes
+├─ avail lists: 1:2,2:169,3:29,4:27,5:84,6:12,7:460,8:1,9:96,10:2,11:18
+├─ .otf>
+├─ Output written on hello.pdf (1 page, 14946 bytes).
+├─ Transcript written on hello.log.
+├─ Getting log file 'hello.log'
+├─ Examining 'hello.fls'
+├─ Examining 'hello.log'
+├─ Log file says output to 'hello.pdf'
+└─ All targets (hello.pdf) are up-to-date
+Summary — errors: 0, warnings: 0, info: 23
+                   Build Outputs
+┌───────────────┬──────────────────────────────────┐
+│ Artifact      │ Location                         │
+├───────────────┼──────────────────────────────────┤
+│ Main document │ /tmp/texsmith-czmi34j1/hello.tex │
+│ PDF           │ hello.pdf                        │
+└───────────────┴──────────────────────────────────┘
 ```
 
 ## Positional Arguments
 
-| Argument | Description |
-| -------- | ----------- |
-| `INPUT...` | One or more Markdown (`.md`, `.markdown`) or HTML (`.html`, `.htm`) documents to convert. Positional BibTeX files (`.bib`, `.bibtex`) are detected automatically and merged into the bibliography set. |
+Positional arguments are detected automatically and merged the output. Supported input types are:
 
-When `--build` is enabled, exactly one Markdown/HTML document must be provided.
+- One or more Markdown (`.md`, `.markdown`).
+- HTML (`.html`, `.htm`) documents to convert. 
+- BibTeX files (`.bib`, `.bibtex`) 
 
 ## Options
 
-| Option | Description |
-| ------ | ----------- |
-| `--output/-o/--output-dir PATH` | Destination for the rendered output. Pass a file path to write a single `.tex` file, a directory to emit `<stem>.tex` (and template artefacts), or omit the flag to print to `stdout` unless a template dictates otherwise. |
-| `--selector TEXT` | CSS selector used to extract article content from HTML inputs. Defaults to `article.md-content__inner`, which matches MkDocs Material pages. |
-| `--full-document/--no-full-document` | Render the entire HTML file without applying the selector. Useful for standalone pages that do not follow MkDocs conventions. |
-| `--base-level INTEGER` | Offsets detected heading levels before rendering (e.g. `1` turns top-level `#` headings into LaTeX `\section` + 1). |
-| `--heading-level/-h INTEGER` | Applies an additional offset during rendering so the document nests deeper inside a template. |
-| `--drop-title/--keep-title` | Drop the first document heading. Handy when the template already prints its own title page. |
-| `--title-from-heading/--title-from-frontmatter` | Promote the first heading to the template title metadata (compatible with templates that expect front-matter titles). |
-| `--numbered/--unnumbered` | Toggle section numbering in the resulting LaTeX. |
-| `--parser TEXT` | Selects the BeautifulSoup parser (`html.parser`, `lxml`, `html5lib`, …). Override when the default parser struggles with your HTML. |
-| `--no-fallback-converters` | Disable placeholder converters that hide missing optional dependencies (Docker, cairosvg, Pillow, requests). When disabled the command fails immediately if a dependency is unavailable. |
-| `--copy-assets/-a/--no-copy-assets/-A` | Control whether referenced assets are copied into the output directory. |
-| `--manifest/-m/--no-manifest/-M` | Toggle manifest generation alongside template outputs. |
-| `--template/-t PATH_OR_NAME` | Wrap the LaTeX using a template. Accepts a filesystem path or a registered template name, enabling slot-based composition and asset copying. |
-| `--debug-html/--no-debug-html` | Persist intermediate HTML snapshots (`*.debug.html`) next to the output to aid debugging. |
-| `--language TEXT` | Override the LaTeX language (BCP 47) passed to babel/polyglossia. Defaults to document metadata or template settings. |
-| `--legacy-latex-accents/--unicode-latex-accents` | Emit legacy LaTeX accent macros instead of Unicode glyphs. |
-| `--slot/-s VALUE` | Map documents or sections to template slots. Syntax: `slot:Selector` for a single document, or `slot:file[:selector]` when converting multiple inputs. Selectors support heading text, `#id`, and the special token `@document` to inject the entire file. |
-| `--markdown-extensions/-x VALUE` | Enable additional Markdown extensions. Accepts comma-separated or space-separated lists, or multiple flag occurrences. |
-| `--disable-extension/-d VALUE` | Disable default Markdown extensions. Uses the same notation as `--markdown-extensions`. |
-| `--bibliography/-b PATH` | Add explicit BibTeX files to the bibliography set. Combine with positional `.bib` inputs as needed. |
-| `--build/--no-build` | Invoke `latexmk` after rendering to compile the LaTeX project. Requires `--template` and exactly one Markdown/HTML document. |
-| `--classic-output/--rich-output` | When using `--build`, choose between raw `latexmk` output (`--classic-output`) or the structured, live-updating renderer (`--rich-output`, default). |
-| `--open-log/--no-open-log` | When `latexmk` fails (with `--build`), open the log file in the system viewer. |
+`--build`
+:  Invoke `latexmk` after rendering to compile the resulting LaTeX project. Requires `--template`, and a TeX installation with `latexmk` available in `PATH`.
 
-## Usage Examples
+`--classic-output`
+: When using `--build`, display raw `latexmk` output without parsing (use `--rich-output` for structured logs). Defaults to `--rich-output`.
 
-### Convert a Markdown page to stdout
+`--legacy-latex-accents`
+:   Escape accented characters and ligatures with legacy LaTeX macros instead of emitting Unicode glyph:
 
-```bash
-texsmith render docs/getting-started.md
-```
+    ```tex
+    é: \'{e}, à: \`{a}, ô: \^{o}, ü: \"{u}, æ: \ae{}, œ: \oe{}...
+    ```
 
-The rendered LaTeX is printed to the terminal. Redirect it to save the result:
+`--output/-o/--output-dir PATH`
+: Destination for the rendered output. Pass a file path to write a single `.tex` file, a directory to emit `<stem>.tex` (and template artefacts), or omit the flag to print to `stdout` unless a template dictates otherwise. When not specified, the default is `stdout`.
 
-```bash
-texsmith render docs/getting-started.md > build/getting-started.tex
-```
+`--isolate`
+: Use a per-render TeX cache inside the output directory instead of the shared `~/.cache/texsmith` cache. This can be slower when using LuaTeX because of font reprocessing, but ensures reproducible builds.
 
-### Write the output into a directory
+## Managing slots
 
-```bash
-texsmith render docs/overview.md --output build/
-# Produces build/overview.tex
-```
-
-### Apply a template and manage slots
+Slots are placeholders in the LaTeX template where specific document sections can be injected. Use the `--slot` (or `-s`) option to map input documents to these slots. For example, to inject `abstract.md` into the `abstract` slot:
 
 ```bash
 texsmith render docs/intro.md docs/chapter1.md \
   --template article \
   --output-dir build/book \
-  --slot frontmatter:docs/intro.md \
-  --slot mainmatter:docs/chapter1.md
+  --slot abstract:docs/abstract.md \
+  main.md
 ```
 
-This scenario:
+You can also extract sections from a single document using the `slot:Section Name` syntax. For example, to inject the "Abstract" section from `main.md` into the `abstract` slot:"
 
-- wraps the LaTeX with the `article` template,
-- writes template fragments into `build/book`,
-- injects `intro.md` into the `frontmatter` slot and `chapter1.md` into `mainmatter`.
+```bash
+texsmith render docs/main.md \
+  --template article \
+  --output-dir build/book \
+  --slot abstract:slot:Abstract
+```
 
 ### Compile a PDF with `--build`
 

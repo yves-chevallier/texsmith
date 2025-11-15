@@ -9,6 +9,7 @@ import shutil
 from typing import Any
 
 from .base import WrappableTemplate, load_specialised_template
+from .builtins import load_builtin_template
 from .manifest import TemplateError
 
 
@@ -23,6 +24,10 @@ def load_template(identifier: str) -> WrappableTemplate:
         for candidate in _iter_local_candidates(path_candidate, slug):
             if candidate.exists():
                 return _load_path_template(candidate)
+
+    builtin = load_builtin_template(identifier)
+    if builtin is not None:
+        return builtin
 
     entry_points = metadata.entry_points()
     group = entry_points.select(group="texsmith.templates")

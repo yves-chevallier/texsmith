@@ -258,8 +258,14 @@ class NotConfiguredStrategy:
 def _read_text(source: Path | str) -> str:
     if isinstance(source, Path):
         return source.read_text("utf-8")
-    if Path(source).exists():
-        return Path(source).read_text("utf-8")
+    if isinstance(source, str):
+        candidate = Path(source)
+        try:
+            if candidate.exists():
+                return candidate.read_text("utf-8")
+        except OSError:
+            return source
+        return source
     return str(source)
 
 

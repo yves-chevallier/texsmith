@@ -94,6 +94,10 @@ def _detect_manifests(directory: Path) -> list[Path]:
     return sorted(path for path in directory.glob("*.json") if "manifest" in path.name.lower())
 
 
+def _detect_debug_html(directory: Path) -> list[Path]:
+    return sorted(directory.glob("*.debug.html"))
+
+
 def present_conversion_summary(
     *,
     state: CLIState,
@@ -115,6 +119,8 @@ def present_conversion_summary(
             rows.append(("Manifest", _format_path(manifest), ""))
         for asset in _detect_assets(main_dir):
             rows.append(("Asset", _format_path(asset), ""))
+        for debug_html in _detect_debug_html(main_dir):
+            rows.append(("Debug HTML", _format_path(debug_html), ""))
         _render_summary(state, "Template Conversion Summary", rows)
         return
 
@@ -133,6 +139,8 @@ def present_conversion_summary(
                 rows.append(("Manifest", _format_path(manifest), ""))
             for asset in _detect_assets(output_path):
                 rows.append(("Asset", _format_path(asset), ""))
+            for debug_html in _detect_debug_html(output_path):
+                rows.append(("Debug HTML", _format_path(debug_html), ""))
 
     if rows:
         _render_summary(state, "Conversion Summary", rows)
@@ -157,6 +165,8 @@ def present_build_summary(
         rows.append(("Manifest", _format_path(manifest), ""))
     for asset in _detect_assets(build_dir):
         rows.append(("Asset", _format_path(asset), ""))
+    for debug_html in _detect_debug_html(build_dir):
+        rows.append(("Debug HTML", _format_path(debug_html), ""))
     _render_summary(state, "Build Outputs", rows)
 
 

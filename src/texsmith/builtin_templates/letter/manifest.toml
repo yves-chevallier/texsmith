@@ -13,7 +13,6 @@ tlmgr_packages = [
     "fontspec",
     "microtype",
     "koma-script",
-    "lettre",
 ]
 
 [latex.template.attributes.cursive]
@@ -26,6 +25,11 @@ default = "en-UK"
 type = "string"
 allow_empty = false
 sources = ["press.language"]
+
+[latex.template.attributes.standard]
+default = ""
+type = "string"
+sources = ["press.standard", "press.layout"]
 
 [latex.template.attributes.date]
 default = "\\today"

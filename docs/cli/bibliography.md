@@ -1,4 +1,4 @@
-# `texsmith bibliography`
+# Bibliography
 
 The `bibliography` command group provides utilities for inspecting BibTeX files before running a conversion or build. It helps catch parsing issues, duplicate entries, and empty datasets early in your workflow.
 

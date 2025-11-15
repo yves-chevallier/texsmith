@@ -19,6 +19,9 @@
 \RequirePackage{booktabs}
 \RequirePackage{minted}
 \RequirePackage[many,minted]{tcolorbox}
+\RequirePackage{callouts}
+\RequirePackage{todolist}
+\RequirePackage{keystroke}
 \RequirePackage{csquotes}
 \RequirePackage{epigraph}
 \RequirePackage{capt-of}
@@ -82,6 +85,8 @@
       "NotoSansSymbols2-Regular:mode=harf;",
       "NotoSansMath-Regular:mode=harf;",
       "NotoMusic-Regular:mode=harf;",
+      "NotoSansSyriac:mode=harf;",
+      "NotoSansSyriacWestern:mode=harf;"
     }
   )}
 
@@ -93,15 +98,13 @@
   RawFeature={fallback=fontfallback}
 ]
 
-\setmonofont{Noto Sans Mono}[
+\setmonofont{FreeMono}[
   Scale=0.9,
-  ItalicFont=lmmono10-italic.otf,
-  BoldItalicFont=lmmonolt10-boldoblique.otf,
+  ItalicFont={* Oblique},
+  BoldFont={* Bold},
+  BoldItalicFont={* Bold Oblique},
   RawFeature={fallback=fontfallback}
 ]
-
-\newfontfamily\creativecommonfont{Creative Commons}
-\DeclareTextFontCommand\creativecommon{\creativecommonfont}
 
 \graphicspath{{assets/}}
 
@@ -195,193 +198,10 @@
 
 
 %
-% Callouts
-%
-
-\definecolor{calloutNoteBg}{HTML}{ECF3FF}
-\definecolor{calloutNoteFrame}{HTML}{448AFF}
-
-\definecolor{calloutAbstractBg}{HTML}{E5F7FF}
-\definecolor{calloutAbstractFrame}{HTML}{00B0FF}
-
-\definecolor{calloutInfoBg}{HTML}{E5F8FB}
-\definecolor{calloutInfoFrame}{HTML}{00B8D4}
-
-\definecolor{calloutTipBg}{HTML}{E5F8F6}
-\definecolor{calloutTipFrame}{HTML}{00BFA5}
-
-\definecolor{calloutSuccessBg}{HTML}{E5F9ED}
-\definecolor{calloutSuccessFrame}{HTML}{00C853}
-
-\definecolor{calloutQuestionBg}{HTML}{EFFCE7}
-\definecolor{calloutQuestionFrame}{HTML}{64DD17}
-
-\definecolor{calloutWarningBg}{HTML}{FFF4E5}
-\definecolor{calloutWarningFrame}{HTML}{FF9E1D}
-
-\definecolor{calloutFailureBg}{HTML}{FFEDED}
-\definecolor{calloutFailureFrame}{HTML}{FF5252}
-
-\definecolor{calloutDangerBg}{HTML}{FFE7EC}
-\definecolor{calloutDangerFrame}{HTML}{FF1744}
-
-\definecolor{calloutBugBg}{HTML}{FEE5EE}
-\definecolor{calloutBugFrame}{HTML}{F50057}
-
-\definecolor{calloutExampleBg}{HTML}{F2EDFF}
-\definecolor{calloutExampleFrame}{HTML}{7C4DFF}
-
-\definecolor{calloutQuoteBg}{HTML}{F5F5F5}
-\definecolor{calloutQuoteFrame}{HTML}{9E9E9E}
-
-\definecolor{calloutExerciseBg}{HTML}{F5F5F5}
-\definecolor{calloutExerciseFrame}{HTML}{202020}
-
-\newcounter{exercisecounter}
-\renewcommand{\theexercisecounter}{\arabic{exercisecounter}}
-
-\tcbset{
-  callout note/.style={
-      colbacktitle=calloutNoteBg,
-      colframe=calloutNoteFrame,
-      coltitle=calloutNoteFrame!80!black,
-      borderline west={0.3mm}{0mm}{calloutNoteFrame},
-      title={\makebox[1.3em][c]{\faBookmark}},
-    },
-  callout abstract/.style={
-      colbacktitle=calloutAbstractBg,
-      colframe=calloutAbstractFrame,
-      coltitle=calloutAbstractFrame!80!black,
-      borderline west={0.3mm}{0mm}{calloutAbstractFrame},
-      title={\makebox[1.3em][c]{\faLaptopCode}},
-    },
-  callout info/.style={
-      colbacktitle=calloutInfoBg,
-      colframe=calloutInfoFrame,
-      coltitle=calloutInfoFrame!80!black,
-      borderline west={0.3mm}{0mm}{calloutInfoFrame},
-      title={\makebox[1.3em][c]{\faComment}},
-    },
-  callout tip/.style={
-      colbacktitle=calloutTipBg,
-      colframe=calloutTipFrame,
-      coltitle=calloutTipFrame!80!black,
-      borderline west={0.3mm}{0mm}{calloutTipFrame},
-      title={\makebox[1.3em][c]{\faLightbulb}},
-    },
-  callout success/.style={
-      colbacktitle=calloutSuccessBg,
-      colframe=calloutSuccessFrame,
-      coltitle=calloutSuccessFrame!80!black,
-      borderline west={0.3mm}{0mm}{calloutSuccessFrame},
-      title={\makebox[1.3em][c]{\faCheck}},
-    },
-  callout warning/.style={
-      colbacktitle=calloutWarningBg,
-      colframe=calloutWarningFrame,
-      coltitle=calloutWarningFrame!80!black,
-      borderline west={0.3mm}{0mm}{calloutWarningFrame},
-      title={\makebox[1.3em][c]{\faBolt}},
-    },
-  callout failure/.style={
-      colbacktitle=calloutFailureBg,
-      colframe=calloutFailureFrame,
-      coltitle=calloutFailureFrame!80!black,
-      borderline west={0.3mm}{0mm}{calloutFailureFrame},
-      title={\makebox[1.3em][c]{\faExclamationTriangle}},
-    },
-  callout important/.style={
-      colbacktitle=calloutDangerBg,
-      colframe=calloutDangerFrame,
-      coltitle=calloutDangerFrame!80!black,
-      borderline west={0.3mm}{0mm}{calloutDangerFrame},
-      title={\makebox[1.3em][c]{\faExclamationTriangle}},
-    },
-  callout hint/.style={
-      colbacktitle=calloutTipBg,
-      colframe=calloutTipFrame,
-      coltitle=calloutTipFrame!80!black,
-      borderline west={0.3mm}{0mm}{calloutTipFrame},
-      title={\makebox[1.3em][c]{\faLightbulb}},
-    },
-  callout danger/.style={
-      colbacktitle=calloutDangerBg,
-      colframe=calloutDangerFrame,
-      coltitle=calloutDangerFrame!80!black,
-      borderline west={0.3mm}{0mm}{calloutDangerFrame},
-      title={\makebox[1.3em][c]{\faExclamationTriangle}},
-    },
-  callout bug/.style={
-      colbacktitle=calloutBugBg,
-      colframe=calloutBugFrame,
-      coltitle=calloutBugFrame!80!black,
-      borderline west={0.3mm}{0mm}{calloutBugFrame},
-      title={\makebox[1.3em][c]{\faBomb}},
-    },
-  callout example/.style={
-      colbacktitle=calloutExampleBg,
-      colframe=calloutExampleFrame,
-      coltitle=calloutExampleFrame!80!black,
-      borderline west={0.3mm}{0mm}{calloutExampleFrame},
-      title={\makebox[1.3em][c]{\faFlask}},
-    },
-  callout quote/.style={
-      colbacktitle=calloutQuoteBg,
-      colframe=calloutQuoteFrame,
-      coltitle=calloutQuoteFrame!80!black,
-      borderline west={0.3mm}{0mm}{calloutQuoteFrame},
-      title={\makebox[1.3em][c]{\faQuestionCircle}},
-    },
-  callout question/.style={
-      colbacktitle=calloutQuestionBg,
-      colframe=calloutQuestionFrame,
-      coltitle=calloutQuestionFrame!80!black,
-      borderline west={0.3mm}{0mm}{calloutQuestionFrame},
-      title={\makebox[1.3em][c]{\faQuestionCircle}},
-    },
-  callout exercise/.style={
-      colbacktitle=calloutExerciseBg,
-      colframe=calloutExerciseFrame,
-      coltitle=calloutExerciseFrame!80!black,
-      borderline west={0.3mm}{0mm}{calloutExerciseFrame},
-      title={\faChess
-          \refstepcounter{exercisecounter}
-          \textbf{Exercice \theexercisecounter:}
-        }
-    },
-  callout solution/.style={
-      colbacktitle=gray!40!white,
-      title={\textcolor{black}{\makebox[1.3em][l]{\faComment}}},
-    },
-  callout default/.style={
-      colbacktitle=gray!40!white,
-
-      title={\textcolor{black}{\makebox[1.3em][l]{\faComment}}},
-    }
-}
-
-\newtcolorbox{callout}[2][]{%
-  breakable,
-  enhanced,
-  arc=0mm,
-  boxrule=0mm,
-  titlerule=0mm,
-  lefttitle=1mm,
-  leftupper=1mm,
-  colback=white,
-  parbox=false, % Allow paragraph breaks inside the box
-  frame hidden,
-  borderline west={0.3mm}{0mm}{black!70},
-  #1,
-  after title={~#2}
-}
-
-%
 % Listing / Code configuration
 %
 
-\setminted{style=trac}
-\setmintedinline{style=trac} %,bgcolor=gray!20}
+\usemintedstyle{bw}
 
 \newtcblisting[auto counter,number within=section,
   list inside=mypyg]{code}[4][]{%
@@ -392,8 +212,7 @@
   pad at break*=1mm,
   toptitle=0.15em,
   bottomtitle=0.1em,
-  boxrule=0mm,
-  frame hidden,
+  boxrule=0.1em,
   minted language=#2,
   top=1mm,
   bottom=1mm,
@@ -454,26 +273,6 @@
   arc=4mm,
   auto outer arc,
   #1
-}
-
-%
-% Keyboard keys symbols
-%
-
-\newcommand*\keystroke[1]{%
-  \tikz[baseline=(key.base)]
-  \node[%
-    draw,
-    fill=gray!10,
-    drop shadow={shadow xshift=0.25ex,shadow yshift=-0.25ex,fill=black!70,opacity=0.75},
-    rectangle,
-    rounded corners=1.5pt,
-    inner ysep=0.1em,
-    inner xsep=0.5em,
-    line width=0.5pt,
-    font=\scriptsize\sffamily
-  ](key) {#1\strut}
-  ;
 }
 
 %

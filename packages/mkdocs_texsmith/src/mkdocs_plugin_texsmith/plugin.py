@@ -6,6 +6,8 @@ import os
 from pathlib import Path
 import shutil
 from typing import Any
+import warnings
+from warnings import WarningMessage
 
 from mkdocs.config import config_options
 from mkdocs.config.defaults import MkDocsConfig
@@ -33,10 +35,12 @@ from texsmith.core.conversion import (
     extract_front_matter_bibliography,
     render_with_fallback,
 )
+from texsmith.core.conversion.debug import format_rendering_error
 from texsmith.core.conversion.inputs import (
     InlineBibliographyEntry,
     InlineBibliographyValidationError,
 )
+from texsmith.core.exceptions import LatexRenderingError
 from texsmith.core.templates import (
     TemplateError,
     TemplateSlot,
@@ -48,6 +52,7 @@ import yaml
 
 
 AUTO_BASE_LEVEL = -2
+FULL_NAVIGATION_ROOT = "__texsmith_full_navigation__"
 
 
 @dataclass(slots=True)
@@ -323,13 +328,19 @@ class LatexPlugin(BasePlugin):
             mkdocs_config, "site_email", None
         )
 
-        root_item = self._find_item_by_title(nav.items, book_config.root)
-        if root_item is None:
-            raise PluginError(
-                f"Root section '{book_config.root}' not found in navigation."
-            )
+        entries: list[NavEntry]
+        root_item: StructureItem | None = None
 
-        entries = self._flatten_navigation(root_item, book_config)
+        if book_config.root == FULL_NAVIGATION_ROOT:
+            entries = self._flatten_full_navigation(nav, book_config)
+        else:
+            root_item = self._find_item_by_title(nav.items, book_config.root)
+            if root_item is None:
+                raise PluginError(
+                    f"Root section '{book_config.root}' not found in navigation."
+                )
+            entries = self._flatten_navigation(root_item, book_config)
+
         runtime = BookRuntime(config=book_config, extras=extras, section=root_item)
         runtime.entries = entries
         self._books.append(runtime)
@@ -461,7 +472,7 @@ class LatexPlugin(BasePlugin):
         language = normalise_template_language(raw_language)
         runtime_language = language or raw_language
 
-        for entry in runtime.entries:
+        for page_index, entry in enumerate(runtime.entries):
             target_buffer = (
                 frontmatter
                 if entry.part == "frontmatter"
@@ -509,19 +520,36 @@ class LatexPlugin(BasePlugin):
             }
 
             try:
-                fragment, document_state = render_with_fallback(
-                    track_renderer,
-                    html,
-                    runtime_payload,
-                    bibliography_map,
-                    state=document_state,
-                )
+                with warnings.catch_warnings(record=True) as captured_warnings:
+                    warnings.simplefilter("always")
+                    fragment, document_state = render_with_fallback(
+                        track_renderer,
+                        html,
+                        runtime_payload,
+                        bibliography_map,
+                        state=document_state,
+                    )
             except Exception as exc:  # pragma: no cover - defensive
+                log.exception(
+                    "TeXSmith failed while rendering page '%s'.", entry.title
+                )
+                detail = (
+                    format_rendering_error(exc)
+                    if isinstance(exc, LatexRenderingError)
+                    else str(exc)
+                )
                 raise PluginError(
-                    f"LaTeX rendering failed for page '{entry.title}': {exc}"
+                    f"LaTeX rendering failed for page '{entry.title}': {detail}"
                 ) from exc
 
-            target_buffer.append(fragment)
+            for warning in captured_warnings:
+                self._log_render_warning(entry, warning)
+
+            page_rel_path = self._resolve_page_fragment_path(entry, page_index)
+            page_abs_path = output_root / page_rel_path
+            page_abs_path.parent.mkdir(parents=True, exist_ok=True)
+            page_abs_path.write_text(fragment, encoding="utf-8")
+            target_buffer.append(f"\\input{{{page_rel_path.as_posix()}}}")
 
             if last_renderer is not None:
                 for key, path in last_renderer.assets.items():
@@ -599,6 +627,7 @@ class LatexPlugin(BasePlugin):
         tex_path = output_root / f"{stem}.tex"
         tex_path.write_text(latex_document, encoding="utf-8")
         log.info("TeXSmith wrote '%s'.", tex_path.relative_to(self._build_root))
+        self._announce_latexmk_command(output_root, tex_path)
 
         try:
             copy_template_assets(
@@ -672,6 +701,16 @@ class LatexPlugin(BasePlugin):
                 )
 
         walk(root, config.base_level, True, "mainmatter", False, False)
+        return entries
+
+    def _flatten_full_navigation(
+        self,
+        nav: Navigation,
+        config: BookConfig,
+    ) -> list[NavEntry]:
+        entries: list[NavEntry] = []
+        for item in nav.items:
+            entries.extend(self._flatten_navigation(item, config))
         return entries
 
     def _find_item_by_title(
@@ -762,6 +801,64 @@ class LatexPlugin(BasePlugin):
                 target.parent.mkdir(parents=True, exist_ok=True)
                 shutil.copy2(src, target)
                 log.info("Copied '%s' to '%s'.", src, target)
+
+    def _resolve_page_fragment_path(
+        self, entry: NavEntry, index: int
+    ) -> Path:
+        base = entry.src_path or entry.title or f"page-{index}"
+        normalised = slugify(base.replace("/", "-"), separator="-")
+        if not normalised:
+            normalised = f"page-{index}"
+        return Path("pages") / f"{normalised}.tex"
+
+    def _log_render_warning(self, entry: NavEntry, warning: WarningMessage) -> None:
+        """Surface warnings raised during page rendering as MkDocs warnings."""
+        page_label = entry.title or entry.src_path or "page"
+        message = str(warning.message).strip()
+        category = getattr(warning.category, "__name__", "Warning")
+
+        location = ""
+        filename = getattr(warning, "filename", "") or ""
+        if filename:
+            candidate = Path(filename)
+            try:
+                candidate = candidate.resolve()
+            except OSError:
+                pass
+            project_dir = self._project_dir
+            if project_dir is not None:
+                try:
+                    candidate = candidate.relative_to(project_dir)
+                except ValueError:
+                    try:
+                        candidate = Path(os.path.relpath(candidate, project_dir))
+                    except ValueError:
+                        pass
+            location = f" ({candidate}:{warning.lineno})"
+
+        log.warning(
+            "TeXSmith warning on page '%s': %s%s [%s]",
+            page_label,
+            message,
+            location,
+            category,
+        )
+
+    def _announce_latexmk_command(self, output_root: Path, tex_path: Path) -> None:
+        """Log a helpful hint showing how to compile the generated project."""
+        base_dir = self._project_dir or output_root
+        bundle_path = self._relativise(base_dir, output_root)
+        try:
+            tex_rel = tex_path.relative_to(output_root)
+        except ValueError:
+            tex_rel = tex_path
+
+        log.info(
+            "Press bundle ready in '%s'. Run 'latexmk -cd %s/%s' to build the documentation.",
+            bundle_path.as_posix(),
+            bundle_path.as_posix(),
+            tex_rel.as_posix(),
+        )
 
     def _load_inline_bibliography(
         self,

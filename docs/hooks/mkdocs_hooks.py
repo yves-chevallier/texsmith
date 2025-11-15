@@ -38,7 +38,7 @@ def on_config(config: Any) -> Any:
     return config
 
 
-def on_page_markdown(markdown: str, page: Any, _config: Any, _files: Any) -> str:
+def on_page_markdown(markdown: str, page: Any, config: Any = None, files: Any = None) -> str:  # noqa: ARG001
     """Prefix `api/core.md` with the anchor expected by older cross-links."""
     if page.file.src_path == "api/core.md" and "#texsmithapi" not in markdown:
         return '<a id="texsmithapi"></a>\n' + markdown

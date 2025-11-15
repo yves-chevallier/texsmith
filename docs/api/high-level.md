@@ -103,6 +103,9 @@ print("Template engine:", result.template_engine)
 
 Need bibliography support?  Register `.bib` files with `session.add_bibliography(...)` before calling `render`.  Every slot override (`Document.assign_slot`) and metadata tweak flows straight through to the template runtime.
 
+!!! note
+    For practical slot recipes (front matter/main matter splits, appendix routing, overrides) see the [Template Cookbook](../guide/template-cookbook.md).
+
 ## Reuse the same plumbing as the CLI
 
 `texsmith render` relies on these high-level primitives. Inspect the CLI command and you will notice the same API surface shown above. Scripts and command-line invocations stay aligned, and new features land in one place.

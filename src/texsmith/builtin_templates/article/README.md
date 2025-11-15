@@ -1,16 +1,12 @@
-# Texsmith Article Template
+# TeXSmith Article Template
 
-This package bundles the `article` layout for [Texsmith](https://github.com/yves-chevallier/texsmith). Installing it makes the template discoverable through the `texsmith.templates` entry point group.
-
-## Installation
+This directory hosts the built-in `article` layout bundled with [TeXSmith](https://github.com/yves-chevallier/texsmith). The CLI exposes it via `--template article` (or `-tarticle`), so no extra installation is required.
 
 ```bash
-# From the repository root
-uv pip install ./templates/article
-
-# Once published
-uv pip install texsmith-template-article
+texsmith render intro.md --template article --output-dir build/article
 ```
+
+To customise the template, copy this directory (or extract it via `importlib.resources`) and adjust the manifest, assets, or LaTeX entry point before packaging it as your own distribution.
 
 ## Fonts
 
@@ -28,14 +24,6 @@ For black and white emojis, the `Symbola` font is used. For example on Ubuntu:
 ```bash
 sudo apt update
 sudo apt install fonts-symbola
-```
-
-## Usage
-
-Invoke Texsmith with the registered entry point:
-
-```bash
-texsmith convert --template article README.md
 ```
 
 ## Template Details
