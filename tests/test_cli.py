@@ -672,6 +672,37 @@ def test_convert_template_outputs_summary(tmp_path: Path) -> None:
     assert "Main document" in result.stdout
 
 
+def test_convert_template_outputs_debug_html(tmp_path: Path) -> None:
+    runner = CliRunner()
+    html_file = tmp_path / "index.html"
+    html_file.write_text(
+        "<article class='md-content__inner'><h2>Intro</h2></article>",
+        encoding="utf-8",
+    )
+
+    output_dir = tmp_path / "output"
+    template_dir = _template_path("article")
+
+    result = runner.invoke(
+        app,
+        [
+            "render",
+            str(html_file),
+            "--template",
+            str(template_dir),
+            "--output-dir",
+            str(output_dir),
+            "--debug-html",
+        ],
+    )
+
+    assert result.exit_code == 0, result.stdout
+    debug_file = output_dir / "index.debug.html"
+    assert debug_file.exists()
+    assert "Debug HTML" in result.stdout
+    assert str(debug_file) in result.stdout
+
+
 def test_slot_assignment_targets_specific_file(tmp_path: Path) -> None:
     runner = CliRunner()
     abstract_doc = tmp_path / "abstract.md"

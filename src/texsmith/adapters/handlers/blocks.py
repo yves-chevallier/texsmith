@@ -21,6 +21,8 @@ from ._helpers import (
     mark_processed,
     resolve_asset_path,
 )
+from .code import render_code_blocks as _render_code_block
+from .inline import render_inline_code as _render_inline_code
 
 
 def _iter_reversed(nodes: Iterable[Tag]) -> Iterable[Tag]:
@@ -74,6 +76,19 @@ def _strip_caption_prefix(node: Tag | None) -> None:
             span.decompose()
 
 
+def _split_citation_keys(identifier: str) -> list[str]:
+    """Split a comma-separated string into individual citation keys."""
+    if not identifier or "," not in identifier:
+        return []
+    return [part.strip() for part in identifier.split(",") if part.strip()]
+
+
+def _is_multiline_footnote(text: str) -> bool:
+    """Check whether rendered footnote text spans multiple non-empty lines."""
+    lines = [line for line in text.splitlines() if line.strip()]
+    return len(lines) > 1
+
+
 @renders("div", phase=RenderPhase.PRE, priority=120, name="tabbed_content", auto_mark=False)
 def render_tabbed_content(element: Tag, context: RenderContext) -> None:
     """Unwrap MkDocs tabbed content structures."""
@@ -87,31 +102,102 @@ def render_tabbed_content(element: Tag, context: RenderContext) -> None:
             titles.append(label.get_text(strip=True))
         labels.extract()
     else:
-        fallback_titles = [label.get_text(strip=True) for label in element.find_all("label")]
-        if fallback_titles:
-            for title in fallback_titles:
-                if not title:
-                    continue
-                formatted = context.formatter.strong(text=title)
-                heading = mark_processed(NavigableString(f"{formatted}\\par\n"))
-                element.insert_before(heading)
-        element.unwrap()
-        return
+        fallback_labels = element.find_all("label", recursive=False)
+        for label in fallback_labels:
+            titles.append(label.get_text(strip=True))
+            label.extract()
 
     for input_node in element.find_all("input", recursive=False):
         input_node.extract()
 
-    tabbed_content = element.find("div", class_="tabbed-content")
-    if tabbed_content is None:
-        raise InvalidNodeError("Missing tabbed-content container inside tabbed-set")
+    content_containers = element.find_all("div", class_="tabbed-content", recursive=False)
+    if not content_containers:
+        candidate = element.find("div", class_="tabbed-content")
+        if candidate is None:
+            raise InvalidNodeError("Missing tabbed-content container inside tabbed-set")
+        content_containers = [candidate]
 
-    for index, block in enumerate(tabbed_content.find_all("div", class_="tabbed-block")):
+    blocks: list[Tag] = []
+    for container in content_containers:
+        inner_blocks = container.find_all("div", class_="tabbed-block", recursive=False)
+        if inner_blocks:
+            blocks.extend(inner_blocks)
+        else:
+            blocks.append(container)
+
+    soup = element.soup
+
+    for index, block in enumerate(blocks):
         title = titles[index] if index < len(titles) else ""
-        heading = mark_processed(NavigableString(f"\n\\textbf{{{title}}}\\par\n"))
+        if soup is None:
+            heading = mark_processed(NavigableString(f"\\textbf{{{title}}}\\par\n"))
+        else:
+            heading = soup.new_tag("p")
+            strong = soup.new_tag("strong")
+            strong.string = title
+            heading.append(strong)
         block.insert_before(heading)
-        block.unwrap()
 
-    tabbed_content.unwrap()
+        for highlight in block.find_all("div"):
+            highlight_classes = gather_classes(highlight.get("class"))
+            if "highlight" not in highlight_classes:
+                continue
+            if context.is_processed(highlight):
+                continue
+            parent_before = highlight.parent
+            _render_code_block(highlight, context)
+            if highlight.parent is not None and highlight.parent is parent_before:
+                code_element = highlight.find("code")
+                code_text = (
+                    code_element.get_text(strip=False)
+                    if code_element is not None
+                    else highlight.get_text(strip=False)
+                )
+                if code_text and not code_text.endswith("\n"):
+                    code_text += "\n"
+                fallback = mark_processed(
+                    NavigableString(
+                        context.formatter.codeblock(
+                            code=code_text,
+                            language="text",
+                            lineno=False,
+                            filename=None,
+                            highlight=[],
+                            baselinestretch=None,
+                        )
+                    )
+                )
+                highlight.replace_with(fallback)
+            context.mark_processed(highlight)
+
+
+@renders(
+    "div",
+    phase=RenderPhase.PRE,
+    priority=130,
+    name="tabbed_cleanup",
+    auto_mark=False,
+    after_children=True,
+)
+def cleanup_tabbed_content(element: Tag, context: RenderContext) -> None:
+    """Remove tabbed container wrappers after children are processed."""
+    classes = gather_classes(element.get("class"))
+    if "tabbed-set" not in classes:
+        return
+
+    containers = element.find_all("div", class_="tabbed-content", recursive=False)
+    if not containers:
+        containers = element.find_all("div", class_="tabbed-content")
+    if not containers:
+        element.unwrap()
+        return
+
+    for container in containers:
+        inner_blocks = container.find_all("div", class_="tabbed-block", recursive=False)
+        if inner_blocks:
+            for block in inner_blocks:
+                block.unwrap()
+        container.unwrap()
     element.unwrap()
 
 
@@ -184,10 +270,18 @@ def render_description_lists(root: Tag, context: RenderContext) -> None:
 
         for child in dl.find_all(["dt", "dd"], recursive=False):
             if child.name == "dt":
-                current_term = child.get_text(strip=False).strip()
+                term = child.get_text(strip=False).strip()
+                current_term = term or None
             elif child.name == "dd":
                 content = child.get_text(strip=False).strip()
+                if not content and current_term is None:
+                    continue
                 items.append((current_term, content))
+
+        if not items:
+            warnings.warn("Discarding empty description list.", stacklevel=2)
+            dl.decompose()
+            continue
 
         latex = context.formatter.description_list(items=items)
         dl.replace_with(mark_processed(NavigableString(latex)))
@@ -212,11 +306,6 @@ def render_footnotes(root: Tag, context: RenderContext) -> None:
     def _replace_with_latex(node: Tag, latex: str) -> None:
         replacement = mark_processed(NavigableString(latex))
         node.replace_with(replacement)
-
-    def _split_citation_keys(identifier: str) -> list[str]:
-        if not identifier or "," not in identifier:
-            return []
-        return [part.strip() for part in identifier.split(",") if part.strip()]
 
     _citation_payload_pattern = re.compile(
         r"^\s*([A-Za-z0-9_\-:]+(?:\s*,\s*[A-Za-z0-9_\-:]+)*)\s*$"
@@ -244,13 +333,22 @@ def render_footnotes(root: Tag, context: RenderContext) -> None:
         return True
 
     citation_footnotes: dict[str, list[str]] = {}
+    invalid_footnotes: set[str] = set()
 
     for container in root.find_all("div", class_="footnote"):
         for li in container.find_all("li"):
             footnote_id = _normalise_footnote_id(coerce_attribute(li.get("id")))
             if not footnote_id:
                 raise InvalidNodeError("Footnote item missing identifier")
-            text = li.get_text(strip=False).strip()
+            text = li.get_text(strip=False)
+            if _is_multiline_footnote(text):
+                warnings.warn(
+                    f"Footnote '{footnote_id}' spans multiple lines and cannot be rendered; dropping it.",
+                    stacklevel=2,
+                )
+                invalid_footnotes.add(footnote_id)
+                continue
+            text = text.strip()
             footnotes[footnote_id] = text
             recovered = _citation_keys_from_payload(text)
             if recovered:
@@ -262,6 +360,9 @@ def render_footnotes(root: Tag, context: RenderContext) -> None:
 
     for sup in root.find_all("sup", id=True):
         footnote_id = _normalise_footnote_id(coerce_attribute(sup.get("id")))
+        if footnote_id in invalid_footnotes:
+            sup.decompose()
+            continue
         citation_keys = citation_footnotes.get(footnote_id)
         if citation_keys and _render_citation(sup, citation_keys):
             continue
@@ -300,6 +401,9 @@ def render_footnotes(root: Tag, context: RenderContext) -> None:
         identifier = identifier_attr or placeholder.get_text(strip=True)
         footnote_id = identifier.strip() if identifier else ""
         if not footnote_id:
+            placeholder.decompose()
+            continue
+        if footnote_id in invalid_footnotes:
             placeholder.decompose()
             continue
 

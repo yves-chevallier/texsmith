@@ -52,6 +52,19 @@ source = "titlepage.tex"
 [latex.template.assets."imprint.tex"]
 source = "imprint.tex"
 
+[latex.template.assets."callouts.sty"]
+source = "template/callouts.sty"
+
+[latex.template.assets."keystroke.sty"]
+source = "template/keystroke.sty"
+
+[latex.template.assets."todolist.sty"]
+source = "template/todolist.sty"
+
+[latex.template.assets.".latexmkrc"]
+source = "template/assets/latexmkrc"
+template = true
+
 [latex.template.assets."mkbook.cls"]
 source = "template/mkbook.cls"
 template = true

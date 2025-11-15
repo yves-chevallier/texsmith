@@ -229,8 +229,8 @@ wikipedia_glossary = true
 
 TeXSmith style
 : ```md
-  A duck image with 25% width
-  : ![A duck](duck.jpg){width=25%}
+  A diagram with 25% width
+  : ![Diagram example](../examples/diagrams.png){width=25%}
 
   Table Caption Avec une grosse famille de chats  {#bigcats}
   : | Cat Name    | Age | Color      |
@@ -241,7 +241,7 @@ TeXSmith style
 
 Pymarkdown style
 : ```md
-  ![A duck](duck.jpg){width=25%}
+  ![Diagram example](../examples/diagrams.png){width=25%}
 
   /// figure-caption
       attrs: {#foobar}

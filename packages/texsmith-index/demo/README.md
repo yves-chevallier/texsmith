@@ -15,7 +15,7 @@ This directory demonstrates how to combine the three components shipped with
 
 ```bash
 cd packages/texsmith-index/examples/index-demo
-uv pip install ../../../.. ../../../../templates/article
+uv pip install ../../../..
 uv run mkdocs build
 ```
 

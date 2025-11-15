@@ -78,6 +78,13 @@ def test_definition_list_rendering(renderer: LaTeXRenderer) -> None:
     assert "\\item[Banana] Yellow" in latex
 
 
+def test_empty_description_list_dropped(renderer: LaTeXRenderer) -> None:
+    html = "<dl><dt></dt><dd></dd></dl>"
+    with pytest.warns(UserWarning, match="Discarding empty description list"):
+        latex = renderer.render(html)
+    assert "\\begin{description}" not in latex
+
+
 def test_footnote_conversion(renderer: LaTeXRenderer) -> None:
     html = """
     <p>See note<sup id="fnref:1"><a href="#fn:1">1</a></sup>.</p>
@@ -90,6 +97,23 @@ def test_footnote_conversion(renderer: LaTeXRenderer) -> None:
     latex = renderer.render(html)
     assert "\\footnote{Footnote content}" in latex
     assert "<div" not in latex
+
+
+def test_multiline_footnote_removed(renderer: LaTeXRenderer) -> None:
+    html = """
+    <p>See note<sup id="fnref:1"><a href="#fn:1">1</a></sup>.</p>
+    <div class="footnote">
+        <ol>
+            <li id="fn:1">
+                <p>First paragraph.</p>
+                <p>Second paragraph.</p>
+            </li>
+        </ol>
+    </div>
+    """
+    with pytest.warns(UserWarning, match="Footnote '1' spans multiple lines"):
+        latex = renderer.render(html)
+    assert "\\footnote" not in latex
 
 
 def test_horizontal_rule_removed(renderer: LaTeXRenderer) -> None:
@@ -123,6 +147,82 @@ def test_tabbed_content_rendering(renderer: LaTeXRenderer) -> None:
     assert "\\textbf{JavaScript}\\par" in latex
     assert "Hello from Python." in latex
     assert "Hello from JS." in latex
+
+
+def test_tabbed_code_blocks_preserved(renderer: LaTeXRenderer) -> None:
+    html = """
+    <div class="tabbed-set">
+        <div class="tabbed-labels">
+            <label>CLI</label>
+            <label>Python</label>
+        </div>
+        <input type="radio" />
+        <div class="tabbed-content">
+            <div class="tabbed-block">
+                <div class="language-bash highlight">
+                    <pre><span></span><code>uv tool install texsmith</code></pre>
+                </div>
+            </div>
+            <div class="tabbed-block">
+                <div class="language-python highlight">
+                    <pre><span></span><code>print("hello")</code></pre>
+                </div>
+            </div>
+        </div>
+    </div>
+    """
+    latex = renderer.render(html)
+    assert "\\textbf{CLI}\\par" in latex
+    assert "\\textbf{Python}\\par" in latex
+    assert "\\begin{code}{bash}" in latex
+    assert "\\begin{code}{python}" in latex
+
+
+def test_admonition_preserves_formatting(renderer: LaTeXRenderer) -> None:
+    html = """
+    <div class="admonition seealso">
+        <p class="admonition-title">Links</p>
+        <p>Use <code>foo_bar</code> inside callouts.</p>
+        <div class="language-python highlight">
+            <pre><span></span><code>print("hello")</code></pre>
+        </div>
+        <ul>
+            <li>Bullet <strong>item</strong></li>
+        </ul>
+    </div>
+    """
+    latex = renderer.render(html)
+    assert "\\begin{callout}[callout info]" in latex
+    assert "\\texttt{foo\\_bar}" in latex
+    assert "\\begin{code}{python}" in latex
+    assert "\\begin{itemize}" in latex
+
+
+def test_blockquote_callout_transformed(renderer: LaTeXRenderer) -> None:
+    html = """
+    <blockquote>
+        <p>[!seealso] Cross-links</p>
+        <p>Check <code>uv tool install texsmith</code>.</p>
+    </blockquote>
+    """
+    latex = renderer.render(html)
+    assert "\\begin{callout}[callout info]" in latex
+    assert "\\texttt{uv~tool~install~texsmith}" in latex
+
+
+def test_code_block_with_paragraph_keyword_not_mermaid(renderer: LaTeXRenderer) -> None:
+    html = """
+    <div class="highlight">
+        <pre><span></span><code>
+Paragraph headings explain paragraphs.
+
+This is a paragraph with a trailing space.
+        </code></pre>
+    </div>
+    """
+    latex = renderer.render(html)
+    assert "\\begin{code}{text}" in latex
+    assert "Paragraph headings explain paragraphs." in latex
 
 
 def test_arithmatex_block_preserved(renderer: LaTeXRenderer) -> None:

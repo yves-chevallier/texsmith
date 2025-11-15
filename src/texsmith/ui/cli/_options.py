@@ -267,8 +267,8 @@ TemplateOption = Annotated[
         "--template",
         "-t",
         help=(
-            "Select a LaTeX template to use during conversion. Accepts a local path or a registered "
-            "template name."
+            "Select a LaTeX template to use during conversion. Accepts a local path, entry point, "
+            "or built-in slug such as 'article' or 'letter'."
         ),
         rich_help_panel=TEMPLATE_PANEL,
     ),

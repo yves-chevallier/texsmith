@@ -819,7 +819,6 @@ dev = [
     { name = "pytest" },
     { name = "ruff" },
     { name = "texsmith" },
-    { name = "texsmith-template-article" },
 ]
 
 [package.metadata]
@@ -837,19 +836,7 @@ dev = [
     { name = "pytest", specifier = ">=8.4.2" },
     { name = "ruff", specifier = ">=0.14.1" },
     { name = "texsmith", directory = "../../" },
-    { name = "texsmith-template-article", directory = "../../templates/article" },
 ]
-
-[[package]]
-name = "texsmith-template-article"
-version = "0.1.0"
-source = { directory = "../../templates/article" }
-dependencies = [
-    { name = "texsmith" },
-]
-
-[package.metadata]
-requires-dist = [{ name = "texsmith", specifier = ">=0.1,<1.0" }]
 
 [[package]]
 name = "text-unidecode"

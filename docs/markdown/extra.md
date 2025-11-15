@@ -84,17 +84,7 @@ Footnotes have a name, a reference[^1], and a definition[^word].
 
 Footnotes have a name, a reference[^1], and a definition[^word].
 
-[^1]:
-    The first paragraph of the definition.
-
-    Paragraph two of the definition.
-
-    > A blockquote with
-    > multiple lines.
-
-        a code block
-
-    A final paragraph.
+[^1]: A reference to a footnote definition.
 [^word]: A footnote with the name "word".
 
 ## Tables

@@ -131,7 +131,7 @@ class CoverConfig(BaseModel):
 
     model_config = ConfigDict(extra="forbid")
 
-    name: str = Field(default="default", description="Cover template name")
+    name: str = Field(default="circles", description="Cover template name")
     color: str | None = Field(default="black", description="Primary color")
     logo: str | None = Field(default=None, description="Logo path")
 

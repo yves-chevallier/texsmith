@@ -49,7 +49,6 @@ package = true
 [tool.uv.sources]
 texsmith = { path = "../../" }
 mkdocs_texsmith = { path = "../mkdocs_texsmith/" }
-texsmith_template_article = { path = "../../templates/article/" }
 
 [dependency-groups]
 dev = [
@@ -59,5 +58,4 @@ dev = [
     "pytest>=8.4.2",
     "ruff>=0.14.1",
     "texsmith>=0.1.0",
-    "texsmith-template-article>=0.1.0",
 ]

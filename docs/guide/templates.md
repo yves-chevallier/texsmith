@@ -1,14 +1,63 @@
 # Templates
 
-TeXSmith templates are reusable LaTeX document structures that define how
-Markdown content is converted into LaTeX. They provide a way to standardize
-the formatting and layout of documents generated from Markdown files.
+TeXSmith templates define the LaTeX skeleton that wraps converted Markdown. Each
+template bundles assets, slot definitions, attribute schemas, and build metadata
+so you can aim the renderer at anything from articles to slide decks.
 
-Templates are distributed as packages that can be installed via `pip` such as:
+Templates are a core feature that allows TeXSmith to be extended for different
+use cases. You may use:
+
+- Custom project templates stored in a `templates/` folder.
+- Local user templates installed in your `~/.texsmith/templates/` folder.
+- Published templates installed from PyPI.
+- Built-in templates included with TeXSmith.
+
+## Built-in templates
+
+TeXSmith includes standard templates for common document types:
+
+- `article`: academic-style article layout with title page, abstract, and sections.
+- `letter`: formal letters with sender/recipient metadata, fold marks, and cursive signatures.
+
+Invoke them with `-tarticle` or `-tletter`. Additional community templates remain available under `templates/` or as separate PyPI packages.
+
+## Quick start
 
 ```bash
-pip install texsmith-template-article
+# 1. Inspect a built-in template
+texsmith template info article
+
+# 2. Render a document with template slots + build
+texsmith render docs/intro.md \
+  --template article \
+  --slot mainmatter:@document \
+  --output-dir build/article \
+  --build
 ```
+
+Need a blank template skeleton? Copy the built-in article template from this repo or extract it from an installed package:
+
+```bash
+# From a cloned repository
+cp -R src/texsmith/builtin_templates/article my-template
+
+# Or from an installed wheel
+python - <<'PY'
+from importlib import resources
+from pathlib import Path
+import shutil
+
+dest = Path("my-template")
+with resources.as_file(resources.files("texsmith.builtin_templates").joinpath("article")) as article_root:
+    shutil.copytree(article_root, dest, dirs_exist_ok=True)
+PY
+
+cd my-template
+uv run hatch build  # optional packaging smoke test
+```
+
+Publish by pointing `pyproject.toml` to the `template/` package, then `uv publish` or `twine upload dist/*`.
+For in-depth patterns (overrides, slots, metadata), see the [Template Cookbook](template-cookbook.md).
 
 ## Write your own TeXSmith templates
 
@@ -221,6 +270,21 @@ When the manifest lists `latex.template.override = ["partials/bold.tex"]`, TeXSm
 
 Placeholders inside override files can use the same Jinja syntax (`\VAR{...}`, `\BLOCK{...}`).
 
+### Slot strategies
+
+Slots determine how multiple Markdown documents (or sections) flow into the
+LaTeX structure. Typical patterns:
+
+- **Single document, single slot** – map the only input with `--slot mainmatter:@document`.
+- **Front matter + main matter** – convert two files (eg `intro.md`,
+  `book.md`) and pass `--slot frontmatter:intro.md` and `--slot mainmatter:book.md`.
+- **Selective sections** – reference headings or IDs:
+  `--slot abstract:paper.md:@abstract --slot mainmatter:paper.md:"Results"` injects
+  only the abstract heading and the “Results” section into separate slots.
+- **Per-language appendices** – define slots (`appendix_en`, `appendix_fr`) and use front-matter metadata (`press.slot.appendix_en: docs/en.md`) so automation scripts do not need to pass CLI flags.
+
+Slots are resolved by `DocumentSlots` across CLI flags, front matter (`press.slot.*`), and API overrides, so mix and match whichever suits your workflow.
+
 ### Testing your template
 
 Before publishing, run the built-in test suite against your template:
@@ -230,3 +294,8 @@ uv run pytest tests/test_template_attributes.py
 ```
 
 This repository includes examples for the bundled templates; copy one into your package and adjust expectations to match your manifest. Automated tests help ensure attributes, slots, and metadata mappings keep working as the TeXSmith runtime evolves.
+
+## Next steps
+
+- Study the [Template Cookbook](template-cookbook.md) for practical recipes (title pages, metadata bindings, bibliography tweaks).
+- Browse the [API high-level guide](../api/high-level.md) to orchestrate templates programmatically with `ConversionService`.

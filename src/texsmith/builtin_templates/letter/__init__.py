@@ -21,9 +21,41 @@ class LanguageProfile:
     key: str
     locale: str
     babel: str
-    uses_lettre: bool
     fallback_opening: str
     fallback_closing: str
+    default_standard: str
+    subject_prefix: str
+
+
+@dataclass(frozen=True)
+class LetterStandard:
+    """Describe one of the supported national letter layouts."""
+
+    key: str
+    option: str
+
+
+_LETTER_STANDARDS: dict[str, LetterStandard] = {
+    "din": LetterStandard(key="din", option="DIN"),
+    "sn-left": LetterStandard(key="sn-left", option="SNleft"),
+    "sn-right": LetterStandard(key="sn-right", option="SNright"),
+}
+
+_LETTER_STANDARD_ALIASES: dict[str, str] = {
+    "din": "din",
+    "din5008": "din",
+    "din-5008": "din",
+    "de": "din",
+    "german": "din",
+    "sn": "sn-left",
+    "sn010130": "sn-left",
+    "sn-010130": "sn-left",
+    "snleft": "sn-left",
+    "sn-left": "sn-left",
+    "snright": "sn-right",
+    "sn-right": "sn-right",
+    "swiss": "sn-left",
+}
 
 
 _LANGUAGE_PROFILES: dict[str, LanguageProfile] = {
@@ -31,25 +63,28 @@ _LANGUAGE_PROFILES: dict[str, LanguageProfile] = {
         key="en-uk",
         locale="en-UK",
         babel="british",
-        uses_lettre=False,
         fallback_opening="Dear Sir or Madam,",
         fallback_closing="Yours faithfully,",
+        default_standard="din",
+        subject_prefix=r"Subject:~",
     ),
     "en-us": LanguageProfile(
         key="en-us",
         locale="en-US",
         babel="english",
-        uses_lettre=False,
         fallback_opening="Dear Sir or Madam,",
         fallback_closing="Sincerely,",
+        default_standard="din",
+        subject_prefix=r"Subject:~",
     ),
     "fr-fr": LanguageProfile(
         key="fr-fr",
         locale="fr-FR",
         babel="french",
-        uses_lettre=True,
         fallback_opening="Madame, Monsieur,",
         fallback_closing="Je vous prie d’agréer l’expression de mes salutations distinguées.",
+        default_standard="sn-left",
+        subject_prefix=r"Objet~:~",
     ),
 }
 
@@ -74,7 +109,14 @@ class Template(WrappableTemplate):
         profile = self._resolve_language_profile(context.get("language"))
         context["language"] = profile.locale
         context["babel_language"] = profile.babel
-        context["use_lettre"] = profile.uses_lettre
+        letter_standard = self._resolve_letter_standard(
+            context.get("standard")
+            or context.get("letter_standard")
+            or context.get("layout"),
+            profile,
+        )
+        context["letter_standard"] = letter_standard.key
+        context["letter_standard_option"] = letter_standard.option
 
         context["from_name"] = self._coerce_string(context.get("from_name")) or ""
         context["signature_text"] = (
@@ -96,6 +138,7 @@ class Template(WrappableTemplate):
         context["object_value"] = self._coerce_string(context.get("object")) or ""
         context["from_location_value"] = self._coerce_string(context.get("from_location")) or ""
         context["to_name"] = self._coerce_string(context.get("to_name")) or ""
+        context["subject_prefix"] = profile.subject_prefix
 
         context["signature_text"] = context["signature_text"] or context["from_name"]
         if not context["signature_text"]:
@@ -112,6 +155,17 @@ class Template(WrappableTemplate):
         context.pop("press", None)
 
         return context
+
+    def _resolve_letter_standard(self, value: Any, profile: LanguageProfile) -> LetterStandard:
+        candidate = self._coerce_string(value)
+        if candidate:
+            key = candidate.lower().replace(" ", "-").replace("_", "-").replace(".", "-")
+        else:
+            key = profile.default_standard
+        resolved_key = _LETTER_STANDARD_ALIASES.get(key, key)
+        if resolved_key in _LETTER_STANDARDS:
+            return _LETTER_STANDARDS[resolved_key]
+        return _LETTER_STANDARDS[profile.default_standard]
 
     def _resolve_language_profile(self, value: Any) -> LanguageProfile:
         if isinstance(value, str):

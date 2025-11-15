@@ -37,20 +37,7 @@ from ._helpers import (
     mark_processed,
     resolve_asset_path,
 )
-
-
-MERMAID_KEYWORDS = (
-    "graph ",
-    "graph\t",
-    "flowchart ",
-    "flowchart\t",
-    "sequenceDiagram",
-    "classDiagram",
-    "stateDiagram",
-    "gantt",
-    "erDiagram",
-    "journey",
-)
+from ._mermaid import looks_like_mermaid as _looks_like_mermaid
 
 
 MERMAID_FILE_SUFFIXES = (".mmd", ".mermaid")
@@ -258,12 +245,6 @@ def _mermaid_caption(diagram: str) -> tuple[str | None, str]:
         body = "\n".join(lines[1:])
         return caption, body
     return None, diagram
-
-
-def _looks_like_mermaid(diagram: str) -> bool:
-    """Heuristically detect Mermaid diagrams."""
-    lower = diagram.lstrip().lower()
-    return any(keyword in lower for keyword in MERMAID_KEYWORDS)
 
 
 @renders("img", phase=RenderPhase.BLOCK, name="render_images", nestable=False)

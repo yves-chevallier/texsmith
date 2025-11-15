@@ -24,6 +24,69 @@ pip install texsmith
 texsmith render input.md input.bib -o article/ --template nature
 ```
 
+## Key features
+
+- **MkDocs-native Markdown** – Ships with the same Material + pymdown extension stack you use in MkDocs, so tabs, callouts, annotations, tooltips, and data tables survive the conversion.
+- **Template-first runtime** – Bundle multiple fragments into slots, merge front matter metadata, and emit latexmk-ready projects with Docker-friendly manifests.
+- **CLI and Python parity** – The Typer-powered CLI wraps the same ConversionService you can consume as a library, making CI/CD and notebooks behave like local runs.
+- **Actionable diagnostics** – Structured emitters, verbosity switches, and `--debug` traces keep LaTeX issues debuggable even in automated pipelines.
+- **Extensible converters** – Override Markdown parsers, hook into RenderPhase handlers, or ship diagram transformers (Mermaid, Draw.io, Svgbob) that plug directly into the engine.
+
+## Installation
+
+```bash
+# uv (recommended for isolated CLI installs)
+uv tool install texsmith
+
+# pip / pipx
+pip install texsmith
+pipx install texsmith
+```
+
+TeXSmith targets Python 3.10+ and expects a LaTeX distribution (TeX Live, MiKTeX, or MacTeX) when you pass `--build`. Optional converters such as Mermaid rely on Docker (`minlag/mermaid-cli`) unless you register custom handlers.
+
+### Platform notes
+
+- **Linux** – Install TeX Live (full) via your package manager or `install-tl`. When running inside CI containers, cache `~/.texliveYY` so repeated `latexmk` runs stay fast.
+- **macOS** – Use [MacTeX](https://www.tug.org/mactex/) or `BasicTeX` plus the tlmgr packages reported by `texsmith template info`. Homebrew’s `mactex` cask works well when paired with `uv`.
+- **Windows** – TeXSmith runs via native Python or WSL. For PDF builds we recommend [MiKTeX](https://miktex.org/) + PowerShell, or WSL2 with TeX Live and Docker Desktop (needed for Mermaid).
+- **Docker workflows** – Run `texsmith render --build` inside a TeX Live container, mounting your project plus the template directory. Copy tlmgr prerequisites from `template info` so images compile without network access.
+
+See the [Getting Started guide](docs/guide/getting-started.md) for a step-by-step walkthrough, verification commands, and Python API examples.
+
+## Documentation
+
+Browse the full documentation at [yves-chevallier.github.io/texsmith](https://yves-chevallier.github.io/texsmith) for:
+
+- [Getting Started](docs/guide/getting-started.md): installation, prerequisites, and API snippets.
+- [CLI Reference](docs/cli/index.md): every flag, including the template inspector.
+- [Markdown Directory](docs/markdown/supported.md): exhaustive syntax coverage.
+- [API Reference](docs/api/index.md): ConversionService, TemplateSession, handlers, and plugins.
+- [Template Cookbook](docs/guide/template-cookbook.md): practical recipes for slots, overrides, packaging, and testing.
+- [Release Notes & Compatibility](docs/guide/release-notes.md): TeXSmith feature history plus template/TeX Live requirements.
+
+## Template catalog
+
+Inspect templates by name or path to understand their slots, metadata attributes, TeX Live requirements, and declared assets:
+
+```bash
+texsmith template info article
+# or the namespaced alias
+texsmith latex template info ./templates/nature
+```
+
+Use this command before wiring slots or when you need to confirm which tlmgr packages to preinstall in CI.
+
+## Examples
+
+The `examples/` directory includes reproducible demos:
+
+- `examples/scientific-paper` – end-to-end render with bibliographies and latexmk.
+- `examples/diagrams` – Mermaid and Draw.io conversions.
+- `examples/markdown` – exhaustive Markdown showcase with diagram/front-matter overrides.
+
+Each example ships build instructions inside [`docs/examples/index.md`](docs/examples/index.md).
+
 ## Project layout
 
 The source tree is organised around three top-level namespaces:

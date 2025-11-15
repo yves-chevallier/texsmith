@@ -11,6 +11,7 @@ from texsmith.core.context import RenderContext
 from texsmith.core.rules import RenderPhase, renders
 
 from ._helpers import gather_classes, mark_processed
+from .inline import render_inline_code as _render_inline_code
 
 
 IGNORED_CLASSES = {
@@ -67,12 +68,29 @@ def _extract_title(node: Tag | None) -> str:
     return title
 
 
+CALLOUT_ALIASES = {"seealso": "info"}
+
+
+def _promote_callout(
+    element: Tag, context: RenderContext, *, classes: list[str], title: str
+) -> None:
+    """Re-tag a node so it can be converted after its children render."""
+    element["data-callout-title"] = title
+    element["class"] = classes
+    element.name = "texsmith-callout"
+    context.mark_processed(element, phase=RenderPhase.POST)
+
+
 def _render_admonition(
     element: Tag, context: RenderContext, *, classes: list[str], title: str
 ) -> None:
     """Convert a generic admonition container into a LaTeX callout."""
     admonition_classes = [cls for cls in classes if cls not in IGNORED_CLASSES]
     admonition_type = admonition_classes[0] if admonition_classes else "note"
+    admonition_type = CALLOUT_ALIASES.get(admonition_type, admonition_type)
+
+    for code in element.find_all("code"):
+        _render_inline_code(code, context)
 
     with _use_tcolorbox_figures(context):
         content = element.get_text(strip=False).strip()
@@ -92,7 +110,7 @@ def _render_admonition(
     phase=RenderPhase.POST,
     priority=50,
     name="admonitions",
-    nestable=False,
+    nestable=True,
     auto_mark=False,
 )
 def render_div_admonitions(element: Tag, context: RenderContext) -> None:
@@ -104,7 +122,7 @@ def render_div_admonitions(element: Tag, context: RenderContext) -> None:
         return
 
     title = _extract_title(element.find("p", class_="admonition-title"))
-    _render_admonition(element, context, classes=classes, title=title)
+    _promote_callout(element, context, classes=classes, title=title)
 
 
 @renders(
@@ -157,9 +175,14 @@ def render_blockquote_callouts(element: Tag, context: RenderContext) -> None:
     else:
         first_paragraph.decompose()
 
-    _render_admonition(element, context, classes=[callout_type], title=title)
-    context.suppress_children(element, phase=RenderPhase.POST)
-    context.mark_processed(element, phase=RenderPhase.POST)
+    classes = gather_classes(element.get("class"))
+    preserved = [cls for cls in classes if cls != "admonition"]
+    new_classes = ["admonition", callout_type]
+    for cls in preserved:
+        if cls not in new_classes:
+            new_classes.append(cls)
+    element["class"] = new_classes
+    _promote_callout(element, context, classes=new_classes, title=title)
 
 
 @renders(
@@ -167,7 +190,7 @@ def render_blockquote_callouts(element: Tag, context: RenderContext) -> None:
     phase=RenderPhase.POST,
     priority=55,
     name="details_admonitions",
-    nestable=False,
+    nestable=True,
     auto_mark=False,
 )
 def render_details_admonitions(element: Tag, context: RenderContext) -> None:
@@ -181,7 +204,23 @@ def render_details_admonitions(element: Tag, context: RenderContext) -> None:
         title = summary.get_text(strip=True)
         summary.decompose()
 
-    _render_admonition(element, context, classes=classes, title=title or "")
+    _promote_callout(element, context, classes=classes, title=title or "")
+
+
+@renders(
+    "texsmith-callout",
+    phase=RenderPhase.POST,
+    priority=140,
+    name="finalize_callouts",
+    nestable=False,
+    auto_mark=False,
+    after_children=True,
+)
+def render_texsmith_callouts(element: Tag, context: RenderContext) -> None:
+    """Convert promoted callout nodes once their children have rendered."""
+    classes = gather_classes(element.get("class"))
+    title = element.attrs.pop("data-callout-title", "")
+    _render_admonition(element, context, classes=classes, title=title)
 
 
 __all__ = [
@@ -190,5 +229,6 @@ __all__ = [
     "render_blockquote_callouts",
     "render_details_admonitions",
     "render_div_admonitions",
+    "render_texsmith_callouts",
 ]
 CALLOUT_PATTERN = re.compile(r"^\s*\[!(?P<kind>[A-Za-z0-9_-]+)\]\s*(?P<content>.*)$", re.DOTALL)

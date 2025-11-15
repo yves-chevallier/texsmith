@@ -2,6 +2,7 @@
 press:
   template: letter
   language: fr-CH
+  standard: sn
   cursive: false
   date: 1928-12-23
   object: Invitation souper de Noël

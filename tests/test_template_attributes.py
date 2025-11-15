@@ -31,12 +31,14 @@ if "texsmith" not in sys.modules:
     texsmith_stub.__path__ = [str((SRC_ROOT / "texsmith").resolve())]
     sys.modules["texsmith"] = texsmith_stub
 
-Template = importlib.import_module("templates.article").Template
+article_module = importlib.import_module("texsmith.builtin_templates.article")
+Template = article_module.Template
 TemplateManifest = importlib.import_module("texsmith.core.templates.manifest").TemplateManifest
+ARTICLE_ROOT = Path(article_module.__file__).resolve().parent
 
 
 def test_attribute_resolver_merges_press_metadata() -> None:
-    manifest = TemplateManifest.load(Path("templates/article/template/manifest.toml"))
+    manifest = TemplateManifest.load(ARTICLE_ROOT / "template" / "manifest.toml")
     info = manifest.latex.template
 
     overrides = {

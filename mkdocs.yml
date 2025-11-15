@@ -50,27 +50,38 @@ extra:
 # Navigation groups mirror the English IA designed in phase 2.
 nav:
   - Home: index.md
-  - Introduction:
-      - Overview: getting-started/overview.md
-      - Quick Start: getting-started/getting-started.md
-  - User Guide:
-      - CLI Reference:
-          - Command-line Overview: cli/index.md
-          - Render Command: cli/render.md
-          - Bibliography Command: cli/bibliography.md
-      - Markdown Reference:
-          - Markdown Overview: markdown/index.md
-          - Syntax Directory: markdown/supported.md
-          - Admonitions: markdown/admonitions.md
-          - Abbreviations: markdown/abbr.md
-          - Code Highlighting: markdown/highlight.md
-          - Tables: markdown/tables.md
-          - Math Support: markdown/math.md
-          - Mermaid Diagrams: markdown/mermaid.md
-          - SVGbob Diagrams: markdown/svgbob.md
-          - Smarty Pants: markdown/smartypants.md
-          - Extra Extensions: markdown/extra.md
-          - Wiki Links: markdown/wikilinks.md
+  - Guide:
+      - Overview: guide/overview.md
+      - Quick Start: guide/getting-started.md
+      - Bibliography: guide/bibliography.md
+      - Front Matter: guide/front-matter.md
+      - Templates: guide/templates.md
+      - Template Cookbook: guide/template-cookbook.md
+      - Release Notes & Compatibility: guide/release-notes.md
+      - Examples: examples/index.md
+      - Troubleshooting: guide/troubleshooting.md
+  - Reference:
+      - Markdown Overview: markdown/index.md
+      - Syntax Directory: markdown/supported.md
+      - Admonitions: markdown/admonitions.md
+      - Abbreviations: markdown/abbr.md
+      - Code Highlighting: markdown/highlight.md
+      - Tables: markdown/tables.md
+      - Math Support: markdown/math.md
+      - Equations: markdown/equations.md
+      - Mermaid Diagrams: markdown/mermaid.md
+      - SVGbob Diagrams: markdown/svgbob.md
+      - Captions: markdown/captions.md
+      - Notes: markdown/notes.md
+      - Smarty Pants: markdown/smartypants.md
+      - Extra Extensions: markdown/extra.md
+      - Wiki Links: markdown/wikilinks.md
+      - Examples: examples/index.md
+  - CLI Reference:
+      - Command-line Overview: cli/index.md
+      - Render Command: cli/render.md
+      - Bibliography Command: cli/bibliography.md
+      - Template Info Command: cli/template.md
   - API Reference:
       - API Overview: api/index.md
       - High-Level Workflows: api/high-level.md
@@ -78,12 +89,15 @@ nav:
       - Markdown API: api/markdown.md
       - LaTeX Runtime: api/latex.md
       - Transformers API: api/transformers.md
+      - Custom Transformers: api/custom-transformers.md
       - Handlers API: api/handlers.md
       - CLI API: api/cli.md
       - Bibliography API: api/bibliography.md
       - Plugin API: api/plugins.md
-  - Contributing:
-      - Contribution Guide: contribute/index.md
+  - About:
+      - About: about/index.md
+      - Contribute: about/contribute.md
+      - License: about/license.md
 markdown_extensions:
   - admonition
   - pymdownx.details
@@ -109,7 +123,8 @@ extra_javascript:
   - https://cdn.jsdelivr.net/npm/vega-lite@5
   - https://cdn.jsdelivr.net/npm/vega-embed@6
 extra_css:
-  - styles/brand.css
+  - css/brand.css
+  - css/extra.css
 plugins:
   - search
   - mkdocstrings:
@@ -125,6 +140,15 @@ plugins:
             separate_signature: true
             merge_init_into_class: true
   - pills
-  - drawio
+  - drawio:
+      viewer_js: assets/drawio-viewer.js
+  - texsmith:
+      template: book
+      build_dir: press
+      books:
+        - title: "TeXSmith Documentation"
+          folder: texsmith-docs
+          root: "__texsmith_full_navigation__"  # flatten the entire navigation tree
+          base_level: -1  # top-level sections become \part entries
 hooks:
   - docs/hooks/mkdocs_hooks.py  # helper hooks that patch missing anchors and plugin namespace

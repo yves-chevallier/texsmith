@@ -1,17 +1,16 @@
 # Formal Letter
 
-This template provides a unified structure to write letters for different coutries and languages. The supported versions are:
+This template provides a unified structure to write letters for different coutries and languages. It exclusively relies on the KOMA-Script `scrlttr2` class and loads the appropriate national layout so the output complies with SN 010130 (Switzerland) or DIN 5008 (Germany). Invoke it through the CLI with `--template letter`. The supported versions are:
 
 - English (UK)
 - English (US)
 - French (France or Switzerland via `fr-CH`)
 
-For french language, we use the `lettre` package.
-
 ## Attributes
 
 - `cursive` (boolean): If true, the letter will be written in a cursive font style (modernline).
 - `language` (string): Specifies the language of the letter. Supported values are `en-UK`, `en-US`, `fr-FR`, or `fr-CH`. Default is `en-UK`.
+- `standard` (string): Selects the letter layout. Use `din`/`din5008` for DIN 5008 and `sn`, `sn-left`, or `sn-right` for SN 010130. Defaults to DIN for English locales and SN 010130 for French locales.
 - `date` (string): The date to be displayed on the letter. If not provided, the current date will be used.
 - `object` (string): The subject of the letter.
 - `opening` (string): Optional override for the salutation inserted via `\opening{}`. If not provided, the Markdown document title (`# Heading`) is injected automatically.
@@ -34,6 +33,7 @@ press:
   template: letter
   cursive: true
   language: fr-CH
+  standard: sn
   date: 1928-12-23
   object: Invitation souper de Noël
   from:

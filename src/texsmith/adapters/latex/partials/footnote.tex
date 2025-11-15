@@ -1,1 +1,3 @@
-\footnote\BLOCK{if id}[\VAR{id}]\BLOCK{endif}{\VAR{text}}
+\footnote\BLOCK{if id}[\VAR{id}]\BLOCK{endif}{\BLOCK{if "\n" in text}%
+\VAR{text}
+\BLOCK{else}\VAR{text}\BLOCK{endif}}%

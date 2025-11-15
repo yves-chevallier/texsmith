@@ -17,5 +17,5 @@ def test_template_infers_templates_folder_when_path_missing(monkeypatch: pytest.
     nested = Path("examples/diagrams")
     monkeypatch.chdir(nested)
 
-    runtime = load_template_runtime("../../template/article")
-    assert runtime.name == "article"
+    runtime = load_template_runtime("../../template/nature")
+    assert runtime.instance.root.name == "nature"

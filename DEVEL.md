@@ -41,6 +41,15 @@ assert response.render_result is not None
 - `DiagnosticEmitter.event()` records structured payloads (CLI renders them in the diagnostics panel).
 - Provide a custom emitter in automation to capture or suppress output deterministically.
 
+## Local automation
+
+- `scripts/check_docs.sh` runs `mkdocs build --strict` with the project’s `UV_CACHE_DIR`.
+  Execute it before pushing doc updates to catch missing nav entries or warnings.
+- `scripts/run_example_smoke_tests.sh` renders every project under `examples/`
+  with the bundled `article` template and reports the output directory. Run it
+  locally (or in CI) to ensure diagrams, bibliographies, and template assets
+  still compile.
+
 ## TO-DO
 
 ### TeXSmith Core
@@ -89,14 +98,15 @@ reference the canonical module to avoid extra indirection.
 - [x] Optimize bibliography management using bib instead of jinja
 - [x] Documenter le processus de création de templates LaTeX personnalisées
 - [x] Support for index supported through texsmith-index
-- [ ] Make all examples build
-- [ ] Noto Color Emoji ou {\fontspec{Symbola}\char"1F343} couleur ou nb
+- [x] Textsc in Markdown
+- [x] Noto Color Emoji ou {\fontspec{Symbola}\char"1F343} couleur ou nb
+- [x] Make all examples build
+- [x] Écrire documentation
+- [ ] Base letter template on koma scrlttr2 adjust country-specific settings
 - [ ] Add article template as "default" template part of TeXSmith
-- [ ] Finalize documentation
 - [ ] Support for glossaries (glossaries package)
 - [ ] Support for cross-references (cleveref package)
 - [ ] Listings, verbatim ou minted
-- [ ] Textsc in Markdown
 - [ ] Table width (auto width, fixed width..., tabularx, tabulary or not)
 - [ ] Table orientation (large table landscape...)
 - [ ] Scaffolding de templates avec cookiecutter
@@ -104,7 +114,6 @@ reference the canonical module to avoid extra indirection.
 - [ ] Index generation
 - [ ] Progressbar support
 - [ ] Compilation avec Docker ou TeXlive (choix)
-- [ ] Écrire documentation
 - [ ] Documentation complete de docstring dans le projet
 - [ ] Déployer sur PyPI
 
