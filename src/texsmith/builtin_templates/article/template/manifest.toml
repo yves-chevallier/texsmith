@@ -80,6 +80,12 @@ type = "string"
 normaliser = "orientation"
 choices = ["portrait", "landscape"]
 
+[latex.template.attributes.geometry]
+default = {}
+type = "mapping"
+allow_empty = true
+sources = ["press.geometry", "geometry"]
+
 [latex.template.attributes.margin]
 default = "default"
 type = "string"
@@ -98,7 +104,7 @@ choices = ["fancy", "classic", "minimal"]
 sources = ["press.callout_style", "press.callouts.style", "callout_style"]
 normaliser = "callout_style"
 
-[latex.template.attributes.preamble_injection]
+[latex.template.attributes.preamble]
 default = ""
 type = "string"
 allow_empty = true

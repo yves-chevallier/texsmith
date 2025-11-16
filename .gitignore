@@ -49,3 +49,5 @@ tmp*
 examples/diagrams/*.pdf
 press/
 site/
+docs/assets/examples/*.png
+docs/assets/examples/*.pdf

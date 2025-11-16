@@ -1,9 +1,8 @@
-import warnings
 from pathlib import Path
-
-import pytest
+import warnings
 
 from mkdocs_plugin_texsmith.plugin import LatexPlugin, NavEntry, log
+import pytest
 
 
 def test_plugin_logs_render_warning(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:

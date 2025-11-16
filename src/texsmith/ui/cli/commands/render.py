@@ -23,6 +23,7 @@ from texsmith.core.conversion.inputs import UnsupportedInputError
 from texsmith.core.templates import TemplateError
 
 from .._options import (
+    OUTPUT_PANEL,
     BaseLevelOption,
     BibliographyOption,
     CopyAssetsOptionWithShort,
@@ -38,7 +39,6 @@ from .._options import (
     MarkdownExtensionsOption,
     NumberedOption,
     OpenLogOption,
-    OUTPUT_PANEL,
     OutputPathOption,
     ParserOption,
     SelectorOption,
@@ -202,6 +202,20 @@ def _coerce_attribute_value(raw: str) -> Any:
     return candidate
 
 
+def _assign_nested_value(target: dict[str, Any], path: list[str], value: Any) -> None:
+    cursor = target
+    for key in path[:-1]:
+        if key not in cursor:
+            cursor[key] = {}
+        elif not isinstance(cursor[key], dict):
+            raise typer.BadParameter(
+                f"Invalid attribute override for '{'.'.join(path)}', "
+                f"'{key}' is already assigned to a non-mapping value."
+            )
+        cursor = cursor[key]  # type: ignore[assignment]
+    cursor[path[-1]] = value
+
+
 def _parse_template_attributes(values: Iterable[str] | None) -> dict[str, Any]:
     overrides: dict[str, Any] = {}
     if not values:
@@ -215,11 +229,14 @@ def _parse_template_attributes(values: Iterable[str] | None) -> dict[str, Any]:
         key = key.strip()
         if not key:
             raise typer.BadParameter(f"Invalid attribute override '{raw}', empty key.")
-        if "." in key:
-            raise typer.BadParameter(
-                f"Invalid attribute '{key}'. Nested attributes are not supported."
-            )
-        overrides[key] = _coerce_attribute_value(value)
+        parts = [chunk for chunk in key.split(".") if chunk]
+        if not parts:
+            raise typer.BadParameter(f"Invalid attribute override '{raw}', empty key.")
+        coerced = _coerce_attribute_value(value)
+        if len(parts) == 1:
+            overrides[parts[0]] = coerced
+        else:
+            _assign_nested_value(overrides, parts, coerced)
     return overrides
 
 

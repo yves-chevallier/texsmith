@@ -17,6 +17,12 @@ if "bs4" not in sys.modules:
     bs4_stub.BeautifulSoup = object
     bs4_stub.FeatureNotFound = _FeatureNotFoundError
     sys.modules["bs4"] = bs4_stub
+    bs4_element_stub = types.ModuleType("bs4.element")
+    bs4_element_stub.NavigableString = str
+    bs4_element_stub.Tag = object
+    bs4_element_stub.PageElement = object
+    sys.modules["bs4.element"] = bs4_element_stub
+    bs4_stub.element = bs4_element_stub
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 SRC_ROOT = PROJECT_ROOT / "src"
@@ -35,6 +41,7 @@ article_module = importlib.import_module("texsmith.builtin_templates.article")
 Template = article_module.Template
 TemplateManifest = importlib.import_module("texsmith.core.templates.manifest").TemplateManifest
 ARTICLE_ROOT = Path(article_module.__file__).resolve().parent
+from texsmith.ui.cli.commands.render import _parse_template_attributes  # type: ignore
 
 
 def test_attribute_resolver_merges_press_metadata() -> None:
@@ -97,7 +104,18 @@ def test_article_template_accepts_preamble_override() -> None:
 
     context = template.prepare_context("", overrides=overrides)
 
-    assert context["preamble_injection"] == "\\usepackage{xcolor}"
+    assert context["preamble"] == "\\usepackage{xcolor}"
+
+
+def test_article_template_geometry_overrides() -> None:
+    template = Template()
+    overrides = {"press": {"geometry": {"paperheight": "4cm", "showframe": True}}}
+
+    context = template.prepare_context("", overrides=overrides)
+
+    assert "paperheight=4cm" in context["geometry_options"]
+    assert "showframe" in context["geometry_options"]
+    assert context["geometry_extra_options"] == "paperheight=4cm,showframe"
 
 
 def test_article_template_normalises_callout_style() -> None:
@@ -107,3 +125,14 @@ def test_article_template_normalises_callout_style() -> None:
     context = template.prepare_context("Body", overrides=overrides)
 
     assert context["callout_style"] == "classic"
+
+
+def test_parse_template_attributes_supports_nested_keys() -> None:
+    result = _parse_template_attributes(
+        ["margin=wide", "geometry.paperheight=4cm", "geometry.showframe=true"]
+    )
+
+    assert result["margin"] == "wide"
+    assert isinstance(result["geometry"], dict)
+    assert result["geometry"]["paperheight"] == "4cm"
+    assert result["geometry"]["showframe"] is True

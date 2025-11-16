@@ -20,6 +20,7 @@
 \usepackage{booktabs}
 \usepackage[many,minted]{tcolorbox}
 \usepackage{csquotes}
+\usepackage{amsmath}
 \usepackage[normalem]{ulem} % Strikethrough text with \sout{}
 \providecommand{\texsmithCalloutStyle}{fancy}
 \renewcommand{\texsmithCalloutStyle}{\VAR{callout_style|default('fancy')}}
@@ -41,7 +42,7 @@
 \BLOCK{ endif }
 
 \BLOCK{ if acronyms }
-\usepackage[acronym]{glossaries}
+\usepackage[acronym,nomain]{glossaries}
 \makeglossaries
 \BLOCK{ endif }
 \BLOCK{ if has_index or index_entries }\usepackage[xindy]{imakeidx}\BLOCK{ endif }
@@ -115,13 +116,17 @@
   listing only,
   enhanced,
   colback=white,
+  colframe=black!90,
+  colbacktitle=white,
+  coltitle=black,
   pad at break*=1mm,
   toptitle=0.15em,
   bottomtitle=0.1em,
-  boxrule=0.1em,
-  %frame hidden,
+  boxrule=0.07em,
+  fonttitle=\bfseries,
   minted language=#2,
   top=1mm,
+  arc=0.5mm,
   bottom=1mm,
   minted options={%
       tabsize=4,
@@ -132,25 +137,27 @@
       ignorelexererrors,
       #4
     },
+  before title={\hspace*{-0.9em}},
   title={#3},
   list entry={\protect\numberline{\thetcbcounter}#3},
   #1
 }
 
-\BLOCK{ if preamble_injection }
+\BLOCK{ if preamble }
 % Custom document preamble injected from front matter overrides.
-\VAR{preamble_injection}
+\VAR{preamble}
 
 \BLOCK{ endif }
 
 \BLOCK{ set margin_style = margin|default('default')|lower }
 \BLOCK{ set margin_literal = margin_style not in ["narrow", "default", "wide"] }
+\BLOCK{ set geometry_extra = geometry_extra_options|default('')|trim }
 \BLOCK{ if margin_style == "narrow" }
-\geometry{margin=1.5cm}
+\geometry{margin=1.5cm\BLOCK{ if geometry_extra },\VAR{geometry_extra}\BLOCK{ endif }}
 \BLOCK{ elif margin_style == "wide" }
-\geometry{margin=3.0cm}
+\geometry{margin=3.0cm\BLOCK{ if geometry_extra },\VAR{geometry_extra}\BLOCK{ endif }}
 \BLOCK{ elif margin_literal }
-\geometry{margin=\VAR{margin}}
+\geometry{margin=\VAR{margin}\BLOCK{ if geometry_extra },\VAR{geometry_extra}\BLOCK{ endif }}
 \BLOCK{ else }
 \geometry{\VAR{geometry_options}}
 \BLOCK{ endif }
@@ -193,7 +200,7 @@
 
 \VAR{mainmatter}
 
-\BLOCK{ if acronyms }\printglossary[type=\acronymtype, title=Liste des acronymes]\BLOCK{ endif }
+\BLOCK{ if acronyms }\printglossary[type=\acronymtype, title=List of Acronyms]\BLOCK{ endif }
 \BLOCK{ if has_index or index_entries }\printindex\BLOCK{ endif }
 
 \BLOCK{ if citations and bibliography_resource }

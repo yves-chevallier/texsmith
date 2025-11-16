@@ -2,11 +2,12 @@
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from io import BytesIO
 from pathlib import Path
 import shutil
 import subprocess
-from typing import Any, Sequence
+from typing import Any
 import warnings
 
 from texsmith.core.exceptions import TransformerExecutionError
@@ -62,12 +63,11 @@ def _run_cli(command: list[str], *, cwd: Path, description: str) -> None:
         raise TransformerExecutionError(message)
 
 
-def _compose_fallback_error(tool: str, primary: Exception, fallback: Exception) -> TransformerExecutionError:
+def _compose_fallback_error(
+    tool: str, primary: Exception, fallback: Exception
+) -> TransformerExecutionError:
     """Combine CLI and Docker failures into a single diagnostic."""
-    message = (
-        f"{tool} CLI failed: {primary}\n"
-        f"Docker fallback also failed: {fallback}"
-    )
+    message = f"{tool} CLI failed: {primary}\nDocker fallback also failed: {fallback}"
     return TransformerExecutionError(message)
 
 

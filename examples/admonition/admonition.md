@@ -1,3 +1,5 @@
+# Some Admonitions
+
 !!! note 
     A Note
 

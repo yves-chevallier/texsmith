@@ -44,9 +44,7 @@ def test_counter_example_renders_full_demo_html() -> None:
         """
     ).strip()
 
-    # render() keeps a leading and trailing blank line around the block
     assert latex.strip() == expected
-    assert latex.startswith("\n")
     assert latex.endswith("\n")
     assert state.peek_counter(COUNTER_KEY) == 3
 

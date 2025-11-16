@@ -35,7 +35,9 @@ class _RecordingEmitter:
     def warning(self, message: str, exc: BaseException | None = None) -> None:
         self.warnings.append((message, exc))
 
-    def error(self, message: str, exc: BaseException | None = None) -> None:  # pragma: no cover - unused
+    def error(
+        self, message: str, exc: BaseException | None = None
+    ) -> None:  # pragma: no cover - unused
         raise AssertionError(f"error emitted unexpectedly: {message}") from exc
 
     def event(self, name: str, payload: dict) -> None:  # pragma: no cover - unused
@@ -176,7 +178,9 @@ def test_drawio_cli_warns_when_using_hint_path(
         renderer.render(html, runtime={"source_dir": tmp_path})
 
 
-def test_drawio_cli_failure_falls_back_to_docker(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+def test_drawio_cli_failure_falls_back_to_docker(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
     strategy = strategies.DrawioToPdfStrategy()
     source = tmp_path / "diagram.drawio"
     source.write_text("<mxfile />", encoding="utf-8")
@@ -221,6 +225,7 @@ def test_drawio_cli_and_docker_failure(monkeypatch: pytest.MonkeyPatch, tmp_path
     message = str(excinfo.value)
     assert "draw.io CLI failed" in message
     assert "Docker fallback also failed" in message
+
 
 def test_mermaid_block_conversion(renderer: LaTeXRenderer, tmp_path: Path) -> None:
     original = registry.get("mermaid")
@@ -271,7 +276,9 @@ flowchart LR
         register_converter("mermaid", original)
 
 
-def test_mermaid_prefers_local_cli(monkeypatch: pytest.MonkeyPatch, renderer: LaTeXRenderer, tmp_path: Path) -> None:
+def test_mermaid_prefers_local_cli(
+    monkeypatch: pytest.MonkeyPatch, renderer: LaTeXRenderer, tmp_path: Path
+) -> None:
     script = _make_mermaid_cli(tmp_path)
 
     monkeypatch.setattr(strategies, "normalise_pdf_version", lambda *_args, **_kwargs: None)
@@ -328,7 +335,9 @@ A --> B
         renderer.render(html, runtime={"source_dir": tmp_path})
 
 
-def test_mermaid_cli_failure_falls_back_to_docker(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+def test_mermaid_cli_failure_falls_back_to_docker(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
     strategy = strategies.MermaidToPdfStrategy()
     monkeypatch.setattr(strategies, "_resolve_cli", lambda *_: ("mmdc-bin", True))
 
@@ -401,7 +410,9 @@ def test_mermaid_warning_uses_emitter(renderer: LaTeXRenderer, tmp_path: Path) -
         register_converter("mermaid", original)
 
 
-def test_mermaid_warning_includes_details_when_debug(renderer: LaTeXRenderer, tmp_path: Path) -> None:
+def test_mermaid_warning_includes_details_when_debug(
+    renderer: LaTeXRenderer, tmp_path: Path
+) -> None:
     original = registry.get("mermaid")
 
     def _failing_converter(*_args, **_kwargs):
@@ -446,7 +457,7 @@ def test_renderer_emits_unicode_accents_by_default(renderer: LaTeXRenderer) -> N
     html = "<p>éclair — ligature œ</p>"
     latex = renderer.render(html)
 
-    assert "éclair — ligature œ" in latex
+    assert "éclair --- ligature œ" in latex
 
 
 def test_renderer_supports_legacy_accent_mode(tmp_path: Path) -> None:

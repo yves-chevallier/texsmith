@@ -112,6 +112,12 @@ type = "string"
 normaliser = "margin_style"
 sources = ["press.margin", "margin"]
 
+[latex.template.attributes.preamble]
+default = ""
+type = "string"
+allow_empty = true
+sources = ["press.override.preamble", "press.preamble", "preamble"]
+
 [latex.template.attributes.page_numbers]
 default = false
 type = "boolean"

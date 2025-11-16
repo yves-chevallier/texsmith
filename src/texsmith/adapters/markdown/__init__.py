@@ -35,6 +35,7 @@ DEFAULT_MARKDOWN_EXTENSIONS = [
     "texsmith.adapters.markdown_extensions.missing_footnotes:MissingFootnotesExtension",
     "texsmith.adapters.markdown_extensions.latex_text:LatexTextExtension",
     "texsmith.adapters.markdown_extensions.smallcaps:SmallCapsExtension",
+    "texsmith.mermaid:MermaidExtension",
     "md_in_html",
     "mdx_math",
     "pymdownx.betterem",
@@ -186,12 +187,22 @@ def render_markdown(
 
     entry = _resolve_markdown_entry(markdown, extensions_key, snippet_paths)
 
+    resolved_base: Path | None = None
+    if base_path is not None:
+        try:
+            resolved_base = Path(base_path).resolve()
+        except OSError:
+            resolved_base = Path(base_path)
+
     try:
         with entry.lock:
             processor = entry.processor
             reset_callback = getattr(processor, "reset", None)
             if callable(reset_callback):
                 reset_callback()
+            processor.texsmith_mermaid_base_path = (
+                str(resolved_base) if resolved_base is not None else None
+            )
             html = processor.convert(markdown_body)
     except MarkdownConversionError:
         raise

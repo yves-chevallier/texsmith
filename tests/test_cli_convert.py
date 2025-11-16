@@ -16,6 +16,19 @@ except ModuleNotFoundError as exc:  # pragma: no cover - optional dependency gua
 pytestmark = pytest.mark.skipif(render is None, reason="Typer dependency is not available.")
 
 
+def _template_path(name: str) -> str:
+    project_root = Path(__file__).resolve().parents[1]
+    candidate = project_root / "templates" / name
+    if candidate.exists():
+        return str(candidate)
+
+    builtin = project_root / "src" / "texsmith" / "builtin_templates" / name
+    if builtin.exists():
+        return str(builtin)
+
+    raise AssertionError(f"Template '{name}' is unavailable")
+
+
 @pytest.fixture(autouse=True)
 def _change_to_project_root(monkeypatch: pytest.MonkeyPatch) -> None:
     project_root = Path(__file__).resolve().parents[1]
@@ -33,7 +46,7 @@ def test_render_template_writes_file() -> None:
         render(
             input_path=source,
             output=output_dir,
-            template="./book",
+            template=_template_path("book"),
         )
 
         output_file = output_dir / "sample.tex"
@@ -84,7 +97,7 @@ Content here.
         render(
             input_path=source,
             output=output_dir,
-            template="./article",
+            template=_template_path("article"),
         )
 
         output_file = output_dir / "sample.tex"
@@ -114,7 +127,7 @@ def test_nature_template_applies_table_override() -> None:
         render(
             input_path=source,
             output=output_dir,
-            template="./nature",
+            template=_template_path("nature"),
         )
 
         output_file = output_dir / "sample.tex"
