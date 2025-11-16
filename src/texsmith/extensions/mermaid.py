@@ -2,20 +2,20 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterable, Sequence
 from pathlib import Path
-from typing import Iterable, Sequence
 import xml.etree.ElementTree as ElementTree
 
 from markdown import Markdown
 from markdown.extensions import Extension
 from markdown.treeprocessors import Treeprocessor
 
-from ..core.exceptions import InvalidNodeError
 from ..adapters.handlers._mermaid import (
     MERMAID_FILE_SUFFIXES,
     extract_mermaid_live_diagram,
     looks_like_mermaid,
 )
+from ..core.exceptions import InvalidNodeError
 
 
 def _collapse_relative_path(src: str) -> str:
@@ -258,7 +258,9 @@ class MermaidExtension(Extension):
         md.treeprocessors.register(processor, "texsmith_mermaid_images", priority=15)
 
 
-def makeExtension(**kwargs: object) -> MermaidExtension:  # pragma: no cover - entry point  # noqa: N802
+def makeExtension(  # noqa: N802 - Markdown expects this entry point name
+    **kwargs: object,
+) -> MermaidExtension:  # pragma: no cover - entry point
     return MermaidExtension(**kwargs)
 
 

@@ -206,16 +206,30 @@ def _build_latex2e(container: ElementTree.Element, spec: LogoSpec) -> None:
 
 
 def _build_texsmith(container: ElementTree.Element, _: LogoSpec) -> None:
+    container.text = "TeX"
     outer = ElementTree.SubElement(
         container,
         "span",
         {
-            "class": "texsmith-word",
-            "style": "font-weight: 600; margin-left: 0.15em;",
+            "class": "texsmith-word texsmith-smallcaps",
+            "style": (
+                "margin-left: 0.15em;"
+                "font-variant: small-caps; display: inline-flex; align-items: flex-end;"
+            ),
         },
     )
-    outer.text = "Smith"
-    container.text = "TeX"
+    lead = ElementTree.SubElement(
+        outer,
+        "span",
+        {"style": ("font-size: 1.05em; letter-spacing: 0.05em; margin-right: 0.05em;")},
+    )
+    lead.text = "S"
+    trail = ElementTree.SubElement(
+        outer,
+        "span",
+        {"style": "position: relative; top: -0.18em; font-size: 0.9em; letter-spacing: 0.08em;"},
+    )
+    trail.text = "mith"
 
 
 _HTML_BUILDERS: Mapping[str, Callable[[ElementTree.Element, LogoSpec], None]] = {

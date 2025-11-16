@@ -41,7 +41,7 @@ article_module = importlib.import_module("texsmith.builtin_templates.article")
 Template = article_module.Template
 TemplateManifest = importlib.import_module("texsmith.core.templates.manifest").TemplateManifest
 ARTICLE_ROOT = Path(article_module.__file__).resolve().parent
-from texsmith.ui.cli.commands.render import _parse_template_attributes  # type: ignore
+from texsmith.ui.cli.commands.render import _parse_template_attributes  # type: ignore  # noqa: E402
 
 
 def test_attribute_resolver_merges_press_metadata() -> None:

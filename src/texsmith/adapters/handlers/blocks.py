@@ -179,7 +179,7 @@ def render_tabbed_content(element: Tag, context: RenderContext) -> None:
     auto_mark=False,
     after_children=True,
 )
-def cleanup_tabbed_content(element: Tag, context: RenderContext) -> None:
+def cleanup_tabbed_content(element: Tag, _context: RenderContext) -> None:
     """Remove tabbed container wrappers after children are processed."""
     classes = gather_classes(element.get("class"))
     if "tabbed-set" not in classes:

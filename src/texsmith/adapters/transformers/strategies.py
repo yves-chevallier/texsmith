@@ -321,7 +321,6 @@ class MermaidToPdfStrategy(CachedConversionStrategy):
         cli_path, discovered_via_path = _resolve_cli(["mmdc"], MERMAID_CLI_HINT_PATHS)
         cli_error: TransformerExecutionError | None = None
         ran_local = False
-        docker_attempted = False
         if cli_path:
             if not discovered_via_path:
                 _warn_add_to_path("mmdc", cli_path)
@@ -359,7 +358,6 @@ class MermaidToPdfStrategy(CachedConversionStrategy):
                     workdir="/data",
                     limits=DockerLimits(cpus=1.0, memory="1g", pids_limit=512),
                 )
-                docker_attempted = True
             except TransformerExecutionError as exc:
                 if cli_error is not None:
                     raise _compose_fallback_error("Mermaid", cli_error, exc) from exc
@@ -387,7 +385,6 @@ class MermaidToPdfStrategy(CachedConversionStrategy):
                     workdir="/data",
                     limits=DockerLimits(cpus=1.0, memory="1g", pids_limit=512),
                 )
-                docker_attempted = True
             except TransformerExecutionError as exc:
                 raise _compose_fallback_error("Mermaid", cli_error, exc) from exc
 
@@ -462,7 +459,6 @@ class DrawioToPdfStrategy(CachedConversionStrategy):
         cli_path, discovered_via_path = _resolve_cli(["drawio", "draw.io"], DRAWIO_CLI_HINT_PATHS)
         cli_error: TransformerExecutionError | None = None
         ran_local = False
-        docker_attempted = False
         if cli_path:
             if not discovered_via_path:
                 _warn_add_to_path("drawio", cli_path)
@@ -506,7 +502,6 @@ class DrawioToPdfStrategy(CachedConversionStrategy):
                     use_host_user=False,
                     limits=DockerLimits(cpus=1.0, memory="1g", pids_limit=512),
                 )
-                docker_attempted = True
             except TransformerExecutionError as exc:
                 if cli_error is not None:
                     raise _compose_fallback_error("draw.io", cli_error, exc) from exc
@@ -542,7 +537,6 @@ class DrawioToPdfStrategy(CachedConversionStrategy):
                     use_host_user=False,
                     limits=DockerLimits(cpus=1.0, memory="1g", pids_limit=512),
                 )
-                docker_attempted = True
             except TransformerExecutionError as exc:
                 raise _compose_fallback_error("draw.io", cli_error, exc) from exc
 

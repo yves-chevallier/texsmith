@@ -5,7 +5,6 @@ from __future__ import annotations
 from bs4 import BeautifulSoup
 from markdown import Markdown
 
-
 from texsmith.adapters.latex.renderer import LaTeXRenderer
 from texsmith.texlogos import TexLogosExtension, iter_specs, register_renderer
 

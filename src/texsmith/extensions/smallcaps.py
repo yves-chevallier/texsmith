@@ -15,7 +15,7 @@ _SMALL_CAPS_PATTERN = r"(?<!_)__(?!_)(.+?)__(?!_)"
 class _SmallCapsInlineProcessor(InlineProcessor):
     """Inline processor converting ``__text__`` into a span marker."""
 
-    def handleMatch(  # type: ignore[override]
+    def handleMatch(  # type: ignore[override]  # noqa: N802 - Markdown API requires camelCase
         self,
         match,  # type: ignore[override]  # noqa: ANN001
         data: str,

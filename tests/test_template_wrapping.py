@@ -207,7 +207,7 @@ def test_article_prefers_lualatex_for_latin_text(
     article_template: WrappableTemplate,
     tmp_path: Path,
 ) -> None:
-    body = "Résumé avec des caractères comme œ et l’euro €."
+    body = "Résumé avec des caractères comme œ et l'euro €."
     state = DocumentState()
     result = wrap_template_document(
         template=article_template,

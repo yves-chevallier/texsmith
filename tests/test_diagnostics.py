@@ -11,6 +11,17 @@ from texsmith.ui.cli.diagnostics import CliEmitter
 from texsmith.ui.cli.state import CLIState, ensure_rich_compat, set_cli_state
 
 
+def _raise_transformer_execution_error() -> None:
+    raise TransformerExecutionError("Docker executable could not be located.")
+
+
+def _raise_nested_render_error() -> None:
+    try:
+        _raise_transformer_execution_error()
+    except TransformerExecutionError as exc:
+        raise LatexRenderingError("render failed") from exc
+
+
 def test_null_emitter_is_noop(caplog: pytest.LogCaptureFixture) -> None:
     emitter = NullEmitter()
     with caplog.at_level(logging.WARNING):
@@ -47,10 +58,7 @@ def test_cli_emitter_bridges_state(capsys: pytest.CaptureFixture[str]) -> None:
 
 def test_format_user_friendly_render_error_reports_root_cause() -> None:
     try:
-        try:
-            raise TransformerExecutionError("Docker executable could not be located.")
-        except TransformerExecutionError as exc:
-            raise LatexRenderingError("render failed") from exc
+        _raise_nested_render_error()
     except LatexRenderingError as error:
         message = format_user_friendly_render_error(error)
     assert "Docker executable could not be located." in message

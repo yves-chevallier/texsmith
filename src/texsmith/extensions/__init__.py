@@ -2,9 +2,10 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable, Iterable
 from dataclasses import dataclass
 from importlib import import_module
-from typing import Any, Callable, Iterable
+from typing import Any
 
 
 __all__ = [

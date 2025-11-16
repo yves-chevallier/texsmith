@@ -97,10 +97,7 @@ def build_latexmk_command(
 def _shared_tex_cache_root() -> Path:
     """Return the global cache directory used for TeX artefacts."""
     xdg_cache = os.environ.get("XDG_CACHE_HOME")
-    if xdg_cache:
-        base = Path(xdg_cache).expanduser()
-    else:
-        base = Path.home() / ".cache"
+    base = Path(xdg_cache).expanduser() if xdg_cache else Path.home() / ".cache"
     return (base / "texsmith").resolve()
 
 
@@ -167,10 +164,7 @@ def _front_matter_has_title(metadata: Mapping[str, Any] | None) -> bool:
             return True
 
     dotted = metadata.get("press.title")
-    if isinstance(dotted, str) and dotted.strip():
-        return True
-
-    return False
+    return bool(isinstance(dotted, str) and dotted.strip())
 
 
 def _format_path_for_event(path: Path) -> str:
