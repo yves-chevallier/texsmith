@@ -36,22 +36,30 @@ It is thus transparent to the pipeline whether the diagram is inline or external
 Using a `mmd` file is as simple as including an image:
 
 ```markdown
-![Build pipeline](assets/ci.mmd)
+![Build pipeline](../assets/mermaid.mmd)
 ```
+
+![Build pipeline](../assets/mermaid.mmd)
 
 Pako is a compression library that Mermaid Live uses to encode diagrams in URLs for sharing and embedding such as:
 
 ```markdown
-![Online Diagram](https://mermaid.live/edit#pako:eNpVjcFuwjAMhl8l8mmTABEKzchh0igbF6TtwGktB4uapoImVZq
-KsbbvvrQIbfPJ1vf9vxs4mJRAwvFsLgeF1rHdOtHMz0scKZtXrsBqz8bj53ZDjhVG07Vlq4eNYZUyZZnr7PHmr3qJRc2214g5let
-Td0PRkH_X1LJ1vMXSmXL_l-wupmWvcf6hfP1_oiz51Ft8RHnE8QEti9AOCowgs3kK0tmaRlCQLbA_oelpAk5RQQlIv6ZoTwkkuvO
-ZEvWnMcU9Zk2dKfDd58pfdZmio3WOmcVfhXRKNjK1diC5GCpANvAFMuB8Ivg8mC45D0XYwyvIhZiEs_lSTAM-n81CEXQj-B5-Tid
-PYtH9AECMcsA)
+![Online Diagram](https://mermaid.live/edit#pako:eNpVTctugzAQ_BVrT4lEEMQEiA_tIemt7aE9tX
+EODl4eSrAtY5q2iH8vEBGpe1jtzOzMdJBpicAgv-hrVgrryPMbV2SYxg1o8T7uJVmtHoipsvNhXxWkNcfby8hMU
+pV3O3E6iQKbx_6mVfmgcHjVHMaPxqE5vOgvJLm2V2El0Qon9jjXobnX_Iv4wGbO0GbxpOQSPChsJYE526IHNdpa
+jBC60cjBlVgjBzacUtgzB676wWOE-tS6nm1Wt0UJLBeXZkCtkcLhvhKFFfWdtagk2p1ulQO23tApBFgH38DCMPG
+TMKI0TKKABkHswQ-wlPrxOtrSKNnSOA2SsPfgd2oN_DTZ9H9_ZXFC)
 ```
 
 On rendering in HTML or PDF, TeXSmith will add an hyperlink to the Mermaid Live editor. Try clicking the image below:
 
-![Example Pako](https://mermaid.live/edit#pako:eNpVjcFuwjAMhl8l8mmTABEKzchh0igbF6TtwGktB4uapoImVZqKsbbvvrQIbfPJ1vf9vxs4mJRAwvFsLgeF1rHdOtHMz0scKZtXrsBqz8bj53ZDjhVG07Vlq4eNYZUyZZnr7PHmr3qJRc2214g5letTd0PRkH_X1LJ1vMXSmXL_l-wupmWvcf6hfP1_oiz51Ft8RHnE8QEti9AOCowgs3kK0tmaRlCQLbA_oelpAk5RQQlIv6ZoTwkkuvOZEvWnMcU9Zk2dKfDd58pfdZmio3WOmcVfhXRKNjK1diC5GCpANvAFMuB8Ivg8mC45D0XYwyvIhZiEs_lSTAM-n81CEXQj-B5-TidPYtH9AECMcsA)
+![Example Pako](https://mermaid.live/edit#pako:eNpVTctugzAQ_BVrT4lEEMQEiA_tIemt7aE9tXEODl4eSrAtY5q2iH8vEBGpe1jtzOzMdJBpicAgv-hrVgrryPMbV2SYxg1o8T7uJVmtHoipsvNhXxWkNcfby8hMUpV3O3E6iQKbx_6mVfmgcHjVHMaPxqE5vOgvJLm2V2El0Qon9jjXobnX_Iv4wGbO0GbxpOQSPChsJYE526IHNdpajBC60cjBlVgjBzacUtgzB676wWOE-tS6nm1Wt0UJLBeXZkCtkcLhvhKFFfWdtagk2p1ulQO23tApBFgH38DCMPGTMKI0TKKABkHswQ-wlPrxOtrSKNnSOA2SsPfgd2oN_DTZ9H9_ZXFC)
+
+## LaTeX Rendering
+
+Here an example of how diagrams are rendered in LaTeX with TeXSmith:
+
+[![Mermaid Diagrams](../assets/examples/mermaid.png)](../assets/examples/mermaid.pdf)
 
 ## Conversion by TeXSmith
 
@@ -71,3 +79,4 @@ press:
 
 Alternatively, you can add a `mermaid-config.json` file to the `~/.texsmith/` directory
 to apply it globally to all your TeXSmith projects.
+

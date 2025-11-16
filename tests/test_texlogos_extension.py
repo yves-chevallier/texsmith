@@ -1,23 +1,13 @@
-"""Integration tests for the texsmith-texlogos extension package."""
+"""Integration tests for the bundled TeX logos extension."""
 
 from __future__ import annotations
-
-from pathlib import Path
-import sys
 
 from bs4 import BeautifulSoup
 from markdown import Markdown
 
 
-ROOT = Path(__file__).resolve().parents[1]
-EXT_SRC = ROOT / "packages" / "texsmith-texlogos" / "src"
-if str(EXT_SRC) not in sys.path:
-    sys.path.insert(0, str(EXT_SRC))
-
-from texsmith_texlogos import iter_specs, register_renderer  # noqa: E402
-from texsmith_texlogos.markdown import TexLogosExtension  # noqa: E402
-
-from texsmith.adapters.latex.renderer import LaTeXRenderer  # noqa: E402
+from texsmith.adapters.latex.renderer import LaTeXRenderer
+from texsmith.texlogos import TexLogosExtension, iter_specs, register_renderer
 
 
 def _convert(text: str) -> BeautifulSoup:

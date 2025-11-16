@@ -69,8 +69,8 @@ expect. TeXSmith relies on fenced code blocks by default, so triple backticks
 | Fancy lists | `pymdownx.fancylists` | `pymdown-extensions` | Extended list markers |
 | Blocks caption | `pymdownx.blocks.caption` | `pymdown-extensions` | Captions for fenced blocks |
 | Blocks HTML | `pymdownx.blocks.html` | `pymdown-extensions` | Named block wrappers |
-| Snippets of LaTeX | `texsmith.adapters.markdown_extensions.latex_raw` | bundled | Raw LaTeX fence |
-| Missing footnotes guard | `texsmith.adapters.markdown_extensions.missing_footnotes` | bundled | Warns when references lack definitions |
+| Snippets of LaTeX | `texsmith.latex_raw` | bundled | Raw LaTeX fence |
+| Missing footnotes guard | `texsmith.missing_footnotes` | bundled | Warns when references lack definitions |
 
 Use the table above as a quick pointer. The following sections provide more
 context and runnable examples.

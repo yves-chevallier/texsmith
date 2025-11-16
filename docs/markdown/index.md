@@ -85,10 +85,12 @@ For printed documentation, especially for scientific or technical reports, some 
 | Feature       | Syntax                    | Extension               |
 | ------------- | ------------------------- | ----------------------- |
 | Small Caps    | `^^x^^`                   | `texsmith.smallcaps`    |
+| Mermaid       | `![](diagram.mmd)`        | `texsmith.mermaid`      |
 | Bibliography  | `[^citekey]`              | `texsmith.bibliography` |
 | Index Entries | `#[entry]`                | `texsmith.index`        |
 | Acronyms      | `ACME (Acme Corporation)` | `texsmith.acronyms`     |
 | Raw LaTeX     | `/// latex`               | `texsmith.latex_raw`    |
+| LaTeX Text    | `LaTeX`, `TeXSmith`       | `texsmith.latex`        |
 
 ### Other
 
@@ -113,11 +115,11 @@ For printed documentation, especially for scientific or technical reports, some 
   - mdx_math
   - md_in_html
 - TeXSmith
-  - texsmith.adapters.markdown_extensions.multi_citations:MultiCitationExtension
-  - texsmith.adapters.markdown_extensions.latex_raw:LatexRawExtension
-  - texsmith.adapters.markdown_extensions.missing_footnotes:MissingFootnotesExtension
-  - texsmith.adapters.markdown_extensions.latex_text:LatexTextExtension
-  - texsmith.adapters.markdown_extensions.smallcaps:SmallCapsExtension
+  - texsmith.multi_citations:MultiCitationExtension
+  - texsmith.latex_raw:LatexRawExtension
+  - texsmith.missing_footnotes:MissingFootnotesExtension
+  - texsmith.latex_text:LatexTextExtension
+  - texsmith.smallcaps:SmallCapsExtension
 - Pymdown Extensions
   - pymdownx.betterem
   - pymdownx.blocks.caption
@@ -151,8 +153,3 @@ When you need to insert LaTeX that must not appear in the HTML build, use the de
 ```
 
 The Markdown → HTML pass creates a hidden paragraph (`<p class="latex-raw" style="display:none;">…</p>`) so the fragment remains invisible online. During the HTML → LaTeX conversion, TeXSmith spots these blocks and drops the original payload straight into the final document. This makes it safe to declare macros, page tweaks, or any advanced snippet without impacting the web version.
-
-!!! seealso
-    - [Supported Markdown Syntax](supported.md) lists every extension TeXSmith enables by default with examples.
-    - [Mermaid Diagrams](mermaid.md) explains how to embed flowcharts, sequence diagrams, and Mermaid Live exports.
-    - [Diagram Converters](svgbob.md) covers Svgbob ASCII diagrams and CircuitTikZ snippets.

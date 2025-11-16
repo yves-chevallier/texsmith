@@ -112,6 +112,7 @@ def _apply_figure_template(
     label: str | None = None,
     width: str | None = None,
     template: str | None = None,
+    adjustbox: bool = False,
 ) -> NavigableString:
     """Render the shared figure template and return a new node."""
     template_name = template or context.runtime.get("figure_template", "figure")
@@ -123,6 +124,7 @@ def _apply_figure_template(
         shortcaption=caption,
         label=label,
         width=width,
+        adjustbox=adjustbox,
     )
     return mark_processed(NavigableString(latex))
 
@@ -170,6 +172,7 @@ def _render_mermaid_diagram(
         label=None,
         width=None,
         template=template,
+        adjustbox=True,
     )
 
 
@@ -207,6 +210,8 @@ def render_images(element: Tag, context: RenderContext) -> None:
 
     raw_alt = coerce_attribute(element.get("alt"))
     alt_text = raw_alt.strip() if raw_alt else None
+    raw_title = coerce_attribute(element.get("title"))
+    caption_text = raw_title.strip() if raw_title else None
     width = coerce_attribute(element.get("width")) or None
     template = _figure_template_for(element)
 
@@ -217,12 +222,15 @@ def render_images(element: Tag, context: RenderContext) -> None:
             context,
             diagram,
             template=template,
-            caption=alt_text,
+            caption=caption_text,
         )
         if figure_node is None:
             raise InvalidNodeError(f"Mermaid source '{src}' does not contain a valid diagram")
         element.replace_with(figure_node)
         return
+
+    if not caption_text:
+        caption_text = alt_text
 
     asset_key = src
 
@@ -248,10 +256,11 @@ def render_images(element: Tag, context: RenderContext) -> None:
     figure_node = _apply_figure_template(
         context,
         path=stored_path,
-        caption=alt_text,
+        caption=caption_text,
         label=None,
         width=width,
         template=template,
+        adjustbox=False,
     )
     element.replace_with(figure_node)
 
@@ -283,7 +292,15 @@ def render_mermaid_pre(element: Tag, context: RenderContext) -> None:
     if "mermaid" not in classes:
         return
 
-    diagram = element.get_text()
+    diagram: str | None = None
+    source_hint = coerce_attribute(element.get("data-mermaid-source"))
+    if source_hint:
+        payload = _load_mermaid_diagram(context, source_hint)
+        if payload is not None:
+            diagram, _ = payload
+    if diagram is None:
+        diagram = element.get_text()
+
     template = _figure_template_for(element)
     figure_node = _render_mermaid_diagram(context, diagram, template=template)
     if figure_node is None:

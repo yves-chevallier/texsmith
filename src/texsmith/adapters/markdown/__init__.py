@@ -30,11 +30,11 @@ DEFAULT_MARKDOWN_EXTENSIONS = [
     "attr_list",
     "def_list",
     "footnotes",
-    "texsmith.adapters.markdown_extensions.multi_citations:MultiCitationExtension",
-    "texsmith.adapters.markdown_extensions.latex_raw:LatexRawExtension",
-    "texsmith.adapters.markdown_extensions.missing_footnotes:MissingFootnotesExtension",
-    "texsmith.adapters.markdown_extensions.latex_text:LatexTextExtension",
-    "texsmith.adapters.markdown_extensions.smallcaps:SmallCapsExtension",
+    "texsmith.multi_citations:MultiCitationExtension",
+    "texsmith.latex_raw:LatexRawExtension",
+    "texsmith.missing_footnotes:MissingFootnotesExtension",
+    "texsmith.latex_text:LatexTextExtension",
+    "texsmith.smallcaps:SmallCapsExtension",
     "texsmith.mermaid:MermaidExtension",
     "md_in_html",
     "mdx_math",
@@ -298,7 +298,9 @@ def _build_markdown_processor(
         raise MarkdownConversionError(f"Failed to initialize Markdown processor: {exc}") from exc
 
 
-def _normalise_extension_name(value: str) -> str:
+def _normalise_extension_name(value: str | object) -> str:
+    if not isinstance(value, str):
+        return ""
     return value.split(":", 1)[0].lower()
 
 

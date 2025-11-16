@@ -63,13 +63,14 @@ nav:
   - Reference:
       - Markdown Overview: markdown/index.md
       - Syntax Directory: markdown/supported.md
+      - Formatting Basics: markdown/formatting.md
       - Admonitions: markdown/admonitions.md
       - Abbreviations: markdown/abbr.md
+      - Definition Lists: markdown/deflists.md
       - Code: markdown/code.md
       - Tables: markdown/tables.md
-      - Math Support: markdown/math.md
+      - Math: markdown/math.md
       - Mermaid Diagrams: markdown/mermaid.md
-      - SVGbob Diagrams: markdown/svgbob.md
       - Captions: markdown/captions.md
       - Notes: markdown/notes.md
       - Smarty Pants: markdown/smartypants.md
@@ -99,6 +100,10 @@ nav:
       - License: about/license.md
 markdown_extensions:
   - admonition
+  - texsmith.smallcaps:SmallCapsExtension:
+  - texsmith.mermaid:MermaidExtension:
+      base_paths:
+        - !relative $config_dir/docs
   - pymdownx.superfences:
       custom_fences:
         - name: mermaid

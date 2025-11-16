@@ -583,7 +583,7 @@ class LatexPlugin(BasePlugin):
         template_context["has_index"] = bool(index_terms)
         template_context["index_terms"] = [tuple(term) for term in index_terms]
         try:
-            from texsmith_index import get_registry
+            from texsmith.index import get_registry
         except ModuleNotFoundError:
             template_context["index_registry"] = [tuple(term) for term in index_terms]
         else:
