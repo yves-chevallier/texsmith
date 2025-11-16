@@ -4,10 +4,12 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+import logging
 from pathlib import Path
 import shutil
 import subprocess
 from typing import Any
+
 
 try:  # pragma: no cover - optional dependency alias
     import pymupdf as fitz  # type: ignore[import-not-found]
@@ -22,6 +24,7 @@ from texsmith.ui.cli.commands import build_latexmk_command
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 DOCS_OUTPUT = PROJECT_ROOT / "docs" / "assets" / "examples"
 SERVICE = ConversionService()
+LOGGER = logging.getLogger(__name__)
 
 BORDER_PREAMBLE = r"""
 \usepackage{tikz}
@@ -213,7 +216,7 @@ def main() -> None:
     specs = _build_specs()
     for spec in specs:
         pdf_path, png_path = _render_example(spec)
-        print(f"Rendered {spec.name}: {pdf_path.name}, {png_path.name}")
+        LOGGER.info("Rendered %s: %s, %s", spec.name, pdf_path.name, png_path.name)
 
 
 if __name__ == "__main__":

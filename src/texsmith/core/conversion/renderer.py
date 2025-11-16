@@ -218,9 +218,8 @@ class TemplateRenderer:
 
         template_engine = self.runtime.engine
 
-        if context_engine:
-            if context_engine.lower() != "pdflatex":
-                template_engine = context_engine
+        if context_engine and context_engine.lower() != "pdflatex":
+            template_engine = context_engine
         if template_engine is None:
             template_engine = context_engine or "pdflatex"
 

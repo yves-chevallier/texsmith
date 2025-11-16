@@ -139,23 +139,23 @@ _SUBSCRIPT_MAP = {
 
 _SUBSCRIPT_PATTERN = re.compile(f"([{''.join(re.escape(char) for char in _SUBSCRIPT_MAP)}]+)")
 _UNICODE_DASH_MAP = {
-    "–": "--",  # en dash
-    "‒": "--",  # figure dash
-    "—": "---",  # em dash
-    "―": "---",  # horizontal bar
+    "\N{EN DASH}": "--",
+    "\N{FIGURE DASH}": "--",
+    "\N{EM DASH}": "---",
+    "\N{HORIZONTAL BAR}": "---",
 }
 _UNICODE_DASH_PATTERN = re.compile("[" + "".join(re.escape(k) for k in _UNICODE_DASH_MAP) + "]")
 
 _UNICODE_PUNCT_MAP = {
-    "’": "'",
-    "‘": "`",
-    "‚": ",",
-    "‛": "'",
-    "“": "``",
-    "”": "''",
-    "„": ",,",
-    "‟": "''",
-    "…": "...",
+    "\N{RIGHT SINGLE QUOTATION MARK}": "'",
+    "\N{LEFT SINGLE QUOTATION MARK}": "`",
+    "\N{SINGLE LOW-9 QUOTATION MARK}": ",",
+    "\N{SINGLE HIGH-REVERSED-9 QUOTATION MARK}": "'",
+    "\N{LEFT DOUBLE QUOTATION MARK}": "``",
+    "\N{RIGHT DOUBLE QUOTATION MARK}": "''",
+    "\N{DOUBLE LOW-9 QUOTATION MARK}": ",,",
+    "\N{DOUBLE HIGH-REVERSED-9 QUOTATION MARK}": "''",
+    "\N{HORIZONTAL ELLIPSIS}": "...",
 }
 _UNICODE_PUNCT_PATTERN = re.compile("[" + "".join(re.escape(k) for k in _UNICODE_PUNCT_MAP) + "]")
 _MINTINLINE_DELIMITERS: tuple[str, ...] = (

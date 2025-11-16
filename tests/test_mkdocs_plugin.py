@@ -29,7 +29,7 @@ def test_plugin_logs_render_warning(monkeypatch: pytest.MonkeyPatch, tmp_path: P
 
     with warnings.catch_warnings(record=True) as captured:
         warnings.simplefilter("always")
-        warnings.warn("Footnote issue", UserWarning)
+        warnings.warn("Footnote issue", UserWarning, stacklevel=2)
 
     warning_msg = captured[0]
     warning_msg.filename = str(tmp_path / "docs" / "intro.py")

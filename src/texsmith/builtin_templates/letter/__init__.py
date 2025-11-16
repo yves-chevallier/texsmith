@@ -82,7 +82,7 @@ _LANGUAGE_PROFILES: dict[str, LanguageProfile] = {
         locale="fr-FR",
         babel="french",
         fallback_opening="Madame, Monsieur,",
-        fallback_closing="Je vous prie d’agréer l’expression de mes salutations distinguées.",
+        fallback_closing="Je vous prie d'agreer l'expression de mes salutations distinguees.",
         default_standard="sn-left",
         subject_prefix=r"Objet~:~",
     ),
@@ -167,10 +167,7 @@ class Template(WrappableTemplate):
         return _LETTER_STANDARDS[profile.default_standard]
 
     def _resolve_language_profile(self, value: Any) -> LanguageProfile:
-        if isinstance(value, str):
-            key = value.strip().lower().replace("_", "-")
-        else:
-            key = ""
+        key = value.strip().lower().replace("_", "-") if isinstance(value, str) else ""
 
         if not key:
             return _LANGUAGE_PROFILES["en-uk"]
@@ -204,10 +201,7 @@ class Template(WrappableTemplate):
     def _coerce_string(self, value: Any) -> str | None:
         if value is None:
             return None
-        if isinstance(value, str):
-            candidate = value.strip()
-        else:
-            candidate = str(value).strip()
+        candidate = value.strip() if isinstance(value, str) else str(value).strip()
         return candidate or None
 
     def _normalise_lines(self, payload: Any) -> list[str]:
@@ -242,7 +236,7 @@ class Template(WrappableTemplate):
             return lines
         if lines and lines[0] == name:
             return lines
-        return [name] + lines
+        return [name, *lines]
 
     def _resolve_opening(self, context: Mapping[str, Any], profile: LanguageProfile) -> str:
         opening_override = self._coerce_string(context.get("opening"))
@@ -261,10 +255,7 @@ class Template(WrappableTemplate):
 
     def _normalise_callout_style(self, value: Any) -> str:
         candidate = self._coerce_string(value)
-        if candidate:
-            candidate = candidate.lower()
-        else:
-            candidate = "fancy"
+        candidate = candidate.lower() if candidate else "fancy"
         if candidate not in {"fancy", "classic", "minimal"}:
             return "fancy"
         return candidate

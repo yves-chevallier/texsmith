@@ -850,7 +850,10 @@ class LatexPlugin(BasePlugin):
             tex_rel = tex_path
 
         log.info(
-            "Press bundle ready in '%s'. Run 'latexmk -cd %s/%s' to build the documentation.",
+            (
+                "Press bundle ready in '%s'. "
+                "Run 'latexmk -cd %s/%s' to build the documentation."
+            ),
             bundle_path.as_posix(),
             bundle_path.as_posix(),
             tex_rel.as_posix(),

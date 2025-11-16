@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Iterable, Mapping
 from pathlib import Path
-from typing import Any
+from typing import Any, ClassVar
 import unicodedata
 
 from texsmith.adapters.latex.utils import escape_latex_chars
@@ -17,42 +17,42 @@ _PACKAGE_ROOT = Path(__file__).parent.resolve()
 class Template(WrappableTemplate):
     """Expose the article template as a wrappable template instance."""
 
-    _LATIN_RANGE_LIMIT = 0x024F
-    _TEXTCOMP_CHARACTERS = {
-        "€",
-        "£",
-        "¥",
-        "§",
-        "¶",
-        "°",
-        "±",
-        "µ",
-        "×",
-        "÷",
-        "©",
-        "®",
-        "™",
-        "½",
-        "¼",
-        "¾",
-        "‰",
+    _LATIN_RANGE_LIMIT: ClassVar[int] = 0x024F
+    _TEXTCOMP_CHARACTERS: ClassVar[set[str]] = {
+        "\N{EURO SIGN}",
+        "\N{POUND SIGN}",
+        "\N{YEN SIGN}",
+        "\N{SECTION SIGN}",
+        "\N{PILCROW SIGN}",
+        "\N{DEGREE SIGN}",
+        "\N{PLUS-MINUS SIGN}",
+        "\N{MICRO SIGN}",
+        "\N{MULTIPLICATION SIGN}",
+        "\N{DIVISION SIGN}",
+        "\N{COPYRIGHT SIGN}",
+        "\N{REGISTERED SIGN}",
+        "\N{TRADE MARK SIGN}",
+        "\N{VULGAR FRACTION ONE HALF}",
+        "\N{VULGAR FRACTION ONE QUARTER}",
+        "\N{VULGAR FRACTION THREE QUARTERS}",
+        "\N{PER MILLE SIGN}",
     }
-    _ALLOWED_PUNCTUATION = {
-        "«",
-        "»",
-        "‹",
-        "›",
-        "„",
-        "“",
-        "”",
-        "’",
-        "‚",
-        "·",
-        "–",
-        "—",
-        "…",
+    _ALLOWED_PUNCTUATION: ClassVar[set[str]] = {
+        "\N{LEFT-POINTING DOUBLE ANGLE QUOTATION MARK}",
+        "\N{RIGHT-POINTING DOUBLE ANGLE QUOTATION MARK}",
+        "\N{SINGLE LEFT-POINTING ANGLE QUOTATION MARK}",
+        "\N{SINGLE RIGHT-POINTING ANGLE QUOTATION MARK}",
+        "\N{DOUBLE LOW-9 QUOTATION MARK}",
+        "\N{LEFT DOUBLE QUOTATION MARK}",
+        "\N{RIGHT DOUBLE QUOTATION MARK}",
+        "\N{RIGHT SINGLE QUOTATION MARK}",
+        "\N{SINGLE LOW-9 QUOTATION MARK}",
+        "\N{MIDDLE DOT}",
+        "\N{EN DASH}",
+        "\N{EM DASH}",
+        "\N{HORIZONTAL ELLIPSIS}",
     }
-    _SCRIPT_FONT_RANGES: tuple[tuple[int, int, str], ...] = (
+    _SCRIPT_FONT_RANGES: ClassVar[tuple[tuple[int, int, str], ...]] = (
         (0x3040, 0x30FF, "NotoSerifCJKjp:mode=harf;"),  # Hiragana/Katakana
         (0x31F0, 0x31FF, "NotoSerifCJKjp:mode=harf;"),  # Katakana Phonetic Extensions
         (0x3400, 0x4DBF, "NotoSerifCJKjp:mode=harf;"),  # CJK Extension A
@@ -135,10 +135,7 @@ class Template(WrappableTemplate):
     def _coerce_string(self, value: Any) -> str | None:
         if value is None:
             return None
-        if isinstance(value, str):
-            candidate = value.strip()
-        else:
-            candidate = str(value).strip()
+        candidate = value.strip() if isinstance(value, str) else str(value).strip()
         return candidate or None
 
     def _format_authors(self, payload: Any) -> str | None:
@@ -200,10 +197,10 @@ class Template(WrappableTemplate):
 
     def _normalise_callout_style(self, value: Any) -> str:
         candidate = self._coerce_string(value)
-        if candidate:
-            candidate = candidate.lower()
-        else:
-            candidate = "fancy"
+        if not candidate:
+            default_value = self.info.get_attribute_default("callout_style") or "fancy"
+            candidate = self._coerce_string(default_value)
+        candidate = candidate.lower() if candidate else "fancy"
 
         if candidate not in {"fancy", "classic", "minimal"}:
             return "fancy"

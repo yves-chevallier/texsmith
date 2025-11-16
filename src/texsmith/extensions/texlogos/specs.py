@@ -45,7 +45,7 @@ _SPECS: tuple[LogoSpec, ...] = (
         aliases=("LaTeX2e", "LaTeX2\u03b5", "LaTeXe"),
     ),
     LogoSpec(
-        command=r"\TeX{}\textsc{Smith}",
+        command=r"\TeX{}\textsc{S}\lower0.15ex\hbox{\textsc{mith}}",
         display="TeXSmith",
         description="Extension Markdown TeXSmith pour des logos TeX harmonises",
         slug="texsmith",

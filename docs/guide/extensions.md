@@ -15,16 +15,19 @@ Every extension follows the same structure:
 
 ## Built-in extensions
 
-| Name                | Module                       | Purpose                                                              |
-| ------------------- | ---------------------------- | -------------------------------------------------------------------- |
-| `smallcaps`         | `texsmith.smallcaps`         | `__text__` syntax mapped to `<span class="texsmith-smallcaps">`.     |
-| `latex_raw`         | `texsmith.latex_raw`         | `/// latex` fenced blocks injected as hidden HTML.                   |
-| `latex_text`        | `texsmith.latex_text`        | Styles the literal `LaTeX` token in running text.                    |
-| `missing_footnotes` | `texsmith.missing_footnotes` | Warns about references to undefined footnotes.                       |
-| `multi_citations`   | `texsmith.multi_citations`   | Normalises `^[foo,bar]` blocks to footnotes.                         |
-| `mermaid`           | `texsmith.mermaid`           | Inlines Mermaid diagrams pointed to by Markdown images.              |
-| `texlogos`          | `texsmith.texlogos`          | Replaces TeX logo keywords with accessible HTML spans.               |
-| `index`             | `texsmith.index`             | Adds the `#[tag]` syntax, LaTeX index handlers and an MkDocs plugin. |
+In order to align Markdown with LaTeX capabilities, TeXSmith provides the
+following extensions under the `texsmith` namespace:
+
+| Module                       | Purpose                                                              |
+| ---------------------------- | -------------------------------------------------------------------- |
+| `texsmith.smallcaps`         | `__text__` syntax mapped to `<span class="texsmith-smallcaps">`.     |
+| `texsmith.latex_raw`         | `/// latex` fenced blocks injected as hidden HTML.                   |
+| `texsmith.latex_text`        | Styles the literal `LaTeX` token in running text.                    |
+| `texsmith.missing_footnotes` | Warns about references to undefined footnotes.                       |
+| `texsmith.multi_citations`   | Normalises `^[foo,bar]` blocks to footnotes.                         |
+| `texsmith.mermaid`           | Inlines Mermaid diagrams pointed to by Markdown images.              |
+| `texsmith.texlogos`          | Replaces TeX logo keywords with accessible HTML spans.               |
+| `texsmith.index`             | Adds the `#[tag]` syntax, LaTeX index handlers and an MkDocs plugin. |
 
 Inspect the registry programmatically if you want to discover the available
 extensions dynamically:
@@ -106,5 +109,5 @@ If you want every built-in extension to register its renderer hook, call
 ## Write your own extensions
 
 You can create custom Markdown extensions that plug into TeXSmith's conversion
-pipeline. Refer to the [API documentation](api/extensions.md) for details on
+pipeline. Refer to the API documentation for details on
 the extension points and how to register your extension with TeXSmith.

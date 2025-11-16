@@ -289,10 +289,9 @@ def extract_slot_fragments(
     else:
         remainder_html = "".join(str(node) for node in container.contents)
 
-    if fragments:
-        remainder_position = max(fragment.position for fragment in fragments) + 1
-    else:
-        remainder_position = 0
+    remainder_position = (
+        max(fragment.position for fragment in fragments) + 1 if fragments else 0
+    )
 
     fragments.append(
         SlotFragment(name=default_slot, html=remainder_html, position=remainder_position)
