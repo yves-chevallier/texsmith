@@ -158,6 +158,20 @@ _UNICODE_PUNCT_MAP = {
     "…": "...",
 }
 _UNICODE_PUNCT_PATTERN = re.compile("[" + "".join(re.escape(k) for k in _UNICODE_PUNCT_MAP) + "]")
+_MINTINLINE_DELIMITERS: tuple[str, ...] = (
+    "|",
+    "!",
+    ";",
+    ":",
+    "+",
+    "/",
+    "-",
+    "=",
+    "~",
+    "*",
+    "#",
+    "?",
+)
 
 
 def _replace_unicode_scripts(
@@ -409,15 +423,39 @@ def _extract_code_text(element: Tag) -> str:
     return element.get_text(strip=False)
 
 
+def _pick_mintinline_delimiter(text: str) -> str | None:
+    for delimiter in _MINTINLINE_DELIMITERS:
+        if delimiter not in text:
+            return delimiter
+    return None
+
+
 @renders("code", phase=RenderPhase.PRE, priority=50, name="inline_code", nestable=False)
 def render_inline_code(element: Tag, context: RenderContext) -> None:
     """Render inline code elements using the formatter."""
     if element.find_parent("pre"):
         return
 
+    classes = gather_classes(element.get("class"))
     code = _extract_code_text(element)
     if "\n" in code:
         return
+
+    has_language = any(cls.startswith("language-") for cls in classes)
+    if has_language or "highlight" in classes:
+        language = next(
+            (cls[len("language-") :] or "text" for cls in classes if cls.startswith("language-")),
+            "text",
+        )
+        delimiter = _pick_mintinline_delimiter(code)
+        if delimiter:
+            latex = context.formatter.codeinline(
+                language=language or "text",
+                text=code,
+                delimiter=delimiter,
+            )
+            element.replace_with(mark_processed(NavigableString(latex)))
+            return
 
     legacy_latex_accents = getattr(context.config, "legacy_latex_accents", False)
     code = escape_latex_chars(code, legacy_accents=legacy_latex_accents).replace(" ", "~")
@@ -464,7 +502,10 @@ def render_math_script(element: Tag, _context: RenderContext) -> None:
     if not payload:
         node = NavigableString("")
     elif is_display:
-        node = NavigableString(f"\n$$\n{payload}\n$$\n")
+        if _payload_is_block_environment(payload):
+            node = NavigableString(f"\n{payload}\n")
+        else:
+            node = NavigableString(f"\n$$\n{payload}\n$$\n")
     else:
         node = NavigableString(f"${payload}$")
 
@@ -773,3 +814,17 @@ def render_critic_substitution(element: Tag, context: RenderContext) -> None:
     context.mark_processed(element)
     context.suppress_children(element)
     element.replace_with(node)
+
+
+_BLOCK_MATH_ENVIRONMENTS = {
+    "align",
+    "align*",
+    "equation",
+    "equation*",
+}
+
+
+def _payload_is_block_environment(payload: str) -> bool:
+    stripped = payload.lstrip()
+    match = re.match(r"\\begin\{([^}]+)\}", stripped)
+    return bool(match and match.group(1).lower() in _BLOCK_MATH_ENVIRONMENTS)

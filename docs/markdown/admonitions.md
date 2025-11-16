@@ -51,15 +51,15 @@ press:
 
 === "Fancy Admonitions"
 
-    ![Fancy Admonitions](fancy-admonition.png)
+    [![Fancy Admonitions](../assets/examples/fancy-admonition.png)](../assets/examples/fancy-admonition.pdf)
 
 === "Classic and Minimal Admonitions"
 
-    ![Classic Admonitions](classic-admonition.png)
+    [![Classic Admonitions](../assets/examples/classic-admonition.png)](../assets/examples/classic-admonition.pdf)
 
 === "Minimal Admonitions"
 
-    ![Minimal Admonitions](minimal-admonition.png)
+    [![Minimal Admonitions](../assets/examples/minimal-admonition.png)](../assets/examples/minimal-admonition.pdf)
 
 ## Builtin Admonition Types
 

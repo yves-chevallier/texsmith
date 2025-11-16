@@ -4,11 +4,11 @@ from __future__ import annotations
 
 from collections.abc import Iterable, Mapping
 from pathlib import Path
-import unicodedata
 from typing import Any
+import unicodedata
 
-from texsmith.core.templates import TemplateError, WrappableTemplate
 from texsmith.adapters.latex.utils import escape_latex_chars
+from texsmith.core.templates import TemplateError, WrappableTemplate
 
 
 _PACKAGE_ROOT = Path(__file__).parent.resolve()
@@ -106,6 +106,8 @@ class Template(WrappableTemplate):
             geometry_options.append(paper_option)
         if orientation_option:
             geometry_options.append(orientation_option)
+        extra_geometry = self._format_geometry_overrides(context.get("geometry"))
+        geometry_options.extend(extra_geometry)
 
         engine_default = self.info.engine or "pdflatex"
 
@@ -113,6 +115,7 @@ class Template(WrappableTemplate):
         context["orientation_option"] = orientation_option
         context["documentclass_options"] = f"[{','.join(options)}]" if options else ""
         context["geometry_options"] = ",".join(geometry_options)
+        context["geometry_extra_options"] = ",".join(extra_geometry)
         context.setdefault("latex_engine", engine_default)
         context.setdefault("requires_unicode_engine", False)
         context.setdefault("unicode_chars", "")
@@ -205,6 +208,32 @@ class Template(WrappableTemplate):
         if candidate not in {"fancy", "classic", "minimal"}:
             return "fancy"
         return candidate
+
+    def _format_geometry_overrides(self, value: Any) -> list[str]:
+        if not isinstance(value, Mapping):
+            return []
+        formatted: list[str] = []
+        for key, raw in value.items():
+            option = self._coerce_string(key)
+            if not option:
+                continue
+            if isinstance(raw, bool):
+                if raw:
+                    formatted.append(option)
+                continue
+            if raw is None:
+                continue
+            string_value = self._coerce_string(raw)
+            if string_value is None:
+                continue
+            lowered = string_value.lower()
+            if lowered == "true":
+                formatted.append(option)
+                continue
+            if lowered == "false":
+                continue
+            formatted.append(f"{option}={string_value}")
+        return formatted
 
     def _detect_script_font(self, char: str) -> str | None:
         codepoint = ord(char)

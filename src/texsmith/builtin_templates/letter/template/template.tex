@@ -10,6 +10,7 @@
 \usepackage{fontspec}
 \usepackage[\VAR{babel_language|default('english')}]{babel}
 \usepackage{csquotes}
+\usepackage{amsmath}
 \providecommand{\texsmithCalloutStyle}{fancy}
 \renewcommand{\texsmithCalloutStyle}{\VAR{callout_style|default('fancy')}}
 \usepackage{callouts}
@@ -36,6 +37,12 @@
 \catcode"2014=\active
 \begingroup\lccode`~="2013\lowercase{\endgroup\protected\def~}{\TexsmithLetterEndash}
 \begingroup\lccode`~="2014\lowercase{\endgroup\protected\def~}{\TexsmithLetterEmdash}
+\BLOCK{ endif }
+
+\BLOCK{ if preamble }
+% Custom document preamble injected from overrides.
+\VAR{preamble}
+
 \BLOCK{ endif }
 
 \BLOCK{ if use_cursive_signature }

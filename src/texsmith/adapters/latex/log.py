@@ -509,7 +509,9 @@ class LatexLogRenderer:
 
         summary_style = style
         if heading:
-            summary_style = f"{summary_style} bold" if "bold" not in summary_style else summary_style
+            summary_style = (
+                f"{summary_style} bold" if "bold" not in summary_style else summary_style
+            )
         if _HIGHLIGHT_PATTERN.match(message.summary):
             summary_style = f"{summary_style} bold" if summary_style else "bold"
         if message.severity is LatexMessageSeverity.INFO and _TEX_ASSIGN_PATTERN.search(

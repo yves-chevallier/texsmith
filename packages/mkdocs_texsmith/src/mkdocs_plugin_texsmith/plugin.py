@@ -530,9 +530,7 @@ class LatexPlugin(BasePlugin):
                         state=document_state,
                     )
             except Exception as exc:  # pragma: no cover - defensive
-                log.exception(
-                    "TeXSmith failed while rendering page '%s'.", entry.title
-                )
+                log.exception("TeXSmith failed while rendering page '%s'.", entry.title)
                 detail = (
                     format_rendering_error(exc)
                     if isinstance(exc, LatexRenderingError)
@@ -802,9 +800,7 @@ class LatexPlugin(BasePlugin):
                 shutil.copy2(src, target)
                 log.info("Copied '%s' to '%s'.", src, target)
 
-    def _resolve_page_fragment_path(
-        self, entry: NavEntry, index: int
-    ) -> Path:
+    def _resolve_page_fragment_path(self, entry: NavEntry, index: int) -> Path:
         base = entry.src_path or entry.title or f"page-{index}"
         normalised = slugify(base.replace("/", "-"), separator="-")
         if not normalised:

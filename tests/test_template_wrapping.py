@@ -26,7 +26,7 @@ def book_template(project_root: Path) -> WrappableTemplate:
 
 @pytest.fixture
 def article_template(project_root: Path) -> WrappableTemplate:
-    return load_template(str(project_root / "templates" / "article"))
+    return load_template(str(project_root / "src" / "texsmith" / "builtin_templates" / "article"))
 
 
 def test_iter_assets_declares_required_files(book_template: WrappableTemplate) -> None:
@@ -117,7 +117,7 @@ def test_copy_template_assets_materialises_payload(
 
 
 def test_load_template_from_shortcut_path(book_template: WrappableTemplate) -> None:
-    shortcut = load_template("./book")
+    shortcut = load_template("./templates/book")
     assert shortcut.info.name == book_template.info.name
     assert shortcut.info.entrypoint == book_template.info.entrypoint
     slug = load_template("book")
@@ -164,7 +164,7 @@ def test_article_injects_custom_preamble_block(
 def test_load_article_template_from_shortcut_path(
     article_template: WrappableTemplate,
 ) -> None:
-    shortcut = load_template("./article")
+    shortcut = load_template("./src/texsmith/builtin_templates/article")
     assert shortcut.info.name == article_template.info.name
     slug = load_template("article")
     assert slug.info.name == article_template.info.name
@@ -197,13 +197,13 @@ def test_article_includes_acronyms_when_present(
     context = article_template.prepare_context("")
     context["acronyms"] = {"HTTP": "Hypertext Transfer Protocol"}
     wrapped = article_template.wrap_document("", context=context)
-    assert "\\usepackage[acronym]{glossaries}" in wrapped
+    assert "\\usepackage[acronym,nomain]{glossaries}" in wrapped
     assert "\\makeglossaries" in wrapped
     assert "\\newacronym{HTTP}{HTTP}{Hypertext Transfer Protocol}" in wrapped
     assert "\\printglossary[type=\\acronymtype" in wrapped
 
 
-def test_article_prefers_pdflatex_for_latin_text(
+def test_article_prefers_lualatex_for_latin_text(
     article_template: WrappableTemplate,
     tmp_path: Path,
 ) -> None:
@@ -220,15 +220,12 @@ def test_article_prefers_pdflatex_for_latin_text(
     )
 
     context = result.template_context
-    assert context["latex_engine"] == "pdflatex"
+    assert context["latex_engine"] == "lualatex"
     assert "€" in context["unicode_chars"]
     assert context["unicode_problematic_chars"] == ""
-    assert "textcomp" in context["pdflatex_extra_packages"]
 
     latex_output = result.latex_output
-    assert "\\usepackage[T1]{fontenc}" in latex_output
-    assert "\\usepackage{textcomp}" in latex_output
-    assert "\\usepackage{fontspec}" not in latex_output
+    assert "\\usepackage{fontspec}" in latex_output
 
 
 def test_article_switches_to_lualatex_for_non_latin_scripts(

@@ -13,7 +13,9 @@ def test_template_slug_resolves_from_nested_directory(monkeypatch: pytest.Monkey
     assert runtime.name == "article"
 
 
-def test_template_infers_templates_folder_when_path_missing(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_template_infers_templates_folder_when_path_missing(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     nested = Path("examples/diagrams")
     monkeypatch.chdir(nested)
 

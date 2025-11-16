@@ -141,7 +141,7 @@ LaTeX with converted Markdown content.
 The `pymdownx.snippets` extension lets you avoid duplication:
 
 ```markdown
---8<-- "includes/built-in-tasks.md"
+;--8<-- "includes/built-in-tasks.md"
 ```
 
 Create an `includes` directory under `docs/` and share fragments across pages.

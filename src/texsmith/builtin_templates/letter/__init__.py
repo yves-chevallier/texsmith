@@ -110,9 +110,7 @@ class Template(WrappableTemplate):
         context["language"] = profile.locale
         context["babel_language"] = profile.babel
         letter_standard = self._resolve_letter_standard(
-            context.get("standard")
-            or context.get("letter_standard")
-            or context.get("layout"),
+            context.get("standard") or context.get("letter_standard") or context.get("layout"),
             profile,
         )
         context["letter_standard"] = letter_standard.key

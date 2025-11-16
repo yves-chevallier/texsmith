@@ -65,10 +65,9 @@ nav:
       - Syntax Directory: markdown/supported.md
       - Admonitions: markdown/admonitions.md
       - Abbreviations: markdown/abbr.md
-      - Code Highlighting: markdown/highlight.md
+      - Code: markdown/code.md
       - Tables: markdown/tables.md
       - Math Support: markdown/math.md
-      - Equations: markdown/equations.md
       - Mermaid Diagrams: markdown/mermaid.md
       - SVGbob Diagrams: markdown/svgbob.md
       - Captions: markdown/captions.md
@@ -100,7 +99,11 @@ nav:
       - License: about/license.md
 markdown_extensions:
   - admonition
-  - pymdownx.superfences
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
   - pymdownx.details
   - pymdownx.tabbed:
       alternate_style: true
@@ -110,6 +113,9 @@ markdown_extensions:
   - pymdownx.keys
   - pymdownx.mark
   - pymdownx.tilde
+  - pymdownx.snippets:
+      check_paths: true
+      base_path: !relative $config_dir
   - pymdownx.blocks.html
   - toc:
       permalink: true
@@ -117,7 +123,10 @@ markdown_extensions:
   - footnotes
   - attr_list
   - md_in_html
+  - pymdownx.arithmatex:
+      generic: true
 extra_javascript:
+  - js/mathjax.js
   - https://unpkg.com/mathjax@3/es5/tex-mml-chtml.js
   - https://cdn.jsdelivr.net/npm/vega@5
   - https://cdn.jsdelivr.net/npm/vega-lite@5
