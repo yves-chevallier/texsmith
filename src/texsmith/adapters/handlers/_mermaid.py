@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import base64
 import binascii
+import json
 from urllib.parse import urlparse
 import zlib
 
@@ -21,6 +22,7 @@ MERMAID_KEYWORDS = {
     "gantt",
     "erdiagram",
     "journey",
+    "packet",
 }
 
 
@@ -39,6 +41,23 @@ def looks_like_mermaid(diagram: str) -> bool:
         return token in MERMAID_KEYWORDS
 
     return False
+
+
+def _extract_mermaid_code(payload: str) -> str:
+    """Return Mermaid code embedded in a Mermaid Live payload."""
+    candidate = payload.lstrip()
+    if not candidate.startswith("{"):
+        return payload
+
+    try:
+        data = json.loads(candidate)
+    except json.JSONDecodeError:
+        return payload
+
+    code = data.get("code")
+    if isinstance(code, str) and code.strip():
+        return code
+    return payload
 
 
 def decode_mermaid_pako(payload: str) -> str:
@@ -61,7 +80,8 @@ def decode_mermaid_pako(payload: str) -> str:
         try:
             data = zlib.decompress(compressed, wbits=wbits)
             try:
-                return data.decode("utf-8")
+                extracted = data.decode("utf-8")
+                return _extract_mermaid_code(extracted)
             except UnicodeDecodeError as exc:  # pragma: no cover - defensive
                 raise InvalidNodeError("Mermaid payload is not UTF-8 text") from exc
         except zlib.error as exc:

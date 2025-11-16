@@ -58,7 +58,7 @@ def wrap_template_document(
 
     registry_entries = index_terms
     try:  # pragma: no cover - optional dependency
-        from texsmith_index import get_registry
+        from texsmith.index import get_registry
     except ModuleNotFoundError:
         template_context["index_registry"] = [tuple(term) for term in registry_entries]
     else:

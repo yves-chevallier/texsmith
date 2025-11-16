@@ -2,6 +2,6 @@
 
 ::: texsmith.adapters.markdown
 
-::: texsmith.adapters.markdown_extensions
+::: texsmith.extensions
 
-::: texsmith.adapters.markdown_extensions.missing_footnotes
+::: texsmith.extensions.missing_footnotes

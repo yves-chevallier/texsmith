@@ -1,17 +1,18 @@
 {
   "theme": "base",
   "themeVariables": {
-    "primaryColor": "#ffffff",
-    "primaryTextColor": "#000000",
-    "primaryBorderColor": "#000000",
-    "secondaryColor": "#ffffff",
-    "secondaryTextColor": "#000000",
-    "tertiaryColor": "#ffffff",
-    "lineColor": "#000000",
-    "background": "#ffffff",
-    "clusterBkg": "#ffffff",
-    "clusterBorder": "#000000",
+    "primaryColor": "white",
+    "primaryTextColor": "black",
+    "primaryBorderColor": "black",
+    "secondaryColor": "transparent",
+    "secondaryTextColor": "black",
+    "tertiaryColor": "transparent",
+    "lineColor": "black",
+    "background": "white",
+    "clusterBkg": "white",
+    "clusterBorder": "black",
     "fontFamily": "Latin Modern Roman, Computer Modern Serif, Times New Roman, serif",
-    "fontSize": "14px"
-  }
+    "fontSize": "12px"
+  },
+  "themeCSS": ".packetBlock { fill: #ffffff !important; stroke: #000000 !important; }\n.packet rect, .packet polygon { fill: #ffffff !important; stroke: #000000 !important; }\n.packet text, .packetLabel, .packetByte, .packetTitle { fill: #000000 !important; }"
 }

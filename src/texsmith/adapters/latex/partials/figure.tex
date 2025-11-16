@@ -2,7 +2,17 @@
     \centering
     \BLOCK{-if label}\label{\VAR{label}}\BLOCK{endif}
     \BLOCK{if width}\BLOCK{set width_value = width.rstrip('%') if width.endswith('%') else width}\BLOCK{endif}
+    \BLOCK{if adjustbox}
+    \ifdefined\adjustbox
+        \adjustbox{max width=\textwidth}{%
+            \includegraphics{\VAR{path}}
+        }
+    \else
+        \includegraphics[width=\BLOCK{if width}\BLOCK{if width.endswith('%')}\VAR{(width_value|float) / 100}\linewidth\BLOCK{else}\VAR{width}\BLOCK{endif}\BLOCK{else}\linewidth\BLOCK{endif}]{\VAR{path}}
+    \fi
+    \BLOCK{else}
     \includegraphics[width=\BLOCK{if width}\BLOCK{if width.endswith('%')}\VAR{(width_value|float) / 100}\linewidth\BLOCK{else}\VAR{width}\BLOCK{endif}\BLOCK{else}\linewidth\BLOCK{endif}]{\VAR{path}}
+    \BLOCK{endif}
     \BLOCK{-if caption}
     \caption\BLOCK{if shortcaption}[\VAR{shortcaption}]\BLOCK{endif}{\VAR{caption}}
     \BLOCK{-endif}

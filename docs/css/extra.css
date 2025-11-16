@@ -54,3 +54,8 @@ p > img {
   margin-left: auto;
   margin-right: auto;
 }
+
+.texsmith-smallcaps {
+  font-variant: small-caps;
+  letter-spacing: 0.04em;
+}

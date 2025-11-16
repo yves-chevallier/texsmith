@@ -536,10 +536,28 @@ def test_mermaid_image_from_live_url(renderer: LaTeXRenderer) -> None:
 
         assert "\\includegraphics" in latex
         assert "mermaid-live.pdf" in latex
-        assert "Flowchart diagram" in latex
+        assert "Flowchart diagram" not in latex
 
         assets = dict(renderer.assets.items())
         assert any(key.startswith("mermaid::") for key in assets)
+    finally:
+        register_converter("mermaid", original)
+
+
+def test_mermaid_pre_block_with_source_attribute(renderer: LaTeXRenderer) -> None:
+    original = registry.get("mermaid")
+    register_converter("mermaid", _StubConverter("mermaid-pre"))
+    try:
+        diagram = "flowchart LR\n    A --> B\n"
+        compressed = zlib.compress(diagram.encode("utf-8"))
+        encoded = base64.urlsafe_b64encode(compressed).decode("ascii").rstrip("=")
+        url = f"https://mermaid.live/edit#pako:{encoded}"
+        html = f'<pre class="mermaid" data-mermaid-source="{url}">garbled</pre>'
+
+        latex = renderer.render(html)
+
+        assert "\\includegraphics" in latex
+        assert "mermaid-pre.pdf" in latex
     finally:
         register_converter("mermaid", original)
 

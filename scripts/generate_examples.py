@@ -9,7 +9,10 @@ import shutil
 import subprocess
 from typing import Any
 
-import fitz  # PyMuPDF
+try:  # pragma: no cover - optional dependency alias
+    import pymupdf as fitz  # type: ignore[import-not-found]
+except ImportError:  # pragma: no cover - compatibility alias
+    import fitz  # type: ignore[import-not-found]
 
 from texsmith.api.service import ConversionRequest, ConversionService
 from texsmith.api.templates import TemplateRenderResult
@@ -117,6 +120,7 @@ def _build_specs() -> list[ExampleSpec]:
     math_dir = examples_dir / "math"
     admonition_dir = examples_dir / "admonition"
     abbr_dir = examples_dir / "abbr"
+    mermaid_dir = examples_dir / "mermaid"
 
     specs: list[ExampleSpec] = [
         ExampleSpec(
@@ -166,6 +170,19 @@ def _build_specs() -> list[ExampleSpec]:
                 "orientation": "landscape",
                 "margin": "1cm",
                 "page_numbers": False,
+                "preamble": BORDER_PREAMBLE,
+            },
+        ),
+        ExampleSpec(
+            name="mermaid",
+            source=mermaid_dir / "example.md",
+            build_dir=mermaid_dir / "build",
+            persist_debug_html=True,
+            template_options={
+                "paper": "a5",
+                "margin": "narrow",
+                "page_numbers": False,
+                "geometry": {"paperheight": "17cm"},
                 "preamble": BORDER_PREAMBLE,
             },
         ),

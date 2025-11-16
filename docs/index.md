@@ -125,13 +125,3 @@ on to [Core Engine](api/core.md) once you need fine-grained control.
   its subcommand pages.
 - **Building your own template?** See [High-Level Workflows](api/high-level.md)
   for template walkthroughs, then dive into the API reference.
-
-## Project status
-
-TeXSmith is under active development and gearing up for a 1.0 release. The
-conversion pipeline is stable across real-world MkDocs sites, but you should
-expect ongoing improvements to templates, diagram strategies, and diagnostics.
-
-!!! info "Give feedback"
-    Found a gap or an edge case? Open an issue or PR—most new features come from
-    teams converting documentation sets in the wild.
