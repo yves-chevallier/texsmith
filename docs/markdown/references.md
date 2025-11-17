@@ -77,7 +77,7 @@ You can also check our GitHub repository at \url{https://github.com/yves-chevall
 ## Bibliographic References
 
 Bibliography is not supported natively in markdown, TeXSmith uses the footnote syntax to insert bibliographic references based
-on a keyword defined in a BibTeX file or in your front-matter. See the documentation on [Bibliography management](../guide/40-bibliography.md) for more details.
+on a keyword defined in a BibTeX file or in your front-matter. See the documentation on [Bibliography management](../guide/bibliography.md) for more details.
 
 ```markdown
 ---

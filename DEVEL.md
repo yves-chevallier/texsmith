@@ -556,3 +556,10 @@ Issue with scientific paper cheese. code closed to early after snippet.
 
 ----
 
+## Markdown packages issues...
+
+Mkdocs autorefs (from mkdocsstrings) definition `[](){#}` before heading gives Markdown lint issues.
+
+## Lint/Format
+
+Find a solution, none of the existing tools work well with mkdocs syntax.

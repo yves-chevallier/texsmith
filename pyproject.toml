@@ -113,7 +113,7 @@ members = [
 ]
 
 [tool.uv.sources]
-mkdocs-texsmith = { workspace = true, editable = true }
+mkdocs-texsmith = { workspace = true }
 
 [tool.pytest.ini_options]
 addopts = [

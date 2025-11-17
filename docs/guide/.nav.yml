@@ -1,0 +1,10 @@
+nav:
+  - index.md
+  - getting-started.md
+  - bibliography.md
+  - glossary.md
+  - front-matter.md
+  - templates.md
+  - template-cookbook.md
+  - extensions.md
+  - troubleshooting.md
