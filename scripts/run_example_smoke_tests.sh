@@ -21,7 +21,7 @@ run_render() {
   )
 }
 
-run_render "examples/scientific-paper" cheese.md cheese.bib
+run_render "examples/paper" cheese.md cheese.bib
 run_render "examples/diagrams" diagrams.md
 run_render "examples/markdown" features.md
 
