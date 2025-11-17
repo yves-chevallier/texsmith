@@ -11,6 +11,11 @@ from texsmith.core.context import RenderContext
 from texsmith.core.rules import RenderPhase, renders
 
 from ._helpers import gather_classes, mark_processed
+from .code import (
+    render_code_blocks as _render_code_block,
+    render_preformatted_code as _render_preformatted_code,
+    render_standalone_code_blocks as _render_standalone_code_block,
+)
 from .inline import render_inline_code as _render_inline_code
 
 
@@ -71,6 +76,25 @@ def _extract_title(node: Tag | None) -> str:
 CALLOUT_ALIASES = {"seealso": "info"}
 
 
+def _prepare_callout_content(element: Tag, context: RenderContext) -> None:
+    """Normalise inline and block code inside callouts before flattening."""
+    for highlight in list(element.find_all("div")):
+        highlight_classes = gather_classes(highlight.get("class"))
+        if "highlight" in highlight_classes or "codehilite" in highlight_classes:
+            _render_code_block(highlight, context)
+
+    for pre in list(element.find_all("pre")):
+        _render_preformatted_code(pre, context)
+
+    for code_block in list(element.find_all("code")):
+        _render_standalone_code_block(code_block, context)
+
+    for code in list(element.find_all("code")):
+        if code.find_parent("pre"):
+            continue
+        _render_inline_code(code, context)
+
+
 def _promote_callout(
     element: Tag, context: RenderContext, *, classes: list[str], title: str
 ) -> None:
@@ -78,6 +102,8 @@ def _promote_callout(
     element["data-callout-title"] = title
     element["class"] = classes
     element.name = "texsmith-callout"
+    _prepare_callout_content(element, context)
+    element.attrs["data-callout-prepared"] = True
     context.mark_processed(element, phase=RenderPhase.POST)
 
 
@@ -89,8 +115,8 @@ def _render_admonition(
     admonition_type = admonition_classes[0] if admonition_classes else "note"
     admonition_type = CALLOUT_ALIASES.get(admonition_type, admonition_type)
 
-    for code in element.find_all("code"):
-        _render_inline_code(code, context)
+    if not element.attrs.pop("data-callout-prepared", False):
+        _prepare_callout_content(element, context)
 
     with _use_tcolorbox_figures(context):
         content = element.get_text(strip=False).strip()

@@ -120,7 +120,7 @@ on to [Core Engine](api/core.md) once you need fine-grained control.
 
 ## Next steps
 
-- **New to TeXSmith?** Head to the [Quick Start guide](guide/getting-started.md).
+- **New to TeXSmith?** Head to the [Quick Start guide](guide/10-getting-started.md).
 - **Need CLI details?** Browse the [Command-line Overview](cli/index.md) and
   its subcommand pages.
 - **Building your own template?** See [High-Level Workflows](api/high-level.md)

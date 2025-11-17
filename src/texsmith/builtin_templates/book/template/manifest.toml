@@ -1,0 +1,140 @@
+[compat]
+texsmith = ">=0.6,<1.0"
+
+[latex.template]
+name = "book"
+version = "0.2.0"
+entrypoint = "template/template.tex"
+engine = "lualatex"
+shell_escape = true
+texlive_year = 2023
+tlmgr_packages = [
+    "babel",
+    "babel-french",
+    "csquotes",
+    "fontspec",
+    "fancyvrb",
+    "geometry",
+    "hyperref",
+    "longtable",
+    "microtype",
+    "titlesec",
+    "titletoc",
+    "xcolor",
+    "xunicode",
+]
+override = ["codeblock.tex", "codeinline.tex"]
+
+[latex.template.attributes.base_level]
+default = 0
+type = "integer"
+sources = ["press.base_level", "base_level"]
+
+[latex.template.attributes.title]
+default = "A LaTeX Book Template"
+type = "string"
+escape = "latex"
+allow_empty = true
+sources = ["press.title", "title"]
+
+[latex.template.attributes.subtitle]
+default = "An example of a book template for MkDocs LaTeX"
+type = "string"
+escape = "latex"
+allow_empty = true
+sources = ["press.subtitle", "subtitle"]
+
+[latex.template.attributes.author]
+default = "John Doe"
+type = "string"
+escape = "latex"
+allow_empty = true
+sources = ["press.author", "author"]
+
+[latex.template.attributes.email]
+default = "john.doe@acme.corp"
+type = "string"
+escape = "latex"
+allow_empty = true
+sources = ["press.email", "press.author.email", "email"]
+
+[latex.template.attributes.date]
+default = "\\today"
+type = "string"
+escape = "latex"
+allow_empty = false
+sources = ["press.date", "date"]
+
+[latex.template.attributes.language]
+default = "english"
+type = "string"
+allow_empty = false
+normaliser = "babel_language"
+sources = ["press.language", "language"]
+
+[latex.template.attributes.cover]
+default = "circles"
+type = "string"
+allow_empty = false
+sources = ["press.cover", "cover"]
+
+[latex.template.attributes.covercolor]
+default = ""
+type = "string"
+allow_empty = true
+sources = ["press.cover.color", "covercolor", "press.covercolor"]
+
+[latex.template.attributes.logo]
+default = ""
+type = "string"
+allow_empty = true
+sources = ["press.cover.logo", "press.logo", "logo"]
+
+[latex.template.attributes.callout_style]
+default = "fancy"
+type = "string"
+choices = ["fancy", "classic", "minimal"]
+normaliser = "callout_style"
+sources = ["press.callout_style", "press.callouts.style", "callout_style"]
+
+[latex.template.attributes.glossary]
+default = false
+type = "boolean"
+sources = ["press.glossary", "glossary"]
+
+[latex.template.attributes.listoffigures]
+default = true
+type = "boolean"
+sources = ["press.listoffigures", "listoffigures"]
+
+[latex.template.attributes.listoftables]
+default = true
+type = "boolean"
+sources = ["press.listoftables", "listoftables"]
+
+[latex.template.attributes.preamble]
+default = ""
+type = "string"
+allow_empty = true
+sources = ["press.override.preamble", "press.preamble", "preamble"]
+
+[latex.template.slots.frontmatter]
+depth = "chapter"
+
+[latex.template.slots.mainmatter]
+default = true
+depth = "chapter"
+
+[latex.template.slots.backmatter]
+depth = "chapter"
+
+[latex.template.assets]
+"covers" = { source = "covers" }
+"covers/circles.tex" = { source = "covers/circles.tex", template = true }
+"titlepage.tex" = { source = "titlepage.tex" }
+"imprint.tex" = { source = "imprint.tex" }
+"mkbook.cls" = { source = "template/mkbook.cls", template = true }
+"callouts.sty" = { source = "template/callouts.sty.jinja", template = true }
+"todolist.sty" = { source = "../common/todolist.sty" }
+"keystroke.sty" = { source = "../common/keystroke.sty" }
+".latexmkrc" = { source = "template/assets/latexmkrc", template = true }

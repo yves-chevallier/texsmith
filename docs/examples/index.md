@@ -35,17 +35,6 @@ Expected artefacts:
 
 `examples/diagrams` demonstrates Mermaid and Draw.io rendering.
 
-### Smoke test
-
-```bash
-cd examples/diagrams
-texsmith render diagrams.md \
-  --template article \
-  --output-dir ../../build/examples/diagrams \
-  --build \
-  --classic-output
-```
-
 Expected artefacts include rendered diagram PDFs (requires Docker) plus `diagrams.pdf`.
 
 ![Diagram Example](diagrams.png)
@@ -54,16 +43,7 @@ Expected artefacts include rendered diagram PDFs (requires Docker) plus `diagram
 
 `examples/markdown/features.md` exercises Markdown extensions and custom front-matter overrides.
 
-### Smoke test
 
-```bash
-cd examples/markdown
-texsmith render features.md \
-  --template article \
-  --output-dir ../../build/examples/markdown \
-  --build \
-  --classic-output
-```
 
 Use this example to catch regressions in renderer handlers, typography tweaks, and bibliography overrides.
 

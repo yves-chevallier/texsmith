@@ -29,7 +29,7 @@ sources = ["press.language"]
 [latex.template.attributes.standard]
 default = ""
 type = "string"
-sources = ["press.standard", "press.layout"]
+sources = ["press.standard", "press.layout", "press.format"]
 
 [latex.template.attributes.date]
 default = "\\today"
@@ -56,6 +56,12 @@ sources = ["press.from.name", "press.author", "author"]
 default = []
 type = "list"
 sources = ["press.from.address"]
+
+[latex.template.attributes.back_address]
+default = ""
+type = "string"
+escape = "latex"
+sources = ["press.back_address", "press.back-address"]
 
 [latex.template.attributes.from_location]
 default = ""
@@ -97,9 +103,43 @@ sources = ["press.opening"]
 
 [latex.template.attributes.signature]
 default = ""
-type = "string"
+type = "any"
 escape = "latex"
 sources = ["press.signature"]
+
+[latex.template.attributes.source_dir]
+default = ""
+type = "string"
+allow_empty = true
+sources = ["source_dir", "press._source_dir"]
+
+[latex.template.attributes.output_dir]
+default = ""
+type = "string"
+allow_empty = true
+sources = ["output_dir"]
+
+[latex.template.attributes.signature_align]
+default = "left"
+type = "string"
+sources = ["press.signature.align", "press.signature_align"]
+
+[latex.template.attributes.reference]
+default = ""
+type = "string"
+escape = "latex"
+sources = ["press.reference", "press.myref", "press.my_ref"]
+
+[latex.template.attributes.reference_fields]
+default = false
+type = "boolean"
+sources = ["press.reference_fields"]
+
+[latex.template.attributes.postscript]
+default = ""
+type = "string"
+escape = "latex"
+sources = ["press.ps", "press.postscript"]
 
 [latex.template.attributes.fold_marks]
 default = false

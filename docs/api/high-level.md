@@ -104,7 +104,7 @@ print("Template engine:", result.template_engine)
 Need bibliography support?  Register `.bib` files with `session.add_bibliography(...)` before calling `render`.  Every slot override (`Document.assign_slot`) and metadata tweak flows straight through to the template runtime.
 
 !!! note
-    For practical slot recipes (front matter/main matter splits, appendix routing, overrides) see the [Template Cookbook](../guide/template-cookbook.md).
+    For practical slot recipes (front matter/main matter splits, appendix routing, overrides) see the [Template Cookbook](../guide/55-template-cookbook.md).
 
 ## Reuse the same plumbing as the CLI
 

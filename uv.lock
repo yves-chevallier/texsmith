@@ -1335,7 +1335,6 @@ dev = [
     { name = "ruff", specifier = ">=0.14.1" },
 ]
 docs = [
-    { name = "mkdocs-awesome-nav", specifier = ">=3.1.0" },
     { name = "mkdocs-awesome-nav", specifier = ">=3.2.0" },
     { name = "mkdocs-drawio", git = "https://github.com/yves-chevallier/mkdocs-drawio.git?rev=testounet" },
     { name = "mkdocs-material", specifier = ">=9.6.22" },

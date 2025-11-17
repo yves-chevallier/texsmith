@@ -256,7 +256,7 @@ In Markdown you can have **bold**, *italic*, and `inline code`. But, with Pymark
 One missing feature is small capitals which can be done using the following syntax: §§Small Capitals§§.
 
 ```markdown
-§§Small Capitals§§
+__Small Capitals__
 ```
 
 which will be rendered as:

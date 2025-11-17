@@ -43,7 +43,7 @@ theme:
     repo: fontawesome/brands/github
 plugins:
   - search
-  - mkdocs-awesome-nav
+  - awesome-nav
   - mkdocstrings:
       default_handler: python
       handlers:
@@ -73,8 +73,8 @@ extra:
   social:
     - icon: fontawesome/brands/github
       link: https://github.com/yves-chevallier/texsmith
-exclude:
-  - "assets/examples/README.md"
+# exclude:
+#   - "assets/examples/README.md"
 markdown_extensions:
   - admonition
   - texsmith.index
@@ -121,3 +121,6 @@ extra_css:
 
 hooks:
   - docs/hooks/mkdocs_hooks.py  # helper hooks that patch missing anchors and plugin namespace
+exclude_docs:
+  |-
+    assets/**/*.md

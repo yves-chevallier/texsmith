@@ -1,58 +1,67 @@
 # Getting Started
 
-Use this guide to install TeXSmith, verify the CLI, and explore the Python API.
-Once you can render a single Markdown page, jump to the CLI or API sections for
-the deeper feature set.
+Welcome to TeXSmith! This guide walks you through the initial setup. I may first ask you a question:
+
+1. Do you need TeXSmith for converting sole Markdown files into LaTeX/PDF documents?
+2. Are you planning on integrating TeXSmith with an existing MkDocs site?
+3. Will you be using TeXSmith programmatically via the Python API?
+
+Jump to the relevant section accordingly, or follow the entire guide for a comprehensive overview.
 
 ## Prerequisites
 
-- **Python 3.10+** – TeXSmith ships as a Python package. We recommend
+TeXSmith requires the following components:
+
+Python 3.10+
+: TeXSmith ships as a Python package. We recommend
   [uv](https://github.com/astral-sh/uv) or `pipx` for isolated installs.
-- **LaTeX distribution** – Install TeX Live, MiKTeX, or MacTeX so `texsmith render --build`
+
+LaTeX distribution
+: Install TeX Live, MiKTeX, or MacTeX so `texsmith render --build`
   can call `latexmk` and friends.
-- **Optional diagram tooling** – Mermaid-to-PDF conversion defaults to Docker
+
+Optional diagram tooling
+: Mermaid-to-PDF conversion defaults to Docker
   (`minlag/mermaid-cli`). Install Docker Desktop (with WSL integration on
   Windows) or register your own converter if you rely on Mermaid diagrams.
 
-!!! tip
-    Containerised TeX Live images work fine—mount your project into the
-    container and run `texsmith render --build` inside.
+  Do the same for Draw.io diagrams if you plan to embed them in your documents.
 
-## Install TeXSmith
+## Installation
+
+You have two main options to install TeXSmith:
 
 === "uv"
+
     ```bash
     uv tool install texsmith
     ```
 
 === "pip / pipx"
+
     ```bash
     pip install texsmith
     # or
-    pipx install texsmith
+    pipx install texsmith # Respect PEP 660 isolation
     ```
 
-Optionally install template packages such as `texsmith-template-nature` from
-PyPI when you need layout presets tailored to journals or publishers.
+## Convert a Markdown file
 
-## Try the CLI
+Create a sample Markdown file `booby.md` or use the snippet below:
+
+```markdown
+--8<--- "examples/booby/booby.md
+```
+
+Then invoke TeXSmith from the command line:
 
 ```bash
-cat <<'EOF' > intro.md
-# Sample report
-
-Numbers appear in @tbl:summary.
-
-| Item | Value |
-|------|------:|
-| Foo  |  42.0 |
-| Bar  |   3.1 |
-{: #tbl:summary caption="Key metrics"}
-EOF
-
-texsmith render intro.md --output build/
-ls build
+texsmith render booby.md --output build/ -tarticle -paper=a5 --build
 ```
+
+You will get a pdf file `build/booby.pdf` ready for printing:
+
+[![Booby](../assets/examples/booby.png){width=60%}](../assets/examples/booby.pdf)
 
 You should see `intro.tex` in the `build/` directory. Add the `--template`
 option (and a template package) to emit complete LaTeX projects or PDFs:
@@ -87,7 +96,7 @@ Use TeXSmith once your MkDocs project already renders clean HTML:
 
 ```bash
 # Build your MkDocs site into a disposable directory
-mkdocs build --site-dir build/site
+mkdocs build 
 
 # Convert one page into LaTeX/PDF-ready assets
 texsmith render build/site/guides/overview/index.html \
@@ -112,3 +121,7 @@ Once the LaTeX bundle looks good, add `--build` to invoke `latexmk` or wire the 
   programmatically.
 - Browse [Supported Markdown Syntax](../markdown/supported.md) to see exactly
   which extensions TeXSmith enables by default.
+
+## How does TeXSmith work?
+
+![Workflow diagram of TeXSmith](../assets/workflow.drawio)

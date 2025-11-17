@@ -21,8 +21,31 @@ from ._helpers import (
     mark_processed,
     resolve_asset_path,
 )
-from .code import render_code_blocks as _render_code_block
+from .code import (
+    render_code_blocks as _render_code_block,
+    render_preformatted_code as _render_preformatted_code,
+    render_standalone_code_blocks as _render_standalone_code_block,
+)
 from .inline import render_inline_code as _render_inline_code
+
+
+def _prepare_rich_text_content(container: Tag, context: RenderContext) -> None:
+    """Ensure inline and block code inside containers render before flattening."""
+    for highlight in list(container.find_all("div")):
+        classes = gather_classes(highlight.get("class"))
+        if "highlight" in classes or "codehilite" in classes:
+            _render_code_block(highlight, context)
+
+    for pre in list(container.find_all("pre")):
+        _render_preformatted_code(pre, context)
+
+    for code_element in list(container.find_all("code")):
+        _render_standalone_code_block(code_element, context)
+
+    for inline in list(container.find_all("code")):
+        if inline.find_parent("pre"):
+            continue
+        _render_inline_code(inline, context)
 
 
 def _iter_reversed(nodes: Iterable[Tag]) -> Iterable[Tag]:
@@ -265,6 +288,7 @@ def render_lists(root: Tag, context: RenderContext) -> None:
 def render_description_lists(root: Tag, context: RenderContext) -> None:
     """Render <dl> elements."""
     for dl in _iter_reversed(root.find_all("dl")):
+        _prepare_rich_text_content(dl, context)
         items: list[tuple[str | None, str]] = []
         current_term: str | None = None
 
@@ -285,6 +309,15 @@ def render_description_lists(root: Tag, context: RenderContext) -> None:
 
         latex = context.formatter.description_list(items=items)
         dl.replace_with(mark_processed(NavigableString(latex)))
+
+
+@renders(phase=RenderPhase.POST, priority=5, name="fallback_highlight_blocks", auto_mark=False)
+def render_remaining_code_blocks(root: Tag, context: RenderContext) -> None:
+    """Convert any remaining MkDocs highlight blocks that escaped earlier passes."""
+    for highlight in _iter_reversed(root.find_all("div", class_="highlight")):
+        if context.is_processed(highlight):
+            continue
+        _render_code_block(highlight, context)
 
 
 @renders(phase=RenderPhase.POST, priority=-10, name="footnotes", auto_mark=False)

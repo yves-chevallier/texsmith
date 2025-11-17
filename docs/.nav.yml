@@ -1,6 +1,8 @@
 nav:
-  - Getting Started: getting-started/
+  - Home: index.md
+  - Guide: guide/
+  - Reference: markdown/
+  - Examples: examples/
   - CLI: cli/
   - API: api/
-  - Markdown: markdown/
-  - Contribute: contribute/
+  - About: about/

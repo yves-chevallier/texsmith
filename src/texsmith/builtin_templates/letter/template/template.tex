@@ -1,13 +1,11 @@
 \documentclass[
   paper=a4,
-  fontsize=11pt,
   parskip=half,
-  fromalign=left,
-  fromrule=afteraddress,
+  firstfoot=false,
   enlargefirstpage=true,
-  subject=beforeopening,
 ]{scrlttr2}
 \usepackage{fontspec}
+\usepackage{graphicx}
 \usepackage[\VAR{babel_language|default('english')}]{babel}
 \usepackage{csquotes}
 \usepackage{amsmath}
@@ -53,12 +51,18 @@
 \newcommand{\SignatureText}[1]{#1}
 \BLOCK{ endif }
 
+\newcommand{\SignatureBlock}{%
+\BLOCK{ if has_signature_image }
+  \includegraphics[height=1.6cm]{\VAR{signature_image_path}}
+  \\[-0.25\baselineskip]%
+\BLOCK{ endif }
+  \SignatureText{\VAR{signature_text}}%
+}
+
 \setkomavar{fromname}{\VAR{from_name}}
 \setkomavar{fromaddress}{%
 \BLOCK{ if has_sender_address }
-\BLOCK{ for line in from_address_lines }
-\VAR{line}\BLOCK{ if not loop.last }\\\BLOCK{ endif }
-\BLOCK{ endfor }
+  \VAR{from_address_lines|join('\\\\\n')}
 \BLOCK{ endif }
 }
 \BLOCK{ if from_location_value }\setkomavar{location}{\VAR{from_location_value}}\BLOCK{ endif }
@@ -67,17 +71,27 @@
 \setkomavar{subject}{\VAR{object_value}}
 \setkomavar*{subject}{\VAR{subject_prefix}}
 \BLOCK{ endif }
-\setkomavar{signature}{\SignatureText{\VAR{signature_text}}}
+\setkomavar{signature}{\SignatureBlock}
+\BLOCK{ if has_back_address }
+\setkomavar{backaddress}{%
+  \VAR{back_address_lines|join('\\\\\n')}
+}
+\BLOCK{ endif }
+\BLOCK{ if reference_value }
+\setkomavar{myref}{\VAR{reference_value}}
+\BLOCK{ endif }
+\BLOCK{ if not reference_fields_enabled }
+\removereffields
+\BLOCK{ endif }
+\renewcommand*{\raggedsignature}{\VAR{signature_alignment_command}}
 
 \begin{document}
 
 \begin{letter}{%
 \BLOCK{ if has_recipient_address }
-\BLOCK{ for line in to_address_lines }
-\VAR{line}\BLOCK{ if not loop.last }\\\BLOCK{ endif }
-\BLOCK{ endfor }
+  \VAR{to_address_lines|join('\\\\\n  ')}
 \BLOCK{ else }
-\VAR{to_name}
+  \VAR{to_name}
 \BLOCK{ endif }
 }
 
@@ -85,11 +99,12 @@
 
 \VAR{mainmatter}
 
-\closing{%
-\VAR{closing_text}%
-\\[2\baselineskip]%
-\SignatureText{\VAR{signature_text}}%
-}
+\BLOCK{ if has_closing }
+\closing{\VAR{closing_text}}
+\BLOCK{ endif }
+\BLOCK{ if has_postscript }
+\ps{PS: \VAR{postscript_text}}
+\BLOCK{ endif }
 
 \end{letter}
 \BLOCK{ if not page_numbers }

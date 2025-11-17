@@ -13,6 +13,16 @@ from .builtins import load_builtin_template
 from .manifest import TemplateError
 
 
+def _looks_like_template_root(path: Path) -> bool:
+    """Return True when ``path`` contains manifest or specialised template markers."""
+    if not path.exists() or path.is_file():
+        return False
+    if (path / "__init__.py").exists():
+        return True
+    manifest_candidates = (path / "manifest.toml", path / "template" / "manifest.toml")
+    return any(candidate.exists() for candidate in manifest_candidates)
+
+
 def load_template(identifier: str) -> WrappableTemplate:
     """Load a template selected by name or filesystem path."""
     path_candidate = Path(identifier).expanduser()
@@ -22,7 +32,7 @@ def load_template(identifier: str) -> WrappableTemplate:
     if not path_candidate.is_absolute():
         slug = _slug_from_identifier(identifier)
         for candidate in _iter_local_candidates(path_candidate, slug):
-            if candidate.exists():
+            if _looks_like_template_root(candidate):
                 return _load_path_template(candidate)
 
     builtin = load_builtin_template(identifier)

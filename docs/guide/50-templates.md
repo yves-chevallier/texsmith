@@ -57,7 +57,7 @@ uv run hatch build  # optional packaging smoke test
 ```
 
 Publish by pointing `pyproject.toml` to the `template/` package, then `uv publish` or `twine upload dist/*`.
-For in-depth patterns (overrides, slots, metadata), see the [Template Cookbook](template-cookbook.md).
+For in-depth patterns (overrides, slots, metadata), see the [Template Cookbook](55-template-cookbook.md).
 
 ## Write your own TeXSmith templates
 
@@ -297,5 +297,5 @@ This repository includes examples for the bundled templates; copy one into your 
 
 ## Next steps
 
-- Study the [Template Cookbook](template-cookbook.md) for practical recipes (title pages, metadata bindings, bibliography tweaks).
+- Study the [Template Cookbook](55-template-cookbook.md) for practical recipes (title pages, metadata bindings, bibliography tweaks).
 - Browse the [API high-level guide](../api/high-level.md) to orchestrate templates programmatically with `ConversionService`.

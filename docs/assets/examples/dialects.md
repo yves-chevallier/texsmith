@@ -1,21 +1,20 @@
 
 # Language Support
 
-TeXSmith can render documents in multiple languages and scripts, including those with
-complex typesetting requirements. Below are examples of various languages and scripts
-supported by TeXSmith, showcasing its versatility in handling diverse linguistic
-content.
+TeXSmith can render documents in multiple languages and scripts, including those with 
+complex typesetting requirements. Below are examples of various languages and scripts 
+supported by TeXSmith, showcasing its versatility in handling diverse linguistic content.
 
 ## Japanese (日本語) – Haiku & Classical Poetry
 
 Source (public domain): Matsuo Bashō, Oku no Hosomichi (1694)
 
 > 月日は百代の過客にして、行きかふ年も旅人なり。
->
+> 
 > 舟に乗り、馬に乗りて、初秋の風に吹かれつつ、
->
+> 
 > 道のべの小草を分け、山川を越えて、
->
+> 
 > 心にかかる景色を求めて歩みゆく。
 
 ## Syriac
@@ -51,16 +50,16 @@ Source (public domain): Jeong Mong-ju (1337–1392), *Dansimga*
 Source (public domain): Tao Yuanming (365–427), *歸園田居*
 
 > 少無適俗韻，性本愛丘山。
->
+> 
 > 誤落塵網中，一去三十年。
->
+> 
 > 羈鳥戀舊林，池魚思故淵。
->
+> 
 > 開荒南野際，守拙歸園田。
->
+> 
 > 久在樊籠裡，復得返自然。
 
-## Arabic
+## Arabic 
 
 Source (public domain): Imru’ al-Qays (6th century), *Mu‘allaqāt*
 
@@ -103,9 +102,9 @@ Source (public domain): Classical Sandesa-style verse
 Source (public domain): Classical Khmer poetic style (Chbab form)
 
 > យប់ស្ថប់ត្រង់ ព្រៃស្រពន់សូរ ស្ទឹងស្ទូងតាមស្រមោលដើមឈើ
->
+> 
 > ខ្យល់អូលីល មកពីភ្នំឆ្ងាយ ប៉ះមកដល់ចិត្តអើយឆ្ងាយណា
->
+> 
 > សូរសត្វបក្សី លេបលាន់តាមសែន ក្លិនផ្កាឈូករាត្រីរំលេច។
 
 ## Telugu (తెలుగు)

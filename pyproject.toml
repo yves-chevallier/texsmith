@@ -98,7 +98,6 @@ docs = [
     "mkdocs-awesome-nav>=3.2.0",
     "mkdocs-material>=9.6.22",
     "mkdocstrings[python]>=0.21.2",
-    "mkdocs-awesome-nav>=3.1.0",
     "mkdocs-drawio @ git+https://github.com/yves-chevallier/mkdocs-drawio.git@testounet",
     "mkdocs-pills>=0.1.0",
 ]

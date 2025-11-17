@@ -464,7 +464,14 @@ def render_inline_code(element: Tag, context: RenderContext) -> None:
     element.replace_with(mark_processed(NavigableString(latex)))
 
 
-@renders("span", phase=RenderPhase.PRE, priority=60, name="inline_math", nestable=False)
+@renders(
+    "span",
+    phase=RenderPhase.PRE,
+    priority=60,
+    name="inline_math",
+    nestable=False,
+    auto_mark=False,
+)
 def render_math_inline(element: Tag, _context: RenderContext) -> None:
     """Preserve inline math payloads untouched."""
     classes = gather_classes(element.get("class"))
@@ -474,17 +481,42 @@ def render_math_inline(element: Tag, _context: RenderContext) -> None:
     element.replace_with(mark_processed(NavigableString(text)))
 
 
-@renders("div", phase=RenderPhase.PRE, priority=70, name="math_block", nestable=False)
+@renders(
+    "div",
+    phase=RenderPhase.PRE,
+    priority=30,
+    name="math_block",
+    nestable=False,
+    auto_mark=False,
+)
 def render_math_block(element: Tag, _context: RenderContext) -> None:
     """Preserve block math payloads."""
     classes = gather_classes(element.get("class"))
     if "arithmatex" not in classes:
         return
     text = element.get_text(strip=False)
+    stripped = text.strip()
+
+    match = _DISPLAY_MATH_PATTERN.match(stripped)
+    if match:
+        inner = match.group(1)
+        if _payload_is_block_environment(inner):
+            # align/equation environments already provide display math.
+            latex = f"\n{inner.strip()}\n"
+            element.replace_with(mark_processed(NavigableString(latex)))
+            return
+
     element.replace_with(mark_processed(NavigableString(f"\n{text}\n")))
 
 
-@renders("script", phase=RenderPhase.PRE, priority=65, name="math_script", nestable=False)
+@renders(
+    "script",
+    phase=RenderPhase.PRE,
+    priority=65,
+    name="math_script",
+    nestable=False,
+    auto_mark=False,
+)
 def render_math_script(element: Tag, _context: RenderContext) -> None:
     """Preserve math payloads generated via script tags (e.g. mdx_math)."""
     type_attr = coerce_attribute(element.get("type"))
@@ -824,7 +856,21 @@ _BLOCK_MATH_ENVIRONMENTS = {
 }
 
 
+_DISPLAY_MATH_PATTERN = re.compile(r"^\\\[\s*(.*?)\s*\\\]\s*$", re.DOTALL)
+
+
 def _payload_is_block_environment(payload: str) -> bool:
     stripped = payload.lstrip()
     match = re.match(r"\\begin\{([^}]+)\}", stripped)
     return bool(match and match.group(1).lower() in _BLOCK_MATH_ENVIRONMENTS)
+
+
+@renders(phase=RenderPhase.POST, priority=5, name="inline_code_fallback", auto_mark=False)
+def render_inline_code_fallback(root: Tag, context: RenderContext) -> None:
+    """Convert lingering inline code nodes that escaped the PRE phase."""
+    for code in list(root.find_all("code")):
+        if code.find_parent("pre"):
+            continue
+        if context.is_processed(code):
+            continue
+        render_inline_code(code, context)

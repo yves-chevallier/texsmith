@@ -9,6 +9,7 @@ from .base import WrappableTemplate
 
 _BUILTIN_FACTORIES: dict[str, str] = {
     "article": "texsmith.builtin_templates.article:Template",
+    "book": "texsmith.builtin_templates.book:Template",
     "letter": "texsmith.builtin_templates.letter:Template",
 }
 
