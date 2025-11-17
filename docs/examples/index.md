@@ -10,24 +10,24 @@ Use these projects to verify your toolchain end-to-end. Each section lists prere
 
 ## Scientific Paper
 
-The `examples/scientific-paper` folder converts `cheese.md` + `cheese.bib` into a fully typeset paper with bibliography.
+The `examples/paper` folder converts `cheese.md` + `cheese.bib` into a fully typeset paper with bibliography.
 
 ### Smoke test
 
 ```bash
-cd examples/scientific-paper
+cd examples/paper
 texsmith render cheese.md cheese.bib \
   --template article \
-  --output-dir ../../build/examples/scientific-paper \
+  --output-dir ../../build/examples/paper \
   --build \
   --classic-output
 ```
 
 Expected artefacts:
 
-- `build/examples/scientific-paper/cheese.tex`
-- `build/examples/scientific-paper/cheese.pdf`
-- `build/examples/scientific-paper/output/latexmk.log`
+- `build/examples/paper/cheese.tex`
+- `build/examples/paper/cheese.pdf`
+- `build/examples/paper/output/latexmk.log`
 
 ![Cheese Article](cheese.png)
 

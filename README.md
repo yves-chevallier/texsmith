@@ -81,7 +81,7 @@ Use this command before wiring slots or when you need to confirm which tlmgr pac
 
 The `examples/` directory includes reproducible demos:
 
-- `examples/scientific-paper` – end-to-end render with bibliographies and latexmk.
+- `examples/paper` – end-to-end render with bibliographies and latexmk.
 - `examples/diagrams` – Mermaid and Draw.io conversions.
 - `examples/markdown` – exhaustive Markdown showcase with diagram/front-matter overrides.
 
