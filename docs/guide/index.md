@@ -1,4 +1,5 @@
-# Index Generation {#index}
+[](){ #index }
+# Index Generation
 
 In static site generators like MkDocs, a search based index can be generated
 to help users quickly find content through full-text search. However in printed documents,

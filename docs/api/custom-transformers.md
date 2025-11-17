@@ -84,5 +84,5 @@ control that behaviour:
   `CachedConversionStrategy`.
 - [`texsmith.adapters.handlers.media`](../api/handlers.md) – real-world examples
   of how converters integrate with handlers.
-- [Template Cookbook](../guide/55-template-cookbook.md) – packaging
+- [Template Cookbook](../guide/template-cookbook.md) – packaging
   recommendations so your templates document converter prerequisites.
