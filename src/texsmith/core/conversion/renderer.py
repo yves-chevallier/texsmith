@@ -46,6 +46,9 @@ class TemplateRendererResult:
     template_overrides: dict[str, Any] = field(default_factory=dict)
 
 
+_SOFT_OVERRIDE_KEYS = {"press._source_dir", "press._source_path"}
+
+
 class FragmentOverrideError(TemplateError):
     """Raised when fragment template overrides disagree."""
 
@@ -74,6 +77,8 @@ def _merge_overrides(
             continue
 
         conflict_path = f"{namespace}.{key}" if namespace else key
+        if conflict_path in _SOFT_OVERRIDE_KEYS:
+            continue
         raise FragmentOverrideError(
             f"Conflicting template override for '{conflict_path}': {existing!r} vs {value!r}"
         )
