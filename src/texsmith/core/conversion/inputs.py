@@ -65,10 +65,7 @@ def build_document_context(
     """Construct a document context enriched with metadata and slot requests."""
     metadata = dict(front_matter or {})
     press_section = metadata.get("press")
-    if isinstance(press_section, Mapping):
-        press_payload = dict(press_section)
-    else:
-        press_payload = {}
+    press_payload = dict(press_section) if isinstance(press_section, Mapping) else {}
     press_payload.setdefault("_source_dir", str(source_path.parent))
     press_payload.setdefault("_source_path", str(source_path))
     metadata["press"] = press_payload

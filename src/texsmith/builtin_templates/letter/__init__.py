@@ -4,11 +4,11 @@ from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
-from datetime import date, datetime
+from datetime import UTC, date, datetime, timezone
 from pathlib import Path
-import shutil
 import re
-from typing import Any
+import shutil
+from typing import Any, ClassVar
 
 from texsmith.adapters.latex.utils import escape_latex_chars
 from texsmith.adapters.transformers import svg2pdf
@@ -354,7 +354,7 @@ class Template(WrappableTemplate):
         return re.sub(r"\\thispagestyle\{[^}]+\}\s*", "", payload).strip()
 
     def _extract_body_closing(self, payload: str) -> tuple[str, str | None]:
-        blocks = [block for block in payload.rstrip().split("\n\n")]
+        blocks = list(payload.rstrip().split("\n\n"))
         for index in range(len(blocks) - 1, -1, -1):
             candidate = blocks[index].strip()
             if not candidate:
@@ -371,9 +371,7 @@ class Template(WrappableTemplate):
             return False
         if "\\\\" in candidate or "\\begin" in candidate or "\\end" in candidate:
             return False
-        if len(candidate.split()) > 16:
-            return False
-        return True
+        return not len(candidate.split()) > 16
 
     def _resolve_signature_alignment(self, value: Any) -> str:
         candidate = self._coerce_string(value)
@@ -386,7 +384,7 @@ class Template(WrappableTemplate):
         }
         return mapping.get(key, r"\raggedleft")
 
-    _SIGNATURE_EXTENSIONS = {".pdf", ".png", ".jpg", ".jpeg", ".svg"}
+    _SIGNATURE_EXTENSIONS: ClassVar[set[str]] = {".pdf", ".png", ".jpg", ".jpeg", ".svg"}
 
     def _extract_signature_components(self, value: Any) -> tuple[str | None, str | None]:
         if isinstance(value, Mapping):
@@ -415,10 +413,7 @@ class Template(WrappableTemplate):
         if not path.exists():
             raise TemplateError(f"Signature asset '{path}' does not exist.")
         output_dir = self._coerce_string(context.get("output_dir"))
-        if output_dir:
-            mirrored = self._mirror_signature_asset(path, Path(output_dir))
-        else:
-            mirrored = path
+        mirrored = self._mirror_signature_asset(path, Path(output_dir)) if output_dir else path
         return self._format_latex_path(mirrored)
 
     def _mirror_signature_asset(self, source: Path, output_dir: Path) -> Path:
@@ -469,7 +464,7 @@ class Template(WrappableTemplate):
             formats = ("%Y/%m/%d", "%d/%m/%Y", "%d.%m.%Y", "%m/%d/%Y")
             for fmt in formats:
                 try:
-                    parsed = datetime.strptime(candidate, fmt)
+                    parsed = datetime.strptime(candidate, fmt).replace(tzinfo=UTC)
                     break
                 except ValueError:
                     continue
@@ -478,10 +473,7 @@ class Template(WrappableTemplate):
         return parsed.date()
 
     def _month_name(self, month_index: int, profile: LanguageProfile) -> str:
-        if profile.key.startswith("fr"):
-            names = _FR_MONTHS
-        else:
-            names = _EN_MONTHS
+        names = _FR_MONTHS if profile.key.startswith("fr") else _EN_MONTHS
         if 1 <= month_index <= 12:
             return names[month_index - 1]
         return names[0]
