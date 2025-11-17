@@ -21,7 +21,7 @@ def project_root(monkeypatch: pytest.MonkeyPatch) -> Path:
 
 @pytest.fixture
 def book_template(project_root: Path) -> WrappableTemplate:
-    return load_template(str(project_root / "templates" / "book"))
+    return load_template(str(project_root / "src" / "texsmith" / "builtin_templates" / "book"))
 
 
 @pytest.fixture
@@ -117,7 +117,7 @@ def test_copy_template_assets_materialises_payload(
 
 
 def test_load_template_from_shortcut_path(book_template: WrappableTemplate) -> None:
-    shortcut = load_template("./templates/book")
+    shortcut = load_template("./src/texsmith/builtin_templates/book")
     assert shortcut.info.name == book_template.info.name
     assert shortcut.info.entrypoint == book_template.info.entrypoint
     slug = load_template("book")

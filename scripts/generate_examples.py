@@ -3,12 +3,13 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 import logging
 from pathlib import Path
+import re
 import shutil
 import subprocess
-from typing import Any
+from typing import Any, Callable
 
 
 try:  # pragma: no cover - optional dependency alias
@@ -59,10 +60,44 @@ class ExampleSpec:
     name: str
     source: Path
     build_dir: Path
-    template_options: dict[str, Any]
+    template_options: dict[str, Any] = field(default_factory=dict)
     template: str = "article"
     title_from_heading: bool = False
     persist_debug_html: bool = False
+    bibliography: list[Path] = field(default_factory=list)
+    extra_inputs: list[Path] = field(default_factory=list)
+
+    def input_paths(self) -> list[Path]:
+        """Return the list of inputs tracked for freshness."""
+        unique: list[Path] = []
+        for candidate in [self.source, *self.bibliography, *self.extra_inputs]:
+            if candidate not in unique:
+                unique.append(candidate)
+        return unique
+
+
+@dataclass(frozen=True)
+class CopyTask:
+    """Describe a derived asset that needs snippet escaping or extra copies."""
+
+    source: Path
+    destination: Path
+    transformer: Callable[[Path, Path], None]
+    extra_files: tuple[tuple[Path, Path], ...] = ()
+
+
+def _latest_mtime(paths: list[Path]) -> float:
+    """Return the latest modification time among inputs."""
+    mtimes = [path.stat().st_mtime for path in paths if isinstance(path, Path) and path.exists()]
+    return max(mtimes) if mtimes else 0.0
+
+
+def _needs_render(target: Path, inputs: list[Path]) -> bool:
+    """Return True when target is missing or older than its dependencies."""
+    if not target.exists():
+        return True
+    newest_input = _latest_mtime(inputs)
+    return newest_input > target.stat().st_mtime
 
 
 def _compile_pdf(result: TemplateRenderResult) -> Path:
@@ -89,7 +124,25 @@ def _pdf_to_png(pdf_path: Path, target_path: Path) -> None:
         pixmap.save(target_path)
 
 
+def _sync_png(pdf_path: Path, png_path: Path) -> None:
+    """Ensure the PNG preview matches the PDF timestamp."""
+    if not pdf_path.exists():
+        return
+    if not png_path.exists() or png_path.stat().st_mtime < pdf_path.stat().st_mtime:
+        _pdf_to_png(pdf_path, png_path)
+
+
 def _render_example(spec: ExampleSpec) -> tuple[Path, Path]:
+    DOCS_OUTPUT.mkdir(parents=True, exist_ok=True)
+    target_pdf = DOCS_OUTPUT / f"{spec.name}.pdf"
+    target_png = DOCS_OUTPUT / f"{spec.name}.png"
+    dependencies = spec.input_paths()
+
+    if dependencies and not _needs_render(target_pdf, dependencies):
+        _sync_png(target_pdf, target_png)
+        LOGGER.info("Skipping %s (up-to-date)", spec.name)
+        return target_pdf, target_png
+
     shutil.rmtree(spec.build_dir, ignore_errors=True)
     spec.build_dir.mkdir(parents=True, exist_ok=True)
 
@@ -100,6 +153,7 @@ def _render_example(spec: ExampleSpec) -> tuple[Path, Path]:
         title_from_heading=spec.title_from_heading,
         persist_debug_html=spec.persist_debug_html,
         template_options=spec.template_options,
+        bibliography_files=list(spec.bibliography),
     )
 
     prepared = SERVICE.prepare_documents(request)
@@ -108,13 +162,34 @@ def _render_example(spec: ExampleSpec) -> tuple[Path, Path]:
 
     pdf_path = _compile_pdf(render_result)
 
-    DOCS_OUTPUT.mkdir(parents=True, exist_ok=True)
-    target_pdf = DOCS_OUTPUT / f"{spec.name}.pdf"
-    target_png = DOCS_OUTPUT / f"{spec.name}.png"
-
     shutil.copy2(pdf_path, target_pdf)
     _pdf_to_png(pdf_path, target_png)
     return target_pdf, target_png
+
+
+def _write_snippet_copy(source: Path, destination: Path) -> None:
+    """Copy a Markdown file while escaping snippet markers and orphan footnotes."""
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    pattern = re.compile(r"^([ \t]*)(-+8<-+)")
+    footnote = re.compile(r"^([ \t]*)\[\^([^\]]+)\]:(.*)$")
+    with (
+        source.open("r", encoding="utf-8") as infile,
+        destination.open("w", encoding="utf-8") as outfile,
+    ):
+        for line in infile:
+            if pattern.match(line):
+                outfile.write(pattern.sub(r"\1;\2", line, count=1))
+            elif footnote.match(line):
+                outfile.write(footnote.sub(r"\1;[^\2]:\3", line, count=1))
+            else:
+                outfile.write(line)
+
+
+def _needs_copy(target: Path, dependencies: list[Path]) -> bool:
+    if not target.exists():
+        return True
+    newest = _latest_mtime(dependencies)
+    return newest > target.stat().st_mtime
 
 
 def _build_specs() -> list[ExampleSpec]:
@@ -124,6 +199,10 @@ def _build_specs() -> list[ExampleSpec]:
     admonition_dir = examples_dir / "admonition"
     abbr_dir = examples_dir / "abbr"
     mermaid_dir = examples_dir / "mermaid"
+    booby_dir = examples_dir / "booby"
+    letter_dir = examples_dir / "letter"
+    paper_dir = examples_dir / "paper"
+    dialects_dir = examples_dir / "dialects"
 
     specs: list[ExampleSpec] = [
         ExampleSpec(
@@ -189,6 +268,36 @@ def _build_specs() -> list[ExampleSpec]:
                 "preamble": BORDER_PREAMBLE,
             },
         ),
+        ExampleSpec(
+            name="booby",
+            source=booby_dir / "booby.md",
+            build_dir=booby_dir / "build",
+            template_options={
+                "paper": "a5",
+                "preamble": BORDER_PREAMBLE,
+            },
+        ),
+        ExampleSpec(
+            name="paper",
+            source=paper_dir / "cheese.md",
+            build_dir=paper_dir / "build" / "preview",
+            template="article",
+            title_from_heading=True,
+            bibliography=[paper_dir / "cheese.bib"],
+            template_options={
+                "preamble": BORDER_PREAMBLE,
+            },
+        ),
+        ExampleSpec(
+            name="dialects",
+            source=dialects_dir / "dialects.md",
+            build_dir=dialects_dir / "build" / "preview",
+            template="article",
+            title_from_heading=True,
+            template_options={
+                "preamble": BORDER_PREAMBLE,
+            },
+        ),
     ]
 
     for style in ("fancy", "classic", "minimal"):
@@ -208,7 +317,52 @@ def _build_specs() -> list[ExampleSpec]:
             )
         )
 
+    for layout in ("din", "nf", "sn"):
+        specs.append(
+            ExampleSpec(
+                name=f"letter-{layout}",
+                source=letter_dir / "letter.md",
+                build_dir=letter_dir / "build" / layout,
+                template="letter",
+                title_from_heading=True,
+                template_options={
+                    "preamble": BORDER_PREAMBLE,
+                    "press": {"format": layout},
+                },
+            )
+        )
+
     return specs
+
+
+def _run_copy_tasks(tasks: list[CopyTask]) -> None:
+    for task in tasks:
+        if _needs_copy(task.destination, [task.source]):
+            task.transformer(task.source, task.destination)
+        for extra_source, extra_dest in task.extra_files:
+            extra_dest.parent.mkdir(parents=True, exist_ok=True)
+            if _needs_copy(extra_dest, [extra_source]):
+                shutil.copy2(extra_source, extra_dest)
+
+
+COPY_TASKS = [
+    CopyTask(
+        source=PROJECT_ROOT / "examples" / "paper" / "cheese.md",
+        destination=DOCS_OUTPUT / "cheese.md",
+        transformer=_write_snippet_copy,
+        extra_files=(
+            (
+                PROJECT_ROOT / "examples" / "paper" / "mozzarella.svg",
+                DOCS_OUTPUT / "mozzarella.svg",
+            ),
+        ),
+    ),
+    CopyTask(
+        source=PROJECT_ROOT / "examples" / "dialects" / "dialects.md",
+        destination=DOCS_OUTPUT / "dialects.md",
+        transformer=_write_snippet_copy,
+    ),
+]
 
 
 def main() -> None:
@@ -217,6 +371,7 @@ def main() -> None:
     for spec in specs:
         pdf_path, png_path = _render_example(spec)
         LOGGER.info("Rendered %s: %s, %s", spec.name, pdf_path.name, png_path.name)
+    _run_copy_tasks(COPY_TASKS)
 
 
 if __name__ == "__main__":

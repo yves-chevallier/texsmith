@@ -1,55 +1,5 @@
 # Devel Notes
 
-## 2025 architecture recap
-
-- Core engine lives under `texsmith.core`. The old `texsmith.domain.*` modules are gone; compatibility wrappers forward to the new package.
-- `ConversionService` is the single orchestration entry point. It accepts a `ConversionRequest`, materialises document bundles via `prepare_documents()`, and runs the pipeline with `execute()`, returning a `ConversionResponse`.
-- `TemplateRenderer` owns slot aggregation, bibliography emission, and LaTeX assembly. `TemplateSession` now just manages runtime state (options, registered documents, bibliography files) before delegating to the renderer.
-- `DocumentSlots` unifies slot directives from front matter, CLI flags, and programmatic overrides. Any consumer can merge directives through the same API.
-- `DiagnosticEmitter` replaces the loose callback bag. Pass `CliEmitter` in the CLI, use `NullEmitter` in tests, or implement your own to capture warnings/events in other integrations.
-
-### Working with `ConversionService`
-
-```python
-from pathlib import Path
-
-from texsmith.api.service import ConversionRequest, ConversionService
-
-service = ConversionService()
-request = ConversionRequest(
-    documents=[Path("index.html")],
-    template="article",
-    render_dir=Path("build"),
-    emitter=None,  # defaults to NullEmitter
-)
-prepared = service.prepare_documents(request)
-response = service.execute(request, prepared=prepared)
-
-assert response.render_result is not None
-```
-
-`ConversionResponse` includes the render result, merged diagnostics, and the resolved slot map for downstream processing.
-
-### Template responsibilities
-
-- `TemplateSession`: holds runtime objects, exposes option APIs, tracks registered documents/bibliography files, and prepares `ConversionRequest`.
-- `TemplateRenderer`: consumes a `TemplateRuntime` plus a `ConversionBundle`, aggregates slots through `DocumentSlots`, renders LaTeX once, and returns structured results (slots, bibliography metadata, state).
-
-### Diagnostics pipeline
-
-- `DiagnosticEmitter.warning()` and `.error()` drive CLI output and optional debug raises.
-- `DiagnosticEmitter.event()` records structured payloads (CLI renders them in the diagnostics panel).
-- Provide a custom emitter in automation to capture or suppress output deterministically.
-
-## Local automation
-
-- `scripts/check_docs.sh` runs `mkdocs build --strict` with the project’s `UV_CACHE_DIR`.
-  Execute it before pushing doc updates to catch missing nav entries or warnings.
-- `scripts/run_example_smoke_tests.sh` renders every project under `examples/`
-  with the bundled `article` template and reports the output directory. Run it
-  locally (or in CI) to ensure diagrams, bibliographies, and template assets
-  still compile.
-
 ## TO-DO
 
 ### TeXSmith Core
@@ -102,6 +52,9 @@ reference the canonical module to avoid extra indirection.
 - [x] Noto Color Emoji ou {\fontspec{Symbola}\char"1F343} couleur ou nb
 - [x] Make all examples build
 - [x] Écrire documentation
+- [ ] Fix or test __text__ in admonition.
+- [ ] Do not require --shell-escape if minted is not used (no code or inline)
+- [ ] Update dynamically in the latexmkrc the used engine (pdflatex, xelatex, lualatex)
 - [ ] Base letter template on koma scrlttr2 adjust country-specific settings
 - [ ] Add article template as "default" template part of TeXSmith
 - [ ] Support for glossaries (glossaries package)
@@ -537,3 +490,69 @@ and store the `.tex` asset alongside your Markdown.
   transformers are installed before invoking `texsmith render --build`.
 - Combine diagrams with the `figure` slot of your template for consistent
   placement and captions.
+
+
+- [ ] Share benefits Microsoft 365 with Flo?
+
+----
+
+!!! note
+
+    Underline would have been more naturally represented with double underscores `__text__` but that syntax
+    is historically already taken by bold in standard Markdown. Hence the choice of carets from PyMdownX
+    extensions.
+
+---
+
+Modules can inject, extend, and re-define functionality
+Modules are deterministic through topological ordering
+Modules foster reusability, with the possibility to remix them
+Modules can cooperate through well-defined contracts
+
+----
+
+Goal is to automatically convert Markdown table into latex tables with automatic break.
+
+- Table allow break inside column in tables when table too wide.
+
+----
+
+Integrate book template into mkdocs:
+- Remove HEIG-VD reference
+- Remove cover page not necessary
+- Use classic admonitions
+- Use noto for code
+- Choose serif/noserif for the font
+- Inherit code configuration from article reduce arc in code, reduce thickness of frame
+- Use default mermaid config (no color) which is not the case with the template
+- Do not use french style
+- Build mkdocs using parts as level0
+- Do not show list of table if no tables
+----
+
+Reduce line height for code when have Unicode boxchars.
+
+----
+
+Style for inserted text ugly (green very round, see Formatting inserted text.
+
+----
+
+{~~deleted text~~} not rendered properly, curly brace kept.
+----
+
+TeXSmith mkdocs do not resolve hyperlinks in other pages for instance the :
+
+[High-Level Workflows](api/high-level.md)
+
+Is resolved as : the \ref{snippet:... is not defined anywhere.
+
+For a deeper dive, start with High-Level Workflows \ref{snippet:1e3d017478b3bcb5fa151c3d783935d265bf00e8ba4066b23115acad60dc817b} and move
+
+Fixed with \ref instead of something else. Build but don't work.
+----
+
+Issue with scientific paper cheese. code closed to early after snippet.
+
+----
+

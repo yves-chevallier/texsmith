@@ -50,3 +50,36 @@ def test_local_file_link_registers_snippet(renderer: LaTeXRenderer) -> None:
         assert payload["path"] == snippet_file.resolve()
         assert payload["content"] == snippet_file.read_bytes()
         assert reference_key in latex
+
+
+def test_local_html_link_becomes_reference(renderer: LaTeXRenderer, tmp_path: Path) -> None:
+    source_dir = tmp_path
+    target_dir = source_dir / "api" / "high-level"
+    target_dir.mkdir(parents=True)
+    target_html = target_dir / "index.html"
+    target_html.write_text('<h1 id="high-level-workflows">High Level</h1>', encoding="utf-8")
+
+    html = '<p>See <a href="api/high-level/">High-Level Workflows</a>.</p>'
+    latex = renderer.render(
+        html,
+        runtime={"document_path": source_dir / "index.html", "source_dir": source_dir},
+    )
+    assert "\\ref{high-level-workflows}" in latex
+
+
+def test_local_html_fragment_preserved(renderer: LaTeXRenderer, tmp_path: Path) -> None:
+    source_dir = tmp_path
+    target_dir = source_dir / "api" / "core"
+    target_dir.mkdir(parents=True)
+    target_html = target_dir / "index.html"
+    target_html.write_text(
+        '<h1 id="core-engine">Core engine</h1><h2 id="domvisitor">DOM</h2>',
+        encoding="utf-8",
+    )
+
+    html = '<p><a href="api/core/#domvisitor">_DOMVisitor</a></p>'
+    latex = renderer.render(
+        html,
+        runtime={"document_path": source_dir / "index.html", "source_dir": source_dir},
+    )
+    assert "\\ref{domvisitor}" in latex

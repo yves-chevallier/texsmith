@@ -2,10 +2,12 @@
 
 from __future__ import annotations
 
+from functools import lru_cache
 from hashlib import sha256
 from pathlib import Path
 from urllib.parse import urlparse
 
+from bs4 import BeautifulSoup
 from bs4.element import NavigableString, Tag
 from requests.utils import requote_uri as requote_url
 
@@ -13,6 +15,7 @@ from texsmith.core.context import RenderContext
 from texsmith.core.exceptions import AssetMissingError, InvalidNodeError
 from texsmith.core.rules import RenderPhase, renders
 
+from ..markdown import DEFAULT_MARKDOWN_EXTENSIONS, render_markdown
 from ..latex.utils import escape_latex_chars
 from ._helpers import coerce_attribute, mark_processed, resolve_asset_path
 
@@ -25,6 +28,9 @@ def _coerce_existing_path(candidate: Path) -> Path | None:
         index_file = candidate / "index.md"
         if index_file.exists():
             return index_file.resolve()
+        html_index = candidate / "index.html"
+        if html_index.exists():
+            return html_index.resolve()
     return None
 
 
@@ -57,14 +63,19 @@ def _iter_local_href_candidates(href: str) -> list[str]:
         stripped = trimmed.rstrip("/")
         add_candidate(stripped)
         add_candidate(f"{trimmed}index.md")
+        add_candidate(f"{trimmed}index.html")
         if stripped:
             add_candidate(f"{stripped}/index.md")
+            add_candidate(f"{stripped}/index.html")
             add_candidate(f"{stripped}.md")
+            add_candidate(f"{stripped}.html")
     else:
         suffix = Path(trimmed).suffix
         if not suffix:
             add_candidate(f"{trimmed}.md")
+            add_candidate(f"{trimmed}.html")
             add_candidate(f"{trimmed}/index.md")
+            add_candidate(f"{trimmed}/index.html")
 
     return candidates
 
@@ -153,6 +164,7 @@ def render_links(element: Tag, context: RenderContext) -> None:
 
     parsed_href = urlparse(href)
     scheme = (parsed_href.scheme or "").lower()
+    fragment = parsed_href.fragment.strip() if parsed_href.fragment else ""
 
     if scheme in {"http", "https"}:
         latex = context.formatter.href(text=text, url=requote_url(href))
@@ -166,20 +178,62 @@ def render_links(element: Tag, context: RenderContext) -> None:
         resolved = _resolve_local_target(context, href)
         if resolved is None:
             raise AssetMissingError(f"Unable to resolve link target '{href}'")
-        content = resolved.read_bytes()
-        digest = sha256(content).hexdigest()
-        reference = f"snippet:{digest}"
-        context.state.register_snippet(
-            reference,
-            {
-                "path": resolved,
-                "content": content,
-                "format": resolved.suffix[1:] if resolved.suffix else "",
-            },
-        )
-        latex = context.formatter.ref(text or "extrait", ref=reference)
+        target_ref = fragment or _infer_heading_reference(resolved)
+        if target_ref:
+            latex = context.formatter.ref(text or "", ref=target_ref)
+        else:
+            content = resolved.read_bytes()
+            digest = sha256(content).hexdigest()
+            reference = f"snippet:{digest}"
+            context.state.register_snippet(
+                reference,
+                {
+                    "path": resolved,
+                    "content": content,
+                    "format": resolved.suffix[1:] if resolved.suffix else "",
+                },
+            )
+            latex = context.formatter.ref(text or "extrait", ref=reference)
     else:
         legacy_latex_accents = getattr(context.config, "legacy_latex_accents", False)
         latex = escape_latex_chars(text, legacy_accents=legacy_latex_accents)
 
     element.replace_with(mark_processed(NavigableString(latex)))
+
+
+_HEADING_TAGS = ("h1", "h2", "h3", "h4", "h5", "h6")
+_HTML_EXTENSIONS = {".html", ".htm"}
+_MARKDOWN_EXTENSIONS = {".md", ".markdown", ".mkd", ".mkdn"}
+
+
+@lru_cache(maxsize=256)
+def _extract_primary_heading(path: str) -> str | None:
+    candidate = Path(path)
+    suffix = candidate.suffix.lower()
+    try:
+        payload = candidate.read_text(encoding="utf-8")
+    except (OSError, UnicodeDecodeError):
+        return None
+
+    if suffix in _HTML_EXTENSIONS:
+        soup = BeautifulSoup(payload, "html.parser")
+    elif suffix in _MARKDOWN_EXTENSIONS:
+        document = render_markdown(
+            payload,
+            extensions=DEFAULT_MARKDOWN_EXTENSIONS,
+            base_path=candidate.parent,
+        )
+        soup = BeautifulSoup(document.html, "html.parser")
+    else:
+        return None
+
+    heading = soup.find(_HEADING_TAGS, id=True)
+    if heading is None:
+        return None
+    identifier = heading.get("id")
+    return identifier or None
+
+
+def _infer_heading_reference(path: Path) -> str | None:
+    reference = _extract_primary_heading(str(path.resolve()))
+    return reference

@@ -1,3 +1,5 @@
+"""Book template integration for TeXSmith."""
+
 from pathlib import Path
 
 from texsmith.core.templates import TemplateError, WrappableTemplate

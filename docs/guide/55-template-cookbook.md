@@ -1,6 +1,6 @@
 # Template Cookbook
 
-This cookbook collects repeatable patterns for building and iterating on TeXSmith templates. Use it in combination with the [Templates primer](templates.md) when you need concrete commands or Jinja snippets.
+This cookbook collects repeatable patterns for building and iterating on TeXSmith templates. Use it in combination with the [Templates primer](50-templates.md) when you need concrete commands or Jinja snippets.
 
 ## Clone a starter and rename it
 
@@ -89,6 +89,6 @@ Assets are copied to the render directory. Combine this with `latexmkrc` options
 
 ## Further reading
 
-- [Templates primer](templates.md) – attribute schema, manifest format, and slot mechanics.
+- [Templates primer](50-templates.md) – attribute schema, manifest format, and slot mechanics.
 - [API High-Level Workflows](../api/high-level.md) – use `ConversionService` to assemble slots programmatically.
-- [Troubleshooting](troubleshooting.md) – debugging latexmk, shell-escape, and bibliography issues once your template ships.
+- [Troubleshooting](80-troubleshooting.md) – debugging latexmk, shell-escape, and bibliography issues once your template ships.

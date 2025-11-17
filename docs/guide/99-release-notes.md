@@ -15,7 +15,7 @@ Future releases will append to this table with new features, migration notes, an
 | Template | Version | TeX Live year | Shell escape | Key `tlmgr` packages | Notes |
 | -------- | ------- | ------------- | ------------ | -------------------- | ----- |
 | `article` | 0.1.0 | 2023 | Required (minted) | `babel`, `geometry`, `hyperref`, `microtype`, `lmodern`, `textcomp`, `fontspec`, `biblatex` | Provides `mainmatter` + `abstract` slots, ships custom `.latexmkrc` with minted settings. |
-| `book` | 0.1.0 | 2023 | Required (minted) | `babel`, `babel-french`, `csquotes`, `fontspec`, `fancyvrb`, `geometry`, `hyperref`, `longtable`, `microtype`, `titlesec`, `titletoc`, `xcolor`, `xunicode` | Adds chapter-aware slots (`frontmatter`, `mainmatter`, `appendix`), bilingual babel defaults. |
+| `book` | 0.2.0 | 2023 | Required (minted) | `babel`, `babel-french`, `csquotes`, `fontspec`, `fancyvrb`, `geometry`, `hyperref`, `longtable`, `microtype`, `titlesec`, `titletoc`, `xcolor`, `xunicode` | Adds chapter-aware slots (`frontmatter`, `mainmatter`, `appendix`), reuses shared callouts/utility styles, ships cover assets. |
 
 To inspect third-party or local templates, run:
 

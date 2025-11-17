@@ -78,6 +78,44 @@ def test_definition_list_rendering(renderer: LaTeXRenderer) -> None:
     assert "\\item[Banana] Yellow" in latex
 
 
+def test_description_list_preserves_code(renderer: LaTeXRenderer) -> None:
+    html = """
+    <dl>
+        <dt><code>DoiBibliographyFetcher</code> encapsulates remote lookups.</dt>
+        <dd><code>bibliography_data_from_string</code> converts to <code>BibliographyData</code>.</dd>
+    </dl>
+    """
+    latex = renderer.render(html)
+    assert "\\texttt{DoiBibliographyFetcher}" in latex
+    assert "\\texttt{bibliography\\_data\\_from\\_string}" in latex
+    assert "\\texttt{BibliographyData}" in latex
+
+
+def test_highlight_block_nested_in_doc_container(renderer: LaTeXRenderer) -> None:
+    html = """
+    <div class="doc doc-contents first">
+        <div class="highlight">
+            <pre><span></span><code><span class="gp">&gt;&gt;&gt; </span>print("hi")</code></pre>
+        </div>
+    </div>
+    """
+    latex = renderer.render(html)
+    assert "\\begin{code}" in latex
+    assert '>>> print("hi")' in latex
+
+
+def test_inline_code_in_doc_container(renderer: LaTeXRenderer) -> None:
+    html = """
+    <div class="doc doc-contents first">
+        <p>This module uses <code>@renders</code> macros.</p>
+        <p>:class:<code>_DOMVisitor</code> to apply handlers.</p>
+    </div>
+    """
+    latex = renderer.render(html)
+    assert "\\texttt{@renders}" in latex
+    assert "\\texttt{\\_DOMVisitor}" in latex
+
+
 def test_empty_description_list_dropped(renderer: LaTeXRenderer) -> None:
     html = "<dl><dt></dt><dd></dd></dl>"
     with pytest.warns(UserWarning, match="Discarding empty description list"):
@@ -229,6 +267,13 @@ def test_arithmatex_block_preserved(renderer: LaTeXRenderer) -> None:
     html = '<div class="arithmatex">$$\nE = mc^2\n$$</div>'
     latex = renderer.render(html)
     assert "$$\nE = mc^2\n$$" in latex
+
+
+def test_arithmatex_block_align_unwrapped(renderer: LaTeXRenderer) -> None:
+    html = '<div class="arithmatex">\\[\n\\begin{align*}\nE &= mc^2\n\\end{align*}\n\\]</div>'
+    latex = renderer.render(html)
+    assert "\\begin{align*}" in latex
+    assert "\\[" not in latex
 
 
 def test_hidden_latex_block(renderer: LaTeXRenderer) -> None:

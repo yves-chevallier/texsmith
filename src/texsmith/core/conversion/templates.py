@@ -130,6 +130,8 @@ def build_binder_context(
     press_section = template_overrides.get("press")
     if isinstance(press_section, dict):
         press_section.setdefault("language", resolved_language)
+    template_overrides["source_dir"] = str(document_context.source_path.parent)
+    template_overrides["output_dir"] = str(output_dir)
 
     active_slot_requests: dict[str, str] = {}
     binding: TemplateBinding | None = None
@@ -289,9 +291,7 @@ def extract_slot_fragments(
     else:
         remainder_html = "".join(str(node) for node in container.contents)
 
-    remainder_position = (
-        max(fragment.position for fragment in fragments) + 1 if fragments else 0
-    )
+    remainder_position = max(fragment.position for fragment in fragments) + 1 if fragments else 0
 
     fragments.append(
         SlotFragment(name=default_slot, html=remainder_html, position=remainder_position)

@@ -65,7 +65,7 @@ press:
 
 The following admonition types are built into the `admonition` extension:
 
-!!! note 
+!!! note
     A Note
 
 !!! tip
@@ -74,16 +74,13 @@ The following admonition types are built into the `admonition` extension:
 !!! warning
     A Warning
 
-!!! caution
-    A Caution
-
 !!! important
     An Important notice
 
 !!! danger
     A Danger notice
 
-!!! info   
+!!! info
     An Info notice
 
 !!! hint
@@ -97,6 +94,3 @@ The following admonition types are built into the `admonition` extension:
 
 !!! abstract
     An Abstract
-
-!!! summary
-    A Summary

@@ -13,6 +13,15 @@ def test_template_slug_resolves_from_nested_directory(monkeypatch: pytest.Monkey
     assert runtime.name == "article"
 
 
+def test_template_slug_ignores_manifestless_directories(monkeypatch: pytest.MonkeyPatch) -> None:
+    nested = Path("examples/letter")
+    monkeypatch.chdir(nested)
+
+    runtime = load_template_runtime("letter")
+    assert runtime.instance.root != nested.resolve()
+    assert runtime.name in {"letter", "formal-letter"}
+
+
 def test_template_infers_templates_folder_when_path_missing(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
