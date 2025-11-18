@@ -7,9 +7,28 @@
   --md-code-font: "Noto Sans Mono", monospace;
 }
 
+[data-md-color-scheme="slate"] {
+  --md-typeset-a-color: #86c5ff;
+  --md-typeset-a-color--hover: #b3dcff;
+}
+
 .md-typeset code {
   line-height: 1.25;
 }
+
+/* Reduce size of code copy button to better fit the code font size */
+.md-code__button {
+  font-size: 0.8em;
+}
+
+/* Adjust the size of view/edit icons (eye/pencil)
+   Default value is too big, it is not elegant
+*/
+.md-content__button svg {
+  width: 18px;
+  padding-top: 9px;
+}
+
 
 .md-typeset .headerlink {
   font-size: 0.7em;
