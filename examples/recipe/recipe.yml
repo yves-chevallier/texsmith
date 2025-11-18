@@ -1,0 +1,114 @@
+time:
+  total: 140
+  preparation: 50
+  cooking: 40
+steps:
+  - instructions:
+      - Préparer le moule
+  - title: Pâte sablée
+    steps:
+      - ingredients:
+          - quantity:
+              amount: 150
+              unit: g
+            name: farine
+          - quantity:
+              amount: 100
+              unit: g
+            name: sucre
+          - quantity:
+            amount: 1
+            unit: pinch
+            name: sel
+        instructions:
+          - mettre dans un saladier
+      - ingredients:
+          - quantity:
+              amount: 100
+              unit: g
+            name: beurre froid
+        instructions:
+          - couper en morceaux, ajouter
+          - travailler soigneusement à la main jusqu'à ce que la préparation soir friable
+      - ingredients:
+          - quantity:
+              amount: 1
+              unit:
+            name: œuf
+        instructions:
+          - ajouter
+          - travailler rapidement à la main, ne pas pétrir
+          - couvrir et mettre au réfrigérateur 30 minutes
+        time:
+          regrigeration: 30
+  - title: Farce
+    steps:
+      - ingredients:
+          name: noix
+          quantity:
+            amount: 130
+            unit: g
+        instructions:
+          - hacher grossièrement, réserver
+      - ingredients:
+          - quantity:
+              amount: 100
+              unit: g
+            name: sucre
+          - quantity:
+              amount: 2
+              unit: cs
+            name: eau
+        instructions:
+          - verser dans une grande casserole
+          - chauffer à feu très vif, jusqu'à ce que le sucre se dissolve
+          - revenir à feu vif
+          - tourner légèrement la casserole
+          - faire caraméliser le sucre sans remuer jusqu'à ce qu'il devienne noisette
+          - retirer la casserole du feu
+      - ingredients:
+          - quantity:
+              amount: 1.25
+              unit: dl
+            name: crème entière
+        instructions:
+          - ajouter, mélanger à la cuillère de cuisine
+          - réchauffer à petit feu en remuant jusqu'à ce que le caramel soit dissous, porter à ébullition env. 10 min.
+        time:
+          cooking: 10
+      - ingredients:
+          name: miel liquide
+          quantity:
+            amount: 1.5
+            unit: cs
+        instructions:
+          - ajouter, mélanger, laisser refroidir
+  - title: Assemblage
+    steps:
+      - ingredients:
+          - name: farine
+            quantity:
+              text: un peu
+        instructions:
+          - partager la pâte en 3 portions régulières
+          - étaler 1 portion de pâte en un cercle d'environ 4 mm d'épaisseur avec un rouleau à pâtisserie sur un peu de farine
+          - poser dans le moule préparé
+          - piquer avec une fourchette
+      - ingredients:
+          - name: farine
+            quantity:
+              text: un peu
+        instructions:
+          - former 1 rouleau avec 1 portion de pâte
+          - appuyer sur les bords du moule jusqu'à obtenir un bord d'environ 4 cm de hauteur
+      - ingredients:
+          - step: Farce
+        instructions:
+          - répartir sur le fond de pâte
+          - replier le bord qui dépasse sur la farce
+          - étaler 1 portion de pâte en un cercle d'environ 4 mm d'épaisseur avec un rouleau à patisserie sur un peu de farine
+          - poser sur la farce
+          - piquer avec une fourchette
+          - cuire dans le bas du four, 200°C, 40-50 min.
+        time:
+          cooking: 40
