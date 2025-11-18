@@ -4,6 +4,19 @@ TeXSmith include a built-in letter template based on the KOMA-Script `scrlttr2` 
 three examples of letters formatted according to different national standards: DIN (Germany),
 SN (Switzerland), and NF (France).
 
+=== "DIN (Germany)"
+
+    [![DIN](../assets/examples/letter-din.png){width=60%}](../assets/examples/letter-din.pdf)
+
+=== "SN (Switzerland)"
+
+    [![SN](../assets/examples/letter-sn.png){width=60%}](../assets/examples/letter-sn.pdf)
+
+=== "NF (France)"
+
+    [![NF](../assets/examples/letter-nf.png){width=60%}](../assets/examples/letter-nf.pdf)
+
+
 ```markdown
 --8<--- "examples/letter/letter.md"
 ```
@@ -16,14 +29,3 @@ texsmith render letter.md --build -aformat sn  # for SN format
 texsmith render letter.md --build -aformat nf  # for NF format
 ```
 
-=== "DIN (Germany)"
-
-    [![DIN](../assets/examples/letter-din.png){width=60%}](../assets/examples/letter-din.pdf)
-
-=== "SN (Switzerland)"
-
-    [![SN](../assets/examples/letter-sn.png){width=60%}](../assets/examples/letter-sn.pdf)
-
-=== "NF (France)"
-
-    [![NF](../assets/examples/letter-nf.png){width=60%}](../assets/examples/letter-nf.pdf)

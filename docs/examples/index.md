@@ -2,6 +2,8 @@
 
 Use these projects to verify your toolchain end-to-end. Each section lists prerequisites, the smoke-test command, and the expected artefacts. When wiring CI, reproduce the same commands (plus `--classic-output` if you prefer deterministic logs).
 
+TeXSmith templates are fully customisable: clone one, tweak the manifest, and redefine every slot to match your own layout. You can introduce bespoke page geometries, add new slot names, and ship extra assets so Markdown sections drop exactly where you need them.
+
 ## Prerequisites
 
 - Use the built-in `article` template (`-tarticle`) or point to a custom template.
@@ -31,19 +33,9 @@ Expected artefacts:
 
 ![Cheese Article](cheese.png)
 
-## Diagrams
-
-`examples/diagrams` demonstrates Mermaid and Draw.io rendering.
-
-Expected artefacts include rendered diagram PDFs (requires Docker) plus `diagrams.pdf`.
-
-![Diagram Example](diagrams.png)
-
 ## Markdown Feature Showcase
 
 `examples/markdown/features.md` exercises Markdown extensions and custom front-matter overrides.
-
-
 
 Use this example to catch regressions in renderer handlers, typography tweaks, and bibliography overrides.
 
@@ -52,3 +44,4 @@ Use this example to catch regressions in renderer handlers, typography tweaks, a
 Run `scripts/run_example_smoke_tests.sh` from the repository root to execute all
 commands sequentially and collect outputs under `build/examples-smoke/`. Wire
 the script into CI to keep diagrams and bibliographies green.
+

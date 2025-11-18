@@ -16,10 +16,14 @@
 \pagestyle{empty}
 
 \BLOCK{ set squares = [
-  {"slot": "nw", "origin": "0,0", "center": "5,5", "label": "NW", "content": nw, "color": colors.nw},
-  {"slot": "ne", "origin": "10,0", "center": "15,5", "label": "NE", "content": ne, "color": colors.ne},
-  {"slot": "sw", "origin": "0,10", "center": "5,15", "label": "SW", "content": sw, "color": colors.sw},
-  {"slot": "se", "origin": "10,10", "center": "15,15", "label": "SE", "content": se, "color": colors.se},
+  {"slot": "nw", "origin": "0,0", "center": "5,5",
+   "label": "NW", "content": nw, "color": colors.nw},
+  {"slot": "ne", "origin": "10,0", "center": "15,5",
+   "label": "NE", "content": ne, "color": colors.ne},
+  {"slot": "sw", "origin": "0,10", "center": "5,15",
+   "label": "SW", "content": sw, "color": colors.sw},
+  {"slot": "se", "origin": "10,10", "center": "15,15",
+   "label": "SE", "content": se, "color": colors.se},
 ] }
 
 \begin{document}
@@ -43,7 +47,8 @@
   \fill[\VAR{color_name}] ($(SW)+(\VAR{square.origin})$) rectangle ++(10,10);
   \node[text=white,font=\bfseries\Large,align=center]
   at ($(SW)+(\VAR{square.center})$)
-  {\parbox{\boxwidth}{\VAR{square.content|default('Slot ' ~ square.label, true)|trim}}};
+  {\parbox{\boxwidth}{%
+    \VAR{square.content|default('Slot ' ~ square.label, true)|trim}}};
   \BLOCK{ endfor }
 \end{tikzpicture}
 \end{document}
