@@ -199,10 +199,12 @@ def _build_specs() -> list[ExampleSpec]:
     admonition_dir = examples_dir / "admonition"
     abbr_dir = examples_dir / "abbr"
     mermaid_dir = examples_dir / "mermaid"
+    diagrams_dir = examples_dir / "diagrams"
     booby_dir = examples_dir / "booby"
     letter_dir = examples_dir / "letter"
     paper_dir = examples_dir / "paper"
     dialects_dir = examples_dir / "dialects"
+    colorful_dir = examples_dir / "colorful"
 
     specs: list[ExampleSpec] = [
         ExampleSpec(
@@ -278,6 +280,19 @@ def _build_specs() -> list[ExampleSpec]:
             },
         ),
         ExampleSpec(
+            name="diagrams",
+            source=diagrams_dir / "diagrams.md",
+            build_dir=diagrams_dir / "build",
+            template_options={
+                "paper": "a5",
+                "orientation": "landscape",
+                "margin": "1cm",
+                "page_numbers": False,
+                "preamble": BORDER_PREAMBLE,
+            },
+            extra_inputs=[diagrams_dir / "pgcd.drawio"],
+        ),
+        ExampleSpec(
             name="paper",
             source=paper_dir / "cheese.md",
             build_dir=paper_dir / "build" / "preview",
@@ -297,6 +312,16 @@ def _build_specs() -> list[ExampleSpec]:
             template_options={
                 "preamble": BORDER_PREAMBLE,
             },
+        ),
+        ExampleSpec(
+            name="colorful",
+            source=colorful_dir / "colorful.md",
+            build_dir=colorful_dir / "build",
+            template=str(colorful_dir / "template"),
+            extra_inputs=[
+                colorful_dir / "template" / "manifest.toml",
+                colorful_dir / "template" / "template" / "template.tex",
+            ],
         ),
     ]
 

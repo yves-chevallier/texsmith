@@ -17,8 +17,13 @@ tlmgr_packages = [
 
 [latex.template.attributes.colors]
 type = "mapping"
-default = { nw = "strongpink", ne = "strongyellow", sw = "stronggreen", se = "strongblue" }
 sources = ["press.colors", "colors"]
+
+[latex.template.attributes.colors.default]
+nw = "strongpink"
+ne = "strongyellow"
+sw = "stronggreen"
+se = "strongblue"
 
 [latex.template.slots.nw]
 default = true
