@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+import contextlib
 import logging
 from pathlib import Path
 import re
@@ -26,6 +27,7 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 DOCS_OUTPUT = PROJECT_ROOT / "docs" / "assets" / "examples"
 SERVICE = ConversionService()
 LOGGER = logging.getLogger(__name__)
+MAGENTA = "#FF00FF"
 
 BORDER_PREAMBLE = r"""
 \usepackage{tikz}
@@ -66,6 +68,8 @@ class ExampleSpec:
     persist_debug_html: bool = False
     bibliography: list[Path] = field(default_factory=list)
     extra_inputs: list[Path] = field(default_factory=list)
+    preview_page: int = 0
+    transparent_border: bool = False
 
     def input_paths(self) -> list[Path]:
         """Return the list of inputs tracked for freshness."""
@@ -117,19 +121,80 @@ def _compile_pdf(result: TemplateRenderResult) -> Path:
     return result.main_tex_path.with_suffix(".pdf")
 
 
-def _pdf_to_png(pdf_path: Path, target_path: Path) -> None:
+def _preview_meta_path(png_path: Path) -> Path:
+    return png_path.with_suffix(png_path.suffix + ".meta")
+
+
+def _write_preview_meta(png_path: Path, page_index: int) -> None:
+    meta_path = _preview_meta_path(png_path)
+    meta_path.write_text(str(page_index), encoding="utf-8")
+
+
+def _read_preview_meta(png_path: Path) -> int | None:
+    meta_path = _preview_meta_path(png_path)
+    try:
+        return int(meta_path.read_text(encoding="utf-8").strip())
+    except (FileNotFoundError, ValueError):
+        return None
+
+
+def _pdf_to_png(pdf_path: Path, target_path: Path, *, page_index: int = 0) -> None:
     with fitz.open(pdf_path) as document:
-        page = document.load_page(0)
+        index = max(0, min(page_index, document.page_count - 1))
+        page = document.load_page(index)
         pixmap = page.get_pixmap(dpi=200)
         pixmap.save(target_path)
+    _write_preview_meta(target_path, index)
 
 
-def _sync_png(pdf_path: Path, png_path: Path) -> None:
+def _sync_png(pdf_path: Path, png_path: Path, *, page_index: int = 0) -> None:
     """Ensure the PNG preview matches the PDF timestamp."""
     if not pdf_path.exists():
         return
-    if not png_path.exists() or png_path.stat().st_mtime < pdf_path.stat().st_mtime:
-        _pdf_to_png(pdf_path, png_path)
+    recorded_index = _read_preview_meta(png_path)
+    needs_refresh = recorded_index is None or recorded_index != page_index
+    if (
+        needs_refresh
+        or not png_path.exists()
+        or png_path.stat().st_mtime < pdf_path.stat().st_mtime
+    ):
+        _pdf_to_png(pdf_path, png_path, page_index=page_index)
+
+
+def _apply_transparent_border(png_path: Path) -> None:
+    """Flood-fill the outer background to transparent."""
+    convert_path = shutil.which("convert")
+    if convert_path is None:
+        LOGGER.warning("ImageMagick 'convert' not found; skipping transparency for %s", png_path)
+        return
+
+    filled = png_path.with_suffix(".filled.png")
+    try:
+        subprocess.run(
+            [
+                convert_path,
+                str(png_path),
+                "-fill",
+                MAGENTA,
+                "-draw",
+                "color 1,1 floodfill",
+                str(filled),
+            ],
+            check=True,
+        )
+        subprocess.run(
+            [
+                convert_path,
+                str(filled),
+                "-transparent",
+                MAGENTA,
+                str(png_path),
+            ],
+            check=True,
+        )
+    finally:
+        with contextlib.suppress(FileNotFoundError):
+            filled.unlink()
 
 
 def _render_example(spec: ExampleSpec) -> tuple[Path, Path]:
@@ -139,7 +204,7 @@ def _render_example(spec: ExampleSpec) -> tuple[Path, Path]:
     dependencies = spec.input_paths()
 
     if dependencies and not _needs_render(target_pdf, dependencies):
-        _sync_png(target_pdf, target_png)
+        _sync_png(target_pdf, target_png, page_index=spec.preview_page)
         LOGGER.info("Skipping %s (up-to-date)", spec.name)
         return target_pdf, target_png
 
@@ -163,7 +228,9 @@ def _render_example(spec: ExampleSpec) -> tuple[Path, Path]:
     pdf_path = _compile_pdf(render_result)
 
     shutil.copy2(pdf_path, target_pdf)
-    _pdf_to_png(pdf_path, target_png)
+    _pdf_to_png(pdf_path, target_png, page_index=spec.preview_page)
+    if spec.transparent_border:
+        _apply_transparent_border(target_png)
     return target_pdf, target_png
 
 
@@ -218,6 +285,7 @@ def _build_specs() -> list[ExampleSpec]:
                 "page_numbers": False,
                 "preamble": BORDER_PREAMBLE,
             },
+            transparent_border=True,
         ),
         ExampleSpec(
             name="code-inline",
@@ -231,6 +299,7 @@ def _build_specs() -> list[ExampleSpec]:
                 "geometry": {"paperheight": "5cm"},
                 "preamble": BORDER_PREAMBLE,
             },
+            transparent_border=True,
         ),
         ExampleSpec(
             name="equation",
@@ -244,6 +313,7 @@ def _build_specs() -> list[ExampleSpec]:
                 "page_numbers": False,
                 "preamble": BORDER_PREAMBLE,
             },
+            transparent_border=True,
         ),
         ExampleSpec(
             name="abbreviations",
@@ -256,6 +326,7 @@ def _build_specs() -> list[ExampleSpec]:
                 "page_numbers": False,
                 "preamble": BORDER_PREAMBLE,
             },
+            transparent_border=True,
         ),
         ExampleSpec(
             name="mermaid",
@@ -269,6 +340,7 @@ def _build_specs() -> list[ExampleSpec]:
                 "geometry": {"paperheight": "17cm"},
                 "preamble": BORDER_PREAMBLE,
             },
+            transparent_border=True,
         ),
         ExampleSpec(
             name="booby",
@@ -278,6 +350,7 @@ def _build_specs() -> list[ExampleSpec]:
                 "paper": "a5",
                 "preamble": BORDER_PREAMBLE,
             },
+            transparent_border=True,
         ),
         ExampleSpec(
             name="diagrams",
@@ -291,6 +364,8 @@ def _build_specs() -> list[ExampleSpec]:
                 "preamble": BORDER_PREAMBLE,
             },
             extra_inputs=[diagrams_dir / "pgcd.drawio"],
+            preview_page=1,
+            transparent_border=True,
         ),
         ExampleSpec(
             name="paper",
@@ -302,6 +377,7 @@ def _build_specs() -> list[ExampleSpec]:
             template_options={
                 "preamble": BORDER_PREAMBLE,
             },
+            transparent_border=True,
         ),
         ExampleSpec(
             name="dialects",
@@ -312,6 +388,7 @@ def _build_specs() -> list[ExampleSpec]:
             template_options={
                 "preamble": BORDER_PREAMBLE,
             },
+            transparent_border=True,
         ),
         ExampleSpec(
             name="colorful",
@@ -339,6 +416,7 @@ def _build_specs() -> list[ExampleSpec]:
                     "callout_style": style,
                     "preamble": BORDER_PREAMBLE,
                 },
+                transparent_border=True,
             )
         )
 
@@ -354,6 +432,7 @@ def _build_specs() -> list[ExampleSpec]:
                     "preamble": BORDER_PREAMBLE,
                     "press": {"format": layout},
                 },
+                transparent_border=True,
             )
         )
 
