@@ -1,0 +1,41 @@
+[compat]
+texsmith = ">=0.6,<1.0"
+
+[latex.template]
+name = "colorful-grid"
+version = "0.1.0"
+entrypoint = "template.tex"
+engine = "lualatex"
+shell_escape = false
+texlive_year = 2023
+tlmgr_packages = [
+    "geometry",
+    "fontspec",
+    "xcolor",
+    "pgf",
+]
+
+[latex.template.attributes.colors]
+type = "mapping"
+default = { nw = "strongpink", ne = "strongyellow", sw = "stronggreen", se = "strongblue" }
+sources = ["press.colors", "colors"]
+
+[latex.template.slots.nw]
+default = true
+depth = "section"
+strip_heading = true
+
+[latex.template.slots.ne]
+depth = "section"
+strip_heading = true
+
+[latex.template.slots.sw]
+depth = "section"
+strip_heading = true
+
+[latex.template.slots.se]
+depth = "section"
+strip_heading = true
+
+[latex.template.slots.mainmatter]
+default = false

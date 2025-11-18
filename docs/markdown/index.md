@@ -17,6 +17,15 @@ For printed documentation, especially for scientific or technical reports, some 
 - Rich tables (span, multi-line cells, etc.)
 - Direct LaTeX injections using fenced `/// latex` blocks that stay hidden in HTML but reach the LaTeX output unchanged
 
+## Markdown is a mess
+
+So many flavours, so many extensions, so many incompatible syntaxes. It's a jungle out there! Some attempted to standardize Markdown (CommonMark) but the ecosystem is still fragmented. A nice shot was MyST which tried to bring Sphinx-style reStructuredText features to Markdown, but it is not compatible with MkDocs and thus not supported by TeXSmith.
+
+![How Standards Proliferate[^1]](https://imgs.xkcd.com/comics/standards.png)
+
+*[1]: [xkcd:927](https://xkcd.com/927/)
+
+So as an opinionated tool, TeXSmith picks a set of extensions, adds a few more, and call it: **Tmark** (for TeXSmith Markdown).
 ## TeXSmith compatibility
 
 ### Commonmark

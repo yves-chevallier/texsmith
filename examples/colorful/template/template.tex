@@ -1,0 +1,49 @@
+\documentclass{article}
+\usepackage[paperwidth=20cm, paperheight=20cm, margin=0cm]{geometry}
+
+\usepackage{fontspec}
+\setmainfont{TeX Gyre Heros}
+
+\usepackage{tikz}
+\usetikzlibrary{calc}
+\usepackage{xcolor}
+
+\definecolor{strongpink}{RGB}{255,105,180}
+\definecolor{strongyellow}{RGB}{255,215,0}
+\definecolor{stronggreen}{RGB}{0,200,150}
+\definecolor{strongblue}{RGB}{100,149,237}
+
+\pagestyle{empty}
+
+\BLOCK{ set squares = [
+  {"slot": "nw", "origin": "0,0", "center": "5,5", "label": "NW", "content": nw, "color": colors.nw},
+  {"slot": "ne", "origin": "10,0", "center": "15,5", "label": "NE", "content": ne, "color": colors.ne},
+  {"slot": "sw", "origin": "0,10", "center": "5,15", "label": "SW", "content": sw, "color": colors.sw},
+  {"slot": "se", "origin": "10,10", "center": "15,15", "label": "SE", "content": se, "color": colors.se},
+] }
+
+\begin{document}
+\begin{tikzpicture}[remember picture,overlay,x=1cm,y=1cm]
+  \coordinate (SW) at (current page.south west);
+  \def\boxwidth{7.5cm}
+
+  \BLOCK{ for square in squares }
+  \BLOCK{ set color_name = "slotcolor-" ~ square.slot }
+  \BLOCK{ set color_value = square.color | default('', true) }
+  \BLOCK{ if color_value and color_value.startswith('#') }
+  \definecolor{\VAR{color_name}}{HTML}{\VAR{color_value|replace('#', '')}}
+  \BLOCK{ elif color_value and ',' in color_value }
+  \definecolor{\VAR{color_name}}{RGB}{\VAR{color_value}}
+  \BLOCK{ elif color_value }
+  \colorlet{\VAR{color_name}}{\VAR{color_value}}
+  \BLOCK{ else }
+  \colorlet{\VAR{color_name}}{black}
+  \BLOCK{ endif }
+
+  \fill[\VAR{color_name}] ($(SW)+(\VAR{square.origin})$) rectangle ++(10,10);
+  \node[text=white,font=\bfseries\Large,align=center]
+  at ($(SW)+(\VAR{square.center})$)
+  {\parbox{\boxwidth}{\VAR{square.content|default('Slot ' ~ square.label, true)|trim}}};
+  \BLOCK{ endfor }
+\end{tikzpicture}
+\end{document}
