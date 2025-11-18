@@ -42,4 +42,6 @@ def on_page_markdown(markdown: str, page: Any, config: Any = None, files: Any = 
     """Prefix `api/core.md` with the anchor expected by older cross-links."""
     if page.file.src_path == "api/core.md" and "#texsmithapi" not in markdown:
         return '<a id="texsmithapi"></a>\n' + markdown
+    if page.file.src_path == "markdown/references.md" and "[index]:" not in markdown:
+        return markdown + "\n[index]: ../markdown/notes/#index\n"
     return markdown

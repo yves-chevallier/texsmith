@@ -1,0 +1,44 @@
+% Ligne en haut du header
+% Titre sur heading
+
+\documentclass{article}
+
+\usepackage[margin=2cm, a4paper]{geometry}
+\usepackage{fontspec}
+\usepackage{cookingsymbols}
+\usepackage{tabularx}
+\renewcommand{\familydefault}{\sfdefault}
+\setcounter{secnumdepth}{0}
+
+\begin{document}
+    {\Huge\bfseries Gâteau aux noix}
+
+\vspace{2cm}
+\noindent
+\begin{minipage}[t]{0.3\textwidth}
+\vspace{0pt}%
+\rule{\linewidth}{1.5pt}
+\Topbottomheat\quad{} temps total \textbf{140 min} \\
+\Gloves\quad{} préparation \textbf{30 min} \\
+\rule{\linewidth}{1.5pt}
+
+\subsection{Conseils}
+
+Se conserve env. 2 semaines au réfrigérateur bien emballé.
+
+\end{minipage}
+\hfill
+\begin{minipage}[t]{0.68\textwidth}  % 0.78 pour laisser un peu d'espace au \hfill
+\vspace{0pt}%
+\textbf{Pâte sablée}\vskip 1em
+\begin{tabularx}{\textwidth}{l l >{\raggedright\arraybackslash}X}
+150~g & farine & \\
+50~g & sucre & \\
+1 pincée & sel & mettre dans un saladier \\
+\hline
+100~g & beurre & couper en petits morceaux et ajouter \\
+
+\end{tabularx}
+\end{minipage}
+
+\end{document}
