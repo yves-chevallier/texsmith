@@ -6,9 +6,22 @@
 \usepackage[margin=2cm, a4paper]{geometry}
 \usepackage{fontspec}
 \usepackage{cookingsymbols}
-\usepackage{tabularx}
+\usepackage{array,tabularx} % tu as déjà tabularx
+
+\usepackage[clock]{ifsym}
 \renewcommand{\familydefault}{\sfdefault}
 \setcounter{secnumdepth}{0}
+
+% Largeurs fixes des colonnes 1 et 2 (à ajuster si tu veux)
+\newlength{\colA}
+\newlength{\colB}
+\setlength{\colA}{0.07\textwidth} % quantité
+\setlength{\colB}{0.15\textwidth} % ingrédient
+
+% Types de colonnes réutilisables
+\newcolumntype{A}{>{\raggedright\arraybackslash}p{\colA}} % col 1
+\newcolumntype{B}{>{\raggedright\arraybackslash}p{\colB}} % col 2
+\newcolumntype{C}{>{\raggedright\arraybackslash}X}        % col 3, auto
 
 \begin{document}
     {\Huge\bfseries Gâteau aux noix}
@@ -18,9 +31,13 @@
 \begin{minipage}[t]{0.3\textwidth}
 \vspace{0pt}%
 \rule{\linewidth}{1.5pt}
-\Topbottomheat\quad{} temps total \textbf{140 min} \\
-\Gloves\quad{} préparation \textbf{30 min} \\
+\vskip 0.5em
+\showclock{1}{40}\quad{} temps total \textbf{140 min} \\
+\Gloves\quad{} préparation \textbf{50 min} \\
+\Oven\quad{} cuisson \textbf{40 min} \\
 \rule{\linewidth}{1.5pt}
+\vskip 1em
+Ce gâteau aux noix séduit dès la première bouchée par son équilibre parfait entre une pâte sablée délicatement friable et une farce généreuse mêlant noix croquantes, caramel doré et miel parfumé. Doux sans être lourd, riche sans être écœurant, il offre une texture fondante relevée par le croustillant des noix et la profondeur du caramel. Servi tiède ou à température ambiante, il dégage un parfum chaleureux et gourmand qui évoque les desserts traditionnels d’automne, tout en offrant une élégance rustique irrésistible. Une véritable tentation pour tous les amateurs de saveurs authentiques et de pâtisseries raffinées.
 
 \subsection{Conseils}
 
@@ -30,15 +47,46 @@ Se conserve env. 2 semaines au réfrigérateur bien emballé.
 \hfill
 \begin{minipage}[t]{0.68\textwidth}  % 0.78 pour laisser un peu d'espace au \hfill
 \vspace{0pt}%
-\textbf{Pâte sablée}\vskip 1em
-\begin{tabularx}{\textwidth}{l l >{\raggedright\arraybackslash}X}
-150~g & farine & \\
-50~g & sucre & \\
-1 pincée & sel & mettre dans un saladier \\
-\hline
-100~g & beurre & couper en petits morceaux et ajouter \\
-
+\textbf{Préparation du moule}\vskip 0.5em
+\begin{tabularx}{\textwidth}{@{}A B C@{}}
+ & & Préparer le moule et le réserver.\\
 \end{tabularx}
+
+\vspace{1em}
+\textbf{Pâte sablée}\vskip 0.5em
+\begin{tabularx}{\textwidth}{@{}A B C@{}}
+150~g & farine & \\
+100~g & sucre & \\
+1 pincée & sel & Mettre dans un saladier. \\
+\multicolumn{3}{@{}l}{\rule{\textwidth}{0.2pt}}\\
+100~g & beurre froid & Couper en morceaux, ajouter, travailler à la main jusqu'à texture friable.\\
+\multicolumn{3}{@{}l}{\rule{\textwidth}{0.2pt}}\\
+1 & œuf & Ajouter, travailler rapidement sans pétrir, couvrir et réfrigérer 30~min.\\
+\end{tabularx}
+
+\vspace{1em}
+\textbf{Farce}\vskip 0.5em
+\begin{tabularx}{\textwidth}{@{}A B C@{}}
+130~g & noix & Hacher grossièrement et réserver.\\
+\multicolumn{3}{@{}l}{\rule{\textwidth}{0.2pt}}\\
+100~g & sucre & \\
+2~cs & eau & Verser avec l'eau dans une grande casserole, chauffer à feu très vif jusqu'à dissolution, laisser caraméliser sans remuer jusqu'à couleur noisette, retirer du feu. \\
+\multicolumn{3}{@{}l}{\rule{\textwidth}{0.2pt}}\\
+1.25~dl & crème entière & Ajouter, mélanger, réchauffer en remuant jusqu'à dissolution du caramel puis porter à ébullition env.~10~min.\\
+\multicolumn{3}{@{}l}{\rule{\textwidth}{0.2pt}}\\
+1.5~cs & miel liquide & Ajouter, mélanger et laisser refroidir avant d'incorporer les noix.\\
+\end{tabularx}
+
+\vspace{1em}
+\textbf{Assemblage}\vskip 0.5em
+\begin{tabularx}{\textwidth}{@{}A B C@{}}
+& farine & Partager la pâte en 3 portions, abaisser la première sur 4~mm, foncer le moule et piquer.\\
+\multicolumn{3}{@{}l}{\rule{\textwidth}{0.2pt}}\\
+& farine & Rouler la deuxième portion, former un bord d'env.~4~cm sur tout le moule.\\
+\multicolumn{3}{@{}l}{\rule{\textwidth}{0.2pt}}\\
+ & farce & Répartir sur le fond, replier le bord, abaisser la dernière portion (4~mm) et couvrir. Piquer puis cuire dans la partie inférieure du four à 200~°C pendant 40--50~min.\\
+\end{tabularx}
+
 \end{minipage}
 
 \end{document}
