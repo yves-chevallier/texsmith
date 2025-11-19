@@ -203,7 +203,9 @@ class ProgressBarExtension(Extension):
         md.preprocessors.register(processor, "texsmith_progressbar", 27)
 
 
-def makeExtension(**kwargs: object) -> ProgressBarExtension:  # pragma: no cover - Markdown hook
+def makeExtension(  # noqa: N802
+    **kwargs: object,
+) -> ProgressBarExtension:  # pragma: no cover - Markdown hook
     return ProgressBarExtension(**kwargs)
 
 

@@ -3,8 +3,8 @@
 from __future__ import annotations
 
 import hashlib
-import shutil
 from pathlib import Path
+import shutil
 from urllib.parse import unquote, urlparse
 
 from texsmith.adapters.transformers import drawio2pdf, fetch_image, image2pdf, svg2pdf

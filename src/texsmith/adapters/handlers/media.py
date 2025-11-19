@@ -20,6 +20,7 @@ from texsmith.core.exceptions import (
 from texsmith.core.rules import RenderPhase, renders
 
 from ..transformers import mermaid2pdf
+from ._assets import store_local_image_asset, store_remote_image_asset
 from ._helpers import (
     coerce_attribute,
     gather_classes,
@@ -27,7 +28,6 @@ from ._helpers import (
     mark_processed,
     resolve_asset_path,
 )
-from ._assets import store_local_image_asset, store_remote_image_asset
 from ._mermaid import (
     MERMAID_FILE_SUFFIXES,
     extract_mermaid_live_diagram as _extract_mermaid_live_diagram,

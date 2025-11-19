@@ -25,8 +25,8 @@ def test_markdown_generates_progress_div() -> None:
 
 
 def test_markdown_ignores_fenced_code_blocks() -> None:
-    soup = _render_html("```\n[=90% \"Snippet\"]\n```")
-    assert "[=90% \"Snippet\"]" in soup.get_text()
+    soup = _render_html('```\n[=90% "Snippet"]\n```')
+    assert '[=90% "Snippet"]' in soup.get_text()
     assert not soup.find("div", class_="progress")
 
 

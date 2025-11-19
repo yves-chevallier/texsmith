@@ -15,8 +15,8 @@ from texsmith.core.context import RenderContext
 from texsmith.core.exceptions import AssetMissingError, InvalidNodeError
 from texsmith.core.rules import RenderPhase, renders
 
-from ..markdown import DEFAULT_MARKDOWN_EXTENSIONS, render_markdown
 from ..latex.utils import escape_latex_chars
+from ..markdown import DEFAULT_MARKDOWN_EXTENSIONS, render_markdown
 from ._helpers import coerce_attribute, mark_processed, resolve_asset_path
 
 
