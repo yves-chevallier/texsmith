@@ -1,0 +1,51 @@
+site_name: TeXSmith
+site_url: https://yves-chevallier.github.io/texsmith
+site_author: Yves Chevallier
+repo_name: yves-chevallier/texsmith
+repo_url: https://github.com/yves-chevallier/texsmith
+copyright: Copyright &copy; 2025 Yves Chevallier
+theme:
+  language: en
+  name: material
+  features:
+    - search
+    - navigation.instant
+    - navigation.tabs
+    - navigation.top
+    - navigation.indexes
+    - navigation.tracking
+    - navigation.expand
+    - navigation.sections
+    - navigation.footer
+    - toc.follow
+    - content.code.copy
+    - content.code.annotate
+    - content.tabs.link
+    - search.highlight
+    - search.share
+    - search.suggest
+  palette:
+    - scheme: default
+      primary: custom
+      accent: blue
+      toggle:
+        icon: material/weather-night
+        name: Switch to dark mode
+    - scheme: slate
+      primary: custom
+      accent: blue
+      toggle:
+        icon: material/weather-sunny
+        name: Switch to light mode
+markdown_extensions:
+  - attr_list
+  - pymdownx.superfences
+plugins:
+  - texsmith:
+      template: book
+      build_dir: press
+      books:
+        - title: "TeXSmith Documentation"
+          folder: texsmith-docs
+          root: "__texsmith_full_navigation__"
+          base_level: -1

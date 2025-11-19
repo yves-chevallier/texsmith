@@ -3,7 +3,7 @@ from __future__ import annotations
 from collections.abc import Iterable, Mapping
 from dataclasses import dataclass, field
 import os
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 import shutil
 from typing import Any
 import warnings
@@ -20,7 +20,7 @@ from mkdocs.utils import log
 from pybtex.exceptions import PybtexError
 from slugify import slugify
 from texsmith.adapters.latex import LaTeXFormatter, LaTeXRenderer
-from texsmith.adapters.plugins import material
+from texsmith.adapters.plugins import material, snippet
 from texsmith.core.bibliography import (
     BibliographyCollection,
     DoiBibliographyFetcher,
@@ -134,7 +134,7 @@ class LatexPlugin(BasePlugin):
         self._enabled = bool(self.config.get("enabled", True))
         self._mkdocs_config = config
 
-        if not self._enabled or self._is_serve:
+        if not self._enabled:
             return config
 
         config_path = Path(config.config_file_path)
@@ -193,7 +193,7 @@ class LatexPlugin(BasePlugin):
         config: MkDocsConfig,
         files: Files,  # noqa: ARG002 - required by MkDocs
     ) -> Navigation:  # pragma: no cover - hook
-        if not self._enabled or self._is_serve:
+        if not self._enabled:
             return nav
 
         self._nav = nav
@@ -205,14 +205,18 @@ class LatexPlugin(BasePlugin):
         page,
         config: MkDocsConfig,
     ) -> str:  # pragma: no cover - hook
-        if not self._enabled or self._is_serve:
+        if not self._enabled:
             return output
 
         src_path = page.file.src_path
         self._page_content[src_path] = page.content
         self._page_meta[src_path] = dict(page.meta or {})
         self._page_sources[src_path] = Path(page.file.abs_src_path)
-        return output
+        rewritten = snippet.rewrite_html_snippets(
+            output,
+            lambda block: self._build_snippet_urls(page, block),
+        )
+        return rewritten
 
     def on_post_build(self, config: MkDocsConfig) -> None:  # pragma: no cover - hook
         if not self._enabled or self._is_serve:
@@ -407,6 +411,7 @@ class LatexPlugin(BasePlugin):
             )
             if self.config.get("register_material", True):
                 material.register(renderer)
+            snippet.register(renderer)
             return renderer
 
         inline_bibliography_specs: list[
@@ -644,6 +649,7 @@ class LatexPlugin(BasePlugin):
             self._prune_unused_assets(output_root, assets_map.values())
 
         self._copy_extra_files(runtime.config, output_root)
+        self._publish_snippet_assets(output_root)
 
     def _flatten_navigation(
         self,
@@ -727,6 +733,69 @@ class LatexPlugin(BasePlugin):
         folder = config.folder
         candidate = base_dir if not folder else base_dir / folder
         return candidate.resolve()
+
+    def _build_snippet_urls(self, page: Any, block: snippet.SnippetBlock) -> tuple[str, str]:
+        self._ensure_site_snippet_assets(page, block)
+        pdf_name = snippet.asset_filename(block.digest, ".pdf")
+        png_name = snippet.asset_filename(block.digest, ".png")
+        return (
+            self._relative_snippet_path(page, pdf_name),
+            self._relative_snippet_path(page, png_name),
+        )
+
+    def _relative_snippet_path(self, page: Any, filename: str) -> str:
+        file_attr = getattr(page, "file", None)
+        dest_path = getattr(file_attr, "dest_path", "") if file_attr else ""
+        parent = PurePosixPath(dest_path).parent
+        if str(parent) in {"", "."}:
+            prefix = ""
+        else:
+            depth = len([part for part in parent.parts if part and part != "."])
+            prefix = "../" * depth
+        return f"{prefix}assets/{snippet.SNIPPET_DIR}/{filename}"
+
+    def _publish_snippet_assets(self, output_root: Path) -> None:
+        source_dir = output_root / snippet.SNIPPET_DIR
+        site_dir = self._site_dir
+        if site_dir is None or not source_dir.exists():
+            return
+        target_dir = site_dir / "assets" / snippet.SNIPPET_DIR
+        target_dir.mkdir(parents=True, exist_ok=True)
+        for asset in source_dir.glob("*.pdf"):
+            shutil.copy2(asset, target_dir / asset.name)
+        for asset in source_dir.glob("*.png"):
+            shutil.copy2(asset, target_dir / asset.name)
+
+    def _ensure_site_snippet_assets(self, page: Any, block: snippet.SnippetBlock) -> None:
+        dest_dir = self._site_snippet_dir()
+        abs_src = getattr(page.file, "abs_src_path", None)
+        if not abs_src:
+            raise PluginError("Unable to determine the source path for snippet rendering.")
+        source_path = Path(abs_src)
+        try:
+            snippet.ensure_snippet_assets(
+                block,
+                output_dir=dest_dir,
+                source_path=source_path,
+                transparent_corner=block.transparent_corner,
+            )
+        except Exception as exc:  # pragma: no cover - passthrough
+            raise PluginError(
+                f"Failed to render snippet on page '{page.file.src_path}': {exc}"
+            ) from exc
+
+    def _site_snippet_dir(self) -> Path:
+        site_dir = self._site_dir
+        if site_dir is None:
+            config_site = getattr(self._mkdocs_config, "site_dir", None)
+            if config_site:
+                site_dir = Path(config_site).resolve()
+                self._site_dir = site_dir
+            else:
+                raise PluginError("MkDocs site directory is not initialised.")
+        target_dir = site_dir / "assets" / snippet.SNIPPET_DIR
+        target_dir.mkdir(parents=True, exist_ok=True)
+        return target_dir
 
     def _persist_html_snapshot(
         self, output_root: Path, src_path: str, html: str
