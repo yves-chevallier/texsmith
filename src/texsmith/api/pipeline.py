@@ -210,6 +210,8 @@ def to_template_fragments(bundle: ConversionBundle) -> list[TemplateFragment]:
                 requires_shell_escape=conversion.template_shell_escape,
                 template_overrides=dict(conversion.template_overrides),
                 output_path=fragment.output_path,
+                front_matter=document.front_matter,
+                source_path=document.source_path,
             )
         )
     return fragments

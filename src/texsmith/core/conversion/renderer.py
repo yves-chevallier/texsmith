@@ -29,6 +29,8 @@ class TemplateFragment:
     requires_shell_escape: bool = False
     template_overrides: Mapping[str, Any] | None = None
     output_path: Path | None = None
+    front_matter: Mapping[str, Any] | None = None
+    source_path: Path | None = None
 
 
 @dataclass(slots=True)
@@ -121,11 +123,24 @@ class TemplateRenderer:
         template_engine: str | None = None
         requires_shell_escape = bool(self.runtime.requires_shell_escape)
 
+        document_metadata: list[dict[str, Any]] = []
+
         for fragment in fragments:
             fragment_default_slot = fragment.default_slot or default_slot
             slot_outputs = dict(fragment.slot_outputs)
             if fragment_default_slot not in slot_outputs:
                 slot_outputs[fragment_default_slot] = fragment.latex
+            fragment_record: dict[str, Any] = {
+                "stem": fragment.stem,
+                "default_slot": fragment_default_slot,
+                "slot_outputs": dict(slot_outputs),
+                "index": len(document_metadata),
+            }
+            if fragment.front_matter:
+                fragment_record["front_matter"] = copy.deepcopy(dict(fragment.front_matter))
+            if fragment.source_path:
+                fragment_record["source_path"] = str(fragment.source_path)
+            document_metadata.append(fragment_record)
 
             for slot_name, latex in slot_outputs.items():
                 if not latex:
@@ -181,6 +196,11 @@ class TemplateRenderer:
             override_dict = dict(overrides)
             _merge_overrides(template_overrides, override_dict)
 
+        if document_metadata:
+            if template_overrides is None:
+                template_overrides = {}
+            template_overrides["documents"] = document_metadata
+
         if template_overrides:
             record_event(
                 self.emitter,
@@ -206,7 +226,7 @@ class TemplateRenderer:
                 raise
             raise_conversion_error(self.emitter, str(exc), exc)
 
-        template_context = wrap_result.template_context
+        template_context = wrap_result.template_context or {}
         main_tex_path = wrap_result.output_path or (output_dir / main_name)
 
         fragment_paths: list[Path] = [
