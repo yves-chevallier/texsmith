@@ -23,8 +23,7 @@ def render(recipes: list[Path], *, template: str = "recipe", output_dir: Path | 
     response = service.execute(request, prepared=prepared)
     return response.render_result.main_tex_path
 
-
-def main() -> None:
+if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("recipes", nargs="+", type=Path, help="YAML files describing recipes.")
     parser.add_argument(
@@ -44,6 +43,3 @@ def main() -> None:
     tex_path = render(args.recipes, template=args.template, output_dir=args.output_dir)
     print(f"Wrote {tex_path}")
 
-
-if __name__ == "__main__":
-    main()

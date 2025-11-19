@@ -268,9 +268,9 @@ Body text.
     assert any(name == "template_overrides" for name, _ in emitter.events)
 
 
-def test_prepare_documents_rejects_unsupported_inputs(tmp_path: Path) -> None:
+def test_prepare_documents_rejects_unsupported_mkdocs_inputs(tmp_path: Path) -> None:
     service = ConversionService()
-    unsupported = tmp_path / "config.yml"
+    unsupported = tmp_path / "mkdocs.yml"
     unsupported.write_text("site_name: demo", encoding="utf-8")
 
     request = ConversionRequest(
@@ -281,6 +281,20 @@ def test_prepare_documents_rejects_unsupported_inputs(tmp_path: Path) -> None:
     with pytest.raises(UnsupportedInputError) as exc_info:
         service.prepare_documents(request)
     assert "MkDocs configuration files are not supported" in str(exc_info.value)
+
+
+def test_prepare_documents_allows_generic_yaml(tmp_path: Path) -> None:
+    service = ConversionService()
+    yaml_doc = tmp_path / "recipe.yml"
+    yaml_doc.write_text("---\ntitle: Demo\n---\nContent", encoding="utf-8")
+
+    request = ConversionRequest(
+        documents=[yaml_doc],
+        bibliography_files=[],
+    )
+
+    prepared = service.prepare_documents(request)
+    assert prepared.documents and prepared.documents[0].source_path == yaml_doc
 
 
 def test_execute_without_template_returns_bundle(tmp_path: Path) -> None:

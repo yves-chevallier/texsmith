@@ -270,7 +270,9 @@ def classify_input_source(path: Path) -> InputKind:
     if suffix in {".md", ".markdown"}:
         return InputKind.MARKDOWN
     if suffix in {".yaml", ".yml"}:
-        raise UnsupportedInputError("MkDocs configuration files are not supported.")
+        if path.name.lower() in {"mkdocs.yml", "mkdocs.yaml"}:
+            raise UnsupportedInputError("MkDocs configuration files are not supported.")
+        return InputKind.MARKDOWN
     if suffix in {".html", ".htm"}:
         return InputKind.HTML
     raise UnsupportedInputError(
