@@ -408,6 +408,7 @@ def _build_specs() -> list[ExampleSpec]:
     dialects_dir = examples_dir / "dialects"
     colorful_dir = examples_dir / "colorful"
     index_dir = examples_dir / "index"
+    recipe_dir = examples_dir / "recipe"
 
     specs: list[ExampleSpec] = [
         ExampleSpec(
@@ -564,6 +565,15 @@ def _build_specs() -> list[ExampleSpec]:
             },
             preview_grid={"columns": 1, "rows": -1, "gap": 3},
             transparent_border=True,
+        ),
+        ExampleSpec(
+            name="recipe",
+            source=recipe_dir / "cake.yml",
+            build_dir=recipe_dir / "build",
+            template=str(recipe_dir),
+            template_options={
+                "preamble": BORDER_PREAMBLE,
+            },
         ),
     ]
 
