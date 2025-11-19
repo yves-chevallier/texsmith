@@ -1,16 +1,18 @@
 ---
 press:
-  title: Bobby
+  title: Booby
   author: Yves Chevallier
   date: 2025-11-16
   template: article
 ---
-# Introduction
+## Introduction
 
 Boobies are seabirds in the genus *Sula*, family Sulidae. They are
 large, long-winged birds that plunge-dive for fish. The name "booby"
 originates from the Spanish word "bobo", meaning "stupid" or "clown",
 due to the birds' apparent lack of fear of humans.
+
+![Booby](booby.png){width=30%}
 
 ## Particularities
 

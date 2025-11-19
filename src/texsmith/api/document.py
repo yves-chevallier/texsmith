@@ -50,7 +50,7 @@ from ..adapters.markdown import (
     MarkdownConversionError,
     render_markdown,
 )
-from ..core.conversion.debug import ConversionError
+from ..core.conversion.debug import ConversionError, debug_enabled
 from ..core.conversion.inputs import (
     DOCUMENT_SELECTOR_SENTINEL,
     InputKind,
@@ -332,11 +332,12 @@ class Document:
             try:
                 html = extract_content(payload, selector)
             except ValueError as exc:
-                message = (
-                    f"CSS selector '{selector}' was not found in '{path.name}'. "
-                    "Falling back to the full document."
-                )
-                active_emitter.warning(message, exc)
+                if debug_enabled(active_emitter):
+                    message = (
+                        f"CSS selector '{selector}' was not found in '{path.name}'. "
+                        "Falling back to the full document."
+                    )
+                    active_emitter.warning(message, exc)
 
         strategy = _resolve_title_strategy(
             explicit=title_strategy,

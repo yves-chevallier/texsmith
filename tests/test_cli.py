@@ -171,6 +171,29 @@ def test_convert_markdown_file(monkeypatch: Any) -> None:
     assert "Paragraph text." in result.stdout
 
 
+def test_render_from_stdin(monkeypatch: Any) -> None:
+    class DummyMarkdown:
+        def __init__(self, *args: object, **kwargs: object) -> None:
+            pass
+
+        def convert(self, text: str) -> str:
+            return "<h1>Hello</h1>" if "# Title" in text else "<p>Body</p>"
+
+    monkeypatch.setitem(sys.modules, "markdown", types.SimpleNamespace(Markdown=DummyMarkdown))
+
+    runner = CliRunner()
+    result = runner.invoke(
+        app,
+        [
+            "render",
+        ],
+        input="# Title\n\nSome **bold** text.\n",
+    )
+
+    assert result.exit_code == 0, result.stdout
+    assert any(marker in result.stdout for marker in ("\\section{Hello}", "\\chapter{Hello}"))
+
+
 def test_default_markdown_extensions(monkeypatch: Any) -> None:
     recorded: dict[str, list[str] | None] = {"extensions": None}
 

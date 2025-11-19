@@ -2,12 +2,14 @@
 
 from __future__ import annotations
 
+import atexit
 from collections.abc import Iterable, Mapping
 import os
 from pathlib import Path
 import shlex
 import shutil
 import subprocess
+import sys
 import tempfile
 from typing import Annotated, Any
 
@@ -110,6 +112,42 @@ _MARKDOWN_SUFFIXES = {
     ".mdtxt",
     ".text",
 }
+
+
+def _cleanup_temp_input(path: Path) -> None:
+    try:
+        path.unlink(missing_ok=True)
+    except OSError:
+        pass
+
+
+def _read_stdin_document() -> Path | None:
+    """Write stdin content to a temporary Markdown file when piped."""
+    stream = sys.stdin
+    if stream is None or stream.closed:
+        return None
+    try:
+        if stream.isatty():
+            return None
+    except (AttributeError, ValueError):
+        return None
+
+    payload = stream.read()
+    if not payload:
+        return None
+
+    handle = tempfile.NamedTemporaryFile(
+        mode="w",
+        suffix=".md",
+        prefix="texsmith-stdin-",
+        encoding="utf-8",
+        delete=False,
+    )
+    with handle:
+        handle.write(payload)
+        temp_path = Path(handle.name)
+    atexit.register(_cleanup_temp_input, temp_path)
+    return temp_path
 
 
 def _load_front_matter(path: Path) -> Mapping[str, Any] | None:
@@ -319,9 +357,16 @@ def render(
             raise typer.BadParameter("Provide either positional inputs or --input-path, not both.")
         document_paths = [input_path]
 
+    if not document_paths:
+        stdin_document = _read_stdin_document()
+        if stdin_document is not None:
+            document_paths = [stdin_document]
+
     document_paths, bibliography_files = _SERVICE.split_inputs(document_paths, bibliography or [])
     if not document_paths:
-        raise typer.BadParameter("Provide a Markdown (.md) or HTML (.html) source document.")
+        raise typer.BadParameter(
+            "Provide a Markdown (.md) or HTML (.html) source document or pipe content via stdin."
+        )
 
     primary_front_matter: Mapping[str, Any] | None = None
     first_document = document_paths[0] if document_paths else None
