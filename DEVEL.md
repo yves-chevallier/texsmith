@@ -55,9 +55,10 @@ Roadmap and development notes for TeXSmith. I keep this file as a running checkl
 - [x] Add progress-bar support
 - [x] Integrate coverage reporting
 - [x] Snippet Template
+- [x] Snippet plugin
+- [ ] Snippet plugin, avoid rebuilding unchanged snippets
 - [ ] Epigraph Plugin
 - [ ] Consolidate Book template
-- [ ] Snippet plugin
 - [ ] Put fonts and code into separate sty merged during build
 - [ ] Avoid `--shell-escape` when `minted` is unused (no code blocks or inline code)
 - [ ] Dynamically update the engine in `latexmkrc` (pdflatex, xelatex, lualatex)
