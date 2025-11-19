@@ -96,7 +96,7 @@ Use TeXSmith once your MkDocs project already renders clean HTML:
 
 ```bash
 # Build your MkDocs site into a disposable directory
-mkdocs build 
+mkdocs build
 
 # Convert one page into LaTeX/PDF-ready assets
 texsmith render build/site/guides/overview/index.html \
@@ -105,22 +105,14 @@ texsmith render build/site/guides/overview/index.html \
   --bibliography docs/references.bib
 ```
 
-Tips:
+!!! tip
 
-- The default selector (`article.md-content__inner`) already targets MkDocs Material content; omit `--selector` unless you heavily customise templates.
-- When your site spans multiple documents, repeat the command per page and combine them with template slots (for example, `--slot mainmatter:build/site/manual/index.html`).
-- For live previews, hook TeXSmith to `mkdocs serve` by pointing at the temporary site directory MkDocs prints on startup.
+    - The default selector (`article.md-content__inner`) already targets MkDocs Material content; omit `--selector` unless you heavily customise templates.
+    - When your site spans multiple documents, repeat the command per page and combine them with template slots (for example, `--slot mainmatter:build/site/manual/index.html`).
+    - For live previews, hook TeXSmith to `mkdocs serve` by pointing at the temporary site directory MkDocs prints on startup.
 
-Once the LaTeX bundle looks good, add `--build` to invoke `latexmk` or wire the commands into CI so MkDocs HTML → TeXSmith PDF generation happens automatically.
+    Once the LaTeX bundle looks good, add `--build` to invoke `latexmk` or wire the commands into CI so MkDocs HTML → TeXSmith PDF generation happens automatically.
 
-## Next steps
-
-- Read the [Command-line overview](../cli/index.md) for every flag and
-  subcommand.
-- Explore [High-Level Workflows](../api/high-level.md) to orchestrate templates
-  programmatically.
-- Browse [Supported Markdown Syntax](../markdown/supported.md) to see exactly
-  which extensions TeXSmith enables by default.
 
 ## How does TeXSmith work?
 
