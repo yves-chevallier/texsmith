@@ -111,7 +111,7 @@ def register(renderer: object) -> None:
     if getattr(renderer, "_texsmith_progressbar_registered", False):
         return
     register_callable(render_progressbar)
-    setattr(renderer, "_texsmith_progressbar_registered", True)
+    renderer._texsmith_progressbar_registered = True  # noqa: SLF001
 
 
 __all__ = ["register", "render_progressbar"]

@@ -7,9 +7,9 @@ from io import BytesIO
 from pathlib import Path
 import shutil
 import subprocess
-from typing import Any
-import warnings
+from typing import Any, ClassVar
 from urllib.parse import urlparse
+import warnings
 
 from texsmith.core.exceptions import TransformerExecutionError
 
@@ -143,8 +143,8 @@ class ImageToPdfStrategy(CachedConversionStrategy):
 class FetchImageStrategy(CachedConversionStrategy):
     """Fetch a remote image, normalise it to PDF, and cache the result."""
 
-    _NATIVE_SUFFIXES: set[str] = {".png", ".jpg", ".jpeg", ".pdf"}
-    _MIMETYPE_SUFFIXES: dict[str, str] = {
+    _NATIVE_SUFFIXES: ClassVar[set[str]] = {".png", ".jpg", ".jpeg", ".pdf"}
+    _MIMETYPE_SUFFIXES: ClassVar[dict[str, str]] = {
         "image/png": ".png",
         "image/jpeg": ".jpg",
         "image/jpg": ".jpg",

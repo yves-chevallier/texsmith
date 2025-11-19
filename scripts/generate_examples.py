@@ -3,14 +3,15 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from collections.abc import Callable
 import contextlib
+from dataclasses import dataclass, field
 import logging
 from pathlib import Path
 import re
 import shutil
 import subprocess
-from typing import Any, Callable
+from typing import Any
 
 
 try:  # pragma: no cover - optional dependency alias

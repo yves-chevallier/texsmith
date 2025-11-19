@@ -13,6 +13,7 @@ from texsmith.core.context import RenderContext
 from texsmith.core.exceptions import AssetMissingError, InvalidNodeError
 from texsmith.core.rules import RenderPhase, renders
 
+from ._assets import store_local_image_asset, store_remote_image_asset
 from ._helpers import (
     coerce_attribute,
     gather_classes,
@@ -20,7 +21,6 @@ from ._helpers import (
     mark_processed,
     resolve_asset_path,
 )
-from ._assets import store_local_image_asset, store_remote_image_asset
 from .code import (
     render_code_blocks as _render_code_block,
     render_preformatted_code as _render_preformatted_code,

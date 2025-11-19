@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import atexit
 from collections.abc import Iterable, Mapping
+import contextlib
 import os
 from pathlib import Path
 import shlex
@@ -28,19 +29,19 @@ from .._options import (
     OUTPUT_PANEL,
     BaseLevelOption,
     BibliographyOption,
-    CopyAssetsOptionWithShort,
     ConvertAssetsOption,
+    CopyAssetsOptionWithShort,
     DebugHtmlOption,
     DisableFallbackOption,
     DisableMarkdownExtensionsOption,
     DropTitleOption,
     FullDocumentOption,
+    HashAssetsOption,
     HeadingLevelOption,
     InputPathArgument,
     LanguageOption,
     ManifestOptionWithShort,
     MarkdownExtensionsOption,
-    HashAssetsOption,
     NumberedOption,
     OpenLogOption,
     OutputPathOption,
@@ -117,10 +118,8 @@ _MARKDOWN_SUFFIXES = {
 
 
 def _cleanup_temp_input(path: Path) -> None:
-    try:
+    with contextlib.suppress(OSError):
         path.unlink(missing_ok=True)
-    except OSError:
-        pass
 
 
 def _read_stdin_document() -> Path | None:
@@ -138,14 +137,13 @@ def _read_stdin_document() -> Path | None:
     if not payload:
         return None
 
-    handle = tempfile.NamedTemporaryFile(
+    with tempfile.NamedTemporaryFile(
         mode="w",
         suffix=".md",
         prefix="texsmith-stdin-",
         encoding="utf-8",
         delete=False,
-    )
-    with handle:
+    ) as handle:
         handle.write(payload)
         temp_path = Path(handle.name)
     atexit.register(_cleanup_temp_input, temp_path)
