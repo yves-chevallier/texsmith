@@ -47,7 +47,7 @@ article {
   hyphens: auto;
 }
 
-.md-typeset h1 {
+/* .md-typeset h1 {
   font-size: 2.5em;
   margin-top: 1.5em;
   margin-bottom: 0.5em;
@@ -62,7 +62,7 @@ article {
 .md-typeset h3 {
   font-weight: 600;
   color: var(--md-default-fg-color--light);
-}
+} */
 
 .mermaid {
   text-align: center;
@@ -77,4 +77,8 @@ p > img {
 .texsmith-smallcaps {
   font-variant: small-caps;
   letter-spacing: 0.04em;
+}
+
+dt {
+  font-weight: 600;
 }

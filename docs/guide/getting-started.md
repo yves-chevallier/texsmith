@@ -1,35 +1,40 @@
 # Getting Started
 
-Welcome to TeXSmith! This guide walks you through the initial setup. I may first ask you a question:
+Welcome to TeXSmith! This quick tour gets you from a blank terminal to crisp PDFs. Start by deciding what you need today:
 
-1. Do you need TeXSmith for converting sole Markdown files into LaTeX/PDF documents?
-2. Are you planning on integrating TeXSmith with an existing MkDocs site?
-3. Will you be using TeXSmith programmatically via the Python API?
+1. Converting standalone Markdown into LaTeX/PDF?
+2. Wiring TeXSmith into an existing MkDocs site?
+3. Driving it from Python code?
 
-Jump to the relevant section accordingly, or follow the entire guide for a comprehensive overview.
+Hop to the section that matches, or ride the whole tour for the full download.
 
 ## Prerequisites
 
-TeXSmith requires the following components:
+TeXSmith expects a few tools already on your machine:
 
 Python 3.10+
-: TeXSmith ships as a Python package. We recommend
-  [uv](https://github.com/astral-sh/uv) or `pipx` for isolated installs.
+: TeXSmith ships as a Python package. Use
+  [uv](https://github.com/astral-sh/uv) or `pipx` for isolated installs so the CLI stays tidy.
 
 LaTeX distribution
 : Install TeX Live, MiKTeX, or MacTeX so `texsmith render --build`
-  can call `latexmk` and friends.
+  can hand off to `latexmk` and friends.
 
 Optional diagram tooling
-: Mermaid-to-PDF conversion defaults to Docker
-  (`minlag/mermaid-cli`). Install Docker Desktop (with WSL integration on
-  Windows) or register your own converter if you rely on Mermaid diagrams.
+: Mermaid-to-PDF (`minlag/mermaid-cli`) conversion defaults to Docker.
+  Install Docker Desktop (with WSL integration on
+  Windows) or register your own converter if Mermaid is part of your workflow.
 
-  Do the same for Draw.io diagrams if you plan to embed them in your documents.
+  Repeat the same idea for Draw.io (`rlespinasse/drawio-desktop-headless`) if they show up in your docs.
+
+Fonts
+: TeXSmith prefers Noto for its extensive Unicode coverage. Install
+  [Noto Serif](https://www.google.com/get/noto/#serif-lgc) and
+  [Noto Sans](https://www.google.com/get/noto/#sans-lgc) for best results.
 
 ## Installation
 
-You have two main options to install TeXSmith:
+Pick the installer that matches your toolbox:
 
 === "uv"
 
@@ -37,44 +42,86 @@ You have two main options to install TeXSmith:
     uv tool install texsmith
     ```
 
-=== "pip / pipx"
+=== "pip"
 
     ```bash
     pip install texsmith
-    # or
-    pipx install texsmith # Respect PEP 660 isolation
+    ```
+
+=== "pipx"
+
+    ```bash
+    pipx install texsmith
+    ```
+
+## Convert a Markdown file to LaTeX
+
+By default TeXSmith converts any Markdown file to LaTeX. It can also parse an HTML file:
+
+=== "Here document"
+
+    ```bash
+    $ cat << EOF | texsmith render
+    # Title
+    Some **bold** text.
+    EOF
+    \chapter{Title}\label{title}
+
+    Some \textbf{bold} text.
+    ```
+
+=== "From file"
+
+    ```bash
+    $ echo "# Title\nSome **bold** text." > sample.md
+    $ texsmith render sample.md --output build/
+    \chapter{Title}\label{title}
+
+    Some \textbf{bold} text.
+    ```
+
+=== "HTML"
+
+    ```bash
+    $ echo "<h1>Title</h1><p>Some <strong>bold</strong> text.</p>" > sample.html
+    $ texsmith render sample.html
+    \chapter{Title}
+    Some \textbf{bold} text.
     ```
 
 ## Convert a Markdown file
 
-Create a sample Markdown file `booby.md` or use the snippet below:
+Imagine you want to write an article about boobies. Create a sample Markdown file that you name `booby.md` or reuse our example:
 
 ```markdown
---8<--- "examples/booby/booby.md
+--8<--- "examples/booby/booby.md"
 ```
 
-Then invoke TeXSmith from the command line:
+Notice the front matter at the top that specify information about the document
+like title, author, date, and template to use.
+
+Then let TeXSmith crunch it:
 
 ```bash
-texsmith render booby.md --output build/ -tarticle -paper=a5 --build
+texsmith render booby.md --output build/ -apaper=a5 --build
 ```
 
-You will get a pdf file `build/booby.pdf` ready for printing:
+Enjoy a fresh PDF at `build/booby.pdf`:
 
 [![Booby](../assets/examples/booby.png){width=60%}](../assets/examples/booby.pdf)
 
-You should see `intro.tex` in the `build/` directory. Add the `--template`
-option (and a template package) to emit complete LaTeX projects or PDFs:
+Peek inside `build/` and you will find `booby.tex`. Be free to change the  `--template` when you want a full LaTeX project or a polished PDF:
 
 ```bash
-texsmith render intro.md --template article --output-dir build/pdf --build
+texsmith render booby.md --template article --output-dir build
 ```
 
 ## Use the Python API
 
+TeXSmith is also a Python library. Create a file named `demo.py` with the following content:
+
 ```python
 from pathlib import Path
-
 from texsmith import Document, convert_documents
 
 bundle = convert_documents(
@@ -86,13 +133,13 @@ print("Fragments:", [fragment.stem for fragment in bundle.fragments])
 print("Preview:", bundle.combined_output()[:120])
 ```
 
-Run this snippet with `uv run python demo.py`. The API mirrors the CLI, so
-switch to `ConversionService` or `TemplateSession` whenever you need more
+Run the snippet with `uv run python demo.py`. The API mirrors the CLI, so
+drop into `ConversionService` or `TemplateSession` whenever you need more
 control over slot assignments, diagnostic emitters, or template metadata.
 
 ## Convert a MkDocs site
 
-Use TeXSmith once your MkDocs project already renders clean HTML:
+Point TeXSmith at a MkDocs site once `mkdocs build` renders clean HTML:
 
 ```bash
 # Build your MkDocs site into a disposable directory
@@ -107,11 +154,11 @@ texsmith render build/site/guides/overview/index.html \
 
 !!! tip
 
-    - The default selector (`article.md-content__inner`) already targets MkDocs Material content; omit `--selector` unless you heavily customise templates.
-    - When your site spans multiple documents, repeat the command per page and combine them with template slots (for example, `--slot mainmatter:build/site/manual/index.html`).
-    - For live previews, hook TeXSmith to `mkdocs serve` by pointing at the temporary site directory MkDocs prints on startup.
+    - The default selector (`article.md-content__inner`) already matches MkDocs Material content; skip `--selector` unless you heavily customise templates.
+    - When your site spans multiple documents, repeat the command per page and stitch them with template slots (for example, `--slot mainmatter:build/site/manual/index.html`).
+    - For live previews, point TeXSmith at the temporary site directory that `mkdocs serve` prints on startup.
 
-    Once the LaTeX bundle looks good, add `--build` to invoke `latexmk` or wire the commands into CI so MkDocs HTML → TeXSmith PDF generation happens automatically.
+    Once the LaTeX bundle looks good, add `--build` to invoke `latexmk` or wire everything into CI so MkDocs HTML → TeXSmith PDF happens on every run.
 
 
 ## How does TeXSmith work?

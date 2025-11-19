@@ -52,6 +52,7 @@ reference the canonical module to avoid extra indirection.
 - [x] Noto Color Emoji ou {\fontspec{Symbola}\char"1F343} couleur ou nb
 - [x] Make all examples build
 - [x] Écrire documentation
+- [ ] Generating assets as sha only when using mkdocs, not texsmith directly or only when a specific option is enabled.
 - [ ] Fix or test __text__ in admonition.
 - [ ] Do not require --shell-escape if minted is not used (no code or inline)
 - [ ] Update dynamically in the latexmkrc the used engine (pdflatex, xelatex, lualatex)
@@ -69,6 +70,36 @@ reference the canonical module to avoid extra indirection.
 - [ ] Compilation avec Docker ou TeXlive (choix)
 - [ ] Documentation complete de docstring dans le projet
 - [ ] Déployer sur PyPI
+
+## Image conversion
+
+In the following we notice that TeXSmith converts images to PDF and assign a SHA name avoiding the reconversion and name collision. However LaTeX supports well png, jpg so conversion to PDF is not necessary in this case.
+
+This feature is mainly useful for anonymous images (svgbob, drawio, mermaid, tikz...) that need to be converted to PDF for inclusion in LaTeX documents and when used with TeXSmith MkDocs. So I want to change the behavior of TeXSmith by default to not convert images unless necessary or specified, and do not hash the name unless necessary. Converted version like `booby.svg` can easily be transleted to `booby.pdf` without hashing. We can introduce in the API, then also in the CLI the `--hash-assets` and `--convert-assets` options to control this behavior. By default no hash no conversion
+
+➜ uv run texsmith render booby.md --output build/ -apaper=a5 --build
+Running latexmk…
+...
+
+Summary — errors: 0, warnings: 0, info: 24
+                                            Build Outputs
+┌───────────────┬───────────────────────────────────────────────────────────────────────────────────┐
+│ Artifact      │ Location                                                                          │
+├───────────────┼───────────────────────────────────────────────────────────────────────────────────┤
+│ Main document │ build/booby.tex                                                                   │
+│ PDF           │ build/booby.pdf                                                                   │
+│ Asset         │ build/assets/d841c16f9215115a8ad612d61a93f290166432008e15abd6e179f63f858ab4ce.pdf │
+└───────────────┴───────────────────────────────────────────────────────────────────────────────────┘
+
+After the implementation we would simply have:
+
+┌───────────────┬─────────────────────────┐
+│ Artifact      │ Location                │
+├───────────────┼─────────────────────────┤
+│ Main document │ build/booby.tex         │
+│ PDF           │ build/booby.pdf         │
+│ Asset         │ build/assets/booby.png  │
+└───────────────┴─────────────────────────┘
 
 ## Progress Bar
 
