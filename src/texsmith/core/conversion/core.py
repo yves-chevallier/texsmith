@@ -88,6 +88,8 @@ def convert_document(
     parser: str | None,
     disable_fallback_converters: bool,
     copy_assets: bool,
+    convert_assets: bool,
+    hash_assets: bool,
     manifest: bool,
     template: str | None,
     persist_debug_html: bool,
@@ -106,6 +108,8 @@ def convert_document(
     emitter = ensure_emitter(emitter)
     strategy = GenerationStrategy(
         copy_assets=copy_assets,
+        convert_assets=convert_assets,
+        hash_assets=hash_assets,
         prefer_inputs=False,
         persist_manifest=manifest,
     )
@@ -129,6 +133,8 @@ def convert_document(
     renderer_kwargs: dict[str, Any] = {
         "output_root": output_dir,
         "copy_assets": strategy.copy_assets,
+        "convert_assets": strategy.convert_assets,
+        "hash_assets": strategy.hash_assets,
         "parser": parser or "html.parser",
     }
 
@@ -178,6 +184,8 @@ def _render_document(
         "source_dir": document_context.source_path.parent,
         "document_path": document_context.source_path,
         "copy_assets": strategy.copy_assets,
+        "convert_assets": strategy.convert_assets,
+        "hash_assets": strategy.hash_assets,
         "language": binder_context.language,
         "emitter": emitter,
     }

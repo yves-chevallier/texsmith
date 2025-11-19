@@ -9,6 +9,7 @@ import shutil
 import subprocess
 from typing import Any
 import warnings
+from urllib.parse import urlparse
 
 from texsmith.core.exceptions import TransformerExecutionError
 
@@ -142,9 +143,30 @@ class ImageToPdfStrategy(CachedConversionStrategy):
 class FetchImageStrategy(CachedConversionStrategy):
     """Fetch a remote image, normalise it to PDF, and cache the result."""
 
+    _NATIVE_SUFFIXES: set[str] = {".png", ".jpg", ".jpeg", ".pdf"}
+    _MIMETYPE_SUFFIXES: dict[str, str] = {
+        "image/png": ".png",
+        "image/jpeg": ".jpg",
+        "image/jpg": ".jpg",
+        "image/pjpeg": ".jpg",
+        "image/svg+xml": ".svg",
+        "text/svg": ".svg",
+        "application/svg+xml": ".svg",
+        "image/gif": ".gif",
+        "image/bmp": ".bmp",
+        "application/pdf": ".pdf",
+    }
+
     def __init__(self, timeout: float = 10.0) -> None:
         super().__init__("fetch-image")
         self.timeout = timeout
+
+    def output_suffix(self, source: Any, options: dict[str, Any]) -> str:
+        candidate = options.get("output_suffix")
+        if isinstance(candidate, str) and candidate.strip():
+            suffix = candidate.strip()
+            return suffix if suffix.startswith(".") else f".{suffix.lstrip('.')}"
+        return super().output_suffix(source, options)
 
     def _perform_conversion(
         self,
@@ -155,6 +177,10 @@ class FetchImageStrategy(CachedConversionStrategy):
         **options: Any,
     ) -> Path:
         url = str(source)
+        convert_requested = bool(options.get("convert", True))
+        metadata: dict[str, str] | None = options.get("metadata")
+        if metadata is not None and not isinstance(metadata, dict):
+            metadata = None
 
         try:
             import requests  # type: ignore[import]
@@ -174,6 +200,22 @@ class FetchImageStrategy(CachedConversionStrategy):
 
         content_type = response.headers.get("Content-Type", "")
         mimetype = content_type.split(";", 1)[0].strip().lower()
+        suffix = self._suffix_from_request(url, mimetype)
+
+        native_supported = self._can_emit_native(suffix)
+        should_convert = not native_supported
+        if convert_requested and suffix.lower() != ".pdf":
+            should_convert = True
+        final_suffix = ".pdf" if should_convert else suffix or ".pdf"
+
+        if metadata is not None:
+            metadata["content_type"] = mimetype
+            metadata["suffix"] = final_suffix
+
+        if not should_convert:
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.write_bytes(response.content)
+            return target
 
         if mimetype in ("image/svg+xml", "text/svg", "application/svg+xml"):
             try:
@@ -199,6 +241,19 @@ class FetchImageStrategy(CachedConversionStrategy):
         normalise_pdf_version(target)
 
         return target
+
+    def _suffix_from_request(self, url: str, mimetype: str) -> str:
+        parsed = urlparse(url)
+        suffix = Path(parsed.path or "").suffix.lower()
+        if suffix:
+            return suffix
+        return self._MIMETYPE_SUFFIXES.get(mimetype, "")
+
+    def _can_emit_native(self, suffix: str) -> bool:
+        lowered = suffix.lower()
+        if not lowered:
+            return False
+        return lowered in self._NATIVE_SUFFIXES
 
 
 class PdfMetadataStrategy:

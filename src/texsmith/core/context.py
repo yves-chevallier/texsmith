@@ -143,6 +143,11 @@ class AssetRegistry:
         self.assets_map[key] = path
         return path
 
+    def lookup(self, key: str) -> Path | None:
+        """Return a previously registered artefact when available."""
+        stored = self.assets_map.get(key)
+        return Path(stored) if stored is not None else None
+
     def get(self, key: str) -> Path:
         """Retrieve a previously registered artefact."""
         try:

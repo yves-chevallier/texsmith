@@ -29,6 +29,8 @@ class GenerationStrategy:
     """Rendering strategy toggles shared across conversion workflows."""
 
     copy_assets: bool = True
+    convert_assets: bool = False
+    hash_assets: bool = False
     prefer_inputs: bool = False
     persist_manifest: bool = False
 

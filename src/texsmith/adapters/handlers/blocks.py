@@ -13,7 +13,6 @@ from texsmith.core.context import RenderContext
 from texsmith.core.exceptions import AssetMissingError, InvalidNodeError
 from texsmith.core.rules import RenderPhase, renders
 
-from ..transformers import drawio2pdf, fetch_image, image2pdf, svg2pdf
 from ._helpers import (
     coerce_attribute,
     gather_classes,
@@ -21,6 +20,7 @@ from ._helpers import (
     mark_processed,
     resolve_asset_path,
 )
+from ._assets import store_local_image_asset, store_remote_image_asset
 from .code import (
     render_code_blocks as _render_code_block,
     render_preformatted_code as _render_preformatted_code,
@@ -549,23 +549,13 @@ def render_figures(element: Tag, context: RenderContext) -> None:
         return
 
     if is_valid_url(src):
-        artefact = fetch_image(src, output_dir=context.assets.output_root)
-        asset_key = src
+        stored_path = store_remote_image_asset(context, src)
     else:
         resolved = _resolve_source_path(context, src)
         if resolved is None:
             raise AssetMissingError(f"Unable to resolve figure asset '{src}'")
 
-        suffix = resolved.suffix.lower()
-        if suffix == ".svg":
-            artefact = svg2pdf(resolved, output_dir=context.assets.output_root)
-        elif suffix == ".drawio":
-            artefact = drawio2pdf(resolved, output_dir=context.assets.output_root)
-        else:
-            artefact = image2pdf(resolved, output_dir=context.assets.output_root)
-        asset_key = str(resolved)
-
-    stored_path = context.assets.register(asset_key, artefact)
+        stored_path = store_local_image_asset(context, resolved)
 
     caption_text = None
     short_caption = alt_text

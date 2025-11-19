@@ -72,6 +72,8 @@ class RenderSettings:
     parser: str | None = None
     disable_fallback_converters: bool = False
     copy_assets: bool = True
+    convert_assets: bool = False
+    hash_assets: bool = False
     manifest: bool = False
     persist_debug_html: bool = False
     language: str | None = None
@@ -146,6 +148,8 @@ def convert_documents(
             parser=settings.parser,
             disable_fallback_converters=settings.disable_fallback_converters,
             copy_assets=settings.copy_assets,
+            convert_assets=settings.convert_assets,
+            hash_assets=settings.hash_assets,
             manifest=settings.manifest,
             template=template,
             persist_debug_html=settings.persist_debug_html,
