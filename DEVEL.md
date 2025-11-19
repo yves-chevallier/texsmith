@@ -55,6 +55,8 @@ Roadmap and development notes for TeXSmith. I keep this file as a running checkl
 - [x] Add progress-bar support
 - [x] Integrate coverage reporting
 - [x] Snippet Template
+- [ ] Epigraph Plugin
+- [ ] Consolidate Book template
 - [ ] Snippet plugin
 - [ ] Put fonts and code into separate sty merged during build
 - [ ] Avoid `--shell-escape` when `minted` is unused (no code blocks or inline code)
@@ -70,6 +72,21 @@ Roadmap and development notes for TeXSmith. I keep this file as a running checkl
 - [ ] Integrate Nox
 - [ ] Complete docstring coverage across the project
 - [ ] Deploy to PyPI
+
+## Book Template Integration with MkDocs
+
+Update the book template integration:
+
+- [x] Remove the HEIG-VD reference.
+- [x] Remove the optional cover page.
+- [ ] Use classic admonitions.
+- [ ] Use Noto for code samples.
+- [ ] Decide on a serif vs. sans-serif body font.
+- [ ] Inherit code styling from the article template (smaller arc and thinner frame).
+- [ ] Use the default Mermaid configuration (no color overrides).
+- [ ] Avoid French typographic conventions.
+- [ ] Build MkDocs with parts at level 0.
+- [ ] Hide the list of tables when no tables exist.
 
 ## Snippet Plugin
 
@@ -173,16 +190,6 @@ Support abbreviations end-to-end. If partial functionality already exists, refac
 5. Have Jinja loop over `acronyms` and emit `\newacronym{key}{term}{description}` when the list is not empty.
 6. Conditionally include `\usepackage[acronym]{glossaries}` and `\makeglossaries` in the templates.
 
-## Package and Template Renaming
-
-- Rename the `texsmith` package and executable everywhere, including `pyproject` entries.
-- Rename all templates that currently follow the `texsmith-template-*` naming convention.
-- Move the templates into a dedicated `templates` folder.
-
-## Template Heading Levels
-
-Some templates start at `\part`, others at `\chapter`, and others at `\section`. Add a `base_level` to every template so a `# heading` maps to `part`, `chapter`, or `section` automatically based on the document class. Keep a CLI option that applies an offset when users want to skip top-level structures.
-
 ## Complex Tables
 
 Markdown offers limited table configuration—only column alignment by default. PyMdown provides captions, and superfences can inject more metadata, but we still miss:
@@ -193,6 +200,24 @@ Markdown offers limited table configuration—only column alignment by default. 
 - Column and row spanning
 - Horizontal and vertical separator lines
 - Column widths (fixed, auto, relative)
+
+### Extended Markdown Table Syntax
+
+Leverage Pymdown’s table extension to add more metadata directly in Markdown. For example:
+texsmith.spantable extension lets us span cells in standard Markdown tables.
+
+The `>>>` syntax will span cells horizontally, the `vvv` syntax will span cells vertically.
+
+```markdown
+| Header 1 | Header 2 | Header 3 |
+|:---------|:--------:|---------:|
+| Cell 1   | Cell 2   | Cell 3   |
+| Cell 4   | >>>      | Cell 6   |
+| Cell 7   | Cell 8   | Cell 11  |
+| Cell 9   |          | vvv      |
+```
+
+### Raw table syntax
 
 Superfences do not work directly with tables, so define a `table` fence that accepts YAML options:
 
@@ -243,7 +268,15 @@ The same sentence in French typography would translate to “The elephant shown 
 
 In scientific English we capitalize “Figure”, while French typography keeps “figure” lowercase.
 
-## Svgbob
+## Standalone Plugins
+
+### Epigraph
+
+Integrate epigraph support via a dedicated plugin. The goal is to let users insert epigraphs easily from Markdown files.
+
+### Svgbob
+
+This can be a good example of a standalone TeXSmith plugin that allows rendering ASCII art diagrams using SvgBob.
 
 [Svgbob](https://github.com/ivanceras/svgbob) lets you sketch diagrams using ASCII art. Save the source with a `.bob` extension (or keep it inline) and link to it like any other image:
 
@@ -253,18 +286,18 @@ In scientific English we capitalize “Figure”, while French typography keeps 
 
 During the build TeXSmith calls the bundled Svgbob converter, generates a PDF, and inserts it into the final LaTeX output. Cached artifacts prevent repeated rendering when the source diagram stays the same.
 
-## CircuitTikZ
+### CircuitTikZ
 
 The [CircuitTikZ designer](https://circuit2tikz.tf.fau.de/designer/) helps produce circuit diagrams from the browser. Export the generated TikZ snippet and wrap it in a raw LaTeX fence:
 
-```markdown
-/// latex
+````markdown
+```latex { circuitikz }
 \begin{circuitikz}
     \draw (0,0) to[battery] (0,2)
           -- (3,2) to[R=R] (3,0) -- (0,0);
 \end{circuitikz}
-///
 ```
+````
 
 Raw blocks bypass the HTML output but remain in the LaTeX build. To keep the TikZ code in a separate file, include it via `\input{}` inside a raw fence and store the `.tex` asset alongside the Markdown.
 
@@ -276,21 +309,6 @@ Verify that TeXSmith respects these design principles:
 - Modules remain deterministic through topological ordering.
 - Modules foster reusability and remixing.
 - Modules cooperate through well-defined contracts.
-
-## Book Template Integration with MkDocs
-
-Update the book template integration:
-
-- Remove the HEIG-VD reference.
-- Remove the optional cover page.
-- Use classic admonitions.
-- Use Noto for code samples.
-- Decide on a serif vs. sans-serif body font.
-- Inherit code styling from the article template (smaller arc and thinner frame).
-- Use the default Mermaid configuration (no color overrides).
-- Avoid French typographic conventions.
-- Build MkDocs with parts at level 0.
-- Hide the list of tables when no tables exist.
 
 ## Visual Tweaks
 
