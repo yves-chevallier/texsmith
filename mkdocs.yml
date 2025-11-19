@@ -19,6 +19,7 @@ theme:
     - navigation.tracking
     - navigation.expand
     - navigation.sections
+    - navigation.footer
     - toc.follow
     - content.code.copy
     - content.code.annotate
@@ -65,8 +66,8 @@ plugins:
       books:
         - title: "TeXSmith Documentation"
           folder: texsmith-docs
-          root: "__texsmith_full_navigation__" 
-          base_level: -1 
+          root: "__texsmith_full_navigation__"
+          base_level: -1
 extra:
   version:
     provider: mike

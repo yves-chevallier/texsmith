@@ -1,0 +1,10 @@
+mkdir -p ~/.local/share/fonts
+
+https://cdn.jsdelivr.net/gh/notofonts/notofonts.github.io/fonts/NotoSansSyriacWestern/unhinted/ttf/NotoSansSyriacWestern-Black.ttf
+
+https://cdn.jsdelivr.net/gh/notofonts/notofonts.github.io/fonts/NotoSansSyriacWestern/unhinted/ttf/NotoSansSyriacWestern-Regular.ttf
+
+https://cdn.jsdelivr.net/gh/notofonts/notofonts.github.io/fonts/NotoSansSyriacWestern/unhinted/ttf/NotoSansSyriacWestern-Thin.ttf
+
+cp *.ttf ~/.local/share/fonts/
+fc-cache -f -v
