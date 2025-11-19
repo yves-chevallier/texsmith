@@ -284,9 +284,10 @@ class Document:
             drop_title=drop_title,
             title_from_heading=title_from_heading,
         )
+        alignment = cls._resolve_heading_alignment(rendered.html, strategy)
 
         options = DocumentRenderOptions(
-            base_level=base_level,
+            base_level=base_level - alignment,
             heading_level=resolve_heading_level(heading),
             title_strategy=strategy,
             numbered=numbered,
@@ -344,9 +345,10 @@ class Document:
             drop_title=drop_title,
             title_from_heading=title_from_heading,
         )
+        alignment = cls._resolve_heading_alignment(html, strategy)
 
         options = DocumentRenderOptions(
-            base_level=base_level,
+            base_level=base_level - alignment,
             heading_level=resolve_heading_level(heading),
             title_strategy=strategy,
             numbered=numbered,
@@ -445,6 +447,44 @@ class Document:
                 self.slots.merge(DocumentSlots.from_mapping(base_mapping))
 
     _HEADING_TAGS: ClassVar[set[str]] = {"h1", "h2", "h3", "h4", "h5", "h6"}
+
+    class _HeadingLevelScanner(HTMLParser):
+        __slots__ = ("minimum_level",)
+
+        def __init__(self) -> None:
+            super().__init__()
+            self.minimum_level: int | None = None
+
+        def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
+            if not tag:
+                return
+            name = tag.lower()
+            if not name.startswith("h") or len(name) < 2 or not name[1].isdigit():
+                return
+            try:
+                level = int(name[1])
+            except ValueError:
+                return
+            if not 1 <= level <= 6:
+                return
+            if self.minimum_level is None or level < self.minimum_level:
+                self.minimum_level = level
+
+    @classmethod
+    def _resolve_heading_alignment(cls, html: str, strategy: TitleStrategy) -> int:
+        if strategy is not TitleStrategy.KEEP:
+            return 0
+
+        scanner = cls._HeadingLevelScanner()
+        try:
+            scanner.feed(html)
+        finally:
+            scanner.close()
+
+        minimum = scanner.minimum_level
+        if minimum is None or minimum <= 1:
+            return 0
+        return minimum - 1
 
     class _HeadingExtractor(HTMLParser):
         __slots__ = ("_depth", "_resolved", "parts")

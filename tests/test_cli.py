@@ -71,7 +71,12 @@ def test_convert_command() -> None:
     with runner.isolated_filesystem():
         html_file = Path("index.html")
         html_file.write_text(
-            "<article class='md-content__inner'><h2 id='intro'>Introduction</h2></article>",
+            (
+                "<article class='md-content__inner'>"
+                "<h2 id='intro'>Introduction</h2>"
+                "<p>Body text.</p>"
+                "</article>"
+            ),
             encoding="utf-8",
         )
 
@@ -86,7 +91,37 @@ def test_convert_command() -> None:
         )
 
     assert result.exit_code == 0, result.stdout
-    assert "\\section{Introduction}\\label{intro}" in result.stdout
+    assert "\\chapter{Introduction}\\label{intro}" in result.stdout
+
+
+def test_template_alignment_defaults_to_section() -> None:
+    runner = CliRunner()
+    with runner.isolated_filesystem():
+        html_file = Path("index.html")
+        html_file.write_text(
+            "<article class='md-content__inner'><h2 id='intro'>Introduction</h2></article>",
+            encoding="utf-8",
+        )
+
+        result = runner.invoke(
+            app,
+            [
+                "render",
+                str(html_file),
+                "--template",
+                "article",
+                "--output",
+                "build",
+                "--title-from-frontmatter",
+            ],
+        )
+
+        output_file = Path("build") / "index.tex"
+        assert output_file.exists(), result.stdout
+        content = output_file.read_text(encoding="utf-8")
+
+    assert result.exit_code == 0, result.stdout
+    assert "\\section{Introduction}\\label{intro}" in content
 
 
 def test_heading_level_option() -> None:
@@ -109,7 +144,7 @@ def test_heading_level_option() -> None:
         )
 
     assert result.exit_code == 0, result.stdout
-    assert "\\subsection{Overview}\\label{intro}" in result.stdout
+    assert "\\section{Overview}\\label{intro}" in result.stdout
 
 
 def test_copy_assets_disabled() -> None:
