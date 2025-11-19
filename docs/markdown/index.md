@@ -95,6 +95,7 @@ So as an opinionated tool, TeXSmith picks a set of extensions, adds a few more, 
 | ------------- | ------------------------- | ----------------------- |
 | Small Caps    | `^^x^^`                   | `texsmith.smallcaps`    |
 | Mermaid       | `![](diagram.mmd)`        | `texsmith.mermaid`      |
+| Progress Bars | `[=75% "Done"]`           | `texsmith.progressbar`  |
 | Bibliography  | `[^citekey]`              | `texsmith.bibliography` |
 | Index Entries | `#[entry]`                | `texsmith.index`        |
 | Acronyms      | `ACME (Acme Corporation)` | `texsmith.acronyms`     |
@@ -129,6 +130,7 @@ So as an opinionated tool, TeXSmith picks a set of extensions, adds a few more, 
   - texsmith.missing_footnotes:MissingFootnotesExtension
   - texsmith.latex_text:LatexTextExtension
   - texsmith.smallcaps:SmallCapsExtension
+  - texsmith.progressbar:ProgressBarExtension
 - Pymdown Extensions
   - pymdownx.betterem
   - pymdownx.blocks.caption

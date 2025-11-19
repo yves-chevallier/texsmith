@@ -104,6 +104,12 @@ _EXTENSIONS: dict[str, ExtensionSpec] = {
         markdown_entry="texsmith.mermaid:MermaidExtension",
         description="Inlines Mermaid diagrams referenced via Markdown images.",
     ),
+    "progressbar": ExtensionSpec(
+        slug="progressbar",
+        markdown_entry="texsmith.progressbar:ProgressBarExtension",
+        renderer_entry="texsmith.progressbar:register_renderer",
+        description="Renders `[=50%]` progress blocks via the LaTeX progressbar package.",
+    ),
 }
 
 
