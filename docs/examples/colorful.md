@@ -13,11 +13,25 @@ This example demonstrates the creation of a colorful examples with four slots us
 === "manifest.toml"
 
     ```toml
-    --8<--- "examples/colorful/template/manifest.toml"
+    --8<--- "examples/colorful/manifest.toml"
     ```
 
 === "template.tex"
 
     ```tex
-    ---8<--- "examples/colorful/template/template.tex"
+    ---8<--- "examples/colorful/template.tex"
     ```
+
+To build this example, simply run:
+
+```text
+$ ls
+colorful.md  manifest.toml  template.tex
+$ texsmith colorful.md -t. --build
+┌───────────────┬─────────────────────────────────────┐
+│ Artifact      │ Location                            │
+├───────────────┼─────────────────────────────────────┤
+│ Main document │ /tmp/texsmith-x84gefq4/colorful.tex │
+│ PDF           │ colorful.pdf                        │
+└───────────────┴─────────────────────────────────────┘
+```

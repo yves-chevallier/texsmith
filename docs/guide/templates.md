@@ -18,6 +18,7 @@ TeXSmith includes standard templates for common document types:
 
 - `article`: academic-style article layout with title page, abstract, and sections.
 - `letter`: formal letters with sender/recipient metadata, fold marks, and cursive signatures.
+- `snippet`: standalone `tikzpicture` frame for screenshots, stickers, and snippets. Shares the article preamble (fonts, callouts, keystrokes) but constrains output to a minipage with an optional dog-ear border.
 
 Invoke them with `-tarticle` or `-tletter`. Additional community templates remain available under `templates/` or as separate PyPI packages.
 

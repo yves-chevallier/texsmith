@@ -68,6 +68,7 @@ article {
   text-align: center;
 }
 
+a > img,
 p > img {
   display: block;
   margin-left: auto;

@@ -1,0 +1,24 @@
+$bibtex_use = 2;
+
+\BLOCK{ if latex_engine == "lualatex" }
+$pdflatex = 'lualatex --shell-escape %O %S';
+\BLOCK{ else }
+$pdflatex = 'pdflatex --shell-escape %O %S';
+\BLOCK{ endif }
+
+$biber = 'biber %O %B';
+if (system("which texindy >/dev/null 2>&1") == 0) {
+  $makeindex = 'texindy %O -o %D %S';
+} else {
+  $makeindex = 'makeindex %O -o %D %S';
+}
+$clean_ext .= ' %R.run.xml %R.blg';
+
+add_cus_dep('glo', 'gls', 0, 'run_makeglossaries');
+add_cus_dep('acn', 'acr', 0, 'run_makeglossaries');
+
+sub run_makeglossaries {
+  my ($base) = @_;
+  my $cmd = "makeglossaries \"$base\"";
+  return system($cmd);
+}

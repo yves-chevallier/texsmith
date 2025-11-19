@@ -11,6 +11,7 @@ _BUILTIN_FACTORIES: dict[str, str] = {
     "article": "texsmith.builtin_templates.article:Template",
     "book": "texsmith.builtin_templates.book:Template",
     "letter": "texsmith.builtin_templates.letter:Template",
+    "snippet": "texsmith.builtin_templates.snippet:Template",
 }
 
 _ALIASES: dict[str, str] = {

@@ -1,0 +1,87 @@
+[compat]
+texsmith = ">=0.1,<1.0"
+
+[latex.template]
+name = "snippet"
+version = "0.1.0"
+entrypoint = "template/template.tex"
+engine = "lualatex"
+shell_escape = true
+texlive_year = 2023
+tlmgr_packages = [
+    "babel",
+    "fontspec",
+    "hyphenat",
+    "microtype",
+    "tcolorbox",
+    "fontawesome5",
+    "csquotes",
+    "hyperref",
+    "tikz",
+]
+
+[latex.template.attributes.language]
+default = "english"
+type = "string"
+allow_empty = false
+sources = ["press.language", "language"]
+
+[latex.template.attributes.width]
+default = "12cm"
+type = "string"
+allow_empty = false
+sources = ["press.snippet.width", "snippet.width", "width"]
+
+[latex.template.attributes.margin]
+default = "6mm"
+type = "string"
+allow_empty = false
+sources = ["press.snippet.margin", "snippet.margin", "margin"]
+
+[latex.template.attributes.dogear]
+default = "5mm"
+type = "string"
+allow_empty = false
+sources = ["press.snippet.dogear", "snippet.dogear", "dogear"]
+
+[latex.template.attributes.dogear_enabled]
+default = true
+type = "boolean"
+sources = ["press.snippet.dogear_enabled", "snippet.dogear_enabled", "dogear_enabled"]
+
+[latex.template.attributes.border]
+default = true
+type = "boolean"
+sources = ["press.snippet.border", "snippet.border", "border"]
+
+[latex.template.attributes.callout_style]
+default = "fancy"
+type = "string"
+choices = ["fancy", "classic", "minimal"]
+sources = ["press.callout_style", "press.callouts.style", "callout_style"]
+
+[latex.template.attributes.bibliography_style]
+default = "numeric"
+type = "string"
+
+[latex.template.attributes.emoji]
+default = "artifact"
+type = "string"
+choices = ["artifact", "symbola", "color"]
+sources = ["press.emoji", "emoji"]
+
+[latex.template.attributes.preamble]
+default = ""
+type = "string"
+allow_empty = true
+sources = ["press.override.preamble", "press.preamble", "preamble"]
+
+[latex.template.slots.mainmatter]
+default = true
+depth = "section"
+
+[latex.template.assets]
+"callouts.sty" = { source = "template/callouts.sty.jinja", template = true }
+"todolist.sty" = { source = "../common/todolist.sty" }
+"keystroke.sty" = { source = "../common/keystroke.sty" }
+".latexmkrc" = { source = "template/assets/latexmkrc", template = true }

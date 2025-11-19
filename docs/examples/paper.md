@@ -5,6 +5,13 @@ Markdown source, bibliographies, and figures.  It uses the `article` template
 package, which provides a standard article layout with support for
 citations, cross-references, and floating figures/tables.
 
+The documentation preview uses the default A4 portrait layout. Click the image
+to download the PDF.
+
+[![Scientific paper preview](../assets/examples/paper.png){width=70%}](../assets/examples/paper.pdf)
+
+Here is the source code for this example:
+
 ````markdown
 --8<--- "docs/assets/examples/cheese.md"
 ````
@@ -14,8 +21,3 @@ To render the example manually:
 ```bash
 texsmith cheese.md cheese.bib -tarticle --build
 ```
-
-The documentation preview uses the default A4 portrait layout. Click the image
-to download the PDF.
-
-[![Scientific paper preview](../assets/examples/paper.png){width=70%}](../assets/examples/paper.pdf)
