@@ -38,7 +38,7 @@ Roadmap and development notes for TeXSmith. I keep this file as a running checkl
 - [x] Improve error handling and reporting during LaTeX compilation
 - [x] Support raw LaTeX blocks (optionally hidden from HTML)
 - [x] Create CI/CD pipelines
-- [x] Add the `texsmith template info book` command
+- [x] Add the `texsmith --template book --template-info` command
 - [x] Manage figure references (`\cref`, etc.)
 - [x] Optimize bibliography management using `.bib` files instead of Jinja
 - [x] Document how to create custom LaTeX templates
@@ -70,7 +70,7 @@ Roadmap and development notes for TeXSmith. I keep this file as a running checkl
 
 ## Simplifying TeXSmith CLI Usage
 
-Most TeXSmith workflows rely on `texsmith render`, so `render` should become the default command. Re-expose the current subcommands as dash options:
+Most TeXSmith workflows rely on `texsmith`, so the root command should expose everything inline. Re-expose the current subcommands as dash options:
 
 - `--list-extensions`: list all enabled extensions
 - `--list-templates`: list all available templates (built-in, third-party, or local)

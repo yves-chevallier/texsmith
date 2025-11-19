@@ -1,6 +1,6 @@
 # Troubleshooting LaTeX Builds
 
-Running `texsmith render --build` shells out to `latexmk`, `bibtex`/`biber`, and any template assets declared in `manifest.toml`. When those tools fail, the CLI will highlight the failing step and (optionally) open the log file. Use this page to decode the most common issues.
+Running `texsmith --build` shells out to `latexmk`, `bibtex`/`biber`, and any template assets declared in `manifest.toml`. When those tools fail, the CLI will highlight the failing step and (optionally) open the log file. Use this page to decode the most common issues.
 
 ## Enable rich diagnostics
 
@@ -19,13 +19,13 @@ Running `texsmith render --build` shells out to `latexmk`, `bibtex`/`biber`, and
 
 **Symptom:** `LaTeX Error: File <package>.sty not found`.
 
-**Fix:** Run `texsmith template info <NAME>` and install the listed tlmgr packages (`tlmgr install ...`). Distributions with minimal profiles (BasicTeX, MikTeX) require this step for every template.
+**Fix:** Run `texsmith --template <NAME> --template-info` and install the listed tlmgr packages (`tlmgr install ...`). Distributions with minimal profiles (BasicTeX, MikTeX) require this step for every template.
 
 ## Shell-escape blocked
 
 **Symptom:** `shell escape feature is not enabled` when templates run `minted`, `gnuplot`, or diagram converters.
 
-**Fix:** `texsmith template info` indicates whether `shell_escape` is required. Re-run `texsmith render --build --classic-output` to confirm the flag, then edit your TeX Live config or pass `latexmk -shell-escape` by exporting `LATEXMKOPT="-shell-escape"`.
+**Fix:** `texsmith --template-info` indicates whether `shell_escape` is required. Re-run `texsmith --build --classic-output` to confirm the flag, then edit your TeX Live config or pass `latexmk -shell-escape` by exporting `LATEXMKOPT="-shell-escape"`.
 
 ## Bibliography failures
 
@@ -33,7 +33,7 @@ Running `texsmith render --build` shells out to `latexmk`, `bibtex`/`biber`, and
 
 **Fix:**
 
-- Run `texsmith bibliography list references.bib` to validate files before building.
+- Run `texsmith references.bib --list-bibliography` to validate files before building.
 - Make sure every bibliography file passed via `--bibliography` exists and is UTF-8 encoded.
 - If `biber` complains about encoding, add `encoding = "UTF-8"` to your template manifest bibliography section or normalise via `pybtex`.
 
@@ -47,7 +47,7 @@ Running `texsmith render --build` shells out to `latexmk`, `bibtex`/`biber`, and
 
 **Symptom:** `Package polyglossia Error` or `fontspec` warnings after switching languages.
 
-**Fix:** Ensure the `press.language` metadata (front matter or CLI `--language`) maps to a Babel/Polyglossia identifier. Refer to `texsmith template info` to confirm defaults and install any necessary language packages (e.g., `tlmgr install babel-french`).
+**Fix:** Ensure the `press.language` metadata (front matter or CLI `--language`) maps to a Babel/Polyglossia identifier. Refer to `texsmith --template-info` to confirm defaults and install any necessary language packages (e.g., `tlmgr install babel-french`).
 
 ## Still stuck?
 

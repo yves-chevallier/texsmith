@@ -33,10 +33,10 @@ level 1.
     EOF
 
     # Plain fragment output → \chapter, \section …
-    texsmith render headings.md
+    texsmith headings.md
 
     # Template output → \section, \subsection …
-    texsmith render headings.md --template article --title-from-frontmatter \
+    texsmith headings.md --template article --title-from-frontmatter \
       --output-dir build/headings
     ```
 
@@ -67,10 +67,10 @@ Need to nudge the entire hierarchy up or down? Use the base level knobs:
 
     ```bash
     # Turn the same ## heading into a subsection
-    texsmith render headings.md --base-level 2
+    texsmith headings.md --base-level 2
 
     # Or force it back to a chapter, even inside a template
-    texsmith render headings.md -tarticle --base-level -1 \
+    texsmith headings.md -tarticle --base-level -1 \
       --title-from-frontmatter
     ```
 
@@ -92,7 +92,7 @@ Base level changes where the first heading lands. The `--heading-level`
 (`-h`) flag indents *every* heading by a constant amount after alignment. This is
 handy when you embed documents into a larger structure and need an extra offset.
 
-- CLI: `texsmith render intro.md -h 1` turns `#` into `\subsection`.
+- CLI: `texsmith intro.md -h 1` turns `#` into `\subsection`.
 - API: pass `heading=` to `Document.from_markdown` or call
   `document.set_heading("subsection")`.
 
@@ -118,10 +118,10 @@ the leading `#` inside the body rather than absorbing it into the title page.
 
     ```bash
     # Promote the first heading to \title{} and re-align the rest
-    texsmith render paper.md --title-from-heading --template article
+    texsmith paper.md --title-from-heading --template article
 
     # Keep headings but drop the duplicate title in the body
-    texsmith render paper.md --drop-title -tarticle
+    texsmith paper.md --drop-title -tarticle
     ```
 
 === "Python API"

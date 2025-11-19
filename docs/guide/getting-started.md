@@ -17,7 +17,7 @@ Python 3.10+
   [uv](https://github.com/astral-sh/uv) or `pipx` for isolated installs so the CLI stays tidy.
 
 LaTeX distribution
-: Install TeX Live, MiKTeX, or MacTeX so `texsmith render --build`
+: Install TeX Live, MiKTeX, or MacTeX so `texsmith --build`
   can hand off to `latexmk` and friends.
 
 Optional diagram tooling
@@ -61,7 +61,7 @@ By default TeXSmith converts any Markdown file to LaTeX. It can also parse an HT
 === "Here document"
 
     ```bash
-    $ cat << EOF | texsmith render
+    $ cat << EOF | texsmith
     # Title
     Some **bold** text.
     EOF
@@ -74,7 +74,7 @@ By default TeXSmith converts any Markdown file to LaTeX. It can also parse an HT
 
     ```bash
     $ echo "# Title\nSome **bold** text." > sample.md
-    $ texsmith render sample.md --output build/
+    $ texsmith sample.md --output build/
     \chapter{Title}\label{title}
 
     Some \textbf{bold} text.
@@ -84,7 +84,7 @@ By default TeXSmith converts any Markdown file to LaTeX. It can also parse an HT
 
     ```bash
     $ echo "<h1>Title</h1><p>Some <strong>bold</strong> text.</p>" > sample.html
-    $ texsmith render sample.html
+    $ texsmith sample.html
     \chapter{Title}
     Some \textbf{bold} text.
     ```
@@ -103,7 +103,7 @@ like title, author, date, and template to use.
 Then let TeXSmith crunch it:
 
 ```bash
-texsmith render booby.md --output build/ -apaper=a5 --build
+texsmith booby.md --output build/ -apaper=a5 --build
 ```
 
 Enjoy a fresh PDF at `build/booby.pdf`:
@@ -113,7 +113,7 @@ Enjoy a fresh PDF at `build/booby.pdf`:
 Peek inside `build/` and you will find `booby.tex`. Be free to change the  `--template` when you want a full LaTeX project or a polished PDF:
 
 ```bash
-texsmith render booby.md --template article --output-dir build
+texsmith booby.md --template article --output-dir build
 ```
 
 ## Use the Python API
@@ -146,7 +146,7 @@ Point TeXSmith at a MkDocs site once `mkdocs build` renders clean HTML:
 mkdocs build
 
 # Convert one page into LaTeX/PDF-ready assets
-texsmith render build/site/guides/overview/index.html \
+texsmith build/site/guides/overview/index.html \
   --template article \
   --output-dir build/press \
   --bibliography docs/references.bib

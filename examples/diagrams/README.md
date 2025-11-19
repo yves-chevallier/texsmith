@@ -21,10 +21,10 @@ sudo snap install drawio
 You can run the example with:
 
 ```tex
-$ uv run texsmith render diagrams.md --template article --build
+$ uv run texsmith diagrams.md --template article --build
 ```
 
 TeXSmith automatically resolves built-in template names like `article` even when you
 invoke the CLI from nested example directories, so no extra path gymnastics are required.
-If you need detailed traces during development, pass `--debug` *before* the subcommand,
-e.g. `uv run texsmith --debug render …`.
+If you need detailed traces during development, pass `--debug` before the inputs,
+e.g. `uv run texsmith --debug diagrams.md …`.

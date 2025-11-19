@@ -12,7 +12,7 @@ citations, cross-references, and floating figures/tables.
 To render the example manually:
 
 ```bash
-texsmith render cheese.md cheese.bib -tarticle --build
+texsmith cheese.md cheese.bib -tarticle --build
 ```
 
 The documentation preview uses the default A4 portrait layout. Click the image

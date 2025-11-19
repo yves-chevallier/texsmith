@@ -4,10 +4,10 @@ TeXSmith is capable of processing bibliographic data stored in BibTeX files and 
 
 ## Using Bibliography Files
 
-When invoking the `texsmith render` command, you can specify one or more BibTeX files:
+When invoking `texsmith`, you can specify one or more BibTeX files:
 
 ```bash
-texsmith render docs/chapter.md references.bib
+texsmith docs/chapter.md references.bib
 ```
 
 ## Using the front matter

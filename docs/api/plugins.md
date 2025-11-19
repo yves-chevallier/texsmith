@@ -19,7 +19,7 @@ from texsmith import Document, convert_documents
 bundle = convert_documents([Document.from_markdown(Path("intro.md"))])
 ```
 
-When running `texsmith render`, use the `--markdown-extensions` or MkDocs plugin
+When running `texsmith`, use the `--markdown-extensions` or MkDocs plugin
 configuration to import modules before TeXSmith executes. For example, add the
 following to your MkDocs `hooks` file:
 

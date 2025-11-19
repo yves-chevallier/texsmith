@@ -10,10 +10,10 @@ mkdir -p "${BUILD_DIR}"
 run_render() {
   local example_dir=$1
   shift
-  echo "→ Running texsmith render in ${example_dir}"
+  echo "→ Running texsmith in ${example_dir}"
   (
     cd "${ROOT_DIR}/${example_dir}"
-    texsmith render "$@" \
+    texsmith "$@" \
       --template article \
       --output-dir "${BUILD_DIR}/${example_dir}" \
       --build \

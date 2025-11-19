@@ -20,7 +20,7 @@ Future releases will append to this table with new features, migration notes, an
 To inspect third-party or local templates, run:
 
 ```bash
-texsmith template info <name-or-path>
+texsmith --template <name-or-path> --template-info
 ```
 
 The command lists TeX Live requirements, shell-escape expectations, slot definitions, and declared assets.
