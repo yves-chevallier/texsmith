@@ -1,13 +1,19 @@
 [](){ #index }
 # Index Generation
 
-In static site generators like MkDocs, a search based index can be generated
-to help users quickly find content through full-text search. However in printed documents,
-an index can be useful to provide a list of important terms and their locations in the text.
+In static site generators such as MkDocs, every build emits a `search_index.json`
+file consumed by Lunr.js or Wasabi directly in the browser. It lists every word
+encountered in the documentation along with its locations, enabling instant
+client-side search. That automation works wonderfully for HTML, but printed
+documents require a static index compiled ahead of time.
 
-Index in LaTeX documents is typically created using the `imakeidx` package, which allows you to
-define index entries in your source files and generate an index section which refers to the pages where
-those terms appear. The LaTeX form is typically:
+Traditional LaTeX editing relies on `\index{term}` commands sprinkled throughout
+the source. After compilation you run `makeindex` or `xindy`, which produces the
+final index file included near the end of the document. TeXSmith mirrors that
+workflow: it turns Markdown annotations into LaTeX `\index{...}` calls and
+triggers `makeindex`/`xindy` while building the PDF.
+
+The LaTeX form still looks familiar:
 
 ```latex
 \index{term!subterm}
@@ -22,20 +28,29 @@ Thus, index entries can:
 - be rendered in bold, italic or both,
 - appear multiple times in the document, with all page numbers listed.
 
-To mimic this behavior in TeXSmith, the `index` extension provides the `@{}` shortcode:
+To mimic this behavior in Markdown, the `texsmith.index` extension provides the
+hashtag syntax:
 
 ```markdown
-Albert Einstein @{Albert Einstein} is known for the theory of relativity
-theory @{theory}{*relativity*}.
+#[a] One level index entry in default index
+#[a][b][c](registry) Three levels nesting in the registry index
+#[*a*] Formatted index entry in default index
+#[**a**] Bold formatted index entry in default index
+#[***a***] Bold italic formatted index entry in default index
+#[a] #[b] Multiple index entries in one place
 ```
 
 ## Emphasis and Formatting
 
-Traditionally index entries can be emphasized which have special meaning in litterature.
+Printed indexes often differentiate how important an entry is within a section:
 
-- Bold entries are used for main topics or important terms.
-- Italic entries are used for terms mentioned in passing or less significant terms.
-- Bold + Italic entries are used for terms that are both important and mentioned in passing.
+- Normal text: the term is discussed in that section (default).
+- **Bold**: the term is the main topic of that section.
+- *Italic*: the term is mentioned but not deeply discussed.
+- ***Bold italic***: the term is the main topic and also referenced elsewhere in the same section.
+
+Because the hashtag syntax accepts Markdown formatting, just wrap the indexed term
+in the appropriate markers (e.g. `#[**topic**]`).
 
 ## Nested Entries
 
@@ -59,4 +74,8 @@ LaTeX only supports up to 3 levels of nesting:
 ## Tags
 
 In MkDocs, search powered by Lunr.js automatically adds tags on headings to improve searchability.
-TeXSmith extension `texsmith.index` adds both index entries and tags when the `#[]` syntax is used.
+From an HTML perspective the extension emits invisible spans such as
+`<span class="ts-hashtag" data-tag="term" data-style="b">`. The LaTeX renderer
+converts them into the proper `\index{...}` call while the MkDocs plugin collects
+the same metadata to enrich Lunr’s search index. This keeps the PDF index and the
+interactive site search in sync even though they are generated through different pipelines.
