@@ -53,8 +53,9 @@ Roadmap and development notes for TeXSmith. I keep this file as a running checkl
 - [x] Add an article template as the TeXSmith "default"
 - [x] Finalize index generation workflow
 - [x] Add progress-bar support
+- [x] Integrate coverage reporting
+- [ ] Snippet plugin
 - [ ] Put fonts and code into separate sty merged during build
-- [ ] Integrate coverage reporting
 - [ ] Avoid `--shell-escape` when `minted` is unused (no code blocks or inline code)
 - [ ] Dynamically update the engine in `latexmkrc` (pdflatex, xelatex, lualatex)
 - [ ] Support glossaries (glossaries package)
@@ -68,18 +69,6 @@ Roadmap and development notes for TeXSmith. I keep this file as a running checkl
 - [ ] Integrate Nox
 - [ ] Complete docstring coverage across the project
 - [ ] Deploy to PyPI
-
-## Simplifying TeXSmith CLI Usage
-
-Most TeXSmith workflows rely on `texsmith`, so the root command should expose everything inline. Re-expose the current subcommands as dash options:
-
-- `--list-extensions`: list all enabled extensions
-- `--list-templates`: list all available templates (built-in, third-party, or local)
-- `--list-bibliography`: show bibliography elements that appear in the document or linked files, along with a formatted table
-- `--template-info`: show details about the selected template
-- `--template-scaffold`: copy the template specified via `--template` into the provided output folder so it can be overridden or used as a starting point
-
-Once those options exist, retire the separate subcommands. Running `texsmith foo.md --build` should build the document with the default article template unless another template is specified. Update the documentation to reflect the simplified CLI.
 
 ## Add TeXSmith Use Cases to the Documentation
 

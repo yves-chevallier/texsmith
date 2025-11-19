@@ -1,6 +1,6 @@
 # Welcome to TeXSmith
 
-**TeXSmith** turns [Markdown](https://www.markdownguide.org/) into 
+**TeXSmith** turns [Markdown](https://www.markdownguide.org/) into
 press-ready [LaTeX](https://www.latex-project.org/). Keep your
 docs authored in English-first Markdown, then compile polished PDFs for print,
 journals, or long-form review packages-without maintaining two sources of truth.
@@ -12,6 +12,18 @@ documentation pipeline.
 
 You can use TeXSmith to generate academic papers, technical reports, letters,
 minutes, or class materials with diagrams, tables, citations, and code snippets.
+
+## Why would I use TeXSmith?
+
+TeXSmith bridges the gap between lightweight Markdown authoring
+and the typographic power of LaTeX. It is ideal for:
+
+- Writing a scientific article.
+- Writing product documentation.
+- Writing a book.
+- Writing a letter.
+- Writing cooking recipes.
+- Writing technical reports.
 
 ## Why teams choose TeXSmith
 
@@ -37,7 +49,7 @@ Diagnostics you can trust
 
 ## How is it different from Pandoc?
 
-[Pandoc](https://pandoc.org/) is a powerhouse, but reproducing a Extended Markdown syntax other than 
+[Pandoc](https://pandoc.org/) is a powerhouse, but reproducing a Extended Markdown syntax other than
 [CommonMark](https://commonmark.org/) or [GitHub-flavored Markdown](https://github.github.com/gfm/) document in
 Pandoc requires custom filters and maintenance. TeXSmith focuses on MkDocs Markdown
 with Pymdownx extensions, delivering parity out of the box:
