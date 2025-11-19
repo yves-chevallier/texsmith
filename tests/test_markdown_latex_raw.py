@@ -19,3 +19,10 @@ def test_latex_raw_without_closing_fence_is_preserved() -> None:
 
     assert "latex-raw" not in html
     assert "/// latex" in html
+
+
+def test_inline_latex_shortcut_converts_to_hidden_span() -> None:
+    md = markdown.Markdown(extensions=DEFAULT_MARKDOWN_EXTENSIONS)
+    html = md.convert("Paragraph {latex}[\\clearpage] text")
+
+    assert '<span class="latex-raw" style="display:none;">\\clearpage</span>' in html

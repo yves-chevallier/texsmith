@@ -1,19 +1,10 @@
+---
+title: Index Example
+---
+
 # Index
 
 This document demonstrates the index generation with TeXSmith. You can nest, format and create multiple index entries for terms.
-
-Use the hashtag syntax `#[term]` to inject index entries without altering the visible text.
-
-```markdown
-#[a] One level index entry in default index
-#[a][b][c](registry) Three levels nesting in the registry index
-#[*a*] Formatted index entry in default index
-#[**a**] Bold formatted index entry in default index
-#[***a***] Bold italic formatted index entry in default index
-#[a] #[b] Multiple index entries in one place
-```
-
-When built with default template (article) the indices will automatically be placed at the end of the document if there are any index entries.
 
 ## Granny Smith
 

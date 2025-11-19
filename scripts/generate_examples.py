@@ -6,18 +6,22 @@ from __future__ import annotations
 from collections.abc import Callable
 import contextlib
 from dataclasses import dataclass, field
+import json
 import logging
+import math
 from pathlib import Path
 import re
 import shutil
 import subprocess
-from typing import Any
+from typing import Any, Mapping
 
 
 try:  # pragma: no cover - optional dependency alias
     import pymupdf as fitz  # type: ignore[import-not-found]
 except ImportError:  # pragma: no cover - compatibility alias
     import fitz  # type: ignore[import-not-found]
+
+from PIL import Image  # type: ignore[import]
 
 from texsmith.api.service import ConversionRequest, ConversionService
 from texsmith.api.templates import TemplateRenderResult
@@ -29,6 +33,8 @@ DOCS_OUTPUT = PROJECT_ROOT / "docs" / "assets" / "examples"
 SERVICE = ConversionService()
 LOGGER = logging.getLogger(__name__)
 MAGENTA = "#FF00FF"
+PREVIEW_DPI = 200
+MM_PER_INCH = 25.4
 
 BORDER_PREAMBLE = r"""
 \usepackage{tikz}
@@ -57,6 +63,51 @@ BORDER_PREAMBLE = r"""
 
 
 @dataclass(frozen=True)
+class PreviewGrid:
+    """Describe how PDF pages should be combined into PNG previews."""
+
+    columns: int = 1
+    rows: int = 1
+    gap_mm: float = 0.0
+
+    def to_signature(self) -> dict[str, float | int]:
+        return {"columns": self.columns, "rows": self.rows, "gap": self.gap_mm}
+
+    def gap_pixels(self) -> int:
+        if self.gap_mm <= 0:
+            return 0
+        return max(0, round((self.gap_mm / MM_PER_INCH) * PREVIEW_DPI))
+
+    def resolve_dimensions(self, page_count: int) -> tuple[int, int]:
+        cols = self.columns
+        rows = self.rows
+
+        if cols <= 0 and rows <= 0:
+            cols = 1
+            rows = 1
+        elif cols <= 0:
+            rows = max(1, rows)
+            cols = math.ceil(page_count / rows) if page_count else 1
+        elif rows <= 0:
+            cols = max(1, cols)
+            rows = math.ceil(page_count / cols) if page_count else 1
+
+        return max(1, cols), max(1, rows)
+
+
+def _coerce_preview_grid(value: PreviewGrid | Mapping[str, Any] | None) -> PreviewGrid:
+    if isinstance(value, PreviewGrid):
+        return value
+    if isinstance(value, Mapping):
+        columns = int(value.get("columns", 1) or 1)
+        rows = int(value.get("rows", 1) or 1)
+        gap_value = value.get("gap", value.get("gap_mm", 0.0))
+        gap = float(gap_value) if gap_value is not None else 0.0
+        return PreviewGrid(columns=columns, rows=rows, gap_mm=gap)
+    return PreviewGrid()
+
+
+@dataclass(frozen=True)
 class ExampleSpec:
     """Description of an example asset to render."""
 
@@ -70,7 +121,8 @@ class ExampleSpec:
     bibliography: list[Path] = field(default_factory=list)
     extra_inputs: list[Path] = field(default_factory=list)
     preview_page: int = 0
-    transparent_border: bool = False
+    transparent_border: bool | None = None
+    preview_grid: PreviewGrid | Mapping[str, Any] | None = None
 
     def input_paths(self) -> list[Path]:
         """Return the list of inputs tracked for freshness."""
@@ -79,6 +131,14 @@ class ExampleSpec:
             if candidate not in unique:
                 unique.append(candidate)
         return unique
+
+    def __post_init__(self) -> None:
+        object.__setattr__(self, "preview_grid", _coerce_preview_grid(self.preview_grid))
+        if self.transparent_border is None:
+            wants_border = bool(self.template_options.get("preamble"))
+            object.__setattr__(self, "transparent_border", wants_border)
+        else:
+            object.__setattr__(self, "transparent_border", bool(self.transparent_border))
 
 
 @dataclass(frozen=True)
@@ -126,40 +186,112 @@ def _preview_meta_path(png_path: Path) -> Path:
     return png_path.with_suffix(png_path.suffix + ".meta")
 
 
-def _write_preview_meta(png_path: Path, page_index: int) -> None:
+def _write_preview_meta(png_path: Path, meta: dict[str, Any]) -> None:
     meta_path = _preview_meta_path(png_path)
-    meta_path.write_text(str(page_index), encoding="utf-8")
+    meta_path.write_text(json.dumps(meta, sort_keys=True), encoding="utf-8")
 
 
-def _read_preview_meta(png_path: Path) -> int | None:
+def _read_preview_meta(png_path: Path) -> dict[str, Any] | None:
     meta_path = _preview_meta_path(png_path)
     try:
-        return int(meta_path.read_text(encoding="utf-8").strip())
-    except (FileNotFoundError, ValueError):
+        payload = meta_path.read_text(encoding="utf-8").strip()
+    except FileNotFoundError:
         return None
+    try:
+        data: Any = json.loads(payload)
+    except json.JSONDecodeError:
+        try:
+            return {"page_index": int(payload)}
+        except ValueError:
+            return None
+    if isinstance(data, dict):
+        return data
+    return None
 
 
-def _pdf_to_png(pdf_path: Path, target_path: Path, *, page_index: int = 0) -> None:
+def _render_page_image(page: fitz.Page) -> Image.Image:
+    pixmap = page.get_pixmap(dpi=PREVIEW_DPI)
+    mode = "RGBA" if pixmap.alpha else "RGB"
+    return Image.frombytes(mode, (pixmap.width, pixmap.height), pixmap.samples)
+
+
+def _compose_preview(
+    images: list[Image.Image],
+    columns: int,
+    rows: int,
+    gap_px: int,
+) -> Image.Image:
+    if not images:
+        raise ValueError("No pages available to compose preview.")
+    width, height = images[0].size
+    usable_rows = max(1, math.ceil(len(images) / max(1, columns)))
+    total_rows = max(rows, usable_rows)
+
+    canvas_width = columns * width + max(0, columns - 1) * gap_px
+    canvas_height = total_rows * height + max(0, total_rows - 1) * gap_px
+    canvas = Image.new("RGB", (canvas_width, canvas_height), "white")
+
+    for position, image in enumerate(images):
+        row = position // columns
+        col = position % columns
+        x = col * (width + gap_px)
+        y = row * (height + gap_px)
+        canvas.paste(image, (x, y))
+    return canvas
+
+
+def _pdf_to_png(
+    pdf_path: Path,
+    target_path: Path,
+    *,
+    page_index: int = 0,
+    grid: PreviewGrid | None = None,
+) -> None:
+    grid = grid or PreviewGrid()
     with fitz.open(pdf_path) as document:
-        index = max(0, min(page_index, document.page_count - 1))
-        page = document.load_page(index)
-        pixmap = page.get_pixmap(dpi=200)
-        pixmap.save(target_path)
-    _write_preview_meta(target_path, index)
+        page_count = document.page_count
+        if page_count == 0:
+            raise RuntimeError(f"{pdf_path} does not contain any pages.")
+        start_index = min(max(page_index, 0), page_count - 1)
+        columns, rows = grid.resolve_dimensions(page_count)
+        total_slots = max(1, columns * rows)
+        last_index = min(page_count, start_index + total_slots)
+        indices = list(range(start_index, last_index))
+        images = [_render_page_image(document.load_page(i)) for i in indices]
+        if len(images) == 1 and columns == 1 and rows == 1 and grid.gap_mm <= 0:
+            images[0].save(target_path)
+        else:
+            canvas = _compose_preview(images, columns, rows, grid.gap_pixels())
+            canvas.save(target_path)
+    _write_preview_meta(
+        target_path,
+        {
+            "page_index": start_index,
+            "grid": grid.to_signature(),
+        },
+    )
 
 
-def _sync_png(pdf_path: Path, png_path: Path, *, page_index: int = 0) -> None:
+def _sync_png(
+    pdf_path: Path,
+    png_path: Path,
+    *,
+    page_index: int = 0,
+    grid: PreviewGrid | None = None,
+) -> None:
     """Ensure the PNG preview matches the PDF timestamp."""
     if not pdf_path.exists():
         return
-    recorded_index = _read_preview_meta(png_path)
-    needs_refresh = recorded_index is None or recorded_index != page_index
+    grid = grid or PreviewGrid()
+    recorded_meta = _read_preview_meta(png_path)
+    expected_meta = {"page_index": page_index, "grid": grid.to_signature()}
+    needs_refresh = recorded_meta != expected_meta
     if (
         needs_refresh
         or not png_path.exists()
         or png_path.stat().st_mtime < pdf_path.stat().st_mtime
     ):
-        _pdf_to_png(pdf_path, png_path, page_index=page_index)
+        _pdf_to_png(pdf_path, png_path, page_index=page_index, grid=grid)
 
 
 def _apply_transparent_border(png_path: Path) -> None:
@@ -203,9 +335,10 @@ def _render_example(spec: ExampleSpec) -> tuple[Path, Path]:
     target_pdf = DOCS_OUTPUT / f"{spec.name}.pdf"
     target_png = DOCS_OUTPUT / f"{spec.name}.png"
     dependencies = spec.input_paths()
+    grid = spec.preview_grid
 
     if dependencies and not _needs_render(target_pdf, dependencies):
-        _sync_png(target_pdf, target_png, page_index=spec.preview_page)
+        _sync_png(target_pdf, target_png, page_index=spec.preview_page, grid=grid)
         LOGGER.info("Skipping %s (up-to-date)", spec.name)
         return target_pdf, target_png
 
@@ -229,7 +362,7 @@ def _render_example(spec: ExampleSpec) -> tuple[Path, Path]:
     pdf_path = _compile_pdf(render_result)
 
     shutil.copy2(pdf_path, target_pdf)
-    _pdf_to_png(pdf_path, target_png, page_index=spec.preview_page)
+    _pdf_to_png(pdf_path, target_png, page_index=spec.preview_page, grid=grid)
     if spec.transparent_border:
         _apply_transparent_border(target_png)
     return target_pdf, target_png
@@ -274,6 +407,7 @@ def _build_specs() -> list[ExampleSpec]:
     paper_dir = examples_dir / "paper"
     dialects_dir = examples_dir / "dialects"
     colorful_dir = examples_dir / "colorful"
+    index_dir = examples_dir / "index"
 
     specs: list[ExampleSpec] = [
         ExampleSpec(
@@ -352,6 +486,7 @@ def _build_specs() -> list[ExampleSpec]:
                 "paper": "a5",
                 "margin": "narrow",
                 "page_numbers": False,
+                "geometry": {"paperheight": "15cm"},
                 "preamble": BORDER_PREAMBLE,
             },
             transparent_border=True,
@@ -391,6 +526,7 @@ def _build_specs() -> list[ExampleSpec]:
             template_options={
                 "preamble": BORDER_PREAMBLE,
             },
+            preview_grid={"columns": 2, "rows": 2, "gap": 3},
             transparent_border=True,
         ),
         ExampleSpec(
@@ -402,6 +538,7 @@ def _build_specs() -> list[ExampleSpec]:
             template_options={
                 "preamble": BORDER_PREAMBLE,
             },
+            preview_grid={"columns": 2, "rows": 1, "gap": 3},
             transparent_border=True,
         ),
         ExampleSpec(
@@ -413,6 +550,20 @@ def _build_specs() -> list[ExampleSpec]:
                 colorful_dir / "template" / "manifest.toml",
                 colorful_dir / "template" / "template" / "template.tex",
             ],
+        ),
+        ExampleSpec(
+            name="index",
+            source=index_dir / "example.md",
+            build_dir=index_dir / "build",
+            template="article",
+            title_from_heading=False,
+            template_options={
+                "margin": "narrow",
+                "geometry": {"paperheight": "6cm"},
+                "preamble": BORDER_PREAMBLE,
+            },
+            preview_grid={"columns": 1, "rows": -1, "gap": 3},
+            transparent_border=True,
         ),
     ]
 

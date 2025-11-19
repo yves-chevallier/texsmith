@@ -280,3 +280,9 @@ def test_hidden_latex_block(renderer: LaTeXRenderer) -> None:
     html = '<p class="latex-raw" style="display:none;">\\newline\\textbf{hidden}</p>'
     latex = renderer.render(html)
     assert "\\newline\\textbf{hidden}" in latex
+
+
+def test_hidden_latex_inline_span(renderer: LaTeXRenderer) -> None:
+    html = '<span class="latex-raw" style="display:none;">\\clearpage</span>'
+    latex = renderer.render(html)
+    assert "\\clearpage" in latex

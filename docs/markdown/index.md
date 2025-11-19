@@ -15,7 +15,7 @@ For printed documentation, especially for scientific or technical reports, some 
 - Index
 - Glossary and acronyms
 - Rich tables (span, multi-line cells, etc.)
-- Direct LaTeX injections using fenced `/// latex` blocks that stay hidden in HTML but reach the LaTeX output unchanged
+- Direct LaTeX injections using fenced `/// latex` blocks or inline `{latex}[...]` snippets that stay hidden in HTML but reach the LaTeX output unchanged
 
 ## Markdown is a mess
 
@@ -99,7 +99,7 @@ So as an opinionated tool, TeXSmith picks a set of extensions, adds a few more, 
 | Bibliography  | `[^citekey]`              | `texsmith.bibliography` |
 | Index Entries | `#[entry]`                | `texsmith.index`        |
 | Acronyms      | `ACME (Acme Corporation)` | `texsmith.acronyms`     |
-| Raw LaTeX     | `/// latex`               | `texsmith.latex_raw`    |
+| Raw LaTeX     | `/// latex`, `{latex}[x]` | `texsmith.latex_raw` / `texsmith.rawlatex` |
 | LaTeX Text    | `LaTeX`, `TeXSmith`       | `texsmith.latex`        |
 
 ### Other
@@ -153,7 +153,7 @@ So as an opinionated tool, TeXSmith picks a set of extensions, adds a few more, 
   - pymdownx.tasklist
   - pymdownx.tilde
 
-## Raw LaTeX Blocks (`/// latex`)
+## Raw LaTeX Snippets (`/// latex`, `{latex}[...]`)
 
 When you need to insert LaTeX that must not appear in the HTML build, use the dedicated fence:
 
@@ -163,4 +163,10 @@ When you need to insert LaTeX that must not appear in the HTML build, use the de
 ///
 ```
 
-The Markdown → HTML pass creates a hidden paragraph (`<p class="latex-raw" style="display:none;">…</p>`) so the fragment remains invisible online. During the HTML → LaTeX conversion, TeXSmith spots these blocks and drops the original payload straight into the final document. This makes it safe to declare macros, page tweaks, or any advanced snippet without impacting the web version.
+For inline tweaks, drop `{latex}[payload]` anywhere inside your paragraph:
+
+```md
+Section break {latex}[\clearpage] before the next topic.
+```
+
+Both syntaxes create hidden nodes (`<p>` for blocks, `<span>` for inline) so the fragments remain invisible online. During the HTML → LaTeX conversion, TeXSmith spots these nodes and drops the original payload straight into the final document. This makes it safe to declare macros, page tweaks, or any advanced snippet without impacting the web version.

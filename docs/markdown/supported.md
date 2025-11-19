@@ -134,7 +134,12 @@ E &= mc^2 \\
 ```
 
 TeXSmith passes the block straight to the renderer, letting you mix handcrafted
-LaTeX with converted Markdown content.
+LaTeX with converted Markdown content. For inline adjustments drop
+`{latex}[commands]` right into the paragraph:
+
+```markdown
+The chapter ends here {latex}[\clearpage] before appendices.
+```
 
 ## Snippet Includes
 

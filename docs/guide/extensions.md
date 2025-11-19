@@ -21,7 +21,7 @@ following extensions under the `texsmith` namespace:
 | Module                       | Purpose                                                              |
 | ---------------------------- | -------------------------------------------------------------------- |
 | `texsmith.smallcaps`         | `__text__` syntax mapped to `<span class="texsmith-smallcaps">`.     |
-| `texsmith.latex_raw`         | `/// latex` fenced blocks injected as hidden HTML.                   |
+| `texsmith.latex_raw` / `texsmith.rawlatex` | `/// latex` fences and `{latex}[x]` inline snippets injected as hidden HTML. |
 | `texsmith.latex_text`        | Styles the literal `LaTeX` token in running text.                    |
 | `texsmith.missing_footnotes` | Warns about references to undefined footnotes.                       |
 | `texsmith.multi_citations`   | Normalises `^[foo,bar]` blocks to footnotes.                         |
