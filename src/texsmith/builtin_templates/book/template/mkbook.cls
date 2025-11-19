@@ -33,6 +33,7 @@
 \RequirePackage{etoolbox}
 \RequirePackage{tocloft}
 \RequirePackage{adjustbox}
+\RequirePackage{progressbar}
 \RequirePackage{caption}
 \RequirePackage{microtype}
 \RequirePackage[\VAR{language|default('english')}]{babel}

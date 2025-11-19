@@ -14,6 +14,7 @@ from texsmith.core.context import AssetRegistry, DocumentState, RenderContext
 from texsmith.core.diagnostics import DiagnosticEmitter, NullEmitter
 from texsmith.core.exceptions import LatexRenderingError
 from texsmith.core.rules import RenderEngine, RenderPhase
+from texsmith.extensions import register_all_renderers
 
 from .formatter import LaTeXFormatter
 
@@ -60,6 +61,7 @@ class LaTeXRenderer:
         self.engine = RenderEngine()
         self._register_builtin_handlers()
         self._register_entry_point_handlers()
+        register_all_renderers(self)
 
     def _register_builtin_handlers(self) -> None:
         """Register the initial set of handlers for the renderer."""

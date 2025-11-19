@@ -266,6 +266,7 @@ def _build_specs() -> list[ExampleSpec]:
     admonition_dir = examples_dir / "admonition"
     abbr_dir = examples_dir / "abbr"
     mermaid_dir = examples_dir / "mermaid"
+    progress_dir = examples_dir / "progressbar"
     diagrams_dir = examples_dir / "diagrams"
     booby_dir = examples_dir / "booby"
     letter_dir = examples_dir / "letter"
@@ -338,6 +339,18 @@ def _build_specs() -> list[ExampleSpec]:
                 "margin": "narrow",
                 "page_numbers": False,
                 "geometry": {"paperheight": "17cm"},
+                "preamble": BORDER_PREAMBLE,
+            },
+            transparent_border=True,
+        ),
+        ExampleSpec(
+            name="progressbar",
+            source=progress_dir / "example.md",
+            build_dir=progress_dir / "build",
+            template_options={
+                "paper": "a5",
+                "margin": "narrow",
+                "page_numbers": False,
                 "preamble": BORDER_PREAMBLE,
             },
             transparent_border=True,

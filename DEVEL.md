@@ -52,8 +52,8 @@ reference the canonical module to avoid extra indirection.
 - [x] Noto Color Emoji ou {\fontspec{Symbola}\char"1F343} couleur ou nb
 - [x] Make all examples build
 - [x] Écrire documentation
-- [ ] Generating assets as sha only when using mkdocs, not texsmith directly or only when a specific option is enabled.
-- [ ] Fix or test __text__ in admonition.
+- [x] Generating assets as sha only when using mkdocs, not texsmith directly or only when a specific option is enabled.
+- [x] Fix or test __text__ in admonition.
 - [ ] Do not require --shell-escape if minted is not used (no code or inline)
 - [ ] Update dynamically in the latexmkrc the used engine (pdflatex, xelatex, lualatex)
 - [ ] Base letter template on koma scrlttr2 adjust country-specific settings
@@ -71,29 +71,6 @@ reference the canonical module to avoid extra indirection.
 - [ ] Documentation complete de docstring dans le projet
 - [ ] Déployer sur PyPI
 
-## Image conversion
-
-TeXSmith now mirrors PNG/JPEG/PDF images directly into `build/assets` without
-renaming them unless a collision would occur. Assets keep their original
-extensions (e.g. `booby.png` stays `booby.png`), which makes inspecting the
-output directory and debugging templates much easier.
-
-Only formats that LaTeX cannot handle directly (such as SVG, draw.io, Mermaid,
-svgbob, TikZ placeholders, etc.) are converted to PDF automatically. Their
-converted artefacts reuse the original stem (`diagram.svg` becomes
-`diagram.pdf`) and only fall back to hashed names when no friendly identifier
-is available (for example inline Mermaid payloads).
-
-Two new knobs expose the old behaviour when necessary:
-
-- `--convert-assets/--no-convert-assets` forces bitmap files to be normalised to
-  PDF even when LaTeX supports them. This is useful when downstream tooling
-  relies on PDF-only assets.
-- `--hash-assets/--no-hash-assets` switches asset naming back to the SHA-based
-  cache when deterministic filenames are required.
-
-Both options flow through the public API via `RenderSettings` and the CLI via
-`texsmith render --convert-assets` and `texsmith render --hash-assets`.
 
 ## Progress Bar
 
