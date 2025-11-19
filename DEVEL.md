@@ -1,12 +1,10 @@
 # Devel Notes
 
-## TO-DO
+Roadmap and development notes for TeXSmith. I maintain this file as a
+checklist of features to implement, refactorings to perform, and documentation
+to write this file will live within TeXSmith until version 1.0.0 is released.
 
-### TeXSmith Core
-
-The conversion engine, context models, templates, and bibliography tools now live in
-the `texsmith.core` package. Legacy imports still point there, but new work should
-reference the canonical module to avoid extra indirection.
+## Roadmap
 
 - [x] Extract template aggregation into TemplateRenderer and slim TemplateSession
 - [x] Remplacer safe_quote par requote_url de requests.utils
@@ -87,7 +85,25 @@ We integrates the subcommands as dash options.
 
 Then we drop all commands mechanism, that simplify CLI usage. To build a document we could therefore do: texsmith foo.md --build (which will use the default template article if not specified.
 
-## ~/.texsmith/config.toml
+Eventually update all the documentation to reflect that.
+
+## Add in the documentation the usecase of texsmith to complete:
+
+- Write a scientific article
+- Write product documentation
+- Write a book
+- Write a letter
+- Write cooking recipes
+- Write technical reports
+
+Huge advantage with conjunction with MkDocs is to have a single source of truth for both web and pdf output.
+This enrich collaboration as all documentation is stored in markdown on git repository. Versnioning with Miked is easy and natural.
+
+## .texsmith/config.toml
+
+Improve documentation and structure of the user's configuration of texsmith. Goal is to be able to select default templates, mermaid style,
+prefered options paper format for daily use of texsmith. This file is perfectly optional. TeXSmith can live anythwere from local folder or parent folders.
+An existing folder .texsmith will be use by texsmith to store cache, config and other user specific data.
 
 ## Good integration of latexmkrc
 
@@ -351,16 +367,7 @@ Fixed with \ref instead of something else. Build but don't work.
 
 Issue with scientific paper cheese. code closed to early after snippet.
 
-----
-
-Base64 images md
-
-![Hello World](data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEYAAAAUCAAAAAAVAxSkAAABrUlEQVQ4y+3TPUvDQBgH8OdDOGa+oUMgk2MpdHIIgpSUiqC0OKirgxYX8QVFRQRpBRF8KShqLbgIYkUEteCgFVuqUEVxEIkvJFhae3m8S2KbSkcFBw9yHP88+eXucgH8kQZ/jSm4VDaIy9RKCpKac9NKgU4uEJNwhHhK3qvPBVO8rxRWmFXPF+NSM1KVMbwriAMwhDgVcrxeMZm85GR0PhvGJAAmyozJsbsxgNEir4iEjIK0SYqGd8sOR3rJAGN2BCEkOxhxMhpd8Mk0CXtZacxi1hr20mI/rzgnxayoidevcGuHXTC/q6QuYSMt1jC+gBIiMg12v2vb5NlklChiWnhmFZpwvxDGzuUzV8kOg+N8UUvNBp64vy9q3UN7gDXhwWLY2nMC3zRDibfsY7wjEkY79CdMZhrxSqqzxf4ZRPXwzWJirMicDa5KwiPeARygHXKNMQHEy3rMopDR20XNZGbJzUtrwDC/KshlLDWyqdmhxZzCsdYmf2fWZPoxCEDyfIvdtNQH0PRkH6Q51g8rFO3Qzxh2LbItcDCOpmuOsV7ntNaERe3v/lP/zO8yn4N+yNPrekmPAAAAAElFTkSuQmCC)
-
-But not necessary optimal in term of sile size a 250kB image is about 5000 lines of base64.
-----
-
-## Markdown packages issues...
+## Markdown packages issues
 
 Mkdocs autorefs (from mkdocsstrings) definition `[](){#}` before heading gives Markdown lint issues.
 
