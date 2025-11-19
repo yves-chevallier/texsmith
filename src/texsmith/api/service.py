@@ -263,15 +263,10 @@ class ConversionService:
 def classify_input_source(path: Path) -> InputKind:
     """Determine the document kind based on filename suffix."""
     suffix = path.suffix.lower()
-    if suffix in {".md", ".markdown"}:
+    if suffix in {".md", ".markdown", ".yaml", ".yml"}:
         return InputKind.MARKDOWN
     if suffix in {".html", ".htm"}:
         return InputKind.HTML
-    if suffix in {".yaml", ".yml"}:
-        raise UnsupportedInputError(
-            "MkDocs configuration files are not supported as input. "
-            "Provide a Markdown source or an HTML document."
-        )
     raise UnsupportedInputError(
         f"Unsupported input file type '{suffix or '<none>'}'. "
         "Provide a Markdown source (.md) or HTML document (.html)."

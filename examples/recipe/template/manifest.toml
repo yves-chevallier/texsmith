@@ -1,0 +1,20 @@
+[compat]
+texsmith = ">=0.6,<1.0"
+
+[latex.template]
+name = "recipe"
+version = "0.1.0"
+entrypoint = "template.tex"
+engine = "lualatex"
+texlive_year = 2023
+tlmgr_packages = [
+    "geometry",
+    "fontspec",
+    "cookingsymbols",
+    "tabularx",
+    "multirow",
+    "xcolor",
+]
+
+[latex.template.slots.mainmatter]
+default = true

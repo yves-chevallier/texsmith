@@ -1,0 +1,126 @@
+\documentclass{article}
+\usepackage[a4paper, top=2cm, left=2cm, right=2cm, bottom=1cm]{geometry}
+\usepackage{fontspec}
+\usepackage{cookingsymbols}
+\usepackage{tabularx}
+\usepackage{multirow}
+\usepackage{enumitem}
+\usepackage{array}
+
+\setlist[itemize]{leftmargin=*,nosep}
+\renewcommand{\familydefault}{\sfdefault}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{0.5em}
+
+\newlength{\colA}
+\newlength{\colB}
+\setlength{\colA}{0.07\textwidth}
+\setlength{\colB}{0.15\textwidth}
+\newcolumntype{A}{>{\raggedright\arraybackslash}p{\colA}}
+\newcolumntype{B}{>{\raggedright\arraybackslash}p{\colB}}
+\newcolumntype{C}{>{\raggedright\arraybackslash}X}
+
+\BLOCK{ macro quantity(value) -}
+\BLOCK{ if value is mapping -}
+  \BLOCK{ if value.text -}
+    \VAR{value.text}
+  \BLOCK{ elif value.amount is defined -}
+    \VAR{value.amount}\BLOCK{ if value.unit }~\VAR{value.unit}\BLOCK{ endif }
+  \BLOCK{ else -}
+  \BLOCK{ endif -}
+\BLOCK{ elif value is number -}
+  \VAR{value}
+\BLOCK{ elif value -}
+  \VAR{value}
+\BLOCK{ endif -}
+\BLOCK{ endmacro }
+
+\BLOCK{ set recipe_documents = documents | default([], true) }
+
+\begin{document}
+\pagestyle{empty}
+\BLOCK{ if recipe_documents }
+\BLOCK{ for doc in recipe_documents }
+\BLOCK{ set data = doc.front_matter | default({}, true) }
+\BLOCK{ set recipe = data.recipe if data.recipe is defined else data }
+\BLOCK{ if loop.index > 1 }\newpage\BLOCK{ endif }
+
+{\Huge\bfseries \VAR{recipe.title | default('Recette', true)}}\par
+\vspace{2cm}
+\noindent
+\begin{minipage}[t]{0.3\textwidth}
+\vspace{0pt}%
+\rule{\linewidth}{1.5pt}
+\BLOCK{ set time = recipe.time | default({}, true) }
+\Topbottomheat\quad{} temps total \textbf{\VAR{time.total | default('--', true)}}~min \\
+\Gloves\quad{} préparation \textbf{\VAR{time.preparation | default('--', true)}}~min \\
+\Oven\quad{} cuisson \textbf{\VAR{time.cooking | default('--', true)}}~min \\
+\rule{\linewidth}{1.5pt}
+
+\BLOCK{ if recipe.description }
+\subsection*{Description}
+\VAR{recipe.description}
+\BLOCK{ endif }
+
+\subsection*{Conseils}
+
+\VAR{recipe.notes | default('Aucun conseil enregistré.', true)}
+
+\end{minipage}
+\hfill
+\begin{minipage}[t]{0.68\textwidth}
+\vspace{0pt}%
+\BLOCK{ for section in recipe.sections | default([], true) }
+\textbf{\VAR{section.title | default('Étape', true)}}\vskip 0.75em
+
+\BLOCK{ if section.instructions }
+\begin{itemize}
+\BLOCK{ for instruction in section.instructions }
+  \item \VAR{instruction}
+\BLOCK{ endfor }
+\end{itemize}
+\BLOCK{ endif }
+
+\BLOCK{ if section.steps }
+\begin{tabularx}{\textwidth}{@{}A B C@{}}
+\BLOCK{ for step in section.steps }
+\BLOCK{ set raw_items = step.ingredients | default([], true) }
+\BLOCK{ if raw_items is mapping }
+  \BLOCK{ set ingredients = [raw_items] }
+\BLOCK{ elif raw_items is iterable and raw_items is not string }
+  \BLOCK{ set ingredients = raw_items }
+\BLOCK{ else }
+  \BLOCK{ set ingredients = [] }
+\BLOCK{ endif }
+\BLOCK{ set note = step.instructions | default([], true) }
+\BLOCK{ set note_text = note | join(' \\newline ') }
+\BLOCK{ if ingredients }
+  \BLOCK{ for ingredient in ingredients }
+    \VAR{quantity(ingredient.quantity | default('', true))} & \VAR{ingredient.name | default(ingredient.step | default('', true), true)} &
+    \BLOCK{ if loop.first }
+      \VAR{note_text}
+    \BLOCK{ endif }\\
+  \BLOCK{ endfor }
+\BLOCK{ else }
+  & & \VAR{note_text}\\
+\BLOCK{ endif }
+\BLOCK{ if not loop.last }
+\multicolumn{3}{@{}l}{\rule{\textwidth}{0.2pt}}\\
+\BLOCK{ endif }
+\BLOCK{ endfor }
+\end{tabularx}
+\BLOCK{ endif }
+
+\vspace{1em}
+\BLOCK{ endfor }
+\end{minipage}
+
+\BLOCK{ endfor }
+\BLOCK{ endif }
+
+\BLOCK{ if mainmatter and mainmatter.strip() }
+\newpage
+\VAR{mainmatter}
+\BLOCK{ endif }
+
+\end{document}
