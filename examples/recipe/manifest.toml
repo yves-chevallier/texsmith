@@ -18,3 +18,8 @@ tlmgr_packages = [
 
 [latex.template.slots.mainmatter]
 default = true
+
+[latex.template.attributes.preamble]
+default = ""
+type = "string"
+allow_empty = true

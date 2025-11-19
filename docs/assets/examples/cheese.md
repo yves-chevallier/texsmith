@@ -157,7 +157,8 @@ rate, the theoretical expression (Eq. 1) was implemented in **Python** as follow
 ```
 
 This computational approach allows the parametric exploration of cheese stiffness
-under varying conditions, offering predictive insight into texture control during processing.
+under varying conditions, offering predictive insight into texture control
+during processing.
 
 ## Discussion
 
@@ -189,9 +190,9 @@ for scientific publications.
 ## Conclusions
 
 This study integrates rheological experimentation and computational modeling to
-quantify the **stiffness–malleability balance** of hard cheeses. The proposed formulation
-effectively predicts the combined influence of **temperature** and **strain rate**
-on the elastic modulus.
+quantify the **stiffness–malleability balance** of hard cheeses. The proposed
+formulation effectively predicts the combined influence of **temperature** and
+**strain rate** on the elastic modulus.
 
 Such predictive tools can aid in optimizing industrial cheese handling, from cutting
 and packaging to consumer preparation, by linking measurable mechanical parameters to

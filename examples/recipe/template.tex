@@ -7,6 +7,11 @@
 \usepackage{enumitem}
 \usepackage{array}
 
+\BLOCK{ if preamble }
+\VAR{preamble}
+
+\BLOCK{ endif }
+
 \setlist[itemize]{leftmargin=*,nosep}
 \renewcommand{\familydefault}{\sfdefault}
 \setlength{\parindent}{0pt}
@@ -96,7 +101,8 @@
 \BLOCK{ set note_text = note | join(' \\newline ') }
 \BLOCK{ if ingredients }
   \BLOCK{ for ingredient in ingredients }
-    \VAR{quantity(ingredient.quantity | default('', true))} & \VAR{ingredient.name | default(ingredient.step | default('', true), true)} &
+    \VAR{quantity(ingredient.quantity | default('', true))} &
+    \VAR{ingredient.name | default(ingredient.step | default('', true), true)} &
     \BLOCK{ if loop.first }
       \VAR{note_text}
     \BLOCK{ endif }\\
