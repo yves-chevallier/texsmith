@@ -7,6 +7,7 @@ from dataclasses import dataclass
 import importlib.util
 import inspect
 from pathlib import Path
+import shutil
 import sys
 from typing import Any, cast
 
@@ -14,6 +15,11 @@ from jinja2 import Environment, FileSystemLoader, TemplateNotFound
 
 from texsmith.core.utils import escape_latex_chars
 from .manifest import TemplateError, TemplateManifest, TemplateSlot
+
+
+def _detect_index_engine() -> str:
+    """Return the preferred index engine based on available executables."""
+    return "texindy" if shutil.which("texindy") else "makeindex"
 
 
 def _resolve_manifest_path(root: Path) -> Path:
@@ -99,6 +105,7 @@ class WrappableTemplate(BaseTemplate):
         context.setdefault("has_index", False)
         context.setdefault("index_terms", [])
         context.setdefault("index_registry", [])
+        context.setdefault("index_engine", "auto")
         context.setdefault("acronyms", {})
         context.setdefault("citations", [])
         context.setdefault("bibliography_entries", {})
@@ -138,6 +145,12 @@ class WrappableTemplate(BaseTemplate):
             else:
                 context.setdefault("mainmatter", "")
                 context[default_slot] = latex_body
+
+        engine = str(context.get("index_engine") or "").strip().lower()
+        if not engine or engine == "auto":
+            context["index_engine"] = _detect_index_engine()
+        else:
+            context["index_engine"] = engine
 
         return self.render_template(self.info.entrypoint, **context)
 

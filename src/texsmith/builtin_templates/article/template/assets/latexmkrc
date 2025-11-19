@@ -7,7 +7,11 @@ $pdflatex = 'pdflatex --shell-escape %O %S';
 \BLOCK{ endif }
 
 $biber = 'biber %O %B';
-$makeindex = 'texindy %O -o %D %S';
+if (system("which texindy >/dev/null 2>&1") == 0) {
+  $makeindex = 'texindy %O -o %D %S';
+} else {
+  $makeindex = 'makeindex %O -o %D %S';
+}
 $clean_ext .= ' %R.run.xml %R.blg';
 
 add_cus_dep('glo', 'gls', 0, 'run_makeglossaries');

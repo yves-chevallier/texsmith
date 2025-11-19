@@ -1,4 +1,4 @@
-"""Markdown extension introducing the ``#[tag]`` inline index syntax."""
+"""Markdown extension providing the ``#[term]`` hashtag syntax."""
 
 from __future__ import annotations
 
@@ -11,11 +11,11 @@ from markdown.inlinepatterns import InlineProcessor
 
 
 TAG_PATTERN = re.compile(r"\[([^\]]+)\]")
-STYLE_PATTERN = re.compile(r"^[ibIB]{1,2}$")
+STYLE_PATTERN = re.compile(r"\{([^}]+)\}")
 
 
-class _HashtagInlineProcessor(InlineProcessor):
-    """Replace hash-tag syntax with tagged spans."""
+class _IndexInlineProcessor(InlineProcessor):
+    """Replace index syntax with tagged spans."""
 
     def handleMatch(  # noqa: N802 - Markdown inline API requires camelCase
         self,
@@ -23,51 +23,69 @@ class _HashtagInlineProcessor(InlineProcessor):
         data: str,
     ) -> tuple[ElementTree.Element, int, int]:  # type: ignore[override]
         del data
-        tags = _extract_tags(match.group("payload"))
-        style = _normalise_style(match.group("style"))
+        payload = match.group("payload")
+        registry_group = match.group("registry")
+        registry = registry_group.strip("()") if registry_group else None
+        style_token = match.group("style")
+
+        tags = _extract_tags(payload)
+        if not tags:
+            return None, match.start(0), match.end(0)
 
         element = ElementTree.Element("span")
         element.set("class", "ts-hashtag")
         for index, tag in enumerate(tags):
             key = "data-tag" if index == 0 else f"data-tag{index}"
             element.set(key, tag)
-        if style:
-            element.set("data-style", style)
-        element.text = tags[0]
+
+        normalised_style = _normalise_style(style_token)
+        if normalised_style:
+            element.set("data-style", normalised_style)
+
+        if registry:
+            element.set("data-registry", registry)
+
+        # The index marker is invisible in the output text
+        element.text = ""
         return element, match.start(0), match.end(0)
 
 
 def _extract_tags(payload: str | None) -> list[str]:
     if not payload:
-        return ["index"]
+        return []
     values = [part.strip() for part in TAG_PATTERN.findall(payload)]
-    filtered = [value for value in values if value]
-    if not filtered:
-        return ["index"]
-    return filtered[:3]
+    return [value for value in values if value]
 
 
-def _normalise_style(token: str | None) -> str:
-    if not token:
-        return ""
-    stripped = token.strip("{}").lower()
-    if not stripped or not STYLE_PATTERN.match(stripped):
-        return ""
-    # Deduplicate while preserving order (e.g. "bi" vs "ib")
-    result: list[str] = []
-    for char in stripped:
-        if char not in result:
-            result.append(char)
-    return "".join(result)
+def _normalise_style(style_token: str | None) -> str | None:
+    if not style_token:
+        return None
+    match = STYLE_PATTERN.search(style_token)
+    if not match:
+        return None
+    style = match.group(1).strip().lower()
+    if not style:
+        return None
+    if style == "ib":
+        style = "bi"
+    if style not in {"b", "i", "bi"}:
+        return None
+    return style
 
 
 class TexsmithIndexExtension(Extension):
-    """Register the inline hashtag processor with Python-Markdown."""
+    """Register the inline index processor with Python-Markdown."""
 
     def extendMarkdown(self, md: Markdown) -> None:  # noqa: N802
-        pattern = r"#(?P<payload>(?:\[[^\]]+\]){1,3})(?P<style>\{[ibIB]{1,2}\})?"
-        processor = _HashtagInlineProcessor(pattern, md)
-        md.inlinePatterns.register(processor, "texsmith_index_hashtag", 180)
+        # Matches #[...]{style?}(registry?) alongside legacy {index} and % syntaxes
+        pattern = (
+            r"(?<!\\)(?P<prefix>#|\{index\}|%)"
+            r"(?P<payload>(?:\[[^\]]+\])+)"
+            r"(?P<style>\{[^}]+\})?"
+            r"\s*(?P<registry>\([^)]+\))?"
+        )
+        processor = _IndexInlineProcessor(pattern, md)
+        md.inlinePatterns.register(processor, "texsmith_index", 180)
 
 
 def makeExtension(**kwargs: object) -> TexsmithIndexExtension:  # noqa: N802 - Markdown API hook; pragma: no cover

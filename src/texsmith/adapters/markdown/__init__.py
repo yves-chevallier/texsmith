@@ -30,6 +30,7 @@ DEFAULT_MARKDOWN_EXTENSIONS = [
     "attr_list",
     "def_list",
     "footnotes",
+    "texsmith.index:TexsmithIndexExtension",
     "texsmith.multi_citations:MultiCitationExtension",
     "texsmith.latex_raw:LatexRawExtension",
     "texsmith.missing_footnotes:MissingFootnotesExtension",

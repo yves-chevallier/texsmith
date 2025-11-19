@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Iterable
 from pathlib import Path
+import re
 
 from bs4 import NavigableString, Tag
 
@@ -23,35 +24,69 @@ TEMPLATE_DIR = Path(__file__).resolve().parent / "templates"
 INDEX_TEMPLATE = TEMPLATE_DIR / "index.tex"
 
 
-VALID_STYLES = {"", "i", "b", "bi"}
-
-
 def _collect_tags(element: Tag) -> list[str]:
     tags: list[str] = []
-    for index in range(3):
+    index = 0
+    while True:
         key = "data-tag" if index == 0 else f"data-tag{index}"
         value = coerce_attribute(element.get(key))
         if not value:
-            continue
+            break
         cleaned = str(value).strip()
         if cleaned:
             tags.append(cleaned)
+        index += 1
     return tags
+
+
+def _strip_formatting(text: str) -> str:
+    """Remove markdown formatting from text."""
+    text = re.sub(r"\*\*\*(.*?)\*\*\*|___(.*?)___", r"\1\2", text)
+    text = re.sub(r"\*\*(.*?)\*\*|__(.*?)__", r"\1\2", text)
+    text = re.sub(r"\*(.*?)\*|_(.*?)_", r"\1\2", text)
+    return text
+
+
+def _format_tag(text: str, legacy: bool) -> str:
+    """Convert markdown formatting to LaTeX."""
+    parts = re.split(r"(\*\*\*.*?\*\*\*)", text)
+    processed = []
+    for part in parts:
+        if part.startswith("***") and part.endswith("***"):
+            content = part[3:-3]
+            processed.append(
+                f"\\textbf{{\\textit{{{escape_latex_chars(content, legacy_accents=legacy)}}}}}"
+            )
+        else:
+            subparts = re.split(r"(\*\*.*?\*\*)", part)
+            for subpart in subparts:
+                if subpart.startswith("**") and subpart.endswith("**"):
+                    content = subpart[2:-2]
+                    processed.append(
+                        f"\\textbf{{{escape_latex_chars(content, legacy_accents=legacy)}}}"
+                    )
+                else:
+                    subsubparts = re.split(r"(\*.*?\*)", subpart)
+                    for subsubpart in subsubparts:
+                        if subsubpart.startswith("*") and subsubpart.endswith("*"):
+                            content = subsubpart[1:-1]
+                            processed.append(
+                                f"\\textit{{{escape_latex_chars(content, legacy_accents=legacy)}}}"
+                            )
+                        else:
+                            processed.append(escape_latex_chars(subsubpart, legacy_accents=legacy))
+    return "".join(processed)
 
 
 def _normalise_style(value: str | None) -> str:
     if not value:
         return ""
     cleaned = str(value).strip().lower()
-    if cleaned in {"ib", "bi"}:
+    if cleaned == "ib":
         cleaned = "bi"
-    if cleaned not in VALID_STYLES:
-        return ""
-    return cleaned
-
-
-def _escape_fragments(values: Iterable[str], *, legacy: bool) -> list[str]:
-    return [escape_latex_chars(fragment, legacy_accents=legacy) for fragment in values if fragment]
+    if cleaned in {"b", "i", "bi"}:
+        return cleaned
+    return ""
 
 
 def _apply_style(fragment: str, style: str) -> str:
@@ -64,19 +99,6 @@ def _apply_style(fragment: str, style: str) -> str:
     return fragment
 
 
-def _build_styled_entry(fragments: list[str], style: str) -> str | None:
-    if not fragments:
-        return None
-    styled_tail = _apply_style(fragments[-1], style)
-    if len(fragments) == 1:
-        return f"{fragments[0]}@{styled_tail}"
-    if len(fragments) == 2:
-        return f"{fragments[0]}!{fragments[1]}@{styled_tail}"
-    styled_parts = list(fragments[:-1])
-    styled_parts[-1] = f"{styled_parts[-1]}@{styled_tail}"
-    return "!".join(styled_parts)
-
-
 _REGISTER_ATTR = "_texsmith_index_registered"
 
 
@@ -84,45 +106,58 @@ _REGISTER_ATTR = "_texsmith_index_registered"
     "span",
     phase=RenderPhase.INLINE,
     priority=44,
-    name="texsmith_index_hashtag",
+    name="texsmith_index",
     nestable=False,
     auto_mark=False,
 )
-def render_hashtag(element: Tag, context: RenderContext) -> None:
+def render_index(element: Tag, context: RenderContext) -> None:
     """Convert ``<span class="ts-hashtag">`` elements into LaTeX index commands."""
     classes = gather_classes(element.get("class"))
-    if "ts-hashtag" not in classes:
+    if "ts-hashtag" not in classes and "ts-index" not in classes:
         return
 
     tags = _collect_tags(element)
     if not tags:
         return
 
+    registry_name = coerce_attribute(element.get("data-registry"))
+    style_value = _normalise_style(coerce_attribute(element.get("data-style")))
     legacy = getattr(context.config, "legacy_latex_accents", False)
-    escaped_fragments = _escape_fragments(tags, legacy=legacy)
-    escaped_entry = "!".join(escaped_fragments)
 
-    style = _normalise_style(coerce_attribute(element.get("data-style")))
+    formatted_tags = [_format_tag(tag, legacy=legacy) for tag in tags]
+    if style_value and formatted_tags:
+        formatted_tags[-1] = _apply_style(formatted_tags[-1], style_value)
 
-    display_text = element.get_text(strip=False) or tags[0]
-    escaped_text = escape_latex_chars(display_text, legacy_accents=legacy)
-    styled_entry = _build_styled_entry(escaped_fragments, style) if style else None
+    sort_tags = [_strip_formatting(tag) for tag in tags]
+
+    entries = []
+    for f_tag, s_tag in zip(formatted_tags, sort_tags):
+        escaped_s_tag = escape_latex_chars(s_tag, legacy_accents=legacy)
+        if f_tag == escaped_s_tag:
+            entries.append(f_tag)
+        else:
+            entries.append(f"{escaped_s_tag}@{f_tag}")
+
+    entry_str = "!".join(entries)
+
+    visible_text = element.get_text(strip=False) or ""
 
     latex = context.formatter.index(
-        escaped_text,
-        entry=escaped_entry,
-        style=style,
-        styled_entry=styled_entry,
+        visible_text,
+        entry=entry_str,
+        style="",
+        styled_entry=None,
+        registry=registry_name,
     )
 
     registry = get_registry()
-    registry.add(tags)
+    registry.add(tuple(sort_tags))
 
     state = context.state
     state.has_index_entries = True
     index_entries = getattr(state, "index_entries", None)
     if isinstance(index_entries, list):
-        index_entries.append(tuple(tags))
+        index_entries.append(tuple(sort_tags))
 
     node = mark_processed(NavigableString(latex))
     context.mark_processed(element)
@@ -131,13 +166,13 @@ def render_hashtag(element: Tag, context: RenderContext) -> None:
 
 
 def register(renderer: object) -> None:
-    """Register the hashtag renderer on the provided TeXSmith renderer."""
+    """Register the index renderer on the provided TeXSmith renderer."""
     register_callable = getattr(renderer, "register", None)
     if not callable(register_callable):
         raise TypeError("Renderer does not expose a 'register' method.")
     if getattr(renderer, _REGISTER_ATTR, False):
         return
-    register_callable(render_hashtag)
+    register_callable(render_index)
 
     formatter = getattr(renderer, "formatter", None)
     override_template = getattr(formatter, "override_template", None)
@@ -146,4 +181,4 @@ def register(renderer: object) -> None:
     setattr(renderer, _REGISTER_ATTR, True)
 
 
-__all__ = ["register", "render_hashtag"]
+__all__ = ["register", "render_index"]

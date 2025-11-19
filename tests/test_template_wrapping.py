@@ -185,10 +185,22 @@ def test_article_includes_index_when_flag_true(
 ) -> None:
     context = article_template.prepare_context("")
     context["index_entries"] = True
+    context["index_engine"] = "texindy"
     wrapped = article_template.wrap_document("", context=context)
     assert "\\usepackage[xindy]{imakeidx}" in wrapped
     assert "\\makeindex" in wrapped
     assert "\\printindex" in wrapped
+
+
+def test_article_falls_back_to_makeindex_when_xindy_missing(
+    article_template: WrappableTemplate,
+) -> None:
+    context = article_template.prepare_context("")
+    context["index_entries"] = True
+    context["index_engine"] = "makeindex"
+    wrapped = article_template.wrap_document("", context=context)
+    assert "\\usepackage{imakeidx}" in wrapped
+    assert "\\usepackage[xindy]{imakeidx}" not in wrapped
 
 
 def test_article_includes_acronyms_when_present(
