@@ -53,6 +53,7 @@ Roadmap and development notes for TeXSmith. I keep this file as a running checkl
 - [x] Add an article template as the TeXSmith "default"
 - [x] Finalize index generation workflow
 - [x] Add progress-bar support
+- [ ] Put fonts and code into separate sty merged during build
 - [ ] Integrate coverage reporting
 - [ ] Avoid `--shell-escape` when `minted` is unused (no code blocks or inline code)
 - [ ] Dynamically update the engine in `latexmkrc` (pdflatex, xelatex, lualatex)
