@@ -18,7 +18,7 @@ from mkdocs.structure.pages import Page
 
 
 RE_HEADERLINK = re.compile(r'<a\s+[^>]*headerlink[^>]*href="(#[^"]+)"[^>]*>')
-RE_HASHTAG = re.compile(r"<span\s+[^>]*class=\"[^\"]*ts-hashtag[^\"]*\"[^>]*>")
+RE_HASHTAG = re.compile(r"<span\s+[^>]*class=\"[^\"]*ts-(?:hashtag|index)[^\"]*\"[^>]*>")
 RE_DATA_TAG = re.compile(r"data-tag\d*=\"([^\"]+)\"")
 
 

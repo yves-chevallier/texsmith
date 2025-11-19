@@ -55,7 +55,7 @@ def test_renderer_handles_three_levels(renderer: LaTeXRenderer) -> None:
         'data-tag2="Formula" data-style="bi">Matrices</span></p>'
     )
     latex = renderer.render(html)
-    assert "Matrices\\index{Matrices!Determinant@\\textbf{\\textit{Formula}}}" in latex
+    assert "Matrices\\index{Matrices!Determinant!Formula@\\textbf{\\textit{Formula}}}" in latex
 
 
 def test_renderer_normalises_style(renderer: LaTeXRenderer) -> None:

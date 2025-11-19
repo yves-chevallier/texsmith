@@ -47,7 +47,12 @@
 \usepackage[acronym,nomain]{glossaries}
 \makeglossaries
 \BLOCK{ endif }
-\BLOCK{ if has_index or index_entries }\usepackage[xindy]{imakeidx}\BLOCK{ endif }
+\BLOCK{ if has_index or index_entries }
+\BLOCK{ set resolved_index_engine = index_engine|default('makeindex') }
+\BLOCK{ if resolved_index_engine == "texindy" }\usepackage[xindy]{imakeidx}
+\BLOCK{ else }\usepackage{imakeidx}
+\BLOCK{ endif }
+\BLOCK{ endif }
 
 \BLOCK{ if latex_engine == "lualatex" }
 \BLOCK{ set base_font_fallbacks = [
