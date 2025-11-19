@@ -97,7 +97,7 @@ TeXSmith is unapologetically opinionated: it curates a stack, sprinkles extra sa
 | Mermaid       | `![](diagram.mmd)`        | `texsmith.mermaid`      |
 | Progress Bars | `[=75% "Done"]`           | `texsmith.progressbar`  |
 | Bibliography  | `[^citekey]`              | `texsmith.bibliography` |
-| Index Entries | `#[entry]`                | `texsmith.index`        |
+| Index Entries | `{index}[entry]`          | `texsmith.index`        |
 | Acronyms      | `ACME (Acme Corporation)` | `texsmith.acronyms`     |
 | Raw LaTeX     | `/// latex`, `{latex}[x]` | `texsmith.latex_raw` / `texsmith.rawlatex` |
 | LaTeX Text    | `LaTeX`, `TeXSmith`       | `texsmith.latex`        |
@@ -111,7 +111,7 @@ TeXSmith is unapologetically opinionated: it curates a stack, sprinkles extra sa
 | Svgbob Diagrams          |               |  Yes       |
 | CircuitTikZ Diagrams     |               |  Yes       |
 
-## Defaults Extensions
+## Default Extensions
 
 - Python Markdown
   - abbr

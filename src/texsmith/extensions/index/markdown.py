@@ -77,7 +77,7 @@ class TexsmithIndexExtension(Extension):
     """Register the inline index processor with Python-Markdown."""
 
     def extendMarkdown(self, md: Markdown) -> None:  # noqa: N802
-        # Matches #[...]{style?}(registry?) alongside legacy {index} and % syntaxes
+        """Match modern and legacy index syntaxes and register the inline processor."""
         pattern = (
             r"(?<!\\)(?P<prefix>#|\{index\}|%)"
             r"(?P<payload>(?:\[[^\]]+\])+)"

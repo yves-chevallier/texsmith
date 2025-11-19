@@ -35,7 +35,7 @@ def test_cli_bibliography_list_outputs_entries(tmp_path: Path) -> None:
     )
 
     runner = CliRunner()
-    result = runner.invoke(app, ["bibliography", "list", str(bib_file)])
+    result = runner.invoke(app, ["render", "--list-bibliography", str(bib_file)])
 
     assert result.exit_code == 0, result.stdout
     assert "Bibliography Files" in result.stdout
@@ -70,7 +70,7 @@ def test_cli_bibliography_list_reports_conflicts(tmp_path: Path) -> None:
     )
 
     runner = CliRunner()
-    result = runner.invoke(app, ["bibliography", "list", str(original), str(conflicting)])
+    result = runner.invoke(app, ["render", "--list-bibliography", str(original), str(conflicting)])
 
     assert result.exit_code == 0, result.stdout
     assert "Warnings" in result.stdout
@@ -88,7 +88,10 @@ def test_cli_bibliography_list_with_fixture_files() -> None:
     ]
 
     runner = CliRunner()
-    result = runner.invoke(app, ["bibliography", "list", *(str(path) for path in fixture_files)])
+    result = runner.invoke(
+        app,
+        ["render", "--list-bibliography", *(str(path) for path in fixture_files)],
+    )
 
     assert result.exit_code == 0, result.stdout
     assert "Bibliography Files" in result.stdout

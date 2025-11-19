@@ -59,7 +59,7 @@ press:
 
     [![Minimal Admonitions](../assets/examples/minimal-admonition.png)](../assets/examples/minimal-admonition.pdf)
 
-## Builtin Admonition Types
+## Built-in Admonition Types
 
 The following admonition types are built into the `admonition` extension:
 

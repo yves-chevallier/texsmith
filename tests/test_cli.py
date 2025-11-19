@@ -880,13 +880,25 @@ def test_convert_verbose_template_reports_overrides(tmp_path: Path) -> None:
     assert "Settings:" in result.stdout
 
 
-def test_build_requires_template(tmp_path: Path) -> None:
+def test_build_without_template_defaults_to_article(tmp_path: Path, monkeypatch: Any) -> None:
     runner = CliRunner()
     html_file = tmp_path / "index.html"
     html_file.write_text(
         "<article class='md-content__inner'><h2>Title</h2></article>",
         encoding="utf-8",
     )
+
+    def fake_which(name: str) -> str:
+        return f"/usr/bin/{name}"
+
+    def fake_run(cmd: list[str], **kwargs: Any) -> types.SimpleNamespace:
+        pdf_path = Path(kwargs["cwd"]) / "index.pdf"
+        pdf_path.parent.mkdir(parents=True, exist_ok=True)
+        pdf_path.write_text("%PDF-1.4", encoding="utf-8")
+        return types.SimpleNamespace(returncode=0, stdout="build ok\n", stderr="")
+
+    monkeypatch.setattr(render_cmd.shutil, "which", fake_which)
+    monkeypatch.setattr(render_cmd.subprocess, "run", fake_run)
 
     result = runner.invoke(
         app,
@@ -899,8 +911,8 @@ def test_build_requires_template(tmp_path: Path) -> None:
         ],
     )
 
-    assert result.exit_code == 1
-    assert "requires a LaTeX template" in result.stderr
+    assert result.exit_code == 0, result.stdout
+    assert "Running latexmk" in result.stdout
 
 
 def test_build_defaults_to_rich_output(tmp_path: Path, monkeypatch: Any) -> None:
@@ -917,8 +929,7 @@ def test_build_defaults_to_rich_output(tmp_path: Path, monkeypatch: Any) -> None
     captured: dict[str, Any] = {}
 
     def fake_which(name: str) -> str:
-        assert name == "latexmk"
-        return "/usr/bin/latexmk"
+        return f"/usr/bin/{name}"
 
     def fake_stream(
         command: list[str],
@@ -974,8 +985,7 @@ def test_build_invokes_latexmk(tmp_path: Path, monkeypatch: Any) -> None:
     calls: list[tuple[list[str], dict[str, Any]]] = []
 
     def fake_which(name: str) -> str:
-        assert name == "latexmk"
-        return "/usr/bin/latexmk"
+        return f"/usr/bin/{name}"
 
     def fake_run(cmd: list[str], **kwargs: Any) -> types.SimpleNamespace:
         calls.append((cmd, kwargs))
@@ -1041,8 +1051,7 @@ def test_build_with_bibliography_forces_bibtex(tmp_path: Path, monkeypatch: Any)
     calls: list[tuple[list[str], dict[str, Any]]] = []
 
     def fake_which(name: str) -> str:
-        assert name == "latexmk"
-        return "/usr/bin/latexmk"
+        return f"/usr/bin/{name}"
 
     def fake_run(cmd: list[str], **kwargs: Any) -> types.SimpleNamespace:
         calls.append((cmd, kwargs))
@@ -1087,8 +1096,7 @@ def test_build_respects_shell_escape(tmp_path: Path, monkeypatch: Any) -> None:
     template_dir = _template_path("book")
 
     def fake_which(name: str) -> str:
-        assert name == "latexmk"
-        return "/usr/bin/latexmk"
+        return f"/usr/bin/{name}"
 
     calls: list[list[str]] = []
 
@@ -1133,8 +1141,7 @@ def test_build_failure_reports_summary(tmp_path: Path, monkeypatch: Any) -> None
     template_dir = _template_path("article")
 
     def fake_which(name: str) -> str:
-        assert name == "latexmk"
-        return "/usr/bin/latexmk"
+        return f"/usr/bin/{name}"
 
     def fake_stream(
         command: list[str],

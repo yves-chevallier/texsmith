@@ -54,18 +54,18 @@ Example:
 texsmith --debug -vv render docs/chapter.md
 ```
 
-## Available Commands
+## Available Commands and Flags
 
 [`render`](render.md)
-: Convert Markdown/HTML documents to LaTeX fragments or template-aware outputs, optionally building PDFs.
+: Convert Markdown/HTML documents to LaTeX fragments or template-aware outputs, optionally building PDFs. This is also the default action when you run `texsmith` without an explicit subcommand.
 
-[`bibliography`](bibliography.md)
-: Inspect BibTeX files and surface parsing issues.
+[`--list-bibliography`](bibliography.md)
+: Load one or more BibTeX files and surface parsing issues without rendering.
 
-[`template info`](template.md)
-: Inspect manifest metadata, attributes, assets, and slots for any installed or local template (also available under `texsmith latex template info`).
+[`--template-info`, `--template-scaffold`](template.md)
+: Inspect manifest metadata, attributes, assets, and slots for any installed or local template, or copy a template tree to a writable directory for customization.
 
-Each command has its own options and usage examples on the linked pages.
+Each option has its own usage examples on the linked pages.
 
 ## Quick Start
 
@@ -77,7 +77,7 @@ texsmith render intro.md --output build/
 texsmith render intro.md --template article --output-dir build/pdf --build
 
 # Inspect bibliography sources
-texsmith bibliography list references.bib
+texsmith references.bib --list-bibliography
 ```
 
 Refer to `texsmith COMMAND --help` whenever you need the most up-to-date option list, defaults, and environment-specific notes.

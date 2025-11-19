@@ -1,12 +1,16 @@
-"""CLI helpers for inspecting LaTeX templates."""
+"""CLI helpers for inspecting and scaffolding LaTeX templates."""
 
 from __future__ import annotations
 
 from collections.abc import Iterable
+from importlib import metadata
+from pathlib import Path
+import shutil
 
-import click
 import typer
-from typer.models import ArgumentInfo
+
+from texsmith.core.templates import TemplateError, load_template
+from texsmith.core.templates.builtins import iter_builtin_templates
 
 from ..state import emit_error, ensure_rich_compat, get_cli_state
 
@@ -16,16 +20,109 @@ def _format_list(values: Iterable[str]) -> str:
     return ", ".join(sequence) if sequence else "-"
 
 
-def template_info(
-    identifier: str | None = typer.Argument(None, help="Template name or path to inspect."),
-) -> None:
-    """Display metadata extracted from a LaTeX template manifest."""
-    if identifier is None or isinstance(identifier, ArgumentInfo):
-        ctx = click.get_current_context()
-        typer.echo(ctx.command.get_help(ctx))
-        raise typer.Exit()
+def _looks_like_template_root(path: Path) -> bool:
+    if not path.exists() or path.is_file():
+        return False
+    manifest_candidates = (path / "manifest.toml", path / "template" / "manifest.toml")
+    if any(candidate.exists() for candidate in manifest_candidates):
+        return True
+    return (path / "__init__.py").exists()
 
-    assert isinstance(identifier, str)
+
+def _discover_local_templates(base: Path | None = None) -> list[Path]:
+    base_path = (base or Path.cwd()).resolve()
+    roots = {base_path, base_path / "templates"}
+    candidates: list[Path] = []
+    for root in roots:
+        if not root.exists() or not root.is_dir():
+            continue
+        for child in root.iterdir():
+            if child.is_dir() and _looks_like_template_root(child):
+                candidates.append(child)
+    return sorted({candidate.resolve() for candidate in candidates})
+
+
+def list_templates() -> None:
+    """Print a table listing built-in, entry-point, and local templates."""
+
+    ensure_rich_compat()
+    try:
+        from rich import box
+        from rich.table import Table
+    except ImportError:  # pragma: no cover - fallback when Rich is unavailable
+        _print_template_list_plain()
+        return
+
+    console = get_cli_state().console
+    table = Table(
+        title="Available Templates",
+        box=box.MINIMAL_DOUBLE_HEAD,
+        header_style="bold cyan",
+    )
+    table.add_column("Name", style="magenta")
+    table.add_column("Origin", style="green")
+    table.add_column("Location")
+
+    entries = _collect_template_entries()
+    if not entries:
+        table.add_row("-", "-", "No templates found")
+    else:
+        for entry in entries:
+            table.add_row(entry["name"], entry["origin"], entry["root"])
+
+    console.print(table)
+
+
+def _print_template_list_plain() -> None:
+    typer.echo("Available templates:")
+    entries = _collect_template_entries()
+    if not entries:
+        typer.echo("  - (none)")
+        return
+    for entry in entries:
+        typer.echo(f"  - {entry['name']} ({entry['origin']}) -> {entry['root']}")
+
+
+def _collect_template_entries() -> list[dict[str, str]]:
+    entries: list[dict[str, str]] = []
+
+    for slug in iter_builtin_templates():
+        try:
+            template = load_template(slug)
+        except TemplateError:
+            continue
+        entries.append({"name": slug, "origin": "builtin", "root": str(template.root)})
+
+    try:
+        entry_points = metadata.entry_points().select(group="texsmith.templates")
+    except Exception:  # pragma: no cover - extremely defensive
+        entry_points = ()
+
+    for entry_point in entry_points:
+        try:
+            template = load_template(entry_point.name)
+        except TemplateError:
+            continue
+        entries.append(
+            {"name": entry_point.name, "origin": "entry-point", "root": str(template.root)}
+        )
+
+    for local_root in _discover_local_templates():
+        entries.append({"name": local_root.name, "origin": "local", "root": str(local_root)})
+
+    seen: set[tuple[str, str]] = set()
+    unique_entries: list[dict[str, str]] = []
+    for entry in entries:
+        key = (entry["name"], entry["root"])
+        if key in seen:
+            continue
+        seen.add(key)
+        unique_entries.append(entry)
+    return sorted(unique_entries, key=lambda item: (item["origin"], item["name"]))
+
+
+def show_template_info(identifier: str) -> None:
+    """Display metadata extracted from a LaTeX template manifest."""
 
     ensure_rich_compat()
     try:
@@ -35,8 +132,6 @@ def template_info(
         from rich.table import Table as RichTable
     except ImportError:  # pragma: no cover - fallback when Rich is stubbed
         rich_box = RichPanel = RichPretty = RichTable = None  # type: ignore[assignment]  # noqa: N806
-
-    from texsmith.core.templates import TemplateError, load_template
 
     try:
         template = load_template(identifier)
@@ -94,7 +189,6 @@ def template_info(
             )
         return
 
-    # Rich is available beyond this point.
     assert RichTable is not None
     assert RichPanel is not None
     assert RichPretty is not None
@@ -188,4 +282,27 @@ def template_info(
     console.print(slots_table)
 
 
-__all__ = ["template_info"]
+def scaffold_template(identifier: str, destination: Path) -> None:
+    """Copy the selected template into ``destination`` for customization."""
+
+    try:
+        template = load_template(identifier)
+    except TemplateError as exc:
+        emit_error(f"Unable to load template '{identifier}': {exc}", exception=exc)
+        raise typer.Exit(code=1) from exc
+
+    destination = destination.expanduser().resolve()
+    try:
+        shutil.copytree(template.root, destination, dirs_exist_ok=True)
+    except OSError as exc:
+        emit_error(f"Failed to scaffold template into '{destination}': {exc}", exception=exc)
+        raise typer.Exit(code=1) from exc
+
+    typer.echo(f"Scaffolded template '{identifier}' into {destination}")
+
+
+__all__ = [
+    "list_templates",
+    "scaffold_template",
+    "show_template_info",
+]

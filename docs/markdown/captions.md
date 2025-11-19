@@ -37,7 +37,7 @@ As seen in Figure \ref{fig:my-figure}, the results are significant.
 \end{figure}
 ```
 
-## Adressing issues
+## Addressing issues
 
 1. Consistent numbering across a document
 2. Easy cross-references

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from pathlib import Path
+import sys
 from typing import Any
 
 import click
@@ -10,7 +10,7 @@ import typer
 from typer.core import TyperCommand
 
 from texsmith.ui.cli.commands.render import render
-from texsmith.ui.cli.commands.templates import template_info
+from texsmith.ui.cli.commands.templates import list_templates
 
 from ._options import DIAGNOSTICS_PANEL
 from .state import debug_enabled, emit_error, ensure_rich_compat, get_cli_state, set_cli_state
@@ -32,29 +32,6 @@ app = typer.Typer(
     invoke_without_command=True,
 )
 
-bibliography_app = typer.Typer(
-    help="Inspect and interact with BibTeX bibliography files.",
-    context_settings={"help_option_names": ["--help"]},
-    invoke_without_command=True,
-)
-
-app.add_typer(bibliography_app, name="bibliography")
-
-latex_app = typer.Typer(
-    help="Inspect LaTeX templates and runtime data.",
-    context_settings={"help_option_names": ["--help"]},
-    invoke_without_command=True,
-)
-template_app = typer.Typer(
-    help="Inspect LaTeX templates available to TeXSmith.",
-    context_settings={"help_option_names": ["--help"]},
-    invoke_without_command=True,
-)
-
-latex_app.add_typer(template_app, name="template")
-app.add_typer(latex_app, name="latex")
-app.add_typer(template_app, name="template")
-
 
 @app.callback()
 def _app_root(
@@ -63,6 +40,12 @@ def _app_root(
         False,
         "--list-extensions",
         help="List Markdown extensions enabled by default and exit.",
+        rich_help_panel=DIAGNOSTICS_PANEL,
+    ),
+    list_templates_flag: bool = typer.Option(
+        False,
+        "--list-templates",
+        help="List available templates (builtin, entry-point, and local) and exit.",
         rich_help_panel=DIAGNOSTICS_PANEL,
     ),
     verbose: int = typer.Option(
@@ -90,80 +73,27 @@ def _app_root(
             typer.echo(extension)
         raise typer.Exit(code=0)
 
+    if list_templates_flag:
+        list_templates()
+        raise typer.Exit(code=0)
+
     if ctx.resilient_parsing:
         return
-
-    if ctx.invoked_subcommand is None:
-        ensure_rich_compat()
-        typer.echo(ctx.command.get_help(ctx))
-        raise typer.Exit()
-
-
-@bibliography_app.callback()
-def _bibliography_root(ctx: typer.Context) -> None:
-    if ctx.resilient_parsing:
-        return
-    if ctx.invoked_subcommand is None:
-        ensure_rich_compat()
-        typer.echo(ctx.command.get_help(ctx))
-        raise typer.Exit()
-
-
-@latex_app.callback()
-def _latex_root(ctx: typer.Context) -> None:
-    if ctx.resilient_parsing:
-        return
-    if ctx.invoked_subcommand is None:
-        ensure_rich_compat()
-        typer.echo(ctx.command.get_help(ctx))
-        raise typer.Exit()
-
-
-@template_app.callback()
-def _template_root(ctx: typer.Context) -> None:
-    if ctx.resilient_parsing:
-        return
-    if ctx.invoked_subcommand is None:
-        ensure_rich_compat()
-        typer.echo(ctx.command.get_help(ctx))
-        raise typer.Exit()
-
-
-@bibliography_app.command(name="list", cls=HelpOnEmptyCommand)
-def bibliography_list(
-    bib_files: list[Path] | None = typer.Argument(
-        [],
-        metavar="BIBFILE",
-        help="One or more BibTeX files to inspect.",
-        exists=True,
-        file_okay=True,
-        dir_okay=False,
-        readable=True,
-        resolve_path=True,
-    ),
-) -> None:
-    """Load the given BibTeX files and print a formatted overview table."""
-    resolved_files = list(bib_files or [])
-
-    if not resolved_files:
-        ctx = click.get_current_context()
-        typer.echo(ctx.command.get_help(ctx))
-        raise typer.Exit()
-
-    from texsmith.core.bibliography import BibliographyCollection
-    from texsmith.ui.cli.bibliography import print_bibliography_overview
-
-    collection = BibliographyCollection()
-    collection.load_files(resolved_files)
-    print_bibliography_overview(collection)
 
 
 app.command(name="render", cls=HelpOnEmptyCommand)(render)
-template_app.command(name="info", cls=HelpOnEmptyCommand)(template_info)
 
 
 def main() -> None:
     """Entry point compatible with console scripts."""
+    original_argv = sys.argv[:]
+    patched = False
+    commands = {"render"}
+    if len(sys.argv) > 1:
+        first = sys.argv[1]
+        if not first.startswith("-") and first not in commands:
+            sys.argv = [sys.argv[0], "render", *sys.argv[1:]]
+            patched = True
     try:
         app()
     except typer.Exit:
@@ -190,6 +120,9 @@ def main() -> None:
         else:
             emit_error(str(exc), exception=exc)
         raise typer.Exit(code=1) from exc
+    finally:
+        if patched:
+            sys.argv = original_argv
 
 
-__all__ = ["app", "bibliography_app", "main"]
+__all__ = ["app", "main"]

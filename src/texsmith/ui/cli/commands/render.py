@@ -21,6 +21,7 @@ import typer
 from texsmith.adapters.latex.log import stream_latexmk_output
 from texsmith.adapters.markdown import resolve_markdown_extensions, split_front_matter
 from texsmith.api.service import ConversionRequest, ConversionService
+from texsmith.core.bibliography import BibliographyCollection
 from texsmith.core.conversion.debug import ConversionError
 from texsmith.core.conversion.inputs import UnsupportedInputError
 from texsmith.core.templates import TemplateError
@@ -52,6 +53,8 @@ from .._options import (
     TemplateOption,
     TitleFromHeadingOption,
 )
+from ..bibliography import print_bibliography_overview
+from ..commands.templates import scaffold_template, show_template_info
 from ..diagnostics import CliEmitter
 from ..presenter import (
     consume_event_diagnostics,
@@ -330,6 +333,13 @@ def render(
     markdown_extensions: MarkdownExtensionsOption = None,
     disable_markdown_extensions: DisableMarkdownExtensionsOption = None,
     bibliography: BibliographyOption = None,
+    list_bibliography: Annotated[
+        bool,
+        typer.Option(
+            "--list-bibliography",
+            help="Print bibliography details from provided .bib files and exit.",
+        ),
+    ] = False,
     open_log: OpenLogOption = False,
     isolate_cache: Annotated[
         bool,
@@ -342,6 +352,21 @@ def render(
             rich_help_panel=OUTPUT_PANEL,
         ),
     ] = False,
+    template_info_flag: Annotated[
+        bool,
+        typer.Option(
+            "--template-info",
+            help="Display template metadata and exit.",
+        ),
+    ] = False,
+    template_scaffold: Annotated[
+        Path | None,
+        typer.Option(
+            "--template-scaffold",
+            metavar="DEST",
+            help="Copy the selected template into DEST and exit.",
+        ),
+    ] = None,
 ) -> None:
     """Convert MkDocs documents into LaTeX artefacts and optionally build PDFs."""
 
@@ -365,7 +390,24 @@ def render(
             document_paths = [stdin_document]
 
     document_paths, bibliography_files = _SERVICE.split_inputs(document_paths, bibliography or [])
+
+    template_requested = template_info_flag or template_scaffold
+
+    if list_bibliography:
+        collection = BibliographyCollection()
+        if bibliography_files:
+            collection.load_files(bibliography_files)
+        print_bibliography_overview(collection)
+        raise typer.Exit()
+
     if not document_paths:
+        if template_requested:
+            identifier = template or "article"
+            if template_info_flag:
+                show_template_info(identifier)
+            if template_scaffold:
+                scaffold_template(identifier, template_scaffold)
+            raise typer.Exit()
         raise typer.BadParameter(
             "Provide a Markdown (.md) or HTML (.html) source document or pipe content via stdin."
         )
@@ -388,7 +430,18 @@ def render(
         if metadata_template:
             template = metadata_template
 
+    if template is None and (build_pdf or template_requested):
+        template = "article"
+
     template_selected = bool(template)
+
+    if template_requested:
+        identifier = template or "article"
+        if template_info_flag:
+            show_template_info(identifier)
+        if template_scaffold:
+            scaffold_template(identifier, template_scaffold)
+        raise typer.Exit()
 
     attribute_overrides = _parse_template_attributes(template_attributes)
     if attribute_overrides and not template_selected:

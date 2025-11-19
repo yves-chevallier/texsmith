@@ -33,13 +33,13 @@ Tags/Index
 
 You can reference another section in the same document or cross-link to other files in the project.
 
-Refer to another file. TeXSmith will hook it to the main heading and insert a hyperlink, useful for navigation-friendly PDFs (no manual tweaking needed).
+Linking to another file? TeXSmith targets the destination’s main heading and drops a proper hyperlink—handy for navigation-friendly PDFs without any manual tinkering.
 
 ```markdown
 See the [Code Examples](code.md) for more details.
 ```
 
-If you skip the link text, TeXSmith inserts the section number in the print build.
+Skip the link text and TeXSmith injects the section number for the print build automatically.
 ```markdown
 See the section [](code.md) for more details.
 ```
@@ -56,11 +56,11 @@ Check section @[sec:section-title] for more details.
 
 ### Autorefs
 
-With `mkdocs-autorefs` extension enabled, you can use the `[text][label]` syntax to create automatic reference to headings.
+When the `mkdocs-autorefs` extension is enabled you can use the `[text][label]` syntax to generate automatic references to headings.
 
 ## External References
 
-You can refer to an external resource (http/https) using standard markdown link syntax.
+Reference external resources (HTTP/HTTPS) with vanilla Markdown link syntax:
 
 ```markdown
 For more information, visit the [TeXSmith Website](https://texsmith.org).
@@ -88,7 +88,7 @@ Einstein's theory of relativity revolutionized physics. [^einstein1905]
 
 ## Footnotes
 
-You can add footnotes to provide additional information or citations without cluttering the main text. Footnotes are indicated by a superscript number in the text, with the corresponding footnote text provided at the bottom of the page or section.
+Use footnotes to park side comments without cluttering the main text. Markdown marks them with superscript numbers; the rendered document moves the details to the bottom of the page or section.
 
 ```markdown
 This is a sample sentence with a footnote.[^1]
@@ -111,7 +111,7 @@ E = mc^2
 As shown in Equation $\eqref{eq:einstein}$, energy is equal to mass times the speed of light squared.
 ```
 
-For sake of consistency, TeXSmith provides the shorthand `@[label]` to reference it.
+For consistency, TeXSmith provides the shorthand `@[label]` to reference it.
 
 ```markdown
 As shown in Equation @[eq:einstein], energy is equal to mass times the speed of light squared.
@@ -132,7 +132,7 @@ Reference the figure anywhere using its label.
 As shown in Figure @[fig:sample-figure], the data illustrates...
 ```
 
-Figures in both web and print outputs will be numbered automatically. However the numbers may differ between outputs due to layout differences.
+Both web and print outputs number figures automatically, though the actual numbers may differ because each layout floats content differently.
 
 ## Tables
 
@@ -170,10 +170,10 @@ Listing @[code:bubble-sort] shows the classic bubble sort.
 
 ## Tags and Index Entries
 
-You can add tags or index entries to associate keywords with specific sections or topics in the document.
+Add tags or index entries to associate keywords with specific sections or topics in the document.
 
 ```markdown
-This section covers advanced sorting algorithms. #[algorithm]
+This section covers advanced sorting algorithms. {index}[algorithm]
 ```
 
 See the section [][index] for more details on how to manage index entries.

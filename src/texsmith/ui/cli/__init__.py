@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from texsmith.adapters.markdown import DEFAULT_MARKDOWN_EXTENSIONS
 
-from .app import app, bibliography_app, latex_app, main, template_app
+from .app import app, main
 from .commands import render
 from .state import debug_enabled, emit_error, emit_warning, ensure_rich_compat, get_cli_state
 
@@ -12,14 +12,11 @@ from .state import debug_enabled, emit_error, emit_warning, ensure_rich_compat, 
 __all__ = [
     "DEFAULT_MARKDOWN_EXTENSIONS",
     "app",
-    "bibliography_app",
     "debug_enabled",
     "emit_error",
     "emit_warning",
     "ensure_rich_compat",
     "get_cli_state",
-    "latex_app",
     "main",
     "render",
-    "template_app",
 ]
