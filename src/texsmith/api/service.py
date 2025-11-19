@@ -55,6 +55,8 @@ class ConversionRequest:
     parser: str | None = None
     disable_fallback_converters: bool = False
     copy_assets: bool = True
+    convert_assets: bool = False
+    hash_assets: bool = False
     manifest: bool = False
     persist_debug_html: bool = False
     language: str | None = None
@@ -240,6 +242,8 @@ class ConversionService:
             parser=request.parser,
             disable_fallback_converters=request.disable_fallback_converters,
             copy_assets=request.copy_assets,
+            convert_assets=request.convert_assets,
+            hash_assets=request.hash_assets,
             manifest=request.manifest,
             persist_debug_html=request.persist_debug_html,
             language=request.language,

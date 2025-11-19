@@ -19,13 +19,7 @@ from texsmith.core.exceptions import (
 )
 from texsmith.core.rules import RenderPhase, renders
 
-from ..transformers import (
-    drawio2pdf,
-    fetch_image,
-    image2pdf,
-    mermaid2pdf,
-    svg2pdf,
-)
+from ..transformers import mermaid2pdf
 from ._helpers import (
     coerce_attribute,
     gather_classes,
@@ -33,6 +27,7 @@ from ._helpers import (
     mark_processed,
     resolve_asset_path,
 )
+from ._assets import store_local_image_asset, store_remote_image_asset
 from ._mermaid import (
     MERMAID_FILE_SUFFIXES,
     extract_mermaid_live_diagram as _extract_mermaid_live_diagram,
@@ -232,26 +227,14 @@ def render_images(element: Tag, context: RenderContext) -> None:
     if not caption_text:
         caption_text = alt_text
 
-    asset_key = src
-
     if is_valid_url(src):
-        artefact = fetch_image(src, output_dir=context.assets.output_root)
+        stored_path = store_remote_image_asset(context, src)
     else:
         resolved = _resolve_source_path(context, src)
         if resolved is None:
             raise AssetMissingError(f"Unable to resolve image asset '{src}'")
 
-        match resolved.suffix.lower():
-            case ".svg":
-                artefact = svg2pdf(resolved, output_dir=context.assets.output_root)
-            case ".drawio":
-                artefact = drawio2pdf(resolved, output_dir=context.assets.output_root)
-            case _:
-                artefact = image2pdf(resolved, output_dir=context.assets.output_root)
-
-        asset_key = str(resolved)
-
-    stored_path = context.assets.register(asset_key, artefact)
+        stored_path = store_local_image_asset(context, resolved)
 
     figure_node = _apply_figure_template(
         context,

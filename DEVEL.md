@@ -73,38 +73,59 @@ reference the canonical module to avoid extra indirection.
 
 ## Image conversion
 
-In the following we notice that TeXSmith converts images to PDF and assign a SHA name avoiding the reconversion and name collision. However LaTeX supports well png, jpg so conversion to PDF is not necessary in this case.
+TeXSmith now mirrors PNG/JPEG/PDF images directly into `build/assets` without
+renaming them unless a collision would occur. Assets keep their original
+extensions (e.g. `booby.png` stays `booby.png`), which makes inspecting the
+output directory and debugging templates much easier.
 
-This feature is mainly useful for anonymous images (svgbob, drawio, mermaid, tikz...) that need to be converted to PDF for inclusion in LaTeX documents and when used with TeXSmith MkDocs. So I want to change the behavior of TeXSmith by default to not convert images unless necessary or specified, and do not hash the name unless necessary. Converted version like `booby.svg` can easily be transleted to `booby.pdf` without hashing. We can introduce in the API, then also in the CLI the `--hash-assets` and `--convert-assets` options to control this behavior. By default no hash no conversion
+Only formats that LaTeX cannot handle directly (such as SVG, draw.io, Mermaid,
+svgbob, TikZ placeholders, etc.) are converted to PDF automatically. Their
+converted artefacts reuse the original stem (`diagram.svg` becomes
+`diagram.pdf`) and only fall back to hashed names when no friendly identifier
+is available (for example inline Mermaid payloads).
 
-➜ uv run texsmith render booby.md --output build/ -apaper=a5 --build
-Running latexmk…
-...
+Two new knobs expose the old behaviour when necessary:
 
-Summary — errors: 0, warnings: 0, info: 24
-                                            Build Outputs
-┌───────────────┬───────────────────────────────────────────────────────────────────────────────────┐
-│ Artifact      │ Location                                                                          │
-├───────────────┼───────────────────────────────────────────────────────────────────────────────────┤
-│ Main document │ build/booby.tex                                                                   │
-│ PDF           │ build/booby.pdf                                                                   │
-│ Asset         │ build/assets/d841c16f9215115a8ad612d61a93f290166432008e15abd6e179f63f858ab4ce.pdf │
-└───────────────┴───────────────────────────────────────────────────────────────────────────────────┘
+- `--convert-assets/--no-convert-assets` forces bitmap files to be normalised to
+  PDF even when LaTeX supports them. This is useful when downstream tooling
+  relies on PDF-only assets.
+- `--hash-assets/--no-hash-assets` switches asset naming back to the SHA-based
+  cache when deterministic filenames are required.
 
-After the implementation we would simply have:
-
-┌───────────────┬─────────────────────────┐
-│ Artifact      │ Location                │
-├───────────────┼─────────────────────────┤
-│ Main document │ build/booby.tex         │
-│ PDF           │ build/booby.pdf         │
-│ Asset         │ build/assets/booby.png  │
-└───────────────┴─────────────────────────┘
+Both options flow through the public API via `RenderSettings` and the CLI via
+`texsmith render --convert-assets` and `texsmith render --hash-assets`.
 
 ## Progress Bar
 
-Utiliser le package progressbar pour convertir les barres de progresion
-https://facelessuser.github.io/pymdown-extensions/extensions/progressbar/#styling-with-css-preview
+Pymdown Progressbar extension allow the syntax:
+
+```markdown
+[=85% "85%"]{: .candystripe}
+[=100% "100%"]{: .candystripe .candystripe-animate}
+
+[=0% "0%"]
+[=5% "5%"]
+[=25% "25%"]
+[=45% "45%"]
+[=65% "65%"]
+[=85% "85%"]
+[=100% "100%"]
+
+[=25%]{: .thin}
+```
+
+Which is generated in html with this structure:
+
+```html
+<div class="progress progress-100plus">
+    <div class="progress-bar" style="width:100.00%">
+        <p class="progress-label">100%</p>
+    </div>
+</div>
+```
+
+We want to add to the catalog of builtin markdown extension to texsmith the `texsmith.progressbar` which
+use the package progressbar LaTeX package:
 
 ```latex
 \usepackage{progressbar}
@@ -126,13 +147,12 @@ https://facelessuser.github.io/pymdown-extensions/extensions/progressbar/#stylin
 
 Si class .thin alors on divise le height par 2.
 
-```html
-<div class="progress progress-100plus">
-    <div class="progress-bar" style="width:100.00%">
-        <p class="progress-label">100%</p>
-    </div>
-</div>
-```
+We won't cover everything but only what is covered in `\usepackage{progressbar}`.
+
+Please implement this extension, add tests and add an example following the existing ones in examples/progressbar.
+
+Then add to the generate_examples.py script to generate the example automatically and add in the documentation docs/markdown/progressbar.md
+which describe the usage of this extension giving also the example following the structure given in docs/examples/...
 
 ## Index generation
 

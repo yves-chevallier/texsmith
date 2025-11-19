@@ -107,6 +107,44 @@ def renderer(tmp_path: Path) -> LaTeXRenderer:
     )
 
 
+def test_png_image_preserves_name_by_default(renderer: LaTeXRenderer, tmp_path: Path) -> None:
+    source_file = tmp_path / "figure.png"
+    Image.new("RGB", (16, 16), color="blue").save(source_file)
+
+    html = '<p><img src="figure.png" alt="Example Figure"></p>'
+    latex = renderer.render(html, runtime={"source_dir": tmp_path})
+
+    assert "\\includegraphics" in latex
+    assert "figure.png" in latex
+
+    stored = renderer.assets.lookup(str(source_file))
+    assert stored is not None
+    assert stored.exists()
+    assert stored.suffix.lower() == ".png"
+
+
+def test_convert_assets_forces_png_conversion(tmp_path: Path) -> None:
+    config = BookConfig(project_dir=tmp_path)
+    renderer = LaTeXRenderer(
+        config=config,
+        output_root=tmp_path / "build",
+        parser="html.parser",
+        convert_assets=True,
+    )
+
+    source_file = tmp_path / "diagram.png"
+    Image.new("RGB", (16, 16), color="green").save(source_file)
+
+    html = '<p><img src="diagram.png" alt="Converted"></p>'
+    latex = renderer.render(html, runtime={"source_dir": tmp_path})
+
+    assert "diagram.pdf" in latex
+
+    stored = renderer.assets.lookup(str(source_file))
+    assert stored is not None
+    assert stored.suffix.lower() == ".pdf"
+
+
 def test_drawio_image_conversion(renderer: LaTeXRenderer, tmp_path: Path) -> None:
     source_file = tmp_path / "diagram.drawio"
     source_file.write_text("<mxfile />", encoding="utf-8")

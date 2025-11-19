@@ -128,7 +128,28 @@ CopyAssetsOptionWithShort = Annotated[
     bool,
     typer.Option(
         "--copy-assets/--no-copy-assets",
+        "-c/-C",
         help="Toggle copying of remote assets to the output directory.",
+        rich_help_panel=RENDERING_PANEL,
+    ),
+]
+
+ConvertAssetsOption = Annotated[
+    bool,
+    typer.Option(
+        "--convert-assets/--no-convert-assets",
+        help=(
+            "Convert bitmap assets (PNG/JPEG) to PDF even when LaTeX supports the original format."
+        ),
+        rich_help_panel=RENDERING_PANEL,
+    ),
+]
+
+HashAssetsOption = Annotated[
+    bool,
+    typer.Option(
+        "--hash-assets/--no-hash-assets",
+        help="Hash stored asset filenames instead of preserving their original names.",
         rich_help_panel=RENDERING_PANEL,
     ),
 ]

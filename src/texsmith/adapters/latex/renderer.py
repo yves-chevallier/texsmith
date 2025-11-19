@@ -35,11 +35,15 @@ class LaTeXRenderer:
         output_root: Path | str = Path("build"),
         parser: str = "lxml",
         copy_assets: bool = True,
+        convert_assets: bool = False,
+        hash_assets: bool = False,
     ) -> None:
         self.config = config or BookConfig()
         self.formatter = formatter or LaTeXFormatter()
         self.parser_backend = parser
         self.copy_assets = copy_assets
+        self.convert_assets = convert_assets
+        self.hash_assets = hash_assets
 
         self.output_root = Path(output_root)
         self.assets_root = (self.output_root / "assets").resolve()
@@ -165,7 +169,11 @@ class LaTeXRenderer:
             state=document_state,
         )
 
-        context.attach_runtime(copy_assets=self.copy_assets)
+        context.attach_runtime(
+            copy_assets=self.copy_assets,
+            convert_assets=self.convert_assets,
+            hash_assets=self.hash_assets,
+        )
         if runtime:
             context.attach_runtime(**runtime)
 
