@@ -1,6 +1,6 @@
 # Abbreviations
 
-When building with the `abbr` extension enabled, you can define abbreviations in your Markdown documents. An abbreviation is defined by placing the abbreviation in square brackets followed by the full form in parentheses.
+Enable the `abbr` extension and you can sprinkle definitions directly into your Markdown. Drop the abbreviation between square brackets, follow it with the expanded form in parentheses, and the parser does the rest.
 
 ```markdown
 The HTML specification is maintained by the W3C.
@@ -9,14 +9,14 @@ The HTML specification is maintained by the W3C.
 *[W3C](World Wide Web Consortium)
 ```
 
-TeXSmith will render this as:
+TeXSmith renders that snippet as:
 
 ```text
 $ uv run texsmith render abbr.md
 The \acrshort{HTML} specification is maintained by the \acrshort{W3C}.
 ```
 
-The abbreviations are automatically added to the list of acronyms in the LaTeX output:
+Acronyms are collected automatically during the LaTeX pass:
 
 ```text
 $ uv run texsmith render test.md -tarticle 1>/dev/null
@@ -30,4 +30,3 @@ $ rg newacronym  build/test.tex
 Below is a preview of how the abbreviations will appear in the rendered document:
 
 [![Rendered acronym list](../assets/examples/abbreviations.png)](../assets/examples/abbreviations.pdf)
-

@@ -1,6 +1,6 @@
 # Definition Lists
 
-Definition Lists allow you to create lists of terms and their corresponding definitions. The syntax for creating a definition list is as follows:
+Definition lists pair a term with one or more definitions. Markdown sticks to a simple pattern:
 
 ```markdown
 Apple
@@ -11,7 +11,7 @@ Orange
 :   The fruit of an evergreen tree of the genus Citrus.
 ```
 
-Rendered as:
+Which renders as:
 
 Apple
 :   Pomaceous fruit of plants of the genus Malus in
@@ -20,7 +20,7 @@ Apple
 Orange
 :   The fruit of an evergreen tree of the genus Citrus.
 
-The LaTeX corresponding output is:
+LaTeX output:
 
 ```latex
 \begin{description}

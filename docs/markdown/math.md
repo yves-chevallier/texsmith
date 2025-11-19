@@ -1,10 +1,10 @@
 # Math Extension
 
-The undisputed standard for writing mathematical notation is the LaTeX syntax, as implemented by the MathJax and Arithmatex extensions.
+LaTeX is the gold standard for math notation. TeXSmith relies on the same syntax MathJax/Arithmatex understand.
 
 ## Inline Math
 
-You can include inline math expressions using the standard LaTeX delimiters `\( ... \)` or `$ ... $` :
+Inline math uses the usual delimiters `\( ... \)` or `$ ... $`:
 
 ```markdown
 The quadratic formula is given by \(x = \frac{-b \pm \sqrt{b^2 - 4ac}}{2a}\) 
@@ -16,14 +16,14 @@ Rendered as:
 > The quadratic formula is given by \(x = \frac{-b \pm \sqrt{b^2 - 4ac}}{2a}\) 
 > or $x = \frac{-b \pm \sqrt{b^2 - 4ac}}{2a}$.
 
-!!! note 
-    Do not add spaces between the dollar signs and the math content, as this will prevent proper rendering.
+!!! note
+    Skip the spaces right after `$` or `\(`—they confuse the parser.
 
 ## Block Math
 
 ### Simple equations
 
-The Schrödinger equation in a non-relativistic case is written as:
+Example: Schrödinger’s equation in the non-relativistic case:
 
 ```latex
 $$
@@ -67,7 +67,7 @@ $$
 
 ### Numbered equation
 
-To number an equation use the `\begin{equation}` and `\end{equation}` commands. Here the example for the relativistic gravitational field equation:
+Wrap an equation inside `\begin{equation}...\end{equation}` (or `equation*`) to control numbering. Example: the relativistic gravitational field equation:
 
 ```latex
 The equation $\eqref{eq:gravity}$ describes the fundamental interaction of 
@@ -89,7 +89,7 @@ R_{\mu \nu} - \frac{1}{2} R g_{\mu \nu} + \Lambda g_{\mu \nu} = \frac{8 \pi G}{c
 \end{equation}
 $$
 
-You can refer to numbered equations using the `\label{}` and place in Markdown `$\eqref{}$`.
+Reference numbered equations via `\label{}` and drop `$\eqref{...}$` in Markdown.
 
 In an aligned environment, you can number individual lines using the `\label{}` command:
 
@@ -110,7 +110,7 @@ $$
 $$
 ```
 
-As we see $\eqref{eq:max2}$, the magnetic flux through any closed surface is zero, this implies that there are no magnetic monopoles.
+As we see in $\eqref{eq:max2}$, the magnetic flux through a closed surface is zero, implying the lack of magnetic monopoles.
 
 $$
 \begin{align}
@@ -124,7 +124,7 @@ $$
 
 ## MkDocs Configuration
 
-If used in MkDocs, ensure you have the following configuration to enable MathJax with equation numbering support:
+Running under MkDocs? Enable Arithmatex/MathJax and let it handle numbering:
 
 ```yaml
 markdown_extensions:
@@ -154,6 +154,6 @@ window.MathJax = {
 
 ## With LaTeX output
 
-Here what the above examples would look when rendered with TeXSmith:
+Here’s what the above snippets look like once rendered through TeXSmith:
 
 [![Math rendering](../assets/examples/equation.png)](../assets/examples/equation.pdf)

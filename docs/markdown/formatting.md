@@ -1,6 +1,6 @@
 # Text Formatting 
 
-## Emphsis
+## Emphasis
 
 You can make text **bold**, *italic*, or ~~strikethrough~~ using the following syntax:
 
@@ -10,7 +10,7 @@ This is *italic* text.
 This is ~~strikethrough~~ text.
 ```
 
-With ***PymDown betterem***, you can also achieve bold and italic text by combining the markers:
+With ***Pymdown BetterEm*** you can combine markers for bold italic:
 
 ```markdown
 This is ***bold and italic*** text.
@@ -18,7 +18,7 @@ This is ***bold and italic*** text.
 
 ## Small Capitals
 
-In LaTeX, you can use `\textsc{}` for __small capitals__ text. TeXSmith recycles the old bold syntax for this purpose. The following Markdown:
+LaTeX uses `\textsc{}` for __small capitals__. TeXSmith remaps the legacy `__text__` syntax to that command:
 
 ```markdown
 This is __small capitals__ text.

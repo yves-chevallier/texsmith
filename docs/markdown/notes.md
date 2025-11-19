@@ -1,8 +1,6 @@
 # Notes on TeXSmith Extensions
 
-TeXSmith is better to be used with some of its own extensions mostly to add LaTeX-specific missing features in Markdown documents. These extensions are also designed to be compatible with MkDocs and Mkdocs-Material for better in-browser rendering.
-
-mostly uses empty links with custom attributes to add metadata to the HTML output, then process it in the LaTeX generation phase.
+TeXSmith ships with a few extensions that fill the LaTeX-sized gaps left in stock Markdown. They play nicely with MkDocs and MkDocs Material, adding metadata to the HTML and letting the LaTeX renderer finish the job.
 
 - Index entries also used to create tags for Lunr search on MkDocs site.
 - Glossary entries to define specific terms used in the documentation.
@@ -19,7 +17,7 @@ The chosen syntax follows these rules:
 3. Avoid conflicts with existing Markdown syntax and extensions.
 4. Least intrusive in the document content.
 
-### Proposition
+### Syntax shorthand
 
 `@[]` Smart references
 : Replaced with the target identifier depending on the context. Figures and tables are replaced with `Table X` or `Figure Y`, sections with `Section Z`, equations with `(N)`, theorems with `Theorem M`, etc.
@@ -30,13 +28,12 @@ The chosen syntax follows these rules:
 `#[]` Index entries
 : Used to create index entries for the document, these entries are invisible in the rendered output HTML but are processed to generate an index in the final LaTeX document or in tags for Lunr search when using MkDocs.
 
-
-
+Quick reference:
 
 - `[](:)` Add content
-- `@()`
-- `^[]` `\cite{}` Bibliographic citation
-- `#[]`, `\index{}` Index entry
+- `@()` Cross-reference helper
+- `^[]` / `\cite{}` Bibliographic citation
+- `#[]` / `\index{}` Index entry
 
 ## Other extensions
 
@@ -54,7 +51,7 @@ Entries in classic books index can be:
 - Bold italic text (very important topic)
 - Nested entries
 
-To create a tag in the index:
+Example tag entries:
 
 ```md
 Do you know the Gulliver's Travels story about the egg dispute?

@@ -1,10 +1,10 @@
 # Markdown
 
-If you don't know Markdown, you should probably start with the [official documentation](https://www.markdownguide.org/basic-syntax/).
+If Markdown is new to you, start with the [canonical guide](https://www.markdownguide.org/basic-syntax/).
 
-Markdown was designed to be minimalist and back then didn't include features for embedding complex content (tables, diagrams...).
+The original spec is spartan—tables, diagrams, and other niceties didn’t exist.
 
-Various *flavours* of Markdown have since emerged, each extending the original syntax in different ways. As we target MkDocs, TeXSmith supports the same extensions as [Python-Markdown](https://python-markdown.github.io/extensions/), which is the engine behind MkDocs and the majority of Markdown extensions such as [Pymdown Extensions](https://facelessuser.github.io/pymdown-extensions/).
+Over time new *flavours* sprouted to fill the gaps. Because TeXSmith targets MkDocs, it aligns with [Python-Markdown](https://python-markdown.github.io/extensions/) (MkDocs’ engine) plus the usual suspects like [Pymdown Extensions](https://facelessuser.github.io/pymdown-extensions/).
 
 For printed documentation, especially for scientific or technical reports, some additional features are required:
 
@@ -19,13 +19,13 @@ For printed documentation, especially for scientific or technical reports, some 
 
 ## Markdown is a mess
 
-So many flavours, so many extensions, so many incompatible syntaxes. It's a jungle out there! Some attempted to standardize Markdown (CommonMark) but the ecosystem is still fragmented. A nice shot was MyST which tried to bring Sphinx-style reStructuredText features to Markdown, but it is not compatible with MkDocs and thus not supported by TeXSmith.
+So many flavours, so many extensions, so many incompatible syntaxes—it’s a jungle. CommonMark tried to herd the cats and mostly succeeded, but fragmentation remains. MyST brought Sphinx-style goodies to Markdown, yet it isn’t MkDocs-compatible, so TeXSmith had to chart its own course.
 
 ![How Standards Proliferate[^1]](https://imgs.xkcd.com/comics/standards.png)
 
 *[1]: [xkcd:927](https://xkcd.com/927/)
 
-So as an opinionated tool, TeXSmith picks a set of extensions, adds a few more, and call it: **Tmark** (for TeXSmith Markdown).
+TeXSmith is unapologetically opinionated: it curates a stack, sprinkles extra sauce on top, and calls the bundle **Tmark** (TeXSmith Markdown).
 ## TeXSmith compatibility
 
 ### Commonmark

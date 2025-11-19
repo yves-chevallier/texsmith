@@ -1,6 +1,6 @@
 # Code
 
-Code blocks is one of the key features of Markdown, it allows to highlight code snippets in various programming languages. TeXSmith uses `minted` package to provide syntax highlighting in LaTeX output. While `minted` is usually slower than other packages like `listings`, it offers superior highlighting quality and supports a wide range of programming languages, moreover the Unicode support is better when built with `xelatex` or `lualatex`.
+Code fences are one of Markdown’s greatest hits: drop a triple backtick block, label it, and you get nicely formatted snippets. TeXSmith leans on the `minted` package for LaTeX output. It’s a bit slower than `listings`, but the highlighting is richer, it speaks more languages, and its Unicode support (especially under XeLaTeX/LuaLaTeX) is top-notch.
 
 ## Code Blocks
 
@@ -46,7 +46,7 @@ function bubbleSort(items) {
 
 ### Snippets
 
-With the `pymdownx.snippets` extension, you can include external code snippets stored in separate files. This is useful for reusing code across multiple documents.
+With `pymdownx.snippets` you can pull code from external files, keeping samples reusable across docs.
 
 ```` markdown
 ```python

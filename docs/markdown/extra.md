@@ -1,6 +1,6 @@
 # Extra (built-in)
 
-Imitates the behavior of PHP Markdown Extra. These features are part of Python Markdown.
+These are the stalwarts borrowed from PHP Markdown Extra and bundled directly with Python-Markdown.
 
 ```pip
 pip install markdown
@@ -8,7 +8,7 @@ pip install markdown
 
 ## Abbreviations
 
-The Abbreviations extension adds support for abbreviations in Markdown documents. An abbreviation is defined using the following syntax:
+The Abbreviations extension lets you tack definitions onto shorthand terms:
 
 ```markdown
 Do you know HTML and CSS?
@@ -24,7 +24,7 @@ Do you know HTML and CSS?
 
 ## Attribute Lists
 
-The Attribute Lists extension allows you to add attributes to various Markdown elements, such as headers, paragraphs, images, and links. You can specify attributes using curly braces `{}` immediately following the element.
+Attribute Lists add lightweight metadata to headings, paragraphs, images, links, and more. Drop a brace block right after the element:
 
 ```markdown
 # Header 1 {#header1 .class1 key="value"}
@@ -38,4 +38,3 @@ This is a paragraph with a class and an ID.
 |--------------|-------------|
 | *a* { .foo } | *b*{ .foo } |
 ```
-

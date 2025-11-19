@@ -7,18 +7,17 @@
 |       {cspan}        |   r3_c2 |                |
 |                      |   r4_c2 | {cspan}        |
 
-Printed document is much more complex when it comes to tables. Markdown has a very simple syntax for tables, but it does not support all features like row spans and column spans. This extension extends the basic syntax to support these features.
+LaTeX tables get fancy fast: row/column spans, width constraints, captions, labels, alignment tweaks. Stock Markdown only handles the basics, so TeXSmith extends the syntax to cover:
 
-- Row spans
-- Column spans
-- Wrap cell content if too wide
-- Full width tables with variable width columns
-- Caption and label
-- Alignment of cell content
+- Row and column spans (`{rspan}`, `{cspan}`)
+- Automatic cell wrapping
+- Full-width tables with custom column widths
+- Captions + labels for cross-references
+- Per-column alignment
 
 ## Meta data approach
 
-You can define table properties in an additional meta data block before the table:
+Attach a metadata block immediately before the Markdown table to describe layout hints:
 
 ````markdown
 ```yml { .meta-table }
@@ -33,13 +32,13 @@ columns:
 
 ## Code block definition
 
-We can define table with a code block using `table` as the language:
+Alternatively, describe the table entirely through a fenced code block marked with `.table`:
 
 ````markdown
 ```yml { .table }
 width: 100%
 span:
-alignemnt:
+alignment:
   - center
   - right
   - left
