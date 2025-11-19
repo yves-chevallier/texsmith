@@ -84,6 +84,11 @@ _EXTENSIONS: dict[str, ExtensionSpec] = {
         markdown_entry="texsmith.latex_raw:LatexRawExtension",
         description="Fence supporting inline raw LaTeX payloads.",
     ),
+    "rawlatex": ExtensionSpec(
+        slug="rawlatex",
+        markdown_entry="texsmith.rawlatex:RawLatexExtension",
+        description="Inline {latex}[...] markers and /// latex fences.",
+    ),
     "latex_text": ExtensionSpec(
         slug="latex_text",
         markdown_entry="texsmith.latex_text:LatexTextExtension",

@@ -1,12 +1,14 @@
-"""Markdown extension adding support for raw LaTeX fence blocks."""
+"""Markdown extension adding support for raw LaTeX fence blocks and inline snippets."""
 
 from __future__ import annotations
 
 from html import escape
 import re
+from xml.etree import ElementTree
 
 from markdown import Markdown
 from markdown.extensions import Extension
+from markdown.inlinepatterns import InlineProcessor
 from markdown.preprocessors import Preprocessor
 
 
@@ -76,11 +78,34 @@ class _LatexRawPreprocessor(Preprocessor):
         return result
 
 
+class _LatexInlineProcessor(InlineProcessor):
+    """Inline handler for ``{latex}[payload]`` markers."""
+
+    def handleMatch(  # noqa: N802 - Markdown inline API requires camelCase
+        self,
+        match: re.Match[str],
+        data: str,
+    ) -> tuple[ElementTree.Element | None, int, int]:  # type: ignore[override]
+        del data
+        payload = match.group("payload")
+        if payload is None:
+            return None, match.start(0), match.end(0)
+
+        element = ElementTree.Element("span")
+        element.set("class", "latex-raw")
+        element.set("style", "display:none;")
+        element.text = escape(payload, quote=False)
+        return element, match.start(0), match.end(0)
+
+
 class LatexRawExtension(Extension):
     """Register the raw LaTeX block preprocessor."""
 
     def extendMarkdown(self, md: Markdown) -> None:  # type: ignore[override]  # noqa: N802
         md.preprocessors.register(_LatexRawPreprocessor(md), "texsmith_latex_raw", priority=27)
+        pattern = r"\{latex\}\[(?P<payload>[^\]]+)\]"
+        processor = _LatexInlineProcessor(pattern, md)
+        md.inlinePatterns.register(processor, "texsmith_latex_inline", 181)
 
 
 def makeExtension(**_: object) -> LatexRawExtension:  # pragma: no cover - API hook  # noqa: N802

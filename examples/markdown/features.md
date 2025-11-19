@@ -315,7 +315,7 @@ graph TD;
 >   A-->B;
 > ```
 
-### Raw LaTeX Blocks (`/// latex`)
+### Raw LaTeX Blocks and Inline Snippets
 
 _Extension: `texsmith.markdown_extensions.latex_raw`_
 _Package: shipped with TeXSmith_
@@ -325,6 +325,14 @@ _Description: Embeds raw LaTeX that is injected verbatim._
 /// latex
 \clearpage
 ///
+
+Inline variant:
+
+```md
+Insert {latex}[\clearpage] anywhere in the paragraph.
+```
+
+Insert {latex}[\clearpage] anywhere in the paragraph.
 ```
 
 /// latex
