@@ -25,7 +25,7 @@ Invoke them with `-tarticle` or `-tletter`. Additional community templates remai
 
 ```bash
 # 1. Inspect a built-in template
-texsmith template info article
+texsmith --template article --template-info
 
 # 2. Render a document with template slots + build
 texsmith render docs/intro.md \
@@ -35,23 +35,11 @@ texsmith render docs/intro.md \
   --build
 ```
 
-Need a blank template skeleton? Copy the built-in article template from this repo or extract it from an installed package:
+Need a blank template skeleton? Use the scaffold flag to copy any template into
+your working tree:
 
 ```bash
-# From a cloned repository
-cp -R src/texsmith/builtin_templates/article my-template
-
-# Or from an installed wheel
-python - <<'PY'
-from importlib import resources
-from pathlib import Path
-import shutil
-
-dest = Path("my-template")
-with resources.as_file(resources.files("texsmith.builtin_templates").joinpath("article")) as article_root:
-    shutil.copytree(article_root, dest, dirs_exist_ok=True)
-PY
-
+texsmith --template article --template-scaffold my-template
 cd my-template
 uv run hatch build  # optional packaging smoke test
 ```

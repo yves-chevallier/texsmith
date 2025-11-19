@@ -15,7 +15,7 @@ LaTeX tables get fancy fast: row/column spans, width constraints, captions, labe
 - Captions + labels for cross-references
 - Per-column alignment
 
-## Meta data approach
+## Metadata approach
 
 Attach a metadata block immediately before the Markdown table to describe layout hints:
 

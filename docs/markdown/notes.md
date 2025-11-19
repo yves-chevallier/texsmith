@@ -1,74 +1,72 @@
 # Notes on TeXSmith Extensions
 
-TeXSmith ships with a few extensions that fill the LaTeX-sized gaps left in stock Markdown. They play nicely with MkDocs and MkDocs Material, adding metadata to the HTML and letting the LaTeX renderer finish the job.
+TeXSmith ships with laser-focused extensions to close the LaTeX-sized gaps that stock Markdown leaves behind. They cooperate with MkDocs and MkDocs Material, tagging the HTML with enough metadata for the LaTeX renderer to finish the heavy lifting.
 
-- Index entries also used to create tags for Lunr search on MkDocs site.
-- Glossary entries to define specific terms used in the documentation.
-- Citations to manage references and bibliographies.
-- Cross-references to refer to figures, tables, sections, etc.
-- Custom LaTeX blocks to insert raw LaTeX code in the generated document.
+- Index entries double as Lunr tags in MkDocs and page references in LaTeX.
+- Glossary entries and acronyms keep terminology consistent.
+- Citations and cross-references wire figures, tables, equations, and bibliography entries together.
+- Raw LaTeX fences and inline snippets let you sprinkle precise TeX without polluting the HTML build.
 
 ## Syntax
 
-The chosen syntax follows these rules:
+The syntax for these helpers follows a few rules:
 
-1. Easy to write in Markdown.
-2. Compatible with common Markdown parsers.
-3. Avoid conflicts with existing Markdown syntax and extensions.
-4. Least intrusive in the document content.
+1. Easy to type in Markdown.
+2. Friendly with standard Markdown parsers.
+3. Collision-free with existing extensions.
+4. Minimal visual noise in the raw text.
 
 ### Syntax shorthand
 
 `@[]` Smart references
-: Replaced with the target identifier depending on the context. Figures and tables are replaced with `Table X` or `Figure Y`, sections with `Section Z`, equations with `(N)`, theorems with `Theorem M`, etc.
+: Expands to the proper label for the referenced object. Figures become `Figure X`, tables render as `Table Y`, sections as `Section Z`, equations as `(N)`, theorems as `Theorem M`, and so on.
 
-`^[]` Footnotes and bibliographic citations
-: Replaced with footnote numbers if defined or bibliographic citations depending on the context.
+`^[]` Footnotes / bibliographic citations
+: Resolves to either an inline footnote (if defined locally) or a bibliography citation.
 
-`#[]` Index entries
-: Used to create index entries for the document, these entries are invisible in the rendered output HTML but are processed to generate an index in the final LaTeX document or in tags for Lunr search when using MkDocs.
+`{index}[...]` Index entries
+: Inserts one or more index terms. They stay invisible in HTML yet show up as tags in Lunr and as `\index{}` entries in LaTeX.
 
 Quick reference:
 
-- `[](:)` Add content
+- `[](:)` Add content block
 - `@()` Cross-reference helper
 - `^[]` / `\cite{}` Bibliographic citation
-- `#[]` / `\index{}` Index entry
+- `{index}[term]` / `\index{}` Index entry
 
 ## Other extensions
 
-- Epigraph defined in front matter using `epigraph` key.
-- Letterine `:[A](natoly)`
-- Wikipedia
+- Epigraphs: define `epigraph` blocks in front matter or mark blockquotes with the `epigraph` class to route them through the LaTeX epigraph macro.
+- Drop caps: Material’s `lettering` syntax (`:[A](Natoly)`) produces LaTeX letterine output automatically.
+- Wikipedia shortcodes keep working; they simply render as annotated links in both HTML and LaTeX.
 
 ## Index
 
-Entries in classic books index can be:
+Printed indexes convey intent with typography:
 
-- Normal text
-- Italic text (page reference is not the main topic)
-- Bold text (main topic of the section)
-- Bold italic text (very important topic)
-- Nested entries
+- Normal text: the topic is discussed.
+- Italic: quick mention only.
+- Bold: this section focuses on the topic.
+- Bold italic: primary topic plus ancillary references.
+- Nested entries: group related terms.
 
-Example tag entries:
+Use `{index}` plus multiple `[brackets]` to build entries. Append `{b}`, `{i}`, or `{bi}` to tweak the style, and `(registry)` to file the entry under a custom registry (handy for multi-index books).
 
 ```md
 Do you know the Gulliver's Travels story about the egg dispute?
-#[endianness]{i}
+{index}[endianness]{i}
 
-#[endianness]{ib}
-#[endianness]{b}
-#[byte order][endianness]{i}
-
+{index}[endianness]{bi}
+{index}[endianness]{b}
+{index}[byte order][endianness]{i}
 ```
 
 ## Citations
 
-Bibliographic references can be added using two different methods:
+Bibliographic references land in two ways:
 
-1. Use a `.bib` file and cite entries using `^[]` syntax.
-2. Use front matter to define references directly with DOIs or manual entries.
+1. Point TeXSmith at one or more `.bib` files and cite entries using `^[]`.
+2. Declare references directly in front matter via DOIs or inline metadata.
 
 ```yaml
 ---
@@ -99,7 +97,7 @@ references ^[ein05,KOFINAS2025].
 Or with the CLI:
 
 ```sh
-texsmith article.md article.bib
+texsmith article.md --bibliography article.bib
 ```
 
 Or directly in Python:
@@ -121,9 +119,9 @@ print(f"LaTeX written to: {tex_path}")
 
 ## Math
 
-Inline math can be written using standard Markdown syntax with dollar signs `$...$` or `\(...\)` for inline math and `$$...$$` or `\[...\]` for display math which is usually supported by most Markdown parsers.
+Inline math uses the standard Markdown-friendly delimiters: `$...$` or `\(...\)` for inline spans, `$$...$$` or `\[...\]` for display mode. Most Markdown engines (including MkDocs) pass these through untouched.
 
-However numbered equations are not natively supported in Markdown. TeXSmith provides everything for it.
+Numbered equations are not part of Markdown itself, so TeXSmith handles the heavy lifting for you.
 
 ```md
 {#pythagoras}
@@ -132,15 +130,15 @@ However numbered equations are not natively supported in Markdown. TeXSmith prov
 From @[pythagoras], we know that...
 ```
 
-Equation will be rendered as the equation number in parentheses and can be referenced in the text.
+The equation receives an automatic number and can be referenced inline.
 
-## Thorem
+## Theorems
 
-We use admonitions to define theorems, lemmas, definitions, etc.
+Use admonitions to define theorems, lemmas, definitions, and friends.
 
 ```md
 !!! theorem "Pythagorean Theorem" {#thm:pythagoras}
-    This is a theorem about right triangles and can be summarised in the next
+    This is a theorem about right triangles and can be summarized in the next
     equation
     $$ x^2 + y^2 = z^2 $$
 ```
@@ -150,31 +148,30 @@ It will be rendered as:
 ```latex
 \begin{theorem}[Pythagorean theorem]
 \label{pythagorean}
-This is a theorem about right triangles and can be summarised in the next
+This is a theorem about right triangles and can be summarized in the next
 equation
 \[ x^2 + y^2 = z^2 \]
 \end{theorem}
 ```
 
-TeXSmith automatically generates the foollowing admonition types:
+TeXSmith automatically generates the following admonition types:
 
-- Thorems (📐)
+- Theorem (📐)
 - Corollary (🧾)
 - Lemma (📜)
 - Proof (🔍)
 
 ## Glossary
 
-Specific terms used in the documentation can be defined in a glossary section.
-We must distinguish from :
+Specific terms live in the glossary; shorthand belongs in the acronym list. Keep them separate so TeXSmith can decide when to expand, hyperlink, or index each one.
 
 Glossary entries
-: Explanations of specific terms (single or multiple words) used in the documentation.
+: Definitions for full terms, whether single words or multi-word concepts.
 
 Acronyms
-: Shortened forms of terms or phrases, usually formed from the initial letters of the words such as UNESCO or NASA.
+: Shortened forms such as NASA or UNESCO, often with an expanded description.
 
-They can be defined in the front matter as follows:
+Define both collections in front matter:
 
 ```yaml
 acronyms:
@@ -201,21 +198,21 @@ glossary:
         The Liskov Substitution Principle (LSP) states that objects of a superclass should be replaceable with objects of a subclass without affecting the correctness of the program. In other words, if S is a subtype of T, then objects of type T in a program may be replaced with objects of type S without altering any of the desirable properties of that program (e.g., correctness).
 ```
 
-From the Markdown document, we can reference glossary entries as follows:
+Inside the Markdown document you can reference glossary entries with the `gls:` prefix:
 
 ```md
-From the well known [](gls:solid) principles, the following class must be [](gls:liskov) Substitution Principle compliant.
+From the well-known [](gls:solid) principles, the following class must be [](gls:liskov) Substitution Principle compliant.
 ```
 
 ### Wikipedia
 
-Glossary entries can often be found on Wikipedia with which the summary can be automatically fetched.
+Many glossary-worthy entries live on Wikipedia, and TeXSmith can pull their summaries automatically.
 
 ```md
 From the well known [SOLID](https://en.wikipedia.org/wiki/SOLID)
 ```
 
-With TeXSmith, wikipedia links are automatically converted to glossary entries for the printed document.
+When enabled, TeXSmith converts Wikipedia links into glossary entries for the printed document.
 
 ```toml
 [texsmith.extensions]
@@ -248,15 +245,15 @@ Pymarkdown style
 
 ## Formatting
 
-In Markdown you can have **bold**, *italic*, and `inline code`. But, with Pymarkdown extensions you can also have ~~strikethrough~~, ==highlighted text==, ^^inserted text^^, {++inserted text++}, {~~deleted text~~}, {==highlighted text==}.
+Plain Markdown covers **bold**, *italic*, and `inline code`. PyMdown extensions add ~~strikethrough~~, ==highlighted text==, ^^inserted text^^, {++inserted text++}, and {~~deleted text~~}.
 
-One missing feature is small capitals which can be done using the following syntax: §§Small Capitals§§.
+Small capitals are missing from the spec, so TeXSmith repurposes the double-underscore syntax for that effect:
 
 ```markdown
 __Small Capitals__
 ```
 
-which will be rendered as:
+which renders as:
 
 ```latex
 \textsc{Small Capitals}
@@ -266,8 +263,8 @@ which will be rendered as:
 
 One of the limitations of Markdown is the lack of support for complex table features such as multi-row and multi-column cells, cell alignment, and captions.
 
-When a table is too large to fit on the page several strategies can be used:
+When a table is too large to fit on the page, try:
 
-- Slightly resize the table to fit the page
-- Allow cells to break on multiple lines
-- Rotate the table to landscape orientation
+- Slightly resizing the table to fit the available width.
+- Allowing cells to wrap across multiple lines.
+- Rotating the table to landscape orientation.

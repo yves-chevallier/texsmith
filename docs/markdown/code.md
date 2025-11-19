@@ -67,7 +67,7 @@ With `pymdownx.snippets` you can pull code from external files, keeping samples 
 
 ### With LaTeX output
 
-Here what the above examples would look when rendered with TeXSmith:
+Here’s what the above examples look when rendered with TeXSmith:
 
 [![Code Block Examples in LaTeX](../assets/examples/code-block.png)](../assets/examples/code-block.pdf)
 
@@ -97,7 +97,7 @@ You can use `` `#!py print("Hello, World!")` `` to display a message in Python.
 > You can use `#!py print("Hello, World!")` to display a message in Python.
 ```
 
-With TeXSmith this example will be rendered as follow:
+With TeXSmith this example renders as follows:
 
 ```markdown
 --8<-- "examples/code/code-inline.md"

@@ -49,7 +49,7 @@ Use the bundled `examples/progressbar` project for smoke tests or screenshots:
 
 ```bash
 cd examples/progressbar
-texsmith render example.md --template article --output-dir build --build
+texsmith example.md --template article --output-dir build --build
 ```
 
 [![Progress Bars](../assets/examples/progressbar.png)](../assets/examples/progressbar.pdf)

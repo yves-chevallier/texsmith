@@ -131,7 +131,7 @@ def render_index(element: Tag, context: RenderContext) -> None:
     sort_tags = [_strip_formatting(tag) for tag in tags]
 
     entries = []
-    for f_tag, s_tag in zip(formatted_tags, sort_tags):
+    for f_tag, s_tag in zip(formatted_tags, sort_tags, strict=True):
         escaped_s_tag = escape_latex_chars(s_tag, legacy_accents=legacy)
         if f_tag == escaped_s_tag:
             entries.append(f_tag)

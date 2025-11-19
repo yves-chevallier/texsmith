@@ -1,4 +1,4 @@
-# Text Formatting 
+# Text Formatting
 
 ## Emphasis
 
@@ -10,7 +10,7 @@ This is *italic* text.
 This is ~~strikethrough~~ text.
 ```
 
-With ***Pymdown BetterEm*** you can combine markers for bold italic:
+The `pymdownx.betterem` extension lets you stack delimiters for bold italic:
 
 ```markdown
 This is ***bold and italic*** text.
@@ -18,7 +18,7 @@ This is ***bold and italic*** text.
 
 ## Small Capitals
 
-LaTeX uses `\textsc{}` for __small capitals__. TeXSmith remaps the legacy `__text__` syntax to that command:
+LaTeX uses `\textsc{}` for __small capitals__. TeXSmith remaps the legacy double-underscore syntax to that command:
 
 ```markdown
 This is __small capitals__ text.

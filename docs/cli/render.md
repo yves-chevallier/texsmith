@@ -2,7 +2,17 @@
 
 `texsmith render` is the primary entry point for turning Markdown or HTML into LaTeX. 
 It can stream fragments to `stdout`, populate a directory with template-aware assets, 
-and—when the `--build` flag is supplied-run `latexmk` to produce ready-to-share PDFs.
+and—when the `--build` flag is supplied—run `latexmk` to produce ready-to-share PDFs. The
+`render` verb is now optional: `texsmith report.md` behaves the same as `texsmith render report.md`.
+
+!!! tip
+    Handy inspection flags live at the top level:
+
+    - `texsmith --list-extensions` dumps the default Markdown extension stack.
+    - `texsmith --list-templates` enumerates built-in, entry-point, and local templates.
+    - `texsmith bibliography.bib --list-bibliography` formats BibTeX entries without rendering.
+    - `texsmith --template ./templates/report --template-info` prints manifest metadata.
+    - `texsmith --template article --template-scaffold scaffold-dir/` copies a template for tweaking.
 
 ```bash
 $ uv run texsmith render --help
@@ -92,6 +102,12 @@ $ uv run texsmith render --help
 │ --bibliography        -b                            FILE  BibTeX files merged and  │
 │                                                           exposed to the renderer. │
 ╰────────────────────────────────────────────────────────────────────────────────────╯
+
+!!! note
+    When `--build` is supplied without `--template`, TeXSmith falls back to the
+    built-in `article` template. Pair `--template` with `--template-info` or
+    `--template-scaffold` when you need to inspect or clone a non-default template.
+
 ╭─ Rendering ────────────────────────────────────────────────────────────────────────╮
 │ --no-fallback-converters                                  Disable registration of  │
 │                                                           placeholder converters   │

@@ -3,7 +3,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable
+from collections.abc import Callable, Mapping
 import contextlib
 from dataclasses import dataclass, field
 import json
@@ -13,7 +13,7 @@ from pathlib import Path
 import re
 import shutil
 import subprocess
-from typing import Any, Mapping
+from typing import Any
 
 
 try:  # pragma: no cover - optional dependency alias
