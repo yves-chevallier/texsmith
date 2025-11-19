@@ -1,7 +1,6 @@
 # Mermaid Diagrams
 
-À l'instar de MkDocs, TeXSmith can render [Mermaid](https://mermaid.js.org) diagrams. However, as with MkDocs diagrams are live-rendered into the browser, for PDF production, 
-TeXSmith converts them to vector PDFs during the conversion pipeline. This would require either
+Just like MkDocs, TeXSmith understands [Mermaid](https://mermaid.js.org) diagrams. Browsers render them on the fly, but PDFs need static assets, so TeXSmith converts each diagram into a vector PDF during the build. That requires either:
 
 1. Installing `mermaid-cli` and its dependencies in your environment, or
 2. Using Docker with the pulled image `mermaidjs/mermaid-cli`.
@@ -24,14 +23,12 @@ flowchart LR
 
 ## External diagrams
 
-Sometime diagrams are better maintained in separate files. TeXSmith supports two ways to include them.
+Sometimes diagrams live better outside the Markdown. TeXSmith supports:
 
 1. Reference external `.mmd` / `.mermaid` files.
 2. Embed Mermaid Live snippets using `pako:` URLs for live editing.
 
-Thanks to the `texsmith.mermaid` extension, you can include external Mermaid diagrams in your documents.
-The extension will convert them into standard mermaid diagrams during the Markdown processing stage.
-It is thus transparent to the pipeline whether the diagram is inline or external.
+The `texsmith.mermaid` extension sniffs out these references, pulls the content in, and treats inline/external sources the same way.
   
 Using a `mmd` file is as simple as including an image:
 
@@ -41,7 +38,7 @@ Using a `mmd` file is as simple as including an image:
 
 ![Build pipeline](../assets/mermaid.mmd)
 
-Pako is a compression library that Mermaid Live uses to encode diagrams in URLs for sharing and embedding such as:
+Mermaid Live encodes diagrams via Pako (a compression library) so you can share/edit them through URLs:
 
 ```markdown
 ![Online Diagram](https://mermaid.live/edit#pako:eNpVTctugzAQ_BVrT4lEEMQEiA_tIemt7aE9tX
@@ -51,13 +48,13 @@ jBC60cjBlVgjBzacUtgzB676wWOE-tS6nm1Wt0UJLBeXZkCtkcLhvhKFFfWdtagk2p1ulQO23tApBFgH
 TMKI0TKKABkHswQ-wlPrxOtrSKNnSOA2SsPfgd2oN_DTZ9H9_ZXFC)
 ```
 
-On rendering in HTML or PDF, TeXSmith will add an hyperlink to the Mermaid Live editor. Try clicking the image below:
+When TeXSmith renders HTML/PDF it wraps the image with a link to the Mermaid Live editor. Click the preview to inspect the source:
 
 ![Example Pako](https://mermaid.live/edit#pako:eNpVTctugzAQ_BVrT4lEEMQEiA_tIemt7aE9tXEODl4eSrAtY5q2iH8vEBGpe1jtzOzMdJBpicAgv-hrVgrryPMbV2SYxg1o8T7uJVmtHoipsvNhXxWkNcfby8hMUpV3O3E6iQKbx_6mVfmgcHjVHMaPxqE5vOgvJLm2V2El0Qon9jjXobnX_Iv4wGbO0GbxpOQSPChsJYE526IHNdpajBC60cjBlVgjBzacUtgzB676wWOE-tS6nm1Wt0UJLBeXZkCtkcLhvhKFFfWdtagk2p1ulQO23tApBFgH38DCMPGTMKI0TKKABkHswQ-wlPrxOtrSKNnSOA2SsPfgd2oN_DTZ9H9_ZXFC)
 
 ## LaTeX Rendering
 
-Here an example of how diagrams are rendered in LaTeX with TeXSmith:
+Here’s how the diagrams look once TeXSmith embeds them:
 
 [![Mermaid Diagrams](../assets/examples/mermaid.png)](../assets/examples/mermaid.pdf)
 
@@ -66,9 +63,7 @@ Here an example of how diagrams are rendered in LaTeX with TeXSmith:
 All Mermaid diagrams are converted to PDF and included with `\includegraphics`
 so they integrate cleanly with templates and LaTeX floats.
 
-On printed documents you may want to adjust the style of the diagrams to
-better suit the medium. You can provide a custom configuration file by setting
-the `mermaid_config` attribute either in front matter or via the CLI:
+Printed output might deserve a different theme. Point `mermaid_config` to a JSON config (front matter or CLI `--attribute press.mermaid_config=...`) to override:
 
 ```yaml
 ---
@@ -79,4 +74,3 @@ press:
 
 Alternatively, you can add a `mermaid-config.json` file to the `~/.texsmith/` directory
 to apply it globally to all your TeXSmith projects.
-

@@ -31,15 +31,15 @@ Tags/Index
 
 ## Internal References
 
-You can refer to another section within the same document, another document in the same project or simply another file in the same project.
+You can reference another section in the same document or cross-link to other files in the project.
 
-Refer to another file. TeXSmith will hook it to the main heading and insert an hyperlink, useful for navigables PDFs.
+Refer to another file. TeXSmith will hook it to the main heading and insert a hyperlink, useful for navigation-friendly PDFs (no manual tweaking needed).
 
 ```markdown
 See the [Code Examples](code.md) for more details.
 ```
 
-When text is not provided, TeXSmith will use the section number in printed document
+If you skip the link text, TeXSmith inserts the section number in the print build.
 ```markdown
 See the section [](code.md) for more details.
 ```
@@ -47,7 +47,7 @@ See the section [](code.md) for more details.
 ```markdown
 ## Section Title {#sec:section-title}
 
-Blah blah...
+Placeholder text that other sections can reference.
 
 ## Other Section
 
@@ -67,7 +67,7 @@ For more information, visit the [TeXSmith Website](https://texsmith.org).
 You can also check our GitHub repository at https://github.com/yves-chevallier/texsmith.
 ```
 
-This will be rendered as a clickable link:
+Printed output uses the usual LaTeX link commands:
 
 ```latex
 For more information, visit the \href{https://texsmith.org}{TeXSmith Website}.
@@ -76,8 +76,7 @@ You can also check our GitHub repository at \url{https://github.com/yves-chevall
 
 ## Bibliographic References
 
-Bibliography is not supported natively in markdown, TeXSmith uses the footnote syntax to insert bibliographic references based
-on a keyword defined in a BibTeX file or in your front-matter. See the documentation on [Bibliography management](../guide/bibliography.md) for more details.
+Markdown lacks native bibliography support, so TeXSmith reuses the footnote syntax and BibTeX/front matter keys. See the documentation on [Bibliography management](../guide/bibliography.md) for more details.
 
 ```markdown
 ---
@@ -97,7 +96,7 @@ This is a sample sentence with a footnote.[^1]
 [^1]: This is the footnote text that provides additional information.
 ```
 
-Footnotes are limited to one line in print, so keep them concise.
+Footnotes are limited to one line in print—keep them tight.
 
 ## Equations
 
@@ -109,7 +108,7 @@ E = mc^2
 \label{eq:einstein}
 \end{equation}
 
-As shown in Equation $\eref{eq:einstein}$, energy is equal to mass times the speed of light squared.
+As shown in Equation $\eqref{eq:einstein}$, energy is equal to mass times the speed of light squared.
 ```
 
 For sake of consistency, TeXSmith provides the shorthand `@[label]` to reference it.
@@ -120,14 +119,14 @@ As shown in Equation @[eq:einstein], energy is equal to mass times the speed of 
 
 ## Figures
 
-Figures are images, charts, or diagrams included in the document identified with a caption and a label for referencing.
+Figures are any diagram with a caption and label for cross-references.
 
 ```markdown
 !!! figure {#fig:sample-figure}
     ![Sample Figure](image-url.jpg)
 ```
 
-You can reference the figure in your text using its label.
+Reference the figure anywhere using its label.
 
 ```markdown
 As shown in Figure @[fig:sample-figure], the data illustrates...
@@ -137,7 +136,7 @@ Figures in both web and print outputs will be numbered automatically. However th
 
 ## Tables
 
-Tables are used to present data in a structured format with rows and columns. You can create tables using markdown syntax and assign a label for referencing.
+Tables present structured data; give them a label so you can reference them later.
 
 ```markdown
 !!! table {#tab:sample-table}
@@ -145,7 +144,7 @@ Tables are used to present data in a structured format with rows and columns. Yo
     |----------|----------|
     | Cell 1   | Cell 2   |
 
-    This is a sample table.
+    This is a sample table for cross-references.
 
 Check Table @[tab:sample-table] for more details.
 ```
@@ -166,7 +165,7 @@ You can reference specific code blocks within your document by assigning them a 
 
     Caption for the bubble sort code block.
 
-The bubble sort algorithm defined in Listing @[code:bubble-sort] is a simple sorting algorithm.
+Listing @[code:bubble-sort] shows the classic bubble sort.
 ```
 
 ## Tags and Index Entries
@@ -181,7 +180,7 @@ See the section [][index] for more details on how to manage index entries.
 
 ## Naming Conventions
 
-Before computers, references were essentially managed by numbers: page numbers, figure numbers, table numbers, equation numbers, etc.
+Before hypertext, references revolved around numbers: pages, figures, tables, equations.
 
 ```text
 1. Section
@@ -206,21 +205,21 @@ Before computers, references were essentially managed by numbers: page numbers, 
 
 ### French
 
-In French documents, the naming conventions is to write in lowercase the type of reference unless it starts a sentence.
+In French, the reference type stays lowercase unless it begins the sentence.
 
 > Voir le tableau 7 pour plus de détails. La figure 42 illustre le concept.
 > Le tout est expliqué à la section 1.
 
 ### English
 
-In English however, the naming convention is to capitalize the type of reference. We do not use articles before the type of reference.
+In English we capitalize the reference type and skip the article (“Table 7,” not “the Table 7”).
 
 > See Table 7 for more details. Figure 42 illustrates the concept.
 > Everything is explained in Section 1.
 
 ### German
 
-In German documents, the naming convention is to capitalize the type of reference as well.
+German capitalizes the reference type too.
 
 > Siehe Tabelle 7 für weitere Details. Abbildung 42 veranschaulicht das Konzept.
 > Alles wird in Abschnitt 1 erklärt.

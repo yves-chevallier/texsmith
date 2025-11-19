@@ -1,8 +1,8 @@
 # Admonitions
 
-Admonitions are special blocks that highlight important information, such as notes, warnings, tips, and more. They are created using the `admonition` extension in Python-Markdown.
+Admonitions are little callout blocks for surfacing notes, warnings, tips, and whatever else you need to highlight. Python-Markdown’s `admonition` extension powers them.
 
-Here the are two ways to create admonitions in your Markdown documents, either the standard style:
+You can render them in two flavors. The plain/static variant looks like this:
 
 ```markdown
 !!! note "This is a Note"
@@ -16,7 +16,7 @@ Here the are two ways to create admonitions in your Markdown documents, either t
 
     This is the second paragraph.
 
-Or de foldable style:
+Prefer collapsible callouts? Use the foldable form:
 
 ```markdown
 ??? note "This is a Note"
@@ -32,11 +32,9 @@ Or de foldable style:
 
 ## LaTeX Rendering
 
-Admonitions can be rendered in LaTeX using the `tcolorbox` package. TeXSmith automatically converts admonitions into appropriate LaTeX environments.
-Template authors can customize the appearance of admonitions by modifying the LaTeX preamble or the template slots.
+TeXSmith maps admonitions onto the `tcolorbox` package automatically, so they come through in LaTeX without extra work. Template authors can still restyle them via the preamble or dedicated slots.
 
-Builtin templates like `article` and `book` already include basic styling for admonitions providing a consistent look and feel across documents.
-Set the `callout_style` attribute (via front matter or CLI `--attribute callout_style=<style>`) to switch among the bundled palettes:
+Built-in templates like `article` and `book` ship with sensible defaults. Tweak the look by setting `callout_style` in front matter (or via `--attribute callout_style=<style>`):
 
 ```yaml
 ---

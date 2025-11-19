@@ -54,10 +54,13 @@ reference the canonical module to avoid extra indirection.
 - [x] Écrire documentation
 - [x] Generating assets as sha only when using mkdocs, not texsmith directly or only when a specific option is enabled.
 - [x] Fix or test __text__ in admonition.
+- [x] Base letter template on koma scrlttr2 adjust country-specific settings
+- [x] Add article template as "default" template part of TeXSmith
+- [x] Index generation
+- [x] Progressbar support
+- [ ] Integrate coverage
 - [ ] Do not require --shell-escape if minted is not used (no code or inline)
 - [ ] Update dynamically in the latexmkrc the used engine (pdflatex, xelatex, lualatex)
-- [ ] Base letter template on koma scrlttr2 adjust country-specific settings
-- [ ] Add article template as "default" template part of TeXSmith
 - [ ] Support for glossaries (glossaries package)
 - [ ] Support for cross-references (cleveref package)
 - [ ] Listings, verbatim ou minted
@@ -65,41 +68,38 @@ reference the canonical module to avoid extra indirection.
 - [ ] Table orientation (large table landscape...)
 - [ ] Scaffolding de templates avec cookiecutter
 - [ ] texsmith template create my-template
-- [ ] Index generation
-- [ ] Progressbar support
 - [ ] Compilation avec Docker ou TeXlive (choix)
+- [ ] Integrate nox
 - [ ] Documentation complete de docstring dans le projet
 - [ ] Déployer sur PyPI
+
+## We want to simplify the use of texsmith in CLI
+
+Most of texsmith is used through the render command which can become the default.
+
+We integrates the subcommands as dash options.
+
+--list-extensions: shows all enabled extensions by default
+--list-templates: shows all available templates specify builtin or third party or local templates found
+--list-bibliography: shows when bibliography elements are found in the document or linked files. List pretty in a table like before
+--template-info: shows information about the template used
+--template-scaffold: create in the mentionned output folder a copy of the template specified with --template, easy to override or create new templates
+
+Then we drop all commands mechanism, that simplify CLI usage. To build a document we could therefore do: texsmith foo.md --build (which will use the default template article if not specified.
+
+## ~/.texsmith/config.toml
+
+## Good integration of latexmkrc
+
+We want always to generate a latexmkrc for all templates that simlpify the build.
+To build we simply do latexmk and it build the correct file with the correct engine
+and enable shell-escape if needed (if minted is used). We do not need to include minted logic and code features we no code blocks are used.
+
+Can you check that and implement that?
 
 ## Nox
 
 We want the pyproject.toml support nox to test with all compatibles version 3.10, 3.11, 3.12, 3.13
-
-## Index documentation.
-
-In docs/guide/tags.md, Explain that MkDocs generate a `search_index.json` consumed by lunr or wasabi to provide search capabilities in the generated HTML site. This index contains all words present in the documentation along with their locations. This is an automated way built dynamically on the browser side. However on LaTeX documents we need to generate a static index at compile time. In traditional LaTeX edition we use `\index{term}` commands scattered in the document, then we run `makeindex` or `xindy` to generate the index file included at the end of the document.
-
-In printed documents, index entries are often formatted typographically to indicate the relevance of a term in a given section:
-
-- Normal text: the term is discussed in that section (default)
-- Bold text: the term is the main topic of that section (topic)
-- Italic text: the term is mentioned but not discussed (mentionned)
-- Bold italic text: the term is both the main topic and mentioned elsewhere in the same section. (all)
-
-TeXSmith unlocks through `texsmith.index` the syntax :
-
-```markdown
-{index}[a] One level index entry in default index
-{index}[a][b][c](registry) Three levels nesting in the registry index
-{index}[*a*] Formatted index entry in default index
-{index}[**a**] Bold formatted index entry in default index
-{index}[***a***] Bold italic formatted index entry in default index
-{index}[a] {index}[b] Multiple index entries in one place
-```
-
-From an HTML perspective, we can define we can define a new index handler on `<span data-index="term1" data-index-style="b">`. It will be translatex into `\index{term1|textbf}` in LaTeX. MkDocs plugin, will parse the HTML and extract index to feed the Lunr index.
-
-Eventually go to the files in docs/ to make sure we only reference to the new syntax everywhere.
 
 ### Glossary
 
