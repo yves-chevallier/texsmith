@@ -54,6 +54,7 @@ Roadmap and development notes for TeXSmith. I keep this file as a running checkl
 - [x] Finalize index generation workflow
 - [x] Add progress-bar support
 - [x] Integrate coverage reporting
+- [x] Snippet Template
 - [ ] Snippet plugin
 - [ ] Put fonts and code into separate sty merged during build
 - [ ] Avoid `--shell-escape` when `minted` is unused (no code blocks or inline code)
@@ -70,18 +71,31 @@ Roadmap and development notes for TeXSmith. I keep this file as a running checkl
 - [ ] Complete docstring coverage across the project
 - [ ] Deploy to PyPI
 
-## Add TeXSmith Use Cases to the Documentation
+## Snippet Plugin
 
-Document the primary workflows:
+The goal of `texsmith.snippet` plugin is to provide a way to include external examples built in LaTeX easily from Markdown files.
+The meain goal is to document texsmith, but it can have broader applications.
 
-- Writing a scientific article
-- Writing product documentation
-- Writing a book
-- Writing a letter
-- Writing cooking recipes
-- Writing technical reports
+We introduce a fenced code block with the `snippet` class:
 
-The combination with MkDocs provides a single source of truth for both web and PDF output, which improves collaboration because all documentation lives in Markdown in a Git repository. Versioning with MkDocs stays simple and natural.
+````markdown
+```markdown { snippet }
+```
+````
+
+During the build, TeXSmith extracts the content of the block, use TeXSmith API to render it into a standalone PDF,
+and replace the fenced block with a figure that includes the generated PDF.
+
+When using MkDocs integration, the snippet plugin will generate the pdf, but also a PNG version of the snippet to be included in the HTML output.
+In the HTMl we will have like any other pictures:
+
+```html
+<a href="path/to/generated/snippet.pdf" target="_blank" rel="noopener noreferrer">
+  <img src="path/to/generated/snippet.png" alt="Snippet">
+</a>
+```
+
+Please implement this feature as a TeXSmith plugin.
 
 ## .texsmith/config.toml
 
