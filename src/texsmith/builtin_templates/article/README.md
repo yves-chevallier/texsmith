@@ -3,7 +3,7 @@
 This directory hosts the built-in `article` layout bundled with [TeXSmith](https://github.com/yves-chevallier/texsmith). The CLI exposes it via `--template article` (or `-tarticle`), so no extra installation is required.
 
 ```bash
-texsmith render intro.md --template article --output-dir build/article
+texsmith intro.md --template article --output-dir build/article
 ```
 
 To customise the template, copy this directory (or extract it via `importlib.resources`) and adjust the manifest, assets, or LaTeX entry point before packaging it as your own distribution.

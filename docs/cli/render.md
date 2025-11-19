@@ -1,9 +1,9 @@
-# TeXSmith render
+# TeXSmith CLI
 
-`texsmith render` is the primary entry point for turning Markdown or HTML into LaTeX. 
-It can stream fragments to `stdout`, populate a directory with template-aware assets, 
-and—when the `--build` flag is supplied—run `latexmk` to produce ready-to-share PDFs. The
-`render` verb is now optional: `texsmith report.md` behaves the same as `texsmith render report.md`.
+`texsmith` is the primary entry point for turning Markdown or HTML into LaTeX. It
+can stream fragments to `stdout`, populate a directory with template-aware assets, and—when
+the `--build` flag is supplied—run `latexmk` to produce ready-to-share PDFs. The legacy
+`render` verb still works (for muscle memory), but the canonical form is simply `texsmith`.
 
 !!! tip
     Handy inspection flags live at the top level:
@@ -15,9 +15,9 @@ and—when the `--build` flag is supplied—run `latexmk` to produce ready-to-sh
     - `texsmith --template article --template-scaffold scaffold-dir/` copies a template for tweaking.
 
 ```bash
-$ uv run texsmith render --help
+$ uv run texsmith --help
 
- Usage: texsmith render [OPTIONS] INPUT...
+ Usage: texsmith [OPTIONS] INPUT...
 
  Convert MkDocs documents into LaTeX artefacts and optionally build PDFs.
 
@@ -150,7 +150,7 @@ $ uv run texsmith render --help
 ### Simple conversion to LaTeX fragment
 
 ```text
-$ texsmith render hello.md
+$ texsmith hello.md
 \chapter{Hello}\label{hello}
 
 Hello, \textbf{world}! This is a sample \LaTeX{} document created with TeXSmith.
@@ -159,7 +159,7 @@ Hello, \textbf{world}! This is a sample \LaTeX{} document created with TeXSmith.
 ### Use a template
 
 ```text
-$ texsmith render hello.md -tarticle
+$ texsmith hello.md -tarticle
     Template Conversion Summary
 ┌───────────────┬─────────────────┐
 │ Artifact      │ Location        │
@@ -179,7 +179,7 @@ build
 ### Compile a PDF
 
 ```text
-$ uv run texsmith render hello.md -tarticle --build
+$ uv run texsmith hello.md -tarticle --build
 Using temporary output directory: /tmp/texsmith-czmi34j1
 Running latexmk…
 ├─ Rc files read:
@@ -285,7 +285,7 @@ Positional arguments are detected automatically and merged the output. Supported
 Slots are placeholders in the LaTeX template where specific document sections can be injected. Use the `--slot` (or `-s`) option to map input documents to these slots. For example, to inject `abstract.md` into the `abstract` slot:
 
 ```bash
-texsmith render docs/intro.md docs/chapter1.md \
+texsmith docs/intro.md docs/chapter1.md \
   --template article \
   --output-dir build/book \
   --slot abstract:docs/abstract.md \
@@ -295,7 +295,7 @@ texsmith render docs/intro.md docs/chapter1.md \
 You can also extract sections from a single document using the `slot:Section Name` syntax. For example, to inject the "Abstract" section from `main.md` into the `abstract` slot:"
 
 ```bash
-texsmith render docs/main.md \
+texsmith docs/main.md \
   --template article \
   --output-dir build/book \
   --slot abstract:slot:Abstract
@@ -304,7 +304,7 @@ texsmith render docs/main.md \
 ### Compile a PDF with `--build`
 
 ```bash
-texsmith render docs/manual.md \
+texsmith docs/manual.md \
   --template article \
   --output-dir build/pdf \
   --build
@@ -315,7 +315,7 @@ TeXSmith renders the template into `build/pdf`, sets up an isolated TeX cache, a
 Need deterministic logs (for CI or scripting)? Switch to classic output:
 
 ```bash
-texsmith render docs/manual.md \
+texsmith docs/manual.md \
   --template article \
   --output-dir build/pdf \
   --build \

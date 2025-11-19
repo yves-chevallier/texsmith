@@ -108,7 +108,7 @@ Need bibliography support?  Register `.bib` files with `session.add_bibliography
 
 ## Reuse the same plumbing as the CLI
 
-`texsmith render` relies on these high-level primitives. Inspect the CLI command and you will notice the same API surface shown above. Scripts and command-line invocations stay aligned, and new features land in one place.
+`texsmith` relies on these high-level primitives. Inspect the CLI command and you will notice the same API surface shown above. Scripts and command-line invocations stay aligned, and new features land in one place.
 
 For a complete reference, browse [`texsmith.api`](core.md#texsmithapi) in the API browser or explore the source directly in `src/texsmith/api/`.
 

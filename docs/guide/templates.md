@@ -28,7 +28,7 @@ Invoke them with `-tarticle` or `-tletter`. Additional community templates remai
 texsmith --template article --template-info
 
 # 2. Render a document with template slots + build
-texsmith render docs/intro.md \
+texsmith docs/intro.md \
   --template article \
   --slot mainmatter:@document \
   --output-dir build/article \

@@ -83,7 +83,6 @@ def test_convert_command() -> None:
         result = runner.invoke(
             app,
             [
-                "render",
                 str(html_file),
                 "--base-level",
                 "0",
@@ -106,7 +105,6 @@ def test_template_alignment_defaults_to_section() -> None:
         result = runner.invoke(
             app,
             [
-                "render",
                 str(html_file),
                 "--template",
                 "article",
@@ -136,7 +134,6 @@ def test_heading_level_option() -> None:
         result = runner.invoke(
             app,
             [
-                "render",
                 str(html_file),
                 "-h",
                 "1",
@@ -159,7 +156,6 @@ def test_copy_assets_disabled() -> None:
         result = runner.invoke(
             app,
             [
-                "render",
                 str(html_file),
                 "--no-copy-assets",
             ],
@@ -194,7 +190,6 @@ def test_convert_markdown_file(monkeypatch: Any) -> None:
         result = runner.invoke(
             app,
             [
-                "render",
                 str(markdown_file),
                 "-h",
                 "1",
@@ -220,7 +215,6 @@ def test_render_from_stdin(monkeypatch: Any) -> None:
     result = runner.invoke(
         app,
         [
-            "render",
         ],
         input="# Title\n\nSome **bold** text.\n",
     )
@@ -249,7 +243,6 @@ def test_default_markdown_extensions(monkeypatch: Any) -> None:
         result = runner.invoke(
             app,
             [
-                "render",
                 str(markdown_file),
             ],
         )
@@ -279,7 +272,6 @@ def test_markdown_extensions_option_extends_defaults(monkeypatch: Any) -> None:
         result = runner.invoke(
             app,
             [
-                "render",
                 str(markdown_file),
                 "-x",
                 "custom_extension,another_extension",
@@ -316,7 +308,6 @@ def test_disable_markdown_extensions_option(tmp_path: Path, monkeypatch: Any) ->
     result = runner.invoke(
         app,
         [
-            "render",
             str(markdown_file),
             "--output-dir",
             str(tmp_path / "output"),
@@ -350,7 +341,6 @@ def test_rejects_mkdocs_configuration(tmp_path: Path) -> None:
     result = runner.invoke(
         app,
         [
-            "render",
             str(config_file),
         ],
     )
@@ -371,7 +361,6 @@ def test_mdx_math_extension_preserves_latex() -> None:
         result = runner.invoke(
             app,
             [
-                "render",
                 str(markdown_file),
                 "-x",
                 "mdx_math",
@@ -393,7 +382,7 @@ def test_multi_document_stdout_concat() -> None:
         second = Path("second.md")
         second.write_text("# Second\n\nBeta.", encoding="utf-8")
 
-        result = runner.invoke(app, ["render", str(first), str(second)])
+        result = runner.invoke(app, [str(first), str(second)])
 
     assert result.exit_code == 0, result.stdout
     assert "\\chapter{First}" in result.stdout
@@ -412,7 +401,6 @@ def test_multi_document_output_file(tmp_path: Path) -> None:
     result = runner.invoke(
         app,
         [
-            "render",
             str(first),
             str(second),
             "--output",
@@ -442,7 +430,6 @@ def test_slot_injection_extracts_abstract(tmp_path: Path) -> None:
     result = runner.invoke(
         app,
         [
-            "render",
             str(markdown_file),
             "--output-dir",
             str(output_dir),
@@ -476,7 +463,6 @@ def test_slot_injection_matches_label(tmp_path: Path) -> None:
     result = runner.invoke(
         app,
         [
-            "render",
             str(markdown_file),
             "--output-dir",
             str(output_dir),
@@ -504,7 +490,6 @@ def test_slot_injection_warns_unknown_slot(tmp_path: Path) -> None:
     result = runner.invoke(
         app,
         [
-            "render",
             str(markdown_file),
             "--output-dir",
             str(output_dir),
@@ -529,7 +514,6 @@ def test_slot_injection_preserves_footnotes(tmp_path: Path) -> None:
     result = runner.invoke(
         app,
         [
-            "render",
             "examples/paper/cheese.md",
             "--output-dir",
             str(output_dir),
@@ -576,7 +560,6 @@ Main discussion.
     result = runner.invoke(
         app,
         [
-            "render",
             str(markdown_file),
             "--output-dir",
             str(output_dir),
@@ -619,7 +602,6 @@ Main discussion.
     result = runner.invoke(
         app,
         [
-            "render",
             str(markdown_file),
             "--output-dir",
             str(output_dir),
@@ -660,7 +642,6 @@ Override from CLI.
     result = runner.invoke(
         app,
         [
-            "render",
             str(markdown_file),
             "--output-dir",
             str(output_dir),
@@ -691,7 +672,6 @@ def test_multi_document_template_generates_inputs(tmp_path: Path) -> None:
     result = runner.invoke(
         app,
         [
-            "render",
             str(chapter1),
             str(chapter2),
             "--template",
@@ -723,7 +703,6 @@ def test_convert_template_outputs_summary(tmp_path: Path) -> None:
     result = runner.invoke(
         app,
         [
-            "render",
             str(html_file),
             "--template",
             str(template_dir),
@@ -751,7 +730,6 @@ def test_convert_template_outputs_debug_html(tmp_path: Path) -> None:
     result = runner.invoke(
         app,
         [
-            "render",
             str(html_file),
             "--template",
             str(template_dir),
@@ -780,7 +758,6 @@ def test_slot_assignment_targets_specific_file(tmp_path: Path) -> None:
     result = runner.invoke(
         app,
         [
-            "render",
             str(abstract_doc),
             str(body_doc),
             "--template",
@@ -815,7 +792,6 @@ def test_slot_assignment_extracts_section_from_file(tmp_path: Path) -> None:
     result = runner.invoke(
         app,
         [
-            "render",
             str(chapter1),
             str(chapter2),
             "--template",
@@ -845,7 +821,6 @@ def test_convert_verbose_emits_extension_diagnostics(tmp_path: Path) -> None:
         app,
         [
             "--verbose",
-            "render",
             str(html_file),
         ],
     )
@@ -866,7 +841,6 @@ def test_convert_verbose_template_reports_overrides(tmp_path: Path) -> None:
         [
             "--verbose",
             "--verbose",
-            "render",
             str(markdown_file),
             "--template",
             str(template_dir),
@@ -903,7 +877,6 @@ def test_build_without_template_defaults_to_article(tmp_path: Path, monkeypatch:
     result = runner.invoke(
         app,
         [
-            "render",
             str(html_file),
             "--output-dir",
             str(tmp_path / "output"),
@@ -952,7 +925,6 @@ def test_build_defaults_to_rich_output(tmp_path: Path, monkeypatch: Any) -> None
     result = runner.invoke(
         app,
         [
-            "render",
             str(html_file),
             "--output-dir",
             str(output_dir),
@@ -999,7 +971,6 @@ def test_build_invokes_latexmk(tmp_path: Path, monkeypatch: Any) -> None:
     result = runner.invoke(
         app,
         [
-            "render",
             str(html_file),
             "--output-dir",
             str(output_dir),
@@ -1065,7 +1036,6 @@ def test_build_with_bibliography_forces_bibtex(tmp_path: Path, monkeypatch: Any)
     result = runner.invoke(
         app,
         [
-            "render",
             str(html_file),
             "--output-dir",
             str(output_dir),
@@ -1112,7 +1082,6 @@ def test_build_respects_shell_escape(tmp_path: Path, monkeypatch: Any) -> None:
     result = runner.invoke(
         app,
         [
-            "render",
             str(html_file),
             "--output-dir",
             str(output_dir),
@@ -1167,7 +1136,6 @@ def test_build_failure_reports_summary(tmp_path: Path, monkeypatch: Any) -> None
     result = runner.invoke(
         app,
         [
-            "render",
             str(html_file),
             "--output-dir",
             str(output_dir),

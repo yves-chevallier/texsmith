@@ -33,7 +33,7 @@ Diagnostics you can trust
 
 !!! note "LaTeX distribution"
     TeXSmith only generates LaTeX sources. Use TeX Live, MiKTeX, or MacTeX when
-    you need PDFs (`texsmith render --build` orchestrates `latexmk` for you).
+    you need PDFs (`texsmith --build` orchestrates `latexmk` for you).
 
 ## How is it different from Pandoc?
 
@@ -72,7 +72,7 @@ compatibility is the priority.
     ```
     EOF
 
-    texsmith render intro.md --output build/
+    texsmith intro.md --output build/
     ````
 
 === "Python"
@@ -100,9 +100,9 @@ flag or `render_dir` to go straight to a print-ready project.
 
 - Markdown extensions mirror MkDocs Material out of the box. See
   [Supported Markdown Syntax](markdown/supported.md) for the full list.
-- CLI subcommands (`render`, `bibliography`) map directly to pipeline
-  primitives and include instant diagnostics (`--debug`, `--verbose`, and
-  `--list-extensions`).
+- The single `texsmith` command exposes every pipeline primitive via flags
+  (`--template`, `--build`, `--list-bibliography`, `--list-extensions`), keeping
+  diagnostics close to the workflow.
 - The Python API exposes the same runtime objects used internally, making it
   straightforward to integrate TeXSmith into CI pipelines or publishing tools.
 

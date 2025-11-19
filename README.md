@@ -21,7 +21,7 @@ TeXSmith is a [Python](https://www.python.org/) package and CLI tool to convert 
 
 ```bash
 pip install texsmith
-texsmith render input.md input.bib -o article/ --template nature
+texsmith input.md input.bib -o article/ --template nature
 ```
 
 ## Key features
@@ -48,9 +48,9 @@ TeXSmith targets Python 3.10+ and expects a LaTeX distribution (TeX Live, MiKTeX
 ### Platform notes
 
 - **Linux** – Install TeX Live (full) via your package manager or `install-tl`. When running inside CI containers, cache `~/.texliveYY` so repeated `latexmk` runs stay fast.
-- **macOS** – Use [MacTeX](https://www.tug.org/mactex/) or `BasicTeX` plus the tlmgr packages reported by `texsmith template info`. Homebrew’s `mactex` cask works well when paired with `uv`.
+- **macOS** – Use [MacTeX](https://www.tug.org/mactex/) or `BasicTeX` plus the tlmgr packages reported by `texsmith --template <name> --template-info`. Homebrew’s `mactex` cask works well when paired with `uv`.
 - **Windows** – TeXSmith runs via native Python or WSL. For PDF builds we recommend [MiKTeX](https://miktex.org/) + PowerShell, or WSL2 with TeX Live and Docker Desktop (needed for Mermaid).
-- **Docker workflows** – Run `texsmith render --build` inside a TeX Live container, mounting your project plus the template directory. Copy tlmgr prerequisites from `template info` so images compile without network access.
+- **Docker workflows** – Run `texsmith --build` inside a TeX Live container, mounting your project plus the template directory. Copy tlmgr prerequisites from `--template-info` so images compile without network access.
 
 See the [Getting Started guide](docs/guide/getting-started.md) for a step-by-step walkthrough, verification commands, and Python API examples.
 
@@ -70,9 +70,9 @@ Browse the full documentation at [yves-chevallier.github.io/texsmith](https://yv
 Inspect templates by name or path to understand their slots, metadata attributes, TeX Live requirements, and declared assets:
 
 ```bash
-texsmith template info article
-# or the namespaced alias
-texsmith latex template info ./templates/nature
+texsmith --template article --template-info
+# or inspect a local path
+texsmith --template ./templates/nature --template-info
 ```
 
 Use this command before wiring slots or when you need to confirm which tlmgr packages to preinstall in CI.

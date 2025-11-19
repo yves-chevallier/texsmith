@@ -8,7 +8,7 @@ todo list helpers exported through `texsmith.builtin_templates.common`.
 ## Usage
 
 ```bash
-texsmith render manuscript.md --template book \
+texsmith manuscript.md --template book \
   --slot frontmatter:intro.md \
   --slot backmatter:appendix.md
 ```

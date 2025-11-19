@@ -18,7 +18,7 @@ The `examples/paper` folder converts `cheese.md` + `cheese.bib` into a fully typ
 
 ```bash
 cd examples/paper
-texsmith render cheese.md cheese.bib \
+texsmith cheese.md cheese.bib \
   --template article \
   --output-dir ../../build/examples/paper \
   --build \

@@ -17,7 +17,7 @@ Adjust `pyproject.toml` (name, version), `template/manifest.toml` (template attr
 ## Inspect metadata with `template info`
 
 ```bash
-texsmith template info ./texsmith-template-report
+texsmith --template ./texsmith-template-report --template-info
 ```
 
 Use the output to validate:
@@ -36,7 +36,7 @@ Run the command inside CI to log tlmgr prerequisites, then cache `tlmgr install 
 When a template defines slots such as `frontmatter`, `mainmatter`, and `appendix`, wire documents via CLI selectors:
 
 ```bash
-texsmith render docs/intro.md docs/manual.md docs/appendix.md \
+texsmith docs/intro.md docs/manual.md docs/appendix.md \
   --template texsmith-template-report \
   --slot frontmatter:docs/intro.md \
   --slot mainmatter:docs/manual.md \

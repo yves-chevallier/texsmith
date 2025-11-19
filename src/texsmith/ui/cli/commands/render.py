@@ -1,4 +1,4 @@
-"""Implementation of the `texsmith render` command."""
+"""Implementation of the primary ``texsmith`` CLI command."""
 
 from __future__ import annotations
 
@@ -19,7 +19,11 @@ from click.core import ParameterSource
 import typer
 
 from texsmith.adapters.latex.log import stream_latexmk_output
-from texsmith.adapters.markdown import resolve_markdown_extensions, split_front_matter
+from texsmith.adapters.markdown import (
+    DEFAULT_MARKDOWN_EXTENSIONS,
+    resolve_markdown_extensions,
+    split_front_matter,
+)
 from texsmith.api.service import ConversionRequest, ConversionService
 from texsmith.core.bibliography import BibliographyCollection
 from texsmith.core.conversion.debug import ConversionError
@@ -27,6 +31,7 @@ from texsmith.core.conversion.inputs import UnsupportedInputError
 from texsmith.core.templates import TemplateError
 
 from .._options import (
+    DIAGNOSTICS_PANEL,
     OUTPUT_PANEL,
     BaseLevelOption,
     BibliographyOption,
@@ -54,7 +59,7 @@ from .._options import (
     TitleFromHeadingOption,
 )
 from ..bibliography import print_bibliography_overview
-from ..commands.templates import scaffold_template, show_template_info
+from ..commands.templates import list_templates, scaffold_template, show_template_info
 from ..diagnostics import CliEmitter
 from ..presenter import (
     consume_event_diagnostics,
@@ -63,7 +68,7 @@ from ..presenter import (
     present_conversion_summary,
     present_latexmk_failure,
 )
-from ..state import debug_enabled, emit_error, get_cli_state
+from ..state import debug_enabled, emit_error, set_cli_state
 from ..utils import determine_output_target, organise_slot_overrides, write_output_file
 
 
@@ -276,6 +281,40 @@ def _parse_template_attributes(values: Iterable[str] | None) -> dict[str, Any]:
 
 
 def render(
+    list_extensions: Annotated[
+        bool,
+        typer.Option(
+            "--list-extensions",
+            help="List Markdown extensions enabled by default and exit.",
+            rich_help_panel=DIAGNOSTICS_PANEL,
+        ),
+    ] = False,
+    list_templates_flag: Annotated[
+        bool,
+        typer.Option(
+            "--list-templates",
+            help="List available templates (builtin, entry-point, and local) and exit.",
+            rich_help_panel=DIAGNOSTICS_PANEL,
+        ),
+    ] = False,
+    verbose: Annotated[
+        int,
+        typer.Option(
+            "--verbose",
+            "-v",
+            count=True,
+            help=("Increase CLI verbosity. Combine multiple times for additional diagnostics."),
+            rich_help_panel=DIAGNOSTICS_PANEL,
+        ),
+    ] = 0,
+    debug: Annotated[
+        bool,
+        typer.Option(
+            "--debug/--no-debug",
+            help="Show full tracebacks when an unexpected error occurs.",
+            rich_help_panel=DIAGNOSTICS_PANEL,
+        ),
+    ] = False,
     inputs: InputPathArgument = None,
     input_path: Annotated[
         Path | None,
@@ -370,13 +409,27 @@ def render(
 ) -> None:
     """Convert MkDocs documents into LaTeX artefacts and optionally build PDFs."""
 
-    state = get_cli_state()
     ctx = click.get_current_context(silent=True)
-    verbosity = state.verbosity
-    if verbosity <= 0 and ctx is not None and ctx.parent is not None:
-        verbosity = int(ctx.parent.params.get("verbose", 0) or 0)
-        if verbosity > 0:
-            state.verbosity = verbosity
+    typer_ctx = ctx if isinstance(ctx, typer.Context) else None
+    state = set_cli_state(ctx=typer_ctx, verbosity=verbose, debug=debug)
+
+    if typer_ctx is not None and typer_ctx.resilient_parsing:
+        return
+
+    if list_extensions:
+        for extension in DEFAULT_MARKDOWN_EXTENSIONS:
+            typer.echo(extension)
+        raise typer.Exit()
+
+    if list_templates_flag:
+        list_templates()
+        raise typer.Exit()
+
+    verbosity_level = state.verbosity
+    if verbosity_level <= 0 and typer_ctx is not None and typer_ctx.parent is not None:
+        verbosity_level = int(typer_ctx.parent.params.get("verbose", 0) or 0)
+        if verbosity_level > 0:
+            state.verbosity = verbosity_level
 
     document_paths = list(inputs or [])
     if input_path is not None:
@@ -509,7 +562,7 @@ def render(
 
     def _flush_diagnostics() -> None:
         lines: list[str] = []
-        if verbosity >= 1:
+        if state.verbosity >= 1:
             lines.append(extension_line)
         lines.extend(consume_event_diagnostics(state))
         for line in lines:

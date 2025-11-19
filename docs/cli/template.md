@@ -1,29 +1,28 @@
-# `texsmith template info`
+# Template inspection flags
 
-Use `texsmith template info` to inspect the metadata declared by a LaTeX template before wiring it into your workflow. The command parses the `manifest.toml`, resolves slots, lists attributes, and dumps the assets that will be copied into the render directory.
+Use the `--template-info` and `--template-scaffold` flags to inspect or copy LaTeX templates before wiring them into your workflow. Both flags piggyback on the main `texsmith` command, so you can reuse the same invocation environment and attribute overrides.
 
 ```bash
-texsmith template info [TEMPLATE]
+# Display manifest metadata, slots, attributes, and assets
+texsmith --template article --template-info
+
+# Copy a template tree to scaffold-dir/ for customization
+texsmith --template ./templates/nature --template-scaffold scaffold-dir/
 ```
-
-The command is available from two entry points:
-
-- `texsmith template info article` – direct child of the root CLI.
-- `texsmith latex template info ./templates/nature` – scoped under the `latex` namespace.
-
-Both invocations produce the same output, so pick whichever best matches your mental model. The root command accepts built-in slugs such as `article` and `letter` in addition to local paths.
 
 ## Arguments
 
 | Argument | Description |
 | -------- | ----------- |
-| `TEMPLATE` | Template name (as installed in the current Python environment) or filesystem path pointing to a template package root. The path can be absolute or relative. |
+| `--template` | Template name (as installed in the current Python environment) or filesystem path pointing to a template package root. The path can be absolute or relative. Required when using either flag. |
+| `--template-info` | Prints template metadata and exits. |
+| `--template-scaffold DEST` | Copies the selected template into `DEST`, preserving its manifest and assets, then exits. |
 
-If you omit the argument, the command prints its contextual help.
+If you omit `--template`, TeXSmith falls back to the default `article` template.
 
 ## Output
 
-`template info` prints a summary panel showing:
+`--template-info` prints a summary panel showing:
 
 - Template metadata: name, version, Jinja entrypoint, engine, whether `latexmk` needs `--shell-escape`, and tlmgr prerequisites.
 - Attribute schema: every manifest attribute along with type information, defaults, and normalisers.
@@ -32,14 +31,11 @@ If you omit the argument, the command prints its contextual help.
 
 When [Rich](https://rich.readthedocs.io/) is available (the default in TeXSmith’s CLI), the command renders tables; otherwise it falls back to plain text.
 
-## Example
-
-```bash
-$ texsmith template info article
-```
+`--template-scaffold` copies the template directory structure to the provided destination. It is ideal for bootstrapping a custom theme or inspecting all assets with your editor.
 
 Typical use cases:
 
 - Confirm which slots a template exposes before wiring CLI `--slot` values or front-matter directives.
-- List the tlmgr packages required by CI/CD environments prior to running `texsmith render --build`.
+- List the tlmgr packages required by CI/CD environments prior to running `texsmith --build`.
 - Audit attribute defaults when debugging why a template prints the wrong title, language, or bibliography style.
+- Scaffold a built-in template into a local path so you can tweak its manifest, geometry, or assets without editing the originals.

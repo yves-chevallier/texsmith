@@ -24,8 +24,7 @@ SN (Switzerland), and NF (France).
 To build the examples, use the following commands:
 
 ```bash
-texsmith render letter.md --build # for default format (DIN)
-texsmith render letter.md --build -aformat sn  # for SN format
-texsmith render letter.md --build -aformat nf  # for NF format
+texsmith letter.md --build # for default format (DIN)
+texsmith letter.md --build -aformat sn  # for SN format
+texsmith letter.md --build -aformat nf  # for NF format
 ```
-
