@@ -45,6 +45,11 @@ def wrap_template_document(
         main_slot_content,
         overrides=overrides_payload,
     )
+    root_name: str | None = None
+    if output_name:
+        root_name = Path(output_name).stem
+    if root_name:
+        template_context.setdefault("root_filename", root_name)
 
     for slot_name, content in resolved_slots.items():
         if slot_name == default_slot:
@@ -67,6 +72,10 @@ def wrap_template_document(
     template_context["acronyms"] = document_state.acronyms.copy()
     template_context["citations"] = list(document_state.citations)
     template_context["bibliography_entries"] = document_state.bibliography
+    template_context["requires_shell_escape"] = bool(
+        template_context.get("requires_shell_escape", False)
+        or getattr(document_state, "requires_shell_escape", False)
+    )
 
     if document_state.citations and bibliography_path is not None:
         template_context["bibliography"] = bibliography_path.stem
@@ -92,6 +101,7 @@ def wrap_template_document(
         output_dir.mkdir(parents=True, exist_ok=True)
         output_path = output_dir / output_name
         output_path.write_text(latex_output, encoding="utf-8")
+        template_context.setdefault("root_filename", output_path.stem)
 
     return TemplateWrapResult(
         latex_output=latex_output,

@@ -7,7 +7,6 @@ from collections.abc import Iterable, Mapping
 import contextlib
 import os
 from pathlib import Path
-import shlex
 import shutil
 import subprocess
 import sys
@@ -18,6 +17,11 @@ import click
 from click.core import ParameterSource
 import typer
 
+from texsmith.adapters.latex.latexmk import (
+    build_engine_command,
+    latexmk_pdf_flag,
+    normalise_engine_command,
+)
 from texsmith.adapters.latex.log import stream_latexmk_output
 from texsmith.adapters.markdown import (
     DEFAULT_MARKDOWN_EXTENSIONS,
@@ -81,26 +85,14 @@ def build_latexmk_command(
     force_bibtex: bool = False,
 ) -> list[str]:
     """Construct the latexmk command arguments respecting CLI options."""
-    engine_command = (engine or "pdflatex").strip()
-    if not engine_command:
-        engine_command = "pdflatex"
-
-    tokens = shlex.split(engine_command)
-    if not tokens:
-        tokens = ["pdflatex"]
-
-    if shell_escape and not any(token in {"-shell-escape", "--shell-escape"} for token in tokens):
-        tokens.append("--shell-escape")
-
-    tokens.extend(["%O", "%S"])
-
+    engine_config = normalise_engine_command(engine, shell_escape=shell_escape)
     command = [
         "latexmk",
-        "-pdf",
+        latexmk_pdf_flag(engine_config.pdf_mode),
         "-interaction=nonstopmode",
         "-halt-on-error",
         "-file-line-error",
-        f"-pdflatex={' '.join(tokens)}",
+        f"-pdflatex={build_engine_command(engine_config)}",
     ]
     if force_bibtex:
         command.insert(2, "-bibtex")

@@ -56,6 +56,7 @@ Roadmap and development notes for TeXSmith. I keep this file as a running checkl
 - [x] Integrate coverage reporting
 - [x] Snippet Template
 - [x] Snippet plugin
+- [x] Integrate Nox
 - [ ] Snippet plugin, avoid rebuilding unchanged snippets
 - [ ] Epigraph Plugin
 - [ ] Consolidate Book template
@@ -70,7 +71,6 @@ Roadmap and development notes for TeXSmith. I keep this file as a running checkl
 - [ ] Scaffold templates with Cookiecutter
 - [ ] Implement `texsmith template create my-template`
 - [ ] Offer compilation with Docker or TeX Live (user choice)
-- [ ] Integrate Nox
 - [ ] Complete docstring coverage across the project
 - [ ] Deploy to PyPI
 
@@ -148,31 +148,6 @@ Dans les templates plugins on a
   RawFeature={fallback=fontfallback}
 ]
 ```
-## Snippet Plugin
-
-The goal of `texsmith.snippet` plugin is to provide a way to include external examples built in LaTeX easily from Markdown files.
-The meain goal is to document texsmith, but it can have broader applications.
-
-We introduce a fenced code block with the `snippet` class:
-
-````markdown
-```markdown { snippet }
-```
-````
-
-During the build, TeXSmith extracts the content of the block, use TeXSmith API to render it into a standalone PDF,
-and replace the fenced block with a figure that includes the generated PDF.
-
-When using MkDocs integration, the snippet plugin will generate the pdf, but also a PNG version of the snippet to be included in the HTML output.
-In the HTMl we will have like any other pictures:
-
-```html
-<a href="path/to/generated/snippet.pdf" target="_blank" rel="noopener noreferrer">
-  <img src="path/to/generated/snippet.png" alt="Snippet">
-</a>
-```
-
-Please implement this feature as a TeXSmith plugin.
 
 ## .texsmith/config.toml
 
@@ -182,9 +157,6 @@ Improve the documentation and structure for user configuration. The goal is to l
 
 Always generate a `latexmkrc` for every template to simplify builds. Running `latexmk` should build the right file with the right engine, enabling `--shell-escape` only when needed (for instance when `minted` is in use). Avoid injecting minted-specific logic when no code blocks exist.
 
-## Nox
-
-Update `pyproject.toml` so that Nox can test every supported CPython version (3.10 through 3.13).
 
 ### Glossary
 
