@@ -8,7 +8,7 @@ version = "0.1.0"
 description = "A Markdown to LaTeX converter."
 readme = "README.md"
 license = "MIT"
-requires-python = ">=3.11"
+requires-python = ">=3.10"
 authors = [
     { name = "Yves Chevallier", email = "yves.chevalier@heig-vd.ch" }
 ]
@@ -18,6 +18,14 @@ keywords = [
     "latex",
     "mkdocs",
     "convert"
+]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
 ]
 dependencies = [
     "beautifulsoup4>=4.14.2",
@@ -86,13 +94,14 @@ texsmith = "texsmith.ui.cli.app:main"
 dev = [
     "pytest>=8.4.2",
     "ruff>=0.14.1",
+    "nox[pbs]>=2024.4.16",
     "cairosvg>=2.8.2",
     "pillow>=12.0.0",
     "pypdf>=6.1.1",
     "requests>=2.32.5",
     "mkdocs-material>=9.6.22",
     "pytest-cov>=7.0.0",
-    "mkdocs-texsmith",
+    "mkdocs-texsmith ; python_version >= \"3.10\"",
     "pymupdf>=1.26.6",
 ]
 docs = [
