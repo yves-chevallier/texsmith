@@ -1001,6 +1001,9 @@ wheels = [
 name = "mkdocs-texsmith"
 version = "0.1.0"
 source = { editable = "packages/mkdocs_texsmith" }
+dependencies = [
+    { name = "texsmith" },
+]
 
 [package.dev-dependencies]
 dev = [
@@ -1009,12 +1012,15 @@ dev = [
     { name = "mkdocs-material" },
     { name = "mkdocs-pills" },
     { name = "mkdocstrings-python" },
+    { name = "nox", extra = ["pbs"] },
+    { name = "pillow" },
     { name = "pytest" },
+    { name = "pytest-cov" },
     { name = "ruff" },
 ]
 
 [package.metadata]
-requires-dist = [{ name = "mkdocs-texsmith", editable = "packages/mkdocs_texsmith" }]
+requires-dist = [{ name = "texsmith", editable = "." }]
 
 [package.metadata.requires-dev]
 dev = [
@@ -1023,7 +1029,10 @@ dev = [
     { name = "mkdocs-material", specifier = ">=9.6.22" },
     { name = "mkdocs-pills", specifier = ">=0.1.0" },
     { name = "mkdocstrings-python", specifier = ">=1.18.2" },
+    { name = "nox", extras = ["pbs"], specifier = ">=2024.4.16" },
+    { name = "pillow", specifier = ">=12.0.0" },
     { name = "pytest", specifier = ">=8.4.2" },
+    { name = "pytest-cov", specifier = ">=7.0.0" },
     { name = "ruff", specifier = ">=0.14.1" },
 ]
 
