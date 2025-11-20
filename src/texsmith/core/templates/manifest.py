@@ -7,7 +7,10 @@ import copy
 from pathlib import Path
 from typing import Any, Callable, Literal
 
-import tomllib
+try:  # Python >=3.11
+    import tomllib  # type: ignore[attr-defined]
+except ModuleNotFoundError:  # Python 3.10
+    import tomli as tomllib
 from pydantic import (
     BaseModel,
     ConfigDict,
