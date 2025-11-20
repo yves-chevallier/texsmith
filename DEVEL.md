@@ -57,12 +57,12 @@ Roadmap and development notes for TeXSmith. I keep this file as a running checkl
 - [x] Snippet Template
 - [x] Snippet plugin
 - [x] Integrate Nox
-- [ ] Snippet plugin, avoid rebuilding unchanged snippets
+- [x] No shell escape when `minted` is unused (no code blocks or inline code)
+- [x] Snippet plugin, avoid rebuilding unchanged snippets
+- [x] Dynamically update the engine in `latexmkrc` (pdflatex, xelatex, lualatex)
 - [ ] Epigraph Plugin
 - [ ] Consolidate Book template
 - [ ] Put fonts and code into separate sty merged during build
-- [ ] Avoid `--shell-escape` when `minted` is unused (no code blocks or inline code)
-- [ ] Dynamically update the engine in `latexmkrc` (pdflatex, xelatex, lualatex)
 - [ ] Support glossaries (glossaries package)
 - [ ] Support cross-references (cleveref package)
 - [ ] Provide listings/verbatim/minted handling
@@ -152,11 +152,6 @@ Dans les templates plugins on a
 ## .texsmith/config.toml
 
 Improve the documentation and structure for user configuration. The goal is to let users pick default templates, Mermaid styles, preferred options, and paper formats for everyday TeXSmith usage. The file is optional and can live in the current directory or any parent directory. When present, the `.texsmith` folder also stores cache, configuration, and other user-specific data.
-
-## latexmkrc Integration
-
-Always generate a `latexmkrc` for every template to simplify builds. Running `latexmk` should build the right file with the right engine, enabling `--shell-escape` only when needed (for instance when `minted` is in use). Avoid injecting minted-specific logic when no code blocks exist.
-
 
 ### Glossary
 
