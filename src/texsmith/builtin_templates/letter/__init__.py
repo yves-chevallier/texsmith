@@ -4,7 +4,11 @@ from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
-from datetime import UTC, date, datetime, timezone
+from datetime import date, datetime, timezone
+try:
+    from datetime import UTC  # py311+
+except ImportError:  # py310 fallback
+    UTC = timezone.utc  # type: ignore[assignment]
 from pathlib import Path
 import re
 import shutil
