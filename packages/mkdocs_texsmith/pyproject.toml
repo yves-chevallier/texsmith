@@ -20,8 +20,16 @@ keywords = [
     "mkdocs",
     "convert"
 ]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+]
 dependencies = [
-    "mkdocs_texsmith>=0.1.0",
+    "texsmith>=0.1.0",
 ]
 [project.urls]
 Homepage = "https://github.com/yves-chevallier/mkdocs-texsmith"
@@ -54,7 +62,10 @@ dev = [
     "mkdocs-pills>=0.1.0",
     "mkdocstrings-python>=1.18.2",
     "pytest>=8.4.2",
+    "pytest-cov>=7.0.0",
+    "pillow>=12.0.0",
     "ruff>=0.14.1",
+    "nox[pbs]>=2024.4.16",
 ]
 
 [tool.uv]
@@ -62,7 +73,7 @@ default-groups = ["dev"]
 package = true
 
 [tool.uv.sources]
-texsmith = { path = "../../" }
+texsmith = { workspace = true }
 
 [tool.ruff]
 extend-exclude = ["site"]
