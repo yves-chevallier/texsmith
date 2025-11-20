@@ -225,6 +225,43 @@ data:
 
 The goal is to convert Markdown tables into LaTeX tables with automatic line breaks so that columns wrap gracefully when a table is too wide.
 
+## Arabic
+
+We can allow environment to support specific languages:
+
+```markdown
+::: language arabic
+قِفا نَبْكِ مِنْ ذِكرَى حبيبٍ ومَن
+:::
+```
+
+This will trigger the inclusion of `polyglossia` and set up the Arabic environment. We could also set fonts automatically based on the language. For Arabic, we can use the `Amiri` font as follows:
+
+```latex
+\documentclass[a4paper]{article}
+
+\usepackage{fontspec}
+\usepackage{polyglossia}
+\usepackage{ts-fonts}
+\setmainlanguage{english}
+\setotherlanguage{arabic}
+
+\newfontfamily\arabicfont[Script=Arabic]{Amiri}
+
+\begin{document}
+
+\begin{Arabic}
+قِفا نَبْكِ مِنْ ذِكرَى حبيبٍ ومَنزِلِ
+بِسِقطِ اللِّوَى بَيْنَ الدَّخول فَحَوْمَلِ
+فَتُوضِحَ فَالمِقراةِ لَم يَعفُ رَسمُها
+لِما نَسَجَتها مِن جَنُوبٍ وشَمألِ
+تَرَى بَعَرَ الأرْآمِ في عَرَصاتِها
+وَقِيْعانِها كَأنَّهُ حَبُّ فُلْفُلِ
+\end{Arabic}
+
+\end{document}
+```
+
 ## Figure References
 
 Printed references depend on the document language. In English we would write, “The elephant shown in Figure 1 is large.” The LaTeX equivalent is `The elephant shown in Figure~\ref{fig:elephant} is large.` Pymdown lets us write:
