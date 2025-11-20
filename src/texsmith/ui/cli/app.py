@@ -63,4 +63,5 @@ def main() -> None:
             emit_error(str(exc), exception=exc)
         raise typer.Exit(code=1) from exc
 
+
 __all__ = ["app", "main"]

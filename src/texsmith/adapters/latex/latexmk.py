@@ -3,9 +3,9 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from pathlib import Path
 import shlex
 import shutil
-from pathlib import Path
 from typing import Any
 
 
@@ -36,9 +36,7 @@ def normalise_engine_command(engine: str | None, *, shell_escape: bool) -> Latex
     if not tokens:
         tokens = ["pdflatex"]
 
-    if shell_escape and not any(
-        token in {"-shell-escape", "--shell-escape"} for token in tokens
-    ):
+    if shell_escape and not any(token in {"-shell-escape", "--shell-escape"} for token in tokens):
         tokens.append("--shell-escape")
 
     pdf_mode = _pdf_mode_from_command(tokens[0])

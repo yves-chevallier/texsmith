@@ -291,6 +291,15 @@ def consume_event_diagnostics(state: CLIState) -> list[str]:
             output_lines.append(
                 f"Settings: parser={parser}, copy_assets={copy_assets}, manifest={manifest}, fallback_converters={fallback_enabled}"
             )
+        for event in state.events.get("font_requirements", []):
+            required = event.get("required", [])
+            missing = event.get("missing", [])
+            present = event.get("present", [])
+            if missing:
+                output_lines.append(f"Font gaps: {', '.join(missing)}")
+            output_lines.append(f"Font fallbacks: {', '.join(required) or '<none>'}")
+            if present:
+                output_lines.append(f"Detected locally: {', '.join(present)}")
 
     state.events.clear()
     return output_lines

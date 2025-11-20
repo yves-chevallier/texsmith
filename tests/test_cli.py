@@ -214,8 +214,7 @@ def test_render_from_stdin(monkeypatch: Any) -> None:
     runner = CliRunner()
     result = runner.invoke(
         app,
-        [
-        ],
+        [],
         input="# Title\n\nSome **bold** text.\n",
     )
 

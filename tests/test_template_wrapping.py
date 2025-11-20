@@ -237,7 +237,7 @@ def test_article_prefers_lualatex_for_latin_text(
     assert context["unicode_problematic_chars"] == ""
 
     latex_output = result.latex_output
-    assert "\\usepackage{fontspec}" in latex_output
+    assert "\\usepackage{ts-fonts}" in latex_output
 
 
 def test_article_switches_to_lualatex_for_non_latin_scripts(
@@ -263,5 +263,5 @@ def test_article_switches_to_lualatex_for_non_latin_scripts(
     assert context["pdflatex_extra_packages"] == []
 
     latex_output = result.latex_output
-    assert "\\usepackage{fontspec}" in latex_output
+    assert "\\usepackage{ts-fonts}" in latex_output
     assert "\\usepackage[T1]{fontenc}" not in latex_output
