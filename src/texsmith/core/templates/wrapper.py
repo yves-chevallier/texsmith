@@ -4,7 +4,11 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Mapping, Any
+from typing import Any, Mapping
+
+from texsmith.core.conversion.debug import ensure_emitter, record_event
+from texsmith.core.diagnostics import DiagnosticEmitter
+from texsmith.fonts.analyzer import analyse_font_requirements
 
 from ..context import DocumentState
 from .base import WrappableTemplate
@@ -32,6 +36,7 @@ def wrap_template_document(
     copy_assets: bool = True,
     output_name: str | None = None,
     bibliography_path: Path | None = None,
+    emitter: DiagnosticEmitter | None = None,
 ) -> TemplateWrapResult:
     """Wrap LaTeX content using a template and optional asset copying."""
     output_dir = Path(output_dir).resolve()
@@ -76,6 +81,48 @@ def wrap_template_document(
         template_context.get("requires_shell_escape", False)
         or getattr(document_state, "requires_shell_escape", False)
     )
+
+    font_yaml_hint = template_context.get("fonts_yaml")
+    fonts_yaml_path = Path(font_yaml_hint) if isinstance(font_yaml_hint, (str, Path)) else None
+    emitter_obj = ensure_emitter(emitter)
+    if fonts_yaml_path and not fonts_yaml_path.exists():
+        emitter_obj.warning(f"fonts_yaml override does not exist: {fonts_yaml_path}")
+        fonts_yaml_path = None
+    font_match = analyse_font_requirements(
+        slot_outputs=resolved_slots,
+        context=template_context,
+        fonts_yaml=fonts_yaml_path,
+        check_system=True,
+    )
+    if font_match:
+        available_fonts = list(font_match.present_fonts) or list(font_match.fallback_fonts)
+        if not available_fonts:
+            available_fonts = ["NotoSans", "NotoColorEmoji"]
+        fallback_fonts = list(available_fonts)
+        extra_fallbacks = template_context.get("extra_font_fallbacks") or []
+        if isinstance(extra_fallbacks, (list, tuple, set)):
+            fallback_fonts.extend(str(item) for item in extra_fallbacks if item)
+        if fallback_fonts:
+            deduped = list(dict.fromkeys(fallback_fonts))
+            template_context["fallback_fonts"] = deduped
+        template_context.setdefault("present_fonts", list(font_match.present_fonts))
+        template_context.setdefault("missing_fonts", list(font_match.missing_fonts))
+        template_context.setdefault("font_match_ranges", dict(font_match.font_ranges))
+        if font_match.missing_fonts:
+            readable = ", ".join(sorted(font_match.missing_fonts))
+            emitter_obj.warning(
+                f"Missing {len(font_match.missing_fonts)} font families on the system: {readable}."
+            )
+        if font_match.font_ranges:
+            record_event(
+                emitter_obj,
+                "font_requirements",
+                {
+                    "required": list(fallback_fonts),
+                    "present": list(font_match.present_fonts),
+                    "missing": list(font_match.missing_fonts),
+                },
+            )
 
     if document_state.citations and bibliography_path is not None:
         template_context["bibliography"] = bibliography_path.stem

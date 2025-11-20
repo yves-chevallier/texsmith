@@ -4,6 +4,7 @@ from pathlib import Path
 
 import nox
 
+
 PYPROJECT = nox.project.load_toml("pyproject.toml")
 # Drive the matrix from pyproject metadata so versions stay in sync.
 PYTHON_VERSIONS = nox.project.python_versions(PYPROJECT, max_version="3.13")

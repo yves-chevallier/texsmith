@@ -334,6 +334,7 @@ def _render_document(
                 copy_assets=strategy.copy_assets,
                 output_name=f"{document_context.source_path.stem}.tex",
                 bibliography_path=bibliography_output,
+                emitter=emitter,
             )
             latex_output = wrap_result.latex_output
             tex_path = wrap_result.output_path
@@ -355,7 +356,8 @@ def _render_document(
         tex_path=tex_path,
         template_engine=binding.engine,
         template_shell_escape=bool(
-            binding.requires_shell_escape or (document_state and document_state.requires_shell_escape)
+            binding.requires_shell_escape
+            or (document_state and document_state.requires_shell_escape)
         ),
         language=binder_context.language,
         has_bibliography=bool(citations),

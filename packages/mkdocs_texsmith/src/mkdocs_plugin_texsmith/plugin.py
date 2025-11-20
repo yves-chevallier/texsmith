@@ -734,7 +734,9 @@ class LatexPlugin(BasePlugin):
         candidate = base_dir if not folder else base_dir / folder
         return candidate.resolve()
 
-    def _build_snippet_urls(self, page: Any, block: snippet.SnippetBlock) -> tuple[str, str]:
+    def _build_snippet_urls(
+        self, page: Any, block: snippet.SnippetBlock
+    ) -> tuple[str, str]:
         self._ensure_site_snippet_assets(page, block)
         pdf_name = snippet.asset_filename(block.digest, ".pdf")
         png_name = snippet.asset_filename(block.digest, ".png")
@@ -766,11 +768,15 @@ class LatexPlugin(BasePlugin):
         for asset in source_dir.glob("*.png"):
             shutil.copy2(asset, target_dir / asset.name)
 
-    def _ensure_site_snippet_assets(self, page: Any, block: snippet.SnippetBlock) -> None:
+    def _ensure_site_snippet_assets(
+        self, page: Any, block: snippet.SnippetBlock
+    ) -> None:
         dest_dir = self._site_snippet_dir()
         abs_src = getattr(page.file, "abs_src_path", None)
         if not abs_src:
-            raise PluginError("Unable to determine the source path for snippet rendering.")
+            raise PluginError(
+                "Unable to determine the source path for snippet rendering."
+            )
         source_path = Path(abs_src)
         try:
             snippet.ensure_snippet_assets(

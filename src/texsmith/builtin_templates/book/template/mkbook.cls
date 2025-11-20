@@ -1,7 +1,7 @@
 \ProvidesClass{mkbook}[2024/09/26 MkDocs class]
 \LoadClass[9pt,twoside]{memoir}
 
-\RequirePackage{fontspec}
+\RequirePackage{ts-fonts}
 \RequirePackage[svgnames,dvipsnames,x11names]{xcolor}
 \RequirePackage{tikz}
 \RequirePackage{textcomp} % For ©, ™
@@ -35,7 +35,6 @@
 \RequirePackage{adjustbox}
 \RequirePackage{progressbar}
 \RequirePackage{caption}
-\RequirePackage{microtype}
 \RequirePackage[\VAR{language|default('english')}]{babel}
 \RequirePackage{emptypage}
 
@@ -66,46 +65,6 @@
 \usetikzlibrary{shapes.geometric}
 \usetikzlibrary{calc}
 \usetikzlibrary{shadows}
-
-%
-% Fonts
-%
-
-% Set fallback fonts
-\directlua{luaotfload.add_fallback
-  ("fontfallback",
-  {
-      "NotoColorEmoji:mode=harf;",
-      "NotoNaskhArabic:mode=harf;",
-      "NotoSerifHebrew:mode=harf;",
-      "NotoSerifDevanagari:mode=harf;",
-      "NotoSerifTamil:mode=harf;",
-      "NotoSerifTibetan:mode=harf;",
-      "NotoSerifCJKkr:mode=harf;",
-      "NotoSans:mode=harf;",
-      "NotoSansSymbols2-Regular:mode=harf;",
-      "NotoSansMath-Regular:mode=harf;",
-      "NotoMusic-Regular:mode=harf;",
-      "NotoSansSyriac:mode=harf;",
-      "NotoSansSyriacWestern:mode=harf;"
-    }
-  )}
-
-\setmainfont{Latin Modern Roman}[
-  RawFeature={fallback=fontfallback}
-]
-
-\setsansfont{Latin Modern Sans}[
-  RawFeature={fallback=fontfallback}
-]
-
-\setmonofont{FreeMono}[
-  Scale=0.9,
-  ItalicFont={* Oblique},
-  BoldFont={* Bold},
-  BoldItalicFont={* Bold Oblique},
-  RawFeature={fallback=fontfallback}
-]
 
 \graphicspath{{assets/}}
 

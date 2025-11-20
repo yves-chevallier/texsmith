@@ -95,58 +95,6 @@ Dans les templates plugins on a
 
 ```latex
 
-\usepackage{microtype}
-
-\BLOCK{ if latex_engine == "lualatex" or latex_engine == "xelatex" }
-\usepackage{fontspec}
-\BLOCK{ else }
-\usepackage[T1]{fontenc}
-\usepackage[utf8]{inputenc}
-\BLOCK{ endif }
-
-\BLOCK{ if latex_engine == "lualatex" }
-\BLOCK{ set base_font_fallbacks = [
-    "NotoColorEmoji:mode=harf;",
-    "NotoNaskhArabic:mode=harf;",
-    "NotoSerifHebrew:mode=harf;",
-    "NotoSerifDevanagari:mode=harf;",
-    "NotoSerifTamil:mode=harf;",
-    "NotoSerifTibetan:mode=harf;",
-    "NotoSerifCJKkr:mode=harf;",
-    "NotoSans:mode=harf;",
-    "NotoSansSymbols2-Regular:mode=harf;",
-    "NotoSansMath-Regular:mode=harf;",
-    "NotoMusic-Regular:mode=harf;",
-    "NotoSansSyriac-Regular:mode=harf;",
-    "NotoSansSyriacWestern-Regular:mode=harf;"
-] }
-\BLOCK{ set fallback_fonts = base_font_fallbacks + (extra_font_fallbacks or []) }
-\directlua{luaotfload.add_fallback
-  ("fontfallback",
-  {
-      \BLOCK{ for font in fallback_fonts }
-      "\VAR{font}"\BLOCK{ if not loop.last },\BLOCK{ endif }
-      \BLOCK{ endfor }
-  }
-  )}
-
-\setmainfont{Latin Modern Roman}[
-  Ligatures=TeX,
-  SmallCapsFont = Latin Modern Roman Caps,
-  RawFeature = {fallback=fontfallback},
-]
-
-\setsansfont{Latin Modern Sans}[
-  RawFeature={fallback=fontfallback}
-]
-
-\setmonofont{FreeMono}[
-  Scale=0.9,
-  ItalicFont={* Oblique},
-  BoldFont={* Bold},
-  BoldItalicFont={* Bold Oblique},
-  RawFeature={fallback=fontfallback}
-]
 ```
 
 ## .texsmith/config.toml

@@ -85,3 +85,4 @@ depth = "section"
 "todolist.sty" = { source = "../common/todolist.sty" }
 "keystroke.sty" = { source = "../common/keystroke.sty" }
 ".latexmkrc" = { source = "template/assets/latexmkrc", template = true }
+"ts-fonts.sty" = { source = "../common/ts-fonts.sty.jinja", template = true }

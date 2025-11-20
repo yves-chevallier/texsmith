@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass
 import hashlib
 import json
@@ -9,7 +10,7 @@ import os
 from pathlib import Path
 import shutil
 import subprocess
-from typing import Any, Callable
+from typing import Any
 
 from bs4 import BeautifulSoup
 from bs4.element import NavigableString, Tag
@@ -67,7 +68,7 @@ class _SnippetAssets:
 
 
 _SNIPPET_RUNTIME: TemplateRuntime | None = None
-_SNIPPET_CACHE: "_SnippetCache | None" = None
+_SNIPPET_CACHE: _SnippetCache | None = None
 
 
 @dataclass(slots=True)
@@ -369,7 +370,7 @@ def _build_document(
         options=options,
         slots=DocumentSlots(),
     )
-    document._initialise_slots_from_front_matter()
+    document._initialise_slots_from_front_matter()  # noqa: SLF001
     return document
 
 
@@ -403,7 +404,7 @@ def _compile_pdf(render_result: Any) -> Path:
     return render_result.main_tex_path.with_suffix(".pdf")
 
 
-def _load_pymupdf():
+def _load_pymupdf() -> object:
     try:
         import pymupdf as fitz  # type: ignore[import-not-found]
     except ModuleNotFoundError:
@@ -526,10 +527,7 @@ def ensure_snippet_assets(
         return assets
 
     runtime = _resolve_runtime()
-    if source_path is not None:
-        host_path = Path(source_path)
-    else:
-        host_path = destination / "snippet.md"
+    host_path = Path(source_path) if source_path is not None else destination / "snippet.md"
     host_dir = host_path.parent
     host_name = host_path.stem or "snippet"
 
@@ -581,7 +579,9 @@ def _render_snippet_assets(block: SnippetBlock, context: RenderContext) -> _Snip
     )
 
 
-def _render_figure(context: RenderContext, assets: _SnippetAssets, block: SnippetBlock) -> NavigableString:
+def _render_figure(
+    context: RenderContext, assets: _SnippetAssets, block: SnippetBlock
+) -> NavigableString:
     template_name = context.runtime.get("figure_template", "figure")
     formatter = getattr(context.formatter, template_name)
     latex_path = context.assets.latex_path(assets.pdf)
@@ -648,9 +648,9 @@ def register(renderer: Any) -> None:
 
 __all__ = [
     "SNIPPET_DIR",
-    "ensure_snippet_assets",
     "SnippetBlock",
     "asset_filename",
+    "ensure_snippet_assets",
     "register",
     "render_snippet_block",
     "rewrite_html_snippets",

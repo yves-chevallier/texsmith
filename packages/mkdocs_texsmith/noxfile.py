@@ -4,6 +4,7 @@ from pathlib import Path
 
 import nox
 
+
 ROOT = Path(__file__).resolve().parent
 REPO_ROOT = ROOT.parent.parent  # texsmith repo root
 PYPROJECT = nox.project.load_toml("pyproject.toml")

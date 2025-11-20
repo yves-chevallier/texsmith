@@ -1,6 +1,6 @@
 \documentclass[9pt,twoside]{memoir}
 
-\usepackage{fontspec}
+\usepackage{ts-fonts}
 \usepackage[svgnames,dvipsnames,x11names]{xcolor}
 \usepackage{tikz}
 \usepackage{textcomp} % For ©, ™
@@ -33,7 +33,6 @@
 \usepackage{tocloft}
 \usepackage{adjustbox}
 \usepackage{caption}
-\usepackage{microtype}
 \usepackage[\VAR{language|default('english')}]{babel}
 \usepackage{emptypage}
 
@@ -64,46 +63,6 @@
 \usetikzlibrary{shapes.geometric}
 \usetikzlibrary{calc}
 \usetikzlibrary{shadows}
-
-%
-% Fonts
-%
-
-% Set fallback fonts
-\directlua{luaotfload.add_fallback
-  ("fontfallback",
-  {
-      "NotoColorEmoji:mode=harf;",
-      "NotoNaskhArabic:mode=harf;",
-      "NotoSerifHebrew:mode=harf;",
-      "NotoSerifDevanagari:mode=harf;",
-      "NotoSerifTamil:mode=harf;",
-      "NotoSerifTibetan:mode=harf;",
-      "NotoSerifCJKkr:mode=harf;",
-      "NotoSans:mode=harf;",
-      "NotoSansSymbols2-Regular:mode=harf;",
-      "NotoSansMath-Regular:mode=harf;",
-      "NotoMusic-Regular:mode=harf;",
-      "NotoSansSyriac:mode=harf;",
-      "NotoSansSyriacWestern:mode=harf;"
-    }
-  )}
-
-\setmainfont{Latin Modern Roman}[
-  RawFeature={fallback=fontfallback}
-]
-
-\setsansfont{Latin Modern Sans}[
-  RawFeature={fallback=fontfallback}
-]
-
-\setmonofont{FreeMono}[
-  Scale=0.9,
-  ItalicFont={* Oblique},
-  BoldFont={* Bold},
-  BoldItalicFont={* Bold Oblique},
-  RawFeature={fallback=fontfallback}
-]
 
 \graphicspath{{assets/}}
 

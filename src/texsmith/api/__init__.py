@@ -39,6 +39,7 @@ from .document import (
     TitleStrategy,
     resolve_heading_level,
 )
+from .fonts import FontMatchResult, match_fonts
 from .pipeline import ConversionBundle, LaTeXFragment, RenderSettings, convert_documents
 from .service import (
     ConversionRequest,
@@ -62,6 +63,7 @@ __all__ = [
     "ConversionService",
     "Document",
     "DocumentRenderOptions",
+    "FontMatchResult",
     "HeadingLevel",
     "LaTeXFragment",
     "RenderSettings",
@@ -73,5 +75,6 @@ __all__ = [
     "classify_input_source",
     "convert_documents",
     "get_template",
+    "match_fonts",
     "resolve_heading_level",
 ]

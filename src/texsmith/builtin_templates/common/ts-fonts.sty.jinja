@@ -1,0 +1,82 @@
+\BLOCK{ set fallback_fonts = fallback_fonts | default(
+  ["NotoSans", "NotoSansSymbols2-Regular", "NotoSansMath-Regular", "NotoColorEmoji"],
+  true) }
+\ProvidesPackage{ts-fonts}[2025/11/21 TeXSmith Unified font setup (generated)]
+
+% This file is a Jinja2 template. Render it to a .sty before use.
+% Context expected:
+%   - fallback_fonts: list of font family names (LuaLaTeX fallbacks)
+%   - present_fonts: list (optional, informational)
+%   - missing_fonts: list (optional, informational)
+
+\RequirePackage{iftex}
+\RequirePackage{microtype}
+\RequirePackage{fontspec}
+\defaultfontfeatures{
+  Ligatures = TeX,
+  Scale = MatchLowercase,
+}
+
+\ifPDFTeX
+  \RequirePackage[T1]{fontenc}
+  \RequirePackage[utf8]{inputenc}
+  \RequirePackage{lmodern}
+  \microtypesetup{expansion=true,protrusion=true}
+\else
+  \ifLuaTeX
+    \UseMicrotypeSet[protrusion]{basicmath}
+    \directlua{
+      luaotfload.add_fallback("mainfb-reg", {
+\BLOCK{ for font in fallback_fonts }
+        "\VAR{font}:mode=harf;",
+\BLOCK{ endfor }
+      })
+      luaotfload.add_fallback("mainfb-bold", {
+\BLOCK{ for font in fallback_fonts }
+        "\VAR{font}/B:mode=harf;",
+\BLOCK{ endfor }
+      })
+      luaotfload.add_fallback("mainfb-it", {
+\BLOCK{ for font in fallback_fonts }
+        "\VAR{font}/I:mode=harf;",
+\BLOCK{ endfor }
+      })
+      luaotfload.add_fallback("mainfb-bi", {
+\BLOCK{ for font in fallback_fonts }
+        "\VAR{font}/BI:mode=harf;",
+\BLOCK{ endfor }
+      })
+    }
+    \setmainfont{Latin Modern Roman}[
+      Ligatures=TeX,
+      SmallCapsFont = Latin Modern Roman Caps,
+      RawFeature = {fallback=mainfb-reg},
+      BoldFeatures = {RawFeature={fallback=mainfb-bold}},
+      ItalicFeatures = {RawFeature={fallback=mainfb-it}},
+      BoldItalicFeatures = {RawFeature={fallback=mainfb-bi}},
+    ]
+    \setsansfont{Latin Modern Sans}[
+      Ligatures=TeX,
+      RawFeature = {fallback=mainfb-reg},
+      BoldFeatures  = {RawFeature={fallback=mainfb-bold}},
+      ItalicFeatures = {RawFeature={fallback=mainfb-it}},
+      BoldItalicFeatures = {RawFeature={fallback=mainfb-bi}},
+    ]
+    \setmonofont{FreeMono}[
+      Scale=0.9,
+      Ligatures=TeX,
+      ItalicFont={* Oblique},
+      BoldFont={* Bold},
+      BoldItalicFont={* Bold Oblique},
+      RawFeature = {fallback=mainfb-reg},
+      BoldFeatures = {RawFeature={fallback=mainfb-bold}},
+      ItalicFeatures = {RawFeature={fallback=mainfb-it}},
+      BoldItalicFeatures = {RawFeature={fallback=mainfb-bi}},
+    ]
+  \else
+    % XeLaTeX path: no lua fallbacks; rely on ucharclasses for CJK/emoji if desired.
+    \setmainfont{Latin Modern Roman}
+    \setsansfont{Latin Modern Sans}
+    \setmonofont{FreeMono}[Scale=0.9]
+  \fi
+\fi

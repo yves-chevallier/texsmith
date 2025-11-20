@@ -1,47 +1,8 @@
 \documentclass[border=0pt]{standalone}
 
-\BLOCK{ if latex_engine == "lualatex" }
-\usepackage{fontspec}
-\BLOCK{ set base_font_fallbacks = [
-    "NotoColorEmoji:mode=harf;",
-    "NotoNaskhArabic:mode=harf;",
-    "NotoSerifHebrew:mode=harf;",
-    "NotoSerifDevanagari:mode=harf;",
-    "NotoSerifTamil:mode=harf;",
-    "NotoSerifTibetan:mode=harf;",
-    "NotoSerifCJKkr:mode=harf;",
-    "NotoSans:mode=harf;",
-    "NotoSansSymbols2-Regular:mode=harf;",
-    "NotoSansMath-Regular:mode=harf;",
-    "NotoMusic-Regular:mode=harf;"
-] }
-\directlua{luaotfload.add_fallback
-  ("snippetfallback",
-  {
-      \BLOCK{ for font in base_font_fallbacks }
-      "\VAR{font}"\BLOCK{ if not loop.last },\BLOCK{ endif }
-      \BLOCK{ endfor }
-  }
-  )}
-
-\setmainfont{Latin Modern Roman}[
-  Ligatures=TeX,
-  SmallCapsFont = Latin Modern Roman Caps,
-  RawFeature = {fallback=snippetfallback},
-]
-
-\setsansfont{Latin Modern Sans}[
-  RawFeature={fallback=snippetfallback}
-]
-
-\setmonofont{FreeMono}[
-  Scale=0.9,
-  ItalicFont={* Oblique},
-  BoldFont={* Bold},
-  BoldItalicFont={* Bold Oblique},
-  RawFeature={fallback=snippetfallback}
-]
+\usepackage{ts-fonts}
 \BLOCK{ set emoji_mode = (emoji | default('artifact') | lower) }
+\BLOCK{ if latex_engine == "lualatex" }
 \BLOCK{ if emoji_mode == "symbola" }
 \IfFontExistsTF{Symbola}{
   \newfontfamily\texsmithEmojiFont{Symbola}[Scale=1.0]
@@ -56,17 +17,11 @@
 }{
   \renewcommand{\texsmithEmoji}[1]{#1}
 }
-\BLOCK{ else }
-\providecommand{\texsmithEmoji}[1]{#1}
 \BLOCK{ endif }
 \BLOCK{ else }
-\usepackage[T1]{fontenc}
-\usepackage[utf8]{inputenc}
-\usepackage{lmodern}
 \providecommand{\texsmithEmoji}[1]{#1}
 \BLOCK{ endif }
 
-\usepackage{microtype}
 \usepackage{hyphenat}
 \usepackage[\VAR{language|default('english')}]{babel}
 \usepackage{booktabs}

@@ -1,0 +1,44 @@
+from pathlib import Path
+
+from texsmith.api import match_fonts
+from texsmith.fonts.analyzer import analyse_font_requirements
+
+
+def _write_demo_fonts_yaml(tmp_path: Path) -> Path:
+    payload = """\
+- family: DemoSans
+  unicode_ranges:
+    - [0x0041, 0x005A]
+    - [0x0061, 0x007A]
+- family: DemoEmoji
+  unicode_ranges:
+    - [0x1F600, 0x1F601]
+"""
+    path = tmp_path / "fonts.yaml"
+    path.write_text(payload, encoding="utf-8")
+    return path
+
+
+def test_match_fonts_with_custom_index(tmp_path: Path) -> None:
+    fonts_yaml = _write_demo_fonts_yaml(tmp_path)
+    result = match_fonts("Ab😀", fonts_yaml=fonts_yaml, check_system=False)
+
+    assert set(result.fallback_fonts) == {"DemoSans", "DemoEmoji"}
+    assert not result.missing_fonts
+    assert not result.missing_codepoints
+
+
+def test_font_analysis_collects_nested_characters(tmp_path: Path) -> None:
+    fonts_yaml = _write_demo_fonts_yaml(tmp_path)
+    slot_outputs = {"mainmatter": "A"}
+    context = {"title": "😀", "nested": {"note": ["b"]}}
+
+    result = analyse_font_requirements(
+        slot_outputs=slot_outputs,
+        context=context,
+        fonts_yaml=fonts_yaml,
+        check_system=False,
+    )
+
+    assert result is not None
+    assert set(result.fallback_fonts) == {"DemoSans", "DemoEmoji"}

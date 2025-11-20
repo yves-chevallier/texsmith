@@ -52,19 +52,6 @@ class Template(WrappableTemplate):
         "\N{EM DASH}",
         "\N{HORIZONTAL ELLIPSIS}",
     }
-    _SCRIPT_FONT_RANGES: ClassVar[tuple[tuple[int, int, str], ...]] = (
-        (0x3040, 0x30FF, "NotoSerifCJKjp:mode=harf;"),  # Hiragana/Katakana
-        (0x31F0, 0x31FF, "NotoSerifCJKjp:mode=harf;"),  # Katakana Phonetic Extensions
-        (0x3400, 0x4DBF, "NotoSerifCJKjp:mode=harf;"),  # CJK Extension A
-        (0x4E00, 0x9FFF, "NotoSerifCJKjp:mode=harf;"),  # CJK Unified
-        (0xF900, 0xFAFF, "NotoSerifCJKjp:mode=harf;"),  # CJK Compatibility Ideographs
-        (0x20000, 0x2FA1F, "NotoSerifCJKjp:mode=harf;"),  # CJK extensions B-F
-        (0x0700, 0x074F, "NotoSansSyriac:mode=harf;"),
-        (0x0980, 0x09FF, "NotoSerifBengali:mode=harf;"),
-        (0x1780, 0x17FF, "NotoSerifKhmer:mode=harf;"),
-        (0x0D80, 0x0DFF, "NotoSerifSinhala:mode=harf;"),
-        (0x0C00, 0x0C7F, "NotoSerifTelugu:mode=harf;"),
-    )
 
     def __init__(self) -> None:
         try:
@@ -232,13 +219,6 @@ class Template(WrappableTemplate):
             formatted.append(f"{option}={string_value}")
         return formatted
 
-    def _detect_script_font(self, char: str) -> str | None:
-        codepoint = ord(char)
-        for start, end, font in self._SCRIPT_FONT_RANGES:
-            if start <= codepoint <= end:
-                return font
-        return None
-
     def _resolve_attribute(self, context: Mapping[str, Any], name: str) -> str | None:
         value = self._coerce_string(context.get(name))
         if value:
@@ -272,7 +252,6 @@ class Template(WrappableTemplate):
         unicode_chars = self._collect_unicode_characters(context)
         problematic = []
         extra_packages: set[str] = set()
-        extra_fonts: set[str] = set()
 
         base_engine = context.get("latex_engine") or "pdflatex"
 
@@ -282,14 +261,10 @@ class Template(WrappableTemplate):
                 extra_packages.add("textcomp")
             elif classification == "unsupported":
                 problematic.append(char)
-            font = self._detect_script_font(char)
-            if font:
-                extra_fonts.add(font)
 
         context["unicode_chars"] = "".join(sorted(unicode_chars, key=ord))
         context["unicode_problematic_chars"] = "".join(sorted(problematic, key=ord))
         context["pdflatex_extra_packages"] = sorted(extra_packages)
-        context["extra_font_fallbacks"] = sorted(extra_fonts)
 
         requires_unicode_engine = bool(problematic)
         context["requires_unicode_engine"] = requires_unicode_engine

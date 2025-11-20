@@ -20,8 +20,14 @@ def test_build_latex_config_defaults(tmp_path: Path) -> None:
 def test_inline_bibliography_source_path_slugifies() -> None:
     plugin = LatexPlugin()
 
-    assert plugin._inline_bibliography_source_path("My Label").name == "frontmatter-my-label.bib"
-    assert plugin._inline_bibliography_source_path("  ").name == "frontmatter-frontmatter.bib"
+    assert (
+        plugin._inline_bibliography_source_path("My Label").name
+        == "frontmatter-my-label.bib"
+    )
+    assert (
+        plugin._inline_bibliography_source_path("  ").name
+        == "frontmatter-frontmatter.bib"
+    )
 
 
 def test_coerce_paths_relative_to_project(tmp_path: Path) -> None:

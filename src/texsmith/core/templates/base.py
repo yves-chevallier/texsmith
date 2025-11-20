@@ -34,7 +34,11 @@ def _resolve_manifest_path(root: Path) -> Path:
 
 
 def _build_environment(template_root: Path) -> Environment:
-    loader = FileSystemLoader(str(template_root))
+    search_paths = [str(template_root)]
+    common_dir = template_root.parent / "common"
+    if common_dir.exists():
+        search_paths.append(str(common_dir))
+    loader = FileSystemLoader(search_paths)
     environment = Environment(
         loader=loader,
         autoescape=False,
@@ -180,9 +184,14 @@ class WrappableTemplate(BaseTemplate):
                 try:
                     relative = source_path.relative_to(self.root)
                 except ValueError as exc:  # pragma: no cover - defensive
-                    raise TemplateError(
-                        f"Templated asset '{asset.source}' must live inside the template root."
-                    ) from exc
+                    common_dir = self.root.parent / "common"
+                    try:
+                        relative = source_path.relative_to(common_dir)
+                    except ValueError as nested_exc:
+                        raise TemplateError(
+                            f"Templated asset '{asset.source}' must live inside the template root "
+                            "or the shared 'common' directory."
+                        ) from nested_exc
                 template_name = relative.as_posix()
 
             yield ResolvedAsset(

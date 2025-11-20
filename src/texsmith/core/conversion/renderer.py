@@ -269,6 +269,7 @@ class TemplateRenderer:
                 copy_assets=copy_assets,
                 output_name=main_name,
                 bibliography_path=bibliography_path,
+                emitter=self.emitter,
             )
         except TemplateError as exc:
             if debug_enabled(self.emitter):
