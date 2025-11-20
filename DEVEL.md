@@ -56,7 +56,7 @@ Roadmap and development notes for TeXSmith. I keep this file as a running checkl
 - [x] Integrate coverage reporting
 - [x] Snippet Template
 - [x] Snippet plugin
-- [ ] Snippet plugin, avoid rebuilding unchanged snippets
+- [x] Snippet plugin, avoid rebuilding unchanged snippets
 - [ ] Epigraph Plugin
 - [ ] Consolidate Book template
 - [ ] Put fonts and code into separate sty merged during build
