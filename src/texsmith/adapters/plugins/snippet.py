@@ -5,6 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 import hashlib
 import json
+import os
 from pathlib import Path
 import shutil
 import subprocess
@@ -35,6 +36,9 @@ SNIPPET_DIR = "snippets"
 _SNIPPET_PREFIX = "snippet-"
 _TRUE_VALUES = {"1", "true", "on", "yes"}
 _FALSE_VALUES = {"0", "false", "off", "no"}
+_SNIPPET_CACHE_NAMESPACE = "snippets"
+_SNIPPET_CACHE_FILENAME = "metadata.json"
+_SNIPPET_CACHE_VERSION = 1
 
 
 @dataclass(slots=True)
@@ -63,6 +67,108 @@ class _SnippetAssets:
 
 
 _SNIPPET_RUNTIME: TemplateRuntime | None = None
+_SNIPPET_CACHE: "_SnippetCache | None" = None
+
+
+@dataclass(slots=True)
+class _SnippetCache:
+    """Disk-backed cache storing rendered snippet artefacts."""
+
+    root: Path
+    metadata_path: Path
+    metadata: dict[str, Any]
+    dirty: bool = False
+
+    def lookup(self, digest: str, template_version: str | None) -> _SnippetAssets | None:
+        """Return cached assets when they exist and match the signature."""
+        entries = self._entries()
+        payload = entries.get(digest)
+        if not isinstance(payload, dict):
+            self.discard(digest)
+            return None
+
+        signature = payload.get("signature")
+        if signature and signature != digest:
+            self.discard(digest)
+            return None
+
+        recorded_version = payload.get("template_version")
+        if template_version and recorded_version and recorded_version != template_version:
+            self.discard(digest)
+            return None
+
+        pdf_name = payload.get("pdf") or asset_filename(digest, ".pdf")
+        png_name = payload.get("png") or asset_filename(digest, ".png")
+        pdf_path = (self.root / pdf_name).resolve()
+        png_path = (self.root / png_name).resolve()
+        if not pdf_path.exists() or not png_path.exists():
+            self.discard(digest)
+            return None
+
+        return _SnippetAssets(pdf=pdf_path, png=png_path)
+
+    def store(
+        self,
+        digest: str,
+        pdf_path: Path,
+        png_path: Path,
+        *,
+        template_version: str | None,
+    ) -> None:
+        """Persist compiled assets in the cache directory."""
+        entries = self._entries()
+        cached_pdf = (self.root / asset_filename(digest, ".pdf")).resolve()
+        cached_png = (self.root / asset_filename(digest, ".png")).resolve()
+        cached_pdf.parent.mkdir(parents=True, exist_ok=True)
+
+        try:
+            source_pdf = Path(pdf_path).resolve()
+            source_png = Path(png_path).resolve()
+            if source_pdf != cached_pdf:
+                shutil.copy2(source_pdf, cached_pdf)
+            if source_png != cached_png:
+                shutil.copy2(source_png, cached_png)
+        except OSError:
+            return
+
+        entries[digest] = {
+            "signature": digest,
+            "pdf": cached_pdf.name,
+            "png": cached_png.name,
+            "template_version": template_version,
+        }
+        self.dirty = True
+
+    def discard(self, digest: str) -> None:
+        """Remove a cache entry when it becomes invalid."""
+        entries = self._entries()
+        if digest in entries:
+            entries.pop(digest, None)
+            self.dirty = True
+
+    def flush(self) -> None:
+        """Persist metadata to disk when modified."""
+        if not self.dirty:
+            return
+
+        payload = {
+            "version": _SNIPPET_CACHE_VERSION,
+            "entries": self._entries(),
+        }
+        tmp_path = self.metadata_path.with_suffix(".tmp")
+        try:
+            tmp_path.write_text(json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8")
+            tmp_path.replace(self.metadata_path)
+            self.dirty = False
+        except OSError:
+            return
+
+    def _entries(self) -> dict[str, Any]:
+        entries = self.metadata.setdefault("entries", {})
+        if not isinstance(entries, dict):
+            entries = {}
+            self.metadata["entries"] = entries
+        return entries
 
 
 def _resolve_runtime() -> TemplateRuntime:
@@ -70,6 +176,74 @@ def _resolve_runtime() -> TemplateRuntime:
     if _SNIPPET_RUNTIME is None:
         _SNIPPET_RUNTIME = load_template_runtime("snippet")
     return _SNIPPET_RUNTIME
+
+
+def _resolve_cache_root() -> Path | None:
+    base = os.environ.get("TEXSMITH_CACHE_DIR")
+    if base:
+        candidate = Path(base).expanduser() / _SNIPPET_CACHE_NAMESPACE
+    else:
+        xdg_cache = os.environ.get("XDG_CACHE_HOME")
+        if xdg_cache:
+            candidate = Path(xdg_cache).expanduser() / "texsmith" / _SNIPPET_CACHE_NAMESPACE
+        else:
+            try:
+                candidate = Path.home() / ".cache" / "texsmith" / _SNIPPET_CACHE_NAMESPACE
+            except RuntimeError:
+                return None
+
+    try:
+        candidate.mkdir(parents=True, exist_ok=True)
+    except OSError:
+        return None
+    return candidate
+
+
+def _load_cache_metadata(path: Path) -> dict[str, Any]:
+    default = {"version": _SNIPPET_CACHE_VERSION, "entries": {}}
+    try:
+        raw = path.read_text(encoding="utf-8")
+    except FileNotFoundError:
+        return default
+    except OSError:
+        return default
+
+    try:
+        payload = json.loads(raw)
+    except json.JSONDecodeError:
+        return default
+
+    if payload.get("version") != _SNIPPET_CACHE_VERSION:
+        return default
+
+    entries = payload.get("entries")
+    if not isinstance(entries, dict):
+        payload["entries"] = {}
+    return payload
+
+
+def _resolve_cache() -> _SnippetCache | None:
+    global _SNIPPET_CACHE
+    if _SNIPPET_CACHE is not None:
+        return _SNIPPET_CACHE
+
+    root = _resolve_cache_root()
+    if root is None:
+        return None
+
+    metadata_path = root / _SNIPPET_CACHE_FILENAME
+    metadata = _load_cache_metadata(metadata_path)
+    _SNIPPET_CACHE = _SnippetCache(root=root, metadata_path=metadata_path, metadata=metadata)
+    return _SNIPPET_CACHE
+
+
+def _snippet_template_version() -> str | None:
+    runtime = _resolve_runtime()
+    info = getattr(runtime.instance, "info", None)
+    if info is None:
+        return None
+    version = getattr(info, "version", None)
+    return str(version) if version is not None else None
 
 
 def _resolve_emitter(context: RenderContext) -> DiagnosticEmitter | None:
@@ -303,12 +477,53 @@ def ensure_snippet_assets(
     pdf_missing = not pdf_path.exists()
     png_missing = not png_path.exists()
     apply_corner = block.transparent_corner if transparent_corner is None else transparent_corner
+    assets = _SnippetAssets(pdf=pdf_path, png=png_path)
+    cache = _resolve_cache()
+    template_version = _snippet_template_version() if cache is not None else None
 
     if not pdf_missing and not png_missing:
-        return _SnippetAssets(pdf=pdf_path, png=png_path)
+        if cache is not None:
+            cached = cache.lookup(block.digest, template_version=template_version)
+            if cached is None:
+                cache.store(
+                    block.digest,
+                    pdf_path,
+                    png_path,
+                    template_version=template_version,
+                )
+            cache.flush()
+        return assets
+
+    if cache is not None and (pdf_missing or png_missing):
+        cached_assets = cache.lookup(block.digest, template_version=template_version)
+        if cached_assets is not None:
+            try:
+                if pdf_missing:
+                    shutil.copy2(cached_assets.pdf, pdf_path)
+                    pdf_missing = False
+                if png_missing:
+                    shutil.copy2(cached_assets.png, png_path)
+                    png_missing = False
+            except OSError:
+                cache.discard(block.digest)
+                cache.flush()
+            else:
+                if not pdf_missing and not png_missing:
+                    cache.flush()
+                    return assets
+
     if not pdf_missing and png_missing:
         _pdf_to_png(pdf_path, png_path, transparent_corner=apply_corner)
-        return _SnippetAssets(pdf=pdf_path, png=png_path)
+        png_missing = False
+        if cache is not None:
+            cache.store(
+                block.digest,
+                pdf_path,
+                png_path,
+                template_version=template_version,
+            )
+            cache.flush()
+        return assets
 
     runtime = _resolve_runtime()
     if source_path is not None:
@@ -342,7 +557,15 @@ def ensure_snippet_assets(
         shutil.rmtree(work_dir, ignore_errors=True)
 
     _pdf_to_png(pdf_path, png_path, transparent_corner=apply_corner)
-    return _SnippetAssets(pdf=pdf_path, png=png_path)
+    if cache is not None:
+        cache.store(
+            block.digest,
+            pdf_path,
+            png_path,
+            template_version=template_version,
+        )
+        cache.flush()
+    return assets
 
 
 def _render_snippet_assets(block: SnippetBlock, context: RenderContext) -> _SnippetAssets:
