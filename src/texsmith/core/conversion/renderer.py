@@ -8,6 +8,8 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
+from texsmith.adapters.latex.latexmk import build_latexmkrc_content
+
 from ..context import DocumentState
 from ..diagnostics import DiagnosticEmitter
 from ..templates import TemplateError, TemplateRuntime, wrap_template_document
@@ -97,6 +99,53 @@ class TemplateRenderer:
     ) -> None:
         self.runtime = runtime
         self.emitter = ensure_emitter(emitter)
+
+    def _write_latexmkrc(
+        self,
+        *,
+        output_dir: Path,
+        main_tex_path: Path,
+        template_engine: str | None,
+        requires_shell_escape: bool,
+        document_state: DocumentState,
+        template_context: Mapping[str, Any] | None,
+        bibliography_present: bool,
+    ) -> Path | None:
+        latexmkrc_path = output_dir / ".latexmkrc"
+        if latexmkrc_path.exists():
+            return latexmkrc_path
+
+        index_engine: str | None = None
+        if template_context:
+            raw_engine = template_context.get("index_engine")
+            if isinstance(raw_engine, str):
+                candidate = raw_engine.strip()
+                if candidate:
+                    index_engine = candidate
+
+        has_index = bool(
+            getattr(document_state, "has_index_entries", False)
+            or getattr(document_state, "index_entries", [])
+        )
+        has_glossary = bool(
+            getattr(document_state, "acronyms", {}) or getattr(document_state, "glossary", {})
+        )
+
+        content = build_latexmkrc_content(
+            root_filename=main_tex_path.stem,
+            engine=template_engine,
+            requires_shell_escape=requires_shell_escape,
+            bibliography=bibliography_present,
+            index_engine=index_engine,
+            has_index=has_index,
+            has_glossary=has_glossary,
+        )
+        try:
+            latexmkrc_path.write_text(content, encoding="utf-8")
+        except OSError as exc:
+            self.emitter.warning(f"Failed to write latexmkrc: {exc}")
+            return None
+        return latexmkrc_path
 
     def render(
         self,
@@ -247,6 +296,16 @@ class TemplateRenderer:
             template_engine = context_engine
         if template_engine is None:
             template_engine = context_engine or "pdflatex"
+
+        self._write_latexmkrc(
+            output_dir=output_dir,
+            main_tex_path=main_tex_path,
+            template_engine=template_engine,
+            requires_shell_escape=requires_shell_escape,
+            document_state=shared_state,
+            template_context=template_context,
+            bibliography_present=bool(bibliography_path),
+        )
 
         return TemplateRendererResult(
             main_tex_path=main_tex_path,

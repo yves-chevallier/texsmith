@@ -449,6 +449,7 @@ def render_inline_code(element: Tag, context: RenderContext) -> None:
         )
         delimiter = _pick_mintinline_delimiter(code)
         if delimiter:
+            context.state.requires_shell_escape = True
             latex = context.formatter.codeinline(
                 language=language or "text",
                 text=code,

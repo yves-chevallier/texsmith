@@ -1,12 +1,18 @@
 $bibtex_use = 2;
+$biber = 'biber %O %B';
+$root_filename = '\VAR{root_filename|default("texsmith-output")}';
 
-\BLOCK{ if latex_engine == "lualatex" }
-$pdflatex = 'lualatex --shell-escape %O %S';
+\BLOCK{ if latex_engine == "xelatex" }
+$pdf_mode = 5;
+$xelatex = 'xelatex\BLOCK{ if requires_shell_escape|default(false) } --shell-escape\BLOCK{ endif } %O %S';
+\BLOCK{ elif latex_engine == "lualatex" }
+$pdf_mode = 4;
+$lualatex = 'lualatex\BLOCK{ if requires_shell_escape|default(false) } --shell-escape\BLOCK{ endif } %O %S';
 \BLOCK{ else }
-$pdflatex = 'pdflatex --shell-escape %O %S';
+$pdf_mode = 1;
+$pdflatex = 'pdflatex\BLOCK{ if requires_shell_escape|default(false) } --shell-escape\BLOCK{ endif } %O %S';
 \BLOCK{ endif }
 
-$biber = 'biber %O %B';
 if (system("which texindy >/dev/null 2>&1") == 0) {
   $makeindex = 'texindy %O -o %D %S';
 } else {

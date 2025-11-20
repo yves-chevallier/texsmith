@@ -315,6 +315,10 @@ def _render_document(
             bibliography_output = None
 
     tex_path: Path | None = None
+    if document_state is not None:
+        document_state.requires_shell_escape = (
+            document_state.requires_shell_escape or binding.requires_shell_escape
+        )
     template_instance = binding.instance
     if template_instance is not None and wrap_document:
         try:
@@ -350,7 +354,9 @@ def _render_document(
         latex_output=latex_output,
         tex_path=tex_path,
         template_engine=binding.engine,
-        template_shell_escape=binding.requires_shell_escape,
+        template_shell_escape=bool(
+            binding.requires_shell_escape or (document_state and document_state.requires_shell_escape)
+        ),
         language=binder_context.language,
         has_bibliography=bool(citations),
         slot_outputs=dict(slot_outputs),

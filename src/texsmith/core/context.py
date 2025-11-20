@@ -35,6 +35,7 @@ class DocumentState:
     headings: list[dict[str, Any]] = field(default_factory=list)
     exercise_counter: int = 0
     has_index_entries: bool = False
+    requires_shell_escape: bool = False
     counters: dict[str, int] = field(default_factory=dict)
     bibliography: dict[str, dict[str, Any]] = field(default_factory=dict)
     citations: list[str] = field(default_factory=list)

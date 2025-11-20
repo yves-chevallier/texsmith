@@ -5,6 +5,7 @@ import textwrap
 
 import pytest
 
+from texsmith.adapters.latex.latexmk import build_latexmkrc_content
 from texsmith.api.document import Document
 from texsmith.api.pipeline import convert_documents, to_template_fragments
 from texsmith.api.templates import TemplateSession
@@ -19,6 +20,43 @@ def _write_markdown(tmp_path: Path, name: str, content: str) -> Path:
     path = tmp_path / name
     path.write_text(textwrap.dedent(content).strip() + "\n", encoding="utf-8")
     return path
+
+
+def _create_minimal_template(tmp_path: Path, *, engine: str, shell_escape: bool) -> Path:
+    template_dir = tmp_path / "template"
+    template_dir.mkdir()
+    (template_dir / "manifest.toml").write_text(
+        textwrap.dedent(
+            f"""
+            [compat]
+            texsmith = ">=0.1,<2.0"
+
+            [latex.template]
+            name = "demo"
+            version = "0.0.1"
+            entrypoint = "template.tex"
+            engine = "{engine}"
+            shell_escape = {str(bool(shell_escape)).lower()}
+
+            [latex.template.slots.mainmatter]
+            default = true
+            depth = "section"
+            """
+        ).strip(),
+        encoding="utf-8",
+    )
+    (template_dir / "template.tex").write_text(
+        textwrap.dedent(
+            r"""
+            \documentclass{article}
+            \begin{document}
+            \VAR{mainmatter}
+            \end{document}
+            """
+        ).strip(),
+        encoding="utf-8",
+    )
+    return template_dir
 
 
 def test_template_session_renders_bundle_via_renderer(tmp_path: Path) -> None:
@@ -148,3 +186,72 @@ def test_template_session_conflicting_overrides(tmp_path: Path) -> None:
     with pytest.raises(FragmentOverrideError) as excinfo:
         renderer.render(fragments, output_dir=build_dir)
     assert "press.title" in str(excinfo.value)
+
+
+def test_renderer_generates_latexmkrc_when_missing(tmp_path: Path) -> None:
+    template_dir = _create_minimal_template(tmp_path, engine="xelatex", shell_escape=True)
+    runtime = load_template_runtime(str(template_dir))
+    session = TemplateSession(runtime=runtime)
+
+    doc_path = _write_markdown(
+        tmp_path,
+        "paper.md",
+        """
+        # Title
+
+        Body text.
+        """,
+    )
+    session.add_document(Document.from_markdown(doc_path))
+
+    build_dir = tmp_path / "rc-build"
+    session.render(build_dir)
+
+    latexmkrc = build_dir / ".latexmkrc"
+    assert latexmkrc.exists()
+    content = latexmkrc.read_text(encoding="utf-8")
+    assert "$root_filename = 'paper';" in content
+    assert "$pdf_mode = 5;" in content
+    assert "$xelatex = 'xelatex --shell-escape %O %S';" in content
+    assert "$bibtex_use" not in content
+
+
+def test_renderer_preserves_template_latexmkrc(tmp_path: Path) -> None:
+    runtime = load_template_runtime(str(Path("templates") / "nature"))
+    session = TemplateSession(runtime=runtime)
+
+    doc_path = _write_markdown(
+        tmp_path,
+        "article.md",
+        """
+        # Heading
+        """,
+    )
+    session.add_document(Document.from_markdown(doc_path))
+
+    build_dir = tmp_path / "nature-rc"
+    session.render(build_dir)
+
+    latexmkrc = build_dir / ".latexmkrc"
+    assert latexmkrc.exists()
+    content = latexmkrc.read_text(encoding="utf-8").strip()
+    assert content == "$ENV{'TEXMFCACHE'} = 'texmf-cache';"
+
+
+def test_latexmkrc_content_optional_sections() -> None:
+    content = build_latexmkrc_content(
+        root_filename="demo",
+        engine="lualatex",
+        requires_shell_escape=False,
+        bibliography=True,
+        index_engine="texindy",
+        has_index=True,
+        has_glossary=True,
+    )
+
+    assert "$pdf_mode = 4;" in content
+    assert "$lualatex = 'lualatex %O %S';" in content
+    assert "$bibtex_use = 2;" in content
+    assert "$makeindex = 'texindy %O -o %D %S';" in content
+    assert "makeglossaries" in content
+    assert "--shell-escape" not in content

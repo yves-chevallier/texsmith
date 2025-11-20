@@ -124,6 +124,7 @@ def render_preformatted_code(element: Tag, context: RenderContext) -> None:
     if not code_text.endswith("\n"):
         code_text += "\n"
 
+    context.state.requires_shell_escape = True
     latex = context.formatter.codeblock(
         code=code_text,
         language=language,
@@ -171,6 +172,7 @@ def render_code_blocks(element: Tag, context: RenderContext) -> None:
     if not code_text.endswith("\n"):
         code_text += "\n"
 
+    context.state.requires_shell_escape = True
     latex = context.formatter.codeblock(
         code=code_text,
         language=language,
@@ -222,6 +224,7 @@ def render_standalone_code_blocks(element: Tag, context: RenderContext) -> None:
 
     baselinestretch = 0.5 if _is_ascii_art(code_text) else None
 
+    context.state.requires_shell_escape = True
     latex = context.formatter.codeblock(
         code=code_text,
         language=language,
@@ -262,6 +265,7 @@ def render_pre_code_blocks(element: Tag, context: RenderContext) -> None:
     if not code_text.endswith("\n"):
         code_text += "\n"
 
+    context.state.requires_shell_escape = True
     latex = context.formatter.codeblock(
         code=code_text,
         language=language,
