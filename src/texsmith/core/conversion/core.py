@@ -197,8 +197,8 @@ def _render_document(
             template_callouts if isinstance(template_callouts, Mapping) else None,
         )
     )
-    if binder_context.bibliography_map:
-        runtime_common["bibliography"] = binder_context.bibliography_map
+    runtime_common["bibliography"] = binder_context.bibliography_map
+    runtime_common["bibliography_collection"] = binder_context.bibliography_collection
     if binding.name is not None:
         runtime_common["template"] = binding.name
     if strategy.persist_manifest:

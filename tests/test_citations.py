@@ -12,16 +12,33 @@ from texsmith.ui.cli import DEFAULT_MARKDOWN_EXTENSIONS
 
 
 FIXTURE_BIB = Path(__file__).resolve().parent / "fixtures" / "bib" / "b.bib"
+SAMPLE_DOI_BIB = "@article{10.1063/1.1897520,title={Example},author={Doe, Jane},year={2024}}\n"
+SAMPLE_DOI_BIB_TWO = "@article{10.1007/978-94-007-2582-9_14,title={Another},author={Roe, John}}\n"
+
+
+class _StaticFetcher:
+    def __init__(self, mapping: dict[str, str]) -> None:
+        self.mapping = mapping
+        self.requests: list[str] = []
+
+    def fetch(self, value: str) -> str:
+        self.requests.append(value)
+        return self.mapping[value]
 
 
 def _render_markdown(
-    source: str, bibliography: dict[str, dict[str, object]]
+    source: str,
+    bibliography: dict[str, dict[str, object]],
+    runtime: dict[str, object] | None = None,
 ) -> tuple[str, DocumentState]:
     md = markdown.Markdown(extensions=DEFAULT_MARKDOWN_EXTENSIONS)
     html = md.convert(source)
     renderer = LaTeXRenderer(parser="html.parser")
     state = DocumentState(bibliography=dict(bibliography))
-    latex = renderer.render(html, runtime={"bibliography": bibliography}, state=state)
+    runtime_payload: dict[str, object] = {"bibliography": bibliography}
+    if runtime:
+        runtime_payload.update(runtime)
+    latex = renderer.render(html, runtime=runtime_payload, state=state)
     return latex, state
 
 
@@ -79,3 +96,43 @@ def test_multiple_citations_are_combined() -> None:
 
     assert "\\cite{LAWRENCE19841632,BERESFORD2001259}" in latex
     assert state.citations == ["LAWRENCE19841632", "BERESFORD2001259"]
+
+
+def test_doi_citation_fetches_bibliography_entry() -> None:
+    fetcher = _StaticFetcher({"10.1063/1.1897520": SAMPLE_DOI_BIB})
+    latex, state = _render_markdown(
+        "Einstein^[10.1063/1.1897520]",
+        {},
+        runtime={"doi_fetcher": fetcher},
+    )
+
+    assert "\\cite{10.1063/1.1897520}" in latex
+    assert state.citations == ["10.1063/1.1897520"]
+    assert "10.1063/1.1897520" in state.bibliography
+    assert fetcher.requests == ["10.1063/1.1897520"]
+
+
+def test_multiple_doi_citations_are_combined() -> None:
+    fetcher = _StaticFetcher(
+        {
+            "10.1016/j.shpsb.2011.12.002": SAMPLE_DOI_BIB,
+            "10.1007/978-94-007-2582-9_14": SAMPLE_DOI_BIB_TWO,
+        }
+    )
+    latex, state = _render_markdown(
+        "Refs^[10.1016/j.shpsb.2011.12.002,10.1007/978-94-007-2582-9_14]",
+        {},
+        runtime={"doi_fetcher": fetcher},
+    )
+
+    assert (
+        "\\cite{10.1016/j.shpsb.2011.12.002,10.1007/978-94-007-2582-9_14}" in latex
+    )
+    assert state.citations == [
+        "10.1016/j.shpsb.2011.12.002",
+        "10.1007/978-94-007-2582-9_14",
+    ]
+    assert set(fetcher.requests) == {
+        "10.1016/j.shpsb.2011.12.002",
+        "10.1007/978-94-007-2582-9_14",
+    }

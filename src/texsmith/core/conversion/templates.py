@@ -106,12 +106,14 @@ def build_binder_context(
                 emitter=emitter,
             )
 
-    if bibliography_collection is not None:
-        bibliography_map = bibliography_collection.to_dict()
-        for issue in bibliography_collection.issues:
-            prefix = f"[{issue.key}] " if issue.key else ""
-            source_hint = f" ({issue.source})" if issue.source else ""
-            emitter.warning(f"{prefix}{issue.message}{source_hint}")
+    if bibliography_collection is None:
+        bibliography_collection = BibliographyCollection()
+
+    bibliography_map = bibliography_collection.to_dict()
+    for issue in bibliography_collection.issues:
+        prefix = f"[{issue.key}] " if issue.key else ""
+        source_hint = f" ({issue.source})" if issue.source else ""
+        emitter.warning(f"{prefix}{issue.message}{source_hint}")
 
     document_context.bibliography = bibliography_map
 
