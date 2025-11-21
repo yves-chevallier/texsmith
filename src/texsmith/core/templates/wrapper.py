@@ -142,7 +142,7 @@ def wrap_template_document(
         if template_runtime is not None:
             fragment_names = list(template_runtime.extras.get("fragments", []))
         else:
-            fragment_names = ["ts-fonts", "ts-callouts"]
+            fragment_names = ["ts-fonts", "ts-callouts", "ts-code"]
     callout_overrides = overrides_payload.get("callouts") if overrides_payload else None
     callouts_defs = normalise_callouts(
         merge_callouts(
