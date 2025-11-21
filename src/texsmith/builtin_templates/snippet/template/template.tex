@@ -1,6 +1,6 @@
 \documentclass[border=0pt]{standalone}
 
-\usepackage{ts-fonts}
+\VAR{extra_packages}
 \BLOCK{ set emoji_mode = (emoji | default('artifact') | lower) }
 \BLOCK{ if latex_engine == "lualatex" }
 \BLOCK{ if emoji_mode == "symbola" }
@@ -25,12 +25,8 @@
 \usepackage{hyphenat}
 \usepackage[\VAR{language|default('english')}]{babel}
 \usepackage{booktabs}
-\usepackage[many,minted]{tcolorbox}
 \usepackage{csquotes}
 \usepackage[normalem]{ulem}
-\providecommand{\texsmithCalloutStyle}{fancy}
-\renewcommand{\texsmithCalloutStyle}{\VAR{callout_style|default('fancy')}}
-\usepackage{callouts}
 \usepackage{soul}
 \usepackage{keystroke}
 \usepackage{todolist}

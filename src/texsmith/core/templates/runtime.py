@@ -112,9 +112,22 @@ def build_template_overrides(front_matter: Mapping[str, Any] | None) -> dict[str
 
     press_section = front_matter.get("press")
     if isinstance(press_section, Mapping):
-        return {"press": dict(press_section)}
+        overrides = {"press": dict(press_section)}
+    else:
+        overrides = {"press": dict(front_matter)}
 
-    return {"press": dict(front_matter)}
+    fragments = overrides["press"].get("fragments")
+    if isinstance(fragments, list):
+        overrides["fragments"] = list(fragments)
+
+    callouts_section = overrides["press"].get("callouts")
+    if isinstance(callouts_section, Mapping):
+        overrides["callouts"] = dict(callouts_section)
+
+    if "callouts_style" in overrides["press"]:
+        overrides["callout_style"] = overrides["press"].get("callouts_style")
+
+    return overrides
 
 
 def extract_language_from_front_matter(
@@ -196,6 +209,7 @@ def load_template_runtime(template: str) -> TemplateRuntime:
     formatter_overrides = dict(template_instance.iter_formatter_overrides())
     extras_payload = getattr(template_instance, "extras", {}) or {}
     extras = {key: value for key, value in extras_payload.items()}
+    extras.setdefault("fragments", ["ts-fonts", "ts-callouts"])
 
     return TemplateRuntime(
         instance=template_instance,

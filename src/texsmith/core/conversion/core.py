@@ -14,6 +14,7 @@ from texsmith.adapters.docker import is_docker_available
 from texsmith.adapters.latex.formatter import LaTeXFormatter
 from texsmith.adapters.latex.renderer import LaTeXRenderer
 from texsmith.adapters.transformers import has_converter, register_converter
+from texsmith.core.callouts import DEFAULT_CALLOUTS, merge_callouts, normalise_callouts
 from texsmith.core.context import DocumentState
 from texsmith.core.conversion_contexts import (
     BinderContext,
@@ -189,6 +190,13 @@ def _render_document(
         "language": binder_context.language,
         "emitter": emitter,
     }
+    template_callouts = binder_context.template_overrides.get("callouts")
+    runtime_common["callouts_definitions"] = normalise_callouts(
+        merge_callouts(
+            DEFAULT_CALLOUTS,
+            template_callouts if isinstance(template_callouts, Mapping) else None,
+        )
+    )
     if binder_context.bibliography_map:
         runtime_common["bibliography"] = binder_context.bibliography_map
     if binding.name is not None:
@@ -335,6 +343,12 @@ def _render_document(
                 output_name=f"{document_context.source_path.stem}.tex",
                 bibliography_path=bibliography_output,
                 emitter=emitter,
+                fragments=list(
+                    binder_context.template_overrides.get(
+                        "fragments", binding.runtime.extras.get("fragments", [])
+                    )
+                ),
+                template_runtime=binding.runtime,
             )
             latex_output = wrap_result.latex_output
             tex_path = wrap_result.output_path
