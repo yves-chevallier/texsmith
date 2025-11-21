@@ -330,6 +330,13 @@
 \raggedbottom
 
 \frontmatter
+\BLOCK{ if preface|trim }
+\cleardoublepage
+\thispagestyle{plain}
+\phantomsection
+\addcontentsline{toc}{chapter}{Preface}
+\VAR{preface}
+\BLOCK{ endif }
 
 \VAR{frontmatter}
 

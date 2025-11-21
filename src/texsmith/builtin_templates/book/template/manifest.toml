@@ -159,6 +159,9 @@ strip_heading = true
 default = true
 depth = "chapter"
 
+[latex.template.slots.preface]
+depth = "chapter"
+
 [latex.template.slots.backmatter]
 depth = "chapter"
 
