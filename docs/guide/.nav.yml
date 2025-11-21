@@ -5,8 +5,7 @@ nav:
   - headings.md
   - glossary.md
   - front-matter.md
-  - templates.md
+  - templates/
   - tags.md
-  - template-cookbook.md
   - extensions.md
   - troubleshooting.md
