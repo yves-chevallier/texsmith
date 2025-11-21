@@ -12,8 +12,8 @@ from texsmith.ui.cli import DEFAULT_MARKDOWN_EXTENSIONS
 
 
 FIXTURE_BIB = Path(__file__).resolve().parent / "fixtures" / "bib" / "b.bib"
-SAMPLE_DOI_BIB = "@article{10.1063/1.1897520,title={Example},author={Doe, Jane},year={2024}}\n"
-SAMPLE_DOI_BIB_TWO = "@article{10.1007/978-94-007-2582-9_14,title={Another},author={Roe, John}}\n"
+SAMPLE_DOI_BIB = "@article{KLEPPNER2005,title={Example},author={Doe, Jane},year={2024}}\n"
+SAMPLE_DOI_BIB_TWO = "@article{SHPSB201112002,title={Another},author={Roe, John}}\n"
 
 
 class _StaticFetcher:
@@ -106,9 +106,9 @@ def test_doi_citation_fetches_bibliography_entry() -> None:
         runtime={"doi_fetcher": fetcher},
     )
 
-    assert "\\cite{10.1063/1.1897520}" in latex
-    assert state.citations == ["10.1063/1.1897520"]
-    assert "10.1063/1.1897520" in state.bibliography
+    assert "\\cite{KLEPPNER2005}" in latex
+    assert state.citations == ["KLEPPNER2005"]
+    assert "KLEPPNER2005" in state.bibliography
     assert fetcher.requests == ["10.1063/1.1897520"]
 
 
@@ -125,12 +125,10 @@ def test_multiple_doi_citations_are_combined() -> None:
         runtime={"doi_fetcher": fetcher},
     )
 
-    assert (
-        "\\cite{10.1016/j.shpsb.2011.12.002,10.1007/978-94-007-2582-9_14}" in latex
-    )
+    assert "\\cite{KLEPPNER2005,SHPSB201112002}" in latex
     assert state.citations == [
-        "10.1016/j.shpsb.2011.12.002",
-        "10.1007/978-94-007-2582-9_14",
+        "KLEPPNER2005",
+        "SHPSB201112002",
     ]
     assert set(fetcher.requests) == {
         "10.1016/j.shpsb.2011.12.002",
