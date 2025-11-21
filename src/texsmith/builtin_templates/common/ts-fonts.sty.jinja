@@ -12,12 +12,9 @@
 \BLOCK{ set mono_font = "FreeMono" }
 \BLOCK{ set math_font = "Latin Modern Math" }
 \BLOCK{ set small_caps_font = "Latin Modern Roman Caps" }
-\BLOCK{ set mono_italic = "* Italic" }
-\BLOCK{ set mono_bold_italic = "* Bold Italic" }
-\BLOCK{ if mono_font == "FreeMono" }
-  \BLOCK{ set mono_italic = "* Oblique" }
-  \BLOCK{ set mono_bold_italic = "* Bold Oblique" }
-\BLOCK{ endif }
+\BLOCK{ set mono_italic = none }
+\BLOCK{ set mono_bold_italic = none }
+\BLOCK{ set mono_fake_slant = False }
 \BLOCK{ if font_profile == "sans" }
   \BLOCK{ set main_font = "Latin Modern Sans" }
   \BLOCK{ set sans_font = "Latin Modern Sans" }
@@ -40,10 +37,18 @@
   \BLOCK{ set mono_font = "Noto Sans Mono" }
   \BLOCK{ set math_font = "Noto Sans Math" }
   \BLOCK{ set small_caps_font = None }
+  \BLOCK{ set mono_italic = "*" }
+  \BLOCK{ set mono_bold_italic = "* Bold" }
+  \BLOCK{ set mono_fake_slant = True }
 \BLOCK{ endif }
-\BLOCK{ if mono_font != "FreeMono" }
-  \BLOCK{ set mono_italic = "* Italic" }
-  \BLOCK{ set mono_bold_italic = "* Bold Italic" }
+\BLOCK{ if mono_italic is none }
+  \BLOCK{ if mono_font == "FreeMono" }
+    \BLOCK{ set mono_italic = "* Oblique" }
+    \BLOCK{ set mono_bold_italic = "* Bold Oblique" }
+  \BLOCK{ else }
+    \BLOCK{ set mono_italic = "* Italic" }
+    \BLOCK{ set mono_bold_italic = "* Bold Italic" }
+  \BLOCK{ endif }
 \BLOCK{ endif }
 \BLOCK{ set fallback_fonts = fallback_fonts | default(
   ["NotoSans", "NotoSansSymbols2-Regular", "NotoSansMath-Regular", "NotoColorEmoji"],
@@ -146,8 +151,18 @@
         BoldItalicFont={\VAR{mono_bold_italic}},
         RawFeature = {fallback=mainfb-reg},
         BoldFeatures = {RawFeature={fallback=mainfb-bold}},
-        ItalicFeatures = {RawFeature={fallback=mainfb-it}},
-        BoldItalicFeatures = {RawFeature={fallback=mainfb-bi}},
+        ItalicFeatures = {
+          RawFeature={fallback=mainfb-it},
+\BLOCK{ if mono_fake_slant }
+          FakeSlant=0.2,
+\BLOCK{ endif }
+        },
+        BoldItalicFeatures = {
+          RawFeature={fallback=mainfb-bi},
+\BLOCK{ if mono_fake_slant }
+          FakeSlant=0.2,
+\BLOCK{ endif }
+        },
       ]
     }{
       \setmonofont{FreeMono}[
@@ -158,8 +173,18 @@
         BoldItalicFont={\VAR{mono_bold_italic}},
         RawFeature = {fallback=mainfb-reg},
         BoldFeatures = {RawFeature={fallback=mainfb-bold}},
-        ItalicFeatures = {RawFeature={fallback=mainfb-it}},
-        BoldItalicFeatures = {RawFeature={fallback=mainfb-bi}},
+        ItalicFeatures = {
+          RawFeature={fallback=mainfb-it},
+\BLOCK{ if mono_fake_slant }
+          FakeSlant=0.2,
+\BLOCK{ endif }
+        },
+        BoldItalicFeatures = {
+          RawFeature={fallback=mainfb-bi},
+\BLOCK{ if mono_fake_slant }
+          FakeSlant=0.2,
+\BLOCK{ endif }
+        },
       ]
     }
 \IfFontExistsTF{\VAR{math_font}}{
