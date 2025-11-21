@@ -74,16 +74,25 @@ def coerce_base_level(value: Any, *, allow_none: bool = True) -> int | None:
         return int(value)
 
     if isinstance(value, str):
-        candidate = value.strip()
+        candidate = value.strip().lower()
         if not candidate:
             if allow_none:
                 return None
             raise TemplateError("Base level value cannot be empty.")
+        alias_map = {
+            "part": -1,
+            "chapter": 0,
+            "section": 1,
+            "subsection": 2,
+        }
+        if candidate in alias_map:
+            return alias_map[candidate]
         try:
             return int(candidate)
         except ValueError as exc:  # pragma: no cover - defensive
             raise TemplateError(
-                f"Invalid base level '{value}'. Expected an integer value."
+                f"Invalid base level '{value}'. Expected an integer value or one of "
+                f"{', '.join(alias_map)}."
             ) from exc
 
     raise TemplateError(
@@ -113,6 +122,10 @@ def build_template_overrides(front_matter: Mapping[str, Any] | None) -> dict[str
     press_section = front_matter.get("press")
     if isinstance(press_section, Mapping):
         overrides = {"press": dict(press_section)}
+        for key, value in front_matter.items():
+            if key == "press":
+                continue
+            overrides["press"].setdefault(key, value)
     else:
         overrides = {"press": dict(front_matter)}
 
@@ -126,6 +139,13 @@ def build_template_overrides(front_matter: Mapping[str, Any] | None) -> dict[str
 
     if "callouts_style" in overrides["press"]:
         overrides["callout_style"] = overrides["press"].get("callouts_style")
+
+    base_override = overrides["press"].get("base_level")
+    if base_override is not None:
+        try:
+            overrides["press"]["base_level"] = coerce_base_level(base_override)
+        except TemplateError:
+            overrides["press"]["base_level"] = base_override
 
     return overrides
 

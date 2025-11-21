@@ -10,7 +10,7 @@ from texsmith.api.document import Document
 from texsmith.api.pipeline import convert_documents, to_template_fragments
 from texsmith.api.templates import TemplateSession
 from texsmith.core.conversion.renderer import FragmentOverrideError, TemplateRenderer
-from texsmith.core.templates import load_template_runtime
+from texsmith.core.templates import coerce_base_level, load_template_runtime
 
 
 FIXTURE_BIB = Path(__file__).resolve().parent / "fixtures" / "bib" / "b.bib"
@@ -236,6 +236,116 @@ def test_renderer_preserves_template_latexmkrc(tmp_path: Path) -> None:
     assert latexmkrc.exists()
     content = latexmkrc.read_text(encoding="utf-8").strip()
     assert content == "$ENV{'TEXMFCACHE'} = 'texmf-cache';"
+
+
+def test_requires_shell_escape_reaches_templated_assets(tmp_path: Path) -> None:
+    template_dir = tmp_path / "templated-rc"
+    template_dir.mkdir()
+    (template_dir / "manifest.toml").write_text(
+        textwrap.dedent(
+            """
+            [compat]
+            texsmith = ">=0.1,<2.0"
+
+            [latex.template]
+            name = "templated-rc"
+            version = "0.0.1"
+            entrypoint = "template.tex"
+            engine = "lualatex"
+            shell_escape = true
+
+            [latex.template.slots.mainmatter]
+            default = true
+            depth = "section"
+
+            [latex.template.assets]
+            ".latexmkrc" = { source = "latexmkrc.jinja", template = true }
+            """
+        ).strip(),
+        encoding="utf-8",
+    )
+    (template_dir / "template.tex").write_text(
+        textwrap.dedent(
+            r"""
+            \documentclass{article}
+            \begin{document}
+            \VAR{mainmatter}
+            \end{document}
+            """
+        ).strip(),
+        encoding="utf-8",
+    )
+    (template_dir / "latexmkrc.jinja").write_text(
+        textwrap.dedent(
+            r"""
+            \BLOCK{ if latex_engine == "lualatex" }
+            $lualatex = 'lualatex\BLOCK{ if requires_shell_escape } --shell-escape\BLOCK{ endif } %O %S';
+            \BLOCK{ else }
+            $pdflatex = 'pdflatex %O %S';
+            \BLOCK{ endif }
+            """
+        ).strip(),
+        encoding="utf-8",
+    )
+
+    runtime = load_template_runtime(str(template_dir))
+    session = TemplateSession(runtime=runtime)
+
+    doc_path = _write_markdown(
+        tmp_path,
+        "article.md",
+        """
+        # Heading
+        """,
+    )
+    session.add_document(Document.from_markdown(doc_path))
+
+    build_dir = tmp_path / "templated-rc-build"
+    session.render(build_dir)
+
+    latexmkrc = build_dir / ".latexmkrc"
+    assert latexmkrc.exists()
+    content = latexmkrc.read_text(encoding="utf-8")
+    assert "--shell-escape" in content
+    assert "$lualatex" in content
+
+
+def test_front_matter_merges_press_and_top_level_metadata(tmp_path: Path) -> None:
+    runtime = load_template_runtime("book")
+    session = TemplateSession(runtime=runtime)
+
+    doc_path = _write_markdown(
+        tmp_path,
+        "book.md",
+        """
+        ---
+        title: Custom Title
+        author: Jane Author
+        press:
+          template: book
+        ---
+
+        # Heading
+        """,
+    )
+    session.add_document(Document.from_markdown(doc_path))
+
+    build_dir = tmp_path / "book-metadata-build"
+    result = session.render(build_dir)
+
+    tex_payload = result.main_tex_path.read_text(encoding="utf-8")
+    assert "Custom Title" in tex_payload
+    assert "Jane Author" in tex_payload
+
+
+def test_book_template_exposes_dedication_and_colophon_slots() -> None:
+    runtime = load_template_runtime("book")
+    assert "dedication" in runtime.slots
+    assert "colophon" in runtime.slots
+
+
+def test_base_level_alias_part() -> None:
+    assert coerce_base_level("part") == -1
 
 
 def test_latexmkrc_content_optional_sections() -> None:

@@ -115,12 +115,12 @@ class TemplateSlot(BaseModel):
 
     def resolve_level(self, fallback: int) -> int:
         """Return the base level applied to rendered headings for this slot."""
-        level = fallback
+        base = fallback
         if self.base_level is not None:
-            level = self.base_level
+            base = fallback + self.base_level
         elif self.depth is not None:
-            level = LATEX_HEADING_LEVELS[self.depth]
-        return level + self.offset
+            base = fallback + LATEX_HEADING_LEVELS[self.depth]
+        return base + self.offset
 
 
 AttributePrimitiveType = Literal["any", "string", "integer", "float", "boolean", "list", "mapping"]

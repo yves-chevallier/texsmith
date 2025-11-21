@@ -4,9 +4,11 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 from io import BytesIO
+import os
 from pathlib import Path
 import shutil
 import subprocess
+from importlib import metadata as importlib_metadata
 from typing import Any, ClassVar
 from urllib.parse import urlparse
 import warnings
@@ -188,8 +190,23 @@ class FetchImageStrategy(CachedConversionStrategy):
             msg = "requests is required to fetch remote images."
             raise TransformerExecutionError(msg) from exc
 
+        user_agent = None
+        candidate = options.get("user_agent")
+        if isinstance(candidate, str) and candidate.strip():
+            user_agent = candidate.strip()
+        elif os.getenv("TEXSMITH_HTTP_USER_AGENT"):
+            user_agent = os.environ["TEXSMITH_HTTP_USER_AGENT"].strip()
+        else:
+            try:
+                version = importlib_metadata.version("texsmith")
+            except importlib_metadata.PackageNotFoundError:
+                version = "unknown"
+            user_agent = f"texsmith/{version}"
+
+        headers = {"User-Agent": user_agent}
+
         try:
-            response = requests.get(url, timeout=self.timeout)
+            response = requests.get(url, timeout=self.timeout, headers=headers)
         except requests.exceptions.RequestException as exc:  # pragma: no cover - network
             msg = f"Failed to fetch image '{url}': {exc}"
             raise TransformerExecutionError(msg) from exc

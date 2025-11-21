@@ -259,10 +259,26 @@
 \newcommand\choice{$\bigcirc$}
 
 
-\def\title{\VAR{title}}
-\def\subtitle{\VAR{subtitle}}
-\def\author{\VAR{author}}
-\def\email{\VAR{email}}
+\newcommand{\booktitle}{\VAR{title}}
+\newcommand{\booksubtitle}{\VAR{subtitle}}
+\newcommand{\bookauthor}{\VAR{author}}
+\newcommand{\bookemail}{\VAR{email}}
+\newcommand{\bookpublisher}{\VAR{publisher}}
+\newcommand{\bookedition}{\VAR{edition}}
+\newcommand{\bookdate}{\VAR{date}}
+
+% Preserve convenience macros expected by assets/covers
+\newcommand{\subtitle}{\booksubtitle}
+
+\title{\booktitle}
+\author{\bookauthor}
+\makeatletter
+\gdef\@subtitle{\booksubtitle}
+\gdef\@authoremail{\bookemail}
+\makeatother
+\newcommand{\subtitletext}{\booksubtitle}
+\newcommand{\authorname}{\bookauthor}
+\newcommand{\authoremail}{\bookemail}
 \providecommand{\texsmithEmoji}[1]{#1}
 
 \definecolor{indigo(dye)}{rgb}{0.0, 0.25, 0.42}
@@ -281,8 +297,22 @@
 
 \begin{document}
 
-\maketitle
+\input{titlepage}
+\BLOCK{ if imprint_thanks|trim or imprint_license|trim or imprint_copyright|trim }
 \cleardoublepage
+\input{imprint}
+\BLOCK{ endif }
+
+\BLOCK{ if dedication|trim }
+\cleardoublepage
+\thispagestyle{plain}
+\phantomsection
+\addcontentsline{toc}{chapter}{Dedication}
+\begin{center}
+  \vspace*{3cm}
+  {\Large\itshape \VAR{dedication}}
+\end{center}
+\BLOCK{ endif }
 
 \thispagestyle{empty}
 
@@ -303,11 +333,14 @@
 
 \VAR{backmatter}
 
+\BLOCK{ if listoffigures }
 \clearpage
-\BLOCK{ if listoffigures }\listoffigures\BLOCK{ endif }
+\listoffigures
+\BLOCK{ endif }
+\BLOCK{ if listoftables }
 \clearpage
-\BLOCK{ if listoftables }\listoftables\BLOCK{ endif }
-\clearpage
+\listoftables
+\BLOCK{ endif }
 
 \BLOCK{ if acronyms }\printglossary[type=\acronymtype, title=Liste des acronymes]\BLOCK{ endif }
 \BLOCK{ if glossary }\printglossary[title=Termes et définitions]\BLOCK{ endif }
@@ -332,6 +365,14 @@ Missing bibliography entry for \VAR{key}
 \BLOCK{ endif }
 \BLOCK{ endfor }
 \end{thebibliography}
+\BLOCK{ endif }
+
+\BLOCK{ if colophon|trim }
+\cleardoublepage
+\phantomsection
+\addcontentsline{toc}{chapter}{Colophon}
+\chapter*{Colophon}
+\VAR{colophon}
 \BLOCK{ endif }
 
 \end{document}

@@ -23,7 +23,7 @@
       minimum height=1cm,
       align=right] at ($(current page.north east)+(-1,-8)$)
     {
-      {\fontsize{20}{25} \selectfont \bfseries \title}
+      {\fontsize{20}{25} \selectfont \bfseries \booktitle}
     };
     \node[
       left,
@@ -33,11 +33,11 @@
       minimum height=1cm,
       align=right] at ($(current page.north east)+(-1,-9.3)$)
     {
-      {\large \textit{\subtitle}}
+      {\large \textit{\subtitletext}}
     };
     \node[left,\covercolor!5,minimum width=80mm,minimum height=1cm,text width=80mm, align=right, rounded corners] at ($(current page.south east)+(-1,1)$)
     {
-      {\textsc{\author}}
+      {\textsc{\bookauthor}}
     };
     \foreach \i in {2.5,3.3,...,15}{
         \node[rounded corners,\covercolor!60,draw,regular polygon,regular polygon sides=6, minimum size=\i cm,line width=1.4pt,rotate=30] at ($(current page.west)+(4,-5)$) {} ;
