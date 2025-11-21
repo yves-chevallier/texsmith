@@ -4,11 +4,13 @@ from __future__ import annotations
 
 from collections.abc import Iterable
 from pathlib import Path
+import io
 import re
 import warnings
 from typing import Any, TYPE_CHECKING
 
 from bs4.element import NavigableString, Tag
+from pybtex.database.input import bibtex
 from pybtex.exceptions import PybtexError
 
 from texsmith.core.context import RenderContext
@@ -183,7 +185,6 @@ def _resolve_doi_fetcher(context: RenderContext) -> Any:
 def _materialise_doi_entry(key: str, context: RenderContext) -> dict[str, object] | None:
     """Fetch and register a bibliography entry for a DOI citation."""
     from texsmith.core.bibliography.doi import DoiLookupError
-    from texsmith.core.bibliography.parsing import bibliography_data_from_string
 
     bibliography = context.state.bibliography
     runtime_bibliography, collection = _ensure_bibliography_runtime(context)
@@ -201,31 +202,53 @@ def _materialise_doi_entry(key: str, context: RenderContext) -> dict[str, object
         _emit_bibliography_warning(context, f"Failed to resolve DOI '{key}': {exc}")
         return None
 
+    parser = bibtex.Parser()
     try:
-        data = bibliography_data_from_string(payload, key)
-    except PybtexError as exc:
+        parsed = parser.parse_stream(io.StringIO(payload))
+    except (OSError, PybtexError) as exc:
         _emit_bibliography_warning(context, f"Failed to parse bibliography entry '{key}': {exc}")
         return None
+    if not parsed.entries:
+        _emit_bibliography_warning(context, f"Bibliography entry for DOI '{key}' is empty.")
+        return None
+    if len(parsed.entries) > 1:
+        _emit_bibliography_warning(context, f"Bibliography entry for DOI '{key}' contains multiple records; using the first.")
+    resolved_key, entry_obj = next(iter(parsed.entries.items()))
 
     source = _inline_doi_source_path(context)
-    collection.load_data(data, source=source)
-    entry = collection.find(key)
+    collection.load_data(parsed, source=source)
+    entry = collection.find(resolved_key)
     if entry is None:
         return None
 
-    bibliography[key] = entry
-    runtime_bibliography[key] = entry
+    bibliography[resolved_key] = entry
+    runtime_bibliography[resolved_key] = entry
+    doi_map: dict[str, str] = context.runtime.setdefault("doi_citation_keys", {})
+    doi_map[key] = resolved_key
     return entry
 
 
 def _ensure_doi_entries(keys: list[str], context: RenderContext) -> None:
     """Materialise bibliography entries for any DOI keys not yet loaded."""
-    for key in keys:
+    doi_map: dict[str, str] = context.runtime.setdefault("doi_citation_keys", {})
+    for key in list(keys):
         if key in context.state.bibliography:
             continue
         if not _is_doi_key(key):
             continue
-        _materialise_doi_entry(key, context)
+        if key in doi_map:
+            continue
+        resolved = _materialise_doi_entry(key, context)
+        if resolved is None:
+            continue
+        resolved_key = doi_map.get(key)
+        if resolved_key:
+            # replace original DOI key in-place for downstream handling
+            try:
+                index = keys.index(key)
+                keys[index] = resolved_key
+            except ValueError:
+                continue
 
 
 @renders("div", phase=RenderPhase.PRE, priority=120, name="tabbed_content", auto_mark=False)
