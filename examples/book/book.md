@@ -33,7 +33,7 @@ press:
 
 *Cucumis sativus*, commonly known as the cucumber, is a widely cultivated plant in the gourd family, Cucurbitaceae. It is a creeping vine that bears cylindrical fruits, which are used as vegetables in culinary contexts. Cucumbers are believed to have originated in South Asia and have been cultivated for over 3,000 years.
 
-![Cucumber Image](assets/Cucumber_BNC.jpg){ width=60% }
+![Cucumber Image](https://upload.wikimedia.org/wikipedia/commons/a/a3/Cucumber_BNC.jpg){ width=60% }
 
 ### Botanical Characteristics
 

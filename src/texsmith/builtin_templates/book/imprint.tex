@@ -1,6 +1,6 @@
 
 \begingroup
-\thispagestyle{plain}
+\thispagestyle{empty}
 \footnotesize
 \setlength{\parindent}{0pt}
 \setlength{\parskip}{\baselineskip}
@@ -19,15 +19,15 @@
 
 \begin{description}
   \BLOCK{ if imprint_copyright|trim }
-  \item[\textcopyright{}] \VAR{imprint_copyright|latex_escape}
+  \item[\textcopyright{}] \VAR{imprint_copyright}
   \BLOCK{ elif copyright_text }
-  \item[\textcopyright{}] \VAR{copyright_text|latex_escape}
+  \item[\textcopyright{}] \VAR{copyright_text}
   \BLOCK{ endif }
   \BLOCK{ if imprint_license|trim }
-  \item[License] \VAR{imprint_license|latex_escape}
+  \item[License] \VAR{imprint_license}
   \BLOCK{ endif }
   \BLOCK{ if imprint_thanks|trim }
-  \item[Acknowledgments] \VAR{imprint_thanks|latex_escape}
+  \item[Acknowledgments] \VAR{imprint_thanks}
   \BLOCK{ endif }
 \end{description}
 
