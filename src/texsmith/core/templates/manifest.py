@@ -5,6 +5,7 @@ from __future__ import annotations
 from collections.abc import Mapping, Sequence
 import copy
 from pathlib import Path
+import re
 from typing import Any, Callable, Literal
 
 try:  # Python >=3.11
@@ -20,7 +21,10 @@ from pydantic import (
     model_validator,
 )
 
+from bs4 import BeautifulSoup, NavigableString, Tag
+
 from texsmith.adapters.latex.utils import escape_latex_chars
+from texsmith.adapters.markdown import DEFAULT_MARKDOWN_EXTENSIONS, render_markdown
 from texsmith.core.exceptions import LatexRenderingError
 
 
@@ -124,6 +128,7 @@ class TemplateSlot(BaseModel):
 
 
 AttributePrimitiveType = Literal["any", "string", "integer", "float", "boolean", "list", "mapping"]
+AttributeFormatType = Literal["markdown", "raw"]
 AttributeEscapeMode = Literal["latex"]
 
 
@@ -158,6 +163,80 @@ def _normalise_sources(payload: Any) -> list[str]:
                 tokens.append(element.strip())
         return tokens
     return []
+
+
+def _render_attribute_markdown(value: str, language: str = DEFAULT_TEMPLATE_LANGUAGE) -> str:
+    """Render a short Markdown snippet through the standard TeXSmith pipeline."""
+    from texsmith.adapters.latex.formatter import LaTeXFormatter
+    from texsmith.adapters.latex.renderer import LaTeXRenderer
+    from texsmith.core.config import BookConfig
+    from texsmith.core.conversion.core import render_with_fallback
+
+    document = render_markdown(value, DEFAULT_MARKDOWN_EXTENSIONS)
+    html = document.html
+
+    config = BookConfig(
+        project_dir=Path("."),
+        language=language or DEFAULT_TEMPLATE_LANGUAGE,
+        legacy_latex_accents=False,
+    )
+
+    formatter = LaTeXFormatter()
+    renderer_kwargs = {
+        "output_root": Path("."),
+        "copy_assets": False,
+        "convert_assets": False,
+        "hash_assets": False,
+        "parser": "html.parser",
+    }
+
+    def _renderer_factory() -> LaTeXRenderer:
+        return LaTeXRenderer(config=config, formatter=formatter, **renderer_kwargs)
+
+    rendered, _ = render_with_fallback(
+        _renderer_factory,
+        html,
+        runtime={"language": config.language, "copy_assets": False, "convert_assets": False, "hash_assets": False},
+        bibliography={},
+        state=None,
+        emitter=None,
+    )
+    return rendered.strip()
+
+
+def _render_attribute_markdown(value: str) -> str:
+    """Render a short Markdown snippet into LaTeX-safe text."""
+    doc = render_markdown(value, DEFAULT_MARKDOWN_EXTENSIONS)
+    html = doc.html
+    soup = BeautifulSoup(html, "html.parser")
+
+    def render_node(node: Tag | NavigableString) -> str:
+        if isinstance(node, NavigableString):
+            return escape_latex_chars(str(node))
+
+        name = (node.name or "").lower()
+        classes = set(node.get("class") or [])
+        rendered_children = "".join(render_node(child) for child in node.children)
+
+        if name in {"strong", "b"}:
+            return rf"\textbf{{{rendered_children}}}"
+        if name in {"em", "i"}:
+            return rf"\emph{{{rendered_children}}}"
+        if name == "code":
+            return rf"\texttt{{{rendered_children}}}"
+        if name == "span" and "texsmith-smallcaps" in classes:
+            return rf"\textsc{{{rendered_children}}}"
+        if name == "br":
+            return r"\\"
+        if name == "p":
+            return rendered_children + "\n\n"
+        if name == "li":
+            return "- " + rendered_children + "\n"
+        return rendered_children
+
+    body = soup.body if soup.body else soup
+    rendered = "".join(render_node(child) for child in body.children)
+    return rendered.strip()
 
 
 _ATTRIBUTE_NORMALISERS: dict[str, Callable[[Any, "TemplateAttributeSpec", Any], Any]] = {}
@@ -328,6 +407,7 @@ class TemplateAttributeSpec(BaseModel):
 
     default: Any = None
     type: AttributePrimitiveType | None = None
+    format: AttributeFormatType = "markdown"
     choices: list[Any] = Field(default_factory=list)
     sources: list[str] = Field(default_factory=list)
     escape: AttributeEscapeMode | None = None
@@ -435,6 +515,8 @@ class TemplateAttributeSpec(BaseModel):
                 result = str(value).strip()
             if not result and not self.allow_empty:
                 result = None
+            if result and self.format == "markdown":
+                result = _render_attribute_markdown(result)
         elif target_type == "integer":
             try:
                 result = int(value)
@@ -494,7 +576,13 @@ class TemplateAttributeSpec(BaseModel):
                 f"Attribute '{self.name}' value '{result}' is invalid. Expected one of: {allowed}."
             )
 
-        if self.escape == "latex" and isinstance(result, str) and from_override and not is_default:
+        if (
+            self.escape == "latex"
+            and isinstance(result, str)
+            and from_override
+            and not is_default
+            and self.format != "markdown"
+        ):
             result = escape_latex_chars(result)
 
         return copy.deepcopy(result)

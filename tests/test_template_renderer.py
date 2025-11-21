@@ -348,6 +348,36 @@ def test_base_level_alias_part() -> None:
     assert coerce_base_level("part") == -1
 
 
+def test_imprint_fields_render_markdown(tmp_path: Path) -> None:
+    runtime = load_template_runtime("book")
+    session = TemplateSession(runtime=runtime)
+
+    doc_path = _write_markdown(
+        tmp_path,
+        "book.md",
+        """
+        ---
+        title: Demo
+        press:
+          template: book
+          imprint:
+            thanks: Thanks to __ACME__!
+            license: "MIT, see http://example.com"
+        ---
+
+        # Body
+        """,
+    )
+    session.add_document(Document.from_markdown(doc_path))
+
+    build_dir = tmp_path / "imprint-build"
+    session.render(build_dir)
+
+    imprint = (build_dir / "imprint.tex").read_text(encoding="utf-8")
+    assert r"Thanks to \textsc{ACME}!" in imprint
+    assert r"http://example.com" in imprint
+
+
 def test_latexmkrc_content_optional_sections() -> None:
     content = build_latexmkrc_content(
         root_filename="demo",
