@@ -225,7 +225,7 @@
 
 % Paragraph indentation
 % \setlength{\parindent}{0pt}
-% \setlength\parskip{\medskipamount}
+\setlength\parskip{\smallskipamount}
 
 % Avoid orphans at the end of a page, encourage page breaks if there are
 % a section with less than 3 lines
@@ -333,9 +333,11 @@
 \BLOCK{ if preface|trim }
 \cleardoublepage
 \thispagestyle{plain}
+\begingroup
+\setsecnumdepth{none}
 \phantomsection
-\addcontentsline{toc}{chapter}{Preface}
 \VAR{preface}
+\endgroup
 \BLOCK{ endif }
 
 \VAR{frontmatter}
