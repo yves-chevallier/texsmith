@@ -160,7 +160,7 @@ default = true
 depth = "chapter"
 
 [latex.template.slots.preface]
-depth = "chapter"
+base_level = 0
 
 [latex.template.slots.backmatter]
 depth = "chapter"
