@@ -270,6 +270,10 @@ class TemplateRenderer:
                 output_name=main_name,
                 bibliography_path=bibliography_path,
                 emitter=self.emitter,
+                fragments=list(
+                    template_overrides.get("fragments", self.runtime.extras.get("fragments", []))
+                ),
+                template_runtime=self.runtime,
             )
         except TemplateError as exc:
             if debug_enabled(self.emitter):

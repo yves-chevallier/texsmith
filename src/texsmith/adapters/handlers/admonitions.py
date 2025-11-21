@@ -7,7 +7,9 @@ import re
 
 from bs4.element import NavigableString, Tag
 
+from texsmith.core.callouts import DEFAULT_CALLOUTS
 from texsmith.core.context import RenderContext
+from texsmith.core.diagnostics import DiagnosticEmitter
 from texsmith.core.rules import RenderPhase, renders
 
 from ._helpers import gather_classes, mark_processed
@@ -74,6 +76,12 @@ def _extract_title(node: Tag | None) -> str:
 
 
 CALLOUT_ALIASES = {"seealso": "info"}
+DEFAULT_CALLOUT_SET = set(DEFAULT_CALLOUTS)
+
+
+def _runtime_emitter(context: RenderContext) -> DiagnosticEmitter | None:
+    emitter = context.runtime.get("emitter")
+    return emitter if getattr(emitter, "warning", None) else None
 
 
 def _prepare_callout_content(element: Tag, context: RenderContext) -> None:
@@ -114,6 +122,12 @@ def _render_admonition(
     admonition_classes = [cls for cls in classes if cls not in IGNORED_CLASSES]
     admonition_type = admonition_classes[0] if admonition_classes else "note"
     admonition_type = CALLOUT_ALIASES.get(admonition_type, admonition_type)
+    callouts_definitions = context.runtime.get("callouts_definitions") or DEFAULT_CALLOUTS
+    if admonition_type not in callouts_definitions:
+        emitter = _runtime_emitter(context)
+        if emitter:
+            emitter.warning(f"Unknown callout/admonition type '{admonition_type}', using default.")
+        admonition_type = "default"
 
     if not element.attrs.pop("data-callout-prepared", False):
         _prepare_callout_content(element, context)

@@ -1,7 +1,7 @@
 \ProvidesClass{mkbook}[2024/09/26 MkDocs class]
 \LoadClass[9pt,twoside]{memoir}
 
-\RequirePackage{ts-fonts}
+\VAR{extra_packages}
 \RequirePackage[svgnames,dvipsnames,x11names]{xcolor}
 \RequirePackage{tikz}
 \RequirePackage{textcomp} % For ©, ™
@@ -18,8 +18,6 @@
 \RequirePackage{stackengine}
 \RequirePackage{booktabs}
 \RequirePackage{minted}
-\RequirePackage[many,minted]{tcolorbox}
-\RequirePackage{callouts}
 \RequirePackage{todolist}
 \RequirePackage{keystroke}
 \RequirePackage{csquotes}

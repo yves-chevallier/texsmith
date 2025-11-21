@@ -6,6 +6,10 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Mapping
 
+from texsmith.core.callouts import DEFAULT_CALLOUTS, merge_callouts, normalise_callouts
+from texsmith.core.fragments import render_fragments
+from texsmith.core.templates import TemplateRuntime
+
 from texsmith.core.conversion.debug import ensure_emitter, record_event
 from texsmith.core.diagnostics import DiagnosticEmitter
 from texsmith.fonts.analyzer import analyse_font_requirements
@@ -37,6 +41,8 @@ def wrap_template_document(
     output_name: str | None = None,
     bibliography_path: Path | None = None,
     emitter: DiagnosticEmitter | None = None,
+    fragments: list[str] | None = None,
+    template_runtime: TemplateRuntime | None = None,
 ) -> TemplateWrapResult:
     """Wrap LaTeX content using a template and optional asset copying."""
     output_dir = Path(output_dir).resolve()
@@ -123,6 +129,47 @@ def wrap_template_document(
                     "missing": list(font_match.missing_fonts),
                 },
             )
+
+    # Render fragments and inject \usepackage declarations.
+    source_dir = None
+    overrides_press = overrides_payload.get("press") if overrides_payload else None
+    if isinstance(overrides_press, Mapping):
+        source_dir_raw = overrides_press.get("_source_dir") or overrides_press.get("source_dir")
+        if source_dir_raw:
+            source_dir = Path(source_dir_raw)
+    fragment_names = list(fragments or [])
+    if not fragment_names:
+        if template_runtime is not None:
+            fragment_names = list(template_runtime.extras.get("fragments", []))
+        else:
+            fragment_names = ["ts-fonts", "ts-callouts"]
+    callout_overrides = overrides_payload.get("callouts") if overrides_payload else None
+    callouts_defs = normalise_callouts(
+        merge_callouts(
+            DEFAULT_CALLOUTS, callout_overrides if isinstance(callout_overrides, Mapping) else None
+        )
+    )
+    template_context.setdefault("callouts_definitions", callouts_defs)
+    rendered_packages: list[str] = []
+    if fragment_names:
+        fragment_context: dict[str, Any] = dict(template_context)
+        if overrides_payload:
+            fragment_context.update(overrides_payload)
+            press_section = overrides_payload.get("press")
+            if isinstance(press_section, Mapping):
+                for key, value in press_section.items():
+                    fragment_context.setdefault(key, value)
+        rendered_packages, _ = render_fragments(
+            fragment_names,
+            context=fragment_context,
+            output_dir=output_dir,
+            source_dir=source_dir,
+        )
+        template_context["extra_packages"] = "\n".join(
+            f"\\usepackage{{{pkg}}}" for pkg in rendered_packages
+        )
+    else:
+        template_context.setdefault("extra_packages", "")
 
     if document_state.citations and bibliography_path is not None:
         template_context["bibliography"] = bibliography_path.stem

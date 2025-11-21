@@ -168,5 +168,3 @@ default = true
 
 [latex.template.assets]
 "fonts/modernline.otf" = { source = "fonts/modernline.otf" }
-"callouts.sty" = { source = "template/callouts.sty.jinja", template = true }
-"ts-fonts.sty" = { source = "../common/ts-fonts.sty.jinja", template = true }

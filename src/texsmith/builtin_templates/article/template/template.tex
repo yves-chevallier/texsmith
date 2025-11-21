@@ -1,6 +1,6 @@
 \documentclass\VAR{documentclass_options}{article}
 
-\usepackage{ts-fonts}
+\VAR{extra_packages}
 \BLOCK{ if latex_engine != "lualatex" }
 \BLOCK{ if pdflatex_extra_packages }
 \BLOCK{ for package in pdflatex_extra_packages }
@@ -13,13 +13,9 @@
 \usepackage{hyphenat}
 \usepackage[\VAR{language|default('english')}]{babel}
 \usepackage{booktabs}
-\usepackage[many,minted]{tcolorbox}
 \usepackage{csquotes}
 \usepackage{amsmath}
 \usepackage[normalem]{ulem} % Strikethrough text with \sout{}
-\providecommand{\texsmithCalloutStyle}{fancy}
-\renewcommand{\texsmithCalloutStyle}{\VAR{callout_style|default('fancy')}}
-\usepackage{callouts} % Admonitions
 \usepackage{soul} % Highlighting text with \hl{}
 \usepackage{keystroke} % Keystroke package
 \usepackage{todolist}

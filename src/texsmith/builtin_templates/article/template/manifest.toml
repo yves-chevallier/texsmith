@@ -131,8 +131,6 @@ strip_heading = true
 # All additional assets to be included in the template package.
 # They will be copied to the working directory when the template is used.
 [latex.template.assets]
-"callouts.sty" = { source = "template/callouts.sty.jinja", template = true }
 "todolist.sty" = { source = "../common/todolist.sty" }
 "keystroke.sty" = { source = "../common/keystroke.sty" }
 ".latexmkrc" = { source = "template/assets/latexmkrc", template = true }
-"ts-fonts.sty" = { source = "../common/ts-fonts.sty.jinja", template = true }
