@@ -9,7 +9,8 @@ from markdown.extensions import Extension
 from markdown.preprocessors import Preprocessor
 
 
-_TOKEN_RE = re.compile(r"^[0-9A-Za-z_:-]+$")
+_DOI_PATTERN = r"10\.\d{4,9}/[^\s\]]+"
+_TOKEN_RE = re.compile(rf"^(?:{_DOI_PATTERN}|[0-9A-Za-z_:-]+)$")
 _PATTERN = re.compile(r"\^\[(?P<keys>[^\]]+)\]")
 
 

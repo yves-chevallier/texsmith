@@ -6,12 +6,18 @@ from collections.abc import Iterable
 from pathlib import Path
 import re
 import warnings
+from typing import Any, TYPE_CHECKING
 
 from bs4.element import NavigableString, Tag
+from pybtex.exceptions import PybtexError
 
 from texsmith.core.context import RenderContext
 from texsmith.core.exceptions import AssetMissingError, InvalidNodeError
 from texsmith.core.rules import RenderPhase, renders
+
+if TYPE_CHECKING:  # pragma: no cover - typing helpers
+    from texsmith.core.bibliography.collection import BibliographyCollection
+    from texsmith.core.bibliography.doi import DoiBibliographyFetcher
 
 from ._assets import store_local_image_asset, store_remote_image_asset
 from ._helpers import (
@@ -101,8 +107,10 @@ def _strip_caption_prefix(node: Tag | None) -> None:
 
 def _split_citation_keys(identifier: str) -> list[str]:
     """Split a comma-separated string into individual citation keys."""
-    if not identifier or "," not in identifier:
+    if not identifier:
         return []
+    if "," not in identifier:
+        return [identifier.strip()] if _is_doi_key(identifier) else []
     return [part.strip() for part in identifier.split(",") if part.strip()]
 
 
@@ -110,6 +118,114 @@ def _is_multiline_footnote(text: str) -> bool:
     """Check whether rendered footnote text spans multiple non-empty lines."""
     lines = [line for line in text.splitlines() if line.strip()]
     return len(lines) > 1
+
+
+_DOI_KEY_PATTERN = r"10\.\d{4,9}/[^\s,\]]+"
+_CITATION_KEY_PATTERN = rf"(?:{_DOI_KEY_PATTERN}|[A-Za-z0-9_\-:]+)"
+_DOI_KEY_RE = re.compile(rf"^{_DOI_KEY_PATTERN}$")
+_DEFAULT_DOI_SOURCE = Path("inline-doi-citations.bib")
+
+
+def _is_doi_key(candidate: str) -> bool:
+    """Return True when a citation key matches a DOI shape."""
+    return bool(_DOI_KEY_RE.match(candidate.strip()))
+
+
+def _emit_bibliography_warning(context: RenderContext, message: str) -> None:
+    emitter = context.runtime.get("emitter")
+    if emitter is not None:
+        emitter.warning(message)
+        return
+    warnings.warn(message, stacklevel=2)
+
+
+def _inline_doi_source_path(context: RenderContext) -> Path:
+    """Return a synthetic source path for inline DOI citations."""
+    document_path = context.runtime.get("document_path")
+    if isinstance(document_path, Path):
+        return Path(f"inline-doi-{document_path.stem}.bib")
+    try:
+        return Path(f"inline-doi-{Path(str(document_path)).stem}.bib")
+    except Exception:
+        return _DEFAULT_DOI_SOURCE
+
+
+def _ensure_bibliography_runtime(
+    context: RenderContext,
+) -> tuple[dict[str, dict[str, object]], BibliographyCollection]:
+    from texsmith.core.bibliography.collection import BibliographyCollection
+
+    runtime_bibliography = context.runtime.get("bibliography")
+    if not isinstance(runtime_bibliography, dict):
+        runtime_bibliography = {}
+        context.runtime["bibliography"] = runtime_bibliography
+
+    collection = context.runtime.get("bibliography_collection")
+    if not isinstance(collection, BibliographyCollection):
+        collection = BibliographyCollection()
+        context.runtime["bibliography_collection"] = collection
+
+    return runtime_bibliography, collection
+
+
+def _resolve_doi_fetcher(context: RenderContext) -> Any:
+    from texsmith.core.bibliography.doi import DoiBibliographyFetcher
+
+    fetcher = context.runtime.get("doi_fetcher")
+    if fetcher is not None:
+        return fetcher
+
+    fetcher = DoiBibliographyFetcher()
+    context.runtime["doi_fetcher"] = fetcher
+    return fetcher
+
+
+def _materialise_doi_entry(key: str, context: RenderContext) -> dict[str, object] | None:
+    """Fetch and register a bibliography entry for a DOI citation."""
+    from texsmith.core.bibliography.doi import DoiLookupError
+    from texsmith.core.bibliography.parsing import bibliography_data_from_string
+
+    bibliography = context.state.bibliography
+    runtime_bibliography, collection = _ensure_bibliography_runtime(context)
+
+    try:
+        fetcher = _resolve_doi_fetcher(context)
+        fetch = getattr(fetcher, "fetch", None)
+        if not callable(fetch):
+            raise DoiLookupError("Configured DOI fetcher is missing a 'fetch' method.")
+        payload = fetch(key)
+    except DoiLookupError as exc:
+        _emit_bibliography_warning(context, f"Failed to resolve DOI '{key}': {exc}")
+        return None
+    except Exception as exc:  # pragma: no cover - defensive fallback
+        _emit_bibliography_warning(context, f"Failed to resolve DOI '{key}': {exc}")
+        return None
+
+    try:
+        data = bibliography_data_from_string(payload, key)
+    except PybtexError as exc:
+        _emit_bibliography_warning(context, f"Failed to parse bibliography entry '{key}': {exc}")
+        return None
+
+    source = _inline_doi_source_path(context)
+    collection.load_data(data, source=source)
+    entry = collection.find(key)
+    if entry is None:
+        return None
+
+    bibliography[key] = entry
+    runtime_bibliography[key] = entry
+    return entry
+
+
+def _ensure_doi_entries(keys: list[str], context: RenderContext) -> None:
+    """Materialise bibliography entries for any DOI keys not yet loaded."""
+    for key in keys:
+        if key in context.state.bibliography:
+            continue
+        if not _is_doi_key(key):
+            continue
+        _materialise_doi_entry(key, context)
 
 
 @renders("div", phase=RenderPhase.PRE, priority=120, name="tabbed_content", auto_mark=False)
@@ -341,7 +457,7 @@ def render_footnotes(root: Tag, context: RenderContext) -> None:
         node.replace_with(replacement)
 
     _citation_payload_pattern = re.compile(
-        r"^\s*([A-Za-z0-9_\-:]+(?:\s*,\s*[A-Za-z0-9_\-:]+)*)\s*$"
+        rf"^\s*({_CITATION_KEY_PATTERN}(?:\s*,\s*{_CITATION_KEY_PATTERN})*)\s*$"
     )
 
     def _citation_keys_from_payload(text: str | None) -> list[str]:
@@ -356,6 +472,7 @@ def render_footnotes(root: Tag, context: RenderContext) -> None:
     def _render_citation(node: Tag, keys: list[str]) -> bool:
         if not keys:
             return False
+        _ensure_doi_entries(keys, context)
         missing = [key for key in keys if key not in bibliography]
         if missing:
             return False

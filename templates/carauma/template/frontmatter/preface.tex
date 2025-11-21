@@ -1,9 +1,0 @@
-\chapter{\caraumaprefaceheading}
-
-\BLOCK{ if preface_dropcap_letter and preface_dropcap_letter.strip() }
-\lettrine{\VAR{preface_dropcap_letter|escape_latex}}{\VAR{preface_dropcap_tail|default('', true)|escape_latex}}\VAR{preface_body}
-\BLOCK{ else }
-\VAR{preface_body}
-\BLOCK{ endif }
-
-\cleardoublepage
