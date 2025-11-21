@@ -227,11 +227,12 @@ def _render_document(
     segment_registry: dict[str, list[SegmentContext]] = {}
     for fragment in slot_fragments:
         base_value = slot_base_levels.get(fragment.name, effective_base_level)
+        base_offset = document_context.base_level if fragment.name == binding.default_slot else 0
         segment_registry.setdefault(fragment.name, []).append(
             SegmentContext(
                 name=fragment.name,
                 html=fragment.html,
-                base_level=base_value + document_context.base_level,
+                base_level=base_value + base_offset,
                 metadata=document_context.front_matter,
                 bibliography=binder_context.bibliography_map,
             )
@@ -265,9 +266,13 @@ def _render_document(
     for fragment in slot_fragments:
         runtime_fragment = dict(runtime_common)
         base_value = slot_base_levels.get(fragment.name, effective_base_level)
-        runtime_fragment["base_level"] = (
-            base_value + base_level_offset + document_context.heading_level
-        )
+        if fragment.name == binding.default_slot:
+            base_offset = base_level_offset
+            runtime_fragment["base_level"] = (
+                base_value + base_offset + document_context.heading_level
+            )
+        else:
+            runtime_fragment["base_level"] = base_value
         if drop_title_flag and fragment.name == binding.default_slot:
             runtime_fragment["drop_title"] = True
             drop_title_flag = False

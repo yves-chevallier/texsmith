@@ -40,7 +40,7 @@ In the middle part of his career, Einstein made important contributions to stati
 
 When he was very young, his parents worried that he had a learning disability because he was very slow to learn to talk. When he was five and sick in bed, his father brought him a compass. This sparked his lifelong fascination with electromagnetism. He realized that "Something deeply hidden had to be behind things."
 
-![Einstein in 1882](https://upload.wikimedia.org/wikipedia/commons/f/fb/Albert_Einstein_at_the_age_of_three_%281882%29.jpg){width=8cm}
+![Einstein in 1882](https://upload.wikimedia.org/wikipedia/commons/f/fb/Albert_Einstein_at_the_age_of_three_%281882%29.jpg){width=5cm}
 
 /// caption
 Einstein in 1882, age 3
@@ -55,7 +55,7 @@ Einstein excelled at physics and mathematics from an early age, and soon acquire
 ![Einstein in 1893](https://upload.wikimedia.org/wikipedia/commons/a/ad/Albert_Einstein_as_a_child.jpg){width=60%}
 
 /// caption
-Einstein in 1893, age14
+Einstein in 1893, age 14.
 ///
 
 At thirteen, when his range of enthusiasms had broadened to include music and philosophy, Talmud introduced Einstein to Kant's "Critique of Pure Reason". Kant became his favorite philosopher; according to Talmud, "At the time he was still a child, only thirteen years old, yet Kant's works, incomprehensible to ordinary mortals, seemed to be clear to him."
@@ -102,9 +102,7 @@ Einstein's first paper, "Folgerungen aus den Capillaritätserscheinungen" ("Conc
 
 ### Academic career in Europe (1908-1933)
 
-Einstein's sabbatical as a civil servant approached its end in 1908, when he secured a junior teaching position at the University of Bern. In 1909, a lecture on relativistic electrodynamics that he gave at the University of Zurich, much admired by Alfred Kleiner, led to Zurich's luring him away from Bern with a newly created associate professorship.^[bG2yp] Promotion to a full professorship followed in April 1911, when he took up a chair at the German Charles-Ferdinand University in Prague, a move which required him to become an Austrian citizen of the Austro-Hungarian Empire, which was not completed. His time in Prague saw him producing eleven research papers.
-
-From 30 October to 3 November 1911, Einstein attended the first Solvay Conference on Physics.
+Einstein's sabbatical as a civil servant approached its end in 1908, when he secured a junior teaching position at the University of Bern. In 1909, a lecture on relativistic electrodynamics that he gave at the University of Zurich, much admired by Alfred Kleiner, led to Zurich's luring him away from Bern with a newly created associate professorship.^[bG2yp] Promotion to a full professorship followed in April 1911, when he took up a chair at the German Charles-Ferdinand University in Prague, a move which required him to become an Austrian citizen of the Austro-Hungarian Empire, which was not completed. His time in Prague saw him producing eleven research papers. From 30 October to 3 November 1911, Einstein attended the first Solvay Conference on Physics.
 
 In July 1912, he returned to his "alma mater", the ETH Zurich, to take up a chair in theoretical physics. His teaching activities there centered on thermodynamics and analytical mechanics, and his research interests included the molecular theory of heat, continuum mechanics and the development of a relativistic theory of gravitation. In his work on the latter topic, he was assisted by his friend Marcel Grossmann, whose knowledge of the kind of mathematics required was greater than his own.^[hXQin]
 
@@ -144,7 +142,7 @@ In December 1930, Einstein began another significant sojourn in the United State
 
 After arriving in New York City, Einstein was taken to various places and events, including Chinatown, a lunch with the editors of "The New York Times", and a performance of "Carmen" at the Metropolitan Opera, where he was cheered by the audience on his arrival. During the days following, he was given the keys to the city by Mayor Jimmy Walker and met Nicholas Murray Butler, the president of Columbia University, who described Einstein as "the ruling monarch of the mind". Harry Emerson Fosdick, pastor at New York's Riverside Church, gave Einstein a tour of the church and showed him a full-size statue that the church made of Einstein, standing at the entrance. Also during his stay in New York, he joined a crowd of 15,000 people at Madison Square Garden during a Hanukkah celebration.
 
-![Einstein with Charlie Chaplin](https://upload.wikimedia.org/wikipedia/commons/9/9c/Albert_Einstein_and_Charlie_Chaplin_City_Lights_premiere_1931.jpg)
+![Einstein with Charlie Chaplin](https://upload.wikimedia.org/wikipedia/commons/9/9c/Albert_Einstein_and_Charlie_Chaplin_City_Lights_premiere_1931.jpg){width=50%}
 
 /// caption
 Einstein with Charlie Chaplin at the Hollywood premiere of Chaplin's "City Lights", January 1931
@@ -228,9 +226,9 @@ Einstein had been sympathetic toward vegetarianism for a long time. In a letter 
 
 > Although I have been prevented by outward circumstances from observing a strictly vegetarian diet, I have long been an adherent to the cause in principle. Besides agreeing with the aims of vegetarianism for aesthetic and moral reasons, it is my view that a vegetarian manner of living by its purely physical effect on the human temperament would most beneficially influence the lot of mankind.
 
-He became a vegetarian himself only during the last part of his life. In March 1954 he wrote in a letter: "So I am living without fats, without meat, without fish, but am feeling quite well this way. It almost seems to me that man was not born to be a carnivore."
+He became a vegetarian himself only during the last part of his life. In March 1954 he wrote in a letter:
 
-"Albert Einstein [...] also read Blavatsky and attended lectures by Rudolf Steiner."
+> So I am living without fats, without meat, without fish, but am feeling quite well this way. It almost seems to me that man was not born to be a carnivore.
 
 #### Love of music
 
@@ -287,7 +285,7 @@ Einstein originally framed special relativity in terms of kinematics (the study 
 
 #### General relativity and the equivalence principle
 
-![](https://upload.wikimedia.org/wikipedia/commons/3/37/1919_eclipse_positive.jpg)
+![](https://upload.wikimedia.org/wikipedia/commons/3/37/1919_eclipse_positive.jpg){width=50%}
 
 /// caption
 Eddington's photo of a solar eclipse
@@ -394,19 +392,6 @@ In 1964, John Stewart Bell carried the analysis of quantum entanglement much fur
 
 Despite this, and although Einstein personally found the argument in the EPR paper overly complicated, that paper became among the most influential papers published in "Physical Review". It is considered a centerpiece of the development of quantum information theory.
 
-### Unified field theory
-
-Encouraged by his success with general relativity, Einstein sought an even more ambitious geometrical theory that would treat gravitation and electromagnetism as aspects of a single entity. In 1950, he described his unified field theory in a "Scientific American" article titled "On the Generalized Theory of Gravitation".^[10.12942/lrr-2004-2]
-
-### Other investigations
-
-Einstein conducted other investigations that were unsuccessful and abandoned. These pertain to force, superconductivity, and other research.
-
-### Collaboration with other scientists
-
-[[File:Solvay conference 1927.jpg|thumb|The 1927 Solvay Conference in Brussels, a gathering of the world's top physicists. Einstein is in the center.]]
-In addition to longtime collaborators Leopold Infeld, Nathan Rosen, Peter Bergmann and others, Einstein also had some one-shot collaborations with various scientists.
-
 #### Einstein-de Haas experiment
 
 In 1908, Owen Willans Richardson predicted that a change in the magnetic moment of a free body will cause this body to rotate. This effect is a consequence of the conservation of angular momentum and is strong enough to be observable in ferromagnetic materials. Einstein and Wander Johannes de Haas published two papers in 1915 claiming the first experimental observation of the effect. Measurements of this kind demonstrate that the phenomenon of magnetization is caused by the alignment (polarization) of the angular momenta of the electrons in the material along the axis of magnetization. These measurements also allow the separation of the two contributions to the magnetization: that which is associated with the spin and with the orbital motion of the electrons. The Einstein-de Haas experiment is the only experiment conceived, realized and published by Albert Einstein himself.
@@ -423,7 +408,7 @@ Einstein also invented an electromagnetic pump, sound reproduction device, and s
 
 ### Non-scientific
 
-![Einstein at a picnic in Oslo in 1920](https://upload.wikimedia.org/wikipedia/commons/6/61/Einstein-Oslofjord_%28cropped%29.jpg)
+![Einstein at a picnic in Oslo in 1920](https://upload.wikimedia.org/wikipedia/commons/6/61/Einstein-Oslofjord_%28cropped%29.jpg){width=50%}
 
 /// caption
 Heinrich Goldschmidt, Einstein, Ole Colbjørnsen, Jørgen Vogt, and Ilse Einstein at a picnic in Oslo in 1920.
@@ -449,14 +434,6 @@ Physicist Lev Landau ranked physicists from 0 to 5 on a logarithmic scale of pro
 
 Physicist Eugene Wigner noted that while John von Neumann had the quickest and most acute mind he ever knew, it was Einstein who had the more penetrating and original mind of the two, stating that:^[10.1007/978-1-4899-6313-0] It was also declared the "International Year of Physics" by the United Nations.
 
-## In popular culture
-
-Einstein became one of the most famous scientific celebrities after the confirmation of his general theory of relativity in 1919.^[10.1063/PT.3.4183,10.1177/030631285015002003] Although most of the public had little understanding of his work, he was widely recognized and admired. In the period before World War II, "The New Yorker" published a vignette in their "The Talk of the Town" feature saying that Einstein was so well known in America that he would be stopped on the street by people wanting him to explain "that theory". Eventually he came to cope with unwanted enquirers by pretending to be someone else: "Pardon me, sorry! Always I am mistaken for Professor Einstein."
-
-Einstein has been the subject of or inspiration for many novels, films, plays, and works of music.
-
-Many popular quotations are often misattributed to him.
-
 ## Colophon
 
 This document was generated by TeXSmith and is given as an example of its capabilities. It uses a book template with custom styling and several plugins to enhance the output. The source markdown file is located at `examples/book/book.md` in the TexSmith repository.
@@ -465,6 +442,14 @@ This document was generated by TeXSmith and is given as an example of its capabi
 
 This book is dedicated to the memory of Albert Einstein
 
-(14 March 1879 – 18 April 1955),
+/// latex
+\vspace{1em}
+///
+
+(14 March 1879 – 18 April 1955)
+
+/// latex
+\vspace{1em}
+///
 
 whose life and work continue to inspire generations of scientists and thinkers around the world.
