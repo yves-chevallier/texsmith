@@ -15,8 +15,10 @@ def test_fragments_default_injection(tmp_path: Path) -> None:
     tex_content = result.main_tex_path.read_text(encoding="utf-8")
     assert "\\usepackage{ts-fonts}" in tex_content
     assert "\\usepackage{ts-callouts}" in tex_content
+    assert "\\usepackage{ts-code}" in tex_content
     assert (tmp_path / "build" / "ts-callouts.sty").exists()
     assert (tmp_path / "build" / "ts-fonts.sty").exists()
+    assert (tmp_path / "build" / "ts-code.sty").exists()
 
 
 def test_custom_fragment_rendering(tmp_path: Path) -> None:

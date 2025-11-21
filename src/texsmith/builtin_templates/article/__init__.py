@@ -286,7 +286,9 @@ class Template(WrappableTemplate):
                 if identifier in visited:
                     return
                 visited.add(identifier)
-                for item in value.values():
+                for key, item in value.items():
+                    if isinstance(key, str) and key == "callouts_definitions":
+                        continue
                     _walk(item)
                 return
 

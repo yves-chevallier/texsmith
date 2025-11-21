@@ -33,41 +33,6 @@
 \BLOCK{ endif }
 \BLOCK{ endif }
 
-\usemintedstyle{bw}
-
-\newtcblisting[auto counter,number within=section,
-  list inside=mypyg]{code}[4][]{%
-  breakable,
-  listing only,
-  enhanced,
-  colback=white,
-  colframe=black!90,
-  colbacktitle=white,
-  coltitle=black,
-  pad at break*=1mm,
-  toptitle=0.15em,
-  bottomtitle=0.1em,
-  boxrule=0.07em,
-  fonttitle=\bfseries,
-  minted language=#2,
-  top=1mm,
-  arc=0.5mm,
-  bottom=1mm,
-  minted options={%
-      tabsize=4,
-      breaklines,
-      xleftmargin=-0.75em,
-      fontsize=\footnotesize,
-      highlightcolor=gray!30,
-      ignorelexererrors,
-      #4
-    },
-  before title={\hspace*{-0.9em}},
-  title={#3},
-  list entry={\protect\numberline{\thetcbcounter}#3},
-  #1
-}
-
 \BLOCK{ if preamble }
 % Custom snippets can inject LaTeX here.
 \VAR{preamble}

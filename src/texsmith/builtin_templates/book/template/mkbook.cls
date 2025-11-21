@@ -159,37 +159,6 @@
 % Listing / Code configuration
 %
 
-\usemintedstyle{bw}
-
-\newtcblisting[auto counter,number within=section,
-  list inside=mypyg]{code}[4][]{%
-  breakable,
-  listing only,
-  enhanced,
-  colback=white,
-  pad at break*=1mm,
-  toptitle=0.15em,
-  bottomtitle=0.1em,
-  boxrule=0.1em,
-  minted language=#2,
-  top=1mm,
-  bottom=1mm,
-  minted options={%
-      tabsize=4,
-      breaklines,
-      xleftmargin=-0.75em,
-      fontsize=\footnotesize,
-      highlightcolor=gray!30,
-      ignorelexererrors,
-      #4
-    },
-  coltitle=black,
-  colbacktitle=gray!20!white,
-  title={#3},
-  list entry={\protect\numberline{\thetcbcounter}#3},
-  #1
-}
-
 \NewTotalTCBox{\cde}{mv}{
   on line,
   boxsep=0pt,

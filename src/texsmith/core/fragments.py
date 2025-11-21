@@ -28,6 +28,10 @@ _BUILTIN_FRAGMENTS: dict[str, Path] = {
     / "builtin_templates"
     / "common"
     / "ts-callouts.sty.jinja",
+    "ts-code": Path(__file__).resolve().parent.parent
+    / "builtin_templates"
+    / "common"
+    / "ts-code.jinja.tex",
 }
 
 

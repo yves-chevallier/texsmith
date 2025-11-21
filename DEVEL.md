@@ -73,6 +73,8 @@ Roadmap and development notes for TeXSmith. I keep this file as a running checkl
 - [ ] Offer compilation with Docker or TeX Live (user choice)
 - [ ] Complete docstring coverage across the project
 - [ ] Deploy to PyPI
+- [ ] Sidenotes (`marginpar` package with footnotes syntax)
+- [ ] Letterine
 
 ## Book Template Integration with MkDocs
 
