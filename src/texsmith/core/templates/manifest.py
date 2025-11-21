@@ -121,7 +121,7 @@ class TemplateSlot(BaseModel):
         """Return the base level applied to rendered headings for this slot."""
         base = fallback
         if self.base_level is not None:
-            base = fallback + self.base_level
+            base = self.base_level
         elif self.depth is not None:
             base = fallback + LATEX_HEADING_LEVELS[self.depth]
         return base + self.offset
