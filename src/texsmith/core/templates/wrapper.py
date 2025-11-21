@@ -86,7 +86,10 @@ def wrap_template_document(
     template_context["requires_shell_escape"] = bool(
         template_context.get("requires_shell_escape", False)
         or getattr(document_state, "requires_shell_escape", False)
+        or (template_runtime.requires_shell_escape if template_runtime else False)
     )
+    if template_runtime and template_runtime.engine:
+        template_context.setdefault("latex_engine", template_runtime.engine)
 
     font_yaml_hint = template_context.get("fonts_yaml")
     fonts_yaml_path = Path(font_yaml_hint) if isinstance(font_yaml_hint, (str, Path)) else None

@@ -84,6 +84,36 @@ type = "string"
 allow_empty = true
 sources = ["press.cover.color", "covercolor", "press.covercolor"]
 
+[latex.template.attributes.edition]
+default = ""
+type = "string"
+allow_empty = true
+sources = ["press.edition", "edition"]
+
+[latex.template.attributes.publisher]
+default = ""
+type = "string"
+allow_empty = true
+sources = ["press.publisher", "publisher"]
+
+[latex.template.attributes.imprint_thanks]
+default = ""
+type = "string"
+allow_empty = true
+sources = ["press.imprint.thanks", "imprint.thanks"]
+
+[latex.template.attributes.imprint_license]
+default = ""
+type = "string"
+allow_empty = true
+sources = ["press.imprint.license", "imprint.license"]
+
+[latex.template.attributes.imprint_copyright]
+default = ""
+type = "string"
+allow_empty = true
+sources = ["press.imprint.copyright", "imprint.copyright"]
+
 [latex.template.attributes.logo]
 default = ""
 type = "string"
@@ -121,6 +151,10 @@ sources = ["press.override.preamble", "press.preamble", "preamble"]
 [latex.template.slots.frontmatter]
 depth = "chapter"
 
+[latex.template.slots.dedication]
+depth = "chapter"
+strip_heading = true
+
 [latex.template.slots.mainmatter]
 default = true
 depth = "chapter"
@@ -128,11 +162,15 @@ depth = "chapter"
 [latex.template.slots.backmatter]
 depth = "chapter"
 
+[latex.template.slots.colophon]
+depth = "chapter"
+strip_heading = true
+
 [latex.template.assets]
 "covers" = { source = "covers" }
 "covers/circles.tex" = { source = "covers/circles.tex", template = true }
-"titlepage.tex" = { source = "titlepage.tex" }
-"imprint.tex" = { source = "imprint.tex" }
+"titlepage.tex" = { source = "titlepage.tex", template = true }
+"imprint.tex" = { source = "imprint.tex", template = true }
 "mkbook.cls" = { source = "template/mkbook.cls", template = true }
 "todolist.sty" = { source = "../common/todolist.sty" }
 "keystroke.sty" = { source = "../common/keystroke.sty" }

@@ -60,9 +60,12 @@ Roadmap and development notes for TeXSmith. I keep this file as a running checkl
 - [x] No shell escape when `minted` is unused (no code blocks or inline code)
 - [x] Snippet plugin, avoid rebuilding unchanged snippets
 - [x] Dynamically update the engine in `latexmkrc` (pdflatex, xelatex, lualatex)
-- [ ] Epigraph Plugin
+- [x] Put fonts and code into separate sty merged during build
+- [x] Consolidate CI
+- [ ] Serif/sans-serif toggle
 - [ ] Consolidate Book template
-- [ ] Put fonts and code into separate sty merged during build
+- [ ] Build snippet with pdflatex when possible (faster)
+- [ ] Complete docstring coverage across the project
 - [ ] Support glossaries (glossaries package)
 - [ ] Support cross-references (cleveref package)
 - [ ] Provide listings/verbatim/minted handling
@@ -71,8 +74,8 @@ Roadmap and development notes for TeXSmith. I keep this file as a running checkl
 - [ ] Scaffold templates with Cookiecutter
 - [ ] Implement `texsmith template create my-template`
 - [ ] Offer compilation with Docker or TeX Live (user choice)
-- [ ] Complete docstring coverage across the project
 - [ ] Deploy to PyPI
+- [ ] Epigraph Plugin
 - [ ] Sidenotes (`marginpar` package with footnotes syntax)
 - [ ] Letterine
 

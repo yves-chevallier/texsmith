@@ -2,78 +2,87 @@ name: CI
 
 on:
   push:
+    branches: ["**"]
+    tags: ["v*"]
   pull_request:
 
 permissions:
   contents: read
+  id-token: write
 
 jobs:
-  tests:
-    name: Tests (Python ${{ matrix.python-version }})
+  quality:
+    name: Tests, lint & docs
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        python-version: ["3.12", "3.13"]
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: ${{ matrix.python-version }}
-
       - name: Install uv
-        run: pip install uv
+        uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: true
+          cache-python: true
 
-      - name: Sync dependencies
-        run: uv sync --dev
+      - name: Install supported Python versions
+        run: |
+          PY_VERSIONS=$(python - <<'PY'
+import re
+import tomllib
 
-      - name: Run test suite
-        run: uv run pytest
+data = tomllib.load(open("pyproject.toml", "rb"))
+versions = []
+for classifier in data.get("project", {}).get("classifiers", []):
+    match = re.fullmatch(r"Programming Language :: Python :: (\d\.\d+)", classifier.strip())
+    if match:
+        versions.append(match.group(1))
+
+if not versions:
+    raise SystemExit("No Python versions found in pyproject classifiers.")
+
+versions = sorted(set(versions), key=lambda v: tuple(map(int, v.split("."))))
+print(" ".join(versions))
+PY
+          echo "Installing Python versions: ${PY_VERSIONS}"
+          uv python install ${PY_VERSIONS}
+
+      - name: Sync dependencies (dev + docs)
+        run: uv sync --all-groups --frozen
+
+      - name: Run test suite (nox)
+        run: uv run nox -s tests
 
       - name: Run Ruff
         run: uv run ruff check .
 
-  docs:
-    name: Build & Deploy Docs
-    needs: tests
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+      - name: Build documentation
+        run: uv run mkdocs build --strict
+
+  publish:
+    name: Publish to PyPI
+    needs: quality
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      pages: write
       id-token: write
     environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
+      name: pypi
+      url: https://pypi.org/project/texsmith/
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-
       - name: Install uv
-        run: pip install uv
-
-      - name: Sync dependencies
-        run: uv sync --dev
-
-      - name: Build documentation
-        run: uv run mkdocs build --strict
-
-      - name: Configure Pages
-        uses: actions/configure-pages@v4
-
-      - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
+        uses: astral-sh/setup-uv@v7
         with:
-          path: site
+          enable-cache: true
 
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
+      - name: Build distributions
+        run: uv build
+
+      - name: Publish package
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          packages-dir: dist
+          password: ${{ secrets.PYPI_API_TOKEN }}
