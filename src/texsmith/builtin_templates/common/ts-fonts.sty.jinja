@@ -12,6 +12,7 @@
 \RequirePackage{iftex}
 \RequirePackage{microtype}
 \RequirePackage{fontspec}
+\providecommand{\texsmithEmoji}[1]{#1}
 \defaultfontfeatures{
   Ligatures = TeX,
   Scale = MatchLowercase,
@@ -73,6 +74,22 @@
       ItalicFeatures = {RawFeature={fallback=mainfb-it}},
       BoldItalicFeatures = {RawFeature={fallback=mainfb-bi}},
     ]
+\BLOCK{ set emoji_mode = (emoji | default('artifact') | lower) }
+\BLOCK{ if emoji_mode == "symbola" }
+\IfFontExistsTF{Symbola}{
+  \newfontfamily\texsmithEmojiFont{Symbola}[Scale=1.0]
+  \renewcommand{\texsmithEmoji}[1]{{\texsmithEmojiFont #1}}
+}{
+  \renewcommand{\texsmithEmoji}[1]{#1}
+}
+\BLOCK{ elif emoji_mode == "color" }
+\IfFontExistsTF{Noto Color Emoji}{
+  \newfontfamily\texsmithEmojiFont{Noto Color Emoji}[Renderer=Harfbuzz,Scale=1.1]
+  \renewcommand{\texsmithEmoji}[1]{{\texsmithEmojiFont #1}}
+}{
+  \renewcommand{\texsmithEmoji}[1]{#1}
+}
+\BLOCK{ endif }
   \else
     % XeLaTeX path: no lua fallbacks; rely on ucharclasses for CJK/emoji if desired.
     \setmainfont{Latin Modern Roman}
