@@ -1,0 +1,96 @@
+# Template fragments
+
+Fragments are small, pluggable LaTeX packages (`.sty` rendered from Jinja) that
+TeXSmith can inject into any template at `\VAR{extra_packages}`. They keep
+shared logic (fonts, callouts, code listings, …) out of individual templates
+while staying configurable from front matter or your own extensions.
+
+## Built-in fragments
+
+`ts-fonts`
+: font setup, emoji handling, and fallback management. It also
+  connects to the font matcher to warn about missing fonts on the host.
+`ts-callouts`
+: admonition/callout boxes generated from callout definitions.
+
+`ts-code`
+: unified minted/tcolorbox code listing style.
+
+All built-in templates default to rendering these three fragments. They are
+written into the build directory as `ts-*.sty` and loaded via
+`\usepackage{ts-fonts}` (and friends) in the generated TeX.
+
+## Using fragments in documents
+
+Fragments are declared under the `press.fragments` list in front matter. Each
+entry is either the name of a built-in fragment or a path to a custom Jinja
+template (absolute or relative to the Markdown file).
+
+```yaml
+---
+press:
+  template: article
+  fragments:
+    - ts-fonts        # built-in
+    - ts-callouts
+    - ts-code
+    - fragments/foo.sty.jinja  # custom fragment located next to your doc
+  foo:
+    value: 42         # variables consumed by foo.sty.jinja
+---
+```
+
+TeXSmith renders each fragment into the output directory and injects the
+corresponding `\usepackage{…}` lines into `\VAR{extra_packages}`.
+
+### What a fragment looks like
+
+Fragments are plain Jinja templates that output LaTeX. The package name is the
+stem of the file unless it is a built-in registered name.
+
+```tex
+% fragments/foo.sty.jinja
+\ProvidesPackage{foo}[2025/01/01 Example fragment]
+\newcommand{\FooValue}{\VAR{foo.value|default(0)}}
+```
+
+With the front matter above, the generated build will contain `foo.sty` and the
+document preamble will include `\usepackage{foo}`.
+
+## Template authors: allowing fragments
+
+To consume fragments, a template needs a placeholder where TeXSmith can inject
+the `\usepackage` lines. Add `\VAR{extra_packages}` near the top of your
+preamble—typically next to other package imports. No TOML manifest changes are
+required; the core runtime resolves fragments before rendering.
+
+Built-in templates already include this placeholder and opt into
+`ts-fonts`, `ts-callouts`, and `ts-code` by default via the template runtime
+extras. Third-party templates can also declare default fragments in their
+`TemplateRuntime.extras["fragments"]` or let users supply their own through
+front matter.
+
+### Passing variables to fragments
+
+Any values under `press` (or other front-matter keys) are merged into the
+template rendering context. If your fragment expects a variable such as
+`foo.value`, document it and read it directly in the Jinja template. Unknown
+keys are ignored.
+
+## CLI and API integration
+
+CLI usage is automatic once `press.fragments` is present. For API consumers:
+
+```python
+from texsmith.api import Document, TemplateSession
+from texsmith.core.templates import load_template_runtime
+
+session = TemplateSession(load_template_runtime("article"))
+session.add_document(Document.from_markdown(path_to_md))
+result = session.render(output_dir)
+# result.main_tex_path already includes the rendered fragments
+```
+
+Custom fragments may live anywhere; relative paths are resolved against the
+document’s directory. Built-in names are always available without shipping
+assets in your template package.
