@@ -1,14 +1,6 @@
 \documentclass\VAR{documentclass_options}{article}
 
 \VAR{extra_packages}
-\BLOCK{ if latex_engine != "lualatex" }
-\BLOCK{ if pdflatex_extra_packages }
-\BLOCK{ for package in pdflatex_extra_packages }
-\usepackage{\VAR{package}}
-\BLOCK{ endfor }
-\BLOCK{ endif }
-\BLOCK{ endif }
-
 \usepackage{geometry}
 \usepackage{hyphenat}
 \usepackage[\VAR{language|default('english')}]{babel}
@@ -24,7 +16,6 @@
 \usepackage{hyperref}
 \usepackage{bookmark}
 \usepackage{adjustbox}
-\providecommand{\texsmithEmoji}[1]{#1}
 
 \BLOCK{ if bibliography_resource }
 \usepackage[
@@ -45,24 +36,6 @@
 \BLOCK{ endif }
 \BLOCK{ endif }
 
-\BLOCK{ set emoji_mode = (emoji | default('artifact') | lower) }
-\BLOCK{ if latex_engine == "lualatex" }
-\BLOCK{ if emoji_mode == "symbola" }
-\IfFontExistsTF{Symbola}{
-  \newfontfamily\texsmithEmojiFont{Symbola}[Scale=1.0]
-  \renewcommand{\texsmithEmoji}[1]{{\texsmithEmojiFont #1}}
-}{
-  \renewcommand{\texsmithEmoji}[1]{#1}
-}
-\BLOCK{ elif emoji_mode == "color" }
-\IfFontExistsTF{Noto Color Emoji}{
-  \newfontfamily\texsmithEmojiFont{Noto Color Emoji}[Renderer=Harfbuzz,Scale=1.1]
-  \renewcommand{\texsmithEmoji}[1]{{\texsmithEmojiFont #1}}
-}{
-  \renewcommand{\texsmithEmoji}[1]{#1}
-}
-\BLOCK{ endif }
-\BLOCK{ endif }
 
 \usemintedstyle{bw}
 

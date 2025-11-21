@@ -171,6 +171,15 @@ def wrap_template_document(
     else:
         template_context.setdefault("extra_packages", "")
 
+    # Append pdfLaTeX-specific packages when not using LuaLaTeX.
+    extra_lines = [line for line in template_context.get("extra_packages", "").splitlines() if line]
+    engine = str(template_context.get("latex_engine") or "").strip().lower()
+    if engine and engine != "lualatex":
+        for package in template_context.get("pdflatex_extra_packages") or []:
+            if package:
+                extra_lines.append(f"\\usepackage{{{package}}}")
+    template_context["extra_packages"] = "\n".join(extra_lines)
+
     if document_state.citations and bibliography_path is not None:
         template_context["bibliography"] = bibliography_path.stem
         template_context["bibliography_resource"] = bibliography_path.name
