@@ -1,3 +1,50 @@
+\BLOCK{ set font_profile = (
+  fonts
+  | default(
+    (press.fonts if press is defined and press else None),
+    true
+  )
+  | default("default", true)
+  | lower
+) }
+\BLOCK{ set main_font = "Latin Modern Roman" }
+\BLOCK{ set sans_font = "Latin Modern Sans" }
+\BLOCK{ set mono_font = "FreeMono" }
+\BLOCK{ set math_font = "Latin Modern Math" }
+\BLOCK{ set small_caps_font = "Latin Modern Roman Caps" }
+\BLOCK{ set mono_italic = "* Italic" }
+\BLOCK{ set mono_bold_italic = "* Bold Italic" }
+\BLOCK{ if mono_font == "FreeMono" }
+  \BLOCK{ set mono_italic = "* Oblique" }
+  \BLOCK{ set mono_bold_italic = "* Bold Oblique" }
+\BLOCK{ endif }
+\BLOCK{ if font_profile == "sans" }
+  \BLOCK{ set main_font = "Latin Modern Sans" }
+  \BLOCK{ set sans_font = "Latin Modern Sans" }
+  \BLOCK{ set mono_font = "IBM Plex Mono" }
+\BLOCK{ elif font_profile == "adventor" }
+  \BLOCK{ set main_font = "TeX Gyre Adventor" }
+  \BLOCK{ set sans_font = "TeX Gyre Adventor" }
+  \BLOCK{ set mono_font = "IBM Plex Mono" }
+  \BLOCK{ set math_font = "TeX Gyre Adventor Math" }
+  \BLOCK{ set small_caps_font = None }
+\BLOCK{ elif font_profile == "heros" }
+  \BLOCK{ set main_font = "TeX Gyre Heros" }
+  \BLOCK{ set sans_font = "TeX Gyre Heros" }
+  \BLOCK{ set mono_font = "IBM Plex Mono" }
+  \BLOCK{ set math_font = "TeX Gyre Heros Math" }
+  \BLOCK{ set small_caps_font = None }
+\BLOCK{ elif font_profile == "noto" }
+  \BLOCK{ set main_font = "Noto Serif" }
+  \BLOCK{ set sans_font = "Noto Sans" }
+  \BLOCK{ set mono_font = "Noto Sans Mono" }
+  \BLOCK{ set math_font = "Noto Sans Math" }
+  \BLOCK{ set small_caps_font = None }
+\BLOCK{ endif }
+\BLOCK{ if mono_font != "FreeMono" }
+  \BLOCK{ set mono_italic = "* Italic" }
+  \BLOCK{ set mono_bold_italic = "* Bold Italic" }
+\BLOCK{ endif }
 \BLOCK{ set fallback_fonts = fallback_fonts | default(
   ["NotoSans", "NotoSansSymbols2-Regular", "NotoSansMath-Regular", "NotoColorEmoji"],
   true) }
@@ -22,9 +69,14 @@
   \RequirePackage[T1]{fontenc}
   \RequirePackage[utf8]{inputenc}
   \RequirePackage{lmodern}
+  \RequirePackage{amssymb}
   \microtypesetup{expansion=true,protrusion=true}
 \else
   \ifLuaTeX
+    \let\eth\relax
+    \let\Eth\relax
+    \RequirePackage{amssymb}
+    \RequirePackage{unicode-math}
     \UseMicrotypeSet[protrusion]{basicmath}
     \directlua{
       luaotfload.add_fallback("mainfb-reg", {
@@ -48,32 +100,81 @@
 \BLOCK{ endfor }
       })
     }
-    \setmainfont{Latin Modern Roman}[
-      Ligatures=TeX,
-      SmallCapsFont = Latin Modern Roman Caps,
-      RawFeature = {fallback=mainfb-reg},
-      BoldFeatures = {RawFeature={fallback=mainfb-bold}},
-      ItalicFeatures = {RawFeature={fallback=mainfb-it}},
-      BoldItalicFeatures = {RawFeature={fallback=mainfb-bi}},
-    ]
-    \setsansfont{Latin Modern Sans}[
-      Ligatures=TeX,
-      RawFeature = {fallback=mainfb-reg},
-      BoldFeatures  = {RawFeature={fallback=mainfb-bold}},
-      ItalicFeatures = {RawFeature={fallback=mainfb-it}},
-      BoldItalicFeatures = {RawFeature={fallback=mainfb-bi}},
-    ]
-    \setmonofont{FreeMono}[
-      Scale=0.9,
-      Ligatures=TeX,
-      ItalicFont={* Oblique},
-      BoldFont={* Bold},
-      BoldItalicFont={* Bold Oblique},
-      RawFeature = {fallback=mainfb-reg},
-      BoldFeatures = {RawFeature={fallback=mainfb-bold}},
-      ItalicFeatures = {RawFeature={fallback=mainfb-it}},
-      BoldItalicFeatures = {RawFeature={fallback=mainfb-bi}},
-    ]
+    \IfFontExistsTF{\VAR{main_font}}{
+      \setmainfont{\VAR{main_font}}[
+        Ligatures=TeX,
+\BLOCK{ if small_caps_font }
+        SmallCapsFont = \VAR{small_caps_font},
+\BLOCK{ endif }
+        RawFeature = {fallback=mainfb-reg},
+        BoldFeatures = {RawFeature={fallback=mainfb-bold}},
+        ItalicFeatures = {RawFeature={fallback=mainfb-it}},
+        BoldItalicFeatures = {RawFeature={fallback=mainfb-bi}},
+      ]
+    }{
+      \setmainfont{Latin Modern Roman}[
+        Ligatures=TeX,
+        RawFeature = {fallback=mainfb-reg},
+        BoldFeatures = {RawFeature={fallback=mainfb-bold}},
+        ItalicFeatures = {RawFeature={fallback=mainfb-it}},
+        BoldItalicFeatures = {RawFeature={fallback=mainfb-bi}},
+      ]
+    }
+    \IfFontExistsTF{\VAR{sans_font}}{
+      \setsansfont{\VAR{sans_font}}[
+        Ligatures=TeX,
+        RawFeature = {fallback=mainfb-reg},
+        BoldFeatures  = {RawFeature={fallback=mainfb-bold}},
+        ItalicFeatures = {RawFeature={fallback=mainfb-it}},
+        BoldItalicFeatures = {RawFeature={fallback=mainfb-bi}},
+      ]
+    }{
+      \setsansfont{Latin Modern Sans}[
+        Ligatures=TeX,
+        RawFeature = {fallback=mainfb-reg},
+        BoldFeatures  = {RawFeature={fallback=mainfb-bold}},
+        ItalicFeatures = {RawFeature={fallback=mainfb-it}},
+        BoldItalicFeatures = {RawFeature={fallback=mainfb-bi}},
+      ]
+    }
+    \IfFontExistsTF{\VAR{mono_font}}{
+      \setmonofont{\VAR{mono_font}}[
+        Scale=0.9,
+        Ligatures=TeX,
+        ItalicFont={\VAR{mono_italic}},
+        BoldFont={* Bold},
+        BoldItalicFont={\VAR{mono_bold_italic}},
+        RawFeature = {fallback=mainfb-reg},
+        BoldFeatures = {RawFeature={fallback=mainfb-bold}},
+        ItalicFeatures = {RawFeature={fallback=mainfb-it}},
+        BoldItalicFeatures = {RawFeature={fallback=mainfb-bi}},
+      ]
+    }{
+      \setmonofont{FreeMono}[
+        Scale=0.9,
+        Ligatures=TeX,
+        ItalicFont={\VAR{mono_italic}},
+        BoldFont={* Bold},
+        BoldItalicFont={\VAR{mono_bold_italic}},
+        RawFeature = {fallback=mainfb-reg},
+        BoldFeatures = {RawFeature={fallback=mainfb-bold}},
+        ItalicFeatures = {RawFeature={fallback=mainfb-it}},
+        BoldItalicFeatures = {RawFeature={fallback=mainfb-bi}},
+      ]
+    }
+\IfFontExistsTF{\VAR{math_font}}{
+  \setmathfont{\VAR{math_font}}[
+    RawFeature = {fallback=mainfb-reg},
+    BoldFeatures = {RawFeature={fallback=mainfb-bold}},
+    ItalicFeatures = {RawFeature={fallback=mainfb-it}},
+  ]
+}{
+  \setmathfont{Latin Modern Math}[
+    RawFeature = {fallback=mainfb-reg},
+    BoldFeatures = {RawFeature={fallback=mainfb-bold}},
+    ItalicFeatures = {RawFeature={fallback=mainfb-it}},
+  ]
+}
 \BLOCK{ set emoji_mode = (emoji | default('artifact') | lower) }
 \BLOCK{ if emoji_mode == "symbola" }
 \IfFontExistsTF{Symbola}{
@@ -92,8 +193,21 @@
 \BLOCK{ endif }
   \else
     % XeLaTeX path: no lua fallbacks; rely on ucharclasses for CJK/emoji if desired.
-    \setmainfont{Latin Modern Roman}
-    \setsansfont{Latin Modern Sans}
-    \setmonofont{FreeMono}[Scale=0.9]
+    \let\eth\relax
+    \let\Eth\relax
+    \RequirePackage{amssymb}
+    \RequirePackage{unicode-math}
+    \IfFontExistsTF{\VAR{main_font}}{\setmainfont{\VAR{main_font}}}{\setmainfont{Latin Modern Roman}}
+    \IfFontExistsTF{\VAR{sans_font}}{\setsansfont{\VAR{sans_font}}}{\setsansfont{Latin Modern Sans}}
+    \IfFontExistsTF{\VAR{mono_font}}{
+      \setmonofont{\VAR{mono_font}}[Scale=0.9,Ligatures=TeX]
+    }{
+      \setmonofont{FreeMono}[Scale=0.9]
+    }
+    \IfFontExistsTF{\VAR{math_font}}{
+      \setmathfont{\VAR{math_font}}
+    }{
+      \setmathfont{Latin Modern Math}
+    }
   \fi
 \fi
