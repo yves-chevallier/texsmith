@@ -354,12 +354,16 @@
 \VAR{backmatter}
 
 \BLOCK{ if listoffigures }
+\ifnum\value{figure}>0
 \clearpage
 \listoffigures
+\fi
 \BLOCK{ endif }
 \BLOCK{ if listoftables }
+\ifnum\value{table}>0
 \clearpage
 \listoftables
+\fi
 \BLOCK{ endif }
 
 \BLOCK{ if acronyms }\printglossary[type=\acronymtype, title=Liste des acronymes]\BLOCK{ endif }

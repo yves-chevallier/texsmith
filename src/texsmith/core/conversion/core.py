@@ -273,6 +273,8 @@ def _render_document(
             )
         else:
             runtime_fragment["base_level"] = base_value
+        if fragment.name == "preface":
+            runtime_fragment["numbered"] = False
         if drop_title_flag and fragment.name == binding.default_slot:
             runtime_fragment["drop_title"] = True
             drop_title_flag = False
