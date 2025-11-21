@@ -22,8 +22,9 @@ press:
   slots:
     colophon: Colophon
     dedication: Dedication
+    preface: Preface
 ---
-## Albert Einstein
+## Preface
 
 Albert Einstein (14 March 187918 April 1955) was a German-born theoretical physicist best known for developing the theory of relativity. Einstein also made important contributions to quantum theory. His mass-energy equivalence formula , which arises from special relativity, has been called "the world's most famous equation".^[LnLVo] He received the 1921 Nobel Prize in Physics for "his services to theoretical physics, and especially for his discovery of the law of the photoelectric effect".
 
@@ -39,7 +40,7 @@ In the middle part of his career, Einstein made important contributions to stati
 
 When he was very young, his parents worried that he had a learning disability because he was very slow to learn to talk. When he was five and sick in bed, his father brought him a compass. This sparked his lifelong fascination with electromagnetism. He realized that "Something deeply hidden had to be behind things."
 
-![](https://upload.wikimedia.org/wikipedia/commons/f/fb/Albert_Einstein_at_the_age_of_three_%281882%29.jpg)
+![Einstein in 1882](https://upload.wikimedia.org/wikipedia/commons/f/fb/Albert_Einstein_at_the_age_of_three_%281882%29.jpg){width=8cm}
 
 /// caption
 Einstein in 1882, age 3
@@ -51,7 +52,7 @@ In 1894, Hermann and Jakob's company tendered for a contract to install electric
 
 Einstein excelled at physics and mathematics from an early age, and soon acquired the mathematical expertise normally only found in a child several years his senior. He began teaching himself algebra, calculus and Euclidean geometry when he was twelve; he made such rapid progress that he discovered an original proof of the Pythagorean theorem before his thirteenth birthday.^[FVfDU] A family tutor, Max Talmud, said that only a short time after he had given the twelve year old Einstein a geometry textbook, the boy "had worked through the whole book. He thereupon devoted himself to higher mathematics... Soon the flight of his mathematical genius was so high I could not follow." Einstein recorded that he had "mastered integral and differential calculus" while still just fourteen. His love of algebra and geometry was so great that at twelve, he was already confident that nature could be understood as a "mathematical structure".
 
-![](https://upload.wikimedia.org/wikipedia/commons/a/ad/Albert_Einstein_as_a_child.jpg)
+![Einstein in 1893](https://upload.wikimedia.org/wikipedia/commons/a/ad/Albert_Einstein_as_a_child.jpg){width=60%}
 
 /// caption
 Einstein in 1893, age14
@@ -71,7 +72,7 @@ Historians of physics are divided on the question of the extent to which Marić 
 
 Correspondence between Einstein and Marić, discovered and published in 1987, revealed that in early 1902, while Marić was visiting her parents in Novi Sad, she gave birth to a daughter, Lieserl. When Marić returned to Switzerland it was without the child, whose fate is uncertain. A letter of Einstein's that he wrote in September 1903 suggests that the girl was either given up for adoption or died of scarlet fever in infancy.^[HBMes]
 
-![](https://upload.wikimedia.org/wikipedia/commons/8/87/Albert_Einstein_and_his_wife_Mileva_Maric.jpg)
+![Albert Einstein and Mileva](https://upload.wikimedia.org/wikipedia/commons/8/87/Albert_Einstein_and_his_wife_Mileva_Maric.jpg){width=60%}
 
 /// caption
 Albert Einstein and Mileva Marić Einstein, 1912
@@ -143,7 +144,7 @@ In December 1930, Einstein began another significant sojourn in the United State
 
 After arriving in New York City, Einstein was taken to various places and events, including Chinatown, a lunch with the editors of "The New York Times", and a performance of "Carmen" at the Metropolitan Opera, where he was cheered by the audience on his arrival. During the days following, he was given the keys to the city by Mayor Jimmy Walker and met Nicholas Murray Butler, the president of Columbia University, who described Einstein as "the ruling monarch of the mind". Harry Emerson Fosdick, pastor at New York's Riverside Church, gave Einstein a tour of the church and showed him a full-size statue that the church made of Einstein, standing at the entrance. Also during his stay in New York, he joined a crowd of 15,000 people at Madison Square Garden during a Hanukkah celebration.
 
-![](https://upload.wikimedia.org/wikipedia/commons/9/9c/Albert_Einstein_and_Charlie_Chaplin_City_Lights_premiere_1931.jpg)
+![Einstein with Charlie Chaplin](https://upload.wikimedia.org/wikipedia/commons/9/9c/Albert_Einstein_and_Charlie_Chaplin_City_Lights_premiere_1931.jpg)
 
 /// caption
 Einstein with Charlie Chaplin at the Hollywood premiere of Chaplin's "City Lights", January 1931
@@ -422,7 +423,7 @@ Einstein also invented an electromagnetic pump, sound reproduction device, and s
 
 ### Non-scientific
 
-![](https://upload.wikimedia.org/wikipedia/commons/6/61/Einstein-Oslofjord_%28cropped%29.jpg)
+![Einstein at a picnic in Oslo in 1920](https://upload.wikimedia.org/wikipedia/commons/6/61/Einstein-Oslofjord_%28cropped%29.jpg)
 
 /// caption
 Heinrich Goldschmidt, Einstein, Ole Colbjørnsen, Jørgen Vogt, and Ilse Einstein at a picnic in Oslo in 1920.
