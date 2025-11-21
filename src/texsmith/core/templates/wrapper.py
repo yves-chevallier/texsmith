@@ -111,6 +111,14 @@ def wrap_template_document(
         extra_fallbacks = template_context.get("extra_font_fallbacks") or []
         if isinstance(extra_fallbacks, (list, tuple, set)):
             fallback_fonts.extend(str(item) for item in extra_fallbacks if item)
+        fallback_fonts.extend(
+            [
+                "NotoSans",
+                "NotoSansSymbols2-Regular",
+                "NotoSansMath-Regular",
+                "NotoColorEmoji",
+            ]
+        )
         if fallback_fonts:
             deduped = list(dict.fromkeys(fallback_fonts))
             template_context["fallback_fonts"] = deduped

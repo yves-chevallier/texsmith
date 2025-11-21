@@ -18,6 +18,7 @@ imprint:
 press:
   template: book
   base_level: part
+  fonts: adventor
   admonition_style: classic
   slots:
     colophon: Colophon
