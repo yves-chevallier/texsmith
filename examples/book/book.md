@@ -18,7 +18,7 @@ imprint:
 press:
   template: book
   base_level: part
-  fonts: noto # default, sans, adventor, noto
+  fonts: adventor # default, sans, adventor, noto
   admonition_style: classic
   slots:
     colophon: Colophon
