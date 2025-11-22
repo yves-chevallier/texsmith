@@ -21,7 +21,7 @@ tlmgr_packages = [
 fragments = ["ts-geometry", "ts-fonts", "ts-callouts", "ts-code", "ts-glossary", "ts-index"]
 
 [latex.template.attributes.base_level]
-default = 1
+default = 0
 type = "integer"
 
 [latex.template.attributes.title]
