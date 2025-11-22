@@ -454,3 +454,14 @@ This book is dedicated to the memory of Albert Einstein
 ///
 
 whose life and work continue to inspire generations of scientists and thinkers around the world.
+
+*[UNESCO]: United Nations Educational, Scientific and Cultural Organization is a specialized agency of the United Nations (UN). It is headquartered in Paris, France.
+*[EPR]: Einstein-Podolsky-Rosen paradox. A thought experiment that challenges the completeness of quantum mechanics.
+*[ETH]: Eidgenössische Technische Hochschule Zürich (Swiss Federal Institute of Technology in Zurich) is a science, technology, engineering and mathematics university in the city of Zurich, Switzerland.
+*[WAAS]: World Academy of Art and Science is an international non-governmental scientific organization headquartered in Napa, California, USA.
+*[NAACP]: National Association for the Advancement of Colored People is a civil rights organization in the United States, formed in 1909 as a bi-racial endeavor to advance justice for African Americans.
+*[FBI]: Federal Bureau of Investigation is the domestic intelligence and security service of the United States, which simultaneously serves as the nation's prime federal law enforcement agency.
+*[GR]: General relativity is the geometric theory of gravitation published by Albert Einstein in 1915 and the current description of gravitation in modern physics.
+*[NIST]: National Institute of Standards and Technology is a physical sciences laboratory and non-regulatory agency of the United States Department of Commerce.
+*[LIGO]: Laser Interferometer Gravitational-Wave Observatory is a large-scale physics experiment and observatory to detect cosmic gravitational waves and to develop gravitational-wave observations as an astronomical tool.
+*[PSR]: Pulsar is a highly magnetized, rotating neutron star or white dwarf that emits a beam of electromagnetic radiation.

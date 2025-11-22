@@ -49,7 +49,7 @@ def test_wrap_document_injects_mainmatter(book_template: WrappableTemplate) -> N
 
 def test_manifest_defaults_are_applied(book_template: WrappableTemplate) -> None:
     wrapped = book_template.wrap_document("")
-    assert "\\def\\title{A LaTeX Book Template}" in wrapped
+    assert "\\newcommand{\\booktitle}{A LaTeX Book Template}" in wrapped
     assert "\\tableofcontents" in wrapped
     assert "\\makeglossaries" not in wrapped
     assert "\\newacronym" not in wrapped

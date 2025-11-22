@@ -406,7 +406,9 @@ class Template(WrappableTemplate):
     ) -> str | None:
         candidate = self._coerce_string(value)
         if not candidate:
+            print(f"DEBUG: candidate is empty")
             return None
+        print(f"DEBUG: candidate={candidate}")
         path = Path(candidate)
         suffix = path.suffix.lower()
         if suffix not in self._SIGNATURE_EXTENSIONS:
@@ -419,6 +421,7 @@ class Template(WrappableTemplate):
         if not path.exists():
             raise TemplateError(f"Signature asset '{path}' does not exist.")
         output_dir = self._coerce_string(context.get("output_dir"))
+        print(f"DEBUG: output_dir={output_dir}")
         mirrored = self._mirror_signature_asset(path, Path(output_dir)) if output_dir else path
         return self._format_latex_path(mirrored)
 
@@ -437,7 +440,11 @@ class Template(WrappableTemplate):
             result = produced
         else:
             target = asset_root / source.name
+            print(f"DEBUG: copying {source} to {target}")
             shutil.copy2(source, target)
+            print(f"DEBUG: target exists after copy? {target.exists()}")
+            if target.parent.exists():
+                print(f"DEBUG: parent dir content: {list(target.parent.iterdir())}")
             result = target
         try:
             return result.relative_to(output_dir)

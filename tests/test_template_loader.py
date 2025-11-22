@@ -28,5 +28,5 @@ def test_template_infers_templates_folder_when_path_missing(
     nested = Path("examples/diagrams")
     monkeypatch.chdir(nested)
 
-    runtime = load_template_runtime("../../template/nature")
-    assert runtime.instance.root.name == "nature"
+    runtime = load_template_runtime("../../src/texsmith/builtin_templates/letter")
+    assert runtime.instance.root.name == "letter"
