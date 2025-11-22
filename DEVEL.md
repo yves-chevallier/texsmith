@@ -62,8 +62,12 @@ Roadmap and development notes for TeXSmith. I keep this file as a running checkl
 - [x] Dynamically update the engine in `latexmkrc` (pdflatex, xelatex, lualatex)
 - [x] Put fonts and code into separate sty merged during build
 - [x] Consolidate CI
-- [ ] Serif/sans-serif toggle
-- [ ] Consolidate Book template
+- [x] Serif/sans-serif toggle
+- [x] Consolidate Book template
+- [ ] Demonstrate multi indexes (dates, ...)
+- [ ] Demonstrate acronyms in book
+- [ ] Demonstrate glossary in book
+- [ ] Fix API and pytest
 - [ ] Build snippet with pdflatex when possible (faster)
 - [ ] Complete docstring coverage across the project
 - [ ] Support glossaries (glossaries package)

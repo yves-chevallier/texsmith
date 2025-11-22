@@ -18,6 +18,11 @@ if TYPE_CHECKING:
 
 
 def _iterable_items(value: object) -> Iterable[object]:
+    """Normalize a value into an iterable, treating strings as scalars.
+
+    This helper ensures consistent processing of bibliography fields, which may be
+    single values (strings) or lists of values, by wrapping single items in a tuple.
+    """
     if isinstance(value, Iterable) and not isinstance(value, (str, bytes)):
         return value
     return ()
