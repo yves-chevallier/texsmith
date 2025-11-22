@@ -53,3 +53,5 @@ docs/assets/examples/*.png
 docs/assets/examples/*.pdf
 .coverage
 *.meta
+
+.texsmith/

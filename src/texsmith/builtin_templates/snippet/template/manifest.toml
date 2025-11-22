@@ -3,7 +3,7 @@ texsmith = ">=0.1,<1.0"
 
 [latex.template]
 name = "snippet"
-version = "0.1.0"
+version = "0.1.4"
 entrypoint = "template/template.tex"
 engine = "lualatex"
 shell_escape = true

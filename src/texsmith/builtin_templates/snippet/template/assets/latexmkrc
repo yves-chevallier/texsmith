@@ -1,13 +1,33 @@
+$bibtex_use = 2;
+$biber = 'biber %O %B';
+$root_filename = 'test';
+
 $pdf_mode = 4;
-# Enable preview only after a successful glossaries run. We gate via a flag file
-# named after the root job: %R.preview.ready
-$lualatex = qq{bash -lc 'TS_PREVIEW=\$( [ -f "%R.preview.ready" ] && echo 1 || echo 0 ); \
- export TS_PREVIEW; lualatex --shell-escape %O %S'};
+# Enable preview after at least one full pass (and after index/glossary helpers have run).
+$lualatex = q{bash -lc '
+  PREVIEW_READY="%R.preview.ready"
+
+  if [ -f "$PREVIEW_READY" ]; then
+    TS_PREVIEW=1
+  else
+    TS_PREVIEW=0
+  fi
+
+  export TS_PREVIEW
+  lualatex --shell-escape %O %S
+  status=$?
+
+  if [ $status -eq 0 ] && [ ! -f "$PREVIEW_READY" ]; then
+    touch "$PREVIEW_READY"
+  fi
+
+  exit $status
+'};
 
 if (system("which texindy >/dev/null 2>&1") == 0) {
-  $makeindex = 'texindy %O -o %D %S';
+  $makeindex = 'texindy %O -o %D %S && touch "%R.preview.ready"';
 } else {
-  $makeindex = 'makeindex %O -o %D %S';
+  $makeindex = 'makeindex %O -o %D %S && touch "%R.preview.ready"';
 }
 $clean_ext .= ' %R.run.xml %R.blg %R.preview.ready';
 
