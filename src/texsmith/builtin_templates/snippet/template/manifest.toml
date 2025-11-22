@@ -19,6 +19,7 @@ tlmgr_packages = [
     "hyperref",
     "tikz",
 ]
+fragments = ["ts-fonts", "ts-callouts", "ts-code", "ts-glossary", "ts-index"]
 
 [latex.template.attributes.language]
 default = "english"
@@ -85,6 +86,10 @@ sources = ["press.override.preamble", "press.preamble", "preamble"]
 [latex.template.slots.mainmatter]
 default = true
 depth = "section"
+
+[latex.template.slots.backmatter]
+depth = "section"
+strip_heading = true
 
 [latex.template.assets]
 "todolist.sty" = { source = "../common/todolist.sty" }

@@ -624,6 +624,7 @@ class TemplateInfo(BaseModel):
     shell_escape: bool = False
     texlive_year: int | None = None
     tlmgr_packages: list[str] = Field(default_factory=list)
+    fragments: list[str] | None = None
     override: list[str] = Field(default_factory=list)
     attributes: dict[str, TemplateAttributeSpec] = Field(default_factory=dict)
     assets: dict[str, TemplateAsset] = Field(default_factory=dict)

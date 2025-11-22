@@ -231,7 +231,13 @@ def load_template_runtime(template: str) -> TemplateRuntime:
     formatter_overrides = dict(template_instance.iter_formatter_overrides())
     extras_payload = getattr(template_instance, "extras", {}) or {}
     extras = {key: value for key, value in extras_payload.items()}
-    extras.setdefault("fragments", list(FRAGMENT_REGISTRY.default_fragment_names))
+    declared_fragments = (
+        list(template_instance.info.fragments) if template_instance.info.fragments is not None else None
+    )
+    extras.setdefault(
+        "fragments",
+        declared_fragments if declared_fragments is not None else [],
+    )
 
     return TemplateRuntime(
         instance=template_instance,

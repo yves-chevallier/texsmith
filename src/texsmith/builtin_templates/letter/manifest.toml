@@ -14,6 +14,7 @@ tlmgr_packages = [
     "microtype",
     "koma-script",
 ]
+fragments = ["ts-fonts", "ts-callouts", "ts-code", "ts-glossary", "ts-index"]
 
 [latex.template.attributes.cursive]
 default = false
@@ -116,6 +117,7 @@ sources = ["source_dir", "press._source_dir"]
 default = ""
 type = "string"
 allow_empty = true
+format = "raw"
 sources = ["output_dir"]
 
 [latex.template.attributes.signature_align]
@@ -164,6 +166,9 @@ sources = ["press.page_numbers", "page_numbers"]
 
 [latex.template.slots.mainmatter]
 default = true
+
+[latex.template.slots.backmatter]
+strip_heading = true
 
 [latex.template.assets]
 "fonts/modernline.otf" = { source = "fonts/modernline.otf" }

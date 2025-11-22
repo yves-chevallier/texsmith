@@ -344,8 +344,6 @@
 
 \backmatter
 
-\VAR{backmatter}
-
 \BLOCK{ if listoffigures }
 \ifnum\value{figure}>0
 \clearpage
@@ -359,9 +357,8 @@
 \fi
 \BLOCK{ endif }
 
-\BLOCK{ if acronyms }\printglossary[type=\acronymtype]\BLOCK{ endif }
-\BLOCK{ if glossary }\printglossary\BLOCK{ endif }
-\BLOCK{ if index_entries }\printindex\BLOCK{ endif }
+\VAR{backmatter}
+\VAR{fragment_backmatter}
 
 \BLOCK{ if citations }
 \begin{thebibliography}{\VAR{citations|length}}

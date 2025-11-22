@@ -18,6 +18,7 @@ tlmgr_packages = [
     "fontspec",
     "biblatex",
 ]
+fragments = ["ts-fonts", "ts-callouts", "ts-code", "ts-glossary", "ts-index"]
 
 [latex.template.attributes.base_level]
 default = 1
@@ -130,6 +131,10 @@ default = true
 depth = "section"
 
 [latex.template.slots.abstract]
+depth = "section"
+strip_heading = true
+
+[latex.template.slots.backmatter]
 depth = "section"
 strip_heading = true
 
