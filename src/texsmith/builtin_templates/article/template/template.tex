@@ -1,7 +1,7 @@
 \documentclass\VAR{documentclass_options}{article}
 
+\VAR{geometry_setup}
 \VAR{extra_packages}
-\usepackage{geometry}
 \usepackage{hyphenat}
 \usepackage[\VAR{language|default('english')}]{babel}
 \usepackage{booktabs}
@@ -29,19 +29,6 @@
 % Custom document preamble injected from front matter overrides.
 \VAR{preamble|safe}
 
-\BLOCK{ endif }
-
-\BLOCK{ set margin_style = margin|default('default')|lower }
-\BLOCK{ set margin_literal = margin_style not in ["narrow", "default", "wide"] }
-\BLOCK{ set geometry_extra = geometry_extra_options|default('')|trim }
-\BLOCK{ if margin_style == "narrow" }
-\geometry{margin=1.5cm\BLOCK{ if geometry_extra },\VAR{geometry_extra}\BLOCK{ endif }}
-\BLOCK{ elif margin_style == "wide" }
-\geometry{margin=3.0cm\BLOCK{ if geometry_extra },\VAR{geometry_extra}\BLOCK{ endif }}
-\BLOCK{ elif margin_literal }
-\geometry{margin=\VAR{margin}\BLOCK{ if geometry_extra },\VAR{geometry_extra}\BLOCK{ endif }}
-\BLOCK{ else }
-\geometry{\VAR{geometry_options}}
 \BLOCK{ endif }
 
 \BLOCK{ set has_title_metadata = title|default('')|trim }

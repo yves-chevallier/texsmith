@@ -1,0 +1,3 @@
+name = "ts-code"
+description = "Minted-based code listings used by Markdown code blocks."
+entrypoint = "texsmith.builtin_fragments.ts_code:create_fragment"

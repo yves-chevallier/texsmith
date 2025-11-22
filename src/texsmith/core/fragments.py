@@ -224,6 +224,7 @@ class FragmentRenderResult:
 
 
 BUILTIN_FRAGMENT_ORDER = [
+    "ts-geometry",
     "ts-fonts",
     "ts-callouts",
     "ts-code",

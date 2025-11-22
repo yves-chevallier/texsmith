@@ -1,8 +1,0 @@
-name = "ts-callouts"
-description = "Reusable callout styles shared by built-in templates."
-
-[[files]]
-path = "ts-callouts.sty.jinja"
-type = "package"
-slot = "extra_packages"
-output = "ts-callouts.sty"

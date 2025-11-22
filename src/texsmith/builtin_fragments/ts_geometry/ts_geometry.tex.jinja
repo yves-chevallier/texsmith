@@ -1,0 +1,7 @@
+\BLOCK{ set options = geometry_options|default('margin=2.5cm')|trim }
+\BLOCK{ if options }
+\usepackage[\VAR{options}]{geometry}
+\geometry{\VAR{options}}
+\BLOCK{ else }
+\usepackage{geometry}
+\BLOCK{ endif }

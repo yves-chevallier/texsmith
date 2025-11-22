@@ -1,0 +1,3 @@
+name = "ts-geometry"
+description = "Page layout setup driven by press.paper."
+entrypoint = "texsmith.builtin_fragments.ts_geometry:create_fragment"
