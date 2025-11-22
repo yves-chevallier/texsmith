@@ -104,7 +104,6 @@ sources = ["press.opening"]
 [latex.template.attributes.signature]
 default = ""
 type = "any"
-escape = "latex"
 sources = ["press.signature"]
 
 [latex.template.attributes.source_dir]

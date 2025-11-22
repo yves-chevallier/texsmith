@@ -109,31 +109,4 @@ Content here.
         assert r"\usepackage[french]{babel}" in content
 
 
-def test_nature_template_applies_table_override() -> None:
-    with TemporaryDirectory() as temp_dir:
-        temp_path = Path(temp_dir)
-        source = temp_path / "sample.html"
-        source.write_text(
-            """<table id="tbl-sample">
-<caption>Overview</caption>
-<tr><th>Col 1</th><th>Col 2</th></tr>
-<tr><td>Foo</td><td>Bar</td></tr>
-</table>""",
-            encoding="utf-8",
-        )
-        output_dir = temp_path / "build"
 
-        assert render is not None  # for type checkers
-        render(
-            input_path=source,
-            output=output_dir,
-            template=_template_path("nature"),
-        )
-
-        output_file = output_dir / "sample.tex"
-        assert output_file.exists()
-        content = output_file.read_text(encoding="utf-8")
-        assert r"\begin{tabular}{@{}ll@{}}" in content
-        assert r"\caption{Overview}\label{tbl-sample}" in content
-        assert r"\botrule" in content
-        assert r"\textbf{Col 1}" not in content

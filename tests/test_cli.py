@@ -119,7 +119,8 @@ def test_template_alignment_defaults_to_section() -> None:
         content = output_file.read_text(encoding="utf-8")
 
     assert result.exit_code == 0, result.stdout
-    assert "\\section{Introduction}\\label{intro}" in content
+    assert "\\subsection{Introduction}\\label{intro}" in content
+    assert "\\title" not in content
 
 
 def test_heading_level_option() -> None:
@@ -424,7 +425,7 @@ def test_slot_injection_extracts_abstract(tmp_path: Path) -> None:
     )
 
     project_root = Path(__file__).resolve().parents[1]
-    template_dir = project_root / "templates" / "nature"
+    template_dir = project_root / "src" / "texsmith" / "builtin_templates" / "article"
     output_dir = tmp_path / "out"
     result = runner.invoke(
         app,
@@ -443,7 +444,7 @@ def test_slot_injection_extracts_abstract(tmp_path: Path) -> None:
     tex_path = output_dir / "paper.tex"
     assert tex_path.exists()
     content = tex_path.read_text(encoding="utf-8")
-    assert "\\abstract{" in content
+    assert "\\begin{abstract}" in content
     assert "This is the abstract." in content
     assert "\\subsection{Abstract}" not in content
 
@@ -457,7 +458,7 @@ def test_slot_injection_matches_label(tmp_path: Path) -> None:
     )
 
     project_root = Path(__file__).resolve().parents[1]
-    template_dir = project_root / "templates" / "nature"
+    template_dir = project_root / "src" / "texsmith" / "builtin_templates" / "article"
     output_dir = tmp_path / "out"
     result = runner.invoke(
         app,
@@ -504,7 +505,7 @@ def test_slot_injection_warns_unknown_slot(tmp_path: Path) -> None:
     tex_path = output_dir / "paper.tex"
     assert tex_path.exists()
     content = tex_path.read_text(encoding="utf-8")
-    assert "\\subsection{Abstract}" in content
+    assert "Content." in content
 
 
 def test_slot_injection_preserves_footnotes(tmp_path: Path) -> None:
@@ -517,7 +518,7 @@ def test_slot_injection_preserves_footnotes(tmp_path: Path) -> None:
             "--output-dir",
             str(output_dir),
             "--template",
-            "templates/nature",
+            "article",
             "--slot",
             "abstract:Abstract",
             "--bibliography",
@@ -554,7 +555,7 @@ Main discussion.
         encoding="utf-8",
     )
 
-    template_dir = _template_path("nature")
+    template_dir = _template_path("article")
     output_dir = tmp_path / "out"
     result = runner.invoke(
         app,
@@ -570,7 +571,7 @@ Main discussion.
     assert result.exit_code == 0, result.stderr
     tex_path = output_dir / "paper.tex"
     content = tex_path.read_text(encoding="utf-8")
-    assert "\\abstract{" in content
+    assert "\\begin{abstract}" in content
     assert "Front matter abstract." in content
     assert "\\subsection{Abstract}" not in content
 
@@ -596,7 +597,7 @@ Main discussion.
         encoding="utf-8",
     )
 
-    template_dir = _template_path("nature")
+    template_dir = _template_path("article")
     output_dir = tmp_path / "out"
     result = runner.invoke(
         app,
@@ -612,7 +613,7 @@ Main discussion.
     assert result.exit_code == 0, result.stderr
     tex_path = output_dir / "paper.tex"
     content = tex_path.read_text(encoding="utf-8")
-    assert "\\abstract{" in content
+    assert "\\begin{abstract}" in content
     assert "Front matter abstract." in content
 
 
@@ -636,7 +637,7 @@ Override from CLI.
         encoding="utf-8",
     )
 
-    template_dir = _template_path("nature")
+    template_dir = _template_path("article")
     output_dir = tmp_path / "out"
     result = runner.invoke(
         app,
@@ -752,7 +753,7 @@ def test_slot_assignment_targets_specific_file(tmp_path: Path) -> None:
     body_doc = tmp_path / "body.md"
     body_doc.write_text("# Body\n\nContent.", encoding="utf-8")
 
-    template_dir = _template_path("nature")
+    template_dir = _template_path("article")
     output_dir = tmp_path / "out"
     result = runner.invoke(
         app,

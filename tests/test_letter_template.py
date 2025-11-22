@@ -122,7 +122,7 @@ def test_letter_template_embeds_signature_image(tmp_path) -> None:
     context = template.prepare_context(
         "Body,\n\nWith regards,",
         overrides=build_overrides(
-            signature=signature.name,
+            signature=str(signature),
             source_dir=str(tmp_path),
             output_dir=str(output_dir),
         ),

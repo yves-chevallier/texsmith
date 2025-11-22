@@ -108,6 +108,7 @@ normaliser = "callout_style"
 default = ""
 type = "string"
 allow_empty = true
+format = "raw"
 sources = ["press.override.preamble", "press.preamble", "preamble"]
 
 [latex.template.attributes.bibliography_style]

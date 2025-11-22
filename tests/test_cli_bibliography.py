@@ -18,7 +18,7 @@ def _write(tmp_path: Path, name: str, content: str) -> Path:
 
 def _template_path(name: str) -> Path:
     project_root = Path(__file__).resolve().parents[1]
-    return project_root / "templates" / name
+    return project_root / "src" / "texsmith" / "builtin_templates" / name
 
 
 def test_cli_bibliography_list_outputs_entries(tmp_path: Path) -> None:
@@ -137,7 +137,7 @@ def test_cli_front_matter_bibliography_fetches_doi(monkeypatch, tmp_path: Path) 
         """,
     )
 
-    template_dir = _template_path("nature")
+    template_dir = _template_path("article")
     output_dir = tmp_path / "out"
     runner = CliRunner()
     result = runner.invoke(
@@ -199,7 +199,7 @@ def test_cli_front_matter_bibliography_uses_output_cache(monkeypatch, tmp_path: 
         """,
     )
 
-    template_dir = _template_path("nature")
+    template_dir = _template_path("article")
     output_dir = tmp_path / "out"
     runner = CliRunner()
 
