@@ -1,8 +1,0 @@
-name = "ts-fonts"
-description = "Font selection and fallbacks for TeXSmith templates."
-
-[[files]]
-path = "ts-fonts.sty.jinja"
-type = "package"
-slot = "extra_packages"
-output = "ts-fonts.sty"

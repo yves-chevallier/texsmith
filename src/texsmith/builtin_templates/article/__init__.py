@@ -8,6 +8,7 @@ from typing import Any, ClassVar
 import unicodedata
 
 from texsmith.adapters.latex.utils import escape_latex_chars
+from texsmith.core.paper import resolve_geometry_settings
 from texsmith.core.templates import TemplateError, WrappableTemplate
 
 
@@ -83,26 +84,8 @@ class Template(WrappableTemplate):
 
         context.pop("press", None)
 
-        paper_option = self._resolve_attribute(context, "paper")
-        orientation_value = self._resolve_attribute(context, "orientation")
-        orientation_option = "landscape" if orientation_value == "landscape" else ""
-
-        options = [option for option in (paper_option, orientation_option) if option]
-        geometry_options = ["margin=2.5cm"]
-        if paper_option:
-            geometry_options.append(paper_option)
-        if orientation_option:
-            geometry_options.append(orientation_option)
-        extra_geometry = self._format_geometry_overrides(context.get("geometry"))
-        geometry_options.extend(extra_geometry)
-
         engine_default = self.info.engine or "pdflatex"
 
-        context["paper_option"] = paper_option
-        context["orientation_option"] = orientation_option
-        context["documentclass_options"] = f"[{','.join(options)}]" if options else ""
-        context["geometry_options"] = ",".join(geometry_options)
-        context["geometry_extra_options"] = ",".join(extra_geometry)
         context.setdefault("latex_engine", engine_default)
         context.setdefault("requires_unicode_engine", False)
         context.setdefault("unicode_chars", "")
@@ -116,6 +99,21 @@ class Template(WrappableTemplate):
             context["requires_unicode_engine"] = True
 
         context["callout_style"] = self._normalise_callout_style(context.get("callout_style"))
+
+        geometry = resolve_geometry_settings(context, overrides)
+        context["documentclass_options"] = geometry.documentclass_options
+        context["paper_option"] = geometry.paper_option
+        context["orientation_option"] = geometry.orientation_option
+        context["geometry_options"] = geometry.geometry_options
+        context["geometry_extra_options"] = geometry.geometry_extra_options
+        if "geometry_setup" not in context:
+            if geometry.geometry_options:
+                context["geometry_setup"] = (
+                    f"\\usepackage[{geometry.geometry_options}]{{geometry}}\n"
+                    f"\\geometry{{{geometry.geometry_options}}}"
+                )
+            else:
+                context["geometry_setup"] = "\\usepackage{geometry}"
 
         return context
 
@@ -192,39 +190,6 @@ class Template(WrappableTemplate):
         if candidate not in {"fancy", "classic", "minimal"}:
             return "fancy"
         return candidate
-
-    def _format_geometry_overrides(self, value: Any) -> list[str]:
-        if not isinstance(value, Mapping):
-            return []
-        formatted: list[str] = []
-        for key, raw in value.items():
-            option = self._coerce_string(key)
-            if not option:
-                continue
-            if isinstance(raw, bool):
-                if raw:
-                    formatted.append(option)
-                continue
-            if raw is None:
-                continue
-            string_value = self._coerce_string(raw)
-            if string_value is None:
-                continue
-            lowered = string_value.lower()
-            if lowered == "true":
-                formatted.append(option)
-                continue
-            if lowered == "false":
-                continue
-            formatted.append(f"{option}={string_value}")
-        return formatted
-
-    def _resolve_attribute(self, context: Mapping[str, Any], name: str) -> str | None:
-        value = self._coerce_string(context.get(name))
-        if value:
-            return value
-        default_value = self.info.get_attribute_default(name)
-        return self._coerce_string(default_value)
 
     def wrap_document(
         self,

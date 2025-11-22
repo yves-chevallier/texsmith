@@ -10,6 +10,7 @@ from jinja2 import meta
 
 from texsmith.core.callouts import DEFAULT_CALLOUTS, merge_callouts, normalise_callouts
 from texsmith.core.fragments import FRAGMENT_REGISTRY, render_fragments
+from texsmith.core.paper import resolve_geometry_settings
 from texsmith.core.templates import TemplateRuntime
 from texsmith.core.templates.manifest import TemplateError
 
@@ -144,7 +145,7 @@ def wrap_template_document(
                     "present": list(font_match.present_fonts),
                     "missing": list(font_match.missing_fonts),
                 },
-            )
+        )
 
     # Render fragments and inject declarations into template variables.
     source_dir = None
