@@ -16,6 +16,8 @@ from .manifest import (
     _BABEL_LANGUAGE_ALIASES,
 )
 
+from texsmith.core.fragments import FRAGMENT_REGISTRY
+
 if TYPE_CHECKING:
     from texsmith.adapters.latex.formatter import LaTeXFormatter
 
@@ -229,7 +231,7 @@ def load_template_runtime(template: str) -> TemplateRuntime:
     formatter_overrides = dict(template_instance.iter_formatter_overrides())
     extras_payload = getattr(template_instance, "extras", {}) or {}
     extras = {key: value for key, value in extras_payload.items()}
-    extras.setdefault("fragments", ["ts-fonts", "ts-callouts", "ts-code", "ts-glossary"])
+    extras.setdefault("fragments", list(FRAGMENT_REGISTRY.default_fragment_names))
 
     return TemplateRuntime(
         instance=template_instance,

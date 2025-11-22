@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Iterable, Mapping
+from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -19,43 +19,70 @@ class Fragment:
     template_path: Path
 
 
-_BUILTIN_FRAGMENTS: dict[str, Path] = {
-    "ts-fonts": Path(__file__).resolve().parent.parent
-    / "builtin_templates"
-    / "common"
-    / "ts-fonts.sty.jinja",
-    "ts-callouts": Path(__file__).resolve().parent.parent
-    / "builtin_templates"
-    / "common"
-    / "ts-callouts.sty.jinja",
-    "ts-code": Path(__file__).resolve().parent.parent
-    / "builtin_templates"
-    / "common"
-    / "ts-code.jinja.tex",
-    "ts-glossary": Path(__file__).resolve().parent.parent
-    / "builtin_templates"
-    / "common"
-    / "ts-glossary.sty.jinja",
-}
+class FragmentRegistry:
+    """Central registry resolving fragment templates."""
+
+    def __init__(self, *, root: Path, default_order: Sequence[str]) -> None:
+        self._root = root
+        self._default_order = list(default_order)
+        self._fragments: dict[str, Path] = {}
+        self._discover_builtins()
+
+    @property
+    def default_fragment_names(self) -> list[str]:
+        return [name for name in self._default_order if name in self._fragments]
+
+    def register_fragment(self, name: str, path: Path) -> None:
+        self._fragments[name] = path
+
+    def resolve(self, name: str, *, source_dir: Path | None = None) -> Fragment:
+        candidate: Path | None
+        if name in self._fragments:
+            candidate = self._fragments[name]
+        else:
+            path_candidate = Path(name)
+            if not path_candidate.is_absolute() and source_dir is not None:
+                path_candidate = (source_dir / path_candidate).resolve()
+            candidate = path_candidate
+        if candidate is None or not candidate.exists():
+            raise TemplateError(f"Fragment '{name}' could not be resolved.")
+        return Fragment(name=self._package_name(name), template_path=candidate)
+
+    def _discover_builtins(self) -> None:
+        if not self._root.exists():
+            return
+        patterns = ("*.sty.jinja", "*.jinja.tex")
+        for pattern in patterns:
+            for path in sorted(self._root.glob(pattern)):
+                name = self._package_name(path.name)
+                if name not in self._fragments:
+                    self._fragments[name] = path
+
+    @staticmethod
+    def _package_name(identifier: str) -> str:
+        candidate = Path(identifier)
+        name = candidate.name
+        for suffix in (".sty.jinja", ".jinja.tex"):
+            if name.endswith(suffix):
+                name = name[: -len(suffix)]
+        return Path(name).stem
+
+
+BUILTIN_FRAGMENT_ORDER = [
+    "ts-fonts",
+    "ts-callouts",
+    "ts-code",
+    "ts-glossary",
+    "ts-index",
+]
+
+FRAGMENT_ROOT = Path(__file__).resolve().parent.parent / "builtin_templates" / "common"
+FRAGMENT_REGISTRY = FragmentRegistry(root=FRAGMENT_ROOT, default_order=BUILTIN_FRAGMENT_ORDER)
 
 
 def register_fragment(name: str, path: Path) -> None:
     """Register a custom fragment path (mainly for extensions/tests)."""
-    _BUILTIN_FRAGMENTS[name] = path
-
-
-def _resolve_fragment(name: str, *, source_dir: Path | None = None) -> Fragment:
-    candidate: Path | None = None
-    if name in _BUILTIN_FRAGMENTS:
-        candidate = _BUILTIN_FRAGMENTS[name]
-    else:
-        path_candidate = Path(name)
-        if not path_candidate.is_absolute() and source_dir is not None:
-            path_candidate = (source_dir / path_candidate).resolve()
-        candidate = path_candidate
-    if candidate is None or not candidate.exists():
-        raise TemplateError(f"Fragment '{name}' could not be resolved.")
-    return Fragment(name=Path(name).stem, template_path=candidate)
+    FRAGMENT_REGISTRY.register_fragment(name, path)
 
 
 def render_fragments(
@@ -71,7 +98,7 @@ def render_fragments(
     rendered_packages: list[str] = []
     written: list[Path] = []
     for name in names:
-        fragment = _resolve_fragment(name, source_dir=source_dir)
+        fragment = FRAGMENT_REGISTRY.resolve(name, source_dir=source_dir)
         env = _build_environment(fragment.template_path.parent)
         template = env.get_template(fragment.template_path.name)
         payload = template.render(**context)
@@ -84,4 +111,4 @@ def render_fragments(
     return rendered_packages, written
 
 
-__all__ = ["Fragment", "register_fragment", "render_fragments"]
+__all__ = ["Fragment", "FragmentRegistry", "FRAGMENT_REGISTRY", "register_fragment", "render_fragments"]

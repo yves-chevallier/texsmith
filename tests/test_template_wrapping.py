@@ -63,7 +63,6 @@ def test_wrap_document_includes_index_when_flag_true(
     context = book_template.prepare_context("")
     context["index_entries"] = True
     wrapped = book_template.wrap_document("", context=context)
-    assert "\\makeindex" in wrapped
     assert "\\printindex" in wrapped
 
 
@@ -141,8 +140,6 @@ def test_documentclass_defaults(article_template: WrappableTemplate) -> None:
     assert r"\documentclass[a4paper]{article}" in wrapped
     assert "landscape]{article}" not in wrapped
     assert r"\geometry{margin=2.5cm,a4paper}" in wrapped
-    assert "\\usepackage{imakeidx}" not in wrapped
-    assert "\\usepackage[acronym]{glossaries}" not in wrapped
     assert "\\makeindex" not in wrapped
     assert "\\printindex" not in wrapped
     assert "\\newacronym" not in wrapped
@@ -192,29 +189,6 @@ def test_rejects_invalid_orientation_option(article_template: WrappableTemplate)
         article_template.wrap_document("", overrides={"orientation": "diagonal"})
 
 
-def test_article_includes_index_when_flag_true(
-    article_template: WrappableTemplate,
-) -> None:
-    context = article_template.prepare_context("")
-    context["index_entries"] = True
-    context["index_engine"] = "texindy"
-    wrapped = article_template.wrap_document("", context=context)
-    assert "\\usepackage[xindy]{imakeidx}" in wrapped
-    assert "\\makeindex" in wrapped
-    assert "\\printindex" in wrapped
-
-
-def test_article_falls_back_to_makeindex_when_xindy_missing(
-    article_template: WrappableTemplate,
-) -> None:
-    context = article_template.prepare_context("")
-    context["index_entries"] = True
-    context["index_engine"] = "makeindex"
-    wrapped = article_template.wrap_document("", context=context)
-    assert "\\usepackage{imakeidx}" in wrapped
-    assert "\\usepackage[xindy]{imakeidx}" not in wrapped
-
-
 def test_article_includes_acronyms_when_present(
     article_template: WrappableTemplate, tmp_path: Path
 ) -> None:
@@ -236,6 +210,52 @@ def test_article_includes_acronyms_when_present(
     fragment = (tmp_path / "ts-glossary.sty").read_text(encoding="utf-8")
     assert "\\makeglossaries" in fragment
     assert "\\newacronym{HTTP}{HTTP}{Hypertext Transfer Protocol}" in fragment
+
+
+def test_ts_index_fragment_uses_texindy(
+    article_template: WrappableTemplate,
+    tmp_path: Path,
+) -> None:
+    state = DocumentState()
+    state.has_index_entries = True
+    state.index_entries.append(("Alpha",))
+    result = wrap_template_document(
+        template=article_template,
+        default_slot="mainmatter",
+        slot_outputs={"mainmatter": ""},
+        document_state=state,
+        template_overrides={"index_engine": "texindy"},
+        output_dir=tmp_path,
+        copy_assets=False,
+    )
+
+    assert "\\usepackage{ts-index}" in result.latex_output
+    ts_index = (tmp_path / "ts-index.sty").read_text(encoding="utf-8")
+    assert "\\RequirePackage[xindy]{imakeidx}" in ts_index
+    assert "\\makeindex" in ts_index
+
+
+def test_ts_index_fragment_falls_back_to_makeindex(
+    article_template: WrappableTemplate,
+    tmp_path: Path,
+) -> None:
+    state = DocumentState()
+    state.has_index_entries = True
+    state.index_entries.append(("Beta",))
+    result = wrap_template_document(
+        template=article_template,
+        default_slot="mainmatter",
+        slot_outputs={"mainmatter": ""},
+        document_state=state,
+        template_overrides={"index_engine": "makeindex"},
+        output_dir=tmp_path,
+        copy_assets=False,
+    )
+
+    ts_index = (tmp_path / "ts-index.sty").read_text(encoding="utf-8")
+    assert "\\RequirePackage[xindy]{imakeidx}" not in ts_index
+    assert "\\RequirePackage{imakeidx}" in ts_index
+    assert "\\makeindex" in ts_index
 
 
 def test_article_prefers_lualatex_for_latin_text(

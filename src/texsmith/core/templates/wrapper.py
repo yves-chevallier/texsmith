@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import Any, Mapping
 
 from texsmith.core.callouts import DEFAULT_CALLOUTS, merge_callouts, normalise_callouts
-from texsmith.core.fragments import render_fragments
+from texsmith.core.fragments import FRAGMENT_REGISTRY, render_fragments
 from texsmith.core.templates import TemplateRuntime
 
 from texsmith.core.conversion.debug import ensure_emitter, record_event
@@ -153,7 +153,7 @@ def wrap_template_document(
         if template_runtime is not None:
             fragment_names = list(template_runtime.extras.get("fragments", []))
         else:
-            fragment_names = ["ts-fonts", "ts-callouts", "ts-code", "ts-glossary"]
+            fragment_names = list(FRAGMENT_REGISTRY.default_fragment_names)
     callout_overrides = overrides_payload.get("callouts") if overrides_payload else None
     callouts_defs = normalise_callouts(
         merge_callouts(
