@@ -32,8 +32,9 @@ To mimic this behavior in Markdown, the `texsmith.index` extension provides the
 hashtag syntax:
 
 ```markdown
-#[a] One level index entry in default index
-#[a][b][c](registry) Three levels nesting in the registry index
+#[a] One level index entry in the default index
+#[a][b][c] Three-level entry in the default index
+{index:registry}[Foo][Bar] Entry nested twice under the `registry` index
 #[*a*] Formatted index entry in default index
 #[**a**] Bold formatted index entry in default index
 #[***a***] Bold italic formatted index entry in default index

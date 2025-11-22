@@ -1,8 +1,7 @@
 \documentclass[9pt,twoside]{memoir}
-\usepackage{textcomp} % For ©, ™
-\usepackage{amsmath} % For \text
-\usepackage{gensymb} % For °, ℃, ℉, etc.
 
+\usepackage{amsmath} % Support align, and text in math mode
+\usepackage{amssymb} % Additional math symbols
 
 \usepackage[
   colorlinks=true,
@@ -16,13 +15,12 @@
 
 \VAR{extra_packages}
 \usepackage[svgnames,dvipsnames,x11names]{xcolor}
-\usepackage{nicefrac}
+\usepackage{nicefrac} % For support of: ½, ⅔...
 \usepackage{fancyhdr}
-\usepackage[normalem]{ulem}
-\usepackage{graphicx}
+\usepackage[normalem]{ulem} % for \sout (strikethrough)
+\usepackage{graphicx} % For including images
 \usepackage{fontawesome5}
 \usepackage{multicol}
-\usepackage{stackengine}
 \usepackage{booktabs}
 \usepackage{minted}
 \usepackage{todolist}
@@ -90,8 +88,6 @@
 \setlength{\cftsubsectionnumwidth}{3.5em}
 \setlength{\cftfigurenumwidth}{3em}
 \setlength{\cfttablenumwidth}{3em}
-
-\captionsetup[table]{skip=10pt}
 
 % Make quotations italic and smaller
 \AtBeginEnvironment{displayquote}{\small\itshape}
@@ -277,11 +273,6 @@
 
 % Highlight text in yellow
 \newtcbox{\hl}{on line, boxrule=0.5pt, colframe=black, colback=yellow!30, sharp corners, boxsep=0pt, left=2pt, right=2pt, top=2pt, bottom=2pt}
-
-% For exercises and solutions
-\newcommand\correctchoice{\stackinset{c}{}{c}{}{$\times$}{$\bigcirc$}}
-\newcommand\choice{$\bigcirc$}
-
 
 \newcommand{\booktitle}{\VAR{title}}
 \newcommand{\booksubtitle}{\VAR{subtitle}}
