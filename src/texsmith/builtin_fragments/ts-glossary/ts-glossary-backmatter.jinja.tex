@@ -1,0 +1,5 @@
+\BLOCK{ set raw_glossary = glossary|default(false) }
+\BLOCK{ if acronyms or raw_glossary }
+\BLOCK{ if acronyms }\printglossary[type=\acronymtype, title=List of Acronyms]\BLOCK{ endif }
+\BLOCK{ if raw_glossary }\printglossary\BLOCK{ endif }
+\BLOCK{ endif }

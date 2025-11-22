@@ -24,6 +24,7 @@ tlmgr_packages = [
     "xunicode",
 ]
 override = ["codeblock.tex", "codeinline.tex"]
+fragments = ["ts-fonts", "ts-callouts", "ts-code", "ts-glossary", "ts-index"]
 
 [latex.template.attributes.base_level]
 default = 0

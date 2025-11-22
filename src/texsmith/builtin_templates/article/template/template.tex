@@ -73,8 +73,8 @@
 
 \VAR{mainmatter}
 
-\BLOCK{ if acronyms }\printglossary[type=\acronymtype, title=List of Acronyms]\BLOCK{ endif }
-\BLOCK{ if has_index or index_entries }\printindex\BLOCK{ endif }
+\VAR{backmatter}
+\VAR{fragment_backmatter}
 
 \BLOCK{ if citations and bibliography_resource }
 \printbibliography

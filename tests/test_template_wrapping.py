@@ -3,6 +3,7 @@ from pathlib import Path
 import pytest
 
 from texsmith.core.context import DocumentState
+from texsmith.core.fragments import register_fragment
 from texsmith.core.templates import (
     TemplateError,
     WrappableTemplate,
@@ -57,13 +58,24 @@ def test_manifest_defaults_are_applied(book_template: WrappableTemplate) -> None
     assert "\\printindex" not in wrapped
 
 
-def test_wrap_document_includes_index_when_flag_true(
-    book_template: WrappableTemplate,
+def test_wrap_template_document_includes_index_when_flag_true(
+    book_template: WrappableTemplate, tmp_path: Path
 ) -> None:
-    context = book_template.prepare_context("")
-    context["index_entries"] = True
-    wrapped = book_template.wrap_document("", context=context)
-    assert "\\printindex" in wrapped
+    state = DocumentState()
+    state.has_index_entries = True
+    state.index_entries.append(("Alpha",))
+    result = wrap_template_document(
+        template=book_template,
+        default_slot="mainmatter",
+        slot_outputs={"mainmatter": ""},
+        document_state=state,
+        template_overrides=None,
+        output_dir=tmp_path,
+        copy_assets=False,
+    )
+    assert "\\usepackage{ts-index}" in result.latex_output
+    assert "\\printindex" in result.latex_output
+    assert "\\printindex" in result.template_context.get("fragment_backmatter", "")
 
 
 def test_wrap_template_document_exposes_index_terms(
@@ -212,6 +224,72 @@ def test_article_includes_acronyms_when_present(
     assert "\\newacronym{HTTP}{HTTP}{Hypertext Transfer Protocol}" in fragment
 
 
+def test_fragment_targeting_slot_is_rejected(
+    article_template: WrappableTemplate, tmp_path: Path
+) -> None:
+    frag_dir = tmp_path / "frag-slot"
+    frag_dir.mkdir()
+    (frag_dir / "inline.tex").write_text("Hello", encoding="utf-8")
+    (frag_dir / "fragment.toml").write_text(
+        "\n".join(
+            [
+                'name = "tmp-slot-frag"',
+                '[[files]]',
+                'path = "inline.tex"',
+                'type = "inline"',
+                'slot = "mainmatter"',
+            ]
+        ),
+        encoding="utf-8",
+    )
+    register_fragment(frag_dir)
+
+    with pytest.raises(TemplateError):
+        wrap_template_document(
+            template=article_template,
+            default_slot="mainmatter",
+            slot_outputs={"mainmatter": ""},
+            document_state=DocumentState(),
+            template_overrides=None,
+            output_dir=tmp_path,
+            copy_assets=False,
+            fragments=["tmp-slot-frag"],
+        )
+
+
+def test_fragment_targeting_unknown_variable_is_rejected(
+    article_template: WrappableTemplate, tmp_path: Path
+) -> None:
+    frag_dir = tmp_path / "frag-unknown"
+    frag_dir.mkdir()
+    (frag_dir / "inline.tex").write_text("Hello", encoding="utf-8")
+    (frag_dir / "fragment.toml").write_text(
+        "\n".join(
+            [
+                'name = "tmp-unknown-frag"',
+                '[[files]]',
+                'path = "inline.tex"',
+                'type = "inline"',
+                'slot = "unknown_variable"',
+            ]
+        ),
+        encoding="utf-8",
+    )
+    register_fragment(frag_dir)
+
+    with pytest.raises(TemplateError):
+        wrap_template_document(
+            template=article_template,
+            default_slot="mainmatter",
+            slot_outputs={"mainmatter": ""},
+            document_state=DocumentState(),
+            template_overrides=None,
+            output_dir=tmp_path,
+            copy_assets=False,
+            fragments=["tmp-unknown-frag"],
+        )
+
+
 def test_ts_index_fragment_uses_texindy(
     article_template: WrappableTemplate,
     tmp_path: Path,
@@ -229,6 +307,7 @@ def test_ts_index_fragment_uses_texindy(
         copy_assets=False,
     )
 
+    assert "\\printindex" in result.latex_output
     assert "\\usepackage{ts-index}" in result.latex_output
     ts_index = (tmp_path / "ts-index.sty").read_text(encoding="utf-8")
     assert "\\RequirePackage[xindy]{imakeidx}" in ts_index
@@ -252,6 +331,7 @@ def test_ts_index_fragment_falls_back_to_makeindex(
         copy_assets=False,
     )
 
+    assert "\\printindex" in result.latex_output
     ts_index = (tmp_path / "ts-index.sty").read_text(encoding="utf-8")
     assert "\\RequirePackage[xindy]{imakeidx}" not in ts_index
     assert "\\RequirePackage{imakeidx}" in ts_index

@@ -6,9 +6,12 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Mapping
 
+from jinja2 import meta
+
 from texsmith.core.callouts import DEFAULT_CALLOUTS, merge_callouts, normalise_callouts
 from texsmith.core.fragments import FRAGMENT_REGISTRY, render_fragments
 from texsmith.core.templates import TemplateRuntime
+from texsmith.core.templates.manifest import TemplateError
 
 from texsmith.core.conversion.debug import ensure_emitter, record_event
 from texsmith.core.diagnostics import DiagnosticEmitter
@@ -56,6 +59,8 @@ def wrap_template_document(
         main_slot_content,
         overrides=overrides_payload,
     )
+    template_context.setdefault("fragment_backmatter", "")
+    template_context.setdefault("extra_packages", "")
     root_name: str | None = None
     if output_name:
         root_name = Path(output_name).stem
@@ -141,7 +146,7 @@ def wrap_template_document(
                 },
             )
 
-    # Render fragments and inject \usepackage declarations.
+    # Render fragments and inject declarations into template variables.
     source_dir = None
     overrides_press = overrides_payload.get("press") if overrides_payload else None
     if isinstance(overrides_press, Mapping):
@@ -151,9 +156,10 @@ def wrap_template_document(
     fragment_names = list(fragments or [])
     if not fragment_names:
         if template_runtime is not None:
-            fragment_names = list(template_runtime.extras.get("fragments", []))
+            fragment_names = list(template_runtime.extras.get("fragments") or [])
         else:
-            fragment_names = list(FRAGMENT_REGISTRY.default_fragment_names)
+            manifest_fragments = getattr(template.info, "fragments", None)
+            fragment_names = list(manifest_fragments or [])
     callout_overrides = overrides_payload.get("callouts") if overrides_payload else None
     callouts_defs = normalise_callouts(
         merge_callouts(
@@ -161,7 +167,8 @@ def wrap_template_document(
         )
     )
     template_context.setdefault("callouts_definitions", callouts_defs)
-    rendered_packages: list[str] = []
+    variable_injections: dict[str, list[str]] = {}
+    fragment_providers: dict[str, list[str]] = {}
     if fragment_names:
         fragment_context: dict[str, Any] = dict(template_context)
         if overrides_payload:
@@ -170,17 +177,35 @@ def wrap_template_document(
             if isinstance(press_section, Mapping):
                 for key, value in press_section.items():
                     fragment_context.setdefault(key, value)
-        rendered_packages, _ = render_fragments(
+        fragment_result = render_fragments(
             fragment_names,
             context=fragment_context,
             output_dir=output_dir,
             source_dir=source_dir,
         )
-        template_context["extra_packages"] = "\n".join(
-            f"\\usepackage{{{pkg}}}" for pkg in rendered_packages
-        )
-    else:
-        template_context.setdefault("extra_packages", "")
+        variable_injections = fragment_result.variable_injections
+        fragment_providers = fragment_result.providers
+
+    if variable_injections:
+        declared_slots, _default_slot = template.info.resolve_slots()
+        declared_slot_names = set(declared_slots.keys())
+        declared_vars = _discover_template_variables(template)
+        for variable_name, injections in variable_injections.items():
+            if variable_name in declared_slot_names:
+                raise TemplateError(
+                    f"Fragments cannot target slot '{variable_name}' in template '{template.info.name}'."
+                )
+            if declared_vars is not None and variable_name not in declared_vars:
+                providers = fragment_providers.get(variable_name, [])
+                provider_hint = f" required by fragment '{providers[0]}'" if providers else ""
+                raise TemplateError(
+                    f"Template '{template.info.name}' doesn't declare variable '{variable_name}'"
+                    f"{provider_hint}."
+                )
+            base = template_context.get(variable_name, "")
+            parts: list[str] = [base] if base else []
+            parts.extend(injections)
+            template_context[variable_name] = "\n".join(part for part in parts if part)
 
     # Append pdfLaTeX-specific packages when not using LuaLaTeX.
     extra_lines = [line for line in template_context.get("extra_packages", "").splitlines() if line]
@@ -223,6 +248,17 @@ def wrap_template_document(
         output_path=output_path,
         asset_paths=asset_paths,
     )
+
+
+def _discover_template_variables(template: WrappableTemplate) -> set[str] | None:
+    """Return undeclared variables referenced by the template entrypoint."""
+    env = template.environment
+    try:
+        source, _, _ = env.loader.get_source(env, template.info.entrypoint)
+    except Exception:
+        return None
+    parsed = env.parse(source)
+    return set(meta.find_undeclared_variables(parsed))
 
 
 __all__ = ["TemplateWrapResult", "wrap_template_document"]

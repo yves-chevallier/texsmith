@@ -1,0 +1,8 @@
+name = "ts-code"
+description = "Minted-based code listings used by Markdown code blocks."
+
+[[files]]
+path = "ts-code.jinja.tex"
+type = "package"
+slot = "extra_packages"
+output = "ts-code.sty"

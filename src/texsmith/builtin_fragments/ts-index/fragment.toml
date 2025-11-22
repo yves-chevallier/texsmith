@@ -1,0 +1,13 @@
+name = "ts-index"
+description = "Index helpers with backmatter insertion."
+
+[[files]]
+path = "ts-index.sty.jinja"
+type = "package"
+slot = "extra_packages"
+output = "ts-index.sty"
+
+[[files]]
+path = "ts-index-backmatter.jinja.tex"
+type = "inline"
+slot = "fragment_backmatter"
