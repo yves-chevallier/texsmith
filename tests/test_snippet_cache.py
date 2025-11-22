@@ -24,6 +24,7 @@ def _build_block(content: str = "print('Hello')") -> snippet.SnippetBlock:
 def test_ensure_snippet_assets_reuses_cached_artifacts(tmp_path, monkeypatch) -> None:
     monkeypatch.setenv("TEXSMITH_CACHE_DIR", str(tmp_path / "cache-root"))
     monkeypatch.setattr(snippet, "_SNIPPET_CACHE", None, raising=False)
+    monkeypatch.setattr(snippet, "_WORKSPACE_CACHES", {}, raising=False)
     block = _build_block()
 
     cache = snippet._resolve_cache()
@@ -54,3 +55,47 @@ def test_ensure_snippet_assets_reuses_cached_artifacts(tmp_path, monkeypatch) ->
     assert assets.pdf.read_bytes() == pdf_source.read_bytes()
     assert assets.png.read_bytes() == png_source.read_bytes()
     assert compile_called["value"] is False
+
+
+def test_workspace_cache_under_texsmith_folder(tmp_path, monkeypatch) -> None:
+    project_root = tmp_path / "project"
+    source_path = project_root / "docs" / "page.md"
+    source_path.parent.mkdir(parents=True, exist_ok=True)
+
+    workspace_cache = project_root / ".texsmith" / "snippets"
+    workspace_cache.mkdir(parents=True, exist_ok=True)
+
+    block = _build_block()
+    pdf_source = workspace_cache / snippet.asset_filename(block.digest, ".pdf")
+    png_source = workspace_cache / snippet.asset_filename(block.digest, ".png")
+    pdf_source.write_bytes(b"%PDF-WORKSPACE%")
+    png_source.write_bytes(b"\x89PNG\r\nWORKSPACE")
+
+    monkeypatch.setattr(snippet, "_SNIPPET_CACHE", None, raising=False)
+    monkeypatch.setattr(snippet, "_WORKSPACE_CACHES", {}, raising=False)
+    cache = snippet._resolve_workspace_cache(source_path)
+    assert cache is not None
+    cache.store(block.digest, pdf_source, png_source, template_version=snippet._snippet_template_version())
+    cache.flush()
+
+    compile_called = {"value": False}
+
+    def _fail_compile(*_args, **_kwargs) -> Path:
+        compile_called["value"] = True
+        raise AssertionError("Snippet compilation should be skipped when workspace cache exists.")
+
+    monkeypatch.setattr(snippet, "_compile_pdf", _fail_compile)
+
+    destination = project_root / "site" / "snippets"
+    assets = snippet.ensure_snippet_assets(
+        block,
+        output_dir=destination,
+        source_path=source_path,
+        transparent_corner=False,
+    )
+
+    assert assets.pdf.read_bytes() == pdf_source.read_bytes()
+    assert assets.png.read_bytes() == png_source.read_bytes()
+    assert compile_called["value"] is False
+    assert (workspace_cache / snippet.asset_filename(block.digest, ".pdf")).exists()
+    assert (workspace_cache / snippet.asset_filename(block.digest, ".png")).exists()

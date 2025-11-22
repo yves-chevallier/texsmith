@@ -71,6 +71,7 @@ class _SnippetAssets:
 
 _SNIPPET_RUNTIME: TemplateRuntime | None = None
 _SNIPPET_CACHE: _SnippetCache | None = None
+_WORKSPACE_CACHES: dict[Path, _SnippetCache] = {}
 
 
 @dataclass(slots=True)
@@ -238,6 +239,68 @@ def _resolve_cache() -> _SnippetCache | None:
     metadata = _load_cache_metadata(metadata_path)
     _SNIPPET_CACHE = _SnippetCache(root=root, metadata_path=metadata_path, metadata=metadata)
     return _SNIPPET_CACHE
+
+
+def _resolve_workspace_cache_root(source_path: Path | str | None) -> Path | None:
+    if source_path is None:
+        return None
+
+    try:
+        base = Path(source_path).resolve()
+    except (OSError, RuntimeError):
+        return None
+
+    search_root = base.parent if base.is_file() else base
+    candidates = (search_root, *search_root.parents)
+
+    for candidate in candidates:
+        marker = candidate / ".texsmith"
+        if marker.is_dir():
+            return marker / SNIPPET_DIR
+
+    for candidate in candidates:
+        if (candidate / "mkdocs.yml").exists() or (candidate / ".git").is_dir():
+            return candidate / ".texsmith" / SNIPPET_DIR
+
+    return search_root / ".texsmith" / SNIPPET_DIR
+
+
+def _resolve_workspace_cache(source_path: Path | str | None) -> _SnippetCache | None:
+    root = _resolve_workspace_cache_root(source_path)
+    if root is None:
+        return None
+
+    cache = _WORKSPACE_CACHES.get(root)
+    if cache is not None:
+        return cache
+
+    try:
+        root.mkdir(parents=True, exist_ok=True)
+    except OSError:
+        return None
+
+    metadata_path = root / _SNIPPET_CACHE_FILENAME
+    metadata = _load_cache_metadata(metadata_path)
+    cache = _SnippetCache(root=root, metadata_path=metadata_path, metadata=metadata)
+    _WORKSPACE_CACHES[root] = cache
+    return cache
+
+
+def _resolve_caches(source_path: Path | str | None) -> list[_SnippetCache]:
+    """Return available caches scoped to the workspace and user cache."""
+    caches: list[_SnippetCache] = []
+
+    workspace_cache = _resolve_workspace_cache(source_path)
+    default_cache = _resolve_cache()
+
+    for cache in (workspace_cache, default_cache):
+        if cache is None:
+            continue
+        if any(existing.root == cache.root for existing in caches):
+            continue
+        caches.append(cache)
+
+    return caches
 
 
 def _snippet_template_version() -> str | None:
@@ -481,25 +544,34 @@ def ensure_snippet_assets(
     png_missing = not png_path.exists()
     apply_corner = block.transparent_corner if transparent_corner is None else transparent_corner
     assets = _SnippetAssets(pdf=pdf_path, png=png_path)
-    cache = _resolve_cache()
-    template_version = _snippet_template_version() if cache is not None else None
+    caches = _resolve_caches(source_path)
+    template_version = _snippet_template_version() if caches else None
+
+    def _flush_caches() -> None:
+        for cache in caches:
+            cache.flush()
+
+    def _store_in_caches() -> None:
+        if not caches:
+            return
+        for cache in caches:
+            cache.store(
+                block.digest,
+                pdf_path,
+                png_path,
+                template_version=template_version,
+            )
+        _flush_caches()
 
     if not pdf_missing and not png_missing:
-        if cache is not None:
-            cached = cache.lookup(block.digest, template_version=template_version)
-            if cached is None:
-                cache.store(
-                    block.digest,
-                    pdf_path,
-                    png_path,
-                    template_version=template_version,
-                )
-            cache.flush()
+        _store_in_caches()
         return assets
 
-    if cache is not None and (pdf_missing or png_missing):
-        cached_assets = cache.lookup(block.digest, template_version=template_version)
-        if cached_assets is not None:
+    if caches and (pdf_missing or png_missing):
+        for cache in caches:
+            cached_assets = cache.lookup(block.digest, template_version=template_version)
+            if cached_assets is None:
+                continue
             try:
                 if pdf_missing:
                     shutil.copy2(cached_assets.pdf, pdf_path)
@@ -509,23 +581,16 @@ def ensure_snippet_assets(
                     png_missing = False
             except OSError:
                 cache.discard(block.digest)
-                cache.flush()
-            else:
-                if not pdf_missing and not png_missing:
-                    cache.flush()
-                    return assets
+                continue
+            if not pdf_missing and not png_missing:
+                _store_in_caches()
+                return assets
+        _flush_caches()
 
     if not pdf_missing and png_missing:
         _pdf_to_png(pdf_path, png_path, transparent_corner=apply_corner)
         png_missing = False
-        if cache is not None:
-            cache.store(
-                block.digest,
-                pdf_path,
-                png_path,
-                template_version=template_version,
-            )
-            cache.flush()
+        _store_in_caches()
         return assets
 
     _announce_build(block, source_path, emitter)
@@ -559,14 +624,7 @@ def ensure_snippet_assets(
         shutil.rmtree(work_dir, ignore_errors=True)
 
     _pdf_to_png(pdf_path, png_path, transparent_corner=apply_corner)
-    if cache is not None:
-        cache.store(
-            block.digest,
-            pdf_path,
-            png_path,
-            template_version=template_version,
-        )
-        cache.flush()
+    _store_in_caches()
     return assets
 
 
