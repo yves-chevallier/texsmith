@@ -29,12 +29,6 @@
 \usepackage{csquotes}
 \usepackage{epigraph}
 \usepackage{capt-of}
-\BLOCK{ set resolved_index_engine = index_engine|default('makeindex') }
-\BLOCK{ if resolved_index_engine == "texindy" }
-\usepackage[xindy]{imakeidx}
-\BLOCK{ else }
-\usepackage{imakeidx}
-\BLOCK{ endif }
 \usepackage{fvextra}
 \usepackage{enumitem}
 \usepackage{etoolbox}
@@ -300,7 +294,6 @@
 \definecolor{indigo(dye)}{rgb}{0.0, 0.25, 0.42}
 
 \BLOCK{ if glossary }\input{glossary}\BLOCK{ endif }
-\BLOCK{ if index_entries }\makeindex\BLOCK{ endif }
 
 %\input{acronyms}
 

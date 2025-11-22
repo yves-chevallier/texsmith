@@ -17,10 +17,12 @@ def test_fragments_default_injection(tmp_path: Path) -> None:
     assert "\\usepackage{ts-callouts}" in tex_content
     assert "\\usepackage{ts-code}" in tex_content
     assert "\\usepackage{ts-glossary}" in tex_content
+    assert "\\usepackage{ts-index}" in tex_content
     assert (tmp_path / "build" / "ts-callouts.sty").exists()
     assert (tmp_path / "build" / "ts-fonts.sty").exists()
     assert (tmp_path / "build" / "ts-code.sty").exists()
     assert (tmp_path / "build" / "ts-glossary.sty").exists()
+    assert (tmp_path / "build" / "ts-index.sty").exists()
 
 
 def test_custom_fragment_rendering(tmp_path: Path) -> None:

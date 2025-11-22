@@ -15,6 +15,8 @@ while staying configurable from front matter or your own extensions.
 
 `ts-code`
 : unified minted/tcolorbox code listing style.
+`ts-index`
+: central imakeidx/macros glue, selects texindy/makeindex and runs `\makeindex` when entries are present.
 `ts-glossary`
 : glossary and acronym wiring: loads `glossaries`, runs `\makeglossaries` when needed, and materialises acronym definitions from front matter with configurable styles.
 
@@ -68,7 +70,7 @@ preamble—typically next to other package imports. No TOML manifest changes are
 required; the core runtime resolves fragments before rendering.
 
 Built-in templates already include this placeholder and opt into
-`ts-fonts`, `ts-callouts`, `ts-code`, and `ts-glossary` by default via the template runtime
+`ts-fonts`, `ts-callouts`, `ts-code`, `ts-glossary`, and `ts-index` by default via the template runtime
 extras. Third-party templates can also declare default fragments in their
 `TemplateRuntime.extras["fragments"]` or let users supply their own through
 front matter.
