@@ -15,7 +15,6 @@
 \RequirePackage{unicode-math}
 \RequirePackage{fontawesome5}
 \RequirePackage{multicol}
-\RequirePackage{stackengine}
 \RequirePackage{booktabs}
 \RequirePackage{minted}
 \RequirePackage{todolist}

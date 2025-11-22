@@ -97,7 +97,7 @@ TeXSmith is unapologetically opinionated: it curates a stack, sprinkles extra sa
 | Mermaid       | `![](diagram.mmd)`        | `texsmith.mermaid`      |
 | Progress Bars | `[=75% "Done"]`           | `texsmith.progressbar`  |
 | Bibliography  | `[^citekey]`              | `texsmith.bibliography` |
-| Index Entries | `{index}[entry]`          | `texsmith.index`        |
+| Index Entries | `{index}[entry]` (use `{index:registry}[entry]` to target another registry; add more `[level]` brackets for nesting) | `texsmith.index`        |
 | Acronyms      | `ACME (Acme Corporation)` | `texsmith.acronyms`     |
 | Raw LaTeX     | `/// latex`, `{latex}[x]` | `texsmith.latex_raw` / `texsmith.rawlatex` |
 | LaTeX Text    | `LaTeX`, `TeXSmith`       | `texsmith.latex`        |

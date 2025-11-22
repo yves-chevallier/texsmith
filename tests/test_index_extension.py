@@ -37,6 +37,12 @@ def test_markdown_extension_supports_hierarchy_and_style() -> None:
     assert 'data-style="bi"' in html
 
 
+def test_markdown_extension_extracts_registry_from_prefix() -> None:
+    html = markdown.markdown(
+        "Compare {index:physics}[relativity]",
+        extensions=[EXTENSION],
+    )
+    assert 'data-registry="physics"' in html
 def test_renderer_registers_index_entries(renderer: LaTeXRenderer) -> None:
     html = (
         '<p><span class="ts-hashtag" data-tag="Alpha" '

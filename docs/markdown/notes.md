@@ -50,7 +50,7 @@ Printed indexes convey intent with typography:
 - Bold italic: primary topic plus ancillary references.
 - Nested entries: group related terms.
 
-Use `{index}` plus multiple `[brackets]` to build entries. Append `{b}`, `{i}`, or `{bi}` to tweak the style, and `(registry)` to file the entry under a custom registry (handy for multi-index books).
+Use `{index}` plus multiple `[brackets]` to build entries. Append `{b}`, `{i}`, or `{bi}` to tweak the style, and specify `{index:registry}` when you want to file the entry under a custom registry (handy for multi-index books).
 
 ```md
 Do you know the Gulliver's Travels story about the egg dispute?
@@ -59,6 +59,7 @@ Do you know the Gulliver's Travels story about the egg dispute?
 {index}[endianness]{bi}
 {index}[endianness]{b}
 {index}[byte order][endianness]{i}
+{index:physics}[relativity]{b}
 ```
 
 ## Citations

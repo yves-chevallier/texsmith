@@ -24,8 +24,7 @@ class _IndexInlineProcessor(InlineProcessor):
     ) -> tuple[ElementTree.Element, int, int]:  # type: ignore[override]
         del data
         payload = match.group("payload")
-        registry_group = match.group("registry")
-        registry = registry_group.strip("()") if registry_group else None
+        registry = match.group("registry1")
         style_token = match.group("style")
 
         tags = _extract_tags(payload)
@@ -79,10 +78,10 @@ class TexsmithIndexExtension(Extension):
     def extendMarkdown(self, md: Markdown) -> None:  # noqa: N802
         """Match modern and legacy index syntaxes and register the inline processor."""
         pattern = (
-            r"(?<!\\)(?P<prefix>#|\{index\}|%)"
+            r"(?<!\\)"
+            r"(?P<prefix>#|\{index(?::(?P<registry1>[^\]\{\(\s]+))?\}|%)"
             r"(?P<payload>(?:\[[^\]]+\])+)"
             r"(?P<style>\{[^}]+\})?"
-            r"\s*(?P<registry>\([^)]+\))?"
         )
         processor = _IndexInlineProcessor(pattern, md)
         md.inlinePatterns.register(processor, "texsmith_index", 180)
