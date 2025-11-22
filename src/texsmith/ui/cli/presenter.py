@@ -25,6 +25,12 @@ if TYPE_CHECKING:  # pragma: no cover - typing only
 
 
 def _get_console(state: CLIState, *, stderr: bool = False) -> Console | None:
+    """Retrieve the active Rich console from the CLI state if available.
+
+    This helper ensures that we respect the user's stream preference (stdout vs stderr)
+    and gracefully handle cases where the console hasn't been initialized or is
+    running in a non-interactive environment.
+    """
     try:
         console = state.err_console if stderr else state.console
     except Exception:  # pragma: no cover - fallback when Rich unavailable
@@ -35,6 +41,11 @@ def _get_console(state: CLIState, *, stderr: bool = False) -> Console | None:
 
 
 def _rich_components() -> tuple[Any, Any, Any, Any] | None:
+    """Import and return Rich components if the library is installed.
+
+    This allows the CLI to degrade gracefully on systems where `rich` is missing,
+    falling back to plain text output instead of crashing.
+    """
     try:
         from rich import box
         from rich.panel import Panel
@@ -46,6 +57,11 @@ def _rich_components() -> tuple[Any, Any, Any, Any] | None:
 
 
 def _format_path(path: Path) -> str:
+    """Format a path relative to the current working directory for display.
+
+    Using relative paths reduces visual noise in console output, making it easier
+    for users to identify files within their project structure.
+    """
     resolved = path.resolve()
     try:
         return str(resolved.relative_to(Path.cwd()))
@@ -54,6 +70,11 @@ def _format_path(path: Path) -> str:
 
 
 def _render_summary(state: CLIState, title: str, rows: Sequence[tuple[str, str, str]]) -> None:
+    """Display a summary table of generated artifacts.
+
+    This provides the user with a high-level overview of what was created and where,
+    saving them from having to manually check the output directory.
+    """
     console = _get_console(state)
     components = _rich_components()
     has_details = any(bool(details) for _, _, details in rows)
@@ -81,6 +102,11 @@ def _render_summary(state: CLIState, title: str, rows: Sequence[tuple[str, str, 
 
 
 def _detect_assets(directory: Path) -> list[Path]:
+    """Find asset files in the given directory.
+
+    We report these to the user so they know which static resources (images, fonts)
+    were successfully copied or generated alongside their document.
+    """
     assets_dir = directory / "assets"
     if not assets_dir.is_dir():
         return []
@@ -91,10 +117,20 @@ def _detect_assets(directory: Path) -> list[Path]:
 
 
 def _detect_manifests(directory: Path) -> list[Path]:
+    """Find manifest files in the given directory.
+
+    Manifests contain machine-readable metadata about the build. Detecting and
+    reporting them confirms to the user that the build metadata was correctly persisted.
+    """
     return sorted(path for path in directory.glob("*.json") if "manifest" in path.name.lower())
 
 
 def _detect_debug_html(directory: Path) -> list[Path]:
+    """Find debug HTML snapshots in the given directory.
+
+    These snapshots are crucial for troubleshooting rendering issues. Pointing them
+    out explicitly helps users find the diagnostic information they need.
+    """
     return sorted(directory.glob("*.debug.html"))
 
 
@@ -171,6 +207,11 @@ def present_build_summary(
 
 
 def _format_message_entry(message: LatexMessage) -> str:
+    """Format a LaTeX log message for display in the failure panel.
+
+    This condenses complex LaTeX log entries into a single, readable line,
+    stripping unnecessary details to help the user focus on the primary error.
+    """
     details = "; ".join(message.details[:2])
     if details:
         return f"{message.summary} ({details})"
@@ -182,6 +223,11 @@ def _render_failure_panel(
     title: str,
     rows: Sequence[tuple[str, str]],
 ) -> None:
+    """Display a failure diagnostic panel.
+
+    This panel highlights the critical error and suggests next steps, helping
+    users diagnose build failures quickly without wading through raw logs.
+    """
     console = _get_console(state, stderr=True)
     components = _rich_components()
     if console is not None and components is not None:

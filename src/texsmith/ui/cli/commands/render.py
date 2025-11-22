@@ -118,6 +118,11 @@ _MARKDOWN_SUFFIXES = {
 
 
 def _cleanup_temp_input(path: Path) -> None:
+    """Remove the temporary input file if it exists.
+
+    This cleanup step prevents filesystem clutter when the user pipes content
+    via stdin, ensuring that temporary files don't accumulate over time.
+    """
     with contextlib.suppress(OSError):
         path.unlink(missing_ok=True)
 
@@ -217,6 +222,11 @@ def _format_path_for_event(path: Path) -> str:
 
 
 def _coerce_attribute_value(raw: str) -> Any:
+    """Infer the type of a template attribute value from its string representation.
+
+    This bridges the gap between string-only CLI arguments and the typed configuration
+    expected by templates, allowing users to pass booleans and numbers naturally.
+    """
     candidate = raw.strip()
     lowered = candidate.lower()
     if lowered in {"true", "false"}:
@@ -235,6 +245,11 @@ def _coerce_attribute_value(raw: str) -> Any:
 
 
 def _assign_nested_value(target: dict[str, Any], path: list[str], value: Any) -> None:
+    """Set a value in a nested dictionary structure using a list of keys.
+
+    This enables dot-notation configuration (e.g. `theme.color=red`) for complex
+    template settings, allowing deep overrides from the flat CLI interface.
+    """
     cursor = target
     for key in path[:-1]:
         if key not in cursor:
@@ -249,6 +264,11 @@ def _assign_nested_value(target: dict[str, Any], path: list[str], value: Any) ->
 
 
 def _parse_template_attributes(values: Iterable[str] | None) -> dict[str, Any]:
+    """Parse a list of key=value strings into a dictionary of attributes.
+
+    This transforms the flat list of CLI arguments into a structured configuration
+    dictionary that can be merged with the template's default settings.
+    """
     overrides: dict[str, Any] = {}
     if not values:
         return overrides

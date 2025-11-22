@@ -16,11 +16,21 @@ from ..state import emit_error, ensure_rich_compat, get_cli_state
 
 
 def _format_list(values: Iterable[str]) -> str:
+    """Format a sequence of strings into a comma-separated list or a placeholder.
+
+    This ensures consistent pretty-printing for user display, handling empty
+    sequences gracefully by returning a standard placeholder.
+    """
     sequence = list(values)
     return ", ".join(sequence) if sequence else "-"
 
 
 def _looks_like_template_root(path: Path) -> bool:
+    """Return True if the path appears to be a valid template directory.
+
+    This heuristic filters out non-template directories during discovery, checking
+    for key indicators like `manifest.toml` or `__init__.py`.
+    """
     if not path.exists() or path.is_file():
         return False
     manifest_candidates = (path / "manifest.toml", path / "template" / "manifest.toml")
@@ -30,6 +40,11 @@ def _looks_like_template_root(path: Path) -> bool:
 
 
 def _discover_local_templates(base: Path | None = None) -> list[Path]:
+    """Scan the working directory for potential template candidates.
+
+    This enables users to use project-local templates without needing to install
+    them as Python packages, supporting rapid development and customization.
+    """
     base_path = (base or Path.cwd()).resolve()
     roots = {base_path, base_path / "templates"}
     candidates: list[Path] = []
@@ -84,6 +99,11 @@ def _print_template_list_plain() -> None:
 
 
 def _collect_template_entries() -> list[dict[str, str]]:
+    """Aggregate available templates from built-ins, entry points, and local paths.
+
+    This unifies multiple template sources into a single list, giving the user
+    a complete view of all available templates regardless of how they are installed.
+    """
     entries: list[dict[str, str]] = []
 
     for slug in iter_builtin_templates():
