@@ -229,7 +229,7 @@ def load_template_runtime(template: str) -> TemplateRuntime:
     formatter_overrides = dict(template_instance.iter_formatter_overrides())
     extras_payload = getattr(template_instance, "extras", {}) or {}
     extras = {key: value for key, value in extras_payload.items()}
-    extras.setdefault("fragments", ["ts-fonts", "ts-callouts", "ts-code"])
+    extras.setdefault("fragments", ["ts-fonts", "ts-callouts", "ts-code", "ts-glossary"])
 
     return TemplateRuntime(
         instance=template_instance,

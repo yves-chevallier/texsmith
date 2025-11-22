@@ -132,6 +132,12 @@ default = false
 type = "boolean"
 sources = ["press.glossary", "glossary"]
 
+[latex.template.attributes.glossary_style]
+default = "long3col"
+type = "string"
+allow_empty = false
+sources = ["press.glossary.style", "press.glossary_style", "glossary_style"]
+
 [latex.template.attributes.listoffigures]
 default = true
 type = "boolean"

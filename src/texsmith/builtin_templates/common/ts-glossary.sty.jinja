@@ -1,0 +1,27 @@
+\ProvidesPackage{ts-glossary}[2025/11/21 TeXSmith glossary helpers (generated)]
+
+\BLOCK{ set resolved_index_engine = index_engine|default("makeindex")|lower }
+\RequirePackage[acronym,nopostdot\BLOCK{ if resolved_index_engine == "texindy" },xindy\BLOCK{ endif }]{glossaries}
+
+% Resolve glossary style (supports overriding via press.glossary.style or glossary_style).
+\BLOCK{ set default_style = default_glossary_style|default("list") }
+\BLOCK{ set raw_style = glossary_style|default("") }
+\BLOCK{ set raw_glossary = glossary|default(false) }
+\BLOCK{ set acronyms_map = acronyms|default({}) }
+\BLOCK{ set resolved_style = raw_style if raw_style else (raw_glossary if raw_glossary is string else default_style) }
+\BLOCK{ set should_activate = raw_glossary or acronyms_map }
+
+\BLOCK{ if should_activate }
+\makeglossaries
+\setglossarystyle{\VAR{resolved_style}}
+\BLOCK{ endif }
+
+% Acronym definitions
+\BLOCK{ if acronyms_map }
+\BLOCK{ for key, entry in acronyms_map.items() }
+\BLOCK{ set pair = entry if (entry is sequence and not entry is string) else [key, entry] }
+\newacronym{\VAR{key}}{\VAR{pair[0]|latex_escape}}{\VAR{pair[1]|latex_escape}}
+\BLOCK{ endfor }
+\BLOCK{ endif }
+
+\endinput

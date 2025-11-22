@@ -15,8 +15,10 @@ while staying configurable from front matter or your own extensions.
 
 `ts-code`
 : unified minted/tcolorbox code listing style.
+`ts-glossary`
+: glossary and acronym wiring: loads `glossaries`, runs `\makeglossaries` when needed, and materialises acronym definitions from front matter with configurable styles.
 
-All built-in templates default to rendering these three fragments. They are
+All built-in templates default to rendering these fragments. They are
 written into the build directory as `ts-*.sty` and loaded via
 `\usepackage{ts-fonts}` (and friends) in the generated TeX.
 
@@ -34,6 +36,7 @@ press:
     - ts-fonts        # built-in
     - ts-callouts
     - ts-code
+    - ts-glossary
     - fragments/foo.sty.jinja  # custom fragment located next to your doc
   foo:
     value: 42         # variables consumed by foo.sty.jinja
@@ -65,7 +68,7 @@ preamble—typically next to other package imports. No TOML manifest changes are
 required; the core runtime resolves fragments before rendering.
 
 Built-in templates already include this placeholder and opt into
-`ts-fonts`, `ts-callouts`, and `ts-code` by default via the template runtime
+`ts-fonts`, `ts-callouts`, `ts-code`, and `ts-glossary` by default via the template runtime
 extras. Third-party templates can also declare default fragments in their
 `TemplateRuntime.extras["fragments"]` or let users supply their own through
 front matter.

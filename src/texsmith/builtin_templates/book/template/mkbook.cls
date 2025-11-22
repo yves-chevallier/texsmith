@@ -23,8 +23,12 @@
 \RequirePackage{csquotes}
 \RequirePackage{epigraph}
 \RequirePackage{capt-of}
-\RequirePackage[acronym,xindy]{glossaries}
+\BLOCK{ set resolved_index_engine = index_engine|default('makeindex') }
+\BLOCK{ if resolved_index_engine == "texindy" }
+\RequirePackage[xindy]{imakeidx}
+\BLOCK{ else }
 \RequirePackage{imakeidx}
+\BLOCK{ endif }
 \RequirePackage{fvextra}
 \RequirePackage{titlesec}
 \RequirePackage{enumitem}

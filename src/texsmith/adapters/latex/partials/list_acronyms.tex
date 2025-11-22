@@ -1,5 +1,5 @@
 % Acronyms
 \BLOCK{for key, entry in text -}
 \BLOCK{ set pair = entry if (entry is sequence and not entry is string) else [key, entry] }
-\newacronym{\VAR{key}}{\VAR{pair[0]}}{\VAR{pair[1]}}
+\newacronym{\VAR{key}}{\VAR{pair[0]|latex_escape}}{\VAR{pair[1]|latex_escape}}
 \BLOCK{endfor}

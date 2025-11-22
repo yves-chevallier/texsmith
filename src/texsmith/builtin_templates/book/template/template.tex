@@ -20,8 +20,12 @@
 \usepackage{csquotes}
 \usepackage{epigraph}
 \usepackage{capt-of}
-\usepackage[acronym,xindy]{glossaries}
+\BLOCK{ set resolved_index_engine = index_engine|default('makeindex') }
+\BLOCK{ if resolved_index_engine == "texindy" }
+\usepackage[xindy]{imakeidx}
+\BLOCK{ else }
 \usepackage{imakeidx}
+\BLOCK{ endif }
 \usepackage{fvextra}
 \usepackage{titlesec}
 \usepackage{enumitem}
@@ -60,6 +64,19 @@
 \usetikzlibrary{shadows}
 
 \graphicspath{{assets/}}
+
+%
+% Heading style
+%
+\chapterstyle{default} % ou ton style préféré (vehttp, ell, etc.)
+
+\renewcommand*{\partnamefont}{\normalfont\sffamily\Huge\bfseries\scshape}
+\renewcommand*{\partnumfont}{\normalfont\sffamily\Huge\bfseries}
+\renewcommand*{\parttitlefont}{\normalfont\sffamily\Huge\bfseries}
+
+\renewcommand*{\chapnamefont}{\normalfont\sffamily\Large\scshape}
+\renewcommand*{\chapnumfont}{\normalfont\sffamily\Huge\bfseries}
+\renewcommand*{\chaptitlefont}{\normalfont\sffamily\Huge\bfseries}
 
 %
 % Adjust spacing
@@ -292,14 +309,7 @@
 
 \definecolor{indigo(dye)}{rgb}{0.0, 0.25, 0.42}
 
-\BLOCK{ if glossary or acronyms }\makeglossaries\BLOCK{ endif }
 \BLOCK{ if glossary }\input{glossary}\BLOCK{ endif }
-\BLOCK{ if acronyms }
-\BLOCK{ for key, entry in acronyms.items() }
-\BLOCK{ set pair = entry if (entry is sequence and not entry is string) else [key, entry] }
-\newacronym{\VAR{key}}{\VAR{pair[0]|latex_escape}}{\VAR{pair[1]|latex_escape}}
-\BLOCK{ endfor }
-\BLOCK{ endif }
 \BLOCK{ if index_entries }\makeindex\BLOCK{ endif }
 
 %\input{acronyms}
@@ -364,8 +374,8 @@
 \fi
 \BLOCK{ endif }
 
-\BLOCK{ if acronyms }\printglossary[type=\acronymtype, title=Liste des acronymes]\BLOCK{ endif }
-\BLOCK{ if glossary }\printglossary[title=Termes et définitions]\BLOCK{ endif }
+\BLOCK{ if acronyms }\printglossary[type=\acronymtype]\BLOCK{ endif }
+\BLOCK{ if glossary }\printglossary\BLOCK{ endif }
 \BLOCK{ if index_entries }\printindex\BLOCK{ endif }
 
 \BLOCK{ if citations }
