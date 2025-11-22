@@ -1,24 +1,15 @@
-$bibtex_use = 2;
-$biber = 'biber %O %B';
-$root_filename = '\VAR{root_filename|default("texsmith-output")}';
-
-\BLOCK{ if latex_engine == "xelatex" }
-$pdf_mode = 5;
-$xelatex = 'xelatex\BLOCK{ if requires_shell_escape|default(false) } --shell-escape\BLOCK{ endif } %O %S';
-\BLOCK{ elif latex_engine == "lualatex" }
 $pdf_mode = 4;
-$lualatex = 'lualatex\BLOCK{ if requires_shell_escape|default(false) } --shell-escape\BLOCK{ endif } %O %S';
-\BLOCK{ else }
-$pdf_mode = 1;
-$pdflatex = 'pdflatex\BLOCK{ if requires_shell_escape|default(false) } --shell-escape\BLOCK{ endif } %O %S';
-\BLOCK{ endif }
+# Enable preview only after a successful glossaries run. We gate via a flag file
+# named after the root job: %R.preview.ready
+$lualatex = qq{bash -lc 'TS_PREVIEW=\$( [ -f "%R.preview.ready" ] && echo 1 || echo 0 ); \
+ export TS_PREVIEW; lualatex --shell-escape %O %S'};
 
 if (system("which texindy >/dev/null 2>&1") == 0) {
   $makeindex = 'texindy %O -o %D %S';
 } else {
   $makeindex = 'makeindex %O -o %D %S';
 }
-$clean_ext .= ' %R.run.xml %R.blg';
+$clean_ext .= ' %R.run.xml %R.blg %R.preview.ready';
 
 add_cus_dep('glo', 'gls', 0, 'run_makeglossaries');
 add_cus_dep('acn', 'acr', 0, 'run_makeglossaries');
@@ -26,5 +17,9 @@ add_cus_dep('acn', 'acr', 0, 'run_makeglossaries');
 sub run_makeglossaries {
   my ($base) = @_;
   my $cmd = "makeglossaries \"$base\"";
-  return system($cmd);
+  my $status = system($cmd);
+  if ($status == 0) {
+    system("touch \"$base.preview.ready\"");
+  }
+  return $status;
 }

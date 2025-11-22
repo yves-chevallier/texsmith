@@ -1,4 +1,21 @@
-\documentclass[border=0pt]{standalone}
+\documentclass{article}
+
+\newif\iftsPreview
+\tsPreviewfalse
+\ifdefined\directlua
+  \directlua{
+    if os.getenv("TS_PREVIEW") == "1" then
+      tex.print("\\global\\tsPreviewtrue")
+    end
+  }
+\fi
+
+\iftsPreview
+  \usepackage[active,tightpage]{preview}
+  \setlength\PreviewBorder{0pt}
+\fi
+
+\newenvironment{MaybePreview}{\iftsPreview\begin{preview}\fi}{\iftsPreview\end{preview}\fi}
 
 \VAR{extra_packages}
 \usepackage{hyphenat}
@@ -33,7 +50,7 @@
 \BLOCK{ endif }
 
 \begin{document}
-
+\begin{MaybePreview}
 \begin{tikzpicture}
   \def\textwidthbox{\VAR{width}}
   \def\margin{\VAR{margin}}
@@ -42,6 +59,9 @@
   \node[inner sep=\margin, outer sep=0pt] (content) {%
     \begin{minipage}{\textwidthbox}
 \VAR{mainmatter}
+\VAR{backmatter}
+\VAR{fragment_backmatter}
+\BLOCK{ if citations and bibliography_resource }\printbibliography\BLOCK{ endif }
     \end{minipage}
   };
 
@@ -67,9 +87,5 @@
 \BLOCK{ endif }
 
 \end{tikzpicture}
-
-\VAR{backmatter}
-\VAR{fragment_backmatter}
-\BLOCK{ if citations and bibliography_resource }\printbibliography\BLOCK{ endif }
-
+\end{MaybePreview}
 \end{document}
