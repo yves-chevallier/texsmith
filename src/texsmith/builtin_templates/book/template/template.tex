@@ -1,11 +1,19 @@
 \documentclass[9pt,twoside]{memoir}
-
-\VAR{extra_packages}
-\usepackage[svgnames,dvipsnames,x11names]{xcolor}
-\usepackage{tikz}
 \usepackage{textcomp} % For ©, ™
 \usepackage{amsmath} % For \text
 \usepackage{gensymb} % For °, ℃, ℉, etc.
+
+\usepackage[
+  colorlinks=true,
+  plainpages=true,
+  linkcolor=black,
+  citecolor=black,
+  plainpages=false,
+  unicode=true,
+  urlcolor=urlcolor]{hyperref}
+
+\VAR{extra_packages}
+\usepackage[svgnames,dvipsnames,x11names]{xcolor}
 \usepackage{nicefrac}
 \usepackage{fancyhdr}
 \usepackage[normalem]{ulem}
@@ -27,7 +35,6 @@
 \usepackage{imakeidx}
 \BLOCK{ endif }
 \usepackage{fvextra}
-\usepackage{titlesec}
 \usepackage{enumitem}
 \usepackage{etoolbox}
 \usepackage{tocloft}
@@ -37,15 +44,6 @@
 \usepackage{emptypage}
 \definecolor{linkcolor}{RGB}{34, 18, 104}
 \definecolor{urlcolor}{RGB}{104, 18, 55}
-
-\usepackage[
-  colorlinks=true,
-  plainpages=true,
-  linkcolor=black,
-  citecolor=black,
-  plainpages=false,
-  unicode=true,
-  urlcolor=urlcolor]{hyperref}
 
 \usepackage[
   paperwidth=160mm,
@@ -58,10 +56,6 @@
   headsep=5mm,
   marginparsep=4mm,
   heightrounded]{geometry}
-
-\usetikzlibrary{shapes.geometric}
-\usetikzlibrary{calc}
-\usetikzlibrary{shadows}
 
 \graphicspath{{assets/}}
 
@@ -77,6 +71,8 @@
 \renewcommand*{\chapnamefont}{\normalfont\sffamily\Large\scshape}
 \renewcommand*{\chapnumfont}{\normalfont\sffamily\Huge\bfseries}
 \renewcommand*{\chaptitlefont}{\normalfont\sffamily\Huge\bfseries}
+\setsecheadstyle{\sffamily\Large\bfseries}
+\setsubsecheadstyle{\sffamily\large\bfseries}
 
 %
 % Adjust spacing
