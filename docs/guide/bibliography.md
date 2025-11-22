@@ -29,7 +29,7 @@ bibliography:
       - Scott Alexander
       - Thomas Larsen
       - Eli Lifland
-      - Romeo Dean  
+      - Romeo Dean
 ```
 
 ## Citation Syntax
@@ -37,6 +37,17 @@ bibliography:
 Citations in your Markdown documents should follow the footnote-style syntax:
 
 ```yaml
+---
+bibliography:
+  WADHWANI20111713: https://doi.org/10.3168/jds.2010-3952
+---
+# Introduction
+
+Cheese exhibits unique melting properties [^WADHWANI20111713].
+```
+
+
+```md {.snippet data-caption="Demo"}
 ---
 bibliography:
   WADHWANI20111713: https://doi.org/10.3168/jds.2010-3952

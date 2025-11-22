@@ -6,6 +6,7 @@ from collections.abc import Callable
 from dataclasses import dataclass
 import hashlib
 import json
+import logging
 import os
 from pathlib import Path
 import shutil
@@ -40,6 +41,7 @@ _FALSE_VALUES = {"0", "false", "off", "no"}
 _SNIPPET_CACHE_NAMESPACE = "snippets"
 _SNIPPET_CACHE_FILENAME = "metadata.json"
 _SNIPPET_CACHE_VERSION = 1
+_log = logging.getLogger(__name__)
 
 
 @dataclass(slots=True)
@@ -526,6 +528,8 @@ def ensure_snippet_assets(
             cache.flush()
         return assets
 
+    _announce_build(block, source_path, emitter)
+
     runtime = _resolve_runtime()
     host_path = Path(source_path) if source_path is not None else destination / "snippet.md"
     host_dir = host_path.parent
@@ -644,6 +648,22 @@ def rewrite_html_snippets(
 def register(renderer: Any) -> None:
     """Register the snippet handler on a renderer instance."""
     renderer.register(render_snippet_block)
+
+
+def _announce_build(
+    block: SnippetBlock, host_path: Path | str | None, emitter: DiagnosticEmitter | None
+) -> None:
+    """Emit an informational message when a snippet is actually compiled."""
+    source_hint = f" from {host_path}" if host_path else ""
+    _log.info("texsmith: building snippet %s%s", block.asset_basename, source_hint)
+    if emitter is not None:
+        try:
+            emitter.event(
+                "snippet_build",
+                {"digest": block.digest, "source": str(host_path) if host_path else ""},
+            )
+        except Exception:
+            _log.debug("failed to emit snippet_build event", exc_info=True)
 
 
 __all__ = [

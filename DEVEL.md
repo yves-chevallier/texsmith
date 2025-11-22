@@ -350,3 +350,20 @@ Also note that the scientific paper “cheese” example prematurely closes code
 ## Lint/Format
 
 We still need a lint/format solution that plays nicely with MkDocs syntax; existing tools fall short.
+
+## Issues
+
+### Acronyms multiline
+
+Thw following don't work, it should either warn or join the different lines together.
+
+```markdown
+# Acronyms
+
+The National Aeronautics and Space Administration NASA is responsible for the
+civilian space program.
+
+*[NASA]:
+    Line 1
+    Line 2
+```

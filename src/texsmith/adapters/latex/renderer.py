@@ -175,6 +175,7 @@ class LaTeXRenderer:
             copy_assets=self.copy_assets,
             convert_assets=self.convert_assets,
             hash_assets=self.hash_assets,
+            emitter=active_emitter,
         )
         if runtime:
             context.attach_runtime(**runtime)
