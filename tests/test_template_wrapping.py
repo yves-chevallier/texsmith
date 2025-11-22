@@ -89,14 +89,26 @@ def test_wrap_template_document_exposes_index_terms(
 
 
 def test_wrap_document_includes_acronyms_when_present(
-    book_template: WrappableTemplate,
+    book_template: WrappableTemplate, tmp_path: Path
 ) -> None:
-    context = book_template.prepare_context("")
-    context["acronyms"] = {"HTTP": "Hypertext Transfer Protocol"}
-    wrapped = book_template.wrap_document("", context=context)
-    assert "\\makeglossaries" in wrapped
-    assert "\\newacronym{HTTP}{HTTP}{Hypertext Transfer Protocol}" in wrapped
-    assert "\\printglossary[type=\\acronymtype" in wrapped
+    state = DocumentState()
+    state.acronyms["HTTP"] = ("HTTP", "Hypertext Transfer Protocol")
+    result = wrap_template_document(
+        template=book_template,
+        default_slot="mainmatter",
+        slot_outputs={"mainmatter": ""},
+        document_state=state,
+        template_overrides=None,
+        output_dir=tmp_path,
+        copy_assets=False,
+    )
+
+    latex_output = result.latex_output
+    assert "\\usepackage{ts-glossary}" in latex_output
+    assert "\\printglossary[type=\\acronymtype" in latex_output
+    fragment = (tmp_path / "ts-glossary.sty").read_text(encoding="utf-8")
+    assert "\\makeglossaries" in fragment
+    assert "\\newacronym{HTTP}{HTTP}{Hypertext Transfer Protocol}" in fragment
 
 
 def test_copy_template_assets_materialises_payload(
@@ -204,15 +216,26 @@ def test_article_falls_back_to_makeindex_when_xindy_missing(
 
 
 def test_article_includes_acronyms_when_present(
-    article_template: WrappableTemplate,
+    article_template: WrappableTemplate, tmp_path: Path
 ) -> None:
-    context = article_template.prepare_context("")
-    context["acronyms"] = {"HTTP": "Hypertext Transfer Protocol"}
-    wrapped = article_template.wrap_document("", context=context)
-    assert "\\usepackage[acronym,nomain]{glossaries}" in wrapped
-    assert "\\makeglossaries" in wrapped
-    assert "\\newacronym{HTTP}{HTTP}{Hypertext Transfer Protocol}" in wrapped
-    assert "\\printglossary[type=\\acronymtype" in wrapped
+    state = DocumentState()
+    state.acronyms["HTTP"] = ("HTTP", "Hypertext Transfer Protocol")
+    result = wrap_template_document(
+        template=article_template,
+        default_slot="mainmatter",
+        slot_outputs={"mainmatter": ""},
+        document_state=state,
+        template_overrides=None,
+        output_dir=tmp_path,
+        copy_assets=False,
+    )
+
+    latex_output = result.latex_output
+    assert "\\usepackage{ts-glossary}" in latex_output
+    assert "\\printglossary[type=\\acronymtype" in latex_output
+    fragment = (tmp_path / "ts-glossary.sty").read_text(encoding="utf-8")
+    assert "\\makeglossaries" in fragment
+    assert "\\newacronym{HTTP}{HTTP}{Hypertext Transfer Protocol}" in fragment
 
 
 def test_article_prefers_lualatex_for_latin_text(
@@ -238,6 +261,7 @@ def test_article_prefers_lualatex_for_latin_text(
 
     latex_output = result.latex_output
     assert "\\usepackage{ts-fonts}" in latex_output
+    assert "\\usepackage{ts-glossary}" in latex_output
 
 
 def test_article_switches_to_lualatex_for_non_latin_scripts(
@@ -264,4 +288,5 @@ def test_article_switches_to_lualatex_for_non_latin_scripts(
 
     latex_output = result.latex_output
     assert "\\usepackage{ts-fonts}" in latex_output
+    assert "\\usepackage{ts-glossary}" in latex_output
     assert "\\usepackage[T1]{fontenc}" not in latex_output
