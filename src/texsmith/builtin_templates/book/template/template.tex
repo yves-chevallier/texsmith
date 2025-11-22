@@ -2,6 +2,8 @@
 
 \usepackage{amsmath} % Support align, and text in math mode
 \usepackage{amssymb} % Additional math symbols
+\usepackage{nicefrac} % For support of: ½, ⅔...
+\usepackage[normalem]{ulem} % for \sout (strikethrough)
 
 \usepackage[
   colorlinks=true,
@@ -15,14 +17,13 @@
 
 \VAR{extra_packages}
 \usepackage[svgnames,dvipsnames,x11names]{xcolor}
-\usepackage{nicefrac} % For support of: ½, ⅔...
+
 \usepackage{fancyhdr}
-\usepackage[normalem]{ulem} % for \sout (strikethrough)
+
 \usepackage{graphicx} % For including images
 \usepackage{fontawesome5}
 \usepackage{multicol}
 \usepackage{booktabs}
-\usepackage{minted}
 \usepackage{todolist}
 \usepackage{keystroke}
 \usepackage{csquotes}
@@ -304,7 +305,7 @@
 %\input{acronyms}
 
 \begin{document}
-
+\hypersetup{pageanchor=false}
 \input{titlepage}
 \BLOCK{ if imprint_thanks|trim or imprint_license|trim or imprint_copyright|trim }
 \cleardoublepage
@@ -326,6 +327,7 @@
 
 \raggedbottom
 
+
 \frontmatter
 \BLOCK{ if preface|trim }
 \cleardoublepage
@@ -342,6 +344,7 @@
 \clearpage
 \tableofcontents
 
+\hypersetup{pageanchor=true}
 \mainmatter
 
 \VAR{mainmatter}
