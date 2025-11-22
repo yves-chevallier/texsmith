@@ -40,6 +40,7 @@ from texsmith.core.conversion.inputs import (
     InlineBibliographyEntry,
     InlineBibliographyValidationError,
 )
+from texsmith.core.diagnostics import LoggingEmitter
 from texsmith.core.exceptions import LatexRenderingError
 from texsmith.core.templates import (
     TemplateError,
@@ -88,6 +89,19 @@ class BookRuntime:
     entries: list[NavEntry] = field(default_factory=list)
 
 
+class _MkdocsEmitter(LoggingEmitter):
+    """Emitter that surfaces diagnostics through MkDocs' logger."""
+
+    def event(self, name: str, payload: Mapping[str, Any]) -> None:
+        if name == "snippet_build":
+            digest = payload.get("digest") if isinstance(payload, Mapping) else None
+            source = payload.get("source") if isinstance(payload, Mapping) else None
+            source_hint = f" ({source})" if source else ""
+            self._logger.info("texsmith: building snippet %s%s", digest or "snippet", source_hint)
+            return
+        super().event(name, payload)
+
+
 class LatexPlugin(BasePlugin):
     """MkDocs plugin that exports documentation to LaTeX using TeXSmith."""
 
@@ -122,6 +136,7 @@ class LatexPlugin(BasePlugin):
         self._global_bibliography: list[Path] = []
         self._global_template_overrides: dict[str, Any] = {}
         self._nav: Navigation | None = None
+        self._diagnostic_emitter: LoggingEmitter | None = None
 
     # -- MkDocs lifecycle -------------------------------------------------
 
@@ -184,6 +199,10 @@ class LatexPlugin(BasePlugin):
         )
 
         self._latex_config = self._build_latex_config(language)
+        self._diagnostic_emitter = _MkdocsEmitter(
+            logger_obj=log,
+            debug_enabled=self._is_serve,
+        )
         ensure_fallback_converters()
         return config
 
@@ -352,6 +371,9 @@ class LatexPlugin(BasePlugin):
     def _render_book(self, runtime: BookRuntime) -> None:
         output_root = self._resolve_output_root(runtime.config)
         output_root.mkdir(parents=True, exist_ok=True)
+        emitter = self._diagnostic_emitter or _MkdocsEmitter(
+            logger_obj=log, debug_enabled=self._is_serve
+        )
 
         template_name = runtime.extras.template or self.config.get("template")
         try:
@@ -522,6 +544,7 @@ class LatexPlugin(BasePlugin):
                 "language": runtime_language,
                 "template": template_runtime.name,
                 "copy_assets": copy_assets,
+                "emitter": emitter,
             }
 
             try:
@@ -533,6 +556,7 @@ class LatexPlugin(BasePlugin):
                         runtime_payload,
                         bibliography_map,
                         state=document_state,
+                        emitter=emitter,
                     )
             except Exception as exc:  # pragma: no cover - defensive
                 log.exception("TeXSmith failed while rendering page '%s'.", entry.title)
@@ -772,6 +796,9 @@ class LatexPlugin(BasePlugin):
         self, page: Any, block: snippet.SnippetBlock
     ) -> None:
         dest_dir = self._site_snippet_dir()
+        emitter = self._diagnostic_emitter or _MkdocsEmitter(
+            logger_obj=log, debug_enabled=self._is_serve
+        )
         abs_src = getattr(page.file, "abs_src_path", None)
         if not abs_src:
             raise PluginError(
@@ -783,6 +810,7 @@ class LatexPlugin(BasePlugin):
                 block,
                 output_dir=dest_dir,
                 source_path=source_path,
+                emitter=emitter,
                 transparent_corner=block.transparent_corner,
             )
         except Exception as exc:  # pragma: no cover - passthrough
