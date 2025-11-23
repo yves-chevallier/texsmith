@@ -22,6 +22,10 @@ This example demonstrates the creation of a colorful examples with four slots us
     ---8<--- "examples/colorful/template.tex"
     ```
 
+```md {.snippet data-caption="Demo" data-cwd="../../examples/colorful"}
+--8<--- "examples/colorful/colorful.md"
+```
+
 To build this example, simply run:
 
 ```text

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable
+from collections.abc import Callable, Mapping
 from dataclasses import dataclass
 import hashlib
 import json
@@ -31,7 +31,7 @@ from texsmith.core.conversion.inputs import InputKind
 from texsmith.core.diagnostics import DiagnosticEmitter
 from texsmith.core.exceptions import AssetMissingError, InvalidNodeError, LatexRenderingError
 from texsmith.core.rules import RenderPhase, renders
-from texsmith.core.templates import TemplateRuntime, load_template_runtime
+from texsmith.core.templates import TemplateError, TemplateRuntime, load_template_runtime
 
 
 SNIPPET_DIR = "snippets"
@@ -40,7 +40,7 @@ _TRUE_VALUES = {"1", "true", "on", "yes"}
 _FALSE_VALUES = {"0", "false", "off", "no"}
 _SNIPPET_CACHE_NAMESPACE = "snippets"
 _SNIPPET_CACHE_FILENAME = "metadata.json"
-_SNIPPET_CACHE_VERSION = 1
+_SNIPPET_CACHE_VERSION = 2
 _log = logging.getLogger(__name__)
 
 
@@ -49,6 +49,7 @@ class SnippetBlock:
     """Parsed representation of a snippet fence."""
 
     content: str
+    cwd: Path | None
     caption: str | None
     label: str | None
     figure_width: str | None
@@ -71,7 +72,6 @@ class _SnippetAssets:
 
 _SNIPPET_RUNTIME: TemplateRuntime | None = None
 _SNIPPET_CACHE: _SnippetCache | None = None
-_WORKSPACE_CACHES: dict[Path, _SnippetCache] = {}
 
 
 @dataclass(slots=True)
@@ -118,12 +118,45 @@ class _SnippetCache:
         png_path: Path,
         *,
         template_version: str | None,
+        block: SnippetBlock | None = None,
+        source_path: Path | None = None,
     ) -> None:
         """Persist compiled assets in the cache directory."""
         entries = self._entries()
         cached_pdf = (self.root / asset_filename(digest, ".pdf")).resolve()
         cached_png = (self.root / asset_filename(digest, ".png")).resolve()
         cached_pdf.parent.mkdir(parents=True, exist_ok=True)
+        cached_md = (self.root / asset_filename(digest, ".md")).resolve()
+
+        cached_md_path: Path | None = None
+        if block is not None:
+            try:
+                cached_md.write_text(block.content, encoding="utf-8")
+                cached_md_path = cached_md
+            except OSError:
+                cached_md_path = None
+
+        attributes: dict[str, Any] | None = None
+        if block is not None:
+            attributes = {
+                "caption": block.caption,
+                "label": block.label,
+                "figure_width": block.figure_width,
+                "border": block.border_enabled,
+                "dogear_enabled": block.dogear_enabled,
+                "transparent_corner": block.transparent_corner,
+                "overrides": block.template_overrides,
+                "cwd": str(block.cwd) if block.cwd else None,
+            }
+
+        linked_files: dict[str, str] = {
+            "pdf": cached_pdf.name,
+            "png": cached_png.name,
+        }
+        if cached_md_path is not None:
+            linked_files["md"] = cached_md_path.name
+
+        source_hint = str(source_path) if source_path is not None else None
 
         try:
             source_pdf = Path(pdf_path).resolve()
@@ -140,6 +173,9 @@ class _SnippetCache:
             "pdf": cached_pdf.name,
             "png": cached_png.name,
             "template_version": template_version,
+            "files": linked_files,
+            "attributes": attributes,
+            "source": source_hint,
         }
         self.dirty = True
 
@@ -241,66 +277,72 @@ def _resolve_cache() -> _SnippetCache | None:
     return _SNIPPET_CACHE
 
 
-def _resolve_workspace_cache_root(source_path: Path | str | None) -> Path | None:
-    if source_path is None:
-        return None
-
-    try:
-        base = Path(source_path).resolve()
-    except (OSError, RuntimeError):
-        return None
-
-    search_root = base.parent if base.is_file() else base
-    candidates = (search_root, *search_root.parents)
-
-    for candidate in candidates:
-        marker = candidate / ".texsmith"
-        if marker.is_dir():
-            return marker / SNIPPET_DIR
-
-    for candidate in candidates:
-        if (candidate / "mkdocs.yml").exists() or (candidate / ".git").is_dir():
-            return candidate / ".texsmith" / SNIPPET_DIR
-
-    return search_root / ".texsmith" / SNIPPET_DIR
-
-
-def _resolve_workspace_cache(source_path: Path | str | None) -> _SnippetCache | None:
-    root = _resolve_workspace_cache_root(source_path)
-    if root is None:
-        return None
-
-    cache = _WORKSPACE_CACHES.get(root)
-    if cache is not None:
-        return cache
-
-    try:
-        root.mkdir(parents=True, exist_ok=True)
-    except OSError:
-        return None
-
-    metadata_path = root / _SNIPPET_CACHE_FILENAME
-    metadata = _load_cache_metadata(metadata_path)
-    cache = _SnippetCache(root=root, metadata_path=metadata_path, metadata=metadata)
-    _WORKSPACE_CACHES[root] = cache
-    return cache
-
-
 def _resolve_caches(source_path: Path | str | None) -> list[_SnippetCache]:
-    """Return available caches scoped to the workspace and user cache."""
-    caches: list[_SnippetCache] = []
+    """Return the user-level cache only."""
+    cache = _resolve_cache()
+    return [cache] if cache is not None else []
 
-    workspace_cache = _resolve_workspace_cache(source_path)
-    default_cache = _resolve_cache()
 
-    for cache in (workspace_cache, default_cache):
-        if cache is None:
+def _resolve_base_dir(block: SnippetBlock, host_path: Path | None) -> Path:
+    """Resolve the effective base directory for snippet assets."""
+    if block.cwd:
+        base = block.cwd
+        if not base.is_absolute() and host_path is not None:
+            try:
+                return (host_path.parent / base).resolve()
+            except OSError:
+                return host_path.parent
+        try:
+            return base.resolve()
+        except OSError:
+            pass
+
+    if host_path is not None:
+        return host_path.parent
+
+    try:
+        return Path.cwd()
+    except OSError:
+        return Path(".")
+
+
+def _resolve_template_runtime(block: SnippetBlock, document: Document, base_dir: Path) -> TemplateRuntime:
+    """Select the template runtime from front matter when provided."""
+    front_matter = document.front_matter
+    template_id: str | None = None
+    if isinstance(front_matter, Mapping):
+        raw = front_matter.get("template")
+        if raw:
+            template_id = str(raw).strip()
+        if not template_id:
+            press = front_matter.get("press")
+            if isinstance(press, Mapping):
+                raw_press = press.get("template")
+                if raw_press:
+                    template_id = str(raw_press).strip()
+
+    if not template_id:
+        return _resolve_runtime()
+
+    # Try resolving relative to the snippet cwd / host directory first.
+    candidates: list[str] = []
+    tpl_path = Path(template_id)
+    if not tpl_path.is_absolute():
+        candidates.append(str((base_dir / tpl_path).resolve()))
+    candidates.append(template_id)
+
+    last_exc: Exception | None = None
+    for candidate in candidates:
+        try:
+            return load_template_runtime(candidate)
+        except TemplateError as exc:
+            last_exc = exc
             continue
-        if any(existing.root == cache.root for existing in caches):
-            continue
-        caches.append(cache)
 
-    return caches
+    if last_exc is not None:
+        raise last_exc
+
+    return _resolve_runtime()
 
 
 def _snippet_template_version() -> str | None:
@@ -324,8 +366,8 @@ def asset_filename(digest: str, suffix: str) -> str:
     return f"{_SNIPPET_PREFIX}{digest}{suffix}"
 
 
-def _hash_payload(content: str, overrides: dict[str, str]) -> str:
-    payload = {"content": content, "overrides": overrides}
+def _hash_payload(content: str, overrides: dict[str, str], cwd: str | None = None) -> str:
+    payload = {"content": content, "overrides": overrides, "cwd": cwd}
     encoded = json.dumps(payload, sort_keys=True).encode("utf-8")
     return hashlib.sha256(encoded).hexdigest()
 
@@ -348,7 +390,7 @@ def _coerce_bool_option(value: Any, default: bool) -> bool:
 
 def _extract_template_overrides(
     element: Tag, classes: list[str]
-) -> tuple[dict[str, Any], str | None, str | None, str | None]:
+) -> tuple[dict[str, Any], str | None, str | None, str | None, str | None]:
     overrides: dict[str, Any] = {}
     caption = coerce_attribute(element.get("data-caption")) or None
     label = coerce_attribute(element.get("data-label")) or None
@@ -357,6 +399,7 @@ def _extract_template_overrides(
         or coerce_attribute(element.get("data-figure-width"))
         or None
     )
+    cwd = coerce_attribute(element.get("data-cwd")) or None
 
     for attr, value in element.attrs.items():
         if not isinstance(attr, str):
@@ -376,7 +419,7 @@ def _extract_template_overrides(
         if key in overrides:
             overrides[key] = _coerce_bool_option(overrides[key], default)
 
-    return overrides, caption, label, figure_width
+    return overrides, caption, label, figure_width, cwd
 
 
 def _extract_snippet_block(element: Tag) -> SnippetBlock | None:
@@ -391,13 +434,14 @@ def _extract_snippet_block(element: Tag) -> SnippetBlock | None:
     if not content.strip():
         return None
 
-    overrides, caption, label, figure_width = _extract_template_overrides(element, classes)
-    digest = _hash_payload(content, overrides)
+    overrides, caption, label, figure_width, cwd = _extract_template_overrides(element, classes)
+    digest = _hash_payload(content, overrides, cwd=cwd)
     border_enabled = _coerce_bool_option(overrides.get("border"), True)
     dogear_enabled = _coerce_bool_option(overrides.get("dogear_enabled"), True)
 
     return SnippetBlock(
         content=content,
+        cwd=Path(cwd).expanduser() if cwd else None,
         caption=caption,
         label=label,
         figure_width=figure_width,
@@ -560,6 +604,8 @@ def ensure_snippet_assets(
                 pdf_path,
                 png_path,
                 template_version=template_version,
+                block=block,
+                source_path=Path(source_path) if source_path is not None else None,
             )
         _flush_caches()
 
@@ -595,12 +641,12 @@ def ensure_snippet_assets(
 
     _announce_build(block, source_path, emitter)
 
-    runtime = _resolve_runtime()
     host_path = Path(source_path) if source_path is not None else destination / "snippet.md"
-    host_dir = host_path.parent
+    host_dir = _resolve_base_dir(block, host_path)
     host_name = host_path.stem or "snippet"
 
     document = _build_document(block, host_dir=host_dir, host_name=host_name)
+    runtime = _resolve_template_runtime(block, document, host_dir)
     settings = RenderSettings(
         copy_assets=True,
         convert_assets=False,
