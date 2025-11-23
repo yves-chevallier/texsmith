@@ -66,6 +66,7 @@ Roadmap and development notes for TeXSmith. I keep this file as a running checkl
 - [x] Consolidate Book template
 - [x] Demonstrate acronyms in book
 - [x] Fix API and pytest
+- [ ] Snippet (frame dog ear would be good in the build pdf)
 - [ ] Be verbose in mkdocs during build to indicate what is happening (fetching assets, building...)
 - [ ] docs/syntax/captions.md (captions for figures not working when using texsmith?)
 - [ ] Never use user cache. Always use a .cache local folder avoir spread project data in user home.
