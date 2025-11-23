@@ -263,12 +263,4 @@ def render_texsmith_callouts(element: Tag, context: RenderContext) -> None:
     _render_admonition(element, context, classes=classes, title=title)
 
 
-__all__ = [
-    "_extract_title",
-    "_use_tcolorbox_figures",
-    "render_blockquote_callouts",
-    "render_details_admonitions",
-    "render_div_admonitions",
-    "render_texsmith_callouts",
-]
 CALLOUT_PATTERN = re.compile(r"^\s*\[!(?P<kind>[A-Za-z0-9_-]+)\]\s*(?P<content>.*)$", re.DOTALL)
