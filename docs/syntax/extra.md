@@ -1,26 +1,10 @@
-# Extra (built-in)
+# Custom Attributes
 
 These are the stalwarts borrowed from PHP Markdown Extra and bundled directly with Python-Markdown.
 
 ```pip
 pip install markdown
 ```
-
-## Abbreviations
-
-The Abbreviations extension lets you tack definitions onto shorthand terms:
-
-```markdown
-Do you know HTML and CSS?
-
-*[HTML]: Hyper Text Markup Language
-*[CSS]: Cascading Style Sheets
-```
-
-Do you know HTML and CSS?
-
-*[HTML]: Hyper Text Markup Language
-*[CSS]: Cascading Style Sheets
 
 ## Attribute Lists
 

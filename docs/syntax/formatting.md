@@ -1,36 +1,38 @@
 # Text Formatting
 
-## Emphasis
-
-You can make text **bold**, *italic*, or ~~strikethrough~~ using the following syntax:
+Like vanilla Markdown, you can apply basic text formatting using a variety of delimiters. TeXSmith extends this with small capitals support.
 
 ```markdown
-This is **bold** text.
-This is *italic* text.
-This is ~~strikethrough~~ text.
+The quick brown fox jumps over the lazy dog. *(regular)*
+
+*The quick brown fox jumps over the lazy dog.* *(italic)*
+
+**The quick brown fox jumps over the lazy dog.** **(bold)*
+
+***The quick brown fox jumps over the lazy dog.*** *(bold italic)*
+
+~~The quick brown fox jumps over the lazy dog.~~ *(strikethrough)*
+
+__The quick brown fox jumps over the lazy dog.__ *(small capitals)*
 ```
 
-The `pymdownx.betterem` extension lets you stack delimiters for bold italic:
+```md { .snippet }
+The quick brown fox jumps over the lazy dog. *(regular)*
 
-```markdown
-This is ***bold and italic*** text.
+*The quick brown fox jumps over the lazy dog.* *(italic)*
+
+**The quick brown fox jumps over the lazy dog.** **(bold)*
+
+***The quick brown fox jumps over the lazy dog.*** *(bold italic)*
+
+~~The quick brown fox jumps over the lazy dog.~~ *(strikethrough)*
+
+__The quick brown fox jumps over the lazy dog.__ *(small capitals)*
 ```
 
-## Small Capitals
+The `pymdownx.betterem` extension lets you stack delimiters for bold italic.
 
-LaTeX uses `\textsc{}` for __small capitals__. TeXSmith remaps the legacy double-underscore syntax to that command:
-
-```markdown
-This is __small capitals__ text.
-```
-
-Is converted to:
-
-```latex
-This is \textsc{small capitals} text.
-```
-
-!!! note 
+!!! note
     In MkDocs, you need to specify how to render small capitals using a custom CSS:
 
     ```css

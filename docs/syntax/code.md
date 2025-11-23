@@ -62,14 +62,16 @@ With `pymdownx.snippets` you can pull code from external files, keeping samples 
     ```yaml
     - pymdownx.snippets:
         check_paths: true
-        base_path: !relative $config_dir    
+        base_path: !relative $config_dir
     ```
 
 ### With LaTeX output
 
 Here’s what the above examples look when rendered with TeXSmith:
 
-[![Code Block Examples in LaTeX](../assets/examples/code-block.png)](../assets/examples/code-block.pdf)
+````md {.snippet }
+---8<--- "examples/code/code-block.md"
+````
 
 ## Inline Code
 
@@ -103,4 +105,6 @@ With TeXSmith this example renders as follows:
 --8<-- "examples/code/code-inline.md"
 ```
 
-[![Inline Code Example in LaTeX](../assets/examples/code-inline.png)](../assets/examples/code-inline.pdf)
+````md {.snippet }
+---8<--- "examples/code/code-inline.md"
+````

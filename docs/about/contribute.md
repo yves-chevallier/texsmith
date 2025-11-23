@@ -1,6 +1,6 @@
 # Contributing
 
-I, [@yves-chevallier](https://github.com/yves-chevallier), am the creator of TeXSmith and owner of the repository. I welcome contributions from the community to help improve TexSmith! Whether it's reporting bugs, suggesting new features, or submitting code changes, your input is valuable to us. Here's how you can contribute:
+I welcome contributions from the community to help improve TexSmith! Whether it's reporting bugs, suggesting new features, or submitting code changes, your input is valuable to us. Here's how you can contribute:
 
 Reporting Issues
 : If you encounter any bugs or issues while using TexSmith, please report them.

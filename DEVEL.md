@@ -379,3 +379,7 @@ __*`abc`*__
 ```
 
 In this case the `code inline` is treated as `texttt` with the proper escapes.
+
+### Caption for figures not working, references.
+
+docs/syntax/captions.md

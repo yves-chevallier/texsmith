@@ -1,4 +1,4 @@
-[](){ #index }
+[](){ #index-tags }
 # Index Generation
 
 In static site generators such as MkDocs, every build emits a `search_index.json`

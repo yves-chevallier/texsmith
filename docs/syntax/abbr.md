@@ -1,4 +1,4 @@
-# Abbreviations/Acronyms
+# Abbreviations / Acronyms
 
 Enable the `texsmith.abbr` extension and you can sprinkle definitions directly into your Markdown. Drop the abbreviation between square brackets, follow it with the expanded form in parentheses, and the parser does the rest.
 

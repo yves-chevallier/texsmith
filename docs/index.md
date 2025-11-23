@@ -112,8 +112,7 @@ flag or `render_dir` to go straight to a print-ready project.
 
 ## Works the way MkDocs authors write
 
-- Markdown extensions mirror MkDocs Material out of the box. See
-  [Supported Markdown Syntax](markdown/supported.md) for the full list.
+- Markdown extensions mirror MkDocs Material out of the box.
 - The single `texsmith` command exposes every pipeline primitive via flags
   (`--template`, `--build`, `--list-bibliography`, `--list-extensions`), keeping
   diagnostics close to the workflow.
@@ -122,12 +121,12 @@ flag or `render_dir` to go straight to a print-ready project.
 
 ## Architecture at a glance
 
-| Layer | Primary modules | Highlights |
-| --- | --- | --- |
-| UI | `texsmith.ui.cli` | Typer-based CLI with Rich diagnostics and slot-aware options |
-| API | `texsmith.api` | Author-friendly façade: `Document`, `ConversionService`, `TemplateSession` |
-| Engine | `texsmith.core.conversion`, `texsmith.core.templates` | HTML→LaTeX renderer, template runtime, diagnostics |
-| Adapters | `texsmith.adapters.markdown`, `texsmith.adapters.transformers` | Markdown normalisation and asset converters (Mermaid, Draw.io, Svgbob) |
+| Layer    | Primary modules                                                | Highlights                                                                 |
+| -------- | -------------------------------------------------------------- | -------------------------------------------------------------------------- |
+| UI       | `texsmith.ui.cli`                                              | Typer-based CLI with Rich diagnostics and slot-aware options               |
+| API      | `texsmith.api`                                                 | Author-friendly façade: `Document`, `ConversionService`, `TemplateSession` |
+| Engine   | `texsmith.core.conversion`, `texsmith.core.templates`          | HTML→LaTeX renderer, template runtime, diagnostics                         |
+| Adapters | `texsmith.adapters.markdown`, `texsmith.adapters.transformers` | Markdown normalisation and asset converters (Mermaid, Draw.io, Svgbob)     |
 
 For a deeper dive, start with [High-Level Workflows](api/high-level.md) and move
 on to [Core Engine](api/core.md) once you need fine-grained control.
