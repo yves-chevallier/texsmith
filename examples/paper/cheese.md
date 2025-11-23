@@ -171,7 +171,8 @@ ArrayLike = npt.NDArray[np.float64] | float
 
 def modulus(temperature: ArrayLike, strain_rate: float) -> ArrayLike:
     """Return elastic modulus as a function of temperature and strain rate."""
-    return E0 * (1 - alpha * (temperature - T0)) * (1 + beta * np.log(strain_rate / eps_dot0))
+    return E0 * (1 - alpha * (temperature - T0)) * (1 + beta *
+        np.log(strain_rate / eps_dot0))
 
 
 # Compute modulus for a range of temperatures

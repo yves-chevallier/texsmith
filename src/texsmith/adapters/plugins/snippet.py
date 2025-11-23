@@ -692,6 +692,8 @@ def _pdf_to_png_grid(
     *,
     layout: tuple[int, int] | None = None,
     transparent_corner: bool = False,
+    spacing: int | None = None,
+    decorate_page: Callable[[Image.Image], Image.Image] | None = None,
 ) -> None:
     fitz = _load_pymupdf()
 
@@ -725,17 +727,28 @@ def _pdf_to_png_grid(
         raise LatexRenderingError(f"Snippet PDF '{pdf_path}' did not produce any pages.")
 
     page_w, page_h = images[0].size
-    canvas = Image.new("RGBA", (cols * page_w, rows * page_h), (255, 255, 255, 0))
+    inferred_spacing = 0
+    if spacing is None and cols * rows > 1:
+        inferred_spacing = max(int(round(min(page_w, page_h) * 0.04)), 18)
+    elif spacing:
+        inferred_spacing = max(spacing, 0)
+
+    total_w = cols * page_w + inferred_spacing * (cols - 1)
+    total_h = rows * page_h + inferred_spacing * (rows - 1)
+    canvas = Image.new("RGBA", (total_w, total_h), (255, 255, 255, 0))
 
     for idx, img in enumerate(images):
+        if transparent_corner:
+            img = _apply_dogear_transparency(img)
+        if decorate_page is not None:
+            img = decorate_page(img)
+
         r = idx // cols
         c = idx % cols
-        x = c * page_w
-        y = r * page_h
-        canvas.paste(img, (x, y))
-
-    if transparent_corner:
-        canvas = _apply_dogear_transparency(canvas)
+        x = c * (page_w + inferred_spacing)
+        y = r * (page_h + inferred_spacing)
+        mask = img if "A" in img.getbands() else None
+        canvas.paste(img, (x, y), mask=mask)
 
     canvas.save(png_path)
 
@@ -1013,13 +1026,27 @@ def ensure_snippet_assets(
     else:
         shutil.rmtree(work_dir, ignore_errors=True)
 
+    total_cells = 1
+    if block.layout:
+        cols, rows = block.layout
+        total_cells = max(cols, 1) * max(rows, 1)
+    per_page_frame: Callable[[Image.Image], Image.Image] | None = None
+    if block.frame_enabled and block.border_enabled and total_cells > 1:
+        def _frame_page(img: Image.Image) -> Image.Image:
+            return _overlay_dogear_frame(img, dogear_enabled=block.dogear_enabled)
+
+        per_page_frame = _frame_page
+
     _pdf_to_png_grid(
         pdf_path,
         png_path,
         layout=block.layout,
         transparent_corner=apply_corner,
+        spacing=None if total_cells > 1 else 0,
+        decorate_page=per_page_frame,
     )
-    if block.frame_enabled and block.border_enabled:
+    needs_global_frame = block.frame_enabled and block.border_enabled and per_page_frame is None
+    if needs_global_frame:
         try:
             image = Image.open(png_path)
         except OSError:
