@@ -50,6 +50,7 @@ class SnippetBlock:
 
     content: str
     frame_enabled: bool
+    layout: tuple[int, int] | None
     template_id: str | None
     cwd: Path | None
     caption: str | None
@@ -143,14 +144,15 @@ class _SnippetCache:
             attributes = {
                 "caption": block.caption,
                 "label": block.label,
-                "figure_width": block.figure_width,
-                "border": block.border_enabled,
-                "dogear_enabled": block.dogear_enabled,
-                "transparent_corner": block.transparent_corner,
-                "frame_enabled": block.frame_enabled,
-                "overrides": block.template_overrides,
-                "cwd": str(block.cwd) if block.cwd else None,
-            }
+            "figure_width": block.figure_width,
+            "border": block.border_enabled,
+            "dogear_enabled": block.dogear_enabled,
+            "transparent_corner": block.transparent_corner,
+            "frame_enabled": block.frame_enabled,
+            "layout": block.layout,
+            "overrides": block.template_overrides,
+            "cwd": str(block.cwd) if block.cwd else None,
+        }
 
         linked_files: dict[str, str] = {
             "pdf": cached_pdf.name,
@@ -375,6 +377,7 @@ def _hash_payload(
     cwd: str | None = None,
     frame: bool = True,
     template_id: str | None = None,
+    layout: tuple[int, int] | None = None,
 ) -> str:
     payload = {
         "content": content,
@@ -382,6 +385,7 @@ def _hash_payload(
         "cwd": cwd,
         "frame": frame,
         "template": template_id,
+        "layout": layout,
     }
     encoded = json.dumps(payload, sort_keys=True).encode("utf-8")
     return hashlib.sha256(encoded).hexdigest()
@@ -440,6 +444,7 @@ def _extract_template_overrides(
     cwd = coerce_attribute(_attr("data-cwd")) or None
     template_id = coerce_attribute(_attr("data-template")) or None
     frame_enabled = _coerce_bool_option(_attr("data-frame"), True)
+    layout_literal = coerce_attribute(_attr("data-layout")) or None
 
     candidate_attrs: list[tuple[str, Any]] = list(element.attrs.items())
     if pre_element is not None:
@@ -465,7 +470,9 @@ def _extract_template_overrides(
         if key in overrides:
             overrides[key] = _coerce_bool_option(overrides[key], default)
 
-    return overrides, caption, label, figure_width, cwd, frame_enabled, template_id
+    layout = _parse_layout(layout_literal)
+
+    return overrides, caption, label, figure_width, cwd, frame_enabled, template_id, layout
 
 
 def _extract_snippet_block(element: Tag) -> SnippetBlock | None:
@@ -488,14 +495,23 @@ def _extract_snippet_block(element: Tag) -> SnippetBlock | None:
         cwd,
         frame_enabled,
         template_id,
+        layout,
     ) = _extract_template_overrides(element, classes)
-    digest = _hash_payload(content, overrides, cwd=cwd, frame=frame_enabled, template_id=template_id)
+    digest = _hash_payload(
+        content,
+        overrides,
+        cwd=cwd,
+        frame=frame_enabled,
+        template_id=template_id,
+        layout=layout,
+    )
     border_enabled = _coerce_bool_option(overrides.get("border"), True)
     dogear_enabled = _coerce_bool_option(overrides.get("dogear_enabled"), True)
 
     return SnippetBlock(
         content=content,
         frame_enabled=frame_enabled,
+        layout=layout,
         template_id=template_id,
         cwd=Path(cwd).expanduser() if cwd else None,
         caption=caption,
@@ -604,6 +620,60 @@ def _pdf_to_png(pdf_path: Path, png_path: Path, *, transparent_corner: bool = Fa
     image.save(png_path)
 
 
+def _pdf_to_png_grid(
+    pdf_path: Path,
+    png_path: Path,
+    *,
+    layout: tuple[int, int] | None = None,
+    transparent_corner: bool = False,
+) -> None:
+    fitz = _load_pymupdf()
+
+    with fitz.open(pdf_path) as document:
+        page_count = document.page_count
+        if page_count == 0:
+            raise LatexRenderingError(f"Snippet PDF '{pdf_path}' did not produce any pages.")
+
+        cols, rows = (1, 1)
+        if layout:
+            c, r = layout
+            if c > 0:
+                cols = c
+            if r > 0:
+                rows = r
+        pages_needed = cols * rows
+        if pages_needed <= 0:
+            cols = 1
+            rows = 1
+            pages_needed = 1
+        use_pages = min(page_count, pages_needed)
+
+        images: list[Image.Image] = []
+        for index in range(use_pages):
+            page = document.load_page(index)
+            pixmap = page.get_pixmap(dpi=220)
+            mode = "RGBA" if pixmap.alpha else "RGB"
+            images.append(Image.frombytes(mode, (pixmap.width, pixmap.height), pixmap.samples))
+
+    if not images:
+        raise LatexRenderingError(f"Snippet PDF '{pdf_path}' did not produce any pages.")
+
+    page_w, page_h = images[0].size
+    canvas = Image.new("RGBA", (cols * page_w, rows * page_h), (255, 255, 255, 0))
+
+    for idx, img in enumerate(images):
+        r = idx // cols
+        c = idx % cols
+        x = c * page_w
+        y = r * page_h
+        canvas.paste(img, (x, y))
+
+    if transparent_corner:
+        canvas = _apply_dogear_transparency(canvas)
+
+    canvas.save(png_path)
+
+
 def _apply_dogear_transparency(image: Image.Image) -> Image.Image:
     rgba = image.convert("RGBA")
     width, height = rgba.size
@@ -624,6 +694,28 @@ def _apply_dogear_transparency(image: Image.Image) -> Image.Image:
             if pixels[x, y] == marker:
                 pixels[x, y] = (0, 0, 0, 0)
     return rgba
+
+
+def _parse_layout(value: str | None) -> tuple[int, int] | None:
+    """Parse layout string like '2x2', '3', or '1x3' into (cols, rows)."""
+    if not value:
+        return None
+    raw = value.strip().lower()
+    if not raw:
+        return None
+    if "x" in raw:
+        parts = raw.split("x", 1)
+        try:
+            cols = int(parts[0])
+            rows = int(parts[1])
+        except ValueError:
+            return None
+        return (cols, rows)
+    try:
+        cols = int(raw)
+    except ValueError:
+        return None
+    return (cols, 1)
 
 
 def _overlay_dogear_frame(
@@ -839,7 +931,12 @@ def ensure_snippet_assets(
     finally:
         shutil.rmtree(work_dir, ignore_errors=True)
 
-    _pdf_to_png(pdf_path, png_path, transparent_corner=apply_corner)
+    _pdf_to_png_grid(
+        pdf_path,
+        png_path,
+        layout=block.layout,
+        transparent_corner=apply_corner,
+    )
     if block.frame_enabled and block.border_enabled:
         try:
             image = Image.open(png_path)

@@ -64,7 +64,8 @@
 \BLOCK{ endif }
 }
 \BLOCK{ if from_location_value }\setkomavar{location}{\VAR{from_location_value}}\BLOCK{ endif }
-\setkomavar{date}{\VAR{date_value}}
+\BLOCK{ set effective_date = date_value|default('')|trim }
+\setkomavar{date}{\BLOCK{ if effective_date }\VAR{date_value}\BLOCK{ else }\today\BLOCK{ endif }}
 \BLOCK{ if has_subject }
 \setkomavar{subject}{\VAR{object_value}}
 \setkomavar*{subject}{\VAR{subject_prefix}}
