@@ -4,11 +4,20 @@
 \RequirePackage[many,minted]{tcolorbox}
 \tcbuselibrary{breakable,skins}
 \RequirePackage{fontawesome5}
+\RequirePackage{fontspec}
 
 \newcommand{\texsmithCalloutStyleDefault}{\VAR{callout_style|default('fancy')}}
 \providecommand{\texsmithCalloutStyle}{\texsmithCalloutStyleDefault}
 
-\newfontfamily\texsmithCalloutIconFont{Noto Emoji}[Renderer=Harfbuzz]
+\ifdefined\IfFontExistsTF
+  \IfFontExistsTF{Noto Emoji}{
+    \newfontfamily\texsmithCalloutIconFont{Noto Emoji}[Renderer=Harfbuzz]
+  }{
+    \newcommand{\texsmithCalloutIconFont}[1]{#1}
+  }
+\else
+  \newcommand{\texsmithCalloutIconFont}[1]{#1}
+\fi
 \newcommand{\texsmithCalloutIcon}[1]{%
   \ifdefined\texsmithCalloutIconFont
     {\texsmithCalloutIconFont #1}%
