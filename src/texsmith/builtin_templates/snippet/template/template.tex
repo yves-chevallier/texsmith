@@ -17,6 +17,7 @@
 
 \newenvironment{MaybePreview}{\iftsPreview\begin{preview}\fi}{\iftsPreview\end{preview}\fi}
 
+\usepackage{fontspec} % Ensure \newfontfamily is available for ts-* fragments.
 \VAR{extra_packages}
 \usepackage{hyphenat}
 \usepackage[\VAR{language|default('english')}]{babel}

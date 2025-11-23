@@ -4,7 +4,7 @@ TeXSmith speaks more than Markdown—it speaks your language. Noto fonts ship in
 
 Below, we render a dialect sampler through the `article` template, lay two PDF pages side-by-side (`data-layout="2x1"`), and keep the dog-ear frame enabled. Click to fetch the PDF.
 
-````md {.snippet data-caption="Download PDF" --data-no-title="false" data-layout="2x1" data-template="article" data-frame="true" data-width="80%"}
+````md {.snippet data-caption="Download PDF" data-layout="2x1" data-template="article" data-frame="true" data-width="80%"}
 ---8<--- "examples/dialects/dialects.md"
 ````
 

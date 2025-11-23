@@ -61,6 +61,8 @@ class SnippetBlock:
     border_enabled: bool
     dogear_enabled: bool
     transparent_corner: bool
+    title_strategy: TitleStrategy
+    suppress_title_metadata: bool
 
     @property
     def asset_basename(self) -> str:
@@ -480,11 +482,21 @@ def _extract_snippet_block(element: Tag) -> SnippetBlock | None:
     if "snippet" not in classes:
         return None
 
+    pre_element = element.find("pre")
     code_element = element.find("code")
     if code_element is None:
         raise InvalidNodeError("Snippet block is missing an inner <code> element.")
     content = code_element.get_text(strip=False)
     if not content.strip():
+        return None
+
+    def _attr(name: str) -> Any:
+        for candidate in (element, pre_element, code_element):
+            if candidate is None:
+                continue
+            value = candidate.get(name)
+            if value is not None:
+                return value
         return None
 
     (
@@ -497,9 +509,20 @@ def _extract_snippet_block(element: Tag) -> SnippetBlock | None:
         template_id,
         layout,
     ) = _extract_template_overrides(element, classes)
+    suppress_title_value = _coerce_bool_option(_attr("data-no-title"), True)
+    drop_title_value = _coerce_bool_option(
+        _attr("data-strip-title") or _attr("data-drop-title"),
+        False,
+    )
+    title_strategy = TitleStrategy.DROP if drop_title_value else TitleStrategy.KEEP
+
+    digest_overrides = dict(overrides)
+    digest_overrides["_no_title"] = suppress_title_value
+    digest_overrides["_drop_title"] = drop_title_value
+
     digest = _hash_payload(
         content,
-        overrides,
+        digest_overrides,
         cwd=cwd,
         frame=frame_enabled,
         template_id=template_id,
@@ -522,6 +545,8 @@ def _extract_snippet_block(element: Tag) -> SnippetBlock | None:
         border_enabled=border_enabled,
         dogear_enabled=dogear_enabled,
         transparent_corner=border_enabled and dogear_enabled,
+        title_strategy=title_strategy,
+        suppress_title_metadata=suppress_title_value,
     )
 
 
@@ -539,9 +564,9 @@ def _build_document(
     synthetic = host_dir / f"{host_name}-{block.asset_basename}.md"
     options = DocumentRenderOptions(
         base_level=0,
-        title_strategy=TitleStrategy.DROP,
+        title_strategy=block.title_strategy,
         numbered=False,
-        suppress_title_metadata=True,
+        suppress_title_metadata=block.suppress_title_metadata,
     )
     document = Document(
         source_path=synthetic,
@@ -928,7 +953,10 @@ def ensure_snippet_assets(
         render_result = session.render(work_dir)
         compiled_pdf = _compile_pdf(render_result)
         shutil.copy2(compiled_pdf, pdf_path)
-    finally:
+    except Exception:
+        # Preserve the work directory for post-mortem inspection when compilation fails.
+        raise
+    else:
         shutil.rmtree(work_dir, ignore_errors=True)
 
     _pdf_to_png_grid(

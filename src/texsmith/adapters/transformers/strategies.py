@@ -516,8 +516,16 @@ class DrawioToPdfStrategy(CachedConversionStrategy):
         if not source_path.exists():
             raise TransformerExecutionError(f"Draw.io file '{source_path}' does not exist.")
 
-        working_dir = cache_dir / "drawio"
+        working_dir = cache_dir / "drawio" / target.stem
+        if working_dir.exists():
+            shutil.rmtree(working_dir, ignore_errors=True)
+        if working_dir.exists():
+            working_dir = cache_dir / "drawio" / f"{target.stem}-{os.getpid()}"
         working_dir.mkdir(parents=True, exist_ok=True)
+        home_dir = working_dir / "home"
+        home_dir.mkdir(parents=True, exist_ok=True)
+        home_dir = working_dir / "home"
+        home_dir.mkdir(parents=True, exist_ok=True)
 
         diagram_name = source_path.name
         working_source = working_dir / diagram_name
@@ -547,6 +555,14 @@ class DrawioToPdfStrategy(CachedConversionStrategy):
                 cli_error = exc
 
         if not ran_local:
+            mounts: list[VolumeMount] = [VolumeMount(working_dir, "/data")]
+            # Provide passwd/group for Electron when running as a non-root user.
+            passwd_path = Path("/etc/passwd")
+            group_path = Path("/etc/group")
+            if passwd_path.exists():
+                mounts.append(VolumeMount(passwd_path, "/etc/passwd", read_only=True))
+            if group_path.exists():
+                mounts.append(VolumeMount(group_path, "/etc/group", read_only=True))
             docker_args = [
                 "--export",
                 "--format",
@@ -568,10 +584,14 @@ class DrawioToPdfStrategy(CachedConversionStrategy):
                 run_container(
                     self.image,
                     args=docker_args,
-                    mounts=[VolumeMount(working_dir, "/data")],
-                    environment={"HOME": "/data/home"},
+                    mounts=mounts,
+                    environment={
+                        "HOME": "/data/home",
+                        "XDG_CACHE_HOME": "/data/home/.cache",
+                        "XDG_CONFIG_HOME": "/data/home/.config",
+                    },
                     workdir="/data",
-                    use_host_user=False,
+                    use_host_user=True,
                     limits=DockerLimits(cpus=1.0, memory="1g", pids_limit=512),
                 )
             except TransformerExecutionError as exc:
@@ -603,10 +623,14 @@ class DrawioToPdfStrategy(CachedConversionStrategy):
                 run_container(
                     self.image,
                     args=docker_args,
-                    mounts=[VolumeMount(working_dir, "/data")],
-                    environment={"HOME": "/data/home"},
+                    mounts=mounts,
+                    environment={
+                        "HOME": "/data/home",
+                        "XDG_CACHE_HOME": "/data/home/.cache",
+                        "XDG_CONFIG_HOME": "/data/home/.config",
+                    },
                     workdir="/data",
-                    use_host_user=False,
+                    use_host_user=True,
                     limits=DockerLimits(cpus=1.0, memory="1g", pids_limit=512),
                 )
             except TransformerExecutionError as exc:
