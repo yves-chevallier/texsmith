@@ -8,10 +8,6 @@ Architecture
   that influence the LaTeX output. Keeping these options separate from the core
   document data allows caller-specific tweaks while preserving the original
   source.
-: `HeadingLevel` and `resolve_heading_level` provide a friendly bridge between
-  human labels (for example `"section"`) and the numeric levels required by the
-  LaTeX engine. This mapping is shared across the CLI and programmatic surfaces
-  to guarantee consistent behaviour.
 
 Implementation Rationale
 : Conversions often need multiple passes over the same document, such as preview
@@ -29,7 +25,7 @@ Usage Example
     >>> with TemporaryDirectory() as tmpdir:
     ...     source = Path(tmpdir) / "chapter.md"
     ...     _ = source.write_text("# Chapter\\nBody")
-    ...     doc = Document.from_markdown(source, heading="section")
+    ...     doc = Document.from_markdown(source, base_level="section")
     ...     context = doc.to_context()
     ...     context.name
     'chapter'
@@ -60,16 +56,15 @@ from ..core.conversion.inputs import (
 )
 from ..core.conversion_contexts import DocumentContext
 from ..core.diagnostics import DiagnosticEmitter, NullEmitter
-from ..core.templates import LATEX_HEADING_LEVELS
+from ..core.templates.runtime import coerce_base_level
 
 
 __all__ = [
     "Document",
     "DocumentRenderOptions",
     "DocumentSlots",
-    "HeadingLevel",
+    "front_matter_has_title",
     "TitleStrategy",
-    "resolve_heading_level",
 ]
 
 
@@ -84,52 +79,37 @@ class TitleStrategy(str, Enum):
 def _resolve_title_strategy(
     *,
     explicit: TitleStrategy | None,
-    drop_title: bool,
-    title_from_heading: bool,
+    promote_title: bool,
+    strip_heading: bool,
+    has_declared_title: bool,
 ) -> TitleStrategy:
-    """Determine the effective title strategy from legacy flags."""
-    if drop_title and title_from_heading:
-        raise ValueError("Cannot request both drop_title and title_from_heading.")
-
-    strategy = explicit or TitleStrategy.KEEP
-
-    if title_from_heading:
-        if explicit and explicit is not TitleStrategy.PROMOTE_METADATA:
-            raise ValueError(
-                "Conflicting title strategy overrides: title_from_heading requires "
-                "TitleStrategy.PROMOTE_METADATA."
-            )
-        strategy = TitleStrategy.PROMOTE_METADATA
-    elif drop_title:
-        if explicit and explicit is not TitleStrategy.DROP:
-            raise ValueError(
-                "Conflicting title strategy overrides: drop_title requires TitleStrategy.DROP."
-            )
-        strategy = TitleStrategy.DROP
-
-    return strategy
+    """Determine the effective title strategy from caller preferences."""
+    if explicit is not None:
+        return explicit
+    if strip_heading:
+        return TitleStrategy.DROP
+    if promote_title and not has_declared_title:
+        return TitleStrategy.PROMOTE_METADATA
+    return TitleStrategy.KEEP
 
 
-class HeadingLevel(int):
-    """Represents a LaTeX heading depth."""
+def front_matter_has_title(metadata: Mapping[str, Any] | None) -> bool:
+    """Return ``True`` when the mapping declares a title."""
+    if not isinstance(metadata, Mapping):
+        return False
 
-    @classmethod
-    def from_label(cls, value: str | int | HeadingLevel) -> HeadingLevel:
-        """Create a HeadingLevel from a label or numeric depth."""
-        if isinstance(value, HeadingLevel):
-            return value
-        if isinstance(value, int):
-            return cls(value)
-        key = value.strip().lower()
-        if key not in LATEX_HEADING_LEVELS:
-            allowed = ", ".join(sorted(LATEX_HEADING_LEVELS))
-            raise ValueError(f"Unknown heading label '{value}'. Expected one of: {allowed}.")
-        return cls(LATEX_HEADING_LEVELS[key])
+    title = metadata.get("title")
+    if isinstance(title, str) and title.strip():
+        return True
 
+    press_section = metadata.get("press")
+    if isinstance(press_section, Mapping):
+        press_title = press_section.get("title")
+        if isinstance(press_title, str) and press_title.strip():
+            return True
 
-def resolve_heading_level(value: str | int | HeadingLevel) -> int:
-    """Resolve a heading descriptor into a numeric level."""
-    return int(HeadingLevel.from_label(value))
+    dotted = metadata.get("press.title")
+    return bool(isinstance(dotted, str) and dotted.strip())
 
 
 @dataclass(slots=True)
@@ -137,17 +117,17 @@ class DocumentRenderOptions:
     """Rendering options applied when preparing a document context."""
 
     base_level: int = 0
-    heading_level: int = 0
     title_strategy: TitleStrategy = TitleStrategy.KEEP
     numbered: bool = True
+    suppress_title_metadata: bool = False
 
     def copy(self) -> DocumentRenderOptions:
         """Return a deep copy of the options."""
         return DocumentRenderOptions(
             base_level=self.base_level,
-            heading_level=self.heading_level,
             title_strategy=self.title_strategy,
             numbered=self.numbered,
+            suppress_title_metadata=self.suppress_title_metadata,
         )
 
 
@@ -255,11 +235,11 @@ class Document:
         path: Path,
         *,
         extensions: Iterable[str] | None = None,
-        heading: str | int | HeadingLevel = 0,
-        base_level: int = 0,
+        promote_title: bool = False,
+        strip_heading: bool = False,
+        suppress_title: bool = False,
+        base_level: int | str = 0,
         title_strategy: TitleStrategy | None = None,
-        drop_title: bool = False,
-        title_from_heading: bool = False,
         numbered: bool = True,
         emitter: DiagnosticEmitter | None = None,
     ) -> Document:
@@ -279,18 +259,27 @@ class Document:
                 exc if isinstance(exc, Exception) else ConversionError(message)
             )
 
+        try:
+            resolved_base_level = coerce_base_level(base_level, allow_none=False)
+        except Exception as exc:  # pragma: no cover - defensive
+            message = f"Invalid base level '{base_level}': {exc}"
+            active_emitter.error(message, exc if isinstance(exc, Exception) else None)
+            raise ConversionError(message) from (
+                exc if isinstance(exc, Exception) else ConversionError(message)
+            )
+
+        declared_title = front_matter_has_title(rendered.front_matter)
         strategy = _resolve_title_strategy(
             explicit=title_strategy,
-            drop_title=drop_title,
-            title_from_heading=title_from_heading,
+            promote_title=promote_title,
+            strip_heading=strip_heading,
+            has_declared_title=declared_title,
         )
-        alignment = cls._resolve_heading_alignment(rendered.html, strategy)
-
         options = DocumentRenderOptions(
-            base_level=base_level - alignment,
-            heading_level=resolve_heading_level(heading),
+            base_level=resolved_base_level,
             title_strategy=strategy,
             numbered=numbered,
+            suppress_title_metadata=suppress_title,
         )
         document = cls(
             source_path=path,
@@ -309,11 +298,11 @@ class Document:
         path: Path,
         *,
         selector: str = "article.md-content__inner",
-        heading: str | int | HeadingLevel = 0,
-        base_level: int = 0,
+        promote_title: bool = False,
+        strip_heading: bool = False,
+        suppress_title: bool = False,
+        base_level: int | str = 0,
         title_strategy: TitleStrategy | None = None,
-        drop_title: bool = False,
-        title_from_heading: bool = False,
         numbered: bool = True,
         full_document: bool = False,
         emitter: DiagnosticEmitter | None = None,
@@ -340,18 +329,26 @@ class Document:
                     )
                     active_emitter.warning(message, exc)
 
+        try:
+            resolved_base_level = coerce_base_level(base_level, allow_none=False)
+        except Exception as exc:  # pragma: no cover - defensive
+            message = f"Invalid base level '{base_level}': {exc}"
+            active_emitter.error(message, exc if isinstance(exc, Exception) else None)
+            raise ConversionError(message) from (
+                exc if isinstance(exc, Exception) else ConversionError(message)
+            )
+
         strategy = _resolve_title_strategy(
             explicit=title_strategy,
-            drop_title=drop_title,
-            title_from_heading=title_from_heading,
+            promote_title=promote_title,
+            strip_heading=strip_heading,
+            has_declared_title=False,
         )
-        alignment = cls._resolve_heading_alignment(html, strategy)
-
         options = DocumentRenderOptions(
-            base_level=base_level - alignment,
-            heading_level=resolve_heading_level(heading),
+            base_level=resolved_base_level,
             title_strategy=strategy,
             numbered=numbered,
+            suppress_title_metadata=suppress_title,
         )
         document = cls(
             source_path=path,
@@ -387,10 +384,14 @@ class Document:
     @property
     def drop_title(self) -> bool:
         """Indicate whether the document title should be dropped."""
-        return self.options.title_strategy in {
-            TitleStrategy.DROP,
-            TitleStrategy.PROMOTE_METADATA,
-        }
+        if self.options.title_strategy is TitleStrategy.DROP:
+            return True
+        if self.options.title_strategy is TitleStrategy.PROMOTE_METADATA:
+            title, should_drop = self._extract_promoted_title()
+            if self.options.suppress_title_metadata:
+                return False
+            return bool(title and should_drop)
+        return False
 
     @drop_title.setter
     def drop_title(self, value: bool) -> None:
@@ -425,10 +426,6 @@ class Document:
     def numbered(self, value: bool) -> None:
         """Set whether the document is numbered."""
         self.options.numbered = bool(value)
-
-    def set_heading(self, heading: str | int | HeadingLevel) -> None:
-        """Update the heading level using a label or numeric depth."""
-        self.options.heading_level = resolve_heading_level(heading)
 
     def assign_slot(
         self,
@@ -486,24 +483,47 @@ class Document:
             return 0
         return minimum - 1
 
-    class _HeadingExtractor(HTMLParser):
-        __slots__ = ("_depth", "_resolved", "parts")
+    class _HeadingInspector(HTMLParser):
+        __slots__ = ("_depth", "_resolved", "first_level", "parts", "level_counts")
 
         def __init__(self) -> None:
             super().__init__()
             self._depth = 0
             self._resolved = False
+            self.first_level: int | None = None
+            self.level_counts: dict[int, int] = {}
             self.parts: list[str] = []
 
         def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
-            tag_lower = tag.lower()
+            name = tag.lower()
+            if not name.startswith("h") or len(name) < 2 or not name[1].isdigit():
+                if self._depth:
+                    self._depth += 1
+                return
+
+            try:
+                level = int(name[1])
+            except ValueError:
+                if self._depth:
+                    self._depth += 1
+                return
+
+            if not 1 <= level <= 6:
+                if self._depth:
+                    self._depth += 1
+                return
+
+            self.level_counts[level] = self.level_counts.get(level, 0) + 1
             if self._resolved:
                 return
+
+            if self.first_level is None:
+                self.first_level = level
+                self._depth = 1
+                return
+
             if self._depth:
                 self._depth += 1
-                return
-            if tag_lower in Document._HEADING_TAGS:
-                self._depth = 1
 
         def handle_endtag(self, tag: str) -> None:
             if not self._depth:
@@ -516,35 +536,54 @@ class Document:
             if self._depth and not self._resolved:
                 self.parts.append(data)
 
-    def _extract_title_from_heading(self) -> str | None:
-        extractor = self._HeadingExtractor()
-        extract_text: str | None = None
+    def _extract_promoted_title(self) -> tuple[str | None, bool]:
+        """Return the promoted title and whether the heading should be dropped."""
+        inspector = self._HeadingInspector()
         try:
-            extractor.feed(self._html)
+            inspector.feed(self._html)
         finally:
-            extractor.close()
-            if extractor.parts:
-                extract_text = "".join(extractor.parts).strip()
-        return extract_text or None
+            inspector.close()
+
+        if inspector.first_level is None:
+            return None, False
+
+        level_count = inspector.level_counts.get(inspector.first_level, 0)
+        if level_count != 1:
+            return None, False
+
+        text = "".join(inspector.parts).strip()
+        return (text or None, bool(text))
 
     def to_context(self) -> DocumentContext:
         """Build a fresh DocumentContext for conversion."""
         strategy = self.options.title_strategy
-        promote_to_metadata = strategy is TitleStrategy.PROMOTE_METADATA
-        drop_title_flag = strategy is not TitleStrategy.KEEP
-        extracted_title = self._extract_title_from_heading() if promote_to_metadata else None
-        base_level = self.options.base_level - 1 if drop_title_flag else self.options.base_level
+        suppress_title = self.options.suppress_title_metadata
+        promote_to_metadata = strategy is TitleStrategy.PROMOTE_METADATA and not suppress_title
+        extracted_title = None
+        drop_title_flag = strategy is TitleStrategy.DROP
+
+        if promote_to_metadata:
+            extracted_title, drop_title_flag = self._extract_promoted_title()
+
+        base_level = self.options.base_level
+        front_matter = copy.deepcopy(self._front_matter)
+        if suppress_title:
+            if isinstance(front_matter, dict):
+                front_matter.pop("title", None)
+                front_matter.pop("press.title", None)
+                press_section = front_matter.get("press")
+                if isinstance(press_section, dict):
+                    press_section.pop("title", None)
 
         context = build_document_context(
             name=self.source_path.stem,
             source_path=self.source_path,
             html=self._html,
-            front_matter=copy.deepcopy(self._front_matter),
+            front_matter=front_matter,
             base_level=base_level,
-            heading_level=self.options.heading_level,
             drop_title=drop_title_flag,
             numbered=self.options.numbered,
-            title_from_heading=promote_to_metadata,
+            title_from_heading=bool(extracted_title),
             extracted_title=extracted_title,
         )
         base_slots = DocumentSlots.from_mapping(context.slot_requests)

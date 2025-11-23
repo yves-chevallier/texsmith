@@ -62,21 +62,22 @@
 %   - missing_fonts: list (optional, informational)
 
 \RequirePackage{iftex}
-\RequirePackage{microtype}
-\RequirePackage{fontspec}
 \providecommand{\texsmithEmoji}[1]{#1}
-\defaultfontfeatures{
-  Ligatures = TeX,
-  Scale = MatchLowercase,
-}
 
 \ifPDFTeX
   \RequirePackage[T1]{fontenc}
   \RequirePackage[utf8]{inputenc}
   \RequirePackage{lmodern}
   \RequirePackage{amssymb}
+  \RequirePackage{microtype}
   \microtypesetup{expansion=true,protrusion=true}
 \else
+  \RequirePackage{fontspec}
+  \RequirePackage{microtype}
+  \defaultfontfeatures{
+    Ligatures = TeX,
+    Scale = MatchLowercase,
+  }
   \ifLuaTeX
     \let\eth\relax
     \let\Eth\relax
@@ -132,6 +133,7 @@
         BoldFeatures  = {RawFeature={fallback=mainfb-bold}},
         ItalicFeatures = {RawFeature={fallback=mainfb-it}},
         BoldItalicFeatures = {RawFeature={fallback=mainfb-bi}},
+        SmallCapsFeatures = {Letters=SmallCaps},
       ]
     }{
       \setsansfont{Latin Modern Sans}[
@@ -140,6 +142,7 @@
         BoldFeatures  = {RawFeature={fallback=mainfb-bold}},
         ItalicFeatures = {RawFeature={fallback=mainfb-it}},
         BoldItalicFeatures = {RawFeature={fallback=mainfb-bi}},
+        SmallCapsFeatures = {Letters=SmallCaps},
       ]
     }
     \IfFontExistsTF{\VAR{mono_font}}{
@@ -151,6 +154,7 @@
         BoldItalicFont={\VAR{mono_bold_italic}},
         RawFeature = {fallback=mainfb-reg},
         BoldFeatures = {RawFeature={fallback=mainfb-bold}},
+        SmallCapsFeatures = {Letters=SmallCaps},
         ItalicFeatures = {
           RawFeature={fallback=mainfb-it},
 \BLOCK{ if mono_fake_slant }
@@ -171,6 +175,7 @@
         ItalicFont={\VAR{mono_italic}},
         BoldFont={* Bold},
         BoldItalicFont={\VAR{mono_bold_italic}},
+        SmallCapsFeatures = {Letters=SmallCaps},
         RawFeature = {fallback=mainfb-reg},
         BoldFeatures = {RawFeature={fallback=mainfb-bold}},
         ItalicFeatures = {

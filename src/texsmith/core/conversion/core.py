@@ -268,9 +268,7 @@ def _render_document(
         base_value = slot_base_levels.get(fragment.name, effective_base_level)
         if fragment.name == binding.default_slot:
             base_offset = base_level_offset
-            runtime_fragment["base_level"] = (
-                base_value + base_offset + document_context.heading_level
-            )
+            runtime_fragment["base_level"] = base_value + base_offset
         else:
             runtime_fragment["base_level"] = base_value
         if fragment.name == "preface":

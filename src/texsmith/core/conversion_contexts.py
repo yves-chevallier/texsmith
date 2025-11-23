@@ -56,7 +56,6 @@ class DocumentContext:
     source_path: Path
     html: str
     base_level: int
-    heading_level: int
     numbered: bool
     drop_title: bool
     title_from_heading: bool

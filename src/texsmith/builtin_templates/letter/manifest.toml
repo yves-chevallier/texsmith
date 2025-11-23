@@ -33,10 +33,10 @@ type = "string"
 sources = ["press.standard", "press.layout", "press.format"]
 
 [latex.template.attributes.date]
-default = "\\today"
+default = ""
 type = "string"
 escape = "latex"
-allow_empty = false
+allow_empty = true
 sources = ["press.date"]
 
 [latex.template.attributes.object]

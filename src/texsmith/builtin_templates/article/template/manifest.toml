@@ -59,7 +59,7 @@ type = "list"
 sources = ["press.authors", "press.author", "authors", "author"]
 
 [latex.template.attributes.date]
-default = "\\today"
+default = ""
 type = "string"
 escape = "latex"
 

@@ -33,6 +33,7 @@ from texsmith.core.bibliography import BibliographyCollection
 from texsmith.core.conversion.debug import ConversionError
 from texsmith.core.conversion.inputs import UnsupportedInputError
 from texsmith.core.templates import TemplateError
+from texsmith.core.templates.runtime import coerce_base_level
 
 from .._options import (
     DIAGNOSTICS_PANEL,
@@ -44,23 +45,23 @@ from .._options import (
     DebugHtmlOption,
     DisableFallbackOption,
     DisableMarkdownExtensionsOption,
-    DropTitleOption,
     FullDocumentOption,
     HashAssetsOption,
-    HeadingLevelOption,
     InputPathArgument,
     LanguageOption,
     ManifestOptionWithShort,
     MarkdownExtensionsOption,
+    NoTitleOption,
     NumberedOption,
     OpenLogOption,
     OutputPathOption,
     ParserOption,
+    PromoteTitleOption,
     SelectorOption,
     SlotsOption,
     TemplateAttributeOption,
     TemplateOption,
-    TitleFromHeadingOption,
+    StripHeadingOption,
 )
 from ..bibliography import print_bibliography_overview
 from ..commands.templates import list_templates, scaffold_template, show_template_info
@@ -189,25 +190,6 @@ def _extract_press_template(metadata: Mapping[str, Any] | None) -> str | None:
         return candidate
 
     return None
-
-
-def _front_matter_has_title(metadata: Mapping[str, Any] | None) -> bool:
-    """Return True when a title is declared in the front matter."""
-    if not isinstance(metadata, Mapping):
-        return False
-
-    title = metadata.get("title")
-    if isinstance(title, str) and title.strip():
-        return True
-
-    press_section = metadata.get("press")
-    if isinstance(press_section, Mapping):
-        press_title = press_section.get("title")
-        if isinstance(press_title, str) and press_title.strip():
-            return True
-
-    dotted = metadata.get("press.title")
-    return bool(isinstance(dotted, str) and dotted.strip())
 
 
 def _format_path_for_event(path: Path) -> str:
@@ -339,10 +321,10 @@ def render(
     output: OutputPathOption = None,
     selector: SelectorOption = "article.md-content__inner",
     full_document: FullDocumentOption = False,
-    base_level: BaseLevelOption = 0,
-    heading_level: HeadingLevelOption = 0,
-    drop_title: DropTitleOption = False,
-    title_from_heading: TitleFromHeadingOption = False,
+    base_level: BaseLevelOption = "0",
+    strip_heading: StripHeadingOption = False,
+    promote_title: PromoteTitleOption = True,
+    no_title: NoTitleOption = False,
     numbered: NumberedOption = True,
     parser: ParserOption = None,
     disable_fallback_converters: DisableFallbackOption = False,
@@ -485,7 +467,7 @@ def render(
             primary_front_matter = front_matter
 
     template_param_source = ctx.get_parameter_source("template") if ctx else None
-    title_param_source = ctx.get_parameter_source("title_from_heading") if ctx else None
+    promote_param_source = ctx.get_parameter_source("promote_title") if ctx else None
     if (
         template_param_source in {None, ParameterSource.DEFAULT}
         and template is None
@@ -520,14 +502,16 @@ def render(
         typer.echo("Enabling --build to produce PDF output.")
         build_pdf = True
 
-    if (
-        template_selected
-        and not title_from_heading
-        and title_param_source in {None, ParameterSource.DEFAULT}
-        and not _front_matter_has_title(primary_front_matter)
-        and not drop_title
-    ):
-        title_from_heading = True
+    if no_title:
+        promote_title = False
+
+    if strip_heading:
+        if promote_param_source not in {None, ParameterSource.DEFAULT} and promote_title:
+            raise typer.BadParameter("--strip-heading cannot be combined with --promote-title.")
+        promote_title = False
+
+    if not template_selected and promote_param_source in {None, ParameterSource.DEFAULT}:
+        promote_title = False
 
     if build_pdf and len(document_paths) != 1:
         raise typer.BadParameter(
@@ -537,9 +521,6 @@ def render(
     if build_pdf and not template_selected:
         emit_error("The --build flag requires a LaTeX template (--template).")
         raise typer.Exit(code=1)
-
-    if drop_title and title_from_heading:
-        raise typer.BadParameter("--drop-title and --title-from-heading cannot be combined.")
 
     if classic_output and not build_pdf:
         raise typer.BadParameter("--classic-output can only be used together with --build.")
@@ -565,6 +546,11 @@ def render(
             )
     if state_slot_rows:
         state.record_event("slot_assignments", {"entries": state_slot_rows})
+
+    try:
+        resolved_base_level = coerce_base_level(base_level, allow_none=False)
+    except TemplateError as exc:
+        raise typer.BadParameter(str(exc)) from exc
 
     resolved_markdown_extensions = resolve_markdown_extensions(
         markdown_extensions,
@@ -628,11 +614,11 @@ def render(
         slot_assignments=slot_assignments,
         selector=selector,
         full_document=full_document,
-        heading_level=heading_level,
-        base_level=base_level,
-        drop_title_all=drop_title if build_pdf else False,
-        drop_title_first_document=False if build_pdf else drop_title,
-        title_from_heading=title_from_heading,
+        base_level=resolved_base_level,
+        strip_heading_all=strip_heading if build_pdf else False,
+        strip_heading_first_document=False if build_pdf else strip_heading,
+        promote_title=promote_title,
+        suppress_title=no_title,
         numbered=numbered,
         markdown_extensions=resolved_markdown_extensions,
         parser=parser,

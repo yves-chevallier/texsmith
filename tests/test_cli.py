@@ -110,7 +110,7 @@ def test_template_alignment_defaults_to_section() -> None:
                 "article",
                 "--output",
                 "build",
-                "--title-from-frontmatter",
+                "--no-promote-title",
             ],
         )
 
@@ -123,12 +123,12 @@ def test_template_alignment_defaults_to_section() -> None:
     assert "\\title" not in content
 
 
-def test_heading_level_option() -> None:
+def test_strip_heading_option() -> None:
     runner = CliRunner()
     with runner.isolated_filesystem():
         html_file = Path("index.html")
         html_file.write_text(
-            "<article class='md-content__inner'><h2 id='intro'>Overview</h2></article>",
+            "<article class='md-content__inner'><h1>Main</h1><h2 id='body'>Body</h2></article>",
             encoding="utf-8",
         )
 
@@ -136,13 +136,13 @@ def test_heading_level_option() -> None:
             app,
             [
                 str(html_file),
-                "-h",
-                "1",
+                "--strip-heading",
             ],
         )
 
     assert result.exit_code == 0, result.stdout
-    assert "\\section{Overview}\\label{intro}" in result.stdout
+    assert "Main" not in result.stdout
+    assert "\\section{Body}\\label{body}" in result.stdout
 
 
 def test_copy_assets_disabled() -> None:
@@ -192,8 +192,8 @@ def test_convert_markdown_file(monkeypatch: Any) -> None:
             app,
             [
                 str(markdown_file),
-                "-h",
-                "1",
+                "--base-level",
+                "section",
             ],
         )
 

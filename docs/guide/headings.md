@@ -36,7 +36,7 @@ level 1.
     texsmith headings.md
 
     # Template output → \section, \subsection …
-    texsmith headings.md --template article --title-from-frontmatter \
+    texsmith headings.md --template article --no-promote-title \
       --output-dir build/headings
     ```
 
@@ -57,8 +57,8 @@ level 1.
 
 Need to nudge the entire hierarchy up or down? Use the base level knobs:
 
-- CLI: `--base-level <int>` shifts the detected heading upward
-  (negative pulls toward chapters, positive pushes toward sublevels).
+- CLI: `--base-level <value>` sets the base heading level; integers or labels
+  like `part`, `chapter`, `section`, and `subsection` are accepted.
 - Front matter: set `press.base_level` to bake the offset into the document.
 - API: pass `base_level=` to `Document.from_markdown` or tweak
   `document.options.base_level`.
@@ -71,7 +71,7 @@ Need to nudge the entire hierarchy up or down? Use the base level knobs:
 
     # Or force it back to a chapter, even inside a template
     texsmith headings.md -tarticle --base-level -1 \
-      --title-from-frontmatter
+      --no-promote-title
     ```
 
 === "Python API"
@@ -86,49 +86,41 @@ Remember that base levels stack with template slot metadata. If a template slot
 sets `depth = "subsection"` and you provide `base_level=1`, the resulting
 headings start at `\subsubsection`.
 
-## Heading indentation (`--heading-level`)
-
-Base level changes where the first heading lands. The `--heading-level`
-(`-h`) flag indents *every* heading by a constant amount after alignment. This is
-handy when you embed documents into a larger structure and need an extra offset.
-
-- CLI: `texsmith intro.md -h 1` turns `#` into `\subsection`.
-- API: pass `heading=` to `Document.from_markdown` or call
-  `document.set_heading("subsection")`.
-
-You can mix both knobs. For example, `--base-level 1 -h 2` shifts the document’s
-top heading down to `\subsection` and then indents twice more, ending up at
-`\subsubsection`.
-
 ## Managing titles
 
-TeXSmith exposes three title strategies:
+By default TeXSmith promotes the first heading into template metadata when no
+title is declared, but only if that heading level is unique (so two `##` blocks
+will never be promoted). You can steer that behaviour with these switches:
 
-| Strategy                  | Trigger                                | Effect                                   |
-| ------------------------- | -------------------------------------- | ---------------------------------------- |
-| `KEEP`                    | default                                | Headings stay intact                     |
-| `DROP` / `--drop-title`   | CLI flag / `TitleStrategy.DROP`        | Removes the first heading after alignment |
-| `PROMOTE_METADATA`        | `--title-from-heading` / API property | Moves the first heading into metadata (title) |
+| Strategy                     | Trigger                                       | Effect                                      |
+| ---------------------------- | --------------------------------------------- | ------------------------------------------- |
+| `KEEP`                       | default                                       | Headings stay intact                        |
+| `DROP` / `--strip-heading`   | CLI flag / `TitleStrategy.DROP`               | Removes the first heading after alignment   |
+| `PROMOTE_METADATA`           | `--promote-title` (default)                   | Moves the first heading into metadata title |
+| `SUPPRESS_METADATA`          | `--no-title`                                  | Keeps headings and disables template titles |
 
 When you promote a heading to metadata, the next heading inherits the top slot.
-That’s why CLI template builds often add `--title-from-frontmatter`: it keeps
-the leading `#` inside the body rather than absorbing it into the title page.
+Use `--no-promote-title` when you want to keep the heading visible even without
+front matter.
 
 === "CLI"
 
     ```bash
     # Promote the first heading to \title{} and re-align the rest
-    texsmith paper.md --title-from-heading --template article
+    texsmith paper.md --promote-title --template article
 
     # Keep headings but drop the duplicate title in the body
-    texsmith paper.md --drop-title -tarticle
+    texsmith paper.md --strip-heading -tarticle
+
+    # Render a template without generating \maketitle
+    texsmith paper.md --no-title -tarticle
     ```
 
 === "Python API"
 
     ```python
     doc = Document.from_markdown(Path("paper.md"))
-    doc.title_from_heading = True  # same effect as --title-from-heading
+    doc.title_from_heading = True  # same effect as --promote-title
     ```
 
 Behind the scenes, TeXSmith recalculates base levels after the title move so
@@ -167,9 +159,10 @@ hierarchies—everything snaps to whatever the slot demands.
 
 - Use `--base-level` (CLI) or `base_level=` (API/front matter) to change where
   the first heading lands.
-- Use `-h/--heading-level` or `heading=` to indent everything after alignment.
-- `--drop-title` removes the first heading; `--title-from-heading` converts it
-  into metadata.
+- `--promote-title` (default) promotes the first unique heading into metadata;
+  `--no-promote-title` keeps it in the body.
+- `--strip-heading` removes the first heading without promoting it.
+- `--no-title` disables template title generation even when metadata is present.
 - Templates can set their own defaults; slots can override them again.
 - Alignment is automatic, so you can mix Markdown sources with different top
   headings without manual clean-up.

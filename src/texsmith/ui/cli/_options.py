@@ -51,39 +51,37 @@ FullDocumentOption = Annotated[
 ]
 
 BaseLevelOption = Annotated[
-    int,
+    str,
     typer.Option(
         "--base-level",
-        help="Shift detected heading levels by this offset.",
+        help="Base heading level relative to the template (e.g. 1 or 'section').",
         rich_help_panel=STRUCTURE_PANEL,
     ),
 ]
 
-HeadingLevelOption = Annotated[
-    int,
-    typer.Option(
-        "--heading-level",
-        "-h",
-        min=0,
-        help="Indent all headings by the selected depth (e.g. 1 turns sections into subsections).",
-        rich_help_panel=STRUCTURE_PANEL,
-    ),
-]
-
-DropTitleOption = Annotated[
+StripHeadingOption = Annotated[
     bool,
     typer.Option(
-        "--drop-title/--keep-title",
-        help="Drop the first document title heading.",
+        "--strip-heading/--keep-heading",
+        help="Drop the first document heading from the rendered content.",
         rich_help_panel=STRUCTURE_PANEL,
     ),
 ]
 
-TitleFromHeadingOption = Annotated[
+PromoteTitleOption = Annotated[
     bool,
     typer.Option(
-        "--title-from-heading/--title-from-frontmatter",
-        help="Treat the first heading as the template title and remove it from the document.",
+        "--promote-title/--no-promote-title",
+        help="Use the first heading as the document title when no metadata title is present.",
+        rich_help_panel=TEMPLATE_PANEL,
+    ),
+]
+
+NoTitleOption = Annotated[
+    bool,
+    typer.Option(
+        "--no-title",
+        help="Disable title generation even when metadata provides one.",
         rich_help_panel=TEMPLATE_PANEL,
     ),
 ]

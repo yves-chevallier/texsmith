@@ -44,11 +44,11 @@ class ConversionRequest:
 
     selector: str = "article.md-content__inner"
     full_document: bool = False
-    heading_level: int = 0
     base_level: int = 0
-    drop_title_all: bool = False
-    drop_title_first_document: bool = False
-    title_from_heading: bool = False
+    strip_heading_all: bool = False
+    strip_heading_first_document: bool = False
+    promote_title: bool = True
+    suppress_title: bool = False
     numbered: bool = True
     markdown_extensions: Sequence[str] = field(default_factory=list)
 
@@ -134,22 +134,32 @@ class ConversionService:
 
         for index, path in enumerate(request.documents):
             input_kind = classify_input_source(path)
-            extract_title = request.title_from_heading and index == 0
-            effective_drop = request.drop_title_all or (
-                request.drop_title_first_document and index == 0
+            extract_title = (
+                request.promote_title
+                and request.template is not None
+                and index == 0
+                and not request.suppress_title
+            )
+            effective_strip = request.strip_heading_all or (
+                request.strip_heading_first_document and index == 0
             )
             strategy: TitleStrategy | None = None
-            if extract_title:
-                strategy = TitleStrategy.PROMOTE_METADATA
-            elif effective_drop:
+            if effective_strip:
                 strategy = TitleStrategy.DROP
+                extract_title = False
+            elif not extract_title:
+                strategy = TitleStrategy.KEEP
+            else:
+                strategy = None
 
             if input_kind is InputKind.MARKDOWN:
                 document = Document.from_markdown(
                     path,
                     extensions=list(request.markdown_extensions),
-                    heading=request.heading_level,
                     base_level=request.base_level,
+                    promote_title=extract_title,
+                    strip_heading=effective_strip,
+                    suppress_title=request.suppress_title,
                     title_strategy=strategy,
                     numbered=request.numbered,
                     emitter=emitter,
@@ -158,8 +168,10 @@ class ConversionService:
                 document = Document.from_html(
                     path,
                     selector=request.selector,
-                    heading=request.heading_level,
                     base_level=request.base_level,
+                    promote_title=extract_title,
+                    strip_heading=effective_strip,
+                    suppress_title=request.suppress_title,
                     title_strategy=strategy,
                     numbered=request.numbered,
                     full_document=request.full_document,

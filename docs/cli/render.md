@@ -61,28 +61,29 @@ $ uv run texsmith --help
 │                              "html.parser").                                       │
 ╰────────────────────────────────────────────────────────────────────────────────────╯
 ╭─ Structure ────────────────────────────────────────────────────────────────────────╮
-│ --base-level                         INTEGER               Shift detected heading  │
-│                                                            levels by this offset.  │
+│ --base-level                         TEXT                  Base heading level      │
+│                                                            relative to the         │
+│                                                            template (accepts       │
+│                                                            labels like             │
+│                                                            "section").             │
 │                                                            [default: 0]            │
-│ --heading-level  -h                  INTEGER RANGE [x>=0]  Indent all headings by  │
-│                                                            the selected depth      │
-│                                                            (e.g. 1 turns sections  │
-│                                                            into subsections).      │
-│                                                            [default: 0]            │
-│ --drop-title         --keep-title                          Drop the first document │
-│                                                            title heading.          │
-│                                                            [default: keep-title]   │
+│ --strip-heading     --keep-heading                         Drop the first document │
+│                                                            heading from the        │
+│                                                            rendered content.       │
+│                                                            [default: keep-heading] │
 │ --numbered           --unnumbered                          Toggle numbered         │
 │                                                            headings.               │
 │                                                            [default: numbered]     │
 ╰────────────────────────────────────────────────────────────────────────────────────╯
 ╭─ Template ─────────────────────────────────────────────────────────────────────────╮
-│ --title-from-heading      --title-from-frontmat…          Treat the first heading  │
-│                                                           as the template title    │
-│                                                           and remove it from the   │
-│                                                           document.                │
+│ --promote-title           --no-promote-title               Use the first heading as │
+│                                                           the template title when  │
+│                                                           metadata is missing.     │
 │                                                           [default:                │
-│                                                           title-from-frontmatter]  │
+│                                                           promote-title]           │
+│ --no-title                                                  Disable title           │
+│                                                           generation even when     │
+│                                                           metadata provides one.   │
 │ --template            -t                            TEXT  Select a LaTeX template  │
 │                                                           to use during            │
 │                                                           conversion. Accepts a    │

@@ -32,13 +32,7 @@ Usage Example
 
 from __future__ import annotations
 
-from .document import (
-    Document,
-    DocumentRenderOptions,
-    HeadingLevel,
-    TitleStrategy,
-    resolve_heading_level,
-)
+from .document import Document, DocumentRenderOptions, TitleStrategy
 from .fonts import FontMatchResult, match_fonts
 from .pipeline import ConversionBundle, LaTeXFragment, RenderSettings, convert_documents
 from .service import (
@@ -64,7 +58,6 @@ __all__ = [
     "Document",
     "DocumentRenderOptions",
     "FontMatchResult",
-    "HeadingLevel",
     "LaTeXFragment",
     "RenderSettings",
     "SlotAssignment",
@@ -76,5 +69,4 @@ __all__ = [
     "convert_documents",
     "get_template",
     "match_fonts",
-    "resolve_heading_level",
 ]
