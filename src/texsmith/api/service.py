@@ -134,12 +134,7 @@ class ConversionService:
 
         for index, path in enumerate(request.documents):
             input_kind = classify_input_source(path)
-            extract_title = (
-                request.promote_title
-                and request.template is not None
-                and index == 0
-                and not request.suppress_title
-            )
+            extract_title = request.promote_title and index == 0 and not request.suppress_title
             effective_strip = request.strip_heading_all or (
                 request.strip_heading_first_document and index == 0
             )
@@ -177,6 +172,16 @@ class ConversionService:
                     full_document=request.full_document,
                     emitter=emitter,
                 )
+
+            if (
+                request.template is None
+                and request.base_level == 0
+                and not extract_title
+                and document.options.base_level == 0
+            ):
+                first_level = document.first_heading_level()
+                if first_level is not None and first_level > 1:
+                    document.options.base_level -= 1
 
             documents.append(document)
             mapping[path] = document

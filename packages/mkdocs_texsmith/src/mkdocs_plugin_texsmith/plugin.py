@@ -97,7 +97,9 @@ class _MkdocsEmitter(LoggingEmitter):
             digest = payload.get("digest") if isinstance(payload, Mapping) else None
             source = payload.get("source") if isinstance(payload, Mapping) else None
             source_hint = f" ({source})" if source else ""
-            self._logger.info("texsmith: building snippet %s%s", digest or "snippet", source_hint)
+            self._logger.info(
+                "texsmith: building snippet %s%s", digest or "snippet", source_hint
+            )
             return
         super().event(name, payload)
 

@@ -63,8 +63,8 @@ __all__ = [
     "Document",
     "DocumentRenderOptions",
     "DocumentSlots",
-    "front_matter_has_title",
     "TitleStrategy",
+    "front_matter_has_title",
 ]
 
 
@@ -484,7 +484,7 @@ class Document:
         return minimum - 1
 
     class _HeadingInspector(HTMLParser):
-        __slots__ = ("_depth", "_resolved", "first_level", "parts", "level_counts")
+        __slots__ = ("_depth", "_resolved", "first_level", "level_counts", "parts")
 
         def __init__(self) -> None:
             super().__init__()
@@ -554,6 +554,19 @@ class Document:
         text = "".join(inspector.parts).strip()
         return (text or None, bool(text))
 
+    def _first_heading_level(self) -> int | None:
+        """Return the level of the first heading in the document, if any."""
+        inspector = self._HeadingInspector()
+        try:
+            inspector.feed(self._html)
+        finally:
+            inspector.close()
+        return inspector.first_level
+
+    def first_heading_level(self) -> int | None:
+        """Public accessor for the first heading level in the document."""
+        return self._first_heading_level()
+
     def to_context(self) -> DocumentContext:
         """Build a fresh DocumentContext for conversion."""
         strategy = self.options.title_strategy
@@ -566,14 +579,15 @@ class Document:
             extracted_title, drop_title_flag = self._extract_promoted_title()
 
         base_level = self.options.base_level
+        if drop_title_flag and promote_to_metadata:
+            base_level -= 1
         front_matter = copy.deepcopy(self._front_matter)
-        if suppress_title:
-            if isinstance(front_matter, dict):
-                front_matter.pop("title", None)
-                front_matter.pop("press.title", None)
-                press_section = front_matter.get("press")
-                if isinstance(press_section, dict):
-                    press_section.pop("title", None)
+        if suppress_title and isinstance(front_matter, dict):
+            front_matter.pop("title", None)
+            front_matter.pop("press.title", None)
+            press_section = front_matter.get("press")
+            if isinstance(press_section, dict):
+                press_section.pop("title", None)
 
         context = build_document_context(
             name=self.source_path.stem,

@@ -4,17 +4,17 @@
 from __future__ import annotations
 
 import argparse
+from collections.abc import Iterable
 import pathlib
 import re
-from typing import Iterable, List, Optional, Tuple
 
 
-WarningEntry = Tuple[Optional[int], str, Optional[str], str]
+WarningEntry = tuple[int | None, str, str | None, str]
 
 
-def parse_warnings(lines: Iterable[str]) -> List[WarningEntry]:
+def parse_warnings(lines: Iterable[str]) -> list[WarningEntry]:
     """Parse LaTeX font warnings and return (line, missing, fallback, raw)."""
-    entries: List[WarningEntry] = []
+    entries: list[WarningEntry] = []
     lines_list = list(lines)
     i = 0
     prefix = "LaTeX Font Warning:"
@@ -30,8 +30,8 @@ def parse_warnings(lines: Iterable[str]) -> List[WarningEntry]:
         if m_missing:
             missing_shape = m_missing.group(1)
 
-        fallback: Optional[str] = None
-        src_line: Optional[int] = None
+        fallback: str | None = None
+        src_line: int | None = None
 
         if i + 1 < len(lines_list) and lines_list[i + 1].lstrip().startswith("(Font)"):
             follow = lines_list[i + 1].replace("(Font)", "", 1).strip()
@@ -74,7 +74,7 @@ def main() -> None:
     entries = parse_warnings(args.logfile.read_text().splitlines())
 
     if not entries:
-        print("No LaTeX font warnings found.")
+        print("No LaTeX font warnings found.")  # noqa: T201
         return
 
     seen = set()
@@ -85,8 +85,8 @@ def main() -> None:
         seen.add(key)
         location = f"line {src_line}" if src_line is not None else "line ?"
         replacement = f" -> {fallback}" if fallback else ""
-        print(f"{location}: missing {missing}{replacement}")
-        print(f"  {raw}")
+        print(f"{location}: missing {missing}{replacement}")  # noqa: T201
+        print(f"  {raw}")  # noqa: T201
 
 
 if __name__ == "__main__":

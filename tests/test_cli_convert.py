@@ -107,6 +107,3 @@ Content here.
         assert r"\author{Alice Example\thanks{Example University} \and Bob Example}" in content
         assert r"\date{2024-10-20}" in content
         assert r"\usepackage[french]{babel}" in content
-
-
-

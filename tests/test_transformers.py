@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from pathlib import Path
 import base64
+from pathlib import Path
 
 import pytest
 import requests
@@ -20,7 +20,9 @@ def test_fetch_image_sets_user_agent(monkeypatch: pytest.MonkeyPatch, tmp_path: 
             )
             self.ok = True
 
-    def fake_get(url: str, *, timeout: float, headers: dict[str, str] | None = None) -> DummyResponse:
+    def fake_get(
+        url: str, *, timeout: float, headers: dict[str, str] | None = None
+    ) -> DummyResponse:
         captured_headers.update(headers or {})
         return DummyResponse()
 

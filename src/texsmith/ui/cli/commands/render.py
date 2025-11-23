@@ -59,9 +59,9 @@ from .._options import (
     PromoteTitleOption,
     SelectorOption,
     SlotsOption,
+    StripHeadingOption,
     TemplateAttributeOption,
     TemplateOption,
-    StripHeadingOption,
 )
 from ..bibliography import print_bibliography_overview
 from ..commands.templates import list_templates, scaffold_template, show_template_info
@@ -510,9 +510,6 @@ def render(
             raise typer.BadParameter("--strip-heading cannot be combined with --promote-title.")
         promote_title = False
 
-    if not template_selected and promote_param_source in {None, ParameterSource.DEFAULT}:
-        promote_title = False
-
     if build_pdf and len(document_paths) != 1:
         raise typer.BadParameter(
             "Provide exactly one Markdown or HTML document when using --build."
@@ -551,6 +548,9 @@ def render(
         resolved_base_level = coerce_base_level(base_level, allow_none=False)
     except TemplateError as exc:
         raise typer.BadParameter(str(exc)) from exc
+
+    if not template_selected and promote_param_source in {None, ParameterSource.DEFAULT}:
+        promote_title = False
 
     resolved_markdown_extensions = resolve_markdown_extensions(
         markdown_extensions,

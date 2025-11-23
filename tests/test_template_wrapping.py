@@ -234,7 +234,7 @@ def test_fragment_targeting_slot_is_rejected(
         "\n".join(
             [
                 'name = "tmp-slot-frag"',
-                '[[files]]',
+                "[[files]]",
                 'path = "inline.tex"',
                 'type = "inline"',
                 'slot = "mainmatter"',
@@ -267,7 +267,7 @@ def test_fragment_targeting_unknown_variable_is_rejected(
         "\n".join(
             [
                 'name = "tmp-unknown-frag"',
-                '[[files]]',
+                "[[files]]",
                 'path = "inline.tex"',
                 'type = "inline"',
                 'slot = "unknown_variable"',

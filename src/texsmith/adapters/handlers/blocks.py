@@ -3,11 +3,11 @@
 from __future__ import annotations
 
 from collections.abc import Iterable
-from pathlib import Path
 import io
+from pathlib import Path
 import re
+from typing import TYPE_CHECKING, Any
 import warnings
-from typing import Any, TYPE_CHECKING
 
 from bs4.element import NavigableString, Tag
 from pybtex.database.input import bibtex
@@ -16,6 +16,7 @@ from pybtex.exceptions import PybtexError
 from texsmith.core.context import RenderContext
 from texsmith.core.exceptions import AssetMissingError, InvalidNodeError
 from texsmith.core.rules import RenderPhase, renders
+
 
 if TYPE_CHECKING:  # pragma: no cover - typing helpers
     from texsmith.core.bibliography.collection import BibliographyCollection
@@ -189,11 +190,12 @@ def _materialise_doi_entry(key: str, context: RenderContext) -> dict[str, object
     bibliography = context.state.bibliography
     runtime_bibliography, collection = _ensure_bibliography_runtime(context)
 
+    fetcher = _resolve_doi_fetcher(context)
+    fetch = getattr(fetcher, "fetch", None)
+    if not callable(fetch):
+        raise DoiLookupError("Configured DOI fetcher is missing a 'fetch' method.")
+
     try:
-        fetcher = _resolve_doi_fetcher(context)
-        fetch = getattr(fetcher, "fetch", None)
-        if not callable(fetch):
-            raise DoiLookupError("Configured DOI fetcher is missing a 'fetch' method.")
         payload = fetch(key)
     except DoiLookupError as exc:
         _emit_bibliography_warning(context, f"Failed to resolve DOI '{key}': {exc}")
@@ -212,8 +214,11 @@ def _materialise_doi_entry(key: str, context: RenderContext) -> dict[str, object
         _emit_bibliography_warning(context, f"Bibliography entry for DOI '{key}' is empty.")
         return None
     if len(parsed.entries) > 1:
-        _emit_bibliography_warning(context, f"Bibliography entry for DOI '{key}' contains multiple records; using the first.")
-    resolved_key, entry_obj = next(iter(parsed.entries.items()))
+        _emit_bibliography_warning(
+            context,
+            f"Bibliography entry for DOI '{key}' contains multiple records; using the first.",
+        )
+    resolved_key, _entry_obj = next(iter(parsed.entries.items()))
 
     source = _inline_doi_source_path(context)
     collection.load_data(parsed, source=source)

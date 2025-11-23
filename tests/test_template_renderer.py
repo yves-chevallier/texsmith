@@ -102,7 +102,9 @@ def test_template_session_renders_bundle_via_renderer(tmp_path: Path) -> None:
     # But wait, render() should return the main tex file.
     # Let's check if "Supplemental material" is in the output.
     # In book template, backmatter slot is rendered.
-    assert "Supplemental material" in latex_output or "Supplemental material" in result.context.get("backmatter", "")
+    assert "Supplemental material" in latex_output or "Supplemental material" in result.context.get(
+        "backmatter", ""
+    )
 
     assert result.bibliography_path is not None
     assert result.bibliography_path.exists()
