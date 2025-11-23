@@ -76,7 +76,7 @@ def store_remote_image_asset(context: RenderContext, url: str) -> Path:
     )
 
 
-# --------------------------------------------------------------------------- helpers
+# --- helpers ---
 
 
 def _requires_conversion(suffix: str, convert_requested: bool) -> bool:

@@ -120,12 +120,3 @@ def extract_mermaid_live_diagram(src: str) -> str | None:
         raise InvalidNodeError("Mermaid URL is missing diagram payload")
 
     return decode_mermaid_pako(payload)
-
-
-__all__ = [
-    "MERMAID_FILE_SUFFIXES",
-    "MERMAID_KEYWORDS",
-    "decode_mermaid_pako",
-    "extract_mermaid_live_diagram",
-    "looks_like_mermaid",
-]
