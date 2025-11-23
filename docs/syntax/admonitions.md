@@ -49,15 +49,21 @@ press:
 
 === "Fancy Admonitions"
 
-    [![Fancy Admonitions](../assets/examples/fancy-admonition.png)](../assets/examples/fancy-admonition.pdf)
+    ```md {.snippet data-caption="Demo" data-width="70%" data-attr-callout_style="fancy"}
+    --8<--- "examples/admonition/admonition.md"
+    ```
 
-=== "Classic and Minimal Admonitions"
+=== "Classic Admonitions"
 
-    [![Classic Admonitions](../assets/examples/classic-admonition.png)](../assets/examples/classic-admonition.pdf)
+    ```md {.snippet data-caption="Demo" data-width="70%" data-attr-callout_style="classic"}
+    --8<--- "examples/admonition/admonition.md"
+    ```
 
 === "Minimal Admonitions"
 
-    [![Minimal Admonitions](../assets/examples/minimal-admonition.png)](../assets/examples/minimal-admonition.pdf)
+    ```md {.snippet data-caption="Demo" data-width="70%" data-attr-callout_style="minimal"}
+    --8<--- "examples/admonition/admonition.md"
+    ```
 
 ## Built-in Admonition Types
 

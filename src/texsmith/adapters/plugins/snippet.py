@@ -61,6 +61,7 @@ class SnippetBlock:
     border_enabled: bool
     dogear_enabled: bool
     transparent_corner: bool
+    bibliography_raw: list[str]
     bibliography_files: list[Path]
     title_strategy: TitleStrategy
     suppress_title_metadata: bool
@@ -291,6 +292,77 @@ def _resolve_caches(source_path: Path | str | None) -> list[_SnippetCache]:
     return [cache] if cache is not None else []
 
 
+def _resolve_bibliography_files(
+    files: list[str],
+    cwd: str | Path | None,
+    host_path: Path | None,
+) -> list[Path]:
+    """Resolve bibliography file paths relative to the snippet host document."""
+    if not files:
+        return []
+
+    base_dir: Path | None = None
+    cwd_path = Path(cwd).expanduser() if cwd else None
+    if cwd_path is not None:
+        if cwd_path.is_absolute():
+            base_dir = cwd_path
+        elif host_path is not None:
+            try:
+                base_dir = (host_path.parent / cwd_path).resolve()
+            except OSError:
+                base_dir = host_path.parent
+        else:
+            try:
+                base_dir = cwd_path.resolve()
+            except OSError:
+                base_dir = None
+    elif host_path is not None:
+        base_dir = host_path.parent
+
+    resolved: list[Path] = []
+    for entry in files:
+        candidate = Path(entry)
+        if not candidate.is_absolute():
+            if base_dir is None:
+                try:
+                    base_dir = Path.cwd()
+                except OSError:
+                    base_dir = None
+            if base_dir is not None:
+                candidate = base_dir / candidate
+        try:
+            candidate = candidate.resolve()
+        except OSError:
+            pass
+        resolved.append(candidate)
+    return resolved
+
+
+def _resolve_host_path(document_path: Path | str | None, source_dir: Path | None) -> Path | None:
+    """Normalise the host document path to an absolute path when possible."""
+    if document_path is None:
+        return None
+
+    try:
+        candidate = Path(document_path)
+    except TypeError:
+        return None
+
+    if candidate.is_absolute():
+        return candidate
+
+    if source_dir is not None:
+        try:
+            return (Path(source_dir) / candidate).resolve()
+        except OSError:
+            return Path(source_dir) / candidate
+
+    try:
+        return candidate.resolve()
+    except OSError:
+        return candidate
+
+
 def _resolve_base_dir(block: SnippetBlock, host_path: Path | None) -> Path:
     """Resolve the effective base directory for snippet assets."""
     if block.cwd:
@@ -502,7 +574,7 @@ def _extract_template_overrides(
     return overrides, caption, label, figure_width, cwd, frame_enabled, template_id, layout, files
 
 
-def _extract_snippet_block(element: Tag) -> SnippetBlock | None:
+def _extract_snippet_block(element: Tag, host_path: Path | None = None) -> SnippetBlock | None:
     classes = gather_classes(element.get("class"))
     if "snippet" not in classes:
         return None
@@ -559,14 +631,7 @@ def _extract_snippet_block(element: Tag) -> SnippetBlock | None:
     border_enabled = _coerce_bool_option(overrides.get("border"), True)
     dogear_enabled = _coerce_bool_option(overrides.get("dogear_enabled"), True)
 
-    resolved_files: list[Path] = []
-    if files:
-        base_dir = Path(cwd).expanduser() if cwd else None
-        for entry in files:
-            candidate = Path(entry)
-            if not candidate.is_absolute() and base_dir is not None:
-                candidate = (base_dir / candidate).resolve()
-            resolved_files.append(candidate)
+    resolved_files = _resolve_bibliography_files(files, cwd, host_path)
 
     return SnippetBlock(
         content=content,
@@ -582,6 +647,7 @@ def _extract_snippet_block(element: Tag) -> SnippetBlock | None:
         border_enabled=border_enabled,
         dogear_enabled=dogear_enabled,
         transparent_corner=border_enabled and dogear_enabled,
+        bibliography_raw=files,
         bibliography_files=resolved_files,
         title_strategy=title_strategy,
         suppress_title_metadata=suppress_title_value,
@@ -1068,7 +1134,17 @@ def ensure_snippet_assets(
 def _render_snippet_assets(block: SnippetBlock, context: RenderContext) -> _SnippetAssets:
     emitter = _resolve_emitter(context)
     document_path = context.runtime.get("document_path")
-    host_path = Path(document_path) if document_path else None
+    source_dir = context.runtime.get("source_dir")
+    host_path = _resolve_host_path(document_path, source_dir)
+    if block.bibliography_raw:
+        try:
+            block.bibliography_files = _resolve_bibliography_files(
+                block.bibliography_raw,
+                block.cwd,
+                host_path,
+            )
+        except Exception:
+            _log.debug("failed to resolve bibliography paths for snippet", exc_info=True)
     return ensure_snippet_assets(
         block,
         output_dir=context.assets.output_root / SNIPPET_DIR,
@@ -1098,7 +1174,10 @@ def _render_figure(
 @renders("div", phase=RenderPhase.PRE, priority=32, name="snippet_blocks", nestable=False)
 def render_snippet_block(element: Tag, context: RenderContext) -> None:
     """Convert `.snippet` code fences into rendered figures."""
-    block = _extract_snippet_block(element)
+    document_path = context.runtime.get("document_path")
+    source_dir = context.runtime.get("source_dir")
+    host_path = _resolve_host_path(document_path, source_dir)
+    block = _extract_snippet_block(element, host_path=host_path)
     if block is None:
         return
 

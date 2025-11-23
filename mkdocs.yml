@@ -77,6 +77,7 @@ extra:
 # exclude:
 #   - "assets/examples/README.md"
 markdown_extensions:
+  - abbr
   - admonition
   - texsmith.index
   - texsmith.texlogos
