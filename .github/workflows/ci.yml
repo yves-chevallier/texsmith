@@ -39,18 +39,7 @@ jobs:
         run: uv sync --all-groups --frozen
 
       - name: Run test suite (nox)
-        run: |
-          if [ "${ACT}" = "true" ]; then
-            PY_VER=$(python - <<'PY'
-import sys
-print(f"{sys.version_info.major}.{sys.version_info.minor}")
-PY
-)
-            echo "Running nox with runner Python ${PY_VER}"
-            uv run nox -s tests -p "${PY_VER}"
-          else
-            uv run nox -s tests
-          fi
+        run: bash scripts/ci/run_nox.sh
 
       - name: Run Ruff
         run: uv run ruff check .
