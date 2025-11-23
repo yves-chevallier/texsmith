@@ -275,7 +275,8 @@
 \newcommand{\bookemail}{\VAR{email}}
 \newcommand{\bookpublisher}{\VAR{publisher}}
 \newcommand{\bookedition}{\VAR{edition}}
-\newcommand{\bookdate}{\VAR{date}}
+\BLOCK{ set effective_date = date|default('')|trim }
+\newcommand{\bookdate}{\BLOCK{ if effective_date }\VAR{date}\BLOCK{ else }\today\BLOCK{ endif }}
 
 % Preserve convenience macros expected by assets/covers
 \newcommand{\subtitle}{\booksubtitle}

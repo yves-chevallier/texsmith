@@ -1,8 +1,8 @@
 # Diagrams
 
-This example demonstrates how you can integrate [Mermaid](https://mermaid.js.org/) and [Draw.io](https://app.diagrams.net/) diagrams in your documentation.
+Markdown doesn’t have to be flat text. Here’s how we wire live [Mermaid](https://mermaid.js.org/) and [Draw.io](https://app.diagrams.net/) diagrams straight into TeXSmith, no opaque binaries, friendly diffs.
 
-Both tools are very useful to avoid binary assets and keep Git diffs manageable. Take for example this code:
+Take this source:
 
 ````markdown
 --8<--- "examples/diagrams/diagrams.md"
@@ -10,13 +10,31 @@ Both tools are very useful to avoid binary assets and keep Git diffs manageable.
 
 ## Rendered Markdown
 
-Here what it looks like when rendered in MkDocs:
+MkDocs render:
 
---8<--- "examples/diagrams/diagrams.md"
+### Draw.io Diagram
+
+![Euclidean GCD](pgcd.drawio)
+
+/// caption
+Euclidean algorithm for the greatest common divisor
+///
+
+### Mermaid Diagram
+
+```mermaid
+%% Vegetable harvesting algorithm
+flowchart LR
+    start(Start) --> pick[Dig up]
+    pick --> if{Cabbages?}
+    if --No--> step[Move forward one step]
+    step --> pick
+    if --Yes--> stop(End)
+```
 
 ## PDF
 
-And here is how it looks in the generated PDF:
+And the PDF render (click to download):
 
 ````md {.snippet data-caption="Download PDF" data-frame="true" data-width="60%"}
 ---8<--- "examples/diagrams/diagrams.md"
