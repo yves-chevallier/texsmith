@@ -9,7 +9,7 @@ document can reference automatically.
 
 ![Euclidean GCD](pgcd.drawio)
 
-/// figure-caption
+/// caption
 Euclidean algorithm for the greatest common divisor
 ///
 

@@ -44,7 +44,9 @@ sections:
             name: beurre froid
         instructions:
           - Couper en morceaux, ajouter.
-          - Travailler soigneusement à la main jusqu'à ce que la préparation soit friable.
+          - <
+            Travailler soigneusement à la main jusqu'à ce que la préparation
+            soit friable.
       - ingredients:
           - quantity:
               amount: 1
@@ -86,7 +88,9 @@ sections:
             name: crème entière
         instructions:
           - Ajouter, mélanger à la cuillère de cuisine.
-          - Réchauffer à petit feu en remuant jusqu'à dissolution complète du caramel, porter à ébullition env. 10 min.
+          - <
+            Réchauffer à petit feu en remuant jusqu'à dissolution complète du
+            caramel, porter à ébullition env. 10 min.
         time:
           cooking: 10
       - ingredients:
@@ -104,7 +108,9 @@ sections:
               text: un peu
         instructions:
           - Partager la pâte en 3 portions régulières.
-          - Étaler 1 portion en un cercle d'environ 4 mm d'épaisseur sur un peu de farine.
+          - <
+            Étaler 1 portion en un cercle d'environ 4 mm d'épaisseur sur un peu de
+            farine.
           - Poser dans le moule préparé.
           - Piquer avec une fourchette.
       - ingredients:
@@ -113,11 +119,14 @@ sections:
               text: un peu
         instructions:
           - Former un rouleau avec la deuxième portion de pâte.
-          - Appuyer sur les bords du moule jusqu'à obtenir un bord d'environ 4 cm de hauteur.
+          - Appuyer sur les bords du moule jusqu'à obtenir un bord d'environ 4 cm de
+            hauteur.
       - instructions:
           - Répartir la farce sur le fond de pâte.
           - Replier le bord qui dépasse sur la farce.
-          - Étaler la dernière portion en un cercle d'environ 4 mm et poser sur la farce.
+          - <
+            Étaler la dernière portion en un cercle d'environ 4 mm et poser sur la
+            farce.
           - Piquer avec une fourchette.
           - Cuire dans le bas du four, 200°C, 40-50 min.
         time:
