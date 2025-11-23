@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Callable, Mapping
+import contextlib
 from dataclasses import dataclass
 import hashlib
 import json
@@ -11,6 +12,7 @@ import os
 from pathlib import Path
 import shutil
 import subprocess
+import tempfile
 from typing import Any
 
 from bs4 import BeautifulSoup
@@ -148,15 +150,15 @@ class _SnippetCache:
             attributes = {
                 "caption": block.caption,
                 "label": block.label,
-            "figure_width": block.figure_width,
-            "border": block.border_enabled,
-            "dogear_enabled": block.dogear_enabled,
-            "transparent_corner": block.transparent_corner,
-            "frame_enabled": block.frame_enabled,
-            "layout": block.layout,
-            "overrides": block.template_overrides,
-            "cwd": str(block.cwd) if block.cwd else None,
-        }
+                "figure_width": block.figure_width,
+                "border": block.border_enabled,
+                "dogear_enabled": block.dogear_enabled,
+                "transparent_corner": block.transparent_corner,
+                "frame_enabled": block.frame_enabled,
+                "layout": block.layout,
+                "overrides": block.template_overrides,
+                "cwd": str(block.cwd) if block.cwd else None,
+            }
 
         linked_files: dict[str, str] = {
             "pdf": cached_pdf.name,
@@ -286,7 +288,7 @@ def _resolve_cache() -> _SnippetCache | None:
     return _SNIPPET_CACHE
 
 
-def _resolve_caches(source_path: Path | str | None) -> list[_SnippetCache]:
+def _resolve_caches() -> list[_SnippetCache]:
     """Return the user-level cache only."""
     cache = _resolve_cache()
     return [cache] if cache is not None else []
@@ -330,10 +332,8 @@ def _resolve_bibliography_files(
                     base_dir = None
             if base_dir is not None:
                 candidate = base_dir / candidate
-        try:
+        with contextlib.suppress(OSError):
             candidate = candidate.resolve()
-        except OSError:
-            pass
         resolved.append(candidate)
     return resolved
 
@@ -383,10 +383,12 @@ def _resolve_base_dir(block: SnippetBlock, host_path: Path | None) -> Path:
     try:
         return Path.cwd()
     except OSError:
-        return Path(".")
+        return Path()
 
 
-def _resolve_template_runtime(block: SnippetBlock, document: Document, base_dir: Path) -> TemplateRuntime:
+def _resolve_template_runtime(
+    block: SnippetBlock, document: Document, base_dir: Path
+) -> TemplateRuntime:
     """Select the template runtime from front matter when provided."""
     front_matter = document.front_matter
     template_id: str | None = block.template_id
@@ -712,9 +714,7 @@ def _compile_pdf(render_result: Any) -> Path:
         stdout = process.stdout.strip()
         detail = stderr or stdout or "latexmk exited with a non-zero status."
         log_path = render_result.main_tex_path.with_suffix(".log")
-        raise LatexRenderingError(
-            f"Failed to compile snippet: {detail} (log: {log_path})"
-        )
+        raise LatexRenderingError(f"Failed to compile snippet: {detail} (log: {log_path})")
 
     return render_result.main_tex_path.with_suffix(".pdf")
 
@@ -797,7 +797,7 @@ def _pdf_to_png_grid(
     page_w, page_h = images[0].size
     inferred_spacing = 0
     if spacing is None and cols * rows > 1:
-        inferred_spacing = max(int(round(min(page_w, page_h) * 0.04)), 18)
+        inferred_spacing = max(round(min(page_w, page_h) * 0.04), 18)
     elif spacing:
         inferred_spacing = max(spacing, 0)
 
@@ -894,10 +894,10 @@ def _overlay_dogear_frame(
     bw = max(1, stroke * scale)
 
     def sx(val: float) -> int:
-        return int(round(val * scale))
+        return round(val * scale)
 
     def sy(val: float) -> int:
-        return int(round(val * scale))
+        return round(val * scale)
 
     draw.line([(sx(x0), sy(y0)), (sx(x1 - fold), sy(y0))], fill=border_color, width=bw)
     draw.line([(sx(x1), sy(y0 + fold)), (sx(x1), sy(y1))], fill=border_color, width=bw)
@@ -912,7 +912,13 @@ def _overlay_dogear_frame(
         bdown = (x1, y0 + fold)
         bleft = (x1 - fold, y0)
 
-        def bezier_points(p0, p1, p2, p3, steps: int = 192):
+        def bezier_points(
+            p0: tuple[float, float],
+            p1: tuple[float, float],
+            p2: tuple[float, float],
+            p3: tuple[float, float],
+            steps: int = 192,
+        ) -> list[tuple[int, int]]:
             pts = []
             for i in range(steps + 1):
                 t = i / steps
@@ -990,11 +996,13 @@ def ensure_snippet_assets(
     if block.frame_enabled:
         apply_corner = False
     elif runtime.name == "snippet":
-        apply_corner = apply_corner_default if block.dogear_enabled and block.border_enabled else False
+        apply_corner = (
+            apply_corner_default if block.dogear_enabled and block.border_enabled else False
+        )
     else:
         apply_corner = False
 
-    caches = _resolve_caches(source_path)
+    caches = _resolve_caches()
     template_version = None
     if caches:
         info = getattr(runtime.instance, "info", None)
@@ -1100,6 +1108,7 @@ def ensure_snippet_assets(
         total_cells = max(cols, 1) * max(rows, 1)
     per_page_frame: Callable[[Image.Image], Image.Image] | None = None
     if block.frame_enabled and block.border_enabled and total_cells > 1:
+
         def _frame_page(img: Image.Image) -> Image.Image:
             return _overlay_dogear_frame(img, dogear_enabled=block.dogear_enabled)
 
@@ -1124,10 +1133,8 @@ def ensure_snippet_assets(
                 image,
                 dogear_enabled=block.dogear_enabled,
             )
-            try:
+            with contextlib.suppress(OSError):
                 framed.save(png_path)
-            except OSError:
-                pass
 
     _store_in_caches()
     return assets

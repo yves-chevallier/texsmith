@@ -2,22 +2,22 @@
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from dataclasses import dataclass
 from typing import Any, Literal
-
-from collections.abc import Mapping
 
 from pydantic import BaseModel, Field, field_validator, model_validator
 
 from texsmith.core.templates.manifest import TemplateError
 
+
 DEFAULT_MARGIN = "2.5cm"
 _FORMAT_SUFFIX = "paper"
-_KNOWN_FORMATS = {
-    f"{family}{index}"
-    for family in ("a", "b", "c")
-    for index in range(0, 7)
-} | {"letter", "legal", "executive"}
+_KNOWN_FORMATS = {f"{family}{index}" for family in ("a", "b", "c") for index in range(0, 7)} | {
+    "letter",
+    "legal",
+    "executive",
+}
 
 
 def _normalise_dimension(value: Any) -> str:

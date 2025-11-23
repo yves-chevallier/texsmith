@@ -2,11 +2,12 @@
 
 from __future__ import annotations
 
-from collections.abc import Iterable, Mapping, Sequence
+from collections.abc import Callable, Iterable, Mapping, Sequence
 from dataclasses import dataclass
 import importlib
 from pathlib import Path
-from typing import Any, Callable, Literal
+from typing import Any, Literal
+
 
 try:  # Python >=3.11
     import tomllib  # type: ignore[attr-defined]
@@ -15,6 +16,7 @@ except ModuleNotFoundError:  # Python 3.10
 
 from texsmith.core.templates.base import _build_environment
 from texsmith.core.templates.manifest import TemplateError
+
 
 FragmentKind = Literal["package", "input", "inline"]
 
@@ -51,8 +53,7 @@ class FragmentPiece:
         kind_raw = payload.get("type", "package")
         if kind_raw not in ("package", "input", "inline"):
             raise TemplateError(
-                f"Unknown fragment file type '{kind_raw}'. "
-                "Expected one of: package, input, inline."
+                f"Unknown fragment file type '{kind_raw}'. Expected one of: package, input, inline."
             )
 
         slot = str(payload.get("slot", "extra_packages"))
@@ -104,12 +105,16 @@ class FragmentDefinition:
             return _load_entrypoint(entrypoint, fallback_dir=base_dir)
 
         name = payload.get("name") if isinstance(payload.get("name"), str) else None
-        description = payload.get("description") if isinstance(payload.get("description"), str) else None
+        description = (
+            payload.get("description") if isinstance(payload.get("description"), str) else None
+        )
         files = payload.get("files") or []
         if not name:
             name = base_dir.name
         if not isinstance(files, list) or not files:
-            raise TemplateError(f"Fragment manifest {manifest_path} must declare at least one file.")
+            raise TemplateError(
+                f"Fragment manifest {manifest_path} must declare at least one file."
+            )
 
         pieces = [FragmentPiece.from_mapping(entry, base_dir=base_dir) for entry in files]
         return cls(name=name, pieces=pieces, description=description, source=manifest_path)
@@ -160,7 +165,9 @@ def _load_entrypoint(entrypoint: str, *, fallback_dir: Path) -> FragmentDefiniti
             source=fallback_dir,
         )
 
-    raise TemplateError(f"Fragment entrypoint '{entrypoint}' must return a FragmentDefinition or mapping.")
+    raise TemplateError(
+        f"Fragment entrypoint '{entrypoint}' must return a FragmentDefinition or mapping."
+    )
 
 
 class FragmentRegistry:
@@ -176,7 +183,9 @@ class FragmentRegistry:
     def default_fragment_names(self) -> list[str]:
         return [name for name in self._default_order if name in self._fragments]
 
-    def register_fragment(self, fragment: FragmentDefinition | Path | str, *, name: str | None = None) -> None:
+    def register_fragment(
+        self, fragment: FragmentDefinition | Path | str, *, name: str | None = None
+    ) -> None:
         """Register a custom fragment definition (path or definition instance)."""
         if isinstance(fragment, FragmentDefinition):
             definition = fragment
@@ -308,11 +317,11 @@ def render_fragments(
 
 
 __all__ = [
+    "FRAGMENT_REGISTRY",
     "FragmentDefinition",
     "FragmentPiece",
     "FragmentRegistry",
     "FragmentRenderResult",
-    "FRAGMENT_REGISTRY",
     "register_fragment",
     "render_fragments",
 ]

@@ -3,12 +3,12 @@
 from __future__ import annotations
 
 from collections.abc import Sequence
+from importlib import metadata as importlib_metadata
 from io import BytesIO
 import os
 from pathlib import Path
 import shutil
 import subprocess
-from importlib import metadata as importlib_metadata
 from typing import Any, ClassVar
 from urllib.parse import urlparse
 import warnings

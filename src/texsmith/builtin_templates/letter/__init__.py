@@ -11,6 +11,7 @@ try:
     from datetime import UTC  # py311+
 except ImportError:  # py310 fallback
     UTC = UTC  # type: ignore[assignment]
+import logging
 from pathlib import Path
 import re
 import shutil
@@ -20,7 +21,6 @@ from texsmith.adapters.latex.utils import escape_latex_chars
 from texsmith.adapters.transformers import svg2pdf
 from texsmith.core.exceptions import TransformerExecutionError
 from texsmith.core.templates import TemplateError, WrappableTemplate
-import logging
 
 
 _PACKAGE_ROOT = Path(__file__).parent.resolve()

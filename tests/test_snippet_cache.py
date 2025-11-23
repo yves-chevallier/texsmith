@@ -7,7 +7,9 @@ from texsmith.adapters.plugins import snippet
 
 def _build_block(content: str = "print('Hello')") -> snippet.SnippetBlock:
     overrides: dict[str, str] = {}
-    digest = snippet._hash_payload(content, overrides, cwd=None, frame=True, template_id=None, layout=None)
+    digest = snippet._hash_payload(
+        content, overrides, cwd=None, frame=True, template_id=None, layout=None
+    )
     return snippet.SnippetBlock(
         content=content,
         frame_enabled=True,
