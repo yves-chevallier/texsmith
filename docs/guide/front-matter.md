@@ -21,7 +21,7 @@ press:
     abstract: Abstract
 ```
 
-Template specific attributes can be referenced in the front matter as well. See the [Template Guide](templates.md) for more details.
+Template specific attributes can be referenced in the front matter as well. See the [Template Guide](templates/index.md) for more details.
 
 ## Bibliography
 

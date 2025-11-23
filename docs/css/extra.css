@@ -75,6 +75,11 @@ p > img {
   margin-right: auto;
 }
 
+/* Pad snippet preview images so they don't hug the callout frame */
+img.ts-snippet {
+  padding: 0.5em;
+}
+
 .texsmith-smallcaps {
   font-variant: small-caps;
   letter-spacing: 0.04em;

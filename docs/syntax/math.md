@@ -7,13 +7,13 @@ LaTeX is the gold standard for math notation. TeXSmith relies on the same syntax
 Inline math uses the usual delimiters `\( ... \)` or `$ ... $`:
 
 ```markdown
-The quadratic formula is given by \(x = \frac{-b \pm \sqrt{b^2 - 4ac}}{2a}\) 
+The quadratic formula is given by \(x = \frac{-b \pm \sqrt{b^2 - 4ac}}{2a}\)
 or $x = \frac{-b \pm \sqrt{b^2 - 4ac}}{2a}$.
 ```
 
 Rendered as:
 
-> The quadratic formula is given by \(x = \frac{-b \pm \sqrt{b^2 - 4ac}}{2a}\) 
+> The quadratic formula is given by \(x = \frac{-b \pm \sqrt{b^2 - 4ac}}{2a}\)
 > or $x = \frac{-b \pm \sqrt{b^2 - 4ac}}{2a}$.
 
 !!! note
@@ -44,9 +44,9 @@ $$
 \begin{align*}
 \nabla \cdot \vec{E} &= \frac{\rho}{\varepsilon_0} \quad &&\text{Gauss Law}\\[4pt]
 \nabla \cdot \vec{B} &= 0 \quad &&\text{Gauss's law for electricity}\\[4pt]
-\nabla \times \vec{E} &= -\,\frac{\partial \vec{B}}{\partial t} 
+\nabla \times \vec{E} &= -\,\frac{\partial \vec{B}}{\partial t}
     \quad &&\text{Faraday's law}\\[4pt]
-\nabla \times \vec{B} &= \mu_0 \vec{J} + \mu_0 \varepsilon_0 
+\nabla \times \vec{B} &= \mu_0 \vec{J} + \mu_0 \varepsilon_0
     \frac{\partial \vec{E}}{\partial t}
 \quad &&\text{Ampère-Maxwell law}
 \end{align*}
@@ -57,9 +57,9 @@ $$
 \begin{align*}
 \nabla \cdot \vec{E} &= \frac{\rho}{\varepsilon_0} \quad &&\text{Gauss Law}\\[4pt]
 \nabla \cdot \vec{B} &= 0 \quad &&\text{Gauss's law for electricity}\\[4pt]
-\nabla \times \vec{E} &= -\,\frac{\partial \vec{B}}{\partial t} 
+\nabla \times \vec{E} &= -\,\frac{\partial \vec{B}}{\partial t}
     \quad &&\text{Faraday's law}\\[4pt]
-\nabla \times \vec{B} &= \mu_0 \vec{J} + \mu_0 \varepsilon_0 
+\nabla \times \vec{B} &= \mu_0 \vec{J} + \mu_0 \varepsilon_0
     \frac{\partial \vec{E}}{\partial t}
 \quad &&\text{Ampère-Maxwell law}
 \end{align*}
@@ -70,12 +70,12 @@ $$
 Wrap an equation inside `\begin{equation}...\end{equation}` (or `equation*`) to control numbering. Example: the relativistic gravitational field equation:
 
 ```latex
-The equation $\eqref{eq:gravity}$ describes the fundamental interaction of 
+The equation $\eqref{eq:gravity}$ describes the fundamental interaction of
 gravitation as a result of spacetime being curved by matter and energy.
 
 $$
 \begin{equation} \label{eq:gravity}
-R_{\mu \nu} - \frac{1}{2} R g_{\mu \nu} + \Lambda g_{\mu \nu} = 
+R_{\mu \nu} - \frac{1}{2} R g_{\mu \nu} + \Lambda g_{\mu \nu} =
     \frac{8 \pi G}{c^4} T_{\mu \nu}
 \end{equation}
 $$
@@ -94,17 +94,17 @@ Reference numbered equations via `\label{}` and drop `$\eqref{...}$` in Markdown
 In an aligned environment, you can number individual lines using the `\label{}` command:
 
 ```latex
-As we see $\eqref{eq:max2}$, the magnetic flux through any closed surface is zero, 
+As we see $\eqref{eq:max2}$, the magnetic flux through any closed surface is zero,
 this implies that there are no magnetic monopoles.
 
 $$
 \begin{align}
-\oint_{\partial V} \vec{E} \cdot d\vec{S} &= \frac{Q_{\text{int}}}{\varepsilon_0} 
+\oint_{\partial V} \vec{E} \cdot d\vec{S} &= \frac{Q_{\text{int}}}{\varepsilon_0}
     \label{eq:max1} \\[6pt]
 \oint_{\partial V} \vec{B} \cdot d\vec{S} &= 0 \label{eq:max2} \\[6pt]
-\oint_{\partial S} \vec{E} \cdot d\vec{\ell} &= -\,\frac{d}{dt} \int_{S} \vec{B} 
+\oint_{\partial S} \vec{E} \cdot d\vec{\ell} &= -\,\frac{d}{dt} \int_{S} \vec{B}
     \cdot d\vec{S} \label{eq:max3} \\[6pt]
-\oint_{\partial S} \vec{B} \cdot d\vec{\ell} &= \mu_0 I_{\text{int}} 
+\oint_{\partial S} \vec{B} \cdot d\vec{\ell} &= \mu_0 I_{\text{int}}
 + \mu_0 \varepsilon_0 \frac{d}{dt} \int_{S} \vec{E} \cdot d\vec{S} \label{eq:max4}
 \end{align}
 $$
@@ -117,7 +117,7 @@ $$
 \oint_{\partial V} \vec{E} \cdot d\vec{S} &= \frac{Q_{\text{int}}}{\varepsilon_0} \label{eq:max1} \\[6pt]
 \oint_{\partial V} \vec{B} \cdot d\vec{S} &= 0 \label{eq:max2} \\[6pt]
 \oint_{\partial S} \vec{E} \cdot d\vec{\ell} &= -\,\frac{d}{dt} \int_{S} \vec{B} \cdot d\vec{S} \label{eq:max3} \\[6pt]
-\oint_{\partial S} \vec{B} \cdot d\vec{\ell} &= \mu_0 I_{\text{int}} 
+\oint_{\partial S} \vec{B} \cdot d\vec{\ell} &= \mu_0 I_{\text{int}}
 + \mu_0 \varepsilon_0 \frac{d}{dt} \int_{S} \vec{E} \cdot d\vec{S} \label{eq:max4}
 \end{align}
 $$
@@ -142,7 +142,7 @@ window.MathJax = {
   tex: {
     inlineMath: [['\\(', '\\)']],
     displayMath: [['$$', '$$'], ['\\[', '\\]']],
-    tags: 'ams',   
+    tags: 'ams',
     packages: {'[+]': ['ams']}
   },
   options: {
@@ -156,4 +156,12 @@ window.MathJax = {
 
 Here’s what the above snippets look like once rendered through TeXSmith:
 
-[![Math rendering](../assets/examples/equation.png)](../assets/examples/equation.pdf)
+````md {.snippet }
+---8<--- "examples/math/math.md"
+````
+
+With the source:
+
+```markdown
+---8<--- "examples/math/math.md"
+```

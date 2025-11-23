@@ -556,6 +556,8 @@ def _extract_template_overrides(
                 press_section[normalised] = value_norm
             else:
                 overrides["press"] = {normalised: value_norm}
+            if normalised in {"callout_style", "callouts_style"}:
+                overrides["callout_style"] = value_norm
 
     if "no-border" in classes and "border" not in overrides:
         overrides["border"] = False
@@ -1211,7 +1213,7 @@ def rewrite_html_snippets(
             target="_blank",
             rel="noopener noreferrer",
         )
-        image_attrs = {"src": png_url, "alt": block.caption or "Snippet"}
+        image_attrs = {"src": png_url, "alt": block.caption or "Snippet", "class": ["ts-snippet"]}
         if block.figure_width:
             image_attrs["width"] = block.figure_width
         image = soup.new_tag("img", **image_attrs)

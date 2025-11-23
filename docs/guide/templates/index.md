@@ -287,4 +287,4 @@ This repository includes examples for the bundled templates; copy one into your 
 ## Next steps
 
 - Study the [Template Cookbook](template-cookbook.md) for practical recipes (title pages, metadata bindings, bibliography tweaks).
-- Browse the [API high-level guide](../api/high-level.md) to orchestrate templates programmatically with `ConversionService`.
+- Browse the [API high-level guide](../../api/high-level.md) to orchestrate templates programmatically with `ConversionService`.

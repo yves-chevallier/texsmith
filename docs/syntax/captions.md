@@ -6,21 +6,32 @@ Markdown doesn’t ship with a native caption primitive for figures or tables. T
 ![This is the alt text](image.png)
 ```
 
-Alt text exists for accessibility. Some browsers show it as a tooltip, but it is not a real caption and you can’t style it separately.
+Alt text exists for accessibility, not for captions. Some browsers show it as a tooltip, but it is not a real caption and you can’t style it separately. Moreover since it is inserted in an HTML tag's attribute, it can’t contain block elements or complex formatting.
 
-Enter `pymdownx.blocks.captions`, which adds proper caption blocks:
+Fortunately, `pymdownx.blocks.captions`, which adds proper caption blocks:
 
 ```md
 As seen in [this figure](#my-figure), the results are significant.
 
-![This is the alt text](image.png)
+![This is the alt text](https://picsum.photos/400/150)
 
-/// figure-caption #my-figure
+/// caption #my-figure
 This is the caption for the figure.
 ///
 ```
 
 Enable numbering and each document gets its own sequence starting at 1.
+
+```md { .snippet }
+As seen in [this figure](#my-figure), the results are significant.
+
+![This is the alt text](https://picsum.photos/400/150)
+
+/// caption
+    attrs: {id: my-figure}
+This is the caption for the figure.
+///
+```
 
 ## LaTeX
 

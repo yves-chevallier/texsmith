@@ -29,7 +29,7 @@ Sometimes diagrams live better outside the Markdown. TeXSmith supports:
 2. Embed Mermaid Live snippets using `pako:` URLs for live editing.
 
 The `texsmith.mermaid` extension sniffs out these references, pulls the content in, and treats inline/external sources the same way.
-  
+
 Using a `mmd` file is as simple as including an image:
 
 ```markdown
@@ -56,7 +56,9 @@ When TeXSmith renders HTML/PDF it wraps the image with a link to the Mermaid Liv
 
 Here’s how the diagrams look once TeXSmith embeds them:
 
-[![Mermaid Diagrams](../assets/examples/mermaid.png)](../assets/examples/mermaid.pdf)
+````md { .snippet }
+---8<--- "examples/mermaid/example.md"
+````
 
 ## Conversion by TeXSmith
 

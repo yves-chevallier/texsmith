@@ -16,13 +16,8 @@ drop the `[=75% "Done"]` shorthand in your Markdown and keep both the HTML previ
 
 - Values must be percentages (`0 – 100`). TexSmith clamps the values if needed.
 - The quoted label is optional; when omitted the percentage is used.
-- Trailing attribute lists (`{: .class #id }`) attach CSS classes and HTML attributes.  
+- Trailing attribute lists (`{: .class #id }`) attach CSS classes and HTML attributes.
   Use the `.thin` class to halve the bar height (e.g. for tables or dense summaries).
-
-[=25% "Research"]
-[=50% "Implementation"]
-[=75% "Review"]
-[=100% "Launch"]{: .thin}
 
 ## LaTeX output
 
@@ -52,6 +47,13 @@ cd examples/progressbar
 texsmith example.md --template article --output-dir build --build
 ```
 
-[![Progress Bars](../assets/examples/progressbar.png)](../assets/examples/progressbar.pdf)
+````md { .snippet }
+[=25% "Research"]
+[=50% "Implementation"]
+[=75% "Review"]
+[=100% "Launch"]{: .thin}
+````
+
+
 
 [pymdownx]: https://facelessuser.github.io/pymdown-extensions/extensions/progressbar/

@@ -176,7 +176,7 @@ Add tags or index entries to associate keywords with specific sections or topics
 This section covers advanced sorting algorithms. {index}[algorithm]
 ```
 
-See the section [][index] for more details on how to manage index entries.
+See the section [Index / Tags][index-tags] for more details on how to manage index entries.
 
 ## Naming Conventions
 
