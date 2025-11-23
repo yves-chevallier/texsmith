@@ -181,7 +181,6 @@ strip_heading = true
 "covers/circles.tex" = { source = "covers/circles.tex", template = true }
 "titlepage.tex" = { source = "template/titlepage.tex", template = true }
 "imprint.tex" = { source = "template/imprint.tex", template = true }
-"mkbook.cls" = { source = "template/mkbook.cls", template = true }
 "todolist.sty" = { source = "../common/todolist.sty" }
 "keystroke.sty" = { source = "../common/keystroke.sty" }
 ".latexmkrc" = { source = "template/assets/latexmkrc", template = true }
