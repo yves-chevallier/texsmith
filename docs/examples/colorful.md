@@ -1,8 +1,14 @@
 # Colorful Squares
 
-This example demonstrates the creation of a colorful examples with four slots using a local template. It showcases how front matter can drive colours, slot routing, and final layout without touching TeX.
+This example shows off a custom poster-ish template with four slots wired through a local template. Front matter steers colors, slot routing, and layout—no LaTeX tweaks needed.
 
-[![Colorful manifesto](../assets/examples/colorful.png)](../assets/examples/colorful.pdf)
+```md {.snippet data-caption="Demo" data-width="60%" data-frame="false" data-cwd="../../examples/colorful"}
+--8<--- "examples/colorful/colorful.md"
+```
+
+The YAML front matter picks the template (`.`), sets the palette, and feeds each slot. Colors live under `colors`, and slot content under `slots`.
+
+The manifest defines defaults, available attributes, and where they get injected.
 
 === "colorful.md"
 
@@ -22,11 +28,7 @@ This example demonstrates the creation of a colorful examples with four slots us
     ---8<--- "examples/colorful/template.tex"
     ```
 
-```md {.snippet data-caption="Demo" data-cwd="../../examples/colorful"}
---8<--- "examples/colorful/colorful.md"
-```
-
-To build this example, simply run:
+Build it with:
 
 ```text
 $ ls

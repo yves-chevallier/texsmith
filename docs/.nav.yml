@@ -1,8 +1,9 @@
 nav:
   - Home: index.md
   - Guide: guide/
-  - Reference: markdown/
+  - Syntax: syntax/
   - Examples: examples/
+  - MkDocs: mkdocs/
   - CLI: cli/
   - API: api/
   - About: about/

@@ -4,7 +4,7 @@
 Hello **World**!
 ```
 
-````markdown {.snippet data-caption="Demo"}
+````markdown {.snippet data-caption="Demo" data-width="60%"}
 ```c
 #include <stdio.h>
 int main() {

@@ -15,7 +15,7 @@ from typing import Any
 
 from bs4 import BeautifulSoup
 from bs4.element import NavigableString, Tag
-from PIL import Image, ImageDraw
+from PIL import Image, ImageDraw, ImageFilter
 
 from texsmith.adapters.handlers._helpers import (
     coerce_attribute,
@@ -49,6 +49,8 @@ class SnippetBlock:
     """Parsed representation of a snippet fence."""
 
     content: str
+    frame_enabled: bool
+    template_id: str | None
     cwd: Path | None
     caption: str | None
     label: str | None
@@ -145,6 +147,7 @@ class _SnippetCache:
                 "border": block.border_enabled,
                 "dogear_enabled": block.dogear_enabled,
                 "transparent_corner": block.transparent_corner,
+                "frame_enabled": block.frame_enabled,
                 "overrides": block.template_overrides,
                 "cwd": str(block.cwd) if block.cwd else None,
             }
@@ -309,7 +312,7 @@ def _resolve_base_dir(block: SnippetBlock, host_path: Path | None) -> Path:
 def _resolve_template_runtime(block: SnippetBlock, document: Document, base_dir: Path) -> TemplateRuntime:
     """Select the template runtime from front matter when provided."""
     front_matter = document.front_matter
-    template_id: str | None = None
+    template_id: str | None = block.template_id
     if isinstance(front_matter, Mapping):
         raw = front_matter.get("template")
         if raw:
@@ -366,8 +369,20 @@ def asset_filename(digest: str, suffix: str) -> str:
     return f"{_SNIPPET_PREFIX}{digest}{suffix}"
 
 
-def _hash_payload(content: str, overrides: dict[str, str], cwd: str | None = None) -> str:
-    payload = {"content": content, "overrides": overrides, "cwd": cwd}
+def _hash_payload(
+    content: str,
+    overrides: dict[str, str],
+    cwd: str | None = None,
+    frame: bool = True,
+    template_id: str | None = None,
+) -> str:
+    payload = {
+        "content": content,
+        "overrides": overrides,
+        "cwd": cwd,
+        "frame": frame,
+        "template": template_id,
+    }
     encoded = json.dumps(payload, sort_keys=True).encode("utf-8")
     return hashlib.sha256(encoded).hexdigest()
 
@@ -390,18 +405,49 @@ def _coerce_bool_option(value: Any, default: bool) -> bool:
 
 def _extract_template_overrides(
     element: Tag, classes: list[str]
-) -> tuple[dict[str, Any], str | None, str | None, str | None, str | None]:
+) -> tuple[dict[str, Any], str | None, str | None, str | None, str | None, bool, str | None]:
+    code_element = element.find("code")
+    pre_element = element.find("pre")
+
+    def _attr(name: str) -> Any:
+        for candidate in (element, pre_element, code_element):
+            if candidate is None:
+                continue
+            value = candidate.get(name)
+            if value is not None:
+                return value
+        return None
+
     overrides: dict[str, Any] = {}
-    caption = coerce_attribute(element.get("data-caption")) or None
-    label = coerce_attribute(element.get("data-label")) or None
+    caption = coerce_attribute(_attr("data-caption")) or None
+    label = coerce_attribute(_attr("data-label")) or None
     figure_width = (
-        coerce_attribute(element.get("data-width"))
-        or coerce_attribute(element.get("data-figure-width"))
+        coerce_attribute(_attr("data-width"))
+        or coerce_attribute(_attr("data-figure-width"))
+        or coerce_attribute(_attr("width"))
         or None
     )
-    cwd = coerce_attribute(element.get("data-cwd")) or None
+    if figure_width is None:
+        style_attr = coerce_attribute(_attr("style")) or ""
+        if "width" in style_attr:
+            for chunk in style_attr.split(";"):
+                if "width" not in chunk:
+                    continue
+                key, _, value = chunk.partition(":")
+                if key.strip().lower() == "width":
+                    figure_width = value.strip()
+                    break
+    cwd = coerce_attribute(_attr("data-cwd")) or None
+    template_id = coerce_attribute(_attr("data-template")) or None
+    frame_enabled = _coerce_bool_option(_attr("data-frame"), True)
 
-    for attr, value in element.attrs.items():
+    candidate_attrs: list[tuple[str, Any]] = list(element.attrs.items())
+    if pre_element is not None:
+        candidate_attrs.extend(pre_element.attrs.items())
+    if code_element is not None:
+        candidate_attrs.extend(code_element.attrs.items())
+
+    for attr, value in candidate_attrs:
         if not isinstance(attr, str):
             continue
         key = attr.lower()
@@ -419,7 +465,7 @@ def _extract_template_overrides(
         if key in overrides:
             overrides[key] = _coerce_bool_option(overrides[key], default)
 
-    return overrides, caption, label, figure_width, cwd
+    return overrides, caption, label, figure_width, cwd, frame_enabled, template_id
 
 
 def _extract_snippet_block(element: Tag) -> SnippetBlock | None:
@@ -434,13 +480,23 @@ def _extract_snippet_block(element: Tag) -> SnippetBlock | None:
     if not content.strip():
         return None
 
-    overrides, caption, label, figure_width, cwd = _extract_template_overrides(element, classes)
-    digest = _hash_payload(content, overrides, cwd=cwd)
+    (
+        overrides,
+        caption,
+        label,
+        figure_width,
+        cwd,
+        frame_enabled,
+        template_id,
+    ) = _extract_template_overrides(element, classes)
+    digest = _hash_payload(content, overrides, cwd=cwd, frame=frame_enabled, template_id=template_id)
     border_enabled = _coerce_bool_option(overrides.get("border"), True)
     dogear_enabled = _coerce_bool_option(overrides.get("dogear_enabled"), True)
 
     return SnippetBlock(
         content=content,
+        frame_enabled=frame_enabled,
+        template_id=template_id,
         cwd=Path(cwd).expanduser() if cwd else None,
         caption=caption,
         label=label,
@@ -570,6 +626,105 @@ def _apply_dogear_transparency(image: Image.Image) -> Image.Image:
     return rgba
 
 
+def _overlay_dogear_frame(
+    image: Image.Image,
+    *,
+    margin: int | None = None,
+    dogear: int | None = None,
+    border_width: int | None = None,
+    border_color: tuple[int, int, int, int] = (0, 0, 0, 255),
+    dogear_enabled: bool = True,
+) -> Image.Image:
+    """Draw a frame with a folded corner directly onto the PNG."""
+    base = image.convert("RGBA")
+    width, height = base.size
+    if width <= 0 or height <= 0:
+        return base
+
+    size_hint = min(width, height)
+    m = 0 if margin is None else max(margin, 0)
+    fold = dogear if dogear is not None else max(int(size_hint * 0.07), 18)
+    stroke = border_width if border_width is not None else max(int(size_hint * 0.0025), 1)
+
+    x0, y0 = m, m
+    x1, y1 = width - 1 - m, height - 1 - m
+
+    scale = 6
+    overlay = Image.new("RGBA", (width * scale, height * scale), (0, 0, 0, 0))
+    draw = ImageDraw.Draw(overlay)
+    bw = max(1, stroke * scale)
+
+    def sx(val: float) -> int:
+        return int(round(val * scale))
+
+    def sy(val: float) -> int:
+        return int(round(val * scale))
+
+    draw.line([(sx(x0), sy(y0)), (sx(x1 - fold), sy(y0))], fill=border_color, width=bw)
+    draw.line([(sx(x1), sy(y0 + fold)), (sx(x1), sy(y1))], fill=border_color, width=bw)
+    draw.line([(sx(x1), sy(y1)), (sx(x0), sy(y1))], fill=border_color, width=bw)
+    draw.line([(sx(x0), sy(y1)), (sx(x0), sy(y0))], fill=border_color, width=bw)
+
+    mask = Image.new("L", overlay.size, color=255)
+    mask_draw = ImageDraw.Draw(mask)
+
+    if dogear_enabled:
+        corner = (x1 - fold, y0 + fold)
+        bdown = (x1, y0 + fold)
+        bleft = (x1 - fold, y0)
+
+        def bezier_points(p0, p1, p2, p3, steps: int = 192):
+            pts = []
+            for i in range(steps + 1):
+                t = i / steps
+                mt = 1 - t
+                x = (
+                    mt * mt * mt * p0[0]
+                    + 3 * mt * mt * t * p1[0]
+                    + 3 * mt * t * t * p2[0]
+                    + t * t * t * p3[0]
+                )
+                y = (
+                    mt * mt * mt * p0[1]
+                    + 3 * mt * mt * t * p1[1]
+                    + 3 * mt * t * t * p2[1]
+                    + t * t * t * p3[1]
+                )
+                pts.append((sx(x), sy(y)))
+            return pts
+
+        spline1 = bezier_points(
+            corner,
+            (corner[0] + 0.3 * fold, corner[1] - 0.1 * fold),
+            (bdown[0] - 0.3 * fold, bdown[1] + 0.1 * fold),
+            bdown,
+        )
+        spline2 = bezier_points(
+            bleft,
+            (bleft[0] + 0.1 * fold, bleft[1] - 0.3 * fold),
+            (corner[0] - 0.1 * fold, corner[1] + 0.3 * fold),
+            corner,
+        )
+
+        draw.line(spline1, fill=border_color, width=bw, joint="curve")
+        draw.line(spline2, fill=border_color, width=bw, joint="curve")
+
+        mask_draw.polygon(
+            [
+                (sx(x1 - fold), sy(y0)),
+                (sx(x1 + 1), sy(y0)),
+                (sx(x1 + 1), sy(y0 + fold + 1)),
+            ],
+            fill=0,
+        )
+
+    composited = Image.alpha_composite(base, overlay.resize(base.size, Image.LANCZOS))
+    if dogear_enabled:
+        mask_small = mask.resize(base.size, Image.LANCZOS)
+        composited.putalpha(mask_small)
+    return composited
+
+
 def ensure_snippet_assets(
     block: SnippetBlock,
     *,
@@ -584,12 +739,33 @@ def ensure_snippet_assets(
     pdf_path = destination / asset_filename(block.digest, ".pdf")
     png_path = destination / asset_filename(block.digest, ".png")
 
-    pdf_missing = not pdf_path.exists()
-    png_missing = not png_path.exists()
-    apply_corner = block.transparent_corner if transparent_corner is None else transparent_corner
-    assets = _SnippetAssets(pdf=pdf_path, png=png_path)
+    host_path = Path(source_path) if source_path is not None else destination / "snippet.md"
+    host_dir = _resolve_base_dir(block, host_path)
+    host_name = host_path.stem or "snippet"
+
+    document = _build_document(block, host_dir=host_dir, host_name=host_name)
+    runtime = _resolve_template_runtime(block, document, host_dir)
+    apply_corner_default = (
+        block.transparent_corner if transparent_corner is None else transparent_corner
+    )
+    if block.frame_enabled:
+        apply_corner = False
+    elif runtime.name == "snippet":
+        apply_corner = apply_corner_default if block.dogear_enabled and block.border_enabled else False
+    else:
+        apply_corner = False
+
     caches = _resolve_caches(source_path)
-    template_version = _snippet_template_version() if caches else None
+    template_version = None
+    if caches:
+        info = getattr(runtime.instance, "info", None)
+        if info is not None:
+            version = getattr(info, "version", None)
+            template_version = str(version) if version is not None else None
+
+    pdf_missing = not pdf_path.exists()
+    png_missing = not png_path.exists() or block.frame_enabled
+    assets = _SnippetAssets(pdf=pdf_path, png=png_path)
 
     def _flush_caches() -> None:
         for cache in caches:
@@ -641,12 +817,6 @@ def ensure_snippet_assets(
 
     _announce_build(block, source_path, emitter)
 
-    host_path = Path(source_path) if source_path is not None else destination / "snippet.md"
-    host_dir = _resolve_base_dir(block, host_path)
-    host_name = host_path.stem or "snippet"
-
-    document = _build_document(block, host_dir=host_dir, host_name=host_name)
-    runtime = _resolve_template_runtime(block, document, host_dir)
     settings = RenderSettings(
         copy_assets=True,
         convert_assets=False,
@@ -670,6 +840,21 @@ def ensure_snippet_assets(
         shutil.rmtree(work_dir, ignore_errors=True)
 
     _pdf_to_png(pdf_path, png_path, transparent_corner=apply_corner)
+    if block.frame_enabled and block.border_enabled:
+        try:
+            image = Image.open(png_path)
+        except OSError:
+            pass
+        else:
+            framed = _overlay_dogear_frame(
+                image,
+                dogear_enabled=block.dogear_enabled,
+            )
+            try:
+                framed.save(png_path)
+            except OSError:
+                pass
+
     _store_in_caches()
     return assets
 
@@ -741,7 +926,10 @@ def rewrite_html_snippets(
             target="_blank",
             rel="noopener noreferrer",
         )
-        image = soup.new_tag("img", src=png_url, alt=block.caption or "Snippet")
+        image_attrs = {"src": png_url, "alt": block.caption or "Snippet"}
+        if block.figure_width:
+            image_attrs["width"] = block.figure_width
+        image = soup.new_tag("img", **image_attrs)
         anchor.append(image)
         element.replace_with(anchor)
         mutated = True
