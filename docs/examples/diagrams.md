@@ -36,6 +36,6 @@ flowchart LR
 
 And the PDF render (click to download):
 
-````md {.snippet data-caption="Download PDF" data-frame="true" data-width="60%"}
+````md {.snippet data-caption="Download PDF" data-frame="true" data-width="60%" data-cwd="../../examples/diagrams"}
 ---8<--- "examples/diagrams/diagrams.md"
 ````
