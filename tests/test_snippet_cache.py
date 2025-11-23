@@ -22,6 +22,10 @@ def _build_block(content: str = "print('Hello')") -> snippet.SnippetBlock:
         border_enabled=True,
         dogear_enabled=True,
         transparent_corner=True,
+        bibliography_raw=[],
+        bibliography_files=[],
+        title_strategy=snippet.TitleStrategy.KEEP,
+        suppress_title_metadata=True,
     )
 
 

@@ -94,22 +94,24 @@
   breakable,
   enhanced,
   arc=0.7mm,
-  boxrule=0mm,
+  boxrule=0.1mm,
   titlerule=0mm,
-  lefttitle=1mm,
-  leftupper=1mm,
+  left=3mm,
+  lefttitle=0.8mm,
+  leftupper=1.5mm,
   coltitle=black,
+  fonttitle=\bfseries\sffamily,
   parbox=false,
 }}
 \BLOCK{ for name, cfg in callouts.items() }
 \tcbset{
   callout \VAR{name}/.style={
     callout base,
-    colback=callout\VAR{name|capitalize}Bg,
+    colback=white,
     colframe=callout\VAR{name|capitalize}Frame,
     colbacktitle=callout\VAR{name|capitalize}Frame!5!white,
     coltitle=callout\VAR{name|capitalize}Title,
-    borderline west={2.5mm}{0mm}{callout\VAR{name|capitalize}Frame},
+    borderline west={1.5mm}{0mm}{callout\VAR{name|capitalize}Frame},
     title={\makebox[1.6em][c]{\texsmithCalloutIcon{\VAR{cfg.get("icon","ℹ")}}}},
   }
 }
