@@ -516,8 +516,8 @@ def render(
         )
 
     if build_pdf and not template_selected:
-        emit_error("The --build flag requires a LaTeX template (--template).")
-        raise typer.Exit(code=1)
+        template = "article"
+        template_selected = True
 
     if classic_output and not build_pdf:
         raise typer.BadParameter("--classic-output can only be used together with --build.")
