@@ -21,3 +21,32 @@ Develop Templates
 : Create and share your own LaTeX templates for TexSmith users to utilize.
 
 TeXSmith is a newly developed project, and is not ready for production use yet, but you can test it out and help us improve it.
+
+## Run the tests
+
+```bash
+git clone https://github.com/yves-chevallier/texsmith.git
+cd texsmith
+uv sync
+uv run pytest
+```
+
+## Build the documentation locally
+
+```bash
+uv sync --group docs
+uv run mkdocs serve
+```
+
+## Test CI
+
+To test the Continuous Integration (CI) using GitHub Actions, we need `act` installed on your local machine:
+
+```bash
+curl -s https://raw.githubusercontent.com/nektos/act/master/install.sh | sudo bash
+git clone https://github.com/yves-chevallier/texsmith.git
+cd texsmith
+act -j build
+```
+
+This would require a **lot** of disk space, as it uses Docker containers to simulate the GitHub Actions environment. Select the *medium* size image when prompted.

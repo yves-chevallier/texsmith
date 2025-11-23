@@ -11,8 +11,8 @@ permissions:
   id-token: write
 
 jobs:
-  quality:
-    name: Tests, lint & docs
+  build:
+    name: Tests, lint & docs check
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -26,23 +26,7 @@ jobs:
 
       - name: Install supported Python versions
         run: |
-          PY_VERSIONS=$(python - <<'PY'
-import re
-import tomllib
-
-data = tomllib.load(open("pyproject.toml", "rb"))
-versions = []
-for classifier in data.get("project", {}).get("classifiers", []):
-    match = re.fullmatch(r"Programming Language :: Python :: (\d\.\d+)", classifier.strip())
-    if match:
-        versions.append(match.group(1))
-
-if not versions:
-    raise SystemExit("No Python versions found in pyproject classifiers.")
-
-versions = sorted(set(versions), key=lambda v: tuple(map(int, v.split("."))))
-print(" ".join(versions))
-PY
+          PY_VERSIONS=$(python scripts/ci/python_versions.py)
           echo "Installing Python versions: ${PY_VERSIONS}"
           uv python install ${PY_VERSIONS}
 
@@ -55,12 +39,76 @@ PY
       - name: Run Ruff
         run: uv run ruff check .
 
-      - name: Build documentation
+      - name: Build documentation (HTML only)
         run: uv run mkdocs build --strict
+
+  docs:
+    name: Build & publish docs
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      id-token: write
+      pages: write
+      actions: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: true
+          cache-python: true
+
+      - name: Cache TeXSmith build artifacts
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/texsmith
+          key: texsmith-cache-${{ runner.os }}-${{ hashFiles('uv.lock', 'packages/mkdocs_texsmith/uv.lock') }}
+
+      - name: Sync dependencies (dev + docs)
+        run: uv sync --all-groups --frozen
+
+      - name: Build documentation (HTML + LaTeX)
+        run: |
+          uv run mkdocs build --strict
+          uv run texsmith mkdocs build
+
+      - name: Compile documentation PDF with latexmk (Docker)
+        run: |
+          docker run --rm \
+            -v "${{ github.workspace }}/build:/work" \
+            -w /work \
+            texlive/texlive \
+            latexmk -pdf -interaction=nonstopmode -shell-escape texsmith-docs.tex
+
+      - name: Build distributions (texsmith)
+        run: uv build
+
+      - name: Build distributions (mkdocs_texsmith)
+        working-directory: packages/mkdocs_texsmith
+        run: uv build
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: texsmith-docs-and-dists
+          path: |
+            dist/*
+            packages/mkdocs_texsmith/dist/*
+            build/texsmith-docs.pdf
+          if-no-files-found: error
+
+      - name: Publish documentation to GitHub Pages
+        if: startsWith(github.ref, 'refs/tags/v')
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: uv run mkdocs gh-deploy --force --clean
 
   publish:
     name: Publish to PyPI
-    needs: quality
+    needs: [build, docs]
     if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
     permissions:
