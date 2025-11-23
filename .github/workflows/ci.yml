@@ -12,7 +12,7 @@ permissions:
 
 jobs:
   build:
-    name: Tests, lint & docs check
+    name: Tests & lint
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -23,6 +23,8 @@ jobs:
         with:
           enable-cache: true
           cache-python: true
+        env:
+          UV_CACHE_SAVE: "false"
 
       - name: Install supported Python versions
         if: env.ACT != 'true'
@@ -44,9 +46,6 @@ jobs:
       - name: Run Ruff
         run: uv run ruff check .
 
-      - name: Build documentation (HTML only)
-        run: uv run mkdocs build --strict
-
   docs:
     name: Build & publish docs
     needs: build
@@ -66,6 +65,9 @@ jobs:
           enable-cache: true
           cache-python: true
 
+      - name: Install TeX Live (full)
+        run: sudo apt-get update && sudo apt-get install -y texlive-full
+
       - name: Cache TeXSmith build artifacts
         uses: actions/cache@v4
         with:
@@ -79,14 +81,6 @@ jobs:
         run: |
           uv run mkdocs build --strict
           uv run texsmith mkdocs build
-
-      - name: Compile documentation PDF with latexmk (Docker)
-        run: |
-          docker run --rm \
-            -v "${{ github.workspace }}/build:/work" \
-            -w /work \
-            texlive/texlive \
-            latexmk -pdf -interaction=nonstopmode -shell-escape texsmith-docs.tex
 
       - name: Build distributions (texsmith)
         run: uv build

@@ -19,12 +19,10 @@ def main() -> int:
             versions.append(match.group(1))
 
     if not versions:
-        msg = "No Python versions found in pyproject classifiers."
-        print(msg, file=sys.stderr)
-        return 1
+        raise SystemExit("No Python versions found in pyproject classifiers.")
 
     unique = sorted(set(versions), key=lambda v: tuple(map(int, v.split("."))))
-    print(" ".join(unique))
+    sys.stdout.write(" ".join(unique))
     return 0
 
 

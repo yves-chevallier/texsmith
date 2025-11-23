@@ -22,7 +22,7 @@ from texsmith.adapters.latex.latexmk import (
     latexmk_pdf_flag,
     normalise_engine_command,
 )
-from texsmith.adapters.latex.log import stream_latexmk_output
+from texsmith.adapters.latex.log import LatexStreamResult, stream_latexmk_output
 from texsmith.adapters.markdown import (
     DEFAULT_MARKDOWN_EXTENSIONS,
     resolve_markdown_extensions,
@@ -518,6 +518,9 @@ def render(
     if build_pdf and not template_selected:
         template = "article"
         template_selected = True
+        # In CI runners like act, prefer classic output to avoid streaming latexmk.
+        if os.environ.get("ACT") == "true":
+            classic_output = True
 
     if classic_output and not build_pdf:
         raise typer.BadParameter("--classic-output can only be used together with --build.")
@@ -761,7 +764,9 @@ def render(
     env["TEXMFCACHE"] = str(texmf_cache)
     env.setdefault("XDG_CACHE_HOME", str(xdg_cache))
 
-    if classic_output:
+    state.console.print("[bold cyan]Running latexmk…[/]")
+
+    def _run_latexmk_classic() -> None:
         try:
             process = subprocess.run(
                 command,
@@ -793,11 +798,13 @@ def render(
             )
             emit_error(f"latexmk exited with status {process.returncode}")
             raise typer.Exit(code=process.returncode)
+
+    if classic_output:
+        _run_latexmk_classic()
     else:
         console = state.console
-        console.print("[bold cyan]Running latexmk…[/]")
         try:
-            result = stream_latexmk_output(
+            result: LatexStreamResult | None = stream_latexmk_output(
                 command,
                 cwd=str(render_dir),
                 env=env,
@@ -807,10 +814,11 @@ def render(
         except OSError as exc:
             if debug_enabled():
                 raise
-            emit_error(f"Failed to execute latexmk: {exc}", exception=exc)
-            raise typer.Exit(code=1) from exc
+            emit_error(f"Failed to execute latexmk: {exc}; falling back to classic output")
+            _run_latexmk_classic()
+            result = None
 
-        if result.returncode != 0:
+        if result is not None and result.returncode != 0:
             log_path = render_result.main_tex_path.with_suffix(".log")
             messages = result.messages or parse_latex_log(log_path)
             present_latexmk_failure(
