@@ -45,6 +45,8 @@ theme:
 plugins:
   - search
   - awesome-nav
+  - autorefs:
+      resolve_closest: true
   - mkdocstrings:
       default_handler: python
       handlers:

@@ -108,7 +108,9 @@ texsmith booby.md --output build/ -apaper=a5 --build
 
 Enjoy a fresh PDF at `build/booby.pdf`:
 
-[![Booby](../assets/examples/booby.png){width=60%}](../assets/examples/booby.pdf)
+```` { .snippet data-template="article" }
+--8<--- "examples/booby/booby.md"
+````
 
 Peek inside `build/` and you will find `booby.tex`. Be free to change the  `--template` when you want a full LaTeX project or a polished PDF:
 
