@@ -64,10 +64,14 @@ Roadmap and development notes for TeXSmith. I keep this file as a running checkl
 - [x] Consolidate CI
 - [x] Serif/sans-serif toggle
 - [x] Consolidate Book template
+- [x] Demonstrate acronyms in book
+- [x] Fix API and pytest
+- [ ] Be verbose in mkdocs during build to indicate what is happening (fetching assets, building...)
+- [ ] docs/syntax/captions.md (captions for figures not working when using texsmith?)
+- [ ] Never use user cache. Always use a .cache local folder avoir spread project data in user home.
+- [ ] Make CI pass
 - [ ] Demonstrate multi indexes (dates, ...)
-- [ ] Demonstrate acronyms in book
 - [ ] Demonstrate glossary in book
-- [ ] Fix API and pytest
 - [ ] Build snippet with pdflatex when possible (faster)
 - [ ] Complete docstring coverage across the project
 - [ ] Support glossaries (glossaries package)
@@ -379,7 +383,3 @@ __*`abc`*__
 ```
 
 In this case the `code inline` is treated as `texttt` with the proper escapes.
-
-### Caption for figures not working, references.
-
-docs/syntax/captions.md

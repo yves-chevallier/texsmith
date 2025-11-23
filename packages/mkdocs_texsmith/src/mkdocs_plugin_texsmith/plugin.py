@@ -29,6 +29,7 @@ from texsmith.core.bibliography import (
     bibliography_data_from_string,
 )
 from texsmith.core.config import BookConfig, LaTeXConfig
+from texsmith.core.callouts import DEFAULT_CALLOUTS, merge_callouts, normalise_callouts
 from texsmith.core.context import DocumentState
 from texsmith.core.conversion import (
     ensure_fallback_converters,
@@ -49,6 +50,7 @@ from texsmith.core.templates import (
     load_template_runtime,
     normalise_template_language,
 )
+from texsmith.core.fragments import render_fragments
 import yaml
 
 
@@ -606,6 +608,11 @@ class LatexPlugin(BasePlugin):
             "\n\n".join(mainmatter),
             overrides=overrides,
         )
+        # Ensure engine/shell-escape flags reach templated assets (.latexmkrc).
+        template_context.setdefault("latex_engine", template_runtime.engine)
+        template_context.setdefault(
+            "requires_shell_escape", bool(template_runtime.requires_shell_escape)
+        )
         template_context["frontmatter"] = "\n\n".join(frontmatter)
         template_context["mainmatter"] = "\n\n".join(mainmatter)
         template_context["backmatter"] = "\n\n".join(backmatter)
@@ -641,6 +648,46 @@ class LatexPlugin(BasePlugin):
             template_context["bibliography"] = bibliography_output.stem
             template_context["bibliography_resource"] = bibliography_output.name
 
+        # Render and inject template fragments (ts-callouts, ts-code, etc.).
+        fragment_names = (
+            overrides.get("fragments")
+            or template_runtime.extras.get("fragments")
+            or []
+        )
+        if fragment_names:
+            fragment_context = dict(template_context)
+            if overrides:
+                fragment_context.update(overrides)
+                press_section = overrides.get("press")
+                if isinstance(press_section, Mapping):
+                    for key, value in press_section.items():
+                        fragment_context.setdefault(key, value)
+
+            # Ensure callout palette is present for ts-callouts.
+            callout_overrides = overrides.get("callouts") if overrides else None
+            fragment_context.setdefault(
+                "callouts_definitions",
+                normalise_callouts(
+                    merge_callouts(
+                        DEFAULT_CALLOUTS,
+                        callout_overrides if isinstance(callout_overrides, Mapping) else None,
+                    )
+                ),
+            )
+
+            fragment_result = render_fragments(
+                fragment_names,
+                context=fragment_context,
+                output_dir=output_root,
+                source_dir=self._project_dir,
+            )
+
+            for variable_name, injections in fragment_result.variable_injections.items():
+                base = template_context.get(variable_name, "")
+                parts: list[str] = [base] if base else []
+                parts.extend(injections)
+                template_context[variable_name] = "\n".join(part for part in parts if part)
+
         try:
             latex_document = template_runtime.instance.wrap_document(
                 template_context.get(template_runtime.default_slot, ""),
@@ -658,8 +705,9 @@ class LatexPlugin(BasePlugin):
         log.info("TeXSmith wrote '%s'.", tex_path.relative_to(self._build_root))
         self._announce_latexmk_command(output_root, tex_path)
 
+        template_assets: list[Path] = []
         try:
-            copy_template_assets(
+            template_assets = copy_template_assets(
                 template_runtime.instance,
                 output_root,
                 context=template_context,
@@ -672,7 +720,8 @@ class LatexPlugin(BasePlugin):
             self._write_assets_manifest(output_root, assets_map)
 
         if self._latex_config.clean_assets and copy_assets:
-            self._prune_unused_assets(output_root, assets_map.values())
+            referenced_assets = [*assets_map.values(), *template_assets]
+            self._prune_unused_assets(output_root, referenced_assets)
 
         self._copy_extra_files(runtime.config, output_root)
         self._publish_snippet_assets(output_root)

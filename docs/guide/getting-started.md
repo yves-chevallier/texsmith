@@ -156,7 +156,7 @@ texsmith build/site/guides/overview/index.html \
 
 !!! tip
 
-    - The default selector (`article.md-content__inner`) already matches MkDocs Material content; skip `--selector` unless you heavily customise templates.
+    - The default selector (`article.md-content\_\_inner`) already matches MkDocs Material content; skip `--selector` unless you heavily customise templates.
     - When your site spans multiple documents, repeat the command per page and stitch them with template slots (for example, `--slot mainmatter:build/site/manual/index.html`).
     - For live previews, point TeXSmith at the temporary site directory that `mkdocs serve` prints on startup.
 
