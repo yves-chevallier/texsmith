@@ -8,14 +8,9 @@ from datetime import date, datetime, timezone
 
 
 try:
-try:
     from datetime import UTC  # py311+
 except ImportError:  # pragma: no cover - py310 compatibility
-    from datetime import timezone
-
     UTC = timezone.utc
-except ImportError:  # py310 fallback
-    UTC = UTC  # type: ignore[assignment]
 import logging
 from pathlib import Path
 import re

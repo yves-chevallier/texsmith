@@ -33,7 +33,7 @@ jobs:
 
       - name: Skip Python matrix under act
         if: env.ACT == 'true'
-        run: echo "ACT detected: using runner Python only"
+        run: 'echo "ACT detected: using runner Python only"'
 
       - name: Sync dependencies (dev + docs)
         run: uv sync --all-groups --frozen
