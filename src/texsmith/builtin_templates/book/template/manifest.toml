@@ -183,4 +183,4 @@ strip_heading = true
 "imprint.tex" = { source = "template/imprint.tex", template = true }
 "todolist.sty" = { source = "../common/todolist.sty" }
 "keystroke.sty" = { source = "../common/keystroke.sty" }
-".latexmkrc" = { source = "template/assets/latexmkrc", template = true }
+".latexmkrc" = { source = "../common/latexmkrc", template = true }

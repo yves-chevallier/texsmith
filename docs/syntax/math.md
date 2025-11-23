@@ -162,6 +162,6 @@ Here’s what the above snippets look like once rendered through TeXSmith:
 
 With the source:
 
-```markdown
+````markdown
 ---8<--- "examples/math/math.md"
-```
+````

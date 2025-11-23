@@ -21,9 +21,11 @@ For printed documentation, especially for scientific or technical reports, some 
 
 So many flavours, so many extensions, so many incompatible syntaxes—it’s a jungle. CommonMark tried to herd the cats and mostly succeeded, but fragmentation remains. MyST brought Sphinx-style goodies to Markdown, yet it isn’t MkDocs-compatible, so TeXSmith had to chart its own course.
 
-![How Standards Proliferate[^1]](https://imgs.xkcd.com/comics/standards.png)
+![How Standards Proliferate](https://imgs.xkcd.com/comics/standards.png)
 
-*[1]: [xkcd:927](https://xkcd.com/927/)
+Source: xkcd[^1].
+
+[^1]: [xkcd:927](https://xkcd.com/927/)
 
 TeXSmith is unapologetically opinionated: it curates a stack, sprinkles extra sauce on top, and calls the bundle **Tmark** (TeXSmith Markdown).
 ## TeXSmith compatibility

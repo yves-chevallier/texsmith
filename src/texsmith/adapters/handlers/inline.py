@@ -470,7 +470,6 @@ def render_inline_code(element: Tag, context: RenderContext) -> None:
     phase=RenderPhase.PRE,
     priority=60,
     name="inline_math",
-    nestable=False,
     auto_mark=False,
 )
 def render_math_inline(element: Tag, _context: RenderContext) -> None:
@@ -487,7 +486,6 @@ def render_math_inline(element: Tag, _context: RenderContext) -> None:
     phase=RenderPhase.PRE,
     priority=30,
     name="math_block",
-    nestable=False,
     auto_mark=False,
 )
 def render_math_block(element: Tag, _context: RenderContext) -> None:

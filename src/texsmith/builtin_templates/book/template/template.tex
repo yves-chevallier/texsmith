@@ -18,6 +18,12 @@
 \VAR{extra_packages}
 \usepackage[svgnames,dvipsnames,x11names]{xcolor}
 
+\ifLuaTeX
+  \usepackage{fontspec}
+  \defaultfontfeatures{Scale=MatchLowercase, Ligatures=TeX}
+  \IfFontExistsTF{DejaVu Sans Mono}{\setmonofont{DejaVu Sans Mono}}{\setmonofont{Latin Modern Mono}}
+\fi
+
 \usepackage{fancyhdr}
 
 \usepackage{graphicx} % For including images
