@@ -1,6 +1,7 @@
 ---
 title: Colorful Manifesto
 press:
+  template: .
   colors:
     nw: "#FF5A5F"
     ne: "#FFC857"
