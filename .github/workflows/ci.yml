@@ -25,16 +25,32 @@ jobs:
           cache-python: true
 
       - name: Install supported Python versions
+        if: env.ACT != 'true'
         run: |
           PY_VERSIONS=$(python scripts/ci/python_versions.py)
           echo "Installing Python versions: ${PY_VERSIONS}"
           uv python install ${PY_VERSIONS}
 
+      - name: Skip Python matrix under act
+        if: env.ACT == 'true'
+        run: echo "ACT detected: using runner Python only"
+
       - name: Sync dependencies (dev + docs)
         run: uv sync --all-groups --frozen
 
       - name: Run test suite (nox)
-        run: uv run nox -s tests
+        run: |
+          if [ "${ACT}" = "true" ]; then
+            PY_VER=$(python - <<'PY'
+import sys
+print(f"{sys.version_info.major}.{sys.version_info.minor}")
+PY
+)
+            echo "Running nox with runner Python ${PY_VER}"
+            uv run nox -s tests -p "${PY_VER}"
+          else
+            uv run nox -s tests
+          fi
 
       - name: Run Ruff
         run: uv run ruff check .
