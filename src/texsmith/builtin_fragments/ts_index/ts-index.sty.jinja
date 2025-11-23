@@ -4,11 +4,10 @@
 \BLOCK{ if resolved_index_engine == "texindy" }
 \RequirePackage[xindy]{imakeidx}
 \BLOCK{ else }
+\RequirePackage{makeidx}
 \RequirePackage{imakeidx}
 \BLOCK{ endif }
 
-\BLOCK{ if index_entries or has_index }
 \makeindex
-\BLOCK{ endif }
 
 \endinput

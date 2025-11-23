@@ -458,12 +458,21 @@ def _extract_template_overrides(
         if not isinstance(attr, str):
             continue
         key = attr.lower()
-        if not key.startswith("data-snippet-"):
-            continue
-        normalised = key[len("data-snippet-") :].strip().replace("-", "_")
-        if not normalised:
-            continue
-        overrides[normalised] = coerce_attribute(value) or ""
+        if key.startswith("data-snippet-"):
+            normalised = key[len("data-snippet-") :].strip().replace("-", "_")
+            if not normalised:
+                continue
+            overrides[normalised] = coerce_attribute(value) or ""
+        elif key.startswith("data-attr-"):
+            normalised = key[len("data-attr-") :].strip().replace("-", "_")
+            if not normalised:
+                continue
+            value_norm = coerce_attribute(value) or ""
+            press_section = overrides.setdefault("press", {})
+            if isinstance(press_section, dict):
+                press_section[normalised] = value_norm
+            else:
+                overrides["press"] = {normalised: value_norm}
 
     if "no-border" in classes and "border" not in overrides:
         overrides["border"] = False
@@ -605,7 +614,10 @@ def _compile_pdf(render_result: Any) -> Path:
         stderr = process.stderr.strip()
         stdout = process.stdout.strip()
         detail = stderr or stdout or "latexmk exited with a non-zero status."
-        raise LatexRenderingError(f"Failed to compile snippet: {detail}")
+        log_path = render_result.main_tex_path.with_suffix(".log")
+        raise LatexRenderingError(
+            f"Failed to compile snippet: {detail} (log: {log_path})"
+        )
 
     return render_result.main_tex_path.with_suffix(".pdf")
 
@@ -949,12 +961,23 @@ def ensure_snippet_assets(
     shutil.rmtree(work_dir, ignore_errors=True)
     work_dir.mkdir(parents=True, exist_ok=True)
 
+    debug_dir: Path | None = None
     try:
         render_result = session.render(work_dir)
         compiled_pdf = _compile_pdf(render_result)
         shutil.copy2(compiled_pdf, pdf_path)
-    except Exception:
+    except Exception as exc:
         # Preserve the work directory for post-mortem inspection when compilation fails.
+        try:
+            cache_root = _resolve_cache_root() or Path(tempfile.gettempdir()) / "texsmith"
+            debug_dir = (cache_root / "snippet-fail" / block.digest).resolve()
+            if debug_dir.exists():
+                shutil.rmtree(debug_dir, ignore_errors=True)
+            shutil.copytree(work_dir, debug_dir, dirs_exist_ok=True)
+        except Exception:
+            debug_dir = None
+        if debug_dir is not None:
+            raise exc.__class__(f"{exc} (debug: {debug_dir})") from exc
         raise
     else:
         shutil.rmtree(work_dir, ignore_errors=True)
