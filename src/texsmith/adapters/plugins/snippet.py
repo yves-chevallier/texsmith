@@ -61,6 +61,7 @@ class SnippetBlock:
     border_enabled: bool
     dogear_enabled: bool
     transparent_corner: bool
+    bibliography_files: list[Path]
     title_strategy: TitleStrategy
     suppress_title_metadata: bool
 
@@ -411,7 +412,16 @@ def _coerce_bool_option(value: Any, default: bool) -> bool:
 
 def _extract_template_overrides(
     element: Tag, classes: list[str]
-) -> tuple[dict[str, Any], str | None, str | None, str | None, str | None, bool, str | None]:
+) -> tuple[
+    dict[str, Any],
+    str | None,
+    str | None,
+    str | None,
+    str | None,
+    bool,
+    str | None,
+    list[str],
+]:
     code_element = element.find("code")
     pre_element = element.find("pre")
 
@@ -447,6 +457,7 @@ def _extract_template_overrides(
     template_id = coerce_attribute(_attr("data-template")) or None
     frame_enabled = _coerce_bool_option(_attr("data-frame"), True)
     layout_literal = coerce_attribute(_attr("data-layout")) or None
+    files_literal = coerce_attribute(_attr("data-files")) or None
 
     candidate_attrs: list[tuple[str, Any]] = list(element.attrs.items())
     if pre_element is not None:
@@ -483,7 +494,12 @@ def _extract_template_overrides(
 
     layout = _parse_layout(layout_literal)
 
-    return overrides, caption, label, figure_width, cwd, frame_enabled, template_id, layout
+    files: list[str] = []
+    if isinstance(files_literal, str) and files_literal.strip():
+        candidates = [chunk.strip() for chunk in files_literal.split(",")]
+        files = [item for item in candidates if item]
+
+    return overrides, caption, label, figure_width, cwd, frame_enabled, template_id, layout, files
 
 
 def _extract_snippet_block(element: Tag) -> SnippetBlock | None:
@@ -517,6 +533,7 @@ def _extract_snippet_block(element: Tag) -> SnippetBlock | None:
         frame_enabled,
         template_id,
         layout,
+        files,
     ) = _extract_template_overrides(element, classes)
     suppress_title_value = _coerce_bool_option(_attr("data-no-title"), True)
     drop_title_value = _coerce_bool_option(
@@ -528,6 +545,8 @@ def _extract_snippet_block(element: Tag) -> SnippetBlock | None:
     digest_overrides = dict(overrides)
     digest_overrides["_no_title"] = suppress_title_value
     digest_overrides["_drop_title"] = drop_title_value
+    if files:
+        digest_overrides["_files"] = [cwd or "", *files]
 
     digest = _hash_payload(
         content,
@@ -539,6 +558,15 @@ def _extract_snippet_block(element: Tag) -> SnippetBlock | None:
     )
     border_enabled = _coerce_bool_option(overrides.get("border"), True)
     dogear_enabled = _coerce_bool_option(overrides.get("dogear_enabled"), True)
+
+    resolved_files: list[Path] = []
+    if files:
+        base_dir = Path(cwd).expanduser() if cwd else None
+        for entry in files:
+            candidate = Path(entry)
+            if not candidate.is_absolute() and base_dir is not None:
+                candidate = (base_dir / candidate).resolve()
+            resolved_files.append(candidate)
 
     return SnippetBlock(
         content=content,
@@ -554,6 +582,7 @@ def _extract_snippet_block(element: Tag) -> SnippetBlock | None:
         border_enabled=border_enabled,
         dogear_enabled=dogear_enabled,
         transparent_corner=border_enabled and dogear_enabled,
+        bibliography_files=resolved_files,
         title_strategy=title_strategy,
         suppress_title_metadata=suppress_title_value,
     )
@@ -954,6 +983,8 @@ def ensure_snippet_assets(
     )
     session = TemplateSession(runtime=runtime, settings=settings, emitter=emitter)
     session.add_document(document)
+    if block.bibliography_files:
+        session.add_bibliography(*block.bibliography_files)
     if block.template_overrides:
         session.update_options(block.template_overrides)
 
