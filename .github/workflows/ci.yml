@@ -41,6 +41,8 @@ jobs:
         run: uv sync --all-groups --frozen
 
       - name: Run test suite (nox)
+        env:
+          NOX_PYTHON: "3.10"
         run: bash scripts/ci/run_nox.sh
 
       - name: Run Ruff
