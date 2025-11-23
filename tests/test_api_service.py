@@ -76,9 +76,9 @@ def test_prepare_documents_handles_markdown_and_html(tmp_path: Path) -> None:
         bibliography_files=[],
         selector="article.md-content__inner",
         markdown_extensions=[],
-        heading_level=0,
         base_level=0,
-        drop_title_first_document=True,
+        strip_heading_first_document=True,
+        promote_title=False,
         numbered=True,
     )
 
@@ -93,13 +93,15 @@ def test_prepare_documents_handles_markdown_and_html(tmp_path: Path) -> None:
 
 def test_document_context_records_title_from_heading(tmp_path: Path) -> None:
     service = ConversionService()
+    template_dir = _create_template(tmp_path)
     source = tmp_path / "doc.md"
     source.write_text("# Sample Title\n\nBody text.", encoding="utf-8")
 
     request = ConversionRequest(
         documents=[source],
         bibliography_files=[],
-        title_from_heading=True,
+        template=str(template_dir),
+        promote_title=True,
     )
 
     prepared = service.prepare_documents(request)
@@ -112,6 +114,27 @@ def test_document_context_records_title_from_heading(tmp_path: Path) -> None:
     assert context.base_level == -1
 
 
+def test_title_promotion_requires_unique_level(tmp_path: Path) -> None:
+    service = ConversionService()
+    template_dir = _create_template(tmp_path)
+    source = tmp_path / "doc.md"
+    source.write_text("## Title\n\n## Other", encoding="utf-8")
+
+    request = ConversionRequest(
+        documents=[source],
+        bibliography_files=[],
+        template=str(template_dir),
+        promote_title=True,
+    )
+
+    prepared = service.prepare_documents(request)
+    context = prepared.documents[0].to_context()
+
+    assert context.title_from_heading is False
+    assert context.extracted_title is None
+    assert context.drop_title is False
+
+
 def test_binder_context_injects_template_title(tmp_path: Path) -> None:
     service = ConversionService()
     template_dir = _create_template(tmp_path)
@@ -122,7 +145,7 @@ def test_binder_context_injects_template_title(tmp_path: Path) -> None:
         documents=[source],
         bibliography_files=[],
         template=str(template_dir),
-        title_from_heading=True,
+        promote_title=True,
     )
 
     prepared = service.prepare_documents(request)

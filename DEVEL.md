@@ -367,3 +367,15 @@ civilian space program.
     Line 1
     Line 2
 ```
+
+### Font style with mono
+
+We want to support combinations of font styles with the monospace font. For example:
+
+```markdown
+*`abc`*
+***`abc`***
+__*`abc`*__
+```
+
+In this case the `code inline` is treated as `texttt` with the proper escapes.

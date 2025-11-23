@@ -116,7 +116,7 @@ class ExampleSpec:
     build_dir: Path
     template_options: dict[str, Any] = field(default_factory=dict)
     template: str = "article"
-    title_from_heading: bool = False
+    promote_title: bool = False
     persist_debug_html: bool = False
     bibliography: list[Path] = field(default_factory=list)
     extra_inputs: list[Path] = field(default_factory=list)
@@ -349,7 +349,7 @@ def _render_example(spec: ExampleSpec) -> tuple[Path, Path]:
         documents=[spec.source],
         template=spec.template,
         render_dir=spec.build_dir,
-        title_from_heading=spec.title_from_heading,
+        promote_title=spec.promote_title,
         persist_debug_html=spec.persist_debug_html,
         template_options=spec.template_options,
         bibliography_files=list(spec.bibliography),
@@ -522,7 +522,7 @@ def _build_specs() -> list[ExampleSpec]:
             source=paper_dir / "cheese.md",
             build_dir=paper_dir / "build" / "preview",
             template="article",
-            title_from_heading=True,
+            promote_title=True,
             bibliography=[paper_dir / "cheese.bib"],
             template_options={
                 "preamble": BORDER_PREAMBLE,
@@ -535,7 +535,7 @@ def _build_specs() -> list[ExampleSpec]:
             source=dialects_dir / "dialects.md",
             build_dir=dialects_dir / "build" / "preview",
             template="article",
-            title_from_heading=True,
+            promote_title=True,
             template_options={
                 "preamble": BORDER_PREAMBLE,
             },
@@ -557,7 +557,7 @@ def _build_specs() -> list[ExampleSpec]:
             source=index_dir / "example.md",
             build_dir=index_dir / "build",
             template="article",
-            title_from_heading=False,
+            promote_title=False,
             template_options={
                 "margin": "narrow",
                 "geometry": {"paperheight": "6cm"},
@@ -602,7 +602,7 @@ def _build_specs() -> list[ExampleSpec]:
                 source=letter_dir / "letter.md",
                 build_dir=letter_dir / "build" / layout,
                 template="letter",
-                title_from_heading=True,
+                promote_title=True,
                 template_options={
                     "preamble": BORDER_PREAMBLE,
                     "press": {"format": layout},

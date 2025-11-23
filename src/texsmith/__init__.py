@@ -9,7 +9,6 @@ from texsmith.api import (
     ConversionService,
     Document,
     DocumentRenderOptions,
-    HeadingLevel,
     LaTeXFragment,
     RenderSettings,
     SlotAssignment,
@@ -20,7 +19,6 @@ from texsmith.api import (
     classify_input_source,
     convert_documents,
     get_template,
-    resolve_heading_level,
 )
 from texsmith.core.bibliography import (
     BibliographyCollection,
@@ -62,7 +60,6 @@ __all__ = [
     "DocumentState",
     "DoiBibliographyFetcher",
     "DoiLookupError",
-    "HeadingLevel",
     "LaTeXConfig",
     "LaTeXFragment",
     "RenderContext",
@@ -87,6 +84,5 @@ __all__ = [
     "load_template",
     "load_template_runtime",
     "renders",
-    "resolve_heading_level",
     "resolve_template_language",
 ]

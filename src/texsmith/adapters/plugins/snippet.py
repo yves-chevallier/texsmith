@@ -539,9 +539,9 @@ def _build_document(
     synthetic = host_dir / f"{host_name}-{block.asset_basename}.md"
     options = DocumentRenderOptions(
         base_level=0,
-        heading_level=0,
         title_strategy=TitleStrategy.DROP,
         numbered=False,
+        suppress_title_metadata=True,
     )
     document = Document(
         source_path=synthetic,
