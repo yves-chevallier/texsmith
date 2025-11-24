@@ -10,7 +10,7 @@ from datetime import date, datetime, timezone
 try:
     from datetime import UTC  # py311+ noqa: F401
 except ImportError:  # pragma: no cover - py310 compatibility
-    UTC = UTC
+    UTC = timezone.utc
 import logging
 from pathlib import Path
 import re
