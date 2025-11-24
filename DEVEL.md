@@ -92,24 +92,9 @@ Roadmap and development notes for TeXSmith. I keep this file as a running checkl
 
 Update the book template integration:
 
-- [x] Remove the HEIG-VD reference.
-- [x] Remove the optional cover page.
-- [ ] Use classic admonitions.
-- [ ] Use Noto for code samples.
-- [ ] Decide on a serif vs. sans-serif body font.
-- [ ] Inherit code styling from the article template (smaller arc and thinner frame).
 - [ ] Use the default Mermaid configuration (no color overrides).
-- [ ] Avoid French typographic conventions.
 - [ ] Build MkDocs with parts at level 0.
 - [ ] Hide the list of tables when no tables exist.
-
-## Sortir sty des templates
-
-Dans les templates plugins on a
-
-```latex
-
-```
 
 ## .texsmith/config.toml
 

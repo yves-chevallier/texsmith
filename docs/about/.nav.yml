@@ -1,0 +1,7 @@
+nav:
+  - About: index.md
+  - Author: author.md
+  - Contribute: contribute.md
+  - Other Resources: other-resources.md
+  - Versioning: versioning.md
+  - Release Notes: release-notes.md
