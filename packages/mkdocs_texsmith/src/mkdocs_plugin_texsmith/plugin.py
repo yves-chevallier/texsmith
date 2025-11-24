@@ -858,6 +858,13 @@ class LatexPlugin(BasePlugin):
                 "Unable to determine the source path for snippet rendering."
             )
         source_path = Path(abs_src)
+        if block.bibliography_raw:
+            resolve_bibliography = snippet._resolve_bibliography_files  # type: ignore[attr-defined]
+            block.bibliography_files = resolve_bibliography(
+                block.bibliography_raw,
+                block.cwd,
+                source_path,
+            )
         try:
             snippet.ensure_snippet_assets(
                 block,

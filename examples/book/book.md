@@ -1,7 +1,7 @@
 ---
 title: Albert Einstein
 subtitle: His Life and Achievements
-date: -03-15
+date: 2025-03-15
 edition: Wikipedia Adaptation
 author: Wikipedia Contributors
 publisher: Wikipedia Sourcebooks
