@@ -37,6 +37,9 @@ jobs:
       - name: Run test suite (nox)
         run: nox -s tests
 
+      - name: Coverage (py3.14)
+        run: nox -s coverage
+
       - name: Run Ruff
         run: uv run ruff check .
 

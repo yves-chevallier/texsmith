@@ -129,10 +129,7 @@ members = [
 mkdocs-texsmith = { workspace = true }
 
 [tool.pytest.ini_options]
-addopts = [
-    "--cov=texsmith",
-    "--cov-report=term-missing",
-]
+addopts = []
 
 [tool.ruff]
 line-length = 100
