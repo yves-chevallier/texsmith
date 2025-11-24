@@ -13,6 +13,7 @@ the `--build` flag is supplied—run `latexmk` to produce ready-to-share PDFs. T
     - `texsmith bibliography.bib --list-bibliography` formats BibTeX entries without rendering.
     - `texsmith --template ./templates/report --template-info` prints manifest metadata.
     - `texsmith --template article --template-scaffold scaffold-dir/` copies a template for tweaking.
+    - `texsmith --debug-rules` dumps the ordered list of renderer rules for debugging extensions.
 
 ```bash
 $ uv run texsmith --help
@@ -139,6 +140,8 @@ $ uv run texsmith --help
 ╭─ Diagnostics ──────────────────────────────────────────────────────────────────────╮
 │ --debug-html    --no-debug-html      Persist intermediate HTML snapshots (inherits │
 │                                      from --debug when omitted).                   │
+│ --debug-rules   --no-debug-rules     Display the ordered list of registered        │
+│                                      renderer rules.                              │
 │ --open-log      --no-open-log        Open the latexmk log with the system viewer   │
 │                                      when compilation fails.                       │
 │                                      [default: no-open-log]                        │

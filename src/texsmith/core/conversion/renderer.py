@@ -90,6 +90,18 @@ def _merge_overrides(
         )
 
 
+def _validate_slots(runtime: TemplateRuntime, aggregated_slots: Mapping[str, Any]) -> None:
+    """Ensure that fragments only target declared template slots."""
+    declared = set(runtime.slots.keys()) | {runtime.default_slot}
+    unknown = sorted(slot for slot in aggregated_slots if slot not in declared)
+    if unknown:
+        allowed = ", ".join(sorted(declared))
+        raise TemplateError(
+            f"Fragments target unknown slot(s) {', '.join(unknown)} for template '{runtime.name}'. "
+            f"Declared slots: {allowed or '(none)'}."
+        )
+
+
 class TemplateRenderer:
     """Aggregate conversion fragments and wrap them with a template."""
 
@@ -239,6 +251,8 @@ class TemplateRenderer:
             slot: "\n\n".join(chunks for chunks in content if chunks)
             for slot, content in aggregated_slots.items()
         }
+
+        _validate_slots(self.runtime, slot_content)
 
         template_instance = self.runtime.instance
         if template_instance is None:  # pragma: no cover - defensive path
