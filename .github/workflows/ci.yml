@@ -26,24 +26,16 @@ jobs:
         env:
           UV_CACHE_SAVE: "false"
 
-      - name: Install supported Python versions
-        if: env.ACT != 'true'
-        run: |
-          PY_VERSIONS=$(python scripts/ci/python_versions.py)
-          echo "Installing Python versions: ${PY_VERSIONS}"
-          uv python install ${PY_VERSIONS}
-
-      - name: Skip Python matrix under act
-        if: env.ACT == 'true'
-        run: 'echo "ACT detected: using runner Python only"'
+      - name: Setup Nox with Python 3.10+
+        uses: wntrblm/nox@2025.10.14
+        with:
+          python-versions: "3.10, 3.11, 3.12, 3.13, 3.14"
 
       - name: Sync dependencies (dev + docs)
         run: uv sync --all-groups --frozen
 
       - name: Run test suite (nox)
-        env:
-          NOX_PYTHON: "3.10"
-        run: bash scripts/ci/run_nox.sh
+        run: nox -s tests
 
       - name: Run Ruff
         run: uv run ruff check .
