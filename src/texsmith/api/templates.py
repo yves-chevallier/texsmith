@@ -114,6 +114,7 @@ class TemplateRenderResult:
     bibliography_path: Path | None
     template_engine: str | None
     requires_shell_escape: bool
+    rule_descriptions: list[dict[str, Any]] = field(default_factory=list)
 
     @property
     def has_bibliography(self) -> bool:
@@ -237,6 +238,7 @@ class TemplateSession:
             bibliography_path=rendered.bibliography_path,
             template_engine=rendered.template_engine,
             requires_shell_escape=rendered.requires_shell_escape,
+            rule_descriptions=rendered.rule_descriptions,
         )
 
 

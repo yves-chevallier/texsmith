@@ -191,6 +191,15 @@ DebugHtmlOption = Annotated[
     ),
 ]
 
+DebugRulesOption = Annotated[
+    bool,
+    typer.Option(
+        "--debug-rules/--no-debug-rules",
+        help="Display the ordered list of registered render rules.",
+        rich_help_panel=DIAGNOSTICS_PANEL,
+    ),
+]
+
 LanguageOption = Annotated[
     str | None,
     typer.Option(

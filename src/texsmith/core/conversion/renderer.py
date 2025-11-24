@@ -33,6 +33,7 @@ class TemplateFragment:
     output_path: Path | None = None
     front_matter: Mapping[str, Any] | None = None
     source_path: Path | None = None
+    rule_descriptions: list[dict[str, Any]] | None = None
 
 
 @dataclass(slots=True)
@@ -48,6 +49,7 @@ class TemplateRendererResult:
     template_engine: str | None
     requires_shell_escape: bool
     template_overrides: dict[str, Any] = field(default_factory=dict)
+    rule_descriptions: list[dict[str, Any]] = field(default_factory=list)
 
 
 _SOFT_OVERRIDE_KEYS = {"press._source_dir", "press._source_path"}
@@ -171,6 +173,7 @@ class TemplateRenderer:
         bibliography_path: Path | None = None
         template_engine: str | None = None
         requires_shell_escape = bool(self.runtime.requires_shell_escape)
+        rule_descriptions: list[dict[str, Any]] = []
 
         document_metadata: list[dict[str, Any]] = []
 
@@ -226,6 +229,8 @@ class TemplateRenderer:
             if template_engine is None and fragment.template_engine is not None:
                 template_engine = fragment.template_engine
             requires_shell_escape = requires_shell_escape or fragment.requires_shell_escape
+            if fragment.rule_descriptions and not rule_descriptions:
+                rule_descriptions = list(fragment.rule_descriptions)
 
         if shared_state is None:
             shared_state = DocumentState()
@@ -322,6 +327,7 @@ class TemplateRenderer:
             template_engine=template_engine,
             requires_shell_escape=requires_shell_escape,
             template_overrides=template_overrides,
+            rule_descriptions=rule_descriptions,
         )
 
     @staticmethod

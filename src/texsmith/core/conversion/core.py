@@ -60,6 +60,7 @@ class ConversionResult:
     template_overrides: dict[str, Any] = field(default_factory=dict)
     document_context: DocumentContext | None = None
     binder_context: BinderContext | None = None
+    rule_descriptions: list[dict[str, Any]] = field(default_factory=list)
 
 
 _EMOJI_MODES = {"artifact", "symbola", "color"}
@@ -382,6 +383,13 @@ def _render_document(
                 exc,
             )
 
+    rule_descriptions: list[dict[str, Any]] = []
+    if renderer is not None:
+        try:
+            rule_descriptions = list(renderer.describe_registered_rules())
+        except Exception:
+            rule_descriptions = []
+
     return ConversionResult(
         latex_output=latex_output,
         tex_path=tex_path,
@@ -399,6 +407,7 @@ def _render_document(
         template_overrides=dict(binder_context.template_overrides),
         document_context=document_context,
         binder_context=binder_context,
+        rule_descriptions=rule_descriptions,
     )
 
 
