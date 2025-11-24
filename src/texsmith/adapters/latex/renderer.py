@@ -108,7 +108,10 @@ class LaTeXRenderer:
                 cls._ENTRY_POINT_PAYLOADS = []
                 return ()
 
-            for entry_point in group:
+            for entry_point in sorted(
+                group,
+                key=lambda ep: (getattr(ep, "priority", 0), getattr(ep, "name", "")),
+            ):
                 try:
                     payloads.append(entry_point.load())
                 except Exception:  # pragma: no cover - defensive

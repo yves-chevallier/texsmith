@@ -27,6 +27,7 @@ handles ordering, deduplication, and orchestration concerns.
 
 from __future__ import annotations
 
+from collections import deque
 from collections.abc import Callable, Iterable
 from dataclasses import dataclass, field
 from enum import Enum, auto
@@ -101,18 +102,20 @@ class RuleFactory(Protocol):
 DOCUMENT_NODE = "__document__"
 
 
-@dataclass(order=True)
+@dataclass
 class RenderRule:
     """Concrete rendering rule registered in the engine."""
 
     priority: int
-    phase: RenderPhase = field(compare=False)
-    tags: tuple[str, ...] = field(compare=False)
-    name: str = field(compare=False)
-    handler: RuleCallable = field(compare=False)
-    auto_mark: bool = field(default=True, compare=False)
-    nestable: bool = field(default=True, compare=False)
-    after_children: bool = field(default=False, compare=False)
+    phase: RenderPhase
+    tags: tuple[str, ...]
+    name: str
+    handler: RuleCallable
+    auto_mark: bool = True
+    nestable: bool = True
+    after_children: bool = False
+    before: tuple[str, ...] = ()
+    after: tuple[str, ...] = ()
 
     def applies_to_document(self) -> bool:
         """Return True when the rule targets the synthetic document node."""
@@ -130,6 +133,8 @@ class RuleDefinition:
     auto_mark: bool = True
     nestable: bool = True
     after_children: bool = False
+    before: tuple[str, ...] = ()
+    after: tuple[str, ...] = ()
 
     def bind(self, handler: RuleCallable) -> RenderRule:
         """Create a concrete rule instance bound to the callable."""
@@ -143,6 +148,8 @@ class RuleDefinition:
             auto_mark=self.auto_mark,
             nestable=self.nestable,
             after_children=self.after_children,
+            before=self.before,
+            after=self.after,
         )
 
 
@@ -158,13 +165,13 @@ class RenderRegistry:
         if rule.applies_to_document():
             tag_bucket = phase_bucket.setdefault(DOCUMENT_NODE, [])
             tag_bucket.append(rule)
-            tag_bucket.sort()
+            tag_bucket[:] = self._sort_rules(tag_bucket)
             return
 
         for tag in rule.tags:
             tag_bucket = phase_bucket.setdefault(tag, [])
             tag_bucket.append(rule)
-            tag_bucket.sort()
+            tag_bucket[:] = self._sort_rules(tag_bucket)
 
     def iter_phase(self, phase: RenderPhase) -> Iterable[RenderRule]:
         """Iterate over rules for the provided phase."""
@@ -177,6 +184,59 @@ class RenderRegistry:
         phase_bucket = self._rules.get(phase, {})
         return {tag: tuple(rules) for tag, rules in phase_bucket.items()}
 
+    def _sort_rules(self, rules: list[RenderRule]) -> list[RenderRule]:
+        """Return rules ordered deterministically using before/after constraints."""
+        if len(rules) <= 1:
+            return list(rules)
+
+        name_to_index: dict[str, int] = {}
+        for index, rule in enumerate(rules):
+            name_to_index.setdefault(rule.name, index)
+
+        adjacency: dict[int, set[int]] = {index: set() for index in range(len(rules))}
+        indegree: dict[int, int] = {index: 0 for index in range(len(rules))}
+
+        def _add_edge(source: int, target: int) -> None:
+            if target in adjacency[source]:
+                return
+            adjacency[source].add(target)
+            indegree[target] += 1
+
+        for current_index, rule in enumerate(rules):
+            for target_name in rule.before:
+                target_index = name_to_index.get(target_name)
+                if target_index is not None:
+                    _add_edge(current_index, target_index)
+            for target_name in rule.after:
+                target_index = name_to_index.get(target_name)
+                if target_index is not None:
+                    _add_edge(target_index, current_index)
+
+        queue: deque[int] = deque(
+            sorted(
+                (index for index, count in indegree.items() if count == 0),
+                key=lambda idx: (rules[idx].priority, rules[idx].name, idx),
+            )
+        )
+        ordered: list[int] = []
+
+        while queue:
+            current = queue.popleft()
+            ordered.append(current)
+            for neighbour in sorted(
+                adjacency[current], key=lambda idx: (rules[idx].priority, rules[idx].name, idx)
+            ):
+                indegree[neighbour] -= 1
+                if indegree[neighbour] == 0:
+                    queue.append(neighbour)
+
+            queue = deque(sorted(queue, key=lambda idx: (rules[idx].priority, rules[idx].name, idx)))
+
+        if len(ordered) != len(rules):  # pragma: no cover - defensive
+            raise RuntimeError("Cyclic render rule dependencies detected.")
+
+        return [rules[index] for index in ordered]
+
 
 def renders(
     *tags: str,
@@ -186,6 +246,8 @@ def renders(
     auto_mark: bool = True,
     nestable: bool = True,
     after_children: bool = False,
+    before: Iterable[str] = (),
+    after: Iterable[str] = (),
 ) -> Callable[[RuleCallable], RuleCallable]:
     """Decorator used to register element handlers."""
     selected_tags = tags or (DOCUMENT_NODE,)
@@ -197,6 +259,8 @@ def renders(
         auto_mark=auto_mark,
         nestable=nestable,
         after_children=after_children,
+        before=tuple(before),
+        after=tuple(after),
     )
 
     def decorator(handler: RuleCallable) -> RuleCallable:
