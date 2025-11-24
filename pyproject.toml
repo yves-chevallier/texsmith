@@ -189,6 +189,7 @@ ignore = [
   "TRY003",  # Catching too general exception Exception
   "ANN401",  # Missing type annotation for function argument
   "C901",  # Function is too complex
+  "UP017",  # Date time issue with py310
 ]
 
 [tool.ruff.lint.isort]
