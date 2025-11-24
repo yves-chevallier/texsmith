@@ -222,6 +222,8 @@ class ConversionService:
                 first_level = document.first_heading_level()
                 if first_level is not None and first_level > 1:
                     document.options.base_level -= 1
+                else:
+                    document.options.base_level = 1
 
             documents.append(document)
             mapping[path] = document
@@ -337,6 +339,9 @@ def _load_front_matter_file(path: Path) -> Mapping[str, Any] | object:
     """Return parsed front matter when the path looks like a metadata file."""
     suffix = path.suffix.lower()
     if suffix not in {".yml", ".yaml"}:
+        return _NOT_FRONT_MATTER
+    name_lower = path.name.lower()
+    if name_lower in {"mkdocs.yml", "mkdocs.yaml"}:
         return _NOT_FRONT_MATTER
     try:
         payload = path.read_text(encoding="utf-8")

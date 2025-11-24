@@ -268,11 +268,10 @@ class TemplateRenderer:
                 for slot_name, latex in slot_outputs.items():
                     if not latex:
                         continue
-                    filename = (
-                        f"{fragment.stem}.tex"
-                        if slot_name == default_slot
-                        else f"{fragment.stem}.{slot_name}.tex"
-                    )
+                    if slot_name == default_slot or slot_name == fragment.stem:
+                        filename = f"{fragment.stem}.tex"
+                    else:
+                        filename = f"{fragment.stem}.{slot_name}.tex"
                     target_path = output_dir / filename
                     try:
                         target_path.write_text(latex, encoding="utf-8")
