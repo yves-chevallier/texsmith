@@ -8,7 +8,6 @@ from typing import Any, ClassVar
 import unicodedata
 
 from texsmith.adapters.latex.utils import escape_latex_chars
-from texsmith.core.paper import resolve_geometry_settings
 from texsmith.core.templates import TemplateError, WrappableTemplate
 
 
@@ -99,21 +98,6 @@ class Template(WrappableTemplate):
             context["requires_unicode_engine"] = True
 
         context["callout_style"] = self._normalise_callout_style(context.get("callout_style"))
-
-        geometry = resolve_geometry_settings(context, overrides)
-        context["documentclass_options"] = geometry.documentclass_options
-        context["paper_option"] = geometry.paper_option
-        context["orientation_option"] = geometry.orientation_option
-        context["geometry_options"] = geometry.geometry_options
-        context["geometry_extra_options"] = geometry.geometry_extra_options
-        if "geometry_setup" not in context:
-            if geometry.geometry_options:
-                context["geometry_setup"] = (
-                    f"\\usepackage[{geometry.geometry_options}]{{geometry}}\n"
-                    f"\\geometry{{{geometry.geometry_options}}}"
-                )
-            else:
-                context["geometry_setup"] = "\\usepackage{geometry}"
 
         return context
 

@@ -24,7 +24,7 @@ tlmgr_packages = [
     "xunicode",
 ]
 override = ["codeblock.tex", "codeinline.tex"]
-fragments = ["ts-fonts", "ts-callouts", "ts-code", "ts-glossary", "ts-index"]
+fragments = ["ts-geometry", "ts-fonts", "ts-callouts", "ts-code", "ts-glossary", "ts-index"]
 
 [latex.template.attributes.base_level]
 default = 0
@@ -72,6 +72,11 @@ type = "string"
 allow_empty = false
 normaliser = "babel_language"
 sources = ["press.language", "language"]
+
+[latex.template.attributes.paper]
+type = "mapping"
+sources = ["press.paper", "paper"]
+default = { width = "160mm", height = "240mm", margin = { top = 20, bottom = 20, left = 20, right = 15 }, extra = { headheight = "6mm", headsep = "5mm", marginparsep = "4mm", heightrounded = true } }
 
 [latex.template.attributes.cover]
 default = "circles"

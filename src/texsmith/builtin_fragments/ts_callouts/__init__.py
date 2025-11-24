@@ -19,6 +19,7 @@ def create_fragment() -> FragmentDefinition:
         ],
         description="Reusable callout styles shared by built-in templates.",
         source=template_path,
+        context_defaults={"extra_packages": ""},
     )
 
 

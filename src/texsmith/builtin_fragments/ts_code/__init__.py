@@ -19,6 +19,7 @@ def create_fragment() -> FragmentDefinition:
         ],
         description="Minted-based code listings used by Markdown code blocks.",
         source=template_path,
+        context_defaults={"extra_packages": ""},
     )
 
 

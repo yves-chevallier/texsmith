@@ -41,6 +41,7 @@ article_module = importlib.import_module("texsmith.builtin_templates.article")
 Template = article_module.Template
 TemplateManifest = importlib.import_module("texsmith.core.templates.manifest").TemplateManifest
 ARTICLE_ROOT = Path(article_module.__file__).resolve().parent
+from texsmith.builtin_fragments.ts_geometry.paper import inject_geometry_context  # noqa: E402
 from texsmith.ui.cli.commands.render import _parse_template_attributes  # type: ignore  # noqa: E402
 
 
@@ -65,9 +66,9 @@ def test_attribute_resolver_merges_press_metadata() -> None:
     resolved = info.resolve_attributes(overrides)
 
     assert resolved["title"] == "Hello \\& World"
-    assert resolved["paper"] == "letterpaper"
-    assert resolved["orientation"] == "landscape"
     assert resolved["language"] == "french"
+    assert "paper" not in resolved
+    assert "orientation" not in resolved
     assert isinstance(resolved["authors"], list)
     assert resolved["authors"][0]["name"] == "Ada Lovelace"
 
@@ -88,6 +89,7 @@ def test_article_template_applies_computed_options() -> None:
     }
 
     context = template.prepare_context("Body", overrides=overrides)
+    inject_geometry_context(context, overrides)
 
     assert context["title"] == "Sample \\& Title"
     assert context["language"] == "french"
@@ -103,6 +105,7 @@ def test_article_template_accepts_preamble_override() -> None:
     overrides = {"press": {"override": {"preamble": "\\usepackage{xcolor}"}}}
 
     context = template.prepare_context("", overrides=overrides)
+    inject_geometry_context(context, overrides)
 
     assert context["preamble"] == "\\usepackage{xcolor}"
 
@@ -112,10 +115,11 @@ def test_article_template_geometry_overrides() -> None:
     overrides = {"press": {"geometry": {"paperheight": "4cm", "showframe": True}}}
 
     context = template.prepare_context("", overrides=overrides)
+    inject_geometry_context(context, overrides)
 
-    assert "paperheight=4cm" in context["geometry_options"]
+    assert "paperheight=40mm" in context["geometry_options"]
     assert "showframe" in context["geometry_options"]
-    assert context["geometry_extra_options"] == "paperheight=4cm,showframe"
+    assert context["geometry_extra_options"] == "paperheight=40mm,showframe"
 
 
 def test_article_template_normalises_callout_style() -> None:

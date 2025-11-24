@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Callable, Iterable, Mapping, Sequence
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 import importlib
 from pathlib import Path
 from typing import Any, Literal
@@ -87,6 +87,8 @@ class FragmentDefinition:
     pieces: list[FragmentPiece]
     description: str | None = None
     source: Path | None = None
+    context_defaults: dict[str, Any] = field(default_factory=dict)
+    context_injector: Callable[[dict[str, Any], Mapping[str, Any] | None], None] | None = None
 
     @classmethod
     def from_manifest(cls, manifest_path: Path) -> FragmentDefinition:
@@ -117,7 +119,13 @@ class FragmentDefinition:
             )
 
         pieces = [FragmentPiece.from_mapping(entry, base_dir=base_dir) for entry in files]
-        return cls(name=name, pieces=pieces, description=description, source=manifest_path)
+        return cls(
+            name=name,
+            pieces=pieces,
+            description=description,
+            source=manifest_path,
+            context_defaults={},
+        )
 
     @classmethod
     def from_path(cls, path: Path, *, name: str | None = None) -> FragmentDefinition:
@@ -128,7 +136,7 @@ class FragmentDefinition:
 
         fragment_name = name or _package_name(resolved.name)
         piece = FragmentPiece(template_path=resolved, kind="package", slot="extra_packages")
-        return cls(name=fragment_name, pieces=[piece], source=resolved)
+        return cls(name=fragment_name, pieces=[piece], source=resolved, context_defaults={})
 
 
 def _package_name(identifier: str) -> str:
@@ -266,6 +274,10 @@ def render_fragments(
     context: Mapping[str, Any],
     output_dir: Path,
     source_dir: Path | None = None,
+    overrides: Mapping[str, Any] | None = None,
+    declared_slots: set[str] | None = None,
+    declared_variables: set[str] | None = None,
+    template_name: str | None = None,
 ) -> FragmentRenderResult:
     """
     Render the selected fragments into ``output_dir`` and return the injected variables.
@@ -275,8 +287,31 @@ def render_fragments(
     variable_injections: dict[str, list[str]] = {}
     providers: dict[str, list[str]] = {}
 
+    if not isinstance(context, dict):
+        raise TemplateError("Fragment rendering requires a mutable context dictionary.")
+
     for name in names:
         fragment = FRAGMENT_REGISTRY.resolve(name, source_dir=source_dir)
+        if declared_slots is not None:
+            for piece in fragment.pieces:
+                target_slot = piece.slot
+                if target_slot in declared_slots:
+                    raise TemplateError(
+                        f"Fragments cannot target slot '{target_slot}' in template "
+                        f"'{template_name or 'unknown'}'."
+                    )
+                if declared_variables is not None and target_slot not in declared_variables:
+                    raise TemplateError(
+                        f"Template '{template_name or 'unknown'}' doesn't declare variable "
+                        f"'{target_slot}' required by fragment '{fragment.name}'."
+                    )
+
+        for key, value in fragment.context_defaults.items():
+            context.setdefault(key, value)
+
+        if fragment.context_injector is not None:
+            fragment.context_injector(context, overrides)
+
         for piece in fragment.pieces:
             env = _build_environment(piece.template_path.parent)
             template = env.get_template(piece.template_path.name)

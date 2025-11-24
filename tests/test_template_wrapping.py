@@ -155,26 +155,44 @@ def test_load_template_from_shortcut_path(book_template: WrappableTemplate) -> N
     assert slug.info.name == book_template.info.name
 
 
-def test_documentclass_defaults(article_template: WrappableTemplate) -> None:
-    wrapped = article_template.wrap_document("")
+def test_documentclass_defaults(article_template: WrappableTemplate, tmp_path: Path) -> None:
+    result = wrap_template_document(
+        template=article_template,
+        default_slot="mainmatter",
+        slot_outputs={"mainmatter": ""},
+        document_state=DocumentState(),
+        template_overrides=None,
+        output_dir=tmp_path,
+        copy_assets=False,
+    )
+    wrapped = result.latex_output
     assert r"\documentclass[a4paper]{article}" in wrapped
     assert "landscape]{article}" not in wrapped
-    assert r"\geometry{margin=2.5cm,a4paper}" in wrapped
+    assert r"\geometry{margin=25mm,a4paper}" in wrapped
     assert "\\makeindex" not in wrapped
     assert "\\printindex" not in wrapped
     assert "\\newacronym" not in wrapped
 
 
-def test_documentclass_overrides(article_template: WrappableTemplate) -> None:
+def test_documentclass_overrides(article_template: WrappableTemplate, tmp_path: Path) -> None:
     overrides = {
         "paper": "a3",
         "orientation": "landscape",
         "title": "Demo Article",
         "author": "Alice Example",
     }
-    wrapped = article_template.wrap_document("", overrides=overrides)
+    result = wrap_template_document(
+        template=article_template,
+        default_slot="mainmatter",
+        slot_outputs={"mainmatter": ""},
+        document_state=DocumentState(),
+        template_overrides=overrides,
+        output_dir=tmp_path,
+        copy_assets=False,
+    )
+    wrapped = result.latex_output
     assert r"\documentclass[a3paper,landscape]{article}" in wrapped
-    assert r"\geometry{margin=2.5cm,a3paper,landscape}" in wrapped
+    assert r"\geometry{margin=25mm,a3paper,landscape}" in wrapped
     assert r"\title{Demo Article}" in wrapped
     assert r"\author{Alice Example}" in wrapped
 
@@ -199,14 +217,32 @@ def test_load_article_template_from_shortcut_path(
     assert slug.info.name == article_template.info.name
 
 
-def test_rejects_invalid_paper_option(article_template: WrappableTemplate) -> None:
+def test_rejects_invalid_paper_option(article_template: WrappableTemplate, tmp_path: Path) -> None:
     with pytest.raises(TemplateError):
-        article_template.wrap_document("", overrides={"paper": "iso"})
+        wrap_template_document(
+            template=article_template,
+            default_slot="mainmatter",
+            slot_outputs={"mainmatter": ""},
+            document_state=DocumentState(),
+            template_overrides={"paper": "iso"},
+            output_dir=tmp_path,
+            copy_assets=False,
+        )
 
 
-def test_rejects_invalid_orientation_option(article_template: WrappableTemplate) -> None:
+def test_rejects_invalid_orientation_option(
+    article_template: WrappableTemplate, tmp_path: Path
+) -> None:
     with pytest.raises(TemplateError):
-        article_template.wrap_document("", overrides={"orientation": "diagonal"})
+        wrap_template_document(
+            template=article_template,
+            default_slot="mainmatter",
+            slot_outputs={"mainmatter": ""},
+            document_state=DocumentState(),
+            template_overrides={"orientation": "diagonal"},
+            output_dir=tmp_path,
+            copy_assets=False,
+        )
 
 
 def test_article_includes_acronyms_when_present(

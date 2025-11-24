@@ -19,6 +19,7 @@ def create_fragment() -> FragmentDefinition:
         ],
         description="Font selection and fallbacks for TeXSmith templates.",
         source=template_path,
+        context_defaults={"extra_packages": ""},
     )
 
 

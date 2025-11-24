@@ -25,6 +25,7 @@ def create_fragment() -> FragmentDefinition:
         ],
         description="Index helpers with backmatter insertion.",
         source=package_path,
+        context_defaults={"extra_packages": "", "fragment_backmatter": ""},
     )
 
 

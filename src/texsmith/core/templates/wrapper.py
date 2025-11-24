@@ -10,7 +10,6 @@ from jinja2 import meta
 
 from texsmith.core.callouts import DEFAULT_CALLOUTS, merge_callouts, normalise_callouts
 from texsmith.core.fragments import FRAGMENT_REGISTRY, render_fragments
-from texsmith.core.paper import resolve_geometry_settings
 from texsmith.core.templates import TemplateRuntime
 from texsmith.core.templates.manifest import TemplateError
 
@@ -60,8 +59,6 @@ def wrap_template_document(
         main_slot_content,
         overrides=overrides_payload,
     )
-    template_context.setdefault("fragment_backmatter", "")
-    template_context.setdefault("extra_packages", "")
     root_name: str | None = None
     if output_name:
         root_name = Path(output_name).stem
@@ -170,8 +167,11 @@ def wrap_template_document(
     template_context.setdefault("callouts_definitions", callouts_defs)
     variable_injections: dict[str, list[str]] = {}
     fragment_providers: dict[str, list[str]] = {}
+    declared_slots, _default_slot = template.info.resolve_slots()
+    declared_slot_names = set(declared_slots.keys())
+    declared_vars = _discover_template_variables(template)
     if fragment_names:
-        fragment_context: dict[str, Any] = dict(template_context)
+        fragment_context: dict[str, Any] = template_context
         if overrides_payload:
             fragment_context.update(overrides_payload)
             press_section = overrides_payload.get("press")
@@ -183,26 +183,16 @@ def wrap_template_document(
             context=fragment_context,
             output_dir=output_dir,
             source_dir=source_dir,
+            overrides=overrides_payload,
+            declared_slots=declared_slot_names,
+            declared_variables=declared_vars,
+            template_name=template.info.name,
         )
         variable_injections = fragment_result.variable_injections
         fragment_providers = fragment_result.providers
 
     if variable_injections:
-        declared_slots, _default_slot = template.info.resolve_slots()
-        declared_slot_names = set(declared_slots.keys())
-        declared_vars = _discover_template_variables(template)
         for variable_name, injections in variable_injections.items():
-            if variable_name in declared_slot_names:
-                raise TemplateError(
-                    f"Fragments cannot target slot '{variable_name}' in template '{template.info.name}'."
-                )
-            if declared_vars is not None and variable_name not in declared_vars:
-                providers = fragment_providers.get(variable_name, [])
-                provider_hint = f" required by fragment '{providers[0]}'" if providers else ""
-                raise TemplateError(
-                    f"Template '{template.info.name}' doesn't declare variable '{variable_name}'"
-                    f"{provider_hint}."
-                )
             base = template_context.get(variable_name, "")
             parts: list[str] = [base] if base else []
             parts.extend(injections)
