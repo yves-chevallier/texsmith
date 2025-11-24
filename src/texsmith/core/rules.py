@@ -256,7 +256,9 @@ class RenderRegistry:
             )
 
         if len(ordered) != len(rules):  # pragma: no cover - defensive
-            cycle_names = sorted(rule.name for index, rule in enumerate(rules) if index not in ordered)
+            cycle_names = sorted(
+                rule.name for index, rule in enumerate(rules) if index not in ordered
+            )
             raise RuntimeError(
                 "Cyclic render rule dependencies detected: " + ", ".join(cycle_names)
             )
