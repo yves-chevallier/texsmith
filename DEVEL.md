@@ -4,68 +4,7 @@ Roadmap and development notes for TeXSmith. I keep this file as a running checkl
 
 ## Roadmap
 
-- [x] Extract template aggregation into TemplateRenderer and keep TemplateSession slim
-- [x] Replace `safe_quote` with `requote_url` from `requests.utils`
-- [x] Replace helper functions with the `latexcodec` package
-- [x] Replace `to_kebab_case` with `python-slugify`
-- [x] Document `RenderPhase(Enum)` and explain each state
-- [x] Support the configured language (babel already, polyglossia next)
-- [x] Allow Renderer and formatter extensions (demo counter)
-- [x] Support index generation (makeindex, xindy)
-- [x] Rename the `texsmith` package and every `texsmith-template-*` template
-- [x] Enable all common extensions by default
-- [x] Support bibliographies (biblatex, natbib, etc.)
-- [x] Support footnotes
-- [x] Convert selected journal templates
-- [x] Add CLI and MkDocs unit and integration tests
-- [x] Support images (and convert to PDF when required)
-- [x] Manage figure captions
-- [x] Manage table captions
-- [x] Allow slots to be defined in the frontmatter
-- [x] Provide a robust Docker submodule/class
-- [x] Declare solution/exercise workflows through plugins
-- [x] Add more Markdown extensions (definition lists, tables, etc.)
-- [x] Support draw.io assets (.drawio, .dio)
-- [x] Support inline Mermaid
-- [x] Support `.mmd`, `.mermaid`, and remote Mermaid definitions (e.g., `https://mermaid.live/edit#...`)
-- [x] Add Twemoji emoji support
-- [x] Ensure images render across formats (.tiff, .webp, .avif, .gif, .png, .bmp, etc.)
-- [x] Provide a verbose CLI with clear warnings and errors
-- [x] Add a `--debug` flag that shows full exceptions
-- [x] Build bibliographies from DOI references in the frontmatter
-- [x] Improve performance by converting HTML to XML and using lxml instead of htmlparser
-- [x] Support multiple input pages (multiple Markdown or HTML files)
-- [x] Improve error handling and reporting during LaTeX compilation
-- [x] Support raw LaTeX blocks (optionally hidden from HTML)
-- [x] Create CI/CD pipelines
-- [x] Add the `texsmith --template book --template-info` command
-- [x] Manage figure references (`\cref`, etc.)
-- [x] Optimize bibliography management using `.bib` files instead of Jinja
-- [x] Document how to create custom LaTeX templates
-- [x] Support hashtag indexes through the built-in `texsmith.index` extension
-- [x] Add `\textsc` support in Markdown
-- [x] Provide Noto Color Emoji or `{\fontspec{Symbola}\char"1F343}` fallbacks (color and monochrome)
-- [x] Ensure all examples build successfully
-- [x] Write documentation
-- [x] Generate assets as SHA only when using MkDocs (or when a specific option requires it)
-- [x] Fix or test `__text__` inside admonitions
-- [x] Base the letter template on KOMA `scrlttr2` and adjust country-specific defaults
-- [x] Add an article template as the TeXSmith "default"
-- [x] Finalize index generation workflow
-- [x] Add progress-bar support
-- [x] Integrate coverage reporting
-- [x] Snippet Template
-- [x] Snippet plugin
-- [x] Integrate Nox
-- [x] No shell escape when `minted` is unused (no code blocks or inline code)
-- [x] Snippet plugin, avoid rebuilding unchanged snippets
-- [x] Dynamically update the engine in `latexmkrc` (pdflatex, xelatex, lualatex)
-- [x] Put fonts and code into separate sty merged during build
-- [x] Consolidate CI
-- [x] Serif/sans-serif toggle
-- [x] Consolidate Book template
-- [x] Demonstrate acronyms in book
-- [x] Fix API and pytest
+- [ ] Test for multi document builds (`texsmith a.md b.md c.md`)
 - [ ] Snippet (frame dog ear would be good in the build pdf)
 - [ ] Be verbose in mkdocs during build to indicate what is happening (fetching assets, building...)
 - [ ] docs/syntax/captions.md (captions for figures not working when using texsmith?)
@@ -283,7 +222,28 @@ In scientific English we capitalize “Figure”, while French typography keeps 
 
 ### Epigraph
 
-Integrate epigraph support via a dedicated plugin. The goal is to let users insert epigraphs easily from Markdown files.
+Integrate epigraph support via a dedicated plugin. The goal is to let users insert epigraphs easily from Markdown files. It can be declared as a fragment and declared into the document via frontmatter:
+
+```yaml
+epigraph: text
+epigraph:
+  quote: "To be, or not to be, that is the question."
+  source: "William Shakespeare, Hamlet"
+```
+
+This is inserted into the LaTeX output using the `epigraph` package:
+
+```latex
+\usepackage{epigraph}
+\setlength\epigraphwidth{0.6\textwidth}
+\setlength\epigraphrule{0pt}
+```
+
+Then, at the desired location in the document:
+
+```latex
+\epigraph{To be, or not to be, that is the question.}{William Shakespeare, \textit{Hamlet}}
+```
 
 ### Svgbob
 
@@ -419,3 +379,47 @@ This text is right-aligned.
 ```
 
 We use the syntax `verb` + `option` after the opening `:::` to specify the type of container and any relevant options.
+
+```text
+::: latex only
+This LaTeX-only content will be included in the LaTeX output but ignored in HTML.
+:::
+
+::: html only
+This HTML-only content will be included in the HTML output but ignored in LaTeX.
+:::
+```
+
+We can use raw LaTeX blocks for more complex LaTeX content that doesn't fit well in Markdown:
+
+```text
+::: latex raw
+\clearpage
+:::
+```
+
+With SuperFences we support extra HTML attributes for custom containers:
+
+```text
+::: language arabic {#custom-id .custom-class data-attr="value"}
+This is Arabic content with custom HTML attributes.
+:::
+```
+
+Each `:::` container is converted into a `<div>` with the specified attributes in HTML, while LaTeX processes the content according to the container type.
+
+#### GFM Support for admonitions
+
+We want TeXSmith to support GitHub Flavored Markdown (GFM) admonitions as well. This includes the ability to create notes, warnings, tips, and other types of admonitions using the GFM syntax.
+
+```md
+> [!NOTE]
+> This is a note admonition.
+```
+
+This is converted to the exact same output as the MkDocs admonition syntax. It is equivalent to:
+
+```md
+!!! note
+    This is a note admonition.
+```

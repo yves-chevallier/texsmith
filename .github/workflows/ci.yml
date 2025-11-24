@@ -62,6 +62,15 @@ jobs:
           enable-cache: true
           cache-python: false
 
+      - name: Free disk space for Docker
+        run: |
+          sudo rm -rf /usr/share/dotnet /opt/ghc /opt/hostedtoolcache/CodeQL || true
+          docker system prune -af || true
+          df -h
+
+      - name: Pre-pull draw.io image
+        run: docker pull rlespinasse/drawio-desktop-headless:latest
+
       - name: Install TeX Live (full)
         run: sudo apt-get update && sudo apt-get install -y texlive-full
 
