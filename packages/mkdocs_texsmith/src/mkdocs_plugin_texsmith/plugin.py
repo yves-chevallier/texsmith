@@ -28,8 +28,8 @@ from texsmith.core.bibliography import (
     bibliography_data_from_inline_entry,
     bibliography_data_from_string,
 )
-from texsmith.core.config import BookConfig, LaTeXConfig
 from texsmith.core.callouts import DEFAULT_CALLOUTS, merge_callouts, normalise_callouts
+from texsmith.core.config import BookConfig, LaTeXConfig
 from texsmith.core.context import DocumentState
 from texsmith.core.conversion import (
     ensure_fallback_converters,
@@ -43,6 +43,7 @@ from texsmith.core.conversion.inputs import (
 )
 from texsmith.core.diagnostics import LoggingEmitter
 from texsmith.core.exceptions import LatexRenderingError
+from texsmith.core.fragments import render_fragments
 from texsmith.core.templates import (
     TemplateError,
     TemplateSlot,
@@ -50,7 +51,6 @@ from texsmith.core.templates import (
     load_template_runtime,
     normalise_template_language,
 )
-from texsmith.core.fragments import render_fragments
 import yaml
 
 
@@ -650,9 +650,7 @@ class LatexPlugin(BasePlugin):
 
         # Render and inject template fragments (ts-callouts, ts-code, etc.).
         fragment_names = (
-            overrides.get("fragments")
-            or template_runtime.extras.get("fragments")
-            or []
+            overrides.get("fragments") or template_runtime.extras.get("fragments") or []
         )
         if fragment_names:
             fragment_context = dict(template_context)
@@ -665,14 +663,13 @@ class LatexPlugin(BasePlugin):
 
             # Ensure callout palette is present for ts-callouts.
             callout_overrides = overrides.get("callouts") if overrides else None
+            merged_callouts = merge_callouts(
+                DEFAULT_CALLOUTS,
+                callout_overrides if isinstance(callout_overrides, Mapping) else None,
+            )
             fragment_context.setdefault(
                 "callouts_definitions",
-                normalise_callouts(
-                    merge_callouts(
-                        DEFAULT_CALLOUTS,
-                        callout_overrides if isinstance(callout_overrides, Mapping) else None,
-                    )
-                ),
+                normalise_callouts(merged_callouts),
             )
 
             fragment_result = render_fragments(
@@ -682,11 +679,16 @@ class LatexPlugin(BasePlugin):
                 source_dir=self._project_dir,
             )
 
-            for variable_name, injections in fragment_result.variable_injections.items():
+            for (
+                variable_name,
+                injections,
+            ) in fragment_result.variable_injections.items():
                 base = template_context.get(variable_name, "")
                 parts: list[str] = [base] if base else []
                 parts.extend(injections)
-                template_context[variable_name] = "\n".join(part for part in parts if part)
+                template_context[variable_name] = "\n".join(
+                    part for part in parts if part
+                )
 
         try:
             latex_document = template_runtime.instance.wrap_document(

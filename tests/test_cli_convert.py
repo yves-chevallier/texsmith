@@ -54,18 +54,23 @@ def test_render_template_writes_file() -> None:
         content = output_file.read_text(encoding="utf-8")
         assert "\\mainmatter" in content
         assert "Titre" in content
+        assert "\\usepackage[english]{babel}" in content
 
-        class_file = output_dir / "mkbook.cls"
-        assert class_file.exists()
-        class_content = class_file.read_text(encoding="utf-8")
-        assert "\\VAR{" not in class_content
-        assert "\\RequirePackage[english]{babel}" in class_content
+        latexmkrc = output_dir / ".latexmkrc"
+        assert latexmkrc.exists()
+        rc_content = latexmkrc.read_text(encoding="utf-8")
+        assert "\\VAR{" not in rc_content
+        assert "$lualatex" in rc_content
 
         circles = output_dir / "covers" / "circles.tex"
         assert circles.exists()
         circles_content = circles.read_text(encoding="utf-8")
         assert "\\VAR{" not in circles_content
         assert "\\def\\covercolor{indigo(dye)}" in circles_content
+
+        titlepage = output_dir / "titlepage.tex"
+        assert titlepage.exists()
+        assert "\\BLOCK" not in titlepage.read_text(encoding="utf-8")
 
 
 def test_render_template_applies_markdown_metadata() -> None:
