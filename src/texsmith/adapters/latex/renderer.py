@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Iterable, Mapping
+import inspect
 from importlib import metadata
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
@@ -120,13 +121,23 @@ class LaTeXRenderer:
             self._apply_entry_point(payload)
 
     def _apply_entry_point(self, payload: Any) -> None:
-        if callable(payload):
+        def _accepts_renderer(target: Callable[..., Any]) -> bool:
             try:
+                signature = inspect.signature(target)
+            except (TypeError, ValueError):
+                return False
+            for parameter in signature.parameters.values():
+                if parameter.kind in (parameter.VAR_POSITIONAL, parameter.VAR_KEYWORD):
+                    return True
+                if parameter.kind in (parameter.POSITIONAL_ONLY, parameter.POSITIONAL_OR_KEYWORD):
+                    return True
+            return False
+
+        if callable(payload):
+            if _accepts_renderer(payload):
                 payload(self)
-            except TypeError:
-                self.register(payload)
-            else:
                 return
+            self.register(payload)
             return
 
         register = getattr(payload, "register", None)
