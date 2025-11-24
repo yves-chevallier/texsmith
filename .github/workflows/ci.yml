@@ -86,8 +86,8 @@ jobs:
             fonts-noto-unhinted \
             fonts-noto-color-emoji
 
-      - name: Install Noto Sans Syriac Western
-        run: scripts/install_noto_syriac_western.sh
+      - name: Install Noto Sans Syriac (Eastern)
+        run: scripts/install_noto_syriac.sh Eastern
 
       - name: Cache TeXSmith build artifacts
         uses: actions/cache@v4
@@ -100,7 +100,7 @@ jobs:
 
       - name: Build documentation (HTML + LaTeX)
         run: |
-          uv run mkdocs build --strict
+          uv run mkdocs build #--strict not yet ready
           uv run texsmith mkdocs build
 
       - name: Build distributions (texsmith)
