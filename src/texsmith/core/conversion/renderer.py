@@ -168,6 +168,7 @@ class TemplateRenderer:
         output_dir: Path,
         overrides: Mapping[str, Any] | None = None,
         copy_assets: bool = True,
+        embed_fragments: bool = True,
     ) -> TemplateRendererResult:
         if not fragments:
             raise TemplateError("No fragments available for template rendering.")
@@ -247,10 +248,71 @@ class TemplateRenderer:
         if shared_state is None:
             shared_state = DocumentState()
 
-        slot_content = {
-            slot: "\n\n".join(chunks for chunks in content if chunks)
-            for slot, content in aggregated_slots.items()
-        }
+        slot_content: dict[str, str] = {}
+
+        written_fragment_paths: list[Path] = []
+
+        if embed_fragments:
+            slot_content = {
+                slot: "\n\n".join(chunks for chunks in content if chunks)
+                for slot, content in aggregated_slots.items()
+            }
+        else:
+            slot_inputs: dict[str, list[str]] = {}
+            for fragment in fragments:
+                fragment_default_slot = fragment.default_slot or default_slot
+                slot_outputs = dict(fragment.slot_outputs)
+                if fragment_default_slot not in slot_outputs:
+                    slot_outputs[fragment_default_slot] = fragment.latex
+
+                for slot_name, latex in slot_outputs.items():
+                    if not latex:
+                        continue
+                    filename = (
+                        f"{fragment.stem}.tex"
+                        if slot_name == default_slot
+                        else f"{fragment.stem}.{slot_name}.tex"
+                    )
+                    target_path = output_dir / filename
+                    try:
+                        target_path.write_text(latex, encoding="utf-8")
+                        written_fragment_paths.append(target_path)
+                        slot_inputs.setdefault(slot_name, []).append(
+                            f"\\input{{{target_path.name}}}"
+                        )
+                    except OSError as exc:
+                        raise TemplateError(
+                            f"Failed to write fragment '{target_path}': {exc}"
+                        ) from exc
+
+                slot_inclusions = set(fragment.slot_includes or set())
+                if slot_inclusions:
+                    for slot_name in slot_inclusions:
+                        if (
+                            slot_name == fragment_default_slot
+                            and fragment_default_slot not in slot_outputs
+                        ):
+                            latex = fragment.latex
+                            if latex:
+                                filename = f"{fragment.stem}.tex"
+                                target_path = output_dir / filename
+                                try:
+                                    target_path.write_text(latex, encoding="utf-8")
+                                    written_fragment_paths.append(target_path)
+                                except OSError as exc:
+                                    raise TemplateError(
+                                        f"Failed to write fragment '{target_path}': {exc}"
+                                    ) from exc
+                                slot_inputs.setdefault(slot_name, []).append(
+                                    f"\\input{{{target_path.name}}}"
+                                )
+
+            slot_content = {
+                slot: "\n".join(entries for entries in slot_inputs.get(slot, []))
+                for slot in aggregated_slots
+            }
+            aggregated_slots.clear()
+            aggregated_slots.update(slot_inputs)
 
         _validate_slots(self.runtime, slot_content)
 
@@ -305,6 +367,7 @@ class TemplateRenderer:
         fragment_paths: list[Path] = [
             Path(fragment.output_path) for fragment in fragments if fragment.output_path
         ]
+        fragment_paths.extend(written_fragment_paths)
 
         context_engine: str | None = None
         if template_context:
@@ -348,8 +411,7 @@ class TemplateRenderer:
     def _resolve_main_name(fragments: Sequence[TemplateFragment]) -> str:
         if len(fragments) == 1:
             return f"{fragments[0].stem}.tex"
-        first = fragments[0]
-        return f"{first.stem}-collection.tex"
+        return "main.tex"
 
 
 __all__ = ["TemplateFragment", "TemplateRenderer", "TemplateRendererResult"]

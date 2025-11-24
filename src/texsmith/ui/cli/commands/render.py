@@ -117,6 +117,8 @@ _MARKDOWN_SUFFIXES = {
     ".mkdown",
     ".mdtxt",
     ".text",
+    ".yml",
+    ".yaml",
 }
 
 
@@ -336,6 +338,13 @@ def render(
     hash_assets: HashAssetsOption = False,
     manifest: ManifestOptionWithShort = False,
     template: TemplateOption = None,
+    embed_fragments: Annotated[
+        bool,
+        typer.Option(
+            "--embed/--no-embed",
+            help="Embed converted fragments into the main document instead of using \\input.",
+        ),
+    ] = False,
     template_attributes: TemplateAttributeOption = None,
     debug_html: DebugHtmlOption = None,
     classic_output: Annotated[
@@ -439,7 +448,16 @@ def render(
         if stdin_document is not None:
             document_paths = [stdin_document]
 
-    document_paths, bibliography_files = _SERVICE.split_inputs(document_paths, bibliography or [])
+    try:
+        split_result = _SERVICE.split_inputs(document_paths, bibliography or [])
+    except ConversionError as exc:
+        emit_error(str(exc), exception=exc)
+        raise typer.Exit(code=1) from exc
+
+    document_paths = split_result.documents
+    bibliography_files = split_result.bibliography_files
+    shared_front_matter = split_result.front_matter
+    shared_front_matter_path = split_result.front_matter_path
 
     template_requested = template_info_flag or template_scaffold
 
@@ -462,9 +480,9 @@ def render(
             "Provide a Markdown (.md) or HTML (.html) source document or pipe content via stdin."
         )
 
-    primary_front_matter: Mapping[str, Any] | None = None
+    primary_front_matter: Mapping[str, Any] | None = shared_front_matter
     first_document = document_paths[0] if document_paths else None
-    if first_document is not None:
+    if primary_front_matter is None and first_document is not None:
         front_matter = _load_front_matter(first_document)
         if front_matter:
             primary_front_matter = front_matter
@@ -512,11 +530,6 @@ def render(
         if promote_param_source not in {None, ParameterSource.DEFAULT} and promote_title:
             raise typer.BadParameter("--strip-heading cannot be combined with --promote-title.")
         promote_title = False
-
-    if build_pdf and len(document_paths) != 1:
-        raise typer.BadParameter(
-            "Provide exactly one Markdown or HTML document when using --build."
-        )
 
     if build_pdf and not template_selected:
         template = "article"
@@ -610,6 +623,9 @@ def render(
     if template_selected and render_dir_path is None:
         raise typer.BadParameter("Unable to resolve template output directory.")
 
+    if not embed_fragments and template_selected and len(document_paths) == 1:
+        embed_fragments = True
+
     emitter = CliEmitter(state=state, debug_enabled=debug_enabled())
 
     request_render_dir = render_dir_path
@@ -617,6 +633,8 @@ def render(
     request = ConversionRequest(
         documents=document_paths,
         bibliography_files=bibliography_files,
+        front_matter=shared_front_matter,
+        front_matter_path=shared_front_matter_path,
         slot_assignments=slot_assignments,
         selector=selector,
         full_document=full_document,
@@ -639,6 +657,7 @@ def render(
         template=template,
         render_dir=request_render_dir,
         template_options=attribute_overrides,
+        embed_fragments=embed_fragments,
         emitter=emitter,
     )
     state.record_event(
@@ -659,6 +678,7 @@ def render(
         emit_error(str(exc), exception=exc)
         raise typer.Exit(code=1) from exc
     except ConversionError as exc:
+        emit_error(str(exc), exception=exc)
         raise typer.Exit(code=1) from exc
 
     try:
