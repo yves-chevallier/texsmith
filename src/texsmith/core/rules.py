@@ -194,7 +194,7 @@ class RenderRegistry:
             name_to_index.setdefault(rule.name, index)
 
         adjacency: dict[int, set[int]] = {index: set() for index in range(len(rules))}
-        indegree: dict[int, int] = {index: 0 for index in range(len(rules))}
+        indegree: dict[int, int] = dict.fromkeys(range(len(rules)), 0)
 
         def _add_edge(source: int, target: int) -> None:
             if target in adjacency[source]:
@@ -230,7 +230,9 @@ class RenderRegistry:
                 if indegree[neighbour] == 0:
                     queue.append(neighbour)
 
-            queue = deque(sorted(queue, key=lambda idx: (rules[idx].priority, rules[idx].name, idx)))
+            queue = deque(
+                sorted(queue, key=lambda idx: (rules[idx].priority, rules[idx].name, idx))
+            )
 
         if len(ordered) != len(rules):  # pragma: no cover - defensive
             raise RuntimeError("Cyclic render rule dependencies detected.")

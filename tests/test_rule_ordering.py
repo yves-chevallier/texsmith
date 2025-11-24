@@ -3,7 +3,9 @@ import sys
 import types
 from typing import Any
 
+# ruff: noqa: E402
 import pytest
+
 
 ROOT = pathlib.Path(__file__).resolve().parents[1] / "src"
 if str(ROOT) not in sys.path:
@@ -25,18 +27,20 @@ if "texsmith" not in sys.modules:
 
 if "emoji" not in sys.modules:
     sys.modules["emoji"] = types.SimpleNamespace(
-        emojize=lambda text, language=None, variant=None: text
+        emojize=lambda text, _language=None, _variant=None: text
     )
 
 from texsmith.core.rules import RenderPhase, RenderRegistry, renders
 
 
-def _make_handler(name: str, *, priority: int = 0, before: tuple[str, ...] = (), after: tuple[str, ...] = ()):
+def _make_handler(
+    name: str, *, priority: int = 0, before: tuple[str, ...] = (), after: tuple[str, ...] = ()
+):
     @renders("p", phase=RenderPhase.BLOCK, name=name, priority=priority, before=before, after=after)
     def handler(_node: Any, _context: Any) -> None:
         return None
 
-    definition = getattr(handler, "__render_rule__")
+    definition = handler.__render_rule__
     return definition.bind(handler)
 
 
