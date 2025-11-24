@@ -25,6 +25,7 @@ def create_fragment() -> FragmentDefinition:
         ],
         description="Glossary and acronym helpers.",
         source=package_path,
+        context_defaults={"extra_packages": "", "fragment_backmatter": ""},
     )
 
 

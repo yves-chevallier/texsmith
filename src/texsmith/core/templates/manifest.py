@@ -242,10 +242,10 @@ def _render_attribute_markdown(value: str) -> str:
 _ATTRIBUTE_NORMALISERS: dict[str, Callable[[Any, "TemplateAttributeSpec", Any], Any]] = {}
 
 
-def register_attribute_normaliser(
+def _register_attribute_normaliser(
     name: str,
 ) -> Callable[[Callable[[Any, "TemplateAttributeSpec", Any], Any]], Callable[[Any, "TemplateAttributeSpec", Any], Any]]:
-    """Decorator used to register attribute normaliser callables."""
+    """Decorator used to register attribute normaliser callables (internal use)."""
 
     def decorator(
         func: Callable[[Any, "TemplateAttributeSpec", Any], Any],
@@ -265,7 +265,7 @@ def _resolve_attribute_normaliser(
         raise TemplateError(f"Unknown attribute normaliser '{name}'.") from exc
 
 
-@register_attribute_normaliser("paper_option")
+@_register_attribute_normaliser("paper_option")
 def _normalise_paper_option(value: Any, spec: "TemplateAttributeSpec", fallback: Any) -> Any:
     valid_bases = {
         "a0",
@@ -310,7 +310,7 @@ def _normalise_paper_option(value: Any, spec: "TemplateAttributeSpec", fallback:
     return f"{candidate}paper"
 
 
-@register_attribute_normaliser("orientation")
+@_register_attribute_normaliser("orientation")
 def _normalise_orientation(value: Any, spec: "TemplateAttributeSpec", fallback: Any) -> Any:
     valid_orientations = {"portrait", "landscape"}
 
@@ -319,6 +319,10 @@ def _normalise_orientation(value: Any, spec: "TemplateAttributeSpec", fallback: 
 
     if isinstance(value, str):
         candidate = value.strip().lower()
+        if candidate == "vertical":
+            candidate = "portrait"
+        elif candidate == "horizontal":
+            candidate = "landscape"
     else:
         raise TemplateError(
             f"Invalid orientation type '{type(value).__name__}' for attribute '{spec.name}'."
@@ -337,7 +341,7 @@ def _normalise_orientation(value: Any, spec: "TemplateAttributeSpec", fallback: 
     return candidate
 
 
-@register_attribute_normaliser("babel_language")
+@_register_attribute_normaliser("babel_language")
 def _normalise_language(value: Any, spec: "TemplateAttributeSpec", fallback: Any) -> Any:
     if value is None or value == "":
         return fallback
@@ -359,7 +363,7 @@ def _normalise_language(value: Any, spec: "TemplateAttributeSpec", fallback: Any
     )
 
 
-@register_attribute_normaliser("callout_style")
+@_register_attribute_normaliser("callout_style")
 def _normalise_callout_style_attribute(
     value: Any, spec: "TemplateAttributeSpec", fallback: Any
 ) -> Any:
@@ -384,7 +388,7 @@ def _normalise_callout_style_attribute(
     return candidate
 
 
-@register_attribute_normaliser("margin_style")
+@_register_attribute_normaliser("margin_style")
 def _normalise_margin_style(value: Any, spec: "TemplateAttributeSpec", fallback: Any) -> Any:
     if value is None or value == "":
         return fallback

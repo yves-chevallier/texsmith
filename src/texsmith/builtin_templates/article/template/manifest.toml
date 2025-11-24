@@ -69,24 +69,6 @@ type = "string"
 allow_empty = false
 normaliser = "babel_language"
 
-[latex.template.attributes.paper]
-default = "a4paper"
-type = "string"
-normaliser = "paper_option"
-allow_empty = false
-
-[latex.template.attributes.orientation]
-default = "portrait"
-type = "string"
-normaliser = "orientation"
-choices = ["portrait", "landscape"]
-
-[latex.template.attributes.geometry]
-default = {}
-type = "mapping"
-allow_empty = true
-sources = ["press.geometry", "geometry"]
-
 [latex.template.attributes.page_numbers]
 default = true
 type = "boolean"

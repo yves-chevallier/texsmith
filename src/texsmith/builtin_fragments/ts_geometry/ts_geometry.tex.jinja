@@ -1,7 +1,19 @@
-\BLOCK{ set options = geometry_options|default('margin=2.5cm')|trim }
+\BLOCK{ set options_list = geometry_options_list|default([]) }
+\BLOCK{ set fallback = options_list|join(',') }
+\BLOCK{ set options = geometry_options|default(fallback)|trim }
 \BLOCK{ if options }
 \usepackage[\VAR{options}]{geometry}
 \geometry{\VAR{options}}
 \BLOCK{ else }
 \usepackage{geometry}
+\BLOCK{ endif }
+\BLOCK{ if geometry_watermark|default('')|trim }
+\usepackage{tikz}
+% Note: xwatermark behaves poorly with LuaLaTeX/XeLaTeX and draftwatermark can
+% conflict with dynamic geometry changes; implement watermark with TikZ instead.
+\AddToHook{shipout/background}{%
+  \begin{tikzpicture}[remember picture,overlay]
+    \node[rotate=45,scale=7,text opacity=0.06] at (current page.center) {\textbf{\textsf{\VAR{geometry_watermark}}}};
+  \end{tikzpicture}%
+}
 \BLOCK{ endif }
