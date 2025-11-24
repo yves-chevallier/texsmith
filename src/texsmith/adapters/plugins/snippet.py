@@ -1241,12 +1241,17 @@ def _announce_build(
 ) -> None:
     """Emit an informational message when a snippet is actually compiled."""
     source_hint = f" from {host_path}" if host_path else ""
-    _log.info("texsmith: building snippet %s%s", block.asset_basename, source_hint)
+    short_digest = block.digest[:10] + "..." if block.digest else block.asset_basename
+    _log.info("texsmith: building snippet %s%s", short_digest, source_hint)
     if emitter is not None:
         try:
             emitter.event(
                 "snippet_build",
-                {"digest": block.digest, "source": str(host_path) if host_path else ""},
+                {
+                    "digest": block.digest,
+                    "source": str(host_path) if host_path else "",
+                    "destination": block.asset_basename,
+                },
             )
         except Exception:
             _log.debug("failed to emit snippet_build event", exc_info=True)
