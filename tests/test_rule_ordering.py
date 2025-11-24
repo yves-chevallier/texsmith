@@ -57,5 +57,16 @@ def test_rule_order_respects_priority_and_topology():
 def test_rule_order_cycle_detection():
     registry = RenderRegistry()
     registry.register(_make_handler("a", priority=0, before=("b",)))
-    with pytest.raises(RuntimeError):
+    with pytest.raises(RuntimeError, match="Cyclic render rule dependencies"):
         registry.register(_make_handler("b", priority=0, before=("a",)))
+
+
+def test_registry_describe_returns_sorted_entries():
+    registry = RenderRegistry()
+    registry.register(_make_handler("alpha", priority=0))
+    registry.register(_make_handler("beta", priority=1, after=("alpha",)))
+
+    snapshot = registry.describe()
+    assert snapshot[0]["name"] == "alpha"
+    assert snapshot[1]["name"] == "beta"
+    assert snapshot[1]["after"] == ["alpha"]

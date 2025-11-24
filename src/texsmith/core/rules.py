@@ -158,10 +158,12 @@ class RenderRegistry:
 
     def __init__(self) -> None:
         self._rules: dict[RenderPhase, dict[str, list[RenderRule]]] = {}
+        self._rule_sources: dict[int, str] = {}
 
     def register(self, rule: RenderRule) -> None:
         """Register a rule for later execution."""
         phase_bucket = self._rules.setdefault(rule.phase, {})
+        self._rule_sources.setdefault(id(rule), rule.name)
         if rule.applies_to_document():
             tag_bucket = phase_bucket.setdefault(DOCUMENT_NODE, [])
             tag_bucket.append(rule)
@@ -183,6 +185,25 @@ class RenderRegistry:
         """Return the rule mapping for the requested phase."""
         phase_bucket = self._rules.get(phase, {})
         return {tag: tuple(rules) for tag, rules in phase_bucket.items()}
+
+    def describe(self) -> list[dict[str, object]]:
+        """Return a serialisable snapshot of the registered rules."""
+        entries: list[dict[str, object]] = []
+        for phase in RenderPhase:
+            for tag, rules in sorted(self.rules_for_phase(phase).items(), key=lambda item: item[0]):
+                for order, rule in enumerate(rules):
+                    entries.append(
+                        {
+                            "phase": phase.name,
+                            "tag": tag,
+                            "name": rule.name,
+                            "priority": rule.priority,
+                            "before": list(rule.before),
+                            "after": list(rule.after),
+                            "order": order,
+                        }
+                    )
+        return entries
 
     def _sort_rules(self, rules: list[RenderRule]) -> list[RenderRule]:
         """Return rules ordered deterministically using before/after constraints."""
@@ -235,7 +256,10 @@ class RenderRegistry:
             )
 
         if len(ordered) != len(rules):  # pragma: no cover - defensive
-            raise RuntimeError("Cyclic render rule dependencies detected.")
+            cycle_names = sorted(rule.name for index, rule in enumerate(rules) if index not in ordered)
+            raise RuntimeError(
+                "Cyclic render rule dependencies detected: " + ", ".join(cycle_names)
+            )
 
         return [rules[index] for index in ordered]
 
