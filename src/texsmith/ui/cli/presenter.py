@@ -123,7 +123,9 @@ def present_rule_descriptions(state: CLIState, rules: Sequence[Mapping[str, Any]
                 ", ".join(entry.get("before", []) or []),
                 ", ".join(entry.get("after", []) or []),
             )
-        console.print(panel_cls(table, box=box_module.SQUARE, title="Registered Rules", border_style="blue"))
+        console.print(
+            panel_cls(table, box=box_module.SQUARE, title="Registered Rules", border_style="blue")
+        )
         return
 
     typer.echo("Registered Rules:")
@@ -131,8 +133,8 @@ def present_rule_descriptions(state: CLIState, rules: Sequence[Mapping[str, Any]
         before = ", ".join(entry.get("before", []) or [])
         after = ", ".join(entry.get("after", []) or [])
         typer.echo(
-            f"  - {entry.get('phase','')}/{entry.get('tag','')}: {entry.get('name','')} "
-            f"(priority={entry.get('priority','')}, before=[{before}], after=[{after}])"
+            f"  - {entry.get('phase', '')}/{entry.get('tag', '')}: {entry.get('name', '')} "
+            f"(priority={entry.get('priority', '')}, before=[{before}], after=[{after}])"
         )
 
 
