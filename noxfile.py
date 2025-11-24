@@ -7,8 +7,9 @@ import nox
 
 PYPROJECT = nox.project.load_toml("pyproject.toml")
 # Drive the matrix from pyproject metadata so versions stay in sync.
-PYTHON_VERSIONS = nox.project.python_versions(PYPROJECT, max_version="3.13")
+PYTHON_VERSIONS = nox.project.python_versions(PYPROJECT, max_version="3.14")
 MKDOCS_PLUGIN_PATH = Path(__file__).parent / "packages" / "mkdocs_texsmith"
+nox.options.default_venv_backend = "uv"
 
 
 @nox.session(python=PYTHON_VERSIONS)
