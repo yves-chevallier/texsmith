@@ -369,3 +369,53 @@ __*`abc`*__
 ```
 
 In this case the `code inline` is treated as `texttt` with the proper escapes.
+
+### Center/Right alignment
+
+```md
+::: center
+texte
+:::
+
+::: right
+texte
+:::
+```
+
+### Fences the gros bordel
+
+#### Code
+
+We only use `` ``` `` fences for code blocks or other special blocks like mermaid, latex, custom tables, etc. No other uses should be allowed.
+
+#### Admonitions
+
+We prefer the MkDocs admonition syntax as it is more flexible and better supported.
+
+```md
+!!! note "Note Title"
+
+    This is the content of the note.
+
+??? info "Folddable Info Title"
+
+    This is the content of the info.
+```
+
+#### Fenced custom
+
+The `:::` syntax is reserved for custom containers like `center`, `right`, `language`, etc. No other uses should be allowed.
+
+```text
+::: align center
+This text is centered.
+:::
+
+::: align right
+This text is right-aligned.
+:::
+
+::: language arabic
+```
+
+We use the syntax `verb` + `option` after the opening `:::` to specify the type of container and any relevant options.
