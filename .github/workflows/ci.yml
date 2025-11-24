@@ -101,10 +101,14 @@ jobs:
       - name: Build documentation (HTML + LaTeX)
         run: |
           uv run mkdocs build #--strict not yet ready
-          uv run texsmith mkdocs build
 
       - name: Build distributions (texsmith)
         run: uv build
+
+      - name: Build PDF from LaTeX
+        run: |
+          cd build/press/texsmith-docs
+          latexmk texsmith-docs.tex
 
       - name: Build distributions (mkdocs_texsmith)
         working-directory: packages/mkdocs_texsmith
