@@ -8,6 +8,20 @@ ROOT = pathlib.Path(__file__).resolve().parents[1] / "src"
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
+if "texsmith" not in sys.modules:
+    pkg = types.ModuleType("texsmith")
+    pkg.__path__ = [str(ROOT / "texsmith")]
+    spec = types.SimpleNamespace()
+    try:
+        import importlib.machinery
+
+        spec = importlib.machinery.ModuleSpec("texsmith", loader=None, is_package=True)
+        spec.submodule_search_locations = pkg.__path__
+    except Exception:  # pragma: no cover - defensive
+        spec.submodule_search_locations = pkg.__path__  # type: ignore[attr-defined]
+    pkg.__spec__ = spec
+    sys.modules["texsmith"] = pkg
+
 if "emoji" not in sys.modules:
     sys.modules["emoji"] = types.SimpleNamespace(
         emojize=lambda text, language=None, variant=None: text
@@ -88,6 +102,7 @@ if "pybtex" not in sys.modules:
     sys.modules["pybtex.exceptions"] = exceptions_mod
 
 from texsmith.adapters.latex.renderer import LaTeXRenderer
+from texsmith.adapters.latex import renderer as renderer_mod
 
 
 def test_entry_point_factory_receives_renderer():
@@ -111,3 +126,26 @@ def test_entry_point_register_error_surfaces():
 
     with pytest.raises(TypeError):
         renderer._apply_entry_point(BadPlugin())
+
+
+def test_entry_points_sorted_by_name(monkeypatch):
+    LaTeXRenderer._ENTRY_POINT_PAYLOADS = None
+
+    class _EP:
+        def __init__(self, name: str, payload: object, priority: int = 0) -> None:
+            self.name = name
+            self._payload = payload
+            self.priority = priority
+
+        def load(self) -> object:
+            return self._payload
+
+    class _Group(list):
+        def select(self, group: str):
+            return self if group == LaTeXRenderer._ENTRY_POINT_GROUP else []
+
+    fake_group = _Group([_EP("zzz", "late"), _EP("aaa", "early"), _EP("mid", "middle", priority=1)])
+    monkeypatch.setattr(renderer_mod.metadata, "entry_points", lambda: fake_group)
+
+    payloads = list(LaTeXRenderer._iter_entry_point_payloads())
+    assert payloads == ["early", "late", "middle"]
