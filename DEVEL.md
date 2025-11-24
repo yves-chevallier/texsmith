@@ -257,6 +257,59 @@ This can be a good example of a standalone TeXSmith plugin that allows rendering
 
 During the build TeXSmith calls the bundled Svgbob converter, generates a PDF, and inserts it into the final LaTeX output. Cached artifacts prevent repeated rendering when the source diagram stays the same.
 
+SVGBob can be installed on Ubuntu via:
+
+```bash
+cargo install svgbob_cli
+```
+
+It is installed by default into `svgbob_cli` or `~/.cargo/bin/svgbob_cli` we want to fetch both warn if the binary is missing and also allow users to override the path via configuration.
+
+We can insert the image in both way:
+
+````markdown
+```svgbob
+       +10-15V           ___0,047R
+      *---------o-----o-|___|-o--o---------o----o-------.
+    + |         |     |       |  |         |    |       |
+    -===-      _|_    |       | .+.        |    |       |
+    -===-      .-.    |       | | | 2k2    |    |       |
+    -===-    470| +   |       | | |        |    |      _|_
+    - |       uF|     '--.    | '+'       .+.   |      \ / LED
+      +---------o        |6   |7 |8    1k | |   |      -+-
+             ___|___   .-+----+--+--.     | |   |       |
+              -═══-    |            |     '+'   |       |
+                -      |            |1     |  |/  BC    |
+               GND     |            +------o--+   547   |
+                       |            |      |  |`>       |
+                       |            |     ,+.   |       |
+               .-------+            | 220R| |   o----||-+  IRF9Z34
+               |       |            |     | |   |    |+->
+               |       |  MC34063   |     `+'   |    ||-+
+               |       |            |      |    |       |  BYV29     -12V6
+               |       |            |      '----'       o--|<-o----o--X OUT
+ 6000 micro  - | +     |            |2                  |     |    |
+ Farad, 40V ___|_____  |            |--o                C|    |    |
+ Capacitor  ~ ~ ~ ~ ~  |            | GND         30uH  C|    |   --- 470
+               |       |            |3      1nF         C|    |   ###  uF
+               |       |            |-------||--.       |     |    | +
+               |       '-----+----+-'           |      GND    |   GND
+               |            5|   4|             |             |
+               |             |    '-------------o-------------o
+               |             |                           ___  |
+               `-------------*------/\/\/------------o--|___|-'
+                                     2k              |       1k0
+                                                    .+.
+                                                    | | 5k6 + 3k3
+                                                    | | in Serie
+                                                    '+'
+                                                     |
+                                                    GND
+```
+````
+
+If not available svgbob diagrams can be skipped with a warning and the diagram is rendered as a code block.
+
 ### CircuitTikZ
 
 The [CircuitTikZ designer](https://circuit2tikz.tf.fau.de/designer/) helps produce circuit diagrams from the browser. Export the generated TikZ snippet and wrap it in a raw LaTeX fence:
