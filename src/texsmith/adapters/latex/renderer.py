@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
-from collections.abc import Iterable, Mapping
-import inspect
+from collections.abc import Callable, Iterable, Mapping
 from importlib import metadata
+import inspect
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 

@@ -2,7 +2,9 @@ import pathlib
 import sys
 import types
 
+# ruff: noqa: E402
 import pytest
+
 
 ROOT = pathlib.Path(__file__).resolve().parents[1] / "src"
 if str(ROOT) not in sys.path:
@@ -24,7 +26,7 @@ if "texsmith" not in sys.modules:
 
 if "emoji" not in sys.modules:
     sys.modules["emoji"] = types.SimpleNamespace(
-        emojize=lambda text, language=None, variant=None: text
+        emojize=lambda text, _language=None, _variant=None: text
     )
 
 if "pylatexenc" not in sys.modules:
@@ -101,8 +103,8 @@ if "pybtex" not in sys.modules:
     sys.modules["pybtex.database.input.bibtex"] = bibtex_mod
     sys.modules["pybtex.exceptions"] = exceptions_mod
 
-from texsmith.adapters.latex.renderer import LaTeXRenderer
 from texsmith.adapters.latex import renderer as renderer_mod
+from texsmith.adapters.latex.renderer import LaTeXRenderer
 
 
 def test_entry_point_factory_receives_renderer():

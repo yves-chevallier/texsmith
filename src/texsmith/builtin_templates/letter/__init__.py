@@ -10,7 +10,7 @@ from datetime import date, datetime, timezone
 try:
     from datetime import UTC  # py311+
 except ImportError:  # pragma: no cover - py310 compatibility
-    UTC = timezone.utc
+    UTC = UTC
 import logging
 from pathlib import Path
 import re
@@ -155,9 +155,7 @@ class Template(WrappableTemplate):
         context["language"] = profile.locale
         context["babel_language"] = profile.babel
         letter_standard = self._resolve_letter_standard(
-            context.get("standard")
-            or context.get("letter_standard")
-            or context.get("layout"),
+            context.get("standard") or context.get("letter_standard") or context.get("layout"),
             profile,
         )
         context["letter_standard"] = letter_standard.key
@@ -172,9 +170,7 @@ class Template(WrappableTemplate):
         from_lines = self._normalise_lines(context.get("from_address"))
         to_lines = self._normalise_lines(context.get("to_address"))
         context["from_address_lines"] = from_lines
-        context["to_address_lines"] = self._inject_name_line(
-            to_lines, context["to_name"]
-        )
+        context["to_address_lines"] = self._inject_name_line(to_lines, context["to_name"])
         back_address_lines = self._normalise_lines(context.get("back_address"))
         context["back_address_lines"] = back_address_lines
         context["has_back_address"] = bool(back_address_lines)
@@ -186,9 +182,7 @@ class Template(WrappableTemplate):
         body_without_closing = cleaned_body
         inferred_closing: str | None = closing_override
         if not inferred_closing:
-            body_without_closing, inferred_closing = self._extract_body_closing(
-                cleaned_body
-            )
+            body_without_closing, inferred_closing = self._extract_body_closing(cleaned_body)
         closing_text = inferred_closing or self._resolve_closing(context, profile)
         context["mainmatter"] = body_without_closing.strip()
         context["_texsmith_main_body"] = context["mainmatter"]
@@ -198,9 +192,7 @@ class Template(WrappableTemplate):
         context["opening_text"] = self._resolve_opening(context, profile)
         context["date_value"] = self._format_date_value(context.get("date"), profile)
         context["object_value"] = self._coerce_string(context.get("object")) or ""
-        context["from_location_value"] = (
-            self._coerce_string(context.get("from_location")) or ""
-        )
+        context["from_location_value"] = self._coerce_string(context.get("from_location")) or ""
         context["subject_prefix"] = profile.subject_prefix
 
         signature_image_path = self._resolve_signature_image(
@@ -211,9 +203,7 @@ class Template(WrappableTemplate):
             signature_text_hint = None
         signature_text = signature_text_hint or context["from_name"]
         if not signature_text:
-            raise TemplateError(
-                "Sender name is required to compute the letter signature."
-            )
+            raise TemplateError("Sender name is required to compute the letter signature.")
         context["signature_text"] = signature_text
         context["signature_image_path"] = signature_image_path
         context["has_signature_image"] = bool(signature_image_path)
@@ -235,9 +225,7 @@ class Template(WrappableTemplate):
         context["has_postscript"] = bool(postscript_text)
 
         context.pop("press", None)
-        context["callout_style"] = self._normalise_callout_style(
-            context.get("callout_style")
-        )
+        context["callout_style"] = self._normalise_callout_style(context.get("callout_style"))
 
         return context
 
@@ -258,14 +246,10 @@ class Template(WrappableTemplate):
             context=context,
         )
 
-    def _resolve_letter_standard(
-        self, value: Any, profile: LanguageProfile
-    ) -> LetterStandard:
+    def _resolve_letter_standard(self, value: Any, profile: LanguageProfile) -> LetterStandard:
         candidate = self._coerce_string(value)
         if candidate:
-            key = (
-                candidate.lower().replace(" ", "-").replace("_", "-").replace(".", "-")
-            )
+            key = candidate.lower().replace(" ", "-").replace("_", "-").replace(".", "-")
         else:
             key = profile.default_standard
         resolved_key = _LETTER_STANDARD_ALIASES.get(key, key)
@@ -347,9 +331,7 @@ class Template(WrappableTemplate):
             return lines
         return [name, *lines]
 
-    def _resolve_opening(
-        self, context: Mapping[str, Any], profile: LanguageProfile
-    ) -> str:
+    def _resolve_opening(self, context: Mapping[str, Any], profile: LanguageProfile) -> str:
         opening_override = self._coerce_string(context.get("opening"))
         if opening_override:
             return opening_override
@@ -363,9 +345,7 @@ class Template(WrappableTemplate):
             return profile.fallback_opening
         return profile.fallback_opening
 
-    def _resolve_closing(
-        self, context: Mapping[str, Any], profile: LanguageProfile
-    ) -> str:
+    def _resolve_closing(self, context: Mapping[str, Any], profile: LanguageProfile) -> str:
         closing_override = self._coerce_string(context.get("closing"))
         if closing_override:
             return closing_override
@@ -420,15 +400,11 @@ class Template(WrappableTemplate):
         ".svg",
     }
 
-    def _extract_signature_components(
-        self, value: Any
-    ) -> tuple[str | None, str | None]:
+    def _extract_signature_components(self, value: Any) -> tuple[str | None, str | None]:
         if isinstance(value, Mapping):
             text_candidate = value.get("text") or value.get("name")
             image_candidate = value.get("image") or value.get("path")
-            return self._coerce_string(text_candidate), self._coerce_string(
-                image_candidate
-            )
+            return self._coerce_string(text_candidate), self._coerce_string(image_candidate)
         return self._coerce_string(value), None
 
     def _resolve_signature_image(
@@ -460,9 +436,7 @@ class Template(WrappableTemplate):
                     "output_dir": output_dir,
                 },
             )
-        mirrored = (
-            self._mirror_signature_asset(path, Path(output_dir)) if output_dir else path
-        )
+        mirrored = self._mirror_signature_asset(path, Path(output_dir)) if output_dir else path
         return self._format_latex_path(mirrored)
 
     def _mirror_signature_asset(self, source: Path, output_dir: Path) -> Path:
@@ -473,9 +447,7 @@ class Template(WrappableTemplate):
         if suffix == ".svg":
             try:
                 produced = svg2pdf(source, output_dir=asset_root)
-            except (
-                TransformerExecutionError
-            ) as exc:  # pragma: no cover - conversion failure
+            except TransformerExecutionError as exc:  # pragma: no cover - conversion failure
                 raise TemplateError(
                     f"Failed to convert signature SVG '{source}' to PDF: {exc}"
                 ) from exc
