@@ -211,5 +211,9 @@ class LaTeXRenderer:
             for rule in self.engine.registry.iter_phase(phase):
                 yield phase, rule.name
 
+    def describe_registered_rules(self) -> list[dict[str, object]]:
+        """Return detailed metadata about registered rules."""
+        return self.engine.registry.describe()
+
 
 __all__ = ["LaTeXRenderer"]
