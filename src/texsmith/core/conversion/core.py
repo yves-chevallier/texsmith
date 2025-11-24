@@ -38,6 +38,7 @@ from .debug import (
     format_user_friendly_render_error,
     persist_debug_artifacts,
     raise_conversion_error,
+    record_event,
 )
 from .templates import build_binder_context, extract_slot_fragments
 
@@ -107,6 +108,17 @@ def convert_document(
 ) -> ConversionResult:
     """Orchestrate the full HTML-to-LaTeX conversion for a single document."""
     emitter = ensure_emitter(emitter)
+    record_event(
+        emitter,
+        "convert_document",
+        {
+            "source": str(document.source_path),
+            "template": template,
+            "language": language,
+            "copy_assets": copy_assets,
+            "convert_assets": convert_assets,
+        },
+    )
     strategy = GenerationStrategy(
         copy_assets=copy_assets,
         convert_assets=convert_assets,

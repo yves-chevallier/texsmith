@@ -9,6 +9,7 @@ from urllib.parse import unquote, urlparse
 
 from texsmith.adapters.transformers import drawio2pdf, fetch_image, image2pdf, svg2pdf
 from texsmith.core.context import RenderContext
+from texsmith.core.conversion.debug import ensure_emitter, record_event
 
 
 _NATIVE_IMAGE_SUFFIXES: set[str] = {".png", ".jpg", ".jpeg", ".pdf"}
@@ -26,14 +27,33 @@ def store_local_image_asset(context: RenderContext, resolved: Path) -> Path:
     suffix = resolved.suffix.lower()
     convert_requested = bool(context.runtime.get("convert_assets", False))
     needs_conversion = _requires_conversion(suffix, convert_requested)
+    emitter = ensure_emitter(context.runtime.get("emitter"))
 
     if needs_conversion:
+        record_event(
+            emitter,
+            "asset_convert",
+            {
+                "source": str(resolved),
+                "suffix": suffix,
+                "reason": "requested" if convert_requested else "forced",
+            },
+        )
         staged = _convert_local_asset(context, resolved, suffix)
         final_suffix = ".pdf"
     else:
         staged = resolved
         final_suffix = suffix or ".bin"
 
+    record_event(
+        emitter,
+        "asset_local",
+        {
+            "source": str(resolved),
+            "stored_suffix": final_suffix,
+            "converted": needs_conversion,
+        },
+    )
     return _persist_asset(
         context,
         asset_key=asset_key,
@@ -53,7 +73,17 @@ def store_remote_image_asset(context: RenderContext, url: str) -> Path:
     metadata: dict[str, str] = {}
     conversion_root = _conversion_cache_root(context)
     suffix_hint = _normalise_suffix(_suffix_from_url(url), default=".pdf")
+    emitter = ensure_emitter(context.runtime.get("emitter"))
 
+    record_event(
+        emitter,
+        "asset_fetch",
+        {
+            "url": url,
+            "convert": convert_requested,
+            "suffix_hint": suffix_hint,
+        },
+    )
     artefact = fetch_image(
         url,
         output_dir=conversion_root,
@@ -65,6 +95,15 @@ def store_remote_image_asset(context: RenderContext, url: str) -> Path:
     final_suffix = _normalise_suffix(metadata.get("suffix"), default=".pdf")
     prefer_name = _extract_remote_name(url)
 
+    record_event(
+        emitter,
+        "asset_fetch_complete",
+        {
+            "url": url,
+            "stored_suffix": final_suffix,
+            "converted": convert_requested or suffix_hint in _FORCED_CONVERSION_SUFFIXES,
+        },
+    )
     return _persist_asset(
         context,
         asset_key=url,
@@ -92,12 +131,16 @@ def _requires_conversion(suffix: str, convert_requested: bool) -> bool:
 
 def _convert_local_asset(context: RenderContext, source: Path, suffix: str) -> Path:
     conversion_root = _conversion_cache_root(context)
+    emitter = ensure_emitter(context.runtime.get("emitter"))
     match suffix:
         case ".svg":
+            record_event(emitter, "diagram_generate", {"source": str(source), "kind": "svg"})
             return svg2pdf(source, output_dir=conversion_root)
         case ".drawio":
+            record_event(emitter, "diagram_generate", {"source": str(source), "kind": "drawio"})
             return drawio2pdf(source, output_dir=conversion_root)
         case _:
+            record_event(emitter, "asset_convert", {"source": str(source), "kind": "image"})
             return image2pdf(source, output_dir=conversion_root)
 
 
