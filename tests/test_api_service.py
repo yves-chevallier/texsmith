@@ -7,6 +7,7 @@ import pytest
 
 from texsmith.api.document import TitleStrategy
 from texsmith.api.service import ConversionRequest, ConversionService, SlotAssignment
+from texsmith.core.conversion.debug import ConversionError
 from texsmith.core.conversion.inputs import UnsupportedInputError
 from texsmith.core.conversion.templates import build_binder_context
 from texsmith.core.conversion_contexts import GenerationStrategy
@@ -62,6 +63,21 @@ def test_split_inputs_separates_sources(tmp_path: Path) -> None:
     assert documents == [doc_a, doc_b]
     assert bibliography[0] == bib
     assert len(bibliography) == 2
+
+
+def test_split_inputs_captures_front_matter(tmp_path: Path) -> None:
+    service = ConversionService()
+    doc = tmp_path / "chapter.md"
+    doc.write_text("# Title\n", encoding="utf-8")
+    metadata_file = tmp_path / "frontmatter.yml"
+    metadata_file.write_text("press:\n  template: demo\n", encoding="utf-8")
+
+    result = service.split_inputs([doc, metadata_file])
+
+    assert result.documents == [doc]
+    assert result.front_matter_path == metadata_file
+    assert isinstance(result.front_matter, Mapping)
+    assert result.front_matter.get("press", {}).get("template") == "demo"
 
 
 def test_prepare_documents_handles_markdown_and_html(tmp_path: Path) -> None:
@@ -289,6 +305,54 @@ Body text.
     assert response.render_result.main_tex_path.exists()
     assert any("missing" in message for message, _ in emitter.warnings)
     assert any(name == "template_overrides" for name, _ in emitter.events)
+
+
+def test_prepare_documents_rejects_multiple_press_sources(tmp_path: Path) -> None:
+    service = ConversionService()
+    doc_a = tmp_path / "a.md"
+    doc_b = tmp_path / "b.md"
+    doc_a.write_text("---\npress:\n  title: A\n---\n# A\n", encoding="utf-8")
+    doc_b.write_text("---\npress:\n  title: B\n---\n# B\n", encoding="utf-8")
+
+    request = ConversionRequest(documents=[doc_a, doc_b], bibliography_files=[])
+
+    with pytest.raises(ConversionError):
+        service.prepare_documents(request)
+
+
+def test_prepare_documents_applies_shared_front_matter(tmp_path: Path) -> None:
+    service = ConversionService()
+    source = tmp_path / "doc.md"
+    source.write_text("# Title\n\nBody", encoding="utf-8")
+
+    request = ConversionRequest(
+        documents=[source],
+        bibliography_files=[],
+        front_matter={"press": {"template": "demo"}, "author": "Ada"},
+    )
+
+    prepared = service.prepare_documents(request)
+    front_matter = prepared.documents[0].front_matter
+    assert front_matter.get("press", {}).get("template") == "demo"
+    assert front_matter.get("author") == "Ada"
+
+
+def test_shared_front_matter_preserves_heading_when_title_declared(tmp_path: Path) -> None:
+    service = ConversionService()
+    source = tmp_path / "doc.md"
+    source.write_text("# Heading\n\nBody", encoding="utf-8")
+
+    request = ConversionRequest(
+        documents=[source],
+        bibliography_files=[],
+        front_matter={"press": {"title": "Declared"}},
+    )
+
+    prepared = service.prepare_documents(request)
+    context = prepared.documents[0].to_context()
+
+    assert context.drop_title is False
+    assert context.title_from_heading is False
 
 
 def test_prepare_documents_rejects_unsupported_mkdocs_inputs(tmp_path: Path) -> None:

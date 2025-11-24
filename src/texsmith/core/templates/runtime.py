@@ -287,7 +287,7 @@ def resolve_template_binding(
             formatter_overrides={},
             slots={"mainmatter": TemplateSlot(default=True)},
             default_slot="mainmatter",
-            base_level=None,
+            base_level=1,
         )
 
     base_override = coerce_base_level(extract_base_level_override(template_overrides))

@@ -81,7 +81,8 @@ def _render_summary(state: CLIState, title: str, rows: Sequence[tuple[str, str, 
     if console is not None and components is not None:
         box_module, _panel_cls, table_cls, _text_cls = components
         table = table_cls(box=box_module.SQUARE, header_style="bold cyan")
-        table.title = title
+        if title:
+            table.title = title
         table.add_column("Artifact", style="cyan")
         table.add_column("Location", style="green")
         if has_details:
@@ -95,7 +96,8 @@ def _render_summary(state: CLIState, title: str, rows: Sequence[tuple[str, str, 
         return
 
     # Plain-text fallback
-    typer.echo(title)
+    if title:
+        typer.echo(title)
     for artifact, location, details in rows:
         suffix = f" — {details}" if details else ""
         typer.echo(f"  * {artifact}: {location}{suffix}")
@@ -194,7 +196,7 @@ def present_conversion_summary(
             rows.append(("Asset", _format_path(asset), ""))
         for debug_html in _detect_debug_html(main_dir):
             rows.append(("Debug HTML", _format_path(debug_html), ""))
-        _render_summary(state, "Template Conversion Summary", rows)
+        _render_summary(state, "", rows)
         return
 
     if output_mode == "file" and output_path is not None:

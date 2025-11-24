@@ -191,7 +191,7 @@ class TemplateSession:
         """Return the registered documents."""
         return tuple(self._documents)
 
-    def render(self, output_dir: Path) -> TemplateRenderResult:
+    def render(self, output_dir: Path, *, embed_fragments: bool = True) -> TemplateRenderResult:
         """Render the registered documents into a LaTeX project."""
         if not self._documents:
             raise ValueError("At least one document must be added before rendering.")
@@ -223,6 +223,7 @@ class TemplateSession:
                 output_dir=output_dir,
                 overrides=option_overrides or None,
                 copy_assets=self.settings.copy_assets,
+                embed_fragments=embed_fragments,
             )
         except TemplateError as exc:
             message = str(exc)

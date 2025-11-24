@@ -3,15 +3,23 @@
 from __future__ import annotations
 
 from collections.abc import Iterable, Mapping, Sequence
+import copy
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
-from texsmith.core.conversion.debug import ensure_emitter
-from texsmith.core.conversion.inputs import InputKind, UnsupportedInputError
+import yaml
+
+from texsmith.adapters.markdown import split_front_matter
+from texsmith.core.conversion.debug import ConversionError, ensure_emitter
+from texsmith.core.conversion.inputs import (
+    InputKind,
+    UnsupportedInputError,
+    extract_front_matter_slots,
+)
 from texsmith.core.diagnostics import DiagnosticEmitter
 
-from .document import Document, TitleStrategy
+from .document import Document, DocumentSlots, TitleStrategy, front_matter_has_title
 from .pipeline import ConversionBundle, RenderSettings, convert_documents
 from .templates import TemplateRenderResult, TemplateSession, get_template
 
@@ -21,6 +29,7 @@ __all__ = [
     "ConversionResponse",
     "ConversionService",
     "SlotAssignment",
+    "SplitInputsResult",
     "classify_input_source",
 ]
 
@@ -35,11 +44,28 @@ class SlotAssignment:
 
 
 @dataclass(slots=True)
+class SplitInputsResult:
+    """Structured partitioning of input paths."""
+
+    documents: list[Path]
+    bibliography_files: list[Path]
+    front_matter: Mapping[str, Any] | None = None
+    front_matter_path: Path | None = None
+
+    def __iter__(self) -> Iterable[object]:  # pragma: no cover - convenience iterator
+        yield self.documents
+        yield self.bibliography_files
+
+
+@dataclass(slots=True)
 class ConversionRequest:
     """Immutable description of a conversion run."""
 
     documents: Sequence[Path]
     bibliography_files: Sequence[Path] = field(default_factory=list)
+    embed_fragments: bool = False
+    front_matter: Mapping[str, Any] | None = None
+    front_matter_path: Path | None = None
     slot_assignments: Mapping[Path, Sequence[SlotAssignment]] = field(default_factory=dict)
 
     selector: str = "article.md-content__inner"
@@ -111,26 +137,40 @@ class ConversionService:
         self,
         inputs: Iterable[Path],
         extra_bibliography: Iterable[Path] = (),
-    ) -> tuple[list[Path], list[Path]]:
-        """Separate document inputs from bibliography files."""
+    ) -> SplitInputsResult:
+        """Separate document inputs, bibliography files, and optional front matter."""
         inline_bibliography: list[Path] = []
         documents: list[Path] = []
+        front_matter: Mapping[str, Any] | None = None
+        front_matter_path: Path | None = None
 
         for candidate in inputs:
             suffix = candidate.suffix.lower()
             if suffix in {".bib", ".bibtex"}:
                 inline_bibliography.append(candidate)
                 continue
+            if front_matter is None:
+                loaded_front_matter = _load_front_matter_file(candidate)
+                if loaded_front_matter is not _NOT_FRONT_MATTER:
+                    front_matter = loaded_front_matter
+                    front_matter_path = candidate
+                    continue
             documents.append(candidate)
 
         bibliography_paths = _deduplicate_paths([*inline_bibliography, *extra_bibliography])
-        return documents, bibliography_paths
+        return SplitInputsResult(
+            documents=documents,
+            bibliography_files=bibliography_paths,
+            front_matter=front_matter,
+            front_matter_path=front_matter_path,
+        )
 
     def prepare_documents(self, request: ConversionRequest) -> _PreparedBatch:
         """Normalise input sources into :class:`Document` instances."""
         emitter = ensure_emitter(request.emitter)
         documents: list[Document] = []
         mapping: dict[Path, Document] = {}
+        shared_front_matter = _normalise_front_matter(request.front_matter)
 
         for index, path in enumerate(request.documents):
             input_kind = classify_input_source(path)
@@ -185,6 +225,15 @@ class ConversionService:
 
             documents.append(document)
             mapping[path] = document
+
+        press_sources = _collect_press_sources(documents, shared_front_matter, request)
+        if len(press_sources) > 1:
+            raise ConversionError(
+                "Multiple sources declare press metadata; only one is allowed for a conversion: "
+                + ", ".join(press_sources)
+            )
+
+        _apply_shared_front_matter(documents, shared_front_matter)
 
         for path, directives in request.slot_assignments.items():
             document = mapping.get(path)
@@ -244,7 +293,7 @@ class ConversionService:
             session.add_document(document)
 
         target_dir = (request.render_dir or Path("build")).resolve()
-        render_result = session.render(target_dir)
+        render_result = session.render(target_dir, embed_fragments=request.embed_fragments)
         return ConversionResponse(
             request=request,
             documents=batch.documents,
@@ -279,6 +328,100 @@ class ConversionService:
             settings=settings,
             emitter=emitter,
         )
+
+
+_NOT_FRONT_MATTER = object()
+
+
+def _load_front_matter_file(path: Path) -> Mapping[str, Any] | object:
+    """Return parsed front matter when the path looks like a metadata file."""
+    suffix = path.suffix.lower()
+    if suffix not in {".yml", ".yaml"}:
+        return _NOT_FRONT_MATTER
+    try:
+        payload = path.read_text(encoding="utf-8")
+    except OSError as exc:
+        raise ConversionError(f"Failed to read front matter source '{path}': {exc}") from exc
+
+    if not payload.strip():
+        return {}
+
+    if payload.lstrip().startswith("---"):
+        metadata, body = split_front_matter(payload)
+        if body.strip():
+            return _NOT_FRONT_MATTER
+        return metadata
+
+    try:
+        parsed = yaml.safe_load(payload)
+    except yaml.YAMLError as exc:
+        raise ConversionError(f"Invalid YAML front matter in '{path}': {exc}") from exc
+    return dict(parsed) if isinstance(parsed, Mapping) else _NOT_FRONT_MATTER
+
+
+def _normalise_front_matter(data: Mapping[str, Any] | None) -> Mapping[str, Any] | None:
+    if data is None:
+        return None
+    if not isinstance(data, Mapping):
+        raise ConversionError("Front matter must be a mapping when provided programmatically.")
+    return copy.deepcopy(dict(data))
+
+
+def _front_matter_declares_press(metadata: Mapping[str, Any] | None) -> bool:
+    if not isinstance(metadata, Mapping):
+        return False
+    press_section = metadata.get("press")
+    if isinstance(press_section, Mapping):
+        return True
+    return any(isinstance(key, str) and key.startswith("press.") for key in metadata)
+
+
+def _merge_front_matter(base: Mapping[str, Any], override: Mapping[str, Any]) -> dict[str, Any]:
+    merged: dict[str, Any] = copy.deepcopy(dict(base))
+    for key, value in override.items():
+        if key in merged and isinstance(merged[key], Mapping) and isinstance(value, Mapping):
+            merged[key] = _merge_front_matter(merged[key], value)
+        else:
+            merged[key] = copy.deepcopy(value)
+    return merged
+
+
+def _apply_shared_front_matter(
+    documents: list[Document],
+    shared_front_matter: Mapping[str, Any] | None,
+) -> None:
+    if not shared_front_matter:
+        return
+    for document in documents:
+        merged = _merge_front_matter(shared_front_matter, document.front_matter)
+        document.set_front_matter(merged)
+        if (
+            document.options.title_strategy is TitleStrategy.PROMOTE_METADATA
+            and front_matter_has_title(merged)
+        ):
+            document.options.title_strategy = TitleStrategy.KEEP
+        document.slots = DocumentSlots()
+        base_mapping = extract_front_matter_slots(merged)
+        if base_mapping:
+            document.slots.merge(DocumentSlots.from_mapping(base_mapping))
+
+
+def _describe_front_matter_source(path: Path | None) -> str:
+    return str(path) if path is not None else "front matter"
+
+
+def _collect_press_sources(
+    documents: list[Document],
+    shared_front_matter: Mapping[str, Any] | None,
+    request: ConversionRequest,
+) -> list[str]:
+    sources: list[str] = []
+    if shared_front_matter and _front_matter_declares_press(shared_front_matter):
+        sources.append(_describe_front_matter_source(request.front_matter_path))
+    for document in documents:
+        if _front_matter_declares_press(document.front_matter):
+            sources.append(str(document.source_path))
+    return sources
 
 
 def classify_input_source(path: Path) -> InputKind:

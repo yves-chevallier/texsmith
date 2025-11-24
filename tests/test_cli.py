@@ -90,7 +90,7 @@ def test_convert_command() -> None:
         )
 
     assert result.exit_code == 0, result.stdout
-    assert "\\chapter{Introduction}\\label{intro}" in result.stdout
+    assert "\\section{Introduction}\\label{intro}" in result.stdout
 
 
 def test_template_alignment_defaults_to_section() -> None:
@@ -220,7 +220,7 @@ def test_render_from_stdin(monkeypatch: Any) -> None:
     )
 
     assert result.exit_code == 0, result.stdout
-    assert any(marker in result.stdout for marker in ("\\section{Hello}", "\\chapter{Hello}"))
+    assert "\\section{Hello}" in result.stdout
 
 
 def test_default_markdown_extensions(monkeypatch: Any) -> None:
@@ -385,8 +385,8 @@ def test_multi_document_stdout_concat() -> None:
         result = runner.invoke(app, [str(first), str(second)])
 
     assert result.exit_code == 0, result.stdout
-    assert "\\chapter{First}" in result.stdout
-    assert "\\chapter{Second}" in result.stdout
+    assert "\\section{First}" in result.stdout
+    assert "\\section{Second}" in result.stdout
     assert result.stdout.index("First") < result.stdout.index("Second")
 
 
@@ -411,8 +411,8 @@ def test_multi_document_output_file(tmp_path: Path) -> None:
     assert result.exit_code == 0, result.stdout
     assert output_file.exists()
     content = output_file.read_text(encoding="utf-8")
-    assert "\\chapter{Chapter One}" in content
-    assert "\\chapter{Chapter Two}" in content
+    assert "\\section{Chapter One}" in content
+    assert "\\section{Chapter Two}" in content
     assert content.index("Chapter One") < content.index("Chapter Two")
 
 
@@ -682,11 +682,11 @@ def test_multi_document_template_generates_inputs(tmp_path: Path) -> None:
     )
 
     assert result.exit_code == 0, result.stderr
-    main_file = output_dir / "chapter1-collection.tex"
+    main_file = output_dir / "main.tex"
     assert main_file.exists()
     content = main_file.read_text(encoding="utf-8")
-    assert "Chapter One" in content
-    assert "Chapter Two" in content
+    assert "\\input{chapter1.tex}" in content
+    assert "\\input{chapter2.tex}" in content
 
 
 def test_convert_template_outputs_summary(tmp_path: Path) -> None:
@@ -712,7 +712,7 @@ def test_convert_template_outputs_summary(tmp_path: Path) -> None:
     )
 
     assert result.exit_code == 0, result.stdout
-    assert "Template Conversion Summary" in result.stdout
+    assert "Template Conversion Summary" not in result.stdout
     assert "Main document" in result.stdout
 
 
@@ -770,11 +770,13 @@ def test_slot_assignment_targets_specific_file(tmp_path: Path) -> None:
     )
 
     assert result.exit_code == 0, result.stderr
-    main_file = output_dir / "abstract-collection.tex"
+    main_file = output_dir / "main.tex"
     assert main_file.exists()
     content = main_file.read_text(encoding="utf-8")
-    assert "Summary." in content
-    assert "Content." in content
+    assert "\\input{abstract.tex}" in content
+    assert "\\input{body.tex}" in content
+    assert "Summary." in (output_dir / "abstract.tex").read_text(encoding="utf-8")
+    assert "Content." in (output_dir / "body.tex").read_text(encoding="utf-8")
 
 
 def test_slot_assignment_extracts_section_from_file(tmp_path: Path) -> None:
@@ -804,9 +806,11 @@ def test_slot_assignment_extracts_section_from_file(tmp_path: Path) -> None:
     )
 
     assert result.exit_code == 0, result.stderr
-    main_file = output_dir / "chapter1-collection.tex"
+    main_file = output_dir / "main.tex"
     content = main_file.read_text(encoding="utf-8")
-    assert "Appendix content." in content
+    assert "\\input{chapter2.backmatter.tex}" in content
+    appendix_file = output_dir / "chapter2.backmatter.tex"
+    assert "Appendix content." in appendix_file.read_text(encoding="utf-8")
 
 
 def test_convert_verbose_emits_extension_diagnostics(tmp_path: Path) -> None:
@@ -941,6 +945,59 @@ def test_build_defaults_to_rich_output(tmp_path: Path, monkeypatch: Any) -> None
     assert captured["console"] is not None
     assert captured["verbosity"] == 0
     assert "Running latexmk…" in result.stdout
+
+
+def test_build_supports_multiple_documents(tmp_path: Path, monkeypatch: Any) -> None:
+    runner = CliRunner()
+    chapter1 = tmp_path / "chapter1.md"
+    chapter1.write_text("# One\n\nBody.", encoding="utf-8")
+    chapter2 = tmp_path / "chapter2.md"
+    chapter2.write_text("# Two\n\nMore.", encoding="utf-8")
+
+    output_dir = tmp_path / "output"
+    template_dir = _template_path("article")
+
+    captured: dict[str, Any] = {}
+
+    def fake_which(name: str) -> str:
+        return f"/usr/bin/{name}"
+
+    def fake_stream(
+        command: list[str],
+        *,
+        cwd: str,
+        env: dict[str, str],
+        console: Any,
+        verbosity: int = 0,
+    ) -> LatexStreamResult:
+        captured["command"] = command
+        captured["cwd"] = cwd
+        captured["env"] = env
+        pdf_path = Path(cwd) / Path(command[-1]).with_suffix(".pdf")
+        pdf_path.parent.mkdir(parents=True, exist_ok=True)
+        pdf_path.write_text("%PDF-1.4", encoding="utf-8")
+        return LatexStreamResult(returncode=0, messages=[])
+
+    monkeypatch.setattr(render_cmd.shutil, "which", fake_which)
+    monkeypatch.setattr(render_module, "stream_latexmk_output", fake_stream)
+
+    result = runner.invoke(
+        app,
+        [
+            str(chapter1),
+            str(chapter2),
+            "--template",
+            str(template_dir),
+            "--output",
+            str(output_dir),
+            "--build",
+        ],
+    )
+
+    assert result.exit_code == 0, result.stdout
+    assert captured["cwd"] == str(output_dir)
+    main_file = output_dir / "main.tex"
+    assert main_file.exists()
 
 
 def test_build_invokes_latexmk(tmp_path: Path, monkeypatch: Any) -> None:

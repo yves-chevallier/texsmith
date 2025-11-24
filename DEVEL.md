@@ -26,6 +26,7 @@ Roadmap and development notes for TeXSmith. I keep this file as a running checkl
 - [ ] Epigraph Plugin
 - [ ] Sidenotes (`marginpar` package with footnotes syntax)
 - [ ] Letterine
+- [ ] uv run mkdocs build #--strict not yet ready
 
 ## Book Template Integration with MkDocs
 
