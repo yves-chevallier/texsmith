@@ -37,7 +37,9 @@ def test_iter_assets_declares_required_files(book_template: WrappableTemplate) -
     assert Path("covers") in destinations
     assert Path("covers/circles.tex") in destinations
     assert Path("titlepage.tex") in destinations
-    assert Path("mkbook.cls") in destinations
+    assert Path("imprint.tex") in destinations
+    assert Path(".latexmkrc") in destinations
+    assert Path("keystroke.sty") in destinations
 
 
 def test_wrap_document_injects_mainmatter(book_template: WrappableTemplate) -> None:
@@ -129,14 +131,20 @@ def test_copy_template_assets_materialises_payload(
     context = book_template.prepare_context("")
     copy_template_assets(book_template, destination_root, context=context)
 
-    assert (destination_root / "mkbook.cls").exists()
     circles = destination_root / "covers" / "circles.tex"
     assert circles.exists()
     content = circles.read_text(encoding="utf-8")
     assert "\\VAR{" not in content
     assert "\\BLOCK" not in content
     assert "\\def\\covercolor{indigo(dye)}" in content
-    assert (destination_root / "titlepage.tex").exists()
+    latexmkrc = destination_root / ".latexmkrc"
+    assert latexmkrc.exists()
+    latexmkrc_content = latexmkrc.read_text(encoding="utf-8")
+    assert "\\VAR{" not in latexmkrc_content
+    assert "\\BLOCK" not in latexmkrc_content
+    titlepage = destination_root / "titlepage.tex"
+    assert titlepage.exists()
+    assert "\\BLOCK" not in titlepage.read_text(encoding="utf-8")
 
 
 def test_load_template_from_shortcut_path(book_template: WrappableTemplate) -> None:

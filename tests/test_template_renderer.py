@@ -114,8 +114,11 @@ def test_template_session_renders_bundle_via_renderer(tmp_path: Path) -> None:
     assert result.template_engine == "lualatex"
 
     # Assets from the template are still copied alongside the main document.
-    mkbook_class = result.main_tex_path.parent / "mkbook.cls"
-    assert mkbook_class.exists()
+    latexmkrc = result.main_tex_path.parent / ".latexmkrc"
+    assert latexmkrc.exists()
+    rc_content = latexmkrc.read_text(encoding="utf-8")
+    assert "\\VAR{" not in rc_content
+    assert "$lualatex" in rc_content
 
     # Renderer avoids emitting intermediate fragment files by default.
     assert result.fragment_paths == []
