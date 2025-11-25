@@ -260,8 +260,9 @@ def _discover_template_variables(template: WrappableTemplate) -> set[str] | None
 
 
 def _squash_blank_lines(text: str) -> str:
-    """Collapse runs of blank lines to a maximum of one."""
-    return re.sub(r"\n{3,}", "\n\n", text)
+    """Normalise LaTeX output by trimming trailing whitespace and blank lines."""
+    trimmed = re.sub(r"[ \t]+(?=\r?\n|$)", "", text)
+    return re.sub(r"\n{3,}", "\n\n", trimmed)
 
 
 __all__ = ["TemplateWrapResult", "wrap_template_document"]
