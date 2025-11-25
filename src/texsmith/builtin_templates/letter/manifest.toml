@@ -105,6 +105,12 @@ choices = ["fancy", "classic", "minimal"]
 sources = ["press.callout_style", "press.callouts.style", "callout_style"]
 normaliser = "callout_style"
 
+[latex.template.attributes.code]
+default = { engine = "pygments" }
+type = "mapping"
+normaliser = "code_options"
+sources = ["press.code", "code"]
+
 [latex.template.attributes.opening]
 default = ""
 type = "string"

@@ -18,6 +18,7 @@ from texsmith.core.rules import RenderPhase, renders
 from ..latex.utils import escape_latex_chars
 from ..transformers import fetch_image, svg2pdf
 from ._helpers import coerce_attribute, gather_classes, is_valid_url, mark_processed
+from .code import _resolve_code_engine
 
 
 _MATH_PAYLOAD_PATTERN = re.compile(
@@ -351,6 +352,9 @@ def escape_plain_text(root: Tag, context: RenderContext) -> None:
         text = str(node)
         if not text:
             continue
+        if "\\keystroke{" in text or "\\keystrokes{" in text:
+            node.replace_with(mark_processed(NavigableString(text)))
+            continue
         matches = list(_MATH_PAYLOAD_PATTERN.finditer(text))
         if not matches:
             escaped = _escape_text_segment(text, context, legacy_latex_accents=legacy_latex_accents)
@@ -441,6 +445,7 @@ def render_inline_code(element: Tag, context: RenderContext) -> None:
     if "\n" in code:
         return
 
+    engine = _resolve_code_engine(context)
     has_language = any(cls.startswith("language-") for cls in classes)
     if has_language or "highlight" in classes:
         language = next(
@@ -448,8 +453,10 @@ def render_inline_code(element: Tag, context: RenderContext) -> None:
             "text",
         )
         delimiter = _pick_mintinline_delimiter(code)
-        if delimiter:
-            context.state.requires_shell_escape = True
+        if delimiter and engine == "minted":
+            context.state.requires_shell_escape = (
+                context.state.requires_shell_escape or engine == "minted"
+            )
             latex = context.formatter.codeinline(
                 language=language or "text",
                 text=code,

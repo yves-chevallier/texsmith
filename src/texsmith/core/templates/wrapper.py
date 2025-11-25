@@ -2,10 +2,11 @@
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from dataclasses import dataclass, field
 from pathlib import Path
 import re
-from typing import Any, Mapping
+from typing import Any
 
 from jinja2 import meta
 
@@ -87,10 +88,27 @@ def wrap_template_document(
     template_context["acronyms"] = document_state.acronyms.copy()
     template_context["citations"] = list(document_state.citations)
     template_context["bibliography_entries"] = document_state.bibliography
+
+    code_section = template_context.get("code")
+    code_engine = None
+    if isinstance(code_section, Mapping):
+        raw_engine = code_section.get("engine")
+        code_engine = raw_engine if isinstance(raw_engine, str) else None
+    elif isinstance(code_section, str):
+        code_engine = code_section
+    code_engine = (code_engine or "pygments").strip().lower()
+    template_context["code_engine"] = code_engine or "pygments"
+    if "code" not in template_context:
+        template_context["code"] = {"engine": template_context["code_engine"]}
+    if code_engine == "pygments" and getattr(document_state, "pygments_styles", {}):
+        styles = getattr(document_state, "pygments_styles", {})
+        template_context["pygments_style_defs"] = "\n".join(styles.values())
+
     template_context["requires_shell_escape"] = bool(
         template_context.get("requires_shell_escape", False)
         or getattr(document_state, "requires_shell_escape", False)
         or (template_runtime.requires_shell_escape if template_runtime else False)
+        or code_engine == "minted"
     )
     if template_runtime and template_runtime.engine:
         template_context.setdefault("latex_engine", template_runtime.engine)

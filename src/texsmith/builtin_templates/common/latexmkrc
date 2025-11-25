@@ -1,5 +1,12 @@
 \BLOCK{ set _fragments = fragments | default([]) }
-\BLOCK{ set _shell_escape = requires_shell_escape|default(false) or ('ts-code' in _fragments) }
+\BLOCK{ set _code_cfg = code | default({}) }
+\BLOCK{ if _code_cfg is mapping }
+\BLOCK{ set _code_engine = (_code_cfg.get('engine') or 'pygments') | lower }
+\BLOCK{ else }
+\BLOCK{ set _code_engine = (_code_cfg or 'pygments') | string | lower }
+\BLOCK{ endif }
+\BLOCK{ set _code_shell_escape = _code_engine == 'minted' }
+\BLOCK{ set _shell_escape = requires_shell_escape|default(false) or _code_shell_escape }
 $root_filename = '\VAR{root_filename|default("texsmith-output")}';
 \BLOCK{ if 'ts-bibliography' in _fragments }
 $bibtex_use = 2;

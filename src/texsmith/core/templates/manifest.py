@@ -133,6 +133,7 @@ AttributeEscapeMode = Literal["latex"]
 
 
 _UNSET = object()
+_CODE_ENGINES = {"minted", "listings", "verbatim", "pygments"}
 
 
 def _lookup_path(container: Mapping[str, Any], path: str) -> tuple[Any, bool]:
@@ -402,6 +403,47 @@ def _normalise_margin_style(value: Any, spec: "TemplateAttributeSpec", fallback:
     if lowered in {"narrow", "default", "wide"}:
         return lowered
     return candidate
+
+
+@_register_attribute_normaliser("code_options")
+def _normalise_code_options(value: Any, spec: "TemplateAttributeSpec", fallback: Any) -> Any:
+    """Normalise code highlighting options ensuring a supported engine."""
+
+    def _pick_engine(candidate: Any) -> str:
+        if isinstance(candidate, str):
+            engine = candidate.strip().lower()
+        else:
+            engine = str(candidate).strip().lower() if candidate is not None else ""
+        if not engine:
+            return "pygments"
+        if engine not in _CODE_ENGINES:
+            allowed = ", ".join(sorted(_CODE_ENGINES))
+            raise TemplateError(
+                f"Attribute '{spec.name}' value '{engine}' is invalid. Expected one of: {allowed}."
+            )
+        return engine
+
+    fallback_engine = _pick_engine(fallback.get("engine")) if isinstance(fallback, Mapping) else "pygments"
+    options: dict[str, Any] = {"engine": fallback_engine}
+
+    if value is None:
+        return options
+
+    if isinstance(value, Mapping):
+        engine_value = value.get("engine", fallback_engine)
+        options = dict(value)
+        options["engine"] = _pick_engine(engine_value)
+        return options
+
+    if isinstance(value, str):
+        engine_value = value.strip()
+        if not engine_value:
+            return options
+        options["engine"] = _pick_engine(engine_value)
+        return options
+
+    options["engine"] = fallback_engine
+    return options
 
 
 class TemplateAttributeSpec(BaseModel):

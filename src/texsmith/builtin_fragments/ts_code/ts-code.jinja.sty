@@ -1,3 +1,10 @@
+\BLOCK{ set _code_cfg = code if code is not none else {} }
+\BLOCK{ if _code_cfg is mapping }
+\BLOCK{ set _code_engine = (_code_cfg.get("engine") or "pygments") | lower }
+\BLOCK{ else }
+\BLOCK{ set _code_engine = (_code_cfg or "pygments") | string | lower }
+\BLOCK{ endif }
+
 \ProvidesPackage{ts-code}[2025/11/21 TeXSmith Code listings (generated)]
 
 \RequirePackage{xparse}
@@ -6,13 +13,17 @@
 \@ifpackageloaded{tcolorbox}{}{%
   \RequirePackage{tcolorbox}%
 }
+\makeatother
+
+\tcbuselibrary{many}
+
+\BLOCK{ if _code_engine == "minted" }
+\makeatletter
 \@ifpackageloaded{minted}{}{%
   \RequirePackage{minted}%
 }
 \makeatother
-
 \tcbuselibrary{minted}
-\tcbuselibrary{many}
 \usemintedstyle{bw}
 
 \newtcblisting[auto counter,number within=section,
@@ -47,3 +58,80 @@
   list entry={\protect\numberline{\thetcbcounter}#3},
   #1
 }
+\BLOCK{ elif _code_engine == "listings" }
+\RequirePackage{xcolor}
+\makeatletter
+\@ifpackageloaded{listings}{}{%
+  \RequirePackage{listings}%
+}
+\makeatother
+\tcbuselibrary{listings,skins}
+
+\lstset{
+  basicstyle=\ttfamily\footnotesize,
+  breaklines=true,
+  columns=fullflexible,
+}
+
+\newtcblisting[auto counter,number within=section,
+  list inside=mypyg]{code}[4][]{%
+  breakable,
+  enhanced,
+  listing only,
+  colback=white,
+  colframe=black!90,
+  colbacktitle=white,
+  coltitle=black,
+  pad at break*=1mm,
+  toptitle=0.15em,
+  bottomtitle=0.1em,
+  boxrule=0.07em,
+  fonttitle=\bfseries,
+  top=1mm,
+  left=1mm,
+  arc=0.5mm,
+  bottom=1mm,
+  title={#3},
+  list entry={\protect\numberline{\thetcbcounter}#3},
+  listing options={language=#2, breaklines=true, columns=fullflexible #4},
+  #1
+}
+\BLOCK{ else }
+\RequirePackage{fancyvrb}
+\RequirePackage{fvextra}
+\BLOCK{ if _code_engine == "pygments" }
+\RequirePackage{color}
+\BLOCK{ endif }
+
+\newtcolorbox[auto counter,number within=section,
+  list inside=mypyg]{code}[4][]{%
+  breakable,
+  enhanced,
+  colback=white,
+  colframe=black!90,
+  colbacktitle=white,
+  coltitle=black,
+  pad at break*=1mm,
+  toptitle=0.15em,
+  bottomtitle=0.1em,
+  boxrule=0.07em,
+  fonttitle=\bfseries,
+  top=1mm,
+  left=1mm,
+  arc=0.5mm,
+  bottom=1mm,
+  title={#3},
+  list entry={\protect\numberline{\thetcbcounter}#3},
+  #1
+}
+
+\RecustomVerbatimEnvironment{Verbatim}{Verbatim}{
+    breaklines,
+    breakanywhere,
+    commandchars=\\\{\},
+}
+
+\BLOCK{ if _code_engine == "pygments" }
+\VAR{pygments_style_defs|default('')}
+\BLOCK{ endif }
+\BLOCK{ endif }

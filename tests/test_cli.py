@@ -1091,7 +1091,7 @@ def test_build_invokes_latexmk(tmp_path: Path, monkeypatch: Any) -> None:
     pdflatex_args = [arg for arg in command if arg.startswith("-pdflatex=")]
     assert pdflatex_args
     assert any(engine in pdflatex_args[0] for engine in {"xelatex", "lualatex"})
-    assert "--shell-escape" in pdflatex_args[0]
+    assert "--shell-escape" not in pdflatex_args[0]
     assert command[-1] == "index.tex"
     assert kwargs["cwd"] == output_dir
     assert "build ok" in result.stdout
@@ -1198,7 +1198,8 @@ def test_build_respects_shell_escape(tmp_path: Path, monkeypatch: Any) -> None:
     assert result.exit_code == 0, result.stdout
     assert calls, "latexmk was not invoked"
     pdflatex_args = [arg for arg in calls[0] if arg.startswith("-pdflatex=")]
-    assert pdflatex_args and "--shell-escape" in pdflatex_args[0]
+    assert pdflatex_args
+    assert "--shell-escape" not in pdflatex_args[0]
 
 
 def test_build_failure_reports_summary(tmp_path: Path, monkeypatch: Any) -> None:

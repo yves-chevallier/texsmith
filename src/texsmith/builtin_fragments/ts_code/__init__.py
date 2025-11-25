@@ -18,7 +18,7 @@ def create_fragment() -> FragmentDefinition:
                 slot="extra_packages",
             )
         ],
-        description="Minted-based code listings used by Markdown code blocks.",
+        description="Configurable code listings used by Markdown code blocks.",
         source=template_path,
         context_defaults={"extra_packages": ""},
         should_render=_uses_code,

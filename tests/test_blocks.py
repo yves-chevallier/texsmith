@@ -101,7 +101,7 @@ def test_highlight_block_nested_in_doc_container(renderer: LaTeXRenderer) -> Non
     """
     latex = renderer.render(html)
     assert "\\begin{code}" in latex
-    assert '>>> print("hi")' in latex
+    assert "print(\\PYZdq{}hi\\PYZdq{})" in latex or "PYZgt" in latex
 
 
 def test_inline_code_in_doc_container(renderer: LaTeXRenderer) -> None:
