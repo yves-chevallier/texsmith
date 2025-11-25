@@ -20,6 +20,7 @@ fragments = [
     "ts-callouts",
     "ts-code",
     "ts-glossary",
+    "ts-bibliography",
     "ts-todolist",
 ]
 

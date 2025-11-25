@@ -123,6 +123,12 @@ def _is_multiline_footnote(text: str) -> bool:
     return len(lines) > 1
 
 
+def _is_bibliography_placeholder(text: str) -> bool:
+    """Return True when a footnote just points readers to the bibliography."""
+    normalised = text.strip().rstrip(".").strip().lower()
+    return normalised in {"see bibliography", "see the bibliography"}
+
+
 _DOI_KEY_PATTERN = r"10\.\d{4,9}/[^\s,\]]+"
 _CITATION_KEY_PATTERN = rf"(?:{_DOI_KEY_PATTERN}|[A-Za-z0-9_\-:]+)"
 _DOI_KEY_RE = re.compile(rf"^{_DOI_KEY_PATTERN}$")
@@ -553,7 +559,8 @@ def render_footnotes(root: Tag, context: RenderContext) -> None:
                 continue
             # Fall back to default handling/warnings for unresolved citations.
         if footnote_id and footnote_id in bibliography:
-            if payload:
+            placeholder_note = bool(payload) and _is_bibliography_placeholder(payload)
+            if payload and not placeholder_note:
                 warnings.warn(
                     f"Conflicting bibliography definition for '{footnote_id}'.",
                     stacklevel=2,

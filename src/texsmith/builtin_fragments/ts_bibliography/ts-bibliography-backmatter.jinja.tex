@@ -1,0 +1,35 @@
+\BLOCK{ if citations }
+\BLOCK{ if bibliography_resource }
+\printbibliography
+\BLOCK{ else }
+\begin{thebibliography}{\VAR{citations|length}}
+\BLOCK{ for key in citations }
+\BLOCK{ set entry = bibliography_entries.get(key) }
+\bibitem{\VAR{key}}%
+\BLOCK{ if entry }
+\BLOCK{ set fields = entry['fields'] }
+\BLOCK{ set persons = entry['persons'] }
+\BLOCK{ set authors = persons.get('author', []) }
+\BLOCK{ if authors }
+\VAR{ authors | map(attribute='text') | join(', ') }
+\BLOCK{ endif }
+\BLOCK{ if fields.get('title') }
+\newblock \textit{\VAR{fields['title']}}
+\BLOCK{ endif }
+\BLOCK{ if fields.get('publisher') }
+\newblock \VAR{fields['publisher']}
+\BLOCK{ endif }
+\BLOCK{ if fields.get('year') }
+\newblock (\VAR{fields['year']})
+\BLOCK{ endif }
+\BLOCK{ if fields.get('url') }
+\newblock \url{\VAR{fields['url']}}
+\BLOCK{ endif }
+\par\smallskip
+\BLOCK{ else }
+Missing bibliography entry for \VAR{key}
+\BLOCK{ endif }
+\BLOCK{ endfor }
+\end{thebibliography}
+\BLOCK{ endif }
+\BLOCK{ endif }

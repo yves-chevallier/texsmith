@@ -38,6 +38,7 @@ DEFAULT_MARKDOWN_EXTENSIONS = [
     "texsmith.smallcaps:SmallCapsExtension",
     "texsmith.mermaid:MermaidExtension",
     "texsmith.progressbar:ProgressBarExtension",
+    "texsmith.quotes:TexsmithQuotesExtension",
     "md_in_html",
     "mdx_math",
     "pymdownx.betterem",
@@ -60,7 +61,6 @@ DEFAULT_MARKDOWN_EXTENSIONS = [
     "pymdownx.tabbed",
     "pymdownx.tasklist",
     "pymdownx.tilde",
-    "smarty",
     "tables",
     "toc",
 ]

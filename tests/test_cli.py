@@ -617,6 +617,51 @@ Main discussion.
     assert "Front matter abstract." in content
 
 
+def test_promoted_title_keeps_section_depth_for_slots(tmp_path: Path) -> None:
+    runner = CliRunner()
+    markdown_file = tmp_path / "paper.md"
+    markdown_file.write_text(
+        """---
+press:
+  subtitle: Subtitle
+  slots:
+    abstract: Abstract
+---
+# Title
+
+## Abstract
+
+abstract
+
+## Section
+
+section
+""",
+        encoding="utf-8",
+    )
+
+    template_dir = _template_path("article")
+    output_dir = tmp_path / "out"
+    result = runner.invoke(
+        app,
+        [
+            str(markdown_file),
+            "--output-dir",
+            str(output_dir),
+            "--template",
+            str(template_dir),
+        ],
+    )
+
+    assert result.exit_code == 0, result.stderr
+    tex_path = output_dir / "paper.tex"
+    content = tex_path.read_text(encoding="utf-8")
+    assert "\\begin{abstract}" in content
+    assert "abstract" in content
+    assert "\\section{Section}\\label{section}" in content
+    assert "\\subsection{Section}" not in content
+
+
 def test_cli_slot_overrides_front_matter(tmp_path: Path) -> None:
     runner = CliRunner()
     markdown_file = tmp_path / "paper.md"
@@ -1050,7 +1095,8 @@ def test_build_invokes_latexmk(tmp_path: Path, monkeypatch: Any) -> None:
     assert command[-1] == "index.tex"
     assert kwargs["cwd"] == output_dir
     assert "build ok" in result.stdout
-    assert "Build Outputs" in result.stdout
+    assert "Build Outputs" not in result.stdout
+    assert "Main document" in result.stdout
     assert "PDF" in result.stdout
 
 
@@ -1206,6 +1252,23 @@ def test_build_failure_reports_summary(tmp_path: Path, monkeypatch: Any) -> None
     assert "latexmk failure" in result.stderr
     assert "Undefined control sequence" in result.stderr
     assert "index.log" in result.stderr
+
+
+def test_html_output_with_template_metadata(tmp_path: Path) -> None:
+    runner = CliRunner()
+    doc = tmp_path / "doc.md"
+    doc.write_text(
+        "---\npress:\n  template: article\n---\n# Title\n\nBody\n",
+        encoding="utf-8",
+    )
+
+    result = runner.invoke(app, [str(doc), "--html"])
+
+    output_file = tmp_path / "build" / "doc.html"
+    assert result.exit_code == 0, result.stdout
+    assert output_file.exists()
+    content = output_file.read_text(encoding="utf-8")
+    assert "<h1" in content and "Title" in content
 
 
 def test_cli_state_per_context_isolated() -> None:

@@ -1,2 +1,5 @@
-all:
-	uv run texsmith booby.md --output build/ -apaper=a5 --build -amargin=1.5cm
+all: booby.md booby.png
+	uv run texsmith $< -obuild --build -tarticle
+clean:
+	rm -rf build
+.PHONY: all clean

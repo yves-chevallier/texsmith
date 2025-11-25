@@ -1,11 +1,26 @@
 \ProvidesPackage{ts-callouts}[2025/11/21 TeXSmith Callouts (generated)]
 
 \RequirePackage{xcolor}
-\RequirePackage{tcolorbox}
-\tcbuselibrary{breakable,skins}
 \RequirePackage{fontawesome5}
-\RequirePackage{fontspec}
-\RequirePackage{graphicx}
+
+\makeatletter
+\@ifpackageloaded{tcolorbox}{}{%
+  \RequirePackage{tcolorbox}%
+}
+
+\@ifundefined{tcbmany}{%
+  \tcbuselibrary{many}%
+}{}
+
+\@ifundefined{tcbbreakable}{%
+  \tcbuselibrary{breakable}%
+}{}
+
+\@ifundefined{tcbskins}{%
+  \tcbuselibrary{skins}%
+}{}
+
+\makeatother
 
 \newcommand{\texsmithCalloutStyleDefault}{\VAR{callout_style|default('fancy')}}
 \providecommand{\texsmithCalloutStyle}{\texsmithCalloutStyleDefault}
@@ -38,8 +53,57 @@
 
 \BLOCK{ if style == "classic" }
 % Classic (monochrome) style
+\tcbset{callout base/.style={
+  breakable,
+  enhanced,
+  title filled=false,
+  arc=0mm,
+  boxrule=0mm,
+  titlerule=0mm,
+  lefttitle=0mm,
+  leftupper=1mm,
+  left=2mm,
+  colback=white,
+  colbacktitle=white,
+  colframe=black!80,
+  coltitle=black!80,
+  parbox=false,
+  frame hidden,
+  borderline west={1mm}{0mm}{black!60},
+}}
+\BLOCK{ for name, cfg in callouts.items() }
+\tcbset{callout \VAR{name}/.style={callout base,title={\makebox[1.6em][c]{\texsmithCalloutIcon{\VAR{cfg.get("icon","ℹ")}}}}}}
+\BLOCK{ endfor }
 \newcommand{\texsmithCalloutTitleFormat}[1]{~#1}
-\NewDocumentEnvironment{callout}{O{} m}{\begin{tcolorbox}[enhanced,breakable,colframe=black,colback=white,title={#2},#1]}{\end{tcolorbox}}
+\newtcolorbox{callout}[2][]{%
+  callout base,
+  #1,
+  after title={\texsmithCalloutTitleFormat{#2}}%
+}
+\BLOCK{ elif style == "minimal" }
+% Minimal style (borders only, no icons)
+\tcbset{callout base/.style={
+  breakable,
+  enhanced,
+  title filled=false,
+  arc=0.7mm,
+  boxrule=0.3mm,
+  titlerule=0mm,
+  lefttitle=0mm,
+  leftupper=1mm,
+  colback=white,
+  colframe=black,
+  parbox=false,
+}}
+\BLOCK{ for name, cfg in callouts.items() }
+\tcbset{callout \VAR{name}/.style={callout base}}
+\BLOCK{ endfor }
+\newcommand{\texsmithCalloutTitleFormat}[1]{~#1}
+\newtcolorbox{callout}[2][]{%
+  callout base,
+  #1,
+  after title={\texsmithCalloutTitleFormat{#2}}%
+}
 \BLOCK{ else }
 % Fancy style (colored, icons)
 \tcbset{callout base/.style={
@@ -59,16 +123,20 @@
 \tcbset{
   callout \VAR{name}/.style={
     callout base,
-    colback=callout\VAR{name|capitalize}Bg,
+    colback=white,
     colframe=callout\VAR{name|capitalize}Frame,
     colbacktitle=callout\VAR{name|capitalize}Frame!5!white,
     coltitle=callout\VAR{name|capitalize}Title,
     borderline west={1.5mm}{0mm}{callout\VAR{name|capitalize}Frame},
-    title={\makebox[1.6em][c]{\raisebox{0.05em}{\scalebox{1.2}{\texsmithCalloutIcon{\VAR{cfg.get("icon", "ℹ")}}}}}},
+    title={\makebox[1.6em][c]{\raisebox{0.05em}{\scalebox{1.2}{\texsmithCalloutIcon{\VAR{cfg.get("icon","ℹ")}}}}}},
   }
 }
 \BLOCK{ endfor }
 
 \newcommand{\texsmithCalloutTitleFormat}[1]{~#1}
-\NewDocumentEnvironment{callout}{O{} m}{\begin{tcolorbox}[callout \texsmithCalloutStyle,after title={\texsmithCalloutTitleFormat{#2}},#1]}{\end{tcolorbox}}
+\newtcolorbox{callout}[2][]{%
+  callout base,
+  #1,
+  after title={\texsmithCalloutTitleFormat{#2}}%
+}
 \BLOCK{ endif }

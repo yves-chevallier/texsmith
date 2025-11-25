@@ -65,6 +65,7 @@ def _collect_packages(context: Mapping[str, object]) -> list[tuple[str, str | No
     _maybe_add("\\hl{" in content, "soul", None)
     _maybe_add("\\keystroke{" in content or "\\keystrokes{" in content, "keystroke", None)
     _maybe_add("\\progressbar{" in content, "progressbar", None)
+    _maybe_add("\\enquote{" in content, "csquotes", None)
     _maybe_add(
         "\\toprule" in content
         or "\\midrule" in content

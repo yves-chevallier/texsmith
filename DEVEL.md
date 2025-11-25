@@ -5,20 +5,24 @@ Roadmap and development notes for TeXSmith. I keep this file as a running checkl
 ## Roadmap
 
 - [x] Test for multi document builds (`texsmith a.md b.md c.md`)
-- [ ] Only load ts-callouts si des callouts are used
-- [ ] Only load ts-code si du code est utilisé
-- [ ] Only load ts-glossary si une glossary est utilisée
-- [ ] Only load ts-index si une index est utilisée
+- [x] Only load ts-callouts si des callouts are used
+- [x] Only load ts-code si du code est utilisé
+- [x] Only load ts-glossary si une glossary est utilisée
+- [x] Only load ts-index si une index est utilisée
+- [x] Demonstrate glossary in book
+- [x] Support glossaries (glossaries package)
+- [ ] csquote
+- [ ] tocloft
+- [ ] multicol
+- [ ] enumitem
 - [ ] Snippet (frame dog ear would be good in the build pdf)
-- [ ] Be verbose in mkdocs during build to indicate what is happening (fetching assets, building...)
-- [ ] docs/syntax/captions.md (captions for figures not working when using texsmith?)
-- [ ] Never use user cache. Always use a .cache local folder avoir spread project data in user home.
+- [ ] Be verbose in mkdocs show what happens (fetching assets, building...)
+- [ ] docs/syntax/captions.md (captions not working when using texsmith?)
+- [ ] Never use user cache. Always use a .cache local?
 - [ ] Make CI pass
 - [ ] Demonstrate multi indexes (dates, ...)
-- [ ] Demonstrate glossary in book
 - [ ] Build snippet with pdflatex when possible (faster)
 - [ ] Complete docstring coverage across the project
-- [ ] Support glossaries (glossaries package)
 - [ ] Support cross-references (cleveref package)
 - [ ] Provide listings/verbatim/minted handling
 - [ ] Add table width controls (auto, fixed width, `tabularx`, `tabulary`, etc.)

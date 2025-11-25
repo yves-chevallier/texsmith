@@ -1,0 +1,10 @@
+\BLOCK{ if citations }
+\usepackage{csquotes}
+\BLOCK{ if bibliography_resource }
+\usepackage[
+  backend=biber,
+  style=\VAR{bibliography_style|default('numeric')},
+]{biblatex}
+\addbibresource{\VAR{bibliography_resource}}
+\BLOCK{ endif }
+\BLOCK{ endif }

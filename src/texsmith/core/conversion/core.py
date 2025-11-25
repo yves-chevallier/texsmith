@@ -399,7 +399,7 @@ def _render_document(
             or (document_state and document_state.requires_shell_escape)
         ),
         language=binder_context.language,
-        has_bibliography=bool(citations),
+        has_bibliography=bool(bibliography_output),
         slot_outputs=dict(slot_outputs),
         default_slot=binding.default_slot,
         document_state=document_state,

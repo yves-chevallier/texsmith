@@ -69,6 +69,19 @@ def _format_path(path: Path) -> str:
         return str(resolved)
 
 
+def _colorize_location(text_cls: Any, *, artifact: str, location: str) -> Any:
+    """Apply per-artifact coloring to locations for Rich tables."""
+    lower_loc = location.lower()
+    style: str | None = None
+    if lower_loc.endswith(".tex"):
+        style = "bright_cyan"
+    elif lower_loc.endswith(".pdf"):
+        style = "bright_green"
+    elif artifact.lower() == "asset" or "/assets/" in lower_loc or lower_loc.startswith("assets"):
+        style = "magenta"
+    return text_cls(location, style=style) if style else text_cls(location)
+
+
 def _render_summary(state: CLIState, title: str, rows: Sequence[tuple[str, str, str]]) -> None:
     """Display a summary table of generated artifacts.
 
@@ -79,19 +92,20 @@ def _render_summary(state: CLIState, title: str, rows: Sequence[tuple[str, str, 
     components = _rich_components()
     has_details = any(bool(details) for _, _, details in rows)
     if console is not None and components is not None:
-        box_module, _panel_cls, table_cls, _text_cls = components
+        box_module, _panel_cls, table_cls, text_cls = components
         table = table_cls(box=box_module.SQUARE, header_style="bold cyan")
         if title:
             table.title = title
         table.add_column("Artifact", style="cyan")
-        table.add_column("Location", style="green")
+        table.add_column("Location")
         if has_details:
             table.add_column("Details", style="magenta")
         for artifact, location, details in rows:
+            location_cell = _colorize_location(text_cls, artifact=artifact, location=location)
             if has_details:
-                table.add_row(artifact, location, details)
+                table.add_row(artifact, location_cell, details)
             else:
-                table.add_row(artifact, location)
+                table.add_row(artifact, location_cell)
         console.print(table)
         return
 
@@ -230,7 +244,7 @@ def present_html_summary(
     rows: list[tuple[str, str, str]] = []
     if output_mode == "file" and output_paths:
         rows.append(("HTML", _format_path(output_paths[0]), ""))
-    elif output_mode == "directory":
+    elif output_mode in {"directory", "template"}:
         for path in output_paths:
             rows.append(("HTML", _format_path(path), ""))
     if rows:
@@ -258,7 +272,7 @@ def present_build_summary(
         rows.append(("Asset", _format_path(asset), ""))
     for debug_html in _detect_debug_html(build_dir):
         rows.append(("Debug HTML", _format_path(debug_html), ""))
-    _render_summary(state, "Build Outputs", rows)
+    _render_summary(state, "", rows)
 
 
 def _format_message_entry(message: LatexMessage) -> str:
