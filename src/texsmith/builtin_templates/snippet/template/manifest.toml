@@ -19,7 +19,15 @@ tlmgr_packages = [
     "hyperref",
     "tikz",
 ]
-fragments = ["ts-fonts", "ts-callouts", "ts-code", "ts-glossary", "ts-index"]
+fragments = [
+    "ts-fonts",
+    "ts-extra",
+    "ts-callouts",
+    "ts-code",
+    "ts-glossary",
+    "ts-index",
+    "ts-todolist",
+]
 
 [latex.template.attributes.language]
 default = "english"
