@@ -22,10 +22,7 @@ class PygmentsLatexHighlighter:
     ) -> None:
         self.commandprefix = commandprefix
         self.style = style
-        self.verboptions = (
-            verboptions
-            or r"breaklines, breakanywhere, commandchars=\\\{\}"
-        )
+        self.verboptions = verboptions or r"breaklines, breakanywhere, commandchars=\\\{\}"
 
     @property
     def style_key(self) -> str:

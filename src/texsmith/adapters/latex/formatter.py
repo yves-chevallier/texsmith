@@ -9,8 +9,9 @@ from typing import TYPE_CHECKING, Any
 from jinja2 import Environment, FileSystemLoader, Template
 from requests.utils import requote_uri as requote_url
 
-from .utils import escape_latex_chars
 from .pygments import PygmentsLatexHighlighter
+from .utils import escape_latex_chars
+
 
 if TYPE_CHECKING:  # pragma: no cover - typing only
     from texsmith.core.context import DocumentState
@@ -128,7 +129,7 @@ class LaTeXFormatter:
         highlight: Iterable[int] | None = None,
         baselinestretch: float | None = None,
         engine: str | None = None,
-        state: "DocumentState | None" = None,
+        state: DocumentState | None = None,
         **_: Any,
     ) -> str:
         """Render code blocks with optional line numbers and highlights."""

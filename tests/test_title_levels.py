@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-import textwrap
 from pathlib import Path
+import textwrap
 
 from texsmith.api.document import Document
 from texsmith.api.templates import get_template

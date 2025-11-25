@@ -43,7 +43,7 @@ def determine_output_target(
     """Infer where conversion output should be written based on CLI arguments."""
     if template_selected:
         if output_option is None:
-            base_dir = documents[0].parent if documents else Path(".")
+            base_dir = documents[0].parent if documents else Path()
             return "template", (base_dir / "build")
         suffix = output_option.suffix.lower()
         if suffix == ".pdf":

@@ -1,8 +1,8 @@
 from __future__ import annotations
 
 from pathlib import Path
-import warnings
 import textwrap
+import warnings
 
 from texsmith.api.document import Document
 from texsmith.api.templates import get_template
