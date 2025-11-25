@@ -50,6 +50,15 @@ def _collect_packages(context: Mapping[str, object]) -> list[tuple[str, str | No
         if condition:
             packages.append((name, options))
 
+    def _string_option(*keys: str) -> str | None:
+        for key in keys:
+            value = context.get(key) if hasattr(context, "get") else None
+            if isinstance(value, str):
+                trimmed = value.strip()
+                if trimmed:
+                    return trimmed
+        return None
+
     lowered = content.lower()
     _maybe_add("\\sout{" in content, "ulem", "[normalem]")
     _maybe_add("\\hl{" in content, "soul", None)
@@ -59,7 +68,8 @@ def _collect_packages(context: Mapping[str, object]) -> list[tuple[str, str | No
 
     link_tokens = ("\\href{", "\\url{", "\\hyperref[", "\\autoref{", "\\nameref{")
     has_links = any(token in content for token in link_tokens)
-    _maybe_add(has_links, "hyperref", None)
+    hyperref_options = _string_option("ts_extra_hyperref_options", "hyperref_options")
+    _maybe_add(has_links, "hyperref", hyperref_options)
     _maybe_add(has_links, "bookmark", None)
 
     _maybe_add("\\adjustbox{" in content, "adjustbox", None)

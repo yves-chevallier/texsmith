@@ -26,10 +26,11 @@ def create_fragment() -> FragmentDefinition:
 
 
 def _uses_todolist(context: Mapping[str, object]) -> bool:
+    tokens = ("\\done", "\\wontfix", "\\begin{todolist}", "\\todolist")
     for value in context.values():
         if not isinstance(value, str):
             continue
-        if "\\done" in value or "\\wontfix" in value:
+        if any(token in value for token in tokens):
             return True
     return False
 
