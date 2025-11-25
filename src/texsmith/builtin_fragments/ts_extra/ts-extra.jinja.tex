@@ -1,0 +1,5 @@
+\BLOCK{ if ts_extra_packages }
+\BLOCK{ for name, options in ts_extra_packages }
+\usepackage\BLOCK{ if options }[\VAR{options}]\BLOCK{ endif }{\VAR{name}}
+\BLOCK{ endfor }
+\BLOCK{ endif }

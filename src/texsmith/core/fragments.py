@@ -244,10 +244,12 @@ class FragmentRenderResult:
 BUILTIN_FRAGMENT_ORDER = [
     "ts-geometry",
     "ts-fonts",
+    "ts-extra",
     "ts-callouts",
     "ts-code",
     "ts-glossary",
     "ts-index",
+    "ts-todolist",
 ]
 
 FRAGMENT_ROOT = Path(__file__).resolve().parent.parent / "builtin_fragments"
