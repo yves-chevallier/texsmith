@@ -405,7 +405,7 @@ def test_article_prefers_lualatex_for_latin_text(
 
     latex_output = result.latex_output
     assert "\\usepackage{ts-fonts}" in latex_output
-    assert "\\usepackage{ts-glossary}" in latex_output
+    assert "\\usepackage{ts-glossary}" not in latex_output
 
 
 def test_article_switches_to_lualatex_for_non_latin_scripts(
@@ -432,5 +432,5 @@ def test_article_switches_to_lualatex_for_non_latin_scripts(
 
     latex_output = result.latex_output
     assert "\\usepackage{ts-fonts}" in latex_output
-    assert "\\usepackage{ts-glossary}" in latex_output
+    assert "\\usepackage{ts-glossary}" not in latex_output
     assert "\\usepackage[T1]{fontenc}" not in latex_output

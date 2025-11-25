@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from collections.abc import Mapping
 from pathlib import Path
 
 from texsmith.core.fragments import FragmentDefinition, FragmentPiece
@@ -26,7 +27,17 @@ def create_fragment() -> FragmentDefinition:
         description="Index helpers with backmatter insertion.",
         source=package_path,
         context_defaults={"extra_packages": "", "fragment_backmatter": ""},
+        should_render=_has_index,
     )
+
+
+def _has_index(context: Mapping[str, object]) -> bool:
+    """Render the index fragment only when index entries are present."""
+    has_flag = context.get("has_index")
+    if isinstance(has_flag, bool) and has_flag:
+        return True
+    entries = context.get("index_terms")
+    return bool(entries)
 
 
 __all__ = ["create_fragment"]
