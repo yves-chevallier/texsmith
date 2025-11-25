@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from collections.abc import Mapping
 from pathlib import Path
 
 from texsmith.core.fragments import FragmentDefinition, FragmentPiece
@@ -26,7 +27,16 @@ def create_fragment() -> FragmentDefinition:
         description="Glossary and acronym helpers.",
         source=package_path,
         context_defaults={"extra_packages": "", "fragment_backmatter": ""},
+        should_render=_has_glossary,
     )
+
+
+def _has_glossary(context: Mapping[str, object]) -> bool:
+    """Render glossary fragment only when glossary or acronyms exist."""
+    if context.get("glossary"):
+        return True
+    acronyms = context.get("acronyms")
+    return bool(acronyms)
 
 
 __all__ = ["create_fragment"]

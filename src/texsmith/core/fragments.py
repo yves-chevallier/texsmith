@@ -89,6 +89,7 @@ class FragmentDefinition:
     source: Path | None = None
     context_defaults: dict[str, Any] = field(default_factory=dict)
     context_injector: Callable[[dict[str, Any], Mapping[str, Any] | None], None] | None = None
+    should_render: Callable[[Mapping[str, Any]], bool] | None = None
 
     @classmethod
     def from_manifest(cls, manifest_path: Path) -> FragmentDefinition:
@@ -311,6 +312,13 @@ def render_fragments(
 
         if fragment.context_injector is not None:
             fragment.context_injector(context, overrides)
+
+        if fragment.should_render is not None:
+            try:
+                if not fragment.should_render(context):
+                    continue
+            except Exception:
+                pass
 
         for piece in fragment.pieces:
             env = _build_environment(piece.template_path.parent)

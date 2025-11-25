@@ -14,17 +14,17 @@ def test_fragments_default_injection(tmp_path: Path) -> None:
 
     tex_content = result.main_tex_path.read_text(encoding="utf-8")
     assert "\\usepackage{ts-fonts}" in tex_content
-    assert "\\usepackage{ts-callouts}" in tex_content
-    assert "\\usepackage{ts-code}" in tex_content
-    assert "\\usepackage{ts-glossary}" in tex_content
-    assert "\\usepackage{ts-index}" in tex_content
+    assert "\\usepackage{ts-callouts}" not in tex_content
+    assert "\\usepackage{ts-code}" not in tex_content
+    assert "\\usepackage{ts-glossary}" not in tex_content
+    assert "\\usepackage{ts-index}" not in tex_content
     assert "\\usepackage[margin=25mm,a4paper]{geometry}" in tex_content
     assert "\\geometry{margin=25mm,a4paper}" in tex_content
-    assert (tmp_path / "build" / "ts-callouts.sty").exists()
+    assert not (tmp_path / "build" / "ts-callouts.sty").exists()
     assert (tmp_path / "build" / "ts-fonts.sty").exists()
-    assert (tmp_path / "build" / "ts-code.sty").exists()
-    assert (tmp_path / "build" / "ts-glossary.sty").exists()
-    assert (tmp_path / "build" / "ts-index.sty").exists()
+    assert not (tmp_path / "build" / "ts-code.sty").exists()
+    assert not (tmp_path / "build" / "ts-glossary.sty").exists()
+    assert not (tmp_path / "build" / "ts-index.sty").exists()
 
 
 def test_custom_fragment_rendering(tmp_path: Path) -> None:

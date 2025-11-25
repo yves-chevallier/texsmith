@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from collections.abc import Mapping
 from pathlib import Path
 
 from texsmith.core.fragments import FragmentDefinition, FragmentPiece
@@ -20,7 +21,18 @@ def create_fragment() -> FragmentDefinition:
         description="Reusable callout styles shared by built-in templates.",
         source=template_path,
         context_defaults={"extra_packages": ""},
+        should_render=_uses_callouts,
     )
+
+
+def _uses_callouts(context: Mapping[str, object]) -> bool:
+    """Detect whether callout environments are present in rendered slots."""
+    for value in context.values():
+        if not isinstance(value, str):
+            continue
+        if "\\begin{callout" in value:
+            return True
+    return False
 
 
 __all__ = ["create_fragment"]
