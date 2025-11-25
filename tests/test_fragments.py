@@ -18,8 +18,7 @@ def test_fragments_default_injection(tmp_path: Path) -> None:
     assert "\\usepackage{ts-code}" not in tex_content
     assert "\\usepackage{ts-glossary}" not in tex_content
     assert "\\usepackage{ts-index}" not in tex_content
-    assert "\\usepackage[margin=25mm,a4paper]{geometry}" in tex_content
-    assert "\\geometry{margin=25mm,a4paper}" not in tex_content
+    assert "\\usepackage[a4paper]{geometry}" in tex_content
     assert not (tmp_path / "build" / "ts-callouts.sty").exists()
     assert (tmp_path / "build" / "ts-fonts.sty").exists()
     assert not (tmp_path / "build" / "ts-code.sty").exists()

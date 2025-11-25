@@ -168,7 +168,7 @@ def test_documentclass_defaults(article_template: WrappableTemplate, tmp_path: P
     wrapped = result.latex_output
     assert r"\documentclass[a4paper]{article}" in wrapped
     assert "landscape]{article}" not in wrapped
-    assert r"\usepackage[margin=25mm,a4paper]{geometry}" in wrapped
+    assert r"\usepackage[a4paper]{geometry}" in wrapped
     assert "\\makeindex" not in wrapped
     assert "\\printindex" not in wrapped
     assert "\\newacronym" not in wrapped
@@ -192,7 +192,7 @@ def test_documentclass_overrides(article_template: WrappableTemplate, tmp_path: 
     )
     wrapped = result.latex_output
     assert r"\documentclass[a3paper,landscape]{article}" in wrapped
-    assert r"\usepackage[margin=25mm,a3paper,landscape]{geometry}" in wrapped
+    assert r"\usepackage[a3paper,landscape]{geometry}" in wrapped
     assert r"\title{Demo Article}" in wrapped
     assert r"\author{Alice Example}" in wrapped
 
