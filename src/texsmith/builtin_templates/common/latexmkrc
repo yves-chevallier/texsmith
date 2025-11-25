@@ -1,30 +1,34 @@
+\BLOCK{ set _fragments = fragments | default([]) }
+\BLOCK{ set _shell_escape = requires_shell_escape|default(false) or ('ts-code' in _fragments) }
+$root_filename = '\VAR{root_filename|default("texsmith-output")}';
+\BLOCK{ if 'ts-bibliography' in _fragments }
 $bibtex_use = 2;
 $biber = 'biber %O %B';
-$root_filename = '\VAR{root_filename|default("texsmith-output")}';
-
+$clean_ext .= ' %R.run.xml %R.blg';
+\BLOCK{ endif }
 \BLOCK{ if latex_engine == "xelatex" }
 $pdf_mode = 5;
-$xelatex = 'xelatex\BLOCK{ if requires_shell_escape|default(false) } --shell-escape\BLOCK{ endif } %O %S';
+$xelatex = 'xelatex\BLOCK{- if _shell_escape } --shell-escape\BLOCK{- endif } %O %S';
 \BLOCK{ elif latex_engine == "lualatex" }
 $pdf_mode = 4;
-$lualatex = 'lualatex\BLOCK{ if requires_shell_escape|default(false) } --shell-escape\BLOCK{ endif } %O %S';
+$lualatex = 'lualatex\BLOCK{- if _shell_escape } --shell-escape\BLOCK{- endif } %O %S';
 \BLOCK{ else }
 $pdf_mode = 1;
-$pdflatex = 'pdflatex\BLOCK{ if requires_shell_escape|default(false) } --shell-escape\BLOCK{ endif } %O %S';
+$pdflatex = 'pdflatex\BLOCK{- if _shell_escape } --shell-escape\BLOCK{- endif } %O %S';
 \BLOCK{ endif }
-
+\BLOCK{ if 'ts-index' in _fragments }
 if (system("which texindy >/dev/null 2>&1") == 0) {
   $makeindex = 'texindy %O -o %D %S';
 } else {
   $makeindex = 'makeindex %O -o %D %S';
 }
-$clean_ext .= ' %R.run.xml %R.blg';
-
+\BLOCK{ endif }
+\BLOCK{ if 'ts-glossary' in _fragments }
 add_cus_dep('glo', 'gls', 0, 'run_makeglossaries');
 add_cus_dep('acn', 'acr', 0, 'run_makeglossaries');
-
 sub run_makeglossaries {
   my ($base) = @_;
   my $cmd = "makeglossaries \"$base\"";
   return system($cmd);
 }
+\BLOCK{ endif }

@@ -6,7 +6,7 @@ name = "snippet"
 version = "0.1.4"
 entrypoint = "template/template.tex"
 engine = "lualatex"
-shell_escape = true
+shell_escape = false
 texlive_year = 2023
 tlmgr_packages = [
     "babel",

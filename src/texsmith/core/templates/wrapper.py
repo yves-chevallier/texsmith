@@ -164,6 +164,7 @@ def wrap_template_document(
         else:
             manifest_fragments = getattr(template.info, "fragments", None)
             fragment_names = list(manifest_fragments or [])
+    requested_fragments = list(fragment_names)
     callout_overrides = overrides_payload.get("callouts") if overrides_payload else None
     callouts_defs = normalise_callouts(
         merge_callouts(
@@ -176,6 +177,7 @@ def wrap_template_document(
     declared_slots, _default_slot = template.info.resolve_slots()
     declared_slot_names = set(declared_slots.keys())
     declared_vars = _discover_template_variables(template)
+    rendered_fragments: set[str] = set()
     if fragment_names:
         fragment_context: dict[str, Any] = template_context
         if overrides_payload:
@@ -196,6 +198,10 @@ def wrap_template_document(
         )
         variable_injections = fragment_result.variable_injections
         fragment_providers = fragment_result.providers
+        for provider_list in fragment_providers.values():
+            rendered_fragments.update(provider_list)
+    template_context["requested_fragments"] = requested_fragments
+    template_context["fragments"] = sorted(rendered_fragments)
 
     if variable_injections:
         for variable_name, injections in variable_injections.items():

@@ -407,3 +407,66 @@ def test_latexmkrc_content_optional_sections() -> None:
     assert "$makeindex = 'texindy %O -o %D %S';" in content
     assert "makeglossaries" in content
     assert "--shell-escape" not in content
+
+
+def test_templated_latexmkrc_includes_optional_tools_when_fragments_render(
+    tmp_path: Path,
+) -> None:
+    runtime = load_template_runtime("article")
+    session = TemplateSession(runtime=runtime)
+
+    doc_path = _write_markdown(
+        tmp_path,
+        "article.md",
+        """
+        This study references prior work.[^LAWRENCE19841632]
+
+        ```python
+        print("hi")
+        ```
+        """,
+    )
+    session.add_document(Document.from_markdown(doc_path))
+    session.add_bibliography(FIXTURE_BIB)
+
+    build_dir = tmp_path / "templated-rc-fragments"
+    session.render(build_dir)
+
+    latexmkrc = build_dir / ".latexmkrc"
+    assert latexmkrc.exists()
+    content = latexmkrc.read_text(encoding="utf-8")
+    assert "$bibtex_use = 2;" in content
+    assert "--shell-escape" in content
+    assert "$makeindex" not in content
+    assert "makeglossaries" not in content
+    assert "\n\n\n" not in content
+    for line in content.splitlines():
+        assert line == line.rstrip()
+
+
+def test_templated_latexmkrc_skips_tools_when_fragments_absent(tmp_path: Path) -> None:
+    runtime = load_template_runtime("article")
+    session = TemplateSession(runtime=runtime)
+
+    doc_path = _write_markdown(
+        tmp_path,
+        "article.md",
+        """
+        # Heading
+        """,
+    )
+    session.add_document(Document.from_markdown(doc_path))
+
+    build_dir = tmp_path / "templated-rc-minimal"
+    session.render(build_dir)
+
+    latexmkrc = build_dir / ".latexmkrc"
+    assert latexmkrc.exists()
+    content = latexmkrc.read_text(encoding="utf-8")
+    assert "$bibtex_use" not in content
+    assert "$makeindex" not in content
+    assert "makeglossaries" not in content
+    assert "--shell-escape" not in content
+    assert "\n\n\n" not in content
+    for line in content.splitlines():
+        assert line == line.rstrip()
