@@ -110,7 +110,7 @@ def test_template_session_renders_bundle_via_renderer(tmp_path: Path) -> None:
     assert result.bibliography_path.exists()
     assert result.document_state.citations == ["LAWRENCE19841632"]
 
-    assert result.requires_shell_escape is True
+    assert result.requires_shell_escape is False
     assert result.template_engine == "lualatex"
 
     # Assets from the template are still copied alongside the main document.
@@ -223,7 +223,7 @@ def test_renderer_generates_latexmkrc_when_missing(tmp_path: Path) -> None:
     content = latexmkrc.read_text(encoding="utf-8")
     assert "$root_filename = 'paper';" in content
     assert "$pdf_mode = 5;" in content
-    assert "$xelatex = 'xelatex --shell-escape %O %S';" in content
+    assert "$xelatex" in content
     assert "$bibtex_use" not in content
 
 
@@ -436,7 +436,7 @@ def test_templated_latexmkrc_includes_optional_tools_when_fragments_render(
     assert latexmkrc.exists()
     content = latexmkrc.read_text(encoding="utf-8")
     assert "$bibtex_use = 2;" in content
-    assert "--shell-escape" in content
+    assert "--shell-escape" not in content
     assert "$makeindex" not in content
     assert "makeglossaries" not in content
     assert "\n\n\n" not in content

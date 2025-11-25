@@ -1,0 +1,12 @@
+\begin{code}{\VAR{language|default('text')}}{\BLOCK{if filename}\VAR{filename}\BLOCK{endif}}{
+    \BLOCK{- if baselinestretch}baselinestretch=\VAR{baselinestretch}, \BLOCK{endif}
+}
+\begin{Verbatim}[
+    breaklines,
+    breakanywhere,
+    commandchars=\\\{\},
+    \BLOCK{- if linenos}numbers=left, firstnumber=1, stepnumber=1,\BLOCK{endif -}
+    \BLOCK{- if highlight }highlightlines={\VAR{','.join(highlight)}}\BLOCK{endif}
+]
+\VAR{code}\end{Verbatim}
+\end{code}

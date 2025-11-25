@@ -42,6 +42,7 @@ class DocumentState:
     _citation_index: set[str] = field(default_factory=set, init=False, repr=False)
     footnotes: dict[str, str] = field(default_factory=dict)
     index_entries: list[tuple[str, ...]] = field(default_factory=list)
+    pygments_styles: dict[str, str] = field(default_factory=dict)
 
     def remember_acronym(self, term: str, description: str) -> str:
         """Register an acronym definition keyed by a normalised identifier."""

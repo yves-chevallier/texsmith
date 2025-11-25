@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import re
+from collections.abc import Mapping
 
 from bs4.element import NavigableString, Tag
 
@@ -47,6 +48,22 @@ def _is_ascii_art(payload: str) -> bool:
 
 
 _LANGUAGE_TOKEN = re.compile(r"^[A-Za-z0-9_+\-#.]+$")
+_CODE_ENGINES = {"minted", "listings", "verbatim", "pygments"}
+
+
+def _resolve_code_engine(context: RenderContext) -> str:
+    runtime_code = context.runtime.get("code")
+    engine: str | None = None
+    if isinstance(runtime_code, Mapping):
+        raw = runtime_code.get("engine")
+        engine = raw if isinstance(raw, str) else None
+    elif isinstance(runtime_code, str):
+        engine = runtime_code
+
+    candidate = (engine or "").strip().lower()
+    if candidate in _CODE_ENGINES:
+        return candidate
+    return "pygments"
 
 
 def _extract_language_hint(text: str) -> tuple[str | None, str]:
@@ -113,6 +130,7 @@ def render_preformatted_code(element: Tag, context: RenderContext) -> None:
         return
 
     language = _extract_language(code_element) if code_element else "text"
+    engine = _resolve_code_engine(context)
     code_text = (
         code_element.get_text(strip=False) if code_element else element.get_text(strip=False)
     )
@@ -124,7 +142,9 @@ def render_preformatted_code(element: Tag, context: RenderContext) -> None:
     if not code_text.endswith("\n"):
         code_text += "\n"
 
-    context.state.requires_shell_escape = True
+    context.state.requires_shell_escape = (
+        context.state.requires_shell_escape or engine == "minted"
+    )
     latex = context.formatter.codeblock(
         code=code_text,
         language=language,
@@ -132,6 +152,8 @@ def render_preformatted_code(element: Tag, context: RenderContext) -> None:
         filename=None,
         highlight=[],
         baselinestretch=baselinestretch,
+        engine=engine,
+        state=context.state,
     )
 
     context.suppress_children(element)
@@ -168,11 +190,14 @@ def render_code_blocks(element: Tag, context: RenderContext) -> None:
 
     code_text, highlight = _collect_code_listing(code_element)
 
+    engine = _resolve_code_engine(context)
     baselinestretch = 0.5 if _is_ascii_art(code_text) else None
     if not code_text.endswith("\n"):
         code_text += "\n"
 
-    context.state.requires_shell_escape = True
+    context.state.requires_shell_escape = (
+        context.state.requires_shell_escape or engine == "minted"
+    )
     latex = context.formatter.codeblock(
         code=code_text,
         language=language,
@@ -180,6 +205,8 @@ def render_code_blocks(element: Tag, context: RenderContext) -> None:
         filename=filename,
         highlight=highlight,
         baselinestretch=baselinestretch,
+        engine=engine,
+        state=context.state,
     )
 
     context.suppress_children(element)
@@ -216,7 +243,9 @@ def render_standalone_code_blocks(element: Tag, context: RenderContext) -> None:
             language = hint
             code_text = adjusted
 
-    code_text = code_text.replace("{", r"\{").replace("}", r"\}")
+    engine = _resolve_code_engine(context)
+    if engine == "minted":
+        code_text = code_text.replace("{", r"\{").replace("}", r"\}")
     if not code_text.strip():
         return
     if not code_text.endswith("\n"):
@@ -224,7 +253,9 @@ def render_standalone_code_blocks(element: Tag, context: RenderContext) -> None:
 
     baselinestretch = 0.5 if _is_ascii_art(code_text) else None
 
-    context.state.requires_shell_escape = True
+    context.state.requires_shell_escape = (
+        context.state.requires_shell_escape or engine == "minted"
+    )
     latex = context.formatter.codeblock(
         code=code_text,
         language=language,
@@ -232,6 +263,8 @@ def render_standalone_code_blocks(element: Tag, context: RenderContext) -> None:
         filename=None,
         highlight=[],
         baselinestretch=baselinestretch,
+        engine=engine,
+        state=context.state,
     )
 
     node = mark_processed(NavigableString(latex))
@@ -261,11 +294,14 @@ def render_pre_code_blocks(element: Tag, context: RenderContext) -> None:
         return
 
     language = _extract_language(code_element) or _extract_language(element)
+    engine = _resolve_code_engine(context)
     baselinestretch = 0.5 if _is_ascii_art(code_text) else None
     if not code_text.endswith("\n"):
         code_text += "\n"
 
-    context.state.requires_shell_escape = True
+    context.state.requires_shell_escape = (
+        context.state.requires_shell_escape or engine == "minted"
+    )
     latex = context.formatter.codeblock(
         code=code_text,
         language=language,
@@ -273,6 +309,8 @@ def render_pre_code_blocks(element: Tag, context: RenderContext) -> None:
         filename=None,
         highlight=highlight,
         baselinestretch=baselinestretch,
+        engine=engine,
+        state=context.state,
     )
 
     context.mark_processed(element)

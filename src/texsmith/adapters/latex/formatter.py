@@ -4,12 +4,16 @@ from __future__ import annotations
 
 from collections.abc import Callable, Iterable
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from jinja2 import Environment, FileSystemLoader, Template
 from requests.utils import requote_uri as requote_url
 
 from .utils import escape_latex_chars
+from .pygments import PygmentsLatexHighlighter
+
+if TYPE_CHECKING:  # pragma: no cover - typing only
+    from texsmith.core.context import DocumentState
 
 
 TEMPLATE_DIR = Path(__file__).resolve().parent / "partials"
@@ -63,6 +67,8 @@ class LaTeXFormatter:
             self._template_names[key] = relative.as_posix()
 
         self.templates: dict[str, Template] = {}
+        self.default_code_engine = "pygments"
+        self._pygments: PygmentsLatexHighlighter | None = None
 
     @staticmethod
     def _normalise_key(name: str) -> str:
@@ -120,16 +126,64 @@ class LaTeXFormatter:
         filename: str | None = None,
         lineno: bool = False,
         highlight: Iterable[int] | None = None,
+        baselinestretch: float | None = None,
+        engine: str | None = None,
+        state: "DocumentState | None" = None,
         **_: Any,
     ) -> str:
         """Render code blocks with optional line numbers and highlights."""
         highlight = list(highlight or [])
+        normalized_engine = (engine or self.default_code_engine or "pygments").lower()
+        if normalized_engine not in {"minted", "listings", "verbatim", "pygments"}:
+            normalized_engine = "pygments"
+
+        if normalized_engine == "pygments":
+            if self._pygments is None:
+                self._pygments = PygmentsLatexHighlighter()
+            latex_code, style_defs = self._pygments.render(
+                code,
+                language,
+                linenos=lineno,
+                highlight_lines=highlight,
+            )
+            if state is not None and style_defs:
+                state.pygments_styles.setdefault(self._pygments.style_key, style_defs)
+            return self._get_template("codeblock_pygments").render(
+                code=latex_code,
+                language=language,
+                linenos=lineno,
+                filename=filename,
+                baselinestretch=baselinestretch,
+            )
+
+        optimized_highlight = optimize_list(highlight)
+        if normalized_engine == "listings":
+            return self._get_template("codeblock_listings").render(
+                code=code,
+                language=language,
+                linenos=lineno,
+                filename=filename,
+                baselinestretch=baselinestretch,
+                highlight=optimized_highlight,
+            )
+
+        if normalized_engine == "verbatim":
+            return self._get_template("codeblock_verbatim").render(
+                code=code,
+                language=language,
+                linenos=lineno,
+                filename=filename,
+                baselinestretch=baselinestretch,
+                highlight=optimized_highlight,
+            )
+
         return self._get_template("codeblock").render(
             code=code,
             language=language,
             linenos=lineno,
             filename=filename,
-            highlight=optimize_list(highlight),
+            baselinestretch=baselinestretch,
+            highlight=optimized_highlight,
         )
 
     def url(self, text: str, url: str) -> str:

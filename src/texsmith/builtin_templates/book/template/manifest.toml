@@ -84,6 +84,12 @@ allow_empty = false
 normaliser = "babel_language"
 sources = ["press.language", "language"]
 
+[latex.template.attributes.code]
+default = { engine = "pygments" }
+type = "mapping"
+normaliser = "code_options"
+sources = ["press.code", "code"]
+
 [latex.template.attributes.hyperref_options]
 default = "colorlinks=true, linkcolor=black, citecolor=black, plainpages=false, unicode=true, urlcolor=urlcolor"
 type = "string"

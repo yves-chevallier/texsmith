@@ -64,6 +64,7 @@ class ConversionResult:
 
 
 _EMOJI_MODES = {"artifact", "symbola", "color"}
+_CODE_ENGINES = {"minted", "listings", "verbatim", "pygments"}
 
 
 def _coerce_emoji_mode(value: Any) -> str | None:
@@ -71,6 +72,42 @@ def _coerce_emoji_mode(value: Any) -> str | None:
         return None
     candidate = value.strip().lower()
     return candidate if candidate in _EMOJI_MODES else None
+
+
+def _resolve_code_options(
+    binding: TemplateBinding,
+    overrides: Mapping[str, Any] | None,
+) -> dict[str, Any]:
+    """Return the effective code configuration merging defaults and overrides."""
+    default_options: dict[str, Any] = {}
+    instance = binding.instance
+    if instance is not None:
+        try:
+            defaults = instance.info.attribute_defaults()
+        except Exception:
+            defaults = {}
+        code_default = defaults.get("code")
+        if isinstance(code_default, Mapping):
+            default_options.update(code_default)
+
+    merged = dict(default_options)
+    override_sources: list[Any] = []
+    if overrides:
+        if "code" in overrides:
+            override_sources.append(overrides.get("code"))
+        press_section = overrides.get("press")
+        if isinstance(press_section, Mapping) and "code" in press_section:
+            override_sources.append(press_section.get("code"))
+
+    for candidate in override_sources:
+        if isinstance(candidate, Mapping):
+            merged.update(candidate)
+        elif isinstance(candidate, str):
+            merged["engine"] = candidate
+
+    engine_value = str(merged.get("engine", "pygments") or "pygments").strip().lower()
+    merged["engine"] = engine_value if engine_value in _CODE_ENGINES else "pygments"
+    return merged
 
 
 def _extract_emoji_mode(mapping: Mapping[str, Any] | None) -> str | None:
@@ -193,6 +230,8 @@ def _render_document(
     effective_base_level = binding.base_level or 0
     slot_base_levels = binding.slot_levels()
 
+    code_options = _resolve_code_options(binding, binder_context.template_overrides)
+
     runtime_common: dict[str, object] = {
         "numbered": document_context.numbered,
         "source_dir": document_context.source_path.parent,
@@ -214,6 +253,7 @@ def _render_document(
     runtime_common["bibliography_collection"] = binder_context.bibliography_collection
     if binding.name is not None:
         runtime_common["template"] = binding.name
+    runtime_common["code"] = code_options
     if strategy.persist_manifest:
         runtime_common["generate_manifest"] = True
     emoji_mode = _extract_emoji_mode(binder_context.template_overrides)
@@ -253,6 +293,7 @@ def _render_document(
 
     formatter = LaTeXFormatter()
     formatter.legacy_latex_accents = legacy_latex_accents
+    formatter.default_code_engine = code_options.get("engine", formatter.default_code_engine)
     binding.apply_formatter_overrides(formatter)
     renderer: LaTeXRenderer | None = None
 
