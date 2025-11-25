@@ -17,6 +17,7 @@ tlmgr_packages = [
 fragments = [
     "ts-fonts",
     "ts-extra",
+    "ts-keystrokes",
     "ts-callouts",
     "ts-code",
     "ts-glossary",
@@ -179,6 +180,4 @@ default = true
 strip_heading = true
 
 [latex.template.assets]
-"todolist.sty" = { source = "../common/todolist.sty" }
-"keystroke.sty" = { source = "../common/keystroke.sty" }
 "fonts/modernline.otf" = { source = "fonts/modernline.otf" }

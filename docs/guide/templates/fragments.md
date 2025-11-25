@@ -7,18 +7,27 @@ while staying configurable from front matter or your own extensions.
 
 ## Built-in fragments
 
+`ts-geometry`
+: page size/orientation glue that mirrors `press.paper`/`press.geometry` options.
 `ts-fonts`
 : font setup, emoji handling, and fallback management. It also
   connects to the font matcher to warn about missing fonts on the host.
+`ts-extra`
+: opt-in aux packages detected from the rendered content (hyperref, soul, ulem, etc.).
+`ts-keystrokes`
+: renders `\keystroke{…}` shortcuts with styled TikZ boxes when they appear in content.
 `ts-callouts`
 : admonition/callout boxes generated from callout definitions.
-
 `ts-code`
 : unified minted/tcolorbox code listing style.
 `ts-index`
 : central imakeidx/macros glue, selects texindy/makeindex and runs `\makeindex` when entries are present.
 `ts-glossary`
 : glossary and acronym wiring: loads `glossaries`, runs `\makeglossaries` when needed, and materialises acronym definitions from front matter with configurable styles.
+`ts-bibliography`
+: bibliography helper that wires `biblatex` into the rendered document.
+`ts-todolist`
+: checklist helpers providing `\done`, `\wontfix`, and the `todolist` environment when they are referenced.
 
 All built-in templates default to rendering these fragments. They are
 written into the build directory as `ts-*.sty` and loaded via
@@ -70,10 +79,12 @@ preamble—typically next to other package imports. No TOML manifest changes are
 required; the core runtime resolves fragments before rendering.
 
 Built-in templates already include this placeholder and opt into
-`ts-fonts`, `ts-callouts`, `ts-code`, `ts-glossary`, and `ts-index` by default via the template runtime
-extras. Third-party templates can also declare default fragments in their
-`TemplateRuntime.extras["fragments"]` or let users supply their own through
-front matter.
+`ts-geometry`, `ts-fonts`, `ts-extra`, `ts-keystrokes`, `ts-callouts`, `ts-code`,
+`ts-glossary`, `ts-index`, `ts-bibliography`, and `ts-todolist` via the template
+runtime extras; conditional fragments only render when their macros are present
+in the rendered LaTeX. Third-party templates can also declare default fragments
+in their `TemplateRuntime.extras["fragments"]` or let users supply their own
+through front matter.
 
 ### Passing variables to fragments
 

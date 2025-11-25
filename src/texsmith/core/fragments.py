@@ -245,6 +245,7 @@ BUILTIN_FRAGMENT_ORDER = [
     "ts-geometry",
     "ts-fonts",
     "ts-extra",
+    "ts-keystrokes",
     "ts-callouts",
     "ts-code",
     "ts-glossary",

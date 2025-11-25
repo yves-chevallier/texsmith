@@ -28,6 +28,7 @@ fragments = [
     "ts-geometry",
     "ts-fonts",
     "ts-extra",
+    "ts-keystrokes",
     "ts-callouts",
     "ts-code",
     "ts-glossary",
@@ -202,6 +203,4 @@ strip_heading = true
 "covers/circles.tex" = { source = "covers/circles.tex", template = true }
 "titlepage.tex" = { source = "template/titlepage.tex", template = true }
 "imprint.tex" = { source = "template/imprint.tex", template = true }
-"todolist.sty" = { source = "../common/todolist.sty" }
-"keystroke.sty" = { source = "../common/keystroke.sty" }
 ".latexmkrc" = { source = "../common/latexmkrc", template = true }
