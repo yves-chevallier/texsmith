@@ -31,7 +31,10 @@ def _has_packages(context: Mapping[str, object]) -> bool:
     return bool(packages)
 
 
-def _inject_packages(context: dict[str, object], overrides: Mapping[str, object] | None = None) -> None:
+def _inject_packages(
+    context: dict[str, object], overrides: Mapping[str, object] | None = None
+) -> None:
+    _ = overrides
     context["ts_extra_packages"] = _collect_packages(context)
 
 

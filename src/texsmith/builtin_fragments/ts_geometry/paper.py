@@ -12,7 +12,7 @@ from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_valida
 from texsmith.core.templates.manifest import TemplateError
 
 
-DEFAULT_MARGIN = "2.5cm"
+DEFAULT_MARGIN: str | None = None
 _FORMAT_SUFFIX = "paper"
 _KNOWN_FORMATS = {f"{family}{index}" for family in ("a", "b", "c") for index in range(0, 7)} | {
     "letter",
@@ -175,16 +175,16 @@ class PaperSpec(BaseModel):
         orientation_option = "landscape" if self.orientation == "landscape" else None
         return paper_option, orientation_option
 
-    def geometry_options(self, *, default_margin: str = DEFAULT_MARGIN) -> list[str]:
+    def geometry_options(self, *, default_margin: str | None = DEFAULT_MARGIN) -> list[str]:
         options: list[str] = []
         margin_value = self.margin or _normalise_margin(default_margin)
-        if isinstance(margin_value, str):
-            if margin_value:
+        if margin_value:
+            if isinstance(margin_value, str):
                 options.append(f"margin={margin_value}")
-        elif isinstance(margin_value, dict):
-            for key, dim in margin_value.items():
-                if dim:
-                    options.append(f"{key}={dim}")
+            elif isinstance(margin_value, dict):
+                for key, dim in margin_value.items():
+                    if dim:
+                        options.append(f"{key}={dim}")
 
         paper_option, orientation_option = self.to_documentclass_options()
         if paper_option:

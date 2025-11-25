@@ -13,6 +13,17 @@ press:
 
 The supported formats include but are not limited to: a0, a1, a2, a3, a4, a5, a6, b0, b1, b2, b3, b4, b5, b6, c0, c1, c2, c3, c4, c5, c6, letter, legal, executive, ansia, ansib, ansic, ansid, ansie.
 
+!!! note
+
+    The default format is `a4`, in contrast to LaTeX’s `letter` default.
+    Globally, only the United States, Canada, Mexico, and a few Caribbean
+    countries primarily use the `letter` size -- roughly 500 million people. The
+    rest of the world, representing more than 6 billion people, relies on `a4`
+    as the standard paper size. Given this overwhelming majority, TeXSmith
+    defaults to `a4` to better serve its global user base. Sorry, folks in the
+    US, Canada, and Mexico -- TeXSmith is opinionated and has chosen the
+    broadest consensus!
+
 ## Orientation
 
 You can set the page orientation using the `paper.orientation` key. The possible values are `portrait` and `landscape`. For example, to set the orientation to landscape, you would use:
