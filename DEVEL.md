@@ -38,6 +38,83 @@ Roadmap and development notes for TeXSmith. I keep this file as a running checkl
 - [ ] Letterine
 - [ ] uv run mkdocs build #--strict not yet ready
 
+## Beading bordel
+
+Ca fait trop longtemps dans le projet que j'ai de sproblèmes avec les titres les offets il faut qu'on résolve ça une fois pour toute
+
+Voici les conditions des headings (association <h1>...<h6> aux \part \section \chapter):
+
+1. Le slot d'injection de la template dispose d'un paramètre dans le toml du niveau minimum autorisé (chapter, section…)
+2. On considère le niveau le plus élevé d'un document comme niveau d'offset 0. Si j'ai que des `##` et `###` dans un document le niveau le plus haut `<h2>` est donc considéré comme le niveau 1 soit un offset de -1.
+3. Si un titre est promu dans un document `#\n##\n##\n`, il resulte que le document à la forme `##\n##\n` et le niveau d'offset est de -1 aussi. Si le titre n'est pas promu l'offset est 0
+4. L'offset du document est ajouté à l'offset de la template. Si la template a section comme premier niveau (1 pour section), il est ajouté à l'offset résultant
+
+Quelques cas de figure:
+
+Title given:
+
+```md
+---
+title: Title # Title is given here so we do not offset the headings
+press:
+  template: article # niveau de base mainmatter default slot: 1 pour section
+---
+## section
+### subsection
+### subsection
+## section
+### subsection
+```
+
+```md
+---
+title: Title # Title is given here so we do not offset the headings
+press:
+  template: book # niveau de base mainmatter default slot: -1 pour section
+---
+## section
+### subsection
+### subsection
+## section
+### subsection
+```
+
+No isolated heading in the document, so no title promoted:
+
+```md
+---
+press:
+  template: article # niveau de base mainmatter default slot: 1 pour section
+---
+## section
+### subsection
+### subsection
+## section
+### subsection
+```
+
+Title automatically promoted:
+
+```md
+---
+press:
+  template: article # niveau de base mainmatter default slot: 1 pour section
+---
+# Title
+## section
+### subsection
+### subsection
+## section
+### subsection
+```
+
+Multidocuments:
+
+```yml
+press:
+  template: article
+```
+
 ## Book Template Integration with MkDocs
 
 Update the book template integration:
