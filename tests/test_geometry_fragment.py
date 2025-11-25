@@ -28,9 +28,7 @@ def test_geometry_fragment_renders_watermark_and_binding() -> None:
         "\\usepackage[top=20mm,left=10mm,letterpaper,bindingoffset=12.7mm,heightrounded]{geometry}"
         in rendered
     )
-    assert (
-        "\\geometry{top=20mm,left=10mm,letterpaper,bindingoffset=12.7mm,heightrounded}" in rendered
-    )
+    assert "\\geometry" not in rendered
     assert "\\AddToHook{shipout/background}" in rendered
     assert "\\node[rotate=45,scale=7,text opacity=0.06]" in rendered
 

@@ -3,7 +3,6 @@
 \BLOCK{ set options = geometry_options|default(fallback)|trim }
 \BLOCK{ if options }
 \usepackage[\VAR{options}]{geometry}
-\geometry{\VAR{options}}
 \BLOCK{ else }
 \usepackage{geometry}
 \BLOCK{ endif }
