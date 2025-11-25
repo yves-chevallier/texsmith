@@ -7,7 +7,7 @@ from texsmith.core.fragments import FragmentDefinition, FragmentPiece
 
 def create_fragment() -> FragmentDefinition:
     """Return the callouts fragment definition."""
-    template_path = Path(__file__).with_name("ts-callouts.sty.jinja")
+    template_path = Path(__file__).with_name("ts-callouts.jinja.sty")
     return FragmentDefinition(
         name="ts-callouts",
         pieces=[

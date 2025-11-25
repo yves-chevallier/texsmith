@@ -4,7 +4,11 @@ Roadmap and development notes for TeXSmith. I keep this file as a running checkl
 
 ## Roadmap
 
-- [ ] Test for multi document builds (`texsmith a.md b.md c.md`)
+- [x] Test for multi document builds (`texsmith a.md b.md c.md`)
+- [ ] Only load ts-callouts si des callouts are used
+- [ ] Only load ts-code si du code est utilisé
+- [ ] Only load ts-glossary si une glossary est utilisée
+- [ ] Only load ts-index si une index est utilisée
 - [ ] Snippet (frame dog ear would be good in the build pdf)
 - [ ] Be verbose in mkdocs during build to indicate what is happening (fetching assets, building...)
 - [ ] docs/syntax/captions.md (captions for figures not working when using texsmith?)

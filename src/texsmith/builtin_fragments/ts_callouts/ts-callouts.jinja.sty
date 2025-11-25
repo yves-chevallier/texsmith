@@ -1,7 +1,18 @@
 \ProvidesPackage{ts-callouts}[2025/11/21 TeXSmith Callouts (generated)]
 
 \RequirePackage{xcolor}
-\RequirePackage[many,minted]{tcolorbox}
+\RequirePackage{tcolorbox}
+
+\makeatletter
+\@ifpackageloaded{tcolorbox}{}{%
+  \RequirePackage{tcolorbox}%
+}
+
+\@ifundefined{tcbmany}{%
+  \tcbuselibrary{many}%
+}{}
+\makeatother
+
 \tcbuselibrary{breakable,skins}
 \RequirePackage{fontawesome5}
 \RequirePackage{fontspec}

@@ -7,7 +7,7 @@ from texsmith.core.fragments import FragmentDefinition, FragmentPiece
 
 def create_fragment() -> FragmentDefinition:
     """Return the code listings fragment definition."""
-    template_path = Path(__file__).with_name("ts-code.jinja.tex")
+    template_path = Path(__file__).with_name("ts-code.jinja.sty")
     return FragmentDefinition(
         name="ts-code",
         pieces=[

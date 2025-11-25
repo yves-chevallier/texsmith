@@ -142,7 +142,7 @@ class FragmentDefinition:
 def _package_name(identifier: str) -> str:
     candidate = Path(identifier)
     name = candidate.name
-    for suffix in (".sty.jinja", ".jinja.tex", ".sty", ".tex"):
+    for suffix in (".jinja.sty", ".jinja.tex", ".sty", ".tex"):
         if name.endswith(suffix):
             name = name[: -len(suffix)]
     return Path(name).stem

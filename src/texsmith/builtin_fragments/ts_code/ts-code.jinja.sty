@@ -1,6 +1,28 @@
 \ProvidesPackage{ts-code}[2025/11/21 TeXSmith Code listings (generated)]
 
-\usepackage[many,minted]{tcolorbox}
+\makeatletter
+% Ensure tcolorbox is available; pass [many] when we load it ourselves.
+\@ifpackageloaded{tcolorbox}{}{%
+  \RequirePackage{tcolorbox}%
+}
+
+\makeatletter
+% Only load minted when not already present
+\@ifpackageloaded{minted}{}{%
+  \RequirePackage{minted}%
+}
+
+% Load many library if not already loaded
+\@ifundefined{tcbmany}{%
+  \tcbuselibrary{many}%
+}{}
+
+% Load the tcolorbox minted library when needed
+\@ifundefined{tcbminted}{%
+  \tcbuselibrary{minted}%
+}{}
+\makeatother
+
 \usemintedstyle{bw}
 
 \newtcblisting[auto counter,number within=section,

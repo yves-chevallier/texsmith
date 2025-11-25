@@ -213,18 +213,6 @@ class ConversionService:
                     emitter=emitter,
                 )
 
-            if (
-                request.template is None
-                and request.base_level == 0
-                and not extract_title
-                and document.options.base_level == 0
-            ):
-                first_level = document.first_heading_level()
-                if first_level is not None and first_level > 1:
-                    document.options.base_level -= 1
-                else:
-                    document.options.base_level = 1
-
             documents.append(document)
             mapping[path] = document
 

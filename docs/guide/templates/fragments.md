@@ -39,9 +39,9 @@ press:
     - ts-callouts
     - ts-code
     - ts-glossary
-    - fragments/foo.sty.jinja  # custom fragment located next to your doc
+    - fragments/foo.jinja.sty  # custom fragment located next to your doc
   foo:
-    value: 42         # variables consumed by foo.sty.jinja
+    value: 42         # variables consumed by foo.jinja.sty
 ---
 ```
 
@@ -54,7 +54,7 @@ Fragments are plain Jinja templates that output LaTeX. The package name is the
 stem of the file unless it is a built-in registered name.
 
 ```tex
-% fragments/foo.sty.jinja
+% fragments/foo.jinja.sty
 \ProvidesPackage{foo}[2025/01/01 Example fragment]
 \newcommand{\FooValue}{\VAR{foo.value|default(0)}}
 ```
