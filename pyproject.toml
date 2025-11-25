@@ -93,6 +93,7 @@ exclude = [
 
 [project.scripts]
 texsmith = "texsmith.ui.cli.app:main"
+check = "texsmith.devtools:main"
 
 [dependency-groups]
 dev = [

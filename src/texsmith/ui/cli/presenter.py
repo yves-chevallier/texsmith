@@ -424,8 +424,8 @@ __all__ = [
     "consume_event_diagnostics",
     "parse_latex_log",
     "present_build_summary",
-    "present_html_summary",
     "present_conversion_summary",
+    "present_html_summary",
     "present_latexmk_failure",
     "present_rule_descriptions",
 ]
