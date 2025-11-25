@@ -10,7 +10,7 @@ from texsmith.core.templates import (
     copy_template_assets,
     load_template,
 )
-from texsmith.core.templates.wrapper import wrap_template_document
+from texsmith.core.templates.wrapper import _squash_blank_lines, wrap_template_document
 
 
 @pytest.fixture
@@ -28,6 +28,14 @@ def book_template(project_root: Path) -> WrappableTemplate:
 @pytest.fixture
 def article_template(project_root: Path) -> WrappableTemplate:
     return load_template(str(project_root / "src" / "texsmith" / "builtin_templates" / "article"))
+
+
+def test_squash_blank_lines_trims_trailing_whitespace() -> None:
+    dirty = "First line   \nSecond\t \n\n  \n\n\nTail  "
+
+    cleaned = _squash_blank_lines(dirty)
+
+    assert cleaned == "First line\nSecond\n\nTail"
 
 
 def test_iter_assets_declares_required_files(book_template: WrappableTemplate) -> None:

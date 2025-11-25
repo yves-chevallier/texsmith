@@ -11,8 +11,9 @@ Roadmap and development notes for TeXSmith. I keep this file as a running checkl
 - [x] Only load ts-index si une index est utilisée
 - [x] Demonstrate glossary in book
 - [x] Support glossaries (glossaries package)
+- [x] csquote
+- [ ] Manage title fragment to insert title meta
 - [ ] Manage fragments order from before/after hooks instead of in fragments.py
-- [ ] csquote
 - [ ] tocloft
 - [ ] multicol
 - [ ] enumitem
