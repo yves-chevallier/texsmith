@@ -200,6 +200,15 @@ DebugRulesOption = Annotated[
     ),
 ]
 
+HtmlOnlyOption = Annotated[
+    bool,
+    typer.Option(
+        "--html",
+        help="Output intermediate HTML instead of LaTeX/PDF.",
+        rich_help_panel=OUTPUT_PANEL,
+    ),
+]
+
 LanguageOption = Annotated[
     str | None,
     typer.Option(

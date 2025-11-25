@@ -221,6 +221,22 @@ def present_conversion_summary(
         _render_summary(state, "Conversion Summary", rows)
 
 
+def present_html_summary(
+    *,
+    state: CLIState,
+    output_mode: str,
+    output_paths: list[Path],
+) -> None:
+    rows: list[tuple[str, str, str]] = []
+    if output_mode == "file" and output_paths:
+        rows.append(("HTML", _format_path(output_paths[0]), ""))
+    elif output_mode == "directory":
+        for path in output_paths:
+            rows.append(("HTML", _format_path(path), ""))
+    if rows:
+        _render_summary(state, "HTML Output", rows)
+
+
 def present_build_summary(
     *,
     state: CLIState,
@@ -394,6 +410,7 @@ __all__ = [
     "consume_event_diagnostics",
     "parse_latex_log",
     "present_build_summary",
+    "present_html_summary",
     "present_conversion_summary",
     "present_latexmk_failure",
     "present_rule_descriptions",

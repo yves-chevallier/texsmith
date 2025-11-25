@@ -373,6 +373,11 @@ class Document:
         )
 
     @property
+    def html(self) -> str:
+        """Return the intermediate HTML content."""
+        return self._html
+
+    @property
     def front_matter(self) -> Mapping[str, Any]:
         """Return a deep copy of the front-matter mapping."""
         return copy.deepcopy(self._front_matter)
