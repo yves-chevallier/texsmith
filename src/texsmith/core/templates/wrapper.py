@@ -145,6 +145,11 @@ def wrap_template_document(
                 },
         )
 
+    if document_state.citations and bibliography_path is not None:
+        template_context["bibliography"] = bibliography_path.stem
+        template_context["bibliography_resource"] = bibliography_path.name
+        template_context.setdefault("bibliography_style", "plain")
+
     # Render fragments and inject declarations into template variables.
     source_dir = None
     overrides_press = overrides_payload.get("press") if overrides_payload else None

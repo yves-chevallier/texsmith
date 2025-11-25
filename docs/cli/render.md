@@ -246,13 +246,13 @@ Running latexmk…
 ├─ Log file says output to 'hello.pdf'
 └─ All targets (hello.pdf) are up-to-date
 Summary — errors: 0, warnings: 0, info: 23
-                   Build Outputs
 ┌───────────────┬──────────────────────────────────┐
 │ Artifact      │ Location                         │
 ├───────────────┼──────────────────────────────────┤
 │ Main document │ /tmp/texsmith-czmi34j1/hello.tex │
 │ PDF           │ hello.pdf                        │
 └───────────────┴──────────────────────────────────┘
+LaTeX paths render in cyan, PDFs in green, and assets in magenta when Rich output is available.
 ```
 
 ## Positional Arguments

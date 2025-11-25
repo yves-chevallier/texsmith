@@ -157,6 +157,14 @@ def render_inline_superscript(element: Tag, context: RenderContext) -> None:
     element.replace_with(NavigableString(latex))
 
 
+@renders("q", phase=RenderPhase.INLINE, name="inline_quote", after_children=True)
+def render_inline_quote(element: Tag, context: RenderContext) -> None:
+    """Render inline quotations using \\enquote{}."""
+    text = element.get_text(strip=False)
+    latex = context.formatter.enquote(text=text)
+    element.replace_with(NavigableString(latex))
+
+
 @renders("div", phase=RenderPhase.BLOCK, name="grid_cards", auto_mark=False)
 def unwrap_grid_cards(element: Tag, _context: RenderContext) -> None:
     """Unwrap ``div.grid-cards`` containers."""

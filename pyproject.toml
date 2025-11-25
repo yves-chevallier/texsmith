@@ -60,6 +60,7 @@ Homepage = "https://github.com/yves-chevallier/texsmith"
 "texsmith.missing_footnotes" = "texsmith.missing_footnotes:MissingFootnotesExtension"
 "texsmith.multi_citations" = "texsmith.multi_citations:MultiCitationExtension"
 "texsmith.mermaid" = "texsmith.mermaid:MermaidExtension"
+"texsmith.quotes" = "texsmith.quotes:TexsmithQuotesExtension"
 
 [project.entry-points."texsmith.renderers"]
 "texsmith.index" = "texsmith.index:register_renderer"

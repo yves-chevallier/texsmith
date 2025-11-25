@@ -711,7 +711,7 @@ def render(
                 emit_error(str(exc), exception=exc)
                 raise typer.Exit(code=1) from exc
             summary_paths.append(resolved_output_target)
-        elif output_mode == "directory":
+        elif output_mode in {"directory", "template"}:
             if resolved_output_target is None:
                 raise typer.BadParameter("Output directory is required when writing HTML files.")
             resolved_output_target.mkdir(parents=True, exist_ok=True)
@@ -723,6 +723,8 @@ def render(
                     emit_error(str(exc), exception=exc)
                     raise typer.Exit(code=1) from exc
                 summary_paths.append(target)
+        elif output_mode == "template-pdf":
+            raise typer.BadParameter("--html cannot be combined with a PDF output target.")
         else:
             raise RuntimeError(f"Unsupported output mode '{output_mode}' for HTML output.")
 

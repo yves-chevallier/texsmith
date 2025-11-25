@@ -249,6 +249,7 @@ BUILTIN_FRAGMENT_ORDER = [
     "ts-code",
     "ts-glossary",
     "ts-index",
+    "ts-bibliography",
     "ts-todolist",
 ]
 

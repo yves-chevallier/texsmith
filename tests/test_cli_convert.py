@@ -112,3 +112,33 @@ Content here.
         assert r"\author{Alice Example\thanks{Example University} \and Bob Example}" in content
         assert r"\date{2024-10-20}" in content
         assert r"\usepackage[french]{babel}" in content
+
+
+def test_render_multi_document_from_cwd(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    """Ensure relative inputs work for multi-document rendering."""
+    monkeypatch.chdir(tmp_path)
+    for name, title in (("a.md", "Zeus"), ("b.md", "Hera"), ("c.md", "Poseidon")):
+        (tmp_path / name).write_text(f"# {title}\n\nHello.", encoding="utf-8")
+    (tmp_path / "config.yml").write_text("press:\n  title: Sample\n", encoding="utf-8")
+
+    output_dir = tmp_path / "build"
+
+    assert render is not None  # for type checkers
+    render(
+        inputs=[
+            Path("a.md"),
+            Path("b.md"),
+            Path("c.md"),
+            Path("config.yml"),
+        ],
+        output=output_dir,
+        template=_template_path("article"),
+    )
+
+    main_tex = output_dir / "main.tex"
+    assert main_tex.exists()
+    fragment_a = output_dir / "a.tex"
+    assert fragment_a.exists()
+    content = fragment_a.read_text(encoding="utf-8")
+    assert "\\section{Zeus}" in content
+    assert "\\subsection{Zeus}" not in content

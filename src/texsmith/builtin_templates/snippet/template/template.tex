@@ -24,14 +24,6 @@
 %\usepackage{tikz}
 %\usetikzlibrary{calc}
 
-\BLOCK{ if bibliography_resource }
-\usepackage[
-  backend=biber,
-  style=\VAR{bibliography_style|default('numeric')},
-]{biblatex}
-\addbibresource{\VAR{bibliography_resource}}
-\BLOCK{ endif }
-
 \BLOCK{ if has_index or index_entries }
 \BLOCK{ set resolved_index_engine = index_engine|default('makeindex') }
 \BLOCK{ endif }
@@ -54,7 +46,6 @@
 \VAR{mainmatter}
 \VAR{backmatter}
 \VAR{fragment_backmatter}
-\BLOCK{ if citations and bibliography_resource }\printbibliography\BLOCK{ endif }
 %     \end{minipage}
 %   };
 
