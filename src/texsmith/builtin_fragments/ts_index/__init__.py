@@ -7,7 +7,7 @@ from texsmith.core.fragments import FragmentDefinition, FragmentPiece
 
 def create_fragment() -> FragmentDefinition:
     """Return the index helpers fragment definition."""
-    package_path = Path(__file__).with_name("ts-index.sty.jinja")
+    package_path = Path(__file__).with_name("ts-index.jinja.sty")
     backmatter_path = Path(__file__).with_name("ts-index-backmatter.jinja.tex")
     return FragmentDefinition(
         name="ts-index",

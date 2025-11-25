@@ -7,7 +7,7 @@ from texsmith.core.fragments import FragmentDefinition, FragmentPiece
 
 def create_fragment() -> FragmentDefinition:
     """Return the fonts fragment definition."""
-    template_path = Path(__file__).with_name("ts-fonts.sty.jinja")
+    template_path = Path(__file__).with_name("ts-fonts.jinja.sty")
     return FragmentDefinition(
         name="ts-fonts",
         pieces=[

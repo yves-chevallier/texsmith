@@ -563,8 +563,12 @@ def render(
     if state_slot_rows:
         state.record_event("slot_assignments", {"entries": state_slot_rows})
 
+    base_level_param_source = ctx.get_parameter_source("base_level") if ctx else None
+    base_level_value = base_level
+    if not template_selected and base_level_param_source in {None, ParameterSource.DEFAULT}:
+        base_level_value = "section"
     try:
-        resolved_base_level = coerce_base_level(base_level, allow_none=False)
+        resolved_base_level = coerce_base_level(base_level_value, allow_none=False)
     except TemplateError as exc:
         raise typer.BadParameter(str(exc)) from exc
 

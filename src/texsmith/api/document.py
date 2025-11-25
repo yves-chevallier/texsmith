@@ -580,7 +580,7 @@ class Document:
 
         base_level = self.options.base_level
         if drop_title_flag:
-            base_level = max(base_level - 1, 0)
+            base_level -= 1
         front_matter = copy.deepcopy(self._front_matter)
         if suppress_title and isinstance(front_matter, dict):
             front_matter.pop("title", None)

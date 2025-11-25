@@ -7,7 +7,7 @@ from texsmith.core.fragments import FragmentDefinition, FragmentPiece
 
 def create_fragment() -> FragmentDefinition:
     """Return the glossary/acronyms fragment definition."""
-    package_path = Path(__file__).with_name("ts-glossary.sty.jinja")
+    package_path = Path(__file__).with_name("ts-glossary.jinja.sty")
     backmatter_path = Path(__file__).with_name("ts-glossary-backmatter.jinja.tex")
     return FragmentDefinition(
         name="ts-glossary",
