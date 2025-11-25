@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from pathlib import Path
+import re
 from typing import Any, Mapping
 
 from jinja2 import meta
@@ -216,6 +217,7 @@ def wrap_template_document(
         main_slot_content,
         context=template_context,
     )
+    latex_output = _squash_blank_lines(latex_output)
 
     asset_paths: list[Path] = []
     if copy_assets:
@@ -250,6 +252,11 @@ def _discover_template_variables(template: WrappableTemplate) -> set[str] | None
         return None
     parsed = env.parse(source)
     return set(meta.find_undeclared_variables(parsed))
+
+
+def _squash_blank_lines(text: str) -> str:
+    """Collapse runs of blank lines to a maximum of one."""
+    return re.sub(r"\n{3,}", "\n\n", text)
 
 
 __all__ = ["TemplateWrapResult", "wrap_template_document"]
