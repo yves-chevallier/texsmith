@@ -47,6 +47,7 @@ from .._options import (
     DisableFallbackOption,
     DisableMarkdownExtensionsOption,
     FullDocumentOption,
+    HtmlOnlyOption,
     HashAssetsOption,
     InputPathArgument,
     LanguageOption,
@@ -71,6 +72,7 @@ from ..presenter import (
     consume_event_diagnostics,
     parse_latex_log,
     present_build_summary,
+    present_html_summary,
     present_conversion_summary,
     present_latexmk_failure,
     present_rule_descriptions,
@@ -356,6 +358,7 @@ def render(
             ),
         ),
     ] = False,
+    html_only: HtmlOnlyOption = False,
     build_pdf: Annotated[
         bool,
         typer.Option(
@@ -418,6 +421,12 @@ def render(
     ctx = click.get_current_context(silent=True)
     typer_ctx = ctx if isinstance(ctx, typer.Context) else None
     state = set_cli_state(ctx=typer_ctx, verbosity=verbose, debug=debug)
+
+    if html_only:
+        build_pdf = False
+        template = None
+        template_info_flag = False
+        template_scaffold = None
 
     if typer_ctx is not None and typer_ctx.resilient_parsing:
         return
@@ -684,6 +693,46 @@ def render(
     except ConversionError as exc:
         emit_error(str(exc), exception=exc)
         raise typer.Exit(code=1) from exc
+
+    if html_only:
+        html_fragments = [(doc.source_path, doc.html) for doc in prepared.documents]
+        if output_mode == "stdout":
+            typer.echo("\n\n".join(fragment for _, fragment in html_fragments))
+            _flush_diagnostics()
+            return
+
+        summary_paths: list[Path] = []
+        if output_mode == "file":
+            if resolved_output_target is None:
+                raise typer.BadParameter("Output path is required when writing HTML to a file.")
+            try:
+                write_output_file(resolved_output_target, html_fragments[0][1])
+            except OSError as exc:
+                emit_error(str(exc), exception=exc)
+                raise typer.Exit(code=1) from exc
+            summary_paths.append(resolved_output_target)
+        elif output_mode == "directory":
+            if resolved_output_target is None:
+                raise typer.BadParameter("Output directory is required when writing HTML files.")
+            resolved_output_target.mkdir(parents=True, exist_ok=True)
+            for source_path, payload in html_fragments:
+                target = resolved_output_target / f"{source_path.stem}.html"
+                try:
+                    write_output_file(target, payload)
+                except OSError as exc:
+                    emit_error(str(exc), exception=exc)
+                    raise typer.Exit(code=1) from exc
+                summary_paths.append(target)
+        else:
+            raise RuntimeError(f"Unsupported output mode '{output_mode}' for HTML output.")
+
+        present_html_summary(
+            state=state,
+            output_mode=output_mode,
+            output_paths=summary_paths,
+        )
+        _flush_diagnostics()
+        return
 
     try:
         response = _SERVICE.execute(request, prepared=prepared)
