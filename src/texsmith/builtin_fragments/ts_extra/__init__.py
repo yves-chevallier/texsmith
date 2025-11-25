@@ -60,10 +60,47 @@ def _collect_packages(context: Mapping[str, object]) -> list[tuple[str, str | No
         return None
 
     lowered = content.lower()
+    _maybe_add("\\nohyphens" in content or "\\nohyphenation" in content, "hyphenat", "[htt]")
     _maybe_add("\\sout{" in content, "ulem", "[normalem]")
     _maybe_add("\\hl{" in content, "soul", None)
     _maybe_add("\\keystroke{" in content or "\\keystrokes{" in content, "keystroke", None)
     _maybe_add("\\progressbar{" in content, "progressbar", None)
+    _maybe_add(
+        "\\toprule" in content
+        or "\\midrule" in content
+        or "\\bottomrule" in content
+        or "\\addlinespace" in content,
+        "booktabs",
+        None,
+    )
+
+    math_tokens = (
+        "\\begin{equation*}",
+        "\\begin{align}",
+        "\\begin{align*}",
+        "\\begin{alignat}",
+        "\\begin{alignat*}",
+        "\\begin{xalignat}",
+        "\\begin{xalignat*}",
+        "\\begin{xxalignat}",
+        "\\begin{flalign}",
+        "\\begin{flalign*}",
+        "\\begin{gather}",
+        "\\begin{gather*}",
+        "\\begin{multline}",
+        "\\begin{multline*}",
+        "\\begin{split}",
+        "\\begin{aligned}",
+        "\\begin{alignedat}",
+        "\\begin{gathered}",
+        "\\begin{multlined}",
+        "\\begin{cases}",
+        "\\begin{equation}",
+    )
+    has_math_env = any(token in content for token in math_tokens)
+    has_math_inline = "$$" in content or "$" in content or "\\[" in content or "\\(" in content
+    _maybe_add(has_math_env or has_math_inline, "amsmath", None)
+
     _maybe_add("\\begin{figure}[h" in lowered or "[h]" in lowered, "float", None)
 
     link_tokens = ("\\href{", "\\url{", "\\hyperref[", "\\autoref{", "\\nameref{")
