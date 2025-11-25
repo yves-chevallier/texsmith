@@ -22,6 +22,7 @@ tlmgr_packages = [
 fragments = [
     "ts-fonts",
     "ts-extra",
+    "ts-keystrokes",
     "ts-callouts",
     "ts-code",
     "ts-glossary",
@@ -101,6 +102,4 @@ depth = "section"
 strip_heading = true
 
 [latex.template.assets]
-"todolist.sty" = { source = "../common/todolist.sty" }
-"keystroke.sty" = { source = "../common/keystroke.sty" }
 ".latexmkrc" = { source = "template/assets/latexmkrc", template = true }

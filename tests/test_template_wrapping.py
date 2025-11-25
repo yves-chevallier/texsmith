@@ -39,7 +39,6 @@ def test_iter_assets_declares_required_files(book_template: WrappableTemplate) -
     assert Path("titlepage.tex") in destinations
     assert Path("imprint.tex") in destinations
     assert Path(".latexmkrc") in destinations
-    assert Path("keystroke.sty") in destinations
 
 
 def test_wrap_document_injects_mainmatter(book_template: WrappableTemplate) -> None:

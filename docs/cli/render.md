@@ -173,12 +173,13 @@ $ texsmith hello.md -tarticle
 
 $ tree build
 build
-├── assets
-├── callouts.sty
+├── .latexmkrc
 ├── hello.tex
-├── keystroke.sty
-└── todolist.sty
+└── ts-fonts.sty
+
 ```
+
+Additional `ts-*` fragments appear only when the document uses their macros.
 
 ### Compile a PDF
 

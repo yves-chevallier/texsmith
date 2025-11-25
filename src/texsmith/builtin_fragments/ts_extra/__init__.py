@@ -63,7 +63,6 @@ def _collect_packages(context: Mapping[str, object]) -> list[tuple[str, str | No
     _maybe_add("\\nohyphens" in content or "\\nohyphenation" in content, "hyphenat", "[htt]")
     _maybe_add("\\sout{" in content, "ulem", "[normalem]")
     _maybe_add("\\hl{" in content, "soul", None)
-    _maybe_add("\\keystroke{" in content or "\\keystrokes{" in content, "keystroke", None)
     _maybe_add("\\progressbar{" in content, "progressbar", None)
     _maybe_add("\\enquote{" in content, "csquotes", None)
     _maybe_add(
