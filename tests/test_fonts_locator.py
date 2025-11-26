@@ -78,11 +78,12 @@ def test_prepare_fonts_updates_context_and_ranges(tmp_path: Path) -> None:
 
     assert result is not None
     assert context["font_path_prefix"] == "./fonts/"
-    assert {"DemoEmoji", "DemoSans"}.issubset(set(context["font_files"].keys()))  # type: ignore[index]
-    assert (tmp_path / "build" / "fonts" / "DemoSans-Regular.otf").exists()
+    assert {"DemoEmoji"}.issubset(set(context["font_files"].keys()))  # type: ignore[index]
     assert context["unicode_font_classes"]  # type: ignore[truthy-bool]
     families = {cls["family"] for cls in context["unicode_font_classes"]}  # type: ignore[index]
-    assert {"DemoEmoji", "DemoSans"} <= families
+    assert {"DemoEmoji"} <= families
+    ranges = {tuple(pair) for cls in context["unicode_font_classes"] for pair in cls["ranges"]}  # type: ignore[index]
+    assert all(int(start, 16) >= 0x80 for start, _ in ranges)
 
 
 def test_kpsewhich_lookup_is_used(monkeypatch, tmp_path: Path) -> None:

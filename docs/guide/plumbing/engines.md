@@ -33,3 +33,11 @@ Omega (and its successor Aleph) were early attempts at adding Unicode and advanc
 ## pTeX / upTeX
 
 Specialized engines designed for Japanese typesetting. pTeX handles vertical writing and Japanese line-breaking rules, while upTeX brings Unicode support to that world. They’re essential in the Japanese TeX community.
+
+## Which to prefer?
+
+That a debate as old as TeX itself still rages on is a testament to its complexity and versatility. For most users, **pdfTeX** or **LuaTeX** (with LaTeX macros) will cover nearly all needs. Some facts:
+
+1. Tectonic is so smooth, it downloads packages automatically, making it great for newcomers. No need to install a heavy TeX distribution.
+2. LuaLaTeX is the only engine that supports both protrusion and font expansion (microtypography) along with Lua scripting which gives a smoother pdf output.
+3. XeLaTeX has similar results that Tectonic but allows `--shell-escape` for minted code highlighting.
