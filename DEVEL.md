@@ -12,6 +12,7 @@ Roadmap and development notes for TeXSmith. I keep this file as a running checkl
 - [x] Demonstrate glossary in book
 - [x] Support glossaries (glossaries package)
 - [x] csquote
+- [ ] Emojis without svg conversions
 - [ ] two columns in article template
 - [ ] Manage title fragment to insert title meta
 - [ ] Manage fragments order from before/after hooks instead of in fragments.py
@@ -39,82 +40,33 @@ Roadmap and development notes for TeXSmith. I keep this file as a running checkl
 - [ ] Letterine
 - [ ] uv run mkdocs build #--strict not yet ready
 
-## Beading bordel
+## Emojis
 
-Ca fait trop longtemps dans le projet que j'ai de sproblèmes avec les titres les offets il faut qu'on résolve ça une fois pour toute
+- Noto emoji ? Twemoji ? Symbola ?
+- Support color emojis with fontspec and Noto Color Emoji?
+- Noto emoji outline (bw) ne couvre que 25% des emojis
+- Openmoji (openmoji.org)
+- Google's nanoemoji toolchain
+- PyMdown Emoji use :shortcode: -> svg
+- Norme 14.0
+- \twemoji{1f1e9 1f1ea} pour le drapeau DE chelou ?
+- #️⃣ = U+0023 U+FE0F U+20E3
+- Symbola font de George Douros, développement arrêté.
+- Pas de support des séquences complexes
+- OpenMoji-Black mieux que symbola?
 
-Voici les conditions des headings (association <h1>...<h6> aux \part \section \chapter):
+## Multicolumn
 
-1. Le slot d'injection de la template dispose d'un paramètre dans le toml du niveau minimum autorisé (chapter, section…)
-2. On considère le niveau le plus élevé d'un document comme niveau d'offset 0. Si j'ai que des `##` et `###` dans un document le niveau le plus haut `<h2>` est donc considéré comme le niveau 1 soit un offset de -1.
-3. Si un titre est promu dans un document `#\n##\n##\n`, il resulte que le document à la forme `##\n##\n` et le niveau d'offset est de -1 aussi. Si le titre n'est pas promu l'offset est 0
-4. L'offset du document est ajouté à l'offset de la template. Si la template a section comme premier niveau (1 pour section), il est ajouté à l'offset résultant
+J'aimerais que les templates article et book supportent le mode multicolumn qui peut être activé via une option dans le fichier de configuration ou en ligne de commande.
 
-Quelques cas de figure:
-
-Title given:
-
-```md
----
-title: Title # Title is given here so we do not offset the headings
-press:
-  template: article # niveau de base mainmatter default slot: 1 pour section
----
-## section
-### subsection
-### subsection
-## section
-### subsection
-```
-
-```md
----
-title: Title # Title is given here so we do not offset the headings
-press:
-  template: book # niveau de base mainmatter default slot: -1 pour section
----
-## section
-### subsection
-### subsection
-## section
-### subsection
-```
-
-No isolated heading in the document, so no title promoted:
-
-```md
----
-press:
-  template: article # niveau de base mainmatter default slot: 1 pour section
----
-## section
-### subsection
-### subsection
-## section
-### subsection
-```
-
-Title automatically promoted:
-
-```md
----
-press:
-  template: article # niveau de base mainmatter default slot: 1 pour section
----
-# Title
-## section
-### subsection
-### subsection
-## section
-### subsection
-```
-
-Multidocuments:
-
-```yml
+```yaml
 press:
   template: article
+  layout:
+    columns: 2
 ```
+
+On inject
 
 ## Book Template Integration with MkDocs
 

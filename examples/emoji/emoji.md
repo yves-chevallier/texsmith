@@ -17,20 +17,27 @@ Article template can render emojis using different approachs depending on the em
 
 | Emoji | Description                    |
 | ----- | ------------------------------ |
-| 😊  | Smiling face with smiling eyes |
-| 🚀  | Rocket                         |
-| 🍕  | Pizza                          |
-| 🎉  | Party popper                   |
-| 🐍  | Snake                          |
-| 🌍  | Globe showing Europe-Africa    |
-| 💻  | Laptop computer                |
-| 📚  | Books                          |
-| 🎨  | Artist palette                 |
-| 👽  | Alien                          |
-| 👋  | Waving hand                    |
-| 🤖  | Robot                          |
-| 🦄  | Unicorn                        |
-| 🧠  | Brain                          |
-| 🛸  | Flying saucer                  |
-| 🛰️  | Satellite                     |
-| 🐙  | Octopus                        |
+| 😊    | Smiling face with smiling eyes |
+| 🚀    | Rocket                         |
+| 🍕    | Pizza                          |
+| 🎉    | Party popper                   |
+| 🐍    | Snake                          |
+| 🌍    | Globe showing Europe-Africa    |
+| 💻    | Laptop computer                |
+| 📚    | Books                          |
+| 🎨    | Artist palette                 |
+| 👽    | Alien                          |
+| 👋    | Waving hand                    |
+| 🤖    | Robot                          |
+| 🦄    | Unicorn                        |
+| 🧠    | Brain                          |
+| 🛸    | Flying saucer                  |
+| 🛰️    | Satellite                      |
+| 🐙    | Octopus                        |
+| 📝    | Memo                           |
+| 📋    | Note                           |
+| ⭐    | Star                           |
+| ✅    | Check mark                     |
+| ❌    | Cross mark                     |
+| 🧪    | Experiment                     |
+| 💡    | Light Bulb                     |
