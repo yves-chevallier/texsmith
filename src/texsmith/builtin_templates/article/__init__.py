@@ -91,7 +91,19 @@ class Template(WrappableTemplate):
         context.setdefault("unicode_problematic_chars", "")
         context.setdefault("pdflatex_extra_packages", [])
 
-        emoji_mode = self._normalise_emoji_mode(context.get("emoji"))
+        candidate_emoji = context.get("emoji")
+        if not candidate_emoji:
+            fonts_cfg = context.get("fonts")
+            if isinstance(fonts_cfg, Mapping):
+                candidate_emoji = fonts_cfg.get("emoji")
+        if not candidate_emoji:
+            press_cfg = context.get("press")
+            if isinstance(press_cfg, Mapping):
+                press_fonts = press_cfg.get("fonts")
+                if isinstance(press_fonts, Mapping):
+                    candidate_emoji = press_fonts.get("emoji")
+
+        emoji_mode = self._normalise_emoji_mode(candidate_emoji)
         context["emoji"] = emoji_mode
         if emoji_mode in {"symbola", "color"}:
             context["latex_engine"] = "lualatex"
@@ -154,15 +166,19 @@ class Template(WrappableTemplate):
     def _normalise_emoji_mode(self, value: Any) -> str:
         candidate = self._coerce_string(value)
         if candidate:
-            candidate = candidate.lower()
+            candidate_stripped = candidate.strip()
         else:
-            default_value = self.info.get_attribute_default("emoji") or "artifact"
+            default_value = self.info.get_attribute_default("emoji") or "black"
             candidate = self._coerce_string(default_value)
-            candidate = candidate.lower() if candidate else "artifact"
+            candidate_stripped = candidate.strip() if candidate else "black"
 
-        if candidate not in {"artifact", "symbola", "color"}:
-            return "artifact"
-        return candidate
+        if not candidate_stripped:
+            return "black"
+
+        lowered = candidate_stripped.lower()
+        if lowered in {"artifact", "symbola", "color", "black", "twemoji"}:
+            return lowered
+        return candidate_stripped
 
     def _normalise_callout_style(self, value: Any) -> str:
         candidate = self._coerce_string(value)

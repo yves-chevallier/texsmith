@@ -16,7 +16,7 @@ class Template(WrappableTemplate):
     """Expose the snippet template as a wrappable template instance."""
 
     _CALLOUT_STYLES: ClassVar[set[str]] = {"fancy", "classic", "minimal"}
-    _EMOJI_MODES: ClassVar[set[str]] = {"artifact", "symbola", "color"}
+    _EMOJI_MODES: ClassVar[set[str]] = {"artifact", "symbola", "color", "black", "twemoji"}
 
     def __init__(self) -> None:
         try:
@@ -39,7 +39,18 @@ class Template(WrappableTemplate):
         context["border"] = bool(context.get("border", True))
         context["dogear_enabled"] = bool(context.get("dogear_enabled", True))
         context["callout_style"] = self._normalise_callout_style(context.get("callout_style"))
-        context["emoji"] = self._normalise_emoji_mode(context.get("emoji"))
+        candidate_emoji = context.get("emoji")
+        if not candidate_emoji:
+            fonts_cfg = context.get("fonts")
+            if isinstance(fonts_cfg, Mapping):
+                candidate_emoji = fonts_cfg.get("emoji")
+        if not candidate_emoji:
+            press_cfg = context.get("press")
+            if isinstance(press_cfg, Mapping):
+                press_fonts = press_cfg.get("fonts")
+                if isinstance(press_fonts, Mapping):
+                    candidate_emoji = press_fonts.get("emoji")
+        context["emoji"] = self._normalise_emoji_mode(candidate_emoji)
         context.setdefault("preamble", "")
         context.setdefault("latex_engine", "lualatex")
         return context
@@ -61,8 +72,13 @@ class Template(WrappableTemplate):
         return candidate if candidate in self._CALLOUT_STYLES else "fancy"
 
     def _normalise_emoji_mode(self, value: Any) -> str:
-        candidate = str(value).strip().lower() if value is not None else ""
-        return candidate if candidate in self._EMOJI_MODES else "artifact"
+        candidate = str(value).strip() if value is not None else ""
+        if not candidate:
+            return "black"
+        lowered = candidate.lower()
+        if lowered in self._EMOJI_MODES:
+            return lowered
+        return candidate
 
 
 __all__ = ["Template"]

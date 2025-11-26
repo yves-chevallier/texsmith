@@ -63,15 +63,18 @@ class ConversionResult:
     rule_descriptions: list[dict[str, Any]] = field(default_factory=list)
 
 
-_EMOJI_MODES = {"artifact", "symbola", "color"}
+_EMOJI_SPECIAL_MODES = {"artifact", "symbola", "color", "black", "twemoji"}
 _CODE_ENGINES = {"minted", "listings", "verbatim", "pygments"}
 
 
 def _coerce_emoji_mode(value: Any) -> str | None:
     if not isinstance(value, str):
         return None
-    candidate = value.strip().lower()
-    return candidate if candidate in _EMOJI_MODES else None
+    candidate = value.strip()
+    if not candidate:
+        return None
+    lowered = candidate.lower()
+    return lowered if lowered in _EMOJI_SPECIAL_MODES else candidate
 
 
 def _resolve_code_options(
@@ -116,9 +119,19 @@ def _extract_emoji_mode(mapping: Mapping[str, Any] | None) -> str | None:
     direct = _coerce_emoji_mode(mapping.get("emoji"))
     if direct:
         return direct
+    fonts_section = mapping.get("fonts")
+    if isinstance(fonts_section, Mapping):
+        direct_fonts = _coerce_emoji_mode(fonts_section.get("emoji"))
+        if direct_fonts:
+            return direct_fonts
     press = mapping.get("press")
     if isinstance(press, Mapping):
-        return _coerce_emoji_mode(press.get("emoji"))
+        press_direct = _coerce_emoji_mode(press.get("emoji"))
+        if press_direct:
+            return press_direct
+        press_fonts = press.get("fonts")
+        if isinstance(press_fonts, Mapping):
+            return _coerce_emoji_mode(press_fonts.get("emoji"))
     return None
 
 
@@ -261,6 +274,7 @@ def _render_document(
         emoji_mode = _extract_emoji_mode(document_context.front_matter)
     if emoji_mode:
         runtime_common["emoji_mode"] = emoji_mode
+        binder_context.template_overrides.setdefault("emoji", emoji_mode)
         if emoji_mode != "artifact":
             runtime_common.setdefault("emoji_command", r"\texsmithEmoji")
 
