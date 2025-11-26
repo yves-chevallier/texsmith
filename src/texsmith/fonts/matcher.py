@@ -13,6 +13,9 @@ from typing import Any
 
 import yaml
 
+from texsmith.fonts.locator import FontLocator
+from texsmith.fonts.utils import normalize_family
+
 
 CACHE_VERSION = 3
 BLOCK_SHIFT = 8  # 256-codepoint buckets for fast narrowing
@@ -230,14 +233,17 @@ def _ranges_from_codepoints(codepoints: Iterable[int]) -> list[str]:
 
 
 def _font_priority(family: str) -> tuple:
-    # Prefer specific script fonts (longer family names) over generic ones.
+    # Prefer the generic Noto families over specialised script variants so that
+    # ASCII/Latin does not randomly select niche fonts that also cover Basic Latin.
     if family == "NotoSans":
-        return (3, family)
+        return (0, family)
+    if family == "NotoSerif":
+        return (1, family)
     if family.startswith("NotoSans"):
-        return (0, -len(family), family)
+        return (2, len(family), family)
     if family.startswith("NotoSerif"):
-        return (1, -len(family), family)
-    return (2, family)
+        return (3, len(family), family)
+    return (4, family)
 
 
 def _font_priority_cached(font_index: FontIndex, family: str) -> tuple:
@@ -291,10 +297,6 @@ def required_fonts_with_ranges(text: str, fonts_yaml: Path | None = None) -> dic
     return {family: _ranges_from_codepoints(cps) for family, cps in per_font_cps.items()}
 
 
-def _normalize_family(name: str) -> str:
-    return "".join(ch for ch in name.casefold() if ch not in {" ", "-", "_"})
-
-
 def discover_installed_families() -> dict[str, set[str]]:
     import subprocess
 
@@ -320,7 +322,7 @@ def discover_installed_families() -> dict[str, set[str]]:
         for part in line.split(","):
             part = part.strip()
             if part:
-                norm = _normalize_family(part)
+                norm = normalize_family(part)
                 families.setdefault(norm, set()).add(part)
     return families
 
@@ -331,7 +333,7 @@ def check_installed(required: Iterable[str]) -> tuple[set[str], set[str]]:
     missing: set[str] = set()
 
     for fam in required:
-        norm = _normalize_family(fam)
+        norm = normalize_family(fam)
         if norm in installed:
             present.add(fam)
         else:
@@ -344,6 +346,7 @@ def match_text(
     *,
     fonts_yaml: Path | None = None,
     check_system: bool = True,
+    font_locator: FontLocator | None = None,
 ) -> FontMatchResult:
     required = required_fonts(text, fonts_yaml=fonts_yaml)
     _assignments, missing_codepoints = _assign_fonts(text, fonts_yaml=fonts_yaml)
@@ -352,7 +355,10 @@ def match_text(
     present: set[str]
     missing_fonts: set[str]
     if check_system:
-        present, missing_fonts = check_installed(required)
+        if font_locator is not None:
+            present, missing_fonts = font_locator.check_installed(required)
+        else:
+            present, missing_fonts = check_installed(required)
     else:
         present, missing_fonts = set(), set()
 

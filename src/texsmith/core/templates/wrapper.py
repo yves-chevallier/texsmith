@@ -18,6 +18,7 @@ from texsmith.core.templates.manifest import TemplateError
 from texsmith.core.conversion.debug import ensure_emitter, record_event
 from texsmith.core.diagnostics import DiagnosticEmitter
 from texsmith.fonts.analyzer import analyse_font_requirements
+from texsmith.fonts.manager import PreparedFonts, prepare_fonts_for_context
 
 from ..context import DocumentState
 from .base import WrappableTemplate
@@ -125,43 +126,29 @@ def wrap_template_document(
         fonts_yaml=fonts_yaml_path,
         check_system=True,
     )
-    if font_match:
-        available_fonts = list(font_match.present_fonts) or list(font_match.fallback_fonts)
-        if not available_fonts:
-            available_fonts = ["NotoSans", "NotoColorEmoji"]
-        fallback_fonts = list(available_fonts)
-        extra_fallbacks = template_context.get("extra_font_fallbacks") or []
-        if isinstance(extra_fallbacks, (list, tuple, set)):
-            fallback_fonts.extend(str(item) for item in extra_fallbacks if item)
-        fallback_fonts.extend(
-            [
-                "NotoSans",
-                "NotoSansSymbols2-Regular",
-                "NotoSansMath-Regular",
-                "NotoColorEmoji",
-            ]
-        )
-        if fallback_fonts:
-            deduped = list(dict.fromkeys(fallback_fonts))
-            template_context["fallback_fonts"] = deduped
-        template_context.setdefault("present_fonts", list(font_match.present_fonts))
-        template_context.setdefault("missing_fonts", list(font_match.missing_fonts))
-        template_context.setdefault("font_match_ranges", dict(font_match.font_ranges))
-        if font_match.missing_fonts:
-            readable = ", ".join(sorted(font_match.missing_fonts))
+    prepared_fonts: PreparedFonts | None = prepare_fonts_for_context(
+        template_context=template_context,
+        output_dir=output_dir,
+        font_match=font_match,
+        emitter=emitter_obj,
+    )
+    if prepared_fonts:
+        missing_fonts = prepared_fonts.missing_fonts
+        if missing_fonts:
+            readable = ", ".join(sorted(missing_fonts))
             emitter_obj.warning(
-                f"Missing {len(font_match.missing_fonts)} font families on the system: {readable}."
+                f"Missing {len(missing_fonts)} font families on the system: {readable}."
             )
-        if font_match.font_ranges:
+        if prepared_fonts.font_ranges:
             record_event(
                 emitter_obj,
                 "font_requirements",
                 {
-                    "required": list(fallback_fonts),
-                    "present": list(font_match.present_fonts),
-                    "missing": list(font_match.missing_fonts),
+                    "required": list(prepared_fonts.fallback_fonts),
+                    "present": list(prepared_fonts.present_fonts),
+                    "missing": list(prepared_fonts.missing_fonts),
                 },
-        )
+            )
 
     if document_state.citations and bibliography_path is not None:
         template_context["bibliography"] = bibliography_path.stem
