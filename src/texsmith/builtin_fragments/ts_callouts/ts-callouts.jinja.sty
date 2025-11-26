@@ -58,7 +58,6 @@
 \BLOCK{ for name, cfg in callouts.items() }
 \tcbset{callout \VAR{name}/.style={callout base,title={\makebox[1.6em][c]{\texsmithCalloutIcon{\VAR{cfg.get("icon","ℹ")}}}}}}
 \BLOCK{ endfor }
-\renewcommand{\texsmithCalloutTitleFormat}[1]{~#1}
 \newtcolorbox{callout}[2][]{%
   callout base,
   #1,
@@ -66,7 +65,7 @@
 }
 \BLOCK{ elif style == "minimal" }
 % Minimal style (borders only, no icons). Prefix title with bold label.
-\renewcommand{\texsmithCalloutTitleFormat}[1]{\textbf{\MakeUppercase{#1}}:~}
+\renewcommand{\texsmithCalloutTitleFormat}[1]{\noindent\textbf{\MakeUppercase{#1}}:~}
 \tcbset{callout base/.style={
   breakable,
   enhanced,
@@ -78,6 +77,8 @@
   leftupper=1mm,
   colback=white,
   colframe=black,
+  colbacktitle=white,
+  coltitle=black,
   parbox=false,
 }}
 \BLOCK{ for name, cfg in callouts.items() }
@@ -85,8 +86,9 @@
 \BLOCK{ endfor }
 \newtcolorbox{callout}[2][]{%
   callout base,
+  title={#2},
   #1,
-  after title={\texsmithCalloutTitleFormat{#2}}%
+  after title={}%
 }
 \BLOCK{ else }
 % Fancy style (colored, icons)
@@ -117,7 +119,6 @@
 }
 \BLOCK{ endfor }
 
-\renewcommand{\texsmithCalloutTitleFormat}[1]{~#1}
 \newtcolorbox{callout}[2][]{%
   callout base,
   #1,
