@@ -534,7 +534,9 @@ class LatexPlugin(BasePlugin):
         if runtime.config.cover.logo:
             overrides.setdefault("logo", runtime.config.cover.logo)
 
-        slot_buffers: dict[str, list[str]] = {name: [] for name in template_runtime.slots}
+        slot_buffers: dict[str, list[str]] = {
+            name: [] for name in template_runtime.slots
+        }
         slot_buffers.setdefault(template_runtime.default_slot, [])
         default_base_level = runtime.config.base_level
         if default_base_level is None:
@@ -880,7 +882,10 @@ class LatexPlugin(BasePlugin):
         if payload is None:
             return {}
         if not isinstance(payload, Mapping):
-            log.warning("Ignoring invalid 'slots' mapping: expected a mapping, got %r", type(payload))
+            log.warning(
+                "Ignoring invalid 'slots' mapping: expected a mapping, got %r",
+                type(payload),
+            )
             return {}
 
         slots: dict[str, set[str]] = {}
@@ -891,7 +896,9 @@ class LatexPlugin(BasePlugin):
             titles: set[str] = set()
             if isinstance(selectors, str):
                 titles.add(self._normalise_label(selectors))
-            elif isinstance(selectors, Iterable) and not isinstance(selectors, (bytes, Mapping, str)):
+            elif isinstance(selectors, Iterable) and not isinstance(
+                selectors, (bytes, Mapping, str)
+            ):
                 for selector in selectors:
                     if isinstance(selector, str) and selector.strip():
                         titles.add(self._normalise_label(selector))
@@ -905,7 +912,9 @@ class LatexPlugin(BasePlugin):
                 slots[name] = titles
         return slots
 
-    def _match_slot(self, title: str | None, slots: Mapping[str, set[str]]) -> str | None:
+    def _match_slot(
+        self, title: str | None, slots: Mapping[str, set[str]]
+    ) -> str | None:
         """Return the slot name matching the provided title, if any."""
         if not slots:
             return None
@@ -924,7 +933,8 @@ class LatexPlugin(BasePlugin):
             press.update(payload)
         elif payload is not None:
             log.warning(
-                "Ignoring invalid 'press' override: expected a mapping, got %r", type(payload)
+                "Ignoring invalid 'press' override: expected a mapping, got %r",
+                type(payload),
             )
 
         if paper is not None:

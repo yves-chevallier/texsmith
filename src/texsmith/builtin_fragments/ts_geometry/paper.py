@@ -265,7 +265,9 @@ def resolve_geometry_settings(
 ) -> GeometryResolution:
     """Resolve geometry settings from template context and overrides."""
     press_section = overrides.get("press") if isinstance(overrides, Mapping) else {}
-    documentclass_override = press_section.get("documentclass") if isinstance(press_section, Mapping) else None
+    documentclass_override = (
+        press_section.get("documentclass") if isinstance(press_section, Mapping) else None
+    )
     documentclass_context = context.get("documentclass")
     documentclass = documentclass_override or documentclass_context
     is_memoir = str(documentclass).strip().lower() == "memoir" if documentclass else False
@@ -358,7 +360,10 @@ def resolve_geometry_settings(
 
     page_width, page_height = _resolve_page_dimensions(spec)
     margin_all, margin_left, margin_right, margin_top, margin_bottom = _resolve_margins(spec)
-    if all(value is None for value in (margin_all, margin_left, margin_right, margin_top, margin_bottom)):
+    if all(
+        value is None
+        for value in (margin_all, margin_left, margin_right, margin_top, margin_bottom)
+    ):
         margin_all = "2cm"
     margin_inner = margin_left
     margin_outer = margin_right
