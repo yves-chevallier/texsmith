@@ -101,11 +101,6 @@ type = "string"
 allow_empty = true
 sources = ["press.hyperref_options", "hyperref_options"]
 
-[latex.template.attributes.paper]
-type = "mapping"
-sources = ["press.paper", "paper"]
-default = { width = "160mm", height = "240mm", margin = { top = 20, bottom = 20, left = 20, right = 15 }, extra = { headheight = "6mm", headsep = "5mm", marginparsep = "4mm", heightrounded = true } }
-
 [latex.template.attributes.cover]
 default = "circles"
 type = "string"

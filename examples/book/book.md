@@ -16,9 +16,10 @@ imprint:
     This TeXSmith example is derived from Wikipedia and is not affiliated with TeXSmith.
     Reuse must credit Wikipedia and share under CC BY-SA .
 press:
+  paper: a5
   template: book
   base_level: part
-  fonts: adventor # default, sans, adventor, noto
+  fonts: adventor
   admonition_style: classic
   slots:
     colophon: Colophon
