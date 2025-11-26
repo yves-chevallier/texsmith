@@ -1,168 +1,80 @@
 # Headings
 
-Headings are where TeXSmith does the most heavy lifting: it analyses every
-document, figures out the shallowest heading, then lines up the entire hierarchy
-with the target template. This section explains how that auto-alignment works,
-how to tweak it, and how CLI flags map onto the Python API.
+Heading alignment in TeXSmith follows a consistent set of rules: find the
+shallowest heading in each fragment, compute an offset, then add the template
+base level. This page explains that calculation, how promotion interacts with
+it, and how slots influence the result.
 
-## Automatic alignment
+## How offsets are computed
 
-TeXSmith always maps the highest heading it finds to the base level requested by
-the runtime:
+1. Remove any sections routed to slots (e.g. `abstract`) before aligning the
+   remaining content for that slot.
+2. If title promotion is enabled and the first heading is uniquely the highest,
+   it becomes metadata and is ignored for offset calculation.
+3. Look at the shallowest heading that remains:
+   - `<h1>` → offset `0`
+   - `<h2>` → offset `-1`
+   - `<h3>` → offset `-2`
+   - No headings → offset `0`
+4. The effective base level for a fragment is:
 
-- Fragment mode (no template) defaults to `\chapter`.
-- The built-in `article` template declares `base_level = 1`, so the highest
-  heading becomes `\section`.
-- Other templates can override this per slot; slot `offset` values stack on top.
+   ```
+   template slot base + document base_level + fragment offset
+   ```
 
-If the first heading in your source is `## Overview`, TeXSmith notices that `##`
-maps to level 2, subtracts one, and shifts every heading so the new top sits at
-level 1.
+5. The rendered LaTeX level is `html_level + effective_base - 1`.
 
-=== "CLI"
+Offsets are per fragment: each slot fragment gets its own pass, so moving a
+heading into an abstract slot cannot force the main matter down a level.
 
-    ```bash
-    cat <<'EOF' > headings.md
-    ## Overview
+## Template and document base levels
 
-    Deep dive incoming.
+- Templates set a default base level and per-slot overrides using `base_level`,
+  `depth`, and `offset` in the manifest. For example, the built-in `article`
+  template maps its main slot to `\section` (base level `1`), while the `book`
+  template maps to `\chapter` (base level `0`).
+- A document can add its own shift via `press.base_level` in front matter, the
+  CLI `--base-level` flag, or `Document(base_level=…)`. Accepted values are the
+  aliases `part`, `chapter`, `section`, `subsection`, or an integer.
+- The document shift is added after the template slot base; then the fragment
+  offset is applied.
 
-    ### Details
+## Promotion rules
 
-    Paragraph text.
-    EOF
+- Promotion is on by default. If no metadata title exists and the first heading
+  is uniquely the shallowest, it is promoted to metadata and dropped from the
+  body. The offset then uses the next heading.
+- A declared `title` in front matter disables promotion. So does `--no-promote-title`
+  or `TitleStrategy.KEEP`.
+- `--strip-heading` / `TitleStrategy.DROP` removes the first heading without
+  promoting it.
 
-    # Plain fragment output → \chapter, \section …
-    texsmith headings.md
+## Worked examples
 
-    # Template output → \section, \subsection …
-    texsmith headings.md --template article --no-promote-title \
-      --output-dir build/headings
-    ```
+All examples use the `article` template (`base_level=section`):
 
-=== "Python API"
+- Metadata title present; headings start at `##`: fragment offset `-1` +
+  template base `1` → first heading renders as `\section`, nested `###` as
+  `\subsection`.
+- No metadata title; first heading is `# Title`: the title is promoted and
+  ignored for offsets, so the remaining `##` headings still become `\section`.
+- Headings begin at `##` with no `#` anywhere: offset `-1` again, so the highest
+  heading is still aligned to `\section`.
+- Slot extraction: if `# Abstract` is routed to the `abstract` slot and stripped
+  there, the remaining main-matter fragment starts at `##` and is aligned to
+  `\section` (the removed `#` does not push sections down to subsections).
 
-    ```python
-    from pathlib import Path
-    from texsmith.api.document import Document
-    from texsmith.api.pipeline import convert_documents
+## Multidocument behaviour
 
-    source = Path("headings.md")
-    doc = Document.from_markdown(source)  # auto alignment enabled
-    bundle = convert_documents([doc])
-    print(bundle.combined_output())
-    ```
+When rendering multiple documents, each document (and each of its slot
+fragments) computes its own offset independently. A root title in a multi-file
+build does not block promotion in subdocuments, and each slot still adds the
+template base level before applying the fragment offset.
 
-## Base level offsets
+## Quick reference
 
-Need to nudge the entire hierarchy up or down? Use the base level knobs:
-
-- CLI: `--base-level <value>` sets the base heading level; integers or labels
-  like `part`, `chapter`, `section`, and `subsection` are accepted.
-- Front matter: set `press.base_level` to bake the offset into the document.
-- API: pass `base_level=` to `Document.from_markdown` or tweak
-  `document.options.base_level`.
-
-=== "CLI"
-
-    ```bash
-    # Turn the same ## heading into a subsection
-    texsmith headings.md --base-level 2
-
-    # Or force it back to a chapter, even inside a template
-    texsmith headings.md -tarticle --base-level -1 \
-      --no-promote-title
-    ```
-
-=== "Python API"
-
-    ```python
-    doc = Document.from_markdown(Path("headings.md"), base_level=2)
-    bundle = convert_documents([doc])
-    # bundle now renders Overview as \subsection
-    ```
-
-Remember that base levels stack with template slot metadata. If a template slot
-sets `depth = "subsection"` and you provide `base_level=1`, the resulting
-headings start at `\subsubsection`.
-
-## Managing titles
-
-By default TeXSmith promotes the first heading into template metadata when no
-title is declared, but only if that heading level is unique (so two `##` blocks
-will never be promoted). You can steer that behaviour with these switches:
-
-| Strategy                     | Trigger                                       | Effect                                      |
-| ---------------------------- | --------------------------------------------- | ------------------------------------------- |
-| `KEEP`                       | default                                       | Headings stay intact                        |
-| `DROP` / `--strip-heading`   | CLI flag / `TitleStrategy.DROP`               | Removes the first heading after alignment   |
-| `PROMOTE_METADATA`           | `--promote-title` (default)                   | Moves the first heading into metadata title |
-| `SUPPRESS_METADATA`          | `--no-title`                                  | Keeps headings and disables template titles |
-
-When you promote a heading to metadata, the next heading inherits the top slot.
-Use `--no-promote-title` when you want to keep the heading visible even without
-front matter.
-
-=== "CLI"
-
-    ```bash
-    # Promote the first heading to \title{} and re-align the rest
-    texsmith paper.md --promote-title --template article
-
-    # Keep headings but drop the duplicate title in the body
-    texsmith paper.md --strip-heading -tarticle
-
-    # Render a template without generating \maketitle
-    texsmith paper.md --no-title -tarticle
-    ```
-
-=== "Python API"
-
-    ```python
-    doc = Document.from_markdown(Path("paper.md"))
-    doc.title_from_heading = True  # same effect as --promote-title
-    ```
-
-Behind the scenes, TeXSmith recalculates base levels after the title move so
-your new top heading still matches the template.
-
-## Templates, slots, and mixed documents
-
-Templates can set a global base level (see `latex.template.attributes.base_level`
-in the manifest) and per-slot overrides:
-
-```toml
-[latex.template.slots.mainmatter]
-default = true
-depth = "section"
-
-[latex.template.slots.appendix]
-base_level = 2  # start at \subsection regardless of inputs
-strip_heading = true
-```
-
-Key takeaways:
-
-- Slot `depth` and `base_level` values override the template default.
-- Slot `offset` adds relative shifts (useful when crafting appendix ladders).
-- Front matter entries under `press.slots.*` or CLI `--slot` flags can target
-  different headings in the same document; each gets its own alignment pass.
-- Titles promoted from headings are scoped per document, even when you feed the
-  same source into multiple slots.
-
-When combining multiple documents in a template session, TeXSmith aligns each
-document individually before applying the slot base level. That means you can
-mix files that start at `#` and `##` without worrying about mismatched
-hierarchies—everything snaps to whatever the slot demands.
-
-## Cheat sheet
-
-- Use `--base-level` (CLI) or `base_level=` (API/front matter) to change where
-  the first heading lands.
-- `--promote-title` (default) promotes the first unique heading into metadata;
-  `--no-promote-title` keeps it in the body.
-- `--strip-heading` removes the first heading without promoting it.
-- `--no-title` disables template title generation even when metadata is present.
-- Templates can set their own defaults; slots can override them again.
-- Alignment is automatic, so you can mix Markdown sources with different top
-  headings without manual clean-up.
+- Offsets are `1 - shallowest_heading_level` after promotion/slot stripping.
+- Effective base = template slot base + document `base_level` + fragment offset.
+- Promotion is default; disable with `--no-promote-title` or a declared title.
+- Slots are aligned independently; moving a heading to a slot never changes the
+  offset of the remaining content.
