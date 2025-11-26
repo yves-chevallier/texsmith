@@ -65,6 +65,8 @@ class BookExtras:
     template: str | None = None
     template_overrides: dict[str, Any] = field(default_factory=dict)
     bibliography: list[Path] = field(default_factory=list)
+    slots: dict[str, set[str]] = field(default_factory=dict)
+    press: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass(slots=True)
@@ -77,6 +79,7 @@ class NavEntry:
     drop_title: bool
     part: str
     is_page: bool
+    slot: str | None = None
     src_path: str | None = None
     abs_src_path: Path | None = None
 
@@ -274,12 +277,19 @@ class LatexPlugin(BasePlugin):
                 raise PluginError(f"Book definition #{idx} is not a mapping.")
 
             data = dict(raw)
+            slot_requests = self._normalise_slot_requests(data.pop("slots", None))
+            paper_override = data.pop("paper", None)
+            press_overrides = self._normalise_press_overrides(
+                data.pop("press", None), paper_override
+            )
             book_extra = BookExtras(
                 template=data.pop("template", None),
                 template_overrides=dict(data.pop("template_overrides", {}) or {}),
                 bibliography=self._coerce_paths(
                     data.pop("bibliography", []), relative_to=project_dir
                 ),
+                slots=slot_requests,
+                press=press_overrides,
             )
             try:
                 book_config = BookConfig(**data)
@@ -359,14 +369,14 @@ class LatexPlugin(BasePlugin):
         root_item: StructureItem | None = None
 
         if book_config.root == FULL_NAVIGATION_ROOT:
-            entries = self._flatten_full_navigation(nav, book_config)
+            entries = self._flatten_full_navigation(nav, book_config, extras.slots)
         else:
             root_item = self._find_item_by_title(nav.items, book_config.root)
             if root_item is None:
                 raise PluginError(
                     f"Root section '{book_config.root}' not found in navigation."
                 )
-            entries = self._flatten_navigation(root_item, book_config)
+            entries = self._flatten_navigation(root_item, book_config, extras.slots)
 
         runtime = BookRuntime(config=book_config, extras=extras, section=root_item)
         runtime.entries = entries
@@ -486,10 +496,6 @@ class LatexPlugin(BasePlugin):
                 source = f" ({issue.source})" if issue.source else ""
                 log.warning("%s%s%s", prefix, issue.message, source)
 
-        frontmatter: list[str] = []
-        mainmatter: list[str] = []
-        backmatter: list[str] = []
-
         document_state: DocumentState | None = None
         assets_map: dict[str, Path] = {}
         last_renderer: LaTeXRenderer | None = None
@@ -503,19 +509,77 @@ class LatexPlugin(BasePlugin):
         language = normalise_template_language(raw_language)
         runtime_language = language or raw_language
 
+        overrides = dict(self._global_template_overrides)
+        overrides.update(runtime.extras.template_overrides)
+        press_section = overrides.get("press")
+        base_press = dict(press_section) if isinstance(press_section, Mapping) else {}
+        if runtime.extras.press:
+            base_press.update(runtime.extras.press)
+        if base_press:
+            overrides["press"] = base_press
+
+        def _set_override(key: str, value: Any) -> None:
+            if value is not None:
+                overrides.setdefault(key, value)
+
+        _set_override("title", runtime.config.title)
+        _set_override("subtitle", runtime.config.subtitle)
+        _set_override("author", runtime.config.author)
+        _set_override("email", runtime.config.email)
+        _set_override("year", runtime.config.year)
+        if language:
+            overrides.setdefault("language", language)
+        overrides.setdefault("cover", runtime.config.cover.name)
+        overrides.setdefault("covercolor", runtime.config.cover.color)
+        if runtime.config.cover.logo:
+            overrides.setdefault("logo", runtime.config.cover.logo)
+
+        slot_buffers: dict[str, list[str]] = {name: [] for name in template_runtime.slots}
+        slot_buffers.setdefault(template_runtime.default_slot, [])
+        default_base_level = runtime.config.base_level
+        if default_base_level is None:
+            default_base_level = 0
+        slot_base_levels = {
+            name: slot.resolve_level(default_base_level)
+            for name, slot in template_runtime.slots.items()
+        }
+        missing_slot_warnings: set[str] = set()
+
+        def select_slot(entry: NavEntry) -> str:
+            if entry.slot:
+                target = entry.slot
+            elif entry.part == "frontmatter" and "frontmatter" in slot_buffers:
+                target = "frontmatter"
+            elif entry.part == "backmatter" and "backmatter" in slot_buffers:
+                target = "backmatter"
+            else:
+                target = template_runtime.default_slot
+
+            if target not in slot_buffers:
+                if target not in missing_slot_warnings:
+                    missing_slot_warnings.add(target)
+                    log.warning(
+                        "Requested slot '%s' is not defined by template '%s'; "
+                        "falling back to '%s'.",
+                        target,
+                        template_runtime.name,
+                        template_runtime.default_slot,
+                    )
+                return template_runtime.default_slot
+            return target
+
         for page_index, entry in enumerate(runtime.entries):
-            target_buffer = (
-                frontmatter
-                if entry.part == "frontmatter"
-                else backmatter
-                if entry.part == "backmatter"
-                else mainmatter
-            )
+            target_slot = select_slot(entry)
+            slot_base = slot_base_levels.get(target_slot, default_base_level)
+            target_buffer = slot_buffers[target_slot]
+            effective_level = entry.level
+            if slot_base is not None:
+                effective_level = slot_base + (entry.level - default_base_level)
 
             if not entry.is_page:
-                if entry.level > runtime.config.base_level:
+                if entry.title and effective_level >= slot_base:
                     fragment = heading_formatter.heading(
-                        entry.title, level=entry.level, numbered=entry.numbered
+                        entry.title, level=effective_level, numbered=entry.numbered
                     )
                     target_buffer.append(fragment)
                 continue
@@ -540,7 +604,7 @@ class LatexPlugin(BasePlugin):
                 self._persist_html_snapshot(output_root, entry.src_path, html)
 
             runtime_payload = {
-                "base_level": entry.level,
+                "base_level": effective_level,
                 "numbered": entry.numbered,
                 "drop_title": entry.drop_title,
                 "source_dir": abs_src.parent,
@@ -590,32 +654,18 @@ class LatexPlugin(BasePlugin):
             bibliography=dict(bibliography_map)
         )
 
-        overrides = dict(self._global_template_overrides)
-        overrides.update(runtime.extras.template_overrides)
-        overrides.setdefault("title", runtime.config.title)
-        overrides.setdefault("subtitle", runtime.config.subtitle)
-        overrides.setdefault("author", runtime.config.author)
-        overrides.setdefault("email", runtime.config.email)
-        overrides.setdefault("year", runtime.config.year)
-        if language:
-            overrides.setdefault("language", language)
-        overrides.setdefault("cover", runtime.config.cover.name)
-        overrides.setdefault("covercolor", runtime.config.cover.color)
-        if runtime.config.cover.logo:
-            overrides.setdefault("logo", runtime.config.cover.logo)
-
+        main_body = "\n\n".join(slot_buffers.get(template_runtime.default_slot, []))
         template_context = template_runtime.instance.prepare_context(
-            "\n\n".join(mainmatter),
+            main_body,
             overrides=overrides,
         )
+        for slot_name, parts in slot_buffers.items():
+            template_context[slot_name] = "\n\n".join(parts)
         # Ensure engine/shell-escape flags reach templated assets (.latexmkrc).
         template_context.setdefault("latex_engine", template_runtime.engine)
         template_context.setdefault(
             "requires_shell_escape", bool(template_runtime.requires_shell_escape)
         )
-        template_context["frontmatter"] = "\n\n".join(frontmatter)
-        template_context["mainmatter"] = "\n\n".join(mainmatter)
-        template_context["backmatter"] = "\n\n".join(backmatter)
         template_context["index_entries"] = final_state.has_index_entries
         index_terms = list(dict.fromkeys(getattr(final_state, "index_entries", [])))
         template_context["has_index"] = bool(index_terms)
@@ -732,8 +782,10 @@ class LatexPlugin(BasePlugin):
         self,
         root: StructureItem,
         config: BookConfig,
+        slots: Mapping[str, set[str]] | None = None,
     ) -> list[NavEntry]:
         entries: list[NavEntry] = []
+        slots_map = slots or {}
 
         def walk(
             node: StructureItem,
@@ -742,10 +794,12 @@ class LatexPlugin(BasePlugin):
             part: str,
             front_flag: bool,
             back_flag: bool,
+            active_slot: str | None,
         ) -> None:
             is_front = front_flag or (node.title in config.frontmatter)
             is_back = back_flag or (node.title in config.backmatter)
             segment = "frontmatter" if is_front else "backmatter" if is_back else part
+            resolved_slot = active_slot or self._match_slot(node.title, slots_map)
 
             drop_title = False
             node_numbered = numbered
@@ -763,6 +817,7 @@ class LatexPlugin(BasePlugin):
                 drop_title=drop_title,
                 part=segment,
                 is_page=node.is_page,
+                slot=resolved_slot,
                 src_path=getattr(node.file, "src_path", None) if node.is_page else None,
                 abs_src_path=Path(node.file.abs_src_path)
                 if node.is_page and getattr(node.file, "abs_src_path", None)
@@ -779,19 +834,21 @@ class LatexPlugin(BasePlugin):
                     segment,
                     is_front,
                     is_back,
+                    resolved_slot,
                 )
 
-        walk(root, config.base_level, True, "mainmatter", False, False)
+        walk(root, config.base_level, True, "mainmatter", False, False, None)
         return entries
 
     def _flatten_full_navigation(
         self,
         nav: Navigation,
         config: BookConfig,
+        slots: Mapping[str, set[str]] | None = None,
     ) -> list[NavEntry]:
         entries: list[NavEntry] = []
         for item in nav.items:
-            entries.extend(self._flatten_navigation(item, config))
+            entries.extend(self._flatten_navigation(item, config, slots))
         return entries
 
     def _find_item_by_title(
@@ -810,6 +867,69 @@ class LatexPlugin(BasePlugin):
         folder = config.folder
         candidate = base_dir if not folder else base_dir / folder
         return candidate.resolve()
+
+    @staticmethod
+    def _normalise_label(value: str | None) -> str:
+        """Return a case-insensitive label suitable for slot matching."""
+        if value is None:
+            return ""
+        return " ".join(str(value).split()).casefold()
+
+    def _normalise_slot_requests(self, payload: Any) -> dict[str, set[str]]:
+        """Return normalised slot selectors keyed by slot name."""
+        if payload is None:
+            return {}
+        if not isinstance(payload, Mapping):
+            log.warning("Ignoring invalid 'slots' mapping: expected a mapping, got %r", type(payload))
+            return {}
+
+        slots: dict[str, set[str]] = {}
+        for slot_name, selectors in payload.items():
+            name = str(slot_name).strip()
+            if not name:
+                continue
+            titles: set[str] = set()
+            if isinstance(selectors, str):
+                titles.add(self._normalise_label(selectors))
+            elif isinstance(selectors, Iterable) and not isinstance(selectors, (bytes, Mapping, str)):
+                for selector in selectors:
+                    if isinstance(selector, str) and selector.strip():
+                        titles.add(self._normalise_label(selector))
+            elif selectors is not None:
+                log.warning(
+                    "Slot '%s' selectors must be strings or lists of strings; ignoring %r.",
+                    name,
+                    type(selectors),
+                )
+            if titles:
+                slots[name] = titles
+        return slots
+
+    def _match_slot(self, title: str | None, slots: Mapping[str, set[str]]) -> str | None:
+        """Return the slot name matching the provided title, if any."""
+        if not slots:
+            return None
+        key = self._normalise_label(title)
+        for slot, candidates in slots.items():
+            if key and key in candidates:
+                return slot
+        return None
+
+    def _normalise_press_overrides(
+        self, payload: Any, paper: Any | None
+    ) -> dict[str, Any]:
+        """Return press overrides merged with a paper alias."""
+        press: dict[str, Any] = {}
+        if isinstance(payload, Mapping):
+            press.update(payload)
+        elif payload is not None:
+            log.warning(
+                "Ignoring invalid 'press' override: expected a mapping, got %r", type(payload)
+            )
+
+        if paper is not None:
+            press["paper"] = paper
+        return press
 
     def _build_snippet_urls(
         self, page: Any, block: snippet.SnippetBlock
