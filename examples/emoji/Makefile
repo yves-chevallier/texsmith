@@ -7,38 +7,32 @@ else
 copy_artifact = @true
 endif
 
-PDF := $(OUTPUT_DIR)/emoji.pdf
-LUALATEX_PDF := $(OUTPUT_DIR)/emoji-lualatex.pdf
+COLOR_DIR := $(OUTPUT_DIR)/color
+BW_DIR := $(OUTPUT_DIR)/bw
+ARTIFACT_DIR := $(OUTPUT_DIR)/artifact
 
-all: $(LUALATEX_PDF)
+COLOR_PDF := $(COLOR_DIR)/emoji-color.pdf
+BW_PDF := $(BW_DIR)/emoji-bw.pdf
+ARTIFACT_PDF := $(ARTIFACT_DIR)/emoji-artifacts.pdf
 
-$(OUTPUT_DIR)/emoji.tex: $(SOURCE)
-	uv run texsmith $< -o$(OUTPUT_DIR) -tarticle
+all: $(COLOR_PDF) $(BW_PDF) $(ARTIFACT_PDF)
 
-$(PDF): $(SOURCE)
-	uv run texsmith $< -o$(OUTPUT_DIR) --build -tarticle
+$(COLOR_PDF): $(SOURCE)
+	uv run texsmith $< -o$(COLOR_DIR) --build -tarticle -afonts.emoji=color
+	mv $(COLOR_DIR)/emoji.pdf $(COLOR_PDF)
 	$(call copy_artifact,$@)
 
-$(LUALATEX_PDF): $(PDF)
-	cp $(PDF) $(LUALATEX_PDF)
+$(BW_PDF): $(SOURCE)
+	uv run texsmith $< -o$(BW_DIR) --build -tarticle -afonts.emoji=black
+	mv $(BW_DIR)/emoji.pdf $(BW_PDF)
 	$(call copy_artifact,$@)
 
-latex: $(OUTPUT_DIR)/emoji.tex
-
-tectonic: $(OUTPUT_DIR)/emoji.tex
-	cd $(OUTPUT_DIR) && tectonic emoji.tex
-	cp $(OUTPUT_DIR)/emoji.pdf $(OUTPUT_DIR)/emoji-tectonic.pdf
-	$(call copy_artifact,$(OUTPUT_DIR)/emoji-tectonic.pdf)
-
-xelatex: $(OUTPUT_DIR)/emoji.tex
-	cd $(OUTPUT_DIR) && latexmk -xelatex emoji.tex
-	cp $(OUTPUT_DIR)/emoji.pdf $(OUTPUT_DIR)/emoji-xelatex.pdf
-	$(call copy_artifact,$(OUTPUT_DIR)/emoji-xelatex.pdf)
-
-view: tectonic
-	evince $(OUTPUT_DIR)/emoji.pdf &
+$(ARTIFACT_PDF): $(SOURCE)
+	uv run texsmith $< -o$(ARTIFACT_DIR) --build -tarticle
+	mv $(ARTIFACT_DIR)/emoji.pdf $(ARTIFACT_PDF)
+	$(call copy_artifact,$@)
 
 clean:
 	rm -rf $(OUTPUT_DIR)
 
-.PHONY: all clean latex tectonic xelatex view compare
+.PHONY: all clean

@@ -25,11 +25,20 @@ EXAMPLES := \
 EXAMPLES_WITH_TECTONIC := admonition booby emoji multi-document
 EXAMPLES_WITH_COMPARE := multi-document
 
-all: $(EXAMPLES:%=%/all)
+all:
+	@for example in $(EXAMPLES); do \
+		$(MAKE) -C $$example all; \
+	done
 
-tectonic: $(EXAMPLES_WITH_TECTONIC:%=%/tectonic)
+tectonic:
+	@for example in $(EXAMPLES_WITH_TECTONIC); do \
+		$(MAKE) -C $$example tectonic; \
+	done
 
-compare: $(EXAMPLES_WITH_COMPARE:%=%/compare)
+compare:
+	@for example in $(EXAMPLES_WITH_COMPARE); do \
+		$(MAKE) -C $$example compare; \
+	done
 
 clean:
 	$(RM) -rf $(ARTIFACTS_DIR)

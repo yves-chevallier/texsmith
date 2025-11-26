@@ -1,7 +1,6 @@
 OUTPUT_DIR := build
 FILES := a.md b.md c.md config.yml
-PDF := $(OUTPUT_DIR)/main.pdf
-LUALATEX_PDF := $(OUTPUT_DIR)/main-lualatex.pdf
+PDF := $(OUTPUT_DIR)/multidocument.pdf
 
 ifneq ($(strip $(ARTIFACTS_DIR)),)
 copy_artifact = mkdir -p "$(ARTIFACTS_DIR)" && cp "$1" "$(ARTIFACTS_DIR)/"
@@ -9,33 +8,28 @@ else
 copy_artifact = @true
 endif
 
-all: $(LUALATEX_PDF)
-
-$(OUTPUT_DIR)/main.tex: $(FILES)
-	uv run texsmith $^ -o$(OUTPUT_DIR) -tarticle
+all: $(PDF)
 
 $(PDF): $(FILES)
 	uv run texsmith $^ -o$(OUTPUT_DIR) --build -tarticle
+	mv $(OUTPUT_DIR)/main.pdf $(PDF)
 	$(call copy_artifact,$@)
 
-$(LUALATEX_PDF): $(PDF)
-	cp $(PDF) $(LUALATEX_PDF)
-	$(call copy_artifact,$@)
+latex: $(FILES)
+	uv run texsmith $^ -o$(OUTPUT_DIR) -tarticle
 
-latex: $(OUTPUT_DIR)/main.tex
-
-tectonic: $(OUTPUT_DIR)/main.tex
+tectonic: latex
 	cd $(OUTPUT_DIR) && tectonic main.tex
-	cp $(OUTPUT_DIR)/main.pdf $(OUTPUT_DIR)/main-tectonic.pdf
-	$(call copy_artifact,$(OUTPUT_DIR)/main-tectonic.pdf)
+	cp $(OUTPUT_DIR)/main.pdf $(OUTPUT_DIR)/multidocument-tectonic.pdf
+	$(call copy_artifact,$(OUTPUT_DIR)/multidocument-tectonic.pdf)
 
-xelatex: $(OUTPUT_DIR)/main.tex
+xelatex: latex
 	cd $(OUTPUT_DIR) && latexmk -xelatex main.tex
-	cp $(OUTPUT_DIR)/main.pdf $(OUTPUT_DIR)/main-xelatex.pdf
-	$(call copy_artifact,$(OUTPUT_DIR)/main-xelatex.pdf)
+	cp $(OUTPUT_DIR)/main.pdf $(OUTPUT_DIR)/multidocument-xelatex.pdf
+	$(call copy_artifact,$(OUTPUT_DIR)/multidocument-xelatex.pdf)
 
-view: tectonic
-	evince $(OUTPUT_DIR)/main.pdf &
+view: $(PDF)
+	evince $(PDF) &
 COMPARE_TMP := overlay_tmp
 COMPARE_OUT := overlay.pdf
 

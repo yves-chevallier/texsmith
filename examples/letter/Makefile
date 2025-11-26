@@ -1,5 +1,4 @@
 OUTPUT_DIR := build
-PDF := $(OUTPUT_DIR)/letter.pdf
 
 ifneq ($(strip $(ARTIFACTS_DIR)),)
 copy_artifact = mkdir -p "$(ARTIFACTS_DIR)" && cp "$1" "$(ARTIFACTS_DIR)/"
@@ -7,10 +6,29 @@ else
 copy_artifact = @true
 endif
 
-all: $(PDF)
+DIN_DIR := $(OUTPUT_DIR)/din
+SN_DIR := $(OUTPUT_DIR)/sn
+NF_DIR := $(OUTPUT_DIR)/nf
 
-$(PDF): letter.md marie-curie.svg
-	uv run texsmith $< -o$(OUTPUT_DIR) --build -tletter
+DIN_PDF := $(DIN_DIR)/letter-din.pdf
+SN_PDF := $(SN_DIR)/letter-sn.pdf
+NF_PDF := $(NF_DIR)/letter-nf.pdf
+
+all: $(DIN_PDF) $(SN_PDF) $(NF_PDF)
+
+$(DIN_PDF): letter.md marie-curie.svg
+	uv run texsmith $< -o$(DIN_DIR) --build -tletter -aformat=din
+	mv $(DIN_DIR)/letter.pdf $(DIN_PDF)
+	$(call copy_artifact,$@)
+
+$(SN_PDF): letter.md marie-curie.svg
+	uv run texsmith $< -o$(SN_DIR) --build -tletter -aformat=sn
+	mv $(SN_DIR)/letter.pdf $(SN_PDF)
+	$(call copy_artifact,$@)
+
+$(NF_PDF): letter.md marie-curie.svg
+	uv run texsmith $< -o$(NF_DIR) --build -tletter -aformat=nf
+	mv $(NF_DIR)/letter.pdf $(NF_PDF)
 	$(call copy_artifact,$@)
 
 clean:
