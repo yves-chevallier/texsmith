@@ -14,6 +14,8 @@ Roadmap and development notes for TeXSmith. I keep this file as a running checkl
 - [x] csquote
 - [x] Emojis without svg conversions
 - [x] two columns in article template
+- [ ] Build MkDocs with parts at level 0.
+- [ ] Hide the list of tables when no tables exist.
 - [ ] Manage title fragment to insert title meta
 - [ ] Manage fragments order from before/after hooks instead of in fragments.py
 - [ ] tocloft
@@ -46,25 +48,10 @@ Roadmap and development notes for TeXSmith. I keep this file as a running checkl
 
 Certaines fonts utilisées par TeXSmith comme OpenMoji-black-glyf.ttf sont difficile à trouver et télécharger. Il faudrait les intégrer dans le package TeXSmith pour éviter aux utilisateurs d'avoir à les chercher et les installer eux-mêmes. Elles seront copiées dans le dossier de build si utilisées. On commence juste par cette font pour l'instant.
 
-## Multicolumn
+## Mermaid color configuration
 
-J'aimerais que la template article et book supportent le mode multicolumn qui peut être activé via une option dans le fichier de configuration ou en ligne de commande.
+Je remarque que les diagrammes mermaid qui sont créés apparaissent avec un fond gris dans le pdf. Mais nous avions configuré un style pour avoir des diagrammes b&w. Il n'est probablement plus activé ou pris en compte. Il faut vérifier cela et corriger le problème.
 
-```yaml
-press:
-  columns: 2
-```
-
-Cela se configure dans le \documentclass[twocolumn]{article}
-
-
-## Book Template Integration with MkDocs
-
-Update the book template integration:
-
-- [ ] Use the default Mermaid configuration (no color overrides).
-- [ ] Build MkDocs with parts at level 0.
-- [ ] Hide the list of tables when no tables exist.
 
 ## .texsmith/config.toml
 

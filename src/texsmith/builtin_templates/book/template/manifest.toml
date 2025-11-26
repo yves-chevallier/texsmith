@@ -159,7 +159,7 @@ default = "fancy"
 type = "string"
 choices = ["fancy", "classic", "minimal"]
 normaliser = "callout_style"
-sources = ["press.callout_style", "press.callouts.style", "callout_style"]
+sources = ["press.callouts.style", "callouts.style", "callout_style", "press.callout_style"]
 
 [latex.template.attributes.glossary]
 default = false
