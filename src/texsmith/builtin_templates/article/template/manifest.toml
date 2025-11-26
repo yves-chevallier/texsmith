@@ -85,6 +85,11 @@ type = "string"
 allow_empty = false
 normaliser = "babel_language"
 
+[latex.template.attributes.columns]
+default = 1
+type = "integer"
+sources = ["press.columns", "columns"]
+
 [latex.template.attributes.page_numbers]
 default = true
 type = "boolean"

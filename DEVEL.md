@@ -12,8 +12,8 @@ Roadmap and development notes for TeXSmith. I keep this file as a running checkl
 - [x] Demonstrate glossary in book
 - [x] Support glossaries (glossaries package)
 - [x] csquote
-- [ ] Emojis without svg conversions
-- [ ] two columns in article template
+- [x] Emojis without svg conversions
+- [x] two columns in article template
 - [ ] Manage title fragment to insert title meta
 - [ ] Manage fragments order from before/after hooks instead of in fragments.py
 - [ ] tocloft

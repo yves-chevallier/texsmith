@@ -1,4 +1,10 @@
-\documentclass\VAR{documentclass_options}{article}
+\BLOCK{ set base_docclass_options = documentclass_options|default('', true) }
+\BLOCK{ set combined_docclass_options = base_docclass_options[1:-1] if base_docclass_options else '' }
+\BLOCK{ if columns|default(1)|int > 1 }
+\BLOCK{   set combined_docclass_options = combined_docclass_options ~ (',' if combined_docclass_options else '') ~ 'twocolumn' }
+\BLOCK{ endif }
+\BLOCK{ set effective_documentclass_options = '[' ~ combined_docclass_options ~ ']' if combined_docclass_options else '' }
+\documentclass\VAR{effective_documentclass_options}{article}
 
 \VAR{extra_packages}
 \usepackage{graphicx}
