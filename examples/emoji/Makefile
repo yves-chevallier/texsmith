@@ -9,13 +9,13 @@ endif
 
 COLOR_DIR := $(OUTPUT_DIR)/color
 BW_DIR := $(OUTPUT_DIR)/bw
-ARTIFACT_DIR := $(OUTPUT_DIR)/artifact
+DEFAULT_DIR := $(OUTPUT_DIR)/default
 
 COLOR_PDF := $(COLOR_DIR)/emoji-color.pdf
 BW_PDF := $(BW_DIR)/emoji-bw.pdf
-ARTIFACT_PDF := $(ARTIFACT_DIR)/emoji-artifacts.pdf
+DEFAULT_PDF := $(DEFAULT_DIR)/emoji-default.pdf
 
-all: $(COLOR_PDF) $(BW_PDF) $(ARTIFACT_PDF)
+all: $(COLOR_PDF) $(BW_PDF) $(DEFAULT_PDF)
 
 $(COLOR_PDF): $(SOURCE)
 	uv run texsmith $< -o$(COLOR_DIR) --build -tarticle -afonts.emoji=color
@@ -27,9 +27,9 @@ $(BW_PDF): $(SOURCE)
 	mv $(BW_DIR)/emoji.pdf $(BW_PDF)
 	$(call copy_artifact,$@)
 
-$(ARTIFACT_PDF): $(SOURCE)
-	uv run texsmith $< -o$(ARTIFACT_DIR) --build -tarticle
-	mv $(ARTIFACT_DIR)/emoji.pdf $(ARTIFACT_PDF)
+$(DEFAULT_PDF): $(SOURCE)
+	uv run texsmith $< -o$(DEFAULT_DIR) --build -tarticle
+	mv $(DEFAULT_DIR)/emoji.pdf $(DEFAULT_PDF)
 	$(call copy_artifact,$@)
 
 clean:

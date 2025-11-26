@@ -10,7 +10,7 @@ endif
 all: $(PDF)
 
 $(PDF): math.md
-	uv run texsmith $< -o$(OUTPUT_DIR) --build -tarticle
+	uv run texsmith $< -o$(OUTPUT_DIR) --build -tarticle -apress.override.preamble="\\usepackage{csquotes}"
 	$(call copy_artifact,$@)
 
 clean:
