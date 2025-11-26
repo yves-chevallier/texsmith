@@ -1,7 +1,7 @@
 from pathlib import Path
 
-from texsmith.fonts.manager import prepare_fonts_for_context
 from texsmith.fonts.locator import FontLocator
+from texsmith.fonts.manager import prepare_fonts_for_context
 from texsmith.fonts.matcher import match_text
 
 

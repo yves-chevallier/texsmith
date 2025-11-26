@@ -2,14 +2,18 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterable, Mapping
 from dataclasses import dataclass
+import os
 from pathlib import Path
-from typing import Any, Iterable, Mapping, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
+from texsmith.fonts import locator as fonts_locator
 from texsmith.fonts.fallback import NotoFallback
 from texsmith.fonts.locator import FontFiles, FontLocator
 from texsmith.fonts.matcher import FontMatchResult
 from texsmith.fonts.utils import unicode_class_ranges
+
 
 if TYPE_CHECKING:
     from texsmith.core.diagnostics import DiagnosticEmitter
@@ -120,7 +124,49 @@ class PreparedFonts:
     fonts_dir: Path
 
 
-def _serialize_copied_fonts(copied: dict[str, FontFiles], base_dir: Path) -> dict[str, dict[str, str]]:
+@dataclass(frozen=True, slots=True)
+class _LocatorCacheKey:
+    fonts_yaml: Path | None
+    mtime_ns: int
+    size: int
+    skip_checks: bool
+    run_available: bool
+
+
+_LOCATOR_CACHE: dict[_LocatorCacheKey, FontLocator] = {}
+
+
+def _locator_cache_key(fonts_yaml: Path | None) -> _LocatorCacheKey:
+    skip_checks = bool(os.environ.get("TEXSMITH_SKIP_FONT_CHECKS"))
+    run_available = fonts_locator.subprocess_run_available()
+    if fonts_yaml is None:
+        return _LocatorCacheKey(None, 0, 0, skip_checks, run_available)
+
+    resolved = fonts_yaml.expanduser().resolve()
+    try:
+        stat = resolved.stat()
+        mtime_ns = stat.st_mtime_ns
+        size = stat.st_size
+    except OSError:
+        mtime_ns = -1
+        size = -1
+    return _LocatorCacheKey(resolved, mtime_ns, size, skip_checks, run_available)
+
+
+def _cached_locator(fonts_yaml: Path | None) -> FontLocator:
+    key = _locator_cache_key(fonts_yaml)
+    locator = _LOCATOR_CACHE.get(key)
+    if locator is not None:
+        return locator
+
+    locator = FontLocator(fonts_yaml=fonts_yaml)
+    _LOCATOR_CACHE[key] = locator
+    return locator
+
+
+def _serialize_copied_fonts(
+    copied: dict[str, FontFiles], base_dir: Path
+) -> dict[str, dict[str, str]]:
     serialised: dict[str, dict[str, str]] = {}
     for family, files in copied.items():
         rel = files.relative_to(base_dir)
@@ -179,7 +225,7 @@ def prepare_fonts_for_context(
     template_context.setdefault("mono_bold_italic", selection.mono_bold_italic)
     template_context.setdefault("mono_fake_slant", selection.mono_fake_slant)
 
-    locator = font_locator or FontLocator(fonts_yaml=font_match.fonts_yaml if font_match else None)
+    locator = font_locator or _cached_locator(font_match.fonts_yaml if font_match else None)
 
     font_ranges = dict(font_match.font_ranges) if font_match else {}
     present_fonts = list(font_match.present_fonts) if font_match else []

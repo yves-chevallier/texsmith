@@ -14,10 +14,10 @@ from .matcher import (
 
 
 __all__ = [
-    "FontIndex",
-    "FontMatchResult",
     "FontFiles",
+    "FontIndex",
     "FontLocator",
+    "FontMatchResult",
     "NotoFallback",
     "UnicodeClassSpec",
     "check_installed",

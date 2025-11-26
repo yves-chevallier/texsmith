@@ -2,16 +2,26 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterable, Mapping
 from dataclasses import dataclass
 import os
 from pathlib import Path
 import shutil
 import subprocess
-from typing import Iterable, Mapping
 
 import yaml
 
 from texsmith.fonts.utils import normalize_family
+
+
+def _subprocess_run_available() -> bool:
+    run_fn = getattr(subprocess, "run", None)
+    return callable(run_fn) and getattr(run_fn, "__module__", "") == "subprocess"
+
+
+def subprocess_run_available() -> bool:
+    """Public wrapper to detect when subprocess.run is available."""
+    return _subprocess_run_available()
 
 
 _REGULAR_STYLES = ("regular", "book", "normal", "roman")
@@ -97,6 +107,7 @@ class FontFiles:
 
     def relative_to(self, base: Path) -> FontFiles:
         """Return a copy with paths relative to ``base`` when possible."""
+
         def _rel(path: Path | None) -> Path | None:
             if path is None:
                 return None
@@ -144,7 +155,9 @@ class FontLocator:
         },
     }
 
-    def __init__(self, *, fonts_yaml: Path | None = None, search_paths: Iterable[Path] | None = None) -> None:
+    def __init__(
+        self, *, fonts_yaml: Path | None = None, search_paths: Iterable[Path] | None = None
+    ) -> None:
         self._fonts: dict[str, dict[str, Path]] = {}
         self._names: dict[str, set[str]] = {}
 
@@ -195,6 +208,8 @@ class FontLocator:
 
     def _load_from_fontconfig(self) -> None:
         if shutil.which("fc-list") is None or os.environ.get("TEXSMITH_SKIP_FONT_CHECKS"):
+            return
+        if not _subprocess_run_available():
             return
 
         try:
@@ -273,7 +288,9 @@ class FontLocator:
             bold_italic=_pick(_BOLD_ITALIC_STYLES),
         )
 
-    def copy_family(self, family: str, destination: Path, *, cache: dict[Path, Path] | None = None) -> FontFiles:
+    def copy_family(
+        self, family: str, destination: Path, *, cache: dict[Path, Path] | None = None
+    ) -> FontFiles:
         """Locate and copy the requested family into ``destination``."""
         located = self.locate_family(family)
         if not located.any_files():
@@ -299,6 +316,8 @@ def _find_with_kpsewhich(filename: str) -> Path | None:
     """Attempt to locate a TeX Live font file via kpsewhich."""
     if shutil.which("kpsewhich") is None:
         return None
+    if not _subprocess_run_available():
+        return None
     try:
         proc = subprocess.run(
             ["kpsewhich", filename],
@@ -314,4 +333,4 @@ def _find_with_kpsewhich(filename: str) -> Path | None:
     return None
 
 
-__all__ = ["FontFiles", "FontLocator"]
+__all__ = ["FontFiles", "FontLocator", "subprocess_run_available"]

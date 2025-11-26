@@ -2,9 +2,10 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterable
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Iterable
+from typing import Any
 
 from texsmith.fonts.analyzer import collate_character_set
 from texsmith.fonts.locator import FontLocator
@@ -59,10 +60,7 @@ class NotoFallback:
         Missing fonts are still reported so the caller can attempt a copy or
         warn the user.
         """
-        if not isinstance(text, str):
-            characters = "".join(text)
-        else:
-            characters = text
+        characters = "".join(text) if not isinstance(text, str) else text
         match = self.match_text(characters, check_system=check_system)
         specs: list[UnicodeClassSpec] = []
         for family, ranges in match.font_ranges.items():

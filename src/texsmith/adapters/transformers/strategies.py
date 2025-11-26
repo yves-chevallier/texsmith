@@ -242,12 +242,12 @@ class FetchImageStrategy(CachedConversionStrategy):
                 raise TransformerExecutionError(msg) from exc
             try:
                 cairosvg.svg2pdf(bytestring=response.content, write_to=str(target))
-                normalise_pdf_version(target)
-                return target
             except Exception as exc:
                 raise TransformerExecutionError(
                     f"Failed to convert remote SVG '{url}': {exc}"
                 ) from exc
+            normalise_pdf_version(target)
+            return target
 
         try:
             from PIL import Image  # type: ignore[import]
