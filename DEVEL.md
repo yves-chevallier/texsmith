@@ -14,6 +14,7 @@ Roadmap and development notes for TeXSmith. I keep this file as a running checkl
 - [x] csquote
 - [x] Emojis without svg conversions
 - [x] two columns in article template
+- [ ] Clean book template
 - [ ] Integrate docker docker run -v $(pwd):/usr/src/tex  dxjoke/tectonic-docker tectonic book.tex
 - [ ] Build MkDocs with parts at level 0.
 - [ ] Hide the list of tables when no tables exist.
@@ -38,12 +39,12 @@ Roadmap and development notes for TeXSmith. I keep this file as a running checkl
 - [ ] Implement `texsmith template create my-template`
 - [ ] Offer compilation with Docker or TeX Live (user choice)
 - [ ] Deploy to PyPI
-- [ ] Epigraph Plugin
-- [ ] Sidenotes (`marginpar` package with footnotes syntax)
-- [ ] Letterine
-- [ ] uv run mkdocs build #--strict not yet ready
+- [ ] CI: uv run mkdocs build #--strict not yet ready
 - [ ] Windows Support
-- [ ] Insérer les pdf de tous les exemples dans un asset de la release GitHub
+- [ ] Insert Examples PDFs in the GitHub Releases
+- [ ] Marginalia (`marginpar` package with footnotes syntax)
+- [ ] Epigraph Plugin
+- [ ] Letterine
 
 ## Intégrer certaines fonts
 

@@ -17,6 +17,7 @@ EXAMPLES := \
 	math \
 	mermaid \
 	multi-document \
+	mkdocs \
 	paper \
 	progressbar \
 	recipe \

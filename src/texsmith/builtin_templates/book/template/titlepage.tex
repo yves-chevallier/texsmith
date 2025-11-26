@@ -6,7 +6,7 @@
   \vspace{0.8cm}
   \BLOCK{ if booksubtitle|trim }\Large\itshape \booksubtitle\par\BLOCK{ endif }
   \vspace{2cm}
-  {\Large \bookauthor\par}
+  \BLOCK{ if bookauthor|trim }{\Large \bookauthor\par}\BLOCK{ endif }
   \BLOCK{ if bookemail|trim }\normalsize \bookemail\par\BLOCK{ endif }
   \vspace{1.5cm}
   \BLOCK{ if bookpublisher|trim }

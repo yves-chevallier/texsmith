@@ -57,7 +57,7 @@ allow_empty = true
 sources = ["press.subtitle", "subtitle"]
 
 [latex.template.attributes.author]
-default = "John Doe"
+default = ""
 type = "string"
 escape = "latex"
 allow_empty = true
