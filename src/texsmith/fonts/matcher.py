@@ -260,7 +260,9 @@ def _assign_fonts(text: str, fonts_yaml: Path | None = None) -> tuple[dict[int, 
     assignments: dict[int, str] = {}
     missing: set[int] = set()
     for cp in {ord(ch) for ch in text}:
-        if cp <= 0x1F:
+        # Skip ASCII entirely; base fonts already cover it and we don't want
+        # fallback substitutions to hijack Basic Latin.
+        if cp <= 0x7F:
             continue
         fonts = index.fonts_for_codepoint(cp) or _manual_fonts_for_codepoint(cp)
         if not fonts:

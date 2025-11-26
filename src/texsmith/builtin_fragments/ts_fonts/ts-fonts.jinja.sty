@@ -91,9 +91,9 @@
         \BLOCK{ set files = font_files.get(font, {}) }
         \BLOCK{ set reg_font = files.get("regular") }
         \BLOCK{ if reg_font }
-        "file:\VAR{font_path_prefix}\VAR{reg_font}:mode=harf;",
+        "[\VAR{font_path_prefix}\VAR{reg_font}]:mode=node",
         \BLOCK{ else }
-        "\VAR{font}:mode=harf;",
+        "\VAR{font}:mode=node",
         \BLOCK{ endif }
 \BLOCK{ endfor }
       })
@@ -102,9 +102,9 @@
         \BLOCK{ set files = font_files.get(font, {}) }
         \BLOCK{ set bold_font = files.get("bold") or files.get("regular") }
         \BLOCK{ if bold_font }
-        "file:\VAR{font_path_prefix}\VAR{bold_font}:mode=harf;",
+        "[\VAR{font_path_prefix}\VAR{bold_font}]:mode=node",
         \BLOCK{ else }
-        "\VAR{font}/B:mode=harf;",
+        "\VAR{font}/B:mode=node",
         \BLOCK{ endif }
 \BLOCK{ endfor }
       })
@@ -113,9 +113,9 @@
         \BLOCK{ set files = font_files.get(font, {}) }
         \BLOCK{ set italic_font = files.get("italic") or files.get("regular") }
         \BLOCK{ if italic_font }
-        "file:\VAR{font_path_prefix}\VAR{italic_font}:mode=harf;",
+        "[\VAR{font_path_prefix}\VAR{italic_font}]:mode=node",
         \BLOCK{ else }
-        "\VAR{font}/I:mode=harf;",
+        "\VAR{font}/I:mode=node",
         \BLOCK{ endif }
 \BLOCK{ endfor }
       })
@@ -124,9 +124,9 @@
         \BLOCK{ set files = font_files.get(font, {}) }
         \BLOCK{ set bold_italic_font = files.get("bold_italic") or files.get("bold") or files.get("italic") or files.get("regular") }
         \BLOCK{ if bold_italic_font }
-        "file:\VAR{font_path_prefix}\VAR{bold_italic_font}:mode=harf;",
+        "[\VAR{font_path_prefix}\VAR{bold_italic_font}]:mode=node",
         \BLOCK{ else }
-        "\VAR{font}/BI:mode=harf;",
+        "\VAR{font}/BI:mode=node",
         \BLOCK{ endif }
 \BLOCK{ endfor }
       })
@@ -289,9 +289,25 @@
     \let\Eth\relax
     \RequirePackage{amssymb}
     \RequirePackage{unicode-math}
-    \BLOCK{ if unicode_font_classes }
+\BLOCK{ if unicode_font_classes }
     \RequirePackage{ucharclasses}
-    \BLOCK{ endif }
+\makeatletter
+\providecommand{\newUnicodeClass}[1]{%
+  \expandafter\newXeTeXintercharclass\csname #1Class\endcsname
+  \ifnum\csname #1Class\endcsname>\@classend
+    \chardef\@classend=\csname #1Class\endcsname
+  \fi
+}
+\providecommand{\setUnicodeClassRange}[3]{%
+  \count@="#2\relax
+  \loop
+    \XeTeXcharclass\count@=\csname #1Class\endcsname
+    \ifnum\count@<"#3\relax
+      \advance\count@\@ne
+  \repeat
+}
+\makeatother
+\BLOCK{ endif }
     \IfFontExistsTF{\VAR{main_font}}{
       \setmainfont{\VAR{main_font}}[
         Ligatures=TeX,
@@ -367,7 +383,7 @@
     }
 \BLOCK{ if unicode_font_classes }
 \BLOCK{ for class in unicode_font_classes }
-    \newfontfamily\VAR{class.font_command}[
+\expandafter\newfontfamily\csname \VAR{class.font_command}\endcsname[
 \BLOCK{ if class.files }
       Path=\VAR{font_path_prefix},
 \BLOCK{ endif }
@@ -385,10 +401,10 @@
 \BLOCK{ endif }
     ]{\VAR{class.family}}
     \newUnicodeClass{\VAR{class.class_name}}
-    \setTransitionTo{\VAR{class.class_name}}{\VAR{class.font_command}}
+\setTransitionTo{\VAR{class.class_name}}{\csname \VAR{class.font_command}\endcsname}
     \setTransitionFrom{\VAR{class.class_name}}{\rmfamily}
 \BLOCK{ for start, end in class.ranges }
-    \setUnicodeClassRange{\VAR{class.class_name}}{"\VAR{start}->"\VAR{end}}
+    \setUnicodeClassRange{\VAR{class.class_name}}{\VAR{start}}{\VAR{end}}
 \BLOCK{ endfor }
 \BLOCK{ endfor }
 \BLOCK{ endif }
