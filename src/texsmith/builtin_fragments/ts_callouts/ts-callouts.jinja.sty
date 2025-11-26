@@ -25,22 +25,7 @@
 \newcommand{\texsmithCalloutStyleDefault}{\VAR{callout_style|default('fancy')}}
 \providecommand{\texsmithCalloutStyle}{\texsmithCalloutStyleDefault}
 
-\ifdefined\IfFontExistsTF
-  \IfFontExistsTF{Noto Emoji}{
-    \newfontfamily\texsmithCalloutIconFont{Noto Emoji}[Renderer=Harfbuzz]
-  }{
-    \newcommand{\texsmithCalloutIconFont}[1]{#1}
-  }
-\else
-  \newcommand{\texsmithCalloutIconFont}[1]{#1}
-\fi
-\newcommand{\texsmithCalloutIcon}[1]{%
-  \ifdefined\texsmithCalloutIconFont
-    {\texsmithCalloutIconFont #1}%
-  \else
-    #1%
-  \fi
-}
+\newfontfamily\texsmithCalloutIconFont{Noto Emoji}[Renderer=Harfbuzz]
 
 \BLOCK{ set style = callout_style | default("fancy") }
 \BLOCK{ set callouts = callouts_definitions | default({}) }
