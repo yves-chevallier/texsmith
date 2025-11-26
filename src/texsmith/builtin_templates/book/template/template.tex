@@ -1,10 +1,4 @@
-\BLOCK{ set base_docclass_options = documentclass_options|default('', true) }
-\BLOCK{ set combined_docclass_options = '9pt,twoside' }
-\BLOCK{ if base_docclass_options }
-\BLOCK{   set combined_docclass_options = combined_docclass_options ~ ',' ~ base_docclass_options[1:-1] }
-\BLOCK{ endif }
-\BLOCK{ set documentclass_options = '[' ~ combined_docclass_options ~ ']' }
-\documentclass\VAR{documentclass_options}{memoir}
+\documentclass\VAR{documentclass_options|default('')}{\VAR{documentclass|default('memoir')}}
 
 \usepackage{amssymb} % Additional math symbols
 \usepackage{nicefrac} % For support of: ½, ⅔...
@@ -12,12 +6,6 @@
 
 \VAR{extra_packages}
 \usepackage[svgnames,dvipsnames,x11names]{xcolor}
-
-\ifLuaTeX
-  \usepackage{fontspec}
-  \defaultfontfeatures{Scale=MatchLowercase, Ligatures=TeX}
-  \IfFontExistsTF{DejaVu Sans Mono}{\setmonofont{DejaVu Sans Mono}}{\setmonofont{Latin Modern Mono}}
-\fi
 
 \usepackage{fancyhdr}
 
@@ -92,6 +80,9 @@
 \setlength\epigraphwidth{.8\textwidth}
 \setlength\epigraphrule{0pt}
 
+\newif\ifgeometryduplex
+\BLOCK{ if geometry_duplex|default(false) }\geometryduplextrue\BLOCK{ else }\geometryduplexfalse\BLOCK{ endif }
+
 %
 % Headers and footers
 %
@@ -109,18 +100,28 @@
 \fancypagestyle{plain}{%
   \fancyhf{}
   \renewcommand{\headrulewidth}{0pt}
-  \fancyfoot[LE,RO]{\thepage}
+  \ifgeometryduplex
+    \fancyfoot[LE,RO]{\thepage}
+  \else
+    \fancyfoot[RO]{\thepage}
+  \fi
 }
 
 % Mainmatter regular page style
 \fancypagestyle{fancy}{%
   \fancyhf{}
   \renewcommand{\headrulewidth}{0.5pt}
-  \fancyhead[LE]{\small\scshape \leftmark}
-  \fancyhead[RO]{\small\scshape \rightmark}
-  \fancyhead[LO]{\small\scshape \leftmark}
-  \fancyhead[RE]{\small\scshape \rightmark}
-  \fancyfoot[LE,RO]{\thepage}
+  \ifgeometryduplex
+    \fancyhead[LE]{\small\scshape \leftmark}
+    \fancyhead[RO]{\small\scshape \rightmark}
+    \fancyhead[LO]{\small\scshape \leftmark}
+    \fancyhead[RE]{\small\scshape \rightmark}
+    \fancyfoot[LE,RO]{\thepage}
+  \else
+    \fancyhead[RO]{\small\scshape \rightmark}
+    \fancyhead[LO]{\small\scshape \leftmark}
+    \fancyfoot[RO]{\thepage}
+  \fi
 }
 \makeatletter
 \nouppercaseheads

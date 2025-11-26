@@ -17,6 +17,7 @@ class GeometryFragmentConfig(BaseModel):
 
     paper: Mapping[str, Any] | None = None
     geometry: dict[str, Any] = Field(default_factory=dict)
+    duplex: bool | None = None
     margin: Any | None = None
     orientation: Any | None = None
     binding: Any | None = None
@@ -42,7 +43,7 @@ class GeometryFragmentConfig(BaseModel):
         else:
             paper_data = {"format": paper_payload}
 
-        for key in ("margin", "orientation", "binding", "frame", "watermark"):
+        for key in ("margin", "orientation", "binding", "frame", "watermark", "duplex"):
             if key in payload and key not in paper_data:
                 paper_data[key] = payload[key]
 
@@ -62,6 +63,8 @@ class GeometryFragmentConfig(BaseModel):
             context["paper"] = self.paper
         if self.geometry:
             context["geometry"] = self.geometry
+        if self.duplex is not None:
+            context["duplex"] = self.duplex
         if self.margin is not None:
             context["margin"] = self.margin
         if self.orientation is not None:
@@ -122,6 +125,7 @@ def create_fragment() -> FragmentDefinition:
             "geometry_options": "",
             "geometry_options_list": [],
             "geometry_extra_options": "",
+            "geometry_duplex": False,
             "paper": {"format": "a4"},
         },
         context_injector=lambda context, overrides=None: inject_geometry_context(
