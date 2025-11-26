@@ -1,10 +1,45 @@
+\BLOCK{ set is_memoir = (documentclass|default('')|lower == 'memoir') }
+\BLOCK{ set duplex = geometry_duplex|default(false) }
 \BLOCK{ set options_list = geometry_options_list|default([]) }
 \BLOCK{ set fallback = options_list|join(',') }
 \BLOCK{ set options = geometry_options|default(fallback)|trim }
+\BLOCK{ if is_memoir }
+\makeatletter
+\BLOCK{ if duplex }
+\@twosidetrue
+\@mparswitchtrue
+\BLOCK{ else }
+\@twosidefalse
+\@mparswitchfalse
+\BLOCK{ endif }
+\makeatother
+\BLOCK{ if geometry_page_height and geometry_page_width }
+\setstocksize{\VAR{geometry_page_height}}{\VAR{geometry_page_width}}
+\settrimmedsize{\VAR{geometry_page_height}}{\VAR{geometry_page_width}}{*}
+\BLOCK{ endif }
+\BLOCK{ if geometry_margin_all|default('', true)|trim }
+\setlrmarginsandblock{\VAR{geometry_margin_all}}{\VAR{geometry_margin_all}}{*}
+\setulmarginsandblock{\VAR{geometry_margin_all}}{\VAR{geometry_margin_all}}{*}
+\BLOCK{ else }
+\BLOCK{ set left_margin = geometry_margin_inner or geometry_margin_left }
+\BLOCK{ set right_margin = geometry_margin_outer or geometry_margin_right or left_margin }
+\BLOCK{ set top_margin = geometry_margin_top }
+\BLOCK{ set bottom_margin = geometry_margin_bottom or top_margin }
+\BLOCK{ if left_margin or right_margin or top_margin or bottom_margin }
+\setlrmarginsandblock{\VAR{left_margin|default('2cm', true)}}{\VAR{right_margin|default('2cm', true)}}{*}
+\setulmarginsandblock{\VAR{top_margin|default('2cm', true)}}{\VAR{bottom_margin|default('2cm', true)}}{*}
+\BLOCK{ endif }
+\BLOCK{ endif }
+\BLOCK{ if geometry_binding_offset|default('', true)|trim }
+\setbinding{\VAR{geometry_binding_offset}}
+\BLOCK{ endif }
+\checkandfixthelayout
+\BLOCK{ else }
 \BLOCK{ if options }
 \usepackage[\VAR{options}]{geometry}
 \BLOCK{ else }
 \usepackage{geometry}
+\BLOCK{ endif }
 \BLOCK{ endif }
 \BLOCK{ if geometry_watermark|default('')|trim }
 \usepackage{tikz}

@@ -84,6 +84,12 @@ allow_empty = false
 normaliser = "babel_language"
 sources = ["press.language", "language"]
 
+[latex.template.attributes.documentclass]
+default = "memoir"
+type = "string"
+allow_empty = false
+sources = ["press.documentclass", "documentclass"]
+
 [latex.template.attributes.columns]
 default = 1
 type = "integer"

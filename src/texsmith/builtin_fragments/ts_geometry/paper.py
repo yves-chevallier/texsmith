@@ -102,6 +102,7 @@ class PaperSpec(BaseModel):
     margin: str | dict[str, str] | None = None
     frame: bool = False
     binding_offset: str | None = Field(default=None, alias="binding")
+    duplex: bool = False
     watermark: str | None = None
     extra: dict[str, Any] = Field(default_factory=dict)
 
@@ -117,6 +118,8 @@ class PaperSpec(BaseModel):
             payload["format"] = payload.pop("paper")
         if "binding" in payload and "binding_offset" not in payload:
             payload["binding_offset"] = payload.pop("binding")
+        if "duplex" in payload:
+            payload["duplex"] = bool(payload["duplex"])
         return payload
 
     @field_validator("format")
@@ -243,6 +246,17 @@ class GeometryResolution:
     geometry_options_list: list[str]
     geometry_extra_options: str
     watermark: str | None
+    duplex: bool
+    page_width: str | None
+    page_height: str | None
+    margin_all: str | None
+    margin_left: str | None
+    margin_right: str | None
+    margin_top: str | None
+    margin_bottom: str | None
+    margin_inner: str | None
+    margin_outer: str | None
+    binding_offset: str | None
     spec: PaperSpec
 
 
@@ -251,6 +265,10 @@ def resolve_geometry_settings(
 ) -> GeometryResolution:
     """Resolve geometry settings from template context and overrides."""
     press_section = overrides.get("press") if isinstance(overrides, Mapping) else {}
+    documentclass_override = press_section.get("documentclass") if isinstance(press_section, Mapping) else None
+    documentclass_context = context.get("documentclass")
+    documentclass = documentclass_override or documentclass_context
+    is_memoir = str(documentclass).strip().lower() == "memoir" if documentclass else False
     paper_raw = press_section.get("paper") if isinstance(press_section, Mapping) else None
     geometry_extra = press_section.get("geometry") if isinstance(press_section, Mapping) else None
     margin_raw = press_section.get("margin") if isinstance(press_section, Mapping) else None
@@ -258,6 +276,7 @@ def resolve_geometry_settings(
         press_section.get("orientation") if isinstance(press_section, Mapping) else None
     )
     watermark_raw = press_section.get("watermark") if isinstance(press_section, Mapping) else None
+    duplex_raw = press_section.get("duplex") if isinstance(press_section, Mapping) else None
     binding_raw = press_section.get("binding") if isinstance(press_section, Mapping) else None
     frame_raw = press_section.get("frame") if isinstance(press_section, Mapping) else None
 
@@ -271,6 +290,8 @@ def resolve_geometry_settings(
         orientation_raw = context.get("orientation")
     if watermark_raw is None:
         watermark_raw = context.get("watermark")
+    if duplex_raw is None:
+        duplex_raw = context.get("duplex")
     if binding_raw is None:
         binding_raw = context.get("binding")
     if frame_raw is None:
@@ -288,6 +309,8 @@ def resolve_geometry_settings(
         payload["orientation"] = orientation_raw
     if "watermark" not in payload and watermark_raw is not None:
         payload["watermark"] = watermark_raw
+    if "duplex" not in payload and duplex_raw is not None:
+        payload["duplex"] = duplex_raw
     if "binding" not in payload and binding_raw is not None:
         payload["binding"] = binding_raw
     if "frame" not in payload and frame_raw is not None:
@@ -316,12 +339,34 @@ def resolve_geometry_settings(
         spec = PaperSpec.model_validate(payload)
     except ValidationError as exc:
         raise TemplateError(f"Invalid paper settings: {exc}") from exc
-    geometry_options_list = spec.geometry_options()
+    geometry_options_list = spec.geometry_options() if not is_memoir else []
     geometry_options = ",".join(geometry_options_list)
-    geometry_extra_options = ",".join(spec.extra_options())
+    geometry_extra_options = ",".join(spec.extra_options()) if not is_memoir else ""
     paper_option, orientation_option = spec.to_documentclass_options()
-    options = [opt for opt in (paper_option, orientation_option) if opt]
+    options: list[str] = []
+    if not is_memoir:
+        options = [opt for opt in (paper_option, orientation_option) if opt]
+    if spec.duplex and "twoside" not in options:
+        options.append("twoside")
+    elif not spec.duplex and "twoside" in options:
+        pass
     documentclass_options = f"[{','.join(options)}]" if options else ""
+
+    if is_memoir:
+        paper_option = None
+        orientation_option = None
+
+    page_width, page_height = _resolve_page_dimensions(spec)
+    margin_all, margin_left, margin_right, margin_top, margin_bottom = _resolve_margins(spec)
+    if all(value is None for value in (margin_all, margin_left, margin_right, margin_top, margin_bottom)):
+        margin_all = "2cm"
+    margin_inner = margin_left
+    margin_outer = margin_right
+    if spec.binding_offset:
+        if margin_inner:
+            margin_inner = f"\\dimexpr {margin_inner} + {spec.binding_offset}\\relax"
+        else:
+            margin_inner = spec.binding_offset
 
     return GeometryResolution(
         documentclass_options=documentclass_options,
@@ -331,6 +376,17 @@ def resolve_geometry_settings(
         geometry_options_list=geometry_options_list,
         geometry_extra_options=geometry_extra_options,
         watermark=spec.watermark,
+        duplex=bool(spec.duplex),
+        page_width=page_width,
+        page_height=page_height,
+        margin_all=margin_all,
+        margin_left=margin_left,
+        margin_right=margin_right,
+        margin_top=margin_top,
+        margin_bottom=margin_bottom,
+        margin_inner=margin_inner,
+        margin_outer=margin_outer,
+        binding_offset=spec.binding_offset,
         spec=spec,
     )
 
@@ -346,11 +402,94 @@ def inject_geometry_context(
     context["geometry_options"] = resolution.geometry_options
     context["geometry_options_list"] = resolution.geometry_options_list
     context["geometry_extra_options"] = resolution.geometry_extra_options
+    context["geometry_page_width"] = resolution.page_width
+    context["geometry_page_height"] = resolution.page_height
+    context["geometry_margin_all"] = resolution.margin_all
+    context["geometry_margin_left"] = resolution.margin_left
+    context["geometry_margin_right"] = resolution.margin_right
+    context["geometry_margin_top"] = resolution.margin_top
+    context["geometry_margin_bottom"] = resolution.margin_bottom
+    context["geometry_margin_inner"] = resolution.margin_inner
+    context["geometry_margin_outer"] = resolution.margin_outer
+    context["geometry_binding_offset"] = resolution.binding_offset
+    context["geometry_duplex"] = resolution.duplex
     if resolution.watermark:
         context["geometry_watermark"] = resolution.watermark
     else:
         context.pop("geometry_watermark", None)
     return resolution
+
+
+def _resolve_page_dimensions(spec: PaperSpec) -> tuple[str | None, str | None]:
+    """Return paper width/height strings with orientation applied."""
+    width = spec.width
+    height = spec.height
+    if not width or not height:
+        format_dims = _format_dimensions(spec.format)
+        if format_dims is not None:
+            width, height = format_dims
+    if spec.orientation == "landscape" and width and height:
+        width, height = height, width
+    return width, height
+
+
+def _format_dimensions(format_name: str | None) -> tuple[str, str] | None:
+    if not format_name:
+        return None
+    lookup = format_name.lower()
+    sizes_mm: dict[str, tuple[float, float]] = {
+        "a0": (841, 1189),
+        "a1": (594, 841),
+        "a2": (420, 594),
+        "a3": (297, 420),
+        "a4": (210, 297),
+        "a5": (148, 210),
+        "a6": (105, 148),
+        "b0": (1000, 1414),
+        "b1": (707, 1000),
+        "b2": (500, 707),
+        "b3": (353, 500),
+        "b4": (250, 353),
+        "b5": (176, 250),
+        "b6": (125, 176),
+        "c0": (917, 1297),
+        "c1": (648, 917),
+        "c2": (458, 648),
+        "c3": (324, 458),
+        "c4": (229, 324),
+        "c5": (162, 229),
+        "c6": (114, 162),
+        "letter": (215.9, 279.4),
+        "legal": (215.9, 355.6),
+        "executive": (184.15, 266.7),
+    }
+    dims = sizes_mm.get(lookup)
+    if dims is None:
+        return None
+    width, height = dims
+    return (f"{width}mm", f"{height}mm")
+
+
+def _resolve_margins(
+    spec: PaperSpec,
+) -> tuple[str | None, str | None, str | None, str | None, str | None]:
+    margin_all: str | None = None
+    margin_left: str | None = None
+    margin_right: str | None = None
+    margin_top: str | None = None
+    margin_bottom: str | None = None
+    if isinstance(spec.margin, str):
+        margin_all = spec.margin
+    elif isinstance(spec.margin, dict):
+        margin_left = spec.margin.get("left") or spec.margin.get("l")
+        margin_right = spec.margin.get("right") or spec.margin.get("r")
+        margin_top = spec.margin.get("top") or spec.margin.get("t")
+        margin_bottom = spec.margin.get("bottom") or spec.margin.get("b")
+        margin_inner = spec.margin.get("inner")
+        margin_outer = spec.margin.get("outer")
+        margin_left = margin_inner or margin_left
+        margin_right = margin_outer or margin_right
+    return margin_all, margin_left, margin_right, margin_top, margin_bottom
 
 
 __all__ = [

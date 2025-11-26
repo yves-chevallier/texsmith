@@ -46,16 +46,24 @@ Roadmap and development notes for TeXSmith. I keep this file as a running checkl
 - [ ] Epigraph Plugin
 - [ ] Letterine
 
-## Intégrer certaines fonts
+## Features
+
+### Support for Tectonic
+
+Tectonic has become a popular LaTeX engine that simplifies document compilation by automatically managing dependencies. Integrate Tectonic as an alternative compilation backend in TeXSmith, allowing users to choose between traditional engines like xelatex, lualatex, and Tectonic for building their documents.
+
+We need to refactor TeXSmith to make the engine modular and pluggable. So we can choose from the CLI and the API which engine to use.
+We want to make tectonic the default engine for TeXSmith going forward. Why? Because it simplifies the user experience by handling package management automatically, reducing setup complexity. Also it is considerably faster and lightweight compared to traditional LaTeX engines, very adapted for CI/CD pipelines and automated document generation.
+
+### Include Fonts in Package
 
 Certaines fonts utilisées par TeXSmith comme OpenMoji-black-glyf.ttf sont difficile à trouver et télécharger. Il faudrait les intégrer dans le package TeXSmith pour éviter aux utilisateurs d'avoir à les chercher et les installer eux-mêmes. Elles seront copiées dans le dossier de build si utilisées. On commence juste par cette font pour l'instant.
 
-## Mermaid color configuration
+### Mermaid color configuration
 
 Je remarque que les diagrammes mermaid qui sont créés apparaissent avec un fond gris dans le pdf. Mais nous avions configuré un style pour avoir des diagrammes b&w. Il n'est probablement plus activé ou pris en compte. Il faut vérifier cela et corriger le problème.
 
-
-## .texsmith/config.toml
+### Global user's configuraiton (.texsmith/config.toml)
 
 Improve the documentation and structure for user configuration. The goal is to let users pick default templates, Mermaid styles, preferred options, and paper formats for everyday TeXSmith usage. The file is optional and can live in the current directory or any parent directory. When present, the `.texsmith` folder also stores cache, configuration, and other user-specific data.
 
@@ -94,36 +102,160 @@ Place an anchor where the term is defined:
 The **HTML**{#gls-html} is the standard markup language for web pages...
 ```
 
-### Acronyms
+### MkDocs Linking Issues
 
-Acronyms often live alongside glossary entries:
+MkDocs currently fails to resolve links to other pages. For example, `[High-Level Workflows](api/high-level.md)` becomes `\ref{snippet:...` but the referenced snippet is never defined. Replacing the syntax with `\ref` builds successfully but still fails at runtime. Investigate and fix the resolver so links work throughout the site.
 
-```tex
-\newglossaryentry{key}{
-  name={singular form},
-  plural={plural form},
-  description={descriptive text},
-  first={special form for first use},
-  text={normal form (if you want to force it)},
-}
+Also note that the scientific paper “cheese” example prematurely closes code blocks after a snippet. Identify why the snippet terminates early and correct it.
 
-\newacronym{gcd}{GCD}{greatest common divisor}
+### Acronyms multiline
+
+Thw following don't work, it should either warn or join the different lines together.
+
+```markdown
+# Acronyms
+
+The National Aeronautics and Space Administration NASA is responsible for the
+civilian space program.
+
+*[NASA]:
+    Line 1
+    Line 2
 ```
 
-Use `\gls` for the nominal form, `\Gls` to capitalize the first letter, `\glspl` for the plural, and `\Glspl` for the capitalized plural. `\acrshort` forces the short form, `\acrlong` forces the long form, and `\acrfull` prints “Long Version (LV)”. HTML typically leans on `<abbr>` for similar semantics.
+### Font style with mono
 
-### Abbreviations
+We want to support combinations of font styles with the monospace font. For example:
 
-Support abbreviations end-to-end. If partial functionality already exists, refactor it as follows:
+```markdown
+*`abc`*
+***`abc`***
+__*`abc`*__
+```
 
-1. Capture all `<abbr>` entries in the document.
-2. Warn when a term reuses different descriptions.
-3. Translate abbreviations to LaTeX via `\acrshort{term}`.
-4. Expose an `acronyms` attribute to the template, structured like `{ 'key': ('term', 'description'), ... }`.
-5. Have Jinja loop over `acronyms` and emit `\newacronym{key}{term}{description}` when the list is not empty.
-6. Conditionally include `\usepackage[acronym]{glossaries}` and `\makeglossaries` in the templates.
+### Fences the gros bordel
 
-## Complex Tables
+#### Code
+
+We only use `` ``` `` fences for code blocks or other special blocks like mermaid, latex, custom tables, etc. No other uses should be allowed.
+
+#### Admonitions
+
+We prefer the MkDocs admonition syntax as it is more flexible and better supported.
+
+```md
+!!! note "Note Title"
+
+    This is the content of the note.
+
+??? info "Folddable Info Title"
+
+    This is the content of the info.
+```
+
+#### Fenced custom
+
+The `:::` syntax is reserved for custom containers like `center`, `right`, `language`, etc. No other uses should be allowed.
+
+##### Font Size
+
+> tiny, small, large, huge, enormous
+> Other synonyms: tiny, scriptsize, footnotesize, small, normalsize, large, Large, LARGE, huge, Huge
+> Other english synonyms: tiny, very small, small, normal, big, very big, huge, enormous
+
+| Adjective(s) (EN)     | LaTeX                   | HTML correspondance (CSS)                  |
+|-----------------------|-------------------------|--------------------------------------------|
+| tiny, very tiny       | \tiny   (≈ 5 pt)        | `<span style="font-size:0.5em">...</span>` |
+| very small            | \scriptsize (≈ 7 pt)    | `<span style="font-size:0.7em">...</span>` |
+| footnote-sized        | \footnotesize (≈ 8 pt)  | `<span style="font-size:0.8em">...</span>` |
+| small                 | \small (≈ 9 pt)         | `<span style="font-size:0.9em">...</span>` |
+| normal                | \normalsize (≈ 10 pt)   | `<span style="font-size:1em">...</span>  ` |
+| big                   | \large (≈ 12 pt)        | `<span style="font-size:1.2em">...</span>` |
+| very big              | \Large (≈ 14.4 pt)      | `<span style="font-size:1.4em">...</span>` |
+| between big and huge  | \LARGE (≈ 17.3 pt)      | `<span style="font-size:1.7em">...</span>` |
+| huge                  | \huge (≈ 20.7 pt)       | `<span style="font-size:2.1em">...</span>` |
+| enormous, gigantic    | \Huge (≈ 24.9 pt)       | `<span style="font-size:2.5em">...</span>` |
+
+
+```text
+::: font large
+This text is large.
+:::
+```
+
+##### Center/Right alignment
+
+```md
+::: center
+texte
+:::
+
+::: right
+texte
+:::
+```
+
+##### Alignment
+
+```text
+::: align center
+This text is centered.
+:::
+
+::: align right
+This text is right-aligned.
+:::
+
+::: language arabic
+```
+
+We use the syntax `verb` + `option` after the opening `:::` to specify the type of container and any relevant options.
+
+```text
+::: latex only
+This LaTeX-only content will be included in the LaTeX output but ignored in HTML.
+:::
+
+::: html only
+This HTML-only content will be included in the HTML output but ignored in LaTeX.
+:::
+```
+
+We can use raw LaTeX blocks for more complex LaTeX content that doesn't fit well in Markdown:
+
+```text
+::: latex raw
+\clearpage
+:::
+```
+
+With SuperFences we support extra HTML attributes for custom containers:
+
+```text
+::: language arabic {#custom-id .custom-class data-attr="value"}
+This is Arabic content with custom HTML attributes.
+:::
+```
+
+Each `:::` container is converted into a `<div>` with the specified attributes in HTML, while LaTeX processes the content according to the container type.
+
+#### GFM Support for admonitions
+
+We want TeXSmith to support GitHub Flavored Markdown (GFM) admonitions as well. This includes the ability to create notes, warnings, tips, and other types of admonitions using the GFM syntax.
+
+```md
+> [!NOTE]
+> This is a note admonition.
+```
+
+This is converted to the exact same output as the MkDocs admonition syntax. It is equivalent to:
+
+```md
+!!! note
+    This is a note admonition.
+```
+
+### Complex Tables
 
 Markdown offers limited table configuration—only column alignment by default. PyMdown provides captions, and superfences can inject more metadata, but we still miss:
 
@@ -134,7 +266,7 @@ Markdown offers limited table configuration—only column alignment by default. 
 - Horizontal and vertical separator lines
 - Column widths (fixed, auto, relative)
 
-### Extended Markdown Table Syntax
+#### Extended Markdown Table Syntax
 
 Leverage Pymdown’s table extension to add more metadata directly in Markdown. For example:
 texsmith.spantable extension lets us span cells in standard Markdown tables.
@@ -150,7 +282,7 @@ The `>>>` syntax will span cells horizontally, the `vvv` syntax will span cells 
 | Cell 9   |          | vvv      |
 ```
 
-### Cmi rules example
+#### Cmi rules example
 
 ```latex
 \begin{tabular}{@{}lll@{}}
@@ -166,11 +298,11 @@ Others & \multicolumn{2}{c}{Not available} \\
 \end{tabular}
 ```
 
-### Align to dot number
+#### Align to dot number
 
 Find a syntax to align numbers to dot. `lS@{}`
 
-### Raw table syntax
+#### Raw table syntax
 
 Superfences do not work directly with tables, so define a `table` fence that accepts YAML options:
 
@@ -203,7 +335,7 @@ data:
 
 The goal is to convert Markdown tables into LaTeX tables with automatic line breaks so that columns wrap gracefully when a table is too wide.
 
-## Arabic
+### Arabic
 
 We can allow environment to support specific languages:
 
@@ -240,7 +372,7 @@ This will trigger the inclusion of `polyglossia` and set up the Arabic environme
 \end{document}
 ```
 
-## Figure References
+### Figure References
 
 Printed references depend on the document language. In English we would write, “The elephant shown in Figure 1 is large.” The LaTeX equivalent is `The elephant shown in Figure~\ref{fig:elephant} is large.` Pymdown lets us write:
 
@@ -380,172 +512,13 @@ Verify that TeXSmith respects these design principles:
 - Restyle inserted text (currently green and overly rounded); see “Formatting inserted text”.
 - `{~~deleted text~~}` should drop the curly braces, which currently leak into the output.
 
-## MkDocs Linking Issues
+## Issues
 
-MkDocs currently fails to resolve links to other pages. For example, `[High-Level Workflows](api/high-level.md)` becomes `\ref{snippet:...` but the referenced snippet is never defined. Replacing the syntax with `\ref` builds successfully but still fails at runtime. Investigate and fix the resolver so links work throughout the site.
-
-Also note that the scientific paper “cheese” example prematurely closes code blocks after a snippet. Identify why the snippet terminates early and correct it.
-
-## Markdown Package Issues
+### Markdown Package Issues
 
 `mkdocstrings` autorefs define heading anchors via `[](){#}`, which triggers Markdown lint violations. Find a syntax or lint configuration that avoids false positives.
 
-## Lint/Format
-
-We still need a lint/format solution that plays nicely with MkDocs syntax; existing tools fall short.
-
-## Issues
-
-### Acronyms multiline
-
-Thw following don't work, it should either warn or join the different lines together.
-
-```markdown
-# Acronyms
-
-The National Aeronautics and Space Administration NASA is responsible for the
-civilian space program.
-
-*[NASA]:
-    Line 1
-    Line 2
-```
-
-### Font style with mono
-
-We want to support combinations of font styles with the monospace font. For example:
-
-```markdown
-*`abc`*
-***`abc`***
-__*`abc`*__
-```
-
-In this case the `code inline` is treated as `texttt` with the proper escapes.
-
-### Center/Right alignment
-
-```md
-::: center
-texte
-:::
-
-::: right
-texte
-:::
-```
-
-### Fences the gros bordel
-
-#### Code
-
-We only use `` ``` `` fences for code blocks or other special blocks like mermaid, latex, custom tables, etc. No other uses should be allowed.
-
-#### Admonitions
-
-We prefer the MkDocs admonition syntax as it is more flexible and better supported.
-
-```md
-!!! note "Note Title"
-
-    This is the content of the note.
-
-??? info "Folddable Info Title"
-
-    This is the content of the info.
-```
-
-#### Fenced custom
-
-The `:::` syntax is reserved for custom containers like `center`, `right`, `language`, etc. No other uses should be allowed.
-
-##### Font Size
-
-> tiny, small, large, huge, enormous
-> Other synonyms: tiny, scriptsize, footnotesize, small, normalsize, large, Large, LARGE, huge, Huge
-> Other english synonyms: tiny, very small, small, normal, big, very big, huge, enormous
-
-| Adjective(s) (EN)          | LaTeX correspondance (≈ pt) | HTML correspondance (CSS)                     |
-|---------------------------|-----------------------------|-----------------------------------------------|
-| tiny, very tiny           | \tiny   (≈ 5 pt)            | <span style="font-size:0.5em">...</span>      |
-| very small                | \scriptsize (≈ 7 pt)        | <span style="font-size:0.7em">...</span>      |
-| footnote-sized            | \footnotesize (≈ 8 pt)      | <span style="font-size:0.8em">...</span>      |
-| small                     | \small (≈ 9 pt)             | <span style="font-size:0.9em">...</span>      |
-| normal                    | \normalsize (≈ 10 pt)       | <span style="font-size:1em">...</span>        |
-| big                       | \large (≈ 12 pt)            | <span style="font-size:1.2em">...</span>      |
-| very big                  | \Large (≈ 14.4 pt)          | <span style="font-size:1.4em">...</span>      |
-| between big and huge      | \LARGE (≈ 17.3 pt)          | <span style="font-size:1.7em">...</span>      |
-| huge                      | \huge (≈ 20.7 pt)           | <span style="font-size:2.1em">...</span>      |
-| enormous, gigantic        | \Huge (≈ 24.9 pt)           | <span style="font-size:2.5em">...</span>      |
-
-
-```text
-::: font large
-This text is large.
-:::
-```
-
-##### Alignment
-
-```text
-::: align center
-This text is centered.
-:::
-
-::: align right
-This text is right-aligned.
-:::
-
-::: language arabic
-```
-
-We use the syntax `verb` + `option` after the opening `:::` to specify the type of container and any relevant options.
-
-```text
-::: latex only
-This LaTeX-only content will be included in the LaTeX output but ignored in HTML.
-:::
-
-::: html only
-This HTML-only content will be included in the HTML output but ignored in LaTeX.
-:::
-```
-
-We can use raw LaTeX blocks for more complex LaTeX content that doesn't fit well in Markdown:
-
-```text
-::: latex raw
-\clearpage
-:::
-```
-
-With SuperFences we support extra HTML attributes for custom containers:
-
-```text
-::: language arabic {#custom-id .custom-class data-attr="value"}
-This is Arabic content with custom HTML attributes.
-:::
-```
-
-Each `:::` container is converted into a `<div>` with the specified attributes in HTML, while LaTeX processes the content according to the container type.
-
-#### GFM Support for admonitions
-
-We want TeXSmith to support GitHub Flavored Markdown (GFM) admonitions as well. This includes the ability to create notes, warnings, tips, and other types of admonitions using the GFM syntax.
-
-```md
-> [!NOTE]
-> This is a note admonition.
-```
-
-This is converted to the exact same output as the MkDocs admonition syntax. It is equivalent to:
-
-```md
-!!! note
-    This is a note admonition.
-```
-
-## Syntax only ?
+### Syntax only ?
 
 ```latex
 \usepackage{syntonly}
