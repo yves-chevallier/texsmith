@@ -1,5 +1,5 @@
 OUTPUT_DIR := build
-PDF := $(OUTPUT_DIR)/index.pdf
+PDF := $(OUTPUT_DIR)/snippet.pdf
 
 ifneq ($(strip $(ARTIFACTS_DIR)),)
 copy_artifact = mkdir -p "$(ARTIFACTS_DIR)" && cp "$1" "$(ARTIFACTS_DIR)/"
@@ -11,6 +11,7 @@ all: $(PDF)
 
 $(PDF): docs/index.md
 	uv run texsmith $< -o$(OUTPUT_DIR) --build -tarticle
+	mv $(OUTPUT_DIR)/index.pdf $(PDF)
 	$(call copy_artifact,$@)
 
 clean:
