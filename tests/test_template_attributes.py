@@ -160,7 +160,8 @@ def test_book_template_supports_columns_option() -> None:
 
     rendered = template.wrap_document("Body", overrides=overrides, context=context)
 
-    assert "\\documentclass[9pt,twoside,twocolumn]{memoir}" in rendered
+    assert "\\documentclass[9pt,twoside]{memoir}" in rendered
+    assert "twocolumn" not in rendered
 
 
 def test_parse_template_attributes_supports_nested_keys() -> None:

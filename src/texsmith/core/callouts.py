@@ -25,7 +25,7 @@ DEFAULT_CALLOUTS: dict[str, CalloutConfig] = {
     "example": {"background_color": "f2edff", "border_color": "7c4dff", "icon": "🧪"},
     "quote": {"background_color": "f5f5f5", "border_color": "9e9e9e", "icon": "✒️"},
     "hint": {"background_color": "e5f8f6", "border_color": "00bfa5", "icon": "💡"},
-    "default": {"background_color": "f0f0f0", "border_color": "808080", "icon": "🎤"},  # noqa: RUF001
+    "default": {"background_color": "f0f0f0", "border_color": "808080", "icon": "🎤"},
 }
 
 

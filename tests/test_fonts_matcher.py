@@ -23,7 +23,8 @@ def test_match_fonts_with_custom_index(tmp_path: Path) -> None:
     fonts_yaml = _write_demo_fonts_yaml(tmp_path)
     result = match_fonts("Ab😀", fonts_yaml=fonts_yaml, check_system=False)
 
-    assert set(result.fallback_fonts) == {"DemoSans", "DemoEmoji"}
+    # ASCII characters are covered by the base font stack; only the emoji requires a fallback.
+    assert set(result.fallback_fonts) == {"DemoEmoji"}
     assert not result.missing_fonts
     assert not result.missing_codepoints
 
@@ -45,7 +46,8 @@ def test_ascii_prefers_generic_noto(tmp_path: Path) -> None:
 
     result = match_fonts("Ab", fonts_yaml=fonts_yaml, check_system=False)
 
-    assert result.fallback_fonts == ("NotoSans",)
+    # ASCII is handled by the primary font stack, so no fallbacks are required.
+    assert result.fallback_fonts == ()
 
 
 def test_font_analysis_collects_nested_characters(tmp_path: Path) -> None:
@@ -61,4 +63,5 @@ def test_font_analysis_collects_nested_characters(tmp_path: Path) -> None:
     )
 
     assert result is not None
-    assert set(result.fallback_fonts) == {"DemoSans", "DemoEmoji"}
+    # Only the emoji needs a dedicated fallback font.
+    assert set(result.fallback_fonts) == {"DemoEmoji"}

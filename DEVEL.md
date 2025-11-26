@@ -14,6 +14,7 @@ Roadmap and development notes for TeXSmith. I keep this file as a running checkl
 - [x] csquote
 - [x] Emojis without svg conversions
 - [x] two columns in article template
+- [ ] Integrate docker docker run -v $(pwd):/usr/src/tex  dxjoke/tectonic-docker tectonic book.tex
 - [ ] Build MkDocs with parts at level 0.
 - [ ] Hide the list of tables when no tables exist.
 - [ ] Manage title fragment to insert title meta
