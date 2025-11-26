@@ -84,6 +84,11 @@ allow_empty = false
 normaliser = "babel_language"
 sources = ["press.language", "language"]
 
+[latex.template.attributes.columns]
+default = 1
+type = "integer"
+sources = ["press.columns", "columns"]
+
 [latex.template.attributes.code]
 default = { engine = "pygments" }
 type = "mapping"

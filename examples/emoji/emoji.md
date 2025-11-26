@@ -1,24 +1,46 @@
+---
+press:
+  columns: 2
+---
 # Emoji Support
 
-TeXSmith now renders emoji as glyphs (no remote SVG fetch) when you pick a font flavour:
+## Introduction
+
+TeXSmith renders emoji as glyphs when you pick a font flavour:
 
 ```yaml
 press:
   fonts:
-    emoji: black   # black | color | twemoji | "Custom Family"
+    emoji: black
 ```
 
-- `black` (défaut) : OpenMoji Black (mono, noir et blanc).
-- `color` : Noto Color Emoji.
-- `twemoji` : passe par le package `twemoji`.
-- `artifact` : (héritage) retombe sur les images téléchargées.
-- Tout autre nom est utilisé comme famille directe.
+You can choose among four built-in options:
 
-Engines :
-- LuaLaTeX s’appuie sur `luaotfload` pour ajouter la police emoji en fallback.
-- XeLaTeX/Tectonic utilisent `ucharclasses` pour basculer automatiquement sur la police emoji sur la plage U+1F000–U+1FAFF.
+`black`
+: OpenMoji Black (default).
 
-Vous pouvez taper les emoji directement dans le Markdown :
+`color`
+: Noto Color Emoji.
+
+`twemoji`
+: Use the `twemoji` package as fallback.
+
+`artifact`
+: Download emoji as images using Twemoji.
+
+Any other name is treated as a custom font family to load directly.
+
+Engines:
+
+- LuaLaTeX relies on `luaotfload` to add the emoji font as a fallback.
+- XeLaTeX/Tectonic use `ucharclasses` to automatically switch to the emoji font on the U+1F000–U+1FAFF range.
+You can type emoji directly in Markdown or LaTeX source.
+
+/// latex
+\newpage
+///
+
+## Examples
 
 | Emoji | Description                    |
 | ----- | ------------------------------ |

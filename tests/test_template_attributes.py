@@ -38,7 +38,9 @@ if "texsmith" not in sys.modules:
     sys.modules["texsmith"] = texsmith_stub
 
 article_module = importlib.import_module("texsmith.builtin_templates.article")
-Template = article_module.Template
+ArticleTemplate = article_module.Template
+book_module = importlib.import_module("texsmith.builtin_templates.book")
+BookTemplate = book_module.Template
 TemplateManifest = importlib.import_module("texsmith.core.templates.manifest").TemplateManifest
 ARTICLE_ROOT = Path(article_module.__file__).resolve().parent
 from texsmith.builtin_fragments.ts_geometry.paper import inject_geometry_context  # noqa: E402
@@ -74,7 +76,7 @@ def test_attribute_resolver_merges_press_metadata() -> None:
 
 
 def test_article_template_applies_computed_options() -> None:
-    template = Template()
+    template = ArticleTemplate()
     overrides = {
         "press": {
             "title": "Sample & Title",
@@ -100,8 +102,26 @@ def test_article_template_applies_computed_options() -> None:
     assert "press" not in context
 
 
+def test_article_template_supports_columns_option() -> None:
+    template = ArticleTemplate()
+    overrides = {
+        "press": {
+            "columns": 2,
+            "paper": "letter",
+            "orientation": "landscape",
+        }
+    }
+
+    context = template.prepare_context("Body", overrides=overrides)
+    inject_geometry_context(context, overrides)
+
+    rendered = template.wrap_document("Body", overrides=overrides, context=context)
+
+    assert "\\documentclass[letterpaper,landscape,twocolumn]{article}" in rendered
+
+
 def test_article_template_accepts_preamble_override() -> None:
-    template = Template()
+    template = ArticleTemplate()
     overrides = {"press": {"override": {"preamble": "\\usepackage{xcolor}"}}}
 
     context = template.prepare_context("", overrides=overrides)
@@ -111,7 +131,7 @@ def test_article_template_accepts_preamble_override() -> None:
 
 
 def test_article_template_geometry_overrides() -> None:
-    template = Template()
+    template = ArticleTemplate()
     overrides = {"press": {"geometry": {"paperheight": "4cm", "showframe": True}}}
 
     context = template.prepare_context("", overrides=overrides)
@@ -123,12 +143,24 @@ def test_article_template_geometry_overrides() -> None:
 
 
 def test_article_template_normalises_callout_style() -> None:
-    template = Template()
+    template = ArticleTemplate()
     overrides = {"press": {"callout_style": "CLASSIC"}}
 
     context = template.prepare_context("Body", overrides=overrides)
 
     assert context["callout_style"] == "classic"
+
+
+def test_book_template_supports_columns_option() -> None:
+    template = BookTemplate()
+    overrides = {"press": {"columns": 2}}
+
+    context = template.prepare_context("Body", overrides=overrides)
+    inject_geometry_context(context, overrides)
+
+    rendered = template.wrap_document("Body", overrides=overrides, context=context)
+
+    assert "\\documentclass[9pt,twoside,twocolumn]{memoir}" in rendered
 
 
 def test_parse_template_attributes_supports_nested_keys() -> None:

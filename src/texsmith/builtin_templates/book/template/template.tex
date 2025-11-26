@@ -1,4 +1,13 @@
-\documentclass[9pt,twoside]{memoir}
+\BLOCK{ set base_docclass_options = documentclass_options|default('', true) }
+\BLOCK{ set combined_docclass_options = '9pt,twoside' }
+\BLOCK{ if base_docclass_options }
+\BLOCK{   set combined_docclass_options = combined_docclass_options ~ ',' ~ base_docclass_options[1:-1] }
+\BLOCK{ endif }
+\BLOCK{ if columns|default(1)|int > 1 }
+\BLOCK{   set combined_docclass_options = combined_docclass_options ~ ',twocolumn' }
+\BLOCK{ endif }
+\BLOCK{ set documentclass_options = '[' ~ combined_docclass_options ~ ']' }
+\documentclass\VAR{documentclass_options}{memoir}
 
 \usepackage{amssymb} % Additional math symbols
 \usepackage{nicefrac} % For support of: ½, ⅔...
