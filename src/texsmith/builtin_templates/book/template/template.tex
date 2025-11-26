@@ -3,9 +3,6 @@
 \BLOCK{ if base_docclass_options }
 \BLOCK{   set combined_docclass_options = combined_docclass_options ~ ',' ~ base_docclass_options[1:-1] }
 \BLOCK{ endif }
-\BLOCK{ if columns|default(1)|int > 1 }
-\BLOCK{   set combined_docclass_options = combined_docclass_options ~ ',twocolumn' }
-\BLOCK{ endif }
 \BLOCK{ set documentclass_options = '[' ~ combined_docclass_options ~ ']' }
 \documentclass\VAR{documentclass_options}{memoir}
 
@@ -25,17 +22,17 @@
 \usepackage{fancyhdr}
 
 \usepackage{graphicx} % For including images
-\usepackage{fontawesome5}
 \usepackage{multicol}
 \usepackage{booktabs}
 \usepackage{csquotes}
 \usepackage{epigraph}
 \usepackage{capt-of}
-\usepackage{fvextra}
+%\usepackage{fvextra}
 \usepackage{enumitem}
 \usepackage{etoolbox}
 \usepackage{tocloft}
 \usepackage{caption}
+\usepackage{hyperref}
 \usepackage[\VAR{language|default('english')}]{babel}
 \usepackage{emptypage}
 \definecolor{linkcolor}{RGB}{34, 18, 104}
@@ -160,48 +157,58 @@
 % Listing / Code configuration
 %
 
-\NewTotalTCBox{\cde}{mv}{
-  on line,
-  boxsep=0pt,
-  left=1.5pt,
-  right=1.5pt,
-  top=1pt,
-  bottom=1pt,
-  colframe=gray!20,
-  colback=gray!20,
-  minted options={%
-      ignorelexererrors
-    },
-  rounded corners,
-  boxrule=0pt,
-}{\mintinline{#1}{#2}}
+% \NewTotalTCBox{\cde}{mv}{
+%   on line,
+%   boxsep=0pt,
+%   left=1.5pt,
+%   right=1.5pt,
+%   top=1pt,
+%   bottom=1pt,
+%   colframe=gray!20,
+%   colback=gray!20,
+%   minted options={%
+%       ignorelexererrors
+%     },
+%   rounded corners,
+%   boxrule=0pt,
+% }{\mintinline{#1}{#2}}
 
-\newtcolorbox{goodbox}[1][]{
-  colback=green!20,
-  colframe=green!50!black,
-  boxrule=0.5pt,
-  arc=4mm,
-  auto outer arc,
-  #1
-}
+% \newtcolorbox{goodbox}[1][]{
+%   colback=green!20,
+%   colframe=green!50!black,
+%   boxrule=0.5pt,
+%   arc=4mm,
+%   auto outer arc,
+%   #1
+% }
 
-\newtcolorbox{badbox}[1][]{
-  colback=red!20,
-  colframe=red!50!black,
-  boxrule=0.5pt,
-  arc=4mm,
-  auto outer arc,
-  #1
-}
+% \newtcolorbox{badbox}[1][]{
+%   colback=red!20,
+%   colframe=red!50!black,
+%   boxrule=0.5pt,
+%   arc=4mm,
+%   auto outer arc,
+%   #1
+% }
 
-\newtcolorbox{commentbox}[1][]{
-  colback=gray!20,
-  colframe=gray!50!black,
-  boxrule=0.5pt,
-  arc=4mm,
-  auto outer arc,
-  #1
-}
+% \newtcolorbox{commentbox}[1][]{
+%   colback=gray!20,
+%   colframe=gray!50!black,
+%   boxrule=0.5pt,
+%   arc=4mm,
+%   auto outer arc,
+%   #1
+% }
+
+%% Workaround for mintedinline in item
+%% https://tex.stackexchange.com/a/723530/85416
+%\NewDocumentCommand{\minteditem}{mv}{%
+%  \item[\mintinline{#1}{#2}]%
+%}
+
+%% Highlight text in yellow
+%\newtcbox{\hl}{on line, boxrule=0.5pt, colframe=black, colback=yellow!30, sharp corners, boxsep=0pt, left=2pt, right=2pt, top=2pt, bottom=2pt}
+
 
 %
 % Tweaks
@@ -249,14 +256,6 @@
   itemindent=\dimexpr-5pt-\labelsep\relax
 }
 
-% Workaround for mintedinline in item
-% https://tex.stackexchange.com/a/723530/85416
-\NewDocumentCommand{\minteditem}{mv}{%
-  \item[\mintinline{#1}{#2}]%
-}
-
-% Highlight text in yellow
-\newtcbox{\hl}{on line, boxrule=0.5pt, colframe=black, colback=yellow!30, sharp corners, boxsep=0pt, left=2pt, right=2pt, top=2pt, bottom=2pt}
 
 \newcommand{\booktitle}{\VAR{title}}
 \newcommand{\booksubtitle}{\VAR{subtitle}}

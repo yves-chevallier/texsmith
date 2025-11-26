@@ -1,8 +1,15 @@
-\BLOCK{ set font_profile = font_profile
-  | default(fonts | default((press.fonts if press is defined and press else None), true), true)
-  | default("default", true)
-  | lower
-}
+\BLOCK{ set press_fonts_raw = press.fonts if press is defined and press else None }
+\BLOCK{ set press_fonts = press_fonts_raw if press_fonts_raw is mapping else None }
+\BLOCK{ set press_fonts_profile = press_fonts_raw if press_fonts_raw is string else None }
+\BLOCK{ set fonts_map = fonts if fonts is defined and fonts is mapping else None }
+\BLOCK{ set fonts_profile = fonts if fonts is defined and fonts is string else None }
+\BLOCK{ set font_profile = font_profile if font_profile is defined and font_profile else None }
+\BLOCK{ if not font_profile and fonts_map } \BLOCK{ set font_profile = fonts_map.get("profile") } \BLOCK{ endif }
+\BLOCK{ if not font_profile and fonts_profile } \BLOCK{ set font_profile = fonts_profile } \BLOCK{ endif }
+\BLOCK{ if not font_profile and press_fonts } \BLOCK{ set font_profile = press_fonts.get("profile") } \BLOCK{ endif }
+\BLOCK{ if not font_profile and press_fonts_profile } \BLOCK{ set font_profile = press_fonts_profile } \BLOCK{ endif }
+\BLOCK{ if not font_profile } \BLOCK{ set font_profile = "default" } \BLOCK{ endif }
+\BLOCK{ set font_profile = font_profile | lower }
 \BLOCK{ set main_font = main_font | default("Latin Modern Roman") }
 \BLOCK{ set sans_font = sans_font | default("Latin Modern Sans") }
 \BLOCK{ set mono_font = mono_font | default("FreeMono") }
@@ -15,9 +22,14 @@
 \BLOCK{ if font_path_prefix and not font_path_prefix.endswith('/') }
   \BLOCK{ set font_path_prefix = font_path_prefix ~ '/' }
 \BLOCK{ endif }
-\BLOCK{ set press_fonts = press.get("fonts") if press is defined and press else None }
+\BLOCK{ set press_fonts = press_fonts if press_fonts is not none else None }
 \BLOCK{ set runtime_emoji = emoji_mode if emoji_mode is defined else None }
-\BLOCK{ set emoji_pref = emoji if emoji is defined else (press_fonts.get("emoji") if press_fonts else (runtime_emoji if runtime_emoji else (fonts.get("emoji") if fonts is defined else None))) }
+\BLOCK{ set emoji_pref = emoji if emoji is defined else ((press_fonts.get("emoji") if press_fonts else None) if press_fonts is mapping else None) }
+\BLOCK{ if not emoji_pref and runtime_emoji }
+  \BLOCK{ set emoji_pref = runtime_emoji }
+\BLOCK{ elif not emoji_pref and fonts_map }
+  \BLOCK{ set emoji_pref = fonts_map.get("emoji") }
+\BLOCK{ endif }
 \BLOCK{ set emoji_mode = (emoji_pref | default('black') | lower) }
 \BLOCK{ set emoji_disabled = emoji_mode in ["artifact", "off", "none"] }
 \BLOCK{ set emoji_twemoji = emoji_mode == "twemoji" }
@@ -78,6 +90,9 @@
   \BLOCK{ set mono_bold_italic = "* Bold" }
   \BLOCK{ set mono_fake_slant = True }
 \BLOCK{ endif }
+\BLOCK{ if font_profile in ["adventor", "heros"] }
+  \BLOCK{ set small_caps_font = None }
+\BLOCK{ endif }
 \ProvidesPackage{ts-fonts}[2025/11/21 TeXSmith Unified font setup (generated)]
 
 % This file is a Jinja2 template. Render it to a .sty before use.
@@ -108,6 +123,14 @@
 \BLOCK{ set mono_files = font_files.get(mono_font, {}) }
 \BLOCK{ set math_files = font_files.get(math_font, {}) }
 \BLOCK{ set small_caps_files = font_files.get(small_caps_font, {}) if small_caps_font else {} }
+\BLOCK{ if not mono_files and mono_font == "IBM Plex Mono" }
+  \BLOCK{ set mono_files = {
+    "regular": "IBMPlexMono-Regular.ttf",
+    "bold": "IBMPlexMono-Bold.ttf",
+    "italic": "IBMPlexMono-Italic.ttf",
+    "bold_italic": "IBMPlexMono-BoldItalic.ttf"
+  } }
+\BLOCK{ endif }
   \ifLuaTeX
     \let\eth\relax
     \let\Eth\relax
@@ -222,6 +245,7 @@
 \BLOCK{ if mono_files }
       Path=\VAR{font_path_prefix},
 \BLOCK{ endif }
+      UprightFont={\VAR{mono_files.get("regular", mono_font)}},
       ItalicFont={\VAR{mono_files.get("italic", mono_italic)}},
       BoldFont={\VAR{mono_files.get("bold", "* Bold")}},
       BoldItalicFont={\VAR{mono_files.get("bold_italic", mono_bold_italic)}},
@@ -332,6 +356,7 @@
 \BLOCK{ if mono_files }
       Path=\VAR{font_path_prefix},
 \BLOCK{ endif }
+      UprightFont={\VAR{mono_files.get("regular", mono_font)}},
       ItalicFont={\VAR{mono_files.get("italic", mono_italic)}},
       BoldFont={\VAR{mono_files.get("bold", "* Bold")}},
       BoldItalicFont={\VAR{mono_files.get("bold_italic", mono_bold_italic)}},
