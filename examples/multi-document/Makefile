@@ -1,17 +1,39 @@
 OUTPUT_DIR := build
 FILES := a.md b.md c.md config.yml
+PDF := $(OUTPUT_DIR)/main.pdf
+LUALATEX_PDF := $(OUTPUT_DIR)/main-lualatex.pdf
 
-all: $(FILES)
-	uv run texsmith $^ -o$(OUTPUT_DIR) --build -tarticle
-	cp $(OUTPUT_DIR)/main.pdf $(OUTPUT_DIR)/main-lualatex.pdf
-latex: $(FILES)
+ifneq ($(strip $(ARTIFACTS_DIR)),)
+copy_artifact = mkdir -p "$(ARTIFACTS_DIR)" && cp "$1" "$(ARTIFACTS_DIR)/"
+else
+copy_artifact = @true
+endif
+
+all: $(LUALATEX_PDF)
+
+$(OUTPUT_DIR)/main.tex: $(FILES)
 	uv run texsmith $^ -o$(OUTPUT_DIR) -tarticle
-tectonic: latex
+
+$(PDF): $(FILES)
+	uv run texsmith $^ -o$(OUTPUT_DIR) --build -tarticle
+	$(call copy_artifact,$@)
+
+$(LUALATEX_PDF): $(PDF)
+	cp $(PDF) $(LUALATEX_PDF)
+	$(call copy_artifact,$@)
+
+latex: $(OUTPUT_DIR)/main.tex
+
+tectonic: $(OUTPUT_DIR)/main.tex
 	cd $(OUTPUT_DIR) && tectonic main.tex
-	cp build/main.pdf build/main-tectonic.pdf
-xelatex: latex
+	cp $(OUTPUT_DIR)/main.pdf $(OUTPUT_DIR)/main-tectonic.pdf
+	$(call copy_artifact,$(OUTPUT_DIR)/main-tectonic.pdf)
+
+xelatex: $(OUTPUT_DIR)/main.tex
 	cd $(OUTPUT_DIR) && latexmk -xelatex main.tex
-	cp build/main.pdf build/main-xelatex.pdf
+	cp $(OUTPUT_DIR)/main.pdf $(OUTPUT_DIR)/main-xelatex.pdf
+	$(call copy_artifact,$(OUTPUT_DIR)/main-xelatex.pdf)
+
 view: tectonic
 	evince $(OUTPUT_DIR)/main.pdf &
 COMPARE_TMP := overlay_tmp

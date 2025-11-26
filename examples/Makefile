@@ -1,22 +1,40 @@
-export ARTIFACTS_DIR := ./examples_build
+export ARTIFACTS_DIR ?= $(CURDIR)/examples_build
 
-all: $(OUTPUT_DIR)
-	$(MAKE) -C abbr/ all
-	$(MAKE) -C booby/ all
-	$(MAKE) -C admonition/ all
+EXAMPLES := \
+	abbr \
+	admonition \
+	booby \
+	book \
+	code \
+	colorful \
+	diagrams \
+	dialects \
+	emoji \
+	fonts \
+	index \
+	letter \
+	markdown \
+	math \
+	mermaid \
+	multi-document \
+	paper \
+	progressbar \
+	recipe \
+	snippet
 
-tectonic: $(OUTPUT_DIR)
-	$(MAKE) -C abbr/ tectonic
-	$(MAKE) -C booby/ tectonic
-	$(MAKE) -C admonition/ tectonic
+EXAMPLES_WITH_TECTONIC := admonition booby emoji multi-document
+EXAMPLES_WITH_COMPARE := multi-document
+
+all: $(EXAMPLES:%=%/all)
+
+tectonic: $(EXAMPLES_WITH_TECTONIC:%=%/tectonic)
+
+compare: $(EXAMPLES_WITH_COMPARE:%=%/compare)
 
 clean:
-	$(RM) -rf $(OUTPUT_DIR)
-	$(MAKE) -C abbr/ clean
-	$(MAKE) -C booby/ clean
-	$(MAKE) -C admonition/ clean
+	$(RM) -rf $(ARTIFACTS_DIR)
+	@for example in $(EXAMPLES); do \
+		$(MAKE) -C $$example clean; \
+	done
 
-$(OUTPUT_DIR):
-	mkdir -p $@
-
-.PHONY: all clean tectonic
+.PHONY: all clean tectonic compare
