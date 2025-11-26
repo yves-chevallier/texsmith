@@ -12,6 +12,7 @@ Roadmap and development notes for TeXSmith. I keep this file as a running checkl
 - [x] Demonstrate glossary in book
 - [x] Support glossaries (glossaries package)
 - [x] csquote
+- [ ] two columns in article template
 - [ ] Manage title fragment to insert title meta
 - [ ] Manage fragments order from before/after hooks instead of in fragments.py
 - [ ] tocloft
@@ -217,6 +218,26 @@ The `>>>` syntax will span cells horizontally, the `vvv` syntax will span cells 
 | Cell 7   | Cell 8   | Cell 11  |
 | Cell 9   |          | vvv      |
 ```
+
+### Cmi rules example
+
+```latex
+\begin{tabular}{@{}lll@{}}
+\toprule
+& \multicolumn{2}{c}{Reaction} \\
+\cmidrule(l){2-3}
+Person & Face & Exclamation \\
+\midrule
+\multirow[t]{2}{*}{VIPs} & :) & Nice \\
+& :] & Sleek \\
+Others & \multicolumn{2}{c}{Not available} \\
+\bottomrule
+\end{tabular}
+```
+
+### Align to dot number
+
+Find a syntax to align numbers to dot. `lS@{}`
 
 ### Raw table syntax
 
@@ -507,6 +528,34 @@ We prefer the MkDocs admonition syntax as it is more flexible and better support
 
 The `:::` syntax is reserved for custom containers like `center`, `right`, `language`, etc. No other uses should be allowed.
 
+##### Font Size
+
+> tiny, small, large, huge, enormous
+> Other synonyms: tiny, scriptsize, footnotesize, small, normalsize, large, Large, LARGE, huge, Huge
+> Other english synonyms: tiny, very small, small, normal, big, very big, huge, enormous
+
+| Adjective(s) (EN)          | LaTeX correspondance (≈ pt) | HTML correspondance (CSS)                     |
+|---------------------------|-----------------------------|-----------------------------------------------|
+| tiny, very tiny           | \tiny   (≈ 5 pt)            | <span style="font-size:0.5em">...</span>      |
+| very small                | \scriptsize (≈ 7 pt)        | <span style="font-size:0.7em">...</span>      |
+| footnote-sized            | \footnotesize (≈ 8 pt)      | <span style="font-size:0.8em">...</span>      |
+| small                     | \small (≈ 9 pt)             | <span style="font-size:0.9em">...</span>      |
+| normal                    | \normalsize (≈ 10 pt)       | <span style="font-size:1em">...</span>        |
+| big                       | \large (≈ 12 pt)            | <span style="font-size:1.2em">...</span>      |
+| very big                  | \Large (≈ 14.4 pt)          | <span style="font-size:1.4em">...</span>      |
+| between big and huge      | \LARGE (≈ 17.3 pt)          | <span style="font-size:1.7em">...</span>      |
+| huge                      | \huge (≈ 20.7 pt)           | <span style="font-size:2.1em">...</span>      |
+| enormous, gigantic        | \Huge (≈ 24.9 pt)           | <span style="font-size:2.5em">...</span>      |
+
+
+```text
+::: font large
+This text is large.
+:::
+```
+
+##### Alignment
+
 ```text
 ::: align center
 This text is centered.
@@ -563,4 +612,11 @@ This is converted to the exact same output as the MkDocs admonition syntax. It i
 ```md
 !!! note
     This is a note admonition.
+```
+
+## Syntax only ?
+
+```latex
+\usepackage{syntonly}
+\syntaxonly
 ```

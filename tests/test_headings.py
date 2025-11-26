@@ -1,6 +1,10 @@
+from pathlib import Path
+
 import pytest
 
 from texsmith.adapters.latex import LaTeXRenderer
+from texsmith.api.document import Document
+from texsmith.api.pipeline import convert_documents
 from texsmith.core.config import BookConfig
 from texsmith.core.context import DocumentState
 
@@ -46,3 +50,106 @@ def test_drop_title_runtime_flag(renderer: LaTeXRenderer) -> None:
     assert "\\thispagestyle{plain}" in latex
     assert "\\section{Subsection}" in latex
     assert state.headings == [{"level": 1, "text": "Subsection", "ref": None}]
+
+
+def _render_headings(
+    tmp_path: Path,
+    markdown: str,
+    *,
+    template: str = "article",
+    base_level: int = 0,
+    promote_title: bool = True,
+) -> list[dict[str, object]]:
+    source = tmp_path / "doc.md"
+    source.write_text(markdown, encoding="utf-8")
+    document = Document.from_markdown(
+        source,
+        base_level=base_level,
+        promote_title=promote_title,
+    )
+    bundle = convert_documents(
+        [document],
+        output_dir=tmp_path / "build",
+        template=template,
+        wrap_document=False,
+    )
+    conversion = bundle.fragments[0].conversion
+    assert conversion is not None
+    assert conversion.document_state is not None
+    return conversion.document_state.headings
+
+
+def test_headings_align_with_metadata_title(tmp_path: Path) -> None:
+    headings = _render_headings(
+        tmp_path,
+        """---
+title: Title
+---
+## Section
+### Subsection
+### Subsection
+## Section
+### Subsection
+""",
+    )
+    levels = [entry["level"] for entry in headings]
+    assert levels == [1, 2, 2, 1, 2]
+
+
+def test_title_promotion_realigns_hierarchy(tmp_path: Path) -> None:
+    headings = _render_headings(
+        tmp_path,
+        """# Title
+## Section
+### Subsection
+### Subsection
+## Section
+### Subsection
+""",
+    )
+    levels = [entry["level"] for entry in headings]
+    assert levels == [1, 2, 2, 1, 2]
+
+
+def test_heading_offset_when_top_level_missing(tmp_path: Path) -> None:
+    headings = _render_headings(
+        tmp_path,
+        """## Section
+### Subsection
+### Subsection
+## Section
+### Subsection
+""",
+    )
+    levels = [entry["level"] for entry in headings]
+    assert levels == [1, 2, 2, 1, 2]
+
+
+def test_slot_extraction_adjusts_offset(tmp_path: Path) -> None:
+    source = tmp_path / "slotted.md"
+    source.write_text(
+        """---
+title: Demo
+---
+# Abstract
+
+## Intro
+Text
+""",
+        encoding="utf-8",
+    )
+    document = Document.from_markdown(source, promote_title=False)
+    document.assign_slot("abstract", selector="Abstract", include_document=False)
+
+    bundle = convert_documents(
+        [document],
+        output_dir=tmp_path / "build",
+        template="article",
+        wrap_document=False,
+    )
+    conversion = bundle.fragments[0].conversion
+    assert conversion is not None
+    state = conversion.document_state
+    assert state is not None
+    assert [entry["level"] for entry in state.headings] == [1]
+    assert state.headings[0]["text"] == "Intro"

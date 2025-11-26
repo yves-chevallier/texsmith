@@ -90,7 +90,7 @@ def test_convert_command() -> None:
         )
 
     assert result.exit_code == 0, result.stdout
-    assert "\\section{Introduction}\\label{intro}" in result.stdout
+    assert "\\chapter{Introduction}\\label{intro}" in result.stdout
 
 
 def test_template_alignment_defaults_to_section() -> None:
@@ -119,7 +119,7 @@ def test_template_alignment_defaults_to_section() -> None:
         content = output_file.read_text(encoding="utf-8")
 
     assert result.exit_code == 0, result.stdout
-    assert "\\subsection{Introduction}\\label{intro}" in content
+    assert "\\section{Introduction}\\label{intro}" in content
     assert "\\title" not in content
 
 

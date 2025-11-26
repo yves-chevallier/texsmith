@@ -40,7 +40,7 @@ from .debug import (
     raise_conversion_error,
     record_event,
 )
-from .templates import build_binder_context, extract_slot_fragments
+from .templates import build_binder_context, compute_heading_offset, extract_slot_fragments
 
 
 @dataclass(slots=True)
@@ -277,10 +277,24 @@ def _render_document(
     for message in missing_slots:
         emitter.warning(message)
 
+    manual_base_level = document_context.base_level
+    drop_title_flag = bool(document_context.drop_title)
+    if drop_title_flag and document_context.slot_requests and not binder_context.slot_requests:
+        drop_title_flag = False
+
+    fragment_offsets: dict[str, int] = {}
+    for fragment in slot_fragments:
+        fragment_offsets[fragment.name] = compute_heading_offset(
+            fragment.html,
+            drop_first_heading=drop_title_flag and fragment.name == binding.default_slot,
+            parser_backend=parser_backend,
+        )
+
     segment_registry: dict[str, list[SegmentContext]] = {}
     for fragment in slot_fragments:
         base_value = slot_base_levels.get(fragment.name, effective_base_level)
-        base_offset = document_context.base_level if fragment.name == binding.default_slot else 0
+        fragment_offset = fragment_offsets.get(fragment.name, 0)
+        base_offset = manual_base_level + fragment_offset
         segment_registry.setdefault(fragment.name, []).append(
             SegmentContext(
                 name=fragment.name,
@@ -312,19 +326,12 @@ def _render_document(
 
     slot_outputs: dict[str, str] = {}
     document_state: DocumentState | None = initial_state
-    drop_title_flag = bool(document_context.drop_title)
-    base_level_offset = document_context.base_level
-    if drop_title_flag and document_context.slot_requests and not binder_context.slot_requests:
-        drop_title_flag = False
-        base_level_offset += 1
     for fragment in slot_fragments:
         runtime_fragment = dict(runtime_common)
         base_value = slot_base_levels.get(fragment.name, effective_base_level)
-        if fragment.name == binding.default_slot:
-            base_offset = base_level_offset
-            runtime_fragment["base_level"] = base_value + base_offset
-        else:
-            runtime_fragment["base_level"] = base_value
+        fragment_offset = fragment_offsets.get(fragment.name, 0)
+        base_offset = manual_base_level + fragment_offset
+        runtime_fragment["base_level"] = base_value + base_offset
         if fragment.name == "preface":
             runtime_fragment["numbered"] = False
         if drop_title_flag and fragment.name == binding.default_slot:

@@ -127,7 +127,7 @@ def test_document_context_records_title_from_heading(tmp_path: Path) -> None:
     assert context.title_from_heading is True
     assert context.extracted_title == "Sample Title"
     assert context.drop_title is True
-    assert context.base_level == -1
+    assert context.base_level == 0
 
 
 def test_title_promotion_requires_unique_level(tmp_path: Path) -> None:

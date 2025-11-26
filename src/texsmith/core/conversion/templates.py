@@ -328,6 +328,41 @@ def heading_level_for(node: Tag) -> int:
     return int(name[1])
 
 
+def compute_heading_offset(
+    html: str,
+    *,
+    drop_first_heading: bool = False,
+    parser_backend: str = "html.parser",
+) -> int:
+    """Return the offset required to align the top heading to level 1.
+
+    The shallowest heading in the fragment counts as offset ``0``; headings
+    starting at ``<h2>`` therefore yield ``-1``. When ``drop_first_heading`` is
+    true the first heading is ignored to mirror title promotion.
+    """
+    try:
+        soup = BeautifulSoup(html, parser_backend)
+    except FeatureNotFound:
+        soup = BeautifulSoup(html, "html.parser")
+
+    headings = soup.find_all(re.compile(r"^h[1-6]$"), recursive=True)
+    if drop_first_heading and headings:
+        headings = headings[1:]
+
+    minimum: int | None = None
+    for heading in headings:
+        try:
+            level = heading_level_for(heading)
+        except ValueError:
+            continue
+        if minimum is None or level < minimum:
+            minimum = level
+
+    if minimum is None:
+        return 0
+    return 1 - minimum
+
+
 def _load_inline_bibliography(
     collection: BibliographyCollection,
     entries: Mapping[str, InlineBibliographyEntry],
@@ -530,6 +565,7 @@ __all__ = [
     "SlotFragment",
     "build_binder_context",
     "collect_section_nodes",
+    "compute_heading_offset",
     "extract_slot_fragments",
     "heading_level_for",
 ]
