@@ -1,37 +1,45 @@
-\BLOCK{ set font_profile = (
-  fonts
-  | default(
-    (press.fonts if press is defined and press else None),
-    true
-  )
+\BLOCK{ set font_profile = font_profile
+  | default(fonts | default((press.fonts if press is defined and press else None), true), true)
   | default("default", true)
   | lower
-) }
-\BLOCK{ set main_font = "Latin Modern Roman" }
-\BLOCK{ set sans_font = "Latin Modern Sans" }
-\BLOCK{ set mono_font = "FreeMono" }
-\BLOCK{ set math_font = "Latin Modern Math" }
-\BLOCK{ set small_caps_font = "Latin Modern Roman Caps" }
-\BLOCK{ set mono_italic = none }
-\BLOCK{ set mono_bold_italic = none }
-\BLOCK{ set mono_fake_slant = False }
-\BLOCK{ if font_profile == "sans" }
+}
+\BLOCK{ set main_font = main_font | default("Latin Modern Roman") }
+\BLOCK{ set sans_font = sans_font | default("Latin Modern Sans") }
+\BLOCK{ set mono_font = mono_font | default("FreeMono") }
+\BLOCK{ set math_font = math_font | default("Latin Modern Math") }
+\BLOCK{ set small_caps_font = small_caps_font | default("Latin Modern Roman Caps") }
+\BLOCK{ set mono_italic = mono_italic | default("* Italic") }
+\BLOCK{ set mono_bold_italic = mono_bold_italic | default("* Bold Italic") }
+\BLOCK{ set mono_fake_slant = mono_fake_slant | default(False) }
+\BLOCK{ set font_path_prefix = font_path_prefix | default("./") }
+\BLOCK{ if font_path_prefix and not font_path_prefix.endswith('/') }
+  \BLOCK{ set font_path_prefix = font_path_prefix ~ '/' }
+\BLOCK{ endif }
+\BLOCK{ set font_files = font_files | default({}) }
+\BLOCK{ set unicode_font_classes = unicode_font_classes | default([]) }
+\BLOCK{ set fallback_fonts = fallback_fonts | default(
+  ["NotoSans", "NotoSansSymbols2-Regular", "NotoSansMath-Regular", "NotoColorEmoji"], true) }
+\BLOCK{ if mono_font == "FreeMono" }
+  \BLOCK{ set mono_italic = "* Oblique" }
+  \BLOCK{ set mono_bold_italic = "* Bold Oblique" }
+\BLOCK{ endif }
+\BLOCK{ if font_profile == "sans" and main_font == "Latin Modern Roman" }
   \BLOCK{ set main_font = "Latin Modern Sans" }
   \BLOCK{ set sans_font = "Latin Modern Sans" }
   \BLOCK{ set mono_font = "IBM Plex Mono" }
-\BLOCK{ elif font_profile == "adventor" }
+\BLOCK{ elif font_profile == "adventor" and main_font == "Latin Modern Roman" }
   \BLOCK{ set main_font = "TeX Gyre Adventor" }
   \BLOCK{ set sans_font = "TeX Gyre Adventor" }
   \BLOCK{ set mono_font = "IBM Plex Mono" }
   \BLOCK{ set math_font = "TeX Gyre Pagella Math" }
   \BLOCK{ set small_caps_font = None }
-\BLOCK{ elif font_profile == "heros" }
+\BLOCK{ elif font_profile == "heros" and main_font == "Latin Modern Roman" }
   \BLOCK{ set main_font = "TeX Gyre Heros" }
   \BLOCK{ set sans_font = "TeX Gyre Heros" }
   \BLOCK{ set mono_font = "IBM Plex Mono" }
   \BLOCK{ set math_font = "TeX Gyre Pagella Math" }
   \BLOCK{ set small_caps_font = None }
-\BLOCK{ elif font_profile == "noto" }
+\BLOCK{ elif font_profile == "noto" and main_font == "Latin Modern Roman" }
   \BLOCK{ set main_font = "Noto Serif" }
   \BLOCK{ set sans_font = "Noto Sans" }
   \BLOCK{ set mono_font = "Noto Sans Mono" }
@@ -41,18 +49,6 @@
   \BLOCK{ set mono_bold_italic = "* Bold" }
   \BLOCK{ set mono_fake_slant = True }
 \BLOCK{ endif }
-\BLOCK{ if mono_italic is none }
-  \BLOCK{ if mono_font == "FreeMono" }
-    \BLOCK{ set mono_italic = "* Oblique" }
-    \BLOCK{ set mono_bold_italic = "* Bold Oblique" }
-  \BLOCK{ else }
-    \BLOCK{ set mono_italic = "* Italic" }
-    \BLOCK{ set mono_bold_italic = "* Bold Italic" }
-  \BLOCK{ endif }
-\BLOCK{ endif }
-\BLOCK{ set fallback_fonts = fallback_fonts | default(
-  ["NotoSans", "NotoSansSymbols2-Regular", "NotoSansMath-Regular", "NotoColorEmoji"],
-  true) }
 \ProvidesPackage{ts-fonts}[2025/11/21 TeXSmith Unified font setup (generated)]
 
 % This file is a Jinja2 template. Render it to a .sty before use.
@@ -78,6 +74,11 @@
     Ligatures = TeX,
     Scale = MatchLowercase,
   }
+\BLOCK{ set main_files = font_files.get(main_font, {}) }
+\BLOCK{ set sans_files = font_files.get(sans_font, {}) }
+\BLOCK{ set mono_files = font_files.get(mono_font, {}) }
+\BLOCK{ set math_files = font_files.get(math_font, {}) }
+\BLOCK{ set small_caps_files = font_files.get(small_caps_font, {}) if small_caps_font else {} }
   \ifLuaTeX
     \let\eth\relax
     \let\Eth\relax
@@ -87,30 +88,69 @@
     \directlua{
       luaotfload.add_fallback("mainfb-reg", {
 \BLOCK{ for font in fallback_fonts }
+        \BLOCK{ set files = font_files.get(font, {}) }
+        \BLOCK{ set reg_font = files.get("regular") }
+        \BLOCK{ if reg_font }
+        "file:\VAR{font_path_prefix}\VAR{reg_font}:mode=harf;",
+        \BLOCK{ else }
         "\VAR{font}:mode=harf;",
+        \BLOCK{ endif }
 \BLOCK{ endfor }
       })
       luaotfload.add_fallback("mainfb-bold", {
 \BLOCK{ for font in fallback_fonts }
+        \BLOCK{ set files = font_files.get(font, {}) }
+        \BLOCK{ set bold_font = files.get("bold") or files.get("regular") }
+        \BLOCK{ if bold_font }
+        "file:\VAR{font_path_prefix}\VAR{bold_font}:mode=harf;",
+        \BLOCK{ else }
         "\VAR{font}/B:mode=harf;",
+        \BLOCK{ endif }
 \BLOCK{ endfor }
       })
       luaotfload.add_fallback("mainfb-it", {
 \BLOCK{ for font in fallback_fonts }
+        \BLOCK{ set files = font_files.get(font, {}) }
+        \BLOCK{ set italic_font = files.get("italic") or files.get("regular") }
+        \BLOCK{ if italic_font }
+        "file:\VAR{font_path_prefix}\VAR{italic_font}:mode=harf;",
+        \BLOCK{ else }
         "\VAR{font}/I:mode=harf;",
+        \BLOCK{ endif }
 \BLOCK{ endfor }
       })
       luaotfload.add_fallback("mainfb-bi", {
 \BLOCK{ for font in fallback_fonts }
+        \BLOCK{ set files = font_files.get(font, {}) }
+        \BLOCK{ set bold_italic_font = files.get("bold_italic") or files.get("bold") or files.get("italic") or files.get("regular") }
+        \BLOCK{ if bold_italic_font }
+        "file:\VAR{font_path_prefix}\VAR{bold_italic_font}:mode=harf;",
+        \BLOCK{ else }
         "\VAR{font}/BI:mode=harf;",
+        \BLOCK{ endif }
 \BLOCK{ endfor }
       })
     }
     \IfFontExistsTF{\VAR{main_font}}{
       \setmainfont{\VAR{main_font}}[
         Ligatures=TeX,
+\BLOCK{ if main_files }
+        Path=\VAR{font_path_prefix},
+\BLOCK{ endif }
+\BLOCK{ if main_files.get("regular") }
+        UprightFont = {\VAR{main_files["regular"]}},
+\BLOCK{ endif }
 \BLOCK{ if small_caps_font }
-        SmallCapsFont = \VAR{small_caps_font},
+        SmallCapsFont = {\VAR{small_caps_files.get("regular", small_caps_font)}},
+\BLOCK{ endif }
+\BLOCK{ if main_files.get("bold") }
+        BoldFont = {\VAR{main_files["bold"]}},
+\BLOCK{ endif }
+\BLOCK{ if main_files.get("italic") }
+        ItalicFont = {\VAR{main_files["italic"]}},
+\BLOCK{ endif }
+\BLOCK{ if main_files.get("bold_italic") }
+        BoldItalicFont = {\VAR{main_files["bold_italic"]}},
 \BLOCK{ endif }
         RawFeature = {fallback=mainfb-reg},
         BoldFeatures = {RawFeature={fallback=mainfb-bold}},
@@ -129,6 +169,21 @@
     \IfFontExistsTF{\VAR{sans_font}}{
       \setsansfont{\VAR{sans_font}}[
         Ligatures=TeX,
+\BLOCK{ if sans_files }
+        Path=\VAR{font_path_prefix},
+\BLOCK{ endif }
+\BLOCK{ if sans_files.get("regular") }
+        UprightFont = {\VAR{sans_files["regular"]}},
+\BLOCK{ endif }
+\BLOCK{ if sans_files.get("bold") }
+        BoldFont = {\VAR{sans_files["bold"]}},
+\BLOCK{ endif }
+\BLOCK{ if sans_files.get("italic") }
+        ItalicFont = {\VAR{sans_files["italic"]}},
+\BLOCK{ endif }
+\BLOCK{ if sans_files.get("bold_italic") }
+        BoldItalicFont = {\VAR{sans_files["bold_italic"]}},
+\BLOCK{ endif }
         RawFeature = {fallback=mainfb-reg},
         BoldFeatures  = {RawFeature={fallback=mainfb-bold}},
         ItalicFeatures = {RawFeature={fallback=mainfb-it}},
@@ -149,9 +204,12 @@
       \setmonofont{\VAR{mono_font}}[
         Scale=0.9,
         Ligatures=TeX,
-        ItalicFont={\VAR{mono_italic}},
-        BoldFont={* Bold},
-        BoldItalicFont={\VAR{mono_bold_italic}},
+\BLOCK{ if mono_files }
+        Path=\VAR{font_path_prefix},
+\BLOCK{ endif }
+        ItalicFont={\VAR{mono_files.get("italic", mono_italic)}},
+        BoldFont={\VAR{mono_files.get("bold", "* Bold")}},
+        BoldItalicFont={\VAR{mono_files.get("bold_italic", mono_bold_italic)}},
         RawFeature = {fallback=mainfb-reg},
         BoldFeatures = {RawFeature={fallback=mainfb-bold}},
         SmallCapsFeatures = {Letters=SmallCaps},
@@ -192,8 +250,12 @@
         },
       ]
     }
+\BLOCK{ set math_target = math_files.get("regular", math_font) }
 \IfFontExistsTF{\VAR{math_font}}{
-  \setmathfont{\VAR{math_font}}[
+  \setmathfont{\VAR{math_target}}[
+\BLOCK{ if math_files }
+    Path=\VAR{font_path_prefix},
+\BLOCK{ endif }
     RawFeature = {fallback=mainfb-reg},
     BoldFeatures = {RawFeature={fallback=mainfb-bold}},
     ItalicFeatures = {RawFeature={fallback=mainfb-it}},
@@ -222,22 +284,113 @@
 }
 \BLOCK{ endif }
   \else
-    % XeLaTeX path: no lua fallbacks; rely on ucharclasses for CJK/emoji if desired.
+    % XeLaTeX/Tectonic path: rely on ucharclasses for glyph coverage.
     \let\eth\relax
     \let\Eth\relax
     \RequirePackage{amssymb}
     \RequirePackage{unicode-math}
-    \IfFontExistsTF{\VAR{main_font}}{\setmainfont{\VAR{main_font}}}{\setmainfont{Latin Modern Roman}}
-    \IfFontExistsTF{\VAR{sans_font}}{\setsansfont{\VAR{sans_font}}}{\setsansfont{Latin Modern Sans}}
+    \BLOCK{ if unicode_font_classes }
+    \RequirePackage{ucharclasses}
+    \BLOCK{ endif }
+    \IfFontExistsTF{\VAR{main_font}}{
+      \setmainfont{\VAR{main_font}}[
+        Ligatures=TeX,
+\BLOCK{ if main_files }
+        Path=\VAR{font_path_prefix},
+\BLOCK{ endif }
+\BLOCK{ if main_files.get("regular") }
+        UprightFont = {\VAR{main_files["regular"]}},
+\BLOCK{ endif }
+\BLOCK{ if small_caps_font }
+        SmallCapsFont = {\VAR{small_caps_files.get("regular", small_caps_font)}},
+\BLOCK{ endif }
+\BLOCK{ if main_files.get("bold") }
+        BoldFont = {\VAR{main_files["bold"]}},
+\BLOCK{ endif }
+\BLOCK{ if main_files.get("italic") }
+        ItalicFont = {\VAR{main_files["italic"]}},
+\BLOCK{ endif }
+\BLOCK{ if main_files.get("bold_italic") }
+        BoldItalicFont = {\VAR{main_files["bold_italic"]}},
+\BLOCK{ endif }
+      ]
+    }{
+      \setmainfont{Latin Modern Roman}
+    }
+    \IfFontExistsTF{\VAR{sans_font}}{
+      \setsansfont{\VAR{sans_font}}[
+        Ligatures=TeX,
+\BLOCK{ if sans_files }
+        Path=\VAR{font_path_prefix},
+\BLOCK{ endif }
+\BLOCK{ if sans_files.get("regular") }
+        UprightFont = {\VAR{sans_files["regular"]}},
+\BLOCK{ endif }
+\BLOCK{ if sans_files.get("bold") }
+        BoldFont = {\VAR{sans_files["bold"]}},
+\BLOCK{ endif }
+\BLOCK{ if sans_files.get("italic") }
+        ItalicFont = {\VAR{sans_files["italic"]}},
+\BLOCK{ endif }
+\BLOCK{ if sans_files.get("bold_italic") }
+        BoldItalicFont = {\VAR{sans_files["bold_italic"]}},
+\BLOCK{ endif }
+      ]
+    }{
+      \setsansfont{Latin Modern Sans}
+    }
     \IfFontExistsTF{\VAR{mono_font}}{
-      \setmonofont{\VAR{mono_font}}[Scale=0.9,Ligatures=TeX]
+      \setmonofont{\VAR{mono_font}}[
+        Scale=0.9,
+        Ligatures=TeX,
+\BLOCK{ if mono_files }
+        Path=\VAR{font_path_prefix},
+\BLOCK{ endif }
+        ItalicFont={\VAR{mono_files.get("italic", mono_italic)}},
+        BoldFont={\VAR{mono_files.get("bold", "* Bold")}},
+        BoldItalicFont={\VAR{mono_files.get("bold_italic", mono_bold_italic)}},
+\BLOCK{ if mono_fake_slant }
+        FakeSlant=0.2,
+\BLOCK{ endif }
+      ]
     }{
       \setmonofont{FreeMono}[Scale=0.9]
     }
     \IfFontExistsTF{\VAR{math_font}}{
-      \setmathfont{\VAR{math_font}}
+      \setmathfont{\VAR{math_files.get("regular", math_font)}}[
+\BLOCK{ if math_files }
+        Path=\VAR{font_path_prefix},
+\BLOCK{ endif }
+      ]
     }{
       \setmathfont{Latin Modern Math}
     }
+\BLOCK{ if unicode_font_classes }
+\BLOCK{ for class in unicode_font_classes }
+    \newfontfamily\VAR{class.font_command}[
+\BLOCK{ if class.files }
+      Path=\VAR{font_path_prefix},
+\BLOCK{ endif }
+\BLOCK{ if class.files.get("regular") }
+      UprightFont={\VAR{class.files["regular"]}},
+\BLOCK{ endif }
+\BLOCK{ if class.files.get("bold") }
+      BoldFont={\VAR{class.files["bold"]}},
+\BLOCK{ endif }
+\BLOCK{ if class.files.get("italic") }
+      ItalicFont={\VAR{class.files["italic"]}},
+\BLOCK{ endif }
+\BLOCK{ if class.files.get("bold_italic") }
+      BoldItalicFont={\VAR{class.files["bold_italic"]}},
+\BLOCK{ endif }
+    ]{\VAR{class.family}}
+    \newUnicodeClass{\VAR{class.class_name}}
+    \setTransitionTo{\VAR{class.class_name}}{\VAR{class.font_command}}
+    \setTransitionFrom{\VAR{class.class_name}}{\rmfamily}
+\BLOCK{ for start, end in class.ranges }
+    \setUnicodeClassRange{\VAR{class.class_name}}{"\VAR{start}->"\VAR{end}}
+\BLOCK{ endfor }
+\BLOCK{ endfor }
+\BLOCK{ endif }
   \fi
 \fi

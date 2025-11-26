@@ -28,6 +28,26 @@ def test_match_fonts_with_custom_index(tmp_path: Path) -> None:
     assert not result.missing_codepoints
 
 
+def test_ascii_prefers_generic_noto(tmp_path: Path) -> None:
+    fonts_yaml = tmp_path / "fonts.yaml"
+    fonts_yaml.write_text(
+        """\
+- family: NotoSans
+  unicode_ranges:
+    - [0x0041, 0x005A]
+    - [0x0061, 0x007A]
+- family: NotoSansInscriptionalParthian
+  unicode_ranges:
+    - [0x0000, 0x007F]
+""",
+        encoding="utf-8",
+    )
+
+    result = match_fonts("Ab", fonts_yaml=fonts_yaml, check_system=False)
+
+    assert result.fallback_fonts == ("NotoSans",)
+
+
 def test_font_analysis_collects_nested_characters(tmp_path: Path) -> None:
     fonts_yaml = _write_demo_fonts_yaml(tmp_path)
     slot_outputs = {"mainmatter": "A"}

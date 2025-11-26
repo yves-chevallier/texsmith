@@ -240,20 +240,28 @@ class FetchImageStrategy(CachedConversionStrategy):
             except ImportError as exc:  # pragma: no cover - optional dependency
                 msg = "cairosvg is required to convert remote SVG assets."
                 raise TransformerExecutionError(msg) from exc
-
-            cairosvg.svg2pdf(bytestring=response.content, write_to=str(target))
-            normalise_pdf_version(target)
-            return target
+            try:
+                cairosvg.svg2pdf(bytestring=response.content, write_to=str(target))
+                normalise_pdf_version(target)
+                return target
+            except Exception as exc:
+                raise TransformerExecutionError(
+                    f"Failed to convert remote SVG '{url}': {exc}"
+                ) from exc
 
         try:
             from PIL import Image  # type: ignore[import]
         except ImportError as exc:  # pragma: no cover - optional dependency
             msg = "Pillow is required to normalise remote images."
             raise TransformerExecutionError(msg) from exc
-
-        with Image.open(BytesIO(response.content)) as image:
-            pdf_ready = image.convert("RGB")
-            pdf_ready.save(target, "PDF")
+        try:
+            with Image.open(BytesIO(response.content)) as image:
+                pdf_ready = image.convert("RGB")
+                pdf_ready.save(target, "PDF")
+        except Exception as exc:
+            raise TransformerExecutionError(
+                f"Failed to convert remote image '{url}': {exc}"
+            ) from exc
 
         normalise_pdf_version(target)
 

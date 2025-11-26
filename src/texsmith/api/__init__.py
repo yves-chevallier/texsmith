@@ -33,7 +33,7 @@ Usage Example
 from __future__ import annotations
 
 from .document import Document, DocumentRenderOptions, TitleStrategy
-from .fonts import FontMatchResult, match_fonts
+from .fonts import FontFiles, FontLocator, FontMatchResult, NotoFallback, match_fonts
 from .pipeline import ConversionBundle, LaTeXFragment, RenderSettings, convert_documents
 from .service import (
     ConversionRequest,
@@ -57,10 +57,13 @@ __all__ = [
     "ConversionService",
     "Document",
     "DocumentRenderOptions",
+    "FontFiles",
+    "FontLocator",
     "FontMatchResult",
     "LaTeXFragment",
     "RenderSettings",
     "SlotAssignment",
+    "NotoFallback",
     "TemplateOptions",
     "TemplateRenderResult",
     "TemplateSession",

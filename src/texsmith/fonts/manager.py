@@ -1,0 +1,245 @@
+"""Coordinate font selection, fallback ranges, and file copying."""
+
+from __future__ import annotations
+
+from dataclasses import dataclass
+from pathlib import Path
+from typing import Any, Iterable, Mapping, TYPE_CHECKING
+
+from texsmith.fonts.fallback import NotoFallback
+from texsmith.fonts.locator import FontFiles, FontLocator
+from texsmith.fonts.matcher import FontMatchResult
+from texsmith.fonts.utils import unicode_class_ranges
+
+if TYPE_CHECKING:
+    from texsmith.core.diagnostics import DiagnosticEmitter
+
+
+DEFAULT_FALLBACK_FONTS: list[str] = ["NotoSans"]
+
+
+@dataclass(frozen=True, slots=True)
+class FontSelection:
+    """Resolved font choices for the ts-fonts fragment."""
+
+    profile: str
+    main: str
+    sans: str
+    mono: str
+    math: str
+    small_caps: str | None
+    mono_italic: str
+    mono_bold_italic: str
+    mono_fake_slant: bool
+
+
+def resolve_font_selection(context: Mapping[str, Any]) -> FontSelection:
+    """Mirror the ts-fonts Jinja defaults to a reusable Python structure."""
+    raw_profile = (
+        context.get("fonts")
+        or (context.get("press") or {}).get("fonts")  # type: ignore[arg-type]
+        or "default"
+    )
+    profile = str(raw_profile).strip().lower() or "default"
+    main_font = "Latin Modern Roman"
+    sans_font = "Latin Modern Sans"
+    mono_font = "FreeMono"
+    math_font = "Latin Modern Math"
+    small_caps_font: str | None = "Latin Modern Roman Caps"
+    mono_italic: str | None = None
+    mono_bold_italic: str | None = None
+    mono_fake_slant = False
+
+    if profile == "sans":
+        main_font = "Latin Modern Sans"
+        sans_font = "Latin Modern Sans"
+        mono_font = "IBM Plex Mono"
+    elif profile == "adventor":
+        main_font = "TeX Gyre Adventor"
+        sans_font = "TeX Gyre Adventor"
+        mono_font = "IBM Plex Mono"
+        math_font = "TeX Gyre Pagella Math"
+        small_caps_font = None
+    elif profile == "heros":
+        main_font = "TeX Gyre Heros"
+        sans_font = "TeX Gyre Heros"
+        mono_font = "IBM Plex Mono"
+        math_font = "TeX Gyre Pagella Math"
+        small_caps_font = None
+    elif profile == "noto":
+        main_font = "Noto Serif"
+        sans_font = "Noto Sans"
+        mono_font = "Noto Sans Mono"
+        math_font = "Noto Sans Math"
+        small_caps_font = None
+        mono_italic = "*"
+        mono_bold_italic = "* Bold"
+        mono_fake_slant = True
+
+    # Context overrides for advanced users.
+    main_font = str(context.get("main_font") or main_font)
+    sans_font = str(context.get("sans_font") or sans_font)
+    mono_font = str(context.get("mono_font") or mono_font)
+    math_font = str(context.get("math_font") or math_font)
+    override_small_caps = context.get("small_caps_font")
+    if isinstance(override_small_caps, str):
+        small_caps_font = override_small_caps
+
+    if mono_italic is None:
+        if mono_font == "FreeMono":
+            mono_italic = "* Oblique"
+            mono_bold_italic = "* Bold Oblique"
+        else:
+            mono_italic = "* Italic"
+            mono_bold_italic = "* Bold Italic"
+
+    return FontSelection(
+        profile=profile,
+        main=main_font,
+        sans=sans_font,
+        mono=mono_font,
+        math=math_font,
+        small_caps=small_caps_font,
+        mono_italic=mono_italic,
+        mono_bold_italic=mono_bold_italic or mono_italic,
+        mono_fake_slant=bool(mono_fake_slant),
+    )
+
+
+@dataclass(slots=True)
+class PreparedFonts:
+    """Result of preparing font files and ranges for ts-fonts."""
+
+    selection: FontSelection
+    fallback_fonts: list[str]
+    present_fonts: list[str]
+    missing_fonts: list[str]
+    font_ranges: dict[str, list[str]]
+    copied_fonts: dict[str, dict[str, str]]
+    unicode_classes: list[dict[str, Any]]
+    fonts_dir: Path
+
+
+def _serialize_copied_fonts(copied: dict[str, FontFiles], base_dir: Path) -> dict[str, dict[str, str]]:
+    serialised: dict[str, dict[str, str]] = {}
+    for family, files in copied.items():
+        rel = files.relative_to(base_dir)
+        entries = {}
+        for key, value in rel.available().items():
+            entries[key] = value.name
+        if entries:
+            serialised[family] = entries
+    return serialised
+
+
+def _build_unicode_classes(
+    font_ranges: Mapping[str, list[str]],
+    copied_fonts: Mapping[str, dict[str, str]],
+) -> list[dict[str, Any]]:
+    specs: list[dict[str, Any]] = []
+    counter = 1
+    for family, ranges in sorted(font_ranges.items()):
+        if family == "__UNCOVERED__" or not ranges:
+            continue
+        specs.append(
+            {
+                "class_name": f"TSUnicodeClass{counter}",
+                "font_command": f"TSUnicodeFont{counter}",
+                "family": family,
+                "ranges": unicode_class_ranges(ranges),
+                "files": copied_fonts.get(family, {}),
+            }
+        )
+        counter += 1
+    return specs
+
+
+def prepare_fonts_for_context(
+    *,
+    template_context: dict[str, Any],
+    output_dir: Path,
+    font_match: FontMatchResult | None,
+    emitter: DiagnosticEmitter | None = None,
+    font_locator: FontLocator | None = None,
+) -> PreparedFonts | None:
+    """
+    Mutate the template context with resolved font settings and assets.
+
+    Returns a :class:`PreparedFonts` summary to help callers with telemetry.
+    """
+    selection = resolve_font_selection(template_context)
+    template_context.setdefault("font_profile", selection.profile)
+    template_context.setdefault("main_font", selection.main)
+    template_context.setdefault("sans_font", selection.sans)
+    template_context.setdefault("mono_font", selection.mono)
+    template_context.setdefault("math_font", selection.math)
+    if selection.small_caps:
+        template_context.setdefault("small_caps_font", selection.small_caps)
+    template_context.setdefault("mono_italic", selection.mono_italic)
+    template_context.setdefault("mono_bold_italic", selection.mono_bold_italic)
+    template_context.setdefault("mono_fake_slant", selection.mono_fake_slant)
+
+    locator = font_locator or FontLocator(fonts_yaml=font_match.fonts_yaml if font_match else None)
+
+    font_ranges = dict(font_match.font_ranges) if font_match else {}
+    present_fonts = list(font_match.present_fonts) if font_match else []
+    missing_fonts = list(font_match.missing_fonts) if font_match else []
+
+    base_fallbacks: list[str] = []
+    if font_match:
+        available_fonts = list(font_match.present_fonts) or list(font_match.fallback_fonts)
+        base_fallbacks.extend(available_fonts)
+        extra_fallbacks = template_context.get("extra_font_fallbacks") or []
+        if isinstance(extra_fallbacks, (list, tuple, set)):
+            base_fallbacks.extend(str(item) for item in extra_fallbacks if item)
+    if not base_fallbacks:
+        base_fallbacks.extend(DEFAULT_FALLBACK_FONTS)
+
+    fallback_fonts = list(dict.fromkeys([font for font in base_fallbacks if font]))
+    template_context["fallback_fonts"] = fallback_fonts
+    template_context.setdefault("font_match_ranges", font_ranges)
+    template_context.setdefault("present_fonts", present_fonts)
+    template_context.setdefault("missing_fonts", missing_fonts)
+
+    fonts_dir = (output_dir / "fonts").resolve()
+    fonts_to_copy: set[str] = {
+        selection.main,
+        selection.sans,
+        selection.mono,
+        selection.math,
+        *([selection.small_caps] if selection.small_caps else []),
+    }
+    fonts_to_copy.update(fallback_fonts)
+    copied = locator.copy_families(fonts_to_copy, fonts_dir)
+    copied_serialised = _serialize_copied_fonts(copied, output_dir)
+    fonts_path_prefix = f"./{fonts_dir.relative_to(output_dir).as_posix()}/"
+    template_context["font_path_prefix"] = fonts_path_prefix
+    template_context["font_files"] = copied_serialised
+
+    missing_after_copy = {family for family in fonts_to_copy if family not in copied_serialised}
+    if emitter and missing_after_copy:
+        readable = ", ".join(sorted(missing_after_copy))
+        emitter.warning(f"Unable to copy {len(missing_after_copy)} font families: {readable}")
+
+    unicode_classes = _build_unicode_classes(font_ranges, copied_serialised)
+    template_context["unicode_font_classes"] = unicode_classes
+
+    return PreparedFonts(
+        selection=selection,
+        fallback_fonts=fallback_fonts,
+        present_fonts=present_fonts,
+        missing_fonts=missing_fonts,
+        font_ranges=font_ranges,
+        copied_fonts=copied_serialised,
+        unicode_classes=unicode_classes,
+        fonts_dir=fonts_dir,
+    )
+
+
+__all__ = [
+    "DEFAULT_FALLBACK_FONTS",
+    "FontSelection",
+    "PreparedFonts",
+    "prepare_fonts_for_context",
+    "resolve_font_selection",
+]
