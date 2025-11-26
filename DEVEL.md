@@ -39,34 +39,24 @@ Roadmap and development notes for TeXSmith. I keep this file as a running checkl
 - [ ] Sidenotes (`marginpar` package with footnotes syntax)
 - [ ] Letterine
 - [ ] uv run mkdocs build #--strict not yet ready
+- [ ] Windows Support
+- [ ] Insérer les pdf de tous les exemples dans un asset de la release GitHub
 
-## Emojis
+## Intégrer certaines fonts
 
-- Noto emoji ? Twemoji ? Symbola ?
-- Support color emojis with fontspec and Noto Color Emoji?
-- Noto emoji outline (bw) ne couvre que 25% des emojis
-- Openmoji (openmoji.org)
-- Google's nanoemoji toolchain
-- PyMdown Emoji use :shortcode: -> svg
-- Norme 14.0
-- \twemoji{1f1e9 1f1ea} pour le drapeau DE chelou ?
-- #️⃣ = U+0023 U+FE0F U+20E3
-- Symbola font de George Douros, développement arrêté.
-- Pas de support des séquences complexes
-- OpenMoji-Black mieux que symbola?
+Certaines fonts utilisées par TeXSmith comme OpenMoji-black-glyf.ttf sont difficile à trouver et télécharger. Il faudrait les intégrer dans le package TeXSmith pour éviter aux utilisateurs d'avoir à les chercher et les installer eux-mêmes. Elles seront copiées dans le dossier de build si utilisées. On commence juste par cette font pour l'instant.
 
 ## Multicolumn
 
-J'aimerais que les templates article et book supportent le mode multicolumn qui peut être activé via une option dans le fichier de configuration ou en ligne de commande.
+J'aimerais que la template article et book supportent le mode multicolumn qui peut être activé via une option dans le fichier de configuration ou en ligne de commande.
 
 ```yaml
 press:
-  template: article
-  layout:
-    columns: 2
+  columns: 2
 ```
 
-On inject
+Cela se configure dans le \documentclass[twocolumn]{article}
+
 
 ## Book Template Integration with MkDocs
 

@@ -1,19 +1,24 @@
 # Emoji Support
 
-TeXSmith supports rendering emojis in Markdown documents. You can include emojis using standard Unicode characters.
+TeXSmith now renders emoji as glyphs (no remote SVG fetch) when you pick a font flavour:
 
-By default TeXSmith generates a PDF artifact, but LaTeX packages such as `fontspec` with symbola or `Noto Color Emoji` can also render emojis without external images.
+```yaml
+press:
+  fonts:
+    emoji: black   # black | color | twemoji | "Custom Family"
+```
 
-Article template can render emojis using different approachs depending on the emoji attribute settings:
+- `black` (défaut) : OpenMoji Black (mono, noir et blanc).
+- `color` : Noto Color Emoji.
+- `twemoji` : passe par le package `twemoji`.
+- `artifact` : (héritage) retombe sur les images téléchargées.
+- Tout autre nom est utilisé comme famille directe.
 
-`artifact`
-: Embeds emojis as images in the PDF artifact.
+Engines :
+- LuaLaTeX s’appuie sur `luaotfload` pour ajouter la police emoji en fallback.
+- XeLaTeX/Tectonic utilisent `ucharclasses` pour basculer automatiquement sur la police emoji sur la plage U+1F000–U+1FAFF.
 
-`symbola`
-: Renders emojis using the Symbola font (Black and white).
-
-`color`
-: Renders emojis using the Noto Color Emoji font.
+Vous pouvez taper les emoji directement dans le Markdown :
 
 | Emoji | Description                    |
 | ----- | ------------------------------ |

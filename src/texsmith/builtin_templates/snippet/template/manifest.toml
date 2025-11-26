@@ -82,9 +82,8 @@ default = "numeric"
 type = "string"
 
 [latex.template.attributes.emoji]
-default = "artifact"
+default = "black"
 type = "string"
-choices = ["artifact", "symbola", "color"]
 sources = ["press.emoji", "emoji"]
 
 [latex.template.attributes.code]

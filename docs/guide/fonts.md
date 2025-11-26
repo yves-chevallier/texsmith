@@ -42,3 +42,30 @@ print({k: v.available() for k, v in copied.items()})
 ```
 
 Use these helpers when you need to preflight a document or stage fonts ahead of running the full template pipeline.
+
+## Emoji support
+
+TeXSmith now renders emoji as real glyphs instead of downloaded images. Configure the flavour in your YAML (or front matter):
+
+```yaml
+press:
+  fonts:
+    emoji: color   # color | black | twemoji | custom family name
+```
+
+- `black` (par défaut) charge OpenMoji Black.
+- `color` charge Noto Color Emoji.
+- `twemoji` active le package `twemoji` comme repli.
+- Tout autre nom est traité comme une famille à charger directement.
+
+At build time, TeXSmith détecte les emoji dans le contenu. Then:
+
+- Sur **LuaLaTeX**, le fallback `luaotfload` ajoute l’emoji en premier (mode HarfBuzz) et `\texsmithEmoji{...}` reste un simple passthrough.
+- Sur **XeLaTeX/Tectonic**, `ucharclasses` ajoute une classe `Emoji` pour `U+1F000–U+1FAFF` et bascule automatiquement vers la police emoji. `\texsmithEmoji` utilise la police emoji et retombe sur le texte brut (ou twemoji si configuré) si le glyphe manque.
+
+Exemple rapide (après `uv run texsmith test.md -article -obuild`):
+
+```bash
+cd build
+latexmk -lualatex test.tex   # ou latexmk -xelatex / tectonic
+```

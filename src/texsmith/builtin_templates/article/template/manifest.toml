@@ -54,9 +54,8 @@ allow_empty = true
 sources = ["press.author", "author"]
 
 [latex.template.attributes.emoji]
-default = "artifact"
+default = "black"
 type = "string"
-choices = ["artifact", "symbola", "color"]
 sources = ["press.emoji", "emoji"]
 
 [latex.template.attributes.code]

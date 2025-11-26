@@ -218,10 +218,10 @@ def _replace_unicode_punctuation(text: str) -> str:
 def _get_emoji_mode(context: RenderContext) -> str:
     value = context.runtime.get("emoji_mode")
     if isinstance(value, str):
-        candidate = value.strip().lower()
-        if candidate in {"artifact", "symbola", "color"}:
+        candidate = value.strip()
+        if candidate:
             return candidate
-    return "artifact"
+    return "black"
 
 
 def _get_emoji_command(context: RenderContext) -> str:
