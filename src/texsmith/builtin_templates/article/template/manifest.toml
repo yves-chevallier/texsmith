@@ -99,7 +99,7 @@ sources = ["press.page_numbers", "page_numbers"]
 default = "fancy"
 type = "string"
 choices = ["fancy", "classic", "minimal"]
-sources = ["press.callout_style", "press.callouts.style", "callout_style"]
+sources = ["press.callouts.style", "callouts.style", "callout_style", "press.callout_style"]
 normaliser = "callout_style"
 
 [latex.template.attributes.glossary_style]

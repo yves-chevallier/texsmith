@@ -17,18 +17,31 @@ DEFAULT_CALLOUTS: dict[str, CalloutConfig] = {
     "success": {"background_color": "e5f9ed", "border_color": "00c853", "icon": "✅"},
     "question": {"background_color": "effce7", "border_color": "64dd17", "icon": "❓"},
     "warning": {"background_color": "fff1d6", "border_color": "ffb200", "icon": "⚠"},
-    "caution": {"background_color": "fff8e1", "border_color": "ff9100", "icon": "⚠"},
+    "caution": {"background_color": "fff8e1", "border_color": "ff9100", "icon": "🚧"},
     "failure": {"background_color": "ffeded", "border_color": "ff5252", "icon": "❗"},
     "danger": {"background_color": "ffe2e7", "border_color": "c62828", "icon": "🔥"},
     "important": {"background_color": "ffe0f0", "border_color": "d81b60", "icon": "❗"},
     "bug": {"background_color": "fee5ee", "border_color": "f50057", "icon": "🐞"},
     "example": {"background_color": "f2edff", "border_color": "7c4dff", "icon": "🧪"},
-    "quote": {"background_color": "f5f5f5", "border_color": "9e9e9e", "icon": "❝"},
-    "exercise": {"background_color": "f5f5f5", "border_color": "202020", "icon": "💬"},
+    "quote": {"background_color": "f5f5f5", "border_color": "9e9e9e", "icon": "✒️"},
     "hint": {"background_color": "e5f8f6", "border_color": "00bfa5", "icon": "💡"},
-    "solution": {"background_color": "e5f9ed", "border_color": "00c853", "icon": "💬"},
-    "default": {"background_color": "f0f0f0", "border_color": "808080", "icon": "ℹ"},  # noqa: RUF001
+    "default": {"background_color": "f0f0f0", "border_color": "808080", "icon": "🎤"},  # noqa: RUF001
 }
+
+
+def _flatten_callouts(definitions: Mapping[str, Any]) -> dict[str, CalloutConfig]:
+    """Flatten nested callout definitions declared under arbitrary keys."""
+    flat: dict[str, CalloutConfig] = {}
+    for name, cfg in definitions.items():
+        if not isinstance(cfg, Mapping):
+            continue
+        if {"icon", "background_color", "border_color", "title_color"} & set(cfg):
+            flat[name] = dict(cfg)
+            continue
+        nested = _flatten_callouts(cfg)
+        for child_name, child_cfg in nested.items():
+            flat[child_name] = child_cfg
+    return flat
 
 
 def merge_callouts(
@@ -36,12 +49,12 @@ def merge_callouts(
     overrides: Mapping[str, Any] | None = None,
 ) -> dict[str, CalloutConfig]:
     """Merge callout definitions with user-provided overrides."""
-    combined: dict[str, CalloutConfig] = {key: dict(value) for key, value in base.items()}
+    combined: dict[str, CalloutConfig] = {
+        key: dict(value) for key, value in _flatten_callouts(base).items()
+    }
     if not overrides:
         return combined
-    for key, cfg in overrides.items():
-        if not isinstance(cfg, Mapping):
-            continue
+    for key, cfg in _flatten_callouts(overrides).items():
         merged = dict(combined.get(key, {}))
         for name, value in cfg.items():
             if value is None:

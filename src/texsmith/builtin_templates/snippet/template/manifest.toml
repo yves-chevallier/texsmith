@@ -69,7 +69,7 @@ sources = ["press.snippet.border", "snippet.border", "border"]
 default = "fancy"
 type = "string"
 choices = ["fancy", "classic", "minimal"]
-sources = ["press.callout_style", "press.callouts.style", "callout_style"]
+sources = ["press.callouts.style", "callouts.style", "callout_style", "press.callout_style"]
 
 [latex.template.attributes.glossary_style]
 default = "list"

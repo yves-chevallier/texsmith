@@ -1,37 +1,68 @@
+---
+press:
+  paper:
+    margin: narrow
+  columns: 2
+  callouts:
+    custom:
+      unicorn:
+        background_color: "fff0ff"
+        border_color: "ff00ff"
+        icon: "🦄"
+---
 # Some Admonitions
 
-!!! note 
-    A Note
+!!! note
+    Highlights extra information that’s useful but not critical, helping readers understand nuances.
 
 !!! tip
-    A Tip
+    Offers a practical hint that makes the task easier, saving the reader time or effort.
 
 !!! warning
-    A Warning
+    Draws attention to something that could cause problems if ignored, helping avoid mistakes.
 
 !!! caution
-    A Caution
+    Signals a potentially risky action, encouraging the reader to proceed carefully.
 
 !!! important
-    An Important notice
+    Emphasizes key information the reader must not overlook to ensure proper understanding.
 
 !!! danger
-    A Danger notice
+    Flags a serious hazard that could break things or cause real harm if mishandled.
 
-!!! info   
-    An Info notice
+!!! info
+    Provides neutral, factual context that supports understanding without urgency.
 
 !!! hint
-    A Hint
+    Gives a gentle clue that helps the reader figure something out without revealing everything.
 
 !!! seealso
-    A See Also notice
+    Points to related material so the reader can explore deeper or connected topics.
 
 !!! question
-    A Question notice
+    Raises an inquiry that prompts reflection or introduces a point the reader should consider.
 
 !!! abstract
-    An Abstract
+    Summarizes the core ideas to help the reader grasp the purpose of a section or document quickly.
 
 !!! summary
-    A Summary
+    Recaps key points so the reader can retain the most important information at a glance.
+
+!!! success
+    Celebrates a positive outcome or achievement, reinforcing good practices and results.
+
+!!! failure
+    Highlights a setback or error, helping the reader learn from mistakes and avoid them in the future
+
+!!! bug
+    Identifies a known issue or problem, guiding the reader on what to watch out for.
+
+!!! quote
+    Presents a relevant quotation that adds authority or perspective to the content.
+
+/// latex
+\vspace{2em}
+///
+
+!!! unicorn
+    A custom admonition with a unicorn theme, adding a whimsical touch to the information presented.
