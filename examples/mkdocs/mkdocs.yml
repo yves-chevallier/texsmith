@@ -1,0 +1,76 @@
+site_name: TeXSmith MkDocs Demo
+nav:
+  - index.md
+  - foo.md
+  - bar.md
+  - Baz Qux:
+      - baz.md
+      - qux.md
+theme:
+  language: en
+  name: material
+  features:
+    - search
+    - navigation.instant
+    - navigation.tabs
+    - navigation.top
+    - navigation.indexes
+    - navigation.tracking
+    - navigation.expand
+    - navigation.sections
+    - navigation.footer
+plugins:
+  - search
+  - autorefs:
+      resolve_closest: true
+  - texsmith:
+      template: book
+      build_dir: press
+      books:
+        - title: "Demo MkDocs Documentation"
+          folder: demo
+          root: "__texsmith_full_navigation__"
+          base_level: -1
+          paper: a5
+          slots:
+            preface: Demo MkDocs
+markdown_extensions:
+  - abbr
+  - admonition
+  - texsmith.index
+  - texsmith.texlogos
+  - texsmith.smallcaps
+  - texsmith.mermaid:
+      base_paths:
+        - !relative $config_dir/docs
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.details
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.critic
+  - pymdownx.inlinehilite
+  - pymdownx.caret
+  - pymdownx.keys
+  - pymdownx.mark
+  - pymdownx.tilde
+  - pymdownx.snippets:
+      check_paths: true
+      base_path: !relative $config_dir
+  - pymdownx.blocks.html
+  - pymdownx.blocks.caption
+  - def_list
+  - footnotes
+  - attr_list
+  - md_in_html
+  - pymdownx.arithmatex:
+      generic: true
+extra_javascript:
+  - js/mathjax.js
+  - https://unpkg.com/mathjax@3/es5/tex-mml-chtml.js
+  - https://cdn.jsdelivr.net/npm/vega@5
+  - https://cdn.jsdelivr.net/npm/vega-lite@5
+  - https://cdn.jsdelivr.net/npm/vega-embed@6
