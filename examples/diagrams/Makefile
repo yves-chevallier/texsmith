@@ -11,7 +11,7 @@ endif
 all: $(PDF)
 
 $(PDF): diagrams.md pgcd.drawio
-	uv run texsmith diagrams.md -tarticle -o$(OUTPUT_DIR) --build --title-from-frontmatter
+	uv run texsmith diagrams.md -tarticle -o$(OUTPUT_DIR) --build --promote-title
 	$(call copy_artifact,$@)
 
 clean:

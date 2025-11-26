@@ -1,7 +1,7 @@
 BUILD_ROOT := build
 OUTPUT_DIR := $(BUILD_ROOT)/recipes
-TEX := $(OUTPUT_DIR)/main.tex
-PDF := $(OUTPUT_DIR)/main.pdf
+TEX := $(OUTPUT_DIR)/cake.tex
+PDF := $(OUTPUT_DIR)/cake.pdf
 
 ifneq ($(strip $(ARTIFACTS_DIR)),)
 copy_artifact = mkdir -p "$(ARTIFACTS_DIR)" && cp "$1" "$(ARTIFACTS_DIR)/"
@@ -15,7 +15,7 @@ $(TEX): cake.yml manifest.toml template.tex render_recipes.py
 	uv run python render_recipes.py cake.yml -o $(OUTPUT_DIR)
 
 $(PDF): $(TEX)
-	cd $(OUTPUT_DIR) && latexmk -lualatex main.tex
+	cd $(OUTPUT_DIR) && latexmk -lualatex $(notdir $(TEX))
 	$(call copy_artifact,$@)
 
 clean:

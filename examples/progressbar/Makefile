@@ -10,7 +10,7 @@ endif
 all: $(PDF)
 
 $(PDF): example.md
-	uv run texsmith $< -o$(OUTPUT_DIR) --build -tarticle
+	uv run texsmith $< -o$(OUTPUT_DIR) --build -tarticle -apress.override.preamble="\\usepackage{progressbar}"
 	$(call copy_artifact,$@)
 
 clean:
