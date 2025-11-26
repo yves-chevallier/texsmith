@@ -1,5 +1,5 @@
 OUTPUT_DIR := build
-PDF := $(OUTPUT_DIR)/colorful.pdf
+PDF := $(OUTPUT_DIR)/letter.pdf
 
 ifneq ($(strip $(ARTIFACTS_DIR)),)
 copy_artifact = mkdir -p "$(ARTIFACTS_DIR)" && cp "$1" "$(ARTIFACTS_DIR)/"
@@ -9,8 +9,8 @@ endif
 
 all: $(PDF)
 
-$(PDF): colorful.md
-	uv run texsmith $< -o$(OUTPUT_DIR) --build
+$(PDF): letter.md marie-curie.svg
+	uv run texsmith $< -o$(OUTPUT_DIR) --build -tletter
 	$(call copy_artifact,$@)
 
 clean:

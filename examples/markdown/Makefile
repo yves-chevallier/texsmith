@@ -1,5 +1,6 @@
 OUTPUT_DIR := build
-PDF := $(OUTPUT_DIR)/colorful.pdf
+PDF := $(OUTPUT_DIR)/features.pdf
+ASSETS := assets/sample.png hanoi.py
 
 ifneq ($(strip $(ARTIFACTS_DIR)),)
 copy_artifact = mkdir -p "$(ARTIFACTS_DIR)" && cp "$1" "$(ARTIFACTS_DIR)/"
@@ -9,8 +10,8 @@ endif
 
 all: $(PDF)
 
-$(PDF): colorful.md
-	uv run texsmith $< -o$(OUTPUT_DIR) --build
+$(PDF): features.md $(ASSETS)
+	uv run texsmith $< -o$(OUTPUT_DIR) --build -tarticle
 	$(call copy_artifact,$@)
 
 clean:
