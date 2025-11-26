@@ -42,7 +42,7 @@ In the middle part of his career, Einstein made important contributions to stati
 
 When he was very young, his parents worried that he had a learning disability because he was very slow to learn to talk. When he was five and sick in bed, his father brought him a compass. This sparked his lifelong fascination with electromagnetism. He realized that "Something deeply hidden had to be behind things."
 
-![Einstein in 1882](https://upload.wikimedia.org/wikipedia/commons/f/fb/Albert_Einstein_at_the_age_of_three_%281882%29.jpg){width=5cm}
+![Einstein in 1882](assets/einstein-1882.jpg){width=5cm}
 
 /// caption
 Einstein in 1882, age 3

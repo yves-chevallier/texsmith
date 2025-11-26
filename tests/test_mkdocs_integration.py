@@ -153,4 +153,4 @@ def test_full_document_conversion(tmp_path: Path) -> None:
     assert "def greet(name):" in latex_output
     assert re.search(r"\\footnote\{.*footnote", latex_output) is not None
     assert r"\begin{callout}[callout note]{Expandable Section}" in latex_output
-    assert r"\includegraphics[width=1em]{" in latex_output
+    assert r"\texsmithEmoji{😂}" in latex_output

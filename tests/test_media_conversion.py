@@ -482,11 +482,10 @@ def test_unicode_emoji_converts_to_icon(renderer: LaTeXRenderer, tmp_path: Path)
     try:
         html = "<p>Math 🧮 icon</p>"
         latex = renderer.render(html, runtime={"source_dir": tmp_path})
-        assert "\\includegraphics" in latex
-        assert "emoji-icon.pdf" in latex
+        assert "\\texsmithEmoji{🧮}" in latex
 
         assets = dict(renderer.assets.items())
-        assert any("twemoji.maxcdn.com" in key for key in assets)
+        assert not any("twemoji.maxcdn.com" in key for key in assets)
     finally:
         register_converter("fetch-image", original)
 
@@ -514,9 +513,9 @@ def test_twemoji_image_conversion(renderer: LaTeXRenderer) -> None:
     try:
         html = "<p><img class='twemoji' src='https://example.com/emoji.svg' alt='rocket'></p>"
         latex = renderer.render(html)
-        assert "\\includegraphics[width=1em]" in latex
+        assert "\\texsmithEmoji{rocket}" in latex
         assets = dict(renderer.assets.items())
-        assert "https://example.com/emoji.svg" in assets
+        assert "https://example.com/emoji.svg" not in assets
     finally:
         register_converter("fetch-image", original)
 
@@ -533,9 +532,9 @@ def test_twemoji_inline_svg_conversion(renderer: LaTeXRenderer) -> None:
         </p>
         """
         latex = renderer.render(html)
-        assert "\\includegraphics[width=1em]" in latex
+        assert "\\texsmithEmoji{sparkles}" in latex
         assets = dict(renderer.assets.items())
-        assert any(key.startswith("twemoji::") for key in assets)
+        assert not any(key.startswith("twemoji::") for key in assets)
     finally:
         register_converter("svg", original)
 
