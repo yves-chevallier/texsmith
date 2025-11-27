@@ -526,7 +526,7 @@ def _build_specs() -> list[ExampleSpec]:
         ),
         ExampleSpec(
             name="mermaid",
-            source=mermaid_dir / "example.md",
+            source=mermaid_dir / "mermaid.md",
             build_dir=mermaid_dir / "build",
             persist_debug_html=True,
             template_options={
@@ -540,7 +540,7 @@ def _build_specs() -> list[ExampleSpec]:
         ),
         ExampleSpec(
             name="progressbar",
-            source=progress_dir / "example.md",
+            source=progress_dir / "progressbar.md",
             build_dir=progress_dir / "build",
             template_options={
                 "paper": "a5",

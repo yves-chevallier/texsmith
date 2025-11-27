@@ -186,12 +186,31 @@ def wrap_template_document(
     rendered_fragments: set[str] = set()
     if fragment_names:
         fragment_context: dict[str, Any] = template_context
+
+        def _reassert_effective_emoji_mode(target: dict[str, Any]) -> None:
+            effective_mode = target.get("_texsmith_effective_emoji_mode")
+            if not effective_mode:
+                return
+            target["emoji"] = effective_mode
+            target["emoji_mode"] = effective_mode
+            fonts_section = target.get("fonts")
+            if isinstance(fonts_section, Mapping):
+                if isinstance(fonts_section, dict):
+                    fonts_section["emoji"] = effective_mode
+                else:
+                    updated_fonts = dict(fonts_section)
+                    updated_fonts["emoji"] = effective_mode
+                    target["fonts"] = updated_fonts
+
         if overrides_payload:
             fragment_context.update(overrides_payload)
             press_section = overrides_payload.get("press")
             if isinstance(press_section, Mapping):
                 for key, value in press_section.items():
                     fragment_context.setdefault(key, value)
+            _reassert_effective_emoji_mode(fragment_context)
+        else:
+            _reassert_effective_emoji_mode(fragment_context)
         fragment_result = render_fragments(
             fragment_names,
             context=fragment_context,
