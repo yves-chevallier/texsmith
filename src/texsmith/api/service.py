@@ -21,7 +21,9 @@ from texsmith.adapters.latex.engine import (
     run_engine_command,
 )
 from texsmith.adapters.latex.tectonic import (
+    BiberAcquisitionError,
     TectonicAcquisitionError,
+    select_biber_binary,
     select_tectonic_binary,
 )
 from texsmith.adapters.markdown import split_front_matter
@@ -330,14 +332,24 @@ class ConversionService:
         )
         choice = resolve_engine(engine, render_result.template_engine)
         tectonic_binary: Path | None = None
+        biber_binary: Path | None = None
+        bundled_bin: Path | None = None
         if choice.backend == "tectonic":
             try:
                 selection = select_tectonic_binary(use_system_tectonic, console=console)
-            except TectonicAcquisitionError as exc:
+                if features.bibliography and not use_system_tectonic:
+                    biber_binary = select_biber_binary(console=console)
+                    bundled_bin = biber_binary.parent
+            except (TectonicAcquisitionError, BiberAcquisitionError) as exc:
                 raise ConversionError(str(exc)) from exc
             tectonic_binary = selection.path
 
-        missing = missing_dependencies(choice, features, use_system_tectonic=use_system_tectonic)
+        missing = missing_dependencies(
+            choice,
+            features,
+            use_system_tectonic=use_system_tectonic,
+            available_binaries={"biber": biber_binary} if biber_binary else None,
+        )
         if missing:
             formatted = ", ".join(sorted(missing))
             raise ConversionError(f"Missing required LaTeX tools for '{choice.label}': {formatted}")
@@ -350,7 +362,12 @@ class ConversionService:
                 tectonic_binary=tectonic_binary,
             )
         )
-        base_env = build_tex_env(render_result.main_tex_path.parent, isolate_cache=isolate_cache)
+        base_env = build_tex_env(
+            render_result.main_tex_path.parent,
+            isolate_cache=isolate_cache,
+            extra_path=bundled_bin,
+            biber_path=biber_binary,
+        )
         merged_env = dict(base_env)
         if env:
             merged_env.update(env)

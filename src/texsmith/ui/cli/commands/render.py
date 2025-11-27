@@ -29,7 +29,9 @@ from texsmith.adapters.latex.engine import (
     run_engine_command,
 )
 from texsmith.adapters.latex.tectonic import (
+    BiberAcquisitionError,
     TectonicAcquisitionError,
+    select_biber_binary,
     select_tectonic_binary,
 )
 from texsmith.adapters.markdown import (
@@ -881,16 +883,24 @@ def render(
     )
 
     tectonic_binary: Path | None = None
+    biber_binary: Path | None = None
+    bundled_bin: Path | None = None
     if engine_choice.backend == "tectonic":
         try:
             selection = select_tectonic_binary(use_system_tectonic, console=state.console)
-        except TectonicAcquisitionError as exc:
+            if features.bibliography and not use_system_tectonic:
+                biber_binary = select_biber_binary(console=state.console)
+                bundled_bin = biber_binary.parent
+        except (TectonicAcquisitionError, BiberAcquisitionError) as exc:
             emit_error(str(exc), exception=exc)
             raise typer.Exit(code=1) from exc
         tectonic_binary = selection.path
 
     missing_tools = missing_dependencies(
-        engine_choice, features, use_system_tectonic=use_system_tectonic
+        engine_choice,
+        features,
+        use_system_tectonic=use_system_tectonic,
+        available_binaries={"biber": biber_binary} if biber_binary else None,
     )
     if missing_tools:
         formatted = ", ".join(sorted(missing_tools))
@@ -905,7 +915,12 @@ def render(
             tectonic_binary=tectonic_binary,
         )
     )
-    env = build_tex_env(render_dir, isolate_cache=isolate_cache)
+    env = build_tex_env(
+        render_dir,
+        isolate_cache=isolate_cache,
+        extra_path=bundled_bin,
+        biber_path=biber_binary,
+    )
 
     state.console.print(f"[bold cyan]Running {engine_choice.label}…[/]")
 

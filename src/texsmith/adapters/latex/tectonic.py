@@ -1,4 +1,4 @@
-"""Bundled Tectonic acquisition and selection helpers."""
+"""Bundled Tectonic (and helper) acquisition and selection helpers."""
 
 from __future__ import annotations
 
@@ -19,14 +19,27 @@ from rich.console import Console
 
 
 TECTONIC_VERSION = "0.15.0"
+BIBER_VERSION = "2.17"
 _BASE_URL = (
     "https://github.com/tectonic-typesetting/tectonic/releases/download/"
     f"tectonic%40{TECTONIC_VERSION}/tectonic-{TECTONIC_VERSION}-"
 )
+_BIBER_BASE_URL = (
+    "https://sourceforge.net/projects/biblatex-biber/files/biblatex-biber/"
+    f"{BIBER_VERSION}/binaries/"
+)
 
 
-class TectonicAcquisitionError(RuntimeError):
+class BundledToolError(RuntimeError):
+    """Raised when a bundled tool cannot be prepared."""
+
+
+class TectonicAcquisitionError(BundledToolError):
     """Raised when the bundled Tectonic binary cannot be prepared."""
+
+
+class BiberAcquisitionError(BundledToolError):
+    """Raised when the bundled Biber binary cannot be prepared."""
 
 
 @dataclass(slots=True)
@@ -55,8 +68,7 @@ def select_tectonic_binary(
 
 
 def _ensure_bundled_binary(*, console: Console | None) -> Path:
-    install_dir = Path.home() / ".texsmith" / "bin"
-    install_dir.mkdir(parents=True, exist_ok=True)
+    install_dir = _install_dir()
     binary_name = "tectonic.exe" if _is_windows() else "tectonic"
     target = install_dir / binary_name
 
@@ -88,6 +100,47 @@ def _ensure_bundled_binary(*, console: Console | None) -> Path:
     return target
 
 
+def select_biber_binary(*, console: Console | None = None) -> Path:
+    """Return the bundled Biber binary, downloading when needed."""
+    install_dir = _install_dir()
+    binary_name = "biber.exe" if _is_windows() else "biber"
+    target = install_dir / binary_name
+
+    if target.exists() and target.is_file():
+        if _binary_matches_version(target, expected=BIBER_VERSION):
+            _log(console, f"Using bundled Biber at {target}", tool="biber")
+            return target
+        _log(console, f"Refreshing bundled Biber in {install_dir}", tool="biber")
+        target.unlink(missing_ok=True)
+
+    archive_url, archive_ext = _detect_biber_archive()
+    _log(console, f"Downloading Biber {BIBER_VERSION} ({archive_url})…", tool="biber")
+
+    try:
+        with tempfile.TemporaryDirectory(prefix="texsmith-biber-") as tmpdir:
+            archive_path = Path(tmpdir) / f"biber{archive_ext}"
+            _download_file(archive_url, archive_path)
+            extracted_root = Path(tmpdir) / "extracted"
+            extracted_root.mkdir(parents=True, exist_ok=True)
+            _extract_archive(archive_path, extracted_root)
+            candidate = _find_binary(
+                extracted_root, binary_name, error_cls=BiberAcquisitionError
+            )
+            _log(console, f"Installing bundled Biber into {install_dir}", tool="biber")
+            shutil.move(str(candidate), target)
+            target.chmod(target.stat().st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
+    except (OSError, URLError, zipfile.BadZipFile, tarfile.TarError) as exc:
+        raise BiberAcquisitionError(f"Unable to download bundled Biber: {exc}") from exc
+
+    return target
+
+
+def _install_dir() -> Path:
+    install_dir = Path.home() / ".texsmith" / "bin"
+    install_dir.mkdir(parents=True, exist_ok=True)
+    return install_dir
+
+
 def _download_file(url: str, destination: Path) -> None:
     with urlopen(url) as response, destination.open("wb") as handle:
         shutil.copyfileobj(response, handle)
@@ -104,14 +157,20 @@ def _extract_archive(archive_path: Path, destination: Path) -> None:
         archive.extractall(destination)
 
 
-def _find_binary(root: Path, name: str) -> Path:
+def _find_binary(
+    root: Path, name: str, *, error_cls: type[BundledToolError] = TectonicAcquisitionError
+) -> Path:
     for candidate in root.rglob(name):
         if candidate.is_file():
             return candidate
-    raise TectonicAcquisitionError(f"Tectonic binary not found in archive contents for {root}")
+    raise error_cls(f"{name} binary not found in archive contents for {root}")
 
 
-def _binary_matches_version(binary: Path) -> bool:
+def _binary_matches_version(binary: Path, *, expected: str = TECTONIC_VERSION) -> bool:
+    return _probe_version(binary, expected=expected)
+
+
+def _probe_version(binary: Path, *, expected: str, binary_label: str = "binary") -> bool:
     try:
         process = subprocess.run(
             [str(binary), "--version"],
@@ -124,23 +183,13 @@ def _binary_matches_version(binary: Path) -> bool:
         return False
     if process.returncode != 0:
         return False
-    return TECTONIC_VERSION in (process.stdout or "") or TECTONIC_VERSION in (process.stderr or "")
+    output = (process.stdout or "") + (process.stderr or "")
+    return expected in output
 
 
 def _detect_architecture() -> tuple[str, str]:
     """Return (triple, archive_ext) compatible with official Tectonic releases."""
-    system = platform.system()
-    machine = platform.machine().lower()
-
-    is_musl = False
-    if system == "Linux":
-        try:
-            output = subprocess.check_output(
-                ["ldd", "--version"], stderr=subprocess.STDOUT, text=True
-            )
-            is_musl = "musl" in output.lower()
-        except (OSError, subprocess.CalledProcessError):
-            is_musl = False
+    system, machine, is_musl = _platform_details()
 
     if system == "Darwin":
         ostype = "apple-darwin"
@@ -169,19 +218,73 @@ def _detect_architecture() -> tuple[str, str]:
     return f"{cputype}-{ostype}", ext
 
 
+def _detect_biber_archive() -> tuple[str, str]:
+    """Return (url, archive_ext) for the appropriate Biber release."""
+    system, machine, is_musl = _platform_details()
+
+    if system == "Linux":
+        platform_dir = "Linux-musl" if is_musl else "Linux"
+        libc_suffix = "-musl" if is_musl else ""
+        if machine in {"x86_64", "x86-64", "amd64", "x64"}:
+            filename = f"biber-linux_x86_64{libc_suffix}.tar.gz"
+        elif machine in {"aarch64", "arm64"}:
+            filename = f"biber-linux_aarch64{libc_suffix}.tar.gz"
+        elif machine in {"i386", "i486", "i686", "i786", "x86"}:
+            filename = f"biber-linux_i386{libc_suffix}.tar.gz"
+        else:
+            raise BiberAcquisitionError(f"Unsupported CPU architecture for Biber: {machine}")
+        return f"{_BIBER_BASE_URL}{platform_dir}/{filename}", ".tar.gz"
+
+    if system == "Darwin":
+        if machine in {"aarch64", "arm64"}:
+            filename = "biber-darwin_arm64.tar.gz"
+        elif machine in {"x86_64", "x86-64", "amd64", "x64"}:
+            filename = "biber-darwin_x86_64.tar.gz"
+        else:
+            raise BiberAcquisitionError(f"Unsupported CPU architecture for Biber: {machine}")
+        return f"{_BIBER_BASE_URL}Darwin/{filename}", ".tar.gz"
+
+    if system == "Windows":
+        filename = "biber-MSWIN64.zip" if machine in {"x86_64", "amd64", "x64"} else "biber-MSWIN32.zip"
+        return f"{_BIBER_BASE_URL}Windows/{filename}", ".zip"
+
+    raise BiberAcquisitionError(f"Unsupported platform for bundled Biber: {system}")
+
+
+def _platform_details() -> tuple[str, str, bool]:
+    system = platform.system()
+    machine = platform.machine().lower()
+
+    is_musl = False
+    if system == "Linux":
+        try:
+            output = subprocess.check_output(
+                ["ldd", "--version"], stderr=subprocess.STDOUT, text=True
+            )
+            is_musl = "musl" in output.lower()
+        except (OSError, subprocess.CalledProcessError):
+            is_musl = False
+
+    return system, machine, is_musl
+
+
 def _is_windows() -> bool:
     return sys.platform.startswith("win")
 
 
-def _log(console: Console | None, message: str) -> None:
+def _log(console: Console | None, message: str, *, tool: str = "tectonic") -> None:
     if console is None:
         return
-    console.log(f"[cyan]tectonic[/]: {message}")
+    console.log(f"[cyan]{tool}[/]: {message}")
 
 
 __all__ = [
+    "BIBER_VERSION",
+    "BiberAcquisitionError",
     "TECTONIC_VERSION",
+    "BundledToolError",
     "TectonicAcquisitionError",
     "TectonicSelection",
+    "select_biber_binary",
     "select_tectonic_binary",
 ]

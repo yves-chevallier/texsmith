@@ -34,7 +34,9 @@ from texsmith.adapters.latex.engine import (
     run_engine_command,
 )
 from texsmith.adapters.latex.tectonic import (
+    BiberAcquisitionError,
     TectonicAcquisitionError,
+    select_biber_binary,
     select_tectonic_binary,
 )
 from texsmith.api.service import ConversionRequest, ConversionService
@@ -187,11 +189,21 @@ def _compile_pdf(result: TemplateRenderResult) -> Path:
         document_state=result.document_state,
         template_context=template_context,
     )
+    biber_binary: Path | None = None
+    bundled_bin: Path | None = None
     try:
         selection = select_tectonic_binary(False, console=None)
-    except TectonicAcquisitionError as exc:  # pragma: no cover - runtime guard
+        if features.bibliography:
+            biber_binary = select_biber_binary(console=None)
+            bundled_bin = biber_binary.parent
+    except (TectonicAcquisitionError, BiberAcquisitionError) as exc:  # pragma: no cover - runtime guard
         raise RuntimeError(str(exc)) from exc
-    missing = missing_dependencies(engine_choice, features, use_system_tectonic=False)
+    missing = missing_dependencies(
+        engine_choice,
+        features,
+        use_system_tectonic=False,
+        available_binaries={"biber": biber_binary} if biber_binary else None,
+    )
     if missing:  # pragma: no cover - runtime guard
         raise RuntimeError(
             f"Missing LaTeX tools for example generation: {', '.join(sorted(missing))}"
@@ -205,7 +217,12 @@ def _compile_pdf(result: TemplateRenderResult) -> Path:
             tectonic_binary=selection.path,
         )
     )
-    env = build_tex_env(result.main_tex_path.parent, isolate_cache=False)
+    env = build_tex_env(
+        result.main_tex_path.parent,
+        isolate_cache=False,
+        extra_path=bundled_bin,
+        biber_path=biber_binary,
+    )
     engine_result: EngineResult = run_engine_command(
         command_plan,
         workdir=result.main_tex_path.parent,
