@@ -288,6 +288,17 @@ class FontLocator:
             bold_italic=_pick(_BOLD_ITALIC_STYLES),
         )
 
+    def register_font_file(self, family: str, path: Path, *, style: str | None = None) -> None:
+        """Register a font file under the provided family name."""
+        try:
+            resolved = path.resolve()
+        except Exception:
+            return
+        if not resolved.exists():
+            return
+        style_value = style or _guess_style_from_filename(resolved)
+        self._register_entry(family, style_value, resolved)
+
     def copy_family(
         self, family: str, destination: Path, *, cache: dict[Path, Path] | None = None
     ) -> FontFiles:

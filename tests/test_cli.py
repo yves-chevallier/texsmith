@@ -41,12 +41,17 @@ def _stub_tectonic_binary(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> Pa
     biber = tmp_path / "biber"
     biber.write_text("#!/bin/sh\n", encoding="utf-8")
     biber.chmod(0o755)
-    monkeypatch.setattr(
-        render_module,
-        "select_tectonic_binary",
-        lambda _use_system, _console=None: selection,
-    )
-    monkeypatch.setattr(render_module, "select_biber_binary", lambda _console=None: biber)
+
+    def fake_select_tectonic(_use_system: bool, console=None):
+        _ = console
+        return selection
+
+    def fake_select_biber(console=None):
+        _ = console
+        return biber
+
+    monkeypatch.setattr(render_module, "select_tectonic_binary", fake_select_tectonic)
+    monkeypatch.setattr(render_module, "select_biber_binary", fake_select_biber)
     return binary
 
 

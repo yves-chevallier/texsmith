@@ -17,11 +17,11 @@ Roadmap and development notes for TeXSmith. I keep this file as a running checkl
 - [x] Provide listings/verbatim/minted handling
 - [x] Add support for Tectonic engine
 - [x] Download tectonic automatically if not installed
-- [ ] Download biber automatically if not installed
-- [ ] Add support for Makefile deps `.d` files
-- [ ] Include fonts in package (like OpenMoji and Noto Color Emoji)
+- [x] Download biber automatically if not installed
+- [x] Add support for Makefile deps `.d` files
+- [x] Include fonts in package (like OpenMoji and Noto Color Emoji)
 - [ ] Mermaid color configuration
-- [ ] Global user's configuration (.texsmith/config.toml)
+- [ ] Global user's configuration (.texsmith/config.yml)
 - [ ] Acronyms multiline
 - [ ] MkDocs Linking Issues
 - [ ] Font style with mono
@@ -64,48 +64,16 @@ Roadmap and development notes for TeXSmith. I keep this file as a running checkl
   - [ ] Marginalia (`marginpar` package with footnotes syntax)
   - [ ] Epigraph Plugin
   - [ ] Letterine
+  - [ ] Custom variables to insert in a document using moustaches
 
 ## Features
 
-### Support for Tectonic
-
-Tectonic has become a popular LaTeX engine that simplifies document compilation by automatically managing dependencies. Integrate Tectonic as an alternative compilation backend in TeXSmith, allowing users to choose between traditional engines like xelatex, lualatex, and Tectonic for building their documents.
-
-We need to refactor TeXSmith to make the engine modular and pluggable. So we can choose from the CLI and the API which engine to use.
-We want to make tectonic the default engine for TeXSmith going forward. Why? Because it simplifies the user experience by handling package management automatically, reducing setup complexity. Also it is considerably faster and lightweight compared to traditional LaTeX engines, very adapted for CI/CD pipelines and automated document generation.
-
-On the CLI the option --engine=tectonic is the default --engine=lualatex or --engine=xelatex both uses latexmk and produce a .latexmkrc.
-
-When using tectonic we don't need latexmk, we can call tectonic directly with the right options.
-
-Both engines can coexist. Befaut they run we make sure that the required executables exists:
-
-For xelatex/lualatex:
-- latexmk
-- xelatex or lualatex
-- biber (if needed)
-- makeindex (if needed)
-- makeglossaries (if needed)
-For tectonic:
-- tectonic
-- biber (if needed)
-- makeindex (if needed)
-- makeglossaries (if needed)
-
-All the "LaTeX log parser" will be moved into the LaTeX engine.
-
-STEPS:
-
-1. Analyse the code and how latex is called, how the latexmkrc is configured and generated and how work the log parser.
-2. Architecture the LaTeX engine interface that will be used by TeXSmith to call the engine and parse logs.
-3. Implement the Tectonic engine.
-4. Refactor the existing xelatex/lualatex engine to use the new interface.
-5. Update the CLI to support the --engine option and set tectonic as default.
-6. Test both engines thoroughly to ensure compatibility and correctness. Tests are run only if the engine is available.
-7. Update documentation to reflect the new engine options and usage instructions.
-8. Write a chapter on the documentation on how install tectonic and use it with TeXSmith.
-
 ### Include Fonts in Package
+
+
+examples/abbr make still fails due to DNS/network outages: OpenMoji downloads blocked and Tectonic can’t fetch TeX packages (makeidx.sty, bundle tarballs). Once network access is available (or the TeX bundle is preinstalled/cached), the build should proceed without the twemoji.sty error because emoji fallback now uses SVG images
+
+
 
 Certaines fonts utilisées par TeXSmith comme OpenMoji-black-glyf.ttf sont difficile à trouver et télécharger. Il faudrait les intégrer dans le package TeXSmith pour éviter aux utilisateurs d'avoir à les chercher et les installer eux-mêmes. Elles seront copiées dans le dossier de build si utilisées. On commence juste par cette font pour l'instant.
 
@@ -118,11 +86,35 @@ Si pas possible de télécharger les fonts, afficher un warning et fallback sur 
 
 ### Mermaid color configuration
 
-Je remarque que les diagrammes mermaid qui sont créés apparaissent avec un fond gris dans le pdf. Mais nous avions configuré un style pour avoir des diagrammes b&w. Il n'est probablement plus activé ou pris en compte. Il faut vérifier cela et corriger le problème.
+Je remarque que les diagrammes mermaid qui sont créés apparaissent avec un fond gris dans le pdf. Mais nous avions configuré un style mermaid global a texsmith pour avoir des diagrammes b&w dans le pdf final. Il n'est probablement plus activé ou pris en compte. Il faut vérifier cela et corriger le problème.
 
-### Global user's configuraiton (.texsmith/config.toml)
+La gestion du cache des assets est aussi à vérifier et la rendre dépendante de la configuration mermaid (si on change le style, il faut regénérer les diagrammes), ou alors si l'exécutable ou la version de l'image docker utilisée change.
 
-Improve the documentation and structure for user configuration. The goal is to let users pick default templates, Mermaid styles, preferred options, and paper formats for everyday TeXSmith usage. The file is optional and can live in the current directory or any parent directory. When present, the `.texsmith` folder also stores cache, configuration, and other user-specific data.
+On ajoute ausis cette vérification pour les assets drawio.
+
+### Global user's configuraiton (.texsmith/config.yml)
+
+We want texsmith to support a global user configuration file located at `.texsmith/config.yml`. This file allows users to set their preferred defaults for templates, Mermaid styles, compilation options, and paper formats. The configuration file is optional and can be placed in the current working directory or any parent directory.
+
+This does only affect the CLI usage of TeXSmith. The API still remains robust and does not depend on any global configuration, except for the cache directory.
+
+A config file could be: 
+
+```yaml
+template: article
+engine: tectonic
+paper: 
+  format: a4
+  orientation: portrait
+mermaid:
+  theme: neutral
+callouts:
+  style: fancy
+```
+
+The format is not rigidly defined. It is used to set default values for command-line options. Command-line options always take precedence over configuration file settings and YAML front matter in Markdown files have the highest precedence. 
+
+Fragments and plugins, and everything inherit from this global configuration when using the CLI. 
 
 ### Glossary
 

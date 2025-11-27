@@ -123,9 +123,7 @@ def select_biber_binary(*, console: Console | None = None) -> Path:
             extracted_root = Path(tmpdir) / "extracted"
             extracted_root.mkdir(parents=True, exist_ok=True)
             _extract_archive(archive_path, extracted_root)
-            candidate = _find_binary(
-                extracted_root, binary_name, error_cls=BiberAcquisitionError
-            )
+            candidate = _find_binary(extracted_root, binary_name, error_cls=BiberAcquisitionError)
             _log(console, f"Installing bundled Biber into {install_dir}", tool="biber")
             shutil.move(str(candidate), target)
             target.chmod(target.stat().st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
@@ -170,7 +168,7 @@ def _binary_matches_version(binary: Path, *, expected: str = TECTONIC_VERSION) -
     return _probe_version(binary, expected=expected)
 
 
-def _probe_version(binary: Path, *, expected: str, binary_label: str = "binary") -> bool:
+def _probe_version(binary: Path, *, expected: str) -> bool:
     try:
         process = subprocess.run(
             [str(binary), "--version"],
@@ -245,7 +243,9 @@ def _detect_biber_archive() -> tuple[str, str]:
         return f"{_BIBER_BASE_URL}Darwin/{filename}", ".tar.gz"
 
     if system == "Windows":
-        filename = "biber-MSWIN64.zip" if machine in {"x86_64", "amd64", "x64"} else "biber-MSWIN32.zip"
+        filename = (
+            "biber-MSWIN64.zip" if machine in {"x86_64", "amd64", "x64"} else "biber-MSWIN32.zip"
+        )
         return f"{_BIBER_BASE_URL}Windows/{filename}", ".zip"
 
     raise BiberAcquisitionError(f"Unsupported platform for bundled Biber: {system}")
@@ -280,8 +280,8 @@ def _log(console: Console | None, message: str, *, tool: str = "tectonic") -> No
 
 __all__ = [
     "BIBER_VERSION",
-    "BiberAcquisitionError",
     "TECTONIC_VERSION",
+    "BiberAcquisitionError",
     "BundledToolError",
     "TectonicAcquisitionError",
     "TectonicSelection",

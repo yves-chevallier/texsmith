@@ -1,8 +1,11 @@
+import io
 from pathlib import Path
+import zipfile
 
+from texsmith.core.diagnostics import NullEmitter
 from texsmith.fonts.locator import FontLocator
 from texsmith.fonts.manager import prepare_fonts_for_context
-from texsmith.fonts.matcher import match_text
+from texsmith.fonts.matcher import FontMatchResult, match_text
 
 
 def _write_font(path: Path) -> None:
@@ -105,3 +108,90 @@ def test_kpsewhich_lookup_is_used(monkeypatch, tmp_path: Path) -> None:
 
     assert located.regular == files["lmroman10-regular.otf"]
     assert located.italic == files["lmroman10-italic.otf"]
+
+
+def _openmoji_zip_payload() -> bytes:
+    buffer = io.BytesIO()
+    with zipfile.ZipFile(buffer, "w") as archive:
+        archive.writestr("fonts/OpenMoji-black-glyf.ttf", b"demo")
+    return buffer.getvalue()
+
+
+def _emoji_match_result() -> FontMatchResult:
+    return FontMatchResult(
+        fallback_fonts=("OpenMoji Black",),
+        present_fonts=(),
+        missing_fonts=("OpenMoji Black",),
+        missing_codepoints=(0x1F600,),
+        font_ranges={"OpenMoji Black": ["U+1F600"]},
+        fonts_yaml=None,
+    )
+
+
+def test_prepare_fonts_downloads_emoji_font(monkeypatch, tmp_path: Path) -> None:
+    payload = _openmoji_zip_payload()
+
+    class FakeResponse(io.BytesIO):
+        def __enter__(self):
+            return self
+
+        def __exit__(self, exc_type, exc_val, exc_tb):
+            self.close()
+            return False
+
+    def fake_open(url: str, timeout: int = 30):
+        return FakeResponse(payload)
+
+    monkeypatch.setenv("TEXSMITH_FONT_CACHE_DIR", str(tmp_path / "cache"))
+    monkeypatch.setattr("texsmith.fonts.cache._open_url", fake_open)
+
+    match = _emoji_match_result()
+    context: dict[str, object] = {}
+    locator = FontLocator()
+
+    result = prepare_fonts_for_context(
+        template_context=context,
+        output_dir=tmp_path / "build",
+        font_match=match,
+        font_locator=locator,
+        emitter=NullEmitter(),
+    )
+
+    cache_file = tmp_path / "cache" / "OpenMoji-black-glyf.ttf"
+    assert result is not None
+    assert cache_file.exists()
+    assert "OpenMoji Black" in context["font_files"]  # type: ignore[index]
+    assert "OpenMoji Black" in context["fallback_fonts"]  # type: ignore[index]
+
+
+def test_prepare_fonts_falls_back_to_twemoji(monkeypatch, tmp_path: Path) -> None:
+    def fake_open(url: str, timeout: int = 30):
+        raise OSError("offline")
+
+    monkeypatch.setenv("TEXSMITH_FONT_CACHE_DIR", str(tmp_path / "cache"))
+    monkeypatch.setattr("texsmith.fonts.cache._open_url", fake_open)
+
+    class ListEmitter(NullEmitter):
+        def __init__(self) -> None:
+            self.messages: list[str] = []
+
+        def warning(self, message: str, exc: BaseException | None = None) -> None:  # type: ignore[override]
+            self.messages.append(message)
+
+    emitter = ListEmitter()
+    match = _emoji_match_result()
+    context: dict[str, object] = {}
+    locator = FontLocator()
+
+    result = prepare_fonts_for_context(
+        template_context=context,
+        output_dir=tmp_path / "build",
+        font_match=match,
+        font_locator=locator,
+        emitter=emitter,
+    )
+
+    assert result is not None
+    assert context.get("emoji_mode") == "artifact"
+    assert "OpenMoji Black" not in context["fallback_fonts"]  # type: ignore[index]
+    assert any("Emoji font" in msg for msg in emitter.messages)
