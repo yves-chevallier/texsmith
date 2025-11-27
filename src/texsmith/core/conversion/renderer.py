@@ -333,7 +333,6 @@ class TemplateRenderer:
         template_instance = self.runtime.instance
         if template_instance is None:  # pragma: no cover - defensive path
             raise TemplateError("Template runtime is missing an instance implementation.")
-        declared_assets = list(template_instance.iter_assets()) if copy_assets else []
 
         if template_overrides is None:
             template_overrides = {}

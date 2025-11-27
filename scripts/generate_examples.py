@@ -196,7 +196,10 @@ def _compile_pdf(result: TemplateRenderResult) -> Path:
         if features.bibliography:
             biber_binary = select_biber_binary(console=None)
             bundled_bin = biber_binary.parent
-    except (TectonicAcquisitionError, BiberAcquisitionError) as exc:  # pragma: no cover - runtime guard
+    except (
+        TectonicAcquisitionError,
+        BiberAcquisitionError,
+    ) as exc:  # pragma: no cover - runtime guard
         raise RuntimeError(str(exc)) from exc
     missing = missing_dependencies(
         engine_choice,

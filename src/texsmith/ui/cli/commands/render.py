@@ -237,10 +237,7 @@ def _write_makefile_deps(target: Path, dependencies: Iterable[Path]) -> Path:
     normalised = sorted(normalised, key=lambda path: path.as_posix())
     rel_target = _escape_make_path(_relativize_path(resolved_target, base))
     rel_deps = [_escape_make_path(_relativize_path(dep, base)) for dep in normalised]
-    if rel_deps:
-        content = f"{rel_target}: {' '.join(rel_deps)}\n"
-    else:
-        content = f"{rel_target}:\n"
+    content = f"{rel_target}: {' '.join(rel_deps)}\n" if rel_deps else f"{rel_target}:\n"
     dep_path.write_text(content, encoding="utf-8")
     return dep_path
 

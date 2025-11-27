@@ -9,6 +9,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 from texsmith.fonts import locator as fonts_locator
+from texsmith.fonts.cache import cache_fonts_for_families
 from texsmith.fonts.fallback import NotoFallback
 from texsmith.fonts.locator import FontFiles, FontLocator
 from texsmith.fonts.matcher import FontMatchResult
@@ -20,6 +21,8 @@ if TYPE_CHECKING:
 
 
 DEFAULT_FALLBACK_FONTS: list[str] = ["NotoSans"]
+_EMOJI_BLACK_MODES = {"black", "openmoji-black", "openmoji black"}
+_EMOJI_COLOR_MODES = {"color", "colour", "openmoji-color", "openmoji color", "noto color emoji"}
 
 
 @dataclass(frozen=True, slots=True)
@@ -110,6 +113,64 @@ def resolve_font_selection(context: Mapping[str, Any]) -> FontSelection:
     )
 
 
+def _dedupe_preserve_order(values: Iterable[str]) -> list[str]:
+    seen: set[str] = set()
+    ordered: list[str] = []
+    for value in values:
+        if not value or value in seen:
+            continue
+        seen.add(value)
+        ordered.append(value)
+    return ordered
+
+
+def _resolve_emoji_preferences(context: Mapping[str, Any]) -> tuple[str, str | None]:
+    press = context.get("press")
+    press_fonts_raw = press.get("fonts") if isinstance(press, Mapping) else None
+    press_fonts = press_fonts_raw if isinstance(press_fonts_raw, Mapping) else None
+    fonts_map = context.get("fonts") if isinstance(context.get("fonts"), Mapping) else None
+
+    runtime_emoji = (
+        context.get("emoji_mode") if isinstance(context.get("emoji_mode"), str) else None
+    )
+    emoji_pref = context.get("emoji") if isinstance(context.get("emoji"), str) else None
+    if emoji_pref is None and isinstance(press_fonts, Mapping):
+        candidate = press_fonts.get("emoji")
+        emoji_pref = candidate if isinstance(candidate, str) else None
+    if emoji_pref is None and runtime_emoji:
+        emoji_pref = runtime_emoji
+    elif emoji_pref is None and isinstance(fonts_map, Mapping):
+        candidate = fonts_map.get("emoji")
+        emoji_pref = candidate if isinstance(candidate, str) else None
+
+    emoji_mode = (emoji_pref or "black").strip().lower() or "black"
+    emoji_font: str | None = None
+    if emoji_mode not in {"artifact", "off", "none", "twemoji"}:
+        if emoji_mode in _EMOJI_BLACK_MODES:
+            emoji_font = "OpenMoji Black"
+        elif emoji_mode in _EMOJI_COLOR_MODES:
+            emoji_font = "Noto Color Emoji"
+        elif isinstance(emoji_pref, str):
+            emoji_font = emoji_pref
+    return emoji_mode, emoji_font
+
+
+def _apply_twemoji_fallback(
+    template_context: dict[str, Any],
+    fallback_fonts: list[str],
+    *,
+    missing_font: str,
+    emitter: DiagnosticEmitter | None,
+) -> list[str]:
+    if emitter:
+        emitter.warning(
+            f"Emoji font '{missing_font}' unavailable; falling back to twemoji SVG images."
+        )
+    template_context["emoji_mode"] = "artifact"
+    template_context["emoji"] = "artifact"
+    return [font for font in fallback_fonts if font != missing_font]
+
+
 @dataclass(slots=True)
 class PreparedFonts:
     """Result of preparing font files and ranges for ts-fonts."""
@@ -187,13 +248,16 @@ def _build_unicode_classes(
     for family, ranges in sorted(font_ranges.items()):
         if family == "__UNCOVERED__" or not ranges:
             continue
+        files = copied_fonts.get(family)
+        if not files:
+            continue
         specs.append(
             {
                 "class_name": f"TSUnicodeClass{counter}",
                 "font_command": f"TSUnicodeFont{counter}",
                 "family": family,
                 "ranges": unicode_class_ranges(ranges),
-                "files": copied_fonts.get(family, {}),
+                "files": files,
             }
         )
         counter += 1
@@ -231,6 +295,9 @@ def prepare_fonts_for_context(
     present_fonts = list(font_match.present_fonts) if font_match else []
     missing_fonts = list(font_match.missing_fonts) if font_match else []
 
+    emoji_mode, emoji_font = _resolve_emoji_preferences(template_context)
+    template_context.setdefault("emoji_mode", emoji_mode)
+
     base_fallbacks: list[str] = []
     if font_match:
         available_fonts = list(font_match.present_fonts) or list(font_match.fallback_fonts)
@@ -241,7 +308,10 @@ def prepare_fonts_for_context(
     if not base_fallbacks:
         base_fallbacks.extend(DEFAULT_FALLBACK_FONTS)
 
-    fallback_fonts = list(dict.fromkeys([font for font in base_fallbacks if font]))
+    fallback_fonts = _dedupe_preserve_order(base_fallbacks)
+    if emoji_font and emoji_font not in fallback_fonts:
+        fallback_fonts = [emoji_font, *fallback_fonts]
+    fallback_fonts = _dedupe_preserve_order(fallback_fonts)
     template_context["fallback_fonts"] = fallback_fonts
     template_context.setdefault("font_match_ranges", font_ranges)
     template_context.setdefault("present_fonts", present_fonts)
@@ -256,6 +326,13 @@ def prepare_fonts_for_context(
         *([selection.small_caps] if selection.small_caps else []),
     }
     fonts_to_copy.update(fallback_fonts)
+    if emoji_font:
+        fonts_to_copy.add(emoji_font)
+
+    cached_fonts, _cache_failures = cache_fonts_for_families(list(fonts_to_copy), emitter=emitter)
+    for family, path in cached_fonts.items():
+        locator.register_font_file(family, path)
+
     copied = locator.copy_families(fonts_to_copy, fonts_dir)
     copied_serialised = _serialize_copied_fonts(copied, output_dir)
     fonts_path_prefix = f"./{fonts_dir.relative_to(output_dir).as_posix()}/"
@@ -263,11 +340,32 @@ def prepare_fonts_for_context(
     template_context["font_files"] = copied_serialised
 
     missing_after_copy = {family for family in fonts_to_copy if family not in copied_serialised}
+
+    available_families = set(copied_serialised.keys())
+    fallback_fonts = [font for font in fallback_fonts if font in available_families]
+    if emoji_font and emoji_font in missing_after_copy:
+        fallback_fonts = _apply_twemoji_fallback(
+            template_context, fallback_fonts, missing_font=emoji_font, emitter=emitter
+        )
+        missing_after_copy.discard(emoji_font)
+
+    template_context["fallback_fonts"] = fallback_fonts
+
+    filtered_font_ranges = {
+        family: ranges
+        for family, ranges in font_ranges.items()
+        if family == "__UNCOVERED__" or family in available_families
+    }
+    template_context["font_match_ranges"] = filtered_font_ranges
+
+    if missing_after_copy:
+        missing_fonts = _dedupe_preserve_order([*missing_fonts, *missing_after_copy])
+
     if emitter and missing_after_copy:
         readable = ", ".join(sorted(missing_after_copy))
         emitter.warning(f"Unable to copy {len(missing_after_copy)} font families: {readable}")
 
-    unicode_classes = _build_unicode_classes(font_ranges, copied_serialised)
+    unicode_classes = _build_unicode_classes(filtered_font_ranges, copied_serialised)
     template_context["unicode_font_classes"] = unicode_classes
 
     return PreparedFonts(
@@ -275,7 +373,7 @@ def prepare_fonts_for_context(
         fallback_fonts=fallback_fonts,
         present_fonts=present_fonts,
         missing_fonts=missing_fonts,
-        font_ranges=font_ranges,
+        font_ranges=filtered_font_ranges,
         copied_fonts=copied_serialised,
         unicode_classes=unicode_classes,
         fonts_dir=fonts_dir,
