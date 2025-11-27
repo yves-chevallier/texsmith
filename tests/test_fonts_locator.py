@@ -113,7 +113,7 @@ def test_kpsewhich_lookup_is_used(monkeypatch, tmp_path: Path) -> None:
 def _openmoji_zip_payload() -> bytes:
     buffer = io.BytesIO()
     with zipfile.ZipFile(buffer, "w") as archive:
-        archive.writestr("fonts/OpenMoji-black-glyf.ttf", b"demo")
+        archive.writestr("OpenMoji-black-glyf/OpenMoji-black-glyf.ttf", b"demo")
     return buffer.getvalue()
 
 

@@ -329,7 +329,9 @@ def prepare_fonts_for_context(
     if emoji_font:
         fonts_to_copy.add(emoji_font)
 
-    cached_fonts, _cache_failures = cache_fonts_for_families(list(fonts_to_copy), emitter=emitter)
+    cached_fonts, cache_failures = cache_fonts_for_families(
+        list(fonts_to_copy), emitter=emitter
+    )
     for family, cached_entry in cached_fonts.items():
         if isinstance(cached_entry, Mapping):
             for style, path in cached_entry.items():
@@ -345,7 +347,9 @@ def prepare_fonts_for_context(
     template_context["font_path_prefix"] = fonts_path_prefix
     template_context["font_files"] = copied_serialised
 
-    missing_after_copy = {family for family in fonts_to_copy if family not in copied_serialised}
+    missing_after_copy = {
+        family for family in fonts_to_copy if family not in copied_serialised
+    } | (set(cache_failures) & set(fonts_to_copy))
 
     available_families = set(copied_serialised.keys())
     fallback_fonts = [font for font in fallback_fonts if font in available_families]
@@ -362,6 +366,9 @@ def prepare_fonts_for_context(
         for family, ranges in font_ranges.items()
         if family == "__UNCOVERED__" or family in available_families
     }
+    if emoji_font:
+        filtered_font_ranges["NotoColorEmoji"] = list(_EMOJI_DEFAULT_RANGES)
+        template_context["emoji_ranges"] = unicode_class_ranges(_EMOJI_DEFAULT_RANGES)
     template_context["font_match_ranges"] = filtered_font_ranges
 
     if missing_after_copy:
@@ -393,3 +400,8 @@ __all__ = [
     "prepare_fonts_for_context",
     "resolve_font_selection",
 ]
+_EMOJI_DEFAULT_RANGES: tuple[str, ...] = (
+    "2000..27FF",  # symbols, dingbats, arrows, punctuation
+    "FE00..FE0F",  # variation selectors
+    "1F000..1FAFF",  # emoji blocks
+)

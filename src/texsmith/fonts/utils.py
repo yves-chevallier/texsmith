@@ -16,6 +16,10 @@ def parse_unicode_range(range_value: str) -> tuple[str, str]:
 
     If the range is a single codepoint, ``start`` and ``end`` will be identical.
     """
+    if isinstance(range_value, (tuple, list)) and len(range_value) == 2:
+        start, end = range_value
+        return (str(start).upper(), str(end).upper())
+
     cleaned = range_value.replace("U+", "").replace("\\u", "").replace("u+", "")
     if ".." in cleaned:
         start, end = cleaned.split("..", 1)
