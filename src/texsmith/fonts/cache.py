@@ -30,6 +30,7 @@ class FontSource:
     url: str
     filename: str
     zip_member: str | None = None
+    style: str | None = None
 
 
 _KNOWN_SOURCES: dict[str, tuple[FontSource, ...]] = {
@@ -46,6 +47,43 @@ _KNOWN_SOURCES: dict[str, tuple[FontSource, ...]] = {
             url="https://github.com/hfg-gmuend/openmoji/releases/download/16.0.0/openmoji-font.zip",
             filename="OpenMoji-black-glyf.ttf",
             zip_member="fonts/OpenMoji-black-glyf.ttf",
+        ),
+    ),
+    normalize_family("IBM Plex Mono"): (
+        FontSource(
+            family="IBM Plex Mono",
+            url="https://mirrors.ctan.org/fonts/plex.zip",
+            filename="IBMPlexMono-Regular.otf",
+            zip_member="plex/opentype/IBMPlexMono-Regular.otf",
+            style="regular",
+        ),
+        FontSource(
+            family="IBM Plex Mono",
+            url="https://mirrors.ctan.org/fonts/plex.zip",
+            filename="IBMPlexMono-Bold.otf",
+            zip_member="plex/opentype/IBMPlexMono-Bold.otf",
+            style="bold",
+        ),
+        FontSource(
+            family="IBM Plex Mono",
+            url="https://mirrors.ctan.org/fonts/plex.zip",
+            filename="IBMPlexMono-Italic.otf",
+            zip_member="plex/opentype/IBMPlexMono-Italic.otf",
+            style="italic",
+        ),
+        FontSource(
+            family="IBM Plex Mono",
+            url="https://mirrors.ctan.org/fonts/plex.zip",
+            filename="IBMPlexMono-BoldItalic.otf",
+            zip_member="plex/opentype/IBMPlexMono-BoldItalic.otf",
+            style="bold italic",
+        ),
+        FontSource(
+            family="IBM Plex Mono",
+            url="https://mirrors.ctan.org/fonts/plex.zip",
+            filename="IBMPlexMono-Medium.otf",
+            zip_member="plex/opentype/IBMPlexMono-Medium.otf",
+            style="medium",
         ),
     ),
 }
@@ -93,10 +131,18 @@ def _extract_payload(
             if source.zip_member in archive.namelist():
                 return archive.read(source.zip_member)
 
-            lowered = [name for name in archive.namelist() if name.lower().endswith(".ttf")]
+            target_lower = source.filename.lower()
+            lowered = [
+                name
+                for name in archive.namelist()
+                if name.lower().endswith(".ttf") or name.lower().endswith(".otf")
+            ]
             preferred: str | None = None
             for candidate in lowered:
                 candidate_lower = candidate.lower()
+                if candidate_lower.endswith(target_lower):
+                    preferred = candidate
+                    break
                 if "openmoji" in candidate_lower and "glyf" in candidate_lower:
                     preferred = candidate
                     break
@@ -129,24 +175,33 @@ def _atomic_write(path: Path, data: bytes) -> None:
     tmp_path.replace(path)
 
 
-def ensure_font_cached(family: str, *, emitter: DiagnosticEmitter | None = None) -> Path | None:
+def ensure_font_cached(
+    family: str, *, emitter: DiagnosticEmitter | None = None
+) -> Path | dict[str, Path] | None:
     """
     Ensure the requested font family is cached locally.
 
-    Returns the cached path on success, otherwise ``None``.
+    Returns the cached path (or style mapping for multi-face families) on success.
     """
     sources = _KNOWN_SOURCES.get(normalize_family(family))
     if not sources:
         return None
 
-    target = font_cache_dir() / sources[0].filename
-    if target.exists():
-        return target
+    cached: dict[str, Path] = {}
+    payload_cache: dict[str, bytes] = {}
 
     for source in sources:
-        payload = _download_payload(source, emitter)
-        if payload is None:
+        target = font_cache_dir() / source.filename
+        if target.exists():
+            cached[source.style or source.filename] = target
             continue
+
+        payload = payload_cache.get(source.url)
+        if payload is None:
+            payload = _download_payload(source, emitter)
+            if payload is None:
+                continue
+            payload_cache[source.url] = payload
 
         extracted = _extract_payload(source, payload, emitter)
         if extracted is None:
@@ -157,17 +212,22 @@ def ensure_font_cached(family: str, *, emitter: DiagnosticEmitter | None = None)
         except Exception as exc:  # pragma: no cover - filesystem/runtime dependent
             _warn(emitter, f"Unable to cache font '{source.family}' at {target}: {exc}")
             continue
-        return target
-    return None
+        cached[source.style or source.filename] = target
+
+    if not cached:
+        return None
+    if len(cached) == 1:
+        return next(iter(cached.values()))
+    return cached
 
 
 def cache_fonts_for_families(
     families: list[str] | set[str] | tuple[str, ...],
     *,
     emitter: DiagnosticEmitter | None = None,
-) -> tuple[dict[str, Path], set[str]]:
+) -> tuple[dict[str, Path | dict[str, Path]], set[str]]:
     """Cache known downloadable fonts required by ``families``."""
-    cached: dict[str, Path] = {}
+    cached: dict[str, Path | dict[str, Path]] = {}
     failures: set[str] = set()
     for family in families:
         result = ensure_font_cached(family, emitter=emitter)
