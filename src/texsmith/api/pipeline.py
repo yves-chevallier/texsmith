@@ -217,6 +217,7 @@ def to_template_fragments(bundle: ConversionBundle) -> list[TemplateFragment]:
                 front_matter=document.front_matter,
                 source_path=document.source_path,
                 rule_descriptions=list(conversion.rule_descriptions),
+                assets=dict(conversion.assets_map),
             )
         )
     return fragments

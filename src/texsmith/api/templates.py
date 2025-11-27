@@ -115,6 +115,9 @@ class TemplateRenderResult:
     template_engine: str | None
     requires_shell_escape: bool
     rule_descriptions: list[dict[str, Any]] = field(default_factory=list)
+    asset_paths: list[Path] = field(default_factory=list)
+    asset_sources: list[Path] = field(default_factory=list)
+    asset_map: dict[str, Path] = field(default_factory=dict)
 
     @property
     def has_bibliography(self) -> bool:
@@ -240,6 +243,9 @@ class TemplateSession:
             template_engine=rendered.template_engine,
             requires_shell_escape=rendered.requires_shell_escape,
             rule_descriptions=rendered.rule_descriptions,
+            asset_paths=rendered.asset_paths,
+            asset_sources=rendered.asset_sources,
+            asset_map=rendered.asset_map,
         )
 
 

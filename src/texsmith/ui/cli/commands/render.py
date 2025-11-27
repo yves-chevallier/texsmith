@@ -60,6 +60,7 @@ from .._options import (
     HtmlOnlyOption,
     InputPathArgument,
     LanguageOption,
+    MakefileDepsOption,
     ManifestOptionWithShort,
     MarkdownExtensionsOption,
     NoTitleOption,
@@ -188,6 +189,58 @@ def _format_path_for_event(path: Path) -> str:
         return str(resolved.relative_to(Path.cwd()))
     except ValueError:
         return str(resolved)
+
+
+def _relativize_path(path: Path, base: Path) -> Path:
+    """Return a path relative to ``base`` when possible."""
+    try:
+        return path.resolve().relative_to(base)
+    except ValueError:
+        try:
+            return Path(os.path.relpath(path, base))
+        except ValueError:
+            return path.resolve()
+
+
+def _escape_make_path(path: Path) -> str:
+    """Escape whitespace and backslashes for Makefile dependency entries."""
+    raw = path.as_posix()
+    raw = raw.replace("\\", "\\\\")
+    return raw.replace(" ", "\\ ")
+
+
+def _write_makefile_deps(target: Path, dependencies: Iterable[Path]) -> Path:
+    """Write a Makefile-compatible .d file for the given target."""
+    base = Path.cwd()
+    resolved_target = target.resolve()
+    dep_path = resolved_target.with_suffix(resolved_target.suffix + ".d")
+    dep_path.parent.mkdir(parents=True, exist_ok=True)
+
+    seen: set[Path] = set()
+    normalised: list[Path] = []
+    for dep in dependencies:
+        if not dep:
+            continue
+        try:
+            resolved = Path(dep).resolve()
+        except OSError:
+            continue
+        if resolved == resolved_target or resolved in seen:
+            continue
+        if not resolved.exists():
+            continue
+        seen.add(resolved)
+        normalised.append(resolved)
+
+    normalised = sorted(normalised, key=lambda path: path.as_posix())
+    rel_target = _escape_make_path(_relativize_path(resolved_target, base))
+    rel_deps = [_escape_make_path(_relativize_path(dep, base)) for dep in normalised]
+    if rel_deps:
+        content = f"{rel_target}: {' '.join(rel_deps)}\n"
+    else:
+        content = f"{rel_target}:\n"
+    dep_path.write_text(content, encoding="utf-8")
+    return dep_path
 
 
 def _coerce_attribute_value(raw: str) -> Any:
@@ -320,6 +373,7 @@ def render(
     convert_assets: ConvertAssetsOption = False,
     hash_assets: HashAssetsOption = False,
     manifest: ManifestOptionWithShort = False,
+    make_deps: MakefileDepsOption = False,
     template: TemplateOption = None,
     embed_fragments: Annotated[
         bool,
@@ -549,6 +603,8 @@ def render(
 
     if open_log and not build_pdf:
         raise typer.BadParameter("--open-log can only be used together with --build.")
+    if make_deps and not build_pdf:
+        raise typer.BadParameter("--makefile-deps can only be used together with --build.")
 
     try:
         _, slot_assignments = organise_slot_overrides(slots, document_paths)
@@ -883,6 +939,7 @@ def render(
 
     pdf_path = command_plan.pdf_path
     final_pdf_path = pdf_path
+    dep_file_path: Path | None = None
 
     if final_pdf_target is not None:
         final_destination = final_pdf_target
@@ -900,7 +957,34 @@ def render(
             raise typer.Exit(code=1) from exc
         final_pdf_path = final_destination
 
+    if make_deps:
+        dependency_paths: set[Path] = set()
+        dependency_paths.update(document_paths)
+        dependency_paths.update(bibliography_files)
+        if shared_front_matter_path:
+            dependency_paths.add(shared_front_matter_path)
+        dependency_paths.add(render_result.main_tex_path)
+        dependency_paths.update(render_result.fragment_paths)
+        if render_result.bibliography_path:
+            dependency_paths.add(render_result.bibliography_path)
+        latexmkrc_candidate = render_dir / ".latexmkrc"
+        if latexmkrc_candidate.exists():
+            dependency_paths.add(latexmkrc_candidate)
+        dependency_paths.update(getattr(render_result, "asset_paths", []))
+        dependency_paths.update(getattr(render_result, "asset_sources", []))
+        for key in getattr(render_result, "asset_map", {}) or {}:
+            candidate_path = Path(key)
+            if candidate_path.exists():
+                dependency_paths.add(candidate_path)
+        try:
+            dep_file_path = _write_makefile_deps(final_pdf_path, dependency_paths)
+        except OSError as exc:
+            emit_error(f"Failed to write dependency file: {exc}", exc)
+            raise typer.Exit(code=1) from exc
+
     present_build_summary(state=state, render_result=render_result, pdf_path=final_pdf_path)
+    if dep_file_path is not None:
+        state.console.print(f"[cyan]Dependencies written to[/] {dep_file_path}")
     _emit_rule_diagnostics()
     _flush_diagnostics()
 

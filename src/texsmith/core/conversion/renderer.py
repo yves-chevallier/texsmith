@@ -34,6 +34,7 @@ class TemplateFragment:
     front_matter: Mapping[str, Any] | None = None
     source_path: Path | None = None
     rule_descriptions: list[dict[str, Any]] | None = None
+    assets: dict[str, Path] | None = None
 
 
 @dataclass(slots=True)
@@ -50,6 +51,9 @@ class TemplateRendererResult:
     requires_shell_escape: bool
     template_overrides: dict[str, Any] = field(default_factory=dict)
     rule_descriptions: list[dict[str, Any]] = field(default_factory=list)
+    asset_paths: list[Path] = field(default_factory=list)
+    asset_sources: list[Path] = field(default_factory=list)
+    asset_map: dict[str, Path] = field(default_factory=dict)
 
 
 _SOFT_OVERRIDE_KEYS = {"press._source_dir", "press._source_path"}
@@ -189,6 +193,9 @@ class TemplateRenderer:
         rule_descriptions: list[dict[str, Any]] = []
 
         document_metadata: list[dict[str, Any]] = []
+        asset_paths: set[Path] = set()
+        asset_sources: set[Path] = set()
+        asset_map: dict[str, Path] = {}
 
         for fragment in fragments:
             fragment_default_slot = fragment.default_slot or default_slot
@@ -206,6 +213,14 @@ class TemplateRenderer:
             if fragment.source_path:
                 fragment_record["source_path"] = str(fragment.source_path)
             document_metadata.append(fragment_record)
+            if fragment.assets:
+                for key, path in fragment.assets.items():
+                    target_path = Path(path).resolve()
+                    asset_map.setdefault(key, target_path)
+                    asset_paths.add(target_path)
+                    source_candidate = Path(key)
+                    if source_candidate.exists():
+                        asset_sources.add(source_candidate.resolve())
 
             for slot_name, latex in slot_outputs.items():
                 if not latex:
@@ -318,6 +333,7 @@ class TemplateRenderer:
         template_instance = self.runtime.instance
         if template_instance is None:  # pragma: no cover - defensive path
             raise TemplateError("Template runtime is missing an instance implementation.")
+        declared_assets = list(template_instance.iter_assets()) if copy_assets else []
 
         if template_overrides is None:
             template_overrides = {}
@@ -367,6 +383,12 @@ class TemplateRenderer:
             Path(fragment.output_path) for fragment in fragments if fragment.output_path
         ]
         fragment_paths.extend(written_fragment_paths)
+        asset_paths.update(wrap_result.asset_paths or [])
+        for source, destination in getattr(wrap_result, "asset_pairs", []):
+            resolved_dest = Path(destination).resolve()
+            asset_paths.add(resolved_dest)
+            asset_sources.add(Path(source).resolve())
+            asset_map.setdefault(str(source), resolved_dest)
 
         context_engine: str | None = None
         if template_context:
@@ -393,6 +415,9 @@ class TemplateRenderer:
             bibliography_present=bool(bibliography_path),
         )
 
+        asset_path_list = sorted({path.resolve() for path in asset_paths})
+        asset_source_list = sorted({path.resolve() for path in asset_sources})
+
         return TemplateRendererResult(
             main_tex_path=main_tex_path,
             fragment_paths=fragment_paths,
@@ -404,6 +429,9 @@ class TemplateRenderer:
             requires_shell_escape=requires_shell_escape,
             template_overrides=template_overrides,
             rule_descriptions=rule_descriptions,
+            asset_paths=asset_path_list,
+            asset_sources=asset_source_list,
+            asset_map=asset_map,
         )
 
     @staticmethod

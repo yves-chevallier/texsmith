@@ -61,6 +61,7 @@ class ConversionResult:
     document_context: DocumentContext | None = None
     binder_context: BinderContext | None = None
     rule_descriptions: list[dict[str, Any]] = field(default_factory=list)
+    assets_map: dict[str, Path] = field(default_factory=dict)
 
 
 _EMOJI_SPECIAL_MODES = {"artifact", "symbola", "color", "black", "twemoji"}
@@ -451,6 +452,12 @@ def _render_document(
             rule_descriptions = list(renderer.describe_registered_rules())
         except Exception:
             rule_descriptions = []
+    asset_map: dict[str, Path] = {}
+    if renderer is not None:
+        try:
+            asset_map = {str(key): Path(path) for key, path in renderer.assets.items()}
+        except Exception:
+            asset_map = {}
 
     return ConversionResult(
         latex_output=latex_output,
@@ -470,6 +477,7 @@ def _render_document(
         document_context=document_context,
         binder_context=binder_context,
         rule_descriptions=rule_descriptions,
+        assets_map=asset_map,
     )
 
 
