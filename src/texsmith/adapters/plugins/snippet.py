@@ -701,7 +701,9 @@ def _compile_pdf(render_result: Any) -> Path:
         run_engine_command,
     )
     from texsmith.adapters.latex.tectonic import (
+        BiberAcquisitionError,
         TectonicAcquisitionError,
+        select_biber_binary,
         select_tectonic_binary,
     )
 
@@ -715,13 +717,23 @@ def _compile_pdf(render_result: Any) -> Path:
         document_state=render_result.document_state,
         template_context=template_context,
     )
+    biber_binary: Path | None = None
+    bundled_bin: Path | None = None
     try:
         selection = select_tectonic_binary(False, console=None)
-    except TectonicAcquisitionError as exc:
+        if features.bibliography:
+            biber_binary = select_biber_binary(console=None)
+            bundled_bin = biber_binary.parent
+    except (TectonicAcquisitionError, BiberAcquisitionError) as exc:
         raise AssetMissingError(str(exc)) from exc
     tectonic_binary = selection.path
 
-    missing = missing_dependencies(engine_choice, features, use_system_tectonic=False)
+    missing = missing_dependencies(
+        engine_choice,
+        features,
+        use_system_tectonic=False,
+        available_binaries={"biber": biber_binary} if biber_binary else None,
+    )
     if missing:
         formatted = ", ".join(sorted(missing))
         raise AssetMissingError(f"Missing LaTeX tools for snippet rendering: {formatted}")
@@ -734,7 +746,12 @@ def _compile_pdf(render_result: Any) -> Path:
             tectonic_binary=tectonic_binary,
         )
     )
-    env = build_tex_env(render_result.main_tex_path.parent, isolate_cache=True)
+    env = build_tex_env(
+        render_result.main_tex_path.parent,
+        isolate_cache=True,
+        extra_path=bundled_bin,
+        biber_path=biber_binary,
+    )
     result: EngineResult = run_engine_command(
         command_plan,
         workdir=render_result.main_tex_path.parent,

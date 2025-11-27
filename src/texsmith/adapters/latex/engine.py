@@ -125,12 +125,20 @@ def compute_features(
 
 
 def missing_dependencies(
-    choice: EngineChoice, features: EngineFeatures, *, use_system_tectonic: bool = False
+    choice: EngineChoice,
+    features: EngineFeatures,
+    *,
+    use_system_tectonic: bool = False,
+    available_binaries: Mapping[str, str | Path] | None = None,
 ) -> list[str]:
     """Return missing executables required by the selected engine."""
     missing: list[str] = []
 
     def _check(binary: str) -> None:
+        if available_binaries and binary in available_binaries:
+            candidate = Path(available_binaries[binary])
+            if candidate.exists():
+                return
         if shutil.which(binary) is None:
             missing.append(binary)
 
@@ -212,7 +220,13 @@ def ensure_command_paths(command: EngineCommand) -> EngineCommand:
     return EngineCommand(argv=argv, log_path=command.log_path, pdf_path=command.pdf_path)
 
 
-def build_tex_env(render_dir: Path, *, isolate_cache: bool) -> dict[str, str]:
+def build_tex_env(
+    render_dir: Path,
+    *,
+    isolate_cache: bool,
+    extra_path: Path | None = None,
+    biber_path: Path | None = None,
+) -> dict[str, str]:
     """Construct TeX cache environment variables (shared by all engines)."""
     if isolate_cache:
         tex_cache_root = (render_dir / ".texmf-cache").resolve()
@@ -244,6 +258,9 @@ def build_tex_env(render_dir: Path, *, isolate_cache: bool) -> dict[str, str]:
     ):
         cache_path.mkdir(parents=True, exist_ok=True)
 
+    if extra_path:
+        env["PATH"] = f"{extra_path}{os.pathsep}{env.get('PATH', '')}"
+
     env["TEXMFHOME"] = str(texmf_home)
     env["TEXMFVAR"] = str(texmf_var)
     env["TEXMFCONFIG"] = str(texmf_config)
@@ -252,6 +269,8 @@ def build_tex_env(render_dir: Path, *, isolate_cache: bool) -> dict[str, str]:
     env["TEXMFCACHE"] = str(texmf_cache)
     env.setdefault("XDG_CACHE_HOME", str(xdg_cache))
     env["TECTONIC_CACHE_DIR"] = str(tectonic_cache)
+    if biber_path:
+        env["BIBER"] = str(biber_path)
     return env
 
 
