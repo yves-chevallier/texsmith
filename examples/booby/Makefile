@@ -1,45 +1,19 @@
-OUTPUT_DIR := build
+include ../common.mk
+
+OUTPUT_DIR := $(ENGINE_DIR)
 SOURCE := booby.md
 ASSETS := booby.png
+BASE_PDF := $(OUTPUT_DIR)/booby.pdf
+PDF := $(OUTPUT_DIR)/booby$(ENGINE_SUFFIX).pdf
 
-ifneq ($(strip $(ARTIFACTS_DIR)),)
-copy_artifact = mkdir -p "$(ARTIFACTS_DIR)" && cp "$1" "$(ARTIFACTS_DIR)/"
-else
-copy_artifact = @true
-endif
+all: $(PDF)
 
-PDF := $(OUTPUT_DIR)/booby.pdf
-LUALATEX_PDF := $(OUTPUT_DIR)/booby-lualatex.pdf
-
-all: $(LUALATEX_PDF)
-
-$(OUTPUT_DIR)/booby.tex: $(SOURCE) | $(ASSETS)
-	uv run texsmith $< -o$(OUTPUT_DIR) -tarticle
-
-$(PDF): $(SOURCE) | $(ASSETS)
-	uv run texsmith $< -o$(OUTPUT_DIR) --build -tarticle
+$(PDF): $(SOURCE) | $(ASSETS) $(OUTPUT_DIR)
+	$(TEXSMITH) $< -o$(OUTPUT_DIR) --build -tarticle $(TEXSMITH_ENGINE)
+	if [ "$(PDF)" != "$(BASE_PDF)" ]; then mv "$(BASE_PDF)" "$(PDF)"; fi
 	$(call copy_artifact,$@)
 
-$(LUALATEX_PDF): $(PDF)
-	cp $(PDF) $(LUALATEX_PDF)
-	$(call copy_artifact,$(LUALATEX_PDF))
-
-latex: $(OUTPUT_DIR)/booby.tex
-
-tectonic: $(OUTPUT_DIR)/booby.tex
-	cd $(OUTPUT_DIR) && tectonic booby.tex
-	cp $(OUTPUT_DIR)/booby.pdf $(OUTPUT_DIR)/booby-tectonic.pdf
-	$(call copy_artifact,$(OUTPUT_DIR)/booby-tectonic.pdf)
-
-xelatex: $(OUTPUT_DIR)/booby.tex
-	cd $(OUTPUT_DIR) && latexmk -xelatex booby.tex
-	cp $(OUTPUT_DIR)/booby.pdf $(OUTPUT_DIR)/booby-xelatex.pdf
-	$(call copy_artifact,$(OUTPUT_DIR)/booby-xelatex.pdf)
-
-view: tectonic
-	evince $(OUTPUT_DIR)/booby.pdf &
-
 clean:
-	rm -rf $(OUTPUT_DIR)
+	rm -rf $(OUTPUT_ROOT)
 
-.PHONY: all clean latex tectonic xelatex view compare
+.PHONY: all clean

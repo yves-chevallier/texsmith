@@ -1,22 +1,17 @@
-OUTPUT_DIR := build
-PDF := $(OUTPUT_DIR)/cheese.pdf
+include ../common.mk
 
-ifneq ($(strip $(ARTIFACTS_DIR)),)
-copy_artifact = mkdir -p "$(ARTIFACTS_DIR)" && cp "$1" "$(ARTIFACTS_DIR)/"
-else
-copy_artifact = @true
-endif
+OUTPUT_DIR := $(ENGINE_DIR)
+PDF := $(OUTPUT_DIR)/cheese$(ENGINE_SUFFIX).pdf
+BASE_PDF := $(OUTPUT_DIR)/cheese.pdf
 
 all: $(PDF)
 
-$(PDF): cheese.md cheese.bib
-	uv run texsmith $^ -o$(OUTPUT_DIR) -tarticle --build
+$(PDF): cheese.md cheese.bib | $(OUTPUT_DIR)
+	$(TEXSMITH) $^ -o$(OUTPUT_DIR) -tarticle --build $(TEXSMITH_ENGINE)
+	if [ "$(PDF)" != "$(BASE_PDF)" ]; then mv "$(BASE_PDF)" "$(PDF)"; fi
 	$(call copy_artifact,$@)
 
-latex: cheese.md cheese.bib
-	uv run texsmith $^ -o$(OUTPUT_DIR) -tarticle
-
 clean:
-	rm -rf $(OUTPUT_DIR)
+	rm -rf $(OUTPUT_ROOT)
 
-.PHONY: all clean latex
+.PHONY: all clean

@@ -1,32 +1,16 @@
-OUTPUT_DIR := build
-FILES := a.md b.md c.md config.yml
-PDF := $(OUTPUT_DIR)/multidocument.pdf
+include ../common.mk
 
-ifneq ($(strip $(ARTIFACTS_DIR)),)
-copy_artifact = mkdir -p "$(ARTIFACTS_DIR)" && cp "$1" "$(ARTIFACTS_DIR)/"
-else
-copy_artifact = @true
-endif
+OUTPUT_DIR := $(ENGINE_DIR)
+FILES := a.md b.md c.md config.yml
+PDF := $(OUTPUT_DIR)/multidocument$(ENGINE_SUFFIX).pdf
+BASE_PDF := $(OUTPUT_DIR)/main.pdf
 
 all: $(PDF)
 
-$(PDF): $(FILES)
-	uv run texsmith $^ -o$(OUTPUT_DIR) --build -tarticle
-	mv $(OUTPUT_DIR)/main.pdf $(PDF)
+$(PDF): $(FILES) | $(OUTPUT_DIR)
+	$(TEXSMITH) $^ -o$(OUTPUT_DIR) --build -tarticle $(TEXSMITH_ENGINE)
+	mv $(BASE_PDF) $(PDF)
 	$(call copy_artifact,$@)
-
-latex: $(FILES)
-	uv run texsmith $^ -o$(OUTPUT_DIR) -tarticle
-
-lualatex: latex
-	uv run texsmith $^ -o$(OUTPUT_DIR) --build -tarticle --engine=lualatex
-	cp $(OUTPUT_DIR)/main.pdf $(OUTPUT_DIR)/multidocument-lualatex.pdf
-	$(call copy_artifact,$(OUTPUT_DIR)/multidocument-lualatex.pdf)
-
-xelatex: latex
-	uv run texsmith $^ -o$(OUTPUT_DIR) --build -tarticle --engine=xelatex
-	cp $(OUTPUT_DIR)/main.pdf $(OUTPUT_DIR)/multidocument-xelatex.pdf
-	$(call copy_artifact,$(OUTPUT_DIR)/multidocument-xelatex.pdf)
 
 view: $(PDF)
 	evince $(PDF) &
@@ -44,5 +28,5 @@ compare: 1.pdf 2.pdf 3.pdf
 	convert $(COMPARE_TMP)/3.png -fill blue  -colorize 100 -alpha set -channel A -evaluate multiply 0.5 $(COMPARE_TMP)/3_tinted.png
 	convert $(COMPARE_TMP)/1_tinted.png $(COMPARE_TMP)/2_tinted.png $(COMPARE_TMP)/3_tinted.png -background none -layers merge $(COMPARE_OUT)
 clean:
-	rm -rf $(OUTPUT_DIR)
-.PHONY: all clean latex tectonic xelatex view compare
+	rm -rf $(OUTPUT_ROOT)
+.PHONY: all clean view compare

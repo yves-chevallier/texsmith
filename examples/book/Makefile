@@ -1,22 +1,17 @@
-OUTPUT_DIR := build
-PDF := $(OUTPUT_DIR)/book.pdf
-BIBER_BIN := $(abspath $(CURDIR)/../../scripts/biber-noop.sh)
+include ../common.mk
 
-ifneq ($(strip $(ARTIFACTS_DIR)),)
-copy_artifact = mkdir -p "$(ARTIFACTS_DIR)" && cp "$1" "$(ARTIFACTS_DIR)/"
-else
-copy_artifact = @true
-endif
+OUTPUT_DIR := $(ENGINE_DIR)
+PDF := $(OUTPUT_DIR)/book$(ENGINE_SUFFIX).pdf
+BASE_PDF := $(OUTPUT_DIR)/book.pdf
 
 all: $(PDF)
 
 $(PDF): book.md book.bib
-	uv run texsmith $^ -o$(OUTPUT_DIR) -tbook -abibliography_style=numeric
-	cd $(OUTPUT_DIR) && lualatex -interaction=nonstopmode -halt-on-error book.tex
-	cd $(OUTPUT_DIR) && lualatex -interaction=nonstopmode -halt-on-error book.tex
+	$(TEXSMITH) $^ -o$(OUTPUT_DIR) --build -tbook -abibliography_style=numeric $(TEXSMITH_ENGINE)
+	if [ "$(PDF)" != "$(BASE_PDF)" ]; then mv "$(BASE_PDF)" "$(PDF)"; fi
 	$(call copy_artifact,$@)
 
 clean:
-	rm -rf $(OUTPUT_DIR)
+	rm -rf $(OUTPUT_ROOT)
 
 .PHONY: all clean
