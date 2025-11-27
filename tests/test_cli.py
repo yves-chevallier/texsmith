@@ -33,6 +33,19 @@ def _template_path(name: str) -> Path:
     raise AssertionError(f"Template '{name}' is not available in tests")
 
 
+def _stub_tectonic_binary(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> Path:
+    binary = tmp_path / "tectonic"
+    binary.write_text("#!/bin/sh\n", encoding="utf-8")
+    binary.chmod(0o755)
+    selection = types.SimpleNamespace(path=binary, source="bundled")
+    monkeypatch.setattr(
+        render_module,
+        "select_tectonic_binary",
+        lambda _use_system, _console=None: selection,
+    )
+    return binary
+
+
 def test_raise_conversion_error_marks_exception_logged() -> None:
     class DummyEmitter:
         def __init__(self) -> None:
@@ -912,8 +925,10 @@ def test_build_without_template_defaults_to_article(tmp_path: Path, monkeypatch:
         encoding="utf-8",
     )
 
+    _stub_tectonic_binary(monkeypatch, tmp_path)
+
     def fake_which(name: str) -> str:
-        return f"/usr/bin/{name}"
+        return name if str(name).startswith("/") else f"/usr/bin/{name}"
 
     def fake_run(command: Any, **kwargs: Any) -> engine.EngineResult:
         pdf_path = command.pdf_path
@@ -958,8 +973,10 @@ def test_build_defaults_to_rich_output(tmp_path: Path, monkeypatch: Any) -> None
 
     captured: dict[str, Any] = {}
 
+    tectonic_path = _stub_tectonic_binary(monkeypatch, tmp_path)
+
     def fake_which(name: str) -> str:
-        return f"/usr/bin/{name}"
+        return name if str(name).startswith("/") else f"/usr/bin/{name}"
 
     def fake_run_engine(command: Any, **kwargs: Any) -> engine.EngineResult:
         captured["command"] = command.argv
@@ -997,12 +1014,68 @@ def test_build_defaults_to_rich_output(tmp_path: Path, monkeypatch: Any) -> None
 
     assert result.exit_code == 0, result.stdout
     assert captured, "stream_latexmk_output was not called"
-    assert captured["command"][0] == "/usr/bin/tectonic"
+    assert captured["command"][0] == str(tectonic_path)
     assert captured["cwd"] == output_dir
     assert captured["console"] is not None
     assert captured["verbosity"] == 0
     assert captured["classic"] is False
     assert "Running tectonic…" in result.stdout
+
+
+def test_system_flag_prefers_system_tectonic(tmp_path: Path, monkeypatch: Any) -> None:
+    runner = CliRunner()
+    html_file = tmp_path / "index.html"
+    html_file.write_text(
+        "<article class='md-content__inner'><p>Body</p></article>",
+        encoding="utf-8",
+    )
+
+    output_dir = tmp_path / "output"
+    template_dir = _template_path("article")
+    system_flag: dict[str, Any] = {}
+    captured: dict[str, Any] = {}
+
+    def fake_select(use_system: bool, console: Any = None) -> Any:
+        system_flag["use_system"] = use_system
+        return types.SimpleNamespace(path=Path("/opt/tectonic/system"), source="system")
+
+    def fake_which(name: str) -> str:
+        return name if str(name).startswith("/") else f"/usr/bin/{name}"
+
+    def fake_run_engine(command: Any, **kwargs: Any) -> engine.EngineResult:
+        captured["command"] = command.argv
+        pdf_path = command.pdf_path
+        pdf_path.parent.mkdir(parents=True, exist_ok=True)
+        pdf_path.write_text("%PDF-1.4", encoding="utf-8")
+        return engine.EngineResult(
+            returncode=0,
+            messages=[],
+            command=command.argv,
+            log_path=command.log_path,
+            pdf_path=pdf_path,
+        )
+
+    monkeypatch.setattr(render_module, "select_tectonic_binary", fake_select)
+    monkeypatch.setattr(render_cmd.shutil, "which", fake_which)
+    monkeypatch.setattr(engine.shutil, "which", fake_which)
+    monkeypatch.setattr(render_cmd, "run_engine_command", fake_run_engine)
+
+    result = runner.invoke(
+        app,
+        [
+            str(html_file),
+            "--output-dir",
+            str(output_dir),
+            "--template",
+            str(template_dir),
+            "--build",
+            "--system",
+        ],
+    )
+
+    assert result.exit_code == 0, result.stdout
+    assert system_flag["use_system"] is True
+    assert captured["command"][0] == "/opt/tectonic/system"
 
 
 def test_build_supports_multiple_documents(tmp_path: Path, monkeypatch: Any) -> None:
@@ -1017,8 +1090,10 @@ def test_build_supports_multiple_documents(tmp_path: Path, monkeypatch: Any) -> 
 
     captured: dict[str, Any] = {}
 
+    tectonic_path = _stub_tectonic_binary(monkeypatch, tmp_path)
+
     def fake_which(name: str) -> str:
-        return f"/usr/bin/{name}"
+        return name if str(name).startswith("/") else f"/usr/bin/{name}"
 
     def fake_run_engine(command: Any, **kwargs: Any) -> engine.EngineResult:
         captured["command"] = command.argv
@@ -1054,6 +1129,7 @@ def test_build_supports_multiple_documents(tmp_path: Path, monkeypatch: Any) -> 
 
     assert result.exit_code == 0, result.stdout
     assert captured["cwd"] == output_dir
+    assert captured["command"][0] == str(tectonic_path)
     main_file = output_dir / "main.tex"
     assert main_file.exists()
 
@@ -1254,6 +1330,8 @@ def test_build_failure_reports_summary(tmp_path: Path, monkeypatch: Any) -> None
 
     output_dir = tmp_path / "output"
     template_dir = _template_path("article")
+
+    _stub_tectonic_binary(monkeypatch, tmp_path)
 
     def fake_which(name: str) -> str:
         return f"/usr/bin/{name}"

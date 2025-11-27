@@ -28,6 +28,10 @@ from texsmith.adapters.latex.engine import (
     resolve_engine,
     run_engine_command,
 )
+from texsmith.adapters.latex.tectonic import (
+    TectonicAcquisitionError,
+    select_tectonic_binary,
+)
 from texsmith.adapters.markdown import (
     DEFAULT_MARKDOWN_EXTENSIONS,
     resolve_markdown_extensions,
@@ -351,6 +355,14 @@ def render(
             rich_help_panel=OUTPUT_PANEL,
         ),
     ] = "tectonic",
+    system_tectonic: Annotated[
+        bool,
+        typer.Option(
+            "--system",
+            help="Use the system Tectonic binary instead of the bundled download.",
+            rich_help_panel=OUTPUT_PANEL,
+        ),
+    ] = False,
     language: LanguageOption = None,
     legacy_latex_accents: Annotated[
         bool,
@@ -804,6 +816,7 @@ def render(
     template_context = getattr(render_result, "template_context", None) or getattr(
         render_result, "context", None
     )
+    use_system_tectonic = system_tectonic if engine_choice.backend == "tectonic" else False
     features = compute_features(
         requires_shell_escape=render_result.requires_shell_escape,
         bibliography=render_result.has_bibliography,
@@ -811,7 +824,18 @@ def render(
         template_context=template_context,
     )
 
-    missing_tools = missing_dependencies(engine_choice, features)
+    tectonic_binary: Path | None = None
+    if engine_choice.backend == "tectonic":
+        try:
+            selection = select_tectonic_binary(use_system_tectonic, console=state.console)
+        except TectonicAcquisitionError as exc:
+            emit_error(str(exc), exception=exc)
+            raise typer.Exit(code=1) from exc
+        tectonic_binary = selection.path
+
+    missing_tools = missing_dependencies(
+        engine_choice, features, use_system_tectonic=use_system_tectonic
+    )
     if missing_tools:
         formatted = ", ".join(sorted(missing_tools))
         emit_error(f"Missing required tools for {engine_choice.label}: {formatted}")
@@ -822,6 +846,7 @@ def render(
             engine_choice,
             features,
             main_tex_path=render_result.main_tex_path,
+            tectonic_binary=tectonic_binary,
         )
     )
     env = build_tex_env(render_dir, isolate_cache=isolate_cache)
