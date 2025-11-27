@@ -295,8 +295,32 @@ def prepare_fonts_for_context(
     present_fonts = list(font_match.present_fonts) if font_match else []
     missing_fonts = list(font_match.missing_fonts) if font_match else []
 
+    engine_hint = str(
+        template_context.get("_texsmith_latex_engine")
+        or os.environ.get("TEXSMITH_SELECTED_ENGINE")
+        or template_context.get("latex_engine")
+        or ""
+    ).strip().lower()
+
     emoji_mode, emoji_font = _resolve_emoji_preferences(template_context)
+    color_requested = bool(
+        emoji_mode in _EMOJI_COLOR_MODES
+        or (emoji_font and emoji_font.lower() == "noto color emoji")
+    )
+    if color_requested and engine_hint and engine_hint != "lualatex":
+        if emitter:
+            emitter.warning(
+                "Color emoji fonts (COLR/CPAL, CBDT/CBLC, SVG-in-OT) are not supported by this engine; falling back to OpenMoji Black."
+            )
+        emoji_mode = "black"
+        emoji_font = "OpenMoji Black"
+        template_context["emoji"] = "black"
+        template_context["emoji_mode"] = "black"
+
     template_context.setdefault("emoji_mode", emoji_mode)
+    template_context["_texsmith_effective_emoji_mode"] = emoji_mode
+    if emoji_font:
+        template_context["_texsmith_effective_emoji_font"] = emoji_font
 
     base_fallbacks: list[str] = []
     if font_match:

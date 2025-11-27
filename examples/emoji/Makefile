@@ -17,12 +17,22 @@ DEFAULT_BASE := $(DEFAULT_DIR)/emoji.pdf
 $(COLOR_DIR) $(BW_DIR) $(DEFAULT_DIR): | $(OUTPUT_DIR)
 	mkdir -p "$@"
 
-all: $(COLOR_PDF) $(BW_PDF) $(DEFAULT_PDF)
+VARIANTS := $(BW_PDF) $(DEFAULT_PDF)
+ifeq ($(ENGINE),lualatex)
+VARIANTS += $(COLOR_PDF)
+endif
 
+all: $(VARIANTS)
+
+ifeq ($(ENGINE),lualatex)
 $(COLOR_PDF): $(SOURCE) | $(COLOR_DIR)
 	$(TEXSMITH) $< -o$(COLOR_DIR) --build -tarticle -afonts.emoji=color $(TEXSMITH_ENGINE)
 	mv $(COLOR_BASE) $(COLOR_PDF)
 	$(call copy_artifact,$@)
+else
+$(COLOR_PDF):
+	@echo "Color emoji output requires LuaLaTeX (use 'make lualatex color')."; exit 1
+endif
 
 $(BW_PDF): $(SOURCE) | $(BW_DIR)
 	$(TEXSMITH) $< -o$(BW_DIR) --build -tarticle -afonts.emoji=black $(TEXSMITH_ENGINE)

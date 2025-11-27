@@ -39,7 +39,7 @@ sources = ["press.language"]
 [latex.template.attributes.standard]
 default = ""
 type = "string"
-sources = ["press.standard", "press.layout", "press.format"]
+sources = ["press.standard", "press.layout", "press.format", "standard", "format"]
 
 [latex.template.attributes.date]
 default = ""

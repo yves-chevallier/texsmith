@@ -1,42 +1,69 @@
 include ../common.mk
 
-OUTPUT_DIR := $(ENGINE_DIR)
 SOURCE := admonition.md
 
-COLOR_PDF := $(OUTPUT_DIR)/admonition-fancy$(ENGINE_SUFFIX).pdf
-CLASSIC_PDF := $(OUTPUT_DIR)/admonition-classic$(ENGINE_SUFFIX).pdf
-MINIMAL_PDF := $(OUTPUT_DIR)/admonition-minimal$(ENGINE_SUFFIX).pdf
-BLACK_PDF := $(OUTPUT_DIR)/admonition-black$(ENGINE_SUFFIX).pdf
-BASE_PDF := $(OUTPUT_DIR)/admonition.pdf
+LATEX_DIR := $(ENGINE_DIR)
 
-all: color classic minimal black
+CLASSIC_ROOT := build_classic
+MINIMAL_ROOT := build_minimal
+FANCY_ROOT := build_fancy
 
-latex: $(OUTPUT_DIR)/admonition.tex
+CLASSIC_DIR := $(CLASSIC_ROOT)/$(ENGINE)
+MINIMAL_DIR := $(MINIMAL_ROOT)/$(ENGINE)
+FANCY_DIR := $(FANCY_ROOT)/$(ENGINE)
 
-$(OUTPUT_DIR)/admonition.tex: $(SOURCE) | $(OUTPUT_DIR)
-	$(TEXSMITH) $< -o$(OUTPUT_DIR) -tarticle -acallouts.style=fancy
+CLASSIC_PDF := $(CLASSIC_DIR)/admonition-classic$(ENGINE_SUFFIX).pdf
+MINIMAL_PDF := $(MINIMAL_DIR)/admonition-minimal$(ENGINE_SUFFIX).pdf
+FANCY_PDF := $(FANCY_DIR)/admonition-fancy$(ENGINE_SUFFIX).pdf
 
-black: $(SOURCE) | $(OUTPUT_DIR)
-	$(TEXSMITH) $< -o$(OUTPUT_DIR) --build -tarticle -afonts.emoji=black -acallouts.style=fancy $(TEXSMITH_ENGINE)
-	mv $(BASE_PDF) $(BLACK_PDF)
-	$(call copy_artifact,$(BLACK_PDF))
+CLASSIC_BASE := $(CLASSIC_DIR)/admonition.pdf
+MINIMAL_BASE := $(MINIMAL_DIR)/admonition.pdf
+FANCY_BASE := $(FANCY_DIR)/admonition.pdf
 
-color: $(SOURCE) | $(OUTPUT_DIR)
-	$(TEXSMITH) $< -o$(OUTPUT_DIR) --build -tarticle -acallouts.style=fancy $(TEXSMITH_ENGINE)
-	mv $(BASE_PDF) $(COLOR_PDF)
-	$(call copy_artifact,$(COLOR_PDF))
+VARIANTS := $(CLASSIC_PDF) $(MINIMAL_PDF)
+ifeq ($(ENGINE),lualatex)
+VARIANTS += $(FANCY_PDF)
+endif
 
-classic: $(SOURCE) | $(OUTPUT_DIR)
-	$(TEXSMITH) $< -o$(OUTPUT_DIR) --build -tarticle -acallouts.style=classic $(TEXSMITH_ENGINE)
-	mv $(BASE_PDF) $(CLASSIC_PDF)
-	$(call copy_artifact,$(CLASSIC_PDF))
+all: $(VARIANTS)
 
-minimal: $(SOURCE) | $(OUTPUT_DIR)
-	$(TEXSMITH) $< -o$(OUTPUT_DIR) --build -tarticle -acallouts.style=minimal $(TEXSMITH_ENGINE)
-	mv $(BASE_PDF) $(MINIMAL_PDF)
-	$(call copy_artifact,$(MINIMAL_PDF))
+latex: $(LATEX_DIR)/admonition.tex
+
+$(LATEX_DIR)/admonition.tex: $(SOURCE) | $(LATEX_DIR)
+	$(TEXSMITH) $< -o$(LATEX_DIR) -tarticle -acallouts.style=fancy
+
+$(CLASSIC_DIR) $(MINIMAL_DIR) $(FANCY_DIR):
+	mkdir -p "$@"
+
+$(CLASSIC_PDF): $(SOURCE) | $(CLASSIC_DIR)
+	$(TEXSMITH) $< -o$(CLASSIC_DIR) --build -tarticle -acallouts.style=classic $(TEXSMITH_ENGINE)
+	mv $(CLASSIC_BASE) $@
+	$(call copy_artifact,$@)
+
+classic: $(CLASSIC_PDF)
+
+$(MINIMAL_PDF): $(SOURCE) | $(MINIMAL_DIR)
+	$(TEXSMITH) $< -o$(MINIMAL_DIR) --build -tarticle -acallouts.style=minimal $(TEXSMITH_ENGINE)
+	mv $(MINIMAL_BASE) $@
+	$(call copy_artifact,$@)
+
+minimal: $(MINIMAL_PDF)
+
+ifeq ($(ENGINE),lualatex)
+$(FANCY_PDF): $(SOURCE) | $(FANCY_DIR)
+	$(TEXSMITH) $< -o$(FANCY_DIR) --build -tarticle -acallouts.style=fancy -afonts.emoji=color $(TEXSMITH_ENGINE)
+	mv $(FANCY_BASE) $@
+	$(call copy_artifact,$@)
+
+color: $(FANCY_PDF)
+else
+$(FANCY_PDF):
+	@echo "Color emoji callouts require LuaLaTeX (run 'make lualatex color')."; exit 1
+
+color: $(FANCY_PDF)
+endif
 
 clean:
-	rm -rf $(OUTPUT_ROOT)
+	rm -rf $(OUTPUT_ROOT) $(CLASSIC_ROOT) $(MINIMAL_ROOT) $(FANCY_ROOT)
 
-.PHONY: all clean latex black color classic minimal
+.PHONY: all clean latex classic minimal color

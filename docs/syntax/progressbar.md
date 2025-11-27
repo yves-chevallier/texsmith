@@ -44,7 +44,7 @@ Use the bundled `examples/progressbar` project for smoke tests or screenshots:
 
 ```bash
 cd examples/progressbar
-texsmith example.md --template article --output-dir build --build
+texsmith progressbar.md --template article --output-dir build --build
 ```
 
 ````md { .snippet }

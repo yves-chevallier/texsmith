@@ -27,4 +27,4 @@ This example shows how to export a MkDocs site to LaTeX using the TeXSmith plugi
   make clean
   ```
 
-You can also run `make all` from the repository-level `examples/Makefile` to build every example, including this one. Generated artifacts are collected in `examples_build/` when `ARTIFACTS_DIR` is set.
+You can also run `make all` from the repository-level `examples/Makefile` to build every example, including this one. Generated artifacts are collected in `build/` when `ARTIFACTS_DIR` is left at its default.

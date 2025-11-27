@@ -57,7 +57,7 @@ When TeXSmith renders HTML/PDF it wraps the image with a link to the Mermaid Liv
 Here’s how the diagrams look once TeXSmith embeds them:
 
 ````md { .snippet }
----8<--- "examples/mermaid/example.md"
+---8<--- "examples/mermaid/mermaid.md"
 ````
 
 ## Conversion by TeXSmith

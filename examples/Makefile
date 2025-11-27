@@ -1,4 +1,4 @@
-export ARTIFACTS_DIR ?= $(CURDIR)/examples_build
+export ARTIFACTS_DIR ?= $(CURDIR)/build
 ENGINE ?= tectonic
 
 EXAMPLES := \

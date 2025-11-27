@@ -20,6 +20,7 @@ Roadmap and development notes for TeXSmith. I keep this file as a running checkl
 - [x] Download biber automatically if not installed
 - [x] Add support for Makefile deps `.d` files
 - [x] Include fonts in package (like OpenMoji and Noto Color Emoji)
+- [ ] Drawio Exporter remote via wreight... see in scripts
 - [ ] Mermaid color configuration
 - [ ] Global user's configuration (.texsmith/config.yml)
 - [ ] Acronyms multiline
@@ -72,6 +73,11 @@ Roadmap and development notes for TeXSmith. I keep this file as a running checkl
 - [ ] ├─ ▲ There is no ���� (U+1F4DD) in font [./fonts/lmsans10-bold.otf]/OT:script=latn;language=dflt;mapping=tex-text;! L'exemple admonition n'utilise pas les bonnes fonts pour les emojis, elle nes sont pas cosidérées, le répertoire fonts de l'output n'est pas pris encompte ?
 - [ ] TeXGyre to be added to the list of fonts to download
 - [ ] Multidocument uses /usr/share fonts, not local ones ? Should download local ones
+- [ ] Cookingsymbols not availble in tectonic ?
+- [ ]
+### Color emoji don't work with Tectonic/XeLaTeX
+
+Il faudrait que XeTeX (ou un XeTeX 2.0) intègre un moteur de rendu qui gère vraiment les polices couleur (COLR/CPAL, CBDT/CBLC, SVGinOT) et sache les convertir en quelque chose de compatible PDF.
 
 ## Features
 

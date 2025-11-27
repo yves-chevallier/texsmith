@@ -1,13 +1,13 @@
 include ../common.mk
 
 OUTPUT_DIR := $(ENGINE_DIR)
-PDF := $(OUTPUT_DIR)/example$(ENGINE_SUFFIX).pdf
-BASE_PDF := $(OUTPUT_DIR)/example.pdf
+PDF := $(OUTPUT_DIR)/mermaid$(ENGINE_SUFFIX).pdf
+BASE_PDF := $(OUTPUT_DIR)/mermaid.pdf
 ASSETS := ../../docs/assets/mermaid.mmd
 
 all: $(PDF)
 
-$(PDF): example.md $(ASSETS) | $(OUTPUT_DIR)
+$(PDF): mermaid.md $(ASSETS) | $(OUTPUT_DIR)
 	$(TEXSMITH) $< -o$(OUTPUT_DIR) --build -tarticle $(TEXSMITH_ENGINE)
 	if [ "$(PDF)" != "$(BASE_PDF)" ]; then mv "$(BASE_PDF)" "$(PDF)"; fi
 	$(call copy_artifact,$@)

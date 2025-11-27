@@ -404,6 +404,8 @@ class TemplateRenderer:
         if template_engine is None:
             template_engine = context_engine or "pdflatex"
 
+        template_context.setdefault("latex_engine", template_engine)
+
         self._write_latexmkrc(
             output_dir=output_dir,
             main_tex_path=main_tex_path,

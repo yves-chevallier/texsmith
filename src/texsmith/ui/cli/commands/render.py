@@ -573,6 +573,8 @@ def render(
     attribute_overrides = _parse_template_attributes(template_attributes)
     if attribute_overrides and not template_selected:
         raise typer.BadParameter("--attribute can only be used together with --template.")
+    if engine:
+        attribute_overrides.setdefault("_texsmith_latex_engine", engine)
     if attribute_overrides:
         state.record_event("template_attributes", {"values": attribute_overrides})
 
@@ -788,11 +790,22 @@ def render(
         _flush_diagnostics()
         return
 
+    engine_env_key = "TEXSMITH_SELECTED_ENGINE"
+    previous_engine_value = os.environ.get(engine_env_key)
+    if engine:
+        os.environ[engine_env_key] = engine
+    else:
+        os.environ.pop(engine_env_key, None)
     try:
         response = _SERVICE.execute(request, prepared=prepared)
     except (TemplateError, ConversionError) as exc:
         emit_error(str(exc), exception=exc)
         raise typer.Exit(code=1) from exc
+    finally:
+        if previous_engine_value is None:
+            os.environ.pop(engine_env_key, None)
+        else:
+            os.environ[engine_env_key] = previous_engine_value
 
     def _emit_rule_diagnostics() -> None:
         if not debug_rules:
