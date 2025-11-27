@@ -66,6 +66,13 @@ Roadmap and development notes for TeXSmith. I keep this file as a running checkl
   - [ ] Letterine
   - [ ] Custom variables to insert in a document using moustaches
 
+## Issues
+
+- [ ] warning: Expected 'fonts/OpenMoji-black-glyf.ttf' in archive but found 'OpenMoji-black-glyf/OpenMoji-black-glyf.ttf'. Using the available font file instead.
+- [ ] ├─ ▲ There is no ���� (U+1F4DD) in font [./fonts/lmsans10-bold.otf]/OT:script=latn;language=dflt;mapping=tex-text;! L'exemple admonition n'utilise pas les bonnes fonts pour les emojis, elle nes sont pas cosidérées, le répertoire fonts de l'output n'est pas pris encompte ?
+- [ ] TeXGyre to be added to the list of fonts to download
+- [ ] Multidocument uses /usr/share fonts, not local ones ? Should download local ones
+
 ## Features
 
 ### Include Fonts in Package
@@ -98,12 +105,12 @@ We want texsmith to support a global user configuration file located at `.texsmi
 
 This does only affect the CLI usage of TeXSmith. The API still remains robust and does not depend on any global configuration, except for the cache directory.
 
-A config file could be: 
+A config file could be:
 
 ```yaml
 template: article
 engine: tectonic
-paper: 
+paper:
   format: a4
   orientation: portrait
 mermaid:
@@ -112,9 +119,9 @@ callouts:
   style: fancy
 ```
 
-The format is not rigidly defined. It is used to set default values for command-line options. Command-line options always take precedence over configuration file settings and YAML front matter in Markdown files have the highest precedence. 
+The format is not rigidly defined. It is used to set default values for command-line options. Command-line options always take precedence over configuration file settings and YAML front matter in Markdown files have the highest precedence.
 
-Fragments and plugins, and everything inherit from this global configuration when using the CLI. 
+Fragments and plugins, and everything inherit from this global configuration when using the CLI.
 
 ### Glossary
 
