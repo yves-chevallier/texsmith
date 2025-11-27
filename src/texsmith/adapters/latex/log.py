@@ -1,4 +1,4 @@
-"""Utilities for parsing and presenting output from latexmk builds."""
+"""Utilities for parsing and presenting output from LaTeX engine builds."""
 
 from __future__ import annotations
 
@@ -621,7 +621,7 @@ class LatexLogRenderer:
 
 @dataclass(slots=True)
 class LatexStreamResult:
-    """Result of streaming latexmk output."""
+    """Result of streaming LaTeX engine output."""
 
     returncode: int
     messages: list[LatexMessage]
@@ -661,7 +661,7 @@ def stream_latexmk_output(
     console: Console,
     verbosity: int = 0,
 ) -> LatexStreamResult:
-    """Execute latexmk and render output incrementally."""
+    """Execute a LaTeX engine command and render output incrementally."""
     parser = LatexLogParser()
     renderer = LatexLogRenderer(console)
 

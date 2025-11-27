@@ -9,11 +9,8 @@ from typing import TYPE_CHECKING, Any
 
 import typer
 
-from texsmith.adapters.latex.log import (
-    LatexLogParser,
-    LatexMessage,
-    LatexMessageSeverity,
-)
+from texsmith.adapters.latex.engine import parse_latex_log
+from texsmith.adapters.latex.log import LatexMessage, LatexMessageSeverity
 from texsmith.api.pipeline import ConversionBundle, LaTeXFragment
 from texsmith.api.templates import TemplateRenderResult
 
@@ -312,7 +309,7 @@ def _render_failure_panel(
         typer.echo(f"  {label}: {value}", err=True)
 
 
-def present_latexmk_failure(
+def present_latex_failure(
     *,
     state: CLIState,
     log_path: Path,
@@ -340,22 +337,11 @@ def present_latexmk_failure(
     rows.append(("Log file", _format_path(log_path)))
     rows.append(("Next steps", "Inspect the log or re-run with --classic-output"))
 
-    _render_failure_panel(state, "latexmk failure", rows)
+    _render_failure_panel(state, "LaTeX failure", rows)
 
     if open_log and log_path.exists():  # pragma: no cover - depends on platform
         with contextlib.suppress(Exception):
             typer.launch(str(log_path))
-
-
-def parse_latex_log(log_path: Path) -> list[LatexMessage]:
-    if not log_path.exists():
-        return []
-    parser = LatexLogParser()
-    with log_path.open("r", encoding="utf-8", errors="replace") as handle:
-        for line in handle:
-            parser.process_line(line)
-    parser.finalize()
-    return list(parser.messages)
 
 
 def consume_event_diagnostics(state: CLIState) -> list[str]:
@@ -422,10 +408,9 @@ def consume_event_diagnostics(state: CLIState) -> list[str]:
 
 __all__ = [
     "consume_event_diagnostics",
-    "parse_latex_log",
     "present_build_summary",
     "present_conversion_summary",
     "present_html_summary",
-    "present_latexmk_failure",
+    "present_latex_failure",
     "present_rule_descriptions",
 ]

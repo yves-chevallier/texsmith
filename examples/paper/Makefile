@@ -10,9 +10,7 @@ endif
 all: $(PDF)
 
 $(PDF): cheese.md cheese.bib
-	uv run texsmith $^ -o$(OUTPUT_DIR) -tarticle
-	cd $(OUTPUT_DIR) && lualatex -interaction=nonstopmode -halt-on-error cheese.tex
-	cd $(OUTPUT_DIR) && lualatex -interaction=nonstopmode -halt-on-error cheese.tex
+	uv run texsmith $^ -o$(OUTPUT_DIR) -tarticle --build
 	$(call copy_artifact,$@)
 
 latex: cheese.md cheese.bib

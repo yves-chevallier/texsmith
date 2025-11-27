@@ -8,7 +8,7 @@ import them using dotted paths (e.g. ``texsmith.ui.cli.commands.render``).
 
 from __future__ import annotations
 
-from .render import build_latexmk_command, render
+from .render import render
 
 
-__all__ = ["build_latexmk_command", "render"]
+__all__ = ["render"]

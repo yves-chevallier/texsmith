@@ -9,7 +9,8 @@ import pytest
 import typer
 from typer.testing import CliRunner
 
-from texsmith.adapters.latex.log import LatexMessage, LatexMessageSeverity, LatexStreamResult
+from texsmith.adapters.latex import engine
+from texsmith.adapters.latex.log import LatexMessage, LatexMessageSeverity
 from texsmith.core.conversion.debug import ConversionError, raise_conversion_error
 from texsmith.ui.cli import DEFAULT_MARKDOWN_EXTENSIONS, app
 from texsmith.ui.cli.commands import render as render_cmd
@@ -914,14 +915,21 @@ def test_build_without_template_defaults_to_article(tmp_path: Path, monkeypatch:
     def fake_which(name: str) -> str:
         return f"/usr/bin/{name}"
 
-    def fake_run(cmd: list[str], **kwargs: Any) -> types.SimpleNamespace:
-        pdf_path = Path(kwargs["cwd"]) / "index.pdf"
+    def fake_run(command: Any, **kwargs: Any) -> engine.EngineResult:
+        pdf_path = command.pdf_path
         pdf_path.parent.mkdir(parents=True, exist_ok=True)
         pdf_path.write_text("%PDF-1.4", encoding="utf-8")
-        return types.SimpleNamespace(returncode=0, stdout="build ok\n", stderr="")
+        return engine.EngineResult(
+            returncode=0,
+            messages=[],
+            command=command.argv,
+            log_path=command.log_path,
+            pdf_path=pdf_path,
+        )
 
     monkeypatch.setattr(render_cmd.shutil, "which", fake_which)
-    monkeypatch.setattr(render_cmd.subprocess, "run", fake_run)
+    monkeypatch.setattr(engine.shutil, "which", fake_which)
+    monkeypatch.setattr(render_cmd, "run_engine_command", fake_run)
 
     result = runner.invoke(
         app,
@@ -934,7 +942,7 @@ def test_build_without_template_defaults_to_article(tmp_path: Path, monkeypatch:
     )
 
     assert result.exit_code == 0, result.stdout
-    assert "Running latexmk" in result.stdout
+    assert "Running tectonic" in result.stdout
 
 
 def test_build_defaults_to_rich_output(tmp_path: Path, monkeypatch: Any) -> None:
@@ -953,23 +961,27 @@ def test_build_defaults_to_rich_output(tmp_path: Path, monkeypatch: Any) -> None
     def fake_which(name: str) -> str:
         return f"/usr/bin/{name}"
 
-    def fake_stream(
-        command: list[str],
-        *,
-        cwd: str,
-        env: dict[str, str],
-        console: Any,
-        verbosity: int = 0,
-    ) -> LatexStreamResult:
-        captured["command"] = command
-        captured["cwd"] = cwd
-        captured["env"] = env
-        captured["console"] = console
-        captured["verbosity"] = verbosity
-        return LatexStreamResult(returncode=0, messages=[])
+    def fake_run_engine(command: Any, **kwargs: Any) -> engine.EngineResult:
+        captured["command"] = command.argv
+        captured["cwd"] = kwargs.get("workdir")
+        captured["env"] = kwargs.get("env")
+        captured["console"] = kwargs.get("console")
+        captured["verbosity"] = kwargs.get("verbosity")
+        captured["classic"] = kwargs.get("classic_output")
+        pdf_path = command.pdf_path
+        pdf_path.parent.mkdir(parents=True, exist_ok=True)
+        pdf_path.write_text("%PDF-1.4", encoding="utf-8")
+        return engine.EngineResult(
+            returncode=0,
+            messages=[],
+            command=command.argv,
+            log_path=command.log_path,
+            pdf_path=pdf_path,
+        )
 
     monkeypatch.setattr(render_cmd.shutil, "which", fake_which)
-    monkeypatch.setattr(render_module, "stream_latexmk_output", fake_stream)
+    monkeypatch.setattr(engine.shutil, "which", fake_which)
+    monkeypatch.setattr(render_cmd, "run_engine_command", fake_run_engine)
 
     result = runner.invoke(
         app,
@@ -985,11 +997,12 @@ def test_build_defaults_to_rich_output(tmp_path: Path, monkeypatch: Any) -> None
 
     assert result.exit_code == 0, result.stdout
     assert captured, "stream_latexmk_output was not called"
-    assert captured["command"][0] == "/usr/bin/latexmk"
-    assert captured["cwd"] == str(output_dir)
+    assert captured["command"][0] == "/usr/bin/tectonic"
+    assert captured["cwd"] == output_dir
     assert captured["console"] is not None
     assert captured["verbosity"] == 0
-    assert "Running latexmk…" in result.stdout
+    assert captured["classic"] is False
+    assert "Running tectonic…" in result.stdout
 
 
 def test_build_supports_multiple_documents(tmp_path: Path, monkeypatch: Any) -> None:
@@ -1007,24 +1020,24 @@ def test_build_supports_multiple_documents(tmp_path: Path, monkeypatch: Any) -> 
     def fake_which(name: str) -> str:
         return f"/usr/bin/{name}"
 
-    def fake_stream(
-        command: list[str],
-        *,
-        cwd: str,
-        env: dict[str, str],
-        console: Any,
-        verbosity: int = 0,
-    ) -> LatexStreamResult:
-        captured["command"] = command
-        captured["cwd"] = cwd
-        captured["env"] = env
-        pdf_path = Path(cwd) / Path(command[-1]).with_suffix(".pdf")
+    def fake_run_engine(command: Any, **kwargs: Any) -> engine.EngineResult:
+        captured["command"] = command.argv
+        captured["cwd"] = kwargs.get("workdir")
+        captured["env"] = kwargs.get("env")
+        pdf_path = command.pdf_path
         pdf_path.parent.mkdir(parents=True, exist_ok=True)
         pdf_path.write_text("%PDF-1.4", encoding="utf-8")
-        return LatexStreamResult(returncode=0, messages=[])
+        return engine.EngineResult(
+            returncode=0,
+            messages=[],
+            command=command.argv,
+            log_path=command.log_path,
+            pdf_path=pdf_path,
+        )
 
     monkeypatch.setattr(render_cmd.shutil, "which", fake_which)
-    monkeypatch.setattr(render_module, "stream_latexmk_output", fake_stream)
+    monkeypatch.setattr(engine.shutil, "which", fake_which)
+    monkeypatch.setattr(render_cmd, "run_engine_command", fake_run_engine)
 
     result = runner.invoke(
         app,
@@ -1040,7 +1053,7 @@ def test_build_supports_multiple_documents(tmp_path: Path, monkeypatch: Any) -> 
     )
 
     assert result.exit_code == 0, result.stdout
-    assert captured["cwd"] == str(output_dir)
+    assert captured["cwd"] == output_dir
     main_file = output_dir / "main.tex"
     assert main_file.exists()
 
@@ -1061,14 +1074,22 @@ def test_build_invokes_latexmk(tmp_path: Path, monkeypatch: Any) -> None:
     def fake_which(name: str) -> str:
         return f"/usr/bin/{name}"
 
-    def fake_run(cmd: list[str], **kwargs: Any) -> types.SimpleNamespace:
-        calls.append((cmd, kwargs))
-        pdf_path = Path(kwargs["cwd"]) / "index.pdf"
+    def fake_run(command: Any, **kwargs: Any) -> engine.EngineResult:
+        calls.append((command.argv, kwargs))
+        pdf_path = command.pdf_path
+        pdf_path.parent.mkdir(parents=True, exist_ok=True)
         pdf_path.write_text("%PDF-1.4", encoding="utf-8")
-        return types.SimpleNamespace(returncode=0, stdout="build ok\n", stderr="")
+        return engine.EngineResult(
+            returncode=0,
+            messages=[],
+            command=command.argv,
+            log_path=command.log_path,
+            pdf_path=pdf_path,
+        )
 
     monkeypatch.setattr(render_cmd.shutil, "which", fake_which)
-    monkeypatch.setattr(render_cmd.subprocess, "run", fake_run)
+    monkeypatch.setattr(engine.shutil, "which", fake_which)
+    monkeypatch.setattr(render_cmd, "run_engine_command", fake_run)
 
     result = runner.invoke(
         app,
@@ -1080,6 +1101,8 @@ def test_build_invokes_latexmk(tmp_path: Path, monkeypatch: Any) -> None:
             str(template_dir),
             "--classic-output",
             "--build",
+            "--engine",
+            "lualatex",
         ],
     )
 
@@ -1093,8 +1116,7 @@ def test_build_invokes_latexmk(tmp_path: Path, monkeypatch: Any) -> None:
     assert any(engine in pdflatex_args[0] for engine in {"xelatex", "lualatex"})
     assert "--shell-escape" not in pdflatex_args[0]
     assert command[-1] == "index.tex"
-    assert kwargs["cwd"] == output_dir
-    assert "build ok" in result.stdout
+    assert kwargs["workdir"] == output_dir
     assert "Build Outputs" not in result.stdout
     assert "Main document" in result.stdout
     assert "PDF" in result.stdout
@@ -1127,14 +1149,22 @@ def test_build_with_bibliography_forces_bibtex(tmp_path: Path, monkeypatch: Any)
     def fake_which(name: str) -> str:
         return f"/usr/bin/{name}"
 
-    def fake_run(cmd: list[str], **kwargs: Any) -> types.SimpleNamespace:
-        calls.append((cmd, kwargs))
-        pdf_path = Path(kwargs["cwd"]) / "index.pdf"
+    def fake_run(command: Any, **kwargs: Any) -> engine.EngineResult:
+        calls.append((command.argv, kwargs))
+        pdf_path = command.pdf_path
+        pdf_path.parent.mkdir(parents=True, exist_ok=True)
         pdf_path.write_text("%PDF-1.4", encoding="utf-8")
-        return types.SimpleNamespace(returncode=0, stdout="build ok\n", stderr="")
+        return engine.EngineResult(
+            returncode=0,
+            messages=[],
+            command=command.argv,
+            log_path=command.log_path,
+            pdf_path=pdf_path,
+        )
 
     monkeypatch.setattr(render_cmd.shutil, "which", fake_which)
-    monkeypatch.setattr(render_cmd.subprocess, "run", fake_run)
+    monkeypatch.setattr(engine.shutil, "which", fake_which)
+    monkeypatch.setattr(render_cmd, "run_engine_command", fake_run)
 
     result = runner.invoke(
         app,
@@ -1148,6 +1178,8 @@ def test_build_with_bibliography_forces_bibtex(tmp_path: Path, monkeypatch: Any)
             str(bib_file),
             "--classic-output",
             "--build",
+            "--engine",
+            "lualatex",
         ],
     )
 
@@ -1173,14 +1205,22 @@ def test_build_respects_shell_escape(tmp_path: Path, monkeypatch: Any) -> None:
 
     calls: list[list[str]] = []
 
-    def fake_run(cmd: list[str], **kwargs: Any) -> types.SimpleNamespace:
-        calls.append(cmd)
-        pdf_path = Path(kwargs["cwd"]) / "index.pdf"
+    def fake_run(command: Any, **kwargs: Any) -> engine.EngineResult:
+        calls.append(command.argv)
+        pdf_path = command.pdf_path
+        pdf_path.parent.mkdir(parents=True, exist_ok=True)
         pdf_path.write_text("%PDF-1.4", encoding="utf-8")
-        return types.SimpleNamespace(returncode=0, stdout="", stderr="")
+        return engine.EngineResult(
+            returncode=0,
+            messages=[],
+            command=command.argv,
+            log_path=command.log_path,
+            pdf_path=pdf_path,
+        )
 
     monkeypatch.setattr(render_cmd.shutil, "which", fake_which)
-    monkeypatch.setattr(render_cmd.subprocess, "run", fake_run)
+    monkeypatch.setattr(engine.shutil, "which", fake_which)
+    monkeypatch.setattr(render_cmd, "run_engine_command", fake_run)
 
     result = runner.invoke(
         app,
@@ -1192,6 +1232,8 @@ def test_build_respects_shell_escape(tmp_path: Path, monkeypatch: Any) -> None:
             str(template_dir),
             "--classic-output",
             "--build",
+            "--engine",
+            "lualatex",
         ],
     )
 
@@ -1216,26 +1258,26 @@ def test_build_failure_reports_summary(tmp_path: Path, monkeypatch: Any) -> None
     def fake_which(name: str) -> str:
         return f"/usr/bin/{name}"
 
-    def fake_stream(
-        command: list[str],
-        *,
-        cwd: str,
-        env: dict[str, str],
-        console: Any,
-        verbosity: int = 0,
-    ) -> LatexStreamResult:
-        log_path = Path(cwd) / "index.log"
+    def fake_run(command: Any, **kwargs: Any) -> engine.EngineResult:
+        log_path = command.log_path
+        log_path.parent.mkdir(parents=True, exist_ok=True)
         log_path.write_text("! Undefined control sequence.\nl.42 \\unknowncmd\n", encoding="utf-8")
         message = LatexMessage(
             severity=LatexMessageSeverity.ERROR,
             summary="! Undefined control sequence.",
             details=["l.42 \\unknowncmd"],
         )
-        assert verbosity == 0
-        return LatexStreamResult(returncode=1, messages=[message])
+        return engine.EngineResult(
+            returncode=1,
+            messages=[message],
+            command=command.argv,
+            log_path=log_path,
+            pdf_path=command.pdf_path,
+        )
 
     monkeypatch.setattr(render_cmd.shutil, "which", fake_which)
-    monkeypatch.setattr(render_module, "stream_latexmk_output", fake_stream)
+    monkeypatch.setattr(engine.shutil, "which", fake_which)
+    monkeypatch.setattr(render_cmd, "run_engine_command", fake_run)
 
     result = runner.invoke(
         app,
@@ -1250,7 +1292,7 @@ def test_build_failure_reports_summary(tmp_path: Path, monkeypatch: Any) -> None
     )
 
     assert result.exit_code == 1
-    assert "latexmk failure" in result.stderr
+    assert "LaTeX failure" in result.stderr
     assert "Undefined control sequence" in result.stderr
     assert "index.log" in result.stderr
 

@@ -18,7 +18,7 @@ Python 3.10+
 
 LaTeX distribution
 : Install TeX Live, MiKTeX, or MacTeX so `texsmith --build`
-  can hand off to `latexmk` and friends.
+  can hand off to Tectonic (default) or `latexmk` when you opt into `--engine lualatex` / `--engine xelatex`.
 
 Optional diagram tooling
 : Mermaid-to-PDF (`minlag/mermaid-cli`) conversion defaults to Docker.
@@ -160,7 +160,7 @@ texsmith build/site/guides/overview/index.html \
     - When your site spans multiple documents, repeat the command per page and stitch them with template slots (for example, `--slot mainmatter:build/site/manual/index.html`).
     - For live previews, point TeXSmith at the temporary site directory that `mkdocs serve` prints on startup.
 
-    Once the LaTeX bundle looks good, add `--build` to invoke `latexmk` or wire everything into CI so MkDocs HTML → TeXSmith PDF happens on every run.
+    Once the LaTeX bundle looks good, add `--build` to invoke your chosen engine or wire everything into CI so MkDocs HTML → TeXSmith PDF happens on every run.
 
 
 ## How does TeXSmith work?

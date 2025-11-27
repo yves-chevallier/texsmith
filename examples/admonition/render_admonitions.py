@@ -2,13 +2,21 @@
 from __future__ import annotations
 
 import shutil
-import subprocess
 from pathlib import Path
 
 import fitz  # PyMuPDF
 
+from texsmith.adapters.latex.engine import (
+    EngineResult,
+    build_engine_command,
+    build_tex_env,
+    compute_features,
+    ensure_command_paths,
+    missing_dependencies,
+    resolve_engine,
+    run_engine_command,
+)
 from texsmith.api.service import ConversionRequest, ConversionService
-from texsmith.ui.cli.commands import build_latexmk_command
 
 STYLES = ("fancy", "classic", "minimal")
 BASE_DIR = Path(__file__).resolve().parent
@@ -44,20 +52,43 @@ def _render_style(style: str) -> Path:
     response = SERVICE.execute(request, prepared=prepared)
     render_result = response.render_result
 
-    latexmk_path = shutil.which("latexmk")
-    if latexmk_path is None:
-        raise RuntimeError("latexmk executable not found in PATH.")
-
-    command = build_latexmk_command(
-        render_result.template_engine,
-        shell_escape=render_result.requires_shell_escape,
-        force_bibtex=render_result.has_bibliography,
+    engine_choice = resolve_engine("tectonic", render_result.template_engine)
+    template_context = getattr(render_result, "template_context", None) or getattr(
+        render_result, "context", None
     )
-    command[0] = latexmk_path
-    command.append(render_result.main_tex_path.name)
+    features = compute_features(
+        requires_shell_escape=render_result.requires_shell_escape,
+        bibliography=render_result.has_bibliography,
+        document_state=render_result.document_state,
+        template_context=template_context,
+    )
+    missing = missing_dependencies(engine_choice, features)
+    if missing:
+        raise RuntimeError(
+            f"Missing LaTeX tools for admonition preview: {', '.join(sorted(missing))}"
+        )
 
-    subprocess.run(command, check=True, cwd=render_result.main_tex_path.parent)
-    return render_result.main_tex_path.with_suffix(".pdf")
+    command_plan = ensure_command_paths(
+        build_engine_command(
+            engine_choice,
+            features,
+            main_tex_path=render_result.main_tex_path,
+        )
+    )
+    env = build_tex_env(render_result.main_tex_path.parent, isolate_cache=False)
+    result: EngineResult = run_engine_command(
+        command_plan,
+        workdir=render_result.main_tex_path.parent,
+        env=env,
+        console=None,
+        classic_output=True,
+    )
+    if result.returncode != 0:
+        raise RuntimeError(
+            f"{engine_choice.label} exited with status {result.returncode} for {render_result.main_tex_path}"
+        )
+
+    return command_plan.pdf_path
 
 
 def _pdf_to_png(pdf_path: Path, target_path: Path) -> None:
