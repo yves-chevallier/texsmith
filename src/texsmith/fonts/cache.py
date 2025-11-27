@@ -43,15 +43,9 @@ _KNOWN_SOURCES: dict[str, tuple[FontSource, ...]] = {
     normalize_family("OpenMoji Black"): (
         FontSource(
             family="OpenMoji Black",
-            url="https://github.com/hfg-gmuend/openmoji/releases/latest/download/openmoji-svg-black.zip",
+            url="https://github.com/hfg-gmuend/openmoji/releases/download/16.0.0/openmoji-font.zip",
             filename="OpenMoji-black-glyf.ttf",
             zip_member="fonts/OpenMoji-black-glyf.ttf",
-        ),
-        FontSource(
-            family="OpenMoji Black",
-            url="https://github.com/hfg-gmuend/openmoji/raw/master/font/OpenMoji-Black.ttf",
-            filename="OpenMoji-black-glyf.ttf",
-            zip_member=None,
         ),
     ),
 }

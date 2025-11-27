@@ -1,20 +1,17 @@
+include ../common.mk
 
-OUTPUT_DIR := build
-PDF := $(OUTPUT_DIR)/diagrams.pdf
-
-ifneq ($(strip $(ARTIFACTS_DIR)),)
-copy_artifact = mkdir -p "$(ARTIFACTS_DIR)" && cp "$1" "$(ARTIFACTS_DIR)/"
-else
-copy_artifact = @true
-endif
+OUTPUT_DIR := $(ENGINE_DIR)
+PDF := $(OUTPUT_DIR)/diagrams$(ENGINE_SUFFIX).pdf
+BASE_PDF := $(OUTPUT_DIR)/diagrams.pdf
 
 all: $(PDF)
 
-$(PDF): diagrams.md pgcd.drawio
-	uv run texsmith diagrams.md -tarticle -o$(OUTPUT_DIR) --build --promote-title
+$(PDF): diagrams.md pgcd.drawio | $(OUTPUT_DIR)
+	$(TEXSMITH) diagrams.md -tarticle -o$(OUTPUT_DIR) --build --promote-title $(TEXSMITH_ENGINE)
+	if [ "$(PDF)" != "$(BASE_PDF)" ]; then mv "$(BASE_PDF)" "$(PDF)"; fi
 	$(call copy_artifact,$@)
 
 clean:
-	rm -rf $(OUTPUT_DIR)
+	-rm -rf $(OUTPUT_ROOT)
 
 .PHONY: all clean

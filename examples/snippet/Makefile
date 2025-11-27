@@ -1,20 +1,17 @@
-OUTPUT_DIR := build
-PDF := $(OUTPUT_DIR)/snippet.pdf
+include ../common.mk
 
-ifneq ($(strip $(ARTIFACTS_DIR)),)
-copy_artifact = mkdir -p "$(ARTIFACTS_DIR)" && cp "$1" "$(ARTIFACTS_DIR)/"
-else
-copy_artifact = @true
-endif
+OUTPUT_DIR := $(ENGINE_DIR)
+PDF := $(OUTPUT_DIR)/snippet$(ENGINE_SUFFIX).pdf
+BASE_PDF := $(OUTPUT_DIR)/snippet.pdf
 
 all: $(PDF)
 
-$(PDF): docs/index.md
-	uv run texsmith $< -o$(OUTPUT_DIR) --build -tarticle
+$(PDF): docs/index.md | $(OUTPUT_DIR)
+	$(TEXSMITH) $< -o$(OUTPUT_DIR) --build -tarticle $(TEXSMITH_ENGINE)
 	mv $(OUTPUT_DIR)/index.pdf $(PDF)
 	$(call copy_artifact,$@)
 
 clean:
-	rm -rf $(OUTPUT_DIR)
+	rm -rf $(OUTPUT_ROOT)
 
 .PHONY: all clean

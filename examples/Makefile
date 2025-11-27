@@ -1,4 +1,5 @@
 export ARTIFACTS_DIR ?= $(CURDIR)/examples_build
+ENGINE ?= tectonic
 
 EXAMPLES := \
 	abbr \
@@ -23,17 +24,11 @@ EXAMPLES := \
 	recipe \
 	snippet
 
-EXAMPLES_WITH_TECTONIC := admonition booby emoji multi-document
 EXAMPLES_WITH_COMPARE := multi-document
 
 all:
 	@for example in $(EXAMPLES); do \
-		$(MAKE) -C $$example all; \
-	done
-
-tectonic:
-	@for example in $(EXAMPLES_WITH_TECTONIC); do \
-		$(MAKE) -C $$example tectonic; \
+		$(MAKE) -C $$example ENGINE=$(ENGINE) all; \
 	done
 
 compare:
@@ -41,10 +36,19 @@ compare:
 		$(MAKE) -C $$example compare; \
 	done
 
+tectonic:
+	$(MAKE) ENGINE=tectonic all
+
+lualatex:
+	$(MAKE) ENGINE=lualatex all
+
+xelatex:
+	$(MAKE) ENGINE=xelatex all
+
 clean:
 	$(RM) -rf $(ARTIFACTS_DIR)
 	@for example in $(EXAMPLES); do \
 		$(MAKE) -C $$example clean; \
 	done
 
-.PHONY: all clean tectonic compare
+.PHONY: all clean tectonic compare lualatex xelatex

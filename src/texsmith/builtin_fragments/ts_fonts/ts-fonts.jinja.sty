@@ -60,6 +60,7 @@
 \BLOCK{ if emoji_font and emoji_font not in fallback_fonts }
   \BLOCK{ set fallback_fonts = [emoji_font] + fallback_fonts }
 \BLOCK{ endif }
+\BLOCK{ set emoji_files = font_files.get(emoji_font, {}) if emoji_font else {} }
 \BLOCK{ if mono_font == "FreeMono" }
   \BLOCK{ set mono_italic = "* Oblique" }
   \BLOCK{ set mono_bold_italic = "* Bold Oblique" }
@@ -280,7 +281,16 @@
   \renewcommand{\texsmithEmoji}[1]{\twemoji{#1}}
 \BLOCK{ elif emoji_font }
   % Fallback already covers emoji; keep macro a passthrough.
-  \newfontfamily\texsmithEmojiFont{\VAR{emoji_font}}[Renderer=Harfbuzz,Scale=1.05]
+  \newfontfamily\texsmithEmojiFont{\VAR{emoji_font}}[
+\BLOCK{ if emoji_files }
+    Path=\VAR{font_path_prefix},
+\BLOCK{ endif }
+\BLOCK{ if emoji_files.get("regular") }
+    UprightFont={\VAR{emoji_files["regular"]}},
+\BLOCK{ endif }
+    Renderer=Harfbuzz,
+    Scale=1.05
+  ]
   \renewcommand{\texsmithEmoji}[1]{#1}
 \BLOCK{ else }
   \renewcommand{\texsmithEmoji}[1]{#1}
@@ -373,7 +383,7 @@
 \BLOCK{ for class in unicode_font_classes }
 \BLOCK{ set is_emoji_class = emoji_font and class.family|lower == "notocoloremoji" }
 \BLOCK{ set class_family = emoji_font if is_emoji_class else class.family }
-\BLOCK{ set class_files = {} if is_emoji_class else class.files }
+\BLOCK{ set class_files = emoji_files if is_emoji_class else class.files }
 \BLOCK{ set class_ranges = [(emoji_range_start, emoji_range_end)] if is_emoji_class else class.ranges }
 \expandafter\newfontfamily\csname \VAR{class.font_command}\endcsname[
 \BLOCK{ if class_files }
@@ -402,6 +412,12 @@
 \BLOCK{ endif }
 \BLOCK{ if emoji_font }
     \newfontfamily\texsmithEmojiFont{\VAR{emoji_font}}[
+\BLOCK{ if emoji_files }
+      Path=\VAR{font_path_prefix},
+\BLOCK{ endif }
+\BLOCK{ if emoji_files.get("regular") }
+      UprightFont={\VAR{emoji_files["regular"]}},
+\BLOCK{ endif }
       Renderer=Harfbuzz,
       Scale=1.05
     ]
