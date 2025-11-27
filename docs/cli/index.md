@@ -14,11 +14,12 @@ $ texsmith --help
 │                         document and optionally one or more BibTeX files.    │
 ╰──────────────────────────────────────────────────────────────────────────────╯
 ╭─ Options ────────────────────────────────────────────────────────────────────╮
-│ --classic-output   --rich-output        Display raw latexmk output without   │
+│ --classic-output   --rich-output        Display raw engine output without    │
 │                                          parsing (use --rich-output for      │
 │                                          structured logs).                   │
-│ --build            --no-build           Invoke latexmk after rendering to    │
-│                                          compile the resulting LaTeX project.│
+│ --build            --no-build           Invoke the selected engine after     │
+│                                          rendering to compile the resulting  │
+│                                          LaTeX project.                      │
 │ --legacy-latex-accents/--unicode-latex-accents …                             │
 │ --list-bibliography                      Print bibliography details from     │
 │                                          provided .bib files and exit.       │
@@ -35,6 +36,7 @@ $ texsmith --help
 ```
 
 This page explains the global behaviour of the CLI, highlights the most important flags, and points toward detailed documentation for specific workflows.
+Use `--engine tectonic|lualatex|xelatex` to pick the PDF compiler; Tectonic is the default.
 
 ## Global Options
 
@@ -59,7 +61,7 @@ texsmith --debug -vv docs/chapter.md --template article --build
 
 ## Rendering Options
 
-See [`render`](render.md) for the complete list of conversion flags (structure adjustments, Markdown extensions, template attributes, slots, and latexmk controls). Every example there works whether or not you type the legacy `render` verb, but the canonical form is now `texsmith …`.
+See [`render`](render.md) for the complete list of conversion flags (structure adjustments, Markdown extensions, template attributes, slots, and engine controls). Every example there works whether or not you type the legacy `render` verb, but the canonical form is now `texsmith …`.
 
 [`--list-bibliography`](bibliography.md)
 : Load one or more BibTeX files and surface parsing issues without rendering. Combine it with your document inputs to validate bibliography assets alongside the main build.
@@ -75,7 +77,7 @@ Each option has its own usage examples on the linked pages.
 # Generate LaTeX fragments from Markdown
 texsmith intro.md --output build/
 
-# Render with a template and latexmk
+# Render with a template and compile to PDF (default = Tectonic)
 texsmith intro.md --template article --output-dir build/pdf --build
 
 # Inspect bibliography sources

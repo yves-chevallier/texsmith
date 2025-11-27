@@ -18,13 +18,13 @@ $(PDF): $(FILES)
 latex: $(FILES)
 	uv run texsmith $^ -o$(OUTPUT_DIR) -tarticle
 
-tectonic: latex
-	cd $(OUTPUT_DIR) && tectonic main.tex
-	cp $(OUTPUT_DIR)/main.pdf $(OUTPUT_DIR)/multidocument-tectonic.pdf
-	$(call copy_artifact,$(OUTPUT_DIR)/multidocument-tectonic.pdf)
+lualatex: latex
+	uv run texsmith $^ -o$(OUTPUT_DIR) --build -tarticle --engine=lualatex
+	cp $(OUTPUT_DIR)/main.pdf $(OUTPUT_DIR)/multidocument-lualatex.pdf
+	$(call copy_artifact,$(OUTPUT_DIR)/multidocument-lualatex.pdf)
 
 xelatex: latex
-	cd $(OUTPUT_DIR) && latexmk -xelatex main.tex
+	uv run texsmith $^ -o$(OUTPUT_DIR) --build -tarticle --engine=xelatex
 	cp $(OUTPUT_DIR)/main.pdf $(OUTPUT_DIR)/multidocument-xelatex.pdf
 	$(call copy_artifact,$(OUTPUT_DIR)/multidocument-xelatex.pdf)
 

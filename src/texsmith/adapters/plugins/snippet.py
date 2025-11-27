@@ -689,34 +689,55 @@ def _build_document(
 
 
 def _compile_pdf(render_result: Any) -> Path:
-    latexmk = shutil.which("latexmk")
-    if latexmk is None:
-        raise AssetMissingError("latexmk executable not found; required for snippet rendering.")
-
-    from texsmith.ui.cli.commands.render import build_latexmk_command
-
-    command = build_latexmk_command(
-        render_result.template_engine,
-        render_result.requires_shell_escape,
-        force_bibtex=render_result.has_bibliography,
+    from texsmith.adapters.latex.engine import (
+        EngineResult,
+        build_engine_command,
+        build_tex_env,
+        compute_features,
+        ensure_command_paths,
+        missing_dependencies,
+        parse_latex_log,
+        resolve_engine,
+        run_engine_command,
     )
-    command[0] = latexmk
-    command.append(render_result.main_tex_path.name)
 
-    process = subprocess.run(
-        command,
-        cwd=render_result.main_tex_path.parent,
-        capture_output=True,
-        text=True,
+    engine_choice = resolve_engine("tectonic", render_result.template_engine)
+    template_context = getattr(render_result, "template_context", None) or getattr(
+        render_result, "context", None
     )
-    if process.returncode != 0:
-        stderr = process.stderr.strip()
-        stdout = process.stdout.strip()
-        detail = stderr or stdout or "latexmk exited with a non-zero status."
-        log_path = render_result.main_tex_path.with_suffix(".log")
+    features = compute_features(
+        requires_shell_escape=render_result.requires_shell_escape,
+        bibliography=render_result.has_bibliography,
+        document_state=render_result.document_state,
+        template_context=template_context,
+    )
+    missing = missing_dependencies(engine_choice, features)
+    if missing:
+        formatted = ", ".join(sorted(missing))
+        raise AssetMissingError(f"Missing LaTeX tools for snippet rendering: {formatted}")
+
+    command_plan = ensure_command_paths(
+        build_engine_command(
+            engine_choice,
+            features,
+            main_tex_path=render_result.main_tex_path,
+        )
+    )
+    env = build_tex_env(render_result.main_tex_path.parent, isolate_cache=True)
+    result: EngineResult = run_engine_command(
+        command_plan,
+        workdir=render_result.main_tex_path.parent,
+        env=env,
+        console=None,
+        classic_output=True,
+    )
+    if result.returncode != 0:
+        log_path = command_plan.log_path
+        messages = result.messages or parse_latex_log(log_path)
+        detail = messages[0].summary if messages else f"{engine_choice.label} failed"
         raise LatexRenderingError(f"Failed to compile snippet: {detail} (log: {log_path})")
 
-    return render_result.main_tex_path.with_suffix(".pdf")
+    return command_plan.pdf_path
 
 
 def _load_pymupdf() -> object:

@@ -10,6 +10,16 @@ from typing import Any
 
 import yaml
 
+from texsmith.adapters.latex.engine import (
+    EngineResult,
+    build_engine_command,
+    build_tex_env,
+    compute_features,
+    ensure_command_paths,
+    missing_dependencies,
+    resolve_engine,
+    run_engine_command,
+)
 from texsmith.adapters.markdown import split_front_matter
 from texsmith.core.conversion.debug import ConversionError, ensure_emitter
 from texsmith.core.conversion.inputs import (
@@ -290,6 +300,50 @@ class ConversionService:
             bibliography_files=batch.bibliography_files,
             result=render_result,
             emitter=emitter,
+        )
+
+    def build_pdf(
+        self,
+        render_result: TemplateRenderResult,
+        *,
+        engine: str | None = "tectonic",
+        classic_output: bool = False,
+        isolate_cache: bool = False,
+        env: Mapping[str, str] | None = None,
+        console: Any | None = None,
+        verbosity: int = 0,
+    ) -> EngineResult:
+        """Compile a rendered template into a PDF using the requested engine."""
+        template_context = getattr(render_result, "template_context", None) or getattr(
+            render_result, "context", None
+        )
+        features = compute_features(
+            requires_shell_escape=render_result.requires_shell_escape,
+            bibliography=render_result.has_bibliography,
+            document_state=render_result.document_state,
+            template_context=template_context,
+        )
+        choice = resolve_engine(engine, render_result.template_engine)
+        missing = missing_dependencies(choice, features)
+        if missing:
+            formatted = ", ".join(sorted(missing))
+            raise ConversionError(f"Missing required LaTeX tools for '{choice.label}': {formatted}")
+
+        command_plan = ensure_command_paths(
+            build_engine_command(choice, features, main_tex_path=render_result.main_tex_path)
+        )
+        base_env = build_tex_env(render_result.main_tex_path.parent, isolate_cache=isolate_cache)
+        merged_env = dict(base_env)
+        if env:
+            merged_env.update(env)
+
+        return run_engine_command(
+            command_plan,
+            workdir=render_result.main_tex_path.parent,
+            env=merged_env,
+            console=console,
+            verbosity=verbosity,
+            classic_output=classic_output,
         )
 
     @staticmethod

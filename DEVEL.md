@@ -14,25 +14,40 @@ Roadmap and development notes for TeXSmith. I keep this file as a running checkl
 - [x] csquote
 - [x] Emojis without svg conversions
 - [x] two columns in article template
+- [x] Provide listings/verbatim/minted handling
+- [ ] Add support for Tectonic engine
+- [ ] Include fonts in package (like OpenMoji)
+- [ ] Mermaid color configuration
+- [ ] Global user's configuration (.texsmith/config.toml)
+- [ ] Acronyms multiline
+- [ ] MkDocs Linking Issues
+- [ ] Font style with mono
+- [ ] Unified Fences Syntax
+  - [ ] Multicolumns
+  - [ ] Font Size
+  - [ ] Center/Right alignment
+  - [ ] Language
+  - [ ] LaTeX only / HTML only
+  - [ ] LaTeX raw
 - [ ] Clean book template
+- [ ] Add example: university exam
+- [ ] Add engine through Docker (docker-tectonic, docker-texlive)
+- [ ] Use docker tectonic if tectonic is not installed
 - [ ] Integrate docker docker run -v $(pwd):/usr/src/tex  dxjoke/tectonic-docker tectonic book.tex
 - [ ] Build MkDocs with parts at level 0.
 - [ ] Hide the list of tables when no tables exist.
 - [ ] Manage title fragment to insert title meta
 - [ ] Manage fragments order from before/after hooks instead of in fragments.py
 - [ ] tocloft
-- [ ] multicol
 - [ ] enumitem
-- [ ] Snippet (frame dog ear would be good in the build pdf)
+- [ ] Fix snippet template (frame dog ear would be good in the build pdf)
 - [ ] Be verbose in mkdocs show what happens (fetching assets, building...)
 - [ ] docs/syntax/captions.md (captions not working when using texsmith?)
-- [ ] Never use user cache. Always use a .cache local?
+- [ ] Use env var for TEXSMITH_CACHE, default to ~/.texsmith/cache
 - [ ] Make CI pass
-- [ ] Demonstrate multi indexes (dates, ...)
-- [ ] Build snippet with pdflatex when possible (faster)
-- [ ] Complete docstring coverage across the project
+- [ ] Support for multi-indexes (dates, ...)
+- [ ] Complete docstrings in the codebase for better mkdocstrings generation
 - [ ] Support cross-references (cleveref package)
-- [ ] Provide listings/verbatim/minted handling
 - [ ] Add table width controls (auto, fixed width, `tabularx`, `tabulary`, etc.)
 - [ ] Support table orientation (rotate very wide tables)
 - [ ] Scaffold templates with Cookiecutter
@@ -42,9 +57,10 @@ Roadmap and development notes for TeXSmith. I keep this file as a running checkl
 - [ ] CI: uv run mkdocs build #--strict not yet ready
 - [ ] Windows Support
 - [ ] Insert Examples PDFs in the GitHub Releases
-- [ ] Marginalia (`marginpar` package with footnotes syntax)
-- [ ] Epigraph Plugin
-- [ ] Letterine
+- [ ] Develop submodules as standalone plugins
+  - [ ] Marginalia (`marginpar` package with footnotes syntax)
+  - [ ] Epigraph Plugin
+  - [ ] Letterine
 
 ## Features
 
@@ -55,9 +71,47 @@ Tectonic has become a popular LaTeX engine that simplifies document compilation 
 We need to refactor TeXSmith to make the engine modular and pluggable. So we can choose from the CLI and the API which engine to use.
 We want to make tectonic the default engine for TeXSmith going forward. Why? Because it simplifies the user experience by handling package management automatically, reducing setup complexity. Also it is considerably faster and lightweight compared to traditional LaTeX engines, very adapted for CI/CD pipelines and automated document generation.
 
+On the CLI the option --engine=tectonic is the default --engine=lualatex or --engine=xelatex both uses latexmk and produce a .latexmkrc.
+
+When using tectonic we don't need latexmk, we can call tectonic directly with the right options.
+
+Both engines can coexist. Befaut they run we make sure that the required executables exists:
+
+For xelatex/lualatex:
+- latexmk
+- xelatex or lualatex
+- biber (if needed)
+- makeindex (if needed)
+- makeglossaries (if needed)
+For tectonic:
+- tectonic
+- biber (if needed)
+- makeindex (if needed)
+- makeglossaries (if needed)
+
+All the "LaTeX log parser" will be moved into the LaTeX engine.
+
+STEPS:
+
+1. Analyse the code and how latex is called, how the latexmkrc is configured and generated and how work the log parser.
+2. Architecture the LaTeX engine interface that will be used by TeXSmith to call the engine and parse logs.
+3. Implement the Tectonic engine.
+4. Refactor the existing xelatex/lualatex engine to use the new interface.
+5. Update the CLI to support the --engine option and set tectonic as default.
+6. Test both engines thoroughly to ensure compatibility and correctness. Tests are run only if the engine is available.
+7. Update documentation to reflect the new engine options and usage instructions.
+8. Write a chapter on the documentation on how install tectonic and use it with TeXSmith.
+
 ### Include Fonts in Package
 
 Certaines fonts utilisées par TeXSmith comme OpenMoji-black-glyf.ttf sont difficile à trouver et télécharger. Il faudrait les intégrer dans le package TeXSmith pour éviter aux utilisateurs d'avoir à les chercher et les installer eux-mêmes. Elles seront copiées dans le dossier de build si utilisées. On commence juste par cette font pour l'instant.
+
+Si utilisé, télécharger https://github.com/googlefonts/noto-emoji/raw/refs/heads/main/fonts/NotoColorEmoji.ttf la garder en cache dans ~/.texsmith/fonts/NotoColorEmoji.ttf et la copier dans le dossier de build si utilisé.
+
+Pour openmoji télécharger depuis https://github.com/hfg-gmuend/openmoji/releases/latest/download/openmoji-svg-black.zip
+extraire le zip et prendre la font `fonts/OpenMoji-black-glyf.ttf` la garder en cache dans ~/.texsmith/fonts/OpenMoji-black-glyf.ttf et la copier dans le dossier de build si utilisé.
+
+Si pas possible de télécharger les fonts, afficher un warning et fallback sur les emojis via images svg de twemoji.
 
 ### Mermaid color configuration
 

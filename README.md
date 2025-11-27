@@ -27,7 +27,7 @@ texsmith input.md input.bib -o article/ --template nature
 ## Key features
 
 - **MkDocs-native Markdown** – Ships with the same Material + pymdown extension stack you use in MkDocs, so tabs, callouts, annotations, tooltips, and data tables survive the conversion.
-- **Template-first runtime** – Bundle multiple fragments into slots, merge front matter metadata, and emit latexmk-ready projects with Docker-friendly manifests.
+- **Template-first runtime** – Bundle multiple fragments into slots, merge front matter metadata, and emit LaTeX projects ready for Tectonic or latexmk with Docker-friendly manifests.
 - **CLI and Python parity** – The Typer-powered CLI wraps the same ConversionService you can consume as a library, making CI/CD and notebooks behave like local runs.
 - **Actionable diagnostics** – Structured emitters, verbosity switches, and `--debug` traces keep LaTeX issues debuggable even in automated pipelines.
 - **Extensible converters** – Override Markdown parsers, hook into RenderPhase handlers, or ship diagram transformers (Mermaid, Draw.io, Svgbob) that plug directly into the engine.
@@ -47,7 +47,7 @@ TeXSmith targets Python 3.10+ and expects a LaTeX distribution (TeX Live, MiKTeX
 
 ### Platform notes
 
-- **Linux** – Install TeX Live (full) via your package manager or `install-tl`. When running inside CI containers, cache `~/.texliveYY` so repeated `latexmk` runs stay fast.
+- **Linux** – Install TeX Live (full) via your package manager or `install-tl`. When running inside CI containers, cache `~/.texliveYY` so repeated latexmk runs stay fast—or use the default Tectonic engine to minimise setup.
 - **macOS** – Use [MacTeX](https://www.tug.org/mactex/) or `BasicTeX` plus the tlmgr packages reported by `texsmith --template <name> --template-info`. Homebrew’s `mactex` cask works well when paired with `uv`.
 - **Windows** – TeXSmith runs via native Python or WSL. For PDF builds we recommend [MiKTeX](https://miktex.org/) + PowerShell, or WSL2 with TeX Live and Docker Desktop (needed for Mermaid).
 - **Docker workflows** – Run `texsmith --build` inside a TeX Live container, mounting your project plus the template directory. Copy tlmgr prerequisites from `--template-info` so images compile without network access.
@@ -81,7 +81,7 @@ Use this command before wiring slots or when you need to confirm which tlmgr pac
 
 The `examples/` directory includes reproducible demos:
 
-- `examples/paper` – end-to-end render with bibliographies and latexmk.
+- `examples/paper` – end-to-end render with bibliographies and latexmk (or Tectonic with `--engine tectonic`).
 - `examples/diagrams` – Mermaid and Draw.io conversions.
 - `examples/markdown` – exhaustive Markdown showcase with diagram/front-matter overrides.
 

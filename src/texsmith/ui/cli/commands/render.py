@@ -17,12 +17,17 @@ import click
 from click.core import ParameterSource
 import typer
 
-from texsmith.adapters.latex.latexmk import (
-    build_engine_command,
-    latexmk_pdf_flag,
-    normalise_engine_command,
+from texsmith.adapters.latex.engine import (
+    EngineResult,
+    build_engine_command as build_latex_engine_command,
+    build_tex_env,
+    compute_features,
+    ensure_command_paths,
+    missing_dependencies,
+    parse_latex_log,
+    resolve_engine,
+    run_engine_command,
 )
-from texsmith.adapters.latex.log import LatexStreamResult, stream_latexmk_output
 from texsmith.adapters.markdown import (
     DEFAULT_MARKDOWN_EXTENSIONS,
     resolve_markdown_extensions,
@@ -70,11 +75,10 @@ from ..commands.templates import list_templates, scaffold_template, show_templat
 from ..diagnostics import CliEmitter
 from ..presenter import (
     consume_event_diagnostics,
-    parse_latex_log,
     present_build_summary,
     present_conversion_summary,
     present_html_summary,
-    present_latexmk_failure,
+    present_latex_failure,
     present_rule_descriptions,
 )
 from ..state import debug_enabled, emit_error, set_cli_state
@@ -82,33 +86,6 @@ from ..utils import determine_output_target, organise_slot_overrides, write_outp
 
 
 _SERVICE = ConversionService()
-
-
-def build_latexmk_command(
-    engine: str | None,
-    shell_escape: bool,
-    force_bibtex: bool = False,
-) -> list[str]:
-    """Construct the latexmk command arguments respecting CLI options."""
-    engine_config = normalise_engine_command(engine, shell_escape=shell_escape)
-    command = [
-        "latexmk",
-        latexmk_pdf_flag(engine_config.pdf_mode),
-        "-interaction=nonstopmode",
-        "-halt-on-error",
-        "-file-line-error",
-        f"-pdflatex={build_engine_command(engine_config)}",
-    ]
-    if force_bibtex:
-        command.insert(2, "-bibtex")
-    return command
-
-
-def _shared_tex_cache_root() -> Path:
-    """Return the global cache directory used for TeX artefacts."""
-    xdg_cache = os.environ.get("XDG_CACHE_HOME")
-    base = Path(xdg_cache).expanduser() if xdg_cache else Path.home() / ".cache"
-    return (base / "texsmith").resolve()
 
 
 _MARKDOWN_SUFFIXES = {
@@ -366,6 +343,14 @@ def render(
             help="Invoke latexmk after rendering to compile the resulting LaTeX project.",
         ),
     ] = False,
+    engine: Annotated[
+        str,
+        typer.Option(
+            "--engine",
+            help="LaTeX engine backend to use when building (tectonic, lualatex, xelatex).",
+            rich_help_panel=OUTPUT_PANEL,
+        ),
+    ] = "tectonic",
     language: LanguageOption = None,
     legacy_latex_accents: Annotated[
         bool,
@@ -815,119 +800,63 @@ def render(
         _flush_diagnostics()
         return
 
-    latexmk_path = shutil.which("latexmk")
-    if latexmk_path is None:
-        emit_error("latexmk executable not found. Install TeX Live (or latexmk) to build PDFs.")
+    engine_choice = resolve_engine(engine, render_result.template_engine)
+    template_context = getattr(render_result, "template_context", None) or getattr(
+        render_result, "context", None
+    )
+    features = compute_features(
+        requires_shell_escape=render_result.requires_shell_escape,
+        bibliography=render_result.has_bibliography,
+        document_state=render_result.document_state,
+        template_context=template_context,
+    )
+
+    missing_tools = missing_dependencies(engine_choice, features)
+    if missing_tools:
+        formatted = ", ".join(sorted(missing_tools))
+        emit_error(f"Missing required tools for {engine_choice.label}: {formatted}")
         raise typer.Exit(code=1)
 
-    command = build_latexmk_command(
-        render_result.template_engine,
-        render_result.requires_shell_escape,
-        force_bibtex=render_result.has_bibliography,
+    command_plan = ensure_command_paths(
+        build_latex_engine_command(
+            engine_choice,
+            features,
+            main_tex_path=render_result.main_tex_path,
+        )
     )
-    command[0] = latexmk_path
-    command.append(render_result.main_tex_path.name)
+    env = build_tex_env(render_dir, isolate_cache=isolate_cache)
 
-    if isolate_cache:
-        tex_cache_root = (render_dir / ".texmf-cache").resolve()
-    else:
-        tex_cache_root = _shared_tex_cache_root()
-    tex_cache_root.mkdir(parents=True, exist_ok=True)
-    env = os.environ.copy()
+    state.console.print(f"[bold cyan]Running {engine_choice.label}…[/]")
 
-    texmf_home = tex_cache_root / "texmf-home"
-    texmf_var = tex_cache_root / "texmf-var"
-    luatex_cache = tex_cache_root / "luatex-cache"
+    run_engine = getattr(render, "run_engine_command", run_engine_command)
 
-    texmf_cache = tex_cache_root / "texmf-cache"
-    texmf_config = tex_cache_root / "texmf-config"
-    xdg_cache = tex_cache_root / "xdg-cache"
+    try:
+        engine_result: EngineResult = run_engine(
+            command_plan,
+            workdir=render_dir,
+            env=env,
+            console=state.console,
+            verbosity=state.verbosity,
+            classic_output=classic_output,
+        )
+    except OSError as exc:
+        if debug_enabled():
+            raise
+        emit_error(f"Failed to execute {engine_choice.label}: {exc}", exception=exc)
+        raise typer.Exit(code=1) from exc
 
-    for cache_path in (
-        texmf_home,
-        texmf_var,
-        texmf_config,
-        luatex_cache,
-        texmf_cache,
-        xdg_cache,
-    ):
-        cache_path.mkdir(parents=True, exist_ok=True)
+    if engine_result.returncode != 0:
+        messages = engine_result.messages or parse_latex_log(command_plan.log_path)
+        present_latex_failure(
+            state=state,
+            log_path=command_plan.log_path,
+            messages=messages,
+            open_log=open_log,
+        )
+        emit_error(f"{engine_choice.label} exited with status {engine_result.returncode}")
+        raise typer.Exit(code=engine_result.returncode)
 
-    env["TEXMFHOME"] = str(texmf_home)
-    env["TEXMFVAR"] = str(texmf_var)
-    env["TEXMFCONFIG"] = str(texmf_config)
-    env["LUATEXCACHE"] = str(luatex_cache)
-    env["LUAOTFLOAD_CACHE"] = str(luatex_cache)
-    env["TEXMFCACHE"] = str(texmf_cache)
-    env.setdefault("XDG_CACHE_HOME", str(xdg_cache))
-
-    state.console.print("[bold cyan]Running latexmk…[/]")
-
-    def _run_latexmk_classic() -> None:
-        try:
-            process = subprocess.run(
-                command,
-                check=False,
-                capture_output=True,
-                text=True,
-                cwd=render_dir,
-                env=env,
-            )
-        except OSError as exc:
-            if debug_enabled():
-                raise
-            emit_error(f"Failed to execute latexmk: {exc}", exception=exc)
-            raise typer.Exit(code=1) from exc
-
-        if process.stdout:
-            typer.echo(process.stdout.rstrip())
-        if process.stderr:
-            typer.echo(process.stderr.rstrip(), err=True)
-
-        if process.returncode != 0:
-            log_path = render_result.main_tex_path.with_suffix(".log")
-            messages = parse_latex_log(log_path)
-            present_latexmk_failure(
-                state=state,
-                log_path=log_path,
-                messages=messages,
-                open_log=open_log,
-            )
-            emit_error(f"latexmk exited with status {process.returncode}")
-            raise typer.Exit(code=process.returncode)
-
-    if classic_output:
-        _run_latexmk_classic()
-    else:
-        console = state.console
-        try:
-            result: LatexStreamResult | None = stream_latexmk_output(
-                command,
-                cwd=str(render_dir),
-                env=env,
-                console=console,
-                verbosity=state.verbosity,
-            )
-        except OSError as exc:
-            if debug_enabled():
-                raise
-            emit_error(f"Failed to execute latexmk: {exc}; falling back to classic output")
-            _run_latexmk_classic()
-            result = None
-
-        if result is not None and result.returncode != 0:
-            log_path = render_result.main_tex_path.with_suffix(".log")
-            messages = result.messages or parse_latex_log(log_path)
-            present_latexmk_failure(
-                state=state,
-                log_path=log_path,
-                messages=messages,
-                open_log=open_log,
-            )
-            emit_error(f"latexmk exited with status {result.returncode}")
-            raise typer.Exit(code=result.returncode)
-
-    pdf_path = render_result.main_tex_path.with_suffix(".pdf")
+    pdf_path = command_plan.pdf_path
     final_pdf_path = pdf_path
 
     if final_pdf_target is not None:
@@ -957,3 +886,4 @@ def render(
 # Expose runtime dependencies for test monkeypatching
 render.shutil = shutil  # type: ignore[attr-defined]
 render.subprocess = subprocess  # type: ignore[attr-defined]
+render.run_engine_command = run_engine_command  # type: ignore[attr-defined]

@@ -2,8 +2,9 @@
 
 `texsmith` is the primary entry point for turning Markdown or HTML into LaTeX. It
 can stream fragments to `stdout`, populate a directory with template-aware assets, and—when
-the `--build` flag is supplied—run `latexmk` to produce ready-to-share PDFs. The legacy
-`render` verb still works (for muscle memory), but the canonical form is simply `texsmith`.
+the `--build` flag is supplied—invoke your chosen engine (Tectonic by default, or latexmk
+with `xelatex`/`lualatex`) to produce ready-to-share PDFs. The legacy `render` verb still
+works (for muscle memory), but the canonical form is simply `texsmith`.
 
 !!! tip
     Handy inspection flags live at the top level:
@@ -27,14 +28,15 @@ $ uv run texsmith --help
 │                         and optionally one or more BibTeX files.                   │
 ╰────────────────────────────────────────────────────────────────────────────────────╯
 ╭─ Options ──────────────────────────────────────────────────────────────────────────╮
-│ --classic-output          --rich-output                Display raw latexmk output  │
+│ --classic-output          --rich-output                Display raw engine output   │
 │                                                        without parsing (use        │
 │                                                        --rich-output for           │
 │                                                        structured logs).           │
 │                                                        [default: rich-output]      │
-│ --build                   --no-build                   Invoke latexmk after        │
-│                                                        rendering to compile the    │
-│                                                        resulting LaTeX project.    │
+│ --build                   --no-build                   Invoke the selected LaTeX   │
+│                                                        engine after rendering to   │
+│                                                        compile the resulting       │
+│                                                        project.                    │
 │                                                        [default: no-build]         │
 │ --legacy-latex-accents    --unicode-latex-accents      Escape accented characters  │
 │                                                        and ligatures with legacy   │
@@ -52,6 +54,8 @@ $ uv run texsmith --help
 │ --isolate                            Use a per-render TeX cache inside the output  │
 │                                      directory instead of the shared               │
 │                                      ~/.cache/texsmith cache.                      │
+│ --engine                             LaTeX engine backend: tectonic (default),     │
+│                                      lualatex, or xelatex.                         │
 ╰────────────────────────────────────────────────────────────────────────────────────╯
 ╭─ Input Handling ───────────────────────────────────────────────────────────────────╮
 │ --selector             TEXT  CSS selector to extract the MkDocs article content.   │
@@ -109,6 +113,12 @@ $ uv run texsmith --help
     When `--build` is supplied without `--template`, TeXSmith falls back to the
     built-in `article` template. Pair `--template` with `--template-info` or
     `--template-scaffold` when you need to inspect or clone a non-default template.
+
+Tectonic is the default build engine. Use `--engine lualatex` or `--engine xelatex`
+to route builds through `latexmk` instead; TeXSmith will verify `latexmk`, the
+selected LaTeX binary, and optional helpers (`biber`, `makeindex`, `makeglossaries`)
+before invoking the toolchain. See [the Tectonic guide](../guide/tectonic.md) for
+installation and usage tips.
 
 ╭─ Rendering ────────────────────────────────────────────────────────────────────────╮
 │ --no-fallback-converters                                  Disable registration of  │

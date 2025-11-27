@@ -23,9 +23,18 @@ except ImportError:  # pragma: no cover - compatibility alias
 
 from PIL import Image  # type: ignore[import]
 
+from texsmith.adapters.latex.engine import (
+    EngineResult,
+    build_engine_command,
+    build_tex_env,
+    compute_features,
+    ensure_command_paths,
+    missing_dependencies,
+    resolve_engine,
+    run_engine_command,
+)
 from texsmith.api.service import ConversionRequest, ConversionService
 from texsmith.api.templates import TemplateRenderResult
-from texsmith.ui.cli.commands import build_latexmk_command
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
@@ -166,20 +175,41 @@ def _needs_render(target: Path, inputs: list[Path]) -> bool:
 
 
 def _compile_pdf(result: TemplateRenderResult) -> Path:
-    latexmk_path = shutil.which("latexmk")
-    if latexmk_path is None:  # pragma: no cover - runtime guard
-        raise RuntimeError("latexmk executable not found in PATH.")
-
-    command = build_latexmk_command(
-        result.template_engine,
-        shell_escape=result.requires_shell_escape,
-        force_bibtex=result.has_bibliography,
+    engine_choice = resolve_engine("tectonic", result.template_engine)
+    template_context = getattr(result, "template_context", None) or getattr(result, "context", None)
+    features = compute_features(
+        requires_shell_escape=result.requires_shell_escape,
+        bibliography=result.has_bibliography,
+        document_state=result.document_state,
+        template_context=template_context,
     )
-    command[0] = latexmk_path
-    command.append(result.main_tex_path.name)
+    missing = missing_dependencies(engine_choice, features)
+    if missing:  # pragma: no cover - runtime guard
+        raise RuntimeError(
+            f"Missing LaTeX tools for example generation: {', '.join(sorted(missing))}"
+        )
 
-    subprocess.run(command, check=True, cwd=result.main_tex_path.parent)
-    return result.main_tex_path.with_suffix(".pdf")
+    command_plan = ensure_command_paths(
+        build_engine_command(
+            engine_choice,
+            features,
+            main_tex_path=result.main_tex_path,
+        )
+    )
+    env = build_tex_env(result.main_tex_path.parent, isolate_cache=False)
+    engine_result: EngineResult = run_engine_command(
+        command_plan,
+        workdir=result.main_tex_path.parent,
+        env=env,
+        console=None,
+        classic_output=True,
+    )
+    if engine_result.returncode != 0:  # pragma: no cover - runtime guard
+        raise RuntimeError(
+            f"{engine_choice.label} exited with status {engine_result.returncode} when compiling "
+            f"{result.main_tex_path}"
+        )
+    return command_plan.pdf_path
 
 
 def _preview_meta_path(png_path: Path) -> Path:

@@ -904,7 +904,10 @@ class LatexPlugin(BasePlugin):
                         titles.add(self._normalise_label(selector))
             elif selectors is not None:
                 log.warning(
-                    "Slot '%s' selectors must be strings or lists of strings; ignoring %r.",
+                    (
+                        "Slot '%s' selectors must be strings or lists of strings; "
+                        "ignoring %r."
+                    ),
                     name,
                     type(selectors),
                 )

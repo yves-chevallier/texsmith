@@ -47,7 +47,7 @@ Diagnostics you can trust
 
 !!! note "LaTeX distribution"
     TeXSmith only generates LaTeX sources. Use TeX Live, MiKTeX, or MacTeX when
-    you need PDFs (`texsmith --build` orchestrates `latexmk` for you).
+    you need PDFs (`texsmith --build` orchestrates Tectonic by default, or latexmk when requested).
 
 ## How is it different from Pandoc?
 

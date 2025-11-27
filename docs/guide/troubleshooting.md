@@ -1,19 +1,25 @@
 # Troubleshooting LaTeX Builds
 
-Running `texsmith --build` shells out to `latexmk`, `bibtex`/`biber`, and any template assets declared in `manifest.toml`. When those tools fail, the CLI will highlight the failing step and (optionally) open the log file. Use this page to decode the most common issues.
+Running `texsmith --build` shells out to your selected engine (Tectonic by default, `latexmk` when `--engine` is set to `xelatex`/`lualatex`), `bibtex`/`biber`, and any template assets declared in `manifest.toml`. When those tools fail, the CLI will highlight the failing step and (optionally) open the log file. Use this page to decode the most common issues.
 
 ## Enable rich diagnostics
 
 - Add `-v` or `-vv` to surface structured diagnostics from the conversion pipeline (missing slots, unresolved citations, asset copy failures).
 - Pass `--debug` to print full Python tracebacks if TeXSmith itself throws.
-- Combine `--classic-output` with CI logs when you need deterministic `latexmk` output, or keep the default rich output locally for incremental updates.
-- When `latexmk` exits non-zero, re-run with `--open-log` to jump directly into the `.log` file.
+- Combine `--classic-output` with CI logs when you need deterministic engine output, or keep the default rich output locally for incremental updates.
+- When the engine exits non-zero, re-run with `--open-log` to jump directly into the `.log` file.
 
 ## latexmk not found
 
 **Symptom:** `latexmk: command not found` or TeXSmith reports it cannot spawn the binary.
 
 **Fix:** Ensure your TeX Live/MacTeX/MiKTeX distribution added `latexmk` to `PATH`. On macOS, `eval "$(/usr/libexec/path_helper -s)"` after installing MacTeX. On Windows, open the “LaTeX apps” PowerShell and run TeXSmith from there.
+
+## tectonic not found
+
+**Symptom:** `tectonic: command not found` or TeXSmith reports missing dependencies before starting the build.
+
+**Fix:** Install Tectonic from your package manager (`brew install tectonic`, `apt install tectonic`, or `cargo install tectonic`) or download a prebuilt binary from https://tectonic-typesetting.github.io/. Ensure the `tectonic` executable is on `PATH` before re-running TeXSmith. You can also switch to `--engine lualatex`/`xelatex` to keep using `latexmk`.
 
 ## Missing tlmgr packages
 
@@ -25,7 +31,7 @@ Running `texsmith --build` shells out to `latexmk`, `bibtex`/`biber`, and any te
 
 **Symptom:** `shell escape feature is not enabled` when templates run `minted`, `gnuplot`, or diagram converters.
 
-**Fix:** `texsmith --template-info` indicates whether `shell_escape` is required. Re-run `texsmith --build --classic-output` to confirm the flag, then edit your TeX Live config or pass `latexmk -shell-escape` by exporting `LATEXMKOPT="-shell-escape"`.
+**Fix:** `texsmith --template-info` indicates whether `shell_escape` is required. Re-run `texsmith --build --classic-output` to confirm the flag. With `--engine lualatex`/`xelatex`, edit your TeX Live config or pass `latexmk -shell-escape` by exporting `LATEXMKOPT="-shell-escape"`. If you're using Tectonic, switch to `--engine lualatex` when you need tighter control over `-shell-escape`.
 
 ## Bibliography failures
 
