@@ -124,7 +124,9 @@ def compute_features(
     )
 
 
-def missing_dependencies(choice: EngineChoice, features: EngineFeatures) -> list[str]:
+def missing_dependencies(
+    choice: EngineChoice, features: EngineFeatures, *, use_system_tectonic: bool = False
+) -> list[str]:
     """Return missing executables required by the selected engine."""
     missing: list[str] = []
 
@@ -133,7 +135,8 @@ def missing_dependencies(choice: EngineChoice, features: EngineFeatures) -> list
             missing.append(binary)
 
     if choice.backend == "tectonic":
-        _check("tectonic")
+        if use_system_tectonic:
+            _check("tectonic")
     else:
         _check("latexmk")
         engine_config = normalise_engine_command(
@@ -158,11 +161,13 @@ def build_engine_command(
     features: EngineFeatures,
     *,
     main_tex_path: Path,
+    tectonic_binary: str | Path | None = None,
 ) -> EngineCommand:
     """Construct the command to compile the LaTeX document."""
     if choice.backend == "tectonic":
+        binary = str(tectonic_binary) if tectonic_binary else "tectonic"
         argv = [
-            "tectonic",
+            binary,
             "-X",
             "compile",
             main_tex_path.name,
@@ -226,6 +231,7 @@ def build_tex_env(render_dir: Path, *, isolate_cache: bool) -> dict[str, str]:
     texmf_cache = tex_cache_root / "texmf-cache"
     texmf_config = tex_cache_root / "texmf-config"
     xdg_cache = tex_cache_root / "xdg-cache"
+    tectonic_cache = tex_cache_root / "tectonic-cache"
 
     for cache_path in (
         texmf_home,
@@ -234,6 +240,7 @@ def build_tex_env(render_dir: Path, *, isolate_cache: bool) -> dict[str, str]:
         luatex_cache,
         texmf_cache,
         xdg_cache,
+        tectonic_cache,
     ):
         cache_path.mkdir(parents=True, exist_ok=True)
 
@@ -244,6 +251,7 @@ def build_tex_env(render_dir: Path, *, isolate_cache: bool) -> dict[str, str]:
     env["LUAOTFLOAD_CACHE"] = str(luatex_cache)
     env["TEXMFCACHE"] = str(texmf_cache)
     env.setdefault("XDG_CACHE_HOME", str(xdg_cache))
+    env["TECTONIC_CACHE_DIR"] = str(tectonic_cache)
     return env
 
 

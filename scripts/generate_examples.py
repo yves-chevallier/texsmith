@@ -33,6 +33,10 @@ from texsmith.adapters.latex.engine import (
     resolve_engine,
     run_engine_command,
 )
+from texsmith.adapters.latex.tectonic import (
+    TectonicAcquisitionError,
+    select_tectonic_binary,
+)
 from texsmith.api.service import ConversionRequest, ConversionService
 from texsmith.api.templates import TemplateRenderResult
 
@@ -183,7 +187,11 @@ def _compile_pdf(result: TemplateRenderResult) -> Path:
         document_state=result.document_state,
         template_context=template_context,
     )
-    missing = missing_dependencies(engine_choice, features)
+    try:
+        selection = select_tectonic_binary(False, console=None)
+    except TectonicAcquisitionError as exc:  # pragma: no cover - runtime guard
+        raise RuntimeError(str(exc)) from exc
+    missing = missing_dependencies(engine_choice, features, use_system_tectonic=False)
     if missing:  # pragma: no cover - runtime guard
         raise RuntimeError(
             f"Missing LaTeX tools for example generation: {', '.join(sorted(missing))}"
@@ -194,6 +202,7 @@ def _compile_pdf(result: TemplateRenderResult) -> Path:
             engine_choice,
             features,
             main_tex_path=result.main_tex_path,
+            tectonic_binary=selection.path,
         )
     )
     env = build_tex_env(result.main_tex_path.parent, isolate_cache=False)

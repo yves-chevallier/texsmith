@@ -16,6 +16,10 @@ from texsmith.adapters.latex.engine import (
     resolve_engine,
     run_engine_command,
 )
+from texsmith.adapters.latex.tectonic import (
+    TectonicAcquisitionError,
+    select_tectonic_binary,
+)
 from texsmith.api.service import ConversionRequest, ConversionService
 
 STYLES = ("fancy", "classic", "minimal")
@@ -62,7 +66,12 @@ def _render_style(style: str) -> Path:
         document_state=render_result.document_state,
         template_context=template_context,
     )
-    missing = missing_dependencies(engine_choice, features)
+    try:
+        selection = select_tectonic_binary(False, console=None)
+    except TectonicAcquisitionError as exc:
+        raise RuntimeError(str(exc)) from exc
+
+    missing = missing_dependencies(engine_choice, features, use_system_tectonic=False)
     if missing:
         raise RuntimeError(
             f"Missing LaTeX tools for admonition preview: {', '.join(sorted(missing))}"
@@ -73,6 +82,7 @@ def _render_style(style: str) -> Path:
             engine_choice,
             features,
             main_tex_path=render_result.main_tex_path,
+            tectonic_binary=selection.path,
         )
     )
     env = build_tex_env(render_result.main_tex_path.parent, isolate_cache=False)

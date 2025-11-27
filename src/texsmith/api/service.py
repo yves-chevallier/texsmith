@@ -20,6 +20,10 @@ from texsmith.adapters.latex.engine import (
     resolve_engine,
     run_engine_command,
 )
+from texsmith.adapters.latex.tectonic import (
+    TectonicAcquisitionError,
+    select_tectonic_binary,
+)
 from texsmith.adapters.markdown import split_front_matter
 from texsmith.core.conversion.debug import ConversionError, ensure_emitter
 from texsmith.core.conversion.inputs import (
@@ -312,6 +316,7 @@ class ConversionService:
         env: Mapping[str, str] | None = None,
         console: Any | None = None,
         verbosity: int = 0,
+        use_system_tectonic: bool = False,
     ) -> EngineResult:
         """Compile a rendered template into a PDF using the requested engine."""
         template_context = getattr(render_result, "template_context", None) or getattr(
@@ -324,13 +329,26 @@ class ConversionService:
             template_context=template_context,
         )
         choice = resolve_engine(engine, render_result.template_engine)
-        missing = missing_dependencies(choice, features)
+        tectonic_binary: Path | None = None
+        if choice.backend == "tectonic":
+            try:
+                selection = select_tectonic_binary(use_system_tectonic, console=console)
+            except TectonicAcquisitionError as exc:
+                raise ConversionError(str(exc)) from exc
+            tectonic_binary = selection.path
+
+        missing = missing_dependencies(choice, features, use_system_tectonic=use_system_tectonic)
         if missing:
             formatted = ", ".join(sorted(missing))
             raise ConversionError(f"Missing required LaTeX tools for '{choice.label}': {formatted}")
 
         command_plan = ensure_command_paths(
-            build_engine_command(choice, features, main_tex_path=render_result.main_tex_path)
+            build_engine_command(
+                choice,
+                features,
+                main_tex_path=render_result.main_tex_path,
+                tectonic_binary=tectonic_binary,
+            )
         )
         base_env = build_tex_env(render_result.main_tex_path.parent, isolate_cache=isolate_cache)
         merged_env = dict(base_env)

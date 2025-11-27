@@ -700,6 +700,10 @@ def _compile_pdf(render_result: Any) -> Path:
         resolve_engine,
         run_engine_command,
     )
+    from texsmith.adapters.latex.tectonic import (
+        TectonicAcquisitionError,
+        select_tectonic_binary,
+    )
 
     engine_choice = resolve_engine("tectonic", render_result.template_engine)
     template_context = getattr(render_result, "template_context", None) or getattr(
@@ -711,7 +715,13 @@ def _compile_pdf(render_result: Any) -> Path:
         document_state=render_result.document_state,
         template_context=template_context,
     )
-    missing = missing_dependencies(engine_choice, features)
+    try:
+        selection = select_tectonic_binary(False, console=None)
+    except TectonicAcquisitionError as exc:
+        raise AssetMissingError(str(exc)) from exc
+    tectonic_binary = selection.path
+
+    missing = missing_dependencies(engine_choice, features, use_system_tectonic=False)
     if missing:
         formatted = ", ".join(sorted(missing))
         raise AssetMissingError(f"Missing LaTeX tools for snippet rendering: {formatted}")
@@ -721,6 +731,7 @@ def _compile_pdf(render_result: Any) -> Path:
             engine_choice,
             features,
             main_tex_path=render_result.main_tex_path,
+            tectonic_binary=tectonic_binary,
         )
     )
     env = build_tex_env(render_result.main_tex_path.parent, isolate_cache=True)
