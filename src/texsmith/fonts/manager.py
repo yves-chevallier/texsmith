@@ -330,8 +330,14 @@ def prepare_fonts_for_context(
         fonts_to_copy.add(emoji_font)
 
     cached_fonts, _cache_failures = cache_fonts_for_families(list(fonts_to_copy), emitter=emitter)
-    for family, path in cached_fonts.items():
-        locator.register_font_file(family, path)
+    for family, cached_entry in cached_fonts.items():
+        if isinstance(cached_entry, Mapping):
+            for style, path in cached_entry.items():
+                locator.register_font_file(
+                    family, path, style=str(style) if isinstance(style, str) else None
+                )
+        else:
+            locator.register_font_file(family, cached_entry)
 
     copied = locator.copy_families(fonts_to_copy, fonts_dir)
     copied_serialised = _serialize_copied_fonts(copied, output_dir)
