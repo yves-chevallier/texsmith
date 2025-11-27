@@ -33,6 +33,7 @@ class TemplateWrapResult:
     template_context: dict[str, Any]
     output_path: Path | None
     asset_paths: list[Path] = field(default_factory=list)
+    asset_pairs: list[tuple[Path, Path]] = field(default_factory=list)
 
 
 def wrap_template_document(
@@ -236,13 +237,17 @@ def wrap_template_document(
     latex_output = _squash_blank_lines(latex_output)
 
     asset_paths: list[Path] = []
+    asset_pairs: list[tuple[Path, Path]] = []
     if copy_assets:
+        declared_assets = list(template.iter_assets())
         asset_paths = copy_template_assets(
             template,
             output_dir,
             context=template_context,
             overrides=overrides_payload,
+            assets=declared_assets,
         )
+        asset_pairs = [(entry.source, dest) for entry, dest in zip(declared_assets, asset_paths)]
 
     output_path: Path | None = None
     if output_name:
@@ -256,6 +261,7 @@ def wrap_template_document(
         template_context=template_context,
         output_path=output_path,
         asset_paths=asset_paths,
+        asset_pairs=asset_pairs,
     )
 
 

@@ -176,9 +176,19 @@ ManifestOptionWithShort = Annotated[
     bool,
     typer.Option(
         "--manifest/--no-manifest",
-        "-m/-M",
+        "-m",
         help="Generate a manifest.json file alongside the LaTeX output.",
         rich_help_panel=RENDERING_PANEL,
+    ),
+]
+
+MakefileDepsOption = Annotated[
+    bool,
+    typer.Option(
+        "--makefile-deps/--no-makefile-deps",
+        "-M",
+        help="Emit a Makefile-compatible .d dependency file when building PDFs.",
+        rich_help_panel=OUTPUT_PANEL,
     ),
 ]
 

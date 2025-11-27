@@ -60,6 +60,7 @@ def copy_template_assets(
     *,
     context: Mapping[str, Any] | None = None,
     overrides: Mapping[str, Any] | None = None,
+    assets: Iterable["ResolvedAsset"] | None = None,
 ) -> list[Path]:
     """Copy the template declared assets into the selected output directory."""
     output_dir = Path(output_dir).resolve()
@@ -71,7 +72,8 @@ def copy_template_assets(
         render_context = dict(context)
 
     written: list[Path] = []
-    for asset in template.iter_assets():
+    asset_entries = list(assets) if assets is not None else list(template.iter_assets())
+    for asset in asset_entries:
         destination_path = (output_dir / asset.destination).resolve()
 
         if asset.template:

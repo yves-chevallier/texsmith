@@ -15,8 +15,11 @@ Roadmap and development notes for TeXSmith. I keep this file as a running checkl
 - [x] Emojis without svg conversions
 - [x] two columns in article template
 - [x] Provide listings/verbatim/minted handling
-- [ ] Add support for Tectonic engine
-- [ ] Include fonts in package (like OpenMoji)
+- [x] Add support for Tectonic engine
+- [x] Download tectonic automatically if not installed
+- [ ] Download biber automatically if not installed
+- [ ] Add support for Makefile deps `.d` files
+- [ ] Include fonts in package (like OpenMoji and Noto Color Emoji)
 - [ ] Mermaid color configuration
 - [ ] Global user's configuration (.texsmith/config.toml)
 - [ ] Acronyms multiline
