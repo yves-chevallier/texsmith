@@ -46,6 +46,7 @@
 \BLOCK{ endif }
 \BLOCK{ set emoji_range_start = "1F000" }
 \BLOCK{ set emoji_range_end = "1FAFF" }
+\BLOCK{ set emoji_ranges = emoji_ranges if emoji_ranges is defined and emoji_ranges else [(emoji_range_start, emoji_range_end)] }
 \BLOCK{ set font_files = font_files | default({}) }
 \BLOCK{ set unicode_font_classes = unicode_font_classes | default([]) }
 \BLOCK{ set fallback_fonts = fallback_fonts | default(
@@ -384,7 +385,7 @@
 \BLOCK{ set is_emoji_class = emoji_font and class.family|lower == "notocoloremoji" }
 \BLOCK{ set class_family = emoji_font if is_emoji_class else class.family }
 \BLOCK{ set class_files = emoji_files if is_emoji_class else class.files }
-\BLOCK{ set class_ranges = [(emoji_range_start, emoji_range_end)] if is_emoji_class else class.ranges }
+\BLOCK{ set class_ranges = class.ranges }
 \expandafter\newfontfamily\csname \VAR{class.font_command}\endcsname[
 \BLOCK{ if class_files }
       Path=\VAR{font_path_prefix},
@@ -432,7 +433,9 @@
     \newUnicodeClass{Emoji}
 \setTransitionTo{Emoji}{\texsmithEmojiFont}
     \setTransitionFrom{Emoji}{\rmfamily}
-    \setUnicodeClassRange{Emoji}{\VAR{emoji_range_start}}{\VAR{emoji_range_end}}
+    \BLOCK{ for start, end in emoji_ranges }
+    \setUnicodeClassRange{Emoji}{\VAR{start}}{\VAR{end}}
+    \BLOCK{ endfor }
 \BLOCK{ endif }
   \fi
 \fi

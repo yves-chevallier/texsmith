@@ -31,6 +31,7 @@ class FontSource:
     filename: str
     zip_member: str | None = None
     style: str | None = None
+    alt_members: tuple[str, ...] = ()
 
 
 _KNOWN_SOURCES: dict[str, tuple[FontSource, ...]] = {
@@ -46,7 +47,8 @@ _KNOWN_SOURCES: dict[str, tuple[FontSource, ...]] = {
             family="OpenMoji Black",
             url="https://github.com/hfg-gmuend/openmoji/releases/download/16.0.0/openmoji-font.zip",
             filename="OpenMoji-black-glyf.ttf",
-            zip_member="fonts/OpenMoji-black-glyf.ttf",
+            zip_member="OpenMoji-black-glyf/OpenMoji-black-glyf.ttf",
+            alt_members=("fonts/OpenMoji-black-glyf.ttf",),
         ),
     ),
     normalize_family("IBM Plex Mono"): (
@@ -128,8 +130,12 @@ def _extract_payload(
         return payload
     try:
         with zipfile.ZipFile(io.BytesIO(payload)) as archive:
-            if source.zip_member in archive.namelist():
+            members = archive.namelist()
+            if source.zip_member in members:
                 return archive.read(source.zip_member)
+            for alternate in source.alt_members:
+                if alternate in members:
+                    return archive.read(alternate)
 
             target_lower = source.filename.lower()
             lowered = [
