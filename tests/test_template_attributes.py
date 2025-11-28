@@ -45,6 +45,8 @@ letter_module = importlib.import_module("texsmith.builtin_templates.letter")
 LetterTemplate = letter_module.Template
 TemplateManifest = importlib.import_module("texsmith.core.templates.manifest").TemplateManifest
 from texsmith.core.fragments import inject_fragment_attributes  # noqa: E402
+
+
 ARTICLE_ROOT = Path(article_module.__file__).resolve().parent
 from texsmith.builtin_fragments.ts_geometry.paper import inject_geometry_context  # noqa: E402
 from texsmith.ui.cli.commands.render import _parse_template_attributes  # type: ignore  # noqa: E402

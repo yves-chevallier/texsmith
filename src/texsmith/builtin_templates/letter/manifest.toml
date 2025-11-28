@@ -60,7 +60,7 @@ type = "string"
 escape = "latex"
 allow_empty = false
 required = true
-sources = ["press.from.name", "press.author", "author"]
+sources = ["from_name", "press.from.name", "press.author", "author"]
 
 [latex.template.attributes.from_address]
 default = []
@@ -85,7 +85,7 @@ type = "string"
 escape = "latex"
 allow_empty = false
 required = true
-sources = ["press.to.name"]
+sources = ["to_name", "press.to.name"]
 
 [latex.template.attributes.to_address]
 default = []

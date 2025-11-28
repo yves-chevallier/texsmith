@@ -14,15 +14,18 @@ Usage :
 from __future__ import annotations
 
 import argparse
-import sys
+from collections.abc import Sequence
+import logging
 from pathlib import Path
-
 import subprocess
 import sys
-from playwright.sync_api import sync_playwright
+
 from playwright._impl._errors import Error as PlaywrightError
+from playwright.sync_api import Browser, Playwright, sync_playwright
+
 
 EXPORT_URL = "https://app.diagrams.net/export3.html"
+logger = logging.getLogger(__name__)
 
 
 def render_svg(input_path: Path, svg_out: Path, embed_fonts: bool, theme: str) -> str:
@@ -107,26 +110,36 @@ def convert_to_pdf(svg_content: str, pdf_out: Path) -> None:
         browser.close()
 
 
-def launch_chromium(playwright, headless: bool = True):
+def launch_chromium(playwright: Playwright, headless: bool = True) -> Browser:
     try:
         return playwright.chromium.launch(headless=headless)
     except PlaywrightError as e:
         msg = str(e)
         if "Executable doesn't exist" in msg or "Failed to launch" in msg:
-            subprocess.run(
-                [sys.executable, "-m", "playwright", "install", "chromium"], check=True
-            )
+            subprocess.run([sys.executable, "-m", "playwright", "install", "chromium"], check=True)
             return playwright.chromium.launch(headless=headless)
         raise
 
 
-def main(argv=None):
-    parser = argparse.ArgumentParser(description="Export draw.io -> SVG/PDF via remote export3.html.")
+def main(argv: Sequence[str] | None = None) -> None:
+    logging.basicConfig(level=logging.INFO)
+    parser = argparse.ArgumentParser(
+        description="Export draw.io -> SVG/PDF via remote export3.html."
+    )
     parser.add_argument("--input", required=True, type=Path, help="Fichier .drawio à convertir")
-    parser.add_argument("--svg", type=Path, help="Chemin de sortie SVG (défaut: <input>_export3.svg)")
+    parser.add_argument(
+        "--svg", type=Path, help="Chemin de sortie SVG (défaut: <input>_export3.svg)"
+    )
     parser.add_argument("--pdf", type=Path, help="Chemin de sortie PDF (optionnel)")
-    parser.add_argument("--embed-fonts", action="store_true", help="Embarque les fontes dans le SVG")
-    parser.add_argument("--theme", default="auto", choices=["auto", "dark", "light"], help="Thème export (auto par défaut)")
+    parser.add_argument(
+        "--embed-fonts", action="store_true", help="Embarque les fontes dans le SVG"
+    )
+    parser.add_argument(
+        "--theme",
+        default="auto",
+        choices=["auto", "dark", "light"],
+        help="Thème export (auto par défaut)",
+    )
     args = parser.parse_args(argv)
 
     if not args.input.exists():
@@ -134,11 +147,11 @@ def main(argv=None):
 
     svg_out = args.svg or args.input.with_name(args.input.stem + "_export3.svg")
     svg = render_svg(args.input, svg_out, args.embed_fonts, args.theme)
-    print(f"Wrote SVG to {svg_out}")
+    logger.info("Wrote SVG to %s", svg_out)
 
     if args.pdf:
         convert_to_pdf(svg, args.pdf)
-        print(f"Wrote PDF to {args.pdf}")
+        logger.info("Wrote PDF to %s", args.pdf)
 
 
 if __name__ == "__main__":
