@@ -295,12 +295,16 @@ def prepare_fonts_for_context(
     present_fonts = list(font_match.present_fonts) if font_match else []
     missing_fonts = list(font_match.missing_fonts) if font_match else []
 
-    engine_hint = str(
-        template_context.get("_texsmith_latex_engine")
-        or os.environ.get("TEXSMITH_SELECTED_ENGINE")
-        or template_context.get("latex_engine")
-        or ""
-    ).strip().lower()
+    engine_hint = (
+        str(
+            template_context.get("_texsmith_latex_engine")
+            or os.environ.get("TEXSMITH_SELECTED_ENGINE")
+            or template_context.get("latex_engine")
+            or ""
+        )
+        .strip()
+        .lower()
+    )
 
     emoji_mode, emoji_font = _resolve_emoji_preferences(template_context)
     color_requested = bool(
@@ -353,9 +357,7 @@ def prepare_fonts_for_context(
     if emoji_font:
         fonts_to_copy.add(emoji_font)
 
-    cached_fonts, cache_failures = cache_fonts_for_families(
-        list(fonts_to_copy), emitter=emitter
-    )
+    cached_fonts, cache_failures = cache_fonts_for_families(list(fonts_to_copy), emitter=emitter)
     for family, cached_entry in cached_fonts.items():
         if isinstance(cached_entry, Mapping):
             for style, path in cached_entry.items():
@@ -371,9 +373,9 @@ def prepare_fonts_for_context(
     template_context["font_path_prefix"] = fonts_path_prefix
     template_context["font_files"] = copied_serialised
 
-    missing_after_copy = {
-        family for family in fonts_to_copy if family not in copied_serialised
-    } | (set(cache_failures) & set(fonts_to_copy))
+    missing_after_copy = {family for family in fonts_to_copy if family not in copied_serialised} | (
+        set(cache_failures) & set(fonts_to_copy)
+    )
 
     available_families = set(copied_serialised.keys())
     fallback_fonts = [font for font in fallback_fonts if font in available_families]
