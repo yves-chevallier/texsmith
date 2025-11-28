@@ -41,7 +41,10 @@ article_module = importlib.import_module("texsmith.builtin_templates.article")
 ArticleTemplate = article_module.Template
 book_module = importlib.import_module("texsmith.builtin_templates.book")
 BookTemplate = book_module.Template
+letter_module = importlib.import_module("texsmith.builtin_templates.letter")
+LetterTemplate = letter_module.Template
 TemplateManifest = importlib.import_module("texsmith.core.templates.manifest").TemplateManifest
+from texsmith.core.fragments import inject_fragment_attributes  # noqa: E402
 ARTICLE_ROOT = Path(article_module.__file__).resolve().parent
 from texsmith.builtin_fragments.ts_geometry.paper import inject_geometry_context  # noqa: E402
 from texsmith.ui.cli.commands.render import _parse_template_attributes  # type: ignore  # noqa: E402
@@ -147,8 +150,24 @@ def test_article_template_normalises_callout_style() -> None:
     overrides = {"press": {"callout_style": "CLASSIC"}}
 
     context = template.prepare_context("Body", overrides=overrides)
+    inject_fragment_attributes(template.info.fragments or [], context=context, overrides=overrides)
 
     assert context["callout_style"] == "classic"
+
+
+def test_letter_template_prefers_direct_format_override() -> None:
+    template = LetterTemplate()
+    overrides = {
+        "press": {"format": "nf"},
+        "format": "sn",
+        "from_name": "Ada Lovelace",
+        "to_name": "Charles Babbage",
+    }
+
+    context = template.prepare_context("Body", overrides=overrides)
+
+    assert context["letter_standard"] == "sn-left"
+    assert context["letter_standard_option"] == "SNleft"
 
 
 def test_book_template_supports_columns_option() -> None:

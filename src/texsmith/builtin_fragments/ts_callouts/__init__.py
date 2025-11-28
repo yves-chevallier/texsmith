@@ -4,6 +4,7 @@ from collections.abc import Mapping
 from pathlib import Path
 
 from texsmith.core.fragments import FragmentDefinition, FragmentPiece
+from texsmith.core.templates.manifest import TemplateAttributeSpec
 
 
 def create_fragment() -> FragmentDefinition:
@@ -21,6 +22,20 @@ def create_fragment() -> FragmentDefinition:
         description="Reusable callout styles shared by built-in templates.",
         source=template_path,
         context_defaults={"extra_packages": ""},
+        attributes={
+            "callout_style": TemplateAttributeSpec(
+                default="fancy",
+                type="string",
+                choices=["fancy", "classic", "minimal"],
+                sources=[
+                    "press.callouts.style",
+                    "callouts.style",
+                    "callout_style",
+                    "press.callout_style",
+                ],
+                normaliser="callout_style",
+            )
+        },
         should_render=_uses_callouts,
     )
 

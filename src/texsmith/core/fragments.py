@@ -15,7 +15,11 @@ except ModuleNotFoundError:  # Python 3.10
     import tomli as tomllib
 
 from texsmith.core.templates.base import _build_environment
-from texsmith.core.templates.manifest import TemplateError
+from texsmith.core.templates.manifest import (
+    TemplateAttributeResolver,
+    TemplateAttributeSpec,
+    TemplateError,
+)
 
 
 FragmentKind = Literal["package", "input", "inline"]
@@ -90,6 +94,40 @@ class FragmentDefinition:
     context_defaults: dict[str, Any] = field(default_factory=dict)
     context_injector: Callable[[dict[str, Any], Mapping[str, Any] | None], None] | None = None
     should_render: Callable[[Mapping[str, Any]], bool] | None = None
+    attributes: dict[str, TemplateAttributeSpec] = field(default_factory=dict)
+    _attribute_resolver: TemplateAttributeResolver | None = field(
+        init=False, repr=False, default=None
+    )
+
+    def __post_init__(self) -> None:
+        if not self.attributes:
+            return
+
+        normalised: dict[str, TemplateAttributeSpec] = {}
+        for name, spec in self.attributes.items():
+            if isinstance(spec, TemplateAttributeSpec):
+                candidate = spec
+            elif isinstance(spec, Mapping):
+                candidate = TemplateAttributeSpec.model_validate(spec)
+            else:
+                candidate = TemplateAttributeSpec.model_validate({"default": spec})
+            candidate.name = name
+            normalised[name] = candidate
+
+        object.__setattr__(self, "attributes", normalised)
+        object.__setattr__(self, "_attribute_resolver", TemplateAttributeResolver(normalised))
+
+    def attribute_defaults(self) -> dict[str, Any]:
+        """Return defaults for fragment-managed attributes."""
+        if self._attribute_resolver is None:
+            return {}
+        return self._attribute_resolver.defaults()
+
+    def resolve_attributes(self, overrides: Mapping[str, Any] | None = None) -> dict[str, Any]:
+        """Return resolved fragment attributes merged with overrides."""
+        if self._attribute_resolver is None:
+            return {}
+        return self._attribute_resolver.merge(overrides)
 
     @classmethod
     def from_manifest(cls, manifest_path: Path) -> FragmentDefinition:
@@ -120,12 +158,25 @@ class FragmentDefinition:
             )
 
         pieces = [FragmentPiece.from_mapping(entry, base_dir=base_dir) for entry in files]
+        attributes: dict[str, TemplateAttributeSpec] = {}
+        declared_attrs = payload.get("attributes")
+        if isinstance(declared_attrs, Mapping):
+            for key, value in declared_attrs.items():
+                attributes[key] = (
+                    value
+                    if isinstance(value, TemplateAttributeSpec)
+                    else TemplateAttributeSpec.model_validate(value)
+                    if isinstance(value, Mapping)
+                    else TemplateAttributeSpec.model_validate({"default": value})
+                )
+
         return cls(
             name=name,
             pieces=pieces,
             description=description,
             source=manifest_path,
             context_defaults={},
+            attributes=attributes,
         )
 
     @classmethod
@@ -167,11 +218,23 @@ def _load_entrypoint(entrypoint: str, *, fallback_dir: Path) -> FragmentDefiniti
         name = definition.get("name") or fallback_dir.name
         description = definition.get("description")
         pieces = [FragmentPiece.from_mapping(entry, base_dir=fallback_dir) for entry in files]
+        attributes_payload = definition.get("attributes")
+        attributes: dict[str, TemplateAttributeSpec] = {}
+        if isinstance(attributes_payload, Mapping):
+            for key, value in attributes_payload.items():
+                attributes[key] = (
+                    value
+                    if isinstance(value, TemplateAttributeSpec)
+                    else TemplateAttributeSpec.model_validate(value)
+                    if isinstance(value, Mapping)
+                    else TemplateAttributeSpec.model_validate({"default": value})
+                )
         return FragmentDefinition(
             name=name,
             pieces=pieces,
             description=description if isinstance(description, str) else None,
             source=fallback_dir,
+            attributes=attributes,
         )
 
     raise TemplateError(
@@ -273,6 +336,43 @@ def register_fragment(
     FRAGMENT_REGISTRY.register_fragment(fragment, name=name)
 
 
+def _resolve_fragment_definitions(
+    names: Iterable[str], *, source_dir: Path | None = None
+) -> list[FragmentDefinition]:
+    return [FRAGMENT_REGISTRY.resolve(name, source_dir=source_dir) for name in names]
+
+
+def collect_fragment_attribute_defaults(
+    names: Iterable[str], *, source_dir: Path | None = None
+) -> dict[str, Any]:
+    """Return default attributes declared by the provided fragments."""
+    defaults: dict[str, Any] = {}
+    for fragment in _resolve_fragment_definitions(names, source_dir=source_dir):
+        for key, value in fragment.attribute_defaults().items():
+            defaults.setdefault(key, value)
+    return defaults
+
+
+def inject_fragment_attributes(
+    names: Iterable[str],
+    *,
+    context: dict[str, Any],
+    overrides: Mapping[str, Any] | None = None,
+    source_dir: Path | None = None,
+) -> dict[str, Any]:
+    """Populate ``context`` with fragment-owned attributes."""
+    if not isinstance(context, dict):
+        raise TemplateError("Fragment attribute injection requires a mutable context dictionary.")
+
+    injected: dict[str, Any] = {}
+    for fragment in _resolve_fragment_definitions(names, source_dir=source_dir):
+        resolved = fragment.resolve_attributes(overrides)
+        for key, value in resolved.items():
+            context[key] = value
+            injected[key] = value
+    return injected
+
+
 def render_fragments(
     names: Iterable[str],
     *,
@@ -295,8 +395,9 @@ def render_fragments(
     if not isinstance(context, dict):
         raise TemplateError("Fragment rendering requires a mutable context dictionary.")
 
-    for name in names:
-        fragment = FRAGMENT_REGISTRY.resolve(name, source_dir=source_dir)
+    fragments = _resolve_fragment_definitions(names, source_dir=source_dir)
+
+    for fragment in fragments:
         if declared_slots is not None:
             for piece in fragment.pieces:
                 target_slot = piece.slot
@@ -310,6 +411,10 @@ def render_fragments(
                         f"Template '{template_name or 'unknown'}' doesn't declare variable "
                         f"'{target_slot}' required by fragment '{fragment.name}'."
                     )
+
+        if fragment.attributes:
+            resolved_attributes = fragment.resolve_attributes(overrides)
+            context.update(resolved_attributes)
 
         for key, value in fragment.context_defaults.items():
             context.setdefault(key, value)
@@ -369,6 +474,8 @@ __all__ = [
     "FragmentPiece",
     "FragmentRegistry",
     "FragmentRenderResult",
+    "collect_fragment_attribute_defaults",
+    "inject_fragment_attributes",
     "register_fragment",
     "render_fragments",
 ]

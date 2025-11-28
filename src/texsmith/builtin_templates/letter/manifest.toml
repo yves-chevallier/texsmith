@@ -39,7 +39,7 @@ sources = ["press.language"]
 [latex.template.attributes.standard]
 default = ""
 type = "string"
-sources = ["press.standard", "press.layout", "press.format", "standard", "format"]
+sources = ["standard", "format", "press.standard", "press.layout", "press.format"]
 
 [latex.template.attributes.date]
 default = ""
@@ -99,18 +99,6 @@ escape = "latex"
 sources = ["press.closing"]
 
 [latex.template.attributes.callout_style]
-default = "fancy"
-type = "string"
-choices = ["fancy", "classic", "minimal"]
-sources = ["press.callouts.style", "callouts.style", "callout_style", "press.callout_style"]
-normaliser = "callout_style"
-
-[latex.template.attributes.code]
-default = { engine = "pygments" }
-type = "mapping"
-normaliser = "code_options"
-sources = ["press.code", "code"]
-
 [latex.template.attributes.opening]
 default = ""
 type = "string"

@@ -58,12 +58,6 @@ default = "black"
 type = "string"
 sources = ["press.emoji", "emoji"]
 
-[latex.template.attributes.code]
-default = { engine = "pygments" }
-type = "mapping"
-normaliser = "code_options"
-sources = ["press.code", "code"]
-
 [latex.template.attributes.toc]
 default = false
 type = "boolean"
@@ -94,13 +88,6 @@ sources = ["press.columns", "columns"]
 default = true
 type = "boolean"
 sources = ["press.page_numbers", "page_numbers"]
-
-[latex.template.attributes.callout_style]
-default = "fancy"
-type = "string"
-choices = ["fancy", "classic", "minimal"]
-sources = ["press.callouts.style", "callouts.style", "callout_style", "press.callout_style"]
-normaliser = "callout_style"
 
 [latex.template.attributes.glossary_style]
 default = "list"

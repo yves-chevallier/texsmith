@@ -95,12 +95,6 @@ default = 1
 type = "integer"
 sources = ["press.columns", "columns"]
 
-[latex.template.attributes.code]
-default = { engine = "pygments" }
-type = "mapping"
-normaliser = "code_options"
-sources = ["press.code", "code"]
-
 [latex.template.attributes.hyperref_options]
 default = "colorlinks=true, linkcolor=black, citecolor=black, plainpages=false, unicode=true, urlcolor=urlcolor"
 type = "string"
@@ -154,13 +148,6 @@ default = ""
 type = "string"
 allow_empty = true
 sources = ["press.cover.logo", "press.logo", "logo"]
-
-[latex.template.attributes.callout_style]
-default = "fancy"
-type = "string"
-choices = ["fancy", "classic", "minimal"]
-normaliser = "callout_style"
-sources = ["press.callouts.style", "callouts.style", "callout_style", "press.callout_style"]
 
 [latex.template.attributes.glossary]
 default = false

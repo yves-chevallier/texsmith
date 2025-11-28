@@ -51,6 +51,7 @@ from pathlib import Path
 from typing import Any
 
 from texsmith.core.context import DocumentState
+from texsmith.core.fragments import collect_fragment_attribute_defaults
 from texsmith.core.templates import TemplateError, TemplateRuntime, load_template_runtime
 
 from ..core.conversion.debug import ensure_emitter
@@ -137,7 +138,14 @@ class TemplateSession:
     ) -> None:
         self.runtime = runtime
         attributes = runtime.instance.info.attribute_defaults() if runtime.instance else {}
-        self._defaults: dict[str, Any] = copy.deepcopy(attributes)
+        fragment_defaults: dict[str, Any] = {}
+        if runtime.extras:
+            fragment_defaults = collect_fragment_attribute_defaults(
+                runtime.extras.get("fragments") or []
+            )
+        merged_defaults = copy.deepcopy(attributes)
+        merged_defaults.update(fragment_defaults)
+        self._defaults: dict[str, Any] = copy.deepcopy(merged_defaults)
         self._overrides = TemplateOptions()
         self._documents: list[Document] = []
         self._bibliography_files: list[Path] = []

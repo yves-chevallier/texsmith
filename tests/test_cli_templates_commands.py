@@ -8,6 +8,7 @@ import typer
 
 from texsmith import latex_text, mermaid, missing_footnotes, multi_citations, rawlatex
 from texsmith.builtin_templates import snippet as snippet_template
+from texsmith.core.fragments import inject_fragment_attributes
 from texsmith.ui.cli.commands import templates
 
 
@@ -119,9 +120,9 @@ def test_format_list_and_discovery(tmp_path):
 
 def test_snippet_template_normalises() -> None:
     tmpl = snippet_template.Template()
-    context = tmpl.prepare_context(
-        "body", overrides={"callout_style": "minimal", "emoji": "symbola"}
-    )
+    overrides = {"callout_style": "minimal", "emoji": "symbola"}
+    context = tmpl.prepare_context("body", overrides=overrides)
+    inject_fragment_attributes(tmpl.info.fragments or [], context=context, overrides=overrides)
     assert context["callout_style"] == "minimal"
     assert context["emoji"] == "symbola"
     assert context["width"]
