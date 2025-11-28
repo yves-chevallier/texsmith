@@ -109,8 +109,6 @@ class Template(WrappableTemplate):
             context["latex_engine"] = "lualatex"
             context["requires_unicode_engine"] = True
 
-        context["callout_style"] = self._normalise_callout_style(context.get("callout_style"))
-
         return context
 
     def _coerce_string(self, value: Any) -> str | None:
@@ -179,17 +177,6 @@ class Template(WrappableTemplate):
         if lowered in {"artifact", "symbola", "color", "black", "twemoji"}:
             return lowered
         return candidate_stripped
-
-    def _normalise_callout_style(self, value: Any) -> str:
-        candidate = self._coerce_string(value)
-        if not candidate:
-            default_value = self.info.get_attribute_default("callout_style") or "fancy"
-            candidate = self._coerce_string(default_value)
-        candidate = candidate.lower() if candidate else "fancy"
-
-        if candidate not in {"fancy", "classic", "minimal"}:
-            return "fancy"
-        return candidate
 
     def wrap_document(
         self,

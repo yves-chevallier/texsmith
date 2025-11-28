@@ -11,7 +11,11 @@ from typing import Any
 from jinja2 import meta
 
 from texsmith.core.callouts import DEFAULT_CALLOUTS, merge_callouts, normalise_callouts
-from texsmith.core.fragments import FRAGMENT_REGISTRY, render_fragments
+from texsmith.core.fragments import (
+    FRAGMENT_REGISTRY,
+    inject_fragment_attributes,
+    render_fragments,
+)
 from texsmith.core.templates import TemplateRuntime
 from texsmith.core.templates.manifest import TemplateError
 
@@ -58,6 +62,19 @@ def wrap_template_document(
     resolved_slots.setdefault(default_slot, main_slot_content)
 
     overrides_payload = dict(template_overrides) if template_overrides else None
+    source_dir = None
+    overrides_press = overrides_payload.get("press") if overrides_payload else None
+    if isinstance(overrides_press, Mapping):
+        source_dir_raw = overrides_press.get("_source_dir") or overrides_press.get("source_dir")
+        if source_dir_raw:
+            source_dir = Path(source_dir_raw)
+    fragment_names = list(fragments or [])
+    if not fragment_names:
+        if template_runtime is not None:
+            fragment_names = list(template_runtime.extras.get("fragments") or [])
+        else:
+            manifest_fragments = getattr(template.info, "fragments", None)
+            fragment_names = list(manifest_fragments or [])
 
     template_context = template.prepare_context(
         main_slot_content,
@@ -90,6 +107,15 @@ def wrap_template_document(
     template_context["acronyms"] = document_state.acronyms.copy()
     template_context["citations"] = list(document_state.citations)
     template_context["bibliography_entries"] = document_state.bibliography
+
+    fragment_attributes: dict[str, Any] = {}
+    if fragment_names:
+        fragment_attributes = inject_fragment_attributes(
+            fragment_names,
+            context=template_context,
+            overrides=overrides_payload,
+            source_dir=source_dir,
+        )
 
     code_section = template_context.get("code")
     code_engine = None
@@ -157,19 +183,6 @@ def wrap_template_document(
         template_context.setdefault("bibliography_style", "plain")
 
     # Render fragments and inject declarations into template variables.
-    source_dir = None
-    overrides_press = overrides_payload.get("press") if overrides_payload else None
-    if isinstance(overrides_press, Mapping):
-        source_dir_raw = overrides_press.get("_source_dir") or overrides_press.get("source_dir")
-        if source_dir_raw:
-            source_dir = Path(source_dir_raw)
-    fragment_names = list(fragments or [])
-    if not fragment_names:
-        if template_runtime is not None:
-            fragment_names = list(template_runtime.extras.get("fragments") or [])
-        else:
-            manifest_fragments = getattr(template.info, "fragments", None)
-            fragment_names = list(manifest_fragments or [])
     requested_fragments = list(fragment_names)
     callout_overrides = overrides_payload.get("callouts") if overrides_payload else None
     callouts_defs = normalise_callouts(
@@ -203,7 +216,10 @@ def wrap_template_document(
                     target["fonts"] = updated_fonts
 
         if overrides_payload:
-            fragment_context.update(overrides_payload)
+            for key, value in overrides_payload.items():
+                if key in fragment_attributes:
+                    continue
+                fragment_context[key] = value
             press_section = overrides_payload.get("press")
             if isinstance(press_section, Mapping):
                 for key, value in press_section.items():

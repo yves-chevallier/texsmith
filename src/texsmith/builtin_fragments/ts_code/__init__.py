@@ -4,6 +4,7 @@ from collections.abc import Mapping
 from pathlib import Path
 
 from texsmith.core.fragments import FragmentDefinition, FragmentPiece
+from texsmith.core.templates.manifest import TemplateAttributeSpec
 
 
 def create_fragment() -> FragmentDefinition:
@@ -21,6 +22,17 @@ def create_fragment() -> FragmentDefinition:
         description="Configurable code listings used by Markdown code blocks.",
         source=template_path,
         context_defaults={"extra_packages": ""},
+        attributes={
+            "code": TemplateAttributeSpec(
+                default={"engine": "pygments"},
+                type="mapping",
+                normaliser="code_options",
+                sources=[
+                    "press.code",
+                    "code",
+                ],
+            )
+        },
         should_render=_uses_code,
     )
 

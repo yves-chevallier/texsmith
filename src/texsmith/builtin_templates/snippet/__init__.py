@@ -38,7 +38,6 @@ class Template(WrappableTemplate):
         context["dogear"] = self._normalise_dimension(context.get("dogear"), "10mm")
         context["border"] = bool(context.get("border", True))
         context["dogear_enabled"] = bool(context.get("dogear_enabled", True))
-        context["callout_style"] = self._normalise_callout_style(context.get("callout_style"))
         candidate_emoji = context.get("emoji")
         if not candidate_emoji:
             fonts_cfg = context.get("fonts")
@@ -66,10 +65,6 @@ class Template(WrappableTemplate):
             return default
         candidate = str(value).strip()
         return candidate or default
-
-    def _normalise_callout_style(self, value: Any) -> str:
-        candidate = str(value).strip().lower() if value is not None else ""
-        return candidate if candidate in self._CALLOUT_STYLES else "fancy"
 
     def _normalise_emoji_mode(self, value: Any) -> str:
         candidate = str(value).strip() if value is not None else ""
