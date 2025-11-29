@@ -4,13 +4,23 @@ from texsmith.api import Document, TemplateSession
 from texsmith.core.templates import load_template_runtime
 
 
-def _render_with_engine(tmp_path: Path, engine: str | None) -> tuple[str, str, str, object]:
+def _render_with_engine(
+    tmp_path: Path,
+    engine: str | None,
+    *,
+    code_overrides: dict[str, str] | None = None,
+) -> tuple[str, str, str, object]:
     md = tmp_path / "doc.md"
     md.write_text("```python\nprint('hello')\n```", encoding="utf-8")
 
     session = TemplateSession(load_template_runtime("article"))
-    if engine:
-        session.update_options({"code": {"engine": engine}})
+    if engine or code_overrides:
+        payload: dict[str, str] = {}
+        if engine:
+            payload["engine"] = engine
+        if code_overrides:
+            payload.update(code_overrides)
+        session.update_options({"code": payload})
     session.add_document(Document.from_markdown(md))
     result = session.render(tmp_path / "build")
 
@@ -34,6 +44,7 @@ def test_minted_engine_enables_shell_escape(tmp_path: Path) -> None:
     _, sty, latexmkrc, result = _render_with_engine(tmp_path, "minted")
 
     assert "\\RequirePackage{minted}" in sty
+    assert "\\usemintedstyle{bw}" in sty
     assert "--shell-escape" in latexmkrc
     assert result.requires_shell_escape
 
@@ -47,3 +58,24 @@ def test_listings_engine_uses_listings_package(tmp_path: Path) -> None:
     assert "\\lstset" in sty
     assert not result.requires_shell_escape
     assert "\\PY{" not in tex
+
+
+def test_minted_respects_configured_style(tmp_path: Path) -> None:
+    _, sty, _, _ = _render_with_engine(
+        tmp_path,
+        "minted",
+        code_overrides={"style": "tango"},
+    )
+
+    assert "\\usemintedstyle{tango}" in sty
+
+
+def test_pygments_style_updates_formatter(tmp_path: Path) -> None:
+    _, _, _, result = _render_with_engine(
+        tmp_path,
+        None,
+        code_overrides={"style": "tango"},
+    )
+
+    styles = result.document_state.pygments_styles
+    assert any(key.startswith("tango:") for key in styles)

@@ -24,7 +24,7 @@ def create_fragment() -> FragmentDefinition:
         context_defaults={"extra_packages": ""},
         attributes={
             "code": TemplateAttributeSpec(
-                default={"engine": "pygments"},
+                default={"engine": "pygments", "style": "bw"},
                 type="mapping",
                 normaliser="code_options",
                 sources=[
