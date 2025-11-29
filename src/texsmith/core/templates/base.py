@@ -13,7 +13,7 @@ from typing import Any, cast
 
 from jinja2 import Environment, FileSystemLoader, TemplateNotFound
 
-from texsmith.core.utils import escape_latex_chars
+from texsmith.adapters.latex.utils import escape_latex_chars
 from .manifest import TemplateError, TemplateManifest, TemplateSlot
 
 

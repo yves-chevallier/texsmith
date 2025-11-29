@@ -609,13 +609,3 @@ class Document:
         context.slot_requests = combined_slots.to_request_mapping()
         context.slot_inclusions = combined_slots.includes()
         return context
-
-    @property
-    def slot_inclusions(self) -> set[str]:
-        """Expose slot inclusions for compatibility with existing code paths."""
-        return self.slots.includes()
-
-    @property
-    def slot_overrides(self) -> dict[str, str]:
-        """Expose slot selectors for compatibility with existing code paths."""
-        return self.slots.selectors()

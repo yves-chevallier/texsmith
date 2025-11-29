@@ -512,9 +512,7 @@ class TemplateAttributeSpec(BaseModel):
     def effective_sources(self) -> list[str]:
         if self.sources:
             return list(self.sources)
-        # Allow nested `press.press.*` to support legacy front matter.
         return [
-            f"press.press.{self.name}",
             f"press.{self.name}",
             self.name,
         ]
