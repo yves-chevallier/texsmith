@@ -1,75 +1,44 @@
-\documentclass{article}
-
-\newif\iftsPreview
-\tsPreviewfalse
-\ifdefined\directlua
-  \directlua{
-    if os.getenv("TS_PREVIEW") == "1" then
-      tex.print("\\global\\tsPreviewtrue")
-    end
-  }
-\fi
-
-\iftsPreview
-  \usepackage[active,tightpage]{preview}
-  \setlength\PreviewBorder{1cm}
-\fi
-
-\newenvironment{MaybePreview}{\iftsPreview\begin{preview}\fi}{\iftsPreview\end{preview}\fi}
-
-\usepackage{fontspec} % Ensure \newfontfamily is available for ts-* fragments.
+\documentclass{standalone}
+\usepackage{fontspec}
 \VAR{extra_packages}
-\usepackage[\VAR{language|default('english')}]{babel}
-\usepackage{csquotes}
-%\usepackage{tikz}
-%\usetikzlibrary{calc}
 
-\BLOCK{ if has_index or index_entries }
-\BLOCK{ set resolved_index_engine = index_engine|default('makeindex') }
-\BLOCK{ endif }
-
-\BLOCK{ if preamble }
-% Custom snippets can inject LaTeX here.
-\VAR{preamble}
-
-\BLOCK{ endif }
+\usepackage{tikz}
+\usetikzlibrary{calc}
 
 \begin{document}
-\begin{MaybePreview}
-% \begin{tikzpicture}
-%   \def\textwidthbox{\VAR{width}}
-%   \def\margin{\VAR{margin}}
-%   \def\e{\VAR{dogear}}
+\BLOCK{ if border }
+\begin{tikzpicture}
+  \def\textwidthbox{\VAR{width}}
+  \def\margin{\VAR{margin}}
+  \def\e{\VAR{dogear}}
 
-%   \node[inner sep=\margin, outer sep=0pt] (content) {%
-%     \begin{minipage}{\textwidthbox}
+  \node[inner sep=\margin, outer sep=0pt] (content) {%
+    \begin{minipage}{\textwidthbox}
+\BLOCK{ endif }
 \VAR{mainmatter}
-\VAR{backmatter}
 \VAR{fragment_backmatter}
-%     \end{minipage}
-%   };
+\BLOCK{ if border }
+    \end{minipage}
+  };
 
-%   \coordinate (A) at (content.north west);
-%   \coordinate (B) at (content.north east);
-%   \coordinate (C) at (content.south east);
-%   \coordinate (D) at (content.south west);
+  \coordinate (A) at (content.north west);
+  \coordinate (B) at (content.north east);
+  \coordinate (C) at (content.south east);
+  \coordinate (D) at (content.south west);
 
-%   \coordinate (Bdown) at ($(B)-(0,\e)$);
-%   \coordinate (Bleft) at ($(B)-(\e,0)$);
-%   \coordinate (Corner) at ($(B)-(\e,\e)$);
+  \coordinate (Bdown) at ($(B)-(0,\e)$);
+  \coordinate (Bleft) at ($(B)-(\e,0)$);
+  \coordinate (Corner) at ($(B)-(\e,\e)$);
 
-% \BLOCK{ if border }
-%   \draw (A) -- (Bleft) -- (Bdown) -- (C) -- (D) -- cycle;
-%   \BLOCK{ if dogear_enabled }
-%   \draw (Corner)
-%    .. controls ($(Corner)+(0.3*\e,0.1*\e)$) and ($(Bdown)+(-0.3*\e,-0.1*\e)$) ..
-%    (Bdown);
-%   \draw (Bleft)
-%    .. controls ($(Bleft)+(0.1*\e,-0.3*\e)$) and ($(Corner)+(-0.1*\e,0.3*\e)$) ..
-%    (Corner);
-%   \BLOCK{ endif }
-% \BLOCK{ endif }
-
-% \end{tikzpicture}
-\end{MaybePreview}
+  \draw (A) -- (Bleft) -- (Bdown) -- (C) -- (D) -- cycle;
+  \BLOCK{ if dogear }
+  \draw (Corner)
+   .. controls ($(Corner)+(0.3*\e,0.1*\e)$) and ($(Bdown)+(-0.3*\e,-0.1*\e)$) ..
+   (Bdown);
+  \draw (Bleft)
+   .. controls ($(Bleft)+(0.1*\e,-0.3*\e)$) and ($(Corner)+(-0.1*\e,0.3*\e)$) ..
+   (Corner);
+  \BLOCK{ endif }
+\BLOCK{ endif }
+\end{tikzpicture}
 \end{document}

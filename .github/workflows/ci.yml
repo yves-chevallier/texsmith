@@ -71,8 +71,8 @@ jobs:
       - name: Pre-pull draw.io image
         run: docker pull rlespinasse/drawio-desktop-headless:latest
 
-      - name: Install TeX Live (full)
-        run: sudo apt-get update && sudo apt-get install -y texlive-full
+      # - name: Install TeX Live (full)
+      #   run: sudo apt-get update && sudo apt-get install -y texlive-full
 
       - name: Install Noto font families (CJK, Arabic UI, Syriac)
         run: |

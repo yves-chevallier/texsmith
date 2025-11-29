@@ -20,8 +20,9 @@ Roadmap and development notes for TeXSmith. I keep this file as a running checkl
 - [x] Download biber automatically if not installed
 - [x] Add support for Makefile deps `.d` files
 - [x] Include fonts in package (like OpenMoji and Noto Color Emoji)
+- [ ] Snippet template
 - [ ] Drawio Exporter remote via wreight... see in scripts
-- [ ] Mermaid color configuration
+- [ ] Mermaid color configuration for MkDocs
 - [ ] Global user's configuration (.texsmith/config.yml)
 - [ ] Acronyms multiline
 - [ ] MkDocs Linking Issues
