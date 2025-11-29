@@ -192,7 +192,7 @@ def wrap_template_document(
     if document_state.citations and bibliography_path is not None:
         template_context["bibliography"] = bibliography_path.stem
         template_context["bibliography_resource"] = bibliography_path.name
-        template_context.setdefault("bibliography_style", "plain")
+        template_context.setdefault("bibliography_style", "numeric")
 
     # Render fragments and inject declarations into template variables.
     requested_fragments = list(fragment_names)

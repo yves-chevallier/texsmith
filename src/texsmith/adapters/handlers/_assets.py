@@ -5,6 +5,7 @@ from __future__ import annotations
 import hashlib
 from pathlib import Path
 import shutil
+from typing import Any
 from urllib.parse import unquote, urlparse
 
 from texsmith.adapters.transformers import drawio2pdf, fetch_image, image2pdf, svg2pdf
@@ -72,7 +73,8 @@ def store_remote_image_asset(context: RenderContext, url: str) -> Path:
     convert_requested = bool(context.runtime.get("convert_assets", False))
     metadata: dict[str, str] = {}
     conversion_root = _conversion_cache_root(context)
-    suffix_hint = _normalise_suffix(_suffix_from_url(url), default=".pdf")
+    url_suffix = _suffix_from_url(url)
+    suffix_hint = _normalise_suffix(url_suffix, default="") if url_suffix else ""
     emitter = ensure_emitter(context.runtime.get("emitter"))
 
     record_event(
@@ -84,15 +86,25 @@ def store_remote_image_asset(context: RenderContext, url: str) -> Path:
             "suffix_hint": suffix_hint,
         },
     )
+    fetch_options: dict[str, Any] = {
+        "convert": convert_requested,
+        "metadata": metadata,
+    }
+    if convert_requested:
+        fetch_options["output_suffix"] = ".pdf"
+    elif suffix_hint:
+        fetch_options["output_suffix"] = suffix_hint
     artefact = fetch_image(
         url,
         output_dir=conversion_root,
-        convert=convert_requested,
-        output_suffix=suffix_hint,
-        metadata=metadata,
+        **fetch_options,
     )
 
-    final_suffix = _normalise_suffix(metadata.get("suffix"), default=".pdf")
+    recorded_suffix = metadata.get("suffix") if metadata else None
+    if recorded_suffix:
+        final_suffix = _normalise_suffix(recorded_suffix)
+    else:
+        final_suffix = Path(artefact).suffix or ".pdf"
     prefer_name = _extract_remote_name(url)
 
     record_event(
