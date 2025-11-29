@@ -26,6 +26,7 @@ from bs4 import BeautifulSoup, NavigableString, Tag
 from texsmith.adapters.latex.utils import escape_latex_chars
 from texsmith.adapters.markdown import DEFAULT_MARKDOWN_EXTENSIONS, render_markdown
 from texsmith.core.exceptions import LatexRenderingError
+from texsmith.core.metadata import PressMetadataError, normalise_press_metadata
 
 
 class TemplateError(LatexRenderingError):
@@ -648,8 +649,14 @@ class TemplateAttributeResolver:
         if not overrides:
             return resolved
 
+        override_payload = dict(overrides)
+        try:
+            normalise_press_metadata(override_payload)
+        except PressMetadataError:
+            pass
+
         for name, spec in self._specs.items():
-            value, from_override = spec.fetch_override(overrides)
+            value, from_override = spec.fetch_override(override_payload)
             if value is _UNSET:
                 continue
             coerced = spec.coerce_value(value, from_override=from_override)

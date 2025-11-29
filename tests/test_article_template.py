@@ -8,6 +8,22 @@ from texsmith.core.conversion_contexts import GenerationStrategy
 from texsmith.core.templates import load_template_runtime
 
 
+def test_document_context_promotes_common_metadata(tmp_path: Path) -> None:
+    source = tmp_path / "doc.md"
+    source.write_text(
+        "---\ntitle: Root Title\nsubtitle: Root Subtitle\nauthor: Ada Lovelace\n---\n# Heading\n",
+        encoding="utf-8",
+    )
+
+    document = Document.from_markdown(source)
+    context = document.to_context()
+
+    press = context.front_matter["press"]
+    assert press["title"] == "Root Title"
+    assert press["subtitle"] == "Root Subtitle"
+    assert press["authors"][0]["name"] == "Ada Lovelace"
+
+
 def test_article_template_registers_mermaid_extra() -> None:
     runtime = load_template_runtime("article")
     config_path = Path(runtime.extras["mermaid_config"])

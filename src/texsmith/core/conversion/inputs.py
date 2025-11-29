@@ -12,7 +12,9 @@ from typing import Any
 
 from bs4 import BeautifulSoup, FeatureNotFound
 
+from ..conversion.debug import ConversionError
 from ..conversion_contexts import DocumentContext
+from ..metadata import PressMetadataError, normalise_press_metadata
 
 
 DOCUMENT_SELECTOR_SENTINEL = "@document"
@@ -63,11 +65,12 @@ def build_document_context(
 ) -> DocumentContext:
     """Construct a document context enriched with metadata and slot requests."""
     metadata = dict(front_matter or {})
-    press_section = metadata.get("press")
-    press_payload = dict(press_section) if isinstance(press_section, Mapping) else {}
+    try:
+        press_payload = normalise_press_metadata(metadata)
+    except PressMetadataError as exc:
+        raise ConversionError(str(exc)) from exc
     press_payload.setdefault("_source_dir", str(source_path.parent))
     press_payload.setdefault("_source_path", str(source_path))
-    metadata["press"] = press_payload
     slot_requests = extract_front_matter_slots(metadata)
 
     return DocumentContext(

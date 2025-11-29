@@ -32,30 +32,30 @@ fragments = [
 default = "english"
 type = "string"
 allow_empty = false
-sources = ["press.language", "language"]
+sources = ["language"]
 
 [latex.template.attributes.width]
 default = "12cm"
 type = "string"
 allow_empty = false
-sources = ["press.snippet.width", "snippet.width", "width"]
+sources = ["width"]
 
 [latex.template.attributes.margin]
 default = "6mm"
 type = "string"
 allow_empty = false
-sources = ["press.snippet.margin", "snippet.margin", "margin"]
+sources = ["margin"]
 
 [latex.template.attributes.dogear]
 default = "5mm"
 type = "string"
 allow_empty = false
-sources = ["press.snippet.dogear", "snippet.dogear", "dogear"]
+sources = ["dogear"]
 
 [latex.template.attributes.border]
 default = true
 type = "boolean"
-sources = ["press.snippet.border", "snippet.border", "border"]
+sources = ["border"]
 
 [latex.template.slots.mainmatter]
 default = true

@@ -40,141 +40,139 @@ fragments = [
 [latex.template.attributes.base_level]
 default = 0
 type = "integer"
-sources = ["press.base_level", "base_level"]
+sources = ["base_level"]
 
 [latex.template.attributes.title]
 default = "A LaTeX Book Template"
 type = "string"
 escape = "latex"
 allow_empty = true
-sources = ["press.title", "title"]
+sources = ["title"]
 
 [latex.template.attributes.subtitle]
 default = "An example of a book template for MkDocs LaTeX"
 type = "string"
 escape = "latex"
 allow_empty = true
-sources = ["press.subtitle", "subtitle"]
+sources = ["subtitle"]
 
-[latex.template.attributes.author]
-default = ""
-type = "string"
-escape = "latex"
-allow_empty = true
-sources = ["press.author", "author"]
+[latex.template.attributes.authors]
+default = []
+type = "list"
+sources = ["authors"]
 
 [latex.template.attributes.email]
 default = "john.doe@acme.corp"
 type = "string"
 escape = "latex"
 allow_empty = true
-sources = ["press.email", "press.author.email", "email"]
+sources = ["email"]
 
 [latex.template.attributes.date]
 default = ""
 type = "string"
 escape = "latex"
 allow_empty = true
-sources = ["press.date", "date"]
+sources = ["date"]
 
 [latex.template.attributes.language]
 default = "english"
 type = "string"
 allow_empty = false
 normaliser = "babel_language"
-sources = ["press.language", "language"]
+sources = ["language"]
 
 [latex.template.attributes.documentclass]
 default = "memoir"
 type = "string"
 allow_empty = false
-sources = ["press.documentclass", "documentclass"]
+sources = ["documentclass"]
 
 [latex.template.attributes.columns]
 default = 1
 type = "integer"
-sources = ["press.columns", "columns"]
+sources = ["columns"]
 
 [latex.template.attributes.hyperref_options]
 default = "colorlinks=true, linkcolor=black, citecolor=black, plainpages=false, unicode=true, urlcolor=urlcolor"
 type = "string"
 allow_empty = true
-sources = ["press.hyperref_options", "hyperref_options"]
+sources = ["hyperref_options"]
 
 [latex.template.attributes.cover]
 default = "circles"
 type = "string"
 allow_empty = false
-sources = ["press.cover", "cover"]
+sources = ["cover"]
 
 [latex.template.attributes.covercolor]
 default = ""
 type = "string"
 allow_empty = true
-sources = ["press.cover.color", "covercolor", "press.covercolor"]
+sources = ["covercolor"]
 
 [latex.template.attributes.edition]
 default = ""
 type = "string"
 allow_empty = true
-sources = ["press.edition", "edition"]
+sources = ["edition"]
 
 [latex.template.attributes.publisher]
 default = ""
 type = "string"
 allow_empty = true
-sources = ["press.publisher", "publisher"]
+sources = ["publisher"]
 
 [latex.template.attributes.imprint_thanks]
 default = ""
 type = "string"
 allow_empty = true
-sources = ["press.imprint.thanks", "imprint.thanks"]
+sources = ["imprint_thanks"]
 
 [latex.template.attributes.imprint_license]
 default = ""
 type = "string"
 allow_empty = true
-sources = ["press.imprint.license", "imprint.license"]
+sources = ["imprint_license"]
 
 [latex.template.attributes.imprint_copyright]
 default = ""
 type = "string"
 allow_empty = true
-sources = ["press.imprint.copyright", "imprint.copyright"]
+sources = ["imprint_copyright"]
 
 [latex.template.attributes.logo]
 default = ""
 type = "string"
 allow_empty = true
-sources = ["press.cover.logo", "press.logo", "logo"]
+sources = ["logo"]
 
 [latex.template.attributes.glossary]
 default = false
 type = "boolean"
-sources = ["press.glossary", "glossary"]
+sources = ["glossary"]
 
 [latex.template.attributes.glossary_style]
 default = "long3col"
 type = "string"
 allow_empty = false
-sources = ["press.glossary.style", "press.glossary_style", "glossary_style"]
+sources = ["glossary_style"]
 
 [latex.template.attributes.listoffigures]
 default = true
 type = "boolean"
-sources = ["press.listoffigures", "listoffigures"]
+sources = ["listoffigures"]
 
 [latex.template.attributes.listoftables]
 default = true
 type = "boolean"
-sources = ["press.listoftables", "listoftables"]
+sources = ["listoftables"]
 
 [latex.template.attributes.preamble]
 default = ""
 type = "string"
 allow_empty = true
-sources = ["press.override.preamble", "press.preamble", "preamble"]
+sources = ["preamble"]
 
 [latex.template.slots.frontmatter]
 depth = "chapter"

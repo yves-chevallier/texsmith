@@ -34,6 +34,7 @@ from texsmith.core.conversion.inputs import (
     extract_front_matter_slots,
 )
 from texsmith.core.diagnostics import DiagnosticEmitter
+from texsmith.core.metadata import PressMetadataError, normalise_press_metadata
 
 from .document import Document, DocumentSlots, TitleStrategy, front_matter_has_title
 from .pipeline import ConversionBundle, RenderSettings, convert_documents
@@ -292,7 +293,7 @@ class ConversionService:
             emitter=emitter,
         )
         if request.template_options:
-            session.update_options(request.template_options)
+            session.update_options(_normalise_template_options(request.template_options))
         if batch.bibliography_files:
             session.add_bibliography(*batch.bibliography_files)
         for document in batch.documents:
@@ -448,6 +449,28 @@ def _normalise_front_matter(data: Mapping[str, Any] | None) -> Mapping[str, Any]
     if not isinstance(data, Mapping):
         raise ConversionError("Front matter must be a mapping when provided programmatically.")
     return copy.deepcopy(dict(data))
+
+
+def _normalise_template_options(options: Mapping[str, Any]) -> dict[str, Any]:
+    payload = copy.deepcopy(dict(options))
+    if _requires_press_normalisation(payload):
+        try:
+            normalise_press_metadata(payload)
+        except PressMetadataError as exc:
+            raise ConversionError(str(exc)) from exc
+    return payload
+
+
+def _requires_press_normalisation(options: Mapping[str, Any]) -> bool:
+    """Return True when template options include press metadata."""
+    for key in options:
+        if not isinstance(key, str):
+            continue
+        if key == "press" or key.startswith("press."):
+            return True
+        if key in {"title", "subtitle", "date", "authors", "author", "language"}:
+            return True
+    return False
 
 
 def _front_matter_declares_press(metadata: Mapping[str, Any] | None) -> bool:
