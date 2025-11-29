@@ -689,7 +689,7 @@ def _build_document(
 
 
 def _compile_pdf(render_result: Any) -> Path:
-    from texsmith.adapters.latex.engine import (
+    from texsmith.adapters.latex.engines import (
         EngineResult,
         build_engine_command,
         build_tex_env,
@@ -754,6 +754,7 @@ def _compile_pdf(render_result: Any) -> Path:
     )
     result: EngineResult = run_engine_command(
         command_plan,
+        backend=engine_choice.backend,
         workdir=render_result.main_tex_path.parent,
         env=env,
         console=None,

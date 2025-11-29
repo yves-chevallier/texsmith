@@ -17,7 +17,7 @@ import click
 from click.core import ParameterSource
 import typer
 
-from texsmith.adapters.latex.engine import (
+from texsmith.adapters.latex.engines import (
     EngineResult,
     build_engine_command as build_latex_engine_command,
     build_tex_env,
@@ -939,6 +939,7 @@ def render(
     try:
         engine_result: EngineResult = run_engine(
             command_plan,
+            backend=engine_choice.backend,
             workdir=render_dir,
             env=env,
             console=state.console,

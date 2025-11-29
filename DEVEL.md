@@ -68,6 +68,18 @@ Roadmap and development notes for TeXSmith. I keep this file as a running checkl
   - [ ] Letterine
   - [ ] Custom variables to insert in a document using moustaches
 
+- [ ] Remove enhanced log for tectonic, keep it only for latexmk stuff
+- [ ] Remove weird snippet if if latexmkrc
+- [ ] sources = ["press.snippet.dogear", "snippet.dogear", "dogear"] why 3 entries.
+- [ ] Implement drawio over pywreight
+- [ ] ts-languages that uses polyglossia and specific things to languages
+- [ ] Instead of injecting title, subtitle every template use default injection for those specific keys
+- [ ] Rename buildtin_templates and builtin_fragments folder into templates and fragments for simplicity. Update all dependencies, run uv run ruff format . uv run ruff check .
+
+## Enhanced Log Visualisation
+
+We implemented an enhanced log visualisation to recudce verbosity on latex build (lualatex, xelatex). This enhanced log named pretty in the cli does not concern tectonic. I want you to move this enhance log code only in the engine based on latex not the tectonic one. Also don't apply this pretty log on tectonic build.
+
 ## Issues
 
 - [ ] warning: Expected 'fonts/OpenMoji-black-glyf.ttf' in archive but found 'OpenMoji-black-glyf/OpenMoji-black-glyf.ttf'. Using the available font file instead.
@@ -75,7 +87,7 @@ Roadmap and development notes for TeXSmith. I keep this file as a running checkl
 - [ ] TeXGyre to be added to the list of fonts to download
 - [ ] Multidocument uses /usr/share fonts, not local ones ? Should download local ones
 - [ ] Cookingsymbols not availble in tectonic ?
-- [ ]
+
 ### Color emoji don't work with Tectonic/XeLaTeX
 
 Il faudrait que XeTeX (ou un XeTeX 2.0) intègre un moteur de rendu qui gère vraiment les polices couleur (COLR/CPAL, CBDT/CBLC, SVGinOT) et sache les convertir en quelque chose de compatible PDF.

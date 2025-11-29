@@ -10,7 +10,7 @@ from typing import Any
 
 import yaml
 
-from texsmith.adapters.latex.engine import (
+from texsmith.adapters.latex.engines import (
     EngineResult,
     build_engine_command,
     build_tex_env,
@@ -374,6 +374,7 @@ class ConversionService:
 
         return run_engine_command(
             command_plan,
+            backend=choice.backend,
             workdir=render_result.main_tex_path.parent,
             env=merged_env,
             console=console,
