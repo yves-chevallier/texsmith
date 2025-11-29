@@ -28,31 +28,31 @@ fragments = [
 [latex.template.attributes.cursive]
 default = false
 type = "boolean"
-sources = ["press.cursive"]
+sources = ["cursive"]
 
 [latex.template.attributes.language]
 default = "en-UK"
 type = "string"
 allow_empty = false
-sources = ["press.language"]
+sources = ["language"]
 
 [latex.template.attributes.standard]
 default = ""
 type = "string"
-sources = ["standard", "format", "press.standard", "press.layout", "press.format"]
+sources = ["standard", "format"]
 
 [latex.template.attributes.date]
 default = ""
 type = "string"
 escape = "latex"
 allow_empty = true
-sources = ["press.date"]
+sources = ["date"]
 
 [latex.template.attributes.object]
 default = ""
 type = "string"
 escape = "latex"
-sources = ["press.object"]
+sources = ["object"]
 
 [latex.template.attributes.from_name]
 default = ""
@@ -60,24 +60,24 @@ type = "string"
 escape = "latex"
 allow_empty = false
 required = true
-sources = ["from_name", "press.from.name", "press.author", "author"]
+sources = ["from_name"]
 
 [latex.template.attributes.from_address]
 default = []
 type = "list"
-sources = ["press.from.address"]
+sources = ["from_address"]
 
 [latex.template.attributes.back_address]
 default = ""
 type = "string"
 escape = "latex"
-sources = ["press.back_address", "press.back-address"]
+sources = ["back_address"]
 
 [latex.template.attributes.from_location]
 default = ""
 type = "string"
 escape = "latex"
-sources = ["press.from.city", "press.from.location"]
+sources = ["from_location"]
 
 [latex.template.attributes.to_name]
 default = ""
@@ -85,36 +85,36 @@ type = "string"
 escape = "latex"
 allow_empty = false
 required = true
-sources = ["to_name", "press.to.name"]
+sources = ["to_name"]
 
 [latex.template.attributes.to_address]
 default = []
 type = "list"
-sources = ["press.to.address"]
+sources = ["to_address"]
 
 [latex.template.attributes.closing]
 default = ""
 type = "string"
 escape = "latex"
-sources = ["press.closing"]
+sources = ["closing"]
 
 [latex.template.attributes.callout_style]
 [latex.template.attributes.opening]
 default = ""
 type = "string"
 escape = "latex"
-sources = ["press.opening"]
+sources = ["opening"]
 
 [latex.template.attributes.signature]
 default = ""
 type = "any"
-sources = ["press.signature"]
+sources = ["signature"]
 
 [latex.template.attributes.source_dir]
 default = ""
 type = "string"
 allow_empty = true
-sources = ["source_dir", "press._source_dir"]
+sources = ["source_dir"]
 
 [latex.template.attributes.output_dir]
 default = ""
@@ -126,46 +126,46 @@ sources = ["output_dir"]
 [latex.template.attributes.signature_align]
 default = "left"
 type = "string"
-sources = ["press.signature.align", "press.signature_align"]
+sources = ["signature_align"]
 
 [latex.template.attributes.reference]
 default = ""
 type = "string"
 escape = "latex"
-sources = ["press.reference", "press.myref", "press.my_ref"]
+sources = ["reference"]
 
 [latex.template.attributes.reference_fields]
 default = false
 type = "boolean"
-sources = ["press.reference_fields"]
+sources = ["reference_fields"]
 
 [latex.template.attributes.postscript]
 default = ""
 type = "string"
 escape = "latex"
-sources = ["press.ps", "press.postscript"]
+sources = ["postscript"]
 
 [latex.template.attributes.fold_marks]
 default = false
 type = "boolean"
-sources = ["press.fold_marks"]
+sources = ["fold_marks"]
 
 [latex.template.attributes.margin]
 default = "default"
 type = "string"
 normaliser = "margin_style"
-sources = ["press.margin", "margin"]
+sources = ["margin"]
 
 [latex.template.attributes.preamble]
 default = ""
 type = "string"
 allow_empty = true
-sources = ["press.override.preamble", "press.preamble", "preamble"]
+sources = ["preamble"]
 
 [latex.template.attributes.page_numbers]
 default = false
 type = "boolean"
-sources = ["press.page_numbers", "page_numbers"]
+sources = ["page_numbers"]
 
 [latex.template.slots.mainmatter]
 default = true

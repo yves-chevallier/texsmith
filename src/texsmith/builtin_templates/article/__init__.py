@@ -118,36 +118,18 @@ class Template(WrappableTemplate):
         return candidate or None
 
     def _format_authors(self, payload: Any) -> str | None:
-        if payload is None:
+        if not payload:
             return None
-
-        if isinstance(payload, str):
-            author = payload.strip()
-            return escape_latex_chars(author) if author else None
-
-        candidates: list[Any]
-        if isinstance(payload, Mapping):
-            candidates = [payload]
-        elif isinstance(payload, Iterable) and not isinstance(payload, (str, bytes)):
-            candidates = list(payload)
-        else:
+        if not isinstance(payload, Iterable) or isinstance(payload, (str, bytes)):
             return None
 
         formatted: list[str] = []
-        for item in candidates:
-            if isinstance(item, str):
-                author_name = item.strip()
-                if author_name:
-                    formatted.append(escape_latex_chars(author_name))
-                continue
-
+        for item in payload:
             if not isinstance(item, Mapping):
                 continue
-
             name_value = self._coerce_string(item.get("name"))
             if not name_value:
                 continue
-
             name_tex = escape_latex_chars(name_value)
             affiliation_value = self._coerce_string(item.get("affiliation"))
             if affiliation_value:
@@ -158,7 +140,6 @@ class Template(WrappableTemplate):
 
         if not formatted:
             return None
-
         return " \\and ".join(formatted)
 
     def _normalise_emoji_mode(self, value: Any) -> str:

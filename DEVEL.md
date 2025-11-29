@@ -20,6 +20,7 @@ Roadmap and development notes for TeXSmith. I keep this file as a running checkl
 - [x] Download biber automatically if not installed
 - [x] Add support for Makefile deps `.d` files
 - [x] Include fonts in package (like OpenMoji and Noto Color Emoji)
+- [x] Remove enhanced log for tectonic
 - [ ] Snippet template
 - [ ] Drawio Exporter remote via wreight... see in scripts
 - [ ] Mermaid color configuration for MkDocs
@@ -68,13 +69,70 @@ Roadmap and development notes for TeXSmith. I keep this file as a running checkl
   - [ ] Letterine
   - [ ] Custom variables to insert in a document using moustaches
 
-- [ ] Remove enhanced log for tectonic, keep it only for latexmk stuff
-- [ ] Remove weird snippet if if latexmkrc
-- [ ] sources = ["press.snippet.dogear", "snippet.dogear", "dogear"] why 3 entries.
+
+- [ ] Simplify the attributes SSOT for templates and fragments
+
 - [ ] Implement drawio over pywreight
 - [ ] ts-languages that uses polyglossia and specific things to languages
-- [ ] Instead of injecting title, subtitle every template use default injection for those specific keys
-- [ ] Rename buildtin_templates and builtin_fragments folder into templates and fragments for simplicity. Update all dependencies, run uv run ruff format . uv run ruff check .
+
+## Clean backward compatibility shims
+
+In the code base of texsmith we have a lot of shims such as src/texsmith/core/utils.py we want to clean the whole codebase to remove all backward compatibility shims. TeXSmith is not 1.0 yet so we can break things and clean the codebase. Make it more consistent and easier to maintain.
+
+First analyse the whole codebase and list all you want to clean. Then create a plan to clean the codebase.
+
+## Refactor texsmith extensions
+
+I noticed texlogos, smallcaps, rawlatex quotes, progressbar... files are located at the root of texsmith code base (src/texsmith). These are Markdown extensions so they should be located into a more appropriate place: src/texsmith/extensions. Move them there and update the imports accordingly. You can also move all the extensions load logic to have something more centralised.
+
+Thus you can notice an extensions folder already exists and smallcapy is located then into two different places. If this is shim, I don't want any back-ward compatibility. Just clean the codebase. For those who are using texsmith as a library for only markdown extension, like using `markdown_extensions` in mkdocs with `texsmith.smallcaps` we want to keep this working. Same for Python markdown when we load extensions from an external script.
+
+Find a way to keep this working while cleaning the codebase.
+
+I also see a "compatibility layer" in `plugins/__init__.py` this is also something that should be cleaned.
+
+## Snippet attributes
+
+In snippets definition toml file we see this:
+
+```toml
+[latex.template.attributes.authors]
+default = []
+type = "list"
+sources = ["press.authors", "press.author", "authors", "author"]
+```
+
+Where authors can be found in multiple places. Instead of having multiples sources authors should only be found in one place: `press.authors`. This is the only attribute seen by the template.
+
+In traditional markdown it is accepted to have `title`, `subtitle`, `author` and `date` in the root of the frontmatter. TeXSmith will only copy these attributes into the press namespace then templates and fragments will only use the press namespace to get these values. Update all teamplates and fragments to use only the press namespace for these common attributes.
+
+Concerning the `author` attribute. We want to introduce a pydantic valication that can accept:
+
+1. A single string: "John Doe"
+2. A list of strings: ["John Doe", "Jane Smith"]
+3. A list of objects with name and affiliation:
+4. A dict with name and affiliation:
+
+We are permissive to the key. It can be `author` or `authors`. The validation will always convert the input into a list of objects with name and affiliation keys, and we only use `press.authors` as the single source of truth for the template and fragments.
+
+Also add a documentation page in docs/guide/metadata.md about this behavior. give the 4 different examples and enforce the user to prefer the `authors` key in the frontmatter.
+
+Clean the codebase and update the tests to reflect this new behavior. We don't need to be backward compatible so no shim or warning is needed.
+
+**STEPS**
+
+1. Update the snippet manifest toml files to only have one source for common attributes like title, subtitle, author, date.
+2. Update all templates and fragments to use only the press namespace for these common attributes.
+3. Implement the pydantic validation for `press.authors` to accept the descriped format coerced into a list of objects with name and affiliation keys.
+4. Implement the copy from root frontmatter to press namespace for these common attributes.
+5. Update tests to reflect this new behavior.
+6. Write documentation in docs/guide/metadata.md about this behavior with examples.
+7. Clean the codebase.
+8. Run uv run ruff format . && uv run ruff check .
+
+**DIRECTIVES**
+
+This refactor should simplify the codebase not add complexity. If you see any complexity added warn me because this is smoke.
 
 ## Enhanced Log Visualisation
 
