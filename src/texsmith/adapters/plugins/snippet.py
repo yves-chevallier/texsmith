@@ -761,6 +761,7 @@ def _compile_pdf(render_result: Any) -> Path:
         env=env,
         console=None,
         classic_output=True,
+        features=features,
     )
     if result.returncode != 0:
         log_path = command_plan.log_path
