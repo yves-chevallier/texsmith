@@ -645,6 +645,8 @@ def _log_requests_rerun(log_path: Path) -> bool:
         with log_path.open("r", encoding="utf-8", errors="ignore") as handle:
             for line in handle:
                 lower = line.lower()
+                if "rerunfilecheck" in lower:
+                    continue
                 if any(token in lower for token in _TECTONIC_RERUN_TOKENS):
                     return True
     except FileNotFoundError:
