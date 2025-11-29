@@ -119,15 +119,25 @@ def wrap_template_document(
 
     code_section = template_context.get("code")
     code_engine = None
+    code_style = "bw"
     if isinstance(code_section, Mapping):
         raw_engine = code_section.get("engine")
         code_engine = raw_engine if isinstance(raw_engine, str) else None
+        raw_style = code_section.get("style")
+        if isinstance(raw_style, str) and raw_style.strip():
+            code_style = raw_style.strip()
     elif isinstance(code_section, str):
         code_engine = code_section
     code_engine = (code_engine or "pygments").strip().lower()
     template_context["code_engine"] = code_engine or "pygments"
+    template_context.setdefault("code_style", code_style)
     if "code" not in template_context:
-        template_context["code"] = {"engine": template_context["code_engine"]}
+        template_context["code"] = {
+            "engine": template_context["code_engine"],
+            "style": template_context["code_style"],
+        }
+    elif isinstance(template_context["code"], dict):
+        template_context["code"].setdefault("style", template_context["code_style"])
     if code_engine == "pygments" and getattr(document_state, "pygments_styles", {}):
         styles = getattr(document_state, "pygments_styles", {})
         template_context["pygments_style_defs"] = "\n".join(styles.values())

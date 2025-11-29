@@ -69,6 +69,7 @@ class LaTeXFormatter:
 
         self.templates: dict[str, Template] = {}
         self.default_code_engine = "pygments"
+        self.default_code_style = "bw"
         self._pygments: PygmentsLatexHighlighter | None = None
 
     @staticmethod
@@ -139,8 +140,9 @@ class LaTeXFormatter:
             normalized_engine = "pygments"
 
         if normalized_engine == "pygments":
-            if self._pygments is None:
-                self._pygments = PygmentsLatexHighlighter()
+            style_name = str(self.default_code_style or "bw").strip() or "bw"
+            if self._pygments is None or self._pygments.style != style_name:
+                self._pygments = PygmentsLatexHighlighter(style=style_name)
             latex_code, style_defs = self._pygments.render(
                 code,
                 language,

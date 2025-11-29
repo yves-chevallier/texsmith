@@ -17,7 +17,7 @@ class PygmentsLatexHighlighter:
         self,
         *,
         commandprefix: str = "PY",
-        style: str = "default",
+        style: str = "bw",
         verboptions: str | None = None,
     ) -> None:
         self.commandprefix = commandprefix

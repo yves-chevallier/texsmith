@@ -111,6 +111,12 @@ def _resolve_code_options(
 
     engine_value = str(merged.get("engine", "pygments") or "pygments").strip().lower()
     merged["engine"] = engine_value if engine_value in _CODE_ENGINES else "pygments"
+    style_value = merged.get("style", "bw")
+    if isinstance(style_value, str):
+        style_candidate = style_value.strip()
+    else:
+        style_candidate = str(style_value).strip() if style_value is not None else ""
+    merged["style"] = style_candidate or "bw"
     return merged
 
 
@@ -323,6 +329,10 @@ def _render_document(
     formatter = LaTeXFormatter()
     formatter.legacy_latex_accents = legacy_latex_accents
     formatter.default_code_engine = code_options.get("engine", formatter.default_code_engine)
+    style_override = code_options.get("style", formatter.default_code_style)
+    if not isinstance(style_override, str):
+        style_override = str(style_override or "")
+    formatter.default_code_style = style_override.strip() or formatter.default_code_style
     binding.apply_formatter_overrides(formatter)
     renderer: LaTeXRenderer | None = None
 

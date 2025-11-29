@@ -424,16 +424,32 @@ def _normalise_code_options(value: Any, spec: "TemplateAttributeSpec", fallback:
             )
         return engine
 
-    fallback_engine = _pick_engine(fallback.get("engine")) if isinstance(fallback, Mapping) else "pygments"
-    options: dict[str, Any] = {"engine": fallback_engine}
+    def _pick_style(candidate: Any, default: str) -> str:
+        if isinstance(candidate, str):
+            stripped = candidate.strip()
+            return stripped or default
+        if candidate is None:
+            return default
+        stripped = str(candidate).strip()
+        return stripped or default
+
+    fallback_engine = (
+        _pick_engine(fallback.get("engine")) if isinstance(fallback, Mapping) else "pygments"
+    )
+    fallback_style = (
+        _pick_style(fallback.get("style"), "bw") if isinstance(fallback, Mapping) else "bw"
+    )
+    options: dict[str, Any] = {"engine": fallback_engine, "style": fallback_style}
 
     if value is None:
         return options
 
     if isinstance(value, Mapping):
         engine_value = value.get("engine", fallback_engine)
+        style_value = value.get("style", fallback_style)
         options = dict(value)
         options["engine"] = _pick_engine(engine_value)
+        options["style"] = _pick_style(style_value, fallback_style)
         return options
 
     if isinstance(value, str):

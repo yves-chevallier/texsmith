@@ -1,8 +1,10 @@
 \BLOCK{ set _code_cfg = code if code is not none else {} }
 \BLOCK{ if _code_cfg is mapping }
 \BLOCK{ set _code_engine = (_code_cfg.get("engine") or "pygments") | lower }
+\BLOCK{ set _code_style = _code_cfg.get("style") or "bw" }
 \BLOCK{ else }
 \BLOCK{ set _code_engine = (_code_cfg or "pygments") | string | lower }
+\BLOCK{ set _code_style = "bw" }
 \BLOCK{ endif }
 
 \ProvidesPackage{ts-code}[2025/11/21 TeXSmith Code listings (generated)]
@@ -24,7 +26,7 @@
 }
 \makeatother
 \tcbuselibrary{minted}
-\usemintedstyle{bw}
+\usemintedstyle{\VAR{_code_style}}
 
 \newtcblisting[auto counter,number within=section,
   list inside=mypyg]{code}[4][]{%
