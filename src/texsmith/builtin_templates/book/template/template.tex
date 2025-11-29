@@ -6,6 +6,7 @@
 
 \VAR{extra_packages}
 \usepackage[svgnames,dvipsnames,x11names]{xcolor}
+\definecolor{texsmithLinkColor}{HTML}{0B3D91}
 
 \usepackage{fancyhdr}
 
@@ -20,11 +21,9 @@
 \usepackage{etoolbox}
 \usepackage{tocloft}
 \usepackage{caption}
-\usepackage{hyperref}
+\usepackage[colorlinks=true, linkcolor=texsmithLinkColor, urlcolor=texsmithLinkColor, citecolor=texsmithLinkColor]{hyperref}
 \usepackage[\VAR{language|default('english')}]{babel}
 \usepackage{emptypage}
-\definecolor{linkcolor}{RGB}{34, 18, 104}
-\definecolor{urlcolor}{RGB}{104, 18, 55}
 
 \graphicspath{{assets/}}
 

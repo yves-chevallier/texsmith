@@ -5,8 +5,11 @@
   enlargefirstpage=true,
 ]{scrlttr2}
 \VAR{extra_packages}
+\usepackage{xcolor}
+\definecolor{texsmithLinkColor}{HTML}{0B3D91}
 \usepackage{graphicx}
 \usepackage[\VAR{babel_language|default('english')}]{babel}
+\usepackage[colorlinks=true, linkcolor=texsmithLinkColor, urlcolor=texsmithLinkColor, citecolor=texsmithLinkColor]{hyperref}
 \LoadLetterOption{\VAR{letter_standard_option}}
 \KOMAoptions{foldmarks=\VAR{foldmarks_option}}
 \BLOCK{ set margin_style = margin|default('default')|lower }

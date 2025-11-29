@@ -7,8 +7,11 @@
 \documentclass\VAR{effective_documentclass_options}{article}
 
 \VAR{extra_packages}
+\usepackage{xcolor}
+\definecolor{texsmithLinkColor}{HTML}{0B3D91}
 \usepackage{graphicx}
 \usepackage[\VAR{language|default('english')}]{babel}
+\usepackage[colorlinks=true, linkcolor=texsmithLinkColor, urlcolor=texsmithLinkColor, citecolor=texsmithLinkColor]{hyperref}
 
 \BLOCK{ if preamble }
 % Custom document preamble injected from front matter overrides.
