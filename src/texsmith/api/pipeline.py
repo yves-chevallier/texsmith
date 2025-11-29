@@ -192,14 +192,8 @@ def to_template_fragments(bundle: ConversionBundle) -> list[TemplateFragment]:
 
         document = fragment.document
         slot_includes: set[str] = set()
-        if document is not None:
-            slots_obj = getattr(document, "slots", None)
-            if slots_obj is not None and hasattr(slots_obj, "includes"):
-                slot_includes = set(slots_obj.includes())
-            else:
-                legacy = getattr(document, "slot_inclusions", set())
-                if isinstance(legacy, set):
-                    slot_includes = set(legacy)
+        if document is not None and hasattr(document, "slots"):
+            slot_includes = set(document.slots.includes())
 
         fragments.append(
             TemplateFragment(

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from texsmith import _alias as _legacy_aliases
 from texsmith.api import (
     ConversionBundle,
     ConversionRequest,
