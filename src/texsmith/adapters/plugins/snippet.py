@@ -485,7 +485,7 @@ def _coerce_bool_option(value: Any, default: bool) -> bool:
 
 
 def _extract_template_overrides(
-    element: Tag, classes: list[str]
+    element: Tag, classes: list[str], *, frame_default: bool = True
 ) -> tuple[
     dict[str, Any],
     str | None,
@@ -529,7 +529,7 @@ def _extract_template_overrides(
                     break
     cwd = coerce_attribute(_attr("data-cwd")) or None
     template_id = coerce_attribute(_attr("data-template")) or None
-    frame_enabled = _coerce_bool_option(_attr("data-frame"), True)
+    frame_enabled = _coerce_bool_option(_attr("data-frame"), frame_default)
     layout_literal = coerce_attribute(_attr("data-layout")) or None
     files_literal = coerce_attribute(_attr("data-files")) or None
 
@@ -578,7 +578,9 @@ def _extract_template_overrides(
     return overrides, caption, label, figure_width, cwd, frame_enabled, template_id, layout, files
 
 
-def _extract_snippet_block(element: Tag, host_path: Path | None = None) -> SnippetBlock | None:
+def _extract_snippet_block(
+    element: Tag, host_path: Path | None = None, *, frame_default: bool = True
+) -> SnippetBlock | None:
     classes = gather_classes(element.get("class"))
     if "snippet" not in classes:
         return None
@@ -610,7 +612,7 @@ def _extract_snippet_block(element: Tag, host_path: Path | None = None) -> Snipp
         template_id,
         layout,
         files,
-    ) = _extract_template_overrides(element, classes)
+    ) = _extract_template_overrides(element, classes, frame_default=frame_default)
     suppress_title_value = _coerce_bool_option(_attr("data-no-title"), True)
     drop_title_value = _coerce_bool_option(
         _attr("data-strip-title") or _attr("data-drop-title"),
@@ -1236,7 +1238,13 @@ def render_snippet_block(element: Tag, context: RenderContext) -> None:
     document_path = context.runtime.get("document_path")
     source_dir = context.runtime.get("source_dir")
     host_path = _resolve_host_path(document_path, source_dir)
-    block = _extract_snippet_block(element, host_path=host_path)
+    runtime_frame_default = context.runtime.get("snippet_frame_default")
+    frame_default = (
+        _coerce_bool_option(runtime_frame_default, True)
+        if runtime_frame_default is not None
+        else True
+    )
+    block = _extract_snippet_block(element, host_path=host_path, frame_default=frame_default)
     if block is None:
         return
 

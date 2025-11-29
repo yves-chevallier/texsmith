@@ -615,6 +615,7 @@ class LatexPlugin(BasePlugin):
                 "template": template_runtime.name,
                 "copy_assets": copy_assets,
                 "emitter": emitter,
+                "snippet_frame_default": False,
             }
 
             try:
