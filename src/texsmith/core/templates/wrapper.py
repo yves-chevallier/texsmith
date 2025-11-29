@@ -80,6 +80,8 @@ def wrap_template_document(
         main_slot_content,
         overrides=overrides_payload,
     )
+    if isinstance(overrides_press, Mapping):
+        template_context.setdefault("press", overrides_press)
     root_name: str | None = None
     if output_name:
         root_name = Path(output_name).stem
