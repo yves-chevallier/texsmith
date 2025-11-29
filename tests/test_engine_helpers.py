@@ -3,7 +3,7 @@ from pathlib import Path
 
 import pytest
 
-from texsmith.adapters.latex import engine
+from texsmith.adapters.latex import engines as engine
 
 
 def test_build_tex_env_prefers_bundled_biber(tmp_path: Path) -> None:

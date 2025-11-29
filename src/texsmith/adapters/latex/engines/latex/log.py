@@ -5,6 +5,7 @@ from __future__ import annotations
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field, replace
 from enum import Enum
+from pathlib import Path
 import re
 import selectors
 import subprocess
@@ -705,3 +706,15 @@ def stream_latexmk_output(
 
     renderer.summarize()
     return LatexStreamResult(returncode=returncode, messages=renderer.messages)
+
+
+def parse_latex_log(log_path: Path) -> list[LatexMessage]:
+    """Parse a LaTeX log file into structured messages."""
+    if not log_path.exists():
+        return []
+    parser = LatexLogParser()
+    with log_path.open("r", encoding="utf-8", errors="replace") as handle:
+        for line in handle:
+            parser.process_line(line)
+    parser.finalize()
+    return list(parser.messages)

@@ -9,8 +9,11 @@ from typing import TYPE_CHECKING, Any
 
 import typer
 
-from texsmith.adapters.latex.engine import parse_latex_log
-from texsmith.adapters.latex.log import LatexMessage, LatexMessageSeverity
+from texsmith.adapters.latex.engines import (
+    LatexMessage,
+    LatexMessageSeverity,
+    parse_latex_log,
+)
 from texsmith.api.pipeline import ConversionBundle, LaTeXFragment
 from texsmith.api.templates import TemplateRenderResult
 

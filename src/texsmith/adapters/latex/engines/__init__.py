@@ -15,19 +15,22 @@ from rich.console import Console
 
 from texsmith.core.context import DocumentState
 
-from .latexmk import (
+from ..latexmk import (
     LatexmkEngine,
     build_engine_command as build_pdflatex_command,
     latexmk_pdf_flag,
     normalise_engine_command,
     normalise_index_engine,
 )
-from .log import (
+from .latex import (
     LatexLogParser,
     LatexMessage,
+    LatexMessageSeverity,
     LatexStreamResult,
-    stream_latexmk_output,
+    parse_latex_log,
+    run_latex_engine,
 )
+from .tectonic import run_tectonic_engine
 
 
 EngineBackend = Literal["tectonic", "latexmk"]
@@ -274,21 +277,10 @@ def build_tex_env(
     return env
 
 
-def parse_latex_log(log_path: Path) -> list[LatexMessage]:
-    """Parse a LaTeX log file into structured messages."""
-    if not log_path.exists():
-        return []
-    parser = LatexLogParser()
-    with log_path.open("r", encoding="utf-8", errors="replace") as handle:
-        for line in handle:
-            parser.process_line(line)
-    parser.finalize()
-    return list(parser.messages)
-
-
 def run_engine_command(
     command: EngineCommand,
     *,
+    backend: EngineBackend,
     workdir: Path,
     env: Mapping[str, str],
     console: Console | None,
@@ -324,13 +316,21 @@ def run_engine_command(
             pdf_path=command.pdf_path,
         )
 
-    result: LatexStreamResult = stream_latexmk_output(
-        argv,
-        cwd=str(workdir),
-        env=env,
-        console=console,
-        verbosity=verbosity,
-    )
+    if backend == "latexmk":
+        result: LatexStreamResult = run_latex_engine(
+            argv,
+            workdir=workdir,
+            env=env,
+            console=console,
+            verbosity=verbosity,
+        )
+    else:
+        result = run_tectonic_engine(
+            argv,
+            workdir=workdir,
+            env=env,
+            console=console,
+        )
     messages = result.messages if result.returncode != 0 else result.messages or []
     if result.returncode != 0 and not messages:
         messages = parse_latex_log(log_path)
@@ -348,6 +348,10 @@ __all__ = [
     "EngineCommand",
     "EngineFeatures",
     "EngineResult",
+    "LatexLogParser",
+    "LatexMessage",
+    "LatexMessageSeverity",
+    "LatexStreamResult",
     "build_engine_command",
     "build_tex_env",
     "compute_features",

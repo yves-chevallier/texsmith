@@ -6,7 +6,7 @@
 
 ::: texsmith.adapters.latex.renderer
 
-::: texsmith.adapters.latex.log
+::: texsmith.adapters.latex.engines.latex.log
 
 ::: texsmith.adapters.latex.utils
 

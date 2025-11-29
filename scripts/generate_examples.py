@@ -23,7 +23,7 @@ except ImportError:  # pragma: no cover - compatibility alias
 
 from PIL import Image  # type: ignore[import]
 
-from texsmith.adapters.latex.engine import (
+from texsmith.adapters.latex.engines import (
     EngineResult,
     build_engine_command,
     build_tex_env,
@@ -228,6 +228,7 @@ def _compile_pdf(result: TemplateRenderResult) -> Path:
     )
     engine_result: EngineResult = run_engine_command(
         command_plan,
+        backend=engine_choice.backend,
         workdir=result.main_tex_path.parent,
         env=env,
         console=None,

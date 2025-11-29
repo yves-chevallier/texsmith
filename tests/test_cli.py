@@ -9,8 +9,8 @@ import pytest
 import typer
 from typer.testing import CliRunner
 
-from texsmith.adapters.latex import engine
-from texsmith.adapters.latex.log import LatexMessage, LatexMessageSeverity
+from texsmith.adapters.latex import engines as engine
+from texsmith.adapters.latex.engines import LatexMessage, LatexMessageSeverity
 from texsmith.core.conversion.debug import ConversionError, raise_conversion_error
 from texsmith.ui.cli import DEFAULT_MARKDOWN_EXTENSIONS, app
 from texsmith.ui.cli.commands import render as render_cmd
