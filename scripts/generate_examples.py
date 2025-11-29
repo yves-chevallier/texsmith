@@ -233,6 +233,7 @@ def _compile_pdf(result: TemplateRenderResult) -> Path:
         env=env,
         console=None,
         classic_output=True,
+        features=features,
     )
     if engine_result.returncode != 0:  # pragma: no cover - runtime guard
         raise RuntimeError(

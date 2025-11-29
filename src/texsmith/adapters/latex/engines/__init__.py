@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 import io
 import os
@@ -77,6 +77,17 @@ class EngineResult:
     command: list[str]
     log_path: Path
     pdf_path: Path
+
+
+_TECTONIC_RERUN_TOKENS = (
+    "rerun to get cross-references right",
+    "rerun to get cross references right",
+    "label(s) may have changed",
+    "there were undefined references",
+    "there were undefined citations",
+    "package rerunfilecheck warning",
+    "please rerun",
+)
 
 
 def resolve_engine(preference: str | None, template_engine: str | None) -> EngineChoice:
@@ -286,11 +297,25 @@ def run_engine_command(
     console: Console | None,
     verbosity: int = 0,
     classic_output: bool = False,
+    features: EngineFeatures | None = None,
+    rerun_limit: int = 5,
 ) -> EngineResult:
     """Execute the engine command, streaming logs when requested."""
     argv = command.argv
     log_path = command.log_path
     console = console or Console(file=io.StringIO())
+
+    if backend == "tectonic" and features is not None:
+        return _run_tectonic_build(
+            command,
+            features,
+            workdir=workdir,
+            env=env,
+            console=console,
+            verbosity=verbosity,
+            classic_output=classic_output,
+            rerun_limit=rerun_limit,
+        )
 
     if classic_output:
         process = subprocess.run(
@@ -331,16 +356,300 @@ def run_engine_command(
             env=env,
             console=console,
         )
+    return _stream_result_to_engine_result(result, command)
+
+
+def _stream_result_to_engine_result(result: LatexStreamResult, command: EngineCommand) -> EngineResult:
+    log_path = command.log_path
     messages = result.messages if result.returncode != 0 else result.messages or []
     if result.returncode != 0 and not messages:
         messages = parse_latex_log(log_path)
     return EngineResult(
         returncode=result.returncode,
         messages=messages,
-        command=argv,
+        command=command.argv,
         log_path=log_path,
         pdf_path=command.pdf_path,
     )
+
+
+@dataclass(slots=True)
+class _AuxiliaryToolRun:
+    returncode: int
+    stdout: str
+    stderr: str
+
+
+def _invoke_auxiliary_tool(
+    label: str,
+    argv: Sequence[str],
+    *,
+    workdir: Path,
+    env: Mapping[str, str],
+    console: Console,
+) -> _AuxiliaryToolRun:
+    console.print(f"[cyan]Running {label}…[/]")
+    try:
+        process = subprocess.run(
+            list(argv),
+            check=False,
+            capture_output=True,
+            text=True,
+            cwd=workdir,
+            env=dict(env),
+        )
+        stdout = process.stdout or ""
+        stderr = process.stderr or ""
+    except OSError as exc:
+        stdout = ""
+        stderr = str(exc)
+        console.print(stderr)
+        return _AuxiliaryToolRun(returncode=1, stdout=stdout, stderr=stderr)
+
+    if stdout:
+        console.print(stdout.rstrip())
+    if stderr:
+        console.print(stderr.rstrip())
+    return _AuxiliaryToolRun(
+        returncode=process.returncode,
+        stdout=stdout,
+        stderr=stderr,
+    )
+
+
+def _tool_failure_result(
+    tool: str,
+    run: _AuxiliaryToolRun,
+    *,
+    command: EngineCommand,
+) -> EngineResult:
+    summary = f"{tool} failed with status {run.returncode}"
+    details = [segment for segment in (run.stdout.strip(), run.stderr.strip()) if segment]
+    message = LatexMessage(
+        severity=LatexMessageSeverity.ERROR,
+        summary=summary,
+        details=details,
+    )
+    return EngineResult(
+        returncode=run.returncode or 1,
+        messages=[message],
+        command=command.argv,
+        log_path=command.log_path,
+        pdf_path=command.pdf_path,
+    )
+
+
+def _run_tectonic_build(
+    command: EngineCommand,
+    features: EngineFeatures,
+    *,
+    workdir: Path,
+    env: Mapping[str, str],
+    console: Console,
+    verbosity: int,
+    classic_output: bool,
+    rerun_limit: int,
+) -> EngineResult:
+    job_stem = command.log_path.with_suffix("").name
+    index_engine = normalise_index_engine(features.index_engine) if features.has_index else None
+    rerun_target = max(1, rerun_limit)
+    ran_biber = False
+    ran_index = False
+    ran_glossary = False
+
+    last_result: LatexStreamResult | None = None
+
+    for pass_number in range(1, rerun_target + 1):
+        result = _run_single_tectonic_pass(
+            command,
+            workdir=workdir,
+            env=env,
+            console=console,
+            verbosity=verbosity,
+            classic_output=classic_output,
+        )
+        last_result = result
+        if result.returncode != 0:
+            return _stream_result_to_engine_result(result, command)
+
+        forced_rerun = False
+
+        if features.bibliography and not ran_biber:
+            ran, failure = _maybe_run_biber(
+                job_stem,
+                workdir=workdir,
+                env=env,
+                console=console,
+                command=command,
+            )
+            if failure is not None:
+                return failure
+            if ran:
+                ran_biber = True
+                forced_rerun = True
+
+        if features.has_index and not ran_index and index_engine:
+            ran, failure = _maybe_run_index(
+                job_stem,
+                engine_name=index_engine,
+                workdir=workdir,
+                env=env,
+                console=console,
+                command=command,
+            )
+            if failure is not None:
+                return failure
+            if ran:
+                ran_index = True
+                forced_rerun = True
+
+        if features.has_glossary and not ran_glossary:
+            ran, failure = _maybe_run_glossaries(
+                job_stem,
+                workdir=workdir,
+                env=env,
+                console=console,
+                command=command,
+            )
+            if failure is not None:
+                return failure
+            if ran:
+                ran_glossary = True
+                forced_rerun = True
+
+        needs_rerun = forced_rerun or _log_requests_rerun(command.log_path)
+        if not needs_rerun:
+            break
+
+        if pass_number == rerun_target:
+            message = LatexMessage(
+                severity=LatexMessageSeverity.ERROR,
+                summary=f"Tectonic did not resolve references after {rerun_target} passes",
+            )
+            return EngineResult(
+                returncode=1,
+                messages=[message],
+                command=command.argv,
+                log_path=command.log_path,
+                pdf_path=command.pdf_path,
+            )
+
+    assert last_result is not None
+    return _stream_result_to_engine_result(last_result, command)
+
+
+def _run_single_tectonic_pass(
+    command: EngineCommand,
+    *,
+    workdir: Path,
+    env: Mapping[str, str],
+    console: Console,
+    verbosity: int,
+    classic_output: bool,
+) -> LatexStreamResult:
+    if classic_output:
+        process = subprocess.run(
+            command.argv,
+            check=False,
+            capture_output=True,
+            text=True,
+            cwd=workdir,
+            env=dict(env),
+        )
+        if process.stdout:
+            console.print(process.stdout.rstrip())
+        if process.stderr:
+            console.print(process.stderr.rstrip())
+        return LatexStreamResult(returncode=process.returncode, messages=[])
+    return run_tectonic_engine(
+        command.argv,
+        workdir=workdir,
+        env=env,
+        console=console,
+    )
+
+
+def _maybe_run_biber(
+    job_stem: str,
+    *,
+    workdir: Path,
+    env: Mapping[str, str],
+    console: Console,
+    command: EngineCommand,
+) -> tuple[bool, EngineResult | None]:
+    bcf_path = workdir / f"{job_stem}.bcf"
+    if not bcf_path.exists():
+        return False, None
+    run = _invoke_auxiliary_tool(
+        "biber",
+        ["biber", job_stem],
+        workdir=workdir,
+        env=env,
+        console=console,
+    )
+    if run.returncode != 0:
+        return True, _tool_failure_result("biber", run, command=command)
+    return True, None
+
+
+def _maybe_run_index(
+    job_stem: str,
+    *,
+    engine_name: str,
+    workdir: Path,
+    env: Mapping[str, str],
+    console: Console,
+    command: EngineCommand,
+) -> tuple[bool, EngineResult | None]:
+    index_path = workdir / f"{job_stem}.idx"
+    if not index_path.exists():
+        return False, None
+    run = _invoke_auxiliary_tool(
+        engine_name,
+        [engine_name, index_path.name],
+        workdir=workdir,
+        env=env,
+        console=console,
+    )
+    if run.returncode != 0:
+        return True, _tool_failure_result(engine_name, run, command=command)
+    return True, None
+
+
+def _maybe_run_glossaries(
+    job_stem: str,
+    *,
+    workdir: Path,
+    env: Mapping[str, str],
+    console: Console,
+    command: EngineCommand,
+) -> tuple[bool, EngineResult | None]:
+    glo_path = workdir / f"{job_stem}.glo"
+    acn_path = workdir / f"{job_stem}.acn"
+    if not glo_path.exists() and not acn_path.exists():
+        return False, None
+    run = _invoke_auxiliary_tool(
+        "makeglossaries",
+        ["makeglossaries", job_stem],
+        workdir=workdir,
+        env=env,
+        console=console,
+    )
+    if run.returncode != 0:
+        return True, _tool_failure_result("makeglossaries", run, command=command)
+    return True, None
+
+
+def _log_requests_rerun(log_path: Path) -> bool:
+    try:
+        with log_path.open("r", encoding="utf-8", errors="ignore") as handle:
+            for line in handle:
+                lower = line.lower()
+                if any(token in lower for token in _TECTONIC_RERUN_TOKENS):
+                    return True
+    except FileNotFoundError:
+        return False
+    return False
 
 
 __all__ = [

@@ -945,6 +945,7 @@ def render(
             console=state.console,
             verbosity=state.verbosity,
             classic_output=classic_output,
+            features=features,
         )
     except OSError as exc:
         if debug_enabled():

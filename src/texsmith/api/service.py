@@ -381,6 +381,7 @@ class ConversionService:
             console=console,
             verbosity=verbosity,
             classic_output=classic_output,
+            features=features,
         )
 
     @staticmethod

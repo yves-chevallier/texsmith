@@ -110,6 +110,7 @@ def _render_style(style: str) -> Path:
         env=env,
         console=None,
         classic_output=True,
+        features=features,
     )
     if result.returncode != 0:
         raise RuntimeError(
