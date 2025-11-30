@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Iterable
+import re
 
 
 def normalize_family(name: str) -> str:
@@ -35,4 +36,16 @@ def unicode_class_ranges(ranges: Iterable[str]) -> list[tuple[str, str]]:
     return [parse_unicode_range(item) for item in ranges]
 
 
-__all__ = ["normalize_family", "parse_unicode_range", "unicode_class_ranges"]
+def sanitize_script_id(script_id: str) -> str:
+    """Normalise a script identifier into a macro-friendly suffix."""
+    parts = re.split(r"[^0-9A-Za-z]+", script_id)
+    cleaned = "".join(part.title() for part in parts if part)
+    return cleaned or "Script"
+
+
+__all__ = [
+    "normalize_family",
+    "parse_unicode_range",
+    "unicode_class_ranges",
+    "sanitize_script_id",
+]

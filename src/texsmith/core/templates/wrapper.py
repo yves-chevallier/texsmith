@@ -22,6 +22,7 @@ from texsmith.core.templates.manifest import TemplateError
 from texsmith.core.conversion.debug import ensure_emitter, record_event
 from texsmith.core.diagnostics import DiagnosticEmitter
 from texsmith.fonts.analyzer import analyse_font_requirements
+from texsmith.fonts.blocks import ScriptTracker, summarise_scripts, wrap_foreign_scripts
 from texsmith.fonts.manager import PreparedFonts, prepare_fonts_for_context
 
 from ..context import DocumentState
@@ -58,7 +59,15 @@ def wrap_template_document(
     """Wrap LaTeX content using a template and optional asset copying."""
     output_dir = Path(output_dir).resolve()
     resolved_slots = {name: value for name, value in slot_outputs.items()}
-    main_slot_content = resolved_slots.get(default_slot, "")
+    tracker = ScriptTracker()
+
+    def _process_slot(value: Any) -> Any:
+        if isinstance(value, str):
+            return wrap_foreign_scripts(value, tracker=tracker)
+        return value
+
+    main_slot_content = _process_slot(resolved_slots.get(default_slot, ""))
+    resolved_slots[default_slot] = main_slot_content
     resolved_slots.setdefault(default_slot, main_slot_content)
 
     overrides_payload = dict(template_overrides) if template_overrides else None
@@ -88,10 +97,12 @@ def wrap_template_document(
     if root_name:
         template_context.setdefault("root_filename", root_name)
 
-    for slot_name, content in resolved_slots.items():
+    for slot_name, raw_content in resolved_slots.items():
         if slot_name == default_slot:
             continue
-        template_context[slot_name] = content
+        processed_content = _process_slot(raw_content)
+        resolved_slots[slot_name] = processed_content
+        template_context[slot_name] = processed_content
 
     template_context["index_entries"] = document_state.has_index_entries
     index_terms = list(dict.fromkeys(getattr(document_state, "index_entries", [])))
@@ -109,6 +120,11 @@ def wrap_template_document(
     template_context["acronyms"] = document_state.acronyms.copy()
     template_context["citations"] = list(document_state.citations)
     template_context["bibliography_entries"] = document_state.bibliography
+
+    if tracker.has_usage():
+        script_payload = summarise_scripts(tracker.to_payload())
+        document_state.script_usage = script_payload
+        template_context["_script_usage"] = script_payload
 
     fragment_attributes: dict[str, Any] = {}
     if fragment_names:

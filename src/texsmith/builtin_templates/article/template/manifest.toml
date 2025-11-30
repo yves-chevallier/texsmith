@@ -78,7 +78,6 @@ normaliser = "babel_language"
 [latex.template.attributes.columns]
 default = 1
 type = "integer"
-sources = ["columns"]
 
 [latex.template.attributes.page_numbers]
 default = true

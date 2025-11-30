@@ -11,11 +11,15 @@ from typing import TYPE_CHECKING, Any
 
 from texsmith.fonts import locator as fonts_locator
 from texsmith.fonts.cache import cache_fonts_for_families
+from texsmith.fonts.blocks import environment_name as script_environment_name
+from texsmith.fonts.emoji import EmojiPayload, resolve_emoji_preferences
+from texsmith.fonts.constants import SCRIPT_FALLBACK_ALIASES
 from texsmith.fonts.fallback import NotoFallback
 from texsmith.fonts.cjk import CJK_SCRIPT_ROWS
 from texsmith.fonts.locator import FontFiles, FontLocator
 from texsmith.fonts.matcher import FontMatchResult
-from texsmith.fonts.utils import unicode_class_ranges
+from texsmith.fonts.selection import FontSelection, resolve_font_selection
+from texsmith.fonts.utils import sanitize_script_id, unicode_class_ranges
 from texsmith.fonts.data import noto_dataset
 
 
@@ -24,98 +28,11 @@ if TYPE_CHECKING:
 
 
 DEFAULT_FALLBACK_FONTS: list[str] = ["NotoSans"]
-_EMOJI_BLACK_MODES = {"black", "openmoji-black", "openmoji black"}
-_EMOJI_COLOR_MODES = {"color", "colour", "openmoji-color", "openmoji color", "noto color emoji"}
 _SCRIPT_LOOKUP = {row[0]: row for row in noto_dataset.SCRIPT_FALLBACKS}
 _SCRIPT_LOOKUP.update(CJK_SCRIPT_ROWS)
-
-
-@dataclass(frozen=True, slots=True)
-class FontSelection:
-    """Resolved font choices for the ts-fonts fragment."""
-
-    profile: str
-    main: str
-    sans: str
-    mono: str
-    math: str
-    small_caps: str | None
-    mono_italic: str
-    mono_bold_italic: str
-    mono_fake_slant: bool
-
-
-def resolve_font_selection(context: Mapping[str, Any]) -> FontSelection:
-    """Mirror the ts-fonts Jinja defaults to a reusable Python structure."""
-    raw_profile = (
-        context.get("fonts")
-        or (context.get("press") or {}).get("fonts")  # type: ignore[arg-type]
-        or "default"
-    )
-    profile = str(raw_profile).strip().lower() or "default"
-    main_font = "Latin Modern Roman"
-    sans_font = "Latin Modern Sans"
-    mono_font = "FreeMono"
-    math_font = "Latin Modern Math"
-    small_caps_font: str | None = "Latin Modern Roman Caps"
-    mono_italic: str | None = None
-    mono_bold_italic: str | None = None
-    mono_fake_slant = False
-
-    if profile == "sans":
-        main_font = "Latin Modern Sans"
-        sans_font = "Latin Modern Sans"
-        mono_font = "IBM Plex Mono"
-    elif profile == "adventor":
-        main_font = "TeX Gyre Adventor"
-        sans_font = "TeX Gyre Adventor"
-        mono_font = "IBM Plex Mono"
-        math_font = "TeX Gyre Pagella Math"
-        small_caps_font = None
-    elif profile == "heros":
-        main_font = "TeX Gyre Heros"
-        sans_font = "TeX Gyre Heros"
-        mono_font = "IBM Plex Mono"
-        math_font = "TeX Gyre Pagella Math"
-        small_caps_font = None
-    elif profile == "noto":
-        main_font = "Noto Serif"
-        sans_font = "Noto Sans"
-        mono_font = "Noto Sans Mono"
-        math_font = "Noto Sans Math"
-        small_caps_font = None
-        mono_italic = "*"
-        mono_bold_italic = "* Bold"
-        mono_fake_slant = True
-
-    # Context overrides for advanced users.
-    main_font = str(context.get("main_font") or main_font)
-    sans_font = str(context.get("sans_font") or sans_font)
-    mono_font = str(context.get("mono_font") or mono_font)
-    math_font = str(context.get("math_font") or math_font)
-    override_small_caps = context.get("small_caps_font")
-    if isinstance(override_small_caps, str):
-        small_caps_font = override_small_caps
-
-    if mono_italic is None:
-        if mono_font == "FreeMono":
-            mono_italic = "* Oblique"
-            mono_bold_italic = "* Bold Oblique"
-        else:
-            mono_italic = "* Italic"
-            mono_bold_italic = "* Bold Italic"
-
-    return FontSelection(
-        profile=profile,
-        main=main_font,
-        sans=sans_font,
-        mono=mono_font,
-        math=math_font,
-        small_caps=small_caps_font,
-        mono_italic=mono_italic,
-        mono_bold_italic=mono_bold_italic or mono_italic,
-        mono_fake_slant=bool(mono_fake_slant),
-    )
+for alias, target in SCRIPT_FALLBACK_ALIASES.items():
+    if target in _SCRIPT_LOOKUP and alias not in _SCRIPT_LOOKUP:
+        _SCRIPT_LOOKUP[alias] = _SCRIPT_LOOKUP[target]
 
 
 def _dedupe_preserve_order(values: Iterable[str]) -> list[str]:
@@ -127,37 +44,6 @@ def _dedupe_preserve_order(values: Iterable[str]) -> list[str]:
         seen.add(value)
         ordered.append(value)
     return ordered
-
-
-def _resolve_emoji_preferences(context: Mapping[str, Any]) -> tuple[str, str | None]:
-    press = context.get("press")
-    press_fonts_raw = press.get("fonts") if isinstance(press, Mapping) else None
-    press_fonts = press_fonts_raw if isinstance(press_fonts_raw, Mapping) else None
-    fonts_map = context.get("fonts") if isinstance(context.get("fonts"), Mapping) else None
-
-    runtime_emoji = (
-        context.get("emoji_mode") if isinstance(context.get("emoji_mode"), str) else None
-    )
-    emoji_pref = context.get("emoji") if isinstance(context.get("emoji"), str) else None
-    if emoji_pref is None and isinstance(press_fonts, Mapping):
-        candidate = press_fonts.get("emoji")
-        emoji_pref = candidate if isinstance(candidate, str) else None
-    if emoji_pref is None and runtime_emoji:
-        emoji_pref = runtime_emoji
-    elif emoji_pref is None and isinstance(fonts_map, Mapping):
-        candidate = fonts_map.get("emoji")
-        emoji_pref = candidate if isinstance(candidate, str) else None
-
-    emoji_mode = (emoji_pref or "black").strip().lower() or "black"
-    emoji_font: str | None = None
-    if emoji_mode not in {"artifact", "off", "none", "twemoji"}:
-        if emoji_mode in _EMOJI_BLACK_MODES:
-            emoji_font = "OpenMoji Black"
-        elif emoji_mode in _EMOJI_COLOR_MODES:
-            emoji_font = "Noto Color Emoji"
-        elif isinstance(emoji_pref, str):
-            emoji_font = emoji_pref
-    return emoji_mode, emoji_font
 
 
 def _apply_twemoji_fallback(
@@ -270,17 +156,12 @@ def _build_unicode_classes(
     return specs
 
 
-def _sanitize_script_name(script_id: str) -> str:
-    parts = re.split(r"[^0-9A-Za-z]+", script_id)
-    cleaned = "".join(part.title() for part in parts if part)
-    return cleaned or "Script"
-
-
 def _build_script_fallbacks(
     script_blocks: Mapping[str, tuple[str, ...]],
     copied_fonts: Mapping[str, dict[str, str]],
 ) -> list[dict[str, Any]]:
     specs: list[dict[str, Any]] = []
+
     for script_id in sorted(script_blocks.keys()):
         script_row = _SCRIPT_LOOKUP.get(script_id)
         if not script_row:
@@ -288,6 +169,8 @@ def _build_script_fallbacks(
         family = script_row[2]
         if not family:
             continue
+        language = script_id.replace("-", "").replace("_", "")
+        env_name = script_environment_name(language)
         files = copied_fonts.get(family)
         if not files:
             continue
@@ -297,8 +180,10 @@ def _build_script_fallbacks(
                 "title": script_row[1],
                 "family": family,
                 "blocks": sorted(script_blocks[script_id]),
-                "font_command": f"TSFallback{_sanitize_script_name(script_id)}",
+                "font_command": f"TSFallback{sanitize_script_id(script_id)}",
                 "files": files,
+                "language": language,
+                "environment_name": env_name,
             }
         )
     return specs
@@ -317,7 +202,10 @@ def prepare_fonts_for_context(
 
     Returns a :class:`PreparedFonts` summary to help callers with telemetry.
     """
-    selection = resolve_font_selection(template_context)
+    selection = resolve_font_selection(
+        template_context,
+        script_usage=template_context.get("_script_usage"),
+    )
     template_context.setdefault("font_profile", selection.profile)
     template_context.setdefault("main_font", selection.main)
     template_context.setdefault("sans_font", selection.sans)
@@ -346,25 +234,33 @@ def prepare_fonts_for_context(
         .lower()
     )
 
-    emoji_mode, emoji_font = _resolve_emoji_preferences(template_context)
-    color_requested = bool(
-        emoji_mode in _EMOJI_COLOR_MODES
-        or (emoji_font and emoji_font.lower() == "noto color emoji")
-    )
-    if color_requested and engine_hint and engine_hint != "lualatex":
-        if emitter:
-            emitter.warning(
-                "Color emoji fonts (COLR/CPAL, CBDT/CBLC, SVG-in-OT) are not supported by this engine; falling back to OpenMoji Black."
-            )
-        emoji_mode = "black"
-        emoji_font = "OpenMoji Black"
-        template_context["emoji"] = "black"
-        template_context["emoji_mode"] = "black"
+    fonts_dir = (output_dir / "fonts").resolve()
 
-    template_context.setdefault("emoji_mode", emoji_mode)
-    template_context["_texsmith_effective_emoji_mode"] = emoji_mode
-    if emoji_font:
-        template_context["_texsmith_effective_emoji_font"] = emoji_font
+    emoji_payload = resolve_emoji_preferences(
+        template_context,
+        engine=engine_hint,
+        fonts_dir=fonts_dir,
+        emitter=emitter,
+    )
+    if emoji_payload.warnings and emitter:
+        for message in emoji_payload.warnings:
+            emitter.warning(message)
+    emoji_font_family = emoji_payload.font_family
+    emoji_font_path = None
+    if emoji_payload.font_path:
+        try:
+            emoji_font_path = emoji_payload.font_path.relative_to(output_dir).as_posix()
+        except ValueError:
+            emoji_font_path = emoji_payload.font_path.as_posix()
+    template_context["_texsmith_effective_emoji_mode"] = emoji_payload.mode
+    template_context["emoji_mode"] = emoji_payload.mode
+    template_context["emoji"] = emoji_payload.mode
+    template_context["emoji_spec"] = {
+        "mode": emoji_payload.mode,
+        "font_family": emoji_font_family,
+        "font_path": emoji_font_path,
+        "color_enabled": emoji_payload.color_enabled,
+    }
 
     base_fallbacks: list[str] = []
     if font_match:
@@ -377,9 +273,12 @@ def prepare_fonts_for_context(
         base_fallbacks.extend(DEFAULT_FALLBACK_FONTS)
 
     fallback_fonts = _dedupe_preserve_order(base_fallbacks)
-    if emoji_font and emoji_font not in fallback_fonts:
-        fallback_fonts = [emoji_font, *fallback_fonts]
+    if emoji_font_family and emoji_font_family not in fallback_fonts:
+        fallback_fonts = [emoji_font_family, *fallback_fonts]
     fallback_fonts = _dedupe_preserve_order(fallback_fonts)
+    script_font_set: set[str] = {
+        family for families in selection.script_fallbacks.values() for family in families
+    }
     template_context["fallback_fonts"] = fallback_fonts
     template_context.setdefault("font_match_ranges", font_ranges)
     template_context.setdefault("present_fonts", present_fonts)
@@ -394,8 +293,9 @@ def prepare_fonts_for_context(
         *([selection.small_caps] if selection.small_caps else []),
     }
     fonts_to_copy.update(fallback_fonts)
-    if emoji_font:
-        fonts_to_copy.add(emoji_font)
+    fonts_to_copy.update(script_font_set)
+    if emoji_font_family:
+        fonts_to_copy.add(emoji_font_family)
 
     cached_fonts, cache_failures = cache_fonts_for_families(list(fonts_to_copy), emitter=emitter)
     for family, cached_entry in cached_fonts.items():
@@ -419,11 +319,18 @@ def prepare_fonts_for_context(
 
     available_families = set(copied_serialised.keys())
     fallback_fonts = [font for font in fallback_fonts if font in available_families]
-    if emoji_font and emoji_font in missing_after_copy:
+    if emoji_font_family and emoji_font_family in missing_after_copy:
         fallback_fonts = _apply_twemoji_fallback(
-            template_context, fallback_fonts, missing_font=emoji_font, emitter=emitter
+            template_context, fallback_fonts, missing_font=emoji_font_family, emitter=emitter
         )
-        missing_after_copy.discard(emoji_font)
+        missing_after_copy.discard(emoji_font_family)
+        emoji_font_family = None
+        template_context["emoji_spec"] = {
+            "mode": template_context["emoji_mode"],
+            "font_family": None,
+            "font_path": None,
+            "color_enabled": False,
+        }
 
     template_context["fallback_fonts"] = fallback_fonts
 
@@ -432,7 +339,7 @@ def prepare_fonts_for_context(
         for family, ranges in font_ranges.items()
         if family == "__UNCOVERED__" or family in available_families
     }
-    if emoji_font:
+    if emoji_font_family:
         filtered_font_ranges["NotoColorEmoji"] = list(_EMOJI_DEFAULT_RANGES)
         template_context["emoji_ranges"] = unicode_class_ranges(_EMOJI_DEFAULT_RANGES)
     template_context["font_match_ranges"] = filtered_font_ranges

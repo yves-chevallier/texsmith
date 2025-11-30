@@ -91,7 +91,6 @@ sources = ["documentclass"]
 [latex.template.attributes.columns]
 default = 1
 type = "integer"
-sources = ["columns"]
 
 [latex.template.attributes.hyperref_options]
 default = "colorlinks=true, linkcolor=black, citecolor=black, plainpages=false, unicode=true, urlcolor=urlcolor"

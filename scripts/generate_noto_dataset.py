@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+from collections import defaultdict
 import io
 import json
 import pprint
@@ -16,6 +17,7 @@ ROOT = Path(__file__).resolve().parents[1]
 OUTPUT_PATH = ROOT / "src" / "texsmith" / "fonts" / "data" / "noto_dataset.py"
 CTAN_ZIP_URL = "https://mirrors.ctan.org/macros/xetex/latex/ucharclasses.zip"
 NOTO_JSON_URL = "https://notofonts.github.io/noto.json"
+UNICODE_BLOCKS_URL = "http://www.unicode.org/Public/UNIDATA/Blocks.txt"
 
 
 def download_bytes(url: str) -> bytes:
@@ -32,6 +34,21 @@ def fetch_ucharclasses_text() -> str:
 def fetch_noto_metadata() -> Dict[str, object]:
     data = download_bytes(NOTO_JSON_URL)
     return json.loads(data.decode("utf-8"))
+
+
+def fetch_unicode_blocks() -> List[Tuple[int, int, str]]:
+    data = download_bytes(UNICODE_BLOCKS_URL)
+    rows: List[Tuple[int, int, str]] = []
+    for raw_line in data.decode("utf-8").splitlines():
+        line = raw_line.strip()
+        if not line or line.startswith("#"):
+            continue
+        range_part, name = line.split(";")
+        start_str, end_str = range_part.strip().split("..")
+        start = int(start_str, 16)
+        end = int(end_str, 16)
+        rows.append((start, end, name.strip()))
+    return rows
 
 
 def tokenize(text: str) -> List[str]:
@@ -144,12 +161,25 @@ def build_dataset() -> Dict[str, object]:
     uchar_text = fetch_ucharclasses_text()
     classes = parse_ucharclasses(uchar_text)
     noto_data = fetch_noto_metadata()
+    unicode_block_rows = fetch_unicode_blocks()
+    unicode_by_range = {(start, end): name for start, end, name in unicode_block_rows}
     alias_map = {script_id: build_aliases(script_id, info["title"]) for script_id, info in noto_data.items()}
     language_rows: List[Tuple[str, int, int, Optional[str]]] = []
     script_rows: Dict[str, Tuple[str, str, Optional[str], Optional[str], Optional[str], Optional[str]]] = {}
+    unicode_blocks: List[Tuple[str, int, int, Optional[str]]] = []
+    block_display_names: Dict[str, str] = {}
+    script_block_map: dict[str, set[str]] = defaultdict(set)
     for name, start, end, tokens in classes:
         script_id = find_script_for_class(tokens, alias_map)
         language_rows.append((name, start, end, script_id))
+        display_name = unicode_by_range.get((start, end))
+        if display_name is None:
+            parts = re.findall(r"[A-Z]+(?=[A-Z][a-z]|$)|[A-Z]?[a-z]+|[0-9]+", name)
+            display_name = " ".join(parts)
+        block_display_names[name] = display_name
+        unicode_blocks.append((display_name, start, end, script_id))
+        if script_id:
+            script_block_map[script_id].add(display_name)
         if script_id and script_id not in script_rows:
             script_info = noto_data[script_id]
             preferred = choose_family(script_info.get("families", {}))
@@ -169,7 +199,18 @@ def build_dataset() -> Dict[str, object]:
             )
     language_rows.sort(key=lambda row: row[0])
     script_table = [script_rows[key] for key in sorted(script_rows)]
-    return {"languages": language_rows, "scripts": script_table}
+    for key in script_rows:
+        script_block_map.setdefault(key, set())
+    script_block_entries = {
+        key: tuple(sorted(values)) for key, values in sorted(script_block_map.items())
+    }
+    return {
+        "languages": language_rows,
+        "scripts": script_table,
+        "unicode_blocks": unicode_blocks,
+        "block_display_names": block_display_names,
+        "script_blocks": script_block_entries,
+    }
 
 
 def main() -> None:
@@ -186,6 +227,15 @@ def main() -> None:
         handle.write("\n\n")
         handle.write("SCRIPT_FALLBACKS = ")
         handle.write(pprint.pformat(dataset["scripts"], sort_dicts=False))
+        handle.write("\n\n")
+        handle.write("UNICODE_BLOCKS = ")
+        handle.write(pprint.pformat(dataset["unicode_blocks"], sort_dicts=False))
+        handle.write("\n\n")
+        handle.write("BLOCK_DISPLAY_NAMES = ")
+        handle.write(pprint.pformat(dataset["block_display_names"], sort_dicts=False))
+        handle.write("\n\n")
+        handle.write("SCRIPT_BLOCKS = ")
+        handle.write(pprint.pformat(dataset["script_blocks"], sort_dicts=False))
         handle.write(
             "\n\n"
             "def build_lookup_tables(language_rows, script_rows):\n"

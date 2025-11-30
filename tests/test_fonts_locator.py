@@ -87,6 +87,9 @@ def test_prepare_fonts_updates_context_and_ranges(tmp_path: Path) -> None:
     assert {"DemoEmoji"} <= families
     ranges = {tuple(pair) for cls in context["unicode_font_classes"] for pair in cls["ranges"]}  # type: ignore[index]
     assert all(int(start, 16) >= 0x80 for start, _ in ranges)
+    emoji_spec = context["emoji_spec"]  # type: ignore[index]
+    assert emoji_spec["font_family"] == "OpenMoji Black"
+    assert emoji_spec["mode"] == "black"
 
 
 def test_kpsewhich_lookup_is_used(monkeypatch, tmp_path: Path) -> None:
@@ -158,11 +161,13 @@ def test_prepare_fonts_downloads_emoji_font(monkeypatch, tmp_path: Path) -> None
         emitter=NullEmitter(),
     )
 
-    cache_file = tmp_path / "cache" / "OpenMoji-black-glyf.ttf"
     assert result is not None
-    assert cache_file.exists()
+    cached_fonts = list((tmp_path / "cache").rglob("OpenMoji-black-glyf.ttf"))
+    assert cached_fonts
     assert "OpenMoji Black" in context["font_files"]  # type: ignore[index]
     assert "OpenMoji Black" in context["fallback_fonts"]  # type: ignore[index]
+    emoji_spec = context["emoji_spec"]  # type: ignore[index]
+    assert emoji_spec["font_family"] == "OpenMoji Black"
 
 
 def test_prepare_fonts_falls_back_to_twemoji(monkeypatch, tmp_path: Path) -> None:
@@ -194,5 +199,7 @@ def test_prepare_fonts_falls_back_to_twemoji(monkeypatch, tmp_path: Path) -> Non
 
     assert result is not None
     assert context.get("emoji_mode") == "artifact"
+    emoji_spec = context["emoji_spec"]  # type: ignore[index]
+    assert emoji_spec["mode"] == "artifact"
     assert "OpenMoji Black" not in context["fallback_fonts"]  # type: ignore[index]
     assert any("Emoji font" in msg for msg in emitter.messages)

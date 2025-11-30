@@ -14,7 +14,9 @@ from typing import Any
 
 import yaml
 
-from texsmith.fonts.cjk import CJK_BLOCK_OVERRIDES
+from texsmith.fonts.blocks import block_override
+from texsmith.fonts.cjk import CJK_SCRIPT_ROWS
+from texsmith.fonts.constants import SCRIPT_FALLBACK_ALIASES
 from texsmith.fonts.data import noto_dataset
 from texsmith.fonts.locator import FontLocator
 from texsmith.fonts.utils import normalize_family
@@ -28,6 +30,10 @@ _DATASET_LANGUAGE_RANGES = noto_dataset.LANGUAGE_RANGES
 _DATASET_SCRIPT_ROWS = noto_dataset.SCRIPT_FALLBACKS
 _DATASET_BLOCK_TABLE = noto_dataset.build_codepoint_table()
 _DATASET_SCRIPT_LOOKUP = {row[0]: row for row in _DATASET_SCRIPT_ROWS}
+_DATASET_SCRIPT_LOOKUP.update(CJK_SCRIPT_ROWS)
+for alias, target in SCRIPT_FALLBACK_ALIASES.items():
+    if target in _DATASET_SCRIPT_LOOKUP and alias not in _DATASET_SCRIPT_LOOKUP:
+        _DATASET_SCRIPT_LOOKUP[alias] = _DATASET_SCRIPT_LOOKUP[target]
 _DATASET_MAX_CP = noto_dataset.MAX_CODEPOINT
 
 
@@ -308,7 +314,9 @@ def _assign_fonts_dataset(
             missing.add(cp)
             continue
         block_name, _start, _end, script_id = _DATASET_LANGUAGE_RANGES[block_idx - 1]
-        script_id = script_id or CJK_BLOCK_OVERRIDES.get(block_name)
+        override = block_override(block_name)
+        if override:
+            script_id = override
         if not script_id:
             missing.add(cp)
             continue
