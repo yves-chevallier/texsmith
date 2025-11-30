@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+
 CJK_SCRIPT_ROWS = {
     "chinese": (
         "chinese",

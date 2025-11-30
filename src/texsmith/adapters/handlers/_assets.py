@@ -281,7 +281,7 @@ def _detect_file_suffix(path: Path) -> str | None:
         return None
     if header.startswith(b"%PDF"):
         return ".pdf"
-    if header.startswith(b"\xFF\xD8\xFF"):
+    if header.startswith(b"\xff\xd8\xff"):
         return ".jpg"
     if header.startswith(b"\x89PNG"):
         return ".png"

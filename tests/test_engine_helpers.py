@@ -68,7 +68,9 @@ def test_run_engine_command_invokes_aux_tools(
         if passes["count"] == 1:
             for suffix in ("bcf", "idx", "glo"):
                 (workdir / f"main.{suffix}").write_text("", encoding="utf-8")
-            log_text = "LaTeX Warning: Label(s) may have changed. Rerun to get cross-references right.\n"
+            log_text = (
+                "LaTeX Warning: Label(s) may have changed. Rerun to get cross-references right.\n"
+            )
         else:
             log_text = "Document stable.\n"
         command.log_path.write_text(log_text, encoding="utf-8")
