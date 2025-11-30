@@ -76,6 +76,97 @@ Roadmap and development notes for TeXSmith. I keep this file as a running checkl
 - [ ] Implement drawio over pywreight
 - [ ] ts-languages that uses polyglossia and specific things to languages
 
+## Refactoring fonts management
+
+We implemented a lot of code related to fonts management, and we want to refactor the whole because it is unstable and hard to maintain. The goal is to have a clear and simple way to add support for new languages and scripts, with the right font selection strategy.
+
+We will use `unicode-blocks-py` to detect the scripts used in the document. During LaTeX translation, we parse the document to detect all the scripts used. For each script we define a strategy to select the right fonts to use. We will wrap to the latex text wither the inline `\text<language>{...}` or the environment `\begin{<language>} ... \end{<language>}` depending on the script. Unicode blocks will help to detect with `unicode-blocks.of(char)` the script of each character. To spped up the process we only match with a regex the characters outside the basic latin range and query unicode-blocks for those caracters. The goal is to detect the sequences of characters in the same script and wrap them with the right LaTeX commands.
+
+The strategy for each script can be one of the following:
+
+- Polyglossia
+- XeCJK / LuaCJK
+- Manual
+
+We try to let to use CTAN packages when possible for collecting the fonts.
+
+Pour les emojis on pointe sur Noto Color Emoji ou OpenMoji-black-glyf.ttf si on veut du noir et blanc:
+
+In [7]: unicode_blocks.of('⚡')
+Out[7]: UnicodeBlock(name='Miscellaneous Symbols', start=0x2600, end=0x26ff, assigned_ranges=[(0x2600, 0x26ff)], aliases=['MISCSYMBOLS'])
+
+In [8]: unicode_blocks.of('👩')
+Out[8]: UnicodeBlock(name='Miscellaneous Symbols and Pictographs', start=0x1f300, end=0x1f5ff, assigned_ranges=[(0x1f300, 0x1f5ff)], aliases=['MISCPICTOGRAPHS'])
+
+In [9]: unicode_blocks.of('💻')
+Out[9]: UnicodeBlock(name='Miscellaneous Symbols and Pictographs', start=0x1f300, end=0x1f5ff, assigned_ranges=[(0x1f300, 0x1f5ff)], aliases=['MISCPICTOGRAPHS'])
+
+### ts-fonts.jinja.sty
+
+This file became a huge mess. We want to simplify ans still support all the engines: pdflatex, xelatex, lualatex, tectonic. You can get inspiration from this file but we want to rewrite it correctly SOLID and KISS.
+
+### Manual Strategy
+
+The `ts-fonts` fragment will add the necessary LaTeX code to define the fonts for each language/script. For example, for Kannada, Malayalam, and Burmese/Myanmar we can define:
+
+```latex
+% Kannada
+\newfontfamily\kannadafont[Script=Kannada]{Noto Sans Kannada}
+\newcommand{\textkannada}[1]{{\kannadafont #1}}
+\newenvironment{kannada}{\kannadafont}{}
+
+% Malayalam
+\newfontfamily\malayalamfont[Script=Malayalam]{Noto Sans Malayalam}
+\newcommand{\textmalayalam}[1]{{\malayalamfont #1}}
+\newenvironment{malayalam}{\malayalamfont}{}
+
+% Burmese / Myanmar
+\newfontfamily\burmesefont[Script=Myanmar]{Noto Sans Myanmar}
+\newcommand{\textburmese}[1]{{\burmesefont #1}}
+\newenvironment{burmese}{\burmesefont}{}
+```
+
+### Case of CJK languages
+
+For Chinese, Japanese, and Korean we can use the `xeCJK` or `luaCJK` package depending on the engine. We define the fonts for each language:
+
+```latex
+\ifLuaTeX
+\usepackage{luatexja-fontspec}
+\setmainjfont{Noto Serif CJK JP} %if japanese is used
+\setsansjfont{Noto Sans CJK JP} % if japanese is used
+\newjfontfamily\krjfont{Noto Sans CJK KR} % If korean is used
+\else
+\usepackage{xeCJK}
+\setCJKmainfont{Noto Serif CJK JP}
+\setCJKsansfont{Noto Sans CJK JP}
+\newCJKfontfamily\krfont{Noto Sans CJK KR}
+\fi
+```
+
+### Polyglossia
+
+To support latin and some cyrillic based languages we can use polyglossia. For example for Vietnamese:
+
+```latex
+\usepackage{polyglossia}
+\setmainlanguage{english} % Depends ont he language attribute for the document
+\setotherlanguage{vietnamese} %Which uses extended latin characters
+```
+
+We use polyglossa strategy if compatible with it.
+
+### Font Download
+
+We will use the NotoFallback class to download the necessary fonts based ont the metadata defined for each script/language.
+This class will use the `scripts/generate_noto_dataset.py` that helps to match unicode blocks to Noto fonts. We can improve the dataset or suppress unused features to
+leverage the use of `unicode-blocks` to identify the script then have a correspondance to the Noto font to use.
+
+### LuaLaTeX
+
+For LuaLaTeX we only relies on the fallback mechanism.
+
+
 ## Configure highlight style for code blocks and code inlines
 
 We currently use pygments internally or use minted package to highlight code blocks and inline code. We want to allow users to configure the style used for highlighting code. For example, we can use the `bw` style for black and white output, or `tango` for colored output. This configuration from the frontmatter (press namespace in md files) with `code.style=bw` by default.

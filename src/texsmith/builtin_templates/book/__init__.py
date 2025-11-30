@@ -29,6 +29,7 @@ class Template(WrappableTemplate):
         overrides: Mapping[str, Any] | None = None,
     ) -> dict[str, Any]:
         context = super().prepare_context(latex_body, overrides=overrides)
+        context["ts_extra_disable_hyperref"] = True
 
         raw_authors = context.pop("authors", None)
         author_value = self._format_authors(raw_authors)

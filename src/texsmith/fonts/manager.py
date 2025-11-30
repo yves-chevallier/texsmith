@@ -6,14 +6,17 @@ from collections.abc import Iterable, Mapping
 from dataclasses import dataclass
 import os
 from pathlib import Path
+import re
 from typing import TYPE_CHECKING, Any
 
 from texsmith.fonts import locator as fonts_locator
 from texsmith.fonts.cache import cache_fonts_for_families
 from texsmith.fonts.fallback import NotoFallback
+from texsmith.fonts.cjk import CJK_SCRIPT_ROWS
 from texsmith.fonts.locator import FontFiles, FontLocator
 from texsmith.fonts.matcher import FontMatchResult
 from texsmith.fonts.utils import unicode_class_ranges
+from texsmith.fonts.data import noto_dataset
 
 
 if TYPE_CHECKING:
@@ -23,6 +26,8 @@ if TYPE_CHECKING:
 DEFAULT_FALLBACK_FONTS: list[str] = ["NotoSans"]
 _EMOJI_BLACK_MODES = {"black", "openmoji-black", "openmoji black"}
 _EMOJI_COLOR_MODES = {"color", "colour", "openmoji-color", "openmoji color", "noto color emoji"}
+_SCRIPT_LOOKUP = {row[0]: row for row in noto_dataset.SCRIPT_FALLBACKS}
+_SCRIPT_LOOKUP.update(CJK_SCRIPT_ROWS)
 
 
 @dataclass(frozen=True, slots=True)
@@ -182,6 +187,7 @@ class PreparedFonts:
     font_ranges: dict[str, list[str]]
     copied_fonts: dict[str, dict[str, str]]
     unicode_classes: list[dict[str, Any]]
+    script_fallbacks: list[dict[str, Any]]
     fonts_dir: Path
 
 
@@ -261,6 +267,40 @@ def _build_unicode_classes(
             }
         )
         counter += 1
+    return specs
+
+
+def _sanitize_script_name(script_id: str) -> str:
+    parts = re.split(r"[^0-9A-Za-z]+", script_id)
+    cleaned = "".join(part.title() for part in parts if part)
+    return cleaned or "Script"
+
+
+def _build_script_fallbacks(
+    script_blocks: Mapping[str, tuple[str, ...]],
+    copied_fonts: Mapping[str, dict[str, str]],
+) -> list[dict[str, Any]]:
+    specs: list[dict[str, Any]] = []
+    for script_id in sorted(script_blocks.keys()):
+        script_row = _SCRIPT_LOOKUP.get(script_id)
+        if not script_row:
+            continue
+        family = script_row[2]
+        if not family:
+            continue
+        files = copied_fonts.get(family)
+        if not files:
+            continue
+        specs.append(
+            {
+                "script_id": script_id,
+                "title": script_row[1],
+                "family": family,
+                "blocks": sorted(script_blocks[script_id]),
+                "font_command": f"TSFallback{_sanitize_script_name(script_id)}",
+                "files": files,
+            }
+        )
     return specs
 
 
@@ -407,6 +447,15 @@ def prepare_fonts_for_context(
     unicode_classes = _build_unicode_classes(filtered_font_ranges, copied_serialised)
     template_context["unicode_font_classes"] = unicode_classes
 
+    script_fallbacks = _build_script_fallbacks(
+        font_match.script_blocks if font_match else {},
+        copied_serialised,
+    )
+    template_context["script_fallbacks"] = script_fallbacks
+    if script_fallbacks:
+        uchar_options = sorted({block for entry in script_fallbacks for block in entry["blocks"]})
+        template_context["ucharclasses_options"] = uchar_options
+
     return PreparedFonts(
         selection=selection,
         fallback_fonts=fallback_fonts,
@@ -415,6 +464,7 @@ def prepare_fonts_for_context(
         font_ranges=filtered_font_ranges,
         copied_fonts=copied_serialised,
         unicode_classes=unicode_classes,
+        script_fallbacks=script_fallbacks,
         fonts_dir=fonts_dir,
     )
 

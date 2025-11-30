@@ -64,7 +64,13 @@ def _collect_packages(context: Mapping[str, object]) -> list[tuple[str, str | No
     _maybe_add("\\sout{" in content, "ulem", "normalem")
     _maybe_add("\\hl{" in content, "soul", None)
     _maybe_add("\\progressbar{" in content, "progressbar", None)
-    _maybe_add("\\enquote{" in content, "csquotes", None)
+    _maybe_add(
+        "\\enquote{" in content
+        or "\\begin{displayquote}" in lowered
+        or "\\end{displayquote}" in lowered,
+        "csquotes",
+        None,
+    )
     _maybe_add(
         "\\toprule" in content
         or "\\midrule" in content
@@ -105,9 +111,11 @@ def _collect_packages(context: Mapping[str, object]) -> list[tuple[str, str | No
 
     link_tokens = ("\\href{", "\\url{", "\\hyperref[", "\\autoref{", "\\nameref{")
     has_links = any(token in content for token in link_tokens)
-    hyperref_options = _string_option("ts_extra_hyperref_options", "hyperref_options")
-    _maybe_add(has_links, "hyperref", hyperref_options)
-    _maybe_add(has_links, "bookmark", None)
+    disable_hyperref = bool(context.get("ts_extra_disable_hyperref"))
+    if not disable_hyperref:
+        hyperref_options = _string_option("ts_extra_hyperref_options", "hyperref_options")
+        _maybe_add(has_links, "hyperref", hyperref_options)
+        _maybe_add(has_links, "bookmark", None)
 
     _maybe_add("\\adjustbox{" in content, "adjustbox", None)
 

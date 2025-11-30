@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Iterable, Mapping
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 import os
 from pathlib import Path
 import shutil
@@ -25,8 +25,8 @@ def subprocess_run_available() -> bool:
 
 
 _REGULAR_STYLES = ("regular", "book", "normal", "roman")
-_BOLD_STYLES = ("bold", "bold regular", "semibold", "demibold", "medium")
-_ITALIC_STYLES = ("italic", "oblique")
+_BOLD_STYLES = ("bold", "bold regular", "semibold", "demibold", "medium", "black")
+_ITALIC_STYLES = ("italic", "oblique", "thin")
 _BOLD_ITALIC_STYLES = (
     "bold italic",
     "bolditalic",
@@ -44,8 +44,12 @@ def _style_key(value: str | None) -> str:
 
 def _guess_style_from_filename(path: Path) -> str:
     name = path.name.casefold()
-    if "bold" in name and ("italic" in name or "oblique" in name):
+    if ("bold" in name or "black" in name) and ("italic" in name or "oblique" in name):
         return "bold italic"
+    if "black" in name:
+        return "black"
+    if "thin" in name:
+        return "thin"
     if "bold" in name:
         return "bold"
     if "italic" in name or "oblique" in name:
@@ -62,10 +66,11 @@ class FontFiles:
     bold: Path | None = None
     italic: Path | None = None
     bold_italic: Path | None = None
+    others: dict[str, Path] = field(default_factory=dict)
 
     def any_files(self) -> bool:
         """Return True when at least one face is present."""
-        return any([self.regular, self.bold, self.italic, self.bold_italic])
+        return any([self.regular, self.bold, self.italic, self.bold_italic]) or bool(self.others)
 
     def available(self) -> dict[str, Path]:
         """Return a mapping of the available face names to their paths."""
@@ -75,6 +80,7 @@ class FontFiles:
             "italic": self.italic,
             "bold_italic": self.bold_italic,
         }
+        entries.update(self.others)
         return {key: value for key, value in entries.items() if value is not None}
 
     def copy_into(self, destination: Path, *, cache: dict[Path, Path] | None = None) -> FontFiles:
@@ -97,12 +103,19 @@ class FontFiles:
                 cache[resolved] = target
             return target
 
+        copied_others: dict[str, Path] = {}
+        for key, path in self.others.items():
+            new_path = _copy(path)
+            if new_path is not None:
+                copied_others[key] = new_path
+
         return FontFiles(
             family=self.family,
             regular=_copy(self.regular),
             bold=_copy(self.bold),
             italic=_copy(self.italic),
             bold_italic=_copy(self.bold_italic),
+            others=copied_others,
         )
 
     def relative_to(self, base: Path) -> FontFiles:
@@ -116,12 +129,19 @@ class FontFiles:
             except ValueError:
                 return path
 
+        rel_others: dict[str, Path] = {}
+        for key, path in self.others.items():
+            rel_path = _rel(path)
+            if rel_path is not None:
+                rel_others[key] = rel_path
+
         return FontFiles(
             family=self.family,
             regular=_rel(self.regular),
             bold=_rel(self.bold),
             italic=_rel(self.italic),
             bold_italic=_rel(self.bold_italic),
+            others=rel_others,
         )
 
 
@@ -274,18 +294,29 @@ class FontLocator:
         if not styles:
             return FontFiles(family=family)
 
+        used: set[str] = set()
+
         def _pick(candidates: tuple[str, ...]) -> Path | None:
             for candidate in candidates:
-                if candidate in styles:
-                    return styles[candidate]
+                path = styles.get(candidate)
+                if path:
+                    used.add(candidate)
+                    return path
             return None
+
+        regular = _pick(_REGULAR_STYLES)
+        bold = _pick(_BOLD_STYLES)
+        italic = _pick(_ITALIC_STYLES)
+        bold_italic = _pick(_BOLD_ITALIC_STYLES)
+        others = {key: value for key, value in styles.items() if key not in used}
 
         return FontFiles(
             family=family,
-            regular=_pick(_REGULAR_STYLES),
-            bold=_pick(_BOLD_STYLES),
-            italic=_pick(_ITALIC_STYLES),
-            bold_italic=_pick(_BOLD_ITALIC_STYLES),
+            regular=regular,
+            bold=bold,
+            italic=italic,
+            bold_italic=bold_italic,
+            others=others,
         )
 
     def register_font_file(self, family: str, path: Path, *, style: str | None = None) -> None:

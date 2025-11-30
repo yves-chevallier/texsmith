@@ -31,6 +31,7 @@ class Template(WrappableTemplate):
         overrides: Mapping[str, Any] | None = None,
     ) -> dict[str, Any]:
         context = super().prepare_context(latex_body, overrides=overrides)
+        context["ts_extra_disable_hyperref"] = True
 
         context["language"] = self._normalise_string(context.get("language"), "english")
         context["width"] = self._normalise_dimension(context.get("width"), "12cm")

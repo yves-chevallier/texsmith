@@ -65,3 +65,13 @@ def test_font_analysis_collects_nested_characters(tmp_path: Path) -> None:
     assert result is not None
     # Only the emoji needs a dedicated fallback font.
     assert set(result.fallback_fonts) == {"DemoEmoji"}
+
+
+def test_cjk_scripts_map_to_cjk_fonts() -> None:
+    result = match_fonts("漢字かなカナ한글", check_system=False)
+    assert "NotoSansCJKsc" in result.fallback_fonts
+    assert "NotoSerifCJKjp" in result.fallback_fonts
+    assert "NotoSerifCJKkr" in result.fallback_fonts
+    assert "chinese" in result.script_blocks
+    assert "japanese" in result.script_blocks
+    assert "korean" in result.script_blocks

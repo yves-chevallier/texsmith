@@ -125,6 +125,7 @@ def _emoji_match_result() -> FontMatchResult:
         missing_codepoints=(0x1F600,),
         font_ranges={"OpenMoji Black": ["U+1F600"]},
         fonts_yaml=None,
+        script_blocks={},
     )
 
 

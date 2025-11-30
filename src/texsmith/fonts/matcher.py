@@ -2,8 +2,9 @@
 
 from __future__ import annotations
 
+from collections import defaultdict
 from collections.abc import Iterable, Mapping
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from importlib import resources
 import os
 from pathlib import Path
@@ -13,6 +14,8 @@ from typing import Any
 
 import yaml
 
+from texsmith.fonts.cjk import CJK_BLOCK_OVERRIDES
+from texsmith.fonts.data import noto_dataset
 from texsmith.fonts.locator import FontLocator
 from texsmith.fonts.utils import normalize_family
 
@@ -21,6 +24,11 @@ CACHE_VERSION = 3
 BLOCK_SHIFT = 8  # 256-codepoint buckets for fast narrowing
 BLOCK_SIZE = 1 << BLOCK_SHIFT
 _DATA_PACKAGE = "texsmith.fonts.data"
+_DATASET_LANGUAGE_RANGES = noto_dataset.LANGUAGE_RANGES
+_DATASET_SCRIPT_ROWS = noto_dataset.SCRIPT_FALLBACKS
+_DATASET_BLOCK_TABLE = noto_dataset.build_codepoint_table()
+_DATASET_SCRIPT_LOOKUP = {row[0]: row for row in _DATASET_SCRIPT_ROWS}
+_DATASET_MAX_CP = noto_dataset.MAX_CODEPOINT
 
 
 @dataclass(frozen=True, slots=True)
@@ -33,6 +41,7 @@ class FontMatchResult:
     missing_codepoints: tuple[int, ...]
     font_ranges: Mapping[str, list[str]]
     fonts_yaml: Path | None = None
+    script_blocks: Mapping[str, tuple[str, ...]] = field(default_factory=dict)
 
     def to_context(self) -> dict[str, object]:
         """Convert the match details into a template-friendly context mapping."""
@@ -43,6 +52,7 @@ class FontMatchResult:
             "missing_codepoints": [f"U+{cp:04X}" for cp in self.missing_codepoints],
             "fonts_yaml": str(self.fonts_yaml) if self.fonts_yaml else None,
             "font_ranges": dict(self.font_ranges),
+            "script_blocks": {key: list(value) for key, value in self.script_blocks.items()},
         }
 
 
@@ -255,7 +265,7 @@ def _font_priority_cached(font_index: FontIndex, family: str) -> tuple:
     return pr
 
 
-def _assign_fonts(text: str, fonts_yaml: Path | None = None) -> tuple[dict[int, str], set[int]]:
+def _assign_fonts_yaml(text: str, fonts_yaml: Path | None = None) -> tuple[dict[int, str], set[int]]:
     index = get_index(fonts_yaml)
     assignments: dict[int, str] = {}
     missing: set[int] = set()
@@ -284,13 +294,53 @@ def _manual_fonts_for_codepoint(codepoint: int) -> set[str]:
     return set()
 
 
+def _assign_fonts_dataset(
+    text: str,
+) -> tuple[dict[int, str], set[int], dict[str, set[str]]]:
+    assignments: dict[int, str] = {}
+    missing: set[int] = set()
+    script_blocks: defaultdict[str, set[str]] = defaultdict(set)
+    for cp in {ord(ch) for ch in text}:
+        if cp <= 0x7F or cp >= _DATASET_MAX_CP:
+            continue
+        block_idx = _DATASET_BLOCK_TABLE[cp]
+        if not block_idx:
+            missing.add(cp)
+            continue
+        block_name, _start, _end, script_id = _DATASET_LANGUAGE_RANGES[block_idx - 1]
+        script_id = script_id or CJK_BLOCK_OVERRIDES.get(block_name)
+        if not script_id:
+            missing.add(cp)
+            continue
+        script_row = _DATASET_SCRIPT_LOOKUP.get(script_id)
+        if not script_row:
+            missing.add(cp)
+            continue
+        family = script_row[2]
+        if not family:
+            missing.add(cp)
+            continue
+        assignments[cp] = family
+        script_blocks[script_id].add(block_name)
+    return assignments, missing, dict(script_blocks)
+
+
+def _assign_fonts(
+    text: str, fonts_yaml: Path | None = None
+) -> tuple[dict[int, str], set[int], dict[str, set[str]]]:
+    if fonts_yaml is None:
+        return _assign_fonts_dataset(text)
+    assignments, missing = _assign_fonts_yaml(text, fonts_yaml=fonts_yaml)
+    return assignments, missing, {}
+
+
 def required_fonts(text: str, fonts_yaml: Path | None = None) -> set[str]:
-    assignments, _ = _assign_fonts(text, fonts_yaml)
+    assignments, _, _ = _assign_fonts(text, fonts_yaml)
     return set(assignments.values())
 
 
 def required_fonts_with_ranges(text: str, fonts_yaml: Path | None = None) -> dict[str, list[str]]:
-    assignments, missing = _assign_fonts(text, fonts_yaml)
+    assignments, missing, _ = _assign_fonts(text, fonts_yaml)
     per_font_cps: dict[str, set[int]] = {}
     for cp, family in assignments.items():
         per_font_cps.setdefault(family, set()).add(cp)
@@ -350,9 +400,15 @@ def match_text(
     check_system: bool = True,
     font_locator: FontLocator | None = None,
 ) -> FontMatchResult:
-    required = required_fonts(text, fonts_yaml=fonts_yaml)
-    _assignments, missing_codepoints = _assign_fonts(text, fonts_yaml=fonts_yaml)
-    font_ranges = required_fonts_with_ranges(text, fonts_yaml=fonts_yaml)
+    assignments, missing_codepoints, script_blocks = _assign_fonts(text, fonts_yaml=fonts_yaml)
+    per_font_cps: dict[str, set[int]] = {}
+    for cp, family in assignments.items():
+        per_font_cps.setdefault(family, set()).add(cp)
+    if missing_codepoints:
+        per_font_cps["__UNCOVERED__"] = set(missing_codepoints)
+    font_ranges = {family: _ranges_from_codepoints(cps) for family, cps in per_font_cps.items()}
+    required = set(assignments.values())
+    script_block_map = {script: tuple(sorted(blocks)) for script, blocks in script_blocks.items()}
 
     present: set[str]
     missing_fonts: set[str]
@@ -371,6 +427,7 @@ def match_text(
         missing_codepoints=tuple(sorted(missing_codepoints)),
         font_ranges=font_ranges,
         fonts_yaml=fonts_yaml,
+        script_blocks=script_block_map,
     )
 
 
