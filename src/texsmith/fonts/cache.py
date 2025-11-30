@@ -10,7 +10,10 @@ import tempfile
 from typing import TYPE_CHECKING, Any
 import urllib.request
 import zipfile
+from urllib.parse import urlparse
 
+from texsmith.fonts.cjk import CJK_FAMILY_SPECS, CJK_SCRIPT_ROWS
+from texsmith.fonts.data import noto_dataset
 from texsmith.fonts.utils import normalize_family
 
 
@@ -19,7 +22,7 @@ if TYPE_CHECKING:
 
 
 _FONT_CACHE_DIR_ENV = "TEXSMITH_FONT_CACHE_DIR"
-_DEFAULT_CACHE_DIR = Path.home() / ".texsmith" / "fonts"
+_DEFAULT_CACHE_DIR = Path.home() / ".cache" / "texsmith" / "fonts"
 
 
 @dataclass(frozen=True, slots=True)
@@ -90,6 +93,60 @@ _KNOWN_SOURCES: dict[str, tuple[FontSource, ...]] = {
     ),
 }
 
+_NOTO_FAMILY_STYLES: dict[str, set[str]] = {}
+_NOTO_FAMILY_NAMES: dict[str, str] = {}
+for script_id, title, regular, bold, italic, bold_italic in noto_dataset.SCRIPT_FALLBACKS:
+    for style_key, family in (
+        ("regular", regular),
+        ("bold", bold),
+        ("italic", italic),
+        ("bolditalic", bold_italic),
+    ):
+        if not family:
+            continue
+        normalized = normalize_family(family)
+        _NOTO_FAMILY_STYLES.setdefault(normalized, set()).add(style_key)
+        _NOTO_FAMILY_NAMES.setdefault(normalized, family)
+
+for row in CJK_SCRIPT_ROWS.values():
+    _id, _title, regular, bold, italic, bold_italic = row
+    for style_key, family in (
+        ("regular", regular),
+        ("bold", bold),
+        ("italic", italic),
+        ("bolditalic", bold_italic),
+    ):
+        if not family:
+            continue
+        normalized = normalize_family(family)
+        _NOTO_FAMILY_STYLES.setdefault(normalized, set()).add(style_key)
+        _NOTO_FAMILY_NAMES.setdefault(normalized, family)
+
+
+def _register_cjk_sources() -> None:
+    for family, spec in CJK_FAMILY_SPECS.items():
+        norm = normalize_family(family)
+        existing = list(_KNOWN_SOURCES.get(norm, ()))
+        for weight in spec.get("weights", ("Regular",)):
+            style_key = "regular" if weight.lower() == "regular" else "bold"
+            filename = f"{family}-{weight}.otf"
+            url = (
+                "https://rawcdn.githack.com/notofonts/noto-cjk/main/"
+                f"{spec['style_dir']}/OTF/{spec['region']}/{filename}"
+            )
+            existing.append(
+                FontSource(
+                    family=family,
+                    url=url,
+                    filename=filename,
+                    style=style_key,
+                )
+            )
+        _KNOWN_SOURCES[norm] = tuple(existing)
+
+
+_register_cjk_sources()
+
 
 def font_cache_dir() -> Path:
     """Return the directory used to cache downloaded fonts."""
@@ -119,6 +176,20 @@ def _download_payload(source: FontSource, emitter: DiagnosticEmitter | None) -> 
         _warn(
             emitter,
             f"Unable to download font '{source.family}' from {source.url}: {exc}",
+        )
+    return None
+
+
+def _download_direct(
+    url: str, family: str, style: str, emitter: DiagnosticEmitter | None
+) -> bytes | None:
+    try:
+        with _open_url(url) as response:
+            return response.read()
+    except Exception as exc:  # pragma: no cover - network/runtime dependent
+        _warn(
+            emitter,
+            f"Unable to download font '{family}' ({style}) from {url}: {exc}",
         )
     return None
 
@@ -181,6 +252,37 @@ def _atomic_write(path: Path, data: bytes) -> None:
     tmp_path.replace(path)
 
 
+def _cache_noto_family(
+    family: str, *, emitter: DiagnosticEmitter | None = None
+) -> dict[str, Path] | None:
+    normalized = normalize_family(family)
+    styles = _NOTO_FAMILY_STYLES.get(normalized)
+    if not styles:
+        return None
+    canonical = _NOTO_FAMILY_NAMES.get(normalized, family)
+    cached: dict[str, Path] = {}
+    cache_dir = font_cache_dir()
+    cache_dir.mkdir(parents=True, exist_ok=True)
+    for style in sorted(styles):
+        style_key = "bold_italic" if style == "bolditalic" else style
+        url = noto_dataset.build_cdn_url(canonical, style=style, build="full", flavor="otf")
+        filename = Path(urlparse(url).path).name
+        target = cache_dir / filename
+        if not target.exists():
+            payload = _download_direct(url, canonical, style_key, emitter)
+            if payload is None:
+                continue
+            try:
+                _atomic_write(target, payload)
+            except Exception as exc:  # pragma: no cover - filesystem/runtime dependent
+                _warn(emitter, f"Unable to cache font '{canonical}' ({style_key}) at {target}: {exc}")
+                continue
+        cached[style_key] = target
+    if not cached:
+        return None
+    return cached
+
+
 def ensure_font_cached(
     family: str, *, emitter: DiagnosticEmitter | None = None
 ) -> Path | dict[str, Path] | None:
@@ -189,8 +291,12 @@ def ensure_font_cached(
 
     Returns the cached path (or style mapping for multi-face families) on success.
     """
-    sources = _KNOWN_SOURCES.get(normalize_family(family))
+    normalized = normalize_family(family)
+    sources = _KNOWN_SOURCES.get(normalized)
     if not sources:
+        noto_cached = _cache_noto_family(family, emitter=emitter)
+        if noto_cached:
+            return noto_cached
         return None
 
     cached: dict[str, Path] = {}
@@ -239,8 +345,10 @@ def cache_fonts_for_families(
         result = ensure_font_cached(family, emitter=emitter)
         if result:
             cached[family] = result
-        elif normalize_family(family) in _KNOWN_SOURCES:
-            failures.add(family)
+        else:
+            normalized = normalize_family(family)
+            if normalized in _KNOWN_SOURCES or normalized in _NOTO_FAMILY_STYLES:
+                failures.add(family)
     return cached, failures
 
 

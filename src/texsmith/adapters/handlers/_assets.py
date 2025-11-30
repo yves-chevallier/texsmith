@@ -101,6 +101,10 @@ def store_remote_image_asset(context: RenderContext, url: str) -> Path:
     )
 
     recorded_suffix = metadata.get("suffix") if metadata else None
+    if not recorded_suffix:
+        detected_suffix = _detect_file_suffix(Path(artefact))
+        if detected_suffix:
+            recorded_suffix = detected_suffix
     if recorded_suffix:
         final_suffix = _normalise_suffix(recorded_suffix)
     else:
@@ -267,6 +271,27 @@ def _normalise_suffix(value: str | None, default: str = ".bin") -> str:
     if not candidate:
         return default
     return candidate if candidate.startswith(".") else f".{candidate.lstrip('.')}"
+
+
+def _detect_file_suffix(path: Path) -> str | None:
+    try:
+        with path.open("rb") as handle:
+            header = handle.read(12)
+    except OSError:
+        return None
+    if header.startswith(b"%PDF"):
+        return ".pdf"
+    if header.startswith(b"\xFF\xD8\xFF"):
+        return ".jpg"
+    if header.startswith(b"\x89PNG"):
+        return ".png"
+    if header.startswith(b"GIF8"):
+        return ".gif"
+    if header.startswith(b"BM"):
+        return ".bmp"
+    if header[0:4] == b"RIFF" and header[8:12] == b"WEBP":
+        return ".webp"
+    return None
 
 
 __all__ = ["store_local_image_asset", "store_remote_image_asset"]

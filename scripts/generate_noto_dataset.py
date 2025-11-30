@@ -1,0 +1,226 @@
+#!/usr/bin/env python3
+"""Build the compact Noto dataset from the official sources."""
+
+from __future__ import annotations
+
+import io
+import json
+import pprint
+import re
+import zipfile
+from pathlib import Path
+from typing import Dict, Iterable, List, Optional, Sequence, Tuple
+from urllib.request import urlopen
+
+ROOT = Path(__file__).resolve().parents[1]
+OUTPUT_PATH = ROOT / "src" / "texsmith" / "fonts" / "data" / "noto_dataset.py"
+CTAN_ZIP_URL = "https://mirrors.ctan.org/macros/xetex/latex/ucharclasses.zip"
+NOTO_JSON_URL = "https://notofonts.github.io/noto.json"
+
+
+def download_bytes(url: str) -> bytes:
+    with urlopen(url) as response:  # noqa: S310 (trusted upstream)
+        return response.read()
+
+
+def fetch_ucharclasses_text() -> str:
+    data = download_bytes(CTAN_ZIP_URL)
+    with zipfile.ZipFile(io.BytesIO(data)) as zf:
+        return zf.read("ucharclasses/ucharclasses.sty").decode("utf-8")
+
+
+def fetch_noto_metadata() -> Dict[str, object]:
+    data = download_bytes(NOTO_JSON_URL)
+    return json.loads(data.decode("utf-8"))
+
+
+def tokenize(text: str) -> List[str]:
+    return [token for token in re.findall(r"[0-9A-Za-z]+", text.lower()) if token]
+
+
+def camel_case_tokens(name: str) -> List[str]:
+    parts = re.findall(r"[A-Z][^A-Z]*|[0-9]+", name)
+    return [part.lower() for part in parts]
+
+
+def parse_ucharclasses(text: str) -> List[Tuple[str, int, int, List[str]]]:
+    pattern = re.compile(
+        r"""\\do\{(?P<name>[^}]+)\}\{"(?P<start>[0-9A-F]+)\}\{"(?P<end>[0-9A-F]+)\}""",
+        re.IGNORECASE,
+    )
+    results: List[Tuple[str, int, int, List[str]]] = []
+    for match in pattern.finditer(text):
+        name = match.group("name")
+        start = int(match.group("start"), 16)
+        end = int(match.group("end"), 16)
+        results.append((name, start, end, camel_case_tokens(name)))
+    return results
+
+
+def build_aliases(script_id: str, title: str) -> List[List[str]]:
+    aliases: List[List[str]] = []
+    slug_parts = [part for part in re.split(r"[-_]", script_id.lower()) if part]
+    if slug_parts:
+        aliases.append(slug_parts)
+        if len(slug_parts) == 1:
+            aliases.append([slug_parts[0]])
+    clean_title = title
+    if clean_title.lower().startswith("noto "):
+        clean_title = clean_title[5:]
+    for segment in re.split(r"[,&/]", clean_title):
+        tokens = [token for token in tokenize(segment) if token != "noto"]
+        if tokens:
+            aliases.append(tokens)
+            if len(tokens) == 1:
+                aliases.append(tokens)
+    seen = set()
+    unique_aliases: List[List[str]] = []
+    for alias in aliases:
+        key = tuple(alias)
+        if alias and key not in seen:
+            unique_aliases.append(alias)
+            seen.add(key)
+    return unique_aliases
+
+
+def find_script_for_class(
+    block_tokens: Sequence[str], aliases: Dict[str, List[List[str]]]
+) -> Optional[str]:
+    token_set = set(block_tokens)
+    matches: List[Tuple[int, str]] = []
+    for script_id, patterns in aliases.items():
+        for alias in patterns:
+            alias_set = set(alias)
+            if alias_set and alias_set <= token_set:
+                matches.append((len(alias_set), script_id))
+    if not matches:
+        return None
+    matches.sort(key=lambda item: (-item[0], item[1]))
+    return matches[0][1]
+
+
+def choose_family(families: Dict[str, object]) -> Optional[Tuple[str, Dict[str, object]]]:
+    if not families:
+        return None
+
+    def family_score(name: str) -> Tuple[int, str]:
+        lower = name.lower()
+        if "sans" in lower:
+            return (0, name)
+        if "serif" in lower:
+            return (1, name)
+        return (2, name)
+
+    best = min(families.keys(), key=family_score)
+    return best, families[best]
+
+
+def extract_style_from_path(path: str) -> str:
+    filename = path.split("/")[-1]
+    stem, _dot, _ext = filename.rpartition(".")
+    family_dir = path.split("/")[1] if "/" in path else ""
+    suffix = ""
+    if family_dir and stem.startswith(family_dir):
+        suffix = stem[len(family_dir) :]
+    if not suffix and "-" in stem:
+        suffix = stem.split("-", 1)[1]
+    suffix = suffix.lstrip("-_")
+    return suffix or "Regular"
+
+
+def available_styles(family_data: Dict[str, object]) -> Dict[str, bool]:
+    files: List[str] = []
+    for entries in family_data.get("files", {}).values():
+        files.extend(entries)
+    availability = {style: False for style in ("Regular", "Bold", "Italic", "BoldItalic")}
+    for path in files:
+        style = extract_style_from_path(path)
+        if style in availability:
+            availability[style] = True
+    return availability
+
+
+def build_dataset() -> Dict[str, object]:
+    uchar_text = fetch_ucharclasses_text()
+    classes = parse_ucharclasses(uchar_text)
+    noto_data = fetch_noto_metadata()
+    alias_map = {script_id: build_aliases(script_id, info["title"]) for script_id, info in noto_data.items()}
+    language_rows: List[Tuple[str, int, int, Optional[str]]] = []
+    script_rows: Dict[str, Tuple[str, str, Optional[str], Optional[str], Optional[str], Optional[str]]] = {}
+    for name, start, end, tokens in classes:
+        script_id = find_script_for_class(tokens, alias_map)
+        language_rows.append((name, start, end, script_id))
+        if script_id and script_id not in script_rows:
+            script_info = noto_data[script_id]
+            preferred = choose_family(script_info.get("families", {}))
+            if preferred:
+                family_name, family_data = preferred
+                styles = available_styles(family_data)
+            else:
+                family_name = None
+                styles = {style: False for style in ("Regular", "Bold", "Italic", "BoldItalic")}
+            script_rows[script_id] = (
+                script_id,
+                script_info["title"],
+                family_name if styles["Regular"] else None,
+                family_name if styles["Bold"] else None,
+                family_name if styles["Italic"] else None,
+                family_name if styles["BoldItalic"] else None,
+            )
+    language_rows.sort(key=lambda row: row[0])
+    script_table = [script_rows[key] for key in sorted(script_rows)]
+    return {"languages": language_rows, "scripts": script_table}
+
+
+def main() -> None:
+    dataset = build_dataset()
+    OUTPUT_PATH.parent.mkdir(parents=True, exist_ok=True)
+    with OUTPUT_PATH.open("w", encoding="utf-8") as handle:
+        handle.write("# Auto-generated by generate_noto_dataset.py\n")
+        handle.write("# Compact Unicode block to Noto script lookup tables.\n")
+        handle.write("from array import array\n")
+        handle.write("import re\n\n")
+        handle.write("MAX_CODEPOINT = 0x110000\n\n")
+        handle.write("LANGUAGE_RANGES = ")
+        handle.write(pprint.pformat(dataset["languages"], sort_dicts=False))
+        handle.write("\n\n")
+        handle.write("SCRIPT_FALLBACKS = ")
+        handle.write(pprint.pformat(dataset["scripts"], sort_dicts=False))
+        handle.write(
+            "\n\n"
+            "def build_lookup_tables(language_rows, script_rows):\n"
+            "    \"\"\"Return dictionaries for O(1) lookups by language or script id.\"\"\"\n"
+            "    script_map = {row[0]: row for row in script_rows}\n"
+            "    language_map = {}\n"
+            "    for name, start, end, script_id in language_rows:\n"
+            "        language_map[name] = (start, end, script_map.get(script_id))\n"
+            "    return language_map, script_map\n\n"
+            "def build_codepoint_table(language_rows=LANGUAGE_RANGES):\n"
+            "    table = array('H', [0]) * MAX_CODEPOINT\n"
+            "    for idx, (_name, start, end, _script_id) in enumerate(language_rows, start=1):\n"
+            "        upper = min(end, MAX_CODEPOINT - 1)\n"
+            "        lower = max(0, start)\n"
+            "        for codepoint in range(lower, upper + 1):\n"
+            "            table[codepoint] = idx\n"
+            "    return table\n\n"
+            "_STYLE_SUFFIX = {\n"
+            "    \"regular\": \"Regular\",\n"
+            "    \"bold\": \"Bold\",\n"
+            "    \"italic\": \"Italic\",\n"
+            "    \"bolditalic\": \"BoldItalic\",\n"
+            "}\n\n"
+            "def build_cdn_url(family_name, style=\"regular\", build=\"full\", flavor=\"otf\"):\n"
+            "    \"\"\"Construct the CDN URL for a given Noto family and style.\"\"\"\n"
+            "    style_key = _STYLE_SUFFIX.get(style.lower(), style)\n"
+            "    family_dir = re.sub(r\"[^0-9A-Za-z]\", \"\", family_name)\n"
+            "    filename = f\"{family_dir}-{style_key}.{flavor}\"\n"
+            "    return (\n"
+            "        \"https://cdn.jsdelivr.net/gh/notofonts/notofonts.github.io/fonts/\"\n"
+            "        f\"{family_dir}/{build}/{flavor}/{filename}\"\n"
+            "    )\n"
+        )
+    print(f"Wrote dataset with {len(dataset['languages'])} entries to {OUTPUT_PATH}")
+
+
+if __name__ == "__main__":
+    main()
