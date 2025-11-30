@@ -56,7 +56,9 @@ def _download_url(url: str, emitter: DiagnosticEmitter | None) -> bytes | None:
         return None
 
 
-def _extract_payload(spec: FontSourceSpec, payload: bytes, emitter: DiagnosticEmitter | None) -> bytes | None:
+def _extract_payload(
+    spec: FontSourceSpec, payload: bytes, emitter: DiagnosticEmitter | None
+) -> bytes | None:
     if not spec.zip_member:
         return payload
     try:
@@ -211,9 +213,10 @@ def materialize_font(
     if prefer_symlink:
         try:
             target.symlink_to(record.path)
-            return target
         except OSError:
             target.unlink(missing_ok=True)
+        else:
+            return target
     shutil.copy2(record.path, target)
     return target
 
@@ -265,9 +268,7 @@ def cache_fonts_for_families(
                 family_entries[spec.style or spec.filename] = record.path
         if family_entries:
             cached[family] = (
-                next(iter(family_entries.values()))
-                if len(family_entries) == 1
-                else family_entries
+                next(iter(family_entries.values())) if len(family_entries) == 1 else family_entries
             )
         else:
             failures.add(family)

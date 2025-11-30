@@ -46,6 +46,6 @@ def sanitize_script_id(script_id: str) -> str:
 __all__ = [
     "normalize_family",
     "parse_unicode_range",
-    "unicode_class_ranges",
     "sanitize_script_id",
+    "unicode_class_ranges",
 ]

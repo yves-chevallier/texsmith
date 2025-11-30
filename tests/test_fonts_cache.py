@@ -77,7 +77,9 @@ def test_cache_fonts_for_families_uses_registry(tmp_path, monkeypatch):
 
     monkeypatch.setattr(cache, "_download_url", fake_download)
     specs = (_make_spec("https://example.com/family.otf", family="Family A"),)
-    monkeypatch.setattr(cache, "sources_for_family", lambda family: specs if family == "Family A" else ())
+    monkeypatch.setattr(
+        cache, "sources_for_family", lambda family: specs if family == "Family A" else ()
+    )
 
     cached, failures = cache.cache_fonts_for_families(["Family A", "Unknown"])
     assert "Family A" in cached

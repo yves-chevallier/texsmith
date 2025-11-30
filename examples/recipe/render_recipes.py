@@ -9,7 +9,9 @@ from pathlib import Path
 from texsmith.api.service import ConversionRequest, ConversionService
 
 
-def render(recipes: list[Path], *, template: str = "recipe", output_dir: Path | None = None) -> Path:
+def render(
+    recipes: list[Path], *, template: str = "recipe", output_dir: Path | None = None
+) -> Path:
     """Render the provided YAML recipes with the dedicated template."""
     service = ConversionService()
     resolved = [path.resolve() for path in recipes]
@@ -22,6 +24,7 @@ def render(recipes: list[Path], *, template: str = "recipe", output_dir: Path | 
     prepared = service.prepare_documents(request)
     response = service.execute(request, prepared=prepared)
     return response.render_result.main_tex_path
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
@@ -42,4 +45,3 @@ if __name__ == "__main__":
     args = parser.parse_args()
     tex_path = render(args.recipes, template=args.template, output_dir=args.output_dir)
     print(f"Wrote {tex_path}")
-

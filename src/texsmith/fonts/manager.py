@@ -10,17 +10,17 @@ import re
 from typing import TYPE_CHECKING, Any
 
 from texsmith.fonts import locator as fonts_locator
-from texsmith.fonts.cache import cache_fonts_for_families
 from texsmith.fonts.blocks import environment_name as script_environment_name
-from texsmith.fonts.emoji import EmojiPayload, resolve_emoji_preferences
-from texsmith.fonts.constants import SCRIPT_FALLBACK_ALIASES
-from texsmith.fonts.fallback import NotoFallback
+from texsmith.fonts.cache import cache_fonts_for_families
 from texsmith.fonts.cjk import CJK_SCRIPT_ROWS
+from texsmith.fonts.constants import SCRIPT_FALLBACK_ALIASES
+from texsmith.fonts.data import noto_dataset
+from texsmith.fonts.emoji import EmojiPayload, resolve_emoji_preferences
+from texsmith.fonts.fallback import NotoFallback
 from texsmith.fonts.locator import FontFiles, FontLocator
 from texsmith.fonts.matcher import FontMatchResult
 from texsmith.fonts.selection import FontSelection, resolve_font_selection
 from texsmith.fonts.utils import sanitize_script_id, unicode_class_ranges
-from texsmith.fonts.data import noto_dataset
 
 
 if TYPE_CHECKING:

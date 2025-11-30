@@ -3,12 +3,12 @@
 from __future__ import annotations
 
 from collections import defaultdict
+from collections.abc import Iterable
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Iterable
 from urllib.parse import urlparse
 
-from texsmith.fonts.cjk import CJK_FAMILY_SPECS, CJK_SCRIPT_ROWS, CJK_BLOCK_OVERRIDES
+from texsmith.fonts.cjk import CJK_BLOCK_OVERRIDES, CJK_FAMILY_SPECS, CJK_SCRIPT_ROWS
 from texsmith.fonts.data import noto_dataset
 from texsmith.fonts.utils import normalize_family
 
@@ -73,7 +73,9 @@ def _build_noto_sources() -> dict[str, tuple[FontSourceSpec, ...]]:
         specs: list[FontSourceSpec] = []
         for style_key, payload in sorted(style_map.items()):
             family_name = payload["family"]
-            url = noto_dataset.build_cdn_url(family_name, style=style_key, build="full", flavor="otf")
+            url = noto_dataset.build_cdn_url(
+                family_name, style=style_key, build="full", flavor="otf"
+            )
             filename = Path(urlparse(url).path).name
             specs.append(
                 FontSourceSpec(
@@ -105,7 +107,6 @@ def _build_cjk_sources() -> dict[str, tuple[FontSourceSpec, ...]]:
         normalized = normalize_family(family_name)
         style_dir = spec["style_dir"]
         region = spec["region"]
-        suffix = spec["suffix"]
         weights = spec.get("weights", ("Regular",))
         for weight in weights:
             filename = f"{family_name}-{weight}.otf"

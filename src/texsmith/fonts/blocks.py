@@ -2,9 +2,10 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterable
 from dataclasses import dataclass, field
 import re
-from typing import Any, Iterable
+from typing import Any
 
 import unicodeblocks
 
@@ -14,17 +15,15 @@ from texsmith.fonts.data import noto_dataset
 from texsmith.fonts.utils import sanitize_script_id
 
 
-_CONNECTOR_PUNCTUATION = ",.;:!?\"'()[]{}<>/_-–—…|"
-_CONNECTOR_CHAR_CLASS = (
-    r"[\s0-9" + re.escape(_CONNECTOR_PUNCTUATION + "\u00A0") + r"]+"
-)
+_CONNECTOR_PUNCTUATION = ",.;:!?\"'()[]{}<>/_-\u2013\u2014\u2026|"
+_CONNECTOR_CHAR_CLASS = r"[\s0-9" + re.escape(_CONNECTOR_PUNCTUATION + "\u00a0") + r"]+"
 NON_LATIN_PATTERN = re.compile(
     r"[^\u0000-\u007F]+(?:" + _CONNECTOR_CHAR_CLASS + r"[^\u0000-\u007F]+)*"
 )
 CONNECTOR_CHAR_SET = frozenset(
     list("0123456789")
     + list(_CONNECTOR_PUNCTUATION)
-    + ["\u00A0", " ", "\t", "\n", "\r", "\v", "\f"]
+    + ["\u00a0", " ", "\t", "\n", "\r", "\v", "\f"]
 )
 EMOJI_BLOCKS = {
     "Emoticons",
@@ -45,6 +44,8 @@ IGNORED_SCRIPTS = {
 INLINE_MACROS: dict[str, str] = {}
 ENVIRONMENT_MACROS: dict[str, str] = {}
 RESERVED_ENVIRONMENTS = {"arabic"}
+
+
 def _block_key(name: str) -> str:
     return "".join(ch for ch in name.lower() if ch not in {" ", "-", "_"})
 
@@ -101,7 +102,7 @@ _FALLBACK_SCRIPT_MACROS: dict[str, str] = {
     row[0]: rf"\TSFallback{sanitize_script_id(row[0])}" for row in noto_dataset.SCRIPT_FALLBACKS
 }
 _FALLBACK_SCRIPT_MACROS.update(
-    {key: rf"\TSFallback{sanitize_script_id(key)}" for key in CJK_SCRIPT_ROWS.keys()}
+    {key: rf"\TSFallback{sanitize_script_id(key)}" for key in CJK_SCRIPT_ROWS}
 )
 for alias in SCRIPT_FALLBACK_ALIASES:
     _FALLBACK_SCRIPT_MACROS[alias] = rf"\TSFallback{sanitize_script_id(alias)}"
@@ -212,11 +213,7 @@ def _wrap_segment(segment: str, script_id: str, language: str, use_block: bool) 
     environment = environment_name(language)
     if use_block:
         if environment:
-            return (
-                f"\\begin{{{environment}}}\n"
-                f"{segment}\n"
-                f"\\end{{{environment}}}"
-            )
+            return f"\\begin{{{environment}}}\n{segment}\n\\end{{{environment}}}"
         if inline_command:
             return _wrapped_inline(inline_command, segment)
         return segment
@@ -269,11 +266,7 @@ def _process_chunk(chunk: str, tracker: ScriptTracker) -> str:
             continue
         block = unicodeblocks.blockof(char)
         block_name = block.name
-        script = None
-        if block_name in EMOJI_BLOCKS:
-            script = None
-        else:
-            script = _script_for_block(block_name)
+        script = None if block_name in EMOJI_BLOCKS else _script_for_block(block_name)
         if script != current_script and buffer:
             flush()
         current_script = script
@@ -290,12 +283,14 @@ def summarise_scripts(usages: Iterable[dict[str, Any]]) -> list[dict[str, Any]]:
 
 __all__ = [
     "ScriptTracker",
-    "wrap_foreign_scripts",
-    "summarise_scripts",
     "ScriptUsage",
     "block_override",
     "environment_name",
+    "summarise_scripts",
+    "wrap_foreign_scripts",
 ]
+
+
 def environment_name(language: str) -> str | None:
     override = ENVIRONMENT_MACROS.get(language)
     if override:

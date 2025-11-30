@@ -312,7 +312,6 @@ def run_engine_command(
             workdir=workdir,
             env=env,
             console=console,
-            verbosity=verbosity,
             classic_output=classic_output,
             rerun_limit=rerun_limit,
         )
@@ -359,7 +358,9 @@ def run_engine_command(
     return _stream_result_to_engine_result(result, command)
 
 
-def _stream_result_to_engine_result(result: LatexStreamResult, command: EngineCommand) -> EngineResult:
+def _stream_result_to_engine_result(
+    result: LatexStreamResult, command: EngineCommand
+) -> EngineResult:
     log_path = command.log_path
     messages = result.messages if result.returncode != 0 else result.messages or []
     if result.returncode != 0 and not messages:
@@ -446,7 +447,6 @@ def _run_tectonic_build(
     workdir: Path,
     env: Mapping[str, str],
     console: Console,
-    verbosity: int,
     classic_output: bool,
     rerun_limit: int,
 ) -> EngineResult:
@@ -465,7 +465,6 @@ def _run_tectonic_build(
             workdir=workdir,
             env=env,
             console=console,
-            verbosity=verbosity,
             classic_output=classic_output,
         )
         last_result = result
@@ -544,7 +543,6 @@ def _run_single_tectonic_pass(
     workdir: Path,
     env: Mapping[str, str],
     console: Console,
-    verbosity: int,
     classic_output: bool,
 ) -> LatexStreamResult:
     if classic_output:

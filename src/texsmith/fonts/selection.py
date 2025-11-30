@@ -10,8 +10,8 @@ import warnings
 from pydantic import BaseModel, ConfigDict, ValidationError
 
 from texsmith.fonts.cjk import CJK_SCRIPT_ROWS
-from texsmith.fonts.data import noto_dataset
 from texsmith.fonts.constants import SCRIPT_FALLBACK_ALIASES
+from texsmith.fonts.data import noto_dataset
 
 
 _SCRIPT_LOOKUP: dict[str, tuple[Any, ...]] = {row[0]: row for row in noto_dataset.SCRIPT_FALLBACKS}
@@ -158,7 +158,9 @@ def _mono_variants(mono_font: str, profile_defaults: dict[str, Any]) -> tuple[st
     return mono_italic, mono_bold_italic or mono_italic, mono_fake_slant
 
 
-def _merge_font_configs(document_config: FontsConfig | None, press_config: FontsConfig | None) -> tuple[str, dict[str, Any]]:
+def _merge_font_configs(
+    document_config: FontsConfig | None, press_config: FontsConfig | None
+) -> tuple[str, dict[str, Any]]:
     profile_name = "default"
     base: dict[str, Any] = _profile_defaults(profile_name)
 
@@ -258,8 +260,8 @@ def resolve_font_selection(
 
 
 __all__ = [
-    "FontSelection",
     "FontFamilyOverrides",
+    "FontSelection",
     "FontsConfig",
     "resolve_font_selection",
 ]

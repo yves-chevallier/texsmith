@@ -271,7 +271,9 @@ def _font_priority_cached(font_index: FontIndex, family: str) -> tuple:
     return pr
 
 
-def _assign_fonts_yaml(text: str, fonts_yaml: Path | None = None) -> tuple[dict[int, str], set[int]]:
+def _assign_fonts_yaml(
+    text: str, fonts_yaml: Path | None = None
+) -> tuple[dict[int, str], set[int]]:
     index = get_index(fonts_yaml)
     assignments: dict[int, str] = {}
     missing: set[int] = set()
