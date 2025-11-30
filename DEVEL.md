@@ -162,6 +162,12 @@ We will use the NotoFallback class to download the necessary fonts based ont the
 This class will use the `scripts/generate_noto_dataset.py` that helps to match unicode blocks to Noto fonts. We can improve the dataset or suppress unused features to
 leverage the use of `unicode-blocks` to identify the script then have a correspondance to the Noto font to use.
 
+### Preamble context contracts
+
+- `_script_usage` records every detected script with the strategy to use (Polyglossia vs CJK vs manual). Fragments such as `ts-fonts` must no longer scan slot content to guess languages.
+- `emoji_spec` mirrors the emoji resolver output: `mode`, `font_family`, `font_path`, and `color_enabled`. Templates should rely on that object instead of recomputing preferences.
+- `fallback_fonts`, `unicode_font_classes`, and `script_fallbacks` are final, filtered lists prepared by the manager; fragments must not inject defaults.
+
 ### LuaLaTeX
 
 For LuaLaTeX we only relies on the fallback mechanism.

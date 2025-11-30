@@ -1,336 +1,248 @@
-"""Cache and download bundled font assets."""
+"""Cache and download font assets with metadata tracking."""
 
 from __future__ import annotations
 
 from dataclasses import dataclass
+from datetime import datetime, timezone
+import hashlib
 import io
+import json
 import os
 from pathlib import Path
+import shutil
 import tempfile
 from typing import TYPE_CHECKING, Any
 import urllib.request
 import zipfile
-from urllib.parse import urlparse
 
-from texsmith.fonts.cjk import CJK_FAMILY_SPECS, CJK_SCRIPT_ROWS
-from texsmith.fonts.data import noto_dataset
-from texsmith.fonts.utils import normalize_family
+from texsmith.fonts.registry import FontSourceSpec, sources_for_family
 
 
 if TYPE_CHECKING:
     from texsmith.core.diagnostics import DiagnosticEmitter
 
 
-_FONT_CACHE_DIR_ENV = "TEXSMITH_FONT_CACHE_DIR"
-_DEFAULT_CACHE_DIR = Path.home() / ".cache" / "texsmith" / "fonts"
-
-
-@dataclass(frozen=True, slots=True)
-class FontSource:
-    """Describe a downloadable font artefact."""
-
-    family: str
-    url: str
-    filename: str
-    zip_member: str | None = None
-    style: str | None = None
-    alt_members: tuple[str, ...] = ()
-
-
-_KNOWN_SOURCES: dict[str, tuple[FontSource, ...]] = {
-    normalize_family("Noto Color Emoji"): (
-        FontSource(
-            family="Noto Color Emoji",
-            url="https://github.com/googlefonts/noto-emoji/raw/refs/heads/main/fonts/NotoColorEmoji.ttf",
-            filename="NotoColorEmoji.ttf",
-        ),
-    ),
-    normalize_family("OpenMoji Black"): (
-        FontSource(
-            family="OpenMoji Black",
-            url="https://github.com/hfg-gmuend/openmoji/releases/download/16.0.0/openmoji-font.zip",
-            filename="OpenMoji-black-glyf.ttf",
-            zip_member="OpenMoji-black-glyf/OpenMoji-black-glyf.ttf",
-            alt_members=("fonts/OpenMoji-black-glyf.ttf",),
-        ),
-    ),
-    normalize_family("IBM Plex Mono"): (
-        FontSource(
-            family="IBM Plex Mono",
-            url="https://mirrors.ctan.org/fonts/plex.zip",
-            filename="IBMPlexMono-Regular.otf",
-            zip_member="plex/opentype/IBMPlexMono-Regular.otf",
-            style="regular",
-        ),
-        FontSource(
-            family="IBM Plex Mono",
-            url="https://mirrors.ctan.org/fonts/plex.zip",
-            filename="IBMPlexMono-Bold.otf",
-            zip_member="plex/opentype/IBMPlexMono-Bold.otf",
-            style="bold",
-        ),
-        FontSource(
-            family="IBM Plex Mono",
-            url="https://mirrors.ctan.org/fonts/plex.zip",
-            filename="IBMPlexMono-Italic.otf",
-            zip_member="plex/opentype/IBMPlexMono-Italic.otf",
-            style="italic",
-        ),
-        FontSource(
-            family="IBM Plex Mono",
-            url="https://mirrors.ctan.org/fonts/plex.zip",
-            filename="IBMPlexMono-BoldItalic.otf",
-            zip_member="plex/opentype/IBMPlexMono-BoldItalic.otf",
-            style="bold italic",
-        ),
-        FontSource(
-            family="IBM Plex Mono",
-            url="https://mirrors.ctan.org/fonts/plex.zip",
-            filename="IBMPlexMono-Medium.otf",
-            zip_member="plex/opentype/IBMPlexMono-Medium.otf",
-            style="medium",
-        ),
-    ),
-}
-
-_NOTO_FAMILY_STYLES: dict[str, set[str]] = {}
-_NOTO_FAMILY_NAMES: dict[str, str] = {}
-for script_id, title, regular, bold, italic, bold_italic in noto_dataset.SCRIPT_FALLBACKS:
-    for style_key, family in (
-        ("regular", regular),
-        ("bold", bold),
-        ("italic", italic),
-        ("bolditalic", bold_italic),
-    ):
-        if not family:
-            continue
-        normalized = normalize_family(family)
-        _NOTO_FAMILY_STYLES.setdefault(normalized, set()).add(style_key)
-        _NOTO_FAMILY_NAMES.setdefault(normalized, family)
-
-for row in CJK_SCRIPT_ROWS.values():
-    _id, _title, regular, bold, italic, bold_italic = row
-    for style_key, family in (
-        ("regular", regular),
-        ("bold", bold),
-        ("italic", italic),
-        ("bolditalic", bold_italic),
-    ):
-        if not family:
-            continue
-        normalized = normalize_family(family)
-        _NOTO_FAMILY_STYLES.setdefault(normalized, set()).add(style_key)
-        _NOTO_FAMILY_NAMES.setdefault(normalized, family)
-
-
-def _register_cjk_sources() -> None:
-    for family, spec in CJK_FAMILY_SPECS.items():
-        norm = normalize_family(family)
-        existing = list(_KNOWN_SOURCES.get(norm, ()))
-        for weight in spec.get("weights", ("Regular",)):
-            style_key = "regular" if weight.lower() == "regular" else "bold"
-            filename = f"{family}-{weight}.otf"
-            url = (
-                "https://rawcdn.githack.com/notofonts/noto-cjk/main/"
-                f"{spec['style_dir']}/OTF/{spec['region']}/{filename}"
-            )
-            existing.append(
-                FontSource(
-                    family=family,
-                    url=url,
-                    filename=filename,
-                    style=style_key,
-                )
-            )
-        _KNOWN_SOURCES[norm] = tuple(existing)
-
-
-_register_cjk_sources()
+FONT_CACHE_DIR_ENV = "TEXSMITH_FONT_CACHE_DIR"
+DEFAULT_CACHE_DIR = Path.home() / ".cache" / "texsmith" / "fonts"
+CACHE_SCHEMA_VERSION = 2
+CACHE_VERSION_PREFIX = f"v{CACHE_SCHEMA_VERSION}"
+METADATA_FILENAME = "metadata.json"
 
 
 def font_cache_dir() -> Path:
     """Return the directory used to cache downloaded fonts."""
-    override = os.environ.get(_FONT_CACHE_DIR_ENV)
-    if override:
-        return Path(override).expanduser()
-    return _DEFAULT_CACHE_DIR
+    override = os.environ.get(FONT_CACHE_DIR_ENV)
+    base_dir = Path(override).expanduser() if override else DEFAULT_CACHE_DIR
+    cache_dir = base_dir / CACHE_VERSION_PREFIX
+    cache_dir.mkdir(parents=True, exist_ok=True)
+    return cache_dir
 
 
 def _warn(emitter: DiagnosticEmitter | None, message: str) -> None:
     if emitter:
-        try:
-            emitter.warning(message)
-        except Exception:
-            return
+        emitter.warning(message)
 
 
 def _open_url(url: str) -> Any:
-    return urllib.request.urlopen(url, timeout=30)
+    return urllib.request.urlopen(url, timeout=60)
 
 
-def _download_payload(source: FontSource, emitter: DiagnosticEmitter | None) -> bytes | None:
-    try:
-        with _open_url(source.url) as response:
-            return response.read()
-    except Exception as exc:  # pragma: no cover - network/runtime dependent
-        _warn(
-            emitter,
-            f"Unable to download font '{source.family}' from {source.url}: {exc}",
-        )
-    return None
-
-
-def _download_direct(
-    url: str, family: str, style: str, emitter: DiagnosticEmitter | None
-) -> bytes | None:
+def _download_url(url: str, emitter: DiagnosticEmitter | None) -> bytes | None:
     try:
         with _open_url(url) as response:
             return response.read()
-    except Exception as exc:  # pragma: no cover - network/runtime dependent
-        _warn(
-            emitter,
-            f"Unable to download font '{family}' ({style}) from {url}: {exc}",
-        )
-    return None
+    except Exception as exc:  # pragma: no cover - depends on network
+        _warn(emitter, f"Unable to download font payload from {url}: {exc}")
+        return None
 
 
-def _extract_payload(
-    source: FontSource, payload: bytes, emitter: DiagnosticEmitter | None
-) -> bytes | None:
-    if not source.zip_member:
+def _extract_payload(spec: FontSourceSpec, payload: bytes, emitter: DiagnosticEmitter | None) -> bytes | None:
+    if not spec.zip_member:
         return payload
     try:
         with zipfile.ZipFile(io.BytesIO(payload)) as archive:
             members = archive.namelist()
-            if source.zip_member in members:
-                return archive.read(source.zip_member)
-            for alternate in source.alt_members:
+            if spec.zip_member in members:
+                return archive.read(spec.zip_member)
+            for alternate in spec.alt_members:
                 if alternate in members:
                     return archive.read(alternate)
-
-            target_lower = source.filename.lower()
-            lowered = [
+            # heuristics: fall back to file with same suffix
+            target_lower = spec.filename.lower()
+            candidates = [
                 name
-                for name in archive.namelist()
+                for name in members
                 if name.lower().endswith(".ttf") or name.lower().endswith(".otf")
             ]
             preferred: str | None = None
-            for candidate in lowered:
-                candidate_lower = candidate.lower()
-                if candidate_lower.endswith(target_lower):
-                    preferred = candidate
-                    break
-                if "openmoji" in candidate_lower and "glyf" in candidate_lower:
+            for candidate in candidates:
+                lower = candidate.lower()
+                if lower.endswith(target_lower):
                     preferred = candidate
                     break
             if not preferred:
-                preferred = next(iter(lowered), None)
+                preferred = candidates[0] if candidates else None
             if preferred:
                 _warn(
                     emitter,
                     (
-                        f"Expected '{source.zip_member}' in archive but found '{preferred}'. "
-                        "Using the available font file instead."
+                        f"Expected '{spec.zip_member}' in archive but located '{preferred}'. "
+                        "Using available font file."
                     ),
                 )
                 return archive.read(preferred)
             _warn(
                 emitter,
-                f"Failed to extract '{source.zip_member}' from downloaded archive: missing file.",
+                f"Failed to extract '{spec.zip_member}' from downloaded archive: missing file.",
             )
             return None
     except Exception as exc:
-        _warn(emitter, f"Failed to extract '{source.zip_member}' from downloaded archive: {exc}")
+        _warn(emitter, f"Failed to unpack archive for '{spec.family}': {exc}")
         return None
 
 
-def _atomic_write(path: Path, data: bytes) -> None:
+def _atomic_write_bytes(path: Path, payload: bytes) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     with tempfile.NamedTemporaryFile(delete=False, dir=path.parent) as tmp:
-        tmp.write(data)
-        tmp_path = Path(tmp.name)
-    tmp_path.replace(path)
+        tmp.write(payload)
+        temp_path = Path(tmp.name)
+    temp_path.replace(path)
 
 
-def _cache_noto_family(
-    family: str, *, emitter: DiagnosticEmitter | None = None
-) -> dict[str, Path] | None:
-    normalized = normalize_family(family)
-    styles = _NOTO_FAMILY_STYLES.get(normalized)
-    if not styles:
+def _atomic_write_json(path: Path, payload: dict[str, Any]) -> None:
+    data = json.dumps(payload, indent=2, sort_keys=True).encode("utf-8")
+    _atomic_write_bytes(path, data)
+
+
+@dataclass(slots=True)
+class FontRecord:
+    """Represent a cached font and its metadata."""
+
+    spec: FontSourceSpec
+    path: Path
+    metadata: dict[str, Any]
+
+
+def _metadata_path(cache_dir: Path) -> Path:
+    return cache_dir / METADATA_FILENAME
+
+
+def _load_metadata(cache_dir: Path, font_path: Path) -> dict[str, Any] | None:
+    meta_path = _metadata_path(cache_dir)
+    if not meta_path.exists() or not font_path.exists():
         return None
-    canonical = _NOTO_FAMILY_NAMES.get(normalized, family)
-    cached: dict[str, Path] = {}
-    cache_dir = font_cache_dir()
-    cache_dir.mkdir(parents=True, exist_ok=True)
-    for style in sorted(styles):
-        style_key = "bold_italic" if style == "bolditalic" else style
-        url = noto_dataset.build_cdn_url(canonical, style=style, build="full", flavor="otf")
-        filename = Path(urlparse(url).path).name
-        target = cache_dir / filename
-        if not target.exists():
-            payload = _download_direct(url, canonical, style_key, emitter)
-            if payload is None:
-                continue
-            try:
-                _atomic_write(target, payload)
-            except Exception as exc:  # pragma: no cover - filesystem/runtime dependent
-                _warn(emitter, f"Unable to cache font '{canonical}' ({style_key}) at {target}: {exc}")
-                continue
-        cached[style_key] = target
-    if not cached:
+    try:
+        metadata = json.loads(meta_path.read_text(encoding="utf-8"))
+    except Exception:
         return None
-    return cached
+    if metadata.get("schema") != CACHE_SCHEMA_VERSION:
+        return None
+    return metadata
+
+
+def _ensure_payload(
+    spec: FontSourceSpec,
+    *,
+    emitter: DiagnosticEmitter | None,
+    payload_cache: dict[str, bytes] | None,
+) -> bytes | None:
+    cache = payload_cache if payload_cache is not None else {}
+    raw = cache.get(spec.url)
+    if raw is None:
+        raw = _download_url(spec.url, emitter)
+        if raw is None:
+            return None
+        cache[spec.url] = raw
+    extracted = _extract_payload(spec, raw, emitter)
+    return extracted
+
+
+def ensure_font(
+    spec: FontSourceSpec,
+    *,
+    emitter: DiagnosticEmitter | None = None,
+    payload_cache: dict[str, bytes] | None = None,
+) -> FontRecord | None:
+    """Ensure the given source spec is cached locally."""
+    cache_dir = font_cache_dir() / spec.cache_key
+    font_path = cache_dir / spec.filename
+    metadata = _load_metadata(cache_dir, font_path)
+    if metadata:
+        return FontRecord(spec=spec, path=font_path, metadata=metadata)
+
+    payload = _ensure_payload(spec, emitter=emitter, payload_cache=payload_cache)
+    if payload is None:
+        return None
+    checksum = hashlib.sha256(payload).hexdigest()
+    _atomic_write_bytes(font_path, payload)
+    metadata = {
+        "schema": CACHE_SCHEMA_VERSION,
+        "family": spec.family,
+        "style": spec.style,
+        "file": font_path.name,
+        "source": {
+            "id": spec.id,
+            "url": spec.url,
+            "zip_member": spec.zip_member,
+            "version": spec.version,
+            "sha256": checksum,
+        },
+        "coverage": {
+            "scripts": list(spec.scripts),
+            "blocks": list(spec.blocks),
+        },
+        "retrieved_at": datetime.now(tz=timezone.utc).isoformat(),
+    }
+    _atomic_write_json(_metadata_path(cache_dir), metadata)
+    return FontRecord(spec=spec, path=font_path, metadata=metadata)
+
+
+def materialize_font(
+    record: FontRecord,
+    *,
+    build_dir: Path,
+    prefer_symlink: bool = False,
+) -> Path:
+    """Copy or link a cached font into the build directory."""
+    build_dir.mkdir(parents=True, exist_ok=True)
+    target = build_dir / record.path.name
+    if target.exists():
+        return target
+    if prefer_symlink:
+        try:
+            target.symlink_to(record.path)
+            return target
+        except OSError:
+            target.unlink(missing_ok=True)
+    shutil.copy2(record.path, target)
+    return target
 
 
 def ensure_font_cached(
-    family: str, *, emitter: DiagnosticEmitter | None = None
-) -> Path | dict[str, Path] | None:
+    family: str,
+    *,
+    emitter: DiagnosticEmitter | None = None,
+) -> dict[str, Path] | Path | None:
     """
-    Ensure the requested font family is cached locally.
+    Compatibility helper mirroring the legacy cache API.
 
     Returns the cached path (or style mapping for multi-face families) on success.
     """
-    normalized = normalize_family(family)
-    sources = _KNOWN_SOURCES.get(normalized)
-    if not sources:
-        noto_cached = _cache_noto_family(family, emitter=emitter)
-        if noto_cached:
-            return noto_cached
+    specs = sources_for_family(family)
+    if not specs:
         return None
-
-    cached: dict[str, Path] = {}
     payload_cache: dict[str, bytes] = {}
-
-    for source in sources:
-        target = font_cache_dir() / source.filename
-        if target.exists():
-            cached[source.style or source.filename] = target
+    cached_paths: dict[str, Path] = {}
+    for spec in specs:
+        record = ensure_font(spec, emitter=emitter, payload_cache=payload_cache)
+        if record is None:
             continue
-
-        payload = payload_cache.get(source.url)
-        if payload is None:
-            payload = _download_payload(source, emitter)
-            if payload is None:
-                continue
-            payload_cache[source.url] = payload
-
-        extracted = _extract_payload(source, payload, emitter)
-        if extracted is None:
-            continue
-
-        try:
-            _atomic_write(target, extracted)
-        except Exception as exc:  # pragma: no cover - filesystem/runtime dependent
-            _warn(emitter, f"Unable to cache font '{source.family}' at {target}: {exc}")
-            continue
-        cached[source.style or source.filename] = target
-
-    if not cached:
+        cached_paths[spec.style or spec.filename] = record.path
+    if not cached_paths:
         return None
-    if len(cached) == 1:
-        return next(iter(cached.values()))
-    return cached
+    if len(cached_paths) == 1:
+        return next(iter(cached_paths.values()))
+    return cached_paths
 
 
 def cache_fonts_for_families(
@@ -338,18 +250,35 @@ def cache_fonts_for_families(
     *,
     emitter: DiagnosticEmitter | None = None,
 ) -> tuple[dict[str, Path | dict[str, Path]], set[str]]:
-    """Cache known downloadable fonts required by ``families``."""
+    """Cache downloadable fonts required by ``families`` using the new registry."""
     cached: dict[str, Path | dict[str, Path]] = {}
     failures: set[str] = set()
+    payload_cache: dict[str, bytes] = {}
     for family in families:
-        result = ensure_font_cached(family, emitter=emitter)
-        if result:
-            cached[family] = result
+        specs = sources_for_family(family)
+        if not specs:
+            continue
+        family_entries: dict[str, Path] = {}
+        for spec in specs:
+            record = ensure_font(spec, emitter=emitter, payload_cache=payload_cache)
+            if record:
+                family_entries[spec.style or spec.filename] = record.path
+        if family_entries:
+            cached[family] = (
+                next(iter(family_entries.values()))
+                if len(family_entries) == 1
+                else family_entries
+            )
         else:
-            normalized = normalize_family(family)
-            if normalized in _KNOWN_SOURCES or normalized in _NOTO_FAMILY_STYLES:
-                failures.add(family)
+            failures.add(family)
     return cached, failures
 
 
-__all__ = ["cache_fonts_for_families", "ensure_font_cached", "font_cache_dir"]
+__all__ = [
+    "FontRecord",
+    "cache_fonts_for_families",
+    "ensure_font",
+    "ensure_font_cached",
+    "font_cache_dir",
+    "materialize_font",
+]

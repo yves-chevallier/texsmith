@@ -170,7 +170,7 @@ def test_run_engine_command_enforces_rerun_limit(
         argv: list[str], *, workdir: Path, env: dict[str, str], console: object
     ) -> engine.LatexStreamResult:
         command.log_path.write_text(
-            "Package rerunfilecheck Warning: File `main.toc' has changed. Rerun to get cross-references right.\n",
+            "LaTeX Warning: Label(s) may have changed. Rerun to get cross-references right.\n",
             encoding="utf-8",
         )
         return engine.LatexStreamResult(returncode=0, messages=[])

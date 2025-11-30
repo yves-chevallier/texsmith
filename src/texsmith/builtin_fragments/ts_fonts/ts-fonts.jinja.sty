@@ -1,15 +1,4 @@
-\BLOCK{ set press_fonts_raw = press.fonts if press is defined and press else None }
-\BLOCK{ set press_fonts = press_fonts_raw if press_fonts_raw is mapping else None }
-\BLOCK{ set press_fonts_profile = press_fonts_raw if press_fonts_raw is string else None }
-\BLOCK{ set fonts_map = fonts if fonts is defined and fonts is mapping else None }
-\BLOCK{ set fonts_profile = fonts if fonts is defined and fonts is string else None }
-\BLOCK{ set font_profile = font_profile if font_profile is defined and font_profile else None }
-\BLOCK{ if not font_profile and fonts_map } \BLOCK{ set font_profile = fonts_map.get("profile") } \BLOCK{ endif }
-\BLOCK{ if not font_profile and fonts_profile } \BLOCK{ set font_profile = fonts_profile } \BLOCK{ endif }
-\BLOCK{ if not font_profile and press_fonts } \BLOCK{ set font_profile = press_fonts.get("profile") } \BLOCK{ endif }
-\BLOCK{ if not font_profile and press_fonts_profile } \BLOCK{ set font_profile = press_fonts_profile } \BLOCK{ endif }
-\BLOCK{ if not font_profile } \BLOCK{ set font_profile = "default" } \BLOCK{ endif }
-\BLOCK{ set font_profile = font_profile | lower }
+\BLOCK{ set font_profile = font_profile | default("default") | lower }
 \BLOCK{ set main_font = main_font | default("Latin Modern Roman") }
 \BLOCK{ set sans_font = sans_font | default("Latin Modern Sans") }
 \BLOCK{ set mono_font = mono_font | default("FreeMono") }
@@ -22,80 +11,23 @@
 \BLOCK{ if font_path_prefix and not font_path_prefix.endswith('/') }
   \BLOCK{ set font_path_prefix = font_path_prefix ~ '/' }
 \BLOCK{ endif }
-\BLOCK{ set press_fonts = press_fonts if press_fonts is not none else None }
-\BLOCK{ set runtime_emoji = emoji_mode if emoji_mode is defined else None }
-\BLOCK{ set emoji_pref = emoji if emoji is defined else ((press_fonts.get("emoji") if press_fonts else None) if press_fonts is mapping else None) }
-\BLOCK{ if not emoji_pref and runtime_emoji }
-  \BLOCK{ set emoji_pref = runtime_emoji }
-\BLOCK{ elif not emoji_pref and fonts_map }
-  \BLOCK{ set emoji_pref = fonts_map.get("emoji") }
-\BLOCK{ endif }
-\BLOCK{ set emoji_mode = (emoji_pref | default('black') | lower) }
-\BLOCK{ set emoji_disabled = emoji_mode in ["artifact", "off", "none"] }
-\BLOCK{ set emoji_twemoji = emoji_mode == "twemoji" }
-\BLOCK{ set emoji_font = None }
-\BLOCK{ set emoji_renderer = "harf" }
-\BLOCK{ if not emoji_disabled and not emoji_twemoji }
-  \BLOCK{ if emoji_mode in ["black", "openmoji-black", "openmoji black"] }
-    \BLOCK{ set emoji_font = "OpenMoji Black" }
-  \BLOCK{ elif emoji_mode in ["color", "colour", "openmoji-color", "openmoji color", "noto color emoji"] }
-    \BLOCK{ set emoji_font = "Noto Color Emoji" }
-  \BLOCK{ else }
-    \BLOCK{ set emoji_font = emoji_pref }
-  \BLOCK{ endif }
-\BLOCK{ endif }
-\BLOCK{ set emoji_range_start = "1F000" }
-\BLOCK{ set emoji_range_end = "1FAFF" }
-\BLOCK{ set emoji_ranges = emoji_ranges if emoji_ranges is defined and emoji_ranges else [(emoji_range_start, emoji_range_end)] }
 \BLOCK{ set font_files = font_files | default({}) }
 \BLOCK{ set script_fallbacks = script_fallbacks | default([]) }
 \BLOCK{ set ucharclasses_options = ucharclasses_options | default([]) }
 \BLOCK{ set unicode_font_classes = unicode_font_classes | default([]) }
-\BLOCK{ set fallback_fonts = fallback_fonts | default(
-  ["NotoSans", "NotoSansSymbols2-Regular", "NotoSansMath-Regular"], true) }
-\BLOCK{ set _emoji_filtered = namespace(items=[]) }
-\BLOCK{ for font in fallback_fonts }
-  \BLOCK{ if "notocoloremoji" not in font|lower }
-    \BLOCK{ set _ = _emoji_filtered.items.append(font) }
-  \BLOCK{ endif }
-\BLOCK{ endfor }
-\BLOCK{ set fallback_fonts = _emoji_filtered.items }
-\BLOCK{ if emoji_font and emoji_font not in fallback_fonts }
-  \BLOCK{ set fallback_fonts = [emoji_font] + fallback_fonts }
-\BLOCK{ endif }
+\BLOCK{ set fallback_fonts = fallback_fonts | default([]) }
+\BLOCK{ set emoji_spec = emoji_spec | default({}) }
+\BLOCK{ set needs_polyglossia_greek = script_fallbacks | selectattr('script_id', 'equalto', 'greek') | list | length > 0 }
+\BLOCK{ set emoji_mode = emoji_spec.get("mode") or (emoji_mode | default("black")) }
+\BLOCK{ set emoji_font = emoji_spec.get("font_family") }
+\BLOCK{ set emoji_font_path = emoji_spec.get("font_path") }
+\BLOCK{ set emoji_color_enabled = emoji_spec.get("color_enabled", False) }
+\BLOCK{ set emoji_twemoji = (emoji_mode == "twemoji") }
+\BLOCK{ set emoji_ranges = emoji_ranges | default([]) }
 \BLOCK{ set emoji_files = font_files.get(emoji_font, {}) if emoji_font else {} }
 \BLOCK{ if mono_font == "FreeMono" }
   \BLOCK{ set mono_italic = "* Oblique" }
   \BLOCK{ set mono_bold_italic = "* Bold Oblique" }
-\BLOCK{ endif }
-\BLOCK{ if font_profile == "sans" and main_font == "Latin Modern Roman" }
-  \BLOCK{ set main_font = "Latin Modern Sans" }
-  \BLOCK{ set sans_font = "Latin Modern Sans" }
-  \BLOCK{ set mono_font = "IBM Plex Mono" }
-\BLOCK{ elif font_profile == "adventor" and main_font == "Latin Modern Roman" }
-  \BLOCK{ set main_font = "TeX Gyre Adventor" }
-  \BLOCK{ set sans_font = "TeX Gyre Adventor" }
-  \BLOCK{ set mono_font = "IBM Plex Mono" }
-  \BLOCK{ set math_font = "TeX Gyre Pagella Math" }
-  \BLOCK{ set small_caps_font = None }
-\BLOCK{ elif font_profile == "heros" and main_font == "Latin Modern Roman" }
-  \BLOCK{ set main_font = "TeX Gyre Heros" }
-  \BLOCK{ set sans_font = "TeX Gyre Heros" }
-  \BLOCK{ set mono_font = "IBM Plex Mono" }
-  \BLOCK{ set math_font = "TeX Gyre Pagella Math" }
-  \BLOCK{ set small_caps_font = None }
-\BLOCK{ elif font_profile == "noto" and main_font == "Latin Modern Roman" }
-  \BLOCK{ set main_font = "Noto Serif" }
-  \BLOCK{ set sans_font = "Noto Sans" }
-  \BLOCK{ set mono_font = "Noto Sans Mono" }
-  \BLOCK{ set math_font = "Noto Sans Math" }
-  \BLOCK{ set small_caps_font = None }
-  \BLOCK{ set mono_italic = "*" }
-  \BLOCK{ set mono_bold_italic = "* Bold" }
-  \BLOCK{ set mono_fake_slant = True }
-\BLOCK{ endif }
-\BLOCK{ if font_profile in ["adventor", "heros"] }
-  \BLOCK{ set small_caps_font = None }
 \BLOCK{ endif }
 \ProvidesPackage{ts-fonts}[2025/11/21 TeXSmith Unified font setup (generated)]
 
@@ -122,6 +54,13 @@
     Ligatures = TeX,
     Scale = MatchLowercase,
   }
+\BLOCK{ if needs_polyglossia_greek }
+\makeatletter
+\@ifpackageloaded{polyglossia}{%
+  \setotherlanguage{greek}%
+}{}
+\makeatother
+\BLOCK{ endif }
 \BLOCK{ set main_files = font_files.get(main_font, {}) }
 \BLOCK{ set sans_files = font_files.get(sans_font, {}) }
 \BLOCK{ set mono_files = font_files.get(mono_font, {}) }
@@ -288,7 +227,7 @@
 \BLOCK{ endif }
   RawFeature = {fallback=mainfb-reg},
   BoldFeatures = {RawFeature={fallback=mainfb-bold}},
-  ItalicFeatures = {RawFeature={fallback=mainfb-it}},
+      ItalicFeatures = {RawFeature={fallback=mainfb-it}},
 ]
 % Emoji handling (LuaLaTeX): rely on luaotfload fallbacks, optional twemoji.
 \BLOCK{ if emoji_twemoji }
@@ -309,6 +248,43 @@
   \renewcommand{\texsmithEmoji}[1]{#1}
 \BLOCK{ else }
   \renewcommand{\texsmithEmoji}[1]{#1}
+\BLOCK{ endif }
+\BLOCK{ if script_fallbacks }
+\BLOCK{ for class in script_fallbacks }
+\BLOCK{ set class_files = class.files }
+\BLOCK{ set class_title = class.title or class.family }
+\BLOCK{ set class_language = class.language or class.script_id.replace('-', '').replace('_', '') }
+\BLOCK{ set class_upright = class_files.get("regular") or class_files.get("black") or class_files.get("thin") or class.family }
+\BLOCK{ set class_bold = class_files.get("bold") or class_files.get("black") or class_upright }
+\BLOCK{ set class_italic = class_files.get("italic") or class_files.get("thin") or class_upright }
+\BLOCK{ set class_bold_italic = class_files.get("bold_italic") or class_bold or class_italic or class_upright }
+% Script \VAR{class_title} (\LuaTeX fallback macro)
+\expandafter\newfontfamily\csname \VAR{class.font_command}\endcsname[
+\BLOCK{ if class_files }
+    Path=\VAR{font_path_prefix},
+\BLOCK{ endif }
+    UprightFont    = {\VAR{class_upright}},
+    BoldFont       = {\VAR{class_bold}},
+    ItalicFont     = {\VAR{class_italic}},
+    BoldItalicFont = {\VAR{class_bold_italic}},
+  ]{\VAR{class.family}}
+\expandafter\DeclareRobustCommand\csname text\VAR{class_language}\endcsname[1]{%
+  \ifdefined\texorpdfstring
+    \texorpdfstring{{\csname \VAR{class.font_command}\endcsname #1}}{#1}%
+  \else
+    {\csname \VAR{class.font_command}\endcsname #1}%
+  \fi
+}
+\BLOCK{ set env_name = class.environment_name }
+\BLOCK{ if env_name }
+\expandafter\def\csname \VAR{env_name}\endcsname{%
+  \begingroup\csname \VAR{class.font_command}\endcsname
+}
+\expandafter\def\csname end\VAR{env_name}\endcsname{%
+  \endgroup
+}
+\BLOCK{ endif }
+\BLOCK{ endfor }
 \BLOCK{ endif }
   \else
     % XeLaTeX/Tectonic path: rely on ucharclasses for glyph coverage.
@@ -391,6 +367,7 @@
 \BLOCK{ for class in script_fallbacks }
 \BLOCK{ set class_files = class.files }
 \BLOCK{ set class_title = class.title or class.family }
+\BLOCK{ set class_language = class.language or class.script_id.replace('-', '').replace('_', '') }
 \BLOCK{ set class_upright = class_files.get("regular") or class_files.get("black") or class_files.get("thin") or class.family }
 \BLOCK{ set class_bold = class_files.get("bold") or class_files.get("black") or class_upright }
 \BLOCK{ set class_italic = class_files.get("italic") or class_files.get("thin") or class_upright }
@@ -410,6 +387,22 @@
 \setTransitionTo{\VAR{block}}{\csname \VAR{class.font_command}\endcsname}
     \setTransitionFrom{\VAR{block}}{\rmfamily}
 \BLOCK{ endfor }
+\expandafter\DeclareRobustCommand\csname text\VAR{class_language}\endcsname[1]{%
+  \ifdefined\texorpdfstring
+    \texorpdfstring{{\csname \VAR{class.font_command}\endcsname #1}}{#1}%
+  \else
+    {\csname \VAR{class.font_command}\endcsname #1}%
+  \fi
+}
+\BLOCK{ set env_name = class.environment_name }
+\BLOCK{ if env_name }
+\expandafter\def\csname \VAR{env_name}\endcsname{%
+  \begingroup\csname \VAR{class.font_command}\endcsname
+}
+\expandafter\def\csname end\VAR{env_name}\endcsname{%
+  \endgroup
+}
+\BLOCK{ endif }
 \BLOCK{ endfor }
 \BLOCK{ elif unicode_font_classes }
 \BLOCK{ for class in unicode_font_classes }
