@@ -14,6 +14,7 @@ from texsmith.adapters.docker import is_docker_available
 from texsmith.adapters.latex.formatter import LaTeXFormatter
 from texsmith.adapters.latex.renderer import LaTeXRenderer
 from texsmith.adapters.transformers import has_converter, register_converter
+from texsmith.core.bibliography.collection import BibliographyCollection
 from texsmith.core.callouts import DEFAULT_CALLOUTS, merge_callouts, normalise_callouts
 from texsmith.core.context import DocumentState
 from texsmith.core.conversion_contexts import (
@@ -40,7 +41,12 @@ from .debug import (
     raise_conversion_error,
     record_event,
 )
-from .templates import build_binder_context, compute_heading_offset, extract_slot_fragments
+from .templates import (
+    SlotFragment,
+    build_binder_context,
+    compute_heading_offset,
+    extract_slot_fragments,
+)
 
 
 @dataclass(slots=True)
@@ -164,6 +170,8 @@ def convert_document(
     template_runtime: TemplateRuntime | None = None,
     wrap_document: bool = True,
     emitter: DiagnosticEmitter | None = None,
+    preloaded_bibliography: BibliographyCollection | None = None,
+    seen_bibliography_issues: set[tuple[str, str | None, str | None]] | None = None,
 ) -> ConversionResult:
     """Orchestrate the full HTML-to-LaTeX conversion for a single document."""
     emitter = ensure_emitter(emitter)
@@ -200,6 +208,8 @@ def convert_document(
         emitter=emitter,
         legacy_latex_accents=legacy_latex_accents,
         session_overrides=template_overrides,
+        preloaded_bibliography=preloaded_bibliography,
+        seen_bibliography_issues=seen_bibliography_issues,
     )
 
     renderer_kwargs: dict[str, Any] = {
@@ -253,48 +263,14 @@ def _render_document(
     effective_base_level = binding.base_level or 0
     slot_base_levels = binding.slot_levels()
 
-    code_options = _resolve_code_options(binding, binder_context.template_overrides)
-
-    runtime_common: dict[str, object] = {
-        "numbered": document_context.numbered,
-        "source_dir": document_context.source_path.parent,
-        "document_path": document_context.source_path,
-        "copy_assets": strategy.copy_assets,
-        "convert_assets": strategy.convert_assets,
-        "hash_assets": strategy.hash_assets,
-        "language": binder_context.language,
-        "emitter": emitter,
-    }
-    template_callouts = binder_context.template_overrides.get("callouts")
-    runtime_common["callouts_definitions"] = normalise_callouts(
-        merge_callouts(
-            DEFAULT_CALLOUTS,
-            template_callouts if isinstance(template_callouts, Mapping) else None,
-        )
+    runtime_common = _build_runtime_common(
+        binding=binding,
+        binder_context=binder_context,
+        document_context=document_context,
+        strategy=strategy,
+        diagrams_backend=diagrams_backend,
+        emitter=emitter,
     )
-    runtime_common["bibliography"] = binder_context.bibliography_map
-    runtime_common["bibliography_collection"] = binder_context.bibliography_collection
-    if binding.name is not None:
-        runtime_common["template"] = binding.name
-    runtime_common["code"] = code_options
-    runtime_common["diagrams_backend"] = diagrams_backend or "playwright"
-    mermaid_config = binder_context.template_overrides.get("mermaid_config") or (
-        binder_context.template_overrides.get("press") or {}
-    ).get("mermaid_config")
-    if not mermaid_config and binding.runtime and binding.runtime.extras:
-        mermaid_config = binding.runtime.extras.get("mermaid_config")
-    if mermaid_config:
-        runtime_common["mermaid_config"] = mermaid_config
-    if strategy.persist_manifest:
-        runtime_common["generate_manifest"] = True
-    emoji_mode = _extract_emoji_mode(binder_context.template_overrides)
-    if not emoji_mode:
-        emoji_mode = _extract_emoji_mode(document_context.front_matter)
-    if emoji_mode:
-        runtime_common["emoji_mode"] = emoji_mode
-        binder_context.template_overrides.setdefault("emoji", emoji_mode)
-        if emoji_mode != "artifact":
-            runtime_common.setdefault("emoji_command", r"\texsmithEmoji")
 
     active_slot_requests = binder_context.slot_requests
 
@@ -316,11 +292,13 @@ def _render_document(
 
     fragment_offsets: dict[str, int] = {}
     for fragment in slot_fragments:
-        fragment_offsets[fragment.name] = compute_heading_offset(
-            fragment.html,
-            drop_first_heading=drop_title_flag and fragment.name == binding.default_slot,
-            parser_backend=parser_backend,
-        )
+        levels = list(getattr(fragment, "heading_levels", []) or [])
+        if drop_title_flag and fragment.name == binding.default_slot and levels:
+            levels = levels[1:]
+        if not levels:
+            fragment_offsets[fragment.name] = 0
+        else:
+            fragment_offsets[fragment.name] = 1 - min(levels)
 
     segment_registry: dict[str, list[SegmentContext]] = {}
     for fragment in slot_fragments:
@@ -337,62 +315,24 @@ def _render_document(
             )
         )
 
-    formatter = LaTeXFormatter()
-    formatter.legacy_latex_accents = legacy_latex_accents
-    formatter.default_code_engine = code_options.get("engine", formatter.default_code_engine)
-    style_override = code_options.get("style", formatter.default_code_style)
-    if not isinstance(style_override, str):
-        style_override = str(style_override or "")
-    formatter.default_code_style = style_override.strip() or formatter.default_code_style
-    binding.apply_formatter_overrides(formatter)
-    renderer: LaTeXRenderer | None = None
-
-    def renderer_factory() -> LaTeXRenderer:
-        nonlocal renderer
-        if renderer is None:
-            renderer = LaTeXRenderer(
-                config=binder_context.config,
-                formatter=formatter,
-                **renderer_kwargs,
-            )
-        return renderer
-
-    if not disable_fallback_converters:
-        ensure_fallback_converters()
-
-    slot_outputs: dict[str, str] = {}
-    document_state: DocumentState | None = initial_state
-    for fragment in slot_fragments:
-        runtime_fragment = dict(runtime_common)
-        base_value = slot_base_levels.get(fragment.name, effective_base_level)
-        fragment_offset = fragment_offsets.get(fragment.name, 0)
-        base_offset = manual_base_level + fragment_offset
-        runtime_fragment["base_level"] = base_value + base_offset
-        if fragment.name == "preface":
-            runtime_fragment["numbered"] = False
-        if drop_title_flag and fragment.name == binding.default_slot:
-            runtime_fragment["drop_title"] = True
-            drop_title_flag = False
-        fragment_output = ""
-        try:
-            fragment_output, document_state = render_with_fallback(
-                renderer_factory,
-                fragment.html,
-                runtime_fragment,
-                binder_context.bibliography_map,
-                state=document_state,
-                emitter=emitter,
-            )
-        except LatexRenderingError as exc:
-            if debug_enabled(emitter):
-                raise
-            message = format_user_friendly_render_error(exc)
-            raise_conversion_error(emitter, message, exc)
-        existing_fragment = slot_outputs.get(fragment.name, "")
-        slot_outputs[fragment.name] = f"{existing_fragment}{fragment_output}"
-
-    if document_state is None:
-        document_state = DocumentState(bibliography=dict(binder_context.bibliography_map))
+    render_result = _render_slot_fragments(
+        slot_fragments=slot_fragments,
+        binding=binding,
+        runtime_common=runtime_common,
+        slot_base_levels=slot_base_levels,
+        fragment_offsets=fragment_offsets,
+        manual_base_level=manual_base_level,
+        disable_fallback_converters=disable_fallback_converters,
+        renderer_kwargs=renderer_kwargs,
+        initial_state=initial_state,
+        drop_title_flag=drop_title_flag,
+        binder_context=binder_context,
+        legacy_latex_accents=legacy_latex_accents,
+        emitter=emitter,
+    )
+    slot_outputs = render_result["slot_outputs"]
+    document_state = render_result["document_state"]
+    renderer = render_result["renderer"]
 
     default_content = slot_outputs.get(binding.default_slot)
     if default_content is None:
@@ -500,6 +440,145 @@ def _render_document(
         rule_descriptions=rule_descriptions,
         assets_map=asset_map,
     )
+
+
+def _build_runtime_common(
+    *,
+    binding: TemplateBinding,
+    binder_context: BinderContext,
+    document_context: DocumentContext,
+    strategy: GenerationStrategy,
+    diagrams_backend: str | None,
+    emitter: DiagnosticEmitter,
+) -> dict[str, object]:
+    """Prepare immutable runtime metadata shared across fragment rendering."""
+    code_options = _resolve_code_options(binding, binder_context.template_overrides)
+
+    runtime_common: dict[str, object] = {
+        "numbered": document_context.numbered,
+        "source_dir": document_context.source_path.parent,
+        "document_path": document_context.source_path,
+        "copy_assets": strategy.copy_assets,
+        "convert_assets": strategy.convert_assets,
+        "hash_assets": strategy.hash_assets,
+        "language": binder_context.language,
+        "emitter": emitter,
+    }
+    template_callouts = binder_context.template_overrides.get("callouts")
+    runtime_common["callouts_definitions"] = normalise_callouts(
+        merge_callouts(
+            DEFAULT_CALLOUTS,
+            template_callouts if isinstance(template_callouts, Mapping) else None,
+        )
+    )
+    runtime_common["bibliography"] = binder_context.bibliography_map
+    runtime_common["bibliography_collection"] = binder_context.bibliography_collection
+    if binding.name is not None:
+        runtime_common["template"] = binding.name
+    runtime_common["code"] = code_options
+    runtime_common["diagrams_backend"] = diagrams_backend or "playwright"
+    mermaid_config = binder_context.template_overrides.get("mermaid_config") or (
+        binder_context.template_overrides.get("press") or {}
+    ).get("mermaid_config")
+    if not mermaid_config and binding.runtime and binding.runtime.extras:
+        mermaid_config = binding.runtime.extras.get("mermaid_config")
+    if mermaid_config:
+        runtime_common["mermaid_config"] = mermaid_config
+    if strategy.persist_manifest:
+        runtime_common["generate_manifest"] = True
+    emoji_mode = _extract_emoji_mode(binder_context.template_overrides)
+    if not emoji_mode:
+        emoji_mode = _extract_emoji_mode(document_context.front_matter)
+    if emoji_mode:
+        runtime_common["emoji_mode"] = emoji_mode
+        binder_context.template_overrides.setdefault("emoji", emoji_mode)
+        if emoji_mode != "artifact":
+            runtime_common.setdefault("emoji_command", r"\texsmithEmoji")
+
+    return runtime_common
+
+
+def _render_slot_fragments(
+    *,
+    slot_fragments: list[SlotFragment],
+    binding: TemplateBinding,
+    runtime_common: dict[str, object],
+    slot_base_levels: Mapping[str, int],
+    fragment_offsets: Mapping[str, int],
+    manual_base_level: int,
+    disable_fallback_converters: bool,
+    renderer_kwargs: dict[str, Any],
+    initial_state: DocumentState | None,
+    drop_title_flag: bool,
+    binder_context: BinderContext,
+    legacy_latex_accents: bool,
+    emitter: DiagnosticEmitter,
+) -> dict[str, Any]:
+    """Render slot fragments, applying fallback converters when required."""
+    formatter = LaTeXFormatter()
+    formatter.legacy_latex_accents = legacy_latex_accents
+    formatter.default_code_engine = runtime_common.get("code", {}).get(
+        "engine", formatter.default_code_engine
+    )
+    style_override = runtime_common.get("code", {}).get("style", formatter.default_code_style)
+    if not isinstance(style_override, str):
+        style_override = str(style_override or "")
+    formatter.default_code_style = style_override.strip() or formatter.default_code_style
+    binding.apply_formatter_overrides(formatter)
+    renderer: LaTeXRenderer | None = None
+
+    def renderer_factory() -> LaTeXRenderer:
+        nonlocal renderer
+        if renderer is None:
+            renderer = LaTeXRenderer(
+                config=binder_context.config,
+                formatter=formatter,
+                **renderer_kwargs,
+            )
+        return renderer
+
+    if not disable_fallback_converters:
+        ensure_fallback_converters()
+
+    slot_outputs: dict[str, str] = {}
+    document_state: DocumentState | None = initial_state
+    for fragment in slot_fragments:
+        runtime_fragment = dict(runtime_common)
+        base_value = slot_base_levels.get(fragment.name, binding.base_level or 0)
+        fragment_offset = fragment_offsets.get(fragment.name, 0)
+        base_offset = manual_base_level + fragment_offset
+        runtime_fragment["base_level"] = base_value + base_offset
+        if fragment.name == "preface":
+            runtime_fragment["numbered"] = False
+        if drop_title_flag and fragment.name == binding.default_slot:
+            runtime_fragment["drop_title"] = True
+            drop_title_flag = False
+        fragment_output = ""
+        try:
+            fragment_output, document_state = render_with_fallback(
+                renderer_factory,
+                fragment.html,
+                runtime_fragment,
+                binder_context.bibliography_map,
+                state=document_state,
+                emitter=emitter,
+            )
+        except LatexRenderingError as exc:
+            if debug_enabled(emitter):
+                raise
+            message = format_user_friendly_render_error(exc)
+            raise_conversion_error(emitter, message, exc)
+        existing_fragment = slot_outputs.get(fragment.name, "")
+        slot_outputs[fragment.name] = f"{existing_fragment}{fragment_output}"
+
+    if document_state is None:
+        document_state = DocumentState(bibliography=dict(binder_context.bibliography_map))
+
+    return {
+        "slot_outputs": slot_outputs,
+        "document_state": document_state,
+        "renderer": renderer,
+    }
 
 
 def copy_document_state(target: DocumentState, source: DocumentState) -> None:
