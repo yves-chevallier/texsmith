@@ -1,3 +1,7 @@
+---
+hide:
+  - navigation
+---
 # Welcome to TeXSmith
 
 **TeXSmith** turns [Markdown](https://www.markdownguide.org/) into
@@ -5,7 +9,7 @@ press-ready [LaTeX](https://www.latex-project.org/). Keep your
 docs authored in English-first Markdown, then compile polished PDFs for print,
 journals, or long-form review packages—without maintaining two sources of truth.
 
-![TexSmith Logo](assets/logo-full.svg){ width="60%" }
+![TexSmith Logo](assets/logo-full.svg){ width="50%" }
 
 Optimized for MkDocs, the TeXSmith MkDocs plugin seamlessly integrates into your
 documentation pipeline.
