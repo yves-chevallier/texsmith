@@ -1,41 +1,35 @@
 # Getting Started
 
-Welcome to TeXSmith! This quick tour gets you from a blank terminal to crisp PDFs. Start by deciding what you need today:
+Welcome to TeXSmith—the fast lane from an empty terminal to a polished PDF. Pick your mission:
 
-1. Converting standalone Markdown into LaTeX/PDF?
-2. Wiring TeXSmith into an existing MkDocs site?
-3. Driving it from Python code?
+1. Turn Markdown or HTML into LaTeX/PDF.
+2. Drop TeXSmith into an existing MkDocs site.
+3. Drive it from Python.
 
-Hop to the section that matches, or ride the whole tour for the full download.
+Hop to the section you need or read straight through for the big picture.
 
 ## Prerequisites
 
-TeXSmith expects a few tools already on your machine:
+TeXSmith only asks for one base tool:
 
 Python 3.10+
-: TeXSmith ships as a Python package. Use
-  [uv](https://github.com/astral-sh/uv) or `pipx` for isolated installs so the CLI stays tidy.
+: TeXSmith ships as a Python package. Install with
+  [uv](https://github.com/astral-sh/uv) or `pipx` to keep the CLI isolated from your system Python.
 
-Yes folks, that's right. Only Python is required. No need to wrestle with TeX
-distributions... yet.
+That is it. No TeX distribution is required to get started—Tectonic will self-bootstrap when needed.
 
 ## Optional prerequisites
 
-LaTeX distribution (Optional)
-: Install TeX Live, MiKTeX, or MacTeX so `texsmith --build`
-  can hand off to Tectonic (default) or `latexmk` when you opt into `--engine lualatex` / `--engine xelatex`.
+LaTeX distribution
+: Install TeX Live, MiKTeX, or MacTeX if you want TeXSmith to hand off builds to `latexmk` (`--engine lualatex` / `--engine xelatex`). The default route uses Tectonic, which auto-installs itself and required packages.
 
-Diagram tooling (Optional)
-: Mermaid-to-PDF (`minlag/mermaid-cli`) conversion defaults to Docker.
-  Install Docker Desktop (with WSL integration on
-  Windows) or register your own converter if Mermaid is part of your workflow.
+Diagram tooling
+: Mermaid-to-PDF (`minlag/mermaid-cli`) conversion falls back to Docker. Install Docker Desktop (with WSL integration on Windows) or register your own converter if Mermaid diagrams are common in your docs.
 
-  Draw.io and Mermaid diagrams try a Playwright-based exporter first (cached under `~/.cache/texsmith/playwright`),
-  then the local CLI, then Docker (`rlespinasse/drawio-desktop-headless` / `minlag/mermaid-cli`). Use
-  `--diagrams-backend=playwright|local|docker` to force a specific backend.
+  Draw.io and Mermaid diagrams try a Playwright exporter first (cached under `~/.cache/texsmith/playwright`), then the local CLI, then Docker (`rlespinasse/drawio-desktop-headless` / `minlag/mermaid-cli`). Use `--diagrams-backend=playwright|local|docker` to pin a specific backend.
 
 Fonts
-: TeXSmith uses Noto for fallback due to its extensive Unicode coverage. You may also want to install additional fonts for specific scripts or to match your document design.
+: TeXSmith ships with Noto fallback for wide Unicode coverage. Add your own fonts if you want a specific script or branded look.
 
 ## Installation
 
@@ -61,7 +55,7 @@ Pick the installer that matches your toolbox:
 
 ## Convert a Markdown file to LaTeX
 
-By default TeXSmith converts any Markdown file to LaTeX. It can also parse an HTML file:
+By default TeXSmith writes LaTeX to stdout. Pipe it or direct it into a folder. HTML works too:
 
 === "Here document"
 
@@ -96,14 +90,13 @@ By default TeXSmith converts any Markdown file to LaTeX. It can also parse an HT
 
 ## Generate a PDF
 
-Imagine you desperatly want to write an article about [boobies](https://en.wikipedia.org/wiki/Booby). Create a sample Markdown file that you name `booby.md` or reuse our example:
+Want the full PDF? Start with our playful [booby](https://en.wikipedia.org/wiki/Booby) example or create your own `booby.md`:
 
 ```markdown
 --8<--- "examples/booby/booby.md"
 ```
 
-Notice the front matter at the top that specify information about the document
-like title, author, date, and template to use.
+Notice the front matter up top: it carries the title, author, date, and template to use.
 
 Then let TeXSmith crunch it:
 
@@ -111,7 +104,7 @@ Then let TeXSmith crunch it:
 texsmith booby.md --output build/ -apaper=a5 --build
 ```
 
-With Tectonic as the default engine, all fonts, packages and dependencies are automatically resolved. Even Tectonic itself is downloaded on demand if missing. You truly need nothing else installed to get started.
+With Tectonic as the default engine, fonts, packages, and dependencies resolve themselves on demand (including Tectonic if it is missing). Nothing else to install.
 
 Enjoy a fresh PDF at `build/booby.pdf`:
 
@@ -119,7 +112,7 @@ Enjoy a fresh PDF at `build/booby.pdf`:
 --8<--- "examples/booby/booby.md"
 ```
 
-Peek inside `build/` and you will find `booby.tex`. Be free to change the  `--template` when you want a full LaTeX project or a polished PDF:
+Peek inside `build/` to find `booby.tex`. Swap `--template` when you want a different LaTeX project layout or polish level:
 
 ```bash
 texsmith booby.md --template article --output-dir build
@@ -127,7 +120,7 @@ texsmith booby.md --template article --output-dir build
 
 ## Use the Python API
 
-TeXSmith is also a Python library. Create a file named `demo.py` with the following content:
+TeXSmith also ships as a Python library. Create `demo.py`:
 
 ```python
 from pathlib import Path
@@ -142,13 +135,11 @@ print("Fragments:", [fragment.stem for fragment in bundle.fragments])
 print("Preview:", bundle.combined_output()[:120])
 ```
 
-Run the snippet with `python demo.py`. The API mirrors the CLI, so
-drop into `ConversionService` or `TemplateSession` whenever you need more
-control over slot assignments, diagnostic emitters, or template metadata.
+Run the snippet with `python demo.py`. The API mirrors the CLI; reach for `ConversionService` or `TemplateSession` when you need fine-grained control over slot assignments, diagnostics, or template metadata.
 
 ## Convert a MkDocs site
 
-Point TeXSmith at a MkDocs site once `mkdocs build` renders clean HTML:
+Point TeXSmith at a MkDocs site after `mkdocs build` renders clean HTML:
 
 ```bash
 # Build your MkDocs site into a disposable directory
@@ -164,19 +155,17 @@ texsmith build/site/guides/overview/index.html \
 !!! tip
 
     - The default selector (`article.md-content\_\_inner`) already matches MkDocs Material content; skip `--selector` unless you heavily customise templates.
-    - When your site spans multiple documents, repeat the command per page and stitch them with template slots (for example, `--slot mainmatter:build/site/manual/index.html`).
+    - When your site spans multiple documents, repeat the command per page and stitch them together with template slots (for example, `--slot mainmatter:build/site/manual/index.html`).
     - For live previews, point TeXSmith at the temporary site directory that `mkdocs serve` prints on startup.
 
-    Once the LaTeX bundle looks good, add `--build` to invoke your chosen engine or wire everything into CI so MkDocs HTML → TeXSmith PDF happens on every run.
+    Once the LaTeX bundle looks good, add `--build` to invoke your engine of choice or wire it into CI so MkDocs HTML → TeXSmith PDF runs on every build.
 
 ## How does TeXSmith work?
 
-TeXSmith ingests Markdown, HTML or even YAML files, then processes them through a series of steps to produce LaTeX or PDF output.
+TeXSmith ingests Markdown, HTML, YAML, and BibTeX, then runs them through a conversion pipeline to produce LaTeX or a finished PDF.
 
-A template can be associated to allow custom layouts and therefore build into a PDF. Each templates defines slots that get filled with content from the source documents.
-
-A template manifest also describes compatible **fragments** that provide additional content or styling to the final document (e.g. bibliography, glossary, index, fonts, page geometry, typesetting options...).
+Templates define the layout and expose slots that get filled with content from your sources. The template manifest also lists compatible **fragments** that layer in extras such as a bibliography, glossary, fonts, page geometry, or other typesetting options.
 
 ![Workflow diagram of TeXSmith](../assets/workflow.drawio)
 
-TeXSmith embeds engines to convert rich diagrams (Mermaid, Draw.io) into PDFs that get included in the LaTeX output. It also supports different LaTeX engines (Tectonic, LuaLaTeX, XeLaTeX) to suit your typesetting needs.
+TeXSmith can render diagrams (Mermaid, Draw.io) into PDFs for inclusion in the LaTeX output. Choose between Tectonic, LuaLaTeX, or XeLaTeX depending on your typesetting needs.

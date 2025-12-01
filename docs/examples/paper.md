@@ -1,3 +1,5 @@
+[](){ #cheese }
+
 # Research Paper
 
 This example shows how TeXSmith can be used to write scientific papers with
@@ -51,4 +53,3 @@ texsmith cheese.md cheese.bib -tarticle --build
     I intially thought about an article on how Swiss music—specifically yodeling—might
     influence cheese ripening. But, well… rheology felt slightly more scientifically
     defensible.
-
