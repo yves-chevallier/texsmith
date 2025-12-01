@@ -318,7 +318,7 @@ BUILTIN_FRAGMENT_ORDER = [
     "ts-todolist",
 ]
 
-FRAGMENT_ROOT = Path(__file__).resolve().parent.parent / "builtin_fragments"
+FRAGMENT_ROOT = Path(__file__).resolve().parent.parent / "fragments"
 FRAGMENT_REGISTRY = FragmentRegistry(root=FRAGMENT_ROOT, default_order=BUILTIN_FRAGMENT_ORDER)
 
 

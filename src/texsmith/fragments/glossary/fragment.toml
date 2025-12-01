@@ -1,0 +1,3 @@
+name = "ts-glossary"
+description = "Glossary and acronym helpers."
+entrypoint = "texsmith.fragments.glossary:create_fragment"

@@ -22,12 +22,12 @@ def project_root(monkeypatch: pytest.MonkeyPatch) -> Path:
 
 @pytest.fixture
 def book_template(project_root: Path) -> WrappableTemplate:
-    return load_template(str(project_root / "src" / "texsmith" / "builtin_templates" / "book"))
+    return load_template(str(project_root / "src" / "texsmith" / "templates" / "book"))
 
 
 @pytest.fixture
 def article_template(project_root: Path) -> WrappableTemplate:
-    return load_template(str(project_root / "src" / "texsmith" / "builtin_templates" / "article"))
+    return load_template(str(project_root / "src" / "texsmith" / "templates" / "article"))
 
 
 def test_squash_blank_lines_trims_trailing_whitespace() -> None:
@@ -155,7 +155,7 @@ def test_copy_template_assets_materialises_payload(
 
 
 def test_load_template_from_shortcut_path(book_template: WrappableTemplate) -> None:
-    shortcut = load_template("./src/texsmith/builtin_templates/book")
+    shortcut = load_template("./src/texsmith/templates/book")
     assert shortcut.info.name == book_template.info.name
     assert shortcut.info.entrypoint == book_template.info.entrypoint
     slug = load_template("book")
@@ -218,7 +218,7 @@ def test_article_injects_custom_preamble_block(
 def test_load_article_template_from_shortcut_path(
     article_template: WrappableTemplate,
 ) -> None:
-    shortcut = load_template("./src/texsmith/builtin_templates/article")
+    shortcut = load_template("./src/texsmith/templates/article")
     assert shortcut.info.name == article_template.info.name
     slug = load_template("article")
     assert slug.info.name == article_template.info.name

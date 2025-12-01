@@ -1,3 +1,0 @@
-name = "ts-todolist"
-description = "Conditional todolist helpers."
-entrypoint = "texsmith.builtin_fragments.ts_todolist:create_fragment"

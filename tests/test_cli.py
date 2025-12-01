@@ -26,7 +26,7 @@ def _template_path(name: str) -> Path:
     if local_candidate.exists():
         return local_candidate
 
-    builtin_candidate = project_root / "src" / "texsmith" / "builtin_templates" / name
+    builtin_candidate = project_root / "src" / "texsmith" / "templates" / name
     if builtin_candidate.exists():
         return builtin_candidate
 
@@ -448,7 +448,7 @@ def test_slot_injection_extracts_abstract(tmp_path: Path) -> None:
     )
 
     project_root = Path(__file__).resolve().parents[1]
-    template_dir = project_root / "src" / "texsmith" / "builtin_templates" / "article"
+    template_dir = project_root / "src" / "texsmith" / "templates" / "article"
     output_dir = tmp_path / "out"
     result = runner.invoke(
         app,
@@ -481,7 +481,7 @@ def test_slot_injection_matches_label(tmp_path: Path) -> None:
     )
 
     project_root = Path(__file__).resolve().parents[1]
-    template_dir = project_root / "src" / "texsmith" / "builtin_templates" / "article"
+    template_dir = project_root / "src" / "texsmith" / "templates" / "article"
     output_dir = tmp_path / "out"
     result = runner.invoke(
         app,

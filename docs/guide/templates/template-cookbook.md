@@ -5,7 +5,7 @@ This cookbook collects repeatable patterns for building and iterating on TeXSmit
 ## Clone a starter and rename it
 
 ```bash
-cp -R src/texsmith/builtin_templates/article texsmith-template-report
+cp -R src/texsmith/templates/article texsmith-template-report
 cd texsmith-template-report
 
 # Update package metadata

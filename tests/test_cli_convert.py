@@ -22,7 +22,7 @@ def _template_path(name: str) -> str:
     if candidate.exists():
         return str(candidate)
 
-    builtin = project_root / "src" / "texsmith" / "builtin_templates" / name
+    builtin = project_root / "src" / "texsmith" / "templates" / name
     if builtin.exists():
         return str(builtin)
 
