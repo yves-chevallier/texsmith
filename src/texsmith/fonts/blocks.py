@@ -265,7 +265,7 @@ def _process_chunk(chunk: str, tracker: ScriptTracker) -> str:
             buffer.append(char)
             continue
         block = unicodeblocks.blockof(char)
-        block_name = block.name
+        block_name = block.name if block is not None else ""
         script = None if block_name in EMOJI_BLOCKS else _script_for_block(block_name)
         if script != current_script and buffer:
             flush()

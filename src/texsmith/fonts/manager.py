@@ -317,6 +317,11 @@ def prepare_fonts_for_context(
         set(cache_failures) & set(fonts_to_copy)
     )
 
+    small_caps_font = template_context.get("small_caps_font")
+    if small_caps_font and small_caps_font in missing_after_copy:
+        # Drop unavailable small-caps selection so templates don't reference a missing family.
+        template_context["small_caps_font"] = None
+
     available_families = set(copied_serialised.keys())
     fallback_fonts = [font for font in fallback_fonts if font in available_families]
     if emoji_font_family and emoji_font_family in missing_after_copy:

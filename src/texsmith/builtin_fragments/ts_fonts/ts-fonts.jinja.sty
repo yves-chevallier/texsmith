@@ -3,7 +3,7 @@
 \BLOCK{ set sans_font = sans_font | default("Latin Modern Sans") }
 \BLOCK{ set mono_font = mono_font | default("FreeMono") }
 \BLOCK{ set math_font = math_font | default("Latin Modern Math") }
-\BLOCK{ set small_caps_font = small_caps_font | default("Latin Modern Roman Caps") }
+\BLOCK{ set small_caps_font = small_caps_font | default(None) }
 \BLOCK{ set mono_italic = mono_italic | default("* Italic") }
 \BLOCK{ set mono_bold_italic = mono_bold_italic | default("* Bold Italic") }
 \BLOCK{ set mono_fake_slant = mono_fake_slant | default(False) }
@@ -25,6 +25,7 @@
 \BLOCK{ set emoji_twemoji = (emoji_mode == "twemoji") }
 \BLOCK{ set emoji_ranges = emoji_ranges | default([]) }
 \BLOCK{ set emoji_files = font_files.get(emoji_font, {}) if emoji_font else {} }
+\BLOCK{ set emoji_upright = emoji_files.get("regular") or emoji_files.get("black") or (emoji_files.values() | first) }
 \BLOCK{ if mono_font == "FreeMono" }
   \BLOCK{ set mono_italic = "* Oblique" }
   \BLOCK{ set mono_bold_italic = "* Bold Oblique" }
@@ -241,6 +242,10 @@
 \BLOCK{ endif }
 \BLOCK{ if emoji_files.get("regular") }
     UprightFont={\VAR{emoji_files["regular"]}},
+\BLOCK{ elif emoji_files.get("black") }
+    UprightFont={\VAR{emoji_files["black"]}},
+\BLOCK{ elif emoji_upright }
+    UprightFont={\VAR{emoji_upright}},
 \BLOCK{ endif }
     Renderer=Harfbuzz,
     Scale=1.05
@@ -441,6 +446,10 @@
 \BLOCK{ endif }
 \BLOCK{ if emoji_files.get("regular") }
       UprightFont={\VAR{emoji_files["regular"]}},
+\BLOCK{ elif emoji_files.get("black") }
+      UprightFont={\VAR{emoji_files["black"]}},
+\BLOCK{ elif emoji_upright }
+      UprightFont={\VAR{emoji_upright}},
 \BLOCK{ endif }
       Renderer=Harfbuzz,
       Scale=1.05
