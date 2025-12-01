@@ -61,7 +61,9 @@ def create_fragment() -> FragmentDefinition:
     )
 
 
-def _inject_context(context: dict[str, Any], overrides: Mapping[str, Any] | None = None) -> None:
+def _inject_context(
+    context: dict[str, Any], overrides: Mapping[str, Any] | None = None
+) -> None:
     _ = overrides
     paragraph = context.get("typesetting_paragraph")
     leading = context.get("typesetting_leading")
@@ -71,7 +73,8 @@ def _inject_context(context: dict[str, Any], overrides: Mapping[str, Any] | None
     leading_mode, leading_value = _normalise_leading(leading)
     lineno_enabled = bool(lineno)
     enabled = (
-        any(option is not None for option in (indent_mode, parskip, leading_mode)) or lineno_enabled
+        any(option is not None for option in (indent_mode, parskip, leading_mode))
+        or lineno_enabled
     )
 
     context["ts_typesetting_indent_mode"] = indent_mode
