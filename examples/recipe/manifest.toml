@@ -16,6 +16,9 @@ tlmgr_packages = [
     "xcolor",
 ]
 
+[latex.template.assets]
+"tikz-cookingsymbols.sty" = { source = "tikz-cookingsymbols.sty" }
+
 [latex.template.slots.mainmatter]
 default = true
 
