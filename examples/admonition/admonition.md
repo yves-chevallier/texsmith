@@ -1,8 +1,10 @@
 ---
 press:
+  subtitle: "An Overview of **{{callouts.style}}** framed elements"
   paper:
     margin: narrow
   columns: 2
+  numbering: false
   callouts:
     custom:
       unicorn:
@@ -10,7 +12,7 @@ press:
         border_color: "ff00ff"
         icon: "🦄"
 ---
-# Some Admonitions
+# Admonitions / Callouts
 
 !!! note
     Highlights extra information that’s useful but not critical, helping readers understand nuances.
@@ -60,9 +62,7 @@ press:
 !!! quote
     Presents a relevant quotation that adds authority or perspective to the content.
 
-/// latex
-\vspace{2em}
-///
+## Custom Admonition
 
 !!! unicorn
     A custom admonition with a unicorn theme, adding a whimsical touch to the information presented.

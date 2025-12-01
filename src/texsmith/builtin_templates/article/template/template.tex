@@ -37,6 +37,9 @@
 \thispagestyle{empty}
 \pagestyle{empty}
 \BLOCK{ endif }
+\BLOCK{ if numbering is defined and not numbering }
+\setcounter{secnumdepth}{-1}
+\BLOCK{ endif }
 
 \BLOCK{ if abstract }
 \begin{abstract}

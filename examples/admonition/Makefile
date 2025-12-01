@@ -20,7 +20,7 @@ $(call style_pdf,$1): $(SOURCE)
 	@mkdir -p $$(dir $$@)
 	$(TEXSMITH) $$< -o$$(dir $$@) --build -tarticle -acallouts.style=$1 \
 		$$(if $$(filter fancy,$1),-afonts.emoji=color,) $(TEXSMITH_ENGINE)
-	mv $$(dir $$@)admonition.pdf $$@
+	cp $$(dir $$@)admonition.pdf $$@
 	$(call copy_artifact,$$@)
 
 $1: $(call style_pdf,$1)

@@ -84,6 +84,11 @@ default = true
 type = "boolean"
 sources = ["page_numbers"]
 
+[latex.template.attributes.numbering]
+default = true
+type = "boolean"
+sources = ["numbering"]
+
 [latex.template.attributes.glossary_style]
 default = "list"
 type = "string"
