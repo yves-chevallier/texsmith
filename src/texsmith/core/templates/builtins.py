@@ -8,10 +8,10 @@ from .base import WrappableTemplate
 
 
 _BUILTIN_FACTORIES: dict[str, str] = {
-    "article": "texsmith.builtin_templates.article:Template",
-    "book": "texsmith.builtin_templates.book:Template",
-    "letter": "texsmith.builtin_templates.letter:Template",
-    "snippet": "texsmith.builtin_templates.snippet:Template",
+    "article": "texsmith.templates.article:Template",
+    "book": "texsmith.templates.book:Template",
+    "letter": "texsmith.templates.letter:Template",
+    "snippet": "texsmith.templates.snippet:Template",
 }
 
 _ALIASES: dict[str, str] = {

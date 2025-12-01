@@ -18,7 +18,7 @@ def _write(tmp_path: Path, name: str, content: str) -> Path:
 
 def _template_path(name: str) -> Path:
     project_root = Path(__file__).resolve().parents[1]
-    return project_root / "src" / "texsmith" / "builtin_templates" / name
+    return project_root / "src" / "texsmith" / "templates" / name
 
 
 def test_cli_bibliography_list_outputs_entries(tmp_path: Path) -> None:

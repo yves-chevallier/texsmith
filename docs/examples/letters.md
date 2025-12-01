@@ -36,13 +36,13 @@ Here is the source code for the letter example used above:
 === "Template"
 
     ```latex
-    --8<--- "src/texsmith/builtin_templates/letter/template/template.tex"
+    --8<--- "src/texsmith/templates/letter/template/template.tex"
     ```
 
 === "Manifest"
 
     ```toml
-    --8<--- "src/texsmith/builtin_templates/letter/manifest.toml"
+    --8<--- "src/texsmith/templates/letter/manifest.toml"
     ```
 
 To build the examples, use the following commands:

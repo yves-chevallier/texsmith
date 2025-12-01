@@ -30,7 +30,7 @@ _EXPORT3_URL = "https://app.diagrams.net/export3.html"
 _DEFAULT_MERMAID_CONFIG_PATH = (
     Path(__file__).resolve().parents[4]
     / "texsmith"
-    / "builtin_templates"
+    / "templates"
     / "article"
     / "template"
     / "assets"

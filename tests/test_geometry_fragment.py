@@ -1,11 +1,11 @@
 import pytest
 
-from texsmith.builtin_fragments.ts_geometry import (
+from texsmith.fragments.geometry import (
     GeometryFragment,
     GeometryFragmentConfig,
     create_fragment,
 )
-from texsmith.builtin_fragments.ts_geometry.paper import inject_geometry_context
+from texsmith.fragments.geometry.paper import inject_geometry_context
 from texsmith.core.templates.manifest import TemplateError
 
 

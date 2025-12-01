@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from texsmith.builtin_templates.letter import Template
+from texsmith.templates.letter import Template
 
 
 def build_overrides(
