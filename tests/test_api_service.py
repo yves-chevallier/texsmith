@@ -80,6 +80,18 @@ def test_split_inputs_captures_front_matter(tmp_path: Path) -> None:
     assert result.front_matter.get("press", {}).get("template") == "demo"
 
 
+def test_split_inputs_allows_yaml_only_input(tmp_path: Path) -> None:
+    service = ConversionService()
+    recipe = tmp_path / "recipe.yml"
+    recipe.write_text("title: Cake\n", encoding="utf-8")
+
+    result = service.split_inputs([recipe])
+
+    assert result.documents == [recipe]
+    assert result.front_matter is None
+    assert result.front_matter_path is None
+
+
 def test_prepare_documents_handles_markdown_and_html(tmp_path: Path) -> None:
     service = ConversionService()
     markdown = tmp_path / "chapter.md"
