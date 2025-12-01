@@ -135,6 +135,7 @@ class LaTeXFormatter:
     ) -> str:
         """Render code blocks with optional line numbers and highlights."""
         highlight = list(highlight or [])
+        optimized_highlight = optimize_list(highlight)
         normalized_engine = (engine or self.default_code_engine or "pygments").lower()
         if normalized_engine not in {"minted", "listings", "verbatim", "pygments"}:
             normalized_engine = "pygments"
@@ -157,9 +158,9 @@ class LaTeXFormatter:
                 linenos=lineno,
                 filename=filename,
                 baselinestretch=baselinestretch,
+                highlight=optimized_highlight,
             )
 
-        optimized_highlight = optimize_list(highlight)
         if normalized_engine == "listings":
             return self._get_template("codeblock_listings").render(
                 code=code,
