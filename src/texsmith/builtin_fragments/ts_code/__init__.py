@@ -43,7 +43,7 @@ def _uses_code(context: Mapping[str, object]) -> bool:
         if not isinstance(value, str):
             continue
         lowered = value.lower()
-        if "\\begin{code" in lowered or "\\begin{minted" in lowered:
+        if "\\begin{code" in lowered or "\\begin{minted" in lowered or "\\py{" in lowered:
             return True
     return False
 

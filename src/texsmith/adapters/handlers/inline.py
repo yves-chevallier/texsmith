@@ -446,12 +446,24 @@ def render_inline_code(element: Tag, context: RenderContext) -> None:
         return
 
     engine = _resolve_code_engine(context)
+    language_hint = None
+    if code.startswith("#!"):
+        shebang_parts = code[2:].strip().split(None, 1)
+        if shebang_parts:
+            language_hint = shebang_parts[0]
+            code = shebang_parts[1] if len(shebang_parts) > 1 else ""
+
     has_language = any(cls.startswith("language-") for cls in classes)
+    language = None
     if has_language or "highlight" in classes:
         language = next(
             (cls[len("language-") :] or "text" for cls in classes if cls.startswith("language-")),
             "text",
         )
+    if language_hint and not language:
+        language = language_hint
+
+    if language:
         delimiter = _pick_mintinline_delimiter(code)
         if delimiter and engine == "minted":
             context.state.requires_shell_escape = (
@@ -460,10 +472,18 @@ def render_inline_code(element: Tag, context: RenderContext) -> None:
             latex = context.formatter.codeinline(
                 language=language or "text",
                 text=code,
-                delimiter=delimiter,
+                engine=engine,
             )
             element.replace_with(mark_processed(NavigableString(latex)))
             return
+        latex = context.formatter.codeinline(
+            language=language or "text",
+            text=code,
+            engine=engine,
+            state=context.state,
+        )
+        element.replace_with(mark_processed(NavigableString(latex)))
+        return
 
     legacy_latex_accents = getattr(context.config, "legacy_latex_accents", False)
     code = escape_latex_chars(code, legacy_accents=legacy_latex_accents).replace(" ", "~")
