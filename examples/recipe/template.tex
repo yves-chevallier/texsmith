@@ -1,7 +1,7 @@
 \documentclass{article}
 \usepackage[a4paper, top=2cm, left=2cm, right=2cm, bottom=1cm]{geometry}
 \usepackage{fontspec}
-\usepackage{cookingsymbols}
+\usepackage{tikz-cookingsymbols}
 \usepackage{tabularx}
 \usepackage{multirow}
 \usepackage{enumitem}
@@ -57,9 +57,9 @@
 \vspace{0pt}%
 \rule{\linewidth}{1.5pt}
 \BLOCK{ set time = recipe.time | default({}, true) }
-\Topbottomheat\quad{} temps total \textbf{\VAR{time.total | default('--', true)}}~min \\
-\Gloves\quad{} préparation \textbf{\VAR{time.preparation | default('--', true)}}~min \\
-\Oven\quad{} cuisson \textbf{\VAR{time.cooking | default('--', true)}}~min \\
+\TopBottomHeat\quad{} temps total \textbf{\VAR{time.total | default('--', true)}}~min \\
+\Grill\quad{} préparation \textbf{\VAR{time.preparation | default('--', true)}}~min \\
+\ConvectionOven\quad{} cuisson \textbf{\VAR{time.cooking | default('--', true)}}~min \\
 \rule{\linewidth}{1.5pt}
 
 \BLOCK{ if recipe.description }
