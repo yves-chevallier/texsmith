@@ -5,10 +5,6 @@
 \setlength{\parindent}{0pt}
 \setlength{\parskip}{\baselineskip}
 
-\begin{center}
-  \textbf{Imprint}
-\end{center}
-
 \BLOCK{ set copyright_text = imprint_copyright|trim if imprint_copyright else "" }
 \BLOCK{ if not copyright_text }
   \BLOCK{ set parts = [] }
@@ -17,12 +13,13 @@
   \BLOCK{ set copyright_text = ("; ".join(parts)) if parts else "" }
 \BLOCK{ endif }
 
+\BLOCK{ if imprint_copyright|trim }
+Copyright \textcopyright{} \VAR{imprint_copyright}
+\BLOCK{ elif copyright_text }
+Copyright \textcopyright{} \VAR{copyright_text}
+\BLOCK{ endif }
+\par\medskip
 \begin{description}
-  \BLOCK{ if imprint_copyright|trim }
-  \item[\textcopyright{}] \VAR{imprint_copyright}
-  \BLOCK{ elif copyright_text }
-  \item[\textcopyright{}] \VAR{copyright_text}
-  \BLOCK{ endif }
   \BLOCK{ if imprint_license|trim }
   \item[License] \VAR{imprint_license}
   \BLOCK{ endif }
