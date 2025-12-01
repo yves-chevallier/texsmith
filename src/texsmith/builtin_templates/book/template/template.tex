@@ -43,6 +43,14 @@
 \setsubsecheadstyle{\sffamily\large\bfseries}
 
 %
+% Table of contents style
+%
+\renewcommand{\cftpartfont}{\sffamily\Large\bfseries}
+\renewcommand{\cftpartpagefont}{\sffamily\Large\bfseries}
+\setlength{\cftbeforepartskip}{1.5em} % Vertical space before parts
+\renewcommand{\cftpartpresnum}{\partname~}
+
+%
 % Adjust spacing
 %
 
@@ -298,7 +306,6 @@
 \cleardoublepage
 \thispagestyle{plain}
 \phantomsection
-\addcontentsline{toc}{chapter}{Dedication}
 \begin{center}
   \vspace*{3cm}
   {\Large\itshape \VAR{dedication}}
@@ -324,7 +331,7 @@
 \VAR{frontmatter}
 
 \clearpage
-\tableofcontents
+\tableofcontents*
 
 \hypersetup{pageanchor=true}
 \mainmatter
