@@ -43,6 +43,26 @@ class PygmentsLatexHighlighter:
         except ClassNotFound:
             lexer = TextLexer()
 
+        def _format_ranges(values: Iterable[int]) -> str:
+            sorted_vals = sorted(set(values))
+            if not sorted_vals:
+                return ""
+            ranges: list[str] = []
+            start = end = sorted_vals[0]
+            for num in sorted_vals[1:]:
+                if num == end + 1:
+                    end = num
+                else:
+                    ranges.append(f"{start}-{end}" if start != end else str(start))
+                    start = end = num
+            ranges.append(f"{start}-{end}" if start != end else str(start))
+            return ",".join(ranges)
+
+        verb_options = self.verboptions
+        formatted_highlight = _format_ranges(highlight_lines or [])
+        if formatted_highlight:
+            verb_options = f"{verb_options},highlightlines={{{formatted_highlight}}}"
+
         formatter = LatexFormatter(
             full=False,
             linenos=linenos,
@@ -50,7 +70,7 @@ class PygmentsLatexHighlighter:
             commandprefix=self.commandprefix,
             linenostart=1,
             linenostep=1,
-            verboptions=self.verboptions,
+            verboptions=verb_options,
             hl_lines=list(highlight_lines or []),
         )
         latex_code = highlight(code, lexer, formatter)

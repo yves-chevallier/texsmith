@@ -1,2 +1,5 @@
-\begin{code}{\VAR{language|default('text')}}{\BLOCK{if filename}\VAR{filename}\BLOCK{endif}}{}
+\begin{code}{\VAR{language|default('text')}}{\BLOCK{if filename}\VAR{filename}\BLOCK{endif}}{
+    \BLOCK{- if baselinestretch}baselinestretch=\VAR{baselinestretch}, \BLOCK{endif}
+    \BLOCK{- if linenos}linenos, \BLOCK{endif -}
+}
 \VAR{code}\end{code}
