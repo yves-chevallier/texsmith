@@ -16,11 +16,16 @@ Python 3.10+
 : TeXSmith ships as a Python package. Use
   [uv](https://github.com/astral-sh/uv) or `pipx` for isolated installs so the CLI stays tidy.
 
-LaTeX distribution
+Yes folks, that's right. Only Python is required. No need to wrestle with TeX
+distributions... yet.
+
+## Optional prerequisites
+
+LaTeX distribution (Optional)
 : Install TeX Live, MiKTeX, or MacTeX so `texsmith --build`
   can hand off to Tectonic (default) or `latexmk` when you opt into `--engine lualatex` / `--engine xelatex`.
 
-Optional diagram tooling
+Diagram tooling (Optional)
 : Mermaid-to-PDF (`minlag/mermaid-cli`) conversion defaults to Docker.
   Install Docker Desktop (with WSL integration on
   Windows) or register your own converter if Mermaid is part of your workflow.
@@ -30,19 +35,11 @@ Optional diagram tooling
   `--diagrams-backend=playwright|local|docker` to force a specific backend.
 
 Fonts
-: TeXSmith prefers Noto for its extensive Unicode coverage. Install
-  [Noto Serif](https://www.google.com/get/noto/#serif-lgc) and
-  [Noto Sans](https://www.google.com/get/noto/#sans-lgc) for best results.
+: TeXSmith uses Noto for fallback due to its extensive Unicode coverage. You may also want to install additional fonts for specific scripts or to match your document design.
 
 ## Installation
 
 Pick the installer that matches your toolbox:
-
-=== "uv"
-
-    ```bash
-    uv tool install texsmith
-    ```
 
 === "pip"
 
@@ -56,13 +53,19 @@ Pick the installer that matches your toolbox:
     pipx install texsmith
     ```
 
+=== "uv"
+
+    ```bash
+    uv tool install texsmith
+    ```
+
 ## Convert a Markdown file to LaTeX
 
 By default TeXSmith converts any Markdown file to LaTeX. It can also parse an HTML file:
 
 === "Here document"
 
-    ```bash
+    ```text
     $ cat << EOF | texsmith
     # Title
     Some **bold** text.
@@ -74,7 +77,7 @@ By default TeXSmith converts any Markdown file to LaTeX. It can also parse an HT
 
 === "From file"
 
-    ```bash
+    ```text
     $ echo "# Title\nSome **bold** text." > sample.md
     $ texsmith sample.md --output build/
     \chapter{Title}\label{title}
@@ -84,16 +87,16 @@ By default TeXSmith converts any Markdown file to LaTeX. It can also parse an HT
 
 === "HTML"
 
-    ```bash
+    ```text
     $ echo "<h1>Title</h1><p>Some <strong>bold</strong> text.</p>" > sample.html
     $ texsmith sample.html
     \chapter{Title}
     Some \textbf{bold} text.
     ```
 
-## Convert a Markdown file
+## Generate a PDF
 
-Imagine you want to write an article about boobies. Create a sample Markdown file that you name `booby.md` or reuse our example:
+Imagine you desperatly want to write an article about [boobies](https://en.wikipedia.org/wiki/Booby). Create a sample Markdown file that you name `booby.md` or reuse our example:
 
 ```markdown
 --8<--- "examples/booby/booby.md"
@@ -108,11 +111,13 @@ Then let TeXSmith crunch it:
 texsmith booby.md --output build/ -apaper=a5 --build
 ```
 
+With Tectonic as the default engine, all fonts, packages and dependencies are automatically resolved. Even Tectonic itself is downloaded on demand if missing. You truly need nothing else installed to get started.
+
 Enjoy a fresh PDF at `build/booby.pdf`:
 
-```` { .snippet data-template="article" }
+```md {.snippet data-caption="Demo" data-width="60%" data-cwd="../../examples/booby"}
 --8<--- "examples/booby/booby.md"
-````
+```
 
 Peek inside `build/` and you will find `booby.tex`. Be free to change the  `--template` when you want a full LaTeX project or a polished PDF:
 
@@ -137,7 +142,7 @@ print("Fragments:", [fragment.stem for fragment in bundle.fragments])
 print("Preview:", bundle.combined_output()[:120])
 ```
 
-Run the snippet with `uv run python demo.py`. The API mirrors the CLI, so
+Run the snippet with `python demo.py`. The API mirrors the CLI, so
 drop into `ConversionService` or `TemplateSession` whenever you need more
 control over slot assignments, diagnostic emitters, or template metadata.
 
@@ -164,7 +169,14 @@ texsmith build/site/guides/overview/index.html \
 
     Once the LaTeX bundle looks good, add `--build` to invoke your chosen engine or wire everything into CI so MkDocs HTML → TeXSmith PDF happens on every run.
 
-
 ## How does TeXSmith work?
 
+TeXSmith ingests Markdown, HTML or even YAML files, then processes them through a series of steps to produce LaTeX or PDF output.
+
+A template can be associated to allow custom layouts and therefore build into a PDF. Each templates defines slots that get filled with content from the source documents.
+
+A template manifest also describes compatible **fragments** that provide additional content or styling to the final document (e.g. bibliography, glossary, index, fonts, page geometry, typesetting options...).
+
 ![Workflow diagram of TeXSmith](../assets/workflow.drawio)
+
+TeXSmith embeds engines to convert rich diagrams (Mermaid, Draw.io) into PDFs that get included in the LaTeX output. It also supports different LaTeX engines (Tectonic, LuaLaTeX, XeLaTeX) to suit your typesetting needs.
