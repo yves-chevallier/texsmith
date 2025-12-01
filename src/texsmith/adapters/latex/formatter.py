@@ -195,6 +195,39 @@ class LaTeXFormatter:
         safe_url = escape_latex_chars(requote_url(url), legacy_accents=self.legacy_latex_accents)
         return self._get_template("url").render(text=text, url=safe_url)
 
+    def handle_codeinline(
+        self,
+        *,
+        language: str = "text",
+        text: str,
+        engine: str | None = None,
+        state: DocumentState | None = None,
+    ) -> str:
+        """Render inline code with engine-specific highlighting."""
+        normalized_engine = (engine or self.default_code_engine or "pygments").lower()
+        if normalized_engine == "minted":
+            delimiter = "|"
+            return self._get_template("codeinline").render(
+                language=language or "text",
+                text=text,
+                delimiter=delimiter,
+            )
+
+        if normalized_engine == "pygments":
+            style_name = str(self.default_code_style or "bw").strip() or "bw"
+            if self._pygments is None or self._pygments.style != style_name:
+                self._pygments = PygmentsLatexHighlighter(style=style_name)
+            latex_code, style_defs = self._pygments.render_inline(text, language)
+            if state is not None and style_defs:
+                state.pygments_styles.setdefault(self._pygments.style_key, style_defs)
+            return r"{\ttfamily " + latex_code + "}"
+
+        # listings/verbatim fallback to plain typewriter
+        escaped = escape_latex_chars(text, legacy_accents=self.legacy_latex_accents).replace(
+            " ", "~"
+        )
+        return self._get_template("codeinlinett").render(text=escaped)
+
     def _escape_latex(self, value: str) -> str:
         """Escape helper that honours the formatter legacy accent setting."""
         return escape_latex_chars(value, legacy_accents=self.legacy_latex_accents)

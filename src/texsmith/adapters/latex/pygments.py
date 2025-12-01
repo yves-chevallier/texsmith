@@ -77,5 +77,23 @@ class PygmentsLatexHighlighter:
         style_defs = formatter.get_style_defs()
         return latex_code, style_defs
 
+    def render_inline(self, code: str, language: str) -> tuple[str, str]:
+        """Return inline LaTeX macros for a code snippet (no Verbatim env)."""
+        try:
+            lexer = get_lexer_by_name(language or "text")
+        except ClassNotFound:
+            lexer = TextLexer()
+
+        formatter = LatexFormatter(
+            full=False,
+            linenos=False,
+            style=self.style,
+            commandprefix=self.commandprefix,
+            nowrap=True,
+        )
+        latex_code = highlight(code, lexer, formatter)
+        style_defs = formatter.get_style_defs()
+        return latex_code, style_defs
+
 
 __all__ = ["PygmentsLatexHighlighter"]
