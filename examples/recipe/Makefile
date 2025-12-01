@@ -1,10 +1,7 @@
 OUTPUT_ROOT := build
 include ../common.mk
 
-ENGINE_FOR_BUILD := $(if $(filter $(ENGINE),tectonic),lualatex,$(ENGINE))
-ifeq ($(ENGINE),tectonic)
-$(info cookingsymbols is not available in Tectonic; falling back to lualatex for this example)
-endif
+ENGINE_FOR_BUILD := $(ENGINE)
 ENGINE_SUFFIX := $(if $(filter $(ENGINE_FOR_BUILD),tectonic),,$(addprefix -,$(ENGINE_FOR_BUILD)))
 OUTPUT_DIR := $(OUTPUT_ROOT)/$(ENGINE_FOR_BUILD)/recipes
 TEX := $(OUTPUT_DIR)/cake.tex

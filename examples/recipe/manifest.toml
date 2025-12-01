@@ -10,7 +10,7 @@ texlive_year = 2023
 tlmgr_packages = [
     "geometry",
     "fontspec",
-    "cookingsymbols",
+    "pgf",
     "tabularx",
     "multirow",
     "xcolor",
