@@ -26,6 +26,7 @@ tlmgr_packages = [
 override = ["codeblock.tex", "codeinline.tex"]
 fragments = [
     "ts-geometry",
+    "ts-typesetting",
     "ts-fonts",
     "ts-extra",
     "ts-keystrokes",

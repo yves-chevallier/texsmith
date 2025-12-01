@@ -6,9 +6,9 @@ import atexit
 from collections.abc import Mapping, Sequence
 from importlib import metadata as importlib_metadata
 from io import BytesIO
-import os
-import math
 import json
+import math
+import os
 from pathlib import Path
 import shutil
 import subprocess
@@ -39,9 +39,7 @@ _DEFAULT_MERMAID_CONFIG_PATH = (
 _DEFAULT_MERMAID_CONFIG: dict[str, Any] = {}
 if _DEFAULT_MERMAID_CONFIG_PATH.exists():
     try:
-        _DEFAULT_MERMAID_CONFIG = json.loads(
-            _DEFAULT_MERMAID_CONFIG_PATH.read_text("utf-8")
-        )
+        _DEFAULT_MERMAID_CONFIG = json.loads(_DEFAULT_MERMAID_CONFIG_PATH.read_text("utf-8"))
     except Exception:
         _DEFAULT_MERMAID_CONFIG = {}
 
@@ -54,9 +52,7 @@ DPI_TARGET = 72
 SCALE = DPI_CSS / DPI_TARGET
 
 
-def _resolve_cli(
-    names: Sequence[str], hints: Sequence[Path]
-) -> tuple[str | None, bool]:
+def _resolve_cli(names: Sequence[str], hints: Sequence[Path]) -> tuple[str | None, bool]:
     """Return an executable path and whether it was discovered via $PATH."""
     for name in names:
         resolved = shutil.which(name)
@@ -88,9 +84,7 @@ def _run_cli(command: list[str], *, cwd: Path, description: str) -> None:
             cwd=cwd,
         )
     except OSError as exc:
-        raise TransformerExecutionError(
-            f"Failed to execute {description}: {exc}"
-        ) from exc
+        raise TransformerExecutionError(f"Failed to execute {description}: {exc}") from exc
 
     if result.returncode != 0:
         detail = (result.stderr or "").strip() or (result.stdout or "").strip()
@@ -241,9 +235,7 @@ class FetchImageStrategy(CachedConversionStrategy):
 
         try:
             response = requests.get(url, timeout=self.timeout, headers=headers)
-        except (
-            requests.exceptions.RequestException
-        ) as exc:  # pragma: no cover - network
+        except requests.exceptions.RequestException as exc:  # pragma: no cover - network
             msg = f"Failed to fetch image '{url}': {exc}"
             raise TransformerExecutionError(msg) from exc
         if not response.ok:
@@ -479,9 +471,7 @@ class MermaidToPdfStrategy(CachedConversionStrategy):
         cache_dir: Path,
         **options: Any,
     ) -> Path:
-        backend = str(
-            options.get("backend") or options.get("diagrams_backend") or "auto"
-        ).lower()
+        backend = str(options.get("backend") or options.get("diagrams_backend") or "auto").lower()
         format_opt = str(options.get("format", "pdf") or "pdf").lower()
         working_dir = cache_dir / "mermaid"
         working_dir.mkdir(parents=True, exist_ok=True)
@@ -553,9 +543,7 @@ class MermaidToPdfStrategy(CachedConversionStrategy):
         docker_error: TransformerExecutionError | None = None
         if backend in {"docker", "auto"} and not produced.exists():
             if shutil.which("docker") is None:
-                docker_error = TransformerExecutionError(
-                    "Docker is not available on this system."
-                )
+                docker_error = TransformerExecutionError("Docker is not available on this system.")
             else:
                 docker_args = [
                     "-i",
@@ -582,13 +570,9 @@ class MermaidToPdfStrategy(CachedConversionStrategy):
                     if backend == "docker":
                         raise
                     if cli_error is not None:
-                        raise _compose_fallback_error(
-                            "Mermaid", cli_error, exc
-                        ) from exc
+                        raise _compose_fallback_error("Mermaid", cli_error, exc) from exc
                     if primary_error is not None:
-                        raise _compose_fallback_error(
-                            "Mermaid", primary_error, exc
-                        ) from exc
+                        raise _compose_fallback_error("Mermaid", primary_error, exc) from exc
 
         if not produced.exists():
             if cli_error and docker_error:
@@ -599,9 +583,7 @@ class MermaidToPdfStrategy(CachedConversionStrategy):
                 raise _compose_fallback_error("Mermaid", primary_error, docker_error)
             if primary_error:
                 raise primary_error
-            raise TransformerExecutionError(
-                "Mermaid conversion did not produce the expected file."
-            )
+            raise TransformerExecutionError("Mermaid conversion did not produce the expected file.")
 
         target.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(produced, target)
@@ -664,9 +646,7 @@ class MermaidToPdfStrategy(CachedConversionStrategy):
                     resolved_config = {}
 
         if not resolved_config:
-            resolved_config = (
-                dict(_DEFAULT_MERMAID_CONFIG) if _DEFAULT_MERMAID_CONFIG else {}
-            )
+            resolved_config = dict(_DEFAULT_MERMAID_CONFIG) if _DEFAULT_MERMAID_CONFIG else {}
         resolved_config.setdefault("startOnLoad", False)
         resolved_config.setdefault("theme", theme)
         page.evaluate("cfg => { window.mermaid.initialize(cfg); }", resolved_config)
@@ -689,9 +669,7 @@ async (code) => {
 
     def _svg_to_pdf(self, browser: Any, svg: str, target: Path) -> None:
         page = browser.new_page()
-        page.set_content(
-            f"<html><body style='margin:0; display:inline-block'>{svg}</body></html>"
-        )
+        page.set_content(f"<html><body style='margin:0; display:inline-block'>{svg}</body></html>")
         locator = page.locator("svg")
         box = locator.bounding_box()
         width = math.ceil(box["width"]) if box else 800
@@ -712,9 +690,7 @@ async (code) => {
 
     def _svg_to_png(self, browser: Any, svg: str, target: Path) -> None:
         page = browser.new_page(viewport={"width": 2400, "height": 1800})
-        page.set_content(
-            f"<html><body style='margin:0; display:inline-block'>{svg}</body></html>"
-        )
+        page.set_content(f"<html><body style='margin:0; display:inline-block'>{svg}</body></html>")
         locator = page.locator("svg")
         box = locator.bounding_box()
         screenshot_kwargs: dict[str, Any] = {"path": str(target)}
@@ -752,17 +728,13 @@ class DrawioToPdfStrategy(CachedConversionStrategy):
         cache_dir: Path,
         **options: Any,
     ) -> Path:
-        backend = str(
-            options.get("backend") or options.get("diagrams_backend") or "auto"
-        ).lower()
+        backend = str(options.get("backend") or options.get("diagrams_backend") or "auto").lower()
         format_opt = str(options.get("format", "pdf") or "pdf").lower()
         theme = str(options.get("theme", "auto") or "auto")
 
         source_path = Path(source)
         if not source_path.exists():
-            raise TransformerExecutionError(
-                f"Draw.io file '{source_path}' does not exist."
-            )
+            raise TransformerExecutionError(f"Draw.io file '{source_path}' does not exist.")
 
         working_dir = cache_dir / "drawio" / target.stem
         if working_dir.exists():
@@ -797,9 +769,7 @@ class DrawioToPdfStrategy(CachedConversionStrategy):
                 primary_error = exc
                 if backend == "playwright":
                     raise
-        cli_path, discovered_via_path = _resolve_cli(
-            ["drawio", "draw.io"], DRAWIO_CLI_HINT_PATHS
-        )
+        cli_path, discovered_via_path = _resolve_cli(["drawio", "draw.io"], DRAWIO_CLI_HINT_PATHS)
         cli_error: TransformerExecutionError | None = None
         if backend in {"local", "auto"} and not produced.exists() and cli_path:
             if not discovered_via_path:
@@ -820,17 +790,13 @@ class DrawioToPdfStrategy(CachedConversionStrategy):
         docker_error: TransformerExecutionError | None = None
         if backend in {"docker", "auto"} and not produced.exists():
             if shutil.which("docker") is None:
-                docker_error = TransformerExecutionError(
-                    "Docker is not available on this system."
-                )
+                docker_error = TransformerExecutionError("Docker is not available on this system.")
             else:
                 mounts: list[VolumeMount] = [VolumeMount(working_dir, "/data")]
                 passwd_path = Path("/etc/passwd")
                 group_path = Path("/etc/group")
                 if passwd_path.exists():
-                    mounts.append(
-                        VolumeMount(passwd_path, "/etc/passwd", read_only=True)
-                    )
+                    mounts.append(VolumeMount(passwd_path, "/etc/passwd", read_only=True))
                 if group_path.exists():
                     mounts.append(VolumeMount(group_path, "/etc/group", read_only=True))
                 docker_args = [
@@ -869,13 +835,9 @@ class DrawioToPdfStrategy(CachedConversionStrategy):
                     if backend == "docker":
                         raise
                     if cli_error is not None:
-                        raise _compose_fallback_error(
-                            "draw.io", cli_error, exc
-                        ) from exc
+                        raise _compose_fallback_error("draw.io", cli_error, exc) from exc
                     if primary_error is not None:
-                        raise _compose_fallback_error(
-                            "draw.io", primary_error, exc
-                        ) from exc
+                        raise _compose_fallback_error("draw.io", primary_error, exc) from exc
 
         if not produced.exists():
             if cli_error and docker_error:
@@ -886,9 +848,7 @@ class DrawioToPdfStrategy(CachedConversionStrategy):
                 raise _compose_fallback_error("draw.io", primary_error, docker_error)
             if primary_error:
                 raise primary_error
-            raise TransformerExecutionError(
-                "draw.io conversion did not produce the expected file."
-            )
+            raise TransformerExecutionError("draw.io conversion did not produce the expected file.")
 
         target.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(produced, target)
@@ -952,9 +912,7 @@ class DrawioToPdfStrategy(CachedConversionStrategy):
         browser = _PlaywrightManager.ensure_browser()
         page = browser.new_page(viewport={"width": 2400, "height": 1800})
         page.goto(export_page.as_uri() if export_url is None else export_url)
-        page.wait_for_function(
-            "() => typeof window.render === 'function'", timeout=30_000
-        )
+        page.wait_for_function("() => typeof window.render === 'function'", timeout=30_000)
         page.evaluate(
             """
 () => {
@@ -1017,9 +975,7 @@ class DrawioToPdfStrategy(CachedConversionStrategy):
 
     def _svg_to_pdf(self, browser: Any, svg: str, target: Path) -> None:
         page = browser.new_page()
-        page.set_content(
-            f"<html><body style='margin:0; display:inline-block'>{svg}</body></html>"
-        )
+        page.set_content(f"<html><body style='margin:0; display:inline-block'>{svg}</body></html>")
         locator = page.locator("svg")
         box = locator.bounding_box()
         width = math.ceil(box["width"]) if box else 800
@@ -1036,9 +992,7 @@ class DrawioToPdfStrategy(CachedConversionStrategy):
 
     def _svg_to_png(self, browser: Any, svg: str, target: Path) -> None:
         page = browser.new_page(viewport={"width": 2400, "height": 1800})
-        page.set_content(
-            f"<html><body style='margin:0; display:inline-block'>{svg}</body></html>"
-        )
+        page.set_content(f"<html><body style='margin:0; display:inline-block'>{svg}</body></html>")
         locator = page.locator("svg")
         box = locator.bounding_box()
         if box:

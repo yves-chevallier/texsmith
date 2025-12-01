@@ -60,9 +60,7 @@ def _collect_packages(context: Mapping[str, object]) -> list[tuple[str, str | No
         return None
 
     lowered = content.lower()
-    _maybe_add(
-        "\\nohyphens" in content or "\\nohyphenation" in content, "hyphenat", "htt"
-    )
+    _maybe_add("\\nohyphens" in content or "\\nohyphenation" in content, "hyphenat", "htt")
     _maybe_add("\\sout{" in content, "ulem", "normalem")
     _maybe_add("\\hl{" in content, "soul", None)
     _maybe_add("\\progressbar{" in content, "progressbar", None)
@@ -106,9 +104,7 @@ def _collect_packages(context: Mapping[str, object]) -> list[tuple[str, str | No
         "\\begin{equation}",
     )
     has_math_env = any(token in content for token in math_tokens)
-    has_math_inline = (
-        "$$" in content or "$" in content or "\\[" in content or "\\(" in content
-    )
+    has_math_inline = "$$" in content or "$" in content or "\\[" in content or "\\(" in content
     _maybe_add(has_math_env or has_math_inline, "amsmath", None)
 
     _maybe_add("\\begin{figure}[h" in lowered or "[h]" in lowered, "float", None)
@@ -117,9 +113,7 @@ def _collect_packages(context: Mapping[str, object]) -> list[tuple[str, str | No
     has_links = any(token in content for token in link_tokens)
     disable_hyperref = bool(context.get("ts_extra_disable_hyperref"))
     if not disable_hyperref:
-        hyperref_options = _string_option(
-            "ts_extra_hyperref_options", "hyperref_options"
-        )
+        hyperref_options = _string_option("ts_extra_hyperref_options", "hyperref_options")
         _maybe_add(has_links, "hyperref", hyperref_options)
         _maybe_add(has_links, "bookmark", None)
 

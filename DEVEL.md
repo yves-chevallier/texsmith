@@ -23,8 +23,9 @@ Roadmap and development notes for TeXSmith. I keep this file as a running checkl
 - [x] Remove enhanced log for tectonic
 - [x] Configure style for code highlight pygments default is bw
 - [x] Snippet template
-- [ ] Drawio Exporter remote via wreight... see in scripts
-- [ ] Mermaid color configuration for MkDocs
+- [x] Drawio Exporter remote via wreight... see in scripts
+- [x] Mermaid color configuration for MkDocs
+- [ ] Solve issue with Greek
 - [ ] Global user's configuration (.texsmith/config.yml)
 - [ ] Acronyms multiline
 - [ ] MkDocs Linking Issues
@@ -76,34 +77,12 @@ Roadmap and development notes for TeXSmith. I keep this file as a running checkl
 - [ ] Implement drawio over pywreight
 - [ ] ts-languages that uses polyglossia and specific things to languages
 
-## Drawio backend using playwright
-
-TeXSmith supports either the local drawio installation if available or fallback to Docker headless. Another option better before docker is to use what I tested in scripts/exporter_remote.py which uses playwright to run drawio in headless mode and export diagrams. This avoids the need for docker and a local drawio installation. The `https://app.diagrams.net/export3.html` could be fetched in the cache and used as the rendering backend.
-
-I want you to add in TeXSmith a new backend for drawio that uses playwright to run the export3.html page in headless mode and export diagrams as PDF or PNG.
-
-From the CLI we can add an option `--drawio-backend` with possible values `docker`, `local`, `playwright` (default to playwright if available, else local, else docker). Playwright local cache is placed into texsmith cache directory. You can use the existing code in scripts/exporter_remote.py as a starting point. The backend selection would be part of the texsmith API.
-
-Update also the documentation in docs/
-
 ## Makeindex with engine tectonic
 
 With the engine `tectonic`, makeindex is not called automatically same for bibtex and makeglossaries. The goal is to implement that in TeXSmith. If the document uses an index, a glossary, or a bibliography, TeXSmith should call the appropriate tools between compilation passes.
 And rerun the compilation until all references are resolved.
 
 For the tools for index we look for `texindy` or `makeindex` in this order. The first one found is used.
-
-## Issues
-
-- [ ] warning: Expected 'fonts/OpenMoji-black-glyf.ttf' in archive but found 'OpenMoji-black-glyf/OpenMoji-black-glyf.ttf'. Using the available font file instead.
-- [ ] ├─ ▲ There is no ���� (U+1F4DD) in font [./fonts/lmsans10-bold.otf]/OT:script=latn;language=dflt;mapping=tex-text;! L'exemple admonition n'utilise pas les bonnes fonts pour les emojis, elle nes sont pas cosidérées, le répertoire fonts de l'output n'est pas pris encompte ?
-- [ ] TeXGyre to be added to the list of fonts to download
-- [ ] Multidocument uses /usr/share fonts, not local ones ? Should download local ones
-- [ ] Cookingsymbols not availble in tectonic ?
-
-### Color emoji don't work with Tectonic/XeLaTeX
-
-Il faudrait que XeTeX (ou un XeTeX 2.0) intègre un moteur de rendu qui gère vraiment les polices couleur (COLR/CPAL, CBDT/CBLC, SVGinOT) et sache les convertir en quelque chose de compatible PDF.
 
 ## Features
 

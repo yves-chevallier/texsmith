@@ -278,10 +278,9 @@ def _render_document(
         runtime_common["template"] = binding.name
     runtime_common["code"] = code_options
     runtime_common["diagrams_backend"] = diagrams_backend or "playwright"
-    mermaid_config = (
-        binder_context.template_overrides.get("mermaid_config")
-        or (binder_context.template_overrides.get("press") or {}).get("mermaid_config")
-    )
+    mermaid_config = binder_context.template_overrides.get("mermaid_config") or (
+        binder_context.template_overrides.get("press") or {}
+    ).get("mermaid_config")
     if not mermaid_config and binding.runtime and binding.runtime.extras:
         mermaid_config = binding.runtime.extras.get("mermaid_config")
     if mermaid_config:

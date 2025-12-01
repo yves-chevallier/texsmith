@@ -271,9 +271,7 @@ def render_mermaid(element: Tag, context: RenderContext) -> None:
     diagram = code.get_text()
     width = coerce_attribute(code.get("width") or element.get("width"))
     template = _figure_template_for(element)
-    figure_node = _render_mermaid_diagram(
-        context, diagram, template=template, width=width
-    )
+    figure_node = _render_mermaid_diagram(context, diagram, template=template, width=width)
     if figure_node is None:
         return
 
@@ -298,9 +296,7 @@ def render_mermaid_pre(element: Tag, context: RenderContext) -> None:
     width = coerce_attribute(element.get("width"))
 
     template = _figure_template_for(element)
-    figure_node = _render_mermaid_diagram(
-        context, diagram, template=template, width=width
-    )
+    figure_node = _render_mermaid_diagram(context, diagram, template=template, width=width)
     if figure_node is None:
         return
 
