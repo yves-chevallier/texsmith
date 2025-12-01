@@ -22,6 +22,7 @@ from ..bibliography.parsing import (
 )
 from ..config import BookConfig
 from ..conversion_contexts import BinderContext, DocumentContext, GenerationStrategy
+from ..mustache import replace_mustaches, replace_mustaches_in_structure
 from ..diagnostics import DiagnosticEmitter
 from ..templates import (
     TemplateBinding,
@@ -134,6 +135,25 @@ def build_binder_context(
         press_section.setdefault("language", resolved_language)
     template_overrides["source_dir"] = str(document_context.source_path.parent)
     template_overrides["output_dir"] = str(output_dir)
+
+    raw_contexts = (template_overrides, document_context.front_matter)
+    template_overrides = replace_mustaches_in_structure(
+        template_overrides, raw_contexts, emitter=emitter, source="template attributes"
+    )
+    document_context.front_matter = replace_mustaches_in_structure(
+        document_context.front_matter,
+        raw_contexts,
+        emitter=emitter,
+        source=str(document_context.source_path),
+    )
+    merged_contexts = (template_overrides, document_context.front_matter)
+    if isinstance(document_context.html, str):
+        document_context.html = replace_mustaches(
+            document_context.html,
+            merged_contexts,
+            emitter=emitter,
+            source=str(document_context.source_path),
+        )
 
     active_slot_requests: dict[str, str] = {}
     binding: TemplateBinding | None = None
