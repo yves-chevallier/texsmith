@@ -11,13 +11,15 @@ permissions:
   id-token: write
 
 jobs:
-  build:
+  checks:
     name: Tests & lint
     runs-on: ubuntu-latest
     steps:
+      # Checkout repository source
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      # Install uv (Python package manager)
       - name: Install uv
         uses: astral-sh/setup-uv@v7
         with:
@@ -26,135 +28,136 @@ jobs:
         env:
           UV_CACHE_SAVE: "false"
 
+      # Setup Nox for multi-version testing
       - name: Setup Nox with Python 3.10+
         uses: wntrblm/nox@2025.10.14
         with:
           python-versions: "3.10, 3.11, 3.12, 3.13, 3.14"
 
+      # Install all dev + docs dependencies (locked)
       - name: Sync dependencies (dev + docs)
         run: uv sync --all-groups --frozen
 
+      # Run test suite across Python versions
       - name: Run test suite (nox)
         run: nox -s tests
 
+      # Generate coverage report (only on Python 3.14)
       - name: Coverage (py3.14)
         run: nox -s coverage
 
+      # Build all examples to validate they run
+      - name: Make all examples
+        run: cd examples && uv run make all
+
+      # Run Ruff linter
       - name: Run Ruff
         run: uv run ruff check .
 
-  docs:
-    name: Build & publish docs
-    needs: build
+  build-artifacts:
+    name: Build dists & docs
+    needs: checks
     runs-on: ubuntu-latest
     permissions:
-      contents: write
+      contents: read
       id-token: write
-      pages: write
-      actions: read
+
     steps:
+      # Checkout repository
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      # Install uv
       - name: Install uv
         uses: astral-sh/setup-uv@v7
         with:
           enable-cache: true
           cache-python: false
 
-      - name: Free disk space for Docker
-        run: |
-          sudo rm -rf /usr/share/dotnet /opt/ghc /opt/hostedtoolcache/CodeQL || true
-          docker system prune -af || true
-          df -h
-
-      - name: Pre-pull draw.io image
-        run: docker pull rlespinasse/drawio-desktop-headless:latest
-
-      # - name: Install TeX Live (full)
-      #   run: sudo apt-get update && sudo apt-get install -y texlive-full
-
-      - name: Install Noto font families (CJK, Arabic UI, Syriac)
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y \
-            fonts-noto-core \
-            fonts-noto-cjk \
-            fonts-noto-cjk-extra \
-            fonts-noto-ui-core \
-            fonts-noto-ui-extra \
-            fonts-noto-unhinted \
-            fonts-noto-color-emoji
-
-      - name: Install Noto Sans Syriac (Eastern)
-        run: scripts/install_noto_syriac.sh Eastern
-
-      - name: Cache TeXSmith build artifacts
-        uses: actions/cache@v4
-        with:
-          path: ~/.cache/texsmith
-          key: texsmith-cache-${{ runner.os }}-${{ hashFiles('uv.lock', 'packages/mkdocs_texsmith/uv.lock') }}
-
+      # Install full dependency set
       - name: Sync dependencies (dev + docs)
         run: uv sync --all-groups --frozen
 
+      # Build MkDocs HTML documentation
       - name: Build documentation (HTML + LaTeX)
         run: |
-          uv run mkdocs build #--strict not yet ready
+          uv run mkdocs build  # --strict can be enabled later
 
+      # Build the main Python package distribution
       - name: Build distributions (texsmith)
         run: uv build
 
+      # Compile PDF using LaTeX output
       - name: Build PDF from LaTeX
         run: |
           cd build/press/texsmith-docs
           latexmk texsmith-docs.tex
 
+      # Build the MkDocs plugin distribution
       - name: Build distributions (mkdocs_texsmith)
         working-directory: packages/mkdocs_texsmith
         run: uv build
 
-      - name: Upload artifacts
+      # Upload all artifacts needed for the release job
+      - name: Upload release artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: texsmith-docs-and-dists
+          name: texsmith-release-assets
           path: |
             dist/*
             packages/mkdocs_texsmith/dist/*
             build/texsmith-docs.pdf
+            site/**
           if-no-files-found: error
 
-      - name: Publish documentation to GitHub Pages
-        if: startsWith(github.ref, 'refs/tags/v')
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: uv run mkdocs gh-deploy --force --clean
-
-  publish:
-    name: Publish to PyPI
-    needs: [build, docs]
+  release:
+    name: Release (Docs + PyPI)
+    needs: [checks, build-artifacts]
     if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
+
     permissions:
-      contents: read
+      contents: write       # Required for GitHub Pages and GitHub Releases
       id-token: write
+      pages: write
+      actions: read
+
     environment:
       name: pypi
       url: https://pypi.org/project/texsmith/
+
     steps:
+      # Checkout repository (needed by mkdocs gh-deploy)
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Install uv
-        uses: astral-sh/setup-uv@v7
+      # Download all build artifacts generated previously
+      - name: Download release artifacts
+        uses: actions/download-artifact@v4
         with:
-          enable-cache: true
+          name: texsmith-release-assets
+          path: .
 
-      - name: Build distributions
-        run: uv build
+      # Publish documentation to GitHub Pages using MkDocs
+      - name: Publish documentation to GitHub Pages
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          uv sync --group docs --frozen
+          uv run mkdocs gh-deploy --force --clean
 
-      - name: Publish package
+      # Publish the package to PyPI from prebuilt dists
+      - name: Publish package to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
           packages-dir: dist
           password: ${{ secrets.PYPI_API_TOKEN }}
+
+      # Optional: create a GitHub Release and attach artifacts
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            dist/*
+            packages/mkdocs_texsmith/dist/*
+            build/texsmith-docs.pdf
