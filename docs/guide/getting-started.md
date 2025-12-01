@@ -25,7 +25,9 @@ Optional diagram tooling
   Install Docker Desktop (with WSL integration on
   Windows) or register your own converter if Mermaid is part of your workflow.
 
-  Repeat the same idea for Draw.io (`rlespinasse/drawio-desktop-headless`) if they show up in your docs.
+  Draw.io and Mermaid diagrams try a Playwright-based exporter first (cached under `~/.cache/texsmith/playwright`),
+  then the local CLI, then Docker (`rlespinasse/drawio-desktop-headless` / `minlag/mermaid-cli`). Use
+  `--diagrams-backend=playwright|local|docker` to force a specific backend.
 
 Fonts
 : TeXSmith prefers Noto for its extensive Unicode coverage. Install

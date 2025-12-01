@@ -157,6 +157,7 @@ def convert_document(
     slot_overrides: Mapping[str, str] | None,
     bibliography_files: list[Path],
     legacy_latex_accents: bool,
+    diagrams_backend: str | None = None,
     *,
     template_overrides: Mapping[str, Any] | None = None,
     state: DocumentState | None = None,
@@ -220,6 +221,7 @@ def convert_document(
         initial_state=state,
         wrap_document=wrap_document,
         legacy_latex_accents=legacy_latex_accents,
+        diagrams_backend=diagrams_backend,
     )
 
 
@@ -235,6 +237,7 @@ def _render_document(
     initial_state: DocumentState | None,
     wrap_document: bool,
     legacy_latex_accents: bool,
+    diagrams_backend: str | None,
 ) -> ConversionResult:
     if persist_debug_html:
         persist_debug_artifacts(
@@ -274,6 +277,15 @@ def _render_document(
     if binding.name is not None:
         runtime_common["template"] = binding.name
     runtime_common["code"] = code_options
+    runtime_common["diagrams_backend"] = diagrams_backend or "playwright"
+    mermaid_config = (
+        binder_context.template_overrides.get("mermaid_config")
+        or (binder_context.template_overrides.get("press") or {}).get("mermaid_config")
+    )
+    if not mermaid_config and binding.runtime and binding.runtime.extras:
+        mermaid_config = binding.runtime.extras.get("mermaid_config")
+    if mermaid_config:
+        runtime_common["mermaid_config"] = mermaid_config
     if strategy.persist_manifest:
         runtime_common["generate_manifest"] = True
     emoji_mode = _extract_emoji_mode(binder_context.template_overrides)

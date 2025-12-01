@@ -22,8 +22,8 @@ from ..bibliography.parsing import (
 )
 from ..config import BookConfig
 from ..conversion_contexts import BinderContext, DocumentContext, GenerationStrategy
-from ..mustache import replace_mustaches, replace_mustaches_in_structure
 from ..diagnostics import DiagnosticEmitter
+from ..mustache import replace_mustaches, replace_mustaches_in_structure
 from ..templates import (
     TemplateBinding,
     TemplateError,

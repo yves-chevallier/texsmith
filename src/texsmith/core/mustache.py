@@ -8,6 +8,7 @@ from typing import Any
 
 from .diagnostics import DiagnosticEmitter
 
+
 _MUSTACHE_RE = re.compile(r"\{\{\s*([^\}\s][^\}]*)\s*\}\}")
 _MISSING = object()
 
@@ -29,7 +30,13 @@ def _resolve_value(path: str, contexts: Sequence[Mapping[str, Any] | None]) -> A
     return _MISSING
 
 
-def replace_mustaches(text: str, contexts: Sequence[Mapping[str, Any] | None], *, emitter: DiagnosticEmitter | None = None, source: str | None = None) -> str:
+def replace_mustaches(
+    text: str,
+    contexts: Sequence[Mapping[str, Any] | None],
+    *,
+    emitter: DiagnosticEmitter | None = None,
+    source: str | None = None,
+) -> str:
     """Replace ``{{path.to.value}}`` placeholders in ``text`` using ``contexts``."""
 
     def _warn(message: str) -> None:
@@ -59,11 +66,20 @@ def replace_mustaches_in_structure(
     if isinstance(payload, str):
         return replace_mustaches(payload, contexts, emitter=emitter, source=source)
     if isinstance(payload, Mapping):
-        return {key: replace_mustaches_in_structure(value, contexts, emitter=emitter, source=source) for key, value in payload.items()}
+        return {
+            key: replace_mustaches_in_structure(value, contexts, emitter=emitter, source=source)
+            for key, value in payload.items()
+        }
     if isinstance(payload, list):
-        return [replace_mustaches_in_structure(item, contexts, emitter=emitter, source=source) for item in payload]
+        return [
+            replace_mustaches_in_structure(item, contexts, emitter=emitter, source=source)
+            for item in payload
+        ]
     if isinstance(payload, tuple):
-        return tuple(replace_mustaches_in_structure(item, contexts, emitter=emitter, source=source) for item in payload)
+        return tuple(
+            replace_mustaches_in_structure(item, contexts, emitter=emitter, source=source)
+            for item in payload
+        )
     return payload
 
 

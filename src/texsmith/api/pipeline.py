@@ -78,6 +78,7 @@ class RenderSettings:
     persist_debug_html: bool = False
     language: str | None = None
     legacy_latex_accents: bool = False
+    diagrams_backend: str | None = None
 
     def copy(self) -> RenderSettings:
         """Create a deep copy of the settings."""
@@ -154,6 +155,7 @@ def convert_documents(
             template=template,
             persist_debug_html=settings.persist_debug_html,
             language=settings.language,
+            diagrams_backend=settings.diagrams_backend,
             slot_overrides=slot_overrides or None,
             bibliography_files=list(bibliography_files or []),
             legacy_latex_accents=settings.legacy_latex_accents,

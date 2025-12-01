@@ -2,15 +2,21 @@
 
 from __future__ import annotations
 
-from collections.abc import Sequence
+import atexit
+from collections.abc import Mapping, Sequence
 from importlib import metadata as importlib_metadata
 from io import BytesIO
 import os
+import math
+import json
 from pathlib import Path
 import shutil
 import subprocess
+import sys
+from threading import Lock
 from typing import Any, ClassVar
 from urllib.parse import urlparse
+from urllib.request import urlopen
 import warnings
 
 from texsmith.core.exceptions import TransformerExecutionError
@@ -20,11 +26,37 @@ from .base import CachedConversionStrategy
 from .utils import normalise_pdf_version, points_to_mm
 
 
+_EXPORT3_URL = "https://app.diagrams.net/export3.html"
+_DEFAULT_MERMAID_CONFIG_PATH = (
+    Path(__file__).resolve().parents[4]
+    / "texsmith"
+    / "builtin_templates"
+    / "article"
+    / "template"
+    / "assets"
+    / "mermaid-config.json"
+)
+_DEFAULT_MERMAID_CONFIG: dict[str, Any] = {}
+if _DEFAULT_MERMAID_CONFIG_PATH.exists():
+    try:
+        _DEFAULT_MERMAID_CONFIG = json.loads(
+            _DEFAULT_MERMAID_CONFIG_PATH.read_text("utf-8")
+        )
+    except Exception:
+        _DEFAULT_MERMAID_CONFIG = {}
+
+
 MERMAID_CLI_HINT_PATHS: tuple[Path, ...] = (Path("/snap/bin/mmdc"),)
 DRAWIO_CLI_HINT_PATHS: tuple[Path, ...] = (Path("/snap/bin/drawio"),)
 
+DPI_CSS = 96
+DPI_TARGET = 72
+SCALE = DPI_CSS / DPI_TARGET
 
-def _resolve_cli(names: Sequence[str], hints: Sequence[Path]) -> tuple[str | None, bool]:
+
+def _resolve_cli(
+    names: Sequence[str], hints: Sequence[Path]
+) -> tuple[str | None, bool]:
     """Return an executable path and whether it was discovered via $PATH."""
     for name in names:
         resolved = shutil.which(name)
@@ -56,7 +88,9 @@ def _run_cli(command: list[str], *, cwd: Path, description: str) -> None:
             cwd=cwd,
         )
     except OSError as exc:
-        raise TransformerExecutionError(f"Failed to execute {description}: {exc}") from exc
+        raise TransformerExecutionError(
+            f"Failed to execute {description}: {exc}"
+        ) from exc
 
     if result.returncode != 0:
         detail = (result.stderr or "").strip() or (result.stdout or "").strip()
@@ -207,7 +241,9 @@ class FetchImageStrategy(CachedConversionStrategy):
 
         try:
             response = requests.get(url, timeout=self.timeout, headers=headers)
-        except requests.exceptions.RequestException as exc:  # pragma: no cover - network
+        except (
+            requests.exceptions.RequestException
+        ) as exc:  # pragma: no cover - network
             msg = f"Failed to fetch image '{url}': {exc}"
             raise TransformerExecutionError(msg) from exc
         if not response.ok:
@@ -349,6 +385,75 @@ def _read_text(source: Path | str) -> str:
     return str(source)
 
 
+def _texsmith_cache_root() -> Path:
+    return Path.home() / ".cache" / "texsmith"
+
+
+class _PlaywrightManager:
+    """Keep a shared Playwright browser alive across conversions."""
+
+    _playwright = None
+    _browser = None
+    _lock: ClassVar[Lock] = Lock()
+    _cleanup_registered = False
+
+    @classmethod
+    def ensure_browser(cls) -> Any:
+        with cls._lock:
+            if cls._browser is not None:
+                return cls._browser
+            try:
+                from playwright._impl._errors import Error as PlaywrightError
+                from playwright.sync_api import sync_playwright
+            except ModuleNotFoundError as exc:  # pragma: no cover - optional dependency
+                raise TransformerExecutionError(
+                    "Playwright backend requested but the 'playwright' package is not installed."
+                ) from exc
+            cls._playwright = sync_playwright().start()
+            cache_root = _texsmith_cache_root() / "playwright"
+            browser_cache = cache_root / "browsers"
+            browser_cache.mkdir(parents=True, exist_ok=True)
+            os.environ.setdefault("PLAYWRIGHT_BROWSERS_PATH", str(browser_cache))
+
+            try:
+                cls._browser = cls._playwright.chromium.launch(headless=True)
+            except PlaywrightError as exc:
+                msg = str(exc)
+                if "Executable doesn't exist" in msg or "Failed to launch" in msg:
+                    subprocess.run(
+                        [sys.executable, "-m", "playwright", "install", "chromium"],
+                        env=os.environ,
+                        check=True,
+                    )
+                    cls._browser = cls._playwright.chromium.launch(headless=True)
+                else:
+                    cls._playwright.stop()
+                    cls._playwright = None
+                    raise TransformerExecutionError(
+                        f"Failed to launch Playwright Chromium: {exc}"
+                    ) from exc
+            if not cls._cleanup_registered:
+                atexit.register(cls._cleanup)
+                cls._cleanup_registered = True
+            return cls._browser
+
+    @classmethod
+    def _cleanup(cls) -> None:
+        with cls._lock:
+            try:
+                if cls._browser is not None:
+                    cls._browser.close()
+            except Exception:
+                pass
+            try:
+                if cls._playwright is not None:
+                    cls._playwright.stop()
+            except Exception:
+                pass
+            cls._browser = None
+            cls._playwright = None
+
+
 class MermaidToPdfStrategy(CachedConversionStrategy):
     """Render Mermaid diagrams to PDF using the official CLI image."""
 
@@ -362,6 +467,10 @@ class MermaidToPdfStrategy(CachedConversionStrategy):
         self.image = image
         self.default_theme = default_theme
 
+    def output_suffix(self, source: Any, options: dict[str, Any]) -> str:
+        fmt = str(options.get("format", "pdf") or "pdf").lower()
+        return ".png" if fmt == "png" else ".pdf"
+
     def _perform_conversion(
         self,
         source: Path | str,
@@ -370,13 +479,19 @@ class MermaidToPdfStrategy(CachedConversionStrategy):
         cache_dir: Path,
         **options: Any,
     ) -> Path:
+        backend = str(
+            options.get("backend") or options.get("diagrams_backend") or "auto"
+        ).lower()
+        format_opt = str(options.get("format", "pdf") or "pdf").lower()
         working_dir = cache_dir / "mermaid"
         working_dir.mkdir(parents=True, exist_ok=True)
 
         content = _read_text(source)
         input_name = options.get("input_name") or "diagram.mmd"
-        output_name = options.get("output_name") or "diagram.pdf"
+        output_ext = ".png" if format_opt == "png" else ".pdf"
+        output_name = options.get("output_name") or f"diagram{output_ext}"
         theme = options.get("theme", self.default_theme)
+        mermaid_config = options.get("mermaid_config")
 
         input_path = working_dir / input_name
         input_path.write_text(content, encoding="utf-8")
@@ -388,6 +503,8 @@ class MermaidToPdfStrategy(CachedConversionStrategy):
             config_file = working_dir / "mermaid-config.json"
             config_file.write_text(config_data, encoding="utf-8")
             extra_args.extend(["-c", config_file.name])
+        if not config_path and _DEFAULT_MERMAID_CONFIG_PATH.exists():
+            extra_args.extend(["-c", str(_DEFAULT_MERMAID_CONFIG_PATH)])
 
         if "backgroundColor" in options:
             extra_args.extend(["-b", str(options["backgroundColor"])])
@@ -398,10 +515,24 @@ class MermaidToPdfStrategy(CachedConversionStrategy):
         if produced.exists():
             produced.unlink()
 
+        primary_error: TransformerExecutionError | None = None
+        if backend in {"playwright", "auto"}:
+            try:
+                self._run_playwright(
+                    content,
+                    target=produced,
+                    format_opt=format_opt,
+                    theme=theme,
+                    mermaid_config=mermaid_config,
+                )
+            except TransformerExecutionError as exc:
+                primary_error = exc
+                if backend == "playwright":
+                    raise
+
         cli_path, discovered_via_path = _resolve_cli(["mmdc"], MERMAID_CLI_HINT_PATHS)
         cli_error: TransformerExecutionError | None = None
-        ran_local = False
-        if cli_path:
+        if backend in {"local", "auto"} and not produced.exists() and cli_path:
             if not discovered_via_path:
                 _warn_add_to_path("mmdc", cli_path)
             try:
@@ -412,70 +543,70 @@ class MermaidToPdfStrategy(CachedConversionStrategy):
                     output_name=output_name,
                     theme=theme,
                     extra_args=extra_args,
+                    format_opt=format_opt,
                 )
-                ran_local = True
             except TransformerExecutionError as exc:
                 cli_error = exc
+                if backend == "local":
+                    raise
 
-        if not ran_local:
-            docker_args = [
-                "-i",
-                input_path.name,
-                "-o",
-                output_name,
-                "-f",
-                "-t",
-                str(theme),
-            ]
-            docker_args.extend(extra_args)
+        docker_error: TransformerExecutionError | None = None
+        if backend in {"docker", "auto"} and not produced.exists():
+            if shutil.which("docker") is None:
+                docker_error = TransformerExecutionError(
+                    "Docker is not available on this system."
+                )
+            else:
+                docker_args = [
+                    "-i",
+                    input_path.name,
+                    "-o",
+                    output_name,
+                ]
+                if format_opt:
+                    docker_args.extend(["-O", format_opt])
+                docker_args.extend(["-t", str(theme)])
+                docker_args.extend(extra_args)
 
-            try:
-                run_container(
-                    self.image,
-                    args=docker_args,
-                    mounts=[VolumeMount(working_dir, "/data")],
-                    environment={"HOME": "/data/home"},
-                    workdir="/data",
-                    limits=DockerLimits(cpus=1.0, memory="1g", pids_limit=512),
-                )
-            except TransformerExecutionError as exc:
-                if cli_error is not None:
-                    raise _compose_fallback_error("Mermaid", cli_error, exc) from exc
-                raise
-        elif not produced.exists():
-            cli_error = cli_error or TransformerExecutionError(
-                "Mermaid CLI did not produce the expected PDF artifact."
-            )
-            docker_args = [
-                "-i",
-                input_path.name,
-                "-o",
-                output_name,
-                "-f",
-                "-t",
-                str(theme),
-            ]
-            docker_args.extend(extra_args)
-            try:
-                run_container(
-                    self.image,
-                    args=docker_args,
-                    mounts=[VolumeMount(working_dir, "/data")],
-                    environment={"HOME": "/data/home"},
-                    workdir="/data",
-                    limits=DockerLimits(cpus=1.0, memory="1g", pids_limit=512),
-                )
-            except TransformerExecutionError as exc:
-                raise _compose_fallback_error("Mermaid", cli_error, exc) from exc
+                try:
+                    run_container(
+                        self.image,
+                        args=docker_args,
+                        mounts=[VolumeMount(working_dir, "/data")],
+                        environment={"HOME": "/data/home"},
+                        workdir="/data",
+                        limits=DockerLimits(cpus=1.0, memory="1g", pids_limit=512),
+                    )
+                except TransformerExecutionError as exc:
+                    docker_error = exc
+                    if backend == "docker":
+                        raise
+                    if cli_error is not None:
+                        raise _compose_fallback_error(
+                            "Mermaid", cli_error, exc
+                        ) from exc
+                    if primary_error is not None:
+                        raise _compose_fallback_error(
+                            "Mermaid", primary_error, exc
+                        ) from exc
 
         if not produced.exists():
+            if cli_error and docker_error:
+                raise _compose_fallback_error("Mermaid", cli_error, docker_error)
+            if primary_error and cli_error:
+                raise _compose_fallback_error("Mermaid", primary_error, cli_error)
+            if primary_error and docker_error:
+                raise _compose_fallback_error("Mermaid", primary_error, docker_error)
+            if primary_error:
+                raise primary_error
             raise TransformerExecutionError(
-                "Mermaid CLI did not produce the expected PDF artifact."
+                "Mermaid conversion did not produce the expected file."
             )
 
         target.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(produced, target)
-        normalise_pdf_version(target)
+        if target.suffix.lower() == ".pdf":
+            normalise_pdf_version(target)
         return target
 
     def _run_local_cli(
@@ -487,6 +618,7 @@ class MermaidToPdfStrategy(CachedConversionStrategy):
         output_name: str,
         theme: str,
         extra_args: list[str],
+        format_opt: str,
     ) -> None:
         command = [
             executable,
@@ -494,16 +626,112 @@ class MermaidToPdfStrategy(CachedConversionStrategy):
             input_name,
             "-o",
             output_name,
-            "-f",
-            "-t",
-            str(theme),
         ]
+        if format_opt:
+            command.extend(["-O", format_opt])
+        command.extend(["-t", str(theme)])
         command.extend(extra_args)
         _run_cli(command, cwd=working_dir, description="Mermaid CLI")
 
+    def _run_playwright(
+        self,
+        content: str,
+        *,
+        target: Path,
+        format_opt: str,
+        theme: str,
+        mermaid_config: Any,
+    ) -> None:
+        browser = _PlaywrightManager.ensure_browser()
+        page = browser.new_page(viewport={"width": 2400, "height": 1800})
+        page.set_content(
+            """<!doctype html>
+<html><head><meta charset="utf-8" />
+<script src="https://unpkg.com/mermaid@11/dist/mermaid.min.js"></script>
+</head><body style="margin:0; background:white;"><div id="container"></div></body></html>""",
+            wait_until="load",
+        )
+        resolved_config: dict[str, Any] = {}
+        print(mermaid_config)
+        if isinstance(mermaid_config, Mapping):
+            resolved_config = dict(mermaid_config)
+        elif isinstance(mermaid_config, str):
+            cfg_path = Path(mermaid_config).expanduser()
+            if cfg_path.exists():
+                try:
+                    resolved_config = json.loads(cfg_path.read_text("utf-8"))
+                except Exception:
+                    resolved_config = {}
+        print("Resolved config:", resolved_config)
+        if not resolved_config:
+            print("Not resolved config")
+            resolved_config = (
+                dict(_DEFAULT_MERMAID_CONFIG) if _DEFAULT_MERMAID_CONFIG else {}
+            )
+        resolved_config.setdefault("startOnLoad", False)
+        resolved_config.setdefault("theme", theme)
+        page.evaluate("cfg => { window.mermaid.initialize(cfg); }", resolved_config)
+        svg = page.evaluate(
+            """
+async (code) => {
+  const result = await window.mermaid.render("theGraph", code);
+  const header = '<?xml version="1.0" encoding="UTF-8"?>\\n';
+  return header + result.svg;
+}
+""",
+            content,
+        )
+        page.close()
+        target.parent.mkdir(parents=True, exist_ok=True)
+        if format_opt == "png":
+            self._svg_to_png(browser, svg, target)
+        else:
+            self._svg_to_pdf(browser, svg, target)
+
+    def _svg_to_pdf(self, browser: Any, svg: str, target: Path) -> None:
+        page = browser.new_page()
+        page.set_content(
+            f"<html><body style='margin:0; display:inline-block'>{svg}</body></html>"
+        )
+        locator = page.locator("svg")
+        box = locator.bounding_box()
+        width = math.ceil(box["width"]) if box else 800
+        height = math.ceil(box["height"]) if box else 600
+
+        scaled_width = math.ceil(width * SCALE)
+        scaled_height = math.ceil(height * SCALE)
+
+        page.set_viewport_size({"width": scaled_width, "height": scaled_height})
+        page.pdf(
+            path=str(target),
+            print_background=True,
+            width=f"{width}px",
+            height=f"{height}px",
+            page_ranges="1",
+        )
+        page.close()
+
+    def _svg_to_png(self, browser: Any, svg: str, target: Path) -> None:
+        page = browser.new_page(viewport={"width": 2400, "height": 1800})
+        page.set_content(
+            f"<html><body style='margin:0; display:inline-block'>{svg}</body></html>"
+        )
+        locator = page.locator("svg")
+        box = locator.bounding_box()
+        screenshot_kwargs: dict[str, Any] = {"path": str(target)}
+        if box:
+            screenshot_kwargs["clip"] = {
+                "x": box["x"],
+                "y": box["y"],
+                "width": box["width"],
+                "height": box["height"],
+            }
+        page.screenshot(**screenshot_kwargs)
+        page.close()
+
 
 class DrawioToPdfStrategy(CachedConversionStrategy):
-    """Convert draw.io diagrams to PDF using the headless desktop image."""
+    """Convert draw.io diagrams using selectable backends (playwright, local, docker)."""
 
     def __init__(
         self,
@@ -511,6 +739,11 @@ class DrawioToPdfStrategy(CachedConversionStrategy):
     ) -> None:
         super().__init__("drawio")
         self.image = image
+        self.export_url = _EXPORT3_URL
+
+    def output_suffix(self, source: Any, options: dict[str, Any]) -> str:
+        fmt = str(options.get("format", "pdf") or "pdf").lower()
+        return ".png" if fmt == "png" else ".pdf"
 
     def _perform_conversion(
         self,
@@ -520,9 +753,17 @@ class DrawioToPdfStrategy(CachedConversionStrategy):
         cache_dir: Path,
         **options: Any,
     ) -> Path:
+        backend = str(
+            options.get("backend") or options.get("diagrams_backend") or "auto"
+        ).lower()
+        format_opt = str(options.get("format", "pdf") or "pdf").lower()
+        theme = str(options.get("theme", "auto") or "auto")
+
         source_path = Path(source)
         if not source_path.exists():
-            raise TransformerExecutionError(f"Draw.io file '{source_path}' does not exist.")
+            raise TransformerExecutionError(
+                f"Draw.io file '{source_path}' does not exist."
+            )
 
         working_dir = cache_dir / "drawio" / target.stem
         if working_dir.exists():
@@ -532,22 +773,36 @@ class DrawioToPdfStrategy(CachedConversionStrategy):
         working_dir.mkdir(parents=True, exist_ok=True)
         home_dir = working_dir / "home"
         home_dir.mkdir(parents=True, exist_ok=True)
-        home_dir = working_dir / "home"
-        home_dir.mkdir(parents=True, exist_ok=True)
 
         diagram_name = source_path.name
         working_source = working_dir / diagram_name
         shutil.copy2(source_path, working_source)
 
-        output_name = options.get("output_name") or f"{working_source.stem}.pdf"
+        output_ext = ".png" if format_opt == "png" else ".pdf"
+        output_name = options.get("output_name") or f"{working_source.stem}{output_ext}"
         produced = working_dir / output_name
         if produced.exists():
             produced.unlink()
 
-        cli_path, discovered_via_path = _resolve_cli(["drawio", "draw.io"], DRAWIO_CLI_HINT_PATHS)
+        primary_error: TransformerExecutionError | None = None
+        if backend in {"playwright", "auto"}:
+            try:
+                self._run_playwright(
+                    working_source,
+                    target=produced,
+                    cache_dir=cache_dir,
+                    format_opt=format_opt,
+                    theme=theme,
+                )
+            except TransformerExecutionError as exc:
+                primary_error = exc
+                if backend == "playwright":
+                    raise
+        cli_path, discovered_via_path = _resolve_cli(
+            ["drawio", "draw.io"], DRAWIO_CLI_HINT_PATHS
+        )
         cli_error: TransformerExecutionError | None = None
-        ran_local = False
-        if cli_path:
+        if backend in {"local", "auto"} and not produced.exists() and cli_path:
             if not discovered_via_path:
                 _warn_add_to_path("drawio", cli_path)
             try:
@@ -556,102 +811,90 @@ class DrawioToPdfStrategy(CachedConversionStrategy):
                     working_dir=working_dir,
                     source_name=working_source.name,
                     output_name=output_name,
-                    options=options,
+                    options=options | {"format": format_opt},
                 )
-                ran_local = True
             except TransformerExecutionError as exc:
                 cli_error = exc
+                if backend == "local":
+                    raise
 
-        if not ran_local:
-            mounts: list[VolumeMount] = [VolumeMount(working_dir, "/data")]
-            # Provide passwd/group for Electron when running as a non-root user.
-            passwd_path = Path("/etc/passwd")
-            group_path = Path("/etc/group")
-            if passwd_path.exists():
-                mounts.append(VolumeMount(passwd_path, "/etc/passwd", read_only=True))
-            if group_path.exists():
-                mounts.append(VolumeMount(group_path, "/etc/group", read_only=True))
-            docker_args = [
-                "--export",
-                "--format",
-                "pdf",
-                "--output",
-                ".",
-            ]
-
-            if options.get("crop", False):
-                docker_args.extend(["--crop"])
-
-            dpi = options.get("dpi")
-            if dpi:
-                docker_args.extend(["--quality", str(dpi)])
-
-            docker_args.append(working_source.name)
-
-            try:
-                run_container(
-                    self.image,
-                    args=docker_args,
-                    mounts=mounts,
-                    environment={
-                        "HOME": "/data/home",
-                        "XDG_CACHE_HOME": "/data/home/.cache",
-                        "XDG_CONFIG_HOME": "/data/home/.config",
-                    },
-                    workdir="/data",
-                    use_host_user=True,
-                    limits=DockerLimits(cpus=1.0, memory="1g", pids_limit=512),
+        docker_error: TransformerExecutionError | None = None
+        if backend in {"docker", "auto"} and not produced.exists():
+            if shutil.which("docker") is None:
+                docker_error = TransformerExecutionError(
+                    "Docker is not available on this system."
                 )
-            except TransformerExecutionError as exc:
-                if cli_error is not None:
-                    raise _compose_fallback_error("draw.io", cli_error, exc) from exc
-                raise
-        elif not produced.exists():
-            cli_error = cli_error or TransformerExecutionError(
-                "draw.io CLI did not produce the expected PDF artifact."
-            )
-            docker_args = [
-                "--export",
-                "--format",
-                "pdf",
-                "--output",
-                ".",
-            ]
+            else:
+                mounts: list[VolumeMount] = [VolumeMount(working_dir, "/data")]
+                passwd_path = Path("/etc/passwd")
+                group_path = Path("/etc/group")
+                if passwd_path.exists():
+                    mounts.append(
+                        VolumeMount(passwd_path, "/etc/passwd", read_only=True)
+                    )
+                if group_path.exists():
+                    mounts.append(VolumeMount(group_path, "/etc/group", read_only=True))
+                docker_args = [
+                    "--export",
+                    "--format",
+                    format_opt,
+                    "--output",
+                    ".",
+                ]
 
-            if options.get("crop", False):
-                docker_args.extend(["--crop"])
+                if options.get("crop", False):
+                    docker_args.extend(["--crop"])
 
-            dpi = options.get("dpi")
-            if dpi:
-                docker_args.extend(["--quality", str(dpi)])
+                dpi = options.get("dpi")
+                if dpi:
+                    docker_args.extend(["--quality", str(dpi)])
 
-            docker_args.append(working_source.name)
+                docker_args.append(working_source.name)
 
-            try:
-                run_container(
-                    self.image,
-                    args=docker_args,
-                    mounts=mounts,
-                    environment={
-                        "HOME": "/data/home",
-                        "XDG_CACHE_HOME": "/data/home/.cache",
-                        "XDG_CONFIG_HOME": "/data/home/.config",
-                    },
-                    workdir="/data",
-                    use_host_user=True,
-                    limits=DockerLimits(cpus=1.0, memory="1g", pids_limit=512),
-                )
-            except TransformerExecutionError as exc:
-                raise _compose_fallback_error("draw.io", cli_error, exc) from exc
+                try:
+                    run_container(
+                        self.image,
+                        args=docker_args,
+                        mounts=mounts,
+                        environment={
+                            "HOME": "/data/home",
+                            "XDG_CACHE_HOME": "/data/home/.cache",
+                            "XDG_CONFIG_HOME": "/data/home/.config",
+                        },
+                        workdir="/data",
+                        use_host_user=True,
+                        limits=DockerLimits(cpus=1.0, memory="1g", pids_limit=512),
+                    )
+                except TransformerExecutionError as exc:
+                    docker_error = exc
+                    if backend == "docker":
+                        raise
+                    if cli_error is not None:
+                        raise _compose_fallback_error(
+                            "draw.io", cli_error, exc
+                        ) from exc
+                    if primary_error is not None:
+                        raise _compose_fallback_error(
+                            "draw.io", primary_error, exc
+                        ) from exc
 
         if not produced.exists():
+            if cli_error and docker_error:
+                raise _compose_fallback_error("draw.io", cli_error, docker_error)
+            if primary_error and cli_error:
+                raise _compose_fallback_error("draw.io", primary_error, cli_error)
+            if primary_error and docker_error:
+                raise _compose_fallback_error("draw.io", primary_error, docker_error)
+            if primary_error:
+                raise primary_error
             raise TransformerExecutionError(
-                "draw.io CLI did not produce the expected PDF artifact."
+                "draw.io conversion did not produce the expected file."
             )
 
         target.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(produced, target)
-        normalise_pdf_version(target)
+        if target.suffix.lower() == ".pdf":
+            normalise_pdf_version(target)
         return target
 
     def _run_local_cli(
@@ -663,12 +906,13 @@ class DrawioToPdfStrategy(CachedConversionStrategy):
         output_name: str,
         options: dict[str, Any],
     ) -> None:
+        fmt = str(options.get("format", "pdf") or "pdf").lower()
         command = [
             executable,
             "--export",
             source_name,
             "--format",
-            "pdf",
+            fmt,
             "--output",
             output_name,
         ]
@@ -681,3 +925,133 @@ class DrawioToPdfStrategy(CachedConversionStrategy):
             command.extend(["--quality", str(dpi)])
 
         _run_cli(command, cwd=working_dir, description="draw.io CLI")
+
+    def _run_playwright(
+        self,
+        source: Path,
+        *,
+        target: Path,
+        cache_dir: Path,
+        format_opt: str,
+        theme: str,
+    ) -> None:
+        cache_root = _texsmith_cache_root() / "playwright"
+        browser_cache = cache_root / "browsers"
+        browser_cache.mkdir(parents=True, exist_ok=True)
+        os.environ.setdefault("PLAYWRIGHT_BROWSERS_PATH", str(browser_cache))
+
+        export_page = cache_root / "export3.html"
+        export_url = None
+        if not export_page.exists():
+            try:
+                with urlopen(self.export_url) as response:
+                    export_page.write_bytes(response.read())
+            except Exception:
+                export_url = self.export_url
+
+        xml = source.read_text(encoding="utf-8")
+        browser = _PlaywrightManager.ensure_browser()
+        page = browser.new_page(viewport={"width": 2400, "height": 1800})
+        page.goto(export_page.as_uri() if export_url is None else export_url)
+        page.wait_for_function(
+            "() => typeof window.render === 'function'", timeout=30_000
+        )
+        page.evaluate(
+            """
+() => {
+  const orig = window.render;
+  window.render = function(data) {
+    const g = orig.call(window, data);
+    window.__lastGraph = g;
+    window.__lastData = data;
+    return g;
+  };
+}
+"""
+        )
+        payload = {
+            "xml": xml,
+            "format": "svg",
+            "border": 0,
+            "scale": 1,
+            "w": 0,
+            "h": 0,
+            "extras": "{}",
+            "embedXml": "1",
+            "embedImages": "1",
+            "embedFonts": "1",
+            "shadows": "1",
+            "theme": theme,
+        }
+        page.evaluate("data => window.render(data)", payload)
+        page.wait_for_selector("#LoadingComplete", state="attached", timeout=60_000)
+        svg = page.evaluate(
+            """
+() => {
+  const graph = window.__lastGraph;
+  const data = window.__lastData || {};
+  const done = document.getElementById('LoadingComplete');
+  const scale = done ? parseFloat(done.getAttribute('scale')) || graph.view.scale || 1 : graph.view.scale || 1;
+  let bg = graph.background;
+  if (bg === mxConstants.NONE) bg = null;
+
+  const svgRoot = graph.getSvg(bg, scale, data.border || 0, false, null,
+    true, null, null, null, null, null, data.theme || 'auto');
+
+  if (data.embedXml === '1') {
+    svgRoot.setAttribute('content', data.xml);
+  }
+
+  const header = (Graph.xmlDeclaration || '') + '\\n' +
+    (Graph.svgDoctype || '') + '\\n' +
+    (Graph.svgFileComment || '');
+  return header + '\\n' + mxUtils.getXml(svgRoot);
+}
+"""
+        )
+        page.close()
+        target.parent.mkdir(parents=True, exist_ok=True)
+        if format_opt == "png":
+            self._svg_to_png(browser, svg, target)
+        else:
+            self._svg_to_pdf(browser, svg, target)
+
+    def _svg_to_pdf(self, browser: Any, svg: str, target: Path) -> None:
+        page = browser.new_page()
+        page.set_content(
+            f"<html><body style='margin:0; display:inline-block'>{svg}</body></html>"
+        )
+        locator = page.locator("svg")
+        box = locator.bounding_box()
+        width = math.ceil(box["width"]) if box else 800
+        height = math.ceil(box["height"]) if box else 600
+        page.set_viewport_size({"width": width, "height": height})
+        page.pdf(
+            path=str(target),
+            print_background=True,
+            width=f"{width}px",
+            height=f"{height}px",
+            page_ranges="1",
+        )
+        page.close()
+
+    def _svg_to_png(self, browser: Any, svg: str, target: Path) -> None:
+        page = browser.new_page(viewport={"width": 2400, "height": 1800})
+        page.set_content(
+            f"<html><body style='margin:0; display:inline-block'>{svg}</body></html>"
+        )
+        locator = page.locator("svg")
+        box = locator.bounding_box()
+        if box:
+            page.screenshot(
+                path=str(target),
+                clip={
+                    "x": box["x"],
+                    "y": box["y"],
+                    "width": box["width"],
+                    "height": box["height"],
+                },
+            )
+        else:
+            page.screenshot(path=str(target))
+        page.close()

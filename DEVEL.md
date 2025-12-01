@@ -21,8 +21,8 @@ Roadmap and development notes for TeXSmith. I keep this file as a running checkl
 - [x] Add support for Makefile deps `.d` files
 - [x] Include fonts in package (like OpenMoji and Noto Color Emoji)
 - [x] Remove enhanced log for tectonic
-- [ ] Configure style for code highlight pygments default is bw
-- [ ] Snippet template
+- [x] Configure style for code highlight pygments default is bw
+- [x] Snippet template
 - [ ] Drawio Exporter remote via wreight... see in scripts
 - [ ] Mermaid color configuration for MkDocs
 - [ ] Global user's configuration (.texsmith/config.yml)
@@ -76,109 +76,15 @@ Roadmap and development notes for TeXSmith. I keep this file as a running checkl
 - [ ] Implement drawio over pywreight
 - [ ] ts-languages that uses polyglossia and specific things to languages
 
-## Refactoring fonts management
+## Drawio backend using playwright
 
-We implemented a lot of code related to fonts management, and we want to refactor the whole because it is unstable and hard to maintain. The goal is to have a clear and simple way to add support for new languages and scripts, with the right font selection strategy.
+TeXSmith supports either the local drawio installation if available or fallback to Docker headless. Another option better before docker is to use what I tested in scripts/exporter_remote.py which uses playwright to run drawio in headless mode and export diagrams. This avoids the need for docker and a local drawio installation. The `https://app.diagrams.net/export3.html` could be fetched in the cache and used as the rendering backend.
 
-We will use `unicode-blocks-py` to detect the scripts used in the document. During LaTeX translation, we parse the document to detect all the scripts used. For each script we define a strategy to select the right fonts to use. We will wrap to the latex text wither the inline `\text<language>{...}` or the environment `\begin{<language>} ... \end{<language>}` depending on the script. Unicode blocks will help to detect with `unicode-blocks.of(char)` the script of each character. To spped up the process we only match with a regex the characters outside the basic latin range and query unicode-blocks for those caracters. The goal is to detect the sequences of characters in the same script and wrap them with the right LaTeX commands.
+I want you to add in TeXSmith a new backend for drawio that uses playwright to run the export3.html page in headless mode and export diagrams as PDF or PNG.
 
-The strategy for each script can be one of the following:
+From the CLI we can add an option `--drawio-backend` with possible values `docker`, `local`, `playwright` (default to playwright if available, else local, else docker). Playwright local cache is placed into texsmith cache directory. You can use the existing code in scripts/exporter_remote.py as a starting point. The backend selection would be part of the texsmith API.
 
-- Polyglossia
-- XeCJK / LuaCJK
-- Manual
-
-We try to let to use CTAN packages when possible for collecting the fonts.
-
-Pour les emojis on pointe sur Noto Color Emoji ou OpenMoji-black-glyf.ttf si on veut du noir et blanc:
-
-In [7]: unicode_blocks.of('⚡')
-Out[7]: UnicodeBlock(name='Miscellaneous Symbols', start=0x2600, end=0x26ff, assigned_ranges=[(0x2600, 0x26ff)], aliases=['MISCSYMBOLS'])
-
-In [8]: unicode_blocks.of('👩')
-Out[8]: UnicodeBlock(name='Miscellaneous Symbols and Pictographs', start=0x1f300, end=0x1f5ff, assigned_ranges=[(0x1f300, 0x1f5ff)], aliases=['MISCPICTOGRAPHS'])
-
-In [9]: unicode_blocks.of('💻')
-Out[9]: UnicodeBlock(name='Miscellaneous Symbols and Pictographs', start=0x1f300, end=0x1f5ff, assigned_ranges=[(0x1f300, 0x1f5ff)], aliases=['MISCPICTOGRAPHS'])
-
-### ts-fonts.jinja.sty
-
-This file became a huge mess. We want to simplify ans still support all the engines: pdflatex, xelatex, lualatex, tectonic. You can get inspiration from this file but we want to rewrite it correctly SOLID and KISS.
-
-### Manual Strategy
-
-The `ts-fonts` fragment will add the necessary LaTeX code to define the fonts for each language/script. For example, for Kannada, Malayalam, and Burmese/Myanmar we can define:
-
-```latex
-% Kannada
-\newfontfamily\kannadafont[Script=Kannada]{Noto Sans Kannada}
-\newcommand{\textkannada}[1]{{\kannadafont #1}}
-\newenvironment{kannada}{\kannadafont}{}
-
-% Malayalam
-\newfontfamily\malayalamfont[Script=Malayalam]{Noto Sans Malayalam}
-\newcommand{\textmalayalam}[1]{{\malayalamfont #1}}
-\newenvironment{malayalam}{\malayalamfont}{}
-
-% Burmese / Myanmar
-\newfontfamily\burmesefont[Script=Myanmar]{Noto Sans Myanmar}
-\newcommand{\textburmese}[1]{{\burmesefont #1}}
-\newenvironment{burmese}{\burmesefont}{}
-```
-
-### Case of CJK languages
-
-For Chinese, Japanese, and Korean we can use the `xeCJK` or `luaCJK` package depending on the engine. We define the fonts for each language:
-
-```latex
-\ifLuaTeX
-\usepackage{luatexja-fontspec}
-\setmainjfont{Noto Serif CJK JP} %if japanese is used
-\setsansjfont{Noto Sans CJK JP} % if japanese is used
-\newjfontfamily\krjfont{Noto Sans CJK KR} % If korean is used
-\else
-\usepackage{xeCJK}
-\setCJKmainfont{Noto Serif CJK JP}
-\setCJKsansfont{Noto Sans CJK JP}
-\newCJKfontfamily\krfont{Noto Sans CJK KR}
-\fi
-```
-
-### Polyglossia
-
-To support latin and some cyrillic based languages we can use polyglossia. For example for Vietnamese:
-
-```latex
-\usepackage{polyglossia}
-\setmainlanguage{english} % Depends ont he language attribute for the document
-\setotherlanguage{vietnamese} %Which uses extended latin characters
-```
-
-We use polyglossa strategy if compatible with it.
-
-### Font Download
-
-We will use the NotoFallback class to download the necessary fonts based ont the metadata defined for each script/language.
-This class will use the `scripts/generate_noto_dataset.py` that helps to match unicode blocks to Noto fonts. We can improve the dataset or suppress unused features to
-leverage the use of `unicode-blocks` to identify the script then have a correspondance to the Noto font to use.
-
-### Preamble context contracts
-
-- `_script_usage` records every detected script with the strategy to use (Polyglossia vs CJK vs manual). Fragments such as `ts-fonts` must no longer scan slot content to guess languages.
-- `emoji_spec` mirrors the emoji resolver output: `mode`, `font_family`, `font_path`, and `color_enabled`. Templates should rely on that object instead of recomputing preferences.
-- `fallback_fonts`, `unicode_font_classes`, and `script_fallbacks` are final, filtered lists prepared by the manager; fragments must not inject defaults.
-
-### LuaLaTeX
-
-For LuaLaTeX we only relies on the fallback mechanism.
-
-
-## Configure highlight style for code blocks and code inlines
-
-We currently use pygments internally or use minted package to highlight code blocks and inline code. We want to allow users to configure the style used for highlighting code. For example, we can use the `bw` style for black and white output, or `tango` for colored output. This configuration from the frontmatter (press namespace in md files) with `code.style=bw` by default.
-
-Can you do this for all methods except listings?
-
+Update also the documentation in docs/
 
 ## Makeindex with engine tectonic
 

@@ -8,7 +8,7 @@ import shutil
 from typing import Any
 from urllib.parse import unquote, urlparse
 
-from texsmith.adapters.transformers import drawio2pdf, fetch_image, image2pdf, svg2pdf
+from texsmith.adapters.transformers import drawio2pdf, fetch_image, image2pdf, mermaid2pdf, svg2pdf
 from texsmith.core.context import RenderContext
 from texsmith.core.conversion.debug import ensure_emitter, record_event
 
@@ -154,7 +154,24 @@ def _convert_local_asset(context: RenderContext, source: Path, suffix: str) -> P
             return svg2pdf(source, output_dir=conversion_root)
         case ".drawio":
             record_event(emitter, "diagram_generate", {"source": str(source), "kind": "drawio"})
-            return drawio2pdf(source, output_dir=conversion_root)
+            emit_info = getattr(emitter, "info", None)
+            if callable(emit_info):
+                emit_info(f"Converting draw.io diagram: {source}")
+            backend = context.runtime.get("diagrams_backend")
+            return drawio2pdf(source, output_dir=conversion_root, backend=backend)
+        case ".mmd" | ".mermaid":
+            record_event(emitter, "diagram_generate", {"source": str(source), "kind": "mermaid"})
+            emit_info = getattr(emitter, "info", None)
+            if callable(emit_info):
+                emit_info(f"Converting Mermaid diagram: {source}")
+            backend = context.runtime.get("diagrams_backend")
+            mermaid_config = context.runtime.get("mermaid_config")
+            return mermaid2pdf(
+                source,
+                output_dir=conversion_root,
+                backend=backend,
+                mermaid_config=mermaid_config,
+            )
         case _:
             record_event(emitter, "asset_convert", {"source": str(source), "kind": "image"})
             return image2pdf(source, output_dir=conversion_root)

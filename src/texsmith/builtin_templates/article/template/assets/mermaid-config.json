@@ -8,11 +8,11 @@
     "secondaryTextColor": "black",
     "tertiaryColor": "transparent",
     "lineColor": "black",
-    "background": "white",
+    "background": "red",
     "clusterBkg": "white",
     "clusterBorder": "black",
     "fontFamily": "Latin Modern Roman, Computer Modern Serif, Times New Roman, serif",
-    "fontSize": "12px"
+    "edgeLabelBackground": "#ffffff"
   },
-  "themeCSS": ".packetBlock { fill: #ffffff !important; stroke: #000000 !important; }\n.packet rect, .packet polygon { fill: #ffffff !important; stroke: #000000 !important; }\n.packet text, .packetLabel, .packetByte, .packetTitle { fill: #000000 !important; }"
+  "themeCSS": ".node rect, .node circle, .node ellipse, .node polygon, .node path { stroke-width: 2px; }\n .edgePath .path { stroke-width: 2px !important; }\n.packetBlock { fill: #ffffff !important; stroke: #000000 !important; }\n.packet rect, .packet polygon { fill: #ffffff !important; stroke: #000000 !important; }\n.packet text, .packetLabel, .packetByte, .packetTitle { fill: #000000 !important; }\n.node rect, .node polygon, .node ellipse { fill: white !important; }"
 }

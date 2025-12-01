@@ -202,11 +202,12 @@ class LaTeXFormatter:
         text: str,
         engine: str | None = None,
         state: DocumentState | None = None,
+        delimiter: str | None = None,
     ) -> str:
         """Render inline code with engine-specific highlighting."""
         normalized_engine = (engine or self.default_code_engine or "pygments").lower()
         if normalized_engine == "minted":
-            delimiter = "|"
+            delimiter = delimiter or "|"
             return self._get_template("codeinline").render(
                 language=language or "text",
                 text=text,

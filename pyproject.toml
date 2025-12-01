@@ -47,6 +47,7 @@ dependencies = [
     "typer>=0.12.5",
     "tomli>=2.0.1; python_version < \"3.11\"",
     "unicodeblocks>=0.3",
+    "playwright>=1.56.0",
 ]
 [project.urls]
 Homepage = "https://github.com/yves-chevallier/texsmith"
