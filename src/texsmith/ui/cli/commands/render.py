@@ -371,6 +371,15 @@ def render(
     copy_assets: CopyAssetsOptionWithShort = True,
     convert_assets: ConvertAssetsOption = False,
     hash_assets: HashAssetsOption = False,
+    diagrams_backend: Annotated[
+        str | None,
+        typer.Option(
+            "--diagrams-backend",
+            metavar="BACKEND",
+            help="Backend for diagram conversion (draw.io, mermaid): playwright, local, or docker (auto-default).",
+            case_sensitive=False,
+        ),
+    ] = None,
     manifest: ManifestOptionWithShort = False,
     make_deps: MakefileDepsOption = False,
     template: TemplateOption = None,
@@ -721,6 +730,7 @@ def render(
         persist_debug_html=bool(debug_snapshot),
         language=language,
         legacy_latex_accents=legacy_latex_accents,
+        diagrams_backend=diagrams_backend.lower() if isinstance(diagrams_backend, str) else None,
         template=template,
         render_dir=request_render_dir,
         template_options=attribute_overrides,

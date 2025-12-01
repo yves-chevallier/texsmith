@@ -213,7 +213,9 @@ def test_drawio_cli_warns_when_using_hint_path(
 
     html = '<p><img src="diagram.drawio" alt="Graph"></p>'
     with pytest.warns(UserWarning, match="drawio"):
-        renderer.render(html, runtime={"source_dir": tmp_path})
+        renderer.render(
+            html, runtime={"source_dir": tmp_path, "diagrams_backend": "local"}
+        )
 
 
 def test_drawio_cli_failure_falls_back_to_docker(
@@ -252,6 +254,11 @@ def test_drawio_cli_and_docker_failure(monkeypatch: pytest.MonkeyPatch, tmp_path
         raise TransformerExecutionError("local draw.io failure")
 
     monkeypatch.setattr(strategies.DrawioToPdfStrategy, "_run_local_cli", _fail_local)
+
+    def _fail_playwright(self, *_, **__):
+        raise TransformerExecutionError("playwright unavailable")
+
+    monkeypatch.setattr(strategies.DrawioToPdfStrategy, "_run_playwright", _fail_playwright)
 
     def _fail_docker(*_, **__):
         raise TransformerExecutionError("docker unavailable")
@@ -338,10 +345,12 @@ def test_mermaid_prefers_local_cli(
     <div class="highlight">
         <pre><code>flowchart LR
 A --> B
-</code></pre>
-    </div>
-    """
-    latex = renderer.render(html, runtime={"source_dir": tmp_path})
+    </code></pre>
+        </div>
+        """
+    latex = renderer.render(
+        html, runtime={"source_dir": tmp_path, "diagrams_backend": "local"}
+    )
     assert "\\includegraphics" in latex
 
 
@@ -354,6 +363,11 @@ def test_mermaid_cli_warns_when_using_hint_path(
 
     monkeypatch.setattr(strategies, "MERMAID_CLI_HINT_PATHS", (script,))
     monkeypatch.setattr(shutil, "which", lambda _name: None)
+
+    def _fail_play(*_a, **_k):
+        raise TransformerExecutionError("playwright missing")
+
+    monkeypatch.setattr(strategies.MermaidToPdfStrategy, "_run_playwright", _fail_play)
 
     monkeypatch.setattr(strategies, "normalise_pdf_version", lambda *_args, **_kwargs: None)
 
@@ -370,7 +384,7 @@ A --> B
     </div>
     """
     with pytest.warns(UserWarning, match="mmdc"):
-        renderer.render(html, runtime={"source_dir": tmp_path})
+        renderer.render(html, runtime={"source_dir": tmp_path, "diagrams_backend": "local"})
 
 
 def test_mermaid_cli_failure_falls_back_to_docker(
@@ -378,6 +392,11 @@ def test_mermaid_cli_failure_falls_back_to_docker(
 ) -> None:
     strategy = strategies.MermaidToPdfStrategy()
     monkeypatch.setattr(strategies, "_resolve_cli", lambda *_: ("mmdc-bin", True))
+
+    def _fail_play(*_a, **_k):
+        raise TransformerExecutionError("playwright missing")
+
+    monkeypatch.setattr(strategies.MermaidToPdfStrategy, "_run_playwright", _fail_play)
 
     def _fail_local(self, *_, **__):
         raise TransformerExecutionError("local mermaid failure")
@@ -402,6 +421,11 @@ def test_mermaid_cli_failure_falls_back_to_docker(
 def test_mermaid_cli_and_docker_failure(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     strategy = strategies.MermaidToPdfStrategy()
     monkeypatch.setattr(strategies, "_resolve_cli", lambda *_: ("mmdc-bin", True))
+
+    def _fail_play(*_a, **_k):
+        raise TransformerExecutionError("playwright missing")
+
+    monkeypatch.setattr(strategies.MermaidToPdfStrategy, "_run_playwright", _fail_play)
 
     def _fail_local(self, *_, **__):
         raise TransformerExecutionError("local mermaid failure")

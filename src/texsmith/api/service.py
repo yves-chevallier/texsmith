@@ -104,6 +104,7 @@ class ConversionRequest:
     persist_debug_html: bool = False
     language: str | None = None
     legacy_latex_accents: bool = False
+    diagrams_backend: str | None = None
 
     template: str | None = None
     render_dir: Path | None = None
@@ -396,6 +397,7 @@ class ConversionService:
             persist_debug_html=request.persist_debug_html,
             language=request.language,
             legacy_latex_accents=request.legacy_latex_accents,
+            diagrams_backend=request.diagrams_backend,
         )
 
     @staticmethod

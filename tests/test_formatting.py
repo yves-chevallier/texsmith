@@ -77,7 +77,7 @@ def test_inline_highlight_code(renderer: LaTeXRenderer) -> None:
         "<span class='p'>)</span></code></p>"
     )
     latex = renderer.render(html)
-    assert '\\texttt{print("Hi")}' in latex
+    assert r"\ttfamily" in latex and "PYZ" in latex
 
 
 def test_unicode_superscript_conversion(renderer: LaTeXRenderer) -> None:

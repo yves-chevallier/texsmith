@@ -150,6 +150,12 @@ def _render_mermaid_diagram(
         if project_dir is None:
             raise AssetMissingError("Project directory required to render Mermaid diagrams")
         render_options["config_filename"] = Path(project_dir) / mermaid_config
+    backend = context.runtime.get("diagrams_backend")
+    if backend:
+        render_options["backend"] = backend
+    runtime_mermaid_config = context.runtime.get("mermaid_config")
+    if runtime_mermaid_config is not None:
+        render_options["mermaid_config"] = runtime_mermaid_config
 
     try:
         artefact = mermaid2pdf(body, output_dir=context.assets.output_root, **render_options)
