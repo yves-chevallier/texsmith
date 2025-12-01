@@ -176,6 +176,13 @@ class ConversionService:
             documents.append(candidate)
 
         bibliography_paths = _deduplicate_paths([*inline_bibliography, *extra_bibliography])
+        if not documents and front_matter_path is not None:
+            # Treat a lone front-matter file as an input document so templates can operate on
+            # YAML sources without requiring additional Markdown/HTML content.
+            documents.append(front_matter_path)
+            front_matter = None
+            front_matter_path = None
+
         return SplitInputsResult(
             documents=documents,
             bibliography_files=bibliography_paths,
