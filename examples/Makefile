@@ -27,12 +27,14 @@ EXAMPLES := \
 EXAMPLES_WITH_COMPARE := multi-document
 
 all:
-	@for example in $(EXAMPLES); do \
+	@set -e; \
+	for example in $(EXAMPLES); do \
 		$(MAKE) -C $$example ENGINE=$(ENGINE) all; \
 	done
 
 compare:
-	@for example in $(EXAMPLES_WITH_COMPARE); do \
+	@set -e; \
+	for example in $(EXAMPLES_WITH_COMPARE); do \
 		$(MAKE) -C $$example compare; \
 	done
 
@@ -47,7 +49,8 @@ xelatex:
 
 clean:
 	$(RM) -rf $(ARTIFACTS_DIR)
-	@for example in $(EXAMPLES); do \
+	@set -e; \
+	for example in $(EXAMPLES); do \
 		$(MAKE) -C $$example clean; \
 	done
 
