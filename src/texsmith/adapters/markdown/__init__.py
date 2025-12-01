@@ -10,6 +10,10 @@ from threading import Lock
 from typing import Any
 
 import yaml
+try:  # Optional dependency guard in case pymdownx is missing in constrained envs
+    from pymdownx.superfences import fence_code_format as _fence_code_format
+except Exception:  # pragma: no cover - fallback when extension unavailable
+    _fence_code_format = None
 
 
 __all__ = [
@@ -74,6 +78,19 @@ DEFAULT_EXTENSION_CONFIGS: dict[str, dict[str, object]] = {
         "anchor_linenums": True,
         "line_spans": "__span",
         "pygments_lang_class": True,
+    },
+    "pymdownx.superfences": {
+        "custom_fences": (
+            []
+            if _fence_code_format is None
+            else [
+                {
+                    "name": "mermaid",
+                    "class": "mermaid",
+                    "format": _fence_code_format,
+                }
+            ]
+        )
     },
 }
 

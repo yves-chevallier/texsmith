@@ -5,7 +5,7 @@ import json
 from pathlib import Path
 import zlib
 
-from texsmith.adapters.markdown import render_markdown
+from texsmith.adapters.markdown import DEFAULT_MARKDOWN_EXTENSIONS, render_markdown
 from texsmith.mermaid import MermaidExtension
 
 
@@ -93,3 +93,20 @@ def test_packet_diagram_is_detected(tmp_path: Path) -> None:
 
     assert '<pre class="mermaid"' in html
     assert "Header" in html
+
+
+def test_mermaid_fence_preserves_attributes() -> None:
+    html = render_markdown(
+        "\n".join(
+            [
+                "```mermaid {width=60%}",
+                "flowchart LR",
+                "    A --> B",
+                "```",
+            ]
+        ),
+        extensions=DEFAULT_MARKDOWN_EXTENSIONS,
+    ).html
+
+    assert '<pre class="mermaid"' in html
+    assert 'width="60%' in html

@@ -21,7 +21,7 @@ Euclidean algorithm for the greatest common divisor
 
 ## Mermaid Diagram
 
-```mermaid {width=60%}
+```mermaid {width=80%}
 %% Vegetable harvesting algorithm
 flowchart LR
     start(Start) --> pick[Dig up]

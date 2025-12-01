@@ -5,7 +5,7 @@
     \BLOCK{if adjustbox}
     \ifdefined\adjustbox
         \adjustbox{max width=\textwidth}{%
-            \includegraphics{\VAR{path}}
+            \includegraphics[width=\BLOCK{if width}\BLOCK{if width.endswith('%')}\VAR{(width_value|float) / 100}\linewidth\BLOCK{else}\VAR{width}\BLOCK{endif}\BLOCK{else}\linewidth\BLOCK{endif}]{\VAR{path}}
         }
     \else
         \includegraphics[width=\BLOCK{if width}\BLOCK{if width.endswith('%')}\VAR{(width_value|float) / 100}\linewidth\BLOCK{else}\VAR{width}\BLOCK{endif}\BLOCK{else}\linewidth\BLOCK{endif}]{\VAR{path}}

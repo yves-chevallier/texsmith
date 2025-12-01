@@ -131,6 +131,7 @@ def _render_mermaid_diagram(
     *,
     template: str | None = None,
     caption: str | None = None,
+    width: str | None = None,
 ) -> NavigableString | None:
     """Render a Mermaid diagram and return the resulting LaTeX node."""
     extracted_caption, body = _mermaid_caption(diagram)
@@ -172,7 +173,7 @@ def _render_mermaid_diagram(
         path=stored_path,
         caption=effective_caption,
         label=None,
-        width=None,
+        width=width,
         template=template,
         adjustbox=True,
     )
@@ -268,8 +269,11 @@ def render_mermaid(element: Tag, context: RenderContext) -> None:
         return
 
     diagram = code.get_text()
+    width = coerce_attribute(code.get("width") or element.get("width"))
     template = _figure_template_for(element)
-    figure_node = _render_mermaid_diagram(context, diagram, template=template)
+    figure_node = _render_mermaid_diagram(
+        context, diagram, template=template, width=width
+    )
     if figure_node is None:
         return
 
@@ -291,9 +295,12 @@ def render_mermaid_pre(element: Tag, context: RenderContext) -> None:
             diagram, _ = payload
     if diagram is None:
         diagram = element.get_text()
+    width = coerce_attribute(element.get("width"))
 
     template = _figure_template_for(element)
-    figure_node = _render_mermaid_diagram(context, diagram, template=template)
+    figure_node = _render_mermaid_diagram(
+        context, diagram, template=template, width=width
+    )
     if figure_node is None:
         return
 
