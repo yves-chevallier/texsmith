@@ -20,6 +20,7 @@ tlmgr_packages = [
 ]
 fragments = [
     "ts-geometry",
+    "ts-typesetting",
     "ts-fonts",
     "ts-extra",
     "ts-keystrokes",

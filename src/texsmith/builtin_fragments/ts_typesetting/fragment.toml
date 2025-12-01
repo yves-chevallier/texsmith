@@ -1,0 +1,3 @@
+name = "ts-typesetting"
+description = "Paragraph spacing, leading, and line numbering helpers."
+entrypoint = "texsmith.builtin_fragments.ts_typesetting:create_fragment"

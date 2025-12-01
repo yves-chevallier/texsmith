@@ -1,0 +1,81 @@
+\BLOCK{ if ts_typesetting_enabled }
+% Typesetting controls (paragraphs, leading, lineno)
+\makeatletter
+\BLOCK{ if ts_typesetting_indent_mode }
+\BLOCK{ if ts_typesetting_indent_mode == "always" }
+\@afterindenttrue
+\BLOCK{ elif ts_typesetting_indent_mode == "auto" }
+\@afterindentfalse
+\BLOCK{ elif ts_typesetting_indent_mode == "none" }
+\setlength{\parindent}{0pt}
+\@afterindentfalse
+\BLOCK{ endif }
+\BLOCK{ endif }
+\makeatother
+
+\BLOCK{ if ts_typesetting_parskip }
+\setlength{\parskip}{\VAR{ts_typesetting_parskip}}
+\BLOCK{ endif }
+
+\BLOCK{ if ts_typesetting_leading_mode }
+\makeatletter
+\@ifclassloaded{memoir}{%
+  \providecommand{\tsTypesettingApplySpacing}[1]{%
+    \ifcsname Spacing\endcsname
+      \Spacing{##1}%
+    \else
+      \renewcommand{\baselinestretch}{##1}\selectfont
+    \fi
+  }%
+  \providecommand{\tsTypesettingSingle}{%
+    \ifcsname SingleSpacing\endcsname
+      \SingleSpacing
+    \else
+      \tsTypesettingApplySpacing{1}%
+    \fi
+  }%
+  \providecommand{\tsTypesettingOnehalf}{%
+    \ifcsname OnehalfSpacing\endcsname
+      \OnehalfSpacing
+    \else
+      \tsTypesettingApplySpacing{1.5}%
+    \fi
+  }%
+  \providecommand{\tsTypesettingDouble}{%
+    \ifcsname DoubleSpacing\endcsname
+      \DoubleSpacing
+    \else
+      \tsTypesettingApplySpacing{2}%
+    \fi
+  }%
+}{%
+  \@ifpackageloaded{setspace}{}{%
+    \RequirePackage{setspace}%
+  }%
+  \providecommand{\tsTypesettingApplySpacing}[1]{\setstretch{##1}}%
+  \providecommand{\tsTypesettingSingle}{\singlespacing}%
+  \providecommand{\tsTypesettingOnehalf}{\onehalfspacing}%
+  \providecommand{\tsTypesettingDouble}{\doublespacing}%
+}
+\makeatother
+
+\BLOCK{ if ts_typesetting_leading_mode == "single" }
+\tsTypesettingSingle
+\BLOCK{ elif ts_typesetting_leading_mode == "onehalf" }
+\tsTypesettingOnehalf
+\BLOCK{ elif ts_typesetting_leading_mode == "double" }
+\tsTypesettingDouble
+\BLOCK{ elif ts_typesetting_leading_mode == "factor" }
+\tsTypesettingApplySpacing{\VAR{ts_typesetting_leading_value}}
+\BLOCK{ elif ts_typesetting_leading_mode == "length" }
+\setlength{\baselineskip}{\VAR{ts_typesetting_leading_value}}
+\BLOCK{ endif }
+\BLOCK{ endif }
+
+\BLOCK{ if ts_typesetting_enable_lineno }
+\@ifpackageloaded{lineno}{}{%
+  \RequirePackage{lineno}%
+}
+\AtBeginDocument{\linenumbers}
+\BLOCK{ endif }
+\BLOCK{ endif }

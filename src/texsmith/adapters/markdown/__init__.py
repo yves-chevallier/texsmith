@@ -10,6 +10,8 @@ from threading import Lock
 from typing import Any
 
 import yaml
+
+
 try:  # Optional dependency guard in case pymdownx is missing in constrained envs
     from pymdownx.superfences import fence_code_format as _fence_code_format
 except Exception:  # pragma: no cover - fallback when extension unavailable

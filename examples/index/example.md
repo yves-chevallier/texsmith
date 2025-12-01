@@ -1,8 +1,7 @@
 ---
-title: Index Example
+paper: a6
 ---
-
-# Index
+# Index Example
 
 This document demonstrates the index generation with TeXSmith. You can nest, format and create multiple index entries for terms.
 

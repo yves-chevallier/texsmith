@@ -213,9 +213,7 @@ def test_drawio_cli_warns_when_using_hint_path(
 
     html = '<p><img src="diagram.drawio" alt="Graph"></p>'
     with pytest.warns(UserWarning, match="drawio"):
-        renderer.render(
-            html, runtime={"source_dir": tmp_path, "diagrams_backend": "local"}
-        )
+        renderer.render(html, runtime={"source_dir": tmp_path, "diagrams_backend": "local"})
 
 
 def test_drawio_cli_failure_falls_back_to_docker(
@@ -348,9 +346,7 @@ A --> B
     </code></pre>
         </div>
         """
-    latex = renderer.render(
-        html, runtime={"source_dir": tmp_path, "diagrams_backend": "local"}
-    )
+    latex = renderer.render(html, runtime={"source_dir": tmp_path, "diagrams_backend": "local"})
     assert "\\includegraphics" in latex
 
 

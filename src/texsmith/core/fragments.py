@@ -306,6 +306,7 @@ class FragmentRenderResult:
 
 BUILTIN_FRAGMENT_ORDER = [
     "ts-geometry",
+    "ts-typesetting",
     "ts-fonts",
     "ts-extra",
     "ts-keystrokes",
