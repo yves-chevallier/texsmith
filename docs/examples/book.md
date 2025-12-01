@@ -1,3 +1,5 @@
+[](){ #einstein }
+
 # Book
 
 For this example we want to rendre homage to Albert Einstein and creating a small book using the [Wikipedia](https://en.wikipedia.org/wiki/Albert_Einstein)

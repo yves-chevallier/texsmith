@@ -1,19 +1,12 @@
 nav:
-  - index.md
   - getting-started.md
-  - bibliography.md
-  - headings.md
-  - glossary.md
-  - acronyms.md
   - front-matter.md
   - metadata.md
-  - fragments/
-  - templates/
-  - tags.md
   - extensions.md
-  - listings.md
-  - typesetting.md
-  - fonts.md
-  - tectonic.md
+  - fragments/
+  - features/
+  - templates/
   - plumbing/
+  - mkdocs.md
+  - tectonic.md
   - troubleshooting.md
