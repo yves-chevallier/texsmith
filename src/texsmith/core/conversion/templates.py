@@ -2,9 +2,10 @@
 
 from __future__ import annotations
 
-from collections.abc import Mapping
+from collections.abc import Iterable, Mapping
+import contextlib
 import copy
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 import re
 from typing import TYPE_CHECKING, Any
@@ -59,6 +60,7 @@ class SlotFragment:
     name: str
     html: str
     position: int
+    heading_levels: list[int] = field(default_factory=list)
 
 
 def build_binder_context(
@@ -74,6 +76,8 @@ def build_binder_context(
     emitter: DiagnosticEmitter | None,
     legacy_latex_accents: bool,
     session_overrides: Mapping[str, Any] | None = None,
+    preloaded_bibliography: BibliographyCollection | None = None,
+    seen_bibliography_issues: set[tuple[str, str | None, str | None]] | None = None,
 ) -> BinderContext:
     """Prepare template bindings, bibliography data, and slot mappings."""
     emitter = ensure_emitter(emitter)
@@ -91,30 +95,35 @@ def build_binder_context(
     except InlineBibliographyValidationError as exc:
         raise_conversion_error(emitter, str(exc), exc)
 
-    bibliography_collection: BibliographyCollection | None = None
+    issue_signatures = seen_bibliography_issues if seen_bibliography_issues is not None else set()
+    bibliography_collection: BibliographyCollection | None = (
+        preloaded_bibliography.clone() if preloaded_bibliography is not None else None
+    )
     bibliography_map: dict[str, dict[str, Any]] = {}
-
-    if bibliography_files or inline_bibliography:
-        bibliography_collection = BibliographyCollection()
-        if bibliography_files:
-            bibliography_collection.load_files(bibliography_files)
-        if inline_bibliography:
-            _load_inline_bibliography(
-                bibliography_collection,
-                inline_bibliography,
-                source_label=document_context.source_path.stem,
-                output_dir=output_dir,
-                emitter=emitter,
-            )
 
     if bibliography_collection is None:
         bibliography_collection = BibliographyCollection()
+        if bibliography_files:
+            bibliography_collection.load_files(bibliography_files)
+
+    if inline_bibliography:
+        _load_inline_bibliography(
+            bibliography_collection,
+            inline_bibliography,
+            source_label=document_context.source_path.stem,
+            output_dir=output_dir,
+            emitter=emitter,
+        )
 
     bibliography_map = bibliography_collection.to_dict()
     for issue in bibliography_collection.issues:
+        signature = (issue.message, issue.key, str(issue.source) if issue.source else None)
+        if signature in issue_signatures:
+            continue
         prefix = f"[{issue.key}] " if issue.key else ""
         source_hint = f" ({issue.source})" if issue.source else ""
         emitter.warning(f"{prefix}{issue.message}{source_hint}")
+        issue_signatures.add(signature)
 
     document_context.bibliography = bibliography_map
 
@@ -252,6 +261,7 @@ def extract_slot_fragments(
     matched: dict[str, tuple[int, Tag]] = {}
     missing: list[str] = []
     occupied_nodes: set[int] = set()
+    document_nodes = list(container.contents)
 
     for slot_name, selector in filtered_requests.items():
         if not selector:
@@ -287,6 +297,7 @@ def extract_slot_fragments(
                 name=slot_name,
                 html=document_html,
                 position=-(len(full_document_slots) - offset),
+                heading_levels=_heading_levels_for_nodes(document_nodes),
             )
         )
 
@@ -302,7 +313,14 @@ def extract_slot_fragments(
                     break
                 render_nodes.pop(0)
         html_fragment = "".join(str(node) for node in render_nodes)
-        fragments.append(SlotFragment(name=slot_name, html=html_fragment, position=order))
+        fragments.append(
+            SlotFragment(
+                name=slot_name,
+                html=html_fragment,
+                position=order,
+                heading_levels=_heading_levels_for_nodes(render_nodes),
+            )
+        )
         for node in section_nodes:
             if hasattr(node, "extract"):
                 node.extract()
@@ -316,11 +334,34 @@ def extract_slot_fragments(
     remainder_position = max(fragment.position for fragment in fragments) + 1 if fragments else 0
 
     fragments.append(
-        SlotFragment(name=default_slot, html=remainder_html, position=remainder_position)
+        SlotFragment(
+            name=default_slot,
+            html=remainder_html,
+            position=remainder_position,
+            heading_levels=_heading_levels_for_nodes(container.contents),
+        )
     )
 
     fragments.sort(key=lambda fragment: fragment.position)
     return fragments, missing
+
+
+def _heading_levels_for_nodes(nodes: Iterable[Any]) -> list[int]:
+    """Return heading levels discovered in the given node sequence (document order)."""
+    levels: list[int] = []
+
+    def _walk(node: Any) -> None:
+        if isinstance(node, Tag):
+            if re.fullmatch(r"h[1-6]", node.name or ""):
+                with contextlib.suppress(ValueError):
+                    levels.append(heading_level_for(node))
+            for child in node.children:
+                _walk(child)
+
+    for node in nodes:
+        _walk(node)
+
+    return levels
 
 
 def collect_section_nodes(heading: Tag) -> list[Any]:

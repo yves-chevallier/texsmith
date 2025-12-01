@@ -43,6 +43,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
+from ..core.bibliography.collection import BibliographyCollection
 from ..core.conversion.core import ConversionResult, convert_document
 from ..core.conversion.renderer import TemplateFragment
 from ..core.diagnostics import DiagnosticEmitter, NullEmitter
@@ -134,6 +135,13 @@ def convert_documents(
     settings = settings.copy() if settings is not None else RenderSettings()
     unique_stems = build_unique_stem_map([doc.source_path for doc in documents])
 
+    shared_bibliography: BibliographyCollection | None = None
+    seen_bibliography_issues: set[tuple[str, str | None, str | None]] = set()
+
+    if bibliography_files:
+        shared_bibliography = BibliographyCollection()
+        shared_bibliography.load_files(bibliography_files)
+
     fragments: list[LaTeXFragment] = []
     should_write_fragments = write_fragments if write_fragments is not None else True
     state = shared_state
@@ -164,6 +172,8 @@ def convert_documents(
             state=None if wrap_document else state,
             template_runtime=template_runtime,
             wrap_document=wrap_document,
+            preloaded_bibliography=shared_bibliography,
+            seen_bibliography_issues=seen_bibliography_issues,
         )
 
         if not wrap_document:

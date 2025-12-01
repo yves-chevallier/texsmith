@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Iterable, Mapping, Sequence
+import copy
 import html
 from pathlib import Path
 import re
@@ -193,6 +194,16 @@ class BibliographyCollection:
             return
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(payload, encoding="utf-8")
+
+    def clone(self) -> BibliographyCollection:
+        """Return a deep copy of the collection without reparsing sources."""
+        cloned = BibliographyCollection()
+        cloned._entries = copy.deepcopy(self._entries)
+        cloned._sources = copy.deepcopy(self._sources)
+        cloned._issues = list(self._issues)
+        cloned._file_entry_counts = dict(self._file_entry_counts)
+        cloned._file_order = list(self._file_order)
+        return cloned
 
     def _entries_equivalent(self, first: Entry, second: Entry) -> bool:
         return self._entry_signature(first) == self._entry_signature(second)
