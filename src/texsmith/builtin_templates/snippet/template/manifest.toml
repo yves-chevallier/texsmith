@@ -18,6 +18,8 @@ tlmgr_packages = [
     "csquotes",
     "hyperref",
     "tikz",
+    "glossaries",
+    "biblatex",
 ]
 fragments = [
     "ts-fonts",
@@ -25,6 +27,8 @@ fragments = [
     "ts-keystrokes",
     "ts-callouts",
     "ts-code",
+    "ts-glossary",
+    "ts-bibliography",
     "ts-todolist",
 ]
 

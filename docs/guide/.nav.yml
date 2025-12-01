@@ -6,9 +6,14 @@ nav:
   - glossary.md
   - acronyms.md
   - front-matter.md
+  - metadata.md
   - fragments/
   - templates/
   - tags.md
   - extensions.md
+  - listings.md
+  - typesetting.md
   - fonts.md
+  - tectonic.md
+  - plumbing/
   - troubleshooting.md
