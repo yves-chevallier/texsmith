@@ -652,7 +652,7 @@ class MermaidToPdfStrategy(CachedConversionStrategy):
             wait_until="load",
         )
         resolved_config: dict[str, Any] = {}
-        print(mermaid_config)
+
         if isinstance(mermaid_config, Mapping):
             resolved_config = dict(mermaid_config)
         elif isinstance(mermaid_config, str):
@@ -662,9 +662,8 @@ class MermaidToPdfStrategy(CachedConversionStrategy):
                     resolved_config = json.loads(cfg_path.read_text("utf-8"))
                 except Exception:
                     resolved_config = {}
-        print("Resolved config:", resolved_config)
+
         if not resolved_config:
-            print("Not resolved config")
             resolved_config = (
                 dict(_DEFAULT_MERMAID_CONFIG) if _DEFAULT_MERMAID_CONFIG else {}
             )
