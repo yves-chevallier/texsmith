@@ -42,6 +42,7 @@ fragments = [
 default = 0
 type = "integer"
 sources = ["base_level"]
+description = "Base heading level offset for slots (0 = chapter, -1 = part)."
 
 [latex.template.attributes.title]
 default = "A LaTeX Book Template"
@@ -82,97 +83,91 @@ type = "string"
 allow_empty = false
 normaliser = "babel_language"
 sources = ["language"]
+description = "Language for hyphenation and document terms (babel)."
 
 [latex.template.attributes.documentclass]
 default = "memoir"
 type = "string"
 allow_empty = false
 sources = ["documentclass"]
-
-[latex.template.attributes.columns]
-default = 1
-type = "integer"
+description = "Document class to use (memoir by default)."
 
 [latex.template.attributes.hyperref_options]
 default = "colorlinks=true, linkcolor=black, citecolor=black, plainpages=false, unicode=true, urlcolor=urlcolor"
 type = "string"
 allow_empty = true
 sources = ["hyperref_options"]
-
-[latex.template.attributes.cover]
-default = "circles"
-type = "string"
-allow_empty = false
-sources = ["cover"]
-
-[latex.template.attributes.covercolor]
-default = ""
-type = "string"
-allow_empty = true
-sources = ["covercolor"]
+description = "Custom hyperref options appended to defaults."
 
 [latex.template.attributes.edition]
 default = ""
 type = "string"
 allow_empty = true
 sources = ["edition"]
+description = "Edition label rendered in imprint."
 
 [latex.template.attributes.publisher]
 default = ""
 type = "string"
 allow_empty = true
 sources = ["publisher"]
+description = "Publisher string rendered in imprint."
 
 [latex.template.attributes.imprint_thanks]
 default = ""
 type = "string"
 allow_empty = true
-sources = ["imprint_thanks"]
+format = "markdown"
+sources = ["imprint.thanks", "imprint_thanks"]
+description = "Imprint thanks paragraph (Markdown)."
 
 [latex.template.attributes.imprint_license]
 default = ""
 type = "string"
 allow_empty = true
-sources = ["imprint_license"]
+format = "markdown"
+sources = ["imprint.license", "imprint_license"]
+description = "Imprint license paragraph (Markdown)."
 
 [latex.template.attributes.imprint_copyright]
 default = ""
 type = "string"
 allow_empty = true
-sources = ["imprint_copyright"]
-
-[latex.template.attributes.logo]
-default = ""
-type = "string"
-allow_empty = true
-sources = ["logo"]
+format = "markdown"
+sources = ["imprint.copyright", "imprint_copyright"]
+description = "Imprint copyright paragraph (Markdown)."
 
 [latex.template.attributes.glossary]
 default = false
 type = "boolean"
 sources = ["glossary"]
+description = "Enable glossary section."
 
 [latex.template.attributes.glossary_style]
 default = "long3col"
 type = "string"
 allow_empty = false
 sources = ["glossary_style"]
+description = "Glossary style to use."
 
 [latex.template.attributes.listoffigures]
 default = true
 type = "boolean"
 sources = ["listoffigures"]
+description = "Render list of figures when figures exist."
 
 [latex.template.attributes.listoftables]
 default = true
 type = "boolean"
 sources = ["listoftables"]
+description = "Render list of tables when tables exist."
 
-[latex.template.attributes.preamble]
-default = ""
-type = "string"
-allow_empty = true
-sources = ["preamble"]
+[latex.template.attributes.part]
+default = false
+type = "boolean"
+sources = ["part"]
+description = "Use parts above chapters (adjusts mainmatter depth)."
+
 
 [latex.template.slots.frontmatter]
 depth = "chapter"
@@ -191,13 +186,10 @@ base_level = 0
 [latex.template.slots.backmatter]
 depth = "chapter"
 
+[latex.template.slots.appendix]
+depth = "chapter"
+description = "Appendix content inserted before backmatter."
+
 [latex.template.slots.colophon]
 depth = "chapter"
 strip_heading = true
-
-[latex.template.assets]
-"covers" = { source = "covers" }
-"covers/circles.tex" = { source = "covers/circles.tex", template = true }
-"titlepage.tex" = { source = "template/titlepage.tex", template = true }
-"imprint.tex" = { source = "template/imprint.tex", template = true }
-".latexmkrc" = { source = "../common/latexmkrc", template = true }

@@ -14,6 +14,7 @@ tlmgr_packages = [
     "microtype",
     "koma-script",
 ]
+description = "Formal letter template based on KOMA-Script with configurable sender/recipient and standards."
 fragments = [
     "ts-fonts",
     "ts-extra",
@@ -29,17 +30,20 @@ fragments = [
 default = false
 type = "boolean"
 sources = ["cursive"]
+description = "Toggle cursive signature font."
 
 [latex.template.attributes.language]
 default = "en-UK"
 type = "string"
 allow_empty = false
 sources = ["language"]
+description = "Language for babel."
 
 [latex.template.attributes.standard]
 default = ""
 type = "string"
 sources = ["standard", "format"]
+description = "Letter standard/format (e.g., sn, nf)."
 
 [latex.template.attributes.date]
 default = ""
@@ -53,6 +57,7 @@ default = ""
 type = "string"
 escape = "latex"
 sources = ["object"]
+description = "Subject line."
 
 [latex.template.attributes.from_name]
 default = ""
@@ -61,6 +66,7 @@ escape = "latex"
 allow_empty = false
 required = true
 sources = ["from_name"]
+description = "Sender full name."
 
 [latex.template.attributes.from_address]
 default = []
@@ -86,6 +92,7 @@ escape = "latex"
 allow_empty = false
 required = true
 sources = ["to_name"]
+description = "Recipient full name."
 
 [latex.template.attributes.to_address]
 default = []
@@ -97,18 +104,20 @@ default = ""
 type = "string"
 escape = "latex"
 sources = ["closing"]
+description = "Closing phrase."
 
-[latex.template.attributes.callout_style]
 [latex.template.attributes.opening]
 default = ""
 type = "string"
 escape = "latex"
 sources = ["opening"]
+description = "Opening phrase."
 
 [latex.template.attributes.signature]
 default = ""
 type = "any"
 sources = ["signature"]
+description = "Signature block (text or raw LaTeX)."
 
 [latex.template.attributes.source_dir]
 default = ""
@@ -133,28 +142,33 @@ default = ""
 type = "string"
 escape = "latex"
 sources = ["reference"]
+description = "Reference field content."
 
 [latex.template.attributes.reference_fields]
 default = false
 type = "boolean"
 sources = ["reference_fields"]
+description = "Whether to render reference fields block."
 
 [latex.template.attributes.postscript]
 default = ""
 type = "string"
 escape = "latex"
 sources = ["postscript"]
+description = "Postscript paragraph."
 
 [latex.template.attributes.fold_marks]
 default = false
 type = "boolean"
 sources = ["fold_marks"]
+description = "Toggle fold marks."
 
 [latex.template.attributes.margin]
 default = "default"
 type = "string"
 normaliser = "margin_style"
 sources = ["margin"]
+description = "Margin style (default, wide, narrow)."
 
 [latex.template.attributes.preamble]
 default = ""
@@ -166,6 +180,7 @@ sources = ["preamble"]
 default = false
 type = "boolean"
 sources = ["page_numbers"]
+description = "Enable page numbers."
 
 [latex.template.slots.mainmatter]
 default = true

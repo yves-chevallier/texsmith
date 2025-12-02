@@ -3,14 +3,14 @@ from __future__ import annotations
 from collections.abc import Mapping
 from pathlib import Path
 
-from texsmith.core.fragments import FragmentDefinition, FragmentPiece
+from texsmith.core.fragments import Fragment, FragmentDefinition, FragmentPiece
 
 
 def create_fragment() -> FragmentDefinition:
     """Return the index helpers fragment definition."""
     package_path = Path(__file__).with_name("ts-index.jinja.sty")
     backmatter_path = Path(__file__).with_name("ts-index-backmatter.jinja.tex")
-    return FragmentDefinition(
+    fragment = Fragment(
         name="ts-index",
         pieces=[
             FragmentPiece(
@@ -29,6 +29,7 @@ def create_fragment() -> FragmentDefinition:
         context_defaults={"extra_packages": "", "fragment_backmatter": ""},
         should_render=_has_index,
     )
+    return fragment.to_definition()
 
 
 def _has_index(context: Mapping[str, object]) -> bool:

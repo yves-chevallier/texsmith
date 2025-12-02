@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from .base import BaseTemplate, ResolvedAsset, WrappableTemplate
-from .loader import copy_template_assets, load_template
+from .loader import copy_template_assets, discover_templates, load_template
 from .manifest import (
     DEFAULT_TEMPLATE_LANGUAGE,
     LATEX_HEADING_LEVELS,
@@ -46,6 +46,7 @@ __all__ = [
     "build_template_overrides",
     "coerce_base_level",
     "copy_template_assets",
+    "discover_templates",
     "extract_base_level_override",
     "extract_language_from_front_matter",
     "load_template",

@@ -2,13 +2,13 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from texsmith.core.fragments import FragmentDefinition, FragmentPiece
+from texsmith.core.fragments import Fragment, FragmentDefinition, FragmentPiece
 
 
 def create_fragment() -> FragmentDefinition:
     """Return the fonts fragment definition."""
     template_path = Path(__file__).with_name("ts-fonts.jinja.sty")
-    return FragmentDefinition(
+    fragment = Fragment(
         name="ts-fonts",
         pieces=[
             FragmentPiece(
@@ -21,6 +21,7 @@ def create_fragment() -> FragmentDefinition:
         source=template_path,
         context_defaults={"extra_packages": ""},
     )
+    return fragment.to_definition()
 
 
 __all__ = ["create_fragment"]

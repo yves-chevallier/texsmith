@@ -58,7 +58,7 @@ class Template(WrappableTemplate):
             super().__init__(_PACKAGE_ROOT)
         except TemplateError as exc:
             raise TemplateError(f"Failed to initialise article template: {exc}") from exc
-        config_path = (self.root / "template" / "assets" / "mermaid-config.json").resolve()
+        config_path = (self.root / "template" / "mermaid-config.json").resolve()
         self.extras = {"mermaid_config": str(config_path)}
 
     def prepare_context(

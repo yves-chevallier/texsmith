@@ -4,13 +4,14 @@ from __future__ import annotations
 
 from collections.abc import Iterable
 from importlib import metadata
-from pathlib import Path
 import shutil
 
 import typer
 
-from texsmith.core.templates import TemplateError, load_template
+from texsmith.core.fragments import FRAGMENT_REGISTRY, TemplateError
+from texsmith.core.templates import TemplateError as TemplateTplError, load_template
 from texsmith.core.templates.builtins import iter_builtin_templates
+from texsmith.core.templates.loader import _looks_like_template_root, _iter_local_candidates
 
 from ..state import emit_error, ensure_rich_compat, get_cli_state
 
@@ -23,20 +24,6 @@ def _format_list(values: Iterable[str]) -> str:
     """
     sequence = list(values)
     return ", ".join(sequence) if sequence else "-"
-
-
-def _looks_like_template_root(path: Path) -> bool:
-    """Return True if the path appears to be a valid template directory.
-
-    This heuristic filters out non-template directories during discovery, checking
-    for key indicators like `manifest.toml` or `__init__.py`.
-    """
-    if not path.exists() or path.is_file():
-        return False
-    manifest_candidates = (path / "manifest.toml", path / "template" / "manifest.toml")
-    if any(candidate.exists() for candidate in manifest_candidates):
-        return True
-    return (path / "__init__.py").exists()
 
 
 def _discover_local_templates(base: Path | None = None) -> list[Path]:
@@ -141,6 +128,29 @@ def _collect_template_entries() -> list[dict[str, str]]:
     return sorted(unique_entries, key=lambda item: (item["origin"], item["name"]))
 
 
+def _discover_local_templates(base: Path | None = None) -> list[Path]:
+    """Scan for potential template roots under cwd/parents and templates/."""
+    base_path = (base or Path.cwd()).resolve()
+    roots = {base_path, base_path / "templates"}
+    candidates: list[Path] = []
+    for root in roots:
+        if not root.exists() or not root.is_dir():
+            continue
+        try:
+            children = list(root.iterdir())
+        except OSError:
+            continue
+        for child in children:
+            if child.is_dir() and _looks_like_template_root(child):
+                candidates.append(child)
+
+    # Also walk ancestor templates folders via loader helper.
+    for candidate in _iter_local_candidates(""):
+        if candidate.is_dir() and _looks_like_template_root(candidate):
+            candidates.append(candidate)
+    return sorted({candidate.resolve() for candidate in candidates})
+
+
 def show_template_info(identifier: str) -> None:
     """Display metadata extracted from a LaTeX template manifest."""
 
@@ -155,7 +165,7 @@ def show_template_info(identifier: str) -> None:
 
     try:
         template = load_template(identifier)
-    except TemplateError as exc:
+    except TemplateTplError as exc:
         emit_error(f"Unable to load template '{identifier}': {exc}", exception=exc)
         raise typer.Exit(code=1) from exc
 
@@ -166,6 +176,8 @@ def show_template_info(identifier: str) -> None:
         typer.echo(f"Template: {identifier}")
         typer.echo(f"Name: {info.name}")
         typer.echo(f"Version: {info.version}")
+        if getattr(info, "description", None):
+            typer.echo(f"Description: {getattr(info, 'description')}")
         typer.echo(f"Entrypoint: {info.entrypoint}")
         typer.echo(f"Engine: {info.engine or '-'}")
         typer.echo(f"Shell escape: {'yes' if info.shell_escape else 'no'}")
@@ -177,7 +189,11 @@ def show_template_info(identifier: str) -> None:
         if info.attributes:
             typer.echo("Attributes:")
             for key, value in sorted(info.attributes.items()):
-                typer.echo(f"  - {key}: {value!r}")
+                desc = getattr(value, "description", None) or "-"
+                typer.echo(
+                    f"  - {key}: type={value.type or 'any'}, format={value.format or '-'}, "
+                    f"default={value.default!r}, desc={desc}"
+                )
 
         assets = list(template.iter_assets())
         typer.echo("Assets:")
@@ -196,16 +212,32 @@ def show_template_info(identifier: str) -> None:
         else:
             typer.echo("  - No declared assets")
 
+        fragment_entries = getattr(info, "fragments", None) or []
+        typer.echo("Fragments:")
+        if fragment_entries:
+            for fragment_name in fragment_entries:
+                try:
+                    definition = FRAGMENT_REGISTRY.resolve(fragment_name)
+                    desc = definition.description or ""
+                    attrs = ", ".join(sorted(definition.attributes.keys())) or "-"
+                    typer.echo(f"  - {fragment_name}: {desc} (attributes: {attrs})")
+                except Exception:
+                    typer.echo(f"  - {fragment_name}")
+        else:
+            typer.echo("  - None")
+
         slots, default_slot = info.resolve_slots()
         typer.echo("Slots:")
         for name, slot in sorted(slots.items()):
             base = slot.base_level if slot.base_level is not None else "-"
             depth = slot.depth or "-"
             effective = slot.resolve_level(0)
+            desc = getattr(slot, "description", None)
             typer.echo(
                 f"  - {name} ({'default' if name == default_slot else 'optional'}): "
                 f"base={base}, depth={depth}, offset={slot.offset}, "
                 f"effective={effective}, strip_heading={'yes' if slot.strip_heading else 'no'}"
+                + (f" — {desc}" if desc else "")
             )
         return
 
@@ -239,9 +271,18 @@ def show_template_info(identifier: str) -> None:
             show_lines=True,
         )
         attrs.add_column("Key", style="magenta")
-        attrs.add_column("Value", style="green")
+        attrs.add_column("Type", style="green")
+        attrs.add_column("Format", style="green")
+        attrs.add_column("Default")
+        attrs.add_column("Description")
         for key, value in sorted(info.attributes.items()):
-            attrs.add_row(key, RichPretty(value, indent_guides=True))
+            attrs.add_row(
+                key,
+                str(getattr(value, "type", None) or "any"),
+                str(getattr(value, "format", None) or "-"),
+                RichPretty(getattr(value, "default", None), indent_guides=True),
+                getattr(value, "description", None) or "-",
+            )
         console.print(attrs)
 
     assets = list(template.iter_assets())
@@ -270,6 +311,28 @@ def show_template_info(identifier: str) -> None:
     else:
         assets_table.add_row("-", "No declared assets", "", "")
     console.print(assets_table)
+
+    fragment_entries = info.fragments or []
+    fragments_table = RichTable(
+        title="Fragments",
+        box=rich_box.MINIMAL_DOUBLE_HEAD,
+        header_style="bold cyan",
+    )
+    fragments_table.add_column("Name", style="magenta")
+    fragments_table.add_column("Description")
+    fragments_table.add_column("Attributes")
+    if fragment_entries:
+        for fragment_name in fragment_entries:
+            try:
+                definition = FRAGMENT_REGISTRY.resolve(fragment_name)
+                desc = definition.description or "-"
+                attrs = ", ".join(sorted(definition.attributes.keys())) or "-"
+                fragments_table.add_row(fragment_name, desc, attrs)
+            except Exception:
+                fragments_table.add_row(fragment_name, "-", "-")
+    else:
+        fragments_table.add_row("-", "None", "-")
+    console.print(fragments_table)
 
     slots, default_slot = info.resolve_slots()
     slots_table = RichTable(

@@ -9,10 +9,16 @@ and the project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ### Added
 - Created an explicit changelog to track the rewritten Git history.
+- Documented the new fragment manifest (attributes + partials + required_partials), partial precedence (template > fragment > core), and conversion pipeline order.
+- Expanded template discovery docs and CLI info output (slots, fragments, attribute columns).
+- Marked the legacy ``texsmith.fragments`` import path as deprecated; fragments should rely on ``fragment.toml`` or entrypoint factories.
+- Dropped unused template knobs (article twocolumn/preamble hooks, letter callout_style stub) to align manifests with the refactored pipeline.
 
 ### Changed
 - Updated every reference to the scientific paper demo so that it matches the
   renamed `examples/paper` directory used by the CLI tests and documentation.
+- Template lookup now prefers built-ins, then `texsmith-template-*` packages/entry points, then cwd/parents, then `~/.texsmith/templates`; explicit paths still bypass discovery.
+- Built-in template docs reflect appendix slot ordering and removal of legacy cover/twocolumn/backmatter/emoji attributes.
 
 ## [0.3.0] - 2025-11-17
 
@@ -65,4 +71,3 @@ and the project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
   bibliography/config helpers, and end-to-end article rendering examples.
 - Early documentation, MkDocs integration, and helper scripts for generating the
   cheese/scientific paper demonstration.
-

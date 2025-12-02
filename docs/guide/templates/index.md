@@ -17,7 +17,7 @@ use cases. You may use:
 TeXSmith includes standard templates for common document types:
 
 - `article`: academic-style article layout with title page, abstract, and sections.
-- `book`: book-style layout with parts, chapters, preface, table of contents, and appendices.
+- `book`: book-style layout with parts, chapters, preface, table of contents, appendices, and optional `part` base-level override.
 - `letter`: formal letters with sender/recipient metadata, fold marks, and signature.
 - `snippet`: standalone `tikzpicture` frame for screenshots, stickers, and snippets.
 
@@ -187,6 +187,18 @@ Each attribute table accepts the following keys:
 - `normaliser`: name of a registered normaliser that post-processes the value (see below).
 
 Attributes are resolved before `WrappableTemplate.prepare_context` runs, meaning template classes only need to handle presentation-specific tweaks (for example, combining authors, building option strings, or removing temporary keys).
+
+### Attribute ownership & precedence
+
+- Each attribute belongs to a single owner (template by default, fragment when declared in `fragment.toml`). Conflicting owners raise a `TemplateError`.
+- Overrides flow: CLI/front matter → attribute resolver (type coercion, normalisers) → template emitters/fragment defaults. Empty strings are dropped when `allow_empty = false`.
+- Attributes no longer live under ad-hoc dotted names (`press.*`); normalisation collapses supported aliases onto the declared attribute name.
+
+### Template slots and built-ins
+
+- Templates must declare at least one slot; `mainmatter` is the default when absent. Slots surface `depth`, `offset`, `strip_heading`, and optional `base_level`.
+- Built-in `article` exposes `mainmatter`, `abstract`, `appendix`, and `backmatter`. `book` inserts `appendix` before `backmatter` and supports `part` toggling. `letter` uses `mainmatter` only.
+- Deprecated attributes removed from built-ins: `article`/`book` no longer accept `cover`, `covercolor`, `twocolumn`, or template-owned `emoji`. Backmatter/preamble overrides moved into fragments where applicable. 
 
 #### Built-in normalisers
 

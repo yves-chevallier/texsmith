@@ -111,3 +111,9 @@ If you want every built-in extension to register its renderer hook, call
 You can create custom Markdown extensions that plug into TeXSmith's conversion
 pipeline. Refer to the API documentation for details on
 the extension points and how to register your extension with TeXSmith.
+
+### Pipeline placement & precedence
+
+- Markdown extensions run before slot extraction and fragment rendering; any HTML they emit flows through the same pipeline.
+- Renderer hooks execute in `RenderPhase` order (PRE → BLOCK → INLINE → POST); use the lowest required phase to keep transforms predictable.
+- Extensions should not override template partials directly—expose fragment partials or attributes instead so precedence stays transparent. 

@@ -3,13 +3,13 @@ from __future__ import annotations
 from collections.abc import Mapping
 from pathlib import Path
 
-from texsmith.core.fragments import FragmentDefinition, FragmentPiece
+from texsmith.core.fragments import Fragment, FragmentDefinition, FragmentPiece
 
 
 def create_fragment() -> FragmentDefinition:
     """Conditional todolist helpers."""
     template_path = Path(__file__).with_name("ts-todolist.jinja.sty")
-    return FragmentDefinition(
+    fragment = Fragment(
         name="ts-todolist",
         pieces=[
             FragmentPiece(
@@ -23,6 +23,7 @@ def create_fragment() -> FragmentDefinition:
         context_defaults={"extra_packages": ""},
         should_render=_uses_todolist,
     )
+    return fragment.to_definition()
 
 
 def _uses_todolist(context: Mapping[str, object]) -> bool:

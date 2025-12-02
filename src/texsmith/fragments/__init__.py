@@ -1,20 +1,10 @@
+"""Legacy fragment namespace.
+
+Fragments now register via ``fragment.toml`` or entry points returning
+``Fragment``/``FragmentDefinition`` objects. This module is kept only to avoid
+import errors for legacy paths; no registration occurs here.
 """
-Fragments are reusable pieces of LaTeX code that can be combined to create
-complex documents. This module provides the base class for all fragments and
-registers them for easy access.
 
-Each fragment should inherit from the `Fragment` base class and implement the
-`render` method, which returns the LaTeX code as a string.
+from __future__ import annotations
 
-Fragments are used by templates to extend their functionality and provide
-modular components that can be reused across different documents.
-
-- Bibliography: Fragments for managing references and citations.
-- Callouts: Fragments for highlighting important information.
-- Code Listings: Fragments for including source code with syntax highlighting.
-- Glossary: Fragments for defining terms and acronyms.
-- Typesetting: Fragments for custom formatting and layout.
-- Geometry: Fragments for setting page dimensions and margins.
-- etc.
-
-"""
+__all__ = []

@@ -142,6 +142,7 @@ def build_binder_context(
     press_section = template_overrides.get("press")
     if isinstance(press_section, dict):
         press_section.setdefault("language", resolved_language)
+        press_section.setdefault("_source_dir", str(document_context.source_path.parent))
     template_overrides["source_dir"] = str(document_context.source_path.parent)
     template_overrides["output_dir"] = str(output_dir)
 

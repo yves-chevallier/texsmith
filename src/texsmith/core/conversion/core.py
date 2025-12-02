@@ -24,6 +24,7 @@ from texsmith.core.conversion_contexts import (
     SegmentContext,
 )
 from texsmith.core.exceptions import LatexRenderingError, TransformerExecutionError
+from texsmith.core.fragments import collect_fragment_partials
 from texsmith.core.templates import (
     TemplateBinding,
     TemplateError,
@@ -145,6 +146,52 @@ def _extract_emoji_mode(mapping: Mapping[str, Any] | None) -> str | None:
         press_fonts = press.get("fonts")
         if isinstance(press_fonts, Mapping):
             return _coerce_emoji_mode(press_fonts.get("emoji"))
+    return None
+
+
+def _resolve_active_fragments(
+    binding: TemplateBinding, overrides: Mapping[str, Any] | None
+) -> list[str]:
+    """Return the fragment list, respecting explicit overrides when provided."""
+    if isinstance(overrides, Mapping) and "fragments" in overrides:
+        override_payload = overrides.get("fragments")
+        if isinstance(override_payload, list):
+            return list(override_payload)
+        return []
+
+    runtime = binding.runtime
+    if runtime is not None:
+        fragments = runtime.extras.get("fragments") if runtime.extras else None
+        if isinstance(fragments, list):
+            return list(fragments)
+    return []
+
+
+def _resolve_fragment_source_dir(
+    overrides: Mapping[str, Any] | None, binder_context: BinderContext
+) -> Path | None:
+    """Infer the base directory used to resolve fragment paths."""
+    candidates = []
+    press_section = overrides.get("press") if isinstance(overrides, Mapping) else None
+    for container in (press_section, overrides):
+        if not isinstance(container, Mapping):
+            continue
+        for key in ("_source_dir", "source_dir"):
+            raw_value = container.get(key)
+            if isinstance(raw_value, str) and raw_value.strip():
+                candidates.append(Path(raw_value))
+    if candidates:
+        return candidates[0]
+    if getattr(binder_context, "config", None) is not None:
+        try:
+            return binder_context.config.project_dir
+        except Exception:
+            return None
+    if binder_context.documents:
+        try:
+            return binder_context.documents[0].source_path.parent
+        except Exception:
+            return None
     return None
 
 
@@ -315,21 +362,26 @@ def _render_document(
             )
         )
 
-    render_result = _render_slot_fragments(
-        slot_fragments=slot_fragments,
-        binding=binding,
-        runtime_common=runtime_common,
-        slot_base_levels=slot_base_levels,
-        fragment_offsets=fragment_offsets,
-        manual_base_level=manual_base_level,
-        disable_fallback_converters=disable_fallback_converters,
-        renderer_kwargs=renderer_kwargs,
-        initial_state=initial_state,
-        drop_title_flag=drop_title_flag,
-        binder_context=binder_context,
-        legacy_latex_accents=legacy_latex_accents,
-        emitter=emitter,
-    )
+    try:
+        render_result = _render_slot_fragments(
+            slot_fragments=slot_fragments,
+            binding=binding,
+            runtime_common=runtime_common,
+            slot_base_levels=slot_base_levels,
+            fragment_offsets=fragment_offsets,
+            manual_base_level=manual_base_level,
+            disable_fallback_converters=disable_fallback_converters,
+            renderer_kwargs=renderer_kwargs,
+            initial_state=initial_state,
+            drop_title_flag=drop_title_flag,
+            binder_context=binder_context,
+            legacy_latex_accents=legacy_latex_accents,
+            emitter=emitter,
+        )
+    except TemplateError as exc:
+        if debug_enabled(emitter):
+            raise
+        raise_conversion_error(emitter, str(exc), exc)
     slot_outputs = render_result["slot_outputs"]
     document_state = render_result["document_state"]
     renderer = render_result["renderer"]
@@ -524,7 +576,40 @@ def _render_slot_fragments(
     if not isinstance(style_override, str):
         style_override = str(style_override or "")
     formatter.default_code_style = style_override.strip() or formatter.default_code_style
+    partial_providers: dict[str, str] = {name: "core" for name in formatter._template_names.keys()}
+    fragment_names = _resolve_active_fragments(binding, binder_context.template_overrides)
+    fragment_source_dir = _resolve_fragment_source_dir(
+        binder_context.template_overrides, binder_context
+    )
+    required_partials: dict[str, set[str]] = {}
+    if fragment_names:
+        fragment_overrides, fragment_required, fragment_providers = collect_fragment_partials(
+            fragment_names,
+            source_dir=fragment_source_dir,
+        )
+        for key, override_path in fragment_overrides.items():
+            formatter.override_template(key, override_path)
+            partial_providers[key] = fragment_providers.get(key, "fragment")
+        for key, owners in fragment_required.items():
+            required_partials.setdefault(key, set()).update(owners)
+
     binding.apply_formatter_overrides(formatter)
+    template_provider = binding.name or "template"
+    for key in binding.formatter_overrides:
+        partial_providers[key] = template_provider
+    if binding.required_partials:
+        for name in binding.required_partials:
+            required_partials.setdefault(name, set()).add(template_provider)
+
+    available_partials = set(formatter._template_names.keys())
+    missing_partials = [name for name in required_partials if name not in available_partials]
+    if missing_partials:
+        details = []
+        for name in sorted(missing_partials):
+            owners = ", ".join(sorted(required_partials.get(name, set()))) or "unknown providers"
+            details.append(f"partial '{name}' required by {owners}")
+        raise TemplateError(f"Missing {', '.join(details)}.")
+    runtime_common["partial_providers"] = partial_providers
     renderer: LaTeXRenderer | None = None
 
     def renderer_factory() -> LaTeXRenderer:

@@ -3,14 +3,14 @@ from __future__ import annotations
 from collections.abc import Mapping
 from pathlib import Path
 
-from texsmith.core.fragments import FragmentDefinition, FragmentPiece
+from texsmith.core.fragments import Fragment, FragmentPiece
 from texsmith.core.templates.manifest import TemplateAttributeSpec
 
 
 def create_fragment() -> FragmentDefinition:
     """Return the callouts fragment definition."""
     template_path = Path(__file__).with_name("ts-callouts.jinja.sty")
-    return FragmentDefinition(
+    fragment = Fragment(
         name="ts-callouts",
         pieces=[
             FragmentPiece(
@@ -38,6 +38,7 @@ def create_fragment() -> FragmentDefinition:
         },
         should_render=_uses_callouts,
     )
+    return fragment.to_definition()
 
 
 def _uses_callouts(context: Mapping[str, object]) -> bool:

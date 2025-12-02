@@ -7,6 +7,7 @@ Use this page to see what changed in each TeXSmith release and which LaTeX prere
 | Version | Highlights | Notes |
 | ------- | ---------- | ----- |
 | `0.1.0` | Unified conversion engine (`ConversionService`, `DocumentSlots`, diagnostics emitters), Typer CLI with `render`/`bibliography`, initial template catalog (article, book), diagram adapters (Mermaid, Draw.io, Svgbob), MkDocs integration hooks. | Requires Python 3.10+, MkDocs ≥ 1.6 for docs. Templates target TeX Live 2023. |
+| `0.4.0` | Fragment manifest/ABC (attributes, partials, slot validation), explicit partial precedence (template > fragment > core), template discovery order (built-ins → packages → local → `~/.texsmith/templates`), improved `--template-info` output (slots, fragments, attribute columns). | Update custom fragments to `fragment.toml` + `partials`/`required_partials`; remove legacy template attributes (cover/twocolumn/backmatter/emoji) and use fragment-provided options instead. Use `texsmith templates` to confirm discovery. |
 
 Future releases will append to this table with new features, migration notes, and API changes. If you upgrade past the compatibility range declared in a template manifest (`[compat]`), update the template and rerun its smoke tests.
 

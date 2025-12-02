@@ -20,6 +20,7 @@ from texsmith.core.templates.manifest import (
     TemplateAttributeSpec,
     TemplateError,
 )
+from texsmith.core.partials import normalise_partial_key
 
 
 FragmentKind = Literal["package", "input", "inline"]
@@ -84,6 +85,37 @@ class FragmentPiece:
 
 
 @dataclass(slots=True)
+class Fragment:
+    """Declarative fragment metadata that can be converted to a definition."""
+
+    name: str
+    pieces: list[FragmentPiece]
+    description: str | None = None
+    source: Path | None = None
+    context_defaults: dict[str, Any] = field(default_factory=dict)
+    context_injector: Callable[[dict[str, Any], Mapping[str, Any] | None], None] | None = None
+    should_render: Callable[[Mapping[str, Any]], bool] | None = None
+    attributes: dict[str, TemplateAttributeSpec] = field(default_factory=dict)
+    partials: Mapping[str, Path | str] | Sequence[Path | str] = field(default_factory=dict)
+    required_partials: Sequence[str] = field(default_factory=list)
+
+    def to_definition(self) -> "FragmentDefinition":
+        """Convert to the runtime FragmentDefinition."""
+        return FragmentDefinition(
+            name=self.name,
+            pieces=self.pieces,
+            description=self.description,
+            source=self.source,
+            context_defaults=self.context_defaults,
+            context_injector=self.context_injector,
+            should_render=self.should_render,
+            attributes=self.attributes,
+            partials=self.partials,
+            required_partials=set(self.required_partials),
+        )
+
+
+@dataclass(slots=True)
 class FragmentDefinition:
     """Resolved fragment template ready to render."""
 
@@ -95,27 +127,34 @@ class FragmentDefinition:
     context_injector: Callable[[dict[str, Any], Mapping[str, Any] | None], None] | None = None
     should_render: Callable[[Mapping[str, Any]], bool] | None = None
     attributes: dict[str, TemplateAttributeSpec] = field(default_factory=dict)
+    partials: Mapping[str, Path] | Sequence[Path | str] = field(default_factory=dict)
+    required_partials: set[str] = field(default_factory=set)
     _attribute_resolver: TemplateAttributeResolver | None = field(
         init=False, repr=False, default=None
     )
 
     def __post_init__(self) -> None:
-        if not self.attributes:
-            return
+        if self.attributes:
+            normalised: dict[str, TemplateAttributeSpec] = {}
+            for name, spec in self.attributes.items():
+                if isinstance(spec, TemplateAttributeSpec):
+                    candidate = spec
+                elif isinstance(spec, Mapping):
+                    candidate = TemplateAttributeSpec.model_validate(spec)
+                else:
+                    candidate = TemplateAttributeSpec.model_validate({"default": spec})
+                candidate.name = name
+                if candidate.owner is None:
+                    candidate.owner = self.name
+                normalised[name] = candidate
 
-        normalised: dict[str, TemplateAttributeSpec] = {}
-        for name, spec in self.attributes.items():
-            if isinstance(spec, TemplateAttributeSpec):
-                candidate = spec
-            elif isinstance(spec, Mapping):
-                candidate = TemplateAttributeSpec.model_validate(spec)
-            else:
-                candidate = TemplateAttributeSpec.model_validate({"default": spec})
-            candidate.name = name
-            normalised[name] = candidate
+            object.__setattr__(self, "attributes", normalised)
+            object.__setattr__(self, "_attribute_resolver", TemplateAttributeResolver(normalised))
 
-        object.__setattr__(self, "attributes", normalised)
-        object.__setattr__(self, "_attribute_resolver", TemplateAttributeResolver(normalised))
+        base_dir = self._resolve_base_dir()
+        resolved_partials = self._normalise_partials(base_dir)
+        object.__setattr__(self, "partials", resolved_partials)
+        object.__setattr__(self, "required_partials", self._normalise_required_partials())
 
     def attribute_defaults(self) -> dict[str, Any]:
         """Return defaults for fragment-managed attributes."""
@@ -128,6 +167,60 @@ class FragmentDefinition:
         if self._attribute_resolver is None:
             return {}
         return self._attribute_resolver.merge(overrides)
+
+    def iter_partials(self) -> Iterable[tuple[str, Path]]:
+        """Yield resolved partial overrides."""
+        return self.partials.items()
+
+    def _resolve_base_dir(self) -> Path:
+        if self.source is not None:
+            return (self.source if self.source.is_dir() else self.source.parent).resolve()
+        if self.pieces:
+            return self.pieces[0].template_path.parent
+        return Path(".").resolve()
+
+    def _normalise_partials(self, base_dir: Path) -> dict[str, Path]:
+        raw_partials = self.partials or {}
+        resolved: dict[str, Path] = {}
+        entries: Iterable[tuple[str | None, Path | str]]
+
+        if isinstance(raw_partials, Mapping):
+            entries = [(key, value) for key, value in raw_partials.items()]
+        elif isinstance(raw_partials, Sequence) and not isinstance(raw_partials, (str, bytes)):
+            entries = [(None, entry) for entry in raw_partials]
+        else:
+            return resolved
+
+        for name_hint, payload in entries:
+            path_value = Path(payload)
+            resolved_path = path_value if path_value.is_absolute() else (base_dir / path_value).resolve()
+            if not resolved_path.exists():
+                raise TemplateError(
+                    f"Partial '{payload}' declared by fragment '{self.name}' is missing: {resolved_path}"
+                )
+
+            candidate_name = (
+                str(name_hint)
+                if name_hint is not None
+                else path_value.with_suffix("").as_posix()
+            )
+            normalised = normalise_partial_key(candidate_name)
+            if not normalised:
+                raise TemplateError(f"Fragment '{self.name}' declared a partial with an empty name.")
+            if normalised in resolved:
+                raise TemplateError(
+                    f"Fragment '{self.name}' declares partial '{normalised}' more than once."
+                )
+            resolved[normalised] = resolved_path
+        return resolved
+
+    def _normalise_required_partials(self) -> set[str]:
+        required: set[str] = set()
+        for entry in self.required_partials or set():
+            key = normalise_partial_key(str(entry))
+            if key:
+                required.add(key)
+        return required
 
     @classmethod
     def from_manifest(cls, manifest_path: Path) -> FragmentDefinition:
@@ -169,6 +262,22 @@ class FragmentDefinition:
                     if isinstance(value, Mapping)
                     else TemplateAttributeSpec.model_validate({"default": value})
                 )
+        partials: Mapping[str, Path | str] | Sequence[Path | str] = {}
+        partial_entries = payload.get("partials")
+        if isinstance(partial_entries, (Mapping, list, tuple)):
+            partials = partial_entries
+        elif partial_entries is not None:
+            raise TemplateError("Fragment manifest 'partials' must be a list or mapping.")
+
+        required_partials: set[str] = set()
+        required_entries = payload.get("required_partials") or ()
+        if isinstance(required_entries, Sequence) and not isinstance(required_entries, (str, bytes)):
+            for entry in required_entries:
+                if not isinstance(entry, str):
+                    raise TemplateError("Fragment 'required_partials' entries must be strings.")
+                required_partials.add(entry)
+        elif required_entries:
+            raise TemplateError("Fragment manifest 'required_partials' must be a list of strings.")
 
         return cls(
             name=name,
@@ -177,6 +286,8 @@ class FragmentDefinition:
             source=manifest_path,
             context_defaults={},
             attributes=attributes,
+            partials=partials,
+            required_partials=required_partials,
         )
 
     @classmethod
@@ -213,6 +324,9 @@ def _load_entrypoint(entrypoint: str, *, fallback_dir: Path) -> FragmentDefiniti
     if isinstance(definition, FragmentDefinition):
         return definition
 
+    if isinstance(definition, Fragment):
+        return definition.to_definition()
+
     if isinstance(definition, Mapping):
         files = definition.get("files") or []
         name = definition.get("name") or fallback_dir.name
@@ -229,12 +343,17 @@ def _load_entrypoint(entrypoint: str, *, fallback_dir: Path) -> FragmentDefiniti
                     if isinstance(value, Mapping)
                     else TemplateAttributeSpec.model_validate({"default": value})
                 )
+        partials_payload = definition.get("partials") or {}
+        required_partials_payload = definition.get("required_partials") or set()
+        required_partials: set[str] = set(required_partials_payload) if required_partials_payload else set()
         return FragmentDefinition(
             name=name,
             pieces=pieces,
             description=description if isinstance(description, str) else None,
             source=fallback_dir,
             attributes=attributes,
+            partials=partials_payload,
+            required_partials=required_partials,
         )
 
     raise TemplateError(
@@ -360,18 +479,55 @@ def inject_fragment_attributes(
     context: dict[str, Any],
     overrides: Mapping[str, Any] | None = None,
     source_dir: Path | None = None,
+    declared_attribute_owners: Mapping[str, str] | None = None,
 ) -> dict[str, Any]:
     """Populate ``context`` with fragment-owned attributes."""
     if not isinstance(context, dict):
         raise TemplateError("Fragment attribute injection requires a mutable context dictionary.")
 
+    owners: dict[str, str] = dict(declared_attribute_owners or {})
     injected: dict[str, Any] = {}
     for fragment in _resolve_fragment_definitions(names, source_dir=source_dir):
         resolved = fragment.resolve_attributes(overrides)
+        for attr_name in fragment.attributes:
+            owner = fragment.attributes[attr_name].owner or fragment.name
+            existing = owners.get(attr_name)
+            if existing and existing != owner:
+                raise TemplateError(
+                    f"Attribute '{attr_name}' already owned by '{existing}', conflict with '{owner}'."
+                )
+            owners[attr_name] = owner
         for key, value in resolved.items():
             context[key] = value
             injected[key] = value
     return injected
+
+
+def collect_fragment_partials(
+    names: Iterable[str],
+    *,
+    source_dir: Path | None = None,
+) -> tuple[dict[str, Path], dict[str, set[str]], dict[str, str]]:
+    """Return partial overrides and requirements declared by the selected fragments."""
+    overrides: dict[str, Path] = {}
+    required_by: dict[str, set[str]] = {}
+    providers: dict[str, str] = {}
+
+    for fragment in _resolve_fragment_definitions(names, source_dir=source_dir):
+        for partial_name, partial_path in fragment.iter_partials():
+            if partial_name in overrides:
+                existing = providers.get(partial_name, "unknown fragment")
+                raise TemplateError(
+                    f"Partial '{partial_name}' provided by fragment '{fragment.name}' "
+                    f"conflicts with '{existing}'."
+                )
+            overrides[partial_name] = partial_path
+            providers[partial_name] = fragment.name
+
+        for required in fragment.required_partials:
+            required_by.setdefault(required, set()).add(fragment.name)
+
+    return overrides, required_by, providers
 
 
 def render_fragments(
@@ -471,11 +627,13 @@ def render_fragments(
 
 __all__ = [
     "FRAGMENT_REGISTRY",
+    "Fragment",
     "FragmentDefinition",
     "FragmentPiece",
     "FragmentRegistry",
     "FragmentRenderResult",
     "collect_fragment_attribute_defaults",
+    "collect_fragment_partials",
     "inject_fragment_attributes",
     "register_fragment",
     "render_fragments",

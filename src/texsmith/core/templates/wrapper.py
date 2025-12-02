@@ -77,6 +77,10 @@ def wrap_template_document(
         source_dir_raw = overrides_press.get("_source_dir") or overrides_press.get("source_dir")
         if source_dir_raw:
             source_dir = Path(source_dir_raw)
+    if source_dir is None and isinstance(overrides_payload, Mapping):
+        raw_source_dir = overrides_payload.get("source_dir")
+        if isinstance(raw_source_dir, (str, Path)) and str(raw_source_dir):
+            source_dir = Path(raw_source_dir)
     fragment_names = list(fragments or [])
     if not fragment_names:
         if template_runtime is not None:
@@ -133,6 +137,9 @@ def wrap_template_document(
             context=template_context,
             overrides=overrides_payload,
             source_dir=source_dir,
+            declared_attribute_owners=(
+                template.info.attribute_owners() if hasattr(template, "info") else {}
+            ),
         )
 
     code_section = template_context.get("code")

@@ -3,13 +3,13 @@ from __future__ import annotations
 from collections.abc import Mapping
 from pathlib import Path
 
-from texsmith.core.fragments import FragmentDefinition, FragmentPiece
+from texsmith.core.fragments import Fragment, FragmentDefinition, FragmentPiece
 
 
 def create_fragment() -> FragmentDefinition:
     """Conditional keystroke helpers."""
     template_path = Path(__file__).with_name("ts-keystrokes.jinja.sty")
-    return FragmentDefinition(
+    fragment = Fragment(
         name="ts-keystrokes",
         pieces=[
             FragmentPiece(
@@ -23,6 +23,7 @@ def create_fragment() -> FragmentDefinition:
         context_defaults={"extra_packages": ""},
         should_render=_uses_keystrokes,
     )
+    return fragment.to_definition()
 
 
 def _uses_keystrokes(context: Mapping[str, object]) -> bool:
