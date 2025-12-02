@@ -121,7 +121,7 @@ docs = [
 
 
 [tool.uv]
-default-groups = ["dev"]
+default-groups = ["dev", "docs"]
 package = true
 
 [tool.uv.workspace]
