@@ -1,0 +1,29 @@
+Template: snippet
+Name: snippet
+Version: 0.1.4
+Entrypoint: template/template.tex
+Engine: lualatex
+Shell escape: no
+Template root: /home/ycr/texsmith/src/texsmith/templates/snippet
+TeX Live year: 2023
+tlmgr packages: babel, fontspec, hyphenat, microtype, tcolorbox, fontawesome5, csquotes, hyperref, tikz, glossaries, biblatex
+Formatter overrides: -
+Attributes:
+  - border: TemplateAttributeSpec(default=True, type='boolean', format='markdown', choices=[], sources=['border'], escape=None, normaliser=None, required=False, allow_empty=True, description=None, range=None, owner='snippet', name='border')
+  - dogear: TemplateAttributeSpec(default='5mm', type='string', format='markdown', choices=[], sources=['dogear'], escape=None, normaliser=None, required=False, allow_empty=False, description=None, range=None, owner='snippet', name='dogear')
+  - language: TemplateAttributeSpec(default='english', type='string', format='markdown', choices=[], sources=['language'], escape=None, normaliser=None, required=False, allow_empty=False, description=None, range=None, owner='snippet', name='language')
+  - margin: TemplateAttributeSpec(default='6mm', type='string', format='markdown', choices=[], sources=['margin'], escape=None, normaliser=None, required=False, allow_empty=False, description=None, range=None, owner='snippet', name='margin')
+  - width: TemplateAttributeSpec(default='12cm', type='string', format='markdown', choices=[], sources=['width'], escape=None, normaliser=None, required=False, allow_empty=False, description=None, range=None, owner='snippet', name='width')
+Assets:
+  - No declared assets
+Fragments:
+  - ts-fonts: Font selection and fallbacks for TeXSmith templates. (attributes: -)
+  - ts-extra: Auxiliary LaTeX packages loaded on demand (hyperref, ulem, soul, etc.). (attributes: -)
+  - ts-keystrokes: Keyboard shortcut rendering helpers loaded only when needed. (attributes: -)
+  - ts-callouts: Reusable callout styles shared by built-in templates. (attributes: callout_style)
+  - ts-code: Configurable code listings used by Markdown code blocks. (attributes: code)
+  - ts-glossary: Glossary and acronym helpers. (attributes: -)
+  - ts-bibliography: Bibliography helpers (packages + backmatter) loaded when citations are present. (attributes: -)
+  - ts-todolist: Todolist helper commands loaded when checklist macros are present. (attributes: -)
+Slots:
+  - mainmatter (default): base=-, depth=section, offset=0, effective=1, strip_heading=no

@@ -4,14 +4,14 @@ from collections.abc import Mapping
 from pathlib import Path
 from typing import Any
 
-from texsmith.core.fragments import FragmentDefinition, FragmentPiece
+from texsmith.core.fragments import Fragment, FragmentDefinition, FragmentPiece
 from texsmith.core.templates.manifest import TemplateAttributeSpec, TemplateError
 
 
 def create_fragment() -> FragmentDefinition:
     """Return the typesetting fragment definition."""
     template_path = Path(__file__).with_name("ts-typesetting.tex.jinja")
-    return FragmentDefinition(
+    fragment = Fragment(
         name="ts-typesetting",
         pieces=[
             FragmentPiece(
@@ -59,6 +59,7 @@ def create_fragment() -> FragmentDefinition:
             ),
         },
     )
+    return fragment.to_definition()
 
 
 def _inject_context(

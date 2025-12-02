@@ -1,0 +1,51 @@
+Template: letter
+Name: formal-letter
+Version: 0.1.0
+Description: Formal letter template based on KOMA-Script with configurable sender/recipient and standards.
+Entrypoint: template/template.tex
+Engine: xelatex
+Shell escape: no
+Template root: /home/ycr/texsmith/src/texsmith/templates/letter
+TeX Live year: 2023
+tlmgr packages: babel, fontspec, microtype, koma-script
+Formatter overrides: -
+Attributes:
+  - back_address: TemplateAttributeSpec(default='', type='string', format='markdown', choices=[], sources=['back_address'], escape='latex', normaliser=None, required=False, allow_empty=True, description=None, range=None, owner='formal-letter', name='back_address')
+  - callout_style: TemplateAttributeSpec(default={}, type=None, format='markdown', choices=[], sources=[], escape=None, normaliser=None, required=False, allow_empty=True, description=None, range=None, owner='formal-letter', name='callout_style')
+  - closing: TemplateAttributeSpec(default='', type='string', format='markdown', choices=[], sources=['closing'], escape='latex', normaliser=None, required=False, allow_empty=True, description='Closing phrase.', range=None, owner='formal-letter', name='closing') — Closing phrase.
+  - cursive: TemplateAttributeSpec(default=False, type='boolean', format='markdown', choices=[], sources=['cursive'], escape=None, normaliser=None, required=False, allow_empty=True, description='Toggle cursive signature font.', range=None, owner='formal-letter', name='cursive') — Toggle cursive signature font.
+  - date: TemplateAttributeSpec(default='', type='string', format='markdown', choices=[], sources=['date'], escape='latex', normaliser=None, required=False, allow_empty=True, description=None, range=None, owner='formal-letter', name='date')
+  - fold_marks: TemplateAttributeSpec(default=False, type='boolean', format='markdown', choices=[], sources=['fold_marks'], escape=None, normaliser=None, required=False, allow_empty=True, description='Toggle fold marks.', range=None, owner='formal-letter', name='fold_marks') — Toggle fold marks.
+  - from_address: TemplateAttributeSpec(default=[], type='list', format='markdown', choices=[], sources=['from_address'], escape=None, normaliser=None, required=False, allow_empty=True, description=None, range=None, owner='formal-letter', name='from_address')
+  - from_location: TemplateAttributeSpec(default='', type='string', format='markdown', choices=[], sources=['from_location'], escape='latex', normaliser=None, required=False, allow_empty=True, description=None, range=None, owner='formal-letter', name='from_location')
+  - from_name: TemplateAttributeSpec(default='', type='string', format='markdown', choices=[], sources=['from_name'], escape='latex', normaliser=None, required=True, allow_empty=False, description='Sender full name.', range=None, owner='formal-letter', name='from_name') — Sender full name.
+  - language: TemplateAttributeSpec(default='en-UK', type='string', format='markdown', choices=[], sources=['language'], escape=None, normaliser=None, required=False, allow_empty=False, description='Language for babel.', range=None, owner='formal-letter', name='language') — Language for babel.
+  - margin: TemplateAttributeSpec(default='default', type='string', format='markdown', choices=[], sources=['margin'], escape=None, normaliser='margin_style', required=False, allow_empty=True, description='Margin style (default, wide, narrow).', range=None, owner='formal-letter', name='margin') — Margin style (default, wide, narrow).
+  - object: TemplateAttributeSpec(default='', type='string', format='markdown', choices=[], sources=['object'], escape='latex', normaliser=None, required=False, allow_empty=True, description='Subject line.', range=None, owner='formal-letter', name='object') — Subject line.
+  - opening: TemplateAttributeSpec(default='', type='string', format='markdown', choices=[], sources=['opening'], escape='latex', normaliser=None, required=False, allow_empty=True, description='Opening phrase.', range=None, owner='formal-letter', name='opening') — Opening phrase.
+  - output_dir: TemplateAttributeSpec(default='', type='string', format='raw', choices=[], sources=['output_dir'], escape=None, normaliser=None, required=False, allow_empty=True, description=None, range=None, owner='formal-letter', name='output_dir')
+  - page_numbers: TemplateAttributeSpec(default=False, type='boolean', format='markdown', choices=[], sources=['page_numbers'], escape=None, normaliser=None, required=False, allow_empty=True, description='Enable page numbers.', range=None, owner='formal-letter', name='page_numbers') — Enable page numbers.
+  - postscript: TemplateAttributeSpec(default='', type='string', format='markdown', choices=[], sources=['postscript'], escape='latex', normaliser=None, required=False, allow_empty=True, description='Postscript paragraph.', range=None, owner='formal-letter', name='postscript') — Postscript paragraph.
+  - preamble: TemplateAttributeSpec(default='', type='string', format='markdown', choices=[], sources=['preamble'], escape=None, normaliser=None, required=False, allow_empty=True, description=None, range=None, owner='formal-letter', name='preamble')
+  - reference: TemplateAttributeSpec(default='', type='string', format='markdown', choices=[], sources=['reference'], escape='latex', normaliser=None, required=False, allow_empty=True, description='Reference field content.', range=None, owner='formal-letter', name='reference') — Reference field content.
+  - reference_fields: TemplateAttributeSpec(default=False, type='boolean', format='markdown', choices=[], sources=['reference_fields'], escape=None, normaliser=None, required=False, allow_empty=True, description='Whether to render reference fields block.', range=None, owner='formal-letter', name='reference_fields') — Whether to render reference fields block.
+  - signature: TemplateAttributeSpec(default='', type='any', format='markdown', choices=[], sources=['signature'], escape=None, normaliser=None, required=False, allow_empty=True, description='Signature block (text or raw LaTeX).', range=None, owner='formal-letter', name='signature') — Signature block (text or raw LaTeX).
+  - signature_align: TemplateAttributeSpec(default='left', type='string', format='markdown', choices=[], sources=['signature_align'], escape=None, normaliser=None, required=False, allow_empty=True, description=None, range=None, owner='formal-letter', name='signature_align')
+  - source_dir: TemplateAttributeSpec(default='', type='string', format='markdown', choices=[], sources=['source_dir'], escape=None, normaliser=None, required=False, allow_empty=True, description=None, range=None, owner='formal-letter', name='source_dir')
+  - standard: TemplateAttributeSpec(default='', type='string', format='markdown', choices=[], sources=['standard', 'format'], escape=None, normaliser=None, required=False, allow_empty=True, description='Letter standard/format (e.g., sn, nf).', range=None, owner='formal-letter', name='standard') — Letter standard/format (e.g., sn, nf).
+  - to_address: TemplateAttributeSpec(default=[], type='list', format='markdown', choices=[], sources=['to_address'], escape=None, normaliser=None, required=False, allow_empty=True, description=None, range=None, owner='formal-letter', name='to_address')
+  - to_name: TemplateAttributeSpec(default='', type='string', format='markdown', choices=[], sources=['to_name'], escape='latex', normaliser=None, required=True, allow_empty=False, description='Recipient full name.', range=None, owner='formal-letter', name='to_name') — Recipient full name.
+Assets:
+  - fonts/modernline.otf <- fonts/modernline.otf (templated: no, encoding: -)
+Fragments:
+  - ts-fonts: Font selection and fallbacks for TeXSmith templates. (attributes: -)
+  - ts-extra: Auxiliary LaTeX packages loaded on demand (hyperref, ulem, soul, etc.). (attributes: -)
+  - ts-keystrokes: Keyboard shortcut rendering helpers loaded only when needed. (attributes: -)
+  - ts-callouts: Reusable callout styles shared by built-in templates. (attributes: callout_style)
+  - ts-code: Configurable code listings used by Markdown code blocks. (attributes: code)
+  - ts-glossary: Glossary and acronym helpers. (attributes: -)
+  - ts-bibliography: Bibliography helpers (packages + backmatter) loaded when citations are present. (attributes: -)
+  - ts-todolist: Todolist helper commands loaded when checklist macros are present. (attributes: -)
+Slots:
+  - backmatter (optional): base=-, depth=-, offset=0, effective=0, strip_heading=yes
+  - mainmatter (default): base=-, depth=-, offset=0, effective=0, strip_heading=no

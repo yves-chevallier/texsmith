@@ -62,15 +62,8 @@ def test_render_template_writes_file() -> None:
         assert "\\VAR{" not in rc_content
         assert "$lualatex" in rc_content
 
-        circles = output_dir / "covers" / "circles.tex"
-        assert circles.exists()
-        circles_content = circles.read_text(encoding="utf-8")
-        assert "\\VAR{" not in circles_content
-        assert "\\def\\covercolor{indigo(dye)}" in circles_content
-
-        titlepage = output_dir / "titlepage.tex"
-        assert titlepage.exists()
-        assert "\\BLOCK" not in titlepage.read_text(encoding="utf-8")
+        assert not (output_dir / "covers").exists()
+        assert not (output_dir / "titlepage.tex").exists()
 
 
 def test_render_template_applies_markdown_metadata() -> None:

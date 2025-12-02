@@ -32,10 +32,6 @@ fragments = [
     "ts-todolist",
 ]
 
-[latex.template.attributes.base_level]
-default = 0
-type = "integer"
-
 [latex.template.attributes.title]
 default = ""
 type = "string"
@@ -50,11 +46,6 @@ type = "string"
 escape = "latex"
 sources = ["subtitle"]
 description = "The subtitle of the document."
-
-[latex.template.attributes.emoji]
-default = "black"
-type = "string"
-sources = ["emoji"]
 
 [latex.template.attributes.toc]
 default = false
@@ -82,12 +73,6 @@ allow_empty = false
 normaliser = "babel_language"
 description = "The language for hyphenation, typesettings and document terms (e.g., 'Table of Contents')."
 
-[latex.template.attributes.columns]
-default = 1
-range = [1, 2]
-type = "integer"
-description = "Number of columns in the document. Can be 1 or 2."
-
 [latex.template.attributes.page_numbers]
 default = true
 type = "boolean"
@@ -106,13 +91,6 @@ type = "string"
 allow_empty = false
 sources = ["glossary_style"]
 description = "The style used for the glossary section."
-
-[latex.template.attributes.preamble]
-default = ""
-type = "string"
-allow_empty = true
-format = "raw"
-sources = ["preamble"]
 
 [latex.template.attributes.bibliography_style]
 default = "numeric"
@@ -133,13 +111,10 @@ depth = "section"
 strip_heading = true
 description = "The abstract or summary of the document."
 
+[latex.template.slots.appendix]
+depth = "section"
+description = "Appendix content inserted before backmatter."
+
 [latex.template.slots.backmatter]
 depth = "section"
 strip_heading = true
-
-# Additional Assets:
-# ------------------
-# All additional assets to be included in the template package.
-# They will be copied to the working directory when the template is used.
-[latex.template.assets]
-".latexmkrc" = { source = "../common/latexmkrc", template = true }

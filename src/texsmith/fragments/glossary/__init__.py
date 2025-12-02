@@ -3,14 +3,14 @@ from __future__ import annotations
 from collections.abc import Mapping
 from pathlib import Path
 
-from texsmith.core.fragments import FragmentDefinition, FragmentPiece
+from texsmith.core.fragments import Fragment, FragmentDefinition, FragmentPiece
 
 
 def create_fragment() -> FragmentDefinition:
     """Return the glossary/acronyms fragment definition."""
     package_path = Path(__file__).with_name("ts-glossary.jinja.sty")
     backmatter_path = Path(__file__).with_name("ts-glossary-backmatter.jinja.tex")
-    return FragmentDefinition(
+    fragment = Fragment(
         name="ts-glossary",
         pieces=[
             FragmentPiece(
@@ -29,6 +29,7 @@ def create_fragment() -> FragmentDefinition:
         context_defaults={"extra_packages": "", "fragment_backmatter": ""},
         should_render=_has_glossary,
     )
+    return fragment.to_definition()
 
 
 def _has_glossary(context: Mapping[str, object]) -> bool:

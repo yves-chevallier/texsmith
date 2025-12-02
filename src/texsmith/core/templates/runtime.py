@@ -34,6 +34,7 @@ class TemplateRuntime:
     default_slot: str
     formatter_overrides: dict[str, Path]
     base_level: int | None
+    required_partials: set[str] = field(default_factory=set)
     extras: dict[str, Any] = field(default_factory=dict)
 
 
@@ -50,6 +51,7 @@ class TemplateBinding:
     slots: dict[str, TemplateSlot]
     default_slot: str
     base_level: int | None
+    required_partials: set[str] = field(default_factory=set)
 
     def slot_levels(self, *, offset: int = 0) -> dict[str, int]:
         """Return the resolved base level for each slot."""
@@ -248,6 +250,7 @@ def load_template_runtime(template: str) -> TemplateRuntime:
         default_slot=default_slot,
         formatter_overrides=formatter_overrides,
         base_level=template_base,
+        required_partials=set(template_instance.info.required_partials or []),
         extras=extras,
     )
 
@@ -266,6 +269,17 @@ def resolve_template_binding(
         runtime = load_template_runtime(template)
 
     if runtime is not None:
+        # Adjust base level for book parts when requested via overrides.
+        binding_base_level = runtime.base_level
+        part_flag = None
+        press_section = template_overrides.get("press")
+        if isinstance(template_overrides.get("part"), bool):
+            part_flag = template_overrides.get("part")
+        elif isinstance(press_section, Mapping) and isinstance(press_section.get("part"), bool):
+            part_flag = press_section.get("part")
+        if part_flag and runtime.name == "book":
+            binding_base_level = coerce_base_level("part")
+
         binding = TemplateBinding(
             runtime=runtime,
             instance=runtime.instance,
@@ -275,7 +289,8 @@ def resolve_template_binding(
             formatter_overrides=dict(runtime.formatter_overrides),
             slots=runtime.slots,
             default_slot=runtime.default_slot,
-            base_level=runtime.base_level,
+            base_level=binding_base_level,
+            required_partials=set(runtime.required_partials),
         )
     else:
         binding = TemplateBinding(
@@ -288,6 +303,7 @@ def resolve_template_binding(
             slots={"mainmatter": TemplateSlot(default=True)},
             default_slot="mainmatter",
             base_level=None,
+            required_partials=set(),
         )
 
     base_override = coerce_base_level(extract_base_level_override(template_overrides))

@@ -137,7 +137,10 @@ class TemplateSession:
         emitter: DiagnosticEmitter | None = None,
     ) -> None:
         self.runtime = runtime
-        attributes = runtime.instance.info.attribute_defaults() if runtime.instance else {}
+        attributes: dict[str, Any] = {}
+        if runtime.instance:
+            attributes = runtime.instance.info.attribute_defaults()
+            attributes.update(runtime.instance.info.emit_defaults())
         fragment_defaults: dict[str, Any] = {}
         if runtime.extras:
             fragment_defaults = collect_fragment_attribute_defaults(

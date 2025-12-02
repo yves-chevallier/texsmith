@@ -73,6 +73,7 @@ Inspect templates by name or path to understand their slots, metadata attributes
 texsmith --template article --template-info
 # or inspect a local path
 texsmith --template ./templates/nature --template-info
+texsmith templates  # view discovery order across built-ins/packages/local/home
 ```
 
 Use this command before wiring slots or when you need to confirm which tlmgr packages to preinstall in CI.

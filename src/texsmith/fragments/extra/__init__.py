@@ -3,13 +3,13 @@ from __future__ import annotations
 from collections.abc import Mapping
 from pathlib import Path
 
-from texsmith.core.fragments import FragmentDefinition, FragmentPiece
+from texsmith.core.fragments import Fragment, FragmentDefinition, FragmentPiece
 
 
 def create_fragment() -> FragmentDefinition:
     """Return the auxiliary utilities fragment definition."""
     template_path = Path(__file__).with_name("ts-extra.jinja.tex")
-    return FragmentDefinition(
+    fragment = Fragment(
         name="ts-extra",
         pieces=[
             FragmentPiece(
@@ -24,6 +24,7 @@ def create_fragment() -> FragmentDefinition:
         context_injector=_inject_packages,
         should_render=_has_packages,
     )
+    return fragment.to_definition()
 
 
 def _has_packages(context: Mapping[str, object]) -> bool:

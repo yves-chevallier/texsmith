@@ -77,7 +77,9 @@ Roadmap and development notes for TeXSmith. I keep this file as a running checkl
 - [ ] Implement drawio over pywreight
 - [ ] ts-languages that uses polyglossia and specific things to languages
 
-# Refactor notes
+# Refactoring Plan: Templates, Fragments, Partials, Attributes
+
+We want to do a huge refactoring on the concepts of templates, fragments, partials, and attributes. Here some notes about these concepts. I ask you to load the context (architecture of TexSmith, how templates/fragments are loaded, how attributes are emitted and consumed, etc) before proceeding. Then establish a plan in phases (plan, steps, tests, cleaning old code, etc.) to perform this refactoring. I will execute these steps once the plan is ready in the order.
 
 ## Components
 
@@ -96,6 +98,8 @@ Template
 
 Attribute
 : An attribute is a scalar or an object loaded in the context of a document. Attributes can be emitted by the user (CLI through `--attribute`), from the frontmatter in markdown files or from an external config file. Fragments or templates can also emit attributes, but they can also consume them to configure their behavior.
+
+We need to document these concepts in the docs/guide.
 
 ## Pipeline of document generation
 

@@ -385,9 +385,11 @@ def test_imprint_fields_render_markdown(tmp_path: Path) -> None:
     build_dir = tmp_path / "imprint-build"
     session.render(build_dir)
 
-    imprint = (build_dir / "imprint.tex").read_text(encoding="utf-8")
-    assert r"Thanks to \textsc{ACME}!" in imprint
-    assert r"http://example.com" in imprint
+    tex_files = list(build_dir.glob("*.tex"))
+    assert tex_files, "Expected rendered LaTeX output"
+    content = tex_files[0].read_text(encoding="utf-8")
+    assert r"Thanks to \textsc{ACME}!" in content
+    assert r"http://example.com" in content
 
 
 def test_latexmkrc_content_optional_sections() -> None:

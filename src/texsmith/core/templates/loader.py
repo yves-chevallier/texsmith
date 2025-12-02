@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Iterable, Mapping
 from importlib import metadata
+import importlib.util
 from pathlib import Path
 import shutil
 from typing import Any
@@ -11,6 +12,7 @@ from typing import Any
 from .base import WrappableTemplate, load_specialised_template
 from .builtins import load_builtin_template
 from .manifest import TemplateError
+from .builtins import iter_builtin_templates
 
 
 def _looks_like_template_root(path: Path) -> bool:
@@ -26,27 +28,32 @@ def _looks_like_template_root(path: Path) -> bool:
 def load_template(identifier: str) -> WrappableTemplate:
     """Load a template selected by name or filesystem path."""
     path_candidate = Path(identifier).expanduser()
-    if path_candidate.exists():
+    looks_like_path = (
+        path_candidate.is_absolute()
+        or "/" in identifier
+        or "\\" in identifier
+        or identifier.startswith(".")
+    )
+    if looks_like_path and path_candidate.exists():
         return _load_path_template(path_candidate)
 
-    if not path_candidate.is_absolute():
-        slug = _slug_from_identifier(identifier)
-        for candidate in _iter_local_candidates(path_candidate, slug):
-            if _looks_like_template_root(candidate):
-                return _load_path_template(candidate)
+    slug = _slug_from_identifier(identifier)
 
     builtin = load_builtin_template(identifier)
     if builtin is not None:
         return builtin
 
-    entry_points = metadata.entry_points()
-    group = entry_points.select(group="texsmith.templates")
+    packaged_root = _resolve_packaged_template_root(slug)
+    if packaged_root is not None:
+        return _load_path_template(packaged_root)
 
-    for entry_point in _match_entry_points(group, identifier):
-        loaded = entry_point.load()
-        template = _coerce_template(loaded)
-        if template is not None:
-            return template
+    for candidate in _iter_local_candidates(slug):
+        if _looks_like_template_root(candidate):
+            return _load_path_template(candidate)
+
+    home_candidate = _home_template_candidate(slug)
+    if home_candidate is not None and _looks_like_template_root(home_candidate):
+        return _load_path_template(home_candidate)
 
     raise TemplateError(
         f"Unable to load template '{identifier}'. Provide a valid path or "
@@ -129,50 +136,161 @@ def _slug_from_identifier(identifier: str) -> str:
     return slug
 
 
-def _iter_local_candidates(initial: Path, slug: str) -> Iterable[Path]:
-    """Yield additional candidate locations for local templates."""
-    candidates: list[Path] = []
-    if str(initial) not in {slug, f"./{slug}", f".\\{slug}"}:
-        candidates.append(initial)
-
-    distribution_name = f"texsmith-template-{slug}"
-    package_name = f"texsmith_template_{slug}"
-
-    def _extend_for_root(root: Path) -> None:
-        templates_root = root / "templates"
-        candidates.extend(
-            [
-                root / slug,
-                root / package_name,
-                root / distribution_name / package_name,
-                root / distribution_name,
-                templates_root / slug,
-                templates_root / package_name,
-                templates_root / distribution_name / package_name,
-                templates_root / distribution_name,
-            ]
-        )
-
+def _iter_local_candidates(slug: str | None) -> Iterable[Path]:
+    """Yield template candidates from the current directory and its parents."""
     cwd = Path.cwd().resolve()
     visited_roots: set[Path] = set()
     current = cwd
     while current not in visited_roots:
         visited_roots.add(current)
-        _extend_for_root(current)
+        templates_root = current / "templates"
+        roots = (current, templates_root)
+        if not slug:
+            for root in roots:
+                if not root.exists():
+                    continue
+                for child in root.iterdir():
+                    if child.is_dir():
+                        yield child
+        else:
+            distribution_name = f"texsmith-template-{slug}"
+            package_name = f"texsmith_template_{slug}"
+            for root in roots:
+                for candidate in (
+                    root / slug,
+                    root / package_name,
+                    root / distribution_name / package_name,
+                    root / distribution_name,
+                ):
+                    yield candidate
         if current.parent == current:
             break
         current = current.parent
 
-    seen: set[str] = set()
-    for candidate in candidates:
-        key = str(candidate.resolve()) if candidate.exists() else str(candidate)
-        if key in seen:
+
+def _resolve_packaged_template_root(slug: str) -> Path | None:
+    """Return a template root provided by an installed Python package."""
+    entry_points = metadata.entry_points()
+    group = entry_points.select(group="texsmith.templates")
+    for entry_point in _match_entry_points(group, slug):
+        loaded = entry_point.load()
+        template = _coerce_template(loaded)
+        if template is not None:
+            return template.root
+
+    candidate_modules = [
+        f"texsmith_template_{slug}",
+        f"texsmith-template-{slug}",
+        slug,
+    ]
+    for module_name in candidate_modules:
+        spec = importlib.util.find_spec(module_name)
+        if spec is None or spec.origin is None:
             continue
-        seen.add(key)
-        yield candidate
+        origin_path = Path(spec.origin).resolve()
+        module_root = origin_path.parent if origin_path.name == "__init__.py" else origin_path
+        if _looks_like_template_root(module_root):
+            return module_root
+    return None
+
+
+def _home_template_candidate(slug: str) -> Path | None:
+    """Return a template path under ~/.texsmith/templates if present."""
+    home_root = Path.home() / ".texsmith" / "templates"
+    distribution_name = f"texsmith-template-{slug}"
+    package_name = f"texsmith_template_{slug}"
+    for candidate in (
+        home_root / slug,
+        home_root / package_name,
+        home_root / distribution_name / package_name,
+        home_root / distribution_name,
+    ):
+        if candidate.exists():
+            return candidate
+    return None
+
+
+def discover_templates() -> list[dict[str, str]]:
+    """Return available templates in discovery order."""
+    entries: list[dict[str, str]] = []
+
+    def _record(origin: str, name: str, root: Path) -> None:
+        entries.append({"name": name, "origin": origin, "root": str(root.resolve())})
+
+    for slug in iter_builtin_templates():
+        try:
+            template = load_builtin_template(slug)
+        except TemplateError:
+            continue
+        if template is not None:
+            _record("builtin", slug, template.root)
+
+    try:
+        for dist in metadata.distributions():
+            name = dist.metadata.get("Name", "")
+            if not name.lower().startswith("texsmith-template-"):
+                continue
+            slug = name[len("texsmith-template-") :]
+            root = _resolve_packaged_template_root(slug)
+            if root is None:
+                continue
+            _record("package", slug, root)
+    except Exception:
+        pass
+
+    seen_locals: set[str] = set()
+    for candidate in _iter_local_candidates(""):
+        if not _looks_like_template_root(candidate):
+            continue
+        key = str(candidate.resolve())
+        if key in seen_locals:
+            continue
+        seen_locals.add(key)
+        _record("local", candidate.name, candidate)
+
+    home_root = Path.home() / ".texsmith" / "templates"
+    if home_root.exists():
+        for child in sorted(home_root.iterdir()):
+            if child.is_dir() and _looks_like_template_root(child):
+                _record("home", child.name, child)
+
+    return sorted(entries, key=lambda entry: (entry["origin"], entry["name"]))
+
+    for candidate in _iter_local_candidates("*placeholder*"):
+        pass
+
+    local_candidates: list[Path] = []
+    for slug in set():
+        pass
+
+    for candidate in _iter_local_candidates("*placeholder*"):
+        pass
+
+    def _record(origin: str, name: str, root: Path) -> None:
+        key = (name, str(root))
+        if key in seen_paths:
+            return
+        seen_paths.add(key)
+        entries.append({"name": name, "origin": origin, "root": str(root)})
+
+    # Re-run local with concrete names.
+    visited: set[str] = set()
+    cwd = Path.cwd().resolve()
+    for candidate in _iter_local_candidates(""):
+        if _looks_like_template_root(candidate):
+            _record("local", candidate.name, candidate)
+
+    home_root = Path.home() / ".texsmith" / "templates"
+    if home_root.exists():
+        for child in home_root.iterdir():
+            if child.is_dir() and _looks_like_template_root(child):
+                _record("home", child.name, child)
+
+    return sorted(entries, key=lambda entry: (entry["origin"], entry["name"]))
 
 
 __all__ = [
     "copy_template_assets",
+    "discover_templates",
     "load_template",
 ]

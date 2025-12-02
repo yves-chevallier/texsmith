@@ -27,6 +27,7 @@ from texsmith.adapters.latex.utils import escape_latex_chars
 from texsmith.adapters.markdown import DEFAULT_MARKDOWN_EXTENSIONS, render_markdown
 from texsmith.core.exceptions import LatexRenderingError
 from texsmith.core.metadata import PressMetadataError, normalise_press_metadata
+from texsmith.core.partials import normalise_partial_key
 
 
 class TemplateError(LatexRenderingError):
@@ -108,6 +109,7 @@ class TemplateSlot(BaseModel):
     offset: int = 0
     default: bool = False
     strip_heading: bool = False
+    description: str | None = None
 
     @model_validator(mode="after")
     def _validate_depth(self) -> TemplateSlot:
@@ -477,6 +479,9 @@ class TemplateAttributeSpec(BaseModel):
     normaliser: str | None = None
     required: bool = False
     allow_empty: bool = True
+    description: str | None = None
+    range: list[Any] | None = None
+    owner: str | None = None
 
     # Populated lazily after validation
     name: str = ""
@@ -693,12 +698,15 @@ class TemplateInfo(BaseModel):
     tlmgr_packages: list[str] = Field(default_factory=list)
     fragments: list[str] | None = None
     override: list[str] = Field(default_factory=list)
+    required_partials: list[str] = Field(default_factory=list)
     attributes: dict[str, TemplateAttributeSpec] = Field(default_factory=dict)
     assets: dict[str, TemplateAsset] = Field(default_factory=dict)
     slots: dict[str, TemplateSlot] = Field(default_factory=dict)
+    emit: dict[str, Any] = Field(default_factory=dict)
 
     _attribute_resolver: TemplateAttributeResolver = PrivateAttr()
     _attribute_defaults: dict[str, Any] = PrivateAttr(default_factory=dict)
+    _attribute_owners: dict[str, str] = PrivateAttr(default_factory=dict)
 
     @model_validator(mode="before")
     @classmethod
@@ -742,8 +750,19 @@ class TemplateInfo(BaseModel):
     def _bind_attribute_names(self) -> "TemplateInfo":
         for name, spec in self.attributes.items():
             spec.name = name
+            if spec.owner is None:
+                spec.owner = self.name
+            self._attribute_owners[name] = spec.owner
         self._attribute_resolver = TemplateAttributeResolver(self.attributes)
         self._attribute_defaults = self._attribute_resolver.defaults()
+        normalised_required: list[str] = []
+        for entry in self.required_partials or []:
+            if not isinstance(entry, str):
+                continue
+            key = normalise_partial_key(entry)
+            if key:
+                normalised_required.append(key)
+        self.required_partials = normalised_required
         return self
 
     def resolve_slots(self) -> tuple[dict[str, TemplateSlot], str]:
@@ -770,12 +789,20 @@ class TemplateInfo(BaseModel):
         """Return a deep copy of template attribute defaults."""
         return copy.deepcopy(self._attribute_defaults)
 
+    def emit_defaults(self) -> dict[str, Any]:
+        """Return default attributes emitted by the template."""
+        return copy.deepcopy(self.emit)
+
     def get_attribute_default(self, name: str, default: Any | None = None) -> Any:
         return copy.deepcopy(self._attribute_defaults.get(name, default))
 
     def resolve_attributes(self, overrides: Mapping[str, Any] | None = None) -> dict[str, Any]:
         """Return defaults merged with overrides using the attribute specification."""
         return self._attribute_resolver.merge(overrides)
+
+    def attribute_owners(self) -> dict[str, str]:
+        """Return attribute ownership map (name -> owner)."""
+        return dict(self._attribute_owners)
 
 
 class LatexSection(BaseModel):

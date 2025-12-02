@@ -16,6 +16,8 @@ if "bs4" not in sys.modules:
 
     bs4_stub.BeautifulSoup = object
     bs4_stub.FeatureNotFound = _FeatureNotFoundError
+    bs4_stub.NavigableString = str
+    bs4_stub.Tag = object
     sys.modules["bs4"] = bs4_stub
     bs4_element_stub = types.ModuleType("bs4.element")
     bs4_element_stub.NavigableString = str
@@ -122,7 +124,8 @@ def test_article_template_supports_columns_option() -> None:
 
     rendered = template.wrap_document("Body", overrides=overrides, context=context)
 
-    assert "\\documentclass[letterpaper,landscape,twocolumn]{article}" in rendered
+    assert "\\documentclass[letterpaper,landscape]{article}" in rendered
+    assert "twocolumn" not in rendered
 
 
 def test_article_template_accepts_preamble_override() -> None:
@@ -132,7 +135,7 @@ def test_article_template_accepts_preamble_override() -> None:
     context = template.prepare_context("", overrides=overrides)
     inject_geometry_context(context, overrides)
 
-    assert context["preamble"] == "\\usepackage{xcolor}"
+    assert "preamble" not in context
 
 
 def test_article_template_geometry_overrides() -> None:

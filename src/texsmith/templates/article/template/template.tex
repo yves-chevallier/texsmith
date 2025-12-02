@@ -1,8 +1,5 @@
 \BLOCK{ set base_docclass_options = documentclass_options|default('', true) }
 \BLOCK{ set combined_docclass_options = base_docclass_options[1:-1] if base_docclass_options else '' }
-\BLOCK{ if columns|default(1)|int > 1 }
-\BLOCK{   set combined_docclass_options = combined_docclass_options ~ (',' if combined_docclass_options else '') ~ 'twocolumn' }
-\BLOCK{ endif }
 \BLOCK{ set effective_documentclass_options = '[' ~ combined_docclass_options ~ ']' if combined_docclass_options else '' }
 \documentclass\VAR{effective_documentclass_options}{article}
 
@@ -12,12 +9,6 @@
 \usepackage{graphicx}
 \usepackage[\VAR{language|default('english')}]{babel}
 \usepackage[colorlinks=true, linkcolor=texsmithLinkColor, urlcolor=texsmithLinkColor, citecolor=texsmithLinkColor]{hyperref}
-
-\BLOCK{ if preamble }
-% Custom document preamble injected from front matter overrides.
-\VAR{preamble|safe}
-
-\BLOCK{ endif }
 
 \BLOCK{ set has_title_metadata = title|default('')|trim }
 \BLOCK{ set effective_date = date|default('')|trim }
@@ -51,6 +42,11 @@
 \BLOCK{ endif }
 
 \VAR{mainmatter}
+
+\BLOCK{ if appendix }
+\appendix
+\VAR{appendix}
+\BLOCK{ endif }
 
 \VAR{backmatter}
 \VAR{fragment_backmatter}

@@ -274,9 +274,6 @@
 \BLOCK{ set effective_date = date|default('')|trim }
 \newcommand{\bookdate}{\BLOCK{ if effective_date }\VAR{date}\BLOCK{ else }\today\BLOCK{ endif }}
 
-% Preserve convenience macros expected by assets/covers
-\newcommand{\subtitle}{\booksubtitle}
-
 \title{\booktitle}
 \author{\bookauthor}
 \makeatletter
@@ -296,10 +293,25 @@
 
 \begin{document}
 \hypersetup{pageanchor=false}
-\input{titlepage}
+\frontmatter
+\maketitle
 \BLOCK{ if imprint_thanks|trim or imprint_license|trim or imprint_copyright|trim }
 \cleardoublepage
-\input{imprint}
+\thispagestyle{plain}
+\phantomsection
+\section*{Imprint}
+\BLOCK{ if imprint_thanks|trim }
+\subsection*{Thanks}
+\VAR{imprint_thanks}
+\BLOCK{ endif }
+\BLOCK{ if imprint_license|trim }
+\subsection*{License}
+\VAR{imprint_license}
+\BLOCK{ endif }
+\BLOCK{ if imprint_copyright|trim }
+\subsection*{Copyright}
+\VAR{imprint_copyright}
+\BLOCK{ endif }
 \BLOCK{ endif }
 
 \BLOCK{ if dedication|trim }
@@ -317,7 +329,6 @@
 \raggedbottom
 
 
-\frontmatter
 \BLOCK{ if preface|trim }
 \cleardoublepage
 \thispagestyle{plain}
@@ -337,6 +348,11 @@
 \mainmatter
 
 \VAR{mainmatter}
+
+\BLOCK{ if appendix }
+\appendix
+\VAR{appendix}
+\BLOCK{ endif }
 
 \backmatter
 

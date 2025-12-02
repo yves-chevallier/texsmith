@@ -1,0 +1,52 @@
+Template: book
+Name: book
+Version: 0.2.0
+Entrypoint: template/template.tex
+Engine: lualatex
+Shell escape: no
+Template root: /home/ycr/texsmith/src/texsmith/templates/book
+TeX Live year: 2023
+tlmgr packages: babel, babel-french, csquotes, fontspec, fancyvrb, geometry, hyperref, longtable, microtype, titlesec, titletoc, xcolor, xunicode
+Formatter overrides: codeblock.tex, codeinline.tex
+Attributes:
+  - authors: TemplateAttributeSpec(default=[], type='list', format='markdown', choices=[], sources=['authors'], escape=None, normaliser=None, required=False, allow_empty=True, description=None, range=None, owner='book', name='authors')
+  - base_level: TemplateAttributeSpec(default=0, type='integer', format='markdown', choices=[], sources=['base_level'], escape=None, normaliser=None, required=False, allow_empty=True, description='Base heading level offset for slots (0 = chapter, -1 = part).', range=None, owner='book', name='base_level') — Base heading level offset for slots (0 = chapter, -1 = part).
+  - date: TemplateAttributeSpec(default='', type='string', format='markdown', choices=[], sources=['date'], escape='latex', normaliser=None, required=False, allow_empty=True, description=None, range=None, owner='book', name='date')
+  - documentclass: TemplateAttributeSpec(default='memoir', type='string', format='markdown', choices=[], sources=['documentclass'], escape=None, normaliser=None, required=False, allow_empty=False, description='Document class to use (memoir by default).', range=None, owner='book', name='documentclass') — Document class to use (memoir by default).
+  - edition: TemplateAttributeSpec(default='', type='string', format='markdown', choices=[], sources=['edition'], escape=None, normaliser=None, required=False, allow_empty=True, description='Edition label rendered in imprint.', range=None, owner='book', name='edition') — Edition label rendered in imprint.
+  - email: TemplateAttributeSpec(default='john.doe@acme.corp', type='string', format='markdown', choices=[], sources=['email'], escape='latex', normaliser=None, required=False, allow_empty=True, description=None, range=None, owner='book', name='email')
+  - glossary: TemplateAttributeSpec(default=False, type='boolean', format='markdown', choices=[], sources=['glossary'], escape=None, normaliser=None, required=False, allow_empty=True, description='Enable glossary section.', range=None, owner='book', name='glossary') — Enable glossary section.
+  - glossary_style: TemplateAttributeSpec(default='long3col', type='string', format='markdown', choices=[], sources=['glossary_style'], escape=None, normaliser=None, required=False, allow_empty=False, description='Glossary style to use.', range=None, owner='book', name='glossary_style') — Glossary style to use.
+  - hyperref_options: TemplateAttributeSpec(default='colorlinks=true, linkcolor=black, citecolor=black, plainpages=false, unicode=true, urlcolor=urlcolor', type='string', format='markdown', choices=[], sources=['hyperref_options'], escape=None, normaliser=None, required=False, allow_empty=True, description='Custom hyperref options appended to defaults.', range=None, owner='book', name='hyperref_options') — Custom hyperref options appended to defaults.
+  - imprint_copyright: TemplateAttributeSpec(default='', type='string', format='markdown', choices=[], sources=['imprint.copyright', 'imprint_copyright'], escape=None, normaliser=None, required=False, allow_empty=True, description='Imprint copyright paragraph (Markdown).', range=None, owner='book', name='imprint_copyright') — Imprint copyright paragraph (Markdown).
+  - imprint_license: TemplateAttributeSpec(default='', type='string', format='markdown', choices=[], sources=['imprint.license', 'imprint_license'], escape=None, normaliser=None, required=False, allow_empty=True, description='Imprint license paragraph (Markdown).', range=None, owner='book', name='imprint_license') — Imprint license paragraph (Markdown).
+  - imprint_thanks: TemplateAttributeSpec(default='', type='string', format='markdown', choices=[], sources=['imprint.thanks', 'imprint_thanks'], escape=None, normaliser=None, required=False, allow_empty=True, description='Imprint thanks paragraph (Markdown).', range=None, owner='book', name='imprint_thanks') — Imprint thanks paragraph (Markdown).
+  - language: TemplateAttributeSpec(default='english', type='string', format='markdown', choices=[], sources=['language'], escape=None, normaliser='babel_language', required=False, allow_empty=False, description='Language for hyphenation and document terms (babel).', range=None, owner='book', name='language') — Language for hyphenation and document terms (babel).
+  - listoffigures: TemplateAttributeSpec(default=True, type='boolean', format='markdown', choices=[], sources=['listoffigures'], escape=None, normaliser=None, required=False, allow_empty=True, description='Render list of figures when figures exist.', range=None, owner='book', name='listoffigures') — Render list of figures when figures exist.
+  - listoftables: TemplateAttributeSpec(default=True, type='boolean', format='markdown', choices=[], sources=['listoftables'], escape=None, normaliser=None, required=False, allow_empty=True, description='Render list of tables when tables exist.', range=None, owner='book', name='listoftables') — Render list of tables when tables exist.
+  - part: TemplateAttributeSpec(default=False, type='boolean', format='markdown', choices=[], sources=['part'], escape=None, normaliser=None, required=False, allow_empty=True, description='Use parts above chapters (adjusts mainmatter depth).', range=None, owner='book', name='part') — Use parts above chapters (adjusts mainmatter depth).
+  - publisher: TemplateAttributeSpec(default='', type='string', format='markdown', choices=[], sources=['publisher'], escape=None, normaliser=None, required=False, allow_empty=True, description='Publisher string rendered in imprint.', range=None, owner='book', name='publisher') — Publisher string rendered in imprint.
+  - subtitle: TemplateAttributeSpec(default='An example of a book template for MkDocs LaTeX', type='string', format='markdown', choices=[], sources=['subtitle'], escape='latex', normaliser=None, required=False, allow_empty=True, description=None, range=None, owner='book', name='subtitle')
+  - title: TemplateAttributeSpec(default='A LaTeX Book Template', type='string', format='markdown', choices=[], sources=['title'], escape='latex', normaliser=None, required=False, allow_empty=True, description=None, range=None, owner='book', name='title')
+Assets:
+  - No declared assets
+Fragments:
+  - ts-geometry: Page layout setup driven by press.paper. (attributes: -)
+  - ts-typesetting: Paragraph spacing, line spacing, and line numbers controls. (attributes: typesetting_leading, typesetting_lineno, typesetting_paragraph)
+  - ts-fonts: Font selection and fallbacks for TeXSmith templates. (attributes: -)
+  - ts-extra: Auxiliary LaTeX packages loaded on demand (hyperref, ulem, soul, etc.). (attributes: -)
+  - ts-keystrokes: Keyboard shortcut rendering helpers loaded only when needed. (attributes: -)
+  - ts-callouts: Reusable callout styles shared by built-in templates. (attributes: callout_style)
+  - ts-code: Configurable code listings used by Markdown code blocks. (attributes: code)
+  - ts-glossary: Glossary and acronym helpers. (attributes: -)
+  - ts-index: Index helpers with backmatter insertion. (attributes: -)
+  - ts-bibliography: Bibliography helpers (packages + backmatter) loaded when citations are present. (attributes: -)
+  - ts-todolist: Todolist helper commands loaded when checklist macros are present. (attributes: -)
+Slots:
+  - appendix (optional): base=-, depth=chapter, offset=0, effective=0, strip_heading=no — Appendix content inserted before backmatter.
+  - backmatter (optional): base=-, depth=chapter, offset=0, effective=0, strip_heading=no
+  - colophon (optional): base=-, depth=chapter, offset=0, effective=0, strip_heading=yes
+  - dedication (optional): base=-, depth=chapter, offset=0, effective=0, strip_heading=yes
+  - frontmatter (optional): base=-, depth=chapter, offset=0, effective=0, strip_heading=no
+  - mainmatter (default): base=-, depth=chapter, offset=0, effective=0, strip_heading=no
+  - preface (optional): base=0, depth=-, offset=0, effective=0, strip_heading=no
