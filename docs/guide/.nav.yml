@@ -7,6 +7,6 @@ nav:
   - features/
   - templates/
   - plumbing/
-  - mkdocs.md
+  - MkDocs Integration: mkdocs.md
   - tectonic.md
   - troubleshooting.md

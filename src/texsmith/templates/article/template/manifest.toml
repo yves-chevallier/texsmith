@@ -42,12 +42,14 @@ type = "string"
 escape = "latex"
 allow_empty = true
 sources = ["title"]
+description = "The title of the document. If empty, first heading in document will be used."
 
 [latex.template.attributes.subtitle]
 default = ""
 type = "string"
 escape = "latex"
 sources = ["subtitle"]
+description = "The subtitle of the document."
 
 [latex.template.attributes.emoji]
 default = "black"
@@ -58,43 +60,52 @@ sources = ["emoji"]
 default = false
 type = "boolean"
 sources = ["toc"]
+description = "Whether to include a table of contents."
 
 [latex.template.attributes.authors]
 default = []
 type = "list"
 sources = ["authors"]
+description = "List of authors of the document. Use plain strings or objects with 'name', 'affiliation', and 'email' fields. You may include multiple authors."
 
 [latex.template.attributes.date]
 default = ""
 type = "string"
 escape = "latex"
 sources = ["date"]
+description = "The date of the document, use ISO format (YYYY-MM-DD) or any string. If empty, the current date will be used."
 
 [latex.template.attributes.language]
 default = "english"
 type = "string"
 allow_empty = false
 normaliser = "babel_language"
+description = "The language for hyphenation, typesettings and document terms (e.g., 'Table of Contents')."
 
 [latex.template.attributes.columns]
 default = 1
+range = [1, 2]
 type = "integer"
+description = "Number of columns in the document. Can be 1 or 2."
 
 [latex.template.attributes.page_numbers]
 default = true
 type = "boolean"
 sources = ["page_numbers"]
+description = "Whether to include page numbers in the document."
 
 [latex.template.attributes.numbering]
 default = true
 type = "boolean"
 sources = ["numbering"]
+description = "Whether to include section numbering in the document."
 
 [latex.template.attributes.glossary_style]
 default = "list"
 type = "string"
 allow_empty = false
 sources = ["glossary_style"]
+description = "The style used for the glossary section."
 
 [latex.template.attributes.preamble]
 default = ""
@@ -106,6 +117,7 @@ sources = ["preamble"]
 [latex.template.attributes.bibliography_style]
 default = "numeric"
 type = "string"
+description = "The bibliography style to use. See BibLaTeX documentation for available styles."
 
 # Slots definition:
 # -----------------
@@ -114,10 +126,12 @@ type = "string"
 [latex.template.slots.mainmatter]
 default = true
 depth = "section"
+description = "The main content of the document."
 
 [latex.template.slots.abstract]
 depth = "section"
 strip_heading = true
+description = "The abstract or summary of the document."
 
 [latex.template.slots.backmatter]
 depth = "section"
