@@ -1,8 +1,8 @@
 include ../common.mk
 
 SOURCE := cake.yml
-BASE_PDF := $(ENGINE_DIR)/example.pdf
-PDF := $(ENGINE_DIR)/example$(ENGINE_SUFFIX).pdf
+BASE_PDF := $(ENGINE_DIR)/cake.pdf
+PDF := $(ENGINE_DIR)/cake$(ENGINE_SUFFIX).pdf
 
 all: $(PDF)
 
