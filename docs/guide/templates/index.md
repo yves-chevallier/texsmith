@@ -17,10 +17,13 @@ use cases. You may use:
 TeXSmith includes standard templates for common document types:
 
 - `article`: academic-style article layout with title page, abstract, and sections.
-- `letter`: formal letters with sender/recipient metadata, fold marks, and cursive signatures.
-- `snippet`: standalone `tikzpicture` frame for screenshots, stickers, and snippets. Shares the article preamble (fonts, callouts, keystrokes) but constrains output to a minipage with an optional dog-ear border.
+- `book`: book-style layout with parts, chapters, preface, table of contents, and appendices.
+- `letter`: formal letters with sender/recipient metadata, fold marks, and signature.
+- `snippet`: standalone `tikzpicture` frame for screenshots, stickers, and snippets.
 
-Invoke them with `-tarticle` or `-tletter`. Additional community templates remain available under `templates/` or as separate PyPI packages.
+Invoke them in the CLI with `-tarticle` or `-tletter`. Additional community templates remain available under `templates/` or as separate PyPI packages.
+
+Take a look to built-in fragments for full configuration options.
 
 ## Quick start
 

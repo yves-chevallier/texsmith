@@ -76,7 +76,7 @@ You can also check our GitHub repository at \url{https://github.com/yves-chevall
 
 ## Bibliographic References
 
-Markdown lacks native bibliography support, so TeXSmith reuses the footnote syntax and BibTeX/front matter keys. See the documentation on [Bibliography management](../guide/bibliography.md) for more details.
+Markdown lacks native bibliography support, so TeXSmith reuses the footnote syntax and BibTeX/front matter keys. See the documentation on [Bibliography management](../guide/features/bibliography.md) for more details.
 
 ```markdown
 ---

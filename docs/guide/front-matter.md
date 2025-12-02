@@ -25,4 +25,4 @@ Template specific attributes can be referenced in the front matter as well. See 
 
 ## Bibliography
 
-Bibliography entries can be specified in the front matter as well. See the [Bibliography Guide](bibliography.md) for more details.
+Bibliography entries can be specified in the front matter as well. See the [Bibliography Guide](features/bibliography.md) for more details.
