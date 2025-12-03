@@ -79,3 +79,19 @@ def test_todolist_fragment_renders_when_used(tmp_path: Path) -> None:
     tex_content = result.main_tex_path.read_text(encoding="utf-8")
     assert "\\usepackage{ts-todolist}" in tex_content
     assert (tmp_path / "build" / "ts-todolist.sty").exists()
+
+
+def test_callouts_fragment_renders_when_used(tmp_path: Path) -> None:
+    md = tmp_path / "doc.md"
+    md.write_text(
+        "!!! info\n    Important callout content.\n",
+        encoding="utf-8",
+    )
+
+    session = TemplateSession(load_template_runtime("article"))
+    session.add_document(Document.from_markdown(md))
+    result = session.render(tmp_path / "build")
+
+    tex_content = result.main_tex_path.read_text(encoding="utf-8")
+    assert "\\usepackage{ts-callouts}" in tex_content
+    assert (tmp_path / "build" / "ts-callouts.sty").exists()

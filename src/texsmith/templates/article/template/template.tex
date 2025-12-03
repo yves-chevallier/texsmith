@@ -3,9 +3,9 @@
 \BLOCK{ set effective_documentclass_options = '[' ~ combined_docclass_options ~ ']' if combined_docclass_options else '' }
 \documentclass\VAR{effective_documentclass_options}{article}
 
-\VAR{extra_packages}
 \usepackage{xcolor}
 \definecolor{texsmithLinkColor}{HTML}{0B3D91}
+\VAR{extra_packages}
 \usepackage{graphicx}
 \usepackage[\VAR{language|default('english')}]{babel}
 \usepackage[colorlinks=true, linkcolor=texsmithLinkColor, urlcolor=texsmithLinkColor, citecolor=texsmithLinkColor]{hyperref}

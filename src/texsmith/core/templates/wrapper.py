@@ -217,6 +217,8 @@ def wrap_template_document(
         template_context["bibliography_resource"] = bibliography_path.name
         template_context.setdefault("bibliography_style", "numeric")
 
+    template_context["ts_uses_callouts"] = bool(getattr(document_state, "callouts_used", False))
+
     # Render fragments and inject declarations into template variables.
     requested_fragments = list(fragment_names)
     callout_overrides = overrides_payload.get("callouts") if overrides_payload else None

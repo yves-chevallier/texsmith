@@ -5,6 +5,7 @@ from dataclasses import dataclass, field
 import os
 from pathlib import Path, PurePosixPath
 import shutil
+import sys
 from typing import Any
 import warnings
 from warnings import WarningMessage
@@ -17,9 +18,29 @@ from mkdocs.structure import StructureItem
 from mkdocs.structure.files import Files
 from mkdocs.structure.nav import Navigation
 from mkdocs.utils import log
+from rich.console import Console
 from pybtex.exceptions import PybtexError
 from slugify import slugify
 from texsmith.adapters.latex import LaTeXFormatter, LaTeXRenderer
+from texsmith.adapters.latex.engines import (
+    EngineFeatures,
+    LatexMessage,
+    LatexMessageSeverity,
+    build_engine_command,
+    build_tex_env,
+    compute_features,
+    ensure_command_paths,
+    missing_dependencies,
+    resolve_engine,
+    run_engine_command,
+)
+from texsmith.adapters.latex.latexmk import build_latexmkrc_content
+from texsmith.adapters.latex.tectonic import (
+    BiberAcquisitionError,
+    TectonicAcquisitionError,
+    select_biber_binary,
+    select_tectonic_binary,
+)
 from texsmith.adapters.plugins import material, snippet
 from texsmith.core.bibliography import (
     BibliographyCollection,
@@ -144,6 +165,7 @@ class LatexPlugin(BasePlugin):
         self._global_template_overrides: dict[str, Any] = {}
         self._nav: Navigation | None = None
         self._diagnostic_emitter: LoggingEmitter | None = None
+        self._auto_build = False
 
     # -- MkDocs lifecycle -------------------------------------------------
 
@@ -155,6 +177,7 @@ class LatexPlugin(BasePlugin):
     ) -> MkDocsConfig:  # pragma: no cover - hook
         self._enabled = bool(self.config.get("enabled", True))
         self._mkdocs_config = config
+        self._auto_build = self._env_flag_enabled(os.environ.get("TEXSMITH_BUILD"))
 
         if not self._enabled:
             return config
@@ -257,6 +280,13 @@ class LatexPlugin(BasePlugin):
             self._render_book(runtime)
 
     # -- Helpers ----------------------------------------------------------
+
+    @staticmethod
+    def _env_flag_enabled(raw: str | None) -> bool:
+        if raw is None:
+            return False
+        normalised = raw.strip().lower()
+        return normalised not in {"", "0", "false", "no", "off"}
 
     def _build_latex_config(self, language: str | None) -> LaTeXConfig:
         project_dir = self._project_dir
@@ -686,6 +716,9 @@ class LatexPlugin(BasePlugin):
         template_context["solutions"] = list(final_state.solutions)
         template_context["citations"] = list(final_state.citations)
         template_context["bibliography_entries"] = final_state.bibliography.copy()
+        template_context["ts_uses_callouts"] = bool(
+            getattr(final_state, "callouts_used", False)
+        )
 
         bibliography_output: Path | None = None
         if (
@@ -780,6 +813,14 @@ class LatexPlugin(BasePlugin):
 
         self._copy_extra_files(runtime.config, output_root)
         self._publish_snippet_assets(output_root)
+        if self._auto_build:
+            self._run_pdf_build(
+                output_root=output_root,
+                tex_path=tex_path,
+                template_context=template_context,
+                document_state=final_state,
+                bibliography_present=bool(bibliography_output),
+            )
 
     def _flatten_navigation(
         self,
@@ -978,6 +1019,169 @@ class LatexPlugin(BasePlugin):
             shutil.copy2(asset, target_dir / asset.name)
         for asset in source_dir.glob("*.png"):
             shutil.copy2(asset, target_dir / asset.name)
+
+    def _run_pdf_build(
+        self,
+        *,
+        output_root: Path,
+        tex_path: Path,
+        template_context: Mapping[str, Any],
+        document_state: DocumentState,
+        bibliography_present: bool,
+    ) -> None:
+        env_engine = os.environ.get("TEXSMITH_ENGINE")
+        engine_preference = env_engine.strip() if env_engine else "tectonic"
+        use_system_tectonic = self._env_flag_enabled(os.environ.get("TEXSMITH_SYSTEM_TECTONIC"))
+
+        template_engine = None
+        raw_engine = template_context.get("latex_engine")
+        if isinstance(raw_engine, str) and raw_engine.strip():
+            template_engine = raw_engine.strip()
+
+        engine_choice = resolve_engine(engine_preference, template_engine)
+
+        features = compute_features(
+            requires_shell_escape=bool(template_context.get("requires_shell_escape", False)),
+            bibliography=bibliography_present,
+            document_state=document_state,
+            template_context=template_context,
+        )
+
+        tectonic_binary: Path | None = None
+        biber_binary: Path | None = None
+        bundled_bin: Path | None = None
+        if engine_choice.backend == "tectonic":
+            try:
+                selection = select_tectonic_binary(
+                    use_system_tectonic,
+                    console=None,
+                )
+                tectonic_binary = selection.path
+                if features.bibliography and not use_system_tectonic:
+                    biber_binary = select_biber_binary(console=None)
+                    bundled_bin = biber_binary.parent
+            except (TectonicAcquisitionError, BiberAcquisitionError) as exc:
+                raise PluginError(str(exc)) from exc
+
+        missing = missing_dependencies(
+            engine_choice,
+            features,
+            use_system_tectonic=use_system_tectonic if engine_choice.backend == "tectonic" else False,
+            available_binaries={"biber": biber_binary} if biber_binary else None,
+        )
+        if missing:
+            readable = ", ".join(sorted(set(missing)))
+            raise PluginError(
+                (
+                    f"LaTeX build skipped for '{tex_path.name}': "
+                    f"missing dependencies ({readable})."
+                )
+            )
+
+        if engine_choice.backend == "latexmk":
+            self._ensure_latexmkrc(
+                tex_path=tex_path,
+                engine=engine_choice.latexmk_engine,
+                features=features,
+            )
+
+        command_plan = ensure_command_paths(
+            build_engine_command(
+                engine_choice,
+                features,
+                main_tex_path=tex_path,
+                tectonic_binary=tectonic_binary,
+            )
+        )
+
+        env = build_tex_env(
+            tex_path.parent,
+            isolate_cache=False,
+            extra_path=bundled_bin,
+            biber_path=biber_binary,
+        )
+        console = Console(
+            file=sys.stdout,
+            force_terminal=False,
+            color_system=None,
+            no_color=True,
+        )
+
+        engine_label = (
+            engine_choice.latexmk_engine if engine_choice.backend == "latexmk" else "tectonic"
+        )
+        bundle_label = self._relativise(self._project_dir or output_root, tex_path.parent)
+        log.info(
+            "TEXSMITH_BUILD enabled: building '%s' with %s.",
+            bundle_label.as_posix(),
+            engine_label,
+        )
+
+        result = run_engine_command(
+            command_plan,
+            backend=engine_choice.backend,
+            workdir=tex_path.parent,
+            env=env,
+            console=console,
+            verbosity=1,
+        )
+
+        if result.messages:
+            self._log_engine_messages(result.messages)
+
+        if result.returncode != 0:
+            log_path = self._relativise(tex_path.parent, result.log_path)
+            raise PluginError(
+                f"LaTeX build failed for '{tex_path.name}' (see {log_path})."
+            )
+
+        pdf_path = result.pdf_path
+        if not pdf_path.is_absolute():
+            pdf_path = (tex_path.parent / pdf_path).resolve()
+        pdf_label = self._relativise(self._project_dir or tex_path.parent, pdf_path)
+        log.info("LaTeX build complete: %s", pdf_label)
+
+    def _ensure_latexmkrc(
+        self, *, tex_path: Path, engine: str | None, features: EngineFeatures
+    ) -> Path | None:
+        rc_path = tex_path.parent / ".latexmkrc"
+        if rc_path.exists():
+            return rc_path
+
+        try:
+            content = build_latexmkrc_content(
+                root_filename=tex_path.stem,
+                engine=engine,
+                requires_shell_escape=features.requires_shell_escape,
+                bibliography=features.bibliography,
+                index_engine=features.index_engine,
+                has_index=features.has_index,
+                has_glossary=features.has_glossary,
+            )
+        except Exception as exc:  # pragma: no cover - defensive
+            log.warning("Unable to prepare latexmkrc for '%s': %s", tex_path.name, exc)
+            return None
+
+        try:
+            rc_path.write_text(content, encoding="utf-8")
+        except OSError as exc:  # pragma: no cover - filesystem
+            log.warning("Failed to write latexmkrc for '%s': %s", tex_path.name, exc)
+            return None
+
+        return rc_path
+
+    def _log_engine_messages(self, messages: Iterable[LatexMessage]) -> None:
+        for message in messages:
+            summary = message.summary.strip()
+            details = "; ".join(part.strip() for part in message.details if part.strip())
+            payload = f"{summary}: {details}" if details else summary
+
+            if message.severity is LatexMessageSeverity.ERROR:
+                log.error("LaTeX: %s", payload)
+            elif message.severity is LatexMessageSeverity.WARNING:
+                log.warning("LaTeX: %s", payload)
+            else:
+                log.info("LaTeX: %s", payload)
 
     def _ensure_site_snippet_assets(
         self, page: Any, block: snippet.SnippetBlock
