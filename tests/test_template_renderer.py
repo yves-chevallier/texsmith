@@ -199,6 +199,38 @@ def test_template_session_conflicting_overrides(tmp_path: Path) -> None:
     assert "press.title" in str(excinfo.value)
 
 
+def test_linked_fragments_still_enable_code_fragment(tmp_path: Path) -> None:
+    runtime = load_template_runtime("article")
+    session = TemplateSession(runtime=runtime)
+
+    intro_path = _write_markdown(
+        tmp_path,
+        "intro.md",
+        """
+        # Intro
+        """,
+    )
+    code_path = _write_markdown(
+        tmp_path,
+        "code.md",
+        """
+        ```python
+        print("hello")
+        ```
+        """,
+    )
+
+    session.add_document(Document.from_markdown(intro_path))
+    session.add_document(Document.from_markdown(code_path))
+
+    build_dir = tmp_path / "linked"
+    result = session.render(build_dir, embed_fragments=False)
+
+    latex = result.main_tex_path.read_text(encoding="utf-8")
+    assert "\\usepackage{ts-code}" in latex
+    assert any("\\input{" in line for line in latex.splitlines())
+
+
 def test_renderer_generates_latexmkrc_when_missing(tmp_path: Path) -> None:
     template_dir = _create_minimal_template(tmp_path, engine="xelatex", shell_escape=True)
     runtime = load_template_runtime(str(template_dir))

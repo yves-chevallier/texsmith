@@ -7,12 +7,29 @@
 \BLOCK{ set effective_documentclass_options = '[' ~ option_parts|join(',') ~ ']' if option_parts else '' }
 \documentclass\VAR{effective_documentclass_options}{article}
 
-\usepackage{xcolor}
-\definecolor{texsmithLinkColor}{HTML}{0B3D91}
+\usepackage[svgnames,dvipsnames,x11names]{xcolor}
 \VAR{extra_packages}
 \usepackage{graphicx}
 \usepackage[\VAR{language|default('english')}]{babel}
-\usepackage[colorlinks=true, linkcolor=texsmithLinkColor, urlcolor=texsmithLinkColor, citecolor=texsmithLinkColor]{hyperref}
+\usepackage[colorlinks=true, linkcolor=NavyBlue, urlcolor=NavyBlue, citecolor=NavyBlue]{hyperref}
+
+\usepackage{lastpage} % pour le label LastPage
+\usepackage{refcount} % pour \getpagerefnumber
+
+\makeatletter
+\def\ps@plain{%
+  \let\@oddhead\@empty
+  \let\@evenhead\@empty
+  \def\@oddfoot{%
+    \hfil
+    % Afficher le numéro seulement si le document a plus d’une page
+    \ifnum\getpagerefnumber{LastPage}>1\relax
+      \thepage
+    \fi
+    \hfil}%
+  \let\@evenfoot\@oddfoot
+}
+\makeatother
 
 \BLOCK{ set has_title_metadata = title|default('')|trim }
 \BLOCK{ set effective_date = date|default('')|trim }
@@ -31,16 +48,6 @@
 \pagenumbering{gobble}
 \thispagestyle{empty}
 \pagestyle{empty}
-\BLOCK{ else }
-\AtEndDocument{%
-  \ifnum\value{page}=1
-    \gdef\ps@plain{\ps@empty}%
-    \gdef\ps@headings{\ps@empty}%
-    \gdef\ps@myheadings{\ps@empty}%
-    \thispagestyle{empty}%
-    \pagestyle{empty}%
-  \fi
-}
 \BLOCK{ endif }
 \BLOCK{ if numbering is defined and not numbering }
 \setcounter{secnumdepth}{-1}

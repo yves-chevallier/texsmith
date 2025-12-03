@@ -174,6 +174,26 @@ class Template(WrappableTemplate):
             prepared = dict(context)
             context_ref = context if isinstance(context, dict) else None
 
+        preamble_override: str | None = None
+        if overrides:
+            press_section = overrides.get("press")
+            if isinstance(press_section, Mapping):
+                override_section = press_section.get("override")
+                if isinstance(override_section, Mapping):
+                    candidate = override_section.get("preamble")
+                    if isinstance(candidate, str) and candidate.strip():
+                        preamble_override = candidate.strip()
+            if preamble_override is None:
+                direct_override = overrides.get("preamble")
+                if isinstance(direct_override, str) and direct_override.strip():
+                    preamble_override = direct_override.strip()
+
+        if preamble_override:
+            existing_extra = prepared.get("extra_packages") or ""
+            package_parts = [existing_extra] if existing_extra else []
+            package_parts.append(preamble_override)
+            prepared["extra_packages"] = "\n".join(part for part in package_parts if part)
+
         self._analyse_unicode_payload(prepared)
 
         if context_ref is not prepared and context_ref is not None:

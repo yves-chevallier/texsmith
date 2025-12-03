@@ -1,7 +1,8 @@
 from pathlib import Path
 
-from mkdocs_plugin_texsmith.plugin import LatexPlugin
 from texsmith.adapters.latex.engines import EngineFeatures
+
+from mkdocs_plugin_texsmith.plugin import LatexPlugin
 
 
 def test_build_latex_config_defaults(tmp_path: Path) -> None:
@@ -63,7 +64,9 @@ def test_ensure_latexmkrc_created(tmp_path: Path) -> None:
         has_glossary=False,
     )
 
-    rc_path = plugin._ensure_latexmkrc(tex_path=tex_path, engine="lualatex", features=features)
+    rc_path = plugin._ensure_latexmkrc(
+        tex_path=tex_path, engine="lualatex", features=features
+    )
 
     assert rc_path is not None and rc_path.exists()
     content = rc_path.read_text(encoding="utf-8")

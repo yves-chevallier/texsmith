@@ -15,9 +15,9 @@ Markdown is loose: some files start at `##`, others at `###`, and multi-file bui
    - No headings → offset `0`
 4. The effective base level for a fragment is:
 
-    ```text
-    template slot base + document base_level + fragment offset
-    ```
+   ```text
+   template slot base + document base_level + fragment offset
+   ```
 
 5. The rendered LaTeX level is `html_level + effective_base - 1`.
 

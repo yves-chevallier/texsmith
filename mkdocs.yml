@@ -65,6 +65,7 @@ plugins:
   - texsmith:
       template: book
       build_dir: press
+      embed_fragments: false
       books:
         - title: "TeXSmith Documentation"
           folder: texsmith-docs
