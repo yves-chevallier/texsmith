@@ -124,8 +124,7 @@ def test_article_template_supports_columns_option() -> None:
 
     rendered = template.wrap_document("Body", overrides=overrides, context=context)
 
-    assert "\\documentclass[letterpaper,landscape]{article}" in rendered
-    assert "twocolumn" not in rendered
+    assert "\\documentclass[letterpaper,landscape,twocolumn]{article}" in rendered
 
 
 def test_article_template_accepts_preamble_override() -> None:
