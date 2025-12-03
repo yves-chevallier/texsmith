@@ -1,6 +1,10 @@
 \BLOCK{ set base_docclass_options = documentclass_options|default('', true) }
 \BLOCK{ set combined_docclass_options = base_docclass_options[1:-1] if base_docclass_options else '' }
-\BLOCK{ set effective_documentclass_options = '[' ~ combined_docclass_options ~ ']' if combined_docclass_options else '' }
+\BLOCK{ set column_count = columns|default(1)|int }
+\BLOCK{ set option_parts = [] }
+\BLOCK{ if combined_docclass_options }\BLOCK{ set option_parts = option_parts + [combined_docclass_options] }\BLOCK{ endif }
+\BLOCK{ if column_count > 1 }\BLOCK{ set option_parts = option_parts + ['twocolumn'] }\BLOCK{ endif }
+\BLOCK{ set effective_documentclass_options = '[' ~ option_parts|join(',') ~ ']' if option_parts else '' }
 \documentclass\VAR{effective_documentclass_options}{article}
 
 \usepackage{xcolor}

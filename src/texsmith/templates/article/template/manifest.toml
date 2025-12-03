@@ -73,6 +73,11 @@ allow_empty = false
 normaliser = "babel_language"
 description = "The language for hyphenation, typesettings and document terms (e.g., 'Table of Contents')."
 
+[latex.template.attributes.columns]
+default = 1
+type = "integer"
+description = "Number of columns for the document. When >1, uses the documentclass twocolumn option."
+
 [latex.template.attributes.page_numbers]
 default = true
 type = "boolean"
