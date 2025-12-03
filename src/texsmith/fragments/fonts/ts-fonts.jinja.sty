@@ -457,9 +457,9 @@
     \renewcommand{\texsmithEmoji}[1]{{\texsmithEmojiFont #1}}
 \BLOCK{ elif emoji_twemoji }
     \RequirePackage{twemoji}
-    \renewcommand{\texsmithEmoji}[1]{\twemoji{##1}}
+    \renewcommand{\texsmithEmoji}[1]{\twemoji{#1}}
 \BLOCK{ else }
-    \renewcommand{\texsmithEmoji}[1]{##1}
+    \renewcommand{\texsmithEmoji}[1]{#1}
 \BLOCK{ endif }
 \BLOCK{ if emoji_font }
     \newUnicodeClass{Emoji}
