@@ -72,7 +72,11 @@ plugins:
           root: "__texsmith_full_navigation__"
           base_level: -1
           slots:
-            preface: Welcome to TeXSmith
+            preface: Home
+          press:
+            paragraph:
+              indent: 0
+              spacing: 0.5em
 extra:
   version:
     provider: mike
