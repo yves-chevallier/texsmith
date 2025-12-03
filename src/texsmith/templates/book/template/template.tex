@@ -19,7 +19,7 @@
 \usepackage{etoolbox}
 \usepackage{tocloft}
 \usepackage{caption}
-\usepackage[colorlinks=true, linkcolor=NavyBlue, urlcolor=NavyBlue, citecolor=NavyBlue]{hyperref}
+\usepackage[colorlinks=true, linkcolor=DarkBlue, urlcolor=DarkBlue, citecolor=DarkBlue]{hyperref}
 \usepackage[\VAR{language|default('english')}]{babel}
 \usepackage{emptypage}
 \usepackage{fixtoc} % Custom package to fix TOC number widths
@@ -113,14 +113,12 @@
   \fancyhf{}
   \renewcommand{\headrulewidth}{0.5pt}
   \ifgeometryduplex
-    \fancyhead[LE]{\small\scshape \leftmark}
-    \fancyhead[RO]{\small\scshape \rightmark}
-    \fancyhead[LO]{\small\scshape \leftmark}
-    \fancyhead[RE]{\small\scshape \rightmark}
+    \fancyhead[LE]{\scshape \leftmark}
+    \fancyhead[RO]{\scshape \rightmark}
     \fancyfoot[LE,RO]{\thepage}
   \else
-    \fancyhead[RO]{\small\scshape \rightmark}
-    \fancyhead[LO]{\small\scshape \leftmark}
+    \fancyhead[RO]{\scshape \rightmark}
+    \fancyhead[LO]{\scshape \leftmark}
     \fancyfoot[RO]{\thepage}
   \fi
 }

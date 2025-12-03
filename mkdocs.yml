@@ -71,6 +71,8 @@ plugins:
           folder: texsmith-docs
           root: "__texsmith_full_navigation__"
           base_level: -1
+          slots:
+            preface: Welcome to TeXSmith
 extra:
   version:
     provider: mike

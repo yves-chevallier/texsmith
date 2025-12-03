@@ -155,6 +155,8 @@ def _collect_packages(context: Mapping[str, object]) -> list[tuple[str, str | No
     _maybe_add("\\begin{minted}" in lowered, "minted", None)
     _maybe_add("\\lstdefinelanguage" in lowered, "listings", None)
 
+    # Always allow long monospace strings to break.
+    _maybe_add(True, "seqsplit", None)
     progressbar_options = _string_option("ts_extra_progressbar_options")
     if progressbar_options:
         _maybe_add(True, "progressbar", progressbar_options)
