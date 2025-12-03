@@ -46,6 +46,7 @@ def wrap_template_document(
     template: WrappableTemplate,
     default_slot: str,
     slot_outputs: Mapping[str, str],
+    slot_output_overrides: Mapping[str, str] | None = None,
     document_state: DocumentState,
     template_overrides: Mapping[str, Any] | None,
     output_dir: Path,
@@ -59,6 +60,11 @@ def wrap_template_document(
     """Wrap LaTeX content using a template and optional asset copying."""
     output_dir = Path(output_dir).resolve()
     resolved_slots = {name: value for name, value in slot_outputs.items()}
+    override_slots = (
+        {name: value for name, value in slot_output_overrides.items()}
+        if slot_output_overrides
+        else None
+    )
     tracker = ScriptTracker()
 
     def _process_slot(value: Any) -> Any:
@@ -69,6 +75,14 @@ def wrap_template_document(
     main_slot_content = _process_slot(resolved_slots.get(default_slot, ""))
     resolved_slots[default_slot] = main_slot_content
     resolved_slots.setdefault(default_slot, main_slot_content)
+    processed_override_slots: dict[str, Any] | None = None
+    if override_slots is not None:
+        processed_override_slots = {
+            name: _process_slot(value) for name, value in override_slots.items()
+        }
+        processed_override_slots.setdefault(
+            default_slot, resolved_slots.get(default_slot, "")
+        )
 
     overrides_payload = dict(template_overrides) if template_overrides else None
     source_dir = None
@@ -287,6 +301,11 @@ def wrap_template_document(
             parts: list[str] = [base] if base else []
             parts.extend(injections)
             template_context[variable_name] = "\n".join(part for part in parts if part)
+
+    final_slots = processed_override_slots if processed_override_slots is not None else resolved_slots
+    for slot_name, value in final_slots.items():
+        template_context[slot_name] = value
+    main_slot_content = final_slots.get(default_slot, main_slot_content)
 
     # Append pdfLaTeX-specific packages when not using LuaLaTeX.
     extra_lines = [line for line in template_context.get("extra_packages", "").splitlines() if line]

@@ -259,7 +259,7 @@ Pymarkdown style
 
 ## Formatting
 
-Plain Markdown covers **bold**, *italic*, and `inline code`. PyMdown extensions add ~~strikethrough~~, ==highlighted text==, ^^inserted text^^, {++inserted text++}, and {~~deleted text~~}.
+Plain Markdown covers **bold**, *italic*, and `inline code`. PyMdown extensions add ~~strikethrough~~, ==highlighted text==, ^^inserted text^^.
 
 Small capitals are missing from the spec, so TeXSmith repurposes the double-underscore syntax for that effect:
 

@@ -33,6 +33,7 @@ Roadmap and development notes for TeXSmith. I keep this file as a running checkl
 - [ ] Global user's configuration (.texsmith/config.yml)
 - [ ] Acronyms multiline
 - [ ] MkDocs Linking Issues
+- [ ] Support for {++inserted text++}, and {~~deleted text~~} (goodbox)
 - [ ] Font style with mono
 - [ ] Unified Fences Syntax
   - [ ] Multicolumns

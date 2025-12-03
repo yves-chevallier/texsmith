@@ -4,7 +4,6 @@ press:
   paper:
     margin: narrow
   columns: 2
-  numbering: false
   callouts:
     custom:
       unicorn:

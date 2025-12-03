@@ -18,8 +18,8 @@ from mkdocs.structure import StructureItem
 from mkdocs.structure.files import Files
 from mkdocs.structure.nav import Navigation
 from mkdocs.utils import log
-from rich.console import Console
 from pybtex.exceptions import PybtexError
+from rich.console import Console
 from slugify import slugify
 from texsmith.adapters.latex import LaTeXFormatter, LaTeXRenderer
 from texsmith.adapters.latex.engines import (
@@ -49,7 +49,6 @@ from texsmith.core.bibliography import (
     bibliography_data_from_inline_entry,
     bibliography_data_from_string,
 )
-from texsmith.core.callouts import DEFAULT_CALLOUTS, merge_callouts, normalise_callouts
 from texsmith.core.config import BookConfig, LaTeXConfig
 from texsmith.core.context import DocumentState
 from texsmith.core.conversion import (
@@ -64,13 +63,12 @@ from texsmith.core.conversion.inputs import (
 )
 from texsmith.core.diagnostics import LoggingEmitter
 from texsmith.core.exceptions import LatexRenderingError
-from texsmith.core.fragments import render_fragments
 from texsmith.core.templates import (
     TemplateError,
     TemplateSlot,
-    copy_template_assets,
     load_template_runtime,
     normalise_template_language,
+    wrap_template_document,
 )
 import yaml
 
@@ -141,6 +139,7 @@ class LatexPlugin(BasePlugin):
         ("copy_assets", config_options.Type(bool, default=True)),
         ("clean_assets", config_options.Type(bool, default=True)),
         ("save_html", config_options.Type(bool, default=False)),
+        ("embed_fragments", config_options.Type(bool, default=False)),
         ("language", config_options.Type((str, type(None)), default=None)),
         ("bibliography", config_options.Type(list, default=[])),
         ("books", config_options.Type(list, default=[])),
@@ -564,10 +563,16 @@ class LatexPlugin(BasePlugin):
         if runtime.config.cover.logo:
             overrides.setdefault("logo", runtime.config.cover.logo)
 
-        slot_buffers: dict[str, list[str]] = {
+        embed_fragments = bool(self.config.get("embed_fragments", False))
+
+        slot_buffers_embed: dict[str, list[str]] = {
             name: [] for name in template_runtime.slots
         }
-        slot_buffers.setdefault(template_runtime.default_slot, [])
+        slot_buffers_embed.setdefault(template_runtime.default_slot, [])
+        slot_buffers_link: dict[str, list[str]] = {
+            name: [] for name in template_runtime.slots
+        }
+        slot_buffers_link.setdefault(template_runtime.default_slot, [])
         default_base_level = runtime.config.base_level
         if default_base_level is None:
             default_base_level = 0
@@ -580,14 +585,14 @@ class LatexPlugin(BasePlugin):
         def select_slot(entry: NavEntry) -> str:
             if entry.slot:
                 target = entry.slot
-            elif entry.part == "frontmatter" and "frontmatter" in slot_buffers:
+            elif entry.part == "frontmatter" and "frontmatter" in slot_buffers_embed:
                 target = "frontmatter"
-            elif entry.part == "backmatter" and "backmatter" in slot_buffers:
+            elif entry.part == "backmatter" and "backmatter" in slot_buffers_embed:
                 target = "backmatter"
             else:
                 target = template_runtime.default_slot
 
-            if target not in slot_buffers:
+            if target not in slot_buffers_embed:
                 if target not in missing_slot_warnings:
                     missing_slot_warnings.add(target)
                     log.warning(
@@ -603,7 +608,8 @@ class LatexPlugin(BasePlugin):
         for page_index, entry in enumerate(runtime.entries):
             target_slot = select_slot(entry)
             slot_base = slot_base_levels.get(target_slot, default_base_level)
-            target_buffer = slot_buffers[target_slot]
+            target_buffer_embed = slot_buffers_embed[target_slot]
+            target_buffer_link = slot_buffers_link[target_slot]
             effective_level = entry.level
             if slot_base is not None:
                 effective_level = slot_base + (entry.level - default_base_level)
@@ -613,7 +619,8 @@ class LatexPlugin(BasePlugin):
                     fragment = heading_formatter.heading(
                         entry.title, level=effective_level, numbered=entry.numbered
                     )
-                    target_buffer.append(fragment)
+                    target_buffer_embed.append(fragment)
+                    target_buffer_link.append(fragment)
                 continue
 
             if not entry.src_path or entry.src_path not in self._page_content:
@@ -677,7 +684,8 @@ class LatexPlugin(BasePlugin):
             page_abs_path = output_root / page_rel_path
             page_abs_path.parent.mkdir(parents=True, exist_ok=True)
             page_abs_path.write_text(fragment, encoding="utf-8")
-            target_buffer.append(f"\\input{{{page_rel_path.as_posix()}}}")
+            target_buffer_embed.append(fragment)
+            target_buffer_link.append(f"\\input{{{page_rel_path.as_posix()}}}")
 
             if last_renderer is not None:
                 for key, path in last_renderer.assets.items():
@@ -687,38 +695,12 @@ class LatexPlugin(BasePlugin):
             bibliography=dict(bibliography_map)
         )
 
-        main_body = "\n\n".join(slot_buffers.get(template_runtime.default_slot, []))
-        template_context = template_runtime.instance.prepare_context(
-            main_body,
-            overrides=overrides,
-        )
-        for slot_name, parts in slot_buffers.items():
-            template_context[slot_name] = "\n\n".join(parts)
-        # Ensure engine/shell-escape flags reach templated assets (.latexmkrc).
-        template_context.setdefault("latex_engine", template_runtime.engine)
-        template_context.setdefault(
-            "requires_shell_escape", bool(template_runtime.requires_shell_escape)
-        )
-        template_context["index_entries"] = final_state.has_index_entries
-        index_terms = list(dict.fromkeys(getattr(final_state, "index_entries", [])))
-        template_context["has_index"] = bool(index_terms)
-        template_context["index_terms"] = [tuple(term) for term in index_terms]
-        try:
-            from texsmith.index import get_registry
-        except ModuleNotFoundError:
-            template_context["index_registry"] = [tuple(term) for term in index_terms]
-        else:
-            template_context["index_registry"] = [
-                tuple(term) for term in sorted(get_registry().snapshot())
-            ]
-        template_context["acronyms"] = final_state.acronyms.copy()
-        template_context["glossary"] = final_state.glossary.copy()
-        template_context["solutions"] = list(final_state.solutions)
-        template_context["citations"] = list(final_state.citations)
-        template_context["bibliography_entries"] = final_state.bibliography.copy()
-        template_context["ts_uses_callouts"] = bool(
-            getattr(final_state, "callouts_used", False)
-        )
+        slot_outputs_embed = {
+            name: "\n\n".join(parts) for name, parts in slot_buffers_embed.items()
+        }
+        slot_outputs_link = {
+            name: "\n\n".join(parts) for name, parts in slot_buffers_link.items()
+        }
 
         bibliography_output: Path | None = None
         if (
@@ -731,78 +713,47 @@ class LatexPlugin(BasePlugin):
             bibliography_collection.write_bibtex(
                 bibliography_output, keys=final_state.citations
             )
-            template_context["bibliography"] = bibliography_output.stem
-            template_context["bibliography_resource"] = bibliography_output.name
+            overrides.setdefault("bibliography", bibliography_output.stem)
+            overrides.setdefault("bibliography_resource", bibliography_output.name)
 
-        # Render and inject template fragments (ts-callouts, ts-code, etc.).
         fragment_names = (
             overrides.get("fragments") or template_runtime.extras.get("fragments") or []
         )
-        if fragment_names:
-            fragment_context = dict(template_context)
-            if overrides:
-                fragment_context.update(overrides)
-                press_section = overrides.get("press")
-                if isinstance(press_section, Mapping):
-                    for key, value in press_section.items():
-                        fragment_context.setdefault(key, value)
-
-            # Ensure callout palette is present for ts-callouts.
-            callout_overrides = overrides.get("callouts") if overrides else None
-            merged_callouts = merge_callouts(
-                DEFAULT_CALLOUTS,
-                callout_overrides if isinstance(callout_overrides, Mapping) else None,
-            )
-            fragment_context.setdefault(
-                "callouts_definitions",
-                normalise_callouts(merged_callouts),
-            )
-
-            fragment_result = render_fragments(
-                fragment_names,
-                context=fragment_context,
-                output_dir=output_root,
-                source_dir=self._project_dir,
-            )
-
-            for (
-                variable_name,
-                injections,
-            ) in fragment_result.variable_injections.items():
-                base = template_context.get(variable_name, "")
-                parts: list[str] = [base] if base else []
-                parts.extend(injections)
-                template_context[variable_name] = "\n".join(
-                    part for part in parts if part
-                )
-
-        try:
-            latex_document = template_runtime.instance.wrap_document(
-                template_context.get(template_runtime.default_slot, ""),
-                context=template_context,
-            )
-        except TemplateError as exc:
-            raise PluginError(f"Failed to wrap LaTeX document: {exc}") from exc
 
         folder = runtime.config.folder
         stem = (
             folder.name if isinstance(folder, Path) else folder if folder else "index"
         )
-        tex_path = output_root / f"{stem}.tex"
-        tex_path.write_text(latex_document, encoding="utf-8")
+
+        try:
+            wrap_result = wrap_template_document(
+                template=template_runtime.instance,
+                default_slot=template_runtime.default_slot,
+                slot_outputs=slot_outputs_embed,
+                slot_output_overrides=None if embed_fragments else slot_outputs_link,
+                document_state=final_state,
+                template_overrides=overrides,
+                output_dir=output_root,
+                copy_assets=copy_assets,
+                output_name=f"{stem}.tex",
+                bibliography_path=bibliography_output,
+                emitter=emitter,
+                fragments=fragment_names,
+                template_runtime=template_runtime,
+            )
+        except TemplateError as exc:
+            raise PluginError(f"Failed to wrap LaTeX document: {exc}") from exc
+
+        template_context = wrap_result.template_context or {}
+        tex_path = wrap_result.output_path or (output_root / f"{stem}.tex")
         log.info("TeXSmith wrote '%s'.", tex_path.relative_to(self._build_root))
         self._announce_latexmk_command(output_root, tex_path)
 
-        template_assets: list[Path] = []
-        try:
-            template_assets = copy_template_assets(
-                template_runtime.instance,
-                output_root,
-                context=template_context,
-                overrides=overrides,
-            )
-        except TemplateError as exc:
-            raise PluginError(f"Failed to copy template assets: {exc}") from exc
+        template_assets: list[Path] = list(wrap_result.asset_paths or [])
+        template_assets.extend(
+            Path(destination)
+            for _, destination in getattr(wrap_result, "asset_pairs", [])
+        )
 
         if assets_map:
             self._write_assets_manifest(output_root, assets_map)
@@ -1031,7 +982,9 @@ class LatexPlugin(BasePlugin):
     ) -> None:
         env_engine = os.environ.get("TEXSMITH_ENGINE")
         engine_preference = env_engine.strip() if env_engine else "tectonic"
-        use_system_tectonic = self._env_flag_enabled(os.environ.get("TEXSMITH_SYSTEM_TECTONIC"))
+        use_system_tectonic = self._env_flag_enabled(
+            os.environ.get("TEXSMITH_SYSTEM_TECTONIC")
+        )
 
         template_engine = None
         raw_engine = template_context.get("latex_engine")
@@ -1041,7 +994,9 @@ class LatexPlugin(BasePlugin):
         engine_choice = resolve_engine(engine_preference, template_engine)
 
         features = compute_features(
-            requires_shell_escape=bool(template_context.get("requires_shell_escape", False)),
+            requires_shell_escape=bool(
+                template_context.get("requires_shell_escape", False)
+            ),
             bibliography=bibliography_present,
             document_state=document_state,
             template_context=template_context,
@@ -1066,16 +1021,16 @@ class LatexPlugin(BasePlugin):
         missing = missing_dependencies(
             engine_choice,
             features,
-            use_system_tectonic=use_system_tectonic if engine_choice.backend == "tectonic" else False,
+            use_system_tectonic=use_system_tectonic
+            if engine_choice.backend == "tectonic"
+            else False,
             available_binaries={"biber": biber_binary} if biber_binary else None,
         )
         if missing:
             readable = ", ".join(sorted(set(missing)))
             raise PluginError(
-                (
-                    f"LaTeX build skipped for '{tex_path.name}': "
-                    f"missing dependencies ({readable})."
-                )
+                f"LaTeX build skipped for '{tex_path.name}': "
+                f"missing dependencies ({readable})."
             )
 
         if engine_choice.backend == "latexmk":
@@ -1108,9 +1063,13 @@ class LatexPlugin(BasePlugin):
         )
 
         engine_label = (
-            engine_choice.latexmk_engine if engine_choice.backend == "latexmk" else "tectonic"
+            engine_choice.latexmk_engine
+            if engine_choice.backend == "latexmk"
+            else "tectonic"
         )
-        bundle_label = self._relativise(self._project_dir or output_root, tex_path.parent)
+        bundle_label = self._relativise(
+            self._project_dir or output_root, tex_path.parent
+        )
         log.info(
             "TEXSMITH_BUILD enabled: building '%s' with %s.",
             bundle_label.as_posix(),
@@ -1173,7 +1132,9 @@ class LatexPlugin(BasePlugin):
     def _log_engine_messages(self, messages: Iterable[LatexMessage]) -> None:
         for message in messages:
             summary = message.summary.strip()
-            details = "; ".join(part.strip() for part in message.details if part.strip())
+            details = "; ".join(
+                part.strip() for part in message.details if part.strip()
+            )
             payload = f"{summary}: {details}" if details else summary
 
             if message.severity is LatexMessageSeverity.ERROR:

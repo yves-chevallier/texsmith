@@ -264,14 +264,17 @@ class TemplateRenderer:
             shared_state = DocumentState()
 
         slot_content: dict[str, str] = {}
+        render_slot_content: dict[str, str] = {
+            slot: "\n\n".join(chunks for chunks in content if chunks)
+            for slot, content in aggregated_slots.items()
+        }
 
         written_fragment_paths: list[Path] = []
 
+        slot_output_overrides: dict[str, str] | None = None
+
         if embed_fragments:
-            slot_content = {
-                slot: "\n\n".join(chunks for chunks in content if chunks)
-                for slot, content in aggregated_slots.items()
-            }
+            slot_content = dict(render_slot_content)
         else:
             slot_inputs: dict[str, list[str]] = {}
             for fragment in fragments:
@@ -325,10 +328,11 @@ class TemplateRenderer:
                 slot: "\n".join(entries for entries in slot_inputs.get(slot, []))
                 for slot in aggregated_slots
             }
+            slot_output_overrides = dict(slot_content)
             aggregated_slots.clear()
             aggregated_slots.update(slot_inputs)
 
-        _validate_slots(self.runtime, slot_content)
+        _validate_slots(self.runtime, render_slot_content)
 
         template_instance = self.runtime.instance
         if template_instance is None:  # pragma: no cover - defensive path
@@ -357,7 +361,8 @@ class TemplateRenderer:
             wrap_result = wrap_template_document(
                 template=template_instance,
                 default_slot=default_slot,
-                slot_outputs=slot_content,
+                slot_outputs=render_slot_content,
+                slot_output_overrides=slot_output_overrides,
                 document_state=shared_state,
                 template_overrides=template_overrides if template_overrides else None,
                 output_dir=output_dir,
@@ -423,7 +428,7 @@ class TemplateRenderer:
             main_tex_path=main_tex_path,
             fragment_paths=fragment_paths,
             template_context=template_context or {},
-            slot_content=slot_content,
+            slot_content=slot_output_overrides or slot_content,
             document_state=shared_state,
             bibliography_path=bibliography_path,
             template_engine=template_engine,

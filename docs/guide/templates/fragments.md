@@ -9,23 +9,32 @@ while staying configurable from front matter or your own extensions.
 
 `ts-geometry`
 : page size/orientation glue that mirrors `press.paper`/`press.geometry` options.
+
 `ts-fonts`
 : font setup, emoji handling, and fallback management. It also
   connects to the font matcher to warn about missing fonts on the host.
+
 `ts-extra`
 : opt-in aux packages detected from the rendered content (hyperref, soul, ulem, etc.).
+
 `ts-keystrokes`
 : renders `\keystroke{…}` shortcuts with styled TikZ boxes when they appear in content.
+
 `ts-callouts`
 : admonition/callout boxes generated from callout definitions.
+
 `ts-code`
 : unified minted/tcolorbox code listing style.
+
 `ts-index`
 : central imakeidx/macros glue, selects texindy/makeindex and runs `\makeindex` when entries are present.
+
 `ts-glossary`
 : glossary and acronym wiring: loads `glossaries`, runs `\makeglossaries` when needed, and materialises acronym definitions from front matter with configurable styles.
+
 `ts-bibliography`
 : bibliography helper that wires `biblatex` into the rendered document.
+
 `ts-todolist`
 : checklist helpers providing `\done`, `\wontfix`, and the `todolist` environment when they are referenced.
 
