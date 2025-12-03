@@ -103,7 +103,7 @@ class GeometryFragment(BaseFragment[GeometryFragmentConfig]):
         "geometry_options": "",
         "geometry_options_list": [],
         "geometry_extra_options": "",
-        "geometry_duplex": False,
+        "geometry_duplex": True,
         "paper": {"format": "a4"},
     }
 

@@ -195,4 +195,4 @@ depth = "chapter"
 strip_heading = true
 
 [latex.template.assets]
-"fixtoc.sty" = { source = "fixtoc.sty" }
+"fixtoc.sty" = { source = "template/fixtoc.sty" }

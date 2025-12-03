@@ -102,7 +102,7 @@ class PaperSpec(BaseModel):
     margin: str | dict[str, str] | None = None
     frame: bool = False
     binding_offset: str | None = Field(default=None, alias="binding")
-    duplex: bool = False
+    duplex: bool = True
     watermark: str | None = None
     extra: dict[str, Any] = Field(default_factory=dict)
 
