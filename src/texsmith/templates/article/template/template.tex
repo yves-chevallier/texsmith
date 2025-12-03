@@ -31,6 +31,16 @@
 \pagenumbering{gobble}
 \thispagestyle{empty}
 \pagestyle{empty}
+\BLOCK{ else }
+\AtEndDocument{%
+  \ifnum\value{page}=1
+    \gdef\ps@plain{\ps@empty}%
+    \gdef\ps@headings{\ps@empty}%
+    \gdef\ps@myheadings{\ps@empty}%
+    \thispagestyle{empty}%
+    \pagestyle{empty}%
+  \fi
+}
 \BLOCK{ endif }
 \BLOCK{ if numbering is defined and not numbering }
 \setcounter{secnumdepth}{-1}
