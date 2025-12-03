@@ -1,0 +1,151 @@
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{fixtoc}[2025/12/03 Dynamic TOC widths]
+
+\renewcommand{\cftpartpresnum}{\partname\ }
+\renewcommand{\cftpartaftersnum}{\quad}
+
+\makeatletter
+\ExplSyntaxOn
+
+\cs_new_protected:Npn \ts_set_and_compute_width:nnnnnn #1#2#3#4#5#6
+  {
+    \int_set:Nn #2 { \value{#1} }
+    \dim_zero:N #3
+    \int_step_inline:nn { #2 }
+      {
+        \int_set:cn { c@#1 } {##1}
+        \settowidth{\l_tmpa_dim}{ #4 #5 #6 }
+        \dim_compare:nT { \l_tmpa_dim > #3 }
+          { \dim_set_eq:NN #3 \l_tmpa_dim }
+      }
+    \int_set:cn { c@#1 } { #2 }
+  }
+
+% part
+\dim_new:N \l__ts_part_max_dim
+\dim_new:N \l__ts_part_saved_dim
+\int_new:N \l__ts_part_saved_int
+\cs_if_exist:NF \tsSavedPartWidth
+  { \cs_new:Npn \tsSavedPartWidth { \the\cftpartnumwidth } }
+\cs_new_protected:Npn \ts_set_saved_part_width:
+  {
+    \dim_set:Nn \l__ts_part_saved_dim { \tsSavedPartWidth }
+    \dim_set:Nn \cftpartnumwidth { \l__ts_part_saved_dim }
+  }
+\cs_new_protected:Npn \ts_compute_and_store_part_width:
+  {
+    \ts_set_and_compute_width:nnnnnn
+      {part}{\l__ts_part_saved_int}{\l__ts_part_max_dim}
+      {\cftpartfont}{\cftpartpresnum \thepart}{\cftpartaftersnum}
+    \protected@write\@auxout{}{%
+      \string\gdef\string\tsSavedPartWidth{\dim_use:N \l__ts_part_max_dim}%
+    }
+    \dim_compare:nF { \l__ts_part_max_dim = \l__ts_part_saved_dim }
+      { \typeout{(texsmith) Rerun to update part number width in the ToC.} }
+  }
+\AtBeginDocument{ \ts_set_saved_part_width: }
+\AddToHook{shipout/lastpage}{\ts_compute_and_store_part_width:}
+
+% chapter
+\dim_new:N \l__ts_chapter_max_dim
+\dim_new:N \l__ts_chapter_saved_dim
+\int_new:N \l__ts_chapter_saved_int
+\cs_if_exist:NF \tsSavedChapterWidth
+  { \cs_new:Npn \tsSavedChapterWidth { \the\cftchapternumwidth } }
+\cs_new_protected:Npn \ts_set_saved_chapter_width:
+  {
+    \dim_set:Nn \l__ts_chapter_saved_dim { \tsSavedChapterWidth }
+    \dim_set:Nn \cftchapternumwidth { \l__ts_chapter_saved_dim }
+  }
+\cs_new_protected:Npn \ts_compute_and_store_chapter_width:
+  {
+    \ts_set_and_compute_width:nnnnnn
+      {chapter}{\l__ts_chapter_saved_int}{\l__ts_chapter_max_dim}
+      {\cftchapterfont}{\cftchapterpresnum \thechapter}{\cftchapteraftersnum}
+    \dim_add:Nn \l__ts_chapter_max_dim { 1em }
+    \protected@write\@auxout{}{%
+      \string\gdef\string\tsSavedChapterWidth{\dim_use:N \l__ts_chapter_max_dim}%
+    }
+    \dim_compare:nF { \l__ts_chapter_max_dim = \l__ts_chapter_saved_dim }
+      { \typeout{(texsmith) Rerun to update chapter number width in the ToC.} }
+  }
+\AtBeginDocument{ \ts_set_saved_chapter_width: }
+\AddToHook{shipout/lastpage}{\ts_compute_and_store_chapter_width:}
+
+% section
+\dim_new:N \l__ts_section_max_dim
+\dim_new:N \l__ts_section_saved_dim
+\int_new:N \l__ts_section_saved_int
+\cs_if_exist:NF \tsSavedSectionWidth
+  { \cs_new:Npn \tsSavedSectionWidth { \the\cftsectionnumwidth } }
+\cs_new_protected:Npn \ts_set_saved_section_width:
+  {
+    \dim_set:Nn \l__ts_section_saved_dim { \tsSavedSectionWidth }
+    \dim_set:Nn \cftsectionnumwidth { \l__ts_section_saved_dim }
+  }
+\cs_new_protected:Npn \ts_compute_and_store_section_width:
+  {
+    \ts_set_and_compute_width:nnnnnn
+      {section}{\l__ts_section_saved_int}{\l__ts_section_max_dim}
+      {\cftsectionfont}{\cftsectionpresnum \thesection}{\cftsectionaftersnum}
+    \protected@write\@auxout{}{%
+      \string\gdef\string\tsSavedSectionWidth{\dim_use:N \l__ts_section_max_dim}%
+    }
+    \dim_compare:nF { \l__ts_section_max_dim = \l__ts_section_saved_dim }
+      { \typeout{(texsmith) Rerun to update section number width in the ToC.} }
+  }
+\AtBeginDocument{ \ts_set_saved_section_width: }
+\AddToHook{shipout/lastpage}{\ts_compute_and_store_section_width:}
+
+% subsection
+\dim_new:N \l__ts_subsection_max_dim
+\dim_new:N \l__ts_subsection_saved_dim
+\int_new:N \l__ts_subsection_saved_int
+\cs_if_exist:NF \tsSavedSubsectionWidth
+  { \cs_new:Npn \tsSavedSubsectionWidth { \the\cftsubsectionnumwidth } }
+\cs_new_protected:Npn \ts_set_saved_subsection_width:
+  {
+    \dim_set:Nn \l__ts_subsection_saved_dim { \tsSavedSubsectionWidth }
+    \dim_set:Nn \cftsubsectionnumwidth { \l__ts_subsection_saved_dim }
+  }
+\cs_new_protected:Npn \ts_compute_and_store_subsection_width:
+  {
+    \ts_set_and_compute_width:nnnnnn
+      {subsection}{\l__ts_subsection_saved_int}{\l__ts_subsection_max_dim}
+      {\cftsubsectionfont}{\cftsubsectionpresnum \thesubsection}{\cftsubsectionaftersnum}
+    \protected@write\@auxout{}{%
+      \string\gdef\string\tsSavedSubsectionWidth{\dim_use:N \l__ts_subsection_max_dim}%
+    }
+    \dim_compare:nF { \l__ts_subsection_max_dim = \l__ts_subsection_saved_dim }
+      { \typeout{(texsmith) Rerun to update subsection number width in the ToC.} }
+  }
+\AtBeginDocument{ \ts_set_saved_subsection_width: }
+\AddToHook{shipout/lastpage}{\ts_compute_and_store_subsection_width:}
+
+% subsubsection
+\dim_new:N \l__ts_subsubsection_max_dim
+\dim_new:N \l__ts_subsubsection_saved_dim
+\int_new:N \l__ts_subsubsection_saved_int
+\cs_if_exist:NF \tsSavedSubsubsectionWidth
+  { \cs_new:Npn \tsSavedSubsubsectionWidth { \the\cftsubsubsectionnumwidth } }
+\cs_new_protected:Npn \ts_set_saved_subsubsection_width:
+  {
+    \dim_set:Nn \l__ts_subsubsection_saved_dim { \tsSavedSubsubsectionWidth }
+    \dim_set:Nn \cftsubsubsectionnumwidth { \l__ts_subsubsection_saved_dim }
+  }
+\cs_new_protected:Npn \ts_compute_and_store_subsubsection_width:
+  {
+    \ts_set_and_compute_width:nnnnnn
+      {subsubsection}{\l__ts_subsubsection_saved_int}{\l__ts_subsubsection_max_dim}
+      {\cftsubsubsectionfont}{\cftsubsubsectionpresnum \thesubsubsection}{\cftsubsubsectionaftersnum}
+    \protected@write\@auxout{}{%
+      \string\gdef\string\tsSavedSubsubsectionWidth{\dim_use:N \l__ts_subsubsection_max_dim}%
+    }
+    \dim_compare:nF
+      { \l__ts_subsubsection_max_dim = \l__ts_subsubsection_saved_dim }
+      { \typeout{(texsmith) Rerun to update subsubsection number width in the ToC.} }
+  }
+\AtBeginDocument{ \ts_set_saved_subsubsection_width: }
+\AddToHook{shipout/lastpage}{\ts_compute_and_store_subsubsection_width:}
+\ExplSyntaxOff
+\makeatother
