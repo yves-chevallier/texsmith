@@ -5,7 +5,6 @@
 \usepackage{xurl} % For better URL line breaking reduce overfull hbox
 
 \usepackage[svgnames,dvipsnames,x11names]{xcolor}
-\definecolor{texsmithLinkColor}{HTML}{0B3D91}
 \VAR{extra_packages}
 
 \usepackage{fancyhdr}
@@ -16,14 +15,14 @@
 \usepackage{csquotes}
 \usepackage{epigraph}
 \usepackage{capt-of}
-%\usepackage{fvextra}
 \usepackage{enumitem}
 \usepackage{etoolbox}
 \usepackage{tocloft}
 \usepackage{caption}
-\usepackage[colorlinks=true, linkcolor=texsmithLinkColor, urlcolor=texsmithLinkColor, citecolor=texsmithLinkColor]{hyperref}
+\usepackage[colorlinks=true, linkcolor=NavyBlue, urlcolor=NavyBlue, citecolor=NavyBlue]{hyperref}
 \usepackage[\VAR{language|default('english')}]{babel}
 \usepackage{emptypage}
+\usepackage{fixtoc} % Custom package to fix TOC number widths
 
 \graphicspath{{assets/}}
 
@@ -47,7 +46,6 @@
 %
 \renewcommand{\cftpartfont}{\sffamily\Large\bfseries}
 \renewcommand{\cftpartpagefont}{\sffamily\Large\bfseries}
-\setlength{\cftbeforepartskip}{1.5em} % Vertical space before parts
 \renewcommand{\cftpartpresnum}{\partname~}
 
 %
@@ -82,10 +80,6 @@
      \usebox{\mytablebox} % Otherwise, use the table as is
    \fi
   }
-
-% Custom epigraph style
-\setlength\epigraphwidth{.8\textwidth}
-\setlength\epigraphrule{0pt}
 
 \newif\ifgeometryduplex
 \BLOCK{ if geometry_duplex|default(false) }\geometryduplextrue\BLOCK{ else }\geometryduplexfalse\BLOCK{ endif }
@@ -160,73 +154,12 @@
   \setcounter{secnumdepth}{2}
 }{}{}
 
-
-%
-% Listing / Code configuration
-%
-
-% \NewTotalTCBox{\cde}{mv}{
-%   on line,
-%   boxsep=0pt,
-%   left=1.5pt,
-%   right=1.5pt,
-%   top=1pt,
-%   bottom=1pt,
-%   colframe=gray!20,
-%   colback=gray!20,
-%   minted options={%
-%       ignorelexererrors
-%     },
-%   rounded corners,
-%   boxrule=0pt,
-% }{\mintinline{#1}{#2}}
-
-% \newtcolorbox{goodbox}[1][]{
-%   colback=green!20,
-%   colframe=green!50!black,
-%   boxrule=0.5pt,
-%   arc=4mm,
-%   auto outer arc,
-%   #1
-% }
-
-% \newtcolorbox{badbox}[1][]{
-%   colback=red!20,
-%   colframe=red!50!black,
-%   boxrule=0.5pt,
-%   arc=4mm,
-%   auto outer arc,
-%   #1
-% }
-
-% \newtcolorbox{commentbox}[1][]{
-%   colback=gray!20,
-%   colframe=gray!50!black,
-%   boxrule=0.5pt,
-%   arc=4mm,
-%   auto outer arc,
-%   #1
-% }
-
-%% Workaround for mintedinline in item
-%% https://tex.stackexchange.com/a/723530/85416
-%\NewDocumentCommand{\minteditem}{mv}{%
-%  \item[\mintinline{#1}{#2}]%
-%}
-
-%% Highlight text in yellow
-%\newtcbox{\hl}{on line, boxrule=0.5pt, colframe=black, colback=yellow!30, sharp corners, boxsep=0pt, left=2pt, right=2pt, top=2pt, bottom=2pt}
-
-
 %
 % Tweaks
 %
 
 % Allow hyphenation after a hyphen
 \providecommand{\allowhyphens}{\ifvmode\else\nobreak\hspace{0pt}\fi}
-
-% Redefine bullet list character to a dash (demi-cadratin)
-\setlist[itemize,1]{label=--}
 
 % To number paragraphs and subparagraphs
 \setcounter{secnumdepth}{5}
@@ -288,8 +221,6 @@
 \definecolor{indigo(dye)}{rgb}{0.0, 0.25, 0.42}
 
 \BLOCK{ if glossary }\input{glossary}\BLOCK{ endif }
-
-%\input{acronyms}
 
 \begin{document}
 \hypersetup{pageanchor=false}

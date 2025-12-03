@@ -193,3 +193,6 @@ description = "Appendix content inserted before backmatter."
 [latex.template.slots.colophon]
 depth = "chapter"
 strip_heading = true
+
+[latex.template.assets]
+"fixtoc.sty" = { source = "fixtoc.sty" }
