@@ -102,6 +102,7 @@ The source tree is organised around three top-level namespaces:
 - `TemplateRenderer` now owns slot aggregation and LaTeX assembly. `TemplateSession` focuses on session state, template options, and bibliography tracking.
 - `DocumentSlots` unify slot directives from front matter, CLI flags, and programmatic overrides. Every entry point now speaks the same data model.
 - `DiagnosticEmitter` replaces ad-hoc callback bags so warnings, errors, and structured events flow through a predictable interface (CLI uses `CliEmitter`; libraries can plug in their own).
+- Fragments use a `BaseFragment` + config dataclass model (`fragment = YourFragment()` export referenced by `fragment.toml` entrypoints). No legacy factories remain.
 
 ### Programmatic conversions with `ConversionService`
 

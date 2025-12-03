@@ -10,7 +10,7 @@ Take this source:
 
 ## Rendered Markdown
 
-MkDocs render:
+Obviously everything built with texsmith can also be rendered in this very Markdown file:
 
 ### Draw.io Diagram
 

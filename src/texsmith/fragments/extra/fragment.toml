@@ -1,3 +1,3 @@
 name = "ts-extra"
 description = "Auxiliary LaTeX packages loaded on demand."
-entrypoint = "texsmith.fragments.extra:create_fragment"
+entrypoint = "texsmith.fragments.extra:fragment"

@@ -34,7 +34,6 @@ from texsmith.core.templates import (
 
 from ..diagnostics import DiagnosticEmitter
 from .debug import (
-    ConversionError,
     debug_enabled,
     ensure_emitter,
     format_user_friendly_render_error,
@@ -45,7 +44,6 @@ from .debug import (
 from .templates import (
     SlotFragment,
     build_binder_context,
-    compute_heading_offset,
     extract_slot_fragments,
 )
 
@@ -576,7 +574,8 @@ def _render_slot_fragments(
     if not isinstance(style_override, str):
         style_override = str(style_override or "")
     formatter.default_code_style = style_override.strip() or formatter.default_code_style
-    partial_providers: dict[str, str] = {name: "core" for name in formatter._template_names.keys()}
+    available_templates = formatter.template_names
+    partial_providers: dict[str, str] = dict.fromkeys(available_templates, "core")
     fragment_names = _resolve_active_fragments(binding, binder_context.template_overrides)
     fragment_source_dir = _resolve_fragment_source_dir(
         binder_context.template_overrides, binder_context
@@ -601,7 +600,7 @@ def _render_slot_fragments(
         for name in binding.required_partials:
             required_partials.setdefault(name, set()).add(template_provider)
 
-    available_partials = set(formatter._template_names.keys())
+    available_partials = set(available_templates)
     missing_partials = [name for name in required_partials if name not in available_partials]
     if missing_partials:
         details = []
@@ -669,7 +668,11 @@ def _render_slot_fragments(
 def copy_document_state(target: DocumentState, source: DocumentState) -> None:
     """Synchronise ``target`` with a source ``DocumentState`` instance."""
     for metadata_field in dataclasses.fields(DocumentState):
-        setattr(target, metadata_field.name, copy.deepcopy(getattr(source, metadata_field.name)))
+        setattr(
+            target,
+            metadata_field.name,
+            copy.deepcopy(getattr(source, metadata_field.name)),
+        )
 
 
 def render_with_fallback(

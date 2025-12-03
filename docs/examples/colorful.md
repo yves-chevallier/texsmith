@@ -6,7 +6,7 @@ This example shows off a custom poster-ish template with four slots wired throug
 --8<--- "examples/colorful/colorful.md"
 ```
 
-The YAML front matter picks the template (`.`), sets the palette, and feeds each slot. Colors live under `colors`, and slot content under `slots`.
+The YAML front matter picks the local defined template (`.`), sets the palette, and feeds each slot. Colors live under `colors`, and slot content under `slots`.
 
 The manifest defines defaults, available attributes, and where they get injected.
 
@@ -37,7 +37,6 @@ $ texsmith colorful.md -t. --build
 ┌───────────────┬─────────────────────────────────────┐
 │ Artifact      │ Location                            │
 ├───────────────┼─────────────────────────────────────┤
-│ Main document │ /tmp/texsmith-x84gefq4/colorful.tex │
 │ PDF           │ colorful.pdf                        │
 └───────────────┴─────────────────────────────────────┘
 ```

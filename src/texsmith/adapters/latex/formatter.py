@@ -77,6 +77,16 @@ class LaTeXFormatter:
         """Normalise template identifiers to align with loader expectations."""
         return name.replace("/", "_")
 
+    @classmethod
+    def normalise_key(cls, name: str) -> str:
+        """Public wrapper for normalising template identifiers."""
+        return cls._normalise_key(name)
+
+    @property
+    def template_names(self) -> set[str]:
+        """Return the set of available template identifiers."""
+        return set(self._template_names)
+
     def _get_template(self, key: str) -> Template:
         """Return a cached template instance loading it on demand."""
         normalised = self._normalise_key(key)

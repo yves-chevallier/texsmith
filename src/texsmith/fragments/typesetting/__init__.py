@@ -1,89 +1,121 @@
 from __future__ import annotations
 
 from collections.abc import Mapping
+from dataclasses import dataclass
 from pathlib import Path
-from typing import Any
+from typing import Any, ClassVar
 
-from texsmith.core.fragments import Fragment, FragmentDefinition, FragmentPiece
+from texsmith.core.fragments.base import BaseFragment, FragmentPiece
 from texsmith.core.templates.manifest import TemplateAttributeSpec, TemplateError
 
 
-def create_fragment() -> FragmentDefinition:
-    """Return the typesetting fragment definition."""
-    template_path = Path(__file__).with_name("ts-typesetting.tex.jinja")
-    fragment = Fragment(
-        name="ts-typesetting",
-        pieces=[
-            FragmentPiece(
-                template_path=template_path,
-                kind="inline",
-                slot="extra_packages",
+@dataclass(frozen=True)
+class TypesettingConfig:
+    indent_mode: str | None
+    parskip: str | None
+    leading_mode: str | None
+    leading_value: str | None
+    lineno_enabled: bool
+
+    @classmethod
+    def from_context(cls, context: Mapping[str, Any]) -> TypesettingConfig:
+        paragraph = context.get("typesetting_paragraph")
+        leading = context.get("typesetting_leading")
+        lineno = bool(context.get("typesetting_lineno"))
+
+        indent_mode, parskip = _normalise_paragraph(paragraph)
+        leading_mode, leading_value = _normalise_leading(leading)
+
+        return cls(
+            indent_mode=indent_mode,
+            parskip=parskip,
+            leading_mode=leading_mode,
+            leading_value=leading_value,
+            lineno_enabled=lineno,
+        )
+
+    def enabled(self) -> bool:
+        return (
+            any(
+                option is not None for option in (self.indent_mode, self.parskip, self.leading_mode)
             )
-        ],
-        description="Paragraph spacing, line spacing, and line numbers controls.",
-        source=template_path,
-        context_defaults={"extra_packages": ""},
-        context_injector=_inject_context,
-        should_render=_should_render,
-        attributes={
-            "typesetting_paragraph": TemplateAttributeSpec(
-                default=None,
-                type="mapping",
-                sources=[
-                    "press.typesetting.paragraph",
-                    "press.paragraph",
-                    "typesetting.paragraph",
-                    "paragraph",
-                ],
-            ),
-            "typesetting_leading": TemplateAttributeSpec(
-                default=None,
-                type="string",
-                allow_empty=True,
-                sources=[
-                    "press.typesetting.leading",
-                    "press.leading",
-                    "typesetting.leading",
-                    "leading",
-                ],
-            ),
-            "typesetting_lineno": TemplateAttributeSpec(
-                default=None,
-                type="boolean",
-                sources=[
-                    "press.typesetting.lineno",
-                    "press.lineno",
-                    "typesetting.lineno",
-                    "lineno",
-                ],
-            ),
-        },
-    )
-    return fragment.to_definition()
+            or self.lineno_enabled
+        )
+
+    def inject_into(self, context: dict[str, Any]) -> None:
+        context["ts_typesetting_indent_mode"] = self.indent_mode
+        context["ts_typesetting_parskip"] = self.parskip
+        context["ts_typesetting_leading_mode"] = self.leading_mode
+        context["ts_typesetting_leading_value"] = self.leading_value
+        context["ts_typesetting_enable_lineno"] = self.lineno_enabled
+        context["ts_typesetting_enabled"] = self.enabled()
 
 
-def _inject_context(
-    context: dict[str, Any], overrides: Mapping[str, Any] | None = None
-) -> None:
-    _ = overrides
-    paragraph = context.get("typesetting_paragraph")
-    leading = context.get("typesetting_leading")
-    lineno = context.get("typesetting_lineno")
+class TypesettingFragment(BaseFragment[TypesettingConfig]):
+    name: ClassVar[str] = "ts-typesetting"
+    description: ClassVar[str] = "Paragraph spacing, line spacing, and line numbers controls."
+    pieces: ClassVar[list[FragmentPiece]] = [
+        FragmentPiece(
+            template_path=Path(__file__).with_name("ts-typesetting.tex.jinja"),
+            kind="inline",
+            slot="extra_packages",
+        )
+    ]
+    attributes: ClassVar[dict[str, TemplateAttributeSpec]] = {
+        "typesetting_paragraph": TemplateAttributeSpec(
+            default=None,
+            type="mapping",
+            sources=[
+                "press.typesetting.paragraph",
+                "press.paragraph",
+                "typesetting.paragraph",
+                "paragraph",
+            ],
+        ),
+        "typesetting_leading": TemplateAttributeSpec(
+            default=None,
+            type="string",
+            allow_empty=True,
+            sources=[
+                "press.typesetting.leading",
+                "press.leading",
+                "typesetting.leading",
+                "leading",
+            ],
+        ),
+        "typesetting_lineno": TemplateAttributeSpec(
+            default=None,
+            type="boolean",
+            sources=[
+                "press.typesetting.lineno",
+                "press.lineno",
+                "typesetting.lineno",
+                "lineno",
+            ],
+        ),
+    }
 
-    indent_mode, parskip = _normalise_paragraph(paragraph)
-    leading_mode, leading_value = _normalise_leading(leading)
-    lineno_enabled = bool(lineno)
-    enabled = (
-        any(option is not None for option in (indent_mode, parskip, leading_mode))
-        or lineno_enabled
-    )
+    config_cls: ClassVar[type[TypesettingConfig]] = TypesettingConfig
+    source: ClassVar[Path] = Path(__file__).with_name("ts-typesetting.tex.jinja")
+    context_defaults: ClassVar[dict[str, Any]] = {"extra_packages": ""}
 
-    context["ts_typesetting_indent_mode"] = indent_mode
-    context["ts_typesetting_parskip"] = parskip
-    context["ts_typesetting_leading_mode"] = leading_mode
-    context["ts_typesetting_leading_value"] = leading_value
-    context["ts_typesetting_enable_lineno"] = lineno_enabled
-    context["ts_typesetting_enabled"] = enabled
+    def build_config(
+        self, context: Mapping[str, Any], overrides: Mapping[str, Any] | None = None
+    ) -> TypesettingConfig:
+        _ = overrides
+        return self.config_cls.from_context(context)
+
+    def inject(
+        self,
+        config: TypesettingConfig,
+        context: dict[str, Any],
+        overrides: Mapping[str, Any] | None = None,
+    ) -> None:
+        _ = overrides
+        config.inject_into(context)
+
+    def should_render(self, config: TypesettingConfig) -> bool:
+        return config.enabled()
 
 
 def _normalise_paragraph(payload: Any) -> tuple[str | None, str | None]:
@@ -183,8 +215,6 @@ def _format_number(value: float) -> str:
     return cleaned or "0"
 
 
-def _should_render(context: Mapping[str, object]) -> bool:
-    return bool(context.get("ts_typesetting_enabled"))
+fragment = TypesettingFragment()
 
-
-__all__ = ["create_fragment"]
+__all__ = ["TypesettingConfig", "TypesettingFragment", "fragment"]

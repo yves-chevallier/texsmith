@@ -24,7 +24,9 @@ def _write_template(
     if required:
         required_list = ", ".join(f'"{item}"' for item in required)
         manifest_lines.append(f"required_partials = [{required_list}]")
-    (root / "template.tex").write_text(r"\VAR{extra_packages}" "\n" r"\VAR{mainmatter}", encoding="utf-8")
+    (root / "template.tex").write_text(
+        r"\VAR{extra_packages}" "\n" r"\VAR{mainmatter}", encoding="utf-8"
+    )
     if override_content is not None:
         overrides_dir = root / "overrides"
         overrides_dir.mkdir(parents=True, exist_ok=True)
@@ -53,7 +55,9 @@ def _write_fragment(
     if required:
         required_list = ", ".join(f'"{item}"' for item in required)
         manifest_lines.append(f"required_partials = [{required_list}]")
-    manifest_lines.append('files = [{ path = "noop.tex", type = "inline", slot = "extra_packages" }]')
+    manifest_lines.append(
+        'files = [{ path = "noop.tex", type = "inline", slot = "extra_packages" }]'
+    )
     (root / "fragment.toml").write_text("\n".join(manifest_lines), encoding="utf-8")
     return root
 

@@ -8,7 +8,13 @@ import shutil
 from typing import Any
 from urllib.parse import unquote, urlparse
 
-from texsmith.adapters.transformers import drawio2pdf, fetch_image, image2pdf, mermaid2pdf, svg2pdf
+from texsmith.adapters.transformers import (
+    drawio2pdf,
+    fetch_image,
+    image2pdf,
+    mermaid2pdf,
+    svg2pdf,
+)
 from texsmith.core.context import RenderContext
 from texsmith.core.conversion.debug import ensure_emitter, record_event
 
@@ -129,9 +135,6 @@ def store_remote_image_asset(context: RenderContext, url: str) -> Path:
         prefer_name=prefer_name,
         force_hash=not bool(prefer_name),
     )
-
-
-# --- helpers ---
 
 
 def _requires_conversion(suffix: str, convert_requested: bool) -> bool:

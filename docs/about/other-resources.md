@@ -1,5 +1,7 @@
 # Other Similar Projects
 
+Here are some other projects and tools that are related to TeXSmith in terms of functionality, purpose or target audience.
+
 ## Converters and Parsers
 
 [Pandoc](https://pandoc.org/)
@@ -64,6 +66,9 @@
 
 [Docusaurus](https://docusaurus.io/)
 : A static site generator designed for building documentation websites. It supports Markdown and offers features like versioning and localization. Backed by Facebook, it has a strong community and is easy to set up for documentation projects.
+
+[TypeDoc](https://typedoc.org/)
+: A documentation generator for TypeScript projects. It uses TypeScript's type information to generate API documentation in Markdown or HTML format. Ideal for TypeScript developers looking to document their codebases.
 
 [Hexo](https://hexo.io/)
 : A fast, simple, and powerful blog framework powered by Node.js. It uses Markdown for content creation and offers a variety of themes and plugins. Known for its speed and ease of use, making it suitable for bloggers and developers alike.

@@ -14,7 +14,7 @@ def normalise_partial_key(value: str) -> str:
         return ""
     path = Path(candidate)
     base = path.with_suffix("").as_posix()
-    return LaTeXFormatter._normalise_key(base)  # type: ignore[attr-defined]
+    return LaTeXFormatter.normalise_key(base)
 
 
 __all__ = ["normalise_partial_key"]

@@ -2,11 +2,11 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 from pathlib import Path
-from typing import Any
+from typing import Any, ClassVar
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
-from texsmith.core.fragments import FragmentDefinition, FragmentPiece
+from texsmith.core.fragments.base import BaseFragment, FragmentPiece
 from texsmith.core.templates.base import _build_environment
 
 from .paper import GeometryResolution, inject_geometry_context, resolve_geometry_settings
@@ -82,16 +82,72 @@ class GeometryFragmentConfig(BaseModel):
         return resolve_geometry_settings(self.to_context())
 
 
-class GeometryFragment:
-    """Programmatic renderer for the ts-geometry fragment."""
+class GeometryFragment(BaseFragment[GeometryFragmentConfig]):
+    """Programmatic renderer and fragment adapter for the ts-geometry fragment."""
+
+    name: ClassVar[str] = "ts-geometry"
+    description: ClassVar[str] = "Page layout setup driven by press.paper."
+    pieces: ClassVar[list[FragmentPiece]] = [
+        FragmentPiece(
+            template_path=Path(__file__).with_name("ts_geometry.tex.jinja"),
+            kind="inline",
+            slot="extra_packages",
+        )
+    ]
+    attributes: ClassVar[dict[str, Any]] = {}
+    config_cls: ClassVar[type[GeometryFragmentConfig]] = GeometryFragmentConfig
+    source: ClassVar[Path] = Path(__file__).with_name("ts_geometry.tex.jinja")
+    context_defaults: ClassVar[dict[str, Any]] = {
+        "extra_packages": "",
+        "documentclass_options": "",
+        "geometry_options": "",
+        "geometry_options_list": [],
+        "geometry_extra_options": "",
+        "geometry_duplex": False,
+        "paper": {"format": "a4"},
+    }
 
     def __init__(self, payload: Any | None = None) -> None:
         self.config = GeometryFragmentConfig.model_validate(payload or {})
         self.template_path = Path(__file__).with_name("ts_geometry.tex.jinja")
 
+    def build_config(
+        self, context: Mapping[str, Any], overrides: Mapping[str, Any] | None = None
+    ) -> GeometryFragmentConfig:
+        _ = overrides
+        payload: dict[str, Any] = {}
+        for key in (
+            "paper",
+            "geometry",
+            "duplex",
+            "margin",
+            "orientation",
+            "binding",
+            "frame",
+            "watermark",
+        ):
+            if key in context:
+                payload[key] = context.get(key)
+        return self.config_cls.model_validate(payload)
+
+    def inject(
+        self,
+        config: GeometryFragmentConfig,
+        context: dict[str, Any],
+        overrides: Mapping[str, Any] | None = None,
+    ) -> None:
+        # Ensure raw config fields are present before resolution.
+        context.update(config.to_context())
+        inject_geometry_context(context, overrides)
+
+    def should_render(self, config: GeometryFragmentConfig) -> bool:
+        _ = config
+        return True
+
+    # Convenience renderer for direct use
     def render(self) -> str:
         context = self.config.to_context()
-        inject_geometry_context(context)  # populates geometry_* keys
+        inject_geometry_context(context)
         environment = _build_environment(self.template_path.parent)
         template = environment.get_template(self.template_path.name)
         return template.render(**context)
@@ -105,33 +161,7 @@ class GeometryFragment:
         return self.render()
 
 
-def create_fragment() -> FragmentDefinition:
-    """Return the geometry fragment definition injected via ``extra_packages``."""
-    template_path = Path(__file__).with_name("ts_geometry.tex.jinja")
-    return FragmentDefinition(
-        name="ts-geometry",
-        pieces=[
-            FragmentPiece(
-                template_path=template_path,
-                kind="inline",
-                slot="extra_packages",
-            )
-        ],
-        description="Page layout setup driven by press.paper.",
-        source=template_path,
-        context_defaults={
-            "extra_packages": "",
-            "documentclass_options": "",
-            "geometry_options": "",
-            "geometry_options_list": [],
-            "geometry_extra_options": "",
-            "geometry_duplex": False,
-            "paper": {"format": "a4"},
-        },
-        context_injector=lambda context, overrides=None: inject_geometry_context(
-            context, overrides
-        ),
-    )
+fragment = GeometryFragment()
 
 
-__all__ = ["GeometryFragment", "GeometryFragmentConfig", "create_fragment"]
+__all__ = ["GeometryFragment", "GeometryFragmentConfig", "fragment"]

@@ -52,7 +52,11 @@ from typing import Any
 
 from texsmith.core.context import DocumentState
 from texsmith.core.fragments import collect_fragment_attribute_defaults
-from texsmith.core.templates import TemplateError, TemplateRuntime, load_template_runtime
+from texsmith.core.templates import (
+    TemplateError,
+    TemplateRuntime,
+    load_template_runtime,
+)
 
 from ..core.conversion.debug import ensure_emitter
 from ..core.conversion.renderer import TemplateRenderer
