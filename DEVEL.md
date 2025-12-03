@@ -25,6 +25,10 @@ Roadmap and development notes for TeXSmith. I keep this file as a running checkl
 - [x] Snippet template
 - [x] Drawio Exporter remote via wreight... see in scripts
 - [x] Mermaid color configuration for MkDocs
+- [x] Build MkDocs with parts at level 0.
+- [x] Implement drawio over pywreight
+- [ ] Refactoring snippets
+- [ ] Fix snippet template (frame dog ear would be good in the build pdf)
 - [ ] Solve issue with Greek
 - [ ] Global user's configuration (.texsmith/config.yml)
 - [ ] Acronyms multiline
@@ -42,13 +46,11 @@ Roadmap and development notes for TeXSmith. I keep this file as a running checkl
 - [ ] Add engine through Docker (docker-tectonic, docker-texlive)
 - [ ] Use docker tectonic if tectonic is not installed
 - [ ] Integrate docker docker run -v $(pwd):/usr/src/tex  dxjoke/tectonic-docker tectonic book.tex
-- [ ] Build MkDocs with parts at level 0.
 - [ ] Hide the list of tables when no tables exist.
 - [ ] Manage title fragment to insert title meta
 - [ ] Manage fragments order from before/after hooks instead of in fragments.py
 - [ ] tocloft
 - [ ] enumitem
-- [ ] Fix snippet template (frame dog ear would be good in the build pdf)
 - [ ] Be verbose in mkdocs show what happens (fetching assets, building...)
 - [ ] docs/syntax/captions.md (captions not working when using texsmith?)
 - [ ] Use env var for TEXSMITH_CACHE, default to ~/.texsmith/cache
@@ -60,7 +62,6 @@ Roadmap and development notes for TeXSmith. I keep this file as a running checkl
 - [ ] Support table orientation (rotate very wide tables)
 - [ ] Scaffold templates with Cookiecutter
 - [ ] Implement `texsmith template create my-template`
-- [ ] Offer compilation with Docker or TeX Live (user choice)
 - [ ] Deploy to PyPI
 - [ ] CI: uv run mkdocs build #--strict not yet ready
 - [ ] Windows Support
@@ -70,143 +71,95 @@ Roadmap and development notes for TeXSmith. I keep this file as a running checkl
   - [ ] Epigraph Plugin
   - [ ] Letterine
   - [ ] Custom variables to insert in a document using moustaches
-
-
 - [ ] Simplify the attributes SSOT for templates and fragments
-
-- [ ] Implement drawio over pywreight
 - [ ] ts-languages that uses polyglossia and specific things to languages
+- [ ] Analyse which license suit best TeXSmith
+- [ ] Update docs/api to reflect the actual codebase
+- [ ] Add comprehensive docstring in each docs/api entrypoint in the codebase to explain why/the architecture and how it is useful.
+- [ ] Do not show temporary paths in outputs CLI summary table (│ Main document │ /tmp/texsmith-x84gefq4/colorful.tex │)
 
-# Refactoring Plan: Templates, Fragments, Partials, Attributes
+## Snippets for on doc examples:
 
-We want to do a huge refactoring on the concepts of templates, fragments, partials, and attributes. Here some notes about these concepts. I ask you to load the context (architecture of TexSmith, how templates/fragments are loaded, how attributes are emitted and consumed, etc) before proceeding. Then establish a plan in phases (plan, steps, tests, cleaning old code, etc.) to perform this refactoring. I will execute these steps once the plan is ready in the order.
+We currently use this syntax which is aweful with plenty of parameters. I want to provide an alternative syntax using code fences
 
-## Components
+Here the current syntax for two examples:
 
-Markdown Extension
-: Markdown extensions provide new syntax or logic to be used in markdown files.
-Each extension can be declared and enabled by plugins.
+````md {.snippet data-caption="Download PDF" data-attr-format="din" data-drop-title="true" data-frame="true" data-width="80%" data-cwd="../../examples/letter/"}
+---8<--- "examples/letter/letter.md"
+````
 
-Fragment
-: A fragment is reusable pieces of LaTeX code that can be injected into templates at specific slots. Fragments can be configured with attributes.
+````md {.snippet data-caption="Download PDF" data-frame="true" data-template="article" data-layout="2x2" data-width="70%" data-files="cheese.bib" data-cwd="../../examples/paper/"}
+---8<--- "examples/paper/cheese.md"
+````
 
-Partial
-: A partial is a small piece of LaTeX code associated to its own logic that translate HTML elements to LaTeX code. Partials are used by the markdown engine to convert markdown content to LaTeX. Templates or fragments can override default partials or provide new ones.
+Here the alternative syntax whcih doesn't use the ---8<--- mechanism:
 
-Template
-: A template is a complete LaTeX document structure that defines the overall layout and style of the generated LaTeX document. Templates can declare attributes, use fragments, and define slots for content injection. Template can override default partials. A template may have assets (images, latexmkrc, config files, etc) that are copied to the output folder when generating a document. All template text files are jinja2 templates, they will be rendered with the context of the document (a.k. attributes)
-
-Attribute
-: An attribute is a scalar or an object loaded in the context of a document. Attributes can be emitted by the user (CLI through `--attribute`), from the frontmatter in markdown files or from an external config file. Fragments or templates can also emit attributes, but they can also consume them to configure their behavior.
-
-We need to document these concepts in the docs/guide.
-
-## Pipeline of document generation
-
-1. All documents sources are collected (markdown files, tex files, bibliography)
-2. The template is loaded if specified. The template can override default partials, that's why it is loaded before markdown conversion.
-3. All fragments are loaded. Fragments can also override default partials.
-4. The markdown engine is initialized with all extensions and partials (from template and fragments)
-5. Each document is processed:
-   - The markdown content is converted to LaTeX using the markdown engine
-   - The LaTeX content is injected into the template defined slots
-6. The final LaTeX document is compiled using the selected engine (pdflatex, xelatex, lualatex, tectonic)
-
-The context of the documents contains all attributes emitted by the user, template, fragments, and markdown frontmatter, in an order of precedence:
-
-1. User attributes (CLI, config file)
-2. Frontmatter attributes in markdown files and in the order of the files
-3. Fragments attributes
-4. Template attributes
-5. Default attributes from TeXSmith core
-
-So user attributes will always override all others, and template attributes will override default attributes from TeXSmith core.
-
-## Attributes
-
-As defined, an attribute can be a scalar or a complex object. Attributes are parsed using `pydantic` models. Each fragment or template can define its own attributes model. During validation warnings or errors can be raised if the attribute value doesn't conform to the expected type or range.
-
-TeXSmith uses both a permissive syntax and strict syntax for attributes. It allows user to define attributs in a simple way when possible, but once validated everything is converted to the strict syntax. For instance, authors can be defined as a simple string or as a complex object:
-
-```yaml
-author: John Doe
+```yaml { .snippet width=80% }
+cwd: ../../examples/letter
+sources:
+  - letter.md
+press:
+  format: din
+  frame: true
 ```
 
-But once validated it is converted to:
-
-```yaml
-authors:
-  - name: John Doe
-    affiliation: null
-    email: null
+```yaml { .snippet width=70% }
+layout: 2x2
+cwd: ../../examples/paper
+sources:
+  - cheese.md
+  - cheese.bib
+press:
+  frame: true
 ```
 
-Regarding attributes we have:
+## Frame with dog-ear
 
-- Emitter: An emitter is a component that set attributes in the document context.
-- Consumer: A consumer is a component that read attributes from the document context to configure its behavior.
-- Owner: An owner is a component that declares attributes.
+TeXSmith have two different mechanism to add fancy frame around pages:
 
-Only one owner is allowed per attribute key. But multiple emitters and consumers can exist for the same attribute key. If both a fragment and a template declare the same attribute key, an error is raised during template loading.
+1. On preview PNG, by drawing manually the frame for having a good preview.
+2. On LaTeX snippet template only.
 
-Attributes can be emitted without being declared by any owner. This is useful for user-defined attributes that can be used in templates or fragments via moustaches. It is so because it allows user to add custom informational metadata to documents without having impact on the core TeXSmith system.
+## ts-frame
 
-## Refactoring notes
+Implement a new fragment `ts-frame` which use the `frame` boolean attribute. If enabled we add a small frame on each page, the same way does the snippet template on the PDF. To be more functional we might automatically inject in latex  using a `\AddToHook{shipout/foreground}{%` for instance:
 
-By analysing the codebase of TeXSmith we note that the responsibilities of templates and fragments are a bit mixed up. We need to rework templates attributes. Some of them ont rien à foutre dans les templates mais plutôt dans les fragments. Here some examples:
+```latex
+\usepackage{tikz}
+\usetikzlibrary{calc,backgrounds}
 
-`article: emoji`: this attribute is declared in the ts-fonts and already declared as black by default. It is SSOT issue. The template relies on ts-fonts for configuring emoji handling. We can remove this attribute from the article template. If the case is to force emoji style in the template, we can set the attribute in the template emitter. We need to introduce a new key in the toml to emit attributes from the template.
-`article/book: preamble`: I don't think this is still used. We can check who's using this and eventually remove this attribute.
-`article: base_level`: Base-level was a legacy attribute to define the sectioning level of the mainmatter. Article template will always start at section level. This is only useful for book template which can either start at part or chapter level. We can declare a template attribute `part: bool` to indicate if the book uses parts or not. This will update the mainmatter slot depth accordingly. We need to think of a smart way to do that.
-`article: backmatter`: Article class doesn't have backmatter. We can remove that. Only `book` template has backmatter.
+\AddToHook{shipout/foreground}{%
+  \begin{tikzpicture}[remember picture,overlay]
+    \def\margin{1cm} % marge du cadre par rapport au bord de la page
+    \def\e{1cm}      % taille du coin replié
 
-## Template Info
+    \coordinate (A) at ($(current page.north west) + (\margin,-\margin)$);
+    \coordinate (B) at ($(current page.north east) + (-\margin,-\margin)$);
+    \coordinate (C) at ($(current page.south east) + (-\margin,\margin)$);
+    \coordinate (D) at ($(current page.south west) + (\margin,\margin)$);
 
-In the texsmith `--template-info` CLI command we want to display the list of all templates visible from TeXSmith. It can be built-in templates, or installed templates from PIP packages. TeXSmith templates packages must be named `texsmith-template-<name>` to be discovered automatically. Local templates from the cwd are also listed. We recrusively look for templates ascending from the cwd to the root folder. We also look at the `~/.texsmith/templates` folder for user installed templates.
+    \coordinate (Bdown) at ($(B)-(0,\e)$);
+    \coordinate (Bleft) at ($(B)-(\e,0)$);
+    \coordinate (Corner) at ($(B)-(\e,\e)$);
 
-Documentation docs/guide/templates:Discovery should be updated/written to explain how templates are discovered.
+    \draw (A) -- (Bleft) -- (Bdown) -- (C) -- (D) -- cycle;
+    \draw (Corner)
+     .. controls ($(Corner)+(0.3*\e,0.1*\e)$) and ($(Bdown)+(-0.3*\e,-0.1*\e)$) ..
+     (Bdown);
+    \draw (Bleft)
+     .. controls ($(Bleft)+(0.1*\e,-0.3*\e)$) and ($(Corner)+(-0.1*\e,0.3*\e)$) ..
+     (Corner);
+  \end{tikzpicture}%
+}
+```
 
-On the CLI we add use: `texsmith --template=article --template-info` to display info about a specific template. We lists the slots, fragments with attributes and description, and template attributes with description.
+This mechanism only works on not standalone documents I think. So the fragment should be compatible with article, letter and book, not the snippet template which still use its own version. In this case the attribute is declared in the template snippet
 
-In this representation we want most user friendly. We use additional columns : Type, Format, Description.
+Pour être cohérent on va utiliser les attributs suivants:
 
-## Template Article and Book
-
-Adds an `appendix` slot. If any we add an appendix section at the end of the document before backmatter
-
-For article and book remove the additional assets `.latexmkrc`. TeXSmith core template manager injects automatically the latexmkrc to all templates. This is not the responsability of templates to do so.
-
-`mermaid-config.json` config should be be a the same level of the manifest.toml, not in assets. By default TeXSmith diagrams module will look if a mermaid-config.json exists in the template. If so we use it.
-
-Document in guide/templates how to customize mermaid configuration per template.
-
-For the use of template info cli command we also want to add descriptions in the book and letter templates TOML de la même manière que je l'ai fait dans le article manifest.toml.
-
-`book: columns` Memoir doesn't have any twocolumn. We don't want that attribute for book template.
-
-Book covers. We don't want to keep covers and attributes related to cover we can remove: `"covers" = { source = "covers" }`,
-`"covers/circles.tex" = { source = "covers/circles.tex", template = true }` and the files themselves. We could have later a dedicated fragment for covers if needed.
-
-And the following attributes can also be removed then:
-
-- latex.template.attributes.logo
-- latex.template.attributes.cover
-- latex.template.attributes.covercolor
-
-## Fragments
-
-Currently all fragments are declared in a `__init__.py` through an injection point declared in the manifest of the fragment. We can refactor that to have each fragment declare its own metadata (name, description, injection points) in the fragment manifest.toml, the same manner as templates.
-
-Fragments now use a `BaseFragment` subclass plus a config dataclass (`fragment = MyFragment()` export).
-
-## Fragment API quick reference
-
-- Implement `BaseFragment[Config]` with class attributes `name`, `description`, `pieces`, `attributes` (TemplateAttributeSpec map), optional `context_defaults`, `partials`, `required_partials`, `source`.
-- Methods: `build_config(context, overrides=None) -> Config`, `inject(config, context, overrides=None) -> None`, `should_render(config) -> bool`. `render_context` does build+inject.
-- Config: prefer immutable `@dataclass` with `from_context(ctx)` and `inject_into(ctx)` helpers (plus `enabled()` if useful).
-- Entrypoint: export `fragment = YourFragment()`; `fragment.toml` points `entrypoint` to `texsmith.fragments.yourname:fragment`.
-- Registry: fragments are discovered via manifest entrypoints and operate directly on `BaseFragment`; no legacy `create_fragment`/`FragmentDefinition` shims remain.
-
+```yaml
+frame: false (default, no frame added, nothing added in the tex output) | true (juste un cadre) | curl (active le coin replié)
+```
 
 ## Makeindex with engine tectonic
 
