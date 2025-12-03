@@ -1,4 +1,4 @@
-()[]{ #releasenotes }
+[](){ #releasenotes }
 # Release Notes & Compatibility
 
 Use this page to see what changed in each TeXSmith release and which LaTeX prerequisites (TeX Live year, `tlmgr` packages, shell-escape requirements) the bundled templates expect. Update your automation and CI images accordingly before bumping versions.

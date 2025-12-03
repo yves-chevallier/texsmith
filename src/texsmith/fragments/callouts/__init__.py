@@ -73,6 +73,10 @@ class CalloutsFragment(BaseFragment[CalloutsConfig]):
 
 
 def _detect_callouts(context: Mapping[str, Any]) -> bool:
+    uses_flag = context.get("ts_uses_callouts")
+    if isinstance(uses_flag, bool) and uses_flag:
+        return True
+
     for value in context.values():
         if not isinstance(value, str):
             continue

@@ -135,6 +135,7 @@ def _render_admonition(
     with _use_tcolorbox_figures(context):
         content = element.get_text(strip=False).strip()
 
+    context.state.callouts_used = True
     latex = context.formatter.callout(content, title=title, type=admonition_type)
     parent = element.parent
     replacement = mark_processed(NavigableString(latex))

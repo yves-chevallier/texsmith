@@ -44,6 +44,7 @@ class DocumentState:
     index_entries: list[tuple[str, ...]] = field(default_factory=list)
     pygments_styles: dict[str, str] = field(default_factory=dict)
     script_usage: list[dict[str, Any]] = field(default_factory=list)
+    callouts_used: bool = False
 
     def remember_acronym(self, term: str, description: str) -> str:
         """Register an acronym definition keyed by a normalised identifier."""

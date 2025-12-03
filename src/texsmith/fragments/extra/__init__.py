@@ -68,7 +68,7 @@ def _collect_packages(context: Mapping[str, object]) -> list[tuple[str, str | No
     packages: list[tuple[str, str | None]] = []
 
     def _maybe_add(condition: bool, name: str, options: str | None = None) -> None:
-        if condition:
+        if condition and (name, options) not in packages:
             packages.append((name, options))
 
     def _string_option(*keys: str) -> str | None:
@@ -128,7 +128,17 @@ def _collect_packages(context: Mapping[str, object]) -> list[tuple[str, str | No
     has_math_inline = "$$" in content or "$" in content or "\\[" in content or "\\(" in content
     _maybe_add(has_math_env or has_math_inline, "amsmath", None)
 
-    _maybe_add("\\begin{figure}[h" in lowered or "[h]" in lowered, "float", None)
+    # Pick up float package for strict placement (h/H modifiers).
+    float_tokens = (
+        "\\begin{figure}[h",
+        "\\begin{figure}[h!",
+        "\\begin{figure}[H",
+        "[h]",
+        "[H]",
+    )
+    _maybe_add(any(token in content for token in float_tokens), "float", None)
+    # Always provide float for consistent placement support.
+    _maybe_add(True, "float", None)
 
     link_tokens = ("\\href{", "\\url{", "\\hyperref[", "\\autoref{", "\\nameref{")
     has_links = any(token in content for token in link_tokens)
