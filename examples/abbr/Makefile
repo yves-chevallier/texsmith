@@ -1,8 +1,8 @@
 include ../common.mk
 
-SOURCE := example.md
-BASE_PDF := $(ENGINE_DIR)/example.pdf
-PDF := $(ENGINE_DIR)/example$(ENGINE_SUFFIX).pdf
+SOURCE := abbreviations.md
+BASE_PDF := $(ENGINE_DIR)/$(SOURCE:.md=.pdf)
+PDF := $(ENGINE_DIR)/$(SOURCE:.md=$(ENGINE_SUFFIX).pdf)
 
 all: $(PDF)
 
