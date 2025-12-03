@@ -102,7 +102,7 @@ def test_article_template_applies_computed_options() -> None:
 
     assert context["title"] == "Sample \\& Title"
     assert context["language"] == "french"
-    assert context["documentclass_options"] == "[letterpaper,landscape]"
+    assert context["documentclass_options"] == "[letterpaper,landscape,twoside]"
     assert "letterpaper" in context["geometry_options"]
     assert "landscape" in context["geometry_options"]
     assert "\\thanks{" in context["author"]
@@ -124,7 +124,7 @@ def test_article_template_supports_columns_option() -> None:
 
     rendered = template.wrap_document("Body", overrides=overrides, context=context)
 
-    assert "\\documentclass[letterpaper,landscape,twocolumn]{article}" in rendered
+    assert "\\documentclass[letterpaper,landscape,twoside,twocolumn]{article}" in rendered
 
 
 def test_article_template_accepts_preamble_override() -> None:
@@ -183,7 +183,7 @@ def test_book_template_supports_columns_option() -> None:
 
     rendered = template.wrap_document("Body", overrides=overrides, context=context)
 
-    assert "\\documentclass{memoir}" in rendered
+    assert "\\documentclass[twoside]{memoir}" in rendered
     assert "twocolumn" not in rendered
 
 

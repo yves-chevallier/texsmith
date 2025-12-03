@@ -40,7 +40,8 @@ def test_squash_blank_lines_trims_trailing_whitespace() -> None:
 
 def test_iter_assets_declares_required_files(book_template: WrappableTemplate) -> None:
     assets = list(book_template.iter_assets())
-    assert assets == []
+    assert len(assets) == 1
+    assert assets[0].destination.name == "fixtoc.sty"
 
 
 def test_wrap_document_injects_mainmatter(book_template: WrappableTemplate) -> None:
@@ -156,7 +157,7 @@ def test_documentclass_defaults(article_template: WrappableTemplate, tmp_path: P
         copy_assets=False,
     )
     wrapped = result.latex_output
-    assert r"\documentclass[a4paper]{article}" in wrapped
+    assert r"\documentclass[a4paper,twoside]{article}" in wrapped
     assert "landscape]{article}" not in wrapped
     assert r"\usepackage[a4paper]{geometry}" in wrapped
     assert "\\makeindex" not in wrapped
@@ -181,7 +182,7 @@ def test_documentclass_overrides(article_template: WrappableTemplate, tmp_path: 
         copy_assets=False,
     )
     wrapped = result.latex_output
-    assert r"\documentclass[a3paper,landscape]{article}" in wrapped
+    assert r"\documentclass[a3paper,landscape,twoside]{article}" in wrapped
     assert r"\usepackage[a3paper,landscape]{geometry}" in wrapped
     assert r"\title{Demo Article}" in wrapped
     assert r"\author{Alice Example}" in wrapped

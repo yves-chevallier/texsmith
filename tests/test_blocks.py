@@ -12,7 +12,7 @@ def renderer() -> LaTeXRenderer:
 def test_inline_code_rendering(renderer: LaTeXRenderer) -> None:
     html = "<p>Use <code>print('hi')</code> in Python.</p>"
     latex = renderer.render(html)
-    assert "\\texttt{print('hi')}" in latex
+    assert "\\texttt{\\detokenize{print('hi')}}" in latex
 
 
 def test_blockquote_rendering(renderer: LaTeXRenderer) -> None:
@@ -86,9 +86,9 @@ def test_description_list_preserves_code(renderer: LaTeXRenderer) -> None:
     </dl>
     """
     latex = renderer.render(html)
-    assert "\\texttt{DoiBibliographyFetcher}" in latex
-    assert "\\texttt{bibliography\\_data\\_from\\_string}" in latex
-    assert "\\texttt{BibliographyData}" in latex
+    assert "\\texttt{\\detokenize{DoiBibliographyFetcher}}" in latex
+    assert "\\texttt{\\detokenize{bibliography\\_data\\_from\\_string}}" in latex
+    assert "\\texttt{\\detokenize{BibliographyData}}" in latex
 
 
 def test_highlight_block_nested_in_doc_container(renderer: LaTeXRenderer) -> None:
@@ -112,8 +112,8 @@ def test_inline_code_in_doc_container(renderer: LaTeXRenderer) -> None:
     </div>
     """
     latex = renderer.render(html)
-    assert "\\texttt{@renders}" in latex
-    assert "\\texttt{\\_DOMVisitor}" in latex
+    assert "\\texttt{\\detokenize{@renders}}" in latex
+    assert "\\texttt{\\detokenize{\\_DOMVisitor}}" in latex
 
 
 def test_empty_description_list_dropped(renderer: LaTeXRenderer) -> None:
@@ -231,7 +231,7 @@ def test_admonition_preserves_formatting(renderer: LaTeXRenderer) -> None:
     """
     latex = renderer.render(html)
     assert "\\begin{callout}[callout info]" in latex
-    assert "\\texttt{foo\\_bar}" in latex
+    assert "\\texttt{\\detokenize{foo\\_bar}}" in latex
     assert "\\begin{code}{python}" in latex
     assert "\\begin{itemize}" in latex
 
@@ -245,7 +245,7 @@ def test_blockquote_callout_transformed(renderer: LaTeXRenderer) -> None:
     """
     latex = renderer.render(html)
     assert "\\begin{callout}[callout info]" in latex
-    assert "\\texttt{uv~tool~install~texsmith}" in latex
+    assert "\\texttt{\\detokenize{uv~tool~install~texsmith}}" in latex
 
 
 def test_code_block_with_paragraph_keyword_not_mermaid(renderer: LaTeXRenderer) -> None:
