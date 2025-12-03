@@ -7,4 +7,5 @@ import errors for legacy paths; no registration occurs here.
 
 from __future__ import annotations
 
+
 __all__ = []

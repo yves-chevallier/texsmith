@@ -4,8 +4,18 @@ from pathlib import Path
 
 import pytest
 
-from texsmith.core.fragments import FragmentDefinition, FragmentPiece, inject_fragment_attributes, register_fragment
-from texsmith.core.templates.manifest import TemplateAttributeSpec, TemplateInfo, TemplateSlot, TemplateError
+from texsmith.core.fragments import (
+    FragmentDefinition,
+    FragmentPiece,
+    inject_fragment_attributes,
+    register_fragment,
+)
+from texsmith.core.templates.manifest import (
+    TemplateAttributeSpec,
+    TemplateError,
+    TemplateInfo,
+    TemplateSlot,
+)
 
 
 def _inline_fragment(tmp_path: Path, name: str, attr_name: str) -> str:
@@ -41,7 +51,9 @@ def test_conflicting_attribute_owner_between_template_and_fragment(tmp_path: Pat
     frag_name = _inline_fragment(tmp_path, "frag-owner-conflict", "callout_style")
 
     with pytest.raises(TemplateError, match="already owned"):
-        inject_fragment_attributes([frag_name], context={}, overrides=None, declared_attribute_owners=owners)
+        inject_fragment_attributes(
+            [frag_name], context={}, overrides=None, declared_attribute_owners=owners
+        )
 
 
 def test_conflict_between_fragments(tmp_path: Path) -> None:

@@ -28,6 +28,6 @@ The authoring surface is pure data: **YAML** fields flow into a LaTeX template, 
 
 !!! note
 
-    The way of representing the recipe in the template was inspired from the "Cours de cuisine" from M.-C. Bolle in 1978. She wrote an extraordinary book on cooking recipes for the "Department d'instruction publique" of the Canton of Geneva, Switzerland.
+    The recipe layout used in this template was inspired by the Cours de cuisine created by M.-C. Bolle back in 1978. She produced an exceptional cookbook for the Department of Public Instruction of the Canton of Geneva, Switzerland.
 
-    I've never seen such way of writing recipes elsewhere, but I find it very practical and efficient.
+    I’ve never seen recipes presented quite this way anywhere else -- it’s a uniquely clever system -- but I find it incredibly practical and efficient.

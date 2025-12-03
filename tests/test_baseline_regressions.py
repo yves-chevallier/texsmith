@@ -6,7 +6,12 @@ import pytest
 
 from texsmith.api import Document
 from texsmith.api.templates import TemplateSession
-from texsmith.core.fragments import FragmentDefinition, FragmentPiece, register_fragment, render_fragments
+from texsmith.core.fragments import (
+    FragmentDefinition,
+    FragmentPiece,
+    register_fragment,
+    render_fragments,
+)
 from texsmith.core.templates.manifest import TemplateError, TemplateInfo, TemplateSlot
 from texsmith.core.templates.runtime import load_template_runtime
 

@@ -1,3 +1,3 @@
 name = "ts-bibliography"
 description = "Conditional bibliography support (packages + backmatter)."
-entrypoint = "texsmith.fragments.bibliography:create_fragment"
+entrypoint = "texsmith.fragments.bibliography:fragment"

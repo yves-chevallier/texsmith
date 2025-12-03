@@ -7,8 +7,8 @@ from types import SimpleNamespace
 import typer
 
 from texsmith import latex_text, mermaid, missing_footnotes, multi_citations, rawlatex
-from texsmith.templates import snippet as snippet_template
 from texsmith.core.fragments import inject_fragment_attributes
+from texsmith.templates import snippet as snippet_template
 from texsmith.ui.cli.commands import templates
 
 

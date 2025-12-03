@@ -4,7 +4,13 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from texsmith.fonts import FontFiles, FontLocator, FontMatchResult, NotoFallback, match_text
+from texsmith.fonts import (
+    FontFiles,
+    FontLocator,
+    FontMatchResult,
+    NotoFallback,
+    match_text,
+)
 
 
 def match_fonts(

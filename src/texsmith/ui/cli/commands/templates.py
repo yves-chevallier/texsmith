@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Iterable
 from importlib import metadata
+from pathlib import Path
 import shutil
 
 import typer
@@ -11,7 +12,7 @@ import typer
 from texsmith.core.fragments import FRAGMENT_REGISTRY, TemplateError
 from texsmith.core.templates import TemplateError as TemplateTplError, load_template
 from texsmith.core.templates.builtins import iter_builtin_templates
-from texsmith.core.templates.loader import _looks_like_template_root, _iter_local_candidates
+from texsmith.core.templates.loader import _iter_local_candidates, _looks_like_template_root
 
 from ..state import emit_error, ensure_rich_compat, get_cli_state
 
@@ -177,7 +178,7 @@ def show_template_info(identifier: str) -> None:
         typer.echo(f"Name: {info.name}")
         typer.echo(f"Version: {info.version}")
         if getattr(info, "description", None):
-            typer.echo(f"Description: {getattr(info, 'description')}")
+            typer.echo(f"Description: {info.description}")
         typer.echo(f"Entrypoint: {info.entrypoint}")
         typer.echo(f"Engine: {info.engine or '-'}")
         typer.echo(f"Shell escape: {'yes' if info.shell_escape else 'no'}")

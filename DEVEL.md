@@ -197,7 +197,15 @@ And the following attributes can also be removed then:
 
 Currently all fragments are declared in a `__init__.py` through an injection point declared in the manifest of the fragment. We can refactor that to have each fragment declare its own metadata (name, description, injection points) in the fragment manifest.toml, the same manner as templates.
 
-Also instead of using plain function `create_fragment` we can have an ABC `Fragment` base class which defines the metadata as class attributes and the logic in methods. We use dataclass to define fragment attributes for instance and all the pieces fragments (injection slot, file, kind...).
+Fragments now use a `BaseFragment` subclass plus a config dataclass (`fragment = MyFragment()` export).
+
+## Fragment API quick reference
+
+- Implement `BaseFragment[Config]` with class attributes `name`, `description`, `pieces`, `attributes` (TemplateAttributeSpec map), optional `context_defaults`, `partials`, `required_partials`, `source`.
+- Methods: `build_config(context, overrides=None) -> Config`, `inject(config, context, overrides=None) -> None`, `should_render(config) -> bool`. `render_context` does build+inject.
+- Config: prefer immutable `@dataclass` with `from_context(ctx)` and `inject_into(ctx)` helpers (plus `enabled()` if useful).
+- Entrypoint: export `fragment = YourFragment()`; `fragment.toml` points `entrypoint` to `texsmith.fragments.yourname:fragment`.
+- Registry: fragments are discovered via manifest entrypoints and operate directly on `BaseFragment`; no legacy `create_fragment`/`FragmentDefinition` shims remain.
 
 
 ## Makeindex with engine tectonic

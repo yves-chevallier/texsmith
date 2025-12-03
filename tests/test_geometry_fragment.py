@@ -1,12 +1,8 @@
 import pytest
 
-from texsmith.fragments.geometry import (
-    GeometryFragment,
-    GeometryFragmentConfig,
-    create_fragment,
-)
-from texsmith.fragments.geometry.paper import inject_geometry_context
 from texsmith.core.templates.manifest import TemplateError
+from texsmith.fragments.geometry import GeometryFragment, GeometryFragmentConfig, fragment
+from texsmith.fragments.geometry.paper import inject_geometry_context
 
 
 def test_geometry_fragment_renders_watermark_and_binding() -> None:
@@ -47,9 +43,8 @@ def test_geometry_fragment_config_coerces_top_level_fields() -> None:
 
 
 def test_default_a4paper_when_no_front_matter() -> None:
-    frag_def = create_fragment()
     context: dict[str, object] = {}
-    context.update(frag_def.context_defaults)
+    context.update(fragment.context_defaults)
     resolution = inject_geometry_context(context)
 
     assert "a4paper" in resolution.geometry_options

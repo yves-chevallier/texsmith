@@ -77,7 +77,9 @@ bibliography:
   # Manual entry
   KOFINAS2025:
     type: article
-    title: "The impact of generative AI on academic integrity of authentic assessments within a higher education context"
+    title: |
+        The impact of generative AI on academic integrity of authentic
+        assessments within a higher education context
     authors:
       - name: "Alexander K. Kofinas"
         affiliation: "University of Example"
@@ -186,7 +188,8 @@ glossary:
   solid:
     name: S.O.L.I.D.
     description: |
-        Acronym for five design principles intended to make software designs more understandable, flexible, and maintainable.
+        Acronym for five design principles intended to make software designs
+        more understandable, flexible, and maintainable.
 
         1. Single Responsibility Principle
         2. Open/Closed Principle
@@ -196,13 +199,19 @@ glossary:
   liskov:
     name: Liskov Substitution Principle
     description: |
-        The Liskov Substitution Principle (LSP) states that objects of a superclass should be replaceable with objects of a subclass without affecting the correctness of the program. In other words, if S is a subtype of T, then objects of type T in a program may be replaced with objects of type S without altering any of the desirable properties of that program (e.g., correctness).
+        The Liskov Substitution Principle (LSP) states that objects of a
+        superclass should be replaceable with objects of a subclass without
+        affecting the correctness of the program. In other words, if S is a
+        subtype of T, then objects of type T in a program may be replaced with
+        objects of type S without altering any of the desirable properties of
+        that program (e.g., correctness).
 ```
 
 Inside the Markdown document you can reference glossary entries with the `gls:` prefix:
 
 ```md
-From the well-known [](gls:solid) principles, the following class must be [](gls:liskov) Substitution Principle compliant.
+From the well-known [](gls:solid) principles, the following class must
+be [](gls:liskov) Substitution Principle compliant.
 ```
 
 ### Wikipedia
@@ -223,26 +232,30 @@ wikipedia_glossary = true
 ## Caption
 
 TeXSmith style
-: ```md
-  A diagram with 25% width
-  : ![Diagram example](../examples/diagrams.png){width=25%}
+:   Here is a figure with a caption:
 
-  Table Caption Avec une grosse famille de chats  {#bigcats}
-  : | Cat Name    | Age | Color      |
-    | ----------- | ---:| ---------- |
-    | Whiskers    |  2  | Tabby      |
-    | Mittens     |  5  | Black      |
-  ```
+    ```md
+    A diagram with 25% width
+    : ![Diagram example](../examples/diagrams.png){width=25%}
+
+    Table Caption Avec une grosse famille de chats  {#bigcats}
+    : | Cat Name    | Age | Color      |
+      | ----------- | ---:| ---------- |
+      | Whiskers    |  2  | Tabby      |
+      | Mittens     |  5  | Black      |
+    ```
 
 Pymarkdown style
-: ```md
-  ![Diagram example](../examples/diagrams.png){width=25%}
+:   Here is a figure with a caption:
 
-  /// figure-caption
-      attrs: {#foobar}
-      Avec un chocolat violet qui sent la **vanille**
-  ///
-  ```
+    ```md
+    ![Diagram example](../examples/diagrams.png){width=25%}
+
+    /// figure-caption
+        attrs: {#foobar}
+        Avec un chocolat violet qui sent la **vanille**
+    ///
+    ```
 
 ## Formatting
 
