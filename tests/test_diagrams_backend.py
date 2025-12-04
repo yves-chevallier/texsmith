@@ -25,7 +25,7 @@ def test_drawio_playwright_backend(tmp_path, monkeypatch):
     src.write_text("<mxfile/>", encoding="utf-8")
     strategy = DrawioToPdfStrategy()
 
-    def fake_play(source, *, target, cache_dir, format_opt, theme):
+    def fake_play(source, *, target, cache_dir, format_opt, theme, **_):
         target.write_bytes(_FAKE_PDF)
 
     monkeypatch.setattr(strategy, "_run_playwright", fake_play)
@@ -50,7 +50,7 @@ def test_mermaid_playwright_backend(tmp_path, monkeypatch):
     src.write_text("graph TD; A-->B;", encoding="utf-8")
     strategy = MermaidToPdfStrategy()
 
-    def fake_play(content, *, target, format_opt, theme, mermaid_config=None):
+    def fake_play(content, *, target, format_opt, theme, mermaid_config=None, **_):
         target.write_bytes(_FAKE_PDF)
 
     monkeypatch.setattr(strategy, "_run_playwright", fake_play)
