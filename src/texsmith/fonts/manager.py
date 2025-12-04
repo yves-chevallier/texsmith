@@ -69,6 +69,24 @@ def _is_noto_font(family: str | None) -> bool:
     return family.lower().startswith("noto")
 
 
+def _ranges_include_emoji(font_ranges: Mapping[str, list[str]]) -> bool:
+    """Return True if any font range overlaps the default emoji blocks."""
+    def _parse_range(label: str) -> tuple[int, int]:
+        start, _, end = label.partition("..")
+        start_int = int(start.strip().lstrip("U+"), 16)
+        end_int = int((end or start).strip().lstrip("U+"), 16)
+        return start_int, end_int
+
+    emoji_intervals = tuple(_parse_range(rng) for rng in _EMOJI_DEFAULT_RANGES)
+    for ranges in font_ranges.values():
+        for rng in ranges:
+            lo, hi = _parse_range(rng)
+            for emo_lo, emo_hi in emoji_intervals:
+                if lo <= emo_hi and hi >= emo_lo:
+                    return True
+    return False
+
+
 @dataclass(slots=True)
 class PreparedFonts:
     """Result of preparing font files and ranges for ts-fonts."""
@@ -243,12 +261,17 @@ def prepare_fonts_for_context(
 
     fonts_dir = (output_dir / "fonts").resolve()
 
-    emoji_payload = resolve_emoji_preferences(
-        template_context,
-        engine=engine_hint,
-        fonts_dir=fonts_dir,
-        emitter=emitter,
-    )
+    emoji_needed = _ranges_include_emoji(font_ranges)
+    if emoji_needed:
+        emoji_payload = resolve_emoji_preferences(
+            template_context,
+            engine=engine_hint,
+            fonts_dir=fonts_dir,
+            emitter=emitter,
+        )
+    else:
+        emoji_payload = EmojiPayload(mode="none", font_family=None, font_path=None, color_enabled=False)
+
     if emoji_payload.warnings and emitter:
         for message in emoji_payload.warnings:
             emitter.warning(message)
@@ -276,11 +299,11 @@ def prepare_fonts_for_context(
         extra_fallbacks = template_context.get("extra_font_fallbacks") or []
         if isinstance(extra_fallbacks, (list, tuple, set)):
             base_fallbacks.extend(str(item) for item in extra_fallbacks if item)
-    if not base_fallbacks:
+    if not base_fallbacks and font_ranges:
         base_fallbacks.extend(DEFAULT_FALLBACK_FONTS)
 
     fallback_fonts = _dedupe_preserve_order(base_fallbacks)
-    if emoji_font_family and emoji_font_family not in fallback_fonts:
+    if emoji_needed and emoji_font_family and emoji_font_family not in fallback_fonts:
         fallback_fonts = [emoji_font_family, *fallback_fonts]
     fallback_fonts = _dedupe_preserve_order(fallback_fonts)
     script_font_set: set[str] = {
@@ -293,22 +316,18 @@ def prepare_fonts_for_context(
 
     fonts_dir = (output_dir / "fonts").resolve()
     fonts_to_copy: set[str] = set()
-    if emoji_font_family:
+    if emoji_needed and emoji_font_family:
         fonts_to_copy.add(emoji_font_family)
 
     def _maybe_copy(font: str | None) -> None:
         if _is_noto_font(font):
             fonts_to_copy.add(str(font))
 
-    for candidate in (
-        selection.main,
-        selection.sans,
-        selection.mono,
-        selection.math,
-        selection.small_caps,
-        *fallback_fonts,
-        *script_font_set,
-    ):
+    for family, ranges in font_ranges.items():
+        if family == "__UNCOVERED__" or not ranges:
+            continue
+        _maybe_copy(family)
+    for candidate in script_font_set:
         _maybe_copy(candidate)
 
     cached_fonts, cache_failures = cache_fonts_for_families(list(fonts_to_copy), emitter=emitter)
@@ -349,7 +368,7 @@ def prepare_fonts_for_context(
             "font_path": None,
             "color_enabled": False,
         }
-    if emoji_font_family and emoji_font_family not in font_ranges:
+    if emoji_font_family and emoji_font_family not in font_ranges and emoji_needed:
         font_ranges[emoji_font_family] = list(_EMOJI_DEFAULT_RANGES)
 
     template_context["fallback_fonts"] = fallback_fonts
@@ -359,7 +378,7 @@ def prepare_fonts_for_context(
         for family, ranges in font_ranges.items()
         if family == "__UNCOVERED__" or family in available_families
     }
-    if emoji_font_family:
+    if emoji_font_family and emoji_needed:
         filtered_font_ranges["NotoColorEmoji"] = list(_EMOJI_DEFAULT_RANGES)
         template_context["emoji_ranges"] = unicode_class_ranges(_EMOJI_DEFAULT_RANGES)
     template_context["font_match_ranges"] = filtered_font_ranges

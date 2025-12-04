@@ -1,0 +1,164 @@
+\documentclass{article}
+\usepackage{parskip}
+\usepackage{fontspec}
+
+% =================================================
+% 1. Choix du set : lm, lm-sans, bonum,
+%    libertinus, pagella, termes, erewhon
+% =================================================
+\newcommand\FontSet{pennstander} % <--- change juste ça
+
+% Fabrique un petit registre de sets pour éviter l'imbrication de tests.
+\makeatletter
+\newcommand{\DeclareFontSet}[2]{%
+  \expandafter\gdef\csname setupfonts@#1\endcsname{#2}%
+}
+\newcommand{\UseFontSet}[1]{%
+  \@ifundefined{setupfonts@#1}{%
+    \PackageError{fontset}{Unknown FontSet '#1'}%
+      {Declare it with \string\DeclareFontSet\space first. Valid options: lm, lm-sans, bonum, libertinus, pagella, termes, erewhon, schola.}%
+  }{%
+    \csname setupfonts@#1\endcsname
+  }%
+}
+\makeatother
+
+%
+% Latin Modern (lm)
+%
+\DeclareFontSet{lm}{%
+  \setmainfont{lmroman10}[
+    Extension      = .otf,
+    UprightFont    = *-regular,
+    ItalicFont     = *-italic,
+    BoldFont       = *-bold,
+    BoldItalicFont = *-bolditalic,
+    SmallCapsFont = {lmromancaps10-regular},
+    Ligatures      = TeX,
+  ]
+  \setsansfont{lmsans10}[
+    Extension      = .otf,
+    UprightFont    = *-regular,
+    ItalicFont     = *-oblique,
+    BoldFont       = *-bold,
+    BoldItalicFont = *-boldoblique,
+  ]
+  \setmonofont{lmmono10}[
+    Extension      = .otf,
+    UprightFont    = *-regular,
+    ItalicFont     = *-italic,
+    BoldFont       = *-regular,
+    BoldItalicFont = *-italic,
+  ]
+}
+
+%
+% Latin Modern Sans Serif (lm-sans)
+%
+\DeclareFontSet{lm-sans}{%
+  \setmainfont{lmsans10}[
+    Extension      = .otf,
+    UprightFont    = *-regular,
+    ItalicFont     = *-oblique,
+    BoldFont       = *-bold,
+    BoldItalicFont = *-boldoblique,
+    Ligatures      = TeX,
+  ]
+  \setsansfont{lmsans10}[
+    Extension      = .otf,
+    UprightFont    = *-regular,
+    ItalicFont     = *-oblique,
+    BoldFont       = *-bold,
+    BoldItalicFont = *-boldoblique,
+  ]
+  \setmonofont{lmmono10}[
+    Extension      = .otf,
+    UprightFont    = *-regular,
+    ItalicFont     = *-italic,
+    BoldFont       = *-regular,
+    BoldItalicFont = *-italic,
+  ]
+}
+
+%
+% Tex Gyre Bonum (bonum)
+%
+\DeclareFontSet{bonum}{%
+  \RequirePackage{bonum-otf}
+}
+
+%
+% Libertinus (libertinus)
+%
+\DeclareFontSet{libertinus}{%
+   \RequirePackage{libertinus}%
+}
+
+%
+% Tex Gyre Pagella (pagella)
+%
+\DeclareFontSet{pagella}{%
+   \RequirePackage{pagella-otf}
+}
+
+%
+% Tex Gyre Termes (termes)
+%
+\DeclareFontSet{termes}{%
+  \RequirePackage{termes-otf}
+}
+
+\DeclareFontSet{schola}{%
+  \RequirePackage{schola-otf} % https://mirrors.ctan.org/fonts/schola-otf.zip
+}
+
+\DeclareFontSet{plex}{%
+  \RequirePackage{plex-otf}
+}
+
+\DeclareFontSet{pennstander}{%
+  \RequirePackage{pennstander-otf} % https://mirrors.ctan.org/fonts/pennstander-otf.zip
+}
+
+% --- erewhon (Erewhon + Heros + Cursor) ----------------
+\DeclareFontSet{erewhon}{%
+  \setmainfont{Erewhon}[
+    Extension      = .otf,
+    UprightFont    = *-Regular,
+    ItalicFont     = *-Italic,
+    BoldFont       = *-Bold,
+    BoldItalicFont = *-BoldItalic,
+    Ligatures      = TeX,
+  ]
+  \setsansfont{texgyreheros}[
+    Extension      = .otf,
+    UprightFont    = *-regular,
+    ItalicFont     = *-italic,
+    BoldFont       = *-bold,
+    BoldItalicFont = *-bolditalic,
+  ]
+  \setmonofont{texgyrecursor}[
+    Extension      = .otf,
+    UprightFont    = *-regular,
+    ItalicFont     = *-italic,
+    BoldFont       = *-bold,
+    BoldItalicFont = *-bolditalic,
+  ]
+}
+
+% Appel une fois dans le préambule
+\UseFontSet{\FontSet}
+
+% =================================================
+\begin{document}
+This quick brown fox jumps over the lazy dog. \\
+\emph{This quick brown fox jumps over the lazy dog.} \\
+\textbf{This quick brown fox jumps over the lazy dog.} \\
+\textbf{\emph{This quick brown fox jumps over the lazy dog.}} \\
+\textsc{This quick brown fox jumps over the lazy dog.}\par
+
+\texttt{This quick brown fox jumps over the lazy dog.} \\
+\textbf{\texttt{This quick brown fox jumps over the lazy dog.}} \\
+\emph{\texttt{This quick brown fox jumps over the lazy dog.}} \\
+\textbf{\emph{\texttt{This quick brown fox jumps over the lazy dog.}}}
+\end{document}

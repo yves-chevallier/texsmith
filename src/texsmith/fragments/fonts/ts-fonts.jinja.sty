@@ -28,26 +28,29 @@
 \BLOCK{ set emoji_upright = emoji_files.get("regular") or emoji_files.get("black") or (emoji_files.values() | first) }
 \BLOCK{ set kpse_fallbacks = {
   "Latin Modern Roman": {
+    "base": "lmroman10",
     "extension": ".otf",
-    "regular": "lmroman10-regular",
-    "bold": "lmroman10-bold",
-    "italic": "lmroman10-italic",
-    "bold_italic": "lmroman10-bolditalic",
+    "regular": "*-regular",
+    "bold": "*-bold",
+    "italic": "*-italic",
+    "bold_italic": "*-bolditalic",
+    "small_caps": "lmromancaps10-regular",
   },
   "Latin Modern Roman Caps": {
     "extension": ".otf",
     "regular": "lmromancaps10-regular",
   },
   "Latin Modern Sans": {
+    "base": "lmsans10",
     "extension": ".otf",
-    "regular": "lmsans10-regular",
-    "bold": "lmsans10-bold",
-    "italic": "lmsans10-italic",
-    "bold_italic": "lmsans10-bolditalic",
+    "regular": "*-regular",
+    "bold": "*-bold",
+    "italic": "*-italic",
+    "bold_italic": "*-bolditalic",
   },
   "Latin Modern Math": {
-    "extension": ".otf",
-    "regular": "latinmodern-math",
+    "base": "latinmodern-math",
+    "regular": "*",
   },
   "FreeMono": {
     "extension": ".otf",
@@ -102,6 +105,11 @@
 \BLOCK{ set sans_hint = None if sans_files else kpse_fallbacks.get(sans_font) }
 \BLOCK{ set mono_hint = None if mono_files else kpse_fallbacks.get(mono_font) }
 \BLOCK{ set math_hint = None if math_files else kpse_fallbacks.get(math_font) }
+\BLOCK{ if main_hint and main_hint.get("base") } \BLOCK{ set main_font = main_hint.get("base") } \BLOCK{ endif }
+\BLOCK{ if sans_hint and sans_hint.get("base") } \BLOCK{ set sans_font = sans_hint.get("base") } \BLOCK{ endif }
+\BLOCK{ if mono_hint and mono_hint.get("base") } \BLOCK{ set mono_font = mono_hint.get("base") } \BLOCK{ endif }
+\BLOCK{ if math_hint and math_hint.get("base") } \BLOCK{ set math_font = math_hint.get("base") } \BLOCK{ endif }
+\BLOCK{ if not small_caps_font and main_hint and main_hint.get("small_caps") } \BLOCK{ set small_caps_font = main_hint.get("small_caps") } \BLOCK{ endif }
 \BLOCK{ set small_caps_hint = None if small_caps_files else kpse_fallbacks.get(small_caps_font) }
 \BLOCK{ if not mono_files and mono_font == "IBM Plex Mono" }
   \BLOCK{ set mono_files = {
@@ -155,9 +163,9 @@
   \BLOCK{ set mono_bold_italic_file = mono_files and mono_regular or mono_bold_italic }
 \BLOCK{ endif }
 \BLOCK{ set math_regular = math_files.get("regular") or math_files.get("black") or math_files.get("thin") or math_font }
-\BLOCK{ if math_hint and math_regular == math_font } \BLOCK{ set math_regular = math_hint.get("regular") or math_regular } \BLOCK{ endif }
 \BLOCK{ set small_caps_regular = small_caps_files.get("regular") if small_caps_files else None }
 \BLOCK{ if not small_caps_regular and small_caps_hint } \BLOCK{ set small_caps_regular = small_caps_hint.get("regular") } \BLOCK{ endif }
+\BLOCK{ if not small_caps_regular and main_hint } \BLOCK{ set small_caps_regular = main_hint.get("small_caps") } \BLOCK{ endif }
   \ifLuaTeX
     \let\eth\relax
     \let\Eth\relax
@@ -287,8 +295,7 @@
 \BLOCK{ endif }
       },
     ]
-\BLOCK{ set math_target = math_regular }
-\setmathfont{\VAR{math_target}}[
+\setmathfont{\VAR{math_font}}[
 \BLOCK{ if math_files }
   Path=\VAR{font_path_prefix},
 \BLOCK{ endif }
@@ -431,7 +438,7 @@
       FakeSlant=0.2,
 \BLOCK{ endif }
     ]
-    \setmathfont{\VAR{math_regular}}[
+    \setmathfont{\VAR{math_font}}[
 \BLOCK{ if math_files }
       Path=\VAR{font_path_prefix},
 \BLOCK{ endif }

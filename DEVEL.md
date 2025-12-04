@@ -27,15 +27,18 @@ Roadmap and development notes for TeXSmith. I keep this file as a running checkl
 - [x] Mermaid color configuration for MkDocs
 - [x] Build MkDocs with parts at level 0.
 - [x] Implement drawio over pywreight
-- [ ] Refactoring snippets
-- [ ] Fix snippet template (frame dog ear would be good in the build pdf)
-- [ ] Solve issue with Greek
-- [ ] os: [ubuntu-latest, windows-latest, macos-latest]
+- [x] Font style with mono
+- [x] MkDocs Linking Issues
+- [x] Clean book template
+- [x] Hide the list of tables when no tables exist.
+- [x] Manage title fragment to insert title meta
+- [x] Manage fragments order from before/after hooks instead of in fragments.py
+- [ ] Complete docstrings in the codebase for better mkdocstrings generation
+- [ ] Refactoring snippets and fix snippet templates
+- [ ] Solve issue with Greek fonts
+- [ ] Be verbose in mkdocs show what happens (fetching assets, building...)
 - [ ] Global user's configuration (.texsmith/config.yml)
-- [ ] Acronyms multiline
-- [ ] MkDocs Linking Issues
-- [ ] Support for {++inserted text++}, and {~~deleted text~~} (goodbox)
-- [ ] Font style with mono
+- [ ] os: [ubuntu-latest, windows-latest, macos-latest]
 - [ ] Unified Fences Syntax
   - [ ] Multicolumns
   - [ ] Font Size
@@ -43,22 +46,12 @@ Roadmap and development notes for TeXSmith. I keep this file as a running checkl
   - [ ] Language
   - [ ] LaTeX only / HTML only
   - [ ] LaTeX raw
-- [ ] Clean book template
 - [ ] Add example: university exam
-- [ ] Add engine through Docker (docker-tectonic, docker-texlive)
-- [ ] Use docker tectonic if tectonic is not installed
-- [ ] Integrate docker docker run -v $(pwd):/usr/src/tex  dxjoke/tectonic-docker tectonic book.tex
-- [ ] Hide the list of tables when no tables exist.
-- [ ] Manage title fragment to insert title meta
-- [ ] Manage fragments order from before/after hooks instead of in fragments.py
-- [ ] tocloft
-- [ ] enumitem
-- [ ] Be verbose in mkdocs show what happens (fetching assets, building...)
+- [ ] Acronyms multiline
+- [ ] Support for {++inserted text++}, and {~~deleted text~~} (goodbox)
 - [ ] docs/syntax/captions.md (captions not working when using texsmith?)
-- [ ] Use env var for TEXSMITH_CACHE, default to ~/.texsmith/cache
 - [ ] Make CI pass
 - [ ] Support for multi-indexes (dates, ...)
-- [ ] Complete docstrings in the codebase for better mkdocstrings generation
 - [ ] Support cross-references (cleveref package)
 - [ ] Add table width controls (auto, fixed width, `tabularx`, `tabulary`, etc.)
 - [ ] Support table orientation (rotate very wide tables)
@@ -68,6 +61,9 @@ Roadmap and development notes for TeXSmith. I keep this file as a running checkl
 - [ ] CI: uv run mkdocs build #--strict not yet ready
 - [ ] Windows Support
 - [ ] Insert Examples PDFs in the GitHub Releases
+- [ ] Ts-Extra
+  - [ ] tocloft
+  - [ ] enumitem
 - [ ] Develop submodules as standalone plugins
   - [ ] Marginalia (`marginpar` package with footnotes syntax)
   - [ ] Epigraph Plugin
@@ -79,6 +75,134 @@ Roadmap and development notes for TeXSmith. I keep this file as a running checkl
 - [ ] Update docs/api to reflect the actual codebase
 - [ ] Add comprehensive docstring in each docs/api entrypoint in the codebase to explain why/the architecture and how it is useful.
 - [ ] Do not show temporary paths in outputs CLI summary table (│ Main document │ /tmp/texsmith-x84gefq4/colorful.tex │)
+
+## Fonts
+
+
+We want to rework the fonts mechanism it is too clumpsy complex and vague. To separate responsabilities:
+
+TeXSmith Core API is in charge of
+- detecting used codepoints in document/multidocument
+- associate text regions to a language script and to a Noto Font
+- download the requested Noto Fonts
+- download the requested Emojis fonts
+
+TeXSmith ts-fonts fragment is in charge of
+- Defining available fonts packages
+- Building the ts-fonts to be engines friendly (xelatex, tectonic, lualatex...)
+- Populate ucharclasses ranges based on usage (information got from TeXSmith Core)
+
+## Predefined Fonts Package
+
+In order to simplify everything about font management in TeXSmith, we need a configuration file can be toml or yaml in TeXSmith. This file will be cached during the first load to be easily used. We keep it in a form of config file for dev easiness. This file declare the font packages supported by TeXSmith:
+
+```yml
+lm:
+  default: true
+  name: Latin Modern
+  main:
+    regular: lmroman10-regular.otf
+    bold: lmroman10-bold.otf
+    italic: lmroman10-italic.otf
+    bolditalic: lmroman10-bolditalic.otf
+    smallcaps: lmromancaps10-regular.otf
+  sans:
+    regular: lmsans10-regular.otf
+    bold: lmsans10-regular.otf
+    italic: lmsans10-oblique.otf
+    bolditalic: lmsans10-boldoblique.otf
+  mono:
+    regular: FreeMono.otf
+    bold: FreeMonoBold.otf
+    italic: FreeMonoOblique.otf
+    bolditalic: FreeMonoBolOblique.otf
+  math:
+    # Standard no special math (empty)
+lm-sans:
+  name: Latin Modern Sans
+  main:
+    regular: lmsans10-regular.otf
+    bold: lmsans10-regular.otf
+    italic: lmsans10-oblique.otf
+    bolditalic: lmsans10-boldoblique.otf
+  sans:
+    regular: lmsans10-regular.otf
+    bold: lmsans10-regular.otf
+    italic: lmsans10-oblique.otf
+    bolditalic: lmsans10-boldoblique.otf
+  mono:
+    regular: FreeMono.otf
+    bold: FreeMonoBold.otf
+    italic: FreeMonoOblique.otf
+    bolditalic: FreeMonoBolOblique.otf
+  math:
+    # Standard no special math (empty)
+... (same for all texgyre fonts)
+```
+
+This file belongs to the ts-fonts fragment. It is responsable for setting another family other than standard and support for Unicode classes.
+
+We want to support also TeXGyre (Adventor, Bonum, Chorus, Cursor, Heros Pagella Schola Termes). In the case of texgyre some fonts comes with a math font in which case we define the math stuff.
+
+On ts-fonts we have the `fonts` attribute which can be therefore any of:
+
+- lm | None (default to Latin modern)
+- lmsans
+- adventor
+- bonum
+- chorus
+- cursor
+- heros
+- pagella
+- schola
+- termes
+- libertinus (\usepackage{libertinus})
+- newtx (\usepackage[osf]{newtxtext}, \usepackage{newtxmath})
+
+For some fonts packages we simply use LaTeX packages:
+
+-
+
+For now TeXSmith only supports these packages which are available through tectonic or TeXLive automatically we don't need to download or copy any of these fonts.
+
+## Font Copy
+
+We copy all fonts that are not installed or available in texlive in the ./fonts in the cwd of build output. These fonts are only the fallback fonts from the noto family.
+
+## Fallback
+
+In LuaLaTeX on utilise:
+
+\defaultfontfeatures{FallbackFamilies = {{Noto Emoji...}}} pour les fallback ou alors par cohérence avec XeLaTeX:
+
+\defaultfontfeatures{
+  Renderer=HarfBuzz,
+  RawFeature = {
+      fallback=range:1F300-1FAFF,Noto Emoji
+  }
+}
+
+## Font test package
+
+Some packages related to fonts are not on the tectonic bundle. One can do:
+
+\documentclass{article}
+\usepackage{fontspec}
+\usepackage{nexus-otf}
+
+Catch the `Error: File `nexus-otf.sty' not found` message and fallback to manual download of the package.
+
+## Tectonic log
+
+We want to mute false warnings and not display them:
+
+/^warning:\s*.*?:\d+:\s*Requested font.*?at.*$/
+/^warning:\s*.*?:\d+:\s*Unknown feature.*?in font.*$/
+
+
+\newfontfamily\arabic{Amarai}
+\setDefaultTransitions{\begingroup\mainfont}{\endgroup}
+\setTransitionsFor{ArabicLanguage}{\begingroup\arabic}{\endgroup}
 
 ## Snippets for on doc examples:
 

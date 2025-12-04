@@ -198,7 +198,7 @@ def wrap_template_document(
         fonts_yaml_path = None
     font_match = analyse_font_requirements(
         slot_outputs=resolved_slots,
-        context=template_context,
+        context=None,
         fonts_yaml=fonts_yaml_path,
         check_system=True,
     )
