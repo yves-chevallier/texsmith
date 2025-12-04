@@ -1,11 +1,14 @@
 from __future__ import annotations
 
+from pathlib import Path
+
 import pytest
 
 from texsmith.core.templates.manifest import TemplateError
 from texsmith.fragments.bibliography import fragment as bibliography_fragment
 from texsmith.fragments.callouts import fragment as callouts_fragment
 from texsmith.fragments.code import fragment as code_fragment
+from texsmith.fragments.fonts import fragment as fonts_fragment
 from texsmith.fragments.geometry import fragment as geometry_fragment
 from texsmith.fragments.glossary import fragment as glossary_fragment
 from texsmith.fragments.index import fragment as index_fragment
@@ -124,6 +127,26 @@ def test_index_fragment_flag() -> None:
     ctx_flag: dict[str, object] = {"has_index": True}
     cfg_flag = index_fragment.build_config(ctx_flag)
     assert index_fragment.should_render(cfg_flag) is True
+
+
+def test_fonts_fragment_defaults(tmp_path: Path) -> None:
+    ctx: dict[str, object] = {"output_dir": str(tmp_path)}
+    cfg = fonts_fragment.build_config(ctx)
+    fonts_fragment.inject(cfg, ctx)
+
+    assert ctx["fonts_family"] == "lm"
+    assert ctx["fonts"]["family"] == "lm"
+    assert fonts_fragment.should_render(cfg) is True
+
+
+@pytest.mark.filterwarnings("ignore:Unknown font family")
+def test_fonts_fragment_falls_back_to_lm(tmp_path: Path) -> None:
+    ctx: dict[str, object] = {"fonts_family": "unknown", "output_dir": str(tmp_path)}
+    cfg = fonts_fragment.build_config(ctx)
+    fonts_fragment.inject(cfg, ctx)
+
+    assert ctx["fonts_family"] == "lm"
+    assert ctx["fonts"]["family"] == "lm"
 
 
 def test_geometry_fragment_injects_defaults() -> None:

@@ -169,6 +169,11 @@ We want to mute false warnings and not display them:
 /^warning:\s*.*?:\d+:\s*Unknown feature.*?in font.*$/
 ```
 
+Recent matrix runs with TeX Gyre (bonum/pagella/termes/schola/heros/adventor/cursor) trigger
+many Tectonic warnings like `Unknown feature '` or repeated `Requested font` lines; output is
+otherwise correct. Keep these noted as benign until we wire the log filter above or document a
+flag to silence them.
+
 ## Snippets for on doc examples:
 
 We currently use this syntax which is aweful with plenty of parameters. I want to provide an alternative syntax using code fences

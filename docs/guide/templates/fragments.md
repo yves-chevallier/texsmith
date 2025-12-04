@@ -2,17 +2,13 @@
 
 Fragments are small, pluggable LaTeX packages (`.sty` rendered from Jinja) that
 TeXSmith can inject into any template at `\VAR{extra_packages}`. They keep
-shared logic (fonts, callouts, code listings, …) out of individual templates
+shared logic (callouts, code listings, …) out of individual templates
 while staying configurable from front matter or your own extensions.
 
 ## Built-in fragments
 
 `ts-geometry`
 : page size/orientation glue that mirrors `press.paper`/`press.geometry` options.
-
-`ts-fonts`
-: font setup, emoji handling, and fallback management. It also
-  connects to the font matcher to warn about missing fonts on the host.
 
 `ts-extra`
 : opt-in aux packages detected from the rendered content (hyperref, soul, ulem, etc.).
@@ -40,7 +36,7 @@ while staying configurable from front matter or your own extensions.
 
 All built-in templates default to rendering these fragments. They are
 written into the build directory as `ts-*.sty` and loaded via
-`\usepackage{ts-fonts}` (and friends) in the generated TeX.
+`\usepackage{...}` in the generated TeX.
 
 ## Using fragments in documents
 
@@ -53,7 +49,6 @@ template (absolute or relative to the Markdown file).
 press:
   template: article
   fragments:
-    - ts-fonts        # built-in
     - ts-callouts
     - ts-code
     - ts-glossary
@@ -88,7 +83,7 @@ preamble—typically next to other package imports. No TOML manifest changes are
 required; the core runtime resolves fragments before rendering.
 
 Built-in templates already include this placeholder and opt into
-`ts-geometry`, `ts-fonts`, `ts-extra`, `ts-keystrokes`, `ts-callouts`, `ts-code`,
+`ts-geometry`, `ts-extra`, `ts-keystrokes`, `ts-callouts`, `ts-code`,
 `ts-glossary`, `ts-index`, `ts-bibliography`, and `ts-todolist` via the template
 runtime extras; conditional fragments only render when their macros are present
 in the rendered LaTeX. Third-party templates can also declare default fragments

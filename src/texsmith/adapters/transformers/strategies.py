@@ -193,7 +193,9 @@ class SvgToPdfStrategy(CachedConversionStrategy):
         except OSError as exc:
             hint = _cairo_dependency_hint()
             _emit_dependency_warning(emitter, hint)
-            raise TransformerExecutionError(f"Failed to render SVG with CairoSVG: {exc}. {hint}") from exc
+            raise TransformerExecutionError(
+                f"Failed to render SVG with CairoSVG: {exc}. {hint}"
+            ) from exc
         except Exception as exc:
             raise TransformerExecutionError(f"Failed to render SVG with CairoSVG: {exc}") from exc
         normalise_pdf_version(target)
@@ -705,7 +707,7 @@ class MermaidToPdfStrategy(CachedConversionStrategy):
         try:
             from playwright._impl._errors import Error as PlaywrightError
         except Exception:  # pragma: no cover - defensive import fallback
-            PlaywrightError = Exception
+            PlaywrightError = Exception  # noqa: N806
 
         try:
             browser = _PlaywrightManager.ensure_browser(emitter=emitter)
@@ -990,7 +992,7 @@ class DrawioToPdfStrategy(CachedConversionStrategy):
         try:
             from playwright._impl._errors import Error as PlaywrightError
         except Exception:  # pragma: no cover - defensive import fallback
-            PlaywrightError = Exception
+            PlaywrightError = Exception  # noqa: N806
 
         try:
             cache_root = _texsmith_cache_root() / "playwright"

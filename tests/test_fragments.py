@@ -23,11 +23,11 @@ def test_fragments_default_injection(tmp_path: Path) -> None:
     assert "\\usepackage[a4paper]{geometry}" in tex_content
     assert not (tmp_path / "build" / "ts-callouts.sty").exists()
     assert not (tmp_path / "build" / "ts-keystrokes.sty").exists()
-    assert (tmp_path / "build" / "ts-fonts.sty").exists()
     assert not (tmp_path / "build" / "ts-code.sty").exists()
     assert not (tmp_path / "build" / "ts-glossary.sty").exists()
     assert not (tmp_path / "build" / "ts-index.sty").exists()
     assert not (tmp_path / "build" / "ts-todolist.sty").exists()
+    assert (tmp_path / "build" / "ts-fonts.sty").exists()
 
 
 def test_custom_fragment_rendering(tmp_path: Path) -> None:

@@ -17,7 +17,6 @@ Attributes:
 Assets:
   - No declared assets
 Fragments:
-  - ts-fonts: Font selection and fallbacks for TeXSmith templates. (attributes: -)
   - ts-extra: Auxiliary LaTeX packages loaded on demand (hyperref, ulem, soul, etc.). (attributes: -)
   - ts-keystrokes: Keyboard shortcut rendering helpers loaded only when needed. (attributes: -)
   - ts-callouts: Reusable callout styles shared by built-in templates. (attributes: callout_style)
