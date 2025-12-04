@@ -349,6 +349,8 @@ def prepare_fonts_for_context(
             "font_path": None,
             "color_enabled": False,
         }
+    if emoji_font_family and emoji_font_family not in font_ranges:
+        font_ranges[emoji_font_family] = list(_EMOJI_DEFAULT_RANGES)
 
     template_context["fallback_fonts"] = fallback_fonts
 
