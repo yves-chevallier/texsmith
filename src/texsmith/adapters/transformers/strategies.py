@@ -50,6 +50,65 @@ DRAWIO_CLI_HINT_PATHS: tuple[Path, ...] = (Path("/snap/bin/drawio"),)
 DPI_CSS = 96
 DPI_TARGET = 72
 SCALE = DPI_CSS / DPI_TARGET
+_PLAYWRIGHT_APT_PACKAGES: tuple[str, ...] = (
+    "libglib2.0-0",
+    "libnspr4",
+    "libnss3",
+    "libatk1.0-0",
+    "libatk-bridge2.0-0",
+    "libcups2",
+    "libxkbcommon0",
+    "libatspi2.0-0",
+    "libxcomposite1",
+    "libxdamage1",
+    "libxfixes3",
+    "libxrandr2",
+    "libgbm1",
+    "libcairo2",
+    "libpango-1.0-0",
+    "libasound2",
+)
+_PLAYWRIGHT_BACKEND_HINT = (
+    "If Playwright cannot run in this environment, re-run with "
+    "--diagrams-backend local or --diagrams-backend docker."
+)
+
+
+def _emit_dependency_warning(emitter: Any, message: str) -> None:
+    """Send a warning through the emitter or fall back to Python warnings."""
+    handled = False
+    if emitter is not None:
+        try:
+            emitter.warning(message)
+            handled = True
+        except Exception:
+            handled = False
+    if not handled:
+        warnings.warn(message, stacklevel=3)
+
+
+def _playwright_dependency_hint() -> str:
+    packages = " ".join(_PLAYWRIGHT_APT_PACKAGES)
+    return (
+        "Install Playwright browser dependencies with `playwright install-deps` "
+        f"(Debian/Ubuntu: `sudo apt-get install {packages}`)."
+    )
+
+
+def _cairo_dependency_hint() -> str:
+    return (
+        "CairoSVG requires the system cairo library (package: libcairo2). "
+        "Install it via your package manager to enable SVG conversion."
+    )
+
+
+def _wrap_playwright_error(exc: Exception, emitter: Any = None) -> TransformerExecutionError:
+    """Return a structured error with guidance for missing Playwright deps."""
+    base_message = str(exc).strip() or exc.__class__.__name__
+    hint = f"{_playwright_dependency_hint()} {_PLAYWRIGHT_BACKEND_HINT}"
+    _emit_dependency_warning(emitter, hint)
+    message = f"Playwright backend failed: {base_message}. {hint}"
+    return TransformerExecutionError(message)
 
 
 def _resolve_cli(names: Sequence[str], hints: Sequence[Path]) -> tuple[str | None, bool]:
@@ -116,6 +175,7 @@ class SvgToPdfStrategy(CachedConversionStrategy):
         cache_dir: Path,
         **options: Any,
     ) -> Path:
+        emitter = options.get("emitter")
         svg_text = _read_text(source)
 
         try:
@@ -128,7 +188,14 @@ class SvgToPdfStrategy(CachedConversionStrategy):
             raise TransformerExecutionError(msg) from exc
 
         target.parent.mkdir(parents=True, exist_ok=True)
-        cairosvg.svg2pdf(bytestring=svg_text.encode("utf-8"), write_to=str(target))
+        try:
+            cairosvg.svg2pdf(bytestring=svg_text.encode("utf-8"), write_to=str(target))
+        except OSError as exc:
+            hint = _cairo_dependency_hint()
+            _emit_dependency_warning(emitter, hint)
+            raise TransformerExecutionError(f"Failed to render SVG with CairoSVG: {exc}. {hint}") from exc
+        except Exception as exc:
+            raise TransformerExecutionError(f"Failed to render SVG with CairoSVG: {exc}") from exc
         normalise_pdf_version(target)
         return target
 
@@ -206,6 +273,7 @@ class FetchImageStrategy(CachedConversionStrategy):
         cache_dir: Path,
         **options: Any,
     ) -> Path:
+        emitter = options.get("emitter")
         url = str(source)
         convert_requested = bool(options.get("convert", True))
         metadata: dict[str, str] | None = options.get("metadata")
@@ -270,6 +338,12 @@ class FetchImageStrategy(CachedConversionStrategy):
                 raise TransformerExecutionError(msg) from exc
             try:
                 cairosvg.svg2pdf(bytestring=response.content, write_to=str(target))
+            except OSError as exc:
+                hint = _cairo_dependency_hint()
+                _emit_dependency_warning(emitter, hint)
+                raise TransformerExecutionError(
+                    f"Failed to convert remote SVG '{url}': {exc}. {hint}"
+                ) from exc
             except Exception as exc:
                 raise TransformerExecutionError(
                     f"Failed to convert remote SVG '{url}': {exc}"
@@ -390,7 +464,7 @@ class _PlaywrightManager:
     _cleanup_registered = False
 
     @classmethod
-    def ensure_browser(cls) -> Any:
+    def ensure_browser(cls, *, emitter: Any = None) -> Any:
         with cls._lock:
             if cls._browser is not None:
                 return cls._browser
@@ -401,7 +475,10 @@ class _PlaywrightManager:
                 raise TransformerExecutionError(
                     "Playwright backend requested but the 'playwright' package is not installed."
                 ) from exc
-            cls._playwright = sync_playwright().start()
+            try:
+                cls._playwright = sync_playwright().start()
+            except PlaywrightError as exc:
+                raise _wrap_playwright_error(exc, emitter) from exc
             cache_root = _texsmith_cache_root() / "playwright"
             browser_cache = cache_root / "browsers"
             browser_cache.mkdir(parents=True, exist_ok=True)
@@ -421,9 +498,7 @@ class _PlaywrightManager:
                 else:
                     cls._playwright.stop()
                     cls._playwright = None
-                    raise TransformerExecutionError(
-                        f"Failed to launch Playwright Chromium: {exc}"
-                    ) from exc
+                    raise _wrap_playwright_error(exc, emitter) from exc
             if not cls._cleanup_registered:
                 atexit.register(cls._cleanup)
                 cls._cleanup_registered = True
@@ -471,6 +546,7 @@ class MermaidToPdfStrategy(CachedConversionStrategy):
         cache_dir: Path,
         **options: Any,
     ) -> Path:
+        emitter = options.get("emitter")
         backend = str(options.get("backend") or options.get("diagrams_backend") or "auto").lower()
         format_opt = str(options.get("format", "pdf") or "pdf").lower()
         working_dir = cache_dir / "mermaid"
@@ -514,6 +590,7 @@ class MermaidToPdfStrategy(CachedConversionStrategy):
                     format_opt=format_opt,
                     theme=theme,
                     mermaid_config=mermaid_config,
+                    emitter=emitter,
                 )
             except TransformerExecutionError as exc:
                 primary_error = exc
@@ -623,49 +700,62 @@ class MermaidToPdfStrategy(CachedConversionStrategy):
         format_opt: str,
         theme: str,
         mermaid_config: Any,
+        emitter: Any = None,
     ) -> None:
-        browser = _PlaywrightManager.ensure_browser()
-        page = browser.new_page(viewport={"width": 2400, "height": 1800})
-        page.set_content(
-            """<!doctype html>
+        try:
+            from playwright._impl._errors import Error as PlaywrightError
+        except Exception:  # pragma: no cover - defensive import fallback
+            PlaywrightError = Exception
+
+        try:
+            browser = _PlaywrightManager.ensure_browser(emitter=emitter)
+            page = browser.new_page(viewport={"width": 2400, "height": 1800})
+            page.set_content(
+                """<!doctype html>
 <html><head><meta charset="utf-8" />
 <script src="https://unpkg.com/mermaid@11/dist/mermaid.min.js"></script>
 </head><body style="margin:0; background:white;"><div id="container"></div></body></html>""",
-            wait_until="load",
-        )
-        resolved_config: dict[str, Any] = {}
+                wait_until="load",
+            )
+            resolved_config: dict[str, Any] = {}
 
-        if isinstance(mermaid_config, Mapping):
-            resolved_config = dict(mermaid_config)
-        elif isinstance(mermaid_config, str):
-            cfg_path = Path(mermaid_config).expanduser()
-            if cfg_path.exists():
-                try:
-                    resolved_config = json.loads(cfg_path.read_text("utf-8"))
-                except Exception:
-                    resolved_config = {}
+            if isinstance(mermaid_config, Mapping):
+                resolved_config = dict(mermaid_config)
+            elif isinstance(mermaid_config, str):
+                cfg_path = Path(mermaid_config).expanduser()
+                if cfg_path.exists():
+                    try:
+                        resolved_config = json.loads(cfg_path.read_text("utf-8"))
+                    except Exception:
+                        resolved_config = {}
 
-        if not resolved_config:
-            resolved_config = dict(_DEFAULT_MERMAID_CONFIG) if _DEFAULT_MERMAID_CONFIG else {}
-        resolved_config.setdefault("startOnLoad", False)
-        resolved_config.setdefault("theme", theme)
-        page.evaluate("cfg => { window.mermaid.initialize(cfg); }", resolved_config)
-        svg = page.evaluate(
-            """
+            if not resolved_config:
+                resolved_config = dict(_DEFAULT_MERMAID_CONFIG) if _DEFAULT_MERMAID_CONFIG else {}
+            resolved_config.setdefault("startOnLoad", False)
+            resolved_config.setdefault("theme", theme)
+            page.evaluate("cfg => { window.mermaid.initialize(cfg); }", resolved_config)
+            svg = page.evaluate(
+                """
 async (code) => {
   const result = await window.mermaid.render("theGraph", code);
   const header = '<?xml version="1.0" encoding="UTF-8"?>\\n';
   return header + result.svg;
 }
 """,
-            content,
-        )
-        page.close()
-        target.parent.mkdir(parents=True, exist_ok=True)
-        if format_opt == "png":
-            self._svg_to_png(browser, svg, target)
-        else:
-            self._svg_to_pdf(browser, svg, target)
+                content,
+            )
+            page.close()
+            target.parent.mkdir(parents=True, exist_ok=True)
+            if format_opt == "png":
+                self._svg_to_png(browser, svg, target)
+            else:
+                self._svg_to_pdf(browser, svg, target)
+        except PlaywrightError as exc:
+            raise _wrap_playwright_error(exc, emitter) from exc
+        except TransformerExecutionError:
+            raise
+        except Exception as exc:
+            raise TransformerExecutionError(f"Mermaid Playwright backend failed: {exc}") from exc
 
     def _svg_to_pdf(self, browser: Any, svg: str, target: Path) -> None:
         page = browser.new_page()
@@ -728,6 +818,7 @@ class DrawioToPdfStrategy(CachedConversionStrategy):
         cache_dir: Path,
         **options: Any,
     ) -> Path:
+        emitter = options.get("emitter")
         backend = str(options.get("backend") or options.get("diagrams_backend") or "auto").lower()
         format_opt = str(options.get("format", "pdf") or "pdf").lower()
         theme = str(options.get("theme", "auto") or "auto")
@@ -764,6 +855,7 @@ class DrawioToPdfStrategy(CachedConversionStrategy):
                     cache_dir=cache_dir,
                     format_opt=format_opt,
                     theme=theme,
+                    emitter=emitter,
                 )
             except TransformerExecutionError as exc:
                 primary_error = exc
@@ -893,28 +985,35 @@ class DrawioToPdfStrategy(CachedConversionStrategy):
         cache_dir: Path,
         format_opt: str,
         theme: str,
+        emitter: Any = None,
     ) -> None:
-        cache_root = _texsmith_cache_root() / "playwright"
-        browser_cache = cache_root / "browsers"
-        browser_cache.mkdir(parents=True, exist_ok=True)
-        os.environ.setdefault("PLAYWRIGHT_BROWSERS_PATH", str(browser_cache))
+        try:
+            from playwright._impl._errors import Error as PlaywrightError
+        except Exception:  # pragma: no cover - defensive import fallback
+            PlaywrightError = Exception
 
-        export_page = cache_root / "export3.html"
-        export_url = None
-        if not export_page.exists():
-            try:
-                with urlopen(self.export_url) as response:
-                    export_page.write_bytes(response.read())
-            except Exception:
-                export_url = self.export_url
+        try:
+            cache_root = _texsmith_cache_root() / "playwright"
+            browser_cache = cache_root / "browsers"
+            browser_cache.mkdir(parents=True, exist_ok=True)
+            os.environ.setdefault("PLAYWRIGHT_BROWSERS_PATH", str(browser_cache))
 
-        xml = source.read_text(encoding="utf-8")
-        browser = _PlaywrightManager.ensure_browser()
-        page = browser.new_page(viewport={"width": 2400, "height": 1800})
-        page.goto(export_page.as_uri() if export_url is None else export_url)
-        page.wait_for_function("() => typeof window.render === 'function'", timeout=30_000)
-        page.evaluate(
-            """
+            export_page = cache_root / "export3.html"
+            export_url = None
+            if not export_page.exists():
+                try:
+                    with urlopen(self.export_url) as response:
+                        export_page.write_bytes(response.read())
+                except Exception:
+                    export_url = self.export_url
+
+            xml = source.read_text(encoding="utf-8")
+            browser = _PlaywrightManager.ensure_browser(emitter=emitter)
+            page = browser.new_page(viewport={"width": 2400, "height": 1800})
+            page.goto(export_page.as_uri() if export_url is None else export_url)
+            page.wait_for_function("() => typeof window.render === 'function'", timeout=30_000)
+            page.evaluate(
+                """
 () => {
   const orig = window.render;
   window.render = function(data) {
@@ -925,25 +1024,25 @@ class DrawioToPdfStrategy(CachedConversionStrategy):
   };
 }
 """
-        )
-        payload = {
-            "xml": xml,
-            "format": "svg",
-            "border": 0,
-            "scale": 1,
-            "w": 0,
-            "h": 0,
-            "extras": "{}",
-            "embedXml": "1",
-            "embedImages": "1",
-            "embedFonts": "1",
-            "shadows": "1",
-            "theme": theme,
-        }
-        page.evaluate("data => window.render(data)", payload)
-        page.wait_for_selector("#LoadingComplete", state="attached", timeout=60_000)
-        svg = page.evaluate(
-            """
+            )
+            payload = {
+                "xml": xml,
+                "format": "svg",
+                "border": 0,
+                "scale": 1,
+                "w": 0,
+                "h": 0,
+                "extras": "{}",
+                "embedXml": "1",
+                "embedImages": "1",
+                "embedFonts": "1",
+                "shadows": "1",
+                "theme": theme,
+            }
+            page.evaluate("data => window.render(data)", payload)
+            page.wait_for_selector("#LoadingComplete", state="attached", timeout=60_000)
+            svg = page.evaluate(
+                """
 () => {
   const graph = window.__lastGraph;
   const data = window.__lastData || {};
@@ -965,13 +1064,19 @@ class DrawioToPdfStrategy(CachedConversionStrategy):
   return header + '\\n' + mxUtils.getXml(svgRoot);
 }
 """
-        )
-        page.close()
-        target.parent.mkdir(parents=True, exist_ok=True)
-        if format_opt == "png":
-            self._svg_to_png(browser, svg, target)
-        else:
-            self._svg_to_pdf(browser, svg, target)
+            )
+            page.close()
+            target.parent.mkdir(parents=True, exist_ok=True)
+            if format_opt == "png":
+                self._svg_to_png(browser, svg, target)
+            else:
+                self._svg_to_pdf(browser, svg, target)
+        except PlaywrightError as exc:
+            raise _wrap_playwright_error(exc, emitter) from exc
+        except TransformerExecutionError:
+            raise
+        except Exception as exc:
+            raise TransformerExecutionError(f"draw.io Playwright backend failed: {exc}") from exc
 
     def _svg_to_pdf(self, browser: Any, svg: str, target: Path) -> None:
         page = browser.new_page()

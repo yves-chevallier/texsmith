@@ -30,6 +30,7 @@ Roadmap and development notes for TeXSmith. I keep this file as a running checkl
 - [ ] Refactoring snippets
 - [ ] Fix snippet template (frame dog ear would be good in the build pdf)
 - [ ] Solve issue with Greek
+- [ ] os: [ubuntu-latest, windows-latest, macos-latest]
 - [ ] Global user's configuration (.texsmith/config.yml)
 - [ ] Acronyms multiline
 - [ ] MkDocs Linking Issues
