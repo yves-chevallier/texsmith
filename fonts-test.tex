@@ -2,13 +2,8 @@
 \usepackage{parskip}
 \usepackage{fontspec}
 
-% =================================================
-% 1. Choix du set : lm, lm-sans, bonum,
-%    libertinus, pagella, termes, erewhon
-% =================================================
-\newcommand\FontSet{pennstander} % <--- change juste ça
+\newcommand\FontSet{lm}
 
-% Fabrique un petit registre de sets pour éviter l'imbrication de tests.
 \makeatletter
 \newcommand{\DeclareFontSet}[2]{%
   \expandafter\gdef\csname setupfonts@#1\endcsname{#2}%
@@ -16,7 +11,7 @@
 \newcommand{\UseFontSet}[1]{%
   \@ifundefined{setupfonts@#1}{%
     \PackageError{fontset}{Unknown FontSet '#1'}%
-      {Declare it with \string\DeclareFontSet\space first. Valid options: lm, lm-sans, bonum, libertinus, pagella, termes, erewhon, schola.}%
+      {Declare it with \string\DeclareFontSet\space first. }%
   }{%
     \csname setupfonts@#1\endcsname
   }%
@@ -28,13 +23,15 @@
 %
 \DeclareFontSet{lm}{%
   \setmainfont{lmroman10}[
-    Extension      = .otf,
-    UprightFont    = *-regular,
-    ItalicFont     = *-italic,
-    BoldFont       = *-bold,
-    BoldItalicFont = *-bolditalic,
-    SmallCapsFont = {lmromancaps10-regular},
-    Ligatures      = TeX,
+    Extension       = .otf,
+    UprightFont     = lmroman10-regular,
+    ItalicFont      = lmroman10-italic,
+    BoldFont        = lmroman10-bold,
+    BoldItalicFont  = lmroman10-bolditalic,
+    SmallCapsFont   = lmromancaps10-regular,
+    SlantedFont     = lmromanslant10-regular,
+    BoldSlantedFont = lmromanslant10-bold,
+    Ligatures       = TeX,
   ]
   \setsansfont{lmsans10}[
     Extension      = .otf,
@@ -48,7 +45,11 @@
     UprightFont    = *-regular,
     ItalicFont     = *-italic,
     BoldFont       = *-regular,
+    BoldFeatures   = {FakeBold=2},
     BoldItalicFont = *-italic,
+    BoldItalicFeatures = {FakeBold=2},
+    SmallCapsFont   = lmmonocaps10-regular,
+    SmallCapsFeatures = {Letters=SmallCaps},
   ]
 }
 
@@ -71,17 +72,20 @@
     BoldFont       = *-bold,
     BoldItalicFont = *-boldoblique,
   ]
-  \setmonofont{lmmono10}[
+  \setmonofont{IBMPlexMono}[
     Extension      = .otf,
-    UprightFont    = *-regular,
-    ItalicFont     = *-italic,
-    BoldFont       = *-regular,
-    BoldItalicFont = *-italic,
+    UprightFont    = *-Regular,
+    ItalicFont     = *-Italic,
+    BoldFont       = *-Bold,
+    BoldItalicFont = *-BoldItalic,
+    Scale=0.90,
+    FakeStretch    = 0.92,
   ]
 }
 
 %
 % Tex Gyre Bonum (bonum)
+% https://mirrors.ctan.org/fonts/bonum-otf.zip
 %
 \DeclareFontSet{bonum}{%
   \RequirePackage{bonum-otf}
@@ -108,57 +112,69 @@
   \RequirePackage{termes-otf}
 }
 
+%
+% TeX Gyre Schola (schola)
+% https://mirrors.ctan.org/fonts/schola-otf.zip
+%
 \DeclareFontSet{schola}{%
-  \RequirePackage{schola-otf} % https://mirrors.ctan.org/fonts/schola-otf.zip
+  \RequirePackage{schola-otf}
 }
 
+%
+% TeX Gyre Heros (heros)
+% https://mirrors.ctan.org/fonts/heros-otf.zip
+%
+\DeclareFontSet{heros-otf}{%
+  \RequirePackage{heros-otf}
+}
+
+%
+% TeX Gyre Adventor (adventor)
+% https://mirrors.ctan.org/fonts/adventor-otf.zip
+%
+\DeclareFontSet{adventor-otf}{%
+  \RequirePackage{adventor-otf}
+}
+
+%
+% TeX Gyre Cursor (cursor)
+% https://mirrors.ctan.org/fonts/cursor-otf.zip
+%
+\DeclareFontSet{cursor-otf}{%
+  \RequirePackage{cursor-otf}
+}
+
+%
+% IBM Plex (plex)
+% https://mirrors.ctan.org/fonts/plex-otf.zip
+%
 \DeclareFontSet{plex}{%
   \RequirePackage{plex-otf}
 }
 
+%
+% Penn Stander (pennstander)
+% https://mirrors.ctan.org/fonts/pennstander-otf.zip
+%
 \DeclareFontSet{pennstander}{%
-  \RequirePackage{pennstander-otf} % https://mirrors.ctan.org/fonts/pennstander-otf.zip
+  \RequirePackage{pennstander-otf}
 }
 
-% --- erewhon (Erewhon + Heros + Cursor) ----------------
-\DeclareFontSet{erewhon}{%
-  \setmainfont{Erewhon}[
-    Extension      = .otf,
-    UprightFont    = *-Regular,
-    ItalicFont     = *-Italic,
-    BoldFont       = *-Bold,
-    BoldItalicFont = *-BoldItalic,
-    Ligatures      = TeX,
-  ]
-  \setsansfont{texgyreheros}[
-    Extension      = .otf,
-    UprightFont    = *-regular,
-    ItalicFont     = *-italic,
-    BoldFont       = *-bold,
-    BoldItalicFont = *-bolditalic,
-  ]
-  \setmonofont{texgyrecursor}[
-    Extension      = .otf,
-    UprightFont    = *-regular,
-    ItalicFont     = *-italic,
-    BoldFont       = *-bold,
-    BoldItalicFont = *-bolditalic,
-  ]
-}
-
-% Appel une fois dans le préambule
 \UseFontSet{\FontSet}
 
-% =================================================
 \begin{document}
-This quick brown fox jumps over the lazy dog. \\
-\emph{This quick brown fox jumps over the lazy dog.} \\
-\textbf{This quick brown fox jumps over the lazy dog.} \\
-\textbf{\emph{This quick brown fox jumps over the lazy dog.}} \\
-\textsc{This quick brown fox jumps over the lazy dog.}\par
+This quick brown fox jumps over the lazy dog. 0123456789 \\
+\textit{This quick brown fox jumps over the lazy dog. 0123456789} \\
+\textsl{This quick brown fox jumps over the lazy dog. 0123456789} \\
+\textsc{This quick brown fox jumps over the lazy dog. 0123456789} \par
 
-\texttt{This quick brown fox jumps over the lazy dog.} \\
-\textbf{\texttt{This quick brown fox jumps over the lazy dog.}} \\
-\emph{\texttt{This quick brown fox jumps over the lazy dog.}} \\
-\textbf{\emph{\texttt{This quick brown fox jumps over the lazy dog.}}}
+\textbf{This quick brown fox jumps over the lazy dog. 0123456789} \\
+\textbf{\textit{This quick brown fox jumps over the lazy dog. 0123456789}} \\
+\textbf{\textsl{This quick brown fox jumps over the lazy dog. 0123456789}} \\
+\textbf{\textsc{This quick brown fox jumps over the lazy dog. 0123456789}} \par
+
+\texttt{This quick brown fox jumps over the lazy dog. 0123456789} \\
+\textbf{\texttt{This quick brown fox jumps over the lazy dog. 0123456789}} \\
+\emph{\texttt{This quick brown fox jumps over the lazy dog. 0123456789}} \\
+\textbf{\emph{\texttt{This quick brown fox jumps over the lazy dog. 0123456789}}}
 \end{document}

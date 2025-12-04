@@ -76,103 +76,56 @@ Roadmap and development notes for TeXSmith. I keep this file as a running checkl
 - [ ] Add comprehensive docstring in each docs/api entrypoint in the codebase to explain why/the architecture and how it is useful.
 - [ ] Do not show temporary paths in outputs CLI summary table (│ Main document │ /tmp/texsmith-x84gefq4/colorful.tex │)
 
+## Directives
+
+- DO NOT keep any backward compatibility for now. We are still in pre-1.0.0 phase.
+- DO NOT introduce any shim or compatibility layer. Everything must be clean and simple.
+- The unit tests can be changed at will to reflect the new codebase this is not a contract yet.
+- The **PRIMARY GOAL** is to have a clean, simple, maintainable, documented codebase with clear separation of responsabilities, simplify at best.
+- Finish all plan with a cleaning pass to remove any dead code, and all old API that is not used anymore.
+- Write docstrings for everything.
+- Always finish with uv run ruff check . and uv run ruff format .
+
 ## Fonts
 
+We want to refactor and rework the fonts mechanism it is too clumpsy complex and vague. The texsmith/fonts folder contains 14 files plus data files which is too much.
+The goal is to have a clear separation of responsabilities and a clear definition of what is TeXSmith Core API and what is ts-fonts fragment.
 
-We want to rework the fonts mechanism it is too clumpsy complex and vague. To separate responsabilities:
+TeXSmith Core API is in charge of:
 
-TeXSmith Core API is in charge of
 - detecting used codepoints in document/multidocument
 - associate text regions to a language script and to a Noto Font
 - download the requested Noto Fonts
 - download the requested Emojis fonts
 
-TeXSmith ts-fonts fragment is in charge of
+TeXSmith ts-fonts fragment is in charge of:
+
 - Defining available fonts packages
 - Building the ts-fonts to be engines friendly (xelatex, tectonic, lualatex...)
 - Populate ucharclasses ranges based on usage (information got from TeXSmith Core)
 
 ## Predefined Fonts Package
 
-In order to simplify everything about font management in TeXSmith, we need a configuration file can be toml or yaml in TeXSmith. This file will be cached during the first load to be easily used. We keep it in a form of config file for dev easiness. This file declare the font packages supported by TeXSmith:
+The PROFILE_MAP in selection.py should not be defined here, but rather in the ts-fonts fragment which is responsible of loading fonts. Plus we have some SSOT for instance in _KPSE_FAMILIES in locator.py.
 
-```yml
-lm:
-  default: true
-  name: Latin Modern
-  main:
-    regular: lmroman10-regular.otf
-    bold: lmroman10-bold.otf
-    italic: lmroman10-italic.otf
-    bolditalic: lmroman10-bolditalic.otf
-    smallcaps: lmromancaps10-regular.otf
-  sans:
-    regular: lmsans10-regular.otf
-    bold: lmsans10-regular.otf
-    italic: lmsans10-oblique.otf
-    bolditalic: lmsans10-boldoblique.otf
-  mono:
-    regular: FreeMono.otf
-    bold: FreeMonoBold.otf
-    italic: FreeMonoOblique.otf
-    bolditalic: FreeMonoBolOblique.otf
-  math:
-    # Standard no special math (empty)
-lm-sans:
-  name: Latin Modern Sans
-  main:
-    regular: lmsans10-regular.otf
-    bold: lmsans10-regular.otf
-    italic: lmsans10-oblique.otf
-    bolditalic: lmsans10-boldoblique.otf
-  sans:
-    regular: lmsans10-regular.otf
-    bold: lmsans10-regular.otf
-    italic: lmsans10-oblique.otf
-    bolditalic: lmsans10-boldoblique.otf
-  mono:
-    regular: FreeMono.otf
-    bold: FreeMonoBold.otf
-    italic: FreeMonoOblique.otf
-    bolditalic: FreeMonoBolOblique.otf
-  math:
-    # Standard no special math (empty)
-... (same for all texgyre fonts)
-```
+In order to simplify everything about font management in TeXSmith, we will only configure the standard fonts from ts-fonts fragment the same manner as fonts-test.tex demonstrates it in the root of the project. Of course we want a compatible version for xelatex and lualatex. To be compatible with tectonic we absolutly need the full font name not the description name used by harfbuzz.
 
-This file belongs to the ts-fonts fragment. It is responsable for setting another family other than standard and support for Unicode classes.
+Some of these fonts needs to be downloaded from CTAN (at least the .sty). The ts-fonts can be in charge of downloading these packages extract the zip and get the .sty files in the build folder, conditionnally if the font is used. We can keep a cache folder in ~/.texsmith/fonts/ for these downloaded packages.
 
-We want to support also TeXGyre (Adventor, Bonum, Chorus, Cursor, Heros Pagella Schola Termes). In the case of texgyre some fonts comes with a math font in which case we define the math stuff.
+By default we use `lm` as the default font package.
 
-On ts-fonts we have the `fonts` attribute which can be therefore any of:
-
-- lm | None (default to Latin modern)
-- lmsans
-- adventor
-- bonum
-- chorus
-- cursor
-- heros
-- pagella
-- schola
-- termes
-- libertinus (\usepackage{libertinus})
-- newtx (\usepackage[osf]{newtxtext}, \usepackage{newtxmath})
-
-For some fonts packages we simply use LaTeX packages:
-
--
-
-For now TeXSmith only supports these packages which are available through tectonic or TeXLive automatically we don't need to download or copy any of these fonts.
+From now on TeXSmith only supports these packages which are available through tectonic or TeXLive automatically we **do not** need a mechanism to download or copy any of these fonts except the style files if needed.
 
 ## Font Copy
 
-We copy all fonts that are not installed or available in texlive in the ./fonts in the cwd of build output. These fonts are only the fallback fonts from the noto family.
+Previously, TeXSmith copied all fonts in the build fonts/ folder. For the standard documents described above, we do not need to copy all fonts anymore. Except for
+fallbacks which is described below.
 
 ## Fallback
 
-In LuaLaTeX on utilise:
+In LuaLaTeX on utilise quelque chose comme (regarde l'actuel ts-fonts):
 
+```tex
 \defaultfontfeatures{FallbackFamilies = {{Noto Emoji...}}} pour les fallback ou alors par cohérence avec XeLaTeX:
 
 \defaultfontfeatures{
@@ -181,28 +134,40 @@ In LuaLaTeX on utilise:
       fallback=range:1F300-1FAFF,Noto Emoji
   }
 }
+```
 
-## Font test package
+On XeLaTeX/Tectonic, we need to declare the fallback using ucharclasses like we actually do in ts-fonts.
+As it is a fallback. We only include ranges that are not covered by the main fonts **THIS IS IMPORTANT**:
 
-Some packages related to fonts are not on the tectonic bundle. One can do:
+Emojis will naturally be in treated by these fallbacks. No need to add specific case for them.
 
-\documentclass{article}
-\usepackage{fontspec}
-\usepackage{nexus-otf}
+We will recycle the old implementation and simplify it to have a precise mechanssm for fallback detection and match to fonts.
 
-Catch the `Error: File `nexus-otf.sty' not found` message and fallback to manual download of the package.
+Noto is the default fallback font family for all scripts not covered by the main fonts. These fonts are downloaded on demand if required by the document
+cached in ~/.texsmith/fonts/ and copied in the build folder if used and needed only.
+
+## Emojis
+
+Currently TeXSmith supports OpenMoji which is downloaded on demand if any emoji is used in the document. TeXSmith can rely on a "Font Fetcher" mechanism to download
+a font that cover the requested codepoints. So this works for emojis. As Noto Color Emoji is not compatible with XeLaTeX due to the COLR/CPAL format, we will keep OpenMoji as the default emoji font for XeLaTeX and Tectonic for now.
+
+## PLAN
+
+1. Load in your context how ts-fonts and TeXSmith use the fonts mechanisms lean the architecture
+2. Establish a complete refactoring plan related to fonts management
+3. Implement the plan step by step where the old codebase related to fonts is **FULLY** replaced by the new one.
+4. Test to build with the examples (examples/make clean all)
+5. Document in docs/guide/fonts.md the new mechanism, the compatible fonts packages etc.
+6. Clean the codebase remove any dead code.
 
 ## Tectonic log
 
 We want to mute false warnings and not display them:
 
+```perl
 /^warning:\s*.*?:\d+:\s*Requested font.*?at.*$/
 /^warning:\s*.*?:\d+:\s*Unknown feature.*?in font.*$/
-
-
-\newfontfamily\arabic{Amarai}
-\setDefaultTransitions{\begingroup\mainfont}{\endgroup}
-\setTransitionsFor{ArabicLanguage}{\begingroup\arabic}{\endgroup}
+```
 
 ## Snippets for on doc examples:
 
