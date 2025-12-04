@@ -1,6 +1,5 @@
 - family: NotoColorEmoji
-  files:
-  - fonts/NotoColorEmoji/NotoColorEmoji-emojicompat.ttf
+  files: []
   unicode_ranges:
   - [0x0000, 0x0000]
   - [0x000D, 0x000D]
@@ -192,9 +191,7 @@
   - [0xFE82C, 0xFE82C]
   - [0xFE82E, 0xFE837]
 - family: NotoColorEmoji
-  files:
-  - fonts/NotoColorEmoji/NotoColorEmoji.ttf
-  - fonts/NotoColorEmoji/NotoColorEmoji_WindowsCompatible.ttf
+  files: []
   unicode_ranges:
   - [0x0000, 0x0000]
   - [0x000D, 0x000D]
@@ -359,8 +356,7 @@
   - [0xFE82C, 0xFE82C]
   - [0xFE82E, 0xFE837]
 - family: NotoColorEmoji
-  files:
-  - fonts/NotoColorEmoji/NotoColorEmoji-noflags.ttf
+  files: []
   unicode_ranges:
   - [0x0000, 0x0000]
   - [0x000D, 0x000D]
@@ -524,8 +520,7 @@
   - [0xFE82C, 0xFE82C]
   - [0xFE82E, 0xFE837]
 - family: NotoColorEmoji
-  files:
-  - fonts/NotoColorEmoji/Noto-COLRv1-emojicompat.ttf
+  files: []
   unicode_ranges:
   - [0x0020, 0x0020]
   - [0x0023, 0x0023]
@@ -715,8 +710,7 @@
   - [0xFE82C, 0xFE82C]
   - [0xFE82E, 0xFE837]
 - family: NotoColorEmoji
-  files:
-  - fonts/NotoColorEmoji/Noto-COLRv1.ttf
+  files: []
   unicode_ranges:
   - [0x0020, 0x0020]
   - [0x0023, 0x0023]
@@ -879,8 +873,7 @@
   - [0xFE82C, 0xFE82C]
   - [0xFE82E, 0xFE837]
 - family: NotoColorEmoji
-  files:
-  - fonts/NotoColorEmoji/Noto-COLRv1-noflags.ttf
+  files: []
   unicode_ranges:
   - [0x0020, 0x0020]
   - [0x0023, 0x0023]
@@ -1041,8 +1034,7 @@
   - [0xFE82C, 0xFE82C]
   - [0xFE82E, 0xFE837]
 - family: NotoColorEmoji
-  files:
-  - fonts/NotoColorEmoji/NotoColorEmoji-flagsonly.ttf
+  files: []
   unicode_ranges:
   - [0x1F1E6, 0x1F1FF]
   - [0xFE4E5, 0xFE4EE]
@@ -1172,16 +1164,8 @@
   - [0x18B00, 0x18CD5]
 - family: NotoKufiArabic
   files:
-  - fonts/NotoKufiArabic/NotoKufiArabic-Black.ttf
   - fonts/NotoKufiArabic/NotoKufiArabic-Bold.ttf
-  - fonts/NotoKufiArabic/NotoKufiArabic-ExtraBold.ttf
-  - fonts/NotoKufiArabic/NotoKufiArabic-ExtraLight.ttf
-  - fonts/NotoKufiArabic/NotoKufiArabic-Light.ttf
-  - fonts/NotoKufiArabic/NotoKufiArabic-Medium.ttf
   - fonts/NotoKufiArabic/NotoKufiArabic-Regular.ttf
-  - fonts/NotoKufiArabic/NotoKufiArabic-SemiBold.ttf
-  - fonts/NotoKufiArabic/NotoKufiArabic-Thin.ttf
-  - fonts/NotoKufiArabic/NotoKufiArabic[wght].ttf
   unicode_ranges:
   - [0x0000, 0x0000]
   - [0x000D, 0x000D]
@@ -1311,10 +1295,7 @@
 - family: NotoNaskhArabic
   files:
   - fonts/NotoNaskhArabic/NotoNaskhArabic-Bold.ttf
-  - fonts/NotoNaskhArabic/NotoNaskhArabic-Medium.ttf
   - fonts/NotoNaskhArabic/NotoNaskhArabic-Regular.ttf
-  - fonts/NotoNaskhArabic/NotoNaskhArabic-SemiBold.ttf
-  - fonts/NotoNaskhArabic/NotoNaskhArabic[wght].ttf
   unicode_ranges:
   - [0x0000, 0x0000]
   - [0x000D, 0x000D]
@@ -1385,12 +1366,7 @@
   - [0xFEFF, 0xFEFF]
   - [0x10EFD, 0x10EFF]
 - family: NotoNaskhArabicUI
-  files:
-  - fonts/NotoNaskhArabicUI/NotoNaskhArabicUI-Bold.ttf
-  - fonts/NotoNaskhArabicUI/NotoNaskhArabicUI-Medium.ttf
-  - fonts/NotoNaskhArabicUI/NotoNaskhArabicUI-Regular.ttf
-  - fonts/NotoNaskhArabicUI/NotoNaskhArabicUI-SemiBold.ttf
-  - fonts/NotoNaskhArabicUI/NotoNaskhArabicUI[wght].ttf
+  files: []
   unicode_ranges:
   - [0x0000, 0x0000]
   - [0x000D, 0x000D]
@@ -1425,7 +1401,6 @@
   files:
   - fonts/NotoNastaliqUrdu/NotoNastaliqUrdu-Bold.ttf
   - fonts/NotoNastaliqUrdu/NotoNastaliqUrdu-Regular.ttf
-  - fonts/NotoNastaliqUrdu/NotoNastaliqUrdu[wght].ttf
   unicode_ranges:
   - [0x0000, 0x0000]
   - [0x000D, 0x000D]
@@ -1502,16 +1477,8 @@
   - [0xFEEE, 0xFEEE]
 - family: NotoRashiHebrew
   files:
-  - fonts/NotoRashiHebrew/NotoRashiHebrew-Black.ttf
   - fonts/NotoRashiHebrew/NotoRashiHebrew-Bold.ttf
-  - fonts/NotoRashiHebrew/NotoRashiHebrew-ExtraBold.ttf
-  - fonts/NotoRashiHebrew/NotoRashiHebrew-ExtraLight.ttf
-  - fonts/NotoRashiHebrew/NotoRashiHebrew-Light.ttf
-  - fonts/NotoRashiHebrew/NotoRashiHebrew-Medium.ttf
   - fonts/NotoRashiHebrew/NotoRashiHebrew-Regular.ttf
-  - fonts/NotoRashiHebrew/NotoRashiHebrew-SemiBold.ttf
-  - fonts/NotoRashiHebrew/NotoRashiHebrew-Thin.ttf
-  - fonts/NotoRashiHebrew/NotoRashiHebrew[wght].ttf
   unicode_ranges:
   - [0x0000, 0x0000]
   - [0x0020, 0x007E]
@@ -1569,44 +1536,8 @@
   - [0xFB2F, 0xFB2F]
 - family: NotoSans
   files:
-  - fonts/NotoSans/NotoSans-Black.ttf
   - fonts/NotoSans/NotoSans-Bold.ttf
-  - fonts/NotoSans/NotoSans-Condensed.ttf
-  - fonts/NotoSans/NotoSans-CondensedBlack.ttf
-  - fonts/NotoSans/NotoSans-CondensedBold.ttf
-  - fonts/NotoSans/NotoSans-CondensedExtraBold.ttf
-  - fonts/NotoSans/NotoSans-CondensedExtraLight.ttf
-  - fonts/NotoSans/NotoSans-CondensedLight.ttf
-  - fonts/NotoSans/NotoSans-CondensedMedium.ttf
-  - fonts/NotoSans/NotoSans-CondensedSemiBold.ttf
-  - fonts/NotoSans/NotoSans-CondensedThin.ttf
-  - fonts/NotoSans/NotoSans-ExtraBold.ttf
-  - fonts/NotoSans/NotoSans-ExtraCondensed.ttf
-  - fonts/NotoSans/NotoSans-ExtraCondensedBlack.ttf
-  - fonts/NotoSans/NotoSans-ExtraCondensedBold.ttf
-  - fonts/NotoSans/NotoSans-ExtraCondensedExtraBold.ttf
-  - fonts/NotoSans/NotoSans-ExtraCondensedExtraLight.ttf
-  - fonts/NotoSans/NotoSans-ExtraCondensedLight.ttf
-  - fonts/NotoSans/NotoSans-ExtraCondensedMedium.ttf
-  - fonts/NotoSans/NotoSans-ExtraCondensedSemiBold.ttf
-  - fonts/NotoSans/NotoSans-ExtraCondensedThin.ttf
-  - fonts/NotoSans/NotoSans-ExtraLight.ttf
-  - fonts/NotoSans/NotoSans-Light.ttf
-  - fonts/NotoSans/NotoSans-Medium.ttf
   - fonts/NotoSans/NotoSans-Regular.ttf
-  - fonts/NotoSans/NotoSans-SemiBold.ttf
-  - fonts/NotoSans/NotoSans-SemiCondensed.ttf
-  - fonts/NotoSans/NotoSans-SemiCondensedBlack.ttf
-  - fonts/NotoSans/NotoSans-SemiCondensedBold.ttf
-  - fonts/NotoSans/NotoSans-SemiCondensedExtraBold.ttf
-  - fonts/NotoSans/NotoSans-SemiCondensedExtraLight.ttf
-  - fonts/NotoSans/NotoSans-SemiCondensedLight.ttf
-  - fonts/NotoSans/NotoSans-SemiCondensedMedium.ttf
-  - fonts/NotoSans/NotoSans-SemiCondensedSemiBold.ttf
-  - fonts/NotoSans/NotoSans-SemiCondensedThin.ttf
-  - fonts/NotoSans/NotoSans-Thin.ttf
-  - fonts/NotoSans/NotoSans[wdth,wght].ttf
-  - fonts/NotoSans/NotoSans[wght].ttf
   unicode_ranges:
   - [0x0000, 0x0000]
   - [0x000D, 0x000D]
@@ -1674,44 +1605,8 @@
   - [0x1DF00, 0x1DF1E]
 - family: NotoSans
   files:
-  - fonts/NotoSans/NotoSans-BlackItalic.ttf
   - fonts/NotoSans/NotoSans-BoldItalic.ttf
-  - fonts/NotoSans/NotoSans-CondensedBlackItalic.ttf
-  - fonts/NotoSans/NotoSans-CondensedBoldItalic.ttf
-  - fonts/NotoSans/NotoSans-CondensedExtraBoldItalic.ttf
-  - fonts/NotoSans/NotoSans-CondensedExtraLightItalic.ttf
-  - fonts/NotoSans/NotoSans-CondensedItalic.ttf
-  - fonts/NotoSans/NotoSans-CondensedLightItalic.ttf
-  - fonts/NotoSans/NotoSans-CondensedMediumItalic.ttf
-  - fonts/NotoSans/NotoSans-CondensedSemiBoldItalic.ttf
-  - fonts/NotoSans/NotoSans-CondensedThinItalic.ttf
-  - fonts/NotoSans/NotoSans-ExtraBoldItalic.ttf
-  - fonts/NotoSans/NotoSans-ExtraCondensedBlackItalic.ttf
-  - fonts/NotoSans/NotoSans-ExtraCondensedBoldItalic.ttf
-  - fonts/NotoSans/NotoSans-ExtraCondensedExtraBoldItalic.ttf
-  - fonts/NotoSans/NotoSans-ExtraCondensedExtraLightItalic.ttf
-  - fonts/NotoSans/NotoSans-ExtraCondensedItalic.ttf
-  - fonts/NotoSans/NotoSans-ExtraCondensedLightItalic.ttf
-  - fonts/NotoSans/NotoSans-ExtraCondensedMediumItalic.ttf
-  - fonts/NotoSans/NotoSans-ExtraCondensedSemiBoldItalic.ttf
-  - fonts/NotoSans/NotoSans-ExtraCondensedThinItalic.ttf
-  - fonts/NotoSans/NotoSans-ExtraLightItalic.ttf
   - fonts/NotoSans/NotoSans-Italic.ttf
-  - fonts/NotoSans/NotoSans-Italic[wdth,wght].ttf
-  - fonts/NotoSans/NotoSans-Italic[wght].ttf
-  - fonts/NotoSans/NotoSans-LightItalic.ttf
-  - fonts/NotoSans/NotoSans-MediumItalic.ttf
-  - fonts/NotoSans/NotoSans-SemiBoldItalic.ttf
-  - fonts/NotoSans/NotoSans-SemiCondensedBlackItalic.ttf
-  - fonts/NotoSans/NotoSans-SemiCondensedBoldItalic.ttf
-  - fonts/NotoSans/NotoSans-SemiCondensedExtraBoldItalic.ttf
-  - fonts/NotoSans/NotoSans-SemiCondensedExtraLightItalic.ttf
-  - fonts/NotoSans/NotoSans-SemiCondensedItalic.ttf
-  - fonts/NotoSans/NotoSans-SemiCondensedLightItalic.ttf
-  - fonts/NotoSans/NotoSans-SemiCondensedMediumItalic.ttf
-  - fonts/NotoSans/NotoSans-SemiCondensedSemiBoldItalic.ttf
-  - fonts/NotoSans/NotoSans-SemiCondensedThinItalic.ttf
-  - fonts/NotoSans/NotoSans-ThinItalic.ttf
   unicode_ranges:
   - [0x0000, 0x0000]
   - [0x000D, 0x000D]
@@ -1780,7 +1675,6 @@
   files:
   - fonts/NotoSansAdlam/NotoSansAdlam-Bold.ttf
   - fonts/NotoSansAdlam/NotoSansAdlam-Regular.ttf
-  - fonts/NotoSansAdlam/NotoSansAdlam[wght].ttf
   unicode_ranges:
   - [0x0000, 0x0000]
   - [0x000D, 0x000D]
@@ -1842,7 +1736,6 @@
   files:
   - fonts/NotoSansAdlamUnjoined/NotoSansAdlamUnjoined-Bold.ttf
   - fonts/NotoSansAdlamUnjoined/NotoSansAdlamUnjoined-Regular.ttf
-  - fonts/NotoSansAdlamUnjoined/NotoSansAdlamUnjoined[wght].ttf
   unicode_ranges:
   - [0x0000, 0x0000]
   - [0x000D, 0x000D]
@@ -1956,44 +1849,8 @@
   - [0x14400, 0x14646]
 - family: NotoSansArabic
   files:
-  - fonts/NotoSansArabic/NotoSansArabic-Black.ttf
   - fonts/NotoSansArabic/NotoSansArabic-Bold.ttf
-  - fonts/NotoSansArabic/NotoSansArabic-Condensed.ttf
-  - fonts/NotoSansArabic/NotoSansArabic-CondensedBlack.ttf
-  - fonts/NotoSansArabic/NotoSansArabic-CondensedBold.ttf
-  - fonts/NotoSansArabic/NotoSansArabic-CondensedExtraBold.ttf
-  - fonts/NotoSansArabic/NotoSansArabic-CondensedExtraLight.ttf
-  - fonts/NotoSansArabic/NotoSansArabic-CondensedLight.ttf
-  - fonts/NotoSansArabic/NotoSansArabic-CondensedMedium.ttf
-  - fonts/NotoSansArabic/NotoSansArabic-CondensedSemiBold.ttf
-  - fonts/NotoSansArabic/NotoSansArabic-CondensedThin.ttf
-  - fonts/NotoSansArabic/NotoSansArabic-ExtraBold.ttf
-  - fonts/NotoSansArabic/NotoSansArabic-ExtraCondensed.ttf
-  - fonts/NotoSansArabic/NotoSansArabic-ExtraCondensedBlack.ttf
-  - fonts/NotoSansArabic/NotoSansArabic-ExtraCondensedBold.ttf
-  - fonts/NotoSansArabic/NotoSansArabic-ExtraCondensedExtraBold.ttf
-  - fonts/NotoSansArabic/NotoSansArabic-ExtraCondensedExtraLight.ttf
-  - fonts/NotoSansArabic/NotoSansArabic-ExtraCondensedLight.ttf
-  - fonts/NotoSansArabic/NotoSansArabic-ExtraCondensedMedium.ttf
-  - fonts/NotoSansArabic/NotoSansArabic-ExtraCondensedSemiBold.ttf
-  - fonts/NotoSansArabic/NotoSansArabic-ExtraCondensedThin.ttf
-  - fonts/NotoSansArabic/NotoSansArabic-ExtraLight.ttf
-  - fonts/NotoSansArabic/NotoSansArabic-Light.ttf
-  - fonts/NotoSansArabic/NotoSansArabic-Medium.ttf
   - fonts/NotoSansArabic/NotoSansArabic-Regular.ttf
-  - fonts/NotoSansArabic/NotoSansArabic-SemiBold.ttf
-  - fonts/NotoSansArabic/NotoSansArabic-SemiCondensed.ttf
-  - fonts/NotoSansArabic/NotoSansArabic-SemiCondensedBlack.ttf
-  - fonts/NotoSansArabic/NotoSansArabic-SemiCondensedBold.ttf
-  - fonts/NotoSansArabic/NotoSansArabic-SemiCondensedExtraBold.ttf
-  - fonts/NotoSansArabic/NotoSansArabic-SemiCondensedExtraLight.ttf
-  - fonts/NotoSansArabic/NotoSansArabic-SemiCondensedLight.ttf
-  - fonts/NotoSansArabic/NotoSansArabic-SemiCondensedMedium.ttf
-  - fonts/NotoSansArabic/NotoSansArabic-SemiCondensedSemiBold.ttf
-  - fonts/NotoSansArabic/NotoSansArabic-SemiCondensedThin.ttf
-  - fonts/NotoSansArabic/NotoSansArabic-Thin.ttf
-  - fonts/NotoSansArabic/NotoSansArabic[wdth,wght].ttf
-  - fonts/NotoSansArabic/NotoSansArabic[wght].ttf
   unicode_ranges:
   - [0x0000, 0x0000]
   - [0x000D, 0x000D]
@@ -2065,45 +1922,7 @@
   - [0xFEFF, 0xFEFF]
   - [0x10EFD, 0x10EFF]
 - family: NotoSansArabicUI
-  files:
-  - fonts/NotoSansArabicUI/NotoSansArabicUI-Black.ttf
-  - fonts/NotoSansArabicUI/NotoSansArabicUI-Bold.ttf
-  - fonts/NotoSansArabicUI/NotoSansArabicUI-Condensed.ttf
-  - fonts/NotoSansArabicUI/NotoSansArabicUI-CondensedBlack.ttf
-  - fonts/NotoSansArabicUI/NotoSansArabicUI-CondensedBold.ttf
-  - fonts/NotoSansArabicUI/NotoSansArabicUI-CondensedExtraBold.ttf
-  - fonts/NotoSansArabicUI/NotoSansArabicUI-CondensedExtraLight.ttf
-  - fonts/NotoSansArabicUI/NotoSansArabicUI-CondensedLight.ttf
-  - fonts/NotoSansArabicUI/NotoSansArabicUI-CondensedMedium.ttf
-  - fonts/NotoSansArabicUI/NotoSansArabicUI-CondensedSemiBold.ttf
-  - fonts/NotoSansArabicUI/NotoSansArabicUI-CondensedThin.ttf
-  - fonts/NotoSansArabicUI/NotoSansArabicUI-ExtraBold.ttf
-  - fonts/NotoSansArabicUI/NotoSansArabicUI-ExtraCondensed.ttf
-  - fonts/NotoSansArabicUI/NotoSansArabicUI-ExtraCondensedBlack.ttf
-  - fonts/NotoSansArabicUI/NotoSansArabicUI-ExtraCondensedBold.ttf
-  - fonts/NotoSansArabicUI/NotoSansArabicUI-ExtraCondensedExtraBold.ttf
-  - fonts/NotoSansArabicUI/NotoSansArabicUI-ExtraCondensedExtraLight.ttf
-  - fonts/NotoSansArabicUI/NotoSansArabicUI-ExtraCondensedLight.ttf
-  - fonts/NotoSansArabicUI/NotoSansArabicUI-ExtraCondensedMedium.ttf
-  - fonts/NotoSansArabicUI/NotoSansArabicUI-ExtraCondensedSemiBold.ttf
-  - fonts/NotoSansArabicUI/NotoSansArabicUI-ExtraCondensedThin.ttf
-  - fonts/NotoSansArabicUI/NotoSansArabicUI-ExtraLight.ttf
-  - fonts/NotoSansArabicUI/NotoSansArabicUI-Light.ttf
-  - fonts/NotoSansArabicUI/NotoSansArabicUI-Medium.ttf
-  - fonts/NotoSansArabicUI/NotoSansArabicUI-Regular.ttf
-  - fonts/NotoSansArabicUI/NotoSansArabicUI-SemiBold.ttf
-  - fonts/NotoSansArabicUI/NotoSansArabicUI-SemiCondensed.ttf
-  - fonts/NotoSansArabicUI/NotoSansArabicUI-SemiCondensedBlack.ttf
-  - fonts/NotoSansArabicUI/NotoSansArabicUI-SemiCondensedBold.ttf
-  - fonts/NotoSansArabicUI/NotoSansArabicUI-SemiCondensedExtraBold.ttf
-  - fonts/NotoSansArabicUI/NotoSansArabicUI-SemiCondensedExtraLight.ttf
-  - fonts/NotoSansArabicUI/NotoSansArabicUI-SemiCondensedLight.ttf
-  - fonts/NotoSansArabicUI/NotoSansArabicUI-SemiCondensedMedium.ttf
-  - fonts/NotoSansArabicUI/NotoSansArabicUI-SemiCondensedSemiBold.ttf
-  - fonts/NotoSansArabicUI/NotoSansArabicUI-SemiCondensedThin.ttf
-  - fonts/NotoSansArabicUI/NotoSansArabicUI-Thin.ttf
-  - fonts/NotoSansArabicUI/NotoSansArabicUI[wdth,wght].ttf
-  - fonts/NotoSansArabicUI/NotoSansArabicUI[wght].ttf
+  files: []
   unicode_ranges:
   - [0x0000, 0x0000]
   - [0x000D, 0x000D]
@@ -2172,44 +1991,8 @@
   - [0xFE76, 0xFEFC]
 - family: NotoSansArmenian
   files:
-  - fonts/NotoSansArmenian/NotoSansArmenian-Black.ttf
   - fonts/NotoSansArmenian/NotoSansArmenian-Bold.ttf
-  - fonts/NotoSansArmenian/NotoSansArmenian-Condensed.ttf
-  - fonts/NotoSansArmenian/NotoSansArmenian-CondensedBlack.ttf
-  - fonts/NotoSansArmenian/NotoSansArmenian-CondensedBold.ttf
-  - fonts/NotoSansArmenian/NotoSansArmenian-CondensedExtraBold.ttf
-  - fonts/NotoSansArmenian/NotoSansArmenian-CondensedExtraLight.ttf
-  - fonts/NotoSansArmenian/NotoSansArmenian-CondensedLight.ttf
-  - fonts/NotoSansArmenian/NotoSansArmenian-CondensedMedium.ttf
-  - fonts/NotoSansArmenian/NotoSansArmenian-CondensedSemiBold.ttf
-  - fonts/NotoSansArmenian/NotoSansArmenian-CondensedThin.ttf
-  - fonts/NotoSansArmenian/NotoSansArmenian-ExtraBold.ttf
-  - fonts/NotoSansArmenian/NotoSansArmenian-ExtraCondensed.ttf
-  - fonts/NotoSansArmenian/NotoSansArmenian-ExtraCondensedBlack.ttf
-  - fonts/NotoSansArmenian/NotoSansArmenian-ExtraCondensedBold.ttf
-  - fonts/NotoSansArmenian/NotoSansArmenian-ExtraCondensedExtraBold.ttf
-  - fonts/NotoSansArmenian/NotoSansArmenian-ExtraCondensedExtraLight.ttf
-  - fonts/NotoSansArmenian/NotoSansArmenian-ExtraCondensedLight.ttf
-  - fonts/NotoSansArmenian/NotoSansArmenian-ExtraCondensedMedium.ttf
-  - fonts/NotoSansArmenian/NotoSansArmenian-ExtraCondensedSemiBold.ttf
-  - fonts/NotoSansArmenian/NotoSansArmenian-ExtraCondensedThin.ttf
-  - fonts/NotoSansArmenian/NotoSansArmenian-ExtraLight.ttf
-  - fonts/NotoSansArmenian/NotoSansArmenian-Light.ttf
-  - fonts/NotoSansArmenian/NotoSansArmenian-Medium.ttf
   - fonts/NotoSansArmenian/NotoSansArmenian-Regular.ttf
-  - fonts/NotoSansArmenian/NotoSansArmenian-SemiBold.ttf
-  - fonts/NotoSansArmenian/NotoSansArmenian-SemiCondensed.ttf
-  - fonts/NotoSansArmenian/NotoSansArmenian-SemiCondensedBlack.ttf
-  - fonts/NotoSansArmenian/NotoSansArmenian-SemiCondensedBold.ttf
-  - fonts/NotoSansArmenian/NotoSansArmenian-SemiCondensedExtraBold.ttf
-  - fonts/NotoSansArmenian/NotoSansArmenian-SemiCondensedExtraLight.ttf
-  - fonts/NotoSansArmenian/NotoSansArmenian-SemiCondensedLight.ttf
-  - fonts/NotoSansArmenian/NotoSansArmenian-SemiCondensedMedium.ttf
-  - fonts/NotoSansArmenian/NotoSansArmenian-SemiCondensedSemiBold.ttf
-  - fonts/NotoSansArmenian/NotoSansArmenian-SemiCondensedThin.ttf
-  - fonts/NotoSansArmenian/NotoSansArmenian-Thin.ttf
-  - fonts/NotoSansArmenian/NotoSansArmenian[wdth,wght].ttf
-  - fonts/NotoSansArmenian/NotoSansArmenian[wght].ttf
   unicode_ranges:
   - [0x0000, 0x0000]
   - [0x000D, 0x000D]
@@ -2323,10 +2106,7 @@
 - family: NotoSansBalinese
   files:
   - fonts/NotoSansBalinese/NotoSansBalinese-Bold.ttf
-  - fonts/NotoSansBalinese/NotoSansBalinese-Medium.ttf
   - fonts/NotoSansBalinese/NotoSansBalinese-Regular.ttf
-  - fonts/NotoSansBalinese/NotoSansBalinese-SemiBold.ttf
-  - fonts/NotoSansBalinese/NotoSansBalinese[wght].ttf
   unicode_ranges:
   - [0x0000, 0x0000]
   - [0x001D, 0x001D]
@@ -2382,10 +2162,7 @@
 - family: NotoSansBamum
   files:
   - fonts/NotoSansBamum/NotoSansBamum-Bold.ttf
-  - fonts/NotoSansBamum/NotoSansBamum-Medium.ttf
   - fonts/NotoSansBamum/NotoSansBamum-Regular.ttf
-  - fonts/NotoSansBamum/NotoSansBamum-SemiBold.ttf
-  - fonts/NotoSansBamum/NotoSansBamum[wght].ttf
   unicode_ranges:
   - [0x0000, 0x0000]
   - [0x000D, 0x000D]
@@ -2440,10 +2217,7 @@
 - family: NotoSansBassaVah
   files:
   - fonts/NotoSansBassaVah/NotoSansBassaVah-Bold.ttf
-  - fonts/NotoSansBassaVah/NotoSansBassaVah-Medium.ttf
   - fonts/NotoSansBassaVah/NotoSansBassaVah-Regular.ttf
-  - fonts/NotoSansBassaVah/NotoSansBassaVah-SemiBold.ttf
-  - fonts/NotoSansBassaVah/NotoSansBassaVah[wght].ttf
   unicode_ranges:
   - [0x0000, 0x0000]
   - [0x000D, 0x000D]
@@ -2553,44 +2327,8 @@
   - [0x25CC, 0x25CC]
 - family: NotoSansBengali
   files:
-  - fonts/NotoSansBengali/NotoSansBengali-Black.ttf
   - fonts/NotoSansBengali/NotoSansBengali-Bold.ttf
-  - fonts/NotoSansBengali/NotoSansBengali-Condensed.ttf
-  - fonts/NotoSansBengali/NotoSansBengali-CondensedBlack.ttf
-  - fonts/NotoSansBengali/NotoSansBengali-CondensedBold.ttf
-  - fonts/NotoSansBengali/NotoSansBengali-CondensedExtraBold.ttf
-  - fonts/NotoSansBengali/NotoSansBengali-CondensedExtraLight.ttf
-  - fonts/NotoSansBengali/NotoSansBengali-CondensedLight.ttf
-  - fonts/NotoSansBengali/NotoSansBengali-CondensedMedium.ttf
-  - fonts/NotoSansBengali/NotoSansBengali-CondensedSemiBold.ttf
-  - fonts/NotoSansBengali/NotoSansBengali-CondensedThin.ttf
-  - fonts/NotoSansBengali/NotoSansBengali-ExtraBold.ttf
-  - fonts/NotoSansBengali/NotoSansBengali-ExtraCondensed.ttf
-  - fonts/NotoSansBengali/NotoSansBengali-ExtraCondensedBlack.ttf
-  - fonts/NotoSansBengali/NotoSansBengali-ExtraCondensedBold.ttf
-  - fonts/NotoSansBengali/NotoSansBengali-ExtraCondensedExtraBold.ttf
-  - fonts/NotoSansBengali/NotoSansBengali-ExtraCondensedExtraLight.ttf
-  - fonts/NotoSansBengali/NotoSansBengali-ExtraCondensedLight.ttf
-  - fonts/NotoSansBengali/NotoSansBengali-ExtraCondensedMedium.ttf
-  - fonts/NotoSansBengali/NotoSansBengali-ExtraCondensedSemiBold.ttf
-  - fonts/NotoSansBengali/NotoSansBengali-ExtraCondensedThin.ttf
-  - fonts/NotoSansBengali/NotoSansBengali-ExtraLight.ttf
-  - fonts/NotoSansBengali/NotoSansBengali-Light.ttf
-  - fonts/NotoSansBengali/NotoSansBengali-Medium.ttf
   - fonts/NotoSansBengali/NotoSansBengali-Regular.ttf
-  - fonts/NotoSansBengali/NotoSansBengali-SemiBold.ttf
-  - fonts/NotoSansBengali/NotoSansBengali-SemiCondensed.ttf
-  - fonts/NotoSansBengali/NotoSansBengali-SemiCondensedBlack.ttf
-  - fonts/NotoSansBengali/NotoSansBengali-SemiCondensedBold.ttf
-  - fonts/NotoSansBengali/NotoSansBengali-SemiCondensedExtraBold.ttf
-  - fonts/NotoSansBengali/NotoSansBengali-SemiCondensedExtraLight.ttf
-  - fonts/NotoSansBengali/NotoSansBengali-SemiCondensedLight.ttf
-  - fonts/NotoSansBengali/NotoSansBengali-SemiCondensedMedium.ttf
-  - fonts/NotoSansBengali/NotoSansBengali-SemiCondensedSemiBold.ttf
-  - fonts/NotoSansBengali/NotoSansBengali-SemiCondensedThin.ttf
-  - fonts/NotoSansBengali/NotoSansBengali-Thin.ttf
-  - fonts/NotoSansBengali/NotoSansBengali[wdth,wght].ttf
-  - fonts/NotoSansBengali/NotoSansBengali[wght].ttf
   unicode_ranges:
   - [0x0000, 0x0000]
   - [0x000D, 0x000D]
@@ -2899,13 +2637,8 @@
   - [0x25CC, 0x25CC]
 - family: NotoSansCJKhk
   files:
-  - fonts/NotoSansCJKhk/NotoSansCJKhk-Black.otf
   - fonts/NotoSansCJKhk/NotoSansCJKhk-Bold.otf
-  - fonts/NotoSansCJKhk/NotoSansCJKhk-DemiLight.otf
-  - fonts/NotoSansCJKhk/NotoSansCJKhk-Light.otf
-  - fonts/NotoSansCJKhk/NotoSansCJKhk-Medium.otf
   - fonts/NotoSansCJKhk/NotoSansCJKhk-Regular.otf
-  - fonts/NotoSansCJKhk/NotoSansCJKhk-Thin.otf
   unicode_ranges:
   - [0x0020, 0x007E]
   - [0x00A0, 0x0103]
@@ -4941,13 +4674,8 @@
   - [0x3106C, 0x3106C]
 - family: NotoSansCJKjp
   files:
-  - fonts/NotoSansCJKjp/NotoSansCJKjp-Black.otf
   - fonts/NotoSansCJKjp/NotoSansCJKjp-Bold.otf
-  - fonts/NotoSansCJKjp/NotoSansCJKjp-DemiLight.otf
-  - fonts/NotoSansCJKjp/NotoSansCJKjp-Light.otf
-  - fonts/NotoSansCJKjp/NotoSansCJKjp-Medium.otf
   - fonts/NotoSansCJKjp/NotoSansCJKjp-Regular.otf
-  - fonts/NotoSansCJKjp/NotoSansCJKjp-Thin.otf
   unicode_ranges:
   - [0x0020, 0x007E]
   - [0x00A0, 0x0103]
@@ -6983,13 +6711,8 @@
   - [0x3106C, 0x3106C]
 - family: NotoSansCJKkr
   files:
-  - fonts/NotoSansCJKkr/NotoSansCJKkr-Black.otf
   - fonts/NotoSansCJKkr/NotoSansCJKkr-Bold.otf
-  - fonts/NotoSansCJKkr/NotoSansCJKkr-DemiLight.otf
-  - fonts/NotoSansCJKkr/NotoSansCJKkr-Light.otf
-  - fonts/NotoSansCJKkr/NotoSansCJKkr-Medium.otf
   - fonts/NotoSansCJKkr/NotoSansCJKkr-Regular.otf
-  - fonts/NotoSansCJKkr/NotoSansCJKkr-Thin.otf
   unicode_ranges:
   - [0x0020, 0x007E]
   - [0x00A0, 0x0103]
@@ -9025,13 +8748,8 @@
   - [0x3106C, 0x3106C]
 - family: NotoSansCJKsc
   files:
-  - fonts/NotoSansCJKsc/NotoSansCJKsc-Black.otf
   - fonts/NotoSansCJKsc/NotoSansCJKsc-Bold.otf
-  - fonts/NotoSansCJKsc/NotoSansCJKsc-DemiLight.otf
-  - fonts/NotoSansCJKsc/NotoSansCJKsc-Light.otf
-  - fonts/NotoSansCJKsc/NotoSansCJKsc-Medium.otf
   - fonts/NotoSansCJKsc/NotoSansCJKsc-Regular.otf
-  - fonts/NotoSansCJKsc/NotoSansCJKsc-Thin.otf
   unicode_ranges:
   - [0x0020, 0x007E]
   - [0x00A0, 0x0103]
@@ -11067,13 +10785,8 @@
   - [0x3106C, 0x3106C]
 - family: NotoSansCJKtc
   files:
-  - fonts/NotoSansCJKtc/NotoSansCJKtc-Black.otf
   - fonts/NotoSansCJKtc/NotoSansCJKtc-Bold.otf
-  - fonts/NotoSansCJKtc/NotoSansCJKtc-DemiLight.otf
-  - fonts/NotoSansCJKtc/NotoSansCJKtc-Light.otf
-  - fonts/NotoSansCJKtc/NotoSansCJKtc-Medium.otf
   - fonts/NotoSansCJKtc/NotoSansCJKtc-Regular.otf
-  - fonts/NotoSansCJKtc/NotoSansCJKtc-Thin.otf
   unicode_ranges:
   - [0x0020, 0x007E]
   - [0x00A0, 0x0103]
@@ -13109,16 +12822,8 @@
   - [0x3106C, 0x3106C]
 - family: NotoSansCanadianAboriginal
   files:
-  - fonts/NotoSansCanadianAboriginal/NotoSansCanadianAboriginal-Black.ttf
   - fonts/NotoSansCanadianAboriginal/NotoSansCanadianAboriginal-Bold.ttf
-  - fonts/NotoSansCanadianAboriginal/NotoSansCanadianAboriginal-ExtraBold.ttf
-  - fonts/NotoSansCanadianAboriginal/NotoSansCanadianAboriginal-ExtraLight.ttf
-  - fonts/NotoSansCanadianAboriginal/NotoSansCanadianAboriginal-Light.ttf
-  - fonts/NotoSansCanadianAboriginal/NotoSansCanadianAboriginal-Medium.ttf
   - fonts/NotoSansCanadianAboriginal/NotoSansCanadianAboriginal-Regular.ttf
-  - fonts/NotoSansCanadianAboriginal/NotoSansCanadianAboriginal-SemiBold.ttf
-  - fonts/NotoSansCanadianAboriginal/NotoSansCanadianAboriginal-Thin.ttf
-  - fonts/NotoSansCanadianAboriginal/NotoSansCanadianAboriginal[wght].ttf
   unicode_ranges:
   - [0x0000, 0x0000]
   - [0x000D, 0x000D]
@@ -13342,16 +13047,8 @@
   - [0x11136, 0x11147]
 - family: NotoSansCham
   files:
-  - fonts/NotoSansCham/NotoSansCham-Black.ttf
   - fonts/NotoSansCham/NotoSansCham-Bold.ttf
-  - fonts/NotoSansCham/NotoSansCham-ExtraBold.ttf
-  - fonts/NotoSansCham/NotoSansCham-ExtraLight.ttf
-  - fonts/NotoSansCham/NotoSansCham-Light.ttf
-  - fonts/NotoSansCham/NotoSansCham-Medium.ttf
   - fonts/NotoSansCham/NotoSansCham-Regular.ttf
-  - fonts/NotoSansCham/NotoSansCham-SemiBold.ttf
-  - fonts/NotoSansCham/NotoSansCham-Thin.ttf
-  - fonts/NotoSansCham/NotoSansCham[wght].ttf
   unicode_ranges:
   - [0x0000, 0x0000]
   - [0x000D, 0x000D]
@@ -13408,16 +13105,8 @@
   - [0xAA5C, 0xAA5F]
 - family: NotoSansCherokee
   files:
-  - fonts/NotoSansCherokee/NotoSansCherokee-Black.ttf
   - fonts/NotoSansCherokee/NotoSansCherokee-Bold.ttf
-  - fonts/NotoSansCherokee/NotoSansCherokee-ExtraBold.ttf
-  - fonts/NotoSansCherokee/NotoSansCherokee-ExtraLight.ttf
-  - fonts/NotoSansCherokee/NotoSansCherokee-Light.ttf
-  - fonts/NotoSansCherokee/NotoSansCherokee-Medium.ttf
   - fonts/NotoSansCherokee/NotoSansCherokee-Regular.ttf
-  - fonts/NotoSansCherokee/NotoSansCherokee-SemiBold.ttf
-  - fonts/NotoSansCherokee/NotoSansCherokee-Thin.ttf
-  - fonts/NotoSansCherokee/NotoSansCherokee[wght].ttf
   unicode_ranges:
   - [0x0000, 0x0000]
   - [0x000D, 0x000D]
@@ -13816,44 +13505,8 @@
   - [0x10400, 0x1044F]
 - family: NotoSansDevanagari
   files:
-  - fonts/NotoSansDevanagari/NotoSansDevanagari-Black.ttf
   - fonts/NotoSansDevanagari/NotoSansDevanagari-Bold.ttf
-  - fonts/NotoSansDevanagari/NotoSansDevanagari-Condensed.ttf
-  - fonts/NotoSansDevanagari/NotoSansDevanagari-CondensedBlack.ttf
-  - fonts/NotoSansDevanagari/NotoSansDevanagari-CondensedBold.ttf
-  - fonts/NotoSansDevanagari/NotoSansDevanagari-CondensedExtraBold.ttf
-  - fonts/NotoSansDevanagari/NotoSansDevanagari-CondensedExtraLight.ttf
-  - fonts/NotoSansDevanagari/NotoSansDevanagari-CondensedLight.ttf
-  - fonts/NotoSansDevanagari/NotoSansDevanagari-CondensedMedium.ttf
-  - fonts/NotoSansDevanagari/NotoSansDevanagari-CondensedSemiBold.ttf
-  - fonts/NotoSansDevanagari/NotoSansDevanagari-CondensedThin.ttf
-  - fonts/NotoSansDevanagari/NotoSansDevanagari-ExtraBold.ttf
-  - fonts/NotoSansDevanagari/NotoSansDevanagari-ExtraCondensed.ttf
-  - fonts/NotoSansDevanagari/NotoSansDevanagari-ExtraCondensedBlack.ttf
-  - fonts/NotoSansDevanagari/NotoSansDevanagari-ExtraCondensedBold.ttf
-  - fonts/NotoSansDevanagari/NotoSansDevanagari-ExtraCondensedExtraBold.ttf
-  - fonts/NotoSansDevanagari/NotoSansDevanagari-ExtraCondensedExtraLight.ttf
-  - fonts/NotoSansDevanagari/NotoSansDevanagari-ExtraCondensedLight.ttf
-  - fonts/NotoSansDevanagari/NotoSansDevanagari-ExtraCondensedMedium.ttf
-  - fonts/NotoSansDevanagari/NotoSansDevanagari-ExtraCondensedSemiBold.ttf
-  - fonts/NotoSansDevanagari/NotoSansDevanagari-ExtraCondensedThin.ttf
-  - fonts/NotoSansDevanagari/NotoSansDevanagari-ExtraLight.ttf
-  - fonts/NotoSansDevanagari/NotoSansDevanagari-Light.ttf
-  - fonts/NotoSansDevanagari/NotoSansDevanagari-Medium.ttf
   - fonts/NotoSansDevanagari/NotoSansDevanagari-Regular.ttf
-  - fonts/NotoSansDevanagari/NotoSansDevanagari-SemiBold.ttf
-  - fonts/NotoSansDevanagari/NotoSansDevanagari-SemiCondensed.ttf
-  - fonts/NotoSansDevanagari/NotoSansDevanagari-SemiCondensedBlack.ttf
-  - fonts/NotoSansDevanagari/NotoSansDevanagari-SemiCondensedBold.ttf
-  - fonts/NotoSansDevanagari/NotoSansDevanagari-SemiCondensedExtraBold.ttf
-  - fonts/NotoSansDevanagari/NotoSansDevanagari-SemiCondensedExtraLight.ttf
-  - fonts/NotoSansDevanagari/NotoSansDevanagari-SemiCondensedLight.ttf
-  - fonts/NotoSansDevanagari/NotoSansDevanagari-SemiCondensedMedium.ttf
-  - fonts/NotoSansDevanagari/NotoSansDevanagari-SemiCondensedSemiBold.ttf
-  - fonts/NotoSansDevanagari/NotoSansDevanagari-SemiCondensedThin.ttf
-  - fonts/NotoSansDevanagari/NotoSansDevanagari-Thin.ttf
-  - fonts/NotoSansDevanagari/NotoSansDevanagari[wdth,wght].ttf
-  - fonts/NotoSansDevanagari/NotoSansDevanagari[wght].ttf
   unicode_ranges:
   - [0x000D, 0x000D]
   - [0x0020, 0x007E]
@@ -14129,44 +13782,8 @@
   - [0x10FE0, 0x10FF6]
 - family: NotoSansEthiopic
   files:
-  - fonts/NotoSansEthiopic/NotoSansEthiopic-Black.ttf
   - fonts/NotoSansEthiopic/NotoSansEthiopic-Bold.ttf
-  - fonts/NotoSansEthiopic/NotoSansEthiopic-Condensed.ttf
-  - fonts/NotoSansEthiopic/NotoSansEthiopic-CondensedBlack.ttf
-  - fonts/NotoSansEthiopic/NotoSansEthiopic-CondensedBold.ttf
-  - fonts/NotoSansEthiopic/NotoSansEthiopic-CondensedExtraBold.ttf
-  - fonts/NotoSansEthiopic/NotoSansEthiopic-CondensedExtraLight.ttf
-  - fonts/NotoSansEthiopic/NotoSansEthiopic-CondensedLight.ttf
-  - fonts/NotoSansEthiopic/NotoSansEthiopic-CondensedMedium.ttf
-  - fonts/NotoSansEthiopic/NotoSansEthiopic-CondensedSemiBold.ttf
-  - fonts/NotoSansEthiopic/NotoSansEthiopic-CondensedThin.ttf
-  - fonts/NotoSansEthiopic/NotoSansEthiopic-ExtraBold.ttf
-  - fonts/NotoSansEthiopic/NotoSansEthiopic-ExtraCondensed.ttf
-  - fonts/NotoSansEthiopic/NotoSansEthiopic-ExtraCondensedBlack.ttf
-  - fonts/NotoSansEthiopic/NotoSansEthiopic-ExtraCondensedBold.ttf
-  - fonts/NotoSansEthiopic/NotoSansEthiopic-ExtraCondensedExtraBold.ttf
-  - fonts/NotoSansEthiopic/NotoSansEthiopic-ExtraCondensedExtraLight.ttf
-  - fonts/NotoSansEthiopic/NotoSansEthiopic-ExtraCondensedLight.ttf
-  - fonts/NotoSansEthiopic/NotoSansEthiopic-ExtraCondensedMedium.ttf
-  - fonts/NotoSansEthiopic/NotoSansEthiopic-ExtraCondensedSemiBold.ttf
-  - fonts/NotoSansEthiopic/NotoSansEthiopic-ExtraCondensedThin.ttf
-  - fonts/NotoSansEthiopic/NotoSansEthiopic-ExtraLight.ttf
-  - fonts/NotoSansEthiopic/NotoSansEthiopic-Light.ttf
-  - fonts/NotoSansEthiopic/NotoSansEthiopic-Medium.ttf
   - fonts/NotoSansEthiopic/NotoSansEthiopic-Regular.ttf
-  - fonts/NotoSansEthiopic/NotoSansEthiopic-SemiBold.ttf
-  - fonts/NotoSansEthiopic/NotoSansEthiopic-SemiCondensed.ttf
-  - fonts/NotoSansEthiopic/NotoSansEthiopic-SemiCondensedBlack.ttf
-  - fonts/NotoSansEthiopic/NotoSansEthiopic-SemiCondensedBold.ttf
-  - fonts/NotoSansEthiopic/NotoSansEthiopic-SemiCondensedExtraBold.ttf
-  - fonts/NotoSansEthiopic/NotoSansEthiopic-SemiCondensedExtraLight.ttf
-  - fonts/NotoSansEthiopic/NotoSansEthiopic-SemiCondensedLight.ttf
-  - fonts/NotoSansEthiopic/NotoSansEthiopic-SemiCondensedMedium.ttf
-  - fonts/NotoSansEthiopic/NotoSansEthiopic-SemiCondensedSemiBold.ttf
-  - fonts/NotoSansEthiopic/NotoSansEthiopic-SemiCondensedThin.ttf
-  - fonts/NotoSansEthiopic/NotoSansEthiopic-Thin.ttf
-  - fonts/NotoSansEthiopic/NotoSansEthiopic[wdth,wght].ttf
-  - fonts/NotoSansEthiopic/NotoSansEthiopic[wght].ttf
   unicode_ranges:
   - [0x0000, 0x0000]
   - [0x000D, 0x000D]
@@ -14257,44 +13874,8 @@
   - [0x1E7F0, 0x1E7FE]
 - family: NotoSansGeorgian
   files:
-  - fonts/NotoSansGeorgian/NotoSansGeorgian-Black.ttf
   - fonts/NotoSansGeorgian/NotoSansGeorgian-Bold.ttf
-  - fonts/NotoSansGeorgian/NotoSansGeorgian-Condensed.ttf
-  - fonts/NotoSansGeorgian/NotoSansGeorgian-CondensedBlack.ttf
-  - fonts/NotoSansGeorgian/NotoSansGeorgian-CondensedBold.ttf
-  - fonts/NotoSansGeorgian/NotoSansGeorgian-CondensedExtraBold.ttf
-  - fonts/NotoSansGeorgian/NotoSansGeorgian-CondensedExtraLight.ttf
-  - fonts/NotoSansGeorgian/NotoSansGeorgian-CondensedLight.ttf
-  - fonts/NotoSansGeorgian/NotoSansGeorgian-CondensedMedium.ttf
-  - fonts/NotoSansGeorgian/NotoSansGeorgian-CondensedSemiBold.ttf
-  - fonts/NotoSansGeorgian/NotoSansGeorgian-CondensedThin.ttf
-  - fonts/NotoSansGeorgian/NotoSansGeorgian-ExtraBold.ttf
-  - fonts/NotoSansGeorgian/NotoSansGeorgian-ExtraCondensed.ttf
-  - fonts/NotoSansGeorgian/NotoSansGeorgian-ExtraCondensedBlack.ttf
-  - fonts/NotoSansGeorgian/NotoSansGeorgian-ExtraCondensedBold.ttf
-  - fonts/NotoSansGeorgian/NotoSansGeorgian-ExtraCondensedExtraBold.ttf
-  - fonts/NotoSansGeorgian/NotoSansGeorgian-ExtraCondensedExtraLight.ttf
-  - fonts/NotoSansGeorgian/NotoSansGeorgian-ExtraCondensedLight.ttf
-  - fonts/NotoSansGeorgian/NotoSansGeorgian-ExtraCondensedMedium.ttf
-  - fonts/NotoSansGeorgian/NotoSansGeorgian-ExtraCondensedSemiBold.ttf
-  - fonts/NotoSansGeorgian/NotoSansGeorgian-ExtraCondensedThin.ttf
-  - fonts/NotoSansGeorgian/NotoSansGeorgian-ExtraLight.ttf
-  - fonts/NotoSansGeorgian/NotoSansGeorgian-Light.ttf
-  - fonts/NotoSansGeorgian/NotoSansGeorgian-Medium.ttf
   - fonts/NotoSansGeorgian/NotoSansGeorgian-Regular.ttf
-  - fonts/NotoSansGeorgian/NotoSansGeorgian-SemiBold.ttf
-  - fonts/NotoSansGeorgian/NotoSansGeorgian-SemiCondensed.ttf
-  - fonts/NotoSansGeorgian/NotoSansGeorgian-SemiCondensedBlack.ttf
-  - fonts/NotoSansGeorgian/NotoSansGeorgian-SemiCondensedBold.ttf
-  - fonts/NotoSansGeorgian/NotoSansGeorgian-SemiCondensedExtraBold.ttf
-  - fonts/NotoSansGeorgian/NotoSansGeorgian-SemiCondensedExtraLight.ttf
-  - fonts/NotoSansGeorgian/NotoSansGeorgian-SemiCondensedLight.ttf
-  - fonts/NotoSansGeorgian/NotoSansGeorgian-SemiCondensedMedium.ttf
-  - fonts/NotoSansGeorgian/NotoSansGeorgian-SemiCondensedSemiBold.ttf
-  - fonts/NotoSansGeorgian/NotoSansGeorgian-SemiCondensedThin.ttf
-  - fonts/NotoSansGeorgian/NotoSansGeorgian-Thin.ttf
-  - fonts/NotoSansGeorgian/NotoSansGeorgian[wdth,wght].ttf
-  - fonts/NotoSansGeorgian/NotoSansGeorgian[wght].ttf
   unicode_ranges:
   - [0x0000, 0x0000]
   - [0x000D, 0x000D]
@@ -14553,80 +14134,8 @@
   - [0x11370, 0x11374]
 - family: NotoSansGujarati
   files:
-  - fonts/NotoSansGujarati/NotoSansGujarati-Black.ttf
   - fonts/NotoSansGujarati/NotoSansGujarati-Bold.ttf
-  - fonts/NotoSansGujarati/NotoSansGujarati-Condensed.ttf
-  - fonts/NotoSansGujarati/NotoSansGujarati-CondensedBlack.ttf
-  - fonts/NotoSansGujarati/NotoSansGujarati-CondensedBold.ttf
-  - fonts/NotoSansGujarati/NotoSansGujarati-CondensedExtraBold.ttf
-  - fonts/NotoSansGujarati/NotoSansGujarati-CondensedExtraLight.ttf
-  - fonts/NotoSansGujarati/NotoSansGujarati-CondensedLight.ttf
-  - fonts/NotoSansGujarati/NotoSansGujarati-CondensedMedium.ttf
-  - fonts/NotoSansGujarati/NotoSansGujarati-CondensedSemiBold.ttf
-  - fonts/NotoSansGujarati/NotoSansGujarati-CondensedThin.ttf
-  - fonts/NotoSansGujarati/NotoSansGujarati-ExtraBold.ttf
-  - fonts/NotoSansGujarati/NotoSansGujarati-ExtraCondensed.ttf
-  - fonts/NotoSansGujarati/NotoSansGujarati-ExtraCondensedBlack.ttf
-  - fonts/NotoSansGujarati/NotoSansGujarati-ExtraCondensedBold.ttf
-  - fonts/NotoSansGujarati/NotoSansGujarati-ExtraCondensedExtraBold.ttf
-  - fonts/NotoSansGujarati/NotoSansGujarati-ExtraCondensedExtraLight.ttf
-  - fonts/NotoSansGujarati/NotoSansGujarati-ExtraCondensedLight.ttf
-  - fonts/NotoSansGujarati/NotoSansGujarati-ExtraCondensedMedium.ttf
-  - fonts/NotoSansGujarati/NotoSansGujarati-ExtraCondensedSemiBold.ttf
-  - fonts/NotoSansGujarati/NotoSansGujarati-ExtraCondensedThin.ttf
-  - fonts/NotoSansGujarati/NotoSansGujarati-ExtraLight.ttf
-  - fonts/NotoSansGujarati/NotoSansGujarati-Light.ttf
-  - fonts/NotoSansGujarati/NotoSansGujarati-Medium.ttf
   - fonts/NotoSansGujarati/NotoSansGujarati-Regular.ttf
-  - fonts/NotoSansGujarati/NotoSansGujarati-SemiBold.ttf
-  - fonts/NotoSansGujarati/NotoSansGujarati-SemiCondensed.ttf
-  - fonts/NotoSansGujarati/NotoSansGujarati-SemiCondensedBlack.ttf
-  - fonts/NotoSansGujarati/NotoSansGujarati-SemiCondensedBold.ttf
-  - fonts/NotoSansGujarati/NotoSansGujarati-SemiCondensedExtraBold.ttf
-  - fonts/NotoSansGujarati/NotoSansGujarati-SemiCondensedExtraLight.ttf
-  - fonts/NotoSansGujarati/NotoSansGujarati-SemiCondensedLight.ttf
-  - fonts/NotoSansGujarati/NotoSansGujarati-SemiCondensedMedium.ttf
-  - fonts/NotoSansGujarati/NotoSansGujarati-SemiCondensedSemiBold.ttf
-  - fonts/NotoSansGujarati/NotoSansGujarati-SemiCondensedThin.ttf
-  - fonts/NotoSansGujarati/NotoSansGujarati-Thin.ttf
-  - fonts/NotoSansGujarati/NotoSansGujaratiUI-Black.ttf
-  - fonts/NotoSansGujarati/NotoSansGujaratiUI-Bold.ttf
-  - fonts/NotoSansGujarati/NotoSansGujaratiUI-Condensed.ttf
-  - fonts/NotoSansGujarati/NotoSansGujaratiUI-CondensedBlack.ttf
-  - fonts/NotoSansGujarati/NotoSansGujaratiUI-CondensedBold.ttf
-  - fonts/NotoSansGujarati/NotoSansGujaratiUI-CondensedExtraBold.ttf
-  - fonts/NotoSansGujarati/NotoSansGujaratiUI-CondensedExtraLight.ttf
-  - fonts/NotoSansGujarati/NotoSansGujaratiUI-CondensedLight.ttf
-  - fonts/NotoSansGujarati/NotoSansGujaratiUI-CondensedMedium.ttf
-  - fonts/NotoSansGujarati/NotoSansGujaratiUI-CondensedSemiBold.ttf
-  - fonts/NotoSansGujarati/NotoSansGujaratiUI-CondensedThin.ttf
-  - fonts/NotoSansGujarati/NotoSansGujaratiUI-ExtraBold.ttf
-  - fonts/NotoSansGujarati/NotoSansGujaratiUI-ExtraCondensed.ttf
-  - fonts/NotoSansGujarati/NotoSansGujaratiUI-ExtraCondensedBlack.ttf
-  - fonts/NotoSansGujarati/NotoSansGujaratiUI-ExtraCondensedBold.ttf
-  - fonts/NotoSansGujarati/NotoSansGujaratiUI-ExtraCondensedExtraBold.ttf
-  - fonts/NotoSansGujarati/NotoSansGujaratiUI-ExtraCondensedExtraLight.ttf
-  - fonts/NotoSansGujarati/NotoSansGujaratiUI-ExtraCondensedLight.ttf
-  - fonts/NotoSansGujarati/NotoSansGujaratiUI-ExtraCondensedMedium.ttf
-  - fonts/NotoSansGujarati/NotoSansGujaratiUI-ExtraCondensedSemiBold.ttf
-  - fonts/NotoSansGujarati/NotoSansGujaratiUI-ExtraCondensedThin.ttf
-  - fonts/NotoSansGujarati/NotoSansGujaratiUI-ExtraLight.ttf
-  - fonts/NotoSansGujarati/NotoSansGujaratiUI-Light.ttf
-  - fonts/NotoSansGujarati/NotoSansGujaratiUI-Medium.ttf
-  - fonts/NotoSansGujarati/NotoSansGujaratiUI-Regular.ttf
-  - fonts/NotoSansGujarati/NotoSansGujaratiUI-SemiBold.ttf
-  - fonts/NotoSansGujarati/NotoSansGujaratiUI-SemiCondensed.ttf
-  - fonts/NotoSansGujarati/NotoSansGujaratiUI-SemiCondensedBlack.ttf
-  - fonts/NotoSansGujarati/NotoSansGujaratiUI-SemiCondensedBold.ttf
-  - fonts/NotoSansGujarati/NotoSansGujaratiUI-SemiCondensedExtraBold.ttf
-  - fonts/NotoSansGujarati/NotoSansGujaratiUI-SemiCondensedExtraLight.ttf
-  - fonts/NotoSansGujarati/NotoSansGujaratiUI-SemiCondensedLight.ttf
-  - fonts/NotoSansGujarati/NotoSansGujaratiUI-SemiCondensedMedium.ttf
-  - fonts/NotoSansGujarati/NotoSansGujaratiUI-SemiCondensedSemiBold.ttf
-  - fonts/NotoSansGujarati/NotoSansGujaratiUI-SemiCondensedThin.ttf
-  - fonts/NotoSansGujarati/NotoSansGujaratiUI-Thin.ttf
-  - fonts/NotoSansGujarati/NotoSansGujarati[wdth,wght].ttf
-  - fonts/NotoSansGujarati/NotoSansGujarati[wght].ttf
   unicode_ranges:
   - [0x0000, 0x0000]
   - [0x000D, 0x000D]
@@ -14699,10 +14208,7 @@
 - family: NotoSansGunjalaGondi
   files:
   - fonts/NotoSansGunjalaGondi/NotoSansGunjalaGondi-Bold.ttf
-  - fonts/NotoSansGunjalaGondi/NotoSansGunjalaGondi-Medium.ttf
   - fonts/NotoSansGunjalaGondi/NotoSansGunjalaGondi-Regular.ttf
-  - fonts/NotoSansGunjalaGondi/NotoSansGunjalaGondi-Semibold.ttf
-  - fonts/NotoSansGunjalaGondi/NotoSansGunjalaGondi[wght].ttf
   unicode_ranges:
   - [0x0000, 0x0000]
   - [0x000D, 0x000D]
@@ -14761,80 +14267,8 @@
   - [0x11DA0, 0x11DA9]
 - family: NotoSansGurmukhi
   files:
-  - fonts/NotoSansGurmukhi/NotoSansGurmukhi-Black.ttf
   - fonts/NotoSansGurmukhi/NotoSansGurmukhi-Bold.ttf
-  - fonts/NotoSansGurmukhi/NotoSansGurmukhi-Condensed.ttf
-  - fonts/NotoSansGurmukhi/NotoSansGurmukhi-CondensedBlack.ttf
-  - fonts/NotoSansGurmukhi/NotoSansGurmukhi-CondensedBold.ttf
-  - fonts/NotoSansGurmukhi/NotoSansGurmukhi-CondensedExtraBold.ttf
-  - fonts/NotoSansGurmukhi/NotoSansGurmukhi-CondensedExtraLight.ttf
-  - fonts/NotoSansGurmukhi/NotoSansGurmukhi-CondensedLight.ttf
-  - fonts/NotoSansGurmukhi/NotoSansGurmukhi-CondensedMedium.ttf
-  - fonts/NotoSansGurmukhi/NotoSansGurmukhi-CondensedSemiBold.ttf
-  - fonts/NotoSansGurmukhi/NotoSansGurmukhi-CondensedThin.ttf
-  - fonts/NotoSansGurmukhi/NotoSansGurmukhi-ExtraBold.ttf
-  - fonts/NotoSansGurmukhi/NotoSansGurmukhi-ExtraCondensed.ttf
-  - fonts/NotoSansGurmukhi/NotoSansGurmukhi-ExtraCondensedBlack.ttf
-  - fonts/NotoSansGurmukhi/NotoSansGurmukhi-ExtraCondensedBold.ttf
-  - fonts/NotoSansGurmukhi/NotoSansGurmukhi-ExtraCondensedExtraBold.ttf
-  - fonts/NotoSansGurmukhi/NotoSansGurmukhi-ExtraCondensedExtraLight.ttf
-  - fonts/NotoSansGurmukhi/NotoSansGurmukhi-ExtraCondensedLight.ttf
-  - fonts/NotoSansGurmukhi/NotoSansGurmukhi-ExtraCondensedMedium.ttf
-  - fonts/NotoSansGurmukhi/NotoSansGurmukhi-ExtraCondensedSemiBold.ttf
-  - fonts/NotoSansGurmukhi/NotoSansGurmukhi-ExtraCondensedThin.ttf
-  - fonts/NotoSansGurmukhi/NotoSansGurmukhi-ExtraLight.ttf
-  - fonts/NotoSansGurmukhi/NotoSansGurmukhi-Light.ttf
-  - fonts/NotoSansGurmukhi/NotoSansGurmukhi-Medium.ttf
   - fonts/NotoSansGurmukhi/NotoSansGurmukhi-Regular.ttf
-  - fonts/NotoSansGurmukhi/NotoSansGurmukhi-SemiBold.ttf
-  - fonts/NotoSansGurmukhi/NotoSansGurmukhi-SemiCondensed.ttf
-  - fonts/NotoSansGurmukhi/NotoSansGurmukhi-SemiCondensedBlack.ttf
-  - fonts/NotoSansGurmukhi/NotoSansGurmukhi-SemiCondensedBold.ttf
-  - fonts/NotoSansGurmukhi/NotoSansGurmukhi-SemiCondensedExtraBold.ttf
-  - fonts/NotoSansGurmukhi/NotoSansGurmukhi-SemiCondensedExtraLight.ttf
-  - fonts/NotoSansGurmukhi/NotoSansGurmukhi-SemiCondensedLight.ttf
-  - fonts/NotoSansGurmukhi/NotoSansGurmukhi-SemiCondensedMedium.ttf
-  - fonts/NotoSansGurmukhi/NotoSansGurmukhi-SemiCondensedSemiBold.ttf
-  - fonts/NotoSansGurmukhi/NotoSansGurmukhi-SemiCondensedThin.ttf
-  - fonts/NotoSansGurmukhi/NotoSansGurmukhi-Thin.ttf
-  - fonts/NotoSansGurmukhi/NotoSansGurmukhiUI-Black.ttf
-  - fonts/NotoSansGurmukhi/NotoSansGurmukhiUI-Bold.ttf
-  - fonts/NotoSansGurmukhi/NotoSansGurmukhiUI-Condensed.ttf
-  - fonts/NotoSansGurmukhi/NotoSansGurmukhiUI-CondensedBlack.ttf
-  - fonts/NotoSansGurmukhi/NotoSansGurmukhiUI-CondensedBold.ttf
-  - fonts/NotoSansGurmukhi/NotoSansGurmukhiUI-CondensedExtraBold.ttf
-  - fonts/NotoSansGurmukhi/NotoSansGurmukhiUI-CondensedExtraLight.ttf
-  - fonts/NotoSansGurmukhi/NotoSansGurmukhiUI-CondensedLight.ttf
-  - fonts/NotoSansGurmukhi/NotoSansGurmukhiUI-CondensedMedium.ttf
-  - fonts/NotoSansGurmukhi/NotoSansGurmukhiUI-CondensedSemiBold.ttf
-  - fonts/NotoSansGurmukhi/NotoSansGurmukhiUI-CondensedThin.ttf
-  - fonts/NotoSansGurmukhi/NotoSansGurmukhiUI-ExtraBold.ttf
-  - fonts/NotoSansGurmukhi/NotoSansGurmukhiUI-ExtraCondensed.ttf
-  - fonts/NotoSansGurmukhi/NotoSansGurmukhiUI-ExtraCondensedBlack.ttf
-  - fonts/NotoSansGurmukhi/NotoSansGurmukhiUI-ExtraCondensedBold.ttf
-  - fonts/NotoSansGurmukhi/NotoSansGurmukhiUI-ExtraCondensedExtraBold.ttf
-  - fonts/NotoSansGurmukhi/NotoSansGurmukhiUI-ExtraCondensedExtraLight.ttf
-  - fonts/NotoSansGurmukhi/NotoSansGurmukhiUI-ExtraCondensedLight.ttf
-  - fonts/NotoSansGurmukhi/NotoSansGurmukhiUI-ExtraCondensedMedium.ttf
-  - fonts/NotoSansGurmukhi/NotoSansGurmukhiUI-ExtraCondensedSemiBold.ttf
-  - fonts/NotoSansGurmukhi/NotoSansGurmukhiUI-ExtraCondensedThin.ttf
-  - fonts/NotoSansGurmukhi/NotoSansGurmukhiUI-ExtraLight.ttf
-  - fonts/NotoSansGurmukhi/NotoSansGurmukhiUI-Light.ttf
-  - fonts/NotoSansGurmukhi/NotoSansGurmukhiUI-Medium.ttf
-  - fonts/NotoSansGurmukhi/NotoSansGurmukhiUI-Regular.ttf
-  - fonts/NotoSansGurmukhi/NotoSansGurmukhiUI-SemiBold.ttf
-  - fonts/NotoSansGurmukhi/NotoSansGurmukhiUI-SemiCondensed.ttf
-  - fonts/NotoSansGurmukhi/NotoSansGurmukhiUI-SemiCondensedBlack.ttf
-  - fonts/NotoSansGurmukhi/NotoSansGurmukhiUI-SemiCondensedBold.ttf
-  - fonts/NotoSansGurmukhi/NotoSansGurmukhiUI-SemiCondensedExtraBold.ttf
-  - fonts/NotoSansGurmukhi/NotoSansGurmukhiUI-SemiCondensedExtraLight.ttf
-  - fonts/NotoSansGurmukhi/NotoSansGurmukhiUI-SemiCondensedLight.ttf
-  - fonts/NotoSansGurmukhi/NotoSansGurmukhiUI-SemiCondensedMedium.ttf
-  - fonts/NotoSansGurmukhi/NotoSansGurmukhiUI-SemiCondensedSemiBold.ttf
-  - fonts/NotoSansGurmukhi/NotoSansGurmukhiUI-SemiCondensedThin.ttf
-  - fonts/NotoSansGurmukhi/NotoSansGurmukhiUI-Thin.ttf
-  - fonts/NotoSansGurmukhi/NotoSansGurmukhi[wdth,wght].ttf
-  - fonts/NotoSansGurmukhi/NotoSansGurmukhi[wght].ttf
   unicode_ranges:
   - [0x0000, 0x0000]
   - [0x000D, 0x000D]
@@ -14911,10 +14345,7 @@
 - family: NotoSansHanifiRohingya
   files:
   - fonts/NotoSansHanifiRohingya/NotoSansHanifiRohingya-Bold.ttf
-  - fonts/NotoSansHanifiRohingya/NotoSansHanifiRohingya-Medium.ttf
   - fonts/NotoSansHanifiRohingya/NotoSansHanifiRohingya-Regular.ttf
-  - fonts/NotoSansHanifiRohingya/NotoSansHanifiRohingya-SemiBold.ttf
-  - fonts/NotoSansHanifiRohingya/NotoSansHanifiRohingya[wght].ttf
   unicode_ranges:
   - [0x0000, 0x0000]
   - [0x000D, 0x000D]
@@ -15085,44 +14516,8 @@
   - [0x108FB, 0x108FF]
 - family: NotoSansHebrew
   files:
-  - fonts/NotoSansHebrew/NotoSansHebrew-Black.ttf
   - fonts/NotoSansHebrew/NotoSansHebrew-Bold.ttf
-  - fonts/NotoSansHebrew/NotoSansHebrew-Condensed.ttf
-  - fonts/NotoSansHebrew/NotoSansHebrew-CondensedBlack.ttf
-  - fonts/NotoSansHebrew/NotoSansHebrew-CondensedBold.ttf
-  - fonts/NotoSansHebrew/NotoSansHebrew-CondensedExtraBold.ttf
-  - fonts/NotoSansHebrew/NotoSansHebrew-CondensedExtraLight.ttf
-  - fonts/NotoSansHebrew/NotoSansHebrew-CondensedLight.ttf
-  - fonts/NotoSansHebrew/NotoSansHebrew-CondensedMedium.ttf
-  - fonts/NotoSansHebrew/NotoSansHebrew-CondensedSemiBold.ttf
-  - fonts/NotoSansHebrew/NotoSansHebrew-CondensedThin.ttf
-  - fonts/NotoSansHebrew/NotoSansHebrew-ExtraBold.ttf
-  - fonts/NotoSansHebrew/NotoSansHebrew-ExtraCondensed.ttf
-  - fonts/NotoSansHebrew/NotoSansHebrew-ExtraCondensedBlack.ttf
-  - fonts/NotoSansHebrew/NotoSansHebrew-ExtraCondensedBold.ttf
-  - fonts/NotoSansHebrew/NotoSansHebrew-ExtraCondensedExtraBold.ttf
-  - fonts/NotoSansHebrew/NotoSansHebrew-ExtraCondensedExtraLight.ttf
-  - fonts/NotoSansHebrew/NotoSansHebrew-ExtraCondensedLight.ttf
-  - fonts/NotoSansHebrew/NotoSansHebrew-ExtraCondensedMedium.ttf
-  - fonts/NotoSansHebrew/NotoSansHebrew-ExtraCondensedSemiBold.ttf
-  - fonts/NotoSansHebrew/NotoSansHebrew-ExtraCondensedThin.ttf
-  - fonts/NotoSansHebrew/NotoSansHebrew-ExtraLight.ttf
-  - fonts/NotoSansHebrew/NotoSansHebrew-Light.ttf
-  - fonts/NotoSansHebrew/NotoSansHebrew-Medium.ttf
   - fonts/NotoSansHebrew/NotoSansHebrew-Regular.ttf
-  - fonts/NotoSansHebrew/NotoSansHebrew-SemiBold.ttf
-  - fonts/NotoSansHebrew/NotoSansHebrew-SemiCondensed.ttf
-  - fonts/NotoSansHebrew/NotoSansHebrew-SemiCondensedBlack.ttf
-  - fonts/NotoSansHebrew/NotoSansHebrew-SemiCondensedBold.ttf
-  - fonts/NotoSansHebrew/NotoSansHebrew-SemiCondensedExtraBold.ttf
-  - fonts/NotoSansHebrew/NotoSansHebrew-SemiCondensedExtraLight.ttf
-  - fonts/NotoSansHebrew/NotoSansHebrew-SemiCondensedLight.ttf
-  - fonts/NotoSansHebrew/NotoSansHebrew-SemiCondensedMedium.ttf
-  - fonts/NotoSansHebrew/NotoSansHebrew-SemiCondensedSemiBold.ttf
-  - fonts/NotoSansHebrew/NotoSansHebrew-SemiCondensedThin.ttf
-  - fonts/NotoSansHebrew/NotoSansHebrew-Thin.ttf
-  - fonts/NotoSansHebrew/NotoSansHebrew[wdth,wght].ttf
-  - fonts/NotoSansHebrew/NotoSansHebrew[wght].ttf
   unicode_ranges:
   - [0x0000, 0x0000]
   - [0x000D, 0x000D]
@@ -15403,7 +14798,6 @@
   files:
   - fonts/NotoSansJavanese/NotoSansJavanese-Bold.ttf
   - fonts/NotoSansJavanese/NotoSansJavanese-Regular.ttf
-  - fonts/NotoSansJavanese/NotoSansJavanese[wght].ttf
   unicode_ranges:
   - [0x0000, 0x0000]
   - [0x000D, 0x000D]
@@ -15516,8 +14910,7 @@
   - [0x11080, 0x110C2]
   - [0x110CD, 0x110CD]
 - family: NotoSansKannada
-  files:
-  - fonts/NotoSansKannada/NotoSansKannada-UI-VF.ttf
+  files: []
   unicode_ranges:
   - [0x0000, 0x0000]
   - [0x000D, 0x000D]
@@ -15562,80 +14955,8 @@
   - [0xA830, 0xA835]
 - family: NotoSansKannada
   files:
-  - fonts/NotoSansKannada/NotoSansKannada-Black.ttf
   - fonts/NotoSansKannada/NotoSansKannada-Bold.ttf
-  - fonts/NotoSansKannada/NotoSansKannada-Condensed.ttf
-  - fonts/NotoSansKannada/NotoSansKannada-CondensedBlack.ttf
-  - fonts/NotoSansKannada/NotoSansKannada-CondensedBold.ttf
-  - fonts/NotoSansKannada/NotoSansKannada-CondensedExtraBold.ttf
-  - fonts/NotoSansKannada/NotoSansKannada-CondensedExtraLight.ttf
-  - fonts/NotoSansKannada/NotoSansKannada-CondensedLight.ttf
-  - fonts/NotoSansKannada/NotoSansKannada-CondensedMedium.ttf
-  - fonts/NotoSansKannada/NotoSansKannada-CondensedSemiBold.ttf
-  - fonts/NotoSansKannada/NotoSansKannada-CondensedThin.ttf
-  - fonts/NotoSansKannada/NotoSansKannada-ExtraBold.ttf
-  - fonts/NotoSansKannada/NotoSansKannada-ExtraCondensed.ttf
-  - fonts/NotoSansKannada/NotoSansKannada-ExtraCondensedBlack.ttf
-  - fonts/NotoSansKannada/NotoSansKannada-ExtraCondensedBold.ttf
-  - fonts/NotoSansKannada/NotoSansKannada-ExtraCondensedExtraBold.ttf
-  - fonts/NotoSansKannada/NotoSansKannada-ExtraCondensedExtraLight.ttf
-  - fonts/NotoSansKannada/NotoSansKannada-ExtraCondensedLight.ttf
-  - fonts/NotoSansKannada/NotoSansKannada-ExtraCondensedMedium.ttf
-  - fonts/NotoSansKannada/NotoSansKannada-ExtraCondensedSemiBold.ttf
-  - fonts/NotoSansKannada/NotoSansKannada-ExtraCondensedThin.ttf
-  - fonts/NotoSansKannada/NotoSansKannada-ExtraLight.ttf
-  - fonts/NotoSansKannada/NotoSansKannada-Light.ttf
-  - fonts/NotoSansKannada/NotoSansKannada-Medium.ttf
   - fonts/NotoSansKannada/NotoSansKannada-Regular.ttf
-  - fonts/NotoSansKannada/NotoSansKannada-SemiBold.ttf
-  - fonts/NotoSansKannada/NotoSansKannada-SemiCondensed.ttf
-  - fonts/NotoSansKannada/NotoSansKannada-SemiCondensedBlack.ttf
-  - fonts/NotoSansKannada/NotoSansKannada-SemiCondensedBold.ttf
-  - fonts/NotoSansKannada/NotoSansKannada-SemiCondensedExtraBold.ttf
-  - fonts/NotoSansKannada/NotoSansKannada-SemiCondensedExtraLight.ttf
-  - fonts/NotoSansKannada/NotoSansKannada-SemiCondensedLight.ttf
-  - fonts/NotoSansKannada/NotoSansKannada-SemiCondensedMedium.ttf
-  - fonts/NotoSansKannada/NotoSansKannada-SemiCondensedSemiBold.ttf
-  - fonts/NotoSansKannada/NotoSansKannada-SemiCondensedThin.ttf
-  - fonts/NotoSansKannada/NotoSansKannada-Thin.ttf
-  - fonts/NotoSansKannada/NotoSansKannadaUI-Black.ttf
-  - fonts/NotoSansKannada/NotoSansKannadaUI-Bold.ttf
-  - fonts/NotoSansKannada/NotoSansKannadaUI-Condensed.ttf
-  - fonts/NotoSansKannada/NotoSansKannadaUI-CondensedBlack.ttf
-  - fonts/NotoSansKannada/NotoSansKannadaUI-CondensedBold.ttf
-  - fonts/NotoSansKannada/NotoSansKannadaUI-CondensedExtraBold.ttf
-  - fonts/NotoSansKannada/NotoSansKannadaUI-CondensedExtraLight.ttf
-  - fonts/NotoSansKannada/NotoSansKannadaUI-CondensedLight.ttf
-  - fonts/NotoSansKannada/NotoSansKannadaUI-CondensedMedium.ttf
-  - fonts/NotoSansKannada/NotoSansKannadaUI-CondensedSemiBold.ttf
-  - fonts/NotoSansKannada/NotoSansKannadaUI-CondensedThin.ttf
-  - fonts/NotoSansKannada/NotoSansKannadaUI-ExtraBold.ttf
-  - fonts/NotoSansKannada/NotoSansKannadaUI-ExtraCondensed.ttf
-  - fonts/NotoSansKannada/NotoSansKannadaUI-ExtraCondensedBlack.ttf
-  - fonts/NotoSansKannada/NotoSansKannadaUI-ExtraCondensedBold.ttf
-  - fonts/NotoSansKannada/NotoSansKannadaUI-ExtraCondensedExtraBold.ttf
-  - fonts/NotoSansKannada/NotoSansKannadaUI-ExtraCondensedExtraLight.ttf
-  - fonts/NotoSansKannada/NotoSansKannadaUI-ExtraCondensedLight.ttf
-  - fonts/NotoSansKannada/NotoSansKannadaUI-ExtraCondensedMedium.ttf
-  - fonts/NotoSansKannada/NotoSansKannadaUI-ExtraCondensedSemiBold.ttf
-  - fonts/NotoSansKannada/NotoSansKannadaUI-ExtraCondensedThin.ttf
-  - fonts/NotoSansKannada/NotoSansKannadaUI-ExtraLight.ttf
-  - fonts/NotoSansKannada/NotoSansKannadaUI-Light.ttf
-  - fonts/NotoSansKannada/NotoSansKannadaUI-Medium.ttf
-  - fonts/NotoSansKannada/NotoSansKannadaUI-Regular.ttf
-  - fonts/NotoSansKannada/NotoSansKannadaUI-SemiBold.ttf
-  - fonts/NotoSansKannada/NotoSansKannadaUI-SemiCondensed.ttf
-  - fonts/NotoSansKannada/NotoSansKannadaUI-SemiCondensedBlack.ttf
-  - fonts/NotoSansKannada/NotoSansKannadaUI-SemiCondensedBold.ttf
-  - fonts/NotoSansKannada/NotoSansKannadaUI-SemiCondensedExtraBold.ttf
-  - fonts/NotoSansKannada/NotoSansKannadaUI-SemiCondensedExtraLight.ttf
-  - fonts/NotoSansKannada/NotoSansKannadaUI-SemiCondensedLight.ttf
-  - fonts/NotoSansKannada/NotoSansKannadaUI-SemiCondensedMedium.ttf
-  - fonts/NotoSansKannada/NotoSansKannadaUI-SemiCondensedSemiBold.ttf
-  - fonts/NotoSansKannada/NotoSansKannadaUI-SemiCondensedThin.ttf
-  - fonts/NotoSansKannada/NotoSansKannadaUI-Thin.ttf
-  - fonts/NotoSansKannada/NotoSansKannada[wdth,wght].ttf
-  - fonts/NotoSansKannada/NotoSansKannada[wght].ttf
   unicode_ranges:
   - [0x0000, 0x0000]
   - [0x000D, 0x000D]
@@ -15713,7 +15034,6 @@
   files:
   - fonts/NotoSansKawi/NotoSansKawi-Bold.ttf
   - fonts/NotoSansKawi/NotoSansKawi-Regular.ttf
-  - fonts/NotoSansKawi/NotoSansKawi[wght].ttf
   unicode_ranges:
   - [0x0020, 0x007E]
   - [0x00A0, 0x00A3]
@@ -15768,10 +15088,7 @@
 - family: NotoSansKayahLi
   files:
   - fonts/NotoSansKayahLi/NotoSansKayahLi-Bold.ttf
-  - fonts/NotoSansKayahLi/NotoSansKayahLi-Medium.ttf
   - fonts/NotoSansKayahLi/NotoSansKayahLi-Regular.ttf
-  - fonts/NotoSansKayahLi/NotoSansKayahLi-SemiBold.ttf
-  - fonts/NotoSansKayahLi/NotoSansKayahLi[wght].ttf
   unicode_ranges:
   - [0x0000, 0x0000]
   - [0x000D, 0x000D]
@@ -15889,44 +15206,8 @@
   - [0x10A50, 0x10A58]
 - family: NotoSansKhmer
   files:
-  - fonts/NotoSansKhmer/NotoSansKhmer-Black.ttf
   - fonts/NotoSansKhmer/NotoSansKhmer-Bold.ttf
-  - fonts/NotoSansKhmer/NotoSansKhmer-Condensed.ttf
-  - fonts/NotoSansKhmer/NotoSansKhmer-CondensedBlack.ttf
-  - fonts/NotoSansKhmer/NotoSansKhmer-CondensedBold.ttf
-  - fonts/NotoSansKhmer/NotoSansKhmer-CondensedExtraBold.ttf
-  - fonts/NotoSansKhmer/NotoSansKhmer-CondensedExtraLight.ttf
-  - fonts/NotoSansKhmer/NotoSansKhmer-CondensedLight.ttf
-  - fonts/NotoSansKhmer/NotoSansKhmer-CondensedMedium.ttf
-  - fonts/NotoSansKhmer/NotoSansKhmer-CondensedSemiBold.ttf
-  - fonts/NotoSansKhmer/NotoSansKhmer-CondensedThin.ttf
-  - fonts/NotoSansKhmer/NotoSansKhmer-ExtraBold.ttf
-  - fonts/NotoSansKhmer/NotoSansKhmer-ExtraCondensed.ttf
-  - fonts/NotoSansKhmer/NotoSansKhmer-ExtraCondensedBlack.ttf
-  - fonts/NotoSansKhmer/NotoSansKhmer-ExtraCondensedBold.ttf
-  - fonts/NotoSansKhmer/NotoSansKhmer-ExtraCondensedExtraBold.ttf
-  - fonts/NotoSansKhmer/NotoSansKhmer-ExtraCondensedExtraLight.ttf
-  - fonts/NotoSansKhmer/NotoSansKhmer-ExtraCondensedLight.ttf
-  - fonts/NotoSansKhmer/NotoSansKhmer-ExtraCondensedMedium.ttf
-  - fonts/NotoSansKhmer/NotoSansKhmer-ExtraCondensedSemiBold.ttf
-  - fonts/NotoSansKhmer/NotoSansKhmer-ExtraCondensedThin.ttf
-  - fonts/NotoSansKhmer/NotoSansKhmer-ExtraLight.ttf
-  - fonts/NotoSansKhmer/NotoSansKhmer-Light.ttf
-  - fonts/NotoSansKhmer/NotoSansKhmer-Medium.ttf
   - fonts/NotoSansKhmer/NotoSansKhmer-Regular.ttf
-  - fonts/NotoSansKhmer/NotoSansKhmer-SemiBold.ttf
-  - fonts/NotoSansKhmer/NotoSansKhmer-SemiCondensed.ttf
-  - fonts/NotoSansKhmer/NotoSansKhmer-SemiCondensedBlack.ttf
-  - fonts/NotoSansKhmer/NotoSansKhmer-SemiCondensedBold.ttf
-  - fonts/NotoSansKhmer/NotoSansKhmer-SemiCondensedExtraBold.ttf
-  - fonts/NotoSansKhmer/NotoSansKhmer-SemiCondensedExtraLight.ttf
-  - fonts/NotoSansKhmer/NotoSansKhmer-SemiCondensedLight.ttf
-  - fonts/NotoSansKhmer/NotoSansKhmer-SemiCondensedMedium.ttf
-  - fonts/NotoSansKhmer/NotoSansKhmer-SemiCondensedSemiBold.ttf
-  - fonts/NotoSansKhmer/NotoSansKhmer-SemiCondensedThin.ttf
-  - fonts/NotoSansKhmer/NotoSansKhmer-Thin.ttf
-  - fonts/NotoSansKhmer/NotoSansKhmer[wdth,wght].ttf
-  - fonts/NotoSansKhmer/NotoSansKhmer[wght].ttf
   unicode_ranges:
   - [0x0000, 0x0000]
   - [0x000D, 0x000D]
@@ -16098,44 +15379,8 @@
   - [0x112F0, 0x112F9]
 - family: NotoSansLao
   files:
-  - fonts/NotoSansLao/NotoSansLao-Black.ttf
   - fonts/NotoSansLao/NotoSansLao-Bold.ttf
-  - fonts/NotoSansLao/NotoSansLao-Condensed.ttf
-  - fonts/NotoSansLao/NotoSansLao-CondensedBlack.ttf
-  - fonts/NotoSansLao/NotoSansLao-CondensedBold.ttf
-  - fonts/NotoSansLao/NotoSansLao-CondensedExtraBold.ttf
-  - fonts/NotoSansLao/NotoSansLao-CondensedExtraLight.ttf
-  - fonts/NotoSansLao/NotoSansLao-CondensedLight.ttf
-  - fonts/NotoSansLao/NotoSansLao-CondensedMedium.ttf
-  - fonts/NotoSansLao/NotoSansLao-CondensedSemiBold.ttf
-  - fonts/NotoSansLao/NotoSansLao-CondensedThin.ttf
-  - fonts/NotoSansLao/NotoSansLao-ExtraBold.ttf
-  - fonts/NotoSansLao/NotoSansLao-ExtraCondensed.ttf
-  - fonts/NotoSansLao/NotoSansLao-ExtraCondensedBlack.ttf
-  - fonts/NotoSansLao/NotoSansLao-ExtraCondensedBold.ttf
-  - fonts/NotoSansLao/NotoSansLao-ExtraCondensedExtraBold.ttf
-  - fonts/NotoSansLao/NotoSansLao-ExtraCondensedExtraLight.ttf
-  - fonts/NotoSansLao/NotoSansLao-ExtraCondensedLight.ttf
-  - fonts/NotoSansLao/NotoSansLao-ExtraCondensedMedium.ttf
-  - fonts/NotoSansLao/NotoSansLao-ExtraCondensedSemiBold.ttf
-  - fonts/NotoSansLao/NotoSansLao-ExtraCondensedThin.ttf
-  - fonts/NotoSansLao/NotoSansLao-ExtraLight.ttf
-  - fonts/NotoSansLao/NotoSansLao-Light.ttf
-  - fonts/NotoSansLao/NotoSansLao-Medium.ttf
   - fonts/NotoSansLao/NotoSansLao-Regular.ttf
-  - fonts/NotoSansLao/NotoSansLao-SemiBold.ttf
-  - fonts/NotoSansLao/NotoSansLao-SemiCondensed.ttf
-  - fonts/NotoSansLao/NotoSansLao-SemiCondensedBlack.ttf
-  - fonts/NotoSansLao/NotoSansLao-SemiCondensedBold.ttf
-  - fonts/NotoSansLao/NotoSansLao-SemiCondensedExtraBold.ttf
-  - fonts/NotoSansLao/NotoSansLao-SemiCondensedExtraLight.ttf
-  - fonts/NotoSansLao/NotoSansLao-SemiCondensedLight.ttf
-  - fonts/NotoSansLao/NotoSansLao-SemiCondensedMedium.ttf
-  - fonts/NotoSansLao/NotoSansLao-SemiCondensedSemiBold.ttf
-  - fonts/NotoSansLao/NotoSansLao-SemiCondensedThin.ttf
-  - fonts/NotoSansLao/NotoSansLao-Thin.ttf
-  - fonts/NotoSansLao/NotoSansLao[wdth,wght].ttf
-  - fonts/NotoSansLao/NotoSansLao[wght].ttf
   unicode_ranges:
   - [0x0000, 0x0000]
   - [0x000D, 0x000D]
@@ -16199,44 +15444,8 @@
   - [0x25CC, 0x25CC]
 - family: NotoSansLaoLooped
   files:
-  - fonts/NotoSansLaoLooped/NotoSansLaoLooped-Black.ttf
   - fonts/NotoSansLaoLooped/NotoSansLaoLooped-Bold.ttf
-  - fonts/NotoSansLaoLooped/NotoSansLaoLooped-Condensed.ttf
-  - fonts/NotoSansLaoLooped/NotoSansLaoLooped-CondensedBlack.ttf
-  - fonts/NotoSansLaoLooped/NotoSansLaoLooped-CondensedBold.ttf
-  - fonts/NotoSansLaoLooped/NotoSansLaoLooped-CondensedExtraBold.ttf
-  - fonts/NotoSansLaoLooped/NotoSansLaoLooped-CondensedExtraLight.ttf
-  - fonts/NotoSansLaoLooped/NotoSansLaoLooped-CondensedLight.ttf
-  - fonts/NotoSansLaoLooped/NotoSansLaoLooped-CondensedMedium.ttf
-  - fonts/NotoSansLaoLooped/NotoSansLaoLooped-CondensedSemiBold.ttf
-  - fonts/NotoSansLaoLooped/NotoSansLaoLooped-CondensedThin.ttf
-  - fonts/NotoSansLaoLooped/NotoSansLaoLooped-ExtraBold.ttf
-  - fonts/NotoSansLaoLooped/NotoSansLaoLooped-ExtraCondensed.ttf
-  - fonts/NotoSansLaoLooped/NotoSansLaoLooped-ExtraCondensedBlack.ttf
-  - fonts/NotoSansLaoLooped/NotoSansLaoLooped-ExtraCondensedBold.ttf
-  - fonts/NotoSansLaoLooped/NotoSansLaoLooped-ExtraCondensedExtraBold.ttf
-  - fonts/NotoSansLaoLooped/NotoSansLaoLooped-ExtraCondensedExtraLight.ttf
-  - fonts/NotoSansLaoLooped/NotoSansLaoLooped-ExtraCondensedLight.ttf
-  - fonts/NotoSansLaoLooped/NotoSansLaoLooped-ExtraCondensedMedium.ttf
-  - fonts/NotoSansLaoLooped/NotoSansLaoLooped-ExtraCondensedSemiBold.ttf
-  - fonts/NotoSansLaoLooped/NotoSansLaoLooped-ExtraCondensedThin.ttf
-  - fonts/NotoSansLaoLooped/NotoSansLaoLooped-ExtraLight.ttf
-  - fonts/NotoSansLaoLooped/NotoSansLaoLooped-Light.ttf
-  - fonts/NotoSansLaoLooped/NotoSansLaoLooped-Medium.ttf
   - fonts/NotoSansLaoLooped/NotoSansLaoLooped-Regular.ttf
-  - fonts/NotoSansLaoLooped/NotoSansLaoLooped-SemiBold.ttf
-  - fonts/NotoSansLaoLooped/NotoSansLaoLooped-SemiCondensed.ttf
-  - fonts/NotoSansLaoLooped/NotoSansLaoLooped-SemiCondensedBlack.ttf
-  - fonts/NotoSansLaoLooped/NotoSansLaoLooped-SemiCondensedBold.ttf
-  - fonts/NotoSansLaoLooped/NotoSansLaoLooped-SemiCondensedExtraBold.ttf
-  - fonts/NotoSansLaoLooped/NotoSansLaoLooped-SemiCondensedExtraLight.ttf
-  - fonts/NotoSansLaoLooped/NotoSansLaoLooped-SemiCondensedLight.ttf
-  - fonts/NotoSansLaoLooped/NotoSansLaoLooped-SemiCondensedMedium.ttf
-  - fonts/NotoSansLaoLooped/NotoSansLaoLooped-SemiCondensedSemiBold.ttf
-  - fonts/NotoSansLaoLooped/NotoSansLaoLooped-SemiCondensedThin.ttf
-  - fonts/NotoSansLaoLooped/NotoSansLaoLooped-Thin.ttf
-  - fonts/NotoSansLaoLooped/NotoSansLaoLooped[wdth,wght].ttf
-  - fonts/NotoSansLaoLooped/NotoSansLaoLooped[wght].ttf
   unicode_ranges:
   - [0x0000, 0x0000]
   - [0x000D, 0x000D]
@@ -16540,10 +15749,7 @@
 - family: NotoSansLisu
   files:
   - fonts/NotoSansLisu/NotoSansLisu-Bold.ttf
-  - fonts/NotoSansLisu/NotoSansLisu-Medium.ttf
   - fonts/NotoSansLisu/NotoSansLisu-Regular.ttf
-  - fonts/NotoSansLisu/NotoSansLisu-SemiBold.ttf
-  - fonts/NotoSansLisu/NotoSansLisu[wght].ttf
   unicode_ranges:
   - [0x0000, 0x0000]
   - [0x000D, 0x000D]
@@ -16766,81 +15972,8 @@
   - [0x11150, 0x11176]
 - family: NotoSansMalayalam
   files:
-  - fonts/NotoSansMalayalam/NotoSansMalayalam-Black.ttf
   - fonts/NotoSansMalayalam/NotoSansMalayalam-Bold.ttf
-  - fonts/NotoSansMalayalam/NotoSansMalayalam-Condensed.ttf
-  - fonts/NotoSansMalayalam/NotoSansMalayalam-CondensedBlack.ttf
-  - fonts/NotoSansMalayalam/NotoSansMalayalam-CondensedBold.ttf
-  - fonts/NotoSansMalayalam/NotoSansMalayalam-CondensedExtraBold.ttf
-  - fonts/NotoSansMalayalam/NotoSansMalayalam-CondensedExtraLight.ttf
-  - fonts/NotoSansMalayalam/NotoSansMalayalam-CondensedLight.ttf
-  - fonts/NotoSansMalayalam/NotoSansMalayalam-CondensedMedium.ttf
-  - fonts/NotoSansMalayalam/NotoSansMalayalam-CondensedSemiBold.ttf
-  - fonts/NotoSansMalayalam/NotoSansMalayalam-CondensedThin.ttf
-  - fonts/NotoSansMalayalam/NotoSansMalayalam-ExtraBold.ttf
-  - fonts/NotoSansMalayalam/NotoSansMalayalam-ExtraCondensed.ttf
-  - fonts/NotoSansMalayalam/NotoSansMalayalam-ExtraCondensedBlack.ttf
-  - fonts/NotoSansMalayalam/NotoSansMalayalam-ExtraCondensedBold.ttf
-  - fonts/NotoSansMalayalam/NotoSansMalayalam-ExtraCondensedExtraBold.ttf
-  - fonts/NotoSansMalayalam/NotoSansMalayalam-ExtraCondensedExtraLight.ttf
-  - fonts/NotoSansMalayalam/NotoSansMalayalam-ExtraCondensedLight.ttf
-  - fonts/NotoSansMalayalam/NotoSansMalayalam-ExtraCondensedMedium.ttf
-  - fonts/NotoSansMalayalam/NotoSansMalayalam-ExtraCondensedSemiBold.ttf
-  - fonts/NotoSansMalayalam/NotoSansMalayalam-ExtraCondensedThin.ttf
-  - fonts/NotoSansMalayalam/NotoSansMalayalam-ExtraLight.ttf
-  - fonts/NotoSansMalayalam/NotoSansMalayalam-Light.ttf
-  - fonts/NotoSansMalayalam/NotoSansMalayalam-Medium.ttf
   - fonts/NotoSansMalayalam/NotoSansMalayalam-Regular.ttf
-  - fonts/NotoSansMalayalam/NotoSansMalayalam-SemiBold.ttf
-  - fonts/NotoSansMalayalam/NotoSansMalayalam-SemiCondensed.ttf
-  - fonts/NotoSansMalayalam/NotoSansMalayalam-SemiCondensedBlack.ttf
-  - fonts/NotoSansMalayalam/NotoSansMalayalam-SemiCondensedBold.ttf
-  - fonts/NotoSansMalayalam/NotoSansMalayalam-SemiCondensedExtraBold.ttf
-  - fonts/NotoSansMalayalam/NotoSansMalayalam-SemiCondensedExtraLight.ttf
-  - fonts/NotoSansMalayalam/NotoSansMalayalam-SemiCondensedLight.ttf
-  - fonts/NotoSansMalayalam/NotoSansMalayalam-SemiCondensedMedium.ttf
-  - fonts/NotoSansMalayalam/NotoSansMalayalam-SemiCondensedSemiBold.ttf
-  - fonts/NotoSansMalayalam/NotoSansMalayalam-SemiCondensedThin.ttf
-  - fonts/NotoSansMalayalam/NotoSansMalayalam-Thin.ttf
-  - fonts/NotoSansMalayalam/NotoSansMalayalam-UI-VF.ttf
-  - fonts/NotoSansMalayalam/NotoSansMalayalamUI-Black.ttf
-  - fonts/NotoSansMalayalam/NotoSansMalayalamUI-Bold.ttf
-  - fonts/NotoSansMalayalam/NotoSansMalayalamUI-Condensed.ttf
-  - fonts/NotoSansMalayalam/NotoSansMalayalamUI-CondensedBlack.ttf
-  - fonts/NotoSansMalayalam/NotoSansMalayalamUI-CondensedBold.ttf
-  - fonts/NotoSansMalayalam/NotoSansMalayalamUI-CondensedExtraBold.ttf
-  - fonts/NotoSansMalayalam/NotoSansMalayalamUI-CondensedExtraLight.ttf
-  - fonts/NotoSansMalayalam/NotoSansMalayalamUI-CondensedLight.ttf
-  - fonts/NotoSansMalayalam/NotoSansMalayalamUI-CondensedMedium.ttf
-  - fonts/NotoSansMalayalam/NotoSansMalayalamUI-CondensedSemiBold.ttf
-  - fonts/NotoSansMalayalam/NotoSansMalayalamUI-CondensedThin.ttf
-  - fonts/NotoSansMalayalam/NotoSansMalayalamUI-ExtraBold.ttf
-  - fonts/NotoSansMalayalam/NotoSansMalayalamUI-ExtraCondensed.ttf
-  - fonts/NotoSansMalayalam/NotoSansMalayalamUI-ExtraCondensedBlack.ttf
-  - fonts/NotoSansMalayalam/NotoSansMalayalamUI-ExtraCondensedBold.ttf
-  - fonts/NotoSansMalayalam/NotoSansMalayalamUI-ExtraCondensedExtraBold.ttf
-  - fonts/NotoSansMalayalam/NotoSansMalayalamUI-ExtraCondensedExtraLight.ttf
-  - fonts/NotoSansMalayalam/NotoSansMalayalamUI-ExtraCondensedLight.ttf
-  - fonts/NotoSansMalayalam/NotoSansMalayalamUI-ExtraCondensedMedium.ttf
-  - fonts/NotoSansMalayalam/NotoSansMalayalamUI-ExtraCondensedSemiBold.ttf
-  - fonts/NotoSansMalayalam/NotoSansMalayalamUI-ExtraCondensedThin.ttf
-  - fonts/NotoSansMalayalam/NotoSansMalayalamUI-ExtraLight.ttf
-  - fonts/NotoSansMalayalam/NotoSansMalayalamUI-Light.ttf
-  - fonts/NotoSansMalayalam/NotoSansMalayalamUI-Medium.ttf
-  - fonts/NotoSansMalayalam/NotoSansMalayalamUI-Regular.ttf
-  - fonts/NotoSansMalayalam/NotoSansMalayalamUI-SemiBold.ttf
-  - fonts/NotoSansMalayalam/NotoSansMalayalamUI-SemiCondensed.ttf
-  - fonts/NotoSansMalayalam/NotoSansMalayalamUI-SemiCondensedBlack.ttf
-  - fonts/NotoSansMalayalam/NotoSansMalayalamUI-SemiCondensedBold.ttf
-  - fonts/NotoSansMalayalam/NotoSansMalayalamUI-SemiCondensedExtraBold.ttf
-  - fonts/NotoSansMalayalam/NotoSansMalayalamUI-SemiCondensedExtraLight.ttf
-  - fonts/NotoSansMalayalam/NotoSansMalayalamUI-SemiCondensedLight.ttf
-  - fonts/NotoSansMalayalam/NotoSansMalayalamUI-SemiCondensedMedium.ttf
-  - fonts/NotoSansMalayalam/NotoSansMalayalamUI-SemiCondensedSemiBold.ttf
-  - fonts/NotoSansMalayalam/NotoSansMalayalamUI-SemiCondensedThin.ttf
-  - fonts/NotoSansMalayalam/NotoSansMalayalamUI-Thin.ttf
-  - fonts/NotoSansMalayalam/NotoSansMalayalam[wdth,wght].ttf
-  - fonts/NotoSansMalayalam/NotoSansMalayalam[wght].ttf
   unicode_ranges:
   - [0x0000, 0x0000]
   - [0x000D, 0x000D]
@@ -17403,10 +16536,7 @@
 - family: NotoSansMedefaidrin
   files:
   - fonts/NotoSansMedefaidrin/NotoSansMedefaidrin-Bold.ttf
-  - fonts/NotoSansMedefaidrin/NotoSansMedefaidrin-Medium.ttf
   - fonts/NotoSansMedefaidrin/NotoSansMedefaidrin-Regular.ttf
-  - fonts/NotoSansMedefaidrin/NotoSansMedefaidrin-SemiBold.ttf
-  - fonts/NotoSansMedefaidrin/NotoSansMedefaidrin[wght].ttf
   unicode_ranges:
   - [0x0000, 0x0000]
   - [0x000D, 0x000D]
@@ -17459,16 +16589,8 @@
   - [0x16E40, 0x16E9A]
 - family: NotoSansMeeteiMayek
   files:
-  - fonts/NotoSansMeeteiMayek/NotoSansMeeteiMayek-Black.ttf
   - fonts/NotoSansMeeteiMayek/NotoSansMeeteiMayek-Bold.ttf
-  - fonts/NotoSansMeeteiMayek/NotoSansMeeteiMayek-ExtraBold.ttf
-  - fonts/NotoSansMeeteiMayek/NotoSansMeeteiMayek-ExtraLight.ttf
-  - fonts/NotoSansMeeteiMayek/NotoSansMeeteiMayek-Light.ttf
-  - fonts/NotoSansMeeteiMayek/NotoSansMeeteiMayek-Medium.ttf
   - fonts/NotoSansMeeteiMayek/NotoSansMeeteiMayek-Regular.ttf
-  - fonts/NotoSansMeeteiMayek/NotoSansMeeteiMayek-SemiBold.ttf
-  - fonts/NotoSansMeeteiMayek/NotoSansMeeteiMayek-Thin.ttf
-  - fonts/NotoSansMeeteiMayek/NotoSansMeeteiMayek[wght].ttf
   unicode_ranges:
   - [0x0000, 0x0000]
   - [0x000D, 0x000D]
@@ -17525,8 +16647,7 @@
   - [0xABC0, 0xABED]
   - [0xABF0, 0xABF9]
 - family: NotoSansMendeKikakui
-  files:
-  - fonts/NotoSansMendeKikakui/NotoSansMendeKikakui-Regular.ttf
+  files: []
   unicode_ranges:
   - [0x0000, 0x0000]
   - [0x000D, 0x000D]
@@ -17815,44 +16936,8 @@
   - [0x11660, 0x1166C]
 - family: NotoSansMono
   files:
-  - fonts/NotoSansMono/NotoSansMono-Black.ttf
   - fonts/NotoSansMono/NotoSansMono-Bold.ttf
-  - fonts/NotoSansMono/NotoSansMono-Condensed.ttf
-  - fonts/NotoSansMono/NotoSansMono-CondensedBlack.ttf
-  - fonts/NotoSansMono/NotoSansMono-CondensedBold.ttf
-  - fonts/NotoSansMono/NotoSansMono-CondensedExtraBold.ttf
-  - fonts/NotoSansMono/NotoSansMono-CondensedExtraLight.ttf
-  - fonts/NotoSansMono/NotoSansMono-CondensedLight.ttf
-  - fonts/NotoSansMono/NotoSansMono-CondensedMedium.ttf
-  - fonts/NotoSansMono/NotoSansMono-CondensedSemiBold.ttf
-  - fonts/NotoSansMono/NotoSansMono-CondensedThin.ttf
-  - fonts/NotoSansMono/NotoSansMono-ExtraBold.ttf
-  - fonts/NotoSansMono/NotoSansMono-ExtraCondensed.ttf
-  - fonts/NotoSansMono/NotoSansMono-ExtraCondensedBlack.ttf
-  - fonts/NotoSansMono/NotoSansMono-ExtraCondensedBold.ttf
-  - fonts/NotoSansMono/NotoSansMono-ExtraCondensedExtraBold.ttf
-  - fonts/NotoSansMono/NotoSansMono-ExtraCondensedExtraLight.ttf
-  - fonts/NotoSansMono/NotoSansMono-ExtraCondensedLight.ttf
-  - fonts/NotoSansMono/NotoSansMono-ExtraCondensedMedium.ttf
-  - fonts/NotoSansMono/NotoSansMono-ExtraCondensedSemiBold.ttf
-  - fonts/NotoSansMono/NotoSansMono-ExtraCondensedThin.ttf
-  - fonts/NotoSansMono/NotoSansMono-ExtraLight.ttf
-  - fonts/NotoSansMono/NotoSansMono-Light.ttf
-  - fonts/NotoSansMono/NotoSansMono-Medium.ttf
   - fonts/NotoSansMono/NotoSansMono-Regular.ttf
-  - fonts/NotoSansMono/NotoSansMono-SemiBold.ttf
-  - fonts/NotoSansMono/NotoSansMono-SemiCondensed.ttf
-  - fonts/NotoSansMono/NotoSansMono-SemiCondensedBlack.ttf
-  - fonts/NotoSansMono/NotoSansMono-SemiCondensedBold.ttf
-  - fonts/NotoSansMono/NotoSansMono-SemiCondensedExtraBold.ttf
-  - fonts/NotoSansMono/NotoSansMono-SemiCondensedExtraLight.ttf
-  - fonts/NotoSansMono/NotoSansMono-SemiCondensedLight.ttf
-  - fonts/NotoSansMono/NotoSansMono-SemiCondensedMedium.ttf
-  - fonts/NotoSansMono/NotoSansMono-SemiCondensedSemiBold.ttf
-  - fonts/NotoSansMono/NotoSansMono-SemiCondensedThin.ttf
-  - fonts/NotoSansMono/NotoSansMono-Thin.ttf
-  - fonts/NotoSansMono/NotoSansMono[wdth,wght].ttf
-  - fonts/NotoSansMono/NotoSansMono[wght].ttf
   unicode_ranges:
   - [0x0000, 0x0000]
   - [0x000D, 0x000D]
@@ -18098,44 +17183,8 @@
   - [0x1129F, 0x112A9]
 - family: NotoSansMyanmar
   files:
-  - fonts/NotoSansMyanmar/NotoSansMyanmar-Black.ttf
   - fonts/NotoSansMyanmar/NotoSansMyanmar-Bold.ttf
-  - fonts/NotoSansMyanmar/NotoSansMyanmar-Condensed.ttf
-  - fonts/NotoSansMyanmar/NotoSansMyanmar-CondensedBlack.ttf
-  - fonts/NotoSansMyanmar/NotoSansMyanmar-CondensedBold.ttf
-  - fonts/NotoSansMyanmar/NotoSansMyanmar-CondensedExtraBold.ttf
-  - fonts/NotoSansMyanmar/NotoSansMyanmar-CondensedExtraLight.ttf
-  - fonts/NotoSansMyanmar/NotoSansMyanmar-CondensedLight.ttf
-  - fonts/NotoSansMyanmar/NotoSansMyanmar-CondensedMedium.ttf
-  - fonts/NotoSansMyanmar/NotoSansMyanmar-CondensedSemiBold.ttf
-  - fonts/NotoSansMyanmar/NotoSansMyanmar-CondensedThin.ttf
-  - fonts/NotoSansMyanmar/NotoSansMyanmar-ExtraBold.ttf
-  - fonts/NotoSansMyanmar/NotoSansMyanmar-ExtraCondensed.ttf
-  - fonts/NotoSansMyanmar/NotoSansMyanmar-ExtraCondensedBlack.ttf
-  - fonts/NotoSansMyanmar/NotoSansMyanmar-ExtraCondensedBold.ttf
-  - fonts/NotoSansMyanmar/NotoSansMyanmar-ExtraCondensedExtraBold.ttf
-  - fonts/NotoSansMyanmar/NotoSansMyanmar-ExtraCondensedExtraLight.ttf
-  - fonts/NotoSansMyanmar/NotoSansMyanmar-ExtraCondensedLight.ttf
-  - fonts/NotoSansMyanmar/NotoSansMyanmar-ExtraCondensedMedium.ttf
-  - fonts/NotoSansMyanmar/NotoSansMyanmar-ExtraCondensedSemiBold.ttf
-  - fonts/NotoSansMyanmar/NotoSansMyanmar-ExtraCondensedThin.ttf
-  - fonts/NotoSansMyanmar/NotoSansMyanmar-ExtraLight.ttf
-  - fonts/NotoSansMyanmar/NotoSansMyanmar-Light.ttf
-  - fonts/NotoSansMyanmar/NotoSansMyanmar-Medium.ttf
   - fonts/NotoSansMyanmar/NotoSansMyanmar-Regular.ttf
-  - fonts/NotoSansMyanmar/NotoSansMyanmar-SemiBold.ttf
-  - fonts/NotoSansMyanmar/NotoSansMyanmar-SemiCondensed.ttf
-  - fonts/NotoSansMyanmar/NotoSansMyanmar-SemiCondensedBlack.ttf
-  - fonts/NotoSansMyanmar/NotoSansMyanmar-SemiCondensedBold.ttf
-  - fonts/NotoSansMyanmar/NotoSansMyanmar-SemiCondensedExtraBold.ttf
-  - fonts/NotoSansMyanmar/NotoSansMyanmar-SemiCondensedExtraLight.ttf
-  - fonts/NotoSansMyanmar/NotoSansMyanmar-SemiCondensedLight.ttf
-  - fonts/NotoSansMyanmar/NotoSansMyanmar-SemiCondensedMedium.ttf
-  - fonts/NotoSansMyanmar/NotoSansMyanmar-SemiCondensedSemiBold.ttf
-  - fonts/NotoSansMyanmar/NotoSansMyanmar-SemiCondensedThin.ttf
-  - fonts/NotoSansMyanmar/NotoSansMyanmar-Thin.ttf
-  - fonts/NotoSansMyanmar/NotoSansMyanmar[wdth,wght].ttf
-  - fonts/NotoSansMyanmar/NotoSansMyanmar[wght].ttf
   unicode_ranges:
   - [0x0000, 0x0000]
   - [0x000D, 0x000D]
@@ -18257,7 +17306,6 @@
   files:
   - fonts/NotoSansNKoUnjoined/NotoSansNKoUnjoined-Bold.ttf
   - fonts/NotoSansNKoUnjoined/NotoSansNKoUnjoined-Regular.ttf
-  - fonts/NotoSansNKoUnjoined/NotoSansNKoUnjoined[wght].ttf
   unicode_ranges:
   - [0x0000, 0x0000]
   - [0x000D, 0x000D]
@@ -18374,7 +17422,6 @@
   files:
   - fonts/NotoSansNagMundari/NotoSansNagMundari-Bold.ttf
   - fonts/NotoSansNagMundari/NotoSansNagMundari-Regular.ttf
-  - fonts/NotoSansNagMundari/NotoSansNagMundari[wght].ttf
   unicode_ranges:
   - [0x0020, 0x007E]
   - [0x00A0, 0x00A3]
@@ -18489,10 +17536,7 @@
 - family: NotoSansNewTaiLue
   files:
   - fonts/NotoSansNewTaiLue/NotoSansNewTaiLue-Bold.ttf
-  - fonts/NotoSansNewTaiLue/NotoSansNewTaiLue-Medium.ttf
   - fonts/NotoSansNewTaiLue/NotoSansNewTaiLue-Regular.ttf
-  - fonts/NotoSansNewTaiLue/NotoSansNewTaiLue-Semibold.ttf
-  - fonts/NotoSansNewTaiLue/NotoSansNewTaiLue[wght].ttf
   unicode_ranges:
   - [0x0000, 0x0000]
   - [0x000D, 0x000D]
@@ -18722,10 +17766,7 @@
 - family: NotoSansOlChiki
   files:
   - fonts/NotoSansOlChiki/NotoSansOlChiki-Bold.ttf
-  - fonts/NotoSansOlChiki/NotoSansOlChiki-Medium.ttf
   - fonts/NotoSansOlChiki/NotoSansOlChiki-Regular.ttf
-  - fonts/NotoSansOlChiki/NotoSansOlChiki-SemiBold.ttf
-  - fonts/NotoSansOlChiki/NotoSansOlChiki[wght].ttf
   unicode_ranges:
   - [0x0000, 0x0000]
   - [0x000D, 0x000D]
@@ -19212,20 +18253,8 @@
   - [0x10C00, 0x10C48]
 - family: NotoSansOriya
   files:
-  - fonts/NotoSansOriya/NotoSansOriya-Black.ttf
   - fonts/NotoSansOriya/NotoSansOriya-Bold.ttf
-  - fonts/NotoSansOriya/NotoSansOriya-Condensed.ttf
-  - fonts/NotoSansOriya/NotoSansOriya-CondensedBlack.ttf
-  - fonts/NotoSansOriya/NotoSansOriya-CondensedBold.ttf
-  - fonts/NotoSansOriya/NotoSansOriya-CondensedThin.ttf
-  - fonts/NotoSansOriya/NotoSansOriya-ExtraCondensed.ttf
-  - fonts/NotoSansOriya/NotoSansOriya-ExtraCondensedBlack.ttf
-  - fonts/NotoSansOriya/NotoSansOriya-ExtraCondensedBold.ttf
-  - fonts/NotoSansOriya/NotoSansOriya-ExtraCondensedThin.ttf
   - fonts/NotoSansOriya/NotoSansOriya-Regular.ttf
-  - fonts/NotoSansOriya/NotoSansOriya-Thin.ttf
-  - fonts/NotoSansOriya/NotoSansOriya[wdth,wght].ttf
-  - fonts/NotoSansOriya/NotoSansOriya[wght].ttf
   unicode_ranges:
   - [0x0000, 0x0000]
   - [0x000D, 0x000D]
@@ -20191,20 +19220,8 @@
   - [0x1DAA1, 0x1DAAF]
 - family: NotoSansSinhala
   files:
-  - fonts/NotoSansSinhala/NotoSansSinhala-Black.ttf
-  - fonts/NotoSansSinhala/NotoSansSinhala-BlackCondensed.ttf
   - fonts/NotoSansSinhala/NotoSansSinhala-Bold.ttf
-  - fonts/NotoSansSinhala/NotoSansSinhala-Condensed.ttf
-  - fonts/NotoSansSinhala/NotoSansSinhala-ExtraBold.ttf
-  - fonts/NotoSansSinhala/NotoSansSinhala-ExtraLight.ttf
-  - fonts/NotoSansSinhala/NotoSansSinhala-Light.ttf
-  - fonts/NotoSansSinhala/NotoSansSinhala-Medium.ttf
   - fonts/NotoSansSinhala/NotoSansSinhala-Regular.ttf
-  - fonts/NotoSansSinhala/NotoSansSinhala-SemiBold.ttf
-  - fonts/NotoSansSinhala/NotoSansSinhala-Thin.ttf
-  - fonts/NotoSansSinhala/NotoSansSinhala-ThinCondensed.ttf
-  - fonts/NotoSansSinhala/NotoSansSinhala[wdth,wght].ttf
-  - fonts/NotoSansSinhala/NotoSansSinhala[wght].ttf
   unicode_ranges:
   - [0x000D, 0x000D]
   - [0x0020, 0x007E]
@@ -20326,10 +19343,7 @@
 - family: NotoSansSoraSompeng
   files:
   - fonts/NotoSansSoraSompeng/NotoSansSoraSompeng-Bold.ttf
-  - fonts/NotoSansSoraSompeng/NotoSansSoraSompeng-Medium.ttf
   - fonts/NotoSansSoraSompeng/NotoSansSoraSompeng-Regular.ttf
-  - fonts/NotoSansSoraSompeng/NotoSansSoraSompeng-SemiBold.ttf
-  - fonts/NotoSansSoraSompeng/NotoSansSoraSompeng[wght].ttf
   unicode_ranges:
   - [0x0000, 0x0000]
   - [0x000D, 0x000D]
@@ -20439,10 +19453,7 @@
 - family: NotoSansSundanese
   files:
   - fonts/NotoSansSundanese/NotoSansSundanese-Bold.ttf
-  - fonts/NotoSansSundanese/NotoSansSundanese-Medium.ttf
   - fonts/NotoSansSundanese/NotoSansSundanese-Regular.ttf
-  - fonts/NotoSansSundanese/NotoSansSundanese-SemiBold.ttf
-  - fonts/NotoSansSundanese/NotoSansSundanese[wght].ttf
   unicode_ranges:
   - [0x0000, 0x0000]
   - [0x000D, 0x000D]
@@ -20613,16 +19624,8 @@
   - [0xA800, 0xA82C]
 - family: NotoSansSymbols
   files:
-  - fonts/NotoSansSymbols/NotoSansSymbols-Black.ttf
   - fonts/NotoSansSymbols/NotoSansSymbols-Bold.ttf
-  - fonts/NotoSansSymbols/NotoSansSymbols-ExtraBold.ttf
-  - fonts/NotoSansSymbols/NotoSansSymbols-ExtraLight.ttf
-  - fonts/NotoSansSymbols/NotoSansSymbols-Light.ttf
-  - fonts/NotoSansSymbols/NotoSansSymbols-Medium.ttf
   - fonts/NotoSansSymbols/NotoSansSymbols-Regular.ttf
-  - fonts/NotoSansSymbols/NotoSansSymbols-SemiBold.ttf
-  - fonts/NotoSansSymbols/NotoSansSymbols-Thin.ttf
-  - fonts/NotoSansSymbols/NotoSansSymbols[wght].ttf
   unicode_ranges:
   - [0x0000, 0x0000]
   - [0x000D, 0x000D]
@@ -20934,10 +19937,7 @@
   - [0x1FBF0, 0x1FBF9]
 - family: NotoSansSyriac
   files:
-  - fonts/NotoSansSyriac/NotoSansSyriac-Black.ttf
   - fonts/NotoSansSyriac/NotoSansSyriac-Regular.ttf
-  - fonts/NotoSansSyriac/NotoSansSyriac-Thin.ttf
-  - fonts/NotoSansSyriac/NotoSansSyriac[wght].ttf
   unicode_ranges:
   - [0x0000, 0x0000]
   - [0x000D, 0x000D]
@@ -21006,10 +20006,7 @@
   - [0x2670, 0x2671]
 - family: NotoSansSyriacEastern
   files:
-  - fonts/NotoSansSyriacEastern/NotoSansSyriacEastern-Black.ttf
   - fonts/NotoSansSyriacEastern/NotoSansSyriacEastern-Regular.ttf
-  - fonts/NotoSansSyriacEastern/NotoSansSyriacEastern-Thin.ttf
-  - fonts/NotoSansSyriacEastern/NotoSansSyriacEastern[wght].ttf
   unicode_ranges:
   - [0x0000, 0x0000]
   - [0x000D, 0x000D]
@@ -21078,10 +20075,7 @@
   - [0x2670, 0x2671]
 - family: NotoSansSyriacWestern
   files:
-  - fonts/NotoSansSyriacWestern/NotoSansSyriacWestern-Black.ttf
   - fonts/NotoSansSyriacWestern/NotoSansSyriacWestern-Regular.ttf
-  - fonts/NotoSansSyriacWestern/NotoSansSyriacWestern-Thin.ttf
-  - fonts/NotoSansSyriacWestern/NotoSansSyriacWestern[wght].ttf
   unicode_ranges:
   - [0x0000, 0x0000]
   - [0x000D, 0x000D]
@@ -21325,10 +20319,7 @@
 - family: NotoSansTaiTham
   files:
   - fonts/NotoSansTaiTham/NotoSansTaiTham-Bold.ttf
-  - fonts/NotoSansTaiTham/NotoSansTaiTham-Medium.ttf
   - fonts/NotoSansTaiTham/NotoSansTaiTham-Regular.ttf
-  - fonts/NotoSansTaiTham/NotoSansTaiTham-SemiBold.ttf
-  - fonts/NotoSansTaiTham/NotoSansTaiTham[wght].ttf
   unicode_ranges:
   - [0x0000, 0x0000]
   - [0x000D, 0x000D]
@@ -21499,81 +20490,8 @@
   - [0x116C0, 0x116C9]
 - family: NotoSansTamil
   files:
-  - fonts/NotoSansTamil/NotoSansTamil-Black.ttf
   - fonts/NotoSansTamil/NotoSansTamil-Bold.ttf
-  - fonts/NotoSansTamil/NotoSansTamil-Condensed.ttf
-  - fonts/NotoSansTamil/NotoSansTamil-CondensedBlack.ttf
-  - fonts/NotoSansTamil/NotoSansTamil-CondensedBold.ttf
-  - fonts/NotoSansTamil/NotoSansTamil-CondensedExtraBold.ttf
-  - fonts/NotoSansTamil/NotoSansTamil-CondensedExtraLight.ttf
-  - fonts/NotoSansTamil/NotoSansTamil-CondensedLight.ttf
-  - fonts/NotoSansTamil/NotoSansTamil-CondensedMedium.ttf
-  - fonts/NotoSansTamil/NotoSansTamil-CondensedSemiBold.ttf
-  - fonts/NotoSansTamil/NotoSansTamil-CondensedThin.ttf
-  - fonts/NotoSansTamil/NotoSansTamil-ExtraBold.ttf
-  - fonts/NotoSansTamil/NotoSansTamil-ExtraCondensed.ttf
-  - fonts/NotoSansTamil/NotoSansTamil-ExtraCondensedBlack.ttf
-  - fonts/NotoSansTamil/NotoSansTamil-ExtraCondensedBold.ttf
-  - fonts/NotoSansTamil/NotoSansTamil-ExtraCondensedExtraBold.ttf
-  - fonts/NotoSansTamil/NotoSansTamil-ExtraCondensedExtraLight.ttf
-  - fonts/NotoSansTamil/NotoSansTamil-ExtraCondensedLight.ttf
-  - fonts/NotoSansTamil/NotoSansTamil-ExtraCondensedMedium.ttf
-  - fonts/NotoSansTamil/NotoSansTamil-ExtraCondensedSemiBold.ttf
-  - fonts/NotoSansTamil/NotoSansTamil-ExtraCondensedThin.ttf
-  - fonts/NotoSansTamil/NotoSansTamil-ExtraLight.ttf
-  - fonts/NotoSansTamil/NotoSansTamil-Light.ttf
-  - fonts/NotoSansTamil/NotoSansTamil-Medium.ttf
   - fonts/NotoSansTamil/NotoSansTamil-Regular.ttf
-  - fonts/NotoSansTamil/NotoSansTamil-SemiBold.ttf
-  - fonts/NotoSansTamil/NotoSansTamil-SemiCondensed.ttf
-  - fonts/NotoSansTamil/NotoSansTamil-SemiCondensedBlack.ttf
-  - fonts/NotoSansTamil/NotoSansTamil-SemiCondensedBold.ttf
-  - fonts/NotoSansTamil/NotoSansTamil-SemiCondensedExtraBold.ttf
-  - fonts/NotoSansTamil/NotoSansTamil-SemiCondensedExtraLight.ttf
-  - fonts/NotoSansTamil/NotoSansTamil-SemiCondensedLight.ttf
-  - fonts/NotoSansTamil/NotoSansTamil-SemiCondensedMedium.ttf
-  - fonts/NotoSansTamil/NotoSansTamil-SemiCondensedSemiBold.ttf
-  - fonts/NotoSansTamil/NotoSansTamil-SemiCondensedThin.ttf
-  - fonts/NotoSansTamil/NotoSansTamil-Thin.ttf
-  - fonts/NotoSansTamil/NotoSansTamil-UI-VF.ttf
-  - fonts/NotoSansTamil/NotoSansTamilUI-Black.ttf
-  - fonts/NotoSansTamil/NotoSansTamilUI-Bold.ttf
-  - fonts/NotoSansTamil/NotoSansTamilUI-Condensed.ttf
-  - fonts/NotoSansTamil/NotoSansTamilUI-CondensedBlack.ttf
-  - fonts/NotoSansTamil/NotoSansTamilUI-CondensedBold.ttf
-  - fonts/NotoSansTamil/NotoSansTamilUI-CondensedExtraBold.ttf
-  - fonts/NotoSansTamil/NotoSansTamilUI-CondensedExtraLight.ttf
-  - fonts/NotoSansTamil/NotoSansTamilUI-CondensedLight.ttf
-  - fonts/NotoSansTamil/NotoSansTamilUI-CondensedMedium.ttf
-  - fonts/NotoSansTamil/NotoSansTamilUI-CondensedSemiBold.ttf
-  - fonts/NotoSansTamil/NotoSansTamilUI-CondensedThin.ttf
-  - fonts/NotoSansTamil/NotoSansTamilUI-ExtraBold.ttf
-  - fonts/NotoSansTamil/NotoSansTamilUI-ExtraCondensed.ttf
-  - fonts/NotoSansTamil/NotoSansTamilUI-ExtraCondensedBlack.ttf
-  - fonts/NotoSansTamil/NotoSansTamilUI-ExtraCondensedBold.ttf
-  - fonts/NotoSansTamil/NotoSansTamilUI-ExtraCondensedExtraBold.ttf
-  - fonts/NotoSansTamil/NotoSansTamilUI-ExtraCondensedExtraLight.ttf
-  - fonts/NotoSansTamil/NotoSansTamilUI-ExtraCondensedLight.ttf
-  - fonts/NotoSansTamil/NotoSansTamilUI-ExtraCondensedMedium.ttf
-  - fonts/NotoSansTamil/NotoSansTamilUI-ExtraCondensedSemiBold.ttf
-  - fonts/NotoSansTamil/NotoSansTamilUI-ExtraCondensedThin.ttf
-  - fonts/NotoSansTamil/NotoSansTamilUI-ExtraLight.ttf
-  - fonts/NotoSansTamil/NotoSansTamilUI-Light.ttf
-  - fonts/NotoSansTamil/NotoSansTamilUI-Medium.ttf
-  - fonts/NotoSansTamil/NotoSansTamilUI-Regular.ttf
-  - fonts/NotoSansTamil/NotoSansTamilUI-SemiBold.ttf
-  - fonts/NotoSansTamil/NotoSansTamilUI-SemiCondensed.ttf
-  - fonts/NotoSansTamil/NotoSansTamilUI-SemiCondensedBlack.ttf
-  - fonts/NotoSansTamil/NotoSansTamilUI-SemiCondensedBold.ttf
-  - fonts/NotoSansTamil/NotoSansTamilUI-SemiCondensedExtraBold.ttf
-  - fonts/NotoSansTamil/NotoSansTamilUI-SemiCondensedExtraLight.ttf
-  - fonts/NotoSansTamil/NotoSansTamilUI-SemiCondensedLight.ttf
-  - fonts/NotoSansTamil/NotoSansTamilUI-SemiCondensedMedium.ttf
-  - fonts/NotoSansTamil/NotoSansTamilUI-SemiCondensedSemiBold.ttf
-  - fonts/NotoSansTamil/NotoSansTamilUI-SemiCondensedThin.ttf
-  - fonts/NotoSansTamil/NotoSansTamilUI-Thin.ttf
-  - fonts/NotoSansTamil/NotoSansTamil[wdth,wght].ttf
-  - fonts/NotoSansTamil/NotoSansTamil[wght].ttf
   unicode_ranges:
   - [0x0000, 0x0000]
   - [0x000D, 0x000D]
@@ -21707,10 +20625,7 @@
 - family: NotoSansTangsa
   files:
   - fonts/NotoSansTangsa/NotoSansTangsa-Bold.ttf
-  - fonts/NotoSansTangsa/NotoSansTangsa-Medium.ttf
   - fonts/NotoSansTangsa/NotoSansTangsa-Regular.ttf
-  - fonts/NotoSansTangsa/NotoSansTangsa-SemiBold.ttf
-  - fonts/NotoSansTangsa/NotoSansTangsa[wght].ttf
   unicode_ranges:
   - [0x0000, 0x0000]
   - [0x000D, 0x000D]
@@ -21762,8 +20677,7 @@
   - [0x16A70, 0x16ABE]
   - [0x16AC0, 0x16AC9]
 - family: NotoSansTelugu
-  files:
-  - fonts/NotoSansTelugu/NotoSansTelugu-UI-VF.ttf
+  files: []
   unicode_ranges:
   - [0x0000, 0x0000]
   - [0x000D, 0x000D]
@@ -21803,22 +20717,7 @@
   - [0x2212, 0x2212]
   - [0x25CC, 0x25CC]
 - family: NotoSansTelugu
-  files:
-  - fonts/NotoSansTelugu/NotoSansTeluguUI-Condensed.ttf
-  - fonts/NotoSansTelugu/NotoSansTeluguUI-CondensedBlack.ttf
-  - fonts/NotoSansTelugu/NotoSansTeluguUI-CondensedBold.ttf
-  - fonts/NotoSansTelugu/NotoSansTeluguUI-CondensedExtraBold.ttf
-  - fonts/NotoSansTelugu/NotoSansTeluguUI-CondensedMedium.ttf
-  - fonts/NotoSansTelugu/NotoSansTeluguUI-CondensedSemiBold.ttf
-  - fonts/NotoSansTelugu/NotoSansTeluguUI-ExtraCondensed.ttf
-  - fonts/NotoSansTelugu/NotoSansTeluguUI-ExtraCondensedBlack.ttf
-  - fonts/NotoSansTelugu/NotoSansTeluguUI-ExtraCondensedBold.ttf
-  - fonts/NotoSansTelugu/NotoSansTeluguUI-ExtraCondensedExtraBold.ttf
-  - fonts/NotoSansTelugu/NotoSansTeluguUI-ExtraCondensedExtraLight.ttf
-  - fonts/NotoSansTelugu/NotoSansTeluguUI-ExtraCondensedLight.ttf
-  - fonts/NotoSansTelugu/NotoSansTeluguUI-ExtraCondensedMedium.ttf
-  - fonts/NotoSansTelugu/NotoSansTeluguUI-ExtraCondensedSemiBold.ttf
-  - fonts/NotoSansTelugu/NotoSansTeluguUI-ExtraCondensedThin.ttf
+  files: []
   unicode_ranges:
   - [0x0000, 0x0000]
   - [0x000D, 0x000D]
@@ -21857,65 +20756,8 @@
   - [0x25CC, 0x25CC]
 - family: NotoSansTelugu
   files:
-  - fonts/NotoSansTelugu/NotoSansTelugu-Black.ttf
   - fonts/NotoSansTelugu/NotoSansTelugu-Bold.ttf
-  - fonts/NotoSansTelugu/NotoSansTelugu-Condensed.ttf
-  - fonts/NotoSansTelugu/NotoSansTelugu-CondensedBlack.ttf
-  - fonts/NotoSansTelugu/NotoSansTelugu-CondensedBold.ttf
-  - fonts/NotoSansTelugu/NotoSansTelugu-CondensedExtraBold.ttf
-  - fonts/NotoSansTelugu/NotoSansTelugu-CondensedExtraLight.ttf
-  - fonts/NotoSansTelugu/NotoSansTelugu-CondensedLight.ttf
-  - fonts/NotoSansTelugu/NotoSansTelugu-CondensedMedium.ttf
-  - fonts/NotoSansTelugu/NotoSansTelugu-CondensedSemiBold.ttf
-  - fonts/NotoSansTelugu/NotoSansTelugu-CondensedThin.ttf
-  - fonts/NotoSansTelugu/NotoSansTelugu-ExtraBold.ttf
-  - fonts/NotoSansTelugu/NotoSansTelugu-ExtraCondensed.ttf
-  - fonts/NotoSansTelugu/NotoSansTelugu-ExtraCondensedBlack.ttf
-  - fonts/NotoSansTelugu/NotoSansTelugu-ExtraCondensedBold.ttf
-  - fonts/NotoSansTelugu/NotoSansTelugu-ExtraCondensedExtraBold.ttf
-  - fonts/NotoSansTelugu/NotoSansTelugu-ExtraCondensedExtraLight.ttf
-  - fonts/NotoSansTelugu/NotoSansTelugu-ExtraCondensedLight.ttf
-  - fonts/NotoSansTelugu/NotoSansTelugu-ExtraCondensedMedium.ttf
-  - fonts/NotoSansTelugu/NotoSansTelugu-ExtraCondensedSemiBold.ttf
-  - fonts/NotoSansTelugu/NotoSansTelugu-ExtraCondensedThin.ttf
-  - fonts/NotoSansTelugu/NotoSansTelugu-ExtraLight.ttf
-  - fonts/NotoSansTelugu/NotoSansTelugu-Light.ttf
-  - fonts/NotoSansTelugu/NotoSansTelugu-Medium.ttf
   - fonts/NotoSansTelugu/NotoSansTelugu-Regular.ttf
-  - fonts/NotoSansTelugu/NotoSansTelugu-SemiBold.ttf
-  - fonts/NotoSansTelugu/NotoSansTelugu-SemiCondensed.ttf
-  - fonts/NotoSansTelugu/NotoSansTelugu-SemiCondensedBlack.ttf
-  - fonts/NotoSansTelugu/NotoSansTelugu-SemiCondensedBold.ttf
-  - fonts/NotoSansTelugu/NotoSansTelugu-SemiCondensedExtraBold.ttf
-  - fonts/NotoSansTelugu/NotoSansTelugu-SemiCondensedExtraLight.ttf
-  - fonts/NotoSansTelugu/NotoSansTelugu-SemiCondensedLight.ttf
-  - fonts/NotoSansTelugu/NotoSansTelugu-SemiCondensedMedium.ttf
-  - fonts/NotoSansTelugu/NotoSansTelugu-SemiCondensedSemiBold.ttf
-  - fonts/NotoSansTelugu/NotoSansTelugu-SemiCondensedThin.ttf
-  - fonts/NotoSansTelugu/NotoSansTelugu-Thin.ttf
-  - fonts/NotoSansTelugu/NotoSansTeluguUI-Black.ttf
-  - fonts/NotoSansTelugu/NotoSansTeluguUI-Bold.ttf
-  - fonts/NotoSansTelugu/NotoSansTeluguUI-CondensedExtraLight.ttf
-  - fonts/NotoSansTelugu/NotoSansTeluguUI-CondensedLight.ttf
-  - fonts/NotoSansTelugu/NotoSansTeluguUI-CondensedThin.ttf
-  - fonts/NotoSansTelugu/NotoSansTeluguUI-ExtraBold.ttf
-  - fonts/NotoSansTelugu/NotoSansTeluguUI-ExtraLight.ttf
-  - fonts/NotoSansTelugu/NotoSansTeluguUI-Light.ttf
-  - fonts/NotoSansTelugu/NotoSansTeluguUI-Medium.ttf
-  - fonts/NotoSansTelugu/NotoSansTeluguUI-Regular.ttf
-  - fonts/NotoSansTelugu/NotoSansTeluguUI-SemiBold.ttf
-  - fonts/NotoSansTelugu/NotoSansTeluguUI-SemiCondensed.ttf
-  - fonts/NotoSansTelugu/NotoSansTeluguUI-SemiCondensedBlack.ttf
-  - fonts/NotoSansTelugu/NotoSansTeluguUI-SemiCondensedBold.ttf
-  - fonts/NotoSansTelugu/NotoSansTeluguUI-SemiCondensedExtraBold.ttf
-  - fonts/NotoSansTelugu/NotoSansTeluguUI-SemiCondensedExtraLight.ttf
-  - fonts/NotoSansTelugu/NotoSansTeluguUI-SemiCondensedLight.ttf
-  - fonts/NotoSansTelugu/NotoSansTeluguUI-SemiCondensedMedium.ttf
-  - fonts/NotoSansTelugu/NotoSansTeluguUI-SemiCondensedSemiBold.ttf
-  - fonts/NotoSansTelugu/NotoSansTeluguUI-SemiCondensedThin.ttf
-  - fonts/NotoSansTelugu/NotoSansTeluguUI-Thin.ttf
-  - fonts/NotoSansTelugu/NotoSansTelugu[wdth,wght].ttf
-  - fonts/NotoSansTelugu/NotoSansTelugu[wght].ttf
   unicode_ranges:
   - [0x0000, 0x0000]
   - [0x000D, 0x000D]
@@ -22037,16 +20879,8 @@
   - [0x2212, 0x2212]
 - family: NotoSansThaana
   files:
-  - fonts/NotoSansThaana/NotoSansThaana-Black.ttf
   - fonts/NotoSansThaana/NotoSansThaana-Bold.ttf
-  - fonts/NotoSansThaana/NotoSansThaana-ExtraBold.ttf
-  - fonts/NotoSansThaana/NotoSansThaana-ExtraLight.ttf
-  - fonts/NotoSansThaana/NotoSansThaana-Light.ttf
-  - fonts/NotoSansThaana/NotoSansThaana-Medium.ttf
   - fonts/NotoSansThaana/NotoSansThaana-Regular.ttf
-  - fonts/NotoSansThaana/NotoSansThaana-SemiBold.ttf
-  - fonts/NotoSansThaana/NotoSansThaana-Thin.ttf
-  - fonts/NotoSansThaana/NotoSansThaana[wght].ttf
   unicode_ranges:
   - [0x000D, 0x000D]
   - [0x0020, 0x007E]
@@ -22107,44 +20941,8 @@
   - [0xFDFD, 0xFDFD]
 - family: NotoSansThai
   files:
-  - fonts/NotoSansThai/NotoSansThai-Black.ttf
   - fonts/NotoSansThai/NotoSansThai-Bold.ttf
-  - fonts/NotoSansThai/NotoSansThai-Condensed.ttf
-  - fonts/NotoSansThai/NotoSansThai-CondensedBlack.ttf
-  - fonts/NotoSansThai/NotoSansThai-CondensedBold.ttf
-  - fonts/NotoSansThai/NotoSansThai-CondensedExtraBold.ttf
-  - fonts/NotoSansThai/NotoSansThai-CondensedExtraLight.ttf
-  - fonts/NotoSansThai/NotoSansThai-CondensedLight.ttf
-  - fonts/NotoSansThai/NotoSansThai-CondensedMedium.ttf
-  - fonts/NotoSansThai/NotoSansThai-CondensedSemiBold.ttf
-  - fonts/NotoSansThai/NotoSansThai-CondensedThin.ttf
-  - fonts/NotoSansThai/NotoSansThai-ExtraBold.ttf
-  - fonts/NotoSansThai/NotoSansThai-ExtraCondensed.ttf
-  - fonts/NotoSansThai/NotoSansThai-ExtraCondensedBlack.ttf
-  - fonts/NotoSansThai/NotoSansThai-ExtraCondensedBold.ttf
-  - fonts/NotoSansThai/NotoSansThai-ExtraCondensedExtraBold.ttf
-  - fonts/NotoSansThai/NotoSansThai-ExtraCondensedExtraLight.ttf
-  - fonts/NotoSansThai/NotoSansThai-ExtraCondensedLight.ttf
-  - fonts/NotoSansThai/NotoSansThai-ExtraCondensedMedium.ttf
-  - fonts/NotoSansThai/NotoSansThai-ExtraCondensedSemiBold.ttf
-  - fonts/NotoSansThai/NotoSansThai-ExtraCondensedThin.ttf
-  - fonts/NotoSansThai/NotoSansThai-ExtraLight.ttf
-  - fonts/NotoSansThai/NotoSansThai-Light.ttf
-  - fonts/NotoSansThai/NotoSansThai-Medium.ttf
   - fonts/NotoSansThai/NotoSansThai-Regular.ttf
-  - fonts/NotoSansThai/NotoSansThai-SemiBold.ttf
-  - fonts/NotoSansThai/NotoSansThai-SemiCondensed.ttf
-  - fonts/NotoSansThai/NotoSansThai-SemiCondensedBlack.ttf
-  - fonts/NotoSansThai/NotoSansThai-SemiCondensedBold.ttf
-  - fonts/NotoSansThai/NotoSansThai-SemiCondensedExtraBold.ttf
-  - fonts/NotoSansThai/NotoSansThai-SemiCondensedExtraLight.ttf
-  - fonts/NotoSansThai/NotoSansThai-SemiCondensedLight.ttf
-  - fonts/NotoSansThai/NotoSansThai-SemiCondensedMedium.ttf
-  - fonts/NotoSansThai/NotoSansThai-SemiCondensedSemiBold.ttf
-  - fonts/NotoSansThai/NotoSansThai-SemiCondensedThin.ttf
-  - fonts/NotoSansThai/NotoSansThai-Thin.ttf
-  - fonts/NotoSansThai/NotoSansThai[wdth,wght].ttf
-  - fonts/NotoSansThai/NotoSansThai[wght].ttf
   unicode_ranges:
   - [0x0000, 0x0000]
   - [0x000D, 0x000D]
@@ -22202,44 +21000,8 @@
   - [0x25CC, 0x25CC]
 - family: NotoSansThaiLooped
   files:
-  - fonts/NotoSansThaiLooped/NotoSansThaiLooped-Black.ttf
   - fonts/NotoSansThaiLooped/NotoSansThaiLooped-Bold.ttf
-  - fonts/NotoSansThaiLooped/NotoSansThaiLooped-Condensed.ttf
-  - fonts/NotoSansThaiLooped/NotoSansThaiLooped-CondensedBlack.ttf
-  - fonts/NotoSansThaiLooped/NotoSansThaiLooped-CondensedBold.ttf
-  - fonts/NotoSansThaiLooped/NotoSansThaiLooped-CondensedExtraBold.ttf
-  - fonts/NotoSansThaiLooped/NotoSansThaiLooped-CondensedExtraLight.ttf
-  - fonts/NotoSansThaiLooped/NotoSansThaiLooped-CondensedLight.ttf
-  - fonts/NotoSansThaiLooped/NotoSansThaiLooped-CondensedMedium.ttf
-  - fonts/NotoSansThaiLooped/NotoSansThaiLooped-CondensedSemiBold.ttf
-  - fonts/NotoSansThaiLooped/NotoSansThaiLooped-CondensedThin.ttf
-  - fonts/NotoSansThaiLooped/NotoSansThaiLooped-ExtraBold.ttf
-  - fonts/NotoSansThaiLooped/NotoSansThaiLooped-ExtraCondensed.ttf
-  - fonts/NotoSansThaiLooped/NotoSansThaiLooped-ExtraCondensedBlack.ttf
-  - fonts/NotoSansThaiLooped/NotoSansThaiLooped-ExtraCondensedBold.ttf
-  - fonts/NotoSansThaiLooped/NotoSansThaiLooped-ExtraCondensedExtraBold.ttf
-  - fonts/NotoSansThaiLooped/NotoSansThaiLooped-ExtraCondensedExtraLight.ttf
-  - fonts/NotoSansThaiLooped/NotoSansThaiLooped-ExtraCondensedLight.ttf
-  - fonts/NotoSansThaiLooped/NotoSansThaiLooped-ExtraCondensedMedium.ttf
-  - fonts/NotoSansThaiLooped/NotoSansThaiLooped-ExtraCondensedSemiBold.ttf
-  - fonts/NotoSansThaiLooped/NotoSansThaiLooped-ExtraCondensedThin.ttf
-  - fonts/NotoSansThaiLooped/NotoSansThaiLooped-ExtraLight.ttf
-  - fonts/NotoSansThaiLooped/NotoSansThaiLooped-Light.ttf
-  - fonts/NotoSansThaiLooped/NotoSansThaiLooped-Medium.ttf
   - fonts/NotoSansThaiLooped/NotoSansThaiLooped-Regular.ttf
-  - fonts/NotoSansThaiLooped/NotoSansThaiLooped-SemiBold.ttf
-  - fonts/NotoSansThaiLooped/NotoSansThaiLooped-SemiCondensed.ttf
-  - fonts/NotoSansThaiLooped/NotoSansThaiLooped-SemiCondensedBlack.ttf
-  - fonts/NotoSansThaiLooped/NotoSansThaiLooped-SemiCondensedBold.ttf
-  - fonts/NotoSansThaiLooped/NotoSansThaiLooped-SemiCondensedExtraBold.ttf
-  - fonts/NotoSansThaiLooped/NotoSansThaiLooped-SemiCondensedExtraLight.ttf
-  - fonts/NotoSansThaiLooped/NotoSansThaiLooped-SemiCondensedLight.ttf
-  - fonts/NotoSansThaiLooped/NotoSansThaiLooped-SemiCondensedMedium.ttf
-  - fonts/NotoSansThaiLooped/NotoSansThaiLooped-SemiCondensedSemiBold.ttf
-  - fonts/NotoSansThaiLooped/NotoSansThaiLooped-SemiCondensedThin.ttf
-  - fonts/NotoSansThaiLooped/NotoSansThaiLooped-Thin.ttf
-  - fonts/NotoSansThaiLooped/NotoSansThaiLooped[wdth,wght].ttf
-  - fonts/NotoSansThaiLooped/NotoSansThaiLooped[wght].ttf
   unicode_ranges:
   - [0x0000, 0x0000]
   - [0x000D, 0x000D]
@@ -22304,7 +21066,6 @@
   - fonts/NotoSansTifinagh/NotoSansTifinaghAdrar-Regular.ttf
   - fonts/NotoSansTifinagh/NotoSansTifinaghAgrawImazighen-Regular.ttf
   - fonts/NotoSansTifinagh/NotoSansTifinaghAhaggar-Regular.ttf
-  - fonts/NotoSansTifinagh/NotoSansTifinaghAir-Regular.ttf
   - fonts/NotoSansTifinagh/NotoSansTifinaghAzawagh-Regular.ttf
   - fonts/NotoSansTifinagh/NotoSansTifinaghGhat-Regular.ttf
   - fonts/NotoSansTifinagh/NotoSansTifinaghHawad-Regular.ttf
@@ -22537,10 +21298,7 @@
 - family: NotoSansVithkuqi
   files:
   - fonts/NotoSansVithkuqi/NotoSansVithkuqi-Bold.ttf
-  - fonts/NotoSansVithkuqi/NotoSansVithkuqi-Medium.ttf
   - fonts/NotoSansVithkuqi/NotoSansVithkuqi-Regular.ttf
-  - fonts/NotoSansVithkuqi/NotoSansVithkuqi-SemiBold.ttf
-  - fonts/NotoSansVithkuqi/NotoSansVithkuqi[wght].ttf
   unicode_ranges:
   - [0x000D, 0x000D]
   - [0x0020, 0x007E]
@@ -22822,44 +21580,8 @@
   - [0x11A00, 0x11A47]
 - family: NotoSerif
   files:
-  - fonts/NotoSerif/NotoSerif-Black.ttf
   - fonts/NotoSerif/NotoSerif-Bold.ttf
-  - fonts/NotoSerif/NotoSerif-Condensed.ttf
-  - fonts/NotoSerif/NotoSerif-CondensedBlack.ttf
-  - fonts/NotoSerif/NotoSerif-CondensedBold.ttf
-  - fonts/NotoSerif/NotoSerif-CondensedExtraBold.ttf
-  - fonts/NotoSerif/NotoSerif-CondensedExtraLight.ttf
-  - fonts/NotoSerif/NotoSerif-CondensedLight.ttf
-  - fonts/NotoSerif/NotoSerif-CondensedMedium.ttf
-  - fonts/NotoSerif/NotoSerif-CondensedSemiBold.ttf
-  - fonts/NotoSerif/NotoSerif-CondensedThin.ttf
-  - fonts/NotoSerif/NotoSerif-ExtraBold.ttf
-  - fonts/NotoSerif/NotoSerif-ExtraCondensed.ttf
-  - fonts/NotoSerif/NotoSerif-ExtraCondensedBlack.ttf
-  - fonts/NotoSerif/NotoSerif-ExtraCondensedBold.ttf
-  - fonts/NotoSerif/NotoSerif-ExtraCondensedExtraBold.ttf
-  - fonts/NotoSerif/NotoSerif-ExtraCondensedExtraLight.ttf
-  - fonts/NotoSerif/NotoSerif-ExtraCondensedLight.ttf
-  - fonts/NotoSerif/NotoSerif-ExtraCondensedMedium.ttf
-  - fonts/NotoSerif/NotoSerif-ExtraCondensedSemiBold.ttf
-  - fonts/NotoSerif/NotoSerif-ExtraCondensedThin.ttf
-  - fonts/NotoSerif/NotoSerif-ExtraLight.ttf
-  - fonts/NotoSerif/NotoSerif-Light.ttf
-  - fonts/NotoSerif/NotoSerif-Medium.ttf
   - fonts/NotoSerif/NotoSerif-Regular.ttf
-  - fonts/NotoSerif/NotoSerif-SemiBold.ttf
-  - fonts/NotoSerif/NotoSerif-SemiCondensed.ttf
-  - fonts/NotoSerif/NotoSerif-SemiCondensedBlack.ttf
-  - fonts/NotoSerif/NotoSerif-SemiCondensedBold.ttf
-  - fonts/NotoSerif/NotoSerif-SemiCondensedExtraBold.ttf
-  - fonts/NotoSerif/NotoSerif-SemiCondensedExtraLight.ttf
-  - fonts/NotoSerif/NotoSerif-SemiCondensedLight.ttf
-  - fonts/NotoSerif/NotoSerif-SemiCondensedMedium.ttf
-  - fonts/NotoSerif/NotoSerif-SemiCondensedSemiBold.ttf
-  - fonts/NotoSerif/NotoSerif-SemiCondensedThin.ttf
-  - fonts/NotoSerif/NotoSerif-Thin.ttf
-  - fonts/NotoSerif/NotoSerif[wdth,wght].ttf
-  - fonts/NotoSerif/NotoSerif[wght].ttf
   unicode_ranges:
   - [0x0000, 0x0000]
   - [0x000D, 0x000D]
@@ -22925,44 +21647,8 @@
   - [0x1DF00, 0x1DF1E]
 - family: NotoSerif
   files:
-  - fonts/NotoSerif/NotoSerif-BlackItalic.ttf
   - fonts/NotoSerif/NotoSerif-BoldItalic.ttf
-  - fonts/NotoSerif/NotoSerif-CondensedBlackItalic.ttf
-  - fonts/NotoSerif/NotoSerif-CondensedBoldItalic.ttf
-  - fonts/NotoSerif/NotoSerif-CondensedExtraBoldItalic.ttf
-  - fonts/NotoSerif/NotoSerif-CondensedExtraLightItalic.ttf
-  - fonts/NotoSerif/NotoSerif-CondensedItalic.ttf
-  - fonts/NotoSerif/NotoSerif-CondensedLightItalic.ttf
-  - fonts/NotoSerif/NotoSerif-CondensedMediumItalic.ttf
-  - fonts/NotoSerif/NotoSerif-CondensedSemiBoldItalic.ttf
-  - fonts/NotoSerif/NotoSerif-CondensedThinItalic.ttf
-  - fonts/NotoSerif/NotoSerif-ExtraBoldItalic.ttf
-  - fonts/NotoSerif/NotoSerif-ExtraCondensedBlackItalic.ttf
-  - fonts/NotoSerif/NotoSerif-ExtraCondensedBoldItalic.ttf
-  - fonts/NotoSerif/NotoSerif-ExtraCondensedExtraBoldItalic.ttf
-  - fonts/NotoSerif/NotoSerif-ExtraCondensedExtraLightItalic.ttf
-  - fonts/NotoSerif/NotoSerif-ExtraCondensedItalic.ttf
-  - fonts/NotoSerif/NotoSerif-ExtraCondensedLightItalic.ttf
-  - fonts/NotoSerif/NotoSerif-ExtraCondensedMediumItalic.ttf
-  - fonts/NotoSerif/NotoSerif-ExtraCondensedSemiBoldItalic.ttf
-  - fonts/NotoSerif/NotoSerif-ExtraCondensedThinItalic.ttf
-  - fonts/NotoSerif/NotoSerif-ExtraLightItalic.ttf
   - fonts/NotoSerif/NotoSerif-Italic.ttf
-  - fonts/NotoSerif/NotoSerif-Italic[wdth,wght].ttf
-  - fonts/NotoSerif/NotoSerif-Italic[wght].ttf
-  - fonts/NotoSerif/NotoSerif-LightItalic.ttf
-  - fonts/NotoSerif/NotoSerif-MediumItalic.ttf
-  - fonts/NotoSerif/NotoSerif-SemiBoldItalic.ttf
-  - fonts/NotoSerif/NotoSerif-SemiCondensedBlackItalic.ttf
-  - fonts/NotoSerif/NotoSerif-SemiCondensedBoldItalic.ttf
-  - fonts/NotoSerif/NotoSerif-SemiCondensedExtraBoldItalic.ttf
-  - fonts/NotoSerif/NotoSerif-SemiCondensedExtraLightItalic.ttf
-  - fonts/NotoSerif/NotoSerif-SemiCondensedItalic.ttf
-  - fonts/NotoSerif/NotoSerif-SemiCondensedLightItalic.ttf
-  - fonts/NotoSerif/NotoSerif-SemiCondensedMediumItalic.ttf
-  - fonts/NotoSerif/NotoSerif-SemiCondensedSemiBoldItalic.ttf
-  - fonts/NotoSerif/NotoSerif-SemiCondensedThinItalic.ttf
-  - fonts/NotoSerif/NotoSerif-ThinItalic.ttf
   unicode_ranges:
   - [0x0000, 0x0000]
   - [0x000D, 0x000D]
@@ -23082,44 +21768,8 @@
   - [0x11730, 0x11746]
 - family: NotoSerifArmenian
   files:
-  - fonts/NotoSerifArmenian/NotoSerifArmenian-Black.ttf
   - fonts/NotoSerifArmenian/NotoSerifArmenian-Bold.ttf
-  - fonts/NotoSerifArmenian/NotoSerifArmenian-Condensed.ttf
-  - fonts/NotoSerifArmenian/NotoSerifArmenian-CondensedBlack.ttf
-  - fonts/NotoSerifArmenian/NotoSerifArmenian-CondensedBold.ttf
-  - fonts/NotoSerifArmenian/NotoSerifArmenian-CondensedExtraBold.ttf
-  - fonts/NotoSerifArmenian/NotoSerifArmenian-CondensedExtraLight.ttf
-  - fonts/NotoSerifArmenian/NotoSerifArmenian-CondensedLight.ttf
-  - fonts/NotoSerifArmenian/NotoSerifArmenian-CondensedMedium.ttf
-  - fonts/NotoSerifArmenian/NotoSerifArmenian-CondensedSemiBold.ttf
-  - fonts/NotoSerifArmenian/NotoSerifArmenian-CondensedThin.ttf
-  - fonts/NotoSerifArmenian/NotoSerifArmenian-ExtraBold.ttf
-  - fonts/NotoSerifArmenian/NotoSerifArmenian-ExtraCondensed.ttf
-  - fonts/NotoSerifArmenian/NotoSerifArmenian-ExtraCondensedBlack.ttf
-  - fonts/NotoSerifArmenian/NotoSerifArmenian-ExtraCondensedBold.ttf
-  - fonts/NotoSerifArmenian/NotoSerifArmenian-ExtraCondensedExtraBold.ttf
-  - fonts/NotoSerifArmenian/NotoSerifArmenian-ExtraCondensedExtraLight.ttf
-  - fonts/NotoSerifArmenian/NotoSerifArmenian-ExtraCondensedLight.ttf
-  - fonts/NotoSerifArmenian/NotoSerifArmenian-ExtraCondensedMedium.ttf
-  - fonts/NotoSerifArmenian/NotoSerifArmenian-ExtraCondensedSemiBold.ttf
-  - fonts/NotoSerifArmenian/NotoSerifArmenian-ExtraCondensedThin.ttf
-  - fonts/NotoSerifArmenian/NotoSerifArmenian-ExtraLight.ttf
-  - fonts/NotoSerifArmenian/NotoSerifArmenian-Light.ttf
-  - fonts/NotoSerifArmenian/NotoSerifArmenian-Medium.ttf
   - fonts/NotoSerifArmenian/NotoSerifArmenian-Regular.ttf
-  - fonts/NotoSerifArmenian/NotoSerifArmenian-SemiBold.ttf
-  - fonts/NotoSerifArmenian/NotoSerifArmenian-SemiCondensed.ttf
-  - fonts/NotoSerifArmenian/NotoSerifArmenian-SemiCondensedBlack.ttf
-  - fonts/NotoSerifArmenian/NotoSerifArmenian-SemiCondensedBold.ttf
-  - fonts/NotoSerifArmenian/NotoSerifArmenian-SemiCondensedExtraBold.ttf
-  - fonts/NotoSerifArmenian/NotoSerifArmenian-SemiCondensedExtraLight.ttf
-  - fonts/NotoSerifArmenian/NotoSerifArmenian-SemiCondensedLight.ttf
-  - fonts/NotoSerifArmenian/NotoSerifArmenian-SemiCondensedMedium.ttf
-  - fonts/NotoSerifArmenian/NotoSerifArmenian-SemiCondensedSemiBold.ttf
-  - fonts/NotoSerifArmenian/NotoSerifArmenian-SemiCondensedThin.ttf
-  - fonts/NotoSerifArmenian/NotoSerifArmenian-Thin.ttf
-  - fonts/NotoSerifArmenian/NotoSerifArmenian[wdth,wght].ttf
-  - fonts/NotoSerifArmenian/NotoSerifArmenian[wght].ttf
   unicode_ranges:
   - [0x0000, 0x0000]
   - [0x000D, 0x000D]
@@ -23232,44 +21882,8 @@
   - [0x25CC, 0x25CC]
 - family: NotoSerifBengali
   files:
-  - fonts/NotoSerifBengali/NotoSerifBengali-Black.ttf
   - fonts/NotoSerifBengali/NotoSerifBengali-Bold.ttf
-  - fonts/NotoSerifBengali/NotoSerifBengali-Condensed.ttf
-  - fonts/NotoSerifBengali/NotoSerifBengali-CondensedBlack.ttf
-  - fonts/NotoSerifBengali/NotoSerifBengali-CondensedBold.ttf
-  - fonts/NotoSerifBengali/NotoSerifBengali-CondensedExtraBold.ttf
-  - fonts/NotoSerifBengali/NotoSerifBengali-CondensedExtraLight.ttf
-  - fonts/NotoSerifBengali/NotoSerifBengali-CondensedLight.ttf
-  - fonts/NotoSerifBengali/NotoSerifBengali-CondensedMedium.ttf
-  - fonts/NotoSerifBengali/NotoSerifBengali-CondensedSemiBold.ttf
-  - fonts/NotoSerifBengali/NotoSerifBengali-CondensedThin.ttf
-  - fonts/NotoSerifBengali/NotoSerifBengali-ExtraBold.ttf
-  - fonts/NotoSerifBengali/NotoSerifBengali-ExtraCondensed.ttf
-  - fonts/NotoSerifBengali/NotoSerifBengali-ExtraCondensedBlack.ttf
-  - fonts/NotoSerifBengali/NotoSerifBengali-ExtraCondensedBold.ttf
-  - fonts/NotoSerifBengali/NotoSerifBengali-ExtraCondensedExtraBold.ttf
-  - fonts/NotoSerifBengali/NotoSerifBengali-ExtraCondensedExtraLight.ttf
-  - fonts/NotoSerifBengali/NotoSerifBengali-ExtraCondensedLight.ttf
-  - fonts/NotoSerifBengali/NotoSerifBengali-ExtraCondensedMedium.ttf
-  - fonts/NotoSerifBengali/NotoSerifBengali-ExtraCondensedSemiBold.ttf
-  - fonts/NotoSerifBengali/NotoSerifBengali-ExtraCondensedThin.ttf
-  - fonts/NotoSerifBengali/NotoSerifBengali-ExtraLight.ttf
-  - fonts/NotoSerifBengali/NotoSerifBengali-Light.ttf
-  - fonts/NotoSerifBengali/NotoSerifBengali-Medium.ttf
   - fonts/NotoSerifBengali/NotoSerifBengali-Regular.ttf
-  - fonts/NotoSerifBengali/NotoSerifBengali-SemiBold.ttf
-  - fonts/NotoSerifBengali/NotoSerifBengali-SemiCondensed.ttf
-  - fonts/NotoSerifBengali/NotoSerifBengali-SemiCondensedBlack.ttf
-  - fonts/NotoSerifBengali/NotoSerifBengali-SemiCondensedBold.ttf
-  - fonts/NotoSerifBengali/NotoSerifBengali-SemiCondensedExtraBold.ttf
-  - fonts/NotoSerifBengali/NotoSerifBengali-SemiCondensedExtraLight.ttf
-  - fonts/NotoSerifBengali/NotoSerifBengali-SemiCondensedLight.ttf
-  - fonts/NotoSerifBengali/NotoSerifBengali-SemiCondensedMedium.ttf
-  - fonts/NotoSerifBengali/NotoSerifBengali-SemiCondensedSemiBold.ttf
-  - fonts/NotoSerifBengali/NotoSerifBengali-SemiCondensedThin.ttf
-  - fonts/NotoSerifBengali/NotoSerifBengali-Thin.ttf
-  - fonts/NotoSerifBengali/NotoSerifBengali[wdth,wght].ttf
-  - fonts/NotoSerifBengali/NotoSerifBengali[wght].ttf
   unicode_ranges:
   - [0x0000, 0x0000]
   - [0x000D, 0x000D]
@@ -23351,13 +21965,8 @@
   - [0xA8F1, 0xA8F1]
 - family: NotoSerifCJKhk
   files:
-  - fonts/NotoSerifCJKhk/NotoSerifCJKhk-Black.otf
   - fonts/NotoSerifCJKhk/NotoSerifCJKhk-Bold.otf
-  - fonts/NotoSerifCJKhk/NotoSerifCJKhk-ExtraLight.otf
-  - fonts/NotoSerifCJKhk/NotoSerifCJKhk-Light.otf
-  - fonts/NotoSerifCJKhk/NotoSerifCJKhk-Medium.otf
   - fonts/NotoSerifCJKhk/NotoSerifCJKhk-Regular.otf
-  - fonts/NotoSerifCJKhk/NotoSerifCJKhk-SemiBold.otf
   unicode_ranges:
   - [0x0020, 0x007E]
   - [0x00A0, 0x0103]
@@ -25339,13 +23948,8 @@
   - [0x3106C, 0x3106C]
 - family: NotoSerifCJKjp
   files:
-  - fonts/NotoSerifCJKjp/NotoSerifCJKjp-Black.otf
   - fonts/NotoSerifCJKjp/NotoSerifCJKjp-Bold.otf
-  - fonts/NotoSerifCJKjp/NotoSerifCJKjp-ExtraLight.otf
-  - fonts/NotoSerifCJKjp/NotoSerifCJKjp-Light.otf
-  - fonts/NotoSerifCJKjp/NotoSerifCJKjp-Medium.otf
   - fonts/NotoSerifCJKjp/NotoSerifCJKjp-Regular.otf
-  - fonts/NotoSerifCJKjp/NotoSerifCJKjp-SemiBold.otf
   unicode_ranges:
   - [0x0020, 0x007E]
   - [0x00A0, 0x0103]
@@ -27327,13 +25931,8 @@
   - [0x3106C, 0x3106C]
 - family: NotoSerifCJKkr
   files:
-  - fonts/NotoSerifCJKkr/NotoSerifCJKkr-Black.otf
   - fonts/NotoSerifCJKkr/NotoSerifCJKkr-Bold.otf
-  - fonts/NotoSerifCJKkr/NotoSerifCJKkr-ExtraLight.otf
-  - fonts/NotoSerifCJKkr/NotoSerifCJKkr-Light.otf
-  - fonts/NotoSerifCJKkr/NotoSerifCJKkr-Medium.otf
   - fonts/NotoSerifCJKkr/NotoSerifCJKkr-Regular.otf
-  - fonts/NotoSerifCJKkr/NotoSerifCJKkr-SemiBold.otf
   unicode_ranges:
   - [0x0020, 0x007E]
   - [0x00A0, 0x0103]
@@ -29315,13 +27914,8 @@
   - [0x3106C, 0x3106C]
 - family: NotoSerifCJKsc
   files:
-  - fonts/NotoSerifCJKsc/NotoSerifCJKsc-Black.otf
   - fonts/NotoSerifCJKsc/NotoSerifCJKsc-Bold.otf
-  - fonts/NotoSerifCJKsc/NotoSerifCJKsc-ExtraLight.otf
-  - fonts/NotoSerifCJKsc/NotoSerifCJKsc-Light.otf
-  - fonts/NotoSerifCJKsc/NotoSerifCJKsc-Medium.otf
   - fonts/NotoSerifCJKsc/NotoSerifCJKsc-Regular.otf
-  - fonts/NotoSerifCJKsc/NotoSerifCJKsc-SemiBold.otf
   unicode_ranges:
   - [0x0020, 0x007E]
   - [0x00A0, 0x0103]
@@ -31303,13 +29897,8 @@
   - [0x3106C, 0x3106C]
 - family: NotoSerifCJKtc
   files:
-  - fonts/NotoSerifCJKtc/NotoSerifCJKtc-Black.otf
   - fonts/NotoSerifCJKtc/NotoSerifCJKtc-Bold.otf
-  - fonts/NotoSerifCJKtc/NotoSerifCJKtc-ExtraLight.otf
-  - fonts/NotoSerifCJKtc/NotoSerifCJKtc-Light.otf
-  - fonts/NotoSerifCJKtc/NotoSerifCJKtc-Medium.otf
   - fonts/NotoSerifCJKtc/NotoSerifCJKtc-Regular.otf
-  - fonts/NotoSerifCJKtc/NotoSerifCJKtc-SemiBold.otf
   unicode_ranges:
   - [0x0020, 0x007E]
   - [0x00A0, 0x0103]
@@ -33291,44 +31880,8 @@
   - [0x3106C, 0x3106C]
 - family: NotoSerifDevanagari
   files:
-  - fonts/NotoSerifDevanagari/NotoSerifDevanagari-Black.ttf
   - fonts/NotoSerifDevanagari/NotoSerifDevanagari-Bold.ttf
-  - fonts/NotoSerifDevanagari/NotoSerifDevanagari-Condensed.ttf
-  - fonts/NotoSerifDevanagari/NotoSerifDevanagari-CondensedBlack.ttf
-  - fonts/NotoSerifDevanagari/NotoSerifDevanagari-CondensedBold.ttf
-  - fonts/NotoSerifDevanagari/NotoSerifDevanagari-CondensedExtraBold.ttf
-  - fonts/NotoSerifDevanagari/NotoSerifDevanagari-CondensedExtraLight.ttf
-  - fonts/NotoSerifDevanagari/NotoSerifDevanagari-CondensedLight.ttf
-  - fonts/NotoSerifDevanagari/NotoSerifDevanagari-CondensedMedium.ttf
-  - fonts/NotoSerifDevanagari/NotoSerifDevanagari-CondensedSemiBold.ttf
-  - fonts/NotoSerifDevanagari/NotoSerifDevanagari-CondensedThin.ttf
-  - fonts/NotoSerifDevanagari/NotoSerifDevanagari-ExtraBold.ttf
-  - fonts/NotoSerifDevanagari/NotoSerifDevanagari-ExtraCondensed.ttf
-  - fonts/NotoSerifDevanagari/NotoSerifDevanagari-ExtraCondensedBlack.ttf
-  - fonts/NotoSerifDevanagari/NotoSerifDevanagari-ExtraCondensedBold.ttf
-  - fonts/NotoSerifDevanagari/NotoSerifDevanagari-ExtraCondensedExtraBold.ttf
-  - fonts/NotoSerifDevanagari/NotoSerifDevanagari-ExtraCondensedExtraLight.ttf
-  - fonts/NotoSerifDevanagari/NotoSerifDevanagari-ExtraCondensedLight.ttf
-  - fonts/NotoSerifDevanagari/NotoSerifDevanagari-ExtraCondensedMedium.ttf
-  - fonts/NotoSerifDevanagari/NotoSerifDevanagari-ExtraCondensedSemiBold.ttf
-  - fonts/NotoSerifDevanagari/NotoSerifDevanagari-ExtraCondensedThin.ttf
-  - fonts/NotoSerifDevanagari/NotoSerifDevanagari-ExtraLight.ttf
-  - fonts/NotoSerifDevanagari/NotoSerifDevanagari-Light.ttf
-  - fonts/NotoSerifDevanagari/NotoSerifDevanagari-Medium.ttf
   - fonts/NotoSerifDevanagari/NotoSerifDevanagari-Regular.ttf
-  - fonts/NotoSerifDevanagari/NotoSerifDevanagari-SemiBold.ttf
-  - fonts/NotoSerifDevanagari/NotoSerifDevanagari-SemiCondensed.ttf
-  - fonts/NotoSerifDevanagari/NotoSerifDevanagari-SemiCondensedBlack.ttf
-  - fonts/NotoSerifDevanagari/NotoSerifDevanagari-SemiCondensedBold.ttf
-  - fonts/NotoSerifDevanagari/NotoSerifDevanagari-SemiCondensedExtraBold.ttf
-  - fonts/NotoSerifDevanagari/NotoSerifDevanagari-SemiCondensedExtraLight.ttf
-  - fonts/NotoSerifDevanagari/NotoSerifDevanagari-SemiCondensedLight.ttf
-  - fonts/NotoSerifDevanagari/NotoSerifDevanagari-SemiCondensedMedium.ttf
-  - fonts/NotoSerifDevanagari/NotoSerifDevanagari-SemiCondensedSemiBold.ttf
-  - fonts/NotoSerifDevanagari/NotoSerifDevanagari-SemiCondensedThin.ttf
-  - fonts/NotoSerifDevanagari/NotoSerifDevanagari-Thin.ttf
-  - fonts/NotoSerifDevanagari/NotoSerifDevanagari[wdth,wght].ttf
-  - fonts/NotoSerifDevanagari/NotoSerifDevanagari[wght].ttf
   unicode_ranges:
   - [0x0000, 0x0000]
   - [0x000D, 0x000D]
@@ -33391,44 +31944,8 @@
   - [0x11B00, 0x11B09]
 - family: NotoSerifDisplay
   files:
-  - fonts/NotoSerifDisplay/NotoSerifDisplay-Black.ttf
   - fonts/NotoSerifDisplay/NotoSerifDisplay-Bold.ttf
-  - fonts/NotoSerifDisplay/NotoSerifDisplay-Condensed.ttf
-  - fonts/NotoSerifDisplay/NotoSerifDisplay-CondensedBlack.ttf
-  - fonts/NotoSerifDisplay/NotoSerifDisplay-CondensedBold.ttf
-  - fonts/NotoSerifDisplay/NotoSerifDisplay-CondensedExtraBold.ttf
-  - fonts/NotoSerifDisplay/NotoSerifDisplay-CondensedExtraLight.ttf
-  - fonts/NotoSerifDisplay/NotoSerifDisplay-CondensedLight.ttf
-  - fonts/NotoSerifDisplay/NotoSerifDisplay-CondensedMedium.ttf
-  - fonts/NotoSerifDisplay/NotoSerifDisplay-CondensedSemiBold.ttf
-  - fonts/NotoSerifDisplay/NotoSerifDisplay-CondensedThin.ttf
-  - fonts/NotoSerifDisplay/NotoSerifDisplay-ExtraBold.ttf
-  - fonts/NotoSerifDisplay/NotoSerifDisplay-ExtraCondensed.ttf
-  - fonts/NotoSerifDisplay/NotoSerifDisplay-ExtraCondensedBlack.ttf
-  - fonts/NotoSerifDisplay/NotoSerifDisplay-ExtraCondensedBold.ttf
-  - fonts/NotoSerifDisplay/NotoSerifDisplay-ExtraCondensedExtraBold.ttf
-  - fonts/NotoSerifDisplay/NotoSerifDisplay-ExtraCondensedExtraLight.ttf
-  - fonts/NotoSerifDisplay/NotoSerifDisplay-ExtraCondensedLight.ttf
-  - fonts/NotoSerifDisplay/NotoSerifDisplay-ExtraCondensedMedium.ttf
-  - fonts/NotoSerifDisplay/NotoSerifDisplay-ExtraCondensedSemiBold.ttf
-  - fonts/NotoSerifDisplay/NotoSerifDisplay-ExtraCondensedThin.ttf
-  - fonts/NotoSerifDisplay/NotoSerifDisplay-ExtraLight.ttf
-  - fonts/NotoSerifDisplay/NotoSerifDisplay-Light.ttf
-  - fonts/NotoSerifDisplay/NotoSerifDisplay-Medium.ttf
   - fonts/NotoSerifDisplay/NotoSerifDisplay-Regular.ttf
-  - fonts/NotoSerifDisplay/NotoSerifDisplay-SemiBold.ttf
-  - fonts/NotoSerifDisplay/NotoSerifDisplay-SemiCondensed.ttf
-  - fonts/NotoSerifDisplay/NotoSerifDisplay-SemiCondensedBlack.ttf
-  - fonts/NotoSerifDisplay/NotoSerifDisplay-SemiCondensedBold.ttf
-  - fonts/NotoSerifDisplay/NotoSerifDisplay-SemiCondensedExtraBold.ttf
-  - fonts/NotoSerifDisplay/NotoSerifDisplay-SemiCondensedExtraLight.ttf
-  - fonts/NotoSerifDisplay/NotoSerifDisplay-SemiCondensedLight.ttf
-  - fonts/NotoSerifDisplay/NotoSerifDisplay-SemiCondensedMedium.ttf
-  - fonts/NotoSerifDisplay/NotoSerifDisplay-SemiCondensedSemiBold.ttf
-  - fonts/NotoSerifDisplay/NotoSerifDisplay-SemiCondensedThin.ttf
-  - fonts/NotoSerifDisplay/NotoSerifDisplay-Thin.ttf
-  - fonts/NotoSerifDisplay/NotoSerifDisplay[wdth,wght].ttf
-  - fonts/NotoSerifDisplay/NotoSerifDisplay[wght].ttf
   unicode_ranges:
   - [0x0000, 0x0000]
   - [0x000D, 0x000D]
@@ -33485,44 +32002,8 @@
   - [0xFFFC, 0xFFFD]
 - family: NotoSerifDisplay
   files:
-  - fonts/NotoSerifDisplay/NotoSerifDisplay-BlackItalic.ttf
   - fonts/NotoSerifDisplay/NotoSerifDisplay-BoldItalic.ttf
-  - fonts/NotoSerifDisplay/NotoSerifDisplay-CondensedBlackItalic.ttf
-  - fonts/NotoSerifDisplay/NotoSerifDisplay-CondensedBoldItalic.ttf
-  - fonts/NotoSerifDisplay/NotoSerifDisplay-CondensedExtraBoldItalic.ttf
-  - fonts/NotoSerifDisplay/NotoSerifDisplay-CondensedExtraLightItalic.ttf
-  - fonts/NotoSerifDisplay/NotoSerifDisplay-CondensedItalic.ttf
-  - fonts/NotoSerifDisplay/NotoSerifDisplay-CondensedLightItalic.ttf
-  - fonts/NotoSerifDisplay/NotoSerifDisplay-CondensedMediumItalic.ttf
-  - fonts/NotoSerifDisplay/NotoSerifDisplay-CondensedSemiBoldItalic.ttf
-  - fonts/NotoSerifDisplay/NotoSerifDisplay-CondensedThinItalic.ttf
-  - fonts/NotoSerifDisplay/NotoSerifDisplay-ExtraBoldItalic.ttf
-  - fonts/NotoSerifDisplay/NotoSerifDisplay-ExtraCondensedBlackItalic.ttf
-  - fonts/NotoSerifDisplay/NotoSerifDisplay-ExtraCondensedBoldItalic.ttf
-  - fonts/NotoSerifDisplay/NotoSerifDisplay-ExtraCondensedExtraBoldItalic.ttf
-  - fonts/NotoSerifDisplay/NotoSerifDisplay-ExtraCondensedExtraLightItalic.ttf
-  - fonts/NotoSerifDisplay/NotoSerifDisplay-ExtraCondensedItalic.ttf
-  - fonts/NotoSerifDisplay/NotoSerifDisplay-ExtraCondensedLightItalic.ttf
-  - fonts/NotoSerifDisplay/NotoSerifDisplay-ExtraCondensedMediumItalic.ttf
-  - fonts/NotoSerifDisplay/NotoSerifDisplay-ExtraCondensedSemiBoldItalic.ttf
-  - fonts/NotoSerifDisplay/NotoSerifDisplay-ExtraCondensedThinItalic.ttf
-  - fonts/NotoSerifDisplay/NotoSerifDisplay-ExtraLightItalic.ttf
   - fonts/NotoSerifDisplay/NotoSerifDisplay-Italic.ttf
-  - fonts/NotoSerifDisplay/NotoSerifDisplay-Italic[wdth,wght].ttf
-  - fonts/NotoSerifDisplay/NotoSerifDisplay-Italic[wght].ttf
-  - fonts/NotoSerifDisplay/NotoSerifDisplay-LightItalic.ttf
-  - fonts/NotoSerifDisplay/NotoSerifDisplay-MediumItalic.ttf
-  - fonts/NotoSerifDisplay/NotoSerifDisplay-SemiBoldItalic.ttf
-  - fonts/NotoSerifDisplay/NotoSerifDisplay-SemiCondensedBlackItalic.ttf
-  - fonts/NotoSerifDisplay/NotoSerifDisplay-SemiCondensedBoldItalic.ttf
-  - fonts/NotoSerifDisplay/NotoSerifDisplay-SemiCondensedExtraBoldItalic.ttf
-  - fonts/NotoSerifDisplay/NotoSerifDisplay-SemiCondensedExtraLightItalic.ttf
-  - fonts/NotoSerifDisplay/NotoSerifDisplay-SemiCondensedItalic.ttf
-  - fonts/NotoSerifDisplay/NotoSerifDisplay-SemiCondensedLightItalic.ttf
-  - fonts/NotoSerifDisplay/NotoSerifDisplay-SemiCondensedMediumItalic.ttf
-  - fonts/NotoSerifDisplay/NotoSerifDisplay-SemiCondensedSemiBoldItalic.ttf
-  - fonts/NotoSerifDisplay/NotoSerifDisplay-SemiCondensedThinItalic.ttf
-  - fonts/NotoSerifDisplay/NotoSerifDisplay-ThinItalic.ttf
   unicode_ranges:
   - [0x0000, 0x0000]
   - [0x000D, 0x000D]
@@ -33697,44 +32178,8 @@
   - [0x11800, 0x1183B]
 - family: NotoSerifEthiopic
   files:
-  - fonts/NotoSerifEthiopic/NotoSerifEthiopic-Black.ttf
   - fonts/NotoSerifEthiopic/NotoSerifEthiopic-Bold.ttf
-  - fonts/NotoSerifEthiopic/NotoSerifEthiopic-Condensed.ttf
-  - fonts/NotoSerifEthiopic/NotoSerifEthiopic-CondensedBlack.ttf
-  - fonts/NotoSerifEthiopic/NotoSerifEthiopic-CondensedBold.ttf
-  - fonts/NotoSerifEthiopic/NotoSerifEthiopic-CondensedExtraBold.ttf
-  - fonts/NotoSerifEthiopic/NotoSerifEthiopic-CondensedExtraLight.ttf
-  - fonts/NotoSerifEthiopic/NotoSerifEthiopic-CondensedLight.ttf
-  - fonts/NotoSerifEthiopic/NotoSerifEthiopic-CondensedMedium.ttf
-  - fonts/NotoSerifEthiopic/NotoSerifEthiopic-CondensedSemiBold.ttf
-  - fonts/NotoSerifEthiopic/NotoSerifEthiopic-CondensedThin.ttf
-  - fonts/NotoSerifEthiopic/NotoSerifEthiopic-ExtraBold.ttf
-  - fonts/NotoSerifEthiopic/NotoSerifEthiopic-ExtraCondensed.ttf
-  - fonts/NotoSerifEthiopic/NotoSerifEthiopic-ExtraCondensedBlack.ttf
-  - fonts/NotoSerifEthiopic/NotoSerifEthiopic-ExtraCondensedBold.ttf
-  - fonts/NotoSerifEthiopic/NotoSerifEthiopic-ExtraCondensedExtraBold.ttf
-  - fonts/NotoSerifEthiopic/NotoSerifEthiopic-ExtraCondensedExtraLight.ttf
-  - fonts/NotoSerifEthiopic/NotoSerifEthiopic-ExtraCondensedLight.ttf
-  - fonts/NotoSerifEthiopic/NotoSerifEthiopic-ExtraCondensedMedium.ttf
-  - fonts/NotoSerifEthiopic/NotoSerifEthiopic-ExtraCondensedSemiBold.ttf
-  - fonts/NotoSerifEthiopic/NotoSerifEthiopic-ExtraCondensedThin.ttf
-  - fonts/NotoSerifEthiopic/NotoSerifEthiopic-ExtraLight.ttf
-  - fonts/NotoSerifEthiopic/NotoSerifEthiopic-Light.ttf
-  - fonts/NotoSerifEthiopic/NotoSerifEthiopic-Medium.ttf
   - fonts/NotoSerifEthiopic/NotoSerifEthiopic-Regular.ttf
-  - fonts/NotoSerifEthiopic/NotoSerifEthiopic-SemiBold.ttf
-  - fonts/NotoSerifEthiopic/NotoSerifEthiopic-SemiCondensed.ttf
-  - fonts/NotoSerifEthiopic/NotoSerifEthiopic-SemiCondensedBlack.ttf
-  - fonts/NotoSerifEthiopic/NotoSerifEthiopic-SemiCondensedBold.ttf
-  - fonts/NotoSerifEthiopic/NotoSerifEthiopic-SemiCondensedExtraBold.ttf
-  - fonts/NotoSerifEthiopic/NotoSerifEthiopic-SemiCondensedExtraLight.ttf
-  - fonts/NotoSerifEthiopic/NotoSerifEthiopic-SemiCondensedLight.ttf
-  - fonts/NotoSerifEthiopic/NotoSerifEthiopic-SemiCondensedMedium.ttf
-  - fonts/NotoSerifEthiopic/NotoSerifEthiopic-SemiCondensedSemiBold.ttf
-  - fonts/NotoSerifEthiopic/NotoSerifEthiopic-SemiCondensedThin.ttf
-  - fonts/NotoSerifEthiopic/NotoSerifEthiopic-Thin.ttf
-  - fonts/NotoSerifEthiopic/NotoSerifEthiopic[wdth,wght].ttf
-  - fonts/NotoSerifEthiopic/NotoSerifEthiopic[wght].ttf
   unicode_ranges:
   - [0x0000, 0x0000]
   - [0x000D, 0x000D]
@@ -33825,44 +32270,8 @@
   - [0x1E7F0, 0x1E7FE]
 - family: NotoSerifGeorgian
   files:
-  - fonts/NotoSerifGeorgian/NotoSerifGeorgian-Black.ttf
   - fonts/NotoSerifGeorgian/NotoSerifGeorgian-Bold.ttf
-  - fonts/NotoSerifGeorgian/NotoSerifGeorgian-Condensed.ttf
-  - fonts/NotoSerifGeorgian/NotoSerifGeorgian-CondensedBlack.ttf
-  - fonts/NotoSerifGeorgian/NotoSerifGeorgian-CondensedBold.ttf
-  - fonts/NotoSerifGeorgian/NotoSerifGeorgian-CondensedExtraBold.ttf
-  - fonts/NotoSerifGeorgian/NotoSerifGeorgian-CondensedExtraLight.ttf
-  - fonts/NotoSerifGeorgian/NotoSerifGeorgian-CondensedLight.ttf
-  - fonts/NotoSerifGeorgian/NotoSerifGeorgian-CondensedMedium.ttf
-  - fonts/NotoSerifGeorgian/NotoSerifGeorgian-CondensedSemiBold.ttf
-  - fonts/NotoSerifGeorgian/NotoSerifGeorgian-CondensedThin.ttf
-  - fonts/NotoSerifGeorgian/NotoSerifGeorgian-ExtraBold.ttf
-  - fonts/NotoSerifGeorgian/NotoSerifGeorgian-ExtraCondensed.ttf
-  - fonts/NotoSerifGeorgian/NotoSerifGeorgian-ExtraCondensedBlack.ttf
-  - fonts/NotoSerifGeorgian/NotoSerifGeorgian-ExtraCondensedBold.ttf
-  - fonts/NotoSerifGeorgian/NotoSerifGeorgian-ExtraCondensedExtraBold.ttf
-  - fonts/NotoSerifGeorgian/NotoSerifGeorgian-ExtraCondensedExtraLight.ttf
-  - fonts/NotoSerifGeorgian/NotoSerifGeorgian-ExtraCondensedLight.ttf
-  - fonts/NotoSerifGeorgian/NotoSerifGeorgian-ExtraCondensedMedium.ttf
-  - fonts/NotoSerifGeorgian/NotoSerifGeorgian-ExtraCondensedSemiBold.ttf
-  - fonts/NotoSerifGeorgian/NotoSerifGeorgian-ExtraCondensedThin.ttf
-  - fonts/NotoSerifGeorgian/NotoSerifGeorgian-ExtraLight.ttf
-  - fonts/NotoSerifGeorgian/NotoSerifGeorgian-Light.ttf
-  - fonts/NotoSerifGeorgian/NotoSerifGeorgian-Medium.ttf
   - fonts/NotoSerifGeorgian/NotoSerifGeorgian-Regular.ttf
-  - fonts/NotoSerifGeorgian/NotoSerifGeorgian-SemiBold.ttf
-  - fonts/NotoSerifGeorgian/NotoSerifGeorgian-SemiCondensed.ttf
-  - fonts/NotoSerifGeorgian/NotoSerifGeorgian-SemiCondensedBlack.ttf
-  - fonts/NotoSerifGeorgian/NotoSerifGeorgian-SemiCondensedBold.ttf
-  - fonts/NotoSerifGeorgian/NotoSerifGeorgian-SemiCondensedExtraBold.ttf
-  - fonts/NotoSerifGeorgian/NotoSerifGeorgian-SemiCondensedExtraLight.ttf
-  - fonts/NotoSerifGeorgian/NotoSerifGeorgian-SemiCondensedLight.ttf
-  - fonts/NotoSerifGeorgian/NotoSerifGeorgian-SemiCondensedMedium.ttf
-  - fonts/NotoSerifGeorgian/NotoSerifGeorgian-SemiCondensedSemiBold.ttf
-  - fonts/NotoSerifGeorgian/NotoSerifGeorgian-SemiCondensedThin.ttf
-  - fonts/NotoSerifGeorgian/NotoSerifGeorgian-Thin.ttf
-  - fonts/NotoSerifGeorgian/NotoSerifGeorgian[wdth,wght].ttf
-  - fonts/NotoSerifGeorgian/NotoSerifGeorgian[wght].ttf
   unicode_ranges:
   - [0x0000, 0x0000]
   - [0x000D, 0x000D]
@@ -34004,16 +32413,8 @@
   - [0x11370, 0x11374]
 - family: NotoSerifGujarati
   files:
-  - fonts/NotoSerifGujarati/NotoSerifGujarati-Black.ttf
   - fonts/NotoSerifGujarati/NotoSerifGujarati-Bold.ttf
-  - fonts/NotoSerifGujarati/NotoSerifGujarati-ExtraBold.ttf
-  - fonts/NotoSerifGujarati/NotoSerifGujarati-ExtraLight.ttf
-  - fonts/NotoSerifGujarati/NotoSerifGujarati-Light.ttf
-  - fonts/NotoSerifGujarati/NotoSerifGujarati-Medium.ttf
   - fonts/NotoSerifGujarati/NotoSerifGujarati-Regular.ttf
-  - fonts/NotoSerifGujarati/NotoSerifGujarati-SemiBold.ttf
-  - fonts/NotoSerifGujarati/NotoSerifGujarati-Thin.ttf
-  - fonts/NotoSerifGujarati/NotoSerifGujarati[wght].ttf
   unicode_ranges:
   - [0x0000, 0x0000]
   - [0x000D, 0x000D]
@@ -34085,16 +32486,8 @@
   - [0xA830, 0xA839]
 - family: NotoSerifGurmukhi
   files:
-  - fonts/NotoSerifGurmukhi/NotoSerifGurmukhi-Black.ttf
   - fonts/NotoSerifGurmukhi/NotoSerifGurmukhi-Bold.ttf
-  - fonts/NotoSerifGurmukhi/NotoSerifGurmukhi-ExtraBold.ttf
-  - fonts/NotoSerifGurmukhi/NotoSerifGurmukhi-ExtraLight.ttf
-  - fonts/NotoSerifGurmukhi/NotoSerifGurmukhi-Light.ttf
-  - fonts/NotoSerifGurmukhi/NotoSerifGurmukhi-Medium.ttf
   - fonts/NotoSerifGurmukhi/NotoSerifGurmukhi-Regular.ttf
-  - fonts/NotoSerifGurmukhi/NotoSerifGurmukhi-SemiBold.ttf
-  - fonts/NotoSerifGurmukhi/NotoSerifGurmukhi-Thin.ttf
-  - fonts/NotoSerifGurmukhi/NotoSerifGurmukhi[wght].ttf
   unicode_ranges:
   - [0x0000, 0x0000]
   - [0x000D, 0x000D]
@@ -34170,44 +32563,8 @@
   - [0xA830, 0xA839]
 - family: NotoSerifHebrew
   files:
-  - fonts/NotoSerifHebrew/NotoSerifHebrew-Black.ttf
   - fonts/NotoSerifHebrew/NotoSerifHebrew-Bold.ttf
-  - fonts/NotoSerifHebrew/NotoSerifHebrew-Condensed.ttf
-  - fonts/NotoSerifHebrew/NotoSerifHebrew-CondensedBlack.ttf
-  - fonts/NotoSerifHebrew/NotoSerifHebrew-CondensedBold.ttf
-  - fonts/NotoSerifHebrew/NotoSerifHebrew-CondensedExtraBold.ttf
-  - fonts/NotoSerifHebrew/NotoSerifHebrew-CondensedExtraLight.ttf
-  - fonts/NotoSerifHebrew/NotoSerifHebrew-CondensedLight.ttf
-  - fonts/NotoSerifHebrew/NotoSerifHebrew-CondensedMedium.ttf
-  - fonts/NotoSerifHebrew/NotoSerifHebrew-CondensedSemiBold.ttf
-  - fonts/NotoSerifHebrew/NotoSerifHebrew-CondensedThin.ttf
-  - fonts/NotoSerifHebrew/NotoSerifHebrew-ExtraBold.ttf
-  - fonts/NotoSerifHebrew/NotoSerifHebrew-ExtraCondensed.ttf
-  - fonts/NotoSerifHebrew/NotoSerifHebrew-ExtraCondensedBlack.ttf
-  - fonts/NotoSerifHebrew/NotoSerifHebrew-ExtraCondensedBold.ttf
-  - fonts/NotoSerifHebrew/NotoSerifHebrew-ExtraCondensedExtraBold.ttf
-  - fonts/NotoSerifHebrew/NotoSerifHebrew-ExtraCondensedExtraLight.ttf
-  - fonts/NotoSerifHebrew/NotoSerifHebrew-ExtraCondensedLight.ttf
-  - fonts/NotoSerifHebrew/NotoSerifHebrew-ExtraCondensedMedium.ttf
-  - fonts/NotoSerifHebrew/NotoSerifHebrew-ExtraCondensedSemiBold.ttf
-  - fonts/NotoSerifHebrew/NotoSerifHebrew-ExtraCondensedThin.ttf
-  - fonts/NotoSerifHebrew/NotoSerifHebrew-ExtraLight.ttf
-  - fonts/NotoSerifHebrew/NotoSerifHebrew-Light.ttf
-  - fonts/NotoSerifHebrew/NotoSerifHebrew-Medium.ttf
   - fonts/NotoSerifHebrew/NotoSerifHebrew-Regular.ttf
-  - fonts/NotoSerifHebrew/NotoSerifHebrew-SemiBold.ttf
-  - fonts/NotoSerifHebrew/NotoSerifHebrew-SemiCondensed.ttf
-  - fonts/NotoSerifHebrew/NotoSerifHebrew-SemiCondensedBlack.ttf
-  - fonts/NotoSerifHebrew/NotoSerifHebrew-SemiCondensedBold.ttf
-  - fonts/NotoSerifHebrew/NotoSerifHebrew-SemiCondensedExtraBold.ttf
-  - fonts/NotoSerifHebrew/NotoSerifHebrew-SemiCondensedExtraLight.ttf
-  - fonts/NotoSerifHebrew/NotoSerifHebrew-SemiCondensedLight.ttf
-  - fonts/NotoSerifHebrew/NotoSerifHebrew-SemiCondensedMedium.ttf
-  - fonts/NotoSerifHebrew/NotoSerifHebrew-SemiCondensedSemiBold.ttf
-  - fonts/NotoSerifHebrew/NotoSerifHebrew-SemiCondensedThin.ttf
-  - fonts/NotoSerifHebrew/NotoSerifHebrew-Thin.ttf
-  - fonts/NotoSerifHebrew/NotoSerifHebrew[wdth,wght].ttf
-  - fonts/NotoSerifHebrew/NotoSerifHebrew[wght].ttf
   unicode_ranges:
   - [0x0000, 0x0000]
   - [0x000D, 0x000D]
@@ -34270,14 +32627,8 @@
   - [0xFB46, 0xFB4F]
 - family: NotoSerifHentaigana
   files:
-  - fonts/NotoSerifHentaigana/NotoSerifHentaigana-Black.ttf
   - fonts/NotoSerifHentaigana/NotoSerifHentaigana-Bold.ttf
-  - fonts/NotoSerifHentaigana/NotoSerifHentaigana-ExtraLight.ttf
-  - fonts/NotoSerifHentaigana/NotoSerifHentaigana-Light.ttf
-  - fonts/NotoSerifHentaigana/NotoSerifHentaigana-Medium.ttf
   - fonts/NotoSerifHentaigana/NotoSerifHentaigana-Regular.ttf
-  - fonts/NotoSerifHentaigana/NotoSerifHentaigana-SemiBold.ttf
-  - fonts/NotoSerifHentaigana/NotoSerifHentaigana[wght].ttf
   unicode_ranges:
   - [0x0020, 0x007E]
   - [0x00A0, 0x00A3]
@@ -34329,16 +32680,8 @@
   - [0x1B120, 0x1B122]
 - family: NotoSerifKannada
   files:
-  - fonts/NotoSerifKannada/NotoSerifKannada-Black.ttf
   - fonts/NotoSerifKannada/NotoSerifKannada-Bold.ttf
-  - fonts/NotoSerifKannada/NotoSerifKannada-ExtraBold.ttf
-  - fonts/NotoSerifKannada/NotoSerifKannada-ExtraLight.ttf
-  - fonts/NotoSerifKannada/NotoSerifKannada-Light.ttf
-  - fonts/NotoSerifKannada/NotoSerifKannada-Medium.ttf
   - fonts/NotoSerifKannada/NotoSerifKannada-Regular.ttf
-  - fonts/NotoSerifKannada/NotoSerifKannada-SemiBold.ttf
-  - fonts/NotoSerifKannada/NotoSerifKannada-Thin.ttf
-  - fonts/NotoSerifKannada/NotoSerifKannada[wght].ttf
   unicode_ranges:
   - [0x0000, 0x0000]
   - [0x000D, 0x000D]
@@ -34476,44 +32819,8 @@
   - [0x18B00, 0x18CD5]
 - family: NotoSerifKhmer
   files:
-  - fonts/NotoSerifKhmer/NotoSerifKhmer-Black.ttf
   - fonts/NotoSerifKhmer/NotoSerifKhmer-Bold.ttf
-  - fonts/NotoSerifKhmer/NotoSerifKhmer-Condensed.ttf
-  - fonts/NotoSerifKhmer/NotoSerifKhmer-CondensedBlack.ttf
-  - fonts/NotoSerifKhmer/NotoSerifKhmer-CondensedBold.ttf
-  - fonts/NotoSerifKhmer/NotoSerifKhmer-CondensedExtraBold.ttf
-  - fonts/NotoSerifKhmer/NotoSerifKhmer-CondensedExtraLight.ttf
-  - fonts/NotoSerifKhmer/NotoSerifKhmer-CondensedLight.ttf
-  - fonts/NotoSerifKhmer/NotoSerifKhmer-CondensedMedium.ttf
-  - fonts/NotoSerifKhmer/NotoSerifKhmer-CondensedSemiBold.ttf
-  - fonts/NotoSerifKhmer/NotoSerifKhmer-CondensedThin.ttf
-  - fonts/NotoSerifKhmer/NotoSerifKhmer-ExtraBold.ttf
-  - fonts/NotoSerifKhmer/NotoSerifKhmer-ExtraCondensed.ttf
-  - fonts/NotoSerifKhmer/NotoSerifKhmer-ExtraCondensedBlack.ttf
-  - fonts/NotoSerifKhmer/NotoSerifKhmer-ExtraCondensedBold.ttf
-  - fonts/NotoSerifKhmer/NotoSerifKhmer-ExtraCondensedExtraBold.ttf
-  - fonts/NotoSerifKhmer/NotoSerifKhmer-ExtraCondensedExtraLight.ttf
-  - fonts/NotoSerifKhmer/NotoSerifKhmer-ExtraCondensedLight.ttf
-  - fonts/NotoSerifKhmer/NotoSerifKhmer-ExtraCondensedMedium.ttf
-  - fonts/NotoSerifKhmer/NotoSerifKhmer-ExtraCondensedSemiBold.ttf
-  - fonts/NotoSerifKhmer/NotoSerifKhmer-ExtraCondensedThin.ttf
-  - fonts/NotoSerifKhmer/NotoSerifKhmer-ExtraLight.ttf
-  - fonts/NotoSerifKhmer/NotoSerifKhmer-Light.ttf
-  - fonts/NotoSerifKhmer/NotoSerifKhmer-Medium.ttf
   - fonts/NotoSerifKhmer/NotoSerifKhmer-Regular.ttf
-  - fonts/NotoSerifKhmer/NotoSerifKhmer-SemiBold.ttf
-  - fonts/NotoSerifKhmer/NotoSerifKhmer-SemiCondensed.ttf
-  - fonts/NotoSerifKhmer/NotoSerifKhmer-SemiCondensedBlack.ttf
-  - fonts/NotoSerifKhmer/NotoSerifKhmer-SemiCondensedBold.ttf
-  - fonts/NotoSerifKhmer/NotoSerifKhmer-SemiCondensedExtraBold.ttf
-  - fonts/NotoSerifKhmer/NotoSerifKhmer-SemiCondensedExtraLight.ttf
-  - fonts/NotoSerifKhmer/NotoSerifKhmer-SemiCondensedLight.ttf
-  - fonts/NotoSerifKhmer/NotoSerifKhmer-SemiCondensedMedium.ttf
-  - fonts/NotoSerifKhmer/NotoSerifKhmer-SemiCondensedSemiBold.ttf
-  - fonts/NotoSerifKhmer/NotoSerifKhmer-SemiCondensedThin.ttf
-  - fonts/NotoSerifKhmer/NotoSerifKhmer-Thin.ttf
-  - fonts/NotoSerifKhmer/NotoSerifKhmer[wdth,wght].ttf
-  - fonts/NotoSerifKhmer/NotoSerifKhmer[wght].ttf
   unicode_ranges:
   - [0x0000, 0x0000]
   - [0x000D, 0x000D]
@@ -34573,7 +32880,6 @@
   files:
   - fonts/NotoSerifKhojki/NotoSerifKhojki-Bold.ttf
   - fonts/NotoSerifKhojki/NotoSerifKhojki-Regular.ttf
-  - fonts/NotoSerifKhojki/NotoSerifKhojki[wght].ttf
   unicode_ranges:
   - [0x0000, 0x0000]
   - [0x000D, 0x000D]
@@ -34633,44 +32939,8 @@
   - [0x11213, 0x11241]
 - family: NotoSerifLao
   files:
-  - fonts/NotoSerifLao/NotoSerifLao-Black.ttf
   - fonts/NotoSerifLao/NotoSerifLao-Bold.ttf
-  - fonts/NotoSerifLao/NotoSerifLao-Condensed.ttf
-  - fonts/NotoSerifLao/NotoSerifLao-CondensedBlack.ttf
-  - fonts/NotoSerifLao/NotoSerifLao-CondensedBold.ttf
-  - fonts/NotoSerifLao/NotoSerifLao-CondensedExtraBold.ttf
-  - fonts/NotoSerifLao/NotoSerifLao-CondensedExtraLight.ttf
-  - fonts/NotoSerifLao/NotoSerifLao-CondensedLight.ttf
-  - fonts/NotoSerifLao/NotoSerifLao-CondensedMedium.ttf
-  - fonts/NotoSerifLao/NotoSerifLao-CondensedSemiBold.ttf
-  - fonts/NotoSerifLao/NotoSerifLao-CondensedThin.ttf
-  - fonts/NotoSerifLao/NotoSerifLao-ExtraBold.ttf
-  - fonts/NotoSerifLao/NotoSerifLao-ExtraCondensed.ttf
-  - fonts/NotoSerifLao/NotoSerifLao-ExtraCondensedBlack.ttf
-  - fonts/NotoSerifLao/NotoSerifLao-ExtraCondensedBold.ttf
-  - fonts/NotoSerifLao/NotoSerifLao-ExtraCondensedExtraBold.ttf
-  - fonts/NotoSerifLao/NotoSerifLao-ExtraCondensedExtraLight.ttf
-  - fonts/NotoSerifLao/NotoSerifLao-ExtraCondensedLight.ttf
-  - fonts/NotoSerifLao/NotoSerifLao-ExtraCondensedMedium.ttf
-  - fonts/NotoSerifLao/NotoSerifLao-ExtraCondensedSemiBold.ttf
-  - fonts/NotoSerifLao/NotoSerifLao-ExtraCondensedThin.ttf
-  - fonts/NotoSerifLao/NotoSerifLao-ExtraLight.ttf
-  - fonts/NotoSerifLao/NotoSerifLao-Light.ttf
-  - fonts/NotoSerifLao/NotoSerifLao-Medium.ttf
   - fonts/NotoSerifLao/NotoSerifLao-Regular.ttf
-  - fonts/NotoSerifLao/NotoSerifLao-SemiBold.ttf
-  - fonts/NotoSerifLao/NotoSerifLao-SemiCondensed.ttf
-  - fonts/NotoSerifLao/NotoSerifLao-SemiCondensedBlack.ttf
-  - fonts/NotoSerifLao/NotoSerifLao-SemiCondensedBold.ttf
-  - fonts/NotoSerifLao/NotoSerifLao-SemiCondensedExtraBold.ttf
-  - fonts/NotoSerifLao/NotoSerifLao-SemiCondensedExtraLight.ttf
-  - fonts/NotoSerifLao/NotoSerifLao-SemiCondensedLight.ttf
-  - fonts/NotoSerifLao/NotoSerifLao-SemiCondensedMedium.ttf
-  - fonts/NotoSerifLao/NotoSerifLao-SemiCondensedSemiBold.ttf
-  - fonts/NotoSerifLao/NotoSerifLao-SemiCondensedThin.ttf
-  - fonts/NotoSerifLao/NotoSerifLao-Thin.ttf
-  - fonts/NotoSerifLao/NotoSerifLao[wdth,wght].ttf
-  - fonts/NotoSerifLao/NotoSerifLao[wght].ttf
   unicode_ranges:
   - [0x0000, 0x0000]
   - [0x000D, 0x000D]
@@ -34785,16 +33055,8 @@
   - [0x11EE0, 0x11EF8]
 - family: NotoSerifMalayalam
   files:
-  - fonts/NotoSerifMalayalam/NotoSerifMalayalam-Black.ttf
   - fonts/NotoSerifMalayalam/NotoSerifMalayalam-Bold.ttf
-  - fonts/NotoSerifMalayalam/NotoSerifMalayalam-ExtraBold.ttf
-  - fonts/NotoSerifMalayalam/NotoSerifMalayalam-ExtraLight.ttf
-  - fonts/NotoSerifMalayalam/NotoSerifMalayalam-Light.ttf
-  - fonts/NotoSerifMalayalam/NotoSerifMalayalam-Medium.ttf
   - fonts/NotoSerifMalayalam/NotoSerifMalayalam-Regular.ttf
-  - fonts/NotoSerifMalayalam/NotoSerifMalayalam-SemiBold.ttf
-  - fonts/NotoSerifMalayalam/NotoSerifMalayalam-Thin.ttf
-  - fonts/NotoSerifMalayalam/NotoSerifMalayalam[wght].ttf
   unicode_ranges:
   - [0x0000, 0x0000]
   - [0x000D, 0x000D]
@@ -34861,44 +33123,8 @@
   - [0xA830, 0xA832]
 - family: NotoSerifMyanmar
   files:
-  - fonts/NotoSerifMyanmar/NotoSerifMyanmar-Black.ttf
   - fonts/NotoSerifMyanmar/NotoSerifMyanmar-Bold.ttf
-  - fonts/NotoSerifMyanmar/NotoSerifMyanmar-Condensed.ttf
-  - fonts/NotoSerifMyanmar/NotoSerifMyanmar-CondensedBlack.ttf
-  - fonts/NotoSerifMyanmar/NotoSerifMyanmar-CondensedBold.ttf
-  - fonts/NotoSerifMyanmar/NotoSerifMyanmar-CondensedExtraBold.ttf
-  - fonts/NotoSerifMyanmar/NotoSerifMyanmar-CondensedExtraLight.ttf
-  - fonts/NotoSerifMyanmar/NotoSerifMyanmar-CondensedLight.ttf
-  - fonts/NotoSerifMyanmar/NotoSerifMyanmar-CondensedMedium.ttf
-  - fonts/NotoSerifMyanmar/NotoSerifMyanmar-CondensedSemiBold.ttf
-  - fonts/NotoSerifMyanmar/NotoSerifMyanmar-CondensedThin.ttf
-  - fonts/NotoSerifMyanmar/NotoSerifMyanmar-ExtraBold.ttf
-  - fonts/NotoSerifMyanmar/NotoSerifMyanmar-ExtraCondensed.ttf
-  - fonts/NotoSerifMyanmar/NotoSerifMyanmar-ExtraCondensedBlack.ttf
-  - fonts/NotoSerifMyanmar/NotoSerifMyanmar-ExtraCondensedBold.ttf
-  - fonts/NotoSerifMyanmar/NotoSerifMyanmar-ExtraCondensedExtraBold.ttf
-  - fonts/NotoSerifMyanmar/NotoSerifMyanmar-ExtraCondensedExtraLight.ttf
-  - fonts/NotoSerifMyanmar/NotoSerifMyanmar-ExtraCondensedLight.ttf
-  - fonts/NotoSerifMyanmar/NotoSerifMyanmar-ExtraCondensedMedium.ttf
-  - fonts/NotoSerifMyanmar/NotoSerifMyanmar-ExtraCondensedSemiBold.ttf
-  - fonts/NotoSerifMyanmar/NotoSerifMyanmar-ExtraCondensedThin.ttf
-  - fonts/NotoSerifMyanmar/NotoSerifMyanmar-ExtraLight.ttf
-  - fonts/NotoSerifMyanmar/NotoSerifMyanmar-Light.ttf
-  - fonts/NotoSerifMyanmar/NotoSerifMyanmar-Medium.ttf
   - fonts/NotoSerifMyanmar/NotoSerifMyanmar-Regular.ttf
-  - fonts/NotoSerifMyanmar/NotoSerifMyanmar-SemiBold.ttf
-  - fonts/NotoSerifMyanmar/NotoSerifMyanmar-SemiCondensed.ttf
-  - fonts/NotoSerifMyanmar/NotoSerifMyanmar-SemiCondensedBlack.ttf
-  - fonts/NotoSerifMyanmar/NotoSerifMyanmar-SemiCondensedBold.ttf
-  - fonts/NotoSerifMyanmar/NotoSerifMyanmar-SemiCondensedExtraBold.ttf
-  - fonts/NotoSerifMyanmar/NotoSerifMyanmar-SemiCondensedExtraLight.ttf
-  - fonts/NotoSerifMyanmar/NotoSerifMyanmar-SemiCondensedLight.ttf
-  - fonts/NotoSerifMyanmar/NotoSerifMyanmar-SemiCondensedMedium.ttf
-  - fonts/NotoSerifMyanmar/NotoSerifMyanmar-SemiCondensedSemiBold.ttf
-  - fonts/NotoSerifMyanmar/NotoSerifMyanmar-SemiCondensedThin.ttf
-  - fonts/NotoSerifMyanmar/NotoSerifMyanmar-Thin.ttf
-  - fonts/NotoSerifMyanmar/NotoSerifMyanmar[wdth,wght].ttf
-  - fonts/NotoSerifMyanmar/NotoSerifMyanmar[wght].ttf
   unicode_ranges:
   - [0x0000, 0x0000]
   - [0x000D, 0x000D]
@@ -34958,10 +33184,7 @@
 - family: NotoSerifNPHmong
   files:
   - fonts/NotoSerifNPHmong/NotoSerifNPHmong-Bold.ttf
-  - fonts/NotoSerifNPHmong/NotoSerifNPHmong-Medium.ttf
   - fonts/NotoSerifNPHmong/NotoSerifNPHmong-Regular.ttf
-  - fonts/NotoSerifNPHmong/NotoSerifNPHmong-SemiBold.ttf
-  - fonts/NotoSerifNPHmong/NotoSerifNPHmong[wght].ttf
   unicode_ranges:
   - [0x0000, 0x0000]
   - [0x000D, 0x000D]
@@ -35075,10 +33298,7 @@
 - family: NotoSerifOriya
   files:
   - fonts/NotoSerifOriya/NotoSerifOriya-Bold.ttf
-  - fonts/NotoSerifOriya/NotoSerifOriya-Medium.ttf
   - fonts/NotoSerifOriya/NotoSerifOriya-Regular.ttf
-  - fonts/NotoSerifOriya/NotoSerifOriya-SemiBold.ttf
-  - fonts/NotoSerifOriya/NotoSerifOriya[wght].ttf
   unicode_ranges:
   - [0x0000, 0x0000]
   - [0x000D, 0x000D]
@@ -35200,44 +33420,8 @@
   - [0x1ED01, 0x1ED3D]
 - family: NotoSerifSinhala
   files:
-  - fonts/NotoSerifSinhala/NotoSerifSinhala-Black.ttf
   - fonts/NotoSerifSinhala/NotoSerifSinhala-Bold.ttf
-  - fonts/NotoSerifSinhala/NotoSerifSinhala-Condensed.ttf
-  - fonts/NotoSerifSinhala/NotoSerifSinhala-CondensedBlack.ttf
-  - fonts/NotoSerifSinhala/NotoSerifSinhala-CondensedBold.ttf
-  - fonts/NotoSerifSinhala/NotoSerifSinhala-CondensedExtraBold.ttf
-  - fonts/NotoSerifSinhala/NotoSerifSinhala-CondensedExtraLight.ttf
-  - fonts/NotoSerifSinhala/NotoSerifSinhala-CondensedLight.ttf
-  - fonts/NotoSerifSinhala/NotoSerifSinhala-CondensedMedium.ttf
-  - fonts/NotoSerifSinhala/NotoSerifSinhala-CondensedSemiBold.ttf
-  - fonts/NotoSerifSinhala/NotoSerifSinhala-CondensedThin.ttf
-  - fonts/NotoSerifSinhala/NotoSerifSinhala-ExtraBold.ttf
-  - fonts/NotoSerifSinhala/NotoSerifSinhala-ExtraCondensed.ttf
-  - fonts/NotoSerifSinhala/NotoSerifSinhala-ExtraCondensedBlack.ttf
-  - fonts/NotoSerifSinhala/NotoSerifSinhala-ExtraCondensedBold.ttf
-  - fonts/NotoSerifSinhala/NotoSerifSinhala-ExtraCondensedExtraBold.ttf
-  - fonts/NotoSerifSinhala/NotoSerifSinhala-ExtraCondensedExtraLight.ttf
-  - fonts/NotoSerifSinhala/NotoSerifSinhala-ExtraCondensedLight.ttf
-  - fonts/NotoSerifSinhala/NotoSerifSinhala-ExtraCondensedMedium.ttf
-  - fonts/NotoSerifSinhala/NotoSerifSinhala-ExtraCondensedSemiBold.ttf
-  - fonts/NotoSerifSinhala/NotoSerifSinhala-ExtraCondensedThin.ttf
-  - fonts/NotoSerifSinhala/NotoSerifSinhala-ExtraLight.ttf
-  - fonts/NotoSerifSinhala/NotoSerifSinhala-Light.ttf
-  - fonts/NotoSerifSinhala/NotoSerifSinhala-Medium.ttf
   - fonts/NotoSerifSinhala/NotoSerifSinhala-Regular.ttf
-  - fonts/NotoSerifSinhala/NotoSerifSinhala-SemiBold.ttf
-  - fonts/NotoSerifSinhala/NotoSerifSinhala-SemiCondensed.ttf
-  - fonts/NotoSerifSinhala/NotoSerifSinhala-SemiCondensedBlack.ttf
-  - fonts/NotoSerifSinhala/NotoSerifSinhala-SemiCondensedBold.ttf
-  - fonts/NotoSerifSinhala/NotoSerifSinhala-SemiCondensedExtraBold.ttf
-  - fonts/NotoSerifSinhala/NotoSerifSinhala-SemiCondensedExtraLight.ttf
-  - fonts/NotoSerifSinhala/NotoSerifSinhala-SemiCondensedLight.ttf
-  - fonts/NotoSerifSinhala/NotoSerifSinhala-SemiCondensedMedium.ttf
-  - fonts/NotoSerifSinhala/NotoSerifSinhala-SemiCondensedSemiBold.ttf
-  - fonts/NotoSerifSinhala/NotoSerifSinhala-SemiCondensedThin.ttf
-  - fonts/NotoSerifSinhala/NotoSerifSinhala-Thin.ttf
-  - fonts/NotoSerifSinhala/NotoSerifSinhala[wdth,wght].ttf
-  - fonts/NotoSerifSinhala/NotoSerifSinhala[wght].ttf
   unicode_ranges:
   - [0x0000, 0x0000]
   - [0x000D, 0x000D]
@@ -35304,82 +33488,10 @@
   - [0x111E1, 0x111F4]
 - family: NotoSerifTamil
   files:
-  - fonts/NotoSerifTamil/NotoSerifTamil-Black.ttf
-  - fonts/NotoSerifTamil/NotoSerifTamil-BlackItalic.ttf
   - fonts/NotoSerifTamil/NotoSerifTamil-Bold.ttf
   - fonts/NotoSerifTamil/NotoSerifTamil-BoldItalic.ttf
-  - fonts/NotoSerifTamil/NotoSerifTamil-Condensed.ttf
-  - fonts/NotoSerifTamil/NotoSerifTamil-CondensedBlack.ttf
-  - fonts/NotoSerifTamil/NotoSerifTamil-CondensedBlackItalic.ttf
-  - fonts/NotoSerifTamil/NotoSerifTamil-CondensedBold.ttf
-  - fonts/NotoSerifTamil/NotoSerifTamil-CondensedBoldItalic.ttf
-  - fonts/NotoSerifTamil/NotoSerifTamil-CondensedExtraBold.ttf
-  - fonts/NotoSerifTamil/NotoSerifTamil-CondensedExtraBoldItalic.ttf
-  - fonts/NotoSerifTamil/NotoSerifTamil-CondensedExtraLight.ttf
-  - fonts/NotoSerifTamil/NotoSerifTamil-CondensedExtraLightItalic.ttf
-  - fonts/NotoSerifTamil/NotoSerifTamil-CondensedItalic.ttf
-  - fonts/NotoSerifTamil/NotoSerifTamil-CondensedLight.ttf
-  - fonts/NotoSerifTamil/NotoSerifTamil-CondensedLightItalic.ttf
-  - fonts/NotoSerifTamil/NotoSerifTamil-CondensedMedium.ttf
-  - fonts/NotoSerifTamil/NotoSerifTamil-CondensedMediumItalic.ttf
-  - fonts/NotoSerifTamil/NotoSerifTamil-CondensedSemiBold.ttf
-  - fonts/NotoSerifTamil/NotoSerifTamil-CondensedSemiBoldItalic.ttf
-  - fonts/NotoSerifTamil/NotoSerifTamil-CondensedThin.ttf
-  - fonts/NotoSerifTamil/NotoSerifTamil-CondensedThinItalic.ttf
-  - fonts/NotoSerifTamil/NotoSerifTamil-ExtraBold.ttf
-  - fonts/NotoSerifTamil/NotoSerifTamil-ExtraBoldItalic.ttf
-  - fonts/NotoSerifTamil/NotoSerifTamil-ExtraCondensed.ttf
-  - fonts/NotoSerifTamil/NotoSerifTamil-ExtraCondensedBlack.ttf
-  - fonts/NotoSerifTamil/NotoSerifTamil-ExtraCondensedBlackItalic.ttf
-  - fonts/NotoSerifTamil/NotoSerifTamil-ExtraCondensedBold.ttf
-  - fonts/NotoSerifTamil/NotoSerifTamil-ExtraCondensedBoldItalic.ttf
-  - fonts/NotoSerifTamil/NotoSerifTamil-ExtraCondensedExtraBold.ttf
-  - fonts/NotoSerifTamil/NotoSerifTamil-ExtraCondensedExtraBoldItalic.ttf
-  - fonts/NotoSerifTamil/NotoSerifTamil-ExtraCondensedExtraLight.ttf
-  - fonts/NotoSerifTamil/NotoSerifTamil-ExtraCondensedExtraLightItalic.ttf
-  - fonts/NotoSerifTamil/NotoSerifTamil-ExtraCondensedItalic.ttf
-  - fonts/NotoSerifTamil/NotoSerifTamil-ExtraCondensedLight.ttf
-  - fonts/NotoSerifTamil/NotoSerifTamil-ExtraCondensedLightItalic.ttf
-  - fonts/NotoSerifTamil/NotoSerifTamil-ExtraCondensedMedium.ttf
-  - fonts/NotoSerifTamil/NotoSerifTamil-ExtraCondensedMediumItalic.ttf
-  - fonts/NotoSerifTamil/NotoSerifTamil-ExtraCondensedSemiBold.ttf
-  - fonts/NotoSerifTamil/NotoSerifTamil-ExtraCondensedSemiBoldItalic.ttf
-  - fonts/NotoSerifTamil/NotoSerifTamil-ExtraCondensedThin.ttf
-  - fonts/NotoSerifTamil/NotoSerifTamil-ExtraCondensedThinItalic.ttf
-  - fonts/NotoSerifTamil/NotoSerifTamil-ExtraLight.ttf
-  - fonts/NotoSerifTamil/NotoSerifTamil-ExtraLightItalic.ttf
   - fonts/NotoSerifTamil/NotoSerifTamil-Italic.ttf
-  - fonts/NotoSerifTamil/NotoSerifTamil-Italic[wdth,wght].ttf
-  - fonts/NotoSerifTamil/NotoSerifTamil-Italic[wght].ttf
-  - fonts/NotoSerifTamil/NotoSerifTamil-Light.ttf
-  - fonts/NotoSerifTamil/NotoSerifTamil-LightItalic.ttf
-  - fonts/NotoSerifTamil/NotoSerifTamil-Medium.ttf
-  - fonts/NotoSerifTamil/NotoSerifTamil-MediumItalic.ttf
   - fonts/NotoSerifTamil/NotoSerifTamil-Regular.ttf
-  - fonts/NotoSerifTamil/NotoSerifTamil-SemiBold.ttf
-  - fonts/NotoSerifTamil/NotoSerifTamil-SemiBoldItalic.ttf
-  - fonts/NotoSerifTamil/NotoSerifTamil-SemiCondensed.ttf
-  - fonts/NotoSerifTamil/NotoSerifTamil-SemiCondensedBlack.ttf
-  - fonts/NotoSerifTamil/NotoSerifTamil-SemiCondensedBlackItalic.ttf
-  - fonts/NotoSerifTamil/NotoSerifTamil-SemiCondensedBold.ttf
-  - fonts/NotoSerifTamil/NotoSerifTamil-SemiCondensedBoldItalic.ttf
-  - fonts/NotoSerifTamil/NotoSerifTamil-SemiCondensedExtraBold.ttf
-  - fonts/NotoSerifTamil/NotoSerifTamil-SemiCondensedExtraBoldItalic.ttf
-  - fonts/NotoSerifTamil/NotoSerifTamil-SemiCondensedExtraLight.ttf
-  - fonts/NotoSerifTamil/NotoSerifTamil-SemiCondensedExtraLightItalic.ttf
-  - fonts/NotoSerifTamil/NotoSerifTamil-SemiCondensedItalic.ttf
-  - fonts/NotoSerifTamil/NotoSerifTamil-SemiCondensedLight.ttf
-  - fonts/NotoSerifTamil/NotoSerifTamil-SemiCondensedLightItalic.ttf
-  - fonts/NotoSerifTamil/NotoSerifTamil-SemiCondensedMedium.ttf
-  - fonts/NotoSerifTamil/NotoSerifTamil-SemiCondensedMediumItalic.ttf
-  - fonts/NotoSerifTamil/NotoSerifTamil-SemiCondensedSemiBold.ttf
-  - fonts/NotoSerifTamil/NotoSerifTamil-SemiCondensedSemiBoldItalic.ttf
-  - fonts/NotoSerifTamil/NotoSerifTamil-SemiCondensedThin.ttf
-  - fonts/NotoSerifTamil/NotoSerifTamil-SemiCondensedThinItalic.ttf
-  - fonts/NotoSerifTamil/NotoSerifTamil-Thin.ttf
-  - fonts/NotoSerifTamil/NotoSerifTamil-ThinItalic.ttf
-  - fonts/NotoSerifTamil/NotoSerifTamil[wdth,wght].ttf
-  - fonts/NotoSerifTamil/NotoSerifTamil[wght].ttf
   unicode_ranges:
   - [0x0000, 0x0000]
   - [0x000D, 0x000D]
@@ -35515,16 +33627,8 @@
   - [0x1F6D3, 0x1F6D4]
 - family: NotoSerifTelugu
   files:
-  - fonts/NotoSerifTelugu/NotoSerifTelugu-Black.ttf
   - fonts/NotoSerifTelugu/NotoSerifTelugu-Bold.ttf
-  - fonts/NotoSerifTelugu/NotoSerifTelugu-ExtraBold.ttf
-  - fonts/NotoSerifTelugu/NotoSerifTelugu-ExtraLight.ttf
-  - fonts/NotoSerifTelugu/NotoSerifTelugu-Light.ttf
-  - fonts/NotoSerifTelugu/NotoSerifTelugu-Medium.ttf
   - fonts/NotoSerifTelugu/NotoSerifTelugu-Regular.ttf
-  - fonts/NotoSerifTelugu/NotoSerifTelugu-SemiBold.ttf
-  - fonts/NotoSerifTelugu/NotoSerifTelugu-Thin.ttf
-  - fonts/NotoSerifTelugu/NotoSerifTelugu[wght].ttf
   unicode_ranges:
   - [0x0000, 0x0000]
   - [0x000D, 0x000D]
@@ -35598,7 +33702,6 @@
   files:
   - fonts/NotoSerifTest/NotoSerifTest-Bold.ttf
   - fonts/NotoSerifTest/NotoSerifTest-Regular.ttf
-  - fonts/NotoSerifTest/NotoSerifTest[wght].ttf
   unicode_ranges:
   - [0x0020, 0x007E]
   - [0x00A0, 0x00A3]
@@ -35649,44 +33752,8 @@
   - [0x2212, 0x2212]
 - family: NotoSerifThai
   files:
-  - fonts/NotoSerifThai/NotoSerifThai-Black.ttf
   - fonts/NotoSerifThai/NotoSerifThai-Bold.ttf
-  - fonts/NotoSerifThai/NotoSerifThai-Condensed.ttf
-  - fonts/NotoSerifThai/NotoSerifThai-CondensedBlack.ttf
-  - fonts/NotoSerifThai/NotoSerifThai-CondensedBold.ttf
-  - fonts/NotoSerifThai/NotoSerifThai-CondensedExtraBold.ttf
-  - fonts/NotoSerifThai/NotoSerifThai-CondensedExtraLight.ttf
-  - fonts/NotoSerifThai/NotoSerifThai-CondensedLight.ttf
-  - fonts/NotoSerifThai/NotoSerifThai-CondensedMedium.ttf
-  - fonts/NotoSerifThai/NotoSerifThai-CondensedSemiBold.ttf
-  - fonts/NotoSerifThai/NotoSerifThai-CondensedThin.ttf
-  - fonts/NotoSerifThai/NotoSerifThai-ExtraBold.ttf
-  - fonts/NotoSerifThai/NotoSerifThai-ExtraCondensed.ttf
-  - fonts/NotoSerifThai/NotoSerifThai-ExtraCondensedBlack.ttf
-  - fonts/NotoSerifThai/NotoSerifThai-ExtraCondensedBold.ttf
-  - fonts/NotoSerifThai/NotoSerifThai-ExtraCondensedExtraBold.ttf
-  - fonts/NotoSerifThai/NotoSerifThai-ExtraCondensedExtraLight.ttf
-  - fonts/NotoSerifThai/NotoSerifThai-ExtraCondensedLight.ttf
-  - fonts/NotoSerifThai/NotoSerifThai-ExtraCondensedMedium.ttf
-  - fonts/NotoSerifThai/NotoSerifThai-ExtraCondensedSemiBold.ttf
-  - fonts/NotoSerifThai/NotoSerifThai-ExtraCondensedThin.ttf
-  - fonts/NotoSerifThai/NotoSerifThai-ExtraLight.ttf
-  - fonts/NotoSerifThai/NotoSerifThai-Light.ttf
-  - fonts/NotoSerifThai/NotoSerifThai-Medium.ttf
   - fonts/NotoSerifThai/NotoSerifThai-Regular.ttf
-  - fonts/NotoSerifThai/NotoSerifThai-SemiBold.ttf
-  - fonts/NotoSerifThai/NotoSerifThai-SemiCondensed.ttf
-  - fonts/NotoSerifThai/NotoSerifThai-SemiCondensedBlack.ttf
-  - fonts/NotoSerifThai/NotoSerifThai-SemiCondensedBold.ttf
-  - fonts/NotoSerifThai/NotoSerifThai-SemiCondensedExtraBold.ttf
-  - fonts/NotoSerifThai/NotoSerifThai-SemiCondensedExtraLight.ttf
-  - fonts/NotoSerifThai/NotoSerifThai-SemiCondensedLight.ttf
-  - fonts/NotoSerifThai/NotoSerifThai-SemiCondensedMedium.ttf
-  - fonts/NotoSerifThai/NotoSerifThai-SemiCondensedSemiBold.ttf
-  - fonts/NotoSerifThai/NotoSerifThai-SemiCondensedThin.ttf
-  - fonts/NotoSerifThai/NotoSerifThai-Thin.ttf
-  - fonts/NotoSerifThai/NotoSerifThai[wdth,wght].ttf
-  - fonts/NotoSerifThai/NotoSerifThai[wght].ttf
   unicode_ranges:
   - [0x0000, 0x0000]
   - [0x000D, 0x000D]
@@ -35744,16 +33811,8 @@
   - [0x25CC, 0x25CC]
 - family: NotoSerifTibetan
   files:
-  - fonts/NotoSerifTibetan/NotoSerifTibetan-Black.ttf
   - fonts/NotoSerifTibetan/NotoSerifTibetan-Bold.ttf
-  - fonts/NotoSerifTibetan/NotoSerifTibetan-ExtraBold.ttf
-  - fonts/NotoSerifTibetan/NotoSerifTibetan-ExtraLight.ttf
-  - fonts/NotoSerifTibetan/NotoSerifTibetan-Light.ttf
-  - fonts/NotoSerifTibetan/NotoSerifTibetan-Medium.ttf
   - fonts/NotoSerifTibetan/NotoSerifTibetan-Regular.ttf
-  - fonts/NotoSerifTibetan/NotoSerifTibetan-SemiBold.ttf
-  - fonts/NotoSerifTibetan/NotoSerifTibetan-Thin.ttf
-  - fonts/NotoSerifTibetan/NotoSerifTibetan[wght].ttf
   unicode_ranges:
   - [0x0000, 0x0000]
   - [0x000D, 0x000D]
@@ -35870,10 +33929,7 @@
 - family: NotoSerifToto
   files:
   - fonts/NotoSerifToto/NotoSerifToto-Bold.ttf
-  - fonts/NotoSerifToto/NotoSerifToto-Medium.ttf
   - fonts/NotoSerifToto/NotoSerifToto-Regular.ttf
-  - fonts/NotoSerifToto/NotoSerifToto-SemiBold.ttf
-  - fonts/NotoSerifToto/NotoSerifToto[wght].ttf
   unicode_ranges:
   - [0x0000, 0x0000]
   - [0x000D, 0x000D]
@@ -35927,10 +33983,7 @@
 - family: NotoSerifVithkuqi
   files:
   - fonts/NotoSerifVithkuqi/NotoSerifVithkuqi-Bold.ttf
-  - fonts/NotoSerifVithkuqi/NotoSerifVithkuqi-Medium.ttf
   - fonts/NotoSerifVithkuqi/NotoSerifVithkuqi-Regular.ttf
-  - fonts/NotoSerifVithkuqi/NotoSerifVithkuqi-SemiBold.ttf
-  - fonts/NotoSerifVithkuqi/NotoSerifVithkuqi[wght].ttf
   unicode_ranges:
   - [0x000D, 0x000D]
   - [0x0020, 0x007E]
@@ -35989,10 +34042,7 @@
 - family: NotoSerifYezidi
   files:
   - fonts/NotoSerifYezidi/NotoSerifYezidi-Bold.ttf
-  - fonts/NotoSerifYezidi/NotoSerifYezidi-Medium.ttf
   - fonts/NotoSerifYezidi/NotoSerifYezidi-Regular.ttf
-  - fonts/NotoSerifYezidi/NotoSerifYezidi-SemiBold.ttf
-  - fonts/NotoSerifYezidi/NotoSerifYezidi[wght].ttf
   unicode_ranges:
   - [0x0000, 0x0000]
   - [0x000D, 0x000D]
@@ -36053,9 +34103,7 @@
 - family: NotoTraditionalNushu
   files:
   - fonts/NotoTraditionalNushu/NotoTraditionalNushu-Bold.ttf
-  - fonts/NotoTraditionalNushu/NotoTraditionalNushu-Light.ttf
   - fonts/NotoTraditionalNushu/NotoTraditionalNushu-Regular.ttf
-  - fonts/NotoTraditionalNushu/NotoTraditionalNushu[wght].ttf
   unicode_ranges:
   - [0x0020, 0x007E]
   - [0x00A0, 0x00A3]
