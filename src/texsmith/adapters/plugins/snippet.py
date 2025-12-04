@@ -8,7 +8,6 @@ from dataclasses import dataclass
 import hashlib
 import json
 import logging
-import os
 from pathlib import Path
 import shutil
 import subprocess
@@ -34,6 +33,7 @@ from texsmith.core.diagnostics import DiagnosticEmitter
 from texsmith.core.exceptions import AssetMissingError, InvalidNodeError, LatexRenderingError
 from texsmith.core.rules import RenderPhase, renders
 from texsmith.core.templates import TemplateError, TemplateRuntime, load_template_runtime
+from texsmith.core.user_dir import get_user_dir
 
 
 SNIPPET_DIR = "snippets"
@@ -230,24 +230,10 @@ def _resolve_runtime() -> TemplateRuntime:
 
 
 def _resolve_cache_root() -> Path | None:
-    base = os.environ.get("TEXSMITH_CACHE_DIR")
-    if base:
-        candidate = Path(base).expanduser() / _SNIPPET_CACHE_NAMESPACE
-    else:
-        xdg_cache = os.environ.get("XDG_CACHE_HOME")
-        if xdg_cache:
-            candidate = Path(xdg_cache).expanduser() / "texsmith" / _SNIPPET_CACHE_NAMESPACE
-        else:
-            try:
-                candidate = Path.home() / ".cache" / "texsmith" / _SNIPPET_CACHE_NAMESPACE
-            except RuntimeError:
-                return None
-
     try:
-        candidate.mkdir(parents=True, exist_ok=True)
+        return get_user_dir().cache_dir(_SNIPPET_CACHE_NAMESPACE)
     except OSError:
         return None
-    return candidate
 
 
 def _load_cache_metadata(path: Path) -> dict[str, Any]:

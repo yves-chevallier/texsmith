@@ -14,6 +14,7 @@ from requests.utils import requote_uri as requote_url
 from texsmith.core.context import RenderContext
 from texsmith.core.exceptions import InvalidNodeError, TransformerExecutionError
 from texsmith.core.rules import RenderPhase, renders
+from texsmith.fonts.scripts import record_script_usage_for_slug, render_moving_text
 
 from ..latex.utils import escape_latex_chars
 from ..transformers import fetch_image, svg2pdf
@@ -622,6 +623,36 @@ def render_keystrokes(element: Tag, context: RenderContext) -> None:
     "span",
     phase=RenderPhase.INLINE,
     priority=30,
+    name="script_spans",
+    nestable=False,
+    auto_mark=False,
+)
+def render_script_spans(element: Tag, context: RenderContext) -> None:
+    """Render spans tagged with data-script into explicit text commands."""
+    slug = coerce_attribute(element.get("data-script"))
+    if not slug:
+        return
+
+    raw_text = element.get_text(strip=False)
+    if not raw_text:
+        element.decompose()
+        return
+
+    record_script_usage_for_slug(slug, raw_text, context)
+    legacy_accents = getattr(context.config, "legacy_latex_accents", False)
+    payload = escape_latex_chars(raw_text, legacy_accents=legacy_accents)
+    latex = f"\\text{slug}{{{payload}}}"
+    parent = element.parent
+    if parent is not None and getattr(parent, "attrs", None) is not None:
+        parent.attrs["data-texsmith-latex"] = "true"
+    context.mark_processed(element)
+    element.replace_with(mark_processed(NavigableString(latex)))
+
+
+@renders(
+    "span",
+    phase=RenderPhase.INLINE,
+    priority=30,
     name="latex_text",
     nestable=False,
     auto_mark=False,
@@ -743,16 +774,23 @@ def render_index_entry(element: Tag, context: RenderContext) -> None:
 
     legacy_latex_accents = getattr(context.config, "legacy_latex_accents", False)
     escaped_fragments = [
-        escape_latex_chars(part, legacy_accents=legacy_latex_accents) for part in parts
+        render_moving_text(part, context, legacy_accents=legacy_latex_accents, wrap_scripts=True)
+        or ""
+        for part in parts
     ]
-    escaped_entry = "!".join(escaped_fragments)
+    escaped_entry = "!".join(fragment for fragment in escaped_fragments if fragment)
     style_value = coerce_attribute(element.get("data-tag-style"))
     style_key = style_value.strip().lower() if style_value else ""
     if style_key not in {"b", "i", "bi"}:
         style_key = ""
 
     display_text = element.get_text(strip=False) or ""
-    escaped_text = escape_latex_chars(display_text, legacy_accents=legacy_latex_accents)
+    escaped_text = (
+        render_moving_text(
+            display_text, context, legacy_accents=legacy_latex_accents, wrap_scripts=True
+        )
+        or ""
+    )
 
     latex = context.formatter.index(escaped_text, entry=escaped_entry, style=style_key)
     node = mark_processed(NavigableString(latex))

@@ -6,6 +6,7 @@ from bs4.element import NavigableString, Tag
 
 from texsmith.core.context import RenderContext
 from texsmith.core.rules import RenderPhase, renders
+from texsmith.fonts.scripts import render_moving_text
 
 from ._helpers import coerce_attribute, gather_classes, mark_processed
 
@@ -196,7 +197,14 @@ def render_headings(element: Tag, context: RenderContext) -> None:
         element.replace_with(mark_processed(NavigableString(latex)))
         return
 
-    text = element.get_text(strip=False)
+    raw_text = element.get_text(strip=False)
+    text = render_moving_text(
+        raw_text,
+        context,
+        legacy_accents=getattr(context.config, "legacy_latex_accents", False),
+        escape="\\" not in raw_text,
+        wrap_scripts=True,
+    )
     plain_text = element.get_text(strip=True)
     level = int(element.name[1:])
     base_level = context.runtime.get("base_level", 0)

@@ -26,6 +26,6 @@ Font fallback is… complicated -- almost *passionately* so. In a browser, the m
 
 LaTeX, on the other hand, does **not** provide automatic font fallback in the same way. With classic pdfLaTeX there is no real fallback mechanism at all; if a glyph isn’t in the selected font, you simply get a missing-glyph warning or a tofu box.
 
-LuaLaTeX changes the game: thanks to the `luaotfload` package, it *can* perform font fallback, but you must explicitly define fallback fonts in your document or template. That is exactly what TeXSmith’s `ts-fonts` fragment handles for you — it sets up a font chain where missing glyphs are transparently pulled from the fallback families.
+LuaLaTeX changes the game: thanks to the `luaotfload` package, it *can* perform font fallback, but you must explicitly define fallback fonts in your document or template.
 
 However, for this to work, those fallback fonts need to actually *exist* on your TeX system. And this is where it gets tricky: installing Noto fonts via TeX Live (`tlmgr`) or via system packages like `apt install fonts-noto` is often incomplete, because distributions usually ship only a subset of the full Noto collection. For full Unicode coverage (emoji, rare historical scripts, CJK extensions, etc.), you often need to manually download and install the complete font set from Google’s official Noto Fonts repository.

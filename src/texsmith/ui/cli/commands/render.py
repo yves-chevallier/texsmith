@@ -47,6 +47,7 @@ from texsmith.core.conversion.debug import ConversionError
 from texsmith.core.conversion.inputs import UnsupportedInputError
 from texsmith.core.templates import TemplateError
 from texsmith.core.templates.runtime import coerce_base_level
+from texsmith.fonts.html_scripts import wrap_scripts_in_html
 
 from .._options import (
     DIAGNOSTICS_PANEL,
@@ -86,6 +87,7 @@ from ..presenter import (
     consume_event_diagnostics,
     present_build_summary,
     present_conversion_summary,
+    present_fonts_info,
     present_html_summary,
     present_latex_failure,
     present_rule_descriptions,
@@ -476,13 +478,19 @@ def render(
             help="Copy the selected template into DEST and exit.",
         ),
     ] = None,
+    fonts_info: Annotated[
+        bool,
+        typer.Option(
+            "--fonts-info",
+            help="Display a summary of fallback fonts detected during rendering.",
+        ),
+    ] = False,
 ) -> None:
     """Convert MkDocs documents into LaTeX artefacts and optionally build PDFs."""
 
     ctx = click.get_current_context(silent=True)
     typer_ctx = ctx if isinstance(ctx, typer.Context) else None
     state = set_cli_state(ctx=typer_ctx, verbosity=verbose, debug=debug)
-
     if html_only:
         build_pdf = False
         template = None
@@ -761,7 +769,14 @@ def render(
         raise typer.Exit(code=1) from exc
 
     if html_only:
-        html_fragments = [(doc.source_path, doc.html) for doc in prepared.documents]
+        html_fragments = []
+        for doc in prepared.documents:
+            processed_html = doc.html
+            try:
+                processed_html, _usage, _summary = wrap_scripts_in_html(processed_html)
+            except Exception:
+                processed_html = doc.html
+            html_fragments.append((doc.source_path, processed_html))
         if output_mode == "stdout":
             typer.echo("\n\n".join(fragment for _, fragment in html_fragments))
             _flush_diagnostics()
@@ -888,6 +903,8 @@ def render(
             output_path=render_dir,
             render_result=render_result,
         )
+        if fonts_info:
+            present_fonts_info(state, render_result)
         _emit_rule_diagnostics()
         _flush_diagnostics()
         return
@@ -1038,6 +1055,8 @@ def render(
             raise typer.Exit(code=1) from exc
 
     present_build_summary(state=state, render_result=render_result, pdf_path=final_pdf_path)
+    if fonts_info:
+        present_fonts_info(state, render_result)
     if dep_file_path is not None:
         state.console.print(f"[cyan]Dependencies written to[/] {dep_file_path}")
     _emit_rule_diagnostics()

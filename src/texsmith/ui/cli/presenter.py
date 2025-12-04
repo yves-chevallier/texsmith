@@ -154,6 +154,66 @@ def present_rule_descriptions(state: CLIState, rules: Sequence[Mapping[str, Any]
         )
 
 
+def _normalise_script_usage(
+    usage: Sequence[Mapping[str, Any]] | None,
+) -> list[Mapping[str, Any]]:
+    normalised: list[Mapping[str, Any]] = []
+    for entry in usage or []:
+        slug = entry.get("slug") if isinstance(entry, Mapping) else None
+        if not slug:
+            continue
+        normalised.append(entry)
+    return normalised
+
+
+def present_fonts_info(state: CLIState, render_result: TemplateRenderResult) -> None:
+    """Display a table of detected fallback fonts."""
+    template_context = getattr(render_result, "context", {}) or {}
+    fonts_section = template_context.get("fonts") if isinstance(template_context, Mapping) else {}
+    usage = _normalise_script_usage(
+        fonts_section.get("script_usage") if isinstance(fonts_section, Mapping) else []
+    )
+    if not usage:
+        usage = _normalise_script_usage(getattr(render_result.document_state, "script_usage", []))
+    if not usage:
+        return
+
+    console = _get_console(state)
+    components = _rich_components()
+    if console is not None and components is not None:
+        box_module, panel_cls, table_cls, _text_cls = components
+        table = table_cls(box=box_module.SQUARE, header_style="bold cyan", title="Fallback Fonts")
+        table.add_column("Script", style="cyan")
+        table.add_column("Text Cmd")
+        table.add_column("Font Cmd")
+        table.add_column("Codepoints", justify="right")
+        table.add_column("Font Name")
+        for entry in usage:
+            count = entry.get("count")
+            count_text = str(int(count)) if isinstance(count, (int, float)) else ""
+            table.add_row(
+                str(entry.get("group") or entry.get("slug") or ""),
+                f"\\{entry.get('text_command')}" if entry.get("text_command") else "",
+                f"\\{entry.get('font_command')}" if entry.get("font_command") else "",
+                count_text,
+                str(entry.get("font_name") or ""),
+            )
+        console.print(panel_cls(table, box=box_module.SQUARE, border_style="blue"))
+        return
+
+    typer.echo("Fallback Fonts:")
+    for entry in usage:
+        script = entry.get("group") or entry.get("slug") or ""
+        text_cmd = entry.get("text_command") or ""
+        font_cmd = entry.get("font_command") or ""
+        font_name = entry.get("font_name") or ""
+        count = entry.get("count")
+        count_text = f" [{int(count)}]" if isinstance(count, (int, float)) else ""
+        typer.echo(
+            f"  - {script}: \\{text_cmd or '?'} -> \\{font_cmd or '?'} ({font_name}){count_text}"
+        )
+
+
 def _detect_assets(directory: Path) -> list[Path]:
     """Find asset files in the given directory.
 

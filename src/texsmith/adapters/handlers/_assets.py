@@ -161,9 +161,7 @@ def _convert_local_asset(context: RenderContext, source: Path, suffix: str) -> P
             if callable(emit_info):
                 emit_info(f"Converting draw.io diagram: {source}")
             backend = context.runtime.get("diagrams_backend")
-            return drawio2pdf(
-                source, output_dir=conversion_root, backend=backend, emitter=emitter
-            )
+            return drawio2pdf(source, output_dir=conversion_root, backend=backend, emitter=emitter)
         case ".mmd" | ".mermaid":
             record_event(emitter, "diagram_generate", {"source": str(source), "kind": "mermaid"})
             emit_info = getattr(emitter, "info", None)

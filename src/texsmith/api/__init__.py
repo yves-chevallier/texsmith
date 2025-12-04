@@ -32,8 +32,14 @@ Usage Example
 
 from __future__ import annotations
 
+from texsmith.core.user_dir import (
+    TexsmithUserDir,
+    configure_user_dir,
+    get_user_dir,
+    user_dir_context,
+)
+
 from .document import Document, DocumentRenderOptions, TitleStrategy
-from .fonts import FontFiles, FontLocator, FontMatchResult, NotoFallback, match_fonts
 from .pipeline import ConversionBundle, LaTeXFragment, RenderSettings, convert_documents
 from .service import (
     ConversionRequest,
@@ -57,19 +63,18 @@ __all__ = [
     "ConversionService",
     "Document",
     "DocumentRenderOptions",
-    "FontFiles",
-    "FontLocator",
-    "FontMatchResult",
     "LaTeXFragment",
-    "NotoFallback",
     "RenderSettings",
     "SlotAssignment",
     "TemplateOptions",
     "TemplateRenderResult",
     "TemplateSession",
+    "TexsmithUserDir",
     "TitleStrategy",
     "classify_input_source",
+    "configure_user_dir",
     "convert_documents",
     "get_template",
-    "match_fonts",
+    "get_user_dir",
+    "user_dir_context",
 ]

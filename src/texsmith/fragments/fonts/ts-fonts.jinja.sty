@@ -1,542 +1,277 @@
-\BLOCK{ set font_profile = font_profile | default("default") | lower }
-\BLOCK{ set main_font = main_font | default("Latin Modern Roman") }
-\BLOCK{ set sans_font = sans_font | default("Latin Modern Sans") }
-\BLOCK{ set mono_font = mono_font | default("FreeMono") }
-\BLOCK{ set math_font = math_font | default("Latin Modern Math") }
-\BLOCK{ set small_caps_font = small_caps_font | default(None) }
-\BLOCK{ set mono_italic = mono_italic | default("* Italic") }
-\BLOCK{ set mono_bold_italic = mono_bold_italic | default("* Bold Italic") }
-\BLOCK{ set mono_fake_slant = mono_fake_slant | default(False) }
-\BLOCK{ set font_path_prefix = font_path_prefix | default("./") }
-\BLOCK{ if font_path_prefix and not font_path_prefix.endswith('/') }
-  \BLOCK{ set font_path_prefix = font_path_prefix ~ '/' }
-\BLOCK{ endif }
-\BLOCK{ set font_files = font_files | default({}) }
-\BLOCK{ set script_fallbacks = script_fallbacks | default([]) }
-\BLOCK{ set ucharclasses_options = ucharclasses_options | default([]) }
-\BLOCK{ set unicode_font_classes = unicode_font_classes | default([]) }
-\BLOCK{ set fallback_fonts = fallback_fonts | default([]) }
-\BLOCK{ set emoji_spec = emoji_spec | default({}) }
-\BLOCK{ set needs_polyglossia_greek = script_fallbacks | selectattr('script_id', 'equalto', 'greek') | list | length > 0 }
-\BLOCK{ set emoji_mode = emoji_spec.get("mode") or (emoji_mode | default("black")) }
-\BLOCK{ set emoji_font = emoji_spec.get("font_family") }
-\BLOCK{ set emoji_font_path = emoji_spec.get("font_path") }
-\BLOCK{ set emoji_color_enabled = emoji_spec.get("color_enabled", False) }
-\BLOCK{ set emoji_twemoji = (emoji_mode == "twemoji") }
-\BLOCK{ set emoji_ranges = emoji_ranges | default([]) }
-\BLOCK{ set emoji_files = font_files.get(emoji_font, {}) if emoji_font else {} }
-\BLOCK{ set emoji_upright = emoji_files.get("regular") or emoji_files.get("black") or (emoji_files.values() | first) }
-\BLOCK{ set kpse_fallbacks = {
-  "Latin Modern Roman": {
-    "extension": ".otf",
-    "regular": "lmroman10-regular",
-    "bold": "lmroman10-bold",
-    "italic": "lmroman10-italic",
-    "bold_italic": "lmroman10-bolditalic",
-  },
-  "Latin Modern Roman Caps": {
-    "extension": ".otf",
-    "regular": "lmromancaps10-regular",
-  },
-  "Latin Modern Sans": {
-    "extension": ".otf",
-    "regular": "lmsans10-regular",
-    "bold": "lmsans10-bold",
-    "italic": "lmsans10-italic",
-    "bold_italic": "lmsans10-bolditalic",
-  },
-  "Latin Modern Math": {
-    "extension": ".otf",
-    "regular": "latinmodern-math",
-  },
-  "FreeMono": {
-    "extension": ".otf",
-    "regular": "*",
-    "bold": "*Bold",
-    "italic": "*Oblique",
-    "bold_italic": "*BoldOblique",
-  },
-} }
-\BLOCK{ if mono_font == "FreeMono" }
-  \BLOCK{ set mono_italic = "* Oblique" }
-  \BLOCK{ set mono_bold_italic = "* Bold Oblique" }
-\BLOCK{ endif }
-\ProvidesPackage{ts-fonts}[2025/11/21 TeXSmith Unified font setup (generated)]
-
-% This file is a Jinja2 template. Render it to a .sty before use.
-% Context expected:
-%   - fallback_fonts: list of font family names (LuaLaTeX fallbacks)
-%   - present_fonts: list (optional, informational)
-%   - missing_fonts: list (optional, informational)
+\BLOCK{ set font_family = fonts_family | default("lm") }
+\BLOCK{ set fallback = fonts.get("fallback") if fonts is defined and fonts else {} }
+\ProvidesPackage{ts-fonts}[2025/01/10 TeXSmith font selection (generated)]
 
 \RequirePackage{iftex}
-\providecommand{\texsmithEmoji}[1]{#1}
+% Fallback definition replaced when emoji fonts are available.
+\providecommand{\texsmithEmoji}[1]{\textbf{!}}
 
 \ifPDFTeX
-  \RequirePackage[T1]{fontenc}
-  \RequirePackage[utf8]{inputenc}
-  \RequirePackage{lmodern}
-  \RequirePackage{amssymb}
-  \RequirePackage{microtype}
-  \microtypesetup{expansion=true,protrusion=true}
+  \PackageError{ts-fonts}{ts-fonts requires XeLaTeX or LuaLaTeX}{Switch to xelatex or lualatex.}
 \else
   \RequirePackage{fontspec}
-  \RequirePackage{microtype}
-  \defaultfontfeatures{
-    Ligatures = TeX,
-    Scale = MatchLowercase,
+  \defaultfontfeatures{Ligatures = TeX, Scale = MatchLowercase}
+
+  \makeatletter
+  \newcommand{\tsDeclareFontSet}[2]{%
+    \expandafter\gdef\csname tssetupfonts@#1\endcsname{#2}%
   }
-\BLOCK{ if needs_polyglossia_greek }
-\makeatletter
-\@ifpackageloaded{polyglossia}{%
-  \setotherlanguage{greek}%
-}{}
-\makeatother
+  \newcommand{\tsUseFontSet}[1]{%
+    \@ifundefined{tssetupfonts@#1}{%
+      \PackageError{ts-fonts}{Unknown font family '#1'}%
+        {Use one of: lm, lm-sans, bonum, libertinus, pagella, termes, schola, heros, adventor, cursor, plex, pennstander.}%
+    }{%
+      \csname tssetupfonts@#1\endcsname
+    }%
+  }
+  \makeatother
+
+  % Latin Modern (lm)
+  \tsDeclareFontSet{lm}{%
+    \ifLuaTeX
+      \setmainfont{Latin Modern Roman}%
+      \setsansfont{Latin Modern Sans}%
+      \setmonofont{Latin Modern Mono}%
+    \else
+      \setmainfont{lmroman10}[%
+        Extension       = .otf,
+        UprightFont     = lmroman10-regular,
+        ItalicFont      = lmroman10-italic,
+        BoldFont        = lmroman10-bold,
+        BoldItalicFont  = lmroman10-bolditalic,
+        SmallCapsFont   = lmromancaps10-regular,
+        SlantedFont     = lmromanslant10-regular,
+        BoldSlantedFont = lmromanslant10-bold,
+        Ligatures       = TeX,
+      ]%
+      \setsansfont{lmsans10}[%
+        Extension      = .otf,
+        UprightFont    = *-regular,
+        ItalicFont     = *-oblique,
+        BoldFont       = *-bold,
+        BoldItalicFont = *-boldoblique,
+      ]%
+      \setmonofont{lmmono10}[%
+        Extension      = .otf,
+        UprightFont    = *-regular,
+        ItalicFont     = *-italic,
+        BoldFont       = *-regular,
+        BoldFeatures   = {FakeBold=2},
+        BoldItalicFont = *-italic,
+        BoldItalicFeatures = {FakeBold=2},
+        SmallCapsFont   = lmmonocaps10-regular,
+        SmallCapsFeatures = {Letters=SmallCaps},
+      ]%
+    \fi
+  }
+
+  % Latin Modern Sans Serif (lm-sans)
+  \tsDeclareFontSet{lm-sans}{%
+    \ifLuaTeX
+      \setmainfont{Latin Modern Sans}%
+      \setsansfont{Latin Modern Sans}%
+      \setmonofont{Latin Modern Mono}%
+    \else
+      \setmainfont{lmsans10}[%
+        Extension      = .otf,
+        UprightFont    = *-regular,
+        ItalicFont     = *-oblique,
+        BoldFont       = *-bold,
+        BoldItalicFont = *-boldoblique,
+        Ligatures      = TeX,
+      ]%
+      \setsansfont{lmsans10}[%
+        Extension      = .otf,
+        UprightFont    = *-regular,
+        ItalicFont     = *-oblique,
+        BoldFont       = *-bold,
+        BoldItalicFont = *-boldoblique,
+      ]%
+      \setmonofont{IBMPlexMono}[%
+        Extension      = .otf,
+        UprightFont    = *-Regular,
+        ItalicFont     = *-Italic,
+        BoldFont       = *-Bold,
+        BoldItalicFont = *-BoldItalic,
+        Scale=0.90,
+        FakeStretch    = 0.92,
+      ]%
+    \fi
+  }
+
+  % Tex Gyre Bonum (bonum)
+  \tsDeclareFontSet{bonum}{%
+    \RequirePackage{bonum-otf}%
+  }
+
+  % Libertinus (libertinus)
+  \tsDeclareFontSet{libertinus}{%
+    \RequirePackage{libertinus}%
+  }
+
+  % Tex Gyre Pagella (pagella)
+  \tsDeclareFontSet{pagella}{%
+    \RequirePackage{pagella-otf}%
+  }
+
+  % Tex Gyre Termes (termes)
+  \tsDeclareFontSet{termes}{%
+    \RequirePackage{termes-otf}%
+  }
+
+  % TeX Gyre Schola (schola)
+  \tsDeclareFontSet{schola}{%
+    \RequirePackage{schola-otf}%
+  }
+
+  % TeX Gyre Heros (heros)
+  \tsDeclareFontSet{heros}{%
+    \RequirePackage{heros-otf}%
+  }
+
+  % TeX Gyre Adventor (adventor)
+  \tsDeclareFontSet{adventor}{%
+    \RequirePackage{adventor-otf}%
+  }
+
+  % TeX Gyre Cursor (cursor)
+  \tsDeclareFontSet{cursor}{%
+    \RequirePackage{cursor-otf}%
+  }
+
+  % IBM Plex (plex)
+  \tsDeclareFontSet{plex}{%
+    \setmainfont{IBMPlexSerif}[%
+      Path=./fonts/plex-otf/,%
+      UprightFont=*-Regular,%
+      ItalicFont=*-Italic,%
+      BoldFont=*-Bold,%
+      BoldItalicFont=*-BoldItalic,%
+    ]%
+    \setsansfont{IBMPlexSans}[%
+      Path=./fonts/plex-otf/,%
+      UprightFont=*-Regular,%
+      ItalicFont=*-Italic,%
+      BoldFont=*-Bold,%
+      BoldItalicFont=*-BoldItalic,%
+    ]%
+    \setmonofont{IBMPlexMono}[%
+      Path=./fonts/plex-otf/,%
+      UprightFont=*-Regular,%
+      ItalicFont=*-Italic,%
+      BoldFont=*-Bold,%
+      BoldItalicFont=*-BoldItalic,%
+    ]%
+  }
+
+  % Penn Stander (pennstander)
+  \tsDeclareFontSet{pennstander}{%
+    \setmainfont{Latin Modern Roman}%
+    \setsansfont{Latin Modern Sans}%
+    \setmonofont{Latin Modern Mono}%
+  }
+
+  \tsUseFontSet{\VAR{font_family}}
+
+  \BLOCK{- if fallback and fallback.get("entries") }
+  % Fallback script fonts
+  \makeatletter
+  \BLOCK{ for entry in fallback.entries }
+  \BLOCK{ set font_cmd = '\\' + entry.font_command }
+  \BLOCK{ set text_cmd = '\\' + entry.text_command }
+    % Declare font family for \VAR{entry.font_name}
+    \newfontfamily\VAR{font_cmd}[
+      Path = fonts/,
+      Extension = \VAR{entry.extension},
+      UprightFont = \VAR{entry.upright},
+\BLOCK{ if entry.has_bold }
+      BoldFont = \VAR{entry.bold},
+\BLOCK{ else }
+      FakeBold = 2,
 \BLOCK{ endif }
-\BLOCK{ set main_files = font_files.get(main_font, {}) }
-\BLOCK{ set sans_files = font_files.get(sans_font, {}) }
-\BLOCK{ set mono_files = font_files.get(mono_font, {}) }
-\BLOCK{ set math_files = font_files.get(math_font, {}) }
-\BLOCK{ set small_caps_files = font_files.get(small_caps_font, {}) if small_caps_font else {} }
-\BLOCK{ set main_hint = None if main_files else kpse_fallbacks.get(main_font) }
-\BLOCK{ set sans_hint = None if sans_files else kpse_fallbacks.get(sans_font) }
-\BLOCK{ set mono_hint = None if mono_files else kpse_fallbacks.get(mono_font) }
-\BLOCK{ set math_hint = None if math_files else kpse_fallbacks.get(math_font) }
-\BLOCK{ set small_caps_hint = None if small_caps_files else kpse_fallbacks.get(small_caps_font) }
-\BLOCK{ if not mono_files and mono_font == "IBM Plex Mono" }
-  \BLOCK{ set mono_files = {
-    "regular": "IBMPlexMono-Regular.ttf",
-    "bold": "IBMPlexMono-Bold.ttf",
-    "italic": "IBMPlexMono-Italic.ttf",
-    "bold_italic": "IBMPlexMono-BoldItalic.ttf"
-  } }
-\BLOCK{ endif }
-\BLOCK{ set main_extension = main_hint.get("extension") if main_hint else None }
-\BLOCK{ set sans_extension = sans_hint.get("extension") if sans_hint else None }
-\BLOCK{ set mono_extension = mono_hint.get("extension") if mono_hint else None }
-\BLOCK{ set math_extension = math_hint.get("extension") if math_hint else None }
-\BLOCK{ set small_caps_extension = small_caps_hint.get("extension") if small_caps_hint else None }
-\BLOCK{ set main_regular = main_files.get("regular") or main_files.get("black") or main_files.get("thin") }
-\BLOCK{ if not main_regular and main_hint } \BLOCK{ set main_regular = main_hint.get("regular") } \BLOCK{ endif }
-\BLOCK{ if not main_regular } \BLOCK{ set main_regular = main_font } \BLOCK{ endif }
-\BLOCK{ set main_bold = main_files.get("bold") or main_files.get("black") }
-\BLOCK{ if not main_bold and main_hint } \BLOCK{ set main_bold = main_hint.get("bold") } \BLOCK{ endif }
-\BLOCK{ if not main_bold } \BLOCK{ set main_bold = main_regular } \BLOCK{ endif }
-\BLOCK{ set main_italic = main_files.get("italic") or main_files.get("thin") }
-\BLOCK{ if not main_italic and main_hint } \BLOCK{ set main_italic = main_hint.get("italic") } \BLOCK{ endif }
-\BLOCK{ if not main_italic } \BLOCK{ set main_italic = main_regular } \BLOCK{ endif }
-\BLOCK{ set main_bold_italic = main_files.get("bold_italic") or main_bold or main_italic }
-\BLOCK{ if not main_bold_italic and main_hint } \BLOCK{ set main_bold_italic = main_hint.get("bold_italic") } \BLOCK{ endif }
-\BLOCK{ if not main_bold_italic } \BLOCK{ set main_bold_italic = main_regular } \BLOCK{ endif }
-\BLOCK{ set sans_regular = sans_files.get("regular") or sans_files.get("black") or sans_files.get("thin") }
-\BLOCK{ if not sans_regular and sans_hint } \BLOCK{ set sans_regular = sans_hint.get("regular") } \BLOCK{ endif }
-\BLOCK{ if not sans_regular } \BLOCK{ set sans_regular = sans_font } \BLOCK{ endif }
-\BLOCK{ set sans_bold = sans_files.get("bold") or sans_files.get("black") }
-\BLOCK{ if not sans_bold and sans_hint } \BLOCK{ set sans_bold = sans_hint.get("bold") } \BLOCK{ endif }
-\BLOCK{ if not sans_bold } \BLOCK{ set sans_bold = sans_regular } \BLOCK{ endif }
-\BLOCK{ set sans_italic = sans_files.get("italic") or sans_files.get("thin") }
-\BLOCK{ if not sans_italic and sans_hint } \BLOCK{ set sans_italic = sans_hint.get("italic") } \BLOCK{ endif }
-\BLOCK{ if not sans_italic } \BLOCK{ set sans_italic = sans_regular } \BLOCK{ endif }
-\BLOCK{ set sans_bold_italic = sans_files.get("bold_italic") or sans_bold or sans_italic }
-\BLOCK{ if not sans_bold_italic and sans_hint } \BLOCK{ set sans_bold_italic = sans_hint.get("bold_italic") } \BLOCK{ endif }
-\BLOCK{ if not sans_bold_italic } \BLOCK{ set sans_bold_italic = sans_regular } \BLOCK{ endif }
-\BLOCK{ set mono_regular = mono_files.get("regular") or mono_files.get("black") or mono_files.get("thin") }
-\BLOCK{ if not mono_regular } \BLOCK{ set mono_regular = mono_font } \BLOCK{ endif }
-\BLOCK{ set mono_bold_file = mono_files.get("bold") or mono_files.get("black") }
-\BLOCK{ if not mono_bold_file }
-  \BLOCK{ set mono_bold_file = mono_files and mono_regular or "* Bold" }
-\BLOCK{ endif }
-\BLOCK{ set mono_italic_file = mono_files.get("italic") or mono_files.get("thin") }
-\BLOCK{ if not mono_italic_file }
-  \BLOCK{ set mono_italic_file = mono_files and mono_regular or mono_italic }
-\BLOCK{ endif }
-\BLOCK{ set mono_bold_italic_file = mono_files.get("bold_italic") or mono_bold_file or mono_italic_file }
-\BLOCK{ if not mono_bold_italic_file }
-  \BLOCK{ set mono_bold_italic_file = mono_files and mono_regular or mono_bold_italic }
-\BLOCK{ endif }
-\BLOCK{ set math_regular = math_files.get("regular") or math_files.get("black") or math_files.get("thin") or math_font }
-\BLOCK{ if math_hint and math_regular == math_font } \BLOCK{ set math_regular = math_hint.get("regular") or math_regular } \BLOCK{ endif }
-\BLOCK{ set small_caps_regular = small_caps_files.get("regular") if small_caps_files else None }
-\BLOCK{ if not small_caps_regular and small_caps_hint } \BLOCK{ set small_caps_regular = small_caps_hint.get("regular") } \BLOCK{ endif }
+      Scale = MatchLowercase
+    ]{\VAR{entry.font_name}}%
+    \DeclareRobustCommand\VAR{text_cmd}[1]{{\VAR{font_cmd}#1}}%
+
+  \BLOCK{ endfor }
+  \makeatother
+
+\BLOCK{- if fallback and fallback.get("entries") }
+  % Ensure hyperref can build PDF strings without font selection commands.
+  \makeatletter
+  \AtBeginDocument{%
+  \BLOCK{ for entry in fallback.entries }
+    \BLOCK{ set text_cmd = '\\' + entry.text_command }
+      \pdfstringdefDisableCommands{%
+        \def\VAR{text_cmd}#1{#1}%
+      }%
+  \BLOCK{ endfor }
+  }
+  \makeatother
+\BLOCK{- endif }
+
+\BLOCK{- if fallback and fallback.get("missing_commands") }
+  % Define no-op wrappers for scripts without an available fallback font.
+  \BLOCK{ for text_cmd in fallback.missing_commands }
+    \providecommand\VAR{'\\' + text_cmd}[1]{#1}%
+  \BLOCK{ endfor }
+\BLOCK{- endif }
+
   \ifLuaTeX
-    \let\eth\relax
-    \let\Eth\relax
-    \RequirePackage{amssymb}
-    \RequirePackage{unicode-math}
-    \UseMicrotypeSet[protrusion]{basicmath}
-\directlua{
-      luaotfload.add_fallback("mainfb-reg", {
-\BLOCK{ for font in fallback_fonts }
-        \BLOCK{ set files = font_files.get(font, {}) }
-        \BLOCK{ set reg_font = files.get("regular") }
-        \BLOCK{ set is_emoji_font = (emoji_font and font == emoji_font) }
-        \BLOCK{ set fallback_mode = "harf" if is_emoji_font else "node" }
-        \BLOCK{ if reg_font }
-        "[\VAR{font_path_prefix}\VAR{reg_font}]:mode=\VAR{fallback_mode}",
-        \BLOCK{ else }
-        "\VAR{font}:mode=\VAR{fallback_mode}",
-        \BLOCK{ endif }
-\BLOCK{ endfor }
+    \directlua{
+      luaotfload.add_fallback("texsmith-fallback-reg", {
+    \BLOCK{ for font in fallback.lua_regular }
+        "[fonts/\VAR{font}]:mode=harf",
+    \BLOCK{ endfor }
       })
-      luaotfload.add_fallback("mainfb-bold", {
-\BLOCK{ for font in fallback_fonts }
-        \BLOCK{ set files = font_files.get(font, {}) }
-        \BLOCK{ set bold_font = files.get("bold") or files.get("regular") }
-        \BLOCK{ set is_emoji_font = (emoji_font and font == emoji_font) }
-        \BLOCK{ set fallback_mode = "harf" if is_emoji_font else "node" }
-        \BLOCK{ if bold_font }
-        "[\VAR{font_path_prefix}\VAR{bold_font}]:mode=\VAR{fallback_mode}",
-        \BLOCK{ else }
-        "\VAR{font}/B:mode=\VAR{fallback_mode}",
-        \BLOCK{ endif }
-\BLOCK{ endfor }
-      })
-      luaotfload.add_fallback("mainfb-it", {
-\BLOCK{ for font in fallback_fonts }
-        \BLOCK{ set files = font_files.get(font, {}) }
-        \BLOCK{ set italic_font = files.get("italic") or files.get("regular") }
-        \BLOCK{ set is_emoji_font = (emoji_font and font == emoji_font) }
-        \BLOCK{ set fallback_mode = "harf" if is_emoji_font else "node" }
-        \BLOCK{ if italic_font }
-        "[\VAR{font_path_prefix}\VAR{italic_font}]:mode=\VAR{fallback_mode}",
-        \BLOCK{ else }
-        "\VAR{font}/I:mode=\VAR{fallback_mode}",
-        \BLOCK{ endif }
-\BLOCK{ endfor }
-      })
-      luaotfload.add_fallback("mainfb-bi", {
-\BLOCK{ for font in fallback_fonts }
-        \BLOCK{ set files = font_files.get(font, {}) }
-        \BLOCK{ set bold_italic_font = files.get("bold_italic") or files.get("bold") or files.get("italic") or files.get("regular") }
-        \BLOCK{ set is_emoji_font = (emoji_font and font == emoji_font) }
-        \BLOCK{ set fallback_mode = "harf" if is_emoji_font else "node" }
-        \BLOCK{ if bold_italic_font }
-        "[\VAR{font_path_prefix}\VAR{bold_italic_font}]:mode=\VAR{fallback_mode}",
-        \BLOCK{ else }
-        "\VAR{font}/BI:mode=\VAR{fallback_mode}",
-        \BLOCK{ endif }
-\BLOCK{ endfor }
+      luaotfload.add_fallback("texsmith-fallback-bold", {
+    \BLOCK{ for font in fallback.lua_bold }
+        "[fonts/\VAR{font}]:mode=harf",
+    \BLOCK{ endfor }
       })
     }
-    \setmainfont{\VAR{main_font}}[
-      Ligatures=TeX,
-\BLOCK{ if main_files }
-      Path=\VAR{font_path_prefix},
-\BLOCK{ endif }
-\BLOCK{ if main_regular }
-      UprightFont = {\VAR{main_regular}},
-\BLOCK{ endif }
-\BLOCK{ if small_caps_font }
-      SmallCapsFont = {\VAR{small_caps_regular or small_caps_font}},
-\BLOCK{ endif }
-\BLOCK{ if main_extension }
-      Extension = \VAR{main_extension},
-\BLOCK{ endif }
-      BoldFont = {\VAR{main_bold}},
-      ItalicFont = {\VAR{main_italic}},
-      BoldItalicFont = {\VAR{main_bold_italic}},
-      RawFeature = {fallback=mainfb-reg},
-      BoldFeatures = {RawFeature={fallback=mainfb-bold}},
-      ItalicFeatures = {RawFeature={fallback=mainfb-it}},
-      BoldItalicFeatures = {RawFeature={fallback=mainfb-bi}},
-    ]
-    \setsansfont{\VAR{sans_font}}[
-      Ligatures=TeX,
-\BLOCK{ if sans_files }
-      Path=\VAR{font_path_prefix},
-\BLOCK{ endif }
-      UprightFont = {\VAR{sans_regular}},
-      BoldFont = {\VAR{sans_bold}},
-      ItalicFont = {\VAR{sans_italic}},
-      BoldItalicFont = {\VAR{sans_bold_italic}},
-\BLOCK{ if sans_extension }
-      Extension = \VAR{sans_extension},
-\BLOCK{ endif }
-      RawFeature = {fallback=mainfb-reg},
-      BoldFeatures  = {RawFeature={fallback=mainfb-bold}},
-      ItalicFeatures = {RawFeature={fallback=mainfb-it}},
-      BoldItalicFeatures = {RawFeature={fallback=mainfb-bi}},
-      SmallCapsFeatures = {Letters=SmallCaps},
-    ]
-    \setmonofont{\VAR{mono_font}}[
-      Scale=0.9,
-      Ligatures=TeX,
-\BLOCK{ if mono_files }
-      Path=\VAR{font_path_prefix},
-\BLOCK{ endif }
-      UprightFont={\VAR{mono_regular}},
-      ItalicFont={\VAR{mono_italic_file}},
-      BoldFont={\VAR{mono_bold_file}},
-      BoldItalicFont={\VAR{mono_bold_italic_file}},
-\BLOCK{ if mono_extension }
-      Extension = \VAR{mono_extension},
-\BLOCK{ endif }
-      RawFeature = {fallback=mainfb-reg},
-      BoldFeatures = {RawFeature={fallback=mainfb-bold}},
-      SmallCapsFeatures = {Letters=SmallCaps},
-      ItalicFeatures = {
-        RawFeature={fallback=mainfb-it},
-\BLOCK{ if mono_fake_slant }
-        FakeSlant=0.2,
-\BLOCK{ endif }
-      },
-      BoldItalicFeatures = {
-        RawFeature={fallback=mainfb-bi},
-\BLOCK{ if mono_fake_slant }
-        FakeSlant=0.2,
-\BLOCK{ endif }
-      },
-    ]
-\BLOCK{ set math_target = math_regular }
-\setmathfont{\VAR{math_target}}[
-\BLOCK{ if math_files }
-  Path=\VAR{font_path_prefix},
-\BLOCK{ endif }
-\BLOCK{ if math_extension }
-  Extension = \VAR{math_extension},
-\BLOCK{ endif }
-  RawFeature = {fallback=mainfb-reg},
-  BoldFeatures = {RawFeature={fallback=mainfb-bold}},
-      ItalicFeatures = {RawFeature={fallback=mainfb-it}},
-]
-% Emoji handling (LuaLaTeX): rely on luaotfload fallbacks, optional twemoji.
-\BLOCK{ if emoji_twemoji }
-  \RequirePackage{twemoji}
-  \renewcommand{\texsmithEmoji}[1]{\twemoji{#1}}
-\BLOCK{ elif emoji_font }
-  % Fallback already covers emoji; keep macro a passthrough.
-  \newfontfamily\texsmithEmojiFont{\VAR{emoji_font}}[
-\BLOCK{ if emoji_files }
-    Path=\VAR{font_path_prefix},
-\BLOCK{ endif }
-\BLOCK{ if emoji_files.get("regular") }
-    UprightFont={\VAR{emoji_files["regular"]}},
-\BLOCK{ elif emoji_files.get("black") }
-    UprightFont={\VAR{emoji_files["black"]}},
-\BLOCK{ elif emoji_upright }
-    UprightFont={\VAR{emoji_upright}},
-\BLOCK{ endif }
-    Renderer=Harfbuzz,
-    Scale=1.05
-  ]
-  \renewcommand{\texsmithEmoji}[1]{#1}
-\BLOCK{ else }
-  \renewcommand{\texsmithEmoji}[1]{#1}
-\BLOCK{ endif }
-\BLOCK{ if script_fallbacks }
-\BLOCK{ for class in script_fallbacks }
-\BLOCK{ set class_files = class.files }
-\BLOCK{ set class_title = class.title or class.family }
-\BLOCK{ set class_language = class.language or class.script_id.replace('-', '').replace('_', '') }
-\BLOCK{ set class_upright = class_files.get("regular") or class_files.get("black") or class_files.get("thin") or class.family }
-\BLOCK{ set class_bold = class_files.get("bold") or class_files.get("black") or class_upright }
-\BLOCK{ set class_italic = class_files.get("italic") or class_files.get("thin") or class_upright }
-\BLOCK{ set class_bold_italic = class_files.get("bold_italic") or class_bold or class_italic or class_upright }
-% Script \VAR{class_title} (\LuaTeX fallback macro)
-\expandafter\newfontfamily\csname \VAR{class.font_command}\endcsname[
-\BLOCK{ if class_files }
-    Path=\VAR{font_path_prefix},
-\BLOCK{ endif }
-    UprightFont    = {\VAR{class_upright}},
-    BoldFont       = {\VAR{class_bold}},
-    ItalicFont     = {\VAR{class_italic}},
-    BoldItalicFont = {\VAR{class_bold_italic}},
-  ]{\VAR{class.family}}
-\expandafter\DeclareRobustCommand\csname text\VAR{class_language}\endcsname[1]{%
-  \ifdefined\texorpdfstring
-    \texorpdfstring{{\csname \VAR{class.font_command}\endcsname #1}}{#1}%
-  \else
-    {\csname \VAR{class.font_command}\endcsname #1}%
-  \fi
-}
-\BLOCK{ set env_name = class.environment_name }
-\BLOCK{ if env_name }
-\expandafter\def\csname \VAR{env_name}\endcsname{%
-  \begingroup\csname \VAR{class.font_command}\endcsname
-}
-\expandafter\def\csname end\VAR{env_name}\endcsname{%
-  \endgroup
-}
-\BLOCK{ endif }
-\BLOCK{ endfor }
-\BLOCK{ endif }
-  \else
-    % XeLaTeX/Tectonic path: rely on ucharclasses for glyph coverage.
-    \let\eth\relax
-    \let\Eth\relax
-    \RequirePackage{amssymb}
-    \RequirePackage{unicode-math}
-\BLOCK{ set has_script_fallbacks = script_fallbacks and script_fallbacks|length > 0 }
-\BLOCK{ set has_manual_classes = unicode_font_classes and unicode_font_classes|length > 0 }
-\BLOCK{ set needs_uchar = has_script_fallbacks or has_manual_classes or (emoji_font is not none) }
-\BLOCK{ if needs_uchar }
-\BLOCK{ if has_script_fallbacks and ucharclasses_options and ucharclasses_options|length > 0 }
-    \RequirePackage[\VAR{ucharclasses_options | join(',')}]{ucharclasses}
-\BLOCK{ else }
-    \RequirePackage{ucharclasses}
-\BLOCK{ endif }
-\makeatletter
-\providecommand{\newUnicodeClass}[1]{%
-  \expandafter\newXeTeXintercharclass\csname #1Class\endcsname
-  \ifnum\csname #1Class\endcsname>\@classend
-    \chardef\@classend=\csname #1Class\endcsname
-  \fi
-}
-\providecommand{\setUnicodeClassRange}[3]{%
-  \count@="#2\relax
-  \loop
-    \XeTeXcharclass\count@=\csname #1Class\endcsname
-    \ifnum\count@<"#3\relax
-      \advance\count@\@ne
-\repeat
-}
-\makeatother
-\BLOCK{ endif }
-    \setmainfont{\VAR{main_font}}[
-      Ligatures=TeX,
-\BLOCK{ if main_files }
-      Path=\VAR{font_path_prefix},
-\BLOCK{ endif }
-\BLOCK{ if main_regular }
-      UprightFont = {\VAR{main_regular}},
-\BLOCK{ endif }
-\BLOCK{ if small_caps_font }
-      SmallCapsFont = {\VAR{small_caps_regular or small_caps_font}},
-\BLOCK{ endif }
-      BoldFont = {\VAR{main_bold}},
-      ItalicFont = {\VAR{main_italic}},
-      BoldItalicFont = {\VAR{main_bold_italic}},
-    ]
-    \setsansfont{\VAR{sans_font}}[
-      Ligatures=TeX,
-\BLOCK{ if sans_files }
-      Path=\VAR{font_path_prefix},
-\BLOCK{ endif }
-      UprightFont = {\VAR{sans_regular}},
-      BoldFont = {\VAR{sans_bold}},
-      ItalicFont = {\VAR{sans_italic}},
-      BoldItalicFont = {\VAR{sans_bold_italic}},
-    ]
-    \setmonofont{\VAR{mono_font}}[
-      Scale=0.9,
-      Ligatures=TeX,
-\BLOCK{ if mono_files }
-      Path=\VAR{font_path_prefix},
-\BLOCK{ endif }
-      UprightFont={\VAR{mono_regular}},
-      ItalicFont={\VAR{mono_italic_file}},
-      BoldFont={\VAR{mono_bold_file}},
-      BoldItalicFont={\VAR{mono_bold_italic_file}},
-\BLOCK{ if mono_fake_slant }
-      FakeSlant=0.2,
-\BLOCK{ endif }
-    ]
-    \setmathfont{\VAR{math_regular}}[
-\BLOCK{ if math_files }
-      Path=\VAR{font_path_prefix},
-\BLOCK{ endif }
-    ]
-\BLOCK{ if script_fallbacks }
-    \setDefaultTransitions{\rmfamily}{}
-\BLOCK{ for class in script_fallbacks }
-\BLOCK{ set class_files = class.files }
-\BLOCK{ set class_title = class.title or class.family }
-\BLOCK{ set class_language = class.language or class.script_id.replace('-', '').replace('_', '') }
-\BLOCK{ set class_upright = class_files.get("regular") or class_files.get("black") or class_files.get("thin") or class.family }
-\BLOCK{ set class_bold = class_files.get("bold") or class_files.get("black") or class_upright }
-\BLOCK{ set class_italic = class_files.get("italic") or class_files.get("thin") or class_upright }
-\BLOCK{ set class_bold_italic = class_files.get("bold_italic") or class_bold or class_italic or class_upright }
-% Script \VAR{class_title}
-\expandafter\newfontfamily\csname \VAR{class.font_command}\endcsname[
-\BLOCK{ if class_files }
-      Path=\VAR{font_path_prefix},
-\BLOCK{ endif }
-      UprightFont    = {\VAR{class_upright}},
-      BoldFont       = {\VAR{class_bold}},
-      ItalicFont     = {\VAR{class_italic}},
-      BoldItalicFont = {\VAR{class_bold_italic}},
-    ]{\VAR{class.family}}
-
-\BLOCK{ for block in class.blocks }
-\setTransitionTo{\VAR{block}}{\csname \VAR{class.font_command}\endcsname}
-    \setTransitionFrom{\VAR{block}}{\rmfamily}
-\BLOCK{ endfor }
-\expandafter\DeclareRobustCommand\csname text\VAR{class_language}\endcsname[1]{%
-  \ifdefined\texorpdfstring
-    \texorpdfstring{{\csname \VAR{class.font_command}\endcsname #1}}{#1}%
-  \else
-    {\csname \VAR{class.font_command}\endcsname #1}%
-  \fi
-}
-\BLOCK{ set env_name = class.environment_name }
-\BLOCK{ if env_name }
-\expandafter\def\csname \VAR{env_name}\endcsname{%
-  \begingroup\csname \VAR{class.font_command}\endcsname
-}
-\expandafter\def\csname end\VAR{env_name}\endcsname{%
-  \endgroup
-}
-\BLOCK{ endif }
-\BLOCK{ endfor }
-\BLOCK{ elif unicode_font_classes }
-\BLOCK{ for class in unicode_font_classes }
-\BLOCK{ set is_emoji_class = emoji_font and class.family|lower == "notocoloremoji" }
-\BLOCK{ set class_family = emoji_font if is_emoji_class else class.family }
-\BLOCK{ set class_files = emoji_files if is_emoji_class else class.files }
-\BLOCK{ set class_ranges = class.ranges }
-\BLOCK{ set class_title = class_family }
-\BLOCK{ set class_upright = class_files.get("regular") or class_files.get("black") or class_files.get("thin") or class_family }
-\BLOCK{ set class_bold = class_files.get("bold") or class_files.get("black") or class_upright }
-\BLOCK{ set class_italic = class_files.get("italic") or class_files.get("thin") or class_upright }
-\BLOCK{ set class_bold_italic = class_files.get("bold_italic") or class_bold or class_italic or class_upright }
-% Script \VAR{class_title}
-\expandafter\newfontfamily\csname \VAR{class.font_command}\endcsname[
-\BLOCK{ if class_files }
-      Path=\VAR{font_path_prefix},
-\BLOCK{ endif }
-      UprightFont    = {\VAR{class_upright}},
-      BoldFont       = {\VAR{class_bold}},
-      ItalicFont     = {\VAR{class_italic}},
-      BoldItalicFont = {\VAR{class_bold_italic}},
-    ]{\VAR{class_family}}
-
-    \newUnicodeClass{\VAR{class.class_name}}
-\setTransitionTo{\VAR{class.class_name}}{\csname \VAR{class.font_command}\endcsname}
-    \setTransitionFrom{\VAR{class.class_name}}{\rmfamily}
-\BLOCK{ for start, end in class_ranges }
-    \setUnicodeClassRange{\VAR{class.class_name}}{\VAR{start}}{\VAR{end}}
-\BLOCK{ endfor }
-\BLOCK{ endfor }
-\BLOCK{ endif }
-\BLOCK{ if emoji_font }
-    \newfontfamily\texsmithEmojiFont{\VAR{emoji_font}}[
-\BLOCK{ if emoji_files }
-      Path=\VAR{font_path_prefix},
-\BLOCK{ endif }
-\BLOCK{ if emoji_files.get("regular") }
-      UprightFont={\VAR{emoji_files["regular"]}},
-\BLOCK{ elif emoji_files.get("black") }
-      UprightFont={\VAR{emoji_files["black"]}},
-\BLOCK{ elif emoji_upright }
-      UprightFont={\VAR{emoji_upright}},
-\BLOCK{ endif }
-      Renderer=Harfbuzz,
-      Scale=1.05
-    ]
-    \renewcommand{\texsmithEmoji}[1]{{\texsmithEmojiFont #1}}
-\BLOCK{ elif emoji_twemoji }
-    \RequirePackage{twemoji}
-    \renewcommand{\texsmithEmoji}[1]{\twemoji{#1}}
-\BLOCK{ else }
-    \renewcommand{\texsmithEmoji}[1]{#1}
-\BLOCK{ endif }
-\BLOCK{ if emoji_font }
-    \newUnicodeClass{Emoji}
-\setTransitionTo{Emoji}{\texsmithEmojiFont}
-    \setTransitionFrom{Emoji}{\rmfamily}
-    \BLOCK{ for start, end in emoji_ranges }
-    \setUnicodeClassRange{Emoji}{\VAR{start}}{\VAR{end}}
+    \defaultfontfeatures{
+      Renderer           = HarfBuzz,
+      RawFeature         = {fallback=texsmith-fallback-reg},
+      BoldFeatures       = {RawFeature={fallback=texsmith-fallback-bold}},
+      ItalicFeatures     = {RawFeature={fallback=texsmith-fallback-reg}},
+      BoldItalicFeatures = {RawFeature={fallback=texsmith-fallback-bold}},
+    }
+    \addfontfeatures{RawFeature={fallback=texsmith-fallback-reg}}
+    \ExplSyntaxOn
+    \cs_new_protected:Npn \texsmith_apply_fallback_to_family:nn #1#2
+      {
+        \prop_get:cnNTF { g__fontspec_fontinfo_ #2 _prop } { fontname } \l_tmpa_tl
+          {
+            #1[
+              RawFeature         = {fallback=texsmith-fallback-reg},
+              BoldFeatures       = {RawFeature={fallback=texsmith-fallback-bold}},
+              ItalicFeatures     = {RawFeature={fallback=texsmith-fallback-reg}},
+              BoldItalicFeatures = {RawFeature={fallback=texsmith-fallback-bold}},
+            ]{\l_tmpa_tl}
+          }{}
+      }
+    \texsmith_apply_fallback_to_family:nn \setmainfont \rmdefault
+    \texsmith_apply_fallback_to_family:nn \setsansfont \sfdefault
+    \texsmith_apply_fallback_to_family:nn \setmonofont \ttdefault
+    \ExplSyntaxOff
+  \else\ifXeTeX
+  \BLOCK{- if fallback and fallback.get("transitions") }
+  \BLOCK{ set uc_options = ['Latin'] + (fallback.package_options if fallback else []) + ['Devanagari'] }
+    \RequirePackage[
+      \VAR{ uc_options | join(',\n      ') }
+    ]{ucharclasses}
+    \setDefaultTransitions{\rmfamily}{\rmfamily}%
+    \BLOCK{ for transition in fallback.transitions }
+    \VAR{transition}
     \BLOCK{ endfor }
-\BLOCK{ endif }
-  \fi
+    \enableTransitionRules
+    \ifdefined\XeTeXinterchartoksstate
+      \XeTeXinterchartoksstate=1%
+      \AtBeginDocument{\XeTeXinterchartoksstate=1}%
+    \fi
+    \AtBeginDocument{\enableTransitionRules}%
+  \BLOCK{- endif }
+  \fi\fi
+  \BLOCK{- endif }
 \fi

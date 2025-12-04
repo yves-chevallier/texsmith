@@ -44,6 +44,12 @@ from texsmith.core.templates import (
     load_template_runtime,
     resolve_template_language,
 )
+from texsmith.core.user_dir import (
+    TexsmithUserDir,
+    configure_user_dir,
+    get_user_dir,
+    user_dir_context,
+)
 
 
 __all__ = [
@@ -74,16 +80,20 @@ __all__ = [
     "TemplateRuntime",
     "TemplateSession",
     "TemplateSlot",
+    "TexsmithUserDir",
     "TitleStrategy",
     "WrappableTemplate",
     "bibliography_data_from_string",
     "build_template_overrides",
     "classify_input_source",
+    "configure_user_dir",
     "convert_documents",
     "copy_template_assets",
     "get_template",
+    "get_user_dir",
     "load_template",
     "load_template_runtime",
     "renders",
     "resolve_template_language",
+    "user_dir_context",
 ]

@@ -1,0 +1,180 @@
+\documentclass{article}
+\usepackage{parskip}
+\usepackage{fontspec}
+
+\newcommand\FontSet{lm}
+
+\makeatletter
+\newcommand{\DeclareFontSet}[2]{%
+  \expandafter\gdef\csname setupfonts@#1\endcsname{#2}%
+}
+\newcommand{\UseFontSet}[1]{%
+  \@ifundefined{setupfonts@#1}{%
+    \PackageError{fontset}{Unknown FontSet '#1'}%
+      {Declare it with \string\DeclareFontSet\space first. }%
+  }{%
+    \csname setupfonts@#1\endcsname
+  }%
+}
+\makeatother
+
+%
+% Latin Modern (lm)
+%
+\DeclareFontSet{lm}{%
+  \setmainfont{lmroman10}[
+    Extension       = .otf,
+    UprightFont     = lmroman10-regular,
+    ItalicFont      = lmroman10-italic,
+    BoldFont        = lmroman10-bold,
+    BoldItalicFont  = lmroman10-bolditalic,
+    SmallCapsFont   = lmromancaps10-regular,
+    SlantedFont     = lmromanslant10-regular,
+    BoldSlantedFont = lmromanslant10-bold,
+    Ligatures       = TeX,
+  ]
+  \setsansfont{lmsans10}[
+    Extension      = .otf,
+    UprightFont    = *-regular,
+    ItalicFont     = *-oblique,
+    BoldFont       = *-bold,
+    BoldItalicFont = *-boldoblique,
+  ]
+  \setmonofont{lmmono10}[
+    Extension      = .otf,
+    UprightFont    = *-regular,
+    ItalicFont     = *-italic,
+    BoldFont       = *-regular,
+    BoldFeatures   = {FakeBold=2},
+    BoldItalicFont = *-italic,
+    BoldItalicFeatures = {FakeBold=2},
+    SmallCapsFont   = lmmonocaps10-regular,
+    SmallCapsFeatures = {Letters=SmallCaps},
+  ]
+}
+
+%
+% Latin Modern Sans Serif (lm-sans)
+%
+\DeclareFontSet{lm-sans}{%
+  \setmainfont{lmsans10}[
+    Extension      = .otf,
+    UprightFont    = *-regular,
+    ItalicFont     = *-oblique,
+    BoldFont       = *-bold,
+    BoldItalicFont = *-boldoblique,
+    Ligatures      = TeX,
+  ]
+  \setsansfont{lmsans10}[
+    Extension      = .otf,
+    UprightFont    = *-regular,
+    ItalicFont     = *-oblique,
+    BoldFont       = *-bold,
+    BoldItalicFont = *-boldoblique,
+  ]
+  \setmonofont{IBMPlexMono}[
+    Extension      = .otf,
+    UprightFont    = *-Regular,
+    ItalicFont     = *-Italic,
+    BoldFont       = *-Bold,
+    BoldItalicFont = *-BoldItalic,
+    Scale=0.90,
+    FakeStretch    = 0.92,
+  ]
+}
+
+%
+% Tex Gyre Bonum (bonum)
+% https://mirrors.ctan.org/fonts/bonum-otf.zip
+%
+\DeclareFontSet{bonum}{%
+  \RequirePackage{bonum-otf}
+}
+
+%
+% Libertinus (libertinus)
+%
+\DeclareFontSet{libertinus}{%
+   \RequirePackage{libertinus}%
+}
+
+%
+% Tex Gyre Pagella (pagella)
+%
+\DeclareFontSet{pagella}{%
+   \RequirePackage{pagella-otf}
+}
+
+%
+% Tex Gyre Termes (termes)
+%
+\DeclareFontSet{termes}{%
+  \RequirePackage{termes-otf}
+}
+
+%
+% TeX Gyre Schola (schola)
+% https://mirrors.ctan.org/fonts/schola-otf.zip
+%
+\DeclareFontSet{schola}{%
+  \RequirePackage{schola-otf}
+}
+
+%
+% TeX Gyre Heros (heros)
+% https://mirrors.ctan.org/fonts/heros-otf.zip
+%
+\DeclareFontSet{heros}{%
+  \RequirePackage{heros-otf}
+}
+
+%
+% TeX Gyre Adventor (adventor)
+% https://mirrors.ctan.org/fonts/adventor-otf.zip
+%
+\DeclareFontSet{adventor}{%
+  \RequirePackage{adventor-otf}
+}
+
+%
+% TeX Gyre Cursor (cursor)
+% https://mirrors.ctan.org/fonts/cursor-otf.zip
+%
+\DeclareFontSet{cursor}{%
+  \RequirePackage{cursor-otf}
+}
+
+%
+% IBM Plex (plex)
+% https://mirrors.ctan.org/fonts/plex-otf.zip
+%
+\DeclareFontSet{plex}{%
+  \RequirePackage{plex-otf}
+}
+
+%
+% Penn Stander (pennstander)
+% https://mirrors.ctan.org/fonts/pennstander-otf.zip
+%
+\DeclareFontSet{pennstander}{%
+  \RequirePackage{pennstander-otf}
+}
+
+\UseFontSet{\FontSet}
+
+\begin{document}
+This quick brown fox jumps over the lazy dog. 0123456789 \\
+\textit{This quick brown fox jumps over the lazy dog. 0123456789} \\
+\textsl{This quick brown fox jumps over the lazy dog. 0123456789} \\
+\textsc{This quick brown fox jumps over the lazy dog. 0123456789} \par
+
+\textbf{This quick brown fox jumps over the lazy dog. 0123456789} \\
+\textbf{\textit{This quick brown fox jumps over the lazy dog. 0123456789}} \\
+\textbf{\textsl{This quick brown fox jumps over the lazy dog. 0123456789}} \\
+\textbf{\textsc{This quick brown fox jumps over the lazy dog. 0123456789}} \par
+
+\texttt{This quick brown fox jumps over the lazy dog. 0123456789} \\
+\textbf{\texttt{This quick brown fox jumps over the lazy dog. 0123456789}} \\
+\emph{\texttt{This quick brown fox jumps over the lazy dog. 0123456789}} \\
+\textbf{\emph{\texttt{This quick brown fox jumps over the lazy dog. 0123456789}}}
+\end{document}

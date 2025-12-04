@@ -185,7 +185,7 @@ $ tree build
 build
 ├── .latexmkrc
 ├── hello.tex
-└── ts-fonts.sty
+└── ts-extra.sty
 
 ```
 

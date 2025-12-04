@@ -143,6 +143,7 @@ extend-exclude = [
   ".venv",
   "venv",
   "build",
+  "sandbox",
   "templates",
   "examples",
   "experiments",

@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from collections.abc import Iterable, MutableMapping
 from hashlib import sha256
-import os
 from pathlib import Path
 from threading import Lock
 from typing import TYPE_CHECKING, Any
@@ -19,6 +18,8 @@ try:  # pragma: no cover - optional dependency
     import requests  # type: ignore[import]
 except ImportError:  # pragma: no cover - optional dependency
     requests = None  # type: ignore[assignment]
+
+from texsmith.core.user_dir import get_user_dir
 
 
 class DoiLookupError(Exception):
@@ -177,18 +178,9 @@ class DoiBibliographyFetcher:
         if override is not None:
             return override
 
-        base = os.environ.get("TEXSMITH_CACHE_DIR")
-        if base:
-            return Path(base) / self._CACHE_NAMESPACE
-
-        xdg_cache = os.environ.get("XDG_CACHE_HOME")
-        if xdg_cache:
-            return Path(xdg_cache) / "texsmith" / self._CACHE_NAMESPACE
-
         try:
-            return Path.home() / ".cache" / "texsmith" / self._CACHE_NAMESPACE
-        except RuntimeError:
-            # Path.home() may fail in restricted environments.
+            return get_user_dir().cache_dir(self._CACHE_NAMESPACE)
+        except OSError:
             return None
 
     # ------------------------------------------------------------------ requests

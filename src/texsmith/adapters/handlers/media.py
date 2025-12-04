@@ -18,6 +18,7 @@ from texsmith.core.exceptions import (
     exception_messages,
 )
 from texsmith.core.rules import RenderPhase, renders
+from texsmith.fonts.scripts import render_moving_text
 
 from ..transformers import mermaid2pdf
 from ._assets import store_local_image_asset, store_remote_image_asset
@@ -104,6 +105,7 @@ def _apply_figure_template(
     *,
     path: Path,
     caption: str | None = None,
+    shortcaption: str | None = None,
     alt: str | None = None,
     label: str | None = None,
     width: str | None = None,
@@ -114,10 +116,17 @@ def _apply_figure_template(
     template_name = template or context.runtime.get("figure_template", "figure")
     formatter = getattr(context.formatter, template_name)
     asset_path = context.assets.latex_path(path)
+    legacy_accents = getattr(context.config, "legacy_latex_accents", False)
+    caption = render_moving_text(caption, context, legacy_accents=legacy_accents, wrap_scripts=True)
+    shortcaption = render_moving_text(
+        shortcaption, context, legacy_accents=legacy_accents, wrap_scripts=True
+    )
+    alt_text = render_moving_text(alt, context, legacy_accents=legacy_accents, wrap_scripts=True)
+    effective_shortcaption = shortcaption or alt_text or caption
     latex = formatter(
         path=asset_path,
         caption=caption,
-        shortcaption=alt or caption,
+        shortcaption=effective_shortcaption,
         label=label,
         width=width,
         adjustbox=adjustbox,

@@ -19,12 +19,9 @@ from texsmith.core.fragments import (
 from texsmith.core.templates import TemplateRuntime
 from texsmith.core.templates.manifest import TemplateError
 
-from texsmith.core.conversion.debug import ensure_emitter, record_event
+from texsmith.core.conversion.debug import ensure_emitter
 from texsmith.core.diagnostics import DiagnosticEmitter
-from texsmith.fonts.analyzer import analyse_font_requirements
-from texsmith.fonts.blocks import ScriptTracker, summarise_scripts, wrap_foreign_scripts
-from texsmith.fonts.manager import PreparedFonts, prepare_fonts_for_context
-
+from texsmith.fonts.scripts import render_script_macros
 from ..context import DocumentState
 from .base import WrappableTemplate
 from .loader import copy_template_assets
@@ -65,11 +62,7 @@ def wrap_template_document(
         if slot_output_overrides
         else None
     )
-    tracker = ScriptTracker()
-
     def _process_slot(value: Any) -> Any:
-        if isinstance(value, str):
-            return wrap_foreign_scripts(value, tracker=tracker)
         return value
 
     main_slot_content = _process_slot(resolved_slots.get(default_slot, ""))
@@ -139,11 +132,6 @@ def wrap_template_document(
     template_context["citations"] = list(document_state.citations)
     template_context["bibliography_entries"] = document_state.bibliography
 
-    if tracker.has_usage():
-        script_payload = summarise_scripts(tracker.to_payload())
-        document_state.script_usage = script_payload
-        template_context["_script_usage"] = script_payload
-
     fragment_attributes: dict[str, Any] = {}
     if fragment_names:
         fragment_attributes = inject_fragment_attributes(
@@ -190,41 +178,7 @@ def wrap_template_document(
     if template_runtime and template_runtime.engine:
         template_context.setdefault("latex_engine", template_runtime.engine)
 
-    font_yaml_hint = template_context.get("fonts_yaml")
-    fonts_yaml_path = Path(font_yaml_hint) if isinstance(font_yaml_hint, (str, Path)) else None
     emitter_obj = ensure_emitter(emitter)
-    if fonts_yaml_path and not fonts_yaml_path.exists():
-        emitter_obj.warning(f"fonts_yaml override does not exist: {fonts_yaml_path}")
-        fonts_yaml_path = None
-    font_match = analyse_font_requirements(
-        slot_outputs=resolved_slots,
-        context=template_context,
-        fonts_yaml=fonts_yaml_path,
-        check_system=True,
-    )
-    prepared_fonts: PreparedFonts | None = prepare_fonts_for_context(
-        template_context=template_context,
-        output_dir=output_dir,
-        font_match=font_match,
-        emitter=emitter_obj,
-    )
-    if prepared_fonts:
-        missing_fonts = prepared_fonts.missing_fonts
-        if missing_fonts:
-            readable = ", ".join(sorted(missing_fonts))
-            emitter_obj.warning(
-                f"Missing {len(missing_fonts)} font families on the system: {readable}."
-            )
-        if prepared_fonts.font_ranges:
-            record_event(
-                emitter_obj,
-                "font_requirements",
-                {
-                    "required": list(prepared_fonts.fallback_fonts),
-                    "present": list(prepared_fonts.present_fonts),
-                    "missing": list(prepared_fonts.missing_fonts),
-                },
-            )
 
     if document_state.citations and bibliography_path is not None:
         template_context["bibliography"] = bibliography_path.stem
@@ -301,6 +255,14 @@ def wrap_template_document(
             parts: list[str] = [base] if base else []
             parts.extend(injections)
             template_context[variable_name] = "\n".join(part for part in parts if part)
+
+    script_macros = render_script_macros(getattr(document_state, "script_usage", []))
+    if script_macros:
+        existing_extra = template_context.get("extra_packages", "")
+        template_context["extra_packages"] = "\n".join(
+            part for part in (existing_extra, script_macros) if part
+        )
+        template_context["script_macros"] = script_macros
 
     final_slots = processed_override_slots if processed_override_slots is not None else resolved_slots
     for slot_name, value in final_slots.items():

@@ -27,15 +27,18 @@ Roadmap and development notes for TeXSmith. I keep this file as a running checkl
 - [x] Mermaid color configuration for MkDocs
 - [x] Build MkDocs with parts at level 0.
 - [x] Implement drawio over pywreight
-- [ ] Refactoring snippets
-- [ ] Fix snippet template (frame dog ear would be good in the build pdf)
-- [ ] Solve issue with Greek
-- [ ] os: [ubuntu-latest, windows-latest, macos-latest]
+- [x] Font style with mono
+- [x] MkDocs Linking Issues
+- [x] Clean book template
+- [x] Hide the list of tables when no tables exist.
+- [x] Manage title fragment to insert title meta
+- [x] Manage fragments order from before/after hooks instead of in fragments.py
+- [ ] Complete docstrings in the codebase for better mkdocstrings generation
+- [ ] Refactoring snippets and fix snippet templates
+- [ ] Solve issue with Greek fonts
+- [ ] Be verbose in mkdocs show what happens (fetching assets, building...)
 - [ ] Global user's configuration (.texsmith/config.yml)
-- [ ] Acronyms multiline
-- [ ] MkDocs Linking Issues
-- [ ] Support for {++inserted text++}, and {~~deleted text~~} (goodbox)
-- [ ] Font style with mono
+- [ ] os: [ubuntu-latest, windows-latest, macos-latest]
 - [ ] Unified Fences Syntax
   - [ ] Multicolumns
   - [ ] Font Size
@@ -43,22 +46,12 @@ Roadmap and development notes for TeXSmith. I keep this file as a running checkl
   - [ ] Language
   - [ ] LaTeX only / HTML only
   - [ ] LaTeX raw
-- [ ] Clean book template
 - [ ] Add example: university exam
-- [ ] Add engine through Docker (docker-tectonic, docker-texlive)
-- [ ] Use docker tectonic if tectonic is not installed
-- [ ] Integrate docker docker run -v $(pwd):/usr/src/tex  dxjoke/tectonic-docker tectonic book.tex
-- [ ] Hide the list of tables when no tables exist.
-- [ ] Manage title fragment to insert title meta
-- [ ] Manage fragments order from before/after hooks instead of in fragments.py
-- [ ] tocloft
-- [ ] enumitem
-- [ ] Be verbose in mkdocs show what happens (fetching assets, building...)
+- [ ] Acronyms multiline
+- [ ] Support for {++inserted text++}, and {~~deleted text~~} (goodbox)
 - [ ] docs/syntax/captions.md (captions not working when using texsmith?)
-- [ ] Use env var for TEXSMITH_CACHE, default to ~/.texsmith/cache
 - [ ] Make CI pass
 - [ ] Support for multi-indexes (dates, ...)
-- [ ] Complete docstrings in the codebase for better mkdocstrings generation
 - [ ] Support cross-references (cleveref package)
 - [ ] Add table width controls (auto, fixed width, `tabularx`, `tabulary`, etc.)
 - [ ] Support table orientation (rotate very wide tables)
@@ -68,6 +61,9 @@ Roadmap and development notes for TeXSmith. I keep this file as a running checkl
 - [ ] CI: uv run mkdocs build #--strict not yet ready
 - [ ] Windows Support
 - [ ] Insert Examples PDFs in the GitHub Releases
+- [ ] Ts-Extra
+  - [ ] tocloft
+  - [ ] enumitem
 - [ ] Develop submodules as standalone plugins
   - [ ] Marginalia (`marginpar` package with footnotes syntax)
   - [ ] Epigraph Plugin
@@ -79,6 +75,161 @@ Roadmap and development notes for TeXSmith. I keep this file as a running checkl
 - [ ] Update docs/api to reflect the actual codebase
 - [ ] Add comprehensive docstring in each docs/api entrypoint in the codebase to explain why/the architecture and how it is useful.
 - [ ] Do not show temporary paths in outputs CLI summary table (│ Main document │ /tmp/texsmith-x84gefq4/colorful.tex │)
+
+## Directives
+
+- DO NOT keep any backward compatibility for now. We are still in pre-1.0.0 phase.
+- DO NOT introduce any shim or compatibility layer. Everything must be clean and simple.
+- The unit tests can be changed at will to reflect the new codebase this is not a contract yet.
+- The **PRIMARY GOAL** is to have a clean, simple, maintainable, documented codebase with clear separation of responsabilities, simplify at best.
+- Finish all plan with a cleaning pass to remove any dead code, and all old API that is not used anymore.
+- Write docstrings for everything.
+- Always finish with uv run ruff check . and uv run ruff format .
+
+## Fonts
+
+We want to refactor and rework the fonts mechanism it is too clumpsy complex and vague. The texsmith/fonts folder contains 14 files plus data files which is too much.
+The goal is to have a clear separation of responsabilities and a clear definition of what is TeXSmith Core API and what is ts-fonts fragment.
+
+TeXSmith Core API is in charge of:
+
+- detecting used codepoints in document/multidocument
+- associate text regions to a language script and to a Noto Font
+- download the requested Noto Fonts
+- download the requested Emojis fonts
+
+TeXSmith ts-fonts fragment is in charge of:
+
+- Defining available fonts packages
+- Building the ts-fonts to be engines friendly (xelatex, tectonic, lualatex...)
+- Populate ucharclasses ranges based on usage (information got from TeXSmith Core)
+
+## Predefined Fonts Package
+
+The PROFILE_MAP in selection.py should not be defined here, but rather in the ts-fonts fragment which is responsible of loading fonts. Plus we have some SSOT for instance in _KPSE_FAMILIES in locator.py.
+
+In order to simplify everything about font management in TeXSmith, we will only configure the standard fonts from ts-fonts fragment the same manner as fonts-test.tex demonstrates it in the root of the project. Of course we want a compatible version for xelatex and lualatex. To be compatible with tectonic we absolutly need the full font name not the description name used by harfbuzz.
+
+Some of these fonts needs to be downloaded from CTAN (at least the .sty). The ts-fonts can be in charge of downloading these packages extract the zip and get the .sty files in the build folder, conditionnally if the font is used. We can keep a cache folder in ~/.texsmith/fonts/ for these downloaded packages.
+
+By default we use `lm` as the default font package.
+
+From now on TeXSmith only supports these packages which are available through tectonic or TeXLive automatically we **do not** need a mechanism to download or copy any of these fonts except the style files if needed.
+
+## Font Copy
+
+Previously, TeXSmith copied all fonts in the build fonts/ folder. For the standard documents described above, we do not need to copy all fonts anymore. Except for
+fallbacks which is described below.
+
+## Fallback
+
+In LuaLaTeX on utilise quelque chose comme (regarde l'actuel ts-fonts):
+
+```tex
+\defaultfontfeatures{FallbackFamilies = {{Noto Emoji...}}} pour les fallback ou alors par cohérence avec XeLaTeX:
+
+\defaultfontfeatures{
+  Renderer=HarfBuzz,
+  RawFeature = {
+      fallback=range:1F300-1FAFF,Noto Emoji
+  }
+}
+```
+
+On XeLaTeX/Tectonic, we need to declare the fallback using ucharclasses like we actually do in ts-fonts.
+As it is a fallback. We only include ranges that are not covered by the main fonts **THIS IS IMPORTANT**:
+
+Emojis will naturally be in treated by these fallbacks. No need to add specific case for them.
+
+We will recycle the old implementation and simplify it to have a precise mechanssm for fallback detection and match to fonts.
+
+Noto is the default fallback font family for all scripts not covered by the main fonts. These fonts are downloaded on demand if required by the document
+cached in ~/.texsmith/fonts/ and copied in the build folder if used and needed only.
+
+## Emojis
+
+Currently TeXSmith supports OpenMoji which is downloaded on demand if any emoji is used in the document. TeXSmith can rely on a "Font Fetcher" mechanism to download
+a font that cover the requested codepoints. So this works for emojis. As Noto Color Emoji is not compatible with XeLaTeX due to the COLR/CPAL format, we will keep OpenMoji as the default emoji font for XeLaTeX and Tectonic for now.
+
+## Tables
+
+Long table et auto ajustement.
+
+```latex
+\documentclass{article}
+\usepackage[margin=2cm]{geometry}
+\usepackage{booktabs}
+\usepackage[french]{babel}
+\usepackage{array}
+
+% ltablex : Le pont entre tabularx et longtable
+\usepackage{ltablex}
+
+% IMPORTANT : On NE met PAS \keepXColumns ici.
+% Sans cette commande, ltablex va calculer si le tableau a besoin
+% de toute la largeur ou non.
+
+\begin{document}
+
+\section*{Cas 1 : Table petite (Compacte)}
+% Ici, comme le texte est court, le tableau ne prendra pas toute la page
+% Les colonnes X vont se comporter comme des colonnes 'l'
+\begin{tabularx}{\textwidth}{lXX}
+    \toprule
+    \textbf{ID} & \textbf{Statut} & \textbf{Note} \\
+    \midrule
+    \endfirsthead
+    1 & OK & R.A.S. \\
+    \midrule
+\end{tabularx}
+
+\vspace{2cm}
+
+\section*{Cas 2 : Table large (Extension automatique)}
+% Ici, le texte est long. Le tableau va détecter qu'il dépasse,
+% s'étendre jusqu'à \textwidth, et activer le retour à la ligne.
+\begin{tabularx}{\textwidth}{lXX}
+    \toprule
+    \textbf{ID} & \textbf{Description} & \textbf{Analyse} \\
+    \midrule
+    \endfirsthead
+
+    \textbf{ID} & \textbf{Description} & \textbf{Analyse} \\
+    \midrule
+    \endhead
+
+    204 &
+    Ici j'ai un texte suffisamment long pour justifier que le tableau prenne toute la largeur disponible sur la page. &
+    Et ici une autre colonne qui va se partager l'espace restant équitablement avec la colonne précédente. \\
+
+    205 & Test de remplissage & Encore du texte... \\
+    \bottomrule
+\end{tabularx}
+\end{document}
+```
+
+## PLAN
+
+1. Load in your context how ts-fonts and TeXSmith use the fonts mechanisms lean the architecture
+2. Establish a complete refactoring plan related to fonts management
+3. Implement the plan step by step where the old codebase related to fonts is **FULLY** replaced by the new one.
+4. Test to build with the examples (examples/make clean all)
+5. Document in docs/guide/fonts.md the new mechanism, the compatible fonts packages etc.
+6. Clean the codebase remove any dead code.
+
+## Tectonic log
+
+We want to mute false warnings and not display them:
+
+```perl
+/^warning:\s*.*?:\d+:\s*Requested font.*?at.*$/
+/^warning:\s*.*?:\d+:\s*Unknown feature.*?in font.*$/
+```
+
+Recent matrix runs with TeX Gyre (bonum/pagella/termes/schola/heros/adventor/cursor) trigger
+many Tectonic warnings like `Unknown feature '` or repeated `Requested font` lines; output is
+otherwise correct. Keep these noted as benign until we wire the log filter above or document a
+flag to silence them.
 
 ## Snippets for on doc examples:
 

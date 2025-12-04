@@ -116,6 +116,38 @@ def test_convert_command() -> None:
     assert "\\chapter{Introduction}\\label{intro}" in result.stdout
 
 
+def test_fonts_info_flag_displays_script_table() -> None:
+    runner = CliRunner()
+    with runner.isolated_filesystem():
+        html_file = Path("index.html")
+        html_file.write_text(
+            (
+                "<article class='md-content__inner'>"
+                "<h2 id='intro'>Tibetan (བོད་ ཡིག Bengali বাংলা)</h2>"
+                "</article>"
+            ),
+            encoding="utf-8",
+        )
+
+        result = runner.invoke(
+            app,
+            [
+                str(html_file),
+                "--base-level",
+                "0",
+                "--template",
+                "article",
+                "--fonts-info",
+            ],
+        )
+
+    assert result.exit_code == 0, result.stdout
+    assert "Fallback Fonts" in result.stdout
+    assert "tibetan" in result.stdout.lower()
+    assert "bengali" in result.stdout.lower()
+    assert "[4]" in result.stdout or "Codepoints" in result.stdout
+
+
 def test_template_alignment_defaults_to_section() -> None:
     runner = CliRunner()
     with runner.isolated_filesystem():

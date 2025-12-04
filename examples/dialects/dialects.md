@@ -13,7 +13,7 @@ handling diverse linguistic content.
 
 ## Japanese (日本語)
 
-Spoken by over 125 million people, Japanese is the official language of Japan.
+Japanese is the national language of Japan and is spoken by over 125 million people, primarily within the country.
 
 月日は百代の過客にして、行きかふ年も旅人なり。
 
@@ -23,29 +23,9 @@ Spoken by over 125 million people, Japanese is the official language of Japan.
 
 心にかかる景色を求めて歩みゆく。
 
-## Syriac (ܠܫܢܐ ܣܘܪܝܝܐ)
+## Korean (한국어)
 
-Old language of Edessa (modern-day Şanlıurfa, Turkey), used in early Christian texts.
-
-ܛܘܒܝܗܘܢ ܠܡܣܟܢ̈ܐ ܒܪܘܚܐ، ܕܕܝܠܗܘܢ ܗܝ ܡܠܟܘܬܐ ܕܫܡܝ̈ܐ. ܛܘܒܝܗܘܢ ܠܐܒܝ̈ܠܐ، ܕܗܢܘܢ ܢܬܒܝܐܘܢ. ܛܘܒܝܗܘܢ ܠܡܟܝ̈ܟܐ، ܕܗܢܘܢ ܢܪܬܘܢ ܠܐܪܥܐ. ܛܘܒܝܗܘܢ ܠܐܝܠܝܢ ܕܟܦܢܝܢ ܘܨܗܝܢ ܠܟܐܢܘܬܐ، ܕܗܢܘܢ ܢܣܒܥܘܢ.
-
-## Greek (Ἑλληνικά)
-
-From Homer *Odyssey* (8th century BC)
-
-ἄνδρα μοι ἔννεπε, Μοῦσα, πολύτροπον, ὃς μάλα πολλὰ
-
-πλάγχθη, ἐπεὶ Τροίης ἱερὸν πτολίεθρον ἔπερσεν·
-
-πολλῶν δ' ἀνθρώπων ἴδεν ἄστεα καὶ νόον ἔγνω,
-
-πολλὰ δ' ὅ γ' ἐν πόντῳ πάθεν ἄλγεα ὃν κατὰ θυμόν,
-
-ἀρνύμενος ἥν τε ψυχὴν καὶ νόστον ἑταίρων.
-
-## Korean (한국어 – 古典시)
-
-From Jeong Mong-ju (1337–1392), *Dansimga*
+Korean is spoken by about 80 million people worldwide and is the official language of both South Korea and North Korea.
 
 이 몸이 죽고 죽어 일백 번 고쳐 죽어
 
@@ -55,23 +35,38 @@ From Jeong Mong-ju (1337–1392), *Dansimga*
 
 어찌 한 마음 변치 않으리오.
 
+## Syriac (ܠܫܢܐ ܣܘܪܝܝܐ)
+
+Syriac is an ancient Aramaic language historically used in the Middle East, especially in Christian liturgical and literary traditions.
+
+ܛܘܒܝܗܘܢ ܠܡܣܟܢ̈ܐ ܒܪܘܚܐ، ܕܕܝܠܗܘܢ ܗܝ ܡܠܟܘܬܐ ܕܫܡܝ̈ܐ. ܛܘܒܝܗܘܢ ܠܐܒܝ̈ܠܐ، ܕܗܢܘܢ ܢܬܒܝܐܘܢ. ܛܘܒܝܗܘܢ ܠܡܟܝ̈ܟܐ، ܕܗܢܘܢ ܢܪܬܘܢ ܠܐܪܥܐ. ܛܘܒܝܗܘܢ ܠܐܝܠܝܢ ܕܟܦܢܝܢ ܘܨܗܝܢ ܠܟܐܢܘܬܐ، ܕܗܢܘܢ ܢܣܒܥܘܢ.
+
+## Greek (ελληνικά)
+
+Greek is the official language of Greece and Cyprus and is spoken by roughly 13 million people, with a literary tradition dating back more than three millennia.
+
+Άντρα, Μούσα, πες μου τον πολυμήχανο, που πάρα πολλά
+ταλαιπωρήθηκε, αφού κατέστρεψε την ιερή πολιτεία της Τροίας·
+
+και είδε τις πόλεις πολλών ανθρώπων και γνώρισε τον τρόπο τους,
+και πολλές λύπες έπαθε στη θάλασσα μέσα στην καρδιά του,
+
+προσπαθώντας να σώσει και τη δική του ζωή
+και την επιστροφή των συντρόφων του.
+
 ## Chinese Trad. (繁體中文)
 
-From Tao Yuanming (365–427), 歸園田居
+Traditional Chinese characters are used mainly in Taiwan, Hong Kong, and Macau by tens of millions of speakers of Mandarin, Cantonese, and other Sinitic languages.
 
-少無適俗韻，性本愛丘山。
-
-誤落塵網中，一去三十年。
-
-羈鳥戀舊林，池魚思故淵。
-
-開荒南野際，守拙歸園田。
-
-久在樊籠裡，復得返自然。
+少无适俗韵，性本爱丘山。
+误落尘网中，一去三十年。
+羁鸟恋旧林，池鱼思故渊。
+开荒南野际，守拙归园田。
+久在樊笼里，复得返自然。
 
 ## Arabic
 
-Arabic is spoken by over 400 million people worldwide and is the liturgical language of Islam.
+Arabic is spoken by over 400 million people across the Middle East and North Africa and serves as the liturgical language of Islam.
 
 قِفا نَبْكِ مِنْ ذِكرَى حبيبٍ ومَنزِلِ
 
@@ -87,7 +82,7 @@ Arabic is spoken by over 400 million people worldwide and is the liturgical lang
 
 ## Devanagari (देवनागरी)
 
-Language of Sanskrit, Hindi, Marathi, and others; used by over 600 million people.
+The Devanagari script is used for several major South Asian languages, including Hindi, Marathi, and Sanskrit, representing over 600 million speakers combined.
 
 न जायते म्रियते वा कदाचिन्
 
@@ -99,7 +94,7 @@ Language of Sanskrit, Hindi, Marathi, and others; used by over 600 million peopl
 
 ## Urdu (اردو)
 
-Urdu is spoken by over 170 million people, primarily in Pakistan and India.
+Urdu is spoken by more than 170 million people, mainly in Pakistan and India, and serves as Pakistan's national language.
 
 عشق ایک مِیرُی آفت ہے
 
@@ -111,7 +106,7 @@ Urdu is spoken by over 170 million people, primarily in Pakistan and India.
 
 ## Sinhala (සිංහල)
 
-Singhala is spoken by about 17 million people, primarily in Sri Lanka.
+Sinhala is the primary language of Sri Lanka and is spoken by about 17 million native speakers.
 
 සඳ එළිය පුරා රැය නිල් සිලුවෙන් හැඬේලා
 
@@ -123,17 +118,15 @@ Singhala is spoken by about 17 million people, primarily in Sri Lanka.
 
 ## Khmer (ខ្មែរ)
 
-Classical Khmer poetic style (Chbab form). Khmer is spoken by over 16 million people, mainly in Cambodia.
+Khmer is the official language of Cambodia and is spoken by more than 16 million people.
 
 យប់ស្ថប់ត្រង់ ព្រៃស្រពន់សូរ ស្ទឹងស្ទូងតាមស្រមោលដើមឈើ
-
 ខ្យល់អូលីល មកពីភ្នំឆ្ងាយ ប៉ះមកដល់ចិត្តអើយឆ្ងាយណា
-
 សូរសត្វបក្សី លេបលាន់តាមសែន ក្លិនផ្កាឈូករាត្រីរំលេច។
 
 ## Telugu (తెలుగు)
 
-From Nannaya (11th century), *Andhra Mahābhāratam*. Teluga is spoken by over 80 million people primarily in India.
+Telugu is a major Dravidian language of India, spoken by over 80 million people, primarily in the states of Andhra Pradesh and Telangana.
 
 నన్నయ భట్టుని వాక్కులు నదీవేగమువలె ప్రవహించి
 
@@ -145,21 +138,16 @@ From Nannaya (11th century), *Andhra Mahābhāratam*. Teluga is spoken by over 8
 
 ## Georgian (ქართული)
 
-Georgian is the official language of Georgia and the main language of Kartvelian
-speakers. An estimated 4–5 million people speak Georgian worldwide.
+Georgian is the official language of Georgia, with around 4-5 million speakers, and is the largest member of the Kartvelian language family.
 
-ქართული ენა კავკასიონის მთებს შუ에서 დაბადებული ძველი ხმავია
-
-ქრონიკებში ხელნაწერებში და ხალხურ სიმღერებში ეს ენა ხალხის ისტორიას მოჰყვება
-
-თბილისის ქუჩის საუბრიდან სოფლის სუფრის ტოსტებამდე
-
-ქართული სიტყვები მეგობრობისა და სტუმართმოყვარეობის სულს ატარებს
+ქართული ენა კავკასიონის მთებს შორის დაბადებული ძველი ხმავია.
+ქრონიკებში, ხელნაწერებში და ხალხურ სიმღერებში ეს ენა ხალხის ისტორიას მოჰყვება.
+თბილისის ქუჩის საუბრიდან სოფლის სუფრის ტოსტებამდე,
+ქართული სიტყვები მეგობრობისა და სტუმართმოყვარეობის სულს ატარებს.
 
 ## Armenian (Հայերեն)
 
-Armenian is the official language of Armenia and a central language for the
-Armenian diaspora. There are roughly 6–7 million speakers worldwide.
+Armenian is the official language of Armenia and a key language of the global Armenian diaspora, spoken by roughly 6–7 million people.
 
 Հայերենը միայն պետական լեզու չէ՝ այլ նաեւ հոգեւոր հիշողության տանող ուղի է։
 
@@ -167,11 +155,67 @@ Armenian diaspora. There are roughly 6–7 million speakers worldwide.
 
 այս լեզվով են պահպանել ժողովրդի ուրախությունն ու ցավը։
 
+## Russian (русский)
+
+Russian is an East Slavic language spoken by about 258 million people worldwide and is an official language in Russia, Belarus, Kazakhstan, and Kyrgyzstan.
+
+Мой дядя самых честных правил,
+
+когда не в шутку занемог,
+
+он уважать себя заставил
+
+и лучше выдумать не мог.
+
+## Hebrew (עברית)
+
+Hebrew is a Semitic language spoken by over 9 million people worldwide and is the official language of Israel.
+
+הַלֵּילָה אֲנִי חוֹלֵם עַל שָׂפוֹת הָעֵת בָּאוּ בַּחוֹף
+קוֹל הַגַּלִּים מְשַׁחֵק עִם הָרֶגַע
+וְהַלֵּב כּוֹסֵף לְבֵית כָּל שִׁירַי.
+
+## Thai (ไทย)
+
+Thai is the national language of Thailand and is spoken by more than 60 million people.
+
+สายลมพัดผ่านทุ่งข้าวเขียวขจี
+
+กลิ่นดอกไม้โชยมากับเสียงระฆังวัด
+
+หัวใจคิดถึงรอยยิ้มและคำทักทายอบอุ่นของผู้คน.
+
+## Bengali (বাংলা)
+
+Bengali is spoken by over 250 million people, mainly in Bangladesh and the Indian state of West Bengal.
+
+এই নদী মাঠ আর গাছের ছায়া
+
+মানুষের হাসি আর শোকের গান
+
+সব মিলিয়ে বাংলা ভাষা হৃদয়ে রাখে প্রাণের গল্প।
+
+## Tibetan
+
+Tibetan is spoken across Tibet and the Himalayan regions and is used by several million speakers in both secular and religious contexts.
+
+བོད་ཡིག་གི་ཚིག་སྨོན་རྒྱལ་ཁབ་གི་སྙིང་ནས་བྱུང་
+
+རླུང་དང་སྣུམ་གྱི་སྒྲ་དང་མཉམ་དུ་སྐད་ཆ་སྣང་བ་བསྐུར།
+
+ལམ་སེང་གི་སྒྲོན་མ་བཞུགས་སྒོམ་དང་མཉམ་བཞག་པའི་ཡིད་ཀྱི་གདུང་འདུག།
+
+## Tamil (தமிழ்)
+
+Tamil is a Dravidian language with a literary history over two millennia old and is spoken by more than 80 million people in India, Sri Lanka, and the diaspora.
+
+காற்றின் மணம் நனைந்து வரும்
+பாட்டின் சொல் மனதில் நிற்கும்
+தமிழ் மண்ணின் நெஞ்சில் வாழும் மரபின் இனிமை.
+
 ## Amharic (አማርኛ)
 
-Amharic is a Semitic language spoken mainly in Ethiopia, where it is the official
-working language. There are nearly 60 million speakers in total, counting first
-and second language use.
+Amharic is a Semitic language spoken mainly in Ethiopia, where it serves as a federal working language, with nearly 60 million speakers including second-language users.
 
 አማርኛ በኢትዮጵያ የመንግሥት ቋንቋ እና የብዙ ብሔሮች መገናኛ መንገድ ናት።
 
@@ -181,8 +225,8 @@ and second language use.
 
 ## Burmese (မြန်မာ)
 
-Burmese (Myanmar language) is the official language of Myanmar and the mother
-tongue of the country’s largest ethnic group. About 33 million native speakers
+Burmese is the official language of Myanmar, spoken by about 33 million native speakers and over 40 million total speakers.
+
 and over 40 million total speakers use it.
 
 မြန်မာဘာသာကို ရှေးအခေတ်ကပင် ဗိမာန်၊ ရာဇဝင်စာအုပ်တွေထဲက ဗျာဒိတ်စာနဲ့အတူ ဆက်ခံလာကြတယ်။

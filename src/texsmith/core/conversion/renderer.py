@@ -9,6 +9,9 @@ from pathlib import Path
 from typing import Any
 
 from texsmith.adapters.latex.latexmk import build_latexmkrc_content
+from texsmith.fonts import FallbackManager, FontCache, FontPipelineLogger
+from texsmith.fonts.fallback import merge_fallback_summaries
+from texsmith.fonts.scripts import fallback_summary_to_usage, merge_script_usage
 
 from ..context import DocumentState
 from ..diagnostics import DiagnosticEmitter
@@ -187,6 +190,8 @@ class TemplateRenderer:
         template_overrides: dict[str, Any] | None = None
 
         shared_state: DocumentState | None = None
+        aggregated_script_usage: list[dict[str, Any]] = []
+        aggregated_fallback_summary: list[dict[str, Any]] = []
         bibliography_path: Path | None = None
         template_engine: str | None = None
         requires_shell_escape = bool(self.runtime.requires_shell_escape)
@@ -251,7 +256,18 @@ class TemplateRenderer:
                     _merge_overrides(template_overrides, fragment_overrides)
 
             if fragment.document_state is not None:
-                shared_state = fragment.document_state
+                if shared_state is None:
+                    shared_state = fragment.document_state
+                else:
+                    # Preserve the last state for other fields while merging script usage.
+                    pass
+                aggregated_script_usage = merge_script_usage(
+                    aggregated_script_usage, getattr(fragment.document_state, "script_usage", [])
+                )
+                aggregated_fallback_summary = merge_fallback_summaries(
+                    aggregated_fallback_summary,
+                    getattr(fragment.document_state, "fallback_summary", []),
+                )
             if fragment.bibliography_path is not None:
                 bibliography_path = fragment.bibliography_path
             if template_engine is None and fragment.template_engine is not None:
@@ -262,6 +278,14 @@ class TemplateRenderer:
 
         if shared_state is None:
             shared_state = DocumentState()
+        if aggregated_script_usage:
+            shared_state.script_usage = merge_script_usage(
+                getattr(shared_state, "script_usage", []), aggregated_script_usage
+            )
+        if aggregated_fallback_summary:
+            shared_state.fallback_summary = merge_fallback_summaries(
+                getattr(shared_state, "fallback_summary", []), aggregated_fallback_summary
+            )
 
         slot_content: dict[str, str] = {}
         render_slot_content: dict[str, str] = {
@@ -334,6 +358,31 @@ class TemplateRenderer:
 
         _validate_slots(self.runtime, render_slot_content)
 
+        # Compute fallback summary across all slot content for font fragments.
+        concatenated_text = "".join(render_slot_content.values())
+        if concatenated_text:
+            try:
+                raw_summary = FallbackManager(
+                    cache=FontCache(), logger=FontPipelineLogger()
+                ).scan_text(concatenated_text)
+                if raw_summary:
+                    aggregated_fallback_summary = merge_fallback_summaries(
+                        aggregated_fallback_summary, raw_summary
+                    )
+                    usage = fallback_summary_to_usage(raw_summary)
+                    if usage:
+                        aggregated_script_usage = merge_script_usage(aggregated_script_usage, usage)
+                        shared_state.script_usage = merge_script_usage(
+                            getattr(shared_state, "script_usage", []), aggregated_script_usage
+                        )
+                        shared_state.fallback_summary = merge_fallback_summaries(
+                            getattr(shared_state, "fallback_summary", []),
+                            aggregated_fallback_summary,
+                        )
+            except Exception:
+                # Best-effort: fallback detection should never block rendering.
+                pass
+
         template_instance = self.runtime.instance
         if template_instance is None:  # pragma: no cover - defensive path
             raise TemplateError("Template runtime is missing an instance implementation.")
@@ -355,6 +404,75 @@ class TemplateRenderer:
                 "template_overrides",
                 {"values": dict(template_overrides)},
             )
+        if aggregated_script_usage:
+            template_overrides = template_overrides or {}
+            template_overrides.setdefault("fonts", {})
+            if isinstance(template_overrides["fonts"], dict):
+                template_overrides["fonts"].setdefault("script_usage", aggregated_script_usage)
+
+        def _iter_strings(value: Any) -> list[str]:
+            if isinstance(value, str):
+                return [value]
+            if isinstance(value, Mapping):
+                collected: list[str] = []
+                for nested in value.values():
+                    collected.extend(_iter_strings(nested))
+                return collected
+            if isinstance(value, (list, tuple, set)):
+                collected: list[str] = []
+                for nested in value:
+                    collected.extend(_iter_strings(nested))
+                return collected
+            return []
+
+        metadata_strings: list[str] = []
+        for record in document_metadata:
+            front_matter = record.get("front_matter")
+            if isinstance(front_matter, Mapping):
+                metadata_strings.extend(_iter_strings(front_matter))
+        if template_overrides:
+            metadata_strings.extend(_iter_strings(template_overrides))
+
+        metadata_blob = " ".join(part for part in metadata_strings if part.strip())
+        if metadata_blob:
+            try:
+                metadata_raw = FallbackManager(
+                    cache=FontCache(), logger=FontPipelineLogger()
+                ).scan_text(metadata_blob)
+            except Exception:
+                metadata_raw = []
+            if metadata_raw:
+                aggregated_fallback_summary = merge_fallback_summaries(
+                    aggregated_fallback_summary, metadata_raw
+                )
+                metadata_usage = fallback_summary_to_usage(metadata_raw)
+                if metadata_usage:
+                    aggregated_script_usage = merge_script_usage(
+                        aggregated_script_usage, metadata_usage
+                    )
+                    shared_state.script_usage = merge_script_usage(
+                        getattr(shared_state, "script_usage", []), aggregated_script_usage
+                    )
+                shared_state.fallback_summary = merge_fallback_summaries(
+                    getattr(shared_state, "fallback_summary", []), aggregated_fallback_summary
+                )
+
+        if aggregated_script_usage or aggregated_fallback_summary:
+            template_overrides = template_overrides or {}
+            template_overrides.setdefault("fonts", {})
+            if isinstance(template_overrides["fonts"], dict):
+                if aggregated_script_usage:
+                    existing_usage = template_overrides["fonts"].get("script_usage", [])
+                    template_overrides["fonts"]["script_usage"] = merge_script_usage(
+                        existing_usage if isinstance(existing_usage, list) else [],
+                        aggregated_script_usage,
+                    )
+                if aggregated_fallback_summary:
+                    existing_fallback = template_overrides["fonts"].get("fallback_summary", [])
+                    template_overrides["fonts"]["fallback_summary"] = merge_fallback_summaries(
+                        existing_fallback if isinstance(existing_fallback, list) else [],
+                        aggregated_fallback_summary,
+                    )
 
         main_name = self._resolve_main_name(fragments)
         try:

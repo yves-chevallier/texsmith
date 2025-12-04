@@ -17,6 +17,8 @@ import zipfile
 
 from rich.console import Console
 
+from texsmith.core.user_dir import get_user_dir
+
 
 TECTONIC_VERSION = "0.15.0"
 BIBER_VERSION = "2.17"
@@ -186,9 +188,7 @@ def _ensure_makeglossaries(*, console: Console | None) -> Path:
 
 
 def _install_dir() -> Path:
-    install_dir = Path.home() / ".texsmith" / "bin"
-    install_dir.mkdir(parents=True, exist_ok=True)
-    return install_dir
+    return get_user_dir().data_dir("bin")
 
 
 def _download_file(url: str, destination: Path) -> None:
