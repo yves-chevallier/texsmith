@@ -35,8 +35,10 @@ from texsmith.adapters.latex.engines import (
 )
 from texsmith.adapters.latex.tectonic import (
     BiberAcquisitionError,
+    MakeglossariesAcquisitionError,
     TectonicAcquisitionError,
     select_biber_binary,
+    select_makeglossaries,
     select_tectonic_binary,
 )
 from texsmith.api.service import ConversionRequest, ConversionService
@@ -190,22 +192,34 @@ def _compile_pdf(result: TemplateRenderResult) -> Path:
         template_context=template_context,
     )
     biber_binary: Path | None = None
+    makeglossaries_binary: Path | None = None
     bundled_bin: Path | None = None
     try:
         selection = select_tectonic_binary(False, console=None)
         if features.bibliography:
             biber_binary = select_biber_binary(console=None)
             bundled_bin = biber_binary.parent
+        if features.has_glossary:
+            glossaries = select_makeglossaries(console=None)
+            makeglossaries_binary = glossaries.path
+            if glossaries.source == "bundled":
+                bundled_bin = bundled_bin or glossaries.path.parent
     except (
         TectonicAcquisitionError,
         BiberAcquisitionError,
+        MakeglossariesAcquisitionError,
     ) as exc:  # pragma: no cover - runtime guard
         raise RuntimeError(str(exc)) from exc
+    available_bins: dict[str, Path] = {}
+    if biber_binary:
+        available_bins["biber"] = biber_binary
+    if makeglossaries_binary:
+        available_bins["makeglossaries"] = makeglossaries_binary
     missing = missing_dependencies(
         engine_choice,
         features,
         use_system_tectonic=False,
-        available_binaries={"biber": biber_binary} if biber_binary else None,
+        available_binaries=available_bins or None,
     )
     if missing:  # pragma: no cover - runtime guard
         raise RuntimeError(

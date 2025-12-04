@@ -30,8 +30,10 @@ from texsmith.adapters.latex.engines import (
 )
 from texsmith.adapters.latex.tectonic import (
     BiberAcquisitionError,
+    MakeglossariesAcquisitionError,
     TectonicAcquisitionError,
     select_biber_binary,
+    select_makeglossaries,
     select_tectonic_binary,
 )
 from texsmith.adapters.markdown import (
@@ -904,6 +906,7 @@ def render(
 
     tectonic_binary: Path | None = None
     biber_binary: Path | None = None
+    makeglossaries_binary: Path | None = None
     bundled_bin: Path | None = None
     if engine_choice.backend == "tectonic":
         try:
@@ -911,16 +914,31 @@ def render(
             if features.bibliography and not use_system_tectonic:
                 biber_binary = select_biber_binary(console=state.console)
                 bundled_bin = biber_binary.parent
-        except (TectonicAcquisitionError, BiberAcquisitionError) as exc:
+            if features.has_glossary:
+                glossaries = select_makeglossaries(console=state.console)
+                makeglossaries_binary = glossaries.path
+                if glossaries.source == "bundled":
+                    bundled_bin = bundled_bin or glossaries.path.parent
+        except (
+            TectonicAcquisitionError,
+            BiberAcquisitionError,
+            MakeglossariesAcquisitionError,
+        ) as exc:
             emit_error(str(exc), exception=exc)
             raise typer.Exit(code=1) from exc
         tectonic_binary = selection.path
+
+    available_bins: dict[str, Path] = {}
+    if biber_binary:
+        available_bins["biber"] = biber_binary
+    if makeglossaries_binary:
+        available_bins["makeglossaries"] = makeglossaries_binary
 
     missing_tools = missing_dependencies(
         engine_choice,
         features,
         use_system_tectonic=use_system_tectonic,
-        available_binaries={"biber": biber_binary} if biber_binary else None,
+        available_binaries=available_bins or None,
     )
     if missing_tools:
         formatted = ", ".join(sorted(missing_tools))
