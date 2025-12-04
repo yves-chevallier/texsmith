@@ -50,7 +50,9 @@ class CachedConversionStrategy:
         output_dir = Path(output_dir)
         output_dir.mkdir(parents=True, exist_ok=True)
 
-        cache_key = self._make_cache_key(source, options)
+        cacheable_options = {key: value for key, value in options.items() if key != "emitter"}
+
+        cache_key = self._make_cache_key(source, cacheable_options)
         target = self._resolve_target_path(output_dir, cache_key, source, options)
 
         if target.exists() and not options.get("force", False):

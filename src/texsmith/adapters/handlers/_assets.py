@@ -154,14 +154,16 @@ def _convert_local_asset(context: RenderContext, source: Path, suffix: str) -> P
     match suffix:
         case ".svg":
             record_event(emitter, "diagram_generate", {"source": str(source), "kind": "svg"})
-            return svg2pdf(source, output_dir=conversion_root)
+            return svg2pdf(source, output_dir=conversion_root, emitter=emitter)
         case ".drawio":
             record_event(emitter, "diagram_generate", {"source": str(source), "kind": "drawio"})
             emit_info = getattr(emitter, "info", None)
             if callable(emit_info):
                 emit_info(f"Converting draw.io diagram: {source}")
             backend = context.runtime.get("diagrams_backend")
-            return drawio2pdf(source, output_dir=conversion_root, backend=backend)
+            return drawio2pdf(
+                source, output_dir=conversion_root, backend=backend, emitter=emitter
+            )
         case ".mmd" | ".mermaid":
             record_event(emitter, "diagram_generate", {"source": str(source), "kind": "mermaid"})
             emit_info = getattr(emitter, "info", None)
@@ -174,10 +176,11 @@ def _convert_local_asset(context: RenderContext, source: Path, suffix: str) -> P
                 output_dir=conversion_root,
                 backend=backend,
                 mermaid_config=mermaid_config,
+                emitter=emitter,
             )
         case _:
             record_event(emitter, "asset_convert", {"source": str(source), "kind": "image"})
-            return image2pdf(source, output_dir=conversion_root)
+            return image2pdf(source, output_dir=conversion_root, emitter=emitter)
 
 
 def _conversion_cache_root(context: RenderContext) -> Path:

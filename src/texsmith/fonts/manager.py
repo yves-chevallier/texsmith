@@ -62,6 +62,13 @@ def _apply_twemoji_fallback(
     return [font for font in fallback_fonts if font != missing_font]
 
 
+def _is_noto_font(family: str | None) -> bool:
+    """Return True if the family appears to be part of the Noto collection."""
+    if not family:
+        return False
+    return family.lower().startswith("noto")
+
+
 @dataclass(slots=True)
 class PreparedFonts:
     """Result of preparing font files and ranges for ts-fonts."""
@@ -285,17 +292,24 @@ def prepare_fonts_for_context(
     template_context.setdefault("missing_fonts", missing_fonts)
 
     fonts_dir = (output_dir / "fonts").resolve()
-    fonts_to_copy: set[str] = {
+    fonts_to_copy: set[str] = set()
+    if emoji_font_family:
+        fonts_to_copy.add(emoji_font_family)
+
+    def _maybe_copy(font: str | None) -> None:
+        if _is_noto_font(font):
+            fonts_to_copy.add(str(font))
+
+    for candidate in (
         selection.main,
         selection.sans,
         selection.mono,
         selection.math,
-        *([selection.small_caps] if selection.small_caps else []),
-    }
-    fonts_to_copy.update(fallback_fonts)
-    fonts_to_copy.update(script_font_set)
-    if emoji_font_family:
-        fonts_to_copy.add(emoji_font_family)
+        selection.small_caps,
+        *fallback_fonts,
+        *script_font_set,
+    ):
+        _maybe_copy(candidate)
 
     cached_fonts, cache_failures = cache_fonts_for_families(list(fonts_to_copy), emitter=emitter)
     for family, cached_entry in cached_fonts.items():
@@ -323,7 +337,6 @@ def prepare_fonts_for_context(
         template_context["small_caps_font"] = None
 
     available_families = set(copied_serialised.keys())
-    fallback_fonts = [font for font in fallback_fonts if font in available_families]
     if emoji_font_family and emoji_font_family in missing_after_copy:
         fallback_fonts = _apply_twemoji_fallback(
             template_context, fallback_fonts, missing_font=emoji_font_family, emitter=emitter

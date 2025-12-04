@@ -81,13 +81,15 @@ def test_prepare_fonts_updates_context_and_ranges(tmp_path: Path) -> None:
 
     assert result is not None
     assert context["font_path_prefix"] == "./fonts/"
-    assert {"DemoEmoji"}.issubset(set(context["font_files"].keys()))  # type: ignore[index]
+    emoji_spec = context["emoji_spec"]  # type: ignore[index]
+    emoji_family = emoji_spec["font_family"]
+    assert emoji_family
+    assert emoji_family in context["font_files"]  # type: ignore[index]
     assert context["unicode_font_classes"]  # type: ignore[truthy-bool]
     families = {cls["family"] for cls in context["unicode_font_classes"]}  # type: ignore[index]
-    assert {"DemoEmoji"} <= families
+    assert emoji_family in families
     ranges = {tuple(pair) for cls in context["unicode_font_classes"] for pair in cls["ranges"]}  # type: ignore[index]
     assert all(int(start, 16) >= 0x80 for start, _ in ranges)
-    emoji_spec = context["emoji_spec"]  # type: ignore[index]
     assert emoji_spec["font_family"] == "OpenMoji Black"
     assert emoji_spec["mode"] == "black"
 
