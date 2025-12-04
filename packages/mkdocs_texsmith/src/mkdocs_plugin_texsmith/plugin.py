@@ -37,8 +37,10 @@ from texsmith.adapters.latex.engines import (
 from texsmith.adapters.latex.latexmk import build_latexmkrc_content
 from texsmith.adapters.latex.tectonic import (
     BiberAcquisitionError,
+    MakeglossariesAcquisitionError,
     TectonicAcquisitionError,
     select_biber_binary,
+    select_makeglossaries,
     select_tectonic_binary,
 )
 from texsmith.adapters.plugins import material, snippet
@@ -1004,6 +1006,7 @@ class LatexPlugin(BasePlugin):
 
         tectonic_binary: Path | None = None
         biber_binary: Path | None = None
+        makeglossaries_binary: Path | None = None
         bundled_bin: Path | None = None
         if engine_choice.backend == "tectonic":
             try:
@@ -1015,8 +1018,23 @@ class LatexPlugin(BasePlugin):
                 if features.bibliography and not use_system_tectonic:
                     biber_binary = select_biber_binary(console=None)
                     bundled_bin = biber_binary.parent
-            except (TectonicAcquisitionError, BiberAcquisitionError) as exc:
+                if features.has_glossary:
+                    glossaries = select_makeglossaries(console=None)
+                    makeglossaries_binary = glossaries.path
+                    if glossaries.source == "bundled":
+                        bundled_bin = bundled_bin or glossaries.path.parent
+            except (
+                TectonicAcquisitionError,
+                BiberAcquisitionError,
+                MakeglossariesAcquisitionError,
+            ) as exc:
                 raise PluginError(str(exc)) from exc
+
+        available_bins: dict[str, Path] = {}
+        if biber_binary:
+            available_bins["biber"] = biber_binary
+        if makeglossaries_binary:
+            available_bins["makeglossaries"] = makeglossaries_binary
 
         missing = missing_dependencies(
             engine_choice,
@@ -1024,7 +1042,7 @@ class LatexPlugin(BasePlugin):
             use_system_tectonic=use_system_tectonic
             if engine_choice.backend == "tectonic"
             else False,
-            available_binaries={"biber": biber_binary} if biber_binary else None,
+            available_binaries=available_bins or None,
         )
         if missing:
             readable = ", ".join(sorted(set(missing)))

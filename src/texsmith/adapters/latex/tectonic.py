@@ -20,6 +20,7 @@ from rich.console import Console
 
 TECTONIC_VERSION = "0.15.0"
 BIBER_VERSION = "2.17"
+MAKEGLOSSARIES_URL = "https://mirrors.ctan.org/macros/latex/contrib/glossaries.zip"
 _BASE_URL = (
     "https://github.com/tectonic-typesetting/tectonic/releases/download/"
     f"tectonic%40{TECTONIC_VERSION}/tectonic-{TECTONIC_VERSION}-"
@@ -42,9 +43,21 @@ class BiberAcquisitionError(BundledToolError):
     """Raised when the bundled Biber binary cannot be prepared."""
 
 
+class MakeglossariesAcquisitionError(BundledToolError):
+    """Raised when the makeglossaries helper cannot be prepared."""
+
+
 @dataclass(slots=True)
 class TectonicSelection:
     """Resolved Tectonic binary and its origin."""
+
+    path: Path
+    source: str  # "bundled" or "system"
+
+
+@dataclass(slots=True)
+class HelperSelection:
+    """Resolved auxiliary tool selection (system or bundled)."""
 
     path: Path
     source: str  # "bundled" or "system"
@@ -129,6 +142,45 @@ def select_biber_binary(*, console: Console | None = None) -> Path:
             target.chmod(target.stat().st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
     except (OSError, URLError, zipfile.BadZipFile, tarfile.TarError) as exc:
         raise BiberAcquisitionError(f"Unable to download bundled Biber: {exc}") from exc
+
+    return target
+
+
+def select_makeglossaries(*, console: Console | None = None) -> HelperSelection:
+    """Return a makeglossaries command, downloading the Perl helper if absent."""
+    existing = shutil.which("makeglossaries")
+    if existing:
+        return HelperSelection(path=Path(existing), source="system")
+    bundled = _ensure_makeglossaries(console=console)
+    return HelperSelection(path=bundled, source="bundled")
+
+
+def _ensure_makeglossaries(*, console: Console | None) -> Path:
+    install_dir = _install_dir()
+    target = install_dir / "makeglossaries"
+
+    if target.exists() and target.is_file():
+        _log(console, f"Using bundled makeglossaries at {target}", tool="makeglossaries")
+        return target
+
+    _log(console, f"Downloading makeglossaries helper into {install_dir}", tool="makeglossaries")
+
+    try:
+        with tempfile.TemporaryDirectory(prefix="texsmith-makeglossaries-") as tmpdir:
+            archive_path = Path(tmpdir) / "glossaries.zip"
+            _download_file(MAKEGLOSSARIES_URL, archive_path)
+            extracted_root = Path(tmpdir) / "extracted"
+            extracted_root.mkdir(parents=True, exist_ok=True)
+            _extract_archive(archive_path, extracted_root)
+            candidate = _find_binary(
+                extracted_root, "makeglossaries", error_cls=MakeglossariesAcquisitionError
+            )
+            shutil.move(str(candidate), target)
+            target.chmod(target.stat().st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
+    except (OSError, URLError, zipfile.BadZipFile, tarfile.TarError) as exc:
+        raise MakeglossariesAcquisitionError(
+            f"Unable to download makeglossaries helper: {exc}"
+        ) from exc
 
     return target
 
@@ -283,8 +335,11 @@ __all__ = [
     "TECTONIC_VERSION",
     "BiberAcquisitionError",
     "BundledToolError",
+    "HelperSelection",
+    "MakeglossariesAcquisitionError",
     "TectonicAcquisitionError",
     "TectonicSelection",
     "select_biber_binary",
+    "select_makeglossaries",
     "select_tectonic_binary",
 ]
