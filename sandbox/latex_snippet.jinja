@@ -1,0 +1,23 @@
+\usepackage[{{ package_options }}]{ucharclasses}
+\providecommand{\setTransitionsForEgyptianHieroglyphsFull}[2]{}
+
+% Déclarations des polices pour chaque script détecté
+{% for font in fonts %}
+\newfontfamily\{{ font.cmd }}[
+  Path = fonts/,
+  Extension = {{ font.extension }},
+  UprightFont = {{ font.upright }},
+{% if font.bold %}
+  BoldFont   = {{ font.bold }},
+{% elif font.fake_bold %}
+  FakeBold   = 2,
+{% endif %}
+  Scale      = MatchLowercase
+]{ {{ font.display_name }} }
+
+{% endfor %}
+
+% Transitions automatiques vers chaque script
+{% for t in transitions %}
+{{ t }}
+{% endfor %}

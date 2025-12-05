@@ -1,0 +1,66 @@
+[
+  {
+    "class": "Sinhala",
+    "group": "Other",
+    "fonts": [
+      "Noto Sans Sinhala"
+    ],
+    "font": {
+      "name": "NotoSansSinhala",
+      "extension": ".otf",
+      "styles": [
+        "bold",
+        "regular"
+      ]
+    },
+    "ranges": [
+      "U+0D9A",
+      "U+0DB1",
+      "U+0DB3",
+      "U+0DC3-U+0DC4",
+      "U+0DD4",
+      "U+0DD9"
+    ]
+  },
+  {
+    "class": "BasicLatin",
+    "group": "Latin",
+    "fonts": [
+      "Noto Sans Egyptian Hieroglyphs"
+    ],
+    "font": {
+      "name": "NotoSansMongolian",
+      "extension": ".otf",
+      "styles": [
+        "regular"
+      ]
+    },
+    "ranges": [
+      "U+0020"
+    ]
+  },
+  {
+    "class": "Khmer",
+    "group": "Other",
+    "fonts": [
+      "Noto Sans TC"
+    ],
+    "font": {
+      "name": "NotoSansKhmer",
+      "extension": ".otf",
+      "styles": [
+        "bold",
+        "regular"
+      ]
+    },
+    "ranges": [
+      "U+1784",
+      "U+178F-U+1790",
+      "U+1794",
+      "U+1799-U+179A",
+      "U+179F",
+      "U+17CB",
+      "U+17D2"
+    ]
+  }
+]

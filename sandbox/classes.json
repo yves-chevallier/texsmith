@@ -1,0 +1,730 @@
+[
+  {
+    "class": "BasicLatin",
+    "group": "Latin",
+    "fonts": [
+      "Noto Emoji",
+      "Noto Sans Glagolitic"
+    ],
+    "font": {
+      "name": "NotoSansMongolian",
+      "extension": ".otf",
+      "styles": [
+        "regular"
+      ],
+      "dir": "NotoSansMongolian"
+    },
+    "ranges": [
+      "U+0020",
+      "U+0027-U+0029",
+      "U+002C-U+002E",
+      "U+0030-U+0038",
+      "U+003A-U+003B",
+      "U+0041-U+0050",
+      "U+0052-U+0055",
+      "U+0058-U+0059",
+      "U+005B-U+005D",
+      "U+0061-U+0079",
+      "U+007B",
+      "U+007D"
+    ]
+  },
+  {
+    "class": "CJKUnifiedIdeographs",
+    "group": "Chinese",
+    "fonts": [
+      "Noto Sans TC"
+    ],
+    "font": {
+      "name": "NotoSansHK",
+      "extension": ".otf",
+      "styles": [
+        "regular",
+        "bold"
+      ],
+      "dir": "NotoSansHK"
+    },
+    "ranges": [
+      "U+4E00",
+      "U+4E09",
+      "U+4E18",
+      "U+4E2D",
+      "U+4E45",
+      "U+4E57",
+      "U+4EBA",
+      "U+4EE3",
+      "U+4FD7",
+      "U+5206",
+      "U+521D",
+      "U+5341",
+      "U+5357",
+      "U+53BB",
+      "U+5439",
+      "U+5712",
+      "U+5728",
+      "U+5875",
+      "U+5B88",
+      "U+5BA2",
+      "U+5C0F",
+      "U+5C11",
+      "U+5C45",
+      "U+5C71",
+      "U+5DDD",
+      "U+5E74",
+      "U+5F97",
+      "U+5FA9",
+      "U+5FC3",
+      "U+601D",
+      "U+6027",
+      "U+611B",
+      "U+6200",
+      "U+62D9",
+      "U+6545",
+      "U+6587",
+      "U+65C5",
+      "U+65E5",
+      "U+666F",
+      "U+6708",
+      "U+672C",
+      "U+6797",
+      "U+6A0A",
+      "U+6B69",
+      "U+6B78",
+      "U+6C42",
+      "U+6C60",
+      "U+6DF5",
+      "U+7121",
+      "U+7136",
+      "U+7530",
+      "U+767E",
+      "U+79CB",
+      "U+7C60",
+      "U+7DB2",
+      "U+7E41",
+      "U+7F88",
+      "U+81EA",
+      "U+820A",
+      "U+821F",
+      "U+8272",
+      "U+8349",
+      "U+8352",
+      "U+843D",
+      "U+884C",
+      "U+88E1",
+      "U+8A9E",
+      "U+8AA4",
+      "U+8D8A",
+      "U+8FD4",
+      "U+904E",
+      "U+9053",
+      "U+9069",
+      "U+91CE",
+      "U+958B",
+      "U+969B",
+      "U+97FB",
+      "U+98A8",
+      "U+99AC",
+      "U+9AD4",
+      "U+9B5A",
+      "U+9CE5"
+    ]
+  },
+  {
+    "class": "Hiragana",
+    "group": "Japanese",
+    "fonts": [
+      "Noto Sans TC"
+    ],
+    "font": {
+      "name": "NotoSansJP",
+      "extension": ".otf",
+      "styles": [
+        "regular",
+        "bold"
+      ],
+      "dir": "NotoSansJP"
+    },
+    "ranges": [
+      "U+3048",
+      "U+304B",
+      "U+304D",
+      "U+304F",
+      "U+3051",
+      "U+3057",
+      "U+3064",
+      "U+3066",
+      "U+306A-U+306B",
+      "U+306E-U+306F",
+      "U+3075",
+      "U+3079",
+      "U+307F",
+      "U+3081-U+3082",
+      "U+3086",
+      "U+308A-U+308C",
+      "U+3092"
+    ]
+  },
+  {
+    "class": "CJKSymbolsAndPunctuation",
+    "group": "Chinese",
+    "fonts": [
+      "Noto Sans PhagsPa"
+    ],
+    "font": {
+      "name": "NotoSansJP",
+      "extension": ".otf",
+      "styles": [
+        "regular",
+        "bold"
+      ],
+      "dir": "NotoSansJP"
+    },
+    "ranges": [
+      "U+3001-U+3002"
+    ]
+  },
+  {
+    "class": "HangulSyllables",
+    "group": "Korean",
+    "fonts": [
+      "Noto Sans KR",
+      "Noto Sans TC"
+    ],
+    "font": {
+      "name": "NotoSansKR",
+      "extension": ".otf",
+      "styles": [
+        "regular",
+        "bold"
+      ],
+      "dir": "NotoSansKR"
+    },
+    "ranges": [
+      "U+AC00",
+      "U+ACE0",
+      "U+ACE8",
+      "U+AD6D",
+      "U+B10B",
+      "U+B2E8",
+      "U+B3C4",
+      "U+B418",
+      "U+B77C",
+      "U+B7B4",
+      "U+B9AC",
+      "U+B9C8",
+      "U+BAB8",
+      "U+BC31",
+      "U+BC88",
+      "U+BCC0",
+      "U+C11C",
+      "U+C2E4",
+      "U+C2EC",
+      "U+C54A",
+      "U+C57C",
+      "U+C5B4",
+      "U+C5C6",
+      "U+C5D0",
+      "U+C624",
+      "U+C73C",
+      "U+C74C",
+      "U+C774",
+      "U+C77C",
+      "U+C784",
+      "U+C788",
+      "U+C8FD",
+      "U+C904",
+      "U+C9C4",
+      "U+CC0C",
+      "U+CCD0",
+      "U+CE58",
+      "U+D1A0",
+      "U+D3B8",
+      "U+D55C",
+      "U+D5A5"
+    ]
+  },
+  {
+    "class": "Syriac",
+    "group": "SyriacFull",
+    "fonts": [
+      "Noto Sans Syriac"
+    ],
+    "font": {
+      "name": "NotoSansSyriac",
+      "extension": ".otf",
+      "styles": [
+        "regular"
+      ],
+      "dir": "NotoSansSyriac"
+    },
+    "ranges": [
+      "U+0710",
+      "U+0712",
+      "U+0715",
+      "U+0717-U+0718",
+      "U+071A-U+071B",
+      "U+071D",
+      "U+071F-U+0723",
+      "U+0725-U+0726",
+      "U+0728",
+      "U+072A-U+072C"
+    ]
+  },
+  {
+    "class": "LatinExtendedA",
+    "group": "Latin",
+    "fonts": [
+      "Noto Sans Glagolitic"
+    ],
+    "font": {
+      "name": "NotoSansSC",
+      "extension": ".otf",
+      "styles": [
+        "regular",
+        "bold"
+      ],
+      "dir": "NotoSansSC"
+    },
+    "ranges": [
+      "U+0101",
+      "U+0131",
+      "U+015E"
+    ]
+  },
+  {
+    "class": "CombiningDiacriticalMarks",
+    "group": "Diacritics",
+    "fonts": [
+      "Noto Sans Glagolitic"
+    ],
+    "font": {
+      "name": "NotoSansMongolian",
+      "extension": ".otf",
+      "styles": [
+        "regular"
+      ],
+      "dir": "NotoSansMongolian"
+    },
+    "ranges": [
+      "U+0308"
+    ]
+  },
+  {
+    "class": "Arabic",
+    "group": "Arabics",
+    "fonts": [
+      "Noto Sans Arabic",
+      "Noto Sans NKo Unjoined",
+      "Noto Sans Syriac",
+      "Noto Sans TC"
+    ],
+    "font": {
+      "name": "NotoKufiArabic",
+      "extension": ".otf",
+      "styles": [
+        "bold",
+        "regular"
+      ],
+      "dir": "NotoKufiArabic"
+    },
+    "ranges": [
+      "U+060C",
+      "U+0622-U+0623",
+      "U+0626-U+062A",
+      "U+062C-U+0637",
+      "U+0639",
+      "U+0641-U+064A",
+      "U+064D-U+0652",
+      "U+0679",
+      "U+0688",
+      "U+06A9",
+      "U+06BA",
+      "U+06BE",
+      "U+06C1",
+      "U+06CC",
+      "U+06D2"
+    ]
+  },
+  {
+    "class": "GreekAndCoptic",
+    "group": "Greek",
+    "fonts": [
+      "Noto Sans",
+      "Noto Sans Glagolitic"
+    ],
+    "font": {
+      "name": "NotoSerif",
+      "extension": ".otf",
+      "styles": [
+        "bold",
+        "bolditalic",
+        "italic",
+        "regular"
+      ],
+      "dir": "NotoSerif"
+    },
+    "ranges": [
+      "U+0386",
+      "U+039C",
+      "U+03A4",
+      "U+03AC-U+03AF",
+      "U+03B1",
+      "U+03B3-U+03BD",
+      "U+03BF-U+03C9",
+      "U+03CC-U+03CE"
+    ]
+  },
+  {
+    "class": "LatinSupplement",
+    "group": "Latin",
+    "fonts": [
+      "Noto Sans Glagolitic"
+    ],
+    "font": {
+      "name": "NotoSansMongolian",
+      "extension": ".otf",
+      "styles": [
+        "regular"
+      ],
+      "dir": "NotoSansMongolian"
+    },
+    "ranges": [
+      "U+00B7"
+    ]
+  },
+  {
+    "class": "HalfwidthAndFullwidthForms",
+    "group": "Japanese",
+    "fonts": [
+      "Noto Sans TC"
+    ],
+    "font": {
+      "name": "NotoSansJP",
+      "extension": ".otf",
+      "styles": [
+        "regular",
+        "bold"
+      ],
+      "dir": "NotoSansJP"
+    },
+    "ranges": [
+      "U+FF0C"
+    ]
+  },
+  {
+    "class": "DevanagariPreMarks",
+    "group": "Devanagari",
+    "fonts": [
+      "Noto Sans Devanagari",
+      "Noto Sans TC"
+    ],
+    "font": {
+      "name": "NotoSans",
+      "extension": ".otf",
+      "styles": [
+        "bold",
+        "bolditalic",
+        "italic",
+        "regular"
+      ],
+      "dir": "NotoSans"
+    },
+    "ranges": [
+      "U+0902-U+0903",
+      "U+0905",
+      "U+0915",
+      "U+0917",
+      "U+091A",
+      "U+091C",
+      "U+0923-U+0924",
+      "U+0926",
+      "U+0928",
+      "U+092A",
+      "U+092D-U+0930",
+      "U+0935-U+0936",
+      "U+0939",
+      "U+093D-U+0942",
+      "U+0947",
+      "U+094B",
+      "U+094D"
+    ]
+  },
+  {
+    "class": "DevanagariDanDa",
+    "group": "Devanagari",
+    "fonts": [
+      "Noto Sans Devanagari"
+    ],
+    "font": {
+      "name": "NotoSans",
+      "extension": ".otf",
+      "styles": [
+        "bold",
+        "bolditalic",
+        "italic",
+        "regular"
+      ],
+      "dir": "NotoSans"
+    },
+    "ranges": [
+      "U+0964-U+0965"
+    ]
+  },
+  {
+    "class": "Sinhala",
+    "group": "Sinhala",
+    "fonts": [
+      "Noto Sans Sinhala"
+    ],
+    "font": {
+      "name": "NotoSansSinhala",
+      "extension": ".otf",
+      "styles": [
+        "bold",
+        "regular"
+      ],
+      "dir": "NotoSansSinhala"
+    },
+    "ranges": [
+      "U+0D82",
+      "U+0D91",
+      "U+0D9A",
+      "U+0DAC-U+0DAD",
+      "U+0DAF",
+      "U+0DB1",
+      "U+0DB3-U+0DB4",
+      "U+0DB8",
+      "U+0DBA-U+0DBB",
+      "U+0DBD",
+      "U+0DC0",
+      "U+0DC3-U+0DC5",
+      "U+0DCA",
+      "U+0DCF-U+0DD0",
+      "U+0DD2-U+0DD4",
+      "U+0DD9-U+0DDA"
+    ]
+  },
+  {
+    "class": "Khmer",
+    "group": "Khmer",
+    "fonts": [
+      "Noto Sans Khmer",
+      "Noto Sans TC"
+    ],
+    "font": {
+      "name": "NotoSansKhmer",
+      "extension": ".otf",
+      "styles": [
+        "bold",
+        "regular"
+      ],
+      "dir": "NotoSansKhmer"
+    },
+    "ranges": [
+      "U+1780-U+1781",
+      "U+1784-U+1786",
+      "U+1788",
+      "U+178A",
+      "U+178E-U+1791",
+      "U+1793-U+179C",
+      "U+179F",
+      "U+17A2",
+      "U+17B6-U+17B9",
+      "U+17BC",
+      "U+17BE",
+      "U+17C1-U+17C4",
+      "U+17C6-U+17C7",
+      "U+17C9",
+      "U+17CB",
+      "U+17D2",
+      "U+17D4"
+    ]
+  },
+  {
+    "class": "Telugu",
+    "group": "Telugu",
+    "fonts": [
+      "Noto Sans Telugu"
+    ],
+    "font": {
+      "name": "NotoSansTeluguUI",
+      "extension": ".otf",
+      "styles": [
+        "bold",
+        "regular"
+      ],
+      "dir": "NotoSansTelugu"
+    },
+    "ranges": [
+      "U+0C02",
+      "U+0C15",
+      "U+0C17",
+      "U+0C1A",
+      "U+0C1F",
+      "U+0C21",
+      "U+0C24-U+0C28",
+      "U+0C2A",
+      "U+0C2D-U+0C30",
+      "U+0C32",
+      "U+0C35-U+0C39",
+      "U+0C3E-U+0C41",
+      "U+0C43",
+      "U+0C46-U+0C47",
+      "U+0C4A-U+0C4B",
+      "U+0C4D"
+    ]
+  },
+  {
+    "class": "Georgian",
+    "group": "GeorgianFull",
+    "fonts": [
+      "Noto Sans Georgian",
+      "Noto Sans Mongolian"
+    ],
+    "font": {
+      "name": "NotoSansGeorgian",
+      "extension": ".otf",
+      "styles": [
+        "bold",
+        "regular"
+      ],
+      "dir": "NotoSansGeorgian"
+    },
+    "ranges": [
+      "U+10D0-U+10D5",
+      "U+10D7-U+10DD",
+      "U+10E0-U+10E9",
+      "U+10EB-U+10EC",
+      "U+10EE",
+      "U+10F0"
+    ]
+  },
+  {
+    "class": "Armenian",
+    "group": "Armenian",
+    "fonts": [
+      "Noto Sans Armenian",
+      "Noto Sans Glagolitic",
+      "Noto Sans TC"
+    ],
+    "font": {
+      "name": "NotoSansArmenian",
+      "extension": ".otf",
+      "styles": [
+        "bold",
+        "regular"
+      ],
+      "dir": "NotoSansArmenian"
+    },
+    "ranges": [
+      "U+0534",
+      "U+0540",
+      "U+055D",
+      "U+0561",
+      "U+0563-U+0570",
+      "U+0572",
+      "U+0574-U+057A",
+      "U+057D-U+0582",
+      "U+0584",
+      "U+0589"
+    ]
+  },
+  {
+    "class": "Ethiopic",
+    "group": "EthiopicFull",
+    "fonts": [
+      "Noto Sans Ethiopic",
+      "Noto Sans TC"
+    ],
+    "font": {
+      "name": "NotoSansEthiopic",
+      "extension": ".otf",
+      "styles": [
+        "bold",
+        "regular"
+      ],
+      "dir": "NotoSansEthiopic"
+    },
+    "ranges": [
+      "U+1205",
+      "U+1208",
+      "U+120B",
+      "U+120D",
+      "U+1214-U+1215",
+      "U+1218-U+1219",
+      "U+121B",
+      "U+121D",
+      "U+1225",
+      "U+1228",
+      "U+122A",
+      "U+122D-U+122E",
+      "U+1230",
+      "U+1235",
+      "U+1243",
+      "U+124B",
+      "U+1260",
+      "U+1263",
+      "U+1265",
+      "U+1270",
+      "U+1273",
+      "U+1275",
+      "U+127D",
+      "U+1293",
+      "U+1295",
+      "U+129B",
+      "U+12A0",
+      "U+12A2",
+      "U+12A5",
+      "U+12A8",
+      "U+12AB",
+      "U+12AD",
+      "U+12C8",
+      "U+12CA",
+      "U+12CD-U+12CE",
+      "U+12D5",
+      "U+12D8-U+12D9",
+      "U+12DD",
+      "U+12E8",
+      "U+12EB",
+      "U+12ED-U+12EE",
+      "U+12F5-U+12F6",
+      "U+1300",
+      "U+1305",
+      "U+1308",
+      "U+130D",
+      "U+1320",
+      "U+1325",
+      "U+1335",
+      "U+133D",
+      "U+1362-U+1363"
+    ]
+  },
+  {
+    "class": "Myanmar",
+    "group": "MyanmarFull",
+    "fonts": [
+      "Noto Sans Myanmar"
+    ],
+    "font": {
+      "name": "NotoSansMyanmar",
+      "extension": ".otf",
+      "styles": [
+        "bold",
+        "regular"
+      ],
+      "dir": "NotoSansMyanmar"
+    },
+    "ranges": [
+      "U+1000-U+1002",
+      "U+1004-U+1007",
+      "U+100A",
+      "U+1010-U+1012",
+      "U+1014-U+101F",
+      "U+1021",
+      "U+102B-U+1032",
+      "U+1036-U+1038",
+      "U+103A-U+103E",
+      "U+104A-U+104B"
+    ]
+  }
+]

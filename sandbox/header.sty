@@ -1,0 +1,147 @@
+\usepackage[Arabics,Armenian,Chinese,Devanagari,Diacritics,EthiopicFull,GeorgianFull,Greek,Japanese,Khmer,Korean,Latin,MyanmarFull,Sinhala,SyriacFull,Telugu]{ucharclasses}
+\providecommand{\setTransitionsForEgyptianHieroglyphsFull}[2]{}
+
+% Déclarations des polices pour chaque script détecté
+\newfontfamily\arabicsfont[
+  Path = fonts/,
+  Extension = .otf,
+  UprightFont = NotoKufiArabic-Regular,
+  BoldFont   = NotoKufiArabic-Bold,
+  Scale      = MatchLowercase
+]{ NotoKufiArabic }
+
+\newfontfamily\armenianfont[
+  Path = fonts/,
+  Extension = .otf,
+  UprightFont = NotoSansArmenian-Regular,
+  BoldFont   = NotoSansArmenian-Bold,
+  Scale      = MatchLowercase
+]{ NotoSansArmenian }
+
+\newfontfamily\chinesefont[
+  Path = fonts/,
+  Extension = .otf,
+  UprightFont = NotoSansHK-Regular,
+  BoldFont   = NotoSansHK-Bold,
+  Scale      = MatchLowercase
+]{ NotoSansHK }
+
+\newfontfamily\devanagarifont[
+  Path = fonts/,
+  Extension = .otf,
+  UprightFont = NotoSans-Regular,
+  BoldFont   = NotoSans-Bold,
+  Scale      = MatchLowercase
+]{ NotoSans }
+
+\newfontfamily\diacriticsfont[
+  Path = fonts/,
+  Extension = .otf,
+  UprightFont = NotoSansMongolian-Regular,
+  Scale      = MatchLowercase
+]{ NotoSansMongolian }
+
+\newfontfamily\ethiopicFullfont[
+  Path = fonts/,
+  Extension = .otf,
+  UprightFont = NotoSansEthiopic-Regular,
+  BoldFont   = NotoSansEthiopic-Bold,
+  Scale      = MatchLowercase
+]{ NotoSansEthiopic }
+
+\newfontfamily\georgianFullfont[
+  Path = fonts/,
+  Extension = .otf,
+  UprightFont = NotoSansGeorgian-Regular,
+  BoldFont   = NotoSansGeorgian-Bold,
+  Scale      = MatchLowercase
+]{ NotoSansGeorgian }
+
+\newfontfamily\greekfont[
+  Path = fonts/,
+  Extension = .otf,
+  UprightFont = NotoSerif-Regular,
+  BoldFont   = NotoSerif-Bold,
+  Scale      = MatchLowercase
+]{ NotoSerif }
+
+\newfontfamily\japanesefont[
+  Path = fonts/,
+  Extension = .otf,
+  UprightFont = NotoSansJP-Regular,
+  BoldFont   = NotoSansJP-Bold,
+  Scale      = MatchLowercase
+]{ NotoSansJP }
+
+\newfontfamily\khmerfont[
+  Path = fonts/,
+  Extension = .otf,
+  UprightFont = NotoSansKhmer-Regular,
+  BoldFont   = NotoSansKhmer-Bold,
+  Scale      = MatchLowercase
+]{ NotoSansKhmer }
+
+\newfontfamily\koreanfont[
+  Path = fonts/,
+  Extension = .otf,
+  UprightFont = NotoSansKR-Regular,
+  BoldFont   = NotoSansKR-Bold,
+  Scale      = MatchLowercase
+]{ NotoSansKR }
+
+\newfontfamily\latinfont[
+  Path = fonts/,
+  Extension = .otf,
+  UprightFont = NotoSansMongolian-Regular,
+  Scale      = MatchLowercase
+]{ NotoSansMongolian }
+
+\newfontfamily\myanmarFullfont[
+  Path = fonts/,
+  Extension = .otf,
+  UprightFont = NotoSansMyanmar-Regular,
+  BoldFont   = NotoSansMyanmar-Bold,
+  Scale      = MatchLowercase
+]{ NotoSansMyanmar }
+
+\newfontfamily\sinhalafont[
+  Path = fonts/,
+  Extension = .otf,
+  UprightFont = NotoSansSinhala-Regular,
+  BoldFont   = NotoSansSinhala-Bold,
+  Scale      = MatchLowercase
+]{ NotoSansSinhala }
+
+\newfontfamily\syriacFullfont[
+  Path = fonts/,
+  Extension = .otf,
+  UprightFont = NotoSansSyriac-Regular,
+  Scale      = MatchLowercase
+]{ NotoSansSyriac }
+
+\newfontfamily\telugufont[
+  Path = fonts/,
+  Extension = .otf,
+  UprightFont = NotoSansTeluguUI-Regular,
+  BoldFont   = NotoSansTeluguUI-Bold,
+  Scale      = MatchLowercase
+]{ NotoSansTeluguUI }
+
+
+% Transitions automatiques vers chaque script
+\setTransitionsForArabics{\arabicsfont}{\rmfamily}%
+\setTransitionsForArmenian{\armenianfont}{\rmfamily}%
+\setTransitionsForChinese{\chinesefont}{\rmfamily}%
+\setTransitionsForDevanagari{\devanagarifont}{\rmfamily}%
+\setTransitionsForDiacritics{\diacriticsfont}{\rmfamily}%
+\setTransitionsForEthiopicFull{\ethiopicFullfont}{\rmfamily}%
+\setTransitionsForGeorgianFull{\georgianFullfont}{\rmfamily}%
+\setTransitionsForGreek{\greekfont}{\rmfamily}%
+\setTransitionsForJapanese{\japanesefont}{\rmfamily}%
+\setTransitionsForKhmer{\khmerfont}{\rmfamily}%
+\setTransitionsForKorean{\koreanfont}{\rmfamily}%
+\setTransitionsForLatin{\rmfamily}{}%
+\setTransitionsForMyanmarFull{\myanmarFullfont}{\rmfamily}%
+\setTransitionsForSinhala{\sinhalafont}{\rmfamily}%
+\setTransitionsForSyriacFull{\syriacFullfont}{\rmfamily}%
+\setTransitionsForTelugu{\telugufont}{\rmfamily}%
