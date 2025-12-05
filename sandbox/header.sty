@@ -1,4 +1,4 @@
-\usepackage[Arabics,Armenian,Chinese,Devanagari,Diacritics,EthiopicFull,GeorgianFull,Greek,Japanese,Khmer,Korean,Latin,MyanmarFull,Sinhala,SyriacFull,Telugu]{ucharclasses}
+\usepackage[Arabics,Armenian,Bengali,Chinese,Cyrillics,Devanagari,Diacritics,EthiopicFull,GeorgianFull,Greek,Hebrew,Japanese,Khmer,Korean,Latin,MyanmarFull,Sinhala,SyriacFull,Tamil,Telugu,Thai,Tibetan]{ucharclasses}
 \providecommand{\setTransitionsForEgyptianHieroglyphsFull}[2]{}
 
 % Déclarations des polices pour chaque script détecté
@@ -18,6 +18,14 @@
   Scale      = MatchLowercase
 ]{ NotoSansArmenian }
 
+\newfontfamily\bengalifont[
+  Path = fonts/,
+  Extension = .otf,
+  UprightFont = NotoSansBengali-Regular,
+  BoldFont   = NotoSansBengali-Bold,
+  Scale      = MatchLowercase
+]{ NotoSansBengali }
+
 \newfontfamily\chinesefont[
   Path = fonts/,
   Extension = .otf,
@@ -25,6 +33,14 @@
   BoldFont   = NotoSansHK-Bold,
   Scale      = MatchLowercase
 ]{ NotoSansHK }
+
+\newfontfamily\cyrillicsfont[
+  Path = fonts/,
+  Extension = .otf,
+  UprightFont = NotoSans-Regular,
+  BoldFont   = NotoSans-Bold,
+  Scale      = MatchLowercase
+]{ NotoSans }
 
 \newfontfamily\devanagarifont[
   Path = fonts/,
@@ -64,6 +80,14 @@
   BoldFont   = NotoSerif-Bold,
   Scale      = MatchLowercase
 ]{ NotoSerif }
+
+\newfontfamily\hebrewfont[
+  Path = fonts/,
+  Extension = .otf,
+  UprightFont = NotoRashiHebrew-Regular,
+  BoldFont   = NotoRashiHebrew-Bold,
+  Scale      = MatchLowercase
+]{ NotoRashiHebrew }
 
 \newfontfamily\japanesefont[
   Path = fonts/,
@@ -119,6 +143,14 @@
   Scale      = MatchLowercase
 ]{ NotoSansSyriac }
 
+\newfontfamily\tamilfont[
+  Path = fonts/,
+  Extension = .otf,
+  UprightFont = NotoSansTamil-Regular,
+  BoldFont   = NotoSansTamil-Bold,
+  Scale      = MatchLowercase
+]{ NotoSansTamil }
+
 \newfontfamily\telugufont[
   Path = fonts/,
   Extension = .otf,
@@ -127,21 +159,43 @@
   Scale      = MatchLowercase
 ]{ NotoSansTeluguUI }
 
+\newfontfamily\thaifont[
+  Path = fonts/,
+  Extension = .otf,
+  UprightFont = NotoSansThai-Regular,
+  BoldFont   = NotoSansThai-Bold,
+  Scale      = MatchLowercase
+]{ NotoSansThai }
+
+\newfontfamily\tibetanfont[
+  Path = fonts/,
+  Extension = .otf,
+  UprightFont = NotoSerifTibetan-Regular,
+  BoldFont   = NotoSerifTibetan-Bold,
+  Scale      = MatchLowercase
+]{ NotoSerifTibetan }
+
 
 % Transitions automatiques vers chaque script
 \setTransitionsForArabics{\arabicsfont}{\rmfamily}%
-\setTransitionsForArmenian{\armenianfont}{\rmfamily}%
+\setTransitionsFor{Armenian}{\armenianfont}{\rmfamily}%
+\setTransitionsFor{Bengali}{\bengalifont}{\rmfamily}%
 \setTransitionsForChinese{\chinesefont}{\rmfamily}%
+\setTransitionsForCyrillics{\cyrillicsfont}{\rmfamily}%
 \setTransitionsForDevanagari{\devanagarifont}{\rmfamily}%
 \setTransitionsForDiacritics{\diacriticsfont}{\rmfamily}%
 \setTransitionsForEthiopicFull{\ethiopicFullfont}{\rmfamily}%
 \setTransitionsForGeorgianFull{\georgianFullfont}{\rmfamily}%
 \setTransitionsForGreek{\greekfont}{\rmfamily}%
+\setTransitionsFor{Hebrew}{\hebrewfont}{\rmfamily}%
 \setTransitionsForJapanese{\japanesefont}{\rmfamily}%
-\setTransitionsForKhmer{\khmerfont}{\rmfamily}%
+\setTransitionsFor{Khmer}{\khmerfont}{\rmfamily}%
 \setTransitionsForKorean{\koreanfont}{\rmfamily}%
 \setTransitionsForLatin{\rmfamily}{}%
 \setTransitionsForMyanmarFull{\myanmarFullfont}{\rmfamily}%
-\setTransitionsForSinhala{\sinhalafont}{\rmfamily}%
+\setTransitionsFor{Sinhala}{\sinhalafont}{\rmfamily}%
 \setTransitionsForSyriacFull{\syriacFullfont}{\rmfamily}%
-\setTransitionsForTelugu{\telugufont}{\rmfamily}%
+\setTransitionsFor{Tamil}{\tamilfont}{\rmfamily}%
+\setTransitionsFor{Telugu}{\telugufont}{\rmfamily}%
+\setTransitionsFor{Thai}{\thaifont}{\rmfamily}%
+\setTransitionsFor{Tibetan}{\tibetanfont}{\rmfamily}%

@@ -21,6 +21,35 @@ if VENDOR_DIR.exists():
 from jinja2 import Environment, FileSystemLoader  # type: ignore
 
 FONTS_DIR = HERE / "fonts"
+# Groups that have helper macros \setTransitionsFor<Group> defined by ucharclasses.sty.
+GROUP_TRANSITION_MACROS = {
+    "Arabics",
+    "CanadianSyllabics",
+    "CherokeeFull",
+    "Chinese",
+    "CJK",
+    "Cyrillics",
+    "Devanagari",
+    "Diacritics",
+    "EgyptianHieroglyphsFull",
+    "EthiopicFull",
+    "GeorgianFull",
+    "Greek",
+    "Japanese",
+    "Korean",
+    "Latin",
+    "Mathematics",
+    "MongolianFull",
+    "MyanmarFull",
+    "Phonetics",
+    "Punctuation",
+    "SundaneseFull",
+    "Symbols",
+    "SyriacFull",
+    "VedicMarks",
+    "Yi",
+    "Other",
+}
 
 
 def sanitize_command(name: str) -> str:
@@ -90,8 +119,10 @@ def main() -> None:
         )
         if group == "Latin":
             transitions.append("\\setTransitionsForLatin{\\rmfamily}{}%")
-        else:
+        elif group in GROUP_TRANSITION_MACROS:
             transitions.append(f"\\setTransitionsFor{group}{{\\{cmd}}}{{\\rmfamily}}%")
+        else:
+            transitions.append(f"\\setTransitionsFor{{{group}}}{{\\{cmd}}}{{\\rmfamily}}%")
 
     package_options = ",".join(options)
 

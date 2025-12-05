@@ -4,7 +4,7 @@
     "group": "Latin",
     "fonts": [
       "Noto Emoji",
-      "Noto Sans Glagolitic"
+      "Noto Sans Devanagari"
     ],
     "font": {
       "name": "NotoSansMongolian",
@@ -18,14 +18,12 @@
       "U+0020",
       "U+0027-U+0029",
       "U+002C-U+002E",
-      "U+0030-U+0038",
-      "U+003A-U+003B",
+      "U+0030-U+003B",
       "U+0041-U+0050",
       "U+0052-U+0055",
       "U+0058-U+0059",
       "U+005B-U+005D",
-      "U+0061-U+0079",
-      "U+007B",
+      "U+0061-U+007B",
       "U+007D"
     ]
   },
@@ -33,7 +31,8 @@
     "class": "CJKUnifiedIdeographs",
     "group": "Chinese",
     "fonts": [
-      "Noto Sans TC"
+      "Noto Sans JP",
+      "Noto Sans Mongolian"
     ],
     "font": {
       "name": "NotoSansHK",
@@ -133,7 +132,7 @@
     "class": "Hiragana",
     "group": "Japanese",
     "fonts": [
-      "Noto Sans TC"
+      "Noto Sans JP"
     ],
     "font": {
       "name": "NotoSansJP",
@@ -168,7 +167,8 @@
     "class": "CJKSymbolsAndPunctuation",
     "group": "Chinese",
     "fonts": [
-      "Noto Sans PhagsPa"
+      "Noto Sans JP",
+      "Noto Sans Mongolian"
     ],
     "font": {
       "name": "NotoSansJP",
@@ -188,6 +188,7 @@
     "group": "Korean",
     "fonts": [
       "Noto Sans KR",
+      "Noto Sans Mongolian",
       "Noto Sans TC"
     ],
     "font": {
@@ -274,7 +275,7 @@
     "class": "LatinExtendedA",
     "group": "Latin",
     "fonts": [
-      "Noto Sans Glagolitic"
+      "Noto Sans Devanagari"
     ],
     "font": {
       "name": "NotoSansSC",
@@ -295,7 +296,7 @@
     "class": "CombiningDiacriticalMarks",
     "group": "Diacritics",
     "fonts": [
-      "Noto Sans Glagolitic"
+      "Noto Sans Devanagari"
     ],
     "font": {
       "name": "NotoSansMongolian",
@@ -314,9 +315,9 @@
     "group": "Arabics",
     "fonts": [
       "Noto Sans Arabic",
+      "Noto Sans Mongolian",
       "Noto Sans NKo Unjoined",
-      "Noto Sans Syriac",
-      "Noto Sans TC"
+      "Noto Sans Syriac Eastern"
     ],
     "font": {
       "name": "NotoKufiArabic",
@@ -350,7 +351,7 @@
     "group": "Greek",
     "fonts": [
       "Noto Sans",
-      "Noto Sans Glagolitic"
+      "Noto Sans Mongolian"
     ],
     "font": {
       "name": "NotoSerif",
@@ -378,7 +379,7 @@
     "class": "LatinSupplement",
     "group": "Latin",
     "fonts": [
-      "Noto Sans Glagolitic"
+      "Noto Sans Devanagari"
     ],
     "font": {
       "name": "NotoSansMongolian",
@@ -396,7 +397,7 @@
     "class": "HalfwidthAndFullwidthForms",
     "group": "Japanese",
     "fonts": [
-      "Noto Sans TC"
+      "Noto Sans JP"
     ],
     "font": {
       "name": "NotoSansJP",
@@ -416,7 +417,7 @@
     "group": "Devanagari",
     "fonts": [
       "Noto Sans Devanagari",
-      "Noto Sans TC"
+      "Noto Sans Mongolian"
     ],
     "font": {
       "name": "NotoSans",
@@ -509,7 +510,7 @@
     "group": "Khmer",
     "fonts": [
       "Noto Sans Khmer",
-      "Noto Sans TC"
+      "Noto Sans Mongolian"
     ],
     "font": {
       "name": "NotoSansKhmer",
@@ -578,8 +579,7 @@
     "class": "Georgian",
     "group": "GeorgianFull",
     "fonts": [
-      "Noto Sans Georgian",
-      "Noto Sans Mongolian"
+      "Noto Sans Georgian"
     ],
     "font": {
       "name": "NotoSansGeorgian",
@@ -605,7 +605,7 @@
     "fonts": [
       "Noto Sans Armenian",
       "Noto Sans Glagolitic",
-      "Noto Sans TC"
+      "Noto Sans Mongolian"
     ],
     "font": {
       "name": "NotoSansArmenian",
@@ -630,11 +630,217 @@
     ]
   },
   {
+    "class": "Cyrillic",
+    "group": "Cyrillics",
+    "fonts": [
+      "Noto Sans JP"
+    ],
+    "font": {
+      "name": "NotoSans",
+      "extension": ".otf",
+      "styles": [
+        "bold",
+        "bolditalic",
+        "italic",
+        "regular"
+      ],
+      "dir": "NotoSans"
+    },
+    "ranges": [
+      "U+041C",
+      "U+0420",
+      "U+0430-U+0443",
+      "U+0445",
+      "U+0447-U+0448",
+      "U+044B-U+044C",
+      "U+044F"
+    ]
+  },
+  {
+    "class": "Hebrew",
+    "group": "Hebrew",
+    "fonts": [
+      "Noto Sans Hebrew"
+    ],
+    "font": {
+      "name": "NotoRashiHebrew",
+      "extension": ".otf",
+      "styles": [
+        "bold",
+        "regular"
+      ],
+      "dir": "NotoRashiHebrew"
+    },
+    "ranges": [
+      "U+05B0",
+      "U+05B2",
+      "U+05B4-U+05B9",
+      "U+05BC",
+      "U+05C1-U+05C2",
+      "U+05D0-U+05D2",
+      "U+05D4-U+05D5",
+      "U+05D7",
+      "U+05D9",
+      "U+05DB-U+05DE",
+      "U+05E0-U+05E4",
+      "U+05E7-U+05EA"
+    ]
+  },
+  {
+    "class": "Thai",
+    "group": "Thai",
+    "fonts": [
+      "Noto Sans Thai"
+    ],
+    "font": {
+      "name": "NotoSansThai",
+      "extension": ".otf",
+      "styles": [
+        "bold",
+        "regular"
+      ],
+      "dir": "NotoSansThai"
+    },
+    "ranges": [
+      "U+0E01-U+0E02",
+      "U+0E04",
+      "U+0E06-U+0E08",
+      "U+0E0A",
+      "U+0E14",
+      "U+0E16-U+0E17",
+      "U+0E19-U+0E1A",
+      "U+0E1C",
+      "U+0E1E",
+      "U+0E21-U+0E23",
+      "U+0E25",
+      "U+0E27",
+      "U+0E2A-U+0E2B",
+      "U+0E2D",
+      "U+0E30-U+0E36",
+      "U+0E38-U+0E39",
+      "U+0E40-U+0E44",
+      "U+0E48-U+0E49"
+    ]
+  },
+  {
+    "class": "Bengali",
+    "group": "Bengali",
+    "fonts": [
+      "Noto Sans Bengali"
+    ],
+    "font": {
+      "name": "NotoSansBengali",
+      "extension": ".otf",
+      "styles": [
+        "bold",
+        "regular"
+      ],
+      "dir": "NotoSansBengali"
+    },
+    "ranges": [
+      "U+0982",
+      "U+0986-U+0987",
+      "U+098F",
+      "U+0995-U+0997",
+      "U+099B",
+      "U+09A0",
+      "U+09A3",
+      "U+09A6",
+      "U+09A8",
+      "U+09AA",
+      "U+09AC-U+09B0",
+      "U+09B2",
+      "U+09B6-U+09B9",
+      "U+09BC",
+      "U+09BE-U+09C1",
+      "U+09C3",
+      "U+09C7",
+      "U+09CB",
+      "U+09CD"
+    ]
+  },
+  {
+    "class": "Tamil",
+    "group": "Tamil",
+    "fonts": [
+      "Noto Sans Grantha",
+      "Noto Sans Tamil"
+    ],
+    "font": {
+      "name": "NotoSansTamil",
+      "extension": ".otf",
+      "styles": [
+        "bold",
+        "regular"
+      ],
+      "dir": "NotoSansTamil"
+    },
+    "ranges": [
+      "U+0B87",
+      "U+0B95",
+      "U+0B9A",
+      "U+0B9E-U+0B9F",
+      "U+0BA3-U+0BA4",
+      "U+0BA8-U+0BAA",
+      "U+0BAE",
+      "U+0BB0-U+0BB2",
+      "U+0BB4-U+0BB5",
+      "U+0BBE-U+0BBF",
+      "U+0BC1",
+      "U+0BC6",
+      "U+0BC8",
+      "U+0BCA",
+      "U+0BCD"
+    ]
+  },
+  {
+    "class": "Tibetan",
+    "group": "Tibetan",
+    "fonts": [
+      "Noto Serif Tibetan"
+    ],
+    "font": {
+      "name": "NotoSerifTibetan",
+      "extension": ".otf",
+      "styles": [
+        "bold",
+        "regular"
+      ],
+      "dir": "NotoSerifTibetan"
+    },
+    "ranges": [
+      "U+0F0B",
+      "U+0F0D",
+      "U+0F40-U+0F42",
+      "U+0F44",
+      "U+0F46",
+      "U+0F49",
+      "U+0F51",
+      "U+0F53-U+0F54",
+      "U+0F56",
+      "U+0F58",
+      "U+0F5A",
+      "U+0F5E",
+      "U+0F60-U+0F63",
+      "U+0F66",
+      "U+0F72",
+      "U+0F74",
+      "U+0F7A",
+      "U+0F7C",
+      "U+0F90",
+      "U+0F92",
+      "U+0F99",
+      "U+0FA3",
+      "U+0FA8",
+      "U+0FB1-U+0FB3"
+    ]
+  },
+  {
     "class": "Ethiopic",
     "group": "EthiopicFull",
     "fonts": [
       "Noto Sans Ethiopic",
-      "Noto Sans TC"
+      "Noto Sans Mongolian"
     ],
     "font": {
       "name": "NotoSansEthiopic",
@@ -703,6 +909,7 @@
     "class": "Myanmar",
     "group": "MyanmarFull",
     "fonts": [
+      "Noto Sans Mongolian",
       "Noto Sans Myanmar"
     ],
     "font": {
