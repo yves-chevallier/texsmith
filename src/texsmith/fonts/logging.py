@@ -5,6 +5,7 @@ from __future__ import annotations
 from collections.abc import Iterator
 from contextlib import contextmanager
 from dataclasses import dataclass
+from typing import Any
 
 import typer
 
@@ -30,7 +31,16 @@ class FontPipelineLogger:
     def __post_init__(self) -> None:
         self._state = _resolve_state()
 
-    def info(self, message: str) -> None:
+    def _render_message(self, message: str, args: tuple[Any, ...]) -> str:
+        if args:
+            try:
+                message = message % args
+            except Exception:
+                message = " ".join([message, *(str(arg) for arg in args)])
+        return message
+
+    def info(self, message: str, *args: Any) -> None:
+        message = self._render_message(message, args)
         if self._state is not None:
             try:
                 console = self._state.console
@@ -41,7 +51,8 @@ class FontPipelineLogger:
                 return
         typer.echo(message)
 
-    def warning(self, message: str) -> None:
+    def warning(self, message: str, *args: Any) -> None:
+        message = self._render_message(message, args)
         if self._state is not None:
             try:
                 from texsmith.ui.cli.state import emit_warning
@@ -53,9 +64,9 @@ class FontPipelineLogger:
                 return
         typer.secho(message, fg="yellow")
 
-    def notice(self, message: str) -> None:
+    def notice(self, message: str, *args: Any) -> None:
         """Alias for info to mirror the CLI vocabulary."""
-        self.info(message)
+        self.info(message, *args)
 
     @contextmanager
     def progress(self, task: str, total: int | None = None) -> Iterator[callable]:

@@ -48,10 +48,14 @@ class FallbackManager:
     logger: FontPipelineLogger = field(default_factory=FontPipelineLogger)
 
     def _ensure_lookup(self) -> FallbackLookup:
+        repository = FallbackRepository(cache=self.cache, logger=self.logger)
+        cached = repository.load()
+        if cached is not None:
+            return FallbackLookup(cached)
         classes = generate_ucharclasses_data(cache=self.cache, logger=self.logger)
         coverage = generate_noto_metadata(cache=self.cache, logger=self.logger)
         entries = FallbackBuilder(logger=self.logger).build(classes, coverage)
-        index = FallbackRepository(cache=self.cache, logger=self.logger).load_or_build(entries)
+        index = repository.load_or_build(entries)
         return FallbackLookup(index)
 
     def scan_text(self, text: str) -> list[dict]:
