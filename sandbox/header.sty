@@ -1,6 +1,83 @@
-\usepackage[Arabics,Armenian,Bengali,Chinese,Cyrillics,Devanagari,Diacritics,EthiopicFull,GeorgianFull,Greek,Hebrew,Japanese,Khmer,Korean,Latin,MyanmarFull,Sinhala,SyriacFull,Tamil,Telugu,Thai,Tibetan]{ucharclasses}
-\providecommand{\setTransitionsForEgyptianHieroglyphsFull}[2]{}
-
+\RequirePackage{iftex}
+\ifXeTeX  \usepackage[Arabics,Armenian,Bengali,Chinese,Cyrillics,Devanagari,Diacritics,EthiopicFull,GeorgianFull,Greek,Hebrew,Japanese,Khmer,Korean,MyanmarFull,Punctuation,Sinhala,SyriacFull,Tamil,Telugu,Thai,Tibetan]{ucharclasses}
+\else\ifLuaTeX  \RequirePackage{fontspec}
+  \directlua{
+    luaotfload.add_fallback("texsmith-snippet-reg", {
+      "[fonts/NotoKufiArabic-Regular.otf]:mode=harf",
+      "[fonts/NotoSansArmenian-Regular.otf]:mode=harf",
+      "[fonts/NotoSansBengali-Regular.otf]:mode=harf",
+      "[fonts/NotoSansJP-Regular.otf]:mode=harf",
+      "[fonts/NotoSans-Regular.otf]:mode=harf",
+      "[fonts/NotoSansDevanagari-Regular.otf]:mode=harf",
+      "[fonts/NotoSansMongolian-Regular.otf]:mode=harf",
+      "[fonts/NotoSansEthiopic-Regular.otf]:mode=harf",
+      "[fonts/NotoSerifGeorgian-Regular.otf]:mode=harf",
+      "[fonts/NotoSerif-Regular.otf]:mode=harf",
+      "[fonts/NotoSerifHebrew-Regular.otf]:mode=harf",
+      "[fonts/NotoSansJP-Regular.otf]:mode=harf",
+      "[fonts/NotoSansKhmer-Regular.otf]:mode=harf",
+      "[fonts/NotoSansKR-Regular.otf]:mode=harf",
+      "[fonts/NotoSansMyanmar-Regular.otf]:mode=harf",
+      "[fonts/NotoSansMongolian-Regular.otf]:mode=harf",
+      "[fonts/NotoSansSinhala-Regular.otf]:mode=harf",
+      "[fonts/NotoSansSyriac-Regular.otf]:mode=harf",
+      "[fonts/NotoSansTamil-Regular.otf]:mode=harf",
+      "[fonts/NotoSansTeluguUI-Regular.otf]:mode=harf",
+      "[fonts/NotoSansThai-Regular.otf]:mode=harf",
+      "[fonts/NotoSerifTibetan-Regular.otf]:mode=harf",
+    })
+    luaotfload.add_fallback("texsmith-snippet-bold", {
+      "[fonts/NotoKufiArabic-Bold.otf]:mode=harf",
+      "[fonts/NotoSansArmenian-Bold.otf]:mode=harf",
+      "[fonts/NotoSansBengali-Bold.otf]:mode=harf",
+      "[fonts/NotoSansJP-Bold.otf]:mode=harf",
+      "[fonts/NotoSans-Bold.otf]:mode=harf",
+      "[fonts/NotoSansDevanagari-Bold.otf]:mode=harf",
+      "[fonts/NotoSansMongolian-Regular.otf]:mode=harf",
+      "[fonts/NotoSansEthiopic-Bold.otf]:mode=harf",
+      "[fonts/NotoSerifGeorgian-Bold.otf]:mode=harf",
+      "[fonts/NotoSerif-Bold.otf]:mode=harf",
+      "[fonts/NotoSerifHebrew-Bold.otf]:mode=harf",
+      "[fonts/NotoSansJP-Bold.otf]:mode=harf",
+      "[fonts/NotoSansKhmer-Bold.otf]:mode=harf",
+      "[fonts/NotoSansKR-Bold.otf]:mode=harf",
+      "[fonts/NotoSansMyanmar-Bold.otf]:mode=harf",
+      "[fonts/NotoSansMongolian-Regular.otf]:mode=harf",
+      "[fonts/NotoSansSinhala-Bold.otf]:mode=harf",
+      "[fonts/NotoSansSyriac-Regular.otf]:mode=harf",
+      "[fonts/NotoSansTamil-Bold.otf]:mode=harf",
+      "[fonts/NotoSansTeluguUI-Bold.otf]:mode=harf",
+      "[fonts/NotoSansThai-Bold.otf]:mode=harf",
+      "[fonts/NotoSerifTibetan-Bold.otf]:mode=harf",
+    })
+  }
+  \defaultfontfeatures{
+    Renderer           = HarfBuzz,
+    RawFeature          = {fallback=texsmith-snippet-reg},
+    BoldFeatures        = {RawFeature={fallback=texsmith-snippet-bold}},
+    ItalicFeatures      = {RawFeature={fallback=texsmith-snippet-reg}},
+    BoldItalicFeatures  = {RawFeature={fallback=texsmith-snippet-bold}},
+  }
+  \addfontfeatures{RawFeature={fallback=texsmith-snippet-reg}}
+  \ExplSyntaxOn
+  \cs_new_protected:Npn \texsmith_apply_fallback_to_family:nn #1#2
+    {
+      \prop_get:cnNTF { g__fontspec_fontinfo_ #2 _prop } { fontname } \l_tmpa_tl
+        {
+          #1[
+            RawFeature         = {fallback=texsmith-snippet-reg},
+            BoldFeatures       = {RawFeature={fallback=texsmith-snippet-bold}},
+            ItalicFeatures     = {RawFeature={fallback=texsmith-snippet-reg}},
+            BoldItalicFeatures = {RawFeature={fallback=texsmith-snippet-bold}},
+          ]{\l_tmpa_tl}
+        }{}
+    }
+  \texsmith_apply_fallback_to_family:nn \setmainfont \rmdefault
+  \texsmith_apply_fallback_to_family:nn \setsansfont \sfdefault
+  \texsmith_apply_fallback_to_family:nn \setmonofont \ttdefault
+  \ExplSyntaxOff
+\else  \PackageError{texsmith}{Unicode font support requires XeLaTeX or LuaLaTeX}{Switch engine to xelatex or lualatex.}
+\fi\fi
 % Déclarations des polices pour chaque script détecté
 \newfontfamily\arabicsfont[
   Path = fonts/,
@@ -29,10 +106,10 @@
 \newfontfamily\chinesefont[
   Path = fonts/,
   Extension = .otf,
-  UprightFont = NotoSansHK-Regular,
-  BoldFont   = NotoSansHK-Bold,
+  UprightFont = NotoSansJP-Regular,
+  BoldFont   = NotoSansJP-Bold,
   Scale      = MatchLowercase
-]{ NotoSansHK }
+]{ NotoSansJP }
 
 \newfontfamily\cyrillicsfont[
   Path = fonts/,
@@ -45,10 +122,10 @@
 \newfontfamily\devanagarifont[
   Path = fonts/,
   Extension = .otf,
-  UprightFont = NotoSans-Regular,
-  BoldFont   = NotoSans-Bold,
+  UprightFont = NotoSansDevanagari-Regular,
+  BoldFont   = NotoSansDevanagari-Bold,
   Scale      = MatchLowercase
-]{ NotoSans }
+]{ NotoSansDevanagari }
 
 \newfontfamily\diacriticsfont[
   Path = fonts/,
@@ -68,10 +145,10 @@
 \newfontfamily\georgianFullfont[
   Path = fonts/,
   Extension = .otf,
-  UprightFont = NotoSansGeorgian-Regular,
-  BoldFont   = NotoSansGeorgian-Bold,
+  UprightFont = NotoSerifGeorgian-Regular,
+  BoldFont   = NotoSerifGeorgian-Bold,
   Scale      = MatchLowercase
-]{ NotoSansGeorgian }
+]{ NotoSerifGeorgian }
 
 \newfontfamily\greekfont[
   Path = fonts/,
@@ -84,10 +161,10 @@
 \newfontfamily\hebrewfont[
   Path = fonts/,
   Extension = .otf,
-  UprightFont = NotoRashiHebrew-Regular,
-  BoldFont   = NotoRashiHebrew-Bold,
+  UprightFont = NotoSerifHebrew-Regular,
+  BoldFont   = NotoSerifHebrew-Bold,
   Scale      = MatchLowercase
-]{ NotoRashiHebrew }
+]{ NotoSerifHebrew }
 
 \newfontfamily\japanesefont[
   Path = fonts/,
@@ -113,13 +190,6 @@
   Scale      = MatchLowercase
 ]{ NotoSansKR }
 
-\newfontfamily\latinfont[
-  Path = fonts/,
-  Extension = .otf,
-  UprightFont = NotoSansMongolian-Regular,
-  Scale      = MatchLowercase
-]{ NotoSansMongolian }
-
 \newfontfamily\myanmarFullfont[
   Path = fonts/,
   Extension = .otf,
@@ -127,6 +197,13 @@
   BoldFont   = NotoSansMyanmar-Bold,
   Scale      = MatchLowercase
 ]{ NotoSansMyanmar }
+
+\newfontfamily\punctuationfont[
+  Path = fonts/,
+  Extension = .otf,
+  UprightFont = NotoSansMongolian-Regular,
+  Scale      = MatchLowercase
+]{ NotoSansMongolian }
 
 \newfontfamily\sinhalafont[
   Path = fonts/,
@@ -177,25 +254,26 @@
 
 
 % Transitions automatiques vers chaque script
-\setTransitionsForArabics{\arabicsfont}{\rmfamily}%
-\setTransitionsFor{Armenian}{\armenianfont}{\rmfamily}%
-\setTransitionsFor{Bengali}{\bengalifont}{\rmfamily}%
+\ifXeTeX\setTransitionsForArabics{\arabicsfont}{\rmfamily}%
 \setTransitionsForChinese{\chinesefont}{\rmfamily}%
 \setTransitionsForCyrillics{\cyrillicsfont}{\rmfamily}%
 \setTransitionsForDevanagari{\devanagarifont}{\rmfamily}%
-\setTransitionsForDiacritics{\diacriticsfont}{\rmfamily}%
+\setTransitionsForDiacritics{\rmfamily}{\rmfamily}%
 \setTransitionsForEthiopicFull{\ethiopicFullfont}{\rmfamily}%
 \setTransitionsForGeorgianFull{\georgianFullfont}{\rmfamily}%
 \setTransitionsForGreek{\greekfont}{\rmfamily}%
-\setTransitionsFor{Hebrew}{\hebrewfont}{\rmfamily}%
 \setTransitionsForJapanese{\japanesefont}{\rmfamily}%
-\setTransitionsFor{Khmer}{\khmerfont}{\rmfamily}%
 \setTransitionsForKorean{\koreanfont}{\rmfamily}%
-\setTransitionsForLatin{\rmfamily}{}%
 \setTransitionsForMyanmarFull{\myanmarFullfont}{\rmfamily}%
-\setTransitionsFor{Sinhala}{\sinhalafont}{\rmfamily}%
+\setTransitionsForPunctuation{\punctuationfont}{\rmfamily}%
 \setTransitionsForSyriacFull{\syriacFullfont}{\rmfamily}%
+\setTransitionsFor{Armenian}{\armenianfont}{\rmfamily}%
+\setTransitionsFor{Bengali}{\bengalifont}{\rmfamily}%
+\setTransitionsFor{Hebrew}{\hebrewfont}{\rmfamily}%
+\setTransitionsFor{Khmer}{\khmerfont}{\rmfamily}%
+\setTransitionsFor{Sinhala}{\sinhalafont}{\rmfamily}%
 \setTransitionsFor{Tamil}{\tamilfont}{\rmfamily}%
 \setTransitionsFor{Telugu}{\telugufont}{\rmfamily}%
 \setTransitionsFor{Thai}{\thaifont}{\rmfamily}%
 \setTransitionsFor{Tibetan}{\tibetanfont}{\rmfamily}%
+\fi

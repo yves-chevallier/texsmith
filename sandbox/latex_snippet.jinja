@@ -1,5 +1,52 @@
-\usepackage[{{ package_options }}]{ucharclasses}
-\providecommand{\setTransitionsForEgyptianHieroglyphsFull}[2]{}
+\RequirePackage{iftex}
+{% raw %}\ifXeTeX{% endraw %}
+  \usepackage[{{ package_options }}]{ucharclasses}
+{% raw %}\else\ifLuaTeX{% endraw %}
+  \RequirePackage{fontspec}
+  \directlua{
+    luaotfload.add_fallback("texsmith-snippet-reg", {
+{% for font in fonts %}
+      "[fonts/{{ font.upright }}{{ font.extension }}]:mode=harf",
+{% endfor %}
+    })
+    luaotfload.add_fallback("texsmith-snippet-bold", {
+{% for font in fonts %}
+{% if font.bold %}
+      "[fonts/{{ font.bold }}{{ font.extension }}]:mode=harf",
+{% else %}
+      "[fonts/{{ font.upright }}{{ font.extension }}]:mode=harf",
+{% endif %}
+{% endfor %}
+    })
+  }
+  \defaultfontfeatures{
+    Renderer           = HarfBuzz,
+    RawFeature          = {fallback=texsmith-snippet-reg},
+    BoldFeatures        = {RawFeature={fallback=texsmith-snippet-bold}},
+    ItalicFeatures      = {RawFeature={fallback=texsmith-snippet-reg}},
+    BoldItalicFeatures  = {RawFeature={fallback=texsmith-snippet-bold}},
+  }
+  \addfontfeatures{RawFeature={fallback=texsmith-snippet-reg}}
+  \ExplSyntaxOn
+  \cs_new_protected:Npn \texsmith_apply_fallback_to_family:nn #1#2
+    {
+      \prop_get:cnNTF { g__fontspec_fontinfo_ #2 _prop } { fontname } \l_tmpa_tl
+        {
+          #1[
+            RawFeature         = {fallback=texsmith-snippet-reg},
+            BoldFeatures       = {RawFeature={fallback=texsmith-snippet-bold}},
+            ItalicFeatures     = {RawFeature={fallback=texsmith-snippet-reg}},
+            BoldItalicFeatures = {RawFeature={fallback=texsmith-snippet-bold}},
+          ]{\l_tmpa_tl}
+        }{}
+    }
+  \texsmith_apply_fallback_to_family:nn \setmainfont \rmdefault
+  \texsmith_apply_fallback_to_family:nn \setsansfont \sfdefault
+  \texsmith_apply_fallback_to_family:nn \setmonofont \ttdefault
+  \ExplSyntaxOff
+{% raw %}\else{% endraw %}
+  \PackageError{texsmith}{Unicode font support requires XeLaTeX or LuaLaTeX}{Switch engine to xelatex or lualatex.}
+{% raw %}\fi\fi{% endraw %}
 
 % Déclarations des polices pour chaque script détecté
 {% for font in fonts %}
@@ -18,6 +65,8 @@
 {% endfor %}
 
 % Transitions automatiques vers chaque script
+{% raw %}\ifXeTeX{% endraw %}
 {% for t in transitions %}
 {{ t }}
 {% endfor %}
+{% raw %}\fi{% endraw %}
