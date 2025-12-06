@@ -38,6 +38,7 @@ class ScriptSpec:
     font_name: str | None
     font_command: str
     text_command: str
+    count: int = 0
 
     def to_mapping(self) -> dict[str, str | None]:
         return {
@@ -46,6 +47,7 @@ class ScriptSpec:
             "font_name": self.font_name,
             "font_command": self.font_command,
             "text_command": self.text_command,
+            "count": self.count,
         }
 
 
@@ -161,6 +163,7 @@ class ScriptDetector:
             escaped = escape_latex_chars(chunk, legacy_accents=legacy_accents) if escape else chunk
             if group:
                 spec = self._record_spec(group, entry)
+                spec.count += len(chunk)
                 rendered.append(f"\\{spec.text_command}{{{escaped}}}")
             else:
                 rendered.append(escaped)
@@ -187,6 +190,8 @@ def fallback_summary_to_usage(
         if isinstance(font_payload, Mapping):
             raw_name = font_payload.get("name")
             font_name = str(raw_name) if isinstance(raw_name, str) else None
+        count_value = entry.get("count")
+        count = int(count_value) if isinstance(count_value, (int, float)) else None
         usages.append(
             {
                 "group": group,
@@ -194,6 +199,7 @@ def fallback_summary_to_usage(
                 "font_name": font_name,
                 "font_command": f"{slug}font",
                 "text_command": f"text{slug}",
+                "count": count,
             }
         )
     return usages
@@ -216,6 +222,13 @@ def merge_script_usage(
             continue
         if not merged[slug].get("font_name") and entry.get("font_name"):
             merged[slug]["font_name"] = entry.get("font_name")
+        existing_count = merged[slug].get("count")
+        update_count = entry.get("count")
+        if isinstance(existing_count, (int, float)) or isinstance(update_count, (int, float)):
+            existing_value = int(existing_count) if isinstance(existing_count, (int, float)) else 0
+            update_value = int(update_count) if isinstance(update_count, (int, float)) else 0
+            merged_count = existing_value + update_value
+            merged[slug]["count"] = merged_count if merged_count else None
     return list(merged.values())
 
 

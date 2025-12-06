@@ -186,12 +186,16 @@ def present_fonts_info(state: CLIState, render_result: TemplateRenderResult) -> 
         table.add_column("Script", style="cyan")
         table.add_column("Text Cmd")
         table.add_column("Font Cmd")
+        table.add_column("Codepoints", justify="right")
         table.add_column("Font Name")
         for entry in usage:
+            count = entry.get("count")
+            count_text = str(int(count)) if isinstance(count, (int, float)) else ""
             table.add_row(
                 str(entry.get("group") or entry.get("slug") or ""),
                 f"\\{entry.get('text_command')}" if entry.get("text_command") else "",
                 f"\\{entry.get('font_command')}" if entry.get("font_command") else "",
+                count_text,
                 str(entry.get("font_name") or ""),
             )
         console.print(panel_cls(table, box=box_module.SQUARE, border_style="blue"))
@@ -203,7 +207,11 @@ def present_fonts_info(state: CLIState, render_result: TemplateRenderResult) -> 
         text_cmd = entry.get("text_command") or ""
         font_cmd = entry.get("font_command") or ""
         font_name = entry.get("font_name") or ""
-        typer.echo(f"  - {script}: \\{text_cmd or '?'} -> \\{font_cmd or '?'} ({font_name})")
+        count = entry.get("count")
+        count_text = f" [{int(count)}]" if isinstance(count, (int, float)) else ""
+        typer.echo(
+            f"  - {script}: \\{text_cmd or '?'} -> \\{font_cmd or '?'} ({font_name}){count_text}"
+        )
 
 
 def _detect_assets(directory: Path) -> list[Path]:

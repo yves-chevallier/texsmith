@@ -145,6 +145,7 @@ def test_fonts_info_flag_displays_script_table() -> None:
     assert "Fallback Fonts" in result.stdout
     assert "tibetan" in result.stdout.lower()
     assert "bengali" in result.stdout.lower()
+    assert "[4]" in result.stdout or "Codepoints" in result.stdout
 
 
 def test_template_alignment_defaults_to_section() -> None:

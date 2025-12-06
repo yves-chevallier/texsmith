@@ -256,6 +256,7 @@ class FallbackLookup:
         output: list[dict] = []
         for cls, data in raw.items():
             ranges = self._merge_ranges(data["ranges"])
+            count = len(set(data["ranges"]))
             fonts = sorted(f for f in data["fonts"] if f)
             output.append(
                 {
@@ -264,6 +265,7 @@ class FallbackLookup:
                     "fonts": fonts,
                     "font": data.get("font", {}),
                     "ranges": ranges,
+                    "count": count,
                 }
             )
         return sorted(output, key=lambda entry: entry["class"])
