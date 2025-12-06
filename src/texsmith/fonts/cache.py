@@ -2,11 +2,14 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterator
 from pathlib import Path
 import tempfile
-from typing import Iterator
 
-DEFAULT_ROOT = Path.home() / ".texsmith" / "fonts"
+from texsmith.core.user_dir import get_user_dir
+
+
+DEFAULT_ROOT = get_user_dir().data_dir("fonts", create=False)
 
 
 class FontCache:
@@ -17,7 +20,7 @@ class FontCache:
     """
 
     def __init__(self, root: Path | None = None) -> None:
-        self.root = root or DEFAULT_ROOT
+        self.root = root or get_user_dir().data_dir("fonts", create=False)
 
     def ensure(self) -> Path:
         """Ensure the cache root exists and return it."""
@@ -38,4 +41,4 @@ class FontCache:
             yield Path(tmp)
 
 
-__all__ = ["FontCache", "DEFAULT_ROOT"]
+__all__ = ["DEFAULT_ROOT", "FontCache"]

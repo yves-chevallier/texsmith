@@ -32,6 +32,13 @@ Usage Example
 
 from __future__ import annotations
 
+from texsmith.core.user_dir import (
+    TexsmithUserDir,
+    configure_user_dir,
+    get_user_dir,
+    user_dir_context,
+)
+
 from .document import Document, DocumentRenderOptions, TitleStrategy
 from .pipeline import ConversionBundle, LaTeXFragment, RenderSettings, convert_documents
 from .service import (
@@ -62,8 +69,12 @@ __all__ = [
     "TemplateOptions",
     "TemplateRenderResult",
     "TemplateSession",
+    "TexsmithUserDir",
     "TitleStrategy",
     "classify_input_source",
+    "configure_user_dir",
     "convert_documents",
     "get_template",
+    "get_user_dir",
+    "user_dir_context",
 ]

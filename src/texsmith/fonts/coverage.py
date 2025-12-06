@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import contextlib
 from dataclasses import dataclass
 import json
 from pathlib import Path
@@ -12,8 +13,11 @@ import urllib.request
 from texsmith.fonts.cache import FontCache
 from texsmith.fonts.logging import FontPipelineLogger
 
+
 GOOGLE_FONTS_METADATA_URL = "https://fonts.google.com/metadata/fonts"
-NOTOFONTS_STATE_URL = "https://raw.githubusercontent.com/notofonts/notofonts.github.io/main/state.json"
+NOTOFONTS_STATE_URL = (
+    "https://raw.githubusercontent.com/notofonts/notofonts.github.io/main/state.json"
+)
 GOOGLE_FONTS_CSS = "https://fonts.googleapis.com/css2?family={}&display=swap"
 USER_AGENT = (
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
@@ -36,7 +40,7 @@ class NotoCoverage:
     styles: tuple[str, ...]
 
     @classmethod
-    def from_mapping(cls, data: dict) -> "NotoCoverage":
+    def from_mapping(cls, data: dict) -> NotoCoverage:
         return cls(
             family=data["family"],
             ranges=tuple((int(r[0]), int(r[1])) for r in data.get("ranges", [])),
@@ -89,20 +93,24 @@ class NotoCoverageBuilder:
                 continue
             try:
                 raw = json.loads(candidate.read_text(encoding="utf-8"))
-                data = [NotoCoverage.from_mapping(entry) for entry in raw]
-                return data, candidate
             except Exception:
                 continue
+            data = [NotoCoverage.from_mapping(entry) for entry in raw]
+            return data, candidate
         return None
 
     def _fetch_family_list(self) -> list[str]:
-        self.logger.info("Récupération de la liste complète des familles Noto depuis Google Fonts...")
+        self.logger.info(
+            "Récupération de la liste complète des familles Noto depuis Google Fonts..."
+        )
         raw = _http_get(GOOGLE_FONTS_METADATA_URL)
         if raw.startswith(")]}'"):
             raw = raw.split("\n", 1)[1]
         payload = json.loads(raw)
         families = [
-            entry["family"] for entry in payload.get("familyMetadataList", []) if entry["family"].startswith("Noto ")
+            entry["family"]
+            for entry in payload.get("familyMetadataList", [])
+            if entry["family"].startswith("Noto ")
         ]
         families.sort()
         self.logger.notice(f"{len(families)} familles détectées.")
@@ -110,14 +118,21 @@ class NotoCoverageBuilder:
 
     def _normalize_style(self, style: str) -> str | None:
         cleaned = re.sub(r"[^a-z]", "", style.lower())
-        mapping = {"regular": "regular", "italic": "italic", "bold": "bold", "bolditalic": "bolditalic"}
+        mapping = {
+            "regular": "regular",
+            "italic": "italic",
+            "bold": "bold",
+            "bolditalic": "bolditalic",
+        }
         return mapping.get(cleaned)
 
     def _fetch_otf_styles(self) -> dict[str, dict]:
         try:
             state = json.loads(_http_get(NOTOFONTS_STATE_URL))
         except Exception as exc:
-            self.logger.warning(f"Impossible de récupérer les styles OTF ({exc}); poursuite sans styles).")
+            self.logger.warning(
+                "Impossible de récupérer les styles OTF (%s); poursuite sans styles).", exc
+            )
             return {}
 
         index: dict[str, dict] = {}
@@ -179,15 +194,13 @@ class NotoCoverageBuilder:
         cached = self.load_cached()
         if cached:
             data, source = cached
-            self.logger.notice(f"Base de couverture Noto chargée depuis {source}")
+            self.logger.notice("Base de couverture Noto chargée depuis %s", source)
             if source != self.cache_path:
-                try:
+                with contextlib.suppress(Exception):
                     self.cache_path.write_text(
                         json.dumps([entry.to_mapping() for entry in data], separators=(",", ":")),
                         encoding="utf-8",
                     )
-                except Exception:
-                    pass
             return data
 
         families = self._fetch_family_list()
@@ -213,15 +226,15 @@ class NotoCoverageBuilder:
         data = [entry.to_mapping() for entry in dataset]
         try:
             self.cache_path.write_text(json.dumps(data, separators=(",", ":")), encoding="utf-8")
-            self.logger.info(f"Cache écrit dans {self.cache_path}")
+            self.logger.info("Cache écrit dans %s", self.cache_path)
         except Exception:
             self.logger.warning("Impossible d'écrire le cache de couverture Noto.")
         return dataset
 
 
 __all__ = [
-    "NotoCoverage",
-    "NotoCoverageBuilder",
     "GOOGLE_FONTS_METADATA_URL",
     "NOTOFONTS_STATE_URL",
+    "NotoCoverage",
+    "NotoCoverageBuilder",
 ]

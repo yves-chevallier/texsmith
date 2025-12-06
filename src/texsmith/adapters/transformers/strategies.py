@@ -20,6 +20,7 @@ from urllib.request import urlopen
 import warnings
 
 from texsmith.core.exceptions import TransformerExecutionError
+from texsmith.core.user_dir import get_user_dir
 
 from ..docker import DockerLimits, VolumeMount, run_container
 from .base import CachedConversionStrategy
@@ -454,7 +455,7 @@ def _read_text(source: Path | str) -> str:
 
 
 def _texsmith_cache_root() -> Path:
-    return Path.home() / ".cache" / "texsmith"
+    return get_user_dir().cache_dir(create=False)
 
 
 class _PlaywrightManager:

@@ -2,14 +2,14 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterator
 from contextlib import contextmanager
 from dataclasses import dataclass
-from typing import Iterator
 
 import typer
 
 
-def _resolve_state():
+def _resolve_state() -> object | None:
     try:
         from texsmith.ui.cli.state import get_cli_state
     except Exception:  # pragma: no cover - fallback when CLI is unavailable
@@ -35,9 +35,10 @@ class FontPipelineLogger:
             try:
                 console = self._state.console
                 console.log(message)
-                return
             except Exception:  # pragma: no cover - defensive fallback
                 pass
+            else:
+                return
         typer.echo(message)
 
     def warning(self, message: str) -> None:
@@ -46,9 +47,10 @@ class FontPipelineLogger:
                 from texsmith.ui.cli.state import emit_warning
 
                 emit_warning(message)
-                return
             except Exception:  # pragma: no cover - defensive fallback
                 pass
+            else:
+                return
         typer.secho(message, fg="yellow")
 
     def notice(self, message: str) -> None:

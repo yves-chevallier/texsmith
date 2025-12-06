@@ -5,10 +5,12 @@ Output format: [{"name": "...", "start": int, "end": int, "start_hex": "U+XXXX",
 """
 from __future__ import annotations
 
+from collections.abc import Iterable
 import json
 import pathlib
 import re
-from typing import Iterable, List, Tuple
+from typing import List, Tuple
+
 
 HERE = pathlib.Path(__file__).parent
 STY_PATH = HERE / "ucharclasses.sty"
@@ -20,7 +22,7 @@ GROUP_PATTERN = re.compile(r"""\\def\\([A-Za-z0-9]+)Classes\{""")
 DO_NAME_PATTERN = re.compile(r"""\\do\{([^}]+)\}""")
 
 
-def iter_class_ranges(text: str) -> Iterable[Tuple[str, int, int]]:
+def iter_class_ranges(text: str) -> Iterable[tuple[str, int, int]]:
     """Yield (name, start, end) tuples from the sty content."""
     for line in text.splitlines():
         line = line.strip()
@@ -31,7 +33,7 @@ def iter_class_ranges(text: str) -> Iterable[Tuple[str, int, int]]:
             yield name, int(start_hex, 16), int(end_hex, 16)
 
 
-def build() -> List[dict]:
+def build() -> list[dict]:
     raw = STY_PATH.read_text(encoding="utf-8")
     seen = {}
     for name, start, end in iter_class_ranges(raw):

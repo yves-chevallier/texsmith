@@ -11,13 +11,17 @@ from texsmith.fonts.logging import FontPipelineLogger
 from texsmith.fonts.ucharclasses import UCharClassesBuilder
 
 
-def generate_ucharclasses_data(*, cache: FontCache | None = None, logger: FontPipelineLogger | None = None):
+def generate_ucharclasses_data(
+    *, cache: FontCache | None = None, logger: FontPipelineLogger | None = None
+):
     """Fetch and parse ucharclasses definitions, downloading assets if missing."""
     builder = UCharClassesBuilder(cache=cache, logger=logger)
     return builder.build()
 
 
-def generate_noto_metadata(*, cache: FontCache | None = None, logger: FontPipelineLogger | None = None):
+def generate_noto_metadata(
+    *, cache: FontCache | None = None, logger: FontPipelineLogger | None = None
+):
     """Build the Noto coverage dataset (equivalent to sandbox/build.py)."""
     builder = NotoCoverageBuilder(cache=cache, logger=logger)
     return builder.build()

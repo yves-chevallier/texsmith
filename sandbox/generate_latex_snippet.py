@@ -15,6 +15,7 @@ from typing import Dict, List
 from build_ucharclasses_json import build as build_ucharclasses
 from lookup import NotoLookup
 
+
 HERE = pathlib.Path(__file__).parent
 TEMPLATE_PATH = HERE / "latex_snippet.jinja"
 
@@ -32,7 +33,7 @@ def font_file_base(font_name: str) -> str:
     return "".join(ch for ch in font_name if ch.isalnum())
 
 
-def pick_available_font(fonts: List[str]) -> tuple[str, str] | tuple[None, None]:
+def pick_available_font(fonts: list[str]) -> tuple[str, str] | tuple[None, None]:
     """Renvoie (font_name, file_base) pour la première font dont le fichier Regular existe dans ../fonts."""
     fonts_dir = (HERE / ".." / "fonts").resolve()
     for font in fonts:
@@ -42,9 +43,9 @@ def pick_available_font(fonts: List[str]) -> tuple[str, str] | tuple[None, None]
     return None, None
 
 
-def merge_blocks(classes: Dict[str, dict]) -> tuple[str, str, List[str]]:
-    font_blocks: List[str] = []
-    transition_blocks: List[str] = []
+def merge_blocks(classes: dict[str, dict]) -> tuple[str, str, list[str]]:
+    font_blocks: list[str] = []
+    transition_blocks: list[str] = []
     # Load class->group mapping from ucharclasses.json
     meta = json.loads((HERE / "ucharclasses.json").read_text(encoding="utf-8"))
     class_to_group = {entry["name"]: entry.get("group", entry["name"]) for entry in meta}

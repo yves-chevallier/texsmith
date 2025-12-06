@@ -13,12 +13,14 @@ import pathlib
 import sys
 from typing import Dict, List
 
+
 HERE = pathlib.Path(__file__).parent
 VENDOR_DIR = HERE / "_vendor"
 if VENDOR_DIR.exists():
     sys.path.insert(0, str(VENDOR_DIR))
 
 from jinja2 import Environment, FileSystemLoader  # type: ignore
+
 
 FONTS_DIR = HERE / "fonts"
 # Groups that have helper macros \setTransitionsFor<Group> defined by ucharclasses.sty.
@@ -73,10 +75,10 @@ def main() -> None:
     parser.add_argument("classes_json", type=pathlib.Path, help="classes.json")
     args = parser.parse_args()
 
-    data: List[Dict] = json.loads(args.classes_json.read_text(encoding="utf-8"))
+    data: list[dict] = json.loads(args.classes_json.read_text(encoding="utf-8"))
 
     # Regroupe par groupe (Latin, Arabic, etc.) et garde la première fonte vue
-    grouped: Dict[str, Dict] = {}
+    grouped: dict[str, dict] = {}
     for entry in data:
         group = entry.get("group") or entry.get("class")
         font_meta = entry.get("font") or {}

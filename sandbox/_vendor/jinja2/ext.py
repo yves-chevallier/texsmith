@@ -6,22 +6,21 @@ import typing as t
 
 from markupsafe import Markup
 
-from . import defaults
-from . import nodes
+from . import defaults, nodes
 from .environment import Environment
-from .exceptions import TemplateAssertionError
-from .exceptions import TemplateSyntaxError
-from .runtime import concat  # type: ignore
-from .runtime import Context
-from .runtime import Undefined
-from .utils import import_string
-from .utils import pass_context
+from .exceptions import TemplateAssertionError, TemplateSyntaxError
+from .runtime import (
+    Context,
+    Undefined,
+    concat,  # type: ignore
+)
+from .utils import import_string, pass_context
+
 
 if t.TYPE_CHECKING:
     import typing_extensions as te
 
-    from .lexer import Token
-    from .lexer import TokenStream
+    from .lexer import Token, TokenStream
     from .parser import Parser
 
     class _TranslationsBasic(te.Protocol):
@@ -42,7 +41,7 @@ if t.TYPE_CHECKING:
 
 # I18N functions available in Jinja templates. If the I18N library
 # provides ugettext, it will be assigned to gettext.
-GETTEXT_FUNCTIONS: t.Tuple[str, ...] = (
+GETTEXT_FUNCTIONS: tuple[str, ...] = (
     "_",
     "gettext",
     "ngettext",
@@ -77,7 +76,7 @@ class Extension:
         cls.identifier = f"{cls.__module__}.{cls.__name__}"
 
     #: if this extension parses this is the list of tags it's listening to.
-    tags: t.Set[str] = set()
+    tags: set[str] = set()
 
     #: the priority of that extension.  This is especially useful for
     #: extensions that preprocess values.  A lower value means higher
@@ -97,7 +96,7 @@ class Extension:
         return rv
 
     def preprocess(
-        self, source: str, name: t.Optional[str], filename: t.Optional[str] = None
+        self, source: str, name: str | None, filename: str | None = None
     ) -> str:
         """This method is called before the actual lexing and can be used to
         preprocess the source.  The `filename` is optional.  The return value
@@ -115,7 +114,7 @@ class Extension:
         """
         return stream
 
-    def parse(self, parser: "Parser") -> t.Union[nodes.Node, t.List[nodes.Node]]:
+    def parse(self, parser: "Parser") -> nodes.Node | list[nodes.Node]:
         """If any of the :attr:`tags` matched this method is called with the
         parser as first argument.  The token the parser stream is pointing at
         is the name token that matched.  This method has to return one or a
@@ -124,7 +123,7 @@ class Extension:
         raise NotImplementedError()
 
     def attr(
-        self, name: str, lineno: t.Optional[int] = None
+        self, name: str, lineno: int | None = None
     ) -> nodes.ExtensionAttribute:
         """Return an attribute node for the current extension.  This is useful
         to pass constants on extensions to generated template code.
@@ -138,11 +137,11 @@ class Extension:
     def call_method(
         self,
         name: str,
-        args: t.Optional[t.List[nodes.Expr]] = None,
-        kwargs: t.Optional[t.List[nodes.Keyword]] = None,
-        dyn_args: t.Optional[nodes.Expr] = None,
-        dyn_kwargs: t.Optional[nodes.Expr] = None,
-        lineno: t.Optional[int] = None,
+        args: list[nodes.Expr] | None = None,
+        kwargs: list[nodes.Keyword] | None = None,
+        dyn_args: nodes.Expr | None = None,
+        dyn_kwargs: nodes.Expr | None = None,
+        lineno: int | None = None,
     ) -> nodes.Call:
         """Call a method of the extension.  This is a shortcut for
         :meth:`attr` + :class:`jinja2.nodes.Call`.
@@ -164,7 +163,7 @@ class Extension:
 @pass_context
 def _gettext_alias(
     __context: Context, *args: t.Any, **kwargs: t.Any
-) -> t.Union[t.Any, Undefined]:
+) -> t.Any | Undefined:
     return __context.call(__context.resolve("gettext"), *args, **kwargs)
 
 
@@ -268,7 +267,7 @@ class InternationalizationExtension(Extension):
         )
 
     def _install(
-        self, translations: "_SupportedTranslations", newstyle: t.Optional[bool] = None
+        self, translations: "_SupportedTranslations", newstyle: bool | None = None
     ) -> None:
         # ugettext and ungettext are preferred in case the I18N library
         # is providing compatibility with older Python versions.
@@ -285,7 +284,7 @@ class InternationalizationExtension(Extension):
             gettext, ngettext, newstyle=newstyle, pgettext=pgettext, npgettext=npgettext
         )
 
-    def _install_null(self, newstyle: t.Optional[bool] = None) -> None:
+    def _install_null(self, newstyle: bool | None = None) -> None:
         import gettext
 
         translations = gettext.NullTranslations()
@@ -317,9 +316,9 @@ class InternationalizationExtension(Extension):
         self,
         gettext: t.Callable[[str], str],
         ngettext: t.Callable[[str, str, int], str],
-        newstyle: t.Optional[bool] = None,
-        pgettext: t.Optional[t.Callable[[str, str], str]] = None,
-        npgettext: t.Optional[t.Callable[[str, str, str, int], str]] = None,
+        newstyle: bool | None = None,
+        pgettext: t.Callable[[str, str], str] | None = None,
+        npgettext: t.Callable[[str, str, str, int], str] | None = None,
     ) -> None:
         if newstyle is not None:
             self.environment.newstyle_gettext = newstyle  # type: ignore
@@ -343,16 +342,16 @@ class InternationalizationExtension(Extension):
 
     def _extract(
         self,
-        source: t.Union[str, nodes.Template],
+        source: str | nodes.Template,
         gettext_functions: t.Sequence[str] = GETTEXT_FUNCTIONS,
     ) -> t.Iterator[
-        t.Tuple[int, str, t.Union[t.Optional[str], t.Tuple[t.Optional[str], ...]]]
+        tuple[int, str, str | None | tuple[str | None, ...]]
     ]:
         if isinstance(source, str):
             source = self.environment.parse(source)
         return extract_from_ast(source, gettext_functions)
 
-    def parse(self, parser: "Parser") -> t.Union[nodes.Node, t.List[nodes.Node]]:
+    def parse(self, parser: "Parser") -> nodes.Node | list[nodes.Node]:
         """Parse a translatable tag."""
         lineno = next(parser.stream).lineno
 
@@ -365,10 +364,10 @@ class InternationalizationExtension(Extension):
         # find all the variables referenced.  Additionally a variable can be
         # defined in the body of the trans block too, but this is checked at
         # a later state.
-        plural_expr: t.Optional[nodes.Expr] = None
-        plural_expr_assignment: t.Optional[nodes.Assign] = None
+        plural_expr: nodes.Expr | None = None
+        plural_expr_assignment: nodes.Assign | None = None
         num_called_num = False
-        variables: t.Dict[str, nodes.Expr] = {}
+        variables: dict[str, nodes.Expr] = {}
         trimmed = None
         while parser.stream.current.type != "block_end":
             if variables:
@@ -479,7 +478,7 @@ class InternationalizationExtension(Extension):
 
     def _parse_block(
         self, parser: "Parser", allow_pluralize: bool
-    ) -> t.Tuple[t.List[str], str]:
+    ) -> tuple[list[str], str]:
         """Parse until the next block tag with a given name."""
         referenced = []
         buf = []
@@ -527,10 +526,10 @@ class InternationalizationExtension(Extension):
     def _make_node(
         self,
         singular: str,
-        plural: t.Optional[str],
-        context: t.Optional[str],
-        variables: t.Dict[str, nodes.Expr],
-        plural_expr: t.Optional[nodes.Expr],
+        plural: str | None,
+        context: str | None,
+        variables: dict[str, nodes.Expr],
+        plural_expr: nodes.Expr | None,
         vars_referenced: bool,
         num_called_num: bool,
     ) -> nodes.Output:
@@ -546,7 +545,7 @@ class InternationalizationExtension(Extension):
                 plural = plural.replace("%%", "%")
 
         func_name = "gettext"
-        func_args: t.List[nodes.Expr] = [nodes.Const(singular)]
+        func_args: list[nodes.Expr] = [nodes.Const(singular)]
 
         if context is not None:
             func_args.insert(0, nodes.Const(context))
@@ -605,7 +604,7 @@ class LoopControlExtension(Extension):
 
     tags = {"break", "continue"}
 
-    def parse(self, parser: "Parser") -> t.Union[nodes.Break, nodes.Continue]:
+    def parse(self, parser: "Parser") -> nodes.Break | nodes.Continue:
         token = next(parser.stream)
         if token.value == "break":
             return nodes.Break(lineno=token.lineno)
@@ -657,7 +656,7 @@ def extract_from_ast(
     gettext_functions: t.Sequence[str] = GETTEXT_FUNCTIONS,
     babel_style: bool = True,
 ) -> t.Iterator[
-    t.Tuple[int, str, t.Union[t.Optional[str], t.Tuple[t.Optional[str], ...]]]
+    tuple[int, str, str | None | tuple[str | None, ...]]
 ]:
     """Extract localizable strings from the given template node.  Per
     default this function returns matches in babel style that means non string
@@ -693,7 +692,7 @@ def extract_from_ast(
     to extract any comments.  For comment support you have to use the babel
     extraction interface or extract comments yourself.
     """
-    out: t.Union[t.Optional[str], t.Tuple[t.Optional[str], ...]]
+    out: str | None | tuple[str | None, ...]
 
     for node in ast.find_all(nodes.Call):
         if (
@@ -702,7 +701,7 @@ def extract_from_ast(
         ):
             continue
 
-        strings: t.List[t.Optional[str]] = []
+        strings: list[str | None] = []
 
         for arg in node.args:
             if isinstance(arg, nodes.Const) and isinstance(arg.value, str):
@@ -739,14 +738,14 @@ class _CommentFinder:
     """
 
     def __init__(
-        self, tokens: t.Sequence[t.Tuple[int, str, str]], comment_tags: t.Sequence[str]
+        self, tokens: t.Sequence[tuple[int, str, str]], comment_tags: t.Sequence[str]
     ) -> None:
         self.tokens = tokens
         self.comment_tags = comment_tags
         self.offset = 0
         self.last_lineno = 0
 
-    def find_backwards(self, offset: int) -> t.List[str]:
+    def find_backwards(self, offset: int) -> list[str]:
         try:
             for _, token_type, token_value in reversed(
                 self.tokens[self.offset : offset]
@@ -762,7 +761,7 @@ class _CommentFinder:
         finally:
             self.offset = offset
 
-    def find_comments(self, lineno: int) -> t.List[str]:
+    def find_comments(self, lineno: int) -> list[str]:
         if not self.comment_tags or self.last_lineno > lineno:
             return []
         for idx, (token_lineno, _, _) in enumerate(self.tokens[self.offset :]):
@@ -775,10 +774,10 @@ def babel_extract(
     fileobj: t.BinaryIO,
     keywords: t.Sequence[str],
     comment_tags: t.Sequence[str],
-    options: t.Dict[str, t.Any],
+    options: dict[str, t.Any],
 ) -> t.Iterator[
-    t.Tuple[
-        int, str, t.Union[t.Optional[str], t.Tuple[t.Optional[str], ...]], t.List[str]
+    tuple[
+        int, str, str | None | tuple[str | None, ...], list[str]
     ]
 ]:
     """Babel extraction method for Jinja templates.
@@ -808,7 +807,7 @@ def babel_extract(
     :return: an iterator over ``(lineno, funcname, message, comments)`` tuples.
              (comments will be empty currently)
     """
-    extensions: t.Dict[t.Type[Extension], None] = {}
+    extensions: dict[type[Extension], None] = {}
 
     for extension_name in options.get("extensions", "").split(","):
         extension_name = extension_name.strip()

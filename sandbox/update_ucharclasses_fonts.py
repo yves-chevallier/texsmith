@@ -10,6 +10,7 @@ import json
 import pathlib
 from typing import Dict, List, Tuple
 
+
 HERE = pathlib.Path(__file__).parent
 UCHAR_PATH = HERE / "ucharclasses.json"
 DB_PATH = HERE / "noto_coverage_db.json"
@@ -20,7 +21,7 @@ def sanitize_family(name: str) -> str:
     return "".join(ch for ch in name if ch.isalnum())
 
 
-def load_db() -> Dict[str, dict]:
+def load_db() -> dict[str, dict]:
     db = json.loads(DB_PATH.read_text(encoding="utf-8"))
     output = {}
     for entry in db:
@@ -40,7 +41,7 @@ def overlap(a_start: int, a_end: int, b_start: int, b_end: int) -> int:
     return max(0, hi - lo + 1)
 
 
-def pick_font(class_range: Tuple[int, int], db_ranges: Dict[str, dict]) -> dict | None:
+def pick_font(class_range: tuple[int, int], db_ranges: dict[str, dict]) -> dict | None:
     best = None
     best_score = 0
     for family, meta in db_ranges.items():

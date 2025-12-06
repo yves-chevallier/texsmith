@@ -1,12 +1,13 @@
 """Built-in template tests used with the ``is`` operator."""
 
-import operator
-import typing as t
 from collections import abc
 from numbers import Number
+import operator
+import typing as t
 
 from .runtime import Undefined
 from .utils import pass_environment
+
 
 if t.TYPE_CHECKING:
     from .environment import Environment

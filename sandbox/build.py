@@ -1,9 +1,10 @@
 import json
-import urllib.request
-import urllib.parse
 import re
-import time
 import sys
+import time
+import urllib.parse
+import urllib.request
+
 
 # La source de vérité ultime (utilisée par le frontend de fonts.google.com)
 # Elle contient TOUTES les polices, y compris les Noto.

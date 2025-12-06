@@ -14,6 +14,7 @@ from typing import Any, Literal
 from rich.console import Console
 
 from texsmith.core.context import DocumentState
+from texsmith.core.user_dir import get_user_dir
 
 from ..latexmk import (
     LatexmkEngine,
@@ -245,9 +246,7 @@ def build_tex_env(
     if isolate_cache:
         tex_cache_root = (render_dir / ".texmf-cache").resolve()
     else:
-        xdg_cache = os.environ.get("XDG_CACHE_HOME")
-        base = Path(xdg_cache).expanduser() if xdg_cache else Path.home() / ".cache"
-        tex_cache_root = (base / "texsmith").resolve()
+        tex_cache_root = get_user_dir().cache_dir("texmf")
 
     tex_cache_root.mkdir(parents=True, exist_ok=True)
     env = os.environ.copy()

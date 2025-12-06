@@ -9,10 +9,11 @@ from pathlib import Path
 import shutil
 from typing import Any
 
+from texsmith.core.user_dir import get_user_dir
+
 from .base import WrappableTemplate, load_specialised_template
-from .builtins import load_builtin_template
+from .builtins import iter_builtin_templates, load_builtin_template
 from .manifest import TemplateError
-from .builtins import iter_builtin_templates
 
 
 def _looks_like_template_root(path: Path) -> bool:
@@ -196,7 +197,7 @@ def _resolve_packaged_template_root(slug: str) -> Path | None:
 
 def _home_template_candidate(slug: str) -> Path | None:
     """Return a template path under ~/.texsmith/templates if present."""
-    home_root = Path.home() / ".texsmith" / "templates"
+    home_root = get_user_dir().data_dir("templates", create=False)
     distribution_name = f"texsmith-template-{slug}"
     package_name = f"texsmith_template_{slug}"
     for candidate in (
@@ -248,7 +249,7 @@ def discover_templates() -> list[dict[str, str]]:
         seen_locals.add(key)
         _record("local", candidate.name, candidate)
 
-    home_root = Path.home() / ".texsmith" / "templates"
+    home_root = get_user_dir().data_dir("templates", create=False)
     if home_root.exists():
         for child in sorted(home_root.iterdir()):
             if child.is_dir() and _looks_like_template_root(child):
@@ -280,7 +281,7 @@ def discover_templates() -> list[dict[str, str]]:
         if _looks_like_template_root(candidate):
             _record("local", candidate.name, candidate)
 
-    home_root = Path.home() / ".texsmith" / "templates"
+    home_root = get_user_dir().data_dir("templates", create=False)
     if home_root.exists():
         for child in home_root.iterdir():
             if child.is_dir() and _looks_like_template_root(child):

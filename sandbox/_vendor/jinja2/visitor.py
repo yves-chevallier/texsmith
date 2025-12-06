@@ -6,6 +6,7 @@ import typing as t
 
 from .nodes import Node
 
+
 if t.TYPE_CHECKING:
     import typing_extensions as te
 
@@ -25,7 +26,7 @@ class NodeVisitor:
     (return value `None`) the `generic_visit` visitor is used instead.
     """
 
-    def get_visitor(self, node: Node) -> "t.Optional[VisitCallable]":
+    def get_visitor(self, node: Node) -> "VisitCallable | None":
         """Return the visitor function for this node or `None` if no visitor
         exists for this node.  In that case the generic visit function is
         used instead.
@@ -80,7 +81,7 @@ class NodeTransformer(NodeVisitor):
                     setattr(node, field, new_node)
         return node
 
-    def visit_list(self, node: Node, *args: t.Any, **kwargs: t.Any) -> t.List[Node]:
+    def visit_list(self, node: Node, *args: t.Any, **kwargs: t.Any) -> list[Node]:
         """As transformers may return lists in some places this method
         can be used to enforce a list as return value.
         """

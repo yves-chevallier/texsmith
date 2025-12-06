@@ -13,6 +13,7 @@ import zipfile
 from texsmith.fonts.cache import FontCache
 from texsmith.fonts.logging import FontPipelineLogger
 
+
 CTAN_UCHARCLASSES_ZIP = "https://mirrors.ctan.org/macros/xetex/latex/ucharclasses.zip"
 
 DO_PATTERN = re.compile(r"""\\do\{([^}]+)\}\{"?([0-9A-Fa-f]+)\}\{"?([0-9A-Fa-f]+)\}""")
@@ -63,7 +64,7 @@ class UCharClassesBuilder:
         return self.cache.path("ucharclasses", "ucharclasses.sty")
 
     def _download_zip(self, target: Path) -> Path:
-        self.logger.info(f"Téléchargement de ucharclasses depuis {self.source_url}")
+        self.logger.info("Téléchargement de ucharclasses depuis %s", self.source_url)
         with urllib.request.urlopen(self.source_url) as response:
             target.write_bytes(response.read())
         return target
@@ -97,7 +98,7 @@ class UCharClassesBuilder:
             archive = tmp / "ucharclasses.zip"
             self._download_zip(archive)
             sty_path = self._extract_sty(archive, cached)
-            self.logger.info(f"ucharclasses.sty extrait dans {sty_path}")
+            self.logger.info("ucharclasses.sty extrait dans %s", sty_path)
             return sty_path
 
     def sty_path(self) -> Path:
@@ -157,7 +158,7 @@ class UCharClassesBuilder:
         data = [cls.to_dict() for cls in self.build()]
         target.parent.mkdir(parents=True, exist_ok=True)
         target.write_text(json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8")
-        self.logger.info(f"Écriture des classes Unicode dans {target}")
+        self.logger.info("Écriture des classes Unicode dans %s", target)
 
 
-__all__ = ["UCharClass", "UCharClassesBuilder", "CTAN_UCHARCLASSES_ZIP"]
+__all__ = ["CTAN_UCHARCLASSES_ZIP", "UCharClass", "UCharClassesBuilder"]

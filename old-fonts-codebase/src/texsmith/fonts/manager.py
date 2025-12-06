@@ -71,6 +71,7 @@ def _is_noto_font(family: str | None) -> bool:
 
 def _ranges_include_emoji(font_ranges: Mapping[str, list[str]]) -> bool:
     """Return True if any font range overlaps the default emoji blocks."""
+
     def _parse_range(label: str) -> tuple[int, int]:
         start, _, end = label.partition("..")
         start_int = int(start.strip().lstrip("U+"), 16)
@@ -270,7 +271,9 @@ def prepare_fonts_for_context(
             emitter=emitter,
         )
     else:
-        emoji_payload = EmojiPayload(mode="none", font_family=None, font_path=None, color_enabled=False)
+        emoji_payload = EmojiPayload(
+            mode="none", font_family=None, font_path=None, color_enabled=False
+        )
 
     if emoji_payload.warnings and emitter:
         for message in emoji_payload.warnings:

@@ -1,19 +1,14 @@
-import typing as t
-from ast import literal_eval
-from ast import parse
-from itertools import chain
-from itertools import islice
+from ast import literal_eval, parse
+from itertools import chain, islice
 from types import GeneratorType
+import typing as t
 
 from . import nodes
-from .compiler import CodeGenerator
-from .compiler import Frame
-from .compiler import has_safe_repr
-from .environment import Environment
-from .environment import Template
+from .compiler import CodeGenerator, Frame, has_safe_repr
+from .environment import Environment, Template
 
 
-def native_concat(values: t.Iterable[t.Any]) -> t.Optional[t.Any]:
+def native_concat(values: t.Iterable[t.Any]) -> t.Any | None:
     """Return a native Python type from the list of compiled nodes. If
     the result is a single node, its value is returned. Otherwise, the
     nodes are concatenated as strings. If the result can be parsed with

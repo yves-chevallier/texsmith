@@ -16,6 +16,7 @@ import sys
 
 from lookup import NotoLookup
 
+
 HERE = pathlib.Path(__file__).parent
 CLASSES_PATH = HERE / "ucharclasses.json"
 

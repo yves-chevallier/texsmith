@@ -4,11 +4,12 @@
 from __future__ import annotations
 
 import argparse
-import re
 from pathlib import Path
+import re
 import sys
 
 from texsmith.fonts import FallbackManager, FontCache, FontPipelineLogger, UCharClassesBuilder
+
 
 HERE = Path(__file__).parent
 TEMPLATE_PATH = HERE / "latex_snippet.jinja"

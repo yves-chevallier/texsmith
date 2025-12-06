@@ -2,27 +2,27 @@
 sources.
 """
 
+from collections import abc
+from hashlib import sha1
+from importlib import import_module
 import importlib.util
 import os
 import posixpath
 import sys
+from types import ModuleType
 import typing as t
 import weakref
 import zipimport
-from collections import abc
-from hashlib import sha1
-from importlib import import_module
-from types import ModuleType
 
 from .exceptions import TemplateNotFound
 from .utils import internalcode
 
+
 if t.TYPE_CHECKING:
-    from .environment import Environment
-    from .environment import Template
+    from .environment import Environment, Template
 
 
-def split_template_path(template: str) -> t.List[str]:
+def split_template_path(template: str) -> list[str]:
     """Split a path into segments and perform a sanity check.  If it detects
     '..' in the path it will raise a `TemplateNotFound` error.
     """
@@ -74,7 +74,7 @@ class BaseLoader:
 
     def get_source(
         self, environment: "Environment", template: str
-    ) -> t.Tuple[str, t.Optional[str], t.Optional[t.Callable[[], bool]]]:
+    ) -> tuple[str, str | None, t.Callable[[], bool] | None]:
         """Get the template source, filename and reload helper for a template.
         It's passed the environment and template name and has to return a
         tuple in the form ``(source, filename, uptodate)`` or raise a
@@ -98,7 +98,7 @@ class BaseLoader:
             )
         raise TemplateNotFound(template)
 
-    def list_templates(self) -> t.List[str]:
+    def list_templates(self) -> list[str]:
         """Iterates over all templates.  If the loader does not support that
         it should raise a :exc:`TypeError` which is the default behavior.
         """
@@ -109,7 +109,7 @@ class BaseLoader:
         self,
         environment: "Environment",
         name: str,
-        globals: t.Optional[t.MutableMapping[str, t.Any]] = None,
+        globals: t.MutableMapping[str, t.Any] | None = None,
     ) -> "Template":
         """Loads a template.  This method looks up the template in the cache
         or loads one by calling :meth:`get_source`.  Subclasses should not
@@ -193,7 +193,7 @@ class FileSystemLoader(BaseLoader):
 
     def get_source(
         self, environment: "Environment", template: str
-    ) -> t.Tuple[str, str, t.Callable[[], bool]]:
+    ) -> tuple[str, str, t.Callable[[], bool]]:
         pieces = split_template_path(template)
 
         for searchpath in self.searchpath:
@@ -225,7 +225,7 @@ class FileSystemLoader(BaseLoader):
         # Use normpath to convert Windows altsep to sep.
         return contents, os.path.normpath(filename), uptodate
 
-    def list_templates(self) -> t.List[str]:
+    def list_templates(self) -> list[str]:
         found = set()
         for searchpath in self.searchpath:
             walk_dir = os.walk(searchpath, followlinks=self.followlinks)
@@ -245,7 +245,7 @@ class FileSystemLoader(BaseLoader):
 
 if sys.version_info >= (3, 13):
 
-    def _get_zipimporter_files(z: t.Any) -> t.Dict[str, object]:
+    def _get_zipimporter_files(z: t.Any) -> dict[str, object]:
         try:
             get_files = z._get_files
         except AttributeError as e:
@@ -256,7 +256,7 @@ if sys.version_info >= (3, 13):
         return get_files()
 else:
 
-    def _get_zipimporter_files(z: t.Any) -> t.Dict[str, object]:
+    def _get_zipimporter_files(z: t.Any) -> dict[str, object]:
         try:
             files = z._files
         except AttributeError as e:
@@ -333,7 +333,7 @@ class PackageLoader(BaseLoader):
             pkgdir = next(iter(spec.submodule_search_locations))  # type: ignore
             template_root = os.path.join(pkgdir, package_path).rstrip(os.path.sep)
         else:
-            roots: t.List[str] = []
+            roots: list[str] = []
 
             # One element for regular packages, multiple for namespace
             # packages, or None for single module file.
@@ -365,14 +365,14 @@ class PackageLoader(BaseLoader):
 
     def get_source(
         self, environment: "Environment", template: str
-    ) -> t.Tuple[str, str, t.Optional[t.Callable[[], bool]]]:
+    ) -> tuple[str, str, t.Callable[[], bool] | None]:
         # Use posixpath even on Windows to avoid "drive:" or UNC
         # segments breaking out of the search directory. Use normpath to
         # convert Windows altsep to sep.
         p = os.path.normpath(
             posixpath.join(self._template_root, *split_template_path(template))
         )
-        up_to_date: t.Optional[t.Callable[[], bool]]
+        up_to_date: t.Callable[[], bool] | None
 
         if self._archive is None:
             # Package is a directory.
@@ -401,8 +401,8 @@ class PackageLoader(BaseLoader):
 
         return source.decode(self.encoding), p, up_to_date
 
-    def list_templates(self) -> t.List[str]:
-        results: t.List[str] = []
+    def list_templates(self) -> list[str]:
+        results: list[str] = []
 
         if self._archive is None:
             # Package is a directory.
@@ -447,13 +447,13 @@ class DictLoader(BaseLoader):
 
     def get_source(
         self, environment: "Environment", template: str
-    ) -> t.Tuple[str, None, t.Callable[[], bool]]:
+    ) -> tuple[str, None, t.Callable[[], bool]]:
         if template in self.mapping:
             source = self.mapping[template]
             return source, None, lambda: source == self.mapping.get(template)
         raise TemplateNotFound(template)
 
-    def list_templates(self) -> t.List[str]:
+    def list_templates(self) -> list[str]:
         return sorted(self.mapping)
 
 
@@ -479,18 +479,14 @@ class FunctionLoader(BaseLoader):
         self,
         load_func: t.Callable[
             [str],
-            t.Optional[
-                t.Union[
-                    str, t.Tuple[str, t.Optional[str], t.Optional[t.Callable[[], bool]]]
-                ]
-            ],
+            str | tuple[str, str | None, t.Callable[[], bool] | None] | None,
         ],
     ) -> None:
         self.load_func = load_func
 
     def get_source(
         self, environment: "Environment", template: str
-    ) -> t.Tuple[str, t.Optional[str], t.Optional[t.Callable[[], bool]]]:
+    ) -> tuple[str, str | None, t.Callable[[], bool] | None]:
         rv = self.load_func(template)
 
         if rv is None:
@@ -523,7 +519,7 @@ class PrefixLoader(BaseLoader):
         self.mapping = mapping
         self.delimiter = delimiter
 
-    def get_loader(self, template: str) -> t.Tuple[BaseLoader, str]:
+    def get_loader(self, template: str) -> tuple[BaseLoader, str]:
         try:
             prefix, name = template.split(self.delimiter, 1)
             loader = self.mapping[prefix]
@@ -533,7 +529,7 @@ class PrefixLoader(BaseLoader):
 
     def get_source(
         self, environment: "Environment", template: str
-    ) -> t.Tuple[str, t.Optional[str], t.Optional[t.Callable[[], bool]]]:
+    ) -> tuple[str, str | None, t.Callable[[], bool] | None]:
         loader, name = self.get_loader(template)
         try:
             return loader.get_source(environment, name)
@@ -547,7 +543,7 @@ class PrefixLoader(BaseLoader):
         self,
         environment: "Environment",
         name: str,
-        globals: t.Optional[t.MutableMapping[str, t.Any]] = None,
+        globals: t.MutableMapping[str, t.Any] | None = None,
     ) -> "Template":
         loader, local_name = self.get_loader(name)
         try:
@@ -557,7 +553,7 @@ class PrefixLoader(BaseLoader):
             # (the one that includes the prefix)
             raise TemplateNotFound(name) from e
 
-    def list_templates(self) -> t.List[str]:
+    def list_templates(self) -> list[str]:
         result = []
         for prefix, loader in self.mapping.items():
             for template in loader.list_templates():
@@ -584,7 +580,7 @@ class ChoiceLoader(BaseLoader):
 
     def get_source(
         self, environment: "Environment", template: str
-    ) -> t.Tuple[str, t.Optional[str], t.Optional[t.Callable[[], bool]]]:
+    ) -> tuple[str, str | None, t.Callable[[], bool] | None]:
         for loader in self.loaders:
             try:
                 return loader.get_source(environment, template)
@@ -597,7 +593,7 @@ class ChoiceLoader(BaseLoader):
         self,
         environment: "Environment",
         name: str,
-        globals: t.Optional[t.MutableMapping[str, t.Any]] = None,
+        globals: t.MutableMapping[str, t.Any] | None = None,
     ) -> "Template":
         for loader in self.loaders:
             try:
@@ -606,7 +602,7 @@ class ChoiceLoader(BaseLoader):
                 pass
         raise TemplateNotFound(name)
 
-    def list_templates(self) -> t.List[str]:
+    def list_templates(self) -> list[str]:
         found = set()
         for loader in self.loaders:
             found.update(loader.list_templates())
@@ -669,7 +665,7 @@ class ModuleLoader(BaseLoader):
         self,
         environment: "Environment",
         name: str,
-        globals: t.Optional[t.MutableMapping[str, t.Any]] = None,
+        globals: t.MutableMapping[str, t.Any] | None = None,
     ) -> "Template":
         key = self.get_template_key(name)
         module = f"{self.package_name}.{key}"

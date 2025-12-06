@@ -1,32 +1,29 @@
 """Built-in template filters used with the ``|`` operator."""
 
+from collections import abc
+from inspect import getattr_static
+from itertools import chain, groupby
 import math
 import random
 import re
 import typing
 import typing as t
-from collections import abc
-from inspect import getattr_static
-from itertools import chain
-from itertools import groupby
 
-from markupsafe import escape
-from markupsafe import Markup
-from markupsafe import soft_str
+from markupsafe import Markup, escape, soft_str
 
-from .async_utils import async_variant
-from .async_utils import auto_aiter
-from .async_utils import auto_await
-from .async_utils import auto_to_list
+from .async_utils import async_variant, auto_aiter, auto_await, auto_to_list
 from .exceptions import FilterArgumentError
 from .runtime import Undefined
-from .utils import htmlsafe_json_dumps
-from .utils import pass_context
-from .utils import pass_environment
-from .utils import pass_eval_context
-from .utils import pformat
-from .utils import url_quote
-from .utils import urlize
+from .utils import (
+    htmlsafe_json_dumps,
+    pass_context,
+    pass_environment,
+    pass_eval_context,
+    pformat,
+    url_quote,
+    urlize,
+)
+
 
 if t.TYPE_CHECKING:
     import typing_extensions as te
@@ -34,7 +31,7 @@ if t.TYPE_CHECKING:
     from .environment import Environment
     from .nodes import EvalContext
     from .runtime import Context
-    from .sandbox import SandboxedEnvironment  # noqa: F401
+    from .sandbox import SandboxedEnvironment
 
     class HasHTML(te.Protocol):
         def __html__(self) -> str:
@@ -48,7 +45,8 @@ V = t.TypeVar("V")
 
 def ignore_case(value: V) -> V:
     """For use as a postprocessor for :func:`make_attrgetter`. Converts strings
-    to lowercase and returns other types as-is."""
+    to lowercase and returns other types as-is.
+    """
     if isinstance(value, str):
         return t.cast(V, value.lower())
 
@@ -57,9 +55,9 @@ def ignore_case(value: V) -> V:
 
 def make_attrgetter(
     environment: "Environment",
-    attribute: t.Optional[t.Union[str, int]],
-    postprocess: t.Optional[t.Callable[[t.Any], t.Any]] = None,
-    default: t.Optional[t.Any] = None,
+    attribute: str | int | None,
+    postprocess: t.Callable[[t.Any], t.Any] | None = None,
+    default: t.Any | None = None,
 ) -> t.Callable[[t.Any], t.Any]:
     """Returns a callable that looks up the given attribute from a
     passed object with the rules of the environment.  Dots are allowed
@@ -85,9 +83,9 @@ def make_attrgetter(
 
 def make_multi_attrgetter(
     environment: "Environment",
-    attribute: t.Optional[t.Union[str, int]],
-    postprocess: t.Optional[t.Callable[[t.Any], t.Any]] = None,
-) -> t.Callable[[t.Any], t.List[t.Any]]:
+    attribute: str | int | None,
+    postprocess: t.Callable[[t.Any], t.Any] | None = None,
+) -> t.Callable[[t.Any], list[t.Any]]:
     """Returns a callable that looks up the given comma separated
     attributes from a passed object with the rules of the environment.
     Dots are allowed to access attributes of each attribute.  Integer
@@ -99,13 +97,13 @@ def make_multi_attrgetter(
     Examples of attribute: "attr1,attr2", "attr1.inner1.0,attr2.inner2.0", etc.
     """
     if isinstance(attribute, str):
-        split: t.Sequence[t.Union[str, int, None]] = attribute.split(",")
+        split: t.Sequence[str | int | None] = attribute.split(",")
     else:
         split = [attribute]
 
     parts = [_prepare_attribute_parts(item) for item in split]
 
-    def attrgetter(item: t.Any) -> t.List[t.Any]:
+    def attrgetter(item: t.Any) -> list[t.Any]:
         items = [None] * len(parts)
 
         for i, attribute_part in enumerate(parts):
@@ -125,8 +123,8 @@ def make_multi_attrgetter(
 
 
 def _prepare_attribute_parts(
-    attr: t.Optional[t.Union[str, int]],
-) -> t.List[t.Union[str, int]]:
+    attr: str | int | None,
+) -> list[str | int]:
     if attr is None:
         return []
 
@@ -136,7 +134,7 @@ def _prepare_attribute_parts(
     return [attr]
 
 
-def do_forceescape(value: "t.Union[str, HasHTML]") -> Markup:
+def do_forceescape(value: "str | HasHTML") -> Markup:
     """Enforce HTML escaping.  This will probably double escape variables."""
     if hasattr(value, "__html__"):
         value = t.cast("HasHTML", value).__html__()
@@ -145,7 +143,7 @@ def do_forceescape(value: "t.Union[str, HasHTML]") -> Markup:
 
 
 def do_urlencode(
-    value: t.Union[str, t.Mapping[str, t.Any], t.Iterable[t.Tuple[str, t.Any]]],
+    value: str | t.Mapping[str, t.Any] | t.Iterable[tuple[str, t.Any]],
 ) -> str:
     """Quote data for use in a URL path or query using UTF-8.
 
@@ -166,7 +164,7 @@ def do_urlencode(
         return url_quote(value)
 
     if isinstance(value, dict):
-        items: t.Iterable[t.Tuple[str, t.Any]] = value.items()
+        items: t.Iterable[tuple[str, t.Any]] = value.items()
     else:
         items = value  # type: ignore
 
@@ -177,7 +175,7 @@ def do_urlencode(
 
 @pass_eval_context
 def do_replace(
-    eval_ctx: "EvalContext", s: str, old: str, new: str, count: t.Optional[int] = None
+    eval_ctx: "EvalContext", s: str, old: str, new: str, count: int | None = None
 ) -> str:
     """Return a copy of the value with all occurrences of a substring
     replaced with a new one. The first argument is the substring
@@ -201,8 +199,8 @@ def do_replace(
 
     if (
         hasattr(old, "__html__")
-        or hasattr(new, "__html__")
-        and not hasattr(s, "__html__")
+        or (hasattr(new, "__html__")
+        and not hasattr(s, "__html__"))
     ):
         s = escape(s)
     else:
@@ -221,7 +219,7 @@ def do_lower(s: str) -> str:
     return soft_str(s).lower()
 
 
-def do_items(value: t.Union[t.Mapping[K, V], Undefined]) -> t.Iterator[t.Tuple[K, V]]:
+def do_items(value: t.Mapping[K, V] | Undefined) -> t.Iterator[tuple[K, V]]:
     """Return an iterator over the ``(key, value)`` items of a mapping.
 
     ``x|items`` is the same as ``x.items()``, except if ``x`` is
@@ -346,7 +344,7 @@ def do_dictsort(
     case_sensitive: bool = False,
     by: 'te.Literal["key", "value"]' = "key",
     reverse: bool = False,
-) -> t.List[t.Tuple[K, V]]:
+) -> list[tuple[K, V]]:
     """Sort a dict and yield (key, value) pairs. Python dicts may not
     be in the order you want to display them in, so sort them first.
 
@@ -371,7 +369,7 @@ def do_dictsort(
     else:
         raise FilterArgumentError('You can only sort by either "key" or "value"')
 
-    def sort_func(item: t.Tuple[t.Any, t.Any]) -> t.Any:
+    def sort_func(item: tuple[t.Any, t.Any]) -> t.Any:
         value = item[pos]
 
         if not case_sensitive:
@@ -388,8 +386,8 @@ def do_sort(
     value: "t.Iterable[V]",
     reverse: bool = False,
     case_sensitive: bool = False,
-    attribute: t.Optional[t.Union[str, int]] = None,
-) -> "t.List[V]":
+    attribute: str | int | None = None,
+) -> "list[V]":
     """Sort an iterable using Python's :func:`sorted`.
 
     .. sourcecode:: jinja
@@ -443,7 +441,7 @@ def sync_do_unique(
     environment: "Environment",
     value: "t.Iterable[V]",
     case_sensitive: bool = False,
-    attribute: t.Optional[t.Union[str, int]] = None,
+    attribute: str | int | None = None,
 ) -> "t.Iterator[V]":
     """Returns a list of unique items from the given iterable.
 
@@ -474,9 +472,9 @@ def sync_do_unique(
 @async_variant(sync_do_unique)  # type: ignore
 async def do_unique(
     environment: "Environment",
-    value: "t.Union[t.AsyncIterable[V], t.Iterable[V]]",
+    value: "t.AsyncIterable[V] | t.Iterable[V]",
     case_sensitive: bool = False,
-    attribute: t.Optional[t.Union[str, int]] = None,
+    attribute: str | int | None = None,
 ) -> "t.Iterator[V]":
     return sync_do_unique(
         environment, await auto_to_list(value), case_sensitive, attribute
@@ -488,8 +486,8 @@ def _min_or_max(
     value: "t.Iterable[V]",
     func: "t.Callable[..., V]",
     case_sensitive: bool,
-    attribute: t.Optional[t.Union[str, int]],
-) -> "t.Union[V, Undefined]":
+    attribute: str | int | None,
+) -> "V | Undefined":
     it = iter(value)
 
     try:
@@ -508,8 +506,8 @@ def do_min(
     environment: "Environment",
     value: "t.Iterable[V]",
     case_sensitive: bool = False,
-    attribute: t.Optional[t.Union[str, int]] = None,
-) -> "t.Union[V, Undefined]":
+    attribute: str | int | None = None,
+) -> "V | Undefined":
     """Return the smallest item from the sequence.
 
     .. sourcecode:: jinja
@@ -528,8 +526,8 @@ def do_max(
     environment: "Environment",
     value: "t.Iterable[V]",
     case_sensitive: bool = False,
-    attribute: t.Optional[t.Union[str, int]] = None,
-) -> "t.Union[V, Undefined]":
+    attribute: str | int | None = None,
+) -> "V | Undefined":
     """Return the largest item from the sequence.
 
     .. sourcecode:: jinja
@@ -581,7 +579,7 @@ def sync_do_join(
     eval_ctx: "EvalContext",
     value: t.Iterable[t.Any],
     d: str = "",
-    attribute: t.Optional[t.Union[str, int]] = None,
+    attribute: str | int | None = None,
 ) -> str:
     """Return a string which is the concatenation of the strings in the
     sequence. The separator between elements is an empty string per
@@ -637,9 +635,9 @@ def sync_do_join(
 @async_variant(sync_do_join)  # type: ignore
 async def do_join(
     eval_ctx: "EvalContext",
-    value: t.Union[t.AsyncIterable[t.Any], t.Iterable[t.Any]],
+    value: t.AsyncIterable[t.Any] | t.Iterable[t.Any],
     d: str = "",
-    attribute: t.Optional[t.Union[str, int]] = None,
+    attribute: str | int | None = None,
 ) -> str:
     return sync_do_join(eval_ctx, await auto_to_list(value), d, attribute)
 
@@ -652,7 +650,7 @@ def do_center(value: str, width: int = 80) -> str:
 @pass_environment
 def sync_do_first(
     environment: "Environment", seq: "t.Iterable[V]"
-) -> "t.Union[V, Undefined]":
+) -> "V | Undefined":
     """Return the first item of a sequence."""
     try:
         return next(iter(seq))
@@ -662,8 +660,8 @@ def sync_do_first(
 
 @async_variant(sync_do_first)  # type: ignore
 async def do_first(
-    environment: "Environment", seq: "t.Union[t.AsyncIterable[V], t.Iterable[V]]"
-) -> "t.Union[V, Undefined]":
+    environment: "Environment", seq: "t.AsyncIterable[V] | t.Iterable[V]"
+) -> "V | Undefined":
     try:
         return await auto_aiter(seq).__anext__()
     except StopAsyncIteration:
@@ -673,7 +671,7 @@ async def do_first(
 @pass_environment
 def do_last(
     environment: "Environment", seq: "t.Reversible[V]"
-) -> "t.Union[V, Undefined]":
+) -> "V | Undefined":
     """Return the last item of a sequence.
 
     Note: Does not work with generators. You may want to explicitly
@@ -693,7 +691,7 @@ def do_last(
 
 
 @pass_context
-def do_random(context: "Context", seq: "t.Sequence[V]") -> "t.Union[V, Undefined]":
+def do_random(context: "Context", seq: "t.Sequence[V]") -> "V | Undefined":
     """Return a random item from the sequence."""
     try:
         return random.choice(seq)
@@ -701,7 +699,7 @@ def do_random(context: "Context", seq: "t.Sequence[V]") -> "t.Union[V, Undefined
         return context.environment.undefined("No random item, sequence was empty.")
 
 
-def do_filesizeformat(value: t.Union[str, float, int], binary: bool = False) -> str:
+def do_filesizeformat(value: str | float | int, binary: bool = False) -> str:
     """Format the value like a 'human-readable' file size (i.e. 13 kB,
     4.1 MB, 102 Bytes, etc).  Per default decimal prefixes are used (Mega,
     Giga, etc.), if the second parameter is set to `True` the binary
@@ -746,11 +744,11 @@ _uri_scheme_re = re.compile(r"^([\w.+-]{2,}:(/){0,2})$")
 def do_urlize(
     eval_ctx: "EvalContext",
     value: str,
-    trim_url_limit: t.Optional[int] = None,
+    trim_url_limit: int | None = None,
     nofollow: bool = False,
-    target: t.Optional[str] = None,
-    rel: t.Optional[str] = None,
-    extra_schemes: t.Optional[t.Iterable[str]] = None,
+    target: str | None = None,
+    rel: str | None = None,
+    extra_schemes: t.Iterable[str] | None = None,
 ) -> str:
     """Convert URLs in text into clickable links.
 
@@ -823,7 +821,7 @@ def do_urlize(
 
 
 def do_indent(
-    s: str, width: t.Union[int, str] = 4, first: bool = False, blank: bool = False
+    s: str, width: int | str = 4, first: bool = False, blank: bool = False
 ) -> str:
     """Return a copy of the string with each line indented by 4 spaces. The
     first line and blank lines are not indented by default.
@@ -877,7 +875,7 @@ def do_truncate(
     length: int = 255,
     killwords: bool = False,
     end: str = "...",
-    leeway: t.Optional[int] = None,
+    leeway: int | None = None,
 ) -> str:
     """Return a truncated copy of the string. The length is specified
     with the first parameter which defaults to ``255``. If the second
@@ -924,7 +922,7 @@ def do_wordwrap(
     s: str,
     width: int = 79,
     break_long_words: bool = True,
-    wrapstring: t.Optional[str] = None,
+    wrapstring: str | None = None,
     break_on_hyphens: bool = True,
 ) -> str:
     """Wrap a string to the given width. Existing newlines are treated
@@ -1043,12 +1041,12 @@ def do_format(value: str, *args: t.Any, **kwargs: t.Any) -> str:
     return soft_str(value) % (kwargs or args)
 
 
-def do_trim(value: str, chars: t.Optional[str] = None) -> str:
+def do_trim(value: str, chars: str | None = None) -> str:
     """Strip leading and trailing characters, by default whitespace."""
     return soft_str(value).strip(chars)
 
 
-def do_striptags(value: "t.Union[str, HasHTML]") -> str:
+def do_striptags(value: "str | HasHTML") -> str:
     """Strip SGML/XML tags and replace adjacent whitespace by one space."""
     if hasattr(value, "__html__"):
         value = t.cast("HasHTML", value).__html__()
@@ -1057,8 +1055,8 @@ def do_striptags(value: "t.Union[str, HasHTML]") -> str:
 
 
 def sync_do_slice(
-    value: "t.Collection[V]", slices: int, fill_with: "t.Optional[V]" = None
-) -> "t.Iterator[t.List[V]]":
+    value: "t.Collection[V]", slices: int, fill_with: "V | None" = None
+) -> "t.Iterator[list[V]]":
     """Slice an iterator and return a list of lists containing
     those items. Useful if you want to create a div containing
     three ul tags that represent columns:
@@ -1101,16 +1099,16 @@ def sync_do_slice(
 
 @async_variant(sync_do_slice)  # type: ignore
 async def do_slice(
-    value: "t.Union[t.AsyncIterable[V], t.Iterable[V]]",
+    value: "t.AsyncIterable[V] | t.Iterable[V]",
     slices: int,
-    fill_with: t.Optional[t.Any] = None,
-) -> "t.Iterator[t.List[V]]":
+    fill_with: t.Any | None = None,
+) -> "t.Iterator[list[V]]":
     return sync_do_slice(await auto_to_list(value), slices, fill_with)
 
 
 def do_batch(
-    value: "t.Iterable[V]", linecount: int, fill_with: "t.Optional[V]" = None
-) -> "t.Iterator[t.List[V]]":
+    value: "t.Iterable[V]", linecount: int, fill_with: "V | None" = None
+) -> "t.Iterator[list[V]]":
     """
     A filter that batches items. It works pretty much like `slice`
     just the other way round. It returns a list of lists with the
@@ -1129,7 +1127,7 @@ def do_batch(
         {%- endfor %}
         </table>
     """
-    tmp: t.List[V] = []
+    tmp: list[V] = []
 
     for item in value:
         if len(tmp) == linecount:
@@ -1187,7 +1185,7 @@ def do_round(
 
 class _GroupTuple(t.NamedTuple):
     grouper: t.Any
-    list: t.List[t.Any]
+    list: list[t.Any]
 
     # Use the regular tuple repr to hide this subclass if users print
     # out the value during debugging.
@@ -1202,10 +1200,10 @@ class _GroupTuple(t.NamedTuple):
 def sync_do_groupby(
     environment: "Environment",
     value: "t.Iterable[V]",
-    attribute: t.Union[str, int],
-    default: t.Optional[t.Any] = None,
+    attribute: str | int,
+    default: t.Any | None = None,
     case_sensitive: bool = False,
-) -> "t.List[_GroupTuple]":
+) -> "list[_GroupTuple]":
     """Group a sequence of objects by an attribute using Python's
     :func:`itertools.groupby`. The attribute can use dot notation for
     nested access, like ``"address.city"``. Unlike Python's ``groupby``,
@@ -1285,11 +1283,11 @@ def sync_do_groupby(
 @async_variant(sync_do_groupby)  # type: ignore
 async def do_groupby(
     environment: "Environment",
-    value: "t.Union[t.AsyncIterable[V], t.Iterable[V]]",
-    attribute: t.Union[str, int],
-    default: t.Optional[t.Any] = None,
+    value: "t.AsyncIterable[V] | t.Iterable[V]",
+    attribute: str | int,
+    default: t.Any | None = None,
     case_sensitive: bool = False,
-) -> "t.List[_GroupTuple]":
+) -> "list[_GroupTuple]":
     expr = make_attrgetter(
         environment,
         attribute,
@@ -1313,7 +1311,7 @@ async def do_groupby(
 def sync_do_sum(
     environment: "Environment",
     iterable: "t.Iterable[V]",
-    attribute: t.Optional[t.Union[str, int]] = None,
+    attribute: str | int | None = None,
     start: V = 0,  # type: ignore
 ) -> V:
     """Returns the sum of a sequence of numbers plus the value of parameter
@@ -1339,8 +1337,8 @@ def sync_do_sum(
 @async_variant(sync_do_sum)  # type: ignore
 async def do_sum(
     environment: "Environment",
-    iterable: "t.Union[t.AsyncIterable[V], t.Iterable[V]]",
-    attribute: t.Optional[t.Union[str, int]] = None,
+    iterable: "t.AsyncIterable[V] | t.Iterable[V]",
+    attribute: str | int | None = None,
     start: V = 0,  # type: ignore
 ) -> V:
     rv = start
@@ -1358,7 +1356,7 @@ async def do_sum(
     return rv
 
 
-def sync_do_list(value: "t.Iterable[V]") -> "t.List[V]":
+def sync_do_list(value: "t.Iterable[V]") -> "list[V]":
     """Convert the value into a list.  If it was a string the returned list
     will be a list of characters.
     """
@@ -1366,7 +1364,7 @@ def sync_do_list(value: "t.Iterable[V]") -> "t.List[V]":
 
 
 @async_variant(sync_do_list)  # type: ignore
-async def do_list(value: "t.Union[t.AsyncIterable[V], t.Iterable[V]]") -> "t.List[V]":
+async def do_list(value: "t.AsyncIterable[V] | t.Iterable[V]") -> "list[V]":
     return await auto_to_list(value)
 
 
@@ -1390,7 +1388,7 @@ def do_reverse(value: str) -> str: ...
 def do_reverse(value: "t.Iterable[V]") -> "t.Iterable[V]": ...
 
 
-def do_reverse(value: t.Union[str, t.Iterable[V]]) -> t.Union[str, t.Iterable[V]]:
+def do_reverse(value: str | t.Iterable[V]) -> str | t.Iterable[V]:
     """Reverse the object or return an iterator that iterates over it the other
     way round.
     """
@@ -1411,7 +1409,7 @@ def do_reverse(value: t.Union[str, t.Iterable[V]]) -> t.Union[str, t.Iterable[V]
 @pass_environment
 def do_attr(
     environment: "Environment", obj: t.Any, name: str
-) -> t.Union[Undefined, t.Any]:
+) -> Undefined | t.Any:
     """Get an attribute of an object. ``foo|attr("bar")`` works like
     ``foo.bar``, but returns undefined instead of falling back to ``foo["bar"]``
     if the attribute doesn't exist.
@@ -1449,7 +1447,7 @@ def sync_do_map(
     value: t.Iterable[t.Any],
     *,
     attribute: str = ...,
-    default: t.Optional[t.Any] = None,
+    default: t.Any | None = None,
 ) -> t.Iterable[t.Any]: ...
 
 
@@ -1506,7 +1504,7 @@ def sync_do_map(
 @typing.overload
 def do_map(
     context: "Context",
-    value: t.Union[t.AsyncIterable[t.Any], t.Iterable[t.Any]],
+    value: t.AsyncIterable[t.Any] | t.Iterable[t.Any],
     name: str,
     *args: t.Any,
     **kwargs: t.Any,
@@ -1516,17 +1514,17 @@ def do_map(
 @typing.overload
 def do_map(
     context: "Context",
-    value: t.Union[t.AsyncIterable[t.Any], t.Iterable[t.Any]],
+    value: t.AsyncIterable[t.Any] | t.Iterable[t.Any],
     *,
     attribute: str = ...,
-    default: t.Optional[t.Any] = None,
+    default: t.Any | None = None,
 ) -> t.Iterable[t.Any]: ...
 
 
 @async_variant(sync_do_map)  # type: ignore
 async def do_map(
     context: "Context",
-    value: t.Union[t.AsyncIterable[t.Any], t.Iterable[t.Any]],
+    value: t.AsyncIterable[t.Any] | t.Iterable[t.Any],
     *args: t.Any,
     **kwargs: t.Any,
 ) -> t.AsyncIterable[t.Any]:
@@ -1571,7 +1569,7 @@ def sync_do_select(
 @async_variant(sync_do_select)  # type: ignore
 async def do_select(
     context: "Context",
-    value: "t.Union[t.AsyncIterable[V], t.Iterable[V]]",
+    value: "t.AsyncIterable[V] | t.Iterable[V]",
     *args: t.Any,
     **kwargs: t.Any,
 ) -> "t.AsyncIterator[V]":
@@ -1607,7 +1605,7 @@ def sync_do_reject(
 @async_variant(sync_do_reject)  # type: ignore
 async def do_reject(
     context: "Context",
-    value: "t.Union[t.AsyncIterable[V], t.Iterable[V]]",
+    value: "t.AsyncIterable[V] | t.Iterable[V]",
     *args: t.Any,
     **kwargs: t.Any,
 ) -> "t.AsyncIterator[V]":
@@ -1647,7 +1645,7 @@ def sync_do_selectattr(
 @async_variant(sync_do_selectattr)  # type: ignore
 async def do_selectattr(
     context: "Context",
-    value: "t.Union[t.AsyncIterable[V], t.Iterable[V]]",
+    value: "t.AsyncIterable[V] | t.Iterable[V]",
     *args: t.Any,
     **kwargs: t.Any,
 ) -> "t.AsyncIterator[V]":
@@ -1685,7 +1683,7 @@ def sync_do_rejectattr(
 @async_variant(sync_do_rejectattr)  # type: ignore
 async def do_rejectattr(
     context: "Context",
-    value: "t.Union[t.AsyncIterable[V], t.Iterable[V]]",
+    value: "t.AsyncIterable[V] | t.Iterable[V]",
     *args: t.Any,
     **kwargs: t.Any,
 ) -> "t.AsyncIterator[V]":
@@ -1694,7 +1692,7 @@ async def do_rejectattr(
 
 @pass_eval_context
 def do_tojson(
-    eval_ctx: "EvalContext", value: t.Any, indent: t.Optional[int] = None
+    eval_ctx: "EvalContext", value: t.Any, indent: int | None = None
 ) -> Markup:
     """Serialize an object to a string of JSON, and mark it safe to
     render in HTML. This filter is only for use in HTML documents.
@@ -1722,7 +1720,7 @@ def do_tojson(
 
 
 def prepare_map(
-    context: "Context", args: t.Tuple[t.Any, ...], kwargs: t.Dict[str, t.Any]
+    context: "Context", args: tuple[t.Any, ...], kwargs: dict[str, t.Any]
 ) -> t.Callable[[t.Any], t.Any]:
     if not args and "attribute" in kwargs:
         attribute = kwargs.pop("attribute")
@@ -1751,8 +1749,8 @@ def prepare_map(
 
 def prepare_select_or_reject(
     context: "Context",
-    args: t.Tuple[t.Any, ...],
-    kwargs: t.Dict[str, t.Any],
+    args: tuple[t.Any, ...],
+    kwargs: dict[str, t.Any],
     modfunc: t.Callable[[t.Any], t.Any],
     lookup_attr: bool,
 ) -> t.Callable[[t.Any], t.Any]:
@@ -1786,8 +1784,8 @@ def prepare_select_or_reject(
 def select_or_reject(
     context: "Context",
     value: "t.Iterable[V]",
-    args: t.Tuple[t.Any, ...],
-    kwargs: t.Dict[str, t.Any],
+    args: tuple[t.Any, ...],
+    kwargs: dict[str, t.Any],
     modfunc: t.Callable[[t.Any], t.Any],
     lookup_attr: bool,
 ) -> "t.Iterator[V]":
@@ -1801,9 +1799,9 @@ def select_or_reject(
 
 async def async_select_or_reject(
     context: "Context",
-    value: "t.Union[t.AsyncIterable[V], t.Iterable[V]]",
-    args: t.Tuple[t.Any, ...],
-    kwargs: t.Dict[str, t.Any],
+    value: "t.AsyncIterable[V] | t.Iterable[V]",
+    args: tuple[t.Any, ...],
+    kwargs: dict[str, t.Any],
     modfunc: t.Callable[[t.Any], t.Any],
     lookup_attr: bool,
 ) -> "t.AsyncIterator[V]":

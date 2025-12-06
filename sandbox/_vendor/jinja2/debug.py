@@ -1,17 +1,16 @@
 import sys
+from types import CodeType, TracebackType
 import typing as t
-from types import CodeType
-from types import TracebackType
 
 from .exceptions import TemplateSyntaxError
-from .utils import internal_code
-from .utils import missing
+from .utils import internal_code, missing
+
 
 if t.TYPE_CHECKING:
     from .runtime import Context
 
 
-def rewrite_traceback_stack(source: t.Optional[str] = None) -> BaseException:
+def rewrite_traceback_stack(source: str | None = None) -> BaseException:
     """Rewrite the current exception to replace any tracebacks from
     within compiled template code with tracebacks that look like they
     came from the template source.
@@ -74,7 +73,7 @@ def rewrite_traceback_stack(source: t.Optional[str] = None) -> BaseException:
 
 
 def fake_traceback(  # type: ignore
-    exc_value: BaseException, tb: t.Optional[TracebackType], filename: str, lineno: int
+    exc_value: BaseException, tb: TracebackType | None, filename: str, lineno: int
 ) -> TracebackType:
     """Produce a new traceback object that looks like it came from the
     template source instead of the compiled code. The filename, line
@@ -147,15 +146,15 @@ def fake_traceback(  # type: ignore
         return sys.exc_info()[2].tb_next  # type: ignore
 
 
-def get_template_locals(real_locals: t.Mapping[str, t.Any]) -> t.Dict[str, t.Any]:
+def get_template_locals(real_locals: t.Mapping[str, t.Any]) -> dict[str, t.Any]:
     """Based on the runtime locals, get the context that would be
     available at that point in the template.
     """
     # Start with the current template context.
-    ctx: t.Optional[Context] = real_locals.get("context")
+    ctx: Context | None = real_locals.get("context")
 
     if ctx is not None:
-        data: t.Dict[str, t.Any] = ctx.get_all().copy()
+        data: dict[str, t.Any] = ctx.get_all().copy()
     else:
         data = {}
 
@@ -163,7 +162,7 @@ def get_template_locals(real_locals: t.Mapping[str, t.Any]) -> t.Dict[str, t.Any
     # rather than pushing a context. Local variables follow the scheme
     # l_depth_name. Find the highest-depth local that has a value for
     # each name.
-    local_overrides: t.Dict[str, t.Tuple[int, t.Any]] = {}
+    local_overrides: dict[str, tuple[int, t.Any]] = {}
 
     for name, value in real_locals.items():
         if not name.startswith("l_") or value is missing:

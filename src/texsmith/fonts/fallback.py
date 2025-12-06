@@ -2,12 +2,12 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterable
 from dataclasses import dataclass
 import hashlib
 import json
 from pathlib import Path
 import pickle
-from typing import Iterable
 
 from texsmith.fonts.cache import FontCache
 from texsmith.fonts.coverage import NotoCoverage
@@ -38,7 +38,13 @@ class FallbackEntry:
     font: dict
 
     def to_dict(self) -> dict:
-        payload = {"name": self.name, "start": self.start, "end": self.end, "group": self.group, "font": self.font}
+        payload = {
+            "name": self.name,
+            "start": self.start,
+            "end": self.end,
+            "group": self.group,
+            "font": self.font,
+        }
         return payload
 
 
@@ -79,17 +85,20 @@ class FallbackBuilder:
             "dir": best.dir_base,
         }
 
-    def build(self, classes: Iterable[UCharClass], coverage: Iterable[NotoCoverage]) -> list[FallbackEntry]:
+    def build(
+        self, classes: Iterable[UCharClass], coverage: Iterable[NotoCoverage]
+    ) -> list[FallbackEntry]:
         coverage_index = {entry.family: entry for entry in coverage}
         entries: list[FallbackEntry] = []
         for cls in classes:
-            class_range = (cls.start, cls.end)
             font = cls.font or self._pick_font(cls, coverage_index)
             if font is None:
                 fallback_name = _sanitize_family(f"NotoSans{cls.name}")
                 font = {"name": fallback_name, "extension": ".otf", "styles": ["regular", "bold"]}
             entries.append(
-                FallbackEntry(name=cls.name, start=cls.start, end=cls.end, group=cls.group, font=font),
+                FallbackEntry(
+                    name=cls.name, start=cls.start, end=cls.end, group=cls.group, font=font
+                ),
             )
         self.logger.notice(f"Polices fallback générées pour {len(entries)} classes.")
         return entries
@@ -127,7 +136,7 @@ class FallbackIndex:
         }
 
     @classmethod
-    def from_serialized(cls, payload: dict) -> "FallbackIndex" | None:
+    def from_serialized(cls, payload: dict) -> FallbackIndex | None:
         if payload.get("version") != CACHE_VERSION or payload.get("block_shift") != BLOCK_SHIFT:
             return None
         entries = [
@@ -167,14 +176,13 @@ class FallbackRepository:
             return None
         try:
             raw = pickle.loads(self.cache_path.read_bytes())
-            if raw.get("version") != CACHE_VERSION:
-                return None
-            if expected_signature and raw.get("signature") != expected_signature:
-                return None
-            index = FallbackIndex.from_serialized(raw.get("index", {}))
-            return index
         except Exception:
             return None
+        if raw.get("version") != CACHE_VERSION:
+            return None
+        if expected_signature and raw.get("signature") != expected_signature:
+            return None
+        return FallbackIndex.from_serialized(raw.get("index", {}))
 
     def save(self, index: FallbackIndex, signature: str) -> None:
         payload = {"version": CACHE_VERSION, "signature": signature, "index": index.serialize()}
@@ -187,7 +195,7 @@ class FallbackRepository:
         signature = self._signature(entries)
         cached = self.load(expected_signature=signature)
         if cached:
-            self.logger.notice(f"Index fallback chargé depuis {self.cache_path}")
+            self.logger.notice("Index fallback chargé depuis %s", self.cache_path)
             return cached
         index = FallbackIndex(entries)
         self.save(index, signature)
@@ -208,11 +216,20 @@ class FallbackLookup:
             if not hits:
                 if codepoint <= 0x7F:
                     continue
-                hits = [FallbackEntry(name="Unknown", start=codepoint, end=codepoint, group=None, font={})]
+                hits = [
+                    FallbackEntry(
+                        name="Unknown", start=codepoint, end=codepoint, group=None, font={}
+                    )
+                ]
             for hit in hits:
                 entry = classes.setdefault(
                     hit.name,
-                    {"fonts": set(), "ranges": [], "group": hit.group or hit.name, "font": hit.font},
+                    {
+                        "fonts": set(),
+                        "ranges": [],
+                        "group": hit.group or hit.name,
+                        "font": hit.font,
+                    },
                 )
                 entry["fonts"].add(hit.font.get("name") if hit.font else None)
                 entry["ranges"].append(codepoint)

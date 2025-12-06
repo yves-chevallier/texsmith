@@ -2,11 +2,12 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterable
 from dataclasses import dataclass
 import hashlib
 from pathlib import Path
 import pickle
-from typing import Any, Iterable
+from typing import Any
 
 import yaml
 
@@ -60,9 +61,8 @@ class FontIndex:
             return None
         index = cls([])
         index._buckets = {
-            int(block): [tuple(r) for r in ranges]
-            for block, ranges in data["buckets"].items()
-        }  # type: ignore[attr-defined,assignment]  # noqa: SLF001
+            int(block): [tuple(r) for r in ranges] for block, ranges in data["buckets"].items()
+        }  # type: ignore[attr-defined,assignment]
         return index
 
 
@@ -144,7 +144,10 @@ class FallbackFontIndex:
             return None
         try:
             data = pickle.loads(self.cache_path.read_bytes())
-            if data.get("version") != CACHE_VERSION or data.get("signature") != self._fonts_signature:
+            if (
+                data.get("version") != CACHE_VERSION
+                or data.get("signature") != self._fonts_signature
+            ):
                 return None
             return FontIndex.from_serialized(data.get("index", {}))
         except Exception:

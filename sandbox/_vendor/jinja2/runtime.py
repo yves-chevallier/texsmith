@@ -1,28 +1,37 @@
 """The runtime functions and state used by compiled templates."""
 
+from collections import abc
 import functools
+from itertools import chain
 import sys
 import typing as t
-from collections import abc
-from itertools import chain
 
-from markupsafe import escape  # noqa: F401
-from markupsafe import Markup
-from markupsafe import soft_str
+from markupsafe import (
+    Markup,
+    escape,
+    soft_str,
+)
 
-from .async_utils import auto_aiter
-from .async_utils import auto_await  # noqa: F401
-from .exceptions import TemplateNotFound  # noqa: F401
-from .exceptions import TemplateRuntimeError  # noqa: F401
-from .exceptions import UndefinedError
+from .async_utils import (
+    auto_aiter,
+    auto_await,
+)
+from .exceptions import (
+    TemplateNotFound,
+    TemplateRuntimeError,
+    UndefinedError,
+)
 from .nodes import EvalContext
-from .utils import _PassArg
-from .utils import concat
-from .utils import internalcode
-from .utils import missing
-from .utils import Namespace  # noqa: F401
-from .utils import object_type_repr
-from .utils import pass_eval_context
+from .utils import (
+    Namespace,
+    _PassArg,
+    concat,
+    internalcode,
+    missing,
+    object_type_repr,
+    pass_eval_context,
+)
+
 
 V = t.TypeVar("V")
 F = t.TypeVar("F", bound=t.Callable[..., t.Any])
@@ -92,12 +101,12 @@ def str_join(seq: t.Iterable[t.Any]) -> str:
 
 def new_context(
     environment: "Environment",
-    template_name: t.Optional[str],
-    blocks: t.Dict[str, t.Callable[["Context"], t.Iterator[str]]],
-    vars: t.Optional[t.Dict[str, t.Any]] = None,
+    template_name: str | None,
+    blocks: dict[str, t.Callable[["Context"], t.Iterator[str]]],
+    vars: dict[str, t.Any] | None = None,
     shared: bool = False,
-    globals: t.Optional[t.MutableMapping[str, t.Any]] = None,
-    locals: t.Optional[t.Mapping[str, t.Any]] = None,
+    globals: t.MutableMapping[str, t.Any] | None = None,
+    locals: t.Mapping[str, t.Any] | None = None,
 ) -> "Context":
     """Internal helper for context creation."""
     if vars is None:
@@ -165,16 +174,16 @@ class Context:
     def __init__(
         self,
         environment: "Environment",
-        parent: t.Dict[str, t.Any],
-        name: t.Optional[str],
-        blocks: t.Dict[str, t.Callable[["Context"], t.Iterator[str]]],
-        globals: t.Optional[t.MutableMapping[str, t.Any]] = None,
+        parent: dict[str, t.Any],
+        name: str | None,
+        blocks: dict[str, t.Callable[["Context"], t.Iterator[str]]],
+        globals: t.MutableMapping[str, t.Any] | None = None,
     ):
         self.parent = parent
-        self.vars: t.Dict[str, t.Any] = {}
+        self.vars: dict[str, t.Any] = {}
         self.environment: Environment = environment
         self.eval_ctx = EvalContext(self.environment, name)
-        self.exported_vars: t.Set[str] = set()
+        self.exported_vars: set[str] = set()
         self.name = name
         self.globals_keys = set() if globals is None else set(globals)
 
@@ -244,11 +253,11 @@ class Context:
 
         return missing
 
-    def get_exported(self) -> t.Dict[str, t.Any]:
+    def get_exported(self) -> dict[str, t.Any]:
         """Get a new dict with the exported variables."""
         return {k: self.vars[k] for k in self.exported_vars}
 
-    def get_all(self) -> t.Dict[str, t.Any]:
+    def get_all(self) -> dict[str, t.Any]:
         """Return the complete context as dict including the exported
         variables.  For optimizations reasons this might not return an
         actual copy so be careful with using it.
@@ -264,7 +273,7 @@ class Context:
         __self,
         __obj: t.Callable[..., t.Any],
         *args: t.Any,
-        **kwargs: t.Any,  # noqa: B902
+        **kwargs: t.Any,
     ) -> t.Union[t.Any, "Undefined"]:
         """Call the callable with the arguments and keyword arguments
         provided but inject the active context or environment as first
@@ -307,7 +316,7 @@ class Context:
                 " StopIteration exception"
             )
 
-    def derived(self, locals: t.Optional[t.Dict[str, t.Any]] = None) -> "Context":
+    def derived(self, locals: dict[str, t.Any] | None = None) -> "Context":
         """Internal helper function to create a derived context.  This is
         used in situations where the system needs a new context in the same
         template that is independent.
@@ -348,7 +357,7 @@ class BlockReference:
         self,
         name: str,
         context: "Context",
-        stack: t.List[t.Callable[["Context"], t.Iterator[str]]],
+        stack: list[t.Callable[["Context"], t.Iterator[str]]],
         depth: int,
     ) -> None:
         self.name = name
@@ -399,7 +408,7 @@ class LoopContext:
     #: Current iteration of the loop, starting at 0.
     index0 = -1
 
-    _length: t.Optional[int] = None
+    _length: int | None = None
     _after: t.Any = missing
     _current: t.Any = missing
     _before: t.Any = missing
@@ -408,7 +417,7 @@ class LoopContext:
     def __init__(
         self,
         iterable: t.Iterable[V],
-        undefined: t.Type["Undefined"],
+        undefined: type["Undefined"],
         recurse: t.Optional["LoopRenderFunc"] = None,
         depth0: int = 0,
     ) -> None:
@@ -558,7 +567,7 @@ class LoopContext:
     def __iter__(self) -> "LoopContext":
         return self
 
-    def __next__(self) -> t.Tuple[t.Any, "LoopContext"]:
+    def __next__(self) -> tuple[t.Any, "LoopContext"]:
         if self._after is not missing:
             rv = self._after
             self._after = missing
@@ -593,7 +602,7 @@ class AsyncLoopContext(LoopContext):
 
     @staticmethod
     def _to_iterator(  # type: ignore
-        iterable: t.Union[t.Iterable[V], t.AsyncIterable[V]],
+        iterable: t.Iterable[V] | t.AsyncIterable[V],
     ) -> t.AsyncIterator[V]:
         return auto_aiter(iterable)
 
@@ -646,7 +655,7 @@ class AsyncLoopContext(LoopContext):
     def __aiter__(self) -> "AsyncLoopContext":
         return self
 
-    async def __anext__(self) -> t.Tuple[t.Any, "AsyncLoopContext"]:
+    async def __anext__(self) -> tuple[t.Any, "AsyncLoopContext"]:
         if self._after is not missing:
             rv = self._after
             self._after = missing
@@ -667,11 +676,11 @@ class Macro:
         environment: "Environment",
         func: t.Callable[..., str],
         name: str,
-        arguments: t.List[str],
+        arguments: list[str],
         catch_kwargs: bool,
         catch_varargs: bool,
         caller: bool,
-        default_autoescape: t.Optional[bool] = None,
+        default_autoescape: bool | None = None,
     ):
         self._environment = environment
         self._func = func
@@ -769,7 +778,7 @@ class Macro:
 
         return self._invoke(arguments, autoescape)
 
-    async def _async_invoke(self, arguments: t.List[t.Any], autoescape: bool) -> str:
+    async def _async_invoke(self, arguments: list[t.Any], autoescape: bool) -> str:
         rv = await self._func(*arguments)  # type: ignore
 
         if autoescape:
@@ -777,7 +786,7 @@ class Macro:
 
         return rv  # type: ignore
 
-    def _invoke(self, arguments: t.List[t.Any], autoescape: bool) -> str:
+    def _invoke(self, arguments: list[t.Any], autoescape: bool) -> str:
         if self._environment.is_async:
             return self._async_invoke(arguments, autoescape)  # type: ignore
 
@@ -809,18 +818,18 @@ class Undefined:
     """
 
     __slots__ = (
-        "_undefined_hint",
-        "_undefined_obj",
-        "_undefined_name",
         "_undefined_exception",
+        "_undefined_hint",
+        "_undefined_name",
+        "_undefined_obj",
     )
 
     def __init__(
         self,
-        hint: t.Optional[str] = None,
+        hint: str | None = None,
         obj: t.Any = missing,
-        name: t.Optional[str] = None,
-        exc: t.Type[TemplateRuntimeError] = UndefinedError,
+        name: str | None = None,
+        exc: type[TemplateRuntimeError] = UndefinedError,
     ) -> None:
         self._undefined_hint = hint
         self._undefined_obj = obj
@@ -910,8 +919,8 @@ class Undefined:
 
 
 def make_logging_undefined(
-    logger: t.Optional["logging.Logger"] = None, base: t.Type[Undefined] = Undefined
-) -> t.Type[Undefined]:
+    logger: t.Optional["logging.Logger"] = None, base: type[Undefined] = Undefined
+) -> type[Undefined]:
     """Given a logger object this returns a new undefined class that will
     log certain failures.  It will log iterations and printing.  If no
     logger is given a default logger is created.

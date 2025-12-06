@@ -18,17 +18,18 @@ from texsmith.fonts.pipeline import (
 )
 from texsmith.fonts.ucharclasses import UCharClass, UCharClassesBuilder
 
+
 __all__ = [
-    "FontCache",
-    "FontPipelineLogger",
-    "FallbackManager",
-    "NotoCoverage",
-    "NotoCoverageBuilder",
     "FallbackBuilder",
     "FallbackEntry",
     "FallbackIndex",
     "FallbackLookup",
+    "FallbackManager",
     "FallbackRepository",
+    "FontCache",
+    "FontPipelineLogger",
+    "NotoCoverage",
+    "NotoCoverageBuilder",
     "UCharClass",
     "UCharClassesBuilder",
     "generate_fallback_entries",

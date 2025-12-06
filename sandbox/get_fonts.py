@@ -14,6 +14,7 @@ import subprocess
 import sys
 from typing import Dict, Tuple
 
+
 HERE = pathlib.Path(__file__).parent
 
 # Some Google Fonts family names don't match the actual file names hosted in noto-cjk.

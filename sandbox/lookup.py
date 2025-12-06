@@ -1,8 +1,8 @@
 import bisect
+from collections import defaultdict
 import json
 import os
 import pickle
-from collections import defaultdict
 
 
 class NotoLookup:
@@ -48,7 +48,7 @@ class NotoLookup:
         Construit la structure de données optimisée à partir du JSON et la sauvegarde dans le cache.
         """
         try:
-            with open(self.db_path, "r", encoding="utf-8") as f:
+            with open(self.db_path, encoding="utf-8") as f:
                 db = json.load(f)
         except (FileNotFoundError, json.JSONDecodeError) as e:
             print(f"Error reading {self.db_path}: {e}")
@@ -76,7 +76,7 @@ class NotoLookup:
                 pickle.dump(self._data, f)
             if self.verbose:
                 print(f"Cache saved to {self.cache_path}")
-        except IOError as e:
+        except OSError as e:
             if self.verbose:
                 print(f"Error saving cache to {self.cache_path}: {e}")
 
@@ -84,7 +84,7 @@ class NotoLookup:
     def _load_classes(self):
         """Charge le mapping classe Unicode -> ranges pour pouvoir remonter le script."""
         try:
-            with open(self.classes_path, "r", encoding="utf-8") as f:
+            with open(self.classes_path, encoding="utf-8") as f:
                 classes = json.load(f)
         except (FileNotFoundError, json.JSONDecodeError):
             self._classes_index = ([], [])

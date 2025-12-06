@@ -13,19 +13,21 @@ import typing as t
 from . import nodes
 from .visitor import NodeTransformer
 
+
 if t.TYPE_CHECKING:
     from .environment import Environment
 
 
 def optimize(node: nodes.Node, environment: "Environment") -> nodes.Node:
     """The context hint can be used to perform an static optimization
-    based on the context given."""
+    based on the context given.
+    """
     optimizer = Optimizer(environment)
     return t.cast(nodes.Node, optimizer.visit(node))
 
 
 class Optimizer(NodeTransformer):
-    def __init__(self, environment: "t.Optional[Environment]") -> None:
+    def __init__(self, environment: "Environment | None") -> None:
         self.environment = environment
 
     def generic_visit(

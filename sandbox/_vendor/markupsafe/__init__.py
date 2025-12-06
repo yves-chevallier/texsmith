@@ -4,6 +4,7 @@ import collections.abc as cabc
 import string
 import typing as t
 
+
 try:
     from ._speedups import _escape_inner
 except ImportError:
@@ -357,7 +358,7 @@ class EscapeFormatter(string.Formatter):
 class _MarkupEscapeHelper:
     """Helper for :meth:`Markup.__mod__`."""
 
-    __slots__ = ("obj", "escape")
+    __slots__ = ("escape", "obj")
 
     def __init__(self, obj: t.Any, escape: _TPEscape) -> None:
         self.obj: t.Any = obj

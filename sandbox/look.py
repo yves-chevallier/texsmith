@@ -5,7 +5,7 @@ class FontSelector:
     def __init__(self, db_path="noto_coverage_db.json"):
         # Chargement de la base
         try:
-            with open(db_path, "r", encoding="utf-8") as f:
+            with open(db_path, encoding="utf-8") as f:
                 self.db = json.load(f)
         except FileNotFoundError:
             print(f"Erreur : Le fichier {db_path} est introuvable.")

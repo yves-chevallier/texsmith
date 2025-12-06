@@ -1,6 +1,7 @@
 
-import json
 from collections import defaultdict
+import json
+
 
 # Data manually copied from the project files for simplicity
 # from old-fonts-codebase/src/texsmith/fonts/data/noto_dataset.py
