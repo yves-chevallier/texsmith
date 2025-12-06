@@ -125,9 +125,7 @@ Sinhala is the primary language of Sri Lanka and is spoken by about 17 million n
 Khmer is the official language of Cambodia and is spoken by more than 16 million people.
 
 យប់ស្ថប់ត្រង់ ព្រៃស្រពន់សូរ ស្ទឹងស្ទូងតាមស្រមោលដើមឈើ
-
 ខ្យល់អូលីល មកពីភ្នំឆ្ងាយ ប៉ះមកដល់ចិត្តអើយឆ្ងាយណា
-
 សូរសត្វបក្សី លេបលាន់តាមសែន ក្លិនផ្កាឈូករាត្រីរំលេច។
 
 ## Telugu (తెలుగు)

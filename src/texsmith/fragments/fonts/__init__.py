@@ -77,6 +77,10 @@ _CTAN_DEPENDENCIES: dict[str, dict[str, str]] = {
 
 _PLEX_URL = "https://github.com/IBM/plex/releases/download/v6.0.0/TrueType.zip"
 _SKIP_GROUPS = {"latin", "common", "punctuation", "other"}
+_FALLBACK_ALIASES: dict[str, dict[str, object]] = {
+    # Prefer widely available Noto families when coverage picks display variants.
+    "cyrillics": {"name": "NotoSans", "styles": ["regular", "bold"], "extension": ".otf"},
+}
 
 
 def _normalise_family(raw_value: Any) -> str:
@@ -459,6 +463,26 @@ def _prepare_fallback_context(context: Mapping[str, Any], *, output_dir: Path) -
 
         upright_file = _find_font_file(font_name, "regular", ext, roots)
         bold_file = _find_font_file(font_name, "bold", ext, roots) if "bold" in styles else None
+        if upright_file is None:
+            alias = _FALLBACK_ALIASES.get(group_lower)
+            if alias:
+                alt_name = alias.get("name")
+                alt_ext = alias.get("extension", ext)
+                alt_styles = alias.get("styles", styles)
+                if isinstance(alt_name, str):
+                    font_name = alt_name
+                    ext = (
+                        alt_ext if isinstance(alt_ext, str) and alt_ext.startswith(".") else ".otf"
+                    )
+                    styles = (
+                        [str(s).lower() for s in alt_styles]
+                        if isinstance(alt_styles, (list, tuple, set))
+                        else styles
+                    )
+                    upright_file = _find_font_file(font_name, "regular", ext, roots)
+                    bold_file = (
+                        _find_font_file(font_name, "bold", ext, roots) if "bold" in styles else None
+                    )
         if upright_file is None:
             warnings.warn(
                 f"Fallback font '{font_name}' not found on disk; skipping script '{group}'.",
