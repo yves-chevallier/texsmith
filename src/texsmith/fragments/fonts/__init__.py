@@ -1,7 +1,8 @@
 from __future__ import annotations
 
 from collections.abc import Mapping
-from dataclasses import dataclass
+import contextlib
+from dataclasses import dataclass, field
 from pathlib import Path
 import shutil
 import subprocess
@@ -13,6 +14,8 @@ import zipfile
 
 from texsmith.core.fragments.base import BaseFragment, FragmentPiece
 from texsmith.core.templates.manifest import TemplateAttributeSpec, TemplateError
+from texsmith.core.user_dir import get_user_dir
+from texsmith.fonts.cache import FontCache
 
 
 _FAMILY_CHOICES: dict[str, str] = {
@@ -73,6 +76,7 @@ _CTAN_DEPENDENCIES: dict[str, dict[str, str]] = {
 }
 
 _PLEX_URL = "https://github.com/IBM/plex/releases/download/v6.0.0/TrueType.zip"
+_SKIP_GROUPS = {"latin", "common", "punctuation", "other"}
 
 
 def _normalise_family(raw_value: Any) -> str:
@@ -351,10 +355,182 @@ def _resolve_output_dir(context: Mapping[str, Any]) -> Path:
     return Path("build").resolve()
 
 
+def _slugify(value: str) -> str:
+    slug = "".join(ch for ch in value if ch.isalnum())
+    if not slug:
+        return "script"
+    if slug[0].isdigit():
+        slug = f"s{slug}"
+    return slug.lower()
+
+
+def _candidate_font_roots(output_dir: Path) -> list[Path]:
+    roots: list[Path] = []
+    roots.append((output_dir / "fonts").resolve())
+    sandbox_fonts = Path(__file__).resolve().parents[4] / "sandbox" / "fonts"
+    roots.append(sandbox_fonts)
+    user_fonts = get_user_dir().data_dir("fonts", create=False)
+    roots.append(user_fonts)
+    with contextlib.suppress(Exception):
+        roots.append(FontCache().root)
+    return roots
+
+
+def _style_suffix(style: str) -> str:
+    mapping = {
+        "regular": "Regular",
+        "bold": "Bold",
+        "italic": "Italic",
+        "bolditalic": "BoldItalic",
+    }
+    return mapping.get(style.lower(), style.title())
+
+
+def _find_font_file(name: str, style: str, ext: str, roots: list[Path]) -> Path | None:
+    filename = f"{name}-{_style_suffix(style)}{ext}"
+    for root in roots:
+        candidate = root / filename
+        if candidate.exists():
+            return candidate
+    return None
+
+
+def _prepare_fallback_context(context: Mapping[str, Any], *, output_dir: Path) -> dict[str, Any]:
+    """Build fallback metadata for the ts-fonts fragment."""
+    fonts_section = context.get("fonts") if isinstance(context.get("fonts"), Mapping) else {}
+    fallback_summary = (
+        fonts_section.get("fallback_summary") if isinstance(fonts_section, Mapping) else []
+    )
+    script_usage = fonts_section.get("script_usage") if isinstance(fonts_section, Mapping) else []
+
+    usage_index: dict[str, Mapping[str, Any]] = {}
+    for entry in script_usage or []:
+        if not isinstance(entry, Mapping):
+            continue
+        slug = str(entry.get("slug") or "").lower()
+        group = str(entry.get("group") or "").lower()
+        if slug:
+            usage_index[slug] = entry
+        if group:
+            usage_index[group] = entry
+
+    roots = _candidate_font_roots(output_dir)
+
+    entries_by_slug: dict[str, dict[str, Any]] = {}
+    package_options: set[str] = set()
+    transitions: list[str] = []
+    lua_regular: set[str] = set()
+    lua_bold: set[str] = set()
+
+    for entry in fallback_summary or []:
+        if not isinstance(entry, Mapping):
+            continue
+        group = entry.get("group") or entry.get("class")
+        if not isinstance(group, str) or not group.strip():
+            continue
+        group_lower = group.lower()
+        if group_lower in _SKIP_GROUPS:
+            continue
+        slug = _slugify(group)
+        class_name = entry.get("class") or group
+        usage = usage_index.get(slug) or usage_index.get(group_lower)
+        font_command = ""
+        text_command = ""
+        font_name = None
+        if isinstance(usage, Mapping):
+            font_command = str(usage.get("font_command") or "")
+            text_command = str(usage.get("text_command") or "")
+            font_name = usage.get("font_name") if isinstance(usage.get("font_name"), str) else None
+        if not font_command:
+            font_command = f"{slug}font"
+        if not text_command:
+            text_command = f"text{slug}"
+        font_meta = entry.get("font") if isinstance(entry.get("font"), Mapping) else {}
+        if isinstance(font_meta, Mapping):
+            font_name = font_meta.get("name") or font_name
+        if not font_name:
+            continue
+        styles = []
+        if isinstance(font_meta, Mapping):
+            styles = [str(style).lower() for style in font_meta.get("styles", []) if style]
+        count = entry.get("count")
+        ext = font_meta.get("extension") if isinstance(font_meta, Mapping) else ".otf"
+        ext = ext if isinstance(ext, str) and ext.startswith(".") else ".otf"
+
+        upright_file = _find_font_file(font_name, "regular", ext, roots)
+        bold_file = _find_font_file(font_name, "bold", ext, roots) if "bold" in styles else None
+        if upright_file is None:
+            warnings.warn(
+                f"Fallback font '{font_name}' not found on disk; skipping script '{group}'.",
+                stacklevel=2,
+            )
+            continue
+
+        destination_root = (output_dir / "fonts").resolve()
+        destination_root.mkdir(parents=True, exist_ok=True)
+
+        dest_upright = destination_root / upright_file.name
+        if not dest_upright.exists():
+            shutil.copy2(upright_file, dest_upright)
+
+        dest_bold: Path | None = None
+        if bold_file is not None:
+            dest_bold = destination_root / bold_file.name
+            if not dest_bold.exists():
+                shutil.copy2(bold_file, dest_bold)
+
+        existing = entries_by_slug.get(slug)
+        if existing is None:
+            entry_payload = {
+                "group": group,
+                "class": class_name,
+                "slug": slug,
+                "font_command": font_command,
+                "text_command": text_command,
+                "font_name": font_name,
+                "count": count if isinstance(count, (int, float)) else None,
+                "has_bold": bool(dest_bold),
+                "upright": dest_upright.stem,
+                "bold": dest_bold.stem if dest_bold else None,
+                "extension": ext,
+            }
+            entries_by_slug[slug] = entry_payload
+        else:
+            if isinstance(count, (int, float)):
+                existing["count"] = int(existing.get("count", 0) or 0) + int(count)
+            if dest_bold is not None and not existing.get("has_bold"):
+                existing["has_bold"] = True
+                existing["bold"] = dest_bold.stem
+                lua_bold.add(dest_bold.name)
+
+        package_options.add(str(class_name))
+        resolved_font_command = entries_by_slug[slug]["font_command"]
+        transitions.append(
+            f"\\setTransitionsFor{{{class_name}}}{{\\{resolved_font_command}}}{{\\rmfamily}}%"
+        )
+        lua_regular.add(dest_upright.name)
+        if dest_bold:
+            lua_bold.add(dest_bold.name)
+        else:
+            lua_bold.add(dest_upright.name)
+
+    return {
+        "entries": sorted(
+            entries_by_slug.values(),
+            key=lambda e: e.get("group") or e.get("class") or "",
+        ),
+        "package_options": sorted(package_options),
+        "transitions": transitions,
+        "lua_regular": sorted(lua_regular),
+        "lua_bold": sorted(lua_bold),
+    }
+
+
 @dataclass(frozen=True)
 class FontsConfig:
     family: str
     output_dir: Path
+    fallback: dict[str, Any] = field(default_factory=dict)
 
     @classmethod
     def from_context(cls, context: Mapping[str, Any]) -> FontsConfig:
@@ -365,13 +541,16 @@ class FontsConfig:
             raw_family = context.get("fonts_family")
         family = _normalise_family(raw_family)
         output_dir = _resolve_output_dir(context)
-        return cls(family=family, output_dir=output_dir)
+        fallback = _prepare_fallback_context(context, output_dir=output_dir)
+        return cls(family=family, output_dir=output_dir, fallback=fallback)
 
     def inject_into(self, context: dict[str, Any]) -> None:
         context["fonts_family"] = self.family
         fonts_section = context.get("fonts")
         merged = dict(fonts_section) if isinstance(fonts_section, Mapping) else {}
         merged["family"] = self.family
+        if self.fallback and self.fallback.get("entries"):
+            merged["fallback"] = self.fallback
         context["fonts"] = merged
 
         try:

@@ -18,9 +18,9 @@
   \BLOCK{ endif }
 }{}%
 \@ifundefined{\VAR{text_command}}{%
-  \expandafter\providecommand\csname \VAR{text_command}\endcsname[1]{\textrm{##1}}%
+  \expandafter\DeclareRobustCommand\csname \VAR{text_command}\endcsname[1]{\textrm{#1}}%
 }{%
-  \expandafter\renewcommand\csname \VAR{text_command}\endcsname[1]{{\csname \VAR{font_command}\endcsname##1}}%
+  \expandafter\DeclareRobustCommand\csname \VAR{text_command}\endcsname[1]{{\csname \VAR{font_command}\endcsname#1}}%
 }%
 \BLOCK{ endfor }
 \makeatother

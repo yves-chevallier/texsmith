@@ -1,4 +1,5 @@
 \BLOCK{ set font_family = fonts_family | default("lm") }
+\BLOCK{ set fallback = fonts.get("fallback") if fonts is defined and fonts else {} }
 \ProvidesPackage{ts-fonts}[2025/01/10 TeXSmith font selection (generated)]
 
 \RequirePackage{iftex}
@@ -157,4 +158,84 @@
   }
 
   \tsUseFontSet{\VAR{font_family}}
+
+  \BLOCK{- if fallback and fallback.get("entries") }
+  % Fallback script fonts
+  \makeatletter
+  \BLOCK{ for entry in fallback.entries }
+  \@ifundefined{\VAR{entry.font_command}}{%
+    \expandafter\newfontfamily\csname \VAR{entry.font_command}\endcsname[
+      Path = fonts/,
+      Extension = \VAR{entry.extension},
+      UprightFont = \VAR{entry.upright},
+    \BLOCK{ if entry.has_bold }
+      BoldFont = \VAR{entry.bold},
+    \BLOCK{ else }
+      FakeBold = 2,
+    \BLOCK{ endif }
+      Scale      = MatchLowercase
+    ]{ \VAR{entry.font_name} }%
+  }{}%
+  \@ifundefined{\VAR{entry.text_command}}{%
+    \expandafter\DeclareRobustCommand\csname \VAR{entry.text_command}\endcsname[1]{{\csname \VAR{entry.font_command}\endcsname#1}}%
+  }{%
+    \expandafter\renewcommand\csname \VAR{entry.text_command}\endcsname[1]{{\csname \VAR{entry.font_command}\endcsname#1}}%
+  }%
+  \BLOCK{ endfor }
+  \makeatother
+
+  \ifLuaTeX
+    \directlua{
+      luaotfload.add_fallback("texsmith-fallback-reg", {
+    \BLOCK{ for font in fallback.lua_regular }
+        "[fonts/\VAR{font}]:mode=harf",
+    \BLOCK{ endfor }
+      })
+      luaotfload.add_fallback("texsmith-fallback-bold", {
+    \BLOCK{ for font in fallback.lua_bold }
+        "[fonts/\VAR{font}]:mode=harf",
+    \BLOCK{ endfor }
+      })
+    }
+    \defaultfontfeatures{
+      Renderer           = HarfBuzz,
+      RawFeature         = {fallback=texsmith-fallback-reg},
+      BoldFeatures       = {RawFeature={fallback=texsmith-fallback-bold}},
+      ItalicFeatures     = {RawFeature={fallback=texsmith-fallback-reg}},
+      BoldItalicFeatures = {RawFeature={fallback=texsmith-fallback-bold}},
+    }
+    \addfontfeatures{RawFeature={fallback=texsmith-fallback-reg}}
+    \ExplSyntaxOn
+    \cs_new_protected:Npn \texsmith_apply_fallback_to_family:nn #1#2
+      {
+        \prop_get:cnNTF { g__fontspec_fontinfo_ #2 _prop } { fontname } \l_tmpa_tl
+          {
+            #1[
+              RawFeature         = {fallback=texsmith-fallback-reg},
+              BoldFeatures       = {RawFeature={fallback=texsmith-fallback-bold}},
+              ItalicFeatures     = {RawFeature={fallback=texsmith-fallback-reg}},
+              BoldItalicFeatures = {RawFeature={fallback=texsmith-fallback-bold}},
+            ]{\l_tmpa_tl}
+          }{}
+      }
+    \texsmith_apply_fallback_to_family:nn \setmainfont \rmdefault
+    \texsmith_apply_fallback_to_family:nn \setsansfont \sfdefault
+    \texsmith_apply_fallback_to_family:nn \setmonofont \ttdefault
+    \ExplSyntaxOff
+  \else\ifXeTeX
+  \BLOCK{- if fallback.package_options }
+    \RequirePackage[%
+    \BLOCK{ for option in fallback.package_options }
+      \VAR{option}\BLOCK{ if not loop.last },\BLOCK{ endif }
+    \BLOCK{ endfor }
+    ]{ucharclasses}
+  \BLOCK{- else }
+    \RequirePackage{ucharclasses}
+  \BLOCK{- endif }
+    \setDefaultTransitions{\rmfamily}{\rmfamily}%
+    \BLOCK{ for transition in fallback.transitions }
+    \VAR{transition}
+    \BLOCK{ endfor }
+  \fi\fi
+  \BLOCK{- endif }
 \fi

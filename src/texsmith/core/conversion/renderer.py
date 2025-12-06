@@ -10,6 +10,7 @@ from typing import Any
 
 from texsmith.adapters.latex.latexmk import build_latexmkrc_content
 from texsmith.fonts import FallbackManager, FontCache, FontPipelineLogger
+from texsmith.fonts.fallback import merge_fallback_summaries
 from texsmith.fonts.scripts import fallback_summary_to_usage, merge_script_usage
 
 from ..context import DocumentState
@@ -190,6 +191,7 @@ class TemplateRenderer:
 
         shared_state: DocumentState | None = None
         aggregated_script_usage: list[dict[str, Any]] = []
+        aggregated_fallback_summary: list[dict[str, Any]] = []
         bibliography_path: Path | None = None
         template_engine: str | None = None
         requires_shell_escape = bool(self.runtime.requires_shell_escape)
@@ -262,6 +264,10 @@ class TemplateRenderer:
                 aggregated_script_usage = merge_script_usage(
                     aggregated_script_usage, getattr(fragment.document_state, "script_usage", [])
                 )
+                aggregated_fallback_summary = merge_fallback_summaries(
+                    aggregated_fallback_summary,
+                    getattr(fragment.document_state, "fallback_summary", []),
+                )
             if fragment.bibliography_path is not None:
                 bibliography_path = fragment.bibliography_path
             if template_engine is None and fragment.template_engine is not None:
@@ -275,6 +281,10 @@ class TemplateRenderer:
         if aggregated_script_usage:
             shared_state.script_usage = merge_script_usage(
                 getattr(shared_state, "script_usage", []), aggregated_script_usage
+            )
+        if aggregated_fallback_summary:
+            shared_state.fallback_summary = merge_fallback_summaries(
+                getattr(shared_state, "fallback_summary", []), aggregated_fallback_summary
             )
 
         slot_content: dict[str, str] = {}
@@ -352,16 +362,23 @@ class TemplateRenderer:
         concatenated_text = "".join(render_slot_content.values())
         if concatenated_text:
             try:
-                summary = fallback_summary_to_usage(
-                    FallbackManager(cache=FontCache(), logger=FontPipelineLogger()).scan_text(
-                        concatenated_text
+                raw_summary = FallbackManager(
+                    cache=FontCache(), logger=FontPipelineLogger()
+                ).scan_text(concatenated_text)
+                if raw_summary:
+                    aggregated_fallback_summary = merge_fallback_summaries(
+                        aggregated_fallback_summary, raw_summary
                     )
-                )
-                if summary:
-                    aggregated_script_usage = merge_script_usage(aggregated_script_usage, summary)
-                    shared_state.script_usage = merge_script_usage(
-                        getattr(shared_state, "script_usage", []), aggregated_script_usage
-                    )
+                    usage = fallback_summary_to_usage(raw_summary)
+                    if usage:
+                        aggregated_script_usage = merge_script_usage(aggregated_script_usage, usage)
+                        shared_state.script_usage = merge_script_usage(
+                            getattr(shared_state, "script_usage", []), aggregated_script_usage
+                        )
+                        shared_state.fallback_summary = merge_fallback_summaries(
+                            getattr(shared_state, "fallback_summary", []),
+                            aggregated_fallback_summary,
+                        )
             except Exception:
                 # Best-effort: fallback detection should never block rendering.
                 pass
@@ -419,30 +436,43 @@ class TemplateRenderer:
         metadata_blob = " ".join(part for part in metadata_strings if part.strip())
         if metadata_blob:
             try:
-                metadata_summary = fallback_summary_to_usage(
-                    FallbackManager(cache=FontCache(), logger=FontPipelineLogger()).scan_text(
-                        metadata_blob
-                    )
-                )
+                metadata_raw = FallbackManager(
+                    cache=FontCache(), logger=FontPipelineLogger()
+                ).scan_text(metadata_blob)
             except Exception:
-                metadata_summary = []
-            if metadata_summary:
-                aggregated_script_usage = merge_script_usage(
-                    aggregated_script_usage, metadata_summary
+                metadata_raw = []
+            if metadata_raw:
+                aggregated_fallback_summary = merge_fallback_summaries(
+                    aggregated_fallback_summary, metadata_raw
                 )
-                shared_state.script_usage = merge_script_usage(
-                    getattr(shared_state, "script_usage", []), aggregated_script_usage
+                metadata_usage = fallback_summary_to_usage(metadata_raw)
+                if metadata_usage:
+                    aggregated_script_usage = merge_script_usage(
+                        aggregated_script_usage, metadata_usage
+                    )
+                    shared_state.script_usage = merge_script_usage(
+                        getattr(shared_state, "script_usage", []), aggregated_script_usage
+                    )
+                shared_state.fallback_summary = merge_fallback_summaries(
+                    getattr(shared_state, "fallback_summary", []), aggregated_fallback_summary
                 )
 
-        if aggregated_script_usage:
+        if aggregated_script_usage or aggregated_fallback_summary:
             template_overrides = template_overrides or {}
             template_overrides.setdefault("fonts", {})
             if isinstance(template_overrides["fonts"], dict):
-                existing_usage = template_overrides["fonts"].get("script_usage", [])
-                template_overrides["fonts"]["script_usage"] = merge_script_usage(
-                    existing_usage if isinstance(existing_usage, list) else [],
-                    aggregated_script_usage,
-                )
+                if aggregated_script_usage:
+                    existing_usage = template_overrides["fonts"].get("script_usage", [])
+                    template_overrides["fonts"]["script_usage"] = merge_script_usage(
+                        existing_usage if isinstance(existing_usage, list) else [],
+                        aggregated_script_usage,
+                    )
+                if aggregated_fallback_summary:
+                    existing_fallback = template_overrides["fonts"].get("fallback_summary", [])
+                    template_overrides["fonts"]["fallback_summary"] = merge_fallback_summaries(
+                        existing_fallback if isinstance(existing_fallback, list) else [],
+                        aggregated_fallback_summary,
+                    )
 
         main_name = self._resolve_main_name(fragments)
         try:

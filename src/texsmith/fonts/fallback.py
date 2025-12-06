@@ -2,12 +2,13 @@
 
 from __future__ import annotations
 
-from collections.abc import Iterable
+from collections.abc import Iterable, Mapping
 from dataclasses import dataclass
 import hashlib
 import json
 from pathlib import Path
 import pickle
+from typing import Any
 
 from texsmith.fonts.cache import FontCache
 from texsmith.fonts.coverage import NotoCoverage
@@ -271,10 +272,59 @@ class FallbackLookup:
         return sorted(output, key=lambda entry: entry["class"])
 
 
+def merge_fallback_summaries(
+    existing: Iterable[Mapping[str, Any]], updates: Iterable[Mapping[str, Any]]
+) -> list[dict[str, Any]]:
+    """Merge fallback summaries keyed by class/group, accumulating counts and ranges."""
+    merged: dict[str, dict[str, Any]] = {}
+
+    def _key(entry: Mapping[str, Any]) -> str | None:
+        cls = entry.get("class")
+        group = entry.get("group")
+        if isinstance(cls, str) and cls.strip():
+            return cls
+        if isinstance(group, str) and group.strip():
+            return group
+        return None
+
+    def _consume(entry: Mapping[str, Any]) -> None:
+        key = _key(entry)
+        if key is None:
+            return
+        target = merged.setdefault(key, {"class": entry.get("class"), "group": entry.get("group")})
+        font_meta = entry.get("font")
+        if isinstance(font_meta, Mapping) and font_meta:
+            target.setdefault("font", dict(font_meta))
+        fonts = entry.get("fonts")
+        if isinstance(fonts, Iterable) and not isinstance(fonts, (str, bytes)):
+            font_set = set(target.get("fonts", []))
+            font_set.update(str(f) for f in fonts if f)
+            if font_set:
+                target["fonts"] = sorted(font_set)
+        ranges = entry.get("ranges")
+        if isinstance(ranges, Iterable) and not isinstance(ranges, (str, bytes)):
+            range_set = set(target.get("ranges", []))
+            range_set.update(str(r) for r in ranges if r)
+            target["ranges"] = sorted(range_set)
+        count = entry.get("count")
+        if isinstance(count, (int, float)):
+            target["count"] = int(target.get("count", 0) or 0) + int(count)
+
+    for payload in existing:
+        if isinstance(payload, Mapping):
+            _consume(payload)
+    for payload in updates:
+        if isinstance(payload, Mapping):
+            _consume(payload)
+
+    return sorted(merged.values(), key=lambda entry: entry.get("class") or entry.get("group") or "")
+
+
 __all__ = [
     "FallbackBuilder",
     "FallbackEntry",
     "FallbackIndex",
     "FallbackLookup",
     "FallbackRepository",
+    "merge_fallback_summaries",
 ]
