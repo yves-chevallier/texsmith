@@ -31,3 +31,7 @@ def test_scripts_wrapped_in_moving_arguments(tmp_path: Path) -> None:
     assert "\\section{Tibetan (" in content
     assert "\\csname texttibetan\\endcsname" in content
     assert "\\csname bengalifont\\endcsname" in content
+    usage = result.context.get("fonts", {}).get("script_usage")
+    assert usage, "Expected script usage to be propagated to template context"
+    slugs = {entry.get("slug") for entry in usage}
+    assert {"tibetan", "bengali"} <= slugs

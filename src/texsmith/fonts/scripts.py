@@ -158,9 +158,7 @@ class ScriptDetector:
         segments = self._segment_text(text, include_whitespace=include_whitespace)
         rendered: list[str] = []
         for group, chunk, entry in segments:
-            escaped = (
-                escape_latex_chars(chunk, legacy_accents=legacy_accents) if escape else chunk
-            )
+            escaped = escape_latex_chars(chunk, legacy_accents=legacy_accents) if escape else chunk
             if group:
                 spec = self._record_spec(group, entry)
                 rendered.append(f"\\{spec.text_command}{{{escaped}}}")
@@ -168,6 +166,37 @@ class ScriptDetector:
                 rendered.append(escaped)
         usages = [spec.to_mapping() for spec in self._specs.values()]
         return "".join(rendered), usages
+
+
+def fallback_summary_to_usage(
+    summary: Sequence[Mapping[str, object]],
+) -> list[dict[str, str | None]]:
+    """Convert a fallback scan summary into script usage records."""
+    usages: list[dict[str, str | None]] = []
+    for entry in summary:
+        if not isinstance(entry, Mapping):
+            continue
+        group = entry.get("group") or entry.get("class") or entry.get("name")
+        if not isinstance(group, str):
+            continue
+        if group.lower() in _SKIP_GROUPS:
+            continue
+        slug = _slugify(group)
+        font_name = None
+        font_payload = entry.get("font")
+        if isinstance(font_payload, Mapping):
+            raw_name = font_payload.get("name")
+            font_name = str(raw_name) if isinstance(raw_name, str) else None
+        usages.append(
+            {
+                "group": group,
+                "slug": slug,
+                "font_name": font_name,
+                "font_command": f"{slug}font",
+                "text_command": f"text{slug}",
+            }
+        )
+    return usages
 
 
 def merge_script_usage(

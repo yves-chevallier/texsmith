@@ -86,6 +86,7 @@ from ..presenter import (
     consume_event_diagnostics,
     present_build_summary,
     present_conversion_summary,
+    present_fonts_info,
     present_html_summary,
     present_latex_failure,
     present_rule_descriptions,
@@ -476,6 +477,13 @@ def render(
             help="Copy the selected template into DEST and exit.",
         ),
     ] = None,
+    fonts_info: Annotated[
+        bool,
+        typer.Option(
+            "--fonts-info",
+            help="Display a summary of fallback fonts detected during rendering.",
+        ),
+    ] = False,
 ) -> None:
     """Convert MkDocs documents into LaTeX artefacts and optionally build PDFs."""
 
@@ -888,6 +896,8 @@ def render(
             output_path=render_dir,
             render_result=render_result,
         )
+        if fonts_info:
+            present_fonts_info(state, render_result)
         _emit_rule_diagnostics()
         _flush_diagnostics()
         return
@@ -1038,6 +1048,8 @@ def render(
             raise typer.Exit(code=1) from exc
 
     present_build_summary(state=state, render_result=render_result, pdf_path=final_pdf_path)
+    if fonts_info:
+        present_fonts_info(state, render_result)
     if dep_file_path is not None:
         state.console.print(f"[cyan]Dependencies written to[/] {dep_file_path}")
     _emit_rule_diagnostics()
