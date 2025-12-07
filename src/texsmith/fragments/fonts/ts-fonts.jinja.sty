@@ -26,16 +26,63 @@
 
   % Latin Modern (lm)
   \tsDeclareFontSet{lm}{%
-    \setmainfont{Latin Modern Roman}%
-    \setsansfont{Latin Modern Sans}%
-    \setmonofont{Latin Modern Mono}%
+    \setmainfont{lmroman10}[%
+      Extension       = .otf,
+      UprightFont     = lmroman10-regular,
+      ItalicFont      = lmroman10-italic,
+      BoldFont        = lmroman10-bold,
+      BoldItalicFont  = lmroman10-bolditalic,
+      SmallCapsFont   = lmromancaps10-regular,
+      SlantedFont     = lmromanslant10-regular,
+      BoldSlantedFont = lmromanslant10-bold,
+      Ligatures       = TeX,
+    ]%
+    \setsansfont{lmsans10}[%
+      Extension      = .otf,
+      UprightFont    = *-regular,
+      ItalicFont     = *-oblique,
+      BoldFont       = *-bold,
+      BoldItalicFont = *-boldoblique,
+    ]%
+    \setmonofont{lmmono10}[%
+      Extension      = .otf,
+      UprightFont    = *-regular,
+      ItalicFont     = *-italic,
+      BoldFont       = *-regular,
+      BoldFeatures   = {FakeBold=2},
+      BoldItalicFont = *-italic,
+      BoldItalicFeatures = {FakeBold=2},
+      SmallCapsFont   = lmmonocaps10-regular,
+      SmallCapsFeatures = {Letters=SmallCaps},
+    ]%
   }
 
   % Latin Modern Sans Serif (lm-sans)
   \tsDeclareFontSet{lm-sans}{%
-    \setmainfont{Latin Modern Sans}%
-    \setsansfont{Latin Modern Sans}%
-    \setmonofont{Latin Modern Mono}%
+    \setmainfont{lmsans10}[%
+      Extension      = .otf,
+      UprightFont    = *-regular,
+      ItalicFont     = *-oblique,
+      BoldFont       = *-bold,
+      BoldItalicFont = *-boldoblique,
+      Ligatures      = TeX,
+    ]%
+    \setsansfont{lmsans10}[%
+      Extension      = .otf,
+      UprightFont    = *-regular,
+      ItalicFont     = *-oblique,
+      BoldFont       = *-bold,
+      BoldItalicFont = *-boldoblique,
+    ]%
+    \setmonofont{IBMPlexMono}[%
+      Extension      = .otf,
+      UprightFont    = *-Regular,
+      ItalicFont     = *-Italic,
+      BoldFont       = *-Bold,
+      BoldItalicFont = *-BoldItalic,
+      Scale=0.90,
+      FakeStretch    = 0.92,
+    ]%
   }
 
   % Tex Gyre Bonum (bonum)

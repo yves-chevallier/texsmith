@@ -407,6 +407,10 @@ def _prepare_fallback_context(context: Mapping[str, Any], *, output_dir: Path) -
     )
     script_usage = fonts_section.get("script_usage") if isinstance(fonts_section, Mapping) else []
 
+    def _entry_score(has_bold: bool, style_count: int, count: int | None) -> tuple[int, int, int]:
+        """Higher score wins: prefers bold-capable fonts, then style breadth, then usage count."""
+        return (1 if has_bold else 0, style_count, count or 0)
+
     usage_index: dict[str, Mapping[str, Any]] = {}
     for entry in script_usage or []:
         if not isinstance(entry, Mapping):
@@ -464,6 +468,7 @@ def _prepare_fallback_context(context: Mapping[str, Any], *, output_dir: Path) -
 
         upright_file = _find_font_file(font_name, "regular", ext, roots)
         bold_file = _find_font_file(font_name, "bold", ext, roots) if "bold" in styles else None
+        style_count = len(styles) if styles else 1
         if upright_file is None:
             alias = _FALLBACK_ALIASES.get(group_lower)
             if alias:
@@ -484,6 +489,7 @@ def _prepare_fallback_context(context: Mapping[str, Any], *, output_dir: Path) -
                     bold_file = (
                         _find_font_file(font_name, "bold", ext, roots) if "bold" in styles else None
                     )
+                    style_count = len(styles) if styles else 1
         if upright_file is None:
             warnings.warn(
                 f"Fallback font '{font_name}' not found on disk; skipping script '{group}'.",
@@ -505,39 +511,54 @@ def _prepare_fallback_context(context: Mapping[str, Any], *, output_dir: Path) -
                 shutil.copy2(bold_file, dest_bold)
 
         existing = entries_by_slug.get(slug)
+        candidate_payload = {
+            "group": group,
+            "class": class_name,
+            "slug": slug,
+            "font_command": font_command,
+            "text_command": text_command,
+            "font_name": font_name,
+            "count": count if isinstance(count, (int, float)) else None,
+            "has_bold": bool(dest_bold),
+            "upright": dest_upright.stem,
+            "bold": dest_bold.stem if dest_bold else None,
+            "extension": ext,
+            "style_count": style_count,
+        }
+        candidate_score = _entry_score(bool(dest_bold), style_count, candidate_payload["count"])
         if existing is None:
-            entry_payload = {
-                "group": group,
-                "class": class_name,
-                "slug": slug,
-                "font_command": font_command,
-                "text_command": text_command,
-                "font_name": font_name,
-                "count": count if isinstance(count, (int, float)) else None,
-                "has_bold": bool(dest_bold),
-                "upright": dest_upright.stem,
-                "bold": dest_bold.stem if dest_bold else None,
-                "extension": ext,
-            }
-            entries_by_slug[slug] = entry_payload
+            entries_by_slug[slug] = candidate_payload
         else:
-            if isinstance(count, (int, float)):
-                existing["count"] = int(existing.get("count", 0) or 0) + int(count)
-            if dest_bold is not None and not existing.get("has_bold"):
-                existing["has_bold"] = True
-                existing["bold"] = dest_bold.stem
-                lua_bold.add(dest_bold.name)
+            existing_count = existing.get("count", 0)
+            combined_count = int(existing_count or 0) + (int(count) if isinstance(count, (int, float)) else 0)
+            candidate_payload["count"] = combined_count if combined_count else None
+            existing_score = _entry_score(
+                bool(existing.get("has_bold")),
+                int(existing.get("style_count") or 1),
+                existing.get("count"),
+            )
+            if candidate_score > existing_score:
+                entries_by_slug[slug] = candidate_payload
+            else:
+                if combined_count:
+                    existing["count"] = combined_count
+                if dest_bold is not None and not existing.get("has_bold"):
+                    existing["has_bold"] = True
+                    existing["bold"] = dest_bold.stem
+                    existing["style_count"] = max(int(existing.get("style_count") or 1), style_count)
+                    lua_bold.add(dest_bold.name)
 
         package_options.add(str(class_name))
-        resolved_font_command = entries_by_slug[slug]["font_command"]
+        entry_ref = entries_by_slug[slug]
+        resolved_font_command = entry_ref["font_command"]
         transitions.append(
-            f"\\setTransitionsFor{{{class_name}}}{{\\{resolved_font_command}}}{{\\rmfamily}}%"
+            f"\\setTransitionsFor{{{entry_ref['class']}}}{{\\{resolved_font_command}}}{{\\rmfamily}}%"
         )
-        lua_regular.add(dest_upright.name)
-        if dest_bold:
-            lua_bold.add(dest_bold.name)
+        lua_regular.add(f"{entry_ref['upright']}{entry_ref['extension']}")
+        if entry_ref.get("has_bold") and entry_ref.get("bold"):
+            lua_bold.add(f"{entry_ref['bold']}{entry_ref['extension']}")
         else:
-            lua_bold.add(dest_upright.name)
+            lua_bold.add(f"{entry_ref['upright']}{entry_ref['extension']}")
 
     return {
         "entries": sorted(
