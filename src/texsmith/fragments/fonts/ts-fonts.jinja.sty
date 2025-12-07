@@ -221,11 +221,22 @@
     \texsmith_apply_fallback_to_family:nn \setmonofont \ttdefault
     \ExplSyntaxOff
   \else\ifXeTeX
-  \BLOCK{ set uc_options = ['Latin'] + (fallback.package_options if fallback else []) }
+  \BLOCK{ set uc_options = ['Latin'] + (fallback.package_options if fallback else []) + ['Devanagari'] }
     \RequirePackage[
       \VAR{ uc_options | join(',\n      ') }
     ]{ucharclasses}
     \setDefaultTransitions{\rmfamily}{\rmfamily}%
+    \setTransitionsFor{Devanagari}{\devanagarifont}{\rmfamily}%
+    % Ensure Devanagari danda characters use the Devanagari font even though
+    % Unicode marks them as Common.
+    \XeTeXcharclass"0964=\DevanagariDanDaClass
+    \XeTeXcharclass"0965=\DevanagariDanDaClass
+    % Active definitions to force dandas through the Devanagari font without
+    % reintroducing the character in the replacement text (avoids recursion).
+    \catcode"0964=\active
+    \catcode"0965=\active
+    \protected\def।{{\devanagarifont\char"0964}}%
+    \protected\def॥{{\devanagarifont\char"0965}}%
     \BLOCK{ for transition in fallback.transitions }
     \VAR{transition}
     \BLOCK{ endfor }

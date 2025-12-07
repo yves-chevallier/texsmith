@@ -220,10 +220,21 @@ def merge_script_usage(
         if slug not in merged:
             merged[slug] = dict(entry)
             continue
-        if not merged[slug].get("font_name") and entry.get("font_name"):
-            merged[slug]["font_name"] = entry.get("font_name")
+        existing_font = merged[slug].get("font_name")
+        update_font = entry.get("font_name")
         existing_count = merged[slug].get("count")
         update_count = entry.get("count")
+
+        # Prefer the font coming from the entry with the highest count (when available).
+        if update_font:
+            if not existing_font:
+                merged[slug]["font_name"] = update_font
+            else:
+                existing_value = int(existing_count) if isinstance(existing_count, (int, float)) else 0
+                update_value = int(update_count) if isinstance(update_count, (int, float)) else 0
+                if update_value > existing_value:
+                    merged[slug]["font_name"] = update_font
+
         if isinstance(existing_count, (int, float)) or isinstance(update_count, (int, float)):
             existing_value = int(existing_count) if isinstance(existing_count, (int, float)) else 0
             update_value = int(update_count) if isinstance(update_count, (int, float)) else 0
