@@ -425,6 +425,7 @@ def _prepare_fallback_context(context: Mapping[str, Any], *, output_dir: Path) -
     transitions: list[str] = []
     lua_regular: set[str] = set()
     lua_bold: set[str] = set()
+    package_options.add("Latin")
 
     for entry in fallback_summary or []:
         if not isinstance(entry, Mapping):

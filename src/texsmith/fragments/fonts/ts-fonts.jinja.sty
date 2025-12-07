@@ -116,8 +116,10 @@
   % Fallback script fonts
   \makeatletter
   \BLOCK{ for entry in fallback.entries }
-  \@ifundefined{\VAR{entry.font_command}}{%
-    \expandafter\newfontfamily\csname \VAR{entry.font_command}\endcsname[
+  \BLOCK{ set font_cmd = '\\' + entry.font_command }
+  \BLOCK{ set text_cmd = '\\' + entry.text_command }
+    % Declare font family for \VAR{entry.font_name}
+    \newfontfamily\VAR{font_cmd}[
       Path = fonts/,
       Extension = \VAR{entry.extension},
       UprightFont = \VAR{entry.upright},
@@ -126,14 +128,10 @@
     \BLOCK{ else }
       FakeBold = 2,
     \BLOCK{ endif }
-      Scale      = MatchLowercase
-    ]{ \VAR{entry.font_name} }%
-  }{}%
-  \@ifundefined{\VAR{entry.text_command}}{%
-    \expandafter\DeclareRobustCommand\csname \VAR{entry.text_command}\endcsname[1]{{\csname \VAR{entry.font_command}\endcsname#1}}%
-  }{%
-    \expandafter\renewcommand\csname \VAR{entry.text_command}\endcsname[1]{{\csname \VAR{entry.font_command}\endcsname#1}}%
-  }%
+      Scale = MatchLowercase
+    ]{\VAR{entry.font_name}}%
+    \DeclareRobustCommand\VAR{text_cmd}[1]{{\VAR{font_cmd}#1}}%
+
   \BLOCK{ endfor }
   \makeatother
 
@@ -176,15 +174,10 @@
     \texsmith_apply_fallback_to_family:nn \setmonofont \ttdefault
     \ExplSyntaxOff
   \else\ifXeTeX
-  \BLOCK{- if fallback.package_options }
-    \RequirePackage[%
-    \BLOCK{ for option in fallback.package_options }
-      \VAR{option}\BLOCK{ if not loop.last },\BLOCK{ endif }
-    \BLOCK{ endfor }
+  \BLOCK{ set uc_options = ['Latin'] + (fallback.package_options if fallback else []) }
+    \RequirePackage[
+      \VAR{ uc_options | join(',\n      ') }
     ]{ucharclasses}
-  \BLOCK{- else }
-    \RequirePackage{ucharclasses}
-  \BLOCK{- endif }
     \setDefaultTransitions{\rmfamily}{\rmfamily}%
     \BLOCK{ for transition in fallback.transitions }
     \VAR{transition}
