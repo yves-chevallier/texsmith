@@ -272,4 +272,8 @@ def render_script_macros(usages: Iterable[Mapping[str, str | None]]) -> str:
     if not scripts:
         return ""
     formatter = LaTeXFormatter()
-    return formatter.script_macros(scripts=scripts)
+    try:
+        return formatter.script_macros(scripts=scripts)
+    except AttributeError:
+        # When the script_macros partial is not available, skip emitting anything.
+        return ""
