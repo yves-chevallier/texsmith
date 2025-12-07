@@ -490,7 +490,6 @@ def render(
     ctx = click.get_current_context(silent=True)
     typer_ctx = ctx if isinstance(ctx, typer.Context) else None
     state = set_cli_state(ctx=typer_ctx, verbosity=verbose, debug=debug)
-
     if html_only:
         build_pdf = False
         template = None

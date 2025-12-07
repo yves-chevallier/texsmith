@@ -26,63 +26,75 @@
 
   % Latin Modern (lm)
   \tsDeclareFontSet{lm}{%
-    \setmainfont{lmroman10}[%
-      Extension       = .otf,
-      UprightFont     = lmroman10-regular,
-      ItalicFont      = lmroman10-italic,
-      BoldFont        = lmroman10-bold,
-      BoldItalicFont  = lmroman10-bolditalic,
-      SmallCapsFont   = lmromancaps10-regular,
-      SlantedFont     = lmromanslant10-regular,
-      BoldSlantedFont = lmromanslant10-bold,
-      Ligatures       = TeX,
-    ]%
-    \setsansfont{lmsans10}[%
-      Extension      = .otf,
-      UprightFont    = *-regular,
-      ItalicFont     = *-oblique,
-      BoldFont       = *-bold,
-      BoldItalicFont = *-boldoblique,
-    ]%
-    \setmonofont{lmmono10}[%
-      Extension      = .otf,
-      UprightFont    = *-regular,
-      ItalicFont     = *-italic,
-      BoldFont       = *-regular,
-      BoldFeatures   = {FakeBold=2},
-      BoldItalicFont = *-italic,
-      BoldItalicFeatures = {FakeBold=2},
-      SmallCapsFont   = lmmonocaps10-regular,
-      SmallCapsFeatures = {Letters=SmallCaps},
-    ]%
+    \ifLuaTeX
+      \setmainfont{Latin Modern Roman}%
+      \setsansfont{Latin Modern Sans}%
+      \setmonofont{Latin Modern Mono}%
+    \else
+      \setmainfont{lmroman10}[%
+        Extension       = .otf,
+        UprightFont     = lmroman10-regular,
+        ItalicFont      = lmroman10-italic,
+        BoldFont        = lmroman10-bold,
+        BoldItalicFont  = lmroman10-bolditalic,
+        SmallCapsFont   = lmromancaps10-regular,
+        SlantedFont     = lmromanslant10-regular,
+        BoldSlantedFont = lmromanslant10-bold,
+        Ligatures       = TeX,
+      ]%
+      \setsansfont{lmsans10}[%
+        Extension      = .otf,
+        UprightFont    = *-regular,
+        ItalicFont     = *-oblique,
+        BoldFont       = *-bold,
+        BoldItalicFont = *-boldoblique,
+      ]%
+      \setmonofont{lmmono10}[%
+        Extension      = .otf,
+        UprightFont    = *-regular,
+        ItalicFont     = *-italic,
+        BoldFont       = *-regular,
+        BoldFeatures   = {FakeBold=2},
+        BoldItalicFont = *-italic,
+        BoldItalicFeatures = {FakeBold=2},
+        SmallCapsFont   = lmmonocaps10-regular,
+        SmallCapsFeatures = {Letters=SmallCaps},
+      ]%
+    \fi
   }
 
   % Latin Modern Sans Serif (lm-sans)
   \tsDeclareFontSet{lm-sans}{%
-    \setmainfont{lmsans10}[%
-      Extension      = .otf,
-      UprightFont    = *-regular,
-      ItalicFont     = *-oblique,
-      BoldFont       = *-bold,
-      BoldItalicFont = *-boldoblique,
-      Ligatures      = TeX,
-    ]%
-    \setsansfont{lmsans10}[%
-      Extension      = .otf,
-      UprightFont    = *-regular,
-      ItalicFont     = *-oblique,
-      BoldFont       = *-bold,
-      BoldItalicFont = *-boldoblique,
-    ]%
-    \setmonofont{IBMPlexMono}[%
-      Extension      = .otf,
-      UprightFont    = *-Regular,
-      ItalicFont     = *-Italic,
-      BoldFont       = *-Bold,
-      BoldItalicFont = *-BoldItalic,
-      Scale=0.90,
-      FakeStretch    = 0.92,
-    ]%
+    \ifLuaTeX
+      \setmainfont{Latin Modern Sans}%
+      \setsansfont{Latin Modern Sans}%
+      \setmonofont{Latin Modern Mono}%
+    \else
+      \setmainfont{lmsans10}[%
+        Extension      = .otf,
+        UprightFont    = *-regular,
+        ItalicFont     = *-oblique,
+        BoldFont       = *-bold,
+        BoldItalicFont = *-boldoblique,
+        Ligatures      = TeX,
+      ]%
+      \setsansfont{lmsans10}[%
+        Extension      = .otf,
+        UprightFont    = *-regular,
+        ItalicFont     = *-oblique,
+        BoldFont       = *-bold,
+        BoldItalicFont = *-boldoblique,
+      ]%
+      \setmonofont{IBMPlexMono}[%
+        Extension      = .otf,
+        UprightFont    = *-Regular,
+        ItalicFont     = *-Italic,
+        BoldFont       = *-Bold,
+        BoldItalicFont = *-BoldItalic,
+        Scale=0.90,
+        FakeStretch    = 0.92,
+      ]%
+    \fi
   }
 
   % Tex Gyre Bonum (bonum)
@@ -170,11 +182,11 @@
       Path = fonts/,
       Extension = \VAR{entry.extension},
       UprightFont = \VAR{entry.upright},
-    \BLOCK{ if entry.has_bold }
+\BLOCK{ if entry.has_bold }
       BoldFont = \VAR{entry.bold},
-    \BLOCK{ else }
+\BLOCK{ else }
       FakeBold = 2,
-    \BLOCK{ endif }
+\BLOCK{ endif }
       Scale = MatchLowercase
     ]{\VAR{entry.font_name}}%
     \DeclareRobustCommand\VAR{text_cmd}[1]{{\VAR{font_cmd}#1}}%
@@ -227,16 +239,6 @@
     ]{ucharclasses}
     \setDefaultTransitions{\rmfamily}{\rmfamily}%
     \setTransitionsFor{Devanagari}{\devanagarifont}{\rmfamily}%
-    % Ensure Devanagari danda characters use the Devanagari font even though
-    % Unicode marks them as Common.
-    \XeTeXcharclass"0964=\DevanagariDanDaClass
-    \XeTeXcharclass"0965=\DevanagariDanDaClass
-    % Active definitions to force dandas through the Devanagari font without
-    % reintroducing the character in the replacement text (avoids recursion).
-    \catcode"0964=\active
-    \catcode"0965=\active
-    \protected\def।{{\devanagarifont\char"0964}}%
-    \protected\def॥{{\devanagarifont\char"0965}}%
     \BLOCK{ for transition in fallback.transitions }
     \VAR{transition}
     \BLOCK{ endfor }

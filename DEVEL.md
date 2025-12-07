@@ -151,6 +151,63 @@ cached in ~/.texsmith/fonts/ and copied in the build folder if used and needed o
 Currently TeXSmith supports OpenMoji which is downloaded on demand if any emoji is used in the document. TeXSmith can rely on a "Font Fetcher" mechanism to download
 a font that cover the requested codepoints. So this works for emojis. As Noto Color Emoji is not compatible with XeLaTeX due to the COLR/CPAL format, we will keep OpenMoji as the default emoji font for XeLaTeX and Tectonic for now.
 
+## Tables
+
+Long table et auto ajustement.
+
+```latex
+\documentclass{article}
+\usepackage[margin=2cm]{geometry}
+\usepackage{booktabs}
+\usepackage[french]{babel}
+\usepackage{array}
+
+% ltablex : Le pont entre tabularx et longtable
+\usepackage{ltablex}
+
+% IMPORTANT : On NE met PAS \keepXColumns ici.
+% Sans cette commande, ltablex va calculer si le tableau a besoin
+% de toute la largeur ou non.
+
+\begin{document}
+
+\section*{Cas 1 : Table petite (Compacte)}
+% Ici, comme le texte est court, le tableau ne prendra pas toute la page
+% Les colonnes X vont se comporter comme des colonnes 'l'
+\begin{tabularx}{\textwidth}{lXX}
+    \toprule
+    \textbf{ID} & \textbf{Statut} & \textbf{Note} \\
+    \midrule
+    \endfirsthead
+    1 & OK & R.A.S. \\
+    \midrule
+\end{tabularx}
+
+\vspace{2cm}
+
+\section*{Cas 2 : Table large (Extension automatique)}
+% Ici, le texte est long. Le tableau va détecter qu'il dépasse,
+% s'étendre jusqu'à \textwidth, et activer le retour à la ligne.
+\begin{tabularx}{\textwidth}{lXX}
+    \toprule
+    \textbf{ID} & \textbf{Description} & \textbf{Analyse} \\
+    \midrule
+    \endfirsthead
+
+    \textbf{ID} & \textbf{Description} & \textbf{Analyse} \\
+    \midrule
+    \endhead
+
+    204 &
+    Ici j'ai un texte suffisamment long pour justifier que le tableau prenne toute la largeur disponible sur la page. &
+    Et ici une autre colonne qui va se partager l'espace restant équitablement avec la colonne précédente. \\
+
+    205 & Test de remplissage & Encore du texte... \\
+    \bottomrule
+\end{tabularx}
+\end{document}
+```
+
 ## PLAN
 
 1. Load in your context how ts-fonts and TeXSmith use the fonts mechanisms lean the architecture

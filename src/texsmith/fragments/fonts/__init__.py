@@ -427,6 +427,7 @@ def _prepare_fallback_context(context: Mapping[str, Any], *, output_dir: Path) -
     entries_by_slug: dict[str, dict[str, Any]] = {}
     package_options: set[str] = set()
     transitions: list[str] = []
+    slug_classes: dict[str, set[str]] = {}
     lua_regular: set[str] = set()
     lua_bold: set[str] = set()
     package_options.add("Latin")
@@ -549,16 +550,27 @@ def _prepare_fallback_context(context: Mapping[str, Any], *, output_dir: Path) -
                     lua_bold.add(dest_bold.name)
 
         package_options.add(str(class_name))
+        slug_classes.setdefault(slug, set()).add(str(class_name))
         entry_ref = entries_by_slug[slug]
-        resolved_font_command = entry_ref["font_command"]
-        transitions.append(
-            f"\\setTransitionsFor{{{entry_ref['class']}}}{{\\{resolved_font_command}}}{{\\rmfamily}}%"
-        )
         lua_regular.add(f"{entry_ref['upright']}{entry_ref['extension']}")
         if entry_ref.get("has_bold") and entry_ref.get("bold"):
             lua_bold.add(f"{entry_ref['bold']}{entry_ref['extension']}")
         else:
             lua_bold.add(f"{entry_ref['upright']}{entry_ref['extension']}")
+
+    if slug_classes:
+        for slug, classes in slug_classes.items():
+            entry_ref = entries_by_slug.get(slug)
+            if not entry_ref:
+                continue
+            resolved_font_command = entry_ref["font_command"]
+            for cls_name in sorted(classes):
+                transitions.append(
+                    f"\\setTransitionsFor{{{cls_name}}}{{\\{resolved_font_command}}}{{\\rmfamily}}%"
+                )
+        package_options.update(
+            cls_name for classes in slug_classes.values() for cls_name in classes
+        )
 
     return {
         "entries": sorted(

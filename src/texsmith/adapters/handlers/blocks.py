@@ -16,6 +16,7 @@ from pybtex.exceptions import PybtexError
 from texsmith.core.context import RenderContext
 from texsmith.core.exceptions import AssetMissingError, InvalidNodeError
 from texsmith.core.rules import RenderPhase, renders
+from texsmith.fonts.scripts import render_moving_text
 
 
 if TYPE_CHECKING:  # pragma: no cover - typing helpers
@@ -639,17 +640,24 @@ def render_latex_raw(element: Tag, _context: RenderContext) -> None:
 
 
 @renders("p", phase=RenderPhase.POST, priority=90, name="paragraphs", nestable=False)
-def render_paragraphs(element: Tag, _context: RenderContext) -> None:
-    """Render plain paragraphs."""
+def render_paragraphs(element: Tag, context: RenderContext) -> None:
+    """Render plain paragraphs with script-aware wrapping."""
     if element.get("class"):
         return
 
-    text = element.get_text(strip=False).strip()
-    if not text:
+    raw_text = element.get_text(strip=False)
+    if not raw_text.strip():
         element.decompose()
         return
 
-    element.replace_with(mark_processed(NavigableString(f"{text}\n")))
+    legacy_accents = getattr(context.config, "legacy_latex_accents", False)
+    rendered = render_moving_text(
+        raw_text,
+        context,
+        legacy_accents=legacy_accents,
+        include_whitespace=True,
+    )
+    element.replace_with(mark_processed(NavigableString(f"{rendered}\n")))
 
 
 @renders("div", phase=RenderPhase.POST, priority=60, name="multicolumns", nestable=False)
