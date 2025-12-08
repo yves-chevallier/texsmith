@@ -14,6 +14,7 @@ from texsmith.fonts.fallback import (
     FallbackEntry,
     FallbackLookup,
     FallbackRepository,
+    merge_fallback_summaries,
 )
 from texsmith.fonts.logging import FontPipelineLogger
 from texsmith.fonts.pipeline import generate_noto_metadata, generate_ucharclasses_data
@@ -153,6 +154,7 @@ class ScriptDetector:
         include_whitespace: bool = True,
         legacy_accents: bool = False,
         escape: bool = True,
+        wrap_scripts: bool = False,
     ) -> tuple[str, list[dict[str, str | None]]]:
         """Return LaTeX text with script-specific wrappers and usage metadata."""
         if not text:
@@ -164,9 +166,10 @@ class ScriptDetector:
             if group:
                 spec = self._record_spec(group, entry)
                 spec.count += len(chunk)
-                rendered.append(f"\\{spec.text_command}{{{escaped}}}")
-            else:
-                rendered.append(escaped)
+                if wrap_scripts:
+                    rendered.append(f"\\{spec.text_command}{{{escaped}}}")
+                    continue
+            rendered.append(escaped)
         usages = [spec.to_mapping() for spec in self._specs.values()]
         return "".join(rendered), usages
 
@@ -250,6 +253,7 @@ def render_moving_text(
     include_whitespace: bool = True,
     legacy_accents: bool | None = None,
     escape: bool = True,
+    wrap_scripts: bool = False,
 ) -> str | None:
     """Return LaTeX-safe text with script wrappers and record usage in state."""
     if text is None:
@@ -266,9 +270,16 @@ def render_moving_text(
         if legacy_accents is not None
         else getattr(context.config, "legacy_latex_accents", False),
         escape=escape,
+        wrap_scripts=wrap_scripts,
     )
     state_usage = getattr(context.state, "script_usage", [])
     context.state.script_usage = merge_script_usage(state_usage, usage)
+    try:
+        summary = detector._ensure_lookup().summary(text)
+        existing = getattr(context.state, "fallback_summary", [])
+        context.state.fallback_summary = merge_fallback_summaries(existing, summary)
+    except Exception:
+        pass
     return rendered
 
 

@@ -194,6 +194,20 @@
   \BLOCK{ endfor }
   \makeatother
 
+\BLOCK{- if fallback and fallback.get("entries") }
+  % Ensure hyperref can build PDF strings without font selection commands.
+  \makeatletter
+  \AtBeginDocument{%
+  \BLOCK{ for entry in fallback.entries }
+    \BLOCK{ set text_cmd = '\\' + entry.text_command }
+      \pdfstringdefDisableCommands{%
+        \def\VAR{text_cmd}#1{#1}%
+      }%
+  \BLOCK{ endfor }
+  }
+  \makeatother
+\BLOCK{- endif }
+
 \BLOCK{- if fallback and fallback.get("missing_commands") }
   % Define no-op wrappers for scripts without an available fallback font.
   \BLOCK{ for text_cmd in fallback.missing_commands }
@@ -249,6 +263,8 @@
     \BLOCK{ for transition in fallback.transitions }
     \VAR{transition}
     \BLOCK{ endfor }
+    \enableTransitionRules
+    \AtBeginDocument{\enableTransitionRules}%
   \fi\fi
   \BLOCK{- endif }
 \fi

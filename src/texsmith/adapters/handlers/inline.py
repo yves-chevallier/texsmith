@@ -744,7 +744,10 @@ def render_index_entry(element: Tag, context: RenderContext) -> None:
 
     legacy_latex_accents = getattr(context.config, "legacy_latex_accents", False)
     escaped_fragments = [
-        render_moving_text(part, context, legacy_accents=legacy_latex_accents) or ""
+        render_moving_text(
+            part, context, legacy_accents=legacy_latex_accents, wrap_scripts=True
+        )
+        or ""
         for part in parts
     ]
     escaped_entry = "!".join(fragment for fragment in escaped_fragments if fragment)
@@ -755,7 +758,10 @@ def render_index_entry(element: Tag, context: RenderContext) -> None:
 
     display_text = element.get_text(strip=False) or ""
     escaped_text = (
-        render_moving_text(display_text, context, legacy_accents=legacy_latex_accents) or ""
+        render_moving_text(
+            display_text, context, legacy_accents=legacy_latex_accents, wrap_scripts=True
+        )
+        or ""
     )
 
     latex = context.formatter.index(escaped_text, entry=escaped_entry, style=style_key)

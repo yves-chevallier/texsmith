@@ -203,6 +203,7 @@ def render_headings(element: Tag, context: RenderContext) -> None:
         context,
         legacy_accents=getattr(context.config, "legacy_latex_accents", False),
         escape="\\" not in raw_text,
+        wrap_scripts=True,
     )
     plain_text = element.get_text(strip=True)
     level = int(element.name[1:])

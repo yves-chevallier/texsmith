@@ -83,6 +83,14 @@ _SKIP_GROUPS = {"latin", "common", "punctuation", "other"}
 _FALLBACK_ALIASES: dict[str, dict[str, object]] = {
     # Prefer widely available Noto families when coverage picks display variants.
     "cyrillics": {"name": "NotoSans", "styles": ["regular", "bold"], "extension": ".otf"},
+    "diacritics": {"name": "NotoSans", "styles": ["regular", "bold"], "extension": ".otf"},
+    "devanagari": {
+        "name": "NotoSansDevanagari",
+        "styles": ["regular", "bold"],
+        "extension": ".otf",
+        "dir": "NotoSansDevanagari",
+    },
+    "chinese": {"name": "NotoSansSC", "styles": ["regular", "bold"], "extension": ".otf"},
 }
 
 
@@ -439,9 +447,16 @@ def _prepare_fallback_context(context: Mapping[str, Any], *, output_dir: Path) -
         group_lower = group.lower()
         if group_lower in _SKIP_GROUPS:
             continue
-        slug = _slugify(group)
         class_name = entry.get("class") or group
-        usage = usage_index.get(slug) or usage_index.get(group_lower)
+        slug_base = _slugify(group)
+        slug = (
+            _slugify(class_name)
+            if isinstance(class_name, str) and _slugify(class_name) != slug_base
+            else slug_base
+        )
+        usage = usage_index.get(slug)
+        if usage is None and slug == slug_base:
+            usage = usage_index.get(group_lower)
         font_command = ""
         text_command = ""
         font_name = None
@@ -454,6 +469,7 @@ def _prepare_fallback_context(context: Mapping[str, Any], *, output_dir: Path) -
         if not text_command:
             text_command = f"text{slug}"
         font_meta = entry.get("font") if isinstance(entry.get("font"), Mapping) else {}
+        alias = _FALLBACK_ALIASES.get(group_lower)
         if isinstance(font_meta, Mapping):
             font_name = font_meta.get("name") or font_name
         if not font_name:
@@ -464,7 +480,6 @@ def _prepare_fallback_context(context: Mapping[str, Any], *, output_dir: Path) -
         count = entry.get("count")
         ext = font_meta.get("extension") if isinstance(font_meta, Mapping) else ".otf"
         ext = ext if isinstance(ext, str) and ext.startswith(".") else ".otf"
-
         # Ensure required font files exist locally, downloading into the cache when missing.
         downloader.ensure(
             font_name=font_name,
@@ -473,8 +488,25 @@ def _prepare_fallback_context(context: Mapping[str, Any], *, output_dir: Path) -
             dir_base=font_meta.get("dir") if isinstance(font_meta, Mapping) else None,
         )
 
+        destination_root = (output_dir / "fonts").resolve()
+        destination_root.mkdir(parents=True, exist_ok=True)
+        for style in styles or ["regular", "bold"]:
+            src = downloader.fonts_dir / f"{font_name}-{style_suffix(style)}{ext}"
+            if src.exists():
+                dest = destination_root / src.name
+                if not dest.exists():
+                    shutil.copy2(src, dest)
+
         upright_file = _find_font_file(font_name, "regular", ext, roots)
         bold_file = _find_font_file(font_name, "bold", ext, roots) if "bold" in styles else None
+        if upright_file is None:
+            candidate = downloader.fonts_dir / f"{font_name}-{style_suffix('regular')}{ext}"
+            if candidate.exists():
+                upright_file = candidate
+        if bold_file is None and "bold" in styles:
+            candidate = downloader.fonts_dir / f"{font_name}-{style_suffix('bold')}{ext}"
+            if candidate.exists():
+                bold_file = candidate
         style_count = len(styles) if styles else 1
         if upright_file is None:
             alias = _FALLBACK_ALIASES.get(group_lower)
@@ -483,19 +515,36 @@ def _prepare_fallback_context(context: Mapping[str, Any], *, output_dir: Path) -
                 alt_ext = alias.get("extension", ext)
                 alt_styles = alias.get("styles", styles)
                 if isinstance(alt_name, str):
-                    font_name = alt_name
-                    ext = (
+                    alt_dir = alias.get("dir")
+                    alt_ext = (
                         alt_ext if isinstance(alt_ext, str) and alt_ext.startswith(".") else ".otf"
                     )
-                    styles = (
+                    alt_styles = (
                         [str(s).lower() for s in alt_styles]
                         if isinstance(alt_styles, (list, tuple, set))
                         else styles
                     )
+                    downloader.ensure(
+                        font_name=alt_name,
+                        styles=alt_styles or styles or ["regular", "bold"],
+                        extension=alt_ext,
+                        dir_base=str(alt_dir) if isinstance(alt_dir, str) else None,
+                    )
+                    font_name = alt_name
+                    ext = alt_ext
+                    styles = alt_styles
                     upright_file = _find_font_file(font_name, "regular", ext, roots)
                     bold_file = (
                         _find_font_file(font_name, "bold", ext, roots) if "bold" in styles else None
                     )
+                    if upright_file is None:
+                        candidate = downloader.fonts_dir / f"{font_name}-{style_suffix('regular')}{ext}"
+                        if candidate.exists():
+                            upright_file = candidate
+                    if bold_file is None and "bold" in styles:
+                        candidate = downloader.fonts_dir / f"{font_name}-{style_suffix('bold')}{ext}"
+                        if candidate.exists():
+                            bold_file = candidate
                     style_count = len(styles) if styles else 1
         if upright_file is None:
             warnings.warn(
@@ -504,9 +553,6 @@ def _prepare_fallback_context(context: Mapping[str, Any], *, output_dir: Path) -
             )
             missing_commands.add(text_command)
             continue
-
-        destination_root = (output_dir / "fonts").resolve()
-        destination_root.mkdir(parents=True, exist_ok=True)
 
         dest_upright = destination_root / upright_file.name
         if not dest_upright.exists():
