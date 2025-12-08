@@ -101,7 +101,7 @@ class FallbackBuilder:
                     name=cls.name, start=cls.start, end=cls.end, group=cls.group, font=font
                 ),
             )
-        self.logger.notice(f"Polices fallback générées pour {len(entries)} classes.")
+        self.logger.notice(f"Fallback fonts generated for {len(entries)} classes.")
         return entries
 
 

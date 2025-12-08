@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Iterator
+from contextlib import contextmanager
 from pathlib import Path
 import tempfile
 
@@ -34,6 +35,7 @@ class FontCache:
         target.parent.mkdir(parents=True, exist_ok=True)
         return target
 
+    @contextmanager
     def tempdir(self) -> Iterator[Path]:
         """Provide a temporary directory inside the cache root."""
         self.ensure()

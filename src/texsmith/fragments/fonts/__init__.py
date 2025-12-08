@@ -16,6 +16,9 @@ from texsmith.core.fragments.base import BaseFragment, FragmentPiece
 from texsmith.core.templates.manifest import TemplateAttributeSpec, TemplateError
 from texsmith.core.user_dir import get_user_dir
 from texsmith.fonts.cache import FontCache
+from texsmith.fonts.constants import style_suffix
+from texsmith.fonts.downloader import NotoFontDownloader
+from texsmith.fonts.logging import FontPipelineLogger
 
 
 _FAMILY_CHOICES: dict[str, str] = {
@@ -376,22 +379,14 @@ def _candidate_font_roots(output_dir: Path) -> list[Path]:
     user_fonts = get_user_dir().data_dir("fonts", create=False)
     roots.append(user_fonts)
     with contextlib.suppress(Exception):
-        roots.append(FontCache().root)
+        cache = FontCache()
+        roots.append(cache.root)
+        roots.append(cache.path("fonts"))
     return roots
 
 
-def _style_suffix(style: str) -> str:
-    mapping = {
-        "regular": "Regular",
-        "bold": "Bold",
-        "italic": "Italic",
-        "bolditalic": "BoldItalic",
-    }
-    return mapping.get(style.lower(), style.title())
-
-
 def _find_font_file(name: str, style: str, ext: str, roots: list[Path]) -> Path | None:
-    filename = f"{name}-{_style_suffix(style)}{ext}"
+    filename = f"{name}-{style_suffix(style)}{ext}"
     for root in roots:
         candidate = root / filename
         if candidate.exists():
@@ -423,6 +418,8 @@ def _prepare_fallback_context(context: Mapping[str, Any], *, output_dir: Path) -
             usage_index[group] = entry
 
     roots = _candidate_font_roots(output_dir)
+    downloader = NotoFontDownloader(cache=FontCache(), logger=FontPipelineLogger())
+    roots.append(downloader.fonts_dir)
 
     entries_by_slug: dict[str, dict[str, Any]] = {}
     package_options: set[str] = set()
@@ -430,6 +427,7 @@ def _prepare_fallback_context(context: Mapping[str, Any], *, output_dir: Path) -
     slug_classes: dict[str, set[str]] = {}
     lua_regular: set[str] = set()
     lua_bold: set[str] = set()
+    missing_commands: set[str] = set()
     package_options.add("Latin")
 
     for entry in fallback_summary or []:
@@ -467,6 +465,14 @@ def _prepare_fallback_context(context: Mapping[str, Any], *, output_dir: Path) -
         ext = font_meta.get("extension") if isinstance(font_meta, Mapping) else ".otf"
         ext = ext if isinstance(ext, str) and ext.startswith(".") else ".otf"
 
+        # Ensure required font files exist locally, downloading into the cache when missing.
+        downloader.ensure(
+            font_name=font_name,
+            styles=styles or ["regular", "bold"],
+            extension=ext,
+            dir_base=font_meta.get("dir") if isinstance(font_meta, Mapping) else None,
+        )
+
         upright_file = _find_font_file(font_name, "regular", ext, roots)
         bold_file = _find_font_file(font_name, "bold", ext, roots) if "bold" in styles else None
         style_count = len(styles) if styles else 1
@@ -496,6 +502,7 @@ def _prepare_fallback_context(context: Mapping[str, Any], *, output_dir: Path) -
                 f"Fallback font '{font_name}' not found on disk; skipping script '{group}'.",
                 stacklevel=2,
             )
+            missing_commands.add(text_command)
             continue
 
         destination_root = (output_dir / "fonts").resolve()
@@ -581,6 +588,14 @@ def _prepare_fallback_context(context: Mapping[str, Any], *, output_dir: Path) -
         "transitions": transitions,
         "lua_regular": sorted(lua_regular),
         "lua_bold": sorted(lua_bold),
+        "missing_commands": sorted(
+            missing_commands
+            | {
+                str(entry.get("text_command") or f"text{entry.get('slug')}")
+                for entry in usage_index.values()
+                if entry.get("slug") and entry.get("slug") not in entries_by_slug
+            }
+        ),
     }
 
 

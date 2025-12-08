@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
-import contextlib
 from dataclasses import dataclass
 import json
+import pickle
 from pathlib import Path
 import re
 import urllib.parse
@@ -23,6 +23,8 @@ USER_AGENT = (
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
     "(KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
 )
+
+COVERAGE_CACHE_VERSION = 1
 
 
 def _http_get(url: str) -> str:
@@ -77,32 +79,58 @@ class NotoCoverageBuilder:
 
     @property
     def cache_path(self) -> Path:
-        return self.cache.path("noto_coverage_db.json")
+        return self.cache.path("noto_coverage_db.pkl")
 
     def _candidate_paths(self) -> list[Path]:
-        candidates = [self.cache_path]
-        repo_root = Path(__file__).resolve().parents[3]
-        candidates.append(repo_root / "sandbox" / "noto_coverage_db.json")
-        candidates.append(repo_root / "noto_coverage_db.json")
-        candidates.extend(self.seed_paths)
-        return candidates
+        candidates = [
+            self.cache_path,
+            *self.seed_paths,
+        ]
+        unique: list[Path] = []
+        seen: set[Path] = set()
+        for candidate in candidates:
+            if candidate in seen:
+                continue
+            seen.add(candidate)
+            unique.append(candidate)
+        return unique
+
+    def _load_dataset(self, candidate: Path) -> list[NotoCoverage] | None:
+        if not candidate.exists():
+            return None
+        try:
+            raw = pickle.loads(candidate.read_bytes())
+        except Exception:
+            raw = None
+        if isinstance(raw, dict):
+            if raw.get("version") == COVERAGE_CACHE_VERSION and isinstance(raw.get("data"), list):
+                try:
+                    return [NotoCoverage.from_mapping(entry) for entry in raw["data"]]
+                except Exception:
+                    return None
+        try:
+            payload = json.loads(candidate.read_text(encoding="utf-8"))
+        except Exception:
+            return None
+        if isinstance(payload, list):
+            try:
+                return [NotoCoverage.from_mapping(entry) for entry in payload]
+            except Exception:
+                return None
+        return None
 
     def load_cached(self) -> tuple[list[NotoCoverage], Path] | None:
         for candidate in self._candidate_paths():
-            if not candidate.exists():
+            data = self._load_dataset(candidate)
+            if data is None:
                 continue
-            try:
-                raw = json.loads(candidate.read_text(encoding="utf-8"))
-            except Exception:
-                continue
-            data = [NotoCoverage.from_mapping(entry) for entry in raw]
+            if candidate != self.cache_path:
+                self._save_cache(data, quiet=True)
             return data, candidate
         return None
 
     def _fetch_family_list(self) -> list[str]:
-        self.logger.info(
-            "Récupération de la liste complète des familles Noto depuis Google Fonts..."
-        )
+        self.logger.info("Fetching the complete Noto family list from Google Fonts...")
         raw = _http_get(GOOGLE_FONTS_METADATA_URL)
         if raw.startswith(")]}'"):
             raw = raw.split("\n", 1)[1]
@@ -113,7 +141,7 @@ class NotoCoverageBuilder:
             if entry["family"].startswith("Noto ")
         ]
         families.sort()
-        self.logger.notice(f"{len(families)} familles détectées.")
+        self.logger.notice(f"{len(families)} families detected.")
         return families
 
     def _normalize_style(self, style: str) -> str | None:
@@ -130,9 +158,7 @@ class NotoCoverageBuilder:
         try:
             state = json.loads(_http_get(NOTOFONTS_STATE_URL))
         except Exception as exc:
-            self.logger.warning(
-                "Impossible de récupérer les styles OTF (%s); poursuite sans styles).", exc
-            )
+            self.logger.warning("Unable to fetch OTF styles (%s); continuing without styles.", exc)
             return {}
 
         index: dict[str, dict] = {}
@@ -190,23 +216,29 @@ class NotoCoverageBuilder:
                     ranges.append((val, val))
         return ranges or None
 
+    def _save_cache(self, data: list[NotoCoverage], *, quiet: bool = False) -> None:
+        payload = {
+            "version": COVERAGE_CACHE_VERSION,
+            "data": [entry.to_mapping() for entry in data],
+        }
+        try:
+            self.cache_path.write_bytes(pickle.dumps(payload))
+            if not quiet:
+                self.logger.info("Cache de couverture Noto écrit dans %s", self.cache_path)
+        except Exception:
+            self.logger.warning("Unable to write the Noto coverage cache.")
+
     def build(self) -> list[NotoCoverage]:
         cached = self.load_cached()
         if cached:
             data, source = cached
-            self.logger.notice("Base de couverture Noto chargée depuis %s", source)
-            if source != self.cache_path:
-                with contextlib.suppress(Exception):
-                    self.cache_path.write_text(
-                        json.dumps([entry.to_mapping() for entry in data], separators=(",", ":")),
-                        encoding="utf-8",
-                    )
+            self.logger.notice("Noto coverage loaded from %s", source)
             return data
 
         families = self._fetch_family_list()
         styles_index = self._fetch_otf_styles()
         dataset: list[NotoCoverage] = []
-        with self.logger.progress("Scan des familles Noto", total=len(families)) as advance:
+        with self.logger.progress("Scanning Noto families", total=len(families)) as advance:
             for family in families:
                 ranges = self._fetch_ranges(family)
                 advance()
@@ -223,12 +255,7 @@ class NotoCoverageBuilder:
                         styles=tuple(styles_meta.get("styles", [])),
                     )
                 )
-        data = [entry.to_mapping() for entry in dataset]
-        try:
-            self.cache_path.write_text(json.dumps(data, separators=(",", ":")), encoding="utf-8")
-            self.logger.info("Cache écrit dans %s", self.cache_path)
-        except Exception:
-            self.logger.warning("Impossible d'écrire le cache de couverture Noto.")
+        self._save_cache(dataset)
         return dataset
 
 

@@ -194,6 +194,13 @@
   \BLOCK{ endfor }
   \makeatother
 
+\BLOCK{- if fallback and fallback.get("missing_commands") }
+  % Define no-op wrappers for scripts without an available fallback font.
+  \BLOCK{ for text_cmd in fallback.missing_commands }
+    \providecommand\VAR{'\\' + text_cmd}[1]{#1}%
+  \BLOCK{ endfor }
+\BLOCK{- endif }
+
   \ifLuaTeX
     \directlua{
       luaotfload.add_fallback("texsmith-fallback-reg", {
