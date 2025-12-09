@@ -31,6 +31,26 @@ def _sanitize_family(name: str) -> str:
 
 
 @dataclass(slots=True)
+class FallbackPlan:
+    """Structured result of a fallback scan."""
+
+    summary: list[dict]
+    fonts: list[dict]
+    group_fonts: dict[str, dict]
+    uncovered: list[int]
+    strategy: str = "by_class"
+
+    def __iter__(self):
+        return iter(self.summary)
+
+    def __len__(self) -> int:  # pragma: no cover - trivial
+        return len(self.summary)
+
+    def __bool__(self) -> bool:  # pragma: no cover - trivial
+        return bool(self.summary)
+
+
+@dataclass(slots=True)
 class FallbackEntry:
     name: str
     start: int
@@ -326,5 +346,6 @@ __all__ = [
     "FallbackIndex",
     "FallbackLookup",
     "FallbackRepository",
+    "FallbackPlan",
     "merge_fallback_summaries",
 ]

@@ -31,6 +31,12 @@ def main() -> None:
         description="Debug TeXSmith fallback mapping for a text file."
     )
     parser.add_argument("file", type=Path, help="Text/TeX file to inspect")
+    parser.add_argument(
+        "--strategy",
+        choices=["by_class", "minimal_fonts"],
+        default="minimal_fonts",
+        help="Fallback planning strategy (default: minimal_fonts).",
+    )
     args = parser.parse_args()
 
     if not args.file.exists():
@@ -44,8 +50,8 @@ def main() -> None:
     unique_cps = sorted({ord(ch) for ch in text if ord(ch) > 0x20})
 
     print(f"# Fallback summary for {args.file}")
-    summary = manager.scan_text(text)
-    for entry in summary:
+    plan = manager.scan_text(text, strategy=args.strategy)
+    for entry in plan.summary:
         group = entry.get("group") or entry.get("class")
         font = entry.get("font", {}) if isinstance(entry.get("font"), dict) else {}
         font_name = font.get("name")

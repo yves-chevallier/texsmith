@@ -12,6 +12,7 @@ from texsmith.fonts.cache import FontCache
 from texsmith.fonts.fallback import (
     FallbackBuilder,
     FallbackEntry,
+    FallbackPlan,
     FallbackLookup,
     FallbackRepository,
     merge_fallback_summaries,
@@ -178,6 +179,11 @@ def fallback_summary_to_usage(
     summary: Sequence[Mapping[str, object]],
 ) -> list[dict[str, str | None]]:
     """Convert a fallback scan summary into script usage records."""
+    plan_fonts: dict[str, Mapping[str, object]] = {}
+    if isinstance(summary, FallbackPlan):
+        plan_fonts = summary.group_fonts or {}
+        summary = summary.summary
+
     usages: list[dict[str, str | None]] = []
     for entry in summary:
         if not isinstance(entry, Mapping):
@@ -189,10 +195,15 @@ def fallback_summary_to_usage(
             continue
         slug = _slugify(group)
         font_name = None
-        font_payload = entry.get("font")
-        if isinstance(font_payload, Mapping):
-            raw_name = font_payload.get("name")
+        plan_font = plan_fonts.get(group) or plan_fonts.get(group.lower()) if plan_fonts else None
+        if isinstance(plan_font, Mapping):
+            raw_name = plan_font.get("name")
             font_name = str(raw_name) if isinstance(raw_name, str) else None
+        if font_name is None:
+            font_payload = entry.get("font")
+            if isinstance(font_payload, Mapping):
+                raw_name = font_payload.get("name")
+                font_name = str(raw_name) if isinstance(raw_name, str) else None
         count_value = entry.get("count")
         count = int(count_value) if isinstance(count_value, (int, float)) else None
         usages.append(
