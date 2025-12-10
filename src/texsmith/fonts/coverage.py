@@ -224,7 +224,7 @@ class NotoCoverageBuilder:
         try:
             self.cache_path.write_bytes(pickle.dumps(payload))
             if not quiet:
-                self.logger.info("Cache de couverture Noto écrit dans %s", self.cache_path)
+                self.logger.info("Noto coverage cache written to %s", self.cache_path)
         except Exception:
             self.logger.warning("Unable to write the Noto coverage cache.")
 

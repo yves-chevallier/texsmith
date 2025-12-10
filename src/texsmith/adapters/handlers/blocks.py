@@ -695,12 +695,14 @@ def render_paragraphs(element: Tag, context: RenderContext) -> None:
         return
 
     legacy_accents = getattr(context.config, "legacy_latex_accents", False)
+    escape_text = "\\" not in raw_text
     rendered = render_moving_text(
         raw_text,
         context,
         legacy_accents=legacy_accents,
         include_whitespace=True,
         wrap_scripts=True,
+        escape=escape_text,
     )
     element.replace_with(mark_processed(NavigableString(f"{rendered}\n")))
 

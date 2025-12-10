@@ -620,7 +620,14 @@ def render_keystrokes(element: Tag, context: RenderContext) -> None:
     element.replace_with(node)
 
 
-@renders("span", phase=RenderPhase.INLINE, priority=30, name="script_spans", nestable=False)
+@renders(
+    "span",
+    phase=RenderPhase.INLINE,
+    priority=30,
+    name="script_spans",
+    nestable=False,
+    auto_mark=False,
+)
 def render_script_spans(element: Tag, context: RenderContext) -> None:
     """Render spans tagged with data-script into explicit text commands."""
     slug = coerce_attribute(element.get("data-script"))
@@ -639,6 +646,7 @@ def render_script_spans(element: Tag, context: RenderContext) -> None:
     parent = element.parent
     if parent is not None and getattr(parent, "attrs", None) is not None:
         parent.attrs["data-texsmith-latex"] = "true"
+    context.mark_processed(element)
     element.replace_with(mark_processed(NavigableString(latex)))
 
 
