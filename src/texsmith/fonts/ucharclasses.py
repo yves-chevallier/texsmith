@@ -90,7 +90,7 @@ class UCharClassesBuilder:
                 if candidate != cached:
                     cached.parent.mkdir(parents=True, exist_ok=True)
                     shutil.copy(candidate, cached)
-                self.logger.notice(f"ucharclasses.sty loaded from {candidate}")
+                self.logger.debug(f"ucharclasses.sty loaded from {candidate}")
                 return cached
         with self.cache.tempdir() as tmp:
             archive = tmp / "ucharclasses.zip"

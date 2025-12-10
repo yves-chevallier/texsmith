@@ -43,3 +43,33 @@ def test_fallback_cache_rebuilds_when_signature_differs(tmp_path, monkeypatch) -
     font_names = {entry["font"]["name"] for entry in plan.summary if entry.get("font")}
     assert "NotoKufiArabic" in font_names
     assert "NotoSansSC" not in font_names
+
+
+def test_fallback_uses_cached_index_without_rebuilding(monkeypatch) -> None:
+    cached_index = FallbackIndex(
+        [
+            FallbackEntry(
+                name="Arabic",
+                start=0x0600,
+                end=0x06FF,
+                group="Arabics",
+                font={"name": "CachedFont", "extension": ".otf", "styles": ["regular"]},
+            )
+        ]
+    )
+
+    monkeypatch.setattr(
+        FallbackRepository,
+        "load",
+        lambda self, expected_signature=None: cached_index,
+    )
+    monkeypatch.setattr(
+        FallbackRepository,
+        "load_or_build",
+        lambda self, entries: (_ for _ in ()).throw(AssertionError("should not rebuild")),
+    )
+
+    manager = FallbackManager(cache=FontCache(root=None))
+    plan = manager.scan_text("سلام", strategy="by_class")
+    names = {entry["font"]["name"] for entry in plan.summary if entry.get("font")}
+    assert "CachedFont" in names

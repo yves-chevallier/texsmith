@@ -68,6 +68,12 @@ class FontPipelineLogger:
         """Alias for info to mirror the CLI vocabulary."""
         self.info(message, *args)
 
+    def debug(self, message: str, *args: Any) -> None:
+        """Emit a debug/verbose message when verbose mode is enabled."""
+        if not self.verbose:
+            return
+        self.info(message, *args)
+
     @contextmanager
     def progress(self, task: str, total: int | None = None) -> Iterator[callable]:
         """Yield a progress updater. Falls back to a no-op when Rich is absent."""

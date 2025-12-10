@@ -17,20 +17,45 @@ from texsmith.fonts.logging import FontPipelineLogger
 from texsmith.fonts.ucharclasses import UCharClassesBuilder
 
 
+_UCHAR_DATA_CACHE: dict[str, list[UCharClass]] = {}
+_NOTO_DATA_CACHE: dict[str, list[NotoCoverage]] = {}
+_LOOKUP_CACHE: dict[str, FallbackLookup] = {}
+
+
+def _cache_key(cache: FontCache | None) -> str | None:
+    try:
+        root = cache.root if cache is not None else FontCache().root
+        return str(root.resolve())
+    except Exception:
+        return None
+
+
 def generate_ucharclasses_data(
     *, cache: FontCache | None = None, logger: FontPipelineLogger | None = None
 ):
     """Fetch and parse ucharclasses definitions, downloading assets if missing."""
+    key = _cache_key(cache)
+    if key and key in _UCHAR_DATA_CACHE:
+        return _UCHAR_DATA_CACHE[key]
     builder = UCharClassesBuilder(cache=cache, logger=logger)
-    return builder.build()
+    data = builder.build()
+    if key:
+        _UCHAR_DATA_CACHE[key] = data
+    return data
 
 
 def generate_noto_metadata(
     *, cache: FontCache | None = None, logger: FontPipelineLogger | None = None
 ):
     """Build the Noto coverage dataset (equivalent to sandbox/build.py)."""
+    key = _cache_key(cache)
+    if key and key in _NOTO_DATA_CACHE:
+        return _NOTO_DATA_CACHE[key]
     builder = NotoCoverageBuilder(cache=cache, logger=logger)
-    return builder.build()
+    data = builder.build()
+    if key:
+        _NOTO_DATA_CACHE[key] = data
+    return data
 
 
 def generate_fallback_entries(
@@ -58,8 +83,13 @@ class FallbackManager:
     def _ensure_lookup(self) -> FallbackLookup:
         if self._lookup is not None:
             return self._lookup
-
         repository = FallbackRepository(cache=self.cache, logger=self.logger)
+
+        cache_key = _cache_key(self.cache)
+        if cache_key and cache_key in _LOOKUP_CACHE:
+            self._lookup = _LOOKUP_CACHE[cache_key]
+            return self._lookup
+
         classes = generate_ucharclasses_data(cache=self.cache, logger=self.logger)
         coverage = self._ensure_coverage()
         entries = FallbackBuilder(logger=self.logger).build(classes, coverage)
@@ -70,6 +100,8 @@ class FallbackManager:
             cached = repository.load_or_build(entries)
 
         self._lookup = FallbackLookup(cached)
+        if cache_key:
+            _LOOKUP_CACHE[cache_key] = self._lookup
         return self._lookup
 
     def _ensure_coverage(self) -> list[NotoCoverage]:
