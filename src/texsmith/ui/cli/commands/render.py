@@ -47,6 +47,7 @@ from texsmith.core.conversion.debug import ConversionError
 from texsmith.core.conversion.inputs import UnsupportedInputError
 from texsmith.core.templates import TemplateError
 from texsmith.core.templates.runtime import coerce_base_level
+from texsmith.fonts.html_scripts import wrap_scripts_in_html
 
 from .._options import (
     DIAGNOSTICS_PANEL,
@@ -768,7 +769,14 @@ def render(
         raise typer.Exit(code=1) from exc
 
     if html_only:
-        html_fragments = [(doc.source_path, doc.html) for doc in prepared.documents]
+        html_fragments = []
+        for doc in prepared.documents:
+            processed_html = doc.html
+            try:
+                processed_html, _usage, _summary = wrap_scripts_in_html(processed_html)
+            except Exception:
+                processed_html = doc.html
+            html_fragments.append((doc.source_path, processed_html))
         if output_mode == "stdout":
             typer.echo("\n\n".join(fragment for _, fragment in html_fragments))
             _flush_diagnostics()

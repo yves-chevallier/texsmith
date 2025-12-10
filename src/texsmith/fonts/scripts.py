@@ -5,6 +5,7 @@ from __future__ import annotations
 from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass
 import re
+import unicodedata
 
 from texsmith.adapters.latex.utils import escape_latex_chars
 from texsmith.core.context import RenderContext
@@ -104,6 +105,7 @@ class ScriptDetector:
         *,
         include_whitespace: bool,
     ) -> list[tuple[str | None, str, FallbackEntry | None]]:
+        override_group = self._resolve_cjk_override(text)
         runs: list[tuple[str | None, str, FallbackEntry | None]] = []
         current_group: str | None = None
         current_entry: FallbackEntry | None = None
@@ -112,6 +114,13 @@ class ScriptDetector:
         for char in text:
             entry = self._classify_char(char)
             group = self._group_name(entry)
+            if override_group and group and group.lower() in {"chinese", "japanese", "korean", "cjk"}:
+                group = override_group
+                entry = entry
+            combining = bool(unicodedata.combining(char))
+            if current_group is not None and (combining or (group and group.lower() == "diacritics")):
+                group = current_group
+                entry = current_entry
             if include_whitespace and char.isspace() and current_group is not None:
                 group = current_group
                 entry = current_entry
@@ -128,6 +137,37 @@ class ScriptDetector:
             runs.append((current_group, "".join(buffer), current_entry))
 
         return runs
+
+    def _resolve_cjk_override(self, text: str) -> str | None:
+        try:
+            summary = self._ensure_lookup().summary(text)
+        except Exception:
+            return None
+
+        counts: dict[str, int] = {}
+        for entry in summary:
+            group = entry.get("group")
+            count = entry.get("count")
+            if not isinstance(group, str) or not isinstance(count, int):
+                continue
+            lowered = group.lower()
+            if lowered in {"chinese", "japanese", "korean", "cjk"}:
+                counts[lowered] = counts.get(lowered, 0) + count
+
+        if not counts:
+            return None
+
+        chinese_count = counts.get("chinese", 0) + counts.get("cjk", 0)
+        japanese_count = counts.get("japanese", 0)
+        korean_count = counts.get("korean", 0)
+
+        if japanese_count and japanese_count >= chinese_count * 0.5:
+            return "japanese"
+        if korean_count and korean_count >= chinese_count * 0.5:
+            return "korean"
+
+        dominant = max(counts.items(), key=lambda item: item[1])[0]
+        return dominant
 
     def _record_spec(self, group: str, entry: FallbackEntry | None) -> ScriptSpec:
         slug = _slugify(group)
