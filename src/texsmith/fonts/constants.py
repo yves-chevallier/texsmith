@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+
 _STYLE_SUFFIXES = {
     "regular": "Regular",
     "italic": "Italic",
@@ -54,4 +55,4 @@ def guess_cjk_path(filename: str) -> str:
     return ""
 
 
-__all__ = ["CJK_ALIASES", "style_suffix", "filename_base", "guess_cjk_path"]
+__all__ = ["CJK_ALIASES", "filename_base", "guess_cjk_path", "style_suffix"]

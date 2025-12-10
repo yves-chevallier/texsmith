@@ -3,6 +3,8 @@
 \ProvidesPackage{ts-fonts}[2025/01/10 TeXSmith font selection (generated)]
 
 \RequirePackage{iftex}
+% Fallback definition replaced when emoji fonts are available.
+\providecommand{\texsmithEmoji}[1]{\textbf{!}}
 
 \ifPDFTeX
   \PackageError{ts-fonts}{ts-fonts requires XeLaTeX or LuaLaTeX}{Switch to xelatex or lualatex.}

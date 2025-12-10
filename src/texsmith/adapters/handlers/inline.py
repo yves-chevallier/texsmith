@@ -14,8 +14,7 @@ from requests.utils import requote_uri as requote_url
 from texsmith.core.context import RenderContext
 from texsmith.core.exceptions import InvalidNodeError, TransformerExecutionError
 from texsmith.core.rules import RenderPhase, renders
-from texsmith.fonts.scripts import render_moving_text
-from texsmith.fonts.scripts import record_script_usage_for_slug
+from texsmith.fonts.scripts import record_script_usage_for_slug, render_moving_text
 
 from ..latex.utils import escape_latex_chars
 from ..transformers import fetch_image, svg2pdf
@@ -775,9 +774,7 @@ def render_index_entry(element: Tag, context: RenderContext) -> None:
 
     legacy_latex_accents = getattr(context.config, "legacy_latex_accents", False)
     escaped_fragments = [
-        render_moving_text(
-            part, context, legacy_accents=legacy_latex_accents, wrap_scripts=True
-        )
+        render_moving_text(part, context, legacy_accents=legacy_latex_accents, wrap_scripts=True)
         or ""
         for part in parts
     ]

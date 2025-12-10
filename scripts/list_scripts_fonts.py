@@ -4,13 +4,13 @@ from __future__ import annotations
 
 import argparse
 from pathlib import Path
+
+# Import pretty print for better output formatting
+import pprint
 import sys
 
 from texsmith.fonts.pipeline import FallbackManager
 from texsmith.fonts.scripts import fallback_summary_to_usage
-
-# Import pretty print for better output formatting
-import pprint
 
 
 def main() -> None:
@@ -53,3 +53,5 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+#!/usr/bin/env python3
+# ruff: noqa: T203

@@ -4,8 +4,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 import json
-import pickle
 from pathlib import Path
+import pickle
 import re
 import urllib.parse
 import urllib.request
@@ -102,12 +102,13 @@ class NotoCoverageBuilder:
             raw = pickle.loads(candidate.read_bytes())
         except Exception:
             raw = None
-        if isinstance(raw, dict):
-            if raw.get("version") == COVERAGE_CACHE_VERSION and isinstance(raw.get("data"), list):
-                try:
-                    return [NotoCoverage.from_mapping(entry) for entry in raw["data"]]
-                except Exception:
-                    return None
+        if isinstance(raw, dict) and raw.get("version") == COVERAGE_CACHE_VERSION and isinstance(
+            raw.get("data"), list
+        ):
+            try:
+                return [NotoCoverage.from_mapping(entry) for entry in raw["data"]]
+            except Exception:
+                return None
         try:
             payload = json.loads(candidate.read_text(encoding="utf-8"))
         except Exception:

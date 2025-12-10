@@ -61,9 +61,11 @@ def test_html_scripts_marked_for_foreign_runs(tmp_path: Path) -> None:
     wrapped, usage, summary = wrap_scripts_in_html(html)
 
     assert '<span data-script="chinese">繁體中文</span>' in wrapped
-    assert "<p data-script=\"chinese\">少無適俗韻，性本愛丘山。</p>" in wrapped
-    assert "<p data-script=\"arabics\">قِفا نَبْكِ مِنْ ذِكرَى حبيبٍ ومَنزِلِ" in wrapped
+    assert '<p data-script="chinese">少無適俗韻，性本愛丘山。</p>' in wrapped
+    assert '<p data-script="arabics">قِفا نَبْكِ مِنْ ذِكرَى حبيبٍ ومَنزِلِ' in wrapped
     assert '<p data-script="japanese">月日は百代の過客にして、行きかふ年も旅人なり。</p>' in wrapped
     slugs = {entry.get("slug") for entry in usage}
     assert {"chinese", "arabics", "japanese"} <= slugs
     assert summary
+#!/usr/bin/env python3
+# ruff: noqa: RUF001

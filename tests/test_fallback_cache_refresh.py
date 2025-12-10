@@ -1,8 +1,8 @@
 from texsmith.fonts.cache import FontCache
+from texsmith.fonts.coverage import NotoCoverage
 from texsmith.fonts.fallback import FallbackEntry, FallbackIndex, FallbackRepository
 from texsmith.fonts.pipeline import FallbackManager
 from texsmith.fonts.ucharclasses import UCharClass
-from texsmith.fonts.coverage import NotoCoverage
 
 
 def test_fallback_cache_rebuilds_when_signature_differs(tmp_path, monkeypatch) -> None:
@@ -22,11 +22,13 @@ def test_fallback_cache_rebuilds_when_signature_differs(tmp_path, monkeypatch) -
     # Force the pipeline to prefer a correct Arabic font when rebuilding.
     monkeypatch.setattr(
         "texsmith.fonts.pipeline.generate_ucharclasses_data",
-        lambda cache=None, logger=None: [UCharClass(name="Arabic", start=0x0600, end=0x06FF, group="Arabics")],
+        lambda cache=None, logger=None: [  # noqa: ARG005
+            UCharClass(name="Arabic", start=0x0600, end=0x06FF, group="Arabics")
+        ],
     )
     monkeypatch.setattr(
         "texsmith.fonts.pipeline.generate_noto_metadata",
-        lambda cache=None, logger=None: [
+        lambda cache=None, logger=None: [  # noqa: ARG005
             NotoCoverage(
                 family="Noto Kufi Arabic",
                 ranges=((0x0600, 0x06FF),),
@@ -61,12 +63,12 @@ def test_fallback_uses_cached_index_without_rebuilding(monkeypatch) -> None:
     monkeypatch.setattr(
         FallbackRepository,
         "load",
-        lambda self, expected_signature=None: cached_index,
+        lambda self, expected_signature=None: cached_index,  # noqa: ARG005
     )
     monkeypatch.setattr(
         FallbackRepository,
         "load_or_build",
-        lambda self, entries: (_ for _ in ()).throw(AssertionError("should not rebuild")),
+        lambda self, entries: (_ for _ in ()).throw(AssertionError("should not rebuild")),  # noqa: ARG005
     )
 
     manager = FallbackManager(cache=FontCache(root=None))

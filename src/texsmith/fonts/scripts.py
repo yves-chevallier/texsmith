@@ -13,8 +13,8 @@ from texsmith.fonts.cache import FontCache
 from texsmith.fonts.fallback import (
     FallbackBuilder,
     FallbackEntry,
-    FallbackPlan,
     FallbackLookup,
+    FallbackPlan,
     FallbackRepository,
     merge_fallback_summaries,
 )
@@ -114,11 +114,17 @@ class ScriptDetector:
         for char in text:
             entry = self._classify_char(char)
             group = self._group_name(entry)
-            if override_group and group and group.lower() in {"chinese", "japanese", "korean", "cjk"}:
+            if (
+                override_group
+                and group
+                and group.lower() in {"chinese", "japanese", "korean", "cjk"}
+            ):
                 group = override_group
                 entry = entry
             combining = bool(unicodedata.combining(char))
-            if current_group is not None and (combining or (group and group.lower() == "diacritics")):
+            if current_group is not None and (
+                combining or (group and group.lower() == "diacritics")
+            ):
                 group = current_group
                 entry = current_entry
             if include_whitespace and char.isspace() and current_group is not None:
@@ -231,11 +237,12 @@ def fallback_summary_to_usage(
         group = entry.get("group") or entry.get("class") or entry.get("name")
         if not isinstance(group, str):
             continue
-        if group.lower() in _SKIP_GROUPS:
+        group_lower = group.lower()
+        if group_lower in _SKIP_GROUPS:
             continue
         slug = _slugify(group)
         font_name = None
-        plan_font = plan_fonts.get(group) or plan_fonts.get(group.lower()) if plan_fonts else None
+        plan_font = plan_fonts.get(group) or plan_fonts.get(group_lower) if plan_fonts else None
         if isinstance(plan_font, Mapping):
             raw_name = plan_font.get("name")
             font_name = str(raw_name) if isinstance(raw_name, str) else None
@@ -244,6 +251,9 @@ def fallback_summary_to_usage(
             if isinstance(font_payload, Mapping):
                 raw_name = font_payload.get("name")
                 font_name = str(raw_name) if isinstance(raw_name, str) else None
+        is_emoji = group_lower == "symbols" or (font_name and "emoji" in font_name.lower())
+        if is_emoji:
+            slug = "emoji"
         count_value = entry.get("count")
         count = int(count_value) if isinstance(count_value, (int, float)) else None
         usages.append(
@@ -251,8 +261,8 @@ def fallback_summary_to_usage(
                 "group": group,
                 "slug": slug,
                 "font_name": font_name,
-                "font_command": f"{slug}font",
-                "text_command": f"text{slug}",
+                "font_command": "texsmithEmojiFont" if slug == "emoji" else f"{slug}font",
+                "text_command": "texsmithEmoji" if slug == "emoji" else f"text{slug}",
                 "count": count,
             }
         )
@@ -284,7 +294,9 @@ def merge_script_usage(
             if not existing_font:
                 merged[slug]["font_name"] = update_font
             else:
-                existing_value = int(existing_count) if isinstance(existing_count, (int, float)) else 0
+                existing_value = (
+                    int(existing_count) if isinstance(existing_count, (int, float)) else 0
+                )
                 update_value = int(update_count) if isinstance(update_count, (int, float)) else 0
                 if update_value > existing_value:
                     merged[slug]["font_name"] = update_font
@@ -315,7 +327,7 @@ def record_script_usage_for_slug(
     group = slug
     font_name = None
     try:
-        summary = detector._ensure_lookup().summary(text)
+        summary = detector._ensure_lookup().summary(text)  # noqa: SLF001
     except Exception:
         summary = []
 
@@ -375,7 +387,7 @@ def render_moving_text(
     state_usage = getattr(context.state, "script_usage", [])
     context.state.script_usage = merge_script_usage(state_usage, usage)
     try:
-        summary = detector._ensure_lookup().summary(text)
+        summary = detector._ensure_lookup().summary(text)  # noqa: SLF001
         existing = getattr(context.state, "fallback_summary", [])
         context.state.fallback_summary = merge_fallback_summaries(existing, summary)
     except Exception:

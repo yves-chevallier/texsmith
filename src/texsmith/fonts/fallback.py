@@ -40,7 +40,7 @@ class FallbackPlan:
     uncovered: list[int]
     strategy: str = "by_class"
 
-    def __iter__(self):
+    def __iter__(self) -> Any:
         return iter(self.summary)
 
     def __len__(self) -> int:  # pragma: no cover - trivial
@@ -345,7 +345,7 @@ __all__ = [
     "FallbackEntry",
     "FallbackIndex",
     "FallbackLookup",
-    "FallbackRepository",
     "FallbackPlan",
+    "FallbackRepository",
     "merge_fallback_summaries",
 ]

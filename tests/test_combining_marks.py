@@ -5,7 +5,7 @@ from texsmith.fonts.html_scripts import wrap_scripts_in_html
 
 def test_combining_marks_stick_to_base_script() -> None:
     html = "<p>ܛܘܒܝܗܘܢ ܠܡܣܟܢ̈</p>"
-    wrapped, usage, summary = wrap_scripts_in_html(html)
+    wrapped, usage, _summary = wrap_scripts_in_html(html)
 
     assert 'data-script="diacritics"' not in wrapped
     assert 'data-script="syriacfull"' in wrapped

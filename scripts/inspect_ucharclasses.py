@@ -38,3 +38,5 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+#!/usr/bin/env python3
+# ruff: noqa: T203

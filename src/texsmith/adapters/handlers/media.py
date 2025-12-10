@@ -117,9 +117,7 @@ def _apply_figure_template(
     formatter = getattr(context.formatter, template_name)
     asset_path = context.assets.latex_path(path)
     legacy_accents = getattr(context.config, "legacy_latex_accents", False)
-    caption = render_moving_text(
-        caption, context, legacy_accents=legacy_accents, wrap_scripts=True
-    )
+    caption = render_moving_text(caption, context, legacy_accents=legacy_accents, wrap_scripts=True)
     shortcaption = render_moving_text(
         shortcaption, context, legacy_accents=legacy_accents, wrap_scripts=True
     )

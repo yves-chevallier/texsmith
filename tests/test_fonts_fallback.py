@@ -5,13 +5,18 @@ def test_fallback_aligns_with_usage_slug(tmp_path, monkeypatch) -> None:
     fonts_dir = tmp_path / "fonts"
     fonts_dir.mkdir()
     # Provide minimal font files so lookup succeeds without downloads.
-    for name in ("NotoSansSC-Regular.otf", "NotoSansSC-Bold.otf", "NotoKufiArabic-Regular.otf", "NotoKufiArabic-Bold.otf"):
+    for name in (
+        "NotoSansSC-Regular.otf",
+        "NotoSansSC-Bold.otf",
+        "NotoKufiArabic-Regular.otf",
+        "NotoKufiArabic-Bold.otf",
+    ):
         (fonts_dir / name).write_bytes(b"0")
 
     # Avoid network fetches during tests.
     monkeypatch.setattr(
         "texsmith.fragments.fonts.NotoFontDownloader.ensure",
-        lambda self, *, font_name, styles, extension, dir_base=None: None,
+        lambda self, *, font_name, styles, extension, dir_base=None: None,  # noqa: ARG005
     )
 
     context = {
@@ -20,7 +25,11 @@ def test_fallback_aligns_with_usage_slug(tmp_path, monkeypatch) -> None:
                 {
                     "group": "Chinese",
                     "class": "CJKUnifiedIdeographs",
-                    "font": {"name": "NotoSansSC", "styles": ["regular", "bold"], "extension": ".otf"},
+                    "font": {
+                        "name": "NotoSansSC",
+                        "styles": ["regular", "bold"],
+                        "extension": ".otf",
+                    },
                     "count": 2,
                 }
             ],
@@ -50,12 +59,17 @@ def test_fallback_aligns_with_usage_slug(tmp_path, monkeypatch) -> None:
 def test_usage_font_preferred_over_stale_entries(tmp_path, monkeypatch) -> None:
     fonts_dir = tmp_path / "fonts"
     fonts_dir.mkdir()
-    for name in ("NotoSansSC-Regular.otf", "NotoSansSC-Bold.otf", "NotoKufiArabic-Regular.otf", "NotoKufiArabic-Bold.otf"):
+    for name in (
+        "NotoSansSC-Regular.otf",
+        "NotoSansSC-Bold.otf",
+        "NotoKufiArabic-Regular.otf",
+        "NotoKufiArabic-Bold.otf",
+    ):
         (fonts_dir / name).write_bytes(b"0")
 
     monkeypatch.setattr(
         "texsmith.fragments.fonts.NotoFontDownloader.ensure",
-        lambda self, *, font_name, styles, extension, dir_base=None: None,
+        lambda self, *, font_name, styles, extension, dir_base=None: None,  # noqa: ARG005
     )
 
     context = {
@@ -65,14 +79,22 @@ def test_usage_font_preferred_over_stale_entries(tmp_path, monkeypatch) -> None:
                 {
                     "group": "Arabics",
                     "class": "Arabic",
-                    "font": {"name": "NotoSansSC", "styles": ["regular", "bold"], "extension": ".otf"},
+                    "font": {
+                        "name": "NotoSansSC",
+                        "styles": ["regular", "bold"],
+                        "extension": ".otf",
+                    },
                     "count": 10,
                 },
                 # Fresh entry with the correct font.
                 {
                     "group": "Arabics",
                     "class": "Arabic",
-                    "font": {"name": "NotoKufiArabic", "styles": ["regular", "bold"], "extension": ".otf"},
+                    "font": {
+                        "name": "NotoKufiArabic",
+                        "styles": ["regular", "bold"],
+                        "extension": ".otf",
+                    },
                     "count": 5,
                 },
             ],

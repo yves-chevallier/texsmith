@@ -27,9 +27,7 @@ def fallback_hits(lookup, codepoint: int) -> list[str]:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(
-        description="Debug TeXSmith fallback mapping for a text file."
-    )
+    parser = argparse.ArgumentParser(description="Debug TeXSmith fallback mapping for a text file.")
     parser.add_argument("file", type=Path, help="Text/TeX file to inspect")
     parser.add_argument(
         "--strategy",
@@ -70,3 +68,5 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+#!/usr/bin/env python3
+# ruff: noqa: ANN001, SLF001, T201

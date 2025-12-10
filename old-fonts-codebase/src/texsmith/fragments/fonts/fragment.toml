@@ -1,3 +1,0 @@
-name = "ts-fonts"
-description = "Font selection and fallbacks for TeXSmith templates."
-entrypoint = "texsmith.fragments.fonts:fragment"

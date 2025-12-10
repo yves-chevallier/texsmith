@@ -39,7 +39,9 @@ def find_group(groups: list[tuple[str, int, int]], codepoint: int) -> list[str]:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Find groups for given codepoints from extract.txt")
+    parser = argparse.ArgumentParser(
+        description="Find groups for given codepoints from extract.txt"
+    )
     parser.add_argument(
         "input_file",
         type=Path,
@@ -91,3 +93,5 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+#!/usr/bin/env python3
+# ruff: noqa: T201

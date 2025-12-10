@@ -15,7 +15,9 @@ _DEFAULT_BLOCK_TAGS = {"p"}
 _SKIP_TAGS = {"script", "style", "code", "pre"}
 
 
-def _replace_with_nodes(target: NavigableString, replacements: list[object], soup: BeautifulSoup) -> None:
+def _replace_with_nodes(
+    target: NavigableString, replacements: list[object], soup: BeautifulSoup
+) -> None:
     if not replacements:
         target.extract()
         return
@@ -41,7 +43,8 @@ def _iter_text(node: Tag, *, skip_names: set[str]) -> str:
             continue
         if isinstance(descendant, NavigableString):
             if any(
-                getattr(parent, "name", "").lower() in skip_names for parent in getattr(descendant, "parents", [])
+                getattr(parent, "name", "").lower() in skip_names
+                for parent in getattr(descendant, "parents", [])
             ):
                 continue
             parts.append(str(descendant))
@@ -52,7 +55,7 @@ def _promote_block_script(
     tag: Tag,
     detector: ScriptDetector,
     *,
-    soup: BeautifulSoup,
+    soup: BeautifulSoup,  # noqa: ARG001
     segments: list[tuple[str | None, str, object]],
 ) -> None:
     groups = {group for group, _, _ in segments if group}
@@ -60,7 +63,7 @@ def _promote_block_script(
         return
 
     group = groups.pop()
-    slug = detector._record_spec(group, None).slug
+    slug = detector._record_spec(group, None).slug  # noqa: SLF001
     tag.attrs.setdefault("data-script", slug)
 
     for span in list(tag.find_all("span", attrs={"data-script": slug})):
@@ -89,7 +92,7 @@ def wrap_scripts_in_html(
         )
 
     def _resolve_segments(
-        segments: list[tuple[str | None, str, object]]
+        segments: list[tuple[str | None, str, object]],
     ) -> list[tuple[str | None, str, object]]:
         resolved: list[tuple[str | None, str, object]] = []
         last_group: str | None = None
@@ -99,13 +102,12 @@ def wrap_scripts_in_html(
                 continue
             resolved_group = group
             resolved_entry = entry
-            if _is_punctuation(chunk):
-                if resolved_group is None and last_group is not None:
-                    resolved_group = last_group
-                    resolved_entry = last_entry
-                elif resolved_group != last_group and last_group is not None:
-                    resolved_group = last_group
-                    resolved_entry = last_entry
+            if _is_punctuation(chunk) and (
+                (resolved_group is None and last_group is not None)
+                or (resolved_group != last_group and last_group is not None)
+            ):
+                resolved_group = last_group
+                resolved_entry = last_entry
             resolved.append((resolved_group, chunk, resolved_entry))
             if resolved_group:
                 last_group = resolved_group
@@ -118,7 +120,9 @@ def wrap_scripts_in_html(
                 continue
             if isinstance(child, NavigableString):
                 segments = _resolve_segments(
-                    detector._segment_text(str(child), include_whitespace=include_whitespace)
+                    detector._segment_text(  # noqa: SLF001
+                        str(child), include_whitespace=include_whitespace
+                    )
                 )
                 if not segments or all(group is None for group, _, _ in segments):
                     continue
@@ -126,7 +130,7 @@ def wrap_scripts_in_html(
                 replacements: list[object] = []
                 for group, chunk, entry in segments:
                     if group:
-                        spec = detector._record_spec(group, entry)
+                        spec = detector._record_spec(group, entry)  # noqa: SLF001
                         spec.count += len(chunk)
                         span = soup.new_tag("span")
                         span.attrs["data-script"] = spec.slug
@@ -149,13 +153,13 @@ def wrap_scripts_in_html(
         for tag in soup.find_all(tag_name):
             raw_text = _iter_text(tag, skip_names=skip_names)
             segments = _resolve_segments(
-                detector._segment_text(raw_text, include_whitespace=include_whitespace)
+                detector._segment_text(raw_text, include_whitespace=include_whitespace)  # noqa: SLF001
             )
             _promote_block_script(tag, detector, soup=soup, segments=segments)
 
-    usage = [spec.to_mapping() for spec in detector._specs.values()]
+    usage = [spec.to_mapping() for spec in detector._specs.values()]  # noqa: SLF001
     try:
-        summary = detector._ensure_lookup().summary(soup.get_text())
+        summary = detector._ensure_lookup().summary(soup.get_text())  # noqa: SLF001
     except Exception:
         summary = []
     return str(soup), usage, summary

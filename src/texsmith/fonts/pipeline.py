@@ -2,8 +2,9 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterable, Sequence
 from dataclasses import dataclass, field
-from typing import Iterable, Literal, Sequence
+from typing import Literal
 
 from texsmith.fonts.cache import FontCache
 from texsmith.fonts.coverage import NotoCoverage, NotoCoverageBuilder
@@ -14,7 +15,7 @@ from texsmith.fonts.fallback import (
     FallbackRepository,
 )
 from texsmith.fonts.logging import FontPipelineLogger
-from texsmith.fonts.ucharclasses import UCharClassesBuilder
+from texsmith.fonts.ucharclasses import UCharClass, UCharClassesBuilder
 
 
 _UCHAR_DATA_CACHE: dict[str, list[UCharClass]] = {}
@@ -93,7 +94,7 @@ class FallbackManager:
         classes = generate_ucharclasses_data(cache=self.cache, logger=self.logger)
         coverage = self._ensure_coverage()
         entries = FallbackBuilder(logger=self.logger).build(classes, coverage)
-        signature = repository._signature(entries)
+        signature = repository._signature(entries)  # noqa: SLF001
 
         cached = repository.load(expected_signature=signature)
         if cached is None:
@@ -144,7 +145,7 @@ class FallbackManager:
     def _merge_range_strings(self, codes: Iterable[int]) -> list[str]:
         from texsmith.fonts.fallback import FallbackLookup as _Lookup
 
-        return _Lookup._merge_ranges(list(codes))
+        return _Lookup._merge_ranges(list(codes))  # noqa: SLF001
 
     def _plan_minimal_fonts(
         self,

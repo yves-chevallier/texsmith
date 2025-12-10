@@ -13,11 +13,11 @@ from bs4.element import NavigableString, Tag
 from pybtex.database.input import bibtex
 from pybtex.exceptions import PybtexError
 
+from texsmith.adapters.latex.utils import escape_latex_chars
 from texsmith.core.context import RenderContext
 from texsmith.core.exceptions import AssetMissingError, InvalidNodeError
 from texsmith.core.rules import RenderPhase, renders
-from texsmith.fonts.scripts import render_moving_text, record_script_usage_for_slug
-from texsmith.adapters.latex.utils import escape_latex_chars
+from texsmith.fonts.scripts import record_script_usage_for_slug, render_moving_text
 
 
 if TYPE_CHECKING:  # pragma: no cover - typing helpers
@@ -701,7 +701,7 @@ def render_paragraphs(element: Tag, context: RenderContext) -> None:
         context,
         legacy_accents=legacy_accents,
         include_whitespace=True,
-        wrap_scripts=True,
+        wrap_scripts=escape_text,
         escape=escape_text,
     )
     element.replace_with(mark_processed(NavigableString(f"{rendered}\n")))

@@ -79,6 +79,15 @@ _CTAN_DEPENDENCIES: dict[str, dict[str, str]] = {
 }
 
 _PLEX_URL = "https://github.com/IBM/plex/releases/download/v6.0.0/TrueType.zip"
+_OPENMOJI_URL = "https://github.com/hfg-gmuend/openmoji/releases/latest/download/openmoji-font.zip"
+_OPENMOJI_FILE_CANDIDATES = {
+    "OpenMoji-black-glyf.ttf",
+    "OpenMoji-black-glyf/OpenMoji-black-glyf.ttf",
+    "fonts/OpenMoji-black-glyf.ttf",
+}
+_NOTO_COLOR_EMOJI_URL = (
+    "https://github.com/googlefonts/noto-emoji/raw/refs/heads/main/fonts/NotoColorEmoji.ttf"
+)
 _SKIP_GROUPS = {"latin", "common", "punctuation", "other"}
 _FALLBACK_ALIASES: dict[str, dict[str, object]] = {
     # Prefer widely available Noto families when coverage picks display variants.
@@ -91,7 +100,34 @@ _FALLBACK_ALIASES: dict[str, dict[str, object]] = {
         "dir": "NotoSansDevanagari",
     },
     "chinese": {"name": "NotoSansSC", "styles": ["regular", "bold"], "extension": ".otf"},
+    "symbols": {
+        "name": "OpenMojiBlack",
+        "styles": ["regular"],
+        "extension": ".ttf",
+    },
 }
+
+
+def _resolve_emoji_mode(context: Mapping[str, Any]) -> str:
+    """Infer requested emoji mode from template or press settings."""
+    candidates: list[Any] = []
+    fonts_cfg = context.get("fonts")
+    press_cfg = context.get("press")
+    if isinstance(context.get("emoji"), str):
+        candidates.append(context.get("emoji"))
+    if isinstance(context.get("emoji_mode"), str):
+        candidates.append(context.get("emoji_mode"))
+    if isinstance(fonts_cfg, Mapping) and isinstance(fonts_cfg.get("emoji"), str):
+        candidates.append(fonts_cfg.get("emoji"))
+    if isinstance(press_cfg, Mapping):
+        press_fonts = press_cfg.get("fonts")
+        if isinstance(press_fonts, Mapping) and isinstance(press_fonts.get("emoji"), str):
+            candidates.append(press_fonts.get("emoji"))
+    for value in candidates:
+        lowered = str(value).strip().lower()
+        if lowered in {"artifact", "symbola", "color", "black", "twemoji"}:
+            return lowered
+    return "black"
 
 
 def _normalise_family(raw_value: Any) -> str:
@@ -176,6 +212,51 @@ def _write_stub_package(package_name: str, family: str, target: Path) -> Path:
     target.parent.mkdir(parents=True, exist_ok=True)
     target.write_text("\n".join(lines) + "\n", encoding="utf-8")
     return target
+
+
+def _ensure_noto_color_emoji(cache: FontCache) -> Path | None:
+    """Download the Noto Color Emoji font (TTF) into the cache."""
+    dest = cache.path("NotoColorEmoji.ttf")
+    if dest.exists():
+        return dest
+    try:
+        _download_archive(_NOTO_COLOR_EMOJI_URL, dest)
+    except Exception as exc:  # pragma: no cover - network edge
+        warnings.warn(f"Unable to download Noto Color Emoji font: {exc}", stacklevel=2)
+        return None
+    return dest if dest.exists() else None
+
+
+def _ensure_openmoji_black(cache: FontCache) -> Path | None:
+    """Download and extract the OpenMoji black glyph font into the cache."""
+    dest = cache.path("OpenMoji-black-glyf.ttf")
+    if dest.exists():
+        return dest
+    with cache.tempdir() as tmp_dir:
+        archive = tmp_dir / "openmoji.zip"
+        try:
+            _download_archive(_OPENMOJI_URL, archive)
+            with zipfile.ZipFile(archive) as zf:
+                candidate = next(
+                    (
+                        name
+                        for name in zf.namelist()
+                        if name.lower().endswith("openmoji-black-glyf.ttf")
+                        or name in _OPENMOJI_FILE_CANDIDATES
+                    ),
+                    None,
+                )
+                if candidate is None:
+                    raise FileNotFoundError("OpenMoji black glyph font not found in archive.")  # noqa: TRY301
+                extracted = zf.extract(candidate, tmp_dir)
+                extracted_path = Path(extracted)
+                dest.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copy2(extracted_path, dest)
+                return dest
+        except Exception as exc:  # pragma: no cover - network edge
+            warnings.warn(f"Unable to download OpenMoji font: {exc}", stacklevel=2)
+            return None
+    return dest if dest.exists() else None
 
 
 def _write_otf_package(
@@ -409,6 +490,7 @@ def _prepare_fallback_context(context: Mapping[str, Any], *, output_dir: Path) -
         fonts_section.get("fallback_summary") if isinstance(fonts_section, Mapping) else []
     )
     script_usage = fonts_section.get("script_usage") if isinstance(fonts_section, Mapping) else []
+    emoji_mode = _resolve_emoji_mode(context)
 
     def _entry_score(
         has_bold: bool, style_count: int, count: int | None, *, usage_match: bool = False
@@ -429,6 +511,7 @@ def _prepare_fallback_context(context: Mapping[str, Any], *, output_dir: Path) -
 
     roots = _candidate_font_roots(output_dir)
     downloader = NotoFontDownloader(cache=FontCache(), logger=FontPipelineLogger())
+    emoji_cache = downloader.cache
     roots.append(downloader.fonts_dir)
 
     entries_by_slug: dict[str, dict[str, Any]] = {}
@@ -482,25 +565,72 @@ def _prepare_fallback_context(context: Mapping[str, Any], *, output_dir: Path) -
         count = entry.get("count")
         ext = font_meta.get("extension") if isinstance(font_meta, Mapping) else ".otf"
         ext = ext if isinstance(ext, str) and ext.startswith(".") else ".otf"
-        # Ensure required font files exist locally, downloading into the cache when missing.
-        downloader.ensure(
-            font_name=font_name,
-            styles=styles or ["regular", "bold"],
-            extension=ext,
-            dir_base=font_meta.get("dir") if isinstance(font_meta, Mapping) else None,
-        )
+        # Resolve emoji font preferences separately because they are not part of the Noto OTF set.
+        emoji_path: Path | None = None
+        if group_lower == "symbols" or "emoji" in font_name.lower():
+            preferred_color = emoji_mode == "color"
+            # Prefer OpenMoji (monochrome) for broader engine compatibility,
+            # even when color is requested. Fall back to NotoColorEmoji only
+            # when OpenMoji is unavailable.
+            emoji_path = _ensure_openmoji_black(emoji_cache)
+            font_name = "OpenMojiBlack" if emoji_path is not None else font_name
+            if emoji_path is None and preferred_color:
+                emoji_path = _ensure_noto_color_emoji(emoji_cache)
+                if emoji_path is not None:
+                    font_name = "NotoColorEmoji"
+            if emoji_path is None or not emoji_path.exists():
+                warnings.warn(
+                    "Emoji font unavailable; using raw characters for emoji glyphs.",
+                    stacklevel=2,
+                )
+                missing_commands.add("texsmithEmoji")
+                continue
+            styles = ["regular"]
+            ext = ".ttf"
+            slug = "emoji"
+            font_command = "texsmithEmojiFont"
+            text_command = "texsmithEmoji"
+            usage_index.setdefault(
+                "emoji",
+                {
+                    "slug": "emoji",
+                    "font_command": font_command,
+                    "text_command": text_command,
+                    "font_name": font_name,
+                },
+            )
+            usage = usage_index.get("emoji") or usage
+        else:
+            # Ensure required font files exist locally, downloading into the cache when missing.
+            downloader.ensure(
+                font_name=font_name,
+                styles=styles or ["regular", "bold"],
+                extension=ext,
+                dir_base=font_meta.get("dir") if isinstance(font_meta, Mapping) else None,
+            )
 
         destination_root = (output_dir / "fonts").resolve()
         destination_root.mkdir(parents=True, exist_ok=True)
+        sources: dict[str, Path] = {}
         for style in styles or ["regular", "bold"]:
-            src = downloader.fonts_dir / f"{font_name}-{style_suffix(style)}{ext}"
+            if emoji_path is not None:
+                src = emoji_path
+            else:
+                src = downloader.fonts_dir / f"{font_name}-{style_suffix(style)}{ext}"
             if src.exists():
+                sources[style] = src
                 dest = destination_root / src.name
                 if not dest.exists():
                     shutil.copy2(src, dest)
 
-        upright_file = _find_font_file(font_name, "regular", ext, roots)
-        bold_file = _find_font_file(font_name, "bold", ext, roots) if "bold" in styles else None
+        upright_file = sources.get("regular") or _find_font_file(font_name, "regular", ext, roots)
+        bold_file = (
+            sources.get("bold")
+            if "bold" in styles
+            else _find_font_file(font_name, "bold", ext, roots)
+            if "bold" in styles
+            else None
+        )
         if upright_file is None:
             candidate = downloader.fonts_dir / f"{font_name}-{style_suffix('regular')}{ext}"
             if candidate.exists():
@@ -540,11 +670,15 @@ def _prepare_fallback_context(context: Mapping[str, Any], *, output_dir: Path) -
                         _find_font_file(font_name, "bold", ext, roots) if "bold" in styles else None
                     )
                     if upright_file is None:
-                        candidate = downloader.fonts_dir / f"{font_name}-{style_suffix('regular')}{ext}"
+                        candidate = (
+                            downloader.fonts_dir / f"{font_name}-{style_suffix('regular')}{ext}"
+                        )
                         if candidate.exists():
                             upright_file = candidate
                     if bold_file is None and "bold" in styles:
-                        candidate = downloader.fonts_dir / f"{font_name}-{style_suffix('bold')}{ext}"
+                        candidate = (
+                            downloader.fonts_dir / f"{font_name}-{style_suffix('bold')}{ext}"
+                        )
                         if candidate.exists():
                             bold_file = candidate
                     style_count = len(styles) if styles else 1
@@ -589,7 +723,9 @@ def _prepare_fallback_context(context: Mapping[str, Any], *, output_dir: Path) -
             entries_by_slug[slug] = candidate_payload
         else:
             existing_count = existing.get("count", 0)
-            combined_count = int(existing_count or 0) + (int(count) if isinstance(count, (int, float)) else 0)
+            combined_count = int(existing_count or 0) + (
+                int(count) if isinstance(count, (int, float)) else 0
+            )
             candidate_payload["count"] = combined_count if combined_count else None
             existing_usage_match = (
                 bool(usage_font)
@@ -610,7 +746,9 @@ def _prepare_fallback_context(context: Mapping[str, Any], *, output_dir: Path) -
                 if dest_bold is not None and not existing.get("has_bold"):
                     existing["has_bold"] = True
                     existing["bold"] = dest_bold.stem
-                    existing["style_count"] = max(int(existing.get("style_count") or 1), style_count)
+                    existing["style_count"] = max(
+                        int(existing.get("style_count") or 1), style_count
+                    )
                     lua_bold.add(dest_bold.name)
 
         package_options.add(str(class_name))
