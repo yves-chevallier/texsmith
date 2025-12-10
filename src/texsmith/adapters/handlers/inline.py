@@ -15,6 +15,7 @@ from texsmith.core.context import RenderContext
 from texsmith.core.exceptions import InvalidNodeError, TransformerExecutionError
 from texsmith.core.rules import RenderPhase, renders
 from texsmith.fonts.scripts import render_moving_text
+from texsmith.fonts.scripts import record_script_usage_for_slug
 
 from ..latex.utils import escape_latex_chars
 from ..transformers import fetch_image, svg2pdf
@@ -617,6 +618,28 @@ def render_keystrokes(element: Tag, context: RenderContext) -> None:
     context.mark_processed(element)
     context.suppress_children(element)
     element.replace_with(node)
+
+
+@renders("span", phase=RenderPhase.INLINE, priority=30, name="script_spans", nestable=False)
+def render_script_spans(element: Tag, context: RenderContext) -> None:
+    """Render spans tagged with data-script into explicit text commands."""
+    slug = coerce_attribute(element.get("data-script"))
+    if not slug:
+        return
+
+    raw_text = element.get_text(strip=False)
+    if not raw_text:
+        element.decompose()
+        return
+
+    record_script_usage_for_slug(slug, raw_text, context)
+    legacy_accents = getattr(context.config, "legacy_latex_accents", False)
+    payload = escape_latex_chars(raw_text, legacy_accents=legacy_accents)
+    latex = f"\\text{slug}{{{payload}}}"
+    parent = element.parent
+    if parent is not None and getattr(parent, "attrs", None) is not None:
+        parent.attrs["data-texsmith-latex"] = "true"
+    element.replace_with(mark_processed(NavigableString(latex)))
 
 
 @renders(

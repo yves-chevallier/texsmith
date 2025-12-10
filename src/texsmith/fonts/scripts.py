@@ -297,6 +297,55 @@ def merge_script_usage(
     return list(merged.values())
 
 
+def record_script_usage_for_slug(
+    slug: str,
+    text: str,
+    context: RenderContext,
+    *,
+    detector: ScriptDetector | None = None,
+) -> dict[str, str | None]:
+    """Record usage/fallback metadata for a known script slug."""
+    if detector is None:
+        detector_key = "_texsmith_script_detector"
+        detector = context.runtime.get(detector_key)
+        if not isinstance(detector, ScriptDetector):
+            detector = ScriptDetector(cache=FontCache())
+            context.runtime[detector_key] = detector
+
+    group = slug
+    font_name = None
+    try:
+        summary = detector._ensure_lookup().summary(text)
+    except Exception:
+        summary = []
+
+    if summary:
+        dominant = max(summary, key=lambda entry: entry.get("count", 0) or 0)
+        candidate_group = dominant.get("group") or dominant.get("class")
+        if isinstance(candidate_group, str) and candidate_group.strip():
+            group = candidate_group
+        font_meta = dominant.get("font")
+        if isinstance(font_meta, Mapping):
+            raw_name = font_meta.get("name")
+            if isinstance(raw_name, str):
+                font_name = raw_name
+
+    usage_entry = {
+        "group": group,
+        "slug": slug,
+        "font_name": font_name,
+        "font_command": f"{slug}font",
+        "text_command": f"text{slug}",
+        "count": len(text) if text else None,
+    }
+    state_usage = getattr(context.state, "script_usage", [])
+    context.state.script_usage = merge_script_usage(state_usage, [usage_entry])
+    if summary:
+        existing = getattr(context.state, "fallback_summary", [])
+        context.state.fallback_summary = merge_fallback_summaries(existing, summary)
+    return usage_entry
+
+
 def render_moving_text(
     text: str | None,
     context: RenderContext,

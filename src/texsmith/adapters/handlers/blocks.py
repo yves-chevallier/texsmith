@@ -16,7 +16,8 @@ from pybtex.exceptions import PybtexError
 from texsmith.core.context import RenderContext
 from texsmith.core.exceptions import AssetMissingError, InvalidNodeError
 from texsmith.core.rules import RenderPhase, renders
-from texsmith.fonts.scripts import render_moving_text
+from texsmith.fonts.scripts import render_moving_text, record_script_usage_for_slug
+from texsmith.adapters.latex.utils import escape_latex_chars
 
 
 if TYPE_CHECKING:  # pragma: no cover - typing helpers
@@ -107,6 +108,43 @@ def _strip_caption_prefix(node: Tag | None) -> None:
         classes = gather_classes(span.get("class"))
         if "caption-prefix" in classes or "figure-prefix" in classes:
             span.decompose()
+
+
+def _render_script_paragraphs(element: Tag, context: RenderContext) -> bool:
+    """Render consecutive data-script paragraphs into grouped environments."""
+    slug = coerce_attribute(element.get("data-script"))
+    if not slug:
+        return False
+
+    paragraphs: list[Tag] = []
+    cursor: Tag | None = element
+    while cursor is not None and isinstance(cursor, Tag):
+        if cursor.name != "p" or coerce_attribute(cursor.get("data-script")) != slug:
+            break
+        paragraphs.append(cursor)
+        cursor = cursor.find_next_sibling(lambda tag: isinstance(tag, Tag))
+
+    if not paragraphs:
+        return False
+
+    legacy_accents = getattr(context.config, "legacy_latex_accents", False)
+    bodies: list[str] = []
+    for para in paragraphs:
+        text = para.get_text(strip=False)
+        if not text.strip():
+            continue
+        bodies.append(escape_latex_chars(text, legacy_accents=legacy_accents))
+
+    plain_text = "\n\n".join(p.get_text(strip=False) for p in paragraphs)
+    record_script_usage_for_slug(slug, plain_text, context)
+
+    content = "\n\n".join(bodies)
+    latex = f"\\begin{{{slug}}}\n{content}\n\\end{{{slug}}}\n\n"
+    replacement = mark_processed(NavigableString(latex))
+    paragraphs[-1].insert_after(replacement)
+    for para in paragraphs:
+        para.decompose()
+    return True
 
 
 def _split_citation_keys(identifier: str) -> list[str]:
@@ -642,6 +680,12 @@ def render_latex_raw(element: Tag, _context: RenderContext) -> None:
 @renders("p", phase=RenderPhase.POST, priority=90, name="paragraphs", nestable=False)
 def render_paragraphs(element: Tag, context: RenderContext) -> None:
     """Render plain paragraphs with script-aware wrapping."""
+    if _render_script_paragraphs(element, context):
+        return
+    if element.get("data-texsmith-latex") == "true":
+        content = element.get_text(strip=False)
+        element.replace_with(mark_processed(NavigableString(f"{content}\n")))
+        return
     if element.get("class"):
         return
 
