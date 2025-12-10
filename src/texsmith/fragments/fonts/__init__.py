@@ -410,9 +410,11 @@ def _prepare_fallback_context(context: Mapping[str, Any], *, output_dir: Path) -
     )
     script_usage = fonts_section.get("script_usage") if isinstance(fonts_section, Mapping) else []
 
-    def _entry_score(has_bold: bool, style_count: int, count: int | None) -> tuple[int, int, int]:
-        """Higher score wins: prefers bold-capable fonts, then style breadth, then usage count."""
-        return (1 if has_bold else 0, style_count, count or 0)
+    def _entry_score(
+        has_bold: bool, style_count: int, count: int | None, *, usage_match: bool = False
+    ) -> tuple[int, int, int, int]:
+        """Higher score wins: usage-aligned fonts first, then bold support, style breadth, usage count."""
+        return (1 if usage_match else 0, 1 if has_bold else 0, style_count, count or 0)
 
     usage_index: dict[str, Mapping[str, Any]] = {}
     for entry in script_usage or []:
@@ -449,21 +451,21 @@ def _prepare_fallback_context(context: Mapping[str, Any], *, output_dir: Path) -
             continue
         class_name = entry.get("class") or group
         slug_base = _slugify(group)
-        slug = (
-            _slugify(class_name)
-            if isinstance(class_name, str) and _slugify(class_name) != slug_base
-            else slug_base
-        )
-        usage = usage_index.get(slug)
-        if usage is None and slug == slug_base:
-            usage = usage_index.get(group_lower)
+        slug_class = _slugify(class_name) if isinstance(class_name, str) else slug_base
+        slug = slug_class if slug_class != slug_base else slug_base
+        # Prefer the slug recorded in script usage to keep commands aligned with detectors.
+        if slug_class != slug_base and (slug_base in usage_index or group_lower in usage_index):
+            slug = slug_base
+        usage = usage_index.get(slug) or usage_index.get(slug_base) or usage_index.get(group_lower)
         font_command = ""
         text_command = ""
         font_name = None
+        usage_font = None
         if isinstance(usage, Mapping):
             font_command = str(usage.get("font_command") or "")
             text_command = str(usage.get("text_command") or "")
             font_name = usage.get("font_name") if isinstance(usage.get("font_name"), str) else None
+            usage_font = font_name
         if not font_command:
             font_command = f"{slug}font"
         if not text_command:
@@ -579,17 +581,26 @@ def _prepare_fallback_context(context: Mapping[str, Any], *, output_dir: Path) -
             "extension": ext,
             "style_count": style_count,
         }
-        candidate_score = _entry_score(bool(dest_bold), style_count, candidate_payload["count"])
+        usage_match = bool(usage_font) and font_name and usage_font.lower() == font_name.lower()
+        candidate_score = _entry_score(
+            bool(dest_bold), style_count, candidate_payload["count"], usage_match=usage_match
+        )
         if existing is None:
             entries_by_slug[slug] = candidate_payload
         else:
             existing_count = existing.get("count", 0)
             combined_count = int(existing_count or 0) + (int(count) if isinstance(count, (int, float)) else 0)
             candidate_payload["count"] = combined_count if combined_count else None
+            existing_usage_match = (
+                bool(usage_font)
+                and existing.get("font_name")
+                and str(existing.get("font_name")).lower() == str(usage_font).lower()
+            )
             existing_score = _entry_score(
                 bool(existing.get("has_bold")),
                 int(existing.get("style_count") or 1),
                 existing.get("count"),
+                usage_match=existing_usage_match,
             )
             if candidate_score > existing_score:
                 entries_by_slug[slug] = candidate_payload
@@ -612,15 +623,6 @@ def _prepare_fallback_context(context: Mapping[str, Any], *, output_dir: Path) -
             lua_bold.add(f"{entry_ref['upright']}{entry_ref['extension']}")
 
     if slug_classes:
-        for slug, classes in slug_classes.items():
-            entry_ref = entries_by_slug.get(slug)
-            if not entry_ref:
-                continue
-            resolved_font_command = entry_ref["font_command"]
-            for cls_name in sorted(classes):
-                transitions.append(
-                    f"\\setTransitionsFor{{{cls_name}}}{{\\{resolved_font_command}}}{{\\rmfamily}}%"
-                )
         package_options.update(
             cls_name for classes in slug_classes.values() for cls_name in classes
         )

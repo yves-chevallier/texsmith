@@ -58,15 +58,11 @@ Greek is the official language of Greece and Cyprus and is spoken by roughly 13 
 
 Traditional Chinese characters are used mainly in Taiwan, Hong Kong, and Macau by tens of millions of speakers of Mandarin, Cantonese, and other Sinitic languages.
 
-少無適俗韻，性本愛丘山。
-
-誤落塵網中，一去三十年。
-
-羈鳥戀舊林，池魚思故淵。
-
-開荒南野際，守拙歸園田。
-
-久在樊籠裡，復得返自然。
+少无适俗韵，性本爱丘山。
+误落尘网中，一去三十年。
+羁鸟恋旧林，池鱼思故渊。
+开荒南野际，守拙归园田。
+久在樊笼里，复得返自然。
 
 ## Arabic
 

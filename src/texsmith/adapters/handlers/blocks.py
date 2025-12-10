@@ -700,6 +700,7 @@ def render_paragraphs(element: Tag, context: RenderContext) -> None:
         context,
         legacy_accents=legacy_accents,
         include_whitespace=True,
+        wrap_scripts=True,
     )
     element.replace_with(mark_processed(NavigableString(f"{rendered}\n")))
 

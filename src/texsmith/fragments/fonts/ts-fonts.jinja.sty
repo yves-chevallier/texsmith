@@ -254,17 +254,22 @@
     \texsmith_apply_fallback_to_family:nn \setmonofont \ttdefault
     \ExplSyntaxOff
   \else\ifXeTeX
+  \BLOCK{- if fallback and fallback.get("transitions") }
   \BLOCK{ set uc_options = ['Latin'] + (fallback.package_options if fallback else []) + ['Devanagari'] }
     \RequirePackage[
       \VAR{ uc_options | join(',\n      ') }
     ]{ucharclasses}
     \setDefaultTransitions{\rmfamily}{\rmfamily}%
-    \setTransitionsFor{Devanagari}{\devanagarifont}{\rmfamily}%
     \BLOCK{ for transition in fallback.transitions }
     \VAR{transition}
     \BLOCK{ endfor }
     \enableTransitionRules
+    \ifdefined\XeTeXinterchartoksstate
+      \XeTeXinterchartoksstate=1%
+      \AtBeginDocument{\XeTeXinterchartoksstate=1}%
+    \fi
     \AtBeginDocument{\enableTransitionRules}%
+  \BLOCK{- endif }
   \fi\fi
   \BLOCK{- endif }
 \fi

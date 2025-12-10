@@ -58,16 +58,18 @@ class FallbackManager:
     def _ensure_lookup(self) -> FallbackLookup:
         if self._lookup is not None:
             return self._lookup
+
         repository = FallbackRepository(cache=self.cache, logger=self.logger)
-        cached = repository.load()
-        if cached is not None:
-            self._lookup = FallbackLookup(cached)
-            return self._lookup
         classes = generate_ucharclasses_data(cache=self.cache, logger=self.logger)
         coverage = self._ensure_coverage()
         entries = FallbackBuilder(logger=self.logger).build(classes, coverage)
-        index = repository.load_or_build(entries)
-        self._lookup = FallbackLookup(index)
+        signature = repository._signature(entries)
+
+        cached = repository.load(expected_signature=signature)
+        if cached is None:
+            cached = repository.load_or_build(entries)
+
+        self._lookup = FallbackLookup(cached)
         return self._lookup
 
     def _ensure_coverage(self) -> list[NotoCoverage]:
