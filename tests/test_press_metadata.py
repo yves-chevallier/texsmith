@@ -50,6 +50,22 @@ def test_normalise_press_metadata_accepts_author_formats() -> None:
     assert any(entry["affiliation"] == "TU Delft" for entry in press["authors"])
 
 
+def test_normalise_press_metadata_deduplicates_authors() -> None:
+    metadata = {
+        "author": "Ada Lovelace",
+        "press": {
+            "authors": [{"name": "Ada Lovelace", "affiliation": None}],
+            "author": "Ada Lovelace",
+        },
+    }
+
+    press = normalise_press_metadata(metadata)
+
+    assert press.get("author") is None
+    assert metadata.get("author") is None
+    assert press["authors"] == [{"name": "Ada Lovelace", "affiliation": None}]
+
+
 def test_normalise_press_metadata_flattens_nested_aliases() -> None:
     metadata = {
         "press": {

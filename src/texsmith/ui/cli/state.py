@@ -190,22 +190,25 @@ def render_message(
     exception: BaseException | None = None,
 ) -> None:
     """Render a formatted message to the console, including optional diagnostics."""
+    state = get_cli_state()
+
+    if level == "info":
+        # Use a neutral console log for info to align with pipeline logging.
+        console = state.console
+        if getattr(console, "log", None):
+            console.log(message)
+        return
+
     from rich.text import Text
 
-    state = get_cli_state()
     style = "red" if level == "error" else "yellow"
     label_style = f"bold {style}"
-
     if hasattr(Text, "assemble"):
-        text = Text.assemble(
-            (f"{level}: ", label_style),
-            (message, style),
-        )
-    else:  # pragma: no cover - supports stub Text objects used in tests
+        text = Text.assemble((f"{level}: ", label_style), (message, style))
+    else:  # pragma: no cover - stub Text fallback
         text = Text()
         text.append(f"{level}: ")
         text.append(message)
-
     extra_lines: list[str] = []
     if exception is not None and state.verbosity >= 1:
         detail = str(exception).strip()

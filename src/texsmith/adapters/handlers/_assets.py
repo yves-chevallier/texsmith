@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import hashlib
+import json
 from pathlib import Path
 import shutil
 from typing import Any
@@ -22,6 +23,7 @@ from texsmith.core.conversion.debug import ensure_emitter, record_event
 _NATIVE_IMAGE_SUFFIXES: set[str] = {".png", ".jpg", ".jpeg", ".pdf"}
 _FORCED_CONVERSION_SUFFIXES: set[str] = {".svg", ".drawio"}
 _CONVERSION_CACHE_DIR = ".converted"
+_ASSET_MANIFEST = "remote-assets.json"
 
 
 def store_local_image_asset(context: RenderContext, resolved: Path) -> Path:
@@ -79,6 +81,8 @@ def store_remote_image_asset(context: RenderContext, url: str) -> Path:
     convert_requested = bool(context.runtime.get("convert_assets", False))
     metadata: dict[str, str] = {}
     conversion_root = _conversion_cache_root(context)
+    manifest_path = conversion_root / _ASSET_MANIFEST
+    manifest, manifest_dirty = _load_asset_manifest(manifest_path)
     url_suffix = _suffix_from_url(url)
     suffix_hint = _normalise_suffix(url_suffix, default="") if url_suffix else ""
     emitter = ensure_emitter(context.runtime.get("emitter"))
@@ -95,6 +99,10 @@ def store_remote_image_asset(context: RenderContext, url: str) -> Path:
     fetch_options: dict[str, Any] = {
         "convert": convert_requested,
         "metadata": metadata,
+        "manifest": manifest,
+        "manifest_path": manifest_path,
+        "manifest_dirty": manifest_dirty,
+        "emitter": emitter,
     }
     if convert_requested:
         fetch_options["output_suffix"] = ".pdf"
@@ -126,6 +134,8 @@ def store_remote_image_asset(context: RenderContext, url: str) -> Path:
             "converted": convert_requested or suffix_hint in _FORCED_CONVERSION_SUFFIXES,
         },
     )
+    if manifest_dirty["dirty"]:
+        _save_asset_manifest(manifest_path, manifest)
     return _persist_asset(
         context,
         asset_key=url,
@@ -185,6 +195,25 @@ def _conversion_cache_root(context: RenderContext) -> Path:
     root = context.assets.output_root / _CONVERSION_CACHE_DIR
     root.mkdir(parents=True, exist_ok=True)
     return root
+
+
+def _load_asset_manifest(path: Path) -> tuple[dict[str, dict[str, Any]], dict[str, bool]]:
+    if path.exists():
+        try:
+            data = json.loads(path.read_text(encoding="utf-8"))
+            if isinstance(data, dict):
+                return {str(k): dict(v) for k, v in data.items()}, {"dirty": False}
+        except Exception:
+            pass
+    return {}, {"dirty": False}
+
+
+def _save_asset_manifest(path: Path, manifest: dict[str, dict[str, Any]]) -> None:
+    try:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(json.dumps(manifest, indent=2, ensure_ascii=False), encoding="utf-8")
+    except Exception:
+        pass
 
 
 def _persist_asset(

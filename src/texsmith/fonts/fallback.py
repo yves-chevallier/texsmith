@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from bisect import bisect_left
 from collections.abc import Iterable, Mapping
 from dataclasses import dataclass
 import hashlib
@@ -20,14 +21,30 @@ CACHE_VERSION = 1
 BLOCK_SHIFT = 8  # 256-codepoint buckets
 
 
-def _overlap(a_start: int, a_end: int, b_start: int, b_end: int) -> int:
-    lo = max(a_start, b_start)
-    hi = min(a_end, b_end)
-    return max(0, hi - lo + 1)
-
-
 def _sanitize_family(name: str) -> str:
     return "".join(ch for ch in name if ch.isalnum())
+
+
+def _merge_ranges(ranges: Iterable[tuple[int, int]]) -> tuple[tuple[int, int], ...]:
+    """Merge overlapping/contiguous ranges and return a sorted tuple."""
+    merged: list[list[int]] = []
+    for start, end in sorted(ranges):
+        if not merged or start > merged[-1][1] + 1:
+            merged.append([start, end])
+        else:
+            merged[-1][1] = max(merged[-1][1], end)
+    return tuple((start, end) for start, end in merged)
+
+
+@dataclass(slots=True)
+class _CoverageView:
+    """Preprocessed coverage entry with merged ranges and fast-starts."""
+
+    meta: NotoCoverage
+    ranges: tuple[tuple[int, int], ...]
+    starts: tuple[int, ...]
+    total_span: int
+    family_lower: str
 
 
 @dataclass(slots=True)
@@ -75,44 +92,84 @@ class FallbackBuilder:
     def __init__(self, *, logger: FontPipelineLogger | None = None) -> None:
         self.logger = logger or FontPipelineLogger()
 
-    def _pick_font(self, cls: UCharClass, coverage: dict[str, NotoCoverage]) -> dict | None:
+    def _prepare_coverage(self, coverage: Iterable[NotoCoverage]) -> list[_CoverageView]:
+        views: list[_CoverageView] = []
+        for entry in coverage:
+            merged = _merge_ranges(entry.ranges)
+            starts = tuple(start for start, _ in merged)
+            total_span = sum(end - start + 1 for start, end in merged)
+            views.append(
+                _CoverageView(
+                    meta=entry,
+                    ranges=merged,
+                    starts=starts,
+                    total_span=total_span,
+                    family_lower=entry.family.lower(),
+                )
+            )
+        return views
+
+    @staticmethod
+    def _range_overlap(
+        class_start: int, class_end: int, ranges: tuple[tuple[int, int], ...], starts: tuple[int, ...]
+    ) -> int:
+        """Compute overlap using sorted ranges and early exit."""
+        if not ranges:
+            return 0
+        idx = bisect_left(starts, class_start)
+        if idx:
+            idx -= 1  # include the range that could start before the class
+        total = 0
+        for r_start, r_end in ranges[idx:]:
+            if r_start > class_end:
+                break
+            if r_end < class_start:
+                continue
+            lo = class_start if class_start > r_start else r_start
+            hi = class_end if class_end < r_end else r_end
+            total += hi - lo + 1
+        return total
+
+    def _pick_font(self, cls: UCharClass, coverage: Iterable[_CoverageView]) -> dict | None:
         """Pick the most specific font for a class.
 
         Scoring favours the largest overlap, then smaller coverage span (script-specific
         fonts), then a small bonus when the family name mentions the class name.
         """
         class_range = (cls.start, cls.end)
-        best = None
+        class_name = cls.name.lower()
+        best: _CoverageView | None = None
         best_score: tuple[int, int, int] = (0, 0, 0)
-        for meta in coverage.values():
-            overlap = 0
-            for r_start, r_end in meta.ranges:
-                overlap += _overlap(class_range[0], class_range[1], r_start, r_end)
+        for view in coverage:
+            overlap = self._range_overlap(class_range[0], class_range[1], view.ranges, view.starts)
             if overlap == 0:
                 continue
-            total_span = sum(r_end - r_start + 1 for r_start, r_end in meta.ranges)
-            name_bonus = 1 if cls.name.lower() in meta.family.lower() else 0
-            score = (overlap, name_bonus, -total_span)
+            name_bonus = 1 if class_name in view.family_lower else 0
+            score = (overlap, name_bonus, -view.total_span)
             if score > best_score:
                 best_score = score
-                best = meta
+                best = view
         if best is None:
             return None
-        styles = list(best.styles or ["regular", "bold"])
+        styles = list(best.meta.styles or ["regular", "bold"])
         return {
-            "name": best.file_base or _sanitize_family(best.family),
+            "name": best.meta.file_base or _sanitize_family(best.meta.family),
             "extension": ".otf",
             "styles": styles,
-            "dir": best.dir_base,
+            "dir": best.meta.dir_base,
         }
 
     def build(
-        self, classes: Iterable[UCharClass], coverage: Iterable[NotoCoverage]
+        self,
+        classes: Iterable[UCharClass],
+        coverage: Iterable[NotoCoverage],
+        *,
+        announce: bool | None = None,
     ) -> list[FallbackEntry]:
-        coverage_index = {entry.family: entry for entry in coverage}
+        coverage_views = self._prepare_coverage(coverage)
         entries: list[FallbackEntry] = []
         for cls in classes:
-            font = cls.font or self._pick_font(cls, coverage_index)
+            font = cls.font or self._pick_font(cls, coverage_views)
             if font is None:
                 fallback_name = _sanitize_family(f"NotoSans{cls.name}")
                 font = {"name": fallback_name, "extension": ".otf", "styles": ["regular", "bold"]}
@@ -121,7 +178,8 @@ class FallbackBuilder:
                     name=cls.name, start=cls.start, end=cls.end, group=cls.group, font=font
                 ),
             )
-        self.logger.notice(f"Fallback fonts generated for {len(entries)} classes.")
+        log_fn = self.logger.info if announce else self.logger.debug
+        log_fn(f"Fallback fonts generated for {len(entries)} classes.")
         return entries
 
 

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import atexit
 from collections.abc import Mapping, Sequence
+from datetime import datetime, timezone
 from importlib import metadata as importlib_metadata
 from io import BytesIO
 import json
@@ -15,10 +16,11 @@ import subprocess
 import sys
 from threading import Lock
 from typing import Any, ClassVar
-from urllib.parse import urlparse
+from urllib.parse import unquote, urlparse
 from urllib.request import urlopen
 import warnings
 
+from texsmith.core.conversion.debug import ensure_emitter, record_event
 from texsmith.core.exceptions import TransformerExecutionError
 from texsmith.core.user_dir import get_user_dir
 
@@ -276,12 +278,19 @@ class FetchImageStrategy(CachedConversionStrategy):
         cache_dir: Path,
         **options: Any,
     ) -> Path:
-        emitter = options.get("emitter")
+        emitter = ensure_emitter(options.get("emitter"))
         url = str(source)
         convert_requested = bool(options.get("convert", True))
         metadata: dict[str, str] | None = options.get("metadata")
         if metadata is not None and not isinstance(metadata, dict):
             metadata = None
+        manifest = options.get("manifest")
+        manifest = manifest if isinstance(manifest, dict) else {}
+        manifest_dirty = options.get("manifest_dirty")
+        if not isinstance(manifest_dirty, dict):
+            manifest_dirty = {"dirty": False}
+        cache_entry = manifest.get(url)
+        response: Any | None = None
 
         try:
             import requests  # type: ignore[import]
@@ -304,15 +313,87 @@ class FetchImageStrategy(CachedConversionStrategy):
 
         headers = {"User-Agent": user_agent}
 
-        try:
-            response = requests.get(url, timeout=self.timeout, headers=headers)
-        except requests.exceptions.RequestException as exc:  # pragma: no cover - network
-            msg = f"Failed to fetch image '{url}': {exc}"
-            raise TransformerExecutionError(msg) from exc
-        if not response.ok:
-            raise TransformerExecutionError(
-                f"Failed to fetch image '{url}': HTTP {response.status_code}"
+        reuse_reason = None
+        cached_path: Path | None = None
+        if isinstance(cache_entry, dict):
+            cached_path = self._existing_cached_path(cache_entry)
+            wiki_title = self._wikimedia_title(url)
+            if wiki_title and cached_path:
+                wiki_meta = self._fetch_wikimedia_metadata(wiki_title, user_agent)
+                if (
+                    wiki_meta
+                    and cache_entry.get("sha1")
+                    and wiki_meta.get("sha1") == cache_entry.get("sha1")
+                ):
+                    reuse_reason = "wikimedia"
+                    cache_entry.update(wiki_meta)
+            if reuse_reason is None and cached_path:
+                conditional_headers = self._conditional_headers(cache_entry)
+                if conditional_headers:
+                    try:
+                        response = requests.get(
+                            url, timeout=self.timeout, headers={**headers, **conditional_headers}
+                        )
+                    except requests.exceptions.RequestException:
+                        response = None
+                    if response is not None and response.status_code == 304:
+                        reuse_reason = "etag"
+                        cache_entry["etag"] = response.headers.get("ETag", cache_entry.get("etag"))
+                        cache_entry["last_modified"] = response.headers.get(
+                            "Last-Modified", cache_entry.get("last_modified")
+                        )
+                    elif response is not None and not response.ok:
+                        response = None
+        else:
+            response = None
+
+        if reuse_reason and cached_path:
+            if metadata is not None and cache_entry:
+                if cache_entry.get("content_type"):
+                    metadata["content_type"] = str(cache_entry["content_type"])
+                if cache_entry.get("suffix"):
+                    metadata["suffix"] = str(cache_entry["suffix"])
+            manifest[url] = self._build_manifest_entry(
+                url,
+                cache_entry or {},
+                target_path=target,
+                content_type=cache_entry.get("content_type"),
+                suffix=cache_entry.get("suffix") or target.suffix or ".bin",
             )
+            manifest_dirty["dirty"] = True
+            self._copy_cached_artifact(cached_path, target)
+            record_event(emitter, "asset_fetch_cached", {"url": url, "reason": reuse_reason})
+            return target
+
+        if response is None:
+            try:
+                response = requests.get(url, timeout=self.timeout, headers=headers)
+            except requests.exceptions.RequestException as exc:  # pragma: no cover - network
+                msg = f"Failed to fetch image '{url}': {exc}"
+                raise TransformerExecutionError(msg) from exc
+
+        status_code = getattr(response, "status_code", 200)
+        if status_code == 304 and cached_path:
+            reuse_reason = "etag"
+            if metadata is not None and cache_entry:
+                if cache_entry.get("content_type"):
+                    metadata["content_type"] = str(cache_entry["content_type"])
+                if cache_entry.get("suffix"):
+                    metadata["suffix"] = str(cache_entry["suffix"])
+            manifest[url] = self._build_manifest_entry(
+                url,
+                cache_entry or {},
+                target_path=target,
+                content_type=cache_entry.get("content_type"),
+                suffix=cache_entry.get("suffix") or target.suffix or ".bin",
+            )
+            manifest_dirty["dirty"] = True
+            self._copy_cached_artifact(cached_path, target)
+            record_event(emitter, "asset_fetch_cached", {"url": url, "reason": reuse_reason})
+            return target
+
+        if not getattr(response, "ok", False):
+            raise TransformerExecutionError(f"Failed to fetch image '{url}': HTTP {status_code}")
 
         content_type = response.headers.get("Content-Type", "")
         mimetype = content_type.split(";", 1)[0].strip().lower()
@@ -324,13 +405,34 @@ class FetchImageStrategy(CachedConversionStrategy):
             should_convert = True
         final_suffix = ".pdf" if should_convert else suffix or ".pdf"
 
+        wiki_meta: dict[str, Any] = {}
+        wiki_title = self._wikimedia_title(url)
+        if wiki_title:
+            wiki_meta = self._fetch_wikimedia_metadata(wiki_title, user_agent) or {}
+
         if metadata is not None:
             metadata["content_type"] = mimetype
             metadata["suffix"] = final_suffix
+        manifest_extra = {
+            "etag": response.headers.get("ETag"),
+            "last_modified": response.headers.get("Last-Modified"),
+            "sha1": wiki_meta.get("sha1"),
+            "timestamp": wiki_meta.get("timestamp"),
+            "size": self._safe_int(response.headers.get("Content-Length")) or wiki_meta.get("size"),
+        }
 
         if not should_convert:
             target.parent.mkdir(parents=True, exist_ok=True)
             target.write_bytes(response.content)
+            manifest[url] = self._build_manifest_entry(
+                url,
+                cache_entry or {},
+                target_path=target,
+                content_type=mimetype,
+                suffix=final_suffix,
+                extra=manifest_extra,
+            )
+            manifest_dirty["dirty"] = True
             return target
 
         if mimetype in ("image/svg+xml", "text/svg", "application/svg+xml"):
@@ -369,6 +471,15 @@ class FetchImageStrategy(CachedConversionStrategy):
             ) from exc
 
         normalise_pdf_version(target)
+        manifest[url] = self._build_manifest_entry(
+            url,
+            cache_entry or {},
+            target_path=target,
+            content_type=mimetype,
+            suffix=final_suffix,
+            extra=manifest_extra,
+        )
+        manifest_dirty["dirty"] = True
 
         return target
 
@@ -384,6 +495,112 @@ class FetchImageStrategy(CachedConversionStrategy):
         if not lowered:
             return False
         return lowered in self._NATIVE_SUFFIXES
+
+    def _existing_cached_path(self, entry: Mapping[str, Any]) -> Path | None:
+        candidate = entry.get("path")
+        if isinstance(candidate, str):
+            path = Path(candidate)
+            if path.exists():
+                return path
+        return None
+
+    def _safe_int(self, value: Any) -> int | None:
+        try:
+            return int(value)
+        except Exception:
+            return None
+
+    def _conditional_headers(self, entry: Mapping[str, Any]) -> dict[str, str]:
+        headers: dict[str, str] = {}
+        etag = entry.get("etag")
+        last_modified = entry.get("last_modified")
+        if isinstance(etag, str) and etag.strip():
+            headers["If-None-Match"] = etag.strip()
+        if isinstance(last_modified, str) and last_modified.strip():
+            headers["If-Modified-Since"] = last_modified.strip()
+        return headers
+
+    def _copy_cached_artifact(self, source: Path, target: Path) -> None:
+        target.parent.mkdir(parents=True, exist_ok=True)
+        if source.resolve() == target.resolve():
+            return
+        target.write_bytes(source.read_bytes())
+
+    def _build_manifest_entry(
+        self,
+        url: str,
+        base: Mapping[str, Any],
+        *,
+        target_path: Path,
+        content_type: str | None,
+        suffix: str,
+        extra: Mapping[str, Any] | None = None,
+    ) -> dict[str, Any]:
+        entry = dict(base or {})
+        entry.update(
+            {
+                "url": url,
+                "path": str(target_path),
+                "content_type": content_type,
+                "suffix": suffix,
+                "checked_at": datetime.now(timezone.utc).isoformat(),
+            }
+        )
+        if extra:
+            entry.update({k: v for k, v in extra.items() if v is not None})
+        return entry
+
+    def _wikimedia_title(self, url: str) -> str | None:
+        parsed = urlparse(url)
+        if "wikimedia.org" not in parsed.netloc and "wikipedia.org" not in parsed.netloc:
+            return None
+        name = Path(parsed.path).name
+        if not name:
+            return None
+        return f"File:{unquote(name)}"
+
+    def _fetch_wikimedia_metadata(self, title: str, user_agent: str) -> dict[str, Any] | None:
+        try:
+            import requests  # type: ignore[import]
+        except Exception:
+            return None
+        params = {
+            "action": "query",
+            "titles": title,
+            "prop": "imageinfo",
+            "iiprop": "timestamp|sha1|size|url",
+            "format": "json",
+        }
+        headers = {"User-Agent": user_agent}
+        try:
+            resp = requests.get(
+                "https://commons.wikimedia.org/w/api.php",
+                params=params,
+                headers=headers,
+                timeout=5,
+            )
+        except requests.exceptions.RequestException:
+            return None
+        if not resp.ok:
+            return None
+        try:
+            payload = resp.json()
+        except Exception:
+            return None
+        try:
+            page = next(iter(payload.get("query", {}).get("pages", {}).values()))
+            info = page.get("imageinfo", [])
+            if not info:
+                return None
+            entry = info[0]
+            return {
+                "sha1": entry.get("sha1"),
+                "timestamp": entry.get("timestamp"),
+                "size": entry.get("size"),
+                "source_url": entry.get("url"),
+            }
+        except Exception:
+            return None
 
 
 class PdfMetadataStrategy:

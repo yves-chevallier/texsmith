@@ -72,14 +72,84 @@ def _format_path(path: Path) -> str:
 def _colorize_location(text_cls: Any, *, artifact: str, location: str) -> Any:
     """Apply per-artifact coloring to locations for Rich tables."""
     lower_loc = location.lower()
+    suffixes = {
+        "tex": "bright_cyan",
+        "pdf": "bright_green",
+        "sty": "yellow",
+        "cls": "yellow",
+    }
+    image_suffixes = {"png", "jpg", "jpeg", "gif", "svg", "bmp", "webp"}
     style: str | None = None
-    if lower_loc.endswith(".tex"):
-        style = "bright_cyan"
-    elif lower_loc.endswith(".pdf"):
-        style = "bright_green"
-    elif artifact.lower() == "asset" or "/assets/" in lower_loc or lower_loc.startswith("assets"):
+    for suffix, mapped in suffixes.items():
+        if lower_loc.endswith(f".{suffix}"):
+            style = mapped
+            break
+    if style is None and (
+        any(lower_loc.endswith(f".{ext}") for ext in image_suffixes)
+        or artifact.lower() == "asset"
+        or "/assets/" in lower_loc
+        or lower_loc.startswith("assets")
+    ):
         style = "magenta"
     return text_cls(location, style=style) if style else text_cls(location)
+
+
+def _size_details(path: Path) -> str:
+    """Return a human-readable size for a file if it exists."""
+    try:
+        stat = path.stat()
+    except OSError:
+        return ""
+    if not path.is_file():
+        return ""
+    size = stat.st_size
+    if size >= 1024 * 1024:
+        return f"{size / (1024 * 1024):.2f} MiB"
+    if size >= 1024:
+        return f"{size / 1024:.1f} KiB"
+    return f"{size} B"
+
+
+def _align_size_rows(rows: Sequence[tuple[str, str, str]]) -> list[tuple[str, str, str]]:
+    """Pad size strings so decimal points line up."""
+    enriched: list[tuple[str, str, str, str | None, str | None, str | None]] = []
+    max_left = 0
+    max_right = 0
+    for artifact, location, detail in rows:
+        if detail:
+            tokens = detail.split()
+            num = tokens[0]
+            tail = " ".join(tokens[1:]) if len(tokens) > 1 else ""
+            if "." in num:
+                left, right = num.split(".", 1)
+            else:
+                left, right = num, ""
+            max_left = max(max_left, len(left))
+            max_right = max(max_right, len(right))
+            enriched.append((artifact, location, detail, left, right, tail))
+        else:
+            enriched.append((artifact, location, detail, None, None, None))
+
+    if max_left == 0 and max_right == 0:
+        return list(rows)
+
+    aligned: list[tuple[str, str, str]] = []
+    for artifact, location, detail, left, right, tail in enriched:
+        if detail and left is not None and right is not None:
+            padded_left = left.rjust(max_left)
+            padded_right = right.ljust(max_right)
+            if max_right:
+                if right:
+                    number = f"{padded_left}.{padded_right}".rstrip()
+                else:
+                    number = f"{padded_left} {' ' * (max_right + 1)}".rstrip()
+            else:
+                number = padded_left
+            padded = f"{number} {tail}".rstrip()
+            aligned.append((artifact, location, padded))
+        else:
+            aligned.append((artifact, location, detail))
+    return aligned
 
 
 def _render_summary(state: CLIState, title: str, rows: Sequence[tuple[str, str, str]]) -> None:
@@ -88,6 +158,7 @@ def _render_summary(state: CLIState, title: str, rows: Sequence[tuple[str, str, 
     This provides the user with a high-level overview of what was created and where,
     saving them from having to manually check the output directory.
     """
+    rows = _align_size_rows(rows)
     console = _get_console(state)
     components = _rich_components()
     has_details = any(bool(details) for _, _, details in rows)
@@ -99,7 +170,7 @@ def _render_summary(state: CLIState, title: str, rows: Sequence[tuple[str, str, 
         table.add_column("Artifact", style="cyan")
         table.add_column("Location")
         if has_details:
-            table.add_column("Details", style="magenta")
+            table.add_column("Filesize", style="magenta", justify="right", no_wrap=True)
         for artifact, location, details in rows:
             location_cell = _colorize_location(text_cls, artifact=artifact, location=location)
             if has_details:
@@ -273,6 +344,15 @@ def _detect_assets(directory: Path) -> list[Path]:
     )
 
 
+def _detect_ts_packages(directory: Path) -> list[Path]:
+    """Detect generated ts-* packages to highlight them in the summary."""
+    candidates = [
+        directory / "ts-fonts.sty",
+        directory / "ts-glossary.sty",
+    ]
+    return [path for path in candidates if path.is_file()]
+
+
 def _detect_manifests(directory: Path) -> list[Path]:
     """Find manifest files in the given directory.
 
@@ -303,22 +383,42 @@ def present_conversion_summary(
 
     if render_result is not None:
         main_dir = render_result.main_tex_path.parent
-        rows.append(("Main document", _format_path(render_result.main_tex_path), ""))
+        rows.append(
+            (
+                "Main document",
+                _format_path(render_result.main_tex_path),
+                _size_details(render_result.main_tex_path),
+            )
+        )
         for fragment in render_result.fragment_paths:
-            rows.append(("Fragment", _format_path(fragment), ""))
+            rows.append(("Fragment", _format_path(fragment), _size_details(fragment)))
         if render_result.bibliography_path is not None:
-            rows.append(("Bibliography", _format_path(render_result.bibliography_path), ""))
+            rows.append(
+                (
+                    "Bibliography",
+                    _format_path(render_result.bibliography_path),
+                    _size_details(render_result.bibliography_path),
+                )
+            )
+        for package in _detect_ts_packages(main_dir):
+            rows.append(
+                (
+                    package.stem,
+                    _format_path(package),
+                    _size_details(package),
+                )
+            )
         for manifest in _detect_manifests(main_dir):
-            rows.append(("Manifest", _format_path(manifest), ""))
+            rows.append(("Manifest", _format_path(manifest), _size_details(manifest)))
         for asset in _detect_assets(main_dir):
-            rows.append(("Asset", _format_path(asset), ""))
+            rows.append(("Asset", _format_path(asset), _size_details(asset)))
         for debug_html in _detect_debug_html(main_dir):
-            rows.append(("Debug HTML", _format_path(debug_html), ""))
+            rows.append(("Debug HTML", _format_path(debug_html), _size_details(debug_html)))
         _render_summary(state, "", rows)
         return
 
     if output_mode == "file" and output_path is not None:
-        rows.append(("LaTeX", _format_path(output_path), ""))
+        rows.append(("LaTeX", _format_path(output_path), _size_details(output_path)))
     elif output_mode == "directory" and bundle is not None:
         for fragment in bundle.fragments:
             path = fragment.output_path or (
@@ -326,14 +426,14 @@ def present_conversion_summary(
             )
             if path is None:
                 continue
-            rows.append(("Fragment", _format_path(Path(path)), ""))
+            rows.append(("Fragment", _format_path(Path(path)), _size_details(Path(path))))
         if output_path is not None:
             for manifest in _detect_manifests(output_path):
-                rows.append(("Manifest", _format_path(manifest), ""))
+                rows.append(("Manifest", _format_path(manifest), _size_details(manifest)))
             for asset in _detect_assets(output_path):
-                rows.append(("Asset", _format_path(asset), ""))
+                rows.append(("Asset", _format_path(asset), _size_details(asset)))
             for debug_html in _detect_debug_html(output_path):
-                rows.append(("Debug HTML", _format_path(debug_html), ""))
+                rows.append(("Debug HTML", _format_path(debug_html), _size_details(debug_html)))
 
     if rows:
         _render_summary(state, "Conversion Summary", rows)
@@ -347,10 +447,10 @@ def present_html_summary(
 ) -> None:
     rows: list[tuple[str, str, str]] = []
     if output_mode == "file" and output_paths:
-        rows.append(("HTML", _format_path(output_paths[0]), ""))
+        rows.append(("HTML", _format_path(output_paths[0]), _size_details(output_paths[0])))
     elif output_mode in {"directory", "template"}:
         for path in output_paths:
-            rows.append(("HTML", _format_path(path), ""))
+            rows.append(("HTML", _format_path(path), _size_details(path)))
     if rows:
         _render_summary(state, "HTML Output", rows)
 
@@ -362,20 +462,32 @@ def present_build_summary(
     pdf_path: Path,
 ) -> None:
     rows = [
-        ("Main document", _format_path(render_result.main_tex_path), ""),
-        ("PDF", _format_path(pdf_path), ""),
+        (
+            "Main document",
+            _format_path(render_result.main_tex_path),
+            _size_details(render_result.main_tex_path),
+        ),
+        ("PDF", _format_path(pdf_path), _size_details(pdf_path)),
     ]
     for fragment in render_result.fragment_paths:
-        rows.append(("Fragment", _format_path(fragment), ""))
+        rows.append(("Fragment", _format_path(fragment), _size_details(fragment)))
     if render_result.bibliography_path is not None:
-        rows.append(("Bibliography", _format_path(render_result.bibliography_path), ""))
+        rows.append(
+            (
+                "Bibliography",
+                _format_path(render_result.bibliography_path),
+                _size_details(render_result.bibliography_path),
+            )
+        )
     build_dir = render_result.main_tex_path.parent
+    for package in _detect_ts_packages(build_dir):
+        rows.append((package.stem, _format_path(package), _size_details(package)))
     for manifest in _detect_manifests(build_dir):
-        rows.append(("Manifest", _format_path(manifest), ""))
+        rows.append(("Manifest", _format_path(manifest), _size_details(manifest)))
     for asset in _detect_assets(build_dir):
-        rows.append(("Asset", _format_path(asset), ""))
+        rows.append(("Asset", _format_path(asset), _size_details(asset)))
     for debug_html in _detect_debug_html(build_dir):
-        rows.append(("Debug HTML", _format_path(debug_html), ""))
+        rows.append(("Debug HTML", _format_path(debug_html), _size_details(debug_html)))
     _render_summary(state, "", rows)
 
 

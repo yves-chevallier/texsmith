@@ -60,7 +60,7 @@ def determine_output_target(
     if output_option.exists() and output_option.is_dir():
         return "directory", output_option
 
-    if output_option.suffix or len(documents) == 1:
+    if output_option.suffix:
         return "file", output_option
 
     return "directory", output_option

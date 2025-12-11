@@ -112,6 +112,36 @@ def front_matter_has_title(metadata: Mapping[str, Any] | None) -> bool:
     return bool(isinstance(dotted, str) and dotted.strip())
 
 
+def _coerce_bool(value: Any) -> bool | None:
+    """Coerce loose truthy/falsey values from front matter."""
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, (int, float)):
+        return bool(value)
+    if isinstance(value, str):
+        candidate = value.strip().lower()
+        if candidate in {"true", "yes", "on", "1"}:
+            return True
+        if candidate in {"false", "no", "off", "0"}:
+            return False
+    return None
+
+
+def _front_matter_numbered(metadata: Mapping[str, Any] | None) -> bool | None:
+    """Extract a numbered flag from front matter (press.numbered or numbered)."""
+    if not isinstance(metadata, Mapping):
+        return None
+    press_section = metadata.get("press")
+    if isinstance(press_section, Mapping):
+        value = _coerce_bool(press_section.get("numbered"))
+        if value is not None:
+            return value
+    direct = _coerce_bool(metadata.get("numbered"))
+    if direct is not None:
+        return direct
+    return None
+
+
 @dataclass(slots=True)
 class DocumentRenderOptions:
     """Rendering options applied when preparing a document context."""
@@ -275,10 +305,12 @@ class Document:
             strip_heading=strip_heading,
             has_declared_title=declared_title,
         )
+        front_numbered = _front_matter_numbered(rendered.front_matter)
+        numbered_flag = numbered if front_numbered is None else front_numbered
         options = DocumentRenderOptions(
             base_level=resolved_base_level,
             title_strategy=strategy,
-            numbered=numbered,
+            numbered=numbered_flag,
             suppress_title_metadata=suppress_title,
         )
         document = cls(

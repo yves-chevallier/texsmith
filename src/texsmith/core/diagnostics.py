@@ -60,14 +60,59 @@ class LoggingEmitter:
             self._logger.error(message)
 
     def event(self, name: str, payload: Mapping[str, Any]) -> None:
+        message = format_event_message(name, payload)
+        if message:
+            self._logger.info(message)
+            return
         try:
             self._logger.debug("diagnostic event %s: %s", name, dict(payload))
         except Exception:  # pragma: no cover - defensive
             self._logger.debug("failed to log diagnostic event %s", name, exc_info=True)
 
 
+def format_event_message(name: str, payload: Mapping[str, Any]) -> str | None:
+    """Return a human-friendly summary for selected diagnostic events."""
+    try:
+        data = dict(payload)
+    except Exception:  # pragma: no cover - defensive
+        data = {}
+
+    if name == "asset_fetch":
+        url = data.get("url") or "<unknown>"
+        convert = data.get("convert")
+        suffix_hint = data.get("suffix_hint")
+        details: list[str] = []
+        if convert:
+            details.append("convert")
+        if suffix_hint:
+            details.append(f"suffix={suffix_hint}")
+        suffix = f" ({', '.join(details)})" if details else ""
+        return f"Fetching remote image: {url}{suffix}"
+
+    if name == "asset_fetch_cached":
+        url = data.get("url") or "<unknown>"
+        reason = data.get("reason") or "cache"
+        return f"Reusing cached remote image: {url} ({reason})"
+
+    if name == "doi_fetch":
+        doi_value = data.get("value") or data.get("doi") or "<unknown>"
+        key = data.get("key") or "<unknown>"
+        mode = data.get("mode")
+        source = data.get("source") or data.get("resolved_source")
+        details: list[str] = []
+        if mode:
+            details.append(str(mode))
+        if source:
+            details.append(str(source))
+        suffix = f" ({', '.join(details)})" if details else ""
+        return f"Resolved DOI {doi_value} for entry '{key}'{suffix}"
+
+    return None
+
+
 __all__ = [
     "DiagnosticEmitter",
     "LoggingEmitter",
     "NullEmitter",
+    "format_event_message",
 ]

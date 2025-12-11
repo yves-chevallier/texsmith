@@ -131,6 +131,13 @@ class LaTeXFormatter:
     def __getitem__(self, key: str) -> Callable[..., str]:
         return self._get_template(key).render
 
+    def handle_codeinlinett(self, text: str) -> str:
+        """Render plain inline code inside \\texttt."""
+        escaped = escape_latex_chars(text, legacy_accents=self.legacy_latex_accents).replace(
+            " ", "~"
+        )
+        return self._get_template("codeinlinett").render(text=escaped)
+
     def handle_codeblock(
         self,
         code: str,
@@ -234,10 +241,7 @@ class LaTeXFormatter:
             return r"{\ttfamily " + latex_code + "}"
 
         # listings/verbatim fallback to plain typewriter
-        escaped = escape_latex_chars(text, legacy_accents=self.legacy_latex_accents).replace(
-            " ", "~"
-        )
-        return self._get_template("codeinlinett").render(text=escaped)
+        return self.handle_codeinlinett(text)
 
     def _escape_latex(self, value: str) -> str:
         """Escape helper that honours the formatter legacy accent setting."""

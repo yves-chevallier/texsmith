@@ -132,14 +132,20 @@ def _normalise_press_authors(
     press_payload: MutableMapping[str, Any],
 ) -> None:
     sources: list[Any] = []
+
     if isinstance(press_payload, Mapping):
-        for key in ("authors", "author"):
-            if key in press_payload:
-                sources.append(press_payload[key])
+        # Prefer already normalised authors lists from press metadata and ignore
+        # scalar author fields when a list is present to avoid duplicate entries.
+        if press_payload.get("authors"):
+            sources.append(press_payload["authors"])
+        elif "author" in press_payload:
+            sources.append(press_payload["author"])
+
     if not sources:
-        for key in ("authors", "author"):
-            if key in metadata:
-                sources.append(metadata[key])
+        if metadata.get("authors"):
+            sources.append(metadata.get("authors"))
+        if "author" in metadata:
+            sources.append(metadata.get("author"))
 
     if not sources:
         press_payload.setdefault("authors", [])
@@ -155,18 +161,27 @@ def _normalise_press_authors(
         press_payload.pop("author", None)
         return
 
+    # Remove stale scalar author values to keep press metadata canonical.
+    press_payload.pop("author", None)
+
     normalized: list[dict[str, str | None]] = []
+    seen: set[tuple[str | None, str | None]] = set()
     for entry in entries:
         try:
-            normalized.append(_AuthorEntry.model_validate(entry).model_dump())
+            candidate = _AuthorEntry.model_validate(entry).model_dump()
         except ValidationError as exc:
             raise PressMetadataError(
                 "Invalid author metadata. Provide names and optional affiliations."
             ) from exc
+        key = (candidate.get("name"), candidate.get("affiliation"))
+        if key in seen:
+            continue
+        seen.add(key)
+        normalized.append(candidate)
 
     press_payload["authors"] = normalized
-    press_payload.pop("author", None)
     metadata["authors"] = normalized
+    metadata.pop("author", None)
 
 
 def _flatten_press_aliases(press_payload: MutableMapping[str, Any]) -> None:

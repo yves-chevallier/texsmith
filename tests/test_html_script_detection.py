@@ -67,5 +67,7 @@ def test_html_scripts_marked_for_foreign_runs(tmp_path: Path) -> None:
     slugs = {entry.get("slug") for entry in usage}
     assert {"chinese", "arabics", "japanese"} <= slugs
     assert summary
+
+
 #!/usr/bin/env python3
 # ruff: noqa: RUF001

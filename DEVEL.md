@@ -35,7 +35,9 @@ Roadmap and development notes for TeXSmith. I keep this file as a running checkl
 - [x] Manage fragments order from before/after hooks instead of in fragments.py
 - [ ] Complete docstrings in the codebase for better mkdocstrings generation
 - [ ] Refactoring snippets and fix snippet templates
+- [ ] Mono fallback fonts
 - [ ] Solve issue with Greek fonts
+- [ ] Utiliser \caps de soul au lieu de textsc pour le smallcaps
 - [ ] Be verbose in mkdocs show what happens (fetching assets, building...)
 - [ ] Global user's configuration (.texsmith/config.yml)
 - [ ] os: [ubuntu-latest, windows-latest, macos-latest]
@@ -151,6 +153,13 @@ cached in ~/.texsmith/fonts/ and copied in the build folder if used and needed o
 Currently TeXSmith supports OpenMoji which is downloaded on demand if any emoji is used in the document. TeXSmith can rely on a "Font Fetcher" mechanism to download
 a font that cover the requested codepoints. So this works for emojis. As Noto Color Emoji is not compatible with XeLaTeX due to the COLR/CPAL format, we will keep OpenMoji as the default emoji font for XeLaTeX and Tectonic for now.
 
+## Redondance
+
+attr_numbered = (
+        _lookup_bool(attribute_overrides, ("numbered",))
+        or _lookup_bool(attribute_overrides, ("press", "numbered"))
+    )
+
 ## Tables
 
 Long table et auto ajustement.
@@ -216,6 +225,96 @@ Long table et auto ajustement.
 4. Test to build with the examples (examples/make clean all)
 5. Document in docs/guide/fonts.md the new mechanism, the compatible fonts packages etc.
 6. Clean the codebase remove any dead code.
+
+##
+
+inline.py:
+
+"""Advanced inline handlers ported from the legacy renderer."""
+
+
+Use figure admonition
+
+!!! figure
+
+  ![Alt](image.png)
+
+  Caption... you can explain whatever here
+
+Multiple figures
+
+!!! figure
+
+  ![a](image.png)
+  ![b](image.png)
+
+  Caption... you can explain whatever here
+
+
+Or table admonition
+
+!!! table
+
+Or mermaid diagram
+
+!!! figure
+
+    ```mermaid
+    flowchart LR
+        A --> B
+        B --> C
+    ```
+
+    Example diagram caption
+
+
+Configuration with:
+
+.texsmith/
+
+- Recursively search for .texsmith folder in your path
+- All .texsmith configuration can be overritten
+
+---
+
+Captions
+
+Captions in Markdown is a huge mess. Plenty of obsolete extensions attempted to provide a mechanism
+to add rich captions for figure and tables and refer to them. PyMdown added in 10.12 the syntax:
+
+```
+/// caption
+...
+///
+```
+
+which can add captions to figures or tables, but discrimination of target (figure or table) is
+not done automatically you must specify `figure-caption` or `table-caption`
+
+The subfigures with the `| ^1` syntax works, but is not optimal for latex rendering and the reference id generated with `attrs: {id: static-id}` can be derouting.
+
+TeXSmith offers a more convenient way of adding figures using the admonition style
+
+!!! figure { #reference }
+
+   ![alt](image.png)
+
+   Caption...
+
+You can automatically use subfigures with the following. The layout attribute will dictate how the figures are agenced in the output (`2:1` two figures horizontally, `2:2` four figures in two columns with two rows.
+
+!!! figure { #reference layout="2:1" }
+
+   ![a](image.png)
+   ![b](image.png)
+
+   We see in (a) a figure and in (b) another one.
+
+To refer to figures, use the `[](reference)` which will be replaced by the element number.
+
+```markdown
+We see in Figure [](duck) that the animal has two legs.
+```
 
 ## Tectonic log
 

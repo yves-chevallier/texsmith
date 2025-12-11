@@ -13,6 +13,7 @@ DEFAULT_PDF := $(DEFAULT_DIR)/emoji-default$(ENGINE_SUFFIX).pdf
 COLOR_BASE := $(COLOR_DIR)/emoji.pdf
 BW_BASE := $(BW_DIR)/emoji.pdf
 DEFAULT_BASE := $(DEFAULT_DIR)/emoji.pdf
+ARTIFACTS := $(BW_PDF) $(DEFAULT_PDF)
 
 $(COLOR_DIR) $(BW_DIR) $(DEFAULT_DIR): | $(OUTPUT_DIR)
 	mkdir -p "$@"
@@ -20,6 +21,7 @@ $(COLOR_DIR) $(BW_DIR) $(DEFAULT_DIR): | $(OUTPUT_DIR)
 VARIANTS := $(BW_PDF) $(DEFAULT_PDF)
 ifeq ($(ENGINE),lualatex)
 VARIANTS += $(COLOR_PDF)
+ARTIFACTS += $(COLOR_PDF)
 endif
 
 all: $(VARIANTS)

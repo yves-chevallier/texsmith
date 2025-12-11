@@ -207,7 +207,7 @@
 \BLOCK{ set effective_date = date|default('')|trim }
 \newcommand{\bookdate}{\BLOCK{ if effective_date }\VAR{date}\BLOCK{ else }\today\BLOCK{ endif }}
 
-\title{\booktitle}
+\title{\Huge\bfseries\booktitle}
 \author{\bookauthor}
 \makeatletter
 \gdef\@subtitle{\booksubtitle}
@@ -226,6 +226,7 @@
 \hypersetup{pageanchor=false}
 \frontmatter
 \maketitle
+\thispagestyle{empty}
 \BLOCK{ if imprint_thanks|trim or imprint_license|trim or imprint_copyright|trim }
 \cleardoublepage
 \thispagestyle{plain}

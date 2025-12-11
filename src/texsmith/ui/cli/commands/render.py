@@ -86,10 +86,10 @@ from ..diagnostics import CliEmitter
 from ..presenter import (
     consume_event_diagnostics,
     present_build_summary,
+    present_context_attributes,
     present_conversion_summary,
     present_fonts_info,
     present_html_summary,
-    present_context_attributes,
     present_latex_failure,
     present_rule_descriptions,
 )
@@ -316,6 +316,28 @@ def _parse_template_attributes(values: Iterable[str] | None) -> dict[str, Any]:
         else:
             _assign_nested_value(overrides, parts, coerced)
     return overrides
+
+
+def _lookup_bool(mapping: Mapping[str, Any] | None, path: tuple[str, ...]) -> bool | None:
+    """Walk a mapping to resolve a boolean-like value."""
+    if not isinstance(mapping, Mapping):
+        return None
+    cursor: Any = mapping
+    for key in path:
+        if not isinstance(cursor, Mapping) or key not in cursor:
+            return None
+        cursor = cursor[key]
+    if isinstance(cursor, bool):
+        return cursor
+    if isinstance(cursor, (int, float)):
+        return bool(cursor)
+    if isinstance(cursor, str):
+        candidate = cursor.strip().lower()
+        if candidate in {"true", "yes", "on", "1"}:
+            return True
+        if candidate in {"false", "no", "off", "0"}:
+            return False
+    return None
 
 
 def render(
@@ -575,6 +597,12 @@ def render(
         front_matter = _load_front_matter(first_document)
         if front_matter:
             primary_front_matter = front_matter
+    fm_numbered = (
+        _lookup_bool(primary_front_matter, ("press", "numbered"))
+        or _lookup_bool(primary_front_matter, ("numbered",))
+    )
+    if fm_numbered is not None:
+        numbered = fm_numbered
 
     template_param_source = ctx.get_parameter_source("template") if ctx else None
     promote_param_source = ctx.get_parameter_source("promote_title") if ctx else None
@@ -605,6 +633,12 @@ def render(
         raise typer.BadParameter("--attribute can only be used together with --template.")
     if engine:
         attribute_overrides.setdefault("_texsmith_latex_engine", engine)
+    attr_numbered = (
+        _lookup_bool(attribute_overrides, ("numbered",))
+        or _lookup_bool(attribute_overrides, ("press", "numbered"))
+    )
+    if attr_numbered is not None:
+        numbered = attr_numbered
     if attribute_overrides:
         state.record_event("template_attributes", {"values": attribute_overrides})
 
@@ -638,7 +672,9 @@ def render(
         raise typer.BadParameter("--makefile-deps can only be used together with --build.")
 
     if print_context and not template_selected:
-        raise typer.BadParameter("--print-context requires a template (front matter or --template).")
+        raise typer.BadParameter(
+            "--print-context requires a template (front matter or --template)."
+        )
 
     try:
         _, slot_assignments = organise_slot_overrides(slots, document_paths)
