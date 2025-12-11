@@ -141,6 +141,7 @@ class UCharClassesBuilder:
 
     def build(self) -> list[UCharClass]:
         """Return parsed ucharclasses definitions, downloading assets if needed."""
+        had_cached_sty = self._cached_sty_path().exists()
         sty_path = self._ensure_sty()
         raw = sty_path.read_text(encoding="utf-8")
         seen: dict[str, UCharClass] = {}
@@ -148,7 +149,8 @@ class UCharClassesBuilder:
             seen.setdefault(name, UCharClass(name=name, start=start, end=end))
         self._apply_grouping(raw, seen)
         ordered = sorted(seen.values(), key=lambda c: c.start)
-        self.logger.notice(f"{len(ordered)} Unicode classes detected.")
+        log_fn = self.logger.info if not had_cached_sty else self.logger.debug
+        log_fn(f"{len(ordered)} Unicode classes detected.")
         return ordered
 
     def export_json(self, target: Path) -> None:

@@ -5,9 +5,9 @@ from __future__ import annotations
 from collections.abc import Mapping
 from typing import Any
 
-from texsmith.core.diagnostics import DiagnosticEmitter
+from texsmith.core.diagnostics import DiagnosticEmitter, format_event_message
 
-from .state import CLIState, emit_error, emit_warning, get_cli_state
+from .state import CLIState, emit_error, emit_warning, get_cli_state, render_message
 
 
 class CliEmitter(DiagnosticEmitter):
@@ -26,7 +26,11 @@ class CliEmitter(DiagnosticEmitter):
         emit_error(message, exception=exc)
 
     def event(self, name: str, payload: Mapping[str, Any]) -> None:
-        self._state.record_event(name, dict(payload))
+        data = dict(payload)
+        self._state.record_event(name, data)
+        message = format_event_message(name, data)
+        if message:
+            render_message("info", message)
 
 
 __all__ = ["CliEmitter"]

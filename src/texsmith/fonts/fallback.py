@@ -107,7 +107,11 @@ class FallbackBuilder:
         }
 
     def build(
-        self, classes: Iterable[UCharClass], coverage: Iterable[NotoCoverage]
+        self,
+        classes: Iterable[UCharClass],
+        coverage: Iterable[NotoCoverage],
+        *,
+        announce: bool | None = None,
     ) -> list[FallbackEntry]:
         coverage_index = {entry.family: entry for entry in coverage}
         entries: list[FallbackEntry] = []
@@ -121,7 +125,8 @@ class FallbackBuilder:
                     name=cls.name, start=cls.start, end=cls.end, group=cls.group, font=font
                 ),
             )
-        self.logger.notice(f"Fallback fonts generated for {len(entries)} classes.")
+        log_fn = self.logger.info if announce else self.logger.debug
+        log_fn(f"Fallback fonts generated for {len(entries)} classes.")
         return entries
 
 
