@@ -55,6 +55,8 @@
 % Prevent too many overful \hbox (with some fonts)
 \tolerance=2000
 \emergencystretch=10pt
+\hfuzz=1pt
+\hbadness=2000
 
 % Give more spaces on Table of content (between numbers and text)
 \setlength{\cftpartnumwidth}{4em}
@@ -228,7 +230,7 @@
 \cleardoublepage
 \thispagestyle{plain}
 \phantomsection
-\section*{Imprint}
+
 \BLOCK{ if imprint_thanks|trim }
 \subsection*{Thanks}
 \VAR{imprint_thanks}
