@@ -89,6 +89,7 @@ from ..presenter import (
     present_conversion_summary,
     present_fonts_info,
     present_html_summary,
+    present_context_attributes,
     present_latex_failure,
     present_rule_descriptions,
 )
@@ -485,6 +486,14 @@ def render(
             help="Display a summary of fallback fonts detected during rendering.",
         ),
     ] = False,
+    print_context: Annotated[
+        bool,
+        typer.Option(
+            "--print-context",
+            help="Print resolved template context emitters/consumers and exit.",
+            rich_help_panel=DIAGNOSTICS_PANEL,
+        ),
+    ] = False,
 ) -> None:
     """Convert MkDocs documents into LaTeX artefacts and optionally build PDFs."""
 
@@ -496,6 +505,8 @@ def render(
         template = None
         template_info_flag = False
         template_scaffold = None
+    if print_context:
+        build_pdf = False
 
     if typer_ctx is not None and typer_ctx.resilient_parsing:
         return
@@ -625,6 +636,9 @@ def render(
         raise typer.BadParameter("--open-log can only be used together with --build.")
     if make_deps and not build_pdf:
         raise typer.BadParameter("--makefile-deps can only be used together with --build.")
+
+    if print_context and not template_selected:
+        raise typer.BadParameter("--print-context requires a template (front matter or --template).")
 
     try:
         _, slot_assignments = organise_slot_overrides(slots, document_paths)
@@ -903,6 +917,8 @@ def render(
             output_path=render_dir,
             render_result=render_result,
         )
+        if print_context:
+            present_context_attributes(state=state, render_result=render_result)
         if fonts_info:
             present_fonts_info(state, render_result)
         _emit_rule_diagnostics()

@@ -214,6 +214,50 @@ def present_fonts_info(state: CLIState, render_result: TemplateRenderResult) -> 
         )
 
 
+def present_context_attributes(state: CLIState, render_result: TemplateRenderResult) -> None:
+    """Display resolved context attributes with emitters and consumers."""
+
+    entries = getattr(render_result, "context_attributes", []) or []
+    if not entries:
+        typer.echo("No context attributes recorded.")
+        return
+
+    console = _get_console(state)
+    components = _rich_components()
+    if console is not None and components is not None:
+        box_module, panel_cls, table_cls, _text_cls = components
+        table = table_cls(box=box_module.MINIMAL_DOUBLE_HEAD, header_style="bold cyan")
+        table.title = "Template Context"
+        table.add_column("Key", style="cyan")
+        table.add_column("Emitters", style="magenta")
+        table.add_column("Consumers", style="green")
+        table.add_column("Value")
+        for entry in entries:
+            emitters = "\n".join(entry.get("emitters", []) or [])
+            consumers = "\n".join(entry.get("consumers", []) or [])
+            table.add_row(
+                str(entry.get("name", "")),
+                emitters or "-",
+                consumers or "-",
+                str(entry.get("value", "")),
+            )
+        console.print(panel_cls(table, box=box_module.SQUARE, border_style="cyan"))
+        return
+
+    typer.echo("Context attributes:")
+    for entry in entries:
+        emitters_list = entry.get("emitters", []) or ["-"]
+        consumers_list = entry.get("consumers", []) or ["-"]
+        emitters = "\n    ".join(emitters_list)
+        consumers = "\n    ".join(consumers_list)
+        typer.echo(
+            f"  - {entry.get('name', '')}:\n"
+            f"    emitters: {emitters}\n"
+            f"    consumers: {consumers}\n"
+            f"    value: {entry.get('value', '')}"
+        )
+
+
 def _detect_assets(directory: Path) -> list[Path]:
     """Find asset files in the given directory.
 

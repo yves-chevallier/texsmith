@@ -36,6 +36,7 @@ class TemplateWrapResult:
     output_path: Path | None
     asset_paths: list[Path] = field(default_factory=list)
     asset_pairs: list[tuple[Path, Path]] = field(default_factory=list)
+    rendered_fragments: list[str] = field(default_factory=list)
 
 
 def wrap_template_document(
@@ -315,6 +316,7 @@ def wrap_template_document(
         output_path=output_path,
         asset_paths=asset_paths,
         asset_pairs=asset_pairs,
+        rendered_fragments=sorted(rendered_fragments),
     )
 
 
