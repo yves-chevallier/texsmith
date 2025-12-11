@@ -486,9 +486,6 @@ def render_inline_code(element: Tag, context: RenderContext) -> None:
         element.replace_with(mark_processed(NavigableString(latex)))
         return
 
-    legacy_latex_accents = getattr(context.config, "legacy_latex_accents", False)
-    code = escape_latex_chars(code, legacy_accents=legacy_latex_accents).replace(" ", "~")
-
     latex = context.formatter.codeinlinett(code)
     element.replace_with(mark_processed(NavigableString(latex)))
 

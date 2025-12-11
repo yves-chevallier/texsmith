@@ -76,8 +76,8 @@ def test_callout_inline_code_is_preserved(renderer: LaTeXRenderer) -> None:
         == r"""
 \begin{callout}[callout tip]{Tip}
 \begin{itemize}
-\item{} Foo (\texttt{\detokenize{foo\_bar}})
-\item{} Bar \texttt{\detokenize{bar\_\_foo}}
+\item{} Foo (\texttt{foo\_bar})
+\item{} Bar \texttt{bar\_\_foo}
 \item{} \textbf{Baz}
 
 \end{itemize}

@@ -456,7 +456,7 @@ class Template(WrappableTemplate):
 
     def _format_latex_path(self, path: Path) -> str:
         posix = path.as_posix()
-        return rf"\detokenize{{{posix}}}"
+        return escape_latex_chars(posix)
 
     def _format_date_value(self, value: Any, profile: LanguageProfile) -> str:
         parsed = self._parse_date_value(value)

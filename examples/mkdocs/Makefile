@@ -7,7 +7,8 @@ all: $(PDF)
 
 $(PDF):
 	TEXSMITH_BUILD=1 uv run mkdocs build
-	$(call copy_artifact,$@)
+	cp $@ press/mkdocs.pdf
+	$(call copy_artifact,press/mkdocs.pdf)
 
 clean:
 	rm -rf press site

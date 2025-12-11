@@ -53,40 +53,32 @@ Lorem ipsum dolor sit amet.
 Lorem ipsum dolor sit amet.
 ```
 
-#### Heading 4
-
-Lorem ipsum dolor sit amet.
-
-##### Heading 5
-
-Lorem ipsum dolor sit amet.
-
 ### Bold
 
 Shows how to emphasise text with bold weight. Simply translated to `\textbf{…}` in LaTeX.
 
 ```md
-**text** or __text__ or **t**ex**t**
+**text** or **t**ex**t**
 ```
 
-> **text** or __text__ or **t**ex**t**
+> **text** or **t**ex**t**
 
 ### Italic
 
 Applies emphasis for terminology or voice.
 
 ```md
-This _text_ is italic.
+This _text_ or *text* is italic.
 ```
 
-> This _text_ is italic.
+> This _text_ or *text* is italic.
 
 ### Strikethrough
 
 Marks text as deleted or obsolete.
 
 ```md
-We ~~do not~~ want this. 
+We ~~do not~~ want this.
 ```
 
 > We ~~do not~~ want this.
@@ -100,7 +92,6 @@ With caret, mark and tilde extension from PyMdownX it is also possible to underl
 ```
 
 > ^^text^^
-
 
 ### Inline Code / Code Blocks
 
@@ -152,7 +143,7 @@ Embeds remote or local images.
 
 > - First
 > - Second
->    - Subitem
+>     - Subitem
 
 ### Enumerated Lists
 
@@ -195,7 +186,7 @@ Adds a visual separator between sections.
 
 ## TeXSmith Markdown Extensions
 
-TeXSmith features several custom Markdown extensions to enhance document authoring. 
+TeXSmith features several custom Markdown extensions to enhance document authoring.
 Below is a summary of the supported extensions along with their usage.
 
 ### Small Capitals
@@ -215,19 +206,19 @@ This is __small capitals__.
 
 ```md
 | Column 1 | Column 2 |
-| ---- | ---- |
-| Value 1 | Value 2 |
-| Value 3 | Value 4 |
+| -------- | -------- |
+| Value 1  | Value 2  |
+| Value 3  | Value 4  |
 ```
 
 > | Column 1 | Column 2 |
-> | ---- | ---- |
-> | Value 1 | Value 2 |
-> | Value 3 | Value 4 |
+> | -------- | -------- |
+> | Value 1  | Value 2  |
+> | Value 3  | Value 4  |
 
 ### Footnotes
 
-A footnote[^2] is a note placed at the bottom of the page.
+A footnote is a note placed at the bottom of the page.
 
 ```md
 Text with note[^1].
@@ -238,8 +229,6 @@ Text with note[^1].
 > Text with note[^1].
 >
 > [^1]: Here is the note.
-
-[^2]: A footnote is a note placed at the bottom of the page.
 
 ### Abbreviations
 
@@ -268,14 +257,18 @@ Term
 : Definition of the term
 
 Another term
-: Another definition
+:   Another definition with a longer description that spans
+    multiple lines and
+    is indented properly.
 ```
 
 > Term
 > : Definition of the term
-> 
+>
 > Another term
-> : Another definition
+> :   Another definition with a longer description that spans
+>     multiple lines and
+>     is indented properly.
 
 ### Admonitions (Alert / Info / Tip Blocks)
 
@@ -287,14 +280,16 @@ _Description: Emphasises callouts such as notes and warnings._
 !!! note
     This is a note.
 
-!!! warning
+??? warning
     This is a warning.
 ```
+
+The `???` syntax creates a collapsible block in HTML output only.
 
 !!! note
     This is a note.
 
-!!! warning
+??? warning
     This is a warning.
 
 ### SuperFences (Enhanced Fenced Code + Nested Blocks)
@@ -304,13 +299,13 @@ _Package: `pip install pymdown-extensions`_
 _Description: Allows nested fences (e.g., Mermaid diagrams inside fences)._
 
 ````md
-```mermaid
+```mermaid { width=20% }
 graph TD;
   A-->B;
 ```
 ````
 
-> ```mermaid
+> ```mermaid { width=20% }
 > graph TD;
 >   A-->B;
 > ```
@@ -325,19 +320,19 @@ _Description: Embeds raw LaTeX that is injected verbatim._
 /// latex
 \clearpage
 ///
-
-Inline variant:
-
-```md
-Insert {latex}[\clearpage] anywhere in the paragraph.
-```
-
-Insert {latex}[\clearpage] anywhere in the paragraph.
 ```
 
 /// latex
 \clearpage
 ///
+
+Inline variant:
+
+```md
+Insert... {latex}[\clearpage] anywhere in the paragraph.
+```
+
+Insert... {latex}[\clearpage] anywhere in the paragraph.
 
 ### Emoji
 
@@ -352,6 +347,16 @@ _Description: Converts shortcodes into emoji._
 
 > :smile:
 > :heart:
+
+You can also use Unicode emoji directly (not currently supported in mono environments). It will use OpenMoji black by default in TeXSmith unless you specify another font for emoji in the configuration.
+
+```md
+😊 🚀 🍕 🎉 🐍 🌍 💻
+📚 🎨 👽 👋 🤖 🦄 🧠
+```
+
+> 😊 🚀 🍕 🎉 🐍 🌍 💻
+> 📚 🎨 👽 👋 🤖 🦄 🧠
 
 ### Task Lists
 
@@ -374,10 +379,16 @@ _Package: `pip install pymdown-extensions`_
 _Description: Highlights text with a marker effect._
 
 ```md
-==highlighted text==
+==Cellular respiration is a set of metabolic reactions== that take place
+in the cells of organisms. Its ==primary== function is to convert
+biochemical energy from nutrients into ==adenosine triphosphate (ATP)==,
+and then release waste products.
 ```
 
-> ==highlighted text==
+> ==Cellular respiration is a set of metabolic reactions== that take place in the
+> cells of organisms. Its ==primary== function is to convert biochemical energy
+> from nutrients into ==adenosine triphosphate (ATP)==, and then release waste
+> products.
 
 ### Tilde / Subscript / Superscript
 
@@ -386,14 +397,14 @@ _Package: `pip install pymdown-extensions`_
 _Description: Adds subscripts and superscripts._
 
 ```md
-H~2~O
+H~2~O, E = mc^2^
 
-E = mc^2^
+H₂O, E = mc²
 ```
 
-> H~2~O
+> H~2~O, E = mc^2^
 >
-> E = mc^2^
+> H₂O, E = mc²
 
 ### SmartSymbols
 
@@ -406,24 +417,6 @@ _Description: Automatically substitutes typographic punctuation._
 ```
 
 > "Smart quotes", ellipses..., en-dash –, em-dash —
-
-### Inline Code Highlight
-
-_Extension: `pymdownx.inlinehilite`_
-_Package: `pip install pymdown-extensions`_
-_Extension: `codehilite`_
-_Package: `markdown` (standard, requires `pip install Pygments`)_
-_Description: Adds syntax highlighting to inline code or full blocks._
-
-````md
-```lisp
-(+ 1 2 3)
-```
-````
-
-```lisp
-(+ 1 2 3)
-```
 
 ### Better Math / LaTeX
 
@@ -465,12 +458,10 @@ _Package: `pip install pymdown-extensions`_
 _Description: Auto-links URLs, emails, GitHub references, and more._
 
 ```md
-https://github.com
-user/project#1
+https://github.comuser/project#1
 ```
 
-> https://github.com
-> user/project#1
+> https://github.comuser/project#1
 
 ### ProgressBar
 
@@ -478,13 +469,17 @@ _Extension: `pymdownx.progressbar`_
 _Package: `pip install pymdown-extensions`_
 _Description: Visualises progress as textual bars._
 
-```md
-[===> ] 30%
-[====> ] 40%
-```
+````markdown
+[=25% "Research"]
+[=50% "Implementation"]
+[=75% "Review"]
+[=100% "Launch"]{: .thin}
+````
 
-> [===> ] 30%
-> [====> ] 40%
+[=25% "Research"]
+[=50% "Implementation"]
+[=75% "Review"]
+[=100% "Launch"]{: .thin}
 
 ### Details / Collapsible Blocks
 
@@ -494,11 +489,13 @@ _Description: Creates collapsible disclosure sections._
 
 ```md
 ???+ note "Title"
-Collapsible content.
+
+    Collapsible content.
 ```
 
 > ???+ note "Title"
-> Collapsible content.
+>
+>     Collapsible content.
 
 ### Keys (Keyboard Display)
 
@@ -551,31 +548,6 @@ Author: Alice
 # Title
 ```
 
-### Table of Contents (TOC)
-
-_Extension: `toc`_
-_Package: `markdown` (standard)_
-_Description: Generates an automatic table of contents._
-
-```md
-[TOC]
-```
-
-!!! note
-
-    Note supported yet. We could use minitoc or similar in LaTeX output.
-
-### Attr_list (HTML Attributes on Markdown Elements)
-
-Allows you to attach HTML attributes (id, class, style) to various Markdown elements (headers, divs, spans, images, links, etc.). Very useful for TeXSmith.
-_Extension: `attr_list`_
-_Package: `markdown` (standard)_
-_Description: Annotates Markdown elements with custom attributes._
-
-```md
-### My Title {#id .class style="color:red"}
-```
-
 ### Snippets
 
 _Extension: `pymdownx.snippets`_
@@ -610,13 +582,13 @@ _Package: `pymdown-extensions`_
 
 ```md
 **_bold and italic_**
+
+***bold and italic***
 ```
 
 > **_bold and italic_**
-
-### InlineSyntaxHighlight
-
-_Description: Reserves space for additional inline highlighting use cases._
+>
+> ***bold and italic***
 
 ### Long Dash (—)
 
