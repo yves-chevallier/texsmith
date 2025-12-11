@@ -35,8 +35,8 @@ def build_renderer() -> LaTeXRenderer:
 HTML = (
     "<h1>Counter Example</h1>\n"
     "<p>\n"
-    "This is item <span class=\"data-counter\"></span> but we can also have another\n"
-    "item <span class=\"data-counter\"></span> and even more <span class=\"data-counter\"></span>.\n"
+    'This is item <span class="data-counter"></span> but we can also have another\n'
+    'item <span class="data-counter"></span> and even more <span class="data-counter"></span>.\n'
     "</p>\n"
 )
 

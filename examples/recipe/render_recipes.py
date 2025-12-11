@@ -4,9 +4,12 @@
 from __future__ import annotations
 
 import argparse
+import logging
 from pathlib import Path
 
 from texsmith.api.service import ConversionRequest, ConversionService
+
+logger = logging.getLogger(__name__)
 
 
 def render(
@@ -27,6 +30,7 @@ def render(
 
 
 if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO)
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("recipes", nargs="+", type=Path, help="YAML files describing recipes.")
     parser.add_argument(
@@ -44,4 +48,4 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
     tex_path = render(args.recipes, template=args.template, output_dir=args.output_dir)
-    print(f"Wrote {tex_path}")
+    logger.info("Wrote %s", tex_path)

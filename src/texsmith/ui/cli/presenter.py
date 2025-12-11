@@ -84,11 +84,13 @@ def _colorize_location(text_cls: Any, *, artifact: str, location: str) -> Any:
         if lower_loc.endswith(f".{suffix}"):
             style = mapped
             break
-    if style is None:
-        if any(lower_loc.endswith(f".{ext}") for ext in image_suffixes):
-            style = "magenta"
-        elif artifact.lower() == "asset" or "/assets/" in lower_loc or lower_loc.startswith("assets"):
-            style = "magenta"
+    if style is None and (
+        any(lower_loc.endswith(f".{ext}") for ext in image_suffixes)
+        or artifact.lower() == "asset"
+        or "/assets/" in lower_loc
+        or lower_loc.startswith("assets")
+    ):
+        style = "magenta"
     return text_cls(location, style=style) if style else text_cls(location)
 
 

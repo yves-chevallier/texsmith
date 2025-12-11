@@ -35,7 +35,9 @@ Roadmap and development notes for TeXSmith. I keep this file as a running checkl
 - [x] Manage fragments order from before/after hooks instead of in fragments.py
 - [ ] Complete docstrings in the codebase for better mkdocstrings generation
 - [ ] Refactoring snippets and fix snippet templates
+- [ ] Mono fallback fonts
 - [ ] Solve issue with Greek fonts
+- [ ] Utiliser \caps de soul au lieu de textsc pour le smallcaps
 - [ ] Be verbose in mkdocs show what happens (fetching assets, building...)
 - [ ] Global user's configuration (.texsmith/config.yml)
 - [ ] os: [ubuntu-latest, windows-latest, macos-latest]
@@ -150,6 +152,13 @@ cached in ~/.texsmith/fonts/ and copied in the build folder if used and needed o
 
 Currently TeXSmith supports OpenMoji which is downloaded on demand if any emoji is used in the document. TeXSmith can rely on a "Font Fetcher" mechanism to download
 a font that cover the requested codepoints. So this works for emojis. As Noto Color Emoji is not compatible with XeLaTeX due to the COLR/CPAL format, we will keep OpenMoji as the default emoji font for XeLaTeX and Tectonic for now.
+
+## Redondance
+
+attr_numbered = (
+        _lookup_bool(attribute_overrides, ("numbered",))
+        or _lookup_bool(attribute_overrides, ("press", "numbered"))
+    )
 
 ## Tables
 

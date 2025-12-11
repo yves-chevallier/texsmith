@@ -14,6 +14,7 @@ NF_PDF := $(NF_DIR)/letter-nf$(ENGINE_SUFFIX).pdf
 DIN_BASE := $(DIN_DIR)/letter.pdf
 SN_BASE := $(SN_DIR)/letter.pdf
 NF_BASE := $(NF_DIR)/letter.pdf
+ARTIFACTS := $(DIN_PDF) $(SN_PDF) $(NF_PDF)
 
 $(DIN_DIR) $(SN_DIR) $(NF_DIR):
 	mkdir -p "$@"
