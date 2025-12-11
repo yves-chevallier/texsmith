@@ -135,6 +135,11 @@ class BibliographyCollection:
 
     def _sanitize_entry(self, entry: Entry) -> None:
         for field_name, value in list(entry.fields.items()):
+            if field_name.lower() == "month" and isinstance(value, str):
+                normalised_month = _normalise_month_field(value)
+                if normalised_month is not None and normalised_month != value:
+                    entry.fields[field_name] = normalised_month
+                    continue
             if not isinstance(value, str):
                 continue
             sanitized = _sanitize_field_text(value, field=field_name)
@@ -286,6 +291,55 @@ def _sanitize_field_text(value: str, *, field: str | None = None) -> str:
     if field and field.lower() in {"url", "doi"}:
         value = value.replace(r"\_", "_")
     return value
+
+
+_MONTH_NAME_TO_INT: dict[str, int] = {
+    "jan": 1,
+    "january": 1,
+    "feb": 2,
+    "february": 2,
+    "mar": 3,
+    "march": 3,
+    "apr": 4,
+    "april": 4,
+    "may": 5,
+    "jun": 6,
+    "june": 6,
+    "jul": 7,
+    "july": 7,
+    "aug": 8,
+    "august": 8,
+    "sep": 9,
+    "sept": 9,
+    "september": 9,
+    "oct": 10,
+    "october": 10,
+    "nov": 11,
+    "november": 11,
+    "dec": 12,
+    "december": 12,
+}
+
+
+def _normalise_month_field(value: str) -> str | None:
+    """Convert month names/abbreviations to their integer representation."""
+    candidate = value.strip().strip("{}\"'").lower()
+    if not candidate:
+        return None
+
+    if candidate.isdigit():
+        try:
+            month_int = int(candidate)
+        except ValueError:
+            return None
+        if 1 <= month_int <= 12:
+            return str(month_int)
+        return None
+
+    month_int = _MONTH_NAME_TO_INT.get(candidate)
+    if month_int is None:
+        return None
+    return str(month_int)
 
 
 def _iter_mapping_items(value: object) -> Iterable[tuple[object, object]]:
