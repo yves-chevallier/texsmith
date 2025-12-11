@@ -112,7 +112,7 @@ def format_event_message(name: str, payload: Mapping[str, Any]) -> str | None:
 
 __all__ = [
     "DiagnosticEmitter",
-    "format_event_message",
     "LoggingEmitter",
     "NullEmitter",
+    "format_event_message",
 ]

@@ -344,7 +344,7 @@ def escape_plain_text(root: Tag, context: RenderContext) -> None:
         skip_plain_text = False
         while ancestor is not None:
             classes = gather_classes(getattr(ancestor, "get", lambda *_: None)("class"))
-            if "latex-raw" in classes:
+            if "latex-raw" in classes or "arithmatex" in classes:
                 skip_plain_text = True
                 break
             ancestor = getattr(ancestor, "parent", None)

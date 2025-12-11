@@ -49,8 +49,6 @@ class LaTeXRenderer:
 
         self.output_root = Path(output_root)
         self.assets_root = (self.output_root / "assets").resolve()
-        if self.copy_assets:
-            self.assets_root.mkdir(parents=True, exist_ok=True)
 
         self.assets = AssetRegistry(self.assets_root, copy_assets=self.copy_assets)
 

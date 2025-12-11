@@ -333,13 +333,13 @@ def _normalise_month_field(value: str) -> str | None:
         except ValueError:
             return None
         if 1 <= month_int <= 12:
-            return str(month_int)
+            return f"{month_int:02d}"
         return None
 
     month_int = _MONTH_NAME_TO_INT.get(candidate)
     if month_int is None:
         return None
-    return str(month_int)
+    return f"{month_int:02d}"
 
 
 def _iter_mapping_items(value: object) -> Iterable[tuple[object, object]]:

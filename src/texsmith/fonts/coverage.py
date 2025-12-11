@@ -102,8 +102,10 @@ class NotoCoverageBuilder:
             raw = pickle.loads(candidate.read_bytes())
         except Exception:
             raw = None
-        if isinstance(raw, dict) and raw.get("version") == COVERAGE_CACHE_VERSION and isinstance(
-            raw.get("data"), list
+        if (
+            isinstance(raw, dict)
+            and raw.get("version") == COVERAGE_CACHE_VERSION
+            and isinstance(raw.get("data"), list)
         ):
             try:
                 return [NotoCoverage.from_mapping(entry) for entry in raw["data"]]

@@ -86,10 +86,10 @@ from ..diagnostics import CliEmitter
 from ..presenter import (
     consume_event_diagnostics,
     present_build_summary,
+    present_context_attributes,
     present_conversion_summary,
     present_fonts_info,
     present_html_summary,
-    present_context_attributes,
     present_latex_failure,
     present_rule_descriptions,
 )
@@ -638,7 +638,9 @@ def render(
         raise typer.BadParameter("--makefile-deps can only be used together with --build.")
 
     if print_context and not template_selected:
-        raise typer.BadParameter("--print-context requires a template (front matter or --template).")
+        raise typer.BadParameter(
+            "--print-context requires a template (front matter or --template)."
+        )
 
     try:
         _, slot_assignments = organise_slot_overrides(slots, document_paths)

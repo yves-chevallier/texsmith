@@ -286,7 +286,6 @@ class FetchImageStrategy(CachedConversionStrategy):
             metadata = None
         manifest = options.get("manifest")
         manifest = manifest if isinstance(manifest, dict) else {}
-        manifest_path = options.get("manifest_path")
         manifest_dirty = options.get("manifest_dirty")
         if not isinstance(manifest_dirty, dict):
             manifest_dirty = {"dirty": False}
@@ -321,10 +320,13 @@ class FetchImageStrategy(CachedConversionStrategy):
             wiki_title = self._wikimedia_title(url)
             if wiki_title and cached_path:
                 wiki_meta = self._fetch_wikimedia_metadata(wiki_title, user_agent)
-                if wiki_meta:
-                    if cache_entry.get("sha1") and wiki_meta.get("sha1") == cache_entry.get("sha1"):
-                        reuse_reason = "wikimedia"
-                        cache_entry.update(wiki_meta)
+                if (
+                    wiki_meta
+                    and cache_entry.get("sha1")
+                    and wiki_meta.get("sha1") == cache_entry.get("sha1")
+                ):
+                    reuse_reason = "wikimedia"
+                    cache_entry.update(wiki_meta)
             if reuse_reason is None and cached_path:
                 conditional_headers = self._conditional_headers(cache_entry)
                 if conditional_headers:
@@ -336,9 +338,7 @@ class FetchImageStrategy(CachedConversionStrategy):
                         response = None
                     if response is not None and response.status_code == 304:
                         reuse_reason = "etag"
-                        cache_entry["etag"] = response.headers.get(
-                            "ETag", cache_entry.get("etag")
-                        )
+                        cache_entry["etag"] = response.headers.get("ETag", cache_entry.get("etag"))
                         cache_entry["last_modified"] = response.headers.get(
                             "Last-Modified", cache_entry.get("last_modified")
                         )
@@ -348,12 +348,11 @@ class FetchImageStrategy(CachedConversionStrategy):
             response = None
 
         if reuse_reason and cached_path:
-            if metadata is not None:
-                if cache_entry:
-                    if cache_entry.get("content_type"):
-                        metadata["content_type"] = str(cache_entry["content_type"])
-                    if cache_entry.get("suffix"):
-                        metadata["suffix"] = str(cache_entry["suffix"])
+            if metadata is not None and cache_entry:
+                if cache_entry.get("content_type"):
+                    metadata["content_type"] = str(cache_entry["content_type"])
+                if cache_entry.get("suffix"):
+                    metadata["suffix"] = str(cache_entry["suffix"])
             manifest[url] = self._build_manifest_entry(
                 url,
                 cache_entry or {},
@@ -373,7 +372,8 @@ class FetchImageStrategy(CachedConversionStrategy):
                 msg = f"Failed to fetch image '{url}': {exc}"
                 raise TransformerExecutionError(msg) from exc
 
-        if response.status_code == 304 and cached_path:
+        status_code = getattr(response, "status_code", 200)
+        if status_code == 304 and cached_path:
             reuse_reason = "etag"
             if metadata is not None and cache_entry:
                 if cache_entry.get("content_type"):
@@ -392,10 +392,8 @@ class FetchImageStrategy(CachedConversionStrategy):
             record_event(emitter, "asset_fetch_cached", {"url": url, "reason": reuse_reason})
             return target
 
-        if not response.ok:
-            raise TransformerExecutionError(
-                f"Failed to fetch image '{url}': HTTP {response.status_code}"
-            )
+        if not getattr(response, "ok", False):
+            raise TransformerExecutionError(f"Failed to fetch image '{url}': HTTP {status_code}")
 
         content_type = response.headers.get("Content-Type", "")
         mimetype = content_type.split(";", 1)[0].strip().lower()

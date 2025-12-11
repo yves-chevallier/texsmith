@@ -144,7 +144,7 @@ def _normalise_press_authors(
     if not sources:
         if metadata.get("authors"):
             sources.append(metadata.get("authors"))
-        elif "author" in metadata:
+        if "author" in metadata:
             sources.append(metadata.get("author"))
 
     if not sources:
@@ -165,13 +165,19 @@ def _normalise_press_authors(
     press_payload.pop("author", None)
 
     normalized: list[dict[str, str | None]] = []
+    seen: set[tuple[str | None, str | None]] = set()
     for entry in entries:
         try:
-            normalized.append(_AuthorEntry.model_validate(entry).model_dump())
+            candidate = _AuthorEntry.model_validate(entry).model_dump()
         except ValidationError as exc:
             raise PressMetadataError(
                 "Invalid author metadata. Provide names and optional affiliations."
             ) from exc
+        key = (candidate.get("name"), candidate.get("affiliation"))
+        if key in seen:
+            continue
+        seen.add(key)
+        normalized.append(candidate)
 
     press_payload["authors"] = normalized
     metadata["authors"] = normalized

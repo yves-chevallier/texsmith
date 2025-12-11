@@ -37,7 +37,7 @@ from .code import (
     render_preformatted_code as _render_preformatted_code,
     render_standalone_code_blocks as _render_standalone_code_block,
 )
-from .inline import render_inline_code as _render_inline_code
+from .inline import _MATH_PAYLOAD_PATTERN, render_inline_code as _render_inline_code
 
 
 def _prepare_rich_text_content(container: Tag, context: RenderContext) -> None:
@@ -689,13 +689,14 @@ def render_paragraphs(element: Tag, context: RenderContext) -> None:
     if element.get("class"):
         return
 
-    raw_text = element.get_text(strip=False)
+    raw_text = element.get_text(strip=False).strip("\n")
     if not raw_text.strip():
         element.decompose()
         return
 
     legacy_accents = getattr(context.config, "legacy_latex_accents", False)
-    escape_text = "\\" not in raw_text
+    contains_math = bool(_MATH_PAYLOAD_PATTERN.search(raw_text))
+    escape_text = "\\" not in raw_text and not contains_math
     rendered = render_moving_text(
         raw_text,
         context,

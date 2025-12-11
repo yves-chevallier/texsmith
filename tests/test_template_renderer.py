@@ -285,9 +285,7 @@ def test_context_attributes_capture_emitters_and_consumers(tmp_path: Path) -> No
 
     assert "title" in usage
     assert any("template:" in emitter for emitter in usage["title"].get("emitters", []))
-    assert any(
-        consumer.startswith("template:") for consumer in usage["title"].get("consumers", [])
-    )
+    assert any(consumer.startswith("template:") for consumer in usage["title"].get("consumers", []))
 
 
 def test_renderer_preserves_template_latexmkrc(tmp_path: Path) -> None:

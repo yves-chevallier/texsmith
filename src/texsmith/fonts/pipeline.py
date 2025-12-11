@@ -88,7 +88,8 @@ class FallbackManager:
         had_cache = repository.cache_path.exists()
 
         cache_key = _cache_key(self.cache)
-        if cache_key and cache_key in _LOOKUP_CACHE:
+        cached_any = repository.load()
+        if cache_key and cache_key in _LOOKUP_CACHE and cached_any is None:
             self._lookup = _LOOKUP_CACHE[cache_key]
             return self._lookup
 

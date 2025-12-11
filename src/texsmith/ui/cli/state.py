@@ -197,11 +197,10 @@ def render_message(
         console = state.console
         if getattr(console, "log", None):
             console.log(message)
-        else:  # pragma: no cover - fallback
-            print(message)
         return
 
     from rich.text import Text
+
     style = "red" if level == "error" else "yellow"
     label_style = f"bold {style}"
     if hasattr(Text, "assemble"):
