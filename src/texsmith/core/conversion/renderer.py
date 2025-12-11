@@ -16,6 +16,7 @@ from texsmith.fonts.scripts import fallback_summary_to_usage, merge_script_usage
 from ..context import DocumentState
 from ..diagnostics import DiagnosticEmitter
 from ..templates import TemplateError, TemplateRuntime, wrap_template_document
+from ..templates.context_usage import summarise_context_usage
 from .debug import debug_enabled, ensure_emitter, raise_conversion_error, record_event
 
 
@@ -57,6 +58,7 @@ class TemplateRendererResult:
     asset_paths: list[Path] = field(default_factory=list)
     asset_sources: list[Path] = field(default_factory=list)
     asset_map: dict[str, Path] = field(default_factory=dict)
+    context_attributes: list[dict[str, Any]] = field(default_factory=list)
 
 
 _SOFT_OVERRIDE_KEYS = {"press._source_dir", "press._source_path"}
@@ -542,6 +544,13 @@ class TemplateRenderer:
         asset_path_list = sorted({path.resolve() for path in asset_paths})
         asset_source_list = sorted({path.resolve() for path in asset_sources})
 
+        context_attributes = summarise_context_usage(
+            template_instance,
+            template_context,
+            fragment_names=wrap_result.rendered_fragments,
+            overrides=template_overrides,
+        )
+
         return TemplateRendererResult(
             main_tex_path=main_tex_path,
             fragment_paths=fragment_paths,
@@ -556,6 +565,7 @@ class TemplateRenderer:
             asset_paths=asset_path_list,
             asset_sources=asset_source_list,
             asset_map=asset_map,
+            context_attributes=context_attributes,
         )
 
     @staticmethod

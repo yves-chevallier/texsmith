@@ -123,6 +123,7 @@ class TemplateRenderResult:
     asset_paths: list[Path] = field(default_factory=list)
     asset_sources: list[Path] = field(default_factory=list)
     asset_map: dict[str, Path] = field(default_factory=dict)
+    context_attributes: list[dict[str, Any]] = field(default_factory=list)
 
     @property
     def has_bibliography(self) -> bool:
@@ -261,6 +262,7 @@ class TemplateSession:
             asset_paths=rendered.asset_paths,
             asset_sources=rendered.asset_sources,
             asset_map=rendered.asset_map,
+            context_attributes=rendered.context_attributes,
         )
 
 

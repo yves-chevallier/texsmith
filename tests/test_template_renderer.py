@@ -259,6 +259,37 @@ def test_renderer_generates_latexmkrc_when_missing(tmp_path: Path) -> None:
     assert "$bibtex_use" not in content
 
 
+def test_context_attributes_capture_emitters_and_consumers(tmp_path: Path) -> None:
+    runtime = load_template_runtime("article")
+    session = TemplateSession(runtime=runtime)
+
+    doc_path = _write_markdown(
+        tmp_path,
+        "context.md",
+        """
+        ---
+        title: Context Demo
+        ---
+
+        # Heading
+        Body text.
+        """,
+    )
+
+    session.add_document(Document.from_markdown(doc_path))
+    build_dir = tmp_path / "context-build"
+
+    result = session.render(build_dir)
+
+    usage = {entry["name"]: entry for entry in result.context_attributes}
+
+    assert "title" in usage
+    assert any("template:" in emitter for emitter in usage["title"].get("emitters", []))
+    assert any(
+        consumer.startswith("template:") for consumer in usage["title"].get("consumers", [])
+    )
+
+
 def test_renderer_preserves_template_latexmkrc(tmp_path: Path) -> None:
     runtime = load_template_runtime("article")
     session = TemplateSession(runtime=runtime)
