@@ -41,8 +41,8 @@ def test_blockquote_with_nested_table(renderer: LaTeXRenderer) -> None:
     latex = renderer.render(html)
     assert "\\begin{displayquote}" in latex
     assert "\\begin{center}" in latex
-    assert "\\begin{tabular}" in latex
-    assert latex.index("\\begin{displayquote}") < latex.index("\\begin{tabular}")
+    assert "\\begin{tabularx}" in latex
+    assert latex.index("\\begin{displayquote}") < latex.index("\\begin{tabularx}")
 
 
 def test_ordered_list_rendering(renderer: LaTeXRenderer) -> None:

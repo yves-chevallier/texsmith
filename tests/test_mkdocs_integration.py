@@ -129,7 +129,7 @@ def test_full_document_conversion(tmp_path: Path) -> None:
         r"\textbf{Python}\par",
         r"\textbf{JavaScript}\par",
         r"\begin{description}",
-        r"\begin{tabular}{ll}",
+        r"\begin{tabularx}",
         r"\subsubsection{Heading Level 4}\label{custom-id}",
         r"\paragraph{Heading Level 5}\label{heading-level-5}\mbox{}\\",
         r"\hl{vulputate erat efficitur}",
