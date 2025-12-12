@@ -49,6 +49,10 @@ jobs:
       - name: Run Playwright smoke test
         run: uv run python scripts/playwright_smoke.py
 
+      # TexSmith Mermaid->PDF via Playwright backend
+      - name: Run TexSmith Mermaid Playwright smoke
+        run: uv run python scripts/playwright_mermaid_smoke.py
+
   build-artifacts:
     name: Build dists & docs
     needs: checks
