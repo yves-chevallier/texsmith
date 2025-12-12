@@ -54,11 +54,11 @@ from .._options import (
     OUTPUT_PANEL,
     BaseLevelOption,
     ConvertAssetsOption,
-    CopyAssetsOptionWithShort,
     DebugHtmlOption,
     DebugRulesOption,
     DisableFallbackOption,
     DisableMarkdownExtensionsOption,
+    FontsInfoOption,
     FullDocumentOption,
     HashAssetsOption,
     HtmlOnlyOption,
@@ -67,9 +67,9 @@ from .._options import (
     MakefileDepsOption,
     ManifestOptionWithShort,
     MarkdownExtensionsOption,
+    NoCopyAssetsOption,
     NoPromoteTitleOption,
     NoTitleOption,
-    NumberedOption,
     OpenLogOption,
     OutputPathOption,
     ParserOption,
@@ -77,6 +77,7 @@ from .._options import (
     SlotsOption,
     StripHeadingOption,
     TemplateAttributeOption,
+    TemplateInfoOption,
     TemplateOption,
 )
 from ..bibliography import print_bibliography_overview
@@ -241,9 +242,7 @@ def _write_makefile_deps(target: Path, dependencies: Iterable[Path]) -> Path:
     normalised = sorted(normalised, key=lambda path: path.as_posix())
     rel_target = _escape_make_path(_relativize_path(resolved_target, base))
     rel_deps = [_escape_make_path(_relativize_path(dep, base)) for dep in normalised]
-    content = (
-        f"{rel_target}: {' '.join(rel_deps)}\n" if rel_deps else f"{rel_target}:\n"
-    )
+    content = f"{rel_target}: {' '.join(rel_deps)}\n" if rel_deps else f"{rel_target}:\n"
     dep_path.write_text(content, encoding="utf-8")
     return dep_path
 
@@ -303,9 +302,7 @@ def _parse_template_attributes(values: Iterable[str] | None) -> dict[str, Any]:
         if not isinstance(raw, str) or not raw.strip():
             continue
         if "=" not in raw:
-            raise typer.BadParameter(
-                f"Invalid attribute override '{raw}', expected key=value."
-            )
+            raise typer.BadParameter(f"Invalid attribute override '{raw}', expected key=value.")
         key, value = raw.split("=", 1)
         key = key.strip()
         if not key:
@@ -321,9 +318,7 @@ def _parse_template_attributes(values: Iterable[str] | None) -> dict[str, Any]:
     return overrides
 
 
-def _lookup_bool(
-    mapping: Mapping[str, Any] | None, path: tuple[str, ...]
-) -> bool | None:
+def _lookup_bool(mapping: Mapping[str, Any] | None, path: tuple[str, ...]) -> bool | None:
     """Walk a mapping to resolve a boolean-like value."""
     if not isinstance(mapping, Mapping):
         return None
@@ -362,15 +357,21 @@ def render(
             rich_help_panel=DIAGNOSTICS_PANEL,
         ),
     ] = False,
+    list_bibliography: Annotated[
+        bool,
+        typer.Option(
+            "--list-bibliography",
+            help="Print bibliography details from provided .bib files and exit.",
+            rich_help_panel=DIAGNOSTICS_PANEL,
+        ),
+    ] = False,
     verbose: Annotated[
         int,
         typer.Option(
             "--verbose",
             "-v",
             count=True,
-            help=(
-                "Increase CLI verbosity. Combine multiple times for additional diagnostics."
-            ),
+            help=("Increase CLI verbosity. Combine multiple times for additional diagnostics."),
             rich_help_panel=DIAGNOSTICS_PANEL,
         ),
     ] = 0,
@@ -399,10 +400,9 @@ def render(
     strip_heading: StripHeadingOption = False,
     no_promote_title: NoPromoteTitleOption = False,
     no_title: NoTitleOption = False,
-    numbered: NumberedOption = True,
     parser: ParserOption = None,
     disable_fallback_converters: DisableFallbackOption = False,
-    copy_assets: CopyAssetsOptionWithShort = True,
+    no_copy_assets: NoCopyAssetsOption = False,
     convert_assets: ConvertAssetsOption = False,
     hash_assets: HashAssetsOption = False,
     diagrams_backend: Annotated[
@@ -410,7 +410,7 @@ def render(
         typer.Option(
             "--diagrams-backend",
             metavar="BACKEND",
-            help="Backend for diagram conversion (draw.io, mermaid): playwright, local, or docker (auto-default).",
+            help="Force the backend for diagram conversion (draw.io, mermaid): playwright, local, or docker (auto-default).",
             case_sensitive=False,
         ),
     ] = None,
@@ -421,7 +421,7 @@ def render(
         bool,
         typer.Option(
             "--embed",
-            help="Embed converted fragments into the main document instead of using \\input.",
+            help="Embed converted documents into the main document instead linking them with \\input.",
         ),
     ] = False,
     template_attributes: TemplateAttributeOption = None,
@@ -430,9 +430,7 @@ def render(
         bool,
         typer.Option(
             "--classic-output",
-            help=(
-                "Display raw latexmk output without parsing (use --rich-output for structured logs)."
-            ),
+            help=("Display raw latexmk output without parsing."),
         ),
     ] = False,
     html_only: HtmlOnlyOption = False,
@@ -476,13 +474,6 @@ def render(
     slots: SlotsOption = None,
     markdown_extensions: MarkdownExtensionsOption = None,
     disable_markdown_extensions: DisableMarkdownExtensionsOption = None,
-    list_bibliography: Annotated[
-        bool,
-        typer.Option(
-            "--list-bibliography",
-            help="Print bibliography details from provided .bib files and exit.",
-        ),
-    ] = False,
     open_log: OpenLogOption = False,
     isolate_cache: Annotated[
         bool,
@@ -495,13 +486,7 @@ def render(
             rich_help_panel=OUTPUT_PANEL,
         ),
     ] = False,
-    template_info_flag: Annotated[
-        bool,
-        typer.Option(
-            "--template-info",
-            help="Display template metadata and exit.",
-        ),
-    ] = False,
+    template_info_flag: TemplateInfoOption = False,
     template_scaffold: Annotated[
         Path | None,
         typer.Option(
@@ -510,13 +495,7 @@ def render(
             help="Copy the selected template into DEST and exit.",
         ),
     ] = None,
-    fonts_info: Annotated[
-        bool,
-        typer.Option(
-            "--fonts-info",
-            help="Display a summary of fallback fonts detected during rendering.",
-        ),
-    ] = False,
+    fonts_info: FontsInfoOption = False,
     print_context: Annotated[
         bool,
         typer.Option(
@@ -560,9 +539,7 @@ def render(
     document_paths = list(inputs or [])
     if input_path is not None:
         if document_paths:
-            raise typer.BadParameter(
-                "Provide either positional inputs or --input-path, not both."
-            )
+            raise typer.BadParameter("Provide either positional inputs or --input-path, not both.")
         document_paths = [input_path]
 
     if not document_paths:
@@ -602,22 +579,22 @@ def render(
             "Provide a Markdown (.md) or HTML (.html) source document or pipe content via stdin."
         )
 
+    numbered = True
+    copy_assets = not no_copy_assets
     primary_front_matter: Mapping[str, Any] | None = shared_front_matter
     first_document = document_paths[0] if document_paths else None
     if primary_front_matter is None and first_document is not None:
         front_matter = _load_front_matter(first_document)
         if front_matter:
             primary_front_matter = front_matter
-    fm_numbered = _lookup_bool(
-        primary_front_matter, ("press", "numbered")
-    ) or _lookup_bool(primary_front_matter, ("numbered",))
+    fm_numbered = _lookup_bool(primary_front_matter, ("press", "numbered")) or _lookup_bool(
+        primary_front_matter, ("numbered",)
+    )
     if fm_numbered is not None:
         numbered = fm_numbered
 
     template_param_source = ctx.get_parameter_source("template") if ctx else None
-    no_promote_param_source = (
-        ctx.get_parameter_source("no_promote_title") if ctx else None
-    )
+    no_promote_param_source = ctx.get_parameter_source("no_promote_title") if ctx else None
     if (
         template_param_source in {None, ParameterSource.DEFAULT}
         and template is None
@@ -644,9 +621,7 @@ def render(
 
     attribute_overrides = _parse_template_attributes(template_attributes)
     if attribute_overrides and not template_selected:
-        raise typer.BadParameter(
-            "--attribute can only be used together with --template."
-        )
+        raise typer.BadParameter("--attribute can only be used together with --template.")
     if engine:
         attribute_overrides.setdefault("_texsmith_latex_engine", engine)
     attr_numbered = _lookup_bool(attribute_overrides, ("numbered",)) or _lookup_bool(
@@ -677,16 +652,12 @@ def render(
             classic_output = True
 
     if classic_output and not build_pdf:
-        raise typer.BadParameter(
-            "--classic-output can only be used together with --build."
-        )
+        raise typer.BadParameter("--classic-output can only be used together with --build.")
 
     if open_log and not build_pdf:
         raise typer.BadParameter("--open-log can only be used together with --build.")
     if make_deps and not build_pdf:
-        raise typer.BadParameter(
-            "--makefile-deps can only be used together with --build."
-        )
+        raise typer.BadParameter("--makefile-deps can only be used together with --build.")
 
     if print_context and not template_selected:
         raise typer.BadParameter(
@@ -734,9 +705,7 @@ def render(
         markdown_extensions,
         disable_markdown_extensions,
     )
-    extension_line = (
-        f"Extensions: {', '.join(resolved_markdown_extensions) or '(none)'}"
-    )
+    extension_line = f"Extensions: {', '.join(resolved_markdown_extensions) or '(none)'}"
 
     def _flush_diagnostics() -> None:
         lines: list[str] = []
@@ -748,12 +717,8 @@ def render(
 
     debug_snapshot = debug_html if debug_html is not None else debug_enabled()
 
-    output_mode, output_target = determine_output_target(
-        template_selected, document_paths, output
-    )
-    resolved_output_target = (
-        output_target.resolve() if output_target is not None else None
-    )
+    output_mode, output_target = determine_output_target(template_selected, document_paths, output)
+    resolved_output_target = output_target.resolve() if output_target is not None else None
 
     temp_render_dir: Path | None = None
     cleanup_render_dir = False
@@ -819,9 +784,7 @@ def render(
         persist_debug_html=bool(debug_snapshot),
         language=language,
         legacy_latex_accents=legacy_latex_accents,
-        diagrams_backend=diagrams_backend.lower()
-        if isinstance(diagrams_backend, str)
-        else None,
+        diagrams_backend=diagrams_backend.lower() if isinstance(diagrams_backend, str) else None,
         template=template,
         render_dir=request_render_dir,
         template_options=attribute_overrides,
@@ -866,9 +829,7 @@ def render(
         summary_paths: list[Path] = []
         if output_mode == "file":
             if resolved_output_target is None:
-                raise typer.BadParameter(
-                    "Output path is required when writing HTML to a file."
-                )
+                raise typer.BadParameter("Output path is required when writing HTML to a file.")
             try:
                 write_output_file(resolved_output_target, html_fragments[0][1])
             except OSError as exc:
@@ -877,9 +838,7 @@ def render(
             summary_paths.append(resolved_output_target)
         elif output_mode in {"directory", "template"}:
             if resolved_output_target is None:
-                raise typer.BadParameter(
-                    "Output directory is required when writing HTML files."
-                )
+                raise typer.BadParameter("Output directory is required when writing HTML files.")
             resolved_output_target.mkdir(parents=True, exist_ok=True)
             for source_path, payload in html_fragments:
                 target = resolved_output_target / f"{source_path.stem}.html"
@@ -890,13 +849,9 @@ def render(
                     raise typer.Exit(code=1) from exc
                 summary_paths.append(target)
         elif output_mode == "template-pdf":
-            raise typer.BadParameter(
-                "--html cannot be combined with a PDF output target."
-            )
+            raise typer.BadParameter("--html cannot be combined with a PDF output target.")
         else:
-            raise RuntimeError(
-                f"Unsupported output mode '{output_mode}' for HTML output."
-            )
+            raise RuntimeError(f"Unsupported output mode '{output_mode}' for HTML output.")
 
         present_html_summary(
             state=state,
@@ -949,9 +904,7 @@ def render(
 
         if output_mode == "file":
             if resolved_output_target is None:
-                raise typer.BadParameter(
-                    "Output path is required when writing to a file."
-                )
+                raise typer.BadParameter("Output path is required when writing to a file.")
             try:
                 write_output_file(resolved_output_target, bundle.combined_output())
             except OSError as exc:
@@ -1006,9 +959,7 @@ def render(
     template_context = getattr(render_result, "template_context", None) or getattr(
         render_result, "context", None
     )
-    use_system_tectonic = (
-        system_tectonic if engine_choice.backend == "tectonic" else False
-    )
+    use_system_tectonic = system_tectonic if engine_choice.backend == "tectonic" else False
     features = compute_features(
         requires_shell_escape=render_result.requires_shell_escape,
         bibliography=render_result.has_bibliography,
@@ -1022,9 +973,7 @@ def render(
     bundled_bin: Path | None = None
     if engine_choice.backend == "tectonic":
         try:
-            selection = select_tectonic_binary(
-                use_system_tectonic, console=state.console
-            )
+            selection = select_tectonic_binary(use_system_tectonic, console=state.console)
             if features.bibliography and not use_system_tectonic:
                 biber_binary = select_biber_binary(console=state.console)
                 bundled_bin = biber_binary.parent
@@ -1103,9 +1052,7 @@ def render(
             messages=messages,
             open_log=open_log,
         )
-        emit_error(
-            f"{engine_choice.label} exited with status {engine_result.returncode}"
-        )
+        emit_error(f"{engine_choice.label} exited with status {engine_result.returncode}")
         raise typer.Exit(code=engine_result.returncode)
 
     pdf_path = command_plan.pdf_path
@@ -1154,9 +1101,7 @@ def render(
             emit_error(f"Failed to write dependency file: {exc}", exc)
             raise typer.Exit(code=1) from exc
 
-    present_build_summary(
-        state=state, render_result=render_result, pdf_path=final_pdf_path
-    )
+    present_build_summary(state=state, render_result=render_result, pdf_path=final_pdf_path)
     if fonts_info:
         present_fonts_info(state, render_result)
     if dep_file_path is not None:

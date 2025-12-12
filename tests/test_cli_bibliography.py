@@ -44,7 +44,7 @@ def test_cli_bibliography_list_outputs_entries(tmp_path: Path) -> None:
     assert "Sample Article" in result.stdout
     assert "John Example" in result.stdout
     assert "Sources" in result.stdout
-    assert result.stderr == ""
+    assert not result.stderr
 
 
 def test_cli_bibliography_list_reports_conflicts(tmp_path: Path) -> None:
@@ -78,7 +78,7 @@ def test_cli_bibliography_list_reports_conflicts(tmp_path: Path) -> None:
     assert "refkey (book)" in result.stdout
     assert "Original Title" in result.stdout
     assert "Different Title" not in result.stdout
-    assert result.stderr == ""
+    assert not result.stderr
 
 
 def test_cli_bibliography_list_with_fixture_files() -> None:
@@ -101,7 +101,7 @@ def test_cli_bibliography_list_with_fixture_files() -> None:
         assert filename in result.stdout
     for key in ("LAWRENCE19841632", "BERESFORD2001259", "BEST20255106"):
         assert key in result.stdout
-    assert result.stderr == ""
+    assert not result.stderr
 
 
 def test_cli_front_matter_bibliography_fetches_doi(monkeypatch, tmp_path: Path) -> None:

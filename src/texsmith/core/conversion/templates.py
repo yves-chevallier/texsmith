@@ -477,7 +477,8 @@ def _load_inline_bibliography(
                 if cache_mode == "doi":
                     cache_entries.pop(doi_key, None)
                 continue
-            collection.load_data(data, source=source_path)
+            doi_source = source_path.with_stem(f"{source_path.stem}-doi")
+            collection.load_data(data, source=doi_source)
             record_event(
                 emitter,
                 "doi_fetch",

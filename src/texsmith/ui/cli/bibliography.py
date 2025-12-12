@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections import Counter
 from collections.abc import Iterable, Mapping, Sequence
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, cast
@@ -132,17 +133,40 @@ def print_bibliography_overview(collection: BibliographyCollection) -> None:
         from rich import box
         from rich.panel import Panel
         from rich.table import Table
+        from rich.text import Text
     except ImportError:  # pragma: no cover - fallback when Rich is unavailable
         _print_bibliography_plain(collection)
         return
 
     console = get_cli_state().console
+    references = collection.list_references()
+
+    def _summarise_sources() -> tuple[Counter[Path], int, int, int]:
+        per_file: Counter[Path] = Counter()
+        frontmatter = 0
+        doi = 0
+        for reference in references:
+            raw_sources = reference.get("source_files") or []
+            sources = {Path(str(src)) for src in raw_sources if src}
+            if not sources:
+                continue
+            for src in sources:
+                per_file[src] += 1
+            names = {src.name.lower() for src in sources}
+            if any("frontmatter" in name for name in names):
+                frontmatter += 1
+            if any("doi" in name for name in names):
+                doi += 1
+        total = len(references)
+        return per_file, total, frontmatter, doi
+
+    per_file_counts, total_entries, frontmatter_entries, doi_entries = _summarise_sources()
 
     stats = collection.file_stats
     if stats:
         stats_table = Table(
             title="Bibliography Files",
-            box=box.SIMPLE,
+            box=box.SQUARE,
             show_edge=True,
             header_style="bold cyan",
         )
@@ -150,13 +174,16 @@ def print_bibliography_overview(collection: BibliographyCollection) -> None:
         stats_table.add_column("Entries", justify="right")
         for file_path, entry_count in stats:
             stats_table.add_row(str(file_path), str(entry_count))
+        stats_table.add_row(
+            Text("Total", style="bold"), Text(str(sum(count for _, count in stats)))
+        )
         console.print(stats_table)
 
     if collection.issues:
         issue_table = Table(
             title="Warnings",
-            box=box.SIMPLE,
-            header_style="bold yellow",
+            box=box.SQUARE,
+            header_style="bold cyan",
             show_edge=True,
         )
         issue_table.add_column("Key", style="yellow", no_wrap=True)
@@ -170,15 +197,45 @@ def print_bibliography_overview(collection: BibliographyCollection) -> None:
             )
         console.print(issue_table)
 
-    references = collection.list_references()
     if not references:
         console.print("[dim]No references found.[/]")
+        summary_table = Table(
+            title="Bibliography Summary",
+            box=box.SQUARE,
+            header_style="bold cyan",
+            show_edge=True,
+        )
+        summary_table.add_column("Category", style="bold")
+        summary_table.add_column("Count", justify="right")
+        summary_table.add_row("Total entries", str(total_entries))
+        if per_file_counts:
+            for path, count in per_file_counts.most_common():
+                summary_table.add_row(f"From {path.name}", str(count))
+        summary_table.add_row("From front matter", str(frontmatter_entries))
+        summary_table.add_row("From DOI fetches", str(doi_entries))
+        console.print(summary_table)
         return
 
     for reference in references:
         panel = build_reference_panel(reference)
         console.print(panel)
         console.print()
+
+    summary_table = Table(
+        title="Bibliography Summary",
+        box=box.SQUARE,
+        header_style="bold cyan",
+        show_edge=True,
+    )
+    summary_table.add_column("Category", style="bold")
+    summary_table.add_column("Count", justify="right")
+    summary_table.add_row("Total entries", str(total_entries))
+    if per_file_counts:
+        for path, count in per_file_counts.most_common():
+            summary_table.add_row(f"From {path.name}", str(count))
+    summary_table.add_row("From front matter", str(frontmatter_entries))
+    summary_table.add_row("From DOI fetches", str(doi_entries))
+    console.print(summary_table)
 
 
 def _print_bibliography_plain(collection: BibliographyCollection) -> None:
@@ -199,12 +256,21 @@ def _print_bibliography_plain(collection: BibliographyCollection) -> None:
             typer.echo(f"  - [{key}] {issue.message} (source: {source})")
 
     references = collection.list_references()
-    if not references:
-        typer.echo("No references found.")
-        return
+    total = len(references)
+    per_file: Counter[Path] = Counter()
+    frontmatter = 0
+    doi = 0
+    for reference in references:
+        sources = {Path(str(src)) for src in reference.get("source_files") or [] if src}
+        for src in sources:
+            per_file[src] += 1
+        names = {src.name.lower() for src in sources}
+        if any("frontmatter" in name for name in names):
+            frontmatter += 1
+        if any("doi" in name for name in names):
+            doi += 1
 
     typer.echo("Entries:")
-    typer.echo("References:")
     for reference in references:
         key = reference.get("key", "Reference")
         entry_type = reference.get("type", "reference")
@@ -224,3 +290,12 @@ def _print_bibliography_plain(collection: BibliographyCollection) -> None:
         if entries:
             typer.echo(f"    Sources: {', '.join(entries)}")
         typer.echo()
+
+    typer.echo("Summary:")
+    typer.echo(f"  Total entries: {total}")
+    if per_file:
+        typer.echo("  Per-source counts:")
+        for path, count in per_file.most_common():
+            typer.echo(f"    - {path}: {count}")
+    typer.echo(f"  From front matter: {frontmatter}")
+    typer.echo(f"  From DOI fetches: {doi}")

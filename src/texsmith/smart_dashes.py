@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import re
+from typing import ClassVar
 import xml.etree.ElementTree as ElementTree
 
 from markdown import Extension, Markdown
@@ -17,7 +18,7 @@ def _replace_dashes(text: str) -> str:
 
     def _swap(match: re.Match[str]) -> str:
         payload = match.group(0)
-        return "—" if payload == "---" else "–"
+        return "\u2014" if payload == "---" else "\u2013"
 
     return _DASH_PATTERN.sub(_swap, text)
 
@@ -25,7 +26,7 @@ def _replace_dashes(text: str) -> str:
 class _SmartDashesTreeprocessor(Treeprocessor):
     """Replace double/triple hyphens outside code with typographic dashes."""
 
-    _SKIP_TAGS = {"code", "pre", "kbd", "script", "style"}
+    _SKIP_TAGS: ClassVar[set[str]] = {"code", "pre", "kbd", "script", "style"}
 
     def run(self, root: ElementTree.Element) -> None:  # type: ignore[override]
         self._process(root)
@@ -53,7 +54,9 @@ class TexsmithSmartDashesExtension(Extension):
     """Register the smart dash tree-processor."""
 
     def extendMarkdown(self, md: Markdown) -> None:  # type: ignore[override]  # noqa: N802
-        md.treeprocessors.register(_SmartDashesTreeprocessor(md), "texsmith_smart_dashes", priority=16)
+        md.treeprocessors.register(
+            _SmartDashesTreeprocessor(md), "texsmith_smart_dashes", priority=16
+        )
 
 
 def makeExtension(**kwargs: object) -> TexsmithSmartDashesExtension:  # noqa: N802

@@ -20,8 +20,8 @@ InputPathArgument = Annotated[
     typer.Argument(
         metavar="INPUT...",
         help=(
-            "Conversion inputs. Provide a Markdown/HTML source document and optionally "
-            "one or more BibTeX files."
+            "Conversion inputs such as Markdown (.md) or HTML (.html) source documents. "
+            "Optionally, BibTeX files (.bib) for citation processing."
         ),
         exists=True,
         file_okay=True,
@@ -86,15 +86,6 @@ NoTitleOption = Annotated[
     ),
 ]
 
-NumberedOption = Annotated[
-    bool,
-    typer.Option(
-        "--numbered",
-        help="Toggle numbered headings.",
-        rich_help_panel=STRUCTURE_PANEL,
-    ),
-]
-
 ParserOption = Annotated[
     str | None,
     typer.Option(
@@ -113,21 +104,12 @@ DisableFallbackOption = Annotated[
     ),
 ]
 
-CopyAssetsOption = Annotated[
+NoCopyAssetsOption = Annotated[
     bool,
     typer.Option(
-        "--copy-assets",
-        help="Toggle copying of remote assets to the output directory.",
-        rich_help_panel=RENDERING_PANEL,
-    ),
-]
-
-CopyAssetsOptionWithShort = Annotated[
-    bool,
-    typer.Option(
-        "--copy-assets",
-        "-c/-C",
-        help="Toggle copying of remote assets to the output directory.",
+        "--no-copy-assets",
+        "-C",
+        help="Disable copying of remote assets to the output directory.",
         rich_help_panel=RENDERING_PANEL,
     ),
 ]
@@ -210,6 +192,15 @@ DebugRulesOption = Annotated[
     ),
 ]
 
+TemplateInfoOption = Annotated[
+    bool,
+    typer.Option(
+        "--template-info",
+        help="Display template metadata and exit.",
+        rich_help_panel=DIAGNOSTICS_PANEL,
+    ),
+]
+
 HtmlOnlyOption = Annotated[
     bool,
     typer.Option(
@@ -246,7 +237,7 @@ SlotsOption = Annotated[
 MarkdownExtensionsOption = Annotated[
     list[str] | None,
     typer.Option(
-        "--markdown-extensions",
+        "--enable-extension",
         "-x",
         help=(
             "Additional Markdown extensions to enable (comma or space separated values are accepted)."
@@ -260,10 +251,10 @@ DisableMarkdownExtensionsOption = Annotated[
     list[str] | None,
     typer.Option(
         "--disable-extension",
-        "-d",
+        "-X",
         help=(
             "Markdown extensions to disable. Provide a comma separated list or repeat the option "
-            "multiple times."
+            "multiple times. Use --list-extensions to see the extensions enabled by default."
         ),
         show_default=False,
         rich_help_panel=RENDERING_PANEL,
@@ -303,6 +294,15 @@ TemplateOption = Annotated[
             "or built-in slug such as 'article' or 'letter'."
         ),
         rich_help_panel=TEMPLATE_PANEL,
+    ),
+]
+
+FontsInfoOption = Annotated[
+    bool,
+    typer.Option(
+        "--fonts-info",
+        help="Display a summary of fallback fonts detected during rendering.",
+        rich_help_panel=DIAGNOSTICS_PANEL,
     ),
 ]
 

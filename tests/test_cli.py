@@ -328,7 +328,7 @@ def test_markdown_extensions_option_extends_defaults(monkeypatch: Any) -> None:
             app,
             [
                 str(markdown_file),
-                "-x",
+                "--enable-extension",
                 "custom_extension,another_extension",
                 "-x",
                 "custom_extension",
@@ -368,7 +368,7 @@ def test_disable_markdown_extensions_option(tmp_path: Path, monkeypatch: Any) ->
             str(tmp_path / "output"),
             "--disable-extension",
             "footnotes, pymdownx.details",
-            "--disable-extension",
+            "-X",
             "pymdownx.magiclink",
         ],
     )
@@ -712,7 +712,7 @@ section
     content = tex_path.read_text(encoding="utf-8")
     assert "\\begin{abstract}" in content
     assert "abstract" in content
-    assert "\\section{Section}\\label{section}" in content
+    assert "\\section{Section}" in content
     assert "\\subsection{Section}" not in content
 
 

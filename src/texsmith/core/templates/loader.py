@@ -18,12 +18,18 @@ from .manifest import TemplateError
 
 def _looks_like_template_root(path: Path) -> bool:
     """Return True when ``path`` contains manifest or specialised template markers."""
-    if not path.exists() or path.is_file():
+    def _safe_exists(candidate: Path) -> bool:
+        try:
+            return candidate.exists()
+        except OSError:
+            return False
+
+    if not _safe_exists(path) or path.is_file():
         return False
-    if (path / "__init__.py").exists():
+    if _safe_exists(path / "__init__.py"):
         return True
     manifest_candidates = (path / "manifest.toml", path / "template" / "manifest.toml")
-    return any(candidate.exists() for candidate in manifest_candidates)
+    return any(_safe_exists(candidate) for candidate in manifest_candidates)
 
 
 def load_template(identifier: str) -> WrappableTemplate:

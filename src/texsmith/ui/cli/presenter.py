@@ -56,6 +56,29 @@ def _rich_components() -> tuple[Any, Any, Any, Any] | None:
     return box, Panel, Table, Text
 
 
+def _build_table(
+    *,
+    title: str | None,
+    columns: Sequence[str],
+    header_style: str = "bold cyan",
+    box_style: Any | None = None,
+) -> tuple[Any, Any, Any] | tuple[None, None, None]:
+    """Create a Rich table with the house style."""
+    components = _rich_components()
+    if components is None:
+        return None, None, None
+    box_module, _panel_cls, table_cls, text_cls = components
+    table = table_cls(
+        title=title or None,
+        box=box_style or box_module.SQUARE,
+        show_edge=True,
+        header_style=header_style,
+    )
+    for col in columns:
+        table.add_column(col)
+    return table, text_cls, box_module
+
+
 def _format_path(path: Path) -> str:
     """Format a path relative to the current working directory for display.
 
@@ -194,26 +217,23 @@ def present_rule_descriptions(state: CLIState, rules: Sequence[Mapping[str, Any]
         return
 
     console = _get_console(state)
-    components = _rich_components()
-    headers = ["Phase", "Tag", "Name", "Priority", "Before", "After"]
-    if console is not None and components is not None:
-        box_module, panel_cls, table_cls, _text_cls = components
-        table = table_cls(box=box_module.MINIMAL_DOUBLE_HEAD, header_style="bold cyan")
-        for header in headers:
-            table.add_column(header, style="cyan")
-        for entry in rules:
-            table.add_row(
-                str(entry.get("phase", "")),
-                str(entry.get("tag", "")),
-                str(entry.get("name", "")),
-                str(entry.get("priority", "")),
-                ", ".join(entry.get("before", []) or []),
-                ", ".join(entry.get("after", []) or []),
-            )
-        console.print(
-            panel_cls(table, box=box_module.SQUARE, title="Registered Rules", border_style="blue")
+    if console is not None:
+        table, _text_cls, box_module = _build_table(
+            title="Registered Rules",
+            columns=["Phase", "Tag", "Name", "Priority", "Before", "After"],
         )
-        return
+        if table is not None and box_module is not None:
+            for entry in rules:
+                table.add_row(
+                    str(entry.get("phase", "")),
+                    str(entry.get("tag", "")),
+                    str(entry.get("name", "")),
+                    str(entry.get("priority", "")),
+                    ", ".join(entry.get("before", []) or []),
+                    ", ".join(entry.get("after", []) or []),
+                )
+            console.print(table)
+            return
 
     typer.echo("Registered Rules:")
     for entry in rules:
@@ -247,30 +267,40 @@ def present_fonts_info(state: CLIState, render_result: TemplateRenderResult) -> 
     if not usage:
         usage = _normalise_script_usage(getattr(render_result.document_state, "script_usage", []))
     if not usage:
+        console = _get_console(state)
+        components = _rich_components()
+        if console is not None and components is not None:
+            box_module, panel_cls, _table_cls, text_cls = components
+            console.print(
+                panel_cls(
+                    text_cls("No fallback fonts detected; base fonts only.", style="dim"),
+                    box=box_module.SIMPLE,
+                    border_style="cyan",
+                )
+            )
+            return
+        typer.echo("No fallback fonts detected; base fonts only.")
         return
 
     console = _get_console(state)
-    components = _rich_components()
-    if console is not None and components is not None:
-        box_module, panel_cls, table_cls, _text_cls = components
-        table = table_cls(box=box_module.SQUARE, header_style="bold cyan", title="Fallback Fonts")
-        table.add_column("Script", style="cyan")
-        table.add_column("Text Cmd")
-        table.add_column("Font Cmd")
-        table.add_column("Codepoints", justify="right")
-        table.add_column("Font Name")
-        for entry in usage:
-            count = entry.get("count")
-            count_text = str(int(count)) if isinstance(count, (int, float)) else ""
-            table.add_row(
-                str(entry.get("group") or entry.get("slug") or ""),
-                f"\\{entry.get('text_command')}" if entry.get("text_command") else "",
-                f"\\{entry.get('font_command')}" if entry.get("font_command") else "",
-                count_text,
-                str(entry.get("font_name") or ""),
-            )
-        console.print(panel_cls(table, box=box_module.SQUARE, border_style="blue"))
-        return
+    if console is not None:
+        table, _text_cls, _box_module = _build_table(
+            title="Fallback Fonts",
+            columns=["Script", "Text Cmd", "Font Cmd", "Codepoints", "Font Name"],
+        )
+        if table is not None:
+            for entry in usage:
+                count = entry.get("count")
+                count_text = str(int(count)) if isinstance(count, (int, float)) else ""
+                table.add_row(
+                    str(entry.get("group") or entry.get("slug") or ""),
+                    f"\\{entry.get('text_command')}" if entry.get("text_command") else "",
+                    f"\\{entry.get('font_command')}" if entry.get("font_command") else "",
+                    count_text,
+                    str(entry.get("font_name") or ""),
+                )
+            console.print(table)
+            return
 
     typer.echo("Fallback Fonts:")
     for entry in usage:
@@ -296,24 +326,22 @@ def present_context_attributes(state: CLIState, render_result: TemplateRenderRes
     console = _get_console(state)
     components = _rich_components()
     if console is not None and components is not None:
-        box_module, panel_cls, table_cls, _text_cls = components
-        table = table_cls(box=box_module.MINIMAL_DOUBLE_HEAD, header_style="bold cyan")
-        table.title = "Template Context"
-        table.add_column("Key", style="cyan")
-        table.add_column("Emitters", style="magenta")
-        table.add_column("Consumers", style="green")
-        table.add_column("Value")
-        for entry in entries:
-            emitters = "\n".join(entry.get("emitters", []) or [])
-            consumers = "\n".join(entry.get("consumers", []) or [])
-            table.add_row(
-                str(entry.get("name", "")),
-                emitters or "-",
-                consumers or "-",
-                str(entry.get("value", "")),
-            )
-        console.print(panel_cls(table, box=box_module.SQUARE, border_style="cyan"))
-        return
+        table, _text_cls, _box_module = _build_table(
+            title="Template Context",
+            columns=["Key", "Emitters", "Consumers", "Value"],
+        )
+        if table is not None:
+            for entry in entries:
+                emitters = "\n".join(entry.get("emitters", []) or [])
+                consumers = "\n".join(entry.get("consumers", []) or [])
+                table.add_row(
+                    str(entry.get("name", "")),
+                    emitters or "-",
+                    consumers or "-",
+                    str(entry.get("value", "")),
+                )
+            console.print(table)
+            return
 
     typer.echo("Context attributes:")
     for entry in entries:

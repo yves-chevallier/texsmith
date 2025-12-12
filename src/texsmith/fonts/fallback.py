@@ -111,7 +111,10 @@ class FallbackBuilder:
 
     @staticmethod
     def _range_overlap(
-        class_start: int, class_end: int, ranges: tuple[tuple[int, int], ...], starts: tuple[int, ...]
+        class_start: int,
+        class_end: int,
+        ranges: tuple[tuple[int, int], ...],
+        starts: tuple[int, ...],
     ) -> int:
         """Compute overlap using sorted ranges and early exit."""
         if not ranges:
