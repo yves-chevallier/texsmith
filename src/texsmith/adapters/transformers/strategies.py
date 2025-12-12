@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import atexit
+from concurrent.futures import ThreadPoolExecutor
 from collections.abc import Mapping, Sequence
 from datetime import datetime, timezone
 from importlib import metadata as importlib_metadata
@@ -15,7 +16,7 @@ import shutil
 import subprocess
 import sys
 from threading import Lock
-from typing import Any, ClassVar
+from typing import Any, Callable, ClassVar, TypeVar
 from urllib.parse import unquote, urlparse
 from urllib.request import urlopen
 import warnings
@@ -675,6 +676,30 @@ def _texsmith_cache_root() -> Path:
     return get_user_dir().cache_dir(create=False)
 
 
+T = TypeVar("T")
+
+
+class _PlaywrightWorker:
+    """Run Playwright sync API calls on a dedicated thread."""
+
+    _executor: ClassVar[ThreadPoolExecutor | None] = None
+
+    @classmethod
+    def run(cls, func: Callable[[], T]) -> T:
+        if cls._executor is None:
+            cls._executor = ThreadPoolExecutor(max_workers=1, thread_name_prefix="texsmith-playwright")
+            atexit.register(cls._shutdown)
+        future = cls._executor.submit(func)
+        return future.result()
+
+    @classmethod
+    def _shutdown(cls) -> None:
+        if cls._executor is None:
+            return
+        cls._executor.shutdown(wait=False, cancel_futures=True)
+        cls._executor = None
+
+
 class _PlaywrightManager:
     """Keep a shared Playwright browser alive across conversions."""
 
@@ -922,60 +947,63 @@ class MermaidToPdfStrategy(CachedConversionStrategy):
         mermaid_config: Any,
         emitter: Any = None,
     ) -> None:
-        try:
-            from playwright._impl._errors import Error as PlaywrightError
-        except Exception:  # pragma: no cover - defensive import fallback
-            PlaywrightError = Exception  # noqa: N806
+        def task() -> None:
+            try:
+                from playwright._impl._errors import Error as PlaywrightError
+            except Exception:  # pragma: no cover - defensive import fallback
+                PlaywrightError = Exception  # noqa: N806
 
-        try:
-            browser = _PlaywrightManager.ensure_browser(emitter=emitter)
-            page = browser.new_page(viewport={"width": 2400, "height": 1800})
-            page.set_content(
-                """<!doctype html>
+            try:
+                browser = _PlaywrightManager.ensure_browser(emitter=emitter)
+                page = browser.new_page(viewport={"width": 2400, "height": 1800})
+                page.set_content(
+                    """<!doctype html>
 <html><head><meta charset="utf-8" />
 <script src="https://unpkg.com/mermaid@11/dist/mermaid.min.js"></script>
 </head><body style="margin:0; background:white;"><div id="container"></div></body></html>""",
-                wait_until="load",
-            )
-            resolved_config: dict[str, Any] = {}
+                    wait_until="load",
+                )
+                resolved_config: dict[str, Any] = {}
 
-            if isinstance(mermaid_config, Mapping):
-                resolved_config = dict(mermaid_config)
-            elif isinstance(mermaid_config, str):
-                cfg_path = Path(mermaid_config).expanduser()
-                if cfg_path.exists():
-                    try:
-                        resolved_config = json.loads(cfg_path.read_text("utf-8"))
-                    except Exception:
-                        resolved_config = {}
+                if isinstance(mermaid_config, Mapping):
+                    resolved_config = dict(mermaid_config)
+                elif isinstance(mermaid_config, str):
+                    cfg_path = Path(mermaid_config).expanduser()
+                    if cfg_path.exists():
+                        try:
+                            resolved_config = json.loads(cfg_path.read_text("utf-8"))
+                        except Exception:
+                            resolved_config = {}
 
-            if not resolved_config:
-                resolved_config = dict(_DEFAULT_MERMAID_CONFIG) if _DEFAULT_MERMAID_CONFIG else {}
-            resolved_config.setdefault("startOnLoad", False)
-            resolved_config.setdefault("theme", theme)
-            page.evaluate("cfg => { window.mermaid.initialize(cfg); }", resolved_config)
-            svg = page.evaluate(
-                """
+                if not resolved_config:
+                    resolved_config = dict(_DEFAULT_MERMAID_CONFIG) if _DEFAULT_MERMAID_CONFIG else {}
+                resolved_config.setdefault("startOnLoad", False)
+                resolved_config.setdefault("theme", theme)
+                page.evaluate("cfg => { window.mermaid.initialize(cfg); }", resolved_config)
+                svg = page.evaluate(
+                    """
 async (code) => {
   const result = await window.mermaid.render("theGraph", code);
   const header = '<?xml version="1.0" encoding="UTF-8"?>\\n';
   return header + result.svg;
 }
 """,
-                content,
-            )
-            page.close()
-            target.parent.mkdir(parents=True, exist_ok=True)
-            if format_opt == "png":
-                self._svg_to_png(browser, svg, target)
-            else:
-                self._svg_to_pdf(browser, svg, target)
-        except PlaywrightError as exc:
-            raise _wrap_playwright_error(exc, emitter) from exc
-        except TransformerExecutionError:
-            raise
-        except Exception as exc:
-            raise TransformerExecutionError(f"Mermaid Playwright backend failed: {exc}") from exc
+                    content,
+                )
+                page.close()
+                target.parent.mkdir(parents=True, exist_ok=True)
+                if format_opt == "png":
+                    self._svg_to_png(browser, svg, target)
+                else:
+                    self._svg_to_pdf(browser, svg, target)
+            except PlaywrightError as exc:
+                raise _wrap_playwright_error(exc, emitter) from exc
+            except TransformerExecutionError:
+                raise
+            except Exception as exc:
+                raise TransformerExecutionError(f"Mermaid Playwright backend failed: {exc}") from exc
+
+        _PlaywrightWorker.run(task)
 
     def _svg_to_pdf(self, browser: Any, svg: str, target: Path) -> None:
         page = browser.new_page()
@@ -1207,33 +1235,34 @@ class DrawioToPdfStrategy(CachedConversionStrategy):
         theme: str,
         emitter: Any = None,
     ) -> None:
-        try:
-            from playwright._impl._errors import Error as PlaywrightError
-        except Exception:  # pragma: no cover - defensive import fallback
-            PlaywrightError = Exception  # noqa: N806
+        def task() -> None:
+            try:
+                from playwright._impl._errors import Error as PlaywrightError
+            except Exception:  # pragma: no cover - defensive import fallback
+                PlaywrightError = Exception  # noqa: N806
 
-        try:
-            cache_root = _texsmith_cache_root() / "playwright"
-            browser_cache = cache_root / "browsers"
-            browser_cache.mkdir(parents=True, exist_ok=True)
-            os.environ.setdefault("PLAYWRIGHT_BROWSERS_PATH", str(browser_cache))
+            try:
+                cache_root = _texsmith_cache_root() / "playwright"
+                browser_cache = cache_root / "browsers"
+                browser_cache.mkdir(parents=True, exist_ok=True)
+                os.environ.setdefault("PLAYWRIGHT_BROWSERS_PATH", str(browser_cache))
 
-            export_page = cache_root / "export3.html"
-            export_url = None
-            if not export_page.exists():
-                try:
-                    with urlopen(self.export_url) as response:
-                        export_page.write_bytes(response.read())
-                except Exception:
-                    export_url = self.export_url
+                export_page = cache_root / "export3.html"
+                export_url = None
+                if not export_page.exists():
+                    try:
+                        with urlopen(self.export_url) as response:
+                            export_page.write_bytes(response.read())
+                    except Exception:
+                        export_url = self.export_url
 
-            xml = source.read_text(encoding="utf-8")
-            browser = _PlaywrightManager.ensure_browser(emitter=emitter)
-            page = browser.new_page(viewport={"width": 2400, "height": 1800})
-            page.goto(export_page.as_uri() if export_url is None else export_url)
-            page.wait_for_function("() => typeof window.render === 'function'", timeout=30_000)
-            page.evaluate(
-                """
+                xml = source.read_text(encoding="utf-8")
+                browser = _PlaywrightManager.ensure_browser(emitter=emitter)
+                page = browser.new_page(viewport={"width": 2400, "height": 1800})
+                page.goto(export_page.as_uri() if export_url is None else export_url)
+                page.wait_for_function("() => typeof window.render === 'function'", timeout=30_000)
+                page.evaluate(
+                    """
 () => {
   const orig = window.render;
   window.render = function(data) {
@@ -1244,25 +1273,25 @@ class DrawioToPdfStrategy(CachedConversionStrategy):
   };
 }
 """
-            )
-            payload = {
-                "xml": xml,
-                "format": "svg",
-                "border": 0,
-                "scale": 1,
-                "w": 0,
-                "h": 0,
-                "extras": "{}",
-                "embedXml": "1",
-                "embedImages": "1",
-                "embedFonts": "1",
-                "shadows": "1",
-                "theme": theme,
-            }
-            page.evaluate("data => window.render(data)", payload)
-            page.wait_for_selector("#LoadingComplete", state="attached", timeout=60_000)
-            svg = page.evaluate(
-                """
+                )
+                payload = {
+                    "xml": xml,
+                    "format": "svg",
+                    "border": 0,
+                    "scale": 1,
+                    "w": 0,
+                    "h": 0,
+                    "extras": "{}",
+                    "embedXml": "1",
+                    "embedImages": "1",
+                    "embedFonts": "1",
+                    "shadows": "1",
+                    "theme": theme,
+                }
+                page.evaluate("data => window.render(data)", payload)
+                page.wait_for_selector("#LoadingComplete", state="attached", timeout=60_000)
+                svg = page.evaluate(
+                    """
 () => {
   const graph = window.__lastGraph;
   const data = window.__lastData || {};
@@ -1284,19 +1313,21 @@ class DrawioToPdfStrategy(CachedConversionStrategy):
   return header + '\\n' + mxUtils.getXml(svgRoot);
 }
 """
-            )
-            page.close()
-            target.parent.mkdir(parents=True, exist_ok=True)
-            if format_opt == "png":
-                self._svg_to_png(browser, svg, target)
-            else:
-                self._svg_to_pdf(browser, svg, target)
-        except PlaywrightError as exc:
-            raise _wrap_playwright_error(exc, emitter) from exc
-        except TransformerExecutionError:
-            raise
-        except Exception as exc:
-            raise TransformerExecutionError(f"draw.io Playwright backend failed: {exc}") from exc
+                )
+                page.close()
+                target.parent.mkdir(parents=True, exist_ok=True)
+                if format_opt == "png":
+                    self._svg_to_png(browser, svg, target)
+                else:
+                    self._svg_to_pdf(browser, svg, target)
+            except PlaywrightError as exc:
+                raise _wrap_playwright_error(exc, emitter) from exc
+            except TransformerExecutionError:
+                raise
+            except Exception as exc:
+                raise TransformerExecutionError(f"draw.io Playwright backend failed: {exc}") from exc
+
+        _PlaywrightWorker.run(task)
 
     def _svg_to_pdf(self, browser: Any, svg: str, target: Path) -> None:
         page = browser.new_page()
