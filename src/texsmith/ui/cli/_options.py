@@ -20,8 +20,8 @@ InputPathArgument = Annotated[
     typer.Argument(
         metavar="INPUT...",
         help=(
-            "Conversion inputs. Provide a Markdown/HTML source document and optionally "
-            "one or more BibTeX files."
+            "Conversion inputs such as Markdown (.md) or HTML (.html) source documents. "
+            "Optionally, BibTeX files (.bib) for citation processing."
         ),
         exists=True,
         file_okay=True,
@@ -117,15 +117,6 @@ CopyAssetsOption = Annotated[
     bool,
     typer.Option(
         "--copy-assets",
-        help="Toggle copying of remote assets to the output directory.",
-        rich_help_panel=RENDERING_PANEL,
-    ),
-]
-
-CopyAssetsOptionWithShort = Annotated[
-    bool,
-    typer.Option(
-        "--copy-assets",
         "-c/-C",
         help="Toggle copying of remote assets to the output directory.",
         rich_help_panel=RENDERING_PANEL,
@@ -206,6 +197,15 @@ DebugRulesOption = Annotated[
     typer.Option(
         "--debug-rules",
         help="Display the ordered list of registered render rules.",
+        rich_help_panel=DIAGNOSTICS_PANEL,
+    ),
+]
+
+TemplateInfoOption = Annotated[
+    bool,
+    typer.Option(
+        "--template-info",
+        help="Display template metadata and exit.",
         rich_help_panel=DIAGNOSTICS_PANEL,
     ),
 ]
@@ -303,6 +303,15 @@ TemplateOption = Annotated[
             "or built-in slug such as 'article' or 'letter'."
         ),
         rich_help_panel=TEMPLATE_PANEL,
+    ),
+]
+
+FontsInfoOption = Annotated[
+    bool,
+    typer.Option(
+        "--fonts-info",
+        help="Display a summary of fallback fonts detected during rendering.",
+        rich_help_panel=DIAGNOSTICS_PANEL,
     ),
 ]
 

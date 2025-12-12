@@ -101,7 +101,9 @@ class _TexLogosTreeprocessor(Treeprocessor):
                 yield value[cursor:start]
             alias = match.group(0)
             spec = self._alias_map.get(alias)
-            if (start > 0 and value[start - 1].isalnum()) or (end < len(value) and value[end].isalnum()):
+            if (start > 0 and value[start - 1].isalnum()) or (
+                end < len(value) and value[end].isalnum()
+            ):
                 yield value[start:end]
             elif spec:
                 yield spec

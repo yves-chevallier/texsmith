@@ -53,7 +53,9 @@ class TexsmithSmartDashesExtension(Extension):
     """Register the smart dash tree-processor."""
 
     def extendMarkdown(self, md: Markdown) -> None:  # type: ignore[override]  # noqa: N802
-        md.treeprocessors.register(_SmartDashesTreeprocessor(md), "texsmith_smart_dashes", priority=16)
+        md.treeprocessors.register(
+            _SmartDashesTreeprocessor(md), "texsmith_smart_dashes", priority=16
+        )
 
 
 def makeExtension(**kwargs: object) -> TexsmithSmartDashesExtension:  # noqa: N802

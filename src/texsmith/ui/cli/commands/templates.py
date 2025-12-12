@@ -267,7 +267,7 @@ def show_template_info(identifier: str) -> None:
     if info.attributes:
         attrs = RichTable(
             title="Attributes",
-            box=rich_box.MINIMAL_DOUBLE_HEAD,
+            box=rich_box.SQUARE,
             header_style="bold cyan",
             show_lines=True,
         )
@@ -289,7 +289,7 @@ def show_template_info(identifier: str) -> None:
     assets = list(template.iter_assets())
     assets_table = RichTable(
         title="Assets",
-        box=rich_box.MINIMAL_DOUBLE_HEAD,
+        box=rich_box.SQUARE,
         header_style="bold cyan",
     )
     assets_table.add_column("Destination", style="magenta")
@@ -316,7 +316,7 @@ def show_template_info(identifier: str) -> None:
     fragment_entries = info.fragments or []
     fragments_table = RichTable(
         title="Fragments",
-        box=rich_box.MINIMAL_DOUBLE_HEAD,
+        box=rich_box.SQUARE,
         header_style="bold cyan",
     )
     fragments_table.add_column("Name", style="magenta")
@@ -338,7 +338,7 @@ def show_template_info(identifier: str) -> None:
     slots, default_slot = info.resolve_slots()
     slots_table = RichTable(
         title="Slots",
-        box=rich_box.MINIMAL_DOUBLE_HEAD,
+        box=rich_box.SQUARE,
         header_style="bold cyan",
     )
     slots_table.add_column("Name", style="magenta")

@@ -54,7 +54,7 @@ from .._options import (
     OUTPUT_PANEL,
     BaseLevelOption,
     ConvertAssetsOption,
-    CopyAssetsOptionWithShort,
+    CopyAssetsOption,
     DebugHtmlOption,
     DebugRulesOption,
     DisableFallbackOption,
@@ -67,6 +67,7 @@ from .._options import (
     MakefileDepsOption,
     ManifestOptionWithShort,
     MarkdownExtensionsOption,
+    FontsInfoOption,
     NoPromoteTitleOption,
     NoTitleOption,
     NumberedOption,
@@ -78,6 +79,7 @@ from .._options import (
     StripHeadingOption,
     TemplateAttributeOption,
     TemplateOption,
+    TemplateInfoOption,
 )
 from ..bibliography import print_bibliography_overview
 from ..commands.templates import list_templates, scaffold_template, show_template_info
@@ -402,7 +404,7 @@ def render(
     numbered: NumberedOption = True,
     parser: ParserOption = None,
     disable_fallback_converters: DisableFallbackOption = False,
-    copy_assets: CopyAssetsOptionWithShort = True,
+    copy_assets: CopyAssetsOption = True,
     convert_assets: ConvertAssetsOption = False,
     hash_assets: HashAssetsOption = False,
     diagrams_backend: Annotated[
@@ -410,7 +412,7 @@ def render(
         typer.Option(
             "--diagrams-backend",
             metavar="BACKEND",
-            help="Backend for diagram conversion (draw.io, mermaid): playwright, local, or docker (auto-default).",
+            help="Force the backend for diagram conversion (draw.io, mermaid): playwright, local, or docker (auto-default).",
             case_sensitive=False,
         ),
     ] = None,
@@ -421,7 +423,7 @@ def render(
         bool,
         typer.Option(
             "--embed",
-            help="Embed converted fragments into the main document instead of using \\input.",
+            help="Embed converted documents into the main document instead linking them with \\input.",
         ),
     ] = False,
     template_attributes: TemplateAttributeOption = None,
@@ -430,9 +432,7 @@ def render(
         bool,
         typer.Option(
             "--classic-output",
-            help=(
-                "Display raw latexmk output without parsing (use --rich-output for structured logs)."
-            ),
+            help=("Display raw latexmk output without parsing."),
         ),
     ] = False,
     html_only: HtmlOnlyOption = False,
@@ -481,6 +481,7 @@ def render(
         typer.Option(
             "--list-bibliography",
             help="Print bibliography details from provided .bib files and exit.",
+            rich_help_panel=DIAGNOSTICS_PANEL,
         ),
     ] = False,
     open_log: OpenLogOption = False,
@@ -495,13 +496,7 @@ def render(
             rich_help_panel=OUTPUT_PANEL,
         ),
     ] = False,
-    template_info_flag: Annotated[
-        bool,
-        typer.Option(
-            "--template-info",
-            help="Display template metadata and exit.",
-        ),
-    ] = False,
+    template_info_flag: TemplateInfoOption = False,
     template_scaffold: Annotated[
         Path | None,
         typer.Option(
@@ -510,13 +505,7 @@ def render(
             help="Copy the selected template into DEST and exit.",
         ),
     ] = None,
-    fonts_info: Annotated[
-        bool,
-        typer.Option(
-            "--fonts-info",
-            help="Display a summary of fallback fonts detected during rendering.",
-        ),
-    ] = False,
+    fonts_info: FontsInfoOption = False,
     print_context: Annotated[
         bool,
         typer.Option(
