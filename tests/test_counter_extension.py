@@ -37,7 +37,7 @@ def test_counter_example_renders_full_demo_html() -> None:
     latex = renderer.render(HTML, state=state)
     expected = textwrap.dedent(
         r"""
-        \chapter{Counter Example}
+        \chapter{Counter Example}\label{counter-example}
 
         This is item \counter{1} but we can also have another
         item \counter{2} and even more \counter{3}.
