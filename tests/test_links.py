@@ -19,6 +19,12 @@ def test_external_link_rendering(renderer: LaTeXRenderer) -> None:
     assert "\\href{https://example.com}{Example}" in latex
 
 
+def test_external_link_escapes_latex_chars(renderer: LaTeXRenderer) -> None:
+    html = '<p><a href="https://pandoc.org/MANUAL.html#pandocs-markdown">Pandoc Markdown</a></p>'
+    latex = renderer.render(html)
+    assert "\\href{https://pandoc.org/MANUAL.html\\#pandocs-markdown}{Pandoc Markdown}" in latex
+
+
 def test_internal_anchor_link_rendering(renderer: LaTeXRenderer) -> None:
     html = '<p><a href="#section-1">Jump</a></p>'
     latex = renderer.render(html)

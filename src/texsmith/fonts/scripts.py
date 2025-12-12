@@ -24,6 +24,57 @@ from texsmith.fonts.pipeline import generate_noto_metadata, generate_ucharclasse
 
 _SKIP_GROUPS = {"latin", "common", "punctuation", "other"}
 
+# Prefer native math macros for single-letter Greek/hebrew math symbols to avoid
+# relying on \textgreek wrappers when a math glyph already exists.
+_MATH_LETTER_MAP = {
+    "α": r"\alpha",
+    "β": r"\beta",
+    "γ": r"\gamma",
+    "δ": r"\delta",
+    "ε": r"\epsilon",
+    "ζ": r"\zeta",
+    "η": r"\eta",
+    "θ": r"\theta",
+    "ι": r"\iota",
+    "κ": r"\kappa",
+    "λ": r"\lambda",
+    "μ": r"\mu",
+    "ν": r"\nu",
+    "ξ": r"\xi",
+    "π": r"\pi",
+    "ρ": r"\rho",
+    "σ": r"\sigma",
+    "ς": r"\varsigma",
+    "τ": r"\tau",
+    "υ": r"\upsilon",
+    "φ": r"\phi",
+    "χ": r"\chi",
+    "ψ": r"\psi",
+    "ω": r"\omega",
+    "ϑ": r"\vartheta",
+    "ϕ": r"\varphi",
+    "ϖ": r"\varpi",
+    "ϱ": r"\varrho",
+    "ϰ": r"\varkappa",
+    "ϵ": r"\varepsilon",
+    "Γ": r"\Gamma",
+    "Δ": r"\Delta",
+    "Θ": r"\Theta",
+    "Λ": r"\Lambda",
+    "Ξ": r"\Xi",
+    "Π": r"\Pi",
+    "Σ": r"\Sigma",
+    "Υ": r"\Upsilon",
+    "Φ": r"\Phi",
+    "Ψ": r"\Psi",
+    "Ω": r"\Omega",
+    "ℵ": r"\aleph",
+    "ℶ": r"\beth",
+    "ℷ": r"\gimel",
+    "ℸ": r"\daleth",
+}
+_MATH_LETTER_GROUPS = {"greek", "symbols", "hebrew"}
+
 
 def _slugify(value: str) -> str:
     slug = re.sub(r"[^A-Za-z0-9]+", "", value)
@@ -32,6 +83,26 @@ def _slugify(value: str) -> str:
     if slug[0].isdigit():
         slug = f"s{slug}"
     return slug.lower()
+
+
+def _math_letter_override(chunk: str, group: str | None) -> str | None:
+    """Return a math-mode macro for lone Greek/Hebrew symbols when available."""
+    if not chunk:
+        return None
+    normalized_group = group.lower() if isinstance(group, str) else None
+    if normalized_group and normalized_group not in _MATH_LETTER_GROUPS:
+        return None
+    trimmed = chunk.strip()
+    if len(trimmed) != 1:
+        return None
+    command = _MATH_LETTER_MAP.get(trimmed)
+    if command is None:
+        return None
+    prefix_len = len(chunk) - len(chunk.lstrip())
+    suffix_len = len(chunk) - len(chunk.rstrip())
+    prefix = chunk[:prefix_len]
+    suffix = chunk[len(chunk) - suffix_len :] if suffix_len else ""
+    return f"{prefix}${command}${suffix}"
 
 
 @dataclass(slots=True)
@@ -213,6 +284,10 @@ class ScriptDetector:
         segments = self._segment_text(text, include_whitespace=include_whitespace)
         rendered: list[str] = []
         for group, chunk, entry in segments:
+            math_override = _math_letter_override(chunk, group)
+            if math_override is not None:
+                rendered.append(math_override)
+                continue
             escaped = escape_latex_chars(chunk, legacy_accents=legacy_accents) if escape else chunk
             if group:
                 spec = self._record_spec(group, entry)

@@ -38,6 +38,20 @@ def test_heading_with_nested_formatting(renderer: LaTeXRenderer) -> None:
     assert "\\section{Title \\textbf{and \\emph{mix}}}\\label{mix}" in latex
 
 
+def test_heading_without_id_gets_slug(renderer: LaTeXRenderer) -> None:
+    html = "<h2>Release Notes &amp; Compatibility</h2>"
+    state = DocumentState()
+    latex = renderer.render(html, runtime={"base_level": 0}, state=state)
+    assert "\\section{Release Notes \\& Compatibility}\\label{release-notes-compatibility}" in latex
+    assert state.headings == [
+        {
+            "level": 1,
+            "text": "Release Notes \\& Compatibility",
+            "ref": "release-notes-compatibility",
+        }
+    ]
+
+
 def test_drop_title_runtime_flag(renderer: LaTeXRenderer) -> None:
     html = "<h1>Main Title</h1><h2>Subsection</h2>"
     state = DocumentState()
@@ -48,8 +62,8 @@ def test_drop_title_runtime_flag(renderer: LaTeXRenderer) -> None:
     )
     assert "\\chapter{Main Title}" not in latex
     assert "\\thispagestyle{plain}" in latex
-    assert "\\section{Subsection}" in latex
-    assert state.headings == [{"level": 1, "text": "Subsection", "ref": None}]
+    assert "\\section{Subsection}\\label{subsection}" in latex
+    assert state.headings == [{"level": 1, "text": "Subsection", "ref": "subsection"}]
 
 
 def _render_headings(
