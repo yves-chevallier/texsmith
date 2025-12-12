@@ -86,15 +86,6 @@ NoTitleOption = Annotated[
     ),
 ]
 
-NumberedOption = Annotated[
-    bool,
-    typer.Option(
-        "--numbered",
-        help="Toggle numbered headings.",
-        rich_help_panel=STRUCTURE_PANEL,
-    ),
-]
-
 ParserOption = Annotated[
     str | None,
     typer.Option(
@@ -113,12 +104,12 @@ DisableFallbackOption = Annotated[
     ),
 ]
 
-CopyAssetsOption = Annotated[
+NoCopyAssetsOption = Annotated[
     bool,
     typer.Option(
-        "--copy-assets",
-        "-c/-C",
-        help="Toggle copying of remote assets to the output directory.",
+        "--no-copy-assets",
+        "-C",
+        help="Disable copying of remote assets to the output directory.",
         rich_help_panel=RENDERING_PANEL,
     ),
 ]
@@ -246,11 +237,9 @@ SlotsOption = Annotated[
 MarkdownExtensionsOption = Annotated[
     list[str] | None,
     typer.Option(
-        "--markdown-extensions",
+        "--enable-extension",
         "-x",
-        help=(
-            "Additional Markdown extensions to enable (comma or space separated values are accepted)."
-        ),
+        help=("Additional Markdown extensions to enable (comma or space separated values are accepted)."),
         show_default=False,
         rich_help_panel=RENDERING_PANEL,
     ),
@@ -260,10 +249,10 @@ DisableMarkdownExtensionsOption = Annotated[
     list[str] | None,
     typer.Option(
         "--disable-extension",
-        "-d",
+        "-X",
         help=(
             "Markdown extensions to disable. Provide a comma separated list or repeat the option "
-            "multiple times."
+            "multiple times. Use --list-extensions to see the extensions enabled by default."
         ),
         show_default=False,
         rich_help_panel=RENDERING_PANEL,

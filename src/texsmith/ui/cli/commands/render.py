@@ -54,7 +54,6 @@ from .._options import (
     OUTPUT_PANEL,
     BaseLevelOption,
     ConvertAssetsOption,
-    CopyAssetsOption,
     DebugHtmlOption,
     DebugRulesOption,
     DisableFallbackOption,
@@ -68,9 +67,9 @@ from .._options import (
     ManifestOptionWithShort,
     MarkdownExtensionsOption,
     FontsInfoOption,
+    NoCopyAssetsOption,
     NoPromoteTitleOption,
     NoTitleOption,
-    NumberedOption,
     OpenLogOption,
     OutputPathOption,
     ParserOption,
@@ -364,6 +363,14 @@ def render(
             rich_help_panel=DIAGNOSTICS_PANEL,
         ),
     ] = False,
+    list_bibliography: Annotated[
+        bool,
+        typer.Option(
+            "--list-bibliography",
+            help="Print bibliography details from provided .bib files and exit.",
+            rich_help_panel=DIAGNOSTICS_PANEL,
+        ),
+    ] = False,
     verbose: Annotated[
         int,
         typer.Option(
@@ -401,10 +408,9 @@ def render(
     strip_heading: StripHeadingOption = False,
     no_promote_title: NoPromoteTitleOption = False,
     no_title: NoTitleOption = False,
-    numbered: NumberedOption = True,
     parser: ParserOption = None,
     disable_fallback_converters: DisableFallbackOption = False,
-    copy_assets: CopyAssetsOption = True,
+    no_copy_assets: NoCopyAssetsOption = False,
     convert_assets: ConvertAssetsOption = False,
     hash_assets: HashAssetsOption = False,
     diagrams_backend: Annotated[
@@ -476,14 +482,6 @@ def render(
     slots: SlotsOption = None,
     markdown_extensions: MarkdownExtensionsOption = None,
     disable_markdown_extensions: DisableMarkdownExtensionsOption = None,
-    list_bibliography: Annotated[
-        bool,
-        typer.Option(
-            "--list-bibliography",
-            help="Print bibliography details from provided .bib files and exit.",
-            rich_help_panel=DIAGNOSTICS_PANEL,
-        ),
-    ] = False,
     open_log: OpenLogOption = False,
     isolate_cache: Annotated[
         bool,
@@ -591,6 +589,8 @@ def render(
             "Provide a Markdown (.md) or HTML (.html) source document or pipe content via stdin."
         )
 
+    numbered = True
+    copy_assets = not no_copy_assets
     primary_front_matter: Mapping[str, Any] | None = shared_front_matter
     first_document = document_paths[0] if document_paths else None
     if primary_front_matter is None and first_document is not None:

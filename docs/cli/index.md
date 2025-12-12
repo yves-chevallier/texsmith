@@ -4,142 +4,12 @@ TeXSmith ships with a feature-rich CLI that lets you convert Markdown or HTML in
 
 ```text
 $ texsmith --help
-
- Usage: texsmith [OPTIONS] INPUT...
-
- Convert MkDocs documents into LaTeX artefacts and optionally build PDFs.
-
-╭─ Input Handling ─────────────────────────────────────────────────────────────╮
-│   inputs      INPUT...  Conversion inputs such as Markdown (.md) or HTML     │
-│                         (.html) source documents. Optionally, BibTeX files   │
-│                         (.bib) for citation processing.                      │
-╰──────────────────────────────────────────────────────────────────────────────╯
-╭─ Options ────────────────────────────────────────────────────────────────────╮
-│ --diagrams-backend              BACKEND  Force the backend for diagram       │
-│                                          conversion (draw.io, mermaid):      │
-│                                          playwright, local, or docker        │
-│                                          (auto-default).                     │
-│ --embed                                  Embed converted fragments into the  │
-│                                          main document instead of using      │
-│                                          \input.                             │
-│ --classic-output                         Display raw latexmk output without  │
-│                                          parsing (use --rich-output for      │
-│                                          structured logs).                   │
-│ --build                 -b               Invoke latexmk after rendering to   │
-│                                          compile the resulting LaTeX         │
-│                                          project.                            │
-│ --legacy-latex-accents                   Escape accented characters and      │
-│                                          ligatures with legacy LaTeX macros  │
-│                                          instead of emitting Unicode glyphs  │
-│                                          (defaults to Unicode output).       │
-│ --list-bibliography                      Print bibliography details from     │
-│                                          provided .bib files and exit.       │
-│ --template-info                          Display template metadata and exit. │
-│ --template-scaffold             DEST     Copy the selected template into     │
-│                                          DEST and exit.                      │
-│ --fonts-info                             Display a summary of fallback fonts │
-│                                          detected during rendering.          │
-│ --install-completion                     Install completion for the current  │
-│                                          shell.                              │
-│ --show-completion                        Show completion for the current     │
-│                                          shell, to copy it or customize the  │
-│                                          installation.                       │
-│ --help                                   Show this message and exit.         │
-╰──────────────────────────────────────────────────────────────────────────────╯
-╭─ Diagnostics ────────────────────────────────────────────────────────────────╮
-│ --list-extensions                   List Markdown extensions enabled by      │
-│                                     default and exit.                        │
-│ --list-templates                    List available templates (builtin,       │
-│                                     entry-point, and local) and exit.        │
-│ --verbose          -v      INTEGER  Increase CLI verbosity. Combine multiple │
-│                                     times for additional diagnostics.        │
-│                                     [default: 0]                             │
-│ --debug                             Show full tracebacks when an unexpected  │
-│                                     error occurs.                            │
-│ --debug-rules                       Display the ordered list of registered   │
-│                                     render rules.                            │
-│ --debug-html                        Persist intermediate HTML snapshots      │
-│                                     (inherits from --debug when omitted).    │
-│ --open-log                          Open the latexmk log with the system     │
-│                                     viewer when compilation fails.           │
-│ --print-context                     Print resolved template context          │
-│                                     emitters/consumers and exit.             │
-╰──────────────────────────────────────────────────────────────────────────────╯
-╭─ Output ─────────────────────────────────────────────────────────────────────╮
-│ --output,--output-dir  -o      PATH  Output file or directory. Defaults to   │
-│                                      stdout unless a template is used.       │
-│ --makefile-deps        -M            Emit a Makefile-compatible .d           │
-│                                      dependency file when building PDFs.     │
-│ --html                               Output intermediate HTML instead of     │
-│                                      LaTeX/PDF.                              │
-│ --engine               -e      TEXT  LaTeX engine backend to use when        │
-│                                      building (tectonic, lualatex, xelatex). │
-│                                      [default: tectonic]                     │
-│ --system               -S            Use the system Tectonic binary instead  │
-│                                      of the bundled download.                │
-│ --isolate                            Use a per-render TeX cache inside the   │
-│                                      output directory instead of the shared  │
-│                                      ~/.cache/texsmith cache.                │
-╰──────────────────────────────────────────────────────────────────────────────╯
-╭─ Input Handling ─────────────────────────────────────────────────────────────╮
-│ --selector             TEXT  CSS selector to extract the MkDocs article      │
-│                              content.                                        │
-│                              [default: article.md-content__inner]            │
-│ --full-document              Disable article extraction and render the       │
-│                              entire HTML file.                               │
-│ --parser               TEXT  BeautifulSoup parser backend to use (defaults   │
-│                              to "html.parser").                              │
-╰──────────────────────────────────────────────────────────────────────────────╯
-╭─ Structure ──────────────────────────────────────────────────────────────────╮
-│ --base-level           TEXT  Base heading level relative to the template     │
-│                              (e.g. 1 or 'section').                          │
-│                              [default: 0]                                    │
-│ --strip-heading              Drop the first document heading from the        │
-│                              rendered content.                               │
-│ --numbered                   Toggle numbered headings. [default: True]       │
-╰──────────────────────────────────────────────────────────────────────────────╯
-╭─ Template ───────────────────────────────────────────────────────────────────╮
-│ --no-promote-title                Disable promotion of the first heading to  │
-│                                   document title.                            │
-│ --no-title                        Disable title generation even when         │
-│                                   metadata provides one.                     │
-│ --template          -t      TEXT  Select a LaTeX template to use during      │
-│                                   conversion. Accepts a local path, entry    │
-│                                   point, or built-in slug such as 'article'  │
-│                                   or 'letter'.                               │
-│ --attribute         -a      TEXT  Override template attributes as key=value  │
-│                                   pairs (e.g. -a emoji=color).               │
-│ --slot              -s      TEXT  Inject a document section into a template  │
-│                                   slot using 'slot:Section'. Repeat to map   │
-│                                   multiple sections.                         │
-╰──────────────────────────────────────────────────────────────────────────────╯
-╭─ Rendering ──────────────────────────────────────────────────────────────────╮
-│ --no-fallback-converters                  Disable registration of            │
-│                                           placeholder converters when Docker │
-│                                           is unavailable.                    │
-│ --copy-assets             -c    -C        Toggle copying of remote assets to │
-│                                           the output directory.              │
-│                                           [default: copy-assets]             │
-│ --convert-assets                          Convert bitmap assets (PNG/JPEG)   │
-│                                           to PDF even when LaTeX supports    │
-│                                           the original format.               │
-│ --hash-assets                             Hash stored asset filenames        │
-│                                           instead of preserving their        │
-│                                           original names.                    │
-│ --manifest                -m              Generate a manifest.json file      │
-│                                           alongside the LaTeX output.        │
-│ --language                -l        TEXT  Language code passed to babel      │
-│                                           (defaults to metadata or english). │
-│ --markdown-extensions     -x        TEXT  Additional Markdown extensions to  │
-│                                           enable (comma or space separated   │
-│                                           values are accepted).              │
-│ --disable-extension       -d        TEXT  Markdown extensions to disable.    │
-│                                           Provide a comma separated list or  │
-│                                           repeat the option multiple times.  │
-╰──────────────────────────────────────────────────────────────────────────────╯
+--8<--- "docs/assets/cli-help"
 ```
 
 ## Options
+
+### General Options
 
 `--diagrams-backend`
 : When TeXSmith discovers diagrams in your Markdown (e.g., Mermaid or Draw.io), it needs to convert them into image files that LaTeX can include. This option forces a specific backend for that conversion, overriding the automatic selection logic. Supported backends include `playwright` (headless browser), `local` (locally installed CLI tools), and `docker` (containerized tools).
@@ -156,50 +26,125 @@ $ texsmith --help
 `--legacy-latex-accents`
 : By default, TeXSmith emits Unicode characters for accented letters and ligatures (e.g., é, ñ, æ) when generating LaTeX output. This option switches to using legacy LaTeX macros (e.g., `\'{e}`, `\~{n}`, `\ae{}`) instead, which may be necessary for compatibility with older LaTeX engines or templates.
 
+`--install-completion`, `--show-completion`
+: Install or display shell completion scripts for the TeXSmith CLI. This enhances your terminal experience by providing auto-completion for commands and options.
+
+`--help`
+: Show contextual help for the TeXSmith CLI, including available commands and options.
+
+### Diagnostics Options
+
+`--list-extensions`
+: Print a list of all Markdown extensions that are enabled by default during conversion. This is useful for understanding how your Markdown will be processed.
+
+`--list-templates`
+: Show detailed metadata about the selected template, including its attributes, slots, and assets. This is helpful for understanding how to customize or extend a template.
+
 `--list-bibliography`
 : Display a summary of all bibliography entries found in the provided `.bib` files, front matter or doi links. This is useful for validating bibliography sources without performing a full document render.
 
+`--debug`
+: Enable detailed debugging output for the CLI. This includes full Python tracebacks when unexpected exceptions occur, which can help diagnose issues during conversion or rendering.
+
+`--debug-rules`
+: Print the ordered list of registered render rules that TeXSmith applies during conversion. This is useful for understanding the transformation pipeline.
+
+`--debug-html`
+: Save intermediate HTML snapshots generated during the conversion process. This can help diagnose issues related to HTML parsing or content extraction.
+
+`--open-log`
+: If LaTeX compilation fails during the build step, automatically open the `latexmk` log file using the system's default viewer. This makes it easier to inspect compilation errors.
+
 `--template-info`
-: Show detailed metadata about the selected template, including its attributes, slots, and assets. This is helpful for understanding how to customize or extend a template.
+: Show manifest metadata for the template selected via `--template`, including its attributes, assets, and slots.
 
 `--fonts-info`
 : After rendering, display a summary of the fonts used in the generated LaTeX document, including any fallback fonts that were selected based on the document's language and content.
 
-`--install-completion`, `--show-completion`
-: Install or display shell completion scripts for the TeXSmith CLI. This enhances your terminal experience by providing auto-completion for commands and options.
+`--print-context`
+: Print the resolved template context, including all emitters and consumers, then exit. This is useful for debugging template rendering issues.
 
-## Global Options
+### Output Options
 
-These options can be combined with any conversion run:
+`--output`, `--output-dir`
+: Specify the output file or directory for the rendered LaTeX or compiled PDF. If no output path is provided, TeXSmith defaults to writing to `stdout` unless a template is used.
 
-| Option | Description |
-| ------ | ----------- |
-| `--list-extensions` | Print the Markdown extensions enabled by default, then exit. |
-| `--list-templates` | Enumerate built-in, entry-point, and local templates. |
-| `--list-bibliography` | Inspect one or more `.bib` files without rendering. |
-| `--template-info` | Show manifest metadata for the template selected via `--template`. |
-| `--template-scaffold DEST` | Copy the selected template into `DEST` for easy customization. |
-| `-v / --verbose` | Increase logging verbosity. Stack with `-vv` or more to surface richer diagnostics. |
-| `--debug / --no-debug` | Show full Python tracebacks when an unexpected exception occurs. |
-| `--help` | Display contextual help for the CLI. |
+`--makefile-deps`
+: When building PDFs, generate a Makefile-compatible `.d` dependency file alongside the output. This can be useful for integrating TeXSmith into larger build systems.
 
-Example:
+`--html`
+: Instead of generating LaTeX or PDF output, emit the intermediate HTML produced during the conversion process. This is useful for inspecting how your Markdown is transformed into HTML.
 
-```bash
-texsmith --debug -vv docs/chapter.md --template article --build
-```
+`--engine`
+: Specify the LaTeX engine to use when compiling the rendered document into a PDF. Supported engines include `tectonic`, `lualatex`, and `xelatex`. The default is `tectonic`.
 
-## Rendering Options
+`--system`
+: Use the system-installed Tectonic binary instead of the bundled version provided by TeXSmith. This can be useful if you have a specific version of Tectonic installed or want to leverage system-wide configurations.
 
-See [`render`](render.md) for the complete list of conversion flags (structure adjustments, Markdown extensions, template attributes, slots, and engine controls). Every example there works whether or not you type the legacy `render` verb, but the canonical form is now `texsmith …`.
+`--isolate`
+: By default, TeXSmith uses a shared cache located at `~/.cache/texsmith` to store compiled LaTeX artifacts. This option creates a per-render cache inside the output directory, isolating the build environment for each project.
 
-[`--list-bibliography`](bibliography.md)
-: Load one or more BibTeX files and surface parsing issues without rendering. Combine it with your document inputs to validate bibliography assets alongside the main build.
+### Input Handling Options
 
-[`--template-info`, `--template-scaffold`](template.md)
-: Inspect manifest metadata, attributes, assets, and slots for any installed or local template, or copy a template tree to a writable directory for customization.
+`--selector`
+: When converting HTML documents (e.g., from MkDocs), this option specifies a CSS selector to extract the main article content. The default selector is `article.md-content__inner`, which targets the primary content area.
 
-Each option has its own usage examples on the linked pages.
+`--full-document`
+: Disable article extraction and render the entire HTML file as-is. This is useful when you want to convert a complete HTML document rather than just the main content.
+
+`--parser`
+: Specify the BeautifulSoup parser backend to use when parsing HTML input. The default is `html.parser`, but you can choose other parsers like `lxml` if they are installed.
+
+### Structure Options
+
+`--base-level`
+: Set the base heading level for the document relative to the template. For example, if your template starts at level 1 (e.g., `\section{}`), you can adjust the base level accordingly. The default is `0`. We use the convention where `-1` is `\part{}`, `0` is `\chapter{}`, `1` is `\section{}`, and so on.
+
+`--strip-heading`
+: Remove the first heading from the rendered content. This is useful when the first heading is redundant with the document title or when you want to avoid duplicate titles or keep the first heading as information only.
+
+### Template Options
+
+`--no-promote-title`
+: By default, TeXSmith promotes the first heading in the document to be the title of the LaTeX document. This option disables that behavior, keeping the first heading as part of the main content. If not title is found in metadata or front matter, no title will be generated.
+
+`--no-title`
+: Disable title generation entirely, even if metadata or front matter provides a title. This is useful when you want to suppress the title page in the rendered document.
+
+`--template`, `-t`
+: Select a LaTeX template to use during conversion. You can provide a local path, an entry point, or a built-in slug such as `article`, `book` or `letter`.
+
+`--attribute`, `-a`
+: Override template attributes by providing key=value pairs. This allows you to customize template behavior without modifying the template files directly. You can repeat this option multiple times to set multiple attributes.
+
+`--slot`, `-s`
+: Inject specific document sections into designated template slots using the syntax `slot:Section`. You can repeat this option multiple times to map multiple sections to different slots in the template.
+
+### Rendering Options
+
+`--no-fallback-converters`
+: Disable the registration of placeholder converters that TeXSmith uses when Docker is unavailable. This ensures that only fully supported conversion paths are used.
+
+`--no-copy-assets`, `-C`
+: Control whether remote assets (e.g., images, diagrams) are copied to the output directory during rendering. By default, assets are copied to ensure they are available for LaTeX compilation. You can disable this behavior.
+
+`--convert-assets`
+: Convert bitmap assets (e.g., PNG, JPEG) to PDF format even when LaTeX supports the original format. This can improve compatibility and rendering quality in some cases.
+
+`--hash-assets`
+: Hash the filenames of stored assets instead of preserving their original names. This helps avoid filename collisions when multiple assets with the same name are used in different documents.
+
+`--manifest`, `-m`
+: Generate a `manifest.json` file alongside the LaTeX output, containing metadata about the rendered document, including input sources, template details, and rendering options.
+
+`--language`, `-l`
+: Specify the language code to pass to the LaTeX `babel` package. This affects hyphenation and language-specific typographic rules. If not provided, TeXSmith uses the language specified in the document metadata or defaults to English.
+
+`--enable-extension`, `-x`
+: Enable additional Markdown extensions during conversion. You can repeat this option multiple times or provide a comma-separated list of extensions to activate.
+
+`--disable-extension`, `-X`
+: Disable specific Markdown extensions during conversion. You can repeat this option multiple times or provide a comma-separated list of extensions to deactivate.
 
 ## Quick Start
 

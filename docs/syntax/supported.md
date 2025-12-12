@@ -47,7 +47,6 @@ expect. TeXSmith relies on fenced code blocks by default, so triple backticks
 | Abbreviations | `abbr` | `markdown` | <code>*[HTML]: HyperText Markup Language</code> |
 | Admonitions | `admonition` | `markdown` | <code>!!! note<br>&nbsp;&nbsp;Body</code> |
 | Attribute lists | `attr_list` | `markdown` | `![Alt](image.png){ width="50%" }` |
-| Table of contents | `toc` | `markdown` | Produces `[[toc]]` outputs and anchors |
 | Tables | `tables` | `markdown` | Pipe-delimited tables |
 | Markdown in HTML | `md_in_html` | `markdown` | Markdown inside custom `<div>` blocks |
 | SmartyPants | `pymdownx.smartsymbols` | `pymdown-extensions` | Auto converts quotes/dashes |
@@ -71,6 +70,8 @@ expect. TeXSmith relies on fenced code blocks by default, so triple backticks
 | Blocks HTML | `pymdownx.blocks.html` | `pymdown-extensions` | Named block wrappers |
 | Snippets of LaTeX | `texsmith.latex_raw` | bundled | Raw LaTeX fence |
 | Missing footnotes guard | `texsmith.missing_footnotes` | bundled | Warns when references lack definitions |
+
+Want a generated table of contents? Add the Python-Markdown `toc` extension with `-x toc` or `--enable-extension toc`—it is no longer enabled by default.
 
 Use the table above as a quick pointer. The following sections provide more
 context and runnable examples.
@@ -156,7 +157,7 @@ tests, keeping docs and fixtures aligned.
 ## When You Need More
 
 - Use `texsmith --list-extensions` to see the live extension list.
-- Disable or add extensions via the `--markdown-extensions` and `--disable-extension`
+- Disable or add extensions via the `--enable-extension` and `--disable-extension`
   flags in `texsmith` or through `ConversionRequest.markdown_extensions`
   in the API.
 - If a feature relies on a third-party executable (for example Mermaid to PDF),

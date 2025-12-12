@@ -59,7 +59,8 @@ def list_templates() -> None:
     console = get_cli_state().console
     table = Table(
         title="Available Templates",
-        box=box.MINIMAL_DOUBLE_HEAD,
+        box=box.SQUARE,
+        show_edge=True,
         header_style="bold cyan",
     )
     table.add_column("Name", style="magenta")
@@ -269,6 +270,7 @@ def show_template_info(identifier: str) -> None:
             title="Attributes",
             box=rich_box.SQUARE,
             header_style="bold cyan",
+            show_edge=True,
             show_lines=True,
         )
         attrs.add_column("Key", style="magenta")
@@ -291,6 +293,7 @@ def show_template_info(identifier: str) -> None:
         title="Assets",
         box=rich_box.SQUARE,
         header_style="bold cyan",
+        show_edge=True,
     )
     assets_table.add_column("Destination", style="magenta")
     assets_table.add_column("Source", style="green")
@@ -318,6 +321,7 @@ def show_template_info(identifier: str) -> None:
         title="Fragments",
         box=rich_box.SQUARE,
         header_style="bold cyan",
+        show_edge=True,
     )
     fragments_table.add_column("Name", style="magenta")
     fragments_table.add_column("Description")
@@ -340,6 +344,7 @@ def show_template_info(identifier: str) -> None:
         title="Slots",
         box=rich_box.SQUARE,
         header_style="bold cyan",
+        show_edge=True,
     )
     slots_table.add_column("Name", style="magenta")
     slots_table.add_column("Default", justify="center")

@@ -123,7 +123,6 @@ TeXSmith is unapologetically opinionated: it curates a stack, sprinkles extra sa
   - footnotes
   - smarty
   - tables
-  - toc
   - mdx_math
   - md_in_html
 - TeXSmith

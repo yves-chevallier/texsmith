@@ -181,7 +181,7 @@ def print_bibliography_overview(collection: BibliographyCollection) -> None:
         issue_table = Table(
             title="Warnings",
             box=box.SQUARE,
-            header_style="bold yellow",
+            header_style="bold cyan",
             show_edge=True,
         )
         issue_table.add_column("Key", style="yellow", no_wrap=True)
@@ -200,7 +200,7 @@ def print_bibliography_overview(collection: BibliographyCollection) -> None:
         summary_table = Table(
             title="Bibliography Summary",
             box=box.SQUARE,
-            header_style="bold green",
+            header_style="bold cyan",
             show_edge=True,
         )
         summary_table.add_column("Category", style="bold")
@@ -222,7 +222,7 @@ def print_bibliography_overview(collection: BibliographyCollection) -> None:
     summary_table = Table(
         title="Bibliography Summary",
         box=box.SQUARE,
-        header_style="bold green",
+        header_style="bold cyan",
         show_edge=True,
     )
     summary_table.add_column("Category", style="bold")
