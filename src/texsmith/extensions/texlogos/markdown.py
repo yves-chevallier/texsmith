@@ -101,7 +101,9 @@ class _TexLogosTreeprocessor(Treeprocessor):
                 yield value[cursor:start]
             alias = match.group(0)
             spec = self._alias_map.get(alias)
-            if spec:
+            if (start > 0 and value[start - 1].isalnum()) or (end < len(value) and value[end].isalnum()):
+                yield value[start:end]
+            elif spec:
                 yield spec
             else:  # pragma: no cover - defensive
                 yield alias
@@ -205,38 +207,10 @@ def _build_latex2e(container: ElementTree.Element, spec: LogoSpec) -> None:
     lowered_e.tail = "X"
 
 
-def _build_texsmith(container: ElementTree.Element, _: LogoSpec) -> None:
-    container.text = "TeX"
-    outer = ElementTree.SubElement(
-        container,
-        "span",
-        {
-            "class": "texsmith-word texsmith-smallcaps",
-            "style": (
-                "margin-left: 0.15em;"
-                "font-variant: small-caps; display: inline-flex; align-items: flex-end;"
-            ),
-        },
-    )
-    lead = ElementTree.SubElement(
-        outer,
-        "span",
-        {"style": ("font-size: 1.05em; letter-spacing: 0.05em; margin-right: 0.05em;")},
-    )
-    lead.text = "S"
-    trail = ElementTree.SubElement(
-        outer,
-        "span",
-        {"style": "position: relative; top: -0.18em; font-size: 0.9em; letter-spacing: 0.08em;"},
-    )
-    trail.text = "mith"
-
-
 _HTML_BUILDERS: Mapping[str, Callable[[ElementTree.Element, LogoSpec], None]] = {
     "tex": _build_tex_logo,
     "latex": _build_latex,
     "latex2e": _build_latex2e,
-    "texsmith": _build_texsmith,
 }
 
 

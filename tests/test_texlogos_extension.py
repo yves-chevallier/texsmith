@@ -18,11 +18,12 @@ def _convert(text: str) -> BeautifulSoup:
 def test_markdown_generates_logo_spans() -> None:
     soup = _convert("TeX, LaTeX, LaTeX2e, TeXSmith.")
     spans = soup.find_all("span", class_="tex-logo")
-    assert len(spans) == 4
+    assert len(spans) == 3
 
     commands = {span["data-tex-command"] for span in spans}
     expected = {spec.command for spec in iter_specs()}
     assert commands == expected
+    assert not soup.find("span", attrs={"data-tex-logo": "texsmith"})
 
 
 def test_markdown_skips_code_blocks() -> None:
@@ -31,7 +32,7 @@ def test_markdown_skips_code_blocks() -> None:
 
 
 def test_renderer_emits_logo_commands() -> None:
-    soup = _convert("TeX, LaTeX, LaTeX2e, TeXSmith.")
+    soup = _convert("TeX, LaTeX, LaTeX2e.")
     renderer = LaTeXRenderer()
     register_renderer(renderer)
 
