@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import atexit
-from concurrent.futures import ThreadPoolExecutor
 from collections.abc import Mapping, Sequence
 from datetime import datetime, timezone
 from importlib import metadata as importlib_metadata
@@ -15,7 +14,7 @@ from pathlib import Path
 import shutil
 import subprocess
 import sys
-from threading import Lock
+from threading import Lock, Thread
 from typing import Any, Callable, ClassVar, TypeVar
 from urllib.parse import unquote, urlparse
 from urllib.request import urlopen
@@ -680,24 +679,26 @@ T = TypeVar("T")
 
 
 class _PlaywrightWorker:
-    """Run Playwright sync API calls on a dedicated thread."""
-
-    _executor: ClassVar[ThreadPoolExecutor | None] = None
+    """Run Playwright sync API calls on an isolated thread."""
 
     @classmethod
     def run(cls, func: Callable[[], T]) -> T:
-        if cls._executor is None:
-            cls._executor = ThreadPoolExecutor(max_workers=1, thread_name_prefix="texsmith-playwright")
-            atexit.register(cls._shutdown)
-        future = cls._executor.submit(func)
-        return future.result()
+        result: list[T] = []
+        error: list[BaseException] = []
 
-    @classmethod
-    def _shutdown(cls) -> None:
-        if cls._executor is None:
-            return
-        cls._executor.shutdown(wait=False, cancel_futures=True)
-        cls._executor = None
+        def target() -> None:
+            try:
+                result.append(func())
+            except BaseException as exc:  # pragma: no cover - pass through
+                error.append(exc)
+
+        thread = Thread(target=target, name="texsmith-playwright", daemon=True)
+        thread.start()
+        thread.join()
+
+        if error:
+            raise error[0]
+        return result[0]
 
 
 class _PlaywrightManager:
