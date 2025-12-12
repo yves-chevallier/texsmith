@@ -88,70 +88,6 @@ Roadmap and development notes for TeXSmith. I keep this file as a running checkl
 - Write docstrings for everything.
 - Always finish with uv run ruff check . and uv run ruff format .
 
-## Fonts
-
-We want to refactor and rework the fonts mechanism it is too clumpsy complex and vague. The texsmith/fonts folder contains 14 files plus data files which is too much.
-The goal is to have a clear separation of responsabilities and a clear definition of what is TeXSmith Core API and what is ts-fonts fragment.
-
-TeXSmith Core API is in charge of:
-
-- detecting used codepoints in document/multidocument
-- associate text regions to a language script and to a Noto Font
-- download the requested Noto Fonts
-- download the requested Emojis fonts
-
-TeXSmith ts-fonts fragment is in charge of:
-
-- Defining available fonts packages
-- Building the ts-fonts to be engines friendly (xelatex, tectonic, lualatex...)
-- Populate ucharclasses ranges based on usage (information got from TeXSmith Core)
-
-## Predefined Fonts Package
-
-The PROFILE_MAP in selection.py should not be defined here, but rather in the ts-fonts fragment which is responsible of loading fonts. Plus we have some SSOT for instance in _KPSE_FAMILIES in locator.py.
-
-In order to simplify everything about font management in TeXSmith, we will only configure the standard fonts from ts-fonts fragment the same manner as fonts-test.tex demonstrates it in the root of the project. Of course we want a compatible version for xelatex and lualatex. To be compatible with tectonic we absolutly need the full font name not the description name used by harfbuzz.
-
-Some of these fonts needs to be downloaded from CTAN (at least the .sty). The ts-fonts can be in charge of downloading these packages extract the zip and get the .sty files in the build folder, conditionnally if the font is used. We can keep a cache folder in ~/.texsmith/fonts/ for these downloaded packages.
-
-By default we use `lm` as the default font package.
-
-From now on TeXSmith only supports these packages which are available through tectonic or TeXLive automatically we **do not** need a mechanism to download or copy any of these fonts except the style files if needed.
-
-## Font Copy
-
-Previously, TeXSmith copied all fonts in the build fonts/ folder. For the standard documents described above, we do not need to copy all fonts anymore. Except for
-fallbacks which is described below.
-
-## Fallback
-
-In LuaLaTeX on utilise quelque chose comme (regarde l'actuel ts-fonts):
-
-```tex
-\defaultfontfeatures{FallbackFamilies = {{Noto Emoji...}}} pour les fallback ou alors par cohérence avec XeLaTeX:
-
-\defaultfontfeatures{
-  Renderer=HarfBuzz,
-  RawFeature = {
-      fallback=range:1F300-1FAFF,Noto Emoji
-  }
-}
-```
-
-On XeLaTeX/Tectonic, we need to declare the fallback using ucharclasses like we actually do in ts-fonts.
-As it is a fallback. We only include ranges that are not covered by the main fonts **THIS IS IMPORTANT**:
-
-Emojis will naturally be in treated by these fallbacks. No need to add specific case for them.
-
-We will recycle the old implementation and simplify it to have a precise mechanssm for fallback detection and match to fonts.
-
-Noto is the default fallback font family for all scripts not covered by the main fonts. These fonts are downloaded on demand if required by the document
-cached in ~/.texsmith/fonts/ and copied in the build folder if used and needed only.
-
-## Emojis
-
-Currently TeXSmith supports OpenMoji which is downloaded on demand if any emoji is used in the document. TeXSmith can rely on a "Font Fetcher" mechanism to download
-a font that cover the requested codepoints. So this works for emojis. As Noto Color Emoji is not compatible with XeLaTeX due to the COLR/CPAL format, we will keep OpenMoji as the default emoji font for XeLaTeX and Tectonic for now.
 
 ## Redondance
 
@@ -214,6 +150,39 @@ Long table et auto ajustement.
     205 & Test de remplissage & Encore du texte... \\
     \bottomrule
 \end{tabularx}
+\end{document}
+```
+
+We could use a tester to have a rough idea if the table will fit or not, and decide to use `tabularx` or `ltablex` accordingly.
+
+```tex
+\documentclass{article}
+\usepackage{booktabs}
+\usepackage{tabularx} % ou tabularray (tblr), etc.
+
+\newsavebox{\tblbox}
+
+\begin{document}
+\typeout{TEXTWIDTH_PT=\the\textwidth}
+\typeout{LINEWIDTH_PT=\the\linewidth}
+\typeout{COLUMNWIDTH_PT=\the\columnwidth}
+\typeout{PAPERWIDTH_PT=\the\paperwidth}
+\typeout{PAPERHEIGHT_PT=\the\paperheight}
+\thispagestyle{empty}
+
+\sbox{\tblbox}{%
+  \begin{tabular}{l l r}
+    \toprule
+    Item & Description & Price\\
+    \midrule
+    Pink Rabbit & A small pink puppet made of soft fur. & \$10\\
+    \bottomrule
+  \end{tabular}%
+}
+
+\typeout{TABLE_WD_PT=\the\wd\tblbox}
+\typeout{TABLE_HT_PT=\the\dimexpr\ht\tblbox+\dp\tblbox\relax}
+
 \end{document}
 ```
 

@@ -1,5 +1,13 @@
 \BLOCK{ if ts_extra_packages }
+\BLOCK{- set ns = namespace(has_ltablex=False) }
 \BLOCK{ for name, options in ts_extra_packages }
+\BLOCK{- if name == "ltablex" -}
+\BLOCK{- set ns.has_ltablex = True -}
+\BLOCK{- endif }
 \usepackage\BLOCK{ if options }[\VAR{options}]\BLOCK{ endif }{\VAR{name}}
 \BLOCK{ endfor }
+\BLOCK{- if ns.has_ltablex }
+\newcolumntype{Y}{>{\centering\arraybackslash}X}
+\newcolumntype{Z}{>{\raggedleft\arraybackslash}X}
+\BLOCK{- endif }
 \BLOCK{ endif }

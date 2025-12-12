@@ -100,6 +100,7 @@ def _collect_packages(context: Mapping[str, object]) -> list[tuple[str, str | No
         "booktabs",
         None,
     )
+    _maybe_add("tabularx" in lowered, "ltablex", None)
 
     math_tokens = (
         "\\begin{equation*}",
