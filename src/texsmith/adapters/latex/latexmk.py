@@ -8,6 +8,8 @@ import shlex
 import shutil
 from typing import Any
 
+from texsmith.adapters.latex import pyxindy
+
 
 @dataclass(slots=True)
 class LatexmkEngine:
@@ -61,8 +63,12 @@ def normalise_index_engine(candidate: Any) -> str:
     """Resolve the effective index engine from template context or availability."""
     if isinstance(candidate, str):
         stripped = candidate.strip().lower()
-        if stripped in {"texindy", "makeindex"}:
+        if stripped in {"pyxindy", "texindy", "makeindex"}:
+            if stripped == "pyxindy" and not pyxindy.is_available():
+                stripped = "texindy" if shutil.which("texindy") else "makeindex"
             return stripped
+    if pyxindy.is_available():
+        return "pyxindy"
     return "texindy" if shutil.which("texindy") else "makeindex"
 
 
@@ -108,10 +114,14 @@ def build_latexmkrc_content(
 
     if has_index:
         index_var = normalise_index_engine(index_engine)
-        makeindex = "texindy %O -o %D %S" if index_var == "texindy" else "makeindex %O -o %D %S"
-        lines.append(f"$makeindex = '{makeindex}';\n")
+        if index_var == "pyxindy":
+            makeindex = pyxindy.latexmk_makeindex_command()
+        else:
+            makeindex = "texindy %O -o %D %S" if index_var == "texindy" else "makeindex %O -o %D %S"
+        lines.append(f"$makeindex = '{_perl_escape(makeindex)}';\n")
 
     if has_glossary:
+        glossaries_cmd = pyxindy.latexmk_makeglossaries_command()
         lines.extend(
             [
                 "add_cus_dep('glo', 'gls', 0, 'run_makeglossaries');\n",
@@ -119,7 +129,7 @@ def build_latexmkrc_content(
                 "\n",
                 "sub run_makeglossaries {\n",
                 "  my ($base) = @_;\n",
-                '  my $cmd = "makeglossaries \\"$base\\"";\n',
+                f'  my $cmd = "{_perl_escape(glossaries_cmd)}";\n',
                 "  return system($cmd);\n",
                 "}\n",
             ]

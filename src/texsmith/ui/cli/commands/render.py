@@ -28,6 +28,7 @@ from texsmith.adapters.latex.engines import (
     resolve_engine,
     run_engine_command,
 )
+from texsmith.adapters.latex.pyxindy import is_available as pyxindy_available
 from texsmith.adapters.latex.tectonic import (
     BiberAcquisitionError,
     MakeglossariesAcquisitionError,
@@ -977,7 +978,7 @@ def render(
             if features.bibliography and not use_system_tectonic:
                 biber_binary = select_biber_binary(console=state.console)
                 bundled_bin = biber_binary.parent
-            if features.has_glossary:
+            if features.has_glossary and not pyxindy_available():
                 glossaries = select_makeglossaries(console=state.console)
                 makeglossaries_binary = glossaries.path
                 if glossaries.source == "bundled":

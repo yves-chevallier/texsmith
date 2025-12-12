@@ -103,7 +103,14 @@ def test_run_engine_command_invokes_aux_tools(
 
     assert result.returncode == 0
     assert passes["count"] == 2
-    assert tool_calls == [["biber", "main"], ["texindy", "main.idx"], ["makeglossaries", "main"]]
+    expected_index = "makeindex-py" if engine.pyxindy_available() else "texindy"
+    expected_glossaries = "makeglossaries-py" if engine.pyxindy_available() else "makeglossaries"
+    normalized = [[Path(call[0]).name, *call[1:]] for call in tool_calls]
+    assert normalized == [
+        ["biber", "main"],
+        [expected_index, "main.idx"],
+        [expected_glossaries, "main"],
+    ]
 
 
 def test_run_engine_command_reruns_until_stable(

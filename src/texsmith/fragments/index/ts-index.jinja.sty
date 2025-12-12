@@ -1,7 +1,7 @@
 \ProvidesPackage{ts-index}[2025/11/21 TeXSmith index helpers (generated)]
 
 \BLOCK{ set resolved_index_engine = index_engine|default("makeindex")|lower }
-\BLOCK{ if resolved_index_engine == "texindy" }
+\BLOCK{ if resolved_index_engine in ["texindy", "pyxindy"] }
 \RequirePackage[xindy]{imakeidx}
 \BLOCK{ else }
 \RequirePackage{imakeidx}
