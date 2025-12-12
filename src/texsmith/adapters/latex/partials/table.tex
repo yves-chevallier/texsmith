@@ -1,8 +1,13 @@
-\BLOCK{- set style = {
+\BLOCK{- set first_style = {
     'left': 'l',
     'right': 'r',
-    'center': 'c',
-    'justify': 'p'
+    'center': 'c'
+} -}
+\BLOCK{- set rest_style = {
+    'left': 'X',
+    'right': 'Z',
+    'center': 'Y',
+    'justify': 'X'
 } -}
 \BLOCK{- if caption -}
 \begin{table}[H]
@@ -16,7 +21,7 @@
 \BLOCK{- endif}
 \BLOCK{- if is_large -}
 \BLOCK{- endif}
-\begin{tabular}{\BLOCK{- for column in columns}\VAR{style[column]}\BLOCK{- endfor}}
+\begin{tabularx}{\textwidth}{\BLOCK{- for column in columns}\BLOCK{- if loop.first }\VAR{first_style.get(column, 'l')}\BLOCK{- else }\VAR{rest_style.get(column, 'X')}\BLOCK{- endif }\BLOCK{- endfor}}
 \toprule
 \BLOCK{for row in rows -}
 \BLOCK{- if loop.first -}
@@ -33,7 +38,7 @@
 \BLOCK{- endif -}
 \BLOCK{- endfor}
 \bottomrule
-\end{tabular}
+\end{tabularx}
 \BLOCK{- if is_large -}
 \BLOCK{- endif}
 \BLOCK{- if caption -}
