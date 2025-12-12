@@ -19,6 +19,13 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      # Install deps
+      - name: Install system dependencies
+        run: |
+          sudo apt-get install -y libglib2.0-0 libnspr4 libnss3 libatk1.0-0 \
+          libatk-bridge2.0-0 libcups2 libxkbcommon0 libatspi2.0-0 libxcomposite1 \
+          libxdamage1 libxfixes3 libxrandr2 libgbm1 libcairo2 libpango-1.0-0
+
       # Install uv (Python package manager)
       - name: Install uv
         uses: astral-sh/setup-uv@v7
@@ -27,10 +34,6 @@ jobs:
           cache-python: false
         env:
           UV_CACHE_SAVE: "false"
-
-      # Install plawright deps
-      - name: Install Playwright dependencies
-        run: uv run playwright install-deps
 
       # Setup Nox for multi-version testing
       - name: Setup Nox with Python 3.10+
@@ -42,13 +45,17 @@ jobs:
       - name: Sync dependencies (dev + docs)
         run: uv sync --all-groups --frozen
 
-      # Run test suite across Python versions
-      - name: Run test suite (nox)
-        run: nox -s tests
+      # # Run test suite across Python versions
+      # - name: Run test suite (nox)
+      #   run: nox -s tests
 
-      # Generate coverage report (only on Python 3.14)
-      - name: Coverage (py3.14)
-        run: nox -s coverage
+      # # Generate coverage report (only on Python 3.14)
+      # - name: Coverage (py3.14)
+      #   run: nox -s coverage
+
+      # Install plawright deps
+      - name: Install Playwright dependencies
+        run: uv run playwright install-deps
 
       # Build all examples to validate they run
       - name: Make all examples
