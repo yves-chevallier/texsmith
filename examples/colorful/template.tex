@@ -1,8 +1,13 @@
 \documentclass{article}
 \usepackage[paperwidth=20cm, paperheight=20cm, margin=0cm]{geometry}
-
 \usepackage{fontspec}
-\setmainfont{TeX Gyre Heros}
+
+\setsansfont{texgyreheros-regular.otf}[
+    BoldFont       = texgyreheros-bold.otf,
+    ItalicFont     = texgyreheros-italic.otf,
+    BoldItalicFont = texgyreheros-bolditalic.otf
+]
+\renewcommand{\familydefault}{\sfdefault}
 
 \usepackage{tikz}
 \usetikzlibrary{calc}
