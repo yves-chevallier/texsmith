@@ -131,6 +131,10 @@ class LaTeXFormatter:
     def __getitem__(self, key: str) -> Callable[..., str]:
         return self._get_template(key).render
 
+    def _escape_url(self, url: str) -> str:
+        """Escape a URL for safe use in LaTeX commands."""
+        return escape_latex_chars(requote_url(url), legacy_accents=self.legacy_latex_accents)
+
     def handle_codeinlinett(self, text: str) -> str:
         """Render plain inline code inside \\texttt."""
         escaped = escape_latex_chars(text, legacy_accents=self.legacy_latex_accents).replace(
@@ -209,8 +213,16 @@ class LaTeXFormatter:
 
     def url(self, text: str, url: str) -> str:
         """Render a URL, escaping special LaTeX characters."""
-        safe_url = escape_latex_chars(requote_url(url), legacy_accents=self.legacy_latex_accents)
+        safe_url = self._escape_url(url)
         return self._get_template("url").render(text=text, url=safe_url)
+
+    def handle_href(self, text: str, url: str) -> str:
+        """Render \\href links with escaped URLs."""
+        return self._get_template("href").render(text=text, url=self._escape_url(url))
+
+    def handle_regex(self, text: str, url: str) -> str:
+        """Render regex helper links with escaped URLs."""
+        return self._get_template("regex").render(text=text, url=self._escape_url(url))
 
     def handle_codeinline(
         self,

@@ -1,19 +1,4 @@
-# Fonts test
+# Omega (Ω) / Aleph (ℵ)
 
-This quick brown fox jumps over the lazy dog. 0123456789
-
-*This quick brown fox jumps over the lazy dog. 0123456789*
-
-**This quick brown fox jumps over the lazy dog. 0123456789**
-
-***This quick brown fox jumps over the lazy dog. 0123456789***
-
-__This quick brown fox jumps over the lazy dog. 0123456789__
-
-`This quick brown fox jumps over the lazy dog. 0123456789`
-
-*`This quick brown fox jumps over the lazy dog. 0123456789`*
-
-**`This quick brown fox jumps over the lazy dog. 0123456789`**
-
-***`This quick brown fox jumps over the lazy dog. 0123456789`***
+Omega (and its successor Aleph) were early attempts at adding
+Unicode and advanced multilingual typesetting. They never became mainstream, but their ideas paved the way for XeTeX and LuaTeX.

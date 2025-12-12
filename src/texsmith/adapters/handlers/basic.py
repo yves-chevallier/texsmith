@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from bs4.element import NavigableString, Tag
+from slugify import slugify
 
 from texsmith.core.context import RenderContext
 from texsmith.core.rules import RenderPhase, renders
@@ -210,6 +211,9 @@ def render_headings(element: Tag, context: RenderContext) -> None:
     base_level = context.runtime.get("base_level", 0)
     rendered_level = level + base_level - 1
     ref = coerce_attribute(element.get("id"))
+    if not ref:
+        slug = slugify(plain_text, separator="-")
+        ref = slug or None
     numbered = context.runtime.get("numbered", True)
 
     latex = context.formatter.heading(

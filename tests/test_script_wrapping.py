@@ -33,3 +33,17 @@ def test_scripts_wrapped_in_moving_arguments(tmp_path: Path) -> None:
     assert usage, "Expected script usage to be propagated to template context"
     slugs = {entry.get("slug") for entry in usage}
     assert {"tibetan", "bengali"} <= slugs
+
+
+def test_lonely_greek_prefers_math_mode(tmp_path: Path) -> None:
+    doc_path = _write(tmp_path, "greek.md", "# Omega (Ω) / Aleph (ℵ)")
+    session = get_template("article")
+    session.add_document(Document.from_markdown(doc_path))
+
+    build_dir = tmp_path / "build"
+    result = session.render(build_dir)
+
+    content = result.main_tex_path.read_text(encoding="utf-8")
+    assert "$\\Omega$" in content
+    assert "$\\aleph$" in content
+    assert "\\textgreek" not in content
