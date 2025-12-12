@@ -28,6 +28,10 @@ jobs:
         env:
           UV_CACHE_SAVE: "false"
 
+      # Install plawright deps
+      - name: Install Playwright dependencies
+        run: uv run playwright install-deps
+
       # Setup Nox for multi-version testing
       - name: Setup Nox with Python 3.10+
         uses: wntrblm/nox@2025.10.14
