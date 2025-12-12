@@ -12,12 +12,21 @@ permissions:
 
 jobs:
   checks:
-    name: Tests & lint
+    name: Playwright smoke
     runs-on: ubuntu-latest
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /home/runner/.cache/texsmith/playwright/browsers
     steps:
       # Checkout repository source
       - name: Checkout repository
         uses: actions/checkout@v4
+
+      # Install deps
+      - name: Install system dependencies
+        run: |
+          sudo apt-get install -y libglib2.0-0 libnspr4 libnss3 libatk1.0-0 \
+          libatk-bridge2.0-0 libcups2 libxkbcommon0 libatspi2.0-0 libxcomposite1 \
+          libxdamage1 libxfixes3 libxrandr2 libgbm1 libcairo2 libpango-1.0-0
 
       # Install uv (Python package manager)
       - name: Install uv
@@ -28,35 +37,41 @@ jobs:
         env:
           UV_CACHE_SAVE: "false"
 
-      # Install plawright deps
-      - name: Install Playwright dependencies
-        run: uv run playwright install-deps
-
-      # Setup Nox for multi-version testing
-      - name: Setup Nox with Python 3.10+
-        uses: wntrblm/nox@2025.10.14
-        with:
-          python-versions: "3.10, 3.11, 3.12, 3.13, 3.14"
-
-      # Install all dev + docs dependencies (locked)
-      - name: Sync dependencies (dev + docs)
+      # Install Python deps (includes playwright)
+      - name: Sync dependencies (minimal)
         run: uv sync --all-groups --frozen
 
-      # Run test suite across Python versions
-      - name: Run test suite (nox)
-        run: nox -s tests
+      # Install Playwright browser binaries + system deps
+      - name: Install Playwright browsers
+        run: |
+          uv run playwright install-deps
+          uv run playwright install chromium
 
-      # Generate coverage report (only on Python 3.14)
-      - name: Coverage (py3.14)
-        run: nox -s coverage
+      # Playwright smoke test
+      - name: Run Playwright smoke test
+        run: uv run python scripts/playwright_smoke.py
 
-      # Build all examples to validate they run
-      - name: Make all examples
-        run: cd examples && uv run make all
+      # Direct Playwright mermaid render (no TexSmith)
+      - name: Run direct Playwright mermaid render
+        run: uv run python scripts/playwright_mermaid_direct.py
 
-      # Run Ruff linter
-      - name: Run Ruff
-        run: uv run ruff check .
+      # TexSmith Mermaid->PDF via Playwright backend
+      - name: Run TexSmith Mermaid Playwright smoke
+        run: uv run python scripts/playwright_mermaid_smoke.py
+
+      # TexSmith simple conversion (temp snippet)
+      - name: Run TexSmith simple conversion
+        run: uv run python scripts/texsmith_convert_simple.py
+
+      # TexSmith full diagrams conversion via CLI
+      - name: Run TexSmith full diagrams conversion
+        run: uv run python scripts/texsmith_full_conversion.py
+
+      # TexSmith full examples suite (make all)
+      - name: Run TexSmith examples (make all)
+        run: |
+          cd examples
+          uv run make all
 
   build-artifacts:
     name: Build dists & docs
