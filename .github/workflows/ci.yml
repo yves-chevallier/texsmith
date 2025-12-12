@@ -53,11 +53,11 @@ jobs:
       - name: Run TexSmith Mermaid Playwright smoke
         run: uv run python scripts/playwright_mermaid_smoke.py
 
-      # TexSmith diagrams example via make (closest to failing path)
-      - name: Run TexSmith diagrams make target
+      # TexSmith full examples suite (make all)
+      - name: Run TexSmith examples (make all)
         run: |
           cd examples
-          uv run make diagrams
+          uv run make all
 
   build-artifacts:
     name: Build dists & docs
