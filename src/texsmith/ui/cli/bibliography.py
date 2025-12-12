@@ -174,7 +174,9 @@ def print_bibliography_overview(collection: BibliographyCollection) -> None:
         stats_table.add_column("Entries", justify="right")
         for file_path, entry_count in stats:
             stats_table.add_row(str(file_path), str(entry_count))
-        stats_table.add_row(Text("Total", style="bold"), Text(str(sum(count for _, count in stats))))
+        stats_table.add_row(
+            Text("Total", style="bold"), Text(str(sum(count for _, count in stats)))
+        )
         console.print(stats_table)
 
     if collection.issues:
@@ -192,7 +194,7 @@ def print_bibliography_overview(collection: BibliographyCollection) -> None:
                 issue.key or "—",
                 issue.message,
                 str(issue.source) if issue.source else "—",
-        )
+            )
         console.print(issue_table)
 
     if not references:

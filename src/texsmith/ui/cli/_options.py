@@ -239,7 +239,9 @@ MarkdownExtensionsOption = Annotated[
     typer.Option(
         "--enable-extension",
         "-x",
-        help=("Additional Markdown extensions to enable (comma or space separated values are accepted)."),
+        help=(
+            "Additional Markdown extensions to enable (comma or space separated values are accepted)."
+        ),
         show_default=False,
         rich_help_panel=RENDERING_PANEL,
     ),

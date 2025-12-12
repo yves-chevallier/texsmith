@@ -13,7 +13,7 @@ def test_smart_dashes_convert_in_html() -> None:
     ).html
     soup = BeautifulSoup(html, "html.parser")
 
-    assert soup.get_text() == "hello – world — worlds"
+    assert soup.get_text() == "hello \u2013 world \u2014 worlds"
 
 
 def test_smart_dashes_skip_code() -> None:

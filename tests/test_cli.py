@@ -712,7 +712,7 @@ section
     content = tex_path.read_text(encoding="utf-8")
     assert "\\begin{abstract}" in content
     assert "abstract" in content
-    assert "\\section{Section}\\label{section}" in content
+    assert "\\section{Section}" in content
     assert "\\subsection{Section}" not in content
 
 

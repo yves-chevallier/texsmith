@@ -62,7 +62,7 @@ def _build_table(
     columns: Sequence[str],
     header_style: str = "bold cyan",
     box_style: Any | None = None,
-):
+) -> tuple[Any, Any, Any] | tuple[None, None, None]:
     """Create a Rich table with the house style."""
     components = _rich_components()
     if components is None:
