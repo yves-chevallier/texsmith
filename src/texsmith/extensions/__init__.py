@@ -94,6 +94,11 @@ _EXTENSIONS: dict[str, ExtensionSpec] = {
         markdown_entry="texsmith.latex_text:LatexTextExtension",
         description="Styles the literal 'LaTeX' token with a dedicated span.",
     ),
+    "smart_dashes": ExtensionSpec(
+        slug="smart_dashes",
+        markdown_entry="texsmith.smart_dashes:TexsmithSmartDashesExtension",
+        description="Converts '--' and '---' into typographic dashes outside code.",
+    ),
     "missing_footnotes": ExtensionSpec(
         slug="missing_footnotes",
         markdown_entry="texsmith.missing_footnotes:MissingFootnotesExtension",
