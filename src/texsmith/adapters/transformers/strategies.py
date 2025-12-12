@@ -706,14 +706,19 @@ class _PlaywrightManager:
 
     _playwright = None
     _browser = None
+    _owner_thread_id: ClassVar[int | None] = None
     _lock: ClassVar[Lock] = Lock()
     _cleanup_registered = False
 
     @classmethod
     def ensure_browser(cls, *, emitter: Any = None) -> Any:
         with cls._lock:
-            if cls._browser is not None:
+            current_thread = threading.get_ident()
+            if cls._browser is not None and cls._owner_thread_id == current_thread:
                 return cls._browser
+            if cls._browser is not None and cls._owner_thread_id != current_thread:
+                # Existing browser bound to another thread; tear it down and recreate.
+                cls._cleanup()
             try:
                 from playwright._impl._errors import Error as PlaywrightError
                 from playwright.sync_api import sync_playwright
@@ -745,6 +750,7 @@ class _PlaywrightManager:
                     cls._playwright.stop()
                     cls._playwright = None
                     raise _wrap_playwright_error(exc, emitter) from exc
+            cls._owner_thread_id = current_thread
             if not cls._cleanup_registered:
                 atexit.register(cls._cleanup)
                 cls._cleanup_registered = True
@@ -765,6 +771,7 @@ class _PlaywrightManager:
                 pass
             cls._browser = None
             cls._playwright = None
+            cls._owner_thread_id = None
 
 
 class MermaidToPdfStrategy(CachedConversionStrategy):
