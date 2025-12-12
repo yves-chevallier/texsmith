@@ -100,7 +100,7 @@ references ^[ein05,KOFINAS2025].
 Or with the CLI:
 
 ```sh
-texsmith article.md --bibliography article.bib
+texsmith article.md article.bib
 ```
 
 Or directly in Python:

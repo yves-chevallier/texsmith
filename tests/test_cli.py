@@ -570,14 +570,13 @@ def test_slot_injection_preserves_footnotes(tmp_path: Path) -> None:
         app,
         [
             "examples/paper/cheese.md",
+            "examples/paper/cheese.bib",
             "--output-dir",
             str(output_dir),
             "--template",
             "article",
             "--slot",
             "abstract:Abstract",
-            "--bibliography",
-            "examples/paper/cheese.bib",
         ],
     )
 
@@ -1287,12 +1286,11 @@ def test_build_with_bibliography_forces_bibtex(tmp_path: Path, monkeypatch: Any)
         app,
         [
             str(html_file),
+            str(bib_file),
             "--output-dir",
             str(output_dir),
             "--template",
             str(template_dir),
-            "--bibliography",
-            str(bib_file),
             "--classic-output",
             "--build",
             "--engine",

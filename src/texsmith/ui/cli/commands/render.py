@@ -53,7 +53,6 @@ from .._options import (
     DIAGNOSTICS_PANEL,
     OUTPUT_PANEL,
     BaseLevelOption,
-    BibliographyOption,
     ConvertAssetsOption,
     CopyAssetsOptionWithShort,
     DebugHtmlOption,
@@ -68,12 +67,12 @@ from .._options import (
     MakefileDepsOption,
     ManifestOptionWithShort,
     MarkdownExtensionsOption,
+    NoPromoteTitleOption,
     NoTitleOption,
     NumberedOption,
     OpenLogOption,
     OutputPathOption,
     ParserOption,
-    PromoteTitleOption,
     SelectorOption,
     SlotsOption,
     StripHeadingOption,
@@ -398,7 +397,7 @@ def render(
     full_document: FullDocumentOption = False,
     base_level: BaseLevelOption = "0",
     strip_heading: StripHeadingOption = False,
-    promote_title: PromoteTitleOption = True,
+    no_promote_title: NoPromoteTitleOption = False,
     no_title: NoTitleOption = False,
     numbered: NumberedOption = True,
     parser: ParserOption = None,
@@ -457,7 +456,7 @@ def render(
     system_tectonic: Annotated[
         bool,
         typer.Option(
-            "-s",
+            "-S",
             "--system",
             help="Use the system Tectonic binary instead of the bundled download.",
             rich_help_panel=OUTPUT_PANEL,
@@ -477,7 +476,6 @@ def render(
     slots: SlotsOption = None,
     markdown_extensions: MarkdownExtensionsOption = None,
     disable_markdown_extensions: DisableMarkdownExtensionsOption = None,
-    bibliography: BibliographyOption = None,
     list_bibliography: Annotated[
         bool,
         typer.Option(
@@ -573,7 +571,7 @@ def render(
             document_paths = [stdin_document]
 
     try:
-        split_result = _SERVICE.split_inputs(document_paths, bibliography or [])
+        split_result = _SERVICE.split_inputs(document_paths)
     except ConversionError as exc:
         emit_error(str(exc), exception=exc)
         raise typer.Exit(code=1) from exc
@@ -617,7 +615,9 @@ def render(
         numbered = fm_numbered
 
     template_param_source = ctx.get_parameter_source("template") if ctx else None
-    promote_param_source = ctx.get_parameter_source("promote_title") if ctx else None
+    no_promote_param_source = (
+        ctx.get_parameter_source("no_promote_title") if ctx else None
+    )
     if (
         template_param_source in {None, ParameterSource.DEFAULT}
         and template is None
@@ -639,6 +639,8 @@ def render(
         if template_scaffold:
             scaffold_template(identifier, template_scaffold)
         raise typer.Exit()
+
+    promote_title = not no_promote_title
 
     attribute_overrides = _parse_template_attributes(template_attributes)
     if attribute_overrides and not template_selected:
@@ -665,13 +667,6 @@ def render(
         promote_title = False
 
     if strip_heading:
-        if (
-            promote_param_source not in {None, ParameterSource.DEFAULT}
-            and promote_title
-        ):
-            raise typer.BadParameter(
-                "--strip-heading cannot be combined with --promote-title."
-            )
         promote_title = False
 
     if build_pdf and not template_selected:
@@ -729,7 +724,7 @@ def render(
     except TemplateError as exc:
         raise typer.BadParameter(str(exc)) from exc
 
-    if not template_selected and promote_param_source in {
+    if not template_selected and no_promote_param_source in {
         None,
         ParameterSource.DEFAULT,
     }:

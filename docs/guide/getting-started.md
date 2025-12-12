@@ -149,7 +149,7 @@ mkdocs build
 texsmith build/site/guides/overview/index.html \
   --template article \
   --output-dir build/press \
-  --bibliography docs/references.bib
+  docs/references.bib
 ```
 
 !!! tip

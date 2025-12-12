@@ -68,11 +68,11 @@ StripHeadingOption = Annotated[
     ),
 ]
 
-PromoteTitleOption = Annotated[
+NoPromoteTitleOption = Annotated[
     bool,
     typer.Option(
-        "--promote-title/--no-promote-title",
-        help="Use the first heading as the document title when no metadata title is present.",
+        "--no-promote-title",
+        help="Disable promotion of the first heading to document title.",
         rich_help_panel=TEMPLATE_PANEL,
     ),
 ]
@@ -267,22 +267,6 @@ DisableMarkdownExtensionsOption = Annotated[
         ),
         show_default=False,
         rich_help_panel=RENDERING_PANEL,
-    ),
-]
-
-BibliographyOption = Annotated[
-    list[Path] | None,
-    typer.Option(
-        "--bibliography",
-        "-b",
-        help="BibTeX files merged and exposed to the renderer.",
-        exists=True,
-        file_okay=True,
-        dir_okay=False,
-        readable=True,
-        resolve_path=True,
-        show_default=False,
-        rich_help_panel=TEMPLATE_PANEL,
     ),
 ]
 

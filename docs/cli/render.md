@@ -81,11 +81,9 @@ $ uv run texsmith --help
 │                                                            [default: numbered]     │
 ╰────────────────────────────────────────────────────────────────────────────────────╯
 ╭─ Template ─────────────────────────────────────────────────────────────────────────╮
-│ --promote-title           --no-promote-title               Use the first heading as │
-│                                                           the template title when  │
-│                                                           metadata is missing.     │
-│                                                           [default:                │
-│                                                           promote-title]           │
+│ --no-promote-title                                         Disable promotion of    │
+│                                                           the first heading to the │
+│                                                           document title.          │
 │ --no-title                                                  Disable title           │
 │                                                           generation even when     │
 │                                                           metadata provides one.   │
@@ -105,8 +103,6 @@ $ uv run texsmith --help
 │                                                           'slot:Section'. Repeat   │
 │                                                           to map multiple          │
 │                                                           sections.                │
-│ --bibliography        -b                            FILE  BibTeX files merged and  │
-│                                                           exposed to the renderer. │
 ╰────────────────────────────────────────────────────────────────────────────────────╯
 
 !!! note
