@@ -7,7 +7,7 @@ BASE_PDF := $(OUTPUT_DIR)/diagrams.pdf
 all: $(PDF)
 
 $(PDF): diagrams.md pgcd.drawio | $(OUTPUT_DIR)
-	$(TEXSMITH) diagrams.md -tarticle -o$(OUTPUT_DIR) --build --promote-title $(TEXSMITH_ENGINE)
+	$(TEXSMITH) diagrams.md -tarticle -o$(OUTPUT_DIR) --build $(TEXSMITH_ENGINE)
 	if [ "$(PDF)" != "$(BASE_PDF)" ]; then mv "$(BASE_PDF)" "$(PDF)"; fi
 	$(call copy_artifact,$@)
 

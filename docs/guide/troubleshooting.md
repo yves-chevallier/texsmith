@@ -40,7 +40,7 @@ Running `texsmith --build` shells out to your selected engine (Tectonic by defau
 **Fix:**
 
 - Run `texsmith references.bib --list-bibliography` to validate files before building.
-- Make sure every bibliography file passed via `--bibliography` exists and is UTF-8 encoded.
+- Make sure every bibliography file you pass as input exists and is UTF-8 encoded.
 - If `biber` complains about encoding, add `encoding = "UTF-8"` to your template manifest bibliography section or normalise via `pybtex`.
 
 ## Figures or diagrams missing

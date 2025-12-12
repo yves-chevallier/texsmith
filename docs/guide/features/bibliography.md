@@ -10,7 +10,7 @@ Pass one or more `.bib` files on the command line:
 texsmith docs/chapter.md references.bib
 ```
 
-You can also pair `--bibliography file1.bib file2.bib` with a MkDocs site conversion so every page sees the same pool of references.
+You can also add `file1.bib file2.bib` as positional inputs alongside a MkDocs site so every page sees the same pool of references.
 
 ## Using the front matter
 
