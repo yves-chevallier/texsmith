@@ -62,7 +62,7 @@ BaseLevelOption = Annotated[
 StripHeadingOption = Annotated[
     bool,
     typer.Option(
-        "--strip-heading/--keep-heading",
+        "--strip-heading",
         help="Drop the first document heading from the rendered content.",
         rich_help_panel=STRUCTURE_PANEL,
     ),
@@ -89,7 +89,7 @@ NoTitleOption = Annotated[
 NumberedOption = Annotated[
     bool,
     typer.Option(
-        "--numbered/--unnumbered",
+        "--numbered",
         help="Toggle numbered headings.",
         rich_help_panel=STRUCTURE_PANEL,
     ),
@@ -116,7 +116,7 @@ DisableFallbackOption = Annotated[
 CopyAssetsOption = Annotated[
     bool,
     typer.Option(
-        "--copy-assets/--no-copy-assets",
+        "--copy-assets",
         help="Toggle copying of remote assets to the output directory.",
         rich_help_panel=RENDERING_PANEL,
     ),
@@ -125,7 +125,7 @@ CopyAssetsOption = Annotated[
 CopyAssetsOptionWithShort = Annotated[
     bool,
     typer.Option(
-        "--copy-assets/--no-copy-assets",
+        "--copy-assets",
         "-c/-C",
         help="Toggle copying of remote assets to the output directory.",
         rich_help_panel=RENDERING_PANEL,
@@ -135,7 +135,7 @@ CopyAssetsOptionWithShort = Annotated[
 ConvertAssetsOption = Annotated[
     bool,
     typer.Option(
-        "--convert-assets/--no-convert-assets",
+        "--convert-assets",
         help=(
             "Convert bitmap assets (PNG/JPEG) to PDF even when LaTeX supports the original format."
         ),
@@ -146,7 +146,7 @@ ConvertAssetsOption = Annotated[
 HashAssetsOption = Annotated[
     bool,
     typer.Option(
-        "--hash-assets/--no-hash-assets",
+        "--hash-assets",
         help="Hash stored asset filenames instead of preserving their original names.",
         rich_help_panel=RENDERING_PANEL,
     ),
@@ -166,7 +166,7 @@ TemplateAttributeOption = Annotated[
 ManifestOption = Annotated[
     bool,
     typer.Option(
-        "--manifest/--no-manifest",
+        "--manifest",
         help="Generate a manifest.json file alongside the LaTeX output.",
         rich_help_panel=RENDERING_PANEL,
     ),
@@ -175,7 +175,7 @@ ManifestOption = Annotated[
 ManifestOptionWithShort = Annotated[
     bool,
     typer.Option(
-        "--manifest/--no-manifest",
+        "--manifest",
         "-m",
         help="Generate a manifest.json file alongside the LaTeX output.",
         rich_help_panel=RENDERING_PANEL,
@@ -185,7 +185,7 @@ ManifestOptionWithShort = Annotated[
 MakefileDepsOption = Annotated[
     bool,
     typer.Option(
-        "--makefile-deps/--no-makefile-deps",
+        "--makefile-deps",
         "-M",
         help="Emit a Makefile-compatible .d dependency file when building PDFs.",
         rich_help_panel=OUTPUT_PANEL,
@@ -195,7 +195,7 @@ MakefileDepsOption = Annotated[
 DebugHtmlOption = Annotated[
     bool | None,
     typer.Option(
-        "--debug-html/--no-debug-html",
+        "--debug-html",
         help="Persist intermediate HTML snapshots (inherits from --debug when omitted).",
         rich_help_panel=DIAGNOSTICS_PANEL,
     ),
@@ -204,7 +204,7 @@ DebugHtmlOption = Annotated[
 DebugRulesOption = Annotated[
     bool,
     typer.Option(
-        "--debug-rules/--no-debug-rules",
+        "--debug-rules",
         help="Display the ordered list of registered render rules.",
         rich_help_panel=DIAGNOSTICS_PANEL,
     ),
@@ -222,6 +222,7 @@ HtmlOnlyOption = Annotated[
 LanguageOption = Annotated[
     str | None,
     typer.Option(
+        "-l",
         "--language",
         help="Language code passed to babel (defaults to metadata or english).",
         rich_help_panel=RENDERING_PANEL,
@@ -324,7 +325,7 @@ TemplateOption = Annotated[
 OpenLogOption = Annotated[
     bool,
     typer.Option(
-        "--open-log/--no-open-log",
+        "--open-log",
         help="Open the latexmk log with the system viewer when compilation fails.",
         rich_help_panel=DIAGNOSTICS_PANEL,
     ),
