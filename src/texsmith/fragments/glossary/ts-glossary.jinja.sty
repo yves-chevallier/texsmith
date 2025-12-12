@@ -2,7 +2,7 @@
 
 \BLOCK{ set resolved_index_engine = index_engine|default("makeindex")|lower }
 \RequirePackage{makeidx}
-\RequirePackage[acronym,nopostdot\BLOCK{ if resolved_index_engine == "texindy" },xindy\BLOCK{ endif }]{glossaries}
+\RequirePackage[acronym,nopostdot\BLOCK{ if resolved_index_engine in ["texindy", "pyxindy"] },xindy\BLOCK{ endif }]{glossaries}
 
 % Resolve glossary style (supports overriding via press.glossary.style or glossary_style).
 \BLOCK{ set default_style = default_glossary_style|default("list") }

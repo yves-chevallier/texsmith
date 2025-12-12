@@ -48,6 +48,7 @@ dependencies = [
     "tomli>=2.0.1; python_version < \"3.11\"",
     "unicodeblocks>=0.3",
     "playwright>=1.56.0",
+    "pyxindy",
 ]
 [project.urls]
 Homepage = "https://github.com/yves-chevallier/texsmith"
@@ -131,6 +132,7 @@ members = [
 
 [tool.uv.sources]
 mkdocs-texsmith = { workspace = true }
+pyxindy = { git = "https://github.com/yves-chevallier/pyxindy.git" }
 
 [tool.pytest.ini_options]
 addopts = []

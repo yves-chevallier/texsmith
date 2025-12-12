@@ -1,5 +1,5 @@
 version = 1
-revision = 2
+revision = 3
 requires-python = ">=3.10"
 resolution-markers = [
     "python_full_version >= '3.13'",
@@ -1692,6 +1692,14 @@ wheels = [
 ]
 
 [[package]]
+name = "pyxindy"
+version = "0.1.0"
+source = { git = "https://github.com/yves-chevallier/pyxindy.git#ec09e20d9f1ee564e9332f95a2f2065739f745b9" }
+dependencies = [
+    { name = "click" },
+]
+
+[[package]]
 name = "pyyaml"
 version = "6.0.3"
 source = { registry = "https://pypi.org/simple" }
@@ -1877,6 +1885,7 @@ dependencies = [
     { name = "pymupdf" },
     { name = "python-markdown-math" },
     { name = "python-slugify" },
+    { name = "pyxindy" },
     { name = "pyyaml" },
     { name = "rich" },
     { name = "tomli", marker = "python_full_version < '3.11'" },
@@ -1922,6 +1931,7 @@ requires-dist = [
     { name = "pymupdf", specifier = ">=1.24.3" },
     { name = "python-markdown-math", specifier = ">=0.9" },
     { name = "python-slugify", specifier = ">=8.0.4" },
+    { name = "pyxindy", git = "https://github.com/yves-chevallier/pyxindy.git" },
     { name = "pyyaml", specifier = ">=6.0.3" },
     { name = "rich", specifier = ">=13.9.0" },
     { name = "tomli", marker = "python_full_version < '3.11'", specifier = ">=2.0.1" },

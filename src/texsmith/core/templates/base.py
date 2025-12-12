@@ -14,11 +14,14 @@ from typing import Any, cast
 from jinja2 import Environment, FileSystemLoader, TemplateNotFound
 
 from texsmith.adapters.latex.utils import escape_latex_chars
+from texsmith.adapters.latex.pyxindy import is_available as pyxindy_available
 from .manifest import TemplateError, TemplateManifest, TemplateSlot
 
 
 def _detect_index_engine() -> str:
     """Return the preferred index engine based on available executables."""
+    if pyxindy_available():
+        return "pyxindy"
     return "texindy" if shutil.which("texindy") else "makeindex"
 
 

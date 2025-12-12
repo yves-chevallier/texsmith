@@ -23,6 +23,11 @@ from ..latexmk import (
     normalise_engine_command,
     normalise_index_engine,
 )
+from ..pyxindy import (
+    glossary_command_tokens as pyxindy_glossary_tokens,
+    index_command_tokens as pyxindy_index_tokens,
+    is_available as pyxindy_available,
+)
 from .latex import (
     LatexLogParser,
     LatexMessage,
@@ -172,8 +177,12 @@ def missing_dependencies(
         _check("biber")
     if features.has_index:
         index_engine = normalise_index_engine(features.index_engine)
-        _check("texindy" if index_engine == "texindy" else "makeindex")
-    if features.has_glossary:
+        if index_engine == "pyxindy":
+            if not pyxindy_available():
+                missing.append("pyxindy")
+        else:
+            _check("texindy" if index_engine == "texindy" else "makeindex")
+    if features.has_glossary and not pyxindy_available():
         _check("makeglossaries")
 
     return missing
@@ -601,15 +610,16 @@ def _maybe_run_index(
     index_path = workdir / f"{job_stem}.idx"
     if not index_path.exists():
         return False, None
+    argv = [*_index_command_tokens(engine_name), index_path.name]
     run = _invoke_auxiliary_tool(
-        engine_name,
-        [engine_name, index_path.name],
+        argv[0],
+        argv,
         workdir=workdir,
         env=env,
         console=console,
     )
     if run.returncode != 0:
-        return True, _tool_failure_result(engine_name, run, command=command)
+        return True, _tool_failure_result(argv[0], run, command=command)
     return True, None
 
 
@@ -625,16 +635,33 @@ def _maybe_run_glossaries(
     acn_path = workdir / f"{job_stem}.acn"
     if not glo_path.exists() and not acn_path.exists():
         return False, None
+    argv = [*_glossaries_command_tokens(), job_stem]
     run = _invoke_auxiliary_tool(
-        "makeglossaries",
-        ["makeglossaries", job_stem],
+        argv[0],
+        argv,
         workdir=workdir,
         env=env,
         console=console,
     )
     if run.returncode != 0:
-        return True, _tool_failure_result("makeglossaries", run, command=command)
+        return True, _tool_failure_result(argv[0], run, command=command)
     return True, None
+
+
+def _index_command_tokens(engine_name: str) -> list[str]:
+    """Select an index command based on the requested engine."""
+    if engine_name == "pyxindy":
+        return pyxindy_index_tokens()
+    if engine_name == "texindy":
+        return ["texindy"]
+    return [engine_name]
+
+
+def _glossaries_command_tokens() -> list[str]:
+    """Return the preferred makeglossaries command."""
+    if pyxindy_available():
+        return pyxindy_glossary_tokens()
+    return ["makeglossaries"]
 
 
 def _log_requests_rerun(log_path: Path) -> bool:
