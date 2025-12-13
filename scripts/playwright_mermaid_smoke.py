@@ -10,14 +10,23 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
+from texsmith.adapters.transformers import strategies
 from texsmith.adapters.transformers.strategies import MermaidToPdfStrategy
+
+
+def _inline_worker(func):
+    print("[smoke] _PlaywrightWorker.run -> inline execution")
+    return func()
 
 
 def main() -> int:
     target = Path("/tmp/mermaid-playwright-smoke.pdf")
     content = "graph TD; A[Hello] --> B[Playwright]"
+    # Monkeypatch worker to avoid threads and add logs.
+    strategies._PlaywrightWorker.run = staticmethod(_inline_worker)
     strategy = MermaidToPdfStrategy()
     try:
+        print("[smoke] calling _run_playwright()")
         strategy._run_playwright(  # noqa: SLF001 - intentional test of private API
             content,
             target=target,
@@ -27,10 +36,10 @@ def main() -> int:
             emitter=None,
         )
     except Exception as exc:  # pragma: no cover - debug helper
-        print(f"Mermaid Playwright smoke failed: {exc}", file=sys.stderr)
+        print(f"[smoke] Mermaid Playwright smoke failed: {exc}", file=sys.stderr)
         return 1
 
-    print(f"Mermaid Playwright smoke succeeded, PDF at {target}")
+    print(f"[smoke] Mermaid Playwright smoke succeeded, PDF at {target}")
     return 0
 
 
