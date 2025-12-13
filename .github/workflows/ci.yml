@@ -51,6 +51,10 @@ jobs:
       - name: Run Playwright smoke test
         run: uv run python scripts/playwright_smoke.py
 
+      # Direct Playwright mermaid render (no TexSmith)
+      - name: Run direct Playwright mermaid render
+        run: uv run python scripts/playwright_mermaid_direct.py
+
       # TexSmith Mermaid->PDF via Playwright backend
       - name: Run TexSmith Mermaid Playwright smoke
         run: uv run python scripts/playwright_mermaid_smoke.py
