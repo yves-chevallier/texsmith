@@ -700,7 +700,10 @@ class _PlaywrightWorker:
 
         thread = Thread(target=target, name="texsmith-playwright", daemon=True)
         thread.start()
-        thread.join()
+        thread.join(timeout=120)
+        if thread.is_alive():
+            # Defensive: avoid hanging CI if Playwright download/launch stalls.
+            raise TransformerExecutionError("Playwright worker timed out after 120s")
 
         if error:
             raise error[0]
