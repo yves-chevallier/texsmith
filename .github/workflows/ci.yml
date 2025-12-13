@@ -55,6 +55,14 @@ jobs:
       - name: Run TexSmith Mermaid Playwright smoke
         run: uv run python scripts/playwright_mermaid_smoke.py
 
+      # TexSmith simple conversion (temp snippet)
+      - name: Run TexSmith simple conversion
+        run: uv run python scripts/texsmith_convert_simple.py
+
+      # TexSmith full diagrams conversion via CLI
+      - name: Run TexSmith full diagrams conversion
+        run: uv run python scripts/texsmith_full_conversion.py
+
       # TexSmith full examples suite (make all)
       - name: Run TexSmith examples (make all)
         run: |
