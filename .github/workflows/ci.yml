@@ -69,6 +69,8 @@ jobs:
     name: Build dists & docs
     needs: [lint, tests]
     runs-on: ubuntu-latest
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /home/runner/.cache/texsmith/playwright/browsers
     permissions:
       contents: read
       id-token: write
@@ -98,8 +100,6 @@ jobs:
 
       # Install Playwright browser binaries + system deps
       - name: Install Playwright browsers
-        env:
-          PLAYWRIGHT_BROWSERS_PATH: /home/runner/.cache/texsmith/playwright/browsers
         run: |
           uv run playwright install-deps
           uv run playwright install chromium
