@@ -107,23 +107,16 @@ jobs:
       # Build all examples (clean + all)
       - name: Build examples
         run: |
-          cd examples
-          uv run make clean all
+          make examples
 
       # Build MkDocs HTML documentation
       - name: Build documentation (HTML + LaTeX)
         run: |
-          uv run mkdocs build  # --strict can be enabled later
+          make docs
 
       # Build the main Python package distribution
       - name: Build distributions (texsmith)
         run: uv build
-
-      # Compile PDF using LaTeX output
-      - name: Build PDF from LaTeX
-        run: |
-          cd build/press/texsmith-docs
-          latexmk texsmith-docs.tex
 
       # Build the MkDocs plugin distribution
       - name: Build distributions (mkdocs_texsmith)
@@ -137,6 +130,7 @@ jobs:
           name: texsmith-release-assets
           path: |
             dist/*
+            examples/build/*.pdf
             packages/mkdocs_texsmith/dist/*
             build/texsmith-docs.pdf
             site/**
