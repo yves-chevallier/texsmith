@@ -692,6 +692,11 @@ class _PlaywrightWorker:
                 result.append(func())
             except BaseException as exc:  # pragma: no cover - pass through
                 error.append(exc)
+            finally:
+                try:
+                    _PlaywrightManager._cleanup()
+                except Exception:
+                    pass
 
         thread = Thread(target=target, name="texsmith-playwright", daemon=True)
         thread.start()
@@ -715,11 +720,8 @@ class _PlaywrightManager:
     def ensure_browser(cls, *, emitter: Any = None) -> Any:
         with cls._lock:
             current_thread = threading.get_ident()
-            if cls._browser is not None and cls._owner_thread_id == current_thread:
-                return cls._browser
-            if cls._browser is not None and cls._owner_thread_id != current_thread:
-                # Existing browser bound to another thread; tear it down and recreate.
-                cls._cleanup()
+            # Always recreate per call to avoid cross-thread greenlet issues.
+            cls._cleanup()
             try:
                 from playwright._impl._errors import Error as PlaywrightError
                 from playwright.sync_api import sync_playwright
