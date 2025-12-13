@@ -724,7 +724,7 @@ class _PlaywrightManager:
         with cls._lock:
             current_thread = threading.get_ident()
             # Always recreate per call to avoid cross-thread greenlet issues.
-            cls._cleanup()
+            cls._cleanup_unlocked()
             try:
                 from playwright._impl._errors import Error as PlaywrightError
                 from playwright.sync_api import sync_playwright
@@ -765,19 +765,23 @@ class _PlaywrightManager:
     @classmethod
     def _cleanup(cls) -> None:
         with cls._lock:
-            try:
-                if cls._browser is not None:
-                    cls._browser.close()
-            except Exception:
-                pass
-            try:
-                if cls._playwright is not None:
-                    cls._playwright.stop()
-            except Exception:
-                pass
-            cls._browser = None
-            cls._playwright = None
-            cls._owner_thread_id = None
+            cls._cleanup_unlocked()
+
+    @classmethod
+    def _cleanup_unlocked(cls) -> None:
+        try:
+            if cls._browser is not None:
+                cls._browser.close()
+        except Exception:
+            pass
+        try:
+            if cls._playwright is not None:
+                cls._playwright.stop()
+        except Exception:
+            pass
+        cls._browser = None
+        cls._playwright = None
+        cls._owner_thread_id = None
 
 
 class MermaidToPdfStrategy(CachedConversionStrategy):
