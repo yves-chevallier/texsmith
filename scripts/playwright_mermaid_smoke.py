@@ -29,7 +29,7 @@ def main() -> int:
     # Wrap ensure_browser to log entry/exit.
     original_ensure = strategies._PlaywrightManager.ensure_browser
 
-    def ensure_browser_with_logs(*args, **kwargs):
+    def ensure_browser_with_logs(cls, *args, **kwargs):
         print("[smoke] ensure_browser: enter", flush=True)
         res = original_ensure(*args, **kwargs)
         print("[smoke] ensure_browser: exit", flush=True)
