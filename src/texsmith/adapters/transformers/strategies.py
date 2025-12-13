@@ -14,6 +14,7 @@ from pathlib import Path
 import shutil
 import subprocess
 import sys
+import threading
 from threading import Lock, Thread
 from typing import Any, Callable, ClassVar, TypeVar
 from urllib.parse import unquote, urlparse
