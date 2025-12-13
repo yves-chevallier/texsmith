@@ -11,24 +11,13 @@ permissions:
   id-token: write
 
 jobs:
-  checks:
-    name: Playwright smoke
+  lint:
+    name: Ruff (lint + format check)
     runs-on: ubuntu-latest
-    env:
-      PLAYWRIGHT_BROWSERS_PATH: /home/runner/.cache/texsmith/playwright/browsers
     steps:
-      # Checkout repository source
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # Install deps
-      - name: Install system dependencies
-        run: |
-          sudo apt-get install -y libglib2.0-0 libnspr4 libnss3 libatk1.0-0 \
-          libatk-bridge2.0-0 libcups2 libxkbcommon0 libatspi2.0-0 libxcomposite1 \
-          libxdamage1 libxfixes3 libxrandr2 libgbm1 libcairo2 libpango-1.0-0
-
-      # Install uv (Python package manager)
       - name: Install uv
         uses: astral-sh/setup-uv@v7
         with:
@@ -37,45 +26,48 @@ jobs:
         env:
           UV_CACHE_SAVE: "false"
 
-      # Install Python deps (includes playwright)
-      - name: Sync dependencies (minimal)
+      - name: Sync dependencies (dev + docs)
         run: uv sync --all-groups --frozen
 
-      # Install Playwright browser binaries + system deps
-      - name: Install Playwright browsers
-        run: |
-          uv run playwright install-deps
-          uv run playwright install chromium
+      - name: Ruff lint
+        run: uv run ruff check .
 
-      # Playwright smoke test
-      - name: Run Playwright smoke test
-        run: uv run python scripts/playwright_smoke.py
+      - name: Ruff format check
+        run: uv run ruff format . --check
 
-      # Direct Playwright mermaid render (no TexSmith)
-      - name: Run direct Playwright mermaid render
-        run: uv run python scripts/playwright_mermaid_direct.py
+  tests:
+    name: Pytest matrix
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.10", "3.13", "3.14"]
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-      # TexSmith Mermaid->PDF via Playwright backend
-      - name: Run TexSmith Mermaid Playwright smoke
-        run: uv run python scripts/playwright_mermaid_smoke.py
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
 
-      # TexSmith simple conversion (temp snippet)
-      - name: Run TexSmith simple conversion
-        run: uv run python scripts/texsmith_convert_simple.py
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: true
+          cache-python: false
+        env:
+          UV_CACHE_SAVE: "false"
 
-      # TexSmith full diagrams conversion via CLI
-      - name: Run TexSmith full diagrams conversion
-        run: uv run python scripts/texsmith_full_conversion.py
+      - name: Sync dependencies (dev + docs)
+        run: uv sync --all-groups --frozen
 
-      # TexSmith full examples suite (make all)
-      - name: Run TexSmith examples (make all)
-        run: |
-          cd examples
-          uv run make all
+      - name: Run pytest
+        run: uv run pytest
 
   build-artifacts:
     name: Build dists & docs
-    needs: checks
+    needs: [lint, tests]
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -85,6 +77,13 @@ jobs:
       # Checkout repository
       - name: Checkout repository
         uses: actions/checkout@v4
+
+      # Install system dependencies (Playwright, cairo, etc.)
+      - name: Install system dependencies
+        run: |
+          sudo apt-get install -y libglib2.0-0 libnspr4 libnss3 libatk1.0-0 \
+          libatk-bridge2.0-0 libcups2 libxkbcommon0 libatspi2.0-0 libxcomposite1 \
+          libxdamage1 libxfixes3 libxrandr2 libgbm1 libcairo2 libpango-1.0-0
 
       # Install uv
       - name: Install uv
@@ -96,6 +95,20 @@ jobs:
       # Install full dependency set
       - name: Sync dependencies (dev + docs)
         run: uv sync --all-groups --frozen
+
+      # Install Playwright browser binaries + system deps
+      - name: Install Playwright browsers
+        env:
+          PLAYWRIGHT_BROWSERS_PATH: /home/runner/.cache/texsmith/playwright/browsers
+        run: |
+          uv run playwright install-deps
+          uv run playwright install chromium
+
+      # Build all examples (clean + all)
+      - name: Build examples
+        run: |
+          cd examples
+          uv run make clean all
 
       # Build MkDocs HTML documentation
       - name: Build documentation (HTML + LaTeX)
@@ -131,7 +144,7 @@ jobs:
 
   release:
     name: Release (Docs + PyPI)
-    needs: [checks, build-artifacts]
+    needs: [build-artifacts]
     if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
 

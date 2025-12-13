@@ -3,7 +3,8 @@
 from __future__ import annotations
 
 import atexit
-from collections.abc import Mapping, Sequence
+from collections.abc import Callable, Mapping, Sequence
+import contextlib
 from datetime import datetime, timezone
 from importlib import metadata as importlib_metadata
 from io import BytesIO
@@ -16,7 +17,7 @@ import subprocess
 import sys
 import threading
 from threading import Lock, Thread
-from typing import Any, Callable, ClassVar, TypeVar
+from typing import Any, ClassVar, TypeVar
 from urllib.parse import unquote, urlparse
 from urllib.request import urlopen
 import warnings
@@ -693,10 +694,8 @@ class _PlaywrightWorker:
             except BaseException as exc:  # pragma: no cover - pass through
                 error.append(exc)
             finally:
-                try:
-                    _PlaywrightManager._cleanup()
-                except Exception:
-                    pass
+                with contextlib.suppress(Exception):
+                    _PlaywrightManager._cleanup()  # noqa: SLF001
 
         thread = Thread(target=target, name="texsmith-playwright", daemon=True)
         thread.start()
@@ -994,7 +993,9 @@ class MermaidToPdfStrategy(CachedConversionStrategy):
                             resolved_config = {}
 
                 if not resolved_config:
-                    resolved_config = dict(_DEFAULT_MERMAID_CONFIG) if _DEFAULT_MERMAID_CONFIG else {}
+                    resolved_config = (
+                        dict(_DEFAULT_MERMAID_CONFIG) if _DEFAULT_MERMAID_CONFIG else {}
+                    )
                 resolved_config.setdefault("startOnLoad", False)
                 resolved_config.setdefault("theme", theme)
                 page.evaluate("cfg => { window.mermaid.initialize(cfg); }", resolved_config)
@@ -1019,7 +1020,9 @@ async (code) => {
             except TransformerExecutionError:
                 raise
             except Exception as exc:
-                raise TransformerExecutionError(f"Mermaid Playwright backend failed: {exc}") from exc
+                raise TransformerExecutionError(
+                    f"Mermaid Playwright backend failed: {exc}"
+                ) from exc
 
         _PlaywrightWorker.run(task)
 
@@ -1343,7 +1346,9 @@ class DrawioToPdfStrategy(CachedConversionStrategy):
             except TransformerExecutionError:
                 raise
             except Exception as exc:
-                raise TransformerExecutionError(f"draw.io Playwright backend failed: {exc}") from exc
+                raise TransformerExecutionError(
+                    f"draw.io Playwright backend failed: {exc}"
+                ) from exc
 
         _PlaywrightWorker.run(task)
 
