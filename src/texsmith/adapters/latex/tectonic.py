@@ -204,7 +204,10 @@ def _extract_archive(archive_path: Path, destination: Path) -> None:
         return
     mode = "r:gz" if suffixes[-2:] == [".tar", ".gz"] or suffixes[-1:] == [".tgz"] else "r:*"
     with tarfile.open(archive_path, mode) as archive:
-        archive.extractall(destination)
+        try:
+            archive.extractall(destination, filter="data")
+        except TypeError:  # Python < 3.12 compatibility (no filter kw)
+            archive.extractall(destination)
 
 
 def _find_binary(
