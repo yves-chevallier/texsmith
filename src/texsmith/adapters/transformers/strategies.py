@@ -731,14 +731,17 @@ class _PlaywrightManager:
                 raise TransformerExecutionError(
                     "Playwright backend requested but the 'playwright' package is not installed."
                 ) from exc
+
+            cache_root = _texsmith_cache_root() / "playwright"
+            browser_cache = cache_root / "browsers"
+            browser_cache.mkdir(parents=True, exist_ok=True)
+            # Playwright reads PLAYWRIGHT_BROWSERS_PATH during startup, so set it before start().
+            os.environ.setdefault("PLAYWRIGHT_BROWSERS_PATH", str(browser_cache))
+
             try:
                 cls._playwright = sync_playwright().start()
             except PlaywrightError as exc:
                 raise _wrap_playwright_error(exc, emitter) from exc
-            cache_root = _texsmith_cache_root() / "playwright"
-            browser_cache = cache_root / "browsers"
-            browser_cache.mkdir(parents=True, exist_ok=True)
-            os.environ.setdefault("PLAYWRIGHT_BROWSERS_PATH", str(browser_cache))
 
             try:
                 cls._browser = cls._playwright.chromium.launch(headless=True)
