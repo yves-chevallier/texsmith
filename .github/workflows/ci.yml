@@ -158,7 +158,7 @@ jobs:
       url: https://pypi.org/project/texsmith/
 
     steps:
-      # Checkout repository (needed by mkdocs gh-deploy)
+      # Checkout repository (needed by mike deploy)
       - name: Checkout repository
         uses: actions/checkout@v4
 
@@ -178,13 +178,19 @@ jobs:
         env:
           UV_CACHE_SAVE: "false"
 
-      # Publish documentation to GitHub Pages using MkDocs
-      - name: Publish documentation to GitHub Pages
+      # Publish versioned documentation to GitHub Pages using mike
+      - name: Publish documentation to GitHub Pages (mike)
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          set -euo pipefail
+          VERSION="${GITHUB_REF_NAME#v}"
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git fetch origin gh-pages || true
           uv sync --group docs --frozen
-          uv run mkdocs gh-deploy --force --clean
+          uv run mike deploy --push --branch gh-pages --remote origin --update-aliases "$VERSION" latest
+          uv run mike set-default --push --branch gh-pages --remote origin latest
 
       # Publish the package to PyPI from prebuilt dists
       # - name: Publish package to PyPI
@@ -202,4 +208,3 @@ jobs:
             packages/mkdocs_texsmith/dist/*
             press/texsmith-docs/texsmith-docs.pdf
             examples/examples.zip
-            examples/build/*.pdf
