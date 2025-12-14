@@ -109,6 +109,12 @@ jobs:
         run: |
           make examples
 
+      # Package example PDFs into a single archive
+      - name: Package example PDFs
+        run: |
+          mkdir -p examples
+          zip -j examples/examples.zip examples/build/*.pdf
+
       # Build MkDocs HTML documentation
       - name: Build documentation (HTML + LaTeX)
         run: |
@@ -130,10 +136,9 @@ jobs:
           name: texsmith-release-assets
           path: |
             dist/*
-            examples/build/*.pdf
             packages/mkdocs_texsmith/dist/*
-            build/texsmith-docs.pdf
-            site/**
+            press/texsmith-docs/texsmith-docs.pdf
+            examples/examples.zip
           if-no-files-found: error
 
   release:
@@ -195,4 +200,6 @@ jobs:
           files: |
             dist/*
             packages/mkdocs_texsmith/dist/*
-            build/texsmith-docs.pdf
+            press/texsmith-docs/texsmith-docs.pdf
+            examples/examples.zip
+            examples/build/*.pdf
