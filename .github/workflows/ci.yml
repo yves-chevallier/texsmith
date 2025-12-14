@@ -164,6 +164,15 @@ jobs:
           name: texsmith-release-assets
           path: .
 
+      # Install uv for deploying the docs
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: true
+          cache-python: false
+        env:
+          UV_CACHE_SAVE: "false"
+
       # Publish documentation to GitHub Pages using MkDocs
       - name: Publish documentation to GitHub Pages
         env:
