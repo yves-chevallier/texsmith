@@ -114,6 +114,20 @@ jobs:
         run: |
           make docs
 
+      # Archive pre-LaTeX press output for inspection
+      - name: Archive press directory (pre-LaTeX)
+        if: always()
+        run: |
+          if [ -d press ]; then tar -czf press-prelatex.tar.gz press; fi
+        shell: bash
+      - name: Upload press artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: press-prelatex
+          path: press-prelatex.tar.gz
+          if-no-files-found: ignore
+
       # Build the main Python package distribution
       - name: Build distributions (texsmith)
         run: uv build
