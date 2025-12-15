@@ -82,7 +82,7 @@ class RenderSettings:
     diagrams_backend: str | None = None
 
     def copy(self) -> RenderSettings:
-        """Create a deep copy of the settings."""
+        """Create a deep copy of the settings to avoid cross-run mutations."""
         return copy.deepcopy(self)
 
 
@@ -97,7 +97,7 @@ class LaTeXFragment:
     conversion: ConversionResult | None = None
 
     def write_to(self, target: Path) -> None:
-        """Persist the fragment to disk."""
+        """Persist the fragment to disk so later template steps can reference it."""
         target.parent.mkdir(parents=True, exist_ok=True)
         target.write_text(self.latex, encoding="utf-8")
         self.output_path = target
@@ -110,7 +110,7 @@ class ConversionBundle:
     fragments: list[LaTeXFragment]
 
     def combined_output(self) -> str:
-        """Concatenate all fragments separated by blank lines."""
+        """Concatenate all fragments separated by blank lines for quick previews."""
         return "\n\n".join(fragment.latex for fragment in self.fragments if fragment.latex)
 
 
@@ -128,7 +128,7 @@ def convert_documents(
     shared_state: DocumentState | None = None,
     write_fragments: bool | None = None,
 ) -> ConversionBundle:
-    """Convert one or more documents into LaTeX fragments."""
+    """Convert one or more documents into LaTeX fragments while coordinating shared state."""
     if not documents:
         raise ValueError("At least one document is required for conversion.")
 
@@ -195,7 +195,7 @@ def convert_documents(
 
 
 def to_template_fragments(bundle: ConversionBundle) -> list[TemplateFragment]:
-    """Convert API fragments into the core template fragment contract."""
+    """Convert API fragments into the core template fragment contract to keep template engines decoupled from API types."""
     fragments: list[TemplateFragment] = []
     for fragment in bundle.fragments:
         conversion = fragment.conversion

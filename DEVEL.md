@@ -4,35 +4,6 @@ Roadmap and development notes for TeXSmith. I keep this file as a running checkl
 
 ## Roadmap
 
-- [x] Test for multi document builds (`texsmith a.md b.md c.md`)
-- [x] Only load ts-callouts si des callouts are used
-- [x] Only load ts-code si du code est utilisé
-- [x] Only load ts-glossary si une glossary est utilisée
-- [x] Only load ts-index si une index est utilisée
-- [x] Demonstrate glossary in book
-- [x] Support glossaries (glossaries package)
-- [x] csquote
-- [x] Emojis without svg conversions
-- [x] two columns in article template
-- [x] Provide listings/verbatim/minted handling
-- [x] Add support for Tectonic engine
-- [x] Download tectonic automatically if not installed
-- [x] Download biber automatically if not installed
-- [x] Add support for Makefile deps `.d` files
-- [x] Include fonts in package (like OpenMoji and Noto Color Emoji)
-- [x] Remove enhanced log for tectonic
-- [x] Configure style for code highlight pygments default is bw
-- [x] Snippet template
-- [x] Drawio Exporter remote via wreight... see in scripts
-- [x] Mermaid color configuration for MkDocs
-- [x] Build MkDocs with parts at level 0.
-- [x] Implement drawio over pywreight
-- [x] Font style with mono
-- [x] MkDocs Linking Issues
-- [x] Clean book template
-- [x] Hide the list of tables when no tables exist.
-- [x] Manage title fragment to insert title meta
-- [x] Manage fragments order from before/after hooks instead of in fragments.py
 - [ ] Complete docstrings in the codebase for better mkdocstrings generation
 - [ ] Refactoring snippets and fix snippet templates
 - [ ] Mono fallback fonts
@@ -72,21 +43,6 @@ Roadmap and development notes for TeXSmith. I keep this file as a running checkl
   - [ ] Letterine
   - [ ] Custom variables to insert in a document using moustaches
 - [ ] Simplify the attributes SSOT for templates and fragments
-- [ ] ts-languages that uses polyglossia and specific things to languages
-- [ ] Analyse which license suit best TeXSmith
-- [ ] Update docs/api to reflect the actual codebase
-- [ ] Add comprehensive docstring in each docs/api entrypoint in the codebase to explain why/the architecture and how it is useful.
-- [ ] Do not show temporary paths in outputs CLI summary table (│ Main document │ /tmp/texsmith-x84gefq4/colorful.tex │)
-
-## Directives
-
-- DO NOT keep any backward compatibility for now. We are still in pre-1.0.0 phase.
-- DO NOT introduce any shim or compatibility layer. Everything must be clean and simple.
-- The unit tests can be changed at will to reflect the new codebase this is not a contract yet.
-- The **PRIMARY GOAL** is to have a clean, simple, maintainable, documented codebase with clear separation of responsabilities, simplify at best.
-- Finish all plan with a cleaning pass to remove any dead code, and all old API that is not used anymore.
-- Write docstrings for everything.
-- Always finish with uv run ruff check . and uv run ruff format .
 
 
 ## Redondance

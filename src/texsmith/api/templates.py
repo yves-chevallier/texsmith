@@ -92,15 +92,15 @@ class TemplateOptions:
             self._values[name] = value
 
     def to_dict(self) -> dict[str, Any]:
-        """Return a deep copy of the underlying values."""
+        """Return a deep copy of the underlying values so callers can mutate safely."""
         return copy.deepcopy(self._values)
 
     def copy(self) -> TemplateOptions:
-        """Return a deep copy of the option set."""
+        """Return a deep copy of the option set to isolate options between sessions."""
         return TemplateOptions(self.to_dict())
 
     def update(self, values: Mapping[str, Any] | None = None, **extra: Any) -> None:
-        """Update the option set in-place."""
+        """Update the option set in-place, mirroring dict semantics for familiarity."""
         if values:
             self._values.update(values)
         if extra:
@@ -127,7 +127,7 @@ class TemplateRenderResult:
 
     @property
     def has_bibliography(self) -> bool:
-        """Indicate whether a bibliography was generated."""
+        """Indicate whether a bibliography was generated so callers can choose engines accordingly."""
         return bool(self.bibliography_path)
 
 
@@ -161,30 +161,30 @@ class TemplateSession:
         self.emitter = ensure_emitter(emitter)
 
     def _prepare_document(self, document: Document) -> Document:
-        """Return a document copy with template overrides applied."""
+        """Return a document copy with template overrides applied to keep the session immutable."""
         return document.copy()
 
     def _collect_option_overrides(self) -> dict[str, Any]:
-        """Compute overrides that differ from the template defaults."""
+        """Compute overrides that differ from the template defaults to minimise render payloads."""
         return self._overrides.to_dict()
 
     def get_default_options(self) -> TemplateOptions:
-        """Return a copy of the default template options."""
+        """Return a copy of the default template options for caller inspection without mutation."""
         return TemplateOptions(copy.deepcopy(self._defaults))
 
     def set_options(self, options: TemplateOptions | Mapping[str, Any]) -> None:
-        """Replace the current template overrides."""
+        """Replace the current template overrides, allowing bulk configuration resets."""
         if isinstance(options, TemplateOptions):
             self._overrides = options.copy()
         else:
             self._overrides = TemplateOptions(dict(options))
 
     def update_options(self, values: Mapping[str, Any] | None = None, **extra: Any) -> None:
-        """Update the current template overrides."""
+        """Update the current template overrides to adjust session metadata incrementally."""
         self._overrides.update(values, **extra)
 
     def add_bibliography(self, *paths: Path) -> None:
-        """Register bibliography files applied to all documents."""
+        """Register bibliography files applied to all documents so renderers include them once."""
         for path in paths:
             resolved = Path(path)
             if resolved not in self._bibliography_files:
@@ -198,7 +198,7 @@ class TemplateSession:
         selector: str | None = None,
         include_document: bool | None = None,
     ) -> Document:
-        """Register a document for rendering."""
+        """Register a document for rendering, storing a copy to prevent caller mutations."""
         doc = document.copy()
         if slot is not None:
             doc.assign_slot(slot, selector=selector, include_document=include_document)
@@ -207,11 +207,11 @@ class TemplateSession:
 
     @property
     def documents(self) -> Sequence[Document]:
-        """Return the registered documents."""
+        """Return the registered documents as an immutable tuple to discourage in-place edits."""
         return tuple(self._documents)
 
     def render(self, output_dir: Path, *, embed_fragments: bool = True) -> TemplateRenderResult:
-        """Render the registered documents into a LaTeX project."""
+        """Render the registered documents into a LaTeX project, preparing outputs on disk for compilers."""
         if not self._documents:
             raise ValueError("At least one document must be added before rendering.")
 

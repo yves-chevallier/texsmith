@@ -152,7 +152,7 @@ class DocumentRenderOptions:
     suppress_title_metadata: bool = False
 
     def copy(self) -> DocumentRenderOptions:
-        """Return a deep copy of the options."""
+        """Return a deep copy of the options so mutations never leak across documents."""
         return DocumentRenderOptions(
             base_level=self.base_level,
             title_strategy=self.title_strategy,
@@ -181,10 +181,12 @@ class DocumentSlots:
         self._inclusions: set[str] = {slot.strip() for slot in inclusions or [] if slot}
 
     def copy(self) -> DocumentSlots:
+        """Return a detached clone so callers can mutate slots without side effects."""
         return DocumentSlots(self._selectors, self._inclusions)
 
     @classmethod
     def from_mapping(cls, mapping: Mapping[str, str] | None) -> DocumentSlots:
+        """Build slots from stored metadata, normalising empty mappings to defaults."""
         slots = cls()
         if not mapping:
             return slots
@@ -193,6 +195,7 @@ class DocumentSlots:
         return slots
 
     def merge(self, other: DocumentSlots) -> DocumentSlots:
+        """Combine selectors and inclusions to preserve caller overrides."""
         if other is self:
             return self
         self._selectors.update(other._selectors)
@@ -206,6 +209,7 @@ class DocumentSlots:
         selector: str | None = None,
         include_document: bool | None = None,
     ) -> DocumentSlots:
+        """Register a slot directive, preserving explicit inclusion intent."""
         slot_name = slot.strip()
         if not slot_name:
             return self
@@ -233,12 +237,15 @@ class DocumentSlots:
         return self
 
     def includes(self) -> set[str]:
+        """Return slot names flagged for whole-document inclusion."""
         return set(self._inclusions)
 
     def selectors(self) -> dict[str, str]:
+        """Return selectors mapped to slots, leaving the original untouched."""
         return dict(self._selectors)
 
     def to_request_mapping(self) -> dict[str, str]:
+        """Render selectors into the request mapping expected by the engine."""
         mapping = dict(self._selectors)
         for slot in self._inclusions:
             mapping.setdefault(slot, DOCUMENT_SELECTOR_SENTINEL)
@@ -273,7 +280,7 @@ class Document:
         numbered: bool = True,
         emitter: DiagnosticEmitter | None = None,
     ) -> Document:
-        """Create a document from a Markdown file."""
+        """Create a document from a Markdown file while caching HTML for reuse."""
         active_emitter = emitter or NullEmitter()
 
         try:
@@ -339,7 +346,7 @@ class Document:
         full_document: bool = False,
         emitter: DiagnosticEmitter | None = None,
     ) -> Document:
-        """Create a document from an HTML file."""
+        """Create a document from an HTML file, extracting only the renderable region."""
         active_emitter = emitter or NullEmitter()
 
         try:
@@ -394,7 +401,7 @@ class Document:
         return document
 
     def copy(self) -> Document:
-        """Return a deep copy of the document."""
+        """Return a deep copy of the document to isolate later slot or metadata changes."""
         return Document(
             source_path=self.source_path,
             kind=self.kind,
@@ -411,11 +418,11 @@ class Document:
 
     @property
     def front_matter(self) -> Mapping[str, Any]:
-        """Return a deep copy of the front-matter mapping."""
+        """Return a deep copy of the front-matter mapping to keep stored state immutable."""
         return copy.deepcopy(self._front_matter)
 
     def set_front_matter(self, values: Mapping[str, Any]) -> None:
-        """Replace the stored front matter with a deep copy of the mapping."""
+        """Replace the stored front matter with a deep copy to guard against caller mutation."""
         self._front_matter = copy.deepcopy(values)
 
     @property
@@ -605,7 +612,7 @@ class Document:
         return self._first_heading_level()
 
     def to_context(self) -> DocumentContext:
-        """Build a fresh DocumentContext for conversion."""
+        """Build a fresh DocumentContext for conversion, aligning slots with engine expectations."""
         strategy = self.options.title_strategy
         suppress_title = self.options.suppress_title_metadata
         promote_to_metadata = strategy is TitleStrategy.PROMOTE_METADATA and not suppress_title

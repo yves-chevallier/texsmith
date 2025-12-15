@@ -5,8 +5,8 @@ from __future__ import annotations
 from collections.abc import Iterable
 import unicodedata
 
-from bs4 import BeautifulSoup, NavigableString
-from bs4.element import Comment, Tag
+from bs4 import BeautifulSoup
+from bs4.element import Comment, NavigableString, Tag
 
 from texsmith.fonts.scripts import ScriptDetector
 

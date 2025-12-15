@@ -7,7 +7,6 @@ from collections.abc import Iterable, Mapping
 from dataclasses import dataclass
 import hashlib
 import json
-from pathlib import Path
 import pickle
 from typing import Any
 
@@ -175,10 +174,18 @@ class FallbackBuilder:
             font = cls.font or self._pick_font(cls, coverage_views)
             if font is None:
                 fallback_name = _sanitize_family(f"NotoSans{cls.name}")
-                font = {"name": fallback_name, "extension": ".otf", "styles": ["regular", "bold"]}
+                font = {
+                    "name": fallback_name,
+                    "extension": ".otf",
+                    "styles": ["regular", "bold"],
+                }
             entries.append(
                 FallbackEntry(
-                    name=cls.name, start=cls.start, end=cls.end, group=cls.group, font=font
+                    name=cls.name,
+                    start=cls.start,
+                    end=cls.end,
+                    group=cls.group,
+                    font=font,
                 ),
             )
         log_fn = self.logger.info if announce else self.logger.debug
@@ -267,7 +274,11 @@ class FallbackRepository:
         return FallbackIndex.from_serialized(raw.get("index", {}))
 
     def save(self, index: FallbackIndex, signature: str) -> None:
-        payload = {"version": CACHE_VERSION, "signature": signature, "index": index.serialize()}
+        payload = {
+            "version": CACHE_VERSION,
+            "signature": signature,
+            "index": index.serialize(),
+        }
         try:
             self.cache_path.write_bytes(pickle.dumps(payload))
         except Exception:
@@ -300,7 +311,11 @@ class FallbackLookup:
                     continue
                 hits = [
                     FallbackEntry(
-                        name="Unknown", start=codepoint, end=codepoint, group=None, font={}
+                        name="Unknown",
+                        start=codepoint,
+                        end=codepoint,
+                        group=None,
+                        font={},
                     )
                 ]
             for hit in hits:
@@ -398,7 +413,10 @@ def merge_fallback_summaries(
         if isinstance(payload, Mapping):
             _consume(payload)
 
-    return sorted(merged.values(), key=lambda entry: entry.get("class") or entry.get("group") or "")
+    return sorted(
+        merged.values(),
+        key=lambda entry: entry.get("class") or entry.get("group") or "",
+    )
 
 
 __all__ = [

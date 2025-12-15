@@ -33,10 +33,12 @@ def style_suffix(style: str) -> str:
 
 
 def filename_base(filename: str) -> str:
+    """Return the base name of a Noto font file, stripping style suffixes."""
     return filename.split("-")[0]
 
 
 def guess_cjk_path(filename: str) -> str:
+    """Guess the CJK subpath for a Noto CJK font filename."""
     base = filename_base(filename)
     if base in CJK_ALIASES:
         return CJK_ALIASES[base][1]

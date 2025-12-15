@@ -35,6 +35,8 @@ def _http_get(url: str) -> str:
 
 @dataclass(slots=True)
 class NotoCoverage:
+    """A Noto font family and its Unicode coverage ranges."""
+
     family: str
     ranges: tuple[tuple[int, int], ...]
     file_base: str
@@ -43,6 +45,7 @@ class NotoCoverage:
 
     @classmethod
     def from_mapping(cls, data: dict) -> NotoCoverage:
+        """Create a NotoCoverage from a mapping."""
         return cls(
             family=data["family"],
             ranges=tuple((int(r[0]), int(r[1])) for r in data.get("ranges", [])),
@@ -54,6 +57,7 @@ class NotoCoverage:
         )
 
     def to_mapping(self) -> dict:
+        """Convert the NotoCoverage to a mapping."""
         return {
             "family": self.family,
             "ranges": [list(r) for r in self.ranges],
@@ -79,6 +83,7 @@ class NotoCoverageBuilder:
 
     @property
     def cache_path(self) -> Path:
+        """Return the path to the coverage cache file."""
         return self.cache.path("noto_coverage_db.pkl")
 
     def _candidate_paths(self) -> list[Path]:

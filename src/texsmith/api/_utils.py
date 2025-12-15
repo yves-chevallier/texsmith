@@ -37,7 +37,7 @@ __all__ = ["build_unique_stem_map"]
 
 
 def build_unique_stem_map(paths: Iterable[Path]) -> dict[Path, str]:
-    """Generate unique stems for a sequence of paths."""
+    """Generate unique stems for a sequence of paths to avoid filename collisions during rendering."""
     counters: dict[str, int] = {}
     used: set[str] = set()
     mapping: dict[Path, str] = {}

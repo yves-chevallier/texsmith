@@ -6,14 +6,24 @@ from pathlib import Path
 import urllib.request
 
 from texsmith.fonts.cache import FontCache
-from texsmith.fonts.constants import CJK_ALIASES, filename_base, guess_cjk_path, style_suffix
+from texsmith.fonts.constants import (
+    CJK_ALIASES,
+    filename_base,
+    guess_cjk_path,
+    style_suffix,
+)
 from texsmith.fonts.logging import FontPipelineLogger
 
 
 class NotoFontDownloader:
     """Download individual Noto font files into the font cache."""
 
-    def __init__(self, *, cache: FontCache | None = None, logger: FontPipelineLogger | None = None):
+    def __init__(
+        self,
+        *,
+        cache: FontCache | None = None,
+        logger: FontPipelineLogger | None = None,
+    ):
         self.cache = cache or FontCache()
         self.logger = logger or FontPipelineLogger()
         self.fonts_dir = self.cache.path("fonts")

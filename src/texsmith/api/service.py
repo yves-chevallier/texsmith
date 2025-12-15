@@ -128,16 +128,19 @@ class ConversionResponse:
 
     @property
     def is_template(self) -> bool:
+        """Return True when the response contains template output rather than raw fragments."""
         return isinstance(self.result, TemplateRenderResult)
 
     @property
     def bundle(self) -> ConversionBundle:
+        """Expose the conversion bundle while guarding against template misuse."""
         if isinstance(self.result, ConversionBundle):
             return self.result
         raise TypeError("ConversionResponse does not contain a ConversionBundle.")
 
     @property
     def render_result(self) -> TemplateRenderResult:
+        """Expose the template render result while guarding against bundle misuse."""
         if isinstance(self.result, TemplateRenderResult):
             return self.result
         raise TypeError("ConversionResponse does not contain a TemplateRenderResult.")
@@ -159,7 +162,7 @@ class ConversionService:
         inputs: Iterable[Path],
         extra_bibliography: Iterable[Path] = (),
     ) -> SplitInputsResult:
-        """Separate document inputs, bibliography files, and optional front matter."""
+        """Separate document inputs, bibliography files, and optional front matter to keep downstream parsing deterministic."""
         inline_bibliography: list[Path] = []
         documents: list[Path] = []
         front_matter: Mapping[str, Any] | None = None
@@ -194,7 +197,7 @@ class ConversionService:
         )
 
     def prepare_documents(self, request: ConversionRequest) -> _PreparedBatch:
-        """Normalise input sources into :class:`Document` instances."""
+        """Normalise input sources into :class:`Document` instances so conversion steps operate on consistent objects."""
         emitter = ensure_emitter(request.emitter)
         documents: list[Document] = []
         mapping: dict[Path, Document] = {}
@@ -277,7 +280,7 @@ class ConversionService:
         *,
         prepared: _PreparedBatch | None = None,
     ) -> ConversionResponse:
-        """Execute a conversion workflow and return a structured response."""
+        """Execute a conversion workflow and return a structured response, routing to template or raw conversion paths as needed."""
         batch = prepared or self.prepare_documents(request)
         settings = self._build_render_settings(request)
         emitter = batch.emitter
@@ -332,7 +335,7 @@ class ConversionService:
         verbosity: int = 0,
         use_system_tectonic: bool = False,
     ) -> EngineResult:
-        """Compile a rendered template into a PDF using the requested engine."""
+        """Compile a rendered template into a PDF using the requested engine, selecting dependencies on demand."""
         template_context = getattr(render_result, "template_context", None) or getattr(
             render_result, "context", None
         )
@@ -560,7 +563,7 @@ def _collect_press_sources(
 
 
 def classify_input_source(path: Path) -> InputKind:
-    """Determine the document kind based on filename suffix."""
+    """Determine the document kind based on filename suffix, rejecting unsupported types early."""
     suffix = path.suffix.lower()
     if suffix in {".md", ".markdown"}:
         return InputKind.MARKDOWN
