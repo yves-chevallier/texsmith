@@ -100,6 +100,19 @@ def _resolve_source_path(context: RenderContext, src: str) -> Path | None:
     return None
 
 
+_MKDOCS_THEME_VARIANTS = {"only-light", "only-dark"}
+
+
+def _strip_mkdocs_theme_variant(src: str) -> str:
+    """Drop MkDocs Material light/dark suffixes appended to image URLs."""
+    base, sep, fragment = src.partition("#")
+    if not sep:
+        return src
+    if fragment.lower() in _MKDOCS_THEME_VARIANTS:
+        return base
+    return src
+
+
 def _apply_figure_template(
     context: RenderContext,
     *,
@@ -212,6 +225,8 @@ def render_images(element: Tag, context: RenderContext) -> None:
     src = coerce_attribute(element.get("src"))
     if not src:
         raise InvalidNodeError("Image tag without 'src' attribute")
+
+    src = _strip_mkdocs_theme_variant(src)
 
     classes = gather_classes(element.get("class"))
     if {"twemoji", "emojione"}.intersection(classes):

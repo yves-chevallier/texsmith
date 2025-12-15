@@ -123,6 +123,22 @@ def test_png_image_preserves_name_by_default(renderer: LaTeXRenderer, tmp_path: 
     assert stored.suffix.lower() == ".png"
 
 
+def test_mkdocs_theme_variants_are_stripped(renderer: LaTeXRenderer, tmp_path: Path) -> None:
+    source_file = tmp_path / "logo.png"
+    Image.new("RGB", (16, 16), color="red").save(source_file)
+
+    for fragment in ("only-light", "only-dark"):
+        html = f'<p><img src="logo.png#{fragment}" alt="Logo"></p>'
+        latex = renderer.render(html, runtime={"source_dir": tmp_path})
+
+        assert "\\includegraphics" in latex
+        assert f"#{fragment}" not in latex
+
+        stored = renderer.assets.lookup(str(source_file))
+        assert stored is not None
+        assert stored.exists()
+
+
 def test_convert_assets_forces_png_conversion(tmp_path: Path) -> None:
     config = BookConfig(project_dir=tmp_path)
     renderer = LaTeXRenderer(
