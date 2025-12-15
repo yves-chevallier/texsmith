@@ -7,7 +7,7 @@ copyright: Copyright &copy; 2025 Yves Chevallier
 theme:
   language: en
   name: material
-  logo: assets/logo.svg
+  logo: assets/ts-anvil.svg
   font:
     text: Source Sans 3
   features:
@@ -29,14 +29,14 @@ theme:
     - search.suggest
   palette:
     - scheme: default
-      primary: custom
-      accent: blue
+      primary: brown
+      accent: amber
       toggle:
         icon: material/weather-night
         name: Switch to dark mode
     - scheme: slate
-      primary: custom
-      accent: blue
+      primary: brown
+      accent: amber
       toggle:
         icon: material/weather-sunny
         name: Switch to light mode
@@ -84,8 +84,6 @@ extra:
   social:
     - icon: fontawesome/brands/github
       link: https://github.com/yves-chevallier/texsmith
-# exclude:
-#   - "assets/examples/README.md"
 markdown_extensions:
   - abbr
   - admonition
@@ -131,9 +129,3 @@ extra_javascript:
 extra_css:
   - css/brand.css
   - css/extra.css
-
-hooks:
-  - docs/hooks/mkdocs_hooks.py  # helper hooks that patch missing anchors and plugin namespace
-exclude_docs:
-  |-
-    assets/**/*.md

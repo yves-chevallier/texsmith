@@ -14,7 +14,10 @@ tlmgr_packages = [
     "microtype",
     "koma-script",
 ]
-description = "Formal letter template based on KOMA-Script with configurable sender/recipient and standards."
+description = """
+Formal letter template based on KOMA-Script with configurable
+sender/recipient and standards."""
+
 fragments = [
     "ts-fonts",
     "ts-extra",

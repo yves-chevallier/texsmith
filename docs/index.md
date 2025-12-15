@@ -9,7 +9,8 @@ press-ready [LaTeX](https://www.latex-project.org/). Keep your
 docs authored in Markdown, then compile polished PDFs for print,
 journals, or long-form review packages—without maintaining several sources of truth. No need to learn LaTeX, install heavy toolchains, or wrestle with complex conversion setups.
 
-![TexSmith Logo](assets/logo-full.svg){ width="50%" }
+![TexSmith Logo](assets/ts-light.svg#only-light){ width="50%" }
+![TexSmith Logo](assets/ts-dark.svg#only-dark){ width="50%" }
 
 Furthermore, TeXSmith is optimized for MkDocs thanks to the TeXSmith MkDocs plugin, which seamlessly integrates into your documentation pipeline.
 

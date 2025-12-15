@@ -1,7 +1,7 @@
 :root  > * {
-    --md-primary-fg-color: #185c7e;
+    --md-primary-fg-color: #15181a;
 }
 
 .md-header__button.md-logo img, .md-header__button.md-logo svg {
-    height: 1.7rem;
+    height: 2rem;
 }
