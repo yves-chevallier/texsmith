@@ -14,7 +14,6 @@ import typer
 
 if TYPE_CHECKING:
     from rich.console import Console
-    from rich.text import Text
 
 __all__ = [
     "CLIState",

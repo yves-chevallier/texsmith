@@ -19,21 +19,18 @@ from typing import Any
 
 def on_config(config: Any) -> Any:
     """Inject a stub `texsmith.plugins` package for mkdocstrings lookups."""
-    if "texsmith.plugins" not in sys.modules:
-        try:
-            import texsmith.plugins
-        except ImportError:
-            from texsmith.adapters.plugins import material
+    if "texsmith.plugins" not in sys.modules and importlib.util.find_spec("texsmith.plugins") is None:
+        from texsmith.adapters.plugins import material
 
-            module = types.ModuleType("texsmith.plugins")
-            module.material = material
-            module.__all__ = ["material"]
-            module.__path__ = []  # make it importable as a namespace package
-            module.__spec__ = importlib.util.spec_from_loader(
-                "texsmith.plugins", loader=None, is_package=True
-            )
-            sys.modules["texsmith.plugins"] = module
-            sys.modules["texsmith.plugins.material"] = material
+        module = types.ModuleType("texsmith.plugins")
+        module.material = material
+        module.__all__ = ["material"]
+        module.__path__ = []  # make it importable as a namespace package
+        module.__spec__ = importlib.util.spec_from_loader(
+            "texsmith.plugins", loader=None, is_package=True
+        )
+        sys.modules["texsmith.plugins"] = module
+        sys.modules["texsmith.plugins.material"] = material
 
     return config
 

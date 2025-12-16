@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import sys
-
 import click
 import typer
 from typer.core import TyperCommand

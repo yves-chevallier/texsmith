@@ -14,7 +14,6 @@ from texsmith.core.templates.manifest import (
     TemplateAttributeSpec,
     TemplateError,
     TemplateInfo,
-    TemplateSlot,
 )
 
 

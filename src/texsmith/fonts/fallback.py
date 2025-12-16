@@ -152,7 +152,9 @@ class FallbackBuilder:
             # Prefer non-display families when all else is equal so we select workhorse sets over
             # print/display cuts that may be narrower or less available.
             display_bonus = 0 if "display" in view.family_lower else 1
-            name_bonus = 1 if (class_name in view.family_lower or group_token in view.family_lower) else 0
+            name_bonus = (
+                1 if (class_name in view.family_lower or group_token in view.family_lower) else 0
+            )
             score = (overlap, name_bonus, style_bonus, display_bonus, -view.total_span)
             if score > best_score:
                 best_score = score

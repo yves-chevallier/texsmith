@@ -22,7 +22,6 @@ from texsmith.fonts.scripts import record_script_usage_for_slug, render_moving_t
 
 if TYPE_CHECKING:  # pragma: no cover - typing helpers
     from texsmith.core.bibliography.collection import BibliographyCollection
-    from texsmith.core.bibliography.doi import DoiBibliographyFetcher
 
 from ._assets import store_local_image_asset, store_remote_image_asset
 from ._helpers import (

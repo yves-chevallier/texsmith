@@ -131,7 +131,6 @@ def print_bibliography_overview(collection: BibliographyCollection) -> None:
     ensure_rich_compat()
     try:
         from rich import box
-        from rich.panel import Panel
         from rich.table import Table
         from rich.text import Text
     except ImportError:  # pragma: no cover - fallback when Rich is unavailable

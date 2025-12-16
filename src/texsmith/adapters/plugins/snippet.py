@@ -10,13 +10,12 @@ import json
 import logging
 from pathlib import Path
 import shutil
-import subprocess
 import tempfile
 from typing import Any
 
 from bs4 import BeautifulSoup
 from bs4.element import NavigableString, Tag
-from PIL import Image, ImageDraw, ImageFilter
+from PIL import Image, ImageDraw
 
 from texsmith.adapters.handlers._helpers import (
     coerce_attribute,

@@ -40,12 +40,11 @@ from .inputs import (
     InlineBibliographyEntry,
     InlineBibliographyValidationError,
     extract_front_matter_bibliography,
-    extract_front_matter_slots,
 )
 
 
 if TYPE_CHECKING:  # pragma: no cover - typing only
-    from ..bibliography.doi import DoiBibliographyFetcher, DoiLookupError
+    from ..bibliography.doi import DoiBibliographyFetcher
 
 
 _DOI_SUPPORT: dict[str, Any] | None = None

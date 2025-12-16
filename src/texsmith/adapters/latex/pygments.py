@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from collections.abc import Iterable
-from typing import Any
 
 from pygments import highlight
 from pygments.formatters import LatexFormatter

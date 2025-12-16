@@ -14,7 +14,7 @@ from texsmith.adapters.latex.engines import (
     LatexMessageSeverity,
     parse_latex_log,
 )
-from texsmith.api.pipeline import ConversionBundle, LaTeXFragment
+from texsmith.api.pipeline import ConversionBundle
 from texsmith.api.templates import TemplateRenderResult
 
 from .state import CLIState

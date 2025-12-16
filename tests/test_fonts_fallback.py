@@ -1,7 +1,7 @@
-from texsmith.fragments.fonts import _prepare_fallback_context
 from texsmith.fonts.coverage import NotoCoverage
 from texsmith.fonts.fallback import FallbackBuilder
 from texsmith.fonts.ucharclasses import UCharClass
+from texsmith.fragments.fonts import _prepare_fallback_context
 
 
 def test_fallback_aligns_with_usage_slug(tmp_path, monkeypatch) -> None:

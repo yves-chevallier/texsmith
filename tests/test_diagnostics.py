@@ -8,7 +8,7 @@ from texsmith.core.conversion.debug import format_user_friendly_render_error
 from texsmith.core.diagnostics import LoggingEmitter, NullEmitter
 from texsmith.core.exceptions import LatexRenderingError, TransformerExecutionError
 from texsmith.ui.cli.diagnostics import CliEmitter
-from texsmith.ui.cli.state import CLIState, ensure_rich_compat, set_cli_state
+from texsmith.ui.cli.state import ensure_rich_compat, set_cli_state
 
 
 def _raise_transformer_execution_error() -> None:

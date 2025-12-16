@@ -21,7 +21,7 @@ from .formatter import LaTeXFormatter
 
 
 if TYPE_CHECKING:  # pragma: no cover - typing only
-    from texsmith.api.pipeline import ConversionBundle, LaTeXFragment
+    pass
 
 
 class LaTeXRenderer:

@@ -1,4 +1,3 @@
-from pathlib import Path
 import types
 
 from texsmith.adapters.handlers import _assets

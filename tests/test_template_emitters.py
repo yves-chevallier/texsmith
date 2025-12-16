@@ -3,7 +3,6 @@ from __future__ import annotations
 from pathlib import Path
 
 from texsmith.core.templates.base import WrappableTemplate
-from texsmith.core.templates.manifest import TemplateManifest
 
 
 def _make_template(tmp_path: Path) -> WrappableTemplate:
