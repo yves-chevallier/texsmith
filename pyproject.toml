@@ -174,7 +174,6 @@ select = [
 ignore = [
   "E501",  # line too long (handled by line-length)
   "F403",  # 'from module import *' used; unable to detect undefined names
-  "F401",  # module imported but unused
   "D107",  # missing docstring in __init__
   "D202",  # No blank lines after function docstring
   "D203",  # 1 blank line required before class docstring

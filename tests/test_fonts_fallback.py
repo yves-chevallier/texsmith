@@ -1,4 +1,7 @@
 from texsmith.fragments.fonts import _prepare_fallback_context
+from texsmith.fonts.coverage import NotoCoverage
+from texsmith.fonts.fallback import FallbackBuilder
+from texsmith.fonts.ucharclasses import UCharClass
 
 
 def test_fallback_aligns_with_usage_slug(tmp_path, monkeypatch) -> None:
@@ -114,3 +117,59 @@ def test_usage_font_preferred_over_stale_entries(tmp_path, monkeypatch) -> None:
     result = _prepare_fallback_context(context, output_dir=tmp_path)
     arabic_entry = next(entry for entry in result["entries"] if entry["slug"] == "arabics")
     assert arabic_entry["font_name"] == "NotoKufiArabic"
+
+
+def test_greek_prefers_font_with_styles() -> None:
+    builder = FallbackBuilder()
+    coverage = builder._prepare_coverage(
+        [
+            NotoCoverage(
+                family="Noto Sans Display",
+                ranges=((0x0370, 0x03FF),),
+                file_base="NotoSansDisplay",
+                dir_base="NotoSansDisplay",
+                styles=(),
+            ),
+            NotoCoverage(
+                family="Noto Serif",
+                ranges=((0x0370, 0x03FF),),
+                file_base="NotoSerif",
+                dir_base="NotoSerif",
+                styles=("regular", "bold"),
+            ),
+        ]
+    )
+    cls = UCharClass(name="GreekAndCoptic", start=0x0370, end=0x03FF, group="Greek")
+
+    result = builder._pick_font(cls, coverage)
+
+    assert result is not None
+    assert result["name"] == "NotoSerif"
+
+
+def test_devanagari_prefers_script_specific_font() -> None:
+    builder = FallbackBuilder()
+    coverage = builder._prepare_coverage(
+        [
+            NotoCoverage(
+                family="Noto Sans",
+                ranges=((0x0370, 0x03FF), (0x0900, 0x097F)),
+                file_base="NotoSans",
+                dir_base="NotoSans",
+                styles=("regular", "bold", "italic", "bolditalic"),
+            ),
+            NotoCoverage(
+                family="Noto Sans Devanagari",
+                ranges=((0x0900, 0x097F),),
+                file_base="NotoSansDevanagari",
+                dir_base="NotoSansDevanagari",
+                styles=("regular", "bold"),
+            ),
+        ]
+    )
+    cls = UCharClass(name="Devanagari", start=0x0900, end=0x097F, group="Devanagari")
+
+    result = builder._pick_font(cls, coverage)
+
+    assert result is not None
+    assert result["name"] == "NotoSansDevanagari"

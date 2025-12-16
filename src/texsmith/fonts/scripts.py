@@ -145,14 +145,15 @@ class ScriptDetector:
         if self._lookup is None:
             repository = FallbackRepository(cache=self.cache, logger=self.logger)
             had_cache = repository.cache_path.exists()
-            cached = repository.load()
+            classes = generate_ucharclasses_data(cache=self.cache, logger=self.logger)
+            coverage = generate_noto_metadata(cache=self.cache, logger=self.logger)
+            announce = not had_cache
+            entries = FallbackBuilder(logger=self.logger).build(
+                classes, coverage, announce=announce
+            )
+            signature = repository._signature(entries)  # noqa: SLF001
+            cached = repository.load(expected_signature=signature)
             if cached is None:
-                classes = generate_ucharclasses_data(cache=self.cache, logger=self.logger)
-                coverage = generate_noto_metadata(cache=self.cache, logger=self.logger)
-                announce = not had_cache
-                entries = FallbackBuilder(logger=self.logger).build(
-                    classes, coverage, announce=announce
-                )
                 cached = repository.load_or_build(entries)
             self._lookup = FallbackLookup(cached)
         return self._lookup

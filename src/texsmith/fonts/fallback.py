@@ -141,13 +141,19 @@ class FallbackBuilder:
         class_range = (cls.start, cls.end)
         class_name = cls.name.lower()
         best: _CoverageView | None = None
-        best_score: tuple[int, int, int] = (0, 0, 0)
+        best_score: tuple[int, int, int, int, int] = (0, 0, 0, 0, 0)
+        group_token = (cls.group or cls.name or "").lower()
         for view in coverage:
             overlap = self._range_overlap(class_range[0], class_range[1], view.ranges, view.starts)
             if overlap == 0:
                 continue
-            name_bonus = 1 if class_name in view.family_lower else 0
-            score = (overlap, name_bonus, -view.total_span)
+            # Prefer families that declare usable styles so we avoid display-only sets with missing OTFs.
+            style_bonus = len(view.meta.styles) if view.meta.styles else 0
+            # Prefer non-display families when all else is equal so we select workhorse sets over
+            # print/display cuts that may be narrower or less available.
+            display_bonus = 0 if "display" in view.family_lower else 1
+            name_bonus = 1 if (class_name in view.family_lower or group_token in view.family_lower) else 0
+            score = (overlap, name_bonus, style_bonus, display_bonus, -view.total_span)
             if score > best_score:
                 best_score = score
                 best = view
