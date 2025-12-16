@@ -233,14 +233,25 @@ def build_engine_command(
     return EngineCommand(argv=command, log_path=log_path, pdf_path=pdf_path)
 
 
+def _looks_like_path(binary: str) -> bool:
+    """Return True when ``binary`` already encodes a filesystem path."""
+    if Path(binary).is_absolute():
+        return True
+    separators = [os.sep]
+    if os.altsep:
+        separators.append(os.altsep)
+    return any(sep and sep in binary for sep in separators)
+
+
 def ensure_command_paths(command: EngineCommand) -> EngineCommand:
     """Resolve the primary binary path for the generated command."""
     argv = list(command.argv)
     if argv:
-        binary = argv[0]
-        resolved = shutil.which(binary)
-        if resolved:
-            argv[0] = resolved
+        binary = str(argv[0])
+        if not _looks_like_path(binary):
+            resolved = shutil.which(binary)
+            if resolved:
+                argv[0] = resolved
     return EngineCommand(argv=argv, log_path=command.log_path, pdf_path=command.pdf_path)
 
 

@@ -1310,7 +1310,8 @@ class LatexPlugin(BasePlugin):
                         candidate = Path(os.path.relpath(candidate, project_dir))
                     except ValueError:
                         pass
-            location = f" ({candidate}:{warning.lineno})"
+            display_path = candidate.as_posix()
+            location = f" ({display_path}:{warning.lineno})"
 
         log.warning(
             "TeXSmith warning on page '%s': %s%s [%s]",
@@ -1406,7 +1407,11 @@ class LatexPlugin(BasePlugin):
         paths: list[Path] = []
         for raw in values:
             candidate = Path(raw)
-            if not candidate.is_absolute():
+            raw_path = os.fspath(raw)
+            # Windows treats paths like "/tmp/foo" as lacking a drive letter, so
+            # pathlib reports them as non-absolute. Fall back to os.path.isabs
+            # to preserve already-absolute inputs on all platforms.
+            if not os.path.isabs(raw_path):
                 candidate = (base / candidate).resolve()
             paths.append(candidate)
         return paths

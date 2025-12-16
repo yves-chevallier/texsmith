@@ -12,6 +12,7 @@ import json
 import math
 import os
 from pathlib import Path
+import shlex
 import shutil
 import subprocess
 import sys
@@ -78,6 +79,8 @@ _PLAYWRIGHT_BACKEND_HINT = (
     "--diagrams-backend local or --diagrams-backend docker."
 )
 
+_PLACEHOLDER_PDF = b"%PDF-1.4\n1 0 obj<<>>\nendobj\nxref\n0 1\n0000000000 65535 f \ntrailer<<>>\nstartxref\n9\n%%EOF\n"
+
 
 def _emit_dependency_warning(emitter: Any, message: str) -> None:
     """Send a warning through the emitter or fall back to Python warnings."""
@@ -105,6 +108,12 @@ def _cairo_dependency_hint() -> str:
         "CairoSVG requires the system cairo library (package: libcairo2). "
         "Install it via your package manager to enable SVG conversion."
     )
+
+
+def _write_placeholder_pdf(target: Path) -> None:
+    """Write a minimal placeholder PDF when conversion cannot proceed."""
+    target.parent.mkdir(parents=True, exist_ok=True)
+    target.write_bytes(_PLACEHOLDER_PDF)
 
 
 def _wrap_playwright_error(exc: Exception, emitter: Any = None) -> TransformerExecutionError:
@@ -137,22 +146,72 @@ def _warn_add_to_path(command: str, path: str) -> None:
     warnings.warn(message, stacklevel=3)
 
 
+def _script_fallback_command(command: Sequence[str]) -> list[str] | None:
+    """Return a Windows-friendly command for script files without extensions."""
+    if os.name != "nt" or not command:
+        return None
+    executable = Path(command[0])
+    suffix = executable.suffix.lower()
+    if suffix in {".exe", ".bat", ".cmd", ".com"}:
+        return None
+    if not executable.exists():
+        return None
+    interpreter: str | None = None
+    try:
+        first_line = executable.read_text(encoding="utf-8", errors="ignore").splitlines()[0]
+    except Exception:
+        first_line = ""
+    if first_line.startswith("#!"):
+        shebang = first_line[2:].strip()
+        try:
+            parts = shlex.split(shebang)
+        except ValueError:
+            parts = [shebang]
+        if parts and parts[0] == "/usr/bin/env" and len(parts) > 1:
+            interpreter = parts[1]
+        elif parts:
+            interpreter = parts[0]
+    if interpreter is None:
+        interpreter = sys.executable
+    if shutil.which(interpreter) is None and interpreter != sys.executable:
+        interpreter = sys.executable
+    return [interpreter, str(executable), *command[1:]]
+
+
 def _run_cli(command: list[str], *, cwd: Path, description: str) -> None:
     """Execute a local CLI, raising a transformer error on failure."""
-    try:
-        result = subprocess.run(
-            command,
+
+    def _execute(cmd: list[str]) -> subprocess.CompletedProcess[str]:
+        return subprocess.run(
+            cmd,
             check=False,
             capture_output=True,
             text=True,
             cwd=cwd,
         )
+
+    invoked = command
+    primary_error: OSError | None = None
+    try:
+        result = _execute(command)
     except OSError as exc:
-        raise TransformerExecutionError(f"Failed to execute {description}: {exc}") from exc
+        primary_error = exc
+        fallback = _script_fallback_command(command)
+        if fallback is None:
+            raise TransformerExecutionError(f"Failed to execute {description}: {exc}") from exc
+        invoked = fallback
+        try:
+            result = _execute(fallback)
+        except OSError as fallback_exc:
+            raise TransformerExecutionError(
+                f"Failed to execute {description}: {fallback_exc}"
+            ) from fallback_exc
 
     if result.returncode != 0:
         detail = (result.stderr or "").strip() or (result.stdout or "").strip()
         message = f"{description} exited with status {result.returncode}"
+        if primary_error is not None and invoked is not command:
+            message = f"{message} (initial failure: {primary_error})"
         if detail:
             message = f"{message}: {detail}"
         raise TransformerExecutionError(message)

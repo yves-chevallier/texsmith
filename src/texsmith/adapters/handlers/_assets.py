@@ -16,6 +16,7 @@ from texsmith.adapters.transformers import (
     mermaid2pdf,
     svg2pdf,
 )
+from texsmith.adapters.transformers.strategies import _cairo_dependency_hint
 from texsmith.core.context import RenderContext
 from texsmith.core.conversion.debug import ensure_emitter, record_event
 
@@ -24,6 +25,7 @@ _NATIVE_IMAGE_SUFFIXES: set[str] = {".png", ".jpg", ".jpeg", ".pdf"}
 _FORCED_CONVERSION_SUFFIXES: set[str] = {".svg", ".drawio"}
 _CONVERSION_CACHE_DIR = ".converted"
 _ASSET_MANIFEST = "remote-assets.json"
+_PLACEHOLDER_PDF = b"%PDF-1.4\n1 0 obj<<>>\nendobj\nxref\n0 1\n0000000000 65535 f \ntrailer<<>>\nstartxref\n9\n%%EOF\n"
 
 
 def store_local_image_asset(context: RenderContext, resolved: Path) -> Path:
@@ -158,13 +160,27 @@ def _requires_conversion(suffix: str, convert_requested: bool) -> bool:
     return convert_requested
 
 
+def _write_placeholder_pdf(target: Path) -> Path:
+    target.parent.mkdir(parents=True, exist_ok=True)
+    target.write_bytes(_PLACEHOLDER_PDF)
+    return target
+
+
 def _convert_local_asset(context: RenderContext, source: Path, suffix: str) -> Path:
     conversion_root = _conversion_cache_root(context)
     emitter = ensure_emitter(context.runtime.get("emitter"))
     match suffix:
         case ".svg":
             record_event(emitter, "diagram_generate", {"source": str(source), "kind": "svg"})
-            return svg2pdf(source, output_dir=conversion_root, emitter=emitter)
+            try:
+                return svg2pdf(source, output_dir=conversion_root, emitter=emitter)
+            except Exception as exc:
+                emitter.warning(
+                    f"Falling back to placeholder PDF for SVG '{source}': {exc}. "
+                    f"{_cairo_dependency_hint()}"
+                )
+                placeholder = conversion_root / f"{source.stem}.pdf"
+                return _write_placeholder_pdf(placeholder)
         case ".drawio":
             record_event(emitter, "diagram_generate", {"source": str(source), "kind": "drawio"})
             emit_info = getattr(emitter, "info", None)
