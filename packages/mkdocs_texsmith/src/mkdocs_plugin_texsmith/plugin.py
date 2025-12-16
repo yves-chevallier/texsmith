@@ -4,6 +4,7 @@ from collections.abc import Iterable, Mapping
 from dataclasses import dataclass, field
 import os
 from pathlib import Path, PurePosixPath
+import posixpath
 import shutil
 import sys
 from typing import Any
@@ -1408,10 +1409,11 @@ class LatexPlugin(BasePlugin):
         for raw in values:
             candidate = Path(raw)
             raw_path = os.fspath(raw)
-            # Windows treats paths like "/tmp/foo" as lacking a drive letter, so
-            # pathlib reports them as non-absolute. Fall back to os.path.isabs
-            # to preserve already-absolute inputs on all platforms.
-            if not os.path.isabs(raw_path):
+            # Windows treats POSIX-style roots ("/tmp/foo") as missing a drive
+            # letter, so pathlib reports them as relative. Fall back to
+            # posixpath.isabs to preserve already-absolute inputs.
+            is_absolute = os.path.isabs(raw_path) or posixpath.isabs(raw_path)
+            if not is_absolute:
                 candidate = (base / candidate).resolve()
             paths.append(candidate)
         return paths

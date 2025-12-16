@@ -197,7 +197,7 @@ def build_engine_command(
 ) -> EngineCommand:
     """Construct the command to compile the LaTeX document."""
     if choice.backend == "tectonic":
-        binary = str(tectonic_binary) if tectonic_binary else "tectonic"
+        binary = Path(tectonic_binary).as_posix() if tectonic_binary is not None else "tectonic"
         argv = [
             binary,
             "-X",
