@@ -8,6 +8,7 @@ from typing import Any
 import warnings
 
 from bs4.element import NavigableString, Tag
+from requests.utils import requote_uri as requote_url
 
 from texsmith.core.context import RenderContext
 from texsmith.core.diagnostics import DiagnosticEmitter
@@ -20,6 +21,7 @@ from texsmith.core.exceptions import (
 from texsmith.core.rules import RenderPhase, renders
 from texsmith.fonts.scripts import render_moving_text
 
+from ..latex.utils import escape_latex_chars
 from ..transformers import mermaid2pdf
 from ._assets import store_local_image_asset, store_remote_image_asset
 from ._helpers import (
@@ -124,6 +126,7 @@ def _apply_figure_template(
     width: str | None = None,
     template: str | None = None,
     adjustbox: bool = False,
+    link: str | None = None,
 ) -> NavigableString:
     """Render the shared figure template and return a new node."""
     template_name = template or context.runtime.get("figure_template", "figure")
@@ -136,6 +139,9 @@ def _apply_figure_template(
     )
     alt_text = render_moving_text(alt, context, legacy_accents=legacy_accents, wrap_scripts=True)
     effective_shortcaption = shortcaption or alt_text or caption
+    safe_link = (
+        escape_latex_chars(requote_url(link), legacy_accents=legacy_accents) if link else None
+    )
     latex = formatter(
         path=asset_path,
         caption=caption,
@@ -143,6 +149,7 @@ def _apply_figure_template(
         label=label,
         width=width,
         adjustbox=adjustbox,
+        link=safe_link,
     )
     return mark_processed(NavigableString(latex))
 
@@ -242,6 +249,19 @@ def render_images(element: Tag, context: RenderContext) -> None:
     width = coerce_attribute(element.get("width")) or None
     template = _figure_template_for(element)
 
+    link_wrapper = None
+    link_target = None
+    parent = element.parent
+    if isinstance(parent, Tag) and parent.name == "a":
+        candidates = [
+            child
+            for child in parent.contents
+            if not (isinstance(child, NavigableString) and not child.strip())
+        ]
+        if len(candidates) == 1 and candidates[0] is element:
+            link_wrapper = parent
+            link_target = coerce_attribute(parent.get("href"))
+
     mermaid_payload = _load_mermaid_diagram(context, src)
     if mermaid_payload is not None:
         diagram, _ = mermaid_payload
@@ -277,8 +297,12 @@ def render_images(element: Tag, context: RenderContext) -> None:
         width=width,
         template=template,
         adjustbox=False,
+        link=link_target,
     )
-    element.replace_with(figure_node)
+    if link_wrapper:
+        link_wrapper.replace_with(figure_node)
+    else:
+        element.replace_with(figure_node)
 
 
 @renders("div", phase=RenderPhase.BLOCK, name="render_mermaid", nestable=False)
