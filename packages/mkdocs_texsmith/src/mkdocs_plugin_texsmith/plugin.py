@@ -1410,9 +1410,13 @@ class LatexPlugin(BasePlugin):
             candidate = Path(raw)
             raw_path = os.fspath(raw)
             # Windows treats POSIX-style roots ("/tmp/foo") as missing a drive
-            # letter, so pathlib reports them as relative. Fall back to
-            # posixpath.isabs to preserve already-absolute inputs.
-            is_absolute = os.path.isabs(raw_path) or posixpath.isabs(raw_path)
+            # letter, so pathlib reports them as relative. Preserve already-absolute
+            # inputs by checking for either separator prefix as well.
+            is_absolute = (
+                os.path.isabs(raw_path)
+                or posixpath.isabs(raw_path)
+                or raw_path.startswith(("/", "\\"))
+            )
             if not is_absolute:
                 candidate = (base / candidate).resolve()
             paths.append(candidate)
