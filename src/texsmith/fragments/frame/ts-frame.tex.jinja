@@ -1,0 +1,49 @@
+% Page frame fragment (ts-frame)
+\usepackage{tikz}
+\usetikzlibrary{calc}
+\usepackage{tikzpagenodes}
+
+\newif\iftsframe
+\newif\iftsframedogear
+\BLOCK{ if ts_frame_enabled }\tsframetrue\BLOCK{ else }\tsframefalse\BLOCK{ endif }
+\BLOCK{ if ts_frame_dogear }\tsframedogeartrue\BLOCK{ else }\tsframedogearfalse\BLOCK{ endif }
+
+\newlength\TSFrameInset
+\setlength\TSFrameInset{\VAR{ts_frame_margin|default('0pt')}}
+\newlength\TSFrameFoldSize
+\setlength\TSFrameFoldSize{\VAR{ts_frame_fold_size|default('10mm')}}
+\newcommand\TSFrameColor{black}
+\newcommand\TSFrameLineWidth{0.6pt}
+
+\AddToHook{shipout/background}{%
+  \iftsframe
+    \begin{tikzpicture}[remember picture,overlay]
+      \coordinate (A) at ($(current page.north west)+(\TSFrameInset,-\TSFrameInset)$);
+      \coordinate (B) at ($(current page.north east)+(-\TSFrameInset,-\TSFrameInset)$);
+      \coordinate (C) at ($(current page.south east)+(-\TSFrameInset,\TSFrameInset)$);
+      \coordinate (D) at ($(current page.south west)+(\TSFrameInset,\TSFrameInset)$);
+
+      \coordinate (Bdown)  at ($(B)-(0,\TSFrameFoldSize)$);
+      \coordinate (Bleft)  at ($(B)-(\TSFrameFoldSize,0)$);
+      \coordinate (Corner) at ($(B)-(\TSFrameFoldSize,\TSFrameFoldSize)$);
+
+      \iftsframedogear
+        \draw[line width=\TSFrameLineWidth,draw=\TSFrameColor]
+          (A) -- (Bleft) -- (Bdown) -- (C) -- (D) -- cycle;
+        \draw[line width=\TSFrameLineWidth,draw=\TSFrameColor]
+          (Corner)
+          .. controls ($(Corner)+(0.3*\TSFrameFoldSize,0.1*\TSFrameFoldSize)$)
+               and ($(Bdown)+(-0.3*\TSFrameFoldSize,-0.1*\TSFrameFoldSize)$) ..
+          (Bdown);
+        \draw[line width=\TSFrameLineWidth,draw=\TSFrameColor]
+          (Bleft)
+          .. controls ($(Bleft)+(0.1*\TSFrameFoldSize,-0.3*\TSFrameFoldSize)$)
+               and ($(Corner)+(-0.1*\TSFrameFoldSize,0.3*\TSFrameFoldSize)$) ..
+          (Corner);
+      \else
+        \draw[line width=\TSFrameLineWidth,draw=\TSFrameColor]
+          (A) rectangle (C);
+      \fi
+    \end{tikzpicture}%
+  \fi
+}

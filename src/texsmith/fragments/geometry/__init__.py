@@ -9,7 +9,7 @@ from pydantic import BaseModel, ConfigDict, Field, model_validator
 from texsmith.core.fragments.base import BaseFragment, FragmentPiece
 from texsmith.core.templates.base import _build_environment
 
-from .paper import GeometryResolution, inject_geometry_context, resolve_geometry_settings
+from .paper import GeometryResolution, _coerce_marks_flag, inject_geometry_context, resolve_geometry_settings
 
 
 class GeometryFragmentConfig(BaseModel):
@@ -21,7 +21,7 @@ class GeometryFragmentConfig(BaseModel):
     margin: Any | None = None
     orientation: Any | None = None
     binding: Any | None = None
-    frame: bool | None = None
+    marks: bool | None = None
     watermark: str | None = None
 
     model_config = ConfigDict(extra="allow")
@@ -43,7 +43,10 @@ class GeometryFragmentConfig(BaseModel):
         else:
             paper_data = {"format": paper_payload}
 
-        for key in ("margin", "orientation", "binding", "frame", "watermark", "duplex"):
+        if "frame" in payload and "marks" not in payload:
+            payload["marks"] = payload.pop("frame")
+
+        for key in ("margin", "orientation", "binding", "marks", "watermark", "duplex"):
             if key in payload and key not in paper_data:
                 paper_data[key] = payload[key]
 
@@ -71,8 +74,8 @@ class GeometryFragmentConfig(BaseModel):
             context["orientation"] = self.orientation
         if self.binding is not None:
             context["binding"] = self.binding
-        if self.frame is not None:
-            context["frame"] = self.frame
+        if self.marks is not None:
+            context["marks"] = self.marks
         if self.watermark is not None:
             context["watermark"] = self.watermark
         return context
@@ -116,18 +119,12 @@ class GeometryFragment(BaseFragment[GeometryFragmentConfig]):
     ) -> GeometryFragmentConfig:
         _ = overrides
         payload: dict[str, Any] = {}
-        for key in (
-            "paper",
-            "geometry",
-            "duplex",
-            "margin",
-            "orientation",
-            "binding",
-            "frame",
-            "watermark",
-        ):
+        for key in ("paper", "geometry", "duplex", "margin", "orientation", "binding", "watermark"):
             if key in context:
                 payload[key] = context.get(key)
+        marks_flag = _coerce_marks_flag(context.get("marks"))
+        if marks_flag is not None:
+            payload["marks"] = marks_flag
         return self.config_cls.model_validate(payload)
 
     def inject(

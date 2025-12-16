@@ -69,6 +69,8 @@ from .._options import (
     ManifestOptionWithShort,
     MarkdownExtensionsOption,
     NoCopyAssetsOption,
+    DisableFragmentOption,
+    EnableFragmentOption,
     NoPromoteTitleOption,
     NoTitleOption,
     OpenLogOption,
@@ -425,6 +427,8 @@ def render(
             help="Embed converted documents into the main document instead linking them with \\input.",
         ),
     ] = False,
+    enable_fragments: EnableFragmentOption = None,
+    disable_fragments: DisableFragmentOption = None,
     template_attributes: TemplateAttributeOption = None,
     debug_html: DebugHtmlOption = None,
     classic_output: Annotated[
@@ -790,6 +794,8 @@ def render(
         render_dir=request_render_dir,
         template_options=attribute_overrides,
         embed_fragments=embed_fragments,
+        enable_fragments=enable_fragments or [],
+        disable_fragments=disable_fragments or [],
         emitter=emitter,
     )
     state.record_event(

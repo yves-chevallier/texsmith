@@ -100,7 +100,7 @@ class PaperSpec(BaseModel):
     height: str | None = None
     orientation: Literal["portrait", "landscape"] = "portrait"
     margin: str | dict[str, str] | None = None
-    frame: bool = False
+    marks: bool = False
     binding_offset: str | None = Field(default=None, alias="binding")
     duplex: bool = True
     watermark: str | None = None
@@ -118,6 +118,8 @@ class PaperSpec(BaseModel):
             payload["format"] = payload.pop("paper")
         if "binding" in payload and "binding_offset" not in payload:
             payload["binding_offset"] = payload.pop("binding")
+        if "frame" in payload and "marks" not in payload:
+            payload["marks"] = payload.pop("frame")
         if "duplex" in payload:
             payload["duplex"] = bool(payload["duplex"])
         return payload
@@ -199,7 +201,7 @@ class PaperSpec(BaseModel):
         if self.height:
             options.append(f"paperheight={self.height}")
 
-        if self.frame:
+        if self.marks:
             options.append("showframe")
         if self.binding_offset:
             options.append(f"bindingoffset={self.binding_offset}")
@@ -280,7 +282,7 @@ def resolve_geometry_settings(
     watermark_raw = press_section.get("watermark") if isinstance(press_section, Mapping) else None
     duplex_raw = press_section.get("duplex") if isinstance(press_section, Mapping) else None
     binding_raw = press_section.get("binding") if isinstance(press_section, Mapping) else None
-    frame_raw = press_section.get("frame") if isinstance(press_section, Mapping) else None
+    marks_raw = press_section.get("marks") if isinstance(press_section, Mapping) else None
 
     if paper_raw is None:
         paper_raw = context.get("paper")
@@ -296,8 +298,9 @@ def resolve_geometry_settings(
         duplex_raw = context.get("duplex")
     if binding_raw is None:
         binding_raw = context.get("binding")
-    if frame_raw is None:
-        frame_raw = context.get("frame")
+    if marks_raw is None:
+        marks_raw = context.get("marks")
+    marks_flag = _coerce_marks_flag(marks_raw)
 
     payload: dict[str, Any] = {}
     if isinstance(paper_raw, Mapping):
@@ -315,8 +318,8 @@ def resolve_geometry_settings(
         payload["duplex"] = duplex_raw
     if "binding" not in payload and binding_raw is not None:
         payload["binding"] = binding_raw
-    if "frame" not in payload and frame_raw is not None:
-        payload["frame"] = frame_raw
+    if "marks" not in payload and marks_flag is not None:
+        payload["marks"] = marks_flag
 
     if isinstance(geometry_extra, Mapping):
         formatted_extra: dict[str, Any] = {}
@@ -348,6 +351,8 @@ def resolve_geometry_settings(
     options: list[str] = []
     if not is_memoir:
         options = [opt for opt in (paper_option, orientation_option) if opt]
+        if spec.marks and "showframe" not in options:
+            options.append("showframe")
     if spec.duplex and "twoside" not in options:
         options.append("twoside")
     elif not spec.duplex and "twoside" in options:
@@ -495,6 +500,21 @@ def _resolve_margins(
         margin_left = margin_inner or margin_left
         margin_right = margin_outer or margin_right
     return margin_all, margin_left, margin_right, margin_top, margin_bottom
+
+
+def _coerce_marks_flag(value: Any) -> bool | None:
+    """Return a boolean marks flag when the payload resembles one."""
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, (int, float)):
+        return bool(value)
+    if isinstance(value, str):
+        token = value.strip().lower()
+        if not token or token in {"false", "no", "off", "0", "none"}:
+            return False
+        if token in {"true", "yes", "on", "1", "showframe"}:
+            return True
+    return None
 
 
 __all__ = [

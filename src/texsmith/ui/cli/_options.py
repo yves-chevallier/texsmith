@@ -145,6 +145,28 @@ TemplateAttributeOption = Annotated[
     ),
 ]
 
+EnableFragmentOption = Annotated[
+    list[str] | None,
+    typer.Option(
+        "--enable-fragment",
+        "-f",
+        help="Enable an additional fragment by name (can be repeated).",
+        show_default=False,
+        rich_help_panel=TEMPLATE_PANEL,
+    ),
+]
+
+DisableFragmentOption = Annotated[
+    list[str] | None,
+    typer.Option(
+        "--disable-fragment",
+        "-F",
+        help="Disable a fragment by name (can be repeated).",
+        show_default=False,
+        rich_help_panel=TEMPLATE_PANEL,
+    ),
+]
+
 ManifestOption = Annotated[
     bool,
     typer.Option(

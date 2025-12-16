@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import pytest
+
 from texsmith.core.metadata import PressMetadataError, normalise_press_metadata
 
 
@@ -23,7 +25,8 @@ def test_normalise_press_metadata_prefers_press_values() -> None:
         },
     }
 
-    press = normalise_press_metadata(metadata)
+    with pytest.warns(UserWarning, match=r"Overriding press\.title"):
+        press = normalise_press_metadata(metadata)
 
     assert press["title"] == "Root Title"
     assert press["subtitle"] == "Press Subtitle"
