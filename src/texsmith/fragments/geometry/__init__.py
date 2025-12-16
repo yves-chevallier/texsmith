@@ -9,7 +9,12 @@ from pydantic import BaseModel, ConfigDict, Field, model_validator
 from texsmith.core.fragments.base import BaseFragment, FragmentPiece
 from texsmith.core.templates.base import _build_environment
 
-from .paper import GeometryResolution, _coerce_marks_flag, inject_geometry_context, resolve_geometry_settings
+from .paper import (
+    GeometryResolution,
+    _coerce_marks_flag,
+    inject_geometry_context,
+    resolve_geometry_settings,
+)
 
 
 class GeometryFragmentConfig(BaseModel):

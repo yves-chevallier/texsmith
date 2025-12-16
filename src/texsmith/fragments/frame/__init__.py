@@ -9,6 +9,7 @@ from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_valida
 from texsmith.core.fragments.base import BaseFragment, FragmentPiece
 from texsmith.core.templates.manifest import TemplateAttributeSpec, TemplateError
 
+
 _DEFAULT_MARGIN = "0pt"
 _DEFAULT_FOLD_SIZE = "10mm"
 
@@ -99,7 +100,7 @@ class FrameConfig(BaseModel):
         return str(value)
 
     @model_validator(mode="after")
-    def _disable_when_empty(self) -> "FrameConfig":
+    def _disable_when_empty(self) -> FrameConfig:
         if not self.enabled:
             object.__setattr__(self, "dogear", False)
         return self

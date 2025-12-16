@@ -19,7 +19,10 @@ from typing import Any
 
 def on_config(config: Any) -> Any:
     """Inject a stub `texsmith.plugins` package for mkdocstrings lookups."""
-    if "texsmith.plugins" not in sys.modules and importlib.util.find_spec("texsmith.plugins") is None:
+    if (
+        "texsmith.plugins" not in sys.modules
+        and importlib.util.find_spec("texsmith.plugins") is None
+    ):
         from texsmith.adapters.plugins import material
 
         module = types.ModuleType("texsmith.plugins")
