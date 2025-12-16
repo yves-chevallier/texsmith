@@ -107,8 +107,26 @@ def _ensure_bundled_binary(*, console: Console | None) -> Path:
             _extract_archive(archive_path, extracted_root)
             candidate = _find_binary(extracted_root, binary_name)
             _log(console, f"Installing bundled Tectonic into {install_dir}")
-            shutil.move(str(candidate), target)
-            target.chmod(target.stat().st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
+            install_dir.mkdir(parents=True, exist_ok=True)
+            source_dir = candidate.parent
+            if _is_windows():
+                # Windows builds ship DLL sidecars; copy them alongside the binary.
+                for item in source_dir.iterdir():
+                    destination = install_dir / item.name
+                    if destination.exists():
+                        if destination.is_dir():
+                            shutil.rmtree(destination)
+                        else:
+                            destination.unlink()
+                    if item.is_dir():
+                        shutil.copytree(item, destination)
+                    else:
+                        shutil.copy2(item, destination)
+                target = install_dir / binary_name
+                target.chmod(target.stat().st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
+            else:
+                shutil.move(str(candidate), target)
+                target.chmod(target.stat().st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
     except (OSError, URLError, zipfile.BadZipFile, tarfile.TarError) as exc:
         raise TectonicAcquisitionError(f"Unable to download bundled Tectonic: {exc}") from exc
 
@@ -247,7 +265,7 @@ def _detect_architecture() -> tuple[str, str]:
     if system == "Darwin":
         ostype = "apple-darwin"
     elif system == "Windows":
-        ostype = "pc-windows-gnu"
+        ostype = "pc-windows-msvc"
     elif system == "Linux":
         libc = "musl" if is_musl else "gnu"
         ostype = f"unknown-linux-{libc}"
