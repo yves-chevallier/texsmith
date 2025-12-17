@@ -56,7 +56,65 @@ def test_fallback_aligns_with_usage_slug(tmp_path, monkeypatch) -> None:
     assert entries[0]["font_command"] == "chinesefont"
     assert entries[0]["text_command"] == "textchinese"
     assert "textchinese" not in result["missing_commands"]
-    assert result["transitions"] == []
+    assert result["transitions"] == [
+        r"\setTransitionsFor{CJKUnifiedIdeographs}{\chinesefont}{\texsmithFallbackFamily}"
+    ]
+
+
+def test_all_classes_for_slug_receive_transitions(tmp_path, monkeypatch) -> None:
+    fonts_dir = tmp_path / "fonts"
+    fonts_dir.mkdir()
+    for name in ("NotoSansSC-Regular.otf", "NotoSansSC-Bold.otf"):
+        (fonts_dir / name).write_bytes(b"0")
+
+    monkeypatch.setattr(
+        "texsmith.fragments.fonts.NotoFontDownloader.ensure",
+        lambda self, *, font_name, styles, extension, dir_base=None: None,  # noqa: ARG005
+    )
+
+    context = {
+        "fonts": {
+            "fallback_summary": [
+                {
+                    "group": "Chinese",
+                    "class": "CJKUnifiedIdeographs",
+                    "font": {
+                        "name": "NotoSansSC",
+                        "styles": ["regular", "bold"],
+                        "extension": ".otf",
+                    },
+                    "count": 2,
+                },
+                {
+                    "group": "Chinese",
+                    "class": "CJKSymbolsAndPunctuation",
+                    "font": {
+                        "name": "NotoSansSC",
+                        "styles": ["regular", "bold"],
+                        "extension": ".otf",
+                    },
+                    "count": 1,
+                },
+            ],
+            "script_usage": [
+                {
+                    "group": "Chinese",
+                    "slug": "chinese",
+                    "font_name": "NotoSansSC",
+                    "font_command": "chinesefont",
+                    "text_command": "textchinese",
+                    "count": 3,
+                }
+            ],
+        }
+    }
+
+    result = _prepare_fallback_context(context, output_dir=tmp_path)
+
+    assert result["transitions"] == [
+        r"\setTransitionsFor{CJKSymbolsAndPunctuation}{\chinesefont}{\texsmithFallbackFamily}",
+        r"\setTransitionsFor{CJKUnifiedIdeographs}{\chinesefont}{\texsmithFallbackFamily}",
+    ]
 
 
 def test_usage_font_preferred_over_stale_entries(tmp_path, monkeypatch) -> None:
@@ -117,6 +175,9 @@ def test_usage_font_preferred_over_stale_entries(tmp_path, monkeypatch) -> None:
     result = _prepare_fallback_context(context, output_dir=tmp_path)
     arabic_entry = next(entry for entry in result["entries"] if entry["slug"] == "arabics")
     assert arabic_entry["font_name"] == "NotoKufiArabic"
+    assert result["transitions"] == [
+        r"\setTransitionsFor{Arabic}{\arabicsfont}{\texsmithFallbackFamily}"
+    ]
 
 
 def test_greek_prefers_font_with_styles() -> None:

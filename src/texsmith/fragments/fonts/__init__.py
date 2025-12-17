@@ -516,7 +516,6 @@ def _prepare_fallback_context(context: Mapping[str, Any], *, output_dir: Path) -
 
     entries_by_slug: dict[str, dict[str, Any]] = {}
     package_options: set[str] = set()
-    transitions: list[str] = []
     slug_classes: dict[str, set[str]] = {}
     lua_regular: set[str] = set()
     lua_bold: set[str] = set()
@@ -764,6 +763,19 @@ def _prepare_fallback_context(context: Mapping[str, Any], *, output_dir: Path) -
         package_options.update(
             cls_name for classes in slug_classes.values() for cls_name in classes
         )
+
+    transitions: list[str] = []
+    for slug, classes in sorted(slug_classes.items()):
+        entry = entries_by_slug.get(slug)
+        if not entry:
+            continue
+        font_command = entry.get("font_command")
+        if not font_command:
+            continue
+        for class_name in sorted(classes):
+            transitions.append(
+                f"\\setTransitionsFor{{{class_name}}}{{\\{font_command}}}{{\\texsmithFallbackFamily}}"
+            )
 
     return {
         "entries": sorted(

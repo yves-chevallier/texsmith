@@ -5,6 +5,8 @@
 \RequirePackage{iftex}
 % Fallback definition replaced when emoji fonts are available.
 \providecommand{\texsmithEmoji}[1]{\textbf{!}}
+\catcode"2135=\active
+\protected\def^^^^2135{\ensuremath{\aleph}}
 
 \ifPDFTeX
   \PackageError{ts-fonts}{ts-fonts requires XeLaTeX or LuaLaTeX}{Switch to xelatex or lualatex.}
@@ -261,7 +263,20 @@
     \RequirePackage[
       \VAR{ uc_options | join(',\n      ') }
     ]{ucharclasses}
-    \setDefaultTransitions{\rmfamily}{\rmfamily}%
+    \makeatletter
+    \newcommand{\texsmithFallbackFamily}{\rmfamily}
+    \newcommand{\texsmithSetFallbackFamily}[1]{\def\texsmithFallbackFamily{#1}}
+    \g@addto@macro\rmfamily{\texsmithSetFallbackFamily{\rmfamily}}
+    \g@addto@macro\sffamily{\texsmithSetFallbackFamily{\sffamily}}
+    \g@addto@macro\ttfamily{\texsmithSetFallbackFamily{\ttfamily}}
+    \BLOCK{ for entry in fallback.entries }
+      \expandafter\g@addto@macro\csname \VAR{entry.font_command}\endcsname{%
+        \texsmithSetFallbackFamily{\csname \VAR{entry.font_command}\endcsname}%
+      }
+    \BLOCK{ endfor }
+    \makeatother
+    \texsmithSetFallbackFamily{\rmfamily}
+    \setDefaultTransitions{\texsmithFallbackFamily}{\texsmithFallbackFamily}%
     \BLOCK{ for transition in fallback.transitions }
     \VAR{transition}
     \BLOCK{ endfor }

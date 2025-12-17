@@ -1,11 +1,16 @@
 ---
 press:
+  subtitle: Demo on fonts fallback support
   columns: 2
   paragraph:
     indent: 0
     spacing: 0.5em
+  slots:
+    abstract: Abstract
 ---
-# Language Support
+# Foreign Script Support
+
+## Abstract
 
 TeXSmith can render documents in multiple languages and scripts, including those with complex typesetting requirements. Below are examples of various
 languages and scripts supported by TeXSmith, showcasing its versatility in
@@ -19,9 +24,7 @@ Japanese is the national language of Japan and is spoken by over 125 million peo
 
 舟に乗り、馬に乗りて、初秋の風に吹かれつつ、
 
-道のべの小草を分け、山川を越えて、
-
-心にかかる景色を求めて歩みゆく。
+道のべの小草を分け、山川を越えて。
 
 ## Korean (한국어)
 
@@ -32,8 +35,6 @@ Korean is spoken by about 80 million people worldwide and is the official langua
 백골이 진토되어 넋이라도 있고 없고
 
 임 향한 일편단심이야 가실 줄이 있으랴
-
-어찌 한 마음 변치 않으리오.
 
 ## Syriac (ܠܫܢܐ ܣܘܪܝܝܐ)
 
@@ -197,8 +198,6 @@ Bengali is spoken by over 250 million people, mainly in Bangladesh and the India
 
 ## Tibetan
 
-Tibetan is spoken across Tibet and the Himalayan regions and is used by several million speakers in both secular and religious contexts.
-
 བོད་ཡིག་གི་ཚིག་སྨོན་རྒྱལ་ཁབ་གི་སྙིང་ནས་བྱུང་
 
 རླུང་དང་སྣུམ་གྱི་སྒྲ་དང་མཉམ་དུ་སྐད་ཆ་སྣང་བ་བསྐུར།
@@ -207,32 +206,26 @@ Tibetan is spoken across Tibet and the Himalayan regions and is used by several 
 
 ## Tamil (தமிழ்)
 
-Tamil is a Dravidian language with a literary history over two millennia old and is spoken by more than 80 million people in India, Sri Lanka, and the diaspora.
-
 காற்றின் மணம் நனைந்து வரும்
 பாட்டின் சொல் மனதில் நிற்கும்
 தமிழ் மண்ணின் நெஞ்சில் வாழும் மரபின் இனிமை.
 
 ## Amharic (አማርኛ)
 
-Amharic is a Semitic language spoken mainly in Ethiopia, where it serves as a federal working language, with nearly 60 million speakers including second-language users.
+Amharic is a Semitic language spoken mainly in Ethiopia.
 
 አማርኛ በኢትዮጵያ የመንግሥት ቋንቋ እና የብዙ ብሔሮች መገናኛ መንገድ ናት።
 
 መዝሙሮች፣ ታሪካዊ ዘገባዎች እና የዕለት ተዕለት ተወላጅ ቃላት ውስጥ ይህች ቋንቋ የሕይወትን ድምጽ ታትማለች።
 
-ከከተማ መንገዶች ጀምሮ እስከ ገጠር ገበያዎች ድረስ፣ አማርኛ የሰዎችን ልምድ ታስተካክላለች።
-
 ## Burmese (မြန်မာ)
 
-Burmese is the official language of Myanmar, spoken by about 33 million native speakers and over 40 million total speakers.
+Burmese is the official language of Myanmar.
 
 and over 40 million total speakers use it.
 
-မြန်မာဘာသာကို ရှေးအခေတ်ကပင် ဗိမာန်၊ ရာဇဝင်စာအုပ်တွေထဲက ဗျာဒိတ်စာနဲ့အတူ ဆက်ခံလာကြတယ်။
+မြန်မာဘာသာကို ရှေးအခေတ်ကပင် ဗိမာန်၊
 
-ဒိုင်းလယ်ရွာက ညအချိန်ထဲက ပန်းချီသရုပ်ဆောင် မှောင်မိုက်ပြဇာတ်ထဲမှာပါ ဒီဘာသာစကား ခံစားချက်ကိုဖော်ပြတတ်တယ်။
+ရာဇဝင်စာအုပ်တွေထဲက ဗျာဒိတ်စာနဲ့အတူ
 
-လမ်းဘေးဆိုင်က ဖျော်ဖြေမှု၊ ဘုရားကျောင်းရဲ့ ဂာသာတရားတွေ
-
-အားလုံးမှ မြန်မာစကားဟာ လူမှုဘဝရဲ့ နှလုံးတံခါးကို ဖွင့်ပေးနေပါတယ်။
+ဆက်ခံလာကြတယ်။
