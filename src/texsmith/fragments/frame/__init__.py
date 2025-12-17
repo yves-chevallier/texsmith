@@ -127,7 +127,7 @@ class FrameFragment(BaseFragment[FrameConfig]):
     attributes: ClassVar[dict[str, TemplateAttributeSpec]] = {
         "frame_spec": TemplateAttributeSpec(
             default=None,
-            sources=["press.frame", "frame"],
+            sources=["frame"],
         )
     }
     config_cls: ClassVar[type[FrameConfig]] = FrameConfig
@@ -143,13 +143,7 @@ class FrameFragment(BaseFragment[FrameConfig]):
         self, context: Mapping[str, Any], overrides: Mapping[str, Any] | None = None
     ) -> FrameConfig:
         _ = overrides
-        raw_value = context.get("frame_spec")
-        if raw_value is None:
-            press_section = context.get("press")
-            if isinstance(press_section, Mapping):
-                raw_value = press_section.get("frame")
-        if raw_value is None and "frame" in context:
-            raw_value = context.get("frame")
+        raw_value = context.get("frame_spec") or context.get("frame")
         try:
             return self.config_cls.model_validate(raw_value)
         except ValidationError as exc:

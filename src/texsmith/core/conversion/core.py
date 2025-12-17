@@ -105,7 +105,11 @@ def _resolve_code_options(
         if "code" in overrides:
             override_sources.append(overrides.get("code"))
         press_section = overrides.get("press")
-        if isinstance(press_section, Mapping) and "code" in press_section:
+        if (
+            isinstance(press_section, Mapping)
+            and "code" in press_section
+            and "code" not in overrides
+        ):
             override_sources.append(press_section.get("code"))
 
     for candidate in override_sources:
@@ -171,7 +175,7 @@ def _resolve_fragment_source_dir(
     """Infer the base directory used to resolve fragment paths."""
     candidates = []
     press_section = overrides.get("press") if isinstance(overrides, Mapping) else None
-    for container in (press_section, overrides):
+    for container in (overrides, press_section):
         if not isinstance(container, Mapping):
             continue
         for key in ("_source_dir", "source_dir"):

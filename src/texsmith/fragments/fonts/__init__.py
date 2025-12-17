@@ -112,17 +112,12 @@ def _resolve_emoji_mode(context: Mapping[str, Any]) -> str:
     """Infer requested emoji mode from template or press settings."""
     candidates: list[Any] = []
     fonts_cfg = context.get("fonts")
-    press_cfg = context.get("press")
     if isinstance(context.get("emoji"), str):
         candidates.append(context.get("emoji"))
     if isinstance(context.get("emoji_mode"), str):
         candidates.append(context.get("emoji_mode"))
     if isinstance(fonts_cfg, Mapping) and isinstance(fonts_cfg.get("emoji"), str):
         candidates.append(fonts_cfg.get("emoji"))
-    if isinstance(press_cfg, Mapping):
-        press_fonts = press_cfg.get("fonts")
-        if isinstance(press_fonts, Mapping) and isinstance(press_fonts.get("emoji"), str):
-            candidates.append(press_fonts.get("emoji"))
     for value in candidates:
         lowered = str(value).strip().lower()
         if lowered in {"artifact", "symbola", "color", "black", "twemoji"}:
@@ -850,10 +845,8 @@ class FontsFragment(BaseFragment[FontsConfig]):
             allow_empty=False,
             choices=sorted(set(_FAMILY_CHOICES.keys())),
             sources=[
-                "press.fonts.family",
                 "fonts.family",
                 "fonts_family",
-                "press.font_family",
                 "font_family",
             ],
         )

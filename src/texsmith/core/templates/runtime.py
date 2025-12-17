@@ -109,13 +109,13 @@ def extract_base_level_override(overrides: Mapping[str, Any] | None) -> Any:
     if not overrides:
         return None
 
-    direct_candidate = overrides.get("base_level")
     press_section = overrides.get("press")
-    press_candidate = None
+    direct_candidate = overrides.get("base_level")
+    if direct_candidate is not None:
+        return direct_candidate
     if isinstance(press_section, Mapping):
-        press_candidate = press_section.get("base_level")
-
-    return press_candidate if press_candidate is not None else direct_candidate
+        return press_section.get("base_level")
+    return None
 
 
 def build_template_overrides(front_matter: Mapping[str, Any] | None) -> dict[str, Any]:
@@ -123,33 +123,37 @@ def build_template_overrides(front_matter: Mapping[str, Any] | None) -> dict[str
     if not front_matter or not isinstance(front_matter, Mapping):
         return {}
 
-    press_section = front_matter.get("press")
+    overrides = dict(front_matter)
+    press_section = overrides.get("press")
     if isinstance(press_section, Mapping):
-        overrides = {"press": dict(press_section)}
-        for key, value in front_matter.items():
-            if key == "press":
-                continue
-            overrides["press"].setdefault(key, value)
-    else:
-        overrides = {"press": dict(front_matter)}
+        overrides["press"] = dict(press_section)
 
-    fragments = overrides["press"].get("fragments")
+    fragments = overrides.get("fragments")
+    if fragments is None and isinstance(press_section, Mapping):
+        fragments = press_section.get("fragments")
     if isinstance(fragments, list):
         overrides["fragments"] = list(fragments)
 
-    callouts_section = overrides["press"].get("callouts")
+    callouts_section = overrides.get("callouts")
+    if callouts_section is None and isinstance(press_section, Mapping):
+        callouts_section = press_section.get("callouts")
     if isinstance(callouts_section, Mapping):
         overrides["callouts"] = dict(callouts_section)
 
-    if "callouts_style" in overrides["press"]:
-        overrides["callout_style"] = overrides["press"].get("callouts_style")
+    callouts_style = overrides.get("callouts_style")
+    if callouts_style is None and isinstance(press_section, Mapping):
+        callouts_style = press_section.get("callouts_style")
+    if callouts_style is not None:
+        overrides["callout_style"] = callouts_style
 
-    base_override = overrides["press"].get("base_level")
+    base_override = overrides.get("base_level")
+    if base_override is None and isinstance(press_section, Mapping):
+        base_override = press_section.get("base_level")
     if base_override is not None:
         try:
-            overrides["press"]["base_level"] = coerce_base_level(base_override)
+            overrides["base_level"] = coerce_base_level(base_override)
         except TemplateError:
-            overrides["press"]["base_level"] = base_override
+            overrides["base_level"] = base_override
 
     return overrides
 
@@ -161,17 +165,17 @@ def extract_language_from_front_matter(
     if not isinstance(front_matter, Mapping):
         return None
 
-    press_entry = front_matter.get("press")
-    containers: tuple[Mapping[str, Any] | None, ...] = (
-        press_entry if isinstance(press_entry, Mapping) else None,
-        front_matter,
-    )
+    for key in ("language", "lang"):
+        value = front_matter.get(key)
+        if isinstance(value, str):
+            stripped = value.strip()
+            if stripped:
+                return stripped
 
-    for container in containers:
-        if not isinstance(container, Mapping):
-            continue
+    press_entry = front_matter.get("press")
+    if isinstance(press_entry, Mapping):
         for key in ("language", "lang"):
-            value = container.get(key)
+            value = press_entry.get(key)
             if isinstance(value, str):
                 stripped = value.strip()
                 if stripped:

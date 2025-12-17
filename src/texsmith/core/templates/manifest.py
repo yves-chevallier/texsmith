@@ -533,10 +533,7 @@ class TemplateAttributeSpec(BaseModel):
     def effective_sources(self) -> list[str]:
         if self.sources:
             return list(self.sources)
-        return [
-            f"press.{self.name}",
-            self.name,
-        ]
+        return [self.name]
 
     def fetch_override(
         self,

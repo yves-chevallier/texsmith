@@ -40,7 +40,6 @@ class CodeFragment(BaseFragment[CodeConfig]):
             type="mapping",
             normaliser="code_options",
             sources=[
-                "press.code",
                 "code",
             ],
         )

@@ -61,7 +61,7 @@ class TemplateRendererResult:
     context_attributes: list[dict[str, Any]] = field(default_factory=list)
 
 
-_SOFT_OVERRIDE_KEYS = {"press._source_dir", "press._source_path"}
+_SOFT_OVERRIDE_KEYS = {"press._source_dir", "press._source_path", "_source_dir", "_source_path"}
 
 
 class FragmentOverrideError(TemplateError):

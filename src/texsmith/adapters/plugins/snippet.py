@@ -30,6 +30,7 @@ from texsmith.core.context import RenderContext
 from texsmith.core.conversion.inputs import InputKind
 from texsmith.core.diagnostics import DiagnosticEmitter
 from texsmith.core.exceptions import AssetMissingError, InvalidNodeError, LatexRenderingError
+from texsmith.core.metadata import PressMetadataError, normalise_press_metadata
 from texsmith.core.rules import RenderPhase, renders
 from texsmith.core.templates import TemplateError, TemplateRuntime, load_template_runtime
 from texsmith.core.user_dir import get_user_dir
@@ -378,15 +379,12 @@ def _resolve_template_runtime(
     front_matter = document.front_matter
     template_id: str | None = block.template_id
     if isinstance(front_matter, Mapping):
-        raw = front_matter.get("template")
+        payload = dict(front_matter)
+        with contextlib.suppress(PressMetadataError):
+            normalise_press_metadata(payload)
+        raw = payload.get("template")
         if raw:
             template_id = str(raw).strip()
-        if not template_id:
-            press = front_matter.get("press")
-            if isinstance(press, Mapping):
-                raw_press = press.get("template")
-                if raw_press:
-                    template_id = str(raw_press).strip()
 
     if not template_id:
         return _resolve_runtime()
@@ -538,9 +536,10 @@ def _extract_template_overrides(
             if not normalised:
                 continue
             value_norm = coerce_attribute(value) or ""
+            overrides[normalised] = value_norm
             press_section = overrides.setdefault("press", {})
             if isinstance(press_section, dict):
-                press_section[normalised] = value_norm
+                press_section.setdefault(normalised, value_norm)
             else:
                 overrides["press"] = {normalised: value_norm}
             if normalised in {"callout_style", "callouts_style"}:

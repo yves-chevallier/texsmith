@@ -69,8 +69,11 @@ def build_document_context(
         press_payload = normalise_press_metadata(metadata)
     except PressMetadataError as exc:
         raise ConversionError(str(exc)) from exc
-    press_payload.setdefault("_source_dir", str(source_path.parent))
-    press_payload.setdefault("_source_path", str(source_path))
+    metadata.setdefault("_source_dir", str(source_path.parent))
+    metadata.setdefault("_source_path", str(source_path))
+    if press_payload:
+        press_payload.setdefault("_source_dir", str(source_path.parent))
+        press_payload.setdefault("_source_path", str(source_path))
     slot_requests = extract_front_matter_slots(metadata)
 
     return DocumentContext(
@@ -150,11 +153,6 @@ def extract_front_matter_slots(front_matter: Mapping[str, Any]) -> dict[str, str
     """Collect slot overrides defined in document front matter."""
     overrides: dict[str, str] = {}
 
-    press_section = front_matter.get("press")
-    if isinstance(press_section, Mapping):
-        meta_slots = press_section.get("slots") or press_section.get("entrypoints")
-        overrides.update(parse_slot_mapping(meta_slots))
-
     root_slots = front_matter.get("slots") or front_matter.get("entrypoints")
     overrides.update(parse_slot_mapping(root_slots))
 
@@ -222,16 +220,9 @@ def extract_front_matter_bibliography(
         return {}
 
     bibliography: dict[str, InlineBibliographyEntry] = {}
-    containers: list[Any] = []
-    press_section = front_matter.get("press")
-    if isinstance(press_section, Mapping):
-        containers.append(press_section.get("bibliography"))
-    containers.append(front_matter.get("bibliography"))
-
-    for candidate in containers:
-        if not isinstance(candidate, Mapping):
-            continue
-        for key, value in candidate.items():
+    container = front_matter.get("bibliography")
+    if isinstance(container, Mapping):
+        for key, value in container.items():
             if not isinstance(key, str):
                 continue
             entry = _parse_inline_bibliography_entry(key, value)

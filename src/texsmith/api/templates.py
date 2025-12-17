@@ -52,6 +52,7 @@ from typing import Any
 
 from texsmith.core.context import DocumentState
 from texsmith.core.fragments import collect_fragment_attribute_defaults
+from texsmith.core.metadata import PressMetadataError, normalise_press_metadata
 from texsmith.core.templates import (
     TemplateError,
     TemplateRuntime,
@@ -166,7 +167,14 @@ class TemplateSession:
 
     def _collect_option_overrides(self) -> dict[str, Any]:
         """Compute overrides that differ from the template defaults to minimise render payloads."""
-        return self._overrides.to_dict()
+        overrides = self._overrides.to_dict()
+        if not overrides:
+            return {}
+        try:
+            normalise_press_metadata(overrides)
+        except PressMetadataError as exc:
+            raise TemplateError(str(exc)) from exc
+        return overrides
 
     def get_default_options(self) -> TemplateOptions:
         """Return a copy of the default template options for caller inspection without mutation."""

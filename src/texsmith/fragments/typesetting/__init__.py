@@ -66,8 +66,6 @@ class TypesettingFragment(BaseFragment[TypesettingConfig]):
             default=None,
             type="mapping",
             sources=[
-                "press.typesetting.paragraph",
-                "press.paragraph",
                 "typesetting.paragraph",
                 "paragraph",
             ],
@@ -77,8 +75,6 @@ class TypesettingFragment(BaseFragment[TypesettingConfig]):
             type="string",
             allow_empty=True,
             sources=[
-                "press.typesetting.leading",
-                "press.leading",
                 "typesetting.leading",
                 "leading",
             ],
@@ -87,8 +83,6 @@ class TypesettingFragment(BaseFragment[TypesettingConfig]):
             default=None,
             type="boolean",
             sources=[
-                "press.typesetting.lineno",
-                "press.lineno",
                 "typesetting.lineno",
                 "lineno",
             ],

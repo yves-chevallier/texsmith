@@ -585,6 +585,11 @@ def _apply_shared_front_matter(
         return
     for document in documents:
         merged = _merge_front_matter(shared_front_matter, document.front_matter)
+        normalised = dict(merged)
+        try:
+            normalise_press_metadata(normalised)
+        except PressMetadataError as exc:
+            raise ConversionError(str(exc)) from exc
         document.set_front_matter(merged)
         if (
             document.options.title_strategy is TitleStrategy.PROMOTE_METADATA
@@ -592,7 +597,7 @@ def _apply_shared_front_matter(
         ):
             document.options.title_strategy = TitleStrategy.KEEP
         document.slots = DocumentSlots()
-        base_mapping = extract_front_matter_slots(merged)
+        base_mapping = extract_front_matter_slots(normalised)
         if base_mapping:
             document.slots.merge(DocumentSlots.from_mapping(base_mapping))
 

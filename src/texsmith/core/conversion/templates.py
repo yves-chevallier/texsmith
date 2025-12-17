@@ -133,16 +133,29 @@ def build_binder_context(
     template_overrides = build_template_overrides(document_context.front_matter)
     if session_overrides:
         template_overrides = _merge_template_overrides(template_overrides, session_overrides)
-    if document_context.extracted_title:
-        press_section = template_overrides.setdefault("press", {})
-        if isinstance(press_section, dict):
-            press_section.setdefault("title", document_context.extracted_title)
-    template_overrides["language"] = resolved_language
+
     press_section = template_overrides.get("press")
-    if isinstance(press_section, dict):
-        press_section.setdefault("language", resolved_language)
-        press_section.setdefault("_source_dir", str(document_context.source_path.parent))
-    template_overrides["source_dir"] = str(document_context.source_path.parent)
+    if not isinstance(press_section, dict):
+        press_section = None
+
+    def _ensure_press_section() -> dict[str, Any]:
+        nonlocal press_section
+        if press_section is None:
+            press_section = {}
+            template_overrides["press"] = press_section
+        return press_section
+
+    if document_context.extracted_title:
+        template_overrides.setdefault("title", document_context.extracted_title)
+        _ensure_press_section().setdefault("title", document_context.extracted_title)
+
+    template_overrides.setdefault("language", resolved_language)
+    if press_section is not None or "press" in template_overrides:
+        _ensure_press_section().setdefault("language", resolved_language)
+
+    template_overrides.setdefault("_source_dir", str(document_context.source_path.parent))
+    template_overrides.setdefault("_source_path", str(document_context.source_path))
+    template_overrides.setdefault("source_dir", str(document_context.source_path.parent))
     template_overrides["output_dir"] = str(output_dir)
 
     raw_contexts = (template_overrides, document_context.front_matter)

@@ -41,10 +41,8 @@ class CalloutsFragment(BaseFragment[CalloutsConfig]):
             type="string",
             choices=["fancy", "classic", "minimal"],
             sources=[
-                "press.callouts.style",
                 "callouts.style",
                 "callout_style",
-                "press.callout_style",
             ],
             normaliser="callout_style",
         )

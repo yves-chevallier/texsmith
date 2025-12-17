@@ -46,6 +46,7 @@ from texsmith.api.service import ConversionRequest, ConversionService
 from texsmith.core.bibliography import BibliographyCollection
 from texsmith.core.conversion.debug import ConversionError
 from texsmith.core.conversion.inputs import UnsupportedInputError
+from texsmith.core.metadata import PressMetadataError, normalise_press_metadata
 from texsmith.core.templates import TemplateError
 from texsmith.core.templates.runtime import coerce_base_level
 from texsmith.fonts.html_scripts import wrap_scripts_in_html
@@ -171,22 +172,13 @@ def _extract_press_template(metadata: Mapping[str, Any] | None) -> str | None:
     if not isinstance(metadata, Mapping):
         return None
 
-    direct = metadata.get("press/template")
-    if isinstance(direct, str) and (candidate := direct.strip()):
+    payload = dict(metadata)
+    with contextlib.suppress(PressMetadataError):
+        normalise_press_metadata(payload)
+
+    template_value = payload.get("template")
+    if isinstance(template_value, str) and (candidate := template_value.strip()):
         return candidate
-
-    press_section = metadata.get("press")
-    if isinstance(press_section, Mapping):
-        candidate = press_section.get("template")
-        if isinstance(candidate, str):
-            candidate = candidate.strip()
-            if candidate:
-                return candidate
-
-    dotted = metadata.get("press.template")
-    if isinstance(dotted, str) and (candidate := dotted.strip()):
-        return candidate
-
     return None
 
 
@@ -592,9 +584,16 @@ def render(
         front_matter = _load_front_matter(first_document)
         if front_matter:
             primary_front_matter = front_matter
-    fm_numbered = _lookup_bool(primary_front_matter, ("press", "numbered")) or _lookup_bool(
-        primary_front_matter, ("numbered",)
-    )
+
+    fm_payload: dict[str, Any] = {}
+    if isinstance(primary_front_matter, Mapping):
+        fm_payload = dict(primary_front_matter)
+        try:
+            normalise_press_metadata(fm_payload)
+        except PressMetadataError as exc:
+            raise typer.BadParameter(str(exc)) from exc
+
+    fm_numbered = _lookup_bool(fm_payload, ("numbered",))
     if fm_numbered is not None:
         numbered = fm_numbered
 
@@ -625,13 +624,16 @@ def render(
     promote_title = not no_promote_title
 
     attribute_overrides = _parse_template_attributes(template_attributes)
+    if attribute_overrides:
+        try:
+            normalise_press_metadata(attribute_overrides)
+        except PressMetadataError as exc:
+            raise typer.BadParameter(str(exc)) from exc
     if attribute_overrides and not template_selected:
         raise typer.BadParameter("--attribute can only be used together with --template.")
     if engine:
         attribute_overrides.setdefault("_texsmith_latex_engine", engine)
-    attr_numbered = _lookup_bool(attribute_overrides, ("numbered",)) or _lookup_bool(
-        attribute_overrides, ("press", "numbered")
-    )
+    attr_numbered = _lookup_bool(attribute_overrides, ("numbered",))
     if attr_numbered is not None:
         numbered = attr_numbered
     if attribute_overrides:

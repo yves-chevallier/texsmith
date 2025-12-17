@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Mapping, MutableMapping, Sequence
+import copy
 from datetime import date, datetime
 from typing import Any
 import warnings
@@ -77,42 +78,64 @@ _DIRECT_ALIAS_MAP = {
 
 
 def normalise_press_metadata(metadata: MutableMapping[str, Any]) -> MutableMapping[str, Any]:
-    """Ensure ``metadata['press']`` exists and contains canonical common fields."""
-    press_section = metadata.get("press")
+    """Flatten press metadata into the root mapping while preserving compatibility."""
+    press_section = metadata.pop("press", None)
     press_payload: dict[str, Any] = (
         dict(press_section) if isinstance(press_section, Mapping) else {}
     )
-    metadata["press"] = press_payload
 
-    for field in _SPECIAL_FIELDS:
-        _copy_common_string(metadata, press_payload, field)
+    root_payload = dict(metadata)
+    _hoist_dotted_press_keys(root_payload, press_payload)
 
-    _normalise_press_authors(metadata, press_payload)
-    _flatten_press_aliases(press_payload)
-    _sync_root_and_press(metadata, press_payload)
-    return press_payload
+    merged = _merge_press_overrides(press_payload, root_payload)
+    _coerce_common_strings(merged, press_payload)
+    _normalise_press_authors(merged)
+    _flatten_press_aliases(merged)
+
+    metadata.clear()
+    metadata.update(merged)
+
+    press_view = _build_press_view(merged)
+    if press_view:
+        metadata["press"] = press_view
+
+    return press_view
 
 
-def _copy_common_string(
-    metadata: Mapping[str, Any],
-    press_payload: MutableMapping[str, Any],
-    field: str,
+def _merge_press_overrides(
+    press_payload: Mapping[str, Any], root_payload: Mapping[str, Any]
+) -> dict[str, Any]:
+    merged: dict[str, Any] = copy.deepcopy(press_payload)
+
+    def _merge(target: MutableMapping[str, Any], source: Mapping[str, Any]) -> None:
+        for key, value in source.items():
+            existing = target.get(key)
+            if isinstance(existing, MutableMapping) and isinstance(value, Mapping):
+                nested: dict[str, Any] = dict(existing)
+                _merge(nested, value)
+                target[key] = nested
+                continue
+            target[key] = copy.deepcopy(value)
+
+    _merge(merged, root_payload)
+    return merged
+
+
+def _coerce_common_strings(
+    merged: MutableMapping[str, Any], press_payload: Mapping[str, Any]
 ) -> None:
-    existing = _coerce_metadata_string(press_payload.get(field))
-    root_value = _coerce_metadata_string(metadata.get(field))
-    if root_value is not None:
-        if existing is not None and existing != root_value:
-            warnings.warn(
-                f"Overriding press.{field} with root front matter value '{root_value}'.",
-                stacklevel=2,
-            )
-        press_payload[field] = root_value
-        metadata[field] = root_value
-    elif existing is not None:
-        press_payload[field] = existing
-        metadata.setdefault(field, existing)
-    elif field in press_payload:
-        press_payload.pop(field, None)
+    for field in _SPECIAL_FIELDS:
+        existing = _coerce_metadata_string(merged.get(field))
+        source = _coerce_metadata_string(press_payload.get(field))
+        if existing is None and source is not None:
+            merged[field] = source
+        elif existing is not None:
+            if source is not None and source != existing:
+                warnings.warn(
+                    f"Overriding press.{field} with root front matter value '{existing}'.",
+                    stacklevel=2,
+                )
+            merged[field] = existing
 
 
 def _coerce_metadata_string(value: Any) -> str | None:
@@ -127,29 +150,22 @@ def _coerce_metadata_string(value: Any) -> str | None:
     return candidate or None
 
 
-def _normalise_press_authors(
-    metadata: Mapping[str, Any],
-    press_payload: MutableMapping[str, Any],
-) -> None:
+def _normalise_press_authors(metadata: MutableMapping[str, Any]) -> None:
     sources: list[Any] = []
 
-    if isinstance(press_payload, Mapping):
-        # Prefer already normalised authors lists from press metadata and ignore
-        # scalar author fields when a list is present to avoid duplicate entries.
-        if press_payload.get("authors"):
-            sources.append(press_payload["authors"])
-        elif "author" in press_payload:
-            sources.append(press_payload["author"])
+    authors_present = "authors" in metadata
+    author_present = "author" in metadata
+
+    if authors_present:
+        sources.append(metadata.get("authors"))
+    if author_present:
+        sources.append(metadata.get("author"))
 
     if not sources:
-        if metadata.get("authors"):
-            sources.append(metadata.get("authors"))
-        if "author" in metadata:
-            sources.append(metadata.get("author"))
-
-    if not sources:
-        press_payload.setdefault("authors", [])
-        press_payload.pop("author", None)
+        if authors_present:
+            metadata["authors"] = []
+        if author_present:
+            metadata.pop("author", None)
         return
 
     entries: list[dict[str, str | None]] = []
@@ -157,12 +173,12 @@ def _normalise_press_authors(
         entries.extend(_flatten_author_entries(source))
 
     if not entries:
-        press_payload.setdefault("authors", [])
-        press_payload.pop("author", None)
+        metadata.setdefault("authors", [])
+        metadata.pop("author", None)
         return
 
     # Remove stale scalar author values to keep press metadata canonical.
-    press_payload.pop("author", None)
+    metadata.pop("author", None)
 
     normalized: list[dict[str, str | None]] = []
     seen: set[tuple[str | None, str | None]] = set()
@@ -179,9 +195,7 @@ def _normalise_press_authors(
         seen.add(key)
         normalized.append(candidate)
 
-    press_payload["authors"] = normalized
     metadata["authors"] = normalized
-    metadata.pop("author", None)
 
 
 def _flatten_press_aliases(press_payload: MutableMapping[str, Any]) -> None:
@@ -200,22 +214,45 @@ def _flatten_press_aliases(press_payload: MutableMapping[str, Any]) -> None:
         press_payload[target] = press_payload[source]
 
 
-def _sync_root_and_press(
-    metadata: MutableMapping[str, Any],
-    press_payload: MutableMapping[str, Any],
+def _hoist_dotted_press_keys(
+    root_payload: MutableMapping[str, Any], press_payload: MutableMapping[str, Any]
 ) -> None:
-    for key, value in list(metadata.items()):
-        if key in _ROOT_SKIP_KEYS or key.startswith("_"):
+    dotted_keys = [
+        key
+        for key in list(root_payload.keys())
+        if isinstance(key, str) and key.startswith("press.")
+    ]
+    for dotted in dotted_keys:
+        value = root_payload.pop(dotted)
+        segments = [segment for segment in dotted.split(".")[1:] if segment]
+        if not segments:
             continue
-        if key not in press_payload and value is not None:
-            press_payload[key] = value
+        target = press_payload
+        for segment in segments[:-1]:
+            existing = target.get(segment)
+            nested = dict(existing) if isinstance(existing, MutableMapping) else {}
+            target[segment] = nested
+            target = nested
+        target[segments[-1]] = value
 
-    for key, value in press_payload.items():
-        if key in _ROOT_SKIP_KEYS:
-            continue
-        if key.startswith("_"):
-            continue
-        metadata.setdefault(key, value)
+    slash_keys = [
+        key
+        for key in list(root_payload.keys())
+        if isinstance(key, str) and key.startswith("press/")
+    ]
+    for entry in slash_keys:
+        value = root_payload.pop(entry)
+        suffix = entry.split("/", 1)[1]
+        if suffix:
+            press_payload[suffix] = value
+
+
+def _build_press_view(merged: Mapping[str, Any]) -> dict[str, Any]:
+    return {
+        key: copy.deepcopy(value)
+        for key, value in merged.items()
+        if key not in _ROOT_SKIP_KEYS and not str(key).startswith("_")
+    }
 
 
 def _flatten_author_entries(payload: Any) -> list[dict[str, Any]]:

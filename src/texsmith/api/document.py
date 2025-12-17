@@ -34,6 +34,7 @@ Usage Example
 from __future__ import annotations
 
 from collections.abc import Iterable, Mapping
+import contextlib
 import copy
 from dataclasses import dataclass, field
 from enum import Enum
@@ -56,6 +57,7 @@ from ..core.conversion.inputs import (
 )
 from ..core.conversion_contexts import DocumentContext
 from ..core.diagnostics import DiagnosticEmitter, NullEmitter
+from ..core.metadata import PressMetadataError, normalise_press_metadata
 from ..core.templates.runtime import coerce_base_level
 
 
@@ -98,18 +100,12 @@ def front_matter_has_title(metadata: Mapping[str, Any] | None) -> bool:
     if not isinstance(metadata, Mapping):
         return False
 
-    title = metadata.get("title")
-    if isinstance(title, str) and title.strip():
-        return True
+    payload = dict(metadata)
+    with contextlib.suppress(PressMetadataError):
+        normalise_press_metadata(payload)
 
-    press_section = metadata.get("press")
-    if isinstance(press_section, Mapping):
-        press_title = press_section.get("title")
-        if isinstance(press_title, str) and press_title.strip():
-            return True
-
-    dotted = metadata.get("press.title")
-    return bool(isinstance(dotted, str) and dotted.strip())
+    title = payload.get("title")
+    return bool(isinstance(title, str) and title.strip())
 
 
 def _coerce_bool(value: Any) -> bool | None:
@@ -128,18 +124,14 @@ def _coerce_bool(value: Any) -> bool | None:
 
 
 def _front_matter_numbered(metadata: Mapping[str, Any] | None) -> bool | None:
-    """Extract a numbered flag from front matter (press.numbered or numbered)."""
+    """Extract a numbered flag from normalised front matter."""
     if not isinstance(metadata, Mapping):
         return None
-    press_section = metadata.get("press")
-    if isinstance(press_section, Mapping):
-        value = _coerce_bool(press_section.get("numbered"))
-        if value is not None:
-            return value
-    direct = _coerce_bool(metadata.get("numbered"))
-    if direct is not None:
-        return direct
-    return None
+
+    payload = dict(metadata)
+    with contextlib.suppress(PressMetadataError):
+        normalise_press_metadata(payload)
+    return _coerce_bool(payload.get("numbered"))
 
 
 @dataclass(slots=True)
@@ -483,7 +475,10 @@ class Document:
 
     def _initialise_slots_from_front_matter(self) -> None:
         if isinstance(self._front_matter, Mapping):
-            base_mapping = extract_front_matter_slots(self._front_matter)
+            payload = dict(self._front_matter)
+            with contextlib.suppress(PressMetadataError):
+                normalise_press_metadata(payload)
+            base_mapping = extract_front_matter_slots(payload)
             if base_mapping:
                 self.slots.merge(DocumentSlots.from_mapping(base_mapping))
 

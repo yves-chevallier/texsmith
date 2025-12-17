@@ -223,7 +223,6 @@ The `:::` syntax is reserved for custom containers like `center`, `right`, `lang
 | huge                  | \huge (≈ 20.7 pt)       | `<span style="font-size:2.1em">...</span>` |
 | enormous, gigantic    | \Huge (≈ 24.9 pt)       | `<span style="font-size:2.5em">...</span>` |
 
-
 ```text
 ::: font large
 This text is large.

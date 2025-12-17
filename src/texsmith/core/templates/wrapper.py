@@ -81,14 +81,14 @@ def wrap_template_document(
     overrides_payload = dict(template_overrides) if template_overrides else None
     source_dir = None
     overrides_press = overrides_payload.get("press") if overrides_payload else None
-    if isinstance(overrides_press, Mapping):
+    if isinstance(overrides_payload, Mapping):
+        raw_source_dir = overrides_payload.get("_source_dir") or overrides_payload.get("source_dir")
+        if isinstance(raw_source_dir, (str, Path)) and str(raw_source_dir):
+            source_dir = Path(raw_source_dir)
+    if source_dir is None and isinstance(overrides_press, Mapping):
         source_dir_raw = overrides_press.get("_source_dir") or overrides_press.get("source_dir")
         if source_dir_raw:
             source_dir = Path(source_dir_raw)
-    if source_dir is None and isinstance(overrides_payload, Mapping):
-        raw_source_dir = overrides_payload.get("source_dir")
-        if isinstance(raw_source_dir, (str, Path)) and str(raw_source_dir):
-            source_dir = Path(raw_source_dir)
     fragment_names = list(fragments or [])
     if not fragment_names:
         if template_runtime is not None:
@@ -225,7 +225,7 @@ def wrap_template_document(
             for key, value in overrides_payload.items():
                 if key in fragment_attributes:
                     continue
-                fragment_context[key] = value
+                fragment_context.setdefault(key, value)
             press_section = overrides_payload.get("press")
             if isinstance(press_section, Mapping):
                 for key, value in press_section.items():
