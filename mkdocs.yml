@@ -129,3 +129,5 @@ extra_javascript:
 extra_css:
   - css/brand.css
   - css/extra.css
+exclude_docs: |
+  assets/**/*.md

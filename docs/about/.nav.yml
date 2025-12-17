@@ -5,4 +5,5 @@ nav:
   - Other Resources: other-resources.md
   - License: license.md
   - Versioning: versioning.md
+  - Development: devel/
   - Release Notes: release-notes.md
