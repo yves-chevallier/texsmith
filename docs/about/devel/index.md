@@ -45,7 +45,7 @@ Cette solution n'est pas optimale : elle n'est pas très flexible et consiste à
 L'alternative proposée serait d'utiliser un yaml pour l'insertion d'un snippet:
 
 ```yaml { .snippet width=80% }
-cwd: ../../examples/letter  # D'où exécuter la génération
+cwd: ../../../examples/letter  # D'où exécuter la génération
 sources:  # Liste des fichiers sources comme si donné au CLI (mais on utilise l'API)
   - letter.md
 press: # Attributs supplémentaires à ajouter au contexte de texsmith
@@ -59,7 +59,7 @@ De la même manière on conserve la possibilité d'ajouter l'attribut layout dé
 ```yaml { .snippet }
 layout: 2x2
 width: 70%
-cwd: ../../examples/paper
+cwd: ../../../examples/paper
 sources:
   - cheese.md
   - cheese.bib

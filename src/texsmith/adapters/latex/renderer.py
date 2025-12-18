@@ -73,6 +73,7 @@ class LaTeXRenderer:
             links as link_handlers,
             media as media_handlers,
         )
+        from ..plugins import material as material_plugins, snippet as snippet_plugin
 
         self.engine.collect_from(basic_handlers)
         self.engine.collect_from(inline_handlers)
@@ -81,6 +82,8 @@ class LaTeXRenderer:
         self.engine.collect_from(block_handlers)
         self.engine.collect_from(admonition_handlers)
         self.engine.collect_from(media_handlers)
+        self.register(snippet_plugin)
+        self.register(material_plugins)
 
     def register(self, handler: Any) -> None:
         """Register additional handlers on demand.

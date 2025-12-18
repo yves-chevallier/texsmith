@@ -1,10 +1,10 @@
-# Omega (Ω) / Aleph (ℵ)
+# Colorful Squares
 
-Omega (and its successor Aleph) were early attempts at adding
-Unicode and advanced multilingual typesetting. They never became mainstream, but their ideas paved the way for XeTeX and LuaTeX.
+This example shows off a custom poster-ish template with four slots wired through a local template. Front matter steers colors, slot routing, and layout—no LaTeX tweaks needed.
 
-न जायते म्रियते वा कदाचिन्
-
-```text
-न जायते म्रियते वा कदाचिन्
+```yaml {.snippet caption="Demo" width="60%"}
+cwd: examples/recipe
+sources:
+  - cake.yml
+template: examples/recipe
 ```

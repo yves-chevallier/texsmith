@@ -21,13 +21,14 @@ publisher: Wikipedia Sourcebooks
 imprint:
   thanks: |
     Adapted from the Wikipedia article “Albert Einstein” (retrieved ).
-    Thank you to the Wikipedia contributors whose work makes this example possible.
+    Thank you to the Wikipedia contributors whose work makes this example
+    possible.
   copyright: |
     Wikipedia contributors. Text licensed under Creative Commons Attribution-ShareAlike
     International (CC BY-SA).
   license: |
-    This TeXSmith example is derived from Wikipedia and is not affiliated with TeXSmith.
-    Reuse must credit Wikipedia and share under CC BY-SA .
+    This TeXSmith example is derived from Wikipedia and is not affiliated
+    with TeXSmith. Reuse must credit Wikipedia and share under CC BY-SA .
 press:
   paper: a5
   template: book
@@ -47,6 +48,10 @@ sources:
   - book.md
   - book.bib
 template: book
+fragments:
+  ts-frame:
+press:
+  frame: true
 ```
 
 The example can independently be built using the CLI on the `examples/book/` folder. The engine can be chosen between `tectonic`, `xelatex` and `lualatex`

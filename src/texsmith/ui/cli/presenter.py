@@ -367,8 +367,8 @@ def _detect_assets(directory: Path) -> list[Path]:
     if not assets_dir.is_dir():
         return []
     return sorted(
-        (path for path in assets_dir.iterdir() if path.is_file()),
-        key=lambda p: p.name.lower(),
+        (path for path in assets_dir.rglob("*") if path.is_file()),
+        key=lambda p: p.relative_to(assets_dir).as_posix().lower(),
     )
 
 

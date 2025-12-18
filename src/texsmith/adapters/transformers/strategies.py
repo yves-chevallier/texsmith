@@ -796,6 +796,11 @@ class _PlaywrightManager:
             browser_cache.mkdir(parents=True, exist_ok=True)
             # Playwright reads PLAYWRIGHT_BROWSERS_PATH during startup, so set it before start().
             os.environ.setdefault("PLAYWRIGHT_BROWSERS_PATH", str(browser_cache))
+            # Silence Node.js deprecation spew (e.g., url.parse) while staying compatible with Py3.10+.
+            existing_node_opts = os.environ.get("NODE_OPTIONS", "")
+            if "--no-deprecation" not in existing_node_opts:
+                merged_opts = (existing_node_opts + " --no-deprecation").strip()
+                os.environ["NODE_OPTIONS"] = merged_opts
 
             try:
                 cls._playwright = sync_playwright().start()

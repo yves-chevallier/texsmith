@@ -58,6 +58,8 @@ class SnippetBlock:
     content: str | None
     sources: list[Path]
     layout: tuple[int, int] | None
+    preview_dogear: bool
+    preview_fold_size: float | None
     template_id: str | None
     cwd: Path | None
     caption: str | None
@@ -453,6 +455,8 @@ def _hash_payload(
     sources: list[Path] | None = None,
     drop_title: bool = False,
     suppress_title: bool = True,
+    transparent_corner: bool = False,
+    fold_size: float | None = None,
 ) -> str:
     def _hash_file(path: Path) -> str:
         try:
@@ -481,6 +485,8 @@ def _hash_payload(
         ],
         "drop_title": drop_title,
         "suppress_title": suppress_title,
+        "transparent_corner": transparent_corner,
+        "fold_size": fold_size,
     }
     encoded = json.dumps(payload, sort_keys=True).encode("utf-8")
     return hashlib.sha256(encoded).hexdigest()
@@ -514,6 +520,111 @@ def _detect_language(element: Tag) -> str | None:
             if cls in {"yaml", "yml", "md", "markdown"}:
                 return cls
     return None
+
+
+def _frame_dogear_enabled(overrides: Mapping[str, Any]) -> bool:
+    """Detect whether the page frame dogear should be shown for a snippet preview."""
+
+    def _coerce_frame(value: Any) -> tuple[bool, bool]:
+        if value is None:
+            return False, False
+        if isinstance(value, Mapping):
+            enabled = _coerce_bool_option(value.get("enabled"), True)
+            mode = value.get("mode")
+            dogear = _coerce_bool_option(value.get("dogear"), True)
+            if isinstance(mode, str):
+                token = mode.strip().lower()
+                if token == "border":
+                    dogear = False
+                    enabled = True
+                elif token in {"dogear", "fold"}:
+                    dogear = True
+                    enabled = True
+            if not enabled:
+                return False, False
+            return True, dogear
+        if isinstance(value, (bool, int, float)):
+            flag = bool(value)
+            return flag, flag
+        if isinstance(value, str):
+            token = value.strip().lower()
+            if not token or token in {"false", "off", "no", "0", "none"}:
+                return False, False
+            if token == "border":
+                return True, False
+            if token in {"dogear", "true", "yes", "on", "1"}:
+                return True, True
+        return False, False
+
+    press_section = overrides.get("press") if isinstance(overrides, Mapping) else None
+    frame_value = overrides.get("frame")
+    if frame_value is None and isinstance(press_section, Mapping):
+        frame_value = press_section.get("frame")
+    enabled, dogear = _coerce_frame(frame_value)
+    if enabled and dogear:
+        return True
+
+    fragments_value = overrides.get("fragments")
+    if fragments_value is None and isinstance(press_section, Mapping):
+        fragments_value = press_section.get("fragments")
+    return isinstance(fragments_value, list) and any(str(f) == "ts-frame" for f in fragments_value)
+
+
+def _frame_fold_size_px(
+    overrides: Mapping[str, Any], image_size: tuple[int, int], *, default_mm: float = 10.0
+) -> int:
+    """Resolve the frame fold size (in pixels) from press.frame settings."""
+
+    def _parse_length(value: str | None, fallback_mm: float) -> float:
+        if not value:
+            return fallback_mm
+        raw = str(value).strip().lower()
+        if not raw:
+            return fallback_mm
+        unit = "mm"
+        numeric = raw
+        for candidate in ("mm", "cm", "in", "pt"):
+            if raw.endswith(candidate):
+                unit = candidate
+                numeric = raw[: -len(candidate)]
+                break
+        try:
+            mag = float(numeric)
+        except ValueError:
+            return fallback_mm
+        if unit == "cm":
+            mag *= 10.0
+        elif unit == "in":
+            mag *= 25.4
+        elif unit == "pt":
+            mag *= 25.4 / 72.27
+        return max(mag, 0.0)
+
+    press_section = overrides.get("press") if isinstance(overrides, Mapping) else None
+    frame_value = overrides.get("frame")
+    if frame_value is None and isinstance(press_section, Mapping):
+        frame_value = press_section.get("frame")
+
+    fold_spec: str | None = None
+    if isinstance(frame_value, Mapping):
+        fold_spec = (
+            frame_value.get("fold-size")
+            or frame_value.get("fold_size")
+            or frame_value.get("fold")
+            or frame_value.get("foldsize")
+        )
+    elif isinstance(frame_value, (int, float, str)):
+        # When a bare value is supplied, respect it as fold size if it looks like a length.
+        token = str(frame_value).strip().lower()
+        if any(ch.isdigit() for ch in token):
+            fold_spec = token
+
+    fold_mm = _parse_length(fold_spec, default_mm)
+    px_per_mm = 220.0 / 25.4  # match DPI used in _pdf_to_png_grid
+    estimated_px = round(fold_mm * px_per_mm)
+    width, height = image_size
+    max_dim = max(min(width, height) * 0.2, 24)
+    return int(max(12, min(estimated_px, max_dim)))
 
 
 def _load_yaml_mapping(payload: str) -> dict[str, Any]:
@@ -601,12 +712,15 @@ def _merge_press_section(overrides: dict[str, Any], fragments: Any) -> None:
 
 
 def _extract_snippet_block(element: Tag, host_path: Path | None = None) -> SnippetBlock | None:
-    classes = gather_classes(element.get("class"))
+    pre_element = element.find("pre")
+    code_element = element.find("code")
+
+    classes = set(gather_classes(element.get("class")))
+    classes.update(gather_classes(pre_element.get("class") if pre_element else None))
+    classes.update(gather_classes(code_element.get("class") if code_element else None))
     if "snippet" not in classes:
         return None
 
-    pre_element = element.find("pre")
-    code_element = element.find("code")
     if code_element is None:
         raise InvalidNodeError("Snippet block is missing an inner <code> element.")
     raw_content = code_element.get_text(strip=False)
@@ -651,6 +765,15 @@ def _extract_snippet_block(element: Tag, host_path: Path | None = None) -> Snipp
         config_from_body = dict(metadata or {})
         if body.strip():
             inline_content = body
+        if not config_from_body and inline_content is not None:
+            # Fallback: accept pure-YAML snippet bodies even when the language class is missing.
+            try:
+                parsed_yaml = _load_yaml_mapping(raw_content)
+            except InvalidNodeError:
+                parsed_yaml = None
+            if isinstance(parsed_yaml, dict) and parsed_yaml:
+                config_from_body = parsed_yaml
+                inline_content = None
 
     merged_config: dict[str, Any] = {**config_from_file, **config_from_body}
     figure_width = coerce_attribute(merged_config.pop("width", figure_width)) or figure_width
@@ -684,6 +807,10 @@ def _extract_snippet_block(element: Tag, host_path: Path | None = None) -> Snipp
     _merge_press_section(template_overrides, fragments)
 
     layout = _resolve_layout_value(layout_literal)
+    preview_dogear = _frame_dogear_enabled(template_overrides)
+    preview_fold_size = None
+    if preview_dogear:
+        preview_fold_size = _frame_fold_size_px(template_overrides, (0, 0))
     digest = _hash_payload(
         inline_content or "",
         template_overrides,
@@ -693,12 +820,16 @@ def _extract_snippet_block(element: Tag, host_path: Path | None = None) -> Snipp
         sources=sources,
         drop_title=drop_title_value,
         suppress_title=suppress_title_value,
+        transparent_corner=preview_dogear,
+        fold_size=preview_fold_size,
     )
 
     return SnippetBlock(
         content=inline_content,
         sources=sources,
         layout=layout,
+        preview_dogear=preview_dogear,
+        preview_fold_size=preview_fold_size,
         template_id=template_id,
         cwd=base_dir,
         caption=caption,
@@ -760,6 +891,45 @@ def _build_document_from_markup(
     return document
 
 
+def _build_document_from_yaml(
+    content: str,
+    source_path: Path,
+    *,
+    title_strategy: TitleStrategy,
+    suppress_title: bool,
+) -> Document:
+    """Create a Document using YAML front matter only (no body)."""
+    docs: list[Mapping[str, Any]] = []
+    try:
+        for doc in yaml.safe_load_all(content):
+            if isinstance(doc, Mapping):
+                docs.append(doc)
+    except yaml.YAMLError as exc:  # pragma: no cover - defensive
+        raise InvalidNodeError(f"Invalid YAML snippet source '{source_path}': {exc}") from exc
+
+    payload: Mapping[str, Any] = docs[0] if docs else {}
+    if not isinstance(payload, Mapping):
+        raise InvalidNodeError(
+            f"Snippet source '{source_path}' must contain a YAML mapping, got {type(payload)}."
+        )
+    options = DocumentRenderOptions(
+        base_level=0,
+        title_strategy=title_strategy,
+        numbered=False,
+        suppress_title_metadata=suppress_title,
+    )
+    document = Document(
+        source_path=source_path,
+        kind=InputKind.MARKDOWN,
+        _html="",
+        _front_matter=dict(payload),
+        options=options,
+        slots=DocumentSlots(),
+    )
+    document._initialise_slots_from_front_matter()  # noqa: SLF001
+    return document
+
+
 def _build_documents_from_sources(
     sources: list[Path],
     *,
@@ -786,10 +956,9 @@ def _build_documents_from_sources(
             except OSError as exc:
                 raise InvalidNodeError(f"Unable to read snippet source '{path}': {exc}") from exc
             documents.append(
-                _build_document_from_markup(
-                    f"---\n{yaml_content}\n---\n",
+                _build_document_from_yaml(
+                    yaml_content,
                     path,
-                    base_dir=path.parent,
                     title_strategy=title_strategy,
                     suppress_title=suppress_title,
                 )
@@ -941,6 +1110,7 @@ def _pdf_to_png_grid(
     transparent_corner: bool = False,
     spacing: int | None = None,
     decorate_page: Callable[[Image.Image], Image.Image] | None = None,
+    fold_size: int | None = None,
 ) -> None:
     fitz = _load_pymupdf()
 
@@ -986,7 +1156,7 @@ def _pdf_to_png_grid(
 
     for idx, img in enumerate(images):
         if transparent_corner:
-            img = _apply_dogear_transparency(img)
+            img = _apply_dogear_transparency(img, fold_size=fold_size)
         if decorate_page is not None:
             img = decorate_page(img)
 
@@ -1000,25 +1170,28 @@ def _pdf_to_png_grid(
     canvas.save(png_path)
 
 
-def _apply_dogear_transparency(image: Image.Image) -> Image.Image:
+def _apply_dogear_transparency(image: Image.Image, *, fold_size: int | None = None) -> Image.Image:
     rgba = image.convert("RGBA")
     width, height = rgba.size
     if width <= 0 or height <= 0:
         return rgba
-
-    seed_x = max(width - 2, 0)
+    magenta = (255, 0, 255, 255)
+    if fold_size is not None:
+        _ = fold_size  # keep signature meaningful; floodfill is boundary-aware.
+    seed_x = width - 2 if width > 1 else 0
     seed_y = 1 if height > 1 else 0
-    marker = (255, 0, 255, 255)
     try:
-        ImageDraw.floodfill(rgba, (seed_x, seed_y), marker, thresh=4)
-    except ValueError:
+        ImageDraw.floodfill(rgba, (seed_x, seed_y), magenta, thresh=8)
+    except Exception:
         return rgba
 
-    pixels = rgba.load()
-    for y in range(height):
-        for x in range(width):
-            if pixels[x, y] == marker:
-                pixels[x, y] = (0, 0, 0, 0)
+    pixels = []
+    for r, g, b, a in rgba.getdata():
+        if r == 255 and g == 0 and b == 255:
+            pixels.append((r, g, b, 0))
+        else:
+            pixels.append((r, g, b, a))
+    rgba.putdata(pixels)
     return rgba
 
 
@@ -1194,6 +1367,14 @@ def ensure_snippet_assets(
         raise InvalidNodeError("Snippet block is empty; provide inline content or sources.")
 
     runtime = _resolve_template_runtime(block, documents, host_dir)
+    merged_overrides = _merge_fragment_defaults(block.template_overrides, runtime)
+    dogear_enabled = _frame_dogear_enabled(merged_overrides) or block.preview_dogear
+    preview_fold_px: int | None = None
+    if dogear_enabled:
+        preview_fold_px = _frame_fold_size_px(
+            merged_overrides,
+            (0, 0),
+        )
 
     caches = _resolve_caches()
     template_version = None
@@ -1254,8 +1435,9 @@ def ensure_snippet_assets(
             pdf_path,
             png_path,
             layout=block.layout,
-            transparent_corner=False,
+            transparent_corner=dogear_enabled,
             spacing=None if block.layout else 0,
+            fold_size=preview_fold_px,
         )
         png_missing = False
         _store_in_caches()
@@ -1274,8 +1456,8 @@ def ensure_snippet_assets(
         session.add_document(document)
     if bibliography_files:
         session.add_bibliography(*bibliography_files)
-    if block.template_overrides:
-        session.update_options(block.template_overrides)
+    if merged_overrides:
+        session.update_options(merged_overrides)
 
     work_dir = destination / f".build-{block.digest}"
     shutil.rmtree(work_dir, ignore_errors=True)
@@ -1310,9 +1492,10 @@ def ensure_snippet_assets(
         pdf_path,
         png_path,
         layout=block.layout,
-        transparent_corner=False,
+        transparent_corner=dogear_enabled,
         spacing=None if total_cells > 1 else 0,
         decorate_page=None,
+        fold_size=preview_fold_px,
     )
 
     _store_in_caches()
@@ -1337,7 +1520,9 @@ def _render_figure(
 ) -> NavigableString:
     template_name = context.runtime.get("figure_template", "figure")
     formatter = getattr(context.formatter, template_name)
-    latex_path = context.assets.latex_path(assets.pdf)
+    # Prefer the PNG collage when a layout was requested so multi-page previews are visible.
+    figure_source = assets.png if block.layout else assets.pdf
+    latex_path = context.assets.latex_path(figure_source)
     latex = formatter(
         path=latex_path,
         caption=block.caption,
@@ -1349,7 +1534,51 @@ def _render_figure(
     return mark_processed(NavigableString(latex))
 
 
-@renders("div", phase=RenderPhase.PRE, priority=32, name="snippet_blocks", nestable=False)
+def _merge_fragment_defaults(
+    overrides: Mapping[str, Any] | None, runtime: TemplateRuntime | None
+) -> dict[str, Any]:
+    """Ensure explicit fragment overrides keep template defaults such as ts-extra."""
+
+    def _as_list(value: Any) -> list[str]:
+        if value is None:
+            return []
+        if isinstance(value, list):
+            return [str(item) for item in value]
+        if isinstance(value, Mapping):
+            return [str(key) for key in value]
+        return [str(value)]
+
+    if not overrides:
+        return {}
+
+    merged: dict[str, Any] = dict(overrides)
+    press_section = merged.get("press") if isinstance(merged.get("press"), Mapping) else None
+
+    provided = merged.get("fragments")
+    if provided is None and isinstance(press_section, Mapping):
+        provided = press_section.get("fragments")
+
+    defaults = _as_list(runtime.extras.get("fragments") if runtime and runtime.extras else [])
+    requested = _as_list(provided)
+
+    if defaults or requested:
+        merged["fragments"] = list(dict.fromkeys([*defaults, *requested]))
+        if isinstance(press_section, Mapping):
+            updated_press = dict(press_section)
+            updated_press.setdefault("fragments", provided)
+            merged["press"] = updated_press
+
+    return merged
+
+
+@renders(
+    "div",
+    "pre",
+    phase=RenderPhase.PRE,
+    priority=32,
+    name="snippet_blocks",
+    nestable=False,
+)
 def render_snippet_block(element: Tag, context: RenderContext) -> None:
     """Convert `.snippet` code fences into rendered figures."""
     document_path = context.runtime.get("document_path")
@@ -1381,7 +1610,7 @@ def rewrite_html_snippets(
 
     soup = BeautifulSoup(html, "html.parser")
     mutated = False
-    for element in soup.find_all("div"):
+    for element in soup.find_all(["div", "pre"]):
         block = _extract_snippet_block(element, host_path=host_path)
         if block is None:
             continue

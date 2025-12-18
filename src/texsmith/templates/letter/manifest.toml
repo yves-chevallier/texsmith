@@ -187,6 +187,8 @@ description = "Enable page numbers."
 
 [latex.template.slots.mainmatter]
 default = true
+base_level = 10
+strip_heading = true
 
 [latex.template.slots.backmatter]
 strip_heading = true
