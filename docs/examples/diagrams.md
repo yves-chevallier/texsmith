@@ -40,6 +40,8 @@ TeXSmith now tries a Playwright-based exporter first (cached under `~/.cache/tex
 
 And the PDF render (click to download):
 
-````md {.snippet data-caption="Download PDF" data-frame="true" data-width="60%" data-cwd="../../examples/diagrams"}
----8<--- "examples/diagrams/diagrams.md"
-````
+```yaml {.snippet caption="Download PDF" width="60%"}
+cwd: ../../examples/diagrams
+sources:
+  - diagrams.md
+```

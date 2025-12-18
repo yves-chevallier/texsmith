@@ -2,8 +2,11 @@
 
 This example shows off a custom poster-ish template with four slots wired through a local template. Front matter steers colors, slot routing, and layout—no LaTeX tweaks needed.
 
-```md {.snippet data-caption="Demo" data-width="60%" data-frame="false" data-cwd="../../examples/colorful"}
---8<--- "examples/colorful/colorful.md"
+```yaml {.snippet caption="Demo" width="60%"}
+cwd: ../../examples/colorful
+sources:
+  - colorful.md
+template: ../../examples/colorful
 ```
 
 The YAML front matter picks the local defined template (`.`), sets the palette, and feeds each slot. Colors live under `colors`, and slot content under `slots`.

@@ -2,8 +2,11 @@
 
 TeXSmith isn’t just for papers and slides -- it can plate up gorgeous recipes straight from structured data. Here’s a French walnut cake expressed as YAML, pushed through a custom `recipe` template. Click the card to grab the PDF.
 
-```yaml {.snippet data-caption="Demo" data-frame="true" data-width="60%" data-template="../../examples/recipe"}
----8<--- "examples/recipe/cake.yml"
+```yaml {.snippet caption="Demo" width="60%"}
+cwd: ../../examples/recipe
+sources:
+  - cake.yml
+template: ../../examples/recipe
 ```
 
 The authoring surface is pure data: **YAML** fields flow into a LaTeX template, no Markdown gymnastics required. Swap the YAML for a DB/API payload and you’ve got a pipeline-ready recipe generator for your site or app.

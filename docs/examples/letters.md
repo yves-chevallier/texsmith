@@ -6,21 +6,36 @@ The letter template is builtin to TeXSmith; to use it, set `-tletter` on the com
 
 === "DIN (Germany)"
 
-    ````md {.snippet data-caption="Download PDF" data-attr-format="din" data-drop-title="true" data-frame="true" data-width="80%" data-cwd="../../examples/letter/"}
-    ---8<--- "examples/letter/letter.md"
-    ````
+    ```yaml {.snippet caption="Download PDF" width="80%"}
+    cwd: ../../examples/letter
+    sources:
+      - letter.md
+    press:
+      format: din
+    drop_title: true
+    ```
 
 === "SN (Switzerland)"
 
-    ````md {.snippet data-caption="Download PDF" data-attr-format="sn" data-drop-title="true" data-frame="true" data-width="80%" data-cwd="../../examples/letter/"}
-    ---8<--- "examples/letter/letter.md"
-    ````
+    ```yaml {.snippet caption="Download PDF" width="80%"}
+    cwd: ../../examples/letter
+    sources:
+      - letter.md
+    press:
+      format: sn
+    drop_title: true
+    ```
 
 === "NF (France)"
 
-    ````md {.snippet data-caption="Download PDF" data-attr-format="nf" data-drop-title="true" data-frame="true" data-width="80%" data-cwd="../../examples/letter/"}
-    ---8<--- "examples/letter/letter.md"
-    ````
+    ```yaml {.snippet caption="Download PDF" width="80%"}
+    cwd: ../../examples/letter
+    sources:
+      - letter.md
+    press:
+      format: nf
+    drop_title: true
+    ```
 
 Here is the source code for the letter example used above:
 

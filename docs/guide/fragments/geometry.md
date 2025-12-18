@@ -85,8 +85,9 @@ press:
 This document demonstrates custom page geometry settings using the geometry fragment.
 ```
 
-```md { .snippet data-template="article" }
+```md {.snippet}
 ---
+template: article
 press:
   paper:
     format: c5
@@ -116,8 +117,9 @@ press:
 $$ E=mc^2 $$
 ```
 
-```md { .snippet data-template="article" }
+```md {.snippet}
 ---
+template: article
 press:
   paper:
     width: 12cm

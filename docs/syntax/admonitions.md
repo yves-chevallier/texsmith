@@ -49,20 +49,32 @@ press:
 
 === "Fancy Admonitions"
 
-    ```md {.snippet data-caption="Demo" data-width="70%" data-attr-callout_style="fancy"}
-    --8<--- "examples/admonition/admonition.md"
+    ```yaml {.snippet caption="Demo" width="70%"}
+    cwd: ../../examples/admonition
+    sources:
+      - admonition.md
+    press:
+      callout_style: fancy
     ```
 
 === "Classic Admonitions"
 
-    ```md {.snippet data-caption="Demo" data-width="70%" data-attr-callout_style="classic"}
-    --8<--- "examples/admonition/admonition.md"
+    ```yaml {.snippet caption="Demo" width="70%"}
+    cwd: ../../examples/admonition
+    sources:
+      - admonition.md
+    press:
+      callout_style: classic
     ```
 
 === "Minimal Admonitions"
 
-    ```md {.snippet data-caption="Demo" data-width="70%" data-attr-callout_style="minimal"}
-    --8<--- "examples/admonition/admonition.md"
+    ```yaml {.snippet caption="Demo" width="70%"}
+    cwd: ../../examples/admonition
+    sources:
+      - admonition.md
+    press:
+      callout_style: minimal
     ```
 
 ## Built-in Admonition Types

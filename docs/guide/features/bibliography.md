@@ -60,7 +60,7 @@ Cheese exhibits unique melting properties [^WADHWANI20111713].
 
 Which renders into:
 
-```md {.snippet data-caption="Demo"}
+```md {.snippet caption="Demo"}
 ---
 bibliography:
   WADHWANI20111713: https://doi.org/10.3168/jds.2010-3952

@@ -8,11 +8,18 @@ from texsmith.adapters.plugins import snippet
 def _build_block(content: str = "print('Hello')") -> snippet.SnippetBlock:
     overrides: dict[str, str] = {}
     digest = snippet._hash_payload(
-        content, overrides, cwd=None, frame=True, template_id=None, layout=None
+        content,
+        overrides,
+        cwd=None,
+        template_id=None,
+        layout=None,
+        sources=[],
+        drop_title=False,
+        suppress_title=True,
     )
     return snippet.SnippetBlock(
         content=content,
-        frame_enabled=True,
+        sources=[],
         layout=None,
         template_id=None,
         cwd=None,
@@ -21,10 +28,6 @@ def _build_block(content: str = "print('Hello')") -> snippet.SnippetBlock:
         figure_width=None,
         template_overrides=overrides,
         digest=digest,
-        border_enabled=True,
-        dogear_enabled=True,
-        transparent_corner=True,
-        bibliography_raw=[],
         bibliography_files=[],
         title_strategy=snippet.TitleStrategy.KEEP,
         suppress_title_metadata=True,
@@ -58,7 +61,6 @@ def test_ensure_snippet_assets_reuses_cached_artifacts(tmp_path, monkeypatch) ->
     assets = snippet.ensure_snippet_assets(
         block,
         output_dir=destination,
-        transparent_corner=False,
     )
 
     assert assets.pdf.read_bytes() == pdf_source.read_bytes()
@@ -96,6 +98,7 @@ def test_cache_store_records_markdown_and_metadata(tmp_path, monkeypatch) -> Non
     assert md_path.exists()
     assert md_path.read_text(encoding="utf-8") == block.content
     assert entry["source"] == str(source_path)
-    assert entry["attributes"]["border"] is True
+    assert entry["attributes"]["figure_width"] is None
+    assert entry["attributes"]["layout"] is None
     assert entry["files"]["pdf"] == snippet.asset_filename(block.digest, ".pdf")
     assert (cache.root / entry["files"]["pdf"]).read_bytes() == pdf_source.read_bytes()

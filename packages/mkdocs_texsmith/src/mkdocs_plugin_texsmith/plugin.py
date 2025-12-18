@@ -266,6 +266,7 @@ class LatexPlugin(BasePlugin):
         rewritten = snippet.rewrite_html_snippets(
             output,
             lambda block: self._build_snippet_urls(page, block),
+            source_path=page.file.abs_src_path,
         )
         return rewritten
 
@@ -1176,20 +1177,12 @@ class LatexPlugin(BasePlugin):
                 "Unable to determine the source path for snippet rendering."
             )
         source_path = Path(abs_src)
-        if block.bibliography_raw:
-            resolve_bibliography = snippet._resolve_bibliography_files  # type: ignore[attr-defined]
-            block.bibliography_files = resolve_bibliography(
-                block.bibliography_raw,
-                block.cwd,
-                source_path,
-            )
         try:
             snippet.ensure_snippet_assets(
                 block,
                 output_dir=dest_dir,
                 source_path=source_path,
                 emitter=emitter,
-                transparent_corner=block.transparent_corner,
             )
         except Exception as exc:  # pragma: no cover - passthrough
             raise PluginError(

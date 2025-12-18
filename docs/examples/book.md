@@ -40,9 +40,14 @@ press:
     preface: Preface
 ```
 
-````md {.snippet data-frame="true" data-template="book" data-layout="4x2"  data-files="book.bib" data-cwd="../../examples/book/"}
----8<--- "examples/book/book.md"
-````
+```yaml {.snippet}
+layout: 4x2
+cwd: ../../examples/book
+sources:
+  - book.md
+  - book.bib
+template: book
+```
 
 The example can independently be built using the CLI on the `examples/book/` folder. The engine can be chosen between `tectonic`, `xelatex` and `lualatex`
 as follows:

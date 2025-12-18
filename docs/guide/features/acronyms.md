@@ -13,7 +13,7 @@ civilian space program.
 *[NASA]: National Aeronautics and Space Administration is responsible for the civilian space program. APOLLO 11 was one of its most famous missions in which humans first landed on the Moon.
 ```
 
-```md {.snippet data-caption="Demo"}
+```md {.snippet caption="Demo"}
 # Acronyms
 
 The National Aeronautics and Space Administration NASA is responsible for the

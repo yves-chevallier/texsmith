@@ -99,8 +99,10 @@ With Tectonic as the default engine, fonts, packages, and dependencies resolve t
 
 Enjoy a fresh PDF at `build/booby.pdf`:
 
-```md {.snippet data-caption="Demo" data-width="60%" data-cwd="../../examples/booby"}
---8<--- "examples/booby/booby.md"
+```yaml {.snippet caption="Demo" width="60%"}
+cwd: ../../examples/booby
+sources:
+  - booby.md
 ```
 
 Peek inside `build/` to find `booby.tex`. Swap `--template` when you want a different LaTeX project layout or polish level:

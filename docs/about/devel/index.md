@@ -4,7 +4,7 @@ Roadmap and development notes for TeXSmith. I keep this file as a running checkl
 
 ## Roadmap
 
-- [ ] Simplify the attributes SSOT for templates and fragments
+- [x] Simplify the attributes SSOT for templates and fragments
 - [ ] Deploy to PyPI
 - [ ] Attribute redundancy (`numbered`, `press.numbered`, etc.)
 - [ ] Refactoring snippets and fix snippet templates
@@ -36,25 +36,72 @@ Roadmap and development notes for TeXSmith. I keep this file as a running checkl
   - [ ] Letterine
   - [ ] Custom variables to insert in a document using moustaches
 
-## Attribute Redundancy
+## Refactoring snippets in documentation
 
-In several places we have redundant attributes that can be specified in multiple ways. For example, the `numbered` attribute can be specified directly on a snippet or fragment, or it can be specified under the `press` namespace as `press.numbered`. We need to standardize this and ensure that the most specific attribute takes precedence.
+Pour l'instant nous avons une syntaxe custom dans la doc utilisant un plugin snippet avec des attributs `data-*` pour transmettre `caption`, `layout`, `files`, etc. Elle repose sur `pymdownx.snippets` pour inclure le contenu d'un fichier dans un autre.
 
-```py
-attr_numbered = (
-        _lookup_bool(attribute_overrides, ("numbered",))
-        or _lookup_bool(attribute_overrides, ("press", "numbered"))
-    )
+Cette solution n'est pas optimale : elle n'est pas très flexible et consiste à insérer le contenu d'un fichier dans un autre. Il serait préférable de revoir l'approche pour utiliser une syntaxe plus simple et plus lisible.
+
+L'alternative proposée serait d'utiliser un yaml pour l'insertion d'un snippet:
+
+```yaml { .snippet width=80% }
+cwd: ../../examples/letter  # D'où exécuter la génération
+sources:  # Liste des fichiers sources comme si donné au CLI (mais on utilise l'API)
+  - letter.md
+press: # Attributs supplémentaires à ajouter au contexte de texsmith
+  format: din
+  frame: true
 ```
 
-The `press` namespace has only one purpose: avoid `markdown` front matter clash with other web static generators which don't like arbitrary keys. When the front-matter is parsed `press` becomes the root (top-level) and some parent level attributes are copied under texsmith attribute namespaces. The copied keys are: `title`, `subtitle`, `author`, `authors`, `date`. Because those are often used in web static generators.
+Le PDF généré est inséré comme image (comme la syntaxe actuelle) avec un lien de téléchargement. Il convient donc aussi de générer une préview PNG et le PDF.
+De la même manière on conserve la possibilité d'ajouter l'attribut layout déjà existant dans la syntaxe actuelle et qui permet ici d'agencer plusieurs pages dans le préview PNG.
 
-1. parent specified keys override `press` keys,
-2. `press` namespace is `chroot` and are copied into the attribute overrides.
-3. Fragments, texmplates and others don't need to look or know about `press` namespace. This will simplify the code without losing any functionality.
-4. The `press` namespace is therefore only seen in the front-matter parser.
+```yaml { .snippet }
+layout: 2x2
+width: 70%
+cwd: ../../examples/paper
+sources:
+  - cheese.md
+  - cheese.bib
+fragments:
+  ts-frame:
+press:
+  frame: true
+```
 
-Can you propose a refactoring plan to simplify this?
+La génération du cadre autour du PNG n'est plus conservée car nous avons récemment ajouté le fragment `ts-frame` qui permet d'encadrer n'importe quel contenu. On peut imaginer aussi la syntaxe suivante:
+
+```md { .snippet }
+---
+width: 70%
+template: snippet
+fragments:
+  ts-frame:
+press:
+  frame: true
+---
+# Section
+
+Some content...
+```
+
+Ou même en utilisant une configuration locale
+
+```md { .snippet config="my-snippet.yml" }
+# Section
+
+Some content...
+```
+
+1. Analyse le problème consulte l'implémentation actuelle et liste les fichiers concernés.
+2. Propose un plan de refactoring pour migrer vers la nouvelle syntaxe.
+3. Implémente les changements nécessaires dans la documentation et le code source.
+4. Vérifie que les tests passent et met à jour les tests obsolète
+5. Ne garde aucun shim ou layer de compatibilité : l'ancienne syntaxe doit être complètement retirée.
+6. Documente la nouvelle syntaxe dans la documentation officielle de TeXSmith.
+7. Vérifie que la génération de snippet fonctionne correctement avec la nouvelle syntaxe, au besoin rajoute un exemple avec mkdocs dans examples/ et appuye toi sur l'exemple mkdocs
+8. Tente de compiler la doc du projet avec uv run mkdocs serve et uv mkdocs build pour vérifier que tout fonctionne correctement.
+9. Lance les tests et le lint avec uv run ruff check . et uv run ruff format .
 
 ## Unified Fences Syntax
 
@@ -104,40 +151,6 @@ many Tectonic warnings like `Unknown feature '` or repeated `Requested font` lin
 otherwise correct. Keep these noted as benign until we wire the log filter above or document a
 flag to silence them.
 
-## Snippets for on doc examples:
-
-We currently use this syntax which is aweful with plenty of parameters. I want to provide an alternative syntax using code fences
-
-Here the current syntax for two examples:
-
-````md {.snippet data-caption="Download PDF" data-attr-format="din" data-drop-title="true" data-frame="true" data-width="80%" data-cwd="../../examples/letter/"}
-;---8<--- "examples/letter/letter.md"
-````
-
-````md {.snippet data-caption="Download PDF" data-frame="true" data-template="article" data-layout="2x2" data-width="70%" data-files="cheese.bib" data-cwd="../../examples/paper/"}
-;---8<--- "examples/paper/cheese.md"
-````
-
-Here the alternative syntax whcih doesn't use the ---8<--- mechanism:
-
-```yaml { .snippet width=80% }
-cwd: ../../examples/letter
-sources:
-  - letter.md
-press:
-  format: din
-  frame: true
-```
-
-```yaml { .snippet width=70% }
-layout: 2x2
-cwd: ../../examples/paper
-sources:
-  - cheese.md
-  - cheese.bib
-press:
-  frame: true
-```
 
 ## Features
 

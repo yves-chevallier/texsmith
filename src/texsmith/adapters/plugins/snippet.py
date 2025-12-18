@@ -16,13 +16,18 @@ from typing import Any
 from bs4 import BeautifulSoup
 from bs4.element import NavigableString, Tag
 from PIL import Image, ImageDraw
+import yaml
 
 from texsmith.adapters.handlers._helpers import (
     coerce_attribute,
     gather_classes,
     mark_processed,
 )
-from texsmith.adapters.markdown import DEFAULT_MARKDOWN_EXTENSIONS, render_markdown
+from texsmith.adapters.markdown import (
+    DEFAULT_MARKDOWN_EXTENSIONS,
+    render_markdown,
+    split_front_matter,
+)
 from texsmith.api.document import Document, DocumentRenderOptions, DocumentSlots, TitleStrategy
 from texsmith.api.pipeline import RenderSettings
 from texsmith.api.templates import TemplateSession
@@ -50,8 +55,8 @@ _log = logging.getLogger(__name__)
 class SnippetBlock:
     """Parsed representation of a snippet fence."""
 
-    content: str
-    frame_enabled: bool
+    content: str | None
+    sources: list[Path]
     layout: tuple[int, int] | None
     template_id: str | None
     cwd: Path | None
@@ -60,10 +65,6 @@ class SnippetBlock:
     figure_width: str | None
     template_overrides: dict[str, Any]
     digest: str
-    border_enabled: bool
-    dogear_enabled: bool
-    transparent_corner: bool
-    bibliography_raw: list[str]
     bibliography_files: list[Path]
     title_strategy: TitleStrategy
     suppress_title_metadata: bool
@@ -138,7 +139,7 @@ class _SnippetCache:
         cached_md = (self.root / asset_filename(digest, ".md")).resolve()
 
         cached_md_path: Path | None = None
-        if block is not None:
+        if block is not None and block.content is not None:
             try:
                 cached_md.write_text(block.content, encoding="utf-8")
                 cached_md_path = cached_md
@@ -151,10 +152,6 @@ class _SnippetCache:
                 "caption": block.caption,
                 "label": block.label,
                 "figure_width": block.figure_width,
-                "border": block.border_enabled,
-                "dogear_enabled": block.dogear_enabled,
-                "transparent_corner": block.transparent_corner,
-                "frame_enabled": block.frame_enabled,
                 "layout": block.layout,
                 "overrides": block.template_overrides,
                 "cwd": str(block.cwd) if block.cwd else None,
@@ -373,18 +370,33 @@ def _resolve_base_dir(block: SnippetBlock, host_path: Path | None) -> Path:
 
 
 def _resolve_template_runtime(
-    block: SnippetBlock, document: Document, base_dir: Path
+    block: SnippetBlock, documents: list[Document], base_dir: Path
 ) -> TemplateRuntime:
     """Select the template runtime from front matter when provided."""
-    front_matter = document.front_matter
     template_id: str | None = block.template_id
-    if isinstance(front_matter, Mapping):
+
+    def _template_from_front_matter(front_matter: Mapping[str, Any]) -> str | None:
         payload = dict(front_matter)
         with contextlib.suppress(PressMetadataError):
             normalise_press_metadata(payload)
         raw = payload.get("template")
         if raw:
-            template_id = str(raw).strip()
+            return str(raw).strip()
+        press_section = payload.get("press")
+        if isinstance(press_section, Mapping):
+            inner = press_section.get("template")
+            if inner:
+                return str(inner).strip()
+        return None
+
+    for document in documents:
+        front_matter = document.front_matter
+        if not isinstance(front_matter, Mapping):
+            continue
+        candidate = _template_from_front_matter(front_matter)
+        if candidate:
+            template_id = candidate
+            break
 
     if not template_id:
         return _resolve_runtime()
@@ -433,19 +445,42 @@ def asset_filename(digest: str, suffix: str) -> str:
 
 def _hash_payload(
     content: str,
-    overrides: dict[str, str],
+    overrides: Mapping[str, Any],
+    *,
     cwd: str | None = None,
-    frame: bool = True,
     template_id: str | None = None,
     layout: tuple[int, int] | None = None,
+    sources: list[Path] | None = None,
+    drop_title: bool = False,
+    suppress_title: bool = True,
 ) -> str:
+    def _hash_file(path: Path) -> str:
+        try:
+            data = path.read_bytes()
+        except OSError:
+            return ""
+        return hashlib.sha256(data).hexdigest()
+
+    def _normalise(value: Any) -> Any:
+        if isinstance(value, Path):
+            return str(value)
+        if isinstance(value, Mapping):
+            return {str(k): _normalise(v) for k, v in value.items()}
+        if isinstance(value, (list, tuple)):
+            return [_normalise(item) for item in value]
+        return value
+
     payload = {
         "content": content,
-        "overrides": overrides,
+        "overrides": _normalise(dict(overrides)),
         "cwd": cwd,
-        "frame": frame,
         "template": template_id,
         "layout": layout,
+        "sources": [
+            {"path": str(path), "sha256": _hash_file(path)} for path in list(sources or [])
+        ],
+        "drop_title": drop_title,
+        "suppress_title": suppress_title,
     }
     encoded = json.dumps(payload, sort_keys=True).encode("utf-8")
     return hashlib.sha256(encoded).hexdigest()
@@ -467,104 +502,105 @@ def _coerce_bool_option(value: Any, default: bool) -> bool:
     return default
 
 
-def _extract_template_overrides(
-    element: Tag, classes: list[str], *, frame_default: bool = True
-) -> tuple[
-    dict[str, Any],
-    str | None,
-    str | None,
-    str | None,
-    str | None,
-    bool,
-    str | None,
-    list[str],
-]:
-    code_element = element.find("code")
-    pre_element = element.find("pre")
-
-    def _attr(name: str) -> Any:
-        for candidate in (element, pre_element, code_element):
-            if candidate is None:
-                continue
-            value = candidate.get(name)
-            if value is not None:
-                return value
-        return None
-
-    overrides: dict[str, Any] = {}
-    caption = coerce_attribute(_attr("data-caption")) or None
-    label = coerce_attribute(_attr("data-label")) or None
-    figure_width = (
-        coerce_attribute(_attr("data-width"))
-        or coerce_attribute(_attr("data-figure-width"))
-        or coerce_attribute(_attr("width"))
-        or None
-    )
-    if figure_width is None:
-        style_attr = coerce_attribute(_attr("style")) or ""
-        if "width" in style_attr:
-            for chunk in style_attr.split(";"):
-                if "width" not in chunk:
-                    continue
-                key, _, value = chunk.partition(":")
-                if key.strip().lower() == "width":
-                    figure_width = value.strip()
-                    break
-    cwd = coerce_attribute(_attr("data-cwd")) or None
-    template_id = coerce_attribute(_attr("data-template")) or None
-    frame_enabled = _coerce_bool_option(_attr("data-frame"), frame_default)
-    layout_literal = coerce_attribute(_attr("data-layout")) or None
-    files_literal = coerce_attribute(_attr("data-files")) or None
-
-    candidate_attrs: list[tuple[str, Any]] = list(element.attrs.items())
-    if pre_element is not None:
-        candidate_attrs.extend(pre_element.attrs.items())
-    if code_element is not None:
-        candidate_attrs.extend(code_element.attrs.items())
-
-    for attr, value in candidate_attrs:
-        if not isinstance(attr, str):
+def _detect_language(element: Tag) -> str | None:
+    """Return the declared language from the fenced block classes."""
+    candidates = [element, element.find("pre"), element.find("code")]
+    for candidate in candidates:
+        if candidate is None:
             continue
-        key = attr.lower()
-        if key.startswith("data-snippet-"):
-            normalised = key[len("data-snippet-") :].strip().replace("-", "_")
-            if not normalised:
-                continue
-            overrides[normalised] = coerce_attribute(value) or ""
-        elif key.startswith("data-attr-"):
-            normalised = key[len("data-attr-") :].strip().replace("-", "_")
-            if not normalised:
-                continue
-            value_norm = coerce_attribute(value) or ""
-            overrides[normalised] = value_norm
-            press_section = overrides.setdefault("press", {})
-            if isinstance(press_section, dict):
-                press_section.setdefault(normalised, value_norm)
-            else:
-                overrides["press"] = {normalised: value_norm}
-            if normalised in {"callout_style", "callouts_style"}:
-                overrides["callout_style"] = value_norm
-
-    if "no-border" in classes and "border" not in overrides:
-        overrides["border"] = False
-
-    for key, default in (("border", True), ("dogear_enabled", True)):
-        if key in overrides:
-            overrides[key] = _coerce_bool_option(overrides[key], default)
-
-    layout = _parse_layout(layout_literal)
-
-    files: list[str] = []
-    if isinstance(files_literal, str) and files_literal.strip():
-        candidates = [chunk.strip() for chunk in files_literal.split(",")]
-        files = [item for item in candidates if item]
-
-    return overrides, caption, label, figure_width, cwd, frame_enabled, template_id, layout, files
+        for cls in gather_classes(candidate.get("class")):
+            if cls.startswith("language-"):
+                return cls[len("language-") :]
+            if cls in {"yaml", "yml", "md", "markdown"}:
+                return cls
+    return None
 
 
-def _extract_snippet_block(
-    element: Tag, host_path: Path | None = None, *, frame_default: bool = True
-) -> SnippetBlock | None:
+def _load_yaml_mapping(payload: str) -> dict[str, Any]:
+    """Parse a YAML string into a mapping, enforcing a dictionary output."""
+    if not payload.strip():
+        return {}
+    try:
+        loaded = yaml.safe_load(payload)
+    except yaml.YAMLError as exc:
+        raise InvalidNodeError(f"Invalid YAML snippet payload: {exc}") from exc
+    if loaded is None:
+        return {}
+    if not isinstance(loaded, Mapping):
+        raise InvalidNodeError("Snippet configuration must be a YAML mapping.")
+    return dict(loaded)
+
+
+def _resolve_layout_value(value: Any) -> tuple[int, int] | None:
+    if isinstance(value, (list, tuple)) and len(value) == 2:
+        try:
+            return (int(value[0]), int(value[1]))
+        except (ValueError, TypeError):
+            return None
+    if isinstance(value, str):
+        return _parse_layout(value)
+    return None
+
+
+def _resolve_base_dir_value(value: str | Path | None, host_path: Path | None) -> Path | None:
+    if value is None:
+        return host_path.parent if host_path is not None else None
+    candidate = Path(value).expanduser()
+    if candidate.is_absolute():
+        return candidate
+    if host_path is not None:
+        try:
+            return (host_path.parent / candidate).resolve()
+        except OSError:
+            return host_path.parent / candidate
+    try:
+        return candidate.resolve()
+    except OSError:
+        return candidate
+
+
+def _resolve_sources(raw_sources: Any, base_dir: Path | None) -> list[Path]:
+    if raw_sources is None:
+        return []
+    if not isinstance(raw_sources, list):
+        raise InvalidNodeError("The 'sources' field must be a list of paths.")
+
+    resolved: list[Path] = []
+    for entry in raw_sources:
+        if entry is None:
+            continue
+        candidate = Path(str(entry))
+        if not candidate.is_absolute():
+            if base_dir is None:
+                raise InvalidNodeError("Relative snippet sources require a host document path.")
+            candidate = base_dir / candidate
+        with contextlib.suppress(OSError):
+            candidate = candidate.resolve()
+        if not candidate.exists():
+            raise InvalidNodeError(f"Snippet source '{candidate}' does not exist.")
+        resolved.append(candidate)
+    return resolved
+
+
+def _merge_press_section(overrides: dict[str, Any], fragments: Any) -> None:
+    if fragments is None:
+        return
+    press_section = overrides.setdefault("press", {})
+    if not isinstance(press_section, dict):
+        overrides["press"] = {"fragments": fragments}
+        return
+    existing = press_section.get("fragments")
+    if existing is None:
+        press_section["fragments"] = fragments
+    elif isinstance(existing, dict) and isinstance(fragments, Mapping):
+        press_section["fragments"] = {**existing, **dict(fragments)}
+    elif isinstance(existing, list) and isinstance(fragments, list):
+        press_section["fragments"] = [*existing, *fragments]
+    else:
+        press_section["fragments"] = fragments
+
+
+def _extract_snippet_block(element: Tag, host_path: Path | None = None) -> SnippetBlock | None:
     classes = gather_classes(element.get("class"))
     if "snippet" not in classes:
         return None
@@ -573,9 +609,7 @@ def _extract_snippet_block(
     code_element = element.find("code")
     if code_element is None:
         raise InvalidNodeError("Snippet block is missing an inner <code> element.")
-    content = code_element.get_text(strip=False)
-    if not content.strip():
-        return None
+    raw_content = code_element.get_text(strip=False)
 
     def _attr(name: str) -> Any:
         for candidate in (element, pre_element, code_element):
@@ -586,60 +620,94 @@ def _extract_snippet_block(
                 return value
         return None
 
-    (
-        overrides,
-        caption,
-        label,
-        figure_width,
-        cwd,
-        frame_enabled,
-        template_id,
-        layout,
-        files,
-    ) = _extract_template_overrides(element, classes, frame_default=frame_default)
-    suppress_title_value = _coerce_bool_option(_attr("data-no-title"), True)
-    drop_title_value = _coerce_bool_option(
-        _attr("data-strip-title") or _attr("data-drop-title"),
-        False,
+    caption = coerce_attribute(_attr("caption")) or None
+    label = coerce_attribute(_attr("label")) or None
+    figure_width = coerce_attribute(_attr("width")) or None
+    layout_literal: Any = coerce_attribute(_attr("layout")) or None
+    config_literal = coerce_attribute(_attr("config")) or None
+
+    config_from_file: dict[str, Any] = {}
+    if config_literal:
+        config_path = Path(config_literal)
+        if not config_path.is_absolute():
+            if host_path is None:
+                raise InvalidNodeError("Relative snippet configuration requires a host document.")
+            config_path = (host_path.parent / config_path).resolve()
+        try:
+            config_payload = config_path.read_text(encoding="utf-8")
+        except OSError as exc:
+            raise InvalidNodeError(
+                f"Unable to read snippet configuration '{config_path}': {exc}"
+            ) from exc
+        config_from_file = _load_yaml_mapping(config_payload)
+
+    language = _detect_language(element)
+    config_from_body: dict[str, Any] = {}
+    inline_content: str | None = None
+    if language in {"yaml", "yml"}:
+        config_from_body = _load_yaml_mapping(raw_content)
+    else:
+        metadata, body = split_front_matter(raw_content)
+        config_from_body = dict(metadata or {})
+        if body.strip():
+            inline_content = body
+
+    merged_config: dict[str, Any] = {**config_from_file, **config_from_body}
+    figure_width = coerce_attribute(merged_config.pop("width", figure_width)) or figure_width
+    caption = coerce_attribute(merged_config.pop("caption", caption)) or caption
+    label = coerce_attribute(merged_config.pop("label", label)) or label
+    layout_literal = merged_config.pop("layout", layout_literal) or layout_literal
+    template_id_raw = merged_config.pop("template", None)
+    template_id = coerce_attribute(template_id_raw) or None
+    cwd_value = merged_config.pop("cwd", None)
+    drop_title_value = _coerce_bool_option(merged_config.pop("drop_title", False), False)
+    suppress_title_value = _coerce_bool_option(
+        merged_config.pop("suppress_title_metadata", merged_config.pop("suppress_title", True)),
+        True,
     )
-    title_strategy = TitleStrategy.DROP if drop_title_value else TitleStrategy.KEEP
 
-    digest_overrides = dict(overrides)
-    digest_overrides["_no_title"] = suppress_title_value
-    digest_overrides["_drop_title"] = drop_title_value
-    if files:
-        digest_overrides["_files"] = [cwd or "", *files]
+    base_dir = _resolve_base_dir_value(cwd_value, host_path)
+    sources = _resolve_sources(merged_config.pop("sources", None), base_dir)
+    bibliography_files = [
+        path for path in sources if path.suffix.lower() in {".bib", ".bibtex", ".ris"}
+    ]
+    if inline_content is None and not sources:
+        return None
 
+    fragments = merged_config.pop("fragments", None)
+    press_overrides = merged_config.pop("press", None)
+    template_overrides: dict[str, Any] = dict(merged_config)
+    if press_overrides is not None:
+        if not isinstance(press_overrides, Mapping):
+            raise InvalidNodeError("The 'press' section must be a mapping.")
+        template_overrides["press"] = dict(press_overrides)
+    _merge_press_section(template_overrides, fragments)
+
+    layout = _resolve_layout_value(layout_literal)
     digest = _hash_payload(
-        content,
-        digest_overrides,
-        cwd=cwd,
-        frame=frame_enabled,
+        inline_content or "",
+        template_overrides,
+        cwd=str(base_dir) if base_dir else None,
         template_id=template_id,
         layout=layout,
+        sources=sources,
+        drop_title=drop_title_value,
+        suppress_title=suppress_title_value,
     )
-    border_enabled = _coerce_bool_option(overrides.get("border"), True)
-    dogear_enabled = _coerce_bool_option(overrides.get("dogear_enabled"), True)
-
-    resolved_files = _resolve_bibliography_files(files, cwd, host_path)
 
     return SnippetBlock(
-        content=content,
-        frame_enabled=frame_enabled,
+        content=inline_content,
+        sources=sources,
         layout=layout,
         template_id=template_id,
-        cwd=Path(cwd).expanduser() if cwd else None,
+        cwd=base_dir,
         caption=caption,
         label=label,
         figure_width=figure_width,
-        template_overrides=overrides,
+        template_overrides=template_overrides,
         digest=digest,
-        border_enabled=border_enabled,
-        dogear_enabled=dogear_enabled,
-        transparent_corner=border_enabled and dogear_enabled,
-        bibliography_raw=files,
-        bibliography_files=resolved_files,
-        title_strategy=title_strategy,
+        bibliography_files=bibliography_files,
+        title_strategy=TitleStrategy.DROP if drop_title_value else TitleStrategy.KEEP,
         suppress_title_metadata=suppress_title_value,
     )
 
@@ -649,21 +717,39 @@ def _build_document(
     *,
     host_dir: Path,
     host_name: str,
+) -> Document | None:
+    if not block.content:
+        return None
+    return _build_document_from_markup(
+        block.content,
+        host_dir / f"{host_name}-{block.asset_basename}.md",
+        base_dir=host_dir,
+        title_strategy=block.title_strategy,
+        suppress_title=block.suppress_title_metadata,
+    )
+
+
+def _build_document_from_markup(
+    content: str,
+    source_path: Path,
+    *,
+    base_dir: Path,
+    title_strategy: TitleStrategy,
+    suppress_title: bool,
 ) -> Document:
     rendered = render_markdown(
-        block.content,
+        content,
         extensions=list(DEFAULT_MARKDOWN_EXTENSIONS),
-        base_path=host_dir,
+        base_path=base_dir,
     )
-    synthetic = host_dir / f"{host_name}-{block.asset_basename}.md"
     options = DocumentRenderOptions(
         base_level=0,
-        title_strategy=block.title_strategy,
+        title_strategy=title_strategy,
         numbered=False,
-        suppress_title_metadata=block.suppress_title_metadata,
+        suppress_title_metadata=suppress_title,
     )
     document = Document(
-        source_path=synthetic,
+        source_path=source_path,
         kind=InputKind.MARKDOWN,
         _html=rendered.html,
         _front_matter=rendered.front_matter,
@@ -672,6 +758,47 @@ def _build_document(
     )
     document._initialise_slots_from_front_matter()  # noqa: SLF001
     return document
+
+
+def _build_documents_from_sources(
+    sources: list[Path],
+    *,
+    title_strategy: TitleStrategy,
+    suppress_title: bool,
+) -> list[Document]:
+    documents: list[Document] = []
+    for path in sources:
+        suffix = path.suffix.lower()
+        if suffix in {".md", ".markdown", ".mkd"}:
+            documents.append(
+                Document.from_markdown(
+                    path,
+                    base_level=0,
+                    title_strategy=title_strategy,
+                    suppress_title=suppress_title,
+                    numbered=False,
+                )
+            )
+            continue
+        if suffix in {".yml", ".yaml"}:
+            try:
+                yaml_content = path.read_text(encoding="utf-8")
+            except OSError as exc:
+                raise InvalidNodeError(f"Unable to read snippet source '{path}': {exc}") from exc
+            documents.append(
+                _build_document_from_markup(
+                    f"---\n{yaml_content}\n---\n",
+                    path,
+                    base_dir=path.parent,
+                    title_strategy=title_strategy,
+                    suppress_title=suppress_title,
+                )
+            )
+            continue
+        raise InvalidNodeError(
+            f"Unsupported snippet source '{path}'. Only Markdown or YAML inputs are allowed."
+        )
+    return documents
 
 
 def _compile_pdf(render_result: Any) -> Path:
@@ -1028,7 +1155,6 @@ def ensure_snippet_assets(
     output_dir: Path,
     source_path: Path | str | None = None,
     emitter: DiagnosticEmitter | None = None,
-    transparent_corner: bool | None = None,
 ) -> _SnippetAssets:
     """Render snippet assets into the provided directory when missing."""
     destination = Path(output_dir).resolve()
@@ -1040,19 +1166,34 @@ def ensure_snippet_assets(
     host_dir = _resolve_base_dir(block, host_path)
     host_name = host_path.stem or "snippet"
 
-    document = _build_document(block, host_dir=host_dir, host_name=host_name)
-    runtime = _resolve_template_runtime(block, document, host_dir)
-    apply_corner_default = (
-        block.transparent_corner if transparent_corner is None else transparent_corner
-    )
-    if block.frame_enabled:
-        apply_corner = False
-    elif runtime.name == "snippet":
-        apply_corner = (
-            apply_corner_default if block.dogear_enabled and block.border_enabled else False
+    documents: list[Document] = []
+    inline_document = _build_document(block, host_dir=host_dir, host_name=host_name)
+    if inline_document is not None:
+        documents.append(inline_document)
+
+    bibliography_files = list(block.bibliography_files)
+    document_sources: list[Path] = []
+    for path in block.sources:
+        suffix = path.suffix.lower()
+        if suffix in {".bib", ".bibtex", ".ris"}:
+            if path not in bibliography_files:
+                bibliography_files.append(path)
+            continue
+        document_sources.append(path)
+
+    if document_sources:
+        documents.extend(
+            _build_documents_from_sources(
+                document_sources,
+                title_strategy=block.title_strategy,
+                suppress_title=block.suppress_title_metadata,
+            )
         )
-    else:
-        apply_corner = False
+
+    if not documents:
+        raise InvalidNodeError("Snippet block is empty; provide inline content or sources.")
+
+    runtime = _resolve_template_runtime(block, documents, host_dir)
 
     caches = _resolve_caches()
     template_version = None
@@ -1063,7 +1204,7 @@ def ensure_snippet_assets(
             template_version = str(version) if version is not None else None
 
     pdf_missing = not pdf_path.exists()
-    png_missing = not png_path.exists() or block.frame_enabled
+    png_missing = not png_path.exists()
     assets = _SnippetAssets(pdf=pdf_path, png=png_path)
 
     def _flush_caches() -> None:
@@ -1109,7 +1250,13 @@ def ensure_snippet_assets(
         _flush_caches()
 
     if not pdf_missing and png_missing:
-        _pdf_to_png(pdf_path, png_path, transparent_corner=apply_corner)
+        _pdf_to_png_grid(
+            pdf_path,
+            png_path,
+            layout=block.layout,
+            transparent_corner=False,
+            spacing=None if block.layout else 0,
+        )
         png_missing = False
         _store_in_caches()
         return assets
@@ -1123,9 +1270,10 @@ def ensure_snippet_assets(
         manifest=False,
     )
     session = TemplateSession(runtime=runtime, settings=settings, emitter=emitter)
-    session.add_document(document)
-    if block.bibliography_files:
-        session.add_bibliography(*block.bibliography_files)
+    for document in documents:
+        session.add_document(document)
+    if bibliography_files:
+        session.add_bibliography(*bibliography_files)
     if block.template_overrides:
         session.update_options(block.template_overrides)
 
@@ -1158,35 +1306,14 @@ def ensure_snippet_assets(
     if block.layout:
         cols, rows = block.layout
         total_cells = max(cols, 1) * max(rows, 1)
-    per_page_frame: Callable[[Image.Image], Image.Image] | None = None
-    if block.frame_enabled and block.border_enabled and total_cells > 1:
-
-        def _frame_page(img: Image.Image) -> Image.Image:
-            return _overlay_dogear_frame(img, dogear_enabled=block.dogear_enabled)
-
-        per_page_frame = _frame_page
-
     _pdf_to_png_grid(
         pdf_path,
         png_path,
         layout=block.layout,
-        transparent_corner=apply_corner,
+        transparent_corner=False,
         spacing=None if total_cells > 1 else 0,
-        decorate_page=per_page_frame,
+        decorate_page=None,
     )
-    needs_global_frame = block.frame_enabled and block.border_enabled and per_page_frame is None
-    if needs_global_frame:
-        try:
-            image = Image.open(png_path)
-        except OSError:
-            pass
-        else:
-            framed = _overlay_dogear_frame(
-                image,
-                dogear_enabled=block.dogear_enabled,
-            )
-            with contextlib.suppress(OSError):
-                framed.save(png_path)
 
     _store_in_caches()
     return assets
@@ -1197,21 +1324,11 @@ def _render_snippet_assets(block: SnippetBlock, context: RenderContext) -> _Snip
     document_path = context.runtime.get("document_path")
     source_dir = context.runtime.get("source_dir")
     host_path = _resolve_host_path(document_path, source_dir)
-    if block.bibliography_raw:
-        try:
-            block.bibliography_files = _resolve_bibliography_files(
-                block.bibliography_raw,
-                block.cwd,
-                host_path,
-            )
-        except Exception:
-            _log.debug("failed to resolve bibliography paths for snippet", exc_info=True)
     return ensure_snippet_assets(
         block,
         output_dir=context.assets.output_root / SNIPPET_DIR,
         source_path=host_path or (context.assets.output_root / "snippet.md"),
         emitter=emitter,
-        transparent_corner=block.transparent_corner,
     )
 
 
@@ -1238,13 +1355,7 @@ def render_snippet_block(element: Tag, context: RenderContext) -> None:
     document_path = context.runtime.get("document_path")
     source_dir = context.runtime.get("source_dir")
     host_path = _resolve_host_path(document_path, source_dir)
-    runtime_frame_default = context.runtime.get("snippet_frame_default")
-    frame_default = (
-        _coerce_bool_option(runtime_frame_default, True)
-        if runtime_frame_default is not None
-        else True
-    )
-    block = _extract_snippet_block(element, host_path=host_path, frame_default=frame_default)
+    block = _extract_snippet_block(element, host_path=host_path)
     if block is None:
         return
 
@@ -1260,15 +1371,18 @@ def render_snippet_block(element: Tag, context: RenderContext) -> None:
 def rewrite_html_snippets(
     html: str,
     resolver: Callable[[SnippetBlock], tuple[str, str]],
+    *,
+    source_path: Path | str | None = None,
 ) -> str:
     """Replace snippet fences in an HTML fragment with linked previews."""
     if "snippet" not in html:
         return html
+    host_path = Path(source_path) if source_path is not None else None
 
     soup = BeautifulSoup(html, "html.parser")
     mutated = False
     for element in soup.find_all("div"):
-        block = _extract_snippet_block(element)
+        block = _extract_snippet_block(element, host_path=host_path)
         if block is None:
             continue
         pdf_url, png_url = resolver(block)

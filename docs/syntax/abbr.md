@@ -18,7 +18,7 @@ The \acrshort{HTML} specification is maintained by the \acrshort{W3C}.
 
 Which displays as:
 
-```md {.snippet data-caption="Demo" data-width="70%"}
+```md {.snippet caption="Demo" width="70%"}
 The HTML specification is maintained by the W3C.
 
 *[HTML]: HyperText Markup Language
