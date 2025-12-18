@@ -152,7 +152,7 @@ response typical of aged dairy matrices.
 To illustrate the relationship between stiffness, temperature, and deformation
 rate, the theoretical expression (Eq. 1) was implemented in **Python** as follows:
 
-``` python linenums="1"
+```python linenums="1"
 import matplotlib.pyplot as plt
 import numpy as np
 import numpy.typing as npt

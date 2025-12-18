@@ -13,9 +13,11 @@ import yaml
 
 
 try:  # Optional dependency guard in case pymdownx is missing in constrained envs
+    import pymdownx.superfences as _superfences
     from pymdownx.superfences import fence_code_format as _fence_code_format
 except Exception:  # pragma: no cover - fallback when extension unavailable
     _fence_code_format = None
+    _superfences = None
 
 
 __all__ = [
@@ -31,6 +33,8 @@ __all__ = [
 
 
 DEFAULT_MARKDOWN_EXTENSIONS = [
+    "pymdownx.highlight",
+    "pymdownx.superfences",
     "abbr",
     "admonition",
     "attr_list",
@@ -56,7 +60,6 @@ DEFAULT_MARKDOWN_EXTENSIONS = [
     "pymdownx.details",
     "pymdownx.emoji",
     "pymdownx.fancylists",
-    "pymdownx.highlight",
     "pymdownx.inlinehilite",
     "pymdownx.keys",
     "pymdownx.magiclink",
@@ -64,7 +67,6 @@ DEFAULT_MARKDOWN_EXTENSIONS = [
     "pymdownx.saneheaders",
     "pymdownx.smartsymbols",
     "pymdownx.snippets",
-    "pymdownx.superfences",
     "pymdownx.tabbed",
     "pymdownx.tasklist",
     "pymdownx.tilde",
@@ -314,9 +316,13 @@ def _build_markdown_processor(
         snippet_config.setdefault("encoding", "utf-8")
 
     try:
-        return markdown.Markdown(extensions=active_extensions, extension_configs=extension_configs)
+        processor = markdown.Markdown(
+            extensions=active_extensions, extension_configs=extension_configs
+        )
     except Exception as exc:  # pragma: no cover - library-controlled
         raise MarkdownConversionError(f"Failed to initialize Markdown processor: {exc}") from exc
+
+    return processor
 
 
 def _normalise_extension_name(value: str | object) -> str:

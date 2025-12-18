@@ -54,7 +54,7 @@ _TRUE_VALUES = {"1", "true", "on", "yes"}
 _FALSE_VALUES = {"0", "false", "off", "no"}
 _SNIPPET_CACHE_NAMESPACE = "snippets"
 _SNIPPET_CACHE_FILENAME = "metadata.json"
-_SNIPPET_CACHE_VERSION = 2
+_SNIPPET_CACHE_VERSION = 3
 _log = logging.getLogger(__name__)
 
 
@@ -739,10 +739,29 @@ def _extract_snippet_block(element: Tag, host_path: Path | None = None) -> Snipp
         for candidate in (element, pre_element, code_element):
             if candidate is None:
                 continue
-            value = candidate.get(name)
-            if value is not None:
-                return value
+            for key in (name, f"data-{name}"):
+                value = candidate.get(key)
+                if value is not None:
+                    return value
         return None
+
+    def _meta_attrs() -> dict[str, str]:
+        raw_meta = _attr("meta") or _attr("data-meta")
+        if not raw_meta or not isinstance(raw_meta, str):
+            return {}
+        result: dict[str, str] = {}
+        import shlex
+
+        try:
+            tokens = shlex.split(raw_meta)
+        except ValueError:
+            tokens = raw_meta.split()
+        for token in tokens:
+            if "=" not in token:
+                continue
+            key, val = token.split("=", 1)
+            result[key.strip()] = val.strip().strip('"').strip("'")
+        return result
 
     caption = coerce_attribute(_attr("caption")) or None
     label = coerce_attribute(_attr("label")) or None
@@ -786,7 +805,12 @@ def _extract_snippet_block(element: Tag, host_path: Path | None = None) -> Snipp
                 inline_content = None
 
     merged_config: dict[str, Any] = {**config_from_file, **config_from_body}
-    figure_width = coerce_attribute(merged_config.pop("width", figure_width)) or figure_width
+    meta_attrs = _meta_attrs()
+    figure_width = (
+        coerce_attribute(merged_config.pop("width", figure_width))
+        or coerce_attribute(meta_attrs.get("width"))
+        or figure_width
+    )
     caption = coerce_attribute(merged_config.pop("caption", caption)) or caption
     label = coerce_attribute(merged_config.pop("label", label)) or label
     layout_literal = merged_config.pop("layout", layout_literal) or layout_literal
@@ -825,6 +849,11 @@ def _extract_snippet_block(element: Tag, host_path: Path | None = None) -> Snipp
     preview_fold_size = None
     if preview_dogear:
         preview_fold_size = _frame_fold_size_px(template_overrides, (0, 0))
+    if inline_content is not None and not sources and template_id is None:
+        template_id = "snippet"
+        preview_dogear = True
+    elif inline_content is None and sources and template_id is None:
+        template_id = "article"
     digest = _hash_payload(
         inline_content or "",
         template_overrides,
@@ -1556,8 +1585,9 @@ def _render_figure(
 ) -> NavigableString:
     template_name = context.runtime.get("figure_template", "figure")
     formatter = getattr(context.formatter, template_name)
-    # Prefer the PNG collage when a layout was requested so multi-page previews are visible.
-    figure_source = assets.png if block.layout else assets.pdf
+    # Prefer the PNG when a layout is requested or a dogear preview is active.
+    use_png = bool(block.layout) or bool(block.preview_dogear)
+    figure_source = assets.png if use_png else assets.pdf
     latex_path = context.assets.latex_path(figure_source)
     latex = formatter(
         path=latex_path,

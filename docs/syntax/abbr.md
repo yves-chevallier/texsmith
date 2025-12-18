@@ -18,7 +18,17 @@ The \acrshort{HTML} specification is maintained by the \acrshort{W3C}.
 
 Which displays as:
 
-```md {.snippet caption="Demo" width="70%"}
+```md {.snippet width="65%"}
+---
+press:
+  paper:
+    format: a5
+    orientation: landscape
+  frame: true
+template: article
+fragments:
+  ts-frame
+---
 The HTML specification is maintained by the W3C.
 
 *[HTML]: HyperText Markup Language

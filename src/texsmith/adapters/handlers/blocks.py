@@ -435,6 +435,7 @@ def render_blockquotes(element: Tag, context: RenderContext) -> None:
 def render_lists(root: Tag, context: RenderContext) -> None:
     """Render ordered and unordered lists."""
     for element in _iter_reversed(root.find_all(["ol", "ul"])):
+        _prepare_rich_text_content(element, context)
         items: list[str] = []
         checkboxes: list[int] = []
 

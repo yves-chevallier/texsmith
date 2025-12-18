@@ -91,7 +91,7 @@ dt {
 
 .md-typeset h1 {
   font-weight: 500;
-  color: var(--md-primary-bg-color);
+  color: var(--md-primary-fg-color);
 }
 
 .md-tabs__item .md-tabs__item--active {

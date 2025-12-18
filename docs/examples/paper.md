@@ -10,7 +10,12 @@ citations, cross-references, and floating figures/tables.
 The documentation preview uses the default A4 portrait layout. Click the image
 to download the PDF.
 
-```yaml {.snippet caption="Download PDF" width="70%"}
+```yaml {.snippet caption="Download PDF"}
+width: 70%
+fragments:
+  ts-frame
+press:
+  frame: true
 layout: 2x2
 cwd: ../../examples/paper
 sources:

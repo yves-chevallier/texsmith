@@ -2,14 +2,21 @@
 
 Test
 
-```yaml {.snippet }
-width: 60%
-cwd: examples/diagrams
-sources:
-  - diagrams.md
+```md {.snippet width="65%"}
+---
+press:
+  paper:
+    format: a5
+    orientation: landscape
+  frame: true
 template: article
 fragments:
   ts-frame
-press: 
-  frame: true
+
+---
+
+The HTML specification is maintained by the W3C.
+
+*[HTML]: HyperText Markup Language
+*[W3C]: World Wide Web Consortium
 ```

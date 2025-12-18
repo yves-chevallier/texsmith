@@ -138,7 +138,6 @@ def render_exercise_details(element: Tag, context: RenderContext) -> None:
     phase=RenderPhase.POST,
     priority=10,
     name="material_epigraphs",
-    nestable=False,
     auto_mark=False,
 )
 def render_epigraph(element: Tag, context: RenderContext) -> None:

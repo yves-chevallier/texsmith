@@ -20,6 +20,7 @@ theme:
     - navigation.expand
     - navigation.sections
     - navigation.footer
+    - navigation.path
     - toc.follow
     - content.code.copy
     - content.code.annotate

@@ -28,6 +28,7 @@ from ..pyxindy import (
     index_command_tokens as pyxindy_index_tokens,
     is_available as pyxindy_available,
 )
+from ..tectonic import select_makeglossaries
 from .latex import (
     LatexLogParser,
     LatexMessage,
@@ -679,6 +680,15 @@ def _glossaries_command_tokens() -> list[str]:
     """Return the preferred makeglossaries command."""
     if pyxindy_available():
         return pyxindy_glossary_tokens()
+
+    helper: Path | None = None
+    try:
+        helper = select_makeglossaries(console=None).path
+    except Exception:
+        helper = None
+
+    if helper and helper.exists():
+        return [str(helper)]
     return ["makeglossaries"]
 
 

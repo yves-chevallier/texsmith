@@ -41,7 +41,7 @@ class MultiCitationExtension(Extension):
         md.preprocessors.register(
             _MultiCitationPreprocessor(),
             "texsmith_multi_citations",
-            priority=29,
+            priority=5,
         )
 
 

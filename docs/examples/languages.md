@@ -10,6 +10,10 @@ cwd: ../../examples/dialects
 sources:
   - dialects.md
 template: article
+fragments:
+  ts-frame
+press:
+  frame: true
 ```
 
 Source:
