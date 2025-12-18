@@ -14,13 +14,16 @@ def _build_block(content: str = "print('Hello')") -> snippet.SnippetBlock:
         template_id=None,
         layout=None,
         sources=[],
+        promote_title=True,
         drop_title=False,
-        suppress_title=True,
+        suppress_title=False,
     )
     return snippet.SnippetBlock(
         content=content,
         sources=[],
         layout=None,
+        preview_dogear=False,
+        preview_fold_size=None,
         template_id=None,
         cwd=None,
         caption=None,
@@ -29,8 +32,9 @@ def _build_block(content: str = "print('Hello')") -> snippet.SnippetBlock:
         template_overrides=overrides,
         digest=digest,
         bibliography_files=[],
-        title_strategy=snippet.TitleStrategy.KEEP,
-        suppress_title_metadata=True,
+        promote_title=True,
+        drop_title=False,
+        suppress_title_metadata=False,
     )
 
 

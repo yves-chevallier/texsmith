@@ -28,7 +28,14 @@ from texsmith.adapters.markdown import (
     render_markdown,
     split_front_matter,
 )
-from texsmith.api.document import Document, DocumentRenderOptions, DocumentSlots, TitleStrategy
+from texsmith.api.document import (
+    Document,
+    DocumentRenderOptions,
+    DocumentSlots,
+    TitleStrategy,
+    _resolve_title_strategy,
+    front_matter_has_title,
+)
 from texsmith.api.pipeline import RenderSettings
 from texsmith.api.templates import TemplateSession
 from texsmith.core.context import RenderContext
@@ -68,7 +75,8 @@ class SnippetBlock:
     template_overrides: dict[str, Any]
     digest: str
     bibliography_files: list[Path]
-    title_strategy: TitleStrategy
+    promote_title: bool
+    drop_title: bool
     suppress_title_metadata: bool
 
     @property
@@ -453,8 +461,9 @@ def _hash_payload(
     template_id: str | None = None,
     layout: tuple[int, int] | None = None,
     sources: list[Path] | None = None,
+    promote_title: bool = True,
     drop_title: bool = False,
-    suppress_title: bool = True,
+    suppress_title: bool = False,
     transparent_corner: bool = False,
     fold_size: float | None = None,
 ) -> str:
@@ -483,6 +492,7 @@ def _hash_payload(
         "sources": [
             {"path": str(path), "sha256": _hash_file(path)} for path in list(sources or [])
         ],
+        "promote_title": promote_title,
         "drop_title": drop_title,
         "suppress_title": suppress_title,
         "transparent_corner": transparent_corner,
@@ -784,9 +794,13 @@ def _extract_snippet_block(element: Tag, host_path: Path | None = None) -> Snipp
     template_id = coerce_attribute(template_id_raw) or None
     cwd_value = merged_config.pop("cwd", None)
     drop_title_value = _coerce_bool_option(merged_config.pop("drop_title", False), False)
-    suppress_title_value = _coerce_bool_option(
-        merged_config.pop("suppress_title_metadata", merged_config.pop("suppress_title", True)),
+    promote_title_value = _coerce_bool_option(
+        merged_config.pop("promote_title", None),
         True,
+    )
+    suppress_title_value = _coerce_bool_option(
+        merged_config.pop("suppress_title_metadata", merged_config.pop("suppress_title", None)),
+        False,
     )
 
     base_dir = _resolve_base_dir_value(cwd_value, host_path)
@@ -818,6 +832,7 @@ def _extract_snippet_block(element: Tag, host_path: Path | None = None) -> Snipp
         template_id=template_id,
         layout=layout,
         sources=sources,
+        promote_title=promote_title_value,
         drop_title=drop_title_value,
         suppress_title=suppress_title_value,
         transparent_corner=preview_dogear,
@@ -838,7 +853,8 @@ def _extract_snippet_block(element: Tag, host_path: Path | None = None) -> Snipp
         template_overrides=template_overrides,
         digest=digest,
         bibliography_files=bibliography_files,
-        title_strategy=TitleStrategy.DROP if drop_title_value else TitleStrategy.KEEP,
+        promote_title=promote_title_value,
+        drop_title=drop_title_value,
         suppress_title_metadata=suppress_title_value,
     )
 
@@ -855,7 +871,8 @@ def _build_document(
         block.content,
         host_dir / f"{host_name}-{block.asset_basename}.md",
         base_dir=host_dir,
-        title_strategy=block.title_strategy,
+        promote_title=block.promote_title,
+        drop_title=block.drop_title,
         suppress_title=block.suppress_title_metadata,
     )
 
@@ -865,13 +882,20 @@ def _build_document_from_markup(
     source_path: Path,
     *,
     base_dir: Path,
-    title_strategy: TitleStrategy,
+    promote_title: bool,
+    drop_title: bool,
     suppress_title: bool,
 ) -> Document:
     rendered = render_markdown(
         content,
         extensions=list(DEFAULT_MARKDOWN_EXTENSIONS),
         base_path=base_dir,
+    )
+    title_strategy = _resolve_title_strategy(
+        explicit=TitleStrategy.DROP if drop_title else None,
+        promote_title=promote_title,
+        strip_heading=drop_title,
+        has_declared_title=front_matter_has_title(rendered.front_matter),
     )
     options = DocumentRenderOptions(
         base_level=0,
@@ -895,7 +919,8 @@ def _build_document_from_yaml(
     content: str,
     source_path: Path,
     *,
-    title_strategy: TitleStrategy,
+    promote_title: bool,
+    drop_title: bool,
     suppress_title: bool,
 ) -> Document:
     """Create a Document using YAML front matter only (no body)."""
@@ -912,6 +937,12 @@ def _build_document_from_yaml(
         raise InvalidNodeError(
             f"Snippet source '{source_path}' must contain a YAML mapping, got {type(payload)}."
         )
+    title_strategy = _resolve_title_strategy(
+        explicit=TitleStrategy.DROP if drop_title else None,
+        promote_title=promote_title,
+        strip_heading=drop_title,
+        has_declared_title=front_matter_has_title(payload),
+    )
     options = DocumentRenderOptions(
         base_level=0,
         title_strategy=title_strategy,
@@ -933,7 +964,8 @@ def _build_document_from_yaml(
 def _build_documents_from_sources(
     sources: list[Path],
     *,
-    title_strategy: TitleStrategy,
+    promote_title: bool,
+    drop_title: bool,
     suppress_title: bool,
 ) -> list[Document]:
     documents: list[Document] = []
@@ -944,7 +976,9 @@ def _build_documents_from_sources(
                 Document.from_markdown(
                     path,
                     base_level=0,
-                    title_strategy=title_strategy,
+                    title_strategy=None,
+                    promote_title=promote_title,
+                    strip_heading=drop_title,
                     suppress_title=suppress_title,
                     numbered=False,
                 )
@@ -959,7 +993,8 @@ def _build_documents_from_sources(
                 _build_document_from_yaml(
                     yaml_content,
                     path,
-                    title_strategy=title_strategy,
+                    promote_title=promote_title,
+                    drop_title=drop_title,
                     suppress_title=suppress_title,
                 )
             )
@@ -1358,7 +1393,8 @@ def ensure_snippet_assets(
         documents.extend(
             _build_documents_from_sources(
                 document_sources,
-                title_strategy=block.title_strategy,
+                promote_title=block.promote_title,
+                drop_title=block.drop_title,
                 suppress_title=block.suppress_title_metadata,
             )
         )
