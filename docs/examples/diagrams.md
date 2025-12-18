@@ -40,8 +40,14 @@ TeXSmith now tries a Playwright-based exporter first (cached under `~/.cache/tex
 
 And the PDF render (click to download):
 
-```yaml {.snippet caption="Download PDF" width="60%"}
+```yaml {.snippet }
+width: 60%
 cwd: ../../examples/diagrams
 sources:
   - diagrams.md
+template: article
+fragments:
+  ts-frame
+press: 
+  frame: true
 ```

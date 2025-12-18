@@ -1,10 +1,15 @@
-# Colorful Squares
+# Snippet
 
-This example shows off a custom poster-ish template with four slots wired through a local template. Front matter steers colors, slot routing, and layout—no LaTeX tweaks needed.
+Test
 
-```yaml {.snippet caption="Demo" width="60%"}
-cwd: examples/recipe
+```yaml {.snippet }
+width: 60%
+cwd: examples/diagrams
 sources:
-  - cake.yml
-template: examples/recipe
+  - diagrams.md
+template: article
+fragments:
+  ts-frame
+press: 
+  frame: true
 ```

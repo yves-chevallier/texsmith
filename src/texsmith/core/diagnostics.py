@@ -87,7 +87,7 @@ def format_event_message(name: str, payload: Mapping[str, Any]) -> str | None:
         if suffix_hint:
             details.append(f"suffix={suffix_hint}")
         suffix = f" ({', '.join(details)})" if details else ""
-        return f"Fetching remote image: {url}{suffix}"
+        return f"Fetching: {url}{suffix}"
 
     if name == "asset_fetch_cached":
         url = data.get("url") or "<unknown>"
