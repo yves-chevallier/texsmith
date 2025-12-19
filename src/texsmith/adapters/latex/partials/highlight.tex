@@ -1,1 +1,25 @@
-\hl{\VAR{text}}
+\ifXeTeX
+  % soul breaks with ucharclasses on XeTeX: fall back to simple colored text.
+  \providecommand{\texsmithHighlight}[1]{\textcolor{yellow}{#1}}
+  \providecommand{\hl}[1]{\textcolor{yellow}{#1}}
+\else
+  \ifLuaTeX
+    \RequirePackage{lua-ul}
+    \providecommand{\texsmithHighlight}[1]{%
+      \begingroup
+      \setulcolor{yellow}%
+      \ul{#1}%
+      \endgroup
+    }
+    \providecommand{\hl}[1]{\texsmithHighlight{#1}}
+  \else
+    \providecommand{\texsmithHighlight}[1]{%
+      \begingroup
+      \setlength{\fboxsep}{0.8pt}%
+      \colorbox{yellow}{#1}%
+      \endgroup
+    }
+  \fi
+\fi
+
+\texsmithHighlight{\VAR{text}}

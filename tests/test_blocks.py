@@ -159,7 +159,7 @@ def test_horizontal_rule_removed(renderer: LaTeXRenderer) -> None:
     latex = renderer.render(html)
     assert "Before" in latex
     assert "After" in latex
-    assert "\\rule{\\textwidth}{0.4pt}" in latex
+    assert "\\rule{\\linewidth}{0.4pt}" in latex
 
 
 def test_tabbed_content_rendering(renderer: LaTeXRenderer) -> None:
@@ -245,7 +245,7 @@ def test_blockquote_callout_transformed(renderer: LaTeXRenderer) -> None:
     """
     latex = renderer.render(html)
     assert "\\begin{callout}[callout info]" in latex
-    assert "\\texttt{uv~tool~install~texsmith}" in latex
+    assert "\\texttt{uv tool install texsmith}" in latex
 
 
 def test_code_block_with_paragraph_keyword_not_mermaid(renderer: LaTeXRenderer) -> None:

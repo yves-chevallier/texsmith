@@ -61,7 +61,7 @@ def test_keyboard_shortcut_rendering(renderer: LaTeXRenderer) -> None:
 def test_mark_tag_converted(renderer: LaTeXRenderer) -> None:
     html = "<p><mark>Important</mark></p>"
     latex = renderer.render(html)
-    assert "\\hl{Important}" in latex
+    assert "\\texsmithHighlight{Important}" in latex
 
 
 def test_latex_text_span_converted(renderer: LaTeXRenderer) -> None:

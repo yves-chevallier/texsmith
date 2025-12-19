@@ -1585,9 +1585,8 @@ def _render_figure(
 ) -> NavigableString:
     template_name = context.runtime.get("figure_template", "figure")
     formatter = getattr(context.formatter, template_name)
-    # Prefer the PNG when a layout is requested or a dogear preview is active.
-    use_png = bool(block.layout) or bool(block.preview_dogear)
-    figure_source = assets.png if use_png else assets.pdf
+    # Prefer PDF for LaTeX; PNGs are optional previews and may be missing.
+    figure_source = assets.pdf
     latex_path = context.assets.latex_path(figure_source)
     latex = formatter(
         path=latex_path,

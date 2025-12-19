@@ -67,6 +67,8 @@ def _collect_packages(context: Mapping[str, object]) -> list[tuple[str, str | No
     content = "\n".join(combined_strings)
     packages: list[tuple[str, str | None]] = []
 
+    engine = str(getattr(context, "get", lambda *_: None)("latex_engine") or "").lower()
+
     def _maybe_add(condition: bool, name: str, options: str | None = None) -> None:
         if condition and (name, options) not in packages:
             packages.append((name, options))
@@ -83,7 +85,11 @@ def _collect_packages(context: Mapping[str, object]) -> list[tuple[str, str | No
     lowered = content.lower()
     _maybe_add("\\nohyphens" in content or "\\nohyphenation" in content, "hyphenat", "htt")
     _maybe_add("\\sout{" in content, "ulem", "normalem")
-    _maybe_add("\\hl{" in content, "soul", None)
+    if "\\hl{" in content:
+        if engine == "lualatex":
+            _maybe_add(True, "lua-ul", None)
+        elif engine != "xelatex":
+            _maybe_add(True, "soul", None)
     _maybe_add("\\progressbar" in content, "progressbar", None)
     _maybe_add(
         "\\enquote{" in content

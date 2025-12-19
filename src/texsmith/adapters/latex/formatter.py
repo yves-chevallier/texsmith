@@ -137,9 +137,8 @@ class LaTeXFormatter:
 
     def handle_codeinlinett(self, text: str) -> str:
         """Render plain inline code inside \\texttt."""
-        escaped = escape_latex_chars(text, legacy_accents=self.legacy_latex_accents).replace(
-            " ", "~"
-        )
+        escaped = escape_latex_chars(text, legacy_accents=self.legacy_latex_accents)
+        escaped = escaped.replace("-", "-\\allowbreak{}")
         return self._get_template("codeinlinett").render(text=escaped)
 
     def handle_codeblock(
