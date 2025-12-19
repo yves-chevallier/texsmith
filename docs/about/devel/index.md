@@ -6,6 +6,7 @@ Roadmap and development notes for TeXSmith. I keep this file as a running checkl
 
 - [x] Simplify the attributes SSOT for templates and fragments
 - [ ] Deploy to PyPI
+- [ ] WARNING -  Unresolved mustache `{{callouts.style}}` in template attributes; leaving placeholder as-is.
 - [ ] Attribute redundancy (`numbered`, `press.numbered`, etc.)
 - [ ] Refactoring snippets and fix snippet templates
 - [ ] Font: mono fallback for missing characters
