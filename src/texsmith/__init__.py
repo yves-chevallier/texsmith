@@ -53,6 +53,7 @@ from texsmith.core.user_dir import (
     user_dir_context,
 )
 
+
 try:
     __version__ = _pkg_version("texsmith")
 except PackageNotFoundError:

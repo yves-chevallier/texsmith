@@ -1118,7 +1118,6 @@ wheels = [
 
 [[package]]
 name = "mkdocs-texsmith"
-version = "0.1.0"
 source = { editable = "packages/mkdocs_texsmith" }
 dependencies = [
     { name = "texsmith" },
