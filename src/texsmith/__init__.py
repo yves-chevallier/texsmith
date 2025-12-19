@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from importlib.metadata import PackageNotFoundError, version as _pkg_version
+
 from texsmith import _alias as _legacy_aliases
 from texsmith.api import (
     ConversionBundle,
@@ -51,6 +53,10 @@ from texsmith.core.user_dir import (
     user_dir_context,
 )
 
+try:
+    __version__ = _pkg_version("texsmith")
+except PackageNotFoundError:
+    __version__ = "0.0.0"
 
 __all__ = [
     "DEFAULT_TEMPLATE_LANGUAGE",
@@ -83,6 +89,7 @@ __all__ = [
     "TexsmithUserDir",
     "TitleStrategy",
     "WrappableTemplate",
+    "__version__",
     "bibliography_data_from_string",
     "build_template_overrides",
     "classify_input_source",
