@@ -1,22 +1,59 @@
-# Snippet
+# Test Snippet
 
-Test
+## Bibliography caption
 
-```md {.snippet width="65%"}
+```md {.snippet caption="Demo" width="70%"}
 ---
+suppress_title_metadata: true
+press:
+  template: article
+  paper:
+    width: 170mm
+    height: 90mm
+    orientation: landscape
+bibliography:
+  WADHWANI20111713: https://doi.org/10.3168/jds.2010-3952
+fragments:
+  ts-frame:
+frame: true
+---
+# Citation Demo
+
+Cheese exhibits unique melting properties [^WADHWANI20111713].
+```
+
+## Watermark
+
+```md {.snippet}
+---
+template: article
 press:
   paper:
-    format: a5
+    format: c5
     orientation: landscape
-  frame: true
-template: article
+    frame: true
+    margin:
+      left: 3cm
+      bottom: 5
+    watermark: "ENVELOPE"
 fragments:
-  ts-frame
-
+  ts-frame:
+frame: true
 ---
+# Custom Geometry Example
 
-The HTML specification is maintained by the W3C.
+This document demonstrates custom page geometry settings using the geometry fragment.
+```
 
-*[HTML]: HyperText Markup Language
-*[W3C]: World Wide Web Consortium
+## Admonitions
+
+```yaml {.snippet caption="Demo" width="70%"}
+cwd: examples/admonition
+sources:
+  - admonition.md
+press:
+  callout_style: fancy
+fragments:
+  ts-frame:
+frame: true
 ```

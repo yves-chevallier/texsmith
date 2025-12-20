@@ -54,6 +54,7 @@ press:
     sources:
       - admonition.md
     press:
+      template: article
       callout_style: fancy
     ```
 
@@ -64,6 +65,7 @@ press:
     sources:
       - admonition.md
     press:
+      template: article
       callout_style: classic
     ```
 
@@ -74,6 +76,7 @@ press:
     sources:
       - admonition.md
     press:
+      template: article
       callout_style: minimal
     ```
 

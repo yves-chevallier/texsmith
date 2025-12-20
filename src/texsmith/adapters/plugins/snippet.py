@@ -8,6 +8,7 @@ from dataclasses import dataclass
 import hashlib
 import json
 import logging
+import os
 from pathlib import Path
 import shutil
 import tempfile
@@ -56,6 +57,7 @@ _SNIPPET_CACHE_NAMESPACE = "snippets"
 _SNIPPET_CACHE_FILENAME = "metadata.json"
 _SNIPPET_CACHE_VERSION = 3
 _log = logging.getLogger(__name__)
+_SNIPPET_DUMP_ENV = "TEXSMITH_SNIPPET_DUMP_DIR"
 
 
 @dataclass(slots=True)
@@ -63,6 +65,7 @@ class SnippetBlock:
     """Parsed representation of a snippet fence."""
 
     content: str | None
+    front_matter: dict[str, Any]
     sources: list[Path]
     layout: tuple[int, int] | None
     preview_dogear: bool
@@ -448,6 +451,15 @@ def _resolve_emitter(context: RenderContext) -> DiagnosticEmitter | None:
     return None
 
 
+def _resolve_snippet_dump_dir() -> Path | None:
+    value = os.environ.get(_SNIPPET_DUMP_ENV, "").strip()
+    if not value:
+        return None
+    path = Path(value).expanduser()
+    path.mkdir(parents=True, exist_ok=True)
+    return path
+
+
 def asset_filename(digest: str, suffix: str) -> str:
     """Return the deterministic filename for a snippet artefact."""
     return f"{_SNIPPET_PREFIX}{digest}{suffix}"
@@ -786,12 +798,15 @@ def _extract_snippet_block(element: Tag, host_path: Path | None = None) -> Snipp
 
     language = _detect_language(element)
     config_from_body: dict[str, Any] = {}
+    document_front_matter: dict[str, Any] = {}
     inline_content: str | None = None
     if language in {"yaml", "yml"}:
         config_from_body = _load_yaml_mapping(raw_content)
     else:
         metadata, body = split_front_matter(raw_content)
         config_from_body = dict(metadata or {})
+        if "bibliography" in config_from_body:
+            document_front_matter = {"bibliography": config_from_body["bibliography"]}
         if body.strip():
             inline_content = body
         if not config_from_body and inline_content is not None:
@@ -870,6 +885,7 @@ def _extract_snippet_block(element: Tag, host_path: Path | None = None) -> Snipp
 
     return SnippetBlock(
         content=inline_content,
+        front_matter=document_front_matter,
         sources=sources,
         layout=layout,
         preview_dogear=preview_dogear,
@@ -903,6 +919,7 @@ def _build_document(
         promote_title=block.promote_title,
         drop_title=block.drop_title,
         suppress_title=block.suppress_title_metadata,
+        front_matter=block.front_matter,
     )
 
 
@@ -914,6 +931,7 @@ def _build_document_from_markup(
     promote_title: bool,
     drop_title: bool,
     suppress_title: bool,
+    front_matter: Mapping[str, Any] | None = None,
 ) -> Document:
     rendered = render_markdown(
         content,
@@ -932,11 +950,14 @@ def _build_document_from_markup(
         numbered=False,
         suppress_title_metadata=suppress_title,
     )
+    merged_front_matter = dict(rendered.front_matter)
+    if front_matter:
+        merged_front_matter.update(front_matter)
     document = Document(
         source_path=source_path,
         kind=InputKind.MARKDOWN,
         _html=rendered.html,
-        _front_matter=rendered.front_matter,
+        _front_matter=merged_front_matter,
         options=options,
         slots=DocumentSlots(),
     )
@@ -1547,6 +1568,12 @@ def ensure_snippet_assets(
             raise exc.__class__(f"{exc} (debug: {debug_dir})") from exc
         raise
     else:
+        dump_dir = _resolve_snippet_dump_dir()
+        if dump_dir is not None:
+            target_dir = dump_dir / block.asset_basename
+            if target_dir.exists():
+                shutil.rmtree(target_dir, ignore_errors=True)
+            shutil.copytree(work_dir, target_dir, dirs_exist_ok=True)
         shutil.rmtree(work_dir, ignore_errors=True)
 
     total_cells = 1

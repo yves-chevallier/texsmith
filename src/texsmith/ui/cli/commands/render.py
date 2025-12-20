@@ -472,6 +472,15 @@ def render(
     markdown_extensions: MarkdownExtensionsOption = None,
     disable_markdown_extensions: DisableMarkdownExtensionsOption = None,
     open_log: OpenLogOption = False,
+    snippet_dump_dir: Annotated[
+        Path | None,
+        typer.Option(
+            "--dump-snippets",
+            metavar="DIR",
+            help="Copy snippet render sources (tex, aux files) into DIR for inspection.",
+            rich_help_panel=DIAGNOSTICS_PANEL,
+        ),
+    ] = None,
     isolate_cache: Annotated[
         bool,
         typer.Option(
@@ -517,6 +526,9 @@ def render(
 
     if typer_ctx is not None and typer_ctx.resilient_parsing:
         return
+
+    if snippet_dump_dir is not None:
+        os.environ["TEXSMITH_SNIPPET_DUMP_DIR"] = str(snippet_dump_dir)
 
     if list_extensions:
         for extension in DEFAULT_MARKDOWN_EXTENSIONS:

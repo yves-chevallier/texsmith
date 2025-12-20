@@ -20,6 +20,7 @@ def _build_block(content: str = "print('Hello')") -> snippet.SnippetBlock:
     )
     return snippet.SnippetBlock(
         content=content,
+        front_matter={},
         sources=[],
         layout=None,
         preview_dogear=False,

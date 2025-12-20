@@ -248,7 +248,7 @@ class TemplateSession:
             rendered = renderer.render(
                 fragments,
                 output_dir=output_dir,
-                overrides=option_overrides or None,
+                overrides=None,
                 copy_assets=self.settings.copy_assets,
                 embed_fragments=embed_fragments,
             )

@@ -52,6 +52,71 @@ _DOI_SUPPORT: dict[str, Any] | None = None
 DoiBibliographyFetcher: type[Any] | None = None
 
 
+_MUSTACHE_SKIP_TAGS = {"code", "pre", "script", "style"}
+
+
+def _resolve_callout_style(*contexts: Mapping[str, Any] | None) -> str | None:
+    for context in contexts:
+        if not isinstance(context, Mapping):
+            continue
+        callouts = context.get("callouts")
+        if isinstance(callouts, Mapping):
+            style = callouts.get("style")
+            if isinstance(style, str) and style.strip():
+                return style.strip()
+        press_section = context.get("press")
+        if isinstance(press_section, Mapping):
+            press_callouts = press_section.get("callouts")
+            if isinstance(press_callouts, Mapping):
+                style = press_callouts.get("style")
+                if isinstance(style, str) and style.strip():
+                    return style.strip()
+            for key in ("callout_style", "callouts_style"):
+                style = press_section.get(key)
+                if isinstance(style, str) and style.strip():
+                    return style.strip()
+        for key in ("callout_style", "callouts_style"):
+            style = context.get(key)
+            if isinstance(style, str) and style.strip():
+                return style.strip()
+    return None
+
+
+def _build_mustache_defaults(*contexts: Mapping[str, Any] | None) -> dict[str, Any]:
+    defaults: dict[str, Any] = {}
+    callout_style = _resolve_callout_style(*contexts) or "fancy"
+    defaults["callouts"] = {"style": callout_style}
+    return defaults
+
+
+def _replace_mustaches_in_html(
+    html: str,
+    contexts: tuple[Mapping[str, Any], Mapping[str, Any]],
+    *,
+    emitter: DiagnosticEmitter,
+    source: str,
+) -> str:
+    if "{{" not in html:
+        return html
+
+    soup = BeautifulSoup(html, "html.parser")
+    for node in soup.find_all(string=True):
+        if not isinstance(node, NavigableString):
+            continue
+        if node.parent and node.parent.name in _MUSTACHE_SKIP_TAGS:
+            continue
+        if node.find_parent(_MUSTACHE_SKIP_TAGS):
+            continue
+        raw = str(node)
+        if "{{" not in raw:
+            continue
+        replaced = replace_mustaches(raw, contexts, emitter=emitter, source=source)
+        if replaced != raw:
+            node.replace_with(replaced)
+
+    return str(soup)
+
+
 @dataclass(slots=True)
 class SlotFragment:
     """HTML fragment mapped to a template slot with position metadata."""
@@ -158,7 +223,8 @@ def build_binder_context(
     template_overrides.setdefault("source_dir", str(document_context.source_path.parent))
     template_overrides["output_dir"] = str(output_dir)
 
-    raw_contexts = (template_overrides, document_context.front_matter)
+    mustache_defaults = _build_mustache_defaults(template_overrides, document_context.front_matter)
+    raw_contexts = (template_overrides, document_context.front_matter, mustache_defaults)
     template_overrides = replace_mustaches_in_structure(
         template_overrides, raw_contexts, emitter=emitter, source="template attributes"
     )
@@ -170,7 +236,7 @@ def build_binder_context(
     )
     merged_contexts = (template_overrides, document_context.front_matter)
     if isinstance(document_context.html, str):
-        document_context.html = replace_mustaches(
+        document_context.html = _replace_mustaches_in_html(
             document_context.html,
             merged_contexts,
             emitter=emitter,
