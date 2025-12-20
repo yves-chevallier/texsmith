@@ -169,6 +169,16 @@ jobs:
           name: texsmith-release-assets
           path: .
 
+      # Place artifacts at repository root where publish steps expect them
+      - name: Unpack release artifacts
+        run: |
+          set -euo pipefail
+          if [ -d texsmith-release-assets ]; then
+            shopt -s dotglob
+            mv texsmith-release-assets/* .
+            rmdir texsmith-release-assets
+          fi
+
       # Install uv for deploying the docs
       - name: Install uv
         uses: astral-sh/setup-uv@v7
