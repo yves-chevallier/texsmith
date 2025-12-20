@@ -1,0 +1,104 @@
+:root {
+  --md-code-font: "Noto Sans Mono", monospace;
+}
+
+/* [data-md-color-scheme="slate"] {
+  --md-typeset-a-color: #ffd986;
+  --md-typeset-a-color--hover: #ffdcb3;
+} */
+
+.md-typeset code {
+  line-height: 1.25;
+}
+
+/* Reduce size of code copy button to better fit the code font size */
+.md-code__button {
+  font-size: 0.8em;
+}
+
+/* Adjust the size of view/edit icons (eye/pencil)
+   Default value is too big, it is not elegant
+*/
+.md-content__button svg {
+  width: 18px;
+  padding-top: 9px;
+}
+
+
+.md-typeset .headerlink {
+  font-size: 0.7em;
+  line-height: 1;
+  vertical-align: middle;
+  top: -0.1em;
+  position: relative;
+}
+
+.md-typeset p,
+article {
+  hyphens: auto;
+  text-align: justify;
+  line-height: 1.7;
+  text-align: justify;
+  hyphens: auto;
+}
+
+
+/*
+.md-typeset h1 {
+  margin-top: 1em;
+  font-weight: 400;
+}
+
+.md-typeset h2,
+.md-typeset h3 {
+  font-weight: 600;
+  color: var(--md-default-fg-color--light);
+} */
+
+.mermaid {
+  text-align: center;
+}
+
+a > img,
+p > img {
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* Pad snippet preview images so they don't hug the callout frame */
+img.ts-snippet {
+  padding: 0.5em;
+}
+
+.texsmith-smallcaps {
+  font-variant: small-caps;
+  letter-spacing: 0.04em;
+}
+
+dt {
+  font-weight: 600;
+}
+
+
+.md-container > .md-tabs {
+    border-bottom: 1px solid #4a4a4a;
+}
+
+.md-search > .md-search__input {
+    border-radius: 1em;
+}
+
+.md-typeset h1 {
+  font-weight: 500;
+  color: var(--md-primary-fg-color);
+}
+
+.md-tabs__item .md-tabs__item--active {
+  border-bottom: 1px solid white;
+}
+
+/* .md-nav__list > li .md-nav__item:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  border-radius: 1em;
+} */
