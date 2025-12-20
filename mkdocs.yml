@@ -45,7 +45,8 @@ theme:
     repo: fontawesome/brands/github
 plugins:
   - search
-  - mike
+  - mike:
+      alias_type: redirect
   - awesome-nav
   - autorefs:
       resolve_closest: true
