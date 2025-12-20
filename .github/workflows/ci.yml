@@ -179,6 +179,18 @@ jobs:
             rmdir texsmith-release-assets
           fi
 
+      # Ensure expected paths exist for publish steps (artifact layout may vary)
+      - name: Normalize artifact paths
+        run: |
+          set -euo pipefail
+          mkdir -p packages/mkdocs_texsmith/dist
+          shopt -s nullglob
+          # If plugin dists landed at repo root or under dist/, move them into the expected folder.
+          for f in mkdocs_texsmith-* mkdocs-texsmith-* dist/mkdocs_texsmith-* dist/mkdocs-texsmith-*; do
+            [ -e "$f" ] || continue
+            dest="packages/mkdocs_texsmith/dist/$(basename "$f")"
+            mv "$f" "$dest"
+          done
       # Install uv for deploying the docs
       - name: Install uv
         uses: astral-sh/setup-uv@v7
