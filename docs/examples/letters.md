@@ -13,11 +13,10 @@ The letter template is builtin to TeXSmith; to use it, set `-tletter` on the com
       - letter.md
     press:
       format: din
+      frame: true
     drop_title: true
     fragments:
         ts-frame
-    press:
-    frame: true
     ```
 
 === "SN (Switzerland)"
@@ -29,11 +28,10 @@ The letter template is builtin to TeXSmith; to use it, set `-tletter` on the com
       - letter.md
     press:
       format: sn
+      frame: true
     drop_title: true
     fragments:
         ts-frame
-    press:
-    frame: true
     ```
 
 === "NF (France)"
@@ -45,11 +43,10 @@ The letter template is builtin to TeXSmith; to use it, set `-tletter` on the com
       - letter.md
     press:
       format: nf
+      frame: true
     drop_title: true
     fragments:
         ts-frame
-    press:
-    frame: true
     ```
 
 Here is the source code for the letter example used above:

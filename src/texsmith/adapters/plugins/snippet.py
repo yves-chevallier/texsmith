@@ -852,18 +852,24 @@ def _extract_snippet_block(element: Tag, host_path: Path | None = None) -> Snipp
 
     fragments = merged_config.pop("fragments", None)
     press_overrides = merged_config.pop("press", None)
+    press_template: str | None = None
     template_overrides: dict[str, Any] = dict(merged_config)
     if press_overrides is not None:
         if not isinstance(press_overrides, Mapping):
             raise InvalidNodeError("The 'press' section must be a mapping.")
-        template_overrides["press"] = dict(press_overrides)
+        press_payload = dict(press_overrides)
+        press_template = coerce_attribute(press_payload.pop("template", None)) or None
+        template_overrides["press"] = press_payload
     _merge_press_section(template_overrides, fragments)
+    template_overrides.setdefault("glossary_inline", True)
 
     layout = _resolve_layout_value(layout_literal)
     preview_dogear = _frame_dogear_enabled(template_overrides)
     preview_fold_size = None
     if preview_dogear:
         preview_fold_size = _frame_fold_size_px(template_overrides, (0, 0))
+    if template_id is None and press_template:
+        template_id = press_template
     if inline_content is not None and not sources and template_id is None:
         template_id = "snippet"
         preview_dogear = True
@@ -1454,6 +1460,7 @@ def ensure_snippet_assets(
 
     runtime = _resolve_template_runtime(block, documents, host_dir)
     merged_overrides = _merge_fragment_defaults(block.template_overrides, runtime)
+    merged_overrides.setdefault("glossary_inline", True)
     dogear_enabled = _frame_dogear_enabled(merged_overrides) or block.preview_dogear
     preview_fold_px: int | None = None
     if dogear_enabled:
@@ -1654,10 +1661,11 @@ def _merge_fragment_defaults(
     requested = _as_list(provided)
 
     if defaults or requested:
-        merged["fragments"] = list(dict.fromkeys([*defaults, *requested]))
+        merged_fragments = list(dict.fromkeys([*defaults, *requested]))
+        merged["fragments"] = merged_fragments
         if isinstance(press_section, Mapping):
             updated_press = dict(press_section)
-            updated_press.setdefault("fragments", provided)
+            updated_press["fragments"] = merged_fragments
             merged["press"] = updated_press
 
     return merged

@@ -94,6 +94,16 @@ dt {
   color: var(--md-primary-fg-color);
 }
 
+.md-typeset h2 {
+  font-weight: 500;
+  color: var(--md-primary-fg-color);
+}
+
+.md-typeset h3 {
+  font-weight: 500;
+  color: var(--md-primary-fg-color);
+}
+
 .md-tabs__item .md-tabs__item--active {
   border-bottom: 1px solid white;
 }

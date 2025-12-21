@@ -62,6 +62,7 @@ Which renders into:
 
 ```md {.snippet caption="Demo"}
 ---
+width: 70%
 bibliography:
   WADHWANI20111713: https://doi.org/10.3168/jds.2010-3952
 ---

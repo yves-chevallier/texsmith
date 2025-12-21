@@ -21,11 +21,12 @@ Which displays as:
 ```md {.snippet width="65%"}
 ---
 press:
+  template: article
   paper:
-    format: a5
+    width: 150mm
+    height: 90mm
     orientation: landscape
   frame: true
-template: article
 fragments:
   ts-frame
 ---

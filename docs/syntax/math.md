@@ -156,12 +156,50 @@ window.MathJax = {
 
 Here’s what the above snippets look like once rendered through TeXSmith:
 
-````md {.snippet }
----8<--- "examples/math/math.md"
+````md {.snippet width="60%"}
+The Schrödinger equation in a non-relativistic case is written as:
+
+$$
+\imath \hbar \frac{\partial}{\partial t} \Psi(\mathbf{r},t) =
+\left[ -\frac{\hbar^2}{2m} \nabla^2 + V(\mathbf{r},t) \right] \Psi(\mathbf{r},t)
+$$
+
+And the set of Maxwell's equations in differential form. The magnetic flux $\eqref{eq:max2}$ through any closed surface is zero, this implies that there are no magnetic monopoles.
+
+$$
+\begin{align}
+\nabla \cdot \vec{E} &= \frac{\rho}{\varepsilon_0} \quad &&\text{Gauss Law}\\[4pt]
+\nabla \cdot \vec{B} &= 0 \quad &&\text{Gauss's law for electricity} \label{eq:max2}\\[4pt]
+\nabla \times \vec{E} &= -\,\frac{\partial \vec{B}}{\partial t}
+    \quad &&\text{Faraday's law}\\[4pt]
+\nabla \times \vec{B} &= \mu_0 \vec{J} + \mu_0 \varepsilon_0
+    \frac{\partial \vec{E}}{\partial t}
+\quad &&\text{Ampère-Maxwell law}
+\end{align}
+$$
 ````
 
 With the source:
 
 ````markdown
----8<--- "examples/math/math.md"
+The Schrödinger equation in a non-relativistic case is written as:
+
+$$
+\imath \hbar \frac{\partial}{\partial t} \Psi(\mathbf{r},t) =
+\left[ -\frac{\hbar^2}{2m} \nabla^2 + V(\mathbf{r},t) \right] \Psi(\mathbf{r},t)
+$$
+
+And the set of Maxwell's equations in differential form. The magnetic flux $\eqref{eq:max2}$ through any closed surface is zero, this implies that there are no magnetic monopoles.
+
+$$
+\begin{align}
+\nabla \cdot \vec{E} &= \frac{\rho}{\varepsilon_0} \quad &&\text{Gauss Law}\\[4pt]
+\nabla \cdot \vec{B} &= 0 \quad &&\text{Gauss's law for electricity} \label{eq:max2}\\[4pt]
+\nabla \times \vec{E} &= -\,\frac{\partial \vec{B}}{\partial t}
+    \quad &&\text{Faraday's law}\\[4pt]
+\nabla \times \vec{B} &= \mu_0 \vec{J} + \mu_0 \varepsilon_0
+    \frac{\partial \vec{E}}{\partial t}
+\quad &&\text{Ampère-Maxwell law}
+\end{align}
+$$
 ````

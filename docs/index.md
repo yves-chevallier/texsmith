@@ -14,6 +14,11 @@ journals, or long-form review packages—without maintaining several sources of 
 
 Furthermore, TeXSmith is optimized for MkDocs thanks to the TeXSmith MkDocs plugin, which seamlessly integrates into your documentation pipeline.
 
+!!! danger "Currently in Alpha"
+
+    TeXSmith is currently in Alpha. While we are actively working on it and
+    welcome feedback, please be aware that some features may not be fully stable yet.
+
 You can use TeXSmith to generate academic papers, technical reports, letters,
 minutes, or class materials with diagrams, tables, citations, and more.
 

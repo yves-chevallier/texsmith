@@ -87,8 +87,12 @@ This document demonstrates custom page geometry settings using the geometry frag
 
 ```md {.snippet}
 ---
+width: 70%
 template: article
+fragments:
+  ts-frame
 press:
+  frame: true
   paper:
     format: c5
     orientation: landscape
@@ -119,13 +123,17 @@ $$ E=mc^2 $$
 
 ```md {.snippet}
 ---
+width: 70%
 template: article
 press:
+  frame: true
   paper:
     width: 12cm
     height: 5cm
     frame: true
     margin: narrow
+fragments:
+  ts-frame
 ---
 $$ E=mc^2 $$
 ```

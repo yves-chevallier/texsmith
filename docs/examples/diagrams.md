@@ -2,7 +2,7 @@
 
 Markdown doesn’t have to be flat text. Here’s how we wire live [Mermaid](https://mermaid.js.org/) and [Draw.io](https://app.diagrams.net/) diagrams straight into TeXSmith, no opaque binaries, friendly diffs.
 
-```yaml {.snippet }
+```yaml {.snippet width="60%"}
 width: 60%
 cwd: ../../examples/diagrams
 sources:

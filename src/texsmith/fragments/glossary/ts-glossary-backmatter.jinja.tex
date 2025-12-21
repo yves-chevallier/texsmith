@@ -1,5 +1,23 @@
 \BLOCK{ set raw_glossary = glossary|default(false) }
 \BLOCK{ if acronyms or raw_glossary }
+\BLOCK{ if glossary_inline and acronyms }
+\section*{List of Acronyms}
+\begin{description}
+\BLOCK{ for key, entry in acronyms.items() }
+\BLOCK{ set pair = entry if (entry is sequence and not entry is string) else [key, entry] }
+\item[\VAR{pair[0]|latex_escape}] \VAR{pair[1]|latex_escape}
+\BLOCK{ endfor }
+\end{description}
+\BLOCK{ else }
+\BLOCK{ if glossary_inline }
+\begingroup
+\let\clearpage\relax
+\let\cleardoublepage\relax
+\BLOCK{ endif }
 \BLOCK{ if acronyms }\printglossary[type=\acronymtype, title=List of Acronyms]\BLOCK{ endif }
 \BLOCK{ if raw_glossary }\printglossary\BLOCK{ endif }
+\BLOCK{ if glossary_inline }
+\endgroup
+\BLOCK{ endif }
+\BLOCK{ endif }
 \BLOCK{ endif }

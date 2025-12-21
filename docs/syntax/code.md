@@ -69,7 +69,7 @@ With `pymdownx.snippets` you can pull code from external files, keeping samples 
 
 Here’s what the above examples look when rendered with TeXSmith:
 
-````md {.snippet }
+````md {.snippet width="60%"}
 ---8<--- "examples/code/code-block.md"
 ````
 

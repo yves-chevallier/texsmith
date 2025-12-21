@@ -10,7 +10,7 @@ from typing import Any
 
 from texsmith.adapters.latex.latexmk import build_latexmkrc_content
 from texsmith.fonts import FallbackManager, FontCache, FontPipelineLogger
-from texsmith.fonts.fallback import merge_fallback_summaries
+from texsmith.fonts.fallback import FallbackPlan, merge_fallback_summaries
 from texsmith.fonts.scripts import fallback_summary_to_usage, merge_script_usage
 
 from ..context import DocumentState
@@ -203,6 +203,7 @@ class TemplateRenderer:
         asset_paths: set[Path] = set()
         asset_sources: set[Path] = set()
         asset_map: dict[str, Path] = {}
+        fallback_manager: FallbackManager | None = None
 
         for fragment in fragments:
             fragment_default_slot = fragment.default_slot or default_slot
@@ -360,13 +361,17 @@ class TemplateRenderer:
 
         _validate_slots(self.runtime, render_slot_content)
 
+        def _scan_fallback(text: str) -> FallbackPlan:
+            nonlocal fallback_manager
+            if fallback_manager is None:
+                fallback_manager = FallbackManager(cache=FontCache(), logger=FontPipelineLogger())
+            return fallback_manager.scan_text(text)
+
         # Compute fallback summary across all slot content for font fragments.
         concatenated_text = "".join(render_slot_content.values())
         if concatenated_text:
             try:
-                raw_summary = FallbackManager(
-                    cache=FontCache(), logger=FontPipelineLogger()
-                ).scan_text(concatenated_text)
+                raw_summary = _scan_fallback(concatenated_text)
                 if raw_summary:
                     aggregated_fallback_summary = merge_fallback_summaries(
                         aggregated_fallback_summary, raw_summary
@@ -438,9 +443,7 @@ class TemplateRenderer:
         metadata_blob = " ".join(part for part in metadata_strings if part.strip())
         if metadata_blob:
             try:
-                metadata_raw = FallbackManager(
-                    cache=FontCache(), logger=FontPipelineLogger()
-                ).scan_text(metadata_blob)
+                metadata_raw = _scan_fallback(metadata_blob)
             except Exception:
                 metadata_raw = []
             if metadata_raw:

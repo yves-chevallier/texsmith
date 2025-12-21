@@ -79,8 +79,6 @@ By default TeXSmith writes LaTeX to stdout. Pipe it or direct it into a folder. 
 
 ## Generate a PDF
 
-## Generate a PDF
-
 Want the full PDF? Start with our playful [booby](https://en.wikipedia.org/wiki/Booby) example or create your own `booby.md`:
 
 ```markdown
@@ -99,10 +97,15 @@ With Tectonic as the default engine, fonts, packages, and dependencies resolve t
 
 Enjoy a fresh PDF at `build/booby.pdf`:
 
-```yaml {.snippet caption="Demo" width="60%"}
+```yaml {.snippet caption="Demo"}
+width: 70%
 cwd: ../../examples/booby
 sources:
   - booby.md
+fragments:
+  ts-frame
+press:
+  frame: true
 ```
 
 Peek inside `build/` to find `booby.tex`. Swap `--template` when you want a different LaTeX project layout or polish level:

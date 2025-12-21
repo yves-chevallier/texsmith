@@ -1,4 +1,4 @@
-# Mermaid Configuration per Template
+# Mermaid Configuration
 
 TeXSmith will automatically pick up a `mermaid-config.json` located at the root of a template (next to `manifest.toml`). The diagrams module passes this config to Mermaid for all diagrams rendered with that template.
 
