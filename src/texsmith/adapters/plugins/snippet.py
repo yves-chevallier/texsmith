@@ -16,7 +16,11 @@ from typing import Any
 
 from bs4 import BeautifulSoup
 from bs4.element import NavigableString, Tag
-from PIL import Image, ImageDraw
+try:  # Optional dependency: only needed when generating snippet previews.
+    from PIL import Image, ImageDraw
+except ModuleNotFoundError:  # pragma: no cover - optional dependency
+    Image = None  # type: ignore[assignment]
+    ImageDraw = None  # type: ignore[assignment]
 import yaml
 
 from texsmith.adapters.handlers._helpers import (
@@ -58,6 +62,14 @@ _SNIPPET_CACHE_FILENAME = "metadata.json"
 _SNIPPET_CACHE_VERSION = 3
 _log = logging.getLogger(__name__)
 _SNIPPET_DUMP_ENV = "TEXSMITH_SNIPPET_DUMP_DIR"
+
+
+def _require_pillow() -> tuple[Any, Any]:
+    if Image is None or ImageDraw is None:
+        raise AssetMissingError(
+            "Pillow is required to generate snippet previews. Install the 'pillow' package."
+        )
+    return Image, ImageDraw
 
 
 @dataclass(slots=True)
@@ -1179,6 +1191,7 @@ def _load_pymupdf() -> object:
 
 def _pdf_to_png(pdf_path: Path, png_path: Path, *, transparent_corner: bool = False) -> None:
     fitz = _load_pymupdf()
+    Image, _ = _require_pillow()
 
     with fitz.open(pdf_path) as document:
         if document.page_count == 0:
@@ -1204,6 +1217,7 @@ def _pdf_to_png_grid(
     fold_size: int | None = None,
 ) -> None:
     fitz = _load_pymupdf()
+    Image, _ = _require_pillow()
 
     with fitz.open(pdf_path) as document:
         page_count = document.page_count
@@ -1262,6 +1276,7 @@ def _pdf_to_png_grid(
 
 
 def _apply_dogear_transparency(image: Image.Image, *, fold_size: int | None = None) -> Image.Image:
+    _, ImageDraw = _require_pillow()
     rgba = image.convert("RGBA")
     width, height = rgba.size
     if width <= 0 or height <= 0:
@@ -1318,6 +1333,7 @@ def _overlay_dogear_frame(
     dogear_enabled: bool = True,
 ) -> Image.Image:
     """Draw a frame with a folded corner directly onto the PNG."""
+    Image, ImageDraw = _require_pillow()
     base = image.convert("RGBA")
     width, height = base.size
     if width <= 0 or height <= 0:

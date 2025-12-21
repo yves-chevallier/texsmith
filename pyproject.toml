@@ -30,12 +30,15 @@ classifiers = [
 ]
 dependencies = [
     "beautifulsoup4>=4.14.2",
+    "cairosvg>=2.8.2",
     "emoji>=2.12.1",
     "jinja2>=3.1.6",
     "markdown>=3.7",
+    "pillow>=12.0.0",
     "pint>=0.24",
     "pybtex>=0.24.0",
     "pydantic>=2.7.0",
+    "pypdf>=6.1.1",
     "pygments>=2.18.0",
     "pylatexenc>=2.10",
     "pymdown-extensions>=10.9",
@@ -49,6 +52,7 @@ dependencies = [
     "unicodeblocks>=0.3",
     "playwright>=1.56.0",
     "pyxindy>=0.0.3",
+    "requests>=2.32.5",
 ]
 [project.urls]
 Homepage = "https://github.com/yves-chevallier/texsmith"
@@ -107,13 +111,8 @@ dev = [
     "pytest>=8.4.2",
     "ruff>=0.14.1",
     "nox[pbs]>=2024.4.16",
-    "cairosvg>=2.8.2",
-    "pillow>=12.0.0",
-    "pypdf>=6.1.1",
-    "requests>=2.32.5",
     "pytest-cov>=7.0.0",
     "mkdocs-texsmith ; python_version >= \"3.10\"",
-    "pymupdf>=1.26.6",
 ]
 docs = [
     "mike>=2.1.2",
