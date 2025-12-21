@@ -106,7 +106,16 @@ def _collect_packages(context: Mapping[str, object]) -> list[tuple[str, str | No
         "booktabs",
         None,
     )
-    _maybe_add("tabularx" in lowered, "ltablex", None)
+    has_tabularx = "tabularx" in lowered
+    columns_value = context.get("columns") if hasattr(context, "get") else None
+    try:
+        column_count = int(columns_value) if columns_value is not None else 1
+    except (TypeError, ValueError):
+        column_count = 1
+    if has_tabularx and column_count > 1:
+        _maybe_add(True, "tabularx", None)
+    else:
+        _maybe_add(has_tabularx, "ltablex", None)
 
     math_tokens = (
         "\\begin{equation*}",

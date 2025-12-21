@@ -1,6 +1,6 @@
 ---
 press:
-  columns: 1
+  columns: 2
 ---
 # Emoji Support
 

@@ -30,8 +30,8 @@ def index_command_tokens() -> list[str]:
     for candidate in ("makeindex-py", "makeindex4"):
         resolved = shutil.which(candidate) or _script_path(candidate)
         if resolved:
-            return [str(resolved)]
-    return [sys.executable, "-m", "xindy.tex.makeindex4"]
+            return [str(resolved), "--input-encoding=utf-8", "--output-encoding=utf-8"]
+    return [sys.executable, "-m", "xindy.tex.makeindex4", "--input-encoding=utf-8", "--output-encoding=utf-8"]
 
 
 def glossary_command_tokens() -> list[str]:

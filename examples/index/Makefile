@@ -1,7 +1,7 @@
 include ../common.mk
 
 OUTPUT_DIR := $(ENGINE_DIR)
-PDF := $(OUTPUT_DIR)/example$(ENGINE_SUFFIX).pdf
+PDF := $(OUTPUT_DIR)/index$(ENGINE_SUFFIX).pdf
 BASE_PDF := $(OUTPUT_DIR)/index.pdf
 
 all: $(PDF)

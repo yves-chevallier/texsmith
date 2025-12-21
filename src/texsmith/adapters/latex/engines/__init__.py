@@ -678,9 +678,6 @@ def _index_command_tokens(engine_name: str) -> list[str]:
 
 def _glossaries_command_tokens() -> list[str]:
     """Return the preferred makeglossaries command."""
-    if pyxindy_available():
-        return pyxindy_glossary_tokens()
-
     helper: Path | None = None
     try:
         helper = select_makeglossaries(console=None).path
@@ -689,6 +686,8 @@ def _glossaries_command_tokens() -> list[str]:
 
     if helper and helper.exists():
         return [str(helper)]
+    if pyxindy_available():
+        return pyxindy_glossary_tokens()
     return ["makeglossaries"]
 
 
