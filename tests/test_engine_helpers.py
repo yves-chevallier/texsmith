@@ -104,13 +104,39 @@ def test_run_engine_command_invokes_aux_tools(
     assert result.returncode == 0
     assert passes["count"] == 2
     expected_index = "makeindex-py" if engine.pyxindy_available() else "texindy"
-    expected_glossaries = "makeglossaries-py" if engine.pyxindy_available() else "makeglossaries"
     normalized = [[Path(call[0]).name, *call[1:]] for call in tool_calls]
-    assert normalized == [
-        ["biber", "main"],
-        [expected_index, "main.idx"],
-        [expected_glossaries, "main"],
-    ]
+    assert normalized[0] == ["biber", "main"]
+    assert normalized[1][0] == expected_index
+    assert normalized[1][-1] == "main.idx"
+    if expected_index == "makeindex-py":
+        assert "--input-encoding=utf-8" in normalized[1]
+        assert "--output-encoding=utf-8" in normalized[1]
+    assert normalized[2] == ["makeglossaries", "main"]
+
+
+def test_pyxindy_index_tokens_use_utf8(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(engine.shutil, "which", lambda name: f"/usr/bin/{name}")
+    tokens = engine.pyxindy_index_tokens()
+    assert tokens[0].endswith("makeindex-py")
+    assert "--input-encoding=utf-8" in tokens
+    assert "--output-encoding=utf-8" in tokens
+
+
+def test_glossaries_prefers_makeglossaries_when_available(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    class _Helper:
+        def __init__(self, path: Path) -> None:
+            self.path = path
+
+    monkeypatch.setattr(engine, "pyxindy_available", lambda: True)
+    monkeypatch.setattr(
+        engine,
+        "select_makeglossaries",
+        lambda *_args, **_kwargs: _Helper(Path("/usr/bin/makeglossaries")),
+    )
+    tokens = engine._glossaries_command_tokens()
+    assert tokens == ["/usr/bin/makeglossaries"]
 
 
 def test_run_engine_command_reruns_until_stable(
