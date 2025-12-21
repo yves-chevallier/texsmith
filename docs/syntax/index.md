@@ -30,7 +30,7 @@ Source: xkcd[^1].
 TeXSmith is unapologetically opinionated: it curates a stack, sprinkles extra sauce on top, and calls the bundle **Tmark** (TeXSmith Markdown).
 ## TeXSmith compatibility
 
-### Commonmark
+### CommonMark
 
 [CommonMark](https://commonmark.org/help/) is the standardized, modern version of Markdown.
 

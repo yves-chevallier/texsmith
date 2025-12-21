@@ -70,9 +70,9 @@ $ texsmith cheese.md cheese.bib --list-bibliography
 
 ## Behaviour
 
-TeXSmith will loads every provided `.bib` file using `pybtex` and analyses their contents, fetch for duplicate keys, and check for parsing errors. It will emit warnings for any issues found, and print a summary table of the number of entries per file.
+TeXSmith loads every provided `.bib` file using `pybtex` and analyzes their contents, checks for duplicate keys, and verifies parsing integrity. It emits warnings for any issues found and prints a summary table of the number of entries per file.
 
-The `--list-bibliography` flag has the following behaviour:
+The `--list-bibliography` flag has the following behavior:
 
 - Prints a formatted table summarising the number of entries per file.
 - Emits warnings for files that fail to parse, contain duplicate keys, or are empty.

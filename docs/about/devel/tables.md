@@ -15,7 +15,7 @@ Markdown offers limited table configuration—only column alignment by default. 
 ### Extended Markdown Table Syntax
 
 Leverage Pymdown’s table extension to add more metadata directly in Markdown. For example:
-texsmith.spantable extension lets us span cells in standard Markdown tables.
+The `texsmith.spantable` extension lets us span cells in standard Markdown tables.
 
 The `>>>` syntax will span cells horizontally, the `vvv` syntax will span cells vertically.
 
@@ -28,7 +28,7 @@ The `>>>` syntax will span cells horizontally, the `vvv` syntax will span cells 
 | Cell 9   |          | vvv      |
 ```
 
-### Cmi rules example
+### Cmidrule example
 
 ```latex
 \begin{tabular}{@{}lll@{}}
@@ -44,7 +44,7 @@ Others & \multicolumn{2}{c}{Not available} \\
 \end{tabular}
 ```
 
-### Align to dot number
+### Align to decimal points
 
 Find a syntax to align numbers to dot. `lS@{}`
 
@@ -83,7 +83,7 @@ The goal is to convert Markdown tables into LaTeX tables with automatic line bre
 
 ## Shrink-to-fit vs Auto-expand
 
-Long table et auto ajustement.
+Long tables et auto-ajustement.
 
 ```latex
 \documentclass{article}

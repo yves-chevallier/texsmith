@@ -27,7 +27,7 @@ Listings/Code Blocks
 : Code blocks are used to display code snippets in various programming languages. They can be labeled and referenced within the document.
 
 Tags/Index
-: Tags or index entries allows to associate keywords with specific sections or topics in the document, making it easier to locate related information.
+: Tags or index entries allow you to associate keywords with specific sections or topics in the document, making it easier to locate related information.
 
 ## Internal References
 
@@ -56,7 +56,7 @@ Check section @[sec:section-title] for more details.
 
 ### Autorefs
 
-When the `mkdocs-autorefs` extension is enabled you can use the `[text][label]` syntax to generate automatic references to headings.
+When the `mkdocs-autorefs` extension is enabled, you can use the `[text][label]` syntax to generate automatic references to headings.
 
 ## External References
 

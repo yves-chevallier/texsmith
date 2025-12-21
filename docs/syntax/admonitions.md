@@ -6,13 +6,13 @@ You can render them in two flavors. The plain/static variant looks like this:
 
 ```markdown
 !!! note "This is a Note"
-    Any number of other indented markdown elements.
+    Any number of other indented Markdown elements.
 
     This is the second paragraph.
 ```
 
 !!! note "This is a Note"
-    Any number of other indented markdown elements.
+    Any number of other indented Markdown elements.
 
     This is the second paragraph.
 
@@ -94,22 +94,22 @@ The following admonition types are built into the `admonition` extension:
     A Warning
 
 !!! important
-    An Important notice
+    An important notice
 
 !!! danger
-    A Danger notice
+    A danger notice
 
 !!! info
-    An Info notice
+    An info notice
 
 !!! hint
     A Hint
 
 !!! seealso
-    A See Also notice
+    A see-also notice
 
 !!! question
-    A Question notice
+    A question notice
 
 !!! abstract
-    An Abstract
+    An abstract

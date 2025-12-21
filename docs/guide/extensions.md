@@ -1,7 +1,7 @@
 # TeXSmith Extensions
 
 TeXSmith ships its Markdown extensions directly inside the `texsmith`
-distribution. Once `pip install texsmith` is done you can import them either
+distribution. Once `pip install texsmith` is done, you can import them either
 via the `texsmith.extensions` registry or by using the convenience modules
 (`texsmith.smallcaps`, `texsmith.index`, ...).
 
@@ -116,4 +116,4 @@ the extension points and how to register your extension with TeXSmith.
 
 - Markdown extensions run before slot extraction and fragment rendering; any HTML they emit flows through the same pipeline.
 - Renderer hooks execute in `RenderPhase` order (PRE → BLOCK → INLINE → POST); use the lowest required phase to keep transforms predictable.
-- Extensions should not override template partials directly—expose fragment partials or attributes instead so precedence stays transparent. 
+- Extensions should not override template partials directly—expose fragment partials or attributes instead so precedence stays transparent.

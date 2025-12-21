@@ -8,10 +8,10 @@ Roadmap and development notes for TeXSmith. I keep this file as a running checkl
 - [ ] Deploy to PyPI
 - [ ] WARNING -  Unresolved mustache `{{callouts.style}}` in template attributes; leaving placeholder as-is.
 - [ ] Attribute redundancy (`numbered`, `press.numbered`, etc.)
-- [ ] Refactoring snippets and fix snippet templates
+- [ ] Refactoring snippets and fixing snippet templates
 - [ ] Font: mono fallback for missing characters
 - [ ] Use `\caps` from `soul` instead of `\textsc` for smallcaps
-- [ ] Global user's configuration (.texsmith/config.yml)
+- [ ] Global user configuration (.texsmith/config.yml)
 - [ ] Unified Fences Syntax
   - [ ] Multicolumns
   - [ ] Font Size
@@ -19,9 +19,9 @@ Roadmap and development notes for TeXSmith. I keep this file as a running checkl
   - [ ] Language
   - [ ] LaTeX only / HTML only
   - [ ] LaTeX raw
-- [ ] More Examples
+- [ ] More examples
   - [ ] University exam
-  - [ ] Student's Quiz
+- [ ] Student quiz
 - [ ] Multiline Acronyms
 - [ ] Support for `{++inserted text++}` and `{~~deleted text~~}` (goodbox)
 - [ ] Index: support for multi-indexes
@@ -35,7 +35,7 @@ Roadmap and development notes for TeXSmith. I keep this file as a running checkl
   - [ ] Marginalia (`marginpar` package with footnotes syntax)
   - [ ] Epigraph Plugin
   - [ ] Letterine
-  - [ ] Custom variables to insert in a document using moustaches
+  - [ ] Custom variables to insert in a document using mustaches
 
 ## Refactoring snippets in documentation
 
@@ -49,13 +49,13 @@ L'alternative proposée serait d'utiliser un yaml pour l'insertion d'un snippet:
 cwd: ../../../examples/letter  # D'où exécuter la génération
 sources:  # Liste des fichiers sources comme si donné au CLI (mais on utilise l'API)
   - letter.md
-press: # Attributs supplémentaires à ajouter au contexte de texsmith
+press: # Attributs supplémentaires à ajouter au contexte de TeXSmith
   format: din
   frame: true
 ```
 
-Le PDF généré est inséré comme image (comme la syntaxe actuelle) avec un lien de téléchargement. Il convient donc aussi de générer une préview PNG et le PDF.
-De la même manière on conserve la possibilité d'ajouter l'attribut layout déjà existant dans la syntaxe actuelle et qui permet ici d'agencer plusieurs pages dans le préview PNG.
+Le PDF généré est inséré comme image (comme la syntaxe actuelle) avec un lien de téléchargement. Il convient donc aussi de générer une preview PNG et le PDF.
+De la même manière on conserve la possibilité d'ajouter l'attribut layout déjà existant dans la syntaxe actuelle et qui permet ici d'agencer plusieurs pages dans la preview PNG.
 
 ```yaml { .snippet }
 layout: 2x2
@@ -100,8 +100,8 @@ Some content...
 4. Vérifie que les tests passent et met à jour les tests obsolète
 5. Ne garde aucun shim ou layer de compatibilité : l'ancienne syntaxe doit être complètement retirée.
 6. Documente la nouvelle syntaxe dans la documentation officielle de TeXSmith.
-7. Vérifie que la génération de snippet fonctionne correctement avec la nouvelle syntaxe, au besoin rajoute un exemple avec mkdocs dans examples/ et appuye toi sur l'exemple mkdocs
-8. Tente de compiler la doc du projet avec uv run mkdocs serve et uv mkdocs build pour vérifier que tout fonctionne correctement.
+7. Vérifie que la génération de snippet fonctionne correctement avec la nouvelle syntaxe, au besoin rajoute un exemple avec mkdocs dans examples/ et appuye-toi sur l'exemple mkdocs
+8. Tente de compiler la doc du projet avec uv run mkdocs serve et uv run mkdocs build pour vérifier que tout fonctionne correctement.
 9. Lance les tests et le lint avec uv run ruff check . et uv run ruff format .
 
 ## Unified Fences Syntax
@@ -109,7 +109,7 @@ Some content...
 which can add captions to figures or tables, but discrimination of target (figure or table) is
 not done automatically you must specify `figure-caption` or `table-caption`
 
-The subfigures with the `| ^1` syntax works, but is not optimal for latex rendering and the reference id generated with `attrs: {id: static-id}` can be derouting.
+The subfigures with the `| ^1` syntax work, but this is not optimal for LaTeX rendering, and the reference ID generated with `attrs: {id: static-id}` can be misleading.
 
 TeXSmith offers a more convenient way of adding figures using the admonition style
 
@@ -121,7 +121,7 @@ TeXSmith offers a more convenient way of adding figures using the admonition sty
    Caption...
 ```
 
-You can automatically use subfigures with the following. The layout attribute will dictate how the figures are agenced in the output (`2:1` two figures horizontally, `2:2` four figures in two columns with two rows.
+You can automatically use subfigures with the following. The layout attribute will dictate how the figures are arranged in the output (`2:1` two figures horizontally, `2:2` four figures in two columns with two rows).
 
 ```md
 /// figure { #reference layout="2:1" }
@@ -157,11 +157,11 @@ flag to silence them.
 
 ### Mermaid color configuration
 
-Je remarque que les diagrammes mermaid qui sont créés apparaissent avec un fond gris dans le pdf. Mais nous avions configuré un style mermaid global a texsmith pour avoir des diagrammes b&w dans le pdf final. Il n'est probablement plus activé ou pris en compte. Il faut vérifier cela et corriger le problème.
+Je remarque que les diagrammes Mermaid qui sont créés apparaissent avec un fond gris dans le PDF. Mais nous avions configuré un style Mermaid global a TeXSmith pour avoir des diagrammes b&w dans le PDF final. Il n'est probablement plus activé ou pris en compte. Il faut vérifier cela et corriger le problème.
 
 La gestion du cache des assets est aussi à vérifier et la rendre dépendante de la configuration mermaid (si on change le style, il faut regénérer les diagrammes), ou alors si l'exécutable ou la version de l'image docker utilisée change.
 
-On ajoute ausis cette vérification pour les assets drawio.
+On ajoute aussi cette vérification pour les assets drawio.
 
 ### MkDocs Linking Issues
 
@@ -171,7 +171,7 @@ Also note that the scientific paper “cheese” example prematurely closes code
 
 ### Acronyms multiline
 
-Thw following don't work, it should either warn or join the different lines together.
+The following doesn't work; it should either warn or join the different lines together.
 
 ```markdown
 # Acronyms
@@ -198,7 +198,7 @@ __*`abc`*__
 
 #### Code
 
-We only use `` ``` `` fences for code blocks or other special blocks like mermaid, latex, custom tables, etc. No other uses should be allowed.
+We only use `` ``` `` fences for code blocks or other special blocks like Mermaid, LaTeX, custom tables, etc. No other uses should be allowed.
 
 #### Admonitions
 
@@ -209,7 +209,7 @@ We prefer the MkDocs admonition syntax as it is more flexible and better support
 
     This is the content of the note.
 
-??? info "Folddable Info Title"
+??? info "Foldable Info Title"
 
     This is the content of the info.
 ```

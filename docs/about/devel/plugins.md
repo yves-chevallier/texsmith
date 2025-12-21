@@ -1,10 +1,10 @@
 # Standalone Plugins
 
-Some ideas on standalone plugins that can be developed and shared independently, or be included in TeXSmith by default. These are some features that I can use myself and that can be useful to others.
+Some ideas on standalone plugins that can be developed and shared independently or included in TeXSmith by default. These are some features that I can use myself and that can be useful to others.
 
 ## Epigraph
 
-Integrate epigraph support via a dedicated plugin. The goal is to let users insert epigraphs easily from Markdown files. It can be declared as a fragment and declared into the document via frontmatter:
+Integrate epigraph support via a dedicated plugin. The goal is to let users insert epigraphs easily from Markdown files. It can be declared as a fragment and declared in the document via front matter:
 
 ```yaml
 epigraph: text
@@ -29,7 +29,7 @@ Then, at the desired location in the document:
 
 ## SvgBob
 
-This can be a good example of a standalone TeXSmith plugin that allows rendering ASCII art diagrams using SvgBob.
+This can be a good example of a standalone TeXSmith plugin that allows rendering ASCII art diagrams using Svgbob.
 
 [Svgbob](https://github.com/ivanceras/svgbob) lets you sketch diagrams using ASCII art. Save the source with a `.bob` extension (or keep it inline) and link to it like any other image:
 
@@ -45,9 +45,9 @@ SVGBob can be installed on Ubuntu via:
 cargo install svgbob_cli
 ```
 
-It is installed by default into `svgbob_cli` or `~/.cargo/bin/svgbob_cli` we want to fetch both warn if the binary is missing and also allow users to override the path via configuration.
+It is installed by default into `svgbob_cli` or `~/.cargo/bin/svgbob_cli`. We want to check both, warn if the binary is missing, and allow users to override the path via configuration.
 
-We can insert the image in both way:
+We can insert the image in both ways:
 
 ````markdown
 ```svgbob
@@ -90,7 +90,7 @@ We can insert the image in both way:
 ```
 ````
 
-If not available svgbob diagrams can be skipped with a warning and the diagram is rendered as a code block.
+If Svgbob is not available, diagrams can be skipped with a warning and rendered as code blocks.
 
 ## CircuitTikZ
 

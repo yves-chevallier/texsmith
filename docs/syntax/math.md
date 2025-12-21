@@ -1,6 +1,6 @@
 # Math Extension
 
-LaTeX is the gold standard for math notation. TeXSmith relies on the same syntax MathJax/Arithmatex understand.
+LaTeX is the gold standard for math notation. TeXSmith relies on the same syntax that MathJax/Arithmatex understand.
 
 ## Inline Math
 
@@ -94,7 +94,7 @@ Reference numbered equations via `\label{}` and drop `$\eqref{...}$` in Markdown
 In an aligned environment, you can number individual lines using the `\label{}` command:
 
 ```latex
-As we see $\eqref{eq:max2}$, the magnetic flux through any closed surface is zero,
+As we see in $\eqref{eq:max2}$, the magnetic flux through any closed surface is zero;
 this implies that there are no magnetic monopoles.
 
 $$
@@ -164,7 +164,7 @@ $$
 \left[ -\frac{\hbar^2}{2m} \nabla^2 + V(\mathbf{r},t) \right] \Psi(\mathbf{r},t)
 $$
 
-And the set of Maxwell's equations in differential form. The magnetic flux $\eqref{eq:max2}$ through any closed surface is zero, this implies that there are no magnetic monopoles.
+And the set of Maxwell's equations in differential form. The magnetic flux $\eqref{eq:max2}$ through any closed surface is zero, which implies that there are no magnetic monopoles.
 
 $$
 \begin{align}
@@ -189,7 +189,7 @@ $$
 \left[ -\frac{\hbar^2}{2m} \nabla^2 + V(\mathbf{r},t) \right] \Psi(\mathbf{r},t)
 $$
 
-And the set of Maxwell's equations in differential form. The magnetic flux $\eqref{eq:max2}$ through any closed surface is zero, this implies that there are no magnetic monopoles.
+And the set of Maxwell's equations in differential form. The magnetic flux $\eqref{eq:max2}$ through any closed surface is zero, which implies that there are no magnetic monopoles.
 
 $$
 \begin{align}

@@ -1,6 +1,6 @@
 # TeXSmith
 
-And of course, the grand finale -- the true climax of the project -- is that this very documentation can itself be converted into a LaTeX document using TeXSmith.
+And of course, the grand finale—the true climax of the project—is that this very documentation can itself be converted into a LaTeX document using TeXSmith.
 
 ```bash
 git clone https://github.com/yves-chevallier/texsmith.git

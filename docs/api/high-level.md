@@ -13,7 +13,7 @@ This page showcases the building blocks you are most likely to use in scripts, s
 
 ## Convert a handful of documents
 
-Use `Document.from_markdown` / `Document.from_html` to normalise inputs, then hand everything to `convert_documents`.  The bundle returned by `convert_documents` keeps every fragment, output path, and the raw LaTeX handy:
+Use `Document.from_markdown` / `Document.from_html` to normalise inputs, then hand everything to `convert_documents`. The bundle returned by `convert_documents` keeps every fragment, output path, and the raw LaTeX handy:
 
 ```python
 from pathlib import Path
@@ -36,11 +36,11 @@ for fragment in bundle.fragments:
     print("Rendered fragment", fragment.stem, "→", fragment.output_path)
 ```
 
-`RenderSettings` lets you fine-tune the engine (parser, fallbacks, manifest emission, etc.).  When you omit `output_dir`, the bundle stays in memory – perfect for unit tests or further processing.
+`RenderSettings` lets you fine-tune the engine (parser, fallbacks, manifest emission, etc.). When you omit `output_dir`, the bundle stays in memory—perfect for unit tests or further processing.
 
 ## Drive the pipeline with `ConversionService`
 
-If you need the exact orchestration used by the CLI, rely on `ConversionService`.  It exposes two steps:
+If you need the exact orchestration used by the CLI, rely on `ConversionService`. It exposes two steps:
 
 1. `prepare_documents(request)` splits inputs, normalises Markdown/HTML, applies `DocumentSlots`, and returns a `ConversionPrepared` payload.
 2. `execute(request, prepared=...)` renders the documents, optionally through a template, and produces a `ConversionResponse` with the bundle plus emitted diagnostics.
@@ -66,7 +66,7 @@ for event in response.diagnostics:
     print(event.name, event.payload)
 ```
 
-The CLI passes a `CliEmitter` via `ConversionRequest.emitter` so warnings surface nicely.  Library callers can supply their own emitter or accept the default `NullEmitter`.
+The CLI passes a `CliEmitter` via `ConversionRequest.emitter` so warnings surface nicely. Library callers can supply their own emitter or accept the default `NullEmitter`.
 
 ## Work with templates programmatically
 
@@ -101,7 +101,7 @@ print("LaTeX fragments:", result.fragment_paths)
 print("Template engine:", result.template_engine)
 ```
 
-Need bibliography support?  Register `.bib` files with `session.add_bibliography(...)` before calling `render`.  Every slot override (`Document.assign_slot`) and metadata tweak flows straight through to the template runtime.
+Need bibliography support? Register `.bib` files with `session.add_bibliography(...)` before calling `render`. Every slot override (`Document.assign_slot`) and metadata tweak flows straight through to the template runtime.
 
 !!! note
     For practical slot recipes (front matter/main matter splits, appendix routing, overrides) see the [Template Cookbook](../guide/templates/template-cookbook.md).
@@ -110,7 +110,7 @@ Need bibliography support?  Register `.bib` files with `session.add_bibliography
 
 `texsmith` relies on these high-level primitives. Inspect the CLI command and you will notice the same API surface shown above. Scripts and command-line invocations stay aligned, and new features land in one place.
 
-For a complete reference, browse [`texsmith.api`](core.md#texsmithapi) in the API browser or explore the source directly in `src/texsmith/api/`.
+For a complete reference, browse [`texsmith.api`](index.md#api-sections) in the API browser or explore the source directly in `src/texsmith/api/`.
 
 !!! seealso
     - [Command-line Overview](../cli/index.md) explains how these APIs surface through Typer commands.

@@ -1911,9 +1911,11 @@ name = "texsmith"
 source = { editable = "." }
 dependencies = [
     { name = "beautifulsoup4" },
+    { name = "cairosvg" },
     { name = "emoji" },
     { name = "jinja2" },
     { name = "markdown" },
+    { name = "pillow" },
     { name = "pint", version = "0.24.4", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
     { name = "pint", version = "0.25.2", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
     { name = "playwright" },
@@ -1923,6 +1925,7 @@ dependencies = [
     { name = "pylatexenc" },
     { name = "pymdown-extensions" },
     { name = "pymupdf" },
+    { name = "pypdf" },
     { name = "python-markdown-math" },
     { name = "python-slugify" },
     { name = "pyxindy" },
@@ -1936,15 +1939,10 @@ dependencies = [
 
 [package.dev-dependencies]
 dev = [
-    { name = "cairosvg" },
     { name = "mkdocs-texsmith" },
     { name = "nox", extra = ["pbs"] },
-    { name = "pillow" },
-    { name = "pymupdf" },
-    { name = "pypdf" },
     { name = "pytest" },
     { name = "pytest-cov" },
-    { name = "requests" },
     { name = "ruff" },
 ]
 docs = [
@@ -1959,9 +1957,11 @@ docs = [
 [package.metadata]
 requires-dist = [
     { name = "beautifulsoup4", specifier = ">=4.14.2" },
+    { name = "cairosvg", specifier = ">=2.8.2" },
     { name = "emoji", specifier = ">=2.12.1" },
     { name = "jinja2", specifier = ">=3.1.6" },
     { name = "markdown", specifier = ">=3.7" },
+    { name = "pillow", specifier = ">=12.0.0" },
     { name = "pint", specifier = ">=0.24" },
     { name = "playwright", specifier = ">=1.56.0" },
     { name = "pybtex", specifier = ">=0.24.0" },
@@ -1970,6 +1970,7 @@ requires-dist = [
     { name = "pylatexenc", specifier = ">=2.10" },
     { name = "pymdown-extensions", specifier = ">=10.9" },
     { name = "pymupdf", specifier = ">=1.24.3" },
+    { name = "pypdf", specifier = ">=6.1.1" },
     { name = "python-markdown-math", specifier = ">=0.9" },
     { name = "python-slugify", specifier = ">=8.0.4" },
     { name = "pyxindy", specifier = ">=0.0.3" },
@@ -1983,15 +1984,10 @@ requires-dist = [
 
 [package.metadata.requires-dev]
 dev = [
-    { name = "cairosvg", specifier = ">=2.8.2" },
     { name = "mkdocs-texsmith", marker = "python_full_version >= '3.10'", editable = "packages/mkdocs_texsmith" },
     { name = "nox", extras = ["pbs"], specifier = ">=2024.4.16" },
-    { name = "pillow", specifier = ">=12.0.0" },
-    { name = "pymupdf", specifier = ">=1.26.6" },
-    { name = "pypdf", specifier = ">=6.1.1" },
     { name = "pytest", specifier = ">=8.4.2" },
     { name = "pytest-cov", specifier = ">=7.0.0" },
-    { name = "requests", specifier = ">=2.32.5" },
     { name = "ruff", specifier = ">=0.14.1" },
 ]
 docs = [

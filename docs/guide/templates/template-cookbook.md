@@ -23,7 +23,7 @@ texsmith --template ./texsmith-template-report --template-info
 Use the output to validate:
 
 - Slots and their depth/offsets.
-- Attribute defaults and normalisers (escape rules, `required` flags).
+- Attribute defaults and normalizers (escape rules, `required` flags).
 - Declared assets and whether they require templating.
 - TeX Live year, tlmgr packages, and shell-escape requirements.
 

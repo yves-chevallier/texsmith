@@ -1,6 +1,6 @@
 # License
 
-TeXSmith is licensed under the terms of the MIT License
+TeXSmith is licensed under the terms of the MIT License.
 
 Copyright (c) 2025 Yves Chevallier
 

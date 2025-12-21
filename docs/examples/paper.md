@@ -60,6 +60,6 @@ texsmith cheese.md cheese.bib -tarticle --build
     his PhD on cheese and collected delightfully absurd cheese-related research that
     nobody would imagine studying scientifically.
 
-    I intially thought about an article on how Swiss music—specifically yodeling—might
+    I initially thought about an article on how Swiss music—specifically yodeling—might
     influence cheese ripening. But, well… rheology felt slightly more scientifically
     defensible.

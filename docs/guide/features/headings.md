@@ -60,7 +60,7 @@ All examples use the `article` template (`base_level=section`):
 - Headings begin at `##` with no `#` anywhere: offset `-1` again, so the highest heading still aligns to `\section`.
 - Slot extraction: if `# Abstract` is routed to the `abstract` slot and stripped there, the remaining main-matter fragment starts at `##` and is aligned to `\section` (the removed `#` does not push sections down to subsections).
 
-## Multidocument behaviour
+## Multidocument behavior
 
 When rendering multiple documents, each document (and each of its slot fragments) computes its own offset independently. A root title in a multi-file build does not block promotion in subdocuments, and each slot still adds the template base level before applying the fragment offset.
 

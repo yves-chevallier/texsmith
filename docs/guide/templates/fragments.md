@@ -26,7 +26,7 @@ while staying configurable from front matter or your own extensions.
 : central imakeidx/macros glue, selects texindy/makeindex and runs `\makeindex` when entries are present.
 
 `ts-glossary`
-: glossary and acronym wiring: loads `glossaries`, runs `\makeglossaries` when needed, and materialises acronym definitions from front matter with configurable styles.
+: glossary and acronym wiring: loads `glossaries`, runs `\makeglossaries` when needed, and materializes acronym definitions from front matter with configurable styles.
 
 `ts-bibliography`
 : bibliography helper that wires `biblatex` into the rendered document.
@@ -92,7 +92,7 @@ through front matter.
 
 ### Passing variables to fragments
 
-Any values under `press` (or other front-matter keys) are merged into the
+Any values under `press` (or other front matter keys) are merged into the
 template rendering context. If your fragment expects a variable such as
 `foo.value`, document it and read it directly in the Jinja template. Unknown
 keys are ignored.

@@ -14,7 +14,7 @@ drop the `[=75% "Done"]` shorthand in your Markdown and keep both the HTML previ
 [=100% "Launch"]{: .thin}
 ````
 
-- Values must be percentages (`0 – 100`). TexSmith clamps the values if needed.
+- Values must be percentages (`0 – 100`). TeXSmith clamps the values if needed.
 - The quoted label is optional; when omitted the percentage is used.
 - Trailing attribute lists (`{: .class #id }`) attach CSS classes and HTML attributes.
   Use the `.thin` class to halve the bar height (e.g. for tables or dense summaries).

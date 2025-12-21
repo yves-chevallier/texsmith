@@ -18,4 +18,4 @@ Usage:
 Guidance:
 - Prefer template overrides for document-wide styling or publisher branding.
 - Use fragment overrides to co-locate rendering tweaks with the feature they own (callouts, code, glossary).
-- Keep a single source of truth per partial; if a fragment needs to opt out, expose a fragment attribute instead of overlapping overrides. 
+- Keep a single source of truth per partial; if a fragment needs to opt out, expose a fragment attribute instead of overlapping overrides.

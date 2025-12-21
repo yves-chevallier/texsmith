@@ -9,7 +9,7 @@ texsmith abstract.md dedication.md chapter*.md \
   --slot dedication:dedication.md
 ```
 
-To see the available slots for a given template, use the `--list-slots` flag:
+To see the available slots for a given template, use the `--template-info` flag:
 
 ```text
 $ uv run texsmith -tbook --template-info
@@ -29,7 +29,7 @@ $ uv run texsmith -tbook --template-info
 └────────────┴─────────┴───────────┴─────────┴────────┴────────────┴───────────┘
 ```
 
-You can also extract sections from a single document using the `slot:Section Name` syntax. For example, to inject the "Abstract" section from `main.md` into the `abstract` slot:"
+You can also extract sections from a single document using the `slot:Section Name` syntax. For example, to inject the "Abstract" section from `main.md` into the `abstract` slot:
 
 ```bash
 texsmith main.md \

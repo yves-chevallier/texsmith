@@ -16,7 +16,7 @@ TeXSmith bundles a single fragment, `ts-code`, that can render fenced code block
 
 ## Choosing an engine
 
-If you have require to use one, pick the engine in front matter or via the CLI template override:
+If you need to use one, pick the engine in front matter or via the CLI template override:
 
 ```yaml
 ---
@@ -40,10 +40,10 @@ This engine is the most flexible and works with all TeX engines supported by TeX
 
 Furthermore, it is much faster than `minted` since it avoids shelling out during LaTeX compilation.
 
-## Shell-escape behaviour
+## Shell-escape behavior
 
 Shell escape is requested automatically when the minted engine is active or other features need it. With `pygments`, `listings`, or `verbatim`, `.latexmkrc` will not add `--shell-escape`, keeping builds compatible with engines like Tectonic.
 
 !!! note
 
-    By default TeX disables shell escape for security reasons. Only enable it if you trust the source of your documents. Shell escape allows LaTeX to run arbitrary commands on your system during compilation. This behaviour is strongly discouraged by Tectonic team and disabled by default.
+    By default TeX disables shell escape for security reasons. Only enable it if you trust the source of your documents. Shell escape allows LaTeX to run arbitrary commands on your system during compilation. This behavior is strongly discouraged by the Tectonic team and disabled by default.

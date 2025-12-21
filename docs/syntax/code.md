@@ -55,7 +55,7 @@ With `pymdownx.snippets` you can pull code from external files, keeping samples 
 ````
 
 !!! tip
-    If using MkDocs, ensure that the `base_path` for snippets is correctly set in your configuration to point to the directory containing your code files.
+    If you're using MkDocs, ensure that the `base_path` for snippets is correctly set in your configuration to point to the directory containing your code files.
 
     A safe configuration would be:
 
@@ -67,7 +67,7 @@ With `pymdownx.snippets` you can pull code from external files, keeping samples 
 
 ### With LaTeX output
 
-Here’s what the above examples look when rendered with TeXSmith:
+Here’s what the above examples look like when rendered with TeXSmith:
 
 ````md {.snippet width="60%"}
 ---8<--- "examples/code/code-block.md"

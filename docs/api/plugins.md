@@ -1,7 +1,7 @@
 # Plugin API
 
 Plugins bundle opinionated handler collections so you can enable MkDocs-specific
-behaviour (Material tabs, cards, callouts) or ship your own HTML post-processors
+behavior (Material tabs, cards, callouts) or ship your own HTML post-processors
 without patching the core engine.
 
 `texsmith.plugins` exposes a namespace package populated by the MkDocs hook in

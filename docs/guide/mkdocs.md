@@ -22,7 +22,7 @@ You can configure additional options for the TeXSmith plugin as needed:
 
 ### Multiple documents
 
-You can either generate one single document from your MkDocs site, or multiple documents from different sections.
+You can either generate a single document from your MkDocs site or multiple documents from different sections.
 
 ```yaml
 plugins:
@@ -39,13 +39,13 @@ plugins:
 
 ## Serve
 
-During the development with `mkdocs run serve`, TeXSmith plugins can fetch assets from the web (e.g. images, citations) and compile pdf snippets on-the-fly. This allows for a smooth writing experience with instant feedback.
+During development with `mkdocs serve`, the TeXSmith plugin can fetch assets from the web (e.g. images, citations) and compile PDF snippets on the fly. This allows for a smooth writing experience with instant feedback.
 
 ## Build
 
 When you run `mkdocs build`, the TeXSmith plugin processes all TeXSmith documents in your project, generating the corresponding PDFs and integrating them into the final site output. By default the output directory is `press/`.
 
-You can tell TeXSmith to build the PDF during the process with the `build` option in you mkdocs.yml:
+You can tell TeXSmith to build the PDF during the process with the `build` option in your mkdocs.yml:
 
 ```yaml
 plugins:

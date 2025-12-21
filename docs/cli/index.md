@@ -21,7 +21,7 @@ $ texsmith --help
 : When building PDFs, TeXSmith normally parses and structures the output from `latexmk` to provide cleaner logs and richer diagnostics. This option disables that behavior and streams the raw `latexmk` output directly to your terminal. You can disable structured logs temporarily with this option.
 
 `--build`
-: After rendering the LaTeX document from your Markdown sources, invoke the default engine `tectonic` by default or the engine specified via `--engine` to compile the LaTeX into a PDF.
+: After rendering the LaTeX document from your Markdown sources, invoke the default engine (`tectonic`) or the engine specified via `--engine` to compile the LaTeX into a PDF.
 
 `--legacy-latex-accents`
 : By default, TeXSmith emits Unicode characters for accented letters and ligatures (e.g., é, ñ, æ) when generating LaTeX output. This option switches to using legacy LaTeX macros (e.g., `\'{e}`, `\~{n}`, `\ae{}`) instead, which may be necessary for compatibility with older LaTeX engines or templates.
@@ -38,10 +38,10 @@ $ texsmith --help
 : Print a list of all Markdown extensions that are enabled by default during conversion. This is useful for understanding how your Markdown will be processed.
 
 `--list-templates`
-: Show detailed metadata about the selected template, including its attributes, slots, and assets. This is helpful for understanding how to customize or extend a template.
+: List all discoverable templates, along with their origins and paths.
 
 `--list-bibliography`
-: Display a summary of all bibliography entries found in the provided `.bib` files, front matter or doi links. This is useful for validating bibliography sources without performing a full document render.
+: Display a summary of all bibliography entries found in the provided `.bib` files, front matter, or DOI links. This is useful for validating bibliography sources without performing a full document render.
 
 `--debug`
 : Enable detailed debugging output for the CLI. This includes full Python tracebacks when unexpected exceptions occur, which can help diagnose issues during conversion or rendering.
@@ -106,13 +106,13 @@ $ texsmith --help
 ### Template Options
 
 `--no-promote-title`
-: By default, TeXSmith promotes the first heading in the document to be the title of the LaTeX document. This option disables that behavior, keeping the first heading as part of the main content. If not title is found in metadata or front matter, no title will be generated.
+: By default, TeXSmith promotes the first heading in the document to be the title of the LaTeX document. This option disables that behavior, keeping the first heading as part of the main content. If no title is found in metadata or front matter, no title will be generated.
 
 `--no-title`
 : Disable title generation entirely, even if metadata or front matter provides a title. This is useful when you want to suppress the title page in the rendered document.
 
 `--template`, `-t`
-: Select a LaTeX template to use during conversion. You can provide a local path, an entry point, or a built-in slug such as `article`, `book` or `letter`.
+: Select a LaTeX template to use during conversion. You can provide a local path, an entry point, or a built-in slug such as `article`, `book`, or `letter`.
 
 `--attribute`, `-a`
 : Override template attributes by providing key=value pairs. This allows you to customize template behavior without modifying the template files directly. You can repeat this option multiple times to set multiple attributes.

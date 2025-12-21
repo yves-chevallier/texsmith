@@ -7,7 +7,7 @@ press:
       affiliation: Department of Food Mechanics, University of Edam, Netherlands
     - name: Dr. John P. Curds
       affiliation: Institute of Rheological Science, Swiss Cheese Laboratory
-  date: Octobrer 20, 2025
+  date: October 20, 2025
   slots:
     abstract: Abstract
 bibliography:
@@ -106,7 +106,7 @@ upon heating
 
 ## Materials and Methods
 
-### Samples Preparation
+### Sample Preparation
 
 Three commercial hard cheese types were selected for analysis [](#cheese-samples).
 Cylindrical specimens (20 mm diameter × 20 mm height) were extracted from the core
@@ -128,7 +128,7 @@ Characteristics of hard cheese samples used in the study
 
 Compression tests were carried out using a **TA-XT2 texture analyzer** equipped
 with a 50 kg load cell. Specimens were compressed at three nominal strain rates
-(0.1, 1, and 10 s⁻¹) to 20 % strain. The **elastic modulus (E)** was obtained
+(0.1, 1, and 10 s⁻¹) to 20% strain. The **elastic modulus (E)** was obtained
 from the initial linear region (0–5 % strain) of the stress–strain curve. The
 table [](#mechanical-results) summarizes the measured moduli.
 
@@ -184,7 +184,7 @@ This paper is fictional and intended solely for illustrative purposes in demonst
 document formatting and structure. The data, authors, and affiliations are entirely
 fabricated and do not correspond to real individuals or institutions. Any resemblance
 to actual persons, organizations, or scientific studies is purely coincidental.
-The purpose is to showcase the acurate conversion from Markdown to LaTeX format
+The purpose is to showcase the accurate conversion from Markdown to LaTeX format
 for scientific publications.
 
 ## Conclusions

@@ -23,7 +23,7 @@ TeXSmith includes standard templates for common document types:
 
 Invoke them in the CLI with `-tarticle` or `-tletter`. Additional community templates remain available under `templates/` or as separate PyPI packages.
 
-Take a look to built-in fragments for full configuration options.
+Take a look at built-in fragments for full configuration options.
 
 ## Quick start
 
@@ -58,7 +58,7 @@ Markdown fragments. You can create your own templates to control the layout,
 styling, and structure of the final output.
 
 You may start by copying an existing template package and modifying it to suit
-your needs. Templates can be either be published on PyPI for easy distribution or kept locally for personal use, by default TeXSmith will look for templates installed in the current Python environment, or in the current working directory under a `templates/` folder.
+your needs. Templates can either be published on PyPI for easy distribution or kept locally for personal use. By default, TeXSmith will look for templates installed in the current Python environment or in the current working directory under a `templates/` folder.
 
 ### Structure
 
@@ -78,7 +78,7 @@ your needs. Templates can be either be published on PyPI for easy distribution o
 
 ### TOML manifest
 
-The `manifes.toml` file describes the template and its metadata.
+The `manifest.toml` file describes the template and its metadata.
 
 ```toml
 [compat]
@@ -179,7 +179,7 @@ Each attribute table accepts the following keys:
 
 - `default`: (required) the value injected when no override is provided.
 - `type`: optional primitive among `string`, `integer`, `float`, `boolean`, `list`, `mapping`, `any`. When omitted TeXSmith infers a type from `default`.
-- `sources`: the lookup paths (dot notation) used to pull overrides from document front matter. If omitted TeXSmith probes `press.press.<name>`, `press.<name>`, then `<name>`.
+- `sources`: the lookup paths (dot notation) used to pull overrides from document front matter. If omitted, TeXSmith probes `press.press.<name>`, `press.<name>`, then `<name>`.
 - `allow_empty`: when `false`, empty strings are coerced to `None` so templates fall back to defaults.
 - `required`: when `true`, a missing override raises a `TemplateError`.
 - `choices`: restricts string/integer values to the provided list.

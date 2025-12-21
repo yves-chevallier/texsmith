@@ -25,7 +25,7 @@ The LaTeX form still looks familiar:
 Thus, index entries can:
 
 - be nested up to 3 levels,
-- be rendered in bold, italic or both,
+- be rendered in bold, italic, or both,
 - appear multiple times in the document, with all page numbers listed.
 
 To mimic this behavior in Markdown, the `texsmith.index` extension provides the

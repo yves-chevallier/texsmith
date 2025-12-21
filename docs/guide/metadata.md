@@ -79,4 +79,4 @@ depend on the `press` namespace inside templates and fragments.
 - **Consumer**: any template/fragment/renderer code that reads the attribute. Consumers should only read attributes they own or that are explicitly emitted.
 - Precedence: CLI/front matter overrides → attribute resolver (type coercion, normaliser, escape) → emitted defaults → render-time context.
 
-When adding new attributes, pick a single owner (template or fragment) and document the sources that are allowed to override it. 
+When adding new attributes, pick a single owner (template or fragment) and document the sources that are allowed to override it.

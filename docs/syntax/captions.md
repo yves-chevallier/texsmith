@@ -6,9 +6,9 @@ Markdown doesn’t ship with a native caption primitive for figures or tables. T
 ![This is the alt text](image.png)
 ```
 
-Alt text exists for accessibility, not for captions. Some browsers show it as a tooltip, but it is not a real caption and you can’t style it separately. Moreover since it is inserted in an HTML tag's attribute, it can’t contain block elements or complex formatting.
+Alt text exists for accessibility, not for captions. Some browsers show it as a tooltip, but it is not a real caption and you can’t style it separately. Moreover, since it is inserted in an HTML tag's attribute, it can’t contain block elements or complex formatting.
 
-Fortunately, `pymdownx.blocks.captions`, which adds proper caption blocks:
+Fortunately, `pymdownx.blocks.captions` adds proper caption blocks:
 
 ```md
 As seen in [this figure](#my-figure), the results are significant.
@@ -58,11 +58,11 @@ As seen in Figure \ref{fig:my-figure}, the results are significant.
 
 Markdown headings aren’t numbered, so figures/tables can’t piggyback on heading numbering. On the web that’s fine—hyperlinks rule the navigation story—but in print numbering is essential. Guideline:
 
-> Printed documents shall have numbered heading elements, figures and tables for cross-referencing. Web document however should not have numbered headings, figures or tables, relying instead on hyperlinks for navigation.
+> Printed documents shall have numbered heading elements, figures, and tables for cross-referencing. Web documents, however, should not have numbered headings, figures, or tables, relying instead on hyperlinks for navigation.
 
 Printed LaTeX floats figures and tables, so writers can’t assume a caption stays “above” or “below” the reference. HTML is literal: the figure stays where you put it.
 
-> On printed documents, words "above" and "below" when referring to figures and tables shall never be used as their position may vary due to floating. On web documents, "above" and "below" may be used as figures and tables appear exactly where they are defined.
+> On printed documents, the words "above" and "below" when referring to figures and tables shall never be used, as their position may vary due to floating. On web documents, "above" and "below" may be used, as figures and tables appear exactly where they are defined.
 
 ### Cross-referencing captions
 
@@ -110,7 +110,7 @@ As seen in \Cref{fig:my-figure}, the results are significant.
 
 Pandoc users write `{@fig:my-figure}`; the idea is the same.
 
-### Short Caption Names
+### Short caption names
 
 Printed lists of figures appreciate a condensed caption. LaTeX handles this via the optional `\caption[]` argument:
 

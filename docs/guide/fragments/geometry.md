@@ -107,7 +107,7 @@ press:
 This document demonstrates custom page geometry settings using the geometry fragment.
 ```
 
-Here another example with custom paper width:
+Here's another example with custom paper width:
 
 ```md
 ---

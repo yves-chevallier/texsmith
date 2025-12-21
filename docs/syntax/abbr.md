@@ -36,7 +36,7 @@ The HTML specification is maintained by the W3C.
 *[W3C]: World Wide Web Consortium
 ```
 
-Of course this works also in this HTML site. Try to hover over the abbreviations.
+Of course, this also works on this HTML site. Try hovering over the abbreviations.
 
 Acronyms are collected automatically during the LaTeX pass:
 

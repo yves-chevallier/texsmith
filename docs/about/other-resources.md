@@ -1,11 +1,11 @@
 # Other Similar Projects
 
-Here are some other projects and tools that are related to TeXSmith in terms of functionality, purpose or target audience.
+Here are some other projects and tools that are related to TeXSmith in terms of functionality, purpose, or target audience.
 
 ## Converters and Parsers
 
 [Pandoc](https://pandoc.org/)
-: A universal document converter that supports a wide range of formats, including Markdown, LaTeX, HTML, and more. Written in Haskell not ready for smooth integration with Python projects. Very extensible, but may require effort to set up custom conversions, filters, and adapt templates.
+: A universal document converter that supports a wide range of formats, including Markdown, LaTeX, HTML, and more. Written in Haskell, it is not ideal for smooth integration with Python projects. Very extensible, but may require effort to set up custom conversions, filters, and to adapt templates.
 
 [kramdown](https://kramdown.gettalong.org/)
 : A fast, pure Ruby Markdown parser that supports a wide range of extensions and features. It is the default Markdown engine for Jekyll. Highly customizable and feature-rich, but primarily geared towards Ruby developers.
@@ -59,7 +59,7 @@ Here are some other projects and tools that are related to TeXSmith in terms of 
 : A static site generator focused on project documentation. It uses Markdown for content and YAML for configuration. Easy to set up and use, with a variety of themes available. Ideal for creating simple, clean documentation sites.
 
 [Zensical](https://www.zensical.com/)
-: A modern static site generator that emphasizes simplicity and speed. It supports Markdown and offers a range of themes. Designed for quick setup and deployment, making it suitable for personal blogs and small websites. A next gen MkDocs Material alternative.
+: A modern static site generator that emphasizes simplicity and speed. It supports Markdown and offers a range of themes. Designed for quick setup and deployment, making it suitable for personal blogs and small websites. A next-gen MkDocs Material alternative.
 
 [Gatsby](https://www.gatsbyjs.com/)
 : A React-based static site generator that allows for building fast and modern websites. It supports Markdown and offers a rich ecosystem of plugins and themes. Ideal for developers familiar with React, but may have a steeper learning curve for beginners.

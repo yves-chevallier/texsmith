@@ -7,7 +7,7 @@ TeXSmith renders fenced blocks with the `.snippet` class into PDF/PNG pairs and 
 Use a YAML fence to point TeXSmith at your sources, working directory, and extra template options. The width of the rendered preview comes from the fence attribute.
 
 ````md
-```yaml {.snippet }
+```yaml {.snippet}
 layout: 2x2
 cwd: ../../examples/paper
 sources:
@@ -59,7 +59,7 @@ press:
 Some content...
 ```
 
-## Reusing a config file
+## Reusing a configuration file
 
 When the same snippet settings are shared across pages, point the fence to a YAML config and keep the block body empty or minimal.
 

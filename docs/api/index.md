@@ -1,6 +1,6 @@
 # TeXSmith API Overview
 
-The API reference is generated with **mkdocstrings** to stay in sync with the code base. This section is organised into themed pages so you can quickly locate the module you need.
+The API reference is generated with **mkdocstrings** to stay in sync with the codebase. This section is organized into themed pages so you can quickly locate the module you need.
 
 Each page uses `::: module.path` directives; mkdocstrings resolves them at build time and renders docstrings, signatures, and cross-references.
 

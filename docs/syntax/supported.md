@@ -2,7 +2,7 @@
 
 TeXSmith bundles Python-Markdown together with a curated set of PyMdown
 extensions. The combination lets you author rich documentation while keeping
-output predictable for LaTeX conversion. This page summarises the syntax you can
+output predictable for LaTeX conversion. This page summarizes the syntax you can
 use out of the box and points to the extension behind each feature.
 
 !!! info "Renderer defaults"
@@ -49,7 +49,7 @@ expect. TeXSmith relies on fenced code blocks by default, so triple backticks
 | Attribute lists | `attr_list` | `markdown` | `![Alt](image.png){ width="50%" }` |
 | Tables | `tables` | `markdown` | Pipe-delimited tables |
 | Markdown in HTML | `md_in_html` | `markdown` | Markdown inside custom `<div>` blocks |
-| SmartyPants | `pymdownx.smartsymbols` | `pymdown-extensions` | Auto converts quotes/dashes |
+| SmartyPants | `pymdownx.smartsymbols` | `pymdown-extensions` | Auto-converts quotes/dashes |
 | Highlighted code | `pymdownx.highlight` | `pymdown-extensions` | Adds syntax highlighting + anchors |
 | Inline highlighting | `pymdownx.inlinehilite` | `pymdown-extensions` | <code>`#!py print("hi")`</code> |
 | Details/summary | `pymdownx.details` | `pymdown-extensions` | <code>???+ note "Title"</code> |
@@ -60,10 +60,10 @@ expect. TeXSmith relies on fenced code blocks by default, so triple backticks
 | Keys | `pymdownx.keys` | `pymdown-extensions` | <code>++ctrl+alt+del++</code> |
 | Tabbed content | `pymdownx.tabbed` | `pymdown-extensions` | Content tabs |
 | Snippets | `pymdownx.snippets` | `pymdown-extensions` | Include external Markdown snippets |
-| Caret mark-up | `pymdownx.caret` | `pymdown-extensions` | <code>^^insert^^</code> |
+| Caret markup | `pymdownx.caret` | `pymdown-extensions` | <code>^^insert^^</code> |
 | Mark (highlight) | `pymdownx.mark` | `pymdown-extensions` | <code>==highlight==</code> |
 | Tilde syntax | `pymdownx.tilde` | `pymdown-extensions` | Subscript / superscript |
-| Critic mark-up | `pymdownx.critic` | `pymdown-extensions` | Editorial annotations |
+| Critic markup | `pymdownx.critic` | `pymdown-extensions` | Editorial annotations |
 | Emoji | `pymdownx.emoji` | `pymdown-extensions` | `:sparkles:` or `:fontawesome-regular-face-smile:` |
 | Fancy lists | `pymdownx.fancylists` | `pymdown-extensions` | Extended list markers |
 | Blocks caption | `pymdownx.blocks.caption` | `pymdown-extensions` | Captions for fenced blocks |
@@ -135,7 +135,7 @@ E &= mc^2 \\
 ```
 
 TeXSmith passes the block straight to the renderer, letting you mix handcrafted
-LaTeX with converted Markdown content. For inline adjustments drop
+LaTeX with converted Markdown content. For inline adjustments, drop
 `{latex}[commands]` right into the paragraph:
 
 ```markdown

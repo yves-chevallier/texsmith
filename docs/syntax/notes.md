@@ -21,7 +21,7 @@ The syntax for these helpers follows a few rules:
 `@[]` Smart references
 : Expands to the proper label for the referenced object. Figures become `Figure X`, tables render as `Table Y`, sections as `Section Z`, equations as `(N)`, theorems as `Theorem M`, and so on.
 
-`^[]` Footnotes / bibliographic citations
+`^[]` Footnotes/bibliographic citations
 : Resolves to either an inline footnote (if defined locally) or a bibliography citation.
 
 `{index}[...]` Index entries
@@ -37,7 +37,7 @@ Quick reference:
 ## Other extensions
 
 - Epigraphs: define `epigraph` blocks in front matter or mark blockquotes with the `epigraph` class to route them through the LaTeX epigraph macro.
-- Drop caps: Material’s `lettering` syntax (`:[A](Natoly)`) produces LaTeX letterine output automatically.
+- Drop caps: Material’s `lettering` syntax (`:[A](Natoly)`) produces LaTeX lettrine output automatically.
 - Wikipedia shortcodes keep working; they simply render as annotated links in both HTML and LaTeX.
 
 ## Index
@@ -53,7 +53,7 @@ Printed indexes convey intent with typography:
 Use `{index}` plus multiple `[brackets]` to build entries. Append `{b}`, `{i}`, or `{bi}` to tweak the style, and specify `{index:registry}` when you want to file the entry under a custom registry (handy for multi-index books).
 
 ```md
-Do you know the Gulliver's Travels story about the egg dispute?
+Do you know the Gulliver's Travels tale about the egg dispute?
 {index}[endianness]{i}
 
 {index}[endianness]{bi}
@@ -211,7 +211,7 @@ Inside the Markdown document you can reference glossary entries with the `gls:` 
 
 ```md
 From the well-known [](gls:solid) principles, the following class must
-be [](gls:liskov) Substitution Principle compliant.
+be [](gls:liskov) Substitution Principle-compliant.
 ```
 
 ### Wikipedia
@@ -219,7 +219,7 @@ be [](gls:liskov) Substitution Principle compliant.
 Many glossary-worthy entries live on Wikipedia, and TeXSmith can pull their summaries automatically.
 
 ```md
-From the well known [SOLID](https://en.wikipedia.org/wiki/SOLID)
+From the well-known [SOLID](https://en.wikipedia.org/wiki/SOLID)
 ```
 
 When enabled, TeXSmith converts Wikipedia links into glossary entries for the printed document.

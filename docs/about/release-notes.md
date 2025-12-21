@@ -30,6 +30,6 @@ The command lists TeX Live requirements, shell-escape expectations, slot definit
 ## Upgrade checklist
 
 1. Run `uv run mkdocs build` to confirm docs compile without warnings on the new release.
-2. Update your TeX Live image with any new packages referenced in the table above or in `template info`.
+2. Update your TeX Live image with any new packages referenced in the table above or in `template-info`.
 3. Rebuild the examples (`docs/examples/index.md`) and confirm smoke tests still pass.
 4. Capture notable migrations (CLI flags, metadata schema changes) in this page and link PRs or release notes for future reference.

@@ -14,7 +14,7 @@ press:
   frame: true
 ```
 
-Here the source:
+Here is the source:
 
 ````markdown
 --8<--- "examples/diagrams/diagrams.md"
@@ -22,7 +22,7 @@ Here the source:
 
 ## Rendered Markdown
 
-Obviously everything built with texsmith can also be rendered in this very Markdown file:
+Obviously everything built with TeXSmith can also be rendered in this very Markdown file:
 
 ### Draw.io Diagram
 

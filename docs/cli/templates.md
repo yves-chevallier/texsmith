@@ -1,6 +1,6 @@
 # Templates
 
-Templates are pre-defined LaTeX document structures that dictate the overall layout, style, and organization of your final document. TeXSmith includes several built-in templates for common document types, and you can also create and use custom templates.
+Templates are predefined LaTeX document structures that dictate the overall layout, style, and organization of your final document. TeXSmith includes several built-in templates for common document types, and you can also create and use custom templates.
 
 ## Use a template
 
@@ -27,7 +27,7 @@ To see the list of available templates, use the `--list-templates` flag:
 └──────────┴─────────┴───────────────────────────────────────────────────┘
 ```
 
-Each templates comes with its own set of slots, styles, and configurations tailored for specific document types. For example, the `article` template is suitable for academic papers, while the `book` template is designed for longer documents with chapters and parts.
+Each template comes with its own set of slots, styles, and configurations tailored for specific document types. For example, the `article` template is suitable for academic papers, while the `book` template is designed for longer documents with chapters and parts.
 
 ## Explore Template Details
 
@@ -39,7 +39,7 @@ texsmith --template article --template-info
 
 It will display a summary of the template, including:
 
-- List of attributes and their types (e.g. authors, columns, date, language...)
+- List of attributes and their types (e.g., authors, columns, date, language...)
 - List of assets included in the template (e.g. style files, images...)
 - List of fragments (`ts-geometry`, `ts-typesetting`, ...) that the template uses.
 - List of slots available for content injection.
@@ -52,7 +52,7 @@ One goal of TeXSmith is to make it easy to create and share custom templates. Yo
 texsmith --template article --template-scaffold my-custom-template/
 ```
 
-Then you can edit the files in `my-custom-template/` to customize the layout, styles, and slots as needed. Then, use your custom template by specifying its path:
+Then edit the files in `my-custom-template/` to customize the layout, styles, and slots as needed, and use your custom template by specifying its path:
 
 ```bash
 texsmith document.md --template ./my-custom-template/

@@ -9,7 +9,7 @@ sources:
 template: ../../examples/colorful
 ```
 
-The YAML front matter picks the local defined template (`.`), sets the palette, and feeds each slot. Colors live under `colors`, and slot content under `slots`.
+The YAML front matter picks the locally defined template (`.`), sets the palette, and feeds each slot. Colors live under `colors`, and slot content under `slots`.
 
 The manifest defines defaults, available attributes, and where they get injected.
 

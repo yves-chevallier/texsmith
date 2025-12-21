@@ -11,7 +11,7 @@ texsmith --template-info --template article
 texsmith templates  # list all discoverable templates
 ```
 
-To customise, copy the file, adjust options, and point to your modified template directory:
+To customize, copy the file, adjust options, and point to your modified template directory:
 
 ```bash
 cp -r $(python - <<'PY'\nfrom texsmith.core.templates import load_template\nfrom pathlib import Path\nt = load_template('article')\nprint(t.root)\nPY) ./templates/article\n# edit ./templates/article/mermaid-config.json\ntexsmith doc.md --template ./templates/article

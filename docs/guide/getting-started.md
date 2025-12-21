@@ -30,7 +30,7 @@ To install TeXSmith, use your preferred Python package manager:
     uv tool install texsmith
     ```
 
-For basic uses, you don't need anything else. TeXSmith bundles Tectonic for LaTeX builds and will auto-install the required tools on demand.
+For basic use, you don't need anything else. TeXSmith bundles Tectonic for LaTeX builds and will auto-install the required tools on demand.
 
 ## Convert a Markdown file to LaTeX
 

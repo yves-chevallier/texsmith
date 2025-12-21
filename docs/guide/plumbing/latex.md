@@ -4,7 +4,7 @@ LaTeX is the layer that turned TeX from a brilliant but arcane typesetting engin
 
 ## Leslie Lamport
 
-Leslie Lamport, an American computer scientist best known for his pioneering work in distributed systems and formal methods, created LaTeX in the early 1980s while at SRI International. Frustrated by the repetitiveness and fragility of raw TeX macros, Lamport designed LaTeX as a higher-level interface where authors declare what a document element is -- "this is a theorem," "this is a section," "this is a quotation" -- and let the underlying macros decide how it should look. Lamport’s disciplined, engineering-driven approach gave LaTeX the structure and style consistency that made it indispensable across scientific disciplines. Though others have maintained and extended LaTeX since, Lamport remains the architect of the system that made TeX widely accessible.
+Leslie Lamport, an American computer scientist best known for his pioneering work in distributed systems and formal methods, created LaTeX in the early 1980s while at SRI International. Frustrated by the repetitiveness and fragility of raw TeX macros, Lamport designed LaTeX as a higher-level interface where authors declare what a document element is—"this is a theorem," "this is a section," "this is a quotation"—and let the underlying macros decide how it should look. Lamport’s disciplined, engineering-driven approach gave LaTeX the structure and style consistency that made it indispensable across scientific disciplines. Though others have maintained and extended LaTeX since, Lamport remains the architect of the system that made TeX widely accessible.
 
 ## How LaTeX differs from TeX
 

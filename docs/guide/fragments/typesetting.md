@@ -28,4 +28,4 @@ press:
 
 ### Templates
 
-The built-in `article` and `book` templates inject `ts-typesetting` directly (no `\usepackage` file to manage). If you don’t set any of the options above, the fragment emits nothing and the templates’ stock spacing stays unchanged.***
+The built-in `article` and `book` templates inject `ts-typesetting` directly (no `\usepackage` file to manage). If you don’t set any of the options above, the fragment emits nothing and the templates’ stock spacing stays unchanged.

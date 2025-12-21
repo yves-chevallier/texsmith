@@ -1,6 +1,6 @@
 # Glossary
 
-In online documentation, glossary doesn't have much sense, since you can
+In online documentation, a glossary doesn't make much sense because you can
 search for terms directly and you have hyperlinks. However, in printed documents, a
 glossary can be very useful to provide definitions of terms used in the text.
 

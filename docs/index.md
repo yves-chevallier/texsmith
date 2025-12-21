@@ -44,7 +44,7 @@ Pipeline parity
 : The CLI and Python API share the same conversion engine,
   so automation scripts and ad-hoc conversions stay in sync.
 
-Template friendly
+Template-friendly
 : Wrap multiple documents into a single LaTeX project,
   map fragments into template slots, and customise the runtime with Jinja2.
 

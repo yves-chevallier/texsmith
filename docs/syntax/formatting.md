@@ -7,7 +7,7 @@ The quick brown fox jumps over the lazy dog. *(regular)*
 
 *The quick brown fox jumps over the lazy dog.* *(italic)*
 
-**The quick brown fox jumps over the lazy dog.** **(bold)*
+**The quick brown fox jumps over the lazy dog.** *(bold)*
 
 ***The quick brown fox jumps over the lazy dog.*** *(bold italic)*
 
@@ -21,7 +21,7 @@ The quick brown fox jumps over the lazy dog. *(regular)*
 
 *The quick brown fox jumps over the lazy dog.* *(italic)*
 
-**The quick brown fox jumps over the lazy dog.** **(bold)*
+**The quick brown fox jumps over the lazy dog.** *(bold)*
 
 ***The quick brown fox jumps over the lazy dog.*** *(bold italic)*
 

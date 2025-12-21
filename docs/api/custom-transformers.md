@@ -70,7 +70,7 @@ your own `suffix` when the converter emits something other than `.pdf`.
 
 When TeXSmith cannot find a converter, it installs placeholder strategies that
 emit visible warnings and `TODO` boxes in the LaTeX output. Use these helpers to
-control that behaviour:
+control that behavior:
 
 - `texsmith.adapters.transformers.has_converter("mermaid")` – check whether a
   converter is registered before assuming the dependency exists.

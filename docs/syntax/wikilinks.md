@@ -1,4 +1,3 @@
-
 # Wiki Links
 
 MkDocs and Python-Markdown support the `[[Wiki Link]]` syntax via the `wikilinks`

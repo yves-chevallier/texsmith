@@ -14,7 +14,7 @@ texsmith --template-info --template article
 texsmith templates  # list all visible templates
 ```
 
-A valid template root contains either `manifest.toml` or `template/manifest.toml`; an `__init__.py` alongside these allows specialised Python logic.
+A valid template root contains either `manifest.toml` or `template/manifest.toml`; an `__init__.py` alongside these allows specialized Python logic.
 
 Notes:
 - Passing an explicit path (`--template ./templates/custom`) bypasses discovery order.
