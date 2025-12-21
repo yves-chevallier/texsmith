@@ -21,7 +21,7 @@
 \BLOCK{- endif}
 \BLOCK{- if is_large -}
 \BLOCK{- endif}
-\begin{tabularx}{\textwidth}{\BLOCK{- for column in columns}\BLOCK{- if loop.first }\VAR{first_style.get(column, 'l')}\BLOCK{- else }\VAR{rest_style.get(column, 'X')}\BLOCK{- endif }\BLOCK{- endfor}}
+\begin{tabularx}{\linewidth}{\BLOCK{- for column in columns}\BLOCK{- if loop.first }\VAR{first_style.get(column, 'l')}\BLOCK{- else }\VAR{rest_style.get(column, 'X')}\BLOCK{- endif }\BLOCK{- endfor}}
 \toprule
 \BLOCK{for row in rows -}
 \BLOCK{- if loop.first -}
