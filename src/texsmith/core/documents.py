@@ -1,4 +1,4 @@
-"""Document abstractions consumed by the TeXSmith public API.
+"""Document abstractions used by the conversion pipeline.
 
 Architecture
 : `Document` models inputs alongside slot overrides and rendering toggles.
@@ -21,7 +21,7 @@ Usage Example
 :
     >>> from pathlib import Path
     >>> from tempfile import TemporaryDirectory
-    >>> from texsmith.api.document import Document
+    >>> from texsmith.core.documents import Document
     >>> with TemporaryDirectory() as tmpdir:
     ...     source = Path(tmpdir) / "chapter.md"
     ...     _ = source.write_text("# Chapter\\nBody")
@@ -47,18 +47,18 @@ from ..adapters.markdown import (
     MarkdownConversionError,
     render_markdown,
 )
-from ..core.conversion.debug import ConversionError, debug_enabled
-from ..core.conversion.inputs import (
+from .conversion.debug import ConversionError, debug_enabled
+from .conversion.inputs import (
     DOCUMENT_SELECTOR_SENTINEL,
     InputKind,
     build_document_context,
     extract_content,
     extract_front_matter_slots,
 )
-from ..core.conversion_contexts import DocumentContext
-from ..core.diagnostics import DiagnosticEmitter, NullEmitter
-from ..core.metadata import PressMetadataError, normalise_press_metadata
-from ..core.templates.runtime import coerce_base_level
+from .conversion_contexts import DocumentContext
+from .diagnostics import DiagnosticEmitter, NullEmitter
+from .metadata import PressMetadataError, normalise_press_metadata
+from .templates.runtime import coerce_base_level
 
 
 __all__ = [

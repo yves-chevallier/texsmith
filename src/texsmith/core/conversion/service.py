@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Iterable, Mapping, Sequence
 import copy
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
@@ -30,37 +30,27 @@ from texsmith.adapters.latex.tectonic import (
     select_tectonic_binary,
 )
 from texsmith.adapters.markdown import split_front_matter
-from texsmith.core.conversion.debug import ConversionError, ensure_emitter
-from texsmith.core.conversion.inputs import (
+
+from ..diagnostics import DiagnosticEmitter
+from ..documents import Document, DocumentSlots, TitleStrategy, front_matter_has_title
+from ..metadata import PressMetadataError, normalise_press_metadata
+from ..templates.session import TemplateRenderResult, TemplateSession, get_template
+from .debug import ConversionError, ensure_emitter
+from .inputs import (
     InputKind,
     UnsupportedInputError,
     extract_front_matter_slots,
 )
-from texsmith.core.diagnostics import DiagnosticEmitter
-from texsmith.core.metadata import PressMetadataError, normalise_press_metadata
-
-from .document import Document, DocumentSlots, TitleStrategy, front_matter_has_title
+from .models import ConversionRequest, ConversionSettings
 from .pipeline import ConversionBundle, RenderSettings, convert_documents
-from .templates import TemplateRenderResult, TemplateSession, get_template
 
 
 __all__ = [
-    "ConversionRequest",
     "ConversionResponse",
     "ConversionService",
-    "SlotAssignment",
     "SplitInputsResult",
     "classify_input_source",
 ]
-
-
-@dataclass(slots=True)
-class SlotAssignment:
-    """Directive mapping a document onto a template slot."""
-
-    slot: str
-    selector: str | None
-    include_document: bool
 
 
 @dataclass(slots=True)
@@ -75,47 +65,6 @@ class SplitInputsResult:
     def __iter__(self) -> Iterable[object]:  # pragma: no cover - convenience iterator
         yield self.documents
         yield self.bibliography_files
-
-
-@dataclass(slots=True)
-class ConversionRequest:
-    """Immutable description of a conversion run."""
-
-    documents: Sequence[Path]
-    bibliography_files: Sequence[Path] = field(default_factory=list)
-    embed_fragments: bool = False
-    front_matter: Mapping[str, Any] | None = None
-    front_matter_path: Path | None = None
-    slot_assignments: Mapping[Path, Sequence[SlotAssignment]] = field(default_factory=dict)
-
-    selector: str = "article.md-content__inner"
-    full_document: bool = False
-    base_level: int = 0
-    strip_heading_all: bool = False
-    strip_heading_first_document: bool = False
-    promote_title: bool = True
-    suppress_title: bool = False
-    numbered: bool = True
-    markdown_extensions: Sequence[str] = field(default_factory=list)
-
-    parser: str | None = None
-    disable_fallback_converters: bool = False
-    copy_assets: bool = True
-    convert_assets: bool = False
-    hash_assets: bool = False
-    manifest: bool = False
-    persist_debug_html: bool = False
-    language: str | None = None
-    legacy_latex_accents: bool = False
-    diagrams_backend: str | None = None
-
-    template: str | None = None
-    render_dir: Path | None = None
-    template_options: Mapping[str, Any] = field(default_factory=dict)
-    enable_fragments: Sequence[str] = field(default_factory=tuple)
-    disable_fragments: Sequence[str] = field(default_factory=tuple)
-
-    emitter: DiagnosticEmitter | None = None
 
 
 @dataclass(slots=True)
@@ -284,7 +233,7 @@ class ConversionService:
     ) -> ConversionResponse:
         """Execute a conversion workflow and return a structured response, routing to template or raw conversion paths as needed."""
         batch = prepared or self.prepare_documents(request)
-        settings = self._build_render_settings(request)
+        settings = self._build_render_settings(request.settings)
         emitter = batch.emitter
 
         if request.template is None:
@@ -428,18 +377,18 @@ class ConversionService:
         )
 
     @staticmethod
-    def _build_render_settings(request: ConversionRequest) -> RenderSettings:
+    def _build_render_settings(settings: ConversionSettings) -> RenderSettings:
         return RenderSettings(
-            parser=request.parser,
-            disable_fallback_converters=request.disable_fallback_converters,
-            copy_assets=request.copy_assets,
-            convert_assets=request.convert_assets,
-            hash_assets=request.hash_assets,
-            manifest=request.manifest,
-            persist_debug_html=request.persist_debug_html,
-            language=request.language,
-            legacy_latex_accents=request.legacy_latex_accents,
-            diagrams_backend=request.diagrams_backend,
+            parser=settings.parser,
+            disable_fallback_converters=settings.disable_fallback_converters,
+            copy_assets=settings.copy_assets,
+            convert_assets=settings.convert_assets,
+            hash_assets=settings.hash_assets,
+            manifest=settings.manifest,
+            persist_debug_html=settings.persist_debug_html,
+            language=settings.language,
+            legacy_latex_accents=settings.legacy_latex_accents,
+            diagrams_backend=settings.diagrams_backend,
         )
 
     @staticmethod

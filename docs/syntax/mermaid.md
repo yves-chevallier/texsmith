@@ -28,7 +28,7 @@ Sometimes diagrams live better outside the Markdown. TeXSmith supports:
 1. Reference external `.mmd` / `.mermaid` files.
 2. Embed Mermaid Live snippets using `pako:` URLs for live editing.
 
-The `texsmith.mermaid` extension sniffs out these references, pulls the content in, and treats inline/external sources the same way.
+The `texsmith.extensions.mermaid` extension sniffs out these references, pulls the content in, and treats inline/external sources the same way.
 
 Using a `mmd` file is as simple as including an image:
 

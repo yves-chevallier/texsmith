@@ -3,10 +3,10 @@ from pathlib import Path
 import pytest
 
 from texsmith.adapters.latex import LaTeXRenderer
-from texsmith.api.document import Document
-from texsmith.api.pipeline import convert_documents
 from texsmith.core.config import BookConfig
 from texsmith.core.context import DocumentState
+from texsmith.core.conversion.pipeline import convert_documents
+from texsmith.core.documents import Document
 
 
 @pytest.fixture

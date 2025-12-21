@@ -16,6 +16,8 @@ from typing import Any
 
 from bs4 import BeautifulSoup
 from bs4.element import NavigableString, Tag
+
+
 try:  # Optional dependency: only needed when generating snippet previews.
     from PIL import Image, ImageDraw
 except ModuleNotFoundError:  # pragma: no cover - optional dependency
@@ -33,7 +35,11 @@ from texsmith.adapters.markdown import (
     render_markdown,
     split_front_matter,
 )
-from texsmith.api.document import (
+from texsmith.core.context import RenderContext
+from texsmith.core.conversion.inputs import InputKind
+from texsmith.core.conversion.pipeline import RenderSettings
+from texsmith.core.diagnostics import DiagnosticEmitter
+from texsmith.core.documents import (
     Document,
     DocumentRenderOptions,
     DocumentSlots,
@@ -41,15 +47,11 @@ from texsmith.api.document import (
     _resolve_title_strategy,
     front_matter_has_title,
 )
-from texsmith.api.pipeline import RenderSettings
-from texsmith.api.templates import TemplateSession
-from texsmith.core.context import RenderContext
-from texsmith.core.conversion.inputs import InputKind
-from texsmith.core.diagnostics import DiagnosticEmitter
 from texsmith.core.exceptions import AssetMissingError, InvalidNodeError, LatexRenderingError
 from texsmith.core.metadata import PressMetadataError, normalise_press_metadata
 from texsmith.core.rules import RenderPhase, renders
 from texsmith.core.templates import TemplateError, TemplateRuntime, load_template_runtime
+from texsmith.core.templates.session import TemplateSession
 from texsmith.core.user_dir import get_user_dir
 
 
@@ -1191,7 +1193,7 @@ def _load_pymupdf() -> object:
 
 def _pdf_to_png(pdf_path: Path, png_path: Path, *, transparent_corner: bool = False) -> None:
     fitz = _load_pymupdf()
-    Image, _ = _require_pillow()
+    image_lib, _ = _require_pillow()
 
     with fitz.open(pdf_path) as document:
         if document.page_count == 0:
@@ -1200,7 +1202,7 @@ def _pdf_to_png(pdf_path: Path, png_path: Path, *, transparent_corner: bool = Fa
         pixmap = page.get_pixmap(dpi=220)
 
     mode = "RGBA" if pixmap.alpha else "RGB"
-    image = Image.frombytes(mode, (pixmap.width, pixmap.height), pixmap.samples)
+    image = image_lib.frombytes(mode, (pixmap.width, pixmap.height), pixmap.samples)
     if transparent_corner:
         image = _apply_dogear_transparency(image)
     image.save(png_path)
@@ -1217,7 +1219,7 @@ def _pdf_to_png_grid(
     fold_size: int | None = None,
 ) -> None:
     fitz = _load_pymupdf()
-    Image, _ = _require_pillow()
+    image_lib, _ = _require_pillow()
 
     with fitz.open(pdf_path) as document:
         page_count = document.page_count
@@ -1243,7 +1245,7 @@ def _pdf_to_png_grid(
             page = document.load_page(index)
             pixmap = page.get_pixmap(dpi=220)
             mode = "RGBA" if pixmap.alpha else "RGB"
-            images.append(Image.frombytes(mode, (pixmap.width, pixmap.height), pixmap.samples))
+            images.append(image_lib.frombytes(mode, (pixmap.width, pixmap.height), pixmap.samples))
 
     if not images:
         raise LatexRenderingError(f"Snippet PDF '{pdf_path}' did not produce any pages.")
@@ -1257,7 +1259,7 @@ def _pdf_to_png_grid(
 
     total_w = cols * page_w + inferred_spacing * (cols - 1)
     total_h = rows * page_h + inferred_spacing * (rows - 1)
-    canvas = Image.new("RGBA", (total_w, total_h), (255, 255, 255, 0))
+    canvas = image_lib.new("RGBA", (total_w, total_h), (255, 255, 255, 0))
 
     for idx, img in enumerate(images):
         if transparent_corner:
@@ -1276,7 +1278,7 @@ def _pdf_to_png_grid(
 
 
 def _apply_dogear_transparency(image: Image.Image, *, fold_size: int | None = None) -> Image.Image:
-    _, ImageDraw = _require_pillow()
+    _, image_draw = _require_pillow()
     rgba = image.convert("RGBA")
     width, height = rgba.size
     if width <= 0 or height <= 0:
@@ -1287,7 +1289,7 @@ def _apply_dogear_transparency(image: Image.Image, *, fold_size: int | None = No
     seed_x = width - 2 if width > 1 else 0
     seed_y = 1 if height > 1 else 0
     try:
-        ImageDraw.floodfill(rgba, (seed_x, seed_y), magenta, thresh=8)
+        image_draw.floodfill(rgba, (seed_x, seed_y), magenta, thresh=8)
     except Exception:
         return rgba
 
@@ -1333,7 +1335,7 @@ def _overlay_dogear_frame(
     dogear_enabled: bool = True,
 ) -> Image.Image:
     """Draw a frame with a folded corner directly onto the PNG."""
-    Image, ImageDraw = _require_pillow()
+    image_lib, image_draw = _require_pillow()
     base = image.convert("RGBA")
     width, height = base.size
     if width <= 0 or height <= 0:
@@ -1348,8 +1350,8 @@ def _overlay_dogear_frame(
     x1, y1 = width - 1 - m, height - 1 - m
 
     scale = 6
-    overlay = Image.new("RGBA", (width * scale, height * scale), (0, 0, 0, 0))
-    draw = ImageDraw.Draw(overlay)
+    overlay = image_lib.new("RGBA", (width * scale, height * scale), (0, 0, 0, 0))
+    draw = image_draw.Draw(overlay)
     bw = max(1, stroke * scale)
 
     def sx(val: float) -> int:

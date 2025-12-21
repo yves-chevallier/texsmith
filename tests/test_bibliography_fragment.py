@@ -4,8 +4,8 @@ from pathlib import Path
 import textwrap
 import warnings
 
-from texsmith.api.document import Document
-from texsmith.api.templates import get_template
+from texsmith.core.documents import Document
+from texsmith.core.templates.session import get_template
 
 
 FIXTURE_BIB = Path(__file__).resolve().parent / "fixtures" / "bib" / "b.bib"

@@ -24,8 +24,8 @@ Usage Example
 :
     >>> from pathlib import Path
     >>> from tempfile import TemporaryDirectory
-    >>> from texsmith.api.document import Document
-    >>> from texsmith.api.pipeline import convert_documents
+    >>> from texsmith.core.documents import Document
+    >>> from texsmith.core.conversion.pipeline import convert_documents
     >>> with TemporaryDirectory() as tmpdir:
     ...     source = Path(tmpdir) / "intro.md"
     ...     _ = source.write_text("# Intro\\nContent")
@@ -43,18 +43,18 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
-from ..core.bibliography.collection import BibliographyCollection
-from ..core.conversion.core import ConversionResult, convert_document
-from ..core.conversion.renderer import TemplateFragment
-from ..core.diagnostics import DiagnosticEmitter, NullEmitter
+from ..bibliography.collection import BibliographyCollection
+from ..diagnostics import DiagnosticEmitter, NullEmitter
+from ..documents import Document
 from ._utils import build_unique_stem_map
-from .document import Document
+from .core import ConversionResult, convert_document
+from .renderer import TemplateFragment
 
 
 if TYPE_CHECKING:  # pragma: no cover - type checking only
     from texsmith.core.context import DocumentState
 
-    from ..core.templates import TemplateRuntime
+    from ..templates import TemplateRuntime
 
 
 __all__ = [

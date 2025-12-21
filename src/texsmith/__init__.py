@@ -4,25 +4,6 @@ from __future__ import annotations
 
 from importlib.metadata import PackageNotFoundError, version as _pkg_version
 
-from texsmith import _alias as _legacy_aliases
-from texsmith.api import (
-    ConversionBundle,
-    ConversionRequest,
-    ConversionResponse,
-    ConversionService,
-    Document,
-    DocumentRenderOptions,
-    LaTeXFragment,
-    RenderSettings,
-    SlotAssignment,
-    TemplateOptions,
-    TemplateRenderResult,
-    TemplateSession,
-    TitleStrategy,
-    classify_input_source,
-    convert_documents,
-    get_template,
-)
 from texsmith.core.bibliography import (
     BibliographyCollection,
     BibliographyIssue,
@@ -32,6 +13,19 @@ from texsmith.core.bibliography import (
 )
 from texsmith.core.config import BookConfig, LaTeXConfig
 from texsmith.core.context import AssetRegistry, DocumentState, RenderContext
+from texsmith.core.conversion import ConversionRequest, SlotAssignment
+from texsmith.core.conversion.pipeline import (
+    ConversionBundle,
+    LaTeXFragment,
+    RenderSettings,
+    convert_documents,
+)
+from texsmith.core.conversion.service import (
+    ConversionResponse,
+    ConversionService,
+    classify_input_source,
+)
+from texsmith.core.documents import Document, DocumentRenderOptions, TitleStrategy
 from texsmith.core.rules import RenderPhase, renders
 from texsmith.core.templates import (
     DEFAULT_TEMPLATE_LANGUAGE,
@@ -45,6 +39,12 @@ from texsmith.core.templates import (
     load_template,
     load_template_runtime,
     resolve_template_language,
+)
+from texsmith.core.templates.session import (
+    TemplateOptions,
+    TemplateRenderResult,
+    TemplateSession,
+    get_template,
 )
 from texsmith.core.user_dir import (
     TexsmithUserDir,

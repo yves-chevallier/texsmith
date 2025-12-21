@@ -2,13 +2,13 @@
 
 TeXSmith ships its Markdown extensions directly inside the `texsmith`
 distribution. Once `pip install texsmith` is done, you can import them either
-via the `texsmith.extensions` registry or by using the convenience modules
-(`texsmith.smallcaps`, `texsmith.index`, ...).
+via the `texsmith.extensions` registry or by using the extension modules
+(`texsmith.extensions.smallcaps`, `texsmith.index`, ...).
 
 Every extension follows the same structure:
 
 - A Python-Markdown class or `makeExtension()` factory available as
-  `texsmith.<name>`.
+  `texsmith.extensions.<name>`.
 - Optional renderer hooks (`register_renderer`) that teach the LaTeX backend
   how to deal with the extra HTML nodes created by the Markdown layer.
 - Optional MkDocs plugins that keep search indexes in sync.
@@ -20,14 +20,14 @@ following extensions under the `texsmith` namespace:
 
 | Module                       | Purpose                                                              |
 | ---------------------------- | -------------------------------------------------------------------- |
-| `texsmith.smallcaps`         | `__text__` syntax mapped to `<span class="texsmith-smallcaps">`.     |
-| `texsmith.latex_raw` / `texsmith.rawlatex` | `/// latex` fences and `{latex}[x]` inline snippets injected as hidden HTML. |
-| `texsmith.latex_text`        | Styles the literal `LaTeX` token in running text.                    |
-| `texsmith.missing_footnotes` | Warns about references to undefined footnotes.                       |
-| `texsmith.multi_citations`   | Normalises `^[foo,bar]` blocks to footnotes.                         |
-| `texsmith.mermaid`           | Inlines Mermaid diagrams pointed to by Markdown images.              |
-| `texsmith.texlogos`          | Replaces TeX logo keywords with accessible HTML spans.               |
-| `texsmith.index`             | Adds the `#[tag]` syntax, LaTeX index handlers and an MkDocs plugin. |
+| `texsmith.extensions.smallcaps`         | `__text__` syntax mapped to `<span class="texsmith-smallcaps">`.     |
+| `texsmith.extensions.latex_raw`         | `/// latex` fences and `{latex}[x]` inline snippets injected as hidden HTML. |
+| `texsmith.extensions.latex_text`        | Styles the literal `LaTeX` token in running text.                    |
+| `texsmith.extensions.missing_footnotes` | Warns about references to undefined footnotes.                       |
+| `texsmith.extensions.multi_citations`   | Normalises `^[foo,bar]` blocks to footnotes.                         |
+| `texsmith.extensions.mermaid`           | Inlines Mermaid diagrams pointed to by Markdown images.              |
+| `texsmith.extensions.texlogos`          | Replaces TeX logo keywords with accessible HTML spans.               |
+| `texsmith.index`                        | Adds the `#[tag]` syntax, LaTeX index handlers and an MkDocs plugin. |
 
 Inspect the registry programmatically if you want to discover the available
 extensions dynamically:
@@ -35,7 +35,7 @@ extensions dynamically:
 ```python
 >>> from texsmith.extensions import available_extensions
 >>> [spec.package_name for spec in available_extensions()]
-['texsmith.index', 'texsmith.latex_raw', 'texsmith.latex_text', ...]
+['texsmith.index', 'texsmith.extensions.latex_raw', 'texsmith.extensions.latex_text', ...]
 ```
 
 ## Using the extensions with Python Markdown
@@ -73,7 +73,7 @@ Once TeXSmith is installed you can reference the modules directly from
 markdown_extensions:
   - texsmith.index
   - texsmith.texlogos
-  - texsmith.smallcaps
+  - texsmith.extensions.smallcaps
 ```
 
 The index extension also publishes an MkDocs plugin that injects collected tags

@@ -68,8 +68,8 @@ expect. TeXSmith relies on fenced code blocks by default, so triple backticks
 | Fancy lists | `pymdownx.fancylists` | `pymdown-extensions` | Extended list markers |
 | Blocks caption | `pymdownx.blocks.caption` | `pymdown-extensions` | Captions for fenced blocks |
 | Blocks HTML | `pymdownx.blocks.html` | `pymdown-extensions` | Named block wrappers |
-| Snippets of LaTeX | `texsmith.latex_raw` | bundled | Raw LaTeX fence |
-| Missing footnotes guard | `texsmith.missing_footnotes` | bundled | Warns when references lack definitions |
+| Snippets of LaTeX | `texsmith.extensions.latex_raw` | bundled | Raw LaTeX fence |
+| Missing footnotes guard | `texsmith.extensions.missing_footnotes` | bundled | Warns when references lack definitions |
 
 Want a generated table of contents? Add the Python-Markdown `toc` extension with `-x toc` or `--enable-extension toc`—it is no longer enabled by default.
 

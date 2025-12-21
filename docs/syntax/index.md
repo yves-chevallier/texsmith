@@ -95,13 +95,13 @@ TeXSmith is unapologetically opinionated: it curates a stack, sprinkles extra sa
 
 | Feature       | Syntax                    | Extension               |
 | ------------- | ------------------------- | ----------------------- |
-| Small Caps    | `^^x^^`                   | `texsmith.smallcaps`    |
-| Mermaid       | `![](diagram.mmd)`        | `texsmith.mermaid`      |
+| Small Caps    | `^^x^^`                   | `texsmith.extensions.smallcaps`    |
+| Mermaid       | `![](diagram.mmd)`        | `texsmith.extensions.mermaid`      |
 | Progress Bars | `[=75% "Done"]`           | `texsmith.progressbar`  |
 | Bibliography  | `[^citekey]`              | `texsmith.bibliography` |
 | Index Entries | `{index}[entry]` (use `{index:registry}[entry]` to target another registry; add more `[level]` brackets for nesting) | `texsmith.index`        |
 | Acronyms      | `ACME (Acme Corporation)` | `texsmith.acronyms`     |
-| Raw LaTeX     | `/// latex`, `{latex}[x]` | `texsmith.latex_raw` / `texsmith.rawlatex` |
+| Raw LaTeX     | `/// latex`, `{latex}[x]` | `texsmith.extensions.latex_raw` |
 | LaTeX Text    | `LaTeX`, `TeXSmith`       | `texsmith.latex`        |
 
 ### Other
@@ -126,11 +126,11 @@ TeXSmith is unapologetically opinionated: it curates a stack, sprinkles extra sa
   - mdx_math
   - md_in_html
 - TeXSmith
-  - texsmith.multi_citations:MultiCitationExtension
-  - texsmith.latex_raw:LatexRawExtension
-  - texsmith.missing_footnotes:MissingFootnotesExtension
-  - texsmith.latex_text:LatexTextExtension
-  - texsmith.smallcaps:SmallCapsExtension
+  - texsmith.extensions.multi_citations:MultiCitationExtension
+  - texsmith.extensions.latex_raw:LatexRawExtension
+  - texsmith.extensions.missing_footnotes:MissingFootnotesExtension
+  - texsmith.extensions.latex_text:LatexTextExtension
+  - texsmith.extensions.smallcaps:SmallCapsExtension
   - texsmith.progressbar:ProgressBarExtension
 - Pymdown Extensions
   - pymdownx.betterem

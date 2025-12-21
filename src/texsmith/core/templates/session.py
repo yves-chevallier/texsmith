@@ -1,4 +1,4 @@
-"""Template orchestration helpers exposed by the TeXSmith API.
+"""Template orchestration helpers used by the conversion pipeline.
 
 Architecture
 : `TemplateSession` owns lifecycle management: it accepts documents, applies
@@ -23,7 +23,7 @@ Implementation Rationale
 Usage Example
 :
     >>> from types import SimpleNamespace
-    >>> from texsmith.api.templates import TemplateSession
+    >>> from texsmith.core.templates.session import TemplateSession
     >>> from texsmith.core.templates import TemplateRuntime, TemplateSlot
     >>> dummy_info = SimpleNamespace(attributes={"cover_color": "indigo"})
     >>> dummy_template = SimpleNamespace(info=dummy_info)
@@ -50,20 +50,16 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
-from texsmith.core.context import DocumentState
-from texsmith.core.fragments import collect_fragment_attribute_defaults
-from texsmith.core.metadata import PressMetadataError, normalise_press_metadata
-from texsmith.core.templates import (
-    TemplateError,
-    TemplateRuntime,
-    load_template_runtime,
-)
-
-from ..core.conversion.debug import ensure_emitter
-from ..core.conversion.renderer import TemplateRenderer
-from ..core.diagnostics import DiagnosticEmitter
-from .document import Document
-from .pipeline import RenderSettings, convert_documents, to_template_fragments
+from ..context import DocumentState
+from ..conversion.debug import ensure_emitter
+from ..conversion.pipeline import RenderSettings, convert_documents, to_template_fragments
+from ..conversion.renderer import TemplateRenderer
+from ..diagnostics import DiagnosticEmitter
+from ..documents import Document
+from ..fragments import collect_fragment_attribute_defaults
+from ..metadata import PressMetadataError, normalise_press_metadata
+from .manifest import TemplateError
+from .runtime import TemplateRuntime, load_template_runtime
 
 
 __all__ = [

@@ -2,9 +2,9 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from texsmith.api.document import Document
 from texsmith.core.conversion.templates import build_binder_context
 from texsmith.core.conversion_contexts import GenerationStrategy
+from texsmith.core.documents import Document
 from texsmith.core.templates import load_template_runtime
 
 

@@ -7,7 +7,7 @@ from pathlib import Path
 
 import typer
 
-from texsmith.api.service import SlotAssignment
+from texsmith.core.conversion import SlotAssignment
 from texsmith.core.conversion.inputs import DOCUMENT_SELECTOR_SENTINEL
 
 

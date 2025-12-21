@@ -10,11 +10,14 @@ from .extensions.index import (
     get_registry,
 )
 from .extensions.index.markdown import makeExtension
+
+
 try:  # Optional dependency: only needed when running as a MkDocs plugin.
     from .extensions.index.mkdocs_plugin import IndexPlugin
 except ModuleNotFoundError as exc:
     if exc.name != "mkdocs":
         raise
+    mkdocs_exc = exc
 
     class IndexPlugin:  # type: ignore[no-redef]
         """Placeholder when MkDocs isn't installed."""
@@ -23,7 +26,9 @@ except ModuleNotFoundError as exc:
             raise ModuleNotFoundError(
                 "MkDocs is required for the IndexPlugin; install 'mkdocs' or "
                 "'mkdocs-texsmith' to use this plugin."
-            ) from exc
+            ) from mkdocs_exc
+
+
 from .extensions.index.renderer import register as register_renderer
 
 

@@ -4,8 +4,8 @@ import builtins
 from pathlib import Path
 from types import SimpleNamespace
 
-from texsmith import latex_text, mermaid, missing_footnotes, multi_citations, rawlatex
 from texsmith.core.fragments import inject_fragment_attributes
+from texsmith.extensions import latex_raw, latex_text, mermaid, missing_footnotes, multi_citations
 from texsmith.templates import snippet as snippet_template
 from texsmith.ui.cli.commands import templates
 
@@ -127,7 +127,7 @@ def test_snippet_template_normalises() -> None:
 
 
 def test_extension_factories() -> None:
-    assert rawlatex.makeExtension().__class__.__name__.endswith("Extension")
+    assert latex_raw.makeExtension().__class__.__name__.endswith("Extension")
     assert latex_text.makeExtension().__class__.__name__.endswith("Extension")
     assert multi_citations.makeExtension().__class__.__name__.endswith("Extension")
     assert mermaid.makeExtension().__class__.__name__.endswith("Extension")

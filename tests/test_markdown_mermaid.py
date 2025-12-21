@@ -6,10 +6,10 @@ from pathlib import Path
 import zlib
 
 from texsmith.adapters.markdown import DEFAULT_MARKDOWN_EXTENSIONS, render_markdown
-from texsmith.mermaid import MermaidExtension
+from texsmith.extensions.mermaid import MermaidExtension
 
 
-MERMAID_EXTENSION = ["texsmith.mermaid:MermaidExtension"]
+MERMAID_EXTENSION = ["texsmith.extensions.mermaid:MermaidExtension"]
 
 
 def test_mermaid_extension_inlines_local_file(tmp_path: Path) -> None:

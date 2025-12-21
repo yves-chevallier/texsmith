@@ -3,10 +3,10 @@ from __future__ import annotations
 from pathlib import Path
 import textwrap
 
-from texsmith.api.document import Document
-from texsmith.api.templates import TemplateSession
 from texsmith.core.conversion import renderer as renderer_module
+from texsmith.core.documents import Document
 from texsmith.core.templates import load_template_runtime
+from texsmith.core.templates.session import TemplateSession
 
 
 def _write_markdown(tmp_path: Path, name: str, content: str) -> Path:

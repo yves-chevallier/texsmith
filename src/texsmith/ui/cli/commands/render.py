@@ -42,10 +42,11 @@ from texsmith.adapters.markdown import (
     resolve_markdown_extensions,
     split_front_matter,
 )
-from texsmith.api.service import ConversionRequest, ConversionService
 from texsmith.core.bibliography import BibliographyCollection
+from texsmith.core.conversion import ConversionRequest, ConversionSettings
 from texsmith.core.conversion.debug import ConversionError
 from texsmith.core.conversion.inputs import UnsupportedInputError
+from texsmith.core.conversion.service import ConversionService
 from texsmith.core.metadata import PressMetadataError, normalise_press_metadata
 from texsmith.core.templates import TemplateError
 from texsmith.core.templates.runtime import coerce_base_level
@@ -794,22 +795,26 @@ def render(
         suppress_title=no_title,
         numbered=numbered,
         markdown_extensions=resolved_markdown_extensions,
-        parser=parser,
-        disable_fallback_converters=disable_fallback_converters,
-        copy_assets=copy_assets,
-        convert_assets=convert_assets,
-        hash_assets=hash_assets,
-        manifest=manifest,
-        persist_debug_html=bool(debug_snapshot),
-        language=language,
-        legacy_latex_accents=legacy_latex_accents,
-        diagrams_backend=diagrams_backend.lower() if isinstance(diagrams_backend, str) else None,
         template=template,
         render_dir=request_render_dir,
         template_options=attribute_overrides,
         embed_fragments=embed_fragments,
         enable_fragments=enable_fragments or [],
         disable_fragments=disable_fragments or [],
+        settings=ConversionSettings(
+            parser=parser,
+            disable_fallback_converters=disable_fallback_converters,
+            copy_assets=copy_assets,
+            convert_assets=convert_assets,
+            hash_assets=hash_assets,
+            manifest=manifest,
+            persist_debug_html=bool(debug_snapshot),
+            language=language,
+            legacy_latex_accents=legacy_latex_accents,
+            diagrams_backend=diagrams_backend.lower()
+            if isinstance(diagrams_backend, str)
+            else None,
+        ),
         emitter=emitter,
     )
     state.record_event(

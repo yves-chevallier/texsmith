@@ -3,7 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 import textwrap
 
-from texsmith.api.document import Document
+from texsmith.core.documents import Document
 from texsmith.fonts.html_scripts import wrap_scripts_in_html
 
 

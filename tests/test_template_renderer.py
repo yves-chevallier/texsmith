@@ -6,11 +6,11 @@ import textwrap
 import pytest
 
 from texsmith.adapters.latex.latexmk import build_latexmkrc_content
-from texsmith.api.document import Document
-from texsmith.api.pipeline import convert_documents, to_template_fragments
-from texsmith.api.templates import TemplateSession
+from texsmith.core.conversion.pipeline import convert_documents, to_template_fragments
 from texsmith.core.conversion.renderer import FragmentOverrideError, TemplateRenderer
+from texsmith.core.documents import Document
 from texsmith.core.templates import coerce_base_level, load_template_runtime
+from texsmith.core.templates.session import TemplateSession
 
 
 FIXTURE_BIB = Path(__file__).resolve().parent / "fixtures" / "bib" / "b.bib"

@@ -4,8 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from texsmith.api import Document
-from texsmith.api.templates import TemplateSession
+from texsmith.core.documents import Document
 from texsmith.core.fragments import (
     FragmentDefinition,
     FragmentPiece,
@@ -14,6 +13,7 @@ from texsmith.core.fragments import (
 )
 from texsmith.core.templates.manifest import TemplateError, TemplateInfo, TemplateSlot
 from texsmith.core.templates.runtime import load_template_runtime
+from texsmith.core.templates.session import TemplateSession
 
 
 def test_attribute_precedence_prefers_user_over_frontmatter_and_fragments(tmp_path: Path) -> None:

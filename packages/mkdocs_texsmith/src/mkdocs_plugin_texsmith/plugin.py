@@ -54,9 +54,9 @@ from texsmith.core.bibliography import (
 )
 from texsmith.core.config import BookConfig, LaTeXConfig
 from texsmith.core.context import DocumentState
-from texsmith.core.conversion import (
+from texsmith.core.conversion import extract_front_matter_bibliography
+from texsmith.core.conversion.core import (
     ensure_fallback_converters,
-    extract_front_matter_bibliography,
     render_with_fallback,
 )
 from texsmith.core.conversion.debug import format_rendering_error

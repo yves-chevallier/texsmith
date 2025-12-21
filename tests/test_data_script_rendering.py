@@ -2,8 +2,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from texsmith.api.document import Document
-from texsmith.api.pipeline import convert_documents
+from texsmith.core.conversion.pipeline import convert_documents
+from texsmith.core.documents import Document
 
 
 def _write(path: Path, content: str) -> Path:

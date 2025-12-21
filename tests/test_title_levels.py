@@ -3,8 +3,8 @@ from __future__ import annotations
 from pathlib import Path
 import textwrap
 
-from texsmith.api.document import Document
-from texsmith.api.templates import get_template
+from texsmith.core.documents import Document
+from texsmith.core.templates.session import get_template
 
 
 def _write(tmp_path: Path, name: str, content: str) -> Path:

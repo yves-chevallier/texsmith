@@ -76,22 +76,17 @@ _EXTENSIONS: dict[str, ExtensionSpec] = {
     ),
     "smallcaps": ExtensionSpec(
         slug="smallcaps",
-        markdown_entry="texsmith.smallcaps:SmallCapsExtension",
+        markdown_entry="texsmith.extensions.smallcaps:SmallCapsExtension",
         description="Maps '__text__' syntax to small caps spans.",
     ),
     "latex_raw": ExtensionSpec(
         slug="latex_raw",
-        markdown_entry="texsmith.latex_raw:LatexRawExtension",
+        markdown_entry="texsmith.extensions.latex_raw:LatexRawExtension",
         description="Fence supporting inline raw LaTeX payloads.",
-    ),
-    "rawlatex": ExtensionSpec(
-        slug="rawlatex",
-        markdown_entry="texsmith.rawlatex:RawLatexExtension",
-        description="Inline {latex}[...] markers and /// latex fences.",
     ),
     "latex_text": ExtensionSpec(
         slug="latex_text",
-        markdown_entry="texsmith.latex_text:LatexTextExtension",
+        markdown_entry="texsmith.extensions.latex_text:LatexTextExtension",
         description="Styles the literal 'LaTeX' token with a dedicated span.",
     ),
     "smart_dashes": ExtensionSpec(
@@ -101,17 +96,17 @@ _EXTENSIONS: dict[str, ExtensionSpec] = {
     ),
     "missing_footnotes": ExtensionSpec(
         slug="missing_footnotes",
-        markdown_entry="texsmith.missing_footnotes:MissingFootnotesExtension",
+        markdown_entry="texsmith.extensions.missing_footnotes:MissingFootnotesExtension",
         description="Warns about references to undefined footnotes.",
     ),
     "multi_citations": ExtensionSpec(
         slug="multi_citations",
-        markdown_entry="texsmith.multi_citations:MultiCitationExtension",
+        markdown_entry="texsmith.extensions.multi_citations:MultiCitationExtension",
         description="Normalises '^[a,b]' inline citations before footnotes run.",
     ),
     "mermaid": ExtensionSpec(
         slug="mermaid",
-        markdown_entry="texsmith.mermaid:MermaidExtension",
+        markdown_entry="texsmith.extensions.mermaid:MermaidExtension",
         description="Inlines Mermaid diagrams referenced via Markdown images.",
     ),
     "progressbar": ExtensionSpec(
