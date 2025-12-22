@@ -6,15 +6,10 @@ from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass, field
 from datetime import date, datetime
 from enum import Enum
-from pathlib import Path
 import re
 from typing import Any
 
 from bs4 import BeautifulSoup, FeatureNotFound
-
-from ..conversion.debug import ConversionError
-from ..conversion_contexts import DocumentContext
-from ..metadata import PressMetadataError, normalise_press_metadata
 
 
 DOCUMENT_SELECTOR_SENTINEL = "@document"
@@ -49,45 +44,6 @@ class InlineBibliographyEntry:
     def is_manual(self) -> bool:
         """Return True when the entry embeds explicit bibliographic fields."""
         return self.entry_type is not None
-
-
-def build_document_context(
-    *,
-    name: str,
-    source_path: Path,
-    html: str,
-    front_matter: Mapping[str, Any] | None,
-    base_level: int,
-    drop_title: bool,
-    numbered: bool,
-    title_from_heading: bool = False,
-    extracted_title: str | None = None,
-) -> DocumentContext:
-    """Construct a document context enriched with metadata and slot requests."""
-    metadata = dict(front_matter or {})
-    try:
-        press_payload = normalise_press_metadata(metadata)
-    except PressMetadataError as exc:
-        raise ConversionError(str(exc)) from exc
-    metadata.setdefault("_source_dir", str(source_path.parent))
-    metadata.setdefault("_source_path", str(source_path))
-    if press_payload:
-        press_payload.setdefault("_source_dir", str(source_path.parent))
-        press_payload.setdefault("_source_path", str(source_path))
-    slot_requests = extract_front_matter_slots(metadata)
-
-    return DocumentContext(
-        name=name,
-        source_path=source_path,
-        html=html,
-        base_level=base_level,
-        numbered=numbered,
-        drop_title=drop_title,
-        title_from_heading=title_from_heading,
-        extracted_title=extracted_title,
-        front_matter=metadata,
-        slot_requests=slot_requests,
-    )
 
 
 def coerce_slot_selector(payload: Any) -> str | None:
@@ -465,7 +421,6 @@ __all__ = [
     "InlineBibliographyValidationError",
     "InputKind",
     "UnsupportedInputError",
-    "build_document_context",
     "coerce_slot_selector",
     "extract_content",
     "extract_front_matter_bibliography",

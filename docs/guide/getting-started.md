@@ -134,7 +134,7 @@ Fonts
 : TeXSmith ships with Noto fallback for wide Unicode coverage. Add your own fonts if you want a specific script or branded look.
 
 Legacy LaTeX accents
-: By default TeXSmith emits Unicode glyphs. If you need legacy LaTeX accent macros, pass `--legacy-latex-accents` on the CLI or set `ConversionSettings(legacy_latex_accents=True)` in the API.
+: By default TeXSmith emits Unicode glyphs. If you need legacy LaTeX accent macros, pass `--legacy-latex-accents` on the CLI or set `ConversionRequest(legacy_latex_accents=True)` in the API.
 
 ## Use the Python API
 

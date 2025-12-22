@@ -48,7 +48,7 @@ from pathlib import Path
 from typing import Any
 
 from ..context import DocumentState
-from ..conversion import ConversionSettings
+from ..conversion import ConversionRequest
 from ..conversion.debug import ensure_emitter
 from ..conversion.pipeline import convert_documents, to_template_fragments
 from ..conversion.renderer import TemplateRenderer
@@ -98,7 +98,7 @@ class TemplateSession:
         self,
         runtime: TemplateRuntime,
         *,
-        settings: ConversionSettings | None = None,
+        settings: ConversionRequest | None = None,
         emitter: DiagnosticEmitter | None = None,
     ) -> None:
         self.runtime = runtime
@@ -117,7 +117,7 @@ class TemplateSession:
         self._overrides: dict[str, Any] = {}
         self._documents: list[Document] = []
         self._bibliography_files: list[Path] = []
-        self.settings = settings.copy() if settings else ConversionSettings()
+        self.settings = settings.copy() if settings else ConversionRequest()
         self.emitter = ensure_emitter(emitter)
 
     def _prepare_document(self, document: Document) -> Document:

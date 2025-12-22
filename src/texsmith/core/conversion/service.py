@@ -41,7 +41,7 @@ from .inputs import (
     UnsupportedInputError,
     extract_front_matter_slots,
 )
-from .models import ConversionRequest, ConversionSettings
+from .models import ConversionRequest
 from .pipeline import ConversionBundle, convert_documents
 
 
@@ -233,7 +233,7 @@ class ConversionService:
     ) -> ConversionResponse:
         """Execute a conversion workflow and return a structured response, routing to template or raw conversion paths as needed."""
         batch = prepared or self.prepare_documents(request)
-        settings = request.settings.copy()
+        settings = request.copy()
         emitter = batch.emitter
 
         if request.template is None:
@@ -380,7 +380,7 @@ class ConversionService:
     def _initialise_template_session(
         template: str,
         *,
-        settings: ConversionSettings,
+        settings: ConversionRequest,
         emitter: DiagnosticEmitter,
     ) -> TemplateSession:
         return get_template(
@@ -525,9 +525,8 @@ def _apply_shared_front_matter(
         except PressMetadataError as exc:
             raise ConversionError(str(exc)) from exc
         document.set_front_matter(merged)
-        if (
-            document.title_strategy is TitleStrategy.PROMOTE_METADATA
-            and front_matter_has_title(merged)
+        if document.title_strategy is TitleStrategy.PROMOTE_METADATA and front_matter_has_title(
+            merged
         ):
             document.title_strategy = TitleStrategy.KEEP
         base_mapping = extract_front_matter_slots(normalised)

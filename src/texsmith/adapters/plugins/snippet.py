@@ -36,7 +36,7 @@ from texsmith.adapters.markdown import (
     split_front_matter,
 )
 from texsmith.core.context import RenderContext
-from texsmith.core.conversion import ConversionSettings
+from texsmith.core.conversion import ConversionRequest
 from texsmith.core.conversion.inputs import InputKind
 from texsmith.core.diagnostics import DiagnosticEmitter
 from texsmith.core.documents import (
@@ -1546,7 +1546,7 @@ def ensure_snippet_assets(
 
     _announce_build(block, source_path, emitter)
 
-    settings = ConversionSettings(
+    settings = ConversionRequest(
         copy_assets=True,
         convert_assets=False,
         hash_assets=False,

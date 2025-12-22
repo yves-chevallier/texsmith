@@ -36,16 +36,16 @@ for fragment in bundle.fragments:
     print("Rendered fragment", fragment.stem, "→", fragment.output_path)
 ```
 
-`ConversionSettings` lets you fine-tune the engine (parser, fallbacks, manifest emission, etc.). When you omit `output_dir`, the bundle stays in memory—perfect for unit tests or further processing.
+`ConversionRequest` carries conversion settings (parser, fallbacks, manifest emission, etc.) in addition to document inputs. When you omit `output_dir`, the bundle stays in memory—perfect for unit tests or further processing.
 
 Use it to opt into legacy LaTeX accent macros (default is Unicode output):
 
 ```python
 from pathlib import Path
 
-from texsmith import ConversionSettings, convert_documents, Document
+from texsmith import ConversionRequest, convert_documents, Document
 
-settings = ConversionSettings(legacy_latex_accents=True)
+settings = ConversionRequest(legacy_latex_accents=True)
 bundle = convert_documents([Document.from_markdown(Path("intro.md"))], settings=settings)
 ```
 

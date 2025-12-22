@@ -19,10 +19,10 @@ from texsmith.core.callouts import DEFAULT_CALLOUTS, merge_callouts, normalise_c
 from texsmith.core.context import DocumentState
 from texsmith.core.conversion_contexts import (
     BinderContext,
-    DocumentContext,
     GenerationStrategy,
     SegmentContext,
 )
+from texsmith.core.documents import Document
 from texsmith.core.exceptions import LatexRenderingError, TransformerExecutionError
 from texsmith.core.fragments import collect_fragment_partials
 from texsmith.core.templates import (
@@ -63,7 +63,7 @@ class ConversionResult:
     document_state: DocumentState | None = None
     bibliography_path: Path | None = None
     template_overrides: dict[str, Any] = field(default_factory=dict)
-    document_context: DocumentContext | None = None
+    document_context: Document | None = None
     binder_context: BinderContext | None = None
     rule_descriptions: list[dict[str, Any]] = field(default_factory=list)
     assets_map: dict[str, Path] = field(default_factory=dict)
@@ -198,7 +198,7 @@ def _resolve_fragment_source_dir(
 
 
 def convert_document(
-    document: DocumentContext,
+    document: Document,
     output_dir: Path,
     parser: str | None,
     disable_fallback_converters: bool,
@@ -286,7 +286,7 @@ def convert_document(
 
 def _render_document(
     *,
-    document_context: DocumentContext,
+    document_context: Document,
     binder_context: BinderContext,
     renderer_kwargs: dict[str, Any],
     strategy: GenerationStrategy,
@@ -500,7 +500,7 @@ def _build_runtime_common(
     *,
     binding: TemplateBinding,
     binder_context: BinderContext,
-    document_context: DocumentContext,
+    document_context: Document,
     strategy: GenerationStrategy,
     diagrams_backend: str | None,
     emitter: DiagnosticEmitter,

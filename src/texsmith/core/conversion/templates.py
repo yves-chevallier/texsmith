@@ -22,8 +22,9 @@ from ..bibliography.parsing import (
     bibliography_data_from_string,
 )
 from ..config import BookConfig
-from ..conversion_contexts import BinderContext, DocumentContext, GenerationStrategy
+from ..conversion_contexts import BinderContext, GenerationStrategy
 from ..diagnostics import DiagnosticEmitter
+from ..documents import Document
 from ..mustache import replace_mustaches, replace_mustaches_in_structure
 from ..templates import (
     TemplateBinding,
@@ -129,7 +130,7 @@ class SlotFragment:
 
 def build_binder_context(
     *,
-    document_context: DocumentContext,
+    document_context: Document,
     template: str | None,
     template_runtime: TemplateRuntime | None,
     requested_language: str | None,
@@ -228,19 +229,23 @@ def build_binder_context(
     template_overrides = replace_mustaches_in_structure(
         template_overrides, raw_contexts, emitter=emitter, source="template attributes"
     )
-    document_context.front_matter = replace_mustaches_in_structure(
-        document_context.front_matter,
-        raw_contexts,
-        emitter=emitter,
-        source=str(document_context.source_path),
+    document_context.set_front_matter(
+        replace_mustaches_in_structure(
+            document_context.front_matter,
+            raw_contexts,
+            emitter=emitter,
+            source=str(document_context.source_path),
+        )
     )
     merged_contexts = (template_overrides, document_context.front_matter)
     if isinstance(document_context.html, str):
-        document_context.html = _replace_mustaches_in_html(
-            document_context.html,
-            merged_contexts,
-            emitter=emitter,
-            source=str(document_context.source_path),
+        document_context.set_html(
+            _replace_mustaches_in_html(
+                document_context.html,
+                merged_contexts,
+                emitter=emitter,
+                source=str(document_context.source_path),
+            )
         )
 
     active_slot_requests: dict[str, str] = {}

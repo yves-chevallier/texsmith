@@ -12,8 +12,7 @@ Implementation Rationale
   and templated export. By storing canonicalised HTML and front-matter snapshots
   we avoid repeated Markdown or HTML parsing.
 : A dedicated abstraction makes it easy to inspect or mutate front matter in
-  higher layers without leaking the underlying `DocumentContext` type used
-  deeper inside the conversion engine.
+  higher layers while keeping a single document shape throughout the conversion engine.
 
 Usage Example
 :
@@ -24,8 +23,8 @@ Usage Example
     ...     source = Path(tmpdir) / "chapter.md"
     ...     _ = source.write_text("# Chapter\\nBody")
     ...     doc = Document.from_markdown(source, base_level="section")
-    ...     context = doc.to_context()
-    ...     context.name
+    ...     prepared = doc.to_context()
+    ...     prepared.source_path.stem
     'chapter'
 """
 
@@ -49,11 +48,10 @@ from .conversion.debug import ConversionError, debug_enabled
 from .conversion.inputs import (
     DOCUMENT_SELECTOR_SENTINEL,
     InputKind,
-    build_document_context,
     extract_content,
     extract_front_matter_slots,
 )
-from .conversion_contexts import DocumentContext
+from .conversion_contexts import AssetMapping, SegmentContext
 from .diagnostics import DiagnosticEmitter, NullEmitter
 from .metadata import PressMetadataError, normalise_press_metadata
 from .templates.runtime import coerce_base_level
@@ -172,6 +170,14 @@ class Document:
     suppress_title_metadata: bool = False
     slot_selectors: dict[str, str] = field(default_factory=dict)
     slot_includes: set[str] = field(default_factory=set)
+    extracted_title: str | None = None
+    slot_requests: dict[str, str] = field(default_factory=dict)
+    slot_inclusions: set[str] = field(default_factory=set)
+    language: str | None = None
+    bibliography: dict[str, Any] = field(default_factory=dict)
+    assets: list[AssetMapping] = field(default_factory=list)
+    segments: dict[str, list[SegmentContext]] = field(default_factory=dict)
+    _prepared_drop_title: bool | None = field(default=None, init=False, repr=False)
 
     @classmethod
     def from_markdown(
@@ -312,12 +318,23 @@ class Document:
             suppress_title_metadata=self.suppress_title_metadata,
             slot_selectors=copy.deepcopy(self.slot_selectors),
             slot_includes=set(self.slot_includes),
+            extracted_title=None,
+            slot_requests={},
+            slot_inclusions=set(),
+            language=None,
+            bibliography={},
+            assets=[],
+            segments={},
         )
 
     @property
     def html(self) -> str:
         """Return the intermediate HTML content."""
         return self._html
+
+    def set_html(self, html: str) -> None:
+        """Replace the stored HTML payload."""
+        self._html = html
 
     @property
     def front_matter(self) -> Mapping[str, Any]:
@@ -327,10 +344,13 @@ class Document:
     def set_front_matter(self, values: Mapping[str, Any]) -> None:
         """Replace the stored front matter with a deep copy to guard against caller mutation."""
         self._front_matter = copy.deepcopy(values)
+        self._invalidate_prepared()
 
     @property
     def drop_title(self) -> bool:
         """Indicate whether the document title should be dropped."""
+        if self._prepared_drop_title is not None:
+            return self._prepared_drop_title
         if self.title_strategy is TitleStrategy.DROP:
             return True
         if self.title_strategy is TitleStrategy.PROMOTE_METADATA:
@@ -350,10 +370,13 @@ class Document:
         else:
             if self.title_strategy is TitleStrategy.DROP:
                 self.title_strategy = TitleStrategy.KEEP
+        self._invalidate_prepared()
 
     @property
     def title_from_heading(self) -> bool:
         """Indicate whether the title should be extracted from the first heading."""
+        if self._prepared_drop_title is not None:
+            return bool(self.extracted_title)
         return self.title_strategy is TitleStrategy.PROMOTE_METADATA
 
     @title_from_heading.setter
@@ -363,6 +386,7 @@ class Document:
             self.title_strategy = TitleStrategy.PROMOTE_METADATA
         elif self.title_strategy is TitleStrategy.PROMOTE_METADATA:
             self.title_strategy = TitleStrategy.KEEP
+        self._invalidate_prepared()
 
     def assign_slot(
         self,
@@ -395,6 +419,7 @@ class Document:
 
         if selector is None and include_flag is False:
             self.slot_selectors.pop(slot_name, None)
+        self._invalidate_prepared()
 
     def reset_slots(self, mapping: Mapping[str, str] | None = None) -> None:
         """Replace slot selectors/inclusions with the provided mapping."""
@@ -404,6 +429,7 @@ class Document:
             selectors, includes = _split_slot_mapping(mapping)
             self.slot_selectors.update(selectors)
             self.slot_includes.update(includes)
+        self._invalidate_prepared()
 
     def _initialise_slots_from_front_matter(self) -> None:
         if isinstance(self._front_matter, Mapping):
@@ -415,6 +441,7 @@ class Document:
                 selectors, includes = _split_slot_mapping(base_mapping)
                 self.slot_selectors.update(selectors)
                 self.slot_includes.update(includes)
+        self._invalidate_prepared()
 
     _HEADING_TAGS: ClassVar[set[str]] = {"h1", "h2", "h3", "h4", "h5", "h6"}
 
@@ -540,8 +567,18 @@ class Document:
         """Public accessor for the first heading level in the document."""
         return self._first_heading_level()
 
-    def to_context(self) -> DocumentContext:
-        """Build a fresh DocumentContext for conversion, aligning slots with engine expectations."""
+    def _invalidate_prepared(self) -> None:
+        self._prepared_drop_title = None
+        self.extracted_title = None
+        self.slot_requests = {}
+        self.slot_inclusions = set()
+        self.language = None
+        self.bibliography = {}
+        self.assets = []
+        self.segments = {}
+
+    def prepare_for_conversion(self) -> Document:
+        """Normalise metadata and slot requests so the document is ready for conversion."""
         strategy = self.title_strategy
         suppress_title = self.suppress_title_metadata
         promote_to_metadata = strategy is TitleStrategy.PROMOTE_METADATA and not suppress_title
@@ -551,7 +588,6 @@ class Document:
         if promote_to_metadata:
             extracted_title, drop_title_flag = self._extract_promoted_title()
 
-        base_level = self.base_level
         front_matter = copy.deepcopy(self._front_matter)
         if suppress_title and isinstance(front_matter, dict):
             front_matter.pop("title", None)
@@ -560,24 +596,37 @@ class Document:
             if isinstance(press_section, dict):
                 press_section.pop("title", None)
 
-        context = build_document_context(
-            name=self.source_path.stem,
-            source_path=self.source_path,
-            html=self._html,
-            front_matter=front_matter,
-            base_level=base_level,
-            drop_title=drop_title_flag,
-            numbered=self.numbered,
-            title_from_heading=bool(extracted_title),
-            extracted_title=extracted_title,
-        )
-        base_selectors, base_includes = _split_slot_mapping(context.slot_requests or {})
+        metadata = dict(front_matter or {})
+        try:
+            press_payload = normalise_press_metadata(metadata)
+        except PressMetadataError as exc:
+            raise ConversionError(str(exc)) from exc
+        metadata.setdefault("_source_dir", str(self.source_path.parent))
+        metadata.setdefault("_source_path", str(self.source_path))
+        if press_payload:
+            press_payload.setdefault("_source_dir", str(self.source_path.parent))
+            press_payload.setdefault("_source_path", str(self.source_path))
+
+        base_mapping = extract_front_matter_slots(metadata)
+        base_selectors, base_includes = _split_slot_mapping(base_mapping)
         combined_selectors = dict(base_selectors)
         combined_selectors.update(self.slot_selectors)
         combined_includes = set(base_includes)
         combined_includes.update(self.slot_includes)
+
+        self._front_matter = metadata
         self.slot_selectors = dict(combined_selectors)
         self.slot_includes = set(combined_includes)
-        context.slot_requests = _slot_request_mapping(combined_selectors, combined_includes)
-        context.slot_inclusions = set(combined_includes)
-        return context
+        self.slot_requests = _slot_request_mapping(combined_selectors, combined_includes)
+        self.slot_inclusions = set(combined_includes)
+        self.extracted_title = extracted_title
+        self._prepared_drop_title = drop_title_flag
+        self.language = None
+        self.bibliography = {}
+        self.assets = []
+        self.segments = {}
+        return self
+
+    def to_context(self) -> Document:
+        """Prepare the document for conversion and return itself."""
+        return self.prepare_for_conversion()

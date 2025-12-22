@@ -1,7 +1,7 @@
 """Conversion helpers that expose a friendly façade over the core engine.
 
 Architecture
-: `ConversionSettings` stores optional overrides for parser selection, asset
+: `ConversionRequest` stores optional overrides for parser selection, asset
   copying, manifest generation, and diagnostic outputs. A dedicated dataclass
   keeps configuration immutable unless explicitly copied.
 : `LaTeXFragment` represents the output of a single document conversion and
@@ -47,7 +47,7 @@ from ..diagnostics import DiagnosticEmitter, NullEmitter
 from ..documents import Document
 from ._utils import build_unique_stem_map
 from .core import ConversionResult, convert_document
-from .models import ConversionSettings
+from .models import ConversionRequest
 from .renderer import TemplateFragment
 
 
@@ -59,8 +59,8 @@ if TYPE_CHECKING:  # pragma: no cover - type checking only
 
 __all__ = [
     "ConversionBundle",
+    "ConversionRequest",
     "LaTeXFragment",
-    "ConversionSettings",
     "convert_documents",
     "to_template_fragments",
 ]
@@ -98,7 +98,7 @@ def convert_documents(
     documents: Sequence[Document],
     *,
     output_dir: Path | None = None,
-    settings: ConversionSettings | None = None,
+    settings: ConversionRequest | None = None,
     emitter: DiagnosticEmitter | None = None,
     bibliography_files: Iterable[Path] | None = None,
     template: str | None = None,
@@ -112,7 +112,7 @@ def convert_documents(
     if not documents:
         raise ValueError("At least one document is required for conversion.")
 
-    settings = settings.copy() if settings is not None else ConversionSettings()
+    settings = settings.copy() if settings is not None else ConversionRequest()
     unique_stems = build_unique_stem_map([doc.source_path for doc in documents])
 
     shared_bibliography: BibliographyCollection | None = None
@@ -128,11 +128,11 @@ def convert_documents(
     active_emitter = emitter or NullEmitter()
 
     for _index, document in enumerate(documents):
-        context = document.to_context()
+        document = document.prepare_for_conversion()
         target_dir = Path(output_dir) if output_dir is not None else Path("build")
         slot_overrides = dict(document.slot_selectors)
         result = convert_document(
-            document=context,
+            document=document,
             output_dir=target_dir,
             parser=settings.parser,
             disable_fallback_converters=settings.disable_fallback_converters,

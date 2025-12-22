@@ -13,6 +13,7 @@ from .templates import TemplateBinding
 
 if TYPE_CHECKING:  # pragma: no cover - typing only
     from .bibliography.collection import BibliographyCollection
+    from .documents import Document
 
 
 @dataclass(slots=True)
@@ -49,27 +50,6 @@ class SegmentContext:
 
 
 @dataclass(slots=True)
-class DocumentContext:
-    """Document-level context produced before rendering."""
-
-    name: str
-    source_path: Path
-    html: str
-    base_level: int
-    numbered: bool
-    drop_title: bool
-    title_from_heading: bool
-    extracted_title: str | None = None
-    front_matter: dict[str, Any] = field(default_factory=dict)
-    slot_requests: dict[str, str] = field(default_factory=dict)
-    slot_inclusions: set[str] = field(default_factory=set)
-    language: str | None = None
-    bibliography: dict[str, Any] = field(default_factory=dict)
-    assets: list[AssetMapping] = field(default_factory=list)
-    segments: dict[str, list[SegmentContext]] = field(default_factory=dict)
-
-
-@dataclass(slots=True)
 class BinderContext:
     """Binder-level context describing template binding and global state."""
 
@@ -82,14 +62,13 @@ class BinderContext:
     bibliography_map: dict[str, dict[str, Any]] = field(default_factory=dict)
     bibliography_collection: BibliographyCollection | None = None
     template_binding: TemplateBinding | None = None
-    documents: list[DocumentContext] = field(default_factory=list)
+    documents: list[Document] = field(default_factory=list)
     bound_segments: dict[str, list[SegmentContext]] = field(default_factory=dict)
 
 
 __all__ = [
     "AssetMapping",
     "BinderContext",
-    "DocumentContext",
     "GenerationStrategy",
     "SegmentContext",
 ]

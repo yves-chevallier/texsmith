@@ -13,7 +13,7 @@ from texsmith.core.bibliography import (
 )
 from texsmith.core.config import BookConfig, LaTeXConfig
 from texsmith.core.context import AssetRegistry, DocumentState, RenderContext
-from texsmith.core.conversion import ConversionRequest, ConversionSettings, SlotAssignment
+from texsmith.core.conversion import ConversionRequest, SlotAssignment
 from texsmith.core.conversion.pipeline import (
     ConversionBundle,
     LaTeXFragment,
@@ -65,7 +65,6 @@ __all__ = [
     "BookConfig",
     "ConversionBundle",
     "ConversionRequest",
-    "ConversionSettings",
     "ConversionResponse",
     "ConversionService",
     "Document",

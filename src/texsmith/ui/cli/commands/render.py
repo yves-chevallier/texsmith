@@ -43,7 +43,7 @@ from texsmith.adapters.markdown import (
     split_front_matter,
 )
 from texsmith.core.bibliography import BibliographyCollection
-from texsmith.core.conversion import ConversionRequest, ConversionSettings
+from texsmith.core.conversion import ConversionRequest
 from texsmith.core.conversion.debug import ConversionError
 from texsmith.core.conversion.inputs import UnsupportedInputError
 from texsmith.core.conversion.service import ConversionService
@@ -781,6 +781,16 @@ def render(
     request_render_dir = render_dir_path
 
     request = ConversionRequest(
+        parser=parser,
+        disable_fallback_converters=disable_fallback_converters,
+        copy_assets=copy_assets,
+        convert_assets=convert_assets,
+        hash_assets=hash_assets,
+        manifest=manifest,
+        persist_debug_html=bool(debug_snapshot),
+        language=language,
+        legacy_latex_accents=legacy_latex_accents,
+        diagrams_backend=diagrams_backend.lower() if isinstance(diagrams_backend, str) else None,
         documents=document_paths,
         bibliography_files=bibliography_files,
         front_matter=shared_front_matter,
@@ -801,20 +811,6 @@ def render(
         embed_fragments=embed_fragments,
         enable_fragments=enable_fragments or [],
         disable_fragments=disable_fragments or [],
-        settings=ConversionSettings(
-            parser=parser,
-            disable_fallback_converters=disable_fallback_converters,
-            copy_assets=copy_assets,
-            convert_assets=convert_assets,
-            hash_assets=hash_assets,
-            manifest=manifest,
-            persist_debug_html=bool(debug_snapshot),
-            language=language,
-            legacy_latex_accents=legacy_latex_accents,
-            diagrams_backend=diagrams_backend.lower()
-            if isinstance(diagrams_backend, str)
-            else None,
-        ),
         emitter=emitter,
     )
     state.record_event(

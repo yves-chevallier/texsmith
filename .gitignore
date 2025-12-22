@@ -51,9 +51,11 @@ press/
 site/
 docs/assets/examples/*.png
 docs/assets/examples/*.pdf
+docs/assets/cli-help
 .coverage
 *.meta
 
 .texsmith/
 
 *_build/
+snippet-dump/
