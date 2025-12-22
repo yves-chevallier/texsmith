@@ -159,7 +159,7 @@ def test_glossaries_prefers_pyxindy_when_available(monkeypatch: pytest.MonkeyPat
         lambda *_args, **_kwargs: _Helper(Path("/usr/bin/makeglossaries")),
     )
     tokens = engine._glossaries_command_tokens()
-    if Path(tokens[0]).name == "makeglossaries-py":
+    if Path(tokens[0]).stem == "makeglossaries-py":
         assert tokens == [tokens[0]]
     else:
         assert tokens[1:] == ["-m", "xindy.tex.makeglossaries"]

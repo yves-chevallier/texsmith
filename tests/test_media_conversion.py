@@ -421,6 +421,7 @@ def test_mermaid_cli_failure_falls_back_to_docker(
 ) -> None:
     strategy = strategies.MermaidToPdfStrategy()
     monkeypatch.setattr(strategies, "_resolve_cli", lambda *_: ("mmdc-bin", True))
+    monkeypatch.setattr(strategies.shutil, "which", lambda *_: "docker")
 
     def _fail_play(*_a, **_k):
         raise TransformerExecutionError("playwright missing")
@@ -450,6 +451,7 @@ def test_mermaid_cli_failure_falls_back_to_docker(
 def test_mermaid_cli_and_docker_failure(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     strategy = strategies.MermaidToPdfStrategy()
     monkeypatch.setattr(strategies, "_resolve_cli", lambda *_: ("mmdc-bin", True))
+    monkeypatch.setattr(strategies.shutil, "which", lambda *_: "docker")
 
     def _fail_play(*_a, **_k):
         raise TransformerExecutionError("playwright missing")
