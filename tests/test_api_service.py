@@ -7,10 +7,10 @@ import pytest
 
 from texsmith.core.conversion import ConversionRequest, SlotAssignment
 from texsmith.core.conversion.debug import ConversionError
+from texsmith.core.conversion.execution import resolve_execution_context
 from texsmith.core.conversion.inputs import UnsupportedInputError
 from texsmith.core.conversion.service import ConversionService
 from texsmith.core.conversion.templates import build_binder_context
-from texsmith.core.conversion_contexts import GenerationStrategy
 from texsmith.core.documents import TitleStrategy
 from texsmith.core.templates.runtime import load_template_runtime
 
@@ -182,15 +182,15 @@ def test_binder_context_injects_template_title(tmp_path: Path) -> None:
     context = document.prepare_for_conversion()
 
     runtime = load_template_runtime(str(template_dir))
-    binder = build_binder_context(
-        document=context,
-        template=str(template_dir),
+    execution = resolve_execution_context(
+        context,
+        request,
         template_runtime=runtime,
-        requested_language=None,
-        bibliography_files=[],
-        slot_overrides=None,
         output_dir=tmp_path,
-        strategy=GenerationStrategy(),
+    )
+    binder = build_binder_context(
+        execution=execution,
+        template=str(template_dir),
         emitter=None,
         legacy_latex_accents=False,
     )

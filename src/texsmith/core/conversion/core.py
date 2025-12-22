@@ -41,6 +41,8 @@ from .debug import (
     raise_conversion_error,
     record_event,
 )
+from .execution import resolve_execution_context
+from .models import ConversionRequest
 from .templates import (
     SlotFragment,
     build_binder_context,
@@ -200,20 +202,9 @@ def _resolve_fragment_source_dir(
 def convert_document(
     document: Document,
     output_dir: Path,
-    parser: str | None,
-    disable_fallback_converters: bool,
-    copy_assets: bool,
-    convert_assets: bool,
-    hash_assets: bool,
-    manifest: bool,
-    template: str | None,
-    persist_debug_html: bool,
-    language: str | None,
-    slot_overrides: Mapping[str, str] | None,
-    bibliography_files: list[Path],
-    legacy_latex_accents: bool,
-    diagrams_backend: str | None = None,
+    request: ConversionRequest,
     *,
+    slot_overrides: Mapping[str, str] | None,
     template_overrides: Mapping[str, Any] | None = None,
     state: DocumentState | None = None,
     template_runtime: TemplateRuntime | None = None,
@@ -223,64 +214,59 @@ def convert_document(
     seen_bibliography_issues: set[tuple[str, str | None, str | None]] | None = None,
 ) -> ConversionResult:
     """Orchestrate the full HTML-to-LaTeX conversion for a single document."""
-    emitter = ensure_emitter(emitter)
-    record_event(
-        emitter,
-        "convert_document",
-        {
-            "source": str(document.source_path),
-            "template": template,
-            "language": language,
-            "copy_assets": copy_assets,
-            "convert_assets": convert_assets,
-        },
-    )
-    strategy = GenerationStrategy(
-        copy_assets=copy_assets,
-        convert_assets=convert_assets,
-        hash_assets=hash_assets,
-        prefer_inputs=False,
-        persist_manifest=manifest,
-    )
-
+    emitter = ensure_emitter(emitter or request.emitter)
     output_dir = output_dir.resolve()
 
-    binder_context = build_binder_context(
+    execution = resolve_execution_context(
         document=document,
-        template=template,
+        request=request,
         template_runtime=template_runtime,
-        requested_language=language,
-        bibliography_files=bibliography_files,
-        slot_overrides=slot_overrides,
         output_dir=output_dir,
-        strategy=strategy,
-        emitter=emitter,
-        legacy_latex_accents=legacy_latex_accents,
-        session_overrides=template_overrides,
+        slot_overrides=slot_overrides,
+        template_overrides=template_overrides,
+        bibliography_files=request.bibliography_files,
         preloaded_bibliography=preloaded_bibliography,
         seen_bibliography_issues=seen_bibliography_issues,
     )
 
+    record_event(
+        emitter,
+        "convert_document",
+        {
+            "source": str(execution.document.source_path),
+            "template": request.template,
+            "language": execution.language,
+            "copy_assets": execution.generation.copy_assets,
+            "convert_assets": execution.generation.convert_assets,
+        },
+    )
+    binder_context = build_binder_context(
+        execution=execution,
+        template=request.template,
+        emitter=emitter,
+        legacy_latex_accents=request.legacy_latex_accents,
+    )
+
     renderer_kwargs: dict[str, Any] = {
         "output_root": output_dir,
-        "copy_assets": strategy.copy_assets,
-        "convert_assets": strategy.convert_assets,
-        "hash_assets": strategy.hash_assets,
-        "parser": parser or "html.parser",
+        "copy_assets": execution.generation.copy_assets,
+        "convert_assets": execution.generation.convert_assets,
+        "hash_assets": execution.generation.hash_assets,
+        "parser": request.parser or "html.parser",
     }
 
     return _render_document(
-        document=document,
+        document=execution.document,
         binder_context=binder_context,
         renderer_kwargs=renderer_kwargs,
-        strategy=strategy,
-        disable_fallback_converters=disable_fallback_converters,
-        persist_debug_html=persist_debug_html,
+        strategy=execution.generation,
+        disable_fallback_converters=request.disable_fallback_converters,
+        persist_debug_html=request.persist_debug_html,
         emitter=emitter,
         initial_state=state,
         wrap_document=wrap_document,
-        legacy_latex_accents=legacy_latex_accents,
-        diagrams_backend=diagrams_backend,
+        legacy_latex_accents=request.legacy_latex_accents,
+        diagrams_backend=request.diagrams_backend,
     )
 
 

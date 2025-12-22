@@ -22,26 +22,13 @@ from ..bibliography.parsing import (
     bibliography_data_from_string,
 )
 from ..config import BookConfig
-from ..conversion_contexts import BinderContext, GenerationStrategy
+from ..conversion_contexts import BinderContext
 from ..diagnostics import DiagnosticEmitter
-from ..documents import Document
-from ..mustache import replace_mustaches, replace_mustaches_in_structure
-from ..templates import (
-    TemplateBinding,
-    TemplateError,
-    TemplateRuntime,
-    TemplateSlot,
-    build_template_overrides,
-    resolve_template_binding,
-    resolve_template_language,
-)
+from ..execution import ExecutionContext
+from ..mustache import replace_mustaches
+from ..templates import TemplateBinding, TemplateError, TemplateSlot, resolve_template_binding
 from .debug import debug_enabled, ensure_emitter, raise_conversion_error, record_event
-from .inputs import (
-    DOCUMENT_SELECTOR_SENTINEL,
-    InlineBibliographyEntry,
-    InlineBibliographyValidationError,
-    extract_front_matter_bibliography,
-)
+from .inputs import DOCUMENT_SELECTOR_SENTINEL, InlineBibliographyEntry
 
 
 if TYPE_CHECKING:  # pragma: no cover - typing only
@@ -130,24 +117,16 @@ class SlotFragment:
 
 def build_binder_context(
     *,
-    document: Document,
+    execution: ExecutionContext,
     template: str | None,
-    template_runtime: TemplateRuntime | None,
-    requested_language: str | None,
-    bibliography_files: list[Path],
-    slot_overrides: Mapping[str, str] | None,
-    output_dir: Path,
-    strategy: GenerationStrategy,
     emitter: DiagnosticEmitter | None,
     legacy_latex_accents: bool,
-    session_overrides: Mapping[str, Any] | None = None,
-    preloaded_bibliography: BibliographyCollection | None = None,
-    seen_bibliography_issues: set[tuple[str, str | None, str | None]] | None = None,
 ) -> BinderContext:
-    """Prepare template bindings, bibliography data, and slot mappings."""
+    """Prepare template bindings and slot mappings from a resolved execution context."""
     emitter = ensure_emitter(emitter)
-    resolved_language = resolve_template_language(requested_language, document.front_matter)
-    document.language = resolved_language
+    document = execution.document
+    resolved_language = execution.language
+    output_dir = execution.output_dir or document.source_path.parent
 
     config = BookConfig(
         project_dir=document.source_path.parent,
@@ -155,107 +134,14 @@ def build_binder_context(
         legacy_latex_accents=legacy_latex_accents,
     )
 
-    try:
-        inline_bibliography = extract_front_matter_bibliography(document.front_matter)
-    except InlineBibliographyValidationError as exc:
-        raise_conversion_error(emitter, str(exc), exc)
-
-    issue_signatures = seen_bibliography_issues if seen_bibliography_issues is not None else set()
-    bibliography_collection: BibliographyCollection | None = (
-        preloaded_bibliography.clone() if preloaded_bibliography is not None else None
-    )
-    bibliography_map: dict[str, dict[str, Any]] = {}
-
-    if bibliography_collection is None:
-        bibliography_collection = BibliographyCollection()
-        if bibliography_files:
-            bibliography_collection.load_files(bibliography_files)
-
-    if inline_bibliography:
-        _load_inline_bibliography(
-            bibliography_collection,
-            inline_bibliography,
-            source_label=document.source_path.stem,
-            output_dir=output_dir,
-            emitter=emitter,
-        )
-
-    bibliography_map = bibliography_collection.to_dict()
-    for issue in bibliography_collection.issues:
-        signature = (issue.message, issue.key, str(issue.source) if issue.source else None)
-        if signature in issue_signatures:
-            continue
-        prefix = f"[{issue.key}] " if issue.key else ""
-        source_hint = f" ({issue.source})" if issue.source else ""
-        emitter.warning(f"{prefix}{issue.message}{source_hint}")
-        issue_signatures.add(signature)
-
-    document.bibliography = bibliography_map
-
-    slot_requests = dict(document.slot_requests)
-    if slot_overrides:
-        slot_requests.update(dict(slot_overrides))
-
-    template_overrides = build_template_overrides(document.front_matter)
-    if session_overrides:
-        template_overrides = _merge_template_overrides(template_overrides, session_overrides)
-
-    press_section = template_overrides.get("press")
-    if not isinstance(press_section, dict):
-        press_section = None
-
-    def _ensure_press_section() -> dict[str, Any]:
-        nonlocal press_section
-        if press_section is None:
-            press_section = {}
-            template_overrides["press"] = press_section
-        return press_section
-
-    if document.extracted_title:
-        template_overrides.setdefault("title", document.extracted_title)
-        _ensure_press_section().setdefault("title", document.extracted_title)
-
-    template_overrides.setdefault("language", resolved_language)
-    if press_section is not None or "press" in template_overrides:
-        _ensure_press_section().setdefault("language", resolved_language)
-
-    template_overrides.setdefault("_source_dir", str(document.source_path.parent))
-    template_overrides.setdefault("_source_path", str(document.source_path))
-    template_overrides.setdefault("source_dir", str(document.source_path.parent))
-    template_overrides["output_dir"] = str(output_dir)
-
-    mustache_defaults = _build_mustache_defaults(template_overrides, document.front_matter)
-    raw_contexts = (template_overrides, document.front_matter, mustache_defaults)
-    template_overrides = replace_mustaches_in_structure(
-        template_overrides, raw_contexts, emitter=emitter, source="template attributes"
-    )
-    document.set_front_matter(
-        replace_mustaches_in_structure(
-            document.front_matter,
-            raw_contexts,
-            emitter=emitter,
-            source=str(document.source_path),
-        )
-    )
-    merged_contexts = (template_overrides, document.front_matter)
-    if isinstance(document.html, str):
-        document.set_html(
-            _replace_mustaches_in_html(
-                document.html,
-                merged_contexts,
-                emitter=emitter,
-                source=str(document.source_path),
-            )
-        )
-
     active_slot_requests: dict[str, str] = {}
     binding: TemplateBinding | None = None
     try:
         binding, active_slot_requests = resolve_template_binding(
             template=template,
-            template_runtime=template_runtime,
-            template_overrides=template_overrides,
-            slot_requests=slot_requests,
+            template_runtime=execution.template_runtime,
+            template_overrides=execution.template_overrides,
+            slot_requests=execution.slot_requests,
             warn=lambda message: emitter.warning(message),
         )
     except TemplateError as exc:
@@ -273,12 +159,12 @@ def build_binder_context(
     binder_context = BinderContext(
         output_dir=output_dir,
         config=config,
-        strategy=strategy,
+        strategy=execution.generation,
         language=resolved_language,
         slot_requests=active_slot_requests,
-        template_overrides=dict(template_overrides),
-        bibliography_map=bibliography_map,
-        bibliography_collection=bibliography_collection,
+        template_overrides=dict(execution.template_overrides),
+        bibliography_map=execution.bibliography_map,
+        bibliography_collection=execution.bibliography_collection,
         template_binding=binding,
     )
     binder_context.documents.append(document)

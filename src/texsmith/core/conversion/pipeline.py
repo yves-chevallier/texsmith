@@ -112,7 +112,9 @@ def convert_documents(
     if not documents:
         raise ValueError("At least one document is required for conversion.")
 
-    settings = settings.copy() if settings is not None else ConversionRequest()
+    request = settings.copy() if settings is not None else ConversionRequest()
+    request.bibliography_files = list(bibliography_files or [])
+    request.template = template
     unique_stems = build_unique_stem_map([doc.source_path for doc in documents])
 
     shared_bibliography: BibliographyCollection | None = None
@@ -134,19 +136,8 @@ def convert_documents(
         result = convert_document(
             document=document,
             output_dir=target_dir,
-            parser=settings.parser,
-            disable_fallback_converters=settings.disable_fallback_converters,
-            copy_assets=settings.copy_assets,
-            convert_assets=settings.convert_assets,
-            hash_assets=settings.hash_assets,
-            manifest=settings.manifest,
-            template=template,
-            persist_debug_html=settings.persist_debug_html,
-            language=settings.language,
-            diagrams_backend=settings.diagrams_backend,
+            request=request,
             slot_overrides=slot_overrides or None,
-            bibliography_files=list(bibliography_files or []),
-            legacy_latex_accents=settings.legacy_latex_accents,
             emitter=active_emitter,
             template_overrides=template_overrides,
             state=None if wrap_document else state,

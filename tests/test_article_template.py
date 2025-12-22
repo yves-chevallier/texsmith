@@ -2,8 +2,9 @@ from __future__ import annotations
 
 from pathlib import Path
 
+from texsmith.core.conversion import ConversionRequest
+from texsmith.core.conversion.execution import resolve_execution_context
 from texsmith.core.conversion.templates import build_binder_context
-from texsmith.core.conversion_contexts import GenerationStrategy
 from texsmith.core.documents import Document
 from texsmith.core.templates import load_template_runtime
 
@@ -38,15 +39,16 @@ def test_article_template_sets_mermaid_config(tmp_path: Path) -> None:
     context = document.prepare_for_conversion()
 
     runtime = load_template_runtime("article")
-    binder = build_binder_context(
-        document=context,
-        template="article",
+    request = ConversionRequest(documents=[source], template="article")
+    execution = resolve_execution_context(
+        context,
+        request,
         template_runtime=runtime,
-        requested_language=None,
-        bibliography_files=[],
-        slot_overrides=None,
         output_dir=tmp_path,
-        strategy=GenerationStrategy(),
+    )
+    binder = build_binder_context(
+        execution=execution,
+        template="article",
         emitter=None,
         legacy_latex_accents=False,
     )
