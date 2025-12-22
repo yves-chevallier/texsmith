@@ -33,7 +33,6 @@ from texsmith.adapters.markdown import split_front_matter
 
 from ..diagnostics import DiagnosticEmitter
 from ..documents import Document, TitleStrategy, front_matter_has_title
-from ..metadata import PressMetadataError, normalise_press_metadata
 from ..templates.session import TemplateRenderResult, TemplateSession, get_template
 from .debug import ConversionError, ensure_emitter
 from .inputs import (
@@ -446,17 +445,12 @@ def _apply_shared_front_matter(
         return
     for document in documents:
         merged = _merge_front_matter(shared_front_matter, document.front_matter)
-        normalised = dict(merged)
-        try:
-            normalise_press_metadata(normalised)
-        except PressMetadataError as exc:
-            raise ConversionError(str(exc)) from exc
         document.set_front_matter(merged)
         if document.title_strategy is TitleStrategy.PROMOTE_METADATA and front_matter_has_title(
             merged
         ):
             document.title_strategy = TitleStrategy.KEEP
-        base_mapping = extract_front_matter_slots(normalised)
+        base_mapping = extract_front_matter_slots(merged)
         document.reset_slots(base_mapping)
 
 

@@ -43,6 +43,7 @@ Highest wins, left to right:
 ## Execution steps (to run together)
 
 ### Step 1: Inventory and mapping
+Status: done.
 - Enumerate all attribute sources:
   - CLI request defaults and overrides
   - front matter keys (top-level + press.*)
@@ -84,6 +85,7 @@ Mapping target (ExecutionContext owner):
 - Asset flags + parser/diagnostics: `ExecutionContext.settings`
 
 ### Step 2: Define ExecutionContext dataclass
+Status: done.
 - Create `ExecutionContext` in `src/texsmith/core/context.py` (or new module).
 - Include:
   - `document: Document`
@@ -99,6 +101,7 @@ Mapping target (ExecutionContext owner):
 - Keep fields explicit; avoid nested dicts where possible.
 
 ### Step 3: Build a single resolver
+Status: done.
 - Add `resolve_execution_context(...)` in `core/conversion/`:
   - Inputs: `Document`, `ConversionRequest`, template runtime, overrides.
   - Output: `ExecutionContext`.
@@ -111,16 +114,19 @@ Mapping target (ExecutionContext owner):
   - Build bibliography collection + map once.
 
 ### Step 4: Rewire core conversion
+Status: done.
 - Update `build_binder_context` to accept `ExecutionContext` instead of ad-hoc fields.
 - Update `_build_runtime_common` to use `ExecutionContext.runtime_common`.
 - Ensure `render_with_fallback` only reads from `ExecutionContext` and `Document`.
 
 ### Step 5: Rewire template session + CLI
+Status: done.
 - TemplateSession: build ExecutionContext once, pass it through the renderer.
 - CLI: create `ConversionRequest`, prepare `Document`, and call resolver.
 - Keep CLI flags unchanged; confirm help output and behavior are stable.
 
 ### Step 6: Remove redundant merges
+Status: done.
 - Delete duplicate press metadata normalisation in multiple layers.
 - Remove repeated fragment/slot merge logic from core + templates.
 - Ensure `Document.prepare_for_conversion` only prepares document-level concerns.
