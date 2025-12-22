@@ -103,6 +103,7 @@ from ..utils import determine_output_target, organise_slot_overrides, write_outp
 
 
 _SERVICE = ConversionService()
+_REQUEST_DEFAULTS = ConversionRequest()
 
 
 _MARKDOWN_SUFFIXES = {
@@ -390,17 +391,17 @@ def render(
         ),
     ] = None,
     output: OutputPathOption = None,
-    selector: SelectorOption = "article.md-content__inner",
-    full_document: FullDocumentOption = False,
-    base_level: BaseLevelOption = "0",
-    strip_heading: StripHeadingOption = False,
-    no_promote_title: NoPromoteTitleOption = False,
-    no_title: NoTitleOption = False,
+    selector: SelectorOption = _REQUEST_DEFAULTS.selector,
+    full_document: FullDocumentOption = _REQUEST_DEFAULTS.full_document,
+    base_level: BaseLevelOption = str(_REQUEST_DEFAULTS.base_level),
+    strip_heading: StripHeadingOption = _REQUEST_DEFAULTS.strip_heading_all,
+    no_promote_title: NoPromoteTitleOption = not _REQUEST_DEFAULTS.promote_title,
+    no_title: NoTitleOption = _REQUEST_DEFAULTS.suppress_title,
     parser: ParserOption = None,
-    disable_fallback_converters: DisableFallbackOption = False,
-    no_copy_assets: NoCopyAssetsOption = False,
-    convert_assets: ConvertAssetsOption = False,
-    hash_assets: HashAssetsOption = False,
+    disable_fallback_converters: DisableFallbackOption = _REQUEST_DEFAULTS.disable_fallback_converters,
+    no_copy_assets: NoCopyAssetsOption = not _REQUEST_DEFAULTS.copy_assets,
+    convert_assets: ConvertAssetsOption = _REQUEST_DEFAULTS.convert_assets,
+    hash_assets: HashAssetsOption = _REQUEST_DEFAULTS.hash_assets,
     diagrams_backend: Annotated[
         str | None,
         typer.Option(
@@ -409,8 +410,8 @@ def render(
             help="Force the backend for diagram conversion (draw.io, mermaid): playwright, local, or docker (auto-default).",
             case_sensitive=False,
         ),
-    ] = None,
-    manifest: ManifestOptionWithShort = False,
+    ] = _REQUEST_DEFAULTS.diagrams_backend,
+    manifest: ManifestOptionWithShort = _REQUEST_DEFAULTS.manifest,
     make_deps: MakefileDepsOption = False,
     template: TemplateOption = None,
     embed_fragments: Annotated[
@@ -419,7 +420,7 @@ def render(
             "--embed",
             help="Embed converted documents into the main document instead linking them with \\input.",
         ),
-    ] = False,
+    ] = _REQUEST_DEFAULTS.embed_fragments,
     enable_fragments: EnableFragmentOption = None,
     disable_fragments: DisableFragmentOption = None,
     template_attributes: TemplateAttributeOption = None,
@@ -458,7 +459,7 @@ def render(
             rich_help_panel=OUTPUT_PANEL,
         ),
     ] = False,
-    language: LanguageOption = None,
+    language: LanguageOption = _REQUEST_DEFAULTS.language,
     legacy_latex_accents: Annotated[
         bool,
         typer.Option(
@@ -468,7 +469,7 @@ def render(
                 "emitting Unicode glyphs (defaults to Unicode output)."
             ),
         ),
-    ] = False,
+    ] = _REQUEST_DEFAULTS.legacy_latex_accents,
     slots: SlotsOption = None,
     markdown_extensions: MarkdownExtensionsOption = None,
     disable_markdown_extensions: DisableMarkdownExtensionsOption = None,
