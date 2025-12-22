@@ -115,9 +115,9 @@ def test_prepare_documents_handles_markdown_and_html(tmp_path: Path) -> None:
 
     assert len(prepared.documents) == 2
     assert prepared.documents[0].kind.name == "MARKDOWN"
-    assert prepared.documents[0].options.title_strategy is TitleStrategy.DROP
+    assert prepared.documents[0].title_strategy is TitleStrategy.DROP
     assert prepared.documents[1].kind.name == "HTML"
-    assert prepared.documents[1].options.title_strategy is TitleStrategy.KEEP
+    assert prepared.documents[1].title_strategy is TitleStrategy.KEEP
 
 
 def test_document_context_records_title_from_heading(tmp_path: Path) -> None:
@@ -217,8 +217,8 @@ def test_prepare_documents_applies_slot_assignments(tmp_path: Path) -> None:
 
     prepared = service.prepare_documents(request)
     document = prepared.document_map[source]
-    assert document.slots.selectors()["sidebar"] == "#Heading"
-    assert "main" in document.slots.includes()
+    assert document.slot_selectors["sidebar"] == "#Heading"
+    assert "main" in document.slot_includes
 
 
 def test_document_slots_merge_front_matter_and_cli(tmp_path: Path) -> None:
@@ -256,8 +256,8 @@ Body text.
 
     prepared = service.prepare_documents(request)
     document = prepared.document_map[source]
-    selectors = document.slots.selectors()
-    inclusions = document.slots.includes()
+    selectors = document.slot_selectors
+    inclusions = document.slot_includes
     assert selectors["backmatter"] == "Appendix"
     assert selectors["frontmatter"] == "#Introduction"
     assert "abstract" in inclusions

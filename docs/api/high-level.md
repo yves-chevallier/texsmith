@@ -36,13 +36,24 @@ for fragment in bundle.fragments:
     print("Rendered fragment", fragment.stem, "→", fragment.output_path)
 ```
 
-`RenderSettings` lets you fine-tune the engine (parser, fallbacks, manifest emission, etc.). When you omit `output_dir`, the bundle stays in memory—perfect for unit tests or further processing.
+`ConversionSettings` lets you fine-tune the engine (parser, fallbacks, manifest emission, etc.). When you omit `output_dir`, the bundle stays in memory—perfect for unit tests or further processing.
+
+Use it to opt into legacy LaTeX accent macros (default is Unicode output):
+
+```python
+from pathlib import Path
+
+from texsmith import ConversionSettings, convert_documents, Document
+
+settings = ConversionSettings(legacy_latex_accents=True)
+bundle = convert_documents([Document.from_markdown(Path("intro.md"))], settings=settings)
+```
 
 ## Drive the pipeline with `ConversionService`
 
 If you need the exact orchestration used by the CLI, rely on `ConversionService`. It exposes two steps:
 
-1. `prepare_documents(request)` splits inputs, normalises Markdown/HTML, applies `DocumentSlots`, and returns a `ConversionPrepared` payload.
+1. `prepare_documents(request)` splits inputs, normalises Markdown/HTML, applies slot assignments, and returns a `ConversionPrepared` payload.
 2. `execute(request, prepared=...)` renders the documents, optionally through a template, and produces a `ConversionResponse` with the bundle plus emitted diagnostics.
 
 ```python

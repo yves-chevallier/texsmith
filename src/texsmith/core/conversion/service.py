@@ -32,7 +32,7 @@ from texsmith.adapters.latex.tectonic import (
 from texsmith.adapters.markdown import split_front_matter
 
 from ..diagnostics import DiagnosticEmitter
-from ..documents import Document, DocumentSlots, TitleStrategy, front_matter_has_title
+from ..documents import Document, TitleStrategy, front_matter_has_title
 from ..metadata import PressMetadataError, normalise_press_metadata
 from ..templates.session import TemplateRenderResult, TemplateSession, get_template
 from .debug import ConversionError, ensure_emitter
@@ -42,7 +42,7 @@ from .inputs import (
     extract_front_matter_slots,
 )
 from .models import ConversionRequest, ConversionSettings
-from .pipeline import ConversionBundle, RenderSettings, convert_documents
+from .pipeline import ConversionBundle, convert_documents
 
 
 __all__ = [
@@ -233,7 +233,7 @@ class ConversionService:
     ) -> ConversionResponse:
         """Execute a conversion workflow and return a structured response, routing to template or raw conversion paths as needed."""
         batch = prepared or self.prepare_documents(request)
-        settings = self._build_render_settings(request.settings)
+        settings = request.settings.copy()
         emitter = batch.emitter
 
         if request.template is None:
@@ -377,25 +377,10 @@ class ConversionService:
         )
 
     @staticmethod
-    def _build_render_settings(settings: ConversionSettings) -> RenderSettings:
-        return RenderSettings(
-            parser=settings.parser,
-            disable_fallback_converters=settings.disable_fallback_converters,
-            copy_assets=settings.copy_assets,
-            convert_assets=settings.convert_assets,
-            hash_assets=settings.hash_assets,
-            manifest=settings.manifest,
-            persist_debug_html=settings.persist_debug_html,
-            language=settings.language,
-            legacy_latex_accents=settings.legacy_latex_accents,
-            diagrams_backend=settings.diagrams_backend,
-        )
-
-    @staticmethod
     def _initialise_template_session(
         template: str,
         *,
-        settings: RenderSettings,
+        settings: ConversionSettings,
         emitter: DiagnosticEmitter,
     ) -> TemplateSession:
         return get_template(
@@ -541,14 +526,12 @@ def _apply_shared_front_matter(
             raise ConversionError(str(exc)) from exc
         document.set_front_matter(merged)
         if (
-            document.options.title_strategy is TitleStrategy.PROMOTE_METADATA
+            document.title_strategy is TitleStrategy.PROMOTE_METADATA
             and front_matter_has_title(merged)
         ):
-            document.options.title_strategy = TitleStrategy.KEEP
-        document.slots = DocumentSlots()
+            document.title_strategy = TitleStrategy.KEEP
         base_mapping = extract_front_matter_slots(normalised)
-        if base_mapping:
-            document.slots.merge(DocumentSlots.from_mapping(base_mapping))
+        document.reset_slots(base_mapping)
 
 
 def _describe_front_matter_source(path: Path | None) -> str:

@@ -184,7 +184,7 @@ def test_template_session_conflicting_overrides(tmp_path: Path) -> None:
     session.add_document(Document.from_markdown(doc_path))
     session.add_document(Document.from_markdown(doc_path), slot="backmatter")
 
-    session.documents[1].slots.add("backmatter", include_document=True)
+    session.documents[1].assign_slot("backmatter", include_document=True)
 
     # Simulate conflicting overrides at the fragment layer.
     bundle = convert_documents(session.documents, wrap_document=False)

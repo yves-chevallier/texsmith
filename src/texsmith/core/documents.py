@@ -4,10 +4,8 @@ Architecture
 : `Document` models inputs alongside slot overrides and rendering toggles.
   Instances are intentionally lightweight so they can be duplicated when
   entering template sessions without costly reparsing.
-: `DocumentRenderOptions` captures heading offsets, numbering, and other knobs
-  that influence the LaTeX output. Keeping these options separate from the core
-  document data allows caller-specific tweaks while preserving the original
-  source.
+: `Document` stores heading offsets, numbering, and slot overrides alongside
+  the canonicalised HTML so the full conversion state lives in one place.
 
 Implementation Rationale
 : Conversions often need multiple passes over the same document, such as preview
@@ -63,11 +61,37 @@ from .templates.runtime import coerce_base_level
 
 __all__ = [
     "Document",
-    "DocumentRenderOptions",
-    "DocumentSlots",
     "TitleStrategy",
     "front_matter_has_title",
 ]
+
+_SLOT_WILDCARDS: set[str] = {
+    DOCUMENT_SELECTOR_SENTINEL,
+    DOCUMENT_SELECTOR_SENTINEL.lower(),
+    "*",
+}
+
+
+def _split_slot_mapping(mapping: Mapping[str, str]) -> tuple[dict[str, str], set[str]]:
+    selectors: dict[str, str] = {}
+    includes: set[str] = set()
+    for slot, selector in mapping.items():
+        slot_name = slot.strip()
+        if not slot_name:
+            continue
+        token = selector.strip() if isinstance(selector, str) else ""
+        if token.lower() in _SLOT_WILDCARDS:
+            includes.add(slot_name)
+        elif token:
+            selectors[slot_name] = token
+    return selectors, includes
+
+
+def _slot_request_mapping(selectors: Mapping[str, str], includes: Iterable[str]) -> dict[str, str]:
+    mapping = dict(selectors)
+    for slot in includes:
+        mapping.setdefault(slot, DOCUMENT_SELECTOR_SENTINEL)
+    return mapping
 
 
 class TitleStrategy(str, Enum):
@@ -135,119 +159,6 @@ def _front_matter_numbered(metadata: Mapping[str, Any] | None) -> bool | None:
 
 
 @dataclass(slots=True)
-class DocumentRenderOptions:
-    """Rendering options applied when preparing a document context."""
-
-    base_level: int = 0
-    title_strategy: TitleStrategy = TitleStrategy.KEEP
-    numbered: bool = True
-    suppress_title_metadata: bool = False
-
-    def copy(self) -> DocumentRenderOptions:
-        """Return a deep copy of the options so mutations never leak across documents."""
-        return DocumentRenderOptions(
-            base_level=self.base_level,
-            title_strategy=self.title_strategy,
-            numbered=self.numbered,
-            suppress_title_metadata=self.suppress_title_metadata,
-        )
-
-
-class DocumentSlots:
-    """Container tracking slot selectors and inclusion directives."""
-
-    __slots__ = ("_inclusions", "_selectors")
-
-    _WILDCARDS: ClassVar[set[str]] = {
-        DOCUMENT_SELECTOR_SENTINEL,
-        DOCUMENT_SELECTOR_SENTINEL.lower(),
-        "*",
-    }
-
-    def __init__(
-        self,
-        selectors: Mapping[str, str] | None = None,
-        inclusions: Iterable[str] | None = None,
-    ) -> None:
-        self._selectors: dict[str, str] = dict(selectors or {})
-        self._inclusions: set[str] = {slot.strip() for slot in inclusions or [] if slot}
-
-    def copy(self) -> DocumentSlots:
-        """Return a detached clone so callers can mutate slots without side effects."""
-        return DocumentSlots(self._selectors, self._inclusions)
-
-    @classmethod
-    def from_mapping(cls, mapping: Mapping[str, str] | None) -> DocumentSlots:
-        """Build slots from stored metadata, normalising empty mappings to defaults."""
-        slots = cls()
-        if not mapping:
-            return slots
-        for slot, selector in mapping.items():
-            slots.add(slot, selector=selector)
-        return slots
-
-    def merge(self, other: DocumentSlots) -> DocumentSlots:
-        """Combine selectors and inclusions to preserve caller overrides."""
-        if other is self:
-            return self
-        self._selectors.update(other._selectors)
-        self._inclusions.update(other._inclusions)
-        return self
-
-    def add(
-        self,
-        slot: str,
-        *,
-        selector: str | None = None,
-        include_document: bool | None = None,
-    ) -> DocumentSlots:
-        """Register a slot directive, preserving explicit inclusion intent."""
-        slot_name = slot.strip()
-        if not slot_name:
-            return self
-
-        token = selector.strip() if isinstance(selector, str) else None
-        include_flag = include_document
-
-        if token:
-            if token.lower() in self._WILDCARDS:
-                include_flag = True if include_document is not False else include_document
-                token = None
-            else:
-                self._selectors[slot_name] = token
-        elif selector is None and include_flag is None:
-            include_flag = True
-
-        if include_flag is True:
-            self._inclusions.add(slot_name)
-        elif include_flag is False:
-            self._inclusions.discard(slot_name)
-
-        if selector is None and include_flag is False:
-            self._selectors.pop(slot_name, None)
-
-        return self
-
-    def includes(self) -> set[str]:
-        """Return slot names flagged for whole-document inclusion."""
-        return set(self._inclusions)
-
-    def selectors(self) -> dict[str, str]:
-        """Return selectors mapped to slots, leaving the original untouched."""
-        return dict(self._selectors)
-
-    def to_request_mapping(self) -> dict[str, str]:
-        """Render selectors into the request mapping expected by the engine."""
-        mapping = dict(self._selectors)
-        for slot in self._inclusions:
-            mapping.setdefault(slot, DOCUMENT_SELECTOR_SENTINEL)
-        return mapping
-
-    def __bool__(self) -> bool:  # pragma: no cover - trivial
-        return bool(self._selectors or self._inclusions)
-
-
-@dataclass(slots=True)
 class Document:
     """Renderable document used by the high-level API."""
 
@@ -255,8 +166,12 @@ class Document:
     kind: InputKind
     _html: str
     _front_matter: Mapping[str, Any]
-    options: DocumentRenderOptions = field(default_factory=DocumentRenderOptions)
-    slots: DocumentSlots = field(default_factory=DocumentSlots)
+    base_level: int = 0
+    title_strategy: TitleStrategy = TitleStrategy.KEEP
+    numbered: bool = True
+    suppress_title_metadata: bool = False
+    slot_selectors: dict[str, str] = field(default_factory=dict)
+    slot_includes: set[str] = field(default_factory=set)
 
     @classmethod
     def from_markdown(
@@ -306,19 +221,15 @@ class Document:
         )
         front_numbered = _front_matter_numbered(rendered.front_matter)
         numbered_flag = numbered if front_numbered is None else front_numbered
-        options = DocumentRenderOptions(
-            base_level=resolved_base_level,
-            title_strategy=strategy,
-            numbered=numbered_flag,
-            suppress_title_metadata=suppress_title,
-        )
         document = cls(
             source_path=path,
             kind=InputKind.MARKDOWN,
             _html=rendered.html,
             _front_matter=rendered.front_matter,
-            options=options,
-            slots=DocumentSlots(),
+            base_level=resolved_base_level,
+            title_strategy=strategy,
+            numbered=numbered_flag,
+            suppress_title_metadata=suppress_title,
         )
         document._initialise_slots_from_front_matter()
         return document
@@ -375,19 +286,15 @@ class Document:
             strip_heading=strip_heading,
             has_declared_title=False,
         )
-        options = DocumentRenderOptions(
-            base_level=resolved_base_level,
-            title_strategy=strategy,
-            numbered=numbered,
-            suppress_title_metadata=suppress_title,
-        )
         document = cls(
             source_path=path,
             kind=InputKind.HTML,
             _html=html,
             _front_matter={},
-            options=options,
-            slots=DocumentSlots(),
+            base_level=resolved_base_level,
+            title_strategy=strategy,
+            numbered=numbered,
+            suppress_title_metadata=suppress_title,
         )
         document._initialise_slots_from_front_matter()
         return document
@@ -399,8 +306,12 @@ class Document:
             kind=self.kind,
             _html=self._html,
             _front_matter=copy.deepcopy(self._front_matter),
-            options=self.options.copy(),
-            slots=self.slots.copy(),
+            base_level=self.base_level,
+            title_strategy=self.title_strategy,
+            numbered=self.numbered,
+            suppress_title_metadata=self.suppress_title_metadata,
+            slot_selectors=copy.deepcopy(self.slot_selectors),
+            slot_includes=set(self.slot_includes),
         )
 
     @property
@@ -420,11 +331,11 @@ class Document:
     @property
     def drop_title(self) -> bool:
         """Indicate whether the document title should be dropped."""
-        if self.options.title_strategy is TitleStrategy.DROP:
+        if self.title_strategy is TitleStrategy.DROP:
             return True
-        if self.options.title_strategy is TitleStrategy.PROMOTE_METADATA:
+        if self.title_strategy is TitleStrategy.PROMOTE_METADATA:
             title, should_drop = self._extract_promoted_title()
-            if self.options.suppress_title_metadata:
+            if self.suppress_title_metadata:
                 return False
             return bool(title and should_drop)
         return False
@@ -433,35 +344,25 @@ class Document:
     def drop_title(self, value: bool) -> None:
         """Set whether the document title should be dropped."""
         if value:
-            if self.options.title_strategy is TitleStrategy.PROMOTE_METADATA:
+            if self.title_strategy is TitleStrategy.PROMOTE_METADATA:
                 return
-            self.options.title_strategy = TitleStrategy.DROP
+            self.title_strategy = TitleStrategy.DROP
         else:
-            if self.options.title_strategy is TitleStrategy.DROP:
-                self.options.title_strategy = TitleStrategy.KEEP
+            if self.title_strategy is TitleStrategy.DROP:
+                self.title_strategy = TitleStrategy.KEEP
 
     @property
     def title_from_heading(self) -> bool:
         """Indicate whether the title should be extracted from the first heading."""
-        return self.options.title_strategy is TitleStrategy.PROMOTE_METADATA
+        return self.title_strategy is TitleStrategy.PROMOTE_METADATA
 
     @title_from_heading.setter
     def title_from_heading(self, value: bool) -> None:
         """Set whether the title should be extracted from the first heading."""
         if value:
-            self.options.title_strategy = TitleStrategy.PROMOTE_METADATA
-        elif self.options.title_strategy is TitleStrategy.PROMOTE_METADATA:
-            self.options.title_strategy = TitleStrategy.KEEP
-
-    @property
-    def numbered(self) -> bool:
-        """Indicate whether the document is numbered."""
-        return self.options.numbered
-
-    @numbered.setter
-    def numbered(self, value: bool) -> None:
-        """Set whether the document is numbered."""
-        self.options.numbered = bool(value)
+            self.title_strategy = TitleStrategy.PROMOTE_METADATA
+        elif self.title_strategy is TitleStrategy.PROMOTE_METADATA:
+            self.title_strategy = TitleStrategy.KEEP
 
     def assign_slot(
         self,
@@ -471,7 +372,38 @@ class Document:
         include_document: bool | None = None,
     ) -> None:
         """Map the document or a selector subset into a template slot."""
-        self.slots.add(slot, selector=selector, include_document=include_document)
+        slot_name = slot.strip()
+        if not slot_name:
+            return
+
+        token = selector.strip() if isinstance(selector, str) else None
+        include_flag = include_document
+
+        if token:
+            if token.lower() in _SLOT_WILDCARDS:
+                include_flag = True if include_document is not False else include_document
+                token = None
+            else:
+                self.slot_selectors[slot_name] = token
+        elif selector is None and include_flag is None:
+            include_flag = True
+
+        if include_flag is True:
+            self.slot_includes.add(slot_name)
+        elif include_flag is False:
+            self.slot_includes.discard(slot_name)
+
+        if selector is None and include_flag is False:
+            self.slot_selectors.pop(slot_name, None)
+
+    def reset_slots(self, mapping: Mapping[str, str] | None = None) -> None:
+        """Replace slot selectors/inclusions with the provided mapping."""
+        self.slot_selectors = {}
+        self.slot_includes = set()
+        if mapping:
+            selectors, includes = _split_slot_mapping(mapping)
+            self.slot_selectors.update(selectors)
+            self.slot_includes.update(includes)
 
     def _initialise_slots_from_front_matter(self) -> None:
         if isinstance(self._front_matter, Mapping):
@@ -480,7 +412,9 @@ class Document:
                 normalise_press_metadata(payload)
             base_mapping = extract_front_matter_slots(payload)
             if base_mapping:
-                self.slots.merge(DocumentSlots.from_mapping(base_mapping))
+                selectors, includes = _split_slot_mapping(base_mapping)
+                self.slot_selectors.update(selectors)
+                self.slot_includes.update(includes)
 
     _HEADING_TAGS: ClassVar[set[str]] = {"h1", "h2", "h3", "h4", "h5", "h6"}
 
@@ -608,8 +542,8 @@ class Document:
 
     def to_context(self) -> DocumentContext:
         """Build a fresh DocumentContext for conversion, aligning slots with engine expectations."""
-        strategy = self.options.title_strategy
-        suppress_title = self.options.suppress_title_metadata
+        strategy = self.title_strategy
+        suppress_title = self.suppress_title_metadata
         promote_to_metadata = strategy is TitleStrategy.PROMOTE_METADATA and not suppress_title
         extracted_title = None
         drop_title_flag = strategy is TitleStrategy.DROP
@@ -617,7 +551,7 @@ class Document:
         if promote_to_metadata:
             extracted_title, drop_title_flag = self._extract_promoted_title()
 
-        base_level = self.options.base_level
+        base_level = self.base_level
         front_matter = copy.deepcopy(self._front_matter)
         if suppress_title and isinstance(front_matter, dict):
             front_matter.pop("title", None)
@@ -633,13 +567,17 @@ class Document:
             front_matter=front_matter,
             base_level=base_level,
             drop_title=drop_title_flag,
-            numbered=self.options.numbered,
+            numbered=self.numbered,
             title_from_heading=bool(extracted_title),
             extracted_title=extracted_title,
         )
-        base_slots = DocumentSlots.from_mapping(context.slot_requests)
-        combined_slots = base_slots.copy().merge(self.slots)
-        self.slots = combined_slots.copy()
-        context.slot_requests = combined_slots.to_request_mapping()
-        context.slot_inclusions = combined_slots.includes()
+        base_selectors, base_includes = _split_slot_mapping(context.slot_requests or {})
+        combined_selectors = dict(base_selectors)
+        combined_selectors.update(self.slot_selectors)
+        combined_includes = set(base_includes)
+        combined_includes.update(self.slot_includes)
+        self.slot_selectors = dict(combined_selectors)
+        self.slot_includes = set(combined_includes)
+        context.slot_requests = _slot_request_mapping(combined_selectors, combined_includes)
+        context.slot_inclusions = set(combined_includes)
         return context

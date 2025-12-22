@@ -36,13 +36,11 @@ from texsmith.adapters.markdown import (
     split_front_matter,
 )
 from texsmith.core.context import RenderContext
+from texsmith.core.conversion import ConversionSettings
 from texsmith.core.conversion.inputs import InputKind
-from texsmith.core.conversion.pipeline import RenderSettings
 from texsmith.core.diagnostics import DiagnosticEmitter
 from texsmith.core.documents import (
     Document,
-    DocumentRenderOptions,
-    DocumentSlots,
     TitleStrategy,
     _resolve_title_strategy,
     front_matter_has_title,
@@ -964,12 +962,6 @@ def _build_document_from_markup(
         strip_heading=drop_title,
         has_declared_title=front_matter_has_title(rendered.front_matter),
     )
-    options = DocumentRenderOptions(
-        base_level=0,
-        title_strategy=title_strategy,
-        numbered=False,
-        suppress_title_metadata=suppress_title,
-    )
     merged_front_matter = dict(rendered.front_matter)
     if front_matter:
         merged_front_matter.update(front_matter)
@@ -978,8 +970,10 @@ def _build_document_from_markup(
         kind=InputKind.MARKDOWN,
         _html=rendered.html,
         _front_matter=merged_front_matter,
-        options=options,
-        slots=DocumentSlots(),
+        base_level=0,
+        title_strategy=title_strategy,
+        numbered=False,
+        suppress_title_metadata=suppress_title,
     )
     document._initialise_slots_from_front_matter()  # noqa: SLF001
     return document
@@ -1013,19 +1007,15 @@ def _build_document_from_yaml(
         strip_heading=drop_title,
         has_declared_title=front_matter_has_title(payload),
     )
-    options = DocumentRenderOptions(
-        base_level=0,
-        title_strategy=title_strategy,
-        numbered=False,
-        suppress_title_metadata=suppress_title,
-    )
     document = Document(
         source_path=source_path,
         kind=InputKind.MARKDOWN,
         _html="",
         _front_matter=dict(payload),
-        options=options,
-        slots=DocumentSlots(),
+        base_level=0,
+        title_strategy=title_strategy,
+        numbered=False,
+        suppress_title_metadata=suppress_title,
     )
     document._initialise_slots_from_front_matter()  # noqa: SLF001
     return document
@@ -1556,7 +1546,7 @@ def ensure_snippet_assets(
 
     _announce_build(block, source_path, emitter)
 
-    settings = RenderSettings(
+    settings = ConversionSettings(
         copy_assets=True,
         convert_assets=False,
         hash_assets=False,

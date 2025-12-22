@@ -13,11 +13,10 @@ from texsmith.core.bibliography import (
 )
 from texsmith.core.config import BookConfig, LaTeXConfig
 from texsmith.core.context import AssetRegistry, DocumentState, RenderContext
-from texsmith.core.conversion import ConversionRequest, SlotAssignment
+from texsmith.core.conversion import ConversionRequest, ConversionSettings, SlotAssignment
 from texsmith.core.conversion.pipeline import (
     ConversionBundle,
     LaTeXFragment,
-    RenderSettings,
     convert_documents,
 )
 from texsmith.core.conversion.service import (
@@ -25,7 +24,7 @@ from texsmith.core.conversion.service import (
     ConversionService,
     classify_input_source,
 )
-from texsmith.core.documents import Document, DocumentRenderOptions, TitleStrategy
+from texsmith.core.documents import Document, TitleStrategy
 from texsmith.core.rules import RenderPhase, renders
 from texsmith.core.templates import (
     DEFAULT_TEMPLATE_LANGUAGE,
@@ -67,10 +66,10 @@ __all__ = [
     "BookConfig",
     "ConversionBundle",
     "ConversionRequest",
+    "ConversionSettings",
     "ConversionResponse",
     "ConversionService",
     "Document",
-    "DocumentRenderOptions",
     "DocumentState",
     "DoiBibliographyFetcher",
     "DoiLookupError",
@@ -78,7 +77,6 @@ __all__ = [
     "LaTeXFragment",
     "RenderContext",
     "RenderPhase",
-    "RenderSettings",
     "SlotAssignment",
     "TemplateBinding",
     "TemplateError",

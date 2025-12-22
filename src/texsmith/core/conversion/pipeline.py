@@ -1,7 +1,7 @@
 """Conversion helpers that expose a friendly façade over the core engine.
 
 Architecture
-: `RenderSettings` stores optional overrides for parser selection, asset
+: `ConversionSettings` stores optional overrides for parser selection, asset
   copying, manifest generation, and diagnostic outputs. A dedicated dataclass
   keeps configuration immutable unless explicitly copied.
 : `LaTeXFragment` represents the output of a single document conversion and
@@ -38,7 +38,6 @@ Usage Example
 from __future__ import annotations
 
 from collections.abc import Iterable, Mapping, Sequence
-import copy
 from dataclasses import dataclass
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
@@ -48,6 +47,7 @@ from ..diagnostics import DiagnosticEmitter, NullEmitter
 from ..documents import Document
 from ._utils import build_unique_stem_map
 from .core import ConversionResult, convert_document
+from .models import ConversionSettings
 from .renderer import TemplateFragment
 
 
@@ -60,30 +60,10 @@ if TYPE_CHECKING:  # pragma: no cover - type checking only
 __all__ = [
     "ConversionBundle",
     "LaTeXFragment",
-    "RenderSettings",
+    "ConversionSettings",
     "convert_documents",
     "to_template_fragments",
 ]
-
-
-@dataclass(slots=True)
-class RenderSettings:
-    """Engine-level knobs applied during conversion."""
-
-    parser: str | None = None
-    disable_fallback_converters: bool = False
-    copy_assets: bool = True
-    convert_assets: bool = False
-    hash_assets: bool = False
-    manifest: bool = False
-    persist_debug_html: bool = False
-    language: str | None = None
-    legacy_latex_accents: bool = False
-    diagrams_backend: str | None = None
-
-    def copy(self) -> RenderSettings:
-        """Create a deep copy of the settings to avoid cross-run mutations."""
-        return copy.deepcopy(self)
 
 
 @dataclass(slots=True)
@@ -118,7 +98,7 @@ def convert_documents(
     documents: Sequence[Document],
     *,
     output_dir: Path | None = None,
-    settings: RenderSettings | None = None,
+    settings: ConversionSettings | None = None,
     emitter: DiagnosticEmitter | None = None,
     bibliography_files: Iterable[Path] | None = None,
     template: str | None = None,
@@ -132,7 +112,7 @@ def convert_documents(
     if not documents:
         raise ValueError("At least one document is required for conversion.")
 
-    settings = settings.copy() if settings is not None else RenderSettings()
+    settings = settings.copy() if settings is not None else ConversionSettings()
     unique_stems = build_unique_stem_map([doc.source_path for doc in documents])
 
     shared_bibliography: BibliographyCollection | None = None
@@ -150,7 +130,7 @@ def convert_documents(
     for _index, document in enumerate(documents):
         context = document.to_context()
         target_dir = Path(output_dir) if output_dir is not None else Path("build")
-        slot_overrides = document.slots.selectors()
+        slot_overrides = dict(document.slot_selectors)
         result = convert_document(
             document=context,
             output_dir=target_dir,
@@ -204,8 +184,8 @@ def to_template_fragments(bundle: ConversionBundle) -> list[TemplateFragment]:
 
         document = fragment.document
         slot_includes: set[str] = set()
-        if document is not None and hasattr(document, "slots"):
-            slot_includes = set(document.slots.includes())
+        if document is not None:
+            slot_includes = set(document.slot_includes)
 
         fragments.append(
             TemplateFragment(

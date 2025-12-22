@@ -287,7 +287,7 @@ LaTeX structure. Typical patterns:
   only the abstract heading and the “Results” section into separate slots.
 - **Per-language appendices** – define slots (`appendix_en`, `appendix_fr`) and use front-matter metadata (`press.slot.appendix_en: docs/en.md`) so automation scripts do not need to pass CLI flags.
 
-Slots are resolved by `DocumentSlots` across CLI flags, front matter (`press.slot.*`), and API overrides, so mix and match whichever suits your workflow.
+Slots are resolved by the document slot mapping across CLI flags, front matter (`press.slot.*`), and API overrides, so mix and match whichever suits your workflow.
 
 ### Testing your template
 
