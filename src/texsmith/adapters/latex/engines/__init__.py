@@ -614,9 +614,10 @@ def _maybe_run_biber(
     bcf_path = workdir / f"{job_stem}.bcf"
     if not bcf_path.exists():
         return False, None
+    biber_cmd = env.get("BIBER") or "biber"
     run = _invoke_auxiliary_tool(
         "biber",
-        ["biber", job_stem],
+        [biber_cmd, job_stem],
         workdir=workdir,
         env=env,
         console=console,

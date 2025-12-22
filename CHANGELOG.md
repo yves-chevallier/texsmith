@@ -19,6 +19,10 @@ and the project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 - Documented the `--legacy-latex-accents` CLI flag and its API equivalent via `ConversionRequest`.
 
+### Fixed
+
+- Use the bundled `biber` path when invoking bibliography builds to fix Windows CI failures.
+
 ## [0.1.0] - 2025-12-20
 
 ### Added
