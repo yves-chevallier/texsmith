@@ -8,7 +8,7 @@ from texsmith.core.documents import Document
 from texsmith.core.templates import load_template_runtime
 
 
-def test_document_context_promotes_common_metadata(tmp_path: Path) -> None:
+def test_document_promotes_common_metadata(tmp_path: Path) -> None:
     source = tmp_path / "doc.md"
     source.write_text(
         "---\ntitle: Root Title\nsubtitle: Root Subtitle\nauthor: Ada Lovelace\n---\n# Heading\n",
@@ -39,7 +39,7 @@ def test_article_template_sets_mermaid_config(tmp_path: Path) -> None:
 
     runtime = load_template_runtime("article")
     binder = build_binder_context(
-        document_context=context,
+        document=context,
         template="article",
         template_runtime=runtime,
         requested_language=None,

@@ -130,7 +130,7 @@ class SlotFragment:
 
 def build_binder_context(
     *,
-    document_context: Document,
+    document: Document,
     template: str | None,
     template_runtime: TemplateRuntime | None,
     requested_language: str | None,
@@ -146,17 +146,17 @@ def build_binder_context(
 ) -> BinderContext:
     """Prepare template bindings, bibliography data, and slot mappings."""
     emitter = ensure_emitter(emitter)
-    resolved_language = resolve_template_language(requested_language, document_context.front_matter)
-    document_context.language = resolved_language
+    resolved_language = resolve_template_language(requested_language, document.front_matter)
+    document.language = resolved_language
 
     config = BookConfig(
-        project_dir=document_context.source_path.parent,
+        project_dir=document.source_path.parent,
         language=resolved_language,
         legacy_latex_accents=legacy_latex_accents,
     )
 
     try:
-        inline_bibliography = extract_front_matter_bibliography(document_context.front_matter)
+        inline_bibliography = extract_front_matter_bibliography(document.front_matter)
     except InlineBibliographyValidationError as exc:
         raise_conversion_error(emitter, str(exc), exc)
 
@@ -175,7 +175,7 @@ def build_binder_context(
         _load_inline_bibliography(
             bibliography_collection,
             inline_bibliography,
-            source_label=document_context.source_path.stem,
+            source_label=document.source_path.stem,
             output_dir=output_dir,
             emitter=emitter,
         )
@@ -190,13 +190,13 @@ def build_binder_context(
         emitter.warning(f"{prefix}{issue.message}{source_hint}")
         issue_signatures.add(signature)
 
-    document_context.bibliography = bibliography_map
+    document.bibliography = bibliography_map
 
-    slot_requests = dict(document_context.slot_requests)
+    slot_requests = dict(document.slot_requests)
     if slot_overrides:
         slot_requests.update(dict(slot_overrides))
 
-    template_overrides = build_template_overrides(document_context.front_matter)
+    template_overrides = build_template_overrides(document.front_matter)
     if session_overrides:
         template_overrides = _merge_template_overrides(template_overrides, session_overrides)
 
@@ -211,40 +211,40 @@ def build_binder_context(
             template_overrides["press"] = press_section
         return press_section
 
-    if document_context.extracted_title:
-        template_overrides.setdefault("title", document_context.extracted_title)
-        _ensure_press_section().setdefault("title", document_context.extracted_title)
+    if document.extracted_title:
+        template_overrides.setdefault("title", document.extracted_title)
+        _ensure_press_section().setdefault("title", document.extracted_title)
 
     template_overrides.setdefault("language", resolved_language)
     if press_section is not None or "press" in template_overrides:
         _ensure_press_section().setdefault("language", resolved_language)
 
-    template_overrides.setdefault("_source_dir", str(document_context.source_path.parent))
-    template_overrides.setdefault("_source_path", str(document_context.source_path))
-    template_overrides.setdefault("source_dir", str(document_context.source_path.parent))
+    template_overrides.setdefault("_source_dir", str(document.source_path.parent))
+    template_overrides.setdefault("_source_path", str(document.source_path))
+    template_overrides.setdefault("source_dir", str(document.source_path.parent))
     template_overrides["output_dir"] = str(output_dir)
 
-    mustache_defaults = _build_mustache_defaults(template_overrides, document_context.front_matter)
-    raw_contexts = (template_overrides, document_context.front_matter, mustache_defaults)
+    mustache_defaults = _build_mustache_defaults(template_overrides, document.front_matter)
+    raw_contexts = (template_overrides, document.front_matter, mustache_defaults)
     template_overrides = replace_mustaches_in_structure(
         template_overrides, raw_contexts, emitter=emitter, source="template attributes"
     )
-    document_context.set_front_matter(
+    document.set_front_matter(
         replace_mustaches_in_structure(
-            document_context.front_matter,
+            document.front_matter,
             raw_contexts,
             emitter=emitter,
-            source=str(document_context.source_path),
+            source=str(document.source_path),
         )
     )
-    merged_contexts = (template_overrides, document_context.front_matter)
-    if isinstance(document_context.html, str):
-        document_context.set_html(
+    merged_contexts = (template_overrides, document.front_matter)
+    if isinstance(document.html, str):
+        document.set_html(
             _replace_mustaches_in_html(
-                document_context.html,
+                document.html,
                 merged_contexts,
                 emitter=emitter,
-                source=str(document_context.source_path),
+                source=str(document.source_path),
             )
         )
 
@@ -281,7 +281,7 @@ def build_binder_context(
         bibliography_collection=bibliography_collection,
         template_binding=binding,
     )
-    binder_context.documents.append(document_context)
+    binder_context.documents.append(document)
 
     return binder_context
 

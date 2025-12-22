@@ -120,7 +120,7 @@ def test_prepare_documents_handles_markdown_and_html(tmp_path: Path) -> None:
     assert prepared.documents[1].title_strategy is TitleStrategy.KEEP
 
 
-def test_document_context_records_title_from_heading(tmp_path: Path) -> None:
+def test_document_records_title_from_heading(tmp_path: Path) -> None:
     service = ConversionService()
     template_dir = _create_template(tmp_path)
     source = tmp_path / "doc.md"
@@ -183,7 +183,7 @@ def test_binder_context_injects_template_title(tmp_path: Path) -> None:
 
     runtime = load_template_runtime(str(template_dir))
     binder = build_binder_context(
-        document_context=context,
+        document=context,
         template=str(template_dir),
         template_runtime=runtime,
         requested_language=None,

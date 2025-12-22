@@ -63,7 +63,7 @@ class ConversionResult:
     document_state: DocumentState | None = None
     bibliography_path: Path | None = None
     template_overrides: dict[str, Any] = field(default_factory=dict)
-    document_context: Document | None = None
+    document: Document | None = None
     binder_context: BinderContext | None = None
     rule_descriptions: list[dict[str, Any]] = field(default_factory=list)
     assets_map: dict[str, Path] = field(default_factory=dict)
@@ -246,7 +246,7 @@ def convert_document(
     output_dir = output_dir.resolve()
 
     binder_context = build_binder_context(
-        document_context=document,
+        document=document,
         template=template,
         template_runtime=template_runtime,
         requested_language=language,
@@ -270,7 +270,7 @@ def convert_document(
     }
 
     return _render_document(
-        document_context=document,
+        document=document,
         binder_context=binder_context,
         renderer_kwargs=renderer_kwargs,
         strategy=strategy,
@@ -286,7 +286,7 @@ def convert_document(
 
 def _render_document(
     *,
-    document_context: Document,
+    document: Document,
     binder_context: BinderContext,
     renderer_kwargs: dict[str, Any],
     strategy: GenerationStrategy,
@@ -301,8 +301,8 @@ def _render_document(
     if persist_debug_html:
         persist_debug_artifacts(
             binder_context.output_dir,
-            document_context.source_path,
-            document_context.html,
+            document.source_path,
+            document.html,
         )
 
     binding = binder_context.template_binding
@@ -315,7 +315,7 @@ def _render_document(
     runtime_common = _build_runtime_common(
         binding=binding,
         binder_context=binder_context,
-        document_context=document_context,
+        document=document,
         strategy=strategy,
         diagrams_backend=diagrams_backend,
         emitter=emitter,
@@ -325,7 +325,7 @@ def _render_document(
 
     parser_backend = str(renderer_kwargs.get("parser", "html.parser"))
     slot_fragments, missing_slots = extract_slot_fragments(
-        document_context.html,
+        document.html,
         active_slot_requests,
         binding.default_slot,
         slot_definitions=binding.slots,
@@ -334,9 +334,9 @@ def _render_document(
     for message in missing_slots:
         emitter.warning(message)
 
-    manual_base_level = document_context.base_level
-    drop_title_flag = bool(document_context.drop_title)
-    if drop_title_flag and document_context.slot_requests and not binder_context.slot_requests:
+    manual_base_level = document.base_level
+    drop_title_flag = bool(document.drop_title)
+    if drop_title_flag and document.slot_requests and not binder_context.slot_requests:
         drop_title_flag = False
 
     fragment_offsets: dict[str, int] = {}
@@ -359,7 +359,7 @@ def _render_document(
                 name=fragment.name,
                 html=fragment.html,
                 base_level=base_value + base_offset,
-                metadata=document_context.front_matter,
+                metadata=document.front_matter,
                 bibliography=binder_context.bibliography_map,
             )
         )
@@ -394,7 +394,7 @@ def _render_document(
         slot_outputs[binding.default_slot] = default_content
     latex_output = default_content
 
-    document_context.segments = segment_registry
+    document.segments = segment_registry
     for slot_name, segments in segment_registry.items():
         binder_context.bound_segments.setdefault(slot_name, []).extend(segments)
 
@@ -436,7 +436,7 @@ def _render_document(
                 ),
                 output_dir=binder_context.output_dir,
                 copy_assets=strategy.copy_assets,
-                output_name=f"{document_context.source_path.stem}.tex",
+                output_name=f"{document.source_path.stem}.tex",
                 bibliography_path=bibliography_output,
                 emitter=emitter,
                 fragments=list(
@@ -489,7 +489,7 @@ def _render_document(
         document_state=document_state,
         bibliography_path=bibliography_output,
         template_overrides=dict(binder_context.template_overrides),
-        document_context=document_context,
+        document=document,
         binder_context=binder_context,
         rule_descriptions=rule_descriptions,
         assets_map=asset_map,
@@ -500,7 +500,7 @@ def _build_runtime_common(
     *,
     binding: TemplateBinding,
     binder_context: BinderContext,
-    document_context: Document,
+    document: Document,
     strategy: GenerationStrategy,
     diagrams_backend: str | None,
     emitter: DiagnosticEmitter,
@@ -509,9 +509,9 @@ def _build_runtime_common(
     code_options = _resolve_code_options(binding, binder_context.template_overrides)
 
     runtime_common: dict[str, object] = {
-        "numbered": document_context.numbered,
-        "source_dir": document_context.source_path.parent,
-        "document_path": document_context.source_path,
+        "numbered": document.numbered,
+        "source_dir": document.source_path.parent,
+        "document_path": document.source_path,
         "copy_assets": strategy.copy_assets,
         "convert_assets": strategy.convert_assets,
         "hash_assets": strategy.hash_assets,
@@ -542,7 +542,7 @@ def _build_runtime_common(
         runtime_common["generate_manifest"] = True
     emoji_mode = _extract_emoji_mode(binder_context.template_overrides)
     if not emoji_mode:
-        emoji_mode = _extract_emoji_mode(document_context.front_matter)
+        emoji_mode = _extract_emoji_mode(document.front_matter)
     if emoji_mode:
         runtime_common["emoji_mode"] = emoji_mode
         binder_context.template_overrides.setdefault("emoji", emoji_mode)
