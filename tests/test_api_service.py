@@ -135,7 +135,7 @@ def test_document_records_title_from_heading(tmp_path: Path) -> None:
 
     prepared = service.prepare_documents(request)
     document = prepared.documents[0]
-    context = document.to_context()
+    context = document.prepare_for_conversion()
 
     assert context.title_from_heading is True
     assert context.extracted_title == "Sample Title"
@@ -157,7 +157,7 @@ def test_title_promotion_requires_unique_level(tmp_path: Path) -> None:
     )
 
     prepared = service.prepare_documents(request)
-    context = prepared.documents[0].to_context()
+    context = prepared.documents[0].prepare_for_conversion()
 
     assert context.title_from_heading is False
     assert context.extracted_title is None
@@ -179,7 +179,7 @@ def test_binder_context_injects_template_title(tmp_path: Path) -> None:
 
     prepared = service.prepare_documents(request)
     document = prepared.documents[0]
-    context = document.to_context()
+    context = document.prepare_for_conversion()
 
     runtime = load_template_runtime(str(template_dir))
     binder = build_binder_context(
@@ -362,7 +362,7 @@ def test_shared_front_matter_preserves_heading_when_title_declared(tmp_path: Pat
     )
 
     prepared = service.prepare_documents(request)
-    context = prepared.documents[0].to_context()
+    context = prepared.documents[0].prepare_for_conversion()
 
     assert context.drop_title is False
     assert context.title_from_heading is False

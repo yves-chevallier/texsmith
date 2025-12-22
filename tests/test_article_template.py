@@ -16,7 +16,7 @@ def test_document_promotes_common_metadata(tmp_path: Path) -> None:
     )
 
     document = Document.from_markdown(source)
-    context = document.to_context()
+    context = document.prepare_for_conversion()
 
     press = context.front_matter["press"]
     assert press["title"] == "Root Title"
@@ -35,7 +35,7 @@ def test_article_template_sets_mermaid_config(tmp_path: Path) -> None:
     source.write_text("# Title\nbody", encoding="utf-8")
 
     document = Document.from_markdown(source)
-    context = document.to_context()
+    context = document.prepare_for_conversion()
 
     runtime = load_template_runtime("article")
     binder = build_binder_context(

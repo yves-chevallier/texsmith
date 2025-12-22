@@ -23,7 +23,7 @@ Usage Example
     ...     source = Path(tmpdir) / "chapter.md"
     ...     _ = source.write_text("# Chapter\\nBody")
     ...     doc = Document.from_markdown(source, base_level="section")
-    ...     prepared = doc.to_context()
+    ...     prepared = doc.prepare_for_conversion()
     ...     prepared.source_path.stem
     'chapter'
 """
@@ -626,7 +626,3 @@ class Document:
         self.assets = []
         self.segments = {}
         return self
-
-    def to_context(self) -> Document:
-        """Prepare the document for conversion and return itself."""
-        return self.prepare_for_conversion()
