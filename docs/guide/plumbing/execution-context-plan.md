@@ -132,6 +132,7 @@ Status: done.
 - Ensure `Document.prepare_for_conversion` only prepares document-level concerns.
 
 ### Step 7: Tests and safety checks
+Status: done.
 - Update tests to assert `ExecutionContext` values directly.
 - Keep CLI tests unchanged; add minimal coverage for resolver priority order.
 - Run `uv run pytest`, `uv run ruff format .`, `uv run ruff check .`.

@@ -11,7 +11,7 @@ from texsmith.core.conversion.execution import resolve_execution_context
 from texsmith.core.conversion.inputs import UnsupportedInputError
 from texsmith.core.conversion.service import ConversionService
 from texsmith.core.conversion.templates import build_binder_context
-from texsmith.core.documents import TitleStrategy
+from texsmith.core.documents import Document, TitleStrategy
 from texsmith.core.templates.runtime import load_template_runtime
 
 
@@ -196,6 +196,39 @@ def test_binder_context_injects_template_title(tmp_path: Path) -> None:
     )
 
     assert binder.template_overrides["press"]["title"] == "Sample Title"
+
+
+def test_resolve_execution_context_prefers_request_and_overrides(tmp_path: Path) -> None:
+    source = tmp_path / "doc.md"
+    source.write_text(
+        """---
+language: french
+press:
+  title: Front Press
+  subtitle: Front Subtitle
+---
+
+# Heading
+""",
+        encoding="utf-8",
+    )
+    document = Document.from_markdown(source)
+    request = ConversionRequest(
+        documents=[source],
+        bibliography_files=[],
+        language="english",
+    )
+
+    execution = resolve_execution_context(
+        document,
+        request,
+        template_overrides={"press": {"title": "CLI Title"}},
+        output_dir=tmp_path,
+    )
+
+    assert execution.language == "english"
+    assert execution.template_overrides["press"]["title"] == "CLI Title"
+    assert execution.template_overrides["press"]["subtitle"] == "Front Subtitle"
 
 
 def test_prepare_documents_applies_slot_assignments(tmp_path: Path) -> None:
