@@ -37,11 +37,12 @@ jobs:
 
   tests:
     name: Pytest matrix
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.10", "3.13", "3.14"]
+        os: ["ubuntu-latest", "windows-latest", "macos-latest"]
+        python-version: ["3.10", "3.11", "3.12", "3.13", "3.14"]
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -65,9 +66,47 @@ jobs:
       - name: Run pytest
         run: uv run pytest
 
+      - name: Minimal Examples Build
+        shell: bash
+        run: |
+          cd ${GITHUB_WORKSPACE}/examples/abbr && uv run make clean all
+          cd ${GITHUB_WORKSPACE}/examples/paper && uv run make clean all
+          cd ${GITHUB_WORKSPACE}/examples/diagrams && uv run make clean all
+
+  examples:
+    name: Build examples (Windows)
+    runs-on: windows-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: true
+          cache-python: false
+        env:
+          UV_CACHE_SAVE: "false"
+
+      - name: Install make
+        shell: powershell
+        run: choco install make -y
+
+      - name: Sync dependencies (dev + docs)
+        run: uv sync --all-groups --frozen
+
+      - name: Build examples
+        shell: bash
+        run: uv run make -C examples all
+
   build-artifacts:
     name: Build dists & docs
-    needs: [lint, tests]
+    needs: [lint, tests, examples]
     runs-on: ubuntu-latest
     env:
       PLAYWRIGHT_BROWSERS_PATH: /home/runner/.cache/texsmith/playwright/browsers

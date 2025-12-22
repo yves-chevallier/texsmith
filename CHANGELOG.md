@@ -13,6 +13,7 @@ and the project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 - Folded document render options and slot tracking into `Document` for a single SSOT.
 - Simplified template options handling to use plain mappings in `TemplateSession`.
 - Bumped the minimum PyXindy dependency to `0.0.6`.
+- Expanded CI to test on Windows and macOS, and added a Windows examples build job.
 
 ### Added
 
