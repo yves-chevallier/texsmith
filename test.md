@@ -1,18 +1,12 @@
-# Test Snippet
-
-```md {.snippet width="65%"}
 ---
 press:
-  template: article
-  paper:
-    format: a5
-    orientation: landscape
-  frame: true
-fragments:
-  ts-frame
+  fonts:
+    family: heros
 ---
-The HTML specification is maintained by the W3C.
+# Test Code
 
-*[HTML]: HyperText Markup Language
-*[W3C]: World Wide Web Consortium
+This text should be TeX Heros font.
+
+```text
+╭── Test ──╮
 ```

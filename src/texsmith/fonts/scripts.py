@@ -331,7 +331,7 @@ def fallback_summary_to_usage(
             if isinstance(font_payload, Mapping):
                 raw_name = font_payload.get("name")
                 font_name = str(raw_name) if isinstance(raw_name, str) else None
-        is_emoji = group_lower == "symbols" or (font_name and "emoji" in font_name.lower())
+        is_emoji = bool(font_name and "emoji" in font_name.lower())
         if is_emoji:
             slug = "emoji"
         count_value = entry.get("count")

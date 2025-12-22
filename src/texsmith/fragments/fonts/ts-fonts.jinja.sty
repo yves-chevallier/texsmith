@@ -1,4 +1,7 @@
 \BLOCK{ set font_family = fonts_family | default("lm") }
+\BLOCK{ set mono_font = fonts.get("mono") if fonts is defined and fonts else None }
+\BLOCK{ set mono_font = fonts.get("mono_font") if fonts is defined and fonts else None }
+\BLOCK{ set mono_name = fonts.get("mono") if fonts is defined and fonts else None }
 \BLOCK{ set fallback = fonts.get("fallback") if fonts is defined and fonts else {} }
 \ProvidesPackage{ts-fonts}[2025/01/10 TeXSmith font selection (generated)]
 
@@ -26,6 +29,32 @@
       \csname tssetupfonts@#1\endcsname
     }%
   }
+\BLOCK{ if mono_font }
+  \newcommand{\tsSetMonoFallback}{%
+    \setmonofont{\VAR{mono_font.name}}[%
+      Path = \VAR{mono_font.path}/,
+      Extension = \VAR{mono_font.extension},
+      UprightFont = \VAR{mono_font.upright},
+\BLOCK{ if mono_font.has_bold }
+      BoldFont = \VAR{mono_font.bold},
+\BLOCK{ endif }
+\BLOCK{ if mono_font.has_italic }
+      ItalicFont = \VAR{mono_font.italic},
+\BLOCK{ endif }
+\BLOCK{ if mono_font.has_bold_italic }
+      BoldItalicFont = \VAR{mono_font.bold_italic},
+\BLOCK{ endif }
+    ]%
+  }
+\BLOCK{ elif mono_name }
+  \newcommand{\tsSetMonoFallback}{%
+    \setmonofont{\VAR{mono_name}}%
+  }
+\BLOCK{ else }
+  \newcommand{\tsSetMonoFallback}{%
+    \setmonofont{Latin Modern Mono}%
+  }
+\BLOCK{ endif }
   \makeatother
 
   % Latin Modern (lm)
@@ -104,41 +133,58 @@
   % Tex Gyre Bonum (bonum)
   \tsDeclareFontSet{bonum}{%
     \RequirePackage{bonum-otf}%
+    \tsSetMonoFallback%
   }
 
   % Libertinus (libertinus)
   \tsDeclareFontSet{libertinus}{%
     \RequirePackage{libertinus}%
+    \tsSetMonoFallback%
   }
 
   % Tex Gyre Pagella (pagella)
   \tsDeclareFontSet{pagella}{%
     \RequirePackage{pagella-otf}%
+    \tsSetMonoFallback%
   }
 
   % Tex Gyre Termes (termes)
   \tsDeclareFontSet{termes}{%
     \RequirePackage{termes-otf}%
+    \tsSetMonoFallback%
   }
 
   % TeX Gyre Schola (schola)
   \tsDeclareFontSet{schola}{%
     \RequirePackage{schola-otf}%
+    \tsSetMonoFallback%
   }
 
   % TeX Gyre Heros (heros)
   \tsDeclareFontSet{heros}{%
     \RequirePackage{heros-otf}%
+    \setmainfont{TeX Gyre Heros}%
+    \setsansfont{TeX Gyre Heros}%
+    \renewcommand{\familydefault}{\sfdefault}%
+    \tsSetMonoFallback%
   }
 
   % TeX Gyre Adventor (adventor)
   \tsDeclareFontSet{adventor}{%
     \RequirePackage{adventor-otf}%
+    \setmainfont{TeX Gyre Adventor}%
+    \setsansfont{TeX Gyre Adventor}%
+    \renewcommand{\familydefault}{\sfdefault}%
+    \tsSetMonoFallback%
   }
 
   % TeX Gyre Cursor (cursor)
   \tsDeclareFontSet{cursor}{%
     \RequirePackage{cursor-otf}%
+    \setmainfont{TeX Gyre Cursor}%
+    \setsansfont{TeX Gyre Cursor}%
+    \renewcommand{\familydefault}{\ttdefault}%
+    \tsSetMonoFallback%
   }
 
   % IBM Plex (plex)
@@ -182,18 +228,36 @@
   \BLOCK{ set font_cmd = '\\' + entry.font_command }
   \BLOCK{ set text_cmd = '\\' + entry.text_command }
     % Declare font family for \VAR{entry.font_name}
-    \newfontfamily\VAR{font_cmd}[
-      Path = fonts/,
-      Extension = \VAR{entry.extension},
-      UprightFont = \VAR{entry.upright},
+    \@ifundefined{\VAR{entry.font_command}}{%
+      \newfontfamily\VAR{font_cmd}[
+        Path = fonts/,
+        Extension = \VAR{entry.extension},
+        UprightFont = \VAR{entry.upright},
 \BLOCK{ if entry.has_bold }
-      BoldFont = \VAR{entry.bold},
+        BoldFont = \VAR{entry.bold},
 \BLOCK{ else }
-      FakeBold = 2,
+        FakeBold = 2,
 \BLOCK{ endif }
-      Scale = MatchLowercase
-    ]{\VAR{entry.font_name}}%
-    \DeclareRobustCommand\VAR{text_cmd}[1]{{\VAR{font_cmd}#1}}%
+        Scale = MatchLowercase
+      ]{\VAR{entry.font_name}}%
+    }{%
+      \renewfontfamily\VAR{font_cmd}[
+        Path = fonts/,
+        Extension = \VAR{entry.extension},
+        UprightFont = \VAR{entry.upright},
+\BLOCK{ if entry.has_bold }
+        BoldFont = \VAR{entry.bold},
+\BLOCK{ else }
+        FakeBold = 2,
+\BLOCK{ endif }
+        Scale = MatchLowercase
+      ]{\VAR{entry.font_name}}%
+    }%
+    \@ifundefined{\VAR{entry.text_command}}{%
+      \DeclareRobustCommand\VAR{text_cmd}[1]{{\VAR{font_cmd}#1}}%
+    }{%
+      \renewcommand\VAR{text_cmd}[1]{{\VAR{font_cmd}#1}}%
+    }%
 
   \BLOCK{ endfor }
   \makeatother

@@ -1,6 +1,6 @@
 # Author
 
-![Yves Chevallier](https://avatars.githubusercontent.com/u/52489316){ align=right }
+![Yves Chevallier](https://avatars.githubusercontent.com/u/52489316){ align=right width="50%" }
 
 I'm Yves Chevallier, the creator and maintainer of TeXSmith. I work full-time as an associate professor at [HEIG-VD](https://www.heig-vd.ch) in Switzerland, where I teach software engineering. My research interests revolve around software architecture, meta-generation, and—naturally—documentation tooling. Before drifting into academia, I trained as an electronics engineer with a focus on real-time embedded systems for motion-control applications.
 

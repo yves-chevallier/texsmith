@@ -100,11 +100,6 @@ _FALLBACK_ALIASES: dict[str, dict[str, object]] = {
         "dir": "NotoSansDevanagari",
     },
     "chinese": {"name": "NotoSansSC", "styles": ["regular", "bold"], "extension": ".otf"},
-    "symbols": {
-        "name": "OpenMojiBlack",
-        "styles": ["regular"],
-        "extension": ".ttf",
-    },
 }
 
 
@@ -561,7 +556,7 @@ def _prepare_fallback_context(context: Mapping[str, Any], *, output_dir: Path) -
         ext = ext if isinstance(ext, str) and ext.startswith(".") else ".otf"
         # Resolve emoji font preferences separately because they are not part of the Noto OTF set.
         emoji_path: Path | None = None
-        if group_lower == "symbols" or "emoji" in font_name.lower():
+        if "emoji" in font_name.lower():
             preferred_color = emoji_mode == "color"
             # Prefer OpenMoji (monochrome) for broader engine compatibility,
             # even when color is requested. Fall back to NotoColorEmoji only
@@ -792,11 +787,99 @@ def _prepare_fallback_context(context: Mapping[str, Any], *, output_dir: Path) -
     }
 
 
+def _prepare_mono_font(
+    context: Mapping[str, Any], *, output_dir: Path, family: str
+) -> dict[str, Any] | None:
+    """Ensure a usable monospaced font is available in the build output."""
+    fonts_section = context.get("fonts") if isinstance(context.get("fonts"), Mapping) else {}
+    requested_raw = fonts_section.get("mono") if isinstance(fonts_section, Mapping) else None
+    if isinstance(requested_raw, str) and requested_raw.strip():
+        requested = requested_raw.strip()
+        normalized = requested.lower().replace(" ", "").replace("-", "")
+        if normalized in {"ibmplexmono", "plexmono", "plex"}:
+            font_name = "IBMPlexMono"
+            source = "plex"
+        elif normalized in {"notosansmono", "noto"}:
+            font_name = "NotoSansMono"
+            source = "noto"
+        else:
+            return None
+    else:
+        if family == "heros":
+            font_name = "IBMPlexMono"
+            source = "plex"
+        else:
+            return None
+
+    styles = ["regular", "bold", "italic", "bolditalic"]
+    if source == "plex":
+        _ensure_plex_fonts(output_dir)
+        extension = ".ttf"
+        destination_root = (output_dir / "fonts" / "plex-otf").resolve()
+        path = "fonts/plex-otf"
+        sources = {
+            "regular": destination_root / "IBMPlexMono-Regular.ttf",
+            "bold": destination_root / "IBMPlexMono-Bold.ttf",
+            "italic": destination_root / "IBMPlexMono-Italic.ttf",
+            "bolditalic": destination_root / "IBMPlexMono-BoldItalic.ttf",
+        }
+    else:
+        downloader = NotoFontDownloader(cache=FontCache(), logger=FontPipelineLogger())
+        extension = ".otf"
+        downloader.ensure(font_name=font_name, styles=styles, extension=extension, dir_base=None)
+        destination_root = (output_dir / "fonts").resolve()
+        path = "fonts"
+        sources = {
+            "regular": downloader.fonts_dir / f"{font_name}-{style_suffix('regular')}{extension}",
+            "bold": downloader.fonts_dir / f"{font_name}-{style_suffix('bold')}{extension}",
+            "italic": downloader.fonts_dir / f"{font_name}-{style_suffix('italic')}{extension}",
+            "bolditalic": downloader.fonts_dir
+            / f"{font_name}-{style_suffix('bolditalic')}{extension}",
+        }
+
+    destination_root.mkdir(parents=True, exist_ok=True)
+
+    resolved: dict[str, Path] = {}
+    for style, src in sources.items():
+        if not src.exists():
+            continue
+        resolved[style] = src
+        dest = destination_root / src.name
+        if not dest.exists():
+            shutil.copy2(src, dest)
+
+    upright_file = resolved.get("regular")
+    if upright_file is None:
+        warnings.warn(
+            f"Mono font '{font_name}' not found on disk; falling back to default monospaced font.",
+            stacklevel=2,
+        )
+        return None
+
+    bold_file = resolved.get("bold")
+    italic_file = resolved.get("italic")
+    bold_italic_file = resolved.get("bolditalic")
+
+    return {
+        "name": font_name,
+        "extension": extension,
+        "path": path,
+        "upright": upright_file.stem,
+        "bold": bold_file.stem if bold_file else None,
+        "italic": italic_file.stem if italic_file else None,
+        "bold_italic": bold_italic_file.stem if bold_italic_file else None,
+        "has_bold": bool(bold_file),
+        "has_italic": bool(italic_file),
+        "has_bold_italic": bool(bold_italic_file),
+    }
+
+
 @dataclass(frozen=True)
 class FontsConfig:
     family: str
     output_dir: Path
     fallback: dict[str, Any] = field(default_factory=dict)
+    mono_font: dict[str, Any] | None = None
 
     @classmethod
     def from_context(cls, context: Mapping[str, Any]) -> FontsConfig:
@@ -808,7 +891,8 @@ class FontsConfig:
         family = _normalise_family(raw_family)
         output_dir = _resolve_output_dir(context)
         fallback = _prepare_fallback_context(context, output_dir=output_dir)
-        return cls(family=family, output_dir=output_dir, fallback=fallback)
+        mono_font = _prepare_mono_font(context, output_dir=output_dir, family=family)
+        return cls(family=family, output_dir=output_dir, fallback=fallback, mono_font=mono_font)
 
     def inject_into(self, context: dict[str, Any]) -> None:
         context["fonts_family"] = self.family
@@ -817,6 +901,8 @@ class FontsConfig:
         merged["family"] = self.family
         if self.fallback and self.fallback.get("entries"):
             merged["fallback"] = self.fallback
+        if self.mono_font:
+            merged["mono_font"] = self.mono_font
         context["fonts"] = merged
 
         try:
