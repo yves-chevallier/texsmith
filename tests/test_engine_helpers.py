@@ -3,7 +3,7 @@ from pathlib import Path
 
 import pytest
 
-from texsmith.adapters.latex import engines as engine
+from texsmith.adapters.latex import engines as engine, pyxindy
 
 
 def test_build_tex_env_prefers_bundled_biber(tmp_path: Path) -> None:
@@ -111,7 +111,8 @@ def test_run_engine_command_invokes_aux_tools(
     if expected_index == "makeindex-py":
         assert "--input-encoding=utf-8" in normalized[1]
         assert "--output-encoding=utf-8" in normalized[1]
-    assert normalized[2] == ["makeglossaries", "main"]
+    expected_glossaries = "makeglossaries-py" if engine.pyxindy_available() else "makeglossaries"
+    assert normalized[2] == [expected_glossaries, "main"]
 
 
 def test_pyxindy_index_tokens_use_utf8(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -122,9 +123,31 @@ def test_pyxindy_index_tokens_use_utf8(monkeypatch: pytest.MonkeyPatch) -> None:
     assert "--output-encoding=utf-8" in tokens
 
 
-def test_glossaries_prefers_makeglossaries_when_available(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+def test_pyxindy_sanitize_xdy_rewrites_empty_close(tmp_path: Path) -> None:
+    xdy_path = tmp_path / "demo.xdy"
+    xdy_path.write_text(
+        '(markup-locref :open "x" :close "" :attr "pageglsnumberformat")',
+        encoding="utf-8",
+    )
+
+    assert pyxindy.sanitize_xdy(xdy_path) is True
+    assert ':close ""' not in xdy_path.read_text(encoding="utf-8")
+
+
+def test_pyxindy_sanitize_glossary_output_fixes_entries(tmp_path: Path) -> None:
+    acr_path = tmp_path / "demo.acr"
+    acr_path.write_text(
+        "\\glossentry{DFT} {\\glossaryentrynumbers{\\relax ~n\\glsXpageXglsnumberformat{}{1}\n\n",
+        encoding="utf-8",
+    )
+
+    assert pyxindy.sanitize_glossary_output(acr_path) is True
+    content = acr_path.read_text(encoding="utf-8")
+    assert "~n" not in content
+    assert content.strip().endswith("}}")
+
+
+def test_glossaries_prefers_pyxindy_when_available(monkeypatch: pytest.MonkeyPatch) -> None:
     class _Helper:
         def __init__(self, path: Path) -> None:
             self.path = path
@@ -136,7 +159,10 @@ def test_glossaries_prefers_makeglossaries_when_available(
         lambda *_args, **_kwargs: _Helper(Path("/usr/bin/makeglossaries")),
     )
     tokens = engine._glossaries_command_tokens()
-    assert tokens == ["/usr/bin/makeglossaries"]
+    if Path(tokens[0]).name == "makeglossaries-py":
+        assert tokens == [tokens[0]]
+    else:
+        assert tokens[1:] == ["-m", "xindy.tex.makeglossaries"]
 
 
 def test_run_engine_command_reruns_until_stable(

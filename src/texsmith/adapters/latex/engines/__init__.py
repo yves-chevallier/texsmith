@@ -27,6 +27,9 @@ from ..pyxindy import (
     glossary_command_tokens as pyxindy_glossary_tokens,
     index_command_tokens as pyxindy_index_tokens,
     is_available as pyxindy_available,
+    resource_dir as pyxindy_resource_dir,
+    sanitize_glossary_output as pyxindy_sanitize_output,
+    sanitize_xdy as pyxindy_sanitize_xdy,
 )
 from ..tectonic import select_makeglossaries
 from .latex import (
@@ -312,6 +315,12 @@ def build_tex_env(
     env["TECTONIC_CACHE_DIR"] = str(tectonic_cache)
     if biber_path:
         env["BIBER"] = str(biber_path)
+    resource_dir = pyxindy_resource_dir()
+    if resource_dir is not None:
+        existing = env.get("XINDY_SEARCHPATH", "")
+        env["XINDY_SEARCHPATH"] = (
+            f"{resource_dir}{os.pathsep}{existing}" if existing else str(resource_dir)
+        )
     return env
 
 
@@ -654,6 +663,9 @@ def _maybe_run_glossaries(
     acn_path = workdir / f"{job_stem}.acn"
     if not glo_path.exists() and not acn_path.exists():
         return False, None
+    if pyxindy_available():
+        for path in workdir.glob(f"{job_stem}*.xdy"):
+            pyxindy_sanitize_xdy(path)
     argv = [*_glossaries_command_tokens(), job_stem]
     run = _invoke_auxiliary_tool(
         argv[0],
@@ -663,7 +675,30 @@ def _maybe_run_glossaries(
         console=console,
     )
     if run.returncode != 0:
+        if Path(argv[0]).name == "makeglossaries-py":
+            helper: Path | None = None
+            try:
+                helper = select_makeglossaries(console=None).path
+            except Exception:
+                helper = None
+            if helper and helper.exists():
+                fallback_argv = [str(helper), job_stem]
+                fallback_run = _invoke_auxiliary_tool(
+                    fallback_argv[0],
+                    fallback_argv,
+                    workdir=workdir,
+                    env=env,
+                    console=console,
+                )
+                if fallback_run.returncode == 0:
+                    return True, None
+                return True, _tool_failure_result(fallback_argv[0], fallback_run, command=command)
         return True, _tool_failure_result(argv[0], run, command=command)
+    if pyxindy_available():
+        for path in workdir.glob(f"{job_stem}*.acr"):
+            pyxindy_sanitize_output(path)
+        for path in workdir.glob(f"{job_stem}*.gls"):
+            pyxindy_sanitize_output(path)
     return True, None
 
 
@@ -678,16 +713,15 @@ def _index_command_tokens(engine_name: str) -> list[str]:
 
 def _glossaries_command_tokens() -> list[str]:
     """Return the preferred makeglossaries command."""
+    if pyxindy_available():
+        return pyxindy_glossary_tokens()
     helper: Path | None = None
     try:
         helper = select_makeglossaries(console=None).path
     except Exception:
         helper = None
-
     if helper and helper.exists():
         return [str(helper)]
-    if pyxindy_available():
-        return pyxindy_glossary_tokens()
     return ["makeglossaries"]
 
 

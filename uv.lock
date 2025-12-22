@@ -1739,14 +1739,14 @@ wheels = [
 
 [[package]]
 name = "pyxindy"
-version = "0.0.3"
+version = "0.0.6"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "click" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/fd/56/f3d2adbbdc5f2c79e70ebc523c16ac584ca12cb6f31f197e04a8c928cd0f/pyxindy-0.0.3.tar.gz", hash = "sha256:5484627be6f141370541ab9bb8dd76eb57c2435bd7e46d34ff0bf36b2fd8149b", size = 51625, upload-time = "2025-12-16T22:13:53.549Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/79/f8/b023f06f36cba9ea858582d62b4b72e3e9255a316392821d634b5943d24d/pyxindy-0.0.6.tar.gz", hash = "sha256:c0c7e169f7a4842e2a13c9851aebe6b193bd0a0a6a9bea82467b328b4ec11eb7", size = 60788, upload-time = "2025-12-22T11:56:37.316Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/8b/37/610a783efbf75f1dab75fd43f0b10ef5e21ef52cd7cbf4aa458528aef595/pyxindy-0.0.3-py3-none-any.whl", hash = "sha256:067dfe73c4c52f7d80ac50d4361fc3ee82b3b0e6339a06a409dbaf0ece626b33", size = 69446, upload-time = "2025-12-16T22:13:52.357Z" },
+    { url = "https://files.pythonhosted.org/packages/58/1b/6dfda41845c92192599ae9ef776fcc97e8d1db98b032ef25a06c98ba4f59/pyxindy-0.0.6-py3-none-any.whl", hash = "sha256:20b28b7380e307643db3b4bb43d3e6ddc21196ec8aacbfad785bf17876322eae", size = 78967, upload-time = "2025-12-22T11:56:36.203Z" },
 ]
 
 [[package]]
@@ -1973,7 +1973,7 @@ requires-dist = [
     { name = "pypdf", specifier = ">=6.1.1" },
     { name = "python-markdown-math", specifier = ">=0.9" },
     { name = "python-slugify", specifier = ">=8.0.4" },
-    { name = "pyxindy", specifier = ">=0.0.3" },
+    { name = "pyxindy", specifier = ">=0.0.6" },
     { name = "pyyaml", specifier = ">=6.0.3" },
     { name = "requests", specifier = ">=2.32.5" },
     { name = "rich", specifier = ">=13.9.0" },

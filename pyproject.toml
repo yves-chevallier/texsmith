@@ -51,7 +51,7 @@ dependencies = [
     "tomli>=2.0.1; python_version < \"3.11\"",
     "unicodeblocks>=0.3",
     "playwright>=1.56.0",
-    "pyxindy>=0.0.3",
+    "pyxindy>=0.0.6",
     "requests>=2.32.5",
 ]
 [project.urls]
@@ -81,6 +81,7 @@ raw-options = { local_scheme = "no-local-version" }
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/texsmith"]
+include = ["src/texsmith/adapters/latex/xindy/*.xdy"]
 
 [tool.hatch.build]
 exclude = [

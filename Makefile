@@ -16,5 +16,6 @@ lint:
 
 clean:
 	$(RM) -rf build press site
+	$(MAKE) -C examples clean
 
 .PHONY: examples artifacts docs clean lint

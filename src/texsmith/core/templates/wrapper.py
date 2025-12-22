@@ -23,7 +23,7 @@ from texsmith.core.conversion.debug import ensure_emitter
 from texsmith.core.diagnostics import DiagnosticEmitter
 from texsmith.fonts.scripts import render_script_macros
 from ..context import DocumentState
-from .base import WrappableTemplate
+from .base import WrappableTemplate, _detect_index_engine
 from .loader import copy_template_assets
 
 
@@ -101,6 +101,11 @@ def wrap_template_document(
         main_slot_content,
         overrides=overrides_payload,
     )
+    engine = str(template_context.get("index_engine") or "").strip().lower()
+    if not engine or engine == "auto":
+        template_context["index_engine"] = _detect_index_engine()
+    else:
+        template_context["index_engine"] = engine
     if isinstance(overrides_press, Mapping):
         template_context.setdefault("press", overrides_press)
     root_name: str | None = None
