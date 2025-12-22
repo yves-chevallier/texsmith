@@ -108,7 +108,7 @@ Or directly in Python:
 ```python
 from pathlib import Path
 
-from texsmith.api.service import ConversionRequest, ConversionService
+from texsmith import ConversionRequest, ConversionService
 
 service = ConversionService()
 request = ConversionRequest(

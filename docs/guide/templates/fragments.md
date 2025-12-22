@@ -102,7 +102,7 @@ keys are ignored.
 CLI usage is automatic once `press.fragments` is present. For API consumers:
 
 ```python
-from texsmith.api import Document, TemplateSession
+from texsmith import Document, TemplateSession
 from texsmith.core.templates import load_template_runtime
 
 session = TemplateSession(load_template_runtime("article"))

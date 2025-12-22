@@ -7,7 +7,7 @@ Each page uses `::: module.path` directives; mkdocstrings resolves them at build
 ## API Sections
 
 [`high-level`](high-level.md)
-: High-level orchestration helpers (`texsmith.api`) for programmatic conversions and template sessions.
+: High-level orchestration helpers (`ConversionService`, `TemplateSession`) for programmatic conversions and template sessions.
 
 [`core`](core.md)
 : Core package modules (`texsmith`, configuration, contexts, conversion helpers, etc.).

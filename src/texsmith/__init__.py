@@ -40,7 +40,6 @@ from texsmith.core.templates import (
     resolve_template_language,
 )
 from texsmith.core.templates.session import (
-    TemplateOptions,
     TemplateRenderResult,
     TemplateSession,
     get_template,
@@ -80,7 +79,6 @@ __all__ = [
     "SlotAssignment",
     "TemplateBinding",
     "TemplateError",
-    "TemplateOptions",
     "TemplateRenderResult",
     "TemplateRuntime",
     "TemplateSession",

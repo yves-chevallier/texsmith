@@ -5,9 +5,6 @@ Architecture
   metadata overrides, and delegates aggregation to :class:`TemplateRenderer`.
 : `TemplateRenderer` combines conversion bundles into slot-aware LaTeX output,
   copies template assets, and prepares the final context consumed by wrappers.
-: `TemplateOptions` is a thin wrapper around a mutable mapping that keeps
-  user-supplied overrides isolated from the template defaults. Its API is
-  intentionally dictionary-like to integrate smoothly with CLI parsing.
 : `TemplateRenderResult` captures the products of a render pass, including
   computed context, bibliography location, and shell-escape requirements so
   downstream tools can decide how to compile the LaTeX output.
@@ -38,7 +35,7 @@ Usage Example
     ...     base_level=None,
     ... )
     >>> session = TemplateSession(runtime=runtime)
-    >>> session.get_default_options().to_dict()["cover_color"]
+    >>> session.get_default_options()["cover_color"]
     'indigo'
 """
 
@@ -64,45 +61,10 @@ from .runtime import TemplateRuntime, load_template_runtime
 
 
 __all__ = [
-    "TemplateOptions",
     "TemplateRenderResult",
     "TemplateSession",
     "get_template",
 ]
-
-
-@dataclass(slots=True)
-class TemplateOptions:
-    """Mutable mapping of template-level overrides."""
-
-    _values: dict[str, Any] = field(default_factory=dict)
-
-    def __getattr__(self, name: str) -> Any:
-        try:
-            return self._values[name]
-        except KeyError as exc:  # pragma: no cover - attribute passthrough
-            raise AttributeError(name) from exc
-
-    def __setattr__(self, name: str, value: Any) -> None:
-        if name == "_values":
-            object.__setattr__(self, name, value)
-        else:
-            self._values[name] = value
-
-    def to_dict(self) -> dict[str, Any]:
-        """Return a deep copy of the underlying values so callers can mutate safely."""
-        return copy.deepcopy(self._values)
-
-    def copy(self) -> TemplateOptions:
-        """Return a deep copy of the option set to isolate options between sessions."""
-        return TemplateOptions(self.to_dict())
-
-    def update(self, values: Mapping[str, Any] | None = None, **extra: Any) -> None:
-        """Update the option set in-place, mirroring dict semantics for familiarity."""
-        if values:
-            self._values.update(values)
-        if extra:
-            self._values.update(extra)
 
 
 @dataclass(slots=True)
@@ -152,7 +114,7 @@ class TemplateSession:
         merged_defaults = copy.deepcopy(attributes)
         merged_defaults.update(fragment_defaults)
         self._defaults: dict[str, Any] = copy.deepcopy(merged_defaults)
-        self._overrides = TemplateOptions()
+        self._overrides: dict[str, Any] = {}
         self._documents: list[Document] = []
         self._bibliography_files: list[Path] = []
         self.settings = settings.copy() if settings else ConversionSettings()
@@ -164,7 +126,7 @@ class TemplateSession:
 
     def _collect_option_overrides(self) -> dict[str, Any]:
         """Compute overrides that differ from the template defaults to minimise render payloads."""
-        overrides = self._overrides.to_dict()
+        overrides = copy.deepcopy(self._overrides)
         if not overrides:
             return {}
         try:
@@ -173,20 +135,20 @@ class TemplateSession:
             raise TemplateError(str(exc)) from exc
         return overrides
 
-    def get_default_options(self) -> TemplateOptions:
+    def get_default_options(self) -> dict[str, Any]:
         """Return a copy of the default template options for caller inspection without mutation."""
-        return TemplateOptions(copy.deepcopy(self._defaults))
+        return copy.deepcopy(self._defaults)
 
-    def set_options(self, options: TemplateOptions | Mapping[str, Any]) -> None:
+    def set_options(self, options: Mapping[str, Any]) -> None:
         """Replace the current template overrides, allowing bulk configuration resets."""
-        if isinstance(options, TemplateOptions):
-            self._overrides = options.copy()
-        else:
-            self._overrides = TemplateOptions(dict(options))
+        self._overrides = copy.deepcopy(dict(options))
 
     def update_options(self, values: Mapping[str, Any] | None = None, **extra: Any) -> None:
         """Update the current template overrides to adjust session metadata incrementally."""
-        self._overrides.update(values, **extra)
+        if values:
+            self._overrides.update(copy.deepcopy(dict(values)))
+        if extra:
+            self._overrides.update(copy.deepcopy(extra))
 
     def add_bibliography(self, *paths: Path) -> None:
         """Register bibliography files applied to all documents so renderers include them once."""

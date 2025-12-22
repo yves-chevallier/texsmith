@@ -4,7 +4,7 @@ title: High-Level Workflows
 
 # High-Level Workflows
 
-The `texsmith.api` package provides a thin, expressive façade over the lower-level conversion primitives. Mix and match Markdown, HTML, and template-aware documents without touching the CLI or re-implementing glue code.
+TeXSmith exposes a thin, expressive façade over the lower-level conversion primitives. Mix and match Markdown, HTML, and template-aware documents without touching the CLI or re-implementing glue code.
 
 This page showcases the building blocks you are most likely to use in scripts, services, or notebooks. All examples assume `pip install texsmith` (or `uv tool install texsmith`) plus any template packages you rely on.
 
@@ -59,7 +59,7 @@ If you need the exact orchestration used by the CLI, rely on `ConversionService`
 ```python
 from pathlib import Path
 
-from texsmith.api.service import ConversionRequest, ConversionService
+from texsmith import ConversionRequest, ConversionService
 
 service = ConversionService()
 request = ConversionRequest(
@@ -86,15 +86,15 @@ The CLI passes a `CliEmitter` via `ConversionRequest.emitter` so warnings surfac
 ```python
 from pathlib import Path
 
-from texsmith import Document, TemplateOptions, TemplateSession, get_template
+from texsmith import Document, TemplateSession, get_template
 
 session = get_template("article")
 
 # Configure template defaults (auto-completion friendly)
 options = session.get_default_options()
-options.title = "A Binder of Multiple Files"
-options.author = "Your Name"
-options.date = "2024-06-01"
+options["title"] = "A Binder of Multiple Files"
+options["author"] = "Your Name"
+options["date"] = "2024-06-01"
 session.set_options(options)
 
 # Prepare documents
@@ -121,7 +121,7 @@ Need bibliography support? Register `.bib` files with `session.add_bibliography(
 
 `texsmith` relies on these high-level primitives. Inspect the CLI command and you will notice the same API surface shown above. Scripts and command-line invocations stay aligned, and new features land in one place.
 
-For a complete reference, browse [`texsmith.api`](index.md#api-sections) in the API browser or explore the source directly in `src/texsmith/api/`.
+For a complete reference, browse the API browser or explore the source directly in `src/texsmith/core/`.
 
 !!! seealso
     - [Command-line Overview](../cli/index.md) explains how these APIs surface through Typer commands.
