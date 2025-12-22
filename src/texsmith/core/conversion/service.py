@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Iterable, Mapping, Sequence
+from collections.abc import Iterable, Mapping
 import copy
 from dataclasses import dataclass
 from pathlib import Path
@@ -257,19 +257,8 @@ class ConversionService:
             settings=settings,
             emitter=emitter,
         )
-        overrides: dict[str, Any] = {}
         if request.template_options:
-            overrides.update(_normalise_template_options(request.template_options))
-        fragments_override = _resolve_fragment_overrides(
-            session,
-            overrides.get("fragments"),
-            request.enable_fragments,
-            request.disable_fragments,
-        )
-        if fragments_override is not None:
-            overrides["fragments"] = fragments_override
-        if overrides:
-            session.update_options(overrides)
+            session.update_options(request.template_options)
         if batch.bibliography_files:
             session.add_bibliography(*batch.bibliography_files)
         for document in batch.documents:
@@ -428,68 +417,6 @@ def _normalise_front_matter(data: Mapping[str, Any] | None) -> Mapping[str, Any]
     if not isinstance(data, Mapping):
         raise ConversionError("Front matter must be a mapping when provided programmatically.")
     return copy.deepcopy(dict(data))
-
-
-def _normalise_template_options(options: Mapping[str, Any]) -> dict[str, Any]:
-    payload = copy.deepcopy(dict(options))
-    if _requires_press_normalisation(payload):
-        try:
-            normalise_press_metadata(payload)
-        except PressMetadataError as exc:
-            raise ConversionError(str(exc)) from exc
-    return payload
-
-
-def _resolve_fragment_overrides(
-    runtime: TemplateSession,
-    override_fragments: Any,
-    enable: Sequence[str],
-    disable: Sequence[str],
-) -> list[str] | None:
-    """Compute the final fragment list after applying enable/disable toggles."""
-
-    def _clean_list(values: Sequence[str] | None) -> list[str]:
-        seen: set[str] = set()
-        cleaned: list[str] = []
-        if not values:
-            return cleaned
-        for entry in values:
-            name = str(entry).strip()
-            if not name or name in seen:
-                continue
-            seen.add(name)
-            cleaned.append(name)
-        return cleaned
-
-    base: list[str] = []
-    if isinstance(override_fragments, list):
-        base = _clean_list(override_fragments)
-    elif runtime.runtime and isinstance(getattr(runtime.runtime, "extras", None), Mapping):
-        base = _clean_list(runtime.runtime.extras.get("fragments"))
-
-    enable_list = _clean_list(enable)
-    disable_list = _clean_list(disable)
-
-    if not base and not enable_list and not disable_list:
-        return None
-
-    result = [entry for entry in base if entry not in disable_list]
-    for entry in enable_list:
-        if entry not in result:
-            result.append(entry)
-    return result
-
-
-def _requires_press_normalisation(options: Mapping[str, Any]) -> bool:
-    """Return True when template options include press metadata."""
-    for key in options:
-        if not isinstance(key, str):
-            continue
-        if key == "press" or key.startswith("press."):
-            return True
-        if key in {"title", "subtitle", "date", "authors", "author", "language"}:
-            return True
-    return False
 
 
 def _front_matter_declares_press(metadata: Mapping[str, Any] | None) -> bool:

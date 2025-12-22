@@ -76,9 +76,21 @@ def resolve_execution_context(
         overrides.setdefault("title", document.extracted_title)
         _ensure_press_section().setdefault("title", document.extracted_title)
 
+    if press_section:
+        if isinstance(press_section.get("fragments"), list):
+            overrides["fragments"] = list(press_section["fragments"])
+        if isinstance(press_section.get("callouts"), dict):
+            overrides["callouts"] = dict(press_section["callouts"])
+
     overrides.setdefault("language", resolved_language)
     if press_section is not None or "press" in overrides:
         _ensure_press_section().setdefault("language", resolved_language)
+
+    callouts_section = overrides.get("callouts")
+    if isinstance(callouts_section, dict):
+        style_value = callouts_section.get("style")
+        if isinstance(style_value, str) and style_value.strip():
+            overrides.setdefault("callout_style", style_value.strip())
 
     overrides.setdefault("_source_dir", str(document.source_path.parent))
     overrides.setdefault("_source_path", str(document.source_path))

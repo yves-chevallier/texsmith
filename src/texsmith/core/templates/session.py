@@ -55,7 +55,6 @@ from ..conversion.renderer import TemplateRenderer
 from ..diagnostics import DiagnosticEmitter
 from ..documents import Document
 from ..fragments import collect_fragment_attribute_defaults
-from ..metadata import PressMetadataError, normalise_press_metadata
 from .manifest import TemplateError
 from .runtime import TemplateRuntime, load_template_runtime
 
@@ -129,10 +128,6 @@ class TemplateSession:
         overrides = copy.deepcopy(self._overrides)
         if not overrides:
             return {}
-        try:
-            normalise_press_metadata(overrides)
-        except PressMetadataError as exc:
-            raise TemplateError(str(exc)) from exc
         return overrides
 
     def get_default_options(self) -> dict[str, Any]:
