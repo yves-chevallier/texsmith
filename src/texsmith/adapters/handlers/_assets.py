@@ -201,8 +201,14 @@ def _convert_local_asset(context: RenderContext, source: Path, suffix: str) -> P
     match suffix:
         case ".svg":
             record_event(emitter, "diagram_generate", {"source": str(source), "kind": "svg"})
+            backend = context.runtime.get("diagrams_backend")
             try:
-                return svg2pdf(source, output_dir=conversion_root, emitter=emitter)
+                return svg2pdf(
+                    source,
+                    output_dir=conversion_root,
+                    backend=backend,
+                    emitter=emitter,
+                )
             except Exception as exc:
                 emitter.warning(
                     f"Falling back to placeholder PDF for SVG '{source}': {exc}. "
