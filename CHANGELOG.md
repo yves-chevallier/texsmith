@@ -25,6 +25,8 @@ and the project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 - Make placeholder PDFs valid so Tectonic can include them when SVG conversion fails.
 - Add a Playwright fallback for SVG-to-PDF conversion when Cairo isn't available.
 - Try multiple Biber download names on macOS arm64 to avoid 404s on the CI runners.
+- Honor the diagrams backend when converting letter signature SVG assets.
+- Avoid markdown-escaping letter `source_dir` so Windows paths resolve correctly.
 
 ## [0.1.0] - 2025-12-20
 

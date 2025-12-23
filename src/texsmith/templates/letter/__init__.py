@@ -429,17 +429,30 @@ class Template(WrappableTemplate):
                     "output_dir": output_dir,
                 },
             )
-        mirrored = self._mirror_signature_asset(path, Path(output_dir)) if output_dir else path
+        mirrored = (
+            self._mirror_signature_asset(path, Path(output_dir), context=context)
+            if output_dir
+            else path
+        )
         return self._format_latex_path(mirrored)
 
-    def _mirror_signature_asset(self, source: Path, output_dir: Path) -> Path:
+    def _mirror_signature_asset(
+        self, source: Path, output_dir: Path, *, context: Mapping[str, Any]
+    ) -> Path:
         output_dir = output_dir.resolve()
         asset_root = (output_dir / "assets" / "signatures").resolve()
         asset_root.mkdir(parents=True, exist_ok=True)
         suffix = source.suffix.lower()
         if suffix == ".svg":
+            backend = context.get("diagrams_backend")
+            emitter = context.get("emitter")
             try:
-                produced = svg2pdf(source, output_dir=asset_root)
+                produced = svg2pdf(
+                    source,
+                    output_dir=asset_root,
+                    backend=backend,
+                    emitter=emitter,
+                )
             except TransformerExecutionError as exc:  # pragma: no cover - conversion failure
                 raise TemplateError(
                     f"Failed to convert signature SVG '{source}' to PDF: {exc}"

@@ -248,13 +248,11 @@ class SvgToPdfStrategy(CachedConversionStrategy):
 
         try:
             import cairosvg  # type: ignore[import]
-        except ImportError as exc:  # pragma: no cover - optional dependency
+        except Exception as exc:  # pragma: no cover - optional dependency
             if backend in {"auto", "playwright"}:
                 return self._run_playwright(svg_text, target=target, emitter=emitter)
-            msg = (
-                "cairosvg is required to convert SVG assets. "
-                "Install 'cairosvg' or provide a custom converter."
-            )
+            hint = _cairo_dependency_hint()
+            msg = f"cairosvg is required to convert SVG assets. {hint}"
             raise TransformerExecutionError(msg) from exc
 
         target.parent.mkdir(parents=True, exist_ok=True)

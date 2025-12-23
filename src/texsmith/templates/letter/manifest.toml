@@ -126,6 +126,7 @@ description = "Signature block (text or raw LaTeX)."
 default = ""
 type = "string"
 allow_empty = true
+format = "raw"
 sources = ["source_dir"]
 
 [latex.template.attributes.output_dir]
