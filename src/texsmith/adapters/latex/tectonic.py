@@ -146,24 +146,32 @@ def select_biber_binary(*, console: Console | None = None) -> Path:
         _log(console, f"Refreshing bundled Biber in {install_dir}", tool="biber")
         target.unlink(missing_ok=True)
 
-    archive_url, archive_ext = _detect_biber_archive()
-    _log(console, f"Downloading Biber {BIBER_VERSION} ({archive_url})…", tool="biber")
+    last_error: Exception | None = None
+    for archive_url, archive_ext in _biber_archive_candidates():
+        _log(console, f"Downloading Biber {BIBER_VERSION} ({archive_url})…", tool="biber")
+        try:
+            with tempfile.TemporaryDirectory(prefix="texsmith-biber-") as tmpdir:
+                archive_path = Path(tmpdir) / f"biber{archive_ext}"
+                _download_file(archive_url, archive_path)
+                extracted_root = Path(tmpdir) / "extracted"
+                extracted_root.mkdir(parents=True, exist_ok=True)
+                _extract_archive(archive_path, extracted_root)
+                candidate = _find_binary(
+                    extracted_root, binary_name, error_cls=BiberAcquisitionError
+                )
+                _log(console, f"Installing bundled Biber into {install_dir}", tool="biber")
+                shutil.move(str(candidate), target)
+                target.chmod(target.stat().st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
+                return target
+        except (OSError, URLError, zipfile.BadZipFile, tarfile.TarError) as exc:
+            last_error = exc
+            continue
+    if last_error is not None:
+        raise BiberAcquisitionError(
+            f"Unable to download bundled Biber: {last_error}"
+        ) from last_error
 
-    try:
-        with tempfile.TemporaryDirectory(prefix="texsmith-biber-") as tmpdir:
-            archive_path = Path(tmpdir) / f"biber{archive_ext}"
-            _download_file(archive_url, archive_path)
-            extracted_root = Path(tmpdir) / "extracted"
-            extracted_root.mkdir(parents=True, exist_ok=True)
-            _extract_archive(archive_path, extracted_root)
-            candidate = _find_binary(extracted_root, binary_name, error_cls=BiberAcquisitionError)
-            _log(console, f"Installing bundled Biber into {install_dir}", tool="biber")
-            shutil.move(str(candidate), target)
-            target.chmod(target.stat().st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
-    except (OSError, URLError, zipfile.BadZipFile, tarfile.TarError) as exc:
-        raise BiberAcquisitionError(f"Unable to download bundled Biber: {exc}") from exc
-
-    return target
+    raise BiberAcquisitionError("Unable to download bundled Biber: unknown error")
 
 
 def select_makeglossaries(*, console: Console | None = None) -> HelperSelection:
@@ -289,9 +297,10 @@ def _detect_architecture() -> tuple[str, str]:
     return f"{cputype}-{ostype}", ext
 
 
-def _detect_biber_archive() -> tuple[str, str]:
-    """Return (url, archive_ext) for the appropriate Biber release."""
+def _biber_archive_candidates() -> list[tuple[str, str]]:
+    """Return candidate (url, archive_ext) pairs for the current platform."""
     system, machine, is_musl = _platform_details()
+    candidates: list[tuple[str, str]] = []
 
     if system == "Linux":
         platform_dir = "Linux-musl" if is_musl else "Linux"
@@ -304,22 +313,29 @@ def _detect_biber_archive() -> tuple[str, str]:
             filename = f"biber-linux_i386{libc_suffix}.tar.gz"
         else:
             raise BiberAcquisitionError(f"Unsupported CPU architecture for Biber: {machine}")
-        return f"{_BIBER_BASE_URL}{platform_dir}/{filename}", ".tar.gz"
+        candidates.append((f"{_BIBER_BASE_URL}{platform_dir}/{filename}", ".tar.gz"))
+        return candidates
 
     if system == "Darwin":
         if machine in {"aarch64", "arm64"}:
-            filename = "biber-darwin_arm64.tar.gz"
+            filenames = [
+                "biber-darwin_universal.tar.gz",
+                "biber-darwin_x86_64.tar.gz",
+            ]
         elif machine in {"x86_64", "x86-64", "amd64", "x64"}:
-            filename = "biber-darwin_x86_64.tar.gz"
+            filenames = ["biber-darwin_x86_64.tar.gz"]
         else:
             raise BiberAcquisitionError(f"Unsupported CPU architecture for Biber: {machine}")
-        return f"{_BIBER_BASE_URL}Darwin/{filename}", ".tar.gz"
+        for filename in filenames:
+            candidates.append((f"{_BIBER_BASE_URL}MacOS/{filename}", ".tar.gz"))
+        return candidates
 
     if system == "Windows":
         filename = (
             "biber-MSWIN64.zip" if machine in {"x86_64", "amd64", "x64"} else "biber-MSWIN32.zip"
         )
-        return f"{_BIBER_BASE_URL}Windows/{filename}", ".zip"
+        candidates.append((f"{_BIBER_BASE_URL}Windows/{filename}", ".zip"))
+        return candidates
 
     raise BiberAcquisitionError(f"Unsupported platform for bundled Biber: {system}")
 

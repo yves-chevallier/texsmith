@@ -33,7 +33,7 @@ def test_select_biber_binary_downloads_and_extracts(monkeypatch, tmp_path: Path)
     binary_name = "biber.exe" if sys.platform.startswith("win") else "biber"
     archive_path = _build_fake_zip(tmp_path / "biber.zip", binary_name=binary_name)
 
-    monkeypatch.setattr(tectonic, "_detect_biber_archive", lambda: ("dummy-url", ".zip"))
+    monkeypatch.setattr(tectonic, "_biber_archive_candidates", lambda: [("dummy-url", ".zip")])
     monkeypatch.setattr(
         tectonic, "_download_file", lambda _url, destination: shutil.copy(archive_path, destination)
     )
