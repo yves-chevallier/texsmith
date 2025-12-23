@@ -43,7 +43,7 @@ def test_svg_conversion_surfaces_cairo_hint(
     strategy = strategies.SvgToPdfStrategy()
 
     with pytest.raises(TransformerExecutionError) as excinfo:
-        strategy("<svg></svg>", output_dir=tmp_path, emitter=emitter)
+        strategy("<svg></svg>", output_dir=tmp_path, emitter=emitter, backend="local")
 
     message = str(excinfo.value).lower()
     assert "cairo" in message
