@@ -63,6 +63,10 @@ jobs:
       - name: Sync dependencies (dev + docs)
         run: uv sync --all-groups --frozen
 
+      - name: Install Cairo (macOS)
+        if: runner.os == 'macOS'
+        run: brew install cairo
+
       - name: Run pytest
         run: uv run pytest
 

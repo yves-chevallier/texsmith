@@ -22,6 +22,8 @@ and the project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 ### Fixed
 
 - Use the bundled `biber` path when invoking bibliography builds to fix Windows CI failures.
+- Make placeholder PDFs valid so Tectonic can include them when SVG conversion fails.
+- Add a Playwright fallback for SVG-to-PDF conversion when Cairo isn't available.
 
 ## [0.1.0] - 2025-12-20
 

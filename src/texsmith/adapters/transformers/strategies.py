@@ -240,11 +240,17 @@ class SvgToPdfStrategy(CachedConversionStrategy):
         **options: Any,
     ) -> Path:
         emitter = options.get("emitter")
+        backend = str(options.get("backend") or options.get("diagrams_backend") or "auto").lower()
         svg_text = _read_text(source)
+
+        if backend == "playwright":
+            return self._run_playwright(svg_text, target=target, emitter=emitter)
 
         try:
             import cairosvg  # type: ignore[import]
         except ImportError as exc:  # pragma: no cover - optional dependency
+            if backend in {"auto", "playwright"}:
+                return self._run_playwright(svg_text, target=target, emitter=emitter)
             msg = (
                 "cairosvg is required to convert SVG assets. "
                 "Install 'cairosvg' or provide a custom converter."
@@ -257,13 +263,59 @@ class SvgToPdfStrategy(CachedConversionStrategy):
         except OSError as exc:
             hint = _cairo_dependency_hint()
             _emit_dependency_warning(emitter, hint)
+            if backend in {"auto", "playwright"}:
+                return self._run_playwright(svg_text, target=target, emitter=emitter)
             raise TransformerExecutionError(
                 f"Failed to render SVG with CairoSVG: {exc}. {hint}"
             ) from exc
         except Exception as exc:
+            if backend in {"auto", "playwright"}:
+                return self._run_playwright(svg_text, target=target, emitter=emitter)
             raise TransformerExecutionError(f"Failed to render SVG with CairoSVG: {exc}") from exc
         normalise_pdf_version(target)
         return target
+
+    def _run_playwright(self, svg: str, *, target: Path, emitter: Any) -> Path:
+        def task() -> None:
+            try:
+                from playwright._impl._errors import Error as PlaywrightError
+            except Exception:  # pragma: no cover - fallback for missing dependency
+                PlaywrightError = Exception  # noqa: N806
+
+            try:
+                browser = _PlaywrightManager.ensure_browser(emitter=emitter)
+                target.parent.mkdir(parents=True, exist_ok=True)
+                self._svg_to_pdf(browser, svg, target)
+            except PlaywrightError as exc:
+                raise _wrap_playwright_error(exc, emitter) from exc
+            except TransformerExecutionError:
+                raise
+            except Exception as exc:
+                raise TransformerExecutionError(f"SVG Playwright backend failed: {exc}") from exc
+
+        _PlaywrightWorker.run(task)
+        return target
+
+    def _svg_to_pdf(self, browser: Any, svg: str, target: Path) -> None:
+        page = browser.new_page()
+        page.set_content(f"<html><body style='margin:0; display:inline-block'>{svg}</body></html>")
+        locator = page.locator("svg")
+        box = locator.bounding_box()
+        width = math.ceil(box["width"]) if box else 800
+        height = math.ceil(box["height"]) if box else 600
+
+        scaled_width = math.ceil(width * SCALE)
+        scaled_height = math.ceil(height * SCALE)
+
+        page.set_viewport_size({"width": scaled_width, "height": scaled_height})
+        page.pdf(
+            path=str(target),
+            print_background=True,
+            width=f"{width}px",
+            height=f"{height}px",
+            page_ranges="1",
+        )
+        page.close()
 
 
 class ImageToPdfStrategy(CachedConversionStrategy):

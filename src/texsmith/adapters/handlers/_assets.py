@@ -25,7 +25,36 @@ _NATIVE_IMAGE_SUFFIXES: set[str] = {".png", ".jpg", ".jpeg", ".pdf"}
 _FORCED_CONVERSION_SUFFIXES: set[str] = {".svg", ".drawio"}
 _CONVERSION_CACHE_DIR = ".converted"
 _ASSET_MANIFEST = "remote-assets.json"
-_PLACEHOLDER_PDF = b"%PDF-1.4\n1 0 obj<<>>\nendobj\nxref\n0 1\n0000000000 65535 f \ntrailer<<>>\nstartxref\n9\n%%EOF\n"
+_PLACEHOLDER_PDF = (
+    b"%PDF-1.4\n"
+    b"1 0 obj\n"
+    b"<< /Type /Catalog /Pages 2 0 R >>\n"
+    b"endobj\n"
+    b"2 0 obj\n"
+    b"<< /Type /Pages /Kids [3 0 R] /Count 1 >>\n"
+    b"endobj\n"
+    b"3 0 obj\n"
+    b"<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 4 0 R >>\n"
+    b"endobj\n"
+    b"4 0 obj\n"
+    b"<< /Length 0 >>\n"
+    b"stream\n"
+    b"\n"
+    b"endstream\n"
+    b"endobj\n"
+    b"xref\n"
+    b"0 5\n"
+    b"0000000000 65535 f \n"
+    b"0000000009 00000 n \n"
+    b"0000000058 00000 n \n"
+    b"0000000115 00000 n \n"
+    b"0000000202 00000 n \n"
+    b"trailer\n"
+    b"<< /Size 5 /Root 1 0 R >>\n"
+    b"startxref\n"
+    b"251\n"
+    b"%%EOF\n"
+)
 
 
 def store_local_image_asset(context: RenderContext, resolved: Path) -> Path:
