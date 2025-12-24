@@ -121,6 +121,7 @@ docs = [
     "mkdocstrings[python]>=0.21.2",
     "mkdocs-drawio @ git+https://github.com/yves-chevallier/mkdocs-drawio.git@testounet",
     "mkdocs-pills>=0.1.0",
+    "mkdocs-texsmith ; python_version >= \"3.10\"",
 ]
 
 

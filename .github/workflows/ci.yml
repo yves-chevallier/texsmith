@@ -122,6 +122,8 @@ jobs:
       # Checkout repository
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       # Install system dependencies (Playwright, cairo, etc.)
       - name: Install system dependencies
@@ -204,6 +206,8 @@ jobs:
       # Checkout repository (needed by mike deploy)
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       # Download all build artifacts generated previously
       - name: Download release artifacts
@@ -243,6 +247,14 @@ jobs:
         env:
           UV_CACHE_SAVE: "false"
 
+      # Install docs dependencies for the docs publish steps
+      - name: Sync docs dependencies
+        run: uv sync --group docs --frozen
+
+      # Generate documentation snippets that are gitignored
+      - name: Build documentation artifacts
+        run: make artifacts
+
       # Publish versioned documentation to GitHub Pages using mike
       - name: Publish documentation to GitHub Pages (mike)
         env:
@@ -253,7 +265,6 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git fetch origin gh-pages || true
-          uv sync --group docs --frozen
           uv run mike deploy --push --branch gh-pages --remote origin --update-aliases "$VERSION" latest
           uv run mike set-default --push --branch gh-pages --remote origin latest
 
