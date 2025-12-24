@@ -5,12 +5,11 @@ Roadmap and development notes for TeXSmith. I keep this file as a running checkl
 ## Roadmap
 
 - [x] Simplify the attributes SSOT for templates and fragments
-- [ ] Deploy to PyPI
-- [ ] WARNING -  Unresolved mustache `{{callouts.style}}` in template attributes; leaving placeholder as-is.
-- [ ] Attribute redundancy (`numbered`, `press.numbered`, etc.)
-- [ ] Refactoring snippets and fixing snippet templates
-- [ ] Font: mono fallback for missing characters
-- [ ] Use `\caps` from `soul` instead of `\textsc` for smallcaps
+- [x] Deploy to PyPI
+- [x] WARNING -  Unresolved mustache `{{callouts.style}}` in template attributes; leaving placeholder as-is.
+- [x] Attribute redundancy (`numbered`, `press.numbered`, etc.)
+- [x] Refactoring snippets and fixing snippet templates
+- [x] Font: mono fallback for missing characters
 - [ ] Global user configuration (.texsmith/config.yml)
 - [ ] Unified Fences Syntax
   - [ ] Multicolumns
@@ -37,77 +36,43 @@ Roadmap and development notes for TeXSmith. I keep this file as a running checkl
   - [ ] Letterine
   - [ ] Custom variables to insert in a document using mustaches
 
-## Refactoring snippets in documentation
-
-Pour l'instant nous avons une syntaxe custom dans la doc utilisant un plugin snippet avec des attributs `data-*` pour transmettre `caption`, `layout`, `files`, etc. Elle repose sur `pymdownx.snippets` pour inclure le contenu d'un fichier dans un autre.
-
-Cette solution n'est pas optimale : elle n'est pas très flexible et consiste à insérer le contenu d'un fichier dans un autre. Il serait préférable de revoir l'approche pour utiliser une syntaxe plus simple et plus lisible.
-
-L'alternative proposée serait d'utiliser un yaml pour l'insertion d'un snippet:
-
-```yaml { .snippet width=80% }
-cwd: ../../../examples/letter  # D'où exécuter la génération
-sources:  # Liste des fichiers sources comme si donné au CLI (mais on utilise l'API)
-  - letter.md
-press: # Attributs supplémentaires à ajouter au contexte de TeXSmith
-  format: din
-  frame: true
-```
-
-Le PDF généré est inséré comme image (comme la syntaxe actuelle) avec un lien de téléchargement. Il convient donc aussi de générer une preview PNG et le PDF.
-De la même manière on conserve la possibilité d'ajouter l'attribut layout déjà existant dans la syntaxe actuelle et qui permet ici d'agencer plusieurs pages dans la preview PNG.
-
-```yaml { .snippet }
-layout: 2x2
-width: 70%
-cwd: ../../../examples/paper
-sources:
-  - cheese.md
-  - cheese.bib
-fragments:
-  ts-frame:
-press:
-  frame: true
-```
-
-La génération du cadre autour du PNG n'est plus conservée car nous avons récemment ajouté le fragment `ts-frame` qui permet d'encadrer n'importe quel contenu. On peut imaginer aussi la syntaxe suivante:
-
-```md { .snippet }
----
-width: 70%
-template: snippet
-fragments:
-  ts-frame:
-press:
-  frame: true
----
-# Section
-
-Some content...
-```
-
-Ou même en utilisant une configuration locale
-
-```md { .snippet config="my-snippet.yml" }
-# Section
-
-Some content...
-```
-
-1. Analyse le problème consulte l'implémentation actuelle et liste les fichiers concernés.
-2. Propose un plan de refactoring pour migrer vers la nouvelle syntaxe.
-3. Implémente les changements nécessaires dans la documentation et le code source.
-4. Vérifie que les tests passent et met à jour les tests obsolète
-5. Ne garde aucun shim ou layer de compatibilité : l'ancienne syntaxe doit être complètement retirée.
-6. Documente la nouvelle syntaxe dans la documentation officielle de TeXSmith.
-7. Vérifie que la génération de snippet fonctionne correctement avec la nouvelle syntaxe, au besoin rajoute un exemple avec mkdocs dans examples/ et appuye-toi sur l'exemple mkdocs
-8. Tente de compiler la doc du projet avec uv run mkdocs serve et uv run mkdocs build pour vérifier que tout fonctionne correctement.
-9. Lance les tests et le lint avec uv run ruff check . et uv run ruff format .
-
 ## Unified Fences Syntax
+
+Markdown format has evolves like a living spece and multiple syntaxes coexists for different purposes. While MyST chose to only use backticks for any blocks (code, admonition), it seems more natural to use different fence styles for different purposes:
+
+- `` ``` `` for code blocks and special blocks (Mermaid, LaTeX, custom tables, etc.) that require processing
+  - `<language>` Language highlighting for code blocks
+  - `mermaid` for Mermaid diagrams
+  - `svgbob` for SVGBob diagrams
+  - `tikz` for TikZ diagrams
+  - `table` for custom tables
+  - `python figure` for Python-generated figures
+- `!!!` and `???` for admonitions and promoted text (notes, warnings, tips, etc.)
+- `:::` or `///` for custom containers environments (center, right, language, font size, LaTeX only, HTML only, raw LaTeX, etc.)
+  - `align center` for centered text
+  - `align right` for right-aligned text
+  - `language <lang>` for language-specific content
+  - `font large` for font size adjustments
+  - `font small` for font size adjustments
 
 which can add captions to figures or tables, but discrimination of target (figure or table) is
 not done automatically you must specify `figure-caption` or `table-caption`
+
+MyST Directives support adding options/arguments using this syntax:
+
+````md
+```{directive}
+:option: value
+```
+
+{rolename}`text`
+````
+
+```md
+:::{note}
+Admonition
+:::
+```
 
 The subfigures with the `| ^1` syntax work, but this is not optimal for LaTeX rendering, and the reference ID generated with `attrs: {id: static-id}` can be misleading.
 
