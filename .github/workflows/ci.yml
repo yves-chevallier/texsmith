@@ -149,6 +149,21 @@ jobs:
           uv run playwright install-deps
           uv run playwright install chromium
 
+      # Build the main Python package distribution before docs/examples touch the repo
+      - name: Build distributions (texsmith)
+        run: uv build
+
+      # Build the MkDocs plugin distribution before docs/examples touch the repo
+      - name: Build distributions (mkdocs_texsmith)
+        working-directory: packages/mkdocs_texsmith
+        run: uv build
+
+      # Ensure no generated artifacts pollute the version calculation
+      - name: Verify clean git state
+        run: |
+          git status --porcelain
+          test -z "$(git status --porcelain)"
+
       # Build all examples (clean + all)
       - name: Build examples
         run: |
@@ -164,15 +179,6 @@ jobs:
       - name: Build documentation (HTML + LaTeX)
         run: |
           make docs
-
-      # Build the main Python package distribution
-      - name: Build distributions (texsmith)
-        run: uv build
-
-      # Build the MkDocs plugin distribution
-      - name: Build distributions (mkdocs_texsmith)
-        working-directory: packages/mkdocs_texsmith
-        run: uv build
 
       # Upload all artifacts needed for the release job
       - name: Upload release artifacts
