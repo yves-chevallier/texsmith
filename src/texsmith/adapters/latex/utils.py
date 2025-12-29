@@ -21,6 +21,21 @@ _BASIC_LATEX_ESCAPE_MAP = {
     "\\": r"\textbackslash{}",
 }
 
+_COMMON_SYMBOL_MAP = {
+    "→": r"\(\rightarrow\)",
+    "←": r"\(\leftarrow\)",
+    "⇒": r"\(\Rightarrow\)",
+    "⇐": r"\(\Leftarrow\)",
+    "≥": r"\(\geq\)",
+    "≤": r"\(\leq\)",
+    "≠": r"\(\neq\)",
+    "≈": r"\(\approx\)",
+    "±": r"\(\pm\)",
+    "×": r"\(\times\)",  # noqa: RUF001
+    "÷": r"\(\div\)",
+    "∞": r"\(\infty\)",
+}
+
 _ACCENT_NEEDS_BRACES_PATTERN = re.compile(
     r"\\([" + re.escape("`'^\"~=\\.Hrvuck") + r"])\s*([A-Za-z])(?!\{)"
 )
@@ -69,6 +84,13 @@ def escape_latex_chars(text: str, *, legacy_accents: bool = False) -> str:
         return "MODIFIER LETTER" in name and ("SMALL" in name or "CAPITAL" in name)
 
     for char in text:
+        replacement = _COMMON_SYMBOL_MAP.get(char)
+        if replacement is not None:
+            if buffer:
+                parts.append(_encode_chunk("".join(buffer)))
+                buffer.clear()
+            parts.append(replacement)
+            continue
         if _should_skip_encoding(char):
             if buffer:
                 parts.append(_encode_chunk("".join(buffer)))
