@@ -267,6 +267,7 @@ def convert_document(
         wrap_document=wrap_document,
         legacy_latex_accents=request.legacy_latex_accents,
         diagrams_backend=request.diagrams_backend,
+        http_user_agent=request.http_user_agent,
     )
 
 
@@ -283,6 +284,7 @@ def _render_document(
     wrap_document: bool,
     legacy_latex_accents: bool,
     diagrams_backend: str | None,
+    http_user_agent: str | None,
 ) -> ConversionResult:
     if persist_debug_html:
         persist_debug_artifacts(
@@ -305,6 +307,7 @@ def _render_document(
         strategy=strategy,
         diagrams_backend=diagrams_backend,
         emitter=emitter,
+        http_user_agent=http_user_agent,
     )
 
     active_slot_requests = binder_context.slot_requests
@@ -490,6 +493,7 @@ def _build_runtime_common(
     strategy: GenerationStrategy,
     diagrams_backend: str | None,
     emitter: DiagnosticEmitter,
+    http_user_agent: str | None,
 ) -> dict[str, object]:
     """Prepare immutable runtime metadata shared across fragment rendering."""
     code_options = _resolve_code_options(binding, binder_context.template_overrides)
@@ -504,6 +508,8 @@ def _build_runtime_common(
         "language": binder_context.language,
         "emitter": emitter,
     }
+    if isinstance(http_user_agent, str) and http_user_agent.strip():
+        runtime_common["http_user_agent"] = http_user_agent.strip()
     template_callouts = binder_context.template_overrides.get("callouts")
     runtime_common["callouts_definitions"] = normalise_callouts(
         merge_callouts(

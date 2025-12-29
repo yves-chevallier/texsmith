@@ -67,6 +67,7 @@ from .._options import (
     FullDocumentOption,
     HashAssetsOption,
     HtmlOnlyOption,
+    HttpUserAgentOption,
     InputPathArgument,
     LanguageOption,
     MakefileDepsOption,
@@ -402,6 +403,7 @@ def render(
     no_copy_assets: NoCopyAssetsOption = not _REQUEST_DEFAULTS.copy_assets,
     convert_assets: ConvertAssetsOption = _REQUEST_DEFAULTS.convert_assets,
     hash_assets: HashAssetsOption = _REQUEST_DEFAULTS.hash_assets,
+    http_user_agent: HttpUserAgentOption = _REQUEST_DEFAULTS.http_user_agent,
     diagrams_backend: Annotated[
         str | None,
         typer.Option(
@@ -790,6 +792,7 @@ def render(
         manifest=manifest,
         persist_debug_html=bool(debug_snapshot),
         language=language,
+        http_user_agent=http_user_agent,
         legacy_latex_accents=legacy_latex_accents,
         diagrams_backend=diagrams_backend.lower() if isinstance(diagrams_backend, str) else None,
         documents=document_paths,

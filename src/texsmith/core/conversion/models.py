@@ -55,6 +55,7 @@ class ConversionRequest:
     manifest: bool = False
     persist_debug_html: bool = False
     language: str | None = None
+    http_user_agent: str | None = None
     legacy_latex_accents: bool = False
     diagrams_backend: str | None = None
 

@@ -416,11 +416,7 @@ class FetchImageStrategy(CachedConversionStrategy):
         elif os.getenv("TEXSMITH_HTTP_USER_AGENT"):
             user_agent = os.environ["TEXSMITH_HTTP_USER_AGENT"].strip()
         else:
-            try:
-                version = importlib_metadata.version("texsmith")
-            except importlib_metadata.PackageNotFoundError:
-                version = "unknown"
-            user_agent = f"texsmith/{version}"
+            user_agent = "Mozilla/5.0"
 
         headers = {"User-Agent": user_agent}
 

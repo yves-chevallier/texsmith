@@ -134,6 +134,9 @@ $ texsmith --help
 `--hash-assets`
 : Hash the filenames of stored assets instead of preserving their original names. This helps avoid filename collisions when multiple assets with the same name are used in different documents.
 
+`--http-user-agent`
+: Override the User-Agent header used when fetching remote assets (images, emoji). You can also set `TEXSMITH_HTTP_USER_AGENT` in the environment.
+
 `--manifest`, `-m`
 : Generate a `manifest.json` file alongside the LaTeX output, containing metadata about the rendered document, including input sources, template details, and rendering options.
 
