@@ -6,7 +6,6 @@ import atexit
 from collections.abc import Callable, Mapping, Sequence
 import contextlib
 from datetime import datetime, timezone
-from importlib import metadata as importlib_metadata
 from io import BytesIO
 import json
 import math
@@ -20,11 +19,11 @@ import threading
 from threading import Lock, Thread
 from typing import Any, ClassVar, TypeVar
 from urllib.parse import unquote, urlparse
-from urllib.request import urlopen
 import warnings
 
 from texsmith.core.conversion.debug import ensure_emitter, record_event
 from texsmith.core.exceptions import TransformerExecutionError
+from texsmith.core.http import open_url
 from texsmith.core.user_dir import get_user_dir
 
 from ..docker import DockerLimits, VolumeMount, run_container
@@ -1385,7 +1384,7 @@ class DrawioToPdfStrategy(CachedConversionStrategy):
                 export_url = None
                 if not export_page.exists():
                     try:
-                        with urlopen(self.export_url) as response:
+                        with open_url(self.export_url) as response:
                             export_page.write_bytes(response.read())
                     except Exception:
                         export_url = self.export_url

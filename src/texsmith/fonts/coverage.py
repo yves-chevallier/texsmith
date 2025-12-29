@@ -8,8 +8,8 @@ from pathlib import Path
 import pickle
 import re
 import urllib.parse
-import urllib.request
 
+from texsmith.core.http import open_url
 from texsmith.fonts.cache import FontCache
 from texsmith.fonts.logging import FontPipelineLogger
 
@@ -28,8 +28,7 @@ COVERAGE_CACHE_VERSION = 1
 
 
 def _http_get(url: str) -> str:
-    req = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
-    with urllib.request.urlopen(req) as response:
+    with open_url(url, headers={"User-Agent": USER_AGENT}) as response:
         return response.read().decode("utf-8")
 
 
