@@ -333,11 +333,6 @@
     \g@addto@macro\rmfamily{\texsmithSetFallbackFamily{\rmfamily}}
     \g@addto@macro\sffamily{\texsmithSetFallbackFamily{\sffamily}}
     \g@addto@macro\ttfamily{\texsmithSetFallbackFamily{\ttfamily}}
-    \BLOCK{ for entry in fallback.entries }
-      \expandafter\g@addto@macro\csname \VAR{entry.font_command}\endcsname{%
-        \texsmithSetFallbackFamily{\csname \VAR{entry.font_command}\endcsname}%
-      }
-    \BLOCK{ endfor }
     \makeatother
     \texsmithSetFallbackFamily{\rmfamily}
     \setDefaultTransitions{\texsmithFallbackFamily}{\texsmithFallbackFamily}%

@@ -85,6 +85,11 @@ class FallbackEntry:
         return payload
 
 
+_FALLBACK_FAMILY_OVERRIDES = {
+    "Arrows": "Noto Sans Symbols",
+}
+
+
 class FallbackBuilder:
     """Associate ucharclasses with the best matching Noto font."""
 
@@ -169,6 +174,28 @@ class FallbackBuilder:
             "dir": best.meta.dir_base,
         }
 
+    @staticmethod
+    def _pick_override_font(
+        cls: UCharClass,
+        coverage: Iterable[_CoverageView],
+    ) -> dict | None:
+        override_family = _FALLBACK_FAMILY_OVERRIDES.get(
+            cls.name
+        ) or _FALLBACK_FAMILY_OVERRIDES.get(cls.group or "")
+        if not override_family:
+            return None
+        for view in coverage:
+            if view.meta.family.lower() != override_family.lower():
+                continue
+            styles = list(view.meta.styles or ["regular", "bold"])
+            return {
+                "name": view.meta.file_base or _sanitize_family(view.meta.family),
+                "extension": ".otf",
+                "styles": styles,
+                "dir": view.meta.dir_base,
+            }
+        return None
+
     def build(
         self,
         classes: Iterable[UCharClass],
@@ -179,7 +206,11 @@ class FallbackBuilder:
         coverage_views = self._prepare_coverage(coverage)
         entries: list[FallbackEntry] = []
         for cls in classes:
-            font = cls.font or self._pick_font(cls, coverage_views)
+            font = (
+                self._pick_override_font(cls, coverage_views)
+                or cls.font
+                or self._pick_font(cls, coverage_views)
+            )
             if font is None:
                 fallback_name = _sanitize_family(f"NotoSans{cls.name}")
                 font = {
