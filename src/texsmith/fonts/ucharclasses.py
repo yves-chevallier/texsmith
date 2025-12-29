@@ -7,9 +7,9 @@ import json
 from pathlib import Path
 import re
 import shutil
-import urllib.request
 import zipfile
 
+from texsmith.core.http import open_url
 from texsmith.fonts.cache import FontCache
 from texsmith.fonts.logging import FontPipelineLogger
 
@@ -65,7 +65,7 @@ class UCharClassesBuilder:
 
     def _download_zip(self, target: Path) -> Path:
         self.logger.info("Downloading ucharclasses from %s", self.source_url)
-        with urllib.request.urlopen(self.source_url) as response:
+        with open_url(self.source_url) as response:
             target.write_bytes(response.read())
         return target
 

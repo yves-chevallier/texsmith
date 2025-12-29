@@ -3,8 +3,8 @@
 from __future__ import annotations
 
 from pathlib import Path
-import urllib.request
 
+from texsmith.core.http import TLSCertificateError, open_url
 from texsmith.fonts.cache import FontCache
 from texsmith.fonts.constants import (
     CJK_ALIASES,
@@ -30,8 +30,10 @@ class NotoFontDownloader:
 
     def _download(self, url: str, dest: Path) -> bool:
         try:
-            with urllib.request.urlopen(url) as response:
+            with open_url(url) as response:
                 data = response.read()
+        except TLSCertificateError:
+            raise
         except Exception:
             return False
         if len(data) < 1024:

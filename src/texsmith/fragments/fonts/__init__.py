@@ -8,11 +8,11 @@ import shutil
 import subprocess
 import tempfile
 from typing import Any, ClassVar
-import urllib.request
 import warnings
 import zipfile
 
 from texsmith.core.fragments.base import BaseFragment, FragmentPiece
+from texsmith.core.http import open_url
 from texsmith.core.templates.manifest import TemplateAttributeSpec, TemplateError
 from texsmith.core.user_dir import get_user_dir
 from texsmith.fonts.cache import FontCache
@@ -152,7 +152,7 @@ def _download_archive(url: str, destination: Path) -> None:
     if destination.exists():
         return
     try:
-        with urllib.request.urlopen(url) as response, destination.open("wb") as handle:
+        with open_url(url) as response, destination.open("wb") as handle:
             shutil.copyfileobj(response, handle)
     except OSError as exc:
         raise TemplateError(f"Failed to download '{url}': {exc}") from exc

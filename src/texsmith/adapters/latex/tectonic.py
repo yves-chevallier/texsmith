@@ -12,11 +12,11 @@ import sys
 import tarfile
 import tempfile
 from urllib.error import URLError
-from urllib.request import urlopen
 import zipfile
 
 from rich.console import Console
 
+from texsmith.core.http import open_url
 from texsmith.core.user_dir import get_user_dir
 
 
@@ -218,7 +218,7 @@ def _install_dir() -> Path:
 
 
 def _download_file(url: str, destination: Path) -> None:
-    with urlopen(url) as response, destination.open("wb") as handle:
+    with open_url(url) as response, destination.open("wb") as handle:
         shutil.copyfileobj(response, handle)
 
 

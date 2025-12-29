@@ -1,0 +1,610 @@
+texsmith ./Prix-option-1.md  --output build/ -apaper=a5 --build --debug
+[15:04:33] Fetching: https://i.imgur.com/5ovKs4g.png (suffix=.png)                                                                        state.py:198
+           Reusing cached remote image: https://i.imgur.com/5ovKs4g.png (etag)                                                            state.py:198
+           Fetching: https://i.imgur.com/LoDVZDb.png (suffix=.png)                                                                        state.py:198
+[15:04:34] Reusing cached remote image: https://i.imgur.com/LoDVZDb.png (etag)                                                            state.py:198
+           Fetching: https://i.imgur.com/uTLy7Pv.png (suffix=.png)                                                                        state.py:198
+           Reusing cached remote image: https://i.imgur.com/uTLy7Pv.png (etag)                                                            state.py:198
+           Fetching: https://i.imgur.com/WkZpDyD.png (suffix=.png)                                                                        state.py:198
+           Reusing cached remote image: https://i.imgur.com/WkZpDyD.png (etag)                                                            state.py:198
+           Fetching: https://i.imgur.com/in6HJ36.png (suffix=.png)                                                                        state.py:198
+           Reusing cached remote image: https://i.imgur.com/in6HJ36.png (etag)                                                            state.py:198
+           Fetching: https://i.imgur.com/EfMhNlC.png (suffix=.png)                                                                        state.py:198
+           Reusing cached remote image: https://i.imgur.com/EfMhNlC.png (etag)                                                            state.py:198
+           Downloading ucharclasses from https://mirrors.ctan.org/macros/xetex/latex/ucharclasses.zip                                    logging.py:47
+           Downloading ucharclasses from https://mirrors.ctan.org/macros/xetex/latex/ucharclasses.zip                                    logging.py:47
+╭─────────────────────────────── Traceback (most recent call last) ────────────────────────────────╮
+│ /Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/urllib/request.py:1344 in      │
+│ do_open                                                                                          │
+│                                                                                                  │
+│   1341 │   │                                                                                     │
+│   1342 │   │   try:                                                                              │
+│   1343 │   │   │   try:                                                                          │
+│ ❱ 1344 │   │   │   │   h.request(req.get_method(), req.selector, req.data, headers,              │
+│   1345 │   │   │   │   │   │     encode_chunked=req.has_header('Transfer-encoding'))             │
+│   1346 │   │   │   except OSError as err: # timeout error                                        │
+│   1347 │   │   │   │   raise URLError(err)                                                       │
+│                                                                                                  │
+│ /Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/http/client.py:1336 in request │
+│                                                                                                  │
+│   1333 │   def request(self, method, url, body=None, headers={}, *,                              │
+│   1334 │   │   │   │   encode_chunked=False):                                                    │
+│   1335 │   │   """Send a complete request to the server."""                                      │
+│ ❱ 1336 │   │   self._send_request(method, url, body, headers, encode_chunked)                    │
+│   1337 │                                                                                         │
+│   1338 │   def _send_request(self, method, url, body, headers, encode_chunked):                  │
+│   1339 │   │   # Honor explicitly requested Host: and Accept-Encoding: headers.                  │
+│                                                                                                  │
+│ /Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/http/client.py:1382 in         │
+│ _send_request                                                                                    │
+│                                                                                                  │
+│   1379 │   │   │   # RFC 2616 Section 3.7.1 says that text default has a                         │
+│   1380 │   │   │   # default charset of iso-8859-1.                                              │
+│   1381 │   │   │   body = _encode(body, 'body')                                                  │
+│ ❱ 1382 │   │   self.endheaders(body, encode_chunked=encode_chunked)                              │
+│   1383 │                                                                                         │
+│   1384 │   def getresponse(self):                                                                │
+│   1385 │   │   """Get the response from the server.                                              │
+│                                                                                                  │
+│ /Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/http/client.py:1331 in         │
+│ endheaders                                                                                       │
+│                                                                                                  │
+│   1328 │   │   │   self.state = _CS_REQ_SENT                                                   │
+│   1329 │   │   else:                                                                             │
+│   1330 │   │   │   raise CannotSendHeader()                                                      │
+│ ❱ 1331 │   │   self._send_output(message_body, encode_chunked=encode_chunked)                    │
+│   1332 │                                                                                         │
+│   1333 │   def request(self, method, url, body=None, headers={}, *,                              │
+│   1334 │   │   │   │   encode_chunked=False):                                                    │
+│                                                                                                  │
+│ /Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/http/client.py:1091 in         │
+│ _send_output                                                                                     │
+│                                                                                                  │
+│   1088 │   │   self._buffer.extend((b"", b""))                                                   │
+│   1089 │   │   msg = b"\r\n".join(self._buffer)                                                  │
+│   1090 │   │   del self._buffer[:]                                                               │
+│ ❱ 1091 │   │   self.send(msg)                                                                    │
+│   1092 │   │                                                                                     │
+│   1093 │   │   if message_body is not None:                                                      │
+│   1094                                                                                           │
+│                                                                                                  │
+│ /Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/http/client.py:1035 in send    │
+│                                                                                                  │
+│   1032 │   │                                                                                     │
+│   1033 │   │   if self.sock is None:
+│
+│   1034 │   │   │   if self.auto_open:                                                            │
+│ ❱ 1035 │   │   │   │   self.connect()                                                            │
+│   1036 │   │   │   else:                                                                         │
+│   1037 │   │   │   │   raise NotConnected()                                                      │
+│   1038                                                                                           │
+│                                                                                                  │
+│ /Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/http/client.py:1477 in connect │
+│                                                                                                  │
+│   1474 │   │   │   else:                                                                         │
+│   1475 │   │   │   │   server_hostname = self.host                                               │
+│   1476 │   │   │                                                                                 │
+│ ❱ 1477 │   │   │   self.sock = self._context.wrap_socket(self.sock,                              │
+│   1478 │   │   │   │   │   │   │   │   │   │   │   │     server_hostname=server_hostname)        │
+│   1479 │                                                                                         │
+│   1480 │   __all.append("HTTPSConnection")                                                     │
+│                                                                                                  │
+│ /Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/ssl.py:455 in wrap_socket      │
+│                                                                                                  │
+│    452 │   │   │   │   │   server_hostname=None, session=None):                                  │
+│    453 │   │   # SSLSocket class handles server_hostname encoding before it calls                │
+│    454 │   │   # ctx._wrap_socket()                                                              │
+│ ❱  455 │   │   return self.sslsocket_class._create(                                              │
+│    456 │   │   │   sock=sock,                                                                    │
+│    457 │   │   │   server_side=server_side,                                                      │
+│    458 │   │   │   do_handshake_on_connect=do_handshake_on_connect,                              │
+│                                                                                                  │
+│ /Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/ssl.py:1041 in _create         │
+│                                                                                                  │
+│   1038 │   │   │   │   │   if timeout == 0.0:                                                    │
+│   1039 │   │   │   │   │   │   # non-blocking                                                    │
+│   1040 │   │   │   │   │   │   raise ValueError("do_handshake_on_connect should not be specifie  │
+│ ❱ 1041 │   │   │   │   │   self.do_handshake()                                                   │
+│   1042 │   │   except:                                                                           │
+│   1043 │   │   │   try:                                                                          │
+│   1044 │   │   │   │   self.close()                                                              │
+│                                                                                                  │
+│ /Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/ssl.py:1319 in do_handshake    │
+│                                                                                                  │
+│   1316 │   │   try:                                                                              │
+│   1317 │   │   │   if timeout == 0.0 and block:                                                  │
+│   1318 │   │   │   │   self.settimeout(None)                                                     │
+│ ❱ 1319 │   │   │   self._sslobj.do_handshake()                                                   │
+│   1320 │   │   finally:                                                                          │
+│   1321 │   │   │   self.settimeout(timeout)                                                      │
+│   1322                                                                                           │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────╯
+SSLCertVerificationError: [SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: unable to get local issuer certificate (_ssl.c:1000)
+
+During handling of the above exception, another exception occurred:
+
+╭─────────────────────────────── Traceback (most recent call last) ────────────────────────────────╮
+│ /Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/texsmith/adapter │
+│ s/latex/renderer.py:199 in render                                                                │
+│                                                                                                  │
+│   196 │   │   │   context.attach_runtime(**runtime)                                              │
+│   197 │   │                                                                                      │
+│   198 │   │   try:                                                                               │
+│ ❱ 199 │   │   │   self.engine.run(soup, context)                                                 │
+│   200 │   │   except Exception as exc:  # pragma: no cover - defensive                           │
+│   201 │   │   │   raise LatexRenderingError("LaTeX rendering failed") from exc                   │
+│   202                                                                                            │
+│                                                                                                  │
+│ /Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/texsmith/core/ru │
+│ les.py:336 in run                                                                                │
+│                                                                                                  │
+│   333 │   │   │   │   self._execute_rule(rule, root, context)                                    │
+│   334 │   │   │                                                                                  │
+│   335 │   │   │   visitor = _DOMVisitor(phase, phase_rules, context)                             │
+│ ❱ 336 │   │   │   visitor.walk(root)                                                             │
+│   337 │                                                                                          │
+│   338 │   def _execute_rule(self, rule: RenderRule, node: Any, context: RenderContext) -> None   │
+│   339 │   │   """Execute a rule against a specific node applying bookkeeping."""                 │
+│                                                                                                  │
+│ /Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/texsmith/core/ru │
+│ les.py:372 in walk                                                                               │
+│                                                                                                  │
+│   369 │   │   for child in list(getattr(node, "children", ())):                                  │
+│   370 │   │   │   # Only Tags should be traversed recursively                                    │
+│   371 │   │   │   if getattr(child, "name", None):                                               │
+│ ❱ 372 │   │   │   │   self.walk(child)                                                           │
+│   373 │   │                                                                                      │
+│   374 │   │   self._dispatch(node, after_children=True)                                          │
+│   375                                                                                            │
+│                                                                                                  │
+│ /Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/texsmith/core/ru │
+│ les.py:364 in walk                                                                               │
+│                                                                                                  │
+│   361 │                                                                                          │
+│   362 │   def walk(self, node: Tag) -> None:                                                     │
+│   363 │   │   """Traverse descendants depth-first and apply matching rules."""                   │
+│ ❱ 364 │   │   self._dispatch(node, after_children=False)                                         │
+│   365 │   │   if self.context.should_skip_children(node, phase=self.phase):                      │
+│   366 │   │   │   return                                                                         │
+│   367                                                                                            │
+│                                                                                                  │
+│ /Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/texsmith/core/ru │
+│ les.py:390 in _dispatch                                                                          │
+│                                                                                                  │
+│   387 │   │   │   │   continue                                                                   │
+│   388 │   │   │   if rule.auto_mark and self.context.is_processed(node):                         │
+│   389 │   │   │   │   continue                                                                   │
+│ ❱ 390 │   │   │   rule.handler(node, self.context)                                               │
+│   391 │   │   │   if rule.auto_mark:                                                             │
+│   392 │   │   │   │   self.context.mark_processed(node)                                          │
+│   393 │   │   │   if not rule.nestable:                                                          │
+│                                                                                                  │
+│ /Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/texsmith/adapter │
+│ s/handlers/basic.py:202 in render_headings                                                       │
+│                                                                                                  │
+│   199 │   │   return                                                                             │
+│   200 │                                                                                          │
+│   201 │   raw_text = element.get_text(strip=False)                                               │
+│ ❱ 202 │   text = render_moving_text(                                                             │
+│   203 │   │   raw_text,                                                                          │
+│   204 │   │   context,                                                                           │
+│   205 │   │   legacy_accents=getattr(context.config, "legacy_latex_accents", False),             │
+│                                                                                                  │
+│ /Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/texsmith/fonts/s │
+│ cripts.py:458 in render_moving_text                                                              │
+│                                                                                                  │
+│   455 │   if not isinstance(detector, ScriptDetector):                                           │
+│   456 │   │   detector = ScriptDetector(cache=FontCache())                                       │
+│   457 │   │   context.runtime[detector_key] = detector                                           │
+│ ❱ 458 │   rendered, usage = detector.render(                                                     │
+│   459 │   │   text,                                                                              │
+│   460 │   │   include_whitespace=include_whitespace,                                             │
+│   461 │   │   legacy_accents=bool(legacy_accents)                                                │
+│                                                                                                  │
+│ /Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/texsmith/fonts/s │
+│ cripts.py:285 in render                                                                          │
+│                                                                                                  │
+│   282 │   │   """Return LaTeX text with script-specific wrappers and usage metadata."""          │
+│   283 │   │   if not text:                                                                       │
+│   284 │   │   │   return "", []                                                                  │
+│ ❱ 285 │   │   segments = self._segment_text(text, include_whitespace=include_whitespace)         │
+│   286 │   │   rendered: list[str] = []                                                           │
+│   287 │   │   for group, chunk, entry in segments:                                               │
+│   288 │   │   │   math_override = _math_letter_override(chunk, group)                            │
+│                                                                                                  │
+│ /Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/texsmith/fonts/s │
+│ cripts.py:191 in _segment_text                                                                   │
+│                                                                                                  │
+│   188 │   │   buffer: list[str] = []                                                             │
+│   189 │   │                                                                                      │
+│   190 │   │   for char in text:                                                                  │
+│ ❱ 191 │   │   │   entry = self._classify_char(char)                                              │
+│   192 │   │   │   group = self._group_name(entry)                                                │
+│   193 │   │   │   if (                                                                           │
+│   194 │   │   │   │   override_group                                                             │
+│                                                                                                  │
+│ /Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/texsmith/fonts/s │
+│ cripts.py:162 in _classify_char                                                                  │
+│                                                                                                  │
+│   159 │   │   return self._lookup                                                                │
+│   160 │                                                                                          │
+│   161 │   def _classify_char(self, char: str) -> FallbackEntry | None:                           │
+│ ❱ 162 │   │   lookup = self._ensure_lookup()                                                     │
+│   163 │   │   candidates = lookup.index.ranges_for_codepoint(ord(char))                          │
+│   164 │   │   if not candidates:                                                                 │
+│   165 │   │   │   return None                                                                    │
+│                                                                                                  │
+│ /Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/texsmith/fonts/s │
+│ cripts.py:148 in _ensure_lookup                                                                  │
+│                                                                                                  │
+│   145 │   │   if self._lookup is None:                                                           │
+│   146 │   │   │   repository = FallbackRepository(cache=self.cache, logger=self.logger)          │
+│   147 │   │   │   had_cache = repository.cache_path.exists()                                     │
+│ ❱ 148 │   │   │   classes = generate_ucharclasses_data(cache=self.cache, logger=self.logger)     │
+│   149 │   │   │   coverage = generate_noto_metadata(cache=self.cache, logger=self.logger)        │
+│   150 │   │   │   announce = not had_cache                                                       │
+│   151 │   │   │   entries = FallbackBuilder(logger=self.logger).build(                           │
+│                                                                                                  │
+│ /Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/texsmith/fonts/p │
+│ ipeline.py:42 in generate_ucharclasses_data                                                      │
+│                                                                                                  │
+│    39 │   if key and key in _UCHAR_DATA_CACHE:                                                   │
+│    40 │   │   return _UCHAR_DATA_CACHE[key]                                                      │
+│    41 │   builder = UCharClassesBuilder(cache=cache, logger=logger)                              │
+│ ❱  42 │   data = builder.build()                                                                 │
+│    43 │   if key:                                                                                │
+│    44 │   │   _UCHAR_DATA_CACHE[key] = data                                                      │
+│    45 │   return data                                                                            │
+│                                                                                                  │
+│ /Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/texsmith/fonts/u │
+│ charclasses.py:145 in build                                                                      │
+│                                                                                                  │
+│   142 │   def build(self) -> list[UCharClass]:                                                   │
+│   143 │   │   """Return parsed ucharclasses definitions, downloading assets if needed."""        │
+│   144 │   │   had_cached_sty = self._cached_sty_path().exists()                                  │
+│ ❱ 145 │   │   sty_path = self._ensure_sty()                                                      │
+│   146 │   │   raw = sty_path.read_text(encoding="utf-8")                                         │
+│   147 │   │   seen: dict[str, UCharClass] = {}                                                   │
+│   148 │   │   for name, start, end in self._iter_class_ranges(raw):                              │
+│                                                                                                  │
+│ /Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/texsmith/fonts/u │
+│ charclasses.py:97 in _ensure_sty                                                                 │
+│                                                                                                  │
+│    94 │   │   │   │   return cached                                                              │
+│    95 │   │   with self.cache.tempdir() as tmp:                                                  │
+│    96 │   │   │   archive = tmp / "ucharclasses.zip"                                             │
+│ ❱  97 │   │   │   self._download_zip(archive)                                                    │
+│    98 │   │   │   sty_path = self._extract_sty(archive, cached)                                  │
+│    99 │   │   │   self.logger.info("ucharclasses.sty extracted to %s", sty_path)                 │
+│   100 │   │   │   return sty_path                                                                │
+│                                                                                                  │
+│ /Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/texsmith/fonts/u │
+│ charclasses.py:68 in _download_zip                                                               │
+│                                                                                                  │
+│    65 │                                                                                          │
+│    66 │   def _download_zip(self, target: Path) -> Path:                                         │
+│    67 │   │   self.logger.info("Downloading ucharclasses from %s", self.source_url)              │
+│ ❱  68 │   │   with urllib.request.urlopen(self.source_url) as response:                          │
+│    69 │   │   │   target.write_bytes(response.read())                                            │
+│    70 │   │   return target                                                                      │
+│    71                                                                                            │
+│                                                                                                  │
+│ /Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/urllib/request.py:215 in       │
+│ urlopen                                                                                          │
+│                                                                                                  │
+│    212 │   │   _opener = opener = build_opener()                                                 │
+│    213 │   else:                                                                                 │
+│    214 │   │   opener = _opener                                                                  │
+│ ❱  215 │   return opener.open(url, data, timeout)                                                │
+│    216                                                                                           │
+│    217 def install_opener(opener):                                                               │
+│    218 │   global _opener                                                                        │
+│                                                                                                  │
+│ /Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/urllib/request.py:515 in open  │
+│                                                                                                  │
+│    512 │   │   │   req = meth(req)                                                               │
+│    513 │   │                                                                                     │
+│    514 │   │   sys.audit('urllib.Request', req.full_url, req.data, req.headers, req.get_method(  │
+│ ❱  515 │   │   response = self._open(req, data)                                                  │
+│    516 │   │                                                                                     │
+│    517 │   │   # post-process response                                                           │
+│    518 │   │   meth_name = protocol+"_response"                                                  │
+│                                                                                                  │
+│ /Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/urllib/request.py:532 in _open │
+│                                                                                                  │
+│    529 │   │   │   return result                                                                 │
+│    530 │   │                                                                                     │
+│    531 │   │   protocol = req.type                                                               │
+│ ❱  532 │   │   result = self._call_chain(self.handle_open, protocol, protocol +                  │
+│    533 │   │   │   │   │   │   │   │     '_open', req)                                           │
+│    534 │   │   if result:                                                                        │
+│    535 │   │   │   return result                                                                 │
+│                                                                                                  │
+│ /Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/urllib/request.py:492 in       │
+│ _call_chain                                                                                      │
+│                                                                                                  │
+│    489 │   │   handlers = chain.get(kind, ())                                                    │
+│    490 │   │   for handler in handlers:                                                          │
+│    491 │   │   │   func = getattr(handler, meth_name)                                            │
+│ ❱  492 │   │   │   result = func(*args)                                                          │
+│    493 │   │   │   if result is not None:                                                        │
+│    494 │   │   │   │   return result                                                             │
+│    495                                                                                           │
+│                                                                                                  │
+│ /Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/urllib/request.py:1392 in      │
+│ https_open                                                                                       │
+│                                                                                                  │
+│   1389 │   │   │   self._context = context                                                       │
+│   1390 │   │                                                                                     │
+│   1391 │   │   def https_open(self, req):                                                        │
+│ ❱ 1392 │   │   │   return self.do_open(http.client.HTTPSConnection, req,                         │
+│   1393 │   │   │   │   │   │   │   │   context=self._context)                                    │
+│   1394 │   │                                                                                     │
+│   1395 │   │   https_request = AbstractHTTPHandler.do_request_                                   │
+│                                                                                                  │
+│ /Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/urllib/request.py:1347 in      │
+│ do_open                                                                                          │
+│                                                                                                  │
+│   1344 │   │   │   │   h.request(req.get_method(), req.selector, req.data, headers,              │
+│   1345 │   │   │   │   │   │     encode_chunked=req.has_header('Transfer-encoding'))             │
+│   1346 │   │   │   except OSError as err: # timeout error                                        │
+│ ❱ 1347 │   │   │   │   raise URLError(err)                                                       │
+│   1348 │   │   │   r = h.getresponse()                                                           │
+│   1349 │   │   except:                                                                           │
+│   1350 │   │   │   h.close()                                                                     │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────╯
+URLError: <urlopen error [SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: unable to get local issuer certificate (_ssl.c:1000)>
+
+The above exception was the direct cause of the following exception:
+╭─────────────────────────────── Traceback (most recent call last) ────────────────────────────────╮
+│ /Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/texsmith/ui/cli/ │
+│ commands/render.py:897 in render                                                                 │
+│                                                                                                  │
+│    894 │   else:                                                                                 │
+│    895 │   │   os.environ.pop(engine_env_key, None)                                              │
+│    896 │   try:                                                                                  │
+│ ❱  897 │   │   response = _SERVICE.execute(request, prepared=prepared)                           │
+│    898 │   except (TemplateError, ConversionError) as exc:                                       │
+│    899 │   │   emit_error(str(exc), exception=exc)                                               │
+│    900 │   │   raise typer.Exit(code=1) from exc                                                 │
+│                                                                                                  │
+│ /Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/texsmith/core/co │
+│ nversion/service.py:267 in execute                                                               │
+│                                                                                                  │
+│   264 │   │   │   session.add_document(document)                                                 │
+│   265 │   │                                                                                      │
+│   266 │   │   target_dir = (request.render_dir or Path("build")).resolve()                       │
+│ ❱ 267 │   │   render_result = session.render(target_dir, embed_fragments=request.embed_fragmen   │
+│   268 │   │   return ConversionResponse(                                                         │
+│   269 │   │   │   request=request,                                                               │
+│   270 │   │   │   documents=batch.documents,                                                     │
+│                                                                                                  │
+│ /Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/texsmith/core/te │
+│ mplates/session.py:186 in render                                                                 │
+│                                                                                                  │
+│   183 │   │   prepared_documents = [self._prepare_document(document) for document in self._doc   │
+│   184 │   │   option_overrides = self._collect_option_overrides()                                │
+│   185 │   │                                                                                      │
+│ ❱ 186 │   │   bundle = convert_documents(                                                        │
+│   187 │   │   │   prepared_documents,                                                            │
+│   188 │   │   │   output_dir=output_dir,                                                         │
+│   189 │   │   │   settings=self.settings,                                                        │
+│                                                                                                  │
+│ /Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/texsmith/core/co │
+│ nversion/pipeline.py:136 in convert_documents                                                    │
+│                                                                                                  │
+│   133 │   │   document = document.prepare_for_conversion()                                       │
+│   134 │   │   target_dir = Path(output_dir) if output_dir is not None else Path("build")         │
+│   135 │   │   slot_overrides = dict(document.slot_selectors)                                     │
+│ ❱ 136 │   │   result = convert_document(                                                         │
+│   137 │   │   │   document=document,                                                             │
+│   138 │   │   │   output_dir=target_dir,                                                         │
+│   139 │   │   │   request=request,                                                               │
+│                                                                                                  │
+│ /Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/texsmith/core/co │
+│ nversion/core.py:258 in convert_document                                                         │
+│                                                                                                  │
+│   255 │   │   "parser": request.parser or "html.parser",                                         │
+│   256 │   }                                                                                      │
+│   257 │                                                                                          │
+│ ❱ 258 │   return _render_document(                                                               │
+│   259 │   │   document=execution.document,                                                       │
+│   260 │   │   binder_context=binder_context,                                                     │
+│   261 │   │   renderer_kwargs=renderer_kwargs,                                                   │
+│                                                                                                  │
+│ /Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/texsmith/core/co │
+│ nversion/core.py:357 in _render_document                                                         │
+│                                                                                                  │
+│   354 │   │   )                                                                                  │
+│   355 │                                                                                          │
+│   356 │   try:                                                                                   │
+│ ❱ 357 │   │   render_result = _render_slot_fragments(                                            │
+│   358 │   │   │   slot_fragments=slot_fragments,                                                 │
+│   359 │   │   │   binding=binding,                                                               │
+│   360 │   │   │   runtime_common=runtime_common,                                                 │
+│                                                                                                  │
+│ /Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/texsmith/core/co │
+│ nversion/core.py:638 in _render_slot_fragments                                                   │
+│                                                                                                  │
+│   635 │   │   │   drop_title_flag = False                                                        │
+│   636 │   │   fragment_output = ""                                                               │
+│   637 │   │   try:                                                                               │
+│ ❱ 638 │   │   │   fragment_output, document_state = render_with_fallback(                        │
+│   639 │   │   │   │   renderer_factory,                                                          │
+│   640 │   │   │   │   fragment.html,                                                             │
+│   641 │   │   │   │   runtime_fragment,                                                          │
+│                                                                                                  │
+│ /Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/texsmith/core/co │
+│ nversion/core.py:698 in render_with_fallback                                                     │
+│                                                                                                  │
+│   695 │   │                                                                                      │
+│   696 │   │   renderer = renderer_factory()                                                      │
+│   697 │   │   try:                                                                               │
+│ ❱ 698 │   │   │   output = renderer.render(                                                      │
+│   699 │   │   │   │   html,                                                                      │
+│   700 │   │   │   │   runtime=runtime,                                                           │
+│   701 │   │   │   │   state=current_state,                                                       │
+│                                                                                                  │
+│ /Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/texsmith/adapter │
+│ s/latex/renderer.py:201 in render                                                                │
+│                                                                                                  │
+│   198 │   │   try:                                                                               │
+│   199 │   │   │   self.engine.run(soup, context)                                                 │
+│   200 │   │   except Exception as exc:  # pragma: no cover - defensive                           │
+│ ❱ 201 │   │   │   raise LatexRenderingError("LaTeX rendering failed") from exc                   │
+│   202 │   │                                                                                      │
+│   203 │   │   return self._collect_output(soup)                                                  │
+│   204                                                                                            │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────╯
+LatexRenderingError: LaTeX rendering failed
+Traceback (most recent call last):
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/urllib/request.py", line 1344, in do_open
+    h.request(req.get_method(), req.selector, req.data, headers,
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/http/client.py", line 1336, in request
+    self._send_request(method, url, body, headers, encode_chunked)
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/http/client.py", line 1382, in _send_request
+    self.endheaders(body, encode_chunked=encode_chunked)
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/http/client.py", line 1331, in endheaders
+    self._send_output(message_body, encode_chunked=encode_chunked)
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/http/client.py", line 1091, in _send_output
+    self.send(msg)
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/http/client.py", line 1035, in send
+    self.connect()
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/http/client.py", line 1477, in connect
+    self.sock = self._context.wrap_socket(self.sock,
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/ssl.py", line 455, in wrap_socket
+    return self.sslsocket_class._create(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/ssl.py", line 1041, in _create
+    self.do_handshake()
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/ssl.py", line 1319, in do_handshake
+    self._sslobj.do_handshake()
+ssl.SSLCertVerificationError: [SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: unable to get local issuer certificate (_ssl.c:1000)
+
+During handling of the above exception, another exception occurred:
+Traceback (most recent call last):
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/texsmith/adapters/latex/renderer.py", line 199, in render
+    self.engine.run(soup, context)
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/texsmith/core/rules.py", line 336, in run
+    visitor.walk(root)
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/texsmith/core/rules.py", line 372, in walk
+    self.walk(child)
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/texsmith/core/rules.py", line 364, in walk
+    self._dispatch(node, after_children=False)
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/texsmith/core/rules.py", line 390, in _dispatch
+    rule.handler(node, self.context)
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/texsmith/adapters/handlers/basic.py", line 202, in render_headings
+    text = render_moving_text(
+           ^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/texsmith/fonts/scripts.py", line 458, in render_moving_text
+    rendered, usage = detector.render(
+                      ^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/texsmith/fonts/scripts.py", line 285, in render
+    segments = self._segment_text(text, include_whitespace=include_whitespace)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/texsmith/fonts/scripts.py", line 191, in _segment_text
+    entry = self._classify_char(char)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/texsmith/fonts/scripts.py", line 162, in _classify_char
+    lookup = self._ensure_lookup()
+             ^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/texsmith/fonts/scripts.py", line 148, in _ensure_lookup
+    classes = generate_ucharclasses_data(cache=self.cache, logger=self.logger)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/texsmith/fonts/pipeline.py", line 42, in generate_ucharclasses_data
+    data = builder.build()
+           ^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/texsmith/fonts/ucharclasses.py", line 145, in build
+    sty_path = self._ensure_sty()
+               ^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/texsmith/fonts/ucharclasses.py", line 97, in _ensure_sty
+    self._download_zip(archive)
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/texsmith/fonts/ucharclasses.py", line 68, in _download_zip
+    with urllib.request.urlopen(self.source_url) as response:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/urllib/request.py", line 215, in urlopen
+    return opener.open(url, data, timeout)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/urllib/request.py", line 515, in open
+    response = self._open(req, data)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/urllib/request.py", line 532, in _open
+    result = self._call_chain(self.handle_open, protocol, protocol +
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/urllib/request.py", line 492, in _call_chain
+    result = func(*args)
+             ^^^^^^^^^^^
+File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/urllib/request.py", line 1392, in https_open
+    return self.do_open(http.client.HTTPSConnection, req,
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/urllib/request.py", line 1347, in do_open
+    raise URLError(err)
+urllib.error.URLError: <urlopen error [SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: unable to get local issuer certificate (_ssl.c:1000)>
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/texsmith/ui/cli/app.py", line 36, in main
+    app()
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/typer/main.py", line 336, in call
+    raise e
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/typer/main.py", line 319, in call
+    return get_command(self)(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/click/core.py", line 1161, in call
+    return self.main(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/typer/core.py", line 719, in main
+    return _main(
+           ^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/typer/core.py", line 189, in _main
+    rv = self.invoke(ctx)
+         ^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/click/core.py", line 1443, in invoke
+    return ctx.invoke(self.callback, **ctx.params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/click/core.py", line 788, in invoke
+    return __callback(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/typer/main.py", line 706, in wrapper
+    return callback(**use_params)
+           ^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/texsmith/ui/cli/commands/render.py", line 897, in render
+    response = _SERVICE.execute(request, prepared=prepared)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/texsmith/core/conversion/service.py", line 267, in execute
+    render_result = session.render(target_dir, embed_fragments=request.embed_fragments)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/texsmith/core/templates/session.py", line 186, in render
+    bundle = convert_documents(
+             ^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/texsmith/core/conversion/pipeline.py", line 136, in convert_documents
+    result = convert_document(
+             ^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/texsmith/core/conversion/core.py", line 258, in convert_document
+    return _render_document(
+           ^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/texsmith/core/conversion/core.py", line 357, in _render_document
+    render_result = _render_slot_fragments(
+                    ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/texsmith/core/conversion/core.py", line 638, in _render_slot_fragments
+    fragment_output, document_state = render_with_fallback(
+                                      ^^^^^^^^^^^^^^^^^^^^^
+                                      File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/texsmith/core/conversion/core.py", line 698, in render_with_fallback
+    output = renderer.render(
+             ^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/texsmith/adapters/latex/renderer.py", line 201, in render
+    raise LatexRenderingError("LaTeX rendering failed") from exc
+texsmith.core.exceptions.LatexRenderingError: LaTeX rendering failed
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/Library/Frameworks/Python.framework/Versions/3.12/bin/texsmith", line 7, in <module>
+    sys.exit(main())
+             ^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/texsmith/ui/cli/app.py", line 62, in main
+    raise typer.Exit(code=1) from exc
+click.exceptions.Exit
+ ✘  ~/Downloads/texsmith 
