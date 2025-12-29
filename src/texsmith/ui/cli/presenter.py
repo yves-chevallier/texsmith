@@ -5,6 +5,7 @@ from __future__ import annotations
 from collections.abc import Mapping, Sequence
 import contextlib
 from pathlib import Path
+import tempfile
 from typing import TYPE_CHECKING, Any
 
 import typer
@@ -86,6 +87,17 @@ def _format_path(path: Path) -> str:
     for users to identify files within their project structure.
     """
     resolved = path.resolve()
+    temp_root = None
+    temp_dir = Path(tempfile.gettempdir()).resolve()
+    for parent in resolved.parents:
+        if parent.parent == temp_dir and parent.name.startswith("texsmith-"):
+            temp_root = parent
+            break
+    if temp_root is not None:
+        try:
+            return str(resolved.relative_to(temp_root))
+        except ValueError:
+            return resolved.name
     try:
         return str(resolved.relative_to(Path.cwd()))
     except ValueError:
