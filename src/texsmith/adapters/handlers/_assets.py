@@ -57,6 +57,15 @@ _PLACEHOLDER_PDF = (
 )
 
 
+def _resolve_http_user_agent(context: RenderContext) -> str | None:
+    candidate = context.runtime.get("http_user_agent")
+    if isinstance(candidate, str):
+        candidate = candidate.strip()
+        if candidate:
+            return candidate
+    return None
+
+
 def store_local_image_asset(context: RenderContext, resolved: Path) -> Path:
     """Copy or convert a local asset and register it on the context."""
     asset_key = str(resolved)
@@ -135,6 +144,9 @@ def store_remote_image_asset(context: RenderContext, url: str) -> Path:
         "manifest_dirty": manifest_dirty,
         "emitter": emitter,
     }
+    user_agent = _resolve_http_user_agent(context)
+    if user_agent:
+        fetch_options["user_agent"] = user_agent
     if convert_requested:
         fetch_options["output_suffix"] = ".pdf"
     elif suffix_hint:

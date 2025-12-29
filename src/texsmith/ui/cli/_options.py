@@ -134,6 +134,16 @@ HashAssetsOption = Annotated[
     ),
 ]
 
+HttpUserAgentOption = Annotated[
+    str | None,
+    typer.Option(
+        "--http-user-agent",
+        envvar="TEXSMITH_HTTP_USER_AGENT",
+        help="User-Agent header used when fetching remote assets like images.",
+        rich_help_panel=RENDERING_PANEL,
+    ),
+]
+
 TemplateAttributeOption = Annotated[
     list[str] | None,
     typer.Option(

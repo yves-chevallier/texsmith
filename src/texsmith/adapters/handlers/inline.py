@@ -293,10 +293,21 @@ def _emoji_twemoji_url(token: str) -> str:
     return f"https://twemoji.maxcdn.com/v/latest/svg/{codepoints}.svg"
 
 
+def _resolve_http_user_agent(context: RenderContext) -> str | None:
+    candidate = context.runtime.get("http_user_agent")
+    if isinstance(candidate, str):
+        candidate = candidate.strip()
+        if candidate:
+            return candidate
+    return None
+
+
 def _render_emoji(token: str, context: RenderContext) -> str:
     url = _emoji_twemoji_url(token)
     try:
-        artefact = fetch_image(url, output_dir=context.assets.output_root)
+        user_agent = _resolve_http_user_agent(context)
+        options = {"user_agent": user_agent} if user_agent else {}
+        artefact = fetch_image(url, output_dir=context.assets.output_root, **options)
     except TransformerExecutionError as exc:
         warnings.warn(f"Failed to fetch emoji '{token}': {exc}", stacklevel=2)
         legacy = getattr(context.config, "legacy_latex_accents", False)
@@ -700,7 +711,9 @@ def render_twemoji_image(element: Tag, context: RenderContext) -> None:
     if not is_valid_url(src):
         raise InvalidNodeError("Twemoji images must reference remote assets")
 
-    artefact = fetch_image(src, output_dir=context.assets.output_root)
+    user_agent = _resolve_http_user_agent(context)
+    options = {"user_agent": user_agent} if user_agent else {}
+    artefact = fetch_image(src, output_dir=context.assets.output_root, **options)
     stored_path = context.assets.register(src, artefact)
     asset_path = context.assets.latex_path(stored_path)
 
