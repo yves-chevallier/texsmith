@@ -14,6 +14,7 @@ and the project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 - Simplified template options handling to use plain mappings in `TemplateSession`.
 - Bumped the minimum PyXindy dependency to `0.0.6`.
 - Expanded CI to test on Windows and macOS, and added a Windows examples build job.
+- Suppress temporary build roots in CLI artifact locations.
 
 ### Added
 
@@ -27,6 +28,8 @@ and the project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 - Try multiple Biber download names on macOS arm64 to avoid 404s on the CI runners.
 - Honor the diagrams backend when converting letter signature SVG assets.
 - Avoid markdown-escaping letter `source_dir` so Windows paths resolve correctly.
+- Prevent XeTeX fallback fonts from leaking past script transitions and prefer Noto Sans Symbols for arrows.
+- Convert common Unicode symbols to LaTeX math macros to avoid missing glyphs.
 
 ## [0.1.0] - 2025-12-20
 
