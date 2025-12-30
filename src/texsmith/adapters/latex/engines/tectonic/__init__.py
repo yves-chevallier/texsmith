@@ -19,6 +19,19 @@ def run_tectonic_engine(
     console: Console,
 ) -> LatexStreamResult:
     """Execute a tectonic command, streaming plain output."""
+
+    def _safe_console_print(text: str) -> None:
+        try:
+            console.print(text)
+        except UnicodeEncodeError:
+            stream = getattr(console, "file", None)
+            if stream is None:
+                return
+            encoding = getattr(stream, "encoding", None) or "utf-8"
+            sanitized = text.encode(encoding, errors="replace").decode(encoding, errors="replace")
+            stream.write(f"{sanitized}\n")
+            stream.flush()
+
     with subprocess.Popen(
         argv,
         cwd=str(workdir),
@@ -32,7 +45,7 @@ def run_tectonic_engine(
     ) as process:
         assert process.stdout is not None
         for line in process.stdout:
-            console.print(line.rstrip())
+            _safe_console_print(line.rstrip())
         returncode = process.wait()
 
     return LatexStreamResult(returncode=returncode, messages=[])
