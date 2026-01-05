@@ -25,6 +25,8 @@ pip install texsmith
 texsmith input.md input.bib -o build/ --build
 ```
 
+Check the installed version with `texsmith --version` or in Python with `texsmith.get_version()`.
+
 ## Key features
 
 - **MkDocs-native Markdown** – Ships with the same Material + pymdown extension stack you use in MkDocs, so tabs, callouts, annotations, tooltips, and data tables survive the conversion.

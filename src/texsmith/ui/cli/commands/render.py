@@ -51,6 +51,7 @@ from texsmith.core.metadata import PressMetadataError, normalise_press_metadata
 from texsmith.core.templates import TemplateError
 from texsmith.core.templates.runtime import coerce_base_level
 from texsmith.fonts.html_scripts import wrap_scripts_in_html
+from texsmith.version import get_version
 
 from .._options import (
     DIAGNOSTICS_PANEL,
@@ -339,6 +340,14 @@ def _lookup_bool(mapping: Mapping[str, Any] | None, path: tuple[str, ...]) -> bo
 
 
 def render(
+    show_version: Annotated[
+        bool,
+        typer.Option(
+            "--version",
+            help="Show the TeXSmith version and exit.",
+            is_eager=True,
+        ),
+    ] = False,
     list_extensions: Annotated[
         bool,
         typer.Option(
@@ -519,6 +528,14 @@ def render(
 
     ctx = click.get_current_context(silent=True)
     typer_ctx = ctx if isinstance(ctx, typer.Context) else None
+
+    if typer_ctx is not None and typer_ctx.resilient_parsing:
+        return
+
+    if show_version:
+        typer.echo(get_version())
+        raise typer.Exit()
+
     state = set_cli_state(ctx=typer_ctx, verbosity=verbose, debug=debug)
     if html_only:
         build_pdf = False
@@ -527,9 +544,6 @@ def render(
         template_scaffold = None
     if print_context:
         build_pdf = False
-
-    if typer_ctx is not None and typer_ctx.resilient_parsing:
-        return
 
     if snippet_dump_dir is not None:
         os.environ["TEXSMITH_SNIPPET_DUMP_DIR"] = str(snippet_dump_dir)

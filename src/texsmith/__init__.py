@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-from importlib.metadata import PackageNotFoundError, version as _pkg_version
-
 from texsmith.core.bibliography import (
     BibliographyCollection,
     BibliographyIssue,
@@ -50,12 +48,10 @@ from texsmith.core.user_dir import (
     get_user_dir,
     user_dir_context,
 )
+from texsmith.version import get_version
 
 
-try:
-    __version__ = _pkg_version("texsmith")
-except PackageNotFoundError:
-    __version__ = "0.0.0"
+__version__ = get_version()
 
 __all__ = [
     "DEFAULT_TEMPLATE_LANGUAGE",
@@ -94,6 +90,7 @@ __all__ = [
     "copy_template_assets",
     "get_template",
     "get_user_dir",
+    "get_version",
     "load_template",
     "load_template_runtime",
     "renders",
