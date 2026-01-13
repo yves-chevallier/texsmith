@@ -378,8 +378,13 @@ def _detect_assets(directory: Path) -> list[Path]:
     assets_dir = directory / "assets"
     if not assets_dir.is_dir():
         return []
+    excluded_dirs = {".converted"}
     return sorted(
-        (path for path in assets_dir.rglob("*") if path.is_file()),
+        (
+            path
+            for path in assets_dir.rglob("*")
+            if path.is_file() and not excluded_dirs.intersection(path.relative_to(assets_dir).parts)
+        ),
         key=lambda p: p.relative_to(assets_dir).as_posix().lower(),
     )
 
