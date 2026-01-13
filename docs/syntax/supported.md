@@ -35,8 +35,9 @@ Horizontal rules:
 
 All standard Markdown constructs—headings, emphasis, lists, code blocks,
 blockquotes, links, images, and horizontal rules—render exactly as you would
-expect. TeXSmith relies on fenced code blocks by default, so triple backticks
-(```` ``) are the recommended way to author code samples.
+expect. In LaTeX output, horizontal rules become `\clearpage` page breaks rather
+than a literal line. TeXSmith relies on fenced code blocks by default, so triple
+backticks (```` ``) are the recommended way to author code samples.
 
 ## Extension Cheat Sheet
 
