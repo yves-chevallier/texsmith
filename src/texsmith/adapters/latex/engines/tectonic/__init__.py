@@ -11,6 +11,15 @@ from rich.console import Console
 from ..latex import LatexStreamResult
 
 
+_SUPPRESSED_WARNINGS = (
+    "warning: lineno.sty:296: Invalid UTF-8 byte or sequence at line 296 replaced by U+FFFD",
+)
+
+
+def _should_suppress(line: str) -> bool:
+    return any(token in line for token in _SUPPRESSED_WARNINGS)
+
+
 def run_tectonic_engine(
     argv: Sequence[str],
     *,
@@ -45,6 +54,8 @@ def run_tectonic_engine(
     ) as process:
         assert process.stdout is not None
         for line in process.stdout:
+            if _should_suppress(line):
+                continue
             _safe_console_print(line.rstrip())
         returncode = process.wait()
 

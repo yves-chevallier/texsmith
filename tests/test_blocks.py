@@ -159,7 +159,7 @@ def test_horizontal_rule_removed(renderer: LaTeXRenderer) -> None:
     latex = renderer.render(html)
     assert "Before" in latex
     assert "After" in latex
-    assert "\\rule{\\linewidth}{0.4pt}" in latex
+    assert "\\clearpage" in latex
 
 
 def test_tabbed_content_rendering(renderer: LaTeXRenderer) -> None:
