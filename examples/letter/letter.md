@@ -2,7 +2,6 @@
 press:
   template: letter
   date: 1903-07-14
-  format: nf
   signature: marie-curie.svg
   back-address: Laboratory of Physics and Chemistry, Sorbonne Univ., Paris
   from:
@@ -18,7 +17,7 @@ press:
       Near the Church of Santa Croce
       Florence, Republic of Florence (c. 1500)
   ps: |
-    How did you manage to withstand the ravages of time? 
+    How did you manage to withstand the ravages of time?
     You should have been dead for 384 years by now.
 ---
 # Dear Maestro Leonardo

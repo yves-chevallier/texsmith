@@ -11,6 +11,7 @@ import json
 import math
 import os
 from pathlib import Path
+import re
 import shlex
 import shutil
 import subprocess
@@ -122,6 +123,40 @@ def _wrap_playwright_error(exc: Exception, emitter: Any = None) -> TransformerEx
     _emit_dependency_warning(emitter, hint)
     message = f"Playwright backend failed: {base_message}. {hint}"
     return TransformerExecutionError(message)
+
+
+def _normalise_svg_for_playwright(svg: str) -> str:
+    """Ensure Playwright has explicit SVG dimensions when width/height are missing."""
+    svg = re.sub(r"^\s*<\?xml[^>]*>\s*", "", svg)
+    match = re.search(r"<svg\b[^>]*>", svg, flags=re.IGNORECASE | re.DOTALL)
+    if not match:
+        return svg
+
+    tag = match.group(0)
+    has_width = re.search(r"\bwidth\s*=", tag, flags=re.IGNORECASE)
+    has_height = re.search(r"\bheight\s*=", tag, flags=re.IGNORECASE)
+    if has_width and has_height:
+        return svg
+
+    viewbox_match = re.search(
+        r"\bviewBox\s*=\s*['\"]([^'\"]+)['\"]",
+        tag,
+        flags=re.IGNORECASE,
+    )
+    if not viewbox_match:
+        return svg
+
+    parts = re.split(r"[\s,]+", viewbox_match.group(1).strip())
+    if len(parts) != 4:
+        return svg
+
+    width, height = parts[2], parts[3]
+    if tag.endswith("/>"):
+        replacement = tag[:-2] + f' width="{width}" height="{height}" />'
+    else:
+        replacement = tag[:-1] + f' width="{width}" height="{height}">'
+
+    return svg[: match.start()] + replacement + svg[match.end() :]
 
 
 def _resolve_cli(names: Sequence[str], hints: Sequence[Path]) -> tuple[str | None, bool]:
@@ -294,6 +329,7 @@ class SvgToPdfStrategy(CachedConversionStrategy):
         return target
 
     def _svg_to_pdf(self, browser: Any, svg: str, target: Path) -> None:
+        svg = _normalise_svg_for_playwright(svg)
         page = browser.new_page()
         page.set_content(f"<html><body style='margin:0; display:inline-block'>{svg}</body></html>")
         locator = page.locator("svg")
