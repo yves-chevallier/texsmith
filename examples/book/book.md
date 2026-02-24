@@ -410,7 +410,7 @@ Einstein also invented an electromagnetic pump, sound reproduction device, and s
 
 ### Non-scientific
 
-![Einstein at a picnic in Oslo in 1920](https://raw.githubusercontent.com/yves-chevallier/texsmith/refs/heads/master/.wiki/Einstein-Oslofjord_%28cropped%29.jpg){width=50%}
+![Einstein at a picnic in Oslo in 1920](https://raw.githubusercontent.com/yves-chevallier/texsmith/refs/heads/master/.wiki/Einstein-Oslofjord_cropped.jpg){width=50%}
 
 /// caption
 Heinrich Goldschmidt, Einstein, Ole Colbjørnsen, Jørgen Vogt, and Ilse Einstein at a picnic in Oslo in 1920.
