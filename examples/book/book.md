@@ -54,7 +54,7 @@ In 1894, {index}[1894] Hermann and Jakob's company tendered for a contract to in
 
 Einstein excelled at physics and mathematics from an early age, and soon acquired the mathematical expertise normally only found in a child several years his senior. He began teaching himself algebra, calculus and Euclidean geometry when he was twelve; he made such rapid progress that he discovered an original proof of the Pythagorean theorem before his thirteenth birthday.^[FVfDU] A family tutor, Max Talmud, said that only a short time after he had given the twelve year old Einstein a geometry textbook, the boy "had worked through the whole book. He thereupon devoted himself to higher mathematics... Soon the flight of his mathematical genius was so high I could not follow." Einstein recorded that he had "mastered integral and differential calculus" while still just fourteen. His love of algebra and geometry {index}[algebra] {index}[geometry] was so great that at twelve, he was already confident that nature could be understood as a "mathematical structure".
 
-![Einstein in 1893](https://upload.wikimedia.org/wikipedia/commons/a/ad/Albert_Einstein_as_a_child.jpg){width=60%}
+![Einstein in 1893](https://raw.githubusercontent.com/yves-chevallier/texsmith/refs/heads/master/.wiki/Albert_Einstein_as_a_child.jpg){width=60%}
 
 /// caption
 Einstein in 1893, age 14.
@@ -74,7 +74,7 @@ Historians of physics are divided on the question of the extent to which Marić 
 
 Correspondence between Einstein and Marić, discovered and published in 1987, {index}[1987] {index}[1902] revealed that in early 1902, while Marić was visiting her parents in Novi Sad, {index}[Novi Sad] she gave birth to a daughter, Lieserl. {index}[Lieserl] When Marić returned to Switzerland {index}[Switzerland] it was without the child, whose fate is uncertain. A letter of Einstein's that he wrote in September 1903 suggests that the girl was either given up for adoption or died of scarlet fever in infancy.^[HBMes]
 
-![Albert Einstein and Mileva](https://upload.wikimedia.org/wikipedia/commons/8/87/Albert_Einstein_and_his_wife_Mileva_Maric.jpg){width=60%}
+![Albert Einstein and Mileva](https://raw.githubusercontent.com/yves-chevallier/texsmith/refs/heads/master/.wiki/Albert_Einstein_and_his_wife_Mileva_Maric.jpg){width=60%}
 
 /// caption
 Albert Einstein and Mileva Marić Einstein, 1912
@@ -144,7 +144,7 @@ In December 1930, Einstein began another significant sojourn in the United State
 
 After arriving in New York {index}[New York] City, Einstein was taken to various places and events, including Chinatown, {index}[Chinatown] a lunch with the editors of "The New York Times", and a performance of "Carmen" at the Metropolitan Opera, where he was cheered by the audience on his arrival. During the days following, he was given the keys to the city by Mayor Jimmy Walker {index}[Jimmy Walker] and met Nicholas Murray Butler, {index}[Nicholas Murray Butler] the president of Columbia University, who described Einstein as "the ruling monarch of the mind". Harry Emerson Fosdick, pastor at New York's Riverside Church, gave Einstein a tour of the church and showed him a full-size statue that the church made of Einstein, standing at the entrance. Also during his stay in New York, he joined a crowd of 15,000 people at Madison Square Garden {index}[Madison Square Garden] during a Hanukkah celebration.
 
-![Einstein with Charlie Chaplin](https://upload.wikimedia.org/wikipedia/commons/9/9c/Albert_Einstein_and_Charlie_Chaplin_City_Lights_premiere_1931.jpg){width=50%}
+![Einstein with Charlie Chaplin](https://raw.githubusercontent.com/yves-chevallier/texsmith/refs/heads/master/.wiki/Albert_Einstein_and_Charlie_Chaplin_City_Lights_premiere_1931.jpg){width=50%}
 
 /// caption
 Einstein with Charlie Chaplin at the Hollywood premiere of Chaplin's "City Lights", January 1931
@@ -287,7 +287,7 @@ Einstein originally framed special relativity in terms of kinematics {index}[kin
 
 #### General relativity and the equivalence principle
 
-![](https://upload.wikimedia.org/wikipedia/commons/3/37/1919_eclipse_positive.jpg){width=50%}
+![](https://raw.githubusercontent.com/yves-chevallier/texsmith/refs/heads/master/.wiki/1919_eclipse_positive.jpg){width=50%}
 
 /// caption
 Eddington's photo of a solar eclipse
@@ -410,7 +410,7 @@ Einstein also invented an electromagnetic pump, sound reproduction device, and s
 
 ### Non-scientific
 
-![Einstein at a picnic in Oslo in 1920](https://upload.wikimedia.org/wikipedia/commons/6/61/Einstein-Oslofjord_%28cropped%29.jpg){width=50%}
+![Einstein at a picnic in Oslo in 1920](https://raw.githubusercontent.com/yves-chevallier/texsmith/refs/heads/master/.wiki/Einstein-Oslofjord_%28cropped%29.jpg){width=50%}
 
 /// caption
 Heinrich Goldschmidt, Einstein, Ole Colbjørnsen, Jørgen Vogt, and Ilse Einstein at a picnic in Oslo in 1920.
