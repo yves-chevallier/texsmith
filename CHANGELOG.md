@@ -7,28 +7,32 @@ and the project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ## [Unreleased]
 
-### Changed
+### Added
 
-- Collapsed conversion settings to a single `ConversionRequest` model (removed `RenderSettings`).
-- Folded document render options and slot tracking into `Document` for a single SSOT.
-- Simplified template options handling to use plain mappings in `TemplateSession`.
-- Bumped the minimum PyXindy dependency to `0.0.6`.
-- Expanded CI to test on Windows and macOS, and added a Windows examples build job.
-- Suppress temporary build roots in CLI artifact locations.
+- Nothing yet.
+
+## [0.2.2] - 2026-02-24
 
 ### Added
 
-- Documented the `--legacy-latex-accents` CLI flag and its API equivalent via `ConversionRequest`.
+- CLI/API version reporting (`texsmith --version`, `get_version()`).
+- Configurable HTTP user agent for remote asset and emoji fetching (`--http-user-agent` / `TEXSMITH_HTTP_USER_AGENT`).
+- TLS download helper with cert guidance for network fetches.
+- Cached Wikipedia images for the book example under `.wiki/` with documentation.
+
+### Changed
+
+- Horizontal rules now force a page break in LaTeX output.
+- Asset summaries hide temporary build roots and `.converted` cache files.
+- Letter example no longer hard-codes the format, allowing snippet overrides; docs include local build steps.
+- Book example images now resolve via raw GitHub URLs to avoid third‑party rate limits.
+- CI now runs `apt-get update` before installing system dependencies.
 
 ### Fixed
 
-- Use the bundled `biber` path when invoking bibliography builds to fix Windows CI failures.
-- Make placeholder PDFs valid so Tectonic can include them when SVG conversion fails.
-- Add a Playwright fallback for SVG-to-PDF conversion when Cairo isn't available.
-- Try multiple Biber download names on macOS arm64 to avoid 404s on the CI runners.
-- Honor the diagrams backend when converting letter signature SVG assets.
-- Avoid markdown-escaping letter `source_dir` so Windows paths resolve correctly.
-- Prevent XeTeX fallback fonts from leaking past script transitions and prefer Noto Sans Symbols for arrows.
+- Playwright SVG conversion now handles `viewBox`-only SVGs to prevent blank PDFs.
+- Suppressed noisy Tectonic `lineno` UTF‑8 warnings and made console output encoding-safe.
+- XeTeX fallback transitions no longer leak across scripts; arrow glyphs prefer Noto Sans Symbols.
 - Convert common Unicode symbols to LaTeX math macros to avoid missing glyphs.
 
 ## [0.1.0] - 2025-12-20
