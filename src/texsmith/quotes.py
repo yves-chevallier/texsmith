@@ -7,7 +7,6 @@ import xml.etree.ElementTree as ElementTree
 
 from markdown import Extension, Markdown
 from markdown.inlinepatterns import InlineProcessor
-from markdown.util import AtomicString
 
 
 class _QuoteInlineProcessor(InlineProcessor):
@@ -20,7 +19,7 @@ class _QuoteInlineProcessor(InlineProcessor):
     ) -> tuple[ElementTree.Element, int, int]:
         text = match.group(1)
         element = ElementTree.Element("q")
-        element.text = AtomicString(text)
+        element.text = text
         return element, match.start(0), match.end(0)
 
 

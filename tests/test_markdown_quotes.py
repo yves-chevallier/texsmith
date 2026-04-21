@@ -32,3 +32,16 @@ def test_renderer_outputs_enquote_for_q_tags() -> None:
     latex = renderer.render(str(soup))
 
     assert "\\enquote{bonjour}" in latex
+
+
+def test_inline_formatting_inside_quotes() -> None:
+    html = render_markdown('" **bold** "', extensions=DEFAULT_MARKDOWN_EXTENSIONS).html
+    soup = BeautifulSoup(html, "html.parser")
+    q = soup.find("q")
+    assert q is not None
+    assert q.find("strong") is not None, "bold should be parsed inside quotes"
+
+    renderer = LaTeXRenderer()
+    latex = renderer.render(str(soup))
+    assert "\\enquote{" in latex
+    assert "\\textbf{bold}" in latex

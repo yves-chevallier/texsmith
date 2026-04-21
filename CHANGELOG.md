@@ -7,9 +7,9 @@ and the project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ## [Unreleased]
 
-### Added
+### Fixed
 
-- Nothing yet.
+- Inline formatting (bold, italic, etc.) inside quoted text (`"**bold**"`) is now correctly rendered — `AtomicString` was preventing further inline processing inside `<q>` elements.
 
 ## [0.2.2] - 2026-02-24
 
