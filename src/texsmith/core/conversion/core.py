@@ -454,14 +454,14 @@ def _render_document(
     if renderer is not None:
         try:
             rule_descriptions = list(renderer.describe_registered_rules())
-        except Exception:
-            rule_descriptions = []
+        except Exception as exc:
+            emitter.warning(f"Could not collect rule descriptions: {exc}")
     asset_map: dict[str, Path] = {}
     if renderer is not None:
         try:
             asset_map = {str(key): Path(path) for key, path in renderer.assets.items()}
-        except Exception:
-            asset_map = {}
+        except Exception as exc:
+            emitter.warning(f"Could not collect asset map: {exc}")
 
     return ConversionResult(
         latex_output=latex_output,
@@ -563,10 +563,9 @@ def _render_slot_fragments(
     """Render slot fragments, applying fallback converters when required."""
     formatter = LaTeXFormatter()
     formatter.legacy_latex_accents = legacy_latex_accents
-    formatter.default_code_engine = runtime_common.get("code", {}).get(
-        "engine", formatter.default_code_engine
-    )
-    style_override = runtime_common.get("code", {}).get("style", formatter.default_code_style)
+    code_opts = runtime_common.get("code") or {}
+    formatter.default_code_engine = code_opts.get("engine", formatter.default_code_engine)
+    style_override = code_opts.get("style", formatter.default_code_style)
     if not isinstance(style_override, str):
         style_override = str(style_override or "")
     formatter.default_code_style = style_override.strip() or formatter.default_code_style

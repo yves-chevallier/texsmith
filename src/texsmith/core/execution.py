@@ -23,7 +23,6 @@ class ExecutionContext:
     output_dir: Path | None = None
     template_overrides: dict[str, Any] = field(default_factory=dict)
     slot_requests: dict[str, str] = field(default_factory=dict)
-    fragments: list[str] = field(default_factory=list)
     language: str = ""
     bibliography_collection: BibliographyCollection | None = None
     bibliography_map: dict[str, dict[str, Any]] = field(default_factory=dict)

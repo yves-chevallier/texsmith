@@ -191,7 +191,6 @@ def resolve_execution_context(
         template_runtime=template_runtime,
         template_overrides=dict(overrides),
         slot_requests=slot_requests,
-        fragments=fragments_list,
         language=resolved_language,
         bibliography_collection=bibliography_collection,
         bibliography_map=bibliography_map,

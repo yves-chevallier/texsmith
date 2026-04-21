@@ -242,16 +242,7 @@ def _has_ancestor(node: NavigableString, *names: str) -> bool:
 
 
 def _allow_hyphenation(text: str) -> str:
-    """Allow hyphenation in long words.
-
-    TODO: This function is bad. Instead we should look into a dictionary
-    based hyphenation solution.
-    """
-    return text  # Temporary disable hyphenation handling
-
-    if len(text) < 50:
-        return text
-    return re.sub(r"(\b[^\W\d_]{2,}-)([^\W\d_]{7,})\b", r"\1\\allowhyphens \2", text)
+    return text
 
 
 def _prepare_plain_text(text: str, *, legacy_latex_accents: bool) -> str:

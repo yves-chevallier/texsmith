@@ -10,6 +10,14 @@ and the project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 ### Fixed
 
 - Inline formatting (bold, italic, etc.) inside quoted text (`"**bold**"`) is now correctly rendered — `AtomicString` was preventing further inline processing inside `<q>` elements.
+- Silent exception swallowing in post-render rule/asset collection now emits a diagnostic warning instead of discarding the error.
+
+### Changed
+
+- Removed dead code after the early `return` in `_allow_hyphenation` (unreachable lines).
+- Dropped the unused `fragments` field from `ExecutionContext`; fragment resolution was already propagated through `template_overrides`.
+- Deduplicated `runtime_common.get("code")` lookups in `_render_slot_fragments` into a single local variable.
+- Reverted an uncommitted injection of `template_overrides` into the Jinja render context (`runtime_common`) — it had no consumer and exposed internal state unnecessarily.
 
 ## [0.2.2] - 2026-02-24
 
