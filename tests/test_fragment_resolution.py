@@ -5,8 +5,6 @@ from __future__ import annotations
 from pathlib import Path
 from unittest.mock import MagicMock
 
-import pytest
-
 from texsmith.core.conversion.execution import _resolve_fragments_list
 from texsmith.core.documents import Document
 from texsmith.core.templates import load_template_runtime
@@ -45,12 +43,12 @@ class TestResolveFragmentsList:
     def test_dict_append_adds_to_end(self) -> None:
         runtime = _runtime_with_defaults(_DEFAULTS)
         result = _resolve_fragments_list(runtime, {"append": ["./my-logo"]}, [], [])
-        assert result == _DEFAULTS + ["./my-logo"]
+        assert result == [*_DEFAULTS, "./my-logo"]
 
     def test_dict_prepend_adds_to_start(self) -> None:
         runtime = _runtime_with_defaults(_DEFAULTS)
         result = _resolve_fragments_list(runtime, {"prepend": ["./header"]}, [], [])
-        assert result == ["./header"] + _DEFAULTS
+        assert result == ["./header", *_DEFAULTS]
 
     def test_dict_disable_removes_fragment(self) -> None:
         runtime = _runtime_with_defaults(_DEFAULTS)
@@ -60,9 +58,7 @@ class TestResolveFragmentsList:
 
     def test_dict_disable_multiple(self) -> None:
         runtime = _runtime_with_defaults(_DEFAULTS)
-        result = _resolve_fragments_list(
-            runtime, {"disable": ["ts-geometry", "ts-extra"]}, [], []
-        )
+        result = _resolve_fragments_list(runtime, {"disable": ["ts-geometry", "ts-extra"]}, [], [])
         assert "ts-geometry" not in result
         assert "ts-extra" not in result
         assert len(result) == len(_DEFAULTS) - 2
@@ -113,9 +109,7 @@ class TestResolveFragmentsList:
 
     def test_cli_disable_still_applies_with_dict_format(self) -> None:
         runtime = _runtime_with_defaults(_DEFAULTS)
-        result = _resolve_fragments_list(
-            runtime, {"append": ["./logo"]}, [], ["ts-extra"]
-        )
+        result = _resolve_fragments_list(runtime, {"append": ["./logo"]}, [], ["ts-extra"])
         assert "ts-extra" not in result
         assert "./logo" in result
 

@@ -220,10 +220,10 @@ def _resolve_fragments_list(
     """Compute the final fragment list after applying enable/disable toggles.
 
     ``override_fragments`` may be:
-    - a ``list`` – replaces the template defaults entirely (existing behaviour),
-    - a ``dict`` with optional keys ``append``, ``prepend``, and ``disable`` –
+    - a ``list`` - replaces the template defaults entirely (existing behaviour),
+    - a ``dict`` with optional keys ``append``, ``prepend``, and ``disable`` -
       modifies the template defaults without having to enumerate them all, or
-    - ``None`` – use the template defaults unchanged.
+    - ``None`` - use the template defaults unchanged.
     """
 
     def _clean_list(values: Any) -> list[str]:
