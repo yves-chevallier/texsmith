@@ -40,9 +40,13 @@ written into the build directory as `ts-*.sty` and loaded via
 
 ## Using fragments in documents
 
-Fragments are declared under the `press.fragments` list in front matter. Each
+Fragments are declared under the `press.fragments` key in front matter. Each
 entry is either the name of a built-in fragment or a path to a custom Jinja
 template (absolute or relative to the Markdown file).
+
+### Explicit list (replaces template defaults)
+
+Provide a plain list to replace the template's default fragment set entirely:
 
 ```yaml
 ---
@@ -57,6 +61,30 @@ press:
     value: 42         # variables consumed by foo.jinja.sty
 ---
 ```
+
+### Modifier dict (extends template defaults)
+
+When you only need to add or remove a few fragments without restating the full
+list, use the dict form with any combination of `append`, `prepend`, and
+`disable`:
+
+```yaml
+---
+press:
+  template: article
+  fragments:
+    append:
+      - ./fragments/heiglogo   # add a custom fragment at the end
+    prepend:
+      - ./fragments/header     # add a fragment at the start
+    disable:
+      - ts-geometry            # remove a specific built-in fragment
+---
+```
+
+All three keys are optional. Omitted keys leave the corresponding part of the
+default list unchanged. `disable` is applied first (before `prepend`/`append`),
+so the same fragment cannot appear in both `disable` and `prepend`/`append`.
 
 TeXSmith renders each fragment into the output directory and injects the
 corresponding `\usepackage{…}` lines into `\VAR{extra_packages}`.

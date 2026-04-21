@@ -77,8 +77,11 @@ def resolve_execution_context(
         _ensure_press_section().setdefault("title", document.extracted_title)
 
     if press_section:
-        if isinstance(press_section.get("fragments"), list):
-            overrides["fragments"] = list(press_section["fragments"])
+        raw_fragments = press_section.get("fragments")
+        if isinstance(raw_fragments, list):
+            overrides["fragments"] = list(raw_fragments)
+        elif isinstance(raw_fragments, dict):
+            overrides["fragments"] = dict(raw_fragments)
         if isinstance(press_section.get("callouts"), dict):
             overrides["callouts"] = dict(press_section["callouts"])
 
@@ -170,6 +173,8 @@ def resolve_execution_context(
         request.enable_fragments,
         request.disable_fragments,
     )
+    if isinstance(overrides.get("fragments"), dict):
+        overrides["fragments"] = fragments_list
 
     runtime_common: dict[str, object] = {
         "language": resolved_language,
@@ -213,13 +218,22 @@ def _resolve_fragments_list(
     enable: Sequence[str],
     disable: Sequence[str],
 ) -> list[str]:
-    """Compute the final fragment list after applying enable/disable toggles."""
+    """Compute the final fragment list after applying enable/disable toggles.
 
-    def _clean_list(values: Sequence[str] | None) -> list[str]:
+    ``override_fragments`` may be:
+    - a ``list`` – replaces the template defaults entirely (existing behaviour),
+    - a ``dict`` with optional keys ``append``, ``prepend``, and ``disable`` –
+      modifies the template defaults without having to enumerate them all, or
+    - ``None`` – use the template defaults unchanged.
+    """
+
+    def _clean_list(values: Any) -> list[str]:
+        if not values:
+            return []
+        if isinstance(values, str):
+            values = [values]
         seen: set[str] = set()
         cleaned: list[str] = []
-        if not values:
-            return cleaned
         for entry in values:
             name = str(entry).strip()
             if not name or name in seen:
@@ -228,13 +242,28 @@ def _resolve_fragments_list(
             cleaned.append(name)
         return cleaned
 
-    base: list[str] = []
-    if isinstance(override_fragments, list):
+    def _template_defaults() -> list[str]:
+        if runtime and runtime.extras:
+            fragments = runtime.extras.get("fragments")
+            if isinstance(fragments, list):
+                return _clean_list(fragments)
+        return []
+
+    if isinstance(override_fragments, dict):
+        base = _template_defaults()
+        disable_front_matter = _clean_list(override_fragments.get("disable"))
+        prepend_list = _clean_list(override_fragments.get("prepend"))
+        append_list = _clean_list(override_fragments.get("append"))
+
+        base = [e for e in base if e not in disable_front_matter]
+        base = [e for e in prepend_list if e not in base] + base
+        for entry in append_list:
+            if entry not in base:
+                base.append(entry)
+    elif isinstance(override_fragments, list):
         base = _clean_list(override_fragments)
-    elif runtime and runtime.extras:
-        fragments = runtime.extras.get("fragments")
-        if isinstance(fragments, list):
-            base = _clean_list(fragments)
+    else:
+        base = _template_defaults()
 
     enable_list = _clean_list(enable)
     disable_list = _clean_list(disable)
