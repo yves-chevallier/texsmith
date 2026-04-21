@@ -11,6 +11,7 @@ and the project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 - Inline formatting (bold, italic, etc.) inside quoted text (`"**bold**"`) is now correctly rendered — `AtomicString` was preventing further inline processing inside `<q>` elements.
 - Silent exception swallowing in post-render rule/asset collection now emits a diagnostic warning instead of discarding the error.
+- Nested list environments (`\begin{itemize}`) no longer appear glued to the parent item text on the same line; a newline is now inserted between the item content and any nested `\begin{itemize|enumerate|description}`.
 
 ### Changed
 

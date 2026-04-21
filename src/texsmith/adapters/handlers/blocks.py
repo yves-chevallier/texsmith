@@ -431,6 +431,23 @@ def render_blockquotes(element: Tag, context: RenderContext) -> None:
     element.replace_with(mark_processed(NavigableString(latex)))
 
 
+def _li_text(li: Tag) -> str:
+    """Collect text from a <li>, inserting newlines before nested list environments.
+
+    Lists are rendered innermost-first, so a nested <ul>/<ol> has already been
+    replaced by a NavigableString containing LaTeX by the time the parent <li>
+    is processed.  ``get_text()`` concatenates those strings without separators,
+    producing ``\\item text\\begin{itemize}`` on one line.  The regex below
+    inserts the missing newline so each nested environment starts on its own line.
+    """
+    text = li.get_text(strip=False).strip()
+    return re.sub(
+        r"(\S)(\\begin\{(?:itemize|enumerate|description)\})",
+        r"\1\n\2",
+        text,
+    )
+
+
 @renders(phase=RenderPhase.POST, name="lists", auto_mark=False)
 def render_lists(root: Tag, context: RenderContext) -> None:
     """Render ordered and unordered lists."""
@@ -445,9 +462,9 @@ def render_lists(root: Tag, context: RenderContext) -> None:
                 is_checked = checkbox_input.has_attr("checked")
                 checkboxes.append(1 if is_checked else -1)
                 checkbox_input.extract()
-                text = li.get_text(strip=False).strip()
+                text = _li_text(li)
             else:
-                text = li.get_text(strip=False).strip()
+                text = _li_text(li)
                 if text.startswith("[ ]"):
                     checkboxes.append(-1)
                     text = text[3:].strip()
