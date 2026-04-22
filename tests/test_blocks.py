@@ -23,6 +23,34 @@ def test_blockquote_rendering(renderer: LaTeXRenderer) -> None:
     assert "\\end{displayquote}" in latex
 
 
+def test_table_column_spec_uses_raggedright(renderer: LaTeXRenderer) -> None:
+    html = """
+    <table>
+        <tr><th>Header 1</th><th>Header 2</th></tr>
+        <tr><td>Value 1</td><td>Value 2</td></tr>
+    </table>
+    """
+    latex = renderer.render(html)
+    assert r">{\raggedright\arraybackslash}X" in latex
+    assert "\\begin{tabularx}" in latex
+    assert "\\linewidth" in latex
+
+
+def test_table_right_aligned_column_spec(renderer: LaTeXRenderer) -> None:
+    html = """
+    <table>
+        <tr>
+            <th style="text-align: left">Label</th>
+            <th style="text-align: right">Value</th>
+        </tr>
+        <tr><td>A</td><td>1</td></tr>
+    </table>
+    """
+    latex = renderer.render(html)
+    assert r">{\raggedright\arraybackslash}X" in latex
+    assert r">{\raggedleft\arraybackslash}X" in latex
+
+
 def test_blockquote_with_nested_table(renderer: LaTeXRenderer) -> None:
     html = """
     <blockquote>

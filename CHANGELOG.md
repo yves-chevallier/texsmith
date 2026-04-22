@@ -9,6 +9,8 @@ and the project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ### Fixed
 
+- HTML comments (`<!-- ... -->`) are now stripped before rendering and no longer appear verbatim in the LaTeX output.
+- `tabularx` column specifications now use `>{\raggedright\arraybackslash}X`, `>{\raggedleft\arraybackslash}X`, and `>{\centering\arraybackslash}X` for all columns (including the first), replacing the previous `l`/`X` split. This prevents text overflow in two-column (`twocolumn`) document layouts and improves line-breaking throughout.
 - Inline formatting (bold, italic, etc.) inside quoted text (`"**bold**"`) is now correctly rendered — `AtomicString` was preventing further inline processing inside `<q>` elements.
 - Silent exception swallowing in post-render rule/asset collection now emits a diagnostic warning instead of discarding the error.
 - Nested list environments (`\begin{itemize}`) no longer appear glued to the parent item text on the same line; a newline is now inserted between the item content and any nested `\begin{itemize|enumerate|description}`.

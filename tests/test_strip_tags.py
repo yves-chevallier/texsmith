@@ -39,6 +39,29 @@ def test_strip_default_html_structure(renderer: LaTeXRenderer) -> None:
     assert "Content" in latex
 
 
+def test_html_comment_stripped(renderer: LaTeXRenderer) -> None:
+    html = "<!-- This is a comment --><p>Hello</p>"
+    latex = renderer.render(html)
+    assert "This is a comment" not in latex
+    assert "Hello" in latex
+
+
+def test_html_comment_between_paragraphs_stripped(renderer: LaTeXRenderer) -> None:
+    html = "<p>Before</p><!-- hidden note --><p>After</p>"
+    latex = renderer.render(html)
+    assert "hidden note" not in latex
+    assert "Before" in latex
+    assert "After" in latex
+
+
+def test_html_comment_inside_paragraph_stripped(renderer: LaTeXRenderer) -> None:
+    html = "<p>Start<!-- inline comment -->End</p>"
+    latex = renderer.render(html)
+    assert "inline comment" not in latex
+    assert "Start" in latex
+    assert "End" in latex
+
+
 def test_strip_custom_class_rule(renderer: LaTeXRenderer) -> None:
     html = """
     <body>
