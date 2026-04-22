@@ -42,6 +42,13 @@
 % far worse than a slightly loose line.  \emergencystretch lets TeX add extra
 % inter-word stretch as a last resort before declaring an overfull box.
 \setlength{\emergencystretch}{3em}
+% Forbid widows and orphans of 1 or 2 lines pushed to the next column/page.
+% \widowpenalties N p1..pN: p1=penalty when last 1 line is alone at top,
+% p2=when last 2 lines are alone, etc.  10000 = forbidden, 150 = default.
+% \clubpenalties: same logic for first lines left alone at the bottom.
+\widowpenalties 3 10000 10000 150
+\clubpenalties  3 10000 10000 150
+\displaywidowpenalty 10000
 % Restore the single-column abstract style (small font + quotation indentation).
 % The article class degrades \begin{abstract} to a bare \section* when the
 % twocolumn class option is in effect; we manage column switching manually
