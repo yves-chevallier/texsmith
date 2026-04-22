@@ -38,6 +38,10 @@
 \BLOCK{ endif }
 
 \BLOCK{ if column_count > 1 }
+% In two-column mode an overfull line bleeds into the adjacent column, which is
+% far worse than a slightly loose line.  \emergencystretch lets TeX add extra
+% inter-word stretch as a last resort before declaring an overfull box.
+\setlength{\emergencystretch}{3em}
 % Restore the single-column abstract style (small font + quotation indentation).
 % The article class degrades \begin{abstract} to a bare \section* when the
 % twocolumn class option is in effect; we manage column switching manually
