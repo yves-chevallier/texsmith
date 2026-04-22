@@ -11,7 +11,7 @@ import re
 from typing import TYPE_CHECKING, Any
 
 from bs4 import BeautifulSoup, FeatureNotFound
-from bs4.element import NavigableString, Tag
+from bs4.element import Comment, NavigableString, Tag
 from pybtex.exceptions import PybtexError
 from slugify import slugify
 import yaml
@@ -204,6 +204,9 @@ def extract_slot_fragments(
         soup = BeautifulSoup(html, parser_backend)
     except FeatureNotFound:
         soup = BeautifulSoup(html, "html.parser")
+
+    for comment in soup.find_all(string=lambda text: isinstance(text, Comment)):
+        comment.extract()
 
     container = soup.body or soup
     document_html = "".join(str(node) for node in container.contents)

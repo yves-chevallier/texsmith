@@ -9,7 +9,7 @@ and the project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ### Fixed
 
-- HTML comments (`<!-- ... -->`) are now stripped before rendering and no longer appear verbatim in the LaTeX output.
+- HTML comments (`<!-- ... -->`) are now stripped before rendering and no longer appear verbatim in the LaTeX output. The fix operates in two places: `extract_slot_fragments` removes comments from the parsed DOM before node serialisation (where `str(comment_node)` would otherwise silently drop the `<!--`/`-->` delimiters and expose the raw comment text), and `discard_unwanted` removes any surviving comments during the renderer PRE phase.
 - `tabularx` column specifications now use `>{\raggedright\arraybackslash}X`, `>{\raggedleft\arraybackslash}X`, and `>{\centering\arraybackslash}X` for all columns (including the first), replacing the previous `l`/`X` split. This prevents text overflow in two-column (`twocolumn`) document layouts and improves line-breaking throughout.
 - Inline formatting (bold, italic, etc.) inside quoted text (`"**bold**"`) is now correctly rendered — `AtomicString` was preventing further inline processing inside `<q>` elements.
 - Silent exception swallowing in post-render rule/asset collection now emits a diagnostic warning instead of discarding the error.
