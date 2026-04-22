@@ -3,7 +3,6 @@
 \BLOCK{ set column_count = columns|default(1)|int }
 \BLOCK{ set option_parts = [] }
 \BLOCK{ if combined_docclass_options }\BLOCK{ set option_parts = option_parts + [combined_docclass_options] }\BLOCK{ endif }
-\BLOCK{ if column_count > 1 }\BLOCK{ set option_parts = option_parts + ['twocolumn'] }\BLOCK{ endif }
 \BLOCK{ set effective_documentclass_options = '[' ~ option_parts|join(',') ~ ']' if option_parts else '' }
 \documentclass\VAR{effective_documentclass_options}{article}
 
@@ -21,7 +20,7 @@
   \let\@evenhead\@empty
   \def\@oddfoot{%
     \hfil
-    % Afficher le numéro seulement si le document a plus d’une page
+    % Afficher le numéro seulement si le document a plus d'une page
     \ifnum\getpagerefnumber{LastPage}>1\relax
       \thepage
     \fi
@@ -39,8 +38,10 @@
 \BLOCK{ endif }
 
 \BLOCK{ if column_count > 1 }
-% In twocolumn mode the article class degrades abstract to \section* — restore
-% the standard single-column rendering (small font, quoted indentation).
+% Restore the single-column abstract style (small font + quotation indentation).
+% The article class degrades \begin{abstract} to a bare \section* when the
+% twocolumn class option is in effect; we manage column switching manually
+% below with \twocolumn[...] so that option is not set here.
 \renewenvironment{abstract}{%
   \small
   \begin{center}{\bfseries\abstractname}\end{center}%
@@ -59,9 +60,14 @@
 \setcounter{secnumdepth}{-1}
 \BLOCK{ endif }
 
-\BLOCK{ if column_count > 1 and has_title_metadata }
+\BLOCK{ if column_count > 1 }
+% Two-column layout: \maketitle is called outside the twocolumn class option so
+% it does not internally invoke \twocolumn — \@thanks remains populated and is
+% flushed explicitly after the block so affiliation footnotes are preserved.
 \twocolumn[{%
+\BLOCK{ if has_title_metadata }
 \maketitle
+\BLOCK{ endif }
 \BLOCK{ if abstract }
 \begin{abstract}
 \VAR{abstract}
@@ -69,6 +75,7 @@
 \vspace{1em}
 \BLOCK{ endif }
 }]
+\makeatletter\@thanks\let\@thanks\@empty\makeatother
 \BLOCK{ else }
 \BLOCK{ if has_title_metadata }
 \maketitle
