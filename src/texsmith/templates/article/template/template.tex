@@ -32,7 +32,7 @@
 \BLOCK{ set has_title_metadata = title|default('')|trim }
 \BLOCK{ set effective_date = date|default('')|trim }
 \BLOCK{ if has_title_metadata }
-\title{\VAR{title}\BLOCK{ if subtitle }\\\large \VAR{subtitle}\BLOCK{ endif }}
+\title{\VAR{title}\BLOCK{ if subtitle }\\[0.5em]\large \VAR{subtitle}\BLOCK{ endif }}
 \BLOCK{ if author }\author{\VAR{author}}\BLOCK{ else }\author{}\BLOCK{ endif }
 \BLOCK{ if effective_date }\date{\VAR{date}}\BLOCK{ else }\date{\today}\BLOCK{ endif }
 \BLOCK{ endif }
