@@ -47,20 +47,12 @@
   \begin{center}{\bfseries\abstractname}\end{center}%
   \begin{quotation}%
 }{\end{quotation}}
-% \thanks{} accumulator for the two-column heading block.
-% \maketitle empties \@thanks inside the \twocolumn[...] vbox before
-% \footnotetext can reach the page footer.  We redirect \thanks to a
-% separate token register and flush it after the heading block.
-\makeatletter
-\newcommand{\texsmith@affils}{}
-\renewcommand{\thanks}[1]{%
-  \footnotemark
-  \protected@edef\texsmith@affils{%
-    \texsmith@affils
-    \noexpand\footnotetext[\the\c@footnote]{#1}%
-  }%
-}
-\makeatother
+% In two-column mode the standard \thanks footnote mechanism breaks: the
+% \@thanks flush happens inside the \twocolumn[...] vbox where \footnotetext
+% never reaches the page footer.  Replace \thanks with a simple inline
+% affiliation: a line break followed by small text, placed directly under
+% the author name — the standard IEEE/ACM layout.
+\renewcommand{\thanks}[1]{\\{\small #1}}
 \BLOCK{ endif }
 
 \begin{document}
@@ -89,7 +81,6 @@
 \vspace{1em}
 \BLOCK{ endif }
 }]
-\makeatletter\texsmith@affils\makeatother
 \BLOCK{ else }
 \BLOCK{ if has_title_metadata }
 \maketitle
