@@ -47,18 +47,39 @@
   \begin{center}{\bfseries\abstractname}\end{center}%
   \begin{quotation}%
 }{\end{quotation}}
-% \thanks{} accumulator for the two-column heading block.
-% \maketitle empties \@thanks inside the \twocolumn[...] vbox before
-% \footnotetext can reach the page footer.  We redirect \thanks to a
-% separate token register and flush it after the heading block.
+% \thanks{} footnote fix for two-column layout.
+% Three bugs defeat the naive toks approach:
+%   1. \the\c@footnote is stored literally in toks, not expanded — at replay
+%      time article.cls has reset c@footnote to 0 via \@addtoreset{footnote}{page}
+%      triggered by the \shipout inside \twocolumn.
+%   2. \noexpand before \footnotetext in a toks list corrupts \@ifnextchar
+%      scanning when the list is replayed.
+%   3. \@maketitle temporarily sets \thefootnote to \@fnsymbol; at replay time
+%      that redefinition is gone, so \footnotetext[N] would use arabic numbering
+%      and the marks in the title and the text at the bottom would not match.
+% Fix: store the mark string and affiliation text in globally-defined csname
+% macros indexed by a counter, then replay with \@footnotetext directly.
 \makeatletter
-\newcommand{\texsmith@affils}{}
+\newcount\ts@affilcnt
+\newcount\ts@loopcnt
 \renewcommand{\thanks}[1]{%
-  \footnotemark
-  \protected@edef\texsmith@affils{%
-    \texsmith@affils
-    \noexpand\footnotetext[\the\c@footnote]{#1}%
-  }%
+  \stepcounter{footnote}%
+  \protected@xdef\@thefnmark{\thefootnote}%
+  \@footnotemark
+  \global\advance\ts@affilcnt\@ne
+  % xdef: globally store the current mark string (e.g. * or †) as a literal
+  \expandafter\xdef\csname ts@affilM\the\ts@affilcnt\endcsname{\@thefnmark}%
+  % gdef: globally store the affiliation text verbatim (no expansion)
+  \expandafter\gdef\csname ts@affilT\the\ts@affilcnt\endcsname{#1}%
+}
+\newcommand\tsreplayfn{%
+  \ts@loopcnt\z@
+  \loop
+    \advance\ts@loopcnt\@ne
+    \ifnum\ts@loopcnt>\ts@affilcnt\else
+      \xdef\@thefnmark{\csname ts@affilM\the\ts@loopcnt\endcsname}%
+      \@footnotetext{\csname ts@affilT\the\ts@loopcnt\endcsname}%
+  \repeat
 }
 \makeatother
 \BLOCK{ endif }
@@ -89,7 +110,7 @@
 \vspace{1em}
 \BLOCK{ endif }
 }]
-\makeatletter\texsmith@affils\makeatother
+\tsreplayfn
 \BLOCK{ else }
 \BLOCK{ if has_title_metadata }
 \maketitle
