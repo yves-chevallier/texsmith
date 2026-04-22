@@ -38,11 +38,18 @@
 \BLOCK{ if effective_date }\date{\VAR{date}}\BLOCK{ else }\date{\today}\BLOCK{ endif }
 \BLOCK{ endif }
 
+\BLOCK{ if column_count > 1 }
+% In twocolumn mode the article class degrades abstract to \section* — restore
+% the standard single-column rendering (small font, quoted indentation).
+\renewenvironment{abstract}{%
+  \small
+  \begin{center}{\bfseries\abstractname}\end{center}%
+  \begin{quotation}%
+}{\end{quotation}}
+\BLOCK{ endif }
+
 \begin{document}
 
-\BLOCK{ if has_title_metadata }
-\maketitle
-\BLOCK{ endif }
 \BLOCK{ if not page_numbers }
 \pagenumbering{gobble}
 \thispagestyle{empty}
@@ -52,10 +59,25 @@
 \setcounter{secnumdepth}{-1}
 \BLOCK{ endif }
 
+\BLOCK{ if column_count > 1 and has_title_metadata }
+\twocolumn[{%
+\maketitle
 \BLOCK{ if abstract }
 \begin{abstract}
 \VAR{abstract}
 \end{abstract}
+\vspace{1em}
+\BLOCK{ endif }
+}]
+\BLOCK{ else }
+\BLOCK{ if has_title_metadata }
+\maketitle
+\BLOCK{ endif }
+\BLOCK{ if abstract }
+\begin{abstract}
+\VAR{abstract}
+\end{abstract}
+\BLOCK{ endif }
 \BLOCK{ endif }
 \BLOCK{ if toc }
 \tableofcontents
