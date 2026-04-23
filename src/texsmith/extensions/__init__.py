@@ -115,6 +115,12 @@ _EXTENSIONS: dict[str, ExtensionSpec] = {
         renderer_entry="texsmith.progressbar:register_renderer",
         description="Renders `[=50%]` progress blocks via the LaTeX progressbar package.",
     ),
+    "yaml_tables": ExtensionSpec(
+        slug="yaml_tables",
+        markdown_entry="texsmith.extensions.tables:YamlTableExtension",
+        renderer_entry="texsmith.extensions.tables:register_renderer",
+        description="YAML-described tables with multirow/multicolumn support.",
+    ),
 }
 
 

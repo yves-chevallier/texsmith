@@ -91,6 +91,7 @@ def _collect_packages(context: Mapping[str, object]) -> list[tuple[str, str | No
         elif engine != "xelatex":
             _maybe_add(True, "soul", None)
     _maybe_add("\\progressbar" in content, "progressbar", None)
+    _maybe_add("\\multirow" in content, "multirow", None)
     _maybe_add(
         "\\enquote{" in content
         or "\\begin{displayquote}" in lowered
@@ -107,15 +108,13 @@ def _collect_packages(context: Mapping[str, object]) -> list[tuple[str, str | No
         None,
     )
     has_tabularx = "tabularx" in lowered
-    columns_value = context.get("columns") if hasattr(context, "get") else None
-    try:
-        column_count = int(columns_value) if columns_value is not None else 1
-    except (TypeError, ValueError):
-        column_count = 1
-    if has_tabularx and column_count > 1:
-        _maybe_add(True, "tabularx", None)
-    else:
-        _maybe_add(has_tabularx, "ltablex", None)
+    # ``ltablex`` used to wrap ``tabularx`` in ``longtable`` under the hood
+    # to let tables span pages. The side effect was a phantom increment of
+    # the ``table`` counter after every ``tabularx`` (via the internal
+    # ``longtable`` pass), which made caption numbering jump (e.g. 1, 2, 4).
+    # Plain ``tabularx`` is well-defined and doesn't suffer from that, so we
+    # prefer it and leave explicit page-spanning to ``longtable``.
+    _maybe_add(has_tabularx, "tabularx", None)
 
     math_tokens = (
         "\\begin{equation*}",

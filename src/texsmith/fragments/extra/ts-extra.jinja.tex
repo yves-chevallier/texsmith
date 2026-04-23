@@ -1,12 +1,12 @@
 \BLOCK{ if ts_extra_packages }
-\BLOCK{- set ns = namespace(has_ltablex=False) }
+\BLOCK{- set ns = namespace(has_tabularx=False) }
 \BLOCK{ for name, options in ts_extra_packages }
-\BLOCK{- if name == "ltablex" -}
-\BLOCK{- set ns.has_ltablex = True -}
+\BLOCK{- if name == "tabularx" -}
+\BLOCK{- set ns.has_tabularx = True -}
 \BLOCK{- endif }
 \usepackage\BLOCK{ if options }[\VAR{options}]\BLOCK{ endif }{\VAR{name}}
 \BLOCK{ endfor }
-\BLOCK{- if ns.has_ltablex }
+\BLOCK{- if ns.has_tabularx }
 \newcolumntype{Y}{>{\centering\arraybackslash}X}
 \newcolumntype{Z}{>{\raggedleft\arraybackslash}X}
 \BLOCK{- endif }
