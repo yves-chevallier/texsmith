@@ -92,6 +92,9 @@ def _collect_packages(context: Mapping[str, object]) -> list[tuple[str, str | No
             _maybe_add(True, "soul", None)
     _maybe_add("\\progressbar" in content, "progressbar", None)
     _maybe_add("\\multirow" in content, "multirow", None)
+    # ``marginnote`` is preferred over LaTeX's native ``\marginpar`` because
+    # it works inside floats and does not warn on overfull margin runs.
+    _maybe_add("\\marginnote" in content, "marginnote", None)
     _maybe_add(
         "\\enquote{" in content
         or "\\begin{displayquote}" in lowered

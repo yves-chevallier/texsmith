@@ -121,6 +121,12 @@ _EXTENSIONS: dict[str, ExtensionSpec] = {
         renderer_entry="texsmith.extensions.tables:register_renderer",
         description="YAML-described tables with multirow/multicolumn support.",
     ),
+    "marginnote": ExtensionSpec(
+        slug="marginnote",
+        markdown_entry="texsmith.extensions.marginnote:MarginNoteExtension",
+        renderer_entry="texsmith.extensions.marginnote:register_renderer",
+        description="Inline `{margin}[note]{side?}` syntax rendered as LaTeX margin notes.",
+    ),
 }
 
 

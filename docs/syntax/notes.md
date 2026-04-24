@@ -27,12 +27,16 @@ The syntax for these helpers follows a few rules:
 `{index}[...]` Index entries
 : Inserts one or more index terms. They stay invisible in HTML yet show up as tags in Lunr and as `\index{}` entries in LaTeX.
 
+`{margin}[...]{side?}` Margin notes
+: Renders as `\marginnote{…}` from the LaTeX `marginnote` package (auto-loaded on first use). The optional suffix `{l}` / `{r}` / `{o}` / `{i}` forces a margin; without it the note follows the document's default (right in `oneside`, outer in `twoside`).
+
 Quick reference:
 
 - `[](:)` Add content block
 - `@()` Cross-reference helper
 - `^[]` / `\cite{}` Bibliographic citation
 - `{index}[term]` / `\index{}` Index entry
+- `{margin}[note]{l|r|o|i}?` / `\marginnote{}` Margin note
 
 ## Other extensions
 
@@ -61,6 +65,36 @@ Do you know the Gulliver's Travels tale about the egg dispute?
 {index}[byte order][endianness]{i}
 {index:physics}[relativity]{b}
 ```
+
+## Margin notes
+
+Drop short asides into the margin with the `{margin}[…]{side?}` inline syntax.
+An optional single-letter suffix selects the side:
+
+| Suffix | Semantics                                             |
+| ------ | ----------------------------------------------------- |
+| (none) | document default — right in `oneside`, outer in `twoside` |
+| `{l}`  | force the left margin (scoped `\reversemarginpar`)    |
+| `{r}`  | force the right margin                                |
+| `{o}`  | outer — MVP alias of `{r}`                            |
+| `{i}`  | inner — MVP alias of `{l}`                            |
+
+```md
+Hooke's law{margin}[linear only at small strain] holds
+below the yield point, but non-linear effects{margin}[see
+**Prandtl 1921** for the classical derivation]{l} dominate
+above it.
+```
+
+The note compiles down to a `\marginnote{…}` call from the LaTeX `marginnote`
+package, which TeXSmith's `ts-extra` fragment auto-loads when it spots the
+command in the rendered output. A forced left side wraps the call in a
+group that locally applies `\reversemarginpar`, so subsequent notes go
+back to the default placement.
+
+Inline Markdown inside the note (`**bold**`, `*italic*`, `` `code` ``,
+`[links](…)`) is preserved and runs through the standard inline handlers
+on the way to LaTeX.
 
 ## Citations
 

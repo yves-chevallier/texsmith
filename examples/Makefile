@@ -14,6 +14,7 @@ EXAMPLES := \
 	fonts \
 	index \
 	letter \
+	marginnote \
 	markdown \
 	math \
 	mermaid \

@@ -31,7 +31,6 @@ Roadmap and development notes for TeXSmith. I keep this file as a running checkl
 - [ ] Support for `tocloft` package to customize list of figures/tables
 - [ ] Support for `enumitem` package to customize lists
 - [ ] Develop submodules as standalone plugins
-  - [ ] Marginalia (`marginpar` package with footnotes syntax)
   - [ ] Epigraph Plugin
   - [ ] Letterine
   - [ ] Custom variables to insert in a document using mustaches

@@ -49,6 +49,7 @@ DEFAULT_MARKDOWN_EXTENSIONS = [
     "texsmith.extensions.smallcaps:SmallCapsExtension",
     "texsmith.extensions.mermaid:MermaidExtension",
     "texsmith.progressbar:ProgressBarExtension",
+    "texsmith.extensions.marginnote:MarginNoteExtension",
     "texsmith.extensions.tables:YamlTableExtension",
     "texsmith.quotes:TexsmithQuotesExtension",
     "md_in_html",
