@@ -227,7 +227,7 @@ def _total_width_spec(width: str) -> str | None:
 def _choose_env(table: Table, leaves: list[_ResolvedLeaf], total_width: str | None) -> TableEnv:
     if table.settings.long is True:
         return "longtable"
-    has_explicit_x = any(leaf.width_raw == "X" for leaf in leaves)
+    has_explicit_x = any(leaf.width_raw in ("X", "auto") for leaf in leaves)
     if has_explicit_x:
         return "tabularx"
     if total_width is not None and any(leaf.width_raw is None for leaf in leaves):
@@ -244,9 +244,10 @@ def _column_spec(leaf: _ResolvedLeaf, env: TableEnv, *, use_x_for_auto: bool) ->
     width = _normalise_width(leaf.width_raw)
     wrapper = _ALIGN_WRAPPER[leaf.align]
 
-    # Explicit ``X`` marker: always emit a tabularx ``X`` column regardless
-    # of group/auto rules.
-    if leaf.width_raw == "X":
+    # Explicit ``X`` or ``auto`` markers: always emit a tabularx ``X`` column.
+    # ``auto`` is treated as synonymous with ``X`` — both signal a column that
+    # should absorb the remaining horizontal space of the table.
+    if leaf.width_raw in ("X", "auto"):
         return f"{wrapper}X"
 
     if width is None:
@@ -265,14 +266,16 @@ def _build_colspec(leaves: list[_ResolvedLeaf], env: TableEnv) -> str:
     # In ``tabularx``, only columns that need to absorb the remaining width
     # should become ``X``. Markers that designate a column as flexible:
     #
-    # 1. ``width: X`` — explicit X column.
+    # 1. ``width: X`` or ``width: auto`` — explicit flexible column.
     # 2. ``width-group: <id>`` — equal-width X columns within the group.
     #
     # When at least one such marker exists, columns without a marker AND
     # without an explicit width keep their natural width (no X). When no
     # marker exists at all, every auto column becomes ``X`` so the table
     # still fills the declared total width — backward-compatible default.
-    has_marker = any(leaf.width_group is not None or leaf.width_raw == "X" for leaf in leaves)
+    has_marker = any(
+        leaf.width_group is not None or leaf.width_raw in ("X", "auto") for leaf in leaves
+    )
     return "".join(
         _column_spec(
             leaf,

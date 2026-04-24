@@ -259,6 +259,8 @@ def render_details_admonitions(element: Tag, context: RenderContext) -> None:
 )
 def render_texsmith_callouts(element: Tag, context: RenderContext) -> None:
     """Convert promoted callout nodes once their children have rendered."""
+    if element.attrs.pop("data-callout-skip", False):
+        return
     classes = gather_classes(element.get("class"))
     title = element.attrs.pop("data-callout-title", "")
     _render_admonition(element, context, classes=classes, title=title)

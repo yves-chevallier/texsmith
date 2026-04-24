@@ -103,7 +103,10 @@ class LatexRawExtension(Extension):
 
     def extendMarkdown(self, md: Markdown) -> None:  # type: ignore[override]  # noqa: N802
         md.preprocessors.register(_LatexRawPreprocessor(md), "texsmith_latex_raw", priority=27)
-        pattern = r"\{latex\}\[(?P<payload>[^\]]+)\]"
+        # The payload allows one level of nested ``[...]`` so common LaTeX
+        # constructs like ``\cite[prenote]{key}`` or ``\ref[...]`` survive
+        # the inline match without being truncated at the first ``]``.
+        pattern = r"\{latex\}\[(?P<payload>(?:[^\[\]]|\[[^\[\]]*\])+)\]"
         processor = _LatexInlineProcessor(pattern, md)
         md.inlinePatterns.register(processor, "texsmith_latex_inline", 181)
 

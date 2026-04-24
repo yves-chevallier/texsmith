@@ -60,9 +60,10 @@ def _validate_width(raw: Any) -> str:
     """Return a cleaned width specification or raise an error.
 
     Accepts:
-    - ``"auto"``: no fixed width (cell is sized naturally).
-    - ``"X"`` (case-insensitive): explicit ``tabularx`` ``X`` column —
-      the column absorbs whatever horizontal space is left.
+    - ``"auto"`` or ``"X"`` (case-insensitive): explicit ``tabularx`` ``X``
+      column — the column absorbs whatever horizontal space is left. When
+      at least one column in the table is marked this way, columns that
+      declare no ``width`` keep their natural (content-sized) width.
     - ``"NN%"``: percentage of the table width.
     - any other string: passed through as an opaque LaTeX length.
     """

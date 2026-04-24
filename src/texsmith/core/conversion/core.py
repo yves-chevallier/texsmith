@@ -507,6 +507,7 @@ def _build_runtime_common(
         "hash_assets": strategy.hash_assets,
         "language": binder_context.language,
         "emitter": emitter,
+        "template_overrides": dict(binder_context.template_overrides),
     }
     if isinstance(http_user_agent, str) and http_user_agent.strip():
         runtime_common["http_user_agent"] = http_user_agent.strip()

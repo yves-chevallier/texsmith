@@ -15,7 +15,10 @@ the appropriate ``tabular`` / ``tabularx`` / ``longtable`` output:
 from __future__ import annotations
 
 import html as html_lib
+import re
 from xml.etree import ElementTree as ET
+
+import markdown as _md
 
 from .layout import TableLayout, compute_layout
 from .schema import (
@@ -83,6 +86,61 @@ def _format_scalar(value: object) -> str:
     return str(value)
 
 
+_INLINE_MARKER_RE = re.compile(r"[`*_~\[]")
+_P_WRAP_RE = re.compile(r"\A<p>(.*)</p>\Z", flags=re.DOTALL)
+_INLINE_MD: _md.Markdown | None = None
+
+
+def _inline_markdown_to_html(text: str) -> str:
+    """Convert inline markdown syntax in ``text`` to an HTML fragment.
+
+    The leading ``<p>...</p>`` wrapper that python-markdown emits for any
+    standalone text is stripped so the result can be spliced back into a
+    ``<td>`` / ``<th>`` that already owns the paragraph-level context.
+    """
+    global _INLINE_MD
+    if _INLINE_MD is None:
+        _INLINE_MD = _md.Markdown(extensions=[], output_format="html")
+    _INLINE_MD.reset()
+    html = _INLINE_MD.convert(text).strip()
+    match = _P_WRAP_RE.match(html)
+    if match:
+        return match.group(1)
+    return html
+
+
+def _set_inline_content(element: ET.Element, text: str) -> None:
+    """Populate ``element`` with ``text``, honouring inline markdown.
+
+    Supports inline code (``\\`x\\```), emphasis (``*x*``, ``_x_``), strong
+    (``**x**``), strikethrough and inline links — whatever python-markdown's
+    default inline parser produces. The resulting nodes flow through the
+    standard TeXSmith handler chain (``render_inline_code`` converts ``<code>``
+    to ``\\texttt{…}`` etc.) so the LaTeX output picks them up automatically.
+
+    Falls back to plain text assignment when no inline markers are detected
+    or when the generated fragment cannot be parsed back as XML.
+    """
+    if not text:
+        element.text = text
+        return
+    if _INLINE_MARKER_RE.search(text) is None:
+        element.text = text
+        return
+    fragment = _inline_markdown_to_html(text)
+    if "<" not in fragment:
+        element.text = text
+        return
+    try:
+        wrapped = ET.fromstring(f"<wrap>{fragment}</wrap>")
+    except ET.ParseError:
+        element.text = text
+        return
+    element.text = wrapped.text
+    for child in wrapped:
+        element.append(child)
+
+
 # ---------------------------------------------------------------------------
 # HTML element helpers
 # ---------------------------------------------------------------------------
@@ -107,7 +165,7 @@ def _append_cell(
         cell.set("data-ts-align", leaf.align)
     if leaf.value is None:
         cell.set("data-ts-empty", "1")
-    cell.text = _format_scalar(leaf.value)
+    _set_inline_content(cell, _format_scalar(leaf.value))
 
 
 # ---------------------------------------------------------------------------
@@ -126,7 +184,7 @@ def _render_header(
         for cell in level_cells:
             th = ET.SubElement(tr, "th", {"scope": "col"})
             _set_span_attrs(th, int(cell["rowspan"]), int(cell["colspan"]))
-            th.text = str(cell["text"])
+            _set_inline_content(th, str(cell["text"]))
 
 
 def _render_data_row(
@@ -140,7 +198,7 @@ def _render_data_row(
     tr.set("data-ts-role", role)
 
     label_th = ET.SubElement(tr, "th", {"scope": "row"})
-    label_th.text = label
+    _set_inline_content(label_th, label)
 
     for col_index, leaf in enumerate(leaves):
         if leaf.absorbed:
