@@ -187,3 +187,27 @@ def test_ts_extra_template_skips_marginfont_without_marginnote() -> None:
     template = env.get_template(template_path.name)
     rendered = template.render(ts_extra_packages=[("float", None)])
     assert "marginfont" not in rendered
+
+
+def test_ts_extra_template_clamps_marginparwidth_when_marginnote_loaded() -> None:
+    """The preamble injects an ``\\AtBeginDocument`` clamp on ``\\marginparwidth``.
+
+    The guard keeps ``\\marginnote`` calls inside whatever horizontal space
+    the document's geometry actually reserves, so margin notes never bleed
+    past the page edge when the right margin is narrower than LaTeX's
+    default ``\\marginparwidth`` (~3.9cm).
+    """
+    from texsmith.core.templates.base import _build_environment
+    from texsmith.fragments.extra import ExtraFragment
+
+    template_path = ExtraFragment.pieces[0].template_path
+    env = _build_environment(template_path.parent)
+    template = env.get_template(template_path.name)
+    rendered = template.render(ts_extra_packages=[("marginnote", None)])
+    assert r"\AtBeginDocument{%" in rendered
+    assert r"\setlength{\marginparwidth}{\tsmarginparavail}" in rendered
+    # The clamp must consider both odd (recto) and even (verso) sides so the
+    # smaller physical margin constrains the width in twoside layouts.
+    assert r"\if@twoside" in rendered
+    assert r"\evensidemargin" in rendered
+    assert r"\oddsidemargin" in rendered

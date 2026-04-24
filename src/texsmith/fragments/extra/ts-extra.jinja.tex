@@ -18,5 +18,29 @@
 % without overflowing. Override with ``\renewcommand*{\marginfont}{…}`` in a
 % custom preamble snippet if you need a different look.
 \renewcommand*{\marginfont}{\footnotesize}
+% Clamp \marginparwidth so margin notes never overflow the page edge, even
+% when the user's geometry reserves less horizontal space than LaTeX's
+% default \marginparwidth (~3.9cm). We compute the space actually available
+% on each side (recto / verso) at \AtBeginDocument time — once geometry has
+% finalised \textwidth / \oddsidemargin / \evensidemargin — and keep the
+% smaller of the two so the note fits on both sides in twoside documents.
+\newlength{\tsmarginparavail}
+\newlength{\tsmarginparalt}
+\makeatletter
+\AtBeginDocument{%
+  \setlength{\tsmarginparavail}{\dimexpr\paperwidth-\textwidth-1in-\oddsidemargin-\marginparsep\relax}%
+  \ifdim\tsmarginparavail<\z@\setlength{\tsmarginparavail}{\z@}\fi
+  \if@twoside
+    \setlength{\tsmarginparalt}{\dimexpr1in+\evensidemargin-\marginparsep\relax}%
+    \ifdim\tsmarginparalt<\z@\setlength{\tsmarginparalt}{\z@}\fi
+    \ifdim\tsmarginparalt<\tsmarginparavail
+      \setlength{\tsmarginparavail}{\tsmarginparalt}%
+    \fi
+  \fi
+  \ifdim\tsmarginparavail<\marginparwidth
+    \setlength{\marginparwidth}{\tsmarginparavail}%
+  \fi
+}
+\makeatother
 \BLOCK{- endif }
 \BLOCK{ endif }

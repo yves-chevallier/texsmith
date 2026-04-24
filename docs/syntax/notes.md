@@ -96,6 +96,25 @@ Inline Markdown inside the note (`**bold**`, `*italic*`, `` `code` ``,
 `[links](…)`) is preserved and runs through the standard inline handlers
 on the way to LaTeX.
 
+### Width
+
+Margin notes never bleed past the page edge. Alongside `\usepackage{marginnote}`,
+`ts-extra` injects an `\AtBeginDocument` hook that clamps `\marginparwidth`
+to whatever horizontal space the document's geometry actually reserves
+for the margin — the smaller of the recto outer margin and, in `twoside`
+documents, the verso outer margin as well. That means a `geometry` block
+like
+
+```yaml
+press:
+  geometry:
+    left: 3cm
+    right: 4cm
+```
+
+automatically yields notes that fit in the narrower (3 cm) side on verso
+pages. No manual `marginparwidth=…` tweak needed.
+
 ### Font size
 
 Because printed margins are narrow, margin notes default to `\footnotesize`
