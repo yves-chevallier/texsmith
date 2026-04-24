@@ -50,6 +50,13 @@ _FENCE_OPEN_RE = re.compile(r"^(?P<indent>\s*)(?P<fence>`{3,}|~{3,})yaml\s+table
 _TABLE_CONFIG_FENCE_RE = re.compile(
     r"^(?P<indent>\s*)(?P<fence>`{3,}|~{3,})yaml\s+table-config\s*$"
 )
+# Marker left in the source by :class:`_TableConfigPreprocessor` and recognised
+# by :class:`_TableConfigBlockProcessor`. Avoids ``\x02``/``\x03`` (those are
+# claimed by Python-Markdown's htmlStash and would be stripped mid-pipeline).
+_TABLE_CONFIG_MARKER_FMT = "texsmith-table-config-marker-{id}"
+_TABLE_CONFIG_MARKER_RE = re.compile(
+    r"^(?P<indent>\s*)texsmith-table-config-marker-(?P<id>\d+)\s*$"
+)
 _CAPTION_LINE_RE = re.compile(r"^Table:\s*(?P<caption>.*?)(?:\s+\{(?P<attrs>[^}]+)\})?\s*$")
 _ID_ATTR_RE = re.compile(r"#([A-Za-z][\w:.\-]*)")
 
@@ -296,25 +303,173 @@ class _MarkdownTableCaptionTreeprocessor(Treeprocessor):
         _ = table_index  # kept for clarity; not needed after removals
 
 
-class _TableConfigBlockProcessor(BlockProcessor):
-    """Parse ``yaml table-config`` fences into a real ElementTree marker.
+def _ensure_config_store(md: Markdown) -> dict[int, TableConfig]:
+    store = getattr(md, "texsmith_table_configs", None)
+    if store is None:
+        store = {}
+        md.texsmith_table_configs = store
+    return store
 
-    BlockProcessors create elements directly in the parser's tree, so the
-    marker — together with its ``data-config-id`` attribute — is visible to
-    treeprocessors (unlike ``htmlStash`` placeholders, which only resolve at
-    postprocessor time).
+
+class _TableConfigPreprocessor(Preprocessor):
+    """Consume ``yaml table-config`` fences before any other fence handler runs.
+
+    Why this is a preprocessor rather than a block processor: ``pymdownx.superfences``
+    registers a preprocessor that scans for fence pairs early in the pipeline.
+    When it encounters `````yaml table-config`` it parses the info
+    string, finds ``table-config`` in the *unrecognized* group, and abandons the
+    opening fence — but it does not skip the matching closing fence. The next
+    bare ``````` is then misread as the *opening* of a new fenced
+    block, swallowing every line up to the next fence (typically the next
+    ``yaml table-config``). The downstream :class:`_TableConfigBlockProcessor`
+    runs after preprocessing and never sees the original fences.
+
+    The preprocessor parses the YAML body into a :class:`TableConfig`, stores it
+    on ``md.texsmith_table_configs`` keyed by an auto-incrementing id, and
+    replaces the entire fence span with a single marker line of the form
+    ``texsmith-table-config:N``. The companion block processor
+    recognises that marker and emits the same ``<texsmith-table-config>``
+    element it would have produced from the raw fence.
+    """
+
+    def run(self, lines: list[str]) -> list[str]:  # type: ignore[override]
+        result: list[str] = []
+        index = 0
+        total = len(lines)
+
+        while index < total:
+            line = lines[index]
+            match = _TABLE_CONFIG_FENCE_RE.match(line)
+            if match is None:
+                result.append(line)
+                index += 1
+                continue
+
+            fence = match.group("fence")
+            indent = match.group("indent")
+            close_re = re.compile(rf"^{re.escape(indent)}{re.escape(fence)}\s*$")
+
+            body_lines: list[str] = []
+            fence_closed = False
+            cursor = index + 1
+            while cursor < total:
+                if close_re.match(lines[cursor]):
+                    fence_closed = True
+                    break
+                body_lines.append(lines[cursor])
+                cursor += 1
+
+            if not fence_closed:
+                # Leave the fence intact; the block processor (or a downstream
+                # error path) will surface the missing-close diagnostic.
+                result.append(line)
+                index += 1
+                continue
+
+            if indent:
+                body = "\n".join(
+                    bl[len(indent):] if bl.startswith(indent) else bl
+                    for bl in body_lines
+                )
+            else:
+                body = "\n".join(body_lines)
+
+            store = _ensure_config_store(self.md)
+            try:
+                config = parse_table_config(yaml.safe_load(body))
+            except (ValidationError, Exception):  # noqa: BLE001
+                # On parse failure, leave the original fence in place so the
+                # block processor produces the existing admonition-shaped error.
+                result.extend(lines[index:cursor + 1])
+                index = cursor + 1
+                continue
+
+            config_id = len(store)
+            store[config_id] = config
+            result.append(indent + _TABLE_CONFIG_MARKER_FMT.format(id=config_id))
+            index = cursor + 1
+
+        return result
+
+
+class _TableConfigBlockProcessor(BlockProcessor):
+    """Emit a ``<texsmith-table-config>`` marker for each table-config block.
+
+    Two entry points are recognised, in priority order:
+
+    1. The marker line ``texsmith-table-config:N`` left by
+       :class:`_TableConfigPreprocessor`. This is the normal path when the
+       preprocessor pipeline includes fence-eating extensions like
+       ``pymdownx.superfences`` (pre-resolved configs are looked up by id).
+    2. The raw `````yaml table-config`` fence, kept for
+       pipelines that don't run the preprocessor (minimal tests, callers that
+       construct a Markdown instance with only this extension).
+
+    Either way, a ``<texsmith-table-config>`` element is created directly in
+    the parser tree so the companion treeprocessor can bind it to the
+    preceding ``<table>``.
     """
 
     def __init__(self, parser: BlockParser) -> None:
         super().__init__(parser)
         self._open_re = _TABLE_CONFIG_FENCE_RE
+        self._marker_re = _TABLE_CONFIG_MARKER_RE
 
     def test(self, parent: ElementTree.Element, block: str) -> bool:  # type: ignore[override]
         first_line = block.split("\n", 1)[0]
-        return bool(self._open_re.match(first_line))
+        return bool(self._marker_re.match(first_line) or self._open_re.match(first_line))
 
     def run(  # type: ignore[override]
         self, parent: ElementTree.Element, blocks: list[str]
+    ) -> bool:
+        block = blocks[0]
+        first_line = block.split("\n", 1)[0]
+
+        marker_match = self._marker_re.match(first_line)
+        if marker_match is not None:
+            return self._consume_marker(parent, blocks, marker_match)
+
+        return self._consume_fence(parent, blocks)
+
+    def _consume_marker(
+        self,
+        parent: ElementTree.Element,
+        blocks: list[str],
+        marker_match: re.Match[str],
+    ) -> bool:
+        block = blocks.pop(0)
+        config_id = int(marker_match.group("id"))
+        store = _ensure_config_store(self.parser.md)
+        if config_id not in store:
+            # Stale or unknown id; drop silently rather than emitting a marker
+            # the treeprocessor would orphan anyway.
+            self._reinject_remainder(blocks, block, marker_match.end())
+            return True
+
+        marker = ElementTree.SubElement(
+            parent,
+            "texsmith-table-config",
+            {"data-config-id": str(config_id)},
+        )
+        marker.text = ""
+        self._reinject_remainder(blocks, block, marker_match.end())
+        return True
+
+    @staticmethod
+    def _reinject_remainder(blocks: list[str], block: str, marker_end: int) -> None:
+        # The first line is the marker (already consumed); push any trailing
+        # lines back so the parser processes them as their own block.
+        first_newline = block.find("\n", marker_end)
+        if first_newline == -1:
+            return
+        remainder = block[first_newline + 1:]
+        if remainder.strip():
+            blocks.insert(0, remainder)
+
+    def _consume_fence(
+        self,
+        parent: ElementTree.Element,
+        blocks: list[str],
     ) -> bool:
         block = blocks[0]
         match = self._open_re.match(block.split("\n", 1)[0])
@@ -330,10 +485,12 @@ class _TableConfigBlockProcessor(BlockProcessor):
         body_lines: list[str] = []
         first_block_lines = block.split("\n")[1:]
         consumed_blocks = 1
-        body, found = self._consume_block(first_block_lines, close_re)
+        body, found = self._consume_block_lines(first_block_lines, close_re)
         body_lines.extend(body)
         while not found and consumed_blocks < len(blocks):
-            body, found = self._consume_block(blocks[consumed_blocks].split("\n"), close_re)
+            body, found = self._consume_block_lines(
+                blocks[consumed_blocks].split("\n"), close_re
+            )
             body_lines.extend(body)
             consumed_blocks += 1
         if not found:
@@ -350,13 +507,13 @@ class _TableConfigBlockProcessor(BlockProcessor):
                 for line in body_text.split("\n")
             )
 
-        store = self._ensure_store()
+        store = _ensure_config_store(self.parser.md)
         try:
             config = parse_table_config(yaml.safe_load(body_text))
         except ValidationError as exc:
             self._emit_error_block(parent, _format_validation_error(exc))
             return True
-        except Exception as exc:
+        except Exception as exc:  # noqa: BLE001
             self._emit_error_block(parent, str(exc))
             return True
 
@@ -372,21 +529,15 @@ class _TableConfigBlockProcessor(BlockProcessor):
         return True
 
     @staticmethod
-    def _consume_block(lines: list[str], close_re: re.Pattern[str]) -> tuple[list[str], bool]:
+    def _consume_block_lines(
+        lines: list[str], close_re: re.Pattern[str]
+    ) -> tuple[list[str], bool]:
         body: list[str] = []
         for line in lines:
             if close_re.match(line):
                 return body, True
             body.append(line)
         return body, False
-
-    def _ensure_store(self) -> dict[int, TableConfig]:
-        md = self.parser.md
-        store = getattr(md, "texsmith_table_configs", None)
-        if store is None:
-            store = {}
-            md.texsmith_table_configs = store
-        return store
 
     def _emit_error_block(self, parent: ElementTree.Element, message: str) -> None:
         # Create an admonition-shaped element (matches the yaml-table error
@@ -531,6 +682,12 @@ class YamlTableExtension(Extension):
 
     def extendMarkdown(self, md: Markdown) -> None:  # noqa: N802
         md.preprocessors.register(_YamlTablePreprocessor(md), "texsmith_yaml_table", 29)
+        # Must outrank pymdownx.superfences' ``fenced_raw_block`` (priority 31.05)
+        # so the table-config fence is consumed before any other fence handler
+        # has a chance to misparse it.
+        md.preprocessors.register(
+            _TableConfigPreprocessor(md), "texsmith_table_config", 32
+        )
         md.parser.blockprocessors.register(
             _TableConfigBlockProcessor(md.parser),
             "texsmith_table_config_fence",

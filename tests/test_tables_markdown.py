@@ -336,6 +336,55 @@ def test_table_config_block_invalid_yaml_renders_error_admonition() -> None:
     assert "invalid align" in error.get_text()
 
 
+def test_multiple_table_config_blocks_survive_superfences() -> None:
+    """Regression: with ``pymdownx.superfences`` in the pipeline, two adjacent
+    ``yaml table-config`` blocks used to be misparsed.
+
+    Superfences sees ``table-config`` as an unrecognised info string and
+    abandons the opening fence, then reads the next bare ```````
+    as the *opening* of a new fenced block — swallowing every line up to the
+    next fence pair. The first config never bound to its table, and a huge
+    chunk of intermediate content was rendered as a code block.
+
+    The :class:`_TableConfigPreprocessor` consumes the fence before
+    superfences can see it, so both configs now bind to their respective
+    tables.
+    """
+    md = Markdown(
+        extensions=["tables", "pymdownx.superfences", YamlTableExtension()]
+    )
+    src = textwrap.dedent(
+        """
+        | A | B | C | D |
+        | - | - | - | - |
+        | 1 | 2 | 3 | 4 |
+
+        ```yaml table-config
+        columns: [{align: left}, {align: right}, {width: auto}, {align: right}]
+        ```
+
+        Some text in between.
+
+        | E | F | G | H | I |
+        | - | - | - | - | - |
+        | 1 | 2 | 3 | 4 | 5 |
+
+        ```yaml table-config
+        columns: [{align: left}, {align: right}, {width: auto}, {align: left}, {align: right}]
+        ```
+        """
+    ).strip("\n")
+    soup = BeautifulSoup(md.convert(src), "html.parser")
+
+    tables = soup.find_all("table")
+    assert len(tables) == 2
+    assert tables[0].get("data-ts-colspec") == "lr>{\\raggedright\\arraybackslash}Xr"
+    assert tables[1].get("data-ts-colspec") == "lr>{\\raggedright\\arraybackslash}Xlr"
+    # No leftover code blocks from the misparse.
+    assert soup.find("pre") is None
+    assert soup.find("code") is None
+
+
 def test_table_config_block_without_table_is_dropped_silently() -> None:
     soup = _render_with_tables(
         """
