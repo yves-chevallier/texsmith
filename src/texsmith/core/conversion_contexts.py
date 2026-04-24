@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 from .config import BookConfig
+from .conversion.inputs import SlotOptions
 from .templates import TemplateBinding
 
 
@@ -59,6 +60,7 @@ class BinderContext:
     language: str
     slot_requests: dict[str, str]
     template_overrides: dict[str, Any]
+    slot_options: dict[str, SlotOptions] = field(default_factory=dict)
     bibliography_map: dict[str, dict[str, Any]] = field(default_factory=dict)
     bibliography_collection: BibliographyCollection | None = None
     template_binding: TemplateBinding | None = None

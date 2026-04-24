@@ -28,7 +28,7 @@ from ..execution import ExecutionContext
 from ..mustache import replace_mustaches
 from ..templates import TemplateBinding, TemplateError, TemplateSlot, resolve_template_binding
 from .debug import debug_enabled, ensure_emitter, raise_conversion_error, record_event
-from .inputs import DOCUMENT_SELECTOR_SENTINEL, InlineBibliographyEntry
+from .inputs import DOCUMENT_SELECTOR_SENTINEL, InlineBibliographyEntry, SlotOptions
 
 
 if TYPE_CHECKING:  # pragma: no cover - typing only
@@ -163,6 +163,7 @@ def build_binder_context(
         language=resolved_language,
         slot_requests=active_slot_requests,
         template_overrides=dict(execution.template_overrides),
+        slot_options=dict(execution.slot_options),
         bibliography_map=execution.bibliography_map,
         bibliography_collection=execution.bibliography_collection,
         template_binding=binding,
@@ -198,6 +199,7 @@ def extract_slot_fragments(
     *,
     slot_definitions: Mapping[str, TemplateSlot],
     parser_backend: str,
+    slot_options: Mapping[str, SlotOptions] | None = None,
 ) -> tuple[list[SlotFragment], list[str]]:
     """Split the HTML document into fragments mapped to template slots."""
     try:
@@ -274,12 +276,21 @@ def extract_slot_fragments(
             )
         )
 
+    options_map = dict(slot_options or {})
+
     for slot_name, (order, heading) in sorted(matched.items(), key=lambda item: item[1][0]):
         section_nodes = collect_section_nodes(heading)
         slot_config = slot_definitions.get(slot_name)
+        slot_flags = options_map.get(slot_name, SlotOptions())
         strip_heading = bool(slot_config.strip_heading) if slot_config else False
+        flatten = slot_flags.flatten
+        # ``flatten`` is strictly stronger than ``strip_heading``: it also
+        # promotes children up one heading level so a wrapper like ``# Appendix``
+        # with ``## A / ## B / ## C`` renders as independent sections
+        # (``\section{A}``, ``\section{B}``, …) rather than one section with
+        # subsections.
         render_nodes = list(section_nodes)
-        if strip_heading and render_nodes:
+        if (strip_heading or flatten) and render_nodes:
             render_nodes = render_nodes[1:]
             while render_nodes and isinstance(render_nodes[0], NavigableString):
                 if str(render_nodes[0]).strip():

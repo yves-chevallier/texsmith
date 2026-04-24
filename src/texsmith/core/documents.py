@@ -48,8 +48,9 @@ from .conversion.debug import ConversionError, debug_enabled
 from .conversion.inputs import (
     DOCUMENT_SELECTOR_SENTINEL,
     InputKind,
+    SlotOptions,
     extract_content,
-    extract_front_matter_slots,
+    extract_front_matter_slots_with_options,
 )
 from .conversion_contexts import AssetMapping, SegmentContext
 from .diagnostics import DiagnosticEmitter, NullEmitter
@@ -170,6 +171,7 @@ class Document:
     suppress_title_metadata: bool = False
     slot_selectors: dict[str, str] = field(default_factory=dict)
     slot_includes: set[str] = field(default_factory=set)
+    slot_options: dict[str, SlotOptions] = field(default_factory=dict)
     extracted_title: str | None = None
     slot_requests: dict[str, str] = field(default_factory=dict)
     slot_inclusions: set[str] = field(default_factory=set)
@@ -318,6 +320,7 @@ class Document:
             suppress_title_metadata=self.suppress_title_metadata,
             slot_selectors=copy.deepcopy(self.slot_selectors),
             slot_includes=set(self.slot_includes),
+            slot_options=dict(self.slot_options),
             extracted_title=None,
             slot_requests={},
             slot_inclusions=set(),
@@ -425,6 +428,7 @@ class Document:
         """Replace slot selectors/inclusions with the provided mapping."""
         self.slot_selectors = {}
         self.slot_includes = set()
+        self.slot_options = {}
         if mapping:
             selectors, includes = _split_slot_mapping(mapping)
             self.slot_selectors.update(selectors)
@@ -436,11 +440,13 @@ class Document:
             payload = dict(self._front_matter)
             with contextlib.suppress(PressMetadataError):
                 normalise_press_metadata(payload)
-            base_mapping = extract_front_matter_slots(payload)
+            base_mapping, base_options = extract_front_matter_slots_with_options(payload)
             if base_mapping:
                 selectors, includes = _split_slot_mapping(base_mapping)
                 self.slot_selectors.update(selectors)
                 self.slot_includes.update(includes)
+            if base_options:
+                self.slot_options.update(base_options)
         self._invalidate_prepared()
 
     _HEADING_TAGS: ClassVar[set[str]] = {"h1", "h2", "h3", "h4", "h5", "h6"}
@@ -607,16 +613,19 @@ class Document:
             press_payload.setdefault("_source_dir", str(self.source_path.parent))
             press_payload.setdefault("_source_path", str(self.source_path))
 
-        base_mapping = extract_front_matter_slots(metadata)
+        base_mapping, base_options = extract_front_matter_slots_with_options(metadata)
         base_selectors, base_includes = _split_slot_mapping(base_mapping)
         combined_selectors = dict(base_selectors)
         combined_selectors.update(self.slot_selectors)
         combined_includes = set(base_includes)
         combined_includes.update(self.slot_includes)
+        combined_options = dict(base_options)
+        combined_options.update(self.slot_options)
 
         self._front_matter = metadata
         self.slot_selectors = dict(combined_selectors)
         self.slot_includes = set(combined_includes)
+        self.slot_options = dict(combined_options)
         self.slot_requests = _slot_request_mapping(combined_selectors, combined_includes)
         self.slot_inclusions = set(combined_includes)
         self.extracted_title = extracted_title

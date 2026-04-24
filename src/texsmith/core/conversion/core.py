@@ -319,6 +319,7 @@ def _render_document(
         binding.default_slot,
         slot_definitions=binding.slots,
         parser_backend=parser_backend,
+        slot_options=binder_context.slot_options,
     )
     for message in missing_slots:
         emitter.warning(message)

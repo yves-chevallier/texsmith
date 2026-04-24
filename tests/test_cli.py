@@ -671,6 +671,101 @@ Main discussion.
     assert "Front matter abstract." in content
 
 
+def test_appendix_slot_default_keeps_wrapper(tmp_path: Path) -> None:
+    runner = CliRunner()
+    markdown_file = tmp_path / "paper.md"
+    markdown_file.write_text(
+        """---
+slots:
+  appendix: Appendix
+---
+# Body
+
+Main content.
+
+# Appendix
+
+## Appendix A
+
+## Appendix B
+
+## Appendix C
+""",
+        encoding="utf-8",
+    )
+
+    template_dir = _template_path("article")
+    output_dir = tmp_path / "out"
+    result = runner.invoke(
+        app,
+        [
+            str(markdown_file),
+            "--output-dir",
+            str(output_dir),
+            "--template",
+            str(template_dir),
+        ],
+    )
+
+    assert result.exit_code == 0, result.stderr
+    content = (output_dir / "paper.tex").read_text(encoding="utf-8")
+    appendix_idx = content.index("\\appendix")
+    appendix_block = content[appendix_idx:]
+    assert "\\section{Appendix}" in appendix_block
+    assert "\\subsection{Appendix A}" in appendix_block
+    assert "\\subsection{Appendix B}" in appendix_block
+    assert "\\subsection{Appendix C}" in appendix_block
+
+
+def test_appendix_slot_flatten_promotes_children(tmp_path: Path) -> None:
+    runner = CliRunner()
+    markdown_file = tmp_path / "paper.md"
+    markdown_file.write_text(
+        """---
+slots:
+  appendix:
+    title: Appendix
+    flatten: true
+---
+# Body
+
+Main content.
+
+# Appendix
+
+## Appendix A
+
+## Appendix B
+
+## Appendix C
+""",
+        encoding="utf-8",
+    )
+
+    template_dir = _template_path("article")
+    output_dir = tmp_path / "out"
+    result = runner.invoke(
+        app,
+        [
+            str(markdown_file),
+            "--output-dir",
+            str(output_dir),
+            "--template",
+            str(template_dir),
+        ],
+    )
+
+    assert result.exit_code == 0, result.stderr
+    content = (output_dir / "paper.tex").read_text(encoding="utf-8")
+    appendix_idx = content.index("\\appendix")
+    appendix_block = content[appendix_idx:]
+    assert "\\section{Appendix}" not in appendix_block
+    assert "\\subsection{Appendix A}" not in appendix_block
+    assert "\\section{Appendix A}" in appendix_block
+    assert "\\section{Appendix B}" in appendix_block
+    assert "\\section{Appendix C}" in appendix_block
+
+
 def test_promoted_title_keeps_section_depth_for_slots(tmp_path: Path) -> None:
     runner = CliRunner()
     markdown_file = tmp_path / "paper.md"

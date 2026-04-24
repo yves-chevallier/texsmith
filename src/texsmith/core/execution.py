@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import Any
 
 from .bibliography.collection import BibliographyCollection
+from .conversion.inputs import SlotOptions
 from .conversion.models import ConversionRequest
 from .conversion_contexts import GenerationStrategy
 from .documents import Document
@@ -23,6 +24,7 @@ class ExecutionContext:
     output_dir: Path | None = None
     template_overrides: dict[str, Any] = field(default_factory=dict)
     slot_requests: dict[str, str] = field(default_factory=dict)
+    slot_options: dict[str, SlotOptions] = field(default_factory=dict)
     language: str = ""
     bibliography_collection: BibliographyCollection | None = None
     bibliography_map: dict[str, dict[str, Any]] = field(default_factory=dict)

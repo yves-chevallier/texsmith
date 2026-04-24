@@ -46,6 +46,33 @@ class InlineBibliographyEntry:
         return self.entry_type is not None
 
 
+@dataclass(slots=True, frozen=True)
+class SlotOptions:
+    """Per-slot rendering flags parsed from front matter."""
+
+    flatten: bool = False
+
+
+def _coerce_bool_option(value: Any) -> bool:
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, (int, float)):
+        return bool(value)
+    if isinstance(value, str):
+        token = value.strip().lower()
+        if token in {"true", "yes", "on", "1"}:
+            return True
+        if token in {"false", "no", "off", "0", ""}:
+            return False
+    return False
+
+
+def _extract_slot_options(payload: Any) -> SlotOptions:
+    if isinstance(payload, Mapping):
+        return SlotOptions(flatten=_coerce_bool_option(payload.get("flatten")))
+    return SlotOptions()
+
+
 def coerce_slot_selector(payload: Any) -> str | None:
     """Normalise a selector definition coming from front matter."""
     if isinstance(payload, str):
@@ -61,9 +88,27 @@ def coerce_slot_selector(payload: Any) -> str | None:
 
 def parse_slot_mapping(raw: Any) -> dict[str, str]:
     """Parse slot mappings declared in front matter structures."""
+    overrides, _ = parse_slot_mapping_with_options(raw)
+    return overrides
+
+
+def parse_slot_mapping_with_options(
+    raw: Any,
+) -> tuple[dict[str, str], dict[str, SlotOptions]]:
+    """Parse slot mappings and their associated per-slot options."""
     overrides: dict[str, str] = {}
+    options: dict[str, SlotOptions] = {}
     if not raw:
-        return overrides
+        return overrides, options
+
+    def _record(name: str, selector: str, option_payload: Any) -> None:
+        key = name.strip()
+        if not key or not selector:
+            return
+        overrides[key] = selector
+        slot_options = _extract_slot_options(option_payload)
+        if slot_options != SlotOptions():
+            options[key] = slot_options
 
     if isinstance(raw, Mapping):
         for slot_name, payload in raw.items():
@@ -71,10 +116,8 @@ def parse_slot_mapping(raw: Any) -> dict[str, str]:
                 continue
             selector = coerce_slot_selector(payload)
             if selector:
-                key = slot_name.strip()
-                if key:
-                    overrides[key] = selector
-        return overrides
+                _record(slot_name, selector, payload)
+        return overrides, options
 
     if isinstance(raw, Iterable) and not isinstance(raw, str | bytes):
         for entry in raw:
@@ -87,32 +130,41 @@ def parse_slot_mapping(raw: Any) -> dict[str, str]:
             selector_value = coerce_slot_selector(selector)
             if not selector_value:
                 selector_value = coerce_slot_selector(entry)
-            slot_key = slot_name.strip()
-            if slot_key and selector_value:
-                overrides[slot_key] = selector_value
-        return overrides
+            if selector_value:
+                _record(slot_name, selector_value, entry)
+        return overrides, options
 
     if isinstance(raw, str):
         entry = raw.strip()
         if entry and ":" in entry:
             name, selector = entry.split(":", 1)
-            name = name.strip()
             selector = selector.strip()
-            if name and selector:
-                overrides[name] = selector
-        return overrides
+            if selector:
+                _record(name, selector, None)
+        return overrides, options
 
-    return overrides
+    return overrides, options
 
 
 def extract_front_matter_slots(front_matter: Mapping[str, Any]) -> dict[str, str]:
     """Collect slot overrides defined in document front matter."""
+    overrides, _ = extract_front_matter_slots_with_options(front_matter)
+    return overrides
+
+
+def extract_front_matter_slots_with_options(
+    front_matter: Mapping[str, Any],
+) -> tuple[dict[str, str], dict[str, SlotOptions]]:
+    """Return front-matter slot selectors alongside their per-slot options."""
     overrides: dict[str, str] = {}
+    options: dict[str, SlotOptions] = {}
 
     root_slots = front_matter.get("slots") or front_matter.get("entrypoints")
-    overrides.update(parse_slot_mapping(root_slots))
+    parsed_overrides, parsed_options = parse_slot_mapping_with_options(root_slots)
+    overrides.update(parsed_overrides)
+    options.update(parsed_options)
 
-    return overrides
+    return overrides, options
 
 
 _ISO_YEAR_RE = re.compile(r"^(?P<year>\d{4})$")

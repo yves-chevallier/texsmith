@@ -56,6 +56,7 @@ def resolve_execution_context(
     slot_requests = dict(document.slot_requests)
     if slot_overrides:
         slot_requests.update(dict(slot_overrides))
+    slot_options = dict(document.slot_options)
 
     overrides = build_template_overrides(document.front_matter)
     if template_overrides:
@@ -191,6 +192,7 @@ def resolve_execution_context(
         template_runtime=template_runtime,
         template_overrides=dict(overrides),
         slot_requests=slot_requests,
+        slot_options=slot_options,
         language=resolved_language,
         bibliography_collection=bibliography_collection,
         bibliography_map=bibliography_map,
