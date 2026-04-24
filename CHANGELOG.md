@@ -11,6 +11,8 @@ and the project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 - New `yaml table` Markdown fence describing complex tables in YAML and compiling to `tabular` / `tabularx` / `longtable` on demand. Supports multi-row and multi-column cells (in headers and body), nested grouped headers, width-groups, separators with optional labels, footers, captions via the standard `Table: …` syntax, and explicit width control. Validation errors surface as inline error admonitions with a clear, localised message. New `examples/tables/` tutorial pairs each YAML source with its rendered output and ships a Makefile to build the demo PDF.
 - `ts-extra` now auto-loads the `multirow` package when `\multirow` is detected in the rendered LaTeX.
+- `Table: <caption> {#label}` now also works on plain Markdown tables: a tree processor pairs the caption paragraph with the following `<table>`, wraps them in a `<figure>` + `<figcaption>`, and the existing figure handler migrates the caption into a proper `\caption{…}` with its `\label{…}`.
+- 0.5 em of vertical breathing room is inserted between the caption and the table body for both yaml-tables and plain Markdown tables when a caption is present.
 
 ### Fixed
 

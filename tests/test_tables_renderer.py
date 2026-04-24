@@ -80,7 +80,19 @@ def test_caption_and_label_emit_inside_table_float() -> None:
     assert r"\begin{table}[H]" in latex
     assert r"\label{tbl:foo}" in latex
     assert r"\caption{Ma légende}" in latex
+    # 0.5em breathing room between caption and the tabular body.
+    assert r"\vspace{0.5em}" in latex
     assert r"\end{table}" in latex
+
+
+def test_no_vspace_when_caption_is_absent() -> None:
+    latex = _latex_from_yaml(
+        """
+        columns: [A, B]
+        rows: [[x, 1]]
+        """
+    )
+    assert r"\vspace{0.5em}" not in latex
 
 
 def test_no_caption_wraps_in_center() -> None:

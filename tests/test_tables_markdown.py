@@ -16,6 +16,12 @@ def _render(src: str) -> BeautifulSoup:
     return BeautifulSoup(html, "html.parser")
 
 
+def _render_with_tables(src: str) -> BeautifulSoup:
+    md = Markdown(extensions=["tables", YamlTableExtension()])
+    html = md.convert(textwrap.dedent(src).strip("\n"))
+    return BeautifulSoup(html, "html.parser")
+
+
 # ---------------------------------------------------------------------------
 # Happy path
 # ---------------------------------------------------------------------------
@@ -181,6 +187,78 @@ def test_non_yaml_table_fence_is_ignored() -> None:
     )
     # Generic yaml fence → not captured → no <table> element emitted.
     assert soup.find("table") is None
+
+
+# ---------------------------------------------------------------------------
+# `Table: caption` on standard Markdown tables
+# ---------------------------------------------------------------------------
+
+
+def test_standard_markdown_table_gets_figcaption_from_caption_line() -> None:
+    soup = _render_with_tables(
+        """
+        Table: Répartition actuelle
+
+        | Orientation | S1 | S2 |
+        | ----------- | -- | -- |
+        | SE          | 35 | 38 |
+        """
+    )
+    figure = soup.find("figure")
+    assert figure is not None
+    figcaption = figure.find("figcaption")
+    assert figcaption is not None
+    assert figcaption.get_text(strip=True) == "Répartition actuelle"
+    assert figure.find("table") is not None
+    # The "Table:" line must not survive as a stray paragraph.
+    assert "Table:" not in soup.get_text()
+
+
+def test_standard_markdown_table_caption_with_label() -> None:
+    soup = _render_with_tables(
+        """
+        Table: Stocks {#tbl:stocks}
+
+        | A | B |
+        | - | - |
+        | x | 1 |
+        """
+    )
+    figure = soup.find("figure")
+    assert figure is not None
+    assert figure.get("id") == "tbl:stocks"
+
+
+def test_standalone_caption_without_following_table_is_left_alone() -> None:
+    # A "Table: ..." line not followed by a table must keep its paragraph so
+    # the user sees something is off; we don't silently drop text.
+    soup = _render_with_tables(
+        """
+        Table: No table follows here
+
+        Just a paragraph.
+        """
+    )
+    assert soup.find("figure") is None
+    assert "No table follows here" in soup.get_text()
+
+
+def test_paragraph_between_caption_and_table_breaks_the_pair() -> None:
+    soup = _render_with_tables(
+        """
+        Table: Unrelated caption
+
+        A paragraph interrupts the pairing.
+
+        | A | B |
+        | - | - |
+        | x | 1 |
+        """
+    )
+    # The intervening paragraph means the caption shouldn't attach to the table.
+    assert soup.find("figure") is None
+    # The table still renders as a standalone markdown table.
+    assert soup.find("table") is not None
 
 
 def test_grouped_headers_round_trip_through_markdown() -> None:
