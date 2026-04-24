@@ -96,6 +96,20 @@ Inline Markdown inside the note (`**bold**`, `*italic*`, `` `code` ``,
 `[links](…)`) is preserved and runs through the standard inline handlers
 on the way to LaTeX.
 
+### Font size
+
+Because printed margins are narrow, margin notes default to `\footnotesize`
+so multi-word notes fit without overflowing. Override the default from your
+own preamble (or a custom `ts-extra` snippet) if you want a different
+treatment:
+
+```latex
+\renewcommand*{\marginfont}{\small\itshape}
+```
+
+`\marginfont` is part of the `marginnote` package and is applied
+automatically to every note.
+
 ## Citations
 
 Bibliographic references land in two ways:

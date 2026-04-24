@@ -158,3 +158,32 @@ def test_ts_extra_detects_marginnote_command() -> None:
     config = ExtraConfig.from_context(context)
     names = [name for name, _options in config.packages]
     assert "marginnote" in names
+
+
+def test_ts_extra_template_sets_marginfont_footnotesize(tmp_path):
+    """The ``ts-extra`` preamble must shrink margin notes to ``\\footnotesize``."""
+    from jinja2 import Environment
+
+    from texsmith.core.templates.base import _build_environment
+    from texsmith.fragments.extra import ExtraFragment
+
+    del tmp_path  # unused; the template is packaged alongside the fragment
+    del Environment  # only imported to keep the type hint explicit
+
+    template_path = ExtraFragment.pieces[0].template_path
+    env = _build_environment(template_path.parent)
+    template = env.get_template(template_path.name)
+    rendered = template.render(ts_extra_packages=[("marginnote", None)])
+    assert r"\renewcommand*{\marginfont}{\footnotesize}" in rendered
+
+
+def test_ts_extra_template_skips_marginfont_without_marginnote() -> None:
+    """``\\marginfont`` override only lands when ``marginnote`` is loaded."""
+    from texsmith.core.templates.base import _build_environment
+    from texsmith.fragments.extra import ExtraFragment
+
+    template_path = ExtraFragment.pieces[0].template_path
+    env = _build_environment(template_path.parent)
+    template = env.get_template(template_path.name)
+    rendered = template.render(ts_extra_packages=[("float", None)])
+    assert "marginfont" not in rendered

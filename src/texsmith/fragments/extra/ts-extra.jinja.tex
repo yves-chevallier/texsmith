@@ -1,13 +1,22 @@
 \BLOCK{ if ts_extra_packages }
-\BLOCK{- set ns = namespace(has_tabularx=False) }
+\BLOCK{- set ns = namespace(has_tabularx=False, has_marginnote=False) }
 \BLOCK{ for name, options in ts_extra_packages }
 \BLOCK{- if name == "tabularx" -}
 \BLOCK{- set ns.has_tabularx = True -}
+\BLOCK{- endif }
+\BLOCK{- if name == "marginnote" -}
+\BLOCK{- set ns.has_marginnote = True -}
 \BLOCK{- endif }
 \usepackage\BLOCK{ if options }[\VAR{options}]\BLOCK{ endif }{\VAR{name}}
 \BLOCK{ endfor }
 \BLOCK{- if ns.has_tabularx }
 \newcolumntype{Y}{>{\centering\arraybackslash}X}
 \newcolumntype{Z}{>{\raggedleft\arraybackslash}X}
+\BLOCK{- endif }
+\BLOCK{- if ns.has_marginnote }
+% Default margin-note styling: footnote-size so notes fit narrow margins
+% without overflowing. Override with ``\renewcommand*{\marginfont}{…}`` in a
+% custom preamble snippet if you need a different look.
+\renewcommand*{\marginfont}{\footnotesize}
 \BLOCK{- endif }
 \BLOCK{ endif }
