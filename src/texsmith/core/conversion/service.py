@@ -450,7 +450,7 @@ def _apply_shared_front_matter(
             merged
         ):
             document.title_strategy = TitleStrategy.KEEP
-        base_mapping = extract_front_matter_slots(merged)
+        base_mapping, _base_options = extract_front_matter_slots(merged)
         document.reset_slots(base_mapping)
 
 

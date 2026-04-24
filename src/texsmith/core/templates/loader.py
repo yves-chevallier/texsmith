@@ -18,6 +18,7 @@ from .manifest import TemplateError
 
 def _looks_like_template_root(path: Path) -> bool:
     """Return True when ``path`` contains manifest or specialised template markers."""
+
     def _safe_exists(candidate: Path) -> bool:
         try:
             return candidate.exists()
@@ -242,7 +243,11 @@ def discover_templates() -> list[dict[str, str]]:
             if root is None:
                 continue
             _record("package", slug, root)
-    except Exception:
+    except Exception:  # noqa: BLE001 - distribution discovery is best-effort
+        # A broken third-party template distribution (corrupt metadata, missing
+        # file, unreadable entry-point) must not take down the whole template
+        # listing — users would lose access to their builtin and local
+        # templates too. Swallow silently; builtins and local scans still run.
         pass
 
     seen_locals: set[str] = set()

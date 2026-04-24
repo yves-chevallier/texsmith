@@ -2,10 +2,11 @@
 
 from __future__ import annotations
 
-from bs4.element import Comment, NavigableString, Tag
+from bs4.element import NavigableString, Tag
 from slugify import slugify
 
 from texsmith.core.context import RenderContext
+from texsmith.core.html_utils import strip_html_comments
 from texsmith.core.rules import RenderPhase, renders
 from texsmith.fonts.scripts import render_moving_text
 
@@ -59,8 +60,7 @@ def _merge_strip_rules(
 @renders(phase=RenderPhase.PRE, auto_mark=False, name="discard_unwanted")
 def discard_unwanted(root: Tag, context: RenderContext) -> None:
     """Discard or unwrap nodes that must not reach later phases."""
-    for comment in root.find_all(string=lambda text: isinstance(text, Comment)):
-        comment.extract()
+    strip_html_comments(root)
 
     for tag_name, classes, mode in _merge_strip_rules(context):
         class_filter = list(classes)

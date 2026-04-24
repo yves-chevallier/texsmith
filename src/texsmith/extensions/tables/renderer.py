@@ -15,6 +15,20 @@ from texsmith.adapters.handlers._helpers import coerce_attribute, mark_processed
 from texsmith.core.context import RenderContext
 from texsmith.core.rules import RenderPhase, renders
 
+from .constants import Priority, TableAttr
+
+
+def is_texsmith_table(element: Tag) -> bool:
+    """Return True when ``element`` was emitted by the yaml-table extension.
+
+    The ``<table>`` is flagged with ``data-ts-table="1"`` either directly by
+    :func:`texsmith.extensions.tables.html.render_table_html` (yaml tables) or
+    by the table-config treeprocessor (plain Markdown tables with a
+    ``yaml table-config`` fence). Both paths share the same downstream LaTeX
+    renderer.
+    """
+    return coerce_attribute(element.get(TableAttr.TABLE)) == "1"
+
 
 # ---------------------------------------------------------------------------
 # Cell content
@@ -41,7 +55,7 @@ def _align_char(value: str | None) -> str:
 
 
 def _render_header(thead: Tag, total_cols: int) -> str:
-    rows = thead.find_all("tr", attrs={"data-ts-role": "header"}, recursive=False)
+    rows = thead.find_all("tr", attrs={TableAttr.ROLE: "header"}, recursive=False)
     if not rows:
         rows = thead.find_all("tr", recursive=False)
 
@@ -108,7 +122,7 @@ def _render_generic_row(
 
         rowspan = int(cell.get("rowspan", 1))
         colspan = int(cell.get("colspan", 1))
-        align = coerce_attribute(cell.get("data-ts-align"))
+        align = coerce_attribute(cell.get(TableAttr.ALIGN))
         content = _cell_content(cell)
 
         tex = content
@@ -146,7 +160,7 @@ def _render_section(
     active_spans: dict[int, tuple[int, int]] = {}
 
     for tr in section.find_all("tr", recursive=False):
-        role = coerce_attribute(tr.get("data-ts-role"))
+        role = coerce_attribute(tr.get(TableAttr.ROLE))
         if role == "separator":
             if active_spans:
                 # Defensive: the schema validator forbids this upstream.
@@ -162,7 +176,7 @@ def _render_section(
 
 
 def _render_separator(tr: Tag, total_cols: int) -> str:
-    rule = coerce_attribute(tr.get("data-ts-rule"))
+    rule = coerce_attribute(tr.get(TableAttr.RULE))
     midrule = r"\midrule[\heavyrulewidth]" if rule == "double" else r"\midrule"
 
     # Read the label from the separator cell's text so it picks up the LaTeX
@@ -184,20 +198,25 @@ def _render_separator(tr: Tag, total_cols: int) -> str:
 @renders(
     "table",
     phase=RenderPhase.POST,
-    priority=35,
+    priority=Priority.RENDERER,
     name="texsmith_yaml_table",
     nestable=False,
     auto_mark=False,
 )
 def render_yaml_table(element: Tag, context: RenderContext) -> None:
-    """Convert a yaml-generated ``<table>`` into a LaTeX tabular/tabularx/longtable."""
-    if coerce_attribute(element.get("data-ts-table")) != "1":
+    """Convert a yaml-generated ``<table>`` into a LaTeX tabular/tabularx/longtable.
+
+    The ``@renders`` framework dispatches on tag name alone, so we ourselves
+    verify the marker attribute and bail out for plain Markdown tables which
+    belong to the legacy ``render_tables`` handler.
+    """
+    if not is_texsmith_table(element):
         return
 
-    env = coerce_attribute(element.get("data-ts-env")) or "tabular"
-    colspec = coerce_attribute(element.get("data-ts-colspec")) or ""
-    width = coerce_attribute(element.get("data-ts-width"))
-    placement = coerce_attribute(element.get("data-ts-placement"))
+    env = coerce_attribute(element.get(TableAttr.ENV)) or "tabular"
+    colspec = coerce_attribute(element.get(TableAttr.COLSPEC)) or ""
+    width = coerce_attribute(element.get(TableAttr.WIDTH))
+    placement = coerce_attribute(element.get(TableAttr.PLACEMENT))
     label = coerce_attribute(element.get("id"))
 
     caption: str | None = None
@@ -294,4 +313,4 @@ def register(renderer: object) -> None:
     renderer._texsmith_yaml_table_registered = True  # noqa: SLF001
 
 
-__all__ = ["register", "render_yaml_table"]
+__all__ = ["is_texsmith_table", "register", "render_yaml_table"]

@@ -20,6 +20,7 @@ from xml.etree import ElementTree as ET
 
 import markdown as _md
 
+from .constants import TableAttr
 from .layout import TableLayout, compute_layout
 from .schema import (
     Column,
@@ -162,9 +163,9 @@ def _append_cell(
     cell = ET.SubElement(parent, tag)
     _set_span_attrs(cell, leaf.rows, leaf.cols)
     if leaf.align is not None:
-        cell.set("data-ts-align", leaf.align)
+        cell.set(TableAttr.ALIGN, leaf.align)
     if leaf.value is None:
-        cell.set("data-ts-empty", "1")
+        cell.set(TableAttr.EMPTY, "1")
     _set_inline_content(cell, _format_scalar(leaf.value))
 
 
@@ -180,7 +181,7 @@ def _render_header(
     matrix = _header_matrix(columns)
     for level_cells in matrix:
         tr = ET.SubElement(thead, "tr")
-        tr.set("data-ts-role", "header")
+        tr.set(TableAttr.ROLE, "header")
         for cell in level_cells:
             th = ET.SubElement(tr, "th", {"scope": "col"})
             _set_span_attrs(th, int(cell["rowspan"]), int(cell["colspan"]))
@@ -195,7 +196,7 @@ def _render_data_row(
     role: str,
 ) -> None:
     tr = ET.SubElement(parent, "tr")
-    tr.set("data-ts-role", role)
+    tr.set(TableAttr.ROLE, role)
 
     label_th = ET.SubElement(tr, "th", {"scope": "row"})
     _set_inline_content(label_th, label)
@@ -219,12 +220,12 @@ def _render_separator_row(
     total_cols: int,
 ) -> None:
     tr = ET.SubElement(parent, "tr")
-    tr.set("data-ts-role", "separator")
+    tr.set(TableAttr.ROLE, "separator")
     if separator.double_rule:
-        tr.set("data-ts-rule", "double")
+        tr.set(TableAttr.RULE, "double")
     cell = ET.SubElement(tr, "td", {"colspan": str(total_cols)})
     if separator.label:
-        tr.set("data-ts-sep-label", separator.label)
+        tr.set(TableAttr.SEP_LABEL, separator.label)
         cell.text = separator.label
 
 
@@ -276,13 +277,13 @@ def render_table_html(
     total_cols = total_leaves(table.columns)
 
     root = ET.Element("table")
-    root.set("data-ts-table", "1")
-    root.set("data-ts-env", layout.env)
-    root.set("data-ts-colspec", layout.colspec)
+    root.set(TableAttr.TABLE, "1")
+    root.set(TableAttr.ENV, layout.env)
+    root.set(TableAttr.COLSPEC, layout.colspec)
     if layout.total_width_spec is not None:
-        root.set("data-ts-width", layout.total_width_spec)
+        root.set(TableAttr.WIDTH, layout.total_width_spec)
     if layout.placement:
-        root.set("data-ts-placement", layout.placement)
+        root.set(TableAttr.PLACEMENT, layout.placement)
     if label:
         root.set("id", label)
 
@@ -326,19 +327,27 @@ def render_table_html(
     return ET.tostring(root, encoding="unicode", method="html")
 
 
-def render_error_html(message: str) -> str:
-    """Render a visible admonition-shaped error block.
+def build_error_element(message: str, *, title: str = "YAML table error") -> ET.Element:
+    """Build an admonition-shaped error element for a failed table parse.
 
     The message is wrapped in a ``<pre><code>`` block so multiline validator
-    output keeps its formatting and stands out from regular prose.
+    output keeps its formatting and stands out from regular prose. Returning
+    a live ElementTree node lets callers either stash it as HTML (via
+    :func:`render_error_html`) or append it straight into a tree processor's
+    parent.
     """
     root = ET.Element("div", {"class": "admonition error ts-table-error"})
-    title = ET.SubElement(root, "p", {"class": "admonition-title"})
-    title.text = "YAML table error"
+    title_el = ET.SubElement(root, "p", {"class": "admonition-title"})
+    title_el.text = title
     pre = ET.SubElement(root, "pre")
     code = ET.SubElement(pre, "code")
     code.text = html_lib.unescape(message)
-    return ET.tostring(root, encoding="unicode", method="html")
+    return root
 
 
-__all__ = ["render_error_html", "render_table_html"]
+def render_error_html(message: str, *, title: str = "YAML table error") -> str:
+    """Render an admonition-shaped error block as an HTML fragment."""
+    return ET.tostring(build_error_element(message, title=title), encoding="unicode", method="html")
+
+
+__all__ = ["build_error_element", "render_error_html", "render_table_html"]

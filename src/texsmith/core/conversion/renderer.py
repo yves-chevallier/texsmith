@@ -372,23 +372,26 @@ class TemplateRenderer:
         if concatenated_text:
             try:
                 raw_summary = _scan_fallback(concatenated_text)
-                if raw_summary:
-                    aggregated_fallback_summary = merge_fallback_summaries(
-                        aggregated_fallback_summary, raw_summary
+            except Exception as exc:
+                # ``scan_text`` loads the Noto coverage lookup which can fail on
+                # cold caches or IO errors; emit a warning but never block the
+                # render — downstream LaTeX works with the default font set.
+                self.emitter.warning(f"Font fallback scan failed: {exc}")
+                raw_summary = []
+            if raw_summary:
+                aggregated_fallback_summary = merge_fallback_summaries(
+                    aggregated_fallback_summary, raw_summary
+                )
+                usage = fallback_summary_to_usage(raw_summary)
+                if usage:
+                    aggregated_script_usage = merge_script_usage(aggregated_script_usage, usage)
+                    shared_state.script_usage = merge_script_usage(
+                        getattr(shared_state, "script_usage", []), aggregated_script_usage
                     )
-                    usage = fallback_summary_to_usage(raw_summary)
-                    if usage:
-                        aggregated_script_usage = merge_script_usage(aggregated_script_usage, usage)
-                        shared_state.script_usage = merge_script_usage(
-                            getattr(shared_state, "script_usage", []), aggregated_script_usage
-                        )
-                        shared_state.fallback_summary = merge_fallback_summaries(
-                            getattr(shared_state, "fallback_summary", []),
-                            aggregated_fallback_summary,
-                        )
-            except Exception:
-                # Best-effort: fallback detection should never block rendering.
-                pass
+                    shared_state.fallback_summary = merge_fallback_summaries(
+                        getattr(shared_state, "fallback_summary", []),
+                        aggregated_fallback_summary,
+                    )
 
         template_instance = self.runtime.instance
         if template_instance is None:  # pragma: no cover - defensive path
@@ -444,7 +447,10 @@ class TemplateRenderer:
         if metadata_blob:
             try:
                 metadata_raw = _scan_fallback(metadata_blob)
-            except Exception:
+            except Exception as exc:
+                # Mirror the slot-content scan above: surface a warning, keep
+                # rendering with the default font set.
+                self.emitter.warning(f"Font fallback scan failed on metadata: {exc}")
                 metadata_raw = []
             if metadata_raw:
                 aggregated_fallback_summary = merge_fallback_summaries(

@@ -18,7 +18,7 @@ from texsmith.core.bibliography.collection import BibliographyCollection
 from texsmith.core.callouts import DEFAULT_CALLOUTS, merge_callouts, normalise_callouts
 from texsmith.core.context import DocumentState
 from texsmith.core.conversion_contexts import (
-    BinderContext,
+    ConversionContext,
     GenerationStrategy,
     SegmentContext,
 )
@@ -41,11 +41,11 @@ from .debug import (
     raise_conversion_error,
     record_event,
 )
-from .execution import resolve_execution_context
+from .execution import resolve_conversion_context
 from .models import ConversionRequest
 from .templates import (
     SlotFragment,
-    build_binder_context,
+    bind_template,
     extract_slot_fragments,
 )
 
@@ -66,7 +66,7 @@ class ConversionResult:
     bibliography_path: Path | None = None
     template_overrides: dict[str, Any] = field(default_factory=dict)
     document: Document | None = None
-    binder_context: BinderContext | None = None
+    context: ConversionContext | None = None
     rule_descriptions: list[dict[str, Any]] = field(default_factory=list)
     assets_map: dict[str, Path] = field(default_factory=dict)
 
@@ -172,7 +172,7 @@ def _resolve_active_fragments(
 
 
 def _resolve_fragment_source_dir(
-    overrides: Mapping[str, Any] | None, binder_context: BinderContext
+    overrides: Mapping[str, Any] | None, context: ConversionContext
 ) -> Path | None:
     """Infer the base directory used to resolve fragment paths."""
     candidates = []
@@ -186,17 +186,9 @@ def _resolve_fragment_source_dir(
                 candidates.append(Path(raw_value))
     if candidates:
         return candidates[0]
-    if getattr(binder_context, "config", None) is not None:
-        try:
-            return binder_context.config.project_dir
-        except Exception:
-            return None
-    if binder_context.documents:
-        try:
-            return binder_context.documents[0].source_path.parent
-        except Exception:
-            return None
-    return None
+    if context.config is not None:
+        return context.config.project_dir
+    return context.document.source_path.parent
 
 
 def convert_document(
@@ -217,7 +209,7 @@ def convert_document(
     emitter = ensure_emitter(emitter or request.emitter)
     output_dir = output_dir.resolve()
 
-    execution = resolve_execution_context(
+    context = resolve_conversion_context(
         document=document,
         request=request,
         template_runtime=template_runtime,
@@ -233,15 +225,15 @@ def convert_document(
         emitter,
         "convert_document",
         {
-            "source": str(execution.document.source_path),
+            "source": str(context.document.source_path),
             "template": request.template,
-            "language": execution.language,
-            "copy_assets": execution.generation.copy_assets,
-            "convert_assets": execution.generation.convert_assets,
+            "language": context.language,
+            "copy_assets": context.generation.copy_assets,
+            "convert_assets": context.generation.convert_assets,
         },
     )
-    binder_context = build_binder_context(
-        execution=execution,
+    bind_template(
+        context=context,
         template=request.template,
         emitter=emitter,
         legacy_latex_accents=request.legacy_latex_accents,
@@ -249,17 +241,17 @@ def convert_document(
 
     renderer_kwargs: dict[str, Any] = {
         "output_root": output_dir,
-        "copy_assets": execution.generation.copy_assets,
-        "convert_assets": execution.generation.convert_assets,
-        "hash_assets": execution.generation.hash_assets,
+        "copy_assets": context.generation.copy_assets,
+        "convert_assets": context.generation.convert_assets,
+        "hash_assets": context.generation.hash_assets,
         "parser": request.parser or "html.parser",
     }
 
     return _render_document(
-        document=execution.document,
-        binder_context=binder_context,
+        document=context.document,
+        context=context,
         renderer_kwargs=renderer_kwargs,
-        strategy=execution.generation,
+        strategy=context.generation,
         disable_fallback_converters=request.disable_fallback_converters,
         persist_debug_html=request.persist_debug_html,
         emitter=emitter,
@@ -274,7 +266,7 @@ def convert_document(
 def _render_document(
     *,
     document: Document,
-    binder_context: BinderContext,
+    context: ConversionContext,
     renderer_kwargs: dict[str, Any],
     strategy: GenerationStrategy,
     disable_fallback_converters: bool,
@@ -288,21 +280,21 @@ def _render_document(
 ) -> ConversionResult:
     if persist_debug_html:
         persist_debug_artifacts(
-            binder_context.output_dir,
+            context.output_dir,
             document.source_path,
             document.html,
         )
 
-    binding = binder_context.template_binding
+    binding = context.template_binding
     if binding is None:  # pragma: no cover - defensive safeguard
-        raise RuntimeError("BinderContext is missing a template binding.")
+        raise RuntimeError("Conversion context is missing a template binding.")
 
     effective_base_level = binding.base_level or 0
     slot_base_levels = binding.slot_levels()
 
     runtime_common = _build_runtime_common(
         binding=binding,
-        binder_context=binder_context,
+        context=context,
         document=document,
         strategy=strategy,
         diagrams_backend=diagrams_backend,
@@ -310,7 +302,7 @@ def _render_document(
         http_user_agent=http_user_agent,
     )
 
-    active_slot_requests = binder_context.slot_requests
+    active_slot_requests = context.slot_requests
 
     parser_backend = str(renderer_kwargs.get("parser", "html.parser"))
     slot_fragments, missing_slots = extract_slot_fragments(
@@ -319,14 +311,14 @@ def _render_document(
         binding.default_slot,
         slot_definitions=binding.slots,
         parser_backend=parser_backend,
-        slot_options=binder_context.slot_options,
+        slot_options=document.slot_options,
     )
     for message in missing_slots:
         emitter.warning(message)
 
     manual_base_level = document.base_level
     drop_title_flag = bool(document.drop_title)
-    if drop_title_flag and document.slot_requests and not binder_context.slot_requests:
+    if drop_title_flag and document.slot_requests and not context.slot_requests:
         drop_title_flag = False
 
     fragment_offsets: dict[str, int] = {}
@@ -350,7 +342,7 @@ def _render_document(
                 html=fragment.html,
                 base_level=base_value + base_offset,
                 metadata=document.front_matter,
-                bibliography=binder_context.bibliography_map,
+                bibliography=context.bibliography_map,
             )
         )
 
@@ -366,7 +358,7 @@ def _render_document(
             renderer_kwargs=renderer_kwargs,
             initial_state=initial_state,
             drop_title_flag=drop_title_flag,
-            binder_context=binder_context,
+            context=context,
             legacy_latex_accents=legacy_latex_accents,
             emitter=emitter,
         )
@@ -385,20 +377,14 @@ def _render_document(
     latex_output = default_content
 
     document.segments = segment_registry
-    for slot_name, segments in segment_registry.items():
-        binder_context.bound_segments.setdefault(slot_name, []).extend(segments)
 
     citations = list(document_state.citations)
     bibliography_output: Path | None = None
-    if (
-        citations
-        and binder_context.bibliography_collection is not None
-        and binder_context.bibliography_map
-    ):
+    if citations and context.bibliography_collection is not None and context.bibliography_map:
         try:
-            binder_context.output_dir.mkdir(parents=True, exist_ok=True)
-            bibliography_output = binder_context.output_dir / "texsmith-bibliography.bib"
-            binder_context.bibliography_collection.write_bibtex(
+            context.output_dir.mkdir(parents=True, exist_ok=True)
+            bibliography_output = context.output_dir / "texsmith-bibliography.bib"
+            context.bibliography_collection.write_bibtex(
                 bibliography_output,
                 keys=citations,
             )
@@ -422,15 +408,15 @@ def _render_document(
                 slot_outputs=slot_outputs,
                 document_state=document_state,
                 template_overrides=(
-                    binder_context.template_overrides if binder_context.template_overrides else None
+                    context.template_overrides if context.template_overrides else None
                 ),
-                output_dir=binder_context.output_dir,
+                output_dir=context.output_dir,
                 copy_assets=strategy.copy_assets,
                 output_name=f"{document.source_path.stem}.tex",
                 bibliography_path=bibliography_output,
                 emitter=emitter,
                 fragments=list(
-                    binder_context.template_overrides.get(
+                    context.template_overrides.get(
                         "fragments", binding.runtime.extras.get("fragments", [])
                     )
                 ),
@@ -447,7 +433,7 @@ def _render_document(
                 raise
             raise_conversion_error(
                 emitter,
-                f"Failed to write LaTeX output to '{binder_context.output_dir}': {exc}",
+                f"Failed to write LaTeX output to '{context.output_dir}': {exc}",
                 exc,
             )
 
@@ -472,15 +458,15 @@ def _render_document(
             binding.requires_shell_escape
             or (document_state and document_state.requires_shell_escape)
         ),
-        language=binder_context.language,
+        language=context.language,
         has_bibliography=bool(bibliography_output),
         slot_outputs=dict(slot_outputs),
         default_slot=binding.default_slot,
         document_state=document_state,
         bibliography_path=bibliography_output,
-        template_overrides=dict(binder_context.template_overrides),
+        template_overrides=dict(context.template_overrides),
         document=document,
-        binder_context=binder_context,
+        context=context,
         rule_descriptions=rule_descriptions,
         assets_map=asset_map,
     )
@@ -489,7 +475,7 @@ def _render_document(
 def _build_runtime_common(
     *,
     binding: TemplateBinding,
-    binder_context: BinderContext,
+    context: ConversionContext,
     document: Document,
     strategy: GenerationStrategy,
     diagrams_backend: str | None,
@@ -497,7 +483,7 @@ def _build_runtime_common(
     http_user_agent: str | None,
 ) -> dict[str, object]:
     """Prepare immutable runtime metadata shared across fragment rendering."""
-    code_options = _resolve_code_options(binding, binder_context.template_overrides)
+    code_options = _resolve_code_options(binding, context.template_overrides)
 
     runtime_common: dict[str, object] = {
         "numbered": document.numbered,
@@ -506,27 +492,27 @@ def _build_runtime_common(
         "copy_assets": strategy.copy_assets,
         "convert_assets": strategy.convert_assets,
         "hash_assets": strategy.hash_assets,
-        "language": binder_context.language,
+        "language": context.language,
         "emitter": emitter,
-        "template_overrides": dict(binder_context.template_overrides),
+        "template_overrides": dict(context.template_overrides),
     }
     if isinstance(http_user_agent, str) and http_user_agent.strip():
         runtime_common["http_user_agent"] = http_user_agent.strip()
-    template_callouts = binder_context.template_overrides.get("callouts")
+    template_callouts = context.template_overrides.get("callouts")
     runtime_common["callouts_definitions"] = normalise_callouts(
         merge_callouts(
             DEFAULT_CALLOUTS,
             template_callouts if isinstance(template_callouts, Mapping) else None,
         )
     )
-    runtime_common["bibliography"] = binder_context.bibliography_map
-    runtime_common["bibliography_collection"] = binder_context.bibliography_collection
+    runtime_common["bibliography"] = context.bibliography_map
+    runtime_common["bibliography_collection"] = context.bibliography_collection
     if binding.name is not None:
         runtime_common["template"] = binding.name
     runtime_common["code"] = code_options
     runtime_common["diagrams_backend"] = diagrams_backend or "playwright"
-    mermaid_config = binder_context.template_overrides.get("mermaid_config") or (
-        binder_context.template_overrides.get("press") or {}
+    mermaid_config = context.template_overrides.get("mermaid_config") or (
+        context.template_overrides.get("press") or {}
     ).get("mermaid_config")
     if not mermaid_config and binding.runtime and binding.runtime.extras:
         mermaid_config = binding.runtime.extras.get("mermaid_config")
@@ -534,12 +520,12 @@ def _build_runtime_common(
         runtime_common["mermaid_config"] = mermaid_config
     if strategy.persist_manifest:
         runtime_common["generate_manifest"] = True
-    emoji_mode = _extract_emoji_mode(binder_context.template_overrides)
+    emoji_mode = _extract_emoji_mode(context.template_overrides)
     if not emoji_mode:
         emoji_mode = _extract_emoji_mode(document.front_matter)
     if emoji_mode:
         runtime_common["emoji_mode"] = emoji_mode
-        binder_context.template_overrides.setdefault("emoji", emoji_mode)
+        context.template_overrides.setdefault("emoji", emoji_mode)
         if emoji_mode != "artifact":
             runtime_common.setdefault("emoji_command", r"\texsmithEmoji")
 
@@ -558,7 +544,7 @@ def _render_slot_fragments(
     renderer_kwargs: dict[str, Any],
     initial_state: DocumentState | None,
     drop_title_flag: bool,
-    binder_context: BinderContext,
+    context: ConversionContext,
     legacy_latex_accents: bool,
     emitter: DiagnosticEmitter,
 ) -> dict[str, Any]:
@@ -573,10 +559,8 @@ def _render_slot_fragments(
     formatter.default_code_style = style_override.strip() or formatter.default_code_style
     available_templates = formatter.template_names
     partial_providers: dict[str, str] = dict.fromkeys(available_templates, "core")
-    fragment_names = _resolve_active_fragments(binding, binder_context.template_overrides)
-    fragment_source_dir = _resolve_fragment_source_dir(
-        binder_context.template_overrides, binder_context
-    )
+    fragment_names = _resolve_active_fragments(binding, context.template_overrides)
+    fragment_source_dir = _resolve_fragment_source_dir(context.template_overrides, context)
     required_partials: dict[str, set[str]] = {}
     if fragment_names:
         fragment_overrides, fragment_required, fragment_providers = collect_fragment_partials(
@@ -612,7 +596,7 @@ def _render_slot_fragments(
         nonlocal renderer
         if renderer is None:
             renderer = LaTeXRenderer(
-                config=binder_context.config,
+                config=context.config,
                 formatter=formatter,
                 **renderer_kwargs,
             )
@@ -640,7 +624,7 @@ def _render_slot_fragments(
                 renderer_factory,
                 fragment.html,
                 runtime_fragment,
-                binder_context.bibliography_map,
+                context.bibliography_map,
                 state=document_state,
                 emitter=emitter,
             )
@@ -653,7 +637,7 @@ def _render_slot_fragments(
         slot_outputs[fragment.name] = f"{existing_fragment}{fragment_output}"
 
     if document_state is None:
-        document_state = DocumentState(bibliography=dict(binder_context.bibliography_map))
+        document_state = DocumentState(bibliography=dict(context.bibliography_map))
 
     return {
         "slot_outputs": slot_outputs,

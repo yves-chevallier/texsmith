@@ -7,9 +7,9 @@ from pathlib import Path
 from typing import Any
 
 from texsmith.core.bibliography.collection import BibliographyCollection
-from texsmith.core.conversion_contexts import GenerationStrategy
+from texsmith.core.conversion_contexts import ConversionContext, GenerationStrategy
 from texsmith.core.documents import Document
-from texsmith.core.execution import ExecutionContext
+from texsmith.core.fragments.resolution import merge_fragments, parse_modifiers
 from texsmith.core.templates.runtime import (
     TemplateRuntime,
     build_template_overrides,
@@ -26,7 +26,7 @@ from .templates import (
 )
 
 
-def resolve_execution_context(
+def resolve_conversion_context(
     document: Document,
     request: ConversionRequest,
     *,
@@ -37,8 +37,14 @@ def resolve_execution_context(
     bibliography_files: Sequence[Path] | None = None,
     preloaded_bibliography: BibliographyCollection | None = None,
     seen_bibliography_issues: set[tuple[str, str | None, str | None]] | None = None,
-) -> ExecutionContext:
-    """Resolve all inputs into a single execution context for conversion."""
+) -> ConversionContext:
+    """Resolve all inputs into a :class:`ConversionContext` for conversion.
+
+    The returned context has its template-bound fields (``config``,
+    ``template_binding``) still set to ``None``; call
+    :func:`.templates.bind_template` to populate them once a template
+    has been selected.
+    """
     emitter = ensure_emitter(request.emitter)
     document = document.prepare_for_conversion()
 
@@ -56,7 +62,6 @@ def resolve_execution_context(
     slot_requests = dict(document.slot_requests)
     if slot_overrides:
         slot_requests.update(dict(slot_overrides))
-    slot_options = dict(document.slot_options)
 
     overrides = build_template_overrides(document.front_matter)
     if template_overrides:
@@ -185,19 +190,24 @@ def resolve_execution_context(
         "diagrams_backend": request.diagrams_backend or "playwright",
     }
 
-    return ExecutionContext(
+    # When the caller did not specify an output directory we render alongside
+    # the source document.
+    resolved_output_dir = (
+        Path(output_dir) if output_dir is not None else document.source_path.parent
+    )
+
+    return ConversionContext(
         document=document,
         request=request,
-        output_dir=Path(output_dir) if output_dir is not None else None,
+        output_dir=resolved_output_dir,
+        language=resolved_language,
+        generation=generation,
         template_runtime=template_runtime,
         template_overrides=dict(overrides),
         slot_requests=slot_requests,
-        slot_options=slot_options,
-        language=resolved_language,
         bibliography_collection=bibliography_collection,
         bibliography_map=bibliography_map,
         runtime_common=runtime_common,
-        generation=generation,
     )
 
 
@@ -207,7 +217,6 @@ def _replace_mustaches_in_structure(
     emitter: Any,
     source: str,
 ) -> dict[str, Any]:
-    # Local adapter to preserve existing behavior in build_binder_context.
     from texsmith.core.mustache import replace_mustaches_in_structure
 
     return replace_mustaches_in_structure(payload, contexts, emitter=emitter, source=source)
@@ -221,59 +230,18 @@ def _resolve_fragments_list(
 ) -> list[str]:
     """Compute the final fragment list after applying enable/disable toggles.
 
-    ``override_fragments`` may be:
-    - a ``list`` - replaces the template defaults entirely (existing behaviour),
-    - a ``dict`` with optional keys ``append``, ``prepend``, and ``disable`` -
-      modifies the template defaults without having to enumerate them all, or
-    - ``None`` - use the template defaults unchanged.
+    Thin orchestrator around :mod:`texsmith.core.fragments.resolution`: fetch
+    the template defaults, parse the front-matter override once, and let the
+    pure merge function do the rest.
     """
-
-    def _clean_list(values: Any) -> list[str]:
-        if not values:
-            return []
-        if isinstance(values, str):
-            values = [values]
-        seen: set[str] = set()
-        cleaned: list[str] = []
-        for entry in values:
-            name = str(entry).strip()
-            if not name or name in seen:
-                continue
-            seen.add(name)
-            cleaned.append(name)
-        return cleaned
-
-    def _template_defaults() -> list[str]:
-        if runtime and runtime.extras:
-            fragments = runtime.extras.get("fragments")
-            if isinstance(fragments, list):
-                return _clean_list(fragments)
-        return []
-
-    if isinstance(override_fragments, dict):
-        base = _template_defaults()
-        disable_front_matter = _clean_list(override_fragments.get("disable"))
-        prepend_list = _clean_list(override_fragments.get("prepend"))
-        append_list = _clean_list(override_fragments.get("append"))
-
-        base = [e for e in base if e not in disable_front_matter]
-        base = [e for e in prepend_list if e not in base] + base
-        for entry in append_list:
-            if entry not in base:
-                base.append(entry)
-    elif isinstance(override_fragments, list):
-        base = _clean_list(override_fragments)
-    else:
-        base = _template_defaults()
-
-    enable_list = _clean_list(enable)
-    disable_list = _clean_list(disable)
-
-    if not base and not enable_list and not disable_list:
-        return []
-
-    result = [entry for entry in base if entry not in disable_list]
-    for entry in enable_list:
-        if entry not in result:
-            result.append(entry)
-    return result
+    defaults: Sequence[str] = ()
+    if runtime and runtime.extras:
+        maybe_defaults = runtime.extras.get("fragments")
+        if isinstance(maybe_defaults, list):
+            defaults = maybe_defaults
+    return merge_fragments(
+        defaults,
+        parse_modifiers(override_fragments),
+        cli_enable=enable,
+        cli_disable=disable,
+    )

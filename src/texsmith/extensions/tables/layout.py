@@ -15,9 +15,9 @@ per-cell basis.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-import re
 from typing import Literal
 
+from .constants import ALIGN_WRAPPERS, PERCENT_RE
 from .schema import (
     Align,
     Column,
@@ -28,15 +28,6 @@ from .schema import (
 
 
 TableEnv = Literal["tabular", "tabularx", "longtable"]
-
-_PERCENT_RE = re.compile(r"^(\d+(?:\.\d+)?)%$")
-
-_ALIGN_WRAPPER: dict[Align, str] = {
-    "l": r">{\raggedright\arraybackslash}",
-    "r": r">{\raggedleft\arraybackslash}",
-    "c": r">{\centering\arraybackslash}",
-    "j": "",
-}
 
 
 # ---------------------------------------------------------------------------
@@ -72,7 +63,7 @@ class TableLayout:
 
 def _percent_to_linewidth(value: str) -> str:
     """Convert ``'25%'`` into ``'0.25\\linewidth'`` (100% stays as ``'\\linewidth'``)."""
-    match = _PERCENT_RE.match(value)
+    match = PERCENT_RE.match(value)
     if match is None:
         return value
     factor = float(match.group(1)) / 100.0
@@ -93,7 +84,7 @@ def _scale_percent(raw: str | None, factor: float) -> str | None:
     """Scale a percentage width by ``factor``; non-percent widths pass through."""
     if raw is None:
         return None
-    match = _PERCENT_RE.match(raw)
+    match = PERCENT_RE.match(raw)
     if match is None:
         return raw
     scaled = float(match.group(1)) * factor
@@ -242,7 +233,7 @@ def _choose_env(table: Table, leaves: list[_ResolvedLeaf], total_width: str | No
 
 def _column_spec(leaf: _ResolvedLeaf, env: TableEnv, *, use_x_for_auto: bool) -> str:
     width = _normalise_width(leaf.width_raw)
-    wrapper = _ALIGN_WRAPPER[leaf.align]
+    wrapper = ALIGN_WRAPPERS[leaf.align]
 
     # Explicit ``X`` or ``auto`` markers: always emit a tabularx ``X`` column.
     # ``auto`` is treated as synonymous with ``X`` — both signal a column that

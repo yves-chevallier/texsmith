@@ -11,7 +11,7 @@ import re
 from typing import TYPE_CHECKING, Any
 
 from bs4 import BeautifulSoup, FeatureNotFound
-from bs4.element import Comment, NavigableString, Tag
+from bs4.element import NavigableString, Tag
 from pybtex.exceptions import PybtexError
 from slugify import slugify
 import yaml
@@ -22,9 +22,9 @@ from ..bibliography.parsing import (
     bibliography_data_from_string,
 )
 from ..config import BookConfig
-from ..conversion_contexts import BinderContext
+from ..conversion_contexts import ConversionContext
 from ..diagnostics import DiagnosticEmitter
-from ..execution import ExecutionContext
+from ..html_utils import strip_html_comments
 from ..mustache import replace_mustaches
 from ..templates import TemplateBinding, TemplateError, TemplateSlot, resolve_template_binding
 from .debug import debug_enabled, ensure_emitter, raise_conversion_error, record_event
@@ -115,22 +115,26 @@ class SlotFragment:
     heading_levels: list[int] = field(default_factory=list)
 
 
-def build_binder_context(
+def bind_template(
     *,
-    execution: ExecutionContext,
+    context: ConversionContext,
     template: str | None,
     emitter: DiagnosticEmitter | None,
     legacy_latex_accents: bool,
-) -> BinderContext:
-    """Prepare template bindings and slot mappings from a resolved execution context."""
+) -> ConversionContext:
+    """Resolve the template binding and attach it to ``context``.
+
+    The incoming :class:`ConversionContext` has its template-bound fields
+    unset; this function selects the template, builds a :class:`BookConfig`
+    from the resolved language, and stores both back on the context. The
+    same object is returned (mutated in place) so callers can chain.
+    """
     emitter = ensure_emitter(emitter)
-    document = execution.document
-    resolved_language = execution.language
-    output_dir = execution.output_dir or document.source_path.parent
+    document = context.document
 
     config = BookConfig(
         project_dir=document.source_path.parent,
-        language=resolved_language,
+        language=context.language,
         legacy_latex_accents=legacy_latex_accents,
     )
 
@@ -139,9 +143,9 @@ def build_binder_context(
     try:
         binding, active_slot_requests = resolve_template_binding(
             template=template,
-            template_runtime=execution.template_runtime,
-            template_overrides=execution.template_overrides,
-            slot_requests=execution.slot_requests,
+            template_runtime=context.template_runtime,
+            template_overrides=context.template_overrides,
+            slot_requests=context.slot_requests,
             warn=lambda message: emitter.warning(message),
         )
     except TemplateError as exc:
@@ -156,21 +160,10 @@ def build_binder_context(
         if template_mermaid and not config.mermaid_config:
             config.mermaid_config = Path(template_mermaid)
 
-    binder_context = BinderContext(
-        output_dir=output_dir,
-        config=config,
-        strategy=execution.generation,
-        language=resolved_language,
-        slot_requests=active_slot_requests,
-        template_overrides=dict(execution.template_overrides),
-        slot_options=dict(execution.slot_options),
-        bibliography_map=execution.bibliography_map,
-        bibliography_collection=execution.bibliography_collection,
-        template_binding=binding,
-    )
-    binder_context.documents.append(document)
-
-    return binder_context
+    context.config = config
+    context.template_binding = binding
+    context.slot_requests = active_slot_requests
+    return context
 
 
 def _merge_template_overrides(
@@ -207,8 +200,7 @@ def extract_slot_fragments(
     except FeatureNotFound:
         soup = BeautifulSoup(html, "html.parser")
 
-    for comment in soup.find_all(string=lambda text: isinstance(text, Comment)):
-        comment.extract()
+    strip_html_comments(soup)
 
     container = soup.body or soup
     document_html = "".join(str(node) for node in container.contents)
@@ -609,7 +601,7 @@ def _ensure_doi_support() -> tuple[type[Any], type[Exception], Any]:
 
 __all__ = [
     "SlotFragment",
-    "build_binder_context",
+    "bind_template",
     "collect_section_nodes",
     "compute_heading_offset",
     "extract_slot_fragments",

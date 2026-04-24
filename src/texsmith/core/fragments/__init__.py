@@ -7,6 +7,7 @@ from dataclasses import dataclass, field
 import importlib
 from pathlib import Path
 from typing import Any
+import warnings
 
 
 try:  # Python >=3.11
@@ -635,8 +636,17 @@ def render_fragments(
                 try:
                     if not fragment.should_render(context):
                         continue
-                except Exception:
-                    pass
+                except Exception as exc:
+                    # ``should_render`` is a user-authored predicate; a bug in
+                    # it must not kill the whole render. Surface a warning so
+                    # the failure isn't silent and fall through (fail-open) —
+                    # the user sees the fragment render alongside the warning
+                    # rather than losing output with no explanation.
+                    warnings.warn(
+                        f"Fragment '{fragment.name}' should_render() raised {exc!r};"
+                        " rendering the fragment anyway.",
+                        stacklevel=2,
+                    )
         else:
             attributes = FRAGMENT_REGISTRY.attributes_for(fragment.name)
             resolver = FRAGMENT_REGISTRY.attribute_resolver_for(fragment.name)
@@ -659,8 +669,14 @@ def render_fragments(
             try:
                 if not fragment.should_render(config):
                     continue
-            except Exception:
-                pass
+            except Exception as exc:
+                # Mirror the FragmentDefinition branch: warn and fall through
+                # rather than losing the fragment to a buggy predicate.
+                warnings.warn(
+                    f"Fragment '{fragment.name}' should_render() raised {exc!r};"
+                    " rendering the fragment anyway.",
+                    stacklevel=2,
+                )
 
         for piece in fragment.pieces:
             env = _build_environment(piece.template_path.parent)

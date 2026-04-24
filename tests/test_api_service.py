@@ -7,10 +7,10 @@ import pytest
 
 from texsmith.core.conversion import ConversionRequest, SlotAssignment
 from texsmith.core.conversion.debug import ConversionError
-from texsmith.core.conversion.execution import resolve_execution_context
+from texsmith.core.conversion.execution import resolve_conversion_context
 from texsmith.core.conversion.inputs import UnsupportedInputError
 from texsmith.core.conversion.service import ConversionService
-from texsmith.core.conversion.templates import build_binder_context
+from texsmith.core.conversion.templates import bind_template
 from texsmith.core.documents import Document, TitleStrategy
 from texsmith.core.templates.runtime import load_template_runtime
 
@@ -164,7 +164,7 @@ def test_title_promotion_requires_unique_level(tmp_path: Path) -> None:
     assert context.drop_title is False
 
 
-def test_binder_context_injects_template_title(tmp_path: Path) -> None:
+def test_bind_template_injects_template_title(tmp_path: Path) -> None:
     service = ConversionService()
     template_dir = _create_template(tmp_path)
     source = tmp_path / "doc.md"
@@ -178,27 +178,26 @@ def test_binder_context_injects_template_title(tmp_path: Path) -> None:
     )
 
     prepared = service.prepare_documents(request)
-    document = prepared.documents[0]
-    context = document.prepare_for_conversion()
+    document = prepared.documents[0].prepare_for_conversion()
 
     runtime = load_template_runtime(str(template_dir))
-    execution = resolve_execution_context(
-        context,
+    context = resolve_conversion_context(
+        document,
         request,
         template_runtime=runtime,
         output_dir=tmp_path,
     )
-    binder = build_binder_context(
-        execution=execution,
+    bind_template(
+        context=context,
         template=str(template_dir),
         emitter=None,
         legacy_latex_accents=False,
     )
 
-    assert binder.template_overrides["press"]["title"] == "Sample Title"
+    assert context.template_overrides["press"]["title"] == "Sample Title"
 
 
-def test_resolve_execution_context_prefers_request_and_overrides(tmp_path: Path) -> None:
+def test_resolve_conversion_context_prefers_request_and_overrides(tmp_path: Path) -> None:
     source = tmp_path / "doc.md"
     source.write_text(
         """---
@@ -219,16 +218,16 @@ press:
         language="english",
     )
 
-    execution = resolve_execution_context(
+    context = resolve_conversion_context(
         document,
         request,
         template_overrides={"press": {"title": "CLI Title"}},
         output_dir=tmp_path,
     )
 
-    assert execution.language == "english"
-    assert execution.template_overrides["press"]["title"] == "CLI Title"
-    assert execution.template_overrides["press"]["subtitle"] == "Front Subtitle"
+    assert context.language == "english"
+    assert context.template_overrides["press"]["title"] == "CLI Title"
+    assert context.template_overrides["press"]["subtitle"] == "Front Subtitle"
 
 
 def test_prepare_documents_applies_slot_assignments(tmp_path: Path) -> None:

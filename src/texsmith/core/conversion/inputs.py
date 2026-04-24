@@ -86,16 +86,17 @@ def coerce_slot_selector(payload: Any) -> str | None:
     return None
 
 
-def parse_slot_mapping(raw: Any) -> dict[str, str]:
-    """Parse slot mappings declared in front matter structures."""
-    overrides, _ = parse_slot_mapping_with_options(raw)
-    return overrides
-
-
-def parse_slot_mapping_with_options(
+def parse_slot_mapping(
     raw: Any,
 ) -> tuple[dict[str, str], dict[str, SlotOptions]]:
-    """Parse slot mappings and their associated per-slot options."""
+    """Parse slot mappings together with their per-slot options.
+
+    Accepts the three front-matter shapes ``{name: selector}``,
+    ``[{target/slot: ..., label: ...}]`` and the bare ``"name:selector"``
+    string form. Returns a ``(selectors, options)`` tuple where ``options``
+    only contains entries whose values differ from the ``SlotOptions``
+    defaults, so callers can ignore it when they don't care.
+    """
     overrides: dict[str, str] = {}
     options: dict[str, SlotOptions] = {}
     if not raw:
@@ -146,25 +147,12 @@ def parse_slot_mapping_with_options(
     return overrides, options
 
 
-def extract_front_matter_slots(front_matter: Mapping[str, Any]) -> dict[str, str]:
-    """Collect slot overrides defined in document front matter."""
-    overrides, _ = extract_front_matter_slots_with_options(front_matter)
-    return overrides
-
-
-def extract_front_matter_slots_with_options(
+def extract_front_matter_slots(
     front_matter: Mapping[str, Any],
 ) -> tuple[dict[str, str], dict[str, SlotOptions]]:
     """Return front-matter slot selectors alongside their per-slot options."""
-    overrides: dict[str, str] = {}
-    options: dict[str, SlotOptions] = {}
-
     root_slots = front_matter.get("slots") or front_matter.get("entrypoints")
-    parsed_overrides, parsed_options = parse_slot_mapping_with_options(root_slots)
-    overrides.update(parsed_overrides)
-    options.update(parsed_options)
-
-    return overrides, options
+    return parse_slot_mapping(root_slots)
 
 
 _ISO_YEAR_RE = re.compile(r"^(?P<year>\d{4})$")

@@ -50,7 +50,7 @@ from .conversion.inputs import (
     InputKind,
     SlotOptions,
     extract_content,
-    extract_front_matter_slots_with_options,
+    extract_front_matter_slots,
 )
 from .conversion_contexts import AssetMapping, SegmentContext
 from .diagnostics import DiagnosticEmitter, NullEmitter
@@ -440,7 +440,7 @@ class Document:
             payload = dict(self._front_matter)
             with contextlib.suppress(PressMetadataError):
                 normalise_press_metadata(payload)
-            base_mapping, base_options = extract_front_matter_slots_with_options(payload)
+            base_mapping, base_options = extract_front_matter_slots(payload)
             if base_mapping:
                 selectors, includes = _split_slot_mapping(base_mapping)
                 self.slot_selectors.update(selectors)
@@ -613,7 +613,7 @@ class Document:
             press_payload.setdefault("_source_dir", str(self.source_path.parent))
             press_payload.setdefault("_source_path", str(self.source_path))
 
-        base_mapping, base_options = extract_front_matter_slots_with_options(metadata)
+        base_mapping, base_options = extract_front_matter_slots(metadata)
         base_selectors, base_includes = _split_slot_mapping(base_mapping)
         combined_selectors = dict(base_selectors)
         combined_selectors.update(self.slot_selectors)

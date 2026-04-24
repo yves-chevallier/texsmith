@@ -14,27 +14,14 @@ from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
+from .constants import ALIGN_ALIASES, PERCENT_RE
+
 
 Scalar = str | int | float | bool | None
 Align = Literal["l", "c", "r", "j"]
 
-_PERCENT_RE = re.compile(r"^\d+(?:\.\d+)?%$")
 _PLACEMENT_RE = re.compile(r"^[hHtbpT!]+$")
 _RICH_KEYS = frozenset({"value", "rows", "cols", "align"})
-
-# User-friendly long forms accepted everywhere ``align`` is allowed.
-_ALIGN_ALIASES = {
-    "l": "l",
-    "left": "l",
-    "c": "c",
-    "center": "c",
-    "centre": "c",
-    "r": "r",
-    "right": "r",
-    "j": "j",
-    "justify": "j",
-    "justified": "j",
-}
 
 
 def _normalise_align(value: Any) -> str | None:
@@ -44,11 +31,9 @@ def _normalise_align(value: Any) -> str | None:
     if not isinstance(value, str):
         raise TypeError(f"align must be a string, got {type(value).__name__}")
     key = value.strip().lower()
-    if key in _ALIGN_ALIASES:
-        return _ALIGN_ALIASES[key]
-    raise ValueError(
-        f"invalid align value {value!r}; expected one of {sorted(set(_ALIGN_ALIASES))}"
-    )
+    if key in ALIGN_ALIASES:
+        return ALIGN_ALIASES[key]
+    raise ValueError(f"invalid align value {value!r}; expected one of {sorted(set(ALIGN_ALIASES))}")
 
 
 # ---------------------------------------------------------------------------
@@ -76,7 +61,7 @@ def _validate_width(raw: Any) -> str:
         return value
     if value.lower() == "x":
         return "X"
-    if _PERCENT_RE.match(value):
+    if PERCENT_RE.match(value):
         percent = float(value[:-1])
         if not 0 < percent <= 100:
             raise ValueError(f"width percentage must be in (0, 100], got {value!r}")
@@ -118,12 +103,18 @@ class TableSettings(BaseModel):
 # ---------------------------------------------------------------------------
 
 
-class LeafColumn(BaseModel):
-    """Terminal column with optional alignment and width metadata."""
+class _ColumnAttrs(BaseModel):
+    """Shared fields and validators for column-like models.
+
+    Leaf columns, grouped columns, and the per-column entries of a
+    ``yaml table-config`` fence all expose the same optional trio
+    (``align`` / ``width`` / ``width_group``) with identical normalisation
+    rules. Defining them once here keeps the schema surface a single source
+    of truth; subclasses just add their own identity fields.
+    """
 
     model_config = ConfigDict(extra="forbid", populate_by_name=True)
 
-    name: str
     align: Align | None = None
     width: str | None = None
     width_group: str | None = Field(default=None, alias="width-group")
@@ -148,35 +139,17 @@ class LeafColumn(BaseModel):
         return str(value)
 
 
-class ColumnGroup(BaseModel):
-    """Recursive column group containing an ordered list of sub-columns."""
+class LeafColumn(_ColumnAttrs):
+    """Terminal column with optional alignment and width metadata."""
 
-    model_config = ConfigDict(extra="forbid", populate_by_name=True)
+    name: str
+
+
+class ColumnGroup(_ColumnAttrs):
+    """Recursive column group containing an ordered list of sub-columns."""
 
     name: str
     columns: list[Column] = Field(min_length=1)
-    align: Align | None = None
-    width: str | None = None
-    width_group: str | None = Field(default=None, alias="width-group")
-
-    @field_validator("align", mode="before")
-    @classmethod
-    def _check_align(cls, value: Any) -> str | None:
-        return _normalise_align(value)
-
-    @field_validator("width", mode="before")
-    @classmethod
-    def _check_width(cls, value: Any) -> str | None:
-        if value is None:
-            return None
-        return _validate_width(value)
-
-    @field_validator("width_group", mode="before")
-    @classmethod
-    def _coerce_group(cls, value: Any) -> str | None:
-        if value is None:
-            return None
-        return str(value)
 
 
 Column = LeafColumn | ColumnGroup
@@ -449,38 +422,13 @@ def parse_table(raw: dict[str, Any]) -> Table:
 # ---------------------------------------------------------------------------
 
 
-class ColumnConfig(BaseModel):
+class ColumnConfig(_ColumnAttrs):
     """Per-column attributes for a ``yaml table-config`` block.
 
     Columns are matched positionally against the preceding Markdown table
     (no ``name`` field — there is no header lookup, the markdown header
     stays exactly as written).
     """
-
-    model_config = ConfigDict(extra="forbid", populate_by_name=True)
-
-    align: Align | None = None
-    width: str | None = None
-    width_group: str | None = Field(default=None, alias="width-group")
-
-    @field_validator("align", mode="before")
-    @classmethod
-    def _check_align(cls, value: Any) -> str | None:
-        return _normalise_align(value)
-
-    @field_validator("width", mode="before")
-    @classmethod
-    def _check_width(cls, value: Any) -> str | None:
-        if value is None:
-            return None
-        return _validate_width(value)
-
-    @field_validator("width_group", mode="before")
-    @classmethod
-    def _coerce_group(cls, value: Any) -> str | None:
-        if value is None:
-            return None
-        return str(value)
 
 
 class TableConfig(BaseModel):

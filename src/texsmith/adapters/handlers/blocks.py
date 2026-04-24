@@ -750,6 +750,17 @@ def render_figures(element: Tag, context: RenderContext) -> None:
 
     image = element.find("img")
     if image is None:
+        # Extensions like ``pymdownx.blocks.caption`` wrap a plain Markdown
+        # table in a ``<figure>`` with a ``<figcaption>``. Migrate the caption
+        # into a proper ``<caption>`` and let the appropriate table handler
+        # (yaml-table or legacy) finish the rendering. Tables emitted by the
+        # yaml-table extension already carry their own caption, so callers
+        # that use our ``Table: caption`` syntax never hit this branch.
+        from texsmith.extensions.tables.renderer import (
+            is_texsmith_table,
+            render_yaml_table,
+        )
+
         table = element.find("table")
         if table is not None:
             identifier = coerce_attribute(element.get("id"))
@@ -762,12 +773,7 @@ def render_figures(element: Tag, context: RenderContext) -> None:
                 caption.string = figcaption.get_text(strip=False)
                 table.insert(0, caption)
                 figcaption.decompose()
-            # Tables flagged by the yaml-table extension carry their own
-            # data-ts-* attributes; route them through the dedicated renderer
-            # instead of the legacy ``render_tables`` path.
-            if coerce_attribute(table.get("data-ts-table")) == "1":
-                from texsmith.extensions.tables.renderer import render_yaml_table
-
+            if is_texsmith_table(table):
                 render_yaml_table(table, context)
             else:
                 render_tables(table, context)

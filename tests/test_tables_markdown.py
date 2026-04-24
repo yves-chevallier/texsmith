@@ -194,7 +194,7 @@ def test_non_yaml_table_fence_is_ignored() -> None:
 # ---------------------------------------------------------------------------
 
 
-def test_standard_markdown_table_gets_figcaption_from_caption_line() -> None:
+def test_standard_markdown_table_gets_caption_from_caption_line() -> None:
     soup = _render_with_tables(
         """
         Table: Répartition actuelle
@@ -204,12 +204,14 @@ def test_standard_markdown_table_gets_figcaption_from_caption_line() -> None:
         | SE          | 35 | 38 |
         """
     )
-    figure = soup.find("figure")
-    assert figure is not None
-    figcaption = figure.find("figcaption")
-    assert figcaption is not None
-    assert figcaption.get_text(strip=True) == "Répartition actuelle"
-    assert figure.find("table") is not None
+    # No figure wrapper: the caption is attached directly to the table so the
+    # yaml-table and legacy renderers pick it up without special-casing.
+    assert soup.find("figure") is None
+    table = soup.find("table")
+    assert table is not None
+    caption = table.find("caption")
+    assert caption is not None
+    assert caption.get_text(strip=True) == "Répartition actuelle"
     # The "Table:" line must not survive as a stray paragraph.
     assert "Table:" not in soup.get_text()
 
@@ -224,9 +226,11 @@ def test_standard_markdown_table_caption_with_label() -> None:
         | x | 1 |
         """
     )
-    figure = soup.find("figure")
-    assert figure is not None
-    assert figure.get("id") == "tbl:stocks"
+    assert soup.find("figure") is None
+    table = soup.find("table")
+    assert table is not None
+    assert table.get("id") == "tbl:stocks"
+    assert table.find("caption").get_text(strip=True) == "Stocks"
 
 
 def test_standalone_caption_without_following_table_is_left_alone() -> None:
@@ -291,7 +295,7 @@ def test_table_config_block_marks_preceding_table_for_yaml_renderer() -> None:
     assert soup.find("texsmith-table-config") is None
 
 
-def test_table_config_block_caption_pairing_works_with_figure() -> None:
+def test_table_config_block_caption_pairs_with_plain_table() -> None:
     soup = _render_with_tables(
         """
         Table: Demo {#tbl:demo}
@@ -307,10 +311,12 @@ def test_table_config_block_caption_pairing_works_with_figure() -> None:
         ```
         """
     )
-    figure = soup.find("figure")
-    assert figure is not None
-    table = figure.find("table")
-    # Config still binds to the wrapped table.
+    assert soup.find("figure") is None
+    table = soup.find("table")
+    assert table is not None
+    assert table.get("id") == "tbl:demo"
+    assert table.find("caption").get_text(strip=True) == "Demo"
+    # Config binds to the table regardless of the caption.
     assert table.get("data-ts-table") == "1"
     colspec = table.get("data-ts-colspec")
     assert colspec.startswith("l")
@@ -350,9 +356,7 @@ def test_multiple_table_config_blocks_survive_superfences() -> None:
     superfences can see it, so both configs now bind to their respective
     tables.
     """
-    md = Markdown(
-        extensions=["tables", "pymdownx.superfences", YamlTableExtension()]
-    )
+    md = Markdown(extensions=["tables", "pymdownx.superfences", YamlTableExtension()])
     src = textwrap.dedent(
         """
         | A | B | C | D |
