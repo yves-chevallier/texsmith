@@ -661,6 +661,85 @@ def test_leaf_column_rejects_extra_keys() -> None:
         LeafColumn(name="A", foo=1)
 
 
+# ---------------------------------------------------------------------------
+# Long-form alignment + explicit X width
+# ---------------------------------------------------------------------------
+
+
+def test_align_accepts_long_forms() -> None:
+    table = parse_table(
+        _load(
+            """
+            columns:
+              - {name: A, align: left}
+              - {name: B, align: right}
+              - {name: C, align: center}
+              - {name: D, align: justify}
+            rows: [[a, 1, 2, 3]]
+            """
+        )
+    )
+    assert [c.align for c in table.columns] == ["l", "r", "c", "j"]
+
+
+def test_align_rejects_unknown_value() -> None:
+    with pytest.raises(ValidationError, match="invalid align"):
+        LeafColumn(name="A", align="diagonal")
+
+
+def test_width_accepts_explicit_x_marker() -> None:
+    col = LeafColumn(name="A", width="X")
+    assert col.width == "X"
+    # Lowercase ``x`` normalises to ``X``.
+    col = LeafColumn(name="B", width="x")
+    assert col.width == "X"
+
+
+# ---------------------------------------------------------------------------
+# TableConfig parsing (yaml table-config payload)
+# ---------------------------------------------------------------------------
+
+
+def test_table_config_parses_basic_payload() -> None:
+    from texsmith.extensions.tables import parse_table_config, synthesise_table_for_config
+
+    config = parse_table_config(
+        _load(
+            """
+            table:
+              width: 90%
+            columns:
+              - {align: left}
+              - {align: right}
+              - {align: justify, width: X}
+            """
+        )
+    )
+    assert config.settings.width == "90%"
+    assert len(config.columns) == 3
+    assert config.columns[2].width == "X"
+
+    synthetic = synthesise_table_for_config(config, n_columns=3)
+    assert [c.align for c in synthetic.columns] == ["l", "r", "j"]
+    assert synthetic.columns[2].width == "X"
+
+
+def test_table_config_columns_default_to_natural_when_missing() -> None:
+    from texsmith.extensions.tables import parse_table_config, synthesise_table_for_config
+
+    config = parse_table_config(_load("columns: []"))
+    synthetic = synthesise_table_for_config(config, n_columns=4)
+    assert all(c.align is None for c in synthetic.columns)
+    assert all(c.width is None for c in synthetic.columns)
+
+
+def test_table_config_rejects_unknown_keys() -> None:
+    from texsmith.extensions.tables import parse_table_config
+
+    with pytest.raises(ValueError, match="unknown top-level"):
+        parse_table_config({"columns": [], "weird": True})
+
+
 def test_column_leaves_traverses_nested_groups() -> None:
     table = parse_table(
         _load(

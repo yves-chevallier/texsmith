@@ -22,6 +22,34 @@ _PERCENT_RE = re.compile(r"^\d+(?:\.\d+)?%$")
 _PLACEMENT_RE = re.compile(r"^[hHtbpT!]+$")
 _RICH_KEYS = frozenset({"value", "rows", "cols", "align"})
 
+# User-friendly long forms accepted everywhere ``align`` is allowed.
+_ALIGN_ALIASES = {
+    "l": "l",
+    "left": "l",
+    "c": "c",
+    "center": "c",
+    "centre": "c",
+    "r": "r",
+    "right": "r",
+    "j": "j",
+    "justify": "j",
+    "justified": "j",
+}
+
+
+def _normalise_align(value: Any) -> str | None:
+    """Map a user-supplied alignment to its short form, or return None."""
+    if value is None:
+        return None
+    if not isinstance(value, str):
+        raise TypeError(f"align must be a string, got {type(value).__name__}")
+    key = value.strip().lower()
+    if key in _ALIGN_ALIASES:
+        return _ALIGN_ALIASES[key]
+    raise ValueError(
+        f"invalid align value {value!r}; expected one of {sorted(set(_ALIGN_ALIASES))}"
+    )
+
 
 # ---------------------------------------------------------------------------
 # Width helpers
@@ -29,7 +57,15 @@ _RICH_KEYS = frozenset({"value", "rows", "cols", "align"})
 
 
 def _validate_width(raw: Any) -> str:
-    """Return a cleaned width specification or raise an error."""
+    """Return a cleaned width specification or raise an error.
+
+    Accepts:
+    - ``"auto"``: no fixed width (cell is sized naturally).
+    - ``"X"`` (case-insensitive): explicit ``tabularx`` ``X`` column —
+      the column absorbs whatever horizontal space is left.
+    - ``"NN%"``: percentage of the table width.
+    - any other string: passed through as an opaque LaTeX length.
+    """
     if not isinstance(raw, str):
         raise TypeError(f"width must be a string, got {type(raw).__name__}")
     value = raw.strip()
@@ -37,6 +73,8 @@ def _validate_width(raw: Any) -> str:
         raise ValueError("width must not be empty")
     if value == "auto":
         return value
+    if value.lower() == "x":
+        return "X"
     if _PERCENT_RE.match(value):
         percent = float(value[:-1])
         if not 0 < percent <= 100:
@@ -89,6 +127,11 @@ class LeafColumn(BaseModel):
     width: str | None = None
     width_group: str | None = Field(default=None, alias="width-group")
 
+    @field_validator("align", mode="before")
+    @classmethod
+    def _check_align(cls, value: Any) -> str | None:
+        return _normalise_align(value)
+
     @field_validator("width", mode="before")
     @classmethod
     def _check_width(cls, value: Any) -> str | None:
@@ -114,6 +157,11 @@ class ColumnGroup(BaseModel):
     align: Align | None = None
     width: str | None = None
     width_group: str | None = Field(default=None, alias="width-group")
+
+    @field_validator("align", mode="before")
+    @classmethod
+    def _check_align(cls, value: Any) -> str | None:
+        return _normalise_align(value)
 
     @field_validator("width", mode="before")
     @classmethod
@@ -173,6 +221,11 @@ class RichCell(BaseModel):
     rows: int = 1
     cols: int = 1
     align: Align | None = None
+
+    @field_validator("align", mode="before")
+    @classmethod
+    def _check_align(cls, value: Any) -> str | None:
+        return _normalise_align(value)
 
     @field_validator("rows", "cols")
     @classmethod
@@ -388,6 +441,102 @@ def parse_table(raw: dict[str, Any]) -> Table:
     settings = TableSettings.model_validate(settings_raw)
 
     return Table(settings=settings, columns=columns, rows=rows, footer=footer)
+
+
+# ---------------------------------------------------------------------------
+# Table-config payload (applied to a plain Markdown table)
+# ---------------------------------------------------------------------------
+
+
+class ColumnConfig(BaseModel):
+    """Per-column attributes for a ``yaml table-config`` block.
+
+    Columns are matched positionally against the preceding Markdown table
+    (no ``name`` field — there is no header lookup, the markdown header
+    stays exactly as written).
+    """
+
+    model_config = ConfigDict(extra="forbid", populate_by_name=True)
+
+    align: Align | None = None
+    width: str | None = None
+    width_group: str | None = Field(default=None, alias="width-group")
+
+    @field_validator("align", mode="before")
+    @classmethod
+    def _check_align(cls, value: Any) -> str | None:
+        return _normalise_align(value)
+
+    @field_validator("width", mode="before")
+    @classmethod
+    def _check_width(cls, value: Any) -> str | None:
+        if value is None:
+            return None
+        return _validate_width(value)
+
+    @field_validator("width_group", mode="before")
+    @classmethod
+    def _coerce_group(cls, value: Any) -> str | None:
+        if value is None:
+            return None
+        return str(value)
+
+
+class TableConfig(BaseModel):
+    """Full payload of a ``yaml table-config`` fence."""
+
+    model_config = ConfigDict(extra="forbid", populate_by_name=True)
+
+    settings: TableSettings = Field(default_factory=TableSettings)
+    columns: list[ColumnConfig] = Field(default_factory=list)
+
+
+def parse_table_config(raw: Any) -> TableConfig:
+    """Build a validated :class:`TableConfig` from a raw YAML mapping."""
+    if raw is None:
+        raw = {}
+    if not isinstance(raw, dict):
+        raise TypeError("yaml table-config payload must be a mapping")
+
+    unknown = set(raw) - {"table", "columns"}
+    if unknown:
+        raise ValueError(f"unknown top-level key(s): {sorted(unknown)}")
+
+    settings_raw = raw.get("table") or {}
+    if not isinstance(settings_raw, dict):
+        raise TypeError("'table' section must be a mapping")
+    settings = TableSettings.model_validate(settings_raw)
+
+    columns_raw = raw.get("columns") or []
+    if not isinstance(columns_raw, list):
+        raise TypeError("'columns' must be a list of column descriptors")
+    columns = [ColumnConfig.model_validate(c or {}) for c in columns_raw]
+
+    return TableConfig(settings=settings, columns=columns)
+
+
+def synthesise_table_for_config(config: TableConfig, n_columns: int) -> Table:
+    """Produce a :class:`Table` shell suitable for :func:`compute_layout`.
+
+    Used to drive the existing layout machinery for a table-config payload
+    bound to an existing Markdown table whose column count is ``n_columns``.
+    Names are synthesised; rows stay empty since validation only requires
+    column structure.
+    """
+    if n_columns < 2:
+        raise ValueError(f"table-config requires at least 2 columns, got {n_columns}")
+    columns: list[Column] = []
+    for i in range(n_columns):
+        cfg = config.columns[i] if i < len(config.columns) else ColumnConfig()
+        columns.append(
+            LeafColumn(
+                name=f"col_{i}",
+                align=cfg.align,
+                width=cfg.width,
+                width_group=cfg.width_group,
+            )
+        )
+    return Table(settings=config.settings, columns=columns, rows=[], footer=[])
 
 
 # ---------------------------------------------------------------------------

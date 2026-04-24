@@ -261,6 +261,98 @@ def test_paragraph_between_caption_and_table_breaks_the_pair() -> None:
     assert soup.find("table") is not None
 
 
+# ---------------------------------------------------------------------------
+# `yaml table-config` block: applies layout to a plain Markdown table
+# ---------------------------------------------------------------------------
+
+
+def test_table_config_block_marks_preceding_table_for_yaml_renderer() -> None:
+    soup = _render_with_tables(
+        """
+        | A | B | C |
+        | - | - | - |
+        | 1 | 2 | 3 |
+
+        ```yaml table-config
+        columns:
+          - {align: left}
+          - {align: right}
+          - {align: justify, width: X}
+        ```
+        """
+    )
+    table = soup.find("table")
+    assert table is not None
+    assert table.get("data-ts-table") == "1"
+    assert table.get("data-ts-env") == "tabularx"
+    assert table.get("data-ts-colspec") == "lrX"
+    assert table.get("data-ts-width") == r"\linewidth"
+    # The marker element itself is consumed.
+    assert soup.find("texsmith-table-config") is None
+
+
+def test_table_config_block_caption_pairing_works_with_figure() -> None:
+    soup = _render_with_tables(
+        """
+        Table: Demo {#tbl:demo}
+
+        | A | B |
+        | - | - |
+        | x | 1 |
+
+        ```yaml table-config
+        columns:
+          - {align: left}
+          - {align: right, width: X}
+        ```
+        """
+    )
+    figure = soup.find("figure")
+    assert figure is not None
+    table = figure.find("table")
+    # Config still binds to the wrapped table.
+    assert table.get("data-ts-table") == "1"
+    colspec = table.get("data-ts-colspec")
+    assert colspec.startswith("l")
+    assert "X" in colspec
+    assert r"\raggedleft\arraybackslash" in colspec
+
+
+def test_table_config_block_invalid_yaml_renders_error_admonition() -> None:
+    soup = _render_with_tables(
+        """
+        | A | B |
+        | - | - |
+        | x | 1 |
+
+        ```yaml table-config
+        columns:
+          - {align: diagonal}
+        ```
+        """
+    )
+    error = soup.find("div", class_="ts-table-error")
+    assert error is not None
+    assert "invalid align" in error.get_text()
+
+
+def test_table_config_block_without_table_is_dropped_silently() -> None:
+    soup = _render_with_tables(
+        """
+        Just a paragraph.
+
+        ```yaml table-config
+        columns:
+          - {align: left}
+        ```
+        """
+    )
+    # No table to bind to; the marker is dropped, and the document still
+    # renders the paragraph normally.
+    assert soup.find("texsmith-table-config") is None
+    assert "Just a paragraph" in soup.get_text()
+
+
 def test_grouped_headers_round_trip_through_markdown() -> None:
     soup = _render(
         """

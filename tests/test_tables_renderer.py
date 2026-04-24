@@ -27,7 +27,7 @@ def _latex_from_yaml(
 
 
 def _latex_from_markdown(src: str) -> str:
-    md = Markdown(extensions=[YamlTableExtension()])
+    md = Markdown(extensions=["attr_list", "tables", YamlTableExtension()])
     html = md.convert(textwrap.dedent(src).strip("\n"))
     return LaTeXRenderer().render(html)
 
@@ -268,6 +268,31 @@ def test_end_to_end_markdown_to_latex_attaches_caption() -> None:
     assert r"\begin{table}[H]" in latex
     assert r"\label{tbl:stocks}" in latex
     assert r"\caption{Stocks par entrepôt}" in latex
+
+
+def test_markdown_table_with_yaml_table_config_uses_tabularx() -> None:
+    latex = _latex_from_markdown(
+        """
+        Table: Inventaire {#tbl:inv}
+
+        | Abbr | Sem | Nom du cours       | Or.  | Charge |
+        | ---- | --- | ------------------ | ---- | ------ |
+        | I1   | S1  | Informatique 1     | EMA  | 120    |
+        | I2   | S2  | Informatique 2     | EMA  | 100    |
+
+        ```yaml table-config
+        columns:
+          - {align: left}
+          - {align: right}
+          - {align: justify, width: X}
+          - {align: left}
+          - {align: right}
+        ```
+        """
+    )
+    assert r"\begin{tabularx}{\linewidth}{lrXlr}" in latex
+    assert r"\caption{Inventaire}" in latex
+    assert r"\label{tbl:inv}" in latex
 
 
 def test_plain_markdown_table_still_goes_through_legacy_handler() -> None:

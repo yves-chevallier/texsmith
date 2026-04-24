@@ -13,6 +13,9 @@ and the project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 - `ts-extra` now auto-loads the `multirow` package when `\multirow` is detected in the rendered LaTeX.
 - `Table: <caption> {#label}` now also works on plain Markdown tables: a tree processor pairs the caption paragraph with the following `<table>`, wraps them in a `<figure>` + `<figcaption>`, and the existing figure handler migrates the caption into a proper `\caption{…}` with its `\label{…}`.
 - 0.5 em of vertical breathing room is inserted between the caption and the table body for both yaml-tables and plain Markdown tables when a caption is present.
+- New `yaml table-config` fence applied right below a plain Markdown table sends per-column attributes (`align`, `width`, `width-group`) and table-level settings to the yaml-table renderer. Marks the table with `data-ts-*` attributes so it goes through the same `tabular` / `tabularx` / `longtable` selection as full yaml-tables, including caption handling. A `BlockProcessor` parses the fence into a real ElementTree marker so a sibling tree processor can bind the config to the preceding `<table>`.
+- New explicit `width: X` value (case-insensitive, alias for `tabularx`'s `X` column) marks a single column as flexible without needing a `width-group` shim. When any column carries `width: X`, only that column expands; the others keep their natural width.
+- `align` accepts long forms (`left`, `right`, `center`, `centre`, `justify`, `justified`) in addition to the short single-letter forms; both are normalised to the short form internally.
 
 ### Fixed
 

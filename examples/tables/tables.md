@@ -465,6 +465,74 @@ footer:
   - [Total, 165000, 162000, 171000, 171000]
 ```
 
+## Plain Markdown tables, qualified by `yaml table-config`
+
+Markdown's pipe table syntax stays the most ergonomic input format for short,
+literal tables. To give those tables real LaTeX semantics — picking
+`tabularx`, choosing alignment per column, marking one column as the
+flexible (`X`) one — drop a `yaml table-config` fence right below the
+markdown table:
+
+Notable attributes:
+
+- The fence is a regular code block whose info string is `yaml table-config`.
+  It must directly follow the table (only the standard blank line in
+  between).
+- `columns` is matched **positionally** to the markdown columns; no `name`
+  is required.
+- `align` accepts both short forms (`l`, `c`, `r`, `j`) and long forms
+  (`left`, `center`, `right`, `justify`).
+- `width: X` (case-insensitive) marks a column as the flexible one — it
+  becomes the LaTeX `X` column that absorbs the remaining width. Other
+  columns size to their content. The renderer automatically switches the
+  table to `tabularx{\linewidth}{…}`.
+- Standard `width` values (percentages, lengths) and `width-group` work
+  the same as in full yaml-tables.
+
+Source:
+
+````markdown
+Table: Inventaire des cours d'informatique. {#tbl:cours}
+
+| Abbr.      | Sem. | Nom du cours                          | Orientations | Charge |
+| ---------- | ---- | ------------------------------------- | ------------ | ------ |
+| Info1      | S1   | Informatique 1                        | E,M,A,N      | 120    |
+| MicroInfo  | S1   | Microcontrôleurs et microinformatique | E,M,A,N      | 120    |
+| Info2      | S2   | Informatique 2                        | E,M,A,N      | 100    |
+
+```yaml table-config
+columns:
+  - {align: left}
+  - {align: right}
+  - {align: justify, width: X}
+  - {align: left}
+  - {align: right}
+```
+````
+
+Rendered:
+
+Table: Inventaire des cours d'informatique. {#tbl:cours}
+
+| Abbr.      | Sem. | Nom du cours                          | Orientations | Charge |
+| ---------- | ---- | ------------------------------------- | ------------ | ------ |
+| Info1      | S1   | Informatique 1                        | E,M,A,N      | 120    |
+| MicroInfo  | S1   | Microcontrôleurs et microinformatique | E,M,A,N      | 120    |
+| Info2      | S2   | Informatique 2                        | E,M,A,N      | 100    |
+
+```yaml table-config
+columns:
+  - {align: left}
+  - {align: right}
+  - {align: justify, width: X}
+  - {align: left}
+  - {align: right}
+```
+
+The colspec produced is `lrXlr`: `Nom du cours` is the only column to wrap
+its contents and absorb the remainder of `\linewidth`; the other four size
+to their natural width.
+
 ## Error cases
 
 Validation errors surface as inline error admonitions: the document still

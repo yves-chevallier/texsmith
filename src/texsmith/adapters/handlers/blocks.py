@@ -762,7 +762,15 @@ def render_figures(element: Tag, context: RenderContext) -> None:
                 caption.string = figcaption.get_text(strip=False)
                 table.insert(0, caption)
                 figcaption.decompose()
-            render_tables(table, context)
+            # Tables flagged by the yaml-table extension carry their own
+            # data-ts-* attributes; route them through the dedicated renderer
+            # instead of the legacy ``render_tables`` path.
+            if coerce_attribute(table.get("data-ts-table")) == "1":
+                from texsmith.extensions.tables.renderer import render_yaml_table
+
+                render_yaml_table(table, context)
+            else:
+                render_tables(table, context)
             element.unwrap()
             return
         raise InvalidNodeError("Figure missing <img> element")

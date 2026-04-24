@@ -298,6 +298,46 @@ def test_width_group_on_parent_propagates_to_leaves() -> None:
     assert layout.colspec.startswith("l")
 
 
+def test_explicit_width_x_marks_column_as_x() -> None:
+    layout = _layout(
+        """
+        columns:
+          - {name: A, align: left}
+          - {name: B, align: right}
+          - {name: C, align: justify, width: X}
+          - {name: D, align: left}
+          - {name: E, align: right}
+        rows: [[a, 1, 2, 3, 4]]
+        """
+    )
+    assert layout.env == "tabularx"
+    assert layout.total_width_spec == r"\linewidth"
+    # ``l`` and ``r`` letters appear directly; only column 3 carries the
+    # raggedright wrapper because tabularx X needs an alignment prefix.
+    assert layout.colspec.startswith("lr")
+    assert "X" in layout.colspec
+    assert layout.colspec.endswith("lr")
+
+
+def test_explicit_width_x_overrides_legacy_all_auto_rule() -> None:
+    # Even when no ``width-group`` exists, marking a single column with
+    # ``width: X`` confines X behaviour to that column. The previous
+    # backward-compat rule (all auto → X) is suppressed by the marker.
+    layout = _layout(
+        """
+        table: {width: 100%}
+        columns:
+          - {name: A}
+          - {name: B, width: X}
+          - {name: C}
+        rows: [[a, b, c]]
+        """
+    )
+    assert layout.env == "tabularx"
+    assert layout.colspec.count("X") == 1
+    assert layout.colspec.startswith("l")
+
+
 def test_non_group_label_column_stays_natural_when_groups_exist() -> None:
     # When at least one column participates in a width-group, non-group
     # columns without an explicit width must keep their natural width — only
