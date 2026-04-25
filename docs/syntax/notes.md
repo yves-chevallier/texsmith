@@ -98,12 +98,22 @@ on the way to LaTeX.
 
 ### Width
 
-Margin notes never bleed past the page edge. Alongside `\usepackage{marginnote}`,
-`ts-extra` injects an `\AtBeginDocument` hook that clamps `\marginparwidth`
-to whatever horizontal space the document's geometry actually reserves
-for the margin — the smaller of the recto outer margin and, in `twoside`
-documents, the verso outer margin as well. That means a `geometry` block
-like
+Margin notes never bleed past the page edge. `ts-extra` ships three
+defensive layers alongside `\usepackage{marginnote}`:
+
+1. **Geometry-aware clamp.** An `\AtBeginDocument` hook clamps
+   `\marginparwidth` to whatever horizontal space the document's geometry
+   actually reserves for the margin — the smaller of the recto outer
+   margin and, in `twoside` documents, the verso outer margin as well —
+   minus `\marginparsep` and a 6 pt safety buffer.
+2. **Line-breaker tolerance.** `\marginfont` includes `\sloppy`,
+   `\emergencystretch=1em` and `\hyphenpenalty=50` so a long technical
+   word, URL or German compound hyphenates (or stretches inter-word
+   spacing) rather than poking past the margin box edge.
+3. **Footnote-size body.** Notes default to `\footnotesize` so multi-word
+   notes still fit in narrow margins.
+
+That means a `geometry` block like
 
 ```yaml
 press:
@@ -112,8 +122,8 @@ press:
     right: 4cm
 ```
 
-automatically yields notes that fit in the narrower (3 cm) side on verso
-pages. No manual `marginparwidth=…` tweak needed.
+automatically yields notes that fit on both recto and verso pages — no
+manual `marginparwidth=…` tweak needed.
 
 ### Font size
 

@@ -160,21 +160,28 @@ def test_ts_extra_detects_marginnote_command() -> None:
     assert "marginnote" in names
 
 
-def test_ts_extra_template_sets_marginfont_footnotesize(tmp_path):
-    """The ``ts-extra`` preamble must shrink margin notes to ``\\footnotesize``."""
-    from jinja2 import Environment
+def test_ts_extra_template_marginfont_uses_footnotesize_and_sloppy(tmp_path):
+    """The ``ts-extra`` preamble configures ``\\marginfont`` defensively.
 
+    Footnote-size keeps notes compact in narrow margins, ``\\sloppy`` plus
+    ``\\emergencystretch`` and lowered hyphenation penalties stop long words
+    from poking past the margin box edge: TeX prefers a hyphenation or some
+    extra inter-word stretch over an overfull line.
+    """
     from texsmith.core.templates.base import _build_environment
     from texsmith.fragments.extra import ExtraFragment
 
-    del tmp_path  # unused; the template is packaged alongside the fragment
-    del Environment  # only imported to keep the type hint explicit
+    del tmp_path  # template is packaged alongside the fragment
 
     template_path = ExtraFragment.pieces[0].template_path
     env = _build_environment(template_path.parent)
     template = env.get_template(template_path.name)
     rendered = template.render(ts_extra_packages=[("marginnote", None)])
-    assert r"\renewcommand*{\marginfont}{\footnotesize}" in rendered
+    assert r"\renewcommand*{\marginfont}{" in rendered
+    assert r"\footnotesize" in rendered
+    assert r"\sloppy" in rendered
+    assert r"\emergencystretch=1em" in rendered
+    assert r"\hyphenpenalty=50" in rendered
 
 
 def test_ts_extra_template_skips_marginfont_without_marginnote() -> None:
@@ -195,7 +202,9 @@ def test_ts_extra_template_clamps_marginparwidth_when_marginnote_loaded() -> Non
     The guard keeps ``\\marginnote`` calls inside whatever horizontal space
     the document's geometry actually reserves, so margin notes never bleed
     past the page edge when the right margin is narrower than LaTeX's
-    default ``\\marginparwidth`` (~3.9cm).
+    default ``\\marginparwidth`` (~3.9cm). A small extra safety buffer
+    (``\\tsmarginparbuf``) is subtracted on top of ``\\marginparsep`` so a
+    slightly-too-long internal line still has room before clipping the page.
     """
     from texsmith.core.templates.base import _build_environment
     from texsmith.fragments.extra import ExtraFragment
@@ -211,3 +220,7 @@ def test_ts_extra_template_clamps_marginparwidth_when_marginnote_loaded() -> Non
     assert r"\if@twoside" in rendered
     assert r"\evensidemargin" in rendered
     assert r"\oddsidemargin" in rendered
+    # Safety buffer subtracted on both sides.
+    assert r"\newlength{\tsmarginparbuf}" in rendered
+    assert r"\setlength{\tsmarginparbuf}{6pt}" in rendered
+    assert r"-\tsmarginparbuf" in rendered
