@@ -53,6 +53,26 @@ type = "boolean"
 sources = ["toc"]
 description = "Whether to include a table of contents."
 
+[latex.template.attributes.listoffigures]
+default = false
+type = "boolean"
+sources = ["listoffigures"]
+description = "Render list of figures when figures exist."
+
+[latex.template.attributes.listoftables]
+default = false
+type = "boolean"
+sources = ["listoftables"]
+description = "Render list of tables when tables exist."
+
+[latex.template.attributes.lists_position]
+default = "toc"
+type = "string"
+choices = ["toc", "backmatter"]
+allow_empty = false
+sources = ["lists_position"]
+description = "Where to insert the list of figures/tables: 'toc' (right after the table of contents) or 'backmatter' (just before the backmatter and references)."
+
 [latex.template.attributes.authors]
 default = []
 type = "list"

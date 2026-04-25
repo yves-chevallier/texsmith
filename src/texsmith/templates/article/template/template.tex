@@ -135,12 +135,42 @@
 \BLOCK{ if toc }
 \tableofcontents
 \BLOCK{ endif }
+\BLOCK{ set lists_pos = lists_position|default('toc') }
+\BLOCK{ if (listoffigures or listoftables) and lists_pos == 'toc' }
+\BLOCK{ if listoffigures }
+\ifnum\value{figure}>0
+\clearpage
+\listoffigures
+\fi
+\BLOCK{ endif }
+\BLOCK{ if listoftables }
+\ifnum\value{table}>0
+\clearpage
+\listoftables
+\fi
+\BLOCK{ endif }
+\BLOCK{ endif }
 
 \VAR{mainmatter}
 
 \BLOCK{ if appendix }
 \appendix
 \VAR{appendix}
+\BLOCK{ endif }
+
+\BLOCK{ if (listoffigures or listoftables) and lists_pos == 'backmatter' }
+\BLOCK{ if listoffigures }
+\ifnum\value{figure}>0
+\clearpage
+\listoffigures
+\fi
+\BLOCK{ endif }
+\BLOCK{ if listoftables }
+\ifnum\value{table}>0
+\clearpage
+\listoftables
+\fi
+\BLOCK{ endif }
 \BLOCK{ endif }
 
 \VAR{backmatter}

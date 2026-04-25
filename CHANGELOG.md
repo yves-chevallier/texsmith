@@ -9,6 +9,7 @@ and the project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ### Added
 
+- `article` template now supports `listoffigures: true` and `listoftables: true` front-matter flags (mirroring the `book` template), plus a `lists_position: toc | backmatter` knob to choose whether the lists are inserted right after the table of contents (default) or just before the backmatter and references. Each list is wrapped in `\ifnum\value{figure|table}>0` so empty documents don't emit blank pages.
 - New `yaml table` Markdown fence describing complex tables in YAML and compiling to `tabular` / `tabularx` / `longtable` on demand. Supports multi-row and multi-column cells (in headers and body), nested grouped headers, width-groups, separators with optional labels, footers, captions via the standard `Table: …` syntax, and explicit width control. Validation errors surface as inline error admonitions with a clear, localised message. New `examples/tables/` tutorial pairs each YAML source with its rendered output and ships a Makefile to build the demo PDF.
 - `ts-extra` now auto-loads the `multirow` package when `\multirow` is detected in the rendered LaTeX.
 - `Table: <caption> {#label}` now also works on plain Markdown tables: a tree processor pairs the caption paragraph with the following `<table>` and injects a `<caption>` child carrying the caption text (and optional `id` from the `{#label}` part). Both the yaml-table renderer and the legacy table renderer consume `<caption>` directly, so the LaTeX output gets a proper `\caption{…}` with its `\label{…}`.

@@ -127,6 +127,77 @@ def test_article_template_supports_columns_option() -> None:
     assert "\\documentclass[letterpaper,landscape,twoside,twocolumn]{article}" in rendered
 
 
+def test_article_template_renders_lists_at_toc_position() -> None:
+    template = ArticleTemplate()
+    overrides = {
+        "press": {
+            "toc": True,
+            "listoffigures": True,
+            "listoftables": True,
+        }
+    }
+
+    context = template.prepare_context("Body", overrides=overrides)
+    rendered = template.wrap_document("Body", overrides=overrides, context=context)
+
+    toc_pos = rendered.find("\\tableofcontents")
+    body_pos = rendered.find("Body")
+    lof_pos = rendered.find("\\listoffigures")
+    lot_pos = rendered.find("\\listoftables")
+
+    assert toc_pos != -1 and lof_pos != -1 and lot_pos != -1
+    assert toc_pos < lof_pos < body_pos
+    assert toc_pos < lot_pos < body_pos
+
+
+def test_article_template_renders_lists_at_backmatter_position() -> None:
+    template = ArticleTemplate()
+    overrides = {
+        "press": {
+            "toc": True,
+            "listoffigures": True,
+            "listoftables": True,
+            "lists_position": "backmatter",
+        }
+    }
+
+    context = template.prepare_context("Body", overrides=overrides)
+    rendered = template.wrap_document("Body", overrides=overrides, context=context)
+
+    body_pos = rendered.find("Body")
+    lof_pos = rendered.find("\\listoffigures")
+    lot_pos = rendered.find("\\listoftables")
+
+    assert lof_pos != -1 and lot_pos != -1
+    assert body_pos < lof_pos
+    assert body_pos < lot_pos
+
+
+def test_article_template_omits_lists_when_disabled() -> None:
+    template = ArticleTemplate()
+    overrides = {"press": {"toc": True}}
+
+    context = template.prepare_context("Body", overrides=overrides)
+    rendered = template.wrap_document("Body", overrides=overrides, context=context)
+
+    assert "\\listoffigures" not in rendered
+    assert "\\listoftables" not in rendered
+
+
+def test_article_template_rejects_invalid_lists_position() -> None:
+    from texsmith.core.templates.manifest import TemplateError
+
+    template = ArticleTemplate()
+    overrides = {"press": {"listoffigures": True, "lists_position": "middle"}}
+
+    try:
+        template.prepare_context("Body", overrides=overrides)
+    except TemplateError as exc:
+        assert "lists_position" in str(exc)
+    else:  # pragma: no cover - safety net
+        raise AssertionError("Expected TemplateError for invalid lists_position")
+
+
 def test_article_template_accepts_preamble_override() -> None:
     template = ArticleTemplate()
     overrides = {"press": {"override": {"preamble": "\\usepackage{xcolor}"}}}
