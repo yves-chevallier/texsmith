@@ -502,7 +502,7 @@ name = "exceptiongroup"
 version = "1.3.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "typing-extensions", marker = "python_full_version < '3.13'" },
+    { name = "typing-extensions", marker = "python_full_version < '3.11'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/50/79/66800aadf48771f6b62f7eb014e352e5d06856655206165d775e675a02c9/exceptiongroup-1.3.1.tar.gz", hash = "sha256:8b412432c6055b0b7d14c310000ae93352ed6754f70fa8f7c34141f91c4e3219", size = 30371, upload-time = "2025-11-21T23:01:54.787Z" }
 wheels = [
@@ -1739,14 +1739,14 @@ wheels = [
 
 [[package]]
 name = "pyxindy"
-version = "0.0.6"
+version = "0.0.7"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "click" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/79/f8/b023f06f36cba9ea858582d62b4b72e3e9255a316392821d634b5943d24d/pyxindy-0.0.6.tar.gz", hash = "sha256:c0c7e169f7a4842e2a13c9851aebe6b193bd0a0a6a9bea82467b328b4ec11eb7", size = 60788, upload-time = "2025-12-22T11:56:37.316Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/6d/bc/2eede6b01e20f93eb9fa66793205cf9299ac7f3422901db3079f5533925d/pyxindy-0.0.7.tar.gz", hash = "sha256:c71456faae35fa22baaa93b1d358b4e13723814a0fa7fc4d9a6d448266ee1aa9", size = 61007, upload-time = "2026-04-25T15:35:23.67Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/58/1b/6dfda41845c92192599ae9ef776fcc97e8d1db98b032ef25a06c98ba4f59/pyxindy-0.0.6-py3-none-any.whl", hash = "sha256:20b28b7380e307643db3b4bb43d3e6ddc21196ec8aacbfad785bf17876322eae", size = 78967, upload-time = "2025-12-22T11:56:36.203Z" },
+    { url = "https://files.pythonhosted.org/packages/8c/8d/a33de43ad7b1b8a72bf780267f85cc56b9bcab3e896900896ef69f25550b/pyxindy-0.0.7-py3-none-any.whl", hash = "sha256:76a205c55b056d59d8edc22e2ddc5e7d1de71a18c6ffc0b816925af62d7ca688", size = 79225, upload-time = "2026-04-25T15:35:22.464Z" },
 ]
 
 [[package]]
@@ -1974,7 +1974,7 @@ requires-dist = [
     { name = "pypdf", specifier = ">=6.1.1" },
     { name = "python-markdown-math", specifier = ">=0.9" },
     { name = "python-slugify", specifier = ">=8.0.4" },
-    { name = "pyxindy", specifier = ">=0.0.6" },
+    { name = "pyxindy", specifier = ">=0.0.7" },
     { name = "pyyaml", specifier = ">=6.0.3" },
     { name = "requests", specifier = ">=2.32.5" },
     { name = "rich", specifier = ">=13.9.0" },

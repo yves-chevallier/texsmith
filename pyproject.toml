@@ -51,7 +51,7 @@ dependencies = [
     "tomli>=2.0.1; python_version < \"3.11\"",
     "unicodeblocks>=0.3",
     "playwright>=1.56.0",
-    "pyxindy>=0.0.6",
+    "pyxindy>=0.0.7",
     "requests>=2.32.5",
 ]
 [project.urls]
