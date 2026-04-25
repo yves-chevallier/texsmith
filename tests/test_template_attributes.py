@@ -185,17 +185,15 @@ def test_article_template_omits_lists_when_disabled() -> None:
 
 
 def test_article_template_rejects_invalid_lists_position() -> None:
+    import pytest
+
     from texsmith.core.templates.manifest import TemplateError
 
     template = ArticleTemplate()
     overrides = {"press": {"listoffigures": True, "lists_position": "middle"}}
 
-    try:
+    with pytest.raises(TemplateError, match="lists_position"):
         template.prepare_context("Body", overrides=overrides)
-    except TemplateError as exc:
-        assert "lists_position" in str(exc)
-    else:  # pragma: no cover - safety net
-        raise AssertionError("Expected TemplateError for invalid lists_position")
 
 
 def test_article_template_accepts_preamble_override() -> None:
