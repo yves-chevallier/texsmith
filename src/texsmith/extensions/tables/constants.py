@@ -9,9 +9,26 @@ pipeline priorities explicit instead of scattered magic numbers.
 
 from __future__ import annotations
 
-from enum import StrEnum
 import re
+import sys
 from typing import Final
+
+
+if sys.version_info >= (3, 11):
+    from enum import StrEnum
+else:  # pragma: no cover - 3.10 polyfill
+    from enum import Enum
+
+    class StrEnum(str, Enum):
+        """Minimal backport of :class:`enum.StrEnum` for Python 3.10.
+
+        ``str(member)`` already returns the value because the class inherits from
+        ``str``; that is the only behaviour we rely on for ``data-ts-*`` attribute
+        names.
+        """
+
+        def __str__(self) -> str:
+            return str.__str__(self)
 
 
 # ---------------------------------------------------------------------------

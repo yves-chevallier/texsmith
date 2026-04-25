@@ -142,7 +142,10 @@ addopts = []
 
 [tool.ruff]
 line-length = 100
-target-version = "py311"
+# Keep aligned with ``requires-python`` so version-guard polyfills (notably the
+# Python 3.10 ``StrEnum`` shim in ``extensions/tables/constants.py``) are not
+# flagged by UP036 as ``outdated version block``.
+target-version = "py310"
 extend-exclude = [
   "mkdocs_latex",
   ".venv",
