@@ -124,7 +124,15 @@ def test_article_template_supports_columns_option() -> None:
 
     rendered = template.wrap_document("Body", overrides=overrides, context=context)
 
-    assert "\\documentclass[letterpaper,landscape,twoside,twocolumn]{article}" in rendered
+    # The article template intentionally does *not* set the ``twocolumn``
+    # documentclass option: the ``\maketitle`` call must run in single-column
+    # mode so ``\@thanks`` stays populated, and the body is wrapped in
+    # ``\twocolumn[…]`` afterwards (with ``\tsreplayfn`` flushing affiliation
+    # footnotes). See the long ``thanks{} footnote fix`` comment in
+    # templates/article/template/template.tex.
+    assert "\\documentclass[letterpaper,landscape,twoside]{article}" in rendered
+    assert "\\twocolumn[{%" in rendered
+    assert "\\tsreplayfn" in rendered
 
 
 def test_article_template_renders_lists_at_toc_position() -> None:

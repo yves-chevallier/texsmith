@@ -101,7 +101,10 @@ Content here.
         output_file = output_dir / "sample.tex"
         assert output_file.exists()
         content = output_file.read_text(encoding="utf-8")
-        assert r"\title{Sample Article\\\large Insights on Cheese}" in content
+        # The article template wraps the subtitle with ``\\[0.5em]\large`` so
+        # there is a small vertical gap between title and subtitle (commit
+        # c9aff0f). The previous ``\\\large`` form was the pre-spacing pattern.
+        assert r"\title{Sample Article\\[0.5em]\large Insights on Cheese}" in content
         assert r"\author{Alice Example\thanks{Example University} \and Bob Example}" in content
         assert r"\date{2024-10-20}" in content
         assert r"\usepackage[french]{babel}" in content
