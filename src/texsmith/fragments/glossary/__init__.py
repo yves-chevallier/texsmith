@@ -41,7 +41,12 @@ class GlossaryFragment(BaseFragment[GlossaryConfig]):
     attributes: ClassVar[dict[str, Any]] = {}
     config_cls: ClassVar[type[GlossaryConfig]] = GlossaryConfig
     source: ClassVar[Path] = Path(__file__).with_name("ts-glossary.jinja.sty")
-    context_defaults: ClassVar[dict[str, Any]] = {"extra_packages": "", "fragment_backmatter": ""}
+    context_defaults: ClassVar[dict[str, Any]] = {
+        "extra_packages": "",
+        "fragment_backmatter": "",
+        "acronym_groups": [],
+        "acronym_entry_groups": {},
+    }
 
     def build_config(
         self, context: Mapping[str, Any], overrides: Mapping[str, Any] | None = None

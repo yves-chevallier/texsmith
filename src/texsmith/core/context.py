@@ -29,6 +29,8 @@ class DocumentState:
     abbreviations: dict[str, str] = field(default_factory=dict)
     acronym_keys: dict[str, str] = field(default_factory=dict)
     acronyms: dict[str, tuple[str, str]] = field(default_factory=dict)
+    acronym_entry_groups: dict[str, str] = field(default_factory=dict)
+    acronym_groups: list[tuple[str, str]] = field(default_factory=list)
     glossary: dict[str, dict[str, Any]] = field(default_factory=dict)
     snippets: dict[str, dict[str, Any]] = field(default_factory=dict)
     solutions: list[dict[str, Any]] = field(default_factory=list)

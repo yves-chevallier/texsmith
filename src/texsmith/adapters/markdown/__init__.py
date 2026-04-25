@@ -199,6 +199,22 @@ def render_markdown(
 
     metadata, markdown_body = split_front_matter(source)
 
+    # Promote front-matter glossary entries to inline ``*[KEY]: …`` definitions so
+    # the standard ``abbr`` extension picks them up alongside body-level entries.
+    try:
+        from texsmith.core.conversion.glossary import (
+            append_synthetic_abbr_lines,
+            parse_front_matter_glossary,
+        )
+    except ImportError:  # pragma: no cover - defensive
+        parse_front_matter_glossary = None  # type: ignore[assignment]
+        append_synthetic_abbr_lines = None  # type: ignore[assignment]
+
+    if parse_front_matter_glossary is not None:
+        glossary_payload = parse_front_matter_glossary(metadata)
+        if glossary_payload is not None and glossary_payload.has_entries:
+            markdown_body = append_synthetic_abbr_lines(markdown_body, glossary_payload)
+
     active_extensions = list(extensions or ())
     extensions_key = tuple(active_extensions)
 

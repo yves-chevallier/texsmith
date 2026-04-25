@@ -1,7 +1,17 @@
 \BLOCK{ set raw_glossary = glossary|default(false) }
+\BLOCK{ set glossary_is_config = raw_glossary is mapping }
+\BLOCK{ set glossary_main_active = raw_glossary and not glossary_is_config }
+\BLOCK{ set acronym_groups_list = acronym_groups|default([]) }
+\BLOCK{ set acronym_entry_groups_map = acronym_entry_groups|default({}) }
+\BLOCK{ set ns = namespace(has_ungrouped=false) }
+\BLOCK{ if acronyms }
+\BLOCK{ for key, entry in acronyms.items() }
+\BLOCK{ if not acronym_entry_groups_map.get(key) }\BLOCK{ set ns.has_ungrouped = true }\BLOCK{ endif }
+\BLOCK{ endfor }
+\BLOCK{ endif }
 \BLOCK{ if acronyms or raw_glossary }
-\BLOCK{ if glossary_inline and acronyms }
-\section*{List of Acronyms}
+\BLOCK{ if glossary_inline and acronyms and not acronym_groups_list }
+\section*{\acronymname}
 \begin{description}
 \BLOCK{ for key, entry in acronyms.items() }
 \BLOCK{ set pair = entry if (entry is sequence and not entry is string) else [key, entry] }
@@ -14,8 +24,13 @@
 \let\clearpage\relax
 \let\cleardoublepage\relax
 \BLOCK{ endif }
-\BLOCK{ if acronyms }\printglossary[type=\acronymtype, title=List of Acronyms]\BLOCK{ endif }
-\BLOCK{ if raw_glossary }\printglossary\BLOCK{ endif }
+\BLOCK{ if acronyms }
+\BLOCK{ if ns.has_ungrouped }\printglossary[type=\acronymtype]\BLOCK{ endif }
+\BLOCK{ for group_key, group_title in acronym_groups_list }
+\printglossary[type=\VAR{group_key}, title={\VAR{group_title|latex_escape}}]
+\BLOCK{ endfor }
+\BLOCK{ endif }
+\BLOCK{ if glossary_main_active }\printglossary\BLOCK{ endif }
 \BLOCK{ if glossary_inline }
 \endgroup
 \BLOCK{ endif }

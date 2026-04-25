@@ -134,7 +134,10 @@ def wrap_template_document(
     else:
         snapshot = sorted(get_registry().snapshot())
         template_context["index_registry"] = [tuple(term) for term in snapshot]
+    _merge_front_matter_glossary(document_state, overrides_payload, template_context)
     template_context["acronyms"] = document_state.acronyms.copy()
+    template_context["acronym_groups"] = list(document_state.acronym_groups)
+    template_context["acronym_entry_groups"] = dict(document_state.acronym_entry_groups)
     template_context["citations"] = list(document_state.citations)
     template_context["bibliography_entries"] = document_state.bibliography
 
@@ -323,6 +326,42 @@ def wrap_template_document(
         asset_pairs=asset_pairs,
         rendered_fragments=sorted(rendered_fragments),
     )
+
+
+def _merge_front_matter_glossary(
+    document_state: DocumentState,
+    overrides_payload: Mapping[str, Any] | None,
+    template_context: dict[str, Any],
+) -> None:
+    """Seed acronym groups + entries from front-matter glossary metadata."""
+    from texsmith.core.conversion.glossary import (
+        GlossaryValidationError,
+        parse_front_matter_glossary,
+    )
+
+    if not isinstance(overrides_payload, Mapping):
+        return
+    try:
+        glossary_payload = parse_front_matter_glossary(overrides_payload)
+    except GlossaryValidationError as exc:
+        raise TemplateError(str(exc)) from exc
+    if glossary_payload is None:
+        return
+
+    if glossary_payload.style and not template_context.get("glossary_style"):
+        template_context["glossary_style"] = glossary_payload.style
+
+    document_state.acronym_groups = [
+        (group.key, group.title) for group in glossary_payload.groups
+    ]
+    for entry in glossary_payload.entries:
+        if entry.key not in document_state.acronyms:
+            description = entry.long or entry.description
+            document_state.acronyms[entry.key] = (entry.key, description)
+            document_state.abbreviations[entry.key] = description
+            document_state.acronym_keys[entry.key] = entry.key
+        if entry.group is not None:
+            document_state.acronym_entry_groups[entry.key] = entry.group
 
 
 def _discover_template_variables(template: WrappableTemplate) -> set[str] | None:

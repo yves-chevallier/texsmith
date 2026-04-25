@@ -9,8 +9,17 @@
 \BLOCK{ set raw_style = glossary_style|default("") }
 \BLOCK{ set raw_glossary = glossary|default(false) }
 \BLOCK{ set acronyms_map = acronyms|default({}) }
+\BLOCK{ set acronym_groups_list = acronym_groups|default([]) }
+\BLOCK{ set acronym_entry_groups_map = acronym_entry_groups|default({}) }
 \BLOCK{ set resolved_style = raw_style if raw_style else (raw_glossary if raw_glossary is string else default_style) }
 \BLOCK{ set should_activate = raw_glossary or acronyms_map }
+
+% Custom acronym groups (declared in front-matter ``glossary.groups``).
+\BLOCK{ if acronym_groups_list }
+\BLOCK{ for group_key, group_title in acronym_groups_list }
+\newglossary*{\VAR{group_key}}{\VAR{group_title|latex_escape}}
+\BLOCK{ endfor }
+\BLOCK{ endif }
 
 \BLOCK{ if should_activate }
 \makeglossaries
@@ -21,7 +30,12 @@
 \BLOCK{ if acronyms_map }
 \BLOCK{ for key, entry in acronyms_map.items() }
 \BLOCK{ set pair = entry if (entry is sequence and not entry is string) else [key, entry] }
+\BLOCK{ set assigned_group = acronym_entry_groups_map.get(key) }
+\BLOCK{ if assigned_group }
+\newacronym[type=\VAR{assigned_group}]{\VAR{key}}{\VAR{pair[0]|latex_escape}}{\VAR{pair[1]|latex_escape}}
+\BLOCK{ else }
 \newacronym{\VAR{key}}{\VAR{pair[0]|latex_escape}}{\VAR{pair[1]|latex_escape}}
+\BLOCK{ endif }
 \BLOCK{ endfor }
 \BLOCK{ endif }
 

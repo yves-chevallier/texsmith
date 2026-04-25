@@ -7,9 +7,12 @@
 \documentclass\VAR{effective_documentclass_options}{article}
 
 \usepackage[svgnames,dvipsnames,x11names]{xcolor}
-\VAR{extra_packages}
 \usepackage{graphicx}
+% Babel must be loaded before any package that hooks into its localisation (notably
+% the glossaries fragment in ``extra_packages``), otherwise the default acronym
+% table title falls back to English regardless of ``language: french`` etc.
 \usepackage[\VAR{language|default('english')}]{babel}
+\VAR{extra_packages}
 \usepackage[colorlinks=true, linkcolor=NavyBlue, urlcolor=NavyBlue, citecolor=NavyBlue]{hyperref}
 
 \usepackage{lastpage} % pour le label LastPage
