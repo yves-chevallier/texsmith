@@ -289,7 +289,7 @@ def render_table_html(
 
     if caption:
         caption_el = ET.SubElement(root, "caption")
-        caption_el.text = caption
+        _set_inline_content(caption_el, caption)
 
     thead = ET.SubElement(root, "thead")
     _render_header(thead, table.columns)
