@@ -5,7 +5,6 @@
 \usepackage{xurl} % For better URL line breaking reduce overfull hbox
 
 \usepackage[svgnames,dvipsnames,x11names]{xcolor}
-\VAR{extra_packages}
 
 \usepackage{fancyhdr}
 
@@ -19,8 +18,14 @@
 \usepackage{etoolbox}
 \usepackage{tocloft}
 \usepackage{caption}
-\usepackage[colorlinks=true, linkcolor=DarkBlue, urlcolor=DarkBlue, citecolor=DarkBlue]{hyperref}
+% Babel + hyperref must be loaded before any package that hooks into them —
+% notably the ``glossaries`` package pulled in via ``extra_packages``. Babel
+% supplies the localised ``\acronymname`` / ``\glossaryname`` captions, and
+% hyperref enables ``\hyperpage`` so glossary page numbers become clickable
+% backreferences. Loading them after ``extra_packages`` quietly disables both.
 \usepackage[\VAR{language|default('english')}]{babel}
+\usepackage[colorlinks=true, linkcolor=DarkBlue, urlcolor=DarkBlue, citecolor=DarkBlue]{hyperref}
+\VAR{extra_packages}
 \usepackage{emptypage}
 \usepackage{fixtoc} % Custom package to fix TOC number widths
 
