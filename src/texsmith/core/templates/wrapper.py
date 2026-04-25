@@ -355,13 +355,15 @@ def _merge_front_matter_glossary(
         (group.key, group.title) for group in glossary_payload.groups
     ]
     for entry in glossary_payload.entries:
-        if entry.key not in document_state.acronyms:
+        sanitized_key = document_state.acronym_keys.get(entry.key)
+        if sanitized_key is None:
             description = entry.long or entry.description
-            document_state.acronyms[entry.key] = (entry.key, description)
+            sanitized_key = document_state._generate_acronym_key(entry.key)
+            document_state.acronyms[sanitized_key] = (entry.key, description)
             document_state.abbreviations[entry.key] = description
-            document_state.acronym_keys[entry.key] = entry.key
+            document_state.acronym_keys[entry.key] = sanitized_key
         if entry.group is not None:
-            document_state.acronym_entry_groups[entry.key] = entry.group
+            document_state.acronym_entry_groups[sanitized_key] = entry.group
 
 
 def _discover_template_variables(template: WrappableTemplate) -> set[str] | None:

@@ -662,7 +662,8 @@ def _maybe_run_glossaries(
 ) -> tuple[bool, EngineResult | None]:
     glo_path = workdir / f"{job_stem}.glo"
     acn_path = workdir / f"{job_stem}.acn"
-    if not glo_path.exists() and not acn_path.exists():
+    typed_glos = list(workdir.glob(f"{job_stem}*-glo"))
+    if not glo_path.exists() and not acn_path.exists() and not typed_glos:
         return False, None
     if pyxindy_available():
         for path in workdir.glob(f"{job_stem}*.xdy"):
@@ -696,9 +697,16 @@ def _maybe_run_glossaries(
                 return True, _tool_failure_result(fallback_argv[0], fallback_run, command=command)
         return True, _tool_failure_result(argv[0], run, command=command)
     if pyxindy_available():
+        # Built-in glossary extensions (main glossary `.gls`, acronym `.acr`).
         for path in workdir.glob(f"{job_stem}*.acr"):
             pyxindy_sanitize_output(path)
         for path in workdir.glob(f"{job_stem}*.gls"):
+            pyxindy_sanitize_output(path)
+        # Custom glossaries declared via ``\newglossary*{<name>}{<title>}`` produce
+        # files named ``<job>.<name>-gls`` (no dot before ``gls``). Glob both shapes
+        # so the ``~n`` artefacts emitted by PyXindy get rewritten as newlines for
+        # every glossary type, not just the default one.
+        for path in workdir.glob(f"{job_stem}*-gls"):
             pyxindy_sanitize_output(path)
     return True, None
 

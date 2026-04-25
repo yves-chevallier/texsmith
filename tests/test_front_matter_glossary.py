@@ -113,7 +113,9 @@ def test_parse_rejects_invalid_glossary_shape() -> None:
 def test_synthetic_abbr_lines_use_long_form_when_present() -> None:
     payload = GlossaryFrontMatter(
         entries=[
-            GlossaryEntry(key="API", description="API short", long="Application Programming Interface"),
+            GlossaryEntry(
+                key="API", description="API short", long="Application Programming Interface"
+            ),
             GlossaryEntry(key="HTTP", description="HyperText Transfer Protocol"),
         ]
     )
@@ -204,9 +206,7 @@ The API is used. The ONU was founded in 1945. XYZ is here.
         inst_idx = tex.find("\\printglossary[type=inst")
         assert 0 <= tech_idx < inst_idx
         # No double \printglossary (without type) — that would render an empty main glossary.
-        bare_calls = [
-            line for line in tex.splitlines() if line.strip() == "\\printglossary"
-        ]
+        bare_calls = [line for line in tex.splitlines() if line.strip() == "\\printglossary"]
         assert bare_calls == []
 
 

@@ -12,8 +12,12 @@
 % the glossaries fragment in ``extra_packages``), otherwise the default acronym
 % table title falls back to English regardless of ``language: french`` etc.
 \usepackage[\VAR{language|default('english')}]{babel}
-\VAR{extra_packages}
+% Hyperref must be loaded before ``glossaries`` (pulled in via ``extra_packages``)
+% so glossaries can wrap glossary page numbers in ``\hyperpage`` for clickable
+% backreferences. Loading it after glossaries leaves the page numbers as plain
+% text without hyperlinks.
 \usepackage[colorlinks=true, linkcolor=NavyBlue, urlcolor=NavyBlue, citecolor=NavyBlue]{hyperref}
+\VAR{extra_packages}
 
 \usepackage{lastpage} % pour le label LastPage
 \usepackage{refcount} % pour \getpagerefnumber

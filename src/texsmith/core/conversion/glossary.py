@@ -140,7 +140,9 @@ def _coerce_group(key: str, value: Any) -> GlossaryGroupModel:
     )
 
 
-def parse_front_matter_glossary(front_matter: Mapping[str, Any] | None) -> GlossaryFrontMatter | None:
+def parse_front_matter_glossary(
+    front_matter: Mapping[str, Any] | None,
+) -> GlossaryFrontMatter | None:
     """Validate and normalise the ``glossary:`` front-matter section."""
     if not isinstance(front_matter, Mapping):
         return None
