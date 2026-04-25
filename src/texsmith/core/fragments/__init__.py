@@ -334,6 +334,7 @@ class FragmentRegistry:
         self._partials: dict[str, dict[str, Path]] = {}
         self._required_partials: dict[str, set[str]] = {}
         self._discover_builtins()
+        self._discover_entry_points()
 
     @property
     def default_fragment_names(self) -> list[str]:
@@ -393,6 +394,65 @@ class FragmentRegistry:
 
         for manifest in sorted(self._root.rglob("fragment.toml")):
             definition = FragmentDefinition.from_manifest(manifest)
+            self._register_fragment_object(definition)
+
+    def _discover_entry_points(self) -> None:
+        """Discover fragments contributed by installed Python packages.
+
+        A package opts in by declaring an ``texsmith.fragments`` entry point
+        whose value resolves to either a :class:`Path` (a fragment directory
+        or a ``fragment.toml`` file) or a :class:`FragmentDefinition`. This
+        lets fragments live in their own pip-installable distributions
+        without being copied into the texsmith tree or referenced by path.
+        """
+        from importlib.metadata import entry_points
+
+        try:
+            discovered = entry_points(group="texsmith.fragments")
+        except TypeError:  # pragma: no cover - pre-3.10 compat path
+            discovered = entry_points().get("texsmith.fragments", [])  # type: ignore[attr-defined]
+
+        for entry in discovered:
+            try:
+                target = entry.load()
+            except Exception as exc:  # pragma: no cover - defensive
+                warnings.warn(
+                    f"Failed to load texsmith fragment entry point '{entry.name}': {exc}",
+                    stacklevel=2,
+                )
+                continue
+
+            if callable(target) and not isinstance(
+                target, (Path, FragmentDefinition, BaseFragment)
+            ):
+                target = target()
+
+            if isinstance(target, (BaseFragment, FragmentDefinition)):
+                self._register_fragment_object(target)
+                continue
+
+            candidate = Path(target)
+            if candidate.is_dir():
+                manifest_path = candidate / "fragment.toml"
+                if not manifest_path.is_file():
+                    warnings.warn(
+                        f"texsmith fragment entry point '{entry.name}' points to "
+                        f"'{candidate}' but it has no fragment.toml.",
+                        stacklevel=2,
+                    )
+                    continue
+                definition = FragmentDefinition.from_manifest(manifest_path)
+            elif candidate.is_file() and candidate.name == "fragment.toml":
+                definition = FragmentDefinition.from_manifest(candidate)
+            else:
+                warnings.warn(
+                    f"texsmith fragment entry point '{entry.name}' resolved to "
+                    f"'{candidate}', which is neither a fragment directory nor a "
+                    "fragment.toml file.",
+                    stacklevel=2,
+                )
+                continue
+
             self._register_fragment_object(definition)
 
     def _register_fragment_object(self, fragment: BaseFragment[Any] | FragmentDefinition) -> None:
