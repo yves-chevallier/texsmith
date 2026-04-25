@@ -142,9 +142,9 @@ Caption: This is the caption for the figure.
 Tables follow the same pattern:
 
 ```md
+Table: This is the caption for the table. {#my-table}
+
 | Header 1 | Header 2 |
 |----------|----------|
 | Cell 1   | Cell 2   |
-
-Table: This is the caption for the table. {#my-table, short="Short caption for list of tables"}
 ```
