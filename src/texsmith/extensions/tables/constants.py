@@ -146,6 +146,7 @@ class Priority:
     TABLE_CONFIG_BLOCK: Final = 180
     CAPTION_TREE: Final = 5
     CONFIG_TREE: Final = 4
+    SEPARATOR_TREE: Final = 3
     RENDERER: Final = 35
 
 

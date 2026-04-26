@@ -19,7 +19,9 @@
 \begin{tabularx}{\linewidth}{\BLOCK{- for column in columns}\VAR{col_style.get(column, '>{\\raggedright\\arraybackslash}X')}\BLOCK{- if not loop.last} \BLOCK{- endif}\BLOCK{- endfor}}
 \toprule
 \BLOCK{for row in rows -}
-\BLOCK{- if loop.first -}
+\BLOCK{- if row is none -}
+\midrule
+\BLOCK{ elif loop.first -}
 \BLOCK{- for col in row -}
    \textbf{\VAR{col}}\BLOCK{- if not loop.last} & \BLOCK{else} \\
 \BLOCK{endif}

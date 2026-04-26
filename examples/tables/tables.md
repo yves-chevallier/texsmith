@@ -465,6 +465,57 @@ footer:
   - [Total, 165000, 162000, 171000, 171000]
 ```
 
+## Headerless tables
+
+Sometimes a table is just a two-column key/value summary — no real column
+headers, only the rows themselves. Omit the `name` field on every column and
+the renderer drops the `<thead>` (and the corresponding LaTeX `\midrule`)
+so the body sits directly under the `\toprule`. The columns still accept
+`align`, `width`, and `width-group` exactly as in a regular table.
+
+Notable attributes:
+
+- No `name:` on any column → no header rows emitted.
+- The first column remains the **label column**; row labels still take the
+  first cell of each row.
+- Per-column `align` and `width` keep their usual meaning, so a typical
+  headerless layout is a fixed-width key column plus a justified value
+  column that absorbs the remainder of the line.
+
+Source:
+
+```yaml
+table:
+  width: 100%
+columns:
+  - align: l
+    width: 40%
+  - align: j
+rows:
+  - ["Project codename", "Northwind"]
+  - ["Workload estimate", "25 × 7 = 175 hours"]
+  - ["Supervised sessions", "7 × 16 = 112 periods"]
+  - ["Independent study", "175 − 112 = 63 hours"]
+  - ["Theory / practice mix", "50 % theory, 50 % lab"]
+```
+
+Rendered:
+
+```yaml table
+table:
+  width: 100%
+columns:
+  - align: l
+    width: 40%
+  - align: j
+rows:
+  - ["Project codename", "Northwind"]
+  - ["Workload estimate", "25 × 7 = 175 hours"]
+  - ["Supervised sessions", "7 × 16 = 112 periods"]
+  - ["Independent study", "175 − 112 = 63 hours"]
+  - ["Theory / practice mix", "50 % theory, 50 % lab"]
+```
+
 ## Plain Markdown tables, qualified by `yaml table-config`
 
 Markdown's pipe table syntax stays the most ergonomic input format for short,

@@ -37,7 +37,7 @@ from markdown.treeprocessors import Treeprocessor
 from pydantic import ValidationError
 import yaml
 
-from .constants import Priority
+from .constants import Priority, TableAttr
 from .html import build_error_element, render_error_html, render_table_html
 from .layout import compute_layout
 from .schema import (
@@ -656,6 +656,65 @@ def _remove_marker(
 
 
 # ---------------------------------------------------------------------------
+# Treeprocessor 3: dash-only rows in plain Markdown tables → separator rows
+# ---------------------------------------------------------------------------
+
+
+_DASH_ROW_RE = re.compile(r"^\s*-{3,}\s*$")
+
+
+class _MarkdownTableSeparatorTreeprocessor(Treeprocessor):
+    """Convert dash-only rows in plain Markdown tables into separator rows.
+
+    Markdown's pipe-table syntax has no built-in way to draw a horizontal
+    rule between body rows. We adopt the convention that any ``<tr>`` whose
+    every cell text is a string of three or more dashes (optionally
+    surrounded by whitespace) marks a horizontal separator. The row is
+    rewritten as a single ``<td colspan="N">`` cell tagged with
+    ``data-ts-role="separator"`` — the same markup yaml-tables emit — so
+    both renderers (legacy ``render_tables`` and ``render_yaml_table``)
+    handle it uniformly. Rows inside ``<thead>`` are skipped: the standard
+    Markdown header rule (``|---|---|``) is consumed by python-markdown
+    itself and never reaches the tree.
+    """
+
+    def run(self, root: ElementTree.Element) -> ElementTree.Element | None:  # type: ignore[override]
+        for table in root.iter("table"):
+            for section_name in ("tbody", "tfoot"):
+                section = table.find(section_name)
+                if section is None:
+                    continue
+                self._process_section(section)
+        return None
+
+    def _process_section(self, section: ElementTree.Element) -> None:
+        for tr in section.findall("tr"):
+            cells = list(tr)
+            if not cells or any(c.tag not in ("td", "th") for c in cells):
+                continue
+            if not all(self._is_dash_cell(c) for c in cells):
+                continue
+            self._convert_to_separator(tr, n_cols=len(cells))
+
+    @staticmethod
+    def _is_dash_cell(cell: ElementTree.Element) -> bool:
+        # A dash cell holds only text (no inline elements) matching the
+        # dash pattern. Markdown emits ``<td>---</td>`` for a literal cell
+        # of three dashes, so this check stays purely textual.
+        if len(cell):
+            return False
+        return bool(_DASH_ROW_RE.match(cell.text or ""))
+
+    @staticmethod
+    def _convert_to_separator(tr: ElementTree.Element, *, n_cols: int) -> None:
+        for child in list(tr):
+            tr.remove(child)
+        placeholder = ElementTree.SubElement(tr, "td", {"colspan": str(n_cols)})
+        placeholder.text = ""
+        tr.set(TableAttr.ROLE, "separator")
+
+
+# ---------------------------------------------------------------------------
 # Extension wiring
 # ---------------------------------------------------------------------------
 
@@ -686,6 +745,11 @@ class YamlTableExtension(Extension):
             _TableConfigTreeprocessor(md),
             "texsmith_table_config",
             Priority.CONFIG_TREE,
+        )
+        md.treeprocessors.register(
+            _MarkdownTableSeparatorTreeprocessor(md),
+            "texsmith_table_separator",
+            Priority.SEPARATOR_TREE,
         )
 
 

@@ -24,6 +24,7 @@ from .constants import TableAttr
 from .layout import TableLayout, compute_layout
 from .schema import (
     Column,
+    ColumnGroup,
     LeafCell,
     LeafColumn,
     LeafMatrix,
@@ -50,7 +51,7 @@ def _header_matrix(columns: list[Column]) -> list[list[dict[str, object]]]:
         if isinstance(col, LeafColumn):
             rows[level].append(
                 {
-                    "text": col.name,
+                    "text": col.name or "",
                     "colspan": 1,
                     "rowspan": depth - level,
                 }
@@ -58,7 +59,7 @@ def _header_matrix(columns: list[Column]) -> list[list[dict[str, object]]]:
             return
         rows[level].append(
             {
-                "text": col.name,
+                "text": col.name or "",
                 "colspan": leaf_count(col),
                 "rowspan": 1,
             }
@@ -69,6 +70,16 @@ def _header_matrix(columns: list[Column]) -> list[list[dict[str, object]]]:
     for col in columns:
         walk(col, 0)
     return rows
+
+
+def _has_named_column(columns: list[Column]) -> bool:
+    """Return ``True`` when any column or column group carries a name."""
+    for col in columns:
+        if col.name:
+            return True
+        if isinstance(col, ColumnGroup) and _has_named_column(col.columns):
+            return True
+    return False
 
 
 # ---------------------------------------------------------------------------
@@ -291,8 +302,9 @@ def render_table_html(
         caption_el = ET.SubElement(root, "caption")
         _set_inline_content(caption_el, caption)
 
-    thead = ET.SubElement(root, "thead")
-    _render_header(thead, table.columns)
+    if _has_named_column(table.columns):
+        thead = ET.SubElement(root, "thead")
+        _render_header(thead, table.columns)
 
     # Data-row labels are needed because the matrix only holds data leaves,
     # while the first column in the rendered table shows the row label.

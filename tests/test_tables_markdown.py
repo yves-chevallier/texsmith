@@ -406,6 +406,91 @@ def test_table_config_block_without_table_is_dropped_silently() -> None:
     assert "Just a paragraph" in soup.get_text()
 
 
+# ---------------------------------------------------------------------------
+# Plain Markdown table: dash-only row → separator
+# ---------------------------------------------------------------------------
+
+
+def test_dash_only_body_row_becomes_separator() -> None:
+    soup = _render_with_tables(
+        """
+        | Cours     | Sem. |
+        | --------- | ---- |
+        | Info1     | S1   |
+        | --------- | ---- |
+        | **Total** | S1-S3|
+        """
+    )
+    table = soup.find("table")
+    assert table is not None
+    body = table.find("tbody")
+    rows = body.find_all("tr")
+    assert len(rows) == 3
+    sep = rows[1]
+    assert sep.get("data-ts-role") == "separator"
+    cells = sep.find_all(["td", "th"])
+    assert len(cells) == 1
+    assert cells[0].get("colspan") == "2"
+    assert cells[0].get_text(strip=True) == ""
+    # Surrounding rows are untouched.
+    assert rows[0].find_all("td")[0].get_text(strip=True) == "Info1"
+    assert rows[2].find_all("td")[0].get_text(strip=True) == "Total"
+
+
+def test_dash_row_must_have_three_or_more_dashes_in_every_cell() -> None:
+    soup = _render_with_tables(
+        """
+        | A | B |
+        | - | - |
+        | - | - |
+        | x | y |
+        """
+    )
+    table = soup.find("table")
+    body = table.find("tbody")
+    rows = body.find_all("tr")
+    # First body row has only single-dash cells: NOT a separator.
+    assert rows[0].get("data-ts-role") is None
+    cells = rows[0].find_all(["td", "th"])
+    assert [c.get_text(strip=True) for c in cells] == ["-", "-"]
+
+
+def test_partial_dash_row_is_not_a_separator() -> None:
+    soup = _render_with_tables(
+        """
+        | A | B |
+        | - | - |
+        | --- | data |
+        | foo | bar |
+        """
+    )
+    table = soup.find("table")
+    body = table.find("tbody")
+    rows = body.find_all("tr")
+    # Second cell is non-dash content, so the row stays a regular data row.
+    assert rows[0].get("data-ts-role") is None
+    cells = rows[0].find_all(["td", "th"])
+    assert [c.get_text(strip=True) for c in cells] == ["---", "data"]
+
+
+def test_dash_row_inside_yaml_tables_is_unaffected() -> None:
+    # In yaml tables, separators are declared explicitly; literal "---" inside
+    # a string cell must round-trip as plain text.
+    soup = _render(
+        """
+        ```yaml table
+        columns: [A, B]
+        rows:
+          - ["---", "value"]
+        ```
+        """
+    )
+    table = soup.find("table")
+    body = table.find("tbody")
+    rows = body.find_all("tr")
+    assert all(row.get("data-ts-role") != "separator" for row in rows)
+
+
 def test_grouped_headers_round_trip_through_markdown() -> None:
     soup = _render(
         """

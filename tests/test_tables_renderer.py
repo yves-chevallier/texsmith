@@ -305,6 +305,47 @@ def test_plain_markdown_table_still_goes_through_legacy_handler() -> None:
     assert "data-ts-table" not in latex
 
 
+def test_plain_markdown_dash_row_emits_midrule() -> None:
+    latex = _latex_from_markdown(
+        """
+        | Cours     | Sem. |
+        | --------- | ---- |
+        | Info1     | S1   |
+        | --------- | ---- |
+        | **Total** | S1-S3|
+        """
+    )
+    # The separator row sits between the two data rows as a bare \midrule.
+    after_info = latex.split("Info1", 1)[1]
+    midrule_then_total = after_info.split("Total", 1)[0]
+    assert r"\midrule" in midrule_then_total
+    # The dash characters never make it into a row body.
+    assert r"--------- & ----" not in latex
+
+
+def test_headerless_table_skips_header_midrule() -> None:
+    latex = _latex_from_yaml(
+        """
+        table: {width: 100%}
+        columns:
+          - align: l
+            width: 40%
+          - align: j
+        rows:
+          - ["Project codename", "Northwind"]
+          - ["Workload estimate", "175 hours"]
+        """
+    )
+    # \toprule is followed directly by the first data row, with no header
+    # row and no leading \midrule between the two.
+    after_toprule = latex.split(r"\toprule", 1)[1]
+    pre_first_row = after_toprule.split("Project codename", 1)[0]
+    assert r"\midrule" not in pre_first_row
+    # First data row still renders normally with its row label.
+    assert "Project codename" in latex
+    assert "Northwind" in latex
+
+
 def test_latex_escaping_applied_to_cell_values() -> None:
     latex = _latex_from_yaml(
         """

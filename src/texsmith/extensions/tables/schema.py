@@ -140,9 +140,15 @@ class _ColumnAttrs(BaseModel):
 
 
 class LeafColumn(_ColumnAttrs):
-    """Terminal column with optional alignment and width metadata."""
+    """Terminal column with optional alignment and width metadata.
 
-    name: str
+    ``name`` is optional: when omitted, the column has no header label. When
+    every column in the table omits its name, the rendered output drops the
+    ``<thead>`` (and the corresponding LaTeX ``\\midrule`` after the header)
+    so the table starts directly with its body rows.
+    """
+
+    name: str | None = None
 
 
 class ColumnGroup(_ColumnAttrs):
@@ -298,10 +304,12 @@ def _parse_column(raw: Any) -> Column:
                 raise ValueError(f"grouped column is missing 'name': {raw!r}")
             payload["name"] = str(payload["name"])
             return ColumnGroup.model_validate(payload)
-        if "name" not in raw:
-            raise ValueError(f"leaf column is missing 'name': {raw!r}")
         payload = dict(raw)
-        payload["name"] = str(payload["name"])
+        if "name" in payload:
+            payload["name"] = str(payload["name"])
+        # ``name`` is optional on leaf columns: when omitted, the column has
+        # no header text (and, when every column omits it, the whole header
+        # is suppressed downstream).
         return LeafColumn.model_validate(payload)
     raise ValueError(f"invalid column descriptor: {raw!r}")
 
@@ -361,7 +369,7 @@ def _parse_named_row(raw: dict[str, Any], columns: list[Column]) -> DataRow:
         raise TypeError(f"named row {label!r} must map column names to cell values")
 
     data_cols = columns[1:]
-    known = {col.name for col in data_cols}
+    known = {col.name for col in data_cols if col.name is not None}
     unknown = [key for key in cells_map if key not in known]
     if unknown:
         raise ValueError(
@@ -371,7 +379,7 @@ def _parse_named_row(raw: dict[str, Any], columns: list[Column]) -> DataRow:
 
     ordered: list[Any] = []
     for col in data_cols:
-        if col.name in cells_map:
+        if col.name is not None and col.name in cells_map:
             ordered.append(_parse_cell_top(cells_map[col.name]))
         else:
             ordered.append(None)

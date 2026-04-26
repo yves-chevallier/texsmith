@@ -274,6 +274,49 @@ def test_mixed_rectangle_emits_single_origin_with_both_spans() -> None:
 # ---------------------------------------------------------------------------
 
 
+# ---------------------------------------------------------------------------
+# Headerless tables
+# ---------------------------------------------------------------------------
+
+
+def test_headerless_table_omits_thead() -> None:
+    soup = _soup(
+        """
+        table: {width: 100%}
+        columns:
+          - align: l
+            width: 40%
+          - align: j
+        rows:
+          - ["Project codename", "Northwind"]
+          - ["Workload estimate", "175 hours"]
+        """
+    )
+    table = soup.find("table")
+    assert table is not None
+    assert table.find("thead") is None
+    # Body rows still expose their row label as a scoped <th>.
+    body_rows = _rows(soup, "body")
+    assert len(body_rows) == 2
+    assert body_rows[0].find("th", attrs={"scope": "row"}).get_text(strip=True) == "Project codename"
+
+
+def test_partially_named_columns_keep_thead_with_blank_cells() -> None:
+    soup = _soup(
+        """
+        columns:
+          - name: Key
+          - align: r
+        rows:
+          - [Alpha, 1]
+        """
+    )
+    headers = _rows(soup, "header")
+    assert len(headers) == 1
+    cells = headers[0].find_all("th")
+    assert [c.get_text(strip=True) for c in cells] == ["Key", ""]
+
+
 def test_render_error_html_produces_admonition_with_code_block() -> None:
     html = render_error_html("missing 'columns'")
     soup = BeautifulSoup(html, "html.parser")

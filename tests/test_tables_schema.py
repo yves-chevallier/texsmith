@@ -740,6 +740,84 @@ def test_table_config_rejects_unknown_keys() -> None:
         parse_table_config({"columns": [], "weird": True})
 
 
+# ---------------------------------------------------------------------------
+# Headerless columns
+# ---------------------------------------------------------------------------
+
+
+def test_leaf_column_name_is_optional() -> None:
+    table = parse_table(
+        _load(
+            """
+            table:
+              width: 100%
+            columns:
+              - align: l
+                width: 40%
+              - align: j
+            rows:
+              - ["Project codename", "Northwind"]
+              - ["Theory ratio", "50%"]
+            """
+        )
+    )
+    assert all(col.name is None for col in table.columns)
+    assert isinstance(table.columns[0], LeafColumn)
+    assert table.columns[0].align == "l"
+    assert table.columns[0].width == "40%"
+    assert isinstance(table.rows[0], DataRow)
+    assert table.rows[0].label == "Project codename"
+    assert table.rows[0].cells == ["Northwind"]
+
+
+def test_headerless_table_builds_full_matrix() -> None:
+    table = parse_table(
+        _load(
+            """
+            columns:
+              - align: l
+              - align: r
+            rows:
+              - [Alpha, 1]
+              - [Beta, 2]
+            """
+        )
+    )
+    matrix = build_matrix(table)
+    assert [c.value for c in matrix.body[0]] == [1]
+    assert [c.value for c in matrix.body[1]] == [2]
+
+
+def test_grouped_column_still_requires_name() -> None:
+    with pytest.raises(ValueError, match="grouped column is missing 'name'"):
+        parse_table(
+            _load(
+                """
+                columns:
+                  - A
+                  - columns: [Q1, Q2]
+                rows:
+                  - [x, [1, 2]]
+                """
+            )
+        )
+
+
+def test_named_row_against_unnamed_data_column_is_unknown() -> None:
+    with pytest.raises(ValueError, match="unknown column"):
+        parse_table(
+            _load(
+                """
+                columns:
+                  - Label
+                  - align: j
+                rows:
+                  - Foo: {Anything: bar}
+                """
+            )
+        )
+
+
 def test_column_leaves_traverses_nested_groups() -> None:
     table = parse_table(
         _load(

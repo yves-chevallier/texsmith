@@ -842,6 +842,8 @@ def _cell_alignment(cell: Tag) -> str:
 @renders("table", phase=RenderPhase.POST, priority=40, name="tables", nestable=False)
 def render_tables(element: Tag, context: RenderContext) -> None:
     """Render HTML tables to LaTeX."""
+    from texsmith.extensions.tables.constants import TableAttr
+
     caption = None
     if caption_node := element.find("caption"):
         _strip_caption_prefix(caption_node)
@@ -850,11 +852,16 @@ def render_tables(element: Tag, context: RenderContext) -> None:
 
     label = coerce_attribute(element.get("id"))
 
-    table_rows: list[list[str]] = []
+    # Separator rows are encoded as ``None`` so the template can emit a bare
+    # ``\midrule`` between the surrounding data rows.
+    table_rows: list[list[str] | None] = []
     styles: list[list[str]] = []
     is_large = False
 
     for row in element.find_all("tr"):
+        if coerce_attribute(row.get(TableAttr.ROLE)) == "separator":
+            table_rows.append(None)
+            continue
         row_values: list[str] = []
         row_styles: list[str] = []
         for cell in row.find_all(["th", "td"]):
