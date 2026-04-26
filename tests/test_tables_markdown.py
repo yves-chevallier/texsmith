@@ -8,6 +8,7 @@ from bs4 import BeautifulSoup
 from markdown import Markdown
 
 from texsmith.extensions.tables import YamlTableExtension
+from texsmith.smart_dashes import TexsmithSmartDashesExtension
 
 
 def _render(src: str) -> BeautifulSoup:
@@ -18,6 +19,14 @@ def _render(src: str) -> BeautifulSoup:
 
 def _render_with_tables(src: str) -> BeautifulSoup:
     md = Markdown(extensions=["tables", YamlTableExtension()])
+    html = md.convert(textwrap.dedent(src).strip("\n"))
+    return BeautifulSoup(html, "html.parser")
+
+
+def _render_with_smart_dashes(src: str) -> BeautifulSoup:
+    md = Markdown(
+        extensions=["tables", TexsmithSmartDashesExtension(), YamlTableExtension()]
+    )
     html = md.convert(textwrap.dedent(src).strip("\n"))
     return BeautifulSoup(html, "html.parser")
 
@@ -453,6 +462,27 @@ def test_dash_row_must_have_three_or_more_dashes_in_every_cell() -> None:
     assert rows[0].get("data-ts-role") is None
     cells = rows[0].find_all(["td", "th"])
     assert [c.get_text(strip=True) for c in cells] == ["-", "-"]
+
+
+def test_dash_separator_survives_smart_dashes_extension() -> None:
+    # Regression: smart-dashes (priority 16) used to run before separator
+    # detection (priority 3), turning ``---`` into em-dashes and defeating
+    # the ``-{3,}`` match. Separator detection now runs first.
+    soup = _render_with_smart_dashes(
+        """
+        | Cours     | ECTS | Sem.  |
+        | --------- | ---- | ----- |
+        | Info1     | 5    | S1    |
+        | --------- | ---- | ----- |
+        | **Total** | 26   | S1-S3 |
+        """
+    )
+    table = soup.find("table")
+    body = table.find("tbody")
+    rows = body.find_all("tr")
+    assert len(rows) == 3
+    assert rows[1].get("data-ts-role") == "separator"
+    assert rows[1].find("td").get("colspan") == "3"
 
 
 def test_partial_dash_row_is_not_a_separator() -> None:

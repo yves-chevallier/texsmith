@@ -139,6 +139,10 @@ class Priority:
       fences through untouched.
     - ``CAPTION_TREE`` (5) must outrank ``CONFIG_TREE`` (4) so that the
       caption is attached to the table before table-config binding runs.
+    - ``SEPARATOR_TREE`` (17) must outrank ``texsmith_smart_dashes`` (16):
+      dash-only rows are detected on the original ASCII hyphens, before
+      smart-dashes rewrites them into em/en-dashes which would defeat the
+      ``-{3,}`` match.
     """
 
     YAML_TABLE_PRE: Final = 29
@@ -146,7 +150,7 @@ class Priority:
     TABLE_CONFIG_BLOCK: Final = 180
     CAPTION_TREE: Final = 5
     CONFIG_TREE: Final = 4
-    SEPARATOR_TREE: Final = 3
+    SEPARATOR_TREE: Final = 17
     RENDERER: Final = 35
 
 
