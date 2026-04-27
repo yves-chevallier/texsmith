@@ -96,3 +96,18 @@ def test_normalise_press_metadata_rejects_invalid_author_payload() -> None:
     except PressMetadataError:
         return
     raise AssertionError("Expected PressMetadataError for invalid author payload.")
+
+
+def test_normalise_press_metadata_preserves_structured_date_mapping() -> None:
+    metadata = {"date": {"git": True}}
+    press = normalise_press_metadata(metadata)
+    assert press["date"] == {"git": True}
+    assert metadata["date"] == {"git": True}
+
+
+def test_normalise_press_metadata_preserves_structured_version() -> None:
+    # ``version`` is not a special field, so structured values pass through
+    # unchanged via the regular merge path.
+    metadata = {"version": {"major": 2, "minor": 3, "patch": 0}}
+    press = normalise_press_metadata(metadata)
+    assert press["version"] == {"major": 2, "minor": 3, "patch": 0}

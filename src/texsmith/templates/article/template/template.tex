@@ -49,8 +49,7 @@
 \BLOCK{ if has_title_metadata }
 \title{\VAR{title}\BLOCK{ if subtitle }\\[0.5em]\large \VAR{subtitle}\BLOCK{ endif }}
 \BLOCK{ if author }\author{\VAR{author}}\BLOCK{ else }\author{}\BLOCK{ endif }
-\BLOCK{ set date_part = date if effective_date else '\\today' }
-\BLOCK{ if effective_version }\date{\VAR{date_part}\\[0.25em]{\small \VAR{effective_version}}}\BLOCK{ else }\date{\VAR{date_part}}\BLOCK{ endif }
+\BLOCK{ if effective_date and effective_version }\date{\VAR{date}\\[0.25em]{\small \VAR{effective_version}}}\BLOCK{ elif effective_date }\date{\VAR{date}}\BLOCK{ elif effective_version }\date{{\small \VAR{effective_version}}}\BLOCK{ else }\date{}\BLOCK{ endif }
 \BLOCK{ endif }
 
 \BLOCK{ if column_count > 1 }

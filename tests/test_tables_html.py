@@ -298,7 +298,9 @@ def test_headerless_table_omits_thead() -> None:
     # Body rows still expose their row label as a scoped <th>.
     body_rows = _rows(soup, "body")
     assert len(body_rows) == 2
-    assert body_rows[0].find("th", attrs={"scope": "row"}).get_text(strip=True) == "Project codename"
+    assert (
+        body_rows[0].find("th", attrs={"scope": "row"}).get_text(strip=True) == "Project codename"
+    )
 
 
 def test_partially_named_columns_keep_thead_with_blank_cells() -> None:

@@ -1,44 +1,36 @@
-"""Resolve document ``version`` strings, including the magic ``git`` value.
+"""Low-level git helpers used by document metadata resolvers.
 
-The article (and other) templates accept a ``version`` front-matter field that
-may be either a free-form label (``"Draft 3"``) or the literal sentinel
-``"git"``. When ``git`` is requested, the resolved value comes from
-``git describe --tags --dirty`` against the repository that contains the
-document being compiled, falling back to a short commit hash if no tag exists.
-A warning is emitted if git metadata cannot be read so users get an obvious
-signal instead of silently empty output.
+This module exposes the primitives — ``git_describe``, ``git_commit_date``,
+``resolve_git_root`` — that ``texsmith.core.document_version`` and
+``texsmith.core.document_date`` consume to render the front-matter ``version``
+and ``date`` fields. The helpers warn (rather than raise) when git metadata is
+unreachable so a missing repository surfaces in the build log without aborting
+the document.
 """
 
 from __future__ import annotations
 
+from datetime import date, datetime, timezone
 from pathlib import Path
 import subprocess
 from typing import Any
 import warnings
 
 
-_GIT_VERSION_CACHE: dict[Path, str] = {}
+try:
+    from datetime import UTC
+except ImportError:  # pragma: no cover - py310 compatibility
+    UTC = timezone.utc
+
+
+_GIT_DESCRIBE_CACHE: dict[Path, str] = {}
+_GIT_COMMIT_DATE_CACHE: dict[Path, date | None] = {}
 
 
 def reset_cache() -> None:
-    """Clear the per-repository cache (used by tests)."""
-    _GIT_VERSION_CACHE.clear()
-
-
-def format_version(value: Any, *, cwd: Path | None = None) -> str:
-    """Return the rendered version string for a front-matter ``version`` value.
-
-    A free-form string is returned trimmed. The literal ``"git"`` (case-insensitive)
-    is replaced with the output of :func:`git_describe`.
-    """
-    if value is None:
-        return ""
-    text = str(value).strip()
-    if not text:
-        return ""
-    if text.lower() != "git":
-        return text
-    return git_describe(cwd=cwd)
+    """Clear the per-repository caches (used by tests)."""
+    _GIT_DESCRIBE_CACHE.clear()
+    _GIT_COMMIT_DATE_CACHE.clear()
 
 
 def git_describe(*, cwd: Path | None = None) -> str:
@@ -51,13 +43,12 @@ def git_describe(*, cwd: Path | None = None) -> str:
     repo_root = resolve_git_root(cwd=cwd)
     if repo_root is None:
         warnings.warn(
-            "version=git requested but no git repository was found; "
-            "cannot resolve git version.",
+            "version=git requested but no git repository was found; cannot resolve git version.",
             stacklevel=2,
         )
         return ""
 
-    cached = _GIT_VERSION_CACHE.get(repo_root)
+    cached = _GIT_DESCRIBE_CACHE.get(repo_root)
     if cached is not None:
         return cached
 
@@ -75,8 +66,48 @@ def git_describe(*, cwd: Path | None = None) -> str:
             stacklevel=2,
         )
 
-    _GIT_VERSION_CACHE[repo_root] = describe
+    _GIT_DESCRIBE_CACHE[repo_root] = describe
     return describe
+
+
+def git_commit_date(*, cwd: Path | None = None) -> date | None:
+    """Return the committer date of ``HEAD`` for the repository containing ``cwd``.
+
+    Uses ``git log -1 --format=%cs`` (committer date in short ISO ``YYYY-MM-DD``
+    form). Returns ``None`` and warns if the repository is missing or git fails.
+    Cached per repository root.
+    """
+    repo_root = resolve_git_root(cwd=cwd)
+    if repo_root is None:
+        warnings.warn(
+            "date=commit requested but no git repository was found; cannot resolve commit date.",
+            stacklevel=2,
+        )
+        return None
+
+    if repo_root in _GIT_COMMIT_DATE_CACHE:
+        return _GIT_COMMIT_DATE_CACHE[repo_root]
+
+    raw = _run_git(repo_root, ["log", "-1", "--format=%cs"])
+    parsed: date | None
+    if not raw:
+        warnings.warn(
+            "date=commit requested but no commit metadata could be read.",
+            stacklevel=2,
+        )
+        parsed = None
+    else:
+        try:
+            parsed = datetime.strptime(raw, "%Y-%m-%d").replace(tzinfo=UTC).date()
+        except ValueError:
+            warnings.warn(
+                f"date=commit returned unparseable git output {raw!r}; ignoring.",
+                stacklevel=2,
+            )
+            parsed = None
+
+    _GIT_COMMIT_DATE_CACHE[repo_root] = parsed
+    return parsed
 
 
 def resolve_git_root(*, cwd: Path | None = None) -> Path | None:
@@ -103,8 +134,20 @@ def _run_git(repo_root: Path, args: list[str]) -> str:
     return result.stdout.strip()
 
 
+def format_version(value: Any, *, cwd: Path | None = None) -> str:
+    """Deprecated shim that forwards to :func:`texsmith.core.document_version.format_version`.
+
+    Kept to preserve the public surface of older releases; new code should
+    import from ``texsmith.core.document_version`` directly.
+    """
+    from texsmith.core.document_version import format_version as _format
+
+    return _format(value, cwd=cwd)
+
+
 __all__ = [
     "format_version",
+    "git_commit_date",
     "git_describe",
     "reset_cache",
     "resolve_git_root",

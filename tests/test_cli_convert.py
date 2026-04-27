@@ -106,7 +106,9 @@ Content here.
         # c9aff0f). The previous ``\\\large`` form was the pre-spacing pattern.
         assert r"\title{Sample Article\\[0.5em]\large Insights on Cheese}" in content
         assert r"\author{Alice Example\thanks{Example University} \and Bob Example}" in content
-        assert r"\date{2024-10-20}" in content
+        # ISO ``date`` is rendered in long form using the document language
+        # (``fr`` here), via the new ``texsmith.core.document_date`` resolver.
+        assert r"\date{20 octobre 2024}" in content
         assert r"\usepackage[french]{babel}" in content
 
 

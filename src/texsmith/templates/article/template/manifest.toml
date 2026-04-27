@@ -82,18 +82,19 @@ description = "List of authors of the document. Use plain strings or objects wit
 
 [latex.template.attributes.date]
 default = ""
-type = "string"
-escape = "latex"
+type = "any"
+format = "raw"
+allow_empty = true
 sources = ["date"]
-description = "The date of the document, use ISO format (YYYY-MM-DD) or any string. If empty, the current date will be used."
+description = "Document date. Accepts an ISO date (YYYY-MM-DD, rendered in long form using the document language), the keywords 'today' / 'commit' / 'none', or any free-form string (returned as-is). When omitted or set to 'none', \\maketitle drops the date line."
 
 [latex.template.attributes.version]
 default = ""
-type = "string"
+type = "any"
 format = "raw"
 allow_empty = true
 sources = ["version"]
-description = "Document version, appended after the date in \\maketitle. Free-form string, or the literal 'git' to use 'git describe --tags --dirty' (with a short-hash fallback). The template resolves 'git' and LaTeX-escapes the final value, so feed it raw text."
+description = "Document version, appended after the date in \\maketitle. Accepts a free-form string, a list of integers (e.g. [2, 3, 0] -> '2.3.0'), an explicit semver mapping ({major, minor, patch, optional pre/build}), or {git: true, suffix?: '...'} to derive from 'git describe --tags --dirty' (short-hash fallback). The literal 'git' is shorthand for {git: true}. Validation is enforced by Pydantic; the template resolves the value to canonical text and LaTeX-escapes it."
 
 [latex.template.attributes.language]
 default = "english"

@@ -24,9 +24,7 @@ def _render_with_tables(src: str) -> BeautifulSoup:
 
 
 def _render_with_smart_dashes(src: str) -> BeautifulSoup:
-    md = Markdown(
-        extensions=["tables", TexsmithSmartDashesExtension(), YamlTableExtension()]
-    )
+    md = Markdown(extensions=["tables", TexsmithSmartDashesExtension(), YamlTableExtension()])
     html = md.convert(textwrap.dedent(src).strip("\n"))
     return BeautifulSoup(html, "html.parser")
 

@@ -48,6 +48,10 @@ class _AuthorEntry(BaseModel):
 
 
 _SPECIAL_FIELDS = ("title", "subtitle", "date")
+# Fields whose front-matter value may legitimately be a structured shape
+# (mapping or list) handled downstream by a dedicated resolver. Stringifying
+# them here would smuggle ``"{'git': True}"`` into the LaTeX output.
+_STRUCTURED_FIELDS = frozenset({"date"})
 _ROOT_SKIP_KEYS = {"press", "slots", "entrypoints"}
 _NESTED_ALIAS_MAP: dict[tuple[str, str], str] = {
     ("glossary", "style"): "glossary_style",
@@ -125,8 +129,18 @@ def _coerce_common_strings(
     merged: MutableMapping[str, Any], press_payload: Mapping[str, Any]
 ) -> None:
     for field in _SPECIAL_FIELDS:
-        existing = _coerce_metadata_string(merged.get(field))
-        source = _coerce_metadata_string(press_payload.get(field))
+        merged_value = merged.get(field)
+        press_value = press_payload.get(field)
+        if field in _STRUCTURED_FIELDS and (
+            _is_structured(merged_value) or _is_structured(press_value)
+        ):
+            # Structured shapes are resolved downstream (e.g. the ``date``
+            # resolver in ``core.document_date``); leave the value untouched.
+            if merged_value is None and press_value is not None:
+                merged[field] = press_value
+            continue
+        existing = _coerce_metadata_string(merged_value)
+        source = _coerce_metadata_string(press_value)
         if existing is None and source is not None:
             merged[field] = source
         elif existing is not None:
@@ -136,6 +150,14 @@ def _coerce_common_strings(
                     stacklevel=2,
                 )
             merged[field] = existing
+
+
+def _is_structured(value: Any) -> bool:
+    if value is None or isinstance(value, str):
+        return False
+    if isinstance(value, (date, datetime)):
+        return False
+    return isinstance(value, (Mapping, Sequence)) and not isinstance(value, (bytes, bytearray))
 
 
 def _coerce_metadata_string(value: Any) -> str | None:

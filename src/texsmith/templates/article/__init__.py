@@ -8,7 +8,8 @@ from typing import Any, ClassVar
 import unicodedata
 
 from texsmith.adapters.latex.utils import escape_latex_chars
-from texsmith.core.git_version import format_version
+from texsmith.core.document_date import format_date
+from texsmith.core.document_version import format_version
 from texsmith.core.templates import TemplateError, WrappableTemplate
 
 
@@ -71,13 +72,22 @@ class Template(WrappableTemplate):
         context = super().prepare_context(latex_body, overrides=overrides)
         context["ts_extra_disable_hyperref"] = True
 
-        # Resolve the magic ``version: git`` sentinel and LaTeX-escape the
-        # final string. The manifest does not auto-escape so that ``git`` can be
-        # detected verbatim before substitution; tag names may contain
-        # characters (``_``, ``%``, ``#`` …) that would corrupt the title if
-        # left raw.
+        # Resolve the structured ``version`` field (free-form, semver list,
+        # explicit semver mapping, or ``{git: true, suffix?: "..."}``) into a
+        # canonical text and LaTeX-escape it. The manifest does not auto-escape
+        # so structured shapes survive untouched up to this point.
         resolved_version = format_version(context.get("version"))
         context["version"] = escape_latex_chars(resolved_version) if resolved_version else ""
+
+        # Resolve the structured ``date`` field (``today`` / ``none`` /
+        # ``commit`` / ISO date) into localised long-form text. The empty
+        # string means "no date" — the template emits a bare ``\date{}`` so
+        # ``\maketitle`` omits the date line entirely.
+        resolved_date = format_date(
+            context.get("date"),
+            language=context.get("language"),
+        )
+        context["date"] = escape_latex_chars(resolved_date) if resolved_date else ""
 
         # Transform author metadata into a LaTeX-ready string while preserving defaults.
         raw_authors = context.pop("authors", None)

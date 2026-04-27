@@ -63,7 +63,9 @@ class InvisibleCharsExtension(Extension):
         )
 
 
-def makeExtension(**_: object) -> InvisibleCharsExtension:  # pragma: no cover - API hook  # noqa: N802
+def makeExtension(  # noqa: N802 - markdown extension API hook
+    **_: object,
+) -> InvisibleCharsExtension:  # pragma: no cover - API hook
     return InvisibleCharsExtension()
 
 

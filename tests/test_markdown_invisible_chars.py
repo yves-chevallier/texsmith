@@ -13,7 +13,7 @@ def test_zwsp_in_text_is_normalised_to_nbsp() -> None:
     soup = BeautifulSoup(html, "html.parser")
 
     assert "​" not in soup.get_text()
-    assert "before after" == soup.get_text().strip()
+    assert soup.get_text().strip() == "before after"
 
 
 def test_zero_width_family_is_normalised() -> None:

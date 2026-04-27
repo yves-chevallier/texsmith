@@ -87,8 +87,9 @@ def test_article_template_omits_version_when_not_set() -> None:
         "Body",
         overrides={"press": {"title": "Handbook"}},
     )
-    # The empty branch keeps a bare \date{...} without the version sub-line.
-    assert "\\date{\\today}" in latex
+    # No version and no date → \maketitle drops the date line entirely.
+    assert "\\date{}" in latex
+    assert "\\today" not in latex
 
 
 def test_article_template_renders_explicit_version_string() -> None:
@@ -131,3 +132,85 @@ def test_article_template_resolves_git_version(monkeypatch: pytest.MonkeyPatch) 
         },
     )
     assert "v1.2.3-dirty" in latex
+
+
+def test_article_template_renders_semver_list_version() -> None:
+    runtime = load_template_runtime("article")
+    latex = runtime.instance.wrap_document(
+        "Body",
+        overrides={
+            "press": {"title": "Handbook"},
+            "version": [2, 3, 0],
+        },
+    )
+    assert "2.3.0" in latex
+
+
+def test_article_template_renders_semver_dict_version() -> None:
+    runtime = load_template_runtime("article")
+    latex = runtime.instance.wrap_document(
+        "Body",
+        overrides={
+            "press": {"title": "Handbook"},
+            "version": {"major": 1, "minor": 4, "patch": 2, "pre": "rc1"},
+        },
+    )
+    assert "1.4.2-rc1" in latex
+
+
+def test_article_template_renders_git_dict_with_suffix(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from texsmith.core import git_version
+
+    git_version.reset_cache()
+    monkeypatch.setattr(git_version, "git_describe", lambda **_: "v0.5.1")
+
+    runtime = load_template_runtime("article")
+    latex = runtime.instance.wrap_document(
+        "Body",
+        overrides={
+            "press": {"title": "Handbook"},
+            "version": {"git": True, "suffix": "(draft)"},
+        },
+    )
+    assert "v0.5.1 (draft)" in latex
+
+
+def test_article_template_renders_iso_date_in_french() -> None:
+    runtime = load_template_runtime("article")
+    latex = runtime.instance.wrap_document(
+        "Body",
+        overrides={
+            "press": {"title": "Handbook"},
+            "date": "2026-03-05",
+            "language": "french",
+        },
+    )
+    assert "5 mars 2026" in latex
+
+
+def test_article_template_omits_date_for_keyword_none() -> None:
+    runtime = load_template_runtime("article")
+    latex = runtime.instance.wrap_document(
+        "Body",
+        overrides={
+            "press": {"title": "Handbook"},
+            "date": "none",
+        },
+    )
+    assert "\\date{}" in latex
+    assert "\\today" not in latex
+
+
+def test_article_template_renders_version_only_block_when_no_date() -> None:
+    runtime = load_template_runtime("article")
+    latex = runtime.instance.wrap_document(
+        "Body",
+        overrides={
+            "press": {"title": "Handbook"},
+            "date": "none",
+            "version": "Draft",
+        },
+    )
+    assert "\\date{{\\small Draft}}" in latex
