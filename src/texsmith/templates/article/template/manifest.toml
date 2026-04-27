@@ -17,6 +17,7 @@ tlmgr_packages = [
     "textcomp",
     "fontspec",
     "biblatex",
+    "morewrites",
 ]
 fragments = [
     "ts-geometry",

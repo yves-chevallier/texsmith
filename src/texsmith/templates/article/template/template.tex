@@ -6,6 +6,13 @@
 \BLOCK{ set effective_documentclass_options = '[' ~ option_parts|join(',') ~ ']' if option_parts else '' }
 \documentclass\VAR{effective_documentclass_options}{article}
 
+% morewrites virtualises \newwrite so a document that combines many glossary
+% groups (each costs one \write), biblatex (\bcfout), hyperref (\@outlinefile),
+% the toc, and the LOT/LOF can exceed XeLaTeX's 16-register limit. Must be
+% loaded before any package that allocates writes; that is why it sits ahead
+% of xcolor here.
+\usepackage{morewrites}
+
 \usepackage[svgnames,dvipsnames,x11names]{xcolor}
 \usepackage{graphicx}
 % Babel must be loaded before any package that hooks into its localisation (notably
