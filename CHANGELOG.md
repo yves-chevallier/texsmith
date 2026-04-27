@@ -22,6 +22,7 @@ and the project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 - The article template now emits `\date{}` (no date line) when no `date` is configured, replacing the previous `\date{\today}` fallback. Documents that want today's date must opt in explicitly with `date: today`. Same applies when `date: none` is set explicitly.
 - The article template's title block emits a `\date{{\small <version>}}` block when only a version is set (no date), instead of suppressing the version entirely. Combined date+version blocks are unchanged.
 - `texsmith.core.git_version.format_version` is now a thin shim that forwards to `texsmith.core.document_version.format_version`. The shim is preserved for backwards compatibility; new code should import from the new module.
+- `ts-extra` margin-note safety buffer (`\tsmarginparbuf`, subtracted from the available outer margin when clamping `\marginparwidth`) bumped from `6pt` (~2 mm) to `6mm`, so margin notes typeset via the `{margin}[…]` extension keep a visibly safe gap to the page edge instead of sitting 2-3 mm away. Documents that need the previous, tighter clamp can override it in a custom preamble snippet (`\setlength{\tsmarginparbuf}{6pt}`).
 
 ### Fixed
 
