@@ -86,6 +86,14 @@ escape = "latex"
 sources = ["date"]
 description = "The date of the document, use ISO format (YYYY-MM-DD) or any string. If empty, the current date will be used."
 
+[latex.template.attributes.version]
+default = ""
+type = "string"
+format = "raw"
+allow_empty = true
+sources = ["version"]
+description = "Document version, appended after the date in \\maketitle. Free-form string, or the literal 'git' to use 'git describe --tags --dirty' (with a short-hash fallback). The template resolves 'git' and LaTeX-escapes the final value, so feed it raw text."
+
 [latex.template.attributes.language]
 default = "english"
 type = "string"

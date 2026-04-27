@@ -8,6 +8,7 @@ from typing import Any, ClassVar
 import unicodedata
 
 from texsmith.adapters.latex.utils import escape_latex_chars
+from texsmith.core.git_version import format_version
 from texsmith.core.templates import TemplateError, WrappableTemplate
 
 
@@ -69,6 +70,14 @@ class Template(WrappableTemplate):
     ) -> dict[str, Any]:
         context = super().prepare_context(latex_body, overrides=overrides)
         context["ts_extra_disable_hyperref"] = True
+
+        # Resolve the magic ``version: git`` sentinel and LaTeX-escape the
+        # final string. The manifest does not auto-escape so that ``git`` can be
+        # detected verbatim before substitution; tag names may contain
+        # characters (``_``, ``%``, ``#`` …) that would corrupt the title if
+        # left raw.
+        resolved_version = format_version(context.get("version"))
+        context["version"] = escape_latex_chars(resolved_version) if resolved_version else ""
 
         # Transform author metadata into a LaTeX-ready string while preserving defaults.
         raw_authors = context.pop("authors", None)
