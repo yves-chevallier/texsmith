@@ -10,6 +10,15 @@
 \providecommand{\texsmithEmoji}[1]{\textbf{!}}
 \catcode"2135=\active
 \protected\def^^^^2135{\ensuremath{\aleph}}
+% Map U+200B (zero-width space) to a zero-width breakable skip.
+% biblatex's blx-unicode.def appends a literal U+200B inside
+% \textnohyphenation (the workaround for biblatex#979 used by babel-french's
+% \mkbibnamefamily); rendered through a small-caps font that has no glyph for
+% U+200B, this triggers "Missing character" warnings. Activating the codepoint
+% here -- before biblatex is loaded -- replaces it with a no-op that preserves
+% the breakable zero-width semantics without ever hitting the font.
+\catcode"200B=\active
+\protected\def^^^^200b{\hskip\z@}
 
 \ifPDFTeX
   \PackageError{ts-fonts}{ts-fonts requires XeLaTeX or LuaLaTeX}{Switch to xelatex or lualatex.}

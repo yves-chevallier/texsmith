@@ -46,6 +46,7 @@ DEFAULT_MARKDOWN_EXTENSIONS = [
     "texsmith.extensions.missing_footnotes:MissingFootnotesExtension",
     "texsmith.extensions.latex_text:LatexTextExtension",
     "texsmith.smart_dashes:TexsmithSmartDashesExtension",
+    "texsmith.extensions.invisible_chars:InvisibleCharsExtension",
     "texsmith.extensions.smallcaps:SmallCapsExtension",
     "texsmith.extensions.mermaid:MermaidExtension",
     "texsmith.progressbar:ProgressBarExtension",

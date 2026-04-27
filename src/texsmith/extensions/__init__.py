@@ -94,6 +94,11 @@ _EXTENSIONS: dict[str, ExtensionSpec] = {
         markdown_entry="texsmith.smart_dashes:TexsmithSmartDashesExtension",
         description="Converts '--' and '---' into typographic dashes outside code.",
     ),
+    "invisible_chars": ExtensionSpec(
+        slug="invisible_chars",
+        markdown_entry="texsmith.extensions.invisible_chars:InvisibleCharsExtension",
+        description="Replaces zero-width invisible characters (ZWSP, ZWNJ, ZWJ, BOM) with a non-breaking space.",
+    ),
     "missing_footnotes": ExtensionSpec(
         slug="missing_footnotes",
         markdown_entry="texsmith.extensions.missing_footnotes:MissingFootnotesExtension",
