@@ -105,7 +105,7 @@ defensive layers alongside `\usepackage{marginnote}`:
    `\marginparwidth` to whatever horizontal space the document's geometry
    actually reserves for the margin — the smaller of the recto outer
    margin and, in `twoside` documents, the verso outer margin as well —
-   minus `\marginparsep` and a 6 pt safety buffer.
+   minus `\marginparsep` and a 6 mm safety buffer.
 2. **Line-breaker tolerance.** `\marginfont` includes `\sloppy`,
    `\emergencystretch=1em` and `\hyphenpenalty=50` so a long technical
    word, URL or German compound hyphenates (or stretches inter-word

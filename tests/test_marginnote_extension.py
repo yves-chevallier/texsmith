@@ -222,5 +222,5 @@ def test_ts_extra_template_clamps_marginparwidth_when_marginnote_loaded() -> Non
     assert r"\oddsidemargin" in rendered
     # Safety buffer subtracted on both sides.
     assert r"\newlength{\tsmarginparbuf}" in rendered
-    assert r"\setlength{\tsmarginparbuf}{6pt}" in rendered
+    assert r"\setlength{\tsmarginparbuf}{6mm}" in rendered
     assert r"-\tsmarginparbuf" in rendered
