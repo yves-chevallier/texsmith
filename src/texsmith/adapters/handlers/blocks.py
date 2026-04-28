@@ -580,6 +580,11 @@ def render_footnotes(root: Tag, context: RenderContext) -> None:
             footnote_id = _normalise_footnote_id(coerce_attribute(li.get("id")))
             if not footnote_id:
                 raise InvalidNodeError("Footnote item missing identifier")
+            # The footnote container is a <div> whose PRE-phase descent is
+            # suppressed by the snippet/block <div> rules (nestable=False),
+            # so inline <code> children never reach render_inline_code. Run
+            # the same preparation that lists/dl use before flattening.
+            _prepare_rich_text_content(li, context)
             text = li.get_text(strip=False)
             if _is_multiline_footnote(text):
                 warnings.warn(
