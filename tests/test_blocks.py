@@ -165,6 +165,27 @@ def test_footnote_conversion(renderer: LaTeXRenderer) -> None:
     assert "<div" not in latex
 
 
+def test_footnote_does_not_comment_out_following_inline_text(renderer: LaTeXRenderer) -> None:
+    """Trailing % after \\footnote{...} would silently swallow inline content.
+
+    See https://github.com/yves-chevallier/texsmith — a paragraph like
+    ``...enseignants[^note] ; suite du texte.`` previously rendered as
+    ``\\footnote{...}% ; suite du texte.``, hiding everything after the
+    closing brace until the next newline.
+    """
+    html = (
+        '<p>before<sup id="fnref:1"><a href="#fn:1">1</a></sup>'
+        " ; after the footnote.</p>"
+        '<div class="footnote">'
+        '<ol><li id="fn:1">Note body</li></ol>'
+        "</div>"
+    )
+    latex = renderer.render(html)
+    assert "\\footnote{Note body}" in latex
+    assert "\\footnote{Note body}%" not in latex
+    assert "; after the footnote." in latex
+
+
 def test_multiline_footnote_removed(renderer: LaTeXRenderer) -> None:
     html = """
     <p>See note<sup id="fnref:1"><a href="#fn:1">1</a></sup>.</p>
