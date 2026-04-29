@@ -13,7 +13,7 @@ def test_zwsp_in_text_is_normalised_to_nbsp() -> None:
     soup = BeautifulSoup(html, "html.parser")
 
     assert "​" not in soup.get_text()
-    assert soup.get_text().strip() == "before after"
+    assert soup.get_text().strip() == "before\u00a0after"
 
 
 def test_zero_width_family_is_normalised() -> None:
@@ -26,7 +26,7 @@ def test_zero_width_family_is_normalised() -> None:
     text = soup.get_text().strip()
     for invisible in ("​", "‌", "‍", "﻿"):
         assert invisible not in text
-    assert text == "a b c d e"
+    assert text == "a\u00a0b\u00a0c\u00a0d\u00a0e"
 
 
 def test_invisible_chars_skip_code() -> None:

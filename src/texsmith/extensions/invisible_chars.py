@@ -20,7 +20,7 @@ _INVISIBLE_CHARS = (
     "‍"  # ZERO WIDTH JOINER
     "﻿"  # ZERO WIDTH NO-BREAK SPACE / BOM
 )
-_TRANSLATION_TABLE = {ord(ch): " " for ch in _INVISIBLE_CHARS}
+_TRANSLATION_TABLE = {ord(ch): "\u00a0" for ch in _INVISIBLE_CHARS}
 
 
 def _normalise(text: str) -> str:
