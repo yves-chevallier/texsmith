@@ -30,6 +30,12 @@ while staying configurable from front matter or your own extensions.
 
 `ts-bibliography`
 : bibliography helper that wires `biblatex` into the rendered document.
+  By default, raw URLs in entries are suppressed and the entry title becomes
+  a clickable hyperlink to the entry's `url` field — this avoids the
+  overfull/underfull `\hbox` warnings that long URLs typically cause in
+  justified bibliographies. Set `bibliography_show_urls: true` in the
+  document front matter to print the full URL inline instead (same behaviour
+  as biblatex's stock styles).
 
 `ts-todolist`
 : checklist helpers providing `\done`, `\wontfix`, and the `todolist` environment when they are referenced.

@@ -6,5 +6,17 @@
   style=\VAR{bibliography_style|default('numeric')},
 ]{biblatex}
 \addbibresource{\VAR{bibliography_resource}}
+\BLOCK{ if not bibliography_show_urls|default(false) }
+% Default: hide raw URLs (which often produce overfull/underfull \hbox warnings
+% in justified bibliographies) and turn the title into a clickable hyperlink
+% pointing at the entry's url field. Set `bibliography_show_urls: true` in the
+% document front-matter to print the full URL inline instead.
+\DeclareFieldFormat{url}{}
+\DeclareFieldFormat{urldate}{}
+\DeclareFieldFormat{title}{%
+  \iffieldundef{url}{\mkbibemph{#1}}{\href{\thefield{url}}{\mkbibemph{#1}}}}
+\DeclareFieldFormat[article,inbook,incollection,inproceedings,patent,thesis,unpublished]{title}{%
+  \iffieldundef{url}{\mkbibquote{#1\isdot}}{\href{\thefield{url}}{\mkbibquote{#1\isdot}}}}
+\BLOCK{ endif }
 \BLOCK{ endif }
 \BLOCK{ endif }
