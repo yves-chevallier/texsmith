@@ -4,7 +4,7 @@ If Markdown is new to you, start with the [canonical guide](https://www.markdown
 
 The original spec is spartan—tables, diagrams, and other niceties didn’t exist.
 
-Over time new *flavours* sprouted to fill the gaps. Because TeXSmith targets MkDocs, it aligns with [Python-Markdown](https://python-markdown.github.io/extensions/) (MkDocs’ engine) plus the usual suspects like [Pymdown Extensions](https://facelessuser.github.io/pymdown-extensions/).
+Over time new *flavours* sprouted to fill the gaps. Because TeXSmith initially targeted MkDocs, it aligns with [Python-Markdown](https://python-markdown.github.io/extensions/) (MkDocs’ engine) plus the usual suspects like [Pymdown Extensions](https://facelessuser.github.io/pymdown-extensions/).
 
 For printed documentation, especially for scientific or technical reports, some additional features are required:
 
