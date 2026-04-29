@@ -89,6 +89,49 @@ def test_unordered_list_with_formatting(renderer: LaTeXRenderer) -> None:
     assert "\\textbf{Two}" in latex
 
 
+def test_lone_bold_paragraph_uses_tslead(renderer: LaTeXRenderer) -> None:
+    html = "<p><strong>Sens critique</strong></p>"
+    latex = renderer.render(html)
+    assert "\\tslead{Sens critique}" in latex
+    assert "\\providecommand{\\tslead}" in latex
+
+
+def test_lone_bold_paragraph_preserves_indent_between_blocks(
+    renderer: LaTeXRenderer,
+) -> None:
+    html = (
+        "<table><tr><th>A</th></tr><tr><td>1</td></tr></table>"
+        "<p><strong>Méthodologie</strong></p>"
+        "<table><tr><th>B</th></tr><tr><td>2</td></tr></table>"
+    )
+    latex = renderer.render(html)
+    assert "\\tslead{Méthodologie}" in latex
+
+
+def test_paragraph_with_inline_bold_is_not_promoted(renderer: LaTeXRenderer) -> None:
+    html = "<p>Prefix <strong>bold</strong> suffix.</p>"
+    latex = renderer.render(html)
+    assert "\\tslead" not in latex
+    assert "\\textbf{bold}" in latex
+
+
+def test_lone_bold_paragraph_above_limit_stays_textbf(renderer: LaTeXRenderer) -> None:
+    long_label = "x" * 80
+    html = f"<p><strong>{long_label}</strong></p>"
+    latex = renderer.render(html)
+    assert "\\tslead" not in latex
+    assert f"\\textbf{{{long_label}}}" in latex
+
+
+def test_lone_bold_paragraph_just_under_limit_uses_tslead(
+    renderer: LaTeXRenderer,
+) -> None:
+    label = "x" * 79
+    html = f"<p><strong>{label}</strong></p>"
+    latex = renderer.render(html)
+    assert f"\\tslead{{{label}}}" in latex
+
+
 def test_task_list_rendering(renderer: LaTeXRenderer) -> None:
     html = "<ul><li>[x] Completed task</li><li>[ ] Pending task</li></ul>"
     latex = renderer.render(html)

@@ -96,7 +96,7 @@ def test_template_partials_override_fragments(tmp_path: Path) -> None:
         tmp_path=tmp_path,
         template_root=template_root,
         fragment_paths=[fragment_root],
-        body="**bold**",
+        body="text **bold** text",
     )
 
     assert "TEMPLATE<<" in output
@@ -116,7 +116,7 @@ def test_fragment_partial_overrides_core_default(tmp_path: Path) -> None:
         tmp_path=tmp_path,
         template_root=template_root,
         fragment_paths=[fragment_root],
-        body="**bold**",
+        body="text **bold** text",
     )
 
     assert "FRAGMENT<<" in output
@@ -143,7 +143,7 @@ def test_fragment_partial_conflict_raises(tmp_path: Path) -> None:
             tmp_path=tmp_path,
             template_root=template_root,
             fragment_paths=[fragment_a, fragment_b],
-            body="**bold**",
+            body="text **bold** text",
         )
 
 
@@ -160,5 +160,5 @@ def test_required_partial_missing_triggers_error(tmp_path: Path) -> None:
             tmp_path=tmp_path,
             template_root=template_root,
             fragment_paths=[fragment_root],
-            body="**bold**",
+            body="text **bold** text",
         )

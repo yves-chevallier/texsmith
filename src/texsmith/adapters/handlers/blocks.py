@@ -699,6 +699,64 @@ def render_latex_raw(element: Tag, _context: RenderContext) -> None:
     element.replace_with(replacement)
 
 
+_LONE_BOLD_LIMIT = 80
+
+
+@renders(
+    "p",
+    phase=RenderPhase.PRE,
+    priority=80,
+    name="lone_bold_paragraph",
+    auto_mark=False,
+)
+def render_lone_bold_paragraph(element: Tag, context: RenderContext) -> None:
+    """Promote standalone short-bold paragraphs to a stable ``\\tslead`` lead-in.
+
+    Plain ``\\textbf{...}`` paragraphs render as a heading-like cue, but their
+    indentation depends on the preceding block: a paragraph after running prose
+    is indented while one wedged between two tables is not. ``\\tslead`` forces
+    a no-indent paragraph break and a small vertical breather so these labels
+    look identical regardless of context.
+    """
+    if element.get("class"):
+        return
+    if element.get("data-texsmith-latex") == "true":
+        return
+
+    strong: Tag | None = None
+    for child in element.children:
+        if isinstance(child, NavigableString):
+            if str(child).strip():
+                return
+            continue
+        if isinstance(child, Tag) and child.name == "strong":
+            if strong is not None:
+                return
+            strong = child
+            continue
+        return
+    if strong is None:
+        return
+
+    plain_text = strong.get_text(strip=False).strip()
+    if not plain_text or len(plain_text) >= _LONE_BOLD_LIMIT:
+        return
+
+    legacy_accents = getattr(context.config, "legacy_latex_accents", False)
+    contains_math = bool(_MATH_PAYLOAD_PATTERN.search(plain_text))
+    escape_text = "\\" not in plain_text and not contains_math
+    rendered = render_moving_text(
+        plain_text,
+        context,
+        legacy_accents=legacy_accents,
+        include_whitespace=False,
+        wrap_scripts=escape_text,
+        escape=escape_text,
+    )
+    latex = context.formatter.lead(text=rendered)
+    element.replace_with(mark_processed(NavigableString(f"{latex}\n")))
+
+
 @renders("p", phase=RenderPhase.POST, priority=90, name="paragraphs", nestable=False)
 def render_paragraphs(element: Tag, context: RenderContext) -> None:
     """Render plain paragraphs with script-aware wrapping."""
