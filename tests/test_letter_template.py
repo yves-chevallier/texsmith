@@ -52,7 +52,7 @@ def test_letter_template_accepts_standard_override() -> None:
     )
 
     assert context["letter_standard"] == "sn-right"
-    assert context["letter_standard_option"] == "SNright"
+    assert context["letter_standard_option"] == "SN"
 
 
 def test_letter_template_supports_nf_format_alias() -> None:

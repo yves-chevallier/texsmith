@@ -51,7 +51,7 @@ class LetterStandard:
 _LETTER_STANDARDS: dict[str, LetterStandard] = {
     "din": LetterStandard(key="din", option="DIN"),
     "sn-left": LetterStandard(key="sn-left", option="SNleft"),
-    "sn-right": LetterStandard(key="sn-right", option="SNright"),
+    "sn-right": LetterStandard(key="sn-right", option="SN"),
     "nf": LetterStandard(key="nf", option="NF"),
 }
 
