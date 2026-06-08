@@ -247,8 +247,8 @@ def test_letter_template_prefers_direct_format_override() -> None:
 
     context = template.prepare_context("Body", overrides=overrides)
 
-    assert context["letter_standard"] == "sn-left"
-    assert context["letter_standard_option"] == "SNleft"
+    assert context["letter_standard"] == "sn-right"
+    assert context["letter_standard_option"] == "SN"
 
 
 def test_book_template_supports_columns_option() -> None:

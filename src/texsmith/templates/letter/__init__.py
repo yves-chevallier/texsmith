@@ -61,14 +61,14 @@ _LETTER_STANDARD_ALIASES: dict[str, str] = {
     "din-5008": "din",
     "de": "din",
     "german": "din",
-    "sn": "sn-left",
+    "sn": "sn-right",
     "sn010130": "sn-left",
     "sn-010130": "sn-left",
     "snleft": "sn-left",
     "sn-left": "sn-left",
     "snright": "sn-right",
     "sn-right": "sn-right",
-    "swiss": "sn-left",
+    "swiss": "sn-right",
     "nf": "nf",
 }
 
