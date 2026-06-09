@@ -51,7 +51,7 @@ class LetterStandard:
 _LETTER_STANDARDS: dict[str, LetterStandard] = {
     "din": LetterStandard(key="din", option="DIN"),
     "sn-left": LetterStandard(key="sn-left", option="SNleft"),
-    "sn-right": LetterStandard(key="sn-right", option="SNright"),
+    "sn-right": LetterStandard(key="sn-right", option="SN"),
     "nf": LetterStandard(key="nf", option="NF"),
 }
 
@@ -61,14 +61,14 @@ _LETTER_STANDARD_ALIASES: dict[str, str] = {
     "din-5008": "din",
     "de": "din",
     "german": "din",
-    "sn": "sn-left",
+    "sn": "sn-right",
     "sn010130": "sn-left",
     "sn-010130": "sn-left",
     "snleft": "sn-left",
     "sn-left": "sn-left",
     "snright": "sn-right",
     "sn-right": "sn-right",
-    "swiss": "sn-left",
+    "swiss": "sn-right",
     "nf": "nf",
 }
 
