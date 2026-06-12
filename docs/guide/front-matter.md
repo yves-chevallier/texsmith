@@ -65,4 +65,4 @@ glossary:
       description: Artificial Intelligence
 ```
 
-See the [Glossary Guide](features/glossary.md) for sorting behavior, cross-references, and styling options.
+See the [Glossary Guide](fragments/glossary.md) for sorting behavior, cross-references, and styling options.
