@@ -132,14 +132,24 @@ _MARKDOWN_CACHE_GUARD = Lock()
 def resolve_markdown_extensions(
     requested: Iterable[str] | None,
     disabled: Iterable[str] | None,
+    *,
+    template: Iterable[str] | None = None,
 ) -> list[str]:
-    """Return the active Markdown extension list after applying overrides."""
+    """Return the active Markdown extension list after applying overrides.
+
+    ``template`` carries extensions declared by the selected template's manifest.
+    They are layered on top of the defaults but below the CLI-requested ones, and
+    can still be turned off through ``disabled`` (``--disable-extension``).
+    """
+    template_enabled = normalize_markdown_extensions(template)
     enabled = normalize_markdown_extensions(requested)
     disabled_normalized = {
         extension.lower() for extension in normalize_markdown_extensions(disabled)
     }
 
-    combined = deduplicate_markdown_extensions(list(DEFAULT_MARKDOWN_EXTENSIONS) + enabled)
+    combined = deduplicate_markdown_extensions(
+        list(DEFAULT_MARKDOWN_EXTENSIONS) + template_enabled + enabled
+    )
 
     if not disabled_normalized:
         return combined

@@ -694,6 +694,7 @@ class TemplateInfo(BaseModel):
     texlive_year: int | None = None
     tlmgr_packages: list[str] = Field(default_factory=list)
     fragments: list[str] | None = None
+    markdown_extensions: list[str] = Field(default_factory=list)
     override: list[str] = Field(default_factory=list)
     required_partials: list[str] = Field(default_factory=list)
     attributes: dict[str, TemplateAttributeSpec] = Field(default_factory=dict)

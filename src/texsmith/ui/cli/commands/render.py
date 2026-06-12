@@ -48,7 +48,7 @@ from texsmith.core.conversion.debug import ConversionError
 from texsmith.core.conversion.inputs import UnsupportedInputError
 from texsmith.core.conversion.service import ConversionService
 from texsmith.core.metadata import PressMetadataError, normalise_press_metadata
-from texsmith.core.templates import TemplateError
+from texsmith.core.templates import TemplateError, load_template
 from texsmith.core.templates.runtime import coerce_base_level
 from texsmith.fonts.html_scripts import wrap_scripts_in_html
 from texsmith.version import get_version
@@ -738,9 +738,21 @@ def render(
     }:
         promote_title = False
 
+    template_markdown_extensions: list[str] = []
+    if template_selected and template:
+        try:
+            template_markdown_extensions = list(
+                load_template(template).manifest.latex.template.markdown_extensions
+            )
+        except TemplateError:
+            # Defer template-resolution failures to the main pipeline, which
+            # reports them with full context; here we just skip the extensions.
+            pass
+
     resolved_markdown_extensions = resolve_markdown_extensions(
         markdown_extensions,
         disable_markdown_extensions,
+        template=template_markdown_extensions,
     )
     extension_line = f"Extensions: {', '.join(resolved_markdown_extensions) or '(none)'}"
 
