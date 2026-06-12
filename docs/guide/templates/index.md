@@ -184,7 +184,7 @@ Each attribute table accepts the following keys:
 - `required`: when `true`, a missing override raises a `TemplateError`.
 - `choices`: restricts string/integer values to the provided list.
 - `escape`: currently supports `latex` to automatically escape special characters coming from user input.
-- `normaliser`: name of a registered normaliser that post-processes the value (see below).
+- `normaliser`: a built-in normaliser name **or** a `"module:callable"` import reference pointing at your own callable that post-processes the value (see below).
 
 Attributes are resolved before `WrappableTemplate.prepare_context` runs, meaning template classes only need to handle presentation-specific tweaks (for example, combining authors, building option strings, or removing temporary keys).
 
@@ -209,6 +209,41 @@ Attributes are resolved before `WrappableTemplate.prepare_context` runs, meaning
 | `babel_language` | Maps ISO-like language codes to Babel identifiers (for example `fr` → `french`).        |
 
 Normalisers run after type coercion and before escaping. They can also reuse existing defaults to provide fallbacks (`paper_option` and `orientation` do this).
+
+#### Custom normalisers from template packages
+
+Beyond the built-in names, `normaliser` accepts a fully-qualified callable
+reference so a template package can supply its own normaliser without touching
+TeXSmith internals. Use the `"package.module:callable"` form (the dotted
+`"package.module.callable"` form is also accepted):
+
+```toml
+[latex.template.attributes.rules]
+type = "any"
+normaliser = "texsmith_template_exam.rules:resolve_attribute"
+```
+
+The referenced object is imported (and cached) when the manifest is loaded, and
+must honour the normaliser contract:
+
+```python
+def resolve_attribute(value, spec, fallback):
+    # value:    the already type-coerced attribute value
+    # spec:     the TemplateAttributeSpec (use spec.name in error messages)
+    # fallback: the attribute's resolved default
+    # returns:  the normalised value
+    ...
+```
+
+If the module or attribute cannot be found, or the target is not callable,
+TeXSmith raises a `TemplateError` naming the offending template, attribute, and
+`normaliser` value.
+
+Authors who prefer a short registry name can instead call
+`texsmith.core.templates.register_attribute_normaliser(name, func)` at import
+time and reference it by `name`. Registering over a built-in name raises a
+`TemplateError` unless `override=True` is passed. The `"module:callable"` form is
+collision-free and needs no registration, so it is generally preferred.
 
 #### Metadata overrides
 

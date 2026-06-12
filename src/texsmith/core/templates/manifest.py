@@ -2,16 +2,20 @@
 
 from __future__ import annotations
 
-from collections.abc import Mapping, Sequence
+from collections.abc import Callable, Mapping, Sequence
 import copy
+from functools import cache
+from importlib import import_module
 from pathlib import Path
-import re
-from typing import Any, Callable, Literal
+from typing import Any, Literal
+import warnings
+
 
 try:  # Python >=3.11
     import tomllib  # type: ignore[attr-defined]
 except ModuleNotFoundError:  # Python 3.10
     import tomli as tomllib
+from bs4 import BeautifulSoup, NavigableString, Tag
 from pydantic import (
     BaseModel,
     ConfigDict,
@@ -20,8 +24,6 @@ from pydantic import (
     ValidationError,
     model_validator,
 )
-
-from bs4 import BeautifulSoup, NavigableString, Tag
 
 from texsmith.adapters.latex.utils import escape_latex_chars
 from texsmith.adapters.markdown import DEFAULT_MARKDOWN_EXTENSIONS, render_markdown
@@ -169,45 +171,6 @@ def _normalise_sources(payload: Any) -> list[str]:
     return []
 
 
-def _render_attribute_markdown(value: str, language: str = DEFAULT_TEMPLATE_LANGUAGE) -> str:
-    """Render a short Markdown snippet through the standard TeXSmith pipeline."""
-    from texsmith.adapters.latex.formatter import LaTeXFormatter
-    from texsmith.adapters.latex.renderer import LaTeXRenderer
-    from texsmith.core.config import BookConfig
-    from texsmith.core.conversion.core import render_with_fallback
-
-    document = render_markdown(value, DEFAULT_MARKDOWN_EXTENSIONS)
-    html = document.html
-
-    config = BookConfig(
-        project_dir=Path("."),
-        language=language or DEFAULT_TEMPLATE_LANGUAGE,
-        legacy_latex_accents=False,
-    )
-
-    formatter = LaTeXFormatter()
-    renderer_kwargs = {
-        "output_root": Path("."),
-        "copy_assets": False,
-        "convert_assets": False,
-        "hash_assets": False,
-        "parser": "html.parser",
-    }
-
-    def _renderer_factory() -> LaTeXRenderer:
-        return LaTeXRenderer(config=config, formatter=formatter, **renderer_kwargs)
-
-    rendered, _ = render_with_fallback(
-        _renderer_factory,
-        html,
-        runtime={"language": config.language, "copy_assets": False, "convert_assets": False, "hash_assets": False},
-        bibliography={},
-        state=None,
-        emitter=None,
-    )
-    return rendered.strip()
-
-
 def _render_attribute_markdown(value: str) -> str:
     """Render a short Markdown snippet into LaTeX-safe text."""
     doc = render_markdown(value, DEFAULT_MARKDOWN_EXTENSIONS)
@@ -243,34 +206,124 @@ def _render_attribute_markdown(value: str) -> str:
     return rendered.strip()
 
 
-_ATTRIBUTE_NORMALISERS: dict[str, Callable[[Any, "TemplateAttributeSpec", Any], Any]] = {}
+_ATTRIBUTE_NORMALISERS: dict[str, Callable[[Any, TemplateAttributeSpec, Any], Any]] = {}
 
 
 def _register_attribute_normaliser(
     name: str,
-) -> Callable[[Callable[[Any, "TemplateAttributeSpec", Any], Any]], Callable[[Any, "TemplateAttributeSpec", Any], Any]]:
+) -> Callable[
+    [Callable[[Any, TemplateAttributeSpec, Any], Any]],
+    Callable[[Any, TemplateAttributeSpec, Any], Any],
+]:
     """Decorator used to register attribute normaliser callables (internal use)."""
 
     def decorator(
-        func: Callable[[Any, "TemplateAttributeSpec", Any], Any],
-    ) -> Callable[[Any, "TemplateAttributeSpec", Any], Any]:
+        func: Callable[[Any, TemplateAttributeSpec, Any], Any],
+    ) -> Callable[[Any, TemplateAttributeSpec, Any], Any]:
         _ATTRIBUTE_NORMALISERS[name] = func
         return func
 
     return decorator
 
 
+def register_attribute_normaliser(
+    name: str,
+    func: Callable[[Any, TemplateAttributeSpec, Any], Any],
+    *,
+    override: bool = False,
+) -> None:
+    """Register a custom attribute normaliser under a short ``name``.
+
+    Public counterpart of the internal ``_register_attribute_normaliser``
+    decorator. Template packages may call this at import time so that a
+    manifest can refer to the normaliser by ``name``. Registering over an
+    existing built-in name raises ``TemplateError`` unless ``override=True``.
+    """
+    if name in _BUILTIN_NORMALISER_NAMES and not override:
+        raise TemplateError(
+            f"Attribute normaliser '{name}' shadows a built-in normaliser. "
+            f"Pass override=True to replace it intentionally."
+        )
+    if name in _ATTRIBUTE_NORMALISERS and not override:
+        warnings.warn(
+            f"Overriding already-registered attribute normaliser '{name}'.",
+            stacklevel=2,
+        )
+    _ATTRIBUTE_NORMALISERS[name] = func
+
+
+def _import_object(reference: str, *, allow_dotted: bool = False) -> Any:
+    """Import the object named by a ``"module:attribute"`` reference.
+
+    The attribute part may itself be dotted to reach nested attributes. When
+    ``allow_dotted`` is true a reference with no ``:`` is split on its last dot,
+    so ``"package.module.callable"`` is accepted alongside the canonical
+    ``"package.module:callable"`` form. Raises ``TemplateError`` with an
+    actionable message if the reference is malformed, the module cannot be
+    imported, or the attribute does not exist.
+    """
+    if ":" in reference:
+        module_name, _, attr_path = reference.partition(":")
+    elif allow_dotted:
+        module_name, _, attr_path = reference.rpartition(".")
+    else:
+        module_name, attr_path = reference, ""
+    if not module_name or not attr_path:
+        raise TemplateError(
+            f"Invalid import reference '{reference}'. Expected the form 'module:attribute'."
+        )
+
+    try:
+        obj: Any = import_module(module_name)
+    except ImportError as exc:
+        raise TemplateError(
+            f"Could not import module '{module_name}' from reference '{reference}': {exc}."
+        ) from exc
+
+    for attr in attr_path.split("."):
+        try:
+            obj = getattr(obj, attr)
+        except AttributeError as exc:
+            raise TemplateError(
+                f"Reference '{reference}' could not be resolved: "
+                f"'{module_name}' has no attribute '{attr}'."
+            ) from exc
+
+    return obj
+
+
+@cache
+def _import_normaliser_callable(
+    reference: str,
+) -> Callable[[Any, TemplateAttributeSpec, Any], Any]:
+    """Import a normaliser callable from a ``"module:callable"`` reference.
+
+    Accepts both ``"package.module:callable"`` and the dotted
+    ``"package.module.callable"`` form. Raises ``TemplateError`` with an
+    actionable message if the module or attribute is missing or the resolved
+    object is not callable.
+    """
+    obj = _import_object(reference, allow_dotted=True)
+    if not callable(obj):
+        raise TemplateError(
+            f"Attribute normaliser '{reference}' resolved to a non-callable "
+            f"object of type '{type(obj).__name__}'."
+        )
+    return obj
+
+
 def _resolve_attribute_normaliser(
     name: str,
-) -> Callable[[Any, "TemplateAttributeSpec", Any], Any]:
-    try:
+) -> Callable[[Any, TemplateAttributeSpec, Any], Any]:
+    if name in _ATTRIBUTE_NORMALISERS:
         return _ATTRIBUTE_NORMALISERS[name]
-    except KeyError as exc:  # pragma: no cover - defensive
-        raise TemplateError(f"Unknown attribute normaliser '{name}'.") from exc
+    if ":" in name or "." in name:
+        return _import_normaliser_callable(name)
+    raise TemplateError(f"Unknown attribute normaliser '{name}'.")
 
 
 @_register_attribute_normaliser("paper_option")
-def _normalise_paper_option(value: Any, spec: "TemplateAttributeSpec", fallback: Any) -> Any:
+def _normalise_paper_option(value: Any, spec: TemplateAttributeSpec, fallback: Any) -> Any:
     valid_bases = {
         "a0",
         "a1",
@@ -315,7 +368,7 @@ def _normalise_paper_option(value: Any, spec: "TemplateAttributeSpec", fallback:
 
 
 @_register_attribute_normaliser("orientation")
-def _normalise_orientation(value: Any, spec: "TemplateAttributeSpec", fallback: Any) -> Any:
+def _normalise_orientation(value: Any, spec: TemplateAttributeSpec, fallback: Any) -> Any:
     valid_orientations = {"portrait", "landscape"}
 
     if value is None or value == "":
@@ -346,7 +399,7 @@ def _normalise_orientation(value: Any, spec: "TemplateAttributeSpec", fallback: 
 
 
 @_register_attribute_normaliser("babel_language")
-def _normalise_language(value: Any, spec: "TemplateAttributeSpec", fallback: Any) -> Any:
+def _normalise_language(value: Any, spec: TemplateAttributeSpec, fallback: Any) -> Any:
     if value is None or value == "":
         return fallback
 
@@ -362,14 +415,12 @@ def _normalise_language(value: Any, spec: "TemplateAttributeSpec", fallback: Any
     if fallback is not None:
         return fallback
 
-    raise TemplateError(
-        f"Attribute '{spec.name}' received unsupported language value '{value}'."
-    )
+    raise TemplateError(f"Attribute '{spec.name}' received unsupported language value '{value}'.")
 
 
 @_register_attribute_normaliser("callout_style")
 def _normalise_callout_style_attribute(
-    value: Any, spec: "TemplateAttributeSpec", fallback: Any
+    value: Any, spec: TemplateAttributeSpec, fallback: Any
 ) -> Any:
     allowed = {"fancy", "classic", "minimal"}
     if value is None or value == "":
@@ -393,7 +444,7 @@ def _normalise_callout_style_attribute(
 
 
 @_register_attribute_normaliser("margin_style")
-def _normalise_margin_style(value: Any, spec: "TemplateAttributeSpec", fallback: Any) -> Any:
+def _normalise_margin_style(value: Any, spec: TemplateAttributeSpec, fallback: Any) -> Any:
     if value is None or value == "":
         return fallback
 
@@ -409,7 +460,7 @@ def _normalise_margin_style(value: Any, spec: "TemplateAttributeSpec", fallback:
 
 
 @_register_attribute_normaliser("code_options")
-def _normalise_code_options(value: Any, spec: "TemplateAttributeSpec", fallback: Any) -> Any:
+def _normalise_code_options(value: Any, spec: TemplateAttributeSpec, fallback: Any) -> Any:
     """Normalise code highlighting options ensuring a supported engine."""
 
     def _pick_engine(candidate: Any) -> str:
@@ -465,6 +516,11 @@ def _normalise_code_options(value: Any, spec: "TemplateAttributeSpec", fallback:
     return options
 
 
+#: Names of the normalisers shipped with TeXSmith, captured once every built-in
+#: registration above has run. Used to protect them from being shadowed.
+_BUILTIN_NORMALISER_NAMES = frozenset(_ATTRIBUTE_NORMALISERS)
+
+
 class TemplateAttributeSpec(BaseModel):
     """Typed attribute definition used to build template defaults."""
 
@@ -499,7 +555,7 @@ class TemplateAttributeSpec(BaseModel):
         return coerced
 
     @model_validator(mode="after")
-    def _finalise(self) -> "TemplateAttributeSpec":
+    def _finalise(self) -> TemplateAttributeSpec:
         self._default_cache = self._coerce_value(
             self.default,
             from_override=False,
@@ -584,16 +640,12 @@ class TemplateAttributeSpec(BaseModel):
             try:
                 result = int(value)
             except (TypeError, ValueError) as exc:
-                raise TemplateError(
-                    f"Attribute '{self.name}' expects an integer value."
-                ) from exc
+                raise TemplateError(f"Attribute '{self.name}' expects an integer value.") from exc
         elif target_type == "float":
             try:
                 result = float(value)
             except (TypeError, ValueError) as exc:
-                raise TemplateError(
-                    f"Attribute '{self.name}' expects a numeric value."
-                ) from exc
+                raise TemplateError(f"Attribute '{self.name}' expects a numeric value.") from exc
         elif target_type == "boolean":
             if isinstance(value, bool):
                 result = value
@@ -604,15 +656,11 @@ class TemplateAttributeSpec(BaseModel):
                 elif lowered in {"false", "no", "0", "off"}:
                     result = False
                 else:
-                    raise TemplateError(
-                        f"Attribute '{self.name}' expects a boolean value."
-                    )
+                    raise TemplateError(f"Attribute '{self.name}' expects a boolean value.")
             elif isinstance(value, (int, float)):
                 result = bool(value)
             else:
-                raise TemplateError(
-                    f"Attribute '{self.name}' expects a boolean-compatible value."
-                )
+                raise TemplateError(f"Attribute '{self.name}' expects a boolean-compatible value.")
         elif target_type == "list":
             if isinstance(value, Sequence) and not isinstance(value, (str, bytes)):
                 result = [copy.deepcopy(item) for item in value]
@@ -745,12 +793,20 @@ class TemplateInfo(BaseModel):
         return updated
 
     @model_validator(mode="after")
-    def _bind_attribute_names(self) -> "TemplateInfo":
+    def _bind_attribute_names(self) -> TemplateInfo:
         for name, spec in self.attributes.items():
             spec.name = name
             if spec.owner is None:
                 spec.owner = self.name
             self._attribute_owners[name] = spec.owner
+            if spec.normaliser:
+                try:
+                    _resolve_attribute_normaliser(spec.normaliser)
+                except TemplateError as exc:
+                    raise TemplateError(
+                        f"Template '{self.name}' attribute '{name}' declares an "
+                        f"invalid normaliser '{spec.normaliser}': {exc}"
+                    ) from exc
         self._attribute_resolver = TemplateAttributeResolver(self.attributes)
         self._attribute_defaults = self._attribute_resolver.defaults()
         normalised_required: list[str] = []
@@ -834,9 +890,9 @@ class TemplateManifest(BaseModel):
 
 
 __all__ = [
-    "CompatInfo",
     "DEFAULT_TEMPLATE_LANGUAGE",
     "LATEX_HEADING_LEVELS",
+    "CompatInfo",
     "LatexSection",
     "TemplateAsset",
     "TemplateAttributeSpec",
@@ -844,7 +900,10 @@ __all__ = [
     "TemplateInfo",
     "TemplateManifest",
     "TemplateSlot",
+    "register_attribute_normaliser",
 ]
+
+
 def _map_babel_language(value: str | None) -> str | None:
     if value is None:
         return None

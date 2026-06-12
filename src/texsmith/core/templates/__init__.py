@@ -7,12 +7,13 @@ from .loader import copy_template_assets, discover_templates, load_template
 from .manifest import (
     DEFAULT_TEMPLATE_LANGUAGE,
     LATEX_HEADING_LEVELS,
-    TemplateAttributeSpec,
     TemplateAsset,
+    TemplateAttributeSpec,
     TemplateError,
     TemplateInfo,
     TemplateManifest,
     TemplateSlot,
+    register_attribute_normaliser,
 )
 from .runtime import (
     TemplateBinding,
@@ -28,13 +29,14 @@ from .runtime import (
 )
 from .wrapper import TemplateWrapResult, wrap_template_document
 
+
 __all__ = [
-    "BaseTemplate",
     "DEFAULT_TEMPLATE_LANGUAGE",
     "LATEX_HEADING_LEVELS",
+    "BaseTemplate",
     "ResolvedAsset",
-    "TemplateAttributeSpec",
     "TemplateAsset",
+    "TemplateAttributeSpec",
     "TemplateBinding",
     "TemplateError",
     "TemplateInfo",
@@ -52,7 +54,8 @@ __all__ = [
     "load_template",
     "load_template_runtime",
     "normalise_template_language",
-    "wrap_template_document",
+    "register_attribute_normaliser",
     "resolve_template_binding",
     "resolve_template_language",
+    "wrap_template_document",
 ]

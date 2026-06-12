@@ -740,14 +740,12 @@ def render(
 
     template_markdown_extensions: list[str] = []
     if template_selected and template:
-        try:
+        # Defer template-resolution failures to the main pipeline, which
+        # reports them with full context; here we just skip the extensions.
+        with contextlib.suppress(TemplateError):
             template_markdown_extensions = list(
                 load_template(template).manifest.latex.template.markdown_extensions
             )
-        except TemplateError:
-            # Defer template-resolution failures to the main pipeline, which
-            # reports them with full context; here we just skip the extensions.
-            pass
 
     resolved_markdown_extensions = resolve_markdown_extensions(
         markdown_extensions,

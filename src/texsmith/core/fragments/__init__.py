@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from collections.abc import Callable, Iterable, Mapping, Sequence
 from dataclasses import dataclass, field
-import importlib
 from pathlib import Path
 from typing import Any
 import warnings
@@ -22,6 +21,7 @@ from texsmith.core.templates.manifest import (
     TemplateAttributeResolver,
     TemplateAttributeSpec,
     TemplateError,
+    _import_object,
 )
 
 
@@ -227,12 +227,7 @@ def _package_name(identifier: str) -> str:
 
 def _load_entrypoint(entrypoint: str) -> BaseFragment[Any] | FragmentDefinition:
     """Load a fragment definition from a Python callable."""
-    module_name, _, attr = entrypoint.partition(":")
-    if not module_name or not attr:
-        raise TemplateError("Fragment entrypoint must be in the form 'module:attribute'.")
-
-    module = importlib.import_module(module_name)
-    target = getattr(module, attr)
+    target = _import_object(entrypoint)
     candidate = target() if callable(target) else target
 
     if isinstance(candidate, (BaseFragment, FragmentDefinition)):
