@@ -28,7 +28,7 @@ def test_external_link_escapes_latex_chars(renderer: LaTeXRenderer) -> None:
 def test_internal_anchor_link_rendering(renderer: LaTeXRenderer) -> None:
     html = '<p><a href="#section-1">Jump</a></p>'
     latex = renderer.render(html)
-    assert "\\ref{section-1}" in latex
+    assert "\\hyperref[section-1]{Jump}" in latex
 
 
 def test_label_generated_for_anchor_without_href(renderer: LaTeXRenderer) -> None:
@@ -70,7 +70,7 @@ def test_local_html_link_becomes_reference(renderer: LaTeXRenderer, tmp_path: Pa
         html,
         runtime={"document_path": source_dir / "index.html", "source_dir": source_dir},
     )
-    assert "\\ref{high-level-workflows}" in latex
+    assert "\\hyperref[high-level-workflows]{High-Level Workflows}" in latex
 
 
 def test_local_html_fragment_preserved(renderer: LaTeXRenderer, tmp_path: Path) -> None:
@@ -88,4 +88,4 @@ def test_local_html_fragment_preserved(renderer: LaTeXRenderer, tmp_path: Path) 
         html,
         runtime={"document_path": source_dir / "index.html", "source_dir": source_dir},
     )
-    assert "\\ref{domvisitor}" in latex
+    assert "\\hyperref[domvisitor]{\\_DOMVisitor}" in latex
