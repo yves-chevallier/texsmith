@@ -31,6 +31,12 @@ def test_internal_anchor_link_rendering(renderer: LaTeXRenderer) -> None:
     assert "\\hyperref[section-1]{Jump}" in latex
 
 
+def test_internal_anchor_link_no_text(renderer: LaTeXRenderer) -> None:
+    html = '<p><a href="#section-1"></a></p>'
+    latex = renderer.render(html)
+    assert "\\ref{section-1}" in latex
+
+
 def test_label_generated_for_anchor_without_href(renderer: LaTeXRenderer) -> None:
     html = '<a id="section-1"></a>'
     latex = renderer.render(html)
