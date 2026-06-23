@@ -516,10 +516,10 @@ class _MarkdownTableCaptionTreeprocessor(Treeprocessor):
             caption = ElementTree.Element("caption")
             if len(paragraph):
                 # Inline-rich caption: transfer leading text and all children.
-                caption.text = (paragraph.text or "")[len("Table:"):].lstrip()
-                last_idx = len(paragraph) - 1
+                caption.text = (paragraph.text or "").lstrip().removeprefix("Table:").lstrip()
+                last_child_index = len(paragraph) - 1
                 for i, child in enumerate(list(paragraph)):
-                    if i == last_idx and info.label:
+                    if i == last_child_index and info.label:
                         # Strip the {#label} suffix that was parsed from the tail.
                         child.tail = _ATTRS_SUFFIX_RE.sub("", (child.tail or "").rstrip())
                     caption.append(child)
