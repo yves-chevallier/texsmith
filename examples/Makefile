@@ -23,7 +23,9 @@ EXAMPLES := \
 	paper \
 	progressbar \
 	recipe \
-	snippet
+	snippet \
+	typst-hello \
+	typst-article
 
 EXAMPLES_WITH_COMPARE := multi-document
 

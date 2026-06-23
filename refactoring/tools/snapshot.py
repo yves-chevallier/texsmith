@@ -51,10 +51,11 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 EXAMPLES_ROOT = REPO_ROOT / "examples"
 BASELINE_ROOT = REPO_ROOT / "refactoring" / "baseline"
 
-# Artefacts we snapshot: the deterministic LaTeX text. Everything else (PDF,
-# PNG, fonts, .aux, logs, .latexmkrc, JSON manifests) is volatile or binary and
-# is deliberately excluded.
-SNAPSHOT_SUFFIXES = (".tex", ".sty")
+# Artefacts we snapshot: the deterministic backend text. ``.tex``/``.sty`` for
+# the LaTeX backend, ``.typ`` for the Typst backend (Phase 4). Everything else
+# (PDF, PNG, fonts, .aux, logs, .latexmkrc, JSON manifests) is volatile or
+# binary and is deliberately excluded.
+SNAPSHOT_SUFFIXES = (".tex", ".sty", ".typ")
 
 
 # --------------------------------------------------------------------------- #
@@ -263,6 +264,10 @@ CLI_CASES: tuple[Case, ...] = (
     # recipe uses a local template (-t.) resolved against the example cwd.
     Case("recipe", "recipe", ("cake.yml", "-t.")),
     Case("snippet", "snippet", ("docs/index.md", "-tarticle")),
+    # Typst backend (Phase 4): emit the standalone .typ via --format typst.
+    # No template (-t…) — the Typst path bypasses the LaTeX template machinery.
+    Case("typst-hello", "typst-hello", ("hello.md", "--format", "typst")),
+    Case("typst-article", "typst-article", ("article.md", "--format", "typst")),
 )
 
 MKDOCS_CASES: tuple[MkdocsCase, ...] = (

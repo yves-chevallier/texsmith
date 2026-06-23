@@ -1,7 +1,7 @@
 """``LaTeXWriter`` — emit LaTeX from the TeXSmith IR.
 
 The writer is a typed visitor over :mod:`texsmith.ir`. Each node class has an
-emitter registered with :func:`~.registry.writes`; a node with no emitter
+emitter registered with :func:`~texsmith.writers.registry.writes`; a node with no emitter
 raises a clear, localised error (no opaque ``AttributeError``). Emitters reuse
 the existing Jinja partials through :class:`~texsmith.adapters.latex.LaTeXFormatter`
 and the font-script machinery, so the produced LaTeX matches the legacy
@@ -16,9 +16,9 @@ from typing import TYPE_CHECKING
 from requests.utils import requote_uri as requote_url
 
 from texsmith.ir import nodes as ir
+from texsmith.writers.registry import WriterRegistry, writes
 
 from .escaper import _MATH_PAYLOAD_PATTERN, escape_latex_chars, escape_text_segment
-from .registry import WriterRegistry, writes
 
 
 if TYPE_CHECKING:  # pragma: no cover - typing only

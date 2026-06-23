@@ -64,6 +64,7 @@ from .._options import (
     DisableMarkdownExtensionsOption,
     EnableFragmentOption,
     FontsInfoOption,
+    FormatOption,
     FullDocumentOption,
     HashAssetsOption,
     HtmlOnlyOption,
@@ -101,6 +102,7 @@ from ..presenter import (
 )
 from ..state import debug_enabled, emit_error, set_cli_state
 from ..utils import determine_output_target, organise_slot_overrides, write_output_file
+from .typst_emit import build_typst_pdf, render_typst_document
 
 
 _SERVICE = ConversionService()
@@ -442,6 +444,7 @@ def render(
         ),
     ] = False,
     html_only: HtmlOnlyOption = False,
+    output_format: FormatOption = "latex",
     build_pdf: Annotated[
         bool,
         typer.Option(
@@ -535,6 +538,16 @@ def render(
         raise typer.Exit()
 
     state = set_cli_state(ctx=typer_ctx, verbosity=verbose, debug=debug)
+    output_format = (output_format or "latex").strip().lower()
+    if output_format not in {"latex", "typst"}:
+        raise typer.BadParameter("--format must be 'latex' or 'typst'.")
+    if output_format == "typst":
+        # The Typst backend emits a standalone .typ via the shared IR; it does
+        # not (yet) participate in the LaTeX template/fragment/engine machinery.
+        if template is not None or template_info_flag or template_scaffold is not None:
+            raise typer.BadParameter("--format typst does not support --template options.")
+        if html_only:
+            raise typer.BadParameter("--format typst cannot be combined with --html.")
     if html_only:
         build_pdf = False
         template = None
@@ -679,7 +692,7 @@ def render(
     if strip_heading:
         promote_title = False
 
-    if build_pdf and not template_selected:
+    if build_pdf and not template_selected and output_format != "typst":
         template = "article"
         template_selected = True
         # In CI runners like act, prefer classic output to avoid streaming latexmk.
@@ -857,6 +870,49 @@ def render(
     except ConversionError as exc:
         emit_error(str(exc), exception=exc)
         raise typer.Exit(code=1) from exc
+
+    if output_format == "typst":
+        typst_docs = [(doc.source_path, render_typst_document(doc)) for doc in prepared.documents]
+        if output_mode == "stdout":
+            typer.echo("\n\n".join(payload for _, payload in typst_docs))
+            _flush_diagnostics()
+            return
+
+        written_paths: list[Path] = []
+        if output_mode == "file":
+            if resolved_output_target is None:
+                raise typer.BadParameter("Output path is required when writing Typst to a file.")
+            try:
+                write_output_file(resolved_output_target, typst_docs[0][1])
+            except OSError as exc:
+                emit_error(str(exc), exception=exc)
+                raise typer.Exit(code=1) from exc
+            written_paths.append(resolved_output_target)
+        elif output_mode in {"directory", "template"}:
+            if resolved_output_target is None:
+                raise typer.BadParameter("Output directory is required when writing Typst files.")
+            resolved_output_target.mkdir(parents=True, exist_ok=True)
+            for source_path, payload in typst_docs:
+                target = resolved_output_target / f"{source_path.stem}.typ"
+                try:
+                    write_output_file(target, payload)
+                except OSError as exc:
+                    emit_error(str(exc), exception=exc)
+                    raise typer.Exit(code=1) from exc
+                written_paths.append(target)
+        else:
+            raise RuntimeError(f"Unsupported output mode '{output_mode}' for Typst output.")
+
+        for path in written_paths:
+            typer.echo(f"Wrote {path}")
+        if build_pdf:
+            for path in written_paths:
+                ok, message = build_typst_pdf(path)
+                typer.echo(message)
+                if not ok and debug_enabled():
+                    raise typer.Exit(code=1)
+        _flush_diagnostics()
+        return
 
     if html_only:
         html_fragments = []

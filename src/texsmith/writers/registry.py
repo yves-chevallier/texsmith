@@ -1,9 +1,14 @@
-"""The ``@writes`` dispatch registry for IR → LaTeX emitters.
+"""Backend-agnostic ``@writes`` dispatch registry for IR emitters.
 
-Replaces the magic ``LaTeXFormatter.__getattr__`` template proxy with an
-explicit, typed dispatch keyed by IR node class. A node type with no registered
-emitter raises a clear, localised error (node type + backend) instead of an
-opaque ``AttributeError``.
+A writer is a typed visitor over :mod:`texsmith.ir`: each IR node class is
+mapped to an emitter method via the :func:`writes` decorator, and dispatch is
+keyed by node class (resolved along the MRO so a ``visit_Block`` style base
+emitter can capture a whole family). A node type with no registered emitter is
+the writer's cue to raise a clear, localised error (node type + backend)
+instead of an opaque ``AttributeError``.
+
+This abstraction is shared by every backend (LaTeX, Typst, …): it carries no
+backend-specific knowledge — only the node-type → method-name mapping.
 """
 
 from __future__ import annotations
@@ -15,18 +20,18 @@ from typing import TYPE_CHECKING, TypeVar
 if TYPE_CHECKING:  # pragma: no cover - typing only
     from texsmith.ir.nodes import Node
 
-    from .writer import LaTeXWriter
-
 NodeT = TypeVar("NodeT", bound="Node")
+WriterT = TypeVar("WriterT")
 
-# Method name -> the IR node class name it emits. Collected at class-creation
-# time via the ``@writes`` decorator and resolved against bound methods.
+# Attribute stamped on an emitter method by ``@writes`` recording the IR node
+# class it emits. Collected at class-creation time and resolved against bound
+# methods by :class:`WriterRegistry`.
 _EMITTER_ATTR = "__ir_writes__"
 
 
 def writes(
     node_type: type[Node],
-) -> Callable[[Callable[[LaTeXWriter, NodeT], str]], Callable[[LaTeXWriter, NodeT], str]]:
+) -> Callable[[Callable[[WriterT, NodeT], str]], Callable[[WriterT, NodeT], str]]:
     """Mark a writer method as the emitter for ``node_type``.
 
     Usage::
@@ -35,9 +40,7 @@ def writes(
         def _para(self, node: ir.Para) -> str: ...
     """
 
-    def decorate(
-        func: Callable[[LaTeXWriter, NodeT], str],
-    ) -> Callable[[LaTeXWriter, NodeT], str]:
+    def decorate(func: Callable[[WriterT, NodeT], str]) -> Callable[[WriterT, NodeT], str]:
         setattr(func, _EMITTER_ATTR, node_type)
         return func
 

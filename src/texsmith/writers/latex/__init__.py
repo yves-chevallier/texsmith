@@ -2,8 +2,9 @@
 
 from __future__ import annotations
 
+from texsmith.writers.registry import WriterRegistry, writes
+
 from .escaper import escape_latex_chars
-from .registry import WriterRegistry, writes
 from .state import WriterState
 from .writer import LaTeXWriteError, LaTeXWriter
 

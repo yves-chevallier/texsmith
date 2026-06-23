@@ -233,6 +233,16 @@ HtmlOnlyOption = Annotated[
     ),
 ]
 
+FormatOption = Annotated[
+    str,
+    typer.Option(
+        "--format",
+        help="Output backend: 'latex' (default) or 'typst'.",
+        rich_help_panel=OUTPUT_PANEL,
+        case_sensitive=False,
+    ),
+]
+
 LanguageOption = Annotated[
     str | None,
     typer.Option(

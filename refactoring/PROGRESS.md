@@ -11,7 +11,7 @@
 | P1 — Modèle IR | Architect / IR Owner | 🟢 terminé | ✅ | `ir/{nodes,visitor,__init__}.py` + 26 tests verts. pyright 0 erreur, ruff clean, golden `diff --skip-docker` exit 0. Pur ajout, aucun consommateur. |
 | P2 — HtmlReader | Reader Agent | 🟢 terminé | ✅ (commun P3) | `readers/html/` branché dans le live path. Golden `diff --skip-docker` exit 0. |
 | P3 — LaTeXWriter (parité) | Writer Agent LaTeX | 🟢 terminé | ✅ (commun P2) | `writers/latex/` ; pipeline branché `read→write` ; golden `diff --skip-docker` **exit 0** (24/24 non-Docker, 2 skip Docker) ; `uv run pytest` = **798 passed** ; ruff + pyright(writers) clean. |
-| P4 — TypstWriter | Writer Agent Typst | ⬜ à faire | ⬜ | — |
+| P4 — TypstWriter | Writer Agent Typst | 🟢 terminé | ✅ | `writers/typst/` (2e backend) sur la MÊME IR ; registre `@writes` factorisé en `writers/registry.py` (SSOT, partagé LaTeX/Typst) ; `--format {latex,typst}` ; 2 exemples compilés en PDF (`typst 0.14.2`) ; golden Typst déterministe + golden LaTeX `diff --skip-docker` **exit 0** ; `ir/` et `readers/` **non touchés**. |
 | P5 — Nettoyage | Cleanup Agent | 🟢 terminé | ✅ | `adapters/handlers/*` (11 fichiers) + `core/rules.py` + 3 shims top-level supprimés ; `__getattr__` magique retiré ; `_FallbackConverter` retiré ; entry-points repointés. Golden `diff --skip-docker` **exit 0**, `pytest` **795 passed**, ruff clean. Surface src P5 : **−12 fichiers / −4124 lignes**. `type: ignore` 89→**67**. |
 
 Légende statut : ⬜ à faire · 🟡 en cours · 🟢 terminé · 🔴 bloqué
@@ -273,6 +273,82 @@ responsabilités reader (normalisation) / writer (assemblage), conformes au cont
 ---
 
 ## Journal des GATES  *(Golden Harness / Reviewer)*
+
+### P4 — TypstWriter (preuve du multi-backend) — 2026-06-23 — ✅ FRANCHI
+
+- **GATE atteint** : golden LaTeX `uv run python refactoring/tools/snapshot.py diff
+  --skip-docker` = **exit 0** (26 capturés : 24 LaTeX inchangés + 2 nouveaux Typst /
+  2 skip Docker / 0 fail / 0 drift) ; golden Typst déterministe (capture→diff→diff
+  vide, exit 0 ×2) ; `uv run pytest` = **819 passed** (795 + 24 nouveaux tests writer
+  Typst) ; ruff format + check verts ; pyright **0 erreur** sur
+  `src/texsmith/writers/typst`, `writers/registry.py`, `ui/cli/commands/typst_emit.py`.
+
+- **`ir/` et `readers/` NON modifiés** (vérifié `git status` : zéro changement) — c'était
+  le test de l'architecture. Le second backend consomme la MÊME IR. Aucune friction de
+  contrat IR rencontrée : le sous-ensemble couvert s'est exprimé entièrement avec les
+  nœuds existants (y compris le scoping `RawInline`/`RawBlock` par `format`, déjà prévu
+  par le contrat).
+
+- **Livré `writers/typst/`** :
+  - `writer.py` — `TypstWriter` (visitor IR→str), un `@writes(NodeType)` par nœud
+    couvert, dispatch typé par MRO ; nœud non couvert → `TypstWriteError` explicite et
+    localisé (« No Typst emitter registered for IR node 'MarginNote' (backend: typst). »),
+    sur le modèle de `LaTeXWriteError`.
+  - `escaper.py` — `escape_typst_chars` : échappement des spéciaux markup Typst
+    (`\\ # $ * _ \` < > @ [ ]`), distinct du LaTeX.
+  - `state.py` — `TypstWriterState` (dataclass lean : `title` + `runtime`) ; pas de
+    duplication des registres citations/acronymes/footnotes du LaTeX (nœuds hors subset).
+  - `document.py` — `render_document` : enveloppe le corps dans un `.typ` standalone
+    compilable (préambule page/texte + titre optionnel).
+  - `build.py` — `compile_typst`/`typst_available` : compilation `.typ`→PDF **gracieuse**
+    (binaire absent → message, pas d'échec).
+  - `__init__.py` — exports.
+
+- **Registre factorisé (SSOT)** : l'ancien `writers/latex/registry.py` (décorateur
+  `@writes` + `WriterRegistry`, zéro logique backend) est **remonté** en
+  `writers/registry.py`, partagé par les deux backends. `writers/latex/registry.py`
+  **supprimé** (pas de shim) ; `latex/writer.py` + `latex/__init__.py` repointés. C'est
+  la seule abstraction commune émergente ; escaper/state/document restent spécifiques à
+  chaque backend (KISS, pas de couche spéculative).
+
+- **Sous-ensemble couvert** : Document, Para, Plain, Header, Str, Space, SoftBreak,
+  LineBreak, Emph, Strong, Strikeout, Code (inline), CodeBlock, Math (inline `$…$` /
+  display `$ … $`), Link, Image, BulletList, OrderedList, BlockQuote, HorizontalRule,
+  Figure, Table **GFM simple** (modèle → `#table(...)`), RawInline/RawBlock (scoping par
+  `format`, verbatim pour `typst`, ignoré sinon — conforme au contrat IR).
+  **Non couverts → erreur explicite** : Underline, Highlight, Subscript, Superscript,
+  SmallCaps, Quoted, Cite, Note, IndexEntry, TexLogo, Keystroke, MarginNote, Span,
+  DefinitionList, Admonition, ProgressBar, Div, et **tables riches** (`env`/`colspec`
+  posés → `TypstWriteError(detail="rich (yaml/data-ts) tables")`). Note math : l'IR porte
+  la source *TeX* ; conversion TeX→Typst native hors périmètre, source émise verbatim
+  entre `$…$` (correct pour le sous-ensemble compatible : `x^2`, `a + b`).
+
+- **CLI** : `--format {latex,typst}` (défaut `latex`) sur la commande `render`. Pour
+  `typst`, court-circuit après `prepare_documents` (parallèle au chemin `--html`) :
+  `HtmlReader().read(doc.html)` → `TypstWriter` → `.typ` standalone, écrit en
+  stdout/fichier/dossier. `--build` compile chaque `.typ` via le binaire `typst`
+  (gracieux). La sélection bypasse délibérément la machinerie LaTeX template/fragment/
+  engine (pas de contrepartie Typst) ; `--format typst` interdit `--template*`/`--html`
+  (erreur claire). Helper d'émission isolé dans `ui/cli/commands/typst_emit.py`.
+
+- **Exemples + golden** : `examples/typst-hello/` (hello.md + Makefile : `all`→`.typ`,
+  `pdf`→PDF) et `examples/typst-article/` (couvre tout le sous-ensemble : titres, emphase,
+  strikeout, code inline/bloc, math inline+display, liens, listes ord/non-ord + imbriquées,
+  blockquote, table GFM, hr). `refactoring/tools/snapshot.py` étendu : `.typ` ajouté à
+  `SNAPSHOT_SUFFIXES`, 2 cas `--format typst` ajoutés, baseline committée sous
+  `refactoring/baseline/typst-{hello,article}/`.
+
+- **Validation Typst** : binaire `typst 0.14.2` présent → **les deux exemples compilent
+  en PDF** (`make pdf` OK). Pas de validation différée.
+
+- **Tests** : `tests/test_typst_writer.py` (24 cas) — un par nœud couvert (IR fixture →
+  Typst attendu), scoping RawInline/RawBlock, table GFM via le reader de production, table
+  riche → erreur, nœud non couvert → `TypstWriteError` localisé, escaper, `render_document`,
+  extensibilité du registre par sous-classe `@writes`.
+
+- **Bilan surface** : ajout `writers/registry.py` + `writers/typst/` (6 fichiers) +
+  `ui/cli/commands/typst_emit.py` ; suppression `writers/latex/registry.py`. Aucun chemin
+  LaTeX en double ; le golden prouve l'absence de régression.
 
 ### P5 — Nettoyage & resserrage — 2026-06-23 — ✅ FRANCHI
 
