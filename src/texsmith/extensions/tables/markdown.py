@@ -62,6 +62,8 @@ _TABLE_CONFIG_MARKER_RE = re.compile(
 )
 _CAPTION_LINE_RE = re.compile(r"^Table:\s*(?P<caption>.*?)(?:\s+\{(?P<attrs>[^}]+)\})?\s*$")
 _ID_ATTR_RE = re.compile(r"#([A-Za-z][\w:.\-]*)")
+# Matches a trailing ``{attrs}`` suffix (with optional surrounding whitespace).
+_ATTRS_SUFFIX_RE = re.compile(r"\s*\{([^}]+)\}\s*$")
 
 _TABLE_CONFIG_ERROR_TITLE = "YAML table-config error"
 _YAML_TABLE_ERROR_TITLE = "YAML table error"
@@ -478,7 +480,7 @@ class _MarkdownTableCaptionTreeprocessor(Treeprocessor):
         tail = (last.tail or "").rstrip()
         label: str | None = None
         if tail.endswith("}"):
-            m = re.search(r"\s*\{([^}]+)\}\s*$", tail)
+            m = _ATTRS_SUFFIX_RE.search(tail)
             if m:
                 id_m = _ID_ATTR_RE.search(m.group(1))
                 if id_m:
@@ -519,7 +521,7 @@ class _MarkdownTableCaptionTreeprocessor(Treeprocessor):
                 for i, child in enumerate(list(paragraph)):
                     if i == last_idx and info.label:
                         # Strip the {#label} suffix that was parsed from the tail.
-                        child.tail = re.sub(r"\s*\{[^}]+\}\s*$", "", (child.tail or "").rstrip())
+                        child.tail = _ATTRS_SUFFIX_RE.sub("", (child.tail or "").rstrip())
                     caption.append(child)
             else:
                 caption.text = info.text or ""
