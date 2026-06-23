@@ -59,7 +59,6 @@ from .._options import (
     BaseLevelOption,
     ConvertAssetsOption,
     DebugHtmlOption,
-    DebugRulesOption,
     DisableFragmentOption,
     DisableMarkdownExtensionsOption,
     EnableFragmentOption,
@@ -98,7 +97,6 @@ from ..presenter import (
     present_fonts_info,
     present_html_summary,
     present_latex_failure,
-    present_rule_descriptions,
 )
 from ..state import debug_enabled, emit_error, set_cli_state
 from ..utils import determine_output_target, organise_slot_overrides, write_output_file
@@ -391,7 +389,6 @@ def render(
             rich_help_panel=DIAGNOSTICS_PANEL,
         ),
     ] = False,
-    debug_rules: DebugRulesOption = False,
     inputs: InputPathArgument = None,
     input_path: Annotated[
         Path | None,
@@ -980,27 +977,11 @@ def render(
         else:
             os.environ[engine_env_key] = previous_engine_value
 
-    def _emit_rule_diagnostics() -> None:
-        if not debug_rules:
-            return
-        rules: list[dict[str, object]] = []
-        if response.is_template:
-            rules = getattr(response.render_result, "rule_descriptions", []) or []
-        else:
-            for fragment in response.bundle.fragments:
-                conversion = fragment.conversion
-                if conversion and conversion.rule_descriptions:
-                    rules = conversion.rule_descriptions
-                    break
-        if rules:
-            present_rule_descriptions(state, rules)
-
     if not template_selected:
         bundle = response.bundle
 
         if output_mode == "stdout":
             typer.echo(bundle.combined_output())
-            _emit_rule_diagnostics()
             _flush_diagnostics()
             return
 
@@ -1019,7 +1000,6 @@ def render(
                 output_path=resolved_output_target,
                 render_result=None,
             )
-            _emit_rule_diagnostics()
             _flush_diagnostics()
             return
 
@@ -1031,7 +1011,6 @@ def render(
                 output_path=request.render_dir,
                 render_result=None,
             )
-            _emit_rule_diagnostics()
             _flush_diagnostics()
             return
 
@@ -1053,7 +1032,6 @@ def render(
             present_context_attributes(state=state, render_result=render_result)
         if fonts_info:
             present_fonts_info(state, render_result)
-        _emit_rule_diagnostics()
         _flush_diagnostics()
         return
 
@@ -1208,7 +1186,6 @@ def render(
         present_fonts_info(state, render_result)
     if dep_file_path is not None:
         state.console.print(f"[cyan]Dependencies written to[/] {dep_file_path}")
-    _emit_rule_diagnostics()
     _flush_diagnostics()
 
     if cleanup_render_dir and cleanup_render_dir_path is not None:

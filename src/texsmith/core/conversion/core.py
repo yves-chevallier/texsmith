@@ -64,7 +64,6 @@ class ConversionResult:
     template_overrides: dict[str, Any] = field(default_factory=dict)
     document: Document | None = None
     context: ConversionContext | None = None
-    rule_descriptions: list[dict[str, Any]] = field(default_factory=list)
     assets_map: dict[str, Path] = field(default_factory=dict)
 
 
@@ -431,12 +430,6 @@ def _render_document(
                 exc,
             )
 
-    rule_descriptions: list[dict[str, Any]] = []
-    if renderer is not None:
-        try:
-            rule_descriptions = list(renderer.describe_registered_rules())
-        except Exception as exc:
-            emitter.warning(f"Could not collect rule descriptions: {exc}")
     asset_map: dict[str, Path] = {}
     if renderer is not None:
         try:
@@ -461,7 +454,6 @@ def _render_document(
         template_overrides=dict(context.template_overrides),
         document=document,
         context=context,
-        rule_descriptions=rule_descriptions,
         assets_map=asset_map,
     )
 

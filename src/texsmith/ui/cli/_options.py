@@ -206,15 +206,6 @@ DebugHtmlOption = Annotated[
     ),
 ]
 
-DebugRulesOption = Annotated[
-    bool,
-    typer.Option(
-        "--debug-rules",
-        help="Display the ordered list of registered render rules.",
-        rich_help_panel=DIAGNOSTICS_PANEL,
-    ),
-]
-
 TemplateInfoOption = Annotated[
     bool,
     typer.Option(
