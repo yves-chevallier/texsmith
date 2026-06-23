@@ -5,6 +5,30 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.1.0/)
 and the project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- **Typed intermediate representation (IR).** Conversion now flows through an explicit three-stage pipeline — `readers/html` → `texsmith.ir` (a typed, backend-agnostic `Block`/`Inline` document model) → `writers/{latex,typst}` — instead of mutating a BeautifulSoup tree in place into LaTeX strings. The IR is semantic, not LaTeX-shaped (a table column carries `Alignment.RIGHT`, never `"lrX"`; the backend writer computes the preamble), which is what makes a second output backend possible without duplicating the conversion logic. New public surface: `texsmith.ir` (nodes, enums, `NodeVisitor`), `texsmith.readers.html.HtmlReader`, and `texsmith.writers.latex.LaTeXWriter` / `texsmith.writers.typst.TypstWriter`.
+- **Typst output backend.** A new `--format {latex,typst}` flag (default `latex`) selects the output engine, so a single Markdown/HTML source can be built with a LaTeX engine (Tectonic, TeX Live, lualatex…) **or** with [Typst](https://typst.app/). The `article` and `book` templates are Typst-compatible: title, authors (with affiliations), subtitle, date/version, abstract, table of contents, section/heading numbering, native `#bibliography`, and book chapters. Templates declare a `[typst.template]` manifest section (parallel to `[latex.template]`) with a `template.typ` scaffolding; the Typst path routes through the template system, with a standalone fallback for the no-template case. The covered node subset is broad (text/formatting, headers, lists, code, math via `mitex`, links, images, tables, citations, footnotes, admonitions, definition lists); a few nodes (`MarginNote`, rich yaml/data tables) raise an explicit, localised `TypstWriteError` rather than degrading silently.
+- **Pip-installable Typst compiler.** A new `texsmith[typst]` optional extra bundles the Typst compiler (the PyPI `typst` package), so `pip install "texsmith[typst]"` / `uv tool install "texsmith[typst]"` enables `--build` for Typst with no system toolchain — analogous to the live Tectonic download. A system `typst` binary on `PATH` is used as a fallback when present. `.typ` emission never depends on a compiler being installed. (Note: the bundled PyPI compiler can lag recent Typst releases; for documents using recent `mitex` math, prefer a system `typst` binary.)
+- New documentation page `docs/guide/plumbing/backends.md` describing the IR pipeline, the `--format` flag, Typst installation paths, and the covered/uncovered Typst scope.
+- `examples/typst-hello` and `examples/typst-article` demonstrating the Typst backend end to end.
+
+### Changed
+
+- **Rendering architecture rewritten.** Element handling moved from a multi-pass DOM-mutation engine to the reader/writer model above. Extension authors who registered render rules with `@renders` / `RenderPhase` must migrate to `@reads` (lower an HTML element to an IR node) and `@writes(NodeType)` (emit a node for a given backend). `LaTeXRenderer` is now a thin `read → write` orchestrator that reuses the existing Jinja LaTeX partials, so LaTeX output is byte-for-byte unchanged (verified by a golden harness over every bundled example). The font-fallback scan now runs over IR text nodes instead of the final LaTeX, making it backend-agnostic. Net effect on the source tree: ~12 fewer files and ~4k fewer lines.
+- `escape_latex_chars` now lives in `texsmith.writers.latex.escaper` (escaping is a backend concern); `texsmith.adapters.latex.utils` re-exports it.
+- Pinned Tectonic version for the live download bumped `0.15.0` → `0.16.9` (release asset naming verified unchanged; the `--version` cache probe relies on a flag that was dropped in 0.16.0 and restored in 0.16.9).
+
+### Removed
+
+- The render-rule engine (`texsmith.core.rules`: `RenderEngine`, `RenderRegistry`, `RenderPhase`, `_DOMVisitor`) and the `@renders` decorator, together with all of `texsmith.adapters.handlers.*` — their HTML→semantic logic now lives in the HTML reader and their semantic→LaTeX logic in the LaTeX writer.
+- The magic `LaTeXFormatter.__getattr__` template-dispatch proxy, replaced by explicit `render_template(...)` calls and typed `@writes` dispatch (a node with no emitter now raises a clear, localised error instead of an opaque `AttributeError`). This surfaced and fixed two latent hidden-attribute accesses (snippet figure rendering and the MkDocs heading formatter).
+- The obsolete `--debug-rules` flag and its rule-description plumbing (a vestige of the removed engine that emitted a warning on every conversion).
+- The `_FallbackConverter` placeholder-PDF shim.
+- The top-level shim modules `index.py`, `texlogos.py`, `progressbar.py`, `quotes.py`, and `smart_dashes.py`; their implementations now live under `texsmith.extensions.*` and the entry points point there directly.
+
 ## [0.3.1] - 2026-06-12
 
 ### Added
