@@ -1,0 +1,61 @@
+\documentclass{article}
+\usepackage[paperwidth=20cm, paperheight=20cm, margin=0cm]{geometry}
+\usepackage{fontspec}
+
+\setsansfont{texgyreheros-regular.otf}[
+    BoldFont       = texgyreheros-bold.otf,
+    ItalicFont     = texgyreheros-italic.otf,
+    BoldItalicFont = texgyreheros-bolditalic.otf
+]
+\renewcommand{\familydefault}{\sfdefault}
+
+\usepackage{tikz}
+\usetikzlibrary{calc}
+\usepackage{xcolor}
+
+\definecolor{strongpink}{RGB}{255,105,180}
+\definecolor{strongyellow}{RGB}{255,215,0}
+\definecolor{stronggreen}{RGB}{0,200,150}
+\definecolor{strongblue}{RGB}{100,149,237}
+
+\pagestyle{empty}
+
+\begin{document}
+\begin{tikzpicture}[remember picture,overlay,x=1cm,y=1cm]
+  \coordinate (SW) at (current page.south west);
+  \def\boxwidth{7.5cm}
+
+  \definecolor{slotcolor-nw}{HTML}{FF5A5F}
+
+  \fill[slotcolor-nw] ($(SW)+(0,0)$) rectangle ++(10,10);
+  \node[text=white,font=\bfseries\Large,align=center]
+  at ($(SW)+(5,5)$)
+  {\parbox{\boxwidth}{%
+    In the age of AI, our greatest power is not computation -- but compassion.
+Let us rise above the machines we create, and redefine what it means to be human.}};
+  \definecolor{slotcolor-ne}{HTML}{FFC857}
+
+  \fill[slotcolor-ne] ($(SW)+(10,0)$) rectangle ++(10,10);
+  \node[text=white,font=\bfseries\Large,align=center]
+  at ($(SW)+(15,5)$)
+  {\parbox{\boxwidth}{%
+    The planet is speaking through storms and silence. Climate change is our final
+reminder: protect the world that protects us, before the last leaf falls.}};
+  \definecolor{slotcolor-sw}{HTML}{30C39E}
+
+  \fill[slotcolor-sw] ($(SW)+(0,10)$) rectangle ++(10,10);
+  \node[text=white,font=\bfseries\Large,align=center]
+  at ($(SW)+(5,15)$)
+  {\parbox{\boxwidth}{%
+    We invented technology to connect souls -- not isolate them. In the glow of
+progress, choose presence, choose people, choose purpose.}};
+  \definecolor{slotcolor-se}{HTML}{2D7DD2}
+
+  \fill[slotcolor-se] ($(SW)+(10,10)$) rectangle ++(10,10);
+  \node[text=white,font=\bfseries\Large,align=center]
+  at ($(SW)+(15,15)$)
+  {\parbox{\boxwidth}{%
+    The future is not written in code or carbon. It is shaped by every act of
+courage we dare today. Humanity's masterpiece is still ahead.}};
+\end{tikzpicture}
+\end{document}

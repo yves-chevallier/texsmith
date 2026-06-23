@@ -58,22 +58,18 @@ dependencies = [
 Homepage = "https://github.com/yves-chevallier/texsmith"
 
 [project.entry-points."markdown.extensions"]
-"texsmith.index" = "texsmith.index:TexsmithIndexExtension"
-"texsmith.texlogos" = "texsmith.texlogos:TexLogosExtension"
+"texsmith.index" = "texsmith.extensions.index:TexsmithIndexExtension"
+"texsmith.texlogos" = "texsmith.extensions.texlogos:TexLogosExtension"
 "texsmith.smallcaps" = "texsmith.extensions.smallcaps:SmallCapsExtension"
 "texsmith.latex_raw" = "texsmith.extensions.latex_raw:LatexRawExtension"
 "texsmith.latex_text" = "texsmith.extensions.latex_text:LatexTextExtension"
 "texsmith.missing_footnotes" = "texsmith.extensions.missing_footnotes:MissingFootnotesExtension"
 "texsmith.multi_citations" = "texsmith.extensions.multi_citations:MultiCitationExtension"
 "texsmith.mermaid" = "texsmith.extensions.mermaid:MermaidExtension"
-"texsmith.quotes" = "texsmith.quotes:TexsmithQuotesExtension"
-
-[project.entry-points."texsmith.renderers"]
-"texsmith.index" = "texsmith.index:register_renderer"
-"texsmith.texlogos" = "texsmith.texlogos:register_renderer"
+"texsmith.quotes" = "texsmith.extensions.quotes:TexsmithQuotesExtension"
 
 [project.entry-points."mkdocs.plugins"]
-"texsmith.index" = "texsmith.index:IndexPlugin"
+"texsmith.index" = "texsmith.extensions.index:IndexPlugin"
 
 [tool.hatch.version]
 source = "vcs"
@@ -226,3 +222,6 @@ max-complexity = 10
 "src/texsmith/cli.py" = ["B008"]
 "**/__init__.py" = ["F401", "F403"]
 "tests/**" = ["D", "T20", "S101", "ANN", "ARG002", "SLF001", "PT018", "ARG001", "TRY003"]
+# Migration tooling (golden harness) — a standalone CLI script, not production
+# code. ``print`` is its output channel; subprocess invocation is intentional.
+"refactoring/tools/**" = ["T20", "S603", "S607", "D"]

@@ -95,15 +95,6 @@ ParserOption = Annotated[
     ),
 ]
 
-DisableFallbackOption = Annotated[
-    bool,
-    typer.Option(
-        "--no-fallback-converters",
-        help="Disable registration of placeholder converters when Docker is unavailable.",
-        rich_help_panel=RENDERING_PANEL,
-    ),
-]
-
 NoCopyAssetsOption = Annotated[
     bool,
     typer.Option(

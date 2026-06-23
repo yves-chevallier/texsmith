@@ -1,66 +1,69 @@
-# Handlers
+# Readers & Writers
 
-Handlers convert BeautifulSoup nodes into LaTeX fragments. They run inside the
-core renderer and are grouped by `RenderPhase` so transformations can hook into
-the DOM at the right point.
+TeXSmith converts a document through a typed intermediate representation (IR):
 
-## Render phases at a glance
+```
+read(HTML) → IR (texsmith.ir) → write(IR) → LaTeX
+```
 
-| Phase | Purpose | Typical consumers |
-| ----- | ------- | ----------------- |
-| `RenderPhase.PRE` | Normalise HTML before layout-sensitive transforms (unwrap unwanted tags, capture math spans, detect inline code). | `basic.discard_unwanted`, `inline.inline_code`, diagram preprocessors. |
-| `RenderPhase.BLOCK` | Manipulate block-level nodes when structure is stable (convert `<figure>`, extract tabbed content, manage slot boundaries). | `blocks.tabbed_content`, `media.render_mermaid`. |
-| `RenderPhase.INLINE` | Render inline formatting once blocks are resolved. | `inline.inline_emphasis`, `links.links`, `inline.abbreviation`. |
-| `RenderPhase.POST` | Finalisation pass after children are converted; ideal for numbering, bibliography hooks, or asset emission. | `blocks.tables`, `admonitions.render_admonition`, `media.render_images`. |
+A **reader** lowers BeautifulSoup nodes into backend-agnostic IR nodes, and a
+**writer** emits a backend (LaTeX) from that IR. Custom constructs are added in
+two halves that mirror how the built-in constructs work.
 
-Handlers are regular Python callables decorated with `@renders(...)`. The
-decorator declares the HTML selectors, phase, and metadata such as priority,
-`nestable`, and whether TeXSmith should auto-mark the node as processed.
+## Reader lowerings — `@reads`
 
-## Example: add a custom inline macro
+A reader lowering is a callable decorated with `@reads(*tags, level, priority,
+name)`. It **returns** an IR node (never mutates the tree). Returning
+`NotHandled` lets the next candidate — or the generic fallback — run.
 
 ```python
 from bs4 import Tag
 
-from texsmith.core.context import RenderContext
-from texsmith.core.rules import RenderPhase, renders
+from texsmith.ir import nodes as ir
+from texsmith.readers.html.registry import NotHandled, ReadLevel, reads
 
 
-@renders("span", phase=RenderPhase.INLINE, priority=10, name="callout_chips")
-def render_callout_chips(element: Tag, context: RenderContext) -> None:
-    if "data-callout" not in element.attrs:
-        return
-    label = element.get_text(strip=True)
-    latex = r"\CalloutChip{%s}" % context.escape(label)
-    context.write(latex)
-    context.mark_processed(element)
+@reads("span", level=ReadLevel.INLINE, name="data_counter", priority=50)
+def read_data_counter(tag: Tag, ctx) -> ir.Span | object:
+    classes = tag.get("class") or []
+    tokens = {classes} if isinstance(classes, str) else set(classes)
+    if "data-counter" not in tokens:
+        return NotHandled
+    return ir.Span(content=(), attrs=(("role", "counter"),))
 ```
 
-Drop the module anywhere on `PYTHONPATH` and import it before calling
-`texsmith.render`. For MkDocs sites, add the import inside a `mkdocs` plugin or
-`docs/hooks/mkdocs_hooks.py`. For programmatic runs, import the module ahead of
-`convert_documents` so the decorator executes at import time.
+## Writer emitters — `@writes`
+
+A writer emitter is a method decorated with `@writes(NodeType)` on a
+`LaTeXWriter` subclass. Dispatch is typed by node class via the MRO; a node
+without an emitter raises a clear `LaTeXWriteError`.
+
+```python
+from texsmith.ir import nodes as ir
+from texsmith.writers.latex import LaTeXWriter, writes
+
+
+class CountingWriter(LaTeXWriter):
+    @writes(ir.Span)
+    def _counter_span(self, node: ir.Span) -> str:
+        if dict(node.attrs).get("role") == "counter":
+            value = self.state.state.next_counter("data-counter")
+            return f"\\counter{{{value}}}"
+        return super()._span(node)
+```
+
+See [`examples/custom-render/counter.py`](https://github.com/texsmith/texsmith/blob/main/examples/custom-render/counter.py)
+for a complete, runnable extension wiring both halves into a `LaTeXRenderer`.
 
 !!! tip
-    Handlers should call `context.mark_processed(element)` when they fully
-    consume a node. Leave the node untouched to let lower-priority handlers run.
+    Keep the IR semantic and backend-neutral: encode hints via `Span`/`Div`
+    `attrs` (e.g. `("role", "counter")`) rather than backend strings. Only the
+    writer knows about LaTeX.
 
 ## Reference
 
-::: texsmith.adapters.handlers
+::: texsmith.readers.html.registry
 
-::: texsmith.adapters.handlers._helpers
+::: texsmith.readers.html.reader
 
-::: texsmith.adapters.handlers.admonitions
-
-::: texsmith.adapters.handlers.basic
-
-::: texsmith.adapters.handlers.blocks
-
-::: texsmith.adapters.handlers.code
-
-::: texsmith.adapters.handlers.inline
-
-::: texsmith.adapters.handlers.links
-
-::: texsmith.adapters.handlers.media
+::: texsmith.writers.latex

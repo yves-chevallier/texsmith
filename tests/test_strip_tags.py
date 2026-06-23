@@ -62,24 +62,18 @@ def test_html_comment_inside_paragraph_stripped(renderer: LaTeXRenderer) -> None
     assert "End" in latex
 
 
-def test_strip_custom_class_rule(renderer: LaTeXRenderer) -> None:
+def test_latex_ignore_div_dropped(renderer: LaTeXRenderer) -> None:
+    # The configurable ``strip_tags`` runtime override is gone with the legacy
+    # engine; structural stripping (and the built-in ``latex-ignore`` opt-out)
+    # is now the reader's responsibility.
     html = """
     <body>
         <div class="keep">Keep me</div>
-        <div class="remove-me"><span>Drop me</span></div>
+        <div class="latex-ignore"><span>Drop me</span></div>
         <h1>Heading</h1>
     </body>
     """
-    latex = renderer.render(
-        html,
-        runtime={
-            "base_level": 1,
-            "strip_tags": {
-                "body": "unwrap",
-                "div": {"mode": "extract", "classes": ["remove-me"]},
-            },
-        },
-    )
+    latex = renderer.render(html, runtime={"base_level": 1})
     assert "Keep me" in latex
     assert "Drop me" not in latex
     assert "\\section{Heading}" in latex

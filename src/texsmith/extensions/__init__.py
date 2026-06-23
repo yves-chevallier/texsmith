@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable, Iterable
+from collections.abc import Callable
 from dataclasses import dataclass
 from importlib import import_module
 from typing import Any
@@ -14,7 +14,6 @@ __all__ = [
     "get_extension_spec",
     "load_markdown_extension",
     "load_mkdocs_plugin",
-    "register_all_renderers",
 ]
 
 
@@ -43,7 +42,6 @@ class ExtensionSpec:
 
     slug: str
     markdown_entry: str
-    renderer_entry: str | None = None
     mkdocs_entry: str | None = None
     description: str | None = None
 
@@ -51,27 +49,17 @@ class ExtensionSpec:
     def package_name(self) -> str:
         return f"texsmith.{self.slug}"
 
-    def iter_entry_points(self) -> Iterable[str]:
-        """Yield configured entry points for documentation/debugging."""
-        yield self.markdown_entry
-        if self.renderer_entry:
-            yield self.renderer_entry
-        if self.mkdocs_entry:
-            yield self.mkdocs_entry
-
 
 _EXTENSIONS: dict[str, ExtensionSpec] = {
     "index": ExtensionSpec(
         slug="index",
-        markdown_entry="texsmith.index:TexsmithIndexExtension",
-        renderer_entry="texsmith.index:register_renderer",
-        mkdocs_entry="texsmith.index:IndexPlugin",
+        markdown_entry="texsmith.extensions.index:TexsmithIndexExtension",
+        mkdocs_entry="texsmith.extensions.index:IndexPlugin",
         description="Inline hashtags converted into LaTeX index entries.",
     ),
     "texlogos": ExtensionSpec(
         slug="texlogos",
-        markdown_entry="texsmith.texlogos:TexLogosExtension",
-        renderer_entry="texsmith.texlogos:register_renderer",
+        markdown_entry="texsmith.extensions.texlogos:TexLogosExtension",
         description="Semantic spans for TeX logos rendered in Markdown and LaTeX.",
     ),
     "smallcaps": ExtensionSpec(
@@ -91,7 +79,7 @@ _EXTENSIONS: dict[str, ExtensionSpec] = {
     ),
     "smart_dashes": ExtensionSpec(
         slug="smart_dashes",
-        markdown_entry="texsmith.smart_dashes:TexsmithSmartDashesExtension",
+        markdown_entry="texsmith.extensions.smart_dashes:TexsmithSmartDashesExtension",
         description="Converts '--' and '---' into typographic dashes outside code.",
     ),
     "invisible_chars": ExtensionSpec(
@@ -116,20 +104,17 @@ _EXTENSIONS: dict[str, ExtensionSpec] = {
     ),
     "progressbar": ExtensionSpec(
         slug="progressbar",
-        markdown_entry="texsmith.progressbar:ProgressBarExtension",
-        renderer_entry="texsmith.progressbar:register_renderer",
+        markdown_entry="texsmith.extensions.progressbar:ProgressBarExtension",
         description="Renders `[=50%]` progress blocks via the LaTeX progressbar package.",
     ),
     "yaml_tables": ExtensionSpec(
         slug="yaml_tables",
         markdown_entry="texsmith.extensions.tables:YamlTableExtension",
-        renderer_entry="texsmith.extensions.tables:register_renderer",
         description="YAML-described tables with multirow/multicolumn support.",
     ),
     "marginnote": ExtensionSpec(
         slug="marginnote",
         markdown_entry="texsmith.extensions.marginnote:MarginNoteExtension",
-        renderer_entry="texsmith.extensions.marginnote:register_renderer",
         description="Inline `{margin}[note]{side?}` syntax rendered as LaTeX margin notes.",
     ),
 }
@@ -154,15 +139,6 @@ def load_markdown_extension(name: str, **config: Any) -> Any:
     spec = get_extension_spec(name)
     factory: Callable[..., Any] = _load_attribute(spec.markdown_entry)
     return factory(**config)
-
-
-def register_all_renderers(renderer: object) -> None:
-    """Register every available renderer hook on the provided renderer."""
-    for spec in _EXTENSIONS.values():
-        if not spec.renderer_entry:
-            continue
-        register: Callable[[object], None] = _load_attribute(spec.renderer_entry)
-        register(renderer)
 
 
 def load_mkdocs_plugin(name: str) -> type[Any] | None:

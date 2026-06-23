@@ -8,7 +8,6 @@ from bs4 import BeautifulSoup
 import pytest
 
 from texsmith.adapters.latex import LaTeXRenderer
-from texsmith.adapters.plugins import material
 from texsmith.adapters.transformers import register_converter, registry
 from texsmith.core.config import BookConfig
 
@@ -96,7 +95,6 @@ def test_full_document_conversion(tmp_path: Path) -> None:
         output_root=tmp_path / "latex-build",
         parser="html.parser",
     )
-    material.register(renderer)
 
     latex_output = renderer.render(
         content_html,

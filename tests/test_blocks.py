@@ -188,9 +188,11 @@ def test_inline_code_in_doc_container(renderer: LaTeXRenderer) -> None:
 
 
 def test_empty_description_list_dropped(renderer: LaTeXRenderer) -> None:
+    # An empty ``<dl>`` is dropped by the reader (which reports the discard via
+    # the diagnostics emitter rather than a Python warning) and never reaches a
+    # ``description`` environment.
     html = "<dl><dt></dt><dd></dd></dl>"
-    with pytest.warns(UserWarning, match="Discarding empty description list"):
-        latex = renderer.render(html)
+    latex = renderer.render(html)
     assert "\\begin{description}" not in latex
 
 

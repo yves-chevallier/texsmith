@@ -1,0 +1,282 @@
+\documentclass[twoside]{memoir}
+
+\usepackage{amssymb} % Additional math symbols
+\usepackage{nicefrac} % For support of: ½, ⅔...
+\usepackage{xurl} % For better URL line breaking reduce overfull hbox
+
+\usepackage[svgnames,dvipsnames,x11names]{xcolor}
+
+\usepackage{fancyhdr}
+
+\usepackage{graphicx} % For including images
+\usepackage{multicol}
+\usepackage{booktabs}
+\usepackage{csquotes}
+\usepackage{epigraph}
+\usepackage{capt-of}
+\usepackage{enumitem}
+\usepackage{etoolbox}
+\usepackage{tocloft}
+\usepackage{caption}
+% Babel + hyperref must be loaded before any package that hooks into them —
+% notably the ``glossaries`` package pulled in via ``extra_packages``. Babel
+% supplies the localised ``\acronymname`` / ``\glossaryname`` captions, and
+% hyperref enables ``\hyperpage`` so glossary page numbers become clickable
+% backreferences. Loading them after ``extra_packages`` quietly disables both.
+\usepackage[english]{babel}
+\usepackage[colorlinks=true, linkcolor=DarkBlue, urlcolor=DarkBlue, citecolor=DarkBlue]{hyperref}
+\makeatletter
+\@twosidetrue
+\@mparswitchtrue
+\makeatother
+\setstocksize{210mm}{148mm}
+\settrimmedsize{210mm}{148mm}{*}
+\setlrmarginsandblock{2cm}{2cm}{*}
+\setulmarginsandblock{2cm}{2cm}{*}
+\checkandfixthelayout
+\usepackage{ts-fonts}
+\usepackage{float}
+\usepackage{seqsplit}
+\usepackage{ts-callouts}
+\usepackage{emptypage}
+\usepackage{fixtoc} % Custom package to fix TOC number widths
+
+\graphicspath{{assets/}}
+
+%
+% Heading style
+%
+\chapterstyle{default} % ou ton style préféré (vehttp, ell, etc.)
+
+\renewcommand*{\partnamefont}{\normalfont\sffamily\Huge\bfseries\scshape}
+\renewcommand*{\partnumfont}{\normalfont\sffamily\Huge\bfseries}
+\renewcommand*{\parttitlefont}{\normalfont\sffamily\Huge\bfseries}
+
+\renewcommand*{\chapnamefont}{\normalfont\sffamily\Large\scshape}
+\renewcommand*{\chapnumfont}{\normalfont\sffamily\Huge\bfseries}
+\renewcommand*{\chaptitlefont}{\normalfont\sffamily\Huge\bfseries}
+\setsecheadstyle{\sffamily\Large\bfseries}
+\setsubsecheadstyle{\sffamily\large\bfseries}
+
+%
+% Table of contents style
+%
+\renewcommand{\cftpartfont}{\sffamily\Large\bfseries}
+\renewcommand{\cftpartpagefont}{\sffamily\Large\bfseries}
+\renewcommand{\cftpartpresnum}{\partname~}
+
+%
+% Adjust spacing
+%
+
+% Prevent too many overful \hbox (with some fonts)
+\tolerance=2000
+\emergencystretch=10pt
+\hfuzz=1pt
+\hbadness=2000
+
+% Give more spaces on Table of content (between numbers and text)
+\setlength{\cftpartnumwidth}{4em}
+\setlength{\cftsectionnumwidth}{3em}
+\setlength{\cftsubsectionnumwidth}{3.5em}
+\setlength{\cftfigurenumwidth}{3em}
+\setlength{\cfttablenumwidth}{3em}
+
+% Make quotations italic and smaller
+\AtBeginEnvironment{displayquote}{\small\itshape}
+
+% Fit table to page width while keeping tabular optional args (alignment)
+\let\oldtabular\tabular
+\let\endoldtabular\endtabular
+
+\newsavebox{\mytablebox}
+\renewenvironment{tabular}[2][c]
+  {\begin{lrbox}{\mytablebox}\small\oldtabular[#1]{#2}} % Temporary box to store table
+  {\endoldtabular\end{lrbox}%
+   \ifdim\wd\mytablebox>\linewidth
+     \resizebox{\linewidth}{!}{\usebox{\mytablebox}} % Adjust to fit line width
+   \else
+     \usebox{\mytablebox} % Otherwise, use the table as is
+   \fi
+  }
+
+\newif\ifgeometryduplex
+\geometryduplextrue
+%
+% Headers and footers
+%
+
+% No line on the footer
+\renewcommand{\footrulewidth}{0pt}
+
+% Part head pages
+\fancypagestyle{part}{%
+  \fancyhf{}
+  \renewcommand{\headrulewidth}{0pt}
+}
+
+% Chapter head pages
+\fancypagestyle{plain}{%
+  \fancyhf{}
+  \renewcommand{\headrulewidth}{0pt}
+  \ifgeometryduplex
+    \fancyfoot[LE,RO]{\thepage}
+  \else
+    \fancyfoot[RO]{\thepage}
+  \fi
+}
+
+% Mainmatter regular page style
+\fancypagestyle{fancy}{%
+  \fancyhf{}
+  \renewcommand{\headrulewidth}{0.5pt}
+  \ifgeometryduplex
+    \fancyhead[LE]{\scshape \leftmark}
+    \fancyhead[RO]{\scshape \rightmark}
+    \fancyfoot[LE,RO]{\thepage}
+  \else
+    \fancyhead[RO]{\scshape \rightmark}
+    \fancyhead[LO]{\scshape \leftmark}
+    \fancyfoot[RO]{\thepage}
+  \fi
+}
+\makeatletter
+\nouppercaseheads
+\renewcommand{\chaptermark}[1]{%
+  \markboth{\thechapter\quad #1}{}%
+}
+\renewcommand{\sectionmark}[1]{%
+  \markright{\thesection\quad #1}%
+}
+\makeatother
+
+% Associate the part page style to the part
+\patchcmd{\part}{\thispagestyle{plain}}{\thispagestyle{part}}{}{}
+
+\newcommand{\changelocaltocdepth}[1]{%
+  \addtocontents{toc}{\protect\setcounter{tocdepth}{#1}}%
+  \setcounter{tocdepth}{#1}%
+}
+
+\apptocmd{\frontmatter}{%
+  \pagestyle{plain}%
+  \changelocaltocdepth{1}%
+  \setcounter{secnumdepth}{0}
+}{}{}
+
+\apptocmd{\mainmatter}{%
+  \pagestyle{fancy}%
+  \changelocaltocdepth{2}%
+  \setcounter{secnumdepth}{2}
+}{}{}
+
+%
+% Tweaks
+%
+
+% Allow hyphenation after a hyphen
+\providecommand{\allowhyphens}{\ifvmode\else\nobreak\hspace{0pt}\fi}
+
+% To number paragraphs and subparagraphs
+\setcounter{secnumdepth}{5}
+
+% Paragraph indentation
+% \setlength{\parindent}{0pt}
+\setlength\parskip{\smallskipamount}
+
+% Avoid orphans at the end of a page, encourage page breaks if there are
+% a section with less than 3 lines
+% https://tex.stackexchange.com/a/723704/85416
+\makeatletter
+\patchcmd\@afterheading{\clubpenalty \@M}{\clubpenalties 3 \@M\@M 5000 }{%
+  \typeout{patched}}{\typeout{patch failed}
+}
+\makeatother
+
+% Allow for short text below parts
+% https://tex.stackexchange.com/a/336401/85416
+% \makeatletter
+% \newcommand{\extraPartText}[1]{\def\@extraPartText{#1}}
+% \pretocmd{\@endpart}{\vspace{8ex}\begingroup\centering\@extraPartText\par\endgroup\let\@extraPartText\relax}{}{}
+% \makeatother
+
+% Description item and text are displayed by default on the same line
+% this is not very readable. This command changes the style to display
+% the description text on the next line.
+% https://tex.stackexchange.com/a/430454/85416
+% https://tex.stackexchange.com/a/726879/85416
+\AddToHook{cmd/descriptionlabel/after}{\rule[-8pt]{0pt}{0pt}}
+\setlist[description]{
+  style=nextline,
+  labelindent=0pt,
+  leftmargin=1cm,
+  itemindent=\dimexpr-5pt-\labelsep\relax
+}
+
+\newcommand{\booktitle}{Demo MkDocs Documentation}
+\newcommand{\booksubtitle}{An example of a book template for MkDocs LaTeX}
+\newcommand{\bookauthor}{}
+\newcommand{\bookemail}{john.doe@acme.corp}
+\newcommand{\bookpublisher}{}
+\newcommand{\bookedition}{}
+\newcommand{\bookdate}{<DATE>}
+
+\title{\Huge\bfseries\booktitle}
+\author{\bookauthor}
+\makeatletter
+\gdef\@subtitle{\booksubtitle}
+\gdef\@authoremail{\bookemail}
+\makeatother
+\newcommand{\subtitletext}{\booksubtitle}
+\newcommand{\authorname}{\bookauthor}
+\newcommand{\authoremail}{\bookemail}
+\providecommand{\texsmithEmoji}[1]{#1}
+
+\definecolor{indigo(dye)}{rgb}{0.0, 0.25, 0.42}
+
+\begin{document}
+\hypersetup{pageanchor=false}
+\frontmatter
+\maketitle
+\thispagestyle{empty}
+
+\thispagestyle{empty}
+
+\raggedbottom
+
+\cleardoublepage
+\thispagestyle{plain}
+\begingroup
+\setsecnumdepth{none}
+\phantomsection
+\input{pages/index-md.tex}
+\endgroup
+
+\clearpage
+\tableofcontents*
+
+\hypersetup{pageanchor=true}
+\mainmatter
+
+\input{pages/foo-md.tex}
+
+\input{pages/bar-md.tex}
+
+\part{Baz Qux}
+
+\input{pages/baz-md.tex}
+
+\input{pages/qux-md.tex}
+
+\backmatter
+
+\ifnum\value{figure}>0
+\clearpage
+\listoffigures
+\fi
+\ifnum\value{table}>0
+\clearpage
+\listoftables
+\fi
+
+\end{document}

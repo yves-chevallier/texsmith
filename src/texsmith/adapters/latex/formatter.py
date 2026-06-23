@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable, Iterable
+from collections.abc import Iterable
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
@@ -38,6 +38,14 @@ def optimize_list(numbers: Iterable[int]) -> list[str]:
 
     optimized.append(f"{start}-{end}" if start != end else str(start))
     return optimized
+
+
+class TemplateNotFoundError(KeyError):
+    """Raised when a requested LaTeX partial does not exist."""
+
+    def __init__(self, name: str) -> None:
+        super().__init__(f"No LaTeX partial named '{name}' (backend: latex).")
+        self.name = name
 
 
 class LaTeXFormatter:
@@ -102,34 +110,29 @@ class LaTeXFormatter:
         self.templates[normalised] = template
         return template
 
-    def __getattr__(self, method: str) -> Callable[..., str]:
-        """Proxy calls to templates or custom handlers."""
-        mangled = f"handle_{method}"
-        try:
-            handler = object.__getattribute__(self, mangled)
-        except AttributeError:
-            handler = None
+    def render_template(self, name: str, *args: Any, **kwargs: Any) -> str:
+        """Render the partial ``name`` by its identifier.
+
+        This is the explicit template-rendering entry point used by the writer
+        emitters. A missing partial raises a clear ``TemplateNotFoundError``
+        (node/template name + backend) rather than an opaque ``AttributeError``.
+        The first positional argument, if any, binds the conventional ``text``
+        variable.
+        """
+        mangled = f"handle_{name}"
+        handler = getattr(type(self), mangled, None)
         if handler is not None:
-            return handler  # type: ignore[return-value]
-
+            return handler(self, *args, **kwargs)
         try:
-            template = self._get_template(method)
+            template = self._get_template(name)
         except KeyError:
-            raise AttributeError(f"Object has no template for '{method}'") from None
-
-        def render_template(*args: Any, **kwargs: Any) -> str:
-            """Render the template with optional positional shorthand."""
-            if len(args) > 1:
-                msg = f"Expected at most 1 argument, got {len(args)}, use keyword arguments instead"
-                raise ValueError(msg)
-            if args:
-                kwargs["text"] = args[0]
-            return template.render(**kwargs)
-
-        return render_template
-
-    def __getitem__(self, key: str) -> Callable[..., str]:
-        return self._get_template(key).render
+            raise TemplateNotFoundError(name) from None
+        if len(args) > 1:
+            msg = f"Expected at most 1 argument, got {len(args)}, use keyword arguments instead"
+            raise ValueError(msg)
+        if args:
+            kwargs["text"] = args[0]
+        return template.render(**kwargs)
 
     def _escape_url(self, url: str) -> str:
         """Escape a URL for safe use in LaTeX commands."""
@@ -210,11 +213,6 @@ class LaTeXFormatter:
             highlight=optimized_highlight,
         )
 
-    def url(self, text: str, url: str) -> str:
-        """Render a URL, escaping special LaTeX characters."""
-        safe_url = self._escape_url(url)
-        return self._get_template("url").render(text=text, url=safe_url)
-
     def handle_href(self, text: str, url: str) -> str:
         """Render \\href links with escaped URLs."""
         return self._get_template("href").render(text=text, url=self._escape_url(url))
@@ -258,26 +256,6 @@ class LaTeXFormatter:
         """Escape helper that honours the formatter legacy accent setting."""
         return escape_latex_chars(value, legacy_accents=self.legacy_latex_accents)
 
-    def svg(self, svg: str | Path) -> str:
-        """Render an SVG image by converting it to PDF first."""
-        from ..transformers import svg2pdf
-
-        pdfpath = svg2pdf(svg, self.output_path)  # type: ignore[attr-defined]
-        return f"\\includegraphics[width=1em]{{{pdfpath}}}"
-
-    def get_cover(self, name: str, **kwargs: Any) -> str:
-        """Render a named cover template populated with book metadata."""
-        template = self._get_template(f"cover/{name}")
-        return template.render(
-            title=self.config.title,  # type: ignore[attr-defined]
-            author=self.config.author,  # type: ignore[attr-defined]
-            subtitle=self.config.subtitle,  # type: ignore[attr-defined]
-            email=self.config.email,  # type: ignore[attr-defined]
-            year=self.config.year,  # type: ignore[attr-defined]
-            **self.config.cover.model_dump(),  # type: ignore[attr-defined]
-            **kwargs,
-        )
-
     def override_template(self, name: str, source: str | Path) -> None:
         """Override a built-in template snippet using an external payload."""
         if isinstance(source, Path):
@@ -294,4 +272,4 @@ class LaTeXFormatter:
         self._template_names[normalised] = template_name
 
 
-__all__ = ["LaTeXFormatter", "optimize_list"]
+__all__ = ["LaTeXFormatter", "TemplateNotFoundError", "optimize_list"]

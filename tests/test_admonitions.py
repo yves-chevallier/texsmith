@@ -11,9 +11,6 @@ def renderer() -> LaTeXRenderer:
 
 
 def test_fill_in_the_blank_solution_capture(renderer: LaTeXRenderer) -> None:
-    from texsmith.adapters.plugins import material
-
-    material.register(renderer)
     html = """
     <div class="admonition exercise">
         <p class="admonition-title">

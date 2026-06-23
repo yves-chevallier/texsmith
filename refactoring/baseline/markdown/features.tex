@@ -1,0 +1,970 @@
+\documentclass[a4paper,twoside]{article}
+
+% morewrites virtualises \newwrite so a document that combines many glossary
+% groups (each costs one \write), biblatex (\bcfout), hyperref (\@outlinefile),
+% the toc, and the LOT/LOF can exceed XeLaTeX's 16-register limit. Must be
+% loaded before any package that allocates writes; that is why it sits ahead
+% of xcolor here.
+\usepackage{morewrites}
+
+\usepackage[svgnames,dvipsnames,x11names]{xcolor}
+\usepackage{graphicx}
+% Babel must be loaded before any package that hooks into its localisation (notably
+% the glossaries fragment in ``extra_packages``), otherwise the default acronym
+% table title falls back to English regardless of ``language: french`` etc.
+\usepackage[english]{babel}
+% Hyperref must be loaded before ``glossaries`` (pulled in via ``extra_packages``)
+% so glossaries can wrap glossary page numbers in ``\hyperpage`` for clickable
+% backreferences. Loading it after glossaries leaves the page numbers as plain
+% text without hyperlinks.
+\usepackage[colorlinks=true, linkcolor=NavyBlue, urlcolor=NavyBlue, citecolor=NavyBlue]{hyperref}
+\usepackage[a4paper]{geometry}
+\usepackage{ts-fonts}
+\usepackage[normalem]{ulem}
+\usepackage{progressbar}
+\usepackage{csquotes}
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{amsmath}
+\usepackage{float}
+\usepackage{seqsplit}
+\newcolumntype{Y}{>{\centering\arraybackslash}X}
+\newcolumntype{Z}{>{\raggedleft\arraybackslash}X}
+\usepackage{ts-keystrokes}
+\usepackage{ts-callouts}
+\usepackage{ts-code}
+\usepackage{ts-glossary}
+\usepackage{ts-todolist}
+
+\usepackage{lastpage} % pour le label LastPage
+\usepackage{refcount} % pour \getpagerefnumber
+\makeatletter
+\def\ps@plain{%
+  \let\@oddhead\@empty
+  \let\@evenhead\@empty
+  \def\@oddfoot{%
+    \hfil
+    % Afficher le numéro seulement si le document a plus d'une page
+    \ifnum\getpagerefnumber{LastPage}>1\relax
+      \thepage
+    \fi
+    \hfil}%
+  \let\@evenfoot\@oddfoot
+}
+\makeatother
+
+\title{TeXSmith Markdown Syntax}
+\author{Yves Chevallier}\date{}
+
+\begin{document}
+
+\maketitle
+\begin{abstract}
+This document provides a comprehensive overview of Markdown syntax features and extensions supported by TeXSmith. It serves as a reference guide for users looking to leverage Markdown's capabilities in their documents. This is meant to be a cheatsheet of supported features and a test suite for custom templates.
+
+\end{abstract}
+\tableofcontents
+
+\thispagestyle{plain}
+\section{Core Markdown (Standard \enquote{Vanilla})}\label{core-markdown-standard-enquote-vanilla}
+
+\subsection{Headings}\label{headings}
+
+Demonstrates the Markdown heading hierarchy from level 1 to level 5. Note that in Markdown only six levels are defined: \texttt{\#} to \texttt{\#\#\#\#\#\#}. In \LaTeX{}, however, there are less levels (e.g., \texttt{\textbackslash{}section}, \texttt{\textbackslash{}subsection}, \texttt{\textbackslash{}subsubsection}, \texttt{\textbackslash{}paragraph}, \texttt{\textbackslash{}subparagraph}). The last one is usually simply converted to bold text.
+
+\begin{code}{md}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+\PY{g+gh}{\PYZsh{} Heading 1}
+
+Lorem ipsum dolor sit amet.
+
+\PY{g+gu}{\PYZsh{}\PYZsh{} Heading 2}
+
+Lorem ipsum dolor sit amet.
+
+\PY{g+gu}{\PYZsh{}\PYZsh{}\PYZsh{} Heading 3}
+
+Lorem ipsum dolor sit amet.
+
+\PY{g+gu}{\PYZsh{}\PYZsh{}\PYZsh{}\PYZsh{} Heading 4}
+
+Lorem ipsum dolor sit amet.
+
+\PY{g+gu}{\PYZsh{}\PYZsh{}\PYZsh{}\PYZsh{}\PYZsh{} Heading 5}
+
+Lorem ipsum dolor sit amet.
+\end{Verbatim}
+\end{code}
+\subsection{Bold}\label{bold}
+
+Shows how to emphasise text with bold weight. Simply translated to \texttt{\textbackslash{}textbf\{…\}} in \LaTeX{}.
+
+\begin{code}{md}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+\PY{g+gs}{**text**} or \PY{g+gs}{**t**}ex**t**
+\end{Verbatim}
+\end{code}
+\begin{displayquote}
+
+\textbf{text} or \textbf{t}ex\textbf{t}
+
+\end{displayquote}
+\subsection{Italic}\label{italic}
+
+Applies emphasis for terminology or voice.
+
+\begin{code}{md}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+This \PY{g+ge}{\PYZus{}text\PYZus{}} or \PY{g+ge}{*text*} is italic.
+\end{Verbatim}
+\end{code}
+\begin{displayquote}
+
+This \emph{text} or \emph{text} is italic.
+
+\end{displayquote}
+\subsection{Strikethrough}\label{strikethrough}
+
+Marks text as deleted or obsolete.
+
+\begin{code}{md}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+We \PY{g+gd}{\PYZti{}\PYZti{}do not\PYZti{}\PYZti{}} want this.
+\end{Verbatim}
+\end{code}
+\begin{displayquote}
+
+We \sout{do not} want this.
+
+\end{displayquote}
+\subsection{Underline}\label{underline}
+
+With caret, mark and tilde extension from PyMdownX it is also possible to underline text.
+
+\begin{code}{md}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+\PYZca{}\PYZca{}text\PYZca{}\PYZca{}
+\end{Verbatim}
+\end{code}
+\begin{displayquote}
+
+\uline{text}
+
+\end{displayquote}
+\subsection{Inline Code / Code Blocks}\label{inline-code-code-blocks}
+
+\begin{code}{md}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+This entry is \PY{l+s+sb}{`inline code`}, or can be in a fenced code block:
+
+\PY{l+s+sb}{```}\PY{l+s+sb}{python}
+\PY{n+nb}{print}\PY{p}{(}\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{Hello}\PY{l+s+s2}{\PYZdq{}}\PY{p}{)}
+\PY{l+s+sb}{```}
+\end{Verbatim}
+\end{code}
+\begin{displayquote}
+
+This entry is \texttt{inline code}, or can be in a fenced code block:
+
+\begin{code}{python}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+\PY{n+nb}{print}\PY{p}{(}\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{Hello}\PY{l+s+s2}{\PYZdq{}}\PY{p}{)}
+\end{Verbatim}
+\end{code}
+
+\end{displayquote}
+\subsection{Hyperlinks}\label{hyperlinks}
+
+Creates external hyperlinks, in PDF converted to clickable links.
+
+\begin{code}{md}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+The German\PYZhy{}bord pysicist [\PY{n+nt}{Albert Einstein}](\PY{n+na}{https://en.wikipedia.org/wiki/Albert\PYZus{}Einstein}) is famous for
+his nobel prize and the theory of relativity.
+\end{Verbatim}
+\end{code}
+\begin{displayquote}
+
+The German-bord pysicist \href{https://en.wikipedia.org/wiki/Albert\_Einstein}{Albert Einstein} is famous for
+his nobel prize and the theory of relativity.
+
+\end{displayquote}
+\subsection{Images}\label{images}
+
+Embeds remote or local images.
+
+\begin{code}{md}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+![\PY{n+nt}{Random Picture}](\PY{n+na}{https://picsum.photos/500/200})
+\end{Verbatim}
+\end{code}
+\begin{displayquote}
+
+\begin{figure}[H]
+    \centering
+
+    \includegraphics[width=\linewidth]{assets/200.jpg}
+
+    \caption[Random Picture]{Random Picture}
+\end{figure}
+
+\end{displayquote}
+\subsection{Lists}\label{lists}
+
+\subsection{Bulleted Lists}\label{bulleted-lists}
+
+\begin{code}{md}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+\PY{k}{\PYZhy{}}\PY{+w}{ }First
+\PY{k}{\PYZhy{}}\PY{+w}{ }Second
+\PY{+w}{    }\PY{k}{\PYZhy{}}\PY{+w}{ }Subitem
+\end{Verbatim}
+\end{code}
+\begin{displayquote}
+
+\begin{itemize}
+\item{} First
+\item{} Second
+\begin{itemize}
+\item{} Subitem
+
+\end{itemize}
+
+\end{itemize}
+
+\end{displayquote}
+\subsection{Enumerated Lists}\label{enumerated-lists}
+
+\begin{code}{md}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+\PY{k}{1.} Numbered first
+\PY{k}{2.} Numbered second
+\PY{+w}{    }\PY{k}{1.} Sub\PYZhy{}numbered
+        a. Sub\PYZhy{}sub\PYZhy{}numbered
+        b. Sub\PYZhy{}sub\PYZhy{}numbered
+\PY{+w}{    }\PY{k}{2.} Sub\PYZhy{}numbered
+\end{Verbatim}
+\end{code}
+\begin{displayquote}
+
+\begin{enumerate}
+\item Numbered first
+\item Numbered second
+\begin{enumerate}
+\item Sub-numbered
+\begin{enumerate}
+\item Sub-sub-numbered
+\item Sub-sub-numbered
+
+\end{enumerate}
+\item Sub-numbered
+
+\end{enumerate}
+
+\end{enumerate}
+
+\end{displayquote}
+\subsection{Blockquotes}\label{blockquotes}
+
+Highlights quotations or cited text.
+
+\begin{code}{md}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+\PY{k}{\PYZgt{} }\PY{g+ge}{Quote}
+\end{Verbatim}
+\end{code}
+\begin{displayquote}
+
+Quote
+
+\end{displayquote}
+\subsection{Horizontal Rules}\label{horizontal-rules}
+
+Adds a visual separator between sections.
+
+\begin{code}{md}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}
+\end{Verbatim}
+\end{code}
+\begin{displayquote}
+
+\clearpage
+
+\end{displayquote}
+\section{TeXSmith Markdown Extensions}\label{texsmith-markdown-extensions}
+
+TeXSmith features several custom Markdown extensions to enhance document authoring.
+Below is a summary of the supported extensions along with their usage.
+
+\subsection{Small Capitals}\label{small-capitals}
+
+With standard Markdown \texttt{**} or \texttt{\_\_} have the same effect as bold while the former is usually preferred. TeXSmith uses the latter for small capitals when the \texttt{texsmith.smallcaps}
+extension is enabled.
+
+\begin{code}{md}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+This is \PY{g+gs}{\PYZus{}\PYZus{}small capitals\PYZus{}\PYZus{}}.
+\end{Verbatim}
+\end{code}
+\begin{displayquote}
+
+This is \textsc{small capitals}.
+
+\end{displayquote}
+\section{Advanced Syntax Extensions (Non-Standard)}\label{advanced-syntax-extensions-non-standard}
+
+\subsection{Tables}\label{tables}
+
+\begin{code}{md}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+| Column 1 | Column 2 |
+| \PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{} | \PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{} |
+| Value 1  | Value 2  |
+| Value 3  | Value 4  |
+\end{Verbatim}
+\end{code}
+\begin{displayquote}
+
+\begin{center}
+\begin{tabularx}{\linewidth}{>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X}
+\toprule
+\textbf{Column 1} & \textbf{Column 2} \\
+
+\midrule
+Value 1 & Value 2 \\
+Value 3 & Value 4 \\
+
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\end{displayquote}
+\subsection{Footnotes}\label{footnotes}
+
+A footnote is a note placed at the bottom of the page.
+
+\begin{code}{md}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+Text with note[\PYZca{}1].
+
+[\PY{n+nl}{\PYZca{}1}]: \PY{n+na}{Here is the note.}
+\end{Verbatim}
+\end{code}
+\begin{displayquote}
+
+Text with note\footnote{Here is the note.}.
+
+\end{displayquote}
+\subsection{Abbreviations}\label{abbreviations}
+
+\emph{Extension: \texttt{abbr}}
+\emph{Package: \texttt{markdown} (standard)}
+\emph{Description: Expands acronyms on hover.}
+
+\begin{code}{md}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+The HTML standard.
+
+*[HTML]: HyperText Markup Language
+\end{Verbatim}
+\end{code}
+\begin{displayquote}
+
+The \acrshort{HTML} standard.
+
+\end{displayquote}
+\subsection{Definition Lists}\label{definition-lists}
+
+\emph{Extension: \texttt{definition\_lists}}
+\emph{Package: \texttt{markdown} (standard)}
+\emph{Description: Pairs terms with their definitions.}
+
+\begin{code}{md}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+Term
+: Definition of the term
+
+Another term
+:   Another definition with a longer description that spans
+    multiple lines and
+    is indented properly.
+\end{Verbatim}
+\end{code}
+\begin{displayquote}
+
+\begin{description}
+\item[{ Term }] Definition of the term
+\item[{ Another term }] Another definition with a longer description that spans
+multiple lines and
+is indented properly.
+
+\end{description}
+
+\end{displayquote}
+\subsection{Admonitions (Alert / Info / Tip Blocks)}\label{admonitions-alert-info-tip-blocks}
+
+\emph{Extension: \texttt{admonition}}
+\emph{Package: \texttt{pip install markdown} or \texttt{pymdown-\allowbreak{}extensions} (for advanced styles)}
+\emph{Description: Emphasises callouts such as notes and warnings.}
+
+\begin{code}{md}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+!!! note
+    This is a note.
+
+??? warning
+    This is a warning.
+\end{Verbatim}
+\end{code}
+The \texttt{???} syntax creates a collapsible block in \acrshort{HTML} output only.
+
+\begin{callout}[callout note]{Note}
+This is a note.
+\end{callout}
+\begin{callout}[callout warning]{Warning}
+This is a warning.
+\end{callout}
+\subsection{SuperFences (Enhanced Fenced Code + Nested Blocks)}\label{superfences-enhanced-fenced-code-nested-blocks}
+
+\emph{Extension: \texttt{pymdownx.superfences}}
+\emph{Package: \texttt{pip install pymdown-\allowbreak{}extensions}}
+\emph{Description: Allows nested fences (e.g., Mermaid diagrams inside fences).}
+
+\begin{code}{md}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+\PY{l+s+sb}{```}\PY{l+s+sb}{mermaid}\PY{+w}{ }\PYZob{} width=20\PYZpc{} \PYZcb{}
+\PY{l+s}{graph TD;}
+\PY{l+s}{  A\PYZhy{}\PYZhy{}\PYZgt{}B;}
+\PY{l+s+sb}{```}
+\end{Verbatim}
+\end{code}
+\begin{displayquote}
+
+\begin{figure}[H]
+    \centering
+
+    \ifdefined\adjustbox
+
+        \adjustbox{max width=\textwidth}{%
+            \includegraphics[width=0.2\linewidth]{assets/<HASH>.pdf}
+        }
+
+    \else
+
+        \includegraphics[width=0.2\linewidth]{assets/<HASH>.pdf}
+
+    \fi
+
+\end{figure}
+
+\end{displayquote}
+\subsection{Raw LaTeX Blocks and Inline Snippets}\label{raw-latex-blocks-and-inline-snippets}
+
+\emph{Extension: \texttt{texsmith.markdown\_extensions.latex\_raw}}
+\emph{Package: shipped with TeXSmith}
+\emph{Description: Embeds raw \LaTeX{} that is injected verbatim.}
+
+\begin{code}{md}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+/// latex
+\PYZbs{}clearpage
+///
+\end{Verbatim}
+\end{code}
+\clearpage
+Inline variant:
+
+\begin{code}{md}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+Insert... \PYZob{}latex\PYZcb{}[\PYZbs{}clearpage] anywhere in the paragraph.
+\end{Verbatim}
+\end{code}
+Insert... \clearpage anywhere in the paragraph.
+
+\subsection{Emoji}\label{emoji}
+
+\emph{Extension: \texttt{pymdownx.emoji}}
+\emph{Package: \texttt{pip install pymdown-\allowbreak{}extensions}}
+\emph{Description: Converts shortcodes into emoji.}
+
+\begin{code}{md}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+:smile:
+:heart:
+\end{Verbatim}
+\end{code}
+\begin{displayquote}
+
+\texsmithEmoji{😄}
+\texsmithEmoji{❤️}
+
+\end{displayquote}
+You can also use Unicode emoji directly (not currently supported in mono environments). It will use OpenMoji black by default in TeXSmith unless you specify another font for emoji in the configuration.
+
+\begin{code}{md}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+😊 🚀 🍕 🎉 🐍 🌍 💻
+📚 🎨 👽 👋 🤖 🦄 🧠
+\end{Verbatim}
+\end{code}
+\begin{displayquote}
+
+\texsmithEmoji{😊} \texsmithEmoji{🚀} \texsmithEmoji{🍕} \texsmithEmoji{🎉} \texsmithEmoji{🐍} \texsmithEmoji{🌍} \texsmithEmoji{💻}
+\texsmithEmoji{📚} \texsmithEmoji{🎨} \texsmithEmoji{👽} \texsmithEmoji{👋} \texsmithEmoji{🤖} \texsmithEmoji{🦄} \texsmithEmoji{🧠}
+
+\end{displayquote}
+\subsection{Task Lists}\label{task-lists}
+
+\emph{Extension: \texttt{pymdownx.tasklist}}
+\emph{Package: \texttt{pip install pymdown-\allowbreak{}extensions}}
+\emph{Description: Creates interactive checklists.}
+
+\begin{code}{md}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+\PY{k}{\PYZhy{} }\PY{k}{[x]} Done
+\PY{k}{\PYZhy{} }\PY{k}{[ ]} To do
+\end{Verbatim}
+\end{code}
+\begin{displayquote}
+
+\begin{todolist}
+\item[\done] Done
+\item To do
+
+\end{todolist}
+
+\end{displayquote}
+\subsection{Highlight / Mark}\label{highlight-mark}
+
+\emph{Extension: \texttt{pymdownx.mark}}
+\emph{Package: \texttt{pip install pymdown-\allowbreak{}extensions}}
+\emph{Description: Highlights text with a marker effect.}
+
+\begin{code}{md}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+==Cellular respiration is a set of metabolic reactions== that take place
+in the cells of organisms. Its ==primary== function is to convert
+biochemical energy from nutrients into ==adenosine triphosphate (ATP)==,
+and then release waste products.
+\end{Verbatim}
+\end{code}
+\begin{displayquote}
+
+\ifXeTeX
+  % soul breaks with ucharclasses on XeTeX: fall back to simple colored text.
+  \providecommand{\texsmithHighlight}[1]{\textcolor{yellow}{#1}}
+  \providecommand{\hl}[1]{\textcolor{yellow}{#1}}
+\else
+  \ifLuaTeX
+    \RequirePackage{lua-ul}
+    \providecommand{\texsmithHighlight}[1]{%
+      \begingroup
+      \setulcolor{yellow}%
+      \ul{#1}%
+      \endgroup
+    }
+    \providecommand{\hl}[1]{\texsmithHighlight{#1}}
+  \else
+    \providecommand{\texsmithHighlight}[1]{%
+      \begingroup
+      \setlength{\fboxsep}{0.8pt}%
+      \colorbox{yellow}{#1}%
+      \endgroup
+    }
+  \fi
+\fi
+
+\texsmithHighlight{Cellular respiration is a set of metabolic reactions} that take place in the
+cells of organisms. Its \ifXeTeX
+  % soul breaks with ucharclasses on XeTeX: fall back to simple colored text.
+  \providecommand{\texsmithHighlight}[1]{\textcolor{yellow}{#1}}
+  \providecommand{\hl}[1]{\textcolor{yellow}{#1}}
+\else
+  \ifLuaTeX
+    \RequirePackage{lua-ul}
+    \providecommand{\texsmithHighlight}[1]{%
+      \begingroup
+      \setulcolor{yellow}%
+      \ul{#1}%
+      \endgroup
+    }
+    \providecommand{\hl}[1]{\texsmithHighlight{#1}}
+  \else
+    \providecommand{\texsmithHighlight}[1]{%
+      \begingroup
+      \setlength{\fboxsep}{0.8pt}%
+      \colorbox{yellow}{#1}%
+      \endgroup
+    }
+  \fi
+\fi
+
+\texsmithHighlight{primary} function is to convert biochemical energy
+from nutrients into \ifXeTeX
+  % soul breaks with ucharclasses on XeTeX: fall back to simple colored text.
+  \providecommand{\texsmithHighlight}[1]{\textcolor{yellow}{#1}}
+  \providecommand{\hl}[1]{\textcolor{yellow}{#1}}
+\else
+  \ifLuaTeX
+    \RequirePackage{lua-ul}
+    \providecommand{\texsmithHighlight}[1]{%
+      \begingroup
+      \setulcolor{yellow}%
+      \ul{#1}%
+      \endgroup
+    }
+    \providecommand{\hl}[1]{\texsmithHighlight{#1}}
+  \else
+    \providecommand{\texsmithHighlight}[1]{%
+      \begingroup
+      \setlength{\fboxsep}{0.8pt}%
+      \colorbox{yellow}{#1}%
+      \endgroup
+    }
+  \fi
+\fi
+
+\texsmithHighlight{adenosine triphosphate (ATP)}, and then release waste
+products.
+
+\end{displayquote}
+\subsection{Tilde / Subscript / Superscript}\label{tilde-subscript-superscript}
+
+\emph{Extension: \texttt{pymdownx.tilde}, \texttt{pymdownx.caret}}
+\emph{Package: \texttt{pip install pymdown-\allowbreak{}extensions}}
+\emph{Description: Adds subscripts and superscripts.}
+
+\begin{code}{md}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+H\PYZti{}2\PYZti{}O, E = mc\PYZca{}2\PYZca{}
+
+H₂O, E = mc²
+\end{Verbatim}
+\end{code}
+\begin{displayquote}
+
+H\textsubscript{2}O, E = mc\textsuperscript{2}
+
+H\textsubscript{2}O, E = mc\textsuperscript{2}
+
+\end{displayquote}
+\subsection{SmartSymbols}\label{smartsymbols}
+
+\emph{Extension: \texttt{pymdownx.smartsymbols}}
+\emph{Package: \texttt{pip install pymdown-\allowbreak{}extensions}}
+\emph{Description: Automatically substitutes typographic punctuation.}
+
+\begin{code}{md}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+\PYZdq{}Smart quotes\PYZdq{}, ellipses..., en\PYZhy{}dash \PYZhy{}\PYZhy{}, em\PYZhy{}dash \PYZhy{}\PYZhy{}\PYZhy{}
+\end{Verbatim}
+\end{code}
+\begin{displayquote}
+
+\enquote{Smart quotes}, ellipses..., en-dash --, em-dash ---
+
+\end{displayquote}
+\subsection{Better Math / LaTeX}\label{better-math-latex}
+
+\emph{Extension: \texttt{pymdownx.arithmatex}}
+\emph{Package: \texttt{pip install pymdown-\allowbreak{}extensions}}
+\emph{Rendering engines: depends on KaTeX or MathJax.}
+\emph{Description: Typesets mathematical formulas with \LaTeX{} syntax.}
+
+\begin{code}{md}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+The differential form of Maxwell\PYZsq{}s equations:
+
+\PYZdl{}\PYZdl{}
+\PYZbs{}begin\PYZob{}aligned\PYZcb{}
+\PYZbs{}nabla \PYZbs{}cdot \PYZbs{}mathbf\PYZob{}E\PYZcb{} \PYZam{}= \PYZbs{}frac\PYZob{}\PYZbs{}rho\PYZcb{}\PYZob{}\PYZbs{}varepsilon\PYZus{}0\PYZcb{} \PYZbs{}\PYZbs{}
+\PYZbs{}nabla \PYZbs{}cdot \PYZbs{}mathbf\PYZob{}B\PYZcb{} \PYZam{}= 0 \PYZbs{}\PYZbs{}
+\PYZbs{}nabla \PYZbs{}times \PYZbs{}mathbf\PYZob{}E\PYZcb{} \PYZam{}= \PYZhy{}\PYZbs{}frac\PYZob{}\PYZbs{}partial \PYZbs{}mathbf\PYZob{}B\PYZcb{}\PYZcb{}\PYZob{}\PYZbs{}partial t\PYZcb{} \PYZbs{}\PYZbs{}
+\PYZbs{}nabla \PYZbs{}times \PYZbs{}mathbf\PYZob{}B\PYZcb{} \PYZam{}= \PYZbs{}mu\PY{g+ge}{\PYZus{}0 \PYZbs{}mathbf\PYZob{}J\PYZcb{} + \PYZbs{}mu\PYZus{}}0 \PYZbs{}varepsilon\PYZus{}0
+\PYZbs{}frac\PYZob{}\PYZbs{}partial \PYZbs{}mathbf\PYZob{}E\PYZcb{}\PYZcb{}\PYZob{}\PYZbs{}partial t\PYZcb{}
+\PYZbs{}end\PYZob{}aligned\PYZcb{}
+\PYZdl{}\PYZdl{}
+\end{Verbatim}
+\end{code}
+\begin{displayquote}
+
+The differential form of Maxwell's equations:
+
+$$
+\begin{aligned}
+\nabla \cdot \mathbf{E} &= \frac{\rho}{\varepsilon_0} \\
+\nabla \cdot \mathbf{B} &= 0 \\
+\nabla \times \mathbf{E} &= -\frac{\partial \mathbf{B}}{\partial t} \\
+\nabla \times \mathbf{B} &= \mu_0 \mathbf{J} + \mu_0 \varepsilon_0
+\frac{\partial \mathbf{E}}{\partial t}
+\end{aligned}
+$$
+
+\end{displayquote}
+\subsection{MagicLink (Automatic GitHub / Issue Links)}\label{magiclink-automatic-github-issue-links}
+
+\emph{Extension: \texttt{pymdownx.magiclink}}
+\emph{Package: \texttt{pip install pymdown-\allowbreak{}extensions}}
+\emph{Description: Auto-links URLs, emails, GitHub references, and more.}
+
+\begin{code}{md}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+https://github.comuser/project\PYZsh{}1
+\end{Verbatim}
+\end{code}
+\begin{displayquote}
+
+\href{https://github.comuser/project\#1}{https://github.comuser/project\#1}
+
+\end{displayquote}
+\subsection{ProgressBar}\label{progressbar}
+
+\emph{Extension: \texttt{pymdownx.progressbar}}
+\emph{Package: \texttt{pip install pymdown-\allowbreak{}extensions}}
+\emph{Description: Visualises progress as textual bars.}
+
+\begin{code}{markdown}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+[=25\PYZpc{} \PYZdq{}Research\PYZdq{}]
+[=50\PYZpc{} \PYZdq{}Implementation\PYZdq{}]
+[=75\PYZpc{} \PYZdq{}Review\PYZdq{}]
+[=100\PYZpc{} \PYZdq{}Launch\PYZdq{}]\PYZob{}: .thin\PYZcb{}
+\end{Verbatim}
+\end{code}
+{\progressbar[width=9cm,heighta=12pt,roundnessr=0.1,borderwidth=1pt,linecolor=black,filledcolor=black!60,emptycolor=black!10]{0.25} Research}\par
+
+{\progressbar[width=9cm,heighta=12pt,roundnessr=0.1,borderwidth=1pt,linecolor=black,filledcolor=black!60,emptycolor=black!10]{0.5} Implementation}\par
+
+{\progressbar[width=9cm,heighta=12pt,roundnessr=0.1,borderwidth=1pt,linecolor=black,filledcolor=black!60,emptycolor=black!10]{0.75} Review}\par
+
+{\progressbar[width=9cm,heighta=6pt,roundnessr=0.1,borderwidth=1pt,linecolor=black,filledcolor=black!60,emptycolor=black!10]{1} Launch}\par
+
+\subsection{Details / Collapsible Blocks}\label{details-collapsible-blocks}
+
+\emph{Extension: \texttt{pymdownx.details}}
+\emph{Package: \texttt{pip install pymdown-\allowbreak{}extensions}}
+\emph{Description: Creates collapsible disclosure sections.}
+
+\begin{code}{md}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+???+ note \PYZdq{}Title\PYZdq{}
+
+    Collapsible content.
+\end{Verbatim}
+\end{code}
+\begin{displayquote}
+
+\begin{callout}[callout note]{Title}
+Collapsible content.
+\end{callout}
+
+\end{displayquote}
+\subsection{Keys (Keyboard Display)}\label{keys-keyboard-display}
+
+\emph{Extension: \texttt{pymdownx.keys}}
+\emph{Package: \texttt{pip install pymdown-\allowbreak{}extensions}}
+\emph{Description: Shows keyboard shortcuts with consistent styling.}
+
+\begin{code}{md}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+++Ctrl+C++
+\end{Verbatim}
+\end{code}
+\begin{displayquote}
+
+\keystroke{Ctrl}+\keystroke{C}
+
+\end{displayquote}
+\subsection{Tab Blocks (Tabbed Content)}\label{tab-blocks-tabbed-content}
+
+\emph{Extension: \texttt{pymdownx.tabbed}}
+\emph{Package: \texttt{pip install pymdown-\allowbreak{}extensions}}
+\emph{Description: Groups content in tabbed panes.}
+
+\begin{code}{md}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+=== \PYZdq{}Windows\PYZdq{}
+
+Windows is a Microsoft operating system.
+
+=== \PYZdq{}Linux\PYZdq{}
+
+Linux is an open\PYZhy{}source operating system.
+\end{Verbatim}
+\end{code}
+\textbf{Windows}\par
+
+Windows is a Microsoft operating system.
+
+\textbf{Linux}\par
+
+Linux is an open-source operating system.
+
+\subsection{Meta-Data / Front Matter}\label{meta-data-front-matter}
+
+\emph{Extension: \texttt{meta}}
+\emph{Package: \texttt{markdown} (standard)}
+\emph{Description: Adds YAML metadata at the beginning of a document.}
+
+\begin{code}{md}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+\PYZhy{}\PYZhy{}\PYZhy{}
+Title: My document
+\PY{g+gu}{Author: Alice}
+\PY{g+gu}{\PYZhy{}\PYZhy{}\PYZhy{}}
+
+\PY{g+gh}{\PYZsh{} Title}
+\end{Verbatim}
+\end{code}
+\subsection{Snippets}\label{snippets}
+
+\emph{Extension: \texttt{pymdownx.snippets}}
+\emph{Package: \texttt{pymdown-\allowbreak{}extensions}}
+\emph{Description: Includes content from other Markdown files.}
+
+Permits you to include content from other Markdown files.
+
+\begin{code}{md}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+\PY{l+s+sb}{```}\PY{l+s+sb}{python}
+\PY{k+kn}{from}\PY{+w}{ }\PY{n+nn}{\PYZus{}\PYZus{}future\PYZus{}\PYZus{}}\PY{+w}{ }\PY{k+kn}{import} \PY{n}{annotations}
+
+\PY{k+kn}{from}\PY{+w}{ }\PY{n+nn}{collections}\PY{n+nn}{.}\PY{n+nn}{abc}\PY{+w}{ }\PY{k+kn}{import} \PY{n}{Iterable}
+
+\PY{n}{Move} \PY{o}{=} \PY{n+nb}{tuple}\PY{p}{[}\PY{n+nb}{int}\PY{p}{,} \PY{n+nb}{str}\PY{p}{,} \PY{n+nb}{str}\PY{p}{]}
+
+\PY{k}{def}\PY{+w}{ }\PY{n+nf}{tower\PYZus{}of\PYZus{}hanoi}\PY{p}{(}\PY{n}{n}\PY{p}{:} \PY{n+nb}{int}\PY{p}{,} \PY{n}{source}\PY{p}{:} \PY{n+nb}{str}\PY{p}{,} \PY{n}{destination}\PY{p}{:} \PY{n+nb}{str}\PY{p}{,} \PY{n}{auxiliary}\PY{p}{:} \PY{n+nb}{str}\PY{p}{)} \PY{o}{\PYZhy{}}\PY{o}{\PYZgt{}} \PY{n+nb}{list}\PY{p}{[}\PY{n}{Move}\PY{p}{]}\PY{p}{:}
+\PY{+w}{    }\PY{l+s+sd}{\PYZdq{}\PYZdq{}\PYZdq{}Compute the move sequence for the Tower of Hanoi puzzle.\PYZdq{}\PYZdq{}\PYZdq{}}
+    \PY{n}{moves}\PY{p}{:} \PY{n+nb}{list}\PY{p}{[}\PY{n}{Move}\PY{p}{]} \PY{o}{=} \PY{p}{[}\PY{p}{]}
+
+    \PY{k}{def}\PY{+w}{ }\PY{n+nf}{\PYZus{}solve}\PY{p}{(}\PY{n}{disks}\PY{p}{:} \PY{n+nb}{int}\PY{p}{,} \PY{n}{start}\PY{p}{:} \PY{n+nb}{str}\PY{p}{,} \PY{n}{end}\PY{p}{:} \PY{n+nb}{str}\PY{p}{,} \PY{n}{spare}\PY{p}{:} \PY{n+nb}{str}\PY{p}{)} \PY{o}{\PYZhy{}}\PY{o}{\PYZgt{}} \PY{k+kc}{None}\PY{p}{:}
+        \PY{k}{if} \PY{n}{disks} \PY{o}{==} \PY{l+m+mi}{0}\PY{p}{:}
+            \PY{k}{return}
+        \PY{n}{\PYZus{}solve}\PY{p}{(}\PY{n}{disks} \PY{o}{\PYZhy{}} \PY{l+m+mi}{1}\PY{p}{,} \PY{n}{start}\PY{p}{,} \PY{n}{spare}\PY{p}{,} \PY{n}{end}\PY{p}{)}
+        \PY{n}{moves}\PY{o}{.}\PY{n}{append}\PY{p}{(}\PY{p}{(}\PY{n}{disks}\PY{p}{,} \PY{n}{start}\PY{p}{,} \PY{n}{end}\PY{p}{)}\PY{p}{)}
+        \PY{n}{\PYZus{}solve}\PY{p}{(}\PY{n}{disks} \PY{o}{\PYZhy{}} \PY{l+m+mi}{1}\PY{p}{,} \PY{n}{spare}\PY{p}{,} \PY{n}{end}\PY{p}{,} \PY{n}{start}\PY{p}{)}
+
+    \PY{n}{\PYZus{}solve}\PY{p}{(}\PY{n}{n}\PY{p}{,} \PY{n}{source}\PY{p}{,} \PY{n}{destination}\PY{p}{,} \PY{n}{auxiliary}\PY{p}{)}
+    \PY{k}{return} \PY{n}{moves}
+
+\PY{k}{def}\PY{+w}{ }\PY{n+nf}{render\PYZus{}solution}\PY{p}{(}\PY{n}{moves}\PY{p}{:} \PY{n}{Iterable}\PY{p}{[}\PY{n}{Move}\PY{p}{]}\PY{p}{)} \PY{o}{\PYZhy{}}\PY{o}{\PYZgt{}} \PY{n+nb}{str}\PY{p}{:}
+\PY{+w}{    }\PY{l+s+sd}{\PYZdq{}\PYZdq{}\PYZdq{}Return a human\PYZhy{}readable description of the move sequence.\PYZdq{}\PYZdq{}\PYZdq{}}
+    \PY{k}{return} \PY{l+s+s2}{\PYZdq{}}\PY{l+s+se}{\PYZbs{}n}\PY{l+s+s2}{\PYZdq{}}\PY{o}{.}\PY{n}{join}\PY{p}{(}
+        \PY{l+s+sa}{f}\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{Move disk }\PY{l+s+si}{\PYZob{}}\PY{n}{disk}\PY{l+s+si}{\PYZcb{}}\PY{l+s+s2}{ from source }\PY{l+s+si}{\PYZob{}}\PY{n}{start}\PY{l+s+si}{\PYZcb{}}\PY{l+s+s2}{ to destination }\PY{l+s+si}{\PYZob{}}\PY{n}{end}\PY{l+s+si}{\PYZcb{}}\PY{l+s+s2}{\PYZdq{}} \PY{k}{for} \PY{n}{disk}\PY{p}{,} \PY{n}{start}\PY{p}{,} \PY{n}{end} \PY{o+ow}{in} \PY{n}{moves}
+    \PY{p}{)}
+
+\PY{l+s+sb}{```}
+\end{Verbatim}
+\end{code}
+\begin{code}{python}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+\PY{k+kn}{from}\PY{+w}{ }\PY{n+nn}{\PYZus{}\PYZus{}future\PYZus{}\PYZus{}}\PY{+w}{ }\PY{k+kn}{import} \PY{n}{annotations}
+
+\PY{k+kn}{from}\PY{+w}{ }\PY{n+nn}{collections}\PY{n+nn}{.}\PY{n+nn}{abc}\PY{+w}{ }\PY{k+kn}{import} \PY{n}{Iterable}
+
+\PY{n}{Move} \PY{o}{=} \PY{n+nb}{tuple}\PY{p}{[}\PY{n+nb}{int}\PY{p}{,} \PY{n+nb}{str}\PY{p}{,} \PY{n+nb}{str}\PY{p}{]}
+
+\PY{k}{def}\PY{+w}{ }\PY{n+nf}{tower\PYZus{}of\PYZus{}hanoi}\PY{p}{(}\PY{n}{n}\PY{p}{:} \PY{n+nb}{int}\PY{p}{,} \PY{n}{source}\PY{p}{:} \PY{n+nb}{str}\PY{p}{,} \PY{n}{destination}\PY{p}{:} \PY{n+nb}{str}\PY{p}{,} \PY{n}{auxiliary}\PY{p}{:} \PY{n+nb}{str}\PY{p}{)} \PY{o}{\PYZhy{}}\PY{o}{\PYZgt{}} \PY{n+nb}{list}\PY{p}{[}\PY{n}{Move}\PY{p}{]}\PY{p}{:}
+\PY{+w}{    }\PY{l+s+sd}{\PYZdq{}\PYZdq{}\PYZdq{}Compute the move sequence for the Tower of Hanoi puzzle.\PYZdq{}\PYZdq{}\PYZdq{}}
+    \PY{n}{moves}\PY{p}{:} \PY{n+nb}{list}\PY{p}{[}\PY{n}{Move}\PY{p}{]} \PY{o}{=} \PY{p}{[}\PY{p}{]}
+
+    \PY{k}{def}\PY{+w}{ }\PY{n+nf}{\PYZus{}solve}\PY{p}{(}\PY{n}{disks}\PY{p}{:} \PY{n+nb}{int}\PY{p}{,} \PY{n}{start}\PY{p}{:} \PY{n+nb}{str}\PY{p}{,} \PY{n}{end}\PY{p}{:} \PY{n+nb}{str}\PY{p}{,} \PY{n}{spare}\PY{p}{:} \PY{n+nb}{str}\PY{p}{)} \PY{o}{\PYZhy{}}\PY{o}{\PYZgt{}} \PY{k+kc}{None}\PY{p}{:}
+        \PY{k}{if} \PY{n}{disks} \PY{o}{==} \PY{l+m+mi}{0}\PY{p}{:}
+            \PY{k}{return}
+        \PY{n}{\PYZus{}solve}\PY{p}{(}\PY{n}{disks} \PY{o}{\PYZhy{}} \PY{l+m+mi}{1}\PY{p}{,} \PY{n}{start}\PY{p}{,} \PY{n}{spare}\PY{p}{,} \PY{n}{end}\PY{p}{)}
+        \PY{n}{moves}\PY{o}{.}\PY{n}{append}\PY{p}{(}\PY{p}{(}\PY{n}{disks}\PY{p}{,} \PY{n}{start}\PY{p}{,} \PY{n}{end}\PY{p}{)}\PY{p}{)}
+        \PY{n}{\PYZus{}solve}\PY{p}{(}\PY{n}{disks} \PY{o}{\PYZhy{}} \PY{l+m+mi}{1}\PY{p}{,} \PY{n}{spare}\PY{p}{,} \PY{n}{end}\PY{p}{,} \PY{n}{start}\PY{p}{)}
+
+    \PY{n}{\PYZus{}solve}\PY{p}{(}\PY{n}{n}\PY{p}{,} \PY{n}{source}\PY{p}{,} \PY{n}{destination}\PY{p}{,} \PY{n}{auxiliary}\PY{p}{)}
+    \PY{k}{return} \PY{n}{moves}
+
+\PY{k}{def}\PY{+w}{ }\PY{n+nf}{render\PYZus{}solution}\PY{p}{(}\PY{n}{moves}\PY{p}{:} \PY{n}{Iterable}\PY{p}{[}\PY{n}{Move}\PY{p}{]}\PY{p}{)} \PY{o}{\PYZhy{}}\PY{o}{\PYZgt{}} \PY{n+nb}{str}\PY{p}{:}
+\PY{+w}{    }\PY{l+s+sd}{\PYZdq{}\PYZdq{}\PYZdq{}Return a human\PYZhy{}readable description of the move sequence.\PYZdq{}\PYZdq{}\PYZdq{}}
+    \PY{k}{return} \PY{l+s+s2}{\PYZdq{}}\PY{l+s+se}{\PYZbs{}n}\PY{l+s+s2}{\PYZdq{}}\PY{o}{.}\PY{n}{join}\PY{p}{(}
+        \PY{l+s+sa}{f}\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{Move disk }\PY{l+s+si}{\PYZob{}}\PY{n}{disk}\PY{l+s+si}{\PYZcb{}}\PY{l+s+s2}{ from source }\PY{l+s+si}{\PYZob{}}\PY{n}{start}\PY{l+s+si}{\PYZcb{}}\PY{l+s+s2}{ to destination }\PY{l+s+si}{\PYZob{}}\PY{n}{end}\PY{l+s+si}{\PYZcb{}}\PY{l+s+s2}{\PYZdq{}} \PY{k}{for} \PY{n}{disk}\PY{p}{,} \PY{n}{start}\PY{p}{,} \PY{n}{end} \PY{o+ow}{in} \PY{n}{moves}
+    \PY{p}{)}
+\end{Verbatim}
+\end{code}
+\subsection{EscapeAll}\label{escapeall}
+
+\emph{Extension: \texttt{pymdownx.escapeall}}
+\emph{Package: \texttt{pymdown-\allowbreak{}extensions}}
+\emph{Description: Forces every Markdown character to be escaped.}
+
+Forces the escaping of special Markdown characters.
+
+\subsection{BetterEm}\label{betterem}
+
+\emph{Extension: \texttt{pymdownx.betterem}}
+\emph{Package: \texttt{pymdown-\allowbreak{}extensions}}
+*Description: Manages combinations of bold and italic (\texttt{***text***}, etc.).*
+
+\begin{code}{md}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+\PY{g+gs}{**\PYZus{}bold and italic\PYZus{}**}
+
+***bold and italic***
+\end{Verbatim}
+\end{code}
+\begin{displayquote}
+
+\providecommand{\tslead}[1]{\par\noindent\textbf{#1}\par\nobreak\smallskip}
+\tslead{bold and italic}
+
+\providecommand{\tslead}[1]{\par\noindent\textbf{#1}\par\nobreak\smallskip}
+\tslead{bold and italic}
+
+\end{displayquote}
+\subsection{Long Dash (---)}\label{long-dash}
+
+\emph{Description: Notes how em-dashes are handled differently by parsers.}
+
+No current extension automatically handles the em dash in Markdown. In \LaTeX{} you use \texttt{-\allowbreak{}-\allowbreak{}} for an en dash and \texttt{-\allowbreak{}-\allowbreak{}-\allowbreak{}} for an em dash. The \texttt{-\allowbreak{}-\allowbreak{}-\allowbreak{}} sequence can be confusing in Markdown because it is also used for horizontal rules; however, some parsers such as \texttt{markdown-\allowbreak{}it-\allowbreak{}py} interpret it contextually. Experiment as needed.
+
+\begin{code}{md}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+Achiles \PYZhy{}\PYZhy{} the swifest runner \PYZhy{}\PYZhy{} was fast, but not as fast as the tortoise.
+\end{Verbatim}
+\end{code}
+\begin{displayquote}
+
+Achiles -- the swifest runner -- was fast, but not as fast as the tortoise.
+
+\end{displayquote}
+\subsection{Additional Syntax}\label{additional-syntax}
+
+\emph{Description: Highlights extra syntaxes such as callouts and directives.}
+
+\begin{code}{md}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+\PY{k}{\PYZgt{} }\PY{g+ge}{[!note] This is a note.}
+\PY{k}{\PYZgt{} }\PY{g+ge}{Used on Docusaurus, Obsidian, GitHub.}
+
+::directive\PYZob{}param\PYZcb{} Used on MDX, Astro
+\end{Verbatim}
+\end{code}
+\subsection{\textbf{Other, Less Common Dialects}}\label{textbf-other-less-common-dialects}
+
+\emph{Description: Summarises less common Markdown dialects and their strengths.}
+
+\begin{center}
+\begin{tabularx}{\linewidth}{>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X}
+\toprule
+\textbf{Dialect} & \textbf{Highlights} & \textbf{Package} \\
+
+\midrule
+\textbf{MultiMarkdown} & Tables, footnotes, citations, extended metadata & \texttt{multimarkdown} \\
+\textbf{RMarkdown} & Executable code (knitr), math, tables & \texttt{rmarkdown} (R) \\
+\textbf{kramdown} & Math, footnotes, block IAL, definition lists & (Ruby) \\
+\textbf{CommonMark Ext.} & Full GFM support & \texttt{cmarkgfm} \\
+\textbf{Ghost / Jekyll} & ``Liquid tags'' (\texttt{\{\% include \%\}}) & Liquid engine \\
+\textbf{MkDocs Material} & PyMdownX support + Snippets + Tabs + Admonitions & \texttt{mkdocs-\allowbreak{}material} \\
+
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\printglossary[type=\acronymtype]
+
+\end{document}

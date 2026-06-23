@@ -1,0 +1,186 @@
+\documentclass[a4paper,twoside]{article}
+
+% morewrites virtualises \newwrite so a document that combines many glossary
+% groups (each costs one \write), biblatex (\bcfout), hyperref (\@outlinefile),
+% the toc, and the LOT/LOF can exceed XeLaTeX's 16-register limit. Must be
+% loaded before any package that allocates writes; that is why it sits ahead
+% of xcolor here.
+\usepackage{morewrites}
+
+\usepackage[svgnames,dvipsnames,x11names]{xcolor}
+\usepackage{graphicx}
+% Babel must be loaded before any package that hooks into its localisation (notably
+% the glossaries fragment in ``extra_packages``), otherwise the default acronym
+% table title falls back to English regardless of ``language: french`` etc.
+\usepackage[english]{babel}
+% Hyperref must be loaded before ``glossaries`` (pulled in via ``extra_packages``)
+% so glossaries can wrap glossary page numbers in ``\hyperpage`` for clickable
+% backreferences. Loading it after glossaries leaves the page numbers as plain
+% text without hyperlinks.
+\usepackage[colorlinks=true, linkcolor=NavyBlue, urlcolor=NavyBlue, citecolor=NavyBlue]{hyperref}
+\usepackage[a4paper]{geometry}
+\usepackage{ts-fonts}
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{amsmath}
+\usepackage{float}
+\usepackage{seqsplit}
+\newcolumntype{Y}{>{\centering\arraybackslash}X}
+\newcolumntype{Z}{>{\raggedleft\arraybackslash}X}
+\usepackage{ts-code}
+
+\usepackage{lastpage} % pour le label LastPage
+\usepackage{refcount} % pour \getpagerefnumber
+\makeatletter
+\def\ps@plain{%
+  \let\@oddhead\@empty
+  \let\@evenhead\@empty
+  \def\@oddfoot{%
+    \hfil
+    % Afficher le numéro seulement si le document a plus d'une page
+    \ifnum\getpagerefnumber{LastPage}>1\relax
+      \thepage
+    \fi
+    \hfil}%
+  \let\@evenfoot\@oddfoot
+}
+\makeatother
+
+\title{Emoji Support}
+\author{}\date{}
+% In two-column mode an overfull line bleeds into the adjacent column, which is
+% far worse than a slightly loose line.  \emergencystretch lets TeX add extra
+% inter-word stretch as a last resort before declaring an overfull box.
+\setlength{\emergencystretch}{3em}
+% Forbid widows and orphans of 1 or 2 lines pushed to the next column/page.
+% \widowpenalties N p1..pN: p1=penalty when last 1 line is alone at top,
+% p2=when last 2 lines are alone, etc.  10000 = forbidden, 150 = default.
+% \clubpenalties: same logic for first lines left alone at the bottom.
+\widowpenalties 3 10000 10000 150
+\clubpenalties  3 10000 10000 150
+\displaywidowpenalty 10000
+% Restore the single-column abstract style (small font + quotation indentation).
+% The article class degrades \begin{abstract} to a bare \section* when the
+% twocolumn class option is in effect; we manage column switching manually
+% below with \twocolumn[...] so that option is not set here.
+\renewenvironment{abstract}{%
+  \small
+  \begin{center}{\bfseries\abstractname}\end{center}%
+  \begin{quotation}%
+}{\end{quotation}}
+% \thanks{} footnote fix for two-column layout.
+% Three bugs defeat the naive toks approach:
+%   1. \the\c@footnote is stored literally in toks, not expanded — at replay
+%      time article.cls has reset c@footnote to 0 via \@addtoreset{footnote}{page}
+%      triggered by the \shipout inside \twocolumn.
+%   2. \noexpand before \footnotetext in a toks list corrupts \@ifnextchar
+%      scanning when the list is replayed.
+%   3. \@maketitle temporarily sets \thefootnote to \@fnsymbol; at replay time
+%      that redefinition is gone, so \footnotetext[N] would use arabic numbering
+%      and the marks in the title and the text at the bottom would not match.
+% Fix: store the mark string and affiliation text in globally-defined csname
+% macros indexed by a counter, then replay with \@footnotetext directly.
+\makeatletter
+\newcount\ts@affilcnt
+\newcount\ts@loopcnt
+\renewcommand{\thanks}[1]{%
+  \stepcounter{footnote}%
+  \protected@xdef\@thefnmark{\thefootnote}%
+  \@footnotemark
+  \global\advance\ts@affilcnt\@ne
+  % xdef: globally store the current mark string (e.g. * or †) as a literal
+  \expandafter\xdef\csname ts@affilM\the\ts@affilcnt\endcsname{\@thefnmark}%
+  % gdef: globally store the affiliation text verbatim (no expansion)
+  \expandafter\gdef\csname ts@affilT\the\ts@affilcnt\endcsname{#1}%
+}
+\newcommand\tsreplayfn{%
+  \ts@loopcnt\z@
+  \loop
+    \advance\ts@loopcnt\@ne
+    \ifnum\ts@loopcnt>\ts@affilcnt\else
+      \xdef\@thefnmark{\csname ts@affilM\the\ts@loopcnt\endcsname}%
+      \@footnotetext{\csname ts@affilT\the\ts@loopcnt\endcsname}%
+  \repeat
+}
+\makeatother
+
+\begin{document}
+
+% Two-column layout: \maketitle is called outside the twocolumn class option so
+% it does not internally invoke \twocolumn — \@thanks remains populated and is
+% flushed explicitly after the block so affiliation footnotes are preserved.
+\twocolumn[{%
+\maketitle
+}]
+\tsreplayfn
+
+\thispagestyle{plain}
+\section{Introduction}\label{introduction}
+
+TeXSmith renders emoji as glyphs when you pick a font flavour:
+
+\begin{code}{yaml}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+\PY{n+nt}{press}\PY{p}{:}
+\PY{+w}{  }\PY{n+nt}{fonts}\PY{p}{:}
+\PY{+w}{    }\PY{n+nt}{emoji}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{black}
+\end{Verbatim}
+\end{code}
+You can choose among four built-in options:
+
+\begin{description}
+\item[{ \texttt{black} }] OpenMoji Black (default).
+\item[{ \texttt{color} }] Noto Color Emoji.
+\item[{ \texttt{twemoji} }] Use the \texttt{twemoji} package as fallback.
+\item[{ \texttt{artifact} }] Download emoji as images using Twemoji.
+
+\end{description}
+Any other name is treated as a custom font family to load directly.
+
+Engines:
+
+\begin{itemize}
+\item{} LuaLaTeX relies on \texttt{luaotfload} to add the emoji font as a fallback.
+\item{} XeLaTeX/Tectonic use \texttt{ucharclasses} to automatically switch to the emoji font on the U+1F000--U+1FAFF range.
+You can type emoji directly in Markdown or LaTeX source.
+
+\end{itemize}
+\newpage
+\section{Examples}\label{examples}
+
+\begin{center}
+\begin{tabularx}{\linewidth}{>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X}
+\toprule
+\textbf{Emoji} & \textbf{Description} \\
+
+\midrule
+\texsmithEmoji{😊} & Smiling face with smiling eyes \\
+\texsmithEmoji{🚀} & Rocket \\
+\texsmithEmoji{🍕} & Pizza \\
+\texsmithEmoji{🎉} & Party popper \\
+\texsmithEmoji{🐍} & Snake \\
+\texsmithEmoji{🌍} & Globe showing Europe-Africa \\
+\texsmithEmoji{💻} & Laptop computer \\
+\texsmithEmoji{📚} & Books \\
+\texsmithEmoji{🎨} & Artist palette \\
+\texsmithEmoji{👽} & Alien \\
+\texsmithEmoji{👋} & Waving hand \\
+\texsmithEmoji{🤖} & Robot \\
+\texsmithEmoji{🦄} & Unicorn \\
+\texsmithEmoji{🧠} & Brain \\
+\texsmithEmoji{🛸} & Flying saucer \\
+\texsmithEmoji{🛰️} & Satellite \\
+\texsmithEmoji{🐙} & Octopus \\
+\texsmithEmoji{📝} & Memo \\
+\texsmithEmoji{📋} & Note \\
+\texsmithEmoji{⭐} & Star \\
+\texsmithEmoji{✅} & Check mark \\
+\texsmithEmoji{❌} & Cross mark \\
+\texsmithEmoji{🧪} & Experiment \\
+\texsmithEmoji{💡} & Light Bulb \\
+
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\end{document}

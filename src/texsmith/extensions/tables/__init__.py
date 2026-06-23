@@ -10,7 +10,6 @@ from __future__ import annotations
 from .html import render_error_html, render_table_html
 from .layout import ColumnLayout, TableEnv, TableLayout, compute_layout
 from .markdown import YamlTableExtension, makeExtension
-from .renderer import register as register_renderer, render_yaml_table
 from .schema import (
     Align,
     Cell,
@@ -68,10 +67,8 @@ __all__ = [
     "makeExtension",
     "parse_table",
     "parse_table_config",
-    "register_renderer",
     "render_error_html",
     "render_table_html",
-    "render_yaml_table",
     "synthesise_table_for_config",
     "total_leaves",
 ]

@@ -1,0 +1,138 @@
+\documentclass{article}
+\usepackage[a4paper, top=2cm, left=2cm, right=2cm, bottom=1cm]{geometry}
+\usepackage{fontspec}
+\usepackage{tikz-cookingsymbols}
+\usepackage{tabularx}
+\usepackage{multirow}
+\usepackage{enumitem}
+\usepackage{array}
+
+\setlist[itemize]{leftmargin=*,nosep}
+\renewcommand{\familydefault}{\sfdefault}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{0.5em}
+
+\newlength{\colA}
+\newlength{\colB}
+\setlength{\colA}{0.07\textwidth}
+\setlength{\colB}{0.15\textwidth}
+\newcolumntype{A}{>{\raggedright\arraybackslash}p{\colA}}
+\newcolumntype{B}{>{\raggedright\arraybackslash}p{\colB}}
+\newcolumntype{C}{>{\raggedright\arraybackslash}X}
+
+\begin{document}
+\pagestyle{empty}
+
+{\Huge\bfseries Gâteau aux noix}\par
+\vspace{2cm}
+\noindent
+\begin{minipage}[t]{0.3\textwidth}
+\vspace{0pt}%
+\rule{\linewidth}{1.5pt}
+\TopBottomHeat\quad{} temps total \textbf{140}~min \\
+\Grill\quad{} préparation \textbf{50}~min \\
+\ConvectionOven\quad{} cuisson \textbf{40}~min \\
+\rule{\linewidth}{1.5pt}
+
+\subsection*{Description}
+Ce gâteau aux noix séduit dès la première bouchée par son équilibre parfait
+entre une pâte sablée délicatement friable et une farce généreuse mêlant
+noix croquantes, caramel doré et miel parfumé. Doux sans être lourd,
+riche sans être écœurant, il offre une texture fondante relevée par
+le croustillant des noix et la profondeur du caramel. Servi tiède
+ou à température ambiante, il dégage un parfum chaleureux et
+gourmand qui évoque les desserts traditionnels d'automne, tout en
+offrant une élégance rustique irrésistible. Une véritable tentation
+pour tous les amateurs de saveurs authentiques et de pâtisseries raffinées.
+
+\subsection*{Conseils}
+
+Se conserve env. 2 semaines au réfrigérateur bien emballé.
+
+\end{minipage}
+\hfill
+\begin{minipage}[t]{0.68\textwidth}
+\vspace{0pt}%
+\textbf{Préparation du moule}\vskip 0.75em
+
+\begin{itemize}
+  \item Préparer le moule.
+\end{itemize}
+
+\vspace{1em}
+\textbf{Pâte sablée}\vskip 0.75em
+
+\begin{tabularx}{\textwidth}{@{}A B C@{}}
+    150~g &
+    farine &
+      Mettre dans un saladier.
+\\
+    100~g &
+    sucre &
+\\
+    1~pincée &
+    sel &
+\\
+\multicolumn{3}{@{}l}{\rule{\textwidth}{0.2pt}}\\
+    100~g &
+    beurre froid &
+      Couper en morceaux, ajouter. \newline < Travailler soigneusement à la main jusqu'à ce que la préparation soit friable.
+\\
+\multicolumn{3}{@{}l}{\rule{\textwidth}{0.2pt}}\\
+    1 &
+    œuf &
+      Ajouter. \newline Travailler rapidement à la main, ne pas pétrir. \newline Couvrir et mettre au réfrigérateur 30 minutes.
+\\
+\end{tabularx}
+
+\vspace{1em}
+\textbf{Farce}\vskip 0.75em
+
+\begin{tabularx}{\textwidth}{@{}A B C@{}}
+    130~g &
+    noix &
+      Hacher grossièrement, réserver.
+\\
+\multicolumn{3}{@{}l}{\rule{\textwidth}{0.2pt}}\\
+    100~g &
+    sucre &
+      Verser dans une grande casserole. \newline Chauffer à feu très vif jusqu'à dissolution du sucre, revenir à feu vif. \newline Tourner légèrement la casserole. \newline Faire caraméliser sans remuer jusqu'à ce que la couleur devienne noisette. \newline Retirer la casserole du feu.
+\\
+    2~cs &
+    eau &
+\\
+\multicolumn{3}{@{}l}{\rule{\textwidth}{0.2pt}}\\
+    1.25~dl &
+    crème entière &
+      Ajouter, mélanger à la cuillère de cuisine. \newline < Réchauffer à petit feu en remuant jusqu'à dissolution complète du caramel, porter à ébullition env. 10 min.
+\\
+\multicolumn{3}{@{}l}{\rule{\textwidth}{0.2pt}}\\
+    1.5~cs &
+    miel liquide &
+      Ajouter, mélanger, laisser refroidir.
+\\
+\end{tabularx}
+
+\vspace{1em}
+\textbf{Assemblage}\vskip 0.75em
+
+\begin{tabularx}{\textwidth}{@{}A B C@{}}
+    un peu
+ &
+    farine &
+      Partager la pâte en 3 portions régulières. \newline < Étaler 1 portion en un cercle d'environ 4 mm d'épaisseur sur un peu de farine. \newline Poser dans le moule préparé. \newline Piquer avec une fourchette.
+\\
+\multicolumn{3}{@{}l}{\rule{\textwidth}{0.2pt}}\\
+    un peu
+ &
+    farine &
+      Former un rouleau avec la deuxième portion de pâte. \newline Appuyer sur les bords du moule jusqu'à obtenir un bord d'environ 4 cm de hauteur.
+\\
+\multicolumn{3}{@{}l}{\rule{\textwidth}{0.2pt}}\\
+  & & Répartir la farce sur le fond de pâte. \newline Replier le bord qui dépasse sur la farce. \newline < Étaler la dernière portion en un cercle d'environ 4 mm et poser sur la farce. \newline Piquer avec une fourchette. \newline Cuire dans le bas du four, 200°C, 40-50 min.\\
+\end{tabularx}
+
+\vspace{1em}
+\end{minipage}
+
+\end{document}

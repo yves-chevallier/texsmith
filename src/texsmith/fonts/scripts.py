@@ -8,7 +8,7 @@ import re
 import unicodedata
 
 from texsmith.adapters.latex.utils import escape_latex_chars
-from texsmith.core.context import RenderContext
+from texsmith.core.context import RenderContextLike
 from texsmith.fonts.cache import FontCache
 from texsmith.fonts.fallback import (
     FallbackBuilder,
@@ -392,7 +392,7 @@ def merge_script_usage(
 def record_script_usage_for_slug(
     slug: str,
     text: str,
-    context: RenderContext,
+    context: RenderContextLike,
     *,
     detector: ScriptDetector | None = None,
 ) -> dict[str, str | None]:
@@ -440,7 +440,7 @@ def record_script_usage_for_slug(
 
 def render_moving_text(
     text: str | None,
-    context: RenderContext,
+    context: RenderContextLike,
     *,
     include_whitespace: bool = True,
     legacy_accents: bool | None = None,
@@ -485,9 +485,11 @@ def render_script_macros(usages: Iterable[Mapping[str, str | None]]) -> str:
     )
     if not scripts:
         return ""
+    from texsmith.adapters.latex.formatter import TemplateNotFoundError
+
     formatter = LaTeXFormatter()
     try:
-        return formatter.script_macros(scripts=scripts)
-    except AttributeError:
+        return formatter.render_template("script_macros", scripts=scripts)
+    except TemplateNotFoundError:
         # When the script_macros partial is not available, skip emitting anything.
         return ""

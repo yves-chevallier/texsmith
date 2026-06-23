@@ -1,0 +1,354 @@
+\ProvidesPackage{ts-fonts}[2025/01/10 TeXSmith font selection (generated)]
+
+\RequirePackage{iftex}
+% Fallback definition replaced when emoji fonts are available.
+\providecommand{\texsmithEmoji}[1]{\textbf{!}}
+\catcode"2135=\active
+\protected\def^^^^2135{\ensuremath{\aleph}}
+% Map U+200B (zero-width space) to a zero-width breakable skip.
+% biblatex's blx-unicode.def appends a literal U+200B inside
+% \textnohyphenation (the workaround for biblatex#979 used by babel-french's
+% \mkbibnamefamily); rendered through a small-caps font that has no glyph for
+% U+200B, this triggers "Missing character" warnings. Activating the codepoint
+% here -- before biblatex is loaded -- replaces it with a no-op that preserves
+% the breakable zero-width semantics without ever hitting the font.
+\catcode"200B=\active
+\protected\def^^^^200b{\hskip\z@}
+
+\ifPDFTeX
+  \PackageError{ts-fonts}{ts-fonts requires XeLaTeX or LuaLaTeX}{Switch to xelatex or lualatex.}
+\else
+  \RequirePackage{fontspec}
+  \defaultfontfeatures{Ligatures = TeX, Scale = MatchLowercase}
+
+  \makeatletter
+  \newcommand{\tsDeclareFontSet}[2]{%
+    \expandafter\gdef\csname tssetupfonts@#1\endcsname{#2}%
+  }
+  \newcommand{\tsUseFontSet}[1]{%
+    \@ifundefined{tssetupfonts@#1}{%
+      \PackageError{ts-fonts}{Unknown font family '#1'}%
+        {Use one of: lm, lm-sans, bonum, libertinus, pagella, termes, schola, heros, adventor, cursor, plex, pennstander.}%
+    }{%
+      \csname tssetupfonts@#1\endcsname
+    }%
+  }
+  \newcommand{\tsSetMonoFallback}{%
+    \setmonofont{Latin Modern Mono}%
+  }
+  \makeatother
+
+  % Latin Modern (lm)
+  \tsDeclareFontSet{lm}{%
+    \ifLuaTeX
+      \setmainfont{Latin Modern Roman}%
+      \setsansfont{Latin Modern Sans}%
+      \setmonofont{Latin Modern Mono}%
+    \else
+      \setmainfont{lmroman10}[%
+        Extension       = .otf,
+        UprightFont     = lmroman10-regular,
+        ItalicFont      = lmroman10-italic,
+        BoldFont        = lmroman10-bold,
+        BoldItalicFont  = lmroman10-bolditalic,
+        SmallCapsFont   = lmromancaps10-regular,
+        SlantedFont     = lmromanslant10-regular,
+        BoldSlantedFont = lmromanslant10-bold,
+        Ligatures       = TeX,
+      ]%
+      \setsansfont{lmsans10}[%
+        Extension      = .otf,
+        UprightFont    = *-regular,
+        ItalicFont     = *-oblique,
+        BoldFont       = *-bold,
+        BoldItalicFont = *-boldoblique,
+      ]%
+      \setmonofont{lmmono10}[%
+        Extension      = .otf,
+        UprightFont    = *-regular,
+        ItalicFont     = *-italic,
+        BoldFont       = *-regular,
+        BoldFeatures   = {FakeBold=2},
+        BoldItalicFont = *-italic,
+        BoldItalicFeatures = {FakeBold=2},
+        SmallCapsFont   = lmmonocaps10-regular,
+        SmallCapsFeatures = {Letters=SmallCaps},
+      ]%
+    \fi
+  }
+
+  % Latin Modern Sans Serif (lm-sans)
+  \tsDeclareFontSet{lm-sans}{%
+    \ifLuaTeX
+      \setmainfont{Latin Modern Sans}%
+      \setsansfont{Latin Modern Sans}%
+      \setmonofont{Latin Modern Mono}%
+    \else
+      \setmainfont{lmsans10}[%
+        Extension      = .otf,
+        UprightFont    = *-regular,
+        ItalicFont     = *-oblique,
+        BoldFont       = *-bold,
+        BoldItalicFont = *-boldoblique,
+        Ligatures      = TeX,
+      ]%
+      \setsansfont{lmsans10}[%
+        Extension      = .otf,
+        UprightFont    = *-regular,
+        ItalicFont     = *-oblique,
+        BoldFont       = *-bold,
+        BoldItalicFont = *-boldoblique,
+      ]%
+      \setmonofont{IBMPlexMono}[%
+        Extension      = .otf,
+        UprightFont    = *-Regular,
+        ItalicFont     = *-Italic,
+        BoldFont       = *-Bold,
+        BoldItalicFont = *-BoldItalic,
+        Scale=0.90,
+        FakeStretch    = 0.92,
+      ]%
+    \fi
+  }
+
+  % Tex Gyre Bonum (bonum)
+  \tsDeclareFontSet{bonum}{%
+    \RequirePackage{bonum-otf}%
+    \tsSetMonoFallback%
+  }
+
+  % Libertinus (libertinus)
+  \tsDeclareFontSet{libertinus}{%
+    \RequirePackage{libertinus}%
+    \tsSetMonoFallback%
+  }
+
+  % Tex Gyre Pagella (pagella)
+  \tsDeclareFontSet{pagella}{%
+    \RequirePackage{pagella-otf}%
+    \tsSetMonoFallback%
+  }
+
+  % Tex Gyre Termes (termes)
+  \tsDeclareFontSet{termes}{%
+    \RequirePackage{termes-otf}%
+    \tsSetMonoFallback%
+  }
+
+  % TeX Gyre Schola (schola)
+  \tsDeclareFontSet{schola}{%
+    \RequirePackage{schola-otf}%
+    \tsSetMonoFallback%
+  }
+
+  % TeX Gyre Heros (heros)
+  \tsDeclareFontSet{heros}{%
+    \RequirePackage{heros-otf}%
+    \setmainfont{TeX Gyre Heros}%
+    \setsansfont{TeX Gyre Heros}%
+    \renewcommand{\familydefault}{\sfdefault}%
+    \tsSetMonoFallback%
+  }
+
+  % TeX Gyre Adventor (adventor)
+  \tsDeclareFontSet{adventor}{%
+    \RequirePackage{adventor-otf}%
+    \setmainfont{TeX Gyre Adventor}%
+    \setsansfont{TeX Gyre Adventor}%
+    \renewcommand{\familydefault}{\sfdefault}%
+    \tsSetMonoFallback%
+  }
+
+  % TeX Gyre Cursor (cursor)
+  \tsDeclareFontSet{cursor}{%
+    \RequirePackage{cursor-otf}%
+    \setmainfont{TeX Gyre Cursor}%
+    \setsansfont{TeX Gyre Cursor}%
+    \renewcommand{\familydefault}{\ttdefault}%
+    \tsSetMonoFallback%
+  }
+
+  % IBM Plex (plex)
+  \tsDeclareFontSet{plex}{%
+    \setmainfont{IBMPlexSerif}[%
+      Path=./fonts/plex-otf/,%
+      UprightFont=*-Regular,%
+      ItalicFont=*-Italic,%
+      BoldFont=*-Bold,%
+      BoldItalicFont=*-BoldItalic,%
+    ]%
+    \setsansfont{IBMPlexSans}[%
+      Path=./fonts/plex-otf/,%
+      UprightFont=*-Regular,%
+      ItalicFont=*-Italic,%
+      BoldFont=*-Bold,%
+      BoldItalicFont=*-BoldItalic,%
+    ]%
+    \setmonofont{IBMPlexMono}[%
+      Path=./fonts/plex-otf/,%
+      UprightFont=*-Regular,%
+      ItalicFont=*-Italic,%
+      BoldFont=*-Bold,%
+      BoldItalicFont=*-BoldItalic,%
+    ]%
+  }
+
+  % Penn Stander (pennstander)
+  \tsDeclareFontSet{pennstander}{%
+    \setmainfont{Latin Modern Roman}%
+    \setsansfont{Latin Modern Sans}%
+    \setmonofont{Latin Modern Mono}%
+  }
+
+  \tsUseFontSet{lm}  % Fallback script fonts
+  \makeatletter
+    % Declare font family for NotoSansMongolian
+    \@ifundefined{diacriticsfont}{%
+      \newfontfamily\diacriticsfont[
+        Path = fonts/,
+        Extension = .otf,
+        UprightFont = NotoSansMongolian-Regular,
+        FakeBold = 2,
+        Scale = MatchLowercase
+      ]{NotoSansMongolian}%
+    }{%
+      \renewfontfamily\diacriticsfont[
+        Path = fonts/,
+        Extension = .otf,
+        UprightFont = NotoSansMongolian-Regular,
+        FakeBold = 2,
+        Scale = MatchLowercase
+      ]{NotoSansMongolian}%
+    }%
+    \@ifundefined{textdiacritics}{%
+      \DeclareRobustCommand\textdiacritics[1]{{\diacriticsfont#1}}%
+    }{%
+      \renewcommand\textdiacritics[1]{{\diacriticsfont#1}}%
+    }%
+
+    % Declare font family for NotoSans
+    \@ifundefined{greekfont}{%
+      \newfontfamily\greekfont[
+        Path = fonts/,
+        Extension = .otf,
+        UprightFont = NotoSans-Regular,
+        BoldFont = NotoSans-Bold,
+        Scale = MatchLowercase
+      ]{NotoSans}%
+    }{%
+      \renewfontfamily\greekfont[
+        Path = fonts/,
+        Extension = .otf,
+        UprightFont = NotoSans-Regular,
+        BoldFont = NotoSans-Bold,
+        Scale = MatchLowercase
+      ]{NotoSans}%
+    }%
+    \@ifundefined{textgreek}{%
+      \DeclareRobustCommand\textgreek[1]{{\greekfont#1}}%
+    }{%
+      \renewcommand\textgreek[1]{{\greekfont#1}}%
+    }%
+
+    % Declare font family for NotoSerif
+    \@ifundefined{superscriptsandsubscriptsfont}{%
+      \newfontfamily\superscriptsandsubscriptsfont[
+        Path = fonts/,
+        Extension = .otf,
+        UprightFont = NotoSerif-Regular,
+        BoldFont = NotoSerif-Bold,
+        Scale = MatchLowercase
+      ]{NotoSerif}%
+    }{%
+      \renewfontfamily\superscriptsandsubscriptsfont[
+        Path = fonts/,
+        Extension = .otf,
+        UprightFont = NotoSerif-Regular,
+        BoldFont = NotoSerif-Bold,
+        Scale = MatchLowercase
+      ]{NotoSerif}%
+    }%
+    \@ifundefined{textsuperscriptsandsubscripts}{%
+      \DeclareRobustCommand\textsuperscriptsandsubscripts[1]{{\superscriptsandsubscriptsfont#1}}%
+    }{%
+      \renewcommand\textsuperscriptsandsubscripts[1]{{\superscriptsandsubscriptsfont#1}}%
+    }%
+
+  \makeatother  % Ensure hyperref can build PDF strings without font selection commands.
+  \makeatletter
+  \AtBeginDocument{%
+      \pdfstringdefDisableCommands{%
+        \def\textdiacritics#1{#1}%
+      }%
+      \pdfstringdefDisableCommands{%
+        \def\textgreek#1{#1}%
+      }%
+      \pdfstringdefDisableCommands{%
+        \def\textsuperscriptsandsubscripts#1{#1}%
+      }%
+  }
+  \makeatother
+  \ifLuaTeX
+    \directlua{
+      luaotfload.add_fallback("texsmith-fallback-reg", {
+        "[fonts/NotoSans-Regular.otf]:mode=harf",
+        "[fonts/NotoSansMongolian-Regular.otf]:mode=harf",
+        "[fonts/NotoSerif-Regular.otf]:mode=harf",
+      })
+      luaotfload.add_fallback("texsmith-fallback-bold", {
+        "[fonts/NotoSans-Bold.otf]:mode=harf",
+        "[fonts/NotoSansMongolian-Regular.otf]:mode=harf",
+        "[fonts/NotoSerif-Bold.otf]:mode=harf",
+      })
+    }
+    \defaultfontfeatures{
+      Renderer           = HarfBuzz,
+      RawFeature         = {fallback=texsmith-fallback-reg},
+      BoldFeatures       = {RawFeature={fallback=texsmith-fallback-bold}},
+      ItalicFeatures     = {RawFeature={fallback=texsmith-fallback-reg}},
+      BoldItalicFeatures = {RawFeature={fallback=texsmith-fallback-bold}},
+    }
+    \addfontfeatures{RawFeature={fallback=texsmith-fallback-reg}}
+    \ExplSyntaxOn
+    \cs_new_protected:Npn \texsmith_apply_fallback_to_family:nn #1#2
+      {
+        \prop_get:cnNTF { g__fontspec_fontinfo_ #2 _prop } { fontname } \l_tmpa_tl
+          {
+            #1[
+              RawFeature         = {fallback=texsmith-fallback-reg},
+              BoldFeatures       = {RawFeature={fallback=texsmith-fallback-bold}},
+              ItalicFeatures     = {RawFeature={fallback=texsmith-fallback-reg}},
+              BoldItalicFeatures = {RawFeature={fallback=texsmith-fallback-bold}},
+            ]{\l_tmpa_tl}
+          }{}
+      }
+    \texsmith_apply_fallback_to_family:nn \setmainfont \rmdefault
+    \texsmith_apply_fallback_to_family:nn \setsansfont \sfdefault
+    \texsmith_apply_fallback_to_family:nn \setmonofont \ttdefault
+    \ExplSyntaxOff
+  \else\ifXeTeX    \RequirePackage[
+      Latin,
+      CombiningDiacriticalMarks,
+      GreekAndCoptic,
+      Latin,
+      SuperscriptsAndSubscripts,
+      Devanagari
+    ]{ucharclasses}
+    \makeatletter
+    \newcommand{\texsmithFallbackFamily}{\rmfamily}
+    \newcommand{\texsmithSetFallbackFamily}[1]{\def\texsmithFallbackFamily{#1}}
+    \g@addto@macro\rmfamily{\texsmithSetFallbackFamily{\rmfamily}}
+    \g@addto@macro\sffamily{\texsmithSetFallbackFamily{\sffamily}}
+    \g@addto@macro\ttfamily{\texsmithSetFallbackFamily{\ttfamily}}
+    \makeatother
+    \texsmithSetFallbackFamily{\rmfamily}
+    \setDefaultTransitions{\texsmithFallbackFamily}{\texsmithFallbackFamily}%
+    \setTransitionsFor{CombiningDiacriticalMarks}{\diacriticsfont}{\texsmithFallbackFamily}
+    \setTransitionsFor{GreekAndCoptic}{\greekfont}{\texsmithFallbackFamily}
+    \setTransitionsFor{SuperscriptsAndSubscripts}{\superscriptsandsubscriptsfont}{\texsmithFallbackFamily}
+    \enableTransitionRules
+    \ifdefined\XeTeXinterchartoksstate
+      \XeTeXinterchartoksstate=1%
+      \AtBeginDocument{\XeTeXinterchartoksstate=1}%
+    \fi
+    \AtBeginDocument{\enableTransitionRules}%  \fi\fi\fi

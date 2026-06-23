@@ -23,7 +23,6 @@ from texsmith.core.conversion.service import (
     classify_input_source,
 )
 from texsmith.core.documents import Document, TitleStrategy
-from texsmith.core.rules import RenderPhase, renders
 from texsmith.core.templates import (
     DEFAULT_TEMPLATE_LANGUAGE,
     TemplateBinding,
@@ -70,7 +69,6 @@ __all__ = [
     "LaTeXConfig",
     "LaTeXFragment",
     "RenderContext",
-    "RenderPhase",
     "SlotAssignment",
     "TemplateBinding",
     "TemplateError",
@@ -93,7 +91,6 @@ __all__ = [
     "get_version",
     "load_template",
     "load_template_runtime",
-    "renders",
     "resolve_template_language",
     "user_dir_context",
 ]

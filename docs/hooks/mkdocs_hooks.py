@@ -20,17 +20,17 @@ def on_config(config: Any) -> Any:
         "texsmith.plugins" not in sys.modules
         and importlib.util.find_spec("texsmith.plugins") is None
     ):
-        from texsmith.adapters.plugins import material
+        from texsmith.adapters.plugins import snippet
 
         module = types.ModuleType("texsmith.plugins")
-        module.material = material
-        module.__all__ = ["material"]
+        module.snippet = snippet
+        module.__all__ = ["snippet"]
         module.__path__ = []  # make it importable as a namespace package
         module.__spec__ = importlib.util.spec_from_loader(
             "texsmith.plugins", loader=None, is_package=True
         )
         sys.modules["texsmith.plugins"] = module
-        sys.modules["texsmith.plugins.material"] = material
+        sys.modules["texsmith.plugins.snippet"] = snippet
 
     return config
 

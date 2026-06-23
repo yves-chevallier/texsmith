@@ -25,17 +25,13 @@ except ModuleNotFoundError:  # pragma: no cover - optional dependency
     ImageDraw = None  # type: ignore[assignment]
 import yaml
 
-from texsmith.adapters.handlers._helpers import (
-    coerce_attribute,
-    gather_classes,
-    mark_processed,
-)
+from texsmith.adapters.html_utils import coerce_attribute, gather_classes
 from texsmith.adapters.markdown import (
     DEFAULT_MARKDOWN_EXTENSIONS,
     render_markdown,
     split_front_matter,
 )
-from texsmith.core.context import RenderContext
+from texsmith.core.context import RenderContextLike
 from texsmith.core.conversion import ConversionRequest
 from texsmith.core.conversion.inputs import InputKind
 from texsmith.core.diagnostics import DiagnosticEmitter
@@ -47,7 +43,6 @@ from texsmith.core.documents import (
 )
 from texsmith.core.exceptions import AssetMissingError, InvalidNodeError, LatexRenderingError
 from texsmith.core.metadata import PressMetadataError, normalise_press_metadata
-from texsmith.core.rules import RenderPhase, renders
 from texsmith.core.templates import TemplateError, TemplateRuntime, load_template_runtime
 from texsmith.core.templates.session import TemplateSession
 from texsmith.core.user_dir import get_user_dir
@@ -456,7 +451,7 @@ def _snippet_template_version() -> str | None:
     return str(version) if version is not None else None
 
 
-def _resolve_emitter(context: RenderContext) -> DiagnosticEmitter | None:
+def _resolve_emitter(context: RenderContextLike) -> DiagnosticEmitter | None:
     emitter = context.runtime.get("emitter")
     if isinstance(emitter, DiagnosticEmitter):
         return emitter
@@ -1609,7 +1604,7 @@ def ensure_snippet_assets(
     return assets
 
 
-def _render_snippet_assets(block: SnippetBlock, context: RenderContext) -> _SnippetAssets:
+def _render_snippet_assets(block: SnippetBlock, context: RenderContextLike) -> _SnippetAssets:
     emitter = _resolve_emitter(context)
     document_path = context.runtime.get("document_path")
     source_dir = context.runtime.get("source_dir")
@@ -1623,14 +1618,14 @@ def _render_snippet_assets(block: SnippetBlock, context: RenderContext) -> _Snip
 
 
 def _render_figure(
-    context: RenderContext, assets: _SnippetAssets, block: SnippetBlock
+    context: RenderContextLike, assets: _SnippetAssets, block: SnippetBlock
 ) -> NavigableString:
     template_name = context.runtime.get("figure_template", "figure")
-    formatter = getattr(context.formatter, template_name)
     # Prefer PDF for LaTeX; PNGs are optional previews and may be missing.
     figure_source = assets.pdf
     latex_path = context.assets.latex_path(figure_source)
-    latex = formatter(
+    latex = context.formatter.render_template(
+        template_name,
         path=latex_path,
         caption=block.caption,
         shortcaption=block.caption,
@@ -1638,7 +1633,7 @@ def _render_figure(
         width=block.figure_width,
         adjustbox=True,
     )
-    return mark_processed(NavigableString(latex))
+    return NavigableString(latex)
 
 
 def _merge_fragment_defaults(
@@ -1679,32 +1674,6 @@ def _merge_fragment_defaults(
     return merged
 
 
-@renders(
-    "div",
-    "pre",
-    phase=RenderPhase.PRE,
-    priority=32,
-    name="snippet_blocks",
-    nestable=False,
-)
-def render_snippet_block(element: Tag, context: RenderContext) -> None:
-    """Convert `.snippet` code fences into rendered figures."""
-    document_path = context.runtime.get("document_path")
-    source_dir = context.runtime.get("source_dir")
-    host_path = _resolve_host_path(document_path, source_dir)
-    block = _extract_snippet_block(element, host_path=host_path)
-    if block is None:
-        return
-
-    assets = _render_snippet_assets(block, context)
-    asset_key = f"snippet::{block.digest}"
-    context.assets.register(asset_key, assets.pdf)
-
-    node = _render_figure(context, assets, block)
-    context.suppress_children(element)
-    element.replace_with(node)
-
-
 def rewrite_html_snippets(
     html: str,
     resolver: Callable[[SnippetBlock], tuple[str, str]],
@@ -1740,11 +1709,6 @@ def rewrite_html_snippets(
     return str(soup) if mutated else html
 
 
-def register(renderer: Any) -> None:
-    """Register the snippet handler on a renderer instance."""
-    renderer.register(render_snippet_block)
-
-
 def _announce_build(
     block: SnippetBlock, host_path: Path | str | None, emitter: DiagnosticEmitter | None
 ) -> None:
@@ -1771,7 +1735,5 @@ __all__ = [
     "SnippetBlock",
     "asset_filename",
     "ensure_snippet_assets",
-    "register",
-    "render_snippet_block",
     "rewrite_html_snippets",
 ]

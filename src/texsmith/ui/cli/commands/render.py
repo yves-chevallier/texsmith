@@ -60,7 +60,6 @@ from .._options import (
     ConvertAssetsOption,
     DebugHtmlOption,
     DebugRulesOption,
-    DisableFallbackOption,
     DisableFragmentOption,
     DisableMarkdownExtensionsOption,
     EnableFragmentOption,
@@ -408,7 +407,6 @@ def render(
     no_promote_title: NoPromoteTitleOption = not _REQUEST_DEFAULTS.promote_title,
     no_title: NoTitleOption = _REQUEST_DEFAULTS.suppress_title,
     parser: ParserOption = None,
-    disable_fallback_converters: DisableFallbackOption = _REQUEST_DEFAULTS.disable_fallback_converters,
     no_copy_assets: NoCopyAssetsOption = not _REQUEST_DEFAULTS.copy_assets,
     convert_assets: ConvertAssetsOption = _REQUEST_DEFAULTS.convert_assets,
     hash_assets: HashAssetsOption = _REQUEST_DEFAULTS.hash_assets,
@@ -809,7 +807,6 @@ def render(
 
     request = ConversionRequest(
         parser=parser,
-        disable_fallback_converters=disable_fallback_converters,
         copy_assets=copy_assets,
         convert_assets=convert_assets,
         hash_assets=hash_assets,
@@ -849,7 +846,6 @@ def render(
             "convert_assets": convert_assets,
             "hash_assets": hash_assets,
             "manifest": manifest,
-            "fallback_converters_enabled": not disable_fallback_converters,
         },
     )
 

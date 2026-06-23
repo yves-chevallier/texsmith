@@ -6,14 +6,11 @@ from collections.abc import Callable, Mapping
 import copy
 import dataclasses
 from dataclasses import dataclass, field
-import hashlib
 from pathlib import Path
 from typing import Any
 
-from texsmith.adapters.docker import is_docker_available
 from texsmith.adapters.latex.formatter import LaTeXFormatter
 from texsmith.adapters.latex.renderer import LaTeXRenderer
-from texsmith.adapters.transformers import has_converter, register_converter
 from texsmith.core.bibliography.collection import BibliographyCollection
 from texsmith.core.callouts import DEFAULT_CALLOUTS, merge_callouts, normalise_callouts
 from texsmith.core.context import DocumentState
@@ -23,7 +20,7 @@ from texsmith.core.conversion_contexts import (
     SegmentContext,
 )
 from texsmith.core.documents import Document
-from texsmith.core.exceptions import LatexRenderingError, TransformerExecutionError
+from texsmith.core.exceptions import LatexRenderingError
 from texsmith.core.fragments import collect_fragment_partials
 from texsmith.core.templates import (
     TemplateBinding,
@@ -252,7 +249,6 @@ def convert_document(
         context=context,
         renderer_kwargs=renderer_kwargs,
         strategy=context.generation,
-        disable_fallback_converters=request.disable_fallback_converters,
         persist_debug_html=request.persist_debug_html,
         emitter=emitter,
         initial_state=state,
@@ -269,7 +265,6 @@ def _render_document(
     context: ConversionContext,
     renderer_kwargs: dict[str, Any],
     strategy: GenerationStrategy,
-    disable_fallback_converters: bool,
     persist_debug_html: bool,
     emitter: DiagnosticEmitter,
     initial_state: DocumentState | None,
@@ -354,7 +349,6 @@ def _render_document(
             slot_base_levels=slot_base_levels,
             fragment_offsets=fragment_offsets,
             manual_base_level=manual_base_level,
-            disable_fallback_converters=disable_fallback_converters,
             renderer_kwargs=renderer_kwargs,
             initial_state=initial_state,
             drop_title_flag=drop_title_flag,
@@ -540,7 +534,6 @@ def _render_slot_fragments(
     slot_base_levels: Mapping[str, int],
     fragment_offsets: Mapping[str, int],
     manual_base_level: int,
-    disable_fallback_converters: bool,
     renderer_kwargs: dict[str, Any],
     initial_state: DocumentState | None,
     drop_title_flag: bool,
@@ -548,7 +541,7 @@ def _render_slot_fragments(
     legacy_latex_accents: bool,
     emitter: DiagnosticEmitter,
 ) -> dict[str, Any]:
-    """Render slot fragments, applying fallback converters when required."""
+    """Render slot fragments for the document into LaTeX slot outputs."""
     formatter = LaTeXFormatter()
     formatter.legacy_latex_accents = legacy_latex_accents
     code_opts = runtime_common.get("code") or {}
@@ -601,9 +594,6 @@ def _render_slot_fragments(
                 **renderer_kwargs,
             )
         return renderer
-
-    if not disable_fallback_converters:
-        ensure_fallback_converters()
 
     slot_outputs: dict[str, str] = {}
     document_state: DocumentState | None = initial_state
@@ -665,93 +655,35 @@ def render_with_fallback(
     state: DocumentState | None = None,
     emitter: DiagnosticEmitter | None = None,
 ) -> tuple[str, DocumentState]:
-    """Render HTML to LaTeX, retrying with fallback converters when available."""
+    """Render HTML to LaTeX."""
     emitter = ensure_emitter(emitter)
-    attempts = 0
     bibliography_payload = dict(bibliography or {})
     base_state = state
 
-    while True:
-        current_state = (
-            copy.deepcopy(base_state)
-            if base_state is not None
-            else DocumentState(bibliography=dict(bibliography_payload))
-        )
+    current_state = (
+        copy.deepcopy(base_state)
+        if base_state is not None
+        else DocumentState(bibliography=dict(bibliography_payload))
+    )
 
-        renderer = renderer_factory()
-        try:
-            output = renderer.render(
-                html,
-                runtime=runtime,
-                state=current_state,
-                emitter=emitter,
-            )
-        except LatexRenderingError as exc:
-            attempts += 1
-            if attempts >= 5 or not attempt_transformer_fallback(exc):
-                raise
-            continue
+    renderer = renderer_factory()
+    output = renderer.render(
+        html,
+        runtime=runtime,
+        state=current_state,
+        emitter=emitter,
+    )
 
-        if base_state is not None:
-            copy_document_state(base_state, current_state)
-            return output, base_state
+    if base_state is not None:
+        copy_document_state(base_state, current_state)
+        return output, base_state
 
-        return output, current_state
-
-
-def attempt_transformer_fallback(error: LatexRenderingError) -> bool:
-    """Register placeholder converters when known transformers are unavailable."""
-    cause = error.__cause__
-    if not isinstance(cause, TransformerExecutionError):
-        return False
-
-    message = str(cause).lower()
-    applied = False
-
-    if "drawio" in message:
-        return False
-    if "mermaid" in message:
-        return False
-    if ("fetch-image" in message or "fetch image" in message) and not has_converter("fetch-image"):
-        register_converter("fetch-image", _FallbackConverter("image"))
-        applied = True
-    return applied
-
-
-def ensure_fallback_converters() -> None:
-    """Install placeholder converters for optional transformer dependencies."""
-    if is_docker_available():
-        return
-
-    if not has_converter("fetch-image"):
-        register_converter("fetch-image", _FallbackConverter("image"))
-
-
-class _FallbackConverter:
-    def __init__(self, name: str):
-        self.name = name
-
-    def __call__(self, source: Path | str, *, output_dir: Path, **_: Any) -> Path:
-        output_dir = Path(output_dir)
-        output_dir.mkdir(parents=True, exist_ok=True)
-
-        original = str(source) if isinstance(source, Path) else source
-        digest = hashlib.sha256(original.encode("utf-8")).hexdigest()[:12]
-        suffix = Path(original).suffix or ".txt"
-        filename = f"{self.name}-{digest}.pdf"
-        target = output_dir / filename
-        target.write_text(
-            f"Placeholder PDF for {self.name} ({suffix})",
-            encoding="utf-8",
-        )
-        return target
+    return output, current_state
 
 
 __all__ = [
     "ConversionResult",
-    "attempt_transformer_fallback",
     "convert_document",
     "copy_document_state",
-    "ensure_fallback_converters",
     "render_with_fallback",
 ]

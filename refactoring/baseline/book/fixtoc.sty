@@ -1,0 +1,81 @@
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{fixtoc}[2025/12/03 Dynamic TOC widths]
+
+\RequirePackage{refcount}
+
+\gdef\LASTPART{0}
+\gdef\LASTCHAPTER{0}
+\gdef\LASTSECTION{0}
+\newcounter{tssectionmax}
+\makeatletter
+\AddToHook{cmd/part/before}{\protected@write\@mainaux{}{\gdef\string\LASTPART{\arabic{part}}}}
+\AddToHook{cmd/chapter/before}{\protected@write\@mainaux{}{\gdef\string\LASTCHAPTER{\arabic{chapter}}}}
+\newcommand*\tsAfterSectionHook{%
+  \ifnum\numexpr\value{section}+1\relax>\value{tssectionmax}%
+    \setcounter{tssectionmax}{\value{section}}%
+    \addtocounter{tssectionmax}{1}%
+  \fi
+}
+\AddToHook{cmd/section/before}{\tsAfterSectionHook}
+\AddToHook{shipout/lastpage}{%
+  \protected@write\@mainaux{}{\string\gdef\string\LASTSECTION{\arabic{tssectionmax}}}%
+}
+\makeatother
+
+\AtBeginDocument{%
+  \setcounter{tssectionmax}{\LASTSECTION}%
+  \computemaxpartnumberwidth
+  \computemaxchapternumberwidth
+  \computemaxsectionnumberwidth
+}
+\renewcommand{\cftpartpresnum}{\partname\ }
+
+\ExplSyntaxOn
+\NewDocumentCommand{\computemaxpartnumberwidth}{}
+ {
+  \dim_set:Nn \l_tmpa_dim {0pt}
+  \int_step_inline:nn { \use:c{LASTPART}+1 }
+   {
+    \settowidth{\l_tmpb_dim}
+     {
+      \cftpartfont \cftpartpresnum \int_to_Roman:n {##1}
+     }
+   \dim_compare:nT { \l_tmpb_dim > \l_tmpa_dim } { \dim_set:Nn \l_tmpa_dim { \l_tmpb_dim } }
+  }
+  \addtolength{\l_tmpa_dim}{1em}
+  \setlength{\cftpartnumwidth}{\l_tmpa_dim}
+ }
+\NewDocumentCommand{\computemaxchapternumberwidth}{}
+ {
+  \dim_set:Nn \l_tmpa_dim {0pt}
+  \int_step_inline:nn { \use:c{LASTCHAPTER}+1 }
+   {
+    \settowidth{\l_tmpb_dim}
+     {
+      \cftchapterfont \cftchapterpresnum \int_to_arabic:n {##1} \cftchapteraftersnum
+     }
+    \dim_compare:nT { \l_tmpb_dim > \l_tmpa_dim } { \dim_set:Nn \l_tmpa_dim { \l_tmpb_dim } }
+   }
+  \addtolength{\l_tmpa_dim}{1em}
+  \setlength{\cftchapternumwidth}{\l_tmpa_dim}
+ }
+\NewDocumentCommand{\computemaxsectionnumberwidth}{}
+ {
+  \dim_set:Nn \l_tmpa_dim {0pt}
+  \int_set:Nn \l_tmpa_int { \value{chapter} }
+  \int_set:Nn \l_tmpb_int { \value{section} }
+  \int_step_inline:nn { \int_max:nn {1}{ \use:c{LASTSECTION} } }
+   {
+    \int_set:cn { c@section } {##1}
+    \int_set:cn { c@chapter } { \use:c{LASTCHAPTER} }
+    \settowidth{\l_tmpb_dim}
+     { \cftsectionfont \cftsectionpresnum \thesection \cftsectionaftersnum }
+    \dim_compare:nT { \l_tmpb_dim > \l_tmpa_dim }
+      { \dim_set:Nn \l_tmpa_dim { \l_tmpb_dim } }
+   }
+  \int_set:cn { c@chapter } { \l_tmpa_int }
+  \int_set:cn { c@section } { \l_tmpb_int }
+  \addtolength{\l_tmpa_dim}{1em}
+  \setlength{\cftsectionnumwidth}{\l_tmpa_dim}
+ }
+\ExplSyntaxOff

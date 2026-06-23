@@ -59,7 +59,6 @@ All plugin options are declared under the `texsmith` plugin entry.
 - `bibliography` (list[str]): global `.bib` files applied to every book.
 - `books` (list[dict]): per-book configuration (see below).
 - `template_overrides` (dict[str, str]): map of template block names to override files.
-- `register_material` (bool): register Material for MkDocs specific renderers (enabled by default).
 
 ### Multiple books
 
@@ -106,8 +105,6 @@ plugins:
           template_overrides:
             cover: overrides/custom_cover.tex.j2
 ```
-
-The plugin automatically registers TeXSmith's Material integration when `register_material` is `true`, aligning colors and fonts with the Material theme if you use it.
 
 ### Assets and HTML snapshots
 

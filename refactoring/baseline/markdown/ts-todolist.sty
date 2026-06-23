@@ -1,0 +1,21 @@
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{ts-todolist}[2025/11/21 TeXSmith todolist helpers]
+
+\RequirePackage{enumitem}
+\RequirePackage{amssymb}
+\RequirePackage{pifont}
+
+\newlist{todolist}{itemize}{2}
+\setlist[todolist]{label=$\square$, leftmargin=*}
+
+\newcommand{\cmark}{\ding{51}}% check mark
+\newcommand{\xmark}{\ding{55}}% cross mark
+
+\newcommand{\done}{%
+  \rlap{$\square$}{\raisebox{2pt}{\large\hspace{1pt}\cmark}}%
+  \hspace{-2.5pt}%
+}
+
+\newcommand{\wontfix}{%
+  \rlap{$\square$}{\large\hspace{1pt}\xmark}%
+}

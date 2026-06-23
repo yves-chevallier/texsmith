@@ -1,0 +1,20 @@
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{ts-keystrokes}[2025/11/21 TeXSmith keystroke helpers]
+
+\RequirePackage{tikz}
+\usetikzlibrary{shadows}
+
+\newcommand*\keystroke[1]{%
+  \tikz[baseline=(key.base)]%
+  \node[%
+    draw,
+    fill=gray!10,
+    drop shadow={shadow xshift=0.25ex,shadow yshift=-0.25ex,fill=black!70,opacity=0.75},
+    rectangle,
+    rounded corners=1.5pt,
+    inner ysep=0.1em,
+    inner xsep=0.5em,
+    line width=0.5pt,
+    font=\scriptsize\sffamily
+  ](key) {#1\strut};%
+}

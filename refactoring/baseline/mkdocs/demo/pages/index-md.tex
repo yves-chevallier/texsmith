@@ -1,0 +1,26 @@
+\chapter{Demo MkDocs}\label{demo-mkdocs}
+
+This is a demo documentation site for MkDocs using the TeXSmith framework.
+
+\begin{callout}[callout info]{Info}
+This site is built using the TeXSmith MkDocs plugin, which allows you to export your MkDocs documentation to \LaTeX{} and PDF formats seamlessly.
+\end{callout}
+\section{Snippet preview}\label{snippet-preview}
+
+\begin{figure}[H]
+    \centering
+    
+    
+    \ifdefined\adjustbox
+        
+        \adjustbox{max width=\textwidth}{%
+            \includegraphics[width=\linewidth]{assets/snippets/snippet-<HASH>.pdf}
+        }
+        
+    \else
+        
+        \includegraphics[width=\linewidth]{assets/snippets/snippet-<HASH>.pdf}
+        
+    \fi
+    
+\end{figure}

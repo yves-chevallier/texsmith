@@ -7,8 +7,8 @@ import textwrap
 from bs4 import BeautifulSoup
 from markdown import Markdown
 
+from texsmith.extensions.smart_dashes import TexsmithSmartDashesExtension
 from texsmith.extensions.tables import YamlTableExtension
-from texsmith.smart_dashes import TexsmithSmartDashesExtension
 
 
 def _render(src: str) -> BeautifulSoup:
