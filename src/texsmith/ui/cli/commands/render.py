@@ -539,10 +539,15 @@ def render(
     if output_format not in {"latex", "typst"}:
         raise typer.BadParameter("--format must be 'latex' or 'typst'.")
     if output_format == "typst":
-        # The Typst backend emits a standalone .typ via the shared IR; it does
-        # not (yet) participate in the LaTeX template/fragment/engine machinery.
-        if template is not None or template_info_flag or template_scaffold is not None:
-            raise typer.BadParameter("--format typst does not support --template options.")
+        # The Typst backend emits a ``.typ`` via the shared IR. With a template
+        # it wraps the body in the template's [typst.template] scaffolding;
+        # without one it emits a standalone document. It does not use the LaTeX
+        # fragment/engine machinery, so template *info/scaffold* flags and --html
+        # remain unsupported here.
+        if template_info_flag or template_scaffold is not None:
+            raise typer.BadParameter(
+                "--format typst does not support --template-info/--template-scaffold."
+            )
         if html_only:
             raise typer.BadParameter("--format typst cannot be combined with --html.")
     if html_only:
@@ -869,7 +874,25 @@ def render(
         raise typer.Exit(code=1) from exc
 
     if output_format == "typst":
-        typst_docs = [(doc.source_path, render_typst_document(doc)) for doc in prepared.documents]
+        typst_output_dir: Path | None = None
+        if output_mode in {"directory", "template"}:
+            typst_output_dir = resolved_output_target
+        elif output_mode == "file" and resolved_output_target is not None:
+            typst_output_dir = resolved_output_target.parent
+
+        def _emit_typst(doc: Any) -> str:
+            try:
+                return render_typst_document(
+                    doc,
+                    template=template,
+                    bibliography_files=bibliography_files,
+                    output_dir=typst_output_dir,
+                )
+            except TemplateError as exc:
+                emit_error(str(exc), exception=exc)
+                raise typer.Exit(code=1) from exc
+
+        typst_docs = [(doc.source_path, _emit_typst(doc)) for doc in prepared.documents]
         if output_mode == "stdout":
             typer.echo("\n\n".join(payload for _, payload in typst_docs))
             _flush_diagnostics()

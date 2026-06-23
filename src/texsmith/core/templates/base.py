@@ -13,9 +13,10 @@ from typing import Any, cast
 
 from jinja2 import Environment, FileSystemLoader, TemplateNotFound
 
-from texsmith.adapters.latex.utils import escape_latex_chars
 from texsmith.adapters.latex.pyxindy import is_available as pyxindy_available
-from .manifest import TemplateError, TemplateManifest, TemplateSlot
+from texsmith.adapters.latex.utils import escape_latex_chars
+
+from .manifest import TemplateError, TemplateManifest
 
 
 def _detect_index_engine() -> str:
@@ -165,7 +166,7 @@ class WrappableTemplate(BaseTemplate):
 
         return self.render_template(self.info.entrypoint, **context)
 
-    def iter_assets(self) -> Iterable["ResolvedAsset"]:
+    def iter_assets(self) -> Iterable[ResolvedAsset]:
         """Yield declared template assets."""
         for destination, asset in self.info.assets.items():
             dest_path = Path(destination)
@@ -190,7 +191,7 @@ class WrappableTemplate(BaseTemplate):
                     )
                 try:
                     relative = source_path.relative_to(self.root)
-                except ValueError as exc:  # pragma: no cover - defensive
+                except ValueError:  # pragma: no cover - defensive
                     common_dir = self.root.parent / "common"
                     try:
                         relative = source_path.relative_to(common_dir)

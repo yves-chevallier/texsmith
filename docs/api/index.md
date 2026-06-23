@@ -19,7 +19,7 @@ Each page uses `::: module.path` directives; mkdocstrings resolves them at build
 : Command-line entry points and utilities.
 
 [`handlers`](handlers.md)
-: Rendering handlers that transform HTML into LaTeX.
+: Readers and writers of the typed IR pipeline (`read(HTML) → IR → write(IR) → LaTeX`), with the `@reads` / `@writes` decorators.
 
 [`latex`](latex.md)
 : LaTeX infrastructure (formatter, renderer, templates).

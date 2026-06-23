@@ -11,7 +11,7 @@
 ![MkDocs Material](https://img.shields.io/badge/MkDocs%20Material-supported-success.svg?logo=materialdesign)
 ![Python](https://img.shields.io/badge/Python-typed-blue.svg?logo=python)
 
-TeXSmith is a [Python](https://www.python.org/) package and CLI tool to convert **Markdown** or **HTML** documents into LaTeX format. It is designed to be extensible via templates and integrates with [MkDocs](https://www.mkdocs.org/) for generating printable documents from documentation sites.
+TeXSmith is a [Python](https://www.python.org/) package and CLI tool to convert **Markdown** or **HTML** documents into **LaTeX** or **Typst**. It is designed to be extensible via templates and integrates with [MkDocs](https://www.mkdocs.org/) for generating printable documents from documentation sites.
 
 <p align="center">
 <!-- Absolute link for compatibility with PyPi -->
@@ -30,10 +30,11 @@ Check the installed version with `texsmith --version` or in Python with `texsmit
 ## Key features
 
 - **MkDocs-native Markdown** – Ships with the same Material + pymdown extension stack you use in MkDocs, so tabs, callouts, annotations, tooltips, and data tables survive the conversion.
+- **Typed IR with multiple backends** – Documents are lowered into a typed intermediate representation (`read(HTML) → IR → write(IR)`), then emitted as **LaTeX** (default) or **Typst** via `--format`.
 - **Template-first runtime** – Bundle multiple fragments into slots, merge front matter metadata, and emit LaTeX projects ready for Tectonic or latexmk with Docker-friendly manifests.
 - **CLI and Python parity** – The Typer-powered CLI wraps the same ConversionService you can consume as a library, making CI/CD and notebooks behave like local runs.
-- **Actionable diagnostics** – Structured emitters, verbosity switches, and `--debug` traces keep LaTeX issues debuggable even in automated pipelines.
-- **Extensible converters** – Override Markdown parsers, hook into RenderPhase handlers, or ship diagram transformers (Mermaid, Draw.io, Svgbob) that plug directly into the engine.
+- **Actionable diagnostics** – Structured emitters, verbosity switches, and `--debug` traces keep build issues debuggable even in automated pipelines.
+- **Extensible converters** – Override Markdown parsers, add reader lowerings (`@reads`) and writer emitters (`@writes`), or ship diagram transformers (Mermaid, Draw.io, Svgbob) that plug directly into the pipeline.
 
 ## Installation
 
@@ -46,7 +47,17 @@ pip install texsmith
 pipx install texsmith
 ```
 
-TeXSmith targets Python 3.10+ and expects a LaTeX distribution (TeX Live, MiKTeX, or MacTeX) when you pass `--build`. Optional converters such as Mermaid rely on Docker (`minlag/mermaid-cli`) unless you register custom handlers.
+TeXSmith targets Python 3.10+ and expects a LaTeX distribution (TeX Live, MiKTeX, or MacTeX) when you pass `--build` with the default LaTeX backend. Optional converters such as Mermaid rely on Docker (`minlag/mermaid-cli`) unless you register custom handlers.
+
+To build with the **Typst** backend (`--format typst`), install the embedded compiler as an extra:
+
+```bash
+pip install "texsmith[typst]"
+# or with uv
+uv tool install "texsmith[typst]"
+```
+
+This bundles the `typst` PyPI package, so no system binary is required. A system `typst` on `PATH` (Homebrew, `cargo install typst-cli`, or a GitHub release) is detected automatically as a fallback. See the [Output backends guide](docs/guide/plumbing/backends.md) for details.
 
 ### Platform notes
 
@@ -112,7 +123,7 @@ The source tree is organised around three top-level namespaces:
 ```python
 from pathlib import Path
 
-from texsmith.api.service import ConversionRequest, ConversionService
+from texsmith import ConversionRequest, ConversionService
 
 service = ConversionService()
 request = ConversionRequest(
@@ -132,20 +143,27 @@ If you only need a quick conversion, the high-level helpers (`texsmith.Document`
 
 > Refer to `UPGRADE.md` for release notes and migration guidance from earlier builds.
 
-## Render engine phases
+## Render pipeline
 
-The rendering pipeline walks the BeautifulSoup tree four times. Each pass maps
-to a value of `RenderPhase` so handlers can opt into the point where their
-transform should fire:
+TeXSmith lowers every document into a typed intermediate representation (IR)
+and then emits a backend from that IR:
 
-- `RenderPhase.PRE`: Early normalisation. Use it to clean the DOM and
-  replace nodes before structural changes happen (e.g. unwrap unwanted tags,
-  turn inline `<code>` into LaTeX).
-- `RenderPhase.BLOCK`: Block-level transformations once the tree structure
-  is stable. Typical consumers convert paragraphs, lists, or blockquotes into
-  LaTeX environments.
-- `RenderPhase.INLINE`: Inline formatting where block layout is already
-  resolved. It is the right place for emphasis, inline math, or link handling.
-- `RenderPhase.POST`: Final pass after children are processed. Use it for
-  tasks that depend on previous passes such as heading numbering or emitting
-  collected assets.
+```
+read(HTML) → IR (texsmith.ir) → write(IR) → LaTeX | Typst
+```
+
+- **Readers** (`texsmith.readers.html`) turn BeautifulSoup nodes into
+  backend-agnostic IR nodes. A reader lowering is a callable decorated with
+  `@reads(*tags, level, priority, name)`; it *returns* an IR node and never
+  mutates the tree.
+- **IR** (`texsmith.ir`) is a typed, backend-neutral node tree. Semantic hints
+  travel as `Span`/`Div` attributes rather than backend strings.
+- **Writers** emit a backend from the IR. `texsmith.writers.latex.LaTeXWriter`
+  (default) and `texsmith.writers.typst.TypstWriter` register emitters with
+  `@writes(NodeType)`, dispatched by node class along the MRO. A node without
+  an emitter raises a clear, localised error naming the node and backend.
+
+Select the backend with `--format {latex,typst}`. See the
+[Output backends guide](docs/guide/plumbing/backends.md) and the
+[Readers & Writers reference](docs/api/handlers.md) for the decorators and a
+runnable extension example.

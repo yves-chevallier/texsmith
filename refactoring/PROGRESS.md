@@ -13,6 +13,7 @@
 | P3 — LaTeXWriter (parité) | Writer Agent LaTeX | 🟢 terminé | ✅ (commun P2) | `writers/latex/` ; pipeline branché `read→write` ; golden `diff --skip-docker` **exit 0** (24/24 non-Docker, 2 skip Docker) ; `uv run pytest` = **798 passed** ; ruff + pyright(writers) clean. |
 | P4 — TypstWriter | Writer Agent Typst | 🟢 terminé | ✅ | `writers/typst/` (2e backend) sur la MÊME IR ; registre `@writes` factorisé en `writers/registry.py` (SSOT, partagé LaTeX/Typst) ; `--format {latex,typst}` ; 2 exemples compilés en PDF (`typst 0.14.2`) ; golden Typst déterministe + golden LaTeX `diff --skip-docker` **exit 0** ; `ir/` et `readers/` **non touchés**. |
 | P5 — Nettoyage | Cleanup Agent | 🟢 terminé | ✅ | `adapters/handlers/*` (11 fichiers) + `core/rules.py` + 3 shims top-level supprimés ; `__getattr__` magique retiré ; `_FallbackConverter` retiré ; entry-points repointés. Golden `diff --skip-docker` **exit 0**, `pytest` **795 passed**, ruff clean. Surface src P5 : **−12 fichiers / −4124 lignes**. `type: ignore` 89→**67**. |
+| P4b — Templates Typst (article+book) | Core Typst Templates | 🟢 terminé | ✅ | Section manifest **`[typst.template]`** parallèle à `[latex.template]` (article+book) ; `core/templates/typst.py` (`TypstTemplate`, env Jinja `{{ }}`) ; scaffolding `template.typ` natif (titre/auteurs/abstract/`#outline`/`#set heading(numbering)`/`#bibliography`) ; `--format typst -t{article,book}` routé via le wrapper Typst (le standalone reste pour le cas sans template ; section typst absente → `TemplateError` clair). Writer étendu (Cite→`#cite(<key>)`, Note/footnote-ref→`#footnote`/citation, abbr, IndexEntry, Quoted, Underline/Highlight/SmallCaps/Sub/Superscript, TexLogo, Keystroke, Admonition, DefinitionList, Div). Math (Math + latex-RawInline math) → package **`mitex`** (rendu LaTeX natif). cheese+book **compilent en PDF** (`typst 0.14.2`). Golden LaTeX `diff` **exit 0** (30 cas), 2 nouveaux golden Typst `typst-paper`/`typst-book` déterministes. `pytest` **839 passed**, ruff + pyright(modules touchés) clean. `ir/` et `readers/` **NON modifiés**. |
 
 Légende statut : ⬜ à faire · 🟡 en cours · 🟢 terminé · 🔴 bloqué
 Légende GATE : ⬜ non franchi · ✅ franchi (GO Reviewer) · ❌ NO-GO
@@ -269,6 +270,27 @@ fidèles aux anciens handlers) :
 
 Aucune de ces frictions n'a nécessité de modification de l'IR : ce sont des
 responsabilités reader (normalisation) / writer (assemblage), conformes au contrat.
+
+### Writer Typst (P4b) — friction OBSERVÉE (signalée, NON corrigée — pas de changement IR/reader demandé)
+
+1. **Math inline en texte = `RawInline(format="latex")` ⇒ invisible pour un backend non-LaTeX.**
+   *Constat.* Le reader pose le math `$…$`/`\(…\)` tapé dans le texte en
+   `RawInline(format="latex")` (friction reader #2 ci-dessus, conforme au contrat :
+   `RawInline` est *défini* backend-scoped, donc ignoré si `format ≠ backend`). Pour le
+   backend **Typst**, le respect strict de ce contrat ferait **disparaître tout le math
+   inline** (ex. cheese : `$E$`, `$\dot{\varepsilon}$`, `$T$` → vide), ce qui dégrade
+   fortement la sortie. Le math *display* `$$…$$` reste un nœud `Math` (porté correctement),
+   mais sa source est du **TeX**, que la syntaxe math native de Typst ne comprend pas
+   (`\dot`, `\left(`, `\frac`) — compilation cassée si émise telle quelle dans `$ … $`.
+   *Décision writer (sans toucher IR/reader).* Le writer Typst **récupère** le payload math
+   d'un `RawInline(format="latex")` qui est un `$…$`/`\(…\)` et le rend, comme les nœuds
+   `Math`, via le package Typst **`mitex`** (moteur de rendu LaTeX-math natif ; importé à la
+   demande par le scaffolding). C'est un **choix d'émission writer**, pas une dérogation au
+   contrat (le contenu *est* du LaTeX, rendu par un moteur LaTeX) ; mais cela **signale** que
+   le contrat « math inline tapé en texte → `RawInline(latex)` » oblige chaque backend non-LaTeX
+   à dépendre d'un transpileur/rendu LaTeX. Un nœud `Math` *unifié* (au lieu d'un
+   `RawInline(latex)`) pour ce cas serait plus neutre vis-à-vis du backend. **Aucune correction
+   appliquée** (garde-fou : friction de contrat → signaler, ne pas corriger l'IR/reader).
 
 ---
 

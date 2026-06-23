@@ -54,6 +54,9 @@ dependencies = [
     "pyxindy>=0.0.7",
     "requests>=2.32.5",
 ]
+[project.optional-dependencies]
+typst = ["typst>=0.15"]
+
 [project.urls]
 Homepage = "https://github.com/yves-chevallier/texsmith"
 

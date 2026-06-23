@@ -865,11 +865,44 @@ class LatexSection(BaseModel):
     template: TemplateInfo
 
 
+class TypstSection(BaseModel):
+    """Section grouping Typst-specific manifest settings.
+
+    Mirrors :class:`LatexSection`: it reuses the backend-agnostic
+    :class:`TemplateInfo` (attributes / slots) so a single template package can
+    declare a parallel ``[typst.template]`` block driving the Typst backend.
+    """
+
+    template: TemplateInfo
+
+
 class TemplateManifest(BaseModel):
-    """Structured manifest describing a LaTeX template."""
+    """Structured manifest describing a multi-backend template.
+
+    ``latex`` is always present (the primary backend); ``typst`` is optional and
+    only present for templates that also support the Typst backend.
+    """
 
     compat: CompatInfo | None = None
     latex: LatexSection
+    typst: TypstSection | None = None
+
+    def section(self, backend: str) -> TemplateInfo:
+        """Return the :class:`TemplateInfo` for ``backend`` (``latex``/``typst``).
+
+        Raises :class:`TemplateError` when a template is asked for a backend it
+        does not declare — explicit, never a silent fallback to LaTeX.
+        """
+        if backend == "latex":
+            return self.latex.template
+        if backend == "typst":
+            if self.typst is None:
+                raise TemplateError(
+                    f"Template '{self.latex.template.name}' does not declare a "
+                    "[typst.template] section; it cannot be rendered with --format typst."
+                )
+            return self.typst.template
+        raise TemplateError(f"Unknown template backend '{backend}'.")
 
     @classmethod
     def load(cls, manifest_path: Path) -> TemplateManifest:
@@ -900,6 +933,7 @@ __all__ = [
     "TemplateInfo",
     "TemplateManifest",
     "TemplateSlot",
+    "TypstSection",
     "register_attribute_normaliser",
 ]
 

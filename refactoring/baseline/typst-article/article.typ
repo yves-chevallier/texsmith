@@ -1,3 +1,4 @@
+#import "@preview/mitex:0.2.4": mi, mitex
 #set page(margin: 2.5cm)
 #set text(font: "New Computer Modern", size: 11pt)
 #set par(justify: true)
@@ -19,7 +20,7 @@ than one block of prose to typeset.
 
 You can combine _emphasis_, *strong emphasis*, and `code`. External links
 look like #link("https://typst.app")[the Typst website]. Inline math such as
-$a^2 + b^2 = c^2$ flows in the text.
+#mi(```a^2 + b^2 = c^2```) flows in the text.
 
 == Lists
 
@@ -54,7 +55,7 @@ def greet(name):
 
 A display equation:
 
-$ E = m c^2 $
+#mitex(```E = m c^2```)
 
 == A simple table
 

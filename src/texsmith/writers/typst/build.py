@@ -1,46 +1,71 @@
-"""Optional compilation of ``.typ`` sources to PDF via the ``typst`` binary.
+"""Optional compilation of ``.typ`` sources to PDF.
 
-This is a graceful, best-effort helper: if the ``typst`` executable is not on
-``PATH`` it reports that compilation is unavailable rather than failing, so the
-``.typ`` emission path never depends on a toolchain being installed.
+Compilation is a graceful, best-effort helper: it never raises because a
+toolchain is missing, so the ``.typ`` emission path never depends on a compiler
+being installed.
+
+Two compilation paths are supported, tried in this order:
+
+1. The ``typst`` PyPI package (``pip install texsmith[typst]``), which embeds
+   the Rust compiler and needs nothing on ``PATH``.
+2. The system ``typst`` binary resolved via ``PATH``.
+
+If neither is available the result carries an actionable message.
 """
 
 from __future__ import annotations
 
 from dataclasses import dataclass
+from importlib.util import find_spec
 from pathlib import Path
 import shutil
 import subprocess
 
 
+_MISSING_MESSAGE = (
+    "no typst compiler available; .typ emitted but not compiled. "
+    "Install the embedded compiler with `pip install texsmith[typst]` "
+    "or provide the `typst` binary on PATH."
+)
+
+
 @dataclass(slots=True)
 class TypstBuildResult:
-    """Outcome of a ``typst compile`` invocation."""
+    """Outcome of a Typst compilation."""
 
     ok: bool
     pdf_path: Path | None
     message: str
 
 
+def _package_available() -> bool:
+    """Whether the embedded ``typst`` Python package is importable."""
+    return find_spec("typst") is not None
+
+
+def _binary_path() -> str | None:
+    """Path to the system ``typst`` binary, if any."""
+    return shutil.which("typst")
+
+
 def typst_available() -> bool:
-    """Whether the ``typst`` binary is on ``PATH``."""
-    return shutil.which("typst") is not None
+    """Whether a Typst compiler is available via either path."""
+    return _package_available() or _binary_path() is not None
 
 
-def compile_typst(source: Path, *, output: Path | None = None) -> TypstBuildResult:
-    """Compile ``source`` (.typ) to PDF when the ``typst`` binary is present.
+def _compile_with_package(source: Path, pdf_path: Path) -> TypstBuildResult:
+    """Compile via the embedded ``typst`` Python package."""
+    import typst
 
-    Returns a :class:`TypstBuildResult`; never raises for a missing binary or a
-    failed compilation (the caller decides how to surface the message).
-    """
-    binary = shutil.which("typst")
-    if binary is None:
-        return TypstBuildResult(
-            ok=False,
-            pdf_path=None,
-            message="typst binary not found on PATH; .typ emitted but not compiled.",
-        )
-    pdf_path = output or source.with_suffix(".pdf")
+    try:
+        typst.compile(str(source), output=str(pdf_path))
+    except typst.TypstError as exc:
+        return TypstBuildResult(ok=False, pdf_path=None, message=f"typst compile failed:\n{exc}")
+    return TypstBuildResult(ok=True, pdf_path=pdf_path, message=f"Compiled {pdf_path}")
+
+
+def _compile_with_binary(binary: str, source: Path, pdf_path: Path) -> TypstBuildResult:
+    """Compile via the system ``typst`` binary."""
     try:
         proc = subprocess.run(
             [binary, "compile", str(source), str(pdf_path)],
@@ -53,6 +78,23 @@ def compile_typst(source: Path, *, output: Path | None = None) -> TypstBuildResu
         detail = (proc.stderr or proc.stdout or "").strip()
         return TypstBuildResult(ok=False, pdf_path=None, message=f"typst compile failed:\n{detail}")
     return TypstBuildResult(ok=True, pdf_path=pdf_path, message=f"Compiled {pdf_path}")
+
+
+def compile_typst(source: Path, *, output: Path | None = None) -> TypstBuildResult:
+    """Compile ``source`` (.typ) to PDF using the first available compiler.
+
+    Prefers the embedded ``typst`` package (no ``PATH`` dependency) and falls
+    back to the system binary. Returns a :class:`TypstBuildResult`; never raises
+    for a missing compiler or a failed compilation (the caller decides how to
+    surface the message).
+    """
+    pdf_path = output or source.with_suffix(".pdf")
+    if _package_available():
+        return _compile_with_package(source, pdf_path)
+    binary = _binary_path()
+    if binary is not None:
+        return _compile_with_binary(binary, source, pdf_path)
+    return TypstBuildResult(ok=False, pdf_path=None, message=_MISSING_MESSAGE)
 
 
 __all__ = ["TypstBuildResult", "compile_typst", "typst_available"]

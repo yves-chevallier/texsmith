@@ -266,6 +266,20 @@ CLI_CASES: tuple[Case, ...] = (
     # No template (-t…) — the Typst path bypasses the LaTeX template machinery.
     Case("typst-hello", "typst-hello", ("hello.md", "--format", "typst")),
     Case("typst-article", "typst-article", ("article.md", "--format", "typst")),
+    # Typst templated documents (Phase 4b): the SAME article/book sources as
+    # their LaTeX cases, rendered through the [typst.template] scaffolding.
+    Case(
+        "typst-paper",
+        "paper",
+        ("cheese.md", "cheese.bib", "-tarticle", "--format", "typst"),
+        note="article template via the Typst backend (title/authors/abstract/cite/bibliography).",
+    ),
+    Case(
+        "typst-book",
+        "book",
+        ("book.md", "book.bib", "-tbook", "--format", "typst"),
+        note="book template via the Typst backend (chapters/toc/cite/bibliography).",
+    ),
 )
 
 MKDOCS_CASES: tuple[MkdocsCase, ...] = (

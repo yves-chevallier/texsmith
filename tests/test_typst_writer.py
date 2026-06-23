@@ -58,8 +58,18 @@ def test_inline_code_raw() -> None:
 
 
 def test_math_inline_and_display() -> None:
-    assert emit(ir.Math(text="x^2", display=False)) == "$x^2$"
-    assert emit(ir.Math(text="E = m c^2", display=True)) == "$ E = m c^2 $"
+    # Math carries TeX source; the Typst backend renders it via the ``mitex``
+    # LaTeX-math package (inline -> #mi, display -> #mitex).
+    assert emit(ir.Math(text="x^2", display=False)) == "#mi(```x^2```)"
+    assert emit(ir.Math(text="E = m c^2", display=True)) == "#mitex(```E = m c^2```)"
+
+
+def test_latex_inline_math_raw_inline_via_mitex() -> None:
+    # The reader encodes math typed in text as a latex RawInline; recover it.
+    assert emit(ir.RawInline(format="latex", text="$E$")) == "#mi(```E```)"
+    assert emit(ir.RawInline(format="latex", text=r"\(a+b\)")) == "#mi(```a+b```)"
+    # Non-math latex raw inline is still dropped (backend-scoped escape hatch).
+    assert emit(ir.RawInline(format="latex", text=r"\textbf{x}")) == ""
 
 
 def test_link() -> None:
@@ -129,7 +139,9 @@ def test_figure_with_image_and_caption() -> None:
         caption=(ir.Str("A cap"),),
     )
     out = emit(fig)
-    assert '#image("a.png")' in out
+    # Within a figure the image must be a bare expression (no leading hash).
+    assert 'image("a.png")' in out
+    assert "#figure(" in out
     assert "caption: [A cap]" in out
 
 
@@ -200,6 +212,123 @@ def test_render_document_wraps_body_with_title() -> None:
     assert "My Title" in out
     assert out.rstrip().endswith("= Hi")
     assert "#set page" in out
+
+
+# --------------------------------------------------------------------------- #
+# Templated-document nodes (article + book coverage)
+# --------------------------------------------------------------------------- #
+
+
+def test_inline_emphasis_variants() -> None:
+    assert emit(ir.Underline(content=(ir.Str("u"),))) == "#underline[u]"
+    assert emit(ir.Highlight(content=(ir.Str("h"),))) == "#highlight[h]"
+    assert emit(ir.SmallCaps(content=(ir.Str("s"),))) == "#smallcaps[s]"
+    assert emit(ir.Subscript(content=(ir.Str("2"),))) == "#sub[2]"
+    assert emit(ir.Superscript(content=(ir.Str("3"),))) == "#super[3]"
+
+
+def test_quoted_uses_smartquotes() -> None:
+    assert emit(ir.Quoted(content=(ir.Str("hi"),))) == '"hi"'
+
+
+def test_cite_emits_native_marker_and_records() -> None:
+    state = TypstWriterState()
+    writer = TypstWriter(state)
+    out = writer.emit(ir.Cite(keys=("Smith2020", "Doe2021")))
+    assert out == "#cite(<Smith2020>)#cite(<Doe2021>)"
+    assert state.citations == ["Smith2020", "Doe2021"]
+
+
+def test_note_emits_footnote() -> None:
+    note = ir.Note(content=(ir.Para(content=(ir.Str("body"),)),))
+    assert emit(note) == "#footnote[body]"
+
+
+def test_texlogo_renders_plain_text() -> None:
+    assert emit(ir.TexLogo(name="latex")) == "LaTeX"
+    assert emit(ir.TexLogo(name="tex")) == "TeX"
+
+
+def test_index_entry_surfaces_visible_text_only() -> None:
+    assert emit(ir.IndexEntry(path=("Topic",), visible=(ir.Str("Topic"),))) == "Topic"
+    assert emit(ir.IndexEntry(path=("Hidden",))) == ""
+
+
+def test_definition_list() -> None:
+    item = ir.DefinitionItem(
+        term=(ir.Str("Term"),),
+        definitions=((ir.Para(content=(ir.Str("Meaning"),)),),),
+    )
+    assert emit(ir.DefinitionList(items=(item,))) == "/ Term: Meaning"
+
+
+def test_admonition_renders_titled_block() -> None:
+    adm = ir.Admonition(
+        kind="note",
+        title=(ir.Str("Heads up"),),
+        content=(ir.Para(content=(ir.Str("body"),)),),
+    )
+    out = emit(adm)
+    assert "#block(" in out
+    assert "*Heads up*" in out
+    assert "body" in out
+
+
+def test_footnote_ref_resolves_to_citation_when_in_bibliography() -> None:
+    state = TypstWriterState(bibliography=frozenset({"Smith2020"}))
+    writer = TypstWriter(state)
+    span = ir.Span(
+        content=(ir.Str("1"),),
+        attrs=(("role", "footnote-ref"), ("ref", "Smith2020")),
+    )
+    assert writer.emit(span) == "#cite(<Smith2020>)"
+    assert state.citations == ["Smith2020"]
+
+
+def test_footnote_ref_resolves_to_footnote_when_body_present() -> None:
+    doc = ir.Document(
+        content=(
+            ir.Para(
+                content=(
+                    ir.Span(
+                        content=(ir.Str("1"),),
+                        attrs=(("role", "footnote-ref"), ("ref", "fn1")),
+                    ),
+                )
+            ),
+            ir.Div(
+                content=(ir.Para(content=(ir.Str("the footnote body"),)),),
+                attrs=(("role", "footnote-def"), ("id", "fn1")),
+            ),
+        )
+    )
+    out = TypstWriter(TypstWriterState()).write(doc)
+    assert "#footnote[the footnote body]" in out
+
+
+def test_div_footnote_containers_emit_nothing() -> None:
+    div = ir.Div(
+        content=(ir.Para(content=(ir.Str("x"),)),),
+        attrs=(("role", "footnotes"),),
+    )
+    assert emit(div) == ""
+
+
+def test_abbr_records_description_and_renders_term() -> None:
+    state = TypstWriterState()
+    writer = TypstWriter(state)
+    span = ir.Span(
+        content=(ir.Str("HTML"),),
+        attrs=(("role", "abbr"), ("title", "HyperText Markup Language")),
+    )
+    assert writer.emit(span) == "HTML"
+    assert state.abbreviations["HTML"] == "HyperText Markup Language"
+
+
+def test_heading_offset_applies() -> None:
+    state = TypstWriterState(heading_offset=-1)
+    out = TypstWriter(state).emit(ir.Header(level=2, content=(ir.Str("Chapter"),)))
+    assert out == "= Chapter"
 
 
 def test_registry_is_extensible_via_subclass() -> None:

@@ -32,6 +32,22 @@ To install TeXSmith, use your preferred Python package manager:
 
 For basic use, you don't need anything else. TeXSmith bundles Tectonic for LaTeX builds and will auto-install the required tools on demand.
 
+To build with the **Typst** backend (`--format typst`), install the embedded compiler as an extra so no system binary is required:
+
+=== "pip"
+
+    ```bash
+    pip install "texsmith[typst]"
+    ```
+
+=== "uv"
+
+    ```bash
+    uv tool install "texsmith[typst]"
+    ```
+
+A system `typst` binary on your `PATH` is detected automatically as a fallback. See [Output backends](plumbing/backends.md) for details and the math caveat.
+
 ## Convert a Markdown file to LaTeX
 
 By default TeXSmith writes LaTeX to stdout. Pipe it or direct it into a folder. HTML works too:
@@ -124,6 +140,9 @@ You may want to pass additional LaTeX options such as `-apaper=a4` or `-amargin=
 
 LaTeX distribution
 : Install TeX Live, MiKTeX, or MacTeX if you want TeXSmith to hand off builds to `latexmk` (`--engine lualatex` / `--engine xelatex`). The default route uses Tectonic, which auto-installs itself and required packages.
+
+Typst compiler
+: Needed only for `--format typst --build`. Install the embedded compiler with `pip install "texsmith[typst]"`, or put a `typst` binary on your `PATH`. Emitting the `.typ` source (without `--build`) needs no compiler. See [Output backends](plumbing/backends.md).
 
 Diagram tooling
 : Mermaid-to-PDF (`minlag/mermaid-cli`) conversion falls back to Docker. Install Docker Desktop (with WSL integration on Windows) or register your own converter if Mermaid diagrams are common in your docs.

@@ -75,7 +75,7 @@ def copy_template_assets(
     *,
     context: Mapping[str, Any] | None = None,
     overrides: Mapping[str, Any] | None = None,
-    assets: Iterable["ResolvedAsset"] | None = None,
+    assets: Iterable[ResolvedAsset] | None = None,
 ) -> list[Path]:
     """Copy the template declared assets into the selected output directory."""
     output_dir = Path(output_dir).resolve()
@@ -243,7 +243,7 @@ def discover_templates() -> list[dict[str, str]]:
             if root is None:
                 continue
             _record("package", slug, root)
-    except Exception:  # noqa: BLE001 - distribution discovery is best-effort
+    except Exception:
         # A broken third-party template distribution (corrupt metadata, missing
         # file, unreadable entry-point) must not take down the whole template
         # listing — users would lose access to their builtin and local

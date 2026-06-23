@@ -1,6 +1,7 @@
 nav:
   - index.md
   - pipeline.md
+  - backends.md
   - engines.md
   - latex.md
   - tex.md
