@@ -40,7 +40,7 @@ the microstructure of hard cheeses to their macroscopic mechanical response.
 #v(1em)
 
 
-== Introduction
+= Introduction
 
 Cheese, though traditionally perceived as a food product, can also be regarded
 as a *soft viscoelastic solid*, whose rheological response depends on both time
@@ -61,7 +61,7 @@ the rheological stiffness and malleability of hard cheese varieties, using an
 empirical viscoelastic model to rationalize observed behavior across temperature
 and strain-rate ranges.
 
-== Theoretical Framework
+= Theoretical Framework
 
 The elastic modulus #mi(```E```) of a viscoelastic food material is modeled as a function
 of strain rate #mi(```\dot{\varepsilon}```) and temperature #mi(```T```):
@@ -88,7 +88,7 @@ This formalism provides a convenient means to estimate the flexibility of cheese
 under various thermal–mechanical conditions, offering a bridge between empirical
 texture measurements and predictive modeling.
 
-== Melting and Thermal Behavior
+= Melting and Thermal Behavior
 
 The melting characteristics of cheese are governed primarily by *fat content*,
 *moisture level*, and the degree of *protein–fat network entanglement*. Hard
@@ -108,9 +108,9 @@ cheese, highlighting its unique rheological response upon heating.
 upon heating],
 )
 
-== Materials and Methods
+= Materials and Methods
 
-=== Samples Preparation
+== Samples Preparation
 
 Three commercial hard cheese types were selected for analysis #link("#cheese-samples").
 Cylindrical specimens (20 mm diameter × 20 mm height) were extracted from the core
@@ -129,7 +129,7 @@ moisture gradients.
   caption: [Characteristics of hard cheese samples used in the study],
 )
 
-=== Mechanical Testing
+== Mechanical Testing
 
 Compression tests were carried out using a *TA-XT2 texture analyzer* equipped
 with a 50 kg load cell. Specimens were compressed at three nominal strain rates
@@ -153,7 +153,7 @@ table #link("#mechanical-results") summarizes the measured moduli.
 The increasing modulus with strain rate reflects the time-dependent viscoelastic
 response typical of aged dairy matrices.
 
-== Computational Modeling
+= Computational Modeling
 
 To illustrate the relationship between stiffness, temperature, and deformation
 rate, the theoretical expression (Eq. 1) was implemented in *Python* as follows:
@@ -201,7 +201,7 @@ This computational approach allows the parametric exploration of cheese stiffnes
 under varying conditions, offering predictive insight into texture control
 during processing.
 
-== Discussion
+= Discussion
 
 The results corroborate the expected hierarchy of stiffness among hard cheeses,
 with *Parmigiano-Reggiano* exhibiting the highest elastic modulus, consistent
@@ -219,7 +219,7 @@ The modeling results align qualitatively with the empirical data, suggesting tha
 the simplified rheological model captures the dominant trends despite the inherent
 complexity of cheese microstructure.
 
-== Disclaimer
+= Disclaimer
 
 This paper is fictional and intended solely for illustrative purposes in demonstrating
 document formatting and structure. The data, authors, and affiliations are entirely
@@ -228,7 +228,7 @@ to actual persons, organizations, or scientific studies is purely coincidental.
 The purpose is to showcase the acurate conversion from Markdown to LaTeX format
 for scientific publications.
 
-== Conclusions
+= Conclusions
 
 This study integrates rheological experimentation and computational modeling to
 quantify the *stiffness–malleability balance* of hard cheeses. The proposed

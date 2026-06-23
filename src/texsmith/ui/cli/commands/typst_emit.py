@@ -40,9 +40,10 @@ if TYPE_CHECKING:  # pragma: no cover - typing only
     from texsmith.core.documents import Document
 
 
-# Heading offset applied per template so the source's top-level sections map to
-# the right Typst heading level (book: top section -> chapter = level 1).
-_TEMPLATE_HEADING_OFFSET = {"book": -1}
+def _min_heading_level(document: ir.Document) -> int | None:
+    """Return the shallowest heading level in the body, or ``None`` if heading-free."""
+    levels = [block.level for block in document.content if isinstance(block, ir.Header)]
+    return min(levels) if levels else None
 
 
 def _front_matter(document: Document) -> dict[str, Any]:
@@ -337,7 +338,13 @@ def _render_templated(
     slot_titles = _slot_titles(document)
     mainmatter_doc, abstract_blocks = _split_abstract(ir_document, slot_titles)
 
-    offset = _TEMPLATE_HEADING_OFFSET.get(typst_template.info.name, 0)
+    # Map the body's top-level headings onto Typst heading level 1, so numbering
+    # starts at "1" (not "0.1") whatever the source depth — the title (h1) is
+    # carried as document metadata, so content sections typically start at h2.
+    # Mirrors the LaTeX path's ``1 - min(levels)`` offset; the scaffolding decides
+    # whether level 1 renders as a section (article) or a chapter (book).
+    min_level = _min_heading_level(mainmatter_doc)
+    offset = (1 - min_level) if min_level is not None else 0
 
     state = TypstWriterState(
         title=title,
