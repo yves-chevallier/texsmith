@@ -20,7 +20,7 @@ from texsmith.core.http import open_url
 from texsmith.core.user_dir import get_user_dir
 
 
-TECTONIC_VERSION = "0.15.0"
+TECTONIC_VERSION = "0.16.9"
 BIBER_VERSION = "2.17"
 MAKEGLOSSARIES_URL = "https://mirrors.ctan.org/macros/latex/contrib/glossaries.zip"
 _BASE_URL = (
