@@ -240,6 +240,74 @@ def test_standard_markdown_table_caption_with_label() -> None:
     assert table.find("caption").get_text(strip=True) == "Stocks"
 
 
+def test_standard_markdown_table_caption_with_inline_italics() -> None:
+    soup = _render_with_tables(
+        """
+        Table: Coverage of the old foundation (*Info1*, *Info2*)
+
+        | Skill | Description |
+        | ----- | ----------- |
+        | Foo   | Bar         |
+        """
+    )
+    table = soup.find("table")
+    assert table is not None
+    caption = table.find("caption")
+    assert caption is not None
+    # Inline <em> elements must be inside the caption, not lost.
+    em_tags = caption.find_all("em")
+    assert len(em_tags) == 2
+    assert em_tags[0].get_text() == "Info1"
+    assert em_tags[1].get_text() == "Info2"
+    # Full caption text must be present.
+    assert "Coverage of the old foundation" in caption.get_text()
+    # The "Table:" line must not survive as a stray paragraph.
+    assert "Table:" not in soup.get_text()
+
+
+def test_standard_markdown_table_caption_with_inline_code() -> None:
+    soup = _render_with_tables(
+        """
+        Table: Use `foo` and `bar`
+
+        | A | B |
+        | - | - |
+        | 1 | 2 |
+        """
+    )
+    table = soup.find("table")
+    assert table is not None
+    caption = table.find("caption")
+    assert caption is not None
+    code_tags = caption.find_all("code")
+    assert len(code_tags) == 2
+    assert code_tags[0].get_text() == "foo"
+    assert code_tags[1].get_text() == "bar"
+    assert "Table:" not in soup.get_text()
+
+
+def test_standard_markdown_table_caption_inline_with_label() -> None:
+    soup = _render_with_tables(
+        """
+        Table: Results with *emphasis* {#tbl:inline}
+
+        | A | B |
+        | - | - |
+        | 1 | 2 |
+        """
+    )
+    table = soup.find("table")
+    assert table is not None
+    assert table.get("id") == "tbl:inline"
+    caption = table.find("caption")
+    assert caption is not None
+    assert caption.find("em") is not None
+    assert caption.find("em").get_text() == "emphasis"
+    # The {#label} must not appear in the rendered text.
+    assert "{#tbl:inline}" not in caption.get_text()
+    assert "Table:" not in soup.get_text()
+
+
 def test_standalone_caption_without_following_table_is_left_alone() -> None:
     # A "Table: ..." line not followed by a table must keep its paragraph so
     # the user sees something is off; we don't silently drop text.

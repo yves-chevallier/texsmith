@@ -466,13 +466,24 @@ class _MarkdownTableCaptionTreeprocessor(Treeprocessor):
     def _caption_from_paragraph(
         paragraph: ElementTree.Element,
     ) -> _CaptionInfo | None:
-        if len(paragraph):
-            # Caption paragraphs are expected to be plain text.
+        leading = (paragraph.text or "").lstrip()
+        if not leading.startswith("Table:"):
             return None
-        text = (paragraph.text or "").strip()
-        if not text.startswith("Table:"):
-            return None
-        return _parse_caption_line(text)
+        if not len(paragraph):
+            # Plain-text paragraph — use the full-line regex (handles {#label}).
+            return _parse_caption_line((paragraph.text or "").strip())
+        # Paragraph has inline children (e.g. <em>, <code>, <a>).
+        # The optional {#label} suffix lives in the tail of the last child.
+        last = paragraph[-1]
+        tail = (last.tail or "").rstrip()
+        label: str | None = None
+        if tail.endswith("}"):
+            m = re.search(r"\s*\{([^}]+)\}\s*$", tail)
+            if m:
+                id_m = _ID_ATTR_RE.search(m.group(1))
+                if id_m:
+                    label = id_m.group(1)
+        return _CaptionInfo(text=None, label=label)
 
     @staticmethod
     def _next_table_sibling(
@@ -501,7 +512,17 @@ class _MarkdownTableCaptionTreeprocessor(Treeprocessor):
     ) -> None:
         if table.find("caption") is None:
             caption = ElementTree.Element("caption")
-            caption.text = info.text or ""
+            if len(paragraph):
+                # Inline-rich caption: transfer leading text and all children.
+                caption.text = (paragraph.text or "")[len("Table:"):].lstrip()
+                last_idx = len(paragraph) - 1
+                for i, child in enumerate(list(paragraph)):
+                    if i == last_idx and info.label:
+                        # Strip the {#label} suffix that was parsed from the tail.
+                        child.tail = re.sub(r"\s*\{[^}]+\}\s*$", "", (child.tail or "").rstrip())
+                    caption.append(child)
+            else:
+                caption.text = info.text or ""
             table.insert(0, caption)
         if info.label and not table.get("id"):
             table.set("id", info.label)
