@@ -87,15 +87,19 @@ def _author_views(overrides: Mapping[str, Any]) -> tuple[list[str], list[str]]:
             if not name:
                 continue
             names.append(name)
+            # Author blocks are emitted into Typst *markup* (not a function
+            # call), where ``[…]`` would render literally; so the name is plain
+            # markup and only the affiliation footnote keeps its ``#`` call.
             if affiliation:
                 blocks.append(
-                    f"[{_escape_typst_content(name)}#footnote[{_escape_typst_content(affiliation)}]]"
+                    f"{_escape_typst_content(name)}"
+                    f"#footnote[{_escape_typst_content(affiliation)}]"
                 )
             else:
-                blocks.append(f"[{_escape_typst_content(name)}]")
+                blocks.append(_escape_typst_content(name))
     elif isinstance(authors, str) and authors.strip():
         names.append(authors.strip())
-        blocks.append(f"[{_escape_typst_content(authors.strip())}]")
+        blocks.append(_escape_typst_content(authors.strip()))
     return names, blocks
 
 
@@ -496,6 +500,13 @@ def _render_templated(
     context["title"] = title
     context["author_names"] = author_names
     context["author_blocks"] = author_blocks
+    # Render the date in long, language-aware form ("November 16, 2025") via the
+    # shared resolver, matching the LaTeX backend (the Typst attribute is raw).
+    date_value = context.get("date")
+    if date_value:
+        from texsmith.core.document_date import format_date
+
+        context["date"] = format_date(date_value, language=context.get("language"), cwd=source_dir)
     # Raw front matter, for data-driven templates (e.g. the recipe card) that
     # render structured front-matter fields rather than the document body.
     context["front_matter"] = _front_matter(document)

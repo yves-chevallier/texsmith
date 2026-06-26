@@ -344,7 +344,24 @@ class TypstWriter:
 
     @writes(ir.Para)
     def _para(self, node: ir.Para) -> str:
+        # A paragraph whose sole content is an image renders as a centred figure
+        # (mirrors the LaTeX backend, where a bare block image becomes a figure
+        # captioned by its alt/title) rather than a left-aligned inline image.
+        if len(node.content) == 1 and isinstance(node.content[0], ir.Image):
+            return self._standalone_image(node.content[0])
         return self._inlines(node.content).strip()
+
+    def _standalone_image(self, node: ir.Image) -> str:
+        """Render a block-level image as a centred (optionally captioned) figure."""
+        call = self._image_call(node)
+        if not call:
+            return ""
+        caption = self._inlines(node.alt).strip() if node.alt else ""
+        if not caption and node.title:
+            caption = escape_typst_chars(node.title.strip())
+        if caption:
+            return f"#figure(\n  {call},\n  caption: [{caption}],\n)"
+        return f"#align(center)[#{call}]"
 
     @writes(ir.Plain)
     def _plain(self, node: ir.Plain) -> str:

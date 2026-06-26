@@ -13,14 +13,21 @@
 #set page(
   paper: "{{ paper | default('a4') }}",
   margin: 2.5cm,
-{% if not page_numbers | default(true) %}
   numbering: none,
-{% else %}
-  numbering: "1",
+{% if page_numbers | default(true) %}
+  // Page number centred at the foot — but only when the document spans more
+  // than one page (a single-page article stays unnumbered, as in LaTeX).
+  footer: context {
+    if counter(page).final().first() > 1 {
+      align(center)[#counter(page).get().first()]
+    }
+  },
 {% endif %}
 )
 #set text(font: "New Computer Modern", size: 11pt, lang: "{{ language | default('en') }}")
 #set par(justify: true)
+// Section headings get a little more breathing room (closer to LaTeX article).
+#show heading: set block(above: 1.8em, below: 1.0em)
 {% if uses_eqnref %}
 #set math.equation(numbering: "(1)")
 {% endif %}
