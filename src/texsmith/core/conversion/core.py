@@ -14,10 +14,7 @@ from texsmith.adapters.latex.renderer import LaTeXRenderer
 from texsmith.core.bibliography.collection import BibliographyCollection
 from texsmith.core.callouts import DEFAULT_CALLOUTS, merge_callouts, normalise_callouts
 from texsmith.core.context import DocumentState
-from texsmith.core.conversion_contexts import (
-    ConversionContext,
-    GenerationStrategy,
-)
+from texsmith.core.conversion_contexts import ConversionContext
 from texsmith.core.documents import Document
 from texsmith.core.exceptions import LatexRenderingError
 from texsmith.core.fragments import collect_fragment_partials
@@ -234,44 +231,38 @@ def convert_document(
         legacy_latex_accents=request.legacy_latex_accents,
     )
 
-    renderer_kwargs: dict[str, Any] = {
-        "output_root": output_dir,
-        "copy_assets": context.generation.copy_assets,
-        "convert_assets": context.generation.convert_assets,
-        "hash_assets": context.generation.hash_assets,
-        "parser": request.parser or "html.parser",
-    }
-
     return _render_document(
-        document=context.document,
         context=context,
-        renderer_kwargs=renderer_kwargs,
-        strategy=context.generation,
-        persist_debug_html=request.persist_debug_html,
         emitter=emitter,
         initial_state=state,
         wrap_document=wrap_document,
-        legacy_latex_accents=request.legacy_latex_accents,
-        diagrams_backend=request.diagrams_backend,
-        http_user_agent=request.http_user_agent,
     )
 
 
 def _render_document(
     *,
-    document: Document,
     context: ConversionContext,
-    renderer_kwargs: dict[str, Any],
-    strategy: GenerationStrategy,
-    persist_debug_html: bool,
     emitter: DiagnosticEmitter,
     initial_state: DocumentState | None,
     wrap_document: bool,
-    legacy_latex_accents: bool,
-    diagrams_backend: str | None,
-    http_user_agent: str | None,
 ) -> ConversionResult:
-    if persist_debug_html:
+    # Everything the per-document render needs is carried on the context: the
+    # document, the resolved request, and the generation strategy. Derive the
+    # locals here rather than threading them through the signature.
+    document = context.document
+    request = context.request
+    strategy = context.generation
+    legacy_latex_accents = request.legacy_latex_accents
+
+    renderer_kwargs: dict[str, Any] = {
+        "output_root": context.output_dir,
+        "copy_assets": strategy.copy_assets,
+        "convert_assets": strategy.convert_assets,
+        "hash_assets": strategy.hash_assets,
+        "parser": request.parser or "html.parser",
+    }
+
+    if request.persist_debug_html:
         persist_debug_artifacts(
             context.output_dir,
             document.source_path,
@@ -287,11 +278,7 @@ def _render_document(
     runtime_common = _build_runtime_common(
         binding=binding,
         context=context,
-        document=document,
-        strategy=strategy,
-        diagrams_backend=diagrams_backend,
         emitter=emitter,
-        http_user_agent=http_user_agent,
     )
 
     active_slot_requests = context.slot_requests
@@ -443,13 +430,13 @@ def _build_runtime_common(
     *,
     binding: TemplateBinding,
     context: ConversionContext,
-    document: Document,
-    strategy: GenerationStrategy,
-    diagrams_backend: str | None,
     emitter: DiagnosticEmitter,
-    http_user_agent: str | None,
 ) -> dict[str, object]:
     """Prepare immutable runtime metadata shared across fragment rendering."""
+    document = context.document
+    strategy = context.generation
+    diagrams_backend = context.request.diagrams_backend
+    http_user_agent = context.request.http_user_agent
     code_options = _resolve_code_options(binding, context.template_overrides)
 
     runtime_common: dict[str, object] = {
