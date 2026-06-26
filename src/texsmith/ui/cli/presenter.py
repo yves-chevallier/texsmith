@@ -15,7 +15,7 @@ from texsmith.adapters.latex.engines import (
     LatexMessageSeverity,
     parse_latex_log,
 )
-from texsmith.core.conversion.pipeline import ConversionBundle
+from texsmith.core.conversion.core import ConversionBundle
 from texsmith.core.templates.session import TemplateRenderResult
 
 from .state import CLIState

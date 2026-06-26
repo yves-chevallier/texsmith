@@ -12,7 +12,7 @@ from texsmith.core.bibliography import (
 from texsmith.core.config import BookConfig, LaTeXConfig
 from texsmith.core.context import AssetRegistry, DocumentState, RenderContext
 from texsmith.core.conversion import ConversionRequest, SlotAssignment
-from texsmith.core.conversion.pipeline import (
+from texsmith.core.conversion.core import (
     ConversionBundle,
     LaTeXFragment,
     convert_documents,

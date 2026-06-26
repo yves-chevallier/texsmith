@@ -50,7 +50,7 @@ from typing import Any
 from ..context import DocumentState
 from ..conversion import ConversionRequest
 from ..conversion.debug import ensure_emitter
-from ..conversion.pipeline import convert_documents, to_template_fragments
+from ..conversion.core import convert_documents, to_template_fragments
 from ..conversion.renderer import TemplateRenderer
 from ..diagnostics import DiagnosticEmitter
 from ..documents import Document

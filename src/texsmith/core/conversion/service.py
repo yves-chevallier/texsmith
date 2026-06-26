@@ -34,6 +34,7 @@ from texsmith.adapters.markdown import split_front_matter
 from ..diagnostics import DiagnosticEmitter
 from ..documents import Document, TitleStrategy, front_matter_has_title
 from ..templates.session import TemplateRenderResult, TemplateSession, get_template
+from .core import ConversionBundle, convert_documents
 from .debug import ConversionError, ensure_emitter
 from .inputs import (
     InputKind,
@@ -41,7 +42,6 @@ from .inputs import (
     extract_front_matter_slots,
 )
 from .models import ConversionRequest
-from .pipeline import ConversionBundle, convert_documents
 
 
 __all__ = [

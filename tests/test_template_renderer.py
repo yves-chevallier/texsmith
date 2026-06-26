@@ -6,7 +6,7 @@ import textwrap
 import pytest
 
 from texsmith.adapters.latex.latexmk import build_latexmkrc_content
-from texsmith.core.conversion.pipeline import convert_documents, to_template_fragments
+from texsmith.core.conversion.core import convert_documents, to_template_fragments
 from texsmith.core.conversion.renderer import FragmentOverrideError, TemplateRenderer
 from texsmith.core.documents import Document
 from texsmith.core.templates import coerce_base_level, load_template_runtime

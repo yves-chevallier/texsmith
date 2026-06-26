@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from texsmith.core.conversion.pipeline import convert_documents
+from texsmith.core.conversion.core import convert_documents
 from texsmith.core.documents import Document
 
 

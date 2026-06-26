@@ -5,7 +5,7 @@ import pytest
 from texsmith.adapters.latex import LaTeXRenderer
 from texsmith.core.config import BookConfig
 from texsmith.core.context import DocumentState
-from texsmith.core.conversion.pipeline import convert_documents
+from texsmith.core.conversion.core import convert_documents
 from texsmith.core.documents import Document
 
 
