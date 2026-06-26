@@ -73,7 +73,7 @@ Réduction nette `src/` à date : **−645 LOC** (791 supprimées / 146 ajoutée
    - `adapters/transformers/strategies.py` (1537) → une classe/fichier + dédup playwright (cf. Lot 3 déféré).
    - `adapters/latex/engines/__init__.py` (768) → sortir les runners aux (biber/index/glossaries) vers `aux.py`.
    - `adapters/latex/engines/latex/log.py` (720) → séparer `LatexLogParser` / `LatexLogRenderer`.
-   - `core/conversion/core.py` (681) → extraire résolution d'options (emoji/code/fragments) ; `core/documents.py` (637) → `heading_analysis.py`.
+   - `core/conversion/core.py` (681) → extraire résolution d'options (emoji/code/fragments). [x] `core/documents.py` (637→547) → `core/heading_analysis.py` (les 2 `HTMLParser` imbriqués sortis en classes module ; `_HEADING_TAGS` mort supprimé).
 8. **`_MATH_PAYLOAD_PATTERN`** (reporté du Lot 2) — un foyer neutre importable par reader+escaper, à décider lors du découpage des writers.
 
 ---
@@ -83,4 +83,4 @@ Réduction nette `src/` à date : **−645 LOC** (791 supprimées / 146 ajoutée
 - Lot 1 ✅ — shims (`LaTeXWriter.register`, `git_version.format_version`, kwarg `callbacks`, `_ALIASES`, `getLatex`), dead code (`core/fonts/`, machinerie segments/assets/`runtime_common`/`prefer_inputs`/`slot_inclusions`, `CitationMode`/`Alignment`, doublons `_discover_local_templates`/loader/devtools). 849 tests.
 - Lot 2 ✅ — registre d'extensions mort supprimé, `core/html_utils.py` fusionné, `text.py` mort supprimé, `_discover_template_variables` unifié. 849 tests.
 - Lot 3 (partiel) ✅ — `writers/_ir_queries.py`, défauts `BaseFragment`, mixin `templates/common`. strategies déféré. 849 tests.
-- Lot 4 (entamé) — `glossary.py` relocalisé ; tables de langues extraites dans `core/templates/languages.py` (manifest 1039→931). Gros chantiers documentés ci-dessus. 849 tests.
+- Lot 4 (entamé) — `glossary.py` relocalisé ; `languages.py` extrait (manifest 1039→931) ; `heading_analysis.py` extrait (documents 637→547). Gros chantiers documentés ci-dessus. 849 tests.
