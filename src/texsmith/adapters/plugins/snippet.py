@@ -1617,6 +1617,34 @@ def _render_snippet_assets(block: SnippetBlock, context: RenderContextLike) -> _
     )
 
 
+def render_snippet_latex(html: str, context: RenderContextLike) -> str:
+    """Render a preserved ``.snippet`` HTML element to a LaTeX figure string.
+
+    Single entry point used by the LaTeX writer: it unwraps the stored snippet
+    markup, parses the fence (resolving file inclusions against the document via
+    the render context), compiles the preview assets, registers the artefact and
+    emits the figure. Keeps all snippet-HTML handling inside this plugin instead
+    of leaking BeautifulSoup and the block internals into the writer.
+    """
+    from bs4 import BeautifulSoup
+
+    soup = BeautifulSoup(html, "html.parser")
+    element = soup.find(["div", "pre"])
+    if element is None:
+        return ""
+
+    host_path = _resolve_host_path(
+        context.runtime.get("document_path"), context.runtime.get("source_dir")
+    )
+    block = _extract_snippet_block(element, host_path=host_path)
+    if block is None:
+        return ""
+
+    assets = _render_snippet_assets(block, context)
+    context.assets.register(f"snippet::{block.digest}", assets.pdf)
+    return str(_render_figure(context, assets, block))
+
+
 def _render_figure(
     context: RenderContextLike, assets: _SnippetAssets, block: SnippetBlock
 ) -> NavigableString:
@@ -1735,5 +1763,6 @@ __all__ = [
     "SnippetBlock",
     "asset_filename",
     "ensure_snippet_assets",
+    "render_snippet_latex",
     "rewrite_html_snippets",
 ]

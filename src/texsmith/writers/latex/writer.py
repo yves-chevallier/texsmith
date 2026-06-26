@@ -1165,29 +1165,9 @@ class LaTeXWriter:
 
     def _render_snippet(self, html: str) -> str:
         """Render a preserved ``.snippet`` element via the snippet compiler."""
-        from bs4 import BeautifulSoup
+        from texsmith.adapters.plugins.snippet import render_snippet_latex
 
-        from texsmith.adapters.plugins.snippet import (
-            _extract_snippet_block,
-            _render_figure,
-            _render_snippet_assets,
-            _resolve_host_path,
-        )
-
-        soup = BeautifulSoup(html, "html.parser")
-        element = soup.find(["div", "pre"])
-        if element is None:
-            return ""
-        document_path = self.state.runtime.get("document_path")
-        source_dir = self.state.runtime.get("source_dir")
-        host_path = _resolve_host_path(document_path, source_dir)
-        block = _extract_snippet_block(element, host_path=host_path)
-        if block is None:
-            return ""
-        assets = _render_snippet_assets(block, self.state)
-        self.state.assets.register(f"snippet::{block.digest}", assets.pdf)
-        node = _render_figure(self.state, assets, block)
-        return str(node)
+        return render_snippet_latex(html, self.state)
 
     # -- tables -----------------------------------------------------------
 
