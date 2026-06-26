@@ -59,10 +59,11 @@
     {% if section.steps %}
     #table(
       columns: (auto, auto, 1fr),
-      stroke: (y: 0.3pt),
-      inset: (x: 4pt, y: 6pt),
+      stroke: none,
+      inset: (x: 4pt, y: 5pt),
       align: (left + top, left + top, left + top),
       {% for step in section.steps %}
+      {% set step_loop = loop %}
       {% set raw = step.ingredients | default([], true) %}
       {% if raw is mapping %}{% set ingredients = [raw] %}{% elif raw is iterable and raw is not string %}{% set ingredients = raw %}{% else %}{% set ingredients = [] %}{% endif %}
       {% set note = step.instructions | default([], true) %}
@@ -72,6 +73,9 @@
       {% endfor %}
       {% else %}
       [], [], [{{ notecell(note) }}],
+      {% endif %}
+      {% if not step_loop.last %}
+      table.hline(stroke: 0.2pt),
       {% endif %}
       {% endfor %}
     )
