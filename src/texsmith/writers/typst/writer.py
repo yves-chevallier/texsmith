@@ -40,6 +40,13 @@ from typing import TYPE_CHECKING
 from texsmith.ir import nodes as ir
 from texsmith.writers.registry import WriterRegistry, writes
 
+from .._ir_queries import (
+    _citation_keys_from_payload,
+    _find_image,
+    _find_table,
+    _normalise_footnote_id,
+    _split_citation_keys,
+)
 from .escaper import escape_typst_chars
 
 
@@ -811,7 +818,7 @@ def _callout_fancy(title: str, body: str, cfg: dict[str, object]) -> str:
 def _callout_classic(title: str, body: str, cfg: dict[str, object]) -> str:
     """Monochrome callout with a left rule and an icon header ('classic')."""
     header = f"{_callout_icon(cfg)}{title}".strip()
-    head_line = f"#text(weight: \"bold\")[{header}]\n\n" if header else ""
+    head_line = f'#text(weight: "bold")[{header}]\n\n' if header else ""
     inner = _indent(f"{head_line}{body}", "  ")
     return (
         "#block(width: 100%, inset: (left: 10pt, rest: 6pt), "
@@ -820,14 +827,11 @@ def _callout_classic(title: str, body: str, cfg: dict[str, object]) -> str:
     )
 
 
-def _callout_minimal(title: str, body: str, cfg: dict[str, object]) -> str:
+def _callout_minimal(title: str, body: str, _cfg: dict[str, object]) -> str:
     """Border-only callout, no icon, uppercase bold label ('minimal')."""
     label = f'#text(weight: "bold")[#upper[{title}]]\n\n' if title else ""
     inner = _indent(f"{label}{body}", "  ")
-    return (
-        "#block(width: 100%, radius: 1pt, inset: 8pt, stroke: 0.5pt + black)[\n"
-        f"{inner}\n]"
-    )
+    return f"#block(width: 100%, radius: 1pt, inset: 8pt, stroke: 0.5pt + black)[\n{inner}\n]"
 
 
 def _in_separator_row(cell: object) -> bool:
@@ -877,26 +881,6 @@ def _indent(text: str, prefix: str) -> str:
     return "\n".join(f"{prefix}{line}" if line else line for line in text.split("\n"))
 
 
-def _find_image(blocks: Sequence[ir.Block]) -> ir.Image | None:
-    from texsmith.ir.visitor import walk
-
-    for block in blocks:
-        for node in walk(block):
-            if isinstance(node, ir.Image):
-                return node
-    return None
-
-
-def _find_table(blocks: Sequence[ir.Block]) -> ir.Table | None:
-    from texsmith.ir.visitor import walk
-
-    for block in blocks:
-        for node in walk(block):
-            if isinstance(node, ir.Table):
-                return node
-    return None
-
-
 # Typst has no \LaTeX-style logo macros; render the common logos as plain text.
 _TEXLOGO_TEXT = {
     "tex": "TeX",
@@ -904,46 +888,7 @@ _TEXLOGO_TEXT = {
     "latex2e": "LaTeX2e",
 }
 
-_DOI_KEY_PATTERN = r"10\.\d{4,9}/[^\s,\]]+"
-_DOI_KEY_RE = re.compile(rf"^{_DOI_KEY_PATTERN}$")
-_CITATION_KEY_PATTERN = rf"(?:{_DOI_KEY_PATTERN}|[A-Za-z0-9_\-:]+)"
-_CITATION_PAYLOAD_RE = re.compile(
-    rf"^\s*({_CITATION_KEY_PATTERN}(?:\s*,\s*{_CITATION_KEY_PATTERN})*)\s*$"
-)
 _LABEL_SAFE_RE = re.compile(r"[^A-Za-z0-9_.:-]")
-
-
-def _normalise_footnote_id(value: str | None) -> str:
-    if not value:
-        return ""
-    text = str(value).strip()
-    if ":" in text:
-        prefix, suffix = text.split(":", 1)
-        if prefix.startswith("fnref") or prefix.startswith("fn"):
-            return suffix
-    return text
-
-
-def _is_doi_key(candidate: str) -> bool:
-    return bool(_DOI_KEY_RE.match(candidate.strip()))
-
-
-def _split_citation_keys(identifier: str) -> list[str]:
-    if not identifier:
-        return []
-    if "," not in identifier:
-        return [identifier.strip()] if _is_doi_key(identifier) else []
-    return [part.strip() for part in identifier.split(",") if part.strip()]
-
-
-def _citation_keys_from_payload(text: str | None) -> list[str]:
-    """Citation keys when a footnote body is just a key list (else empty)."""
-    if not text:
-        return []
-    match = _CITATION_PAYLOAD_RE.match(text)
-    if not match:
-        return []
-    return [key.strip() for key in match.group(1).split(",") if key.strip()]
 
 
 # Equation cross-references / labels are handled outside ``mitex`` (see ``_mitex``).

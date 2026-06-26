@@ -42,21 +42,6 @@ class IndexFragment(BaseFragment[IndexConfig]):
     source: ClassVar[Path] = Path(__file__).with_name("ts-index.jinja.sty")
     context_defaults: ClassVar[dict[str, Any]] = {"extra_packages": "", "fragment_backmatter": ""}
 
-    def build_config(
-        self, context: Mapping[str, Any], overrides: Mapping[str, Any] | None = None
-    ) -> IndexConfig:
-        _ = overrides
-        return self.config_cls.from_context(context)
-
-    def inject(
-        self,
-        config: IndexConfig,
-        context: dict[str, Any],
-        overrides: Mapping[str, Any] | None = None,
-    ) -> None:
-        _ = overrides
-        config.inject_into(context)
-
     def should_render(self, config: IndexConfig) -> bool:
         return config.has_index
 

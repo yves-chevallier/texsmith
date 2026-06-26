@@ -41,21 +41,6 @@ class BibliographyFragment(BaseFragment[BibliographyConfig]):
     config_cls: ClassVar[type[BibliographyConfig]] = BibliographyConfig
     source: ClassVar[Path] = Path(__file__).with_name("ts-bibliography.jinja.tex")
 
-    def build_config(
-        self, context: Mapping[str, Any], overrides: Mapping[str, Any] | None = None
-    ) -> BibliographyConfig:
-        _ = overrides
-        return self.config_cls.from_context(context)
-
-    def inject(
-        self,
-        config: BibliographyConfig,
-        context: dict[str, Any],
-        overrides: Mapping[str, Any] | None = None,
-    ) -> None:
-        _ = overrides
-        config.inject_into(context)
-
     def should_render(self, config: BibliographyConfig) -> bool:
         return config.has_citations
 

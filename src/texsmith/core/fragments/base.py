@@ -86,19 +86,28 @@ class BaseFragment(ABC, Generic[C]):
     required_partials: ClassVar[Sequence[str]] = ()
     source: ClassVar[Path | None] = None
 
-    @abstractmethod
     def build_config(
         self, context: Mapping[str, Any], overrides: Mapping[str, Any] | None = None
     ) -> C:
-        """Return a normalized config instance from the provided context."""
-        raise NotImplementedError
+        """Return a normalized config instance from the provided context.
 
-    @abstractmethod
+        The default follows the common convention where the config class exposes
+        a ``from_context`` classmethod; fragments with bespoke parsing (e.g.
+        pydantic validation) override this.
+        """
+        _ = overrides
+        return self.config_cls.from_context(context)  # type: ignore[attr-defined]
+
     def inject(
         self, config: C, context: dict[str, Any], overrides: Mapping[str, Any] | None = None
     ) -> None:
-        """Inject Jinja/templating context variables derived from the config."""
-        raise NotImplementedError
+        """Inject Jinja/templating context variables derived from the config.
+
+        The default delegates to ``config.inject_into(context)``; fragments that
+        compute context keys directly override this.
+        """
+        _ = overrides
+        config.inject_into(context)  # type: ignore[attr-defined]
 
     @abstractmethod
     def should_render(self, config: C) -> bool:

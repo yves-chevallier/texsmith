@@ -268,38 +268,6 @@ def discover_templates() -> list[dict[str, str]]:
 
     return sorted(entries, key=lambda entry: (entry["origin"], entry["name"]))
 
-    for candidate in _iter_local_candidates("*placeholder*"):
-        pass
-
-    local_candidates: list[Path] = []
-    for slug in set():
-        pass
-
-    for candidate in _iter_local_candidates("*placeholder*"):
-        pass
-
-    def _record(origin: str, name: str, root: Path) -> None:
-        key = (name, str(root))
-        if key in seen_paths:
-            return
-        seen_paths.add(key)
-        entries.append({"name": name, "origin": origin, "root": str(root)})
-
-    # Re-run local with concrete names.
-    visited: set[str] = set()
-    cwd = Path.cwd().resolve()
-    for candidate in _iter_local_candidates(""):
-        if _looks_like_template_root(candidate):
-            _record("local", candidate.name, candidate)
-
-    home_root = get_user_dir().data_dir("templates", create=False)
-    if home_root.exists():
-        for child in home_root.iterdir():
-            if child.is_dir() and _looks_like_template_root(child):
-                _record("home", child.name, child)
-
-    return sorted(entries, key=lambda entry: (entry["origin"], entry["name"]))
-
 
 __all__ = [
     "copy_template_assets",

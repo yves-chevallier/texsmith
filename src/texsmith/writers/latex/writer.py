@@ -18,6 +18,13 @@ from requests.utils import requote_uri as requote_url
 from texsmith.ir import nodes as ir
 from texsmith.writers.registry import WriterRegistry, writes
 
+from .._ir_queries import (
+    _citation_keys_from_payload,
+    _find_image,
+    _find_table,
+    _normalise_footnote_id,
+    _split_citation_keys,
+)
 from .escaper import _MATH_PAYLOAD_PATTERN, escape_latex_chars, escape_text_segment
 
 
@@ -701,6 +708,8 @@ class LaTeXWriter:
                 from texsmith.core.exceptions import AssetMissingError
 
                 raise AssetMissingError(f"Unable to resolve link target '{target}'")
+            from texsmith.writers.latex.links import _infer_heading_reference
+
             target_ref = fragment or _infer_heading_reference(resolved)
             if target_ref:
                 return formatter.render_template("ref", text or "", ref=target_ref)
@@ -1354,75 +1363,6 @@ def _strip_text(text: str) -> str:
     BeautifulSoup ``get_text(strip=True)`` on a single element's inline run.
     """
     return " ".join(text.split())
-
-
-def _normalise_footnote_id(value: str | None) -> str:
-    if not value:
-        return ""
-    text = str(value).strip()
-    if ":" in text:
-        prefix, suffix = text.split(":", 1)
-        if prefix.startswith("fnref") or prefix.startswith("fn"):
-            return suffix
-    return text
-
-
-_DOI_KEY_PATTERN = r"10\.\d{4,9}/[^\s,\]]+"
-_DOI_KEY_RE = re.compile(rf"^{_DOI_KEY_PATTERN}$")
-
-
-def _is_doi_key(candidate: str) -> bool:
-    return bool(_DOI_KEY_RE.match(candidate.strip()))
-
-
-def _split_citation_keys(identifier: str) -> list[str]:
-    if not identifier:
-        return []
-    if "," not in identifier:
-        return [identifier.strip()] if _is_doi_key(identifier) else []
-    return [part.strip() for part in identifier.split(",") if part.strip()]
-
-
-_CITATION_KEY_PATTERN = rf"(?:{_DOI_KEY_PATTERN}|[A-Za-z0-9_\-:]+)"
-_CITATION_PAYLOAD_RE = re.compile(
-    rf"^\s*({_CITATION_KEY_PATTERN}(?:\s*,\s*{_CITATION_KEY_PATTERN})*)\s*$"
-)
-
-
-def _citation_keys_from_payload(text: str | None) -> list[str]:
-    """Citation keys when a footnote body is just a key list (else empty)."""
-    if not text:
-        return []
-    match = _CITATION_PAYLOAD_RE.match(text)
-    if not match:
-        return []
-    return [key.strip() for key in match.group(1).split(",") if key.strip()]
-
-
-def _infer_heading_reference(path):  # noqa: ANN001, ANN202
-    from texsmith.writers.latex.links import _infer_heading_reference as legacy
-
-    return legacy(path)
-
-
-def _find_image(blocks: Sequence[ir.Block]) -> ir.Image | None:
-    from texsmith.ir.visitor import walk
-
-    for block in blocks:
-        for node in walk(block):
-            if isinstance(node, ir.Image):
-                return node
-    return None
-
-
-def _find_table(blocks: Sequence[ir.Block]) -> ir.Table | None:
-    from texsmith.ir.visitor import walk
-
-    for block in blocks:
-        for node in walk(block):
-            if isinstance(node, ir.Table):
-                return node
-    return None
 
 
 __all__ = ["LaTeXWriteError", "LaTeXWriter"]

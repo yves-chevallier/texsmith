@@ -158,10 +158,6 @@ class GeometryFragment(BaseFragment[GeometryFragmentConfig]):
         """Return the rendered LaTeX fragment."""
         return self.render()
 
-    def getLatex(self) -> str:  # noqa: N802 - API compatibility
-        """CamelCase alias for front-end callers."""
-        return self.render()
-
 
 fragment = GeometryFragment()
 

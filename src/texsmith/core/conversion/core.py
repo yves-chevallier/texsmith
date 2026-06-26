@@ -17,7 +17,6 @@ from texsmith.core.context import DocumentState
 from texsmith.core.conversion_contexts import (
     ConversionContext,
     GenerationStrategy,
-    SegmentContext,
 )
 from texsmith.core.documents import Document
 from texsmith.core.exceptions import LatexRenderingError
@@ -283,7 +282,6 @@ def _render_document(
     if binding is None:  # pragma: no cover - defensive safeguard
         raise RuntimeError("Conversion context is missing a template binding.")
 
-    effective_base_level = binding.base_level or 0
     slot_base_levels = binding.slot_levels()
 
     runtime_common = _build_runtime_common(
@@ -325,21 +323,6 @@ def _render_document(
         else:
             fragment_offsets[fragment.name] = 1 - min(levels)
 
-    segment_registry: dict[str, list[SegmentContext]] = {}
-    for fragment in slot_fragments:
-        base_value = slot_base_levels.get(fragment.name, effective_base_level)
-        fragment_offset = fragment_offsets.get(fragment.name, 0)
-        base_offset = manual_base_level + fragment_offset
-        segment_registry.setdefault(fragment.name, []).append(
-            SegmentContext(
-                name=fragment.name,
-                html=fragment.html,
-                base_level=base_value + base_offset,
-                metadata=document.front_matter,
-                bibliography=context.bibliography_map,
-            )
-        )
-
     try:
         render_result = _render_slot_fragments(
             slot_fragments=slot_fragments,
@@ -368,8 +351,6 @@ def _render_document(
         default_content = ""
         slot_outputs[binding.default_slot] = default_content
     latex_output = default_content
-
-    document.segments = segment_registry
 
     citations = list(document_state.citations)
     bibliography_output: Path | None = None

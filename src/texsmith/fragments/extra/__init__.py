@@ -40,21 +40,6 @@ class ExtraFragment(BaseFragment[ExtraConfig]):
     source: ClassVar[Path] = Path(__file__).with_name("ts-extra.jinja.tex")
     context_defaults: ClassVar[dict[str, Any]] = {"ts_extra_packages": []}
 
-    def build_config(
-        self, context: Mapping[str, Any], overrides: Mapping[str, Any] | None = None
-    ) -> ExtraConfig:
-        _ = overrides
-        return self.config_cls.from_context(context)
-
-    def inject(
-        self,
-        config: ExtraConfig,
-        context: dict[str, Any],
-        overrides: Mapping[str, Any] | None = None,
-    ) -> None:
-        _ = overrides
-        config.inject_into(context)
-
     def should_render(self, config: ExtraConfig) -> bool:
         return config.enabled()
 

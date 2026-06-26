@@ -16,6 +16,7 @@ from pybtex.exceptions import PybtexError
 from slugify import slugify
 import yaml
 
+from ...adapters.html_utils import strip_html_comments
 from ..bibliography.collection import BibliographyCollection
 from ..bibliography.parsing import (
     bibliography_data_from_inline_entry,
@@ -24,7 +25,6 @@ from ..bibliography.parsing import (
 from ..config import BookConfig
 from ..conversion_contexts import ConversionContext
 from ..diagnostics import DiagnosticEmitter
-from ..html_utils import strip_html_comments
 from ..mustache import replace_mustaches
 from ..templates import TemplateBinding, TemplateError, TemplateSlot, resolve_template_binding
 from .debug import debug_enabled, ensure_emitter, raise_conversion_error, record_event

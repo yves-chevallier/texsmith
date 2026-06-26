@@ -231,8 +231,6 @@ def get_template(identifier: str | Path, **kwargs: Any) -> TemplateSession:
     runtime = load_template_runtime(str(identifier))
     settings = kwargs.pop("settings", None)
     emitter = kwargs.pop("emitter", None)
-    if "callbacks" in kwargs:
-        raise TypeError("'callbacks' is no longer supported; provide an emitter instead.")
     if kwargs:
         unexpected = ", ".join(sorted(kwargs))
         raise TypeError(f"Unexpected keyword arguments: {unexpected}")

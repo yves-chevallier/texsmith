@@ -8,8 +8,6 @@ from pathlib import Path
 import re
 from typing import Any
 
-from jinja2 import meta
-
 from texsmith.core.callouts import DEFAULT_CALLOUTS, merge_callouts, normalise_callouts
 from texsmith.core.conversion.debug import ensure_emitter
 from texsmith.core.diagnostics import DiagnosticEmitter
@@ -23,6 +21,7 @@ from texsmith.fonts.scripts import render_script_macros
 
 from ..context import DocumentState
 from .base import WrappableTemplate, _detect_index_engine
+from .context_usage import _discover_template_variables
 from .loader import copy_template_assets
 
 
@@ -334,7 +333,7 @@ def _merge_front_matter_glossary(
     template_context: dict[str, Any],
 ) -> None:
     """Seed acronym groups + entries from front-matter glossary metadata."""
-    from texsmith.core.conversion.glossary import (
+    from texsmith.core.glossary import (
         GlossaryValidationError,
         parse_front_matter_glossary,
     )
@@ -362,17 +361,6 @@ def _merge_front_matter_glossary(
             document_state.acronym_keys[entry.key] = sanitized_key
         if entry.group is not None:
             document_state.acronym_entry_groups[sanitized_key] = entry.group
-
-
-def _discover_template_variables(template: WrappableTemplate) -> set[str] | None:
-    """Return undeclared variables referenced by the template entrypoint."""
-    env = template.environment
-    try:
-        source, _, _ = env.loader.get_source(env, template.info.entrypoint)
-    except Exception:
-        return None
-    parsed = env.parse(source)
-    return set(meta.find_undeclared_variables(parsed))
 
 
 def _squash_blank_lines(text: str) -> str:

@@ -4,9 +4,9 @@ This module is the **single source of truth for the shape of a document** once
 it has been read from any input format (today: HTML produced by Markdown +
 Material/pymdownx). Readers lower their input *into* this tree; writers consume
 it to emit LaTeX, Typst, … The IR is **semantic and backend-agnostic**: a table
-column carries :class:`Alignment.RIGHT`, never the LaTeX preamble letter
-``"r"`` or a column spec like ``"lrX"``. Computing a backend preamble is the
-writer's job.
+carries the validated :mod:`texsmith.extensions.tables` model (one-letter
+semantic alignment ``l``/``c``/``r``/``j``), never a LaTeX preamble letter or a
+column spec like ``"lrX"``. Computing a backend preamble is the writer's job.
 
 Design rules (non-negotiable, see ``refactoring/PLAN.md`` Phase 1):
 
@@ -101,12 +101,10 @@ if TYPE_CHECKING:
 # satisfy RUF022; the categories are documented in the class docstrings.)
 __all__ = [
     "Admonition",
-    "Alignment",
     "AnyNode",
     "Block",
     "BlockQuote",
     "BulletList",
-    "CitationMode",
     "Cite",
     "Code",
     "CodeBlock",
@@ -156,41 +154,6 @@ __all__ = [
 # ---------------------------------------------------------------------------
 # Semantic enumerations
 # ---------------------------------------------------------------------------
-
-
-class Alignment(Enum):
-    """Semantic cell/column alignment. Writers map this to a backend preamble.
-
-    Never store a LaTeX letter (``"r"``) or column spec (``"lrX"``) in the IR;
-    use these members. :meth:`from_short` bridges the one-letter form used by
-    the (already-semantic) :mod:`texsmith.extensions.tables` model.
-    """
-
-    LEFT = "left"
-    CENTER = "center"
-    RIGHT = "right"
-    JUSTIFY = "justify"
-
-    @classmethod
-    def from_short(cls, value: str) -> Alignment:
-        """Map ``l``/``c``/``r``/``j`` (tables schema form) to a member."""
-        return {
-            "l": cls.LEFT,
-            "c": cls.CENTER,
-            "r": cls.RIGHT,
-            "j": cls.JUSTIFY,
-        }[value]
-
-
-class CitationMode(Enum):
-    """How a citation renders: in narrative or parenthetical form."""
-
-    NORMAL = "normal"
-    """Default ``\\cite``-style reference."""
-    AUTHOR_IN_TEXT = "author-in-text"
-    """``\\textcite`` — author becomes part of the sentence."""
-    SUPPRESS_AUTHOR = "suppress-author"
-    """``\\citeyear``-style — author suppressed."""
 
 
 class ListStyle(Enum):
@@ -359,7 +322,6 @@ class Cite(Inline):
     """Bibliographic citation. The writer collects ``keys`` into its state."""
 
     keys: tuple[str, ...]
-    mode: CitationMode = CitationMode.NORMAL
 
 
 @dataclass(frozen=True, slots=True)
@@ -543,8 +505,8 @@ class Table(Block):
     *already-semantic* :class:`texsmith.extensions.tables.schema.Table`. That
     model is the SSOT for table **shape**; re-implementing it here would
     duplicate ~870 lines and diverge. Alignment in that model is the one-letter
-    semantic form (``l``/``c``/``r``/``j``); use :meth:`Alignment.from_short`
-    when a writer needs the IR enum. **No LaTeX preamble string lives in it.**
+    semantic form (``l``/``c``/``r``/``j``). **No LaTeX preamble string lives
+    in it.**
 
     ``caption`` and ``label`` are lifted to the IR so they carry inline content
     and an identifier independently of the structural model.
@@ -591,9 +553,8 @@ class Table(Block):
     Contract for writers:
 
     * ``env == ""`` → **plain GFM table** (no ``data-ts-table``). The writer
-      renders via the plain ``table.tex`` path purely from ``model``
-      (alignment via :meth:`Alignment.from_short`). The other three strings are
-      empty and unused.
+      renders via the plain ``table.tex`` path purely from ``model``. The other
+      three strings are empty and unused.
     * ``env != ""`` → **rich table**. ``env`` is ``"tabular"`` / ``"tabularx"``
       / ``"longtable"``; ``colspec`` is the full LaTeX column preamble (e.g.
       ``>{\\raggedright\\arraybackslash}p{3cm}rX``); ``width`` is the

@@ -213,7 +213,7 @@ def render_markdown(
     # Promote front-matter glossary entries to inline ``*[KEY]: …`` definitions so
     # the standard ``abbr`` extension picks them up alongside body-level entries.
     try:
-        from texsmith.core.conversion.glossary import (
+        from texsmith.core.glossary import (
             append_synthetic_abbr_lines,
             parse_front_matter_glossary,
         )

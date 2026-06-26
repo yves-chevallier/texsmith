@@ -48,7 +48,6 @@ def test_defaults_are_applied() -> None:
     assert ir.Code("x").lang == ""
     assert ir.Math("x").display is False
     assert ir.Link((), "u").title == ""
-    assert ir.Cite(("k",)).mode is ir.CitationMode.NORMAL
     assert ir.OrderedList(()).start == 1
     assert ir.OrderedList(()).style is ir.ListStyle.DECIMAL
     assert ir.MarginNote(()).side is ir.MarginSide.RIGHT
@@ -102,23 +101,6 @@ def test_slots_block_unknown_attributes() -> None:
 
 
 # --------------------------------------------------------------------------
-# Semantic alignment enum
-# --------------------------------------------------------------------------
-
-
-def test_alignment_from_short() -> None:
-    assert ir.Alignment.from_short("l") is ir.Alignment.LEFT
-    assert ir.Alignment.from_short("c") is ir.Alignment.CENTER
-    assert ir.Alignment.from_short("r") is ir.Alignment.RIGHT
-    assert ir.Alignment.from_short("j") is ir.Alignment.JUSTIFY
-
-
-def test_alignment_rejects_latex_letters() -> None:
-    with pytest.raises(KeyError):
-        ir.Alignment.from_short("X")
-
-
-# --------------------------------------------------------------------------
 # Table wraps the semantic tables model without loss
 # --------------------------------------------------------------------------
 
@@ -135,7 +117,6 @@ def test_table_holds_semantic_model() -> None:
     # LaTeX preamble string.
     qty = node.model.columns[1]
     assert qty.align == "r"
-    assert ir.Alignment.from_short(qty.align) is ir.Alignment.RIGHT
     assert node.label == "tbl:fruit"
     assert node.caption[0].text == "Fruit"
     # Layout presentation fields default to empty (plain-GFM path).

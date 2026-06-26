@@ -10,12 +10,10 @@ from __future__ import annotations
 
 from texsmith.ir.nodes import (
     Admonition,
-    Alignment,
     AnyNode,
     Block,
     BlockQuote,
     BulletList,
-    CitationMode,
     Cite,
     Code,
     CodeBlock,
@@ -71,12 +69,10 @@ from texsmith.ir.visitor import (
 
 __all__ = [
     "Admonition",
-    "Alignment",
     "AnyNode",
     "Block",
     "BlockQuote",
     "BulletList",
-    "CitationMode",
     "Cite",
     "Code",
     "CodeBlock",

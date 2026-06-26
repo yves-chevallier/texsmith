@@ -1,7 +1,8 @@
-"""Generic BeautifulSoup attribute and asset-path helpers.
+"""Generic BeautifulSoup helpers shared by handlers and conversion layers.
 
-Pure utilities shared by the writer, the Markdown extensions and the
-plugins. They contain no LaTeX and never mutate the soup.
+Attribute, class and asset-path utilities used by the writer, the Markdown
+extensions and the plugins. They contain no LaTeX; all are pure queries except
+:func:`strip_html_comments`, the single in-place transform.
 """
 
 from __future__ import annotations
@@ -10,6 +11,8 @@ from collections.abc import Iterable
 from pathlib import Path
 from typing import Any, cast
 from urllib.parse import urlparse
+
+from bs4.element import Comment, Tag
 
 
 def coerce_attribute(value: Any) -> str | None:
@@ -53,3 +56,15 @@ def is_valid_url(url: str) -> bool:
     except ValueError:
         return False
     return bool(result.scheme and result.netloc)
+
+
+def strip_html_comments(root: Tag) -> None:
+    """Remove every HTML comment node from ``root`` in place.
+
+    HTML comments that survive into the LaTeX pipeline either leak as literal
+    text (fragment serialisation) or interfere with downstream text scans,
+    so we drop them as early as possible. The pass is idempotent: calling it
+    twice is a no-op.
+    """
+    for comment in root.find_all(string=lambda text: isinstance(text, Comment)):
+        comment.extract()

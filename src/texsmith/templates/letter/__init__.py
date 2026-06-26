@@ -21,6 +21,7 @@ from texsmith.adapters.latex.utils import escape_latex_chars
 from texsmith.adapters.transformers import svg2pdf
 from texsmith.core.exceptions import TransformerExecutionError
 from texsmith.core.templates import TemplateError, WrappableTemplate
+from texsmith.templates.common import TemplateContextHelpers
 
 
 _PACKAGE_ROOT = Path(__file__).parent.resolve()
@@ -134,7 +135,7 @@ _FR_MONTHS = [
 ]
 
 
-class Template(WrappableTemplate):
+class Template(TemplateContextHelpers, WrappableTemplate):
     """Expose the formal letter template as a wrappable template."""
 
     def __init__(self) -> None:
@@ -288,12 +289,6 @@ class Template(WrappableTemplate):
                 resolved_key = "en-uk"
 
         return _LANGUAGE_PROFILES[resolved_key]
-
-    def _coerce_string(self, value: Any) -> str | None:
-        if value is None:
-            return None
-        candidate = value.strip() if isinstance(value, str) else str(value).strip()
-        return candidate or None
 
     def _normalise_lines(self, payload: Any) -> list[str]:
         if payload is None:

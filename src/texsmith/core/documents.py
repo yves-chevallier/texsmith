@@ -52,7 +52,6 @@ from .conversion.inputs import (
     extract_content,
     extract_front_matter_slots,
 )
-from .conversion_contexts import AssetMapping, SegmentContext
 from .diagnostics import DiagnosticEmitter, NullEmitter
 from .metadata import PressMetadataError, normalise_press_metadata
 from .templates.runtime import coerce_base_level
@@ -174,11 +173,8 @@ class Document:
     slot_options: dict[str, SlotOptions] = field(default_factory=dict)
     extracted_title: str | None = None
     slot_requests: dict[str, str] = field(default_factory=dict)
-    slot_inclusions: set[str] = field(default_factory=set)
     language: str | None = None
     bibliography: dict[str, Any] = field(default_factory=dict)
-    assets: list[AssetMapping] = field(default_factory=list)
-    segments: dict[str, list[SegmentContext]] = field(default_factory=dict)
     _prepared_drop_title: bool | None = field(default=None, init=False, repr=False)
 
     @classmethod
@@ -323,11 +319,8 @@ class Document:
             slot_options=dict(self.slot_options),
             extracted_title=None,
             slot_requests={},
-            slot_inclusions=set(),
             language=None,
             bibliography={},
-            assets=[],
-            segments={},
         )
 
     @property
@@ -577,11 +570,8 @@ class Document:
         self._prepared_drop_title = None
         self.extracted_title = None
         self.slot_requests = {}
-        self.slot_inclusions = set()
         self.language = None
         self.bibliography = {}
-        self.assets = []
-        self.segments = {}
 
     def prepare_for_conversion(self) -> Document:
         """Normalise metadata and slot requests so the document is ready for conversion."""
@@ -627,11 +617,8 @@ class Document:
         self.slot_includes = set(combined_includes)
         self.slot_options = dict(combined_options)
         self.slot_requests = _slot_request_mapping(combined_selectors, combined_includes)
-        self.slot_inclusions = set(combined_includes)
         self.extracted_title = extracted_title
         self._prepared_drop_title = drop_title_flag
         self.language = None
         self.bibliography = {}
-        self.assets = []
-        self.segments = {}
         return self

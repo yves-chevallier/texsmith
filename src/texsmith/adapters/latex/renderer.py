@@ -62,14 +62,6 @@ class LaTeXRenderer:
         self.reader_registry: Any | None = None
         self.writer_class: type[LaTeXWriter] = LaTeXWriter
 
-    def register(self, _handler: Any) -> None:
-        """Accept legacy handler-registration calls as no-ops.
-
-        Handlers no longer live on the renderer — emission is the writer's job
-        (see :mod:`texsmith.writers.latex`). Callers (mkdocs plugin, plugin
-        ``register`` helpers) may still invoke this; it is intentionally inert.
-        """
-
     def render(
         self,
         html: str,

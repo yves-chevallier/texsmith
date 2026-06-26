@@ -92,8 +92,7 @@ def _author_views(overrides: Mapping[str, Any]) -> tuple[list[str], list[str]]:
             # markup and only the affiliation footnote keeps its ``#`` call.
             if affiliation:
                 blocks.append(
-                    f"{_escape_typst_content(name)}"
-                    f"#footnote[{_escape_typst_content(affiliation)}]"
+                    f"{_escape_typst_content(name)}#footnote[{_escape_typst_content(affiliation)}]"
                 )
             else:
                 blocks.append(_escape_typst_content(name))

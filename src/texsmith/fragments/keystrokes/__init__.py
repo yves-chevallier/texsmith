@@ -35,21 +35,6 @@ class KeystrokesFragment(BaseFragment[KeystrokesConfig]):
     source: ClassVar[Path] = Path(__file__).with_name("ts-keystrokes.jinja.sty")
     context_defaults: ClassVar[dict[str, Any]] = {"extra_packages": ""}
 
-    def build_config(
-        self, context: Mapping[str, Any], overrides: Mapping[str, Any] | None = None
-    ) -> KeystrokesConfig:
-        _ = overrides
-        return self.config_cls.from_context(context)
-
-    def inject(
-        self,
-        config: KeystrokesConfig,
-        context: dict[str, Any],
-        overrides: Mapping[str, Any] | None = None,
-    ) -> None:
-        _ = overrides
-        config.inject_into(context)
-
     def should_render(self, config: KeystrokesConfig) -> bool:
         return config.uses_keystrokes
 

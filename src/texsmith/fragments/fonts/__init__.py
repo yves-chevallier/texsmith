@@ -941,21 +941,6 @@ class FontsFragment(BaseFragment[FontsConfig]):
     source: ClassVar[Path] = Path(__file__).with_name("ts-fonts.jinja.sty")
     context_defaults: ClassVar[dict[str, Any]] = {"extra_packages": ""}
 
-    def build_config(
-        self, context: Mapping[str, Any], overrides: Mapping[str, Any] | None = None
-    ) -> FontsConfig:
-        _ = overrides
-        return self.config_cls.from_context(context)
-
-    def inject(
-        self,
-        config: FontsConfig,
-        context: dict[str, Any],
-        overrides: Mapping[str, Any] | None = None,
-    ) -> None:
-        _ = overrides
-        config.inject_into(context)
-
     def should_render(self, config: FontsConfig) -> bool:
         _ = config
         return True
