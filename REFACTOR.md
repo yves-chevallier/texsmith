@@ -16,8 +16,10 @@
 | 3 | Dédup structurelle | ~700 supprimés | moyen | [~] |
 | 4 | Refonte architecturale | ~3000 relocalisés | élevé | [~] |
 
-Baseline tests : **851 passed**. Après Lots 1–3 : **849 passed** (−2 tests `Alignment` supprimés), ruff clean.
-Réduction nette `src/` à date : **−645 LOC** (791 supprimées / 146 ajoutées), 3 fichiers supprimés, 1 ajouté (`writers/_ir_queries.py`).
+Baseline tests : **851 passed**. État courant : **849 passed** (−2 tests `Alignment` supprimés), ruff clean à chaque commit.
+Réduction nette `src/` cumulée (vs `0f0ea65`) : **−507 LOC** (1207 supprimées / 700 ajoutées — les ajouts sont surtout du code relocalisé dans des modules cohérents). 3 fichiers supprimés, 5 ajoutés (`writers/_ir_queries.py`, `core/glossary.py` via move, `core/templates/languages.py`, `core/heading_analysis.py`, `adapters/latex/engines/latex/log_render.py`).
+
+Commits (sur `refactor/ir-migration`) : `7e3233d` (Lots 1–3 + glossary), `1b631a5` (languages), `a8d04b5` (heading_analysis), `0c7a027` (log split).
 
 ---
 
