@@ -68,7 +68,7 @@ Réduction nette `src/` à date : **−645 LOC** (791 supprimées / 146 ajoutée
 7. **Découper les god objects** (relocalisation, pas suppression) :
    - `writers/latex/writer.py` (1428) → `spans.py` + `containers.py` + fusion `media.py` → cœur ~550.
    - `ui/cli/commands/render.py` (1225) → options dans `_options.py`, branches HTML/Typst extraites (cf. #2/#3) → ~600.
-   - `core/templates/manifest.py` (1039) → `languages.py` + `normalisers.py` → ~480.
+   - `core/templates/manifest.py` (1039) → [x] `languages.py` extrait (tables babel/BCP-47 + mappers, −108 L → 931 ; `runtime.py` repointé). [ ] `normalisers.py` : **bloqué par dépendance circulaire** (les normalisers décorés référencent `TemplateAttributeSpec` défini dans manifest, et manifest doit les importer pour peupler le registre) — exige de sortir le registre `_ATTRIBUTE_NORMALISERS` + `TemplateAttributeSpec` dans un module socle d'abord.
    - `adapters/plugins/snippet.py` (1739) → package `snippet/` (cache / imagerie / parsing).
    - `adapters/transformers/strategies.py` (1537) → une classe/fichier + dédup playwright (cf. Lot 3 déféré).
    - `adapters/latex/engines/__init__.py` (768) → sortir les runners aux (biber/index/glossaries) vers `aux.py`.
@@ -83,4 +83,4 @@ Réduction nette `src/` à date : **−645 LOC** (791 supprimées / 146 ajoutée
 - Lot 1 ✅ — shims (`LaTeXWriter.register`, `git_version.format_version`, kwarg `callbacks`, `_ALIASES`, `getLatex`), dead code (`core/fonts/`, machinerie segments/assets/`runtime_common`/`prefer_inputs`/`slot_inclusions`, `CitationMode`/`Alignment`, doublons `_discover_local_templates`/loader/devtools). 849 tests.
 - Lot 2 ✅ — registre d'extensions mort supprimé, `core/html_utils.py` fusionné, `text.py` mort supprimé, `_discover_template_variables` unifié. 849 tests.
 - Lot 3 (partiel) ✅ — `writers/_ir_queries.py`, défauts `BaseFragment`, mixin `templates/common`. strategies déféré. 849 tests.
-- Lot 4 (entamé) — `glossary.py` relocalisé. Gros chantiers documentés ci-dessus. 849 tests.
+- Lot 4 (entamé) — `glossary.py` relocalisé ; tables de langues extraites dans `core/templates/languages.py` (manifest 1039→931). Gros chantiers documentés ci-dessus. 849 tests.

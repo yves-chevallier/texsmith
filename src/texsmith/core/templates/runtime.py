@@ -8,9 +8,9 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 from .base import WrappableTemplate
+from .languages import _BABEL_LANGUAGE_ALIASES
 from .loader import load_template
 from .manifest import (
-    _BABEL_LANGUAGE_ALIASES,
     DEFAULT_TEMPLATE_LANGUAGE,
     TemplateError,
     TemplateSlot,
