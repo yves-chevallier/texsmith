@@ -17,12 +17,13 @@ all: $(PDF) $(TYPST_PDF)
 latex: $(PDF)
 typst: $(TYPST_PDF)
 
-$(PDF): colorful.md | $(OUTPUT_DIR)
+# Local template sources: a change to either must trigger a rebuild.
+$(PDF): colorful.md manifest.toml template.tex | $(OUTPUT_DIR)
 	$(TEXSMITH) colorful.md -o$(OUTPUT_DIR) --build $(TEXSMITH_ENGINE)
 	if [ "$(PDF)" != "$(BASE_PDF)" ]; then mv "$(BASE_PDF)" "$(PDF)"; fi
 	$(call copy_artifact,$@)
 
-$(TYPST_PDF): colorful.md | $(TYPST_DIR)
+$(TYPST_PDF): colorful.md manifest.toml template.typ | $(TYPST_DIR)
 	$(TEXSMITH) colorful.md -o$(TYPST_DIR) --format typst --build
 	$(call copy_artifact,$@)
 

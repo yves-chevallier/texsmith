@@ -1,6 +1,9 @@
 include ../common.mk
 
 SOURCE := cake.yml
+# Local template sources: a change to either must trigger a rebuild.
+TEMPLATE := manifest.toml template.tex tikz-cookingsymbols.sty
+TYPST_TEMPLATE := manifest.toml template.typ
 BASE_PDF := $(ENGINE_DIR)/cake.pdf
 PDF := $(ENGINE_DIR)/cake$(ENGINE_SUFFIX).pdf
 
@@ -17,11 +20,11 @@ all: $(PDF) $(TYPST_PDF)
 latex: $(PDF)
 typst: $(TYPST_PDF)
 
-$(PDF): $(SOURCE) | $(ENGINE_DIR)
+$(PDF): $(SOURCE) $(TEMPLATE) | $(ENGINE_DIR)
 	$(TEXSMITH) $< --build -t. -o$(ENGINE_DIR) -M $(TEXSMITH_ENGINE)
 	$(call copy_artifact,$@)
 
-$(TYPST_PDF): $(SOURCE) | $(TYPST_DIR)
+$(TYPST_PDF): $(SOURCE) $(TYPST_TEMPLATE) | $(TYPST_DIR)
 	$(TEXSMITH) $< -t. -o$(TYPST_DIR) -M --format typst --build
 	$(call copy_artifact,$@)
 
