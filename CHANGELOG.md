@@ -29,6 +29,7 @@ and the project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 - Merged `texsmith.core.html_utils` (`strip_html_comments`) into `texsmith.adapters.html_utils` and deleted the dead `texsmith.core.templates.text` module (the live `_squash_blank_lines` lives on in `wrapper`); `_discover_template_variables` is now defined once in `context_usage` and imported by `wrapper`. Front-matter glossary parsing moved from `texsmith.core.conversion.glossary` to `texsmith.core.glossary` (it has no conversion-layer dependency and sits beside the other front-matter resolvers).
 - Extracted the babel / BCP-47 language tables and mappers out of the 1039-line `texsmith.core.templates.manifest` into a focused `texsmith.core.templates.languages` module (manifest down to ~930 lines); `runtime` now imports the alias table from there instead of reaching into `manifest`.
 - Moved the two heading-analysis `HTMLParser` subclasses out of `texsmith.core.documents` (637 → ~547 lines) into `texsmith.core.heading_analysis` (`HeadingLevelScanner`, `HeadingInspector`), and dropped the unused `Document._HEADING_TAGS` class variable.
+- Split the LaTeX-log Rich renderer (`LatexLogRenderer`) out of the 720-line `texsmith.adapters.latex.engines.latex.log` into a sibling `log_render` module (log down to ~500 lines), separating log *parsing* from its *presentation*; the streaming entry point imports the renderer lazily to avoid an import cycle.
 
 ### Removed
 

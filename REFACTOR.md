@@ -72,7 +72,7 @@ Réduction nette `src/` à date : **−645 LOC** (791 supprimées / 146 ajoutée
    - `adapters/plugins/snippet.py` (1739) → package `snippet/` (cache / imagerie / parsing).
    - `adapters/transformers/strategies.py` (1537) → une classe/fichier + dédup playwright (cf. Lot 3 déféré).
    - `adapters/latex/engines/__init__.py` (768) → sortir les runners aux (biber/index/glossaries) vers `aux.py`.
-   - `adapters/latex/engines/latex/log.py` (720) → séparer `LatexLogParser` / `LatexLogRenderer`.
+   - [x] `adapters/latex/engines/latex/log.py` (720→500) → `LatexLogRenderer` sorti dans `log_render.py` (244) ; `stream_latexmk_output` importe le renderer paresseusement pour éviter le cycle ; patterns/types partagés restent dans `log`.
    - `core/conversion/core.py` (681) → extraire résolution d'options (emoji/code/fragments). [x] `core/documents.py` (637→547) → `core/heading_analysis.py` (les 2 `HTMLParser` imbriqués sortis en classes module ; `_HEADING_TAGS` mort supprimé).
 8. **`_MATH_PAYLOAD_PATTERN`** (reporté du Lot 2) — un foyer neutre importable par reader+escaper, à décider lors du découpage des writers.
 
