@@ -1,17 +1,35 @@
 include ../common.mk
 
-SOURCE := abbreviations.md
-BASE_PDF := $(ENGINE_DIR)/$(SOURCE:.md=.pdf)
-PDF := $(ENGINE_DIR)/$(SOURCE:.md=$(ENGINE_SUFFIX).pdf)
+OUTPUT_DIR := $(ENGINE_DIR)
+BASE_PDF := $(OUTPUT_DIR)/abbreviations.pdf
+PDF := $(OUTPUT_DIR)/abbreviations$(ENGINE_SUFFIX).pdf
 
-all: $(PDF)
+# Typst output -> build/typst/abbreviations.pdf (engine-agnostic, native Typst compiler)
+TYPST_DIR := $(OUTPUT_ROOT)/typst
+TYPST_PDF := $(TYPST_DIR)/abbreviations.pdf
 
-$(PDF): $(SOURCE) | $(ENGINE_DIR)
-	$(TEXSMITH) $< --build -tarticle -o$(ENGINE_DIR) -M $(TEXSMITH_ENGINE)
+# `make` builds BOTH the LaTeX and the Typst PDF.
+ARTIFACTS := $(PDF) $(TYPST_PDF)
+
+all: $(PDF) $(TYPST_PDF)
+
+# Build a single backend on demand.
+latex: $(PDF)
+typst: $(TYPST_PDF)
+
+$(PDF): abbreviations.md | $(OUTPUT_DIR)
+	$(TEXSMITH) abbreviations.md -o$(OUTPUT_DIR) --build -tarticle -M $(TEXSMITH_ENGINE)
 	if [ "$(PDF)" != "$(BASE_PDF)" ]; then mv "$(BASE_PDF)" "$(PDF)"; fi
 	$(call copy_artifact,$@)
+
+$(TYPST_PDF): abbreviations.md | $(TYPST_DIR)
+	$(TEXSMITH) abbreviations.md -o$(TYPST_DIR) -tarticle -M --format typst --build
+	$(call copy_artifact,$@)
+
+$(TYPST_DIR):
+	mkdir -p "$@"
 
 clean:
 	rm -rf $(OUTPUT_ROOT)
 
-.PHONY: all clean
+.PHONY: all latex typst clean

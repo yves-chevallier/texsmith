@@ -123,6 +123,15 @@ class TypstWriter:
     def _inlines(self, inlines: Sequence[ir.Inline]) -> str:
         return "".join(self.emit(node) for node in inlines)
 
+    def render_blocks(self, blocks: Sequence[ir.Block]) -> str:
+        """Render a sequence of blocks as full block-level Typst markup.
+
+        Used by the templated emitter for named-slot bodies (e.g. a poster's
+        quadrant), preserving paragraph/list structure — unlike
+        :meth:`render_inline_blocks`, which flattens to a single line.
+        """
+        return self._join_blocks(blocks)
+
     def render_inline_blocks(self, blocks: Sequence[ir.Block]) -> str:
         """Render blocks as inline-ish content (footnote / definition / slot bodies).
 
@@ -249,11 +258,34 @@ class TypstWriter:
         return self._mitex(node.text.strip(), display=node.display)
 
     def _mitex(self, tex: str, *, display: bool) -> str:
-        """Render TeX math source via the ``mitex`` package."""
+        """Render TeX math source via the ``mitex`` package.
+
+        Equation cross-references get native-Typst handling because ``mitex``
+        labels do not propagate to the document: a math span that is purely
+        ``\\eqref{k}`` / ``\\ref{k}`` becomes a Typst ``#ref``, and an embedded
+        ``\\label{k}`` is stripped from the source and re-attached as a Typst
+        label on the emitted (now numbered) equation so the reference resolves.
+        """
+        ref_match = _PURE_EQREF_RE.match(tex)
+        if ref_match:
+            label = _citation_label(ref_match.group(1))
+            if label:
+                self.state.runtime["uses_eqnref"] = True
+                return f"#ref(<{label}>)"
+
+        labels = _LABEL_RE.findall(tex)
+        tex = _LABEL_RE.sub("", tex).strip()
+
         self.state.runtime["uses_mitex"] = True
         fence = _fence_for(tex)
         if display:
-            return f"#mitex({fence}{tex}{fence})"
+            call = f"#mitex({fence}{tex}{fence})"
+            if labels:
+                label = _citation_label(labels[0])
+                if label:
+                    self.state.runtime["uses_eqnref"] = True
+                    return f"{call} <{label}>"
+            return call
         return f"#mi({fence}{tex}{fence})"
 
     @writes(ir.Link)
@@ -831,6 +863,10 @@ def _citation_keys_from_payload(text: str | None) -> list[str]:
         return []
     return [key.strip() for key in match.group(1).split(",") if key.strip()]
 
+
+# Equation cross-references / labels are handled outside ``mitex`` (see ``_mitex``).
+_PURE_EQREF_RE = re.compile(r"^\s*\\(?:eqref|ref)\s*\{([^}]*)\}\s*$")
+_LABEL_RE = re.compile(r"\\label\s*\{([^}]*)\}")
 
 _INLINE_MATH_RE = re.compile(r"^\s*(?:\$(?P<dollar>.+)\$|\\\((?P<paren>.+)\\\))\s*$", re.DOTALL)
 

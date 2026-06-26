@@ -37,17 +37,54 @@ _TYPST_BACKEND = "typst"
 
 def _build_typst_environment(template_root: Path) -> Environment:
     """Build the Jinja environment used to render ``.typ`` scaffolding."""
+    from texsmith.writers.typst.escaper import escape_typst_chars
+
     search_paths = [str(template_root)]
     common_dir = template_root.parent / "common"
     if common_dir.exists():
         search_paths.append(str(common_dir))
-    return Environment(
+    environment = Environment(
         loader=FileSystemLoader(search_paths),
         autoescape=False,
         trim_blocks=True,
         lstrip_blocks=True,
         keep_trailing_newline=True,
     )
+    # ``te`` (typst-escape) lets data-driven templates (e.g. the recipe card,
+    # which renders raw YAML strings rather than writer-produced markup) emit
+    # arbitrary text safely into Typst markup.
+    environment.filters["te"] = lambda value: escape_typst_chars(str(value)) if value else ""
+    # ``longdate`` renders an ISO ``YYYY-MM-DD`` as e.g. "14 July 1903" (other
+    # inputs pass through unchanged); used by the letter template's date line.
+    environment.filters["longdate"] = _format_long_date
+    return environment
+
+
+_LONG_DATE_MONTHS = (
+    "January",
+    "February",
+    "March",
+    "April",
+    "May",
+    "June",
+    "July",
+    "August",
+    "September",
+    "October",
+    "November",
+    "December",
+)
+
+
+def _format_long_date(value: Any) -> str:
+    """Render an ISO ``YYYY-MM-DD`` date as ``D Month YYYY`` (else pass through)."""
+    text = str(value or "").strip()
+    parts = text.split("-")
+    if len(parts) == 3 and all(part.isdigit() for part in parts):
+        year, month, day = (int(part) for part in parts)
+        if 1 <= month <= 12:
+            return f"{day} {_LONG_DATE_MONTHS[month - 1]} {year}"
+    return text
 
 
 class TypstTemplate:

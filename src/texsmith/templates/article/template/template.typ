@@ -21,6 +21,9 @@
 )
 #set text(font: "New Computer Modern", size: 11pt, lang: "{{ language | default('en') }}")
 #set par(justify: true)
+{% if uses_eqnref %}
+#set math.equation(numbering: "(1)")
+{% endif %}
 {% if columns | default(1) | int > 1 %}
 #set page(columns: {{ columns | int }})
 {% endif %}

@@ -12,10 +12,13 @@ $(TYP): article.md | $(OUTPUT_DIR)
 pdf: article.md | $(OUTPUT_DIR)
 	$(TEXSMITH) $< --format typst -o $(OUTPUT_DIR) --build
 
+# `typst` alias so the aggregate `make typst` at the examples root is uniform.
+typst: pdf
+
 $(OUTPUT_DIR):
 	mkdir -p "$@"
 
 clean:
 	rm -rf $(OUTPUT_DIR)
 
-.PHONY: all pdf clean
+.PHONY: all pdf typst clean

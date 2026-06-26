@@ -171,35 +171,58 @@ def _relabel_bibtex(text: str) -> str:
     return re.sub(r"@(\w+)\{([^,]+),", _sub, text)
 
 
-def _split_abstract(
-    document: ir.Document, slot_titles: Mapping[str, str]
-) -> tuple[ir.Document, tuple[ir.Block, ...]]:
-    """Pull the section matching the abstract slot title out of the body.
+def _extract_slots(
+    document: ir.Document,
+    declared_slots: Mapping[str, Any],
+    default_slot: str,
+    slot_titles: Mapping[str, str],
+) -> tuple[ir.Document, dict[str, tuple[ir.Block, ...]]]:
+    """Split the body into named slots by matching section headings to titles.
 
-    Returns ``(mainmatter_document, abstract_blocks)``. When no abstract slot is
-    declared or no matching section exists, the body is returned unchanged.
+    Generalises abstract extraction to any declared, non-default slot that has a
+    configured title (front-matter ``slots:`` mapping). Each matching section is
+    pulled out of the body — heading stripped when the slot declares
+    ``strip_heading`` — and the remaining blocks form the default (mainmatter)
+    sink. Returns ``(mainmatter_document, {slot_name: blocks})``.
     """
-    title = (slot_titles.get("abstract") or "").strip().casefold()
-    if not title:
-        return document, ()
+    wanted: dict[str, tuple[str, Any]] = {}
+    for name, slot in declared_slots.items():
+        if name == default_slot:
+            continue
+        title = (slot_titles.get(name) or "").strip().casefold()
+        if title:
+            wanted[title] = (name, slot)
+    if not wanted:
+        return document, {}
 
     blocks = list(document.content)
-    for index, block in enumerate(blocks):
-        if not isinstance(block, ir.Header):
-            continue
-        if _header_text(block).strip().casefold() != title:
-            continue
-        level = block.level
-        end = index + 1
-        while end < len(blocks):
-            nxt = blocks[end]
-            if isinstance(nxt, ir.Header) and nxt.level <= level:
-                break
-            end += 1
-        abstract = tuple(blocks[index + 1 : end])
-        remaining = tuple(blocks[:index] + blocks[end:])
-        return ir.Document(content=remaining), abstract
-    return document, ()
+    n = len(blocks)
+    consumed = [False] * n
+    extracted: dict[str, tuple[ir.Block, ...]] = {}
+    index = 0
+    while index < n:
+        block = blocks[index]
+        if isinstance(block, ir.Header):
+            key = _header_text(block).strip().casefold()
+            match = wanted.get(key)
+            if match is not None and match[0] not in extracted:
+                name, slot = match
+                level = block.level
+                end = index + 1
+                while end < n and not (
+                    isinstance(blocks[end], ir.Header) and blocks[end].level <= level
+                ):
+                    end += 1
+                start = index + 1 if getattr(slot, "strip_heading", False) else index
+                extracted[name] = tuple(blocks[start:end])
+                for cursor in range(index, end):
+                    consumed[cursor] = True
+                index = end
+                continue
+        index += 1
+
+    remaining = tuple(block for pos, block in enumerate(blocks) if not consumed[pos])
+    return ir.Document(content=remaining), extracted
 
 
 def _build_image_map(
@@ -282,6 +305,7 @@ def render_typst_document(
     template: str | None = None,
     bibliography_files: Sequence[Path] = (),
     output_dir: Path | None = None,
+    diagrams_backend: str | None = None,
 ) -> str:
     """Render one prepared document's HTML to a standalone ``.typ`` source.
 
@@ -289,6 +313,8 @@ def render_typst_document(
     section, the body is wrapped in that scaffolding; otherwise a minimal
     standalone preamble is used.
     """
+    from texsmith.writers.typst.diagrams import render_diagrams
+
     overrides = _press_overrides(_front_matter(document))
     title = _document_title(document, overrides)
 
@@ -296,14 +322,26 @@ def render_typst_document(
     bib_keys = frozenset(_citation_label(key) for key in collection.to_dict())
 
     ir_document = HtmlReader().read(document.html)
-    image_map = _build_image_map(ir_document, document.source_path.parent, output_dir)
+    source_dir = document.source_path.parent
+    # Render Draw.io / Mermaid diagrams to PNGs Typst can embed, rewriting the
+    # IR nodes; merge the produced assets over the generic image resolution map.
+    ir_document, diagram_map = render_diagrams(
+        ir_document, source_dir=source_dir, output_dir=output_dir, backend=diagrams_backend
+    )
+    image_map = _build_image_map(ir_document, source_dir, output_dir)
+    image_map.update(diagram_map)
 
     if template is None:
         state = TypstWriterState(
             title=title, bibliography=bib_keys, runtime={"image_map": image_map}
         )
         body = TypstWriter(state).write(ir_document)
-        return render_document(body, title=title, uses_mitex=bool(state.runtime.get("uses_mitex")))
+        return render_document(
+            body,
+            title=title,
+            uses_mitex=bool(state.runtime.get("uses_mitex")),
+            uses_eqnref=bool(state.runtime.get("uses_eqnref")),
+        )
 
     typst_template = load_typst_template(template)
     return _render_templated(
@@ -315,7 +353,33 @@ def render_typst_document(
         bib_keys,
         bib_resource,
         image_map,
+        source_dir=source_dir,
+        output_dir=output_dir,
     )
+
+
+def _copy_template_asset(value: Any, source_dir: Path, output_dir: Path | None) -> str:
+    """Copy a source-relative file referenced by an attribute into ``output_dir``.
+
+    Returns the emitted relative name (so a template can ``#image(...)`` it), or
+    an empty string when ``value`` is not a usable local file. Powers the Jinja
+    ``asset()`` helper used by data-driven templates (e.g. a letter signature).
+    """
+    import shutil
+
+    if not isinstance(value, str) or not value.strip() or output_dir is None:
+        return ""
+    candidate = (source_dir / value.strip()).resolve()
+    if not candidate.is_file():
+        return ""
+    rel = Path(value.strip()).name
+    destination = (output_dir / rel).resolve()
+    try:
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(candidate, destination)
+    except OSError:
+        return ""
+    return rel
 
 
 def _render_templated(
@@ -327,6 +391,9 @@ def _render_templated(
     bib_keys: frozenset[str],
     bib_resource: str | None,
     image_map: dict[str, str],
+    *,
+    source_dir: Path,
+    output_dir: Path | None = None,
 ) -> str:
     context = typst_template.resolve_attributes(overrides)
 
@@ -336,7 +403,10 @@ def _render_templated(
         title, ir_document = _promote_title(ir_document)
 
     slot_titles = _slot_titles(document)
-    mainmatter_doc, abstract_blocks = _split_abstract(ir_document, slot_titles)
+    declared_slots, default_slot = typst_template.info.resolve_slots()
+    mainmatter_doc, slot_blocks = _extract_slots(
+        ir_document, declared_slots, default_slot, slot_titles
+    )
 
     # Map the body's top-level headings onto Typst heading level 1, so numbering
     # starts at "1" (not "0.1") whatever the source depth — the title (h1) is
@@ -354,7 +424,7 @@ def _render_templated(
     )
     writer = TypstWriter(state)
     mainmatter = writer.write(mainmatter_doc)
-    abstract = writer.render_inline_blocks(abstract_blocks) if abstract_blocks else ""
+    rendered_slots = {name: writer.render_blocks(blocks) for name, blocks in slot_blocks.items()}
 
     author_names, author_blocks = _author_views(overrides)
 
@@ -362,8 +432,20 @@ def _render_templated(
     context["title"] = title
     context["author_names"] = author_names
     context["author_blocks"] = author_blocks
+    # Raw front matter, for data-driven templates (e.g. the recipe card) that
+    # render structured front-matter fields rather than the document body.
+    context["front_matter"] = _front_matter(document)
+    # ``asset(path)`` copies a source-relative file next to the ``.typ`` and
+    # returns its name, so a template can embed it (e.g. a letter signature SVG).
+    context["asset"] = lambda value: _copy_template_asset(value, source_dir, output_dir)
     context["mainmatter"] = mainmatter
-    context["abstract"] = abstract
+    context["abstract"] = rendered_slots.get("abstract", "")
+    # Expose every declared non-default slot (e.g. a poster's quadrants) to the
+    # scaffolding, defaulting to empty so the template can rely on the variable.
+    for name in declared_slots:
+        if name in (default_slot, "abstract"):
+            continue
+        context[name] = rendered_slots.get(name, "")
     if "paper" not in context:
         paper = overrides.get("paper")
         if isinstance(paper, str) and paper.strip():
@@ -371,6 +453,7 @@ def _render_templated(
     context["has_bibliography"] = bool(state.citations and bib_resource)
     context["bibliography_resource"] = bib_resource or ""
     context["uses_mitex"] = bool(state.runtime.get("uses_mitex"))
+    context["uses_eqnref"] = bool(state.runtime.get("uses_eqnref"))
 
     return typst_template.render(context)
 

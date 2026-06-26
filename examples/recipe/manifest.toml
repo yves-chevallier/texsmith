@@ -26,3 +26,20 @@ default = true
 default = ""
 type = "string"
 allow_empty = true
+
+# --------------------------------------------------------------------------- #
+# Typst backend: a native recipe card rendered directly from the YAML front
+# matter (data-driven, like the LaTeX template — the document body is unused).
+# --------------------------------------------------------------------------- #
+[typst.template]
+name = "recipe"
+version = "0.1.0"
+entrypoint = "template.typ"
+
+[typst.template.slots.mainmatter]
+default = true
+
+[typst.template.attributes.preamble]
+default = ""
+type = "string"
+allow_empty = true

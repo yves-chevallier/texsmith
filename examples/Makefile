@@ -29,10 +29,20 @@ EXAMPLES := \
 
 EXAMPLES_WITH_COMPARE := multi-document
 
+# Examples that expose a `typst` target (the mkdocs example has no Typst path).
+TYPST_EXAMPLES := $(filter-out mkdocs,$(EXAMPLES))
+
 all:
 	@set -e; \
 	for example in $(EXAMPLES); do \
 		$(MAKE) -C $$example ENGINE=$(ENGINE) all; \
+	done
+
+# Build only the Typst PDFs across every example (engine-agnostic).
+typst:
+	@set -e; \
+	for example in $(TYPST_EXAMPLES); do \
+		$(MAKE) -C $$example typst; \
 	done
 
 compare:
@@ -57,4 +67,4 @@ clean:
 		$(MAKE) -C $$example clean; \
 	done
 
-.PHONY: all clean tectonic compare lualatex xelatex
+.PHONY: all clean tectonic compare lualatex xelatex typst

@@ -6,9 +6,15 @@ being installed.
 
 Two compilation paths are supported, tried in this order:
 
-1. The ``typst`` PyPI package (``pip install texsmith[typst]``), which embeds
+1. The system ``typst`` binary resolved via ``PATH``.
+2. The ``typst`` PyPI package (``pip install texsmith[typst]``), which embeds
    the Rust compiler and needs nothing on ``PATH``.
-2. The system ``typst`` binary resolved via ``PATH``.
+
+The system binary is preferred because it is the explicitly-installed,
+user-controlled toolchain: it tracks the ``mitex`` math package's supported
+Typst versions, whereas the embedded package floats to the latest release
+(``typst>=0.15``) which can drop symbols ``mitex`` still emits (e.g. ``diff``
+for ``\\partial``). The embedded package remains a zero-PATH fallback.
 
 If neither is available the result carries an actionable message.
 """
@@ -83,17 +89,17 @@ def _compile_with_binary(binary: str, source: Path, pdf_path: Path) -> TypstBuil
 def compile_typst(source: Path, *, output: Path | None = None) -> TypstBuildResult:
     """Compile ``source`` (.typ) to PDF using the first available compiler.
 
-    Prefers the embedded ``typst`` package (no ``PATH`` dependency) and falls
-    back to the system binary. Returns a :class:`TypstBuildResult`; never raises
-    for a missing compiler or a failed compilation (the caller decides how to
-    surface the message).
+    Prefers the system ``typst`` binary (the mitex-compatible, user-controlled
+    toolchain) and falls back to the embedded ``typst`` package. Returns a
+    :class:`TypstBuildResult`; never raises for a missing compiler or a failed
+    compilation (the caller decides how to surface the message).
     """
     pdf_path = output or source.with_suffix(".pdf")
-    if _package_available():
-        return _compile_with_package(source, pdf_path)
     binary = _binary_path()
     if binary is not None:
         return _compile_with_binary(binary, source, pdf_path)
+    if _package_available():
+        return _compile_with_package(source, pdf_path)
     return TypstBuildResult(ok=False, pdf_path=None, message=_MISSING_MESSAGE)
 
 

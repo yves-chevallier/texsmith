@@ -418,6 +418,30 @@ def _normalise_language(value: Any, spec: TemplateAttributeSpec, fallback: Any) 
     raise TemplateError(f"Attribute '{spec.name}' received unsupported language value '{value}'.")
 
 
+@_register_attribute_normaliser("bcp47_language")
+def _normalise_bcp47_language(value: Any, spec: TemplateAttributeSpec, fallback: Any) -> Any:
+    """Map babel language names / locale codes onto a BCP-47 primary subtag.
+
+    The Typst backend's ``#set text(lang: …)`` expects an ISO 639 (BCP-47)
+    language code such as ``"en"`` / ``"fr"``, whereas front matter routinely
+    carries babel names (``"english"``) shared with the LaTeX backend. This
+    normaliser bridges both so a single ``language: english`` source works for
+    either backend.
+    """
+    if value is None or value == "":
+        return fallback
+
+    candidate = value if isinstance(value, str) else str(value)
+    mapped = _map_bcp47_language(candidate)
+    if mapped:
+        return mapped
+
+    if fallback is not None:
+        return fallback
+
+    raise TemplateError(f"Attribute '{spec.name}' received unsupported language value '{value}'.")
+
+
 @_register_attribute_normaliser("callout_style")
 def _normalise_callout_style_attribute(
     value: Any, spec: TemplateAttributeSpec, fallback: Any
@@ -952,4 +976,64 @@ def _map_babel_language(value: str | None) -> str | None:
         return _BABEL_LANGUAGE_ALIASES[primary]
     if lowered.isalpha():
         return lowered
+    return None
+
+
+# Babel language names -> BCP-47 primary subtag (the inverse view of
+# ``_BABEL_LANGUAGE_ALIASES``, which maps codes -> babel names). Used by the
+# Typst backend, whose ``text(lang: …)`` wants an ISO 639 code.
+_BCP47_FROM_BABEL: dict[str, str] = {
+    "english": "en",
+    "british": "en",
+    "american": "en",
+    "australian": "en",
+    "canadian": "en",
+    "usenglish": "en",
+    "ukenglish": "en",
+    "french": "fr",
+    "francais": "fr",
+    "canadien": "fr",
+    "acadian": "fr",
+    "german": "de",
+    "ngerman": "de",
+    "austrian": "de",
+    "naustrian": "de",
+    "spanish": "es",
+    "mexican": "es",
+    "italian": "it",
+    "dutch": "nl",
+    "portuguese": "pt",
+    "brazilian": "pt",
+    "russian": "ru",
+    "polish": "pl",
+    "czech": "cs",
+    "slovak": "sk",
+    "slovene": "sl",
+    "danish": "da",
+    "swedish": "sv",
+    "finnish": "fi",
+    "norwegian": "nb",
+    "nynorsk": "nn",
+    "catalan": "ca",
+    "romanian": "ro",
+    "turkish": "tr",
+}
+
+
+def _map_bcp47_language(value: str | None) -> str | None:
+    """Resolve ``value`` to a BCP-47 primary subtag (babel name or code in)."""
+    if value is None:
+        return None
+    candidate = value.strip()
+    if not candidate:
+        return None
+    lowered = candidate.lower().replace("_", "-")
+    if lowered in _BCP47_FROM_BABEL:
+        return _BCP47_FROM_BABEL[lowered]
+    primary = lowered.split("-", 1)[0]
+    if primary in _BCP47_FROM_BABEL:
+        return _BCP47_FROM_BABEL[primary]
+    # Already an ISO 639 code (e.g. "en", "fr", "en-gb" -> "en").
+    if 2 <= len(primary) <= 3 and primary.isalpha():
+        return primary
     return None

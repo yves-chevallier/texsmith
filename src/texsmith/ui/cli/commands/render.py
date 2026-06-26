@@ -887,6 +887,9 @@ def render(
                     template=template,
                     bibliography_files=bibliography_files,
                     output_dir=typst_output_dir,
+                    diagrams_backend=(
+                        diagrams_backend.lower() if isinstance(diagrams_backend, str) else None
+                    ),
                 )
             except TemplateError as exc:
                 emit_error(str(exc), exception=exc)

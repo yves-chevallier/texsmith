@@ -256,6 +256,7 @@ sources = ["edition"]
 default = "en"
 type = "string"
 allow_empty = false
+normaliser = "bcp47_language"
 sources = ["language", "lang"]
 
 [typst.template.attributes.listoffigures]

@@ -205,8 +205,9 @@ description = "Document version, rendered after the date."
 default = "en"
 type = "string"
 allow_empty = false
+normaliser = "bcp47_language"
 sources = ["language", "lang"]
-description = "Document language (BCP-47 code) for hyphenation and quotes."
+description = "Document language (BCP-47 code) for hyphenation and quotes. Babel names (e.g. 'english') are mapped to their ISO 639 code."
 
 [typst.template.attributes.toc]
 default = false

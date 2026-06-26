@@ -13,9 +13,18 @@ DEFAULT_PDF := $(DEFAULT_DIR)/emoji-default$(ENGINE_SUFFIX).pdf
 COLOR_BASE := $(COLOR_DIR)/emoji.pdf
 BW_BASE := $(BW_DIR)/emoji.pdf
 DEFAULT_BASE := $(DEFAULT_DIR)/emoji.pdf
-ARTIFACTS := $(BW_PDF) $(DEFAULT_PDF)
+
+# Typst output -> build/typst/emoji.pdf. The fonts.emoji color/black variants
+# are LaTeX-only (font selection); the Typst backend emits a single rendering.
+TYPST_DIR := $(OUTPUT_ROOT)/typst
+TYPST_PDF := $(TYPST_DIR)/emoji.pdf
+
+ARTIFACTS := $(BW_PDF) $(DEFAULT_PDF) $(TYPST_PDF)
 
 $(COLOR_DIR) $(BW_DIR) $(DEFAULT_DIR): | $(OUTPUT_DIR)
+	mkdir -p "$@"
+
+$(TYPST_DIR):
 	mkdir -p "$@"
 
 VARIANTS := $(BW_PDF) $(DEFAULT_PDF)
@@ -24,7 +33,11 @@ VARIANTS += $(COLOR_PDF)
 ARTIFACTS += $(COLOR_PDF)
 endif
 
-all: $(VARIANTS)
+all: $(VARIANTS) $(TYPST_PDF)
+
+# Build a single backend on demand.
+latex: $(VARIANTS)
+typst: $(TYPST_PDF)
 
 ifeq ($(ENGINE),lualatex)
 $(COLOR_PDF): $(SOURCE) | $(COLOR_DIR)
@@ -46,7 +59,11 @@ $(DEFAULT_PDF): $(SOURCE) | $(DEFAULT_DIR)
 	mv $(DEFAULT_BASE) $(DEFAULT_PDF)
 	$(call copy_artifact,$@)
 
+$(TYPST_PDF): $(SOURCE) | $(TYPST_DIR)
+	$(TEXSMITH) $< -o$(TYPST_DIR) -tarticle --format typst --build
+	$(call copy_artifact,$@)
+
 clean:
 	rm -rf $(OUTPUT_ROOT)
 
-.PHONY: all clean
+.PHONY: all clean latex typst

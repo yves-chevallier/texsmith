@@ -5,12 +5,34 @@ FILES := a.md b.md c.md config.yml
 PDF := $(OUTPUT_DIR)/multidocument$(ENGINE_SUFFIX).pdf
 BASE_PDF := $(OUTPUT_DIR)/main.pdf
 
-all: $(PDF)
+# Typst output -> build/typst/{a,b,c}.pdf. The Typst backend renders one PDF per
+# input document (it has no multi-document merge like the LaTeX config.yml path).
+TYPST_DIR := $(OUTPUT_ROOT)/typst
+TYPST_PDFS := $(TYPST_DIR)/a.pdf $(TYPST_DIR)/b.pdf $(TYPST_DIR)/c.pdf
+
+ARTIFACTS := $(PDF) $(TYPST_PDFS)
+
+all: $(PDF) $(TYPST_PDFS)
+
+# Build a single backend on demand.
+latex: $(PDF)
+typst: $(TYPST_PDFS)
 
 $(PDF): $(FILES) | $(OUTPUT_DIR)
 	$(TEXSMITH) $^ -o$(OUTPUT_DIR) --build -tarticle $(TEXSMITH_ENGINE)
 	mv $(BASE_PDF) $(PDF)
 	$(call copy_artifact,$@)
+
+$(TYPST_DIR)/a.pdf: $(FILES) | $(TYPST_DIR)
+	$(TEXSMITH) a.md b.md c.md config.yml -o$(TYPST_DIR) -tarticle --format typst --build
+	$(call copy_artifact,$(TYPST_DIR)/a.pdf)
+	$(call copy_artifact,$(TYPST_DIR)/b.pdf)
+	$(call copy_artifact,$(TYPST_DIR)/c.pdf)
+
+$(TYPST_DIR)/b.pdf $(TYPST_DIR)/c.pdf: $(TYPST_DIR)/a.pdf
+
+$(TYPST_DIR):
+	mkdir -p "$@"
 
 view: $(PDF)
 	evince $(PDF) &
@@ -29,4 +51,4 @@ compare: 1.pdf 2.pdf 3.pdf
 	convert $(COMPARE_TMP)/1_tinted.png $(COMPARE_TMP)/2_tinted.png $(COMPARE_TMP)/3_tinted.png -background none -layers merge $(COMPARE_OUT)
 clean:
 	rm -rf $(OUTPUT_ROOT)
-.PHONY: all clean view compare
+.PHONY: all clean latex typst view compare

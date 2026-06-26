@@ -1,9 +1,10 @@
 """Tests for Typst PDF compilation path selection.
 
-``compile_typst`` must prefer the embedded ``typst`` Python package, fall back
-to the system binary, and degrade gracefully (no exception, actionable message)
-when neither is available. Selection is verified with monkeypatching so the
-tests run regardless of what is installed on the machine.
+``compile_typst`` must prefer the system ``typst`` binary (the mitex-compatible,
+user-controlled toolchain), fall back to the embedded ``typst`` Python package,
+and degrade gracefully (no exception, actionable message) when neither is
+available. Selection is verified with monkeypatching so the tests run regardless
+of what is installed on the machine.
 """
 
 from __future__ import annotations
@@ -28,7 +29,7 @@ def test_typst_available_reflects_either_path(monkeypatch: pytest.MonkeyPatch) -
     assert build.typst_available() is True
 
 
-def test_prefers_package_over_binary(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+def test_prefers_binary_over_package(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     calls: list[str] = []
     monkeypatch.setattr(build, "_package_available", lambda: True)
     monkeypatch.setattr(build, "_binary_path", lambda: "/usr/bin/typst")
@@ -46,25 +47,25 @@ def test_prefers_package_over_binary(monkeypatch: pytest.MonkeyPatch, tmp_path: 
 
     result = build.compile_typst(tmp_path / "doc.typ")
 
-    assert calls == ["package"]
+    assert calls == ["binary"]
     assert result.ok is True
     assert result.pdf_path == tmp_path / "doc.pdf"
 
 
-def test_falls_back_to_binary(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+def test_falls_back_to_package(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     calls: list[str] = []
-    monkeypatch.setattr(build, "_package_available", lambda: False)
-    monkeypatch.setattr(build, "_binary_path", lambda: "/usr/bin/typst")
+    monkeypatch.setattr(build, "_package_available", lambda: True)
+    monkeypatch.setattr(build, "_binary_path", lambda: None)
 
-    def fake_binary(binary: str, source: Path, pdf: Path) -> build.TypstBuildResult:
-        calls.append(binary)
-        return build.TypstBuildResult(ok=True, pdf_path=pdf, message="bin")
+    def fake_package(source: Path, pdf: Path) -> build.TypstBuildResult:
+        calls.append("package")
+        return build.TypstBuildResult(ok=True, pdf_path=pdf, message="pkg")
 
-    monkeypatch.setattr(build, "_compile_with_binary", fake_binary)
+    monkeypatch.setattr(build, "_compile_with_package", fake_package)
 
     result = build.compile_typst(tmp_path / "doc.typ", output=tmp_path / "out.pdf")
 
-    assert calls == ["/usr/bin/typst"]
+    assert calls == ["package"]
     assert result.ok is True
     assert result.pdf_path == tmp_path / "out.pdf"
 

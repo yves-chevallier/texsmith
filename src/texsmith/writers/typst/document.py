@@ -10,7 +10,9 @@ single Markdown/HTML source can be compiled to PDF with the ``typst`` binary.
 from __future__ import annotations
 
 
-def render_document(body: str, *, title: str = "", uses_mitex: bool = False) -> str:
+def render_document(
+    body: str, *, title: str = "", uses_mitex: bool = False, uses_eqnref: bool = False
+) -> str:
     """Wrap a Typst writer ``body`` into a standalone, compilable document."""
     lines: list[str] = []
     if uses_mitex:
@@ -20,6 +22,8 @@ def render_document(body: str, *, title: str = "", uses_mitex: bool = False) -> 
         '#set text(font: "New Computer Modern", size: 11pt)',
         "#set par(justify: true)",
     ]
+    if uses_eqnref:
+        lines.append('#set math.equation(numbering: "(1)")')
     if title.strip():
         lines.append("")
         lines.append(f'#align(center)[#text(size: 1.6em, weight: "bold")[{title.strip()}]]')

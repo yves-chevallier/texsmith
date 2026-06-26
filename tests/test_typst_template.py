@@ -27,10 +27,10 @@ def test_manifest_section_raises_for_missing_backend() -> None:
 
 
 def test_template_without_typst_section_is_explicit() -> None:
-    # The 'letter' template has no [typst.template] block.
+    # The 'snippet' template has no [typst.template] block.
     from texsmith.core.templates.loader import load_template
 
-    root = load_template("letter").root
+    root = load_template("snippet").root
     with pytest.raises(TemplateError, match="does not declare a"):
         TypstTemplate(root)
 
