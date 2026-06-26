@@ -344,8 +344,43 @@ def test_admonition_renders_titled_block() -> None:
     )
     out = emit(adm)
     assert "#block(" in out
-    assert "*Heads up*" in out
+    assert "Heads up" in out
     assert "body" in out
+
+
+def _styled_admonition(style: str, callouts: dict[str, dict[str, object]]) -> str:
+    state = TypstWriterState(callout_style=style, callouts=callouts)
+    adm = ir.Admonition(
+        kind="warning",
+        title=(ir.Str("Careful"),),
+        content=(ir.Para(content=(ir.Str("mind the gap"),)),),
+    )
+    return TypstWriter(state).emit(adm)
+
+
+def test_admonition_fancy_uses_kind_colour_and_icon() -> None:
+    callouts = {"warning": {"border_color": "ffb200", "icon": "⚠"}}
+    out = _styled_admonition("fancy", callouts)
+    assert 'rgb("#ffb200")' in out  # kind border colour
+    assert "⚠" in out  # kind icon
+    assert "Careful" in out
+    assert "mind the gap" in out
+
+
+def test_admonition_classic_is_monochrome_with_left_rule() -> None:
+    callouts = {"warning": {"border_color": "ffb200", "icon": "⚠"}}
+    out = _styled_admonition("classic", callouts)
+    assert "luma(40%)" in out  # monochrome left rule, not the kind colour
+    assert 'rgb("#ffb200")' not in out
+    assert "⚠" in out
+
+
+def test_admonition_minimal_uppercases_label_without_icon() -> None:
+    callouts = {"warning": {"border_color": "ffb200", "icon": "⚠"}}
+    out = _styled_admonition("minimal", callouts)
+    assert "#upper[Careful]" in out
+    assert "⚠" not in out  # minimal style drops icons
+    assert 'rgb("#ffb200")' not in out
 
 
 def test_footnote_ref_resolves_to_citation_when_in_bibliography() -> None:

@@ -890,6 +890,7 @@ def render(
                     diagrams_backend=(
                         diagrams_backend.lower() if isinstance(diagrams_backend, str) else None
                     ),
+                    template_options=attribute_overrides,
                 )
             except TemplateError as exc:
                 emit_error(str(exc), exception=exc)

@@ -34,6 +34,11 @@ class TypstWriterState:
     footnotes: dict[str, str] = field(default_factory=dict)
     citations: list[str] = field(default_factory=list)
     abbreviations: dict[str, str] = field(default_factory=dict)
+    # Callout rendering: the resolved style ("fancy" | "classic" | "minimal")
+    # and the merged definitions (kind -> {background_color, border_color,
+    # title_color, icon}), mirroring the LaTeX ts-callouts fragment.
+    callout_style: str = "fancy"
+    callouts: dict[str, dict[str, Any]] = field(default_factory=dict)
     runtime: dict[str, Any] = field(default_factory=dict)
 
     def record_citation(self, key: str) -> None:

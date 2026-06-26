@@ -299,6 +299,57 @@ def _slot_titles(document: Document) -> dict[str, str]:
     return {key: str(value) for key, value in titles.items() if isinstance(value, str)}
 
 
+def _prepare_callouts(
+    document: Document, template_options: Mapping[str, Any] | None
+) -> tuple[str, dict[str, dict[str, Any]]]:
+    """Resolve mustaches and callout styling for the Typst path.
+
+    ``prepare_documents`` (the shared input normalisation) does *not* run the
+    mustache substitution / callout resolution that the LaTeX
+    ``resolve_conversion_context`` performs — those happen during ``execute``,
+    which the Typst path bypasses. This mirrors that step for Typst: it
+    substitutes ``{{…}}`` placeholders in the document front matter and HTML
+    (so e.g. ``{{callouts.style}}`` resolves) and returns the resolved callout
+    style plus the merged definitions (built-in palette + custom callouts).
+    """
+    from texsmith.core.callouts import DEFAULT_CALLOUTS, merge_callouts, normalise_callouts
+    from texsmith.core.conversion.debug import ensure_emitter
+    from texsmith.core.conversion.templates import (
+        _build_mustache_defaults,
+        _replace_mustaches_in_html,
+        _resolve_callout_style,
+    )
+    from texsmith.core.mustache import replace_mustaches_in_structure
+
+    front_matter = _front_matter(document)
+    overrides = _press_overrides(dict(front_matter))
+    options = dict(template_options or {})
+
+    callout_style = _resolve_callout_style(options, overrides, front_matter) or "fancy"
+    mustache_defaults = _build_mustache_defaults(options, overrides, front_matter)
+    contexts = (options, overrides, front_matter, mustache_defaults)
+
+    resolved_fm = replace_mustaches_in_structure(dict(front_matter), contexts)
+    document.set_front_matter(resolved_fm)
+    document.set_html(
+        _replace_mustaches_in_html(
+            document.html,
+            (options, overrides, resolved_fm, mustache_defaults),
+            emitter=ensure_emitter(None),
+            source=str(document.source_path),
+        )
+    )
+
+    custom: Mapping[str, Any] | None = None
+    for context in (overrides, resolved_fm):
+        candidate = context.get("callouts") if isinstance(context, Mapping) else None
+        if isinstance(candidate, Mapping):
+            custom = candidate
+            break
+    callouts = normalise_callouts(merge_callouts(DEFAULT_CALLOUTS, custom))
+    return callout_style, callouts
+
+
 def render_typst_document(
     document: Document,
     *,
@@ -306,6 +357,7 @@ def render_typst_document(
     bibliography_files: Sequence[Path] = (),
     output_dir: Path | None = None,
     diagrams_backend: str | None = None,
+    template_options: Mapping[str, Any] | None = None,
 ) -> str:
     """Render one prepared document's HTML to a standalone ``.typ`` source.
 
@@ -314,6 +366,8 @@ def render_typst_document(
     standalone preamble is used.
     """
     from texsmith.writers.typst.diagrams import render_diagrams
+
+    callout_style, callouts = _prepare_callouts(document, template_options)
 
     overrides = _press_overrides(_front_matter(document))
     title = _document_title(document, overrides)
@@ -333,7 +387,11 @@ def render_typst_document(
 
     if template is None:
         state = TypstWriterState(
-            title=title, bibliography=bib_keys, runtime={"image_map": image_map}
+            title=title,
+            bibliography=bib_keys,
+            callout_style=callout_style,
+            callouts=callouts,
+            runtime={"image_map": image_map},
         )
         body = TypstWriter(state).write(ir_document)
         return render_document(
@@ -355,6 +413,8 @@ def render_typst_document(
         image_map,
         source_dir=source_dir,
         output_dir=output_dir,
+        callout_style=callout_style,
+        callouts=callouts,
     )
 
 
@@ -394,6 +454,8 @@ def _render_templated(
     *,
     source_dir: Path,
     output_dir: Path | None = None,
+    callout_style: str = "fancy",
+    callouts: dict[str, dict[str, Any]] | None = None,
 ) -> str:
     context = typst_template.resolve_attributes(overrides)
 
@@ -420,6 +482,8 @@ def _render_templated(
         title=title,
         heading_offset=offset,
         bibliography=bib_keys,
+        callout_style=callout_style,
+        callouts=callouts or {},
         runtime={"image_map": image_map},
     )
     writer = TypstWriter(state)

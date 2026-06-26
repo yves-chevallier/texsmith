@@ -456,11 +456,24 @@ class TypstWriter:
     @writes(ir.Admonition)
     def _admonition(self, node: ir.Admonition) -> str:
         title = self._inlines(node.title).strip()
-        body = _indent(self._join_blocks(node.content), "  ")
-        header = f"  [*{title}*]\n" if title else ""
-        # A simple bordered block: faithful enough for callouts without a
-        # callout theme system (which the Typst backend has no counterpart for).
-        return f"#block(stroke: 0.5pt, inset: 8pt, radius: 2pt, width: 100%)[\n{header}{body}\n]"
+        body = self._join_blocks(node.content)
+        cfg = self._callout_config(node.kind)
+        style = (self.state.callout_style or "fancy").strip().lower()
+        if style == "classic":
+            return _callout_classic(title, body, cfg)
+        if style == "minimal":
+            return _callout_minimal(title, body, cfg)
+        return _callout_fancy(title, body, cfg)
+
+    def _callout_config(self, kind: str) -> dict[str, object]:
+        """Return the callout definition for ``kind`` (falling back to default)."""
+        callouts = self.state.callouts
+        key = (kind or "").strip().lower()
+        if key in callouts:
+            return callouts[key]
+        if "default" in callouts:
+            return callouts["default"]
+        return {"background_color": "f0f0f0", "border_color": "808080", "icon": "ℹ"}  # noqa: RUF001
 
     @writes(ir.DefinitionList)
     def _definition_list(self, node: ir.DefinitionList) -> str:
@@ -746,6 +759,58 @@ class TypstWriteError(RuntimeError):
 # --------------------------------------------------------------------------- #
 # Module-level helpers
 # --------------------------------------------------------------------------- #
+
+
+def _typst_color(value: object, fallback: str = "808080") -> str:
+    """Return a Typst ``rgb("#rrggbb")`` expression from a hex colour string."""
+    text = str(value or "").strip().lstrip("#")
+    if not text:
+        text = fallback
+    return f'rgb("#{text}")'
+
+
+def _callout_icon(cfg: dict[str, object]) -> str:
+    """Return the callout icon followed by a thin space (empty when unset)."""
+    icon = str(cfg.get("icon") or "").strip()
+    return f"{icon}#h(0.4em)" if icon else ""
+
+
+def _callout_fancy(title: str, body: str, cfg: dict[str, object]) -> str:
+    """Coloured callout with an icon header (mirrors the LaTeX 'fancy' style)."""
+    border = _typst_color(cfg.get("border_color"))
+    title_color = _typst_color(cfg.get("title_color", cfg.get("border_color")))
+    header = f"{_callout_icon(cfg)}{title}".strip() or title
+    inner = _indent(body, "    ")
+    return (
+        f"#block(width: 100%, radius: 2pt, "
+        f"stroke: (left: 1.5pt + {border}, rest: 0.4pt + {border}))[\n"
+        f"  #block(width: 100%, fill: {border}.lighten(90%), inset: (x: 8pt, y: 4pt))"
+        f'[#text(weight: "bold", fill: {title_color})[{header}]]\n'
+        f"  #block(width: 100%, inset: (x: 8pt, y: 6pt))[\n{inner}\n  ]\n"
+        f"]"
+    )
+
+
+def _callout_classic(title: str, body: str, cfg: dict[str, object]) -> str:
+    """Monochrome callout with a left rule and an icon header ('classic')."""
+    header = f"{_callout_icon(cfg)}{title}".strip()
+    head_line = f"#text(weight: \"bold\")[{header}]\n\n" if header else ""
+    inner = _indent(f"{head_line}{body}", "  ")
+    return (
+        "#block(width: 100%, inset: (left: 10pt, rest: 6pt), "
+        "stroke: (left: 1.2pt + luma(40%)))[\n"
+        f"{inner}\n]"
+    )
+
+
+def _callout_minimal(title: str, body: str, cfg: dict[str, object]) -> str:
+    """Border-only callout, no icon, uppercase bold label ('minimal')."""
+    label = f'#text(weight: "bold")[#upper[{title}]]\n\n' if title else ""
+    inner = _indent(f"{label}{body}", "  ")
+    return (
+        "#block(width: 100%, radius: 1pt, inset: 8pt, stroke: 0.5pt + black)[\n"
+        f"{inner}\n]"
+    )
 
 
 def _in_separator_row(cell: object) -> bool:
