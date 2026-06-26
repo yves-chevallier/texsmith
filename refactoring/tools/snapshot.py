@@ -266,6 +266,9 @@ CLI_CASES: tuple[Case, ...] = (
     # No template (-t…) — the Typst path bypasses the LaTeX template machinery.
     Case("typst-hello", "typst-hello", ("hello.md", "--format", "typst")),
     Case("typst-article", "typst-article", ("article.md", "--format", "typst")),
+    # Rich (yaml/data-ts) tables on the Typst backend: column groups,
+    # multirow/multicolumn spans, labelled separators, footer, width columns.
+    Case("typst-tables", "tables", ("tables.md", "--format", "typst")),
     # Typst templated documents (Phase 4b): the SAME article/book sources as
     # their LaTeX cases, rendered through the [typst.template] scaffolding.
     Case(

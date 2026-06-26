@@ -7,15 +7,18 @@ node class has an emitter registered with the shared
 :func:`~texsmith.writers.registry.writes` decorator and dispatch is keyed by
 node class along the MRO.
 
-Coverage spans a real templated document (article + book): Document, Para/Plain,
-Header, all inline emphasis (Emph/Strong/Strikeout/Underline/Highlight/SmallCaps/
-Sub/Superscript/Quoted), Code/CodeBlock, Math, Link, Cite, Note (footnote),
-IndexEntry, TexLogo, Keystroke, Span (footnote-ref/abbr/label + transparent),
-Bullet/OrderedList, DefinitionList, BlockQuote, Admonition, Div, HorizontalRule,
-Image, Figure, and simple (GFM) Table. Any IR node without a Typst emitter raises
-:class:`TypstWriteError` — an explicit, localised error naming the node type and
-the backend, mirroring the LaTeX backend's ``LaTeXWriteError``. Rich
-(yaml/data-ts) tables remain out of the covered subset.
+Coverage now reaches **full IR-node parity with the LaTeX backend**: Document,
+Para/Plain, Header, all inline emphasis (Emph/Strong/Strikeout/Underline/
+Highlight/SmallCaps/Sub/Superscript/Quoted), Code/CodeBlock, Math, Link, Cite,
+Note (footnote), IndexEntry, TexLogo, Keystroke, MarginNote, ProgressBar, Span
+(footnote-ref/abbr/label + transparent), Bullet/OrderedList, DefinitionList,
+BlockQuote, Admonition, Div, HorizontalRule, Image, Figure, and **both** simple
+(GFM) and rich (yaml/data-ts) Tables — the latter rebuilt as a native Typst
+``#table`` (column groups, multirow/multicolumn spans, labelled separators,
+footer) from the validated tables-schema model. Any IR node without a Typst
+emitter still raises :class:`TypstWriteError` — an explicit, localised error
+naming the node type and the backend, mirroring the LaTeX backend's
+``LaTeXWriteError``.
 
 Math note: the IR carries *TeX* math source (``Math.text``), and the HtmlReader
 encodes math typed inline in text as a *latex* ``RawInline`` (a documented IR
@@ -220,6 +223,15 @@ class TypstWriter:
             f"#box(stroke: 0.5pt, inset: (x: 3pt), outset: (y: 2pt))[{k}]" for k in keys
         )
 
+    @writes(ir.MarginNote)
+    def _marginnote(self, node: ir.MarginNote) -> str:
+        # Typst has no dependency-free margin-note primitive; degrade to a
+        # ``#footnote`` (the closest native aside) so the supplementary content
+        # is preserved rather than dropped — mirroring the graceful degradation
+        # the Admonition emitter applies. The ``side`` hint has no counterpart.
+        body = self.render_inline_blocks(node.content).strip()
+        return f"#footnote[{body}]" if body else ""
+
     @writes(ir.Span)
     def _span(self, node: ir.Span) -> str:
         return self._render_span(node)
@@ -357,6 +369,23 @@ class TypstWriter:
     def _hr(self, _node: ir.HorizontalRule) -> str:
         return "#line(length: 100%)"
 
+    @writes(ir.ProgressBar)
+    def _progressbar(self, node: ir.ProgressBar) -> str:
+        # A native Typst bar: a fixed-width rounded track clipping a filled
+        # box whose width is the fraction (relative to the track). No external
+        # package needed — built from ``#box`` primitives.
+        fraction = max(0.0, min(1.0, node.fraction))
+        pct = f"{fraction * 100:g}%"
+        height = "6pt" if node.thin else "12pt"
+        label = self._inlines(node.label).strip() if node.label else pct
+        track = (
+            f"#box(width: 9cm, height: {height}, radius: 1pt, stroke: 0.5pt, "
+            f"fill: luma(90%), clip: true)[#box(width: {pct}, height: 100%, "
+            f"fill: luma(40%))[]]"
+        )
+        suffix = f" {label}" if label else ""
+        return f"{track}{suffix}"
+
     @writes(ir.Figure)
     def _figure(self, node: ir.Figure) -> str:
         caption = self._inlines(node.caption).strip() if node.caption else ""
@@ -480,9 +509,10 @@ class TypstWriter:
         from texsmith.extensions.tables import schema as tbl
 
         if node.env or node.colspec:
-            # Rich (yaml/data-ts) tables carry pre-computed LaTeX layout; they
-            # are not part of the covered Typst subset.
-            raise TypstWriteError(node, detail="rich (yaml/data-ts) tables")
+            # Rich (yaml/data-ts) tables carry pre-computed LaTeX layout; the
+            # Typst backend rebuilds the equivalent native ``#table`` directly
+            # from the validated model (groups, spans, separators, footer).
+            return self._rich_table_call(node)
 
         model = node.model
         leaves: list[tbl.LeafColumn] = []
@@ -515,8 +545,158 @@ class TypstWriter:
             lines.append("  " + ", ".join(f"[{c}]" for c in row) + ",")
         return "\n".join(lines) + "\n)"
 
+    # -- rich (yaml / data-ts) table --------------------------------------
+
+    def _rich_table_call(self, node: ir.Table) -> str:
+        """Rebuild a rich table as a native Typst ``#table`` from the model.
+
+        The IR carries the validated tables-schema ``model`` (the shape SSOT:
+        column groups, multirow/multicolumn spans, separators, footer) plus the
+        rendered inline ``cells`` (document order). We regenerate the canonical
+        ``data-ts`` HTML for the shape, inject the writer-rendered Typst cell
+        content into it (matching the LaTeX yaml path), then translate the
+        ``thead``/``tbody``/``tfoot`` rows into Typst ``table.header(...)``,
+        ``table.cell(colspan/rowspan/align)`` cells and ``table.hline()``
+        separators. Typst auto-flows cells by column count and skips positions
+        consumed by a span, so the HTML's "absorbed slots omitted" convention
+        maps directly without manual cursor threading.
+        """
+        from bs4 import BeautifulSoup
+        from bs4.element import Tag
+
+        from texsmith.extensions.tables import schema as tbl
+        from texsmith.extensions.tables.html import render_table_html
+
+        model = node.model
+        total_cols = tbl.total_leaves(model.columns)
+        leaves: list[tbl.LeafColumn] = []
+        for column in model.columns:
+            leaves.extend(tbl.column_leaves(column))
+
+        html = render_table_html(model)
+        soup = BeautifulSoup(html, "html.parser")
+        table = soup.find("table")
+        if not isinstance(table, Tag):  # pragma: no cover - defensive
+            raise TypstWriteError(node, detail="rich (yaml/data-ts) tables")
+
+        # Inject the writer-rendered inline content (document order, caption and
+        # separator-row cells excluded — same set as ``node.cells``).
+        rendered = [self._inlines(cell).strip() for cell in node.cells]
+        html_cells = [
+            c
+            for c in table.find_all(["th", "td"])
+            if c.find_parent("caption") is None and not _in_separator_row(c)
+        ]
+        for cell, content in zip(html_cells, rendered, strict=False):
+            cell.clear()
+            cell.append(content)
+
+        columns_spec = _rich_columns_spec(leaves, total_cols)
+        aligns = ", ".join(_TYPST_ALIGN.get((leaf.align or "l"), "left") for leaf in leaves)
+
+        lines = [
+            "table(",
+            f"  columns: {columns_spec},",
+            f"  align: ({aligns}),",
+        ]
+
+        thead = table.find("thead")
+        if isinstance(thead, Tag):
+            header_cells: list[str] = []
+            for tr in thead.find_all("tr", recursive=False):
+                header_cells.extend(_rich_row_cells(tr))
+            lines.append("  table.header(" + ", ".join(header_cells) + "),")
+
+        for section_name in ("tbody", "tfoot"):
+            section = table.find(section_name)
+            if not isinstance(section, Tag):
+                continue
+            if section_name == "tfoot":
+                # An extra rule splits summary rows from the body.
+                lines.append("  table.hline(),")
+            lines.extend(_rich_section_lines(section, total_cols))
+
+        return "\n".join(lines) + "\n)"
+
 
 _TYPST_ALIGN = {"l": "left", "c": "center", "r": "right", "j": "left"}
+
+
+def _rich_section_lines(section: object, total_cols: int) -> list[str]:
+    """Translate a ``<tbody>``/``<tfoot>`` into Typst row / hline lines."""
+    from bs4.element import Tag
+
+    from texsmith.adapters.html_utils import coerce_attribute
+    from texsmith.extensions.tables.constants import TableAttr
+
+    lines: list[str] = []
+    if not isinstance(section, Tag):  # pragma: no cover - defensive
+        return lines
+    for tr in section.find_all("tr", recursive=False):
+        if coerce_attribute(tr.get(TableAttr.ROLE)) == "separator":
+            rule = coerce_attribute(tr.get(TableAttr.RULE))
+            lines.append("  table.hline(stroke: 1pt)," if rule == "double" else "  table.hline(),")
+            cell = tr.find(["td", "th"])
+            label = cell.get_text(strip=False).strip() if cell is not None else ""
+            if label:
+                lines.append(f"  table.cell(colspan: {total_cols})[_{escape_typst_chars(label)}_],")
+            continue
+        lines.append("  " + ", ".join(_rich_row_cells(tr)) + ",")
+    return lines
+
+
+def _rich_row_cells(tr: object) -> list[str]:
+    """Render every ``<th>``/``<td>`` in a row to a Typst cell expression."""
+    from texsmith.adapters.html_utils import coerce_attribute
+    from texsmith.extensions.tables.constants import TableAttr
+
+    cells: list[str] = []
+    for cell in tr.find_all(["th", "td"], recursive=False):  # type: ignore[attr-defined]
+        rowspan = int(coerce_attribute(cell.get("rowspan")) or 1)
+        colspan = int(coerce_attribute(cell.get("colspan")) or 1)
+        align = coerce_attribute(cell.get(TableAttr.ALIGN))
+        content = cell.get_text(strip=False).strip()
+        cells.append(_rich_cell(content, rowspan, colspan, align))
+    return cells
+
+
+def _rich_columns_spec(leaves: Sequence[object], total_cols: int) -> str:
+    """Return a Typst ``columns:`` value from the leaf column widths.
+
+    ``X`` (tabularx fill) → ``1fr``; an ``NN%`` width passes through as a Typst
+    relative length; everything else (natural / opaque LaTeX lengths) → ``auto``.
+    When every column is auto we emit the bare integer count.
+    """
+    widths: list[str] = []
+    any_sized = False
+    for leaf in leaves:
+        width = getattr(leaf, "width", None)
+        if width == "X":
+            widths.append("1fr")
+            any_sized = True
+        elif isinstance(width, str) and width.endswith("%"):
+            widths.append(width)
+            any_sized = True
+        else:
+            widths.append("auto")
+    if not any_sized:
+        return str(total_cols)
+    return "(" + ", ".join(widths) + ")"
+
+
+def _rich_cell(content: str, rowspan: int, colspan: int, align: object) -> str:
+    """Render one rich-table cell as a Typst content cell or ``table.cell(...)``."""
+    body = f"[{content}]"
+    args: list[str] = []
+    if colspan > 1:
+        args.append(f"colspan: {colspan}")
+    if rowspan > 1:
+        args.append(f"rowspan: {rowspan}")
+    if align in {"l", "c", "r", "j"}:
+        args.append(f"align: {_TYPST_ALIGN[align]}")  # type: ignore[index]
+    if args:
+        return f"table.cell({', '.join(args)}){body}"
+    return body
 
 
 class TypstWriteError(RuntimeError):
@@ -534,6 +714,14 @@ class TypstWriteError(RuntimeError):
 # --------------------------------------------------------------------------- #
 # Module-level helpers
 # --------------------------------------------------------------------------- #
+
+
+def _in_separator_row(cell: object) -> bool:
+    """True when ``cell`` lives in a ``data-ts-role="separator"`` row."""
+    from texsmith.extensions.tables.constants import TableAttr
+
+    row = cell.find_parent("tr")  # type: ignore[attr-defined]
+    return row is not None and row.get(TableAttr.ROLE) == "separator"
 
 
 def _escape_string(text: str) -> str:

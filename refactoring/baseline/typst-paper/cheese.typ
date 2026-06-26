@@ -1,4 +1,4 @@
-#import "@preview/mitex:0.2.4": mi, mitex
+#import "@preview/mitex:0.2.6": mi, mitex
 #set document(
   title: "Mechanical Stiffness and Malleability of Hard Cheese",
   author: ("Dr. Jane Q. Dairy","Dr. John P. Curds",),

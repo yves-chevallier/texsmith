@@ -1,4 +1,4 @@
-#import "@preview/mitex:0.2.4": mi, mitex
+#import "@preview/mitex:0.2.6": mi, mitex
 #set document(
   title: "Albert Einstein",
   author: ("Wikipedia Contributors",),

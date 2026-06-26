@@ -170,17 +170,83 @@ def test_simple_gfm_table() -> None:
     assert "[1], [2]," in out
 
 
-def test_rich_table_raises() -> None:
-    html = (
-        "<table><thead><tr><th>A</th><th>B</th></tr></thead>"
-        "<tbody><tr><td>1</td><td>2</td></tr></tbody></table>"
+def _rich_table(payload: dict) -> ir.Table:
+    """Build an IR ``Table`` for a yaml-table payload via the production reader.
+
+    Mirrors the rich-table path: ``parse_table`` validates the shape,
+    ``render_table_html`` produces the canonical ``data-ts`` HTML, and the
+    ``HtmlReader`` lowers it back into a rich ``ir.Table`` (carrying ``env`` /
+    ``colspec`` so the writer takes the rich branch).
+    """
+    from texsmith.extensions.tables.html import render_table_html
+    from texsmith.extensions.tables.schema import parse_table
+
+    html = render_table_html(parse_table(payload))
+    for node in HtmlReader().read(html).content:
+        if isinstance(node, ir.Table):
+            return node
+    raise AssertionError("no table produced")
+
+
+def test_rich_table_renders_native_typst() -> None:
+    """A yaml table (separator + footer) becomes a native Typst ``#table``."""
+    table = _rich_table(
+        {
+            "columns": ["Fruit", "Geneva", "Zurich"],
+            "rows": [
+                ["Apples", 120, 180],
+                {"separator": {"label": "Seasonal shortage"}},
+                ["Apricots", 5, 0],
+            ],
+            "footer": [["Total", 170, 180]],
+        }
     )
-    plain = HtmlReader().read(html).content[0]
-    assert isinstance(plain, ir.Table)
-    # Promote it to a "rich" table by attaching pre-computed layout strings.
-    node = ir.Table(model=plain.model, cells=plain.cells, env="tabular", colspec="ll")
-    with pytest.raises(TypstWriteError, match="rich"):
-        emit(node)
+    # Marked rich (carries pre-computed layout), yet no longer raises.
+    assert table.env or table.colspec
+    out = emit(table)
+    assert out.startswith("#table(") or out.startswith("#figure(")
+    assert "columns: 3," in out
+    assert "table.header([Fruit], [Geneva], [Zurich])," in out
+    assert "[Apples], [120], [180]," in out
+    # Labelled separator -> hline + full-width emphasised label cell.
+    assert "table.hline()," in out
+    assert "table.cell(colspan: 3)[_Seasonal shortage_]," in out
+    # Footer is split from the body by an extra rule.
+    assert "[Total], [170], [180]," in out
+
+
+def test_marginnote_degrades_to_footnote() -> None:
+    note = ir.MarginNote(content=(ir.Para(content=(ir.Str("aside"),)),))
+    assert emit(note) == "#footnote[aside]"
+
+
+def test_progressbar_renders_native_box() -> None:
+    bar = ir.ProgressBar(fraction=0.75, label=(ir.Str("Review"),))
+    out = emit(bar)
+    assert "box(width: 9cm" in out
+    assert "width: 75%" in out
+    assert out.endswith(" Review")
+
+
+def test_progressbar_thin_defaults_label_to_percent() -> None:
+    out = emit(ir.ProgressBar(fraction=0.5, thin=True))
+    assert "height: 6pt" in out
+    assert out.endswith(" 50%")
+
+
+def test_rich_table_spans() -> None:
+    """Multirow / multicolumn cells map to ``table.cell(rowspan/colspan)``."""
+    table = _rich_table(
+        {
+            "columns": ["A", "B", "C", "D"],
+            "rows": [
+                ["r1", {"value": "Merged", "rows": 2, "cols": 3, "align": "c"}],
+                ["r2", None, None, None],
+            ],
+        }
+    )
+    out = emit(table)
+    assert "table.cell(colspan: 3, rowspan: 2, align: center)[Merged]" in out
 
 
 # --------------------------------------------------------------------------- #
@@ -197,8 +263,16 @@ def test_document_joins_blocks_with_blank_lines() -> None:
 
 
 def test_uncovered_node_raises_localised_error() -> None:
-    with pytest.raises(TypstWriteError, match=r"MarginNote.*typst"):
-        emit(ir.MarginNote(content=(ir.Para(content=(ir.Str("m"),)),)))
+    # Every real IR node now has a Typst emitter, so a node type without one is
+    # an out-of-tree subclass; it must still fail loudly with a localised error.
+    from dataclasses import dataclass
+
+    @dataclass(frozen=True, slots=True)
+    class _Uncovered(ir.Inline):
+        pass
+
+    with pytest.raises(TypstWriteError, match=r"_Uncovered.*typst"):
+        emit(_Uncovered())
 
 
 def test_escaper_escapes_markup_specials() -> None:

@@ -2,7 +2,7 @@
    Heading level 1 is styled as a chapter; mainmatter content is offset so the
    source's top-level sections become chapters (heading_offset in the writer). #}
 {% if uses_mitex %}
-#import "@preview/mitex:0.2.4": mi, mitex
+#import "@preview/mitex:0.2.6": mi, mitex
 {% endif %}
 #set document(
   title: "{{ title | replace('"', '\\"') }}",

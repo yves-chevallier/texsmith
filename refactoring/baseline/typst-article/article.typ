@@ -1,4 +1,4 @@
-#import "@preview/mitex:0.2.4": mi, mitex
+#import "@preview/mitex:0.2.6": mi, mitex
 #set page(margin: 2.5cm)
 #set text(font: "New Computer Modern", size: 11pt)
 #set par(justify: true)
