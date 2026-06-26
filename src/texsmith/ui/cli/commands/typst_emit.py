@@ -446,6 +446,23 @@ def _copy_template_asset(value: Any, source_dir: Path, output_dir: Path | None) 
     return rel
 
 
+def _render_acronyms(abbreviations: Mapping[str, str]) -> str:
+    """Render the collected abbreviations as a Typst 'Acronyms' backmatter list.
+
+    Mirrors the LaTeX glossary fragment's inline acronym section: an unnumbered
+    'Acronyms' heading followed by a term list of ``short -> long``, sorted
+    alphabetically. Empty when the document used no ``<abbr>`` definitions.
+    """
+    if not abbreviations:
+        return ""
+    from texsmith.writers.typst.escaper import escape_typst_chars
+
+    lines = ["#heading(numbering: none)[Acronyms]", ""]
+    for term in sorted(abbreviations, key=str.casefold):
+        lines.append(f"/ {term}: {escape_typst_chars(abbreviations[term])}")
+    return "\n".join(lines)
+
+
 def _render_templated(
     typst_template: TypstTemplate,
     document: Document,
@@ -525,6 +542,7 @@ def _render_templated(
         paper = overrides.get("paper")
         if isinstance(paper, str) and paper.strip():
             context["paper"] = paper.strip()
+    context["acronyms"] = _render_acronyms(state.abbreviations)
     context["has_bibliography"] = bool(state.citations and bib_resource)
     context["bibliography_resource"] = bib_resource or ""
     context["uses_mitex"] = bool(state.runtime.get("uses_mitex"))

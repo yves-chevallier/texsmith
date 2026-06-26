@@ -77,6 +77,11 @@
 
 {{ mainmatter }}
 
+{% if acronyms %}
+#v(1em)
+{{ acronyms }}
+{% endif %}
+
 {% if has_bibliography %}
 #bibliography("{{ bibliography_resource }}", style: "{{ bibliography_style | default('ieee') }}")
 {% endif %}

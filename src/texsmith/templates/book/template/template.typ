@@ -60,6 +60,11 @@
 
 {{ mainmatter }}
 
+{% if acronyms %}
+#pagebreak()
+{{ acronyms }}
+{% endif %}
+
 {% if listoffigures %}
 #pagebreak()
 #outline(title: [List of Figures], target: figure.where(kind: image))
