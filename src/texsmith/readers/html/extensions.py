@@ -78,27 +78,10 @@ def read_snippet(tag: Tag, _ctx: ReadContext) -> ir.Div | _NotHandledType:
 # ---------------------------------------------------------------------------
 
 
-@reads("div", "details", level=ReadLevel.BLOCK, name="exercise", priority=110)
-def read_exercise(tag: Tag, _ctx: ReadContext) -> ir.Div | _NotHandledType:
-    """A Material *exercise* admonition (gaps + solutions + answer note).
-
-    Exercises carry interactive structure (``<input class=text-with-gap>``,
-    ``<details class=solution>``, an align-right answer note) that the writer's
-    exercise compiler consumes; the element is preserved verbatim, like
-    snippets and ``data-ts`` tables.
-    """
-    cls = classes(tag.get("class"))
-    if "exercise" not in cls:
-        return NotHandled
-    return ir.Div(content=(), attrs=attrs_tuple({"role": "exercise", "html": str(tag)}))
-
-
 @reads("div", level=ReadLevel.BLOCK, name="admonition", priority=100)
 def read_admonition(tag: Tag, ctx: ReadContext) -> ir.Admonition | _NotHandledType:
     cls = classes(tag.get("class"))
     if "admonition" not in cls:
-        return NotHandled
-    if "exercise" in cls:
         return NotHandled
     kind = _admonition_kind(cls)
     title_el = tag.find("p", class_="admonition-title")
@@ -119,8 +102,6 @@ def read_admonition(tag: Tag, ctx: ReadContext) -> ir.Admonition | _NotHandledTy
 def read_details_callout(tag: Tag, ctx: ReadContext) -> ir.Admonition:
     """A ``<details>`` block (collapsible callout)."""
     cls = classes(tag.get("class"))
-    if "exercise" in cls:
-        return read_exercise(tag, ctx)
     summary = tag.find("summary")
     title: tuple[ir.Inline, ...] = ()
     body_children = list(tag.children)

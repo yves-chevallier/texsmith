@@ -74,7 +74,7 @@ acronym_*groups
 footnotes                     :class:`Note`.content        footnote registry
 index_entries /               :class:`IndexEntry`          index registry
 has_index_entries
-counters / exercise_counter   (writer-internal)            counter table
+counters                      (writer-internal)            counter table
 requires_shell_escape         :class:`Code` /              shell-escape flag
                               :class:`CodeBlock` engine
 pygments_styles               :class:`CodeBlock`.lang      style registry
@@ -83,7 +83,7 @@ headings                      :class:`Header`              TOC builder
 script_usage                  :class:`Span`/:class:`Div`   ``data-script`` tracker
                               ``script`` attr
 callouts_used                 :class:`Admonition`          callout flag
-snippets / solutions          (reader, pre-IR)             n/a (resolved upstream)
+snippets                      (reader, pre-IR)             n/a (resolved upstream)
 ============================  ===========================  =========================
 """
 

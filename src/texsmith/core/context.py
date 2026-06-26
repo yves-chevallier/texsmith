@@ -31,9 +31,7 @@ class DocumentState:
     acronym_groups: list[tuple[str, str]] = field(default_factory=list)
     glossary: dict[str, dict[str, Any]] = field(default_factory=dict)
     snippets: dict[str, dict[str, Any]] = field(default_factory=dict)
-    solutions: list[dict[str, Any]] = field(default_factory=list)
     headings: list[dict[str, Any]] = field(default_factory=list)
-    exercise_counter: int = 0
     has_index_entries: bool = False
     requires_shell_escape: bool = False
     counters: dict[str, int] = field(default_factory=dict)
@@ -96,19 +94,9 @@ class DocumentState:
         """Cache snippet metadata to render later in the pipeline."""
         self.snippets[key] = payload
 
-    def add_solution(self, solution: dict[str, Any]) -> None:
-        """Append a solution block encountered during parsing."""
-        self.solutions.append(solution)
-
     def add_heading(self, *, level: int, text: str, ref: str | None = None) -> None:
         """Track heading metadata to power table-of-contents generation."""
         self.headings.append({"level": level, "text": text, "ref": ref})
-
-    def next_exercise(self) -> int:
-        """Increment and return the exercise counter."""
-        counter = self.next_counter("exercise")
-        self.exercise_counter = counter
-        return counter
 
     def next_counter(self, key: str = "default") -> int:
         """Increment and return the named counter."""

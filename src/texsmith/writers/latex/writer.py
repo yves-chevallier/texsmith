@@ -923,8 +923,6 @@ class LaTeXWriter:
             return self._render_script_paragraphs(node, attrs.get("script", ""))
         if role == "snippet":
             return self._render_snippet(attrs.get("html", ""))
-        if role == "exercise":
-            return self._render_exercise(attrs.get("html", ""))
         if role == "diagram":
             width = attrs.get("width") or None
             source_hint = attrs.get("source")
@@ -1164,117 +1162,6 @@ class LaTeXWriter:
             width=width,
         )
         return "" if node is None else str(node)
-
-    _EXERCISE_NOISE = frozenset(
-        {
-            "admonition",
-            "annotate",
-            "inline",
-            "end",
-            "left",
-            "right",
-            "checkbox",
-            "fill-in-the-blank",
-            "exercise",
-        }
-    )
-
-    def _render_exercise(self, html: str) -> str:
-        """Render a Material *exercise* admonition (gaps, solutions, answers)."""
-        from bs4 import BeautifulSoup
-
-        from texsmith.readers.html import HtmlReader
-
-        soup = BeautifulSoup(html, "html.parser")
-        element = soup.find(["div", "details"])
-        if element is None:
-            return ""
-        from texsmith.adapters.html_utils import gather_classes
-
-        classes = gather_classes(element.get("class"))
-        callout_classes = [c for c in classes if c not in self._EXERCISE_NOISE]
-        callout_type = callout_classes[0] if callout_classes else "exercise"
-
-        # Title from the admonition-title / summary.
-        title = ""
-        title_el = element.find("p", class_="admonition-title") or element.find("summary")
-        if title_el is not None:
-            label = title_el.find("span", class_="exercise-label")
-            if label is not None:
-                label.decompose()
-            title = title_el.get_text(strip=True)
-            title_el.decompose()
-
-        # Solutions (<details class=solution>): capture text, remove from body.
-        solutions: list[str] = []
-        for details in element.find_all("details", class_="solution"):
-            summary = details.find("summary")
-            if summary is not None:
-                summary.decompose()
-            solutions.append(details.get_text(strip=False).strip())
-            details.decompose()
-
-        # Gaps (<input class=text-with-gap>): replace with rules, collect answers.
-        answers: list[str] = []
-        for gap in element.find_all("input", class_="text-with-gap"):
-            from texsmith.adapters.html_utils import coerce_attribute
-
-            correct = (
-                coerce_attribute(gap.get("answer")) or coerce_attribute(gap.get("value")) or ""
-            )
-            size_hint = coerce_attribute(gap.get("size"))
-            try:
-                width = max(int(size_hint), 3) if size_hint is not None else max(len(correct), 3)
-            except ValueError:
-                width = max(len(correct), 3)
-            # Inject as a latex-raw span so the reader keeps the rule verbatim.
-            rule = soup.new_tag("span", attrs={"class": "latex-raw"})
-            rule.string = f"\\rule{{{width}ex}}{{0.4pt}}"
-            gap.replace_with(rule)
-            if correct:
-                answers.append(correct)
-
-        if note := element.find("p", class_="align--right"):
-            note_text = note.get_text(strip=True)
-            if note_text:
-                answers.append(note_text)
-            note.decompose()
-
-        # Render the remaining exercise body through the IR (tcolorbox figures).
-        previous = self.state.runtime.get("figure_template")
-        self.state.runtime["figure_template"] = "figure_tcolorbox"
-        try:
-            body_doc = HtmlReader(parser="html.parser").read_tree(element)
-            content = self.write(body_doc).strip()
-        finally:
-            if previous is None:
-                self.state.runtime.pop("figure_template", None)
-            else:
-                self.state.runtime["figure_template"] = previous
-
-        if solutions or answers:
-            index = self.state.state.next_exercise()
-            exercise_label = f"ex:{index}"
-            solution_label = f"sol:{index}"
-            solution_parts = [f"\\label{{{solution_label}}}", *solutions]
-            if answers:
-                label_word = "Réponse" if len(answers) == 1 else "Réponses"
-                solution_parts.append(f"{label_word}: {', '.join(answers)}")
-            self.state.state.add_solution(
-                {
-                    "index": index,
-                    "title": title,
-                    "label": exercise_label,
-                    "solution": "\n".join(part for part in solution_parts if part),
-                }
-            )
-            title = f"\\hyperref[{solution_label}]{{{title}}}"
-            content = f"\\label{{{exercise_label}}}\n{content}"
-
-        self.state.state.callouts_used = True
-        return self.state.formatter.render_template(
-            "callout", content, title=title, type=callout_type
-        )
 
     def _render_snippet(self, html: str) -> str:
         """Render a preserved ``.snippet`` element via the snippet compiler."""
