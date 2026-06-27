@@ -131,7 +131,7 @@ TeXSmith is unapologetically opinionated: it curates a stack, sprinkles extra sa
   - texsmith.extensions.missing_footnotes:MissingFootnotesExtension
   - texsmith.extensions.latex_text:LatexTextExtension
   - texsmith.extensions.smallcaps:SmallCapsExtension
-  - texsmith.progressbar:ProgressBarExtension
+  - texsmith.extensions.progressbar:ProgressBarExtension
 - Pymdown Extensions
   - pymdownx.betterem
   - pymdownx.blocks.caption

@@ -196,3 +196,80 @@ strip_heading = true
 
 [latex.template.assets]
 "fonts/modernline.otf" = { source = "fonts/modernline.otf" }
+
+# --------------------------------------------------------------------------- #
+# Typst backend: a clean business-letter layout. The LaTeX backend's KOMA-Script
+# national standards (DIN/SN/NF) collapse to a single Typst layout; sender /
+# recipient blocks read the nested ``from`` / ``to`` front matter directly.
+# --------------------------------------------------------------------------- #
+[typst.template]
+name = "formal-letter"
+version = "0.1.0"
+entrypoint = "template/template.typ"
+
+[typst.template.attributes.language]
+default = "en"
+type = "string"
+allow_empty = false
+normaliser = "bcp47_language"
+sources = ["language", "lang"]
+
+[typst.template.attributes.from_name]
+default = ""
+type = "string"
+allow_empty = true
+format = "raw"
+sources = ["from.name", "from_name"]
+
+[typst.template.attributes.from_address]
+default = ""
+type = "string"
+allow_empty = true
+format = "raw"
+sources = ["from.address", "from_address"]
+
+[typst.template.attributes.to_name]
+default = ""
+type = "string"
+allow_empty = true
+format = "raw"
+sources = ["to.name", "to_name"]
+
+[typst.template.attributes.to_address]
+default = ""
+type = "string"
+allow_empty = true
+format = "raw"
+sources = ["to.address", "to_address"]
+
+[typst.template.attributes.date]
+default = ""
+type = "string"
+allow_empty = true
+format = "raw"
+sources = ["date"]
+
+[typst.template.attributes.back_address]
+default = ""
+type = "string"
+allow_empty = true
+format = "raw"
+sources = ["back-address", "back_address"]
+
+[typst.template.attributes.signature]
+default = ""
+type = "string"
+allow_empty = true
+format = "raw"
+sources = ["signature"]
+
+[typst.template.attributes.postscript]
+default = ""
+type = "string"
+allow_empty = true
+format = "raw"
+sources = ["ps", "postscript"]
+
+[typst.template.slots.mainmatter]
+default = true
+strip_heading = true

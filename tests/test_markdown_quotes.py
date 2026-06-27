@@ -5,7 +5,7 @@ from markdown import Markdown
 
 from texsmith.adapters.latex.renderer import LaTeXRenderer
 from texsmith.adapters.markdown import DEFAULT_MARKDOWN_EXTENSIONS, render_markdown
-from texsmith.quotes import TexsmithQuotesExtension
+from texsmith.extensions.quotes import TexsmithQuotesExtension
 
 
 def test_quotes_extension_wraps_text_in_q_tags() -> None:

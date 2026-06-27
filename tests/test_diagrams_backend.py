@@ -1,10 +1,10 @@
 import types
 
-from texsmith.adapters.handlers import _assets
 from texsmith.adapters.transformers.strategies import (
     DrawioToPdfStrategy,
     MermaidToPdfStrategy,
 )
+from texsmith.writers.latex import assets as _assets
 
 
 def _raise(*args, **kwargs):

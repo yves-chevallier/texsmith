@@ -4,7 +4,7 @@ from bs4 import BeautifulSoup
 from markdown import Markdown
 
 from texsmith.adapters.latex.renderer import LaTeXRenderer
-from texsmith.progressbar import ProgressBarExtension
+from texsmith.extensions.progressbar import ProgressBarExtension
 
 
 def _render_html(markdown_text: str) -> BeautifulSoup:

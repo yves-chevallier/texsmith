@@ -1,17 +1,36 @@
 include ../common.mk
 
 OUTPUT_DIR := $(ENGINE_DIR)
-PDF := $(OUTPUT_DIR)/colorful$(ENGINE_SUFFIX).pdf
 BASE_PDF := $(OUTPUT_DIR)/colorful.pdf
+PDF := $(OUTPUT_DIR)/colorful$(ENGINE_SUFFIX).pdf
 
-all: $(PDF)
+# Typst output -> build/typst/colorful.pdf (engine-agnostic, native Typst compiler)
+TYPST_DIR := $(OUTPUT_ROOT)/typst
+TYPST_PDF := $(TYPST_DIR)/colorful.pdf
 
-$(PDF): colorful.md | $(OUTPUT_DIR)
-	$(TEXSMITH) $< -o$(OUTPUT_DIR) --build $(TEXSMITH_ENGINE)
+# `make` builds BOTH the LaTeX and the Typst PDF.
+ARTIFACTS := $(PDF) $(TYPST_PDF)
+
+all: $(PDF) $(TYPST_PDF)
+
+# Build a single backend on demand.
+latex: $(PDF)
+typst: $(TYPST_PDF)
+
+# Local template sources: a change to either must trigger a rebuild.
+$(PDF): colorful.md manifest.toml template.tex | $(OUTPUT_DIR)
+	$(TEXSMITH) colorful.md -o$(OUTPUT_DIR) --build $(TEXSMITH_ENGINE)
 	if [ "$(PDF)" != "$(BASE_PDF)" ]; then mv "$(BASE_PDF)" "$(PDF)"; fi
 	$(call copy_artifact,$@)
+
+$(TYPST_PDF): colorful.md manifest.toml template.typ | $(TYPST_DIR)
+	$(TEXSMITH) colorful.md -o$(TYPST_DIR) --format typst --build
+	$(call copy_artifact,$@)
+
+$(TYPST_DIR):
+	mkdir -p "$@"
 
 clean:
 	rm -rf $(OUTPUT_ROOT)
 
-.PHONY: all clean
+.PHONY: all latex typst clean

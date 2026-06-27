@@ -14,10 +14,6 @@ _BUILTIN_FACTORIES: dict[str, str] = {
     "snippet": "texsmith.templates.snippet:Template",
 }
 
-_ALIASES: dict[str, str] = {
-    "formal-letter": "letter",
-}
-
 _PREFIXES = ("texsmith:", "texsmith.", "texsmith/", "builtin:", "builtin.", "builtin/")
 
 
@@ -45,8 +41,7 @@ def load_builtin_template(identifier: str) -> WrappableTemplate | None:
     if slug is None:
         return None
 
-    resolved = _ALIASES.get(slug, slug)
-    factory_path = _BUILTIN_FACTORIES.get(resolved)
+    factory_path = _BUILTIN_FACTORIES.get(slug)
     if factory_path is None:
         return None
 

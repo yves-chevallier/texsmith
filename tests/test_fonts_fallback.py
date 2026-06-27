@@ -1,7 +1,7 @@
 from texsmith.fonts.coverage import NotoCoverage
 from texsmith.fonts.fallback import FallbackBuilder
+from texsmith.fonts.provisioning import _prepare_fallback_context
 from texsmith.fonts.ucharclasses import UCharClass
-from texsmith.fragments.fonts import _prepare_fallback_context
 
 
 def test_fallback_aligns_with_usage_slug(tmp_path, monkeypatch) -> None:
@@ -18,7 +18,7 @@ def test_fallback_aligns_with_usage_slug(tmp_path, monkeypatch) -> None:
 
     # Avoid network fetches during tests.
     monkeypatch.setattr(
-        "texsmith.fragments.fonts.NotoFontDownloader.ensure",
+        "texsmith.fonts.provisioning.NotoFontDownloader.ensure",
         lambda self, *, font_name, styles, extension, dir_base=None: None,  # noqa: ARG005
     )
 
@@ -68,7 +68,7 @@ def test_all_classes_for_slug_receive_transitions(tmp_path, monkeypatch) -> None
         (fonts_dir / name).write_bytes(b"0")
 
     monkeypatch.setattr(
-        "texsmith.fragments.fonts.NotoFontDownloader.ensure",
+        "texsmith.fonts.provisioning.NotoFontDownloader.ensure",
         lambda self, *, font_name, styles, extension, dir_base=None: None,  # noqa: ARG005
     )
 
@@ -129,7 +129,7 @@ def test_usage_font_preferred_over_stale_entries(tmp_path, monkeypatch) -> None:
         (fonts_dir / name).write_bytes(b"0")
 
     monkeypatch.setattr(
-        "texsmith.fragments.fonts.NotoFontDownloader.ensure",
+        "texsmith.fonts.provisioning.NotoFontDownloader.ensure",
         lambda self, *, font_name, styles, extension, dir_base=None: None,  # noqa: ARG005
     )
 

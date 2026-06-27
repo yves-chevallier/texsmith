@@ -11,12 +11,13 @@ from texsmith.adapters.latex.utils import escape_latex_chars
 from texsmith.core.document_date import format_date
 from texsmith.core.document_version import format_version
 from texsmith.core.templates import TemplateError, WrappableTemplate
+from texsmith.templates.common import TemplateContextHelpers
 
 
 _PACKAGE_ROOT = Path(__file__).parent.resolve()
 
 
-class Template(WrappableTemplate):
+class Template(TemplateContextHelpers, WrappableTemplate):
     """Expose the article template as a wrappable template instance."""
 
     _LATIN_RANGE_LIMIT: ClassVar[int] = 0x024F
@@ -130,37 +131,6 @@ class Template(WrappableTemplate):
             context["requires_unicode_engine"] = True
 
         return context
-
-    def _coerce_string(self, value: Any) -> str | None:
-        if value is None:
-            return None
-        candidate = value.strip() if isinstance(value, str) else str(value).strip()
-        return candidate or None
-
-    def _format_authors(self, payload: Any) -> str | None:
-        if not payload:
-            return None
-        if not isinstance(payload, Iterable) or isinstance(payload, (str, bytes)):
-            return None
-
-        formatted: list[str] = []
-        for item in payload:
-            if not isinstance(item, Mapping):
-                continue
-            name_value = self._coerce_string(item.get("name"))
-            if not name_value:
-                continue
-            name_tex = escape_latex_chars(name_value)
-            affiliation_value = self._coerce_string(item.get("affiliation"))
-            if affiliation_value:
-                affiliation_tex = escape_latex_chars(affiliation_value)
-                formatted.append(f"{name_tex}\\thanks{{{affiliation_tex}}}")
-            else:
-                formatted.append(name_tex)
-
-        if not formatted:
-            return None
-        return " \\and ".join(formatted)
 
     def _normalise_emoji_mode(self, value: Any) -> str:
         candidate = self._coerce_string(value)

@@ -27,24 +27,6 @@ def _format_list(values: Iterable[str]) -> str:
     return ", ".join(sequence) if sequence else "-"
 
 
-def _discover_local_templates(base: Path | None = None) -> list[Path]:
-    """Scan the working directory for potential template candidates.
-
-    This enables users to use project-local templates without needing to install
-    them as Python packages, supporting rapid development and customization.
-    """
-    base_path = (base or Path.cwd()).resolve()
-    roots = {base_path, base_path / "templates"}
-    candidates: list[Path] = []
-    for root in roots:
-        if not root.exists() or not root.is_dir():
-            continue
-        for child in root.iterdir():
-            if child.is_dir() and _looks_like_template_root(child):
-                candidates.append(child)
-    return sorted({candidate.resolve() for candidate in candidates})
-
-
 def list_templates() -> None:
     """Print a table listing built-in, entry-point, and local templates."""
 

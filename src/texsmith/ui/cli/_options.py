@@ -95,15 +95,6 @@ ParserOption = Annotated[
     ),
 ]
 
-DisableFallbackOption = Annotated[
-    bool,
-    typer.Option(
-        "--no-fallback-converters",
-        help="Disable registration of placeholder converters when Docker is unavailable.",
-        rich_help_panel=RENDERING_PANEL,
-    ),
-]
-
 NoCopyAssetsOption = Annotated[
     bool,
     typer.Option(
@@ -215,15 +206,6 @@ DebugHtmlOption = Annotated[
     ),
 ]
 
-DebugRulesOption = Annotated[
-    bool,
-    typer.Option(
-        "--debug-rules",
-        help="Display the ordered list of registered render rules.",
-        rich_help_panel=DIAGNOSTICS_PANEL,
-    ),
-]
-
 TemplateInfoOption = Annotated[
     bool,
     typer.Option(
@@ -239,6 +221,16 @@ HtmlOnlyOption = Annotated[
         "--html",
         help="Output intermediate HTML instead of LaTeX/PDF.",
         rich_help_panel=OUTPUT_PANEL,
+    ),
+]
+
+FormatOption = Annotated[
+    str,
+    typer.Option(
+        "--format",
+        help="Output backend: 'latex' (default) or 'typst'.",
+        rich_help_panel=OUTPUT_PANEL,
+        case_sensitive=False,
     ),
 ]
 

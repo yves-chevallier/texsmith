@@ -196,3 +196,85 @@ strip_heading = true
 
 [latex.template.assets]
 "fixtoc.sty" = { source = "template/fixtoc.sty" }
+
+# --------------------------------------------------------------------------- #
+# Typst backend (parallel to [latex.template]).
+# --------------------------------------------------------------------------- #
+[typst.template]
+name = "book"
+version = "0.2.0"
+entrypoint = "template/template.typ"
+
+[typst.template.attributes.title]
+default = "A Book"
+type = "string"
+format = "raw"
+allow_empty = true
+sources = ["title"]
+
+[typst.template.attributes.subtitle]
+default = ""
+type = "string"
+format = "raw"
+allow_empty = true
+sources = ["subtitle"]
+
+[typst.template.attributes.authors]
+default = []
+type = "list"
+sources = ["authors"]
+
+[typst.template.attributes.author]
+default = ""
+type = "string"
+format = "raw"
+allow_empty = true
+sources = ["author"]
+
+[typst.template.attributes.date]
+default = ""
+type = "string"
+format = "raw"
+allow_empty = true
+sources = ["date"]
+
+[typst.template.attributes.publisher]
+default = ""
+type = "string"
+format = "raw"
+allow_empty = true
+sources = ["publisher"]
+
+[typst.template.attributes.edition]
+default = ""
+type = "string"
+format = "raw"
+allow_empty = true
+sources = ["edition"]
+
+[typst.template.attributes.language]
+default = "en"
+type = "string"
+allow_empty = false
+normaliser = "bcp47_language"
+sources = ["language", "lang"]
+
+[typst.template.attributes.listoffigures]
+default = false
+type = "boolean"
+sources = ["listoffigures"]
+
+[typst.template.attributes.listoftables]
+default = false
+type = "boolean"
+sources = ["listoftables"]
+
+[typst.template.attributes.bibliography_style]
+default = "ieee"
+type = "string"
+allow_empty = false
+sources = ["bibliography_style"]
+
+[typst.template.slots.mainmatter]
+default = true
+depth = "chapter"

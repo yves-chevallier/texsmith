@@ -14,12 +14,22 @@ NF_PDF := $(NF_DIR)/letter-nf$(ENGINE_SUFFIX).pdf
 DIN_BASE := $(DIN_DIR)/letter.pdf
 SN_BASE := $(SN_DIR)/letter.pdf
 NF_BASE := $(NF_DIR)/letter.pdf
-ARTIFACTS := $(DIN_PDF) $(SN_PDF) $(NF_PDF)
 
-$(DIN_DIR) $(SN_DIR) $(NF_DIR):
+# Typst output -> build/typst/letter.pdf. The DIN/SN/NF national standards are
+# KOMA-Script (LaTeX) specifics; the Typst backend emits one clean layout.
+TYPST_DIR := $(OUTPUT_ROOT)/typst
+TYPST_PDF := $(TYPST_DIR)/letter.pdf
+
+ARTIFACTS := $(DIN_PDF) $(SN_PDF) $(NF_PDF) $(TYPST_PDF)
+
+$(DIN_DIR) $(SN_DIR) $(NF_DIR) $(TYPST_DIR):
 	mkdir -p "$@"
 
-all: $(DIN_PDF) $(SN_PDF) $(NF_PDF)
+all: $(DIN_PDF) $(SN_PDF) $(NF_PDF) $(TYPST_PDF)
+
+# Build a single backend on demand.
+latex: $(DIN_PDF) $(SN_PDF) $(NF_PDF)
+typst: $(TYPST_PDF)
 
 $(DIN_PDF): letter.md marie-curie.svg | $(DIN_DIR)
 	$(TEXSMITH) $< -o$(DIN_DIR) --build -tletter -aformat=din $(TEXSMITH_ENGINE)
@@ -36,7 +46,11 @@ $(NF_PDF): letter.md marie-curie.svg | $(NF_DIR)
 	mv $(NF_BASE) $(NF_PDF)
 	$(call copy_artifact,$@)
 
+$(TYPST_PDF): letter.md marie-curie.svg | $(TYPST_DIR)
+	$(TEXSMITH) $< -o$(TYPST_DIR) -tletter --format typst --build
+	$(call copy_artifact,$@)
+
 clean:
 	rm -rf $(OUTPUT_ROOT) $(DIN_ROOT) $(SN_ROOT) $(NF_ROOT)
 
-.PHONY: all clean
+.PHONY: all clean latex typst

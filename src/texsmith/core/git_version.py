@@ -13,7 +13,6 @@ from __future__ import annotations
 from datetime import date, datetime, timezone
 from pathlib import Path
 import subprocess
-from typing import Any
 import warnings
 
 
@@ -134,19 +133,7 @@ def _run_git(repo_root: Path, args: list[str]) -> str:
     return result.stdout.strip()
 
 
-def format_version(value: Any, *, cwd: Path | None = None) -> str:
-    """Deprecated shim that forwards to :func:`texsmith.core.document_version.format_version`.
-
-    Kept to preserve the public surface of older releases; new code should
-    import from ``texsmith.core.document_version`` directly.
-    """
-    from texsmith.core.document_version import format_version as _format
-
-    return _format(value, cwd=cwd)
-
-
 __all__ = [
-    "format_version",
     "git_commit_date",
     "git_describe",
     "reset_cache",

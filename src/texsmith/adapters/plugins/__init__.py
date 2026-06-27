@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from . import material, snippet
+from . import snippet
 
 
-__all__ = ["material", "snippet"]
+__all__ = ["snippet"]

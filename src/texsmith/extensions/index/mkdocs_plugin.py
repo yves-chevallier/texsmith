@@ -56,7 +56,7 @@ class IndexPlugin(BasePlugin):
         """Optionally enable the markdown extension automatically."""
         self._collected.clear()
         if self.config.get("inject_markdown_extension", True):
-            extension = "texsmith.index:TexsmithIndexExtension"
+            extension = "texsmith.extensions.index:TexsmithIndexExtension"
             extensions = list(config.markdown_extensions or [])
             if extension not in extensions:
                 extensions.append(extension)

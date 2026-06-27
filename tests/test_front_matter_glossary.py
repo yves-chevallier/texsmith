@@ -8,7 +8,7 @@ from tempfile import TemporaryDirectory
 import bs4  # noqa: F401  (ensure real BeautifulSoup is loaded for downstream imports)
 import pytest
 
-from texsmith.core.conversion.glossary import (
+from texsmith.core.glossary import (
     GlossaryEntry,
     GlossaryFrontMatter,
     GlossaryGroup,

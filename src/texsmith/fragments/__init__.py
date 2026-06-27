@@ -1,11 +1,13 @@
-"""Legacy fragment namespace.
+"""Bundled TeXSmith fragments.
 
-Fragments now register via ``fragment.toml`` or entry points returning
-``Fragment``/``FragmentDefinition`` objects. This module is kept only to avoid
-import errors for legacy paths; no registration occurs here.
+Each subpackage ships a ``fragment.toml`` manifest plus a ``Fragment``/
+``FragmentDefinition`` object; they are discovered by
+:class:`texsmith.core.fragments.FragmentRegistry` via filesystem scanning of
+``FRAGMENT_ROOT`` and the ``texsmith.fragments`` entry-point group. This module
+holds no registration logic itself.
 """
 
 from __future__ import annotations
 
 
-__all__ = []
+__all__: list[str] = []

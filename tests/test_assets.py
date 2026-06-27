@@ -44,10 +44,3 @@ def test_acronym_conflict_emits_warning() -> None:
         duplicate_key = state.remember_acronym("HTTP", "Different")
     assert duplicate_key == key
     assert state.acronyms[key] == ("HTTP", "Hypertext Transfer Protocol")
-
-
-def test_solution_collection() -> None:
-    state = DocumentState()
-    payload = {"id": 1, "content": "Solution"}
-    state.add_solution(payload)
-    assert state.solutions == [payload]

@@ -6,7 +6,7 @@ from bs4 import BeautifulSoup
 from markdown import Markdown
 
 from texsmith.adapters.latex.renderer import LaTeXRenderer
-from texsmith.texlogos import TexLogosExtension, iter_specs, register_renderer
+from texsmith.extensions.texlogos import TexLogosExtension, iter_specs
 
 
 def _convert(text: str) -> BeautifulSoup:
@@ -34,7 +34,6 @@ def test_markdown_skips_code_blocks() -> None:
 def test_renderer_emits_logo_commands() -> None:
     soup = _convert("TeX, LaTeX, LaTeX2e.")
     renderer = LaTeXRenderer()
-    register_renderer(renderer)
 
     latex = renderer.render(str(soup))
     for spec in iter_specs():

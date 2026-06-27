@@ -5,7 +5,7 @@ import pytest
 from texsmith.adapters.latex import LaTeXRenderer
 from texsmith.core.config import BookConfig
 from texsmith.core.context import DocumentState
-from texsmith.index import TexsmithIndexExtension, register_renderer
+from texsmith.extensions.index import TexsmithIndexExtension
 
 
 markdown = pytest.importorskip("markdown")
@@ -15,9 +15,7 @@ EXTENSION = TexsmithIndexExtension()
 
 @pytest.fixture
 def renderer() -> LaTeXRenderer:
-    renderer = LaTeXRenderer(config=BookConfig(), parser="html.parser")
-    register_renderer(renderer)
-    return renderer
+    return LaTeXRenderer(config=BookConfig(), parser="html.parser")
 
 
 def test_markdown_extension_generates_span() -> None:

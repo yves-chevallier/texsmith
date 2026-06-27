@@ -19,23 +19,9 @@ import typer
 
 from texsmith.adapters.latex.engines import (
     EngineResult,
-    build_engine_command as build_latex_engine_command,
-    build_tex_env,
-    compute_features,
-    ensure_command_paths,
-    missing_dependencies,
     parse_latex_log,
     resolve_engine,
     run_engine_command,
-)
-from texsmith.adapters.latex.pyxindy import is_available as pyxindy_available
-from texsmith.adapters.latex.tectonic import (
-    BiberAcquisitionError,
-    MakeglossariesAcquisitionError,
-    TectonicAcquisitionError,
-    select_biber_binary,
-    select_makeglossaries,
-    select_tectonic_binary,
 )
 from texsmith.adapters.markdown import (
     DEFAULT_MARKDOWN_EXTENSIONS,
@@ -47,6 +33,7 @@ from texsmith.core.conversion import ConversionRequest
 from texsmith.core.conversion.debug import ConversionError
 from texsmith.core.conversion.inputs import UnsupportedInputError
 from texsmith.core.conversion.service import ConversionService
+from texsmith.core.conversion.typst import build_typst_pdf, render_typst_document
 from texsmith.core.metadata import PressMetadataError, normalise_press_metadata
 from texsmith.core.templates import TemplateError, load_template
 from texsmith.core.templates.runtime import coerce_base_level
@@ -59,12 +46,11 @@ from .._options import (
     BaseLevelOption,
     ConvertAssetsOption,
     DebugHtmlOption,
-    DebugRulesOption,
-    DisableFallbackOption,
     DisableFragmentOption,
     DisableMarkdownExtensionsOption,
     EnableFragmentOption,
     FontsInfoOption,
+    FormatOption,
     FullDocumentOption,
     HashAssetsOption,
     HtmlOnlyOption,
@@ -98,7 +84,6 @@ from ..presenter import (
     present_fonts_info,
     present_html_summary,
     present_latex_failure,
-    present_rule_descriptions,
 )
 from ..state import debug_enabled, emit_error, set_cli_state
 from ..utils import determine_output_target, organise_slot_overrides, write_output_file
@@ -390,7 +375,6 @@ def render(
             rich_help_panel=DIAGNOSTICS_PANEL,
         ),
     ] = False,
-    debug_rules: DebugRulesOption = False,
     inputs: InputPathArgument = None,
     input_path: Annotated[
         Path | None,
@@ -408,7 +392,6 @@ def render(
     no_promote_title: NoPromoteTitleOption = not _REQUEST_DEFAULTS.promote_title,
     no_title: NoTitleOption = _REQUEST_DEFAULTS.suppress_title,
     parser: ParserOption = None,
-    disable_fallback_converters: DisableFallbackOption = _REQUEST_DEFAULTS.disable_fallback_converters,
     no_copy_assets: NoCopyAssetsOption = not _REQUEST_DEFAULTS.copy_assets,
     convert_assets: ConvertAssetsOption = _REQUEST_DEFAULTS.convert_assets,
     hash_assets: HashAssetsOption = _REQUEST_DEFAULTS.hash_assets,
@@ -444,6 +427,7 @@ def render(
         ),
     ] = False,
     html_only: HtmlOnlyOption = False,
+    output_format: FormatOption = "latex",
     build_pdf: Annotated[
         bool,
         typer.Option(
@@ -537,6 +521,21 @@ def render(
         raise typer.Exit()
 
     state = set_cli_state(ctx=typer_ctx, verbosity=verbose, debug=debug)
+    output_format = (output_format or "latex").strip().lower()
+    if output_format not in {"latex", "typst"}:
+        raise typer.BadParameter("--format must be 'latex' or 'typst'.")
+    if output_format == "typst":
+        # The Typst backend emits a ``.typ`` via the shared IR. With a template
+        # it wraps the body in the template's [typst.template] scaffolding;
+        # without one it emits a standalone document. It does not use the LaTeX
+        # fragment/engine machinery, so template *info/scaffold* flags and --html
+        # remain unsupported here.
+        if template_info_flag or template_scaffold is not None:
+            raise typer.BadParameter(
+                "--format typst does not support --template-info/--template-scaffold."
+            )
+        if html_only:
+            raise typer.BadParameter("--format typst cannot be combined with --html.")
     if html_only:
         build_pdf = False
         template = None
@@ -681,7 +680,7 @@ def render(
     if strip_heading:
         promote_title = False
 
-    if build_pdf and not template_selected:
+    if build_pdf and not template_selected and output_format != "typst":
         template = "article"
         template_selected = True
         # In CI runners like act, prefer classic output to avoid streaming latexmk.
@@ -809,7 +808,6 @@ def render(
 
     request = ConversionRequest(
         parser=parser,
-        disable_fallback_converters=disable_fallback_converters,
         copy_assets=copy_assets,
         convert_assets=convert_assets,
         hash_assets=hash_assets,
@@ -849,7 +847,6 @@ def render(
             "convert_assets": convert_assets,
             "hash_assets": hash_assets,
             "manifest": manifest,
-            "fallback_converters_enabled": not disable_fallback_converters,
         },
     )
 
@@ -861,6 +858,71 @@ def render(
     except ConversionError as exc:
         emit_error(str(exc), exception=exc)
         raise typer.Exit(code=1) from exc
+
+    if output_format == "typst":
+        typst_output_dir: Path | None = None
+        if output_mode in {"directory", "template"}:
+            typst_output_dir = resolved_output_target
+        elif output_mode == "file" and resolved_output_target is not None:
+            typst_output_dir = resolved_output_target.parent
+
+        def _emit_typst(doc: Any) -> str:
+            try:
+                return render_typst_document(
+                    doc,
+                    template=template,
+                    bibliography_files=bibliography_files,
+                    output_dir=typst_output_dir,
+                    diagrams_backend=(
+                        diagrams_backend.lower() if isinstance(diagrams_backend, str) else None
+                    ),
+                    template_options=attribute_overrides,
+                )
+            except TemplateError as exc:
+                emit_error(str(exc), exception=exc)
+                raise typer.Exit(code=1) from exc
+
+        typst_docs = [(doc.source_path, _emit_typst(doc)) for doc in prepared.documents]
+        if output_mode == "stdout":
+            typer.echo("\n\n".join(payload for _, payload in typst_docs))
+            _flush_diagnostics()
+            return
+
+        written_paths: list[Path] = []
+        if output_mode == "file":
+            if resolved_output_target is None:
+                raise typer.BadParameter("Output path is required when writing Typst to a file.")
+            try:
+                write_output_file(resolved_output_target, typst_docs[0][1])
+            except OSError as exc:
+                emit_error(str(exc), exception=exc)
+                raise typer.Exit(code=1) from exc
+            written_paths.append(resolved_output_target)
+        elif output_mode in {"directory", "template"}:
+            if resolved_output_target is None:
+                raise typer.BadParameter("Output directory is required when writing Typst files.")
+            resolved_output_target.mkdir(parents=True, exist_ok=True)
+            for source_path, payload in typst_docs:
+                target = resolved_output_target / f"{source_path.stem}.typ"
+                try:
+                    write_output_file(target, payload)
+                except OSError as exc:
+                    emit_error(str(exc), exception=exc)
+                    raise typer.Exit(code=1) from exc
+                written_paths.append(target)
+        else:
+            raise RuntimeError(f"Unsupported output mode '{output_mode}' for Typst output.")
+
+        for path in written_paths:
+            typer.echo(f"Wrote {path}")
+        if build_pdf:
+            for path in written_paths:
+                ok, message = build_typst_pdf(path)
+                typer.echo(message)
+                if not ok and debug_enabled():
+                    raise typer.Exit(code=1)
+        _flush_diagnostics()
+        return
 
     if html_only:
         html_fragments = []
@@ -928,27 +990,11 @@ def render(
         else:
             os.environ[engine_env_key] = previous_engine_value
 
-    def _emit_rule_diagnostics() -> None:
-        if not debug_rules:
-            return
-        rules: list[dict[str, object]] = []
-        if response.is_template:
-            rules = getattr(response.render_result, "rule_descriptions", []) or []
-        else:
-            for fragment in response.bundle.fragments:
-                conversion = fragment.conversion
-                if conversion and conversion.rule_descriptions:
-                    rules = conversion.rule_descriptions
-                    break
-        if rules:
-            present_rule_descriptions(state, rules)
-
     if not template_selected:
         bundle = response.bundle
 
         if output_mode == "stdout":
             typer.echo(bundle.combined_output())
-            _emit_rule_diagnostics()
             _flush_diagnostics()
             return
 
@@ -967,7 +1013,6 @@ def render(
                 output_path=resolved_output_target,
                 render_result=None,
             )
-            _emit_rule_diagnostics()
             _flush_diagnostics()
             return
 
@@ -979,7 +1024,6 @@ def render(
                 output_path=request.render_dir,
                 render_result=None,
             )
-            _emit_rule_diagnostics()
             _flush_diagnostics()
             return
 
@@ -1001,93 +1045,31 @@ def render(
             present_context_attributes(state=state, render_result=render_result)
         if fonts_info:
             present_fonts_info(state, render_result)
-        _emit_rule_diagnostics()
         _flush_diagnostics()
         return
 
+    # Engine orchestration (binary selection, command/env build, run) lives in
+    # ConversionService.build_pdf; the CLI keeps only presentation, the PDF copy,
+    # and dependency-file emission. ``run_engine`` is injected so the engine run
+    # stays a clean test seam (tests patch this module's ``run_engine_command``).
     engine_choice = resolve_engine(engine, render_result.template_engine)
-    template_context = getattr(render_result, "template_context", None) or getattr(
-        render_result, "context", None
-    )
-    use_system_tectonic = system_tectonic if engine_choice.backend == "tectonic" else False
-    features = compute_features(
-        requires_shell_escape=render_result.requires_shell_escape,
-        bibliography=render_result.has_bibliography,
-        document_state=render_result.document_state,
-        template_context=template_context,
-    )
-
-    tectonic_binary: Path | None = None
-    biber_binary: Path | None = None
-    makeglossaries_binary: Path | None = None
-    bundled_bin: Path | None = None
-    if engine_choice.backend == "tectonic":
-        try:
-            selection = select_tectonic_binary(use_system_tectonic, console=state.console)
-            if features.bibliography and not use_system_tectonic:
-                biber_binary = select_biber_binary(console=state.console)
-                bundled_bin = biber_binary.parent
-            if features.has_glossary and not pyxindy_available():
-                glossaries = select_makeglossaries(console=state.console)
-                makeglossaries_binary = glossaries.path
-                if glossaries.source == "bundled":
-                    bundled_bin = bundled_bin or glossaries.path.parent
-        except (
-            TectonicAcquisitionError,
-            BiberAcquisitionError,
-            MakeglossariesAcquisitionError,
-        ) as exc:
-            emit_error(str(exc), exception=exc)
-            raise typer.Exit(code=1) from exc
-        tectonic_binary = selection.path
-
-    available_bins: dict[str, Path] = {}
-    if biber_binary:
-        available_bins["biber"] = biber_binary
-    if makeglossaries_binary:
-        available_bins["makeglossaries"] = makeglossaries_binary
-
-    missing_tools = missing_dependencies(
-        engine_choice,
-        features,
-        use_system_tectonic=use_system_tectonic,
-        available_binaries=available_bins or None,
-    )
-    if missing_tools:
-        formatted = ", ".join(sorted(missing_tools))
-        emit_error(f"Missing required tools for {engine_choice.label}: {formatted}")
-        raise typer.Exit(code=1)
-
-    command_plan = ensure_command_paths(
-        build_latex_engine_command(
-            engine_choice,
-            features,
-            main_tex_path=render_result.main_tex_path,
-            tectonic_binary=tectonic_binary,
-        )
-    )
-    env = build_tex_env(
-        render_dir,
-        isolate_cache=isolate_cache,
-        extra_path=bundled_bin,
-        biber_path=biber_binary,
-    )
-
     state.console.print(f"[bold cyan]Running {engine_choice.label}…[/]")
 
     run_engine = getattr(render, "run_engine_command", run_engine_command)
-
     try:
-        engine_result: EngineResult = run_engine(
-            command_plan,
-            backend=engine_choice.backend,
-            workdir=render_dir,
-            env=env,
+        engine_result: EngineResult = _SERVICE.build_pdf(
+            render_result,
+            engine=engine,
+            classic_output=classic_output,
+            isolate_cache=isolate_cache,
             console=state.console,
             verbosity=state.verbosity,
-            classic_output=classic_output,
-            features=features,
+            use_system_tectonic=system_tectonic,
+            run_engine=run_engine,
         )
+    except ConversionError as exc:
+        emit_error(str(exc), exception=exc)
+        raise typer.Exit(code=1) from exc
     except OSError as exc:
         if debug_enabled():
             raise
@@ -1095,17 +1077,17 @@ def render(
         raise typer.Exit(code=1) from exc
 
     if engine_result.returncode != 0:
-        messages = engine_result.messages or parse_latex_log(command_plan.log_path)
+        messages = engine_result.messages or parse_latex_log(engine_result.log_path)
         present_latex_failure(
             state=state,
-            log_path=command_plan.log_path,
+            log_path=engine_result.log_path,
             messages=messages,
             open_log=open_log,
         )
         emit_error(f"{engine_choice.label} exited with status {engine_result.returncode}")
         raise typer.Exit(code=engine_result.returncode)
 
-    pdf_path = command_plan.pdf_path
+    pdf_path = engine_result.pdf_path
     final_pdf_path = pdf_path
     dep_file_path: Path | None = None
 
@@ -1156,7 +1138,6 @@ def render(
         present_fonts_info(state, render_result)
     if dep_file_path is not None:
         state.console.print(f"[cyan]Dependencies written to[/] {dep_file_path}")
-    _emit_rule_diagnostics()
     _flush_diagnostics()
 
     if cleanup_render_dir and cleanup_render_dir_path is not None:

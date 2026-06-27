@@ -50,7 +50,7 @@ from typing import Any
 from ..context import DocumentState
 from ..conversion import ConversionRequest
 from ..conversion.debug import ensure_emitter
-from ..conversion.pipeline import convert_documents, to_template_fragments
+from ..conversion.core import convert_documents, to_template_fragments
 from ..conversion.renderer import TemplateRenderer
 from ..diagnostics import DiagnosticEmitter
 from ..documents import Document
@@ -78,7 +78,6 @@ class TemplateRenderResult:
     bibliography_path: Path | None
     template_engine: str | None
     requires_shell_escape: bool
-    rule_descriptions: list[dict[str, Any]] = field(default_factory=list)
     asset_paths: list[Path] = field(default_factory=list)
     asset_sources: list[Path] = field(default_factory=list)
     asset_map: dict[str, Path] = field(default_factory=dict)
@@ -220,7 +219,6 @@ class TemplateSession:
             bibliography_path=rendered.bibliography_path,
             template_engine=rendered.template_engine,
             requires_shell_escape=rendered.requires_shell_escape,
-            rule_descriptions=rendered.rule_descriptions,
             asset_paths=rendered.asset_paths,
             asset_sources=rendered.asset_sources,
             asset_map=rendered.asset_map,
@@ -233,8 +231,6 @@ def get_template(identifier: str | Path, **kwargs: Any) -> TemplateSession:
     runtime = load_template_runtime(str(identifier))
     settings = kwargs.pop("settings", None)
     emitter = kwargs.pop("emitter", None)
-    if "callbacks" in kwargs:
-        raise TypeError("'callbacks' is no longer supported; provide an emitter instead.")
     if kwargs:
         unexpected = ", ".join(sorted(kwargs))
         raise TypeError(f"Unexpected keyword arguments: {unexpected}")

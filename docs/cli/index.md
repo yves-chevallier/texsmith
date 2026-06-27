@@ -46,9 +46,6 @@ $ texsmith --help
 `--debug`
 : Enable detailed debugging output for the CLI. This includes full Python tracebacks when unexpected exceptions occur, which can help diagnose issues during conversion or rendering.
 
-`--debug-rules`
-: Print the ordered list of registered render rules that TeXSmith applies during conversion. This is useful for understanding the transformation pipeline.
-
 `--debug-html`
 : Save intermediate HTML snapshots generated during the conversion process. This can help diagnose issues related to HTML parsing or content extraction.
 
@@ -75,8 +72,11 @@ $ texsmith --help
 `--html`
 : Instead of generating LaTeX or PDF output, emit the intermediate HTML produced during the conversion process. This is useful for inspecting how your Markdown is transformed into HTML.
 
+`--format`
+: Choose the output backend: `latex` (default) or `typst`. Both backends consume the same intermediate representation; `typst` emits a `.typ` source (add `--build` to compile it to PDF). The Typst path does not support `--html`, `--template-info`, or `--template-scaffold`. See [Output backends](../guide/plumbing/backends.md) for installation and scope.
+
 `--engine`
-: Specify the LaTeX engine to use when compiling the rendered document into a PDF. Supported engines include `tectonic`, `lualatex`, and `xelatex`. The default is `tectonic`.
+: Specify the LaTeX engine to use when compiling the rendered document into a PDF (LaTeX backend only). Supported engines include `tectonic`, `lualatex`, and `xelatex`. The default is `tectonic`.
 
 `--system`
 : Use the system-installed Tectonic binary instead of the bundled version provided by TeXSmith. This can be useful if you have a specific version of Tectonic installed or want to leverage system-wide configurations.

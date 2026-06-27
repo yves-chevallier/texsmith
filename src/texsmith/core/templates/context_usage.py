@@ -25,14 +25,18 @@ def _format_value_preview(value: Any, *, limit: int = 60) -> str:
     return rendered
 
 
-def _discover_template_variables(template: WrappableTemplate) -> set[str]:
-    """Return undeclared variables referenced by the template entrypoint."""
+def _discover_template_variables(template: WrappableTemplate) -> set[str] | None:
+    """Return undeclared variables referenced by the template entrypoint.
+
+    Returns ``None`` when the entrypoint source cannot be loaded/parsed, so
+    callers can distinguish "no variables" from "introspection unavailable".
+    """
 
     env = template.environment
     try:
         source, _, _ = env.loader.get_source(env, template.info.entrypoint)
     except Exception:
-        return set()
+        return None
     parsed = env.parse(source)
     return set(meta.find_undeclared_variables(parsed))
 
@@ -112,7 +116,7 @@ def summarise_context_usage(
         if key not in emitter_map:
             emitter_map[key].add("pipeline")
 
-    for variable in _discover_template_variables(template):
+    for variable in _discover_template_variables(template) or set():
         if variable:
             consumer_map[variable].add(f"template:{template_name}")
 

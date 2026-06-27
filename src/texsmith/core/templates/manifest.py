@@ -30,6 +30,7 @@ from texsmith.adapters.markdown import DEFAULT_MARKDOWN_EXTENSIONS, render_markd
 from texsmith.core.exceptions import LatexRenderingError
 from texsmith.core.metadata import PressMetadataError, normalise_press_metadata
 from texsmith.core.partials import normalise_partial_key
+from texsmith.core.templates.languages import _map_babel_language, _map_bcp47_language
 
 
 class TemplateError(LatexRenderingError):
@@ -37,40 +38,6 @@ class TemplateError(LatexRenderingError):
 
 
 DEFAULT_TEMPLATE_LANGUAGE = "english"
-
-_BABEL_LANGUAGE_ALIASES = {
-    "ad": "catalan",
-    "ca": "catalan",
-    "cs": "czech",
-    "da": "danish",
-    "de": "ngerman",
-    "de-de": "ngerman",
-    "en": "english",
-    "en-gb": "british",
-    "en-us": "english",
-    "en-au": "australian",
-    "en-ca": "canadian",
-    "es": "spanish",
-    "es-es": "spanish",
-    "es-mx": "mexican",
-    "fi": "finnish",
-    "fr": "french",
-    "fr-fr": "french",
-    "fr-ca": "canadien",
-    "it": "italian",
-    "nl": "dutch",
-    "nb": "norwegian",
-    "nn": "nynorsk",
-    "pl": "polish",
-    "pt": "portuguese",
-    "pt-br": "brazilian",
-    "ro": "romanian",
-    "ru": "russian",
-    "sk": "slovak",
-    "sl": "slovene",
-    "sv": "swedish",
-    "tr": "turkish",
-}
 
 LATEX_HEADING_LEVELS: dict[str, int] = {
     "part": -1,
@@ -409,6 +376,30 @@ def _normalise_language(value: Any, spec: TemplateAttributeSpec, fallback: Any) 
         candidate = value
 
     mapped = _map_babel_language(candidate)
+    if mapped:
+        return mapped
+
+    if fallback is not None:
+        return fallback
+
+    raise TemplateError(f"Attribute '{spec.name}' received unsupported language value '{value}'.")
+
+
+@_register_attribute_normaliser("bcp47_language")
+def _normalise_bcp47_language(value: Any, spec: TemplateAttributeSpec, fallback: Any) -> Any:
+    """Map babel language names / locale codes onto a BCP-47 primary subtag.
+
+    The Typst backend's ``#set text(lang: …)`` expects an ISO 639 (BCP-47)
+    language code such as ``"en"`` / ``"fr"``, whereas front matter routinely
+    carries babel names (``"english"``) shared with the LaTeX backend. This
+    normaliser bridges both so a single ``language: english`` source works for
+    either backend.
+    """
+    if value is None or value == "":
+        return fallback
+
+    candidate = value if isinstance(value, str) else str(value)
+    mapped = _map_bcp47_language(candidate)
     if mapped:
         return mapped
 
@@ -865,11 +856,44 @@ class LatexSection(BaseModel):
     template: TemplateInfo
 
 
+class TypstSection(BaseModel):
+    """Section grouping Typst-specific manifest settings.
+
+    Mirrors :class:`LatexSection`: it reuses the backend-agnostic
+    :class:`TemplateInfo` (attributes / slots) so a single template package can
+    declare a parallel ``[typst.template]`` block driving the Typst backend.
+    """
+
+    template: TemplateInfo
+
+
 class TemplateManifest(BaseModel):
-    """Structured manifest describing a LaTeX template."""
+    """Structured manifest describing a multi-backend template.
+
+    ``latex`` is always present (the primary backend); ``typst`` is optional and
+    only present for templates that also support the Typst backend.
+    """
 
     compat: CompatInfo | None = None
     latex: LatexSection
+    typst: TypstSection | None = None
+
+    def section(self, backend: str) -> TemplateInfo:
+        """Return the :class:`TemplateInfo` for ``backend`` (``latex``/``typst``).
+
+        Raises :class:`TemplateError` when a template is asked for a backend it
+        does not declare — explicit, never a silent fallback to LaTeX.
+        """
+        if backend == "latex":
+            return self.latex.template
+        if backend == "typst":
+            if self.typst is None:
+                raise TemplateError(
+                    f"Template '{self.latex.template.name}' does not declare a "
+                    "[typst.template] section; it cannot be rendered with --format typst."
+                )
+            return self.typst.template
+        raise TemplateError(f"Unknown template backend '{backend}'.")
 
     @classmethod
     def load(cls, manifest_path: Path) -> TemplateManifest:
@@ -900,22 +924,8 @@ __all__ = [
     "TemplateInfo",
     "TemplateManifest",
     "TemplateSlot",
+    "TypstSection",
     "register_attribute_normaliser",
 ]
 
 
-def _map_babel_language(value: str | None) -> str | None:
-    if value is None:
-        return None
-    candidate = value.strip()
-    if not candidate:
-        return None
-    lowered = candidate.lower().replace("_", "-")
-    if lowered in _BABEL_LANGUAGE_ALIASES:
-        return _BABEL_LANGUAGE_ALIASES[lowered]
-    primary = lowered.split("-", 1)[0]
-    if primary in _BABEL_LANGUAGE_ALIASES:
-        return _BABEL_LANGUAGE_ALIASES[primary]
-    if lowered.isalpha():
-        return lowered
-    return None

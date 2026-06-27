@@ -153,3 +153,90 @@ description = "Appendix content inserted before backmatter."
 [latex.template.slots.backmatter]
 depth = "section"
 strip_heading = true
+
+# --------------------------------------------------------------------------- #
+# Typst backend (parallel to [latex.template]). Attributes are backend-agnostic
+# but use raw values (no LaTeX escaping); the Typst scaffolding escapes inline.
+# --------------------------------------------------------------------------- #
+[typst.template]
+name = "article"
+version = "0.1.0"
+entrypoint = "template/template.typ"
+
+[typst.template.attributes.title]
+default = ""
+type = "string"
+format = "raw"
+allow_empty = true
+sources = ["title"]
+description = "The title of the document."
+
+[typst.template.attributes.subtitle]
+default = ""
+type = "string"
+format = "raw"
+allow_empty = true
+sources = ["subtitle"]
+description = "The subtitle of the document."
+
+[typst.template.attributes.authors]
+default = []
+type = "list"
+sources = ["authors"]
+description = "List of authors (plain strings or objects with 'name'/'affiliation'/'email')."
+
+[typst.template.attributes.date]
+default = ""
+type = "any"
+format = "raw"
+allow_empty = true
+sources = ["date"]
+description = "Document date (free-form string)."
+
+[typst.template.attributes.version]
+default = ""
+type = "any"
+format = "raw"
+allow_empty = true
+sources = ["version"]
+description = "Document version, rendered after the date."
+
+[typst.template.attributes.language]
+default = "en"
+type = "string"
+allow_empty = false
+normaliser = "bcp47_language"
+sources = ["language", "lang"]
+description = "Document language (BCP-47 code) for hyphenation and quotes. Babel names (e.g. 'english') are mapped to their ISO 639 code."
+
+[typst.template.attributes.toc]
+default = false
+type = "boolean"
+sources = ["toc"]
+description = "Whether to include a table of contents."
+
+[typst.template.attributes.numbering]
+default = true
+type = "boolean"
+sources = ["numbering"]
+description = "Whether to number sections."
+
+[typst.template.attributes.columns]
+default = 1
+type = "integer"
+description = "Number of text columns."
+
+[typst.template.attributes.bibliography_style]
+default = "ieee"
+type = "string"
+allow_empty = false
+sources = ["bibliography_style"]
+description = "Typst bibliography style (e.g. 'ieee', 'apa', 'chicago-author-date')."
+
+[typst.template.slots.mainmatter]
+default = true
+depth = "section"
+
+[typst.template.slots.abstract]
+depth = "section"
+strip_heading = true

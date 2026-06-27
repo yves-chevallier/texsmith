@@ -11,9 +11,12 @@ def renderer() -> LaTeXRenderer:
 
 
 def test_strong_tag_converted(renderer: LaTeXRenderer) -> None:
-    html = "<strong>Important</strong>"
+    # A lone short ``<strong>`` paragraph is intentionally promoted to a
+    # ``\tslead`` lead-in (see ``LaTeXWriter._lone_bold_lead``); embed it in
+    # surrounding prose to exercise the plain inline conversion.
+    html = "<p>This is <strong>Important</strong> text.</p>"
     latex = renderer.render(html)
-    assert latex.strip() == "\\textbf{Important}"
+    assert "\\textbf{Important}" in latex
 
 
 def test_emphasis_tag_converted(renderer: LaTeXRenderer) -> None:
@@ -132,7 +135,9 @@ def test_abbreviation_conflicting_definitions_warn(renderer: LaTeXRenderer) -> N
 def test_index_span_with_bold_style(renderer: LaTeXRenderer) -> None:
     html = '<p><span data-tag-name="term" data-tag-style="b">Term</span></p>'
     latex = renderer.render(html)
-    assert "Term\\index{\\textbf{term}}" in latex
+    # Styled entries carry an explicit ``sort@display`` key (the writer unifies
+    # the index emission with the extension's ``data-tag`` variant).
+    assert "Term\\index{term@\\textbf{term}}" in latex
 
 
 def test_index_span_without_style(renderer: LaTeXRenderer) -> None:
@@ -144,13 +149,13 @@ def test_index_span_without_style(renderer: LaTeXRenderer) -> None:
 def test_index_span_with_italic_style(renderer: LaTeXRenderer) -> None:
     html = '<p><span data-tag-name="horse" data-tag-style="i">Horse</span></p>'
     latex = renderer.render(html)
-    assert "Horse\\index{\\textit{horse}}" in latex
+    assert "Horse\\index{horse@\\textit{horse}}" in latex
 
 
 def test_index_anchor_with_bold_italic_style(renderer: LaTeXRenderer) -> None:
     html = '<p><a href="#" data-tag-name="complex" data-tag-style="bi"></a></p>'
     latex = renderer.render(html)
-    assert "\\index{\\textbf{\\textit{complex}}}" in latex
+    assert "\\index{complex@\\textbf{\\textit{complex}}}" in latex
 
 
 def test_index_nested_entries(renderer: LaTeXRenderer) -> None:
@@ -174,6 +179,9 @@ def test_document_state_tracks_index_and_acronyms(renderer: LaTeXRenderer) -> No
 
 
 def test_arithmatex_inline_preserved(renderer: LaTeXRenderer) -> None:
+    # Inline math lowers to a semantic ``Math`` node; the LaTeX writer emits it
+    # with the canonical ``$…$`` delimiters (both ``\(…\)`` and ``$…$`` sources
+    # converge on the same IR, as the math golden case verifies).
     html = "<p>Inline math <span class='arithmatex'>\\(E = mc^2\\)</span></p>"
     latex = renderer.render(html)
-    assert "Inline math \\(E = mc^2\\)" in latex
+    assert "Inline math $E = mc^2$" in latex

@@ -2,28 +2,21 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable, Mapping
+from collections.abc import Callable, Iterable, Mapping, Sequence
 import copy
 import dataclasses
 from dataclasses import dataclass, field
-import hashlib
 from pathlib import Path
 from typing import Any
 
-from texsmith.adapters.docker import is_docker_available
 from texsmith.adapters.latex.formatter import LaTeXFormatter
 from texsmith.adapters.latex.renderer import LaTeXRenderer
-from texsmith.adapters.transformers import has_converter, register_converter
 from texsmith.core.bibliography.collection import BibliographyCollection
 from texsmith.core.callouts import DEFAULT_CALLOUTS, merge_callouts, normalise_callouts
 from texsmith.core.context import DocumentState
-from texsmith.core.conversion_contexts import (
-    ConversionContext,
-    GenerationStrategy,
-    SegmentContext,
-)
+from texsmith.core.conversion_contexts import ConversionContext
 from texsmith.core.documents import Document
-from texsmith.core.exceptions import LatexRenderingError, TransformerExecutionError
+from texsmith.core.exceptions import LatexRenderingError
 from texsmith.core.fragments import collect_fragment_partials
 from texsmith.core.templates import (
     TemplateBinding,
@@ -32,7 +25,8 @@ from texsmith.core.templates import (
     wrap_template_document,
 )
 
-from ..diagnostics import DiagnosticEmitter
+from ..diagnostics import DiagnosticEmitter, NullEmitter
+from ._utils import build_unique_stem_map
 from .debug import (
     debug_enabled,
     ensure_emitter,
@@ -43,6 +37,7 @@ from .debug import (
 )
 from .execution import resolve_conversion_context
 from .models import ConversionRequest
+from .renderer import TemplateFragment
 from .templates import (
     SlotFragment,
     bind_template,
@@ -67,7 +62,6 @@ class ConversionResult:
     template_overrides: dict[str, Any] = field(default_factory=dict)
     document: Document | None = None
     context: ConversionContext | None = None
-    rule_descriptions: list[dict[str, Any]] = field(default_factory=list)
     assets_map: dict[str, Path] = field(default_factory=dict)
 
 
@@ -239,46 +233,38 @@ def convert_document(
         legacy_latex_accents=request.legacy_latex_accents,
     )
 
-    renderer_kwargs: dict[str, Any] = {
-        "output_root": output_dir,
-        "copy_assets": context.generation.copy_assets,
-        "convert_assets": context.generation.convert_assets,
-        "hash_assets": context.generation.hash_assets,
-        "parser": request.parser or "html.parser",
-    }
-
     return _render_document(
-        document=context.document,
         context=context,
-        renderer_kwargs=renderer_kwargs,
-        strategy=context.generation,
-        disable_fallback_converters=request.disable_fallback_converters,
-        persist_debug_html=request.persist_debug_html,
         emitter=emitter,
         initial_state=state,
         wrap_document=wrap_document,
-        legacy_latex_accents=request.legacy_latex_accents,
-        diagrams_backend=request.diagrams_backend,
-        http_user_agent=request.http_user_agent,
     )
 
 
 def _render_document(
     *,
-    document: Document,
     context: ConversionContext,
-    renderer_kwargs: dict[str, Any],
-    strategy: GenerationStrategy,
-    disable_fallback_converters: bool,
-    persist_debug_html: bool,
     emitter: DiagnosticEmitter,
     initial_state: DocumentState | None,
     wrap_document: bool,
-    legacy_latex_accents: bool,
-    diagrams_backend: str | None,
-    http_user_agent: str | None,
 ) -> ConversionResult:
-    if persist_debug_html:
+    # Everything the per-document render needs is carried on the context: the
+    # document, the resolved request, and the generation strategy. Derive the
+    # locals here rather than threading them through the signature.
+    document = context.document
+    request = context.request
+    strategy = context.generation
+    legacy_latex_accents = request.legacy_latex_accents
+
+    renderer_kwargs: dict[str, Any] = {
+        "output_root": context.output_dir,
+        "copy_assets": strategy.copy_assets,
+        "convert_assets": strategy.convert_assets,
+        "hash_assets": strategy.hash_assets,
+        "parser": request.parser or "html.parser",
+    }
+
+    if request.persist_debug_html:
         persist_debug_artifacts(
             context.output_dir,
             document.source_path,
@@ -289,17 +275,12 @@ def _render_document(
     if binding is None:  # pragma: no cover - defensive safeguard
         raise RuntimeError("Conversion context is missing a template binding.")
 
-    effective_base_level = binding.base_level or 0
     slot_base_levels = binding.slot_levels()
 
     runtime_common = _build_runtime_common(
         binding=binding,
         context=context,
-        document=document,
-        strategy=strategy,
-        diagrams_backend=diagrams_backend,
         emitter=emitter,
-        http_user_agent=http_user_agent,
     )
 
     active_slot_requests = context.slot_requests
@@ -331,21 +312,6 @@ def _render_document(
         else:
             fragment_offsets[fragment.name] = 1 - min(levels)
 
-    segment_registry: dict[str, list[SegmentContext]] = {}
-    for fragment in slot_fragments:
-        base_value = slot_base_levels.get(fragment.name, effective_base_level)
-        fragment_offset = fragment_offsets.get(fragment.name, 0)
-        base_offset = manual_base_level + fragment_offset
-        segment_registry.setdefault(fragment.name, []).append(
-            SegmentContext(
-                name=fragment.name,
-                html=fragment.html,
-                base_level=base_value + base_offset,
-                metadata=document.front_matter,
-                bibliography=context.bibliography_map,
-            )
-        )
-
     try:
         render_result = _render_slot_fragments(
             slot_fragments=slot_fragments,
@@ -354,7 +320,6 @@ def _render_document(
             slot_base_levels=slot_base_levels,
             fragment_offsets=fragment_offsets,
             manual_base_level=manual_base_level,
-            disable_fallback_converters=disable_fallback_converters,
             renderer_kwargs=renderer_kwargs,
             initial_state=initial_state,
             drop_title_flag=drop_title_flag,
@@ -375,8 +340,6 @@ def _render_document(
         default_content = ""
         slot_outputs[binding.default_slot] = default_content
     latex_output = default_content
-
-    document.segments = segment_registry
 
     citations = list(document_state.citations)
     bibliography_output: Path | None = None
@@ -437,12 +400,6 @@ def _render_document(
                 exc,
             )
 
-    rule_descriptions: list[dict[str, Any]] = []
-    if renderer is not None:
-        try:
-            rule_descriptions = list(renderer.describe_registered_rules())
-        except Exception as exc:
-            emitter.warning(f"Could not collect rule descriptions: {exc}")
     asset_map: dict[str, Path] = {}
     if renderer is not None:
         try:
@@ -467,7 +424,6 @@ def _render_document(
         template_overrides=dict(context.template_overrides),
         document=document,
         context=context,
-        rule_descriptions=rule_descriptions,
         assets_map=asset_map,
     )
 
@@ -476,13 +432,13 @@ def _build_runtime_common(
     *,
     binding: TemplateBinding,
     context: ConversionContext,
-    document: Document,
-    strategy: GenerationStrategy,
-    diagrams_backend: str | None,
     emitter: DiagnosticEmitter,
-    http_user_agent: str | None,
 ) -> dict[str, object]:
     """Prepare immutable runtime metadata shared across fragment rendering."""
+    document = context.document
+    strategy = context.generation
+    diagrams_backend = context.request.diagrams_backend
+    http_user_agent = context.request.http_user_agent
     code_options = _resolve_code_options(binding, context.template_overrides)
 
     runtime_common: dict[str, object] = {
@@ -540,7 +496,6 @@ def _render_slot_fragments(
     slot_base_levels: Mapping[str, int],
     fragment_offsets: Mapping[str, int],
     manual_base_level: int,
-    disable_fallback_converters: bool,
     renderer_kwargs: dict[str, Any],
     initial_state: DocumentState | None,
     drop_title_flag: bool,
@@ -548,7 +503,7 @@ def _render_slot_fragments(
     legacy_latex_accents: bool,
     emitter: DiagnosticEmitter,
 ) -> dict[str, Any]:
-    """Render slot fragments, applying fallback converters when required."""
+    """Render slot fragments for the document into LaTeX slot outputs."""
     formatter = LaTeXFormatter()
     formatter.legacy_latex_accents = legacy_latex_accents
     code_opts = runtime_common.get("code") or {}
@@ -601,9 +556,6 @@ def _render_slot_fragments(
                 **renderer_kwargs,
             )
         return renderer
-
-    if not disable_fallback_converters:
-        ensure_fallback_converters()
 
     slot_outputs: dict[str, str] = {}
     document_state: DocumentState | None = initial_state
@@ -665,93 +617,172 @@ def render_with_fallback(
     state: DocumentState | None = None,
     emitter: DiagnosticEmitter | None = None,
 ) -> tuple[str, DocumentState]:
-    """Render HTML to LaTeX, retrying with fallback converters when available."""
+    """Render HTML to LaTeX."""
     emitter = ensure_emitter(emitter)
-    attempts = 0
     bibliography_payload = dict(bibliography or {})
     base_state = state
 
-    while True:
-        current_state = (
-            copy.deepcopy(base_state)
-            if base_state is not None
-            else DocumentState(bibliography=dict(bibliography_payload))
+    current_state = (
+        copy.deepcopy(base_state)
+        if base_state is not None
+        else DocumentState(bibliography=dict(bibliography_payload))
+    )
+
+    renderer = renderer_factory()
+    output = renderer.render(
+        html,
+        runtime=runtime,
+        state=current_state,
+        emitter=emitter,
+    )
+
+    if base_state is not None:
+        copy_document_state(base_state, current_state)
+        return output, base_state
+
+    return output, current_state
+
+
+@dataclass(slots=True)
+class LaTeXFragment:
+    """Represents a rendered LaTeX fragment."""
+
+    document: Document
+    latex: str
+    stem: str
+    output_path: Path | None = None
+    conversion: ConversionResult | None = None
+
+    def write_to(self, target: Path) -> None:
+        """Persist the fragment to disk so later template steps can reference it."""
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_text(self.latex, encoding="utf-8")
+        self.output_path = target
+
+
+@dataclass(slots=True)
+class ConversionBundle:
+    """Collection returned by :func:`convert_documents`."""
+
+    fragments: list[LaTeXFragment]
+
+    def combined_output(self) -> str:
+        """Concatenate all fragments separated by blank lines for quick previews."""
+        return "\n\n".join(fragment.latex for fragment in self.fragments if fragment.latex)
+
+
+def convert_documents(
+    documents: Sequence[Document],
+    *,
+    output_dir: Path | None = None,
+    settings: ConversionRequest | None = None,
+    emitter: DiagnosticEmitter | None = None,
+    bibliography_files: Iterable[Path] | None = None,
+    template: str | None = None,
+    template_runtime: TemplateRuntime | None = None,
+    template_overrides: Mapping[str, Any] | None = None,
+    wrap_document: bool = True,
+    shared_state: DocumentState | None = None,
+    write_fragments: bool | None = None,
+) -> ConversionBundle:
+    """Convert one or more documents into LaTeX fragments while coordinating shared state."""
+    if not documents:
+        raise ValueError("At least one document is required for conversion.")
+
+    request = settings.copy() if settings is not None else ConversionRequest()
+    request.bibliography_files = list(bibliography_files or [])
+    request.template = template
+    unique_stems = build_unique_stem_map([doc.source_path for doc in documents])
+
+    shared_bibliography: BibliographyCollection | None = None
+    seen_bibliography_issues: set[tuple[str, str | None, str | None]] = set()
+
+    if bibliography_files:
+        shared_bibliography = BibliographyCollection()
+        shared_bibliography.load_files(bibliography_files)
+
+    fragments: list[LaTeXFragment] = []
+    should_write_fragments = write_fragments if write_fragments is not None else True
+    state = shared_state
+    active_emitter = emitter or NullEmitter()
+
+    for document in documents:
+        document = document.prepare_for_conversion()
+        target_dir = Path(output_dir) if output_dir is not None else Path("build")
+        slot_overrides = dict(document.slot_selectors)
+        result = convert_document(
+            document=document,
+            output_dir=target_dir,
+            request=request,
+            slot_overrides=slot_overrides or None,
+            emitter=active_emitter,
+            template_overrides=template_overrides,
+            state=None if wrap_document else state,
+            template_runtime=template_runtime,
+            wrap_document=wrap_document,
+            preloaded_bibliography=shared_bibliography,
+            seen_bibliography_issues=seen_bibliography_issues,
         )
 
-        renderer = renderer_factory()
-        try:
-            output = renderer.render(
-                html,
-                runtime=runtime,
-                state=current_state,
-                emitter=emitter,
+        if not wrap_document:
+            state = result.document_state or state
+
+        stem = unique_stems[document.source_path]
+        fragment = LaTeXFragment(
+            document=document,
+            latex=result.latex_output,
+            stem=stem,
+            conversion=result,
+        )
+        if output_dir is not None and should_write_fragments:
+            target = target_dir / f"{stem}.tex"
+            fragment.write_to(target)
+        fragments.append(fragment)
+
+    return ConversionBundle(fragments=fragments)
+
+
+def to_template_fragments(bundle: ConversionBundle) -> list[TemplateFragment]:
+    """Convert bundle fragments into the template fragment contract used by the template engine."""
+    fragments: list[TemplateFragment] = []
+    for fragment in bundle.fragments:
+        conversion = fragment.conversion
+        if conversion is None:
+            raise ValueError("Template rendering requires conversion metadata for each fragment.")
+
+        document = fragment.document
+        slot_includes: set[str] = set()
+        if document is not None:
+            slot_includes = set(document.slot_includes)
+
+        fragments.append(
+            TemplateFragment(
+                stem=fragment.stem,
+                latex=conversion.latex_output,
+                default_slot=conversion.default_slot or "mainmatter",
+                slot_outputs=dict(conversion.slot_outputs),
+                slot_includes=slot_includes,
+                document_state=conversion.document_state,
+                bibliography_path=conversion.bibliography_path,
+                template_engine=conversion.template_engine,
+                requires_shell_escape=conversion.template_shell_escape,
+                template_overrides=dict(conversion.template_overrides),
+                output_path=fragment.output_path,
+                front_matter=document.front_matter,
+                source_path=document.source_path,
+                assets=dict(conversion.assets_map),
             )
-        except LatexRenderingError as exc:
-            attempts += 1
-            if attempts >= 5 or not attempt_transformer_fallback(exc):
-                raise
-            continue
-
-        if base_state is not None:
-            copy_document_state(base_state, current_state)
-            return output, base_state
-
-        return output, current_state
-
-
-def attempt_transformer_fallback(error: LatexRenderingError) -> bool:
-    """Register placeholder converters when known transformers are unavailable."""
-    cause = error.__cause__
-    if not isinstance(cause, TransformerExecutionError):
-        return False
-
-    message = str(cause).lower()
-    applied = False
-
-    if "drawio" in message:
-        return False
-    if "mermaid" in message:
-        return False
-    if ("fetch-image" in message or "fetch image" in message) and not has_converter("fetch-image"):
-        register_converter("fetch-image", _FallbackConverter("image"))
-        applied = True
-    return applied
-
-
-def ensure_fallback_converters() -> None:
-    """Install placeholder converters for optional transformer dependencies."""
-    if is_docker_available():
-        return
-
-    if not has_converter("fetch-image"):
-        register_converter("fetch-image", _FallbackConverter("image"))
-
-
-class _FallbackConverter:
-    def __init__(self, name: str):
-        self.name = name
-
-    def __call__(self, source: Path | str, *, output_dir: Path, **_: Any) -> Path:
-        output_dir = Path(output_dir)
-        output_dir.mkdir(parents=True, exist_ok=True)
-
-        original = str(source) if isinstance(source, Path) else source
-        digest = hashlib.sha256(original.encode("utf-8")).hexdigest()[:12]
-        suffix = Path(original).suffix or ".txt"
-        filename = f"{self.name}-{digest}.pdf"
-        target = output_dir / filename
-        target.write_text(
-            f"Placeholder PDF for {self.name} ({suffix})",
-            encoding="utf-8",
         )
-        return target
+    return fragments
 
 
 __all__ = [
+    "ConversionBundle",
     "ConversionResult",
-    "attempt_transformer_fallback",
+    "LaTeXFragment",
     "convert_document",
+    "convert_documents",
     "copy_document_state",
-    "ensure_fallback_converters",
     "render_with_fallback",
+    "to_template_fragments",
 ]

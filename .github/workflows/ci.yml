@@ -16,7 +16,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Install uv
         uses: astral-sh/setup-uv@v7
@@ -46,10 +46,10 @@ jobs:
         python-version: ["3.10", "3.13", "3.14"]
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Setup Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: ${{ matrix.python-version }}
 
@@ -84,10 +84,10 @@ jobs:
     runs-on: windows-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Setup Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: "3.13"
 
@@ -104,8 +104,19 @@ jobs:
         shell: powershell
         run: choco install make -y
 
-      - name: Sync dependencies (dev + docs)
-        run: uv sync --all-groups --frozen
+      - name: Sync dependencies (dev + docs + typst)
+        # `make -C examples all` builds each example's Typst PDF too, which needs
+        # the embedded Typst compiler from the `typst` extra.
+        run: uv sync --all-groups --extra typst --frozen
+
+      # `make -C examples all` builds each example's Typst PDF too. Use a system
+      # Typst binary (preferred over the embedded compiler) pinned to a version
+      # whose `mitex` support still defines symbols like `diff` (the latest
+      # bundled 0.15 drops them and fails on `\partial`-style math).
+      - name: Install Typst
+        uses: typst-community/setup-typst@v5
+        with:
+          typst-version: "0.14.2"
 
       - name: Build examples
         shell: bash
@@ -124,7 +135,7 @@ jobs:
     steps:
       # Checkout repository
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           fetch-depth: 0
 
@@ -144,9 +155,18 @@ jobs:
           enable-cache: true
           cache-python: false
 
-      # Install full dependency set
-      - name: Sync dependencies (dev + docs)
-        run: uv sync --all-groups --frozen
+      # Install full dependency set (incl. the Typst extra: `make examples`
+      # builds each example's Typst PDF via the embedded Typst compiler).
+      - name: Sync dependencies (dev + docs + typst)
+        run: uv sync --all-groups --extra typst --frozen
+
+      # `make examples` builds each example's Typst PDF. Use a system Typst
+      # binary (preferred over the embedded compiler) pinned to a mitex-compatible
+      # version (0.15 drops symbols like `diff` that mitex still emits).
+      - name: Install Typst
+        uses: typst-community/setup-typst@v5
+        with:
+          typst-version: "0.14.2"
 
       # Install Playwright browser binaries + system deps
       - name: Install Playwright browsers
@@ -187,7 +207,7 @@ jobs:
 
       # Upload all artifacts needed for the release job
       - name: Upload release artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: texsmith-release-assets
           path: |
@@ -216,13 +236,13 @@ jobs:
     steps:
       # Checkout repository (needed by mike deploy)
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           fetch-depth: 0
 
       # Download all build artifacts generated previously
       - name: Download release artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: texsmith-release-assets
           path: .
@@ -296,7 +316,7 @@ jobs:
 
       # create a GitHub Release and attach artifacts
       - name: Create GitHub Release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           files: |
             dist/*

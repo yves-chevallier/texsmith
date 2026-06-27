@@ -29,8 +29,6 @@ diagnostics to metrics systems or structured loggers.
 
 ::: texsmith.core.exceptions
 
-::: texsmith.core.rules
-
 ::: texsmith.adapters.latex.utils
 
 ::: texsmith.adapters.docker

@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from collections.abc import Mapping
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
@@ -19,36 +18,13 @@ if TYPE_CHECKING:  # pragma: no cover - typing only
 
 
 @dataclass(slots=True)
-class AssetMapping:
-    """Describe how a source asset should be persisted for LaTeX generation."""
-
-    source: Path
-    target: Path
-    kind: str | None = None
-
-
-@dataclass(slots=True)
 class GenerationStrategy:
     """Rendering strategy toggles shared across conversion workflows."""
 
     copy_assets: bool = True
     convert_assets: bool = False
     hash_assets: bool = False
-    prefer_inputs: bool = False
     persist_manifest: bool = False
-
-
-@dataclass(slots=True)
-class SegmentContext:
-    """Represent a fragment destined for insertion into a template slot."""
-
-    name: str
-    html: str
-    base_level: int
-    metadata: Mapping[str, Any] = field(default_factory=dict)
-    bibliography: Mapping[str, Any] = field(default_factory=dict)
-    assets: list[AssetMapping] = field(default_factory=list)
-    destination: Path | None = None
 
 
 @dataclass(slots=True)
@@ -80,7 +56,6 @@ class ConversionContext:
     slot_requests: dict[str, str] = field(default_factory=dict)
     bibliography_collection: BibliographyCollection | None = None
     bibliography_map: dict[str, dict[str, Any]] = field(default_factory=dict)
-    runtime_common: dict[str, object] = field(default_factory=dict)
 
     # Template-bound state (populated by bind_template)
     config: BookConfig | None = None
@@ -88,8 +63,6 @@ class ConversionContext:
 
 
 __all__ = [
-    "AssetMapping",
     "ConversionContext",
     "GenerationStrategy",
-    "SegmentContext",
 ]

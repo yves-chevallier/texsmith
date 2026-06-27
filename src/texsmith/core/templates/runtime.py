@@ -8,15 +8,14 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 from .base import WrappableTemplate
+from .languages import _BABEL_LANGUAGE_ALIASES
 from .loader import load_template
 from .manifest import (
     DEFAULT_TEMPLATE_LANGUAGE,
     TemplateError,
     TemplateSlot,
-    _BABEL_LANGUAGE_ALIASES,
 )
 
-from texsmith.core.fragments import FRAGMENT_REGISTRY
 
 if TYPE_CHECKING:
     from texsmith.adapters.latex.formatter import LaTeXFormatter
@@ -58,7 +57,7 @@ class TemplateBinding:
         base = (self.base_level or 0) + offset
         return {name: slot.resolve_level(base) for name, slot in self.slots.items()}
 
-    def apply_formatter_overrides(self, formatter: "LaTeXFormatter") -> None:
+    def apply_formatter_overrides(self, formatter: LaTeXFormatter) -> None:
         """Apply template-provided overrides to a formatter."""
         for key, override_path in self.formatter_overrides.items():
             formatter.override_template(key, override_path)
@@ -238,7 +237,9 @@ def load_template_runtime(template: str) -> TemplateRuntime:
     extras_payload = getattr(template_instance, "extras", {}) or {}
     extras = {key: value for key, value in extras_payload.items()}
     declared_fragments = (
-        list(template_instance.info.fragments) if template_instance.info.fragments is not None else None
+        list(template_instance.info.fragments)
+        if template_instance.info.fragments is not None
+        else None
     )
     extras.setdefault(
         "fragments",

@@ -9,25 +9,11 @@ pre-assembled body.
 
 from __future__ import annotations
 
-from bs4 import NavigableString, Tag
+from bs4 import Tag
 
-from texsmith.adapters.handlers._helpers import coerce_attribute, mark_processed
-from texsmith.core.context import RenderContext
-from texsmith.core.rules import RenderPhase, renders
+from texsmith.adapters.html_utils import coerce_attribute
 
-from .constants import Priority, TableAttr
-
-
-def is_texsmith_table(element: Tag) -> bool:
-    """Return True when ``element`` was emitted by the yaml-table extension.
-
-    The ``<table>`` is flagged with ``data-ts-table="1"`` either directly by
-    :func:`texsmith.extensions.tables.html.render_table_html` (yaml tables) or
-    by the table-config treeprocessor (plain Markdown tables with a
-    ``yaml table-config`` fence). Both paths share the same downstream LaTeX
-    renderer.
-    """
-    return coerce_attribute(element.get(TableAttr.TABLE)) == "1"
+from .constants import TableAttr
 
 
 # ---------------------------------------------------------------------------
@@ -120,8 +106,8 @@ def _render_generic_row(
             cursor += 1
             continue
 
-        rowspan = int(cell.get("rowspan", 1))
-        colspan = int(cell.get("colspan", 1))
+        rowspan = int(coerce_attribute(cell.get("rowspan")) or 1)
+        colspan = int(coerce_attribute(cell.get("colspan")) or 1)
         align = coerce_attribute(cell.get(TableAttr.ALIGN))
         content = _cell_content(cell)
 
@@ -191,69 +177,8 @@ def _render_separator(tr: Tag, total_cols: int) -> str:
 
 
 # ---------------------------------------------------------------------------
-# Main handler
+# Column-spec parsing
 # ---------------------------------------------------------------------------
-
-
-@renders(
-    "table",
-    phase=RenderPhase.POST,
-    priority=Priority.RENDERER,
-    name="texsmith_yaml_table",
-    nestable=False,
-    auto_mark=False,
-)
-def render_yaml_table(element: Tag, context: RenderContext) -> None:
-    """Convert a yaml-generated ``<table>`` into a LaTeX tabular/tabularx/longtable.
-
-    The ``@renders`` framework dispatches on tag name alone, so we ourselves
-    verify the marker attribute and bail out for plain Markdown tables which
-    belong to the legacy ``render_tables`` handler.
-    """
-    if not is_texsmith_table(element):
-        return
-
-    env = coerce_attribute(element.get(TableAttr.ENV)) or "tabular"
-    colspec = coerce_attribute(element.get(TableAttr.COLSPEC)) or ""
-    width = coerce_attribute(element.get(TableAttr.WIDTH))
-    placement = coerce_attribute(element.get(TableAttr.PLACEMENT))
-    label = coerce_attribute(element.get("id"))
-
-    caption: str | None = None
-    caption_node = element.find("caption")
-    if caption_node is not None:
-        caption_text = caption_node.get_text(strip=False).strip()
-        if caption_text:
-            # ``escape_plain_text`` already escaped text nodes in PRE phase.
-            caption = caption_text
-        caption_node.decompose()
-
-    total_cols = _count_colspec_slots(colspec)
-
-    thead = element.find("thead")
-    tbody = element.find("tbody")
-    tfoot = element.find("tfoot")
-
-    header_tex = _render_header(thead, total_cols) if thead else ""
-    body_tex = _render_section(tbody, total_cols)
-    footer_tex = _render_section(tfoot, total_cols)
-
-    latex = context.formatter.yaml_table(
-        env=env,
-        colspec=colspec,
-        width=width or "",
-        placement=placement,
-        caption=caption,
-        label=label,
-        header=header_tex,
-        body=body_tex,
-        footer=footer_tex,
-    )
-
-    replacement = mark_processed(NavigableString(latex.rstrip() + "\n"))
-    context.mark_processed(element)
-    context.suppress_children(element)
-    element.replace_with(replacement)
 
 
 def _count_colspec_slots(colspec: str) -> int:
@@ -302,15 +227,4 @@ def _count_colspec_slots(colspec: str) -> int:
     return count
 
 
-def register(renderer: object) -> None:
-    """Register the yaml-table handler on the provided renderer."""
-    register_callable = getattr(renderer, "register", None)
-    if not callable(register_callable):
-        raise TypeError("Renderer does not expose a 'register' method.")
-    if getattr(renderer, "_texsmith_yaml_table_registered", False):
-        return
-    register_callable(render_yaml_table)
-    renderer._texsmith_yaml_table_registered = True  # noqa: SLF001
-
-
-__all__ = ["is_texsmith_table", "register", "render_yaml_table"]
+__all__ = ["_count_colspec_slots", "_render_header", "_render_section"]

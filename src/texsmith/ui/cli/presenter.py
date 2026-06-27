@@ -15,7 +15,7 @@ from texsmith.adapters.latex.engines import (
     LatexMessageSeverity,
     parse_latex_log,
 )
-from texsmith.core.conversion.pipeline import ConversionBundle
+from texsmith.core.conversion.core import ConversionBundle
 from texsmith.core.templates.session import TemplateRenderResult
 
 from .state import CLIState
@@ -221,40 +221,6 @@ def _render_summary(state: CLIState, title: str, rows: Sequence[tuple[str, str, 
     for artifact, location, details in rows:
         suffix = f" — {details}" if details else ""
         typer.echo(f"  * {artifact}: {location}{suffix}")
-
-
-def present_rule_descriptions(state: CLIState, rules: Sequence[Mapping[str, Any]]) -> None:
-    """Render a diagnostic view of registered render rules."""
-    if not rules:
-        return
-
-    console = _get_console(state)
-    if console is not None:
-        table, _text_cls, box_module = _build_table(
-            title="Registered Rules",
-            columns=["Phase", "Tag", "Name", "Priority", "Before", "After"],
-        )
-        if table is not None and box_module is not None:
-            for entry in rules:
-                table.add_row(
-                    str(entry.get("phase", "")),
-                    str(entry.get("tag", "")),
-                    str(entry.get("name", "")),
-                    str(entry.get("priority", "")),
-                    ", ".join(entry.get("before", []) or []),
-                    ", ".join(entry.get("after", []) or []),
-                )
-            console.print(table)
-            return
-
-    typer.echo("Registered Rules:")
-    for entry in rules:
-        before = ", ".join(entry.get("before", []) or [])
-        after = ", ".join(entry.get("after", []) or [])
-        typer.echo(
-            f"  - {entry.get('phase', '')}/{entry.get('tag', '')}: {entry.get('name', '')} "
-            f"(priority={entry.get('priority', '')}, before=[{before}], after=[{after}])"
-        )
 
 
 def _normalise_script_usage(
@@ -676,5 +642,4 @@ __all__ = [
     "present_conversion_summary",
     "present_html_summary",
     "present_latex_failure",
-    "present_rule_descriptions",
 ]

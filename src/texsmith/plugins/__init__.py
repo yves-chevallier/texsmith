@@ -8,7 +8,7 @@ keep the public import path available.
 
 from __future__ import annotations
 
-from texsmith.adapters.plugins import material, snippet
+from texsmith.adapters.plugins import snippet
 
 
-__all__ = ["material", "snippet"]
+__all__ = ["snippet"]

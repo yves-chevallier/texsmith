@@ -6,7 +6,7 @@ import pytest
 
 from texsmith.adapters.latex import LaTeXRenderer
 from texsmith.core.config import BookConfig
-from texsmith.extensions.marginnote import MarginNoteExtension, register_renderer
+from texsmith.extensions.marginnote import MarginNoteExtension
 
 
 markdown = pytest.importorskip("markdown")
@@ -16,9 +16,7 @@ EXTENSION = MarginNoteExtension()
 
 @pytest.fixture
 def renderer() -> LaTeXRenderer:
-    renderer = LaTeXRenderer(config=BookConfig(), parser="html.parser")
-    register_renderer(renderer)
-    return renderer
+    return LaTeXRenderer(config=BookConfig(), parser="html.parser")
 
 
 # ---------------------------------------------------------------------------

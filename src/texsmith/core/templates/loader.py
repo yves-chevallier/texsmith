@@ -75,7 +75,7 @@ def copy_template_assets(
     *,
     context: Mapping[str, Any] | None = None,
     overrides: Mapping[str, Any] | None = None,
-    assets: Iterable["ResolvedAsset"] | None = None,
+    assets: Iterable[ResolvedAsset] | None = None,
 ) -> list[Path]:
     """Copy the template declared assets into the selected output directory."""
     output_dir = Path(output_dir).resolve()
@@ -243,7 +243,7 @@ def discover_templates() -> list[dict[str, str]]:
             if root is None:
                 continue
             _record("package", slug, root)
-    except Exception:  # noqa: BLE001 - distribution discovery is best-effort
+    except Exception:
         # A broken third-party template distribution (corrupt metadata, missing
         # file, unreadable entry-point) must not take down the whole template
         # listing — users would lose access to their builtin and local
@@ -263,38 +263,6 @@ def discover_templates() -> list[dict[str, str]]:
     home_root = get_user_dir().data_dir("templates", create=False)
     if home_root.exists():
         for child in sorted(home_root.iterdir()):
-            if child.is_dir() and _looks_like_template_root(child):
-                _record("home", child.name, child)
-
-    return sorted(entries, key=lambda entry: (entry["origin"], entry["name"]))
-
-    for candidate in _iter_local_candidates("*placeholder*"):
-        pass
-
-    local_candidates: list[Path] = []
-    for slug in set():
-        pass
-
-    for candidate in _iter_local_candidates("*placeholder*"):
-        pass
-
-    def _record(origin: str, name: str, root: Path) -> None:
-        key = (name, str(root))
-        if key in seen_paths:
-            return
-        seen_paths.add(key)
-        entries.append({"name": name, "origin": origin, "root": str(root)})
-
-    # Re-run local with concrete names.
-    visited: set[str] = set()
-    cwd = Path.cwd().resolve()
-    for candidate in _iter_local_candidates(""):
-        if _looks_like_template_root(candidate):
-            _record("local", candidate.name, candidate)
-
-    home_root = get_user_dir().data_dir("templates", create=False)
-    if home_root.exists():
-        for child in home_root.iterdir():
             if child.is_dir() and _looks_like_template_root(child):
                 _record("home", child.name, child)
 

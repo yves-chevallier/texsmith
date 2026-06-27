@@ -44,7 +44,7 @@ from texsmith.adapters.latex.tectonic import (
     select_makeglossaries,
     select_tectonic_binary,
 )
-from texsmith.adapters.plugins import material, snippet
+from texsmith.adapters.plugins import snippet
 from texsmith.core.bibliography import (
     BibliographyCollection,
     DoiBibliographyFetcher,
@@ -55,10 +55,7 @@ from texsmith.core.bibliography import (
 from texsmith.core.config import BookConfig, LaTeXConfig
 from texsmith.core.context import DocumentState
 from texsmith.core.conversion import extract_front_matter_bibliography
-from texsmith.core.conversion.core import (
-    ensure_fallback_converters,
-    render_with_fallback,
-)
+from texsmith.core.conversion.core import render_with_fallback
 from texsmith.core.conversion.debug import format_rendering_error
 from texsmith.core.conversion.inputs import (
     InlineBibliographyEntry,
@@ -147,7 +144,6 @@ class LatexPlugin(BasePlugin):
         ("bibliography", config_options.Type(list, default=[])),
         ("books", config_options.Type(list, default=[])),
         ("template_overrides", config_options.Type(dict, default={})),
-        ("register_material", config_options.Type(bool, default=True)),
     )
 
     def __init__(self) -> None:
@@ -235,7 +231,6 @@ class LatexPlugin(BasePlugin):
             logger_obj=log,
             debug_enabled=self._is_serve,
         )
-        ensure_fallback_converters()
         return config
 
     def on_nav(
@@ -478,9 +473,6 @@ class LatexPlugin(BasePlugin):
                 parser=parser_backend,
                 copy_assets=copy_assets,
             )
-            if self.config.get("register_material", True):
-                material.register(renderer)
-            snippet.register(renderer)
             return renderer
 
         inline_bibliography_specs: list[
@@ -620,8 +612,11 @@ class LatexPlugin(BasePlugin):
 
             if not entry.is_page:
                 if entry.title and effective_level >= slot_base:
-                    fragment = heading_formatter.heading(
-                        entry.title, level=effective_level, numbered=entry.numbered
+                    fragment = heading_formatter.render_template(
+                        "heading",
+                        entry.title,
+                        level=effective_level,
+                        numbered=entry.numbered,
                     )
                     target_buffer_embed.append(fragment)
                     target_buffer_link.append(fragment)

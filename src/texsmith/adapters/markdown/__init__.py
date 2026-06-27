@@ -40,19 +40,19 @@ DEFAULT_MARKDOWN_EXTENSIONS = [
     "attr_list",
     "def_list",
     "footnotes",
-    "texsmith.index:TexsmithIndexExtension",
+    "texsmith.extensions.index:TexsmithIndexExtension",
     "texsmith.extensions.multi_citations:MultiCitationExtension",
     "texsmith.extensions.latex_raw:LatexRawExtension",
     "texsmith.extensions.missing_footnotes:MissingFootnotesExtension",
     "texsmith.extensions.latex_text:LatexTextExtension",
-    "texsmith.smart_dashes:TexsmithSmartDashesExtension",
+    "texsmith.extensions.smart_dashes:TexsmithSmartDashesExtension",
     "texsmith.extensions.invisible_chars:InvisibleCharsExtension",
     "texsmith.extensions.smallcaps:SmallCapsExtension",
     "texsmith.extensions.mermaid:MermaidExtension",
-    "texsmith.progressbar:ProgressBarExtension",
+    "texsmith.extensions.progressbar:ProgressBarExtension",
     "texsmith.extensions.marginnote:MarginNoteExtension",
     "texsmith.extensions.tables:YamlTableExtension",
-    "texsmith.quotes:TexsmithQuotesExtension",
+    "texsmith.extensions.quotes:TexsmithQuotesExtension",
     "md_in_html",
     "mdx_math",
     "pymdownx.betterem",
@@ -213,7 +213,7 @@ def render_markdown(
     # Promote front-matter glossary entries to inline ``*[KEY]: …`` definitions so
     # the standard ``abbr`` extension picks them up alongside body-level entries.
     try:
-        from texsmith.core.conversion.glossary import (
+        from texsmith.core.glossary import (
             append_synthetic_abbr_lines,
             parse_front_matter_glossary,
         )

@@ -8,11 +8,12 @@ import re
 import unicodedata
 
 from texsmith.adapters.latex.utils import escape_latex_chars
-from texsmith.core.context import RenderContext
+from texsmith.core.context import RenderContextLike
 from texsmith.fonts.cache import FontCache
 from texsmith.fonts.fallback import (
     FallbackBuilder,
     FallbackEntry,
+    FallbackIndex,
     FallbackLookup,
     FallbackPlan,
     FallbackRepository,
@@ -143,19 +144,30 @@ class ScriptDetector:
 
     def _ensure_lookup(self) -> FallbackLookup:
         if self._lookup is None:
-            repository = FallbackRepository(cache=self.cache, logger=self.logger)
-            had_cache = repository.cache_path.exists()
-            classes = generate_ucharclasses_data(cache=self.cache, logger=self.logger)
-            coverage = generate_noto_metadata(cache=self.cache, logger=self.logger)
-            announce = not had_cache
-            entries = FallbackBuilder(logger=self.logger).build(
-                classes, coverage, announce=announce
-            )
-            signature = repository._signature(entries)  # noqa: SLF001
-            cached = repository.load(expected_signature=signature)
-            if cached is None:
-                cached = repository.load_or_build(entries)
-            self._lookup = FallbackLookup(cached)
+            try:
+                repository = FallbackRepository(cache=self.cache, logger=self.logger)
+                had_cache = repository.cache_path.exists()
+                classes = generate_ucharclasses_data(cache=self.cache, logger=self.logger)
+                coverage = generate_noto_metadata(cache=self.cache, logger=self.logger)
+                announce = not had_cache
+                entries = FallbackBuilder(logger=self.logger).build(
+                    classes, coverage, announce=announce
+                )
+                signature = repository._signature(entries)  # noqa: SLF001
+                cached = repository.load(expected_signature=signature)
+                if cached is None:
+                    cached = repository.load_or_build(entries)
+                self._lookup = FallbackLookup(cached)
+            except Exception as exc:
+                # Building the fallback index needs the Noto/ucharclasses metadata,
+                # which is downloaded on a cold cache. If that fails (e.g. offline),
+                # degrade to an empty index: text renders with the default font set
+                # rather than aborting the whole conversion.
+                self.logger.warning(
+                    "Font fallback unavailable (%s); rendering without script fallbacks.",
+                    exc,
+                )
+                self._lookup = FallbackLookup(FallbackIndex([]))
         return self._lookup
 
     def _classify_char(self, char: str) -> FallbackEntry | None:
@@ -392,7 +404,7 @@ def merge_script_usage(
 def record_script_usage_for_slug(
     slug: str,
     text: str,
-    context: RenderContext,
+    context: RenderContextLike,
     *,
     detector: ScriptDetector | None = None,
 ) -> dict[str, str | None]:
@@ -440,7 +452,7 @@ def record_script_usage_for_slug(
 
 def render_moving_text(
     text: str | None,
-    context: RenderContext,
+    context: RenderContextLike,
     *,
     include_whitespace: bool = True,
     legacy_accents: bool | None = None,
@@ -485,9 +497,11 @@ def render_script_macros(usages: Iterable[Mapping[str, str | None]]) -> str:
     )
     if not scripts:
         return ""
+    from texsmith.adapters.latex.formatter import TemplateNotFoundError
+
     formatter = LaTeXFormatter()
     try:
-        return formatter.script_macros(scripts=scripts)
-    except AttributeError:
+        return formatter.render_template("script_macros", scripts=scripts)
+    except TemplateNotFoundError:
         # When the script_macros partial is not available, skip emitting anything.
         return ""

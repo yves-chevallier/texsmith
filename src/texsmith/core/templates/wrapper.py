@@ -8,22 +8,20 @@ from pathlib import Path
 import re
 from typing import Any
 
-from jinja2 import meta
-
 from texsmith.core.callouts import DEFAULT_CALLOUTS, merge_callouts, normalise_callouts
+from texsmith.core.conversion.debug import ensure_emitter
+from texsmith.core.diagnostics import DiagnosticEmitter
 from texsmith.core.fragments import (
-    FRAGMENT_REGISTRY,
     inject_fragment_attributes,
     render_fragments,
 )
 from texsmith.core.templates import TemplateRuntime
 from texsmith.core.templates.manifest import TemplateError
-
-from texsmith.core.conversion.debug import ensure_emitter
-from texsmith.core.diagnostics import DiagnosticEmitter
 from texsmith.fonts.scripts import render_script_macros
+
 from ..context import DocumentState
 from .base import WrappableTemplate, _detect_index_engine
+from .context_usage import _discover_template_variables
 from .loader import copy_template_assets
 
 
@@ -63,6 +61,7 @@ def wrap_template_document(
         if slot_output_overrides
         else None
     )
+
     def _process_slot(value: Any) -> Any:
         return value
 
@@ -74,9 +73,7 @@ def wrap_template_document(
         processed_override_slots = {
             name: _process_slot(value) for name, value in override_slots.items()
         }
-        processed_override_slots.setdefault(
-            default_slot, resolved_slots.get(default_slot, "")
-        )
+        processed_override_slots.setdefault(default_slot, resolved_slots.get(default_slot, ""))
 
     overrides_payload = dict(template_overrides) if template_overrides else None
     source_dir = None
@@ -128,7 +125,7 @@ def wrap_template_document(
 
     registry_entries = index_terms
     try:  # pragma: no cover - optional dependency
-        from texsmith.index import get_registry
+        from texsmith.extensions.index import get_registry
     except ModuleNotFoundError:
         template_context["index_registry"] = [tuple(term) for term in registry_entries]
     else:
@@ -273,7 +270,9 @@ def wrap_template_document(
         )
         template_context["script_macros"] = script_macros
 
-    final_slots = processed_override_slots if processed_override_slots is not None else resolved_slots
+    final_slots = (
+        processed_override_slots if processed_override_slots is not None else resolved_slots
+    )
     for slot_name, value in final_slots.items():
         template_context[slot_name] = value
     main_slot_content = final_slots.get(default_slot, main_slot_content)
@@ -334,7 +333,7 @@ def _merge_front_matter_glossary(
     template_context: dict[str, Any],
 ) -> None:
     """Seed acronym groups + entries from front-matter glossary metadata."""
-    from texsmith.core.conversion.glossary import (
+    from texsmith.core.glossary import (
         GlossaryValidationError,
         parse_front_matter_glossary,
     )
@@ -351,9 +350,7 @@ def _merge_front_matter_glossary(
     if glossary_payload.style and not template_context.get("glossary_style"):
         template_context["glossary_style"] = glossary_payload.style
 
-    document_state.acronym_groups = [
-        (group.key, group.title) for group in glossary_payload.groups
-    ]
+    document_state.acronym_groups = [(group.key, group.title) for group in glossary_payload.groups]
     for entry in glossary_payload.entries:
         sanitized_key = document_state.acronym_keys.get(entry.key)
         if sanitized_key is None:
@@ -364,17 +361,6 @@ def _merge_front_matter_glossary(
             document_state.acronym_keys[entry.key] = sanitized_key
         if entry.group is not None:
             document_state.acronym_entry_groups[sanitized_key] = entry.group
-
-
-def _discover_template_variables(template: WrappableTemplate) -> set[str] | None:
-    """Return undeclared variables referenced by the template entrypoint."""
-    env = template.environment
-    try:
-        source, _, _ = env.loader.get_source(env, template.info.entrypoint)
-    except Exception:
-        return None
-    parsed = env.parse(source)
-    return set(meta.find_undeclared_variables(parsed))
 
 
 def _squash_blank_lines(text: str) -> str:

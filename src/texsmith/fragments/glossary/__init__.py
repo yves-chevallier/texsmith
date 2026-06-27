@@ -48,21 +48,6 @@ class GlossaryFragment(BaseFragment[GlossaryConfig]):
         "acronym_entry_groups": {},
     }
 
-    def build_config(
-        self, context: Mapping[str, Any], overrides: Mapping[str, Any] | None = None
-    ) -> GlossaryConfig:
-        _ = overrides
-        return self.config_cls.from_context(context)
-
-    def inject(
-        self,
-        config: GlossaryConfig,
-        context: dict[str, Any],
-        overrides: Mapping[str, Any] | None = None,
-    ) -> None:
-        _ = overrides
-        config.inject_into(context)
-
     def should_render(self, config: GlossaryConfig) -> bool:
         return config.has_entries
 

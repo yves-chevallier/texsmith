@@ -35,9 +35,8 @@ import contextlib
 import copy
 from dataclasses import dataclass, field
 from enum import Enum
-from html.parser import HTMLParser
 from pathlib import Path
-from typing import Any, ClassVar
+from typing import Any
 
 from ..adapters.markdown import (
     DEFAULT_MARKDOWN_EXTENSIONS,
@@ -52,8 +51,8 @@ from .conversion.inputs import (
     extract_content,
     extract_front_matter_slots,
 )
-from .conversion_contexts import AssetMapping, SegmentContext
 from .diagnostics import DiagnosticEmitter, NullEmitter
+from .heading_analysis import HeadingInspector, HeadingLevelScanner
 from .metadata import PressMetadataError, normalise_press_metadata
 from .templates.runtime import coerce_base_level
 
@@ -174,11 +173,8 @@ class Document:
     slot_options: dict[str, SlotOptions] = field(default_factory=dict)
     extracted_title: str | None = None
     slot_requests: dict[str, str] = field(default_factory=dict)
-    slot_inclusions: set[str] = field(default_factory=set)
     language: str | None = None
     bibliography: dict[str, Any] = field(default_factory=dict)
-    assets: list[AssetMapping] = field(default_factory=list)
-    segments: dict[str, list[SegmentContext]] = field(default_factory=dict)
     _prepared_drop_title: bool | None = field(default=None, init=False, repr=False)
 
     @classmethod
@@ -323,11 +319,8 @@ class Document:
             slot_options=dict(self.slot_options),
             extracted_title=None,
             slot_requests={},
-            slot_inclusions=set(),
             language=None,
             bibliography={},
-            assets=[],
-            segments={},
         )
 
     @property
@@ -449,36 +442,12 @@ class Document:
                 self.slot_options.update(base_options)
         self._invalidate_prepared()
 
-    _HEADING_TAGS: ClassVar[set[str]] = {"h1", "h2", "h3", "h4", "h5", "h6"}
-
-    class _HeadingLevelScanner(HTMLParser):
-        __slots__ = ("minimum_level",)
-
-        def __init__(self) -> None:
-            super().__init__()
-            self.minimum_level: int | None = None
-
-        def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
-            if not tag:
-                return
-            name = tag.lower()
-            if not name.startswith("h") or len(name) < 2 or not name[1].isdigit():
-                return
-            try:
-                level = int(name[1])
-            except ValueError:
-                return
-            if not 1 <= level <= 6:
-                return
-            if self.minimum_level is None or level < self.minimum_level:
-                self.minimum_level = level
-
     @classmethod
     def _resolve_heading_alignment(cls, html: str, strategy: TitleStrategy) -> int:
         if strategy is not TitleStrategy.KEEP:
             return 0
 
-        scanner = cls._HeadingLevelScanner()
+        scanner = HeadingLevelScanner()
         try:
             scanner.feed(html)
         finally:
@@ -489,62 +458,9 @@ class Document:
             return 0
         return minimum - 1
 
-    class _HeadingInspector(HTMLParser):
-        __slots__ = ("_depth", "_resolved", "first_level", "level_counts", "parts")
-
-        def __init__(self) -> None:
-            super().__init__()
-            self._depth = 0
-            self._resolved = False
-            self.first_level: int | None = None
-            self.level_counts: dict[int, int] = {}
-            self.parts: list[str] = []
-
-        def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
-            name = tag.lower()
-            if not name.startswith("h") or len(name) < 2 or not name[1].isdigit():
-                if self._depth:
-                    self._depth += 1
-                return
-
-            try:
-                level = int(name[1])
-            except ValueError:
-                if self._depth:
-                    self._depth += 1
-                return
-
-            if not 1 <= level <= 6:
-                if self._depth:
-                    self._depth += 1
-                return
-
-            self.level_counts[level] = self.level_counts.get(level, 0) + 1
-            if self._resolved:
-                return
-
-            if self.first_level is None:
-                self.first_level = level
-                self._depth = 1
-                return
-
-            if self._depth:
-                self._depth += 1
-
-        def handle_endtag(self, tag: str) -> None:
-            if not self._depth:
-                return
-            self._depth -= 1
-            if self._depth == 0:
-                self._resolved = True
-
-        def handle_data(self, data: str) -> None:
-            if self._depth and not self._resolved:
-                self.parts.append(data)
-
     def _extract_promoted_title(self) -> tuple[str | None, bool]:
         """Return the promoted title and whether the heading should be dropped."""
-        inspector = self._HeadingInspector()
+        inspector = HeadingInspector()
         try:
             inspector.feed(self._html)
         finally:
@@ -562,7 +478,7 @@ class Document:
 
     def _first_heading_level(self) -> int | None:
         """Return the level of the first heading in the document, if any."""
-        inspector = self._HeadingInspector()
+        inspector = HeadingInspector()
         try:
             inspector.feed(self._html)
         finally:
@@ -577,11 +493,8 @@ class Document:
         self._prepared_drop_title = None
         self.extracted_title = None
         self.slot_requests = {}
-        self.slot_inclusions = set()
         self.language = None
         self.bibliography = {}
-        self.assets = []
-        self.segments = {}
 
     def prepare_for_conversion(self) -> Document:
         """Normalise metadata and slot requests so the document is ready for conversion."""
@@ -627,11 +540,8 @@ class Document:
         self.slot_includes = set(combined_includes)
         self.slot_options = dict(combined_options)
         self.slot_requests = _slot_request_mapping(combined_selectors, combined_includes)
-        self.slot_inclusions = set(combined_includes)
         self.extracted_title = extracted_title
         self._prepared_drop_title = drop_title_flag
         self.language = None
         self.bibliography = {}
-        self.assets = []
-        self.segments = {}
         return self

@@ -8,9 +8,22 @@ STYLE_PDFS := $(foreach STYLE,$(STYLES),$(call style_pdf,$(STYLE)))
 
 LATEX_OUTPUT := $(ENGINE_DIR)/admonition.tex
 
-all: $(STYLE_PDFS)
+# Typst output -> build/typst/<style>/admonition-<style>.pdf. The Typst backend
+# now honours callouts.style too (fancy/classic/minimal), so the three style
+# variants are built for Typst exactly as for LaTeX.
+typst_pdf = $(OUTPUT_ROOT)/typst/$1/admonition-$1.pdf
+TYPST_PDFS := $(foreach STYLE,$(STYLES),$(call typst_pdf,$(STYLE)))
 
-latex: $(LATEX_OUTPUT)
+ARTIFACTS := $(STYLE_PDFS) $(TYPST_PDFS)
+
+all: $(STYLE_PDFS) $(TYPST_PDFS)
+
+# Build a single backend on demand.
+latex: $(STYLE_PDFS)
+typst: $(TYPST_PDFS)
+
+# Emit the LaTeX .tex source (fancy style) without building.
+tex: $(LATEX_OUTPUT)
 
 $(LATEX_OUTPUT): $(SOURCE) | $(ENGINE_DIR)
 	$(TEXSMITH) $< -o$(ENGINE_DIR) -tarticle -acallouts.style=fancy
@@ -28,7 +41,17 @@ endef
 
 $(foreach STYLE,$(STYLES),$(eval $(call RENDER_STYLE,$(STYLE))))
 
+define RENDER_TYPST_STYLE
+$(call typst_pdf,$1): $(SOURCE)
+	@mkdir -p $$(dir $$@)
+	$(TEXSMITH) $$< -o$$(dir $$@) -tarticle --format typst --build -acallouts.style=$1
+	cp $$(dir $$@)admonition.pdf $$@
+	$(call copy_artifact,$$@)
+endef
+
+$(foreach STYLE,$(STYLES),$(eval $(call RENDER_TYPST_STYLE,$(STYLE))))
+
 clean:
 	rm -rf $(OUTPUT_ROOT)
 
-.PHONY: all clean latex $(STYLES)
+.PHONY: all clean latex tex typst $(STYLES)

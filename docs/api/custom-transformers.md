@@ -82,7 +82,7 @@ control that behavior:
 
 - [`texsmith.adapters.transformers.base`](transformers.md) – reference for
   `CachedConversionStrategy`.
-- [`texsmith.adapters.handlers.media`](../api/handlers.md) – real-world examples
-  of how converters integrate with handlers.
+- [`texsmith.writers.latex.media`](../api/handlers.md) – real-world examples
+  of how converters integrate with the LaTeX writer.
 - [Template Cookbook](../guide/templates/template-cookbook.md) – packaging
   recommendations so your templates document converter prerequisites.

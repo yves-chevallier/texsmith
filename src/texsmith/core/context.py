@@ -2,12 +2,11 @@
 
 from __future__ import annotations
 
-from collections import defaultdict
 from collections.abc import Iterable, MutableMapping
 from dataclasses import dataclass, field
 import os
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Protocol
 import warnings
 
 from slugify import slugify
@@ -19,7 +18,6 @@ if TYPE_CHECKING:  # pragma: no cover - typing only
     from texsmith.adapters.latex.formatter import LaTeXFormatter
 
     from .config import BookConfig
-    from .rules import RenderPhase
 
 
 @dataclass(slots=True)
@@ -33,9 +31,7 @@ class DocumentState:
     acronym_groups: list[tuple[str, str]] = field(default_factory=list)
     glossary: dict[str, dict[str, Any]] = field(default_factory=dict)
     snippets: dict[str, dict[str, Any]] = field(default_factory=dict)
-    solutions: list[dict[str, Any]] = field(default_factory=list)
     headings: list[dict[str, Any]] = field(default_factory=list)
-    exercise_counter: int = 0
     has_index_entries: bool = False
     requires_shell_escape: bool = False
     counters: dict[str, int] = field(default_factory=dict)
@@ -98,19 +94,9 @@ class DocumentState:
         """Cache snippet metadata to render later in the pipeline."""
         self.snippets[key] = payload
 
-    def add_solution(self, solution: dict[str, Any]) -> None:
-        """Append a solution block encountered during parsing."""
-        self.solutions.append(solution)
-
     def add_heading(self, *, level: int, text: str, ref: str | None = None) -> None:
         """Track heading metadata to power table-of-contents generation."""
         self.headings.append({"level": level, "text": text, "ref": ref})
-
-    def next_exercise(self) -> int:
-        """Increment and return the exercise counter."""
-        counter = self.next_counter("exercise")
-        self.exercise_counter = counter
-        return counter
 
     def next_counter(self, key: str = "default") -> int:
         """Increment and return the named counter."""
@@ -184,6 +170,31 @@ class AssetRegistry:
         return reference.as_posix()
 
 
+class RenderContextLike(Protocol):
+    """Structural surface shared by ``RenderContext`` and the writer state.
+
+    The LaTeX writer threads its own ``WriterState`` through helpers that were
+    historically typed against :class:`RenderContext` (font-script rendering,
+    image/asset storage, DOI resolution). Both expose the same attributes, so
+    those helpers depend on this protocol rather than a concrete class.
+    """
+
+    @property
+    def config(self) -> BookConfig: ...
+
+    @property
+    def formatter(self) -> LaTeXFormatter: ...
+
+    @property
+    def assets(self) -> AssetRegistry: ...
+
+    @property
+    def state(self) -> DocumentState: ...
+
+    @property
+    def runtime(self) -> dict[str, Any]: ...
+
+
 @dataclass
 class RenderContext:
     """Shared context passed to every handler during rendering."""
@@ -194,51 +205,3 @@ class RenderContext:
     assets: AssetRegistry
     state: DocumentState = field(default_factory=DocumentState)
     runtime: dict[str, Any] = field(default_factory=dict)
-    phase: RenderPhase | None = None
-
-    _processed_nodes: defaultdict[int, set[int]] = field(
-        default_factory=lambda: defaultdict(set), init=False
-    )
-    _skip_children: defaultdict[int, set[int]] = field(
-        default_factory=lambda: defaultdict(set), init=False
-    )
-    _persistent_runtime: dict[str, Any] = field(default_factory=dict, init=False)
-
-    def enter_phase(self, phase: RenderPhase) -> None:
-        """Mark the current phase and reset transient runtime data."""
-        self.phase = phase
-        self.runtime = dict(self._persistent_runtime)
-        self._skip_children[phase.value].clear()
-
-    def attach_runtime(self, **runtime: Any) -> None:
-        """Attach ad-hoc data visible to handlers for the running phase."""
-        self._persistent_runtime.update(runtime)
-        self.runtime.update(runtime)
-
-    def mark_processed(self, node: Any, *, phase: RenderPhase | None = None) -> None:
-        """Flag a node as already transformed for the selected phase."""
-        label = phase or self.phase
-        if label is None:
-            return
-        self._processed_nodes[label.value].add(id(node))
-
-    def is_processed(self, node: Any, *, phase: RenderPhase | None = None) -> bool:
-        """Check whether a node has been processed in the given phase."""
-        label = phase or self.phase
-        if label is None:
-            return False
-        return id(node) in self._processed_nodes[label.value]
-
-    def suppress_children(self, node: Any, *, phase: RenderPhase | None = None) -> None:
-        """Prevent traversal of node children for the active phase."""
-        label = phase or self.phase
-        if label is None:
-            return
-        self._skip_children[label.value].add(id(node))
-
-    def should_skip_children(self, node: Any, *, phase: RenderPhase | None = None) -> bool:
-        """Check whether children should be skipped during traversal."""
-        label = phase or self.phase
-        if label is None:
-            return False
-        return id(node) in self._skip_children[label.value]

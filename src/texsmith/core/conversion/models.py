@@ -48,7 +48,6 @@ class ConversionRequest:
     disable_fragments: Sequence[str] = field(default_factory=tuple)
 
     parser: str | None = None
-    disable_fallback_converters: bool = False
     copy_assets: bool = True
     convert_assets: bool = False
     hash_assets: bool = False

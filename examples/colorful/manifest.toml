@@ -44,3 +44,41 @@ strip_heading = true
 
 [latex.template.slots.mainmatter]
 default = false
+
+# --------------------------------------------------------------------------- #
+# Typst backend: a native 2x2 colour-grid poster (parallel to the TikZ LaTeX
+# template). Each quadrant is a declared slot filled from the matching section.
+# --------------------------------------------------------------------------- #
+[typst.template]
+name = "colorful-grid"
+version = "0.1.0"
+entrypoint = "template.typ"
+
+[typst.template.attributes.colors]
+type = "mapping"
+sources = ["press.colors", "colors"]
+
+[typst.template.attributes.colors.default]
+nw = "#FF5A5F"
+ne = "#FFC857"
+sw = "#30C39E"
+se = "#2D7DD2"
+
+[typst.template.slots.nw]
+depth = "section"
+strip_heading = true
+
+[typst.template.slots.ne]
+depth = "section"
+strip_heading = true
+
+[typst.template.slots.sw]
+depth = "section"
+strip_heading = true
+
+[typst.template.slots.se]
+depth = "section"
+strip_heading = true
+
+[typst.template.slots.mainmatter]
+default = true

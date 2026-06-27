@@ -4,13 +4,13 @@ from __future__ import annotations
 
 from .log import (
     LatexLogParser,
-    LatexLogRenderer,
     LatexMessage,
     LatexMessageSeverity,
     LatexStreamResult,
     parse_latex_log,
     stream_latexmk_output,
 )
+from .log_render import LatexLogRenderer
 from .runner import run_latex_engine
 
 

@@ -10,7 +10,7 @@ from markdown import Markdown
 from markdown.extensions import Extension
 from markdown.treeprocessors import Treeprocessor
 
-from ..adapters.handlers._mermaid import (
+from ..adapters.transformers.mermaid_detect import (
     MERMAID_FILE_SUFFIXES,
     extract_mermaid_live_diagram,
     looks_like_mermaid,

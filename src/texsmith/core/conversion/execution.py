@@ -52,7 +52,6 @@ def resolve_conversion_context(
         copy_assets=request.copy_assets,
         convert_assets=request.convert_assets,
         hash_assets=request.hash_assets,
-        prefer_inputs=False,
         persist_manifest=request.manifest,
     )
 
@@ -182,14 +181,6 @@ def resolve_conversion_context(
     if isinstance(overrides.get("fragments"), dict):
         overrides["fragments"] = fragments_list
 
-    runtime_common: dict[str, object] = {
-        "language": resolved_language,
-        "copy_assets": generation.copy_assets,
-        "convert_assets": generation.convert_assets,
-        "hash_assets": generation.hash_assets,
-        "diagrams_backend": request.diagrams_backend or "playwright",
-    }
-
     # When the caller did not specify an output directory we render alongside
     # the source document.
     resolved_output_dir = (
@@ -207,7 +198,6 @@ def resolve_conversion_context(
         slot_requests=slot_requests,
         bibliography_collection=bibliography_collection,
         bibliography_map=bibliography_map,
-        runtime_common=runtime_common,
     )
 
 
