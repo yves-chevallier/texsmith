@@ -36,8 +36,6 @@ if TYPE_CHECKING:  # pragma: no cover - typing only
 
 
 _DOI_SUPPORT: dict[str, Any] | None = None
-# Exported for compatibility with existing monkeypatch patterns in tests.
-DoiBibliographyFetcher: type[Any] | None = None
 
 
 _MUSTACHE_SKIP_TAGS = {"code", "pre", "script", "style"}
@@ -421,7 +419,7 @@ def _load_inline_bibliography(
     for key, entry in entries.items():
         if entry.doi:
             if doi_support is None:
-                _, lookup_error_cls, normalise_doi_fn = _ensure_doi_support()
+                lookup_error_cls, normalise_doi_fn = _ensure_doi_support()
                 doi_support = (lookup_error_cls, normalise_doi_fn)
             lookup_error_cls, normalise_doi_fn = doi_support
             doi_value = entry.doi
@@ -502,8 +500,15 @@ def _inline_bibliography_source_path(label: str) -> Path:
 
 
 def _resolve_bibliography_fetcher() -> DoiBibliographyFetcher:
-    fetcher_cls, _, _ = _ensure_doi_support()
-    return fetcher_cls()
+    """Return the default DOI fetcher.
+
+    The single seam for substituting the fetcher: tests patch this function
+    rather than a module-level cache. The import is lazy so ``requests`` is only
+    pulled in when a document actually resolves a DOI.
+    """
+    from ..bibliography.doi import DoiBibliographyFetcher
+
+    return DoiBibliographyFetcher()
 
 
 _DOI_CACHE_FILENAME = "texsmith-doi-cache.yaml"
@@ -543,7 +548,7 @@ def _initialise_doi_cache(output_dir: Path | None) -> tuple[dict[str, str], Path
                 continue
             try:
                 if normalise_fn is None:
-                    _, lookup_error_cls, normalise_fn = _ensure_doi_support()
+                    lookup_error_cls, normalise_fn = _ensure_doi_support()
                 normalised = normalise_fn(key)
             except Exception as exc:
                 if lookup_error_cls is not None and isinstance(exc, lookup_error_cls):
@@ -574,9 +579,9 @@ def _write_doi_cache(path: Path, entries: dict[str, str]) -> None:
         return
 
 
-def _ensure_doi_support() -> tuple[type[Any], type[Exception], Any]:
-    """Lazily import DOI helpers to avoid pulling in requests unless required."""
-    global _DOI_SUPPORT, DoiBibliographyFetcher
+def _ensure_doi_support() -> tuple[type[Exception], Any]:
+    """Lazily import DOI helpers (error type + normaliser) to avoid pulling in requests unless required."""
+    global _DOI_SUPPORT
 
     if _DOI_SUPPORT is None:
         from ..bibliography.doi import DoiLookupError, normalise_doi
@@ -585,18 +590,7 @@ def _ensure_doi_support() -> tuple[type[Any], type[Exception], Any]:
             "lookup_error": DoiLookupError,
             "normalise": normalise_doi,
         }
-    if DoiBibliographyFetcher is None:
-        from ..bibliography.doi import DoiBibliographyFetcher as _Fetcher
-
-        DoiBibliographyFetcher = _Fetcher
-
-    assert _DOI_SUPPORT is not None
-    assert DoiBibliographyFetcher is not None
-    return (
-        DoiBibliographyFetcher,
-        _DOI_SUPPORT["lookup_error"],
-        _DOI_SUPPORT["normalise"],
-    )
+    return _DOI_SUPPORT["lookup_error"], _DOI_SUPPORT["normalise"]
 
 
 __all__ = [
