@@ -19,23 +19,9 @@ import typer
 
 from texsmith.adapters.latex.engines import (
     EngineResult,
-    build_engine_command as build_latex_engine_command,
-    build_tex_env,
-    compute_features,
-    ensure_command_paths,
-    missing_dependencies,
     parse_latex_log,
     resolve_engine,
     run_engine_command,
-)
-from texsmith.adapters.latex.pyxindy import is_available as pyxindy_available
-from texsmith.adapters.latex.tectonic import (
-    BiberAcquisitionError,
-    MakeglossariesAcquisitionError,
-    TectonicAcquisitionError,
-    select_biber_binary,
-    select_makeglossaries,
-    select_tectonic_binary,
 )
 from texsmith.adapters.markdown import (
     DEFAULT_MARKDOWN_EXTENSIONS,
@@ -1062,89 +1048,28 @@ def render(
         _flush_diagnostics()
         return
 
+    # Engine orchestration (binary selection, command/env build, run) lives in
+    # ConversionService.build_pdf; the CLI keeps only presentation, the PDF copy,
+    # and dependency-file emission. ``run_engine`` is injected so the engine run
+    # stays a clean test seam (tests patch this module's ``run_engine_command``).
     engine_choice = resolve_engine(engine, render_result.template_engine)
-    template_context = getattr(render_result, "template_context", None) or getattr(
-        render_result, "context", None
-    )
-    use_system_tectonic = system_tectonic if engine_choice.backend == "tectonic" else False
-    features = compute_features(
-        requires_shell_escape=render_result.requires_shell_escape,
-        bibliography=render_result.has_bibliography,
-        document_state=render_result.document_state,
-        template_context=template_context,
-    )
-
-    tectonic_binary: Path | None = None
-    biber_binary: Path | None = None
-    makeglossaries_binary: Path | None = None
-    bundled_bin: Path | None = None
-    if engine_choice.backend == "tectonic":
-        try:
-            selection = select_tectonic_binary(use_system_tectonic, console=state.console)
-            if features.bibliography and not use_system_tectonic:
-                biber_binary = select_biber_binary(console=state.console)
-                bundled_bin = biber_binary.parent
-            if features.has_glossary and not pyxindy_available():
-                glossaries = select_makeglossaries(console=state.console)
-                makeglossaries_binary = glossaries.path
-                if glossaries.source == "bundled":
-                    bundled_bin = bundled_bin or glossaries.path.parent
-        except (
-            TectonicAcquisitionError,
-            BiberAcquisitionError,
-            MakeglossariesAcquisitionError,
-        ) as exc:
-            emit_error(str(exc), exception=exc)
-            raise typer.Exit(code=1) from exc
-        tectonic_binary = selection.path
-
-    available_bins: dict[str, Path] = {}
-    if biber_binary:
-        available_bins["biber"] = biber_binary
-    if makeglossaries_binary:
-        available_bins["makeglossaries"] = makeglossaries_binary
-
-    missing_tools = missing_dependencies(
-        engine_choice,
-        features,
-        use_system_tectonic=use_system_tectonic,
-        available_binaries=available_bins or None,
-    )
-    if missing_tools:
-        formatted = ", ".join(sorted(missing_tools))
-        emit_error(f"Missing required tools for {engine_choice.label}: {formatted}")
-        raise typer.Exit(code=1)
-
-    command_plan = ensure_command_paths(
-        build_latex_engine_command(
-            engine_choice,
-            features,
-            main_tex_path=render_result.main_tex_path,
-            tectonic_binary=tectonic_binary,
-        )
-    )
-    env = build_tex_env(
-        render_dir,
-        isolate_cache=isolate_cache,
-        extra_path=bundled_bin,
-        biber_path=biber_binary,
-    )
-
     state.console.print(f"[bold cyan]Running {engine_choice.label}…[/]")
 
     run_engine = getattr(render, "run_engine_command", run_engine_command)
-
     try:
-        engine_result: EngineResult = run_engine(
-            command_plan,
-            backend=engine_choice.backend,
-            workdir=render_dir,
-            env=env,
+        engine_result: EngineResult = _SERVICE.build_pdf(
+            render_result,
+            engine=engine,
+            classic_output=classic_output,
+            isolate_cache=isolate_cache,
             console=state.console,
             verbosity=state.verbosity,
-            classic_output=classic_output,
-            features=features,
+            use_system_tectonic=system_tectonic,
+            run_engine=run_engine,
         )
+    except ConversionError as exc:
+        emit_error(str(exc), exception=exc)
+        raise typer.Exit(code=1) from exc
     except OSError as exc:
         if debug_enabled():
             raise
@@ -1152,17 +1077,17 @@ def render(
         raise typer.Exit(code=1) from exc
 
     if engine_result.returncode != 0:
-        messages = engine_result.messages or parse_latex_log(command_plan.log_path)
+        messages = engine_result.messages or parse_latex_log(engine_result.log_path)
         present_latex_failure(
             state=state,
-            log_path=command_plan.log_path,
+            log_path=engine_result.log_path,
             messages=messages,
             open_log=open_log,
         )
         emit_error(f"{engine_choice.label} exited with status {engine_result.returncode}")
         raise typer.Exit(code=engine_result.returncode)
 
-    pdf_path = command_plan.pdf_path
+    pdf_path = engine_result.pdf_path
     final_pdf_path = pdf_path
     dep_file_path: Path | None = None
 

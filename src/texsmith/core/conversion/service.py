@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Iterable, Mapping
+from collections.abc import Callable, Iterable, Mapping
 import copy
 from dataclasses import dataclass
 from pathlib import Path
@@ -284,8 +284,14 @@ class ConversionService:
         console: Any | None = None,
         verbosity: int = 0,
         use_system_tectonic: bool = False,
+        run_engine: Callable[..., EngineResult] = run_engine_command,
     ) -> EngineResult:
-        """Compile a rendered template into a PDF using the requested engine, selecting dependencies on demand."""
+        """Compile a rendered template into a PDF using the requested engine, selecting dependencies on demand.
+
+        ``run_engine`` is the LaTeX-engine runner, injectable so callers (and
+        tests) can substitute the execution step without monkeypatching module
+        globals; it defaults to :func:`run_engine_command`.
+        """
         template_context = getattr(render_result, "template_context", None) or getattr(
             render_result, "context", None
         )
@@ -353,7 +359,7 @@ class ConversionService:
         if env:
             merged_env.update(env)
 
-        return run_engine_command(
+        return run_engine(
             command_plan,
             backend=choice.backend,
             workdir=render_result.main_tex_path.parent,

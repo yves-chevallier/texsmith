@@ -18,6 +18,9 @@ import texsmith.ui.cli.state as cli_state
 
 
 render_module = importlib.import_module("texsmith.ui.cli.commands.render")
+# Engine binary selection now lives in ConversionService.build_pdf; tests patch
+# the selectors on the service module rather than the render command.
+service_module = importlib.import_module("texsmith.core.conversion.service")
 
 
 def _template_path(name: str) -> Path:
@@ -50,8 +53,8 @@ def _stub_tectonic_binary(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> Pa
         _ = console
         return biber
 
-    monkeypatch.setattr(render_module, "select_tectonic_binary", fake_select_tectonic)
-    monkeypatch.setattr(render_module, "select_biber_binary", fake_select_biber)
+    monkeypatch.setattr(service_module, "select_tectonic_binary", fake_select_tectonic)
+    monkeypatch.setattr(service_module, "select_biber_binary", fake_select_biber)
     return binary
 
 
@@ -1190,7 +1193,7 @@ def test_system_flag_prefers_system_tectonic(tmp_path: Path, monkeypatch: Any) -
             pdf_path=pdf_path,
         )
 
-    monkeypatch.setattr(render_module, "select_tectonic_binary", fake_select)
+    monkeypatch.setattr(service_module, "select_tectonic_binary", fake_select)
     monkeypatch.setattr(render_cmd.shutil, "which", fake_which)
     monkeypatch.setattr(engine.shutil, "which", fake_which)
     monkeypatch.setattr(render_cmd, "run_engine_command", fake_run_engine)
