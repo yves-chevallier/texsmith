@@ -225,6 +225,3 @@ max-complexity = 10
 "src/texsmith/cli.py" = ["B008"]
 "**/__init__.py" = ["F401", "F403"]
 "tests/**" = ["D", "T20", "S101", "ANN", "ARG002", "SLF001", "PT018", "ARG001", "TRY003"]
-# Migration tooling (golden harness) — a standalone CLI script, not production
-# code. ``print`` is its output channel; subprocess invocation is intentional.
-"refactoring/tools/**" = ["T20", "S603", "S607", "D"]

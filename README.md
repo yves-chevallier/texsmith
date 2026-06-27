@@ -30,7 +30,7 @@ Check the installed version with `texsmith --version` or in Python with `texsmit
 ## Key features
 
 - **MkDocs-native Markdown** – Ships with the same Material + pymdown extension stack you use in MkDocs, so tabs, callouts, annotations, tooltips, and data tables survive the conversion.
-- **Typed IR with multiple backends** – Documents are lowered into a typed intermediate representation (`read(HTML) → IR → write(IR)`), then emitted as **LaTeX** (default) or **Typst** via `--format`.
+- **Typed IR with multiple backends** – Documents are lowered into a typed intermediate representation (`read(HTML) → IR → write(IR)`), then emitted as **LaTeX** (default) or **Typst** (experimental) via `--format`.
 - **Template-first runtime** – Bundle multiple fragments into slots, merge front matter metadata, and emit LaTeX projects ready for Tectonic or latexmk with Docker-friendly manifests.
 - **CLI and Python parity** – The Typer-powered CLI wraps the same ConversionService you can consume as a library, making CI/CD and notebooks behave like local runs.
 - **Actionable diagnostics** – Structured emitters, verbosity switches, and `--debug` traces keep build issues debuggable even in automated pipelines.

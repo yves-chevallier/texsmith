@@ -13,6 +13,7 @@ from texsmith.fonts.cache import FontCache
 from texsmith.fonts.fallback import (
     FallbackBuilder,
     FallbackEntry,
+    FallbackIndex,
     FallbackLookup,
     FallbackPlan,
     FallbackRepository,
@@ -143,19 +144,30 @@ class ScriptDetector:
 
     def _ensure_lookup(self) -> FallbackLookup:
         if self._lookup is None:
-            repository = FallbackRepository(cache=self.cache, logger=self.logger)
-            had_cache = repository.cache_path.exists()
-            classes = generate_ucharclasses_data(cache=self.cache, logger=self.logger)
-            coverage = generate_noto_metadata(cache=self.cache, logger=self.logger)
-            announce = not had_cache
-            entries = FallbackBuilder(logger=self.logger).build(
-                classes, coverage, announce=announce
-            )
-            signature = repository._signature(entries)  # noqa: SLF001
-            cached = repository.load(expected_signature=signature)
-            if cached is None:
-                cached = repository.load_or_build(entries)
-            self._lookup = FallbackLookup(cached)
+            try:
+                repository = FallbackRepository(cache=self.cache, logger=self.logger)
+                had_cache = repository.cache_path.exists()
+                classes = generate_ucharclasses_data(cache=self.cache, logger=self.logger)
+                coverage = generate_noto_metadata(cache=self.cache, logger=self.logger)
+                announce = not had_cache
+                entries = FallbackBuilder(logger=self.logger).build(
+                    classes, coverage, announce=announce
+                )
+                signature = repository._signature(entries)  # noqa: SLF001
+                cached = repository.load(expected_signature=signature)
+                if cached is None:
+                    cached = repository.load_or_build(entries)
+                self._lookup = FallbackLookup(cached)
+            except Exception as exc:
+                # Building the fallback index needs the Noto/ucharclasses metadata,
+                # which is downloaded on a cold cache. If that fails (e.g. offline),
+                # degrade to an empty index: text renders with the default font set
+                # rather than aborting the whole conversion.
+                self.logger.warning(
+                    "Font fallback unavailable (%s); rendering without script fallbacks.",
+                    exc,
+                )
+                self._lookup = FallbackLookup(FallbackIndex([]))
         return self._lookup
 
     def _classify_char(self, char: str) -> FallbackEntry | None:

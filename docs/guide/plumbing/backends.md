@@ -27,6 +27,14 @@ xelatex`). This is the backend assumed throughout most of this documentation.
 
 ## Typst backend
 
+!!! warning "Experimental"
+    The Typst backend is **experimental**. The LaTeX backend remains the
+    default and the supported path; Typst covers a subset of it, leans on the
+    third-party `mitex` package for math (which can fail on some constructs —
+    see below), and approximates or drops a few constructs. Use it for new,
+    Typst-first documents and check the output; do not assume LaTeX-level
+    fidelity yet.
+
 [Typst](https://typst.app) is a modern, Rust-based typesetting system. The
 Typst backend (`texsmith.writers.typst`) emits a compilable `.typ` source from
 the same IR. It is a lean, Typst-native path and intentionally covers a
@@ -99,18 +107,25 @@ common Markdown/HTML constructs:
   caps, sub/superscript, quotes), inline code, and links.
 - Code blocks, block quotes, bullet and ordered lists, definition lists,
   admonitions, horizontal rules.
-- Images, figures, and simple (GFM) tables.
-- Footnotes, index entries, TeX logos, keystrokes.
-- Math (rendered through the Typst `mitex` package).
+- Images, figures, simple (GFM) tables, and rich (`yaml` / `data-ts`) tables
+  rebuilt as a native Typst `#table`.
+- Footnotes, TeX logos, keystrokes, progress bars.
+- Math (rendered through the Typst `mitex` package) and equation
+  cross-references (`#ref`).
 - Native citations (`#cite`) resolved against the bibliography collection the
   CLI builds (`.bib` files plus inline DOI), wired through `#bibliography(...)`.
 
-Out of the covered subset (these raise an explicit error naming the node and
-the backend, rather than producing wrong output):
+Approximated or dropped on the Typst path (no exact equivalent — the content is
+preserved as closely as possible rather than producing wrong output):
 
-- `MarginNote` and a few advanced nodes are **not yet supported** on the Typst
-  backend.
-- Rich tables (`yaml` / `data-ts` data tables) — only simple GFM tables are
-  emitted.
+- `MarginNote` renders as a `#footnote` (the `side` hint has no counterpart).
+- Index entries (`<abbr>` markers) keep their visible text but emit no index
+  marker — Typst has no `makeindex` equivalent here.
+- Remote (`http(s)://`, `data:`) or unresolved local images are dropped to keep
+  the document compilable.
+- The LaTeX-only glossary/index engines and the fragment system are not used on
+  the Typst path.
 
-For anything beyond this subset, use the default LaTeX backend.
+Any IR node that still has **no** Typst emitter raises an explicit, localised
+`TypstWriteError` (naming the node and the backend) rather than emitting wrong
+output. For anything beyond this subset, use the default LaTeX backend.

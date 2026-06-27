@@ -1,7 +1,7 @@
 """Typst writer package: emit Typst markup from the TeXSmith IR.
 
-The project's second backend (see ``refactoring/PLAN.md`` Phase 4). It consumes
-the same IR as the LaTeX backend without touching ``readers/`` or ``ir/``.
+The project's second backend (experimental). It consumes the same IR as the
+LaTeX backend without touching ``readers/`` or ``ir/``.
 """
 
 from __future__ import annotations

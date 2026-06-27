@@ -8,7 +8,7 @@ carries the validated :mod:`texsmith.extensions.tables` model (one-letter
 semantic alignment ``l``/``c``/``r``/``j``), never a LaTeX preamble letter or a
 column spec like ``"lrX"``. Computing a backend preamble is the writer's job.
 
-Design rules (non-negotiable, see ``refactoring/PLAN.md`` Phase 1):
+Design rules (non-negotiable):
 
 * **No backend strings in the tree.** The only escape hatches are the explicit
   :class:`RawInline` / :class:`RawBlock` nodes, which name their ``format``
