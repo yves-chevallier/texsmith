@@ -109,6 +109,15 @@ jobs:
         # the embedded Typst compiler from the `typst` extra.
         run: uv sync --all-groups --extra typst --frozen
 
+      # `make -C examples all` builds each example's Typst PDF too. Use a system
+      # Typst binary (preferred over the embedded compiler) pinned to a version
+      # whose `mitex` support still defines symbols like `diff` (the latest
+      # bundled 0.15 drops them and fails on `\partial`-style math).
+      - name: Install Typst
+        uses: typst-community/setup-typst@v5
+        with:
+          typst-version: "0.14.2"
+
       - name: Build examples
         shell: bash
         run: uv run make -C examples all
@@ -150,6 +159,14 @@ jobs:
       # builds each example's Typst PDF via the embedded Typst compiler).
       - name: Sync dependencies (dev + docs + typst)
         run: uv sync --all-groups --extra typst --frozen
+
+      # `make examples` builds each example's Typst PDF. Use a system Typst
+      # binary (preferred over the embedded compiler) pinned to a mitex-compatible
+      # version (0.15 drops symbols like `diff` that mitex still emits).
+      - name: Install Typst
+        uses: typst-community/setup-typst@v5
+        with:
+          typst-version: "0.14.2"
 
       # Install Playwright browser binaries + system deps
       - name: Install Playwright browsers
