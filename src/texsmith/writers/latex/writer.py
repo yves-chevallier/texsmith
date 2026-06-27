@@ -488,6 +488,11 @@ class LaTeXWriter:
 
         rendered = self._inlines(node.content)
         text = self._script_wrap_block_heading(rendered)
+        # A heading is typeset as a sectioning-command argument (``\section{…}``),
+        # which cannot contain a paragraph break. Rich headings (e.g. mkdocstrings
+        # members carrying a ``<small>`` label) can render to multi-line content,
+        # so collapse internal newline runs to single spaces.
+        text = re.sub(r"\s*\n\s*", " ", text).strip()
         # Legacy slug came from ``get_text(strip=True)`` of the POST-phase soup,
         # i.e. the already inline-rendered text (``\enquote{…}`` included).
         plain_text = _strip_text(rendered)
@@ -515,12 +520,17 @@ class LaTeXWriter:
         self.state.state.requires_shell_escape = (
             self.state.state.requires_shell_escape or engine == "minted"
         )
+        filename = node.filename or None
+        if filename:
+            # The filename is typeset as the code block's title, so LaTeX
+            # specials in it (e.g. ``_`` in ``bubble_sort.py``) must be escaped.
+            filename = escape_latex_chars(filename, legacy_accents=self.state.legacy_accents)
         return self.state.formatter.render_template(
             "codeblock",
             code=code_text,
             language=node.lang or "text",
             lineno=node.lineno,
-            filename=node.filename or None,
+            filename=filename,
             highlight=list(node.highlight),
             baselinestretch=baselinestretch,
             engine=engine,

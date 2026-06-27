@@ -37,6 +37,11 @@ and the project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 - Consolidated `.snippet` rendering inside the snippet plugin: a new `render_snippet_latex(html, context)` entry point owns the BeautifulSoup unwrap, fence extraction, asset compilation and figure emission, so the LaTeX writer's `_render_snippet` is now a one-line delegation instead of importing BeautifulSoup and four private snippet helpers. No output change; keeps the deliberate snippet HTML-passthrough but stops it leaking into the writer.
 - Collapsed the conversion-orchestration layering: the batch façade (`convert_documents`, `ConversionBundle`, `LaTeXFragment`, `to_template_fragments`) moved from `texsmith.core.conversion.pipeline` into `texsmith.core.conversion.core` (which already owned the single-document engine), and `pipeline.py` was removed — one fewer module/hop for the same job. The top-level `texsmith.convert_documents` / `ConversionBundle` / `LaTeXFragment` public API is unchanged; only the deep `texsmith.core.conversion.pipeline` import path is gone (use `texsmith.core.conversion.core`). Internally, `_render_document` / `_build_runtime_common` now read the document, request flags and generation strategy off the `ConversionContext` instead of receiving them as a long list of unpacked keyword arguments.
 
+### Fixed
+
+- The LaTeX writer now escapes a code block's filename/title before emitting it as the `\begin{code}{lang}{filename}{…}` argument. A title containing a LaTeX special (e.g. `bubble_sort.py`) previously produced `\begin{code}{py}{bubble_sort.py}{}`, which aborts compilation with "Missing $ inserted".
+- Headings whose rendered content spans multiple lines (e.g. mkdocstrings API members carrying a `<small>` role label) are now collapsed to a single line before being emitted as a sectioning-command argument. Multi-line `\section{…}` / `\subsection{…}` arguments previously failed with "Paragraph ended before \M@sect was complete", breaking the `TEXSMITH_BUILD=1` documentation PDF.
+
 ### Removed
 
 - The render-rule engine (`texsmith.core.rules`: `RenderEngine`, `RenderRegistry`, `RenderPhase`, `_DOMVisitor`) and the `@renders` decorator, together with all of `texsmith.adapters.handlers.*` — their HTML→semantic logic now lives in the HTML reader and their semantic→LaTeX logic in the LaTeX writer.

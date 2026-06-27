@@ -378,6 +378,19 @@ This is a paragraph with a trailing space.
     assert "Paragraph headings explain paragraphs." in latex
 
 
+def test_code_block_filename_is_latex_escaped(renderer: LaTeXRenderer) -> None:
+    html = (
+        '<div class="highlight">'
+        '<span class="filename">bubble_sort.py</span>'
+        '<code class="language-py">x\n</code></div>'
+    )
+    latex = renderer.render(html)
+    # The filename is the code block's title argument; its ``_`` must be escaped
+    # or LaTeX fails with "Missing $ inserted".
+    assert "{bubble\\_sort.py}" in latex
+    assert "{bubble_sort.py}" not in latex
+
+
 def test_arithmatex_block_preserved(renderer: LaTeXRenderer) -> None:
     html = '<div class="arithmatex">$$\nE = mc^2\n$$</div>'
     latex = renderer.render(html)
