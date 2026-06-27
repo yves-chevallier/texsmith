@@ -5,7 +5,7 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.1.0/)
 and the project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.4.0] - 2026-06-27
 
 ### Added
 
@@ -43,6 +43,8 @@ and the project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 - Headings whose rendered content spans multiple lines (e.g. mkdocstrings API members carrying a `<small>` role label) are now collapsed to a single line before being emitted as a sectioning-command argument. Multi-line `\section{…}` / `\subsection{…}` arguments previously failed with "Paragraph ended before \M@sect was complete", breaking the `TEXSMITH_BUILD=1` documentation PDF.
 - The script-aware font-fallback scan no longer aborts a conversion when the Noto/ucharclasses coverage metadata cannot be built (cold cache with no network): it now degrades to an empty fallback index and renders with the default font set, instead of letting the `URLError`/`OSError` propagate out of `ScriptDetector`. This also de-flakes offline test runs that render prose.
 - Bundled-tool downloads (Tectonic, Biber, and the `makeglossaries` helper) now retry transient network failures (e.g. "Connection reset by peer" against the CTAN / SourceForge / GitHub mirrors) with a short backoff before failing, instead of aborting the build on a single dropped connection. Non-transient errors (such as TLS certificate failures) still fail fast.
+- Internal anchor links carrying link text (e.g. `[Jump](#section)`) now render as `\hyperref[section]{Jump}` (clickable text) instead of emitting the link text followed by a bare `\ref{…}` number; links without text still fall back to `\ref{…}`. (#4)
+- Plain Markdown table captions (`Table: …`) that contain inline formatting (`*em*`, `` `code` ``, links) are no longer silently dropped: the inline markup is preserved inside the table `<caption>` instead of the caption being left as a stray paragraph with no caption attached to the table. (#5)
 
 ### Removed
 
