@@ -42,6 +42,7 @@ and the project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 - The LaTeX writer now escapes a code block's filename/title before emitting it as the `\begin{code}{lang}{filename}{…}` argument. A title containing a LaTeX special (e.g. `bubble_sort.py`) previously produced `\begin{code}{py}{bubble_sort.py}{}`, which aborts compilation with "Missing $ inserted".
 - Headings whose rendered content spans multiple lines (e.g. mkdocstrings API members carrying a `<small>` role label) are now collapsed to a single line before being emitted as a sectioning-command argument. Multi-line `\section{…}` / `\subsection{…}` arguments previously failed with "Paragraph ended before \M@sect was complete", breaking the `TEXSMITH_BUILD=1` documentation PDF.
 - The script-aware font-fallback scan no longer aborts a conversion when the Noto/ucharclasses coverage metadata cannot be built (cold cache with no network): it now degrades to an empty fallback index and renders with the default font set, instead of letting the `URLError`/`OSError` propagate out of `ScriptDetector`. This also de-flakes offline test runs that render prose.
+- Bundled-tool downloads (Tectonic, Biber, and the `makeglossaries` helper) now retry transient network failures (e.g. "Connection reset by peer" against the CTAN / SourceForge / GitHub mirrors) with a short backoff before failing, instead of aborting the build on a single dropped connection. Non-transient errors (such as TLS certificate failures) still fail fast.
 
 ### Removed
 

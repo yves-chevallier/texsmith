@@ -2,11 +2,14 @@
 
 from __future__ import annotations
 
+import io
 import os
 from pathlib import Path
 import shutil
 import sys
 import zipfile
+
+import pytest
 
 from texsmith.adapters.latex import tectonic
 
@@ -59,3 +62,42 @@ def test_select_makeglossaries_downloads_and_extracts(monkeypatch, tmp_path: Pat
     assert path == install_dir / "makeglossaries"
     assert path.exists()
     assert os.access(path, os.X_OK)
+
+
+class _FakeResponse(io.BytesIO):
+    def __enter__(self) -> _FakeResponse:
+        return self
+
+    def __exit__(self, *_exc: object) -> bool:
+        self.close()
+        return False
+
+
+def test_download_file_retries_transient_network_errors(monkeypatch, tmp_path: Path) -> None:
+    attempts = {"count": 0}
+
+    def fake_open_url(_url: str) -> _FakeResponse:
+        attempts["count"] += 1
+        if attempts["count"] < tectonic._DOWNLOAD_RETRIES:
+            raise ConnectionResetError("Connection reset by peer")
+        return _FakeResponse(b"payload-bytes")
+
+    monkeypatch.setattr(tectonic, "open_url", fake_open_url)
+    monkeypatch.setattr(tectonic.time, "sleep", lambda _seconds: None)
+
+    destination = tmp_path / "out.bin"
+    tectonic._download_file("dummy-url", destination)
+
+    assert attempts["count"] == tectonic._DOWNLOAD_RETRIES
+    assert destination.read_bytes() == b"payload-bytes"
+
+
+def test_download_file_raises_after_exhausting_retries(monkeypatch, tmp_path: Path) -> None:
+    def fake_open_url(_url: str) -> _FakeResponse:
+        raise ConnectionResetError("Connection reset by peer")
+
+    monkeypatch.setattr(tectonic, "open_url", fake_open_url)
+    monkeypatch.setattr(tectonic.time, "sleep", lambda _seconds: None)
+
+    with pytest.raises(OSError, match="Connection reset by peer"):
+        tectonic._download_file("dummy-url", tmp_path / "out.bin")

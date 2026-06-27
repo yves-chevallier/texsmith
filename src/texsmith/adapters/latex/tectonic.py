@@ -11,6 +11,7 @@ import subprocess
 import sys
 import tarfile
 import tempfile
+import time
 from urllib.error import URLError
 import zipfile
 
@@ -22,6 +23,11 @@ from texsmith.core.user_dir import get_user_dir
 
 TECTONIC_VERSION = "0.16.9"
 BIBER_VERSION = "2.17"
+# Helper/binary downloads hit third-party mirrors (CTAN, SourceForge, GitHub
+# releases) that occasionally drop a connection mid-transfer. Retry transient
+# network failures a few times with a short linear backoff before giving up.
+_DOWNLOAD_RETRIES = 3
+_DOWNLOAD_BACKOFF_SECONDS = 2.0
 MAKEGLOSSARIES_URL = "https://mirrors.ctan.org/macros/latex/contrib/glossaries.zip"
 _BASE_URL = (
     "https://github.com/tectonic-typesetting/tectonic/releases/download/"
@@ -218,8 +224,24 @@ def _install_dir() -> Path:
 
 
 def _download_file(url: str, destination: Path) -> None:
-    with open_url(url) as response, destination.open("wb") as handle:
-        shutil.copyfileobj(response, handle)
+    last_error: OSError | None = None
+    for attempt in range(1, _DOWNLOAD_RETRIES + 1):
+        try:
+            with open_url(url) as response, destination.open("wb") as handle:
+                shutil.copyfileobj(response, handle)
+        except (URLError, OSError) as exc:
+            # Transient network failures (connection reset, timeout, DNS hiccup)
+            # are common against the third-party mirrors; retry with backoff.
+            # Non-transient errors (e.g. TLSCertificateError from open_url) are
+            # not OSError subclasses and propagate immediately.
+            last_error = exc
+            if attempt < _DOWNLOAD_RETRIES:
+                time.sleep(_DOWNLOAD_BACKOFF_SECONDS * attempt)
+            continue
+        else:
+            return
+    assert last_error is not None
+    raise last_error
 
 
 def _extract_archive(archive_path: Path, destination: Path) -> None:
