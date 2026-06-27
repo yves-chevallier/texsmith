@@ -1,9 +1,10 @@
 # TeXSmith Extensions
 
 TeXSmith ships its Markdown extensions directly inside the `texsmith`
-distribution. Once `pip install texsmith` is done, you can import them either
-via the `texsmith.extensions` registry or by using the extension modules
-(`texsmith.extensions.smallcaps`, `texsmith.extensions.index`, ...).
+distribution. Once `pip install texsmith` is done, you can use them via the
+extension modules (`texsmith.extensions.smallcaps`, `texsmith.extensions.index`,
+...) or the entry-point aliases registered in `pyproject.toml`. The exact set
+enabled by the conversion pipeline is `texsmith.adapters.markdown.DEFAULT_MARKDOWN_EXTENSIONS`.
 
 Every extension follows the same structure:
 
@@ -30,30 +31,29 @@ following extensions under the `texsmith` namespace:
 | `texsmith.extensions.texlogos`          | Replaces TeX logo keywords with accessible HTML spans.               |
 | `texsmith.extensions.index`             | Adds the `#[tag]` syntax, LaTeX index entries and an MkDocs plugin.  |
 
-Inspect the registry programmatically if you want to discover the available
-extensions dynamically:
+Inspect the pipeline's default extension list programmatically:
 
 ```python
->>> from texsmith.extensions import available_extensions
->>> [spec.package_name for spec in available_extensions()]
-['texsmith.index', 'texsmith.extensions.latex_raw', 'texsmith.extensions.latex_text', ...]
+>>> from texsmith.adapters.markdown import DEFAULT_MARKDOWN_EXTENSIONS
+>>> [e for e in DEFAULT_MARKDOWN_EXTENSIONS if e.startswith("texsmith.")][:2]
+['texsmith.extensions.index:TexsmithIndexExtension', 'texsmith.extensions.multi_citations:MultiCitationExtension']
 ```
 
 ## Using the extensions with Python Markdown
 
-Use the registry helper to instantiate an extension or import the shorthand
-module directly:
+Pass the `module:attribute` strings (the same form used in
+`DEFAULT_MARKDOWN_EXTENSIONS`) straight to Python Markdown:
 
 ```python
 from markdown import Markdown
-from texsmith.extensions import load_markdown_extension
 
-extensions = [
-    load_markdown_extension("smallcaps"),
-    load_markdown_extension("texlogos"),
-    load_markdown_extension("index"),
-]
-md = Markdown(extensions=extensions)
+md = Markdown(
+    extensions=[
+        "texsmith.extensions.smallcaps:SmallCapsExtension",
+        "texsmith.extensions.texlogos:TexLogosExtension",
+        "texsmith.extensions.index:TexsmithIndexExtension",
+    ]
+)
 html = md.convert("`#[LaTeX]` renders a TeX logo and an index entry.")
 ```
 
