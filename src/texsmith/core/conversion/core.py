@@ -488,6 +488,27 @@ def _build_runtime_common(
     return runtime_common
 
 
+def _apply_template_render_extensions(
+    renderer: LaTeXRenderer, binding: TemplateBinding
+) -> None:
+    """Wire a selected template's custom ``@reads``/``@writes`` into ``renderer``.
+
+    Reads the ``readers`` / ``writer`` hooks forwarded onto the binding's runtime
+    extras and applies them to the renderer's reader-registry / writer-class
+    seams. Scoped to this template; a no-op when none are declared.
+    """
+    runtime = binding.runtime
+    if runtime is None:
+        return
+    readers = runtime.extras.get("readers") or []
+    writer = runtime.extras.get("writer")
+    if not readers and not writer:
+        return
+    from texsmith.core.templates.extensions import apply_render_extensions
+
+    apply_render_extensions(renderer, readers=readers, writer=writer)
+
+
 def _render_slot_fragments(
     *,
     slot_fragments: list[SlotFragment],
@@ -555,6 +576,7 @@ def _render_slot_fragments(
                 formatter=formatter,
                 **renderer_kwargs,
             )
+            _apply_template_render_extensions(renderer, binding)
         return renderer
 
     slot_outputs: dict[str, str] = {}

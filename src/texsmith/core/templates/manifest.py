@@ -733,6 +733,14 @@ class TemplateInfo(BaseModel):
     texlive_year: int | None = None
     tlmgr_packages: list[str] = Field(default_factory=list)
     fragments: list[str] | None = None
+    # Render-extension hooks (resolved when this template is selected):
+    # ``readers`` lists importable modules whose ``@reads`` lowerings are layered
+    # on top of the bundled HTML→IR registry; ``writer`` is a ``"module:Class"``
+    # reference to a ``LaTeXWriter`` subclass adding/overriding ``@writes``
+    # emitters. Both are scoped to this template — they never affect other
+    # templates' conversions.
+    readers: list[str] = Field(default_factory=list)
+    writer: str | None = None
     markdown_extensions: list[str] = Field(default_factory=list)
     override: list[str] = Field(default_factory=list)
     required_partials: list[str] = Field(default_factory=list)
