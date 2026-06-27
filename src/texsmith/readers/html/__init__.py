@@ -13,7 +13,7 @@ The reader produces a pure, backend-agnostic IR tree and never emits LaTeX.
 from __future__ import annotations
 
 from .context import ReadContext
-from .reader import HtmlReader
+from .reader import HtmlReader, build_reader_registry
 from .registry import NotHandled, ReaderRegistry, ReaderRule, ReadLevel, reads
 
 
@@ -24,5 +24,6 @@ __all__ = [
     "ReadLevel",
     "ReaderRegistry",
     "ReaderRule",
+    "build_reader_registry",
     "reads",
 ]

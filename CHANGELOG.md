@@ -5,6 +5,12 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.1.0/)
 and the project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- **Template-scoped render extensions.** A template's `[latex.template]` manifest section can now declare `readers` (a list of importable modules whose `@reads` HTML→IR lowerings are layered on top of the bundled registry) and `writer` (a `"module:Class"` reference to a `LaTeXWriter` subclass adding or overriding `@writes` emitters). They are resolved when the template is selected and applied to the `LaTeXRenderer` **for that template only**, so a template package (exam, thesis, poster…) can own custom constructs without affecting other templates' conversions. This restores third-party custom rendering after the 0.4.0 IR migration removed the global `@renders` / `texsmith.renderers` mechanism; the new hook is deliberately template-scoped (no global reader/writer registration). New public helper `texsmith.readers.html.build_reader_registry(extra_modules=…)`; resolution lives in `texsmith.core.templates.extensions`. Documented in `docs/api/handlers.md`.
+
 ## [0.4.0] - 2026-06-27
 
 ### Added

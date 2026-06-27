@@ -245,6 +245,8 @@ def load_template_runtime(template: str) -> TemplateRuntime:
         "fragments",
         declared_fragments if declared_fragments is not None else [],
     )
+    extras.setdefault("readers", list(template_instance.info.readers or []))
+    extras.setdefault("writer", template_instance.info.writer)
 
     return TemplateRuntime(
         instance=template_instance,

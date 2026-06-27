@@ -104,12 +104,25 @@ _BLOCK_TAGS: frozenset[str] = frozenset(
 _INLINE_TAGS: frozenset[str] = frozenset({"img", "script", "ts-marginnote"})
 
 
-def _build_registry() -> ReaderRegistry:
-    """Assemble the default registry from the lowering modules."""
+def build_reader_registry(extra_modules: Iterable[object] = ()) -> ReaderRegistry:
+    """Assemble a registry from the bundled lowering modules plus ``extra_modules``.
+
+    The bundled modules are collected first; any ``extra_modules`` (e.g. a
+    template's ``@reads`` module) are layered on top. Because
+    :meth:`ReaderRegistry.candidates` orders by descending priority (stable on
+    registration order), an extra handler declaring a higher ``priority`` than a
+    bundled one for the same tag is tried first and may return ``NotHandled`` to
+    fall through to the bundled handler.
+    """
     registry = ReaderRegistry()
-    for module in (_inline, _blocks, _extensions):
+    for module in (_inline, _blocks, _extensions, *extra_modules):
         registry.collect_from(module)
     return registry
+
+
+def _build_registry() -> ReaderRegistry:
+    """Assemble the default registry from the bundled lowering modules."""
+    return build_reader_registry()
 
 
 class HtmlReader:
