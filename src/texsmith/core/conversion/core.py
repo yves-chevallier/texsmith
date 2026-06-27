@@ -488,9 +488,7 @@ def _build_runtime_common(
     return runtime_common
 
 
-def _apply_template_render_extensions(
-    renderer: LaTeXRenderer, binding: TemplateBinding
-) -> None:
+def _apply_template_render_extensions(renderer: LaTeXRenderer, binding: TemplateBinding) -> None:
     """Wire a selected template's custom ``@reads``/``@writes`` into ``renderer``.
 
     Reads the ``readers`` / ``writer`` hooks forwarded onto the binding's runtime
