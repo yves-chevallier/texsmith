@@ -104,8 +104,10 @@ jobs:
         shell: powershell
         run: choco install make -y
 
-      - name: Sync dependencies (dev + docs)
-        run: uv sync --all-groups --frozen
+      - name: Sync dependencies (dev + docs + typst)
+        # `make -C examples all` builds each example's Typst PDF too, which needs
+        # the embedded Typst compiler from the `typst` extra.
+        run: uv sync --all-groups --extra typst --frozen
 
       - name: Build examples
         shell: bash
@@ -144,9 +146,10 @@ jobs:
           enable-cache: true
           cache-python: false
 
-      # Install full dependency set
-      - name: Sync dependencies (dev + docs)
-        run: uv sync --all-groups --frozen
+      # Install full dependency set (incl. the Typst extra: `make examples`
+      # builds each example's Typst PDF via the embedded Typst compiler).
+      - name: Sync dependencies (dev + docs + typst)
+        run: uv sync --all-groups --extra typst --frozen
 
       # Install Playwright browser binaries + system deps
       - name: Install Playwright browsers
