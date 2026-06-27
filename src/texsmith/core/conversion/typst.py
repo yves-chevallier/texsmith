@@ -1,7 +1,10 @@
-"""CLI emission of Typst (``.typ``) documents.
+"""Typst (``.typ``) conversion pipeline.
 
-The ``--format typst`` path runs the shared ``HTML → IR → TypstWriter`` pipeline
-and assembles a compilable ``.typ`` source. Two modes:
+The Typst analogue of the LaTeX engine in :mod:`texsmith.core.conversion.core`:
+it runs the shared ``HTML → IR → TypstWriter`` pipeline and assembles a
+compilable ``.typ`` source. The CLI (``--format typst``) and any library caller
+drive it through :func:`render_typst_document` / :func:`build_typst_pdf`. Two
+modes:
 
 * **templated** (``--template`` / front-matter ``press.template``) — load the
   template's ``[typst.template]`` manifest section and render its
@@ -33,7 +36,7 @@ from texsmith.ir import nodes as ir
 from texsmith.readers.html import HtmlReader
 from texsmith.writers.typst import TypstWriter, TypstWriterState, render_document
 from texsmith.writers.typst.build import compile_typst
-from texsmith.writers.typst.writer import _citation_label
+from texsmith.writers.typst.writer import citation_label
 
 
 if TYPE_CHECKING:  # pragma: no cover - typing only
@@ -153,7 +156,7 @@ def _write_label_safe_bibtex(collection: BibliographyCollection, target: Path) -
     """Write the collection to ``target`` with Typst-label-safe entry keys.
 
     Typst ``#cite(<label>)`` requires the bibliography key to be a valid label,
-    so the written ``.bib`` keys are sanitised the same way ``_citation_label``
+    so the written ``.bib`` keys are sanitised the same way ``citation_label``
     sanitises citation markers, keeping ``@key`` and ``<key>`` in agreement.
     """
     raw = _collection_to_bibtex(collection)
@@ -169,7 +172,7 @@ def _relabel_bibtex(text: str) -> str:
 
     def _sub(match: re.Match[str]) -> str:
         kind, key = match.group(1), match.group(2)
-        return f"@{kind}{{{_citation_label(key)},"
+        return f"@{kind}{{{citation_label(key)},"
 
     return re.sub(r"@(\w+)\{([^,]+),", _sub, text)
 
@@ -376,7 +379,7 @@ def render_typst_document(
     title = _document_title(document, overrides)
 
     collection, bib_resource = _build_bibliography(document, bibliography_files, output_dir)
-    bib_keys = frozenset(_citation_label(key) for key in collection.to_dict())
+    bib_keys = frozenset(citation_label(key) for key in collection.to_dict())
 
     ir_document = HtmlReader().read(document.html)
     source_dir = document.source_path.parent

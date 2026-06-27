@@ -275,7 +275,7 @@ class TypstWriter:
         """
         ref_match = _PURE_EQREF_RE.match(tex)
         if ref_match:
-            label = _citation_label(ref_match.group(1))
+            label = citation_label(ref_match.group(1))
             if label:
                 self.state.runtime["uses_eqnref"] = True
                 return f"#ref(<{label}>)"
@@ -288,7 +288,7 @@ class TypstWriter:
         if display:
             call = f"#mitex({fence}{tex}{fence})"
             if labels:
-                label = _citation_label(labels[0])
+                label = citation_label(labels[0])
                 if label:
                     self.state.runtime["uses_eqnref"] = True
                     return f"{call} <{label}>"
@@ -569,7 +569,7 @@ class TypstWriter:
         return self._inlines(node.content)
 
     def _citation_markup(self, keys: Sequence[str]) -> str:
-        return "".join(f"#cite(<{_citation_label(key)}>)" for key in keys)
+        return "".join(f"#cite(<{citation_label(key)}>)" for key in keys)
 
     # -- table -------------------------------------------------------------
 
@@ -906,7 +906,7 @@ def _latex_inline_math_payload(text: str) -> str | None:
     return (match.group("dollar") or match.group("paren") or "").strip()
 
 
-def _citation_label(key: str) -> str:
+def citation_label(key: str) -> str:
     """Map a bibliography key to a Typst label (``<...>``).
 
     Typst label syntax forbids whitespace and most punctuation; bibliography
@@ -916,4 +916,4 @@ def _citation_label(key: str) -> str:
     return _LABEL_SAFE_RE.sub("-", key.strip())
 
 
-__all__ = ["TypstWriteError", "TypstWriter"]
+__all__ = ["TypstWriteError", "TypstWriter", "citation_label"]

@@ -47,6 +47,7 @@ from texsmith.core.conversion import ConversionRequest
 from texsmith.core.conversion.debug import ConversionError
 from texsmith.core.conversion.inputs import UnsupportedInputError
 from texsmith.core.conversion.service import ConversionService
+from texsmith.core.conversion.typst import build_typst_pdf, render_typst_document
 from texsmith.core.metadata import PressMetadataError, normalise_press_metadata
 from texsmith.core.templates import TemplateError, load_template
 from texsmith.core.templates.runtime import coerce_base_level
@@ -100,7 +101,6 @@ from ..presenter import (
 )
 from ..state import debug_enabled, emit_error, set_cli_state
 from ..utils import determine_output_target, organise_slot_overrides, write_output_file
-from .typst_emit import build_typst_pdf, render_typst_document
 
 
 _SERVICE = ConversionService()
