@@ -194,6 +194,7 @@ This is the full caption shown under the figure.
 
 ```markdown
 As shown in Figure @[fig:my-figure], the result is clear.
+As shown in Figure @fig:my-figure, brackets are optional for one-word labels.
 As seen in [](#fig:my-figure), the result is clear.
 ```
 

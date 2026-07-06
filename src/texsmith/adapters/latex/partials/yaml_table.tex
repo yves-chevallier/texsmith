@@ -1,10 +1,10 @@
 \BLOCK{- if caption -}
 \begin{table}\BLOCK{if placement}[\VAR{placement}]\BLOCK{else}[H]\BLOCK{endif}
 \centering
+\caption{\VAR{caption}}
 \BLOCK{if label -}
 \label{\VAR{label}}
 \BLOCK{endif -}
-\caption{\VAR{caption}}
 \vspace{0.5em}
 \BLOCK{- else -}
 \begin{center}

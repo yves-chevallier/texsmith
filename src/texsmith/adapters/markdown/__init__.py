@@ -42,6 +42,7 @@ DEFAULT_MARKDOWN_EXTENSIONS = [
     "footnotes",
     "texsmith.extensions.index:TexsmithIndexExtension",
     "texsmith.extensions.multi_citations:MultiCitationExtension",
+    "texsmith.extensions.references:SmartReferenceExtension",
     "texsmith.extensions.latex_raw:LatexRawExtension",
     "texsmith.extensions.missing_footnotes:MissingFootnotesExtension",
     "texsmith.extensions.latex_text:LatexTextExtension",

@@ -299,6 +299,17 @@ class TypstWriter:
     def _link(self, node: ir.Link) -> str:
         target = node.target
         body = self._inlines(node.content)
+        # A fragment target is an internal cross-reference (``@[label]`` or
+        # ``[text](#label)``), resolved against a Typst ``<label>`` rather
+        # than a URL.
+        if target.startswith("#"):
+            label = citation_label(target[1:])
+            if label:
+                if not body:
+                    # Bare number, matching LaTeX ``\ref``: the naming
+                    # convention leaves the type word to the author.
+                    return f"#ref(<{label}>, supplement: none)"
+                return f"#link(<{label}>)[{body}]"
         if not body:
             return f'#link("{_escape_string(target)}")'
         return f'#link("{_escape_string(target)}")[{body}]'
@@ -379,6 +390,9 @@ class TypstWriter:
         level = max(1, node.level + self.state.heading_offset)
         marker = "=" * level
         text = self._inlines(node.content).strip()
+        label = citation_label(node.identifier) if node.identifier else ""
+        if label:
+            return f"{marker} {text} <{label}>"
         return f"{marker} {text}"
 
     @writes(ir.CodeBlock)
@@ -465,8 +479,13 @@ class TypstWriter:
     def _table(self, node: ir.Table) -> str:
         call = self._table_call(node)
         caption = self._inlines(node.caption).strip() if node.caption else ""
-        if caption:
-            return f"#figure(\n  {_indent(call, '  ').lstrip()},\n  caption: [{caption}],\n)"
+        label = citation_label(node.label) if node.label else ""
+        # A label must attach to a referenceable element, so a labelled table
+        # is wrapped in ``#figure`` even without a caption.
+        if caption or label:
+            caption_arg = f"\n  caption: [{caption}]," if caption else ""
+            suffix = f" <{label}>" if label else ""
+            return f"#figure(\n  {_indent(call, '  ').lstrip()},{caption_arg}\n){suffix}"
         return f"#{call}"
 
     @writes(ir.RawBlock)

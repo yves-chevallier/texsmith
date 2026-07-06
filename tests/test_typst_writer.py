@@ -77,6 +77,14 @@ def test_link() -> None:
     assert emit(node) == '#link("https://example.com")[site]'
 
 
+def test_link_fragment_is_cross_reference() -> None:
+    # ``@[label]`` produces an empty-bodied fragment link -> a bare #ref.
+    assert emit(ir.Link(content=(), target="#sec:intro")) == "#ref(<sec:intro>, supplement: none)"
+    # ``[text](#label)`` keeps its body and links to the Typst label.
+    node = ir.Link(content=(ir.Str("here"),), target="#sec:intro")
+    assert emit(node) == "#link(<sec:intro>)[here]"
+
+
 def test_image() -> None:
     assert emit(ir.Image(src="a.png")) == '#image("a.png")'
     assert emit(ir.Image(src="a.png", width="50%")) == '#image("a.png", width: 50%)'
@@ -101,6 +109,11 @@ def test_para_and_plain() -> None:
 def test_header_levels() -> None:
     assert emit(ir.Header(level=1, content=(ir.Str("Top"),))) == "= Top"
     assert emit(ir.Header(level=3, content=(ir.Str("Sub"),))) == "=== Sub"
+
+
+def test_header_identifier_emits_label() -> None:
+    node = ir.Header(level=2, content=(ir.Str("Com"),), identifier="sec:com")
+    assert emit(node) == "== Com <sec:com>"
 
 
 def test_code_block() -> None:
@@ -168,6 +181,21 @@ def test_simple_gfm_table() -> None:
     assert "columns: 2," in out
     assert "table.header([A], [B])," in out
     assert "[1], [2]," in out
+
+
+def test_labelled_table_is_referenceable_figure() -> None:
+    html = (
+        '<table id="tbl:data"><caption>Data.</caption>'
+        "<thead><tr><th>A</th><th>B</th></tr></thead>"
+        "<tbody><tr><td>1</td><td>2</td></tr></tbody></table>"
+    )
+    doc = HtmlReader().read(html)
+    table = doc.content[0]
+    assert isinstance(table, ir.Table)
+    out = emit(table)
+    assert out.startswith("#figure(")
+    assert "caption: [Data.]," in out
+    assert out.endswith(") <tbl:data>")
 
 
 def _rich_table(payload: dict) -> ir.Table:

@@ -54,6 +54,12 @@ Placeholder text that other sections can reference.
 Check section @[sec:section-title] for more details.
 ```
 
+The brackets are optional when the label is a single word made of letters,
+digits and `_ : . -` characters, so `@sec:section-title` works too. Trailing
+sentence punctuation stays out of the label (`…voir @sec:intro.` references
+`sec:intro`). E-mail addresses and `@` inside words or URLs are left alone;
+write `\@` to force a literal `@` where the shorthand would otherwise apply.
+
 ### Autorefs
 
 When the `mkdocs-autorefs` extension is enabled, you can use the `[text][label]` syntax to generate automatic references to headings.
