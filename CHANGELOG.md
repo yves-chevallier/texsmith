@@ -5,6 +5,12 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.1.0/)
 and the project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.2] - 2026-07-15
+
+### Fixed
+
+- Formatting-only fix (a line wrap the 0.5.1 lint gate rejected); no functional changes. 0.5.1 was tagged but never published.
+
 ## [0.5.1] - 2026-07-15
 
 ### Fixed

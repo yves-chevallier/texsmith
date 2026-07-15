@@ -474,7 +474,9 @@ class TypstWriter:
         label = citation_label(node.identifier) if node.identifier else ""
         suffix = f" <{label}>" if label else ""
         if caption:
-            return f"#figure(\n  {_indent(body, '  ').lstrip()},\n  caption: [{caption}],\n){suffix}"
+            return (
+                f"#figure(\n  {_indent(body, '  ').lstrip()},\n  caption: [{caption}],\n){suffix}"
+            )
         return f"#figure(\n  {_indent(body, '  ').lstrip()},\n){suffix}"
 
     @writes(ir.Table)
