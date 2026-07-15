@@ -116,6 +116,17 @@ def test_header_identifier_emits_label() -> None:
     assert emit(node) == "== Com <sec:com>"
 
 
+def test_figure_identifier_emits_label() -> None:
+    node = ir.Figure(
+        content=(ir.Plain(content=(ir.Image(src="a.png"),)),),
+        caption=(ir.Str("Melt."),),
+        identifier="melting-behavior",
+    )
+    out = emit(node)
+    assert out.startswith("#figure(")
+    assert out.endswith(") <melting-behavior>")
+
+
 def test_code_block() -> None:
     out = emit(ir.CodeBlock(text="print(1)\n", lang="python"))
     assert out == "```python\nprint(1)\n```"

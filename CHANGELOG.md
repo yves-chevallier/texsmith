@@ -10,7 +10,7 @@ and the project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 ### Added
 
 - **`@[label]` cross-reference shorthand.** The reference syntax documented in `docs/syntax/references.md` is now implemented by a bundled Markdown extension (`texsmith.extensions.references:SmartReferenceExtension`, enabled by default). `@[sec:intro]` renders as an internal reference (`\ref{sec:intro}` in LaTeX, `#ref(<sec:intro>, supplement: none)` in Typst), and the brackets can be omitted when the label is a single word (`@sec:intro`, `@tbl:data`); trailing sentence punctuation stays out of the label. E-mail addresses, `@` inside words/URLs and code spans are not affected, and `\@` escapes a literal `@`.
-- **Typst cross-reference targets.** The Typst writer now emits heading labels from `{#…}` identifiers (`= Title <sec:intro>`), wraps labelled tables in a referenceable `#figure(…) <tbl:data>`, and renders fragment links (`[text](#label)`) as `#link(<label>)[text]` instead of a dead URL link.
+- **Typst cross-reference targets.** The Typst writer now emits heading labels from `{#…}` identifiers (`= Title <sec:intro>`), attaches figure identifiers as labels (`#figure(…) <fig:melt>`), wraps labelled tables in a referenceable `#figure(…) <tbl:data>`, and renders fragment links (`[text](#label)`) as `#link(<label>)[text]` instead of a dead URL link. Note that Typst resolves references at compile time: a reference to a label that does not exist is a hard compile error (LaTeX degrades to `??`).
 
 ### Fixed
 
