@@ -76,9 +76,30 @@ def test_split_inputs_captures_front_matter(tmp_path: Path) -> None:
     result = service.split_inputs([doc, metadata_file])
 
     assert result.documents == [doc]
-    assert result.front_matter_path == metadata_file
+    assert result.front_matter_paths == [metadata_file]
     assert isinstance(result.front_matter, Mapping)
     assert result.front_matter.get("press", {}).get("template") == "demo"
+
+
+def test_split_inputs_merges_multiple_front_matter_files(tmp_path: Path) -> None:
+    service = ConversionService()
+    doc = tmp_path / "chapter.md"
+    doc.write_text("# Title\n", encoding="utf-8")
+    base = tmp_path / "texsmith.yaml"
+    base.write_text("press:\n  template: demo\n  language: english\n", encoding="utf-8")
+    data = tmp_path / "data.yml"
+    data.write_text("recipients:\n  - Ada\n", encoding="utf-8")
+    override = tmp_path / "tasks.yaml"
+    override.write_text("press:\n  language: fr\ntasks:\n  - review\n", encoding="utf-8")
+
+    result = service.split_inputs([base, data, override, doc])
+
+    assert result.documents == [doc]
+    assert result.front_matter_paths == [base, data, override]
+    assert isinstance(result.front_matter, Mapping)
+    assert result.front_matter.get("press") == {"template": "demo", "language": "fr"}
+    assert result.front_matter.get("recipients") == ["Ada"]
+    assert result.front_matter.get("tasks") == ["review"]
 
 
 def test_split_inputs_allows_yaml_only_input(tmp_path: Path) -> None:
@@ -90,7 +111,44 @@ def test_split_inputs_allows_yaml_only_input(tmp_path: Path) -> None:
 
     assert result.documents == [recipe]
     assert result.front_matter is None
-    assert result.front_matter_path is None
+    assert result.front_matter_paths == []
+
+
+def test_split_inputs_yaml_only_inputs_keep_last_as_document(tmp_path: Path) -> None:
+    service = ConversionService()
+    config = tmp_path / "config.yml"
+    config.write_text("press:\n  template: demo\n", encoding="utf-8")
+    recipe = tmp_path / "recipe.yml"
+    recipe.write_text("title: Cake\n", encoding="utf-8")
+
+    result = service.split_inputs([config, recipe])
+
+    assert result.documents == [recipe]
+    assert result.front_matter_paths == [config]
+    assert isinstance(result.front_matter, Mapping)
+    assert result.front_matter.get("press", {}).get("template") == "demo"
+
+
+def test_prepare_documents_merged_config_counts_as_single_press_source(tmp_path: Path) -> None:
+    service = ConversionService()
+    doc = tmp_path / "chapter.md"
+    doc.write_text("# Title\nBody\n", encoding="utf-8")
+    base = tmp_path / "texsmith.yaml"
+    base.write_text("press:\n  language: english\n", encoding="utf-8")
+    override = tmp_path / "override.yaml"
+    override.write_text("press:\n  language: fr\n", encoding="utf-8")
+
+    split = service.split_inputs([base, override, doc])
+    request = ConversionRequest(
+        documents=split.documents,
+        front_matter=split.front_matter,
+        front_matter_paths=split.front_matter_paths,
+    )
+
+    prepared = service.prepare_documents(request)
+
+    front_matter = prepared.documents[0].front_matter
+    assert front_matter.get("press", {}).get("language") == "fr"
 
 
 def test_prepare_documents_handles_markdown_and_html(tmp_path: Path) -> None:

@@ -582,7 +582,7 @@ def render(
     document_paths = split_result.documents
     bibliography_files = split_result.bibliography_files
     shared_front_matter = split_result.front_matter
-    shared_front_matter_path = split_result.front_matter_path
+    shared_front_matter_paths = split_result.front_matter_paths
 
     template_requested = template_info_flag or template_scaffold
 
@@ -820,7 +820,7 @@ def render(
         documents=document_paths,
         bibliography_files=bibliography_files,
         front_matter=shared_front_matter,
-        front_matter_path=shared_front_matter_path,
+        front_matter_paths=shared_front_matter_paths,
         slot_assignments=slot_assignments,
         selector=selector,
         full_document=full_document,
@@ -1112,8 +1112,7 @@ def render(
         dependency_paths: set[Path] = set()
         dependency_paths.update(document_paths)
         dependency_paths.update(bibliography_files)
-        if shared_front_matter_path:
-            dependency_paths.add(shared_front_matter_path)
+        dependency_paths.update(shared_front_matter_paths)
         dependency_paths.add(render_result.main_tex_path)
         dependency_paths.update(render_result.fragment_paths)
         if render_result.bibliography_path:

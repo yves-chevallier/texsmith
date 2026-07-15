@@ -27,7 +27,7 @@ class ConversionRequest:
     documents: Sequence[Path] = field(default_factory=tuple)
     bibliography_files: Sequence[Path] = field(default_factory=list)
     front_matter: Mapping[str, Any] | None = None
-    front_matter_path: Path | None = None
+    front_matter_paths: Sequence[Path] = field(default_factory=tuple)
     slot_assignments: Mapping[Path, Sequence[SlotAssignment]] = field(default_factory=dict)
 
     selector: str = "article.md-content__inner"

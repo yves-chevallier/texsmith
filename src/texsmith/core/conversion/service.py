@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Callable, Iterable, Mapping
 import copy
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
@@ -59,7 +59,7 @@ class SplitInputsResult:
     documents: list[Path]
     bibliography_files: list[Path]
     front_matter: Mapping[str, Any] | None = None
-    front_matter_path: Path | None = None
+    front_matter_paths: list[Path] = field(default_factory=list)
 
     def __iter__(self) -> Iterable[object]:  # pragma: no cover - convenience iterator
         yield self.documents
@@ -115,35 +115,39 @@ class ConversionService:
         """Separate document inputs, bibliography files, and optional front matter to keep downstream parsing deterministic."""
         inline_bibliography: list[Path] = []
         documents: list[Path] = []
-        front_matter: Mapping[str, Any] | None = None
-        front_matter_path: Path | None = None
+        front_matter_entries: list[tuple[Path, Mapping[str, Any]]] = []
 
         for candidate in inputs:
             suffix = candidate.suffix.lower()
             if suffix in {".bib", ".bibtex"}:
                 inline_bibliography.append(candidate)
                 continue
-            if front_matter is None:
-                loaded_front_matter = _load_front_matter_file(candidate)
-                if loaded_front_matter is not _NOT_FRONT_MATTER:
-                    front_matter = loaded_front_matter
-                    front_matter_path = candidate
-                    continue
+            loaded_front_matter = _load_front_matter_file(candidate)
+            if isinstance(loaded_front_matter, Mapping):
+                front_matter_entries.append((candidate, loaded_front_matter))
+                continue
             documents.append(candidate)
 
         bibliography_paths = _deduplicate_paths([*inline_bibliography, *extra_bibliography])
-        if not documents and front_matter_path is not None:
-            # Treat a lone front-matter file as an input document so templates can operate on
-            # YAML sources without requiring additional Markdown/HTML content.
-            documents.append(front_matter_path)
-            front_matter = None
-            front_matter_path = None
+        if not documents and front_matter_entries:
+            # Treat the last front-matter file as an input document so templates can
+            # operate on YAML sources without requiring additional Markdown/HTML
+            # content; any earlier YAML inputs keep acting as shared configuration.
+            last_path, _ = front_matter_entries.pop()
+            documents.append(last_path)
+
+        front_matter: Mapping[str, Any] | None = None
+        front_matter_paths: list[Path] = []
+        for path, payload in front_matter_entries:
+            # Deep-merge in argument order: later files override earlier ones.
+            front_matter = _merge_front_matter(front_matter or {}, payload)
+            front_matter_paths.append(path)
 
         return SplitInputsResult(
             documents=documents,
             bibliography_files=bibliography_paths,
             front_matter=front_matter,
-            front_matter_path=front_matter_path,
+            front_matter_paths=front_matter_paths,
         )
 
     def prepare_documents(self, request: ConversionRequest) -> _PreparedBatch:
@@ -460,10 +464,6 @@ def _apply_shared_front_matter(
         document.reset_slots(base_mapping)
 
 
-def _describe_front_matter_source(path: Path | None) -> str:
-    return str(path) if path is not None else "front matter"
-
-
 def _collect_press_sources(
     documents: list[Document],
     shared_front_matter: Mapping[str, Any] | None,
@@ -471,7 +471,12 @@ def _collect_press_sources(
 ) -> list[str]:
     sources: list[str] = []
     if shared_front_matter and _front_matter_declares_press(shared_front_matter):
-        sources.append(_describe_front_matter_source(request.front_matter_path))
+        # Merged configuration files count as a single press source; conflicts
+        # between them are already resolved by the merge (later files win).
+        if request.front_matter_paths:
+            sources.append(", ".join(str(path) for path in request.front_matter_paths))
+        else:
+            sources.append("front matter")
     for document in documents:
         if _front_matter_declares_press(document.front_matter):
             sources.append(str(document.source_path))

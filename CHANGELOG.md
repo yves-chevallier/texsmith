@@ -5,6 +5,12 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.1.0/)
 and the project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Fixed
+
+- **Only the first YAML configuration input was honoured; the following ones were converted as documents.** `split_inputs` captured a single metadata-style YAML file as shared configuration, so every subsequent `.yaml`/`.yml` input fell through to the document list and was rendered as Markdown — surfacing as confusing errors such as a `press.language` conflict between the configuration and the template defaults. All body-less YAML mapping inputs are now recognised as configuration and deep-merged in argument order (later files override earlier ones), so a build can pass `texsmith config.yaml data.yml tasks.yaml doc.md` directly instead of concatenating the files beforehand. The merged configuration counts as a single press-metadata source, `--makefile-deps` records every configuration file as a dependency, and when *only* YAML inputs are given the last one is treated as the document (data-driven templates) with the earlier ones acting as configuration. API note: `SplitInputsResult.front_matter_path` and `ConversionRequest.front_matter_path` (both `Path | None`) are replaced by `front_matter_paths` sequences.
+
 ## [0.5.2] - 2026-07-15
 
 ### Fixed
