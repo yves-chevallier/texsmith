@@ -104,15 +104,6 @@ TeXSmith is unapologetically opinionated: it curates a stack, sprinkles extra sa
 | Raw LaTeX     | `/// latex`, `{latex}[x]` | `texsmith.extensions.latex_raw` |
 | LaTeX Text    | `LaTeX`, `TeXSmith`       | `texsmith.latex`        |
 
-### Other
-
-| Cross-references         |               |  Yes       |
-| Mermaid Diagrams         |               |  Yes       |
-| Graphviz Diagrams        |               |  Yes       |
-| Vega Diagrams            |               |  Yes       |
-| Svgbob Diagrams          |               |  Yes       |
-| CircuitTikZ Diagrams     |               |  Yes       |
-
 ## Default Extensions
 
 - Python Markdown

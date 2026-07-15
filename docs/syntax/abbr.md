@@ -1,6 +1,6 @@
 # Abbreviations / Acronyms
 
-Enable the `texsmith.abbr` extension and you can sprinkle definitions directly into your Markdown. Drop the abbreviation between square brackets, follow it with the expanded form in parentheses, and the parser does the rest.
+Abbreviations are a lightweight mechanism to define acronyms and their expansions. They are rendered in LaTeX with the `glossaries` package, which provides a rich set of commands for formatting and indexing.
 
 ```markdown
 The HTML specification is maintained by the W3C.
@@ -12,7 +12,7 @@ The HTML specification is maintained by the W3C.
 TeXSmith renders that snippet as:
 
 ```text
-$ uv run texsmith abbr.md
+$ texsmith abbr.md
 The \acrshort{HTML} specification is maintained by the \acrshort{W3C}.
 ```
 
