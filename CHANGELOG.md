@@ -5,6 +5,12 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.1.0/)
 and the project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.1] - 2026-07-15
+
+### Fixed
+
+- **Typst: `@[label]` references to figures failed to compile.** The Typst figure emitter dropped the figure's `{#…}` identifier, so a reference to a captioned figure aborted the Typst build with `label does not exist` (Typst resolves references at compile time, unlike LaTeX's `??` fallback). Figure identifiers are now attached as labels. This blocked the 0.5.0 release pipeline on the `paper` example; 0.5.0 was tagged but never published.
+
 ## [0.5.0] - 2026-07-15
 
 ### Added
