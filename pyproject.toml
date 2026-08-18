@@ -113,6 +113,9 @@ dev = [
     "nox[pbs]>=2024.4.16",
     "pytest-cov>=7.0.0",
     "mkdocs-texsmith ; python_version >= \"3.10\"",
+    # The examples Makefile builds the Typst variants: keep the embedded
+    # compiler in the default dev sync so a plain `uv sync` doesn't drop it.
+    "typst>=0.15",
 ]
 docs = [
     "mike>=2.1.2",
