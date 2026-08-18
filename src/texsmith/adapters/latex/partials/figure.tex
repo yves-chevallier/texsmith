@@ -1,6 +1,5 @@
 \begin{figure}[H]
     \centering
-    \BLOCK{-if label}\label{\VAR{label}}\BLOCK{endif}
     \BLOCK{if width}\BLOCK{set width_value = width.rstrip('%') if width.endswith('%') else width}\BLOCK{endif}
     \BLOCK{if adjustbox}
     \ifdefined\adjustbox
@@ -28,6 +27,11 @@
     \BLOCK{endif}
     \BLOCK{endif}
     \BLOCK{-if caption}
-    \caption\BLOCK{if shortcaption}[\VAR{shortcaption}]\BLOCK{endif}{\VAR{caption}}
+    %% The label must come after the caption: it captures the current
+    %% reference value, which the caption sets to the figure number. Emitted
+    %% earlier it would resolve to the enclosing section number instead.
+    \caption\BLOCK{if shortcaption}[\VAR{shortcaption}]\BLOCK{endif}{\VAR{caption}}\BLOCK{if label}\label{\VAR{label}}\BLOCK{endif}
+    \BLOCK{-elif label}
+    \label{\VAR{label}}
     \BLOCK{-endif}
 \end{figure}

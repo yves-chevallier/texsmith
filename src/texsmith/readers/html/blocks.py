@@ -73,6 +73,21 @@ def read_paragraph(tag: Tag, ctx: ReadContext) -> ir.Block | None:
             attrs=attrs_tuple({"role": "script", "script": slug}),
         )
 
+    # A paragraph starting with ``/// `` is the tell-tale of a pymdownx block
+    # (``/// caption``, ``/// figure-caption``, …) that failed to parse and
+    # leaked through as plain text — typically an invalid YAML option payload
+    # or an id containing characters pymdownx rejects (such as ``:``). This
+    # otherwise fails silently, so surface a diagnostic.
+    probe = tag.get_text().lstrip()
+    if probe.startswith("/// "):
+        marker = probe.splitlines()[0].strip()
+        ctx.warn(
+            f"Unprocessed block marker '{marker}': this '///' block was not "
+            "recognised and is rendered as plain text. Check its YAML options; "
+            "note that ids cannot contain ':' (use 'my-figure', not "
+            "'fig:my-figure')."
+        )
+
     content = _strip_edge_space(ctx.lower_inline(tag.children))
     if not content:
         return None

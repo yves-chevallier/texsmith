@@ -1,6 +1,4 @@
 \begin{center}
-\BLOCK{-if label}\label{\VAR{label}}
-\BLOCK{endif-}
 \BLOCK{if width}\BLOCK{set width_value = width.rstrip('%') if width.endswith('%') else width}\BLOCK{endif}
 \BLOCK{-if caption}\captionsetup{type=figure}\BLOCK{endif}
 \BLOCK{if link}\href{\VAR{link}}{%
@@ -10,6 +8,10 @@
 \includegraphics[width=\BLOCK{if width}\BLOCK{if width.endswith('%')}\VAR{(width_value|float) / 100}\linewidth\BLOCK{else}\VAR{width}\BLOCK{endif}\BLOCK{else}\linewidth\BLOCK{endif}]{\VAR{path}}
 \BLOCK{endif}
 \BLOCK{-if caption}
-\captionof{figure}\BLOCK{if shortcaption}[\VAR{shortcaption}]\BLOCK{endif}{\VAR{caption}}
+%% The label must come after the caption so it captures the figure number
+%% rather than the number of the enclosing section.
+\captionof{figure}\BLOCK{if shortcaption}[\VAR{shortcaption}]\BLOCK{endif}{\VAR{caption}}\BLOCK{if label}\label{\VAR{label}}\BLOCK{endif}
+\BLOCK{-elif label}
+\label{\VAR{label}}
 \BLOCK{-endif}
 \end{center}

@@ -15,10 +15,19 @@ As seen in [this figure](#my-figure), the results are significant.
 
 ![This is the alt text](https://picsum.photos/400/150)
 
-/// caption #my-figure
+/// caption
+    attrs: {id: my-figure}
 This is the caption for the figure.
 ///
 ```
+
+!!! warning "Identifier restrictions"
+    The `id` is declared through the block's YAML options and may not contain
+    a colon: `pymdown-extensions` rejects identifiers such as
+    `fig:my-figure`, and the whole block then silently degrades to plain
+    text (TeXSmith emits a warning when it detects this). The shorthand
+    header form `/// caption #my-figure` is likewise not supported by
+    `pymdown-extensions` — always use the `attrs:` option shown above.
 
 Enable numbering and each document gets its own sequence starting at 1.
 
@@ -87,25 +96,25 @@ Language adds another wrinkle: “Figure” in English, “figure” (lowercase)
 Fortunately `pymdownx.blocks.captions` tracks IDs, so TeXSmith can bridge both worlds with a shared syntax:
 
 ```md
-As seen in [](#fig:my-figure), the results are significant.
+As seen in [](#my-figure), the results are significant.
 ```
 
-Any link whose fragment starts with `fig:` is decorated with the assigned number. The HTML output looks like:
+An empty-text link to a caption id is decorated with the assigned number. The HTML output looks like:
 
 ```html
-As seen in <a href="#fig:my-figure">Figure <span class="caption-number">1</span></a>, the results are significant.
+As seen in <a href="#my-figure">Figure <span class="caption-number">1</span></a>, the results are significant.
 ```
 
-In LaTeX:
+In LaTeX (the caption id is emitted verbatim as the `\label`):
 
 ```latex
-As seen in Figure \ref{fig:my-figure}, the results are significant.
+As seen in Figure \ref{my-figure}, the results are significant.
 ```
 
 Or with `cleveref`:
 
 ```latex
-As seen in \Cref{fig:my-figure}, the results are significant.
+As seen in \Cref{my-figure}, the results are significant.
 ```
 
 Pandoc users write `{@fig:my-figure}`; the idea is the same.
@@ -123,7 +132,8 @@ TeXSmith reuses the Markdown `alt` text as that short entry:
 ```md
 ![Short caption for list of figures](image.png)
 
-/// figure-caption #my-figure
+/// figure-caption
+    attrs: {id: my-figure}
 This is the caption for the figure.
 ///
 ```

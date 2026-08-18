@@ -125,54 +125,49 @@ As shown in Equation @[eq:einstein], energy is equal to mass times the speed of 
 
 ## Figures
 
-Figures are any diagram with a caption and label for cross-references.
+Give a figure a caption block with an `id` and reference it anywhere with the
+`@[label]` shorthand. The `id` is emitted verbatim as the LaTeX `\label`.
 
 ```markdown
-!!! figure {#fig:sample-figure}
-    ![Sample Figure](image-url.jpg)
+![Sample Figure](image-url.jpg)
+
+/// caption
+    attrs: {id: sample-figure}
+This is the caption for the figure.
+///
+
+As shown in Figure @[sample-figure], the data illustrates...
 ```
 
-Reference the figure anywhere using its label.
-
-```markdown
-As shown in Figure @[fig:sample-figure], the data illustrates...
-```
+!!! warning
+    The `id` may not contain a colon: `pymdown-extensions` rejects
+    identifiers such as `fig:sample-figure`, and the whole `/// caption`
+    block then silently falls back to plain text (TeXSmith emits a warning
+    when this happens). Use plain identifiers like `sample-figure`.
 
 Both web and print outputs number figures automatically, though the actual numbers may differ because each layout floats content differently.
 
 ## Tables
 
-Tables present structured data; give them a label so you can reference them later.
+Tables present structured data; give them a caption line with a label so you
+can reference them later. The `Table:` line goes directly above the table.
 
 ```markdown
-!!! table {#tab:sample-table}
-    | Header 1 | Header 2 |
-    |----------|----------|
-    | Cell 1   | Cell 2   |
+Table: A sample table for cross-references. {#tbl:sample-table}
 
-    This is a sample table for cross-references.
+| Header 1 | Header 2 |
+|----------|----------|
+| Cell 1   | Cell 2   |
 
-Check Table @[tab:sample-table] for more details.
+Check Table @[tbl:sample-table] for more details.
 ```
 
 ## Code Block References
 
-You can reference specific code blocks within your document by assigning them a label.
-
-```markdown
-!!! listing {#code:bubble-sort}
-    ```python {#code:bubble-sort}
-    def bubble_sort(items):
-        for i in range(len(items)):
-            for j in range(0, len(items)-i-1):
-                if items[j] > items[j+1]:
-                    items[j], items[j+1] = items[j+1], items[j]
-    ```
-
-    Caption for the bubble sort code block.
-
-Listing @[code:bubble-sort] shows the classic bubble sort.
-```
+Labelled, cross-referenceable code listings are not implemented yet: fenced
+code blocks accept a `title` (rendered as the listing header) but carry no
+label, so there is no `@[...]` target for them. Track the feature before
+relying on it.
 
 ## Tags and Index Entries
 
