@@ -9,11 +9,11 @@ number of the enclosing *section* instead of the figure number.
 
 from __future__ import annotations
 
-import re
 from pathlib import Path
+import re
 
-import pytest
 from PIL import Image
+import pytest
 
 from texsmith.adapters.latex import LaTeXRenderer
 from texsmith.core.config import BookConfig
@@ -41,9 +41,7 @@ def _render(renderer: LaTeXRenderer, tmp_path: Path, html: str) -> str:
 # ---------------------------------------------------------------------------
 
 
-def test_figure_label_is_emitted_after_caption(
-    renderer: LaTeXRenderer, tmp_path: Path
-) -> None:
+def test_figure_label_is_emitted_after_caption(renderer: LaTeXRenderer, tmp_path: Path) -> None:
     latex = _render(
         renderer,
         tmp_path,
@@ -55,9 +53,7 @@ def test_figure_label_is_emitted_after_caption(
     assert label_pos > caption_pos, "\\label must follow \\caption to pick up the figure number"
 
 
-def test_figure_label_is_attached_to_caption_line(
-    renderer: LaTeXRenderer, tmp_path: Path
-) -> None:
+def test_figure_label_is_attached_to_caption_line(renderer: LaTeXRenderer, tmp_path: Path) -> None:
     latex = _render(
         renderer,
         tmp_path,
@@ -76,9 +72,7 @@ def test_figure_label_without_caption_is_still_emitted(
     assert "\\caption" not in latex
 
 
-def test_figure_without_label_has_no_label(
-    renderer: LaTeXRenderer, tmp_path: Path
-) -> None:
+def test_figure_without_label_has_no_label(renderer: LaTeXRenderer, tmp_path: Path) -> None:
     latex = _render(
         renderer,
         tmp_path,
@@ -87,9 +81,7 @@ def test_figure_without_label_has_no_label(
     assert "\\label" not in latex
 
 
-def test_admonition_figure_label_follows_captionof(
-    renderer: LaTeXRenderer, tmp_path: Path
-) -> None:
+def test_admonition_figure_label_follows_captionof(renderer: LaTeXRenderer, tmp_path: Path) -> None:
     # Inside admonitions the ``figure_tcolorbox`` template is used, which
     # relies on \captionof{figure}; the same ordering constraint applies.
     latex = _render(
