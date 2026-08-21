@@ -267,3 +267,47 @@ This document mentions only API.
         # Both entries present; HTTP never appears in body but must be defined.
         assert "\\newacronym{API}{API}{Application Programming Interface}" in sty
         assert "\\newacronym{HTTP}{HTTP}{HyperText Transfer Protocol}" in sty
+
+
+@pytestmark_render
+def test_front_matter_glossary_leaves_math_payloads_untouched() -> None:
+    """Acronyms occurring inside math must not be substituted (regression).
+
+    The ``abbr`` extension is a tree processor since Markdown 3.5: it rewrites
+    every non-atomic text node, including math payloads. An acronym inside a
+    formula (``f_{PWM}``) used to be wrapped in an ``<abbr>`` element, which
+    split the formula and downgraded it to escaped literal text in the LaTeX
+    output.
+    """
+    source = """---
+title: Math glossary
+glossary:
+  entries:
+    PWM: Pulse Width Modulation
+---
+
+# Sample
+
+The PWM carrier is fixed. Ripple is $\\Delta I_{pp} = V_{bus}/(4 L f_{PWM})$.
+
+$$
+f_{PWM} = 44\\ \\text{kHz}
+$$
+"""
+    with TemporaryDirectory() as temp_dir:
+        temp_path = Path(temp_dir)
+        src = temp_path / "doc.md"
+        src.write_text(source, encoding="utf-8")
+        out_dir = temp_path / "build"
+
+        assert render is not None
+        render(input_path=src, output=out_dir, template=ARTICLE_TEMPLATE)
+
+        tex = (out_dir / "doc.tex").read_text(encoding="utf-8")
+
+        # Prose occurrence is substituted; the two math occurrences are not.
+        assert tex.count("\\acrshort{PWM}") == 1
+        assert "$\\Delta I_{pp} = V_{bus}/(4 L f_{PWM})$" in tex
+        assert "f_{PWM} = 44" in tex
+        # The formula must not have been escaped into literal text.
+        assert "textbackslash" not in tex

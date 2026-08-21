@@ -79,6 +79,14 @@ DEFAULT_MARKDOWN_EXTENSIONS = [
 
 
 DEFAULT_EXTENSION_CONFIGS: dict[str, dict[str, object]] = {
+    "mdx_math": {
+        # Parse $...$ as inline math so formulas become <script type="math/tex">
+        # elements at inline-pattern time. Left as raw text, a formula would be
+        # exposed to tree-level text rewriting (the abbr extension backing the
+        # glossary) which can split it around an acronym and downgrade it to
+        # escaped literal text.
+        "enable_dollar_delimiter": True,
+    },
     "pymdownx.keys": {
         "camel_case": True,
     },
