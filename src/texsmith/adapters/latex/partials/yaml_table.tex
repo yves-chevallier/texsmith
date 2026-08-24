@@ -1,3 +1,28 @@
+\BLOCK{- if env == 'longtable' -}
+\begin{longtable}{\VAR{colspec}}
+\BLOCK{- if caption}
+\caption{\VAR{caption}}\BLOCK{if label}\label{\VAR{label}}\BLOCK{endif}\\
+\BLOCK{- endif}
+\toprule
+\BLOCK{- if header}
+\VAR{header}
+\midrule
+\BLOCK{- endif}
+\endfirsthead
+\toprule
+\BLOCK{- if header}
+\VAR{header}
+\midrule
+\BLOCK{- endif}
+\endhead
+\VAR{body}
+\BLOCK{- if footer}
+\midrule
+\VAR{footer}
+\BLOCK{- endif}
+\bottomrule
+\end{longtable}
+\BLOCK{- else -}
 \BLOCK{- if caption -}
 \begin{table}\BLOCK{if placement}[\VAR{placement}]\BLOCK{else}[H]\BLOCK{endif}
 \centering
@@ -11,8 +36,6 @@
 \BLOCK{- endif}
 \BLOCK{- if env == 'tabularx' -}
 \begin{tabularx}{\VAR{width}}{\VAR{colspec}}
-\BLOCK{- elif env == 'longtable' -}
-\begin{longtable}{\VAR{colspec}}
 \BLOCK{- else -}
 \begin{tabular}{\VAR{colspec}}
 \BLOCK{- endif}
@@ -29,8 +52,6 @@
 \bottomrule
 \BLOCK{- if env == 'tabularx' }
 \end{tabularx}
-\BLOCK{- elif env == 'longtable' }
-\end{longtable}
 \BLOCK{- else }
 \end{tabular}
 \BLOCK{- endif}
@@ -39,3 +60,4 @@
 \BLOCK{- else }
 \end{center}
 \BLOCK{- endif }
+\BLOCK{- endif}
