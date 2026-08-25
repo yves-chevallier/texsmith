@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 import textwrap
 
 import pytest
@@ -70,8 +71,8 @@ def test_falls_back_to_tabular_when_all_columns_fixed() -> None:
     # tabularx would warn without an X column → fall back to tabular.
     assert layout.env == "tabular"
     assert layout.total_width_spec is None
-    assert r"p{0.3\linewidth}" in layout.colspec
-    assert r"p{0.7\linewidth}" in layout.colspec
+    assert r"p{\dimexpr 0.3\linewidth-2\tabcolsep\relax}" in layout.colspec
+    assert r"p{\dimexpr 0.7\linewidth-2\tabcolsep\relax}" in layout.colspec
 
 
 def test_longtable_when_settings_long_true() -> None:
@@ -147,9 +148,12 @@ def test_align_justified_with_width_uses_plain_pbox() -> None:
         """
     )
     assert layout.columns[1].align == "j"
-    assert r"p{0.3\linewidth}" in layout.colspec
+    assert r"p{\dimexpr 0.3\linewidth-2\tabcolsep\relax}" in layout.colspec
     # Justified columns don't wrap the p{} with raggedright/centering/etc.
-    assert r">{\raggedright\arraybackslash}p{0.3\linewidth}" not in layout.colspec
+    assert (
+        r">{\raggedright\arraybackslash}p{\dimexpr 0.3\linewidth-2\tabcolsep\relax}"
+        not in layout.colspec
+    )
 
 
 def test_align_with_fixed_width_wraps_pbox() -> None:
@@ -162,8 +166,84 @@ def test_align_with_fixed_width_wraps_pbox() -> None:
         rows: [[x, 1, 2]]
         """
     )
-    assert r">{\centering\arraybackslash}p{0.2\linewidth}" in layout.colspec
-    assert r">{\raggedleft\arraybackslash}p{0.1\linewidth}" in layout.colspec
+    assert (
+        r">{\centering\arraybackslash}p{\dimexpr 0.2\linewidth-2\tabcolsep\relax}" in layout.colspec
+    )
+    assert (
+        r">{\raggedleft\arraybackslash}p{\dimexpr 0.1\linewidth-2\tabcolsep\relax}"
+        in layout.colspec
+    )
+
+
+# ---------------------------------------------------------------------------
+# Column padding
+# ---------------------------------------------------------------------------
+
+
+def _pbox_widths(colspec: str) -> list[str]:
+    """Return the content-width expression of every ``p{}`` column in order."""
+    return re.findall(r"p\{([^{}]*)\}", colspec)
+
+
+@pytest.mark.parametrize(
+    ("settings", "expected_env"),
+    [
+        ("table: {}", "tabular"),
+        ("table: {long: true}", "longtable"),
+    ],
+)
+def test_fixed_widths_discount_the_column_padding(settings: str, expected_env: str) -> None:
+    """Declared widths are column footprints, not content boxes.
+
+    ``p{}`` sizes the content box and LaTeX adds ``\\tabcolsep`` on both sides of
+    every column on top of it, so emitting ``p{0.25\\linewidth}`` four times made
+    the table ``\\linewidth + 8\\tabcolsep`` wide and overflow the text block.
+    """
+    layout = _layout(
+        f"""
+        {settings}
+        columns:
+          - {{name: A, width: 25%}}
+          - {{name: B, width: 25%}}
+          - {{name: C, width: 25%}}
+          - {{name: D, width: 25%}}
+        rows: [[1, 2, 3, 4]]
+        """
+    )
+    assert layout.env == expected_env
+    assert _pbox_widths(layout.colspec) == [r"\dimexpr 0.25\linewidth-2\tabcolsep\relax"] * 4
+
+
+def test_fixed_widths_discount_the_padding_in_tabularx_too() -> None:
+    """``X`` columns absorb the remainder, so fixed ones must not steal padding."""
+    layout = _layout(
+        """
+        table: {width: 100%}
+        columns:
+          - {name: A, width: 20%}
+          - {name: B, width: X}
+          - {name: C, width: 30%}
+        rows: [[1, 2, 3]]
+        """
+    )
+    assert layout.env == "tabularx"
+    assert _pbox_widths(layout.colspec) == [
+        r"\dimexpr 0.2\linewidth-2\tabcolsep\relax",
+        r"\dimexpr 0.3\linewidth-2\tabcolsep\relax",
+    ]
+
+
+def test_absolute_widths_discount_the_padding() -> None:
+    """Non-percentage lengths describe the column footprint as well."""
+    layout = _layout(
+        """
+        columns:
+          - A
+          - {name: B, width: 3cm}
+        rows: [[x, y]]
+        """
+    )
+    assert _pbox_widths(layout.colspec) == [r"\dimexpr 3cm-2\tabcolsep\relax"]
 
 
 def test_align_with_x_column_wraps_x() -> None:
@@ -444,7 +524,7 @@ def test_fixed_plus_auto_builds_expected_colspec() -> None:
     assert layout.total_width_spec == r"0.9\linewidth"
     # Three columns: fixed left, flexible justified, fixed centred.
     assert layout.colspec == (
-        r">{\raggedright\arraybackslash}p{0.25\linewidth}"
+        r">{\raggedright\arraybackslash}p{\dimexpr 0.25\linewidth-2\tabcolsep\relax}"
         r"X"
-        r">{\centering\arraybackslash}p{0.15\linewidth}"
+        r">{\centering\arraybackslash}p{\dimexpr 0.15\linewidth-2\tabcolsep\relax}"
     )

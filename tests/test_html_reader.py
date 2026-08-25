@@ -475,7 +475,7 @@ def test_rich_table_carries_layout_presentation_verbatim() -> None:
     assert block.env == "tabularx"
     assert block.width == "0.8\\linewidth"
     assert block.placement == "htbp"
-    assert "p{3cm}" in block.colspec
+    assert r"p{\dimexpr 3cm-2\tabcolsep\relax}" in block.colspec
     assert "X" in block.colspec
 
 

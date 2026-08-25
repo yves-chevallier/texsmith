@@ -250,7 +250,12 @@ def _column_spec(leaf: _ResolvedLeaf, env: TableEnv, *, use_x_for_auto: bool) ->
         # justification requires a ``p{}`` column.
         return "l" if leaf.align == "j" else leaf.align
 
-    return f"{wrapper}p{{{width}}}"
+    # ``p{}`` sizes the *content* box, but LaTeX adds ``\tabcolsep`` of padding
+    # on both sides of every column on top of it. A declared width is meant as
+    # the column's footprint, so subtract the padding: ``n`` columns whose
+    # percentages sum to 100 % then yield a table exactly as wide as the
+    # declared total, whatever ``n`` is.
+    return f"{wrapper}p{{\\dimexpr {width}-2\\tabcolsep\\relax}}"
 
 
 def _build_colspec(leaves: list[_ResolvedLeaf], env: TableEnv) -> str:
