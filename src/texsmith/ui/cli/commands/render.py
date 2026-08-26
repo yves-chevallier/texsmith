@@ -668,7 +668,6 @@ def render(
     if attribute_overrides:
         state.record_event("template_attributes", {"values": attribute_overrides})
 
-    output_param_source = ctx.get_parameter_source("output") if ctx else None
     pdf_output_requested = bool(output and output.suffix.lower() == ".pdf")
     if pdf_output_requested and not build_pdf:
         typer.echo("Enabling --build to produce PDF output.")
@@ -778,11 +777,11 @@ def render(
             cleanup_render_dir = True
             cleanup_render_dir_path = temp_render_dir
             final_pdf_target = resolved_output_target
-        elif (
-            build_pdf
-            and output_mode == "template"
-            and output_param_source in {None, ParameterSource.DEFAULT}
-        ):
+        elif build_pdf and output_mode == "template" and output is None:
+            # Keyed on the absence of ``-o`` itself, not on Typer's parameter
+            # source: that source is ``None`` whenever the command runs without
+            # a click context, which used to route an explicit ``-o dir`` to a
+            # temporary directory and drop the PDF in the current directory.
             temp_render_dir = Path(tempfile.mkdtemp(prefix="texsmith-")).resolve()
             typer.echo(f"Using temporary output directory: {temp_render_dir}")
             cleanup_render_dir = True
