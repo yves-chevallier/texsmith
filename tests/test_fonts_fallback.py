@@ -234,3 +234,62 @@ def test_devanagari_prefers_script_specific_font() -> None:
 
     assert result is not None
     assert result["name"] == "NotoSansDevanagari"
+
+
+def _render_fonts_fragment(**context) -> str:
+    """Render the ``ts-fonts`` fragment template with a minimal context."""
+    from pathlib import Path
+
+    from texsmith.core.templates.base import _build_environment
+
+    root = Path(__file__).resolve().parents[1] / "src" / "texsmith" / "fragments" / "fonts"
+    return _build_environment(root).get_template("ts-fonts.jinja.sty").render(**context)
+
+
+_GREEK_FALLBACK = {
+    "family": "lm",
+    "fallback": {
+        "entries": [
+            {
+                "font_command": "greekfont",
+                "text_command": "textgreek",
+                "font_name": "NotoSans",
+                "extension": ".otf",
+                "path": "fonts",
+                "upright": "NotoSans-Regular",
+                "bold": "NotoSans-Bold",
+                "has_bold": True,
+            }
+        ],
+        "transitions": [r"\setTransitionsFor{GreekAndCoptic}{\greekfont}{\texsmithFallbackFamily}"],
+        "package_options": ["GreekAndCoptic"],
+    },
+}
+
+
+def test_xetex_transitions_restore_math_footnote_symbols() -> None:
+    """Footnote marks must survive the ucharclasses transitions.
+
+    Since 2020 the LaTeX kernel builds them from text symbols
+    (``\\textasteriskcentered`` -> U+2217, ``\\textdagger`` -> U+2020). Those
+    codepoints sit in blocks a transition may hand over to a fallback font
+    picked for *other* characters of the same block — a font that need not
+    carry the mark glyphs, in which case the mark silently disappears.
+    """
+    rendered = _render_fonts_fragment(fonts_family="lm", fonts=_GREEK_FALLBACK)
+
+    assert r"\setTransitionsFor{GreekAndCoptic}" in rendered
+    assert r"\renewcommand\@fnsymbol" in rendered
+    # The marks must come from the math font, out of reach of the transitions.
+    assert r"\ensuremath{%" in rendered
+    guard = rendered.index(r"\renewcommand\@fnsymbol")
+    assert guard > rendered.index(r"\setTransitionsFor{GreekAndCoptic}")
+
+
+def test_no_footnote_guard_without_fallback_transitions() -> None:
+    # No transition installed, no hijacking possible: the kernel definition
+    # is left alone.
+    rendered = _render_fonts_fragment(fonts_family="lm", fonts={"family": "lm"})
+
+    assert r"\setTransitionsFor" not in rendered
+    assert r"\@fnsymbol" not in rendered
