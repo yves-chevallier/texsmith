@@ -97,6 +97,53 @@ def test_admonition_figure_label_follows_captionof(renderer: LaTeXRenderer, tmp_
 
 
 # ---------------------------------------------------------------------------
+# Short captions (list of figures)
+# ---------------------------------------------------------------------------
+
+
+def test_alt_becomes_short_caption_when_caption_is_longer(
+    renderer: LaTeXRenderer, tmp_path: Path
+) -> None:
+    # The whole point of the short caption: the list of figures carries the
+    # terse ``alt`` while the figure itself carries the explanatory caption.
+    latex = _render(
+        renderer,
+        tmp_path,
+        '<figure><img src="a.png" alt="Ripple current"/>'
+        "<figcaption>Phase current reconstructed over two switching periods, "
+        "worst-case duty cycle.</figcaption></figure>",
+    )
+    assert "\\caption[Ripple current]{Phase current reconstructed" in latex
+
+
+def test_short_caption_dropped_when_alt_is_longer_than_caption(
+    renderer: LaTeXRenderer, tmp_path: Path
+) -> None:
+    # A "short" caption more verbose than the caption it stands for would make
+    # the list of figures worse, so it is left out.
+    latex = _render(
+        renderer,
+        tmp_path,
+        '<figure><img src="a.png" alt="A long-winded description of the figure"/>'
+        "<figcaption>Short.</figcaption></figure>",
+    )
+    assert "\\caption{Short.}" in latex
+    assert "\\caption[" not in latex
+
+
+def test_short_caption_kept_when_alt_matches_caption(
+    renderer: LaTeXRenderer, tmp_path: Path
+) -> None:
+    # Historical behaviour for figures whose alt *is* the caption.
+    latex = _render(
+        renderer,
+        tmp_path,
+        '<figure><img src="a.png" alt="Cap"/><figcaption>Cap</figcaption></figure>',
+    )
+    assert "\\caption[Cap]{Cap}" in latex
+
+
+# ---------------------------------------------------------------------------
 # Diagnostics for pymdownx blocks that leaked through as plain text
 # ---------------------------------------------------------------------------
 

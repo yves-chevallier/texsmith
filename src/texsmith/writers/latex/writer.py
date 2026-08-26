@@ -1089,9 +1089,11 @@ class LaTeXWriter:
                 raise AssetMissingError(f"Unable to resolve image asset '{src}'")
             stored = store_local_image_asset(self.state, resolved)
 
-        # Drop the short caption when the full caption is longer than the alt.
+        # The ``alt`` text is the short caption (list of figures); keep it only
+        # when it is no longer than the full caption, otherwise the list entry
+        # would be more verbose than the caption it stands for.
         short_source = alt_text
-        if short_source and raw_caption and len(raw_caption) > len(short_source):
+        if short_source and raw_caption and len(short_source) > len(raw_caption):
             short_source = None
 
         template_name = template or runtime.get("figure_template", "figure")
