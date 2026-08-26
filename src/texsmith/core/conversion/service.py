@@ -2,9 +2,10 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable, Iterable, Mapping
+from collections.abc import Callable, Iterable, Mapping, Sequence
 import copy
 from dataclasses import dataclass, field
+import logging
 from pathlib import Path
 from typing import Any
 
@@ -31,6 +32,7 @@ from texsmith.adapters.latex.tectonic import (
 )
 from texsmith.adapters.markdown import split_front_matter
 
+from ..counters import clear_registry as clear_counters_registry
 from ..diagnostics import DiagnosticEmitter
 from ..documents import Document, TitleStrategy, front_matter_has_title
 from ..templates.session import TemplateRenderResult, TemplateSession, get_template
@@ -153,6 +155,8 @@ class ConversionService:
     def prepare_documents(self, request: ConversionRequest) -> _PreparedBatch:
         """Normalise input sources into :class:`Document` instances so conversion steps operate on consistent objects."""
         emitter = ensure_emitter(request.emitter)
+        # One continuous counter series per batch, restarting on every conversion.
+        clear_counters_registry()
         documents: list[Document] = []
         mapping: dict[Path, Document] = {}
         shared_front_matter = _normalise_front_matter(request.front_matter)
@@ -247,6 +251,12 @@ class ConversionService:
                 emitter=emitter,
                 bibliography_files=batch.bibliography_files,
             )
+            if request.render_dir is not None and batch.documents:
+                _publish_reference_inventory(
+                    batch.documents,
+                    output_dir=Path(request.render_dir),
+                    stem=batch.documents[0].source_path.stem,
+                )
             return ConversionResponse(
                 request=request,
                 documents=batch.documents,
@@ -269,6 +279,11 @@ class ConversionService:
 
         target_dir = (request.render_dir or Path("build")).resolve()
         render_result = session.render(target_dir, embed_fragments=request.embed_fragments)
+        _publish_reference_inventory(
+            batch.documents,
+            output_dir=render_result.main_tex_path.parent,
+            stem=render_result.main_tex_path.stem,
+        )
         return ConversionResponse(
             request=request,
             documents=batch.documents,
@@ -363,7 +378,7 @@ class ConversionService:
         if env:
             merged_env.update(env)
 
-        return run_engine(
+        result = run_engine(
             command_plan,
             backend=choice.backend,
             workdir=render_result.main_tex_path.parent,
@@ -373,6 +388,8 @@ class ConversionService:
             classic_output=classic_output,
             features=features,
         )
+        _attach_reference_pages(render_result.main_tex_path)
+        return result
 
     @staticmethod
     def _initialise_template_session(
@@ -386,6 +403,46 @@ class ConversionService:
             settings=settings,
             emitter=emitter,
         )
+
+
+logger = logging.getLogger(__name__)
+
+
+def _publish_reference_inventory(
+    documents: Sequence[Document],
+    *,
+    output_dir: Path,
+    stem: str,
+) -> None:
+    """Publish the ``*.refs.json`` other documents cite this one through."""
+    from texsmith.core.crossrefs import publish_inventory
+
+    primary = documents[0] if documents else None
+    metadata = dict(primary.front_matter) if primary is not None else {}
+    if primary is not None and not metadata.get("title") and primary.extracted_title:
+        metadata["title"] = primary.extracted_title
+    try:
+        publish_inventory(
+            output_dir=output_dir,
+            stem=stem,
+            metadata=metadata,
+            source_path=primary.source_path if primary is not None else None,
+        )
+    except OSError as exc:  # pragma: no cover - the conversion itself succeeded
+        logger.warning("Could not write the cross-reference inventory: %s", exc)
+
+
+def _attach_reference_pages(main_tex_path: Path) -> None:
+    """Fold the page numbers of the finished run into the published inventory."""
+    from texsmith.core.crossrefs import INVENTORY_SUFFIX, attach_pages
+
+    inventory = main_tex_path.with_name(f"{main_tex_path.stem}{INVENTORY_SUFFIX}")
+    if not inventory.exists():
+        return
+    try:
+        attach_pages(inventory, main_tex_path.with_suffix(".aux"))
+    except OSError as exc:  # pragma: no cover - the PDF itself is fine
+        logger.warning("Could not attach page numbers to '%s': %s", inventory, exc)
 
 
 _NOT_FRONT_MATTER = object()

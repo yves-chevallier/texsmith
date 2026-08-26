@@ -30,6 +30,7 @@ following extensions under the `texsmith` namespace:
 | `texsmith.extensions.mermaid`           | Inlines Mermaid diagrams pointed to by Markdown images.              |
 | `texsmith.extensions.texlogos`          | Replaces TeX logo keywords with accessible HTML spans.               |
 | `texsmith.extensions.index`             | Adds the `#[tag]` syntax, LaTeX index entries and an MkDocs plugin.  |
+| `texsmith.extensions.counters`          | Adds the `#{prefix:key}` custom-counter syntax and an MkDocs plugin. |
 
 Inspect the pipeline's default extension list programmatically:
 

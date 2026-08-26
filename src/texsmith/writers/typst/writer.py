@@ -569,6 +569,11 @@ class TypstWriter:
         if role == "label":
             label = attrs.get("id", "").strip()
             return f"<{label}>" if label else ""
+        if role == "counter":
+            # A Typst label attaches to what precedes it, so it trails the number.
+            label = citation_label(attrs.get("id", "").strip())
+            body = self._inlines(node.content)
+            return f"{body}<{label}>" if label else body
         # Plain / transparent span (emoji, critic, script, …): render children.
         return self._inlines(node.content)
 

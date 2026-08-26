@@ -69,11 +69,13 @@ Homepage = "https://github.com/yves-chevallier/texsmith"
 "texsmith.missing_footnotes" = "texsmith.extensions.missing_footnotes:MissingFootnotesExtension"
 "texsmith.multi_citations" = "texsmith.extensions.multi_citations:MultiCitationExtension"
 "texsmith.references" = "texsmith.extensions.references:SmartReferenceExtension"
+"texsmith.counters" = "texsmith.extensions.counters:CountersExtension"
 "texsmith.mermaid" = "texsmith.extensions.mermaid:MermaidExtension"
 "texsmith.quotes" = "texsmith.extensions.quotes:TexsmithQuotesExtension"
 
 [project.entry-points."mkdocs.plugins"]
 "texsmith.index" = "texsmith.extensions.index:IndexPlugin"
+"texsmith.counters" = "texsmith.extensions.counters:CountersPlugin"
 
 [tool.hatch.version]
 source = "vcs"

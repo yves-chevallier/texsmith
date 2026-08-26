@@ -199,6 +199,7 @@ class Document:
                 path.read_text(encoding="utf-8"),
                 list(extensions or DEFAULT_MARKDOWN_EXTENSIONS),
                 base_path=path.parent,
+                document_path=path,
             )
         except (OSError, MarkdownConversionError) as exc:
             message = f"Failed to convert Markdown source '{path}': {exc}"

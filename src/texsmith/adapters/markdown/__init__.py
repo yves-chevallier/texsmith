@@ -43,6 +43,8 @@ DEFAULT_MARKDOWN_EXTENSIONS = [
     "texsmith.extensions.index:TexsmithIndexExtension",
     "texsmith.extensions.multi_citations:MultiCitationExtension",
     "texsmith.extensions.references:SmartReferenceExtension",
+    "texsmith.extensions.counters:CountersExtension",
+    "texsmith.extensions.crossrefs:CrossRefsExtension",
     "texsmith.extensions.latex_raw:LatexRawExtension",
     "texsmith.extensions.missing_footnotes:MissingFootnotesExtension",
     "texsmith.extensions.latex_text:LatexTextExtension",
@@ -207,6 +209,7 @@ def render_markdown(
     extensions: Sequence[str] | None = None,
     *,
     base_path: str | Path | None = None,
+    document_path: str | Path | None = None,
 ) -> MarkdownDocument:
     """Convert Markdown source into HTML while collecting front matter."""
     try:
@@ -234,6 +237,23 @@ def render_markdown(
         glossary_payload = parse_front_matter_glossary(metadata)
         if glossary_payload is not None and glossary_payload.has_entries:
             markdown_body = append_synthetic_abbr_lines(markdown_body, glossary_payload)
+
+    # Custom counters (``#{prefix:key}``) and cross-document citations
+    # (``@alias:key``) are declared in the front matter. The specs and the
+    # resolver ride on the — cached — processor for this single conversion;
+    # the counter treeprocessor is what declares the specs to the registry.
+    from texsmith.core.counters import parse_front_matter_counters
+    from texsmith.core.crossrefs import CrossRefResolver, parse_front_matter_crossrefs
+
+    counter_specs = parse_front_matter_counters(metadata)
+    crossref_sources = parse_front_matter_crossrefs(
+        metadata, base_path=Path(base_path) if base_path is not None else None
+    )
+    crossref_resolver = (
+        CrossRefResolver(sources=crossref_sources, origin=document_path)
+        if crossref_sources
+        else None
+    )
 
     active_extensions = list(extensions or ())
     extensions_key = tuple(active_extensions)
@@ -263,6 +283,11 @@ def render_markdown(
                 reset_callback()
             processor.texsmith_mermaid_base_path = (
                 str(resolved_base) if resolved_base is not None else None
+            )
+            processor.texsmith_counters = counter_specs
+            processor.texsmith_crossrefs = crossref_resolver
+            processor.texsmith_document_path = (
+                str(document_path) if document_path is not None else None
             )
             html = processor.convert(markdown_body)
     except MarkdownConversionError:

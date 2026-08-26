@@ -66,3 +66,37 @@ glossary:
 ```
 
 See the [Glossary Guide](fragments/glossary.md) for sorting behavior, cross-references, and styling options.
+
+## Counters
+
+Document-specific numbered series — findings, requirements, bugs, test cases —
+are declared under `counters:`. Each key is the prefix used by the `#{…}`
+markers and the `@…` references in the body:
+
+```yaml
+counters:
+  n:
+    name: Requirement # human-readable name, used in diagnostics
+    format: "N-{n:02d}" # optional, defaults to "{n}"
+    start: 1 # optional, defaults to 1
+  fw:
+    name: Firmware finding
+    format: "FW-{n:02d}"
+```
+
+See [Custom counters](../syntax/counters.md) for the marker syntax, the
+numbering scope and the backend mapping.
+
+## Cross-document references
+
+`id` gives the document a free identifier (a contract or report number);
+`crossrefs:` declares the inventories published by the documents it cites:
+
+```yaml
+id: RHE-424
+crossrefs:
+  fwrev: build/firmware-review.refs.json
+```
+
+A citation then reads `@fwrev:fw:pas-de-temps` and renders as
+`RHE-423-FW-10 p. 14`. See [Cross-document references](../syntax/crossrefs.md).

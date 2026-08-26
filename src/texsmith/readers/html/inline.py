@@ -173,6 +173,13 @@ def read_span(tag: Tag, ctx: ReadContext) -> ir.Inline | _NotHandledType:
             attrs=attrs_tuple({"role": "script", "script": slug}),
         )
 
+    # Custom counter marker: the printed number doubles as a label target.
+    if "ts-counter" in cls:
+        return ir.Span(
+            content=ctx.lower_inline(tag.children),
+            attrs=attrs_tuple({"role": "counter", "id": coerce_attr(tag.get("id")) or ""}),
+        )
+
     # Plain span with classes: keep them as a generic Span hint.
     if cls:
         return ir.Span(

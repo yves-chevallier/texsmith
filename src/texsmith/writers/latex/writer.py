@@ -770,6 +770,12 @@ class LaTeXWriter:
             return self._render_regex(node, attrs.get("href", ""))
         if role == "label":
             return formatter.render_template("label", attrs.get("id", ""))
+        if role == "counter":
+            identifier = attrs.get("id", "")
+            text = self._inlines(node.content)
+            if not identifier:
+                return text
+            return formatter.render_template("counter", text, ref=identifier)
         if role == "footnote-ref":
             return self._render_footnote_ref(node, attrs.get("ref", ""))
         if role == "emoji":

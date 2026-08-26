@@ -4,7 +4,9 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 import logging
+from pathlib import Path
 from typing import Any, Protocol, runtime_checkable
+import warnings
 
 
 logger = logging.getLogger(__name__)
@@ -116,3 +118,22 @@ __all__ = [
     "NullEmitter",
     "format_event_message",
 ]
+
+
+def warn_author(message: str, origin: Path | str | None = None, *, stacklevel: int = 3) -> None:
+    """Surface an authoring defect the way the writers do — visibly.
+
+    A broken counter or cross-reference is a hole in the document, not a debug
+    detail, so it goes through :mod:`warnings` (shown by default, promotable to
+    an error with ``PYTHONWARNINGS=error``) rather than to a log nobody reads.
+
+    The message is attributed to ``origin`` — the document being written — when
+    it is known: these diagnostics are for whoever writes the document, and a
+    TeXSmith stack frame tells them nothing; worse, Python prints its source
+    line underneath.
+    """
+    if origin:
+        warnings.warn_explicit(message, UserWarning, str(origin), 0)
+    else:
+        warnings.warn(message, stacklevel=stacklevel)
+    logger.debug(message)

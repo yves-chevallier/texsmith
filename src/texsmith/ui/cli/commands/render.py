@@ -12,6 +12,7 @@ import subprocess
 import sys
 import tempfile
 from typing import Annotated, Any
+import warnings
 
 import click
 from click.core import ParameterSource
@@ -104,6 +105,19 @@ _MARKDOWN_SUFFIXES = {
     ".yml",
     ".yaml",
 }
+
+
+def _deliver_reference_inventory(main_tex_path: Path, destination: Path) -> None:
+    """Copy the reference inventory next to the delivered PDF."""
+    from texsmith.core.crossrefs import INVENTORY_SUFFIX, relocate_inventory
+
+    inventory = main_tex_path.with_name(f"{main_tex_path.stem}{INVENTORY_SUFFIX}")
+    if not inventory.exists():
+        return
+    try:
+        relocate_inventory(inventory, destination)
+    except OSError as exc:  # pragma: no cover - the PDF itself was delivered
+        warnings.warn(f"Could not deliver the cross-reference inventory: {exc}", stacklevel=2)
 
 
 def _cleanup_temp_input(path: Path) -> None:
@@ -1106,6 +1120,12 @@ def render(
             emit_error(f"Failed to write PDF to '{final_destination}': {exc}", exc)
             raise typer.Exit(code=1) from exc
         final_pdf_path = final_destination
+
+        # The reference inventory is written next to the intermediate ``.tex``,
+        # which is a temporary directory in this mode: without this it would be
+        # deleted along with it, and its pages — harvested from the ``.aux`` —
+        # would never reach anyone.
+        _deliver_reference_inventory(render_result.main_tex_path, final_destination.parent)
 
     if make_deps:
         dependency_paths: set[Path] = set()

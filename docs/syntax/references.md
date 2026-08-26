@@ -60,6 +60,19 @@ sentence punctuation stays out of the label (`…voir @sec:intro.` references
 `sec:intro`). E-mail addresses and `@` inside words or URLs are left alone;
 write `\@` to force a literal `@` where the shorthand would otherwise apply.
 
+### Custom counters
+
+Document-specific series (findings, requirements, bugs) declared under
+`counters:` in the front matter reuse the very same `@prefix:key` shorthand,
+resolving to their formatted number instead of a section number. See
+[Custom counters](counters.md).
+
+### Cross-document references
+
+`@alias:key` resolves against another document's published inventory, declared
+under `crossrefs:` in the front matter. See
+[Cross-document references](crossrefs.md).
+
 ### Autorefs
 
 When the `mkdocs-autorefs` extension is enabled, you can use the `[text][label]` syntax to generate automatic references to headings.
