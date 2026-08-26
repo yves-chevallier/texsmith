@@ -341,12 +341,18 @@ class Image(Inline):
 
     A block-level / captioned image is a :class:`Figure` wrapping this node.
     ``src`` is a path or URL; the writer resolves and hashes assets.
+
+    ``identifier`` is the ``id`` carried by the ``<img>`` element itself (what
+    ``attr_list`` writes for ``![alt](src){#fig:x}``), as opposed to
+    :attr:`Figure.identifier`, which is the ``id`` of an enclosing
+    ``<figure>``. Writers turn it into a cross-reference anchor.
     """
 
     src: str
     alt: tuple[Inline, ...] = ()
     title: str = ""
     width: str = ""
+    identifier: str = ""
 
 
 @dataclass(frozen=True, slots=True)

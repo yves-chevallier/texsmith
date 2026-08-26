@@ -179,3 +179,114 @@ def test_regular_paragraph_does_not_warn() -> None:
     emitter = _CollectingEmitter()
     HtmlReader(diagnostics=emitter).read("<p>Un paragraphe // ordinaire.</p>")
     assert not any("Unprocessed block marker" in w for w in emitter.warnings)
+
+
+# ---------------------------------------------------------------------------
+# ``attr_list`` identifiers carried by the ``<img>`` element itself
+# ---------------------------------------------------------------------------
+
+
+def _markdown_to_latex(source: str, tmp_path: Path) -> str:
+    """Render Markdown through the production extension set into LaTeX."""
+    import markdown
+
+    from texsmith.ui.cli import DEFAULT_MARKDOWN_EXTENSIONS
+
+    html = markdown.Markdown(extensions=DEFAULT_MARKDOWN_EXTENSIONS).convert(source)
+    renderer = LaTeXRenderer(
+        config=BookConfig(project_dir=tmp_path),
+        output_root=tmp_path / "build",
+        parser="html.parser",
+    )
+    return renderer.render(html, runtime={"source_dir": tmp_path})
+
+
+def test_image_id_is_read_into_the_ir() -> None:
+    doc = HtmlReader().read('<p><img src="a.png" alt="Legende" id="fig:essai"/></p>')
+    image = doc.content[0].content[0]
+    assert isinstance(image, ir.Image)
+    assert image.identifier == "fig:essai"
+
+
+def test_attr_list_image_id_becomes_a_label(renderer: LaTeXRenderer, tmp_path: Path) -> None:
+    latex = _markdown_to_latex("![Legende](a.png){#fig:essai}\n\nVoir @fig:essai.\n", tmp_path)
+    assert re.search(r"\\caption(?:\[[^\]]*\])?\{Legende\}\\label\{fig:essai\}", latex)
+    # The cross-reference now points at a label that exists.
+    assert re.search(r"\\c?ref\{fig:essai\}", latex)
+
+
+def test_image_id_labels_a_bare_inline_image(renderer: LaTeXRenderer, tmp_path: Path) -> None:
+    latex = _render(renderer, tmp_path, '<p><img src="a.png" id="fig:bare"/></p>')
+    assert "\\label{fig:bare}" in latex
+
+
+def test_image_without_id_emits_no_label(renderer: LaTeXRenderer, tmp_path: Path) -> None:
+    latex = _render(renderer, tmp_path, '<p><img src="a.png" alt="Legende"/></p>')
+    assert "\\label" not in latex
+
+
+def test_figure_id_wins_over_image_id(renderer: LaTeXRenderer, tmp_path: Path) -> None:
+    # ``pymdownx.blocks.caption`` declares the anchor on the ``<figure>``; an
+    # ``attr_list`` id left on the image must not shadow it.
+    latex = _render(
+        renderer,
+        tmp_path,
+        '<figure id="fig-block"><p><img src="a.png" id="img-id"/></p>'
+        "<figcaption><p>Cap</p></figcaption></figure>",
+    )
+    assert "\\label{fig-block}" in latex
+    assert "img-id" not in latex
+
+
+def test_linked_image_keeps_its_label(renderer: LaTeXRenderer, tmp_path: Path) -> None:
+    latex = _render(
+        renderer,
+        tmp_path,
+        '<p><a href="https://example.com"><img src="a.png" alt="Cap" id="fig:linked"/></a></p>',
+    )
+    assert "\\label{fig:linked}" in latex
+
+
+# ---------------------------------------------------------------------------
+# Typst backend
+# ---------------------------------------------------------------------------
+
+
+def _typst(html: str) -> str:
+    from texsmith.writers.typst import TypstWriter, TypstWriterState
+
+    return TypstWriter(TypstWriterState()).write(HtmlReader().read(html))
+
+
+def test_typst_image_id_labels_the_figure() -> None:
+    typst = _typst('<p><img src="a.png" alt="Legende" id="fig:essai"/></p>')
+    assert "caption: [Legende]," in typst
+    assert typst.strip().endswith("<fig:essai>")
+
+
+def test_typst_image_id_labels_an_uncaptioned_image() -> None:
+    # Without a caption there is no ``#figure`` to hang the label on, so one is
+    # introduced rather than labelling an ``#align`` block.
+    typst = _typst('<p><img src="a.png" id="fig:bare"/></p>')
+    assert typst.strip().startswith("#figure(")
+    assert typst.strip().endswith("<fig:bare>")
+
+
+def test_typst_inline_image_id_trails_the_image() -> None:
+    typst = _typst('<p>Voir <img src="a.png" id="fig:inline"/> ici.</p>')
+    assert '#image("a.png")<fig:inline>' in typst
+
+
+def test_typst_image_without_id_has_no_label() -> None:
+    typst = _typst('<p><img src="a.png" alt="Legende"/></p>')
+    assert "caption: [Legende]," in typst
+    assert not typst.strip().endswith(">")
+
+
+def test_typst_figure_id_wins_over_image_id() -> None:
+    typst = _typst(
+        '<figure id="fig-block"><p><img src="a.png" id="img-id"/></p>'
+        "<figcaption><p>Cap</p></figcaption></figure>"
+    )
+    assert typst.strip().endswith("<fig-block>")
+    assert "img-id" not in typst

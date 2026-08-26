@@ -317,7 +317,11 @@ class TypstWriter:
     @writes(ir.Image)
     def _image(self, node: ir.Image) -> str:
         call = self._image_call(node)
-        return f"#{call}" if call else ""
+        if not call:
+            return ""
+        # A Typst label attaches to what precedes it, so it trails the image.
+        label = citation_label(node.identifier) if node.identifier else ""
+        return f"#{call}<{label}>" if label else f"#{call}"
 
     def _image_call(self, node: ir.Image) -> str:
         """Return a bare ``image(...)`` call, resolving the source via the map.
@@ -377,8 +381,14 @@ class TypstWriter:
         caption = self._inlines(node.alt).strip() if node.alt else ""
         if not caption and node.title:
             caption = escape_typst_chars(node.title.strip())
+        label = citation_label(node.identifier) if node.identifier else ""
+        suffix = f" <{label}>" if label else ""
         if caption:
-            return f"#figure(\n  {call},\n  caption: [{caption}],\n)"
+            return f"#figure(\n  {call},\n  caption: [{caption}],\n){suffix}"
+        # A label must attach to a referenceable element, so a labelled image
+        # is wrapped in ``#figure`` even without a caption.
+        if label:
+            return f"#figure(\n  {call},\n){suffix}"
         return f"#align(center)[#{call}]"
 
     @writes(ir.Plain)
@@ -471,7 +481,10 @@ class TypstWriter:
         if not body.strip():
             # The figure's only content was a dropped (unresolvable) image.
             return ""
-        label = citation_label(node.identifier) if node.identifier else ""
+        # The ``<figure>`` id wins over the ``<img>`` id: it is the anchor the
+        # caption block declared for the float as a whole.
+        identifier = node.identifier or (image.identifier if image is not None else "")
+        label = citation_label(identifier) if identifier else ""
         suffix = f" <{label}>" if label else ""
         if caption:
             return (

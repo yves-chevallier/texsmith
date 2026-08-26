@@ -375,6 +375,7 @@ def read_image(tag: Tag, _ctx: ReadContext) -> ir.Inline:
         alt=(ir.Str(coerce_attr(tag.get("alt")) or ""),) if coerce_attr(tag.get("alt")) else (),
         title=coerce_attr(tag.get("title")) or "",
         width=coerce_attr(tag.get("width")) or "",
+        identifier=coerce_attr(tag.get("id")) or "",
     )
 
 

@@ -396,7 +396,7 @@ class LaTeXWriter:
 
     @writes(ir.Image)
     def _image(self, node: ir.Image) -> str:
-        return self._render_image(node, template=None, label=None)
+        return self._render_image(node, template=None, label=node.identifier or None)
 
     @writes(ir.IndexEntry)
     def _index(self, node: ir.IndexEntry) -> str:
@@ -698,7 +698,10 @@ class LaTeXWriter:
         # A link wrapping a single image becomes a figure whose includegraphics
         # is itself wrapped in ``\href`` (the figure template's ``link`` arg).
         if len(content) == 1 and isinstance(content[0], ir.Image):
-            return self._render_image(content[0], template=None, label=None, link=target)
+            image = content[0]
+            return self._render_image(
+                image, template=None, label=image.identifier or None, link=target
+            )
         text = self._inlines(content)
         parsed = urlparse(target)
         scheme = (parsed.scheme or "").lower()
@@ -1034,7 +1037,9 @@ class LaTeXWriter:
         return self._render_image(
             image,
             template=None,
-            label=node.identifier or None,
+            # The ``<figure>`` id wins over the ``<img>`` id: it is the anchor
+            # the caption block declared for the float as a whole.
+            label=node.identifier or image.identifier or None,
             rendered_caption=caption_text,
         )
 
