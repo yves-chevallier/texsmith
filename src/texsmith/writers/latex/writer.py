@@ -1067,6 +1067,9 @@ class LaTeXWriter:
 
         runtime = self.state.runtime
         alt_text = self._plain_text(node.alt).strip() if node.alt else None
+        # The alt is authored Markdown: render it like a figcaption so its
+        # emphasis reaches the caption as ``\emph{…}``, not literal asterisks.
+        alt_rendered = self._inlines(node.alt).strip() if node.alt else None
         is_figure = rendered_caption is not None
         # Bare image: caption is the raw title (else alt), to be script-wrapped.
         raw_caption = rendered_caption or (node.title.strip() if node.title else None)
@@ -1109,14 +1112,16 @@ class LaTeXWriter:
 
         template_name = template or runtime.get("figure_template", "figure")
         asset_path = self.state.assets.latex_path(stored)
+        # The short caption is the rendered alt (same treatment as a
+        # figcaption: already escaped inline LaTeX).
+        short = alt_rendered if short_source else None
+        title_caption = node.title.strip() if node.title else ""
         if is_figure:
-            # Caption already rendered inline (escaped); legacy passed the raw
-            # ``alt`` attribute as the short caption without further escaping.
             caption = raw_caption
-            short = short_source or None
+        elif title_caption:
+            caption = self._moving(title_caption, wrap_scripts=True)
         else:
-            caption = self._moving(raw_caption, wrap_scripts=True) if raw_caption else None
-            short = self._moving(short_source, wrap_scripts=True) if short_source else None
+            caption = alt_rendered
         safe_link = None
         if link:
             from texsmith.writers.latex.escaper import escape_latex_chars

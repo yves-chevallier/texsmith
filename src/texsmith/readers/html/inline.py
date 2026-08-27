@@ -10,6 +10,7 @@ carrying a ``role`` attribute hint, per the IR contract.
 
 from __future__ import annotations
 
+import re
 from typing import TYPE_CHECKING
 
 from texsmith.ir import nodes as ir
@@ -379,11 +380,44 @@ def read_image(tag: Tag, _ctx: ReadContext) -> ir.Inline:
         return ir.Span(content=(ir.Str(token),), attrs=attrs_tuple({"role": "emoji"}))
     return ir.Image(
         src=coerce_attr(tag.get("src")) or "",
-        alt=(ir.Str(coerce_attr(tag.get("alt")) or ""),) if coerce_attr(tag.get("alt")) else (),
+        alt=_alt_inlines(coerce_attr(tag.get("alt")) or "", _ctx),
         title=coerce_attr(tag.get("title")) or "",
         width=coerce_attr(tag.get("width")) or "",
         identifier=coerce_attr(tag.get("id")) or "",
     )
+
+
+#: Characters that can start inline Markdown syntax; an alt without any of
+#: them is plain text and skips the re-parse.
+_ALT_MARKUP_RE = re.compile(r"[*_`\[<]")
+
+_ALT_PARSER = None
+
+
+def _alt_inlines(alt: str, ctx: ReadContext) -> tuple[ir.Inline, ...]:
+    """Lower an ``alt`` attribute, parsing the inline Markdown it carries.
+
+    Python-Markdown copies the image description verbatim into ``alt``, so
+    ``![anti-*windup*](x.png)`` reaches the HTML with its asterisks intact.
+    The alt doubles as the figure caption (and as its short caption), where
+    the emphasis the author wrote must not ship as literal punctuation.
+    """
+    if not alt:
+        return ()
+    if not _ALT_MARKUP_RE.search(alt):
+        return (ir.Str(alt),)
+
+    global _ALT_PARSER
+    if _ALT_PARSER is None:
+        from markdown import Markdown
+
+        _ALT_PARSER = Markdown()
+    from bs4 import BeautifulSoup
+
+    _ALT_PARSER.reset()
+    fragment = BeautifulSoup(_ALT_PARSER.convert(alt), "html.parser")
+    paragraph = fragment.find("p")
+    return ctx.lower_inline((paragraph if paragraph is not None else fragment).children)
 
 
 @reads("script", level=ReadLevel.ANY, name="math_script")
