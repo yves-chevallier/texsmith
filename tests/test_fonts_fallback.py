@@ -293,3 +293,27 @@ def test_no_footnote_guard_without_fallback_transitions() -> None:
 
     assert r"\setTransitionsFor" not in rendered
     assert r"\@fnsymbol" not in rendered
+
+
+def test_capital_greek_survives_math_alphabets() -> None:
+    """``\\mathrm{k\\Omega}`` must not lose its Omega under fontspec.
+
+    fontspec keeps the legacy OT1 math layout in a ``legacymaths`` symbol font
+    where capital Greek sits in slots "00-"0A, but declares those symbols
+    ``\\mathalpha``: a math alphabet then refetches them from the *current*
+    alphabet font — a Unicode text font whose low slots hold control
+    characters — and the glyph silently vanishes (``Missing character:
+    U+000A``). The fragment redeclares them ``\\mathord`` so they always come
+    from ``legacymaths``, with or without fallback transitions.
+    """
+    for rendered in (
+        _render_fonts_fragment(fonts_family="lm"),
+        _render_fonts_fragment(fonts_family="lm", fonts=_GREEK_FALLBACK),
+    ):
+        assert r'\DeclareMathSymbol{\Omega}{\mathord}{legacymaths}{"0A}' in rendered
+        assert r'\DeclareMathSymbol{\Gamma}{\mathord}{legacymaths}{"00}' in rendered
+        # Deferred so it lands after fontspec's own hook-deferred math setup,
+        # and skipped cleanly when fontspec was loaded with no-math.
+        declaration = rendered.index(r"\DeclareMathSymbol{\Omega}")
+        hook = rendered.rindex(r"\AtBeginDocument{%", 0, declaration)
+        assert r"\@ifundefined{symlegacymaths}" in rendered[hook:declaration]

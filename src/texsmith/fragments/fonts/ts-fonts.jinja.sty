@@ -26,6 +26,35 @@
   \RequirePackage{fontspec}
   \defaultfontfeatures{Ligatures = TeX, Scale = MatchLowercase}
 
+  % fontspec's math setup keeps the legacy OT1 layout alive in a 'legacymaths'
+  % symbol font (Computer Modern), where capital Greek sits in slots "00-"0A --
+  % that is where a bare $\Omega$ comes from. But it declares those symbols
+  % \mathalpha (class 7), and a math alphabet -- \mathrm{k\Omega},
+  % \mathbf{\Delta} -- refetches class-7 symbols from the *current* alphabet
+  % font: a Unicode text font whose low slots hold control characters, so the
+  % glyph silently vanishes ("Missing character ... U+000A"). Redeclare capital
+  % Greek as \mathord, always taken from legacymaths: upright in every
+  % alphabet, which is what pdfLaTeX prints for \mathrm{k\Omega}. Registered
+  % at begin-document so it lands after fontspec's own (hook-deferred) math
+  % setup; a no-math fontspec leaves the guard undefined and skips it.
+  \makeatletter
+  \AtBeginDocument{%
+    \@ifundefined{symlegacymaths}{}{%
+      \DeclareMathSymbol{\Gamma}{\mathord}{legacymaths}{"00}%
+      \DeclareMathSymbol{\Delta}{\mathord}{legacymaths}{"01}%
+      \DeclareMathSymbol{\Theta}{\mathord}{legacymaths}{"02}%
+      \DeclareMathSymbol{\Lambda}{\mathord}{legacymaths}{"03}%
+      \DeclareMathSymbol{\Xi}{\mathord}{legacymaths}{"04}%
+      \DeclareMathSymbol{\Pi}{\mathord}{legacymaths}{"05}%
+      \DeclareMathSymbol{\Sigma}{\mathord}{legacymaths}{"06}%
+      \DeclareMathSymbol{\Upsilon}{\mathord}{legacymaths}{"07}%
+      \DeclareMathSymbol{\Phi}{\mathord}{legacymaths}{"08}%
+      \DeclareMathSymbol{\Psi}{\mathord}{legacymaths}{"09}%
+      \DeclareMathSymbol{\Omega}{\mathord}{legacymaths}{"0A}%
+    }%
+  }
+  \makeatother
+
   \makeatletter
   \newcommand{\tsDeclareFontSet}[2]{%
     \expandafter\gdef\csname tssetupfonts@#1\endcsname{#2}%
