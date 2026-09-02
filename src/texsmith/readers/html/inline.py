@@ -384,7 +384,24 @@ def read_image(tag: Tag, _ctx: ReadContext) -> ir.Inline:
         title=coerce_attr(tag.get("title")) or "",
         width=coerce_attr(tag.get("width")) or "",
         identifier=coerce_attr(tag.get("id")) or "",
+        options=_render_options(tag),
     )
+
+
+#: ``attr_list`` keys an image may carry for the converter that renders it
+#: (``![alt](diagram.drawio){crop=false}``). Anything else on the ``<img>``
+#: stays an HTML attribute the IR ignores.
+_RENDER_OPTION_ATTRS: tuple[str, ...] = ("crop",)
+
+
+def _render_options(tag: Tag) -> tuple[tuple[str, str], ...]:
+    """Collect the converter options an ``attr_list`` block set on the image."""
+    collected: dict[str, str] = {}
+    for name in _RENDER_OPTION_ATTRS:
+        value = coerce_attr(tag.get(name))
+        if value is not None and value != "":
+            collected[name] = value
+    return attrs_tuple(collected)
 
 
 #: Characters that can start inline Markdown syntax; an alt without any of

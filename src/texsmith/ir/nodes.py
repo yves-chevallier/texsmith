@@ -346,6 +346,11 @@ class Image(Inline):
     ``attr_list`` writes for ``![alt](src){#fig:x}``), as opposed to
     :attr:`Figure.identifier`, which is the ``id`` of an enclosing
     ``<figure>``. Writers turn it into a cross-reference anchor.
+
+    ``options`` carries the render options an ``attr_list`` block set on the
+    image (``![alt](d.drawio){crop=false}``) for sources a writer has to
+    *convert* rather than copy — today draw.io's ``crop``. They are backend
+    agnostic: each writer hands them to the converter it drives.
     """
 
     src: str
@@ -353,6 +358,7 @@ class Image(Inline):
     title: str = ""
     width: str = ""
     identifier: str = ""
+    options: tuple[tuple[str, str], ...] = ()
 
 
 @dataclass(frozen=True, slots=True)

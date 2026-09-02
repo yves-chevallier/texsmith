@@ -110,6 +110,24 @@ def _cairo_dependency_hint() -> str:
     )
 
 
+def _option_flag(value: Any, *, default: bool = False) -> bool:
+    """Read a boolean option that may reach us as a string from a document attribute."""
+    if value is None:
+        return default
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, str):
+        text = value.strip().lower()
+        if not text:
+            return default
+        if text in {"0", "false", "no", "off"}:
+            return False
+        if text in {"1", "true", "yes", "on"}:
+            return True
+        return default
+    return bool(value)
+
+
 def _write_placeholder_pdf(target: Path) -> None:
     """Write a minimal placeholder PDF when conversion cannot proceed."""
     target.parent.mkdir(parents=True, exist_ok=True)
@@ -1213,7 +1231,13 @@ async (code) => {
 
 
 class DrawioToPdfStrategy(CachedConversionStrategy):
-    """Convert draw.io diagrams using selectable backends (playwright, local, docker)."""
+    """Convert draw.io diagrams using selectable backends (playwright, local, docker).
+
+    ``crop`` (default ``True``) trims the export to the drawing itself. Setting
+    it to ``False`` exports the page(s) the drawing sits on instead — draw.io's
+    *Size: Page Size* — so the canvas margins the author laid out survive into
+    the document. All three backends honour it identically.
+    """
 
     def __init__(
         self,
@@ -1239,6 +1263,7 @@ class DrawioToPdfStrategy(CachedConversionStrategy):
         backend = str(options.get("backend") or options.get("diagrams_backend") or "auto").lower()
         format_opt = str(options.get("format", "pdf") or "pdf").lower()
         theme = str(options.get("theme", "auto") or "auto")
+        crop = _option_flag(options.get("crop"), default=True)
 
         source_path = Path(source)
         if not source_path.exists():
@@ -1272,6 +1297,7 @@ class DrawioToPdfStrategy(CachedConversionStrategy):
                     cache_dir=cache_dir,
                     format_opt=format_opt,
                     theme=theme,
+                    crop=crop,
                     emitter=emitter,
                 )
             except TransformerExecutionError as exc:
@@ -1289,7 +1315,7 @@ class DrawioToPdfStrategy(CachedConversionStrategy):
                     working_dir=working_dir,
                     source_name=working_source.name,
                     output_name=output_name,
-                    options=options | {"format": format_opt},
+                    options=options | {"format": format_opt, "crop": crop},
                 )
             except TransformerExecutionError as exc:
                 cli_error = exc
@@ -1316,7 +1342,7 @@ class DrawioToPdfStrategy(CachedConversionStrategy):
                     ".",
                 ]
 
-                if options.get("crop", False):
+                if crop:
                     docker_args.extend(["--crop"])
 
                 dpi = options.get("dpi")
@@ -1385,7 +1411,7 @@ class DrawioToPdfStrategy(CachedConversionStrategy):
             output_name,
         ]
 
-        if options.get("crop", False):
+        if _option_flag(options.get("crop"), default=True):
             command.append("--crop")
 
         dpi = options.get("dpi")
@@ -1402,6 +1428,7 @@ class DrawioToPdfStrategy(CachedConversionStrategy):
         cache_dir: Path,
         format_opt: str,
         theme: str,
+        crop: bool = True,
         emitter: Any = None,
     ) -> None:
         def task() -> None:
@@ -1456,6 +1483,10 @@ class DrawioToPdfStrategy(CachedConversionStrategy):
                     "embedFonts": "1",
                     "shadows": "1",
                     "theme": theme,
+                    # ``page`` makes export3 lay the drawing out on the page
+                    # rectangle it belongs to (draw.io's *Size: Page Size*)
+                    # instead of shrink-wrapping the export to the cells.
+                    "exportType": "diagram" if crop else "page",
                 }
                 page.evaluate("data => window.render(data)", payload)
                 page.wait_for_selector("#LoadingComplete", state="attached", timeout=60_000)
@@ -1469,8 +1500,11 @@ class DrawioToPdfStrategy(CachedConversionStrategy):
   let bg = graph.background;
   if (bg === mxConstants.NONE) bg = null;
 
+  // The 13th argument is export3's ``exportType``: 'page' crops to the
+  // background page bounds renderPage set up, anything else to the cells.
   const svgRoot = graph.getSvg(bg, scale, data.border || 0, false, null,
-    true, null, null, null, null, null, data.theme || 'auto');
+    true, null, null, null, null, null, data.theme || 'auto',
+    (data.exportType === 'page') ? 'page' : null);
 
   if (data.embedXml === '1') {
     svgRoot.setAttribute('content', data.xml);

@@ -101,7 +101,13 @@ def _diagram_image(
         source = (source_dir / node.src).resolve()
         if not source.is_file():
             return node
-        png = _convert_drawio(source, output_dir=output_dir, backend=backend, emitter=emitter)
+        png = _convert_drawio(
+            source,
+            output_dir=output_dir,
+            backend=backend,
+            emitter=emitter,
+            crop=dict(node.options).get("crop"),
+        )
     elif suffix in _MERMAID_SUFFIXES:
         source = (source_dir / node.src).resolve()
         if not source.is_file():
@@ -134,13 +140,24 @@ def _convert_mermaid(
 
 
 def _convert_drawio(
-    source: Path, *, output_dir: Path, backend: str | None, emitter: Any
+    source: Path,
+    *,
+    output_dir: Path,
+    backend: str | None,
+    emitter: Any,
+    crop: str | None = None,
 ) -> str | None:
     from texsmith.adapters.transformers import drawio2pdf
+    from texsmith.adapters.transformers.strategies import _option_flag
 
     try:
         produced = drawio2pdf(
-            source, output_dir, format="png", backend=backend or "auto", emitter=emitter
+            source,
+            output_dir,
+            format="png",
+            backend=backend or "auto",
+            crop=_option_flag(crop, default=True),
+            emitter=emitter,
         )
     except Exception:  # diagram toolchain unavailable -> degrade gracefully
         return None

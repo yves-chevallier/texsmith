@@ -1103,7 +1103,7 @@ class LaTeXWriter:
             resolved = self._resolve_asset_path(src, resolve_asset_path)
             if resolved is None:
                 raise AssetMissingError(f"Unable to resolve image asset '{src}'")
-            stored = store_local_image_asset(self.state, resolved)
+            stored = store_local_image_asset(self.state, resolved, options=dict(node.options))
 
         # The ``alt`` text is the short caption (list of figures); keep it only
         # when it is no longer than the full caption, otherwise the list entry

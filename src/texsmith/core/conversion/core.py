@@ -476,6 +476,14 @@ def _build_runtime_common(
         mermaid_config = binding.runtime.extras.get("mermaid_config")
     if mermaid_config:
         runtime_common["mermaid_config"] = mermaid_config
+    # Document-wide default for draw.io exports; ``{crop=false}`` on an image
+    # still wins over it.
+    drawio_crop = context.template_overrides.get("drawio_crop")
+    if drawio_crop is None:
+        press = context.template_overrides.get("press")
+        drawio_crop = press.get("drawio_crop") if isinstance(press, Mapping) else None
+    if drawio_crop is not None:
+        runtime_common["drawio_crop"] = drawio_crop
     if strategy.persist_manifest:
         runtime_common["generate_manifest"] = True
     emoji_mode = _extract_emoji_mode(context.template_overrides)

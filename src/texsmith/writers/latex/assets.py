@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 import hashlib
 import json
 from pathlib import Path
@@ -16,7 +17,7 @@ from texsmith.adapters.transformers import (
     mermaid2pdf,
     svg2pdf,
 )
-from texsmith.adapters.transformers.strategies import _cairo_dependency_hint
+from texsmith.adapters.transformers.strategies import _cairo_dependency_hint, _option_flag
 from texsmith.core.conversion.debug import ensure_emitter, record_event
 
 
@@ -69,9 +70,20 @@ def _resolve_http_user_agent(context: RenderContextLike) -> str | None:
     return None
 
 
-def store_local_image_asset(context: RenderContextLike, resolved: Path) -> Path:
-    """Copy or convert a local asset and register it on the context."""
-    asset_key = str(resolved)
+def store_local_image_asset(
+    context: RenderContextLike,
+    resolved: Path,
+    *,
+    options: Mapping[str, str] | None = None,
+) -> Path:
+    """Copy or convert a local asset and register it on the context.
+
+    ``options`` are the per-image render options (``crop`` for draw.io) the
+    document set through ``attr_list``. They select the converter behaviour and
+    therefore take part in the asset key: the same diagram rendered cropped and
+    uncropped is two distinct assets.
+    """
+    asset_key = _asset_key(resolved, options)
     existing = context.assets.lookup(asset_key)
     if existing is not None:
         return existing
@@ -91,7 +103,7 @@ def store_local_image_asset(context: RenderContextLike, resolved: Path) -> Path:
                 "reason": "requested" if convert_requested else "forced",
             },
         )
-        staged = _convert_local_asset(context, resolved, suffix)
+        staged = _convert_local_asset(context, resolved, suffix, options)
         final_suffix = ".pdf"
     else:
         staged = resolved
@@ -193,6 +205,15 @@ def store_remote_image_asset(context: RenderContextLike, url: str) -> Path:
     )
 
 
+def _asset_key(resolved: Path, options: Mapping[str, str] | None) -> str:
+    """Return the registry key for a local asset, qualified by its render options."""
+    key = str(resolved)
+    if not options:
+        return key
+    suffix = "&".join(f"{name}={value}" for name, value in sorted(options.items()))
+    return f"{key}?{suffix}" if suffix else key
+
+
 def _requires_conversion(suffix: str, convert_requested: bool) -> bool:
     lowered = suffix.lower()
     if lowered == ".pdf":
@@ -210,7 +231,12 @@ def _write_placeholder_pdf(target: Path) -> Path:
     return target
 
 
-def _convert_local_asset(context: RenderContextLike, source: Path, suffix: str) -> Path:
+def _convert_local_asset(
+    context: RenderContextLike,
+    source: Path,
+    suffix: str,
+    options: Mapping[str, str] | None = None,
+) -> Path:
     conversion_root = _conversion_cache_root(context)
     emitter = ensure_emitter(context.runtime.get("emitter"))
     match suffix:
@@ -237,7 +263,13 @@ def _convert_local_asset(context: RenderContextLike, source: Path, suffix: str) 
             if callable(emit_info):
                 emit_info(f"Converting draw.io diagram: {source}")
             backend = context.runtime.get("diagrams_backend")
-            return drawio2pdf(source, output_dir=conversion_root, backend=backend, emitter=emitter)
+            return drawio2pdf(
+                source,
+                output_dir=conversion_root,
+                backend=backend,
+                crop=_drawio_crop(context, options),
+                emitter=emitter,
+            )
         case ".mmd" | ".mermaid":
             record_event(emitter, "diagram_generate", {"source": str(source), "kind": "mermaid"})
             emit_info = getattr(emitter, "info", None)
@@ -255,6 +287,14 @@ def _convert_local_asset(context: RenderContextLike, source: Path, suffix: str) 
         case _:
             record_event(emitter, "asset_convert", {"source": str(source), "kind": "image"})
             return image2pdf(source, output_dir=conversion_root, emitter=emitter)
+
+
+def _drawio_crop(context: RenderContextLike, options: Mapping[str, str] | None) -> bool:
+    """Resolve ``crop`` for a draw.io export: image attribute, else document default."""
+    document_default = _option_flag(context.runtime.get("drawio_crop"), default=True)
+    if options is None:
+        return document_default
+    return _option_flag(options.get("crop"), default=document_default)
 
 
 def _conversion_cache_root(context: RenderContextLike) -> Path:

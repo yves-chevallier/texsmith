@@ -84,3 +84,96 @@ def test_diagrams_backend_propagates_to_converters(tmp_path, monkeypatch):
 
     _assets._convert_local_asset(context, src, ".drawio")
     assert called["backend"] == "docker"
+
+
+def test_drawio_crop_option_reaches_every_backend(tmp_path, monkeypatch):
+    """``crop`` is normalised once and honoured identically by all backends."""
+    src = tmp_path / "diagram.drawio"
+    src.write_text("<mxfile/>", encoding="utf-8")
+    strategy = DrawioToPdfStrategy()
+    seen: dict[str, object] = {}
+
+    def fake_play(source, *, target, cache_dir, format_opt, theme, crop=True, **_):
+        seen["playwright_crop"] = crop
+        target.write_bytes(_FAKE_PDF)
+
+    def fake_cli(command, **_kwargs):
+        seen["cli_crop"] = "--crop" in command
+
+    monkeypatch.setattr(strategy, "_run_playwright", fake_play)
+    monkeypatch.setattr("texsmith.adapters.transformers.strategies._run_cli", fake_cli)
+    monkeypatch.setattr(
+        "texsmith.adapters.transformers.strategies.normalise_pdf_version",
+        lambda *_a, **_k: None,
+    )
+    monkeypatch.setattr("texsmith.adapters.transformers.strategies.run_container", _raise)
+
+    strategy(src, output_dir=tmp_path, backend="playwright")
+    assert seen["playwright_crop"] is True
+
+    # ``crop=false`` arrives as a string from an ``attr_list`` attribute.
+    strategy(src, output_dir=tmp_path, backend="playwright", crop="false")
+    assert seen["playwright_crop"] is False
+
+    strategy._run_local_cli(
+        "drawio",
+        working_dir=tmp_path,
+        source_name=src.name,
+        output_name="out.pdf",
+        options={"format": "pdf"},
+    )
+    assert seen["cli_crop"] is True
+
+    strategy._run_local_cli(
+        "drawio",
+        working_dir=tmp_path,
+        source_name=src.name,
+        output_name="out.pdf",
+        options={"format": "pdf", "crop": False},
+    )
+    assert seen["cli_crop"] is False
+
+
+def test_drawio_crop_attribute_flows_from_the_image_to_the_converter(tmp_path, monkeypatch):
+    """``![x](d.drawio){crop=false}`` reaches ``drawio2pdf`` and keys its own asset."""
+    src = tmp_path / "diagram.drawio"
+    src.write_text("<mxfile/>", encoding="utf-8")
+    seen: list[object] = []
+
+    def fake_drawio(source, output_dir, **options):
+        seen.append(options.get("crop"))
+        target = output_dir / f"out-{len(seen)}.pdf"
+        target.write_text("ok", encoding="utf-8")
+        return target
+
+    monkeypatch.setattr(_assets, "drawio2pdf", fake_drawio)
+    context = types.SimpleNamespace(
+        assets=types.SimpleNamespace(output_root=tmp_path),
+        runtime={},
+    )
+
+    _assets._convert_local_asset(context, src, ".drawio")
+    _assets._convert_local_asset(context, src, ".drawio", {"crop": "false"})
+    assert seen == [True, False]
+
+    # A document-wide default still loses against the image attribute.
+    context.runtime["drawio_crop"] = False
+    _assets._convert_local_asset(context, src, ".drawio")
+    _assets._convert_local_asset(context, src, ".drawio", {"crop": "true"})
+    assert seen[2:] == [False, True]
+
+    assert _assets._asset_key(src, None) != _assets._asset_key(src, {"crop": "false"})
+
+
+def test_image_reader_keeps_the_crop_attribute():
+    from bs4 import BeautifulSoup
+
+    from texsmith.readers.html.inline import read_image
+
+    soup = BeautifulSoup('<img src="d.drawio" alt="x" crop="false" width="60%">', "html.parser")
+    node = read_image(soup.img, None)
+    assert node.options == (("crop", "false"),)
+    assert node.width == "60%"
+
+    plain = BeautifulSoup('<img src="a.png" alt="x">', "html.parser")
+    assert read_image(plain.img, None).options == ()
