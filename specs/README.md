@@ -8,14 +8,16 @@ describe what ships today and the spec describes where the dialect is headed.
 ## Documents
 
 [`tmark.md`](tmark.md)
-: **TMark — TeXSmith Markdown** (draft 2, working draft). A consolidated
-  specification proposal for the dialect: philosophy, document model, the
-  canonical form of every construct with its accepted sugar spellings, the
-  exhaustive list of deviations from CommonMark/GFM, and backend mappings.
-  Constructs marked *(proposed)* are not implemented yet; everything else
-  describes shipping behaviour. Draft 2 supersedes the initial draft — the
-  divergences and their rationale are recorded in Appendix A, open questions
-  in Appendix B.
+: **TMark — TeXSmith Markdown** (draft 3, working draft). A consolidated
+  specification proposal for the dialect: philosophy, document model (four
+  syntactic families, two sigils, registries), conformance classes and
+  profiles, front matter layout, and a node catalogue that gives every IR
+  node its canonical form, accepted sugar, degradation class and backend
+  mapping. Constructs marked *(proposed)* are not implemented yet; everything
+  else describes shipping behaviour. Draft 3 supersedes draft 2 — the review
+  that motivated it and each decision are recorded in Appendix A, open
+  questions in Appendix B, PyMdownX-only sugar in Appendix C, and every
+  deprecated spelling with its horizon in Appendix D.
 
 ## Purpose
 
