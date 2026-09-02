@@ -311,10 +311,14 @@ def bubble_sort(items):
 ```
 ````
 
-Options: `title="…"`, `linenums="1"`, `hl_lines="2-3"`. Rendered via `minted`.
+Options: `title="…"`, `linenums="1"`, `hl_lines="2-3"`. Highlighted with Pygments by
+default (`press.code.engine` also accepts `listings`, `verbatim`, `minted`).
 Inline highlighted code: `` `#!py print("hi")` ``. To make a listing referenceable,
 wrap it in a `!!! listing {#code:label}` admonition and reference it with
 `Listing @[code:label]`.
+
+Long inline code overflowing the margin? Let it wrap on identifier separators, and
+optionally drop its colouring, with `press.code.inline: {breaks: "_./", plain: true}`.
 
 ---
 

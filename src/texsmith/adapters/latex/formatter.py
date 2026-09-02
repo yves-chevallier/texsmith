@@ -4,12 +4,15 @@ from __future__ import annotations
 
 from collections.abc import Iterable
 from pathlib import Path
+import re
 from typing import TYPE_CHECKING, Any
 
 from jinja2 import Environment, FileSystemLoader, Template
 from requests.utils import requote_uri as requote_url
 
-from .pygments import PygmentsLatexHighlighter
+from texsmith.core.code_options import DEFAULT_INLINE_BREAKS
+
+from .pygments import ALLOW_BREAK, PygmentsLatexHighlighter
 from .utils import escape_latex_chars
 
 
@@ -78,6 +81,8 @@ class LaTeXFormatter:
         self.templates: dict[str, Template] = {}
         self.default_code_engine = "pygments"
         self.default_code_style = "bw"
+        self.code_inline_plain = False
+        self.code_inline_breaks = DEFAULT_INLINE_BREAKS
         self._pygments: PygmentsLatexHighlighter | None = None
 
     @staticmethod
@@ -140,9 +145,29 @@ class LaTeXFormatter:
 
     def handle_codeinlinett(self, text: str) -> str:
         """Render plain inline code inside \\texttt."""
-        escaped = escape_latex_chars(text, legacy_accents=self.legacy_latex_accents)
-        escaped = escaped.replace("-", "-\\allowbreak{}")
-        return self._get_template("codeinlinett").render(text=escaped)
+        return self._get_template("codeinlinett").render(text=self._escape_inline_code(text))
+
+    def _escape_inline_code(self, text: str) -> str:
+        """Escape inline code, inserting a break opportunity where allowed.
+
+        An inline span sits in a justified paragraph and never wraps on its
+        own, so a long identifier overflows into the margin. Each break
+        character declared by ``code.inline.breaks`` gains an
+        ``\\allowbreak{}`` so the span can wrap the way prose does. The text is
+        split *before* escaping to keep the macros produced by the escaper out
+        of reach of the substitution.
+        """
+        breaks = self.code_inline_breaks or ""
+        if not text or not breaks:
+            return escape_latex_chars(text, legacy_accents=self.legacy_latex_accents)
+        pieces = re.split(f"([{re.escape(breaks)}])", text)
+        rendered: list[str] = []
+        for index, piece in enumerate(pieces):
+            if not piece:
+                continue
+            escaped = escape_latex_chars(piece, legacy_accents=self.legacy_latex_accents)
+            rendered.append((escaped + ALLOW_BREAK) if index % 2 else escaped)
+        return "".join(rendered)
 
     def handle_codeblock(
         self,
@@ -232,6 +257,8 @@ class LaTeXFormatter:
     ) -> str:
         """Render inline code with engine-specific highlighting."""
         normalized_engine = (engine or self.default_code_engine or "pygments").lower()
+        if self.code_inline_plain:
+            return self.handle_codeinlinett(text)
         if normalized_engine == "minted":
             delimiter = delimiter or "|"
             return self._get_template("codeinline").render(
@@ -245,6 +272,7 @@ class LaTeXFormatter:
             if self._pygments is None or self._pygments.style != style_name:
                 self._pygments = PygmentsLatexHighlighter(style=style_name)
             latex_code, style_defs = self._pygments.render_inline(text, language)
+            latex_code = self._pygments.add_break_points(latex_code, self.code_inline_breaks)
             if state is not None and style_defs:
                 state.pygments_styles.setdefault(self._pygments.style_key, style_defs)
             return r"{\ttfamily " + latex_code + "}"

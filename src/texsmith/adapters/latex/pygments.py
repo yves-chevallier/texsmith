@@ -3,10 +3,58 @@
 from __future__ import annotations
 
 from collections.abc import Iterable
+from functools import lru_cache
+import re
 
 from pygments import highlight
 from pygments.formatters import LatexFormatter
 from pygments.lexers import ClassNotFound, TextLexer, get_lexer_by_name
+
+
+try:  # pragma: no cover - depends on the installed Pygments layout
+    from pygments.formatters.latex import escape_tex as _escape_tex
+except ImportError:  # pragma: no cover - fallback for exotic Pygments builds
+    _PYGMENTS_ESCAPES = {
+        "\\": "Zbs",
+        "{": "Zob",
+        "}": "Zcb",
+        "^": "Zca",
+        "_": "Zus",
+        "&": "Zam",
+        "<": "Zlt",
+        ">": "Zgt",
+        "#": "Zsh",
+        "%": "Zpc",
+        "$": "Zdl",
+        "-": "Zhy",
+        '"': "Zdq",
+        "~": "Zti",
+    }
+
+    def _escape_tex(text: str, commandprefix: str) -> str:
+        return "".join(
+            f"\\{commandprefix}{_PYGMENTS_ESCAPES[char]}{{}}" if char in _PYGMENTS_ESCAPES else char
+            for char in text
+        )
+
+
+ALLOW_BREAK = r"\allowbreak{}"
+
+
+@lru_cache(maxsize=32)
+def _break_pattern(chars: str, commandprefix: str) -> re.Pattern[str] | None:
+    """Return a pattern matching the escaped form of every break character."""
+    forms = {_escape_tex(char, commandprefix) for char in chars if char}
+    if not forms:
+        return None
+    ordered = sorted(forms, key=len, reverse=True)
+    return re.compile("|".join(re.escape(form) for form in ordered))
+
+
+@lru_cache(maxsize=8)
+def _command_pattern(commandprefix: str) -> re.Pattern[str]:
+    r"""Return a pattern isolating ``\PY{token}`` markers from their payload."""
+    return re.compile(r"(\\" + re.escape(commandprefix) + r"\{[^{}]*\})")
 
 
 class PygmentsLatexHighlighter:
@@ -93,6 +141,28 @@ class PygmentsLatexHighlighter:
         latex_code = highlight(code, lexer, formatter)
         style_defs = formatter.get_style_defs()
         return latex_code, style_defs
+
+    def add_break_points(self, latex: str, chars: str) -> str:
+        """Insert ``\\allowbreak`` after each break character of ``latex``.
+
+        Highlighted output interleaves ``\\PY{token}`` markers with escaped
+        source text; the markers are left untouched so a token name is never
+        rewritten, and only the payload between them gains break opportunities.
+        """
+        if not latex or not chars:
+            return latex
+        pattern = _break_pattern(chars, self.commandprefix)
+        if pattern is None:
+            return latex
+
+        def _insert(match: re.Match[str]) -> str:
+            return match.group(0) + ALLOW_BREAK
+
+        segments = _command_pattern(self.commandprefix).split(latex)
+        for index, segment in enumerate(segments):
+            if index % 2 == 0 and segment:
+                segments[index] = pattern.sub(_insert, segment)
+        return "".join(segments)
 
 
 __all__ = ["PygmentsLatexHighlighter"]

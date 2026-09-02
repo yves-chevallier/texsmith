@@ -13,6 +13,7 @@ from texsmith.adapters.latex.formatter import LaTeXFormatter
 from texsmith.adapters.latex.renderer import LaTeXRenderer
 from texsmith.core.bibliography.collection import BibliographyCollection
 from texsmith.core.callouts import DEFAULT_CALLOUTS, merge_callouts, normalise_callouts
+from texsmith.core.code_options import normalise_inline_options
 from texsmith.core.context import DocumentState
 from texsmith.core.conversion_contexts import ConversionContext
 from texsmith.core.documents import Document
@@ -122,6 +123,7 @@ def _resolve_code_options(
     else:
         style_candidate = str(style_value).strip() if style_value is not None else ""
     merged["style"] = style_candidate or "bw"
+    merged["inline"] = normalise_inline_options(merged.get("inline"), default_options.get("inline"))
     return merged
 
 
@@ -531,6 +533,9 @@ def _render_slot_fragments(
     if not isinstance(style_override, str):
         style_override = str(style_override or "")
     formatter.default_code_style = style_override.strip() or formatter.default_code_style
+    inline_opts = normalise_inline_options(code_opts.get("inline"))
+    formatter.code_inline_plain = bool(inline_opts["plain"])
+    formatter.code_inline_breaks = str(inline_opts["breaks"])
     available_templates = formatter.template_names
     partial_providers: dict[str, str] = dict.fromkeys(available_templates, "core")
     fragment_names = _resolve_active_fragments(binding, context.template_overrides)

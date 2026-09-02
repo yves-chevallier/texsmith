@@ -355,7 +355,9 @@ class LaTeXWriter:
     def _code(self, node: ir.Code) -> str:
         formatter = self.state.formatter
         engine = self._code_engine()
-        if not node.lang:
+        if not node.lang or getattr(formatter, "code_inline_plain", False):
+            # ``code.inline.plain`` drops the highlighting for inline spans so
+            # they behave like ordinary typewriter text, breaks included.
             return formatter.render_template("codeinlinett", node.text)
         if engine == "minted" and self._pick_minted_delimiter(node.text):
             self.state.state.requires_shell_escape = True

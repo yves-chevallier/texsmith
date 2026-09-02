@@ -27,6 +27,7 @@ from pydantic import (
 
 from texsmith.adapters.latex.utils import escape_latex_chars
 from texsmith.adapters.markdown import DEFAULT_MARKDOWN_EXTENSIONS, render_markdown
+from texsmith.core.code_options import normalise_inline_options
 from texsmith.core.exceptions import LatexRenderingError
 from texsmith.core.metadata import PressMetadataError, normalise_press_metadata
 from texsmith.core.partials import normalise_partial_key
@@ -483,7 +484,12 @@ def _normalise_code_options(value: Any, spec: TemplateAttributeSpec, fallback: A
     fallback_style = (
         _pick_style(fallback.get("style"), "bw") if isinstance(fallback, Mapping) else "bw"
     )
-    options: dict[str, Any] = {"engine": fallback_engine, "style": fallback_style}
+    fallback_inline = fallback.get("inline") if isinstance(fallback, Mapping) else None
+    options: dict[str, Any] = {
+        "engine": fallback_engine,
+        "style": fallback_style,
+        "inline": normalise_inline_options(fallback_inline),
+    }
 
     if value is None:
         return options
@@ -491,9 +497,11 @@ def _normalise_code_options(value: Any, spec: TemplateAttributeSpec, fallback: A
     if isinstance(value, Mapping):
         engine_value = value.get("engine", fallback_engine)
         style_value = value.get("style", fallback_style)
+        inline_value = value.get("inline")
         options = dict(value)
         options["engine"] = _pick_engine(engine_value)
         options["style"] = _pick_style(style_value, fallback_style)
+        options["inline"] = normalise_inline_options(inline_value, fallback_inline)
         return options
 
     if isinstance(value, str):
