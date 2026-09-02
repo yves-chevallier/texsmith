@@ -604,3 +604,48 @@ def test_grouped_headers_round_trip_through_markdown() -> None:
     assert table is not None
     thead_rows = table.find("thead").find_all("tr")
     assert len(thead_rows) == 2
+
+
+# ---------------------------------------------------------------------------
+# Fences nested inside a foreign fence stay literal
+# ---------------------------------------------------------------------------
+
+
+def test_yaml_table_inside_outer_fence_is_left_alone() -> None:
+    soup = _render(
+        """
+        ````md
+        ```yaml table
+        columns: [A, B]
+        rows: [[1, 2]]
+        ```
+        ````
+        """
+    )
+    assert soup.find("table") is None
+    code = soup.find("code")
+    assert code is not None
+    assert "yaml table" in code.get_text()
+    assert "columns: [A, B]" in code.get_text()
+
+
+def test_table_config_inside_outer_fence_is_left_alone() -> None:
+    md = Markdown(extensions=["tables", "fenced_code", YamlTableExtension()])
+    src = """
+        ````md
+        | A | B |
+        | - | - |
+        | 1 | 2 |
+
+        ```yaml table-config
+        columns:
+          - {align: right}
+        ```
+        ````
+        """
+    soup = BeautifulSoup(md.convert(textwrap.dedent(src).strip("\n")), "html.parser")
+    assert soup.find("table") is None
+    assert soup.find("texsmith-table-config") is None
+    code = soup.find("code")
+    assert code is not None
+    assert "yaml table-config" in code.get_text()

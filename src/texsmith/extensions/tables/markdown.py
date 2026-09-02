@@ -91,6 +91,33 @@ class _FenceBody:
     end_index: int
 
 
+_ANY_FENCE_OPEN_RE = re.compile(r"^(?P<indent>\s*)(?P<fence>`{3,}|~{3,})(?P<info>.*)$")
+
+
+def _skip_foreign_fence(lines: list[str], start_index: int) -> int | None:
+    """Return the index after the fence opened at ``start_index``, or ``None``.
+
+    A fence that is not ours (a plain code block, a ````md example wrapping a
+    ``yaml table`` fence, …) must be copied through untouched so that the
+    fences nested inside it are treated as literal text, exactly as
+    CommonMark requires. The closing fence uses the same character and is at
+    least as long as the opening one.
+    """
+    match = _ANY_FENCE_OPEN_RE.match(lines[start_index])
+    if match is None:
+        return None
+    fence = match.group("fence")
+    if fence[0] in match.group("info"):
+        return None  # not a fence opener (backticks in the info string)
+    close_re = re.compile(rf"^\s*{re.escape(fence[0])}{{{len(fence)},}}\s*$")
+    cursor = start_index + 1
+    while cursor < len(lines):
+        if close_re.match(lines[cursor]):
+            return cursor + 1
+        cursor += 1
+    return None
+
+
 def _consume_fence(
     lines: list[str],
     start_index: int,
@@ -217,6 +244,11 @@ class _YamlTablePreprocessor(Preprocessor):
         while index < total:
             extracted = _consume_fence(lines, index, _FENCE_OPEN_RE)
             if extracted is None:
+                skip_to = _skip_foreign_fence(lines, index)
+                if skip_to is not None:
+                    result.extend(lines[index:skip_to])
+                    index = skip_to
+                    continue
                 result.append(lines[index])
                 index += 1
                 continue
@@ -286,6 +318,11 @@ class _TableConfigPreprocessor(Preprocessor):
         while index < total:
             extracted = _consume_fence(lines, index, _TABLE_CONFIG_FENCE_RE)
             if extracted is None:
+                skip_to = _skip_foreign_fence(lines, index)
+                if skip_to is not None:
+                    result.extend(lines[index:skip_to])
+                    index = skip_to
+                    continue
                 result.append(lines[index])
                 index += 1
                 continue
