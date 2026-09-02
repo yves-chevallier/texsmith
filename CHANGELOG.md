@@ -7,6 +7,8 @@ and the project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-09-02
+
 ### Added
 
 - **A draw.io diagram can be exported at its page size, through `crop=false` on the image.** The Playwright exporter — the default backend — always shrink-wrapped the SVG to the cells it found, so everything the author had laid out *around* the drawing was thrown away: the sheet's margins, a frame, a title block, the relative placement of several drawings on one page. What reached the document was the bounding box of the ink, not the canvas, and no option existed to say otherwise. `![Site plan](plan.drawio){crop=false}` now exports the page(s) the drawing spans instead, at the `pageWidth` / `pageHeight` declared in the file — draw.io's own *Size: Page Size* — by asking export3 for an `exportType` of `page` and cropping `getSvg` to the background page bounds rather than to the graph bounds. The flag is document-agnostic: the local CLI and the Docker backends read the same option (they map it onto `--crop`), so the three backends finally agree on what an export contains, where until now the CLI ones silently kept the page and Playwright silently dropped it. Cropping stays the default — a figure embedded in prose wants the drawing, not the whitespace — and `press.drawio_crop: false` in the front matter (or `-a press.drawio_crop=false`) flips it for a whole document, an image attribute still winning over it. The same diagram may appear both ways in one document: the render options take part in the asset key, so the cropped and the full-page exports are stored as two distinct assets rather than the first one silently serving both. See `docs/syntax/images.md`.
