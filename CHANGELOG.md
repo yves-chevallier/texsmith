@@ -7,6 +7,10 @@ and the project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ## [Unreleased]
 
+### Fixed
+
+- **A counter marker at the head of a table cell no longer pushes its text down a line.** The LaTeX partial for `#{ns:key}` emitted `\phantomsection\label{…}` before the counter text; at the start of a `p{}` cell TeX is still in vertical mode, and hyperref's raised link then opened an empty paragraph, so the row's first cell (`D-01`) sat one line below its neighbours. The partial now starts with `\leavevmode`, a no-op inside a paragraph and the right thing at the head of a cell.
+
 ## [0.6.0] - 2026-09-02
 
 ### Added
