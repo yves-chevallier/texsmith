@@ -110,6 +110,8 @@ The source tree is organised around three top-level namespaces:
 - `texsmith.adapters` hosts infrastructure integrations such as Markdown parsing, LaTeX rendering, Docker helpers, and transformer utilities.
 - `texsmith.ui` provides end-user interfaces, including the Typer-powered CLI.
 
+Two companion packages sit under `packages/`: `mkdocs_texsmith`, the MkDocs plugin, and `vscode-tmark`, a VS Code extension that highlights TMark syntax in Markdown files (see `docs/guide/vscode.md`).
+
 ## Core architecture highlights
 
 - `ConversionService` encapsulates the orchestration that previously lived in `texsmith.api.service` helpers. Provide a `ConversionRequest` and receive a `ConversionResponse` with rendered bundles and diagnostics.

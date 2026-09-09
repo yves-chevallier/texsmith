@@ -9,6 +9,7 @@ nav:
   - templates/
   - plumbing/
   - MkDocs Integration: mkdocs.md
+  - VS Code extension: vscode.md
   - tectonic.md
   - limitations.md
   - troubleshooting.md
