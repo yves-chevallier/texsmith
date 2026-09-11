@@ -174,20 +174,22 @@ def test_snippet_example_renders_the_previews(
     )
     body = _body(out / "index.tex")
     # Both fences (one nested in a four-backtick fence) became figures with
-    # the caption and the width the info string carried; the previews sit in
-    # ``snippets/`` next to the ``.tex``.
+    # the caption and the width the info string carried; the previews are
+    # rendered into ``snippets/`` and stored by the assets pass under ``assets/``.
     assert seen == [
         "Hello **World**!",
         '```c\n#include <stdio.h>\nint main() {\n    printf("Hello, World!\\n");\n    return 0;\n}\n```',
     ]
     assert body.count("\\begin{figure}") == 2
-    assert body.count("\\includegraphics[width=0.8\\linewidth]{snippets/snippet-") == 2
+    assert body.count("\\includegraphics[width=0.8\\linewidth]{assets/") == 2
     assert body.count("\\caption[Demo]{Demo}") == 2
     assert "\\begin{tscode}" not in body and "Hello **World**" not in body
-    previews = sorted((out / "snippets").glob("snippet-*.pdf"))
-    assert len(previews) == 2
-    for preview in previews:
-        assert f"{{snippets/{preview.name}}}" in body
+    assert "[asset:" not in body
+    assert len(list((out / "snippets").glob("snippet-*.pdf"))) == 2
+    stored = sorted(path.name for path in (out / "assets").glob("*.pdf"))
+    assert len(stored) == 2
+    for name in stored:
+        assert f"{{assets/{name}}}" in body
 
 
 def test_snippet_example_typst_takes_the_png(
@@ -207,9 +209,9 @@ def test_snippet_example_typst_takes_the_png(
         ]
     )
     typ = (out / "index.typ").read_text(encoding="utf-8")
-    assert typ.count('image("snippets/snippet-') == 2
-    assert '.png", width: 80%)' in typ
-    assert "caption: [Demo]" in typ
+    assert typ.count('image("assets/') == 2
+    assert typ.count('.png", width: 80%)') == 2
+    assert "caption: [Demo]" in typ and "[asset:" not in typ
 
 
 def test_typst_hello_example_writes_a_typst_body(tmp_path: Path) -> None:

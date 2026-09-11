@@ -54,7 +54,7 @@
           "content": [
             {
               "type": "Image",
-              "src": "snippets/snippet-2.pdf"
+              "src": "<out>/snippets/snippet-2.pdf"
             }
           ]
         }

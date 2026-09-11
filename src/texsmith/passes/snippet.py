@@ -8,7 +8,9 @@ parses the fence, :func:`~texsmith.adapters.plugins.snippet.ensure_snippet_asset
 runs the nested conversion + LaTeX build (or serves the content-hash cache)
 and writes the PDF/PNG pair into ``<output dir>/snippets/``. The fence is
 replaced by ``Figure{Para{Image}, Caption?}``: the image ``src`` is the
-output-relative path of the PDF (the PNG for the Typst backend), ``width=``
+absolute path of the rendered PDF (the PNG for the Typst backend), which the
+``assets`` pass that follows stores under ``<output dir>/assets`` and
+rewrites to the output-relative path like any local image; ``width=``
 travels as the image attribute, ``caption=`` becomes a figure caption and
 ``label=`` (or the fence's ``#id``) the anchor. The figure keeps the fence's
 id and span; the nodes created inside share the span and take fresh ids.
@@ -20,8 +22,7 @@ Tests replace :func:`render_snippet_assets` with a fake renderer.
 
 from __future__ import annotations
 
-import os
-from pathlib import Path, PurePath
+from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 from texsmith.adapters.plugins.snippet import (
@@ -63,15 +64,6 @@ def render_snippet_assets(
     return ensure_snippet_assets(
         block, output_dir=output_dir, source_path=source_path, emitter=emitter
     )
-
-
-def _output_relative(path: Path, output_dir: Path) -> str:
-    """``path`` as the writer prints it: relative to the output directory, POSIX spelled."""
-    try:
-        relative = os.path.relpath(Path(path).resolve(), Path(output_dir).resolve())
-    except ValueError:  # pragma: no cover - two Windows drives
-        return Path(path).as_posix()
-    return PurePath(relative).as_posix()
 
 
 def _fence_attributes(block: model.CodeBlock) -> dict[str, Any]:
@@ -131,7 +123,7 @@ class _Renderer:
         source = assets.png if self.ctx.backend == "typst" else assets.pdf
         caption = block.caption
         image = model.Image(
-            src=_output_relative(source, self.ctx.output_dir),
+            src=Path(source).resolve().as_posix(),
             alt=(model.Str(text=caption, id=ids.next(), span=span),) if caption else (),
             attrs=model.Attrs(kv=(("width", block.figure_width),) if block.figure_width else ()),
             id=ids.next(),

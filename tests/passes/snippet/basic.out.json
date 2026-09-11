@@ -23,7 +23,7 @@
           "content": [
             {
               "type": "Image",
-              "src": "snippets/snippet-1.pdf",
+              "src": "<out>/snippets/snippet-1.pdf",
               "alt": [
                 {
                   "type": "Str",
@@ -64,7 +64,7 @@
           "content": [
             {
               "type": "Image",
-              "src": "snippets/snippet-2.pdf",
+              "src": "<out>/snippets/snippet-2.pdf",
               "attrs": {
                 "kv": [
                   [
@@ -90,7 +90,7 @@
               "content": [
                 {
                   "type": "Image",
-                  "src": "snippets/snippet-3.pdf",
+                  "src": "<out>/snippets/snippet-3.pdf",
                   "alt": [
                     {
                       "type": "Str",

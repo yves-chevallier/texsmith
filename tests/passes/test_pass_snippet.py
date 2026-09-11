@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+import json
 from pathlib import Path
 
 import pytest
@@ -50,6 +51,12 @@ def _figures(document) -> list[model.Figure]:
     return [node for node in walk(document.ir) if isinstance(node, model.Figure)]
 
 
+def _structural(harness, document, output_dir: Path) -> dict:
+    """``structural()`` with the temporary output directory spelled ``<out>`` (the goldens)."""
+    text = json.dumps(harness.structural(document))
+    return json.loads(text.replace(output_dir.resolve().as_posix(), "<out>"))
+
+
 def test_snippet_is_registered_after_include_before_assets() -> None:
     order = [item.name for item in build_pipeline()]
     assert order.index("include") < order.index("snippet") < order.index("assets")
@@ -63,7 +70,7 @@ def test_fences_become_figures(harness, renderer: FakeRenderer, tmp_path: Path) 
     out = harness.run("snippet", document, ctx)
 
     assert out is not document
-    assert harness.structural(out) == harness.expected("snippet", "basic")
+    assert _structural(harness, out, tmp_path) == harness.expected("snippet", "basic")
     assert harness.diagnostics(ctx) == []
 
     # The plain fence is untouched; each snippet fence became one figure.
@@ -84,10 +91,13 @@ def test_fences_become_figures(harness, renderer: FakeRenderer, tmp_path: Path) 
             if node is not figure:
                 assert node.id >= floor and node.span == fence.span
 
-    # The assets land in ``<output>/snippets``, and ``src`` is output-relative.
+    # The assets land in ``<output>/snippets``; ``src`` is their absolute path,
+    # the hand-off the ``assets`` pass stores under ``assets/`` like any image.
     assert all(call[1] == tmp_path / "snippets" for call in renderer.calls)
     assert all(call[2] == FIXTURES / "snippet" / "basic.md" for call in renderer.calls)
     assert (tmp_path / "snippets" / "snippet-1.pdf").exists()
+    images = [node for node in walk(out.ir) if isinstance(node, model.Image)]
+    assert all(Path(image.src).is_absolute() and Path(image.src).exists() for image in images)
 
     # The real fence parser ran: content, template, caption, width, label.
     first, second, third = (call[0] for call in renderer.calls)
@@ -105,10 +115,9 @@ def test_typst_backend_takes_the_png(harness, renderer: FakeRenderer, tmp_path: 
     ctx = harness.context(document, output_dir=tmp_path, backend="typst")
     out = harness.run("snippet", document, ctx)
     images = [node for node in walk(out.ir) if isinstance(node, model.Image)]
+    snippets = (tmp_path / "snippets").resolve()
     assert [image.src for image in images] == [
-        "snippets/snippet-1.png",
-        "snippets/snippet-2.png",
-        "snippets/snippet-3.png",
+        (snippets / f"snippet-{n}.png").as_posix() for n in (1, 2, 3)
     ]
 
 
@@ -118,7 +127,7 @@ def test_failed_builds_keep_the_fence(harness, renderer: FakeRenderer, tmp_path:
     ctx = harness.context(document, output_dir=tmp_path)
     out = harness.run("snippet", document, ctx)
 
-    assert harness.structural(out) == harness.expected("snippet", "failure")
+    assert _structural(harness, out, tmp_path) == harness.expected("snippet", "failure")
     assert harness.diagnostics(ctx) == harness.expected_diagnostics("snippet", "failure")
     assert len(_figures(out)) == 1
     # The three failing fences stay as code, classes and all.
