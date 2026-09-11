@@ -26,6 +26,17 @@ Always adhere to these principles:
 - **NEVER** duplicate code; abstract and reuse existing functionality.
 - **NEVER** introduce compatibility layers; maintain a single, clear implementation.
 
+## Migration to the TMark core
+
+TeXSmith is migrating onto the `tmark` Rust core (`~/tmark`): parser, IR,
+printer, registries, writers. The plan is `specs/tmark-migration.md`, the
+design notes are under `specs/migration/`. Rules while it lasts:
+
+- The Python-Markdown extensions under `texsmith/extensions/` are **frozen**:
+  no new syntax there. New syntax goes through the TMark spec and parser.
+- Syntax is unified in the tmark reader, not in the legacy path (decision D0).
+- Nothing of the legacy path is deleted before the parity gate (phase 4) is green.
+
 ## Working agreements
 
 - Always run `uv run pytest` after modifying Python code.

@@ -1,4 +1,6 @@
 PRE_CMD := uv run
+# The TMark specification lives in the tmark repository (single source of truth).
+TMARK_SPEC ?= ../tmark/spec/tmark.md
 
 examples:
 	cd examples && $(PRE_CMD) make all
@@ -10,7 +12,7 @@ docs: artifacts
 	TEXSMITH_BUILD=1 $(PRE_CMD) mkdocs build
 
 spec:
-	$(PRE_CMD) texsmith specs/tmark.md -o build/spec --build
+	$(PRE_CMD) texsmith $(TMARK_SPEC) -o build/spec --build
 
 lint:
 	$(PRE_CMD) ruff format .

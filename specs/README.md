@@ -1,38 +1,30 @@
 # TeXSmith specifications
 
-Design documents for **TMark**, the Markdown dialect understood by TeXSmith.
-This directory holds specification drafts — not user documentation. The user
-guide lives in [`docs/`](../docs); when a spec and the docs disagree, the docs
-describe what ships today and the spec describes where the dialect is headed.
+Design documents for the migration of TeXSmith onto the **TMark** core.
+
+The TMark language specification itself is **not** kept here any more: it
+lives in the `tmark` repository (`spec/tmark.md`, with its conformance
+fixtures under `spec/conformance/`), which is the single source of truth for
+the dialect, its IR and its tooling. `make spec` builds that copy
+(`TMARK_SPEC=../tmark/spec/tmark.md` by default). The user guide in
+[`docs/`](../docs) describes what ships today; the spec describes where the
+dialect is headed.
 
 ## Documents
 
-[`tmark.md`](tmark.md)
-: **TMark — TeXSmith Markdown** (draft 3, working draft). A consolidated
-  specification proposal for the dialect: philosophy, document model (four
-  syntactic families, two sigils, registries), conformance classes and
-  profiles, front matter layout, and a node catalogue that gives every IR
-  node its canonical form, accepted sugar, degradation class and backend
-  mapping. Constructs marked *(proposed)* are not implemented yet; everything
-  else describes shipping behaviour. Draft 3 supersedes draft 2 — the review
-  that motivated it and each decision are recorded in Appendix A, open
-  questions in Appendix B, PyMdownX-only sugar in Appendix C, and every
-  deprecated spelling with its horizon in Appendix D.
+[`tmark-migration.md`](tmark-migration.md)
+: The migration plan: current state, target architecture, decisions,
+  phases, construct gap audit, difficulties and risks, sequencing.
 
-## Purpose
+[`migration/`](migration/)
+: Design notes, one per difficulty of the plan: the web (MkDocs) profile,
+  fragment contracts replacing the Jinja partials, the Rust writers and the
+  Python passes, the migration of the examples, the Python-side IR models
+  and pass framework.
 
-TMark exists to give scientific and technical writing a Markdown that is
-*canonical* (one representation per feature in the document model, enabling
-lint/format/round-trip tooling), *permissive* (the common MkDocs/PyMdownX and
-Pandoc spellings keep working), and *honest about its deviations* (every
-construct is classified by how it degrades in a plain CommonMark renderer).
-The specification is the reference for future work on the parser, the
-canonical printer, `tmark fmt`/`lint`, and editor support.
+## Process
 
-## Status and process
-
-These documents are drafts under active discussion. Normative wording
-("MUST", "SHOULD") is aspirational until a conformance suite exists. Changes
-go through pull requests like any code change; substantial syntax decisions
-should update Appendix A (divergences) or Appendix B (open questions) so the
-history of choices stays traceable.
+The spec is the source of truth. A syntax change starts as a spec change
+and a conformance fixture in the tmark repository, then reaches the parser,
+the printer, the writers, the bindings and finally TeXSmith. The Python-
+Markdown extensions of TeXSmith are frozen: no new syntax is added to them.
