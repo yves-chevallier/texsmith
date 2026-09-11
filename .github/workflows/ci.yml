@@ -79,6 +79,49 @@ jobs:
           cd ${GITHUB_WORKSPACE}/examples/paper && uv run texsmith --build -obuild cheese.md cheese.bib
           cd ${GITHUB_WORKSPACE}/examples/diagrams && uv run texsmith --build -obuild diagrams.md
 
+  parity:
+    # Text-only parity gate (specs/migration/writers-and-passes.md §5): re-render
+    # the corpus with the legacy reader and diff it against the committed
+    # tests/parity/baseline. Entries that need a diagram renderer or a nested
+    # LaTeX build are skipped here (they run in `parity-pdf`); the DOI cache is
+    # served from tests/parity/cache, so only the remote-asset entries (book,
+    # a few docs pages) use the network.
+    name: Parity (baseline check)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
+        with:
+          version: "0.9.18"
+          enable-cache: true
+          cache-python: false
+        env:
+          UV_CACHE_SAVE: "false"
+
+      - name: Sync dependencies (dev + docs)
+        run: uv sync --all-groups --frozen
+
+      - name: Cache font metadata
+        # The Noto coverage database is downloaded on first use; keep it between runs.
+        uses: actions/cache@v4
+        with:
+          path: ~/.texsmith/fonts
+          key: texsmith-fonts-${{ runner.os }}-${{ hashFiles('src/texsmith/fonts/**') }}
+
+      - name: Check the legacy baseline
+        run: uv run python scripts/parity.py baseline --check --without docker --without tectonic
+
+      - name: Upload diffs
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: parity-check-diffs
+          path: build/parity/check/
+          if-no-files-found: ignore
+
   examples:
     name: Build examples (Windows)
     runs-on: windows-latest

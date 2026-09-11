@@ -1,0 +1,96 @@
+name: Parity (full + PDF)
+
+# Full parity run (specs/migration/writers-and-passes.md §5): every corpus
+# entry, including the ones that need a diagram renderer (Playwright Chromium
+# here, Docker in `--diagrams-backend auto`'s last resort) and a LaTeX engine
+# for nested snippet builds, plus the PDF pixel diff.
+#
+# Triggers: nightly, the `parity-pdf` label on a pull request, or by hand.
+# Nothing here needs a secret: tectonic is the bundled download, Typst comes
+# from setup-typst, Chromium from `playwright install`.
+#
+# Until the CLI has `--reader tmark` (plan phase 3.2) the job checks the
+# complete legacy baseline and exercises the PDF pipeline legacy-vs-legacy on
+# a few entries, which must come out identical. Once the tmark reader exists,
+# replace the two `parity.py` steps by `parity.py diff` and
+# `parity.py pdf --entries …` with the default readers.
+
+on:
+  schedule:
+    - cron: "17 3 * * *"
+  pull_request:
+    types: [labeled, synchronize, reopened]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  parity-pdf:
+    name: Parity (full + PDF)
+    if: >-
+      github.event_name != 'pull_request' ||
+      contains(github.event.pull_request.labels.*.name, 'parity-pdf')
+    runs-on: ubuntu-latest
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /home/runner/.cache/texsmith/playwright/browsers
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libglib2.0-0 libnspr4 libnss3 libatk1.0-0 \
+          libatk-bridge2.0-0 libcups2 libxkbcommon0 libatspi2.0-0 libxcomposite1 \
+          libxdamage1 libxfixes3 libxrandr2 libgbm1 libcairo2 libpango-1.0-0
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
+        with:
+          version: "0.9.18"
+          enable-cache: true
+          cache-python: false
+        env:
+          UV_CACHE_SAVE: "false"
+
+      - name: Sync dependencies (dev + docs + typst)
+        run: uv sync --all-groups --extra typst --frozen
+
+      # Same pin as ci.yml: 0.15 drops mitex symbols the examples still use.
+      - name: Install Typst
+        uses: typst-community/setup-typst@v5
+        with:
+          typst-version: "0.14.2"
+
+      - name: Install Playwright browsers
+        run: |
+          uv run playwright install-deps
+          uv run playwright install chromium
+
+      - name: Cache texsmith user data (fonts, bundled tectonic, TeX bundle)
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.texsmith
+            ~/.cache/texsmith/texmf
+          key: texsmith-user-${{ runner.os }}-${{ hashFiles('uv.lock') }}
+
+      - name: Check the complete legacy baseline
+        run: uv run python scripts/parity.py baseline --check
+
+      - name: PDF pipeline self-check (legacy vs legacy)
+        run: >-
+          uv run python scripts/parity.py pdf --reader-b html
+          --entries abbr paper letter-din typst-hello typst-article
+
+      - name: Upload parity artifacts
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: parity-pdf
+          path: |
+            build/parity/check/
+            build/parity/pdf/report.json
+            build/parity/pdf/**/*.png
+          if-no-files-found: ignore
