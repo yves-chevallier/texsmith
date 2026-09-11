@@ -144,7 +144,7 @@ members = [
 
 [tool.uv.sources]
 mkdocs-texsmith = { workspace = true }
-tmark = { path = "../tmark/crates/tmark-py", editable = true }
+tmark = { path = "vendor/tmark/crates/tmark-py", editable = true }
 
 [tool.pytest.ini_options]
 addopts = []

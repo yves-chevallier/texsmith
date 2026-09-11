@@ -1985,7 +1985,7 @@ requires-dist = [
     { name = "pyyaml", specifier = ">=6.0.3" },
     { name = "requests", specifier = ">=2.32.5" },
     { name = "rich", specifier = ">=13.9.0" },
-    { name = "tmark", editable = "../tmark/crates/tmark-py" },
+    { name = "tmark", editable = "vendor/tmark/crates/tmark-py" },
     { name = "tomli", marker = "python_full_version < '3.11'", specifier = ">=2.0.1" },
     { name = "typer", specifier = ">=0.12.5" },
     { name = "typst", marker = "extra == 'typst'", specifier = ">=0.15" },
@@ -2035,7 +2035,7 @@ wheels = [
 
 [[package]]
 name = "tmark"
-source = { editable = "../tmark/crates/tmark-py" }
+source = { editable = "vendor/tmark/crates/tmark-py" }
 
 [[package]]
 name = "tomli"
