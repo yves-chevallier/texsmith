@@ -1,0 +1,91 @@
+{
+  "blocks": [
+    {
+      "type": "Header",
+      "level": 1,
+      "content": [
+        {
+          "type": "Str",
+          "text": "Hello"
+        }
+      ]
+    },
+    {
+      "type": "Para",
+      "content": [
+        {
+          "type": "Str",
+          "text": "The template is "
+        },
+        {
+          "type": "Str",
+          "text": "article"
+        },
+        {
+          "type": "Str",
+          "text": "; the authors are "
+        },
+        {
+          "type": "Var",
+          "path": [
+            "authors"
+          ]
+        },
+        {
+          "type": "SoftBreak"
+        },
+        {
+          "type": "Str",
+          "text": "and the version "
+        },
+        {
+          "type": "Var",
+          "path": [
+            "missing",
+            "path"
+          ]
+        },
+        {
+          "type": "Str",
+          "text": " stays a moustache."
+        }
+      ]
+    },
+    {
+      "type": "Para",
+      "content": [
+        {
+          "type": "Str",
+          "text": "Code keeps "
+        },
+        {
+          "type": "Code",
+          "text": "{{ title }}"
+        },
+        {
+          "type": "Str",
+          "text": " verbatim."
+        }
+      ]
+    }
+  ],
+  "front_matter": {
+    "extra": {
+      "press": {
+        "template": "article"
+      }
+    },
+    "keys": {
+      "authors": [
+        {
+          "name": "Ada Lovelace"
+        },
+        {
+          "name": "Charles Babbage"
+        }
+      ],
+      "title": "Hello"
+    },
+    "raw": "---\ntitle: Hello\nauthors: [Ada Lovelace, Charles Babbage]\npress:\n  template: article\n---"
+  }
+}

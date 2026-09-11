@@ -14,6 +14,10 @@ docs: artifacts
 spec:
 	$(PRE_CMD) texsmith $(TMARK_SPEC) -o build/spec --build
 
+# The IR inputs of the pass tests (tests/passes/<pass>/<case>.in.json), parsed by the installed tmark wheel.
+ir-fixtures:
+	$(PRE_CMD) python scripts/refresh_pass_fixtures.py
+
 lint:
 	$(PRE_CMD) ruff format .
 	$(PRE_CMD) ruff check .
@@ -23,4 +27,4 @@ clean:
 	$(RM) -rf build press site
 	$(MAKE) -C examples clean
 
-.PHONY: examples artifacts docs spec clean lint
+.PHONY: examples artifacts docs spec clean lint ir-fixtures

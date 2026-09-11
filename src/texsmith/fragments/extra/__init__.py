@@ -168,7 +168,23 @@ def _collect_packages(context: Mapping[str, object]) -> list[tuple[str, str | No
     if tikz_option:
         _maybe_add(True, "tikz", tikz_option)
 
+    # IR path (fragment-contracts.md §2): the packages the bodies' ``Requires``
+    # named, minus what the active contracts load themselves (already removed
+    # by ``core.fragments.activation``). Known packages keep the options the
+    # sniffers above would have given them.
+    required = context.get("ts_required_packages") if hasattr(context, "get") else None
+    if isinstance(required, (list, tuple)):
+        loaded = {name for name, _options in packages}
+        for name in required:
+            if isinstance(name, str) and name and name not in loaded:
+                _maybe_add(True, name, _REQUIRED_PACKAGE_OPTIONS.get(name))
+                loaded.add(name)
+
     return packages
+
+
+#: Options the legacy sniffers attach to a package; kept when the IR path names it.
+_REQUIRED_PACKAGE_OPTIONS: dict[str, str | None] = {"ulem": "normalem", "hyphenat": "htt"}
 
 
 fragment = ExtraFragment()

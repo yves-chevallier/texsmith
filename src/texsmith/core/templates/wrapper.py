@@ -15,6 +15,7 @@ from texsmith.core.fragments import (
     inject_fragment_attributes,
     render_fragments,
 )
+from texsmith.core.fragments.activation import REQUIRED_FRAGMENTS_KEY, REQUIRED_PACKAGES_KEY
 from texsmith.core.templates import TemplateRuntime
 from texsmith.core.templates.manifest import TemplateError
 from texsmith.fonts.scripts import render_script_macros
@@ -137,6 +138,11 @@ def wrap_template_document(
     template_context["acronym_entry_groups"] = dict(document_state.acronym_entry_groups)
     template_context["citations"] = list(document_state.citations)
     template_context["bibliography_entries"] = document_state.bibliography
+    # IR path: the contracts and packages the bodies named (empty on the HTML
+    # path, where the fragments keep sniffing the rendered LaTeX).
+    template_context[REQUIRED_FRAGMENTS_KEY] = sorted(document_state.required_fragments)
+    template_context[REQUIRED_PACKAGES_KEY] = list(document_state.required_packages)
+    template_context["index_registries"] = list(document_state.index_registries)
 
     fragment_attributes: dict[str, Any] = {}
     if fragment_names:

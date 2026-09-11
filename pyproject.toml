@@ -86,7 +86,7 @@ raw-options = { local_scheme = "no-local-version" }
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/texsmith"]
-include = ["src/texsmith/adapters/latex/xindy/*.xdy"]
+include = ["src/texsmith/adapters/latex/xindy/*.xdy", "src/texsmith/writers/typst/*.typ"]
 
 [tool.hatch.build]
 exclude = [

@@ -1,0 +1,155 @@
+{
+  "tmark": "0.0.0",
+  "file": 0,
+  "front_matter": {
+    "id": 1,
+    "span": [
+      0,
+      0,
+      69
+    ],
+    "raw": "---\ntitle: Offsets\nslots:\n  abstract: Abstract\n  preface: Preface\n---",
+    "keys": {
+      "title": "Offsets"
+    },
+    "extra": {
+      "slots": {
+        "abstract": "Abstract",
+        "preface": "Preface"
+      }
+    }
+  },
+  "blocks": [
+    {
+      "type": "Header",
+      "id": 2,
+      "span": [
+        0,
+        71,
+        85
+      ],
+      "level": 2,
+      "content": [
+        {
+          "type": "Str",
+          "id": 3,
+          "span": [
+            0,
+            74,
+            85
+          ],
+          "text": "Starts deep"
+        }
+      ]
+    },
+    {
+      "type": "Header",
+      "id": 4,
+      "span": [
+        0,
+        87,
+        97
+      ],
+      "level": 3,
+      "content": [
+        {
+          "type": "Str",
+          "id": 5,
+          "span": [
+            0,
+            91,
+            97
+          ],
+          "text": "Deeper"
+        }
+      ]
+    },
+    {
+      "type": "Header",
+      "id": 6,
+      "span": [
+        0,
+        99,
+        109
+      ],
+      "level": 1,
+      "content": [
+        {
+          "type": "Str",
+          "id": 7,
+          "span": [
+            0,
+            101,
+            109
+          ],
+          "text": "Abstract"
+        }
+      ]
+    },
+    {
+      "type": "Para",
+      "id": 8,
+      "span": [
+        0,
+        111,
+        119
+      ],
+      "content": [
+        {
+          "type": "Str",
+          "id": 9,
+          "span": [
+            0,
+            111,
+            119
+          ],
+          "text": "Summary."
+        }
+      ]
+    },
+    {
+      "type": "Header",
+      "id": 10,
+      "span": [
+        0,
+        121,
+        130
+      ],
+      "level": 1,
+      "content": [
+        {
+          "type": "Str",
+          "id": 11,
+          "span": [
+            0,
+            123,
+            130
+          ],
+          "text": "Preface"
+        }
+      ]
+    },
+    {
+      "type": "Para",
+      "id": 12,
+      "span": [
+        0,
+        132,
+        145
+      ],
+      "content": [
+        {
+          "type": "Str",
+          "id": 13,
+          "span": [
+            0,
+            132,
+            145
+          ],
+          "text": "Words before."
+        }
+      ]
+    }
+  ],
+  "diagnostics": []
+}

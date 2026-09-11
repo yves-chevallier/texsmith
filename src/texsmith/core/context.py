@@ -44,6 +44,11 @@ class DocumentState:
     script_usage: list[dict[str, Any]] = field(default_factory=list)
     fallback_summary: list[dict[str, Any]] = field(default_factory=list)
     callouts_used: bool = False
+    #: IR path only (``core.fragments.activation``): the contracts the bodies
+    #: named, the packages ``ts-extra`` must load, the index registries used.
+    required_fragments: set[str] = field(default_factory=set)
+    required_packages: list[str] = field(default_factory=list)
+    index_registries: list[str] = field(default_factory=list)
 
     def remember_acronym(self, term: str, description: str) -> str:
         """Register an acronym definition keyed by a normalised identifier."""

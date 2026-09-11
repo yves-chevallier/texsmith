@@ -33,12 +33,15 @@ from .debug import (
     ensure_emitter,
     format_user_friendly_render_error,
     persist_debug_artifacts,
+    persist_debug_ir,
     raise_conversion_error,
     record_event,
 )
 from .execution import resolve_conversion_context
 from .models import ConversionRequest
+from .pipeline import render_ir_document
 from .renderer import TemplateFragment
+from .resolution import ResolutionChain, bibliography_paths
 from .templates import (
     SlotFragment,
     bind_template,
@@ -200,8 +203,13 @@ def convert_document(
     emitter: DiagnosticEmitter | None = None,
     preloaded_bibliography: BibliographyCollection | None = None,
     seen_bibliography_issues: set[tuple[str, str | None, str | None]] | None = None,
+    resolution: ResolutionChain | None = None,
 ) -> ConversionResult:
-    """Orchestrate the full HTML-to-LaTeX conversion for a single document."""
+    """Orchestrate the full conversion of a single document to LaTeX.
+
+    ``resolution`` (IR path) chains the counter state across the documents of
+    a batch; ``None`` starts a fresh chain for this document alone.
+    """
     emitter = ensure_emitter(emitter or request.emitter)
     output_dir = output_dir.resolve()
 
@@ -216,6 +224,7 @@ def convert_document(
         preloaded_bibliography=preloaded_bibliography,
         seen_bibliography_issues=seen_bibliography_issues,
     )
+    context.resolution = resolution
 
     record_event(
         emitter,
@@ -267,72 +276,50 @@ def _render_document(
     }
 
     if request.persist_debug_html:
-        persist_debug_artifacts(
-            context.output_dir,
-            document.source_path,
-            document.html,
-        )
+        if document.reader == "tmark" and document.ir is not None:
+            persist_debug_ir(context.output_dir, document.source_path, document.ir)
+        else:
+            persist_debug_artifacts(
+                context.output_dir,
+                document.source_path,
+                document.html,
+            )
 
     binding = context.template_binding
     if binding is None:  # pragma: no cover - defensive safeguard
         raise RuntimeError("Conversion context is missing a template binding.")
 
-    slot_base_levels = binding.slot_levels()
-
-    runtime_common = _build_runtime_common(
-        binding=binding,
-        context=context,
-        emitter=emitter,
-    )
-
-    active_slot_requests = context.slot_requests
-
-    parser_backend = str(renderer_kwargs.get("parser", "html.parser"))
-    slot_fragments, missing_slots = extract_slot_fragments(
-        document.html,
-        active_slot_requests,
-        binding.default_slot,
-        slot_definitions=binding.slots,
-        parser_backend=parser_backend,
-        slot_options=document.slot_options,
-    )
-    for message in missing_slots:
-        emitter.warning(message)
-
-    manual_base_level = document.base_level
-    drop_title_flag = bool(document.drop_title)
-    if drop_title_flag and document.slot_requests and not context.slot_requests:
-        drop_title_flag = False
-
-    fragment_offsets: dict[str, int] = {}
-    for fragment in slot_fragments:
-        levels = list(getattr(fragment, "heading_levels", []) or [])
-        if drop_title_flag and fragment.name == binding.default_slot and levels:
-            levels = levels[1:]
-        if not levels:
-            fragment_offsets[fragment.name] = 0
-        else:
-            fragment_offsets[fragment.name] = 1 - min(levels)
-
-    try:
-        render_result = _render_slot_fragments(
-            slot_fragments=slot_fragments,
-            binding=binding,
-            runtime_common=runtime_common,
-            slot_base_levels=slot_base_levels,
-            fragment_offsets=fragment_offsets,
-            manual_base_level=manual_base_level,
-            renderer_kwargs=renderer_kwargs,
-            initial_state=initial_state,
-            drop_title_flag=drop_title_flag,
+    if document.reader == "tmark":
+        # The IR path: passes, one ``tmark.resolve``, one ``tmark.write`` per
+        # slot body; ``Requires`` drives the fragment flags of the state.
+        try:
+            ir_result = render_ir_document(
+                context=context,
+                binding=binding,
+                emitter=emitter,
+                backend="latex",
+                chain=context.resolution,
+                initial_state=initial_state,
+                code_options=_resolve_code_options(binding, context.template_overrides),
+            )
+        except TemplateError as exc:
+            if debug_enabled(emitter):
+                raise
+            raise_conversion_error(emitter, str(exc), exc)
+        render_result = {
+            "slot_outputs": ir_result.slot_outputs,
+            "document_state": ir_result.document_state,
+            "renderer": None,
+        }
+    else:
+        render_result = _render_html_slots(
             context=context,
-            legacy_latex_accents=legacy_latex_accents,
+            binding=binding,
             emitter=emitter,
+            initial_state=initial_state,
+            renderer_kwargs=renderer_kwargs,
+            legacy_latex_accents=legacy_latex_accents,
         )
-    except TemplateError as exc:
-        if debug_enabled(emitter):
-            raise
-        raise_conversion_error(emitter, str(exc), exc)
     slot_outputs = render_result["slot_outputs"]
     document_state = render_result["document_state"]
     renderer = render_result["renderer"]
@@ -428,6 +415,76 @@ def _render_document(
         context=context,
         assets_map=asset_map,
     )
+
+
+def _render_html_slots(
+    *,
+    context: ConversionContext,
+    binding: TemplateBinding,
+    emitter: DiagnosticEmitter,
+    initial_state: DocumentState | None,
+    renderer_kwargs: dict[str, Any],
+    legacy_latex_accents: bool,
+) -> dict[str, Any]:
+    """The legacy path: split the HTML into slots and render each through the HTML reader."""
+    document = context.document
+    slot_base_levels = binding.slot_levels()
+
+    runtime_common = _build_runtime_common(
+        binding=binding,
+        context=context,
+        emitter=emitter,
+    )
+
+    active_slot_requests = context.slot_requests
+
+    parser_backend = str(renderer_kwargs.get("parser", "html.parser"))
+    slot_fragments, missing_slots = extract_slot_fragments(
+        document.html,
+        active_slot_requests,
+        binding.default_slot,
+        slot_definitions=binding.slots,
+        parser_backend=parser_backend,
+        slot_options=document.slot_options,
+    )
+    for message in missing_slots:
+        emitter.warning(message)
+
+    manual_base_level = document.base_level
+    drop_title_flag = bool(document.drop_title)
+    if drop_title_flag and document.slot_requests and not context.slot_requests:
+        drop_title_flag = False
+
+    fragment_offsets: dict[str, int] = {}
+    for fragment in slot_fragments:
+        levels = list(getattr(fragment, "heading_levels", []) or [])
+        if drop_title_flag and fragment.name == binding.default_slot and levels:
+            levels = levels[1:]
+        if not levels:
+            fragment_offsets[fragment.name] = 0
+        else:
+            fragment_offsets[fragment.name] = 1 - min(levels)
+
+    try:
+        return _render_slot_fragments(
+            slot_fragments=slot_fragments,
+            binding=binding,
+            runtime_common=runtime_common,
+            slot_base_levels=slot_base_levels,
+            fragment_offsets=fragment_offsets,
+            manual_base_level=manual_base_level,
+            renderer_kwargs=renderer_kwargs,
+            initial_state=initial_state,
+            drop_title_flag=drop_title_flag,
+            context=context,
+            legacy_latex_accents=legacy_latex_accents,
+            emitter=emitter,
+        )
+    except TemplateError as exc:
+        if debug_enabled(emitter):
+            raise
+        raise_conversion_error(emitter, str(exc), exc)
+        raise AssertionError("unreachable") from exc  # pragma: no cover
 
 
 def _build_runtime_common(
@@ -738,6 +795,8 @@ def convert_documents(
     should_write_fragments = write_fragments if write_fragments is not None else True
     state = shared_state
     active_emitter = emitter or NullEmitter()
+    # IR path: one chain per batch, ``start`` carried from document to document.
+    resolution = ResolutionChain(bibliography=bibliography_paths(request.bibliography_files))
 
     for document in documents:
         document = document.prepare_for_conversion()
@@ -755,6 +814,7 @@ def convert_documents(
             wrap_document=wrap_document,
             preloaded_bibliography=shared_bibliography,
             seen_bibliography_issues=seen_bibliography_issues,
+            resolution=resolution,
         )
 
         if not wrap_document:

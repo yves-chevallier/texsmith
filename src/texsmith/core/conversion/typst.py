@@ -373,6 +373,17 @@ def render_typst_document(
     """
     from texsmith.writers.typst.diagrams import render_diagrams
 
+    if getattr(document, "reader", "html") == "tmark":
+        from .typst_ir import render_typst_from_ir
+
+        return render_typst_from_ir(
+            document,
+            template=template,
+            bibliography_files=bibliography_files,
+            output_dir=output_dir,
+            template_options=template_options,
+        )
+
     callout_style, callouts = _prepare_callouts(document, template_options)
 
     overrides = _press_overrides(_front_matter(document))

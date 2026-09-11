@@ -5,6 +5,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, ClassVar
 
+from texsmith.core.fragments.activation import required_fragment
 from texsmith.core.fragments.base import BaseFragment, FragmentPiece
 from texsmith.core.templates.manifest import TemplateAttributeSpec
 
@@ -56,6 +57,9 @@ class CalloutsFragment(BaseFragment[CalloutsConfig]):
 
 
 def _detect_callouts(context: Mapping[str, Any]) -> bool:
+    # IR path: the writer named the contract (fragment-contracts.md §2).
+    if required_fragment(context, "ts-callouts"):
+        return True
     uses_flag = context.get("ts_uses_callouts")
     if isinstance(uses_flag, bool) and uses_flag:
         return True

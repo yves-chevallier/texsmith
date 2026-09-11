@@ -5,6 +5,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, ClassVar
 
+from texsmith.core.fragments.activation import required_fragment
 from texsmith.core.fragments.base import BaseFragment, FragmentPiece
 
 
@@ -42,6 +43,9 @@ class TodolistFragment(BaseFragment[TodolistConfig]):
 
 
 def _detect_todolist(context: Mapping[str, Any]) -> bool:
+    # IR path: the writer named the contract (fragment-contracts.md §2).
+    if required_fragment(context, "ts-todolist"):
+        return True
     tokens = ("\\done", "\\wontfix", "\\begin{todolist}", "\\todolist")
     for value in context.values():
         if not isinstance(value, str):

@@ -41,6 +41,19 @@ SelectorOption = Annotated[
     ),
 ]
 
+ReaderOption = Annotated[
+    str,
+    typer.Option(
+        "--reader",
+        help=(
+            "Markdown reader: 'html' (Python-Markdown → HTML → IR, the default) or "
+            "'tmark' (the TMark parser and writers; migration path)."
+        ),
+        rich_help_panel=INPUTS_PANEL,
+        case_sensitive=False,
+    ),
+]
+
 FullDocumentOption = Annotated[
     bool,
     typer.Option(

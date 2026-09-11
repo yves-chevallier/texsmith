@@ -1,0 +1,69 @@
+{
+  "bodies": [
+    {
+      "name": "cover",
+      "position": -2,
+      "heading_levels": [
+        1
+      ],
+      "whole_document": true,
+      "blocks": [
+        {
+          "type": "Header",
+          "level": 1,
+          "content": [
+            {
+              "type": "Str",
+              "text": "Only"
+            }
+          ]
+        },
+        {
+          "type": "Para",
+          "content": [
+            {
+              "type": "Str",
+              "text": "Whole document."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "extra",
+      "position": -1,
+      "heading_levels": [
+        1
+      ],
+      "whole_document": true,
+      "blocks": [
+        {
+          "type": "Header",
+          "level": 1,
+          "content": [
+            {
+              "type": "Str",
+              "text": "Only"
+            }
+          ]
+        },
+        {
+          "type": "Para",
+          "content": [
+            {
+              "type": "Str",
+              "text": "Whole document."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "mainmatter",
+      "position": 0,
+      "heading_levels": [],
+      "whole_document": false,
+      "blocks": []
+    }
+  ]
+}

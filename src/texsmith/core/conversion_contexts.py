@@ -13,6 +13,7 @@ from .templates import TemplateBinding
 if TYPE_CHECKING:  # pragma: no cover - typing only
     from .bibliography.collection import BibliographyCollection
     from .conversion.models import ConversionRequest
+    from .conversion.resolution import ResolutionChain
     from .documents import Document
     from .templates.runtime import TemplateRuntime
 
@@ -60,6 +61,9 @@ class ConversionContext:
     # Template-bound state (populated by bind_template)
     config: BookConfig | None = None
     template_binding: TemplateBinding | None = None
+
+    # IR path (reader ``tmark``): the counter state chained across the batch.
+    resolution: ResolutionChain | None = None
 
 
 __all__ = [

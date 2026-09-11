@@ -13,6 +13,14 @@ Implementation Rationale
   we avoid repeated Markdown or HTML parsing.
 : A dedicated abstraction makes it easy to inspect or mutate front matter in
   higher layers while keeping a single document shape throughout the conversion engine.
+: Two readers feed the same shape during the TMark migration
+  (``specs/migration/python-ir-and-passes.md`` §2). ``reader="html"`` (the
+  default) keeps the Markdown → HTML path and its canonicalised HTML;
+  ``reader="tmark"`` parses the source with ``tmark.parse`` and stores the
+  generated IR (:attr:`Document.ir`), the build's :class:`FileTable`, the
+  parse diagnostics and, once the passes ran, the per-slot bodies. The
+  ``front_matter`` mapping is the legacy view of the same YAML for both, so the
+  template machinery does not change.
 
 Usage Example
 :
@@ -36,12 +44,17 @@ import copy
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
+
+from texsmith.diagnostics import Diagnostic, FileTable
+from texsmith.ir import model as irm
+from texsmith.ir.walk import plain_text
 
 from ..adapters.markdown import (
     DEFAULT_MARKDOWN_EXTENSIONS,
     MarkdownConversionError,
     render_markdown,
+    split_front_matter,
 )
 from .conversion.debug import ConversionError, debug_enabled
 from .conversion.inputs import (
@@ -57,11 +70,20 @@ from .metadata import PressMetadataError, normalise_press_metadata
 from .templates.runtime import coerce_base_level
 
 
+if TYPE_CHECKING:  # pragma: no cover - typing only
+    from ..passes.slots import SlotBody
+
+
 __all__ = [
+    "READERS",
     "Document",
+    "SlotPlan",
     "TitleStrategy",
     "front_matter_has_title",
 ]
+
+#: The readers ``from_markdown`` accepts (``--reader``).
+READERS: tuple[str, ...] = ("html", "tmark")
 
 _SLOT_WILDCARDS: set[str] = {
     DOCUMENT_SELECTOR_SENTINEL,
@@ -117,6 +139,16 @@ def _resolve_title_strategy(
     return TitleStrategy.KEEP
 
 
+def _coerce_document_base_level(value: int | str, emitter: DiagnosticEmitter) -> int:
+    try:
+        resolved = coerce_base_level(value, allow_none=False)
+    except Exception as exc:  # pragma: no cover - defensive
+        message = f"Invalid base level '{value}': {exc}"
+        emitter.error(message, exc)
+        raise ConversionError(message) from exc
+    return int(resolved or 0)
+
+
 def front_matter_has_title(metadata: Mapping[str, Any] | None) -> bool:
     """Return ``True`` when the mapping declares a title."""
     if not isinstance(metadata, Mapping):
@@ -157,6 +189,21 @@ def _front_matter_numbered(metadata: Mapping[str, Any] | None) -> bool | None:
 
 
 @dataclass(slots=True)
+class SlotPlan:
+    """The slot requests of a document: selectors, wildcard inclusions, options.
+
+    A view over the ``Document`` fields of the same names (the dictionaries are
+    shared, not copied), so the slots pass and the legacy HTML splitter read
+    one state.
+    """
+
+    selectors: dict[str, str]
+    includes: set[str]
+    options: dict[str, SlotOptions]
+    requests: dict[str, str]
+
+
+@dataclass(slots=True)
 class Document:
     """Renderable document used by the high-level API."""
 
@@ -175,6 +222,18 @@ class Document:
     slot_requests: dict[str, str] = field(default_factory=dict)
     language: str | None = None
     bibliography: dict[str, Any] = field(default_factory=dict)
+    #: ``"html"`` (Markdown → HTML → legacy IR) or ``"tmark"`` (``tmark.parse`` → :attr:`ir`).
+    reader: str = "html"
+    #: The tmark IR of the source (``ir.file == 0``); ``None`` on the HTML path.
+    ir: irm.Document | None = None
+    #: ``FileId -> SourceFile``; id 0 is the source, includes and loaded files follow.
+    files: FileTable = field(default_factory=FileTable)
+    #: Parse, pass, resolve and write records, in emission order.
+    diagnostics: list[Diagnostic] = field(default_factory=list)
+    #: The ``tmark.resolve`` result of the whole document (``handle`` included).
+    resolved: dict[str, Any] | None = None
+    #: The per-slot bodies computed by the ``slots``/``headings`` passes.
+    bodies: tuple[SlotBody, ...] = ()
     _prepared_drop_title: bool | None = field(default=None, init=False, repr=False)
 
     @classmethod
@@ -190,9 +249,28 @@ class Document:
         title_strategy: TitleStrategy | None = None,
         numbered: bool = True,
         emitter: DiagnosticEmitter | None = None,
+        reader: str = "html",
     ) -> Document:
-        """Create a document from a Markdown file while caching HTML for reuse."""
+        """Create a document from a Markdown file.
+
+        ``reader="html"`` renders the Markdown to HTML (cached for reuse);
+        ``reader="tmark"`` parses it with ``tmark.parse`` and keeps the IR.
+        """
+        if reader not in READERS:
+            raise ValueError(f"Unknown reader '{reader}'; expected one of {', '.join(READERS)}")
         active_emitter = emitter or NullEmitter()
+
+        if reader == "tmark":
+            return cls._from_tmark(
+                path,
+                promote_title=promote_title,
+                strip_heading=strip_heading,
+                suppress_title=suppress_title,
+                base_level=base_level,
+                title_strategy=title_strategy,
+                numbered=numbered,
+                emitter=active_emitter,
+            )
 
         # The counter and cross-reference extensions hold no emitter: they
         # report through the one installed here.
@@ -238,6 +316,70 @@ class Document:
             title_strategy=strategy,
             numbered=numbered_flag,
             suppress_title_metadata=suppress_title,
+        )
+        document._initialise_slots_from_front_matter()
+        return document
+
+    @classmethod
+    def _from_tmark(
+        cls,
+        path: Path,
+        *,
+        promote_title: bool,
+        strip_heading: bool,
+        suppress_title: bool,
+        base_level: int | str,
+        title_strategy: TitleStrategy | None,
+        numbered: bool,
+        emitter: DiagnosticEmitter,
+    ) -> Document:
+        """Parse ``path`` with tmark; the parse diagnostics go to ``emitter`` and the document."""
+        from ..readers import tmark as tmark_reader
+
+        try:
+            text = path.read_text(encoding="utf-8")
+        except OSError as exc:
+            message = f"Failed to read Markdown source '{path}': {exc}"
+            emitter.error(message, exc)
+            raise ConversionError(message) from exc
+
+        # The build's file table is the emitter's when it has one, so every
+        # diagnostic of the batch renders with its file name; a document then
+        # takes the next free id (0 for the first one).
+        files = getattr(emitter, "files", None)
+        if not isinstance(files, FileTable):
+            files = FileTable()
+        file_id = files.add(path, text)
+        ir_document, diagnostics = tmark_reader.read(text, file_id=file_id, name=str(path))
+        for record in diagnostics:
+            emitter.diagnostic(record)
+
+        # The legacy mapping is the raw YAML, as the HTML path sees it:
+        # ``normalise_press_metadata`` applies the same rules to both readers.
+        front_matter, _body = split_front_matter(text)
+
+        resolved_base_level = _coerce_document_base_level(base_level, emitter)
+        declared_title = front_matter_has_title(front_matter)
+        strategy = _resolve_title_strategy(
+            explicit=title_strategy,
+            promote_title=promote_title,
+            strip_heading=strip_heading,
+            has_declared_title=declared_title,
+        )
+        front_numbered = _front_matter_numbered(front_matter)
+        document = cls(
+            source_path=path,
+            kind=InputKind.MARKDOWN,
+            _html="",
+            _front_matter=front_matter,
+            base_level=resolved_base_level,
+            title_strategy=strategy,
+            numbered=numbered if front_numbered is None else front_numbered,
+            suppress_title_metadata=suppress_title,
+            reader="tmark",
+            ir=ir_document,
+            files=files,
+            diagnostics=list(diagnostics),
         )
         document._initialise_slots_from_front_matter()
         return document
@@ -325,7 +467,56 @@ class Document:
             slot_requests={},
             language=None,
             bibliography={},
+            reader=self.reader,
+            ir=self.ir,
+            files=self.files,
+            diagnostics=list(self.diagnostics),
         )
+
+    def evolve(self, **changes: Any) -> Document:
+        """A shallow copy with ``changes`` applied, prepared state kept.
+
+        What a pass returns: the IR, the bodies or the resolution replaced, every
+        other field (including the title decision of :meth:`prepare_for_conversion`)
+        shared with the input, which is never mutated.
+        """
+        clone = copy.copy(self)
+        for name, value in changes.items():
+            setattr(clone, name, value)
+        return clone
+
+    @property
+    def slots(self) -> SlotPlan:
+        """The slot requests as one object (shared dictionaries, not copies)."""
+        return SlotPlan(
+            selectors=self.slot_selectors,
+            includes=self.slot_includes,
+            options=self.slot_options,
+            requests=self.slot_requests,
+        )
+
+    @property
+    def keys(self) -> irm.Keys:
+        """The typed front matter of the tmark reader (empty on the HTML path)."""
+        if self.ir is None:
+            return irm.Keys()
+        return self.ir.front_matter.keys
+
+    @property
+    def press(self) -> dict[str, Any]:
+        """TeXSmith's validated press view of the front matter (``normalise_press_metadata``)."""
+        payload = dict(self._front_matter)
+        try:
+            view = normalise_press_metadata(payload)
+        except PressMetadataError:
+            return {}
+        return dict(view or {})
+
+    def top_level_headers(self) -> list[irm.Header]:
+        """The ``Header`` blocks at the root of the tmark IR, in order (empty on the HTML path)."""
+        if self.ir is None:
+            return []
+        return [block for block in self.ir.blocks if isinstance(block, irm.Header)]
 
     @property
     def html(self) -> str:
@@ -464,6 +655,8 @@ class Document:
 
     def _extract_promoted_title(self) -> tuple[str | None, bool]:
         """Return the promoted title and whether the heading should be dropped."""
+        if self.reader == "tmark":
+            return self._extract_promoted_title_ir()
         inspector = HeadingInspector()
         try:
             inspector.feed(self._html)
@@ -480,8 +673,22 @@ class Document:
         text = "".join(inspector.parts).strip()
         return (text or None, bool(text))
 
+    def _extract_promoted_title_ir(self) -> tuple[str | None, bool]:
+        """The IR twin of :meth:`_extract_promoted_title`: first top-level header, unique at its level."""
+        headers = self.top_level_headers()
+        if not headers:
+            return None, False
+        first = headers[0]
+        if sum(1 for header in headers if header.level == first.level) != 1:
+            return None, False
+        text = plain_text(first.content).strip()
+        return (text or None, bool(text))
+
     def _first_heading_level(self) -> int | None:
         """Return the level of the first heading in the document, if any."""
+        if self.reader == "tmark":
+            headers = self.top_level_headers()
+            return headers[0].level if headers else None
         inspector = HeadingInspector()
         try:
             inspector.feed(self._html)
