@@ -5,6 +5,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, ClassVar
 
+from texsmith.core.fragments.activation import required_fragment
 from texsmith.core.fragments.base import BaseFragment, FragmentPiece
 
 
@@ -40,6 +41,9 @@ class KeystrokesFragment(BaseFragment[KeystrokesConfig]):
 
 
 def _detect_keystrokes(context: Mapping[str, Any]) -> bool:
+    # IR path: the writer named the contract (fragment-contracts.md §2).
+    if required_fragment(context, "ts-keystrokes"):
+        return True
     tokens = ("\\keystroke{", "\\keystrokes{")
     for value in context.values():
         if not isinstance(value, str):

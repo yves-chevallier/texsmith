@@ -52,6 +52,21 @@ def persist_debug_artifacts(output_dir: Path, source: Path, html: str) -> None:
     debug_path.write_text(html, encoding="utf-8")
 
 
+def persist_debug_ir(output_dir: Path, source: Path, ir_document: Any) -> Path:
+    """Persist the tmark IR of a document as ``<stem>.ir.json`` (the ``--debug-html`` twin)."""
+    import json
+
+    from texsmith.ir.codec import encode_document
+
+    output_dir.mkdir(parents=True, exist_ok=True)
+    debug_path = output_dir / f"{source.stem}.ir.json"
+    debug_path.write_text(
+        json.dumps(encode_document(ir_document), indent=2, ensure_ascii=False) + "\n",
+        encoding="utf-8",
+    )
+    return debug_path
+
+
 def format_rendering_error(error: LatexRenderingError) -> str:
     """Format a human-readable rendering failure summary."""
     cause = error.__cause__
@@ -82,6 +97,7 @@ __all__ = [
     "format_rendering_error",
     "format_user_friendly_render_error",
     "persist_debug_artifacts",
+    "persist_debug_ir",
     "raise_conversion_error",
     "record_event",
 ]
