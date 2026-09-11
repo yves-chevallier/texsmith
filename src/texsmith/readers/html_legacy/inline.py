@@ -1,12 +1,11 @@
-"""Inline lowerings: phrasing-level HTML tags into the generated inline models.
+"""Inline lowerings: phrasing-level HTML tags into inline IR.
 
 Each ``@reads(..., level=INLINE)`` callable turns one HTML tag into an inline
-node (or sequence), recursing into children via ``ctx.lower_inline``. Semantic
-concepts (emphasis, code, links, math, notes, index entries, …) map to the
-typed nodes of :mod:`texsmith.ir.model`; anything the models do not express
-(critic markup, helper links, ``data-script`` runs) maps to a
-:class:`~texsmith.ir.model.SpanNode` carrying a ``role`` attribute, which the
-writers render transparently.
+IR node (or sequence), recursing into children via ``ctx.lower_inline``. No
+LaTeX is produced; semantic concepts (emphasis, code, links, math, …) map to
+typed inline nodes, and anything genuinely generic (critic markup, helper
+links, ``data-script`` spans, abbreviations) maps to a :class:`~texsmith.ir.Span`
+carrying a ``role`` attribute hint, per the IR contract.
 """
 
 from __future__ import annotations
@@ -14,18 +13,17 @@ from __future__ import annotations
 import re
 from typing import TYPE_CHECKING
 
-from texsmith.extensions.texlogos.specs import iter_specs
-from texsmith.ir import model
-
-from ._helpers import classes, coerce_attr, make_attrs
-from .registry import NotHandled, ReadLevel, reads
+from texsmith.ir import nodes as ir
+from texsmith.readers.html._helpers import attrs_tuple, classes, coerce_attr
+from texsmith.readers.html.registry import NotHandled, ReadLevel, reads
 
 
 if TYPE_CHECKING:  # pragma: no cover - typing only
     from bs4.element import Tag
 
+    from texsmith.readers.html.registry import _NotHandledType
+
     from .context import ReadContext
-    from .registry import _NotHandledType
 
 
 # ---------------------------------------------------------------------------
@@ -34,28 +32,28 @@ if TYPE_CHECKING:  # pragma: no cover - typing only
 
 
 @reads("em", "i", level=ReadLevel.INLINE, name="emphasis")
-def read_emphasis(tag: Tag, ctx: ReadContext) -> model.Emph:
-    return model.Emph(content=ctx.lower_inline(tag.children))
+def read_emphasis(tag: Tag, ctx: ReadContext) -> ir.Emph:
+    return ir.Emph(content=ctx.lower_inline(tag.children))
 
 
 @reads("strong", "b", level=ReadLevel.INLINE, name="strong")
-def read_strong(tag: Tag, ctx: ReadContext) -> model.Strong:
-    return model.Strong(content=ctx.lower_inline(tag.children))
+def read_strong(tag: Tag, ctx: ReadContext) -> ir.Strong:
+    return ir.Strong(content=ctx.lower_inline(tag.children))
 
 
 @reads("sub", level=ReadLevel.INLINE, name="subscript")
-def read_subscript(tag: Tag, ctx: ReadContext) -> model.Subscript:
-    return model.Subscript(content=ctx.lower_inline(tag.children))
+def read_subscript(tag: Tag, ctx: ReadContext) -> ir.Subscript:
+    return ir.Subscript(content=ctx.lower_inline(tag.children))
 
 
 @reads("q", level=ReadLevel.INLINE, name="quoted")
-def read_quoted(tag: Tag, ctx: ReadContext) -> model.Quoted:
-    return model.Quoted(content=ctx.lower_inline(tag.children))
+def read_quoted(tag: Tag, ctx: ReadContext) -> ir.Quoted:
+    return ir.Quoted(content=ctx.lower_inline(tag.children))
 
 
 @reads("br", level=ReadLevel.INLINE, name="line_break")
-def read_line_break(_tag: Tag, _ctx: ReadContext) -> model.LineBreak:
-    return model.LineBreak()
+def read_line_break(_tag: Tag, _ctx: ReadContext) -> ir.LineBreak:
+    return ir.LineBreak()
 
 
 # ---------------------------------------------------------------------------
@@ -73,29 +71,31 @@ def _critic_role(tag: Tag, default: str) -> str:
     return f"critic-{default}"
 
 
-def _role_span(role: str, content: tuple[model.Inline, ...], **extra: str) -> model.SpanNode:
-    return model.SpanNode(attrs=make_attrs(kv={"role": role, **extra}), content=content)
-
-
 @reads("del", "s", level=ReadLevel.INLINE, name="strikeout", priority=10)
-def read_strikeout(tag: Tag, ctx: ReadContext) -> model.SpanNode | model.Strikeout:
+def read_strikeout(tag: Tag, ctx: ReadContext) -> ir.Span | ir.Strikeout:
     role = _critic_role(tag, "deletion")
     content = ctx.lower_inline(tag.children)
-    return _role_span(role, content) if role else model.Strikeout(content=content)
+    if role:
+        return ir.Span(content=content, attrs=attrs_tuple({"role": role}))
+    return ir.Strikeout(content=content)
 
 
 @reads("ins", "u", level=ReadLevel.INLINE, name="underline", priority=10)
-def read_underline(tag: Tag, ctx: ReadContext) -> model.SpanNode | model.Underline:
+def read_underline(tag: Tag, ctx: ReadContext) -> ir.Span | ir.Underline:
     role = _critic_role(tag, "addition")
     content = ctx.lower_inline(tag.children)
-    return _role_span(role, content) if role else model.Underline(content=content)
+    if role:
+        return ir.Span(content=content, attrs=attrs_tuple({"role": role}))
+    return ir.Underline(content=content)
 
 
 @reads("mark", level=ReadLevel.INLINE, name="highlight", priority=10)
-def read_highlight(tag: Tag, ctx: ReadContext) -> model.SpanNode | model.Highlight:
+def read_highlight(tag: Tag, ctx: ReadContext) -> ir.Span | ir.Highlight:
     role = _critic_role(tag, "highlight")
     content = ctx.lower_inline(tag.children)
-    return _role_span(role, content) if role else model.Highlight(content=content)
+    if role:
+        return ir.Span(content=content, attrs=attrs_tuple({"role": role}))
+    return ir.Highlight(content=content)
 
 
 # ---------------------------------------------------------------------------
@@ -104,32 +104,30 @@ def read_highlight(tag: Tag, ctx: ReadContext) -> model.SpanNode | model.Highlig
 
 
 @reads("span", level=ReadLevel.INLINE, name="span", priority=0)
-def read_span(
-    tag: Tag, ctx: ReadContext
-) -> model.Inline | tuple[model.Inline, ...] | _NotHandledType:
+def read_span(tag: Tag, ctx: ReadContext) -> ir.Inline | _NotHandledType:
     """Lower the many flavours of ``<span>`` to typed nodes or a generic Span."""
     cls = classes(tag.get("class"))
 
     # Raw inline LaTeX payload (``{latex}[…]`` → ``<span class="latex-raw">``).
     if "latex-raw" in cls:
-        return model.RawInline(format="latex", text=tag.get_text())
+        return ir.RawInline(format="latex", text=tag.get_text())
 
     # Inline math payload (mdx_math / arithmatex): keep the raw TeX source.
     if "arithmatex" in cls:
-        return model.Math(text=_math_payload(tag.get_text()), display=False)
+        return ir.Math(text=_math_payload(tag.get_text()), display=False)
 
     # Small caps (texsmith SmallCaps extension).
     if "texsmith-smallcaps" in cls:
-        return model.SmallCaps(content=ctx.lower_inline(tag.children))
+        return ir.SmallCaps(content=ctx.lower_inline(tag.children))
 
     # Twemoji inline SVG span: carry the emoji token (title/text).
     if "twemoji" in cls:
         token = (coerce_attr(tag.get("title")) or tag.get_text(strip=True) or "").strip()
-        return emoji_span(token)
+        return ir.Span(content=(ir.Str(token),), attrs=attrs_tuple({"role": "emoji"}))
 
     # Keystrokes: ``<span class="keys"><kbd class="key-ctrl">…`` (pymdownx.keys).
     if "keys" in cls:
-        return model.Keystroke(keys=_keystroke_keys(tag))
+        return ir.Keystroke(keys=_keystroke_keys(tag))
 
     # Index entry: ``<span class="ts-hashtag|ts-index" data-tag…>``.
     if "ts-hashtag" in cls or "ts-index" in cls:
@@ -137,72 +135,61 @@ def read_span(
         return entry if entry is not None else NotHandled
 
     # Index entry (inline variant): ``<span data-tag-name="a, b" data-tag-style>``
-    # — the comma-separated nested form the inline index handler used.
+    # — the comma-separated nested form the legacy inline index handler used.
     if coerce_attr(tag.get("data-tag-name")):
         entry = _index_entry_named(tag, ctx)
         return entry if entry is not None else NotHandled
 
-    # TeX logo: ``<span class="tex-logo" data-tex-logo="latex">``. The word
-    # stays a ``Str``; the writers' ``typography.tex-logos`` feature sets it.
+    # TeX logo: ``<span class="tex-logo" data-tex-logo="latex">``.
     if "tex-logo" in cls:
         slug = coerce_attr(tag.get("data-tex-logo")) or ""
-        return model.Str(_TEX_LOGO_WORDS.get(slug, tag.get_text(strip=True) or slug))
+        return ir.TexLogo(name=slug or tag.get_text(strip=True))
 
     # latex-text span — the {LaTeX} helper.
     if "latex-text" in cls:
-        return model.Str("LaTeX")
+        return ir.TexLogo(name="latex")
 
     # Critic substitution: paired <del>/<ins> inside the span.
     if "critic" in cls and "subst" in cls:
-        return _role_span("critic-substitution", ctx.lower_inline(tag.children))
+        return ir.Span(
+            content=ctx.lower_inline(tag.children),
+            attrs=attrs_tuple({"role": "critic-substitution"}),
+        )
     if "critic" in cls and "comment" in cls:
-        return _role_span("critic-comment", ctx.lower_inline(tag.children))
+        return ir.Span(
+            content=ctx.lower_inline(tag.children),
+            attrs=attrs_tuple({"role": "critic-comment"}),
+        )
 
     # MkDocs autoref placeholder.
     identifier = coerce_attr(tag.get("data-autorefs-identifier"))
     if identifier:
-        return model.Link(target=model.Anchor(identifier), content=ctx.lower_inline(tag.children))
+        return ir.Link(content=ctx.lower_inline(tag.children), target=f"#{identifier}")
 
     # data-script font wrapper (e.g. a phonetic / script run).
     slug = coerce_attr(tag.get("data-script"))
     if slug:
-        return model.SpanNode(
-            attrs=make_attrs(kv={"script": slug}), content=ctx.lower_inline(tag.children)
+        return ir.Span(
+            content=ctx.lower_inline(tag.children),
+            attrs=attrs_tuple({"role": "script", "script": slug}),
         )
 
     # Custom counter marker: the printed number doubles as a label target.
     if "ts-counter" in cls:
-        return _counter_item(tag)
+        return ir.Span(
+            content=ctx.lower_inline(tag.children),
+            attrs=attrs_tuple({"role": "counter", "id": coerce_attr(tag.get("id")) or ""}),
+        )
 
-    # A span carrying an id or classes is a host for them; a bare span is
-    # transparent — its children stand in its place.
-    span_id = coerce_attr(tag.get("id"))
-    content = ctx.lower_inline(tag.children)
-    if span_id or cls:
-        return model.SpanNode(attrs=make_attrs(id=span_id, classes=cls), content=content)
-    return content
+    # Plain span with classes: keep them as a generic Span hint.
+    if cls:
+        return ir.Span(
+            content=ctx.lower_inline(tag.children),
+            attrs=attrs_tuple({"class": " ".join(cls)}),
+        )
 
-
-#: ``data-tex-logo`` slug → the word tmark's ``TEX_LOGOS`` registry sets as a logo.
-_TEX_LOGO_WORDS: dict[str, str] = {spec.slug: spec.aliases[0] for spec in iter_specs()}
-
-
-def emoji_span(token: str) -> model.SpanNode:
-    """An emoji (twemoji / emojione markup): ``Span{emoji=…}`` around the character."""
-    return model.SpanNode(attrs=make_attrs(kv={"emoji": token}), content=(model.Str(token),))
-
-
-def _counter_item(tag: Tag) -> model.CounterItem | tuple[model.Inline, ...]:
-    """``<span class="ts-counter" data-counter="fw" data-key="x">`` → ``CounterItem``."""
-    prefix = (coerce_attr(tag.get("data-counter")) or "").strip()
-    key = (coerce_attr(tag.get("data-key")) or "").strip()
-    if not (prefix and key):
-        identifier = coerce_attr(tag.get("id")) or ""
-        prefix, _, key = identifier.partition(":")
-    if prefix and key:
-        return model.CounterItem(key=key, prefix=prefix)
-    text = tag.get_text()
-    return (model.Str(text),) if text else ()
+    # Bare span: transparent — lower to its children directly.
+    return ir.Span(content=ctx.lower_inline(tag.children))
 
 
 def _math_payload(text: str) -> str:
@@ -228,7 +215,7 @@ def _keystroke_keys(tag: Tag) -> tuple[str, ...]:
     return tuple(keys)
 
 
-def _index_entry(tag: Tag, ctx: ReadContext) -> tuple[model.Inline, ...] | None:
+def _index_entry(tag: Tag, ctx: ReadContext) -> ir.IndexEntry | None:
     path: list[str] = []
     index = 0
     while True:
@@ -242,35 +229,35 @@ def _index_entry(tag: Tag, ctx: ReadContext) -> tuple[model.Inline, ...] | None:
         index += 1
     if not path:
         return None
-    return _index_nodes(tag, ctx, path, coerce_attr(tag.get("data-style")))
+    style = (coerce_attr(tag.get("data-style")) or "").strip().lower()
+    if style == "ib":
+        style = "bi"
+    if style not in {"b", "i", "bi"}:
+        style = ""
+    registry = (coerce_attr(tag.get("data-registry")) or "").strip()
+    visible = ctx.lower_inline(tag.children)
+    return ir.IndexEntry(
+        path=tuple(path),
+        style=style,
+        registry=registry,
+        visible=visible,
+    )
 
 
-def _index_entry_named(tag: Tag, ctx: ReadContext) -> tuple[model.Inline, ...] | None:
+def _index_entry_named(tag: Tag, ctx: ReadContext) -> ir.IndexEntry | None:
     """Lower the ``data-tag-name`` index span (comma-separated nested path)."""
     raw = coerce_attr(tag.get("data-tag-name")) or ""
     path = [segment.strip() for segment in raw.split(",") if segment.strip()]
     if not path:
         return None
-    return _index_nodes(tag, ctx, path, coerce_attr(tag.get("data-tag-style")))
-
-
-def _index_nodes(
-    tag: Tag, ctx: ReadContext, path: list[str], style: str | None
-) -> tuple[model.Inline, ...]:
-    """The visible text of an index span, then the zero-width ``IndexEntry``.
-
-    The legacy ``{b}`` suffix (a bold page number) is ``main=true``; the
-    ``{i}`` style has no model counterpart and is dropped (spec Appendix
-    "Deprecation schedule").
-    """
-    registry = (coerce_attr(tag.get("data-registry")) or "").strip() or None
-    main = "b" in (style or "").strip().lower()
-    entry = model.IndexEntry(
-        main=main,
-        path=tuple((model.Str(segment),) for segment in path),
-        registry=registry,
-    )
-    return (*ctx.lower_inline(tag.children), entry)
+    style = (coerce_attr(tag.get("data-tag-style")) or "").strip().lower()
+    if style == "ib":
+        style = "bi"
+    if style not in {"b", "i", "bi"}:
+        style = ""
+    registry = (coerce_attr(tag.get("data-registry")) or "").strip()
+    visible = ctx.lower_inline(tag.children)
+    return ir.IndexEntry(path=tuple(path), style=style, registry=registry, visible=visible)
 
 
 # ---------------------------------------------------------------------------
@@ -279,10 +266,16 @@ def _index_nodes(
 
 
 @reads("code", level=ReadLevel.INLINE, name="inline_code")
-def read_inline_code(tag: Tag, _ctx: ReadContext) -> model.Code:
+def read_inline_code(tag: Tag, _ctx: ReadContext) -> ir.Code:
     cls = classes(tag.get("class"))
-    lang = next((c[len("language-") :] for c in cls if c.startswith("language-")), None)
-    return model.Code(text=_code_text(tag), lang=lang or None)
+    lang = next(
+        (c[len("language-") :] for c in cls if c.startswith("language-")),
+        "",
+    )
+    if not lang and "highlight" in cls:
+        lang = "text"
+    text = _code_text(tag)
+    return ir.Code(text=text, lang=lang)
 
 
 def _code_text(tag: Tag) -> str:
@@ -302,17 +295,8 @@ def _code_text(tag: Tag) -> str:
 _CHROME_ANCHOR_CLASSES = frozenset({"headerlink", "footnote-ref", "footnote-backref"})
 
 
-def link_target(href: str) -> model.Target:
-    """``#id`` is an anchor of this document; anything else a URL."""
-    if href.startswith("#"):
-        return model.Anchor(href[1:])
-    return model.Url(href)
-
-
 @reads("a", level=ReadLevel.INLINE, name="link", priority=0)
-def read_link(
-    tag: Tag, ctx: ReadContext
-) -> model.Inline | tuple[model.Inline, ...] | None | _NotHandledType:
+def read_link(tag: Tag, ctx: ReadContext) -> ir.Inline | None | _NotHandledType:
     cls = classes(tag.get("class"))
 
     # Index annotation carried on an anchor (``<a data-tag-name=…>``).
@@ -322,42 +306,59 @@ def read_link(
             return entry
 
     # Navigational chrome (footnote markers/back-refs, header anchors,
-    # lightbox wrappers) is dropped. A footnote *marker* is carried by the
-    # enclosing ``<sup id>`` (a ``Note``); a back-ref is pure chrome.
+    # lightbox wrappers) is dropped, mirroring the legacy ``discard_unwanted``
+    # PRE strip rules. A footnote *marker* is carried by the enclosing
+    # ``<sup id>`` (a footnote-ref span); a back-ref is pure chrome.
     if _CHROME_ANCHOR_CLASSES.intersection(cls):
+        if "footnote-ref" in cls:
+            # Keep the visible marker text so the footnote-ref span still has a
+            # fallback rendering when no body/citation resolves.
+            content = ctx.lower_inline(tag.children)
+            return ir.Span(content=content) if content else None
         return None
     if "glightbox" in cls:
-        return ctx.lower_inline(tag.children)
+        content = ctx.lower_inline(tag.children)
+        return ir.Span(content=content) if content else None
 
     # Unicode helper link: ``<a class="ycr-unicode" href=…>CODE</a>``.
     if "ycr-unicode" in cls:
         code = tag.get_text(strip=True)
         href = coerce_attr(tag.get("href")) or ""
-        return model.Link(target=link_target(href), content=(model.Str(f"U+{code}"),))
+        return ir.Link(
+            content=(ir.Str(f"U+{code}"),),
+            target=href,
+            title="",
+        )
     # Regex helper link.
     if "ycr-regex" in cls:
         href = coerce_attr(tag.get("href")) or ""
-        return _role_span("regex", ctx.lower_inline(tag.children), href=href)
+        return ir.Span(
+            content=ctx.lower_inline(tag.children),
+            attrs=attrs_tuple({"role": "regex", "href": href}),
+        )
 
     href = coerce_attr(tag.get("href"))
-    title = coerce_attr(tag.get("title")) or None
+    title = coerce_attr(tag.get("title")) or ""
     content = ctx.lower_inline(tag.children)
 
-    if not href:
+    if href is None or href == "":
         identifier = coerce_attr(tag.get("id"))
         if identifier:
             # An anchor that only defines a label.
-            return model.SpanNode(attrs=make_attrs(id=identifier), content=content)
+            return ir.Span(
+                content=content,
+                attrs=attrs_tuple({"role": "label", "id": identifier}),
+            )
         # Anchor with no destination: keep its content transparently.
-        return content
+        return ir.Span(content=content) if content else None
 
-    return model.Link(target=link_target(href), content=content, title=title)
+    return ir.Link(content=content, target=href, title=title)
 
 
 @reads("autoref", level=ReadLevel.INLINE, name="autoref")
-def read_autoref(tag: Tag, ctx: ReadContext) -> model.Link:
+def read_autoref(tag: Tag, ctx: ReadContext) -> ir.Link:
     identifier = coerce_attr(tag.get("identifier")) or ""
-    return model.Link(target=model.Anchor(identifier), content=ctx.lower_inline(tag.children))
+    return ir.Link(content=ctx.lower_inline(tag.children), target=f"#{identifier}")
 
 
 # ---------------------------------------------------------------------------
@@ -366,7 +367,7 @@ def read_autoref(tag: Tag, ctx: ReadContext) -> model.Link:
 
 
 @reads("img", level=ReadLevel.ANY, name="image")
-def read_image(tag: Tag, ctx: ReadContext) -> model.Inline:
+def read_image(tag: Tag, _ctx: ReadContext) -> ir.Inline:
     cls = classes(tag.get("class"))
     # Twemoji / emoji images carry their token in alt/title/data-emoji.
     if {"twemoji", "emojione"}.intersection(cls):
@@ -376,18 +377,14 @@ def read_image(tag: Tag, ctx: ReadContext) -> model.Inline:
             or coerce_attr(tag.get("title"))
             or ""
         )
-        return emoji_span(token)
-    return model.Image(
+        return ir.Span(content=(ir.Str(token),), attrs=attrs_tuple({"role": "emoji"}))
+    return ir.Image(
         src=coerce_attr(tag.get("src")) or "",
-        alt=alt_inlines(coerce_attr(tag.get("alt")) or "", ctx),
-        attrs=make_attrs(
-            id=coerce_attr(tag.get("id")),
-            kv={
-                "width": coerce_attr(tag.get("width")),
-                "title": coerce_attr(tag.get("title")),
-                **_render_options(tag),
-            },
-        ),
+        alt=_alt_inlines(coerce_attr(tag.get("alt")) or "", _ctx),
+        title=coerce_attr(tag.get("title")) or "",
+        width=coerce_attr(tag.get("width")) or "",
+        identifier=coerce_attr(tag.get("id")) or "",
+        options=_render_options(tag),
     )
 
 
@@ -397,14 +394,14 @@ def read_image(tag: Tag, ctx: ReadContext) -> model.Inline:
 _RENDER_OPTION_ATTRS: tuple[str, ...] = ("crop",)
 
 
-def _render_options(tag: Tag) -> dict[str, str]:
+def _render_options(tag: Tag) -> tuple[tuple[str, str], ...]:
     """Collect the converter options an ``attr_list`` block set on the image."""
     collected: dict[str, str] = {}
     for name in _RENDER_OPTION_ATTRS:
         value = coerce_attr(tag.get(name))
-        if value:
+        if value is not None and value != "":
             collected[name] = value
-    return collected
+    return attrs_tuple(collected)
 
 
 #: Characters that can start inline Markdown syntax; an alt without any of
@@ -414,7 +411,7 @@ _ALT_MARKUP_RE = re.compile(r"[*_`\[<]")
 _ALT_PARSER = None
 
 
-def alt_inlines(alt: str, ctx: ReadContext) -> tuple[model.Inline, ...]:
+def _alt_inlines(alt: str, ctx: ReadContext) -> tuple[ir.Inline, ...]:
     """Lower an ``alt`` attribute, parsing the inline Markdown it carries.
 
     Python-Markdown copies the image description verbatim into ``alt``, so
@@ -425,7 +422,7 @@ def alt_inlines(alt: str, ctx: ReadContext) -> tuple[model.Inline, ...]:
     if not alt:
         return ()
     if not _ALT_MARKUP_RE.search(alt):
-        return (model.Str(alt),)
+        return (ir.Str(alt),)
 
     global _ALT_PARSER
     if _ALT_PARSER is None:
@@ -437,69 +434,61 @@ def alt_inlines(alt: str, ctx: ReadContext) -> tuple[model.Inline, ...]:
     _ALT_PARSER.reset()
     fragment = BeautifulSoup(_ALT_PARSER.convert(alt), "html.parser")
     paragraph = fragment.find("p")
-    return ctx.inline_content(paragraph if paragraph is not None else fragment)
+    return ctx.lower_inline((paragraph if paragraph is not None else fragment).children)
 
 
 @reads("script", level=ReadLevel.ANY, name="math_script")
-def read_math_script(tag: Tag, _ctx: ReadContext) -> model.Math | _NotHandledType:
+def read_math_script(tag: Tag, _ctx: ReadContext) -> ir.Math | _NotHandledType:
     type_attr = coerce_attr(tag.get("type")) or ""
     if not type_attr.startswith("math/tex"):
         return NotHandled
     display = "mode=display" in type_attr
-    return model.Math(text=tag.get_text().strip(), display=display)
+    return ir.Math(text=tag.get_text().strip(), display=display)
 
 
 @reads("texsmith-missing-footnote", level=ReadLevel.INLINE, name="missing_footnote")
-def read_missing_footnote(tag: Tag, _ctx: ReadContext) -> model.Ref:
-    """A ``[^key]`` reference with no footnote body: a citation, resolved downstream.
+def read_missing_footnote(tag: Tag, ctx: ReadContext) -> ir.Span:
+    """A reference whose footnote/citation body is resolved by the writer.
 
-    The ``missing_footnotes`` extension emits this placeholder for references
-    the footnote extension could not pair; ``tmark.resolve`` decides between a
-    label, a bibliography key and a glossary entry (spec §Ref).
+    The ``missing_footnotes`` extension emits this placeholder for ``[^id]``
+    references with no inline definition; it may resolve to a footnote or a
+    bibliography citation downstream. The reader records the identifier as a
+    ``footnote-ref`` role and lets the writer (which owns the footnote / bib
+    registries) decide.
     """
-    key = (coerce_attr(tag.get("data-footnote-id")) or tag.get_text(strip=True)).strip()
-    return model.Ref(bracketed=True, items=(model.RefItem(key=key),))
+    identifier = (coerce_attr(tag.get("data-footnote-id")) or tag.get_text(strip=True)).strip()
+    return ir.Span(
+        content=ctx.lower_inline(tag.children),
+        attrs=attrs_tuple({"role": "footnote-ref", "ref": identifier}),
+    )
 
 
 @reads("abbr", level=ReadLevel.INLINE, name="abbreviation")
-def read_abbr(tag: Tag, ctx: ReadContext) -> model.Inline | tuple[model.Inline, ...]:
+def read_abbr(tag: Tag, ctx: ReadContext) -> ir.Inline:
     title = (coerce_attr(tag.get("title")) or "").strip()
-    text = tag.get_text()
-    if not (title and text.strip()):
+    content = ctx.lower_inline(tag.children)
+    if not title:
         # No expansion: behaves as plain text.
-        return ctx.lower_inline(tag.children)
-    ctx.define_abbreviation(text, title)
-    return model.Abbr(text=text)
-
-
-_FOOTNOTE_REF_ID = re.compile(r"^fnref\d*:(?P<label>.+)$")
+        return ir.Span(content=content) if content else ir.Str("")
+    return ir.Span(content=content, attrs=attrs_tuple({"role": "abbr", "title": title}))
 
 
 @reads("sup", level=ReadLevel.INLINE, name="superscript", priority=0)
-def read_superscript(tag: Tag, ctx: ReadContext) -> model.Inline:
-    identifier = coerce_attr(tag.get("id")) or ""
-    match = _FOOTNOTE_REF_ID.match(identifier)
-    if match is not None:
-        # Footnote reference marker (``<sup id="fnref:label">``); the body is
-        # registered on the document by the block-level footnote lowering.
-        return model.Note(label=footnote_label(match.group("label")))
-    return model.Superscript(content=ctx.lower_inline(tag.children))
-
-
-def footnote_label(raw: str) -> str:
-    """The author's ``[^label]`` behind Python-Markdown's ``fn:label`` ids.
-
-    A label reused across documents of one build gets a ``-N`` suffix in the
-    HTML; the definition and its references share it, so it is kept.
-    """
-    return raw.strip()
+def read_superscript(tag: Tag, ctx: ReadContext) -> ir.Inline:
+    identifier = coerce_attr(tag.get("id"))
+    if identifier:
+        # Footnote reference marker (``<sup id="fnref:…">``); the footnote body
+        # is matched and carried by the block-level footnote lowering, so the
+        # reference site is recorded as a footnote-ref span hint.
+        ref = identifier
+        return ir.Span(
+            content=ctx.lower_inline(tag.children),
+            attrs=attrs_tuple({"role": "footnote-ref", "ref": ref}),
+        )
+    return ir.Superscript(content=ctx.lower_inline(tag.children))
 
 
 __all__ = [
-    "alt_inlines",
-    "emoji_span",
-    "footnote_label",
-    "link_target",
     "read_abbr",
     "read_autoref",
     "read_emphasis",
@@ -509,7 +498,6 @@ __all__ = [
     "read_line_break",
     "read_link",
     "read_math_script",
-    "read_missing_footnote",
     "read_quoted",
     "read_span",
     "read_strikeout",

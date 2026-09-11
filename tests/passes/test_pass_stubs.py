@@ -1,35 +1,22 @@
-"""The passes not implemented yet are registered no-ops."""
+"""Every bundled pass is implemented; the pipeline keeps the documented order."""
 
 from __future__ import annotations
 
-import pytest
-
-from texsmith.passes import REGISTRY, build_pipeline
+from texsmith.passes import DEFAULT_PIPELINE, REGISTRY, build_pipeline
 
 
-STUBS = ("snippet",)
-
-
-@pytest.mark.parametrize("name", STUBS)
-def test_stub_returns_its_input(harness, name: str) -> None:
-    document = harness.load("stubs", "plain")
-    ctx = harness.context(document)
-    assert harness.run(name, document, ctx) is document
-    assert len(ctx.diagnostics) == 0
-
-
-def test_stubs_are_registered_with_io() -> None:
+def test_every_listed_pass_is_registered() -> None:
     build_pipeline()
-    for name in STUBS:
-        assert REGISTRY[name].needs_io is True
-        assert REGISTRY[name].stage == "pre"
+    assert set(DEFAULT_PIPELINE) <= set(REGISTRY)
 
 
 def test_implemented_passes_keep_their_documented_positions() -> None:
     order = [item.name for item in build_pipeline()]
     assert order[0] == "include"
+    assert order.index("include") < order.index("snippet") < order.index("assets")
+    assert order.index("emoji") < order.index("scripts")
     assert order.index("doi") < order.index("slots")
     assert order[-1] == "highlight"
-    assert REGISTRY["include"].stage == "pre" and REGISTRY["include"].needs_io
-    assert REGISTRY["doi"].stage == "pre" and REGISTRY["doi"].needs_io
+    for name in ("include", "snippet", "assets", "doi"):
+        assert REGISTRY[name].stage == "pre" and REGISTRY[name].needs_io
     assert REGISTRY["highlight"].stage == "post" and not REGISTRY["highlight"].needs_io

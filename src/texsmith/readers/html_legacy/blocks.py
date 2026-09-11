@@ -1,15 +1,16 @@
-"""Block lowerings: structural HTML into the generated block models.
+"""Block lowerings: structural HTML into block IR.
 
 Each ``@reads(..., level=BLOCK)`` callable turns one block-level HTML tag into
-a block node (or sequence), recursing into children via ``ctx.lower_blocks``
-or ``ctx.inline_content``. The shapes are the ones ``tmark.parse`` gives the
-same constructs: a caption follows its float, a lone image is a paragraph,
-footnote bodies go to ``Document.footnotes``, a mermaid fence is a generated
-image the ``assets`` pass renders.
+a block IR node (or sequence), recursing into children via ``ctx.lower_blocks``
+or ``ctx.lower_inline``. No LaTeX is produced. Backend-only concerns (asset
+hashing, shell-escape detection, pygments style collection, font fallback) are
+*not* the reader's job — they are derived later from the IR by the writer
+(see the transverse-state map in ``ir/nodes.py``).
 """
 
 from __future__ import annotations
 
+import re
 from typing import TYPE_CHECKING
 
 from bs4.element import PageElement, Tag
@@ -17,17 +18,15 @@ from bs4.element import PageElement, Tag
 from texsmith.adapters.transformers.mermaid_detect import (
     looks_like_mermaid as _looks_like_mermaid,
 )
-from texsmith.ir import model
-
-from ._helpers import classes, coerce_attr, make_attrs
-from .context import READER_UNPROCESSED_BLOCK
-from .inline import footnote_label
-from .registry import NotHandled, ReadLevel, reads
+from texsmith.ir import nodes as ir
+from texsmith.readers.html._helpers import attrs_tuple, classes, coerce_attr
+from texsmith.readers.html.registry import NotHandled, ReadLevel, reads
 
 
 if TYPE_CHECKING:  # pragma: no cover - typing only
+    from texsmith.readers.html.registry import _NotHandledType
+
     from .context import ReadContext
-    from .registry import _NotHandledType
 
 
 # ---------------------------------------------------------------------------
@@ -36,14 +35,13 @@ if TYPE_CHECKING:  # pragma: no cover - typing only
 
 
 @reads("h1", "h2", "h3", "h4", "h5", "h6", level=ReadLevel.BLOCK, name="heading")
-def read_heading(tag: Tag, ctx: ReadContext) -> model.Header:
+def read_heading(tag: Tag, ctx: ReadContext) -> ir.Header:
     level = int((tag.name or "h1")[1:])
+    identifier = coerce_attr(tag.get("id")) or ""
     # Anchor links inside a heading (``headerlink``) are navigational chrome;
     # drop them and keep the textual content only.
-    content = ctx.inline_content(_without_header_anchors(tag))
-    return model.Header(
-        level=level, attrs=make_attrs(id=coerce_attr(tag.get("id"))), content=content
-    )
+    content = ctx.lower_inline(_without_header_anchors(tag))
+    return ir.Header(level=level, content=content, identifier=identifier)
 
 
 def _without_header_anchors(tag: Tag) -> list[PageElement]:
@@ -60,12 +58,20 @@ def _without_header_anchors(tag: Tag) -> list[PageElement]:
 
 
 @reads("p", level=ReadLevel.BLOCK, name="paragraph")
-def read_paragraph(tag: Tag, ctx: ReadContext) -> model.Block | None:
+def read_paragraph(tag: Tag, ctx: ReadContext) -> ir.Block | None:
     cls = classes(tag.get("class"))
 
     # Raw LaTeX payload hidden in a paragraph (latex_raw extension).
     if "latex-raw" in cls:
-        return model.RawBlock(format="latex", text=tag.get_text())
+        return ir.RawBlock(format="latex", text=tag.get_text())
+
+    # data-script grouped paragraph.
+    slug = coerce_attr(tag.get("data-script"))
+    if slug:
+        return ir.Div(
+            content=(ir.Para(content=ctx.lower_inline(tag.children)),),
+            attrs=attrs_tuple({"role": "script", "script": slug}),
+        )
 
     # A paragraph starting with ``/// `` is the tell-tale of a pymdownx block
     # (``/// caption``, ``/// figure-caption``, …) that failed to parse and
@@ -79,25 +85,34 @@ def read_paragraph(tag: Tag, ctx: ReadContext) -> model.Block | None:
             f"Unprocessed block marker '{marker}': this '///' block was not "
             "recognised and is rendered as plain text. Check its YAML options; "
             "note that ids cannot contain ':' (use 'my-figure', not "
-            "'fig:my-figure').",
-            code=READER_UNPROCESSED_BLOCK,
+            "'fig:my-figure')."
         )
 
-    content = ctx.inline_content(tag)
+    content = _strip_edge_space(ctx.lower_inline(tag.children))
     if not content:
         return None
+    return ir.Para(content=content)
 
-    # A ``data-script`` paragraph: one script run around the whole content
-    # (the shape the ``scripts`` pass produces).
-    slug = coerce_attr(tag.get("data-script"))
-    if slug:
-        content = (model.SpanNode(attrs=make_attrs(kv={"script": slug}), content=content),)
-    return model.Para(content=content)
+
+def _strip_edge_space(inlines: tuple[ir.Inline, ...]) -> tuple[ir.Inline, ...]:
+    """Drop leading/trailing inter-word ``Space`` from a paragraph's content."""
+
+    def _edge(node: ir.Inline) -> bool:
+        if isinstance(node, (ir.Space, ir.SoftBreak)):
+            return True
+        return isinstance(node, ir.Str) and not node.text.strip()
+
+    start, end = 0, len(inlines)
+    while start < end and _edge(inlines[start]):
+        start += 1
+    while end > start and _edge(inlines[end - 1]):
+        end -= 1
+    return inlines[start:end]
 
 
 @reads("hr", level=ReadLevel.BLOCK, name="horizontal_rule")
-def read_horizontal_rule(_tag: Tag, _ctx: ReadContext) -> model.HorizontalRule:
-    return model.HorizontalRule()
+def read_horizontal_rule(_tag: Tag, _ctx: ReadContext) -> ir.HorizontalRule:
+    return ir.HorizontalRule()
 
 
 # ---------------------------------------------------------------------------
@@ -106,65 +121,70 @@ def read_horizontal_rule(_tag: Tag, _ctx: ReadContext) -> model.HorizontalRule:
 
 
 @reads("ul", level=ReadLevel.BLOCK, name="bullet_list")
-def read_bullet_list(tag: Tag, ctx: ReadContext) -> model.Block:
+def read_bullet_list(tag: Tag, ctx: ReadContext) -> ir.Block:
     cls = classes(tag.get("class"))
     items = _list_items(tag, ctx)
-    columns = _multicolumn(cls)
-    if columns:
-        return model.Div(
-            name="multicolumn",
-            attrs=make_attrs(kv={"cols": columns}),
-            content=(model.BulletList(items=items),),
+    if "two-column-list" in cls or "three-column-list" in cls:
+        columns = "2" if "two-column-list" in cls else "3"
+        return ir.Div(
+            content=(ir.BulletList(items=items),),
+            attrs=attrs_tuple({"role": "multicolumn", "columns": columns}),
         )
-    return model.BulletList(items=items)
-
-
-def _multicolumn(cls: list[str]) -> str | None:
-    if "two-column-list" in cls:
-        return "2"
-    if "three-column-list" in cls:
-        return "3"
-    return None
+    return ir.BulletList(items=items)
 
 
 @reads("ol", level=ReadLevel.BLOCK, name="ordered_list")
-def read_ordered_list(tag: Tag, ctx: ReadContext) -> model.OrderedList:
+def read_ordered_list(tag: Tag, ctx: ReadContext) -> ir.OrderedList:
     start_attr = coerce_attr(tag.get("start"))
     start = int(start_attr) if start_attr and start_attr.isdigit() else 1
     style = _ordered_style(coerce_attr(tag.get("type")))
-    return model.OrderedList(items=_list_items(tag, ctx), start=start, style=style)
+    return ir.OrderedList(items=_list_items(tag, ctx), start=start, style=style)
 
 
-def _ordered_style(type_attr: str | None) -> model.ListStyle:
+def _ordered_style(type_attr: str | None) -> ir.ListStyle:
     return {
-        "a": model.ListStyle.LOWER_ALPHA,
-        "A": model.ListStyle.UPPER_ALPHA,
-        "i": model.ListStyle.LOWER_ROMAN,
-        "I": model.ListStyle.UPPER_ROMAN,
-        "1": model.ListStyle.DECIMAL,
-    }.get(type_attr or "", model.ListStyle.DECIMAL)
+        "a": ir.ListStyle.LOWER_ALPHA,
+        "A": ir.ListStyle.UPPER_ALPHA,
+        "i": ir.ListStyle.LOWER_ROMAN,
+        "I": ir.ListStyle.UPPER_ROMAN,
+        "1": ir.ListStyle.DECIMAL,
+    }.get(type_attr or "", ir.ListStyle.DECIMAL)
 
 
-def _list_items(tag: Tag, ctx: ReadContext) -> tuple[model.ListItem, ...]:
-    return tuple(_list_item(li, ctx) for li in tag.find_all("li", recursive=False))
+def _list_items(tag: Tag, ctx: ReadContext) -> tuple[tuple[ir.Block, ...], ...]:
+    items: list[tuple[ir.Block, ...]] = []
+    for li in tag.find_all("li", recursive=False):
+        items.append(_list_item(li, ctx))
+    return tuple(items)
 
 
-def _list_item(li: Tag, ctx: ReadContext) -> model.ListItem:
-    # Task-list checkbox (pymdownx.tasklist): the item's task state.
+def _list_item(li: Tag, ctx: ReadContext) -> tuple[ir.Block, ...]:
+    # Task-list checkbox (pymdownx.tasklist): record it as a leading marker so
+    # the writer can render a checked/unchecked box.
     checkbox = li.find("input", attrs={"type": "checkbox"})
-    task: model.Task | None = None
+    prefix: tuple[ir.Block, ...] = ()
     if checkbox is not None:
-        task = model.Task.DONE if checkbox.has_attr("checked") else model.Task.OPEN
+        checked = checkbox.has_attr("checked")
+        # Represent the task marker as an empty Div hint; the writer turns it
+        # into a checkbox glyph. Kept minimal to honour the IR (no LaTeX here).
+        prefix = (
+            ir.Div(
+                content=(),
+                attrs=attrs_tuple(
+                    {"role": "task-marker", "checked": "true" if checked else "false"}
+                ),
+            ),
+        )
         checkbox.extract()
     children = list(li.children)
     # A tight list item (no block-level child element) carries loose inline
     # content; represent it as a single Plain rather than a Para.
     if not _has_block_child(children):
-        inline = ctx.inline_content(children)
-        body: tuple[model.Block, ...] = (model.Plain(content=inline),) if inline else ()
+        inline = ctx.lower_inline(children)
+        body: tuple[ir.Block, ...] = (ir.Plain(content=inline),) if inline else ()
     else:
         body = ctx.lower_blocks(children)
-    return model.ListItem(content=body, task=task)
+    return (*prefix, *body)
 
 
 def _has_block_child(children: list[PageElement]) -> bool:
@@ -196,33 +216,38 @@ def _has_block_child(children: list[PageElement]) -> bool:
 
 
 @reads("dl", level=ReadLevel.BLOCK, name="definition_list")
-def read_definition_list(tag: Tag, ctx: ReadContext) -> model.Block | None:
-    items: list[tuple[tuple[model.Inline, ...], tuple[tuple[model.Block, ...], ...]]] = []
-    current_term: tuple[model.Inline, ...] | None = None
-    definitions: list[tuple[model.Block, ...]] = []
+def read_definition_list(tag: Tag, ctx: ReadContext) -> ir.Block | None:
+    items: list[ir.DefinitionItem] = []
+    current_term: tuple[ir.Inline, ...] | None = None
+    definitions: list[tuple[ir.Block, ...]] = []
 
     def flush() -> None:
         nonlocal current_term, definitions
         if current_term is not None:
             non_empty_defs = tuple(d for d in definitions if d)
+            term_has_text = any(
+                not (isinstance(n, ir.Str) and not n.text.strip())
+                and not isinstance(n, (ir.Space, ir.SoftBreak))
+                for n in current_term
+            )
             # Drop a wholly-empty entry (empty term and no real definition).
-            if current_term or non_empty_defs:
-                items.append((current_term, tuple(definitions)))
+            if term_has_text or non_empty_defs:
+                items.append(ir.DefinitionItem(term=current_term, definitions=tuple(definitions)))
         current_term = None
         definitions = []
 
     for child in tag.find_all(["dt", "dd"], recursive=False):
         if child.name == "dt":
             flush()
-            current_term = ctx.inline_content(child)
+            current_term = ctx.lower_inline(child.children)
         else:  # dd
             definitions.append(ctx.lower_blocks(child.children))
     flush()
 
     if not items:
-        ctx.warn("empty <dl> definition list discarded")
+        ctx.warn("HtmlReader: empty <dl> definition list discarded.")
         return None
-    return model.DefinitionList(items=tuple(items))
+    return ir.DefinitionList(items=tuple(items))
 
 
 # ---------------------------------------------------------------------------
@@ -231,28 +256,30 @@ def read_definition_list(tag: Tag, ctx: ReadContext) -> model.Block | None:
 
 
 @reads("blockquote", level=ReadLevel.BLOCK, name="blockquote", priority=0)
-def read_blockquote(tag: Tag, ctx: ReadContext) -> model.Block:
+def read_blockquote(tag: Tag, ctx: ReadContext) -> ir.Block:
     cls = classes(tag.get("class"))
     if "epigraph" in cls:
         footer = tag.find("footer")
-        source = None
+        attrs = {"role": "epigraph"}
         if footer is not None:
-            source = footer.get_text(strip=True)
+            attrs["source"] = footer.get_text(strip=True)
             footer.extract()
-        return model.BlockQuote(
-            attrs=make_attrs(classes=("epigraph",), kv={"source": source}),
+        return ir.Div(
             content=ctx.lower_blocks(tag.children),
+            attrs=attrs_tuple(attrs),
         )
-    return model.BlockQuote(content=ctx.lower_blocks(tag.children))
+    return ir.BlockQuote(content=ctx.lower_blocks(tag.children))
 
 
 # ---------------------------------------------------------------------------
 # Code blocks
 # ---------------------------------------------------------------------------
 
+_LANGUAGE_TOKEN = re.compile(r"^[A-Za-z0-9_+\-#.]+$")
+
 
 @reads("pre", level=ReadLevel.BLOCK, name="preformatted")
-def read_pre(tag: Tag, _ctx: ReadContext) -> model.Block:
+def read_pre(tag: Tag, _ctx: ReadContext) -> ir.Block:
     code = tag.find("code")
     target = code if code is not None else tag
     source_hint = coerce_attr(tag.get("data-mermaid-source"))
@@ -261,32 +288,27 @@ def read_pre(tag: Tag, _ctx: ReadContext) -> model.Block:
         or _looks_like_mermaid(target.get_text())
         or source_hint
     ):
-        return mermaid_image(
-            target.get_text(), width=coerce_attr(tag.get("width")), include=source_hint
-        )
+        # Diagram source: kept as a code block with the mermaid language so the
+        # backend (a writer/diagram concern) can recognise it. Lossless, no
+        # LaTeX produced here. A ``width`` attribute (``{ width=20% }``) and a
+        # ``data-mermaid-source`` hint are carried on a wrapping diagram Div.
+        block = ir.CodeBlock(text=_ensure_newline(target.get_text()), lang="mermaid")
+        width = coerce_attr(tag.get("width"))
+        if width or source_hint:
+            hint = {"role": "diagram"}
+            if width:
+                hint["width"] = width
+            if source_hint:
+                hint["source"] = source_hint
+            return ir.Div(content=(block,), attrs=attrs_tuple(hint))
+        return block
+    lang = _language(target)
     text = _code_listing_text(target if code is not None else tag)
-    return model.CodeBlock(text=_ensure_newline(text), lang=_language(target))
-
-
-def mermaid_image(
-    source: str, *, width: str | None = None, include: str | None = None
-) -> model.Para:
-    """A mermaid diagram: the generated image tmark reads a ```` ```mermaid ```` fence as.
-
-    The ``assets`` pass renders ``Image{src="", generate=mermaid, code=…}``;
-    a ``width`` attribute and a source-file hint travel as attributes.
-    """
-    image = model.Image(
-        src="",
-        attrs=make_attrs(
-            kv={"generate": "mermaid", "code": source.strip(), "width": width, "include": include}
-        ),
-    )
-    return model.Para(content=(image,))
+    return ir.CodeBlock(text=_ensure_newline(text), lang=lang)
 
 
 @reads("div", level=ReadLevel.BLOCK, name="code_block_div", priority=40)
-def read_code_block_div(tag: Tag, _ctx: ReadContext) -> model.Block | _NotHandledType:
+def read_code_block_div(tag: Tag, _ctx: ReadContext) -> ir.CodeBlock | _NotHandledType:
     cls = classes(tag.get("class"))
     if "highlight" not in cls and "codehilite" not in cls:
         return NotHandled
@@ -299,24 +321,31 @@ def read_code_block_div(tag: Tag, _ctx: ReadContext) -> model.Block | _NotHandle
         or {"language-mermaid", "mermaid"}.intersection(code_cls)
         or _looks_like_mermaid(code.get_text())
     ):
-        return mermaid_image(code.get_text())
-    lang = _language(code) or _language(tag)
-    options: dict[str, str | None] = {}
+        return ir.CodeBlock(text=_ensure_newline(code.get_text()), lang="mermaid")
+    lang = _language(code)
+    if lang == "text":
+        lang = _language(tag)
+    lineno = tag.find(class_="linenos") is not None
+    filename = ""
     if filename_el := tag.find(class_="filename"):
-        options["title"] = filename_el.get_text(strip=True)
-    if tag.find(class_="linenos") is not None:
-        options["linenums"] = "1"
+        filename = filename_el.get_text(strip=True)
     text, highlight = _code_listing(code)
-    if highlight:
-        options["hl_lines"] = " ".join(str(line) for line in highlight)
-    return model.CodeBlock(text=_ensure_newline(text), lang=lang, options=make_attrs(kv=options))
+    return ir.CodeBlock(
+        text=_ensure_newline(text),
+        lang=lang,
+        highlight=tuple(highlight),
+        lineno=lineno,
+        filename=filename,
+    )
 
 
-def _language(tag: Tag) -> str | None:
+def _language(tag: Tag) -> str:
     for cls in classes(tag.get("class")):
         if cls.startswith("language-"):
-            return cls[len("language-") :] or None
-    return None
+            return cls[len("language-") :] or "text"
+    if "highlight" in classes(tag.get("class")):
+        return "text"
+    return "text"
 
 
 def _code_listing(code: Tag) -> tuple[str, list[int]]:
@@ -352,56 +381,20 @@ def _ensure_newline(text: str) -> str:
 
 
 @reads("figure", level=ReadLevel.BLOCK, name="figure")
-def read_figure(tag: Tag, ctx: ReadContext) -> tuple[model.Block, ...]:
-    """A ``<figure>``: its body then a ``Caption``, as tmark's parser lays them out.
-
-    A figure around one image is the image's paragraph followed by the
-    ``Figure:`` caption line (the anchor lives on the caption; without a
-    caption it stays on the image). A figure holding several images or other
-    blocks is a ``::: figure`` container whose last block is the caption.
-    """
+def read_figure(tag: Tag, ctx: ReadContext) -> ir.Block:
     caption_el = tag.find("figcaption")
-    identifier = coerce_attr(tag.get("id"))
+    caption: tuple[ir.Inline, ...] = ()
+    if caption_el is not None:
+        _strip_caption_prefix(caption_el)
+        caption = ctx.lower_inline(_caption_inline_children(caption_el))
+    identifier = coerce_attr(tag.get("id")) or ""
     body_children = [c for c in tag.children if getattr(c, "name", None) != "figcaption"]
     content = ctx.lower_blocks(body_children)
     if not content:
-        # A figure wrapping bare inline content: lift it into a paragraph.
-        inline = ctx.inline_content(body_children)
-        content = (model.Para(content=inline),) if inline else ()
-
-    caption: model.Caption | None = None
-    if caption_el is not None:
-        strip_caption_prefix(caption_el)
-        caption = model.Caption(
-            kind=model.CaptionKind.FIGURE,
-            attrs=make_attrs(id=identifier),
-            content=ctx.inline_content(_caption_inline_children(caption_el)),
-        )
-
-    if len(content) == 1 and _is_lone_image(content[0]):
-        para = content[0]
-        assert isinstance(para, model.Para)
-        if caption is None and identifier:
-            image = para.content[0]
-            assert isinstance(image, model.Image)
-            attrs = model.Attrs(
-                classes=image.attrs.classes, id=image.attrs.id or identifier, kv=image.attrs.kv
-            )
-            para = model.Para(content=(model.Image(src=image.src, alt=image.alt, attrs=attrs),))
-        return (para, caption) if caption is not None else (para,)
-
-    blocks = (*content, caption) if caption is not None else content
-    return (
-        model.Figure(attrs=make_attrs(id=identifier if caption is None else None), content=blocks),
-    )
-
-
-def _is_lone_image(block: model.Block) -> bool:
-    return (
-        isinstance(block, model.Para)
-        and len(block.content) == 1
-        and isinstance(block.content[0], model.Image)
-    )
+        # A figure wrapping a bare inline image: lift the image into a block.
+        inline = ctx.lower_inline(body_children)
+        content = (ir.Plain(content=inline),) if inline else ()
+    return ir.Figure(content=content, caption=caption, identifier=identifier)
 
 
 def _caption_inline_children(caption_el: Tag) -> list[PageElement]:
@@ -413,8 +406,7 @@ def _caption_inline_children(caption_el: Tag) -> list[PageElement]:
     return children
 
 
-def strip_caption_prefix(node: Tag) -> None:
-    """Drop the ``Figure 1:`` / ``Table 1:`` prefix the extensions render into a caption."""
+def _strip_caption_prefix(node: Tag) -> None:
     for span in list(node.find_all("span")):
         if {"caption-prefix", "figure-prefix"}.intersection(classes(span.get("class"))):
             span.extract()
@@ -426,44 +418,61 @@ def strip_caption_prefix(node: Tag) -> None:
 
 
 @reads("div", level=ReadLevel.BLOCK, name="div", priority=0)
-def read_div(tag: Tag, ctx: ReadContext) -> model.Block | None:
+def read_div(tag: Tag, ctx: ReadContext) -> ir.Block | list[ir.Block] | None:
     cls = classes(tag.get("class"))
 
     # Block math payload (arithmatex / mdx_math): keep raw TeX source.
     if "arithmatex" in cls:
-        return model.MathBlock(text=_strip_block_math(tag.get_text()))
+        return _block_math(tag)
 
-    # Footnote definitions container: every ``<li id="fn:label">`` body is a
-    # ``Footnote`` of the document; the ``Note{label}`` references point at
-    # them. Back-ref anchors are dropped by ``read_link``.
+    # Footnote definitions container: preserve each definition's identifier so
+    # the writer (which owns the footnote/citation registries) can resolve
+    # ``footnote-ref`` sites against the bodies. Back-ref anchors are dropped by
+    # ``read_link``; the ``<li id>`` ids are carried on per-definition Divs.
     if "footnote" in cls:
-        for li in tag.find_all("li", id=True):
-            identifier = coerce_attr(li.get("id")) or ""
-            label = footnote_label(identifier.partition(":")[2] or identifier)
-            ctx.define_footnote(label, ctx.lower_blocks(li.children))
-        return None
+        return ir.Div(
+            content=_footnote_defs(tag, ctx),
+            attrs=attrs_tuple({"role": "footnotes"}),
+        )
 
-    # Content the author excluded from the paged output.
-    if "latex-ignore" in cls:
-        return None
+    # Containers that are pure layout wrappers: unwrap transparently.
+    if {"grid-cards", "latex-ignore"}.intersection(cls):
+        if "latex-ignore" in cls:
+            return None
+        return list(ctx.lower_blocks(tag.children))
 
     if "tabbed-set" in cls:
         return _tabbed_set(tag, ctx)
 
-    columns = _multicolumn(cls)
-    if columns:
-        return model.Div(
-            name="multicolumn",
-            attrs=make_attrs(kv={"cols": columns}),
+    if "two-column-list" in cls or "three-column-list" in cls:
+        columns = "2" if "two-column-list" in cls else "3"
+        return ir.Div(
             content=ctx.lower_blocks(tag.children),
+            attrs=attrs_tuple({"role": "multicolumn", "columns": columns}),
         )
 
-    # ``::: div {.classes #id}``: a transparent container, the classes kept.
-    return model.Div(
-        name="div",
-        attrs=make_attrs(id=coerce_attr(tag.get("id")), classes=cls),
-        content=ctx.lower_blocks(tag.children),
-    )
+    # Generic div: preserve its classes as a hint.
+    attrs = {"class": " ".join(cls)} if cls else {}
+    return ir.Div(content=ctx.lower_blocks(tag.children), attrs=attrs_tuple(attrs))
+
+
+def _footnote_defs(tag: Tag, ctx: ReadContext) -> tuple[ir.Block, ...]:
+    """Lower each ``<li id="fn:…">`` body into an id-tagged ``Div``."""
+    defs: list[ir.Block] = []
+    for li in tag.find_all("li", id=True):
+        identifier = coerce_attr(li.get("id")) or ""
+        defs.append(
+            ir.Div(
+                content=ctx.lower_blocks(li.children),
+                attrs=attrs_tuple({"role": "footnote-def", "id": identifier}),
+            )
+        )
+    return tuple(defs)
+
+
+def _block_math(tag: Tag) -> ir.Plain:
+    """Wrap a display-math payload in a Plain block (Math is an Inline node)."""
+    return ir.Plain(content=(ir.Math(text=_strip_block_math(tag.get_text()), display=True),))
 
 
 def _strip_block_math(text: str) -> str:
@@ -475,8 +484,8 @@ def _strip_block_math(text: str) -> str:
     return stripped
 
 
-def _tabbed_set(tag: Tag, ctx: ReadContext) -> model.Div:
-    """Lower a Material tabbed-set into ``Div{tabs}`` holding ``Div{tab title=…}``."""
+def _tabbed_set(tag: Tag, ctx: ReadContext) -> ir.Div:
+    """Lower a Material tabbed-set into a Div carrying labelled tab blocks."""
     labels: list[str] = []
     label_box = tag.find("div", class_="tabbed-labels")
     if label_box is not None:
@@ -499,19 +508,19 @@ def _tabbed_set(tag: Tag, ctx: ReadContext) -> model.Div:
         else:
             blocks.append(box)
 
-    tabs = tuple(
-        model.Div(
-            name="tab",
-            attrs=make_attrs(kv={"title": labels[index] if index < len(labels) else ""}),
-            content=ctx.lower_blocks(block.children),
+    tab_blocks: list[ir.Block] = []
+    for index, block in enumerate(blocks):
+        title = labels[index] if index < len(labels) else ""
+        tab_blocks.append(
+            ir.Div(
+                content=ctx.lower_blocks(block.children),
+                attrs=attrs_tuple({"role": "tab", "title": title}),
+            )
         )
-        for index, block in enumerate(blocks)
-    )
-    return model.Div(name="tabs", content=tabs)
+    return ir.Div(content=tuple(tab_blocks), attrs=attrs_tuple({"role": "tabbed-set"}))
 
 
 __all__ = [
-    "mermaid_image",
     "read_blockquote",
     "read_bullet_list",
     "read_code_block_div",
@@ -523,5 +532,4 @@ __all__ = [
     "read_ordered_list",
     "read_paragraph",
     "read_pre",
-    "strip_caption_prefix",
 ]

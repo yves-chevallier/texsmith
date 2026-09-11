@@ -218,10 +218,14 @@ def test_evolve_keeps_the_prepared_decision(tmp_path: Path) -> None:
     assert prepared.ir.blocks[0] is not None  # the input is untouched
 
 
-def test_from_html_is_unchanged(tmp_path: Path) -> None:
+def test_from_html_reads_the_fragment_into_the_ir(tmp_path: Path) -> None:
     path = tmp_path / "page.html"
     path.write_text("<article class='md-content__inner'><h1>Hi</h1><p>x</p></article>", "utf-8")
     document = Document.from_html(path)
     assert document.reader == "html"
-    assert document.ir is None
-    assert "<h1>Hi</h1>" in document.html
+    assert isinstance(document.ir, model.Document)
+    assert document.files.path(document.ir.file) == path
+    assert document.files.text(document.ir.file) == ""
+    assert document.keys is not None and document.keys.title is MISSING
+    assert "<h1>Hi</h1>" in document.html  # kept for ``--html`` and the debug snapshot
+    assert [header.level for header in document.top_level_headers()] == [1]

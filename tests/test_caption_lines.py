@@ -18,7 +18,7 @@ import pytest
 from texsmith.adapters.latex import LaTeXRenderer
 from texsmith.adapters.markdown import DEFAULT_MARKDOWN_EXTENSIONS, render_markdown
 from texsmith.core.config import BookConfig
-from texsmith.readers.html import HtmlReader
+from texsmith.readers.html_legacy import HtmlReader
 from texsmith.writers.typst import TypstWriter, TypstWriterState
 
 

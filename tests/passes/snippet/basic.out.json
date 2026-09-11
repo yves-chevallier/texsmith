@@ -1,0 +1,121 @@
+{
+  "blocks": [
+    {
+      "type": "Header",
+      "level": 1,
+      "content": [
+        {
+          "type": "Str",
+          "text": "Snippets"
+        }
+      ]
+    },
+    {
+      "type": "CodeBlock",
+      "text": "print(\"not a snippet\")",
+      "lang": "python"
+    },
+    {
+      "type": "Figure",
+      "content": [
+        {
+          "type": "Para",
+          "content": [
+            {
+              "type": "Image",
+              "src": "<out>/snippets/snippet-1.pdf",
+              "alt": [
+                {
+                  "type": "Str",
+                  "text": "Hello preview"
+                }
+              ],
+              "attrs": {
+                "kv": [
+                  [
+                    "width",
+                    "60%"
+                  ]
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "type": "Caption",
+          "kind": "figure",
+          "content": [
+            {
+              "type": "Str",
+              "text": "Hello preview"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "Figure",
+      "attrs": {
+        "id": "snip:code"
+      },
+      "content": [
+        {
+          "type": "Para",
+          "content": [
+            {
+              "type": "Image",
+              "src": "<out>/snippets/snippet-2.pdf",
+              "attrs": {
+                "kv": [
+                  [
+                    "width",
+                    "50%"
+                  ]
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "Admonition",
+      "kind": "note",
+      "content": [
+        {
+          "type": "Figure",
+          "content": [
+            {
+              "type": "Para",
+              "content": [
+                {
+                  "type": "Image",
+                  "src": "<out>/snippets/snippet-3.pdf",
+                  "alt": [
+                    {
+                      "type": "Str",
+                      "text": "Nested"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "Caption",
+              "kind": "figure",
+              "attrs": {
+                "id": "fig:nested"
+              },
+              "content": [
+                {
+                  "type": "Str",
+                  "text": "Nested"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

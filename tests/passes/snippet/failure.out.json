@@ -1,0 +1,64 @@
+{
+  "blocks": [
+    {
+      "type": "Header",
+      "level": 1,
+      "content": [
+        {
+          "type": "Str",
+          "text": "Failures"
+        }
+      ]
+    },
+    {
+      "type": "CodeBlock",
+      "text": "This build fails.",
+      "lang": "markdown",
+      "options": {
+        "classes": [
+          "snippet"
+        ],
+        "kv": [
+          [
+            "caption",
+            "Broken"
+          ]
+        ]
+      }
+    },
+    {
+      "type": "CodeBlock",
+      "text": "template: article",
+      "lang": "yaml",
+      "options": {
+        "classes": [
+          "snippet"
+        ]
+      }
+    },
+    {
+      "type": "CodeBlock",
+      "text": "sources: 42",
+      "lang": "yaml",
+      "options": {
+        "classes": [
+          "snippet"
+        ]
+      }
+    },
+    {
+      "type": "Figure",
+      "content": [
+        {
+          "type": "Para",
+          "content": [
+            {
+              "type": "Image",
+              "src": "<out>/snippets/snippet-2.pdf"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

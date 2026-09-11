@@ -14,11 +14,13 @@ Implementation Rationale
 : A dedicated abstraction makes it easy to inspect or mutate front matter in
   higher layers while keeping a single document shape throughout the conversion engine.
 : Two readers feed the same shape during the TMark migration
-  (``specs/migration/python-ir-and-passes.md`` §2). ``reader="html"`` (the
-  default) keeps the Markdown → HTML path and its canonicalised HTML;
-  ``reader="tmark"`` parses the source with ``tmark.parse`` and stores the
-  generated IR (:attr:`Document.ir`), the build's :class:`FileTable`, the
-  parse diagnostics and, once the passes ran, the per-slot bodies. The
+  (``specs/migration/python-ir-and-passes.md`` §2). ``from_markdown`` with
+  ``reader="html"`` (the default) keeps the Markdown → HTML path and its
+  canonicalised HTML for the legacy writers; ``reader="tmark"`` parses the
+  source with ``tmark.parse`` and ``from_html`` lowers an HTML page with the
+  ``HtmlReader`` — both store the generated IR (:attr:`Document.ir`), the
+  build's :class:`FileTable`, the reader diagnostics and, once the passes
+  ran, the per-slot bodies, and render through the tmark writers. The
   ``front_matter`` mapping is the legacy view of the same YAML for both, so the
   template machinery does not change.
 
@@ -222,9 +224,11 @@ class Document:
     slot_requests: dict[str, str] = field(default_factory=dict)
     language: str | None = None
     bibliography: dict[str, Any] = field(default_factory=dict)
-    #: ``"html"`` (Markdown → HTML → legacy IR) or ``"tmark"`` (``tmark.parse`` → :attr:`ir`).
+    #: ``"tmark"`` (``tmark.parse`` → :attr:`ir`) or ``"html"``: the ``HtmlReader``
+    #: on an HTML input (→ :attr:`ir`), the legacy Markdown → HTML path otherwise.
     reader: str = "html"
-    #: The tmark IR of the source (``ir.file == 0``); ``None`` on the HTML path.
+    #: The IR of the source (``ir.file`` is its :attr:`files` id); ``None`` on the
+    #: legacy path, which renders :attr:`html` through the Python writers.
     ir: irm.Document | None = None
     #: ``FileId -> SourceFile``; id 0 is the source, includes and loaded files follow.
     files: FileTable = field(default_factory=FileTable)
@@ -399,7 +403,15 @@ class Document:
         full_document: bool = False,
         emitter: DiagnosticEmitter | None = None,
     ) -> Document:
-        """Create a document from an HTML file, extracting only the renderable region."""
+        """Create a document from an HTML file, extracting only the renderable region.
+
+        The fragment is lowered by the :class:`~texsmith.readers.html.HtmlReader`
+        into the generated IR (:attr:`ir`); the document then takes the tmark
+        writer path like a ``reader="tmark"`` Markdown source. The file enters
+        the build's :class:`FileTable` with an empty text (no source spans).
+        """
+        from ..readers.html import HtmlReader
+
         active_emitter = emitter or NullEmitter()
 
         try:
@@ -436,6 +448,12 @@ class Document:
             strip_heading=strip_heading,
             has_declared_title=False,
         )
+        files = getattr(active_emitter, "files", None)
+        if not isinstance(files, FileTable):
+            files = FileTable()
+        file_id = files.add(path, "")
+        reader = HtmlReader(diagnostics=active_emitter)
+        ir_document = reader.read(html, file=file_id)
         document = cls(
             source_path=path,
             kind=InputKind.HTML,
@@ -445,6 +463,10 @@ class Document:
             title_strategy=strategy,
             numbered=numbered,
             suppress_title_metadata=suppress_title,
+            reader="html",
+            ir=ir_document,
+            files=files,
+            diagnostics=list(reader.diagnostics),
         )
         document._initialise_slots_from_front_matter()
         return document
@@ -655,7 +677,7 @@ class Document:
 
     def _extract_promoted_title(self) -> tuple[str | None, bool]:
         """Return the promoted title and whether the heading should be dropped."""
-        if self.reader == "tmark":
+        if self.ir is not None:
             return self._extract_promoted_title_ir()
         inspector = HeadingInspector()
         try:
@@ -686,7 +708,7 @@ class Document:
 
     def _first_heading_level(self) -> int | None:
         """Return the level of the first heading in the document, if any."""
-        if self.reader == "tmark":
+        if self.ir is not None:
             headers = self.top_level_headers()
             return headers[0].level if headers else None
         inspector = HeadingInspector()
