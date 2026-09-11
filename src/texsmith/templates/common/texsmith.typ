@@ -76,8 +76,8 @@
   }
 }
 
-// #ts-progress(0.45, "label", thin: false)
-#let ts-progress(value, label, thin: false) = {
+// #ts-progress(0.45, label: "label", thin: false)
+#let ts-progress(value, label: none, thin: false) = {
   let bar-height = if thin { 6pt } else { 12pt }
   let v = calc.max(0.0, calc.min(1.0, float(value)))
   block(below: 0.6em)[
@@ -215,3 +215,17 @@
 #let ts-del(body) = text(fill: rgb("b3261e"), strike(body))
 #let ts-subst(old, new) = [#ts-del(old) #ts-ins(new)]
 #let ts-comment(body) = text(fill: luma(110), emph[/\* #body \*/])
+
+// TeX logos (spec C33, feature `typography.tex-logos`): the writer emits
+// `#ts-logo("XeLaTeX")` for the words of the closed list; `TeX`, `LaTeX`
+// and `LaTeX2e` are typeset from their parts, any other word as prefix + logo.
+#let ts-tex = [T#h(-0.1667em)#box(move(dy: 0.22em)[E])#h(-0.125em)X]
+#let ts-latex = [L#h(-0.36em)#box(move(dy: -0.22em, text(size: 0.7em)[A]))#h(-0.15em)#ts-tex]
+#let ts-logo(name) = {
+  if name == "TeX" { ts-tex }
+  else if name == "LaTeX" { ts-latex }
+  else if name == "LaTeX2e" { [#ts-latex#h(0.05em)2#text(size: 0.8em)[#sym.epsilon]] }
+  else if name.ends-with("LaTeX") { [#name.slice(0, name.len() - 5)#ts-latex] }
+  else if name.ends-with("TeX") { [#name.slice(0, name.len() - 3)#ts-tex] }
+  else { name }
+}

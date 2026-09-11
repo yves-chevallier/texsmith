@@ -5,7 +5,7 @@ the document was read with ``reader="tmark"``: the same passes as the LaTeX
 path, one ``tmark.resolve``, one ``tmark.write(…, "typst")`` per slot body,
 and either the standalone preamble or the template's ``[typst.template]``
 scaffolding around the bodies. The ``#ts-*`` contract functions the writer
-calls come from :data:`TYPST_PRELUDE` (``writers/typst/texsmith.typ``),
+calls come from :data:`TYPST_PRELUDE` (``templates/common/texsmith.typ``),
 inlined ahead of the bodies until the Typst side of the fragments exists.
 """
 
@@ -34,7 +34,7 @@ if TYPE_CHECKING:  # pragma: no cover - typing only
 
 __all__ = ["TYPST_PRELUDE", "render_typst_from_ir", "typst_prelude"]
 
-_PRELUDE_PATH = Path(__file__).resolve().parents[2] / "writers" / "typst" / "texsmith.typ"
+_PRELUDE_PATH = Path(__file__).resolve().parents[2] / "templates" / "common" / "texsmith.typ"
 
 
 @lru_cache(maxsize=1)
