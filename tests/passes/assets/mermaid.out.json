@@ -1,0 +1,101 @@
+{
+  "blocks": [
+    {
+      "type": "Header",
+      "level": 1,
+      "content": [
+        {
+          "type": "Str",
+          "text": "Diagrams"
+        }
+      ]
+    },
+    {
+      "type": "Para",
+      "content": [
+        {
+          "type": "Image",
+          "src": "assets/mermaid-d493232efc3c.pdf"
+        }
+      ]
+    },
+    {
+      "type": "Caption",
+      "kind": "figure",
+      "content": [
+        {
+          "type": "Str",
+          "text": "Build pipeline"
+        }
+      ]
+    },
+    {
+      "type": "Para",
+      "content": [
+        {
+          "type": "Image",
+          "src": "assets/mermaid-ee16dbc2acd7.pdf"
+        }
+      ]
+    },
+    {
+      "type": "Caption",
+      "kind": "figure",
+      "content": [
+        {
+          "type": "Str",
+          "text": "Explicit caption"
+        }
+      ]
+    },
+    {
+      "type": "Para",
+      "content": [
+        {
+          "type": "Image",
+          "src": "assets/mermaid-1222fd6d8647.pdf",
+          "alt": [
+            {
+              "type": "Str",
+              "text": "Pipeline"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "Caption",
+      "kind": "figure",
+      "content": [
+        {
+          "type": "Str",
+          "text": "From file"
+        }
+      ]
+    },
+    {
+      "type": "Para",
+      "content": [
+        {
+          "type": "Image",
+          "src": "assets/mermaid-5b7cf9b7365e.pdf",
+          "alt": [
+            {
+              "type": "Str",
+              "text": "Live"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "Para",
+      "content": [
+        {
+          "type": "Str",
+          "text": "[Mermaid diagram unavailable]"
+        }
+      ]
+    }
+  ]
+}

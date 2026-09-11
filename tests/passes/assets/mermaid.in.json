@@ -1,0 +1,226 @@
+{
+  "tmark": "0.0.0",
+  "file": 0,
+  "front_matter": {
+    "id": 0,
+    "span": [
+      0,
+      0,
+      0
+    ],
+    "keys": {}
+  },
+  "blocks": [
+    {
+      "type": "Header",
+      "id": 1,
+      "span": [
+        0,
+        0,
+        10
+      ],
+      "level": 1,
+      "content": [
+        {
+          "type": "Str",
+          "id": 2,
+          "span": [
+            0,
+            2,
+            10
+          ],
+          "text": "Diagrams"
+        }
+      ]
+    },
+    {
+      "type": "Para",
+      "id": 3,
+      "span": [
+        0,
+        12,
+        69
+      ],
+      "content": [
+        {
+          "type": "Image",
+          "id": 4,
+          "span": [
+            0,
+            12,
+            69
+          ],
+          "src": "",
+          "attrs": {
+            "kv": [
+              [
+                "generate",
+                "mermaid"
+              ],
+              [
+                "code",
+                "%% Build pipeline\nflowchart LR\n    A --> B"
+              ]
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "type": "Para",
+      "id": 5,
+      "span": [
+        0,
+        71,
+        101
+      ],
+      "content": [
+        {
+          "type": "Image",
+          "id": 6,
+          "span": [
+            0,
+            71,
+            101
+          ],
+          "src": "",
+          "attrs": {
+            "kv": [
+              [
+                "generate",
+                "mermaid"
+              ],
+              [
+                "code",
+                "graph TD; X-->Y"
+              ]
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "type": "Caption",
+      "id": 7,
+      "span": [
+        0,
+        103,
+        127
+      ],
+      "kind": "figure",
+      "content": [
+        {
+          "type": "Str",
+          "id": 8,
+          "span": [
+            0,
+            103,
+            127
+          ],
+          "text": "Explicit caption"
+        }
+      ],
+      "position": "after"
+    },
+    {
+      "type": "Para",
+      "id": 9,
+      "span": [
+        0,
+        129,
+        154
+      ],
+      "content": [
+        {
+          "type": "Image",
+          "id": 10,
+          "span": [
+            0,
+            129,
+            154
+          ],
+          "src": "pipeline.mmd",
+          "alt": [
+            {
+              "type": "Str",
+              "id": 12,
+              "span": [
+                0,
+                129,
+                137
+              ],
+              "text": "Pipeline"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "Para",
+      "id": 13,
+      "span": [
+        0,
+        156,
+        282
+      ],
+      "content": [
+        {
+          "type": "Image",
+          "id": 14,
+          "span": [
+            0,
+            156,
+            282
+          ],
+          "src": "https://mermaid.live/edit#pako:eJyrVkrOT0lVslJQSi9KLMhQ8AmyVnDU1bVzUtJRUMpNLcpNzEwBylYrlWSk5oLVpaSmJZbmlCjV1gIAGQESVw",
+          "alt": [
+            {
+              "type": "Str",
+              "id": 16,
+              "span": [
+                0,
+                156,
+                160
+              ],
+              "text": "Live"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "Para",
+      "id": 17,
+      "span": [
+        0,
+        284,
+        320
+      ],
+      "content": [
+        {
+          "type": "Image",
+          "id": 18,
+          "span": [
+            0,
+            284,
+            320
+          ],
+          "src": "",
+          "attrs": {
+            "kv": [
+              [
+                "generate",
+                "mermaid"
+              ],
+              [
+                "code",
+                "this is not a diagram"
+              ]
+            ]
+          }
+        }
+      ]
+    }
+  ],
+  "diagnostics": []
+}

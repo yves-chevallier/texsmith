@@ -1,0 +1,133 @@
+{
+  "tmark": "0.0.0",
+  "file": 0,
+  "front_matter": {
+    "id": 0,
+    "span": [
+      0,
+      0,
+      0
+    ],
+    "keys": {}
+  },
+  "blocks": [
+    {
+      "type": "Header",
+      "id": 1,
+      "span": [
+        0,
+        0,
+        9
+      ],
+      "level": 1,
+      "content": [
+        {
+          "type": "Str",
+          "id": 2,
+          "span": [
+            0,
+            2,
+            9
+          ],
+          "text": "Scripts"
+        }
+      ]
+    },
+    {
+      "type": "Para",
+      "id": 3,
+      "span": [
+        0,
+        11,
+        71
+      ],
+      "content": [
+        {
+          "type": "Str",
+          "id": 4,
+          "span": [
+            0,
+            11,
+            71
+          ],
+          "text": "Hello Привет мир and 日本語のテキスト text."
+        }
+      ]
+    },
+    {
+      "type": "Para",
+      "id": 5,
+      "span": [
+        0,
+        73,
+        118
+      ],
+      "content": [
+        {
+          "type": "Str",
+          "id": 6,
+          "span": [
+            0,
+            73,
+            101
+          ],
+          "text": "A lone Ω and ℵ here, and "
+        },
+        {
+          "type": "Code",
+          "id": 7,
+          "span": [
+            0,
+            101,
+            109
+          ],
+          "text": "код"
+        },
+        {
+          "type": "Str",
+          "id": 8,
+          "span": [
+            0,
+            109,
+            118
+          ],
+          "text": " in code."
+        }
+      ]
+    },
+    {
+      "type": "Para",
+      "id": 9,
+      "span": [
+        0,
+        120,
+        195
+      ],
+      "content": [
+        {
+          "type": "Str",
+          "id": 12,
+          "span": [
+            0,
+            136,
+            195
+          ],
+          "text": "text with an emoji 😀 and Tibetan བོད་ཡིག."
+        }
+      ],
+      "lead": [
+        {
+          "type": "Str",
+          "id": 11,
+          "span": [
+            0,
+            122,
+            134
+          ],
+          "text": "Жирный"
+        }
+      ]
+    }
+  ],
+  "diagnostics": []
+}

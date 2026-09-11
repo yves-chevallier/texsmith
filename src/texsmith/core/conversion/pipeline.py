@@ -14,6 +14,7 @@ is appended to ``Document.diagnostics`` at the end.
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 import copy
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -23,6 +24,8 @@ from texsmith.core.bibliography.collection import BibliographyCollection
 from texsmith.core.context import DocumentState
 from texsmith.core.fragments.activation import apply_requires
 from texsmith.diagnostics import Diagnostic, DiagnosticSink
+from texsmith.fonts.fallback import merge_fallback_summaries
+from texsmith.fonts.scripts import merge_script_usage
 from texsmith.passes import IdAllocator, PassContext, SlotTemplate, build_pipeline, run_pipeline
 from texsmith.readers.loader import TexsmithLoader
 
@@ -43,6 +46,7 @@ if TYPE_CHECKING:  # pragma: no cover - typing only
 __all__ = [
     "IrRenderResult",
     "absorb_pass_bibliography",
+    "apply_pass_values",
     "build_pass_context",
     "render_ir_document",
     "slot_template_of",
@@ -59,6 +63,8 @@ class IrRenderResult:
     bodies: dict[str, Body] = field(default_factory=dict)
     requires: Requires = field(default_factory=Requires)
     document_state: DocumentState = field(default_factory=DocumentState)
+    #: The assets the ``assets``/``emoji`` passes copied next to the output (key → path).
+    assets: dict[str, Path] = field(default_factory=dict)
 
 
 def slot_template_of(
@@ -122,6 +128,9 @@ def build_pass_context(
         template=template,
         backend=backend,
         code=dict(code_options or {}),
+        copy_assets=context.generation.copy_assets,
+        convert_assets=context.generation.convert_assets,
+        hash_assets=context.generation.hash_assets,
     )
 
 
@@ -141,6 +150,49 @@ def absorb_pass_bibliography(context: ConversionContext, paths: Iterable[Path]) 
         context.bibliography_collection = collection
     collection.load_files(files)
     context.bibliography_map.update(collection.to_dict())
+
+
+def apply_pass_values(
+    ctx: PassContext,
+    state: DocumentState,
+    template_overrides: dict[str, Any] | None = None,
+) -> None:
+    """Hand what the passes computed (``ctx.values``) to the state and the template context.
+
+    The ``scripts`` pass's ``script_usage``/``fallback_summary`` become the
+    ``DocumentState`` fields the wrapper and the multi-document renderer read
+    (``fonts_scanned`` tells the renderer its whole-body LaTeX scan is not
+    needed), and the ``fonts.script_usage``/``fonts.fallback_summary`` keys
+    of the template context that ``ts-fonts`` provisioning reads; the
+    ``emoji`` pass's mode becomes the ``emoji`` override, as
+    ``_build_runtime_common`` set it on the HTML path.
+    """
+    values = ctx.values
+    usage = values.get("script_usage") or []
+    fallback = values.get("fallback_summary") or []
+    if usage:
+        state.script_usage = merge_script_usage(state.script_usage, usage)
+    if fallback:
+        state.fallback_summary = merge_fallback_summaries(state.fallback_summary, fallback)
+    state.fonts_scanned = True
+    if template_overrides is None:
+        return
+    emoji_mode = values.get("emoji_mode")
+    if isinstance(emoji_mode, str) and emoji_mode:
+        template_overrides.setdefault("emoji", emoji_mode)
+    if usage or fallback:
+        fonts = template_overrides.setdefault("fonts", {})
+        if isinstance(fonts, dict):
+            if usage:
+                existing = fonts.get("script_usage")
+                fonts["script_usage"] = merge_script_usage(
+                    existing if isinstance(existing, list) else [], usage
+                )
+            if fallback:
+                existing = fonts.get("fallback_summary")
+                fonts["fallback_summary"] = merge_fallback_summaries(
+                    existing if isinstance(existing, list) else [], fallback
+                )
 
 
 def render_ir_document(
@@ -218,12 +270,17 @@ def render_ir_document(
         abbreviations=processed.ir.abbreviations,
         template_shell_escape=bool(binding.requires_shell_escape) if binding else False,
     )
+    apply_pass_values(ctx, state, context.template_overrides)
 
     processed.diagnostics.extend(record for record in sink if record not in processed.diagnostics)
+    assets = ctx.values.get("assets")
     return IrRenderResult(
         document=processed,
         slot_outputs=slot_outputs,
         bodies=bodies,
         requires=requires,
         document_state=state,
+        assets={str(key): Path(path) for key, path in assets.items()}
+        if isinstance(assets, Mapping)
+        else {},
     )

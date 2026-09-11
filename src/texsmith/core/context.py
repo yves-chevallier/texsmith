@@ -43,6 +43,9 @@ class DocumentState:
     pygments_styles: dict[str, str] = field(default_factory=dict)
     script_usage: list[dict[str, Any]] = field(default_factory=list)
     fallback_summary: list[dict[str, Any]] = field(default_factory=list)
+    #: IR path: the ``scripts`` pass computed the two fields above from the
+    #: IR, so the renderer's whole-body scan of the LaTeX is not needed.
+    fonts_scanned: bool = False
     callouts_used: bool = False
     #: IR path only (``core.fragments.activation``): the contracts the bodies
     #: named, the packages ``ts-extra`` must load, the index registries used.

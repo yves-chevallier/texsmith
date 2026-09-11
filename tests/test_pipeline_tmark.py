@@ -314,3 +314,51 @@ def test_requires_union_and_activation() -> None:
     assert state.acronyms == {"NMR": ("NMR", "Nuclear Magnetic Resonance")}
     assert required_fragment({"ts_required_fragments": ["ts-code"]}, "ts-code")
     assert not required_fragment({}, "ts-code")
+
+
+def test_assets_emoji_and_scripts_passes_reach_the_tex(tmp_path: Path, monkeypatch) -> None:
+    """The wave-3 passes on the CLI path: copied assets, emoji spans, script runs, the font summary."""
+    from texsmith.adapters.transformers import register_converter, registry
+    from texsmith.fonts.fallback import FallbackEntry, FallbackIndex, FallbackLookup
+    from texsmith.fonts.scripts import ScriptDetector
+
+    source = tmp_path / "doc.md"
+    source.write_text(
+        "# Passes\n\nHello 😀 world and Привет.\n\n![A figure](figure.png)\n\n"
+        "```mermaid\n%% Pipeline\nflowchart LR\n  A --> B\n```\n",
+        encoding="utf-8",
+    )
+    (tmp_path / "figure.png").write_bytes(b"\x89PNG\r\n\x1a\nfake")
+
+    def fake_mermaid(diagram: str, *, output_dir: Path, **options: object) -> Path:
+        output_dir.mkdir(parents=True, exist_ok=True)
+        artefact = output_dir / "diagram.pdf"
+        artefact.write_bytes(b"%PDF-1.4\n%fake\n")
+        return artefact
+
+    saved = registry.get("mermaid")
+    register_converter("mermaid", fake_mermaid)
+    cyrillic = FallbackEntry(
+        name="Cyrillic", start=0x0400, end=0x04FF, group="Cyrillics", font={"name": "NotoSans"}
+    )
+    monkeypatch.setattr(
+        ScriptDetector,
+        "_ensure_lookup",
+        lambda self: FallbackLookup(FallbackIndex([cyrillic])),  # noqa: ARG005
+    )
+    out = tmp_path / "out"
+    try:
+        _render(["--reader", "tmark", str(source), "-o", str(out), "-t", "article"])
+    finally:
+        register_converter("mermaid", saved)
+
+    body = _body(out / "doc.tex")
+    assert "\\tsemoji{😀}" in body
+    assert "\\tsscript{cyrillics}{Привет}" in body
+    assert "\\includegraphics[width=\\linewidth]{assets/figure.png}" in body
+    assert (out / "assets" / "figure.png").is_file()
+    assert "\\caption{Pipeline}" in body
+    assert "{assets/diagram.pdf}" in body
+    # The font summary of the ``scripts`` pass reached the ts-fonts provisioning.
+    sty = (out / "ts-fonts.sty").read_text(encoding="utf-8")
+    assert "\\textcyrillics" in sty
