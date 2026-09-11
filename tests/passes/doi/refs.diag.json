@@ -1,0 +1,11 @@
+[
+  [
+    "doi-fetch-failed",
+    [
+      0,
+      243,
+      261
+    ],
+    "Failed to resolve DOI '10.5555/broken': offline: 10.5555/broken"
+  ]
+]
