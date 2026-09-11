@@ -77,7 +77,9 @@
 }
 
 // #ts-progress(0.45, label: "label", thin: false)
-#let ts-progress(value, label: none, thin: false) = {
+#let ts-progress(value, label: none, thin: false, class: (), ..rest) = {
+  // `class` carries the attribute classes of the bar (`{.thin .candystripe}`).
+  let thin = thin or ("thin" in class)
   let bar-height = if thin { 6pt } else { 12pt }
   let v = calc.max(0.0, calc.min(1.0, float(value)))
   block(below: 0.6em)[

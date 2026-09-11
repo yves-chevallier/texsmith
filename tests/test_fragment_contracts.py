@@ -546,7 +546,7 @@ Inline #ts-codeinline(lang: "py", "xs.sort()"). #ts-ins[new] #ts-del[old] #ts-su
 #ts-epigraph(source: [Someone])[A quote.]
 #ts-epigraph[A quote without source.]
 
-#ts-progress(0.45, "label", thin: true)
+#ts-progress(0.45, label: "label", thin: true)
 #ts-progress(0.7, "full")
 
 #ts-callout(kind: "warning", title: [LaTeX toolchain])[
