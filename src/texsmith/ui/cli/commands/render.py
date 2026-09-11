@@ -33,11 +33,18 @@ from texsmith.core.bibliography import BibliographyCollection
 from texsmith.core.conversion import ConversionRequest
 from texsmith.core.conversion.debug import ConversionError
 from texsmith.core.conversion.inputs import UnsupportedInputError
+from texsmith.core.conversion.pipeline import (
+    DEPRECATED_LEVELS,
+    demote_deprecated,
+    deprecated_level,
+)
+from texsmith.core.conversion.resolution import NUMBERING_MODES, NUMBERING_OVERRIDE_KEY
 from texsmith.core.conversion.service import ConversionService
 from texsmith.core.conversion.typst import build_typst_pdf, render_typst_document
 from texsmith.core.metadata import PressMetadataError, normalise_press_metadata
 from texsmith.core.templates import TemplateError, load_template
 from texsmith.core.templates.runtime import coerce_base_level
+from texsmith.diagnostics import Diagnostic
 from texsmith.fonts.html_scripts import wrap_scripts_in_html
 from texsmith.version import get_version
 
@@ -47,6 +54,7 @@ from .._options import (
     BaseLevelOption,
     ConvertAssetsOption,
     DebugHtmlOption,
+    DeprecatedOption,
     DiagnosticsJsonOption,
     DisableFragmentOption,
     DisableMarkdownExtensionsOption,
@@ -65,6 +73,7 @@ from .._options import (
     NoCopyAssetsOption,
     NoPromoteTitleOption,
     NoTitleOption,
+    NumberingOption,
     OpenLogOption,
     OutputPathOption,
     ParserOption,
@@ -322,6 +331,25 @@ def _parse_template_attributes(values: Iterable[str] | None) -> dict[str, Any]:
     return overrides
 
 
+class _RenderEmitter(CliEmitter):
+    """The render command's emitter: applies the ``--deprecated`` level to every record.
+
+    Parse records (``Document.load``), pass, ``resolve`` and ``write`` records
+    all reach the sink through :meth:`diagnostic`, so lowering or dropping
+    tmark's ``deprecated`` records here covers the whole run before the
+    ``--strict`` check reads ``sink.strict_failed()``.
+    """
+
+    def __init__(self, *, deprecated: str = "warning", **kwargs: Any) -> None:
+        super().__init__(**kwargs)
+        self.deprecated = deprecated
+
+    def diagnostic(self, diagnostic: Diagnostic) -> None:
+        record = demote_deprecated(diagnostic, self.deprecated)
+        if record is not None:
+            super().diagnostic(record)
+
+
 def _lookup_bool(mapping: Mapping[str, Any] | None, path: tuple[str, ...]) -> bool | None:
     """Walk a mapping to resolve a boolean-like value."""
     if not isinstance(mapping, Mapping):
@@ -397,6 +425,7 @@ def render(
     ] = False,
     quiet: QuietOption = False,
     strict: StrictOption = False,
+    deprecated: DeprecatedOption = None,
     diagnostics_json: DiagnosticsJsonOption = None,
     inputs: InputPathArgument = None,
     input_path: Annotated[
@@ -479,6 +508,7 @@ def render(
         ),
     ] = False,
     language: LanguageOption = _REQUEST_DEFAULTS.language,
+    numbering: NumberingOption = "backend",
     legacy_latex_accents: Annotated[
         bool,
         typer.Option(
@@ -565,6 +595,13 @@ def render(
         raise typer.BadParameter("--reader must be 'html' or 'tmark'.")
     if html_only and reader == "tmark":
         raise typer.BadParameter("--html needs the html reader; drop --reader tmark.")
+    numbering = (numbering or "backend").strip().lower()
+    if numbering not in NUMBERING_MODES:
+        raise typer.BadParameter("--numbering must be 'backend' or 'tmark'.")
+    if deprecated is not None:
+        deprecated = deprecated.strip().lower()
+        if deprecated not in DEPRECATED_LEVELS:
+            raise typer.BadParameter("--deprecated must be 'warning', 'info' or 'off'.")
     if html_only:
         build_pdf = False
         template = None
@@ -656,6 +693,8 @@ def render(
         numbered = fm_numbered
     if _lookup_bool(primary_front_matter, ("press", "features", "strict")):
         strict = True
+    # The transition knob: ``--deprecated`` over ``press.diagnostics.deprecated``.
+    deprecated = deprecated_level(primary_front_matter, deprecated)
 
     template_param_source = ctx.get_parameter_source("template") if ctx else None
     no_promote_param_source = ctx.get_parameter_source("no_promote_title") if ctx else None
@@ -693,6 +732,9 @@ def render(
         raise typer.BadParameter("--attribute can only be used together with --template.")
     if engine:
         attribute_overrides.setdefault("_texsmith_latex_engine", engine)
+    if numbering != "backend":
+        # Read by both IR backends (``core.conversion.resolution.numbering_mode``).
+        attribute_overrides[NUMBERING_OVERRIDE_KEY] = numbering
     attr_numbered = _lookup_bool(attribute_overrides, ("numbered",))
     if attr_numbered is not None:
         numbered = attr_numbered
@@ -783,7 +825,7 @@ def render(
     )
     extension_line = f"Extensions: {', '.join(resolved_markdown_extensions) or '(none)'}"
 
-    emitter = CliEmitter(state=state, debug_enabled=debug_enabled())
+    emitter = _RenderEmitter(state=state, debug_enabled=debug_enabled(), deprecated=deprecated)
     presented_diagnostics = 0
 
     def _flush_diagnostics() -> None:

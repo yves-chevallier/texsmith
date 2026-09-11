@@ -10,14 +10,25 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+import re
+from typing import Any
 
 import pytest
 from typer.testing import CliRunner
 
 from texsmith.core.context import DocumentState
-from texsmith.core.conversion import ConversionRequest
+from texsmith.core.conversion import ConversionRequest, resolution
 from texsmith.core.conversion.bodies import Requires, build_writer_options
-from texsmith.core.conversion.resolution import ResolutionChain, bibliography_paths
+from texsmith.core.conversion.resolution import (
+    NUMBERING_OVERRIDE_KEY,
+    PREDECLARED_SERIES,
+    ResolutionChain,
+    bibliography_paths,
+    numbering_mode,
+    resolve_numbering,
+    tmark_language,
+    writer_numbering,
+)
 from texsmith.core.conversion.service import ConversionService
 from texsmith.core.fragments.activation import apply_requires, required_fragment
 from texsmith.ir import model
@@ -550,3 +561,195 @@ def test_typst_assets_and_pass_values(tmp_path: Path, monkeypatch) -> None:
     assert '#ts-script("cyrillics")[Привет]' in typ
     assert state.fonts_scanned is True
     assert any(entry.get("slug") == "cyrillics" for entry in state.script_usage)
+
+
+# -- ResolveOptions.lang / --numbering (design 06 §Site-wide resolution) ----
+
+
+@pytest.mark.parametrize(
+    ("name", "expected"),
+    [
+        ("french", "fr"),
+        ("ngerman", "de"),
+        ("german", "de"),
+        ("english", "en"),
+        ("british", "en"),
+        ("italian", "it"),
+        ("spanish", "es"),
+        ("fr", "fr"),  # a tag passes through
+        ("fr-CH", "fr"),  # as its primary subtag
+        ("DE_de", "de"),
+        ("klingon", None),  # unknown: tmark falls back to the front matter's ``lang``
+        ("", None),
+        (None, None),
+    ],
+)
+def test_tmark_language_maps_babel_names_to_bcp47(name: str | None, expected: str | None) -> None:
+    assert tmark_language(name) == expected
+
+
+def test_numbering_mode_helpers() -> None:
+    assert numbering_mode(None) == "backend"
+    assert numbering_mode({}) == "backend"
+    assert numbering_mode({NUMBERING_OVERRIDE_KEY: "tmark"}) == "tmark"
+    assert numbering_mode({NUMBERING_OVERRIDE_KEY: " TMark "}) == "tmark"
+    assert numbering_mode({NUMBERING_OVERRIDE_KEY: "nope"}) == "backend"
+    # The first source naming a mode wins (context overrides, then the request's options).
+    assert numbering_mode({}, {NUMBERING_OVERRIDE_KEY: "tmark"}) == "tmark"
+    assert numbering_mode(None, {"other": 1}) == "backend"
+    assert resolve_numbering("backend") is None
+    assert resolve_numbering("tmark") == "all"
+    assert writer_numbering("backend") is None
+    assert writer_numbering("tmark") == dict.fromkeys(PREDECLARED_SERIES, "tmark")
+    assert set(PREDECLARED_SERIES) >= {"fig", "tbl", "lst", "eq", "sec"}
+
+
+def test_resolution_chain_options_carry_lang_and_numbering(tmp_path: Path) -> None:
+    class _Doc:
+        source_path = tmp_path / "doc.md"
+
+    chain = ResolutionChain(lang="en", numbering="backend")
+    default = chain.options_for(_Doc()).to_json()  # type: ignore[arg-type]
+    assert default["lang"] == "en"
+    assert "numbering" not in default
+    explicit = chain.options_for(_Doc(), lang="fr", numbering="tmark").to_json()  # type: ignore[arg-type]
+    assert explicit["lang"] == "fr"
+    assert explicit["numbering"] == "all"
+
+
+def _capture_resolve_options(monkeypatch: pytest.MonkeyPatch) -> list[dict[str, Any]]:
+    """Record the ``options`` every ``tmark.resolve`` of the run receives."""
+    seen: list[dict[str, Any]] = []
+    real = resolution.tmark.resolve
+
+    def spy(doc: Any, loader: Any = None, options: Any = None, text: Any = None) -> Any:
+        seen.append(dict(options or {}))
+        return real(doc, loader, options, text)
+
+    monkeypatch.setattr(resolution.tmark, "resolve", spy)
+    return seen
+
+
+def test_resolve_receives_the_resolved_language_on_both_backends(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    source = tmp_path / "rapport.md"
+    source.write_text("---\nlanguage: french\n---\n# Bonjour\n\nTexte.\n", encoding="utf-8")
+    seen = _capture_resolve_options(monkeypatch)
+    _render(["--reader", "tmark", str(source), "-o", str(tmp_path / "tex")])
+    _render(["--reader", "tmark", str(source), "--format", "typst", "-o", str(tmp_path / "typ")])
+    assert [options["lang"] for options in seen] == ["fr", "fr"]
+    assert all("numbering" not in options for options in seen)
+    # ``--language`` wins over the front matter, as it does for babel.
+    seen.clear()
+    _render(["--reader", "tmark", "-l", "ngerman", str(source), "-o", str(tmp_path / "de")])
+    assert seen[0]["lang"] == "de"
+
+
+NUMBERED_FLOATS = """\
+---
+title: Floats
+---
+# Intro {#sec:intro}
+
+See @tbl:one, @tbl:two and @sec:intro.
+
+| a | b |
+| - | - |
+| 1 | 2 |
+
+Table: First table {#tbl:one}
+
+| c | d |
+| - | - |
+| 3 | 4 |
+
+Table: Second table {#tbl:two}
+"""
+
+
+def test_numbering_tmark_prints_the_same_numbers_in_tex_and_typ(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    source = tmp_path / "floats.md"
+    source.write_text(NUMBERED_FLOATS, encoding="utf-8")
+    seen = _capture_resolve_options(monkeypatch)
+    out = tmp_path / "out"
+    _render(["--reader", "tmark", "--numbering", "tmark", str(source), "-o", str(out / "tex")])
+    _render(
+        [
+            "--reader",
+            "tmark",
+            "--numbering",
+            "tmark",
+            "--format",
+            "typst",
+            str(source),
+            "-o",
+            str(out / "typ"),
+        ]
+    )
+    assert [options["numbering"] for options in seen] == ["all", "all"]
+    tex = (out / "tex" / "floats.tex").read_text(encoding="utf-8")
+    typ = (out / "typ" / "floats.typ").read_text(encoding="utf-8")
+    # tmark allocated the numbers at resolve time; both writers print them.
+    assert "\\hyperref[tbl:one]{Table~1}" in tex
+    assert "\\hyperref[tbl:two]{Table~2}" in tex
+    assert "\\hyperref[sec:intro]{Section~1}" in tex
+    assert "#link(<tbl:one>)[Table 1]" in typ
+    assert "#link(<tbl:two>)[Table 2]" in typ
+    assert "#link(<sec:intro>)[Section 1]" in typ
+    # The default leaves the numbers to each backend.
+    seen.clear()
+    _render(["--reader", "tmark", str(source), "-o", str(out / "backend")])
+    assert "numbering" not in seen[0]
+    backend_tex = (out / "backend" / "floats.tex").read_text(encoding="utf-8")
+    assert "Table~\\ref{tbl:one}" in backend_tex
+
+
+_NUMBER = r"(?:FW|REQ)-\d+"
+
+
+def _tex_numbers(body: str) -> tuple[dict[str, str], list[tuple[str, str]]]:
+    """``{key: number}`` of the definitions and ``[(key, number)]`` of the references."""
+    definitions = dict(re.findall(rf"\\label\{{([a-z]+:[\w-]+)\}}({_NUMBER})", body))
+    references = re.findall(rf"\\hyperref\[([a-z]+:[\w-]+)\]\{{({_NUMBER})\}}", body)
+    return definitions, references
+
+
+def _typ_numbers(text: str) -> tuple[dict[str, str], list[tuple[str, str]]]:
+    definitions = {
+        key: number for number, key in re.findall(rf"({_NUMBER})<([a-z]+:[\w-]+)>", text)
+    }
+    references = re.findall(rf"#link\(<([a-z]+:[\w-]+)>\)\[({_NUMBER})\]", text)
+    return definitions, references
+
+
+def test_counters_example_numbers_agree_across_backends_under_tmark_numbering(
+    tmp_path: Path,
+) -> None:
+    source = EXAMPLES / "counters" / "counters.md"
+    common = ["--reader", "tmark", "--numbering", "tmark", str(source)]
+    _render([*common, "-o", str(tmp_path / "tex"), "-t", "article"])
+    _render([*common, "--format", "typst", "-o", str(tmp_path / "typ")])
+    tex_definitions, tex_references = _tex_numbers(_body(tmp_path / "tex" / "counters.tex"))
+    typ_definitions, typ_references = _typ_numbers(
+        (tmp_path / "typ" / "counters.typ").read_text(encoding="utf-8")
+    )
+    assert tex_definitions == typ_definitions
+    assert tex_references == typ_references
+    assert tex_definitions["fw:watchdog"] == "FW-01"
+    assert tex_definitions["fw:rtc-drift"] == "FW-05"
+    assert tex_definitions["req:watchdog-reset"] == "REQ-100"
+    assert tex_definitions["req:log-retention"] == "REQ-103"
+    assert ("fw:log-wrap", "FW-04") in tex_references  # the silent heading definition
+    assert len(tex_references) >= 10
+
+
+def test_numbering_option_is_validated() -> None:
+    result = CliRunner().invoke(
+        app,
+        ["--reader", "tmark", "--numbering", "latex", str(EXAMPLES / "counters" / "counters.md")],
+    )
+    assert result.exit_code != 0
+    assert "--numbering must be 'backend' or 'tmark'" in result.output
