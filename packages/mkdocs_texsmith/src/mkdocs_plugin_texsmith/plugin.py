@@ -1,28 +1,48 @@
+"""The ``texsmith`` MkDocs plugin: one plugin, two media, one registry.
+
+``specs/migration/web-profile.md`` §Interfaces, "What the plugin calls":
+
+* ``on_config`` injects the Markdown extensions the lowering relies on
+  (``attr_list``, ``md_in_html``, ``admonition``, ``pymdownx.details``,
+  ``pymdownx.superfences``), registers ``texsmith.css`` and reads the
+  site-wide ``declare.counters``;
+* ``on_nav`` pre-passes every page (``tmark.parse`` + ``tmark.resolve`` with
+  ``numbering: "all"``, ``start`` chained in navigation order) and builds
+  the site label map;
+* ``on_page_markdown`` (priority −50, after ``macros``) resolves the page
+  against the site map, lowers it with ``tmark.lower_web`` and stores the
+  source for the PDF;
+* ``on_page_content`` collects the ``ts-index`` tags for the search index;
+* ``on_post_page`` captures the rendered HTML (the ``press.reader: html``
+  fallback) and rewrites the snippet URLs;
+* ``on_post_build`` builds the books from the stored sources through the
+  tmark reader path and injects the tags into the lunr index.
+"""
+
 from __future__ import annotations
 
 from collections.abc import Iterable, Mapping
 from dataclasses import dataclass, field
+from importlib import resources
 import os
 from pathlib import Path, PurePosixPath
 import posixpath
 import shutil
 import sys
 from typing import Any
-import warnings
-from warnings import WarningMessage
 
 from mkdocs.config import config_options
 from mkdocs.config.defaults import MkDocsConfig
 from mkdocs.exceptions import PluginError
-from mkdocs.plugins import BasePlugin
+from mkdocs.plugins import BasePlugin, event_priority
 from mkdocs.structure import StructureItem
-from mkdocs.structure.files import Files
+from mkdocs.structure.files import File, Files
 from mkdocs.structure.nav import Navigation
+from mkdocs.structure.pages import Page
 from mkdocs.utils import log
-from pybtex.exceptions import PybtexError
 from rich.console import Console
 from slugify import slugify
-from texsmith.adapters.latex import LaTeXFormatter, LaTeXRenderer
+from texsmith.adapters.latex import LaTeXFormatter
 from texsmith.adapters.latex.engines import (
     EngineFeatures,
     LatexMessage,
@@ -47,21 +67,15 @@ from texsmith.adapters.latex.tectonic import (
 from texsmith.adapters.plugins import snippet
 from texsmith.core.bibliography import (
     BibliographyCollection,
-    DoiBibliographyFetcher,
-    DoiLookupError,
-    bibliography_data_from_inline_entry,
-    bibliography_data_from_string,
 )
 from texsmith.core.config import BookConfig, LaTeXConfig
 from texsmith.core.context import DocumentState
-from texsmith.core.conversion import extract_front_matter_bibliography
-from texsmith.core.conversion.core import render_with_fallback
+from texsmith.core.conversion.core import convert_document
 from texsmith.core.conversion.debug import format_rendering_error
-from texsmith.core.conversion.inputs import (
-    InlineBibliographyEntry,
-    InlineBibliographyValidationError,
-)
+from texsmith.core.conversion.models import ConversionRequest
+from texsmith.core.conversion.resolution import ResolutionChain, bibliography_paths
 from texsmith.core.diagnostics import LoggingEmitter
+from texsmith.core.documents import Document, TitleStrategy
 from texsmith.core.exceptions import LatexRenderingError
 from texsmith.core.templates import (
     TemplateError,
@@ -70,11 +84,26 @@ from texsmith.core.templates import (
     normalise_template_language,
     wrap_template_document,
 )
+from texsmith.diagnostics import FileTable
 import yaml
+
+from .search import SearchTags
+from .site import HEADING_PREFIXES, PageRecord, SiteIndex
 
 
 AUTO_BASE_LEVEL = -2
 FULL_NAVIGATION_ROOT = "__texsmith_full_navigation__"
+
+#: What the lowering emits relies on these (spec Table ``tbl:extensions``).
+REQUIRED_MARKDOWN_EXTENSIONS = (
+    "attr_list",
+    "md_in_html",
+    "admonition",
+    "pymdownx.details",
+    "pymdownx.superfences",
+)
+#: Where the stylesheet lands in the site.
+CSS_URI = "assets/texsmith/texsmith.css"
 
 
 @dataclass(slots=True)
@@ -100,6 +129,7 @@ class NavEntry:
     is_page: bool
     slot: str | None = None
     src_path: str | None = None
+    src_uri: str | None = None
     abs_src_path: Path | None = None
 
 
@@ -144,6 +174,14 @@ class LatexPlugin(BasePlugin):
         ("bibliography", config_options.Type(list, default=[])),
         ("books", config_options.Type(list, default=[])),
         ("template_overrides", config_options.Type(dict, default={})),
+        # Site-wide declarations (``declare.counters``), as ``press.declare``
+        # in a page's front matter; every page sees them.
+        ("declare", config_options.Type(dict, default={})),
+        # ``tmark.lower_web`` options: ``sections`` (``title`` | ``number``),
+        # ``citations`` (``inline`` | ``passthrough``).
+        ("web", config_options.Type(dict, default={})),
+        ("inject_markdown_extensions", config_options.Type(bool, default=True)),
+        ("css", config_options.Type(bool, default=True)),
     )
 
     def __init__(self) -> None:
@@ -164,6 +202,9 @@ class LatexPlugin(BasePlugin):
         self._nav: Navigation | None = None
         self._diagnostic_emitter: LoggingEmitter | None = None
         self._auto_build = False
+        self._site: SiteIndex | None = None
+        self._search = SearchTags()
+        self._css_content: str | None = None
 
     # -- MkDocs lifecycle -------------------------------------------------
 
@@ -230,20 +271,97 @@ class LatexPlugin(BasePlugin):
         self._diagnostic_emitter = _MkdocsEmitter(
             logger_obj=log,
             debug_enabled=self._is_serve,
+            files=FileTable(),
         )
+
+        # -- the site on tmark ------------------------------------------------
+        self._page_content.clear()
+        self._page_meta.clear()
+        self._page_sources.clear()
+        self._search.clear()
+        self._books.clear()
+        self._site = SiteIndex(
+            counters=self._site_counters(),
+            lang=language,
+            web_options=self._web_options(),
+            project_dir=self._project_dir,
+            logger=log,
+        )
+        if self.config.get("inject_markdown_extensions", True):
+            self._inject_markdown_extensions(config)
+        if self.config.get("css", True):
+            self._css_content = _stylesheet()
+            extra_css = list(config.extra_css or [])
+            if CSS_URI not in extra_css:
+                extra_css.append(CSS_URI)
+            config.extra_css = extra_css
         return config
+
+    def on_files(
+        self, files: Files, config: MkDocsConfig
+    ) -> Files:  # pragma: no cover - hook
+        if not self._enabled or self._css_content is None:
+            return files
+        if files.get_file_from_path(CSS_URI) is None:
+            files.append(File.generated(config, CSS_URI, content=self._css_content))
+        return files
 
     def on_nav(
         self,
         nav: Navigation,
         config: MkDocsConfig,
-        files: Files,  # noqa: ARG002 - required by MkDocs
+        files: Files,
     ) -> Navigation:  # pragma: no cover - hook
         if not self._enabled:
             return nav
 
         self._nav = nav
+        if self._site is not None:
+            # Navigation order first, then the pages outside the nav in file order.
+            self._site.prepass(nav.pages)
+            self._site.prepass(
+                file.page
+                for file in files.documentation_pages()
+                if file.page is not None
+                and file.page.file.src_uri not in self._site.records
+            )
         return nav
+
+    @event_priority(-50)
+    def on_page_markdown(
+        self,
+        markdown: str,
+        page: Page,
+        config: MkDocsConfig,
+        files: Files,
+    ) -> str:  # pragma: no cover - hook
+        del config, files
+        if not self._enabled or self._site is None:
+            return markdown
+        if not getattr(page.file, "abs_src_path", None):
+            return markdown
+        lowered = self._site.lower(page, markdown)
+        if lowered is None:
+            return markdown
+        self._site.report(
+            lowered,
+            emitter=_MkdocsEmitter(
+                logger_obj=log, debug_enabled=self._is_serve, files=lowered.files
+            ),
+        )
+        return lowered.text
+
+    def on_page_content(
+        self,
+        html: str,
+        page: Page,
+        config: MkDocsConfig,
+        files: Files,
+    ) -> str:  # pragma: no cover - hook
+        del config, files
+        if self._enabled:
+            self._search.collect(html, page.url or "")
+        return html
 
     def on_post_page(
         self,
@@ -254,10 +372,10 @@ class LatexPlugin(BasePlugin):
         if not self._enabled:
             return output
 
-        src_path = page.file.src_path
-        self._page_content[src_path] = page.content
-        self._page_meta[src_path] = dict(page.meta or {})
-        self._page_sources[src_path] = Path(page.file.abs_src_path)
+        src_uri = page.file.src_uri
+        self._page_content[src_uri] = page.content
+        self._page_meta[src_uri] = dict(page.meta or {})
+        self._page_sources[src_uri] = Path(page.file.abs_src_path)
         rewritten = snippet.rewrite_html_snippets(
             output,
             lambda block: self._build_snippet_urls(page, block),
@@ -265,8 +383,16 @@ class LatexPlugin(BasePlugin):
         )
         return rewritten
 
+    @event_priority(-100)
     def on_post_build(self, config: MkDocsConfig) -> None:  # pragma: no cover - hook
-        if not self._enabled or self._is_serve:
+        if not self._enabled:
+            return
+
+        # After the ``search`` plugin wrote its index.
+        if self._search.inject(Path(config.site_dir)):
+            log.info("texsmith: index entries added to the search index.")
+
+        if self._is_serve:
             return
 
         if self._latex_config is None or self._build_root is None:
@@ -276,6 +402,46 @@ class LatexPlugin(BasePlugin):
 
         for runtime in self._books:
             self._render_book(runtime)
+
+    # -- Site helpers -------------------------------------------------------
+
+    def _site_counters(self) -> dict[str, Any]:
+        declare = self.config.get("declare") or {}
+        counters = declare.get("counters") if isinstance(declare, Mapping) else None
+        if counters is None:
+            return {}
+        if not isinstance(counters, Mapping):
+            log.warning(
+                "texsmith: 'declare.counters' must map a prefix to its declaration; "
+                "ignoring %r.",
+                type(counters).__name__,
+            )
+            return {}
+        return dict(counters)
+
+    def _web_options(self) -> dict[str, Any]:
+        raw = self.config.get("web") or {}
+        options: dict[str, Any] = {}
+        if not isinstance(raw, Mapping):
+            log.warning(
+                "texsmith: 'web' must be a mapping; ignoring %r.", type(raw).__name__
+            )
+            return options
+        for key in ("sections", "citations", "css_prefix"):
+            value = raw.get(key)
+            if isinstance(value, str) and value.strip():
+                options[key] = value.strip()
+        return options
+
+    @staticmethod
+    def _inject_markdown_extensions(config: MkDocsConfig) -> None:
+        """Enable the extensions the lowered Markdown relies on, when absent."""
+        extensions = list(config.markdown_extensions or [])
+        present = {name.split(":", 1)[0] for name in extensions}
+        for name in REQUIRED_MARKDOWN_EXTENSIONS:
+            if name not in present:
+                extensions.append(name)
+        config.markdown_extensions = extensions
 
     # -- Helpers ----------------------------------------------------------
 
@@ -462,73 +628,26 @@ class LatexPlugin(BasePlugin):
         for name, override_path in formatter_overrides.items():
             heading_formatter.override_template(name, override_path)
 
-        def renderer_factory() -> LaTeXRenderer:
-            formatter = LaTeXFormatter()
-            for name, override_path in formatter_overrides.items():
-                formatter.override_template(name, override_path)
-            renderer = LaTeXRenderer(
-                config=runtime.config,
-                formatter=formatter,
-                output_root=output_root,
-                parser=parser_backend,
-                copy_assets=copy_assets,
-            )
-            return renderer
-
-        inline_bibliography_specs: list[
-            tuple[str, str, dict[str, InlineBibliographyEntry]]
-        ] = []
-        for entry in runtime.entries:
-            if not entry.is_page or not entry.src_path:
-                continue
-            page_meta = self._page_meta.get(entry.src_path) or {}
-            try:
-                inline_map = extract_front_matter_bibliography(page_meta)
-            except InlineBibliographyValidationError as exc:
-                log.warning(
-                    "Inline bibliography on page '%s' is invalid: %s",
-                    entry.title or entry.src_path,
-                    exc,
-                )
-                inline_map = {}
-            if inline_map:
-                inline_bibliography_specs.append(
-                    (entry.src_path, entry.title or entry.src_path, inline_map)
-                )
-
         bibliography_files = [
             *self._global_bibliography,
             *runtime.extras.bibliography,
         ]
+        # The shared ``.bib`` files; each page's context clones it and adds
+        # the page's inline entries, and the clone becomes the next page's
+        # base, so the collection written at the end holds every entry.
         bibliography_collection: BibliographyCollection | None = None
-        bibliography_map: dict[str, dict[str, Any]] = {}
-        if bibliography_files or inline_bibliography_specs:
+        if bibliography_files:
             bibliography_collection = BibliographyCollection()
-            if bibliography_files:
-                bibliography_collection.load_files(bibliography_files)
-            if inline_bibliography_specs:
-                fetcher = DoiBibliographyFetcher()
-                for src_path, label, mapping in inline_bibliography_specs:
-                    self._load_inline_bibliography(
-                        bibliography_collection,
-                        mapping,
-                        source_label=label or src_path,
-                        fetcher=fetcher,
-                    )
-            bibliography_map = bibliography_collection.to_dict()
-            for issue in bibliography_collection.issues:
-                prefix = f"[{issue.key}] " if issue.key else ""
-                source = f" ({issue.source})" if issue.source else ""
-                log.warning("%s%s%s", prefix, issue.message, source)
+            bibliography_collection.load_files(bibliography_files)
+        bibliography_map: dict[str, dict[str, Any]] = (
+            bibliography_collection.to_dict()
+            if bibliography_collection is not None
+            else {}
+        )
+        seen_bibliography_issues: set[tuple[str, str | None, str | None]] = set()
 
         document_state: DocumentState | None = None
         assets_map: dict[str, Path] = {}
-        last_renderer: LaTeXRenderer | None = None
-
-        def track_renderer() -> LaTeXRenderer:
-            nonlocal last_renderer
-            last_renderer = renderer_factory()
-            return last_renderer
 
         raw_language = runtime.config.language or self._latex_config.language
         language = normalise_template_language(raw_language)
@@ -601,6 +720,29 @@ class LatexPlugin(BasePlugin):
                 return template_runtime.default_slot
             return target
 
+        # The tmark reader path (``web-profile.md`` step 4): one request for
+        # the book, one resolution chain seeded where the site's chain stood
+        # before the book's first page, so ``FW-10`` is ``FW-10`` on both media.
+        request = ConversionRequest(
+            bibliography_files=list(bibliography_files),
+            template=template_runtime.name,
+            parser=parser_backend,
+            copy_assets=copy_assets,
+            language=runtime_language,
+            reader="tmark",
+            emitter=emitter,
+        )
+        chain = ResolutionChain(
+            bibliography=bibliography_paths(bibliography_files),
+            start=self._book_start(runtime),
+            lang=runtime_language,
+        )
+        template_base = template_runtime.base_level or 0
+        template_slot_levels = {
+            name: slot.resolve_level(template_base)
+            for name, slot in template_runtime.slots.items()
+        }
+
         for page_index, entry in enumerate(runtime.entries):
             target_slot = select_slot(entry)
             slot_base = slot_base_levels.get(target_slot, default_base_level)
@@ -622,15 +764,10 @@ class LatexPlugin(BasePlugin):
                     target_buffer_link.append(fragment)
                 continue
 
-            if not entry.src_path or entry.src_path not in self._page_content:
-                log.warning(
-                    "Skipping page '%s' because no rendered HTML was captured.",
-                    entry.title,
-                )
+            if not entry.src_uri:
+                log.warning("Skipping page '%s': it has no source.", entry.title)
                 continue
-
-            html = self._page_content[entry.src_path]
-            abs_src = entry.abs_src_path or self._page_sources.get(entry.src_path)
+            abs_src = entry.abs_src_path or self._page_sources.get(entry.src_uri)
             if abs_src is None:
                 log.warning(
                     "Cannot determine source path for page '%s'; skipping.",
@@ -638,33 +775,40 @@ class LatexPlugin(BasePlugin):
                 )
                 continue
 
-            if runtime.config.save_html:
-                self._persist_html_snapshot(output_root, entry.src_path, html)
+            html = self._page_content.get(entry.src_uri)
+            if runtime.config.save_html and html is not None:
+                self._persist_html_snapshot(output_root, entry.src_uri, html)
 
-            runtime_payload = {
-                "base_level": effective_level,
-                "numbered": entry.numbered,
-                "drop_title": entry.drop_title,
-                "source_dir": abs_src.parent,
-                "document_path": abs_src,
-                "language": runtime_language,
-                "template": template_runtime.name,
-                "copy_assets": copy_assets,
-                "emitter": emitter,
-                "snippet_frame_default": False,
-            }
+            document = self._page_document(
+                entry,
+                abs_src=abs_src,
+                html=html,
+                base_level=effective_level
+                - template_slot_levels.get(target_slot, template_base),
+                output_root=output_root,
+                emitter=emitter,
+            )
+            if document is None:
+                continue
 
+            chain.book = self._book_labels(runtime, entry)
             try:
-                with warnings.catch_warnings(record=True) as captured_warnings:
-                    warnings.simplefilter("always")
-                    fragment, document_state = render_with_fallback(
-                        track_renderer,
-                        html,
-                        runtime_payload,
-                        bibliography_map,
-                        state=document_state,
-                        emitter=emitter,
-                    )
+                result = convert_document(
+                    document,
+                    output_dir=output_root,
+                    request=request,
+                    slot_overrides=None,
+                    template_overrides=overrides,
+                    state=document_state,
+                    template_runtime=template_runtime,
+                    wrap_document=False,
+                    emitter=emitter,
+                    preloaded_bibliography=bibliography_collection,
+                    seen_bibliography_issues=seen_bibliography_issues,
+                    resolution=chain,
+                )
+            except PluginError:
+                raise
             except Exception as exc:  # pragma: no cover - defensive
                 log.exception("TeXSmith failed while rendering page '%s'.", entry.title)
                 detail = (
@@ -676,19 +820,27 @@ class LatexPlugin(BasePlugin):
                     f"LaTeX rendering failed for page '{entry.title}': {detail}"
                 ) from exc
 
-            for warning in captured_warnings:
-                self._log_render_warning(entry, warning)
+            document_state = result.document_state or document_state
+            if result.context is not None and result.context.bibliography_collection:
+                bibliography_collection = result.context.bibliography_collection
+                bibliography_map = dict(result.context.bibliography_map)
 
+            fragment = result.latex_output
             page_rel_path = self._resolve_page_fragment_path(entry, page_index)
             page_abs_path = output_root / page_rel_path
             page_abs_path.parent.mkdir(parents=True, exist_ok=True)
             page_abs_path.write_text(fragment, encoding="utf-8")
             target_buffer_embed.append(fragment)
             target_buffer_link.append(f"\\input{{{page_rel_path.as_posix()}}}")
+            # A page's front matter may route parts of it to other slots.
+            for slot_name, slot_text in result.slot_outputs.items():
+                if slot_name == result.default_slot or not slot_text.strip():
+                    continue
+                if slot_name in slot_buffers_embed:
+                    slot_buffers_embed[slot_name].append(slot_text)
+                    slot_buffers_link[slot_name].append(slot_text)
 
-            if last_renderer is not None:
-                for key, path in last_renderer.assets.items():
-                    assets_map[key] = path
+            assets_map.update(result.assets_map)
 
         final_state = document_state or DocumentState(
             bibliography=dict(bibliography_map)
@@ -772,6 +924,154 @@ class LatexPlugin(BasePlugin):
                 bibliography_present=bool(bibliography_output),
             )
 
+    # -- Page documents (the PDF input) ------------------------------------
+
+    def _book_start(self, runtime: BookRuntime) -> dict[str, int]:
+        """Where the site's chain stood before the book's first page."""
+        if self._site is None:
+            return {}
+        for entry in runtime.entries:
+            if entry.is_page and entry.src_uri:
+                record = self._site.record(entry.src_uri)
+                if record is not None:
+                    return dict(record.start)
+        return {}
+
+    def _book_labels(
+        self, runtime: BookRuntime, entry: NavEntry
+    ) -> list[dict[str, Any]]:
+        """The labels of the book's other pages, for the ``resolve`` of ``entry``.
+
+        The LaTeX writer prints a sibling as text (design 06 §Sibling
+        documents), so only labels whose text is the same on both media are
+        handed over: user counters (tmark numbers them in print too) and
+        headings (their title). A backend-numbered float of another page
+        stays ``[?key]`` rather than carrying the site's number into the PDF.
+        """
+        if self._site is None:
+            return []
+        book: list[dict[str, Any]] = []
+        for other in runtime.entries:
+            if not other.is_page or not other.src_uri or other.src_uri == entry.src_uri:
+                continue
+            record = self._site.record(other.src_uri)
+            if record is None:
+                continue
+            for label in record.labels:
+                prefix = label.get("prefix")
+                kind = label.get("kind")
+                heading = kind == "header"
+                user_counter = bool(prefix) and (
+                    prefix in self._site.counters or prefix in record.page_counters
+                )
+                if not (heading or user_counter):
+                    continue
+                item = dict(label)
+                if heading and prefix not in HEADING_PREFIXES:
+                    item["kind"] = "counter_item"
+                book.append(item)
+        return book
+
+    def _page_document(
+        self,
+        entry: NavEntry,
+        *,
+        abs_src: Path,
+        html: str | None,
+        base_level: int,
+        output_root: Path,
+        emitter: LoggingEmitter,
+    ) -> Document | None:
+        """The :class:`Document` of a page for the book: its source through tmark.
+
+        The source is the text MkDocs handed ``on_page_markdown`` (macros
+        expanded), with the page metadata and the site declarations back in
+        front of it, written under ``sources/`` of the book so the exact input
+        of the PDF is inspectable. A page with ``press.reader: html`` in its
+        front matter is read from its rendered ``page.content`` instead.
+        """
+        assert entry.src_uri is not None
+        record = self._site.record(entry.src_uri) if self._site is not None else None
+        meta = (
+            record.meta
+            if record is not None
+            else self._page_meta.get(entry.src_uri) or {}
+        )
+        title_strategy = TitleStrategy.DROP if entry.drop_title else TitleStrategy.KEEP
+        numbered = entry.numbered
+        declared_numbered = meta.get("numbered")
+        if isinstance(declared_numbered, bool):
+            numbered = declared_numbered
+
+        if _press_reader(meta) == "html":
+            if html is None:
+                log.warning(
+                    "Skipping page '%s': 'press.reader: html' "
+                    "but no rendered HTML was captured.",
+                    entry.title,
+                )
+                return None
+            snapshot = self._persist_html_snapshot(output_root, entry.src_uri, html)
+            document = Document.from_html(
+                snapshot,
+                full_document=True,
+                base_level=base_level,
+                title_strategy=title_strategy,
+                numbered=numbered,
+                emitter=emitter,
+            )
+            # Relative assets resolve against the page, not the snapshot.
+            return document.evolve(source_path=abs_src)
+
+        if record is None or not record.lowered:
+            source_path = abs_src
+        else:
+            source_path = self._persist_source(output_root, entry.src_uri, record)
+        document = Document.from_markdown(
+            source_path,
+            reader="tmark",
+            base_level=base_level,
+            title_strategy=title_strategy,
+            numbered=numbered,
+            emitter=emitter,
+        )
+        if source_path != abs_src:
+            document = document.evolve(source_path=abs_src)
+        return document
+
+    def _persist_source(
+        self, output_root: Path, src_uri: str, record: PageRecord
+    ) -> Path:
+        """Write the page's source as the PDF reads it: merged metadata, stored body."""
+        meta = dict(record.meta)
+        counters = self._site.counters if self._site is not None else {}
+        page_counters = meta.pop("counters", None)
+        merged_counters: dict[str, Any] = dict(counters)
+        press = meta.get("press")
+        press = dict(press) if isinstance(press, Mapping) else {}
+        declare = press.get("declare")
+        declare = dict(declare) if isinstance(declare, Mapping) else {}
+        if isinstance(declare.get("counters"), Mapping):
+            merged_counters.update(declare["counters"])
+        if isinstance(page_counters, Mapping):
+            merged_counters.update(page_counters)
+        if merged_counters:
+            declare["counters"] = merged_counters
+            press["declare"] = declare
+        if press:
+            meta["press"] = press
+        header = ""
+        if meta:
+            header = (
+                "---\n"
+                + yaml.safe_dump(meta, sort_keys=False, allow_unicode=True)
+                + "---\n"
+            )
+        target = output_root / "sources" / Path(src_uri)
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_text(header + record.body, encoding="utf-8")
+        return target
+
     def _flatten_navigation(
         self,
         root: StructureItem,
@@ -813,6 +1113,7 @@ class LatexPlugin(BasePlugin):
                 is_page=node.is_page,
                 slot=resolved_slot,
                 src_path=getattr(node.file, "src_path", None) if node.is_page else None,
+                src_uri=getattr(node.file, "src_uri", None) if node.is_page else None,
                 abs_src_path=Path(node.file.abs_src_path)
                 if node.is_page and getattr(node.file, "abs_src_path", None)
                 else None,
@@ -1199,10 +1500,11 @@ class LatexPlugin(BasePlugin):
 
     def _persist_html_snapshot(
         self, output_root: Path, src_path: str, html: str
-    ) -> None:
+    ) -> Path:
         snapshot_path = output_root / "html" / Path(src_path).with_suffix(".html")
         snapshot_path.parent.mkdir(parents=True, exist_ok=True)
         snapshot_path.write_text(html, encoding="utf-8")
+        return snapshot_path
 
     def _write_assets_manifest(
         self, output_root: Path, assets_map: dict[str, Path]
@@ -1276,40 +1578,6 @@ class LatexPlugin(BasePlugin):
             normalised = f"page-{index}"
         return Path("pages") / f"{normalised}.tex"
 
-    def _log_render_warning(self, entry: NavEntry, warning: WarningMessage) -> None:
-        """Surface warnings raised during page rendering as MkDocs warnings."""
-        page_label = entry.title or entry.src_path or "page"
-        message = str(warning.message).strip()
-        category = getattr(warning.category, "__name__", "Warning")
-
-        location = ""
-        filename = getattr(warning, "filename", "") or ""
-        if filename:
-            candidate = Path(filename)
-            try:
-                candidate = candidate.resolve()
-            except OSError:
-                pass
-            project_dir = self._project_dir
-            if project_dir is not None:
-                try:
-                    candidate = candidate.relative_to(project_dir)
-                except ValueError:
-                    try:
-                        candidate = Path(os.path.relpath(candidate, project_dir))
-                    except ValueError:
-                        pass
-            display_path = candidate.as_posix()
-            location = f" ({display_path}:{warning.lineno})"
-
-        log.warning(
-            "TeXSmith warning on page '%s': %s%s [%s]",
-            page_label,
-            message,
-            location,
-            category,
-        )
-
     def _announce_latexmk_command(self, output_root: Path, tex_path: Path) -> None:
         """Log a helpful hint showing how to compile the generated project."""
         base_dir = self._project_dir or output_root
@@ -1328,60 +1596,6 @@ class LatexPlugin(BasePlugin):
             bundle_path.as_posix(),
             tex_rel.as_posix(),
         )
-
-    def _load_inline_bibliography(
-        self,
-        collection: BibliographyCollection,
-        entries: Mapping[str, InlineBibliographyEntry],
-        *,
-        source_label: str,
-        fetcher: DoiBibliographyFetcher,
-    ) -> None:
-        if not entries:
-            return
-
-        source_path = self._inline_bibliography_source_path(source_label)
-        for key, entry in entries.items():
-            if entry.doi:
-                try:
-                    payload = fetcher.fetch(entry.doi)
-                except DoiLookupError as exc:
-                    log.warning(
-                        "Failed to resolve DOI '%s' for entry '%s': %s",
-                        entry.doi,
-                        key,
-                        exc,
-                    )
-                    continue
-                try:
-                    data = bibliography_data_from_string(payload, key)
-                except PybtexError as exc:
-                    log.warning(
-                        "Failed to parse bibliography entry '%s': %s",
-                        key,
-                        exc,
-                    )
-                    continue
-                collection.load_data(data, source=source_path)
-                continue
-
-            if entry.is_manual:
-                try:
-                    data = bibliography_data_from_inline_entry(key, entry)
-                except (ValueError, PybtexError) as exc:
-                    log.warning(
-                        "Failed to materialise bibliography entry '%s': %s",
-                        key,
-                        exc,
-                    )
-                    continue
-                collection.load_data(data, source=source_path)
-                continue
-
-            log.warning(
-                "Skipping bibliography entry '%s': no DOI and no manual fields.",
-                key,
-            )
 
     def _inline_bibliography_source_path(self, label: str) -> Path:
         slug = slugify(label, separator="-")
@@ -1418,6 +1632,28 @@ class LatexPlugin(BasePlugin):
                 return Path(os.path.relpath(target, base))
             except ValueError:
                 return target
+
+
+def _press_reader(meta: Mapping[str, Any]) -> str | None:
+    """``press.reader`` of a page's front matter (``html``: the HtmlReader fallback)."""
+    press = meta.get("press")
+    if isinstance(press, Mapping):
+        reader = press.get("reader")
+        if isinstance(reader, str) and reader.strip():
+            return reader.strip().lower()
+    reader = meta.get("press.reader")
+    if isinstance(reader, str) and reader.strip():
+        return reader.strip().lower()
+    return None
+
+
+def _stylesheet() -> str:
+    """The ``texsmith.css`` shipped with the plugin."""
+    return (
+        resources.files(__package__)
+        .joinpath("assets/texsmith.css")
+        .read_text(encoding="utf-8")
+    )
 
 
 __all__ = ["LatexPlugin"]

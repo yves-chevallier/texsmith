@@ -76,10 +76,6 @@ Homepage = "https://github.com/yves-chevallier/texsmith"
 "texsmith.mermaid" = "texsmith.extensions.mermaid:MermaidExtension"
 "texsmith.quotes" = "texsmith.extensions.quotes:TexsmithQuotesExtension"
 
-[project.entry-points."mkdocs.plugins"]
-"texsmith.index" = "texsmith.extensions.index:IndexPlugin"
-"texsmith.counters" = "texsmith.extensions.counters:CountersPlugin"
-
 [tool.hatch.version]
 source = "vcs"
 raw-options = { local_scheme = "no-local-version" }

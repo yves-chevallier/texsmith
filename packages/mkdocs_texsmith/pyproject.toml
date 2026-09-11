@@ -33,6 +33,9 @@ Homepage = "https://github.com/yves-chevallier/mkdocs-texsmith"
 
 [project.entry-points."mkdocs.plugins"]
 texsmith = "mkdocs_plugin_texsmith:LatexPlugin"
+# Deprecated aliases (warn and do nothing); removed in 0.8.
+"texsmith.counters" = "mkdocs_plugin_texsmith.aliases:CountersAliasPlugin"
+"texsmith.index" = "mkdocs_plugin_texsmith.aliases:IndexAliasPlugin"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/mkdocs_plugin_texsmith"]

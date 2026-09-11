@@ -64,6 +64,10 @@ class ResolveOptions:
     lang: str | None = None
     #: ``backend`` (the default) or ``all`` (design 06 §Site-wide resolution).
     numbering: str | None = None
+    #: The labels of the other documents of the build (``BookLabel`` dicts:
+    #: ``key``, ``prefix``, ``number``, ``kind``, ``title``, ``location``); a
+    #: key defined in none of the document's registries resolves to a sibling.
+    book: list[dict[str, Any]] = field(default_factory=list)
 
     def to_json(self) -> dict[str, Any]:
         payload: dict[str, Any] = {"path": str(self.path)}
@@ -75,6 +79,8 @@ class ResolveOptions:
             payload["lang"] = self.lang
         if self.numbering:
             payload["numbering"] = self.numbering
+        if self.book:
+            payload["book"] = [dict(label) for label in self.book]
         return payload
 
 
@@ -85,6 +91,9 @@ class ResolutionChain:
     bibliography: tuple[Path, ...] = ()
     start: dict[str, int] = field(default_factory=dict)
     lang: str | None = None
+    #: Sibling labels handed to the next ``resolve`` (a MkDocs book sets them
+    #: per page to the labels of the other pages of the book).
+    book: list[dict[str, Any]] = field(default_factory=list)
 
     def options_for(self, document: Document) -> ResolveOptions:
         return ResolveOptions(
@@ -92,6 +101,7 @@ class ResolutionChain:
             bibliography=self.bibliography,
             start=dict(self.start),
             lang=self.lang,
+            book=[dict(label) for label in self.book],
         )
 
     def advance(self, resolved: Mapping[str, Any]) -> None:

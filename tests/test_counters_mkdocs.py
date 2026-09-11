@@ -1,13 +1,17 @@
-"""End-to-end tests for the MkDocs plugin rendering TeXSmith custom counters."""
+"""End-to-end tests for the MkDocs plugin numbering custom counters site-wide.
+
+The site is rendered through the ``texsmith`` plugin on tmark: the pre-pass
+resolves every page with ``numbering: "all"`` and a ``start`` chained in
+navigation order, and each page is lowered with ``tmark.lower_web``.
+"""
 
 from __future__ import annotations
 
-from collections.abc import Iterator
+import logging
 from pathlib import Path
+import re
 
 import pytest
-
-from texsmith.core.counters import clear_registry
 
 
 try:  # pragma: no cover - optional dependency for this suite
@@ -24,12 +28,13 @@ pytestmark = pytest.mark.skipif(mkdocs_build is None, reason="MkDocs is not inst
 MKDOCS_YML = """\
 site_name: Counters demo
 plugins:
-  - texsmith.counters:
-      counters:
-        req:
-          name: Requirement
-          format: "REQ-{n:03d}"
-          start: 100
+  - texsmith:
+      declare:
+        counters:
+          req:
+            name: Requirement
+            format: "REQ-{n:03d}"
+            start: 100
 nav:
   - Overview: index.md
   - Findings: findings.md
@@ -56,10 +61,10 @@ counters:
 
 | Id | Finding |
 | --- | --- |
-| #{fw:watchdog} | The watchdog does not fire. |
-| #{fw:ota-brick} | OTA update bricks the node. |
+| #(fw:watchdog) | The watchdog does not fire. |
+| #(fw:ota-brick) | OTA update bricks the node. |
 
-Requirement #{req:watchdog-reset} is not met by @fw:watchdog.
+Requirement #(req:watchdog-reset) is not met by @fw:watchdog.
 
 ## Log buffer wiped {#fw:log-wrap}
 
@@ -67,38 +72,52 @@ See @fw:log-wrap.
 """
 
 
-@pytest.fixture(autouse=True)
-def _clear_counter_registry() -> Iterator[None]:
-    clear_registry()
-    yield
-    clear_registry()
+def build_site(root: Path, mkdocs_yml: str, pages: dict[str, str]) -> Path:
+    """Write ``pages`` under ``docs/``, build the site, return its directory."""
+    (root / "docs").mkdir(exist_ok=True)
+    (root / "mkdocs.yml").write_text(mkdocs_yml, encoding="utf-8")
+    for name, text in pages.items():
+        target = root / "docs" / name
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_text(text, encoding="utf-8")
+    config = load_config(str(root / "mkdocs.yml"), site_dir=str(root / "site"))
+    mkdocs_build(config)
+    return root / "site"
 
 
 @pytest.fixture
 def site(tmp_path: Path) -> dict[str, str]:
     """Build a two-page MkDocs site and return its rendered pages."""
-    (tmp_path / "docs").mkdir()
-    (tmp_path / "mkdocs.yml").write_text(MKDOCS_YML, encoding="utf-8")
-    (tmp_path / "docs" / "index.md").write_text(INDEX_MD, encoding="utf-8")
-    (tmp_path / "docs" / "findings.md").write_text(FINDINGS_MD, encoding="utf-8")
-
-    config = load_config(str(tmp_path / "mkdocs.yml"), site_dir=str(tmp_path / "site"))
-    mkdocs_build(config)
-
+    site_dir = build_site(
+        tmp_path, MKDOCS_YML, {"index.md": INDEX_MD, "findings.md": FINDINGS_MD}
+    )
     return {
-        "index": (tmp_path / "site" / "index.html").read_text(encoding="utf-8"),
-        "findings": (tmp_path / "site" / "findings" / "index.html").read_text(encoding="utf-8"),
+        "index": (site_dir / "index.html").read_text(encoding="utf-8"),
+        "findings": (site_dir / "findings" / "index.html").read_text(encoding="utf-8"),
     }
+
+
+def counter_span(html: str, identifier: str) -> str | None:
+    """The text of the ``ts-counter`` span carrying ``identifier``.
+
+    ``lower_web`` writes the attributes as ``class``, ``id``, ``data-counter``,
+    ``data-key`` (the per-construct table of ``web-profile.md``), so the id is
+    not the last attribute before the text.
+    """
+    match = re.search(
+        rf'<span class="ts-counter" id="{re.escape(identifier)}"[^>]*>([^<]*)</span>', html
+    )
+    return match.group(1) if match else None
 
 
 def test_definitions_render_their_formatted_number(site: dict[str, str]) -> None:
     html = site["findings"]
-    assert 'id="fw:watchdog">FW-01' in html
-    assert 'id="fw:ota-brick">FW-02' in html
+    assert counter_span(html, "fw:watchdog") == "FW-01"
+    assert counter_span(html, "fw:ota-brick") == "FW-02"
 
 
 def test_site_wide_counter_declared_in_mkdocs_yml_honours_start(site: dict[str, str]) -> None:
-    assert 'id="req:watchdog-reset">REQ-100' in site["findings"]
+    assert counter_span(site["findings"], "req:watchdog-reset") == "REQ-100"
 
 
 def test_silent_heading_definition_continues_the_series(site: dict[str, str]) -> None:
@@ -118,3 +137,28 @@ def test_cross_page_forward_reference_resolves_to_the_defining_page(site: dict[s
 
 def test_undeclared_prefix_stays_literal_on_a_site(site: dict[str, str]) -> None:
     assert "#{user.name}" in site["index"]
+
+
+def test_deprecated_plugin_aliases_warn_and_do_nothing(
+    tmp_path: Path, caplog: pytest.LogCaptureFixture
+) -> None:
+    mkdocs_yml = """\
+site_name: Aliases
+plugins:
+  - texsmith.counters:
+      counters:
+        req:
+          format: "REQ-{n}"
+  - texsmith.index
+nav:
+  - index.md
+"""
+    with caplog.at_level(logging.WARNING, logger="mkdocs"):
+        site_dir = build_site(
+            tmp_path, mkdocs_yml, {"index.md": "# Home\n\nItem #(req:one) here.\n"}
+        )
+    messages = [record.getMessage() for record in caplog.records]
+    assert any("'texsmith.counters' plugin is deprecated" in m for m in messages)
+    assert any("'texsmith.index' plugin is deprecated" in m for m in messages)
+    # Without the ``texsmith`` plugin nothing is numbered: the marker stays.
+    assert "Item #(req:one) here." in (site_dir / "index.html").read_text(encoding="utf-8")
