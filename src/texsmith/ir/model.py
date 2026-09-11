@@ -1,6 +1,6 @@
 """TeXSmith IR models generated from the tmark IR schema. Do not edit.
 tmark version: 0.0.0
-schema sha256: 7acbe344bb57dfcbeb30eede34fce29908c7aa80cf91ea907bcdfb4e2d169dae
+schema sha256: 8f5eca86d2b87fed49ec62dde0882bc223aee75c09954863d2da708ffa243da6
 
 Regenerate with ``scripts/gen_ir_models.py`` (``--check`` in CI). Every node is a
 frozen, slotted dataclass; ``id`` and ``span`` do not take part in equality or
@@ -15,7 +15,7 @@ from typing import Any, ClassVar, Final, Literal, NamedTuple, TypeAlias
 
 
 TMARK_VERSION: Final = '0.0.0'
-SCHEMA_HASH: Final = '7acbe344bb57dfcbeb30eede34fce29908c7aa80cf91ea907bcdfb4e2d169dae'
+SCHEMA_HASH: Final = '8f5eca86d2b87fed49ec62dde0882bc223aee75c09954863d2da708ffa243da6'
 
 #: A JSON value the schema leaves untyped (front-matter blobs).
 JsonValue: TypeAlias = Any
@@ -496,7 +496,7 @@ class Quoted(Inline):
 
 @dataclass(frozen=True, slots=True)
 class RawBlock(Block):
-    """`latex raw` fence. Spec §Raw passthrough."""
+    """`latex raw` fence. Spec §Raw passthrough. `format=html` is an HTML block kept as typed; `format=markdown` is a foreign directive (spec §Foreign directive: `[TOC]`, a dotted `::: a.b` line with its indented continuation) kept verbatim, printed as typed and rendered by no other writer."""
 
     type: ClassVar[Literal["RawBlock"]] = "RawBlock"
     format: str
@@ -505,7 +505,7 @@ class RawBlock(Block):
 
 @dataclass(frozen=True, slots=True)
 class RawInline(Inline):
-    """`{raw latex}(…)`. Spec §Raw passthrough."""
+    """`{raw latex}(…)`. Spec §Raw passthrough. `format=html` is a tag or an HTML block kept as typed."""
 
     type: ClassVar[Literal["RawInline"]] = "RawInline"
     format: str
@@ -687,7 +687,7 @@ class CodeBlock(Block):
 
 @dataclass(frozen=True, slots=True)
 class Div(Block):
-    """Any other `::: name` container. Spec §Div."""
+    """Any other `::: name` container. Spec §Div: the names of the closed registry (`registry::CONTAINERS`: `tabs`, `tab`, `multicolumn`, `div`) and, with a `container-unknown` diagnostic, any other name, kept so the printer round-trips it."""
 
     type: ClassVar[Literal["Div"]] = "Div"
     name: str
@@ -741,6 +741,16 @@ class Press(Record):
     declare: Declare = field(default_factory=Declare)
     features: dict[str, bool] = field(default_factory=dict)
     sources: Sources = field(default_factory=Sources)
+
+
+@dataclass(frozen=True, slots=True)
+class ProgressBar(Inline):
+    """`[=45% "Review"]{.thin}`. Spec §ProgressBar: an inline bar with a `value` from 0 to 100 (clamped) and an optional `label` (the percentage when absent); `.thin` and the other classes are attributes."""
+
+    type: ClassVar[Literal["ProgressBar"]] = "ProgressBar"
+    value: float
+    attrs: Attrs = field(default_factory=Attrs)
+    label: str | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -821,7 +831,7 @@ class Document(Record):
 
 AnyBlock: TypeAlias = Para | Plain | Header | CodeBlock | BlockQuote | BulletList | OrderedList | DefinitionList | HorizontalRule | Table | TableConfig | Caption | Figure | Admonition | Div | MathBlock | RawBlock | Include | CommentBlock
 AnyColumn: TypeAlias = LeafColumn | ColumnGroup
-AnyInline: TypeAlias = Str | Space | SoftBreak | LineBreak | Emph | Strong | Strikeout | Underline | Highlight | Subscript | Superscript | SmallCaps | Quoted | Code | Math | Link | Ref | Note | Image | IndexEntry | CounterItem | Keystroke | Aside | SpanNode | Var | Abbr | Comment | RawInline
+AnyInline: TypeAlias = Str | Space | SoftBreak | LineBreak | Emph | Strong | Strikeout | Underline | Highlight | Subscript | Superscript | SmallCaps | Quoted | Code | Math | Link | Ref | Note | Image | IndexEntry | CounterItem | Keystroke | Aside | SpanNode | Var | Abbr | Comment | RawInline | ProgressBar
 AnyRow: TypeAlias = DataRow | Separator
 AnyTarget: TypeAlias = Url | Anchor | DocumentTarget
 
@@ -894,6 +904,7 @@ UNIONS: Final[dict[type, dict[str, type]]] = {
         "Abbr": Abbr,
         "Comment": Comment,
         "RawInline": RawInline,
+        "ProgressBar": ProgressBar,
     },
     Row: {
         "Data": DataRow,
@@ -1203,6 +1214,13 @@ FIELDS: Final[dict[type, tuple[FieldSpec, ...]]] = {
         FieldSpec("features", ("map", ("bool",)), "skip", dict, True),
         FieldSpec("sources", ("record", Sources), "skip", Sources, True),
     ),
+    ProgressBar: (
+        FieldSpec("value", ("float",), "required", None),
+        FieldSpec("attrs", ("record", Attrs), "skip", Attrs, True),
+        FieldSpec("label", ("opt", ("str",)), "skip", None),
+        FieldSpec("id", ("int",), "always", 0),
+        FieldSpec("span", ("span",), "always", NO_SPAN),
+    ),
     Quoted: (
         FieldSpec("content", ("list", ("union", Inline)), "skip", ()),
         FieldSpec("kind", ("enum", QuoteKind), "always", QuoteKind.DOUBLE),
@@ -1398,6 +1416,7 @@ __all__ = [
     "Para",
     "Plain",
     "Press",
+    "ProgressBar",
     "QuoteKind",
     "Quoted",
     "ROOT",
