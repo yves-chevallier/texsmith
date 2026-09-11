@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import Any, ClassVar
 
 from texsmith.core.fragments.base import BaseFragment, FragmentPiece
+from texsmith.core.fragments.resolution import contract_active
 
 
 @dataclass(frozen=True)
@@ -14,7 +15,11 @@ class BibliographyConfig:
 
     @classmethod
     def from_context(cls, context: Mapping[str, Any]) -> BibliographyConfig:
-        return cls(has_citations=bool(context.get("citations")))
+        has_citations = bool(context.get("citations"))
+        active = contract_active(context, "ts-bibliography")
+        if active is not None:
+            has_citations = has_citations or active
+        return cls(has_citations=has_citations)
 
     def inject_into(self, context: dict[str, Any]) -> None:
         context["ts_bibliography_enabled"] = self.has_citations

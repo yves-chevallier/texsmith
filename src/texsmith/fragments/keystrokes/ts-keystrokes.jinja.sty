@@ -18,3 +18,35 @@
     font=\scriptsize\sffamily
   ](key) {#1\strut};%
 }
+
+% ---------------------------------------------------------------------------
+% Contract macro (fragment-contracts.md §1): \tskeys{Ctrl,Alt,Del} typesets
+% each key as a \keystroke box joined by ``+''. The writer already applied
+% the key-label table (KEY_LABELS of tmark_ir::registry); the copy below maps
+% a raw key name (ctrl, arrow-up) for a writer that did not. A literal comma
+% is braced: \tskeys{Ctrl,{,}}.
+\BLOCK{ for name, label in ts_key_labels | default([]) }
+\expandafter\def\csname ts@key@\VAR{name}\endcsname{\VAR{label}}
+\BLOCK{ endfor }
+\ExplSyntaxOn
+\cs_new_protected:Npn \ts_key:n #1
+  {
+    \cs_if_exist:cTF { ts@key@#1 }
+      { \keystroke { \use:c { ts@key@#1 } } }
+      { \keystroke { #1 } }
+  }
+\bool_new:N \l__ts_keys_first_bool
+\NewDocumentCommand { \tskeys } { m }
+  {
+    \group_begin:
+    \bool_set_true:N \l__ts_keys_first_bool
+    \clist_map_inline:nn { #1 }
+      {
+        \bool_if:NTF \l__ts_keys_first_bool
+          { \bool_set_false:N \l__ts_keys_first_bool }
+          { \c_space_tl +~ }
+        \ts_key:n { ##1 }
+      }
+    \group_end:
+  }
+\ExplSyntaxOff

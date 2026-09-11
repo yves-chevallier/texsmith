@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import Any, ClassVar
 
 from texsmith.core.fragments.base import BaseFragment, FragmentPiece
+from texsmith.core.fragments.resolution import contract_active
 
 
 @dataclass(frozen=True)
@@ -17,6 +18,9 @@ class GlossaryConfig:
         glossary = context.get("glossary")
         acronyms = context.get("acronyms")
         has_entries = bool(glossary) or bool(acronyms)
+        active = contract_active(context, "ts-glossary")
+        if active is not None:
+            has_entries = has_entries or active
         return cls(has_entries=has_entries)
 
     def inject_into(self, context: dict[str, Any]) -> None:

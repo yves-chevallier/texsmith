@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import Any, ClassVar
 
 from texsmith.core.fragments.base import BaseFragment, FragmentPiece
+from texsmith.core.fragments.resolution import contract_active
 from texsmith.core.templates.manifest import TemplateAttributeSpec
 
 
@@ -17,7 +18,9 @@ class CodeConfig:
     @classmethod
     def from_context(cls, context: Mapping[str, Any]) -> CodeConfig:
         options = context.get("code") or {}
-        return cls(options=dict(options), uses_code=_detect_code(context))
+        active = contract_active(context, "ts-code")
+        uses_code = _detect_code(context) if active is None else active
+        return cls(options=dict(options), uses_code=uses_code)
 
     def inject_into(self, context: dict[str, Any]) -> None:
         context["ts_code_options"] = self.options

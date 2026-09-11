@@ -127,3 +127,58 @@
   after title={\texsmithCalloutTitleFormat{#2}}%
 }
 \BLOCK{ endif }
+
+% ---------------------------------------------------------------------------
+% Contract environment (fragment-contracts.md §1, §3):
+%   \begin{tscallout}[kind=note, title={…}, id=x, class={a,b}, collapsed] … \end{tscallout}
+% Keys live under /ts/callout/; unknown keys (attributes forwarded by the
+% writer, e.g. cols=2) are ignored. A template restyles every callout with
+%   \tcbset{/ts/callout/.append style={…}}
+% and a class with /ts/callout/class/<name>/.style={…}; both are tcolorbox
+% key lists. An unknown kind falls back to ``default``; a missing title is
+% the kind's word.
+\makeatletter
+\providecommand{\phantomsection}{}
+\newif\ifts@callout@collapsed
+\pgfkeys{/ts/callout/.cd,
+  kind/.store in=\ts@callout@kind,
+  title/.store in=\ts@callout@title,
+  id/.store in=\ts@callout@id,
+  class/.store in=\ts@callout@class,
+  collapsed/.is if=ts@callout@collapsed,
+  .unknown/.code={},
+}
+\pgfkeys{/ts/callout/.style={}}
+\BLOCK{ for name, word in (ts_callout_words | default({})).items() }
+\expandafter\def\csname ts@callout@word@\VAR{name}\endcsname{\VAR{word|latex_escape}}
+\BLOCK{ endfor }
+\def\ts@callout@seealso{seealso}
+\newcommand{\ts@callout@begin}[2]{\begin{callout}[#1]{#2}}
+\NewDocumentEnvironment{tscallout}{O{}}{%
+  \def\ts@callout@kind{default}%
+  \def\ts@callout@title{}%
+  \def\ts@callout@id{}%
+  \def\ts@callout@class{}%
+  \ts@callout@collapsedfalse
+  \pgfkeys{/ts/callout/.cd,#1}%
+  \ifx\ts@callout@kind\ts@callout@seealso\def\ts@callout@kind{info}\fi
+  \pgfkeysifdefined{/tcb/callout \ts@callout@kind/.@cmd}{}{\def\ts@callout@kind{default}}%
+  \ifx\ts@callout@title\@empty
+    \ifcsname ts@callout@word@\ts@callout@kind\endcsname
+      \expandafter\let\expandafter\ts@callout@title\csname ts@callout@word@\ts@callout@kind\endcsname
+    \fi
+  \fi
+  \edef\ts@callout@opts{callout \ts@callout@kind, /ts/callout}%
+  \ifx\ts@callout@id\@empty\else
+    \eappto\ts@callout@opts{, phantom={\noexpand\phantomsection\noexpand\label{\ts@callout@id}}}%
+  \fi
+  \@for\ts@callout@c:=\ts@callout@class\do{%
+    \pgfkeysifdefined{/ts/callout/class/\ts@callout@c/.@cmd}{%
+      \eappto\ts@callout@opts{, /ts/callout/class/\ts@callout@c}%
+    }{}%
+  }%
+  \expandafter\ts@callout@begin\expandafter{\ts@callout@opts}{\ts@callout@title}%
+}{%
+  \end{callout}%
+}
+\makeatother
