@@ -1,0 +1,20 @@
+[
+  [
+    "var-not-scalar",
+    [
+      0,
+      159,
+      172
+    ],
+    "moustache '{{authors}}' resolves to a list, not a scalar"
+  ],
+  [
+    "var-unresolved",
+    [
+      0,
+      189,
+      207
+    ],
+    "unresolved moustache '{{missing.path}}'; left as written"
+  ]
+]

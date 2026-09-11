@@ -1,0 +1,195 @@
+{
+  "tmark": "0.0.0",
+  "file": 0,
+  "front_matter": {
+    "id": 1,
+    "span": [
+      0,
+      0,
+      88
+    ],
+    "raw": "---\ntitle: Hello\nauthors: [Ada Lovelace, Charles Babbage]\npress:\n  template: article\n---",
+    "keys": {
+      "title": "Hello",
+      "authors": [
+        {
+          "name": "Ada Lovelace"
+        },
+        {
+          "name": "Charles Babbage"
+        }
+      ]
+    },
+    "extra": {
+      "press": {
+        "template": "article"
+      }
+    }
+  },
+  "blocks": [
+    {
+      "type": "Header",
+      "id": 2,
+      "span": [
+        0,
+        90,
+        103
+      ],
+      "level": 1,
+      "content": [
+        {
+          "type": "Var",
+          "id": 3,
+          "span": [
+            0,
+            92,
+            103
+          ],
+          "path": [
+            "title"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "Para",
+      "id": 4,
+      "span": [
+        0,
+        105,
+        226
+      ],
+      "content": [
+        {
+          "type": "Str",
+          "id": 5,
+          "span": [
+            0,
+            105,
+            121
+          ],
+          "text": "The template is "
+        },
+        {
+          "type": "Var",
+          "id": 6,
+          "span": [
+            0,
+            121,
+            141
+          ],
+          "path": [
+            "press",
+            "template"
+          ]
+        },
+        {
+          "type": "Str",
+          "id": 7,
+          "span": [
+            0,
+            141,
+            159
+          ],
+          "text": "; the authors are "
+        },
+        {
+          "type": "Var",
+          "id": 8,
+          "span": [
+            0,
+            159,
+            172
+          ],
+          "path": [
+            "authors"
+          ]
+        },
+        {
+          "type": "SoftBreak",
+          "id": 9,
+          "span": [
+            0,
+            172,
+            173
+          ]
+        },
+        {
+          "type": "Str",
+          "id": 10,
+          "span": [
+            0,
+            173,
+            189
+          ],
+          "text": "and the version "
+        },
+        {
+          "type": "Var",
+          "id": 11,
+          "span": [
+            0,
+            189,
+            207
+          ],
+          "path": [
+            "missing",
+            "path"
+          ]
+        },
+        {
+          "type": "Str",
+          "id": 12,
+          "span": [
+            0,
+            207,
+            226
+          ],
+          "text": " stays a moustache."
+        }
+      ]
+    },
+    {
+      "type": "Para",
+      "id": 13,
+      "span": [
+        0,
+        228,
+        262
+      ],
+      "content": [
+        {
+          "type": "Str",
+          "id": 14,
+          "span": [
+            0,
+            228,
+            239
+          ],
+          "text": "Code keeps "
+        },
+        {
+          "type": "Code",
+          "id": 15,
+          "span": [
+            0,
+            239,
+            252
+          ],
+          "text": "{{ title }}"
+        },
+        {
+          "type": "Str",
+          "id": 16,
+          "span": [
+            0,
+            252,
+            262
+          ],
+          "text": " verbatim."
+        }
+      ]
+    }
+  ],
+  "diagnostics": []
+}

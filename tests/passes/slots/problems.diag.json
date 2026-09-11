@@ -1,0 +1,29 @@
+[
+  [
+    "slot-selector-unsupported",
+    [
+      0,
+      0,
+      23
+    ],
+    "slot 'cover': selector '.hero' is not a heading id or title; content stays in the default slot"
+  ],
+  [
+    "slot-nested-heading",
+    [
+      0,
+      53,
+      74
+    ],
+    "slot 'abstract': heading 'Inside a container' is nested in a container; only top-level headings form a slot"
+  ],
+  [
+    "slot-missing",
+    [
+      0,
+      0,
+      23
+    ],
+    "unable to locate section '#nowhere' for slot 'appendix'"
+  ]
+]

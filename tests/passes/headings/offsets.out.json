@@ -1,0 +1,14 @@
+{
+  "abstract": {
+    "base_level": 1,
+    "numbered": true
+  },
+  "preface": {
+    "base_level": 1,
+    "numbered": false
+  },
+  "mainmatter": {
+    "base_level": 0,
+    "numbered": true
+  }
+}
