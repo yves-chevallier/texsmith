@@ -16,8 +16,10 @@ from __future__ import annotations
 
 import copy
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
+from texsmith.core.bibliography.collection import BibliographyCollection
 from texsmith.core.context import DocumentState
 from texsmith.core.fragments.activation import apply_requires
 from texsmith.diagnostics import Diagnostic, DiagnosticSink
@@ -31,14 +33,20 @@ from .templates import _build_mustache_defaults
 
 
 if TYPE_CHECKING:  # pragma: no cover - typing only
-    from collections.abc import Mapping
+    from collections.abc import Iterable, Mapping
 
     from texsmith.core.conversion_contexts import ConversionContext
     from texsmith.core.documents import Document
     from texsmith.core.templates import TemplateBinding
 
 
-__all__ = ["IrRenderResult", "build_pass_context", "render_ir_document", "slot_template_of"]
+__all__ = [
+    "IrRenderResult",
+    "absorb_pass_bibliography",
+    "build_pass_context",
+    "render_ir_document",
+    "slot_template_of",
+]
 
 
 @dataclass(slots=True)
@@ -85,8 +93,13 @@ def build_pass_context(
     template: SlotTemplate,
     backend: str,
     sink: DiagnosticSink | None = None,
+    code_options: Mapping[str, Any] | None = None,
 ) -> PassContext:
-    """A ``PassContext`` over the conversion context (files, ids, loader, mustache contexts)."""
+    """A ``PassContext`` over the conversion context (files, ids, loader, mustache contexts).
+
+    ``code_options`` is the merged ``code`` section (``_resolve_code_options``)
+    the ``highlight`` pass reads for the engine, the style and the inline rules.
+    """
     document = context.document
     active_sink = sink if sink is not None else _forwarding_sink(document, emitter)
     ids = IdAllocator()
@@ -108,7 +121,26 @@ def build_pass_context(
         emitter=emitter,
         template=template,
         backend=backend,
+        code=dict(code_options or {}),
     )
+
+
+def absorb_pass_bibliography(context: ConversionContext, paths: Iterable[Path]) -> None:
+    """Load the ``.bib`` files the passes wrote into the conversion's bibliography.
+
+    ``core.py`` writes ``texsmith-bibliography.bib`` from the context's
+    collection for the cited keys, so an entry the ``doi`` pass fetched must
+    be in it or biber sees an undefined citation.
+    """
+    files = [Path(path) for path in paths]
+    if not files:
+        return
+    collection = context.bibliography_collection
+    if collection is None:
+        collection = BibliographyCollection()
+        context.bibliography_collection = collection
+    collection.load_files(files)
+    context.bibliography_map.update(collection.to_dict())
 
 
 def render_ir_document(
@@ -129,12 +161,20 @@ def render_ir_document(
 
     sink = _forwarding_sink(document, emitter)
     template = slot_template_of(binding, context.slot_requests)
-    ctx = build_pass_context(context, emitter, template=template, backend=backend, sink=sink)
+    ctx = build_pass_context(
+        context,
+        emitter,
+        template=template,
+        backend=backend,
+        sink=sink,
+        code_options=code_options,
+    )
     if chain is None:
         chain = ResolutionChain(bibliography=bibliography_paths(request.bibliography_files))
 
     processed = run_pipeline(document, ctx, build_pipeline(), resolve=resolve_pass(chain))
     assert processed.ir is not None
+    absorb_pass_bibliography(context, ctx.bibliography)
 
     language = processed.keys.lang or None
     slot_outputs: dict[str, str] = {}
@@ -166,6 +206,12 @@ def render_ir_document(
         state = copy.deepcopy(initial_state)
     else:
         state = DocumentState(bibliography=dict(context.bibliography_map))
+    if ctx.pygments_styles:
+        # ``\PY`` macros in the bodies: ``ts-code`` prints the style definitions.
+        for key, definitions in ctx.pygments_styles.items():
+            state.pygments_styles.setdefault(key, definitions)
+        if "ts-code" not in requires.fragments:
+            requires.fragments.append("ts-code")
     apply_requires(
         state,
         requires,

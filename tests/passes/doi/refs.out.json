@@ -1,0 +1,96 @@
+{
+  "blocks": [
+    {
+      "type": "Header",
+      "level": 1,
+      "content": [
+        {
+          "type": "Str",
+          "text": "Cheese"
+        }
+      ]
+    },
+    {
+      "type": "Para",
+      "content": [
+        {
+          "type": "Str",
+          "text": "Cited "
+        },
+        {
+          "type": "Ref",
+          "items": [
+            {
+              "key": "Smith_2020"
+            }
+          ]
+        },
+        {
+          "type": "Str",
+          "text": " and "
+        },
+        {
+          "type": "Ref",
+          "items": [
+            {
+              "key": "WAD"
+            }
+          ]
+        },
+        {
+          "type": "Str",
+          "text": ", then "
+        },
+        {
+          "type": "Ref",
+          "items": [
+            {
+              "key": "WAD"
+            },
+            {
+              "key": "doi:10.5555/broken"
+            }
+          ]
+        },
+        {
+          "type": "Str",
+          "text": " and "
+        },
+        {
+          "type": "Ref",
+          "items": [
+            {
+              "key": "manual"
+            }
+          ]
+        },
+        {
+          "type": "Str",
+          "text": "."
+        }
+      ]
+    }
+  ],
+  "front_matter": {
+    "deprecated": [
+      "bibliography"
+    ],
+    "keys": {
+      "press": {
+        "sources": {
+          "bibliography": {
+            "WAD": "https://doi.org/10.3168/jds.2010-3952",
+            "manual": {
+              "type": "article",
+              "title": "Manual entry",
+              "author": "Someone",
+              "year": 2020
+            }
+          }
+        }
+      },
+      "title": "DOI"
+    },
+    "raw": "---\ntitle: DOI\nbibliography:\n  WAD: https://doi.org/10.3168/jds.2010-3952\n  manual:\n    type: article\n    title: Manual entry\n    author: Someone\n    year: 2020\n---"
+  }
+}

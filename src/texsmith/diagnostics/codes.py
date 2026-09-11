@@ -78,6 +78,11 @@ _TABLE: tuple[CodeInfo, ...] = (
     ),
     CodeInfo("include-missing", Severity.WARNING, "An included file cannot be loaded", tmark=True),
     CodeInfo(
+        "include-cycle",
+        Severity.WARNING,
+        "An include names a file that is already being included",
+    ),
+    CodeInfo(
         "deprecated-frontmatter-key",
         Severity.WARNING,
         "A deprecated front-matter spelling",

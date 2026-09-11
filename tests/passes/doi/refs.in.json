@@ -1,0 +1,226 @@
+{
+  "tmark": "0.0.0",
+  "file": 0,
+  "front_matter": {
+    "id": 1,
+    "span": [
+      0,
+      0,
+      164
+    ],
+    "raw": "---\ntitle: DOI\nbibliography:\n  WAD: https://doi.org/10.3168/jds.2010-3952\n  manual:\n    type: article\n    title: Manual entry\n    author: Someone\n    year: 2020\n---",
+    "keys": {
+      "title": "DOI",
+      "press": {
+        "sources": {
+          "bibliography": {
+            "WAD": "https://doi.org/10.3168/jds.2010-3952",
+            "manual": {
+              "type": "article",
+              "title": "Manual entry",
+              "author": "Someone",
+              "year": 2020
+            }
+          }
+        }
+      }
+    },
+    "deprecated": [
+      "bibliography"
+    ]
+  },
+  "blocks": [
+    {
+      "type": "Header",
+      "id": 2,
+      "span": [
+        0,
+        166,
+        174
+      ],
+      "level": 1,
+      "content": [
+        {
+          "type": "Str",
+          "id": 3,
+          "span": [
+            0,
+            168,
+            174
+          ],
+          "text": "Cheese"
+        }
+      ]
+    },
+    {
+      "type": "Para",
+      "id": 4,
+      "span": [
+        0,
+        176,
+        275
+      ],
+      "content": [
+        {
+          "type": "Str",
+          "id": 5,
+          "span": [
+            0,
+            176,
+            182
+          ],
+          "text": "Cited "
+        },
+        {
+          "type": "Ref",
+          "id": 6,
+          "span": [
+            0,
+            182,
+            198
+          ],
+          "items": [
+            {
+              "key": "doi:10.1000/xyz",
+              "key_span": [
+                0,
+                183,
+                198
+              ]
+            }
+          ]
+        },
+        {
+          "type": "Str",
+          "id": 7,
+          "span": [
+            0,
+            198,
+            203
+          ],
+          "text": " and "
+        },
+        {
+          "type": "Ref",
+          "id": 8,
+          "span": [
+            0,
+            203,
+            207
+          ],
+          "items": [
+            {
+              "key": "WAD",
+              "key_span": [
+                0,
+                204,
+                207
+              ]
+            }
+          ]
+        },
+        {
+          "type": "Str",
+          "id": 9,
+          "span": [
+            0,
+            207,
+            214
+          ],
+          "text": ", then "
+        },
+        {
+          "type": "Ref",
+          "id": 10,
+          "span": [
+            0,
+            214,
+            262
+          ],
+          "items": [
+            {
+              "key": "doi:10.3168/jds.2010-3952",
+              "key_span": [
+                0,
+                216,
+                241
+              ]
+            },
+            {
+              "key": "doi:10.5555/broken",
+              "key_span": [
+                0,
+                243,
+                261
+              ]
+            }
+          ],
+          "bracketed": true
+        },
+        {
+          "type": "Str",
+          "id": 11,
+          "span": [
+            0,
+            262,
+            267
+          ],
+          "text": " and "
+        },
+        {
+          "type": "Ref",
+          "id": 12,
+          "span": [
+            0,
+            267,
+            274
+          ],
+          "items": [
+            {
+              "key": "manual",
+              "key_span": [
+                0,
+                268,
+                274
+              ]
+            }
+          ]
+        },
+        {
+          "type": "Str",
+          "id": 13,
+          "span": [
+            0,
+            274,
+            275
+          ],
+          "text": "."
+        }
+      ]
+    }
+  ],
+  "diagnostics": [
+    {
+      "code": "deprecated-frontmatter-key",
+      "severity": "warning",
+      "span": [
+        0,
+        0,
+        164
+      ],
+      "message": "`bibliography` is deprecated, write `press.sources.bibliography`",
+      "fix": {
+        "span": [
+          0,
+          0,
+          164
+        ],
+        "replacement": "---\ntitle: DOI\npress:\n  sources:\n    bibliography:\n      WAD: https://doi.org/10.3168/jds.2010-3952\n      manual:\n        type: article\n        title: Manual entry\n        author: Someone\n        year: 2020\n---"
+      },
+      "stage": "lint",
+      "path": "refs.md",
+      "line": 1,
+      "col": 1
+    }
+  ]
+}

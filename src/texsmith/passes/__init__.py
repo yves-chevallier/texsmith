@@ -50,6 +50,7 @@ __all__ = [
     "Stage",
     "build_pipeline",
     "diagnostic_span",
+    "highest_id",
     "register",
     "run_pipeline",
     "spec",
@@ -88,11 +89,7 @@ class IdAllocator:
 
     def observe(self, root: Any) -> None:
         """Raise the floor above the ids of ``root`` (a document, node or record)."""
-        highest = self.floor - 1
-        for value in _iter_ids(root):
-            if value > highest:
-                highest = value
-        self.floor = highest + 1
+        self.floor = max(self.floor, highest_id(root) + 1)
 
     def next(self) -> int:
         """One fresh id."""
@@ -105,6 +102,11 @@ class IdAllocator:
         first = self.floor
         self.floor += max(0, count)
         return first
+
+
+def highest_id(root: Any) -> int:
+    """The largest node id under ``root`` (a document, node, record or tuple), ``0`` when none."""
+    return max(_iter_ids(root), default=0)
 
 
 def _iter_ids(value: Any) -> Iterable[int]:
@@ -155,6 +157,18 @@ class PassContext:
     template: SlotTemplate = field(default_factory=SlotTemplate)
     #: ``latex`` | ``typst`` | ``html`` — the backend the bodies are written for.
     backend: str = "latex"
+    #: The merged ``code`` section of the template context (``engine``,
+    #: ``style``, ``inline``), what ``build_writer_options`` reads too.
+    code: Mapping[str, Any] = field(default_factory=dict)
+    #: ``.bib`` files a pass wrote (``doi``): appended to
+    #: ``ResolveOptions.bibliography`` and loaded into the conversion's collection.
+    bibliography: list[Path] = field(default_factory=list)
+    #: Pygments style definitions per style key (the ``highlight`` pass), the
+    #: ``pygments_style_defs`` of ``ts-code``.
+    pygments_styles: dict[str, str] = field(default_factory=dict)
+    #: An object with ``fetch(doi) -> bibtex`` (``DoiBibliographyFetcher``);
+    #: ``None`` builds the default one on first use.
+    doi_fetcher: Any = None
 
 
 def diagnostic_span(span: model.Span | None) -> Span:
@@ -194,8 +208,8 @@ def spec(
 
 
 #: The passes in their default order; ``resolve`` (Rust) runs between the
-#: ``pre`` and the ``post`` stage. ``snippet``, ``assets``, ``doi``, ``emoji``,
-#: ``scripts``, ``include`` and ``highlight`` are registered no-ops for now.
+#: ``pre`` and the ``post`` stage. ``snippet``, ``assets``, ``emoji`` and
+#: ``scripts`` are registered no-ops for now.
 DEFAULT_PIPELINE: tuple[str, ...] = (
     "include",
     "var",

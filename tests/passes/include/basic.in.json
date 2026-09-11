@@ -1,0 +1,221 @@
+{
+  "tmark": "0.0.0",
+  "file": 0,
+  "front_matter": {
+    "id": 1,
+    "span": [
+      0,
+      0,
+      23
+    ],
+    "raw": "---\ntitle: Included\n---",
+    "keys": {
+      "title": "Included"
+    }
+  },
+  "blocks": [
+    {
+      "type": "Header",
+      "id": 2,
+      "span": [
+        0,
+        25,
+        31
+      ],
+      "level": 1,
+      "content": [
+        {
+          "type": "Str",
+          "id": 3,
+          "span": [
+            0,
+            27,
+            31
+          ],
+          "text": "Main"
+        }
+      ]
+    },
+    {
+      "type": "Para",
+      "id": 4,
+      "span": [
+        0,
+        33,
+        81
+      ],
+      "content": [
+        {
+          "type": "Str",
+          "id": 5,
+          "span": [
+            0,
+            33,
+            73
+          ],
+          "text": "Before the include, with HTML and a note"
+        },
+        {
+          "type": "Note",
+          "id": 6,
+          "span": [
+            0,
+            73,
+            80
+          ],
+          "label": "main"
+        },
+        {
+          "type": "Str",
+          "id": 7,
+          "span": [
+            0,
+            80,
+            81
+          ],
+          "text": "."
+        }
+      ]
+    },
+    {
+      "type": "Include",
+      "id": 8,
+      "span": [
+        0,
+        83,
+        110
+      ],
+      "path": "parts/chapter.md"
+    },
+    {
+      "type": "CodeBlock",
+      "id": 9,
+      "span": [
+        0,
+        112,
+        151
+      ],
+      "text": "",
+      "lang": "python",
+      "options": {
+        "kv": [
+          [
+            "include",
+            "parts/snippet.py"
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Include",
+      "id": 10,
+      "span": [
+        0,
+        153,
+        187
+      ],
+      "path": "deep/leaf.md",
+      "base": "parts"
+    },
+    {
+      "type": "Include",
+      "id": 11,
+      "span": [
+        0,
+        189,
+        210
+      ],
+      "path": "missing.md"
+    },
+    {
+      "type": "CodeBlock",
+      "id": 12,
+      "span": [
+        0,
+        212,
+        247
+      ],
+      "text": "",
+      "lang": "py",
+      "options": {
+        "kv": [
+          [
+            "include",
+            "parts/absent.py"
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Para",
+      "id": 13,
+      "span": [
+        0,
+        249,
+        255
+      ],
+      "content": [
+        {
+          "type": "Str",
+          "id": 14,
+          "span": [
+            0,
+            249,
+            255
+          ],
+          "text": "After."
+        }
+      ]
+    }
+  ],
+  "footnotes": [
+    {
+      "id": 15,
+      "span": [
+        0,
+        257,
+        280
+      ],
+      "label": "main",
+      "content": [
+        {
+          "type": "Para",
+          "id": 16,
+          "span": [
+            0,
+            266,
+            280
+          ],
+          "content": [
+            {
+              "type": "Str",
+              "id": 17,
+              "span": [
+                0,
+                266,
+                280
+              ],
+              "text": "The main note."
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "diagnostics": [
+    {
+      "code": "deprecated",
+      "severity": "warning",
+      "span": [
+        0,
+        112,
+        151
+      ],
+      "message": "`--8<-- \"file\" in a fence` is deprecated, write `include=\"file\"`",
+      "stage": "parse",
+      "path": "basic.md",
+      "line": 11,
+      "col": 1
+    }
+  ]
+}

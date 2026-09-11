@@ -97,6 +97,10 @@ class Harness:
         contexts: tuple[Mapping[str, Any], ...] | None = None,
         template: SlotTemplate | None = None,
         loader: MemoryLoader | None = None,
+        output_dir: Path | None = None,
+        backend: str = "latex",
+        code: Mapping[str, Any] | None = None,
+        doi_fetcher: Any = None,
     ) -> PassContext:
         ids = IdAllocator()
         if document.ir is not None:
@@ -106,9 +110,12 @@ class Harness:
             ids=ids,
             diagnostics=DiagnosticSink(document.files),
             loader=loader or MemoryLoader(),
-            output_dir=self.root,
+            output_dir=output_dir if output_dir is not None else self.root,
             contexts=contexts if contexts is not None else (document.front_matter,),
             template=template or SlotTemplate(),
+            backend=backend,
+            code=dict(code or {}),
+            doi_fetcher=doi_fetcher,
         )
         self.last_ctx = ctx
         return ctx

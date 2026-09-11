@@ -1,0 +1,124 @@
+{
+  "blocks": [
+    {
+      "type": "Header",
+      "level": 1,
+      "content": [
+        {
+          "type": "Str",
+          "text": "Code"
+        }
+      ]
+    },
+    {
+      "type": "Div",
+      "name": "code",
+      "attrs": {
+        "kv": [
+          [
+            "lang",
+            "py"
+          ],
+          [
+            "title",
+            "bubble_sort.py"
+          ],
+          [
+            "linenums",
+            "1"
+          ],
+          [
+            "hl_lines",
+            "2-3"
+          ],
+          [
+            "engine",
+            "pygments"
+          ]
+        ]
+      },
+      "content": [
+        {
+          "type": "RawBlock",
+          "format": "latex",
+          "text": "<latex>"
+        }
+      ]
+    },
+    {
+      "type": "Caption",
+      "kind": "listing",
+      "attrs": {
+        "id": "lst:bubble"
+      },
+      "content": [
+        {
+          "type": "Str",
+          "text": "Bubble sort."
+        }
+      ]
+    },
+    {
+      "type": "Div",
+      "name": "code",
+      "attrs": {
+        "kv": [
+          [
+            "lang",
+            "text"
+          ],
+          [
+            "stretch",
+            "0.5"
+          ],
+          [
+            "engine",
+            "pygments"
+          ]
+        ]
+      },
+      "content": [
+        {
+          "type": "RawBlock",
+          "format": "latex",
+          "text": "<latex>"
+        }
+      ]
+    },
+    {
+      "type": "Para",
+      "content": [
+        {
+          "type": "Str",
+          "text": "Inline "
+        },
+        {
+          "type": "RawInline",
+          "format": "latex",
+          "text": "<latex>"
+        },
+        {
+          "type": "Str",
+          "text": ", plain "
+        },
+        {
+          "type": "Code",
+          "text": "x-y"
+        },
+        {
+          "type": "Str",
+          "text": ", and "
+        },
+        {
+          "type": "RawInline",
+          "format": "latex",
+          "text": "<latex>"
+        },
+        {
+          "type": "Str",
+          "text": "."
+        }
+      ]
+    }
+  ]
+}

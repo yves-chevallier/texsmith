@@ -1,4 +1,4 @@
-"""The passes not implemented in this wave are registered no-ops."""
+"""The passes not implemented yet are registered no-ops."""
 
 from __future__ import annotations
 
@@ -7,7 +7,7 @@ import pytest
 from texsmith.passes import REGISTRY, build_pipeline
 
 
-STUBS = ("include", "snippet", "assets", "doi", "emoji", "scripts", "highlight")
+STUBS = ("snippet", "assets", "emoji", "scripts")
 
 
 @pytest.mark.parametrize("name", STUBS)
@@ -22,5 +22,14 @@ def test_stubs_are_registered_with_io() -> None:
     build_pipeline()
     for name in STUBS:
         assert REGISTRY[name].needs_io is True
-    assert REGISTRY["highlight"].stage == "post"
-    assert all(REGISTRY[name].stage == "pre" for name in STUBS if name != "highlight")
+        assert REGISTRY[name].stage == "pre"
+
+
+def test_implemented_passes_keep_their_documented_positions() -> None:
+    order = [item.name for item in build_pipeline()]
+    assert order[0] == "include"
+    assert order.index("doi") < order.index("slots")
+    assert order[-1] == "highlight"
+    assert REGISTRY["include"].stage == "pre" and REGISTRY["include"].needs_io
+    assert REGISTRY["doi"].stage == "pre" and REGISTRY["doi"].needs_io
+    assert REGISTRY["highlight"].stage == "post" and not REGISTRY["highlight"].needs_io

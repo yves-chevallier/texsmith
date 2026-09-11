@@ -1,0 +1,32 @@
+{
+  "blocks": [
+    {
+      "type": "Header",
+      "level": 1,
+      "content": [
+        {
+          "type": "Str",
+          "text": "Cycle"
+        }
+      ]
+    },
+    {
+      "type": "Para",
+      "content": [
+        {
+          "type": "Str",
+          "text": "Loop text."
+        }
+      ]
+    },
+    {
+      "type": "Para",
+      "content": [
+        {
+          "type": "Str",
+          "text": "[include: ../cycle.md skipped, cycle]"
+        }
+      ]
+    }
+  ]
+}

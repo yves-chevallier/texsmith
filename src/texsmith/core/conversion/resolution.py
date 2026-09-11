@@ -130,7 +130,11 @@ def resolve_pass(chain: ResolutionChain) -> Any:
     """The ``resolve`` step of :func:`texsmith.passes.run_pipeline`, bound to a chain."""
 
     def run(document: Document, ctx: PassContext) -> Document:
+        """Resolve ``document``; the ``.bib`` files written by the passes join the CLI ones."""
         options = chain.options_for(document)
+        if ctx.bibliography:
+            # The ``.bib`` files the passes wrote (``doi``) follow the CLI ones.
+            options.bibliography = bibliography_paths((*options.bibliography, *ctx.bibliography))
         resolved = resolve_document(
             document, loader=ctx.loader, options=options, sink=ctx.diagnostics
         )
