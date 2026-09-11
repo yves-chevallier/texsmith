@@ -51,7 +51,7 @@ from .conversion.inputs import (
     extract_content,
     extract_front_matter_slots,
 )
-from .diagnostics import DiagnosticEmitter, NullEmitter
+from .diagnostics import DiagnosticEmitter, NullEmitter, use_emitter
 from .heading_analysis import HeadingInspector, HeadingLevelScanner
 from .metadata import PressMetadataError, normalise_press_metadata
 from .templates.runtime import coerce_base_level
@@ -194,13 +194,16 @@ class Document:
         """Create a document from a Markdown file while caching HTML for reuse."""
         active_emitter = emitter or NullEmitter()
 
+        # The counter and cross-reference extensions hold no emitter: they
+        # report through the one installed here.
         try:
-            rendered = render_markdown(
-                path.read_text(encoding="utf-8"),
-                list(extensions or DEFAULT_MARKDOWN_EXTENSIONS),
-                base_path=path.parent,
-                document_path=path,
-            )
+            with use_emitter(emitter):
+                rendered = render_markdown(
+                    path.read_text(encoding="utf-8"),
+                    list(extensions or DEFAULT_MARKDOWN_EXTENSIONS),
+                    base_path=path.parent,
+                    document_path=path,
+                )
         except (OSError, MarkdownConversionError) as exc:
             message = f"Failed to convert Markdown source '{path}': {exc}"
             active_emitter.error(message, exc if isinstance(exc, Exception) else None)

@@ -338,3 +338,36 @@ OpenLogOption = Annotated[
         rich_help_panel=DIAGNOSTICS_PANEL,
     ),
 ]
+
+QuietOption = Annotated[
+    bool,
+    typer.Option(
+        "--quiet",
+        "-q",
+        help="Hide hint and info diagnostics; warnings and errors are still shown.",
+        rich_help_panel=DIAGNOSTICS_PANEL,
+    ),
+]
+
+StrictOption = Annotated[
+    bool,
+    typer.Option(
+        "--strict",
+        help=(
+            "Fail (exit 1) when any warning or error was recorded, after the LaTeX "
+            "is written and before the engine runs. Also enabled by "
+            "'press.features.strict' in the front matter."
+        ),
+        rich_help_panel=DIAGNOSTICS_PANEL,
+    ),
+]
+
+DiagnosticsJsonOption = Annotated[
+    Path | None,
+    typer.Option(
+        "--diagnostics-json",
+        metavar="PATH",
+        help="Write every recorded diagnostic to PATH as a JSON list (for editors and CI).",
+        rich_help_panel=DIAGNOSTICS_PANEL,
+    ),
+]

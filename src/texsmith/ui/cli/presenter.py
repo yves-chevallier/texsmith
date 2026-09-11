@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
 import contextlib
+import json
 from pathlib import Path
 import tempfile
 from typing import TYPE_CHECKING, Any
@@ -17,6 +18,7 @@ from texsmith.adapters.latex.engines import (
 )
 from texsmith.core.conversion.core import ConversionBundle
 from texsmith.core.templates.session import TemplateRenderResult
+from texsmith.diagnostics import DiagnosticSink, Severity, summary_line
 
 from .state import CLIState
 
@@ -636,10 +638,37 @@ def consume_event_diagnostics(state: CLIState) -> list[str]:
     return output_lines
 
 
+def present_diagnostics_summary(state: CLIState, sink: DiagnosticSink) -> None:
+    """Close the diagnostics with ``N errors, M warnings`` when any was recorded.
+
+    The records themselves were printed as they arrived (``CliEmitter``); the
+    summary tells the reader whether the run is clean before ``--strict``
+    decides the exit code.
+    """
+    counts = sink.counts()
+    if not (counts.get(Severity.ERROR) or counts.get(Severity.WARNING)):
+        return
+    line = summary_line(counts)
+    console = _get_console(state, stderr=True)
+    if console is None:
+        typer.echo(line, err=True)
+        return
+    style = "red" if counts.get(Severity.ERROR) else "yellow"
+    console.print(f"[bold {style}]{line}[/]")
+
+
+def write_diagnostics_json(path: Path, sink: DiagnosticSink) -> None:
+    """Dump the recorded diagnostics (``--diagnostics-json``) for editors and CI."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(sink.to_json(), indent=2, ensure_ascii=False) + "\n", "utf-8")
+
+
 __all__ = [
     "consume_event_diagnostics",
     "present_build_summary",
     "present_conversion_summary",
+    "present_diagnostics_summary",
     "present_html_summary",
     "present_latex_failure",
+    "write_diagnostics_json",
 ]

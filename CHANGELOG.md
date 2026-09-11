@@ -7,6 +7,15 @@ and the project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ## [Unreleased]
 
+### Added
+
+- **Diagnostics have one shape, one line and two switches.** Every finding — a missing image, a counter defined twice, a cross-reference nobody publishes, an engine failure — is now a `Diagnostic` record (`code`, `severity`, `span`, `message`, optional `fix` and `related`), the same record the `tmark` core emits, collected in a `DiagnosticSink` and printed as `file:line:col: severity code: message` with a 1-based line and a 1-based byte column, exactly the line `tmark check` prints for the same finding. `--strict` (or `press.features.strict: true` in the front matter) exits 1 when any warning or error was recorded, after the LaTeX is written and before the engine runs, so the `.tex` is there to inspect; `--diagnostics-json PATH` dumps the list — sorted by file and position, with the printed location — for editors and CI; `-q` hides hints and info lines; a run that recorded anything ends with `N errors, M warnings`. The Python side is `texsmith.diagnostics` (`Diagnostic`, `Severity`, `Span`, `Fix`, `FileTable`, `LineIndex`, `DiagnosticSink`, `format_diagnostic`); `DiagnosticEmitter` gains `diagnostic(d)`. See `docs/guide/diagnostics.md`.
+
+### Changed
+
+- **Counter and cross-reference defects are diagnostics, not Python warnings.** `Counter 'n:x' is defined more than once`, `Counter reference '@n:x' has no matching item` and the cross-reference inventory messages (missing, unreadable, stale, key not published) used to go through `warnings.warn`; they now go through the active diagnostic emitter under tmark's codes (`label-duplicate`, `ref-unresolved`, `crossref-inventory-missing`, `crossref-inventory-stale`) and print as `doc.md: warning ref-unresolved: …`. The messages are unchanged. Consequently `PYTHONWARNINGS=error` **no longer promotes them to failures**: use `--strict` (or `press.features.strict`) instead, which also covers every other warning TeXSmith records. Library callers that passed no emitter and relied on the warnings reaching stderr should pass a `LoggingEmitter` (or their own) to the conversion request.
+- **Messages from `DiagnosticEmitter.warning()`/`error()` print with a code.** The CLI shows `warning texsmith: …` / `error texsmith: …` where it showed `warning: …` / `error: …`, and the `LoggingEmitter` logs the same line; the `-v` exception details follow, indented.
+
 ### Fixed
 
 - **A counter marker at the head of a table cell no longer pushes its text down a line.** The LaTeX partial for `#{ns:key}` emitted `\phantomsection\label{…}` before the counter text; at the start of a `p{}` cell TeX is still in vertical mode, and hyperref's raised link then opened an empty paragraph, so the row's first cell (`D-01`) sat one line below its neighbours. The partial now starts with `\leavevmode`, a no-op inside a paragraph and the right thing at the head of a cell.

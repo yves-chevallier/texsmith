@@ -49,6 +49,15 @@ $ texsmith --help
 `--debug-html`
 : Save intermediate HTML snapshots generated during the conversion process. This can help diagnose issues related to HTML parsing or content extraction.
 
+`-q`, `--quiet`
+: Hide `hint` and `info` diagnostics. Warnings and errors are always shown.
+
+`--strict`
+: Exit with status 1 when any warning or error was recorded, after the LaTeX is written and before the engine runs. `press.features.strict: true` in the front matter has the same effect. See [Diagnostics](../guide/diagnostics.md).
+
+`--diagnostics-json PATH`
+: Write every recorded diagnostic to `PATH` as a JSON list, sorted by file and position, for editors and CI.
+
 `--open-log`
 : If LaTeX compilation fails during the build step, automatically open the `latexmk` log file using the system's default viewer. This makes it easier to inspect compilation errors.
 
