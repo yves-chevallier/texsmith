@@ -1,4 +1,4 @@
-"""Migration loop (plan §4, phases 3–4): copy each example of the parity corpus,
+"""Migration loop (plan §4, phases 3-4): copy each example of the parity corpus,
 rewrite its sources with ``tmark lint --fix`` and build it with ``--reader tmark``.
 
 Usage: ``uv run python scripts/migrate_examples.py OUT_DIR [ID ...]`` (OUT_DIR under
@@ -16,7 +16,7 @@ import yaml
 
 ROOT = Path(__file__).resolve().parents[1]
 TMARK = os.environ.get("TMARK", str(ROOT / "vendor/tmark/target/release/tmark"))
-OUT = Path(sys.argv[1])
+OUT = Path(sys.argv[1]).resolve()
 OUT.mkdir(parents=True, exist_ok=True)
 corpus = yaml.safe_load((ROOT / "tests/parity/corpus.yml").read_text())
 only = sys.argv[2:]
@@ -37,7 +37,7 @@ for e in corpus["examples"]:
         fixes.append(
             f"{md.relative_to(work)}:{r.stdout.strip() or r.stderr.strip().splitlines()[-1:]}"
         )
-    args = [a for a in e["args"]]
+    args = list(e["args"])
     outdir = work / "out"
     outdir.mkdir()
     cmd = [
