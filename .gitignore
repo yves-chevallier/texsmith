@@ -68,3 +68,7 @@ vendor/tmark
 
 # Agent worktrees
 .claude/worktrees/
+
+# Parity baselines whose page is named "build" (not build artifacts)
+!tests/parity/baseline/**/build/
+!tests/parity/baseline/**/build@typst/
