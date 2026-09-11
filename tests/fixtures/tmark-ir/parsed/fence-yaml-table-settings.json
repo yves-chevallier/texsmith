@@ -16,24 +16,30 @@
       "span": [
         0,
         0,
-        136
+        310
       ],
       "model": {
         "settings": {
-          "width": "auto"
+          "width": "100%",
+          "placement": "htbp",
+          "long": true
         },
         "columns": [
           {
             "type": "Leaf",
-            "name": "A"
+            "name": "Category"
           },
           {
             "type": "Leaf",
-            "name": "B"
+            "name": "Q1",
+            "align": "r",
+            "width_group": "quarter"
           },
           {
             "type": "Leaf",
-            "name": "C"
+            "name": "Q2",
+            "align": "r",
+            "width_group": "quarter"
           }
         ],
         "rows": [
@@ -48,9 +54,9 @@
                     "span": [
                       0,
                       0,
-                      4
+                      8
                     ],
-                    "text": "1.10"
+                    "text": "Salaries"
                   }
                 ]
               },
@@ -62,9 +68,9 @@
                     "span": [
                       0,
                       0,
-                      2
+                      3
                     ],
-                    "text": "+1"
+                    "text": "120"
                   }
                 ]
               },
@@ -76,14 +82,21 @@
                     "span": [
                       0,
                       0,
-                      4
+                      3
                     ],
-                    "text": "0x1F"
+                    "text": "122"
                   }
                 ]
               }
             ]
           },
+          {
+            "type": "Separator",
+            "label": "Totals",
+            "double_rule": true
+          }
+        ],
+        "footer": [
           {
             "type": "Data",
             "cells": [
@@ -95,9 +108,9 @@
                     "span": [
                       0,
                       0,
-                      1
+                      5
                     ],
-                    "text": "3"
+                    "text": "Total"
                   }
                 ]
               },
@@ -109,9 +122,9 @@
                     "span": [
                       0,
                       0,
-                      4
+                      3
                     ],
-                    "text": "NULL"
+                    "text": "120"
                   }
                 ]
               },
@@ -125,44 +138,7 @@
                       0,
                       3
                     ],
-                    "text": "Yes"
-                  }
-                ]
-              }
-            ]
-          },
-          {
-            "type": "Data",
-            "cells": [
-              {
-                "content": [
-                  {
-                    "type": "Str",
-                    "id": 15,
-                    "span": [
-                      0,
-                      0,
-                      3
-                    ],
-                    "text": "1e3"
-                  }
-                ],
-                "cols": 2
-              },
-              {
-                "absorbed": true
-              },
-              {
-                "content": [
-                  {
-                    "type": "Str",
-                    "id": 17,
-                    "span": [
-                      0,
-                      0,
-                      2
-                    ],
-                    "text": "on"
+                    "text": "122"
                   }
                 ]
               }

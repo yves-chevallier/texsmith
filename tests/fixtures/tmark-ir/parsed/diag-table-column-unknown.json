@@ -1,0 +1,73 @@
+{
+  "file": 0,
+  "front_matter": {
+    "id": 0,
+    "span": [
+      0,
+      0,
+      0
+    ],
+    "keys": {}
+  },
+  "blocks": [
+    {
+      "type": "Table",
+      "id": 1,
+      "span": [
+        0,
+        0,
+        106
+      ],
+      "model": {
+        "settings": {
+          "width": "auto"
+        },
+        "columns": [
+          {
+            "type": "Leaf",
+            "name": "Year"
+          },
+          {
+            "type": "Group",
+            "name": "Actual",
+            "columns": [
+              {
+                "type": "Leaf",
+                "name": "H1"
+              },
+              {
+                "type": "Leaf",
+                "name": "H2"
+              }
+            ]
+          }
+        ],
+        "rows": [
+          {
+            "type": "Data",
+            "cells": [
+              {
+                "content": [
+                  {
+                    "type": "Str",
+                    "id": 3,
+                    "span": [
+                      0,
+                      0,
+                      4
+                    ],
+                    "text": "2024"
+                  }
+                ]
+              },
+              {},
+              {}
+            ],
+            "named": true
+          }
+        ]
+      },
+      "source": "columns:\n  - Year\n  - {name: Actual, columns: [H1, H2]}\nrows:\n  - 2024: {Acutal: [6, 7]}"
+    }
+  ]
+}

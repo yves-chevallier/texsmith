@@ -1,0 +1,25 @@
+{
+  "file": 0,
+  "front_matter": {
+    "id": 0,
+    "span": [
+      0,
+      0,
+      0
+    ],
+    "keys": {}
+  },
+  "blocks": [
+    {
+      "type": "CodeBlock",
+      "id": 1,
+      "span": [
+        0,
+        0,
+        35
+      ],
+      "text": "- not\n- a mapping",
+      "lang": "yaml table"
+    }
+  ]
+}

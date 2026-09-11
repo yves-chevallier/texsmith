@@ -1,0 +1,117 @@
+{
+  "file": 0,
+  "front_matter": {
+    "id": 0,
+    "span": [
+      0,
+      0,
+      0
+    ],
+    "keys": {}
+  },
+  "blocks": [
+    {
+      "type": "Para",
+      "id": 1,
+      "span": [
+        0,
+        0,
+        16
+      ],
+      "content": [
+        {
+          "type": "Str",
+          "id": 2,
+          "span": [
+            0,
+            1,
+            16
+          ],
+          "text": "=== \"Windows\""
+        }
+      ]
+    },
+    {
+      "type": "Para",
+      "id": 3,
+      "span": [
+        0,
+        18,
+        164
+      ],
+      "content": [
+        {
+          "type": "Str",
+          "id": 4,
+          "span": [
+            0,
+            18,
+            90
+          ],
+          "text": "A {--deleted--} word, a bar [=45% \"Review\"]{: .thin}, a [[Wiki Page]],"
+        },
+        {
+          "type": "SoftBreak",
+          "id": 7,
+          "span": [
+            0,
+            90,
+            91
+          ]
+        },
+        {
+          "type": "Str",
+          "id": 8,
+          "span": [
+            0,
+            91,
+            164
+          ],
+          "text": "an emoji :smile: and an icon :material-home:, then ^^inserted^^ text."
+        }
+      ]
+    },
+    {
+      "type": "Para",
+      "id": 9,
+      "span": [
+        0,
+        166,
+        185
+      ],
+      "content": [
+        {
+          "type": "Str",
+          "id": 10,
+          "span": [
+            0,
+            166,
+            185
+          ],
+          "text": "a. first fancy item"
+        }
+      ]
+    },
+    {
+      "type": "Para",
+      "id": 11,
+      "span": [
+        0,
+        187,
+        192
+      ],
+      "content": [
+        {
+          "type": "Str",
+          "id": 12,
+          "span": [
+            0,
+            187,
+            192
+          ],
+          "text": "[TOC]"
+        }
+      ]
+    }
+  ]
+}

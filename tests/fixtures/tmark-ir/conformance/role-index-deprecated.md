@@ -1,7 +1,8 @@
 # Index entries, deprecated registry suffix
 
 Spec Appendix "Deprecation schedule": `{index:registry}[…]` normalises to
-`{index registry=…}[…]`.
+`{index registry=…}[…]`. The diagnostic spans the whole role, so
+the fix reprints it.
 
 ## input
 
@@ -52,5 +53,5 @@ Relativity {index registry=physics}[relativity].
 ## diagnostics
 
 ```text
-deprecated @ 1:12-1:27
+deprecated @ 1:12-1:39
 ```

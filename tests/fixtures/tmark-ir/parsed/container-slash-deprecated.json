@@ -1,0 +1,206 @@
+{
+  "file": 0,
+  "front_matter": {
+    "id": 0,
+    "span": [
+      0,
+      0,
+      0
+    ],
+    "keys": {}
+  },
+  "blocks": [
+    {
+      "type": "Para",
+      "id": 1,
+      "span": [
+        0,
+        0,
+        37
+      ],
+      "content": [
+        {
+          "type": "Image",
+          "id": 2,
+          "span": [
+            0,
+            0,
+            37
+          ],
+          "src": "mozzarella.svg",
+          "alt": [
+            {
+              "type": "Str",
+              "id": 4,
+              "span": [
+                0,
+                0,
+                7
+              ],
+              "text": "Melting"
+            }
+          ],
+          "attrs": {
+            "kv": [
+              [
+                "width",
+                "80%"
+              ]
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "type": "Caption",
+      "id": 5,
+      "span": [
+        0,
+        39,
+        115
+      ],
+      "kind": "figure",
+      "content": [
+        {
+          "type": "Str",
+          "id": 6,
+          "span": [
+            0,
+            39,
+            87
+          ],
+          "text": "Melting behavior of high-moisture cheese"
+        },
+        {
+          "type": "SoftBreak",
+          "id": 7,
+          "span": [
+            0,
+            87,
+            88
+          ]
+        },
+        {
+          "type": "Str",
+          "id": 8,
+          "span": [
+            0,
+            88,
+            101
+          ],
+          "text": "upon heating"
+        }
+      ],
+      "attrs": {
+        "id": "fig:melting",
+        "id_span": [
+          0,
+          103,
+          114
+        ]
+      },
+      "position": "after"
+    },
+    {
+      "type": "Table",
+      "id": 9,
+      "span": [
+        0,
+        117,
+        168
+      ],
+      "model": {
+        "settings": {
+          "width": "auto"
+        },
+        "columns": [
+          {
+            "type": "Leaf",
+            "name": "Cheese"
+          },
+          {
+            "type": "Leaf",
+            "name": "Age"
+          }
+        ],
+        "rows": [
+          {
+            "type": "Data",
+            "cells": [
+              {
+                "content": [
+                  {
+                    "type": "Str",
+                    "id": 12,
+                    "span": [
+                      0,
+                      153,
+                      159
+                    ],
+                    "text": "Comté"
+                  }
+                ]
+              },
+              {
+                "content": [
+                  {
+                    "type": "Str",
+                    "id": 13,
+                    "span": [
+                      0,
+                      163,
+                      165
+                    ],
+                    "text": "18"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "type": "Caption",
+      "id": 14,
+      "span": [
+        0,
+        170,
+        211
+      ],
+      "kind": "table",
+      "content": [
+        {
+          "type": "Str",
+          "id": 15,
+          "span": [
+            0,
+            170,
+            197
+          ],
+          "text": "Hard cheese samples"
+        }
+      ],
+      "attrs": {
+        "id": "tbl:samples",
+        "id_span": [
+          0,
+          199,
+          210
+        ]
+      },
+      "position": "after"
+    },
+    {
+      "type": "RawBlock",
+      "id": 16,
+      "span": [
+        0,
+        213,
+        242
+      ],
+      "format": "latex",
+      "text": "\\vspace{1em}"
+    }
+  ]
+}

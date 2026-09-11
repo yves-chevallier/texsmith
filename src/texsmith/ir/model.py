@@ -1,6 +1,6 @@
 """TeXSmith IR models generated from the tmark IR schema. Do not edit.
 tmark version: 0.0.0
-schema sha256: 02b784e5cbea959ec5bbdf31de9c3cf227c32a8f8000ef7e8043a6a8b23e5059
+schema sha256: 7acbe344bb57dfcbeb30eede34fce29908c7aa80cf91ea907bcdfb4e2d169dae
 
 Regenerate with ``scripts/gen_ir_models.py`` (``--check`` in CI). Every node is a
 frozen, slotted dataclass; ``id`` and ``span`` do not take part in equality or
@@ -15,7 +15,7 @@ from typing import Any, ClassVar, Final, Literal, NamedTuple, TypeAlias
 
 
 TMARK_VERSION: Final = '0.0.0'
-SCHEMA_HASH: Final = '02b784e5cbea959ec5bbdf31de9c3cf227c32a8f8000ef7e8043a6a8b23e5059'
+SCHEMA_HASH: Final = '7acbe344bb57dfcbeb30eede34fce29908c7aa80cf91ea907bcdfb4e2d169dae'
 
 #: A JSON value the schema leaves untyped (front-matter blobs).
 JsonValue: TypeAlias = Any
@@ -47,7 +47,7 @@ SubSpan: TypeAlias = Span
 
 
 class Align(Enum):
-    """Horizontal alignment of a column or cell. Spec §Table (`l|c|r|j`)."""
+    """Horizontal alignment of a column or cell. Spec §Table (`l|c|r|j`). Mirrors Python `Align = Literal["l", "c", "r", "j"]`; the long forms (`left`, `center`, `centre`, `right`, `justify`, `justified`) are accepted by the parser and normalised here (`ALIGN_ALIASES`)."""
 
     LEFT = 'l'
     CENTER = 'c'
@@ -133,7 +133,7 @@ class Block(Node):
 
 @dataclass(frozen=True, slots=True)
 class Column(Record):
-    """Spec §Table rung 5: "Grouped headers (recursive `columns:`)"."""
+    """Spec §Table rung 5: "Grouped headers (recursive `columns:`)". Mirrors Python `Column = LeafColumn | ColumnGroup`."""
 
 
 @dataclass(frozen=True, slots=True)
@@ -143,7 +143,7 @@ class Inline(Node):
 
 @dataclass(frozen=True, slots=True)
 class Row(Record):
-    """Row"""
+    """Mirrors Python `Row = Separator | DataRow`."""
 
 
 @dataclass(frozen=True, slots=True)
@@ -208,7 +208,7 @@ class Attrs(Record):
 
 @dataclass(frozen=True, slots=True)
 class Author(Record):
-    """Spec §Front matter: `authors: [{name, affiliation}]`."""
+    """Spec §Front matter: `authors: [{name, affiliation}]`. A bare string item (`authors: [Ada Lovelace]`) is the name alone (C9: TMark tolerates what TeXSmith accepts)."""
 
     name: str
     affiliation: str | None = None
@@ -225,7 +225,7 @@ class BulletList(Block):
 
 @dataclass(frozen=True, slots=True)
 class Cell(Record):
-    """One slot of the leaf matrix."""
+    """One slot of the leaf matrix. Mirrors Python `LeafCell` (`value`, `absorbed`, `rows`, `cols`, `align`; `origin` is implied by the position). A cell written as `{value, rows, cols, align}` in the YAML form is Python's `RichCell`; a bare scalar is a cell with the defaults."""
 
     absorbed: bool = False
     align: Align | None = None
@@ -245,7 +245,7 @@ class Code(Inline):
 
 @dataclass(frozen=True, slots=True)
 class ColumnConfig(Record):
-    """The optional layout trio every column-like entry carries."""
+    """The optional layout trio every column-like entry carries. Mirrors Python `_ColumnAttrs` (and `ColumnConfig`, the entries of a `yaml table-config` fence, which adds nothing to it)."""
 
     align: Align | None = None
     width: str | None = None
@@ -254,7 +254,7 @@ class ColumnConfig(Record):
 
 @dataclass(frozen=True, slots=True)
 class ColumnGroup(Column):
-    """A header group over an ordered list of sub-columns (recursive)."""
+    """A header group over an ordered list of sub-columns (recursive). Mirrors Python `ColumnGroup` (`name` required, `columns` non-empty)."""
 
     type: ClassVar[Literal["Group"]] = "Group"
     columns: tuple[Column, ...]
@@ -303,7 +303,7 @@ class CounterItem(Inline):
 
 @dataclass(frozen=True, slots=True)
 class DataRow(Row):
-    """A row of data: one cell per leaf column, in column order. In the YAML form the first leaf column holds the row label."""
+    """A row of data: one cell per leaf column, in column order. Mirrors Python `DataRow` (`label`, `cells`, `source`) after `build_matrix`: the label is the first leaf cell (the first top-level column is the label column), the top-level cells are expanded into leaves."""
 
     type: ClassVar[Literal["Data"]] = "Data"
     cells: tuple[Cell, ...] = ()
@@ -406,7 +406,7 @@ class Keystroke(Inline):
 
 @dataclass(frozen=True, slots=True)
 class LeafColumn(Column):
-    """A terminal column. `name` is `None` when the column has no header label; a table whose columns all lack a name has no header row."""
+    """A terminal column. Mirrors Python `LeafColumn`: `name` is `None` when the column has no header label; a table whose columns all lack a name has no header row. A bare scalar column descriptor (`Fruit`, `2024`) is a leaf named by its text."""
 
     type: ClassVar[Literal["Leaf"]] = "Leaf"
     align: Align | None = None
@@ -534,7 +534,7 @@ class RefItem(Record):
 
 @dataclass(frozen=True, slots=True)
 class Separator(Row):
-    """A horizontal rule between rows, optionally labelled."""
+    """A horizontal rule between rows, optionally labelled. Mirrors Python `Separator` (written `separator: true` with `label`/`double-rule` next to it, or `separator: {label, double-rule}`)."""
 
     type: ClassVar[Literal["Separator"]] = "Separator"
     double_rule: bool = False
@@ -613,7 +613,7 @@ class Superscript(Inline):
 
 @dataclass(frozen=True, slots=True)
 class TableSettings(Record):
-    """Knobs of the `table:` section of a `yaml table` or `yaml table-config` payload. Spec §Table rung 5 (`long` and `placement`)."""
+    """Knobs of the `table:` section of a `yaml table` or `yaml table-config` payload. Spec §Table rung 5 (`long` and `placement`). Mirrors Python `TableSettings` (`extra="forbid"`: an unknown key is `table-unknown-key`)."""
 
     long: bool | None = None
     placement: str | None = None
@@ -759,11 +759,12 @@ class TableConfig(Block):
     type: ClassVar[Literal["TableConfig"]] = "TableConfig"
     columns: tuple[ColumnConfig, ...] = ()
     settings: TableSettings = field(default_factory=TableSettings)
+    source: str | None = None
 
 
 @dataclass(frozen=True, slots=True)
 class TableModel(Record):
-    """Spec §Table: the model every rung of the ladder lowers to. Pipe tables produce one with no spans and no groups."""
+    """Spec §Table: the model every rung of the ladder lowers to. Mirrors Python `Table` (`settings`, `columns`, `rows`, `footer`). Pipe tables produce one with no spans and no groups."""
 
     rows: tuple[Row, ...] = ()
     footer: tuple[Row, ...] = ()
@@ -792,6 +793,7 @@ class Table(Block):
     type: ClassVar[Literal["Table"]] = "Table"
     attrs: Attrs = field(default_factory=Attrs)
     model: TableModel = field(default_factory=TableModel)
+    source: str | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -1287,12 +1289,14 @@ FIELDS: Final[dict[type, tuple[FieldSpec, ...]]] = {
     Table: (
         FieldSpec("attrs", ("record", Attrs), "skip", Attrs, True),
         FieldSpec("model", ("record", TableModel), "always", TableModel, True),
+        FieldSpec("source", ("opt", ("str",)), "skip", None),
         FieldSpec("id", ("int",), "always", 0),
         FieldSpec("span", ("span",), "always", NO_SPAN),
     ),
     TableConfig: (
         FieldSpec("columns", ("list", ("record", ColumnConfig)), "skip", ()),
         FieldSpec("settings", ("record", TableSettings), "always", TableSettings, True),
+        FieldSpec("source", ("opt", ("str",)), "skip", None),
         FieldSpec("id", ("int",), "always", 0),
         FieldSpec("span", ("span",), "always", NO_SPAN),
     ),

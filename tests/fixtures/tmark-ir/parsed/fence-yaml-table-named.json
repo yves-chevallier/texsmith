@@ -16,7 +16,7 @@
       "span": [
         0,
         0,
-        136
+        253
       ],
       "model": {
         "settings": {
@@ -25,15 +25,35 @@
         "columns": [
           {
             "type": "Leaf",
-            "name": "A"
+            "name": "Product"
           },
           {
-            "type": "Leaf",
-            "name": "B"
+            "type": "Group",
+            "name": "FY23",
+            "columns": [
+              {
+                "type": "Leaf",
+                "name": "Q1"
+              },
+              {
+                "type": "Leaf",
+                "name": "Q2"
+              }
+            ]
           },
           {
-            "type": "Leaf",
-            "name": "C"
+            "type": "Group",
+            "name": "FY24",
+            "columns": [
+              {
+                "type": "Leaf",
+                "name": "Q1"
+              },
+              {
+                "type": "Leaf",
+                "name": "Q2"
+              }
+            ]
           }
         ],
         "rows": [
@@ -48,9 +68,9 @@
                     "span": [
                       0,
                       0,
-                      4
+                      6
                     ],
-                    "text": "1.10"
+                    "text": "Apples"
                   }
                 ]
               },
@@ -62,9 +82,9 @@
                     "span": [
                       0,
                       0,
-                      2
+                      1
                     ],
-                    "text": "+1"
+                    "text": "1"
                   }
                 ]
               },
@@ -76,17 +96,12 @@
                     "span": [
                       0,
                       0,
-                      4
+                      1
                     ],
-                    "text": "0x1F"
+                    "text": "2"
                   }
                 ]
-              }
-            ]
-          },
-          {
-            "type": "Data",
-            "cells": [
+              },
               {
                 "content": [
                   {
@@ -109,27 +124,18 @@
                     "span": [
                       0,
                       0,
-                      4
+                      1
                     ],
-                    "text": "NULL"
-                  }
-                ]
-              },
-              {
-                "content": [
-                  {
-                    "type": "Str",
-                    "id": 13,
-                    "span": [
-                      0,
-                      0,
-                      3
-                    ],
-                    "text": "Yes"
+                    "text": "4"
                   }
                 ]
               }
-            ]
+            ],
+            "named": true
+          },
+          {
+            "type": "Separator",
+            "label": "Stone fruit"
           },
           {
             "type": "Data",
@@ -138,20 +144,39 @@
                 "content": [
                   {
                     "type": "Str",
+                    "id": 13,
+                    "span": [
+                      0,
+                      0,
+                      8
+                    ],
+                    "text": "Cherries"
+                  }
+                ]
+              },
+              {},
+              {
+                "content": [
+                  {
+                    "type": "Str",
                     "id": 15,
                     "span": [
                       0,
                       0,
-                      3
+                      1
                     ],
-                    "text": "1e3"
+                    "text": "5"
                   }
-                ],
-                "cols": 2
+                ]
               },
-              {
-                "absorbed": true
-              },
+              {},
+              {}
+            ],
+            "named": true
+          },
+          {
+            "type": "Data",
+            "cells": [
               {
                 "content": [
                   {
@@ -160,13 +185,44 @@
                     "span": [
                       0,
                       0,
-                      2
+                      4
                     ],
-                    "text": "on"
+                    "text": "2024"
+                  }
+                ]
+              },
+              {},
+              {},
+              {
+                "content": [
+                  {
+                    "type": "Str",
+                    "id": 19,
+                    "span": [
+                      0,
+                      0,
+                      1
+                    ],
+                    "text": "6"
+                  }
+                ]
+              },
+              {
+                "content": [
+                  {
+                    "type": "Str",
+                    "id": 21,
+                    "span": [
+                      0,
+                      0,
+                      1
+                    ],
+                    "text": "7"
                   }
                 ]
               }
-            ]
+            ],
+            "named": true
           }
         ]
       }

@@ -16,7 +16,7 @@
       "span": [
         0,
         0,
-        143
+        59
       ],
       "model": {
         "settings": {
@@ -25,21 +25,15 @@
         "columns": [
           {
             "type": "Leaf",
-            "name": "Fruit"
+            "name": "A"
           },
           {
-            "type": "Group",
-            "name": "Warehouses",
-            "columns": [
-              {
-                "type": "Leaf",
-                "name": "Geneva"
-              },
-              {
-                "type": "Leaf",
-                "name": "Zurich"
-              }
-            ]
+            "type": "Leaf",
+            "name": "B"
+          },
+          {
+            "type": "Leaf",
+            "name": "C"
           }
         ],
         "rows": [
@@ -50,13 +44,13 @@
                 "content": [
                   {
                     "type": "Str",
-                    "id": 3,
+                    "id": 5,
                     "span": [
                       0,
-                      0,
-                      6
+                      42,
+                      43
                     ],
-                    "text": "Apples"
+                    "text": "1"
                   }
                 ]
               },
@@ -64,13 +58,13 @@
                 "content": [
                   {
                     "type": "Str",
-                    "id": 5,
+                    "id": 6,
                     "span": [
                       0,
-                      0,
-                      1
+                      48,
+                      49
                     ],
-                    "text": "3"
+                    "text": "2"
                   }
                 ]
               },
@@ -81,38 +75,12 @@
                     "id": 7,
                     "span": [
                       0,
-                      0,
-                      1
+                      54,
+                      55
                     ],
-                    "text": "4"
+                    "text": "3"
                   }
                 ]
-              }
-            ]
-          },
-          {
-            "type": "Data",
-            "cells": [
-              {
-                "content": [
-                  {
-                    "type": "Str",
-                    "id": 9,
-                    "span": [
-                      0,
-                      0,
-                      5
-                    ],
-                    "text": "Total"
-                  }
-                ],
-                "cols": 3
-              },
-              {
-                "absorbed": true
-              },
-              {
-                "absorbed": true
               }
             ]
           }
@@ -120,32 +88,55 @@
       }
     },
     {
-      "type": "Caption",
-      "id": 10,
+      "type": "TableConfig",
+      "id": 8,
       "span": [
         0,
-        145,
-        184
+        61,
+        187
+      ],
+      "columns": [
+        {},
+        {
+          "align": "r",
+          "width": "X"
+        },
+        {
+          "align": "c",
+          "width_group": "g"
+        }
+      ],
+      "settings": {
+        "width": "100%"
+      }
+    },
+    {
+      "type": "Caption",
+      "id": 9,
+      "span": [
+        0,
+        189,
+        214
       ],
       "kind": "table",
       "content": [
         {
           "type": "Str",
-          "id": 11,
+          "id": 10,
           "span": [
             0,
-            145,
-            172
+            189,
+            204
           ],
-          "text": "Stock by warehouse."
+          "text": "Config."
         }
       ],
       "attrs": {
-        "id": "tbl:stock",
+        "id": "tbl:cfg",
         "id_span": [
           0,
-          174,
-          183
+          206,
+          213
         ]
       },
       "position": "after"

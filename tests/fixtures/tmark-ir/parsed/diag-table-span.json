@@ -16,7 +16,7 @@
       "span": [
         0,
         0,
-        136
+        109
       ],
       "model": {
         "settings": {
@@ -34,6 +34,10 @@
           {
             "type": "Leaf",
             "name": "C"
+          },
+          {
+            "type": "Leaf",
+            "name": "D"
           }
         ],
         "rows": [
@@ -48,9 +52,9 @@
                     "span": [
                       0,
                       0,
-                      4
+                      2
                     ],
-                    "text": "1.10"
+                    "text": "r1"
                   }
                 ]
               },
@@ -62,11 +66,16 @@
                     "span": [
                       0,
                       0,
-                      2
+                      5
                     ],
-                    "text": "+1"
+                    "text": "Block"
                   }
-                ]
+                ],
+                "rows": 2,
+                "cols": 2
+              },
+              {
+                "absorbed": true
               },
               {
                 "content": [
@@ -76,9 +85,9 @@
                     "span": [
                       0,
                       0,
-                      4
+                      1
                     ],
-                    "text": "0x1F"
+                    "text": "3"
                   }
                 ]
               }
@@ -95,11 +104,17 @@
                     "span": [
                       0,
                       0,
-                      1
+                      2
                     ],
-                    "text": "3"
+                    "text": "r2"
                   }
                 ]
+              },
+              {
+                "absorbed": true
+              },
+              {
+                "absorbed": true
               },
               {
                 "content": [
@@ -109,67 +124,17 @@
                     "span": [
                       0,
                       0,
-                      4
+                      1
                     ],
-                    "text": "NULL"
-                  }
-                ]
-              },
-              {
-                "content": [
-                  {
-                    "type": "Str",
-                    "id": 13,
-                    "span": [
-                      0,
-                      0,
-                      3
-                    ],
-                    "text": "Yes"
-                  }
-                ]
-              }
-            ]
-          },
-          {
-            "type": "Data",
-            "cells": [
-              {
-                "content": [
-                  {
-                    "type": "Str",
-                    "id": 15,
-                    "span": [
-                      0,
-                      0,
-                      3
-                    ],
-                    "text": "1e3"
-                  }
-                ],
-                "cols": 2
-              },
-              {
-                "absorbed": true
-              },
-              {
-                "content": [
-                  {
-                    "type": "Str",
-                    "id": 17,
-                    "span": [
-                      0,
-                      0,
-                      2
-                    ],
-                    "text": "on"
+                    "text": "c"
                   }
                 ]
               }
             ]
           }
         ]
-      }
+      },
+      "source": "columns: [A, B, C, D]\nrows:\n  - [r1, {value: Block, rows: 2, cols: 2}, 3]\n  - [r2, a, b, c]"
     }
   ]
 }

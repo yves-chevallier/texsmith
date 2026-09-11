@@ -1,36 +1,48 @@
-# YAML cells that YAML would type
+# Table settings, width groups and a footer
 
-Floats, exponents, signed and prefixed integers and the null and boolean
-words in any case are quoted so that they read back as the same text;
-plain integers stay plain (printer critic U7). The input is the quoted
-form: the unquoted one reads `1.10` as `1.1` and is a different table. The
-spanning cell keeps the table out of the pipe form, where the question
-does not arise.
+Spec §Table rung 5: the `table:` section (`width`, `placement`, `long`),
+`width-group` on columns, a labelled double-rule separator in its nested
+form and a footer. The `table:` section prints first; the separator prints
+in its flat form.
 
 ## input
 
 ````md
 ```yaml table
-columns: [A, B, C]
+table:
+  width: 100%
+  placement: htbp
+  long: true
+columns:
+  - Category
+  - {name: Q1, width-group: quarter, align: right}
+  - {name: Q2, width-group: quarter, align: right}
 rows:
-  - ["1.10", "+1", "0x1F"]
-  - [3, "NULL", "Yes"]
-  - [{value: "1e3", cols: 2}, "on"]
+  - [Salaries, 120, 122]
+  - separator:
+      label: Totals
+      double-rule: true
+footer:
+  - [Total, 120, 122]
 ```
 ````
-
 ## canonical
 
 ````md
 ```yaml table
+table:
+  width: 100%
+  placement: htbp
+  long: true
 columns:
-  - A
-  - B
-  - C
+  - Category
+  - {name: Q1, align: right, width-group: quarter}
+  - {name: Q2, align: right, width-group: quarter}
 rows:
-  - ["1.10", "+1", "0x1F"]
-  - [3, "NULL", "Yes"]
-  - [{value: "1e3", cols: 2}, "on"]
+  - [Salaries, 120, 122]
+  - {separator: true, label: Totals, double-rule: true}
+footer:
+  - [Total, 120, 122]
 ```
 ````
 
@@ -43,20 +55,26 @@ rows:
       "type": "Table",
       "model": {
         "settings": {
-          "width": "auto"
+          "width": "100%",
+          "placement": "htbp",
+          "long": true
         },
         "columns": [
           {
             "type": "Leaf",
-            "name": "A"
+            "name": "Category"
           },
           {
             "type": "Leaf",
-            "name": "B"
+            "name": "Q1",
+            "align": "r",
+            "width_group": "quarter"
           },
           {
             "type": "Leaf",
-            "name": "C"
+            "name": "Q2",
+            "align": "r",
+            "width_group": "quarter"
           }
         ],
         "rows": [
@@ -67,7 +85,7 @@ rows:
                 "content": [
                   {
                     "type": "Str",
-                    "text": "1.10"
+                    "text": "Salaries"
                   }
                 ]
               },
@@ -75,7 +93,7 @@ rows:
                 "content": [
                   {
                     "type": "Str",
-                    "text": "+1"
+                    "text": "120"
                   }
                 ]
               },
@@ -83,12 +101,19 @@ rows:
                 "content": [
                   {
                     "type": "Str",
-                    "text": "0x1F"
+                    "text": "122"
                   }
                 ]
               }
             ]
           },
+          {
+            "type": "Separator",
+            "label": "Totals",
+            "double_rule": true
+          }
+        ],
+        "footer": [
           {
             "type": "Data",
             "cells": [
@@ -96,7 +121,7 @@ rows:
                 "content": [
                   {
                     "type": "Str",
-                    "text": "3"
+                    "text": "Total"
                   }
                 ]
               },
@@ -104,7 +129,7 @@ rows:
                 "content": [
                   {
                     "type": "Str",
-                    "text": "NULL"
+                    "text": "120"
                   }
                 ]
               },
@@ -112,32 +137,7 @@ rows:
                 "content": [
                   {
                     "type": "Str",
-                    "text": "Yes"
-                  }
-                ]
-              }
-            ]
-          },
-          {
-            "type": "Data",
-            "cells": [
-              {
-                "content": [
-                  {
-                    "type": "Str",
-                    "text": "1e3"
-                  }
-                ],
-                "cols": 2
-              },
-              {
-                "absorbed": true
-              },
-              {
-                "content": [
-                  {
-                    "type": "Str",
-                    "text": "on"
+                    "text": "122"
                   }
                 ]
               }

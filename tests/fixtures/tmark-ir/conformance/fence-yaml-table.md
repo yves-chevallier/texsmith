@@ -1,7 +1,9 @@
 # YAML table
 
-Spec §Table, rung 5: the fully structured form, with grouped headers, spans
-and a separator.
+Spec §Table, rung 5: the fully structured form, with grouped headers and a
+column span. A positional row has one item per top-level column: the leaves
+of a group are a list, and the slots a column span absorbs are not written
+(the port of TeXSmith's `parse_table`).
 
 ## input
 
@@ -11,8 +13,8 @@ columns:
   - Fruit
   - {name: Warehouses, columns: [Geneva, Zurich]}
 rows:
-  - [Apples, 3, 4]
-  - [{value: Total, cols: 3}, ~, ~]
+  - [Apples, [3, 4]]
+  - [{value: Total, cols: 3}]
 ```
 
 Table: Stock by warehouse. {#tbl:stock}
@@ -26,8 +28,8 @@ columns:
   - Fruit
   - {name: Warehouses, columns: [Geneva, Zurich]}
 rows:
-  - [Apples, 3, 4]
-  - [{value: Total, cols: 3}, ~, ~]
+  - [Apples, [3, 4]]
+  - [{value: Total, cols: 3}]
 ```
 
 Table: Stock by warehouse. {#tbl:stock}

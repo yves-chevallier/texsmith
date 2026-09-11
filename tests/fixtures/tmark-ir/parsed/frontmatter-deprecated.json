@@ -1,0 +1,63 @@
+{
+  "file": 0,
+  "front_matter": {
+    "id": 1,
+    "span": [
+      0,
+      0,
+      109
+    ],
+    "raw": "---\ntitle: Notes\nauthors: [TeXSmith]\ncounters:\n  fw:\n    name: Finding\npress:\n  admonition_style: classic\n---",
+    "keys": {
+      "title": "Notes",
+      "authors": [
+        {
+          "name": "TeXSmith"
+        }
+      ],
+      "press": {
+        "declare": {
+          "counters": {
+            "fw": {
+              "name": "Finding"
+            }
+          }
+        }
+      }
+    },
+    "extra": {
+      "press": {
+        "callouts": {
+          "style": "classic"
+        }
+      }
+    },
+    "deprecated": [
+      "counters",
+      "press.admonition_style"
+    ]
+  },
+  "blocks": [
+    {
+      "type": "Para",
+      "id": 2,
+      "span": [
+        0,
+        111,
+        116
+      ],
+      "content": [
+        {
+          "type": "Str",
+          "id": 3,
+          "span": [
+            0,
+            111,
+            116
+          ],
+          "text": "Text."
+        }
+      ]
+    }
+  ]
+}

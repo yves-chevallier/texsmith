@@ -1,0 +1,74 @@
+{
+  "file": 0,
+  "front_matter": {
+    "id": 0,
+    "span": [
+      0,
+      0,
+      0
+    ],
+    "keys": {}
+  },
+  "blocks": [
+    {
+      "type": "Table",
+      "id": 1,
+      "span": [
+        0,
+        0,
+        79
+      ],
+      "model": {
+        "settings": {
+          "width": "auto",
+          "placement": "xyz"
+        },
+        "columns": [
+          {
+            "type": "Leaf",
+            "name": "A"
+          },
+          {
+            "type": "Leaf",
+            "name": "B"
+          }
+        ],
+        "rows": [
+          {
+            "type": "Data",
+            "cells": [
+              {
+                "content": [
+                  {
+                    "type": "Str",
+                    "id": 3,
+                    "span": [
+                      0,
+                      0,
+                      1
+                    ],
+                    "text": "1"
+                  }
+                ]
+              },
+              {
+                "content": [
+                  {
+                    "type": "Str",
+                    "id": 5,
+                    "span": [
+                      0,
+                      0,
+                      1
+                    ],
+                    "text": "2"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

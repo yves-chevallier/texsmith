@@ -116,7 +116,7 @@
       }
     },
     "Align": {
-      "description": "Horizontal alignment of a column or cell. Spec §Table (`l|c|r|j`).",
+      "description": "Horizontal alignment of a column or cell. Spec §Table (`l|c|r|j`). Mirrors Python `Align = Literal[\"l\", \"c\", \"r\", \"j\"]`; the long forms (`left`, `center`, `centre`, `right`, `justify`, `justified`) are accepted by the parser and normalised here (`ALIGN_ALIASES`).",
       "type": "string",
       "enum": [
         "l",
@@ -174,7 +174,7 @@
       }
     },
     "Author": {
-      "description": "Spec §Front matter: `authors: [{name, affiliation}]`.",
+      "description": "Spec §Front matter: `authors: [{name, affiliation}]`. A bare string item (`authors: [Ada Lovelace]`) is the name alone (C9: TMark tolerates what TeXSmith accepts).",
       "type": "object",
       "required": [
         "name"
@@ -635,6 +635,13 @@
                 }
               ]
             },
+            "source": {
+              "description": "The body of a `yaml table` fence the parser reported a `table-*` diagnostic on: `model` is then a best effort and the printer writes this text back as typed (design 03 §Tables). `None` for a table the model holds faithfully.",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
             "span": {
               "default": [
                 0,
@@ -683,6 +690,13 @@
                 {
                   "$ref": "#/definitions/TableSettings"
                 }
+              ]
+            },
+            "source": {
+              "description": "The fence body when the parser reported a `table-*` diagnostic on it; printed back as typed (see [`Table::source`]).",
+              "type": [
+                "string",
+                "null"
               ]
             },
             "span": {
@@ -1084,14 +1098,15 @@
       ]
     },
     "Cell": {
-      "description": "One slot of the leaf matrix.\n\nA spanning cell carries `rows`/`cols` greater than 1 and the slots it covers are present too, marked `absorbed` (the `~` of the YAML form), so every data row has exactly one cell per leaf column.",
+      "description": "One slot of the leaf matrix. Mirrors Python `LeafCell` (`value`, `absorbed`, `rows`, `cols`, `align`; `origin` is implied by the position). A cell written as `{value, rows, cols, align}` in the YAML form is Python's `RichCell`; a bare scalar is a cell with the defaults.\n\nA spanning cell carries `rows`/`cols` greater than 1 and the slots it covers are present too, marked `absorbed` (the `~` of the YAML form under a row span; the slots to the right of a column span are absorbed without being written), so every data row has exactly one cell per leaf column.",
       "type": "object",
       "properties": {
         "absorbed": {
-          "description": "Covered by a spanning cell above or to the left.",
+          "description": "Python `LeafCell.absorbed`: covered by a spanning cell above or to the left.",
           "type": "boolean"
         },
         "align": {
+          "description": "Python `RichCell.align`: a per-cell override.",
           "anyOf": [
             {
               "$ref": "#/definitions/Align"
@@ -1102,18 +1117,20 @@
           ]
         },
         "cols": {
+          "description": "Python `RichCell.cols` (>= 1).",
           "type": "integer",
           "format": "uint32",
           "minimum": 0.0
         },
         "content": {
-          "description": "Inline Markdown; empty for an empty or absorbed cell.",
+          "description": "Python `LeafCell.value`, parsed as inline Markdown; empty for an empty (`~`) or absorbed cell.",
           "type": "array",
           "items": {
             "$ref": "#/definitions/Inline"
           }
         },
         "rows": {
+          "description": "Python `RichCell.rows` (>= 1).",
           "type": "integer",
           "format": "uint32",
           "minimum": 0.0
@@ -1121,16 +1138,17 @@
       }
     },
     "Column": {
-      "description": "Spec §Table rung 5: \"Grouped headers (recursive `columns:`)\".",
+      "description": "Spec §Table rung 5: \"Grouped headers (recursive `columns:`)\". Mirrors Python `Column = LeafColumn | ColumnGroup`.",
       "oneOf": [
         {
-          "description": "A terminal column. `name` is `None` when the column has no header label; a table whose columns all lack a name has no header row.",
+          "description": "A terminal column. Mirrors Python `LeafColumn`: `name` is `None` when the column has no header label; a table whose columns all lack a name has no header row. A bare scalar column descriptor (`Fruit`, `2024`) is a leaf named by its text.",
           "type": "object",
           "required": [
             "type"
           ],
           "properties": {
             "align": {
+              "description": "Python `_ColumnAttrs.align`.",
               "anyOf": [
                 {
                   "$ref": "#/definitions/Align"
@@ -1141,6 +1159,7 @@
               ]
             },
             "name": {
+              "description": "Python `LeafColumn.name`.",
               "type": [
                 "string",
                 "null"
@@ -1153,14 +1172,14 @@
               ]
             },
             "width": {
-              "description": "`X`, `NN%` or an opaque backend length.",
+              "description": "Python `_ColumnAttrs.width`: `X`, `NN%` or an opaque backend length (`auto` on a column is also a flexible column).",
               "type": [
                 "string",
                 "null"
               ]
             },
             "width_group": {
-              "description": "Columns sharing a group get the same computed width.",
+              "description": "Python `_ColumnAttrs.width_group` (YAML key `width-group`, the underscore spelling is accepted too): columns sharing a group get the same computed width. Any scalar, coerced to text.",
               "type": [
                 "string",
                 "null"
@@ -1169,7 +1188,7 @@
           }
         },
         {
-          "description": "A header group over an ordered list of sub-columns (recursive).",
+          "description": "A header group over an ordered list of sub-columns (recursive). Mirrors Python `ColumnGroup` (`name` required, `columns` non-empty).",
           "type": "object",
           "required": [
             "columns",
@@ -1178,6 +1197,7 @@
           ],
           "properties": {
             "align": {
+              "description": "Python `_ColumnAttrs.align`.",
               "anyOf": [
                 {
                   "$ref": "#/definitions/Align"
@@ -1188,12 +1208,14 @@
               ]
             },
             "columns": {
+              "description": "Python `ColumnGroup.columns`.",
               "type": "array",
               "items": {
                 "$ref": "#/definitions/Column"
               }
             },
             "name": {
+              "description": "Python `ColumnGroup.name`.",
               "type": "string"
             },
             "type": {
@@ -1203,14 +1225,14 @@
               ]
             },
             "width": {
-              "description": "`X`, `NN%` or an opaque backend length.",
+              "description": "Python `_ColumnAttrs.width`: `X`, `NN%` or an opaque backend length (`auto` on a column is also a flexible column).",
               "type": [
                 "string",
                 "null"
               ]
             },
             "width_group": {
-              "description": "Columns sharing a group get the same computed width.",
+              "description": "Python `_ColumnAttrs.width_group` (YAML key `width-group`, the underscore spelling is accepted too): columns sharing a group get the same computed width. Any scalar, coerced to text.",
               "type": [
                 "string",
                 "null"
@@ -1221,10 +1243,11 @@
       ]
     },
     "ColumnConfig": {
-      "description": "The optional layout trio every column-like entry carries.",
+      "description": "The optional layout trio every column-like entry carries. Mirrors Python `_ColumnAttrs` (and `ColumnConfig`, the entries of a `yaml table-config` fence, which adds nothing to it).",
       "type": "object",
       "properties": {
         "align": {
+          "description": "Python `_ColumnAttrs.align`.",
           "anyOf": [
             {
               "$ref": "#/definitions/Align"
@@ -1235,14 +1258,14 @@
           ]
         },
         "width": {
-          "description": "`X`, `NN%` or an opaque backend length.",
+          "description": "Python `_ColumnAttrs.width`: `X`, `NN%` or an opaque backend length (`auto` on a column is also a flexible column).",
           "type": [
             "string",
             "null"
           ]
         },
         "width_group": {
-          "description": "Columns sharing a group get the same computed width.",
+          "description": "Python `_ColumnAttrs.width_group` (YAML key `width-group`, the underscore spelling is accepted too): columns sharing a group get the same computed width. Any scalar, coerced to text.",
           "type": [
             "string",
             "null"
@@ -2756,9 +2779,10 @@
       }
     },
     "Row": {
+      "description": "Mirrors Python `Row = Separator | DataRow`.",
       "oneOf": [
         {
-          "description": "A row of data: one cell per leaf column, in column order. In the YAML form the first leaf column holds the row label.",
+          "description": "A row of data: one cell per leaf column, in column order. Mirrors Python `DataRow` (`label`, `cells`, `source`) after `build_matrix`: the label is the first leaf cell (the first top-level column is the label column), the top-level cells are expanded into leaves.",
           "type": "object",
           "required": [
             "type"
@@ -2771,7 +2795,7 @@
               }
             },
             "named": {
-              "description": "Written in named-row mode (`{label: {Column: value}}`) rather than positionally; the printer re-emits the same mode.",
+              "description": "Python `DataRow.source == \"named\"`: written in named-row mode (`- Label: {Column: value}` or `- {label: …, cells: {…}}`) rather than positionally; the printer re-emits the same mode.",
               "type": "boolean"
             },
             "type": {
@@ -2783,16 +2807,18 @@
           }
         },
         {
-          "description": "A horizontal rule between rows, optionally labelled.",
+          "description": "A horizontal rule between rows, optionally labelled. Mirrors Python `Separator` (written `separator: true` with `label`/`double-rule` next to it, or `separator: {label, double-rule}`).",
           "type": "object",
           "required": [
             "type"
           ],
           "properties": {
             "double_rule": {
+              "description": "Python `Separator.double_rule` (YAML key `double-rule`).",
               "type": "boolean"
             },
             "label": {
+              "description": "Python `Separator.label`.",
               "type": [
                 "string",
                 "null"
@@ -2866,28 +2892,32 @@
       "minItems": 3
     },
     "TableModel": {
-      "description": "Spec §Table: the model every rung of the ladder lowers to. Pipe tables produce one with no spans and no groups.",
+      "description": "Spec §Table: the model every rung of the ladder lowers to. Mirrors Python `Table` (`settings`, `columns`, `rows`, `footer`). Pipe tables produce one with no spans and no groups.",
       "type": "object",
       "properties": {
         "columns": {
+          "description": "Python `Table.columns` (at least two in a `yaml table`).",
           "type": "array",
           "items": {
             "$ref": "#/definitions/Column"
           }
         },
         "footer": {
+          "description": "Python `Table.footer`.",
           "type": "array",
           "items": {
             "$ref": "#/definitions/Row"
           }
         },
         "rows": {
+          "description": "Python `Table.rows`.",
           "type": "array",
           "items": {
             "$ref": "#/definitions/Row"
           }
         },
         "settings": {
+          "description": "Python `Table.settings`, the `table:` section.",
           "default": {
             "width": "auto"
           },
@@ -2900,25 +2930,25 @@
       }
     },
     "TableSettings": {
-      "description": "Knobs of the `table:` section of a `yaml table` or `yaml table-config` payload. Spec §Table rung 5 (`long` and `placement`).",
+      "description": "Knobs of the `table:` section of a `yaml table` or `yaml table-config` payload. Spec §Table rung 5 (`long` and `placement`). Mirrors Python `TableSettings` (`extra=\"forbid\"`: an unknown key is `table-unknown-key`).",
       "type": "object",
       "properties": {
         "long": {
-          "description": "`Some(true)` forces a multi-page table, `Some(false)` forbids it, `None` is `auto`.",
+          "description": "Python `TableSettings.long: bool | Literal[\"auto\"]`: `Some(true)` forces a multi-page table, `Some(false)` forbids it, `None` is `auto` (the default; written `long: auto` reads back as `None`).",
           "type": [
             "boolean",
             "null"
           ]
         },
         "placement": {
-          "description": "Float placement letters (`htbp`), backend-specific.",
+          "description": "Python `TableSettings.placement`: float placement letters (`htbp`), backend-specific; `_PLACEMENT_RE` is the lint `table-placement`.",
           "type": [
             "string",
             "null"
           ]
         },
         "width": {
-          "description": "`auto`, `X`, `NN%` or an opaque backend length.",
+          "description": "Python `TableSettings.width` (`\"auto\"` by default): `auto`, `X`, `NN%` or an opaque backend length. `x` is normalised to `X` (`_validate_width`); the percentage range is `table-width`.",
           "default": "auto",
           "type": "string"
         }

@@ -65,3 +65,6 @@ snippet-dump/
 
 # The tmark checkout used to build the wheel (a symlink locally, a checkout in CI)
 vendor/tmark
+
+# Agent worktrees
+.claude/worktrees/

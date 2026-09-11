@@ -1,0 +1,125 @@
+{
+  "file": 0,
+  "front_matter": {
+    "id": 0,
+    "span": [
+      0,
+      0,
+      0
+    ],
+    "keys": {}
+  },
+  "blocks": [
+    {
+      "type": "Para",
+      "id": 1,
+      "span": [
+        0,
+        0,
+        73
+      ],
+      "content": [
+        {
+          "type": "Str",
+          "id": 2,
+          "span": [
+            0,
+            0,
+            11
+          ],
+          "text": "Relativity "
+        },
+        {
+          "type": "IndexEntry",
+          "id": 3,
+          "span": [
+            0,
+            11,
+            40
+          ],
+          "path": [
+            [
+              {
+                "type": "Str",
+                "id": 4,
+                "span": [
+                  0,
+                  29,
+                  39
+                ],
+                "text": "relativity"
+              }
+            ]
+          ],
+          "main": true
+        },
+        {
+          "type": "Str",
+          "id": 5,
+          "span": [
+            0,
+            40,
+            45
+          ],
+          "text": " and "
+        },
+        {
+          "type": "IndexEntry",
+          "id": 6,
+          "span": [
+            0,
+            45,
+            72
+          ],
+          "path": [
+            [
+              {
+                "type": "Str",
+                "id": 7,
+                "span": [
+                  0,
+                  53,
+                  61
+                ],
+                "text": "Einstein"
+              }
+            ],
+            [
+              {
+                "type": "Emph",
+                "id": 8,
+                "span": [
+                  0,
+                  63,
+                  71
+                ],
+                "content": [
+                  {
+                    "type": "Str",
+                    "id": 9,
+                    "span": [
+                      0,
+                      64,
+                      70
+                    ],
+                    "text": "papers"
+                  }
+                ]
+              }
+            ]
+          ]
+        },
+        {
+          "type": "Str",
+          "id": 10,
+          "span": [
+            0,
+            72,
+            73
+          ],
+          "text": "."
+        }
+      ]
+    }
+  ]
+}

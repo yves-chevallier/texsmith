@@ -1,36 +1,26 @@
-# YAML cells that YAML would type
+# Span not acknowledged
 
-Floats, exponents, signed and prefixed integers and the null and boolean
-words in any case are quoted so that they read back as the same text;
-plain integers stay plain (printer critic U7). The input is the quoted
-form: the unquoted one reads `1.10` as `1.1` and is a different table. The
-spanning cell keeps the table out of the pipe form, where the question
-does not arise.
+Design 05 `table-span`: the slots a row span absorbs in the next row must
+be `~`; a value there collides with the span.
 
 ## input
 
 ````md
 ```yaml table
-columns: [A, B, C]
+columns: [A, B, C, D]
 rows:
-  - ["1.10", "+1", "0x1F"]
-  - [3, "NULL", "Yes"]
-  - [{value: "1e3", cols: 2}, "on"]
+  - [r1, {value: Block, rows: 2, cols: 2}, 3]
+  - [r2, a, b, c]
 ```
 ````
-
 ## canonical
 
 ````md
 ```yaml table
-columns:
-  - A
-  - B
-  - C
+columns: [A, B, C, D]
 rows:
-  - ["1.10", "+1", "0x1F"]
-  - [3, "NULL", "Yes"]
-  - [{value: "1e3", cols: 2}, "on"]
+  - [r1, {value: Block, rows: 2, cols: 2}, 3]
+  - [r2, a, b, c]
 ```
 ````
 
@@ -57,6 +47,10 @@ rows:
           {
             "type": "Leaf",
             "name": "C"
+          },
+          {
+            "type": "Leaf",
+            "name": "D"
           }
         ],
         "rows": [
@@ -67,7 +61,7 @@ rows:
                 "content": [
                   {
                     "type": "Str",
-                    "text": "1.10"
+                    "text": "r1"
                   }
                 ]
               },
@@ -75,59 +69,10 @@ rows:
                 "content": [
                   {
                     "type": "Str",
-                    "text": "+1"
-                  }
-                ]
-              },
-              {
-                "content": [
-                  {
-                    "type": "Str",
-                    "text": "0x1F"
-                  }
-                ]
-              }
-            ]
-          },
-          {
-            "type": "Data",
-            "cells": [
-              {
-                "content": [
-                  {
-                    "type": "Str",
-                    "text": "3"
-                  }
-                ]
-              },
-              {
-                "content": [
-                  {
-                    "type": "Str",
-                    "text": "NULL"
-                  }
-                ]
-              },
-              {
-                "content": [
-                  {
-                    "type": "Str",
-                    "text": "Yes"
-                  }
-                ]
-              }
-            ]
-          },
-          {
-            "type": "Data",
-            "cells": [
-              {
-                "content": [
-                  {
-                    "type": "Str",
-                    "text": "1e3"
+                    "text": "Block"
                   }
                 ],
+                "rows": 2,
                 "cols": 2
               },
               {
@@ -137,15 +82,50 @@ rows:
                 "content": [
                   {
                     "type": "Str",
-                    "text": "on"
+                    "text": "3"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "type": "Data",
+            "cells": [
+              {
+                "content": [
+                  {
+                    "type": "Str",
+                    "text": "r2"
+                  }
+                ]
+              },
+              {
+                "absorbed": true
+              },
+              {
+                "absorbed": true
+              },
+              {
+                "content": [
+                  {
+                    "type": "Str",
+                    "text": "c"
                   }
                 ]
               }
             ]
           }
         ]
-      }
+      },
+      "source": "columns: [A, B, C, D]\nrows:\n  - [r1, {value: Block, rows: 2, cols: 2}, 3]\n  - [r2, a, b, c]"
     }
   ]
 }
+```
+
+## diagnostics
+
+```text
+table-span @ 1:1-6:4
+table-span @ 1:1-6:4
 ```

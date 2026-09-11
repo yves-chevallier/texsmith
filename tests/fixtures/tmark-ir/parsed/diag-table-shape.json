@@ -1,0 +1,61 @@
+{
+  "file": 0,
+  "front_matter": {
+    "id": 0,
+    "span": [
+      0,
+      0,
+      0
+    ],
+    "keys": {}
+  },
+  "blocks": [
+    {
+      "type": "Table",
+      "id": 1,
+      "span": [
+        0,
+        0,
+        87
+      ],
+      "model": {
+        "settings": {
+          "width": "auto"
+        },
+        "columns": [
+          {
+            "type": "Leaf",
+            "name": "A"
+          },
+          {
+            "type": "Leaf",
+            "name": "B"
+          }
+        ],
+        "rows": [
+          {
+            "type": "Data",
+            "cells": [
+              {
+                "content": [
+                  {
+                    "type": "Str",
+                    "id": 3,
+                    "span": [
+                      0,
+                      0,
+                      1
+                    ],
+                    "text": "1"
+                  }
+                ]
+              },
+              {}
+            ]
+          }
+        ]
+      },
+      "source": "table: {long: sometimes}\ncolumns: [A, B]\nrows:\n  - [1, {colour: red}]"
+    }
+  ]
+}

@@ -1,0 +1,214 @@
+{
+  "file": 0,
+  "front_matter": {
+    "id": 0,
+    "span": [
+      0,
+      0,
+      0
+    ],
+    "keys": {}
+  },
+  "blocks": [
+    {
+      "type": "Para",
+      "id": 1,
+      "span": [
+        0,
+        0,
+        129
+      ],
+      "content": [
+        {
+          "type": "Str",
+          "id": 2,
+          "span": [
+            0,
+            0,
+            13
+          ],
+          "text": "Slow to talk "
+        },
+        {
+          "type": "Ref",
+          "id": 3,
+          "span": [
+            0,
+            13,
+            19
+          ],
+          "items": [
+            {
+              "key": "ein05",
+              "key_span": [
+                0,
+                14,
+                19
+              ]
+            }
+          ]
+        },
+        {
+          "type": "Str",
+          "id": 4,
+          "span": [
+            0,
+            19,
+            37
+          ],
+          "text": ", said the tutor. "
+        },
+        {
+          "type": "Ref",
+          "id": 5,
+          "span": [
+            0,
+            37,
+            53
+          ],
+          "items": [
+            {
+              "key": "ein05",
+              "key_span": [
+                0,
+                39,
+                44
+              ]
+            },
+            {
+              "key": "AI2027",
+              "key_span": [
+                0,
+                46,
+                52
+              ]
+            }
+          ],
+          "bracketed": true
+        },
+        {
+          "type": "Str",
+          "id": 6,
+          "span": [
+            0,
+            53,
+            74
+          ],
+          "text": " He failed the test, "
+        },
+        {
+          "type": "Ref",
+          "id": 7,
+          "span": [
+            0,
+            74,
+            104
+          ],
+          "items": [
+            {
+              "key": "doi:10.1007/s00016-014-0153-5",
+              "key_span": [
+                0,
+                75,
+                104
+              ]
+            }
+          ]
+        },
+        {
+          "type": "Str",
+          "id": 8,
+          "span": [
+            0,
+            104,
+            109
+          ],
+          "text": " see "
+        },
+        {
+          "type": "Ref",
+          "id": 9,
+          "span": [
+            0,
+            109,
+            116
+          ],
+          "items": [
+            {
+              "key": "AI2027",
+              "key_span": [
+                0,
+                110,
+                116
+              ]
+            }
+          ]
+        },
+        {
+          "type": "Str",
+          "id": 10,
+          "span": [
+            0,
+            116,
+            121
+          ],
+          "text": " and "
+        },
+        {
+          "type": "Note",
+          "id": 11,
+          "span": [
+            0,
+            121,
+            128
+          ],
+          "label": "note"
+        },
+        {
+          "type": "Str",
+          "id": 12,
+          "span": [
+            0,
+            128,
+            129
+          ],
+          "text": "."
+        }
+      ]
+    }
+  ],
+  "footnotes": [
+    {
+      "id": 13,
+      "span": [
+        0,
+        131,
+        156
+      ],
+      "label": "note",
+      "content": [
+        {
+          "type": "Para",
+          "id": 14,
+          "span": [
+            0,
+            140,
+            156
+          ],
+          "content": [
+            {
+              "type": "Str",
+              "id": 15,
+              "span": [
+                0,
+                140,
+                156
+              ],
+              "text": "A real footnote."
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

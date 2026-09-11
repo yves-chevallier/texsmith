@@ -1,0 +1,99 @@
+{
+  "file": 0,
+  "front_matter": {
+    "id": 0,
+    "span": [
+      0,
+      0,
+      0
+    ],
+    "keys": {}
+  },
+  "blocks": [
+    {
+      "type": "CodeBlock",
+      "id": 1,
+      "span": [
+        0,
+        0,
+        58
+      ],
+      "text": "# Hello",
+      "lang": "md",
+      "options": {
+        "classes": [
+          "snippet"
+        ],
+        "kv": [
+          [
+            "caption",
+            "A title"
+          ],
+          [
+            "width",
+            "60%"
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Para",
+      "id": 2,
+      "span": [
+        0,
+        60,
+        115
+      ],
+      "content": [
+        {
+          "type": "Image",
+          "id": 3,
+          "span": [
+            0,
+            60,
+            115
+          ],
+          "src": "",
+          "attrs": {
+            "kv": [
+              [
+                "generate",
+                "mermaid"
+              ],
+              [
+                "code",
+                "flowchart LR\n  A --> B"
+              ],
+              [
+                "width",
+                "80%"
+              ]
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "type": "CodeBlock",
+      "id": 4,
+      "span": [
+        0,
+        117,
+        164
+      ],
+      "text": "print(1)",
+      "lang": "python",
+      "options": {
+        "classes": [
+          "wide"
+        ],
+        "kv": [
+          [
+            "title",
+            "hanoi.py"
+          ]
+        ]
+      }
+    }
+  ]
+}

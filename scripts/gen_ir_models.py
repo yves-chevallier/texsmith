@@ -775,7 +775,15 @@ def canonical_hash(schema: dict[str, Any]) -> str:
 def load_schema(path: Path | None) -> tuple[dict[str, Any], str | None]:
     """The schema and, when it comes from the wheel, the wheel's version."""
     if path is not None:
-        return json.loads(path.read_text(encoding="utf-8")), None
+        # The vendored file carries no version: name the installed wheel's
+        # when there is one, so a file-based run and a wheel-based run agree.
+        try:
+            import tmark  # type: ignore[import-not-found]
+
+            version = getattr(tmark, "__version__", None)
+        except ImportError:
+            version = None
+        return json.loads(path.read_text(encoding="utf-8")), version
     try:
         import tmark  # type: ignore[import-not-found]
     except ImportError as exc:

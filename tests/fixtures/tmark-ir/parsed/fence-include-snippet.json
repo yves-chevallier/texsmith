@@ -1,0 +1,33 @@
+{
+  "file": 0,
+  "front_matter": {
+    "id": 0,
+    "span": [
+      0,
+      0,
+      0
+    ],
+    "keys": {}
+  },
+  "blocks": [
+    {
+      "type": "CodeBlock",
+      "id": 1,
+      "span": [
+        0,
+        0,
+        32
+      ],
+      "text": "",
+      "lang": "python",
+      "options": {
+        "kv": [
+          [
+            "include",
+            "hanoi.py"
+          ]
+        ]
+      }
+    }
+  ]
+}
