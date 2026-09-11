@@ -1,0 +1,44 @@
+# Parity allow-list (specs/migration/writers-and-passes.md §5).
+#
+# One entry per *intended* difference between the legacy (`html`) and the
+# tmark reader outputs. `parity.py diff` applies them before reporting; an
+# unlisted difference fails the run. Every entry names its owner reason and
+# the release at which it expires (the loader refuses expired entries so the
+# list is pruned as the allow-listed change ships).
+#
+# Kinds
+#   rewrite  literal `from` → `to` substitution applied to BOTH sides before
+#            diffing (a spelling change the writer makes on purpose)
+#   hunk     a unified-diff hunk whose `-`/`+` lines match `pattern`
+#            (re.MULTILINE) is ignored; other hunks in the same file still count
+#
+# `files` are glob patterns matched against `<entry id>/<file name>`, e.g.
+# `docs/syntax/tables/tables.tex`, `abbr@typst/abbreviations.typ`;
+# `**` crosses directory boundaries, `*` does not.
+#
+# Examples (inert until the first writer lands):
+#
+#   - id: item-braces                # \item{} → \item
+#     kind: rewrite
+#     files: ["**/*.tex"]
+#     from: '\item{} '
+#     to: '\item '
+#     reason: "unordered_list.tex artefact; changelog 0.7.0"
+#     expires: 0.7.0
+#   - id: zero-width-aside
+#     kind: hunk
+#     files: ["docs/syntax/**/*.tex"]
+#     pattern: '^-(.*) \\marginnote\{(.*)\}\.$\n^\+\1\\marginnote\{\2\}\.$'
+#     reason: "spec §Attributes zero-width collapse"
+#     expires: 0.7.0
+
+# Decision X2 (specs/migration/decisions.md): `---` becomes `\tsdivider`
+# (default `\clearpage`, provided by ts-typesetting) from the first Rust line.
+# Harmless today: the legacy writer never emits `\tsdivider`.
+- id: horizontal-rule-tsdivider
+  kind: rewrite
+  files: ["**/*.tex"]
+  from: '\tsdivider'
+  to: '\clearpage'
+  reason: "decisions.md X2: HorizontalRule → \\tsdivider contract; legacy emits \\clearpage"
+  expires: 0.8.0
