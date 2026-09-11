@@ -7,16 +7,19 @@ The preprocessor captures fence blocks of the form::
     rows: [...]
     ```
 
-It also absorbs an optional ``Table: <caption> {#label}`` line placed on the
-line directly above the fence (the standard TeXSmith caption syntax) so the
-generated ``<table>`` carries both ``<caption>`` and ``id`` attributes.
+It also absorbs an optional ``Table: <caption> {#label}`` caption line — the
+paragraph directly after the fence (TMark's canonical position) or directly
+above it (accepted sugar) — so the generated ``<table>`` carries both
+``<caption>`` and ``id`` attributes. The fence is an htmlStash placeholder
+by the time the tree exists, which is why its caption is bound here rather
+than by the treeprocessor.
 
-A companion treeprocessor applies the same ``Table: <caption> {#label}``
-convention to plain Markdown tables: any paragraph of that shape is converted
-into a ``<caption>`` child of the following ``<table>`` (plus an optional
-``id`` from the ``{#label}`` part). Both the yaml-table renderer and the
-legacy table renderer already consume ``<caption>`` directly, so no figure
-wrapper is needed.
+The caption-line treeprocessor of :mod:`texsmith.extensions.captions` is
+registered from here too: it applies the same ``Table: <caption> {#label}``
+convention to plain Markdown tables (a ``<caption>`` child plus an optional
+``id``), and the ``Figure:`` / ``Listing:`` lines to images and code blocks.
+Both the yaml-table renderer and the legacy table renderer consume
+``<caption>`` directly, so no figure wrapper is needed for tables.
 
 Validation errors and YAML parsing errors surface as a visible admonition-shaped
 error block so the document build fails loudly instead of silently dropping
@@ -37,6 +40,7 @@ from markdown.treeprocessors import Treeprocessor
 from pydantic import ValidationError
 import yaml
 
+from ..captions import CaptionLine, CaptionLineTreeprocessor, parse_caption_line
 from .constants import Priority, TableAttr
 from .html import build_error_element, render_error_html, render_table_html
 from .layout import compute_layout
@@ -60,20 +64,9 @@ _TABLE_CONFIG_MARKER_FMT = "texsmith-table-config-marker-{id}"
 _TABLE_CONFIG_MARKER_RE = re.compile(
     r"^(?P<indent>\s*)texsmith-table-config-marker-(?P<id>\d+)\s*$"
 )
-_CAPTION_LINE_RE = re.compile(r"^Table:\s*(?P<caption>.*?)(?:\s+\{(?P<attrs>[^}]+)\})?\s*$")
-_ID_ATTR_RE = re.compile(r"#([A-Za-z][\w:.\-]*)")
-# Matches a trailing ``{attrs}`` suffix (with optional surrounding whitespace).
-_ATTRS_SUFFIX_RE = re.compile(r"\s*\{([^}]+)\}\s*$")
-
 _TABLE_CONFIG_ERROR_TITLE = "YAML table-config error"
 _YAML_TABLE_ERROR_TITLE = "YAML table error"
 _VALUE_ERROR_PREFIX = "Value error, "
-
-
-@dataclass(slots=True)
-class _CaptionInfo:
-    text: str | None
-    label: str | None
 
 
 @dataclass(slots=True)
@@ -197,15 +190,10 @@ def _parse_table_config_body(body: str) -> TableConfig | str:
         return _describe_parse_failure(exc)
 
 
-def _parse_caption_line(line: str) -> _CaptionInfo | None:
-    match = _CAPTION_LINE_RE.match(line.strip())
-    if match is None:
-        return None
-    caption = match.group("caption").strip() or None
-    attrs = match.group("attrs") or ""
-    label_match = _ID_ATTR_RE.search(attrs)
-    label = label_match.group(1) if label_match else None
-    return _CaptionInfo(text=caption, label=label)
+def _parse_table_caption_line(line: str) -> CaptionLine | None:
+    """Parse ``line`` as a ``Table:`` caption line (other kinds are not ours)."""
+    parsed = parse_caption_line(line)
+    return parsed if parsed is not None and parsed.kind == "table" else None
 
 
 # Each entry in the store is either a successfully parsed :class:`TableConfig`
@@ -253,27 +241,53 @@ class _YamlTablePreprocessor(Preprocessor):
                 index += 1
                 continue
 
+            end_index = extracted.end_index
             caption_info = self._peek_caption(result)
             if caption_info is not None:
                 # Drop the Table: line that we captured (plus any trailing blank).
                 while result and not result[-1].strip():
                     result.pop()
                 result.pop()  # the Table: line itself
+            else:
+                # Canonical position: the caption paragraph after the fence.
+                caption_info, end_index = self._caption_after(lines, end_index)
 
             result.append(self._render_fence(extracted.body, caption=caption_info))
-            index = extracted.end_index
+            index = end_index
 
         return result
 
-    def _peek_caption(self, emitted: list[str]) -> _CaptionInfo | None:
+    def _peek_caption(self, emitted: list[str]) -> CaptionLine | None:
         idx = len(emitted) - 1
         while idx >= 0 and not emitted[idx].strip():
             idx -= 1
         if idx < 0:
             return None
-        return _parse_caption_line(emitted[idx])
+        return _parse_table_caption_line(emitted[idx])
 
-    def _render_fence(self, body: str, *, caption: _CaptionInfo | None) -> str:
+    @staticmethod
+    def _caption_after(lines: list[str], start: int) -> tuple[CaptionLine | None, int]:
+        """Return the ``Table:`` paragraph following the fence and the index after it.
+
+        The line must be a paragraph of its own — followed by a blank line or
+        the end of the document — so a ``Table:`` opening a longer paragraph is
+        left alone. ``start`` is returned untouched when there is no caption.
+        """
+        cursor = start
+        total = len(lines)
+        while cursor < total and not lines[cursor].strip():
+            cursor += 1
+        if cursor >= total:
+            return None, start
+        caption = _parse_table_caption_line(lines[cursor])
+        if caption is None:
+            return None, start
+        following = cursor + 1
+        if following < total and lines[following].strip():
+            return None, start
+        return caption, following
+
+    def _render_fence(self, body: str, *, caption: CaptionLine | None) -> str:
         try:
             table = _load_yaml_table(body)
         except Exception as exc:
@@ -464,120 +478,6 @@ class _TableConfigBlockProcessor(BlockProcessor):
         )
         marker.text = ""
         return True
-
-
-# ---------------------------------------------------------------------------
-# Treeprocessor 1: ``Table: caption {#label}`` paragraphs → <caption>
-# ---------------------------------------------------------------------------
-
-
-class _MarkdownTableCaptionTreeprocessor(Treeprocessor):
-    """Attach ``Table: caption {#label}`` paragraphs to the following table.
-
-    The paragraph is removed and its caption is inserted as a ``<caption>``
-    child at the top of the next sibling ``<table>``; the ``{#label}`` part,
-    if any, becomes the table's ``id``. Both the yaml-table renderer and the
-    legacy table renderer consume ``<caption>`` directly, so no wrapper is
-    needed.
-    """
-
-    def run(self, root: ElementTree.Element) -> ElementTree.Element | None:  # type: ignore[override]
-        parent_map = _build_parent_map(root)
-
-        for paragraph in list(root.iter("p")):
-            info = self._caption_from_paragraph(paragraph)
-            if info is None:
-                continue
-
-            parent = parent_map.get(paragraph)
-            if parent is None:
-                continue
-
-            table = self._next_table_sibling(parent, paragraph)
-            if table is None:
-                continue
-
-            self._attach_caption(parent, paragraph, table, info)
-
-        return None
-
-    @staticmethod
-    def _caption_from_paragraph(
-        paragraph: ElementTree.Element,
-    ) -> _CaptionInfo | None:
-        leading = (paragraph.text or "").lstrip()
-        if not leading.startswith("Table:"):
-            return None
-        if not len(paragraph):
-            # Plain-text paragraph — use the full-line regex (handles {#label}).
-            return _parse_caption_line((paragraph.text or "").strip())
-        # Paragraph has inline children (e.g. <em>, <code>, <a>).
-        # The optional {#label} suffix lives in the tail of the last child.
-        last = paragraph[-1]
-        tail = (last.tail or "").rstrip()
-        label: str | None = None
-        if tail.endswith("}"):
-            m = _ATTRS_SUFFIX_RE.search(tail)
-            if m:
-                id_m = _ID_ATTR_RE.search(m.group(1))
-                if id_m:
-                    label = id_m.group(1)
-        return _CaptionInfo(text=None, label=label)
-
-    @staticmethod
-    def _next_table_sibling(
-        parent: ElementTree.Element,
-        paragraph: ElementTree.Element,
-    ) -> ElementTree.Element | None:
-        children = list(parent)
-        try:
-            index = children.index(paragraph)
-        except ValueError:
-            return None
-        for candidate in children[index + 1 :]:
-            if candidate.tag == "table":
-                return candidate
-            # Any other element between caption and table means the user
-            # didn't actually pair them up — leave everything alone.
-            return None
-        return None
-
-    @staticmethod
-    def _attach_caption(
-        parent: ElementTree.Element,
-        paragraph: ElementTree.Element,
-        table: ElementTree.Element,
-        info: _CaptionInfo,
-    ) -> None:
-        if table.find("caption") is None:
-            caption = ElementTree.Element("caption")
-            if len(paragraph):
-                # Inline-rich caption: transfer leading text and all children.
-                caption.text = (paragraph.text or "").lstrip().removeprefix("Table:").lstrip()
-                last_child_index = len(paragraph) - 1
-                for i, child in enumerate(list(paragraph)):
-                    if i == last_child_index and info.label:
-                        # Strip the {#label} suffix that was parsed from the tail.
-                        child.tail = _ATTRS_SUFFIX_RE.sub("", (child.tail or "").rstrip())
-                    caption.append(child)
-            else:
-                caption.text = info.text or ""
-            table.insert(0, caption)
-        if info.label and not table.get("id"):
-            table.set("id", info.label)
-
-        # Preserve the paragraph's trailing text on whichever neighbour will
-        # still be there after removal — otherwise text between the caption
-        # and the table is silently lost.
-        children = list(parent)
-        paragraph_index = children.index(paragraph)
-        if paragraph.tail:
-            if paragraph_index == 0:
-                parent.text = (parent.text or "") + paragraph.tail
-            else:
-                previous = children[paragraph_index - 1]
-                previous.tail = (previous.tail or "") + paragraph.tail
-        parent.remove(paragraph)
 
 
 # ---------------------------------------------------------------------------
@@ -796,9 +696,12 @@ class YamlTableExtension(Extension):
             "texsmith_table_config_fence",
             priority=Priority.TABLE_CONFIG_BLOCK,
         )
+        # Caption lines for every float kind (``Table:``, ``Figure:``,
+        # ``Listing:``); registered here so a document that enables only the
+        # table extension still gets its ``Table:`` captions.
         md.treeprocessors.register(
-            _MarkdownTableCaptionTreeprocessor(md),
-            "texsmith_table_caption",
+            CaptionLineTreeprocessor(md),
+            "texsmith_caption_line",
             Priority.CAPTION_TREE,
         )
         md.treeprocessors.register(

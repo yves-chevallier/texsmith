@@ -20,6 +20,7 @@ from texsmith.writers.registry import WriterRegistry, writes
 
 from .._ir_queries import (
     _citation_keys_from_payload,
+    _find_code_block,
     _find_image,
     _find_table,
     _normalise_footnote_id,
@@ -509,7 +510,16 @@ class LaTeXWriter:
         return latex
 
     @writes(ir.CodeBlock)
-    def _code_block(self, node: ir.CodeBlock) -> str:
+    def _code_block(
+        self, node: ir.CodeBlock, *, title: str | None = None, label: str | None = None
+    ) -> str:
+        """Render a code block; ``title`` and ``label`` come from a caption.
+
+        ``title`` is an already-rendered inline caption (a ``Listing:`` line or
+        a ``/// caption`` block): it takes the title slot of the ``code`` box,
+        which is how a listing has always been captioned (``title=``), and
+        ``label`` its ``label=`` key.
+        """
         if node.lang == "mermaid":
             return self._render_mermaid(node.text)
         engine = self._code_engine()
@@ -527,6 +537,8 @@ class LaTeXWriter:
             # The filename is typeset as the code block's title, so LaTeX
             # specials in it (e.g. ``_`` in ``bubble_sort.py``) must be escaped.
             filename = escape_latex_chars(filename, legacy_accents=self.state.legacy_accents)
+        if title:
+            filename = title
         return self.state.formatter.render_template(
             "codeblock",
             code=code_text,
@@ -537,6 +549,7 @@ class LaTeXWriter:
             baselinestretch=baselinestretch,
             engine=engine,
             state=self.state.state,
+            label=label or None,
         )
 
     @writes(ir.BlockQuote)
@@ -1038,6 +1051,13 @@ class LaTeXWriter:
                         placement=getattr(table, "placement", ""),
                     )
                 return self._render_table(merged)
+            # A ``<figure>`` wrapping a fenced code block (a ``Listing:`` caption
+            # line or ``/// caption``): the caption is the listing's title and
+            # the figure id its label. A diagram fence is an image, not a
+            # listing, and is not captioned this way.
+            code = _find_code_block(node.content)
+            if code is not None and code.lang != "mermaid":
+                return self._code_block(code, title=caption_text, label=node.identifier)
             raise InvalidNodeError("Figure missing <img> element")
         # A ``<figure>`` carries an already-rendered (escaped) inline caption;
         # the legacy ``render_figures`` passed it straight to the partial, with
