@@ -872,7 +872,7 @@
           }
         },
         {
-          "description": "Any other `::: name` container. Spec §Div.",
+          "description": "Any other `::: name` container. Spec §Div: the names of the closed registry (`registry::CONTAINERS`: `tabs`, `tab`, `multicolumn`, `div`) and, with a `container-unknown` diagnostic, any other name, kept so the printer round-trips it.",
           "type": "object",
           "required": [
             "name",
@@ -958,7 +958,7 @@
           }
         },
         {
-          "description": "`latex raw` fence. Spec §Raw passthrough.",
+          "description": "`latex raw` fence. Spec §Raw passthrough. `format=html` is an HTML block kept as typed; `format=markdown` is a foreign directive (spec §Foreign directive: `[TOC]`, a dotted `::: a.b` line with its indented continuation) kept verbatim, printed as typed and rendered by no other writer.",
           "type": "object",
           "required": [
             "format",
@@ -2555,7 +2555,7 @@
           }
         },
         {
-          "description": "`{raw latex}(…)`. Spec §Raw passthrough.",
+          "description": "`{raw latex}(…)`. Spec §Raw passthrough. `format=html` is a tag or an HTML block kept as typed.",
           "type": "object",
           "required": [
             "format",
@@ -2592,6 +2592,54 @@
               "enum": [
                 "RawInline"
               ]
+            }
+          }
+        },
+        {
+          "description": "`[=45% \"Review\"]{.thin}`. Spec §ProgressBar: an inline bar with a `value` from 0 to 100 (clamped) and an optional `label` (the percentage when absent); `.thin` and the other classes are attributes.",
+          "type": "object",
+          "required": [
+            "type",
+            "value"
+          ],
+          "properties": {
+            "attrs": {
+              "$ref": "#/definitions/Attrs"
+            },
+            "id": {
+              "default": 0,
+              "type": "integer",
+              "format": "uint32",
+              "minimum": 0.0
+            },
+            "label": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "span": {
+              "default": [
+                0,
+                0,
+                0
+              ],
+              "allOf": [
+                {
+                  "$ref": "#/definitions/Span"
+                }
+              ]
+            },
+            "type": {
+              "type": "string",
+              "enum": [
+                "ProgressBar"
+              ]
+            },
+            "value": {
+              "description": "Percentage, 0 to 100.",
+              "type": "number",
+              "format": "double"
             }
           }
         }

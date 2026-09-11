@@ -1,0 +1,47 @@
+{
+  "file": 0,
+  "front_matter": {
+    "id": 0,
+    "span": [
+      0,
+      0,
+      0
+    ],
+    "keys": {}
+  },
+  "blocks": [
+    {
+      "type": "Header",
+      "id": 1,
+      "span": [
+        0,
+        0,
+        26
+      ],
+      "level": 2,
+      "content": [
+        {
+          "type": "Str",
+          "id": 2,
+          "span": [
+            0,
+            3,
+            8
+          ],
+          "text": "Boot"
+        }
+      ],
+      "attrs": {
+        "id": "sec:boot",
+        "id_span": [
+          0,
+          10,
+          18
+        ],
+        "classes": [
+          "draft"
+        ]
+      }
+    }
+  ]
+}

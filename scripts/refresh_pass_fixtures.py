@@ -47,10 +47,10 @@ def main(argv: list[str] | None = None) -> int:
                 drift.append(target)
             continue
         target.write_text(fresh, encoding="utf-8")
-        print(f"wrote {target.relative_to(ROOT)}")  # noqa: T201
+        print(f"wrote {target.relative_to(ROOT)}")
     if drift:
         for path in drift:
-            print(f"stale: {path.relative_to(ROOT)}", file=sys.stderr)  # noqa: T201
+            print(f"stale: {path.relative_to(ROOT)}", file=sys.stderr)
         return 1
     return 0
 

@@ -1,0 +1,109 @@
+{
+  "file": 0,
+  "front_matter": {
+    "id": 0,
+    "span": [
+      0,
+      0,
+      0
+    ],
+    "keys": {}
+  },
+  "blocks": [
+    {
+      "type": "Para",
+      "id": 1,
+      "span": [
+        0,
+        0,
+        49
+      ],
+      "content": [
+        {
+          "type": "Str",
+          "id": 2,
+          "span": [
+            0,
+            0,
+            7
+          ],
+          "text": "Inline "
+        },
+        {
+          "type": "RawInline",
+          "id": 3,
+          "span": [
+            0,
+            7,
+            23
+          ],
+          "format": "html",
+          "text": "<span class=\"x\">"
+        },
+        {
+          "type": "Str",
+          "id": 4,
+          "span": [
+            0,
+            23,
+            27
+          ],
+          "text": "text"
+        },
+        {
+          "type": "RawInline",
+          "id": 5,
+          "span": [
+            0,
+            27,
+            34
+          ],
+          "format": "html",
+          "text": "</span>"
+        },
+        {
+          "type": "Str",
+          "id": 6,
+          "span": [
+            0,
+            34,
+            39
+          ],
+          "text": " and "
+        },
+        {
+          "type": "RawInline",
+          "id": 7,
+          "span": [
+            0,
+            39,
+            43
+          ],
+          "format": "html",
+          "text": "<br>"
+        },
+        {
+          "type": "Str",
+          "id": 8,
+          "span": [
+            0,
+            43,
+            49
+          ],
+          "text": " here."
+        }
+      ]
+    },
+    {
+      "type": "RawBlock",
+      "id": 9,
+      "span": [
+        0,
+        51,
+        87
+      ],
+      "format": "html",
+      "text": "<div class=\"note\">\nRaw block.\n</div>"
+    }
+  ]
+}

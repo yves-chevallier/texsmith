@@ -1,0 +1,108 @@
+{
+  "file": 0,
+  "front_matter": {
+    "id": 0,
+    "span": [
+      0,
+      0,
+      0
+    ],
+    "keys": {}
+  },
+  "blocks": [
+    {
+      "type": "Div",
+      "id": 1,
+      "span": [
+        0,
+        0,
+        152
+      ],
+      "name": "tabs",
+      "content": [
+        {
+          "type": "Div",
+          "id": 2,
+          "span": [
+            0,
+            10,
+            78
+          ],
+          "name": "tab",
+          "content": [
+            {
+              "type": "Para",
+              "id": 3,
+              "span": [
+                0,
+                34,
+                74
+              ],
+              "content": [
+                {
+                  "type": "Str",
+                  "id": 4,
+                  "span": [
+                    0,
+                    34,
+                    74
+                  ],
+                  "text": "Windows is a Microsoft operating system."
+                }
+              ]
+            }
+          ],
+          "attrs": {
+            "kv": [
+              [
+                "title",
+                "Windows"
+              ]
+            ]
+          }
+        },
+        {
+          "type": "Div",
+          "id": 5,
+          "span": [
+            0,
+            80,
+            147
+          ],
+          "name": "tab",
+          "content": [
+            {
+              "type": "Para",
+              "id": 6,
+              "span": [
+                0,
+                102,
+                143
+              ],
+              "content": [
+                {
+                  "type": "Str",
+                  "id": 7,
+                  "span": [
+                    0,
+                    102,
+                    143
+                  ],
+                  "text": "Linux is an open-source operating system."
+                }
+              ]
+            }
+          ],
+          "attrs": {
+            "kv": [
+              [
+                "title",
+                "Linux"
+              ]
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

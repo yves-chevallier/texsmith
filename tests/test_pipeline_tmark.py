@@ -77,7 +77,7 @@ def test_counters_example_numbers_through_resolve(tmp_path: Path) -> None:
         ]
     )
     body = _body(out / "counters.tex")
-    assert "\\section{Scope}\\label{scope}" in body
+    assert "\\section{Scope}" in body  # implicit ids are labelled only when referenced (C38)
     assert "\\subsection{Summary}\\label{summary}" in body
     assert "\\label{fw:watchdog}FW-01" in body
     assert "\\label{req:log-retention}REQ-103" in body
@@ -102,7 +102,7 @@ def test_typst_hello_example_writes_a_typst_body(tmp_path: Path) -> None:
         ]
     )
     typ = (out / "hello.typ").read_text(encoding="utf-8")
-    assert "= Hello Typst <hello-typst>" in typ
+    assert "= Hello Typst" in typ  # implicit ids are labelled only when referenced (C38)
     assert "#ts-divider()" in typ
     assert "#let ts-divider()" in typ  # the contract prelude is inlined
     assert '#link("https://typst.app")[link]' in typ
@@ -126,7 +126,7 @@ def test_typst_templated_uses_the_scaffolding(tmp_path: Path) -> None:
     )
     typ = (out / "hello.typ").read_text(encoding="utf-8")
     assert "#set document(" in typ
-    assert "= Hello Typst <hello-typst>" in typ
+    assert "= Hello Typst" in typ
     assert "#let ts-divider()" in typ
 
 

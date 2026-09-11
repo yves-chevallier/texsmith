@@ -1,0 +1,109 @@
+{
+  "file": 0,
+  "front_matter": {
+    "id": 0,
+    "span": [
+      0,
+      0,
+      0
+    ],
+    "keys": {}
+  },
+  "blocks": [
+    {
+      "type": "Header",
+      "id": 1,
+      "span": [
+        0,
+        0,
+        16
+      ],
+      "level": 2,
+      "content": [
+        {
+          "type": "Str",
+          "id": 2,
+          "span": [
+            0,
+            3,
+            16
+          ],
+          "text": "Boot sequence"
+        }
+      ]
+    },
+    {
+      "type": "Para",
+      "id": 3,
+      "span": [
+        0,
+        18,
+        60
+      ],
+      "content": [
+        {
+          "type": "Str",
+          "id": 4,
+          "span": [
+            0,
+            18,
+            22
+          ],
+          "text": "See "
+        },
+        {
+          "type": "Link",
+          "id": 5,
+          "span": [
+            0,
+            22,
+            40
+          ],
+          "target": {
+            "type": "Anchor",
+            "value": "boot-sequence"
+          }
+        },
+        {
+          "type": "Str",
+          "id": 6,
+          "span": [
+            0,
+            40,
+            45
+          ],
+          "text": " and "
+        },
+        {
+          "type": "Ref",
+          "id": 7,
+          "span": [
+            0,
+            45,
+            59
+          ],
+          "items": [
+            {
+              "key": "boot-sequence",
+              "key_span": [
+                0,
+                46,
+                59
+              ]
+            }
+          ]
+        },
+        {
+          "type": "Str",
+          "id": 8,
+          "span": [
+            0,
+            59,
+            60
+          ],
+          "text": "."
+        }
+      ]
+    }
+  ]
+}

@@ -16,7 +16,7 @@
       "span": [
         0,
         0,
-        39
+        11
       ],
       "content": [
         {
@@ -25,30 +25,39 @@
           "span": [
             0,
             0,
-            39
+            11
           ],
-          "text": "A {--deleted--} word, a [[Wiki Page]]."
+          "text": "First page."
         }
       ]
     },
     {
-      "type": "Para",
+      "type": "HorizontalRule",
       "id": 3,
       "span": [
         0,
-        41,
-        60
+        13,
+        16
+      ]
+    },
+    {
+      "type": "Para",
+      "id": 4,
+      "span": [
+        0,
+        18,
+        30
       ],
       "content": [
         {
           "type": "Str",
-          "id": 4,
+          "id": 5,
           "span": [
             0,
-            41,
-            60
+            18,
+            30
           ],
-          "text": "a. first fancy item"
+          "text": "Second page."
         }
       ]
     }

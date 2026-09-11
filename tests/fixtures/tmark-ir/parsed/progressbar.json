@@ -1,0 +1,61 @@
+{
+  "file": 0,
+  "front_matter": {
+    "id": 0,
+    "span": [
+      0,
+      0,
+      0
+    ],
+    "keys": {}
+  },
+  "blocks": [
+    {
+      "type": "Para",
+      "id": 1,
+      "span": [
+        0,
+        0,
+        40
+      ],
+      "content": [
+        {
+          "type": "ProgressBar",
+          "id": 2,
+          "span": [
+            0,
+            0,
+            17
+          ],
+          "value": 25.0,
+          "label": "Research"
+        },
+        {
+          "type": "SoftBreak",
+          "id": 3,
+          "span": [
+            0,
+            17,
+            18
+          ]
+        },
+        {
+          "type": "ProgressBar",
+          "id": 4,
+          "span": [
+            0,
+            18,
+            40
+          ],
+          "value": 45.0,
+          "label": "Review",
+          "attrs": {
+            "classes": [
+              "thin"
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

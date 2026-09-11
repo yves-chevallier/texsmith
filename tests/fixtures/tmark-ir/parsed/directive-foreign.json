@@ -11,33 +11,34 @@
   },
   "blocks": [
     {
-      "type": "Para",
+      "type": "RawBlock",
       "id": 1,
       "span": [
         0,
         0,
-        39
+        5
       ],
-      "content": [
-        {
-          "type": "Str",
-          "id": 2,
-          "span": [
-            0,
-            0,
-            39
-          ],
-          "text": "A {--deleted--} word, a [[Wiki Page]]."
-        }
-      ]
+      "format": "markdown",
+      "text": "[TOC]"
+    },
+    {
+      "type": "RawBlock",
+      "id": 2,
+      "span": [
+        0,
+        7,
+        64
+      ],
+      "format": "markdown",
+      "text": "::: texsmith.core.config\n    options:\n      members: true"
     },
     {
       "type": "Para",
       "id": 3,
       "span": [
         0,
-        41,
-        60
+        66,
+        81
       ],
       "content": [
         {
@@ -45,10 +46,10 @@
           "id": 4,
           "span": [
             0,
-            41,
-            60
+            66,
+            81
           ],
-          "text": "a. first fancy item"
+          "text": "Next paragraph."
         }
       ]
     }

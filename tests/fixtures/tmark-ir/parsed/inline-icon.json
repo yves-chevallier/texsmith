@@ -1,0 +1,77 @@
+{
+  "file": 0,
+  "front_matter": {
+    "id": 0,
+    "span": [
+      0,
+      0,
+      0
+    ],
+    "keys": {}
+  },
+  "blocks": [
+    {
+      "type": "Para",
+      "id": 1,
+      "span": [
+        0,
+        0,
+        30
+      ],
+      "content": [
+        {
+          "type": "Str",
+          "id": 2,
+          "span": [
+            0,
+            0,
+            6
+          ],
+          "text": "Click "
+        },
+        {
+          "type": "Span",
+          "id": 3,
+          "span": [
+            0,
+            6,
+            20
+          ],
+          "content": [
+            {
+              "type": "Str",
+              "id": 4,
+              "span": [
+                0,
+                6,
+                20
+              ],
+              "text": ":material-cog:"
+            }
+          ],
+          "attrs": {
+            "classes": [
+              "icon"
+            ],
+            "kv": [
+              [
+                "media",
+                "web"
+              ]
+            ]
+          }
+        },
+        {
+          "type": "Str",
+          "id": 5,
+          "span": [
+            0,
+            20,
+            30
+          ],
+          "text": " Settings."
+        }
+      ]
+    }
+  ]
+}
