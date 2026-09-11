@@ -1,0 +1,31 @@
+# tmark diagnostic identifiers, vendored from
+# crates/tmark-ir/src/diagnostic.rs (Code::id). Refresh with
+# scripts/refresh_tmark_codes.py; do not edit by hand.
+attr-no-host
+role-dangling-head
+role-unknown
+caption-no-host
+include-inline
+container-unclosed
+container-unknown
+fence-unknown-node-word
+frontmatter-yaml
+frontmatter-unknown-key
+deprecated
+parse-internal
+ref-unresolved
+ref-ambiguous
+prefix-unknown
+prefix-host-mismatch
+label-duplicate
+citation-shadowed-by-footnote
+crossref-inventory-missing
+crossref-inventory-stale
+include-missing
+hardcoded-number
+position-word
+caption-id-off-convention
+strict-x-construct
+deprecated-frontmatter-key
+lead-promotion
+heading-skip
