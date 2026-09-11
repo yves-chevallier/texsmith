@@ -237,8 +237,11 @@ def bubble(xs): ...
 
 Keys: `lang` (default `text`), `title` (escaped text), `linenums` (bare or
 start number), `hl_lines` (ranges), `id`, `stretch` (the ASCII-art
-`baselinestretch` heuristic stays in the writer, emitted as a key), `engine`
-(set only by the pass below); `include=` is consumed by the `include` pass.
+`baselinestretch` heuristic stays in the writer, emitted as a key),
+`caption` (escaped text: the `Listing: …` caption line attached to the
+fence, spec §Caption; the fragment typesets it as a listing caption and the
+`id` is then the listing's anchor, `lst:` series), `engine` (set only by
+the pass below); `include=` is consumed by the `include` pass.
 The body is verbatim: `tscode` reads verbatim in every engine (tcolorbox
 `listing only` over `minted` or `listings`, or `fvextra`'s `Verbatim`), so
 the writer emits the source unchanged plus a final newline; today's
