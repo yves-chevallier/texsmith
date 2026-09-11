@@ -1,0 +1,170 @@
+\documentclass[a4paper,twoside]{article}
+
+\usepackage{morewrites}
+
+\usepackage[svgnames,dvipsnames,x11names]{xcolor}
+\usepackage{graphicx}
+\usepackage[english]{babel}
+\usepackage[colorlinks=true, linkcolor=NavyBlue, urlcolor=NavyBlue, citecolor=NavyBlue]{hyperref}
+\usepackage[a4paper]{geometry}
+\usepackage{ts-fonts}
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{amsmath}
+\usepackage{float}
+\usepackage{seqsplit}
+\newcolumntype{Y}{>{\centering\arraybackslash}X}
+\newcolumntype{Z}{>{\raggedleft\arraybackslash}X}
+\usepackage{ts-code}
+
+\usepackage{lastpage}
+\usepackage{refcount}
+\makeatletter
+\def\ps@plain{
+  \let\@oddhead\@empty
+  \let\@evenhead\@empty
+  \def\@oddfoot{
+    \hfil
+    \ifnum\getpagerefnumber{LastPage}>1\relax
+      \thepage
+    \fi
+    \hfil}
+  \let\@evenfoot\@oddfoot
+}
+\makeatother
+
+\title{Diagnostics}
+\author{}\date{}
+
+\begin{document}
+
+\maketitle
+
+\thispagestyle{plain}
+TeXSmith reports what it could not do well --- a missing image, a
+cross-reference nobody publishes, a counter defined twice --- as
+\textbf{diagnostics}: one line each, in the shape the \texttt{tmark} toolchain prints, so a
+finding reads the same whether Python or the Rust core found it.
+
+\section{What a line looks like}\label{what-a-line-looks-like}
+
+\begin{code}{text}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+report.md:12:5: warning ref\PYZhy{}unresolved: Counter reference \PYZsq{}@n:missing\PYZsq{} has no matching item
+\end{Verbatim}
+\end{code}
+
+\begin{center}
+\begin{tabularx}{\linewidth}{>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X}
+\toprule
+\textbf{Part} & \textbf{Meaning} \\
+
+\midrule
+\texttt{report.md} & the file the finding belongs to \\
+\texttt{12:5} & 1-based line and 1-based \textbf{byte} column of the construct (\texttt{tmark check} prints the same numbers) \\
+\texttt{warning} & the severity \\
+\texttt{ref-\allowbreak{}unresolved} & a stable kebab-case code; grep for it, filter on it in CI \\
+the rest & one sentence naming the construct \\
+
+\bottomrule
+\end{tabularx}
+\end{center}
+
+A finding without a position prints the file name only
+(\texttt{report.md: warning crossref-\allowbreak{}inventory-\allowbreak{}missing: …}), and a message that has no
+file --- an engine or network failure --- prints as \texttt{warning texsmith: …}.
+
+With \texttt{-\allowbreak{}v}, a suggested fix and the related locations (the other definition of
+a duplicate key) follow, indented under the line.
+
+\section{Severities}\label{severities}
+
+\begin{center}
+\begin{tabularx}{\linewidth}{>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X}
+\toprule
+\textbf{Severity} & \textbf{Meaning} & \textbf{\texttt{-\allowbreak{}-\allowbreak{}strict}} \\
+
+\midrule
+\texttt{hint} & a style nit; nothing is wrong with the output & ignored \\
+\texttt{info} & something was done on your behalf (a root key overriding \texttt{press}) & ignored \\
+\texttt{warning} & the output has a visible defect (\texttt{[?key]}, an empty number, a missing image) & fails \\
+\texttt{error} & a stage could not complete; the run usually stops & fails \\
+
+\bottomrule
+\end{tabularx}
+\end{center}
+
+Warnings and errors are always shown. \texttt{-\allowbreak{}q} hides hints and info lines (they
+stay in the JSON dump and in the counts).
+
+When at least one warning or error was recorded, the run ends with a summary:
+
+\begin{code}{text}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+0 errors, 2 warnings
+\end{Verbatim}
+\end{code}
+\section{\texttt{-\allowbreak{}-\allowbreak{}strict}}\label{texttt-allowbreak-allowbreak-strict}
+
+\begin{code}{sh}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+texsmith\PY{+w}{ }report.md\PY{+w}{ }\PYZhy{}\PYZhy{}build\PY{+w}{ }\PYZhy{}\PYZhy{}strict
+\end{Verbatim}
+\end{code}
+\texttt{-\allowbreak{}-\allowbreak{}strict} exits with status 1 when any warning or error was recorded. The
+check runs \textbf{after the \LaTeX{} is written and before the engine runs}, so the
+\texttt{.tex} is there to inspect and no PDF is produced from a document with a known
+hole. The same switch lives in the front matter, for documents that must never
+ship with an unresolved reference:
+
+\begin{code}{yaml}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+\PY{n+nt}{press}\PY{p}{:}
+\PY{+w}{  }\PY{n+nt}{features}\PY{p}{:}
+\PY{+w}{    }\PY{n+nt}{strict}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{true}
+\end{Verbatim}
+\end{code}
+\texttt{-\allowbreak{}-\allowbreak{}strict} replaces the former \texttt{PYTHONWARNINGS=error}: these findings are no
+longer Python warnings and that variable no longer promotes them.
+
+\section{\texttt{-\allowbreak{}-\allowbreak{}diagnostics-\allowbreak{}json}}\label{texttt-allowbreak-allowbreak-diagnostics-allowbreak-json}
+
+\begin{code}{sh}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+texsmith\PY{+w}{ }report.md\PY{+w}{ }\PYZhy{}\PYZhy{}diagnostics\PYZhy{}json\PY{+w}{ }build/diagnostics.json
+\end{Verbatim}
+\end{code}
+writes every recorded diagnostic as a JSON list, sorted by file and position,
+for editors and CI:
+
+\begin{code}{json}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+\PY{p}{[}
+\PY{+w}{  }\PY{p}{\PYZob{}}
+\PY{+w}{    }\PY{n+nt}{\PYZdq{}code\PYZdq{}}\PY{p}{:}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}ref\PYZhy{}unresolved\PYZdq{}}\PY{p}{,}
+\PY{+w}{    }\PY{n+nt}{\PYZdq{}severity\PYZdq{}}\PY{p}{:}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}warning\PYZdq{}}\PY{p}{,}
+\PY{+w}{    }\PY{n+nt}{\PYZdq{}span\PYZdq{}}\PY{p}{:}\PY{+w}{ }\PY{p}{[}\PY{l+m+mi}{0}\PY{p}{,}\PY{+w}{ }\PY{l+m+mi}{244}\PY{p}{,}\PY{+w}{ }\PY{l+m+mi}{254}\PY{p}{],}
+\PY{+w}{    }\PY{n+nt}{\PYZdq{}message\PYZdq{}}\PY{p}{:}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}Counter reference \PYZsq{}@n:missing\PYZsq{} has no matching item\PYZdq{}}\PY{p}{,}
+\PY{+w}{    }\PY{n+nt}{\PYZdq{}origin\PYZdq{}}\PY{p}{:}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}texsmith\PYZdq{}}\PY{p}{,}
+\PY{+w}{    }\PY{n+nt}{\PYZdq{}path\PYZdq{}}\PY{p}{:}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}report.md\PYZdq{}}\PY{p}{,}
+\PY{+w}{    }\PY{n+nt}{\PYZdq{}line\PYZdq{}}\PY{p}{:}\PY{+w}{ }\PY{l+m+mi}{12}\PY{p}{,}
+\PY{+w}{    }\PY{n+nt}{\PYZdq{}col\PYZdq{}}\PY{p}{:}\PY{+w}{ }\PY{l+m+mi}{5}
+\PY{+w}{  }\PY{p}{\PYZcb{}}
+\PY{p}{]}
+\end{Verbatim}
+\end{code}
+\texttt{code}, \texttt{severity}, \texttt{span} (\texttt{[file, start, end]} in bytes), \texttt{message} and the
+optional \texttt{fix} / \texttt{related} are tmark's fields; \texttt{origin} says which tool found
+it (\texttt{texsmith} or \texttt{tmark}); \texttt{path}, \texttt{line} and \texttt{col} are the printed location,
+\texttt{null} when the record has none.
+
+\section{Codes}\label{codes}
+
+The codes TeXSmith emits itself are listed in \texttt{texsmith.diagnostics.codes}
+with their default severity; a few reuse tmark's identifiers on purpose
+(\texttt{ref-\allowbreak{}unresolved}, \texttt{label-\allowbreak{}duplicate}, \texttt{crossref-\allowbreak{}inventory-\allowbreak{}missing},
+\texttt{crossref-\allowbreak{}inventory-\allowbreak{}stale}, \texttt{include-\allowbreak{}missing}, \texttt{deprecated-\allowbreak{}frontmatter-\allowbreak{}key})
+because the finding is the one tmark reports once that stage runs in Rust.
+The free-form \texttt{texsmith} code carries the messages that predate the codes.
+
+\end{document}

@@ -59,23 +59,24 @@ Use the right level of power:
 \end{itemize}
 \section{Captions and Labels}\label{captions-and-labels}
 
-Put the standard TeXSmith caption line directly before the table:
+Put the standard TeXSmith caption line directly after the table:
 
 \begin{code}{markdown}{}{}
 \begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
-Table: Fruit stock by warehouse \PYZob{}\PYZsh{}tbl:stock\PYZcb{}
-
 \PY{l+s+sb}{```}\PY{l+s+sb}{yaml}\PY{+w}{ }table
 \PY{n+nt}{columns}\PY{p}{:}\PY{+w}{ }\PY{p+pIndicator}{[}\PY{n+nv}{Fruit}\PY{p+pIndicator}{,}\PY{+w}{ }\PY{n+nv}{Geneva}\PY{p+pIndicator}{,}\PY{+w}{ }\PY{n+nv}{Zurich}\PY{p+pIndicator}{,}\PY{+w}{ }\PY{n+nv}{Basel}\PY{p+pIndicator}{]}
 \PY{n+nt}{rows}\PY{p}{:}
 \PY{+w}{  }\PY{p+pIndicator}{\PYZhy{}}\PY{+w}{ }\PY{p+pIndicator}{[}\PY{n+nv}{Apples}\PY{p+pIndicator}{,}\PY{+w}{   }\PY{n+nv}{120}\PY{p+pIndicator}{,}\PY{+w}{ }\PY{n+nv}{180}\PY{p+pIndicator}{,}\PY{+w}{ }\PY{n+nv}{90}\PY{p+pIndicator}{]}
 \PY{+w}{  }\PY{p+pIndicator}{\PYZhy{}}\PY{+w}{ }\PY{p+pIndicator}{[}\PY{n+nv}{Pears}\PY{p+pIndicator}{,}\PY{+w}{    }\PY{n+nv}{45}\PY{p+pIndicator}{,}\PY{+w}{  }\PY{n+nv}{\PYZti{}}\PY{p+pIndicator}{,}\PY{+w}{   }\PY{n+nv}{110}\PY{p+pIndicator}{]}
 \PY{l+s+sb}{```}
+
+Table: Fruit stock by warehouse \PYZob{}\PYZsh{}tbl:stock\PYZcb{}
 \end{Verbatim}
 \end{code}
 The \texttt{\{\#tbl:stock\}} part becomes the \LaTeX{} \texttt{\textbackslash{}label\{tbl:stock\}} and can be
-referenced like any other table. The caption line also works before plain
-Markdown tables.
+referenced like any other table. The caption line also works with plain
+Markdown tables, and the line placed \emph{before} the table is accepted as well
+(see \hyperref[caption-lines]{captions} for the attachment rule).
 
 \section{Full YAML Tables}\label{full-yaml-tables}
 

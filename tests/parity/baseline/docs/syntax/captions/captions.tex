@@ -201,26 +201,61 @@ This is the caption for the figure.
 ///
 \end{Verbatim}
 \end{code}
-The current syntax is a bit verbose. In the future we'd like a shorthand along these lines:
+\section{Caption lines}\label{caption-lines}
+
+The block form is verbose, and its id may not contain a colon. The caption
+\emph{line} is the shorthand: the paragraph right after the float, spelled
+\texttt{Kind: text \{\#id\}}, with \texttt{Figure:}, \texttt{Table:} or \texttt{Listing:} as the kind. This
+is TMark's canonical spelling, and the one \texttt{tmark fmt} prints.
 
 \begin{code}{md}{}{}
 \begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
-![\PY{n+nt}{Short caption}](\PY{n+na}{image.png})\PYZob{}\PYZsh{}my\PYZhy{}figure\PYZcb{}
+![\PY{n+nt}{Short caption for the list of figures}](\PY{n+na}{image.png})\PYZob{}width=70\PYZpc{}\PYZcb{}
 
-Caption: This is the caption for the figure.
+Figure: This is the caption for the figure. \PYZob{}\PYZsh{}fig:my\PYZhy{}figure\PYZcb{}
 \end{Verbatim}
 \end{code}
+\begin{code}{md}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+| Header 1 | Header 2 |
+|\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}|\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}|
+| Cell 1   | Cell 2   |
+
+Table: This is the caption for the table. \PYZob{}\PYZsh{}tbl:my\PYZhy{}table\PYZcb{}
+\end{Verbatim}
+\end{code}
+\begin{code}{md}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+\PY{l+s+sb}{```}\PY{l+s+sb}{python}
+\PY{k}{def}\PY{+w}{ }\PY{n+nf}{bubble\PYZus{}sort}\PY{p}{(}\PY{n}{items}\PY{p}{)}\PY{p}{:} \PY{o}{.}\PY{o}{.}\PY{o}{.}
+\PY{l+s+sb}{```}
+
+Listing: Bubble sort, naive version. \PYZob{}\PYZsh{}lst:bubble\PYZcb{}
+\end{Verbatim}
+\end{code}
+The attribute list is optional and may be a full one (\texttt{\{\#fig:plot .wide\}});
+its \texttt{\#id} is the float's anchor, and ids with a prefix (\texttt{fig:}, \texttt{tbl:},
+\texttt{lst:}) are fine here. The image \texttt{alt} stays the short caption. A \texttt{Figure:}
+line renders exactly like the \texttt{/// caption} block above; a \texttt{Listing:} line
+makes the code block a numbered listing whose caption is the block's title
+and whose id is its label, in \LaTeX{} as in Typst.
+
+The line attaches to the float \emph{before} it when that float is of the matching
+kind and has no caption yet, otherwise to the float \emph{after} it --- so the
+\texttt{Table:} line before its table keeps working. A \texttt{Figure:} line under a table,
+or a caption line with no float next to it, is left as a plain paragraph.
+
 \section{Tables}\label{tables}
 
 Tables follow the same pattern:
 
 \begin{code}{md}{}{}
 \begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
-Table: This is the caption for the table. \PYZob{}\PYZsh{}my\PYZhy{}table\PYZcb{}
-
 | Header 1 | Header 2 |
 |\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}|\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}|
 | Cell 1   | Cell 2   |
+
+Table: This is the caption for the table. \PYZob{}\PYZsh{}my\PYZhy{}table\PYZcb{}
 \end{Verbatim}
 \end{code}
 

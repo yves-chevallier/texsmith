@@ -152,22 +152,55 @@ TeXSmith reuses the Markdown `alt` text as that short entry:
 This is the caption for the figure.
 ```
 
-The current syntax is a bit verbose. In the future we’d like a shorthand along these lines:
+= Caption lines
+
+The block form is verbose, and its id may not contain a colon. The caption
+_line_ is the shorthand: the paragraph right after the float, spelled
+`Kind: text {#id}`, with `Figure:`, `Table:` or `Listing:` as the kind. This
+is TMark's canonical spelling, and the one `tmark fmt` prints.
 
 ```md
-![Short caption](image.png){#my-figure}
+![Short caption for the list of figures](image.png){width=70%}
 
-Caption: This is the caption for the figure.
+Figure: This is the caption for the figure. {#fig:my-figure}
 ```
+
+```md
+| Header 1 | Header 2 |
+|----------|----------|
+| Cell 1   | Cell 2   |
+
+Table: This is the caption for the table. {#tbl:my-table}
+```
+
+````md
+```python
+def bubble_sort(items): ...
+```
+
+Listing: Bubble sort, naive version. {#lst:bubble}
+````
+
+The attribute list is optional and may be a full one (`{#fig:plot .wide}`);
+its `#id` is the float's anchor, and ids with a prefix (`fig:`, `tbl:`,
+`lst:`) are fine here. The image `alt` stays the short caption. A `Figure:`
+line renders exactly like the `/// caption` block above; a `Listing:` line
+makes the code block a numbered listing whose caption is the block's title
+and whose id is its label, in LaTeX as in Typst.
+
+The line attaches to the float _before_ it when that float is of the matching
+kind and has no caption yet, otherwise to the float _after_ it — so the
+`Table:` line before its table keeps working. A `Figure:` line under a table,
+or a caption line with no float next to it, is left as a plain paragraph.
 
 = Tables
 
 Tables follow the same pattern:
 
 ```md
-Table: This is the caption for the table. {#my-table}
-
 | Header 1 | Header 2 |
 |----------|----------|
 | Cell 1   | Cell 2   |
+
+Table: This is the caption for the table. {#my-table}
 ```

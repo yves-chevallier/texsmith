@@ -140,8 +140,9 @@ references keep their live link.
 
 = Diagnostics
 
-This is the part that earns the feature. All of these are Python warnings, shown
-by default and promotable to hard failures with `PYTHONWARNINGS=error`:
+This is the part that earns the feature. All of these are
+#link("../guide/diagnostics.md")[diagnostics], shown by default and promotable to hard
+failures with `--strict` (or `press.features.strict: true`):
 
 #table(
   columns: 2,
@@ -158,7 +159,7 @@ Warnings are attributed to the *citing document*, not to a TeXSmith source
 line:
 
 ```
-review/hardware-review.md:0: UserWarning: Cross-reference '@fwrev:fw:disparu' is not published by …
+review/hardware-review.md: warning ref-unresolved: Cross-reference '@fwrev:fw:disparu' is not published by …
 ```
 
 An unresolved citation is deliberately *visible in the output*. A silently

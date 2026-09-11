@@ -46,6 +46,9 @@ $ texsmith --help
 / `--list-bibliography`: Display a summary of all bibliography entries found in the provided `.bib` files, front matter, or DOI links. This is useful for validating bibliography sources without performing a full document render.
 / `--debug`: Enable detailed debugging output for the CLI. This includes full Python tracebacks when unexpected exceptions occur, which can help diagnose issues during conversion or rendering.
 / `--debug-html`: Save intermediate HTML snapshots generated during the conversion process. This can help diagnose issues related to HTML parsing or content extraction.
+/ `-q`, `--quiet`: Hide `hint` and `info` diagnostics. Warnings and errors are always shown.
+/ `--strict`: Exit with status 1 when any warning or error was recorded, after the LaTeX is written and before the engine runs. `press.features.strict: true` in the front matter has the same effect. See #link("../guide/diagnostics.md")[Diagnostics].
+/ `--diagnostics-json PATH`: Write every recorded diagnostic to `PATH` as a JSON list, sorted by file and position, for editors and CI.
 / `--open-log`: If LaTeX compilation fails during the build step, automatically open the `latexmk` log file using the system's default viewer. This makes it easier to inspect compilation errors.
 / `--template-info`: Show manifest metadata for the template selected via `--template`, including its attributes, assets, and slots.
 / `--fonts-info`: After rendering, display a summary of the fonts used in the generated LaTeX document, including any fallback fonts that were selected based on the document's language and content.

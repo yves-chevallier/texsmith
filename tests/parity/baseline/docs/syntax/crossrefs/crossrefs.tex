@@ -164,8 +164,9 @@ references keep their live link.
 
 \section{Diagnostics}\label{diagnostics}
 
-This is the part that earns the feature. All of these are Python warnings, shown
-by default and promotable to hard failures with \texttt{PYTHONWARNINGS=error}:
+This is the part that earns the feature. All of these are
+\hyperref[snippet:<HASH>]{diagnostics}, shown by default and promotable to hard
+failures with \texttt{-\allowbreak{}-\allowbreak{}strict} (or \texttt{press.features.strict: true}):
 
 \begin{center}
 \begin{tabularx}{\linewidth}{>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X}
@@ -188,7 +189,7 @@ line:
 
 \begin{code}{text}{}{}
 \begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
-review/hardware\PYZhy{}review.md:0: UserWarning: Cross\PYZhy{}reference \PYZsq{}@fwrev:fw:disparu\PYZsq{} is not published by …
+review/hardware\PYZhy{}review.md: warning ref\PYZhy{}unresolved: Cross\PYZhy{}reference \PYZsq{}@fwrev:fw:disparu\PYZsq{} is not published by …
 \end{Verbatim}
 \end{code}
 An unresolved citation is deliberately \textbf{visible in the output}. A silently
