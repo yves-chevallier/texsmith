@@ -49,6 +49,8 @@ from texsmith.core.user_dir import get_user_dir
 
 
 SNIPPET_DIR = "snippets"
+#: The fence attributes a snippet reads besides its body (HTML ``data-*`` or info string).
+FENCE_ATTRIBUTES = ("caption", "label", "width", "layout", "config")
 _SNIPPET_PREFIX = "snippet-"
 _TRUE_VALUES = {"1", "true", "on", "yes"}
 _FALSE_VALUES = {"0", "false", "off", "no"}
@@ -95,7 +97,9 @@ class SnippetBlock:
 
 
 @dataclass(slots=True)
-class _SnippetAssets:
+class SnippetAssets:
+    """The rendered pair of a snippet: the PDF (LaTeX) and its PNG preview (web, Typst)."""
+
     pdf: Path
     png: Path
 
@@ -113,7 +117,7 @@ class _SnippetCache:
     metadata: dict[str, Any]
     dirty: bool = False
 
-    def lookup(self, digest: str, template_version: str | None) -> _SnippetAssets | None:
+    def lookup(self, digest: str, template_version: str | None) -> SnippetAssets | None:
         """Return cached assets when they exist and match the signature."""
         entries = self._entries()
         payload = entries.get(digest)
@@ -139,7 +143,7 @@ class _SnippetCache:
             self.discard(digest)
             return None
 
-        return _SnippetAssets(pdf=pdf_path, png=png_path)
+        return SnippetAssets(pdf=pdf_path, png=png_path)
 
     def store(
         self,
@@ -782,11 +786,39 @@ def _extract_snippet_block(element: Tag, host_path: Path | None = None) -> Snipp
             result[key.strip()] = val.strip().strip('"').strip("'")
         return result
 
-    caption = coerce_attribute(_attr("caption")) or None
-    label = coerce_attribute(_attr("label")) or None
-    figure_width = coerce_attribute(_attr("width")) or None
-    layout_literal: Any = coerce_attribute(_attr("layout")) or None
-    config_literal = coerce_attribute(_attr("config")) or None
+    return build_snippet_block(
+        raw_content,
+        language=_detect_language(element),
+        attributes={name: _attr(name) for name in FENCE_ATTRIBUTES},
+        meta=_meta_attrs(),
+        host_path=host_path,
+    )
+
+
+def build_snippet_block(
+    raw_content: str,
+    *,
+    language: str | None,
+    attributes: Mapping[str, Any] | None = None,
+    meta: Mapping[str, str] | None = None,
+    host_path: Path | None = None,
+) -> SnippetBlock | None:
+    """Parse a snippet fence into a :class:`SnippetBlock`; the pure half of the fence handling.
+
+    ``raw_content`` is the fence body, ``language`` its info-string language,
+    ``attributes`` the :data:`FENCE_ATTRIBUTES` the host element carried
+    (``caption``, ``label``, ``width``, ``layout``, ``config``) and ``meta``
+    the parsed ``data-meta`` tokens of the HTML reader. The HTML path
+    (:func:`_extract_snippet_block`) and the tmark ``snippet`` pass both end
+    here. ``None`` when the fence has neither inline content nor sources.
+    """
+    attrs = dict(attributes or {})
+    meta_attrs = dict(meta or {})
+    caption = coerce_attribute(attrs.get("caption")) or None
+    label = coerce_attribute(attrs.get("label")) or None
+    figure_width = coerce_attribute(attrs.get("width")) or None
+    layout_literal: Any = coerce_attribute(attrs.get("layout")) or None
+    config_literal = coerce_attribute(attrs.get("config")) or None
 
     config_from_file: dict[str, Any] = {}
     if config_literal:
@@ -803,7 +835,6 @@ def _extract_snippet_block(element: Tag, host_path: Path | None = None) -> Snipp
             ) from exc
         config_from_file = _load_yaml_mapping(config_payload)
 
-    language = _detect_language(element)
     config_from_body: dict[str, Any] = {}
     document_front_matter: dict[str, Any] = {}
     inline_content: str | None = None
@@ -827,7 +858,6 @@ def _extract_snippet_block(element: Tag, host_path: Path | None = None) -> Snipp
                 inline_content = None
 
     merged_config: dict[str, Any] = {**config_from_file, **config_from_body}
-    meta_attrs = _meta_attrs()
     figure_width = (
         coerce_attribute(merged_config.pop("width", figure_width))
         or coerce_attribute(meta_attrs.get("width"))
@@ -1422,7 +1452,7 @@ def ensure_snippet_assets(
     output_dir: Path,
     source_path: Path | str | None = None,
     emitter: DiagnosticEmitter | None = None,
-) -> _SnippetAssets:
+) -> SnippetAssets:
     """Render snippet assets into the provided directory when missing."""
     destination = Path(output_dir).resolve()
     destination.mkdir(parents=True, exist_ok=True)
@@ -1482,7 +1512,7 @@ def ensure_snippet_assets(
 
     pdf_missing = not pdf_path.exists()
     png_missing = not png_path.exists()
-    assets = _SnippetAssets(pdf=pdf_path, png=png_path)
+    assets = SnippetAssets(pdf=pdf_path, png=png_path)
 
     def _flush_caches() -> None:
         for cache in caches:
@@ -1604,7 +1634,7 @@ def ensure_snippet_assets(
     return assets
 
 
-def _render_snippet_assets(block: SnippetBlock, context: RenderContextLike) -> _SnippetAssets:
+def _render_snippet_assets(block: SnippetBlock, context: RenderContextLike) -> SnippetAssets:
     emitter = _resolve_emitter(context)
     document_path = context.runtime.get("document_path")
     source_dir = context.runtime.get("source_dir")
@@ -1646,7 +1676,7 @@ def render_snippet_latex(html: str, context: RenderContextLike) -> str:
 
 
 def _render_figure(
-    context: RenderContextLike, assets: _SnippetAssets, block: SnippetBlock
+    context: RenderContextLike, assets: SnippetAssets, block: SnippetBlock
 ) -> NavigableString:
     template_name = context.runtime.get("figure_template", "figure")
     # Prefer PDF for LaTeX; PNGs are optional previews and may be missing.
@@ -1759,9 +1789,12 @@ def _announce_build(
 
 
 __all__ = [
+    "FENCE_ATTRIBUTES",
     "SNIPPET_DIR",
+    "SnippetAssets",
     "SnippetBlock",
     "asset_filename",
+    "build_snippet_block",
     "ensure_snippet_assets",
     "render_snippet_latex",
     "rewrite_html_snippets",
