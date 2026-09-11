@@ -78,7 +78,7 @@ def test_counters_example_numbers_through_resolve(tmp_path: Path) -> None:
     )
     body = _body(out / "counters.tex")
     assert "\\section{Scope}" in body  # implicit ids are labelled only when referenced (C38)
-    assert "\\subsection{Summary}\\label{summary}" in body
+    assert "\\subsection{Summary}" in body
     assert "\\label{fw:watchdog}FW-01" in body
     assert "\\label{req:log-retention}REQ-103" in body
     assert "\\hyperref[fw:watchdog]{FW-01}" in body
