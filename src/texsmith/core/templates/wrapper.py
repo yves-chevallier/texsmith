@@ -16,6 +16,7 @@ from texsmith.core.fragments import (
     render_fragments,
 )
 from texsmith.core.fragments.activation import REQUIRED_FRAGMENTS_KEY, REQUIRED_PACKAGES_KEY
+from texsmith.core.fragments.resolution import inject_requires
 from texsmith.core.templates import TemplateRuntime
 from texsmith.core.templates.manifest import TemplateError
 from texsmith.fonts.scripts import render_script_macros
@@ -143,6 +144,23 @@ def wrap_template_document(
     template_context[REQUIRED_FRAGMENTS_KEY] = sorted(document_state.required_fragments)
     template_context[REQUIRED_PACKAGES_KEY] = list(document_state.required_packages)
     template_context["index_registries"] = list(document_state.index_registries)
+    if document_state.contract_path:
+        # The contract path: the fragments read ``ts_active_fragments``
+        # (``contract_active``) instead of sniffing the rendered LaTeX.
+        inject_requires(
+            template_context,
+            {
+                "fragments": sorted(document_state.required_fragments),
+                "packages": list(document_state.required_packages),
+                "index": list(document_state.index_registries)
+                or ([""] if document_state.has_index_entries else []),
+                "bibliography": bool(document_state.citations),
+                "citations": list(document_state.citations),
+                "acronyms": list(document_state.acronyms),
+                "shell_escape": bool(document_state.requires_shell_escape),
+            },
+            front_matter=overrides_payload if isinstance(overrides_payload, Mapping) else None,
+        )
 
     fragment_attributes: dict[str, Any] = {}
     if fragment_names:

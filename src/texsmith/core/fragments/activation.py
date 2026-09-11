@@ -89,6 +89,7 @@ def apply_requires(
     template_shell_escape: bool = False,
 ) -> DocumentState:
     """Record the union of the bodies' ``Requires`` on ``state`` (in place, returned)."""
+    state.contract_path = True
     state.required_fragments = set(requires.fragments)
     implied = implied_packages(requires.fragments)
     state.required_packages = [pkg for pkg in requires.packages if pkg not in implied]

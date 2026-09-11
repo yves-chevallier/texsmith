@@ -49,6 +49,10 @@ class DocumentState:
     required_fragments: set[str] = field(default_factory=set)
     required_packages: list[str] = field(default_factory=list)
     index_registries: list[str] = field(default_factory=list)
+    #: True once ``apply_requires`` ran: the bodies come from the tmark
+    #: writers, so the fragments activate from ``Requires`` (the contract
+    #: path) instead of sniffing the rendered LaTeX.
+    contract_path: bool = False
 
     def remember_acronym(self, term: str, description: str) -> str:
         """Register an acronym definition keyed by a normalised identifier."""
