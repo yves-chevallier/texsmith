@@ -6,6 +6,7 @@ from collections.abc import Callable, Mapping
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
+import warnings
 
 from .base import WrappableTemplate
 from .languages import _BABEL_LANGUAGE_ALIASES
@@ -224,9 +225,59 @@ def resolve_template_language(
     return DEFAULT_TEMPLATE_LANGUAGE
 
 
+def _warn_deprecated_template_hooks(template_instance: WrappableTemplate) -> None:
+    """Warn about the manifest hooks the contract macros replace.
+
+    fragment-contracts.md §4: ``latex.template.override`` and
+    ``required_partials`` are deprecated in 0.7.0 (a construct is restyled by
+    redefining its ``ts*`` macro in the template), as are the ``readers`` and
+    ``writer`` hooks of 0.4.1 (custom constructs are ``::: name`` containers
+    rendered by ``tsdiv`` or an IR pass under ``[latex.template] passes``).
+    All four are removed in 0.8.0. They keep working meanwhile.
+    """
+    from texsmith.core.fragments.contracts import replacement_for_partial
+
+    info = template_instance.info
+    name = info.name
+    if info.override:
+        mapping = ", ".join(
+            f"{entry} -> {replacement_for_partial(entry)}" for entry in info.override
+        )
+        warnings.warn(
+            f"Template '{name}' declares 'latex.template.override', which is deprecated "
+            f"and will be removed in 0.8.0: override a construct by redefining its "
+            f"contract macro after \\VAR{{extra_packages}} in the template ({mapping}). "
+            f"See docs/guide/templates/partials.md.",
+            FutureWarning,
+            stacklevel=3,
+        )
+    if info.required_partials:
+        names = ", ".join(info.required_partials)
+        warnings.warn(
+            f"Template '{name}' declares 'required_partials' ({names}), which is "
+            f"deprecated and will be removed in 0.8.0: a replacement fragment is "
+            f"checked against the 'provides' list of tmark.fragments() instead.",
+            FutureWarning,
+            stacklevel=3,
+        )
+    if info.readers or info.writer:
+        hooks = ", ".join(
+            hook for hook, used in (("readers", info.readers), ("writer", info.writer)) if used
+        )
+        warnings.warn(
+            f"Template '{name}' declares '{hooks}' under [latex.template], deprecated "
+            f"and removed in 0.8.0: custom constructs are '::: name' containers "
+            f"rendered by the tsdiv environment (a \\tsdiv@name definition in the "
+            f"template) or an IR pass declared under [latex.template] passes.",
+            FutureWarning,
+            stacklevel=3,
+        )
+
+
 def load_template_runtime(template: str) -> TemplateRuntime:
     """Resolve template metadata for repeated conversions."""
     template_instance = load_template(template)
+    _warn_deprecated_template_hooks(template_instance)
 
     template_base = coerce_base_level(
         template_instance.info.get_attribute_default("base_level"),

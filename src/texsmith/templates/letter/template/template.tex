@@ -7,6 +7,13 @@
 \usepackage{xcolor}
 \definecolor{texsmithLinkColor}{HTML}{0B3D91}
 \VAR{extra_packages}
+% Contract macros (fragment-contracts.md §4): a letter keeps its callouts
+% flat — a thin rule on the left, no rounded frame — by restyling the
+% tscallout box through its pgfkeys family. Guarded: ts-callouts is only
+% loaded when the document has a callout.
+\ifcsname tscallout\endcsname
+  \tcbset{/ts/callout/.append style={arc=0mm, boxrule=0mm, frame hidden, borderline west={0.3mm}{0mm}{black!70}}}
+\fi
 \usepackage{graphicx}
 \usepackage[\VAR{babel_language|default('english')}]{babel}
 \usepackage[
