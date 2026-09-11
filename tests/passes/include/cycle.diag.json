@@ -1,0 +1,11 @@
+[
+  [
+    "include-cycle",
+    [
+      1,
+      12,
+      34
+    ],
+    "included file `../cycle.md` is already being included; skipped"
+  ]
+]

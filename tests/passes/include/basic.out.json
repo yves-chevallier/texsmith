@@ -1,0 +1,241 @@
+{
+  "abbreviations": [
+    {
+      "expansion": "HyperText Markup Language",
+      "key": "HTML"
+    }
+  ],
+  "blocks": [
+    {
+      "type": "Header",
+      "level": 1,
+      "content": [
+        {
+          "type": "Str",
+          "text": "Main"
+        }
+      ]
+    },
+    {
+      "type": "Para",
+      "content": [
+        {
+          "type": "Str",
+          "text": "Before the include, with HTML and a note"
+        },
+        {
+          "type": "Note",
+          "label": "main"
+        },
+        {
+          "type": "Str",
+          "text": "."
+        }
+      ]
+    },
+    {
+      "type": "Header",
+      "level": 2,
+      "content": [
+        {
+          "type": "Str",
+          "text": "Chapter"
+        }
+      ]
+    },
+    {
+      "type": "Para",
+      "content": [
+        {
+          "type": "Str",
+          "text": "A figure "
+        },
+        {
+          "type": "Image",
+          "src": "parts/img/fig.png",
+          "alt": [
+            {
+              "type": "Str",
+              "text": "Fig"
+            }
+          ]
+        },
+        {
+          "type": "Str",
+          "text": " and a note"
+        },
+        {
+          "type": "Note",
+          "label": "ch"
+        },
+        {
+          "type": "Str",
+          "text": " about HTML."
+        }
+      ]
+    },
+    {
+      "type": "Header",
+      "level": 3,
+      "content": [
+        {
+          "type": "Str",
+          "text": "Nested"
+        }
+      ]
+    },
+    {
+      "type": "Para",
+      "content": [
+        {
+          "type": "Image",
+          "src": "assets/n.svg",
+          "alt": [
+            {
+              "type": "Str",
+              "text": "Nested"
+            }
+          ]
+        },
+        {
+          "type": "Str",
+          "text": " and "
+        },
+        {
+          "type": "Image",
+          "src": "https://example.org/r.png",
+          "alt": [
+            {
+              "type": "Str",
+              "text": "Remote"
+            }
+          ]
+        },
+        {
+          "type": "Str",
+          "text": " and "
+        },
+        {
+          "type": "Image",
+          "src": "/abs/root.png",
+          "alt": [
+            {
+              "type": "Str",
+              "text": "Root"
+            }
+          ]
+        },
+        {
+          "type": "Str",
+          "text": "."
+        }
+      ]
+    },
+    {
+      "type": "CodeBlock",
+      "text": "print(\"nested\")\n",
+      "lang": "py"
+    },
+    {
+      "type": "CodeBlock",
+      "text": "def hanoi(n):\n    return 2**n - 1\n",
+      "lang": "python"
+    },
+    {
+      "type": "Para",
+      "content": [
+        {
+          "type": "Str",
+          "text": "Leaf paragraph with "
+        },
+        {
+          "type": "Image",
+          "src": "parts/deep/l.png",
+          "alt": [
+            {
+              "type": "Str",
+              "text": "L"
+            }
+          ]
+        },
+        {
+          "type": "Str",
+          "text": "."
+        }
+      ]
+    },
+    {
+      "type": "Para",
+      "content": [
+        {
+          "type": "Str",
+          "text": "[include: missing.md not found]"
+        }
+      ]
+    },
+    {
+      "type": "CodeBlock",
+      "text": "[include: parts/absent.py not found]",
+      "lang": "py"
+    },
+    {
+      "type": "Para",
+      "content": [
+        {
+          "type": "Str",
+          "text": "After."
+        }
+      ]
+    }
+  ],
+  "footnotes": [
+    {
+      "label": "main",
+      "content": [
+        {
+          "type": "Para",
+          "content": [
+            {
+              "type": "Str",
+              "text": "The main note."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "label": "ch",
+      "content": [
+        {
+          "type": "Para",
+          "content": [
+            {
+              "type": "Str",
+              "text": "Chapter note with "
+            },
+            {
+              "type": "Image",
+              "src": "parts/img/note.png",
+              "alt": [
+                {
+                  "type": "Str",
+                  "text": "inline"
+                }
+              ]
+            },
+            {
+              "type": "Str",
+              "text": "."
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "front_matter": {
+    "keys": {
+      "title": "Included"
+    },
+    "raw": "---\ntitle: Included\n---"
+  }
+}

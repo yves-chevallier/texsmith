@@ -1,0 +1,48 @@
+{
+  "tmark": "0.0.0",
+  "file": 0,
+  "front_matter": {
+    "id": 0,
+    "span": [
+      0,
+      0,
+      0
+    ],
+    "keys": {}
+  },
+  "blocks": [
+    {
+      "type": "Header",
+      "id": 1,
+      "span": [
+        0,
+        0,
+        7
+      ],
+      "level": 1,
+      "content": [
+        {
+          "type": "Str",
+          "id": 2,
+          "span": [
+            0,
+            2,
+            7
+          ],
+          "text": "Cycle"
+        }
+      ]
+    },
+    {
+      "type": "Include",
+      "id": 3,
+      "span": [
+        0,
+        9,
+        33
+      ],
+      "path": "parts/loop.md"
+    }
+  ],
+  "diagnostics": []
+}

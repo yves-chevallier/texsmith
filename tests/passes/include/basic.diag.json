@@ -1,0 +1,20 @@
+[
+  [
+    "include-missing",
+    [
+      0,
+      189,
+      210
+    ],
+    "included file `missing.md` not found"
+  ],
+  [
+    "include-missing",
+    [
+      0,
+      212,
+      247
+    ],
+    "included file `parts/absent.py` not found"
+  ]
+]
