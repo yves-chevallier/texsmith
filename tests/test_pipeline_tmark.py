@@ -11,6 +11,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+import pytest
 from typer.testing import CliRunner
 
 from texsmith.core.context import DocumentState
@@ -132,6 +133,83 @@ def test_features_example_splices_the_fence_include(tmp_path: Path) -> None:
     # ``--8<-- "hanoi.py"`` inside the python fence: the include pass read the file.
     assert "\\PY{n+nf}{tower\\PYZus{}of\\PYZus{}hanoi}" in body
     assert "[include:" not in body
+
+
+def _fake_snippet_renderer(monkeypatch: pytest.MonkeyPatch) -> list[str]:
+    """Replace the nested LaTeX build with placeholder assets; returns the fence contents seen."""
+    from texsmith.adapters.plugins.snippet import SnippetAssets
+    from texsmith.passes import snippet as snippet_pass
+
+    seen: list[str] = []
+
+    def render(block, *, output_dir: Path, source_path: Path, emitter) -> SnippetAssets:
+        del source_path, emitter
+        seen.append(block.content or "")
+        output_dir.mkdir(parents=True, exist_ok=True)
+        pdf = output_dir / f"{block.asset_basename}.pdf"
+        png = output_dir / f"{block.asset_basename}.png"
+        pdf.write_bytes(b"%PDF-1.4")
+        png.write_bytes(b"\x89PNG\r\n")
+        return SnippetAssets(pdf=pdf, png=png)
+
+    monkeypatch.setattr(snippet_pass, "render_snippet_assets", render)
+    return seen
+
+
+def test_snippet_example_renders_the_previews(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    seen = _fake_snippet_renderer(monkeypatch)
+    out = tmp_path / "snippet"
+    _render(
+        [
+            "--reader",
+            "tmark",
+            str(EXAMPLES / "snippet" / "docs" / "index.md"),
+            "-o",
+            str(out),
+            "-t",
+            "article",
+        ]
+    )
+    body = _body(out / "index.tex")
+    # Both fences (one nested in a four-backtick fence) became figures with
+    # the caption and the width the info string carried; the previews sit in
+    # ``snippets/`` next to the ``.tex``.
+    assert seen == [
+        "Hello **World**!",
+        '```c\n#include <stdio.h>\nint main() {\n    printf("Hello, World!\\n");\n    return 0;\n}\n```',
+    ]
+    assert body.count("\\begin{figure}") == 2
+    assert body.count("\\includegraphics[width=0.8\\linewidth]{snippets/snippet-") == 2
+    assert body.count("\\caption[Demo]{Demo}") == 2
+    assert "\\begin{tscode}" not in body and "Hello **World**" not in body
+    previews = sorted((out / "snippets").glob("snippet-*.pdf"))
+    assert len(previews) == 2
+    for preview in previews:
+        assert f"{{snippets/{preview.name}}}" in body
+
+
+def test_snippet_example_typst_takes_the_png(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    _fake_snippet_renderer(monkeypatch)
+    out = tmp_path / "snippet-typst"
+    _render(
+        [
+            "--reader",
+            "tmark",
+            str(EXAMPLES / "snippet" / "docs" / "index.md"),
+            "--format",
+            "typst",
+            "-o",
+            str(out),
+        ]
+    )
+    typ = (out / "index.typ").read_text(encoding="utf-8")
+    assert typ.count('image("snippets/snippet-') == 2
+    assert '.png", width: 80%)' in typ
+    assert "caption: [Demo]" in typ
 
 
 def test_typst_hello_example_writes_a_typst_body(tmp_path: Path) -> None:

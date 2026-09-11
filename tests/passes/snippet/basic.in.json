@@ -1,0 +1,136 @@
+{
+  "tmark": "0.0.0",
+  "file": 0,
+  "front_matter": {
+    "id": 0,
+    "span": [
+      0,
+      0,
+      0
+    ],
+    "keys": {}
+  },
+  "blocks": [
+    {
+      "type": "Header",
+      "id": 1,
+      "span": [
+        0,
+        0,
+        10
+      ],
+      "level": 1,
+      "content": [
+        {
+          "type": "Str",
+          "id": 2,
+          "span": [
+            0,
+            2,
+            10
+          ],
+          "text": "Snippets"
+        }
+      ]
+    },
+    {
+      "type": "CodeBlock",
+      "id": 3,
+      "span": [
+        0,
+        12,
+        48
+      ],
+      "text": "print(\"not a snippet\")",
+      "lang": "python"
+    },
+    {
+      "type": "CodeBlock",
+      "id": 4,
+      "span": [
+        0,
+        50,
+        129
+      ],
+      "text": "Hello **World**!",
+      "lang": "markdown",
+      "options": {
+        "classes": [
+          "snippet"
+        ],
+        "kv": [
+          [
+            "caption",
+            "Hello preview"
+          ],
+          [
+            "width",
+            "60%"
+          ]
+        ]
+      }
+    },
+    {
+      "type": "CodeBlock",
+      "id": 5,
+      "span": [
+        0,
+        131,
+        220
+      ],
+      "text": "```c\nint main(void) { return 0; }\n```",
+      "lang": "markdown",
+      "options": {
+        "id": "snip:code",
+        "classes": [
+          "snippet"
+        ],
+        "kv": [
+          [
+            "width",
+            "50%"
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Admonition",
+      "id": 6,
+      "span": [
+        0,
+        222,
+        357
+      ],
+      "kind": "note",
+      "content": [
+        {
+          "type": "CodeBlock",
+          "id": 7,
+          "span": [
+            0,
+            236,
+            357
+          ],
+          "text": "---\ntemplate: article\n---\n# Inside a callout",
+          "lang": "md",
+          "options": {
+            "classes": [
+              "snippet"
+            ],
+            "kv": [
+              [
+                "caption",
+                "Nested"
+              ],
+              [
+                "label",
+                "fig:nested"
+              ]
+            ]
+          }
+        }
+      ]
+    }
+  ],
+  "diagnostics": []
+}
