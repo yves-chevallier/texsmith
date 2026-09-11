@@ -43,6 +43,9 @@ class _RecordingEmitter:
     def event(self, name: str, payload: dict) -> None:  # pragma: no cover - unused
         raise AssertionError(f"event emitted unexpectedly: {name} -> {payload}")
 
+    def diagnostic(self, diagnostic: object) -> None:  # pragma: no cover - unused
+        raise AssertionError(f"diagnostic emitted unexpectedly: {diagnostic}")
+
 
 _FAKE_PDF = b"%PDF-1.4\n1 0 obj<<>>\nendobj\nxref\n0 1\n0000000000 65535 f \ntrailer<<>>\nstartxref\n9\n%%EOF"
 

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Iterator
+from contextlib import contextmanager
 import json
 from pathlib import Path
 
@@ -28,6 +29,8 @@ from texsmith.core.crossrefs import (
     render_reference,
     write_inventory,
 )
+from texsmith.core.diagnostics import LoggingEmitter, use_emitter
+from texsmith.diagnostics import DiagnosticSink
 
 
 @pytest.fixture(autouse=True)
@@ -152,23 +155,29 @@ def test_inventory_round_trip(tmp_path: Path) -> None:
 
 
 def test_missing_inventory_warns_and_returns_none(tmp_path: Path) -> None:
-    with pytest.warns(UserWarning, match="is missing"):
+    with _collect() as sink:
         assert load_inventory(tmp_path / "absent.refs.json") is None
+    (message,) = _reported(sink, "crossref-inventory-missing")
+    assert "is missing" in message
 
 
 def test_unknown_schema_warns_and_returns_none(tmp_path: Path) -> None:
     path = tmp_path / "x.refs.json"
     path.write_text(json.dumps({"schema": 99, "anchors": {}}), encoding="utf-8")
-    with pytest.warns(UserWarning, match="schema"):
+    with _collect() as sink:
         assert load_inventory(path) is None
+    (message,) = _reported(sink, "crossref-inventory-missing")
+    assert "schema" in message
 
 
 def test_stale_inventory_warns(tmp_path: Path) -> None:
     source = tmp_path / "firmware-review.md"
     source.write_text("# a\n", encoding="utf-8")
     path = _write_inventory(tmp_path, source="firmware-review.md", source_sha256="0" * 64)
-    with pytest.warns(UserWarning, match="out of date"):
+    with _collect() as sink:
         load_inventory(path)
+    (message,) = _reported(sink, "crossref-inventory-stale")
+    assert "out of date" in message
 
 
 def test_publish_inventory_exports_the_allocated_counters(tmp_path: Path) -> None:
@@ -247,6 +256,18 @@ def _render(source: str, base_path: Path) -> str:
     return render_markdown(source, extensions=DEFAULT_MARKDOWN_EXTENSIONS, base_path=base_path).html
 
 
+@contextmanager
+def _collect() -> Iterator[DiagnosticSink]:
+    """Capture the diagnostics the code under test reports."""
+    emitter = LoggingEmitter()
+    with use_emitter(emitter):
+        yield emitter.sink
+
+
+def _reported(sink: DiagnosticSink, code: str) -> list[str]:
+    return [diagnostic.message for diagnostic in sink if diagnostic.code == code]
+
+
 CITING = """\
 ---
 title: Revue hardware
@@ -282,9 +303,11 @@ def test_external_citation_reaches_latex_as_plain_text(tmp_path: Path) -> None:
 def test_unpublished_key_stays_visible_and_warns(tmp_path: Path) -> None:
     _write_inventory(tmp_path)
     source = CITING.replace("fw:pas-de-temps", "fw:disparu")
-    with pytest.warns(UserWarning, match="is not published"):
+    with _collect() as sink:
         html = _render(source, tmp_path)
     assert "[?fwrev:fw:disparu]" in BeautifulSoup(html, "html.parser").get_text()
+    (message,) = _reported(sink, "ref-unresolved")
+    assert "is not published" in message
 
 
 def test_an_undeclared_alias_is_left_to_the_regular_reference_machinery(tmp_path: Path) -> None:
@@ -361,5 +384,7 @@ def test_relocate_inventory_is_a_no_op_in_place(tmp_path: Path) -> None:
 
 def test_an_unresolvable_source_warns(tmp_path: Path) -> None:
     path = _write_inventory(tmp_path, source="../gone.md", source_sha256="0" * 64)
-    with pytest.warns(UserWarning, match="does not resolve"):
+    with _collect() as sink:
         load_inventory(path)
+    (message,) = _reported(sink, "crossref-inventory-stale")
+    assert "does not resolve" in message

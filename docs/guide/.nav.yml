@@ -10,5 +10,6 @@ nav:
   - plumbing/
   - MkDocs Integration: mkdocs.md
   - tectonic.md
+  - diagnostics.md
   - limitations.md
   - troubleshooting.md

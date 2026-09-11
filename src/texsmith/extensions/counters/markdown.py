@@ -30,12 +30,12 @@ from texsmith.core.counters import (
     CounterSpec,
     get_registry,
 )
-from texsmith.core.diagnostics import warn_author
+from texsmith.core.diagnostics import emit_diagnostic
 
 
-def _warn(message: str, md: Markdown | None = None) -> None:
+def _warn(code: str, message: str, md: Markdown | None = None) -> None:
     """Surface an authoring defect visibly, attributed to the document."""
-    warn_author(message, getattr(md, "texsmith_document_path", None))
+    emit_diagnostic(code, message, origin=getattr(md, "texsmith_document_path", None))
 
 
 #: ``#{prefix:key}`` — the negative lookbehind keeps ``\#{…}`` literal, and the
@@ -123,6 +123,7 @@ class _CounterTreeprocessor(Treeprocessor):
         value, is_duplicate = registry.allocate(prefix, key)
         if is_duplicate:
             _warn(
+                "label-duplicate",
                 f"Counter '{prefix}:{key}' is defined more than once; keeping the first number.",
                 self.md,
             )
@@ -161,7 +162,11 @@ class _CounterTreeprocessor(Treeprocessor):
             return
         rendered = registry.render(prefix, key)
         if rendered is None:
-            _warn(f"Counter reference '@{prefix}:{key}' has no matching item.", self.md)
+            _warn(
+                "ref-unresolved",
+                f"Counter reference '@{prefix}:{key}' has no matching item.",
+                self.md,
+            )
             return
         # An explicit link text (``[see](#fw:boot)``) wins over the number.
         if not element.text and len(element) == 0:
