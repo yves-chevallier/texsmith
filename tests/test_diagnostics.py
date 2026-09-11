@@ -1,12 +1,21 @@
 from __future__ import annotations
 
 import logging
+from pathlib import Path
 
 import pytest
 
 from texsmith.core.conversion.debug import format_user_friendly_render_error
-from texsmith.core.diagnostics import LoggingEmitter, NullEmitter
+from texsmith.core.diagnostics import (
+    DiagnosticEmitter,
+    LoggingEmitter,
+    NullEmitter,
+    current_emitter,
+    emit_diagnostic,
+    use_emitter,
+)
 from texsmith.core.exceptions import LatexRenderingError, TransformerExecutionError
+from texsmith.diagnostics import NO_SPAN, Diagnostic, Severity, Span
 from texsmith.ui.cli.diagnostics import CliEmitter
 from texsmith.ui.cli.state import ensure_rich_compat, set_cli_state
 
@@ -27,17 +36,60 @@ def test_null_emitter_is_noop(caplog: pytest.LogCaptureFixture) -> None:
     with caplog.at_level(logging.WARNING):
         emitter.warning("nothing to see")
         emitter.error("still quiet")
+        emitter.diagnostic(Diagnostic("asset-missing", Severity.WARNING, NO_SPAN, "gone"))
     assert not caplog.records
     emitter.event("ignored", {"value": 1})
     assert emitter.debug_enabled is False
+    assert isinstance(emitter, DiagnosticEmitter)
 
 
-def test_logging_emitter_logs_messages(caplog: pytest.LogCaptureFixture) -> None:
+def test_logging_emitter_logs_the_rendered_line(caplog: pytest.LogCaptureFixture) -> None:
     emitter = LoggingEmitter(debug_enabled=True)
     with caplog.at_level(logging.ERROR):
         emitter.error("boom")
-    assert any(record.message == "boom" for record in caplog.records)
+    assert [record.message for record in caplog.records] == ["error texsmith: boom"]
     assert emitter.debug_enabled is True
+    # The legacy call is a record in the sink like any other.
+    (recorded,) = emitter.sink
+    assert recorded.code == "texsmith"
+    assert recorded.severity is Severity.ERROR
+    assert recorded.span == NO_SPAN
+
+
+def test_logging_emitter_keeps_the_cause_as_exc_info(caplog: pytest.LogCaptureFixture) -> None:
+    emitter = LoggingEmitter()
+    cause = ValueError("root")
+    with caplog.at_level(logging.WARNING):
+        emitter.warning("Heads up", exc=cause)
+    (record,) = caplog.records
+    assert record.levelno == logging.WARNING
+    assert record.exc_info is not None
+    assert record.exc_info[1] is cause
+
+
+def test_emitter_deduplicates_identical_records(caplog: pytest.LogCaptureFixture) -> None:
+    emitter = LoggingEmitter()
+    with caplog.at_level(logging.WARNING):
+        emitter.warning("twice")
+        emitter.warning("twice")
+    assert len(emitter.sink) == 1
+    assert len(caplog.records) == 1
+
+
+def test_emitter_renders_a_located_record(caplog: pytest.LogCaptureFixture) -> None:
+    emitter = LoggingEmitter()
+    file_id = emitter.files.add(Path("doc.md"), "a\n\nhello @x\n")
+    with caplog.at_level(logging.WARNING):
+        emitter.diagnostic(
+            Diagnostic(
+                "ref-unresolved",
+                Severity.WARNING,
+                Span(file_id, 9, 11),
+                "`@x` does not resolve",
+                origin="tmark",
+            )
+        )
+    assert caplog.records[0].message == "doc.md:3:7: warning ref-unresolved: `@x` does not resolve"
 
 
 def test_cli_emitter_bridges_state(capsys: pytest.CaptureFixture[str]) -> None:
@@ -50,10 +102,68 @@ def test_cli_emitter_bridges_state(capsys: pytest.CaptureFixture[str]) -> None:
     emitter.event("custom", {"flag": True})
 
     captured = capsys.readouterr()
-    combined_output = f"{captured.out}\n{captured.err}"
-    assert "Heads up" in combined_output
-    assert "Boom" in combined_output
+    assert "warning texsmith: Heads up" in captured.err
+    assert "error texsmith: Boom" in captured.err
     assert state.consume_events("custom") == [{"flag": True}]
+    assert [d.severity for d in emitter.sink] == [Severity.WARNING, Severity.ERROR]
+    assert emitter.sink.strict_failed()
+
+
+def test_cli_emitter_shows_the_cause_at_verbosity_one(capsys: pytest.CaptureFixture[str]) -> None:
+    ensure_rich_compat()
+    state = set_cli_state(verbosity=1, debug=False)
+    emitter = CliEmitter(state=state)
+
+    emitter.warning("Fetch failed", exc=OSError("connection refused"))
+
+    err = capsys.readouterr().err
+    assert "warning texsmith: Fetch failed" in err
+    assert "connection refused" in err
+    assert "type: OSError" in err
+
+
+def test_cli_emitter_quiet_hides_hints_and_info(capsys: pytest.CaptureFixture[str]) -> None:
+    ensure_rich_compat()
+    state = set_cli_state(verbosity=0, debug=False, quiet=True)
+    emitter = CliEmitter(state=state)
+
+    emitter.diagnostic(Diagnostic("lead-promotion", Severity.INFO, NO_SPAN, "promoted"))
+    emitter.diagnostic(Diagnostic("heading-skip", Severity.HINT, NO_SPAN, "skipped"))
+    emitter.diagnostic(Diagnostic("asset-missing", Severity.WARNING, NO_SPAN, "gone"))
+
+    err = capsys.readouterr().err
+    assert "promoted" not in err
+    assert "skipped" not in err
+    assert "warning asset-missing: gone" in err
+    # Hidden is not dropped: the JSON dump and the counts still see them.
+    assert len(emitter.sink) == 3
+    state.quiet = False
+
+
+def test_emit_diagnostic_reaches_the_installed_emitter() -> None:
+    emitter = LoggingEmitter()
+    with use_emitter(emitter):
+        assert current_emitter() is emitter
+        emit_diagnostic("label-duplicate", "Counter 'n:x' is defined twice", origin="doc.md")
+    (recorded,) = emitter.sink
+    assert recorded.code == "label-duplicate"
+    assert recorded.severity is Severity.WARNING
+    # The origin is registered as a text-less file: the record prints its name.
+    assert emitter.files.path(recorded.span.file) == Path("doc.md")
+    assert recorded.span.start == 0
+
+
+def test_emit_diagnostic_falls_back_to_logging(caplog: pytest.LogCaptureFixture) -> None:
+    with caplog.at_level(logging.WARNING):
+        emit_diagnostic("ref-unresolved", "Counter reference '@n:x' has no matching item")
+    assert caplog.records[0].message == (
+        "warning ref-unresolved: Counter reference '@n:x' has no matching item"
+    )
+
+
+def test_use_emitter_none_installs_nothing() -> None:
+    with use_emitter(None):
+        assert isinstance(current_emitter(), LoggingEmitter)
 
 
 def test_format_user_friendly_render_error_reports_root_cause() -> None:

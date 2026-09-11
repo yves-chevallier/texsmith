@@ -1,0 +1,108 @@
+{
+  "file": 0,
+  "front_matter": {
+    "id": 0,
+    "span": [
+      0,
+      0,
+      0
+    ],
+    "keys": {}
+  },
+  "blocks": [
+    {
+      "type": "Admonition",
+      "id": 1,
+      "span": [
+        0,
+        0,
+        61
+      ],
+      "kind": "note",
+      "title": [
+        {
+          "type": "Str",
+          "id": 5,
+          "span": [
+            0,
+            0,
+            6
+          ],
+          "text": "Folded"
+        }
+      ],
+      "content": [
+        {
+          "type": "Para",
+          "id": 2,
+          "span": [
+            0,
+            39,
+            57
+          ],
+          "content": [
+            {
+              "type": "Str",
+              "id": 3,
+              "span": [
+                0,
+                39,
+                57
+              ],
+              "text": "Hidden by default."
+            }
+          ]
+        }
+      ],
+      "attrs": {
+        "kv": [
+          [
+            "collapsed",
+            "true"
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Admonition",
+      "id": 6,
+      "span": [
+        0,
+        63,
+        110
+      ],
+      "kind": "tip",
+      "content": [
+        {
+          "type": "Para",
+          "id": 7,
+          "span": [
+            0,
+            89,
+            106
+          ],
+          "content": [
+            {
+              "type": "Str",
+              "id": 8,
+              "span": [
+                0,
+                89,
+                106
+              ],
+              "text": "Shown by default."
+            }
+          ]
+        }
+      ],
+      "attrs": {
+        "kv": [
+          [
+            "collapsed",
+            "false"
+          ]
+        ]
+      }
+    }
+  ]
+}

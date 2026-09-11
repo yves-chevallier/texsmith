@@ -1,9 +1,15 @@
 # TeXSmith on TMark — migration plan
 
-Status: proposal, 2026-09-11. Companion of `~/tmark/design/11-roadmap.md`
+Status: in progress, 2026-09-11. Companion of `~/tmark/design/11-roadmap.md`
 (milestones M4 and M5 are the tmark side of this plan). When the two
 documents disagree, the tmark roadmap wins for what tmark builds and this
-document wins for what TeXSmith builds.
+document wins for what TeXSmith builds. The difficulties of §6 each have a
+design note under `migration/` (`web-profile.md`, `fragment-contracts.md`,
+`writers-and-passes.md`, `examples-migration.md`, `python-ir-and-passes.md`);
+where the notes disagree, `migration/decisions.md` settles it and lists the
+implementation waves. `migration/baseline.md` records the state of the
+examples before any change. Integration branches: `tmark-migration` here,
+`texsmith-migration` in `~/tmark`.
 
 ## 1. Where things stand
 

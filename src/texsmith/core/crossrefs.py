@@ -30,7 +30,17 @@ from pathlib import Path
 import re
 from typing import Any
 
-from texsmith.core.diagnostics import warn_author as _warn
+from texsmith.core.diagnostics import emit_diagnostic
+
+
+def _warn(code: str, message: str, origin: Path | str | None) -> None:
+    """Report an authoring defect, attributed to the citing document.
+
+    A broken cross-reference is a hole in the document, not a debug detail, so
+    it goes to the active diagnostic emitter (the CLI prints it, ``--strict``
+    fails on it) rather than to a log nobody reads.
+    """
+    emit_diagnostic(code, message, origin=origin)
 
 
 #: Bumped when the on-disk shape changes in a way older readers cannot handle.
@@ -150,21 +160,31 @@ def load_inventory(path: Path | str, *, origin: Path | str | None = None) -> Inv
         payload = json.loads(candidate.read_text(encoding="utf-8"))
     except FileNotFoundError:
         _warn(
+            "crossref-inventory-missing",
             f"Cross-reference inventory '{candidate}' is missing; "
             "build the document it describes first.",
             origin,
         )
         return None
     except (OSError, json.JSONDecodeError) as exc:
-        _warn(f"Cross-reference inventory '{candidate}' could not be read: {exc}", origin)
+        _warn(
+            "crossref-inventory-missing",
+            f"Cross-reference inventory '{candidate}' could not be read: {exc}",
+            origin,
+        )
         return None
 
     if not isinstance(payload, Mapping):
-        _warn(f"Cross-reference inventory '{candidate}' is not a JSON object.", origin)
+        _warn(
+            "crossref-inventory-missing",
+            f"Cross-reference inventory '{candidate}' is not a JSON object.",
+            origin,
+        )
         return None
     schema = payload.get("schema")
     if schema != SCHEMA_VERSION:
         _warn(
+            "crossref-inventory-missing",
             f"Cross-reference inventory '{candidate}' uses schema {schema}, "
             f"this TeXSmith reads {SCHEMA_VERSION}.",
             origin,
@@ -213,6 +233,7 @@ def _warn_if_stale(inventory: Inventory, *, origin: Path | str | None = None) ->
         # Silence here would be the worst outcome: the inventory claims to know
         # what it describes, but nothing can check that claim any more.
         _warn(
+            "crossref-inventory-stale",
             f"Cross-reference inventory '{inventory.path}' records a source "
             f"('{identity.source}') that does not resolve; it can no longer be "
             "checked for staleness.",
@@ -221,6 +242,7 @@ def _warn_if_stale(inventory: Inventory, *, origin: Path | str | None = None) ->
         return
     if digest != identity.source_sha256:
         _warn(
+            "crossref-inventory-stale",
             f"Cross-reference inventory '{inventory.path}' is out of date: "
             f"'{source}' changed since it was written. Rebuild that document.",
             origin,
@@ -290,6 +312,7 @@ class CrossRefResolver:
             if token not in self._missing:
                 self._missing.add(token)
                 _warn(
+                    "ref-unresolved",
                     f"Cross-reference '@{token}' is not published by "
                     f"'{inventory.path}'; it may have been renamed or removed.",
                     self.origin,

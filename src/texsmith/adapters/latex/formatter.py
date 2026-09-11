@@ -179,9 +179,15 @@ class LaTeXFormatter:
         baselinestretch: float | None = None,
         engine: str | None = None,
         state: DocumentState | None = None,
+        label: str | None = None,
         **_: Any,
     ) -> str:
-        """Render code blocks with optional line numbers and highlights."""
+        """Render code blocks with optional line numbers and highlights.
+
+        ``label`` is the anchor of a captioned listing; the ``code`` box is an
+        auto-counter tcolorbox, so its ``label=`` key makes the listing
+        referenceable.
+        """
         highlight = list(highlight or [])
         optimized_highlight = optimize_list(highlight)
         normalized_engine = (engine or self.default_code_engine or "pygments").lower()
@@ -207,6 +213,7 @@ class LaTeXFormatter:
                 filename=filename,
                 baselinestretch=baselinestretch,
                 highlight=optimized_highlight,
+                label=label,
             )
 
         if normalized_engine == "listings":
@@ -217,6 +224,7 @@ class LaTeXFormatter:
                 filename=filename,
                 baselinestretch=baselinestretch,
                 highlight=optimized_highlight,
+                label=label,
             )
 
         if normalized_engine == "verbatim":
@@ -227,6 +235,7 @@ class LaTeXFormatter:
                 filename=filename,
                 baselinestretch=baselinestretch,
                 highlight=optimized_highlight,
+                label=label,
             )
 
         return self._get_template("codeblock").render(
@@ -236,6 +245,7 @@ class LaTeXFormatter:
             filename=filename,
             baselinestretch=baselinestretch,
             highlight=optimized_highlight,
+            label=label,
         )
 
     def handle_href(self, text: str, url: str) -> str:

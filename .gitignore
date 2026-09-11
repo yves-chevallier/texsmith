@@ -62,3 +62,6 @@ snippet-dump/
 
 # Stray Codex/editor artifact
 .codex
+
+# The tmark checkout used to build the wheel (a symlink locally, a checkout in CI)
+vendor/tmark

@@ -1,0 +1,93 @@
+{
+  "file": 0,
+  "front_matter": {
+    "id": 0,
+    "span": [
+      0,
+      0,
+      0
+    ],
+    "keys": {}
+  },
+  "blocks": [
+    {
+      "type": "Para",
+      "id": 1,
+      "span": [
+        0,
+        0,
+        69
+      ],
+      "content": [
+        {
+          "type": "Str",
+          "id": 2,
+          "span": [
+            0,
+            0,
+            5
+          ],
+          "text": "Cite "
+        },
+        {
+          "type": "Ref",
+          "id": 3,
+          "span": [
+            0,
+            5,
+            34
+          ],
+          "items": [
+            {
+              "key": "doi:10.1002/andp.19053221004",
+              "key_span": [
+                0,
+                6,
+                34
+              ]
+            }
+          ]
+        },
+        {
+          "type": "Str",
+          "id": 4,
+          "span": [
+            0,
+            34,
+            39
+          ],
+          "text": " and "
+        },
+        {
+          "type": "Ref",
+          "id": 5,
+          "span": [
+            0,
+            39,
+            68
+          ],
+          "items": [
+            {
+              "key": "doi:10.1002/andp.19053221004",
+              "key_span": [
+                0,
+                40,
+                68
+              ]
+            }
+          ]
+        },
+        {
+          "type": "Str",
+          "id": 6,
+          "span": [
+            0,
+            68,
+            69
+          ],
+          "text": "."
+        }
+      ]
+    }
+  ]
+}

@@ -18,6 +18,16 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v5
 
+      - name: Checkout tmark (the wheel is built from it)
+        uses: actions/checkout@v5
+        with:
+          repository: yves-chevallier/tmark
+          ref: texsmith-migration
+          path: vendor/tmark
+
+      - name: Install Rust (maturin builds the tmark wheel)
+        uses: dtolnay/rust-toolchain@stable
+
       - name: Install uv
         uses: astral-sh/setup-uv@v7
         with:
@@ -36,6 +46,16 @@ jobs:
       - name: Ruff format check
         run: uv run ruff format . --check
 
+      # src/texsmith/ir/model.py is generated from tmark's IR schema. The
+      # schema is vendored from the tmark repository by
+      # scripts/refresh_tmark_fixtures.py; phase 2 of the migration replaces
+      # the file by the installed wheel's ``tmark.schema("ir")``.
+      - name: IR models match the vendored tmark schema
+        run: >
+          uv run python scripts/gen_ir_models.py --check
+          --schema tests/fixtures/tmark-ir/ir.json
+          --version "$(cat tests/fixtures/tmark-ir/VERSION)"
+
   tests:
     name: Pytest matrix
     runs-on: ${{ matrix.os }}
@@ -52,6 +72,16 @@ jobs:
         uses: actions/setup-python@v6
         with:
           python-version: ${{ matrix.python-version }}
+
+      - name: Checkout tmark (the wheel is built from it)
+        uses: actions/checkout@v5
+        with:
+          repository: yves-chevallier/tmark
+          ref: texsmith-migration
+          path: vendor/tmark
+
+      - name: Install Rust (maturin builds the tmark wheel)
+        uses: dtolnay/rust-toolchain@stable
 
       - name: Install uv
         uses: astral-sh/setup-uv@v7
@@ -134,6 +164,16 @@ jobs:
         with:
           python-version: "3.13"
 
+      - name: Checkout tmark (the wheel is built from it)
+        uses: actions/checkout@v5
+        with:
+          repository: yves-chevallier/tmark
+          ref: texsmith-migration
+          path: vendor/tmark
+
+      - name: Install Rust (maturin builds the tmark wheel)
+        uses: dtolnay/rust-toolchain@stable
+
       - name: Install uv
         uses: astral-sh/setup-uv@v7
         with:
@@ -191,6 +231,16 @@ jobs:
           libxdamage1 libxfixes3 libxrandr2 libgbm1 libcairo2 libpango-1.0-0
 
       # Install uv
+      - name: Checkout tmark (the wheel is built from it)
+        uses: actions/checkout@v5
+        with:
+          repository: yves-chevallier/tmark
+          ref: texsmith-migration
+          path: vendor/tmark
+
+      - name: Install Rust (maturin builds the tmark wheel)
+        uses: dtolnay/rust-toolchain@stable
+
       - name: Install uv
         uses: astral-sh/setup-uv@v7
         with:
@@ -313,6 +363,16 @@ jobs:
             mv "$f" "$dest"
           done
       # Install uv for deploying the docs
+      - name: Checkout tmark (the wheel is built from it)
+        uses: actions/checkout@v5
+        with:
+          repository: yves-chevallier/tmark
+          ref: texsmith-migration
+          path: vendor/tmark
+
+      - name: Install Rust (maturin builds the tmark wheel)
+        uses: dtolnay/rust-toolchain@stable
+
       - name: Install uv
         uses: astral-sh/setup-uv@v7
         with:

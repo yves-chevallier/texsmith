@@ -17,8 +17,8 @@ from a cleared registry (autouse fixture below).
 from __future__ import annotations
 
 from collections.abc import Iterator
+from contextlib import contextmanager
 import re
-import warnings
 
 from bs4 import BeautifulSoup
 import pytest
@@ -33,6 +33,8 @@ from texsmith.core.counters import (
     get_registry,
     parse_front_matter_counters,
 )
+from texsmith.core.diagnostics import LoggingEmitter, use_emitter
+from texsmith.diagnostics import DiagnosticSink
 from texsmith.readers.html import HtmlReader
 from texsmith.writers.typst import TypstWriter, TypstWriterState
 from texsmith.writers.typst.writer import citation_label
@@ -77,6 +79,14 @@ def _html(source: str) -> str:
 
 def _render(source: str) -> BeautifulSoup:
     return BeautifulSoup(_html(source), "html.parser")
+
+
+@contextmanager
+def _collect() -> Iterator[DiagnosticSink]:
+    """Capture the diagnostics the extension reports."""
+    emitter = LoggingEmitter()
+    with use_emitter(emitter):
+        yield emitter.sink
 
 
 def _counter_texts(soup: BeautifulSoup) -> list[str]:
@@ -586,30 +596,36 @@ def test_duplicate_key_prints_the_first_number_and_warns() -> None:
     source = f"""{FRONT_MATTER}
 First #{{n:joy}} and again #{{n:joy}}, then #{{n:respect}}.
 """
-    # Authoring defects go through ``warnings`` so they are visible without a
-    # verbosity flag, and can be promoted to errors with ``PYTHONWARNINGS``.
-    with pytest.warns(UserWarning, match="joy"):
+    # Authoring defects go to the active diagnostic emitter, so they are
+    # visible without a verbosity flag and fail the build under ``--strict``.
+    with _collect() as sink:
         soup = _render(source)
 
     assert _counter_texts(soup) == ["N-01", "N-01", "N-02"]
+    (diagnostic,) = sink
+    assert diagnostic.code == "label-duplicate"
+    assert "joy" in diagnostic.message
 
 
 def test_dangling_reference_renders_empty_and_warns() -> None:
     source = f"""{FRONT_MATTER}
 Requirement #{{n:joy}} exists but @n:missing does not.
 """
-    with pytest.warns(UserWarning, match="missing"):
+    with _collect() as sink:
         soup = _render(source)
 
     anchor = soup.find("a", href="#n:missing")
     assert anchor is not None
     assert anchor.get_text() == ""
+    (diagnostic,) = sink
+    assert diagnostic.code == "ref-unresolved"
+    assert "missing" in diagnostic.message
 
 
 def test_undeclared_prefix_does_not_warn() -> None:
-    with warnings.catch_warnings():
-        warnings.simplefilter("error")
+    with _collect() as sink:
         _render(f"{FRONT_MATTER}\nAn undeclared #{{x:joy}} marker.\n")
+    assert len(sink) == 0
 
 
 # --------------------------------------------------------------------------- #

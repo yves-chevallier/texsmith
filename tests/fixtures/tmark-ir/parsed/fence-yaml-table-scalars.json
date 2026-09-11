@@ -1,0 +1,175 @@
+{
+  "file": 0,
+  "front_matter": {
+    "id": 0,
+    "span": [
+      0,
+      0,
+      0
+    ],
+    "keys": {}
+  },
+  "blocks": [
+    {
+      "type": "Table",
+      "id": 1,
+      "span": [
+        0,
+        0,
+        139
+      ],
+      "model": {
+        "settings": {
+          "width": "auto"
+        },
+        "columns": [
+          {
+            "type": "Leaf",
+            "name": "A"
+          },
+          {
+            "type": "Leaf",
+            "name": "B"
+          },
+          {
+            "type": "Leaf",
+            "name": "C"
+          }
+        ],
+        "rows": [
+          {
+            "type": "Data",
+            "cells": [
+              {
+                "content": [
+                  {
+                    "type": "Str",
+                    "id": 3,
+                    "span": [
+                      0,
+                      0,
+                      4
+                    ],
+                    "text": "1.10"
+                  }
+                ]
+              },
+              {
+                "content": [
+                  {
+                    "type": "Str",
+                    "id": 5,
+                    "span": [
+                      0,
+                      0,
+                      2
+                    ],
+                    "text": "+1"
+                  }
+                ]
+              },
+              {
+                "content": [
+                  {
+                    "type": "Str",
+                    "id": 7,
+                    "span": [
+                      0,
+                      0,
+                      4
+                    ],
+                    "text": "0x1F"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "type": "Data",
+            "cells": [
+              {
+                "content": [
+                  {
+                    "type": "Str",
+                    "id": 9,
+                    "span": [
+                      0,
+                      0,
+                      1
+                    ],
+                    "text": "3"
+                  }
+                ]
+              },
+              {
+                "content": [
+                  {
+                    "type": "Str",
+                    "id": 11,
+                    "span": [
+                      0,
+                      0,
+                      4
+                    ],
+                    "text": "NULL"
+                  }
+                ]
+              },
+              {
+                "content": [
+                  {
+                    "type": "Str",
+                    "id": 13,
+                    "span": [
+                      0,
+                      0,
+                      3
+                    ],
+                    "text": "Yes"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "type": "Data",
+            "cells": [
+              {
+                "content": [
+                  {
+                    "type": "Str",
+                    "id": 15,
+                    "span": [
+                      0,
+                      0,
+                      3
+                    ],
+                    "text": "1e3"
+                  }
+                ],
+                "cols": 2
+              },
+              {
+                "absorbed": true
+              },
+              {
+                "content": [
+                  {
+                    "type": "Str",
+                    "id": 17,
+                    "span": [
+                      0,
+                      0,
+                      2
+                    ],
+                    "text": "on"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

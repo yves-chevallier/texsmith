@@ -47,6 +47,7 @@ from .._options import (
     BaseLevelOption,
     ConvertAssetsOption,
     DebugHtmlOption,
+    DiagnosticsJsonOption,
     DisableFragmentOption,
     DisableMarkdownExtensionsOption,
     EnableFragmentOption,
@@ -67,8 +68,10 @@ from .._options import (
     OpenLogOption,
     OutputPathOption,
     ParserOption,
+    QuietOption,
     SelectorOption,
     SlotsOption,
+    StrictOption,
     StripHeadingOption,
     TemplateAttributeOption,
     TemplateInfoOption,
@@ -82,9 +85,11 @@ from ..presenter import (
     present_build_summary,
     present_context_attributes,
     present_conversion_summary,
+    present_diagnostics_summary,
     present_fonts_info,
     present_html_summary,
     present_latex_failure,
+    write_diagnostics_json,
 )
 from ..state import debug_enabled, emit_error, set_cli_state
 from ..utils import determine_output_target, organise_slot_overrides, write_output_file
@@ -389,6 +394,9 @@ def render(
             rich_help_panel=DIAGNOSTICS_PANEL,
         ),
     ] = False,
+    quiet: QuietOption = False,
+    strict: StrictOption = False,
+    diagnostics_json: DiagnosticsJsonOption = None,
     inputs: InputPathArgument = None,
     input_path: Annotated[
         Path | None,
@@ -534,7 +542,7 @@ def render(
         typer.echo(get_version())
         raise typer.Exit()
 
-    state = set_cli_state(ctx=typer_ctx, verbosity=verbose, debug=debug)
+    state = set_cli_state(ctx=typer_ctx, verbosity=verbose, debug=debug, quiet=quiet)
     output_format = (output_format or "latex").strip().lower()
     if output_format not in {"latex", "typst"}:
         raise typer.BadParameter("--format must be 'latex' or 'typst'.")
@@ -639,6 +647,8 @@ def render(
     fm_numbered = _lookup_bool(fm_payload, ("numbered",))
     if fm_numbered is not None:
         numbered = fm_numbered
+    if _lookup_bool(primary_front_matter, ("press", "features", "strict")):
+        strict = True
 
     template_param_source = ctx.get_parameter_source("template") if ctx else None
     no_promote_param_source = ctx.get_parameter_source("no_promote_title") if ctx else None
@@ -766,13 +776,35 @@ def render(
     )
     extension_line = f"Extensions: {', '.join(resolved_markdown_extensions) or '(none)'}"
 
+    emitter = CliEmitter(state=state, debug_enabled=debug_enabled())
+    presented_diagnostics = 0
+
     def _flush_diagnostics() -> None:
+        """Close a phase: event lines, the diagnostics summary, the JSON dump, ``--strict``.
+
+        Called at every exit of the command and, when building, once more
+        before the engine runs so the ``.tex`` is there to inspect when
+        ``--strict`` stops the run.
+        """
+        nonlocal presented_diagnostics
         lines: list[str] = []
         if state.verbosity >= 1:
             lines.append(extension_line)
         lines.extend(consume_event_diagnostics(state))
         for line in lines:
             typer.echo(line)
+        if len(emitter.sink) > presented_diagnostics:
+            presented_diagnostics = len(emitter.sink)
+            present_diagnostics_summary(state, emitter.sink)
+        if diagnostics_json is not None:
+            try:
+                write_diagnostics_json(diagnostics_json, emitter.sink)
+            except OSError as exc:
+                emit_error(f"Failed to write diagnostics to '{diagnostics_json}': {exc}", exc)
+                raise typer.Exit(code=1) from exc
+        if strict and emitter.sink.strict_failed():
+            emit_error("Diagnostics were recorded and --strict is on.")
+            raise typer.Exit(code=1)
 
     debug_snapshot = debug_html if debug_html is not None else debug_enabled()
 
@@ -814,8 +846,6 @@ def render(
 
     if not embed_fragments and template_selected and len(document_paths) == 1:
         embed_fragments = True
-
-    emitter = CliEmitter(state=state, debug_enabled=debug_enabled())
 
     request_render_dir = render_dir_path
 
@@ -1065,6 +1095,9 @@ def render(
     # ConversionService.build_pdf; the CLI keeps only presentation, the PDF copy,
     # and dependency-file emission. ``run_engine`` is injected so the engine run
     # stays a clean test seam (tests patch this module's ``run_engine_command``).
+    # The bodies are written: ``--strict`` decides here, before the engine runs.
+    _flush_diagnostics()
+
     engine_choice = resolve_engine(engine, render_result.template_engine)
     state.console.print(f"[bold cyan]Running {engine_choice.label}…[/]")
 

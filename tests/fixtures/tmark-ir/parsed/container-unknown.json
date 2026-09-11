@@ -1,0 +1,55 @@
+{
+  "file": 0,
+  "front_matter": {
+    "id": 0,
+    "span": [
+      0,
+      0,
+      0
+    ],
+    "keys": {}
+  },
+  "blocks": [
+    {
+      "type": "Div",
+      "id": 1,
+      "span": [
+        0,
+        0,
+        26
+      ],
+      "name": "gadget",
+      "content": [
+        {
+          "type": "Para",
+          "id": 2,
+          "span": [
+            0,
+            17,
+            22
+          ],
+          "content": [
+            {
+              "type": "Str",
+              "id": 3,
+              "span": [
+                0,
+                17,
+                22
+              ],
+              "text": "Body."
+            }
+          ]
+        }
+      ],
+      "attrs": {
+        "kv": [
+          [
+            "x",
+            "1"
+          ]
+        ]
+      }
+    }
+  ]
+}

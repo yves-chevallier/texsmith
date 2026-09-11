@@ -1,0 +1,78 @@
+{
+  "file": 0,
+  "front_matter": {
+    "id": 0,
+    "span": [
+      0,
+      0,
+      0
+    ],
+    "keys": {}
+  },
+  "blocks": [
+    {
+      "type": "Para",
+      "id": 1,
+      "span": [
+        0,
+        0,
+        49
+      ],
+      "content": [
+        {
+          "type": "Str",
+          "id": 2,
+          "span": [
+            0,
+            0,
+            12
+          ],
+          "text": "Hooke's law "
+        },
+        {
+          "type": "Aside",
+          "id": 3,
+          "span": [
+            0,
+            12,
+            42
+          ],
+          "content": [
+            {
+              "type": "Plain",
+              "id": 5,
+              "span": [
+                0,
+                12,
+                42
+              ],
+              "content": [
+                {
+                  "type": "Str",
+                  "id": 4,
+                  "span": [
+                    0,
+                    30,
+                    41
+                  ],
+                  "text": "linear only"
+                }
+              ]
+            }
+          ],
+          "side": "left"
+        },
+        {
+          "type": "Str",
+          "id": 6,
+          "span": [
+            0,
+            42,
+            49
+          ],
+          "text": " holds."
+        }
+      ]
+    }
+  ]
+}

@@ -21,6 +21,7 @@ __all__ = [
     "emit_error",
     "emit_warning",
     "ensure_rich_compat",
+    "exception_details",
     "get_cli_state",
     "render_message",
     "set_cli_state",
@@ -70,6 +71,8 @@ class CLIState:
 
     verbosity: int = 0
     show_tracebacks: bool = False
+    #: ``-q``: hide hint and info diagnostics.
+    quiet: bool = False
     events: dict[str, list[dict[str, Any]]] = field(default_factory=dict, init=False)
     _console: Console | None = field(default=None, init=False, repr=False)
     _err_console: Console | None = field(default=None, init=False, repr=False)
@@ -161,6 +164,7 @@ def set_cli_state(
     ctx: typer.Context | None = None,
     verbosity: int | None = None,
     debug: bool | None = None,
+    quiet: bool | None = None,
 ) -> CLIState:
     """Update the CLI state, returning the current instance."""
     state = get_cli_state(ctx)
@@ -168,6 +172,8 @@ def set_cli_state(
         state.verbosity = max(0, verbosity)
     if debug is not None:
         state.show_tracebacks = debug
+    if quiet is not None:
+        state.quiet = quiet
     return state
 
 
@@ -180,6 +186,30 @@ def _exception_chain(exc: BaseException) -> list[str]:
         chain.append(f"{type(current).__name__}: {current}")
         current = current.__cause__ or current.__context__
     return chain
+
+
+def exception_details(
+    exception: BaseException | None, message: str, *, verbosity: int
+) -> list[str]:
+    """The lines ``-v`` adds under a message caused by ``exception`` (none below ``-v``)."""
+    if exception is None or verbosity < 1:
+        return []
+    lines: list[str] = []
+    detail = str(exception).strip()
+    if detail and detail not in message:
+        lines.append(detail)
+    lines.append(f"type: {type(exception).__name__}")
+    notes = getattr(exception, "__notes__", None)
+    if notes:
+        lines.extend(str(note) for note in notes)
+    if verbosity >= 2:
+        chain = _exception_chain(exception)
+        if chain:
+            lines.append("caused by:")
+            lines.extend(f"  {entry}" for entry in chain)
+    if verbosity >= 3:
+        lines.append(f"repr: {exception!r}")
+    return lines
 
 
 def render_message(
@@ -208,22 +238,7 @@ def render_message(
         text = Text()
         text.append(f"{level}: ")
         text.append(message)
-    extra_lines: list[str] = []
-    if exception is not None and state.verbosity >= 1:
-        detail = str(exception).strip()
-        if detail and detail not in message:
-            extra_lines.append(detail)
-        extra_lines.append(f"type: {type(exception).__name__}")
-        notes = getattr(exception, "__notes__", None)
-        if notes:
-            extra_lines.extend(str(note) for note in notes)
-        if state.verbosity >= 2:
-            chain = _exception_chain(exception)
-            if chain:
-                extra_lines.append("caused by:")
-                extra_lines.extend(f"  {entry}" for entry in chain)
-        if state.verbosity >= 3:
-            extra_lines.append(f"repr: {exception!r}")
+    extra_lines = exception_details(exception, message, verbosity=state.verbosity)
 
     if extra_lines:
         if hasattr(text, "append"):
