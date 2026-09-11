@@ -1,8 +1,11 @@
-"""The :class:`HtmlReader` — lower a BeautifulSoup tree into IR.
+"""The :class:`HtmlReader` — lower a BeautifulSoup tree into the generated IR.
 
-The reader is the inverse of the old mutate-and-flatten pipeline: instead of
-rewriting the DOM into LaTeX strings and calling ``soup.get_text()``, it
-*constructs* a :class:`texsmith.ir.Document`. It never emits a backend string.
+The reader *constructs* a :class:`texsmith.ir.model.Document` from the HTML
+Python-Markdown (or a MkDocs page) produced; it never emits a backend string.
+Its output is the shape ``tmark.parse`` gives the same constructs
+(``specs/migration/python-ir-and-passes.md`` §2): dense node ids from the
+reader's own counter, ``NO_SPAN`` everywhere, whitespace kept inside ``Str``
+(no ``Space`` node), footnote bodies and abbreviations on the document.
 
 Dispatch model
 --------------
@@ -11,7 +14,8 @@ Two recursive passes share one registry (:mod:`.registry`):
 * :meth:`lower_blocks` collects block-level IR from a run of siblings. Loose
   inline content between block tags is gathered and wrapped in a ``Para``.
 * :meth:`lower_inline` collects phrasing IR from a run of siblings, turning
-  text nodes into ``Str`` / ``Space`` and recursing into inline tags.
+  text nodes into ``Str`` / ``SoftBreak`` / ``Math`` and recursing into
+  inline tags.
 
 For each element tag the reader asks the registry for candidate lowerings at
 the active level (plus the level-agnostic ones). The first candidate that does
@@ -19,16 +23,17 @@ not return :data:`~.registry.NotHandled` wins.
 
 Fallback (no construct is ever dropped silently)
 ------------------------------------------------
-If no lowering claims a tag, the reader emits a diagnostic warning *and* a
-generic :class:`~texsmith.ir.Div` (block level) or :class:`~texsmith.ir.Span`
-(inline level) that preserves the tag name and its classes in ``attrs`` and
-keeps the recursively-lowered children. Unknown content is therefore always
-represented and traceable, never lost.
+If no lowering claims a tag, the reader emits a ``reader-unsupported``
+diagnostic *and* a generic :class:`~texsmith.ir.model.Div` (block level) or
+:class:`~texsmith.ir.model.SpanNode` (inline level) that preserves the tag
+name and its classes in ``attrs`` and keeps the recursively-lowered children.
+Unknown content is therefore always represented and traceable, never lost.
 """
 
 from __future__ import annotations
 
 from collections.abc import Iterable
+from dataclasses import replace
 import re
 from typing import TYPE_CHECKING
 
@@ -36,30 +41,35 @@ from bs4 import BeautifulSoup
 from bs4.element import Comment, NavigableString, Tag
 
 from texsmith.core.diagnostics import DiagnosticEmitter, NullEmitter
-from texsmith.ir import nodes as ir
+from texsmith.ir import model
+from texsmith.ir.walk import map_tree
 
 from . import blocks as _blocks, extensions as _extensions, inline as _inline
-from .context import ReadContext
+from ._helpers import classes, make_attrs
+from .context import ReadContext, strip_edges
 from .registry import NotHandled, ReaderRegistry, ReadLevel
 
 
 if TYPE_CHECKING:  # pragma: no cover - typing only
     from bs4.element import PageElement
 
+    from texsmith.diagnostics import Diagnostic
 
-# Literal inline-math payloads Markdown may leave untouched in text nodes
-# (``$…$`` / ``\(…\)`` / ``\[…\]`` / math environments). Kept verbatim so the
-# writer does not escape them — the legacy ``escape_plain_text`` did the same.
+
+# Literal math payloads Markdown may leave untouched in text nodes (``$…$`` /
+# ``\(…\)`` / ``\[…\]`` / math environments): the same constructs tmark's
+# parser reads as ``Math``; an environment is kept verbatim as raw LaTeX.
 _MATH_PAYLOAD_PATTERN = re.compile(
     r"""
-    (?:\$\$.*?\$\$)
-    |(?:\\\[.*?\\\])
-    |(?:\\\(.*?\\\))
-    |(?:\\begin\{[a-zA-Z*]+\}.*?\\end\{[a-zA-Z*]+\})
-    |(?<!\\)\$(?!\$)(?!\s)(?:\\.|[^$])*?(?<!\\)\$
+    (?P<display>\$\$.*?\$\$|\\\[.*?\\\])
+    |(?P<env>\\begin\{[a-zA-Z*]+\}.*?\\end\{[a-zA-Z*]+\})
+    |(?P<inline>\\\(.*?\\\)|(?<!\\)\$(?!\$)(?!\s)(?:\\.|[^$])*?(?<!\\)\$)
     """,
     re.DOTALL | re.VERBOSE,
 )
+
+#: A soft line wrap with its continuation indentation.
+_SOFT_BREAK = re.compile(r"[ \t]*\n[ \t]*")
 
 
 # Tags whose presence means "structure": when collecting blocks, hitting one of
@@ -120,13 +130,8 @@ def build_reader_registry(extra_modules: Iterable[object] = ()) -> ReaderRegistr
     return registry
 
 
-def _build_registry() -> ReaderRegistry:
-    """Assemble the default registry from the bundled lowering modules."""
-    return build_reader_registry()
-
-
 class HtmlReader:
-    """Lower HTML (string or parsed tree) into a :class:`texsmith.ir.Document`."""
+    """Lower HTML (string or parsed tree) into a :class:`texsmith.ir.model.Document`."""
 
     def __init__(
         self,
@@ -135,38 +140,56 @@ class HtmlReader:
         diagnostics: DiagnosticEmitter | None = None,
         parser: str = "html.parser",
     ) -> None:
-        self._registry = registry or _build_registry()
+        self._registry = registry or build_reader_registry()
         self._parser = parser
-        self._context = ReadContext(self, diagnostics or NullEmitter())
+        self._emitter = diagnostics or NullEmitter()
+        self._context = ReadContext(self, self._emitter)
 
     # -- public API --------------------------------------------------------
 
-    def read(self, html: str) -> ir.Document:
-        """Parse an HTML string and return the document IR."""
-        soup = BeautifulSoup(html, self._parser)
-        return self.read_tree(soup)
+    @property
+    def diagnostics(self) -> list[Diagnostic]:
+        """The records of every read so far (also forwarded to the emitter as they occur)."""
+        return self._context.diagnostics
 
-    def read_tree(self, root: Tag) -> ir.Document:
+    def read(self, html: str, *, file: int = 0) -> model.Document:
+        """Parse an HTML string and return the document IR (``file`` is its ``FileTable`` id)."""
+        soup = BeautifulSoup(html, self._parser)
+        return self.read_tree(soup, file=file)
+
+    def read_tree(self, root: Tag, *, file: int = 0) -> model.Document:
         """Lower an already-parsed BeautifulSoup tree into a ``Document``."""
         body = root.find("body")
         container = body if isinstance(body, Tag) else root
-        return ir.Document(content=self.lower_blocks(container.children))
+        self._context.file = file
+        self._context.footnotes = []
+        self._context.abbreviations = {}
+        blocks = self.lower_blocks(container.children)
+        document = model.Document(
+            abbreviations=tuple(
+                model.AbbrDef(expansion=expansion, key=key)
+                for key, expansion in self._context.abbreviations.items()
+            ),
+            blocks=blocks,
+            file=file,
+            footnotes=tuple(self._context.footnotes),
+        )
+        return _number(document)
 
     # -- recursion entry points (called back from handlers via context) ----
 
-    def lower_blocks(self, children: Iterable[PageElement]) -> tuple[ir.Block, ...]:
+    def lower_blocks(self, children: Iterable[PageElement]) -> tuple[model.Block, ...]:
         """Lower a run of siblings into block IR, wrapping loose inline runs."""
-        result: list[ir.Block] = []
+        result: list[model.Block] = []
         pending: list[PageElement] = []
 
         def flush() -> None:
             if not pending:
                 return
-            inlines = self._lower_inline_run(pending)
+            inlines = strip_edges(self._lower_inline_run(pending))
             pending.clear()
-            inlines = _strip_edges(inlines)
             if inlines:
-                result.append(ir.Para(content=inlines))
+                result.append(model.Para(content=inlines))
 
         for child in children:
             if isinstance(child, Comment):
@@ -186,7 +209,7 @@ class HtmlReader:
         flush()
         return tuple(result)
 
-    def lower_inline(self, children: Iterable[PageElement]) -> tuple[ir.Inline, ...]:
+    def lower_inline(self, children: Iterable[PageElement]) -> tuple[model.Inline, ...]:
         """Lower a run of siblings into inline IR."""
         return self._lower_inline_run(list(children))
 
@@ -205,7 +228,7 @@ class HtmlReader:
         # silently into a paragraph.
         return not self._registry.candidates(name, ReadLevel.INLINE)
 
-    def _lower_block_tag(self, tag: Tag) -> tuple[ir.Block, ...]:
+    def _lower_block_tag(self, tag: Tag) -> tuple[model.Block, ...]:
         name = tag.name or ""
         for rule in self._registry.candidates(name, ReadLevel.BLOCK):
             outcome = rule.handler(tag, self._context)
@@ -214,32 +237,33 @@ class HtmlReader:
             return _as_blocks(outcome)
         return (self._fallback_block(tag),)
 
-    def _fallback_block(self, tag: Tag) -> ir.Div:
+    def _fallback_block(self, tag: Tag) -> model.Div:
         self._context.warn(
-            f"HtmlReader: no block lowering for <{tag.name}> "
-            f"(class={_classes(tag) or '∅'}); preserved as a generic Div."
+            f"no block lowering for <{tag.name}> (class={_class_text(tag) or '∅'}); "
+            "preserved as a generic Div"
         )
-        return ir.Div(
-            content=self.lower_blocks(tag.children),
+        return model.Div(
+            name="div",
             attrs=_fallback_attrs(tag),
+            content=self.lower_blocks(tag.children),
         )
 
     # -- inline dispatch ---------------------------------------------------
 
-    def _lower_inline_run(self, children: list[PageElement]) -> tuple[ir.Inline, ...]:
-        result: list[ir.Inline] = []
+    def _lower_inline_run(self, children: list[PageElement]) -> tuple[model.Inline, ...]:
+        result: list[model.Inline] = []
         for child in children:
             if isinstance(child, Comment):
                 continue
             if isinstance(child, NavigableString):
-                result.extend(_text_to_inline(str(child)))
+                result.extend(text_to_inline(str(child)))
                 continue
             if not isinstance(child, Tag):
                 continue
             result.extend(self._lower_inline_tag(child))
-        return tuple(result)
+        return _merge_strs(result)
 
-    def _lower_inline_tag(self, tag: Tag) -> tuple[ir.Inline, ...]:
+    def _lower_inline_tag(self, tag: Tag) -> tuple[model.Inline, ...]:
         name = tag.name or ""
         for rule in self._registry.candidates(name, ReadLevel.INLINE):
             outcome = rule.handler(tag, self._context)
@@ -248,15 +272,12 @@ class HtmlReader:
             return _as_inlines(outcome)
         return (self._fallback_inline(tag),)
 
-    def _fallback_inline(self, tag: Tag) -> ir.Span:
+    def _fallback_inline(self, tag: Tag) -> model.SpanNode:
         self._context.warn(
-            f"HtmlReader: no inline lowering for <{tag.name}> "
-            f"(class={_classes(tag) or '∅'}); preserved as a generic Span."
+            f"no inline lowering for <{tag.name}> (class={_class_text(tag) or '∅'}); "
+            "preserved as a generic Span"
         )
-        return ir.Span(
-            content=self.lower_inline(tag.children),
-            attrs=_fallback_attrs(tag),
-        )
+        return model.SpanNode(attrs=_fallback_attrs(tag), content=self.lower_inline(tag.children))
 
 
 # ---------------------------------------------------------------------------
@@ -264,142 +285,116 @@ class HtmlReader:
 # ---------------------------------------------------------------------------
 
 
-def _classes(tag: Tag) -> str:
-    raw = tag.get("class")
-    if isinstance(raw, str):
-        return raw
-    if isinstance(raw, (list, tuple)):
-        return " ".join(str(item) for item in raw)
-    return ""
+def _class_text(tag: Tag) -> str:
+    return " ".join(classes(tag.get("class")))
 
 
-def _fallback_attrs(tag: Tag) -> tuple[tuple[str, str], ...]:
-    """Preserve the original tag name and class on a fallback Div/Span."""
-    attrs: list[tuple[str, str]] = [("html-tag", tag.name or "")]
-    classes = _classes(tag)
-    if classes:
-        attrs.append(("class", classes))
-    return tuple(attrs)
+def _fallback_attrs(tag: Tag) -> model.Attrs:
+    """Preserve the original tag name and classes on a fallback Div/Span."""
+    return make_attrs(classes=classes(tag.get("class")), kv={"html-tag": tag.name or ""})
 
 
-def _text_to_inline(text: str) -> list[ir.Inline]:
+def text_to_inline(text: str) -> list[model.Inline]:
     """Split a text node into inline IR.
 
-    Literal math payloads (``$…$`` / ``\\(…\\)`` / ``\\[…\\]`` / math envs that
-    Markdown left as plain text) are kept verbatim as ``RawInline`` so the
-    writer does not escape them — mirroring the legacy ``escape_plain_text``
-    PRE phase, which protected math before escaping. The prose between math
-    payloads is tokenised into ``Str`` runs / ``Space`` separators.
+    Literal math payloads Markdown left as plain text become ``Math`` (an
+    environment stays a raw LaTeX inline); the prose between them is kept
+    verbatim in ``Str`` runs, a soft line wrap (with its continuation
+    indentation) becoming a ``SoftBreak`` as in tmark's parser.
     """
     if not text:
         return []
-    matches = list(_MATH_PAYLOAD_PATTERN.finditer(text))
-    if not matches:
-        return _tokenize_prose(text)
-    out: list[ir.Inline] = []
+    out: list[model.Inline] = []
     cursor = 0
-    for match in matches:
+    for match in _MATH_PAYLOAD_PATTERN.finditer(text):
         if match.start() > cursor:
-            out.extend(_tokenize_prose(text[cursor : match.start()]))
-        out.append(ir.RawInline(format="latex", text=match.group(0)))
+            out.extend(_prose(text[cursor : match.start()]))
+        payload = match.group(0)
+        if match.group("env") is not None:
+            out.append(model.RawInline(format="latex", text=payload))
+        else:
+            display = match.group("display") is not None
+            width = 1 if payload.startswith("$") and not payload.startswith("$$") else 2
+            out.append(model.Math(text=payload[width:-width].strip(), display=display))
         cursor = match.end()
     if cursor < len(text):
-        out.extend(_tokenize_prose(text[cursor:]))
+        out.extend(_prose(text[cursor:]))
     return out
 
 
-def _tokenize_prose(text: str) -> list[ir.Inline]:
-    """Tokenise prose into ``Str`` runs and ``Space`` / soft-wrap separators."""
-    if not text:
-        return []
-    out: list[ir.Inline] = []
-    run: list[str] = []
-    ws: list[str] = []
+def _prose(text: str) -> list[model.Inline]:
+    out: list[model.Inline] = []
+    for index, piece in enumerate(_SOFT_BREAK.split(text)):
+        if index:
+            out.append(model.SoftBreak())
+        if piece:
+            out.append(model.Str(piece))
+    return out
 
-    def flush_ws() -> None:
-        if not ws:
-            return
-        # Preserve the distinction the legacy ``soup.get_text()`` kept: a
-        # whitespace run that contains a newline (Markdown's soft line wrap,
-        # possibly with continuation indentation) is kept verbatim as a
-        # ``SoftBreak`` carrying the literal whitespace; inter-word spacing
-        # collapses to a single ``Space`` (rendered as ``" "``).
-        run = "".join(ws)
-        # The legacy ``get_text()`` preserved source whitespace verbatim. A run
-        # containing a newline (soft line wrap + any continuation indentation)
-        # or a run of more than one space is kept literally in a ``Str`` (the
-        # writer leaves whitespace unescaped); a single inter-word space
-        # collapses to a ``Space``. Paragraph edge-stripping treats a
-        # whitespace-only ``Str`` like a ``Space``.
-        if "\n" in run or len(run) > 1:
-            out.append(ir.Str(run))
-        elif not out or not isinstance(out[-1], (ir.Space, ir.SoftBreak)):
-            out.append(ir.Space())
-        ws.clear()
 
-    for char in text:
-        if char.isspace():
-            if run:
-                out.append(ir.Str("".join(run)))
-                run.clear()
-            ws.append(char)
+def _merge_strs(inlines: list[model.Inline]) -> tuple[model.Inline, ...]:
+    """Join adjacent ``Str`` nodes (bs4 splits text at entities and stripped tags)."""
+    merged: list[model.Inline] = []
+    for node in inlines:
+        previous = merged[-1] if merged else None
+        if isinstance(node, model.Str) and isinstance(previous, model.Str):
+            merged[-1] = model.Str(previous.text + node.text)
         else:
-            flush_ws()
-            run.append(char)
-    if run:
-        out.append(ir.Str("".join(run)))
-    flush_ws()
-    return out
+            merged.append(node)
+    return tuple(merged)
 
 
-def _strip_edges(inlines: tuple[ir.Inline, ...]) -> tuple[ir.Inline, ...]:
-    """Drop leading/trailing ``Space`` from a paragraph's inline content."""
-    start = 0
-    end = len(inlines)
-    while start < end and _is_edge_space(inlines[start]):
-        start += 1
-    while end > start and _is_edge_space(inlines[end - 1]):
-        end -= 1
-    return inlines[start:end]
+def _number(document: model.Document) -> model.Document:
+    """Give every node (and footnote / abbreviation record) a dense id from 1."""
+    counter = 0
+
+    def assign(node: model.Node) -> model.Node:
+        nonlocal counter
+        counter += 1
+        return replace(node, id=counter)
+
+    numbered = map_tree(document, assign)
+    footnotes = []
+    for note in numbered.footnotes:
+        counter += 1
+        footnotes.append(replace(note, id=counter))
+    abbreviations = []
+    for abbr in numbered.abbreviations:
+        counter += 1
+        abbreviations.append(replace(abbr, id=counter))
+    return replace(numbered, footnotes=tuple(footnotes), abbreviations=tuple(abbreviations))
 
 
-def _is_edge_space(node: ir.Inline) -> bool:
-    """Whether an inline is trimmable paragraph-edge whitespace."""
-    if isinstance(node, (ir.Space, ir.SoftBreak)):
-        return True
-    return isinstance(node, ir.Str) and not node.text.strip()
-
-
-def _as_blocks(outcome: object) -> tuple[ir.Block, ...]:
+def _as_blocks(outcome: object) -> tuple[model.Block, ...]:
     if outcome is None:
         return ()
-    if isinstance(outcome, ir.Block):
+    if isinstance(outcome, model.Block):
         return (outcome,)
     # An ANY-level lowering invoked at block level may yield an inline node
-    # (e.g. a standalone image); wrap it in a Plain so the IR stays well-formed.
-    if isinstance(outcome, ir.Inline):
-        return (ir.Plain(content=(outcome,)),)
+    # (e.g. a standalone image); wrap it in a Para so the IR stays well-formed.
+    if isinstance(outcome, model.Inline):
+        return (model.Para(content=(outcome,)),)
     if isinstance(outcome, (list, tuple)):
-        blocks: list[ir.Block] = []
+        blocks: list[model.Block] = []
         for item in outcome:
-            if isinstance(item, ir.Block):
+            if isinstance(item, model.Block):
                 blocks.append(item)
-            elif isinstance(item, ir.Inline):
-                blocks.append(ir.Plain(content=(item,)))
+            elif isinstance(item, model.Inline):
+                blocks.append(model.Para(content=(item,)))
         return tuple(blocks)
     msg = f"block lowering returned a non-block node: {outcome!r}"
     raise TypeError(msg)
 
 
-def _as_inlines(outcome: object) -> tuple[ir.Inline, ...]:
+def _as_inlines(outcome: object) -> tuple[model.Inline, ...]:
     if outcome is None:
         return ()
-    if isinstance(outcome, ir.Inline):
+    if isinstance(outcome, model.Inline):
         return (outcome,)
     if isinstance(outcome, (list, tuple)):
-        return tuple(item for item in outcome if isinstance(item, ir.Inline))
+        return tuple(item for item in outcome if isinstance(item, model.Inline))
     msg = f"inline lowering returned a non-inline node: {outcome!r}"
     raise TypeError(msg)
 
 
-__all__ = ["HtmlReader"]
+__all__ = ["HtmlReader", "build_reader_registry", "text_to_inline"]

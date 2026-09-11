@@ -72,7 +72,7 @@ def apply_render_extensions(
     bundled-only read→write path untouched.
     """
     if readers:
-        from texsmith.readers.html import build_reader_registry
+        from texsmith.readers.html_legacy import build_reader_registry
 
         renderer.reader_registry = build_reader_registry(resolve_reader_modules(readers))
     if writer:

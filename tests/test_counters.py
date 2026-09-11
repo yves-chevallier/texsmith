@@ -35,7 +35,7 @@ from texsmith.core.counters import (
 )
 from texsmith.core.diagnostics import LoggingEmitter, use_emitter
 from texsmith.diagnostics import DiagnosticSink
-from texsmith.readers.html import HtmlReader
+from texsmith.readers.html_legacy import HtmlReader
 from texsmith.writers.typst import TypstWriter, TypstWriterState
 from texsmith.writers.typst.writer import citation_label
 

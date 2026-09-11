@@ -24,10 +24,11 @@ def test_data_script_paragraphs_group_into_environments(tmp_path: Path) -> None:
 
     bundle = convert_documents([doc], output_dir=tmp_path)
     latex = bundle.fragments[0].latex
-    assert latex.count("\\begin{arabics}") == 1
-    assert "\\begin{arabics}" in latex and "\\end{arabics}" in latex
-    assert "ألف" in latex and "باء" in latex
-    assert "\\begin{chinese}" in latex and "\\end{chinese}" in latex
+    # An HTML input renders through the tmark writers: a ``data-script``
+    # paragraph is one ``\\tsscript`` run (the ``ts-fonts`` contract).
+    assert "\\tsscript{arabics}{ألف}" in latex
+    assert "\\tsscript{arabics}{باء}" in latex
+    assert "\\tsscript{chinese}{漢字}" in latex
 
     usage = bundle.fragments[0].conversion.document_state.script_usage
     slugs = {entry.get("slug") for entry in usage}
@@ -45,7 +46,7 @@ def test_data_script_spans_render_to_text_commands(tmp_path: Path) -> None:
 
     bundle = convert_documents([doc], output_dir=tmp_path)
     latex = bundle.fragments[0].latex
-    assert "\\textarabics{العربية}" in latex
+    assert "\\tsscript{arabics}{العربية}" in latex
     usage = bundle.fragments[0].conversion.document_state.script_usage
     slugs = {entry.get("slug") for entry in usage}
     assert "arabics" in slugs
