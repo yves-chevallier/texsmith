@@ -8,7 +8,7 @@ Typst).
 | Backend | Build through `--reader tmark` | Not built, why |
 | ------- | ------------------------------ | -------------- |
 | LaTeX | 31 / 32 | `emoji-color` needs `lualatex`, absent on this machine (also absent from the legacy baseline run) |
-| Typst | 20 / 26 | `book`, `paper`: `.bib` not reaching `#bibliography` on the Typst path (in progress); `markdown`, `math`: `mitex` 0.2.6 rejects `\begin{aligned}` / `\imath` (pre-existing, see baseline.md); `diagrams`, `mermaid`: verified separately from a `/home` directory (the snap `typst` cannot read `/tmp`) |
+| Typst | 24 / 26 | `markdown`, `math`: `mitex` 0.2.6 rejects `\begin{aligned}` / `\imath` (pre-existing, see baseline.md); run from a `/home` directory (the snap `typst` cannot read `/tmp`) |
 
 The `docs/` corpus (144 pages × 2 backends, minus the entries needing
 Docker, network or nested builds) renders through the tmark reader without
