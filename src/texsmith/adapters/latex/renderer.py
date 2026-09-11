@@ -1,7 +1,7 @@
 """High-level HTML→IR→LaTeX renderer.
 
 ``LaTeXRenderer`` is now a thin orchestrator: it parses the HTML fragment into
-the typed IR via :class:`texsmith.readers.html.HtmlReader`, then emits LaTeX
+the typed IR via :class:`texsmith.readers.html_legacy.HtmlReader`, then emits LaTeX
 from that IR via :class:`texsmith.writers.latex.LaTeXWriter`. The old
 mutate-the-soup-and-``get_text`` pipeline (and its phase/handler engine) is
 gone — there is a single read→write path.
@@ -17,7 +17,7 @@ from texsmith.core.config import BookConfig
 from texsmith.core.context import AssetRegistry, DocumentState
 from texsmith.core.diagnostics import DiagnosticEmitter, NullEmitter
 from texsmith.core.exceptions import LatexRenderingError
-from texsmith.readers.html import HtmlReader
+from texsmith.readers.html_legacy import HtmlReader
 from texsmith.writers.latex import LaTeXWriter, WriterState
 
 from .formatter import LaTeXFormatter

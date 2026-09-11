@@ -14,8 +14,8 @@ import sys
 from texsmith import DocumentState
 from texsmith.adapters.latex import LaTeXRenderer
 from texsmith.ir import nodes as ir
-from texsmith.readers.html.reader import _build_registry
 from texsmith.readers.html.registry import NotHandled, ReadLevel, reads
+from texsmith.readers.html_legacy import build_reader_registry
 from texsmith.writers.latex import LaTeXWriter, writes
 
 
@@ -24,7 +24,7 @@ COUNTER_KEY = "data-counter"
 
 
 @reads("span", level=ReadLevel.INLINE, name="data_counter", priority=50)
-def read_data_counter(tag, ctx):  # noqa: ANN001, ANN201
+def read_data_counter(tag, ctx):  # noqa: ANN001
     """Lower ``<span class="data-counter">`` into a counter ``Span`` hint."""
     classes = tag.get("class") or []
     tokens = {classes} if isinstance(classes, str) else set(classes)
@@ -46,7 +46,7 @@ class CountingWriter(LaTeXWriter):
 
 def build_renderer() -> LaTeXRenderer:
     """Instantiate the renderer wired with the counter reader + writer."""
-    registry = _build_registry()
+    registry = build_reader_registry()
     definition = read_data_counter.__reader_rule__  # type: ignore[attr-defined]
     registry.register(definition.bind(read_data_counter))
 

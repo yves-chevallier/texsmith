@@ -11,7 +11,7 @@ from __future__ import annotations
 import pytest
 
 from texsmith.ir import nodes as ir
-from texsmith.readers.html import HtmlReader
+from texsmith.readers.html_legacy import HtmlReader
 from texsmith.writers.typst import (
     TypstWriteError,
     TypstWriter,

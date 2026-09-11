@@ -18,7 +18,7 @@ import pytest
 from texsmith.adapters.latex import LaTeXRenderer
 from texsmith.core.config import BookConfig
 from texsmith.ir import nodes as ir
-from texsmith.readers.html import HtmlReader
+from texsmith.readers.html_legacy import HtmlReader
 
 
 @pytest.fixture

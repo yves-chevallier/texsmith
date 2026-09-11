@@ -15,8 +15,8 @@ from texsmith.core.templates.extensions import (
 )
 from texsmith.core.templates.manifest import TemplateError, TemplateInfo
 from texsmith.ir import nodes as ir
-from texsmith.readers.html import build_reader_registry
 from texsmith.readers.html.registry import ReadLevel, reads
+from texsmith.readers.html_legacy import build_reader_registry
 from texsmith.writers.latex.writer import LaTeXWriter
 from texsmith.writers.registry import writes
 
@@ -65,9 +65,9 @@ def test_template_info_defaults_have_no_extensions() -> None:
 
 
 def test_resolve_reader_modules_imports_real_modules() -> None:
-    modules = resolve_reader_modules(["texsmith.readers.html.blocks"])
+    modules = resolve_reader_modules(["texsmith.readers.html_legacy.blocks"])
     assert len(modules) == 1
-    assert modules[0].__name__ == "texsmith.readers.html.blocks"
+    assert modules[0].__name__ == "texsmith.readers.html_legacy.blocks"
 
 
 def test_resolve_reader_modules_bad_path_raises() -> None:
@@ -109,7 +109,7 @@ def test_apply_render_extensions_sets_both_seams() -> None:
     renderer = LaTeXRenderer()
     apply_render_extensions(
         renderer,
-        readers=["texsmith.readers.html.blocks"],
+        readers=["texsmith.readers.html_legacy.blocks"],
         writer="texsmith.writers.latex.writer:LaTeXWriter",
     )
     assert renderer.reader_registry is not None
