@@ -152,4 +152,28 @@ def load_typst_template(identifier: str) -> TypstTemplate:
     return TypstTemplate(root)
 
 
-__all__ = ["TypstTemplate", "load_typst_template"]
+#: The shared Typst library defining the ``#ts-…`` functions the tmark Typst
+#: writer emits (fragment-contracts.md §1, §3 rule 7). It is copied next to
+#: the ``.typ`` and imported with ``#import "texsmith.typ": *``; a template
+#: overrides a function after importing it.
+TYPST_LIBRARY_NAME = "texsmith.typ"
+TYPST_LIBRARY_PATH = (
+    Path(__file__).resolve().parent.parent.parent / "templates" / "common" / TYPST_LIBRARY_NAME
+)
+
+
+def copy_typst_library(output_dir: Path) -> Path:
+    """Copy ``texsmith.typ`` into ``output_dir`` and return the written path."""
+    output_dir.mkdir(parents=True, exist_ok=True)
+    destination = output_dir / TYPST_LIBRARY_NAME
+    shutil.copy2(TYPST_LIBRARY_PATH, destination)
+    return destination
+
+
+__all__ = [
+    "TYPST_LIBRARY_NAME",
+    "TYPST_LIBRARY_PATH",
+    "TypstTemplate",
+    "copy_typst_library",
+    "load_typst_template",
+]
