@@ -1,0 +1,137 @@
+{
+  "blocks": [
+    {
+      "type": "Header",
+      "level": 1,
+      "content": [
+        {
+          "type": "Str",
+          "text": "Emoji "
+        },
+        {
+          "type": "Span",
+          "attrs": {
+            "kv": [
+              [
+                "emoji",
+                "😀"
+              ]
+            ]
+          },
+          "content": [
+            {
+              "type": "Str",
+              "text": "😀"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "Para",
+      "content": [
+        {
+          "type": "Str",
+          "text": "Hello "
+        },
+        {
+          "type": "Span",
+          "attrs": {
+            "kv": [
+              [
+                "emoji",
+                "👋"
+              ]
+            ]
+          },
+          "content": [
+            {
+              "type": "Str",
+              "text": "👋"
+            }
+          ]
+        },
+        {
+          "type": "Str",
+          "text": " world, a rocket "
+        },
+        {
+          "type": "Span",
+          "attrs": {
+            "kv": [
+              [
+                "emoji",
+                "🚀"
+              ]
+            ]
+          },
+          "content": [
+            {
+              "type": "Str",
+              "text": "🚀"
+            }
+          ]
+        },
+        {
+          "type": "Str",
+          "text": " and "
+        },
+        {
+          "type": "Code",
+          "text": "code 😀"
+        },
+        {
+          "type": "Str",
+          "text": " and "
+        },
+        {
+          "type": "Math",
+          "text": "x^2"
+        },
+        {
+          "type": "Str",
+          "text": "."
+        }
+      ]
+    },
+    {
+      "type": "BulletList",
+      "items": [
+        {
+          "content": [
+            {
+              "type": "Para",
+              "content": [
+                {
+                  "type": "Str",
+                  "text": "Item with "
+                },
+                {
+                  "type": "Span",
+                  "attrs": {
+                    "kv": [
+                      [
+                        "emoji",
+                        "🛰️"
+                      ]
+                    ]
+                  },
+                  "content": [
+                    {
+                      "type": "Str",
+                      "text": "🛰️"
+                    }
+                  ]
+                },
+                {
+                  "type": "Str",
+                  "text": " satellite"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

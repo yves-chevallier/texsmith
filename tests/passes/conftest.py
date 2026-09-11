@@ -25,9 +25,12 @@ from typing import Any
 import pytest
 
 from texsmith.adapters.markdown import split_front_matter
+from texsmith.adapters.transformers import registry as converter_registry
 from texsmith.core.conversion.inputs import InputKind, SlotOptions
 from texsmith.core.documents import Document, TitleStrategy
 from texsmith.diagnostics import DiagnosticSink, FileTable
+from texsmith.fonts.fallback import FallbackEntry, FallbackIndex, FallbackLookup
+from texsmith.fonts.scripts import ScriptDetector
 from texsmith.ir import codec
 from texsmith.passes import REGISTRY, IdAllocator, PassContext, SlotTemplate, build_pipeline
 from texsmith.readers.loader import MemoryLoader
@@ -159,4 +162,113 @@ def harness() -> Harness:
     return Harness()
 
 
-__all__ = ["FIXTURES", "Harness", "field"]
+# ---------------------------------------------------------------------------
+# Fakes for the passes that touch processes, the network or font metadata
+# ---------------------------------------------------------------------------
+
+_PNG_MAGIC = b"\x89PNG\r\n\x1a\n"
+
+
+@dataclass(slots=True)
+class FakeConverter:
+    """A converter strategy writing a stub artefact and recording its calls.
+
+    ``name`` is the registry slot it stands in for; the artefact is named after
+    the source (its stem, or a digest of the text) with ``.png`` when the call
+    asks for ``format="png"``, else ``.pdf``.
+    """
+
+    name: str
+    calls: list[dict[str, Any]] = field(default_factory=list)
+    fail: Exception | None = None
+
+    def __call__(self, source: Any, *, output_dir: Path, **options: Any) -> Path:
+        self.calls.append({"source": source, "output_dir": Path(output_dir), **options})
+        if self.fail is not None:
+            raise self.fail
+        output_dir = Path(output_dir)
+        output_dir.mkdir(parents=True, exist_ok=True)
+        fmt = str(options.get("format", "pdf") or "pdf").lower()
+        suffix = ".png" if fmt == "png" else ".pdf"
+        if isinstance(source, Path) or (isinstance(source, str) and Path(source).exists()):
+            stem = Path(source).stem
+        else:
+            import hashlib
+
+            stem = hashlib.sha256(str(source).encode("utf-8")).hexdigest()[:12]
+        artefact = output_dir / f"{self.name}-{stem}{suffix}"
+        payload = _PNG_MAGIC if suffix == ".png" else b"%PDF-1.4\n%fake\n"
+        artefact.write_bytes(payload + f"{self.name}:{stem}".encode())
+        return artefact
+
+
+class FakeFetch(FakeConverter):
+    """The ``fetch-image`` stand-in: a PNG named after the URL's basename."""
+
+    def __call__(self, source: Any, *, output_dir: Path, **options: Any) -> Path:
+        self.calls.append({"source": source, "output_dir": Path(output_dir), **options})
+        if self.fail is not None:
+            raise self.fail
+        output_dir = Path(output_dir)
+        output_dir.mkdir(parents=True, exist_ok=True)
+        from urllib.parse import urlparse
+
+        name = Path(urlparse(str(source)).path).name or "remote"
+        suffix = str(options.get("output_suffix") or Path(name).suffix or ".png")
+        if suffix == ".svg" and options.get("convert", True):
+            suffix = ".pdf"  # the real strategy rasterises/converts SVG unless told not to
+        artefact = output_dir / f"fetched-{Path(name).stem}{suffix}"
+        artefact.write_bytes(_PNG_MAGIC + str(source).encode("utf-8"))
+        return artefact
+
+
+@pytest.fixture
+def fake_converters() -> Any:
+    """Fake ``svg``, ``drawio``, ``mermaid``, ``image`` and ``fetch-image`` strategies.
+
+    Registered for the test and restored afterwards; returns ``{name: fake}``.
+    """
+    names = ("svg", "drawio", "mermaid", "image", "fetch-image")
+    saved = {name: converter_registry.get(name) for name in names}
+    fakes: dict[str, FakeConverter] = {
+        name: (FakeFetch(name) if name == "fetch-image" else FakeConverter(name)) for name in names
+    }
+    for name, fake in fakes.items():
+        converter_registry.register(name, fake)
+    try:
+        yield fakes
+    finally:
+        for name, strategy in saved.items():
+            converter_registry.register(name, strategy)
+
+
+def _entry(name: str, start: int, end: int, group: str, font: str | None) -> FallbackEntry:
+    payload = {"name": font, "styles": ["regular", "bold"], "extension": ".otf"} if font else {}
+    return FallbackEntry(name=name, start=start, end=end, group=group, font=payload)
+
+
+#: A small Unicode-block → script table standing in for the Noto/ucharclasses index.
+FAKE_SCRIPT_INDEX: tuple[FallbackEntry, ...] = (
+    _entry("BasicLatin", 0x0000, 0x024F, "Latin", None),
+    _entry("CombiningDiacriticalMarks", 0x0300, 0x036F, "Diacritics", "NotoSans"),
+    _entry("Greek", 0x0370, 0x03FF, "Greek", "NotoSansGreek"),
+    _entry("Cyrillic", 0x0400, 0x04FF, "Cyrillics", "NotoSans"),
+    _entry("Tibetan", 0x0F00, 0x0FFF, "Tibetan", "NotoSerifTibetan"),
+    _entry("GeneralPunctuation", 0x2000, 0x206F, "Punctuation", None),
+    _entry("LetterlikeSymbols", 0x2100, 0x214F, "Symbols", "NotoSansSymbols"),
+    _entry("Hiragana", 0x3040, 0x309F, "Japanese", "NotoSansJP"),
+    _entry("Katakana", 0x30A0, 0x30FF, "Japanese", "NotoSansJP"),
+    _entry("CJKUnifiedIdeographs", 0x4E00, 0x9FFF, "Chinese", "NotoSansSC"),
+    _entry("Emoticons", 0x1F300, 0x1FAFF, "Emoji", "NotoColorEmoji"),
+)
+
+
+@pytest.fixture
+def fake_script_detector() -> ScriptDetector:
+    """A :class:`ScriptDetector` over :data:`FAKE_SCRIPT_INDEX` (no font metadata, no network)."""
+    detector = ScriptDetector()
+    detector._lookup = FallbackLookup(FallbackIndex(list(FAKE_SCRIPT_INDEX)))
+    return detector
+
+
+__all__ = ["FAKE_SCRIPT_INDEX", "FIXTURES", "FakeConverter", "FakeFetch", "Harness", "field"]

@@ -1,0 +1,123 @@
+{
+  "blocks": [
+    {
+      "type": "Header",
+      "level": 1,
+      "content": [
+        {
+          "type": "Str",
+          "text": "Local assets"
+        }
+      ]
+    },
+    {
+      "type": "Para",
+      "content": [
+        {
+          "type": "Image",
+          "src": "assets/figure.png",
+          "alt": [
+            {
+              "type": "Str",
+              "text": "A figure"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "Para",
+      "content": [
+        {
+          "type": "Image",
+          "src": "assets/diagram.pdf",
+          "alt": [
+            {
+              "type": "Str",
+              "text": "Vector"
+            }
+          ],
+          "attrs": {
+            "kv": [
+              [
+                "width",
+                "50%"
+              ]
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "type": "Para",
+      "content": [
+        {
+          "type": "Image",
+          "src": "assets/sketch.pdf",
+          "alt": [
+            {
+              "type": "Str",
+              "text": "Sketch"
+            }
+          ],
+          "attrs": {
+            "kv": [
+              [
+                "crop",
+                "false"
+              ]
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "type": "Para",
+      "content": [
+        {
+          "type": "Str",
+          "text": "[asset: missing.png: not found]"
+        }
+      ]
+    },
+    {
+      "type": "Para",
+      "content": [
+        {
+          "type": "Image",
+          "src": "assets/photo.png",
+          "alt": [
+            {
+              "type": "Str",
+              "text": "Remote"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "Para",
+      "content": [
+        {
+          "type": "Link",
+          "target": {
+            "type": "Url",
+            "value": "https://example.com"
+          },
+          "content": [
+            {
+              "type": "Image",
+              "src": "assets/figure.png",
+              "alt": [
+                {
+                  "type": "Str",
+                  "text": "Linked"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

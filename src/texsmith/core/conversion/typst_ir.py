@@ -16,6 +16,8 @@ from functools import lru_cache
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
+from texsmith.core.bibliography.collection import BibliographyCollection
+from texsmith.core.context import DocumentState
 from texsmith.core.conversion_contexts import ConversionContext, GenerationStrategy
 from texsmith.core.diagnostics import DiagnosticEmitter, NullEmitter
 from texsmith.core.templates.typst import TypstTemplate, load_typst_template
@@ -24,7 +26,7 @@ from texsmith.writers.typst import render_document
 
 from .bodies import Body, Requires, build_writer_options, write_body
 from .models import ConversionRequest
-from .pipeline import build_pass_context
+from .pipeline import apply_pass_values, build_pass_context
 from .resolution import ResolutionChain, bibliography_paths, resolve_pass
 
 
@@ -32,7 +34,7 @@ if TYPE_CHECKING:  # pragma: no cover - typing only
     from texsmith.core.documents import Document
 
 
-__all__ = ["TYPST_PRELUDE", "render_typst_from_ir", "typst_prelude"]
+__all__ = ["TYPST_PRELUDE", "render_typst_from_ir", "typst_bibliography", "typst_prelude"]
 
 _PRELUDE_PATH = Path(__file__).resolve().parents[2] / "templates" / "common" / "texsmith.typ"
 
@@ -50,6 +52,37 @@ def _uses_mitex(requires: Requires) -> bool:
     return any("mitex" in package for package in requires.packages)
 
 
+def typst_bibliography(
+    document: Document,
+    bibliography_files: Sequence[Path],
+    pass_files: Sequence[Path],
+    output_dir: Path | None,
+) -> tuple[BibliographyCollection, str | None]:
+    """The ``.bib`` the Typst scaffolding cites, with the passes' entries in it.
+
+    The legacy ``_build_bibliography`` loads the CLI files and the front-matter
+    inline entries; on the IR path the ``doi`` pass has already fetched every
+    DOI (front-matter entries and ``@doi:`` citations, whose keys it rewrote
+    to the fetched entries') into ``inline-doi-<stem>.bib`` — those files are
+    ``pass_files`` and must reach the written bibliography the way
+    ``absorb_pass_bibliography`` feeds the LaTeX path, or ``#cite(<key>)``
+    names a key Typst does not know. Keys are label-safe, as before.
+    """
+    from .typst import _build_bibliography, _write_label_safe_bibtex
+
+    collection, resource = _build_bibliography(document, bibliography_files, output_dir)
+    files = [Path(path) for path in pass_files if Path(path).is_file()]
+    if not files:
+        return collection, resource
+    collection.load_files(files)
+    if output_dir is None or not collection.to_dict():
+        return collection, resource
+    output_dir.mkdir(parents=True, exist_ok=True)
+    resource = resource or f"{document.source_path.stem}-refs.bib"
+    _write_label_safe_bibtex(collection, output_dir / resource)
+    return collection, resource
+
+
 def render_typst_from_ir(
     document: Document,
     *,
@@ -59,11 +92,16 @@ def render_typst_from_ir(
     template_options: Mapping[str, Any] | None = None,
     emitter: DiagnosticEmitter | None = None,
     chain: ResolutionChain | None = None,
+    state: DocumentState | None = None,
 ) -> str:
-    """Render a tmark-read document to a ``.typ`` source (standalone or templated)."""
+    """Render a tmark-read document to a ``.typ`` source (standalone or templated).
+
+    ``state``, when given, receives what the passes computed (script usage,
+    fallback summary, ``fonts_scanned``) through ``apply_pass_values``; the
+    same values reach the template context (``fonts``, ``emoji``).
+    """
     from .typst import (
         _author_views,
-        _build_bibliography,
         _copy_template_asset,
         _document_title,
         _front_matter,
@@ -155,6 +193,8 @@ def render_typst_from_ir(
     processed.diagnostics.extend(
         record for record in ctx.diagnostics if record not in processed.diagnostics
     )
+    pass_state = state if state is not None else DocumentState()
+    apply_pass_values(ctx, pass_state, context.template_overrides)
 
     if not title and processed.extracted_title:
         title = processed.extracted_title
@@ -168,9 +208,15 @@ def render_typst_from_ir(
             uses_mitex=_uses_mitex(requires),
         )
 
-    _collection, bib_resource = _build_bibliography(document, bibliography_files, output_dir)
+    _collection, bib_resource = typst_bibliography(
+        document, bibliography_files, ctx.bibliography, output_dir
+    )
     source_dir = document.source_path.parent
     template_context = dict(typst_template.resolve_attributes(overrides))
+    for key in ("fonts", "emoji"):
+        value = context.template_overrides.get(key)
+        if value is not None:
+            template_context.setdefault(key, value)
     author_names, author_blocks = _author_views(overrides)
     template_context["title"] = title
     template_context["author_names"] = author_names

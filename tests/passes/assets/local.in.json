@@ -1,0 +1,267 @@
+{
+  "tmark": "0.0.0",
+  "file": 0,
+  "front_matter": {
+    "id": 0,
+    "span": [
+      0,
+      0,
+      0
+    ],
+    "keys": {}
+  },
+  "blocks": [
+    {
+      "type": "Header",
+      "id": 1,
+      "span": [
+        0,
+        0,
+        14
+      ],
+      "level": 1,
+      "content": [
+        {
+          "type": "Str",
+          "id": 2,
+          "span": [
+            0,
+            2,
+            14
+          ],
+          "text": "Local assets"
+        }
+      ]
+    },
+    {
+      "type": "Para",
+      "id": 3,
+      "span": [
+        0,
+        16,
+        39
+      ],
+      "content": [
+        {
+          "type": "Image",
+          "id": 4,
+          "span": [
+            0,
+            16,
+            39
+          ],
+          "src": "figure.png",
+          "alt": [
+            {
+              "type": "Str",
+              "id": 6,
+              "span": [
+                0,
+                16,
+                24
+              ],
+              "text": "A figure"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "Para",
+      "id": 7,
+      "span": [
+        0,
+        41,
+        74
+      ],
+      "content": [
+        {
+          "type": "Image",
+          "id": 8,
+          "span": [
+            0,
+            41,
+            74
+          ],
+          "src": "diagram.svg",
+          "alt": [
+            {
+              "type": "Str",
+              "id": 10,
+              "span": [
+                0,
+                41,
+                47
+              ],
+              "text": "Vector"
+            }
+          ],
+          "attrs": {
+            "kv": [
+              [
+                "width",
+                "50%"
+              ]
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "type": "Para",
+      "id": 11,
+      "span": [
+        0,
+        76,
+        112
+      ],
+      "content": [
+        {
+          "type": "Image",
+          "id": 12,
+          "span": [
+            0,
+            76,
+            112
+          ],
+          "src": "sketch.drawio",
+          "alt": [
+            {
+              "type": "Str",
+              "id": 14,
+              "span": [
+                0,
+                76,
+                82
+              ],
+              "text": "Sketch"
+            }
+          ],
+          "attrs": {
+            "kv": [
+              [
+                "crop",
+                "false"
+              ]
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "type": "Para",
+      "id": 15,
+      "span": [
+        0,
+        114,
+        134
+      ],
+      "content": [
+        {
+          "type": "Image",
+          "id": 16,
+          "span": [
+            0,
+            114,
+            134
+          ],
+          "src": "missing.png",
+          "alt": [
+            {
+              "type": "Str",
+              "id": 18,
+              "span": [
+                0,
+                114,
+                118
+              ],
+              "text": "Gone"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "Para",
+      "id": 19,
+      "span": [
+        0,
+        136,
+        180
+      ],
+      "content": [
+        {
+          "type": "Image",
+          "id": 20,
+          "span": [
+            0,
+            136,
+            180
+          ],
+          "src": "https://example.com/pic/photo.png",
+          "alt": [
+            {
+              "type": "Str",
+              "id": 22,
+              "span": [
+                0,
+                136,
+                142
+              ],
+              "text": "Remote"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "Para",
+      "id": 23,
+      "span": [
+        0,
+        182,
+        236
+      ],
+      "content": [
+        {
+          "type": "Link",
+          "id": 24,
+          "span": [
+            0,
+            182,
+            236
+          ],
+          "content": [
+            {
+              "type": "Image",
+              "id": 25,
+              "span": [
+                0,
+                183,
+                214
+              ],
+              "src": "figure.png#only-dark",
+              "alt": [
+                {
+                  "type": "Str",
+                  "id": 27,
+                  "span": [
+                    0,
+                    183,
+                    189
+                  ],
+                  "text": "Linked"
+                }
+              ]
+            }
+          ],
+          "target": {
+            "type": "Url",
+            "value": "https://example.com"
+          }
+        }
+      ]
+    }
+  ],
+  "diagnostics": []
+}

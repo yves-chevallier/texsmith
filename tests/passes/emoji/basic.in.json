@@ -1,0 +1,135 @@
+{
+  "tmark": "0.0.0",
+  "file": 0,
+  "front_matter": {
+    "id": 0,
+    "span": [
+      0,
+      0,
+      0
+    ],
+    "keys": {}
+  },
+  "blocks": [
+    {
+      "type": "Header",
+      "id": 1,
+      "span": [
+        0,
+        0,
+        12
+      ],
+      "level": 1,
+      "content": [
+        {
+          "type": "Str",
+          "id": 2,
+          "span": [
+            0,
+            2,
+            12
+          ],
+          "text": "Emoji 😀"
+        }
+      ]
+    },
+    {
+      "type": "Para",
+      "id": 3,
+      "span": [
+        0,
+        14,
+        72
+      ],
+      "content": [
+        {
+          "type": "Str",
+          "id": 4,
+          "span": [
+            0,
+            14,
+            50
+          ],
+          "text": "Hello 👋 world, a rocket 🚀 and "
+        },
+        {
+          "type": "Code",
+          "id": 5,
+          "span": [
+            0,
+            50,
+            61
+          ],
+          "text": "code 😀"
+        },
+        {
+          "type": "Str",
+          "id": 6,
+          "span": [
+            0,
+            61,
+            66
+          ],
+          "text": " and "
+        },
+        {
+          "type": "Math",
+          "id": 7,
+          "span": [
+            0,
+            66,
+            71
+          ],
+          "text": "x^2"
+        },
+        {
+          "type": "Str",
+          "id": 8,
+          "span": [
+            0,
+            71,
+            72
+          ],
+          "text": "."
+        }
+      ]
+    },
+    {
+      "type": "BulletList",
+      "id": 9,
+      "span": [
+        0,
+        74,
+        103
+      ],
+      "items": [
+        {
+          "content": [
+            {
+              "type": "Para",
+              "id": 10,
+              "span": [
+                0,
+                76,
+                103
+              ],
+              "content": [
+                {
+                  "type": "Str",
+                  "id": 11,
+                  "span": [
+                    0,
+                    76,
+                    103
+                  ],
+                  "text": "Item with 🛰️ satellite"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "diagnostics": []
+}

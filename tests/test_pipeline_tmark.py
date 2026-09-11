@@ -392,3 +392,159 @@ def test_requires_union_and_activation() -> None:
     assert state.acronyms == {"NMR": ("NMR", "Nuclear Magnetic Resonance")}
     assert required_fragment({"ts_required_fragments": ["ts-code"]}, "ts-code")
     assert not required_fragment({}, "ts-code")
+
+
+def test_assets_emoji_and_scripts_passes_reach_the_tex(tmp_path: Path, monkeypatch) -> None:
+    """The wave-3 passes on the CLI path: copied assets, emoji spans, script runs, the font summary."""
+    from texsmith.adapters.transformers import register_converter, registry
+    from texsmith.fonts.fallback import FallbackEntry, FallbackIndex, FallbackLookup
+    from texsmith.fonts.scripts import ScriptDetector
+
+    source = tmp_path / "doc.md"
+    source.write_text(
+        "# Passes\n\nHello 😀 world and Привет.\n\n![A figure](figure.png)\n\n"
+        "```mermaid\n%% Pipeline\nflowchart LR\n  A --> B\n```\n",
+        encoding="utf-8",
+    )
+    (tmp_path / "figure.png").write_bytes(b"\x89PNG\r\n\x1a\nfake")
+
+    def fake_mermaid(diagram: str, *, output_dir: Path, **options: object) -> Path:
+        output_dir.mkdir(parents=True, exist_ok=True)
+        artefact = output_dir / "diagram.pdf"
+        artefact.write_bytes(b"%PDF-1.4\n%fake\n")
+        return artefact
+
+    saved = registry.get("mermaid")
+    register_converter("mermaid", fake_mermaid)
+    cyrillic = FallbackEntry(
+        name="Cyrillic", start=0x0400, end=0x04FF, group="Cyrillics", font={"name": "NotoSans"}
+    )
+    monkeypatch.setattr(
+        ScriptDetector,
+        "_ensure_lookup",
+        lambda self: FallbackLookup(FallbackIndex([cyrillic])),  # noqa: ARG005
+    )
+    out = tmp_path / "out"
+    try:
+        _render(["--reader", "tmark", str(source), "-o", str(out), "-t", "article"])
+    finally:
+        register_converter("mermaid", saved)
+
+    body = _body(out / "doc.tex")
+    assert "\\tsemoji{😀}" in body
+    assert "\\tsscript{cyrillics}{Привет}" in body
+    assert "\\includegraphics[width=\\linewidth]{assets/figure.png}" in body
+    assert (out / "assets" / "figure.png").is_file()
+    assert "\\caption{Pipeline}" in body
+    assert "{assets/diagram.pdf}" in body
+    # The font summary of the ``scripts`` pass reached the ts-fonts provisioning.
+    sty = (out / "ts-fonts.sty").read_text(encoding="utf-8")
+    assert "\\textcyrillics" in sty
+
+
+def _seed_doi_cache(output_dir: Path, doi: str, key: str) -> None:
+    """Pre-fill the DOI cache the ``doi`` pass reads, so no network is touched."""
+    import yaml
+
+    output_dir.mkdir(parents=True, exist_ok=True)
+    payload = (
+        f"@article{{{key},\n  author = {{Doe, Jane}},\n  title = {{Cached entry}},\n"
+        f"  journal = {{J. Tests}},\n  year = {{2020}},\n  doi = {{{doi}}}\n}}\n"
+    )
+    (output_dir / "texsmith-doi-cache.yaml").write_text(
+        yaml.safe_dump({"version": 1, "entries": {doi: payload}}), encoding="utf-8"
+    )
+
+
+def test_typst_bibliography_includes_the_doi_pass_entries(tmp_path: Path) -> None:
+    """The ``.bib`` the Typst scaffolding cites carries the CLI entries and the fetched DOIs."""
+    source = tmp_path / "doc.md"
+    source.write_text(
+        "---\ntitle: Cited\n---\n\n# Body\n\nSee @knuth84 and @doi:10.1000/cached.\n",
+        encoding="utf-8",
+    )
+    bib = tmp_path / "refs.bib"
+    bib.write_text(
+        "@book{knuth84,\n  author = {Knuth, Donald},\n  title = {The TeXbook},\n"
+        "  publisher = {Addison-Wesley},\n  year = {1984}\n}\n",
+        encoding="utf-8",
+    )
+    out = tmp_path / "out"
+    _seed_doi_cache(out, "10.1000/cached", "Doe_2020")
+    _render(
+        [
+            "--reader",
+            "tmark",
+            str(source),
+            str(bib),
+            "--format",
+            "typst",
+            "-t",
+            "article",
+            "-o",
+            str(out),
+        ]
+    )
+    typ = (out / "doc.typ").read_text(encoding="utf-8")
+    assert "#cite(<knuth84>" in typ
+    assert "#cite(<Doe_2020>" in typ
+    assert '#bibliography("doc-refs.bib"' in typ
+    refs = (out / "doc-refs.bib").read_text(encoding="utf-8")
+    assert "knuth84" in refs
+    assert "Doe_2020" in refs
+    assert (out / "inline-doi-doc.bib").is_file()
+
+
+def test_typst_assets_and_pass_values(tmp_path: Path, monkeypatch) -> None:
+    """Diagrams become PNG for Typst, images land under assets/, the pass values reach the state."""
+    from texsmith.adapters.transformers import register_converter, registry
+    from texsmith.core.context import DocumentState
+    from texsmith.core.conversion.typst_ir import render_typst_from_ir
+    from texsmith.core.documents import Document
+    from texsmith.fonts.fallback import FallbackEntry, FallbackIndex, FallbackLookup
+    from texsmith.fonts.scripts import ScriptDetector
+
+    source = tmp_path / "doc.md"
+    source.write_text(
+        "# Passes\n\nHello 😀 world and Привет.\n\n![A figure](figure.png)\n\n"
+        "```mermaid\n%% Pipeline\nflowchart LR\n  A --> B\n```\n",
+        encoding="utf-8",
+    )
+    (tmp_path / "figure.png").write_bytes(b"\x89PNG\r\n\x1a\nfake")
+    formats: list[object] = []
+
+    def fake_mermaid(diagram: str, *, output_dir: Path, **options: object) -> Path:
+        formats.append(options.get("format"))
+        output_dir.mkdir(parents=True, exist_ok=True)
+        artefact = output_dir / "diagram.png"
+        artefact.write_bytes(b"\x89PNG\r\n\x1a\nfake")
+        return artefact
+
+    saved = registry.get("mermaid")
+    register_converter("mermaid", fake_mermaid)
+    cyrillic = FallbackEntry(
+        name="Cyrillic", start=0x0400, end=0x04FF, group="Cyrillics", font={"name": "NotoSans"}
+    )
+    monkeypatch.setattr(
+        ScriptDetector,
+        "_ensure_lookup",
+        lambda self: FallbackLookup(FallbackIndex([cyrillic])),  # noqa: ARG005
+    )
+    out = tmp_path / "out"
+    state = DocumentState()
+    try:
+        document = Document.from_markdown(source, reader="tmark").prepare_for_conversion()
+        typ = render_typst_from_ir(document, template="article", output_dir=out, state=state)
+    finally:
+        register_converter("mermaid", saved)
+
+    assert formats == ["png"]
+    assert 'image("assets/diagram.png")' in typ
+    assert (out / "assets" / "diagram.png").is_file()
+    assert 'image("assets/figure.png"' in typ
+    assert (out / "assets" / "figure.png").is_file()
+    assert "caption: [Pipeline]" in typ
+    assert "#ts-emoji[😀]" in typ
+    assert '#ts-script("cyrillics")[Привет]' in typ
+    assert state.fonts_scanned is True
+    assert any(entry.get("slug") == "cyrillics" for entry in state.script_usage)

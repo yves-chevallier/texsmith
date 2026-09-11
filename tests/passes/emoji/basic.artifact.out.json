@@ -1,0 +1,105 @@
+{
+  "blocks": [
+    {
+      "type": "Header",
+      "level": 1,
+      "content": [
+        {
+          "type": "Str",
+          "text": "Emoji "
+        },
+        {
+          "type": "Image",
+          "src": "assets/fetched-1f600.pdf",
+          "attrs": {
+            "classes": [
+              "icon"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "type": "Para",
+      "content": [
+        {
+          "type": "Str",
+          "text": "Hello "
+        },
+        {
+          "type": "Image",
+          "src": "assets/fetched-1f44b.pdf",
+          "attrs": {
+            "classes": [
+              "icon"
+            ]
+          }
+        },
+        {
+          "type": "Str",
+          "text": " world, a rocket "
+        },
+        {
+          "type": "Image",
+          "src": "assets/fetched-1f680.pdf",
+          "attrs": {
+            "classes": [
+              "icon"
+            ]
+          }
+        },
+        {
+          "type": "Str",
+          "text": " and "
+        },
+        {
+          "type": "Code",
+          "text": "code 😀"
+        },
+        {
+          "type": "Str",
+          "text": " and "
+        },
+        {
+          "type": "Math",
+          "text": "x^2"
+        },
+        {
+          "type": "Str",
+          "text": "."
+        }
+      ]
+    },
+    {
+      "type": "BulletList",
+      "items": [
+        {
+          "content": [
+            {
+              "type": "Para",
+              "content": [
+                {
+                  "type": "Str",
+                  "text": "Item with "
+                },
+                {
+                  "type": "Image",
+                  "src": "assets/fetched-1f6f0-fe0f.pdf",
+                  "attrs": {
+                    "classes": [
+                      "icon"
+                    ]
+                  }
+                },
+                {
+                  "type": "Str",
+                  "text": " satellite"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
