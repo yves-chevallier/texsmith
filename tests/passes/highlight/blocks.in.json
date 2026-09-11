@@ -1,0 +1,190 @@
+{
+  "tmark": "0.0.0",
+  "file": 0,
+  "front_matter": {
+    "id": 0,
+    "span": [
+      0,
+      0,
+      0
+    ],
+    "keys": {}
+  },
+  "blocks": [
+    {
+      "type": "Header",
+      "id": 1,
+      "span": [
+        0,
+        0,
+        6
+      ],
+      "level": 1,
+      "content": [
+        {
+          "type": "Str",
+          "id": 2,
+          "span": [
+            0,
+            2,
+            6
+          ],
+          "text": "Code"
+        }
+      ]
+    },
+    {
+      "type": "CodeBlock",
+      "id": 3,
+      "span": [
+        0,
+        8,
+        115
+      ],
+      "text": "def bubble(xs):\n    for i in xs:\n        pass",
+      "lang": "py",
+      "options": {
+        "kv": [
+          [
+            "title",
+            "bubble_sort.py"
+          ],
+          [
+            "linenums",
+            "1"
+          ],
+          [
+            "hl_lines",
+            "2-3"
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Caption",
+      "id": 4,
+      "span": [
+        0,
+        117,
+        152
+      ],
+      "kind": "listing",
+      "content": [
+        {
+          "type": "Str",
+          "id": 5,
+          "span": [
+            0,
+            117,
+            139
+          ],
+          "text": "Bubble sort."
+        }
+      ],
+      "attrs": {
+        "id": "lst:bubble",
+        "id_span": [
+          0,
+          141,
+          151
+        ]
+      },
+      "position": "after"
+    },
+    {
+      "type": "CodeBlock",
+      "id": 6,
+      "span": [
+        0,
+        154,
+        200
+      ],
+      "text": "┌──┐\n│hi│\n└──┘",
+      "lang": "text"
+    },
+    {
+      "type": "Para",
+      "id": 7,
+      "span": [
+        0,
+        202,
+        250
+      ],
+      "content": [
+        {
+          "type": "Str",
+          "id": 8,
+          "span": [
+            0,
+            202,
+            209
+          ],
+          "text": "Inline "
+        },
+        {
+          "type": "Code",
+          "id": 9,
+          "span": [
+            0,
+            209,
+            221
+          ],
+          "text": "a-b.c",
+          "lang": "py"
+        },
+        {
+          "type": "Str",
+          "id": 10,
+          "span": [
+            0,
+            221,
+            229
+          ],
+          "text": ", plain "
+        },
+        {
+          "type": "Code",
+          "id": 11,
+          "span": [
+            0,
+            229,
+            234
+          ],
+          "text": "x-y"
+        },
+        {
+          "type": "Str",
+          "id": 12,
+          "span": [
+            0,
+            234,
+            240
+          ],
+          "text": ", and "
+        },
+        {
+          "type": "Code",
+          "id": 13,
+          "span": [
+            0,
+            240,
+            249
+          ],
+          "text": "z|w",
+          "lang": "c"
+        },
+        {
+          "type": "Str",
+          "id": 14,
+          "span": [
+            0,
+            249,
+            250
+          ],
+          "text": "."
+        }
+      ]
+    }
+  ],
+  "diagnostics": []
+}
