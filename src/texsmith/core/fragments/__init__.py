@@ -25,6 +25,39 @@ from texsmith.core.templates.manifest import (
 )
 
 
+def _warn_deprecated_partials(owner: str, partials: Sequence[str]) -> None:
+    """Warn that fragment ``partials`` are deprecated (fragment-contracts.md §4).
+
+    The Jinja partials stop being the rendering layer in 0.7.0; a construct is
+    restyled by redefining its contract macro. The warning names the macro that
+    replaces each overridden partial.
+    """
+    from texsmith.core.fragments.contracts import replacement_for_partial
+
+    if not partials:
+        return
+    mapping = ", ".join(f"{name} -> {replacement_for_partial(name)}" for name in partials)
+    warnings.warn(
+        f"Fragment '{owner}' declares 'partials', which is deprecated and will be "
+        f"removed in 0.8.0: override a construct by redefining its contract macro "
+        f"in the template ({mapping}). See docs/guide/templates/partials.md.",
+        FutureWarning,
+        stacklevel=3,
+    )
+
+
+def _warn_deprecated_required_partials(owner: str, required: Iterable[str]) -> None:
+    """Warn that ``required_partials`` is deprecated (fragment-contracts.md §4)."""
+    names = ", ".join(sorted(required))
+    warnings.warn(
+        f"'{owner}' declares 'required_partials' ({names}), which is deprecated and "
+        f"will be removed in 0.8.0: a replacement fragment is checked against the "
+        f"'provides' list of tmark.fragments() instead.",
+        FutureWarning,
+        stacklevel=3,
+    )
+
+
 @dataclass(slots=True)
 class FragmentDefinition:
     """Resolved fragment template ready to render."""
@@ -101,6 +134,14 @@ class FragmentDefinition:
         else:
             return resolved
 
+        _warn_deprecated_partials(
+            self.name,
+            [
+                str(name_hint) if name_hint is not None else str(payload)
+                for name_hint, payload in entries
+            ],
+        )
+
         for name_hint, payload in entries:
             path_value = Path(payload)
             resolved_path = (
@@ -132,6 +173,8 @@ class FragmentDefinition:
             key = normalise_partial_key(str(entry))
             if key:
                 required.add(key)
+        if required:
+            _warn_deprecated_required_partials(self.name, required)
         return required
 
     @classmethod
@@ -285,6 +328,15 @@ def _normalise_partials_from_fragment(
     else:
         entries = []
 
+    if entries:
+        _warn_deprecated_partials(
+            fragment.name,
+            [
+                str(name_hint) if name_hint is not None else str(payload)
+                for name_hint, payload in entries
+            ],
+        )
+
     for name_hint, payload in entries:
         path_value = Path(payload)
         resolved_path = (
@@ -314,6 +366,8 @@ def _normalise_partials_from_fragment(
         key = normalise_partial_key(str(entry))
         if key:
             required.add(key)
+    if required:
+        _warn_deprecated_required_partials(fragment.name, required)
     return resolved, required
 
 
@@ -491,6 +545,7 @@ BUILTIN_FRAGMENT_ORDER = [
     "ts-index",
     "ts-bibliography",
     "ts-todolist",
+    "ts-critic",
 ]
 
 FRAGMENT_ROOT = Path(__file__).resolve().parent.parent.parent / "fragments"
@@ -734,6 +789,8 @@ def render_fragments(
                 )
 
         for piece in fragment.pieces:
+            if not piece.is_enabled(context):
+                continue
             env = _build_environment(piece.template_path.parent)
             template = env.get_template(piece.template_path.name)
             payload = template.render(**context)
