@@ -16,22 +16,23 @@ Use the right level of power:
 
 ## Captions and Labels
 
-Put the standard TeXSmith caption line directly before the table:
+Put the standard TeXSmith caption line directly after the table:
 
 ````markdown
-Table: Fruit stock by warehouse {#tbl:stock}
-
 ```yaml table
 columns: [Fruit, Geneva, Zurich, Basel]
 rows:
   - [Apples,   120, 180, 90]
   - [Pears,    45,  ~,   110]
 ```
+
+Table: Fruit stock by warehouse {#tbl:stock}
 ````
 
 The `{#tbl:stock}` part becomes the LaTeX `\label{tbl:stock}` and can be
-referenced like any other table. The caption line also works before plain
-Markdown tables.
+referenced like any other table. The caption line also works with plain
+Markdown tables, and the line placed *before* the table is accepted as well
+(see [captions](captions.md#caption-lines) for the attachment rule).
 
 ## Full YAML Tables
 

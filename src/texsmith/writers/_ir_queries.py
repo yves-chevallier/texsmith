@@ -72,3 +72,13 @@ def _find_table(blocks: Sequence[ir.Block]) -> ir.Table | None:
             if isinstance(node, ir.Table):
                 return node
     return None
+
+
+def _find_code_block(blocks: Sequence[ir.Block]) -> ir.CodeBlock | None:
+    from texsmith.ir.visitor import walk
+
+    for block in blocks:
+        for node in walk(block):
+            if isinstance(node, ir.CodeBlock):
+                return node
+    return None
