@@ -88,6 +88,52 @@ def test_counters_example_numbers_through_resolve(tmp_path: Path) -> None:
     assert "node.id" in body
 
 
+def test_code_example_highlights_through_the_pass(tmp_path: Path) -> None:
+    out = tmp_path / "code"
+    _render(
+        [
+            "--reader",
+            "tmark",
+            str(EXAMPLES / "code" / "code-block.md"),
+            "-o",
+            str(out),
+            "-t",
+            "article",
+        ]
+    )
+    body = _body(out / "code-block.tex")
+    # Decision X3: the writer prints the Div{code} as a tscode environment
+    # around the Pygments Verbatim payload of the highlight pass.
+    assert "\\begin{tscode}[lang=py, title={Bubble Sort Algorithm}, engine=pygments]" in body
+    assert "\\begin{tscode}[lang=javascript, linenums, engine=pygments]" in body
+    assert "\\begin{tscode}[lang=lisp, hl_lines={2-3}, engine=pygments]" in body
+    assert "\\begin{Verbatim}[commandchars=\\\\\\{\\}" in body
+    assert "highlightlines={2-3}" in body
+    assert "\\PY{k}{def}" in body
+    assert "\\PY{n+nf}{bubble\\PYZus{}sort}" in body
+    # The style definitions reach ts-code through the document state.
+    assert "\\PY@reset" in (out / "ts-code.sty").read_text(encoding="utf-8")
+
+
+def test_features_example_splices_the_fence_include(tmp_path: Path) -> None:
+    out = tmp_path / "features"
+    _render(
+        [
+            "--reader",
+            "tmark",
+            str(EXAMPLES / "markdown" / "features.md"),
+            "-o",
+            str(out),
+            "-t",
+            "article",
+        ]
+    )
+    body = _body(out / "features.tex")
+    # ``--8<-- "hanoi.py"`` inside the python fence: the include pass read the file.
+    assert "\\PY{n+nf}{tower\\PYZus{}of\\PYZus{}hanoi}" in body
+    assert "[include:" not in body
+
+
 def test_typst_hello_example_writes_a_typst_body(tmp_path: Path) -> None:
     out = tmp_path / "hello"
     _render(
