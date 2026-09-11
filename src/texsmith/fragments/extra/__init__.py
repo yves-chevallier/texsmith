@@ -6,6 +6,8 @@ from pathlib import Path
 from typing import Any, ClassVar
 
 from texsmith.core.fragments.base import BaseFragment, FragmentPiece
+from texsmith.core.fragments.contracts import FRAGMENT_OWNED_PACKAGES, PACKAGE_OPTIONS
+from texsmith.core.fragments.resolution import REQUIRES_PACKAGES_KEY
 
 
 @dataclass(frozen=True)
@@ -14,7 +16,14 @@ class ExtraConfig:
 
     @classmethod
     def from_context(cls, context: Mapping[str, Any]) -> ExtraConfig:
-        return cls(packages=_collect_packages(context))
+        contract = _contract_packages(context)
+        if contract is None:
+            return cls(packages=_collect_packages(context))
+        packages = list(contract)
+        for entry in _collect_packages(context):
+            if entry[0] not in {name for name, _ in packages}:
+                packages.append(entry)
+        return cls(packages=packages)
 
     def inject_into(self, context: dict[str, Any]) -> None:
         context["ts_extra_packages"] = self.packages
@@ -42,6 +51,45 @@ class ExtraFragment(BaseFragment[ExtraConfig]):
 
     def should_render(self, config: ExtraConfig) -> bool:
         return config.enabled()
+
+
+def _contract_packages(context: Mapping[str, object]) -> list[tuple[str, str | None]] | None:
+    """Packages named by a writer's ``Requires`` (fragment-contracts.md §2).
+
+    ``None`` when the context carries no ``ts_requires_packages`` (the legacy
+    path, where the string sniffers of :func:`_collect_packages` decide).
+    Packages a contract fragment loads itself with options (``glossaries``,
+    ``imakeidx``, …) or that only exist for some engines (``fontspec``) are
+    left to their fragment; ``ulem`` takes ``normalem`` so ``\\emph`` survives.
+    """
+    raw = context.get(REQUIRES_PACKAGES_KEY)
+    if raw is None:
+        return None
+    names = [raw] if isinstance(raw, str) else [str(item) for item in raw if item]
+    engine = str(context.get("latex_engine") or "").lower()
+    packages: list[tuple[str, str | None]] = []
+    for name in names:
+        if name in FRAGMENT_OWNED_PACKAGES:
+            continue
+        if name == "babel":
+            # The template loads babel with its language option.
+            continue
+        if name == "hyperref" and context.get("ts_extra_disable_hyperref"):
+            continue
+        if name == "lua-ul" and engine != "lualatex":
+            continue
+        options = PACKAGE_OPTIONS.get(name)
+        if name == "hyperref":
+            options = None
+            for key in ("ts_extra_hyperref_options", "hyperref_options"):
+                value = context.get(key)
+                if isinstance(value, str) and value.strip():
+                    options = value.strip()
+                    break
+        entry = (name, options)
+        if entry not in packages:
+            packages.append(entry)
+    return packages
 
 
 def _collect_packages(context: Mapping[str, object]) -> list[tuple[str, str | None]]:

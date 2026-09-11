@@ -7,6 +7,7 @@ from typing import Any, ClassVar
 
 from texsmith.core.fragments.activation import required_fragment
 from texsmith.core.fragments.base import BaseFragment, FragmentPiece
+from texsmith.core.fragments.resolution import contract_active
 
 
 @dataclass(frozen=True)
@@ -15,7 +16,8 @@ class TodolistConfig:
 
     @classmethod
     def from_context(cls, context: Mapping[str, Any]) -> TodolistConfig:
-        return cls(uses_todolist=_detect_todolist(context))
+        active = contract_active(context, "ts-todolist")
+        return cls(uses_todolist=_detect_todolist(context) if active is None else active)
 
     def inject_into(self, context: dict[str, Any]) -> None:
         context["ts_todolist_enabled"] = self.uses_todolist

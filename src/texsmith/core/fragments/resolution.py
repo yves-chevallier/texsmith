@@ -15,7 +15,7 @@ merge can be unit-tested without a template runtime.
 
 from __future__ import annotations
 
-from collections.abc import Sequence
+from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -121,4 +121,147 @@ def merge_fragments(
     return result
 
 
-__all__ = ["FragmentModifiers", "merge_fragments", "parse_modifiers"]
+# --------------------------------------------------------------------------
+# Activation from a writer's ``Requires`` (fragment-contracts.md §2)
+# --------------------------------------------------------------------------
+
+#: Context key carrying the fragments activated from ``Requires``. When it is
+#: present, a contract fragment renders iff its name is listed; when it is
+#: absent (the legacy Jinja path) the fragments keep their content sniffers.
+ACTIVE_FRAGMENTS_KEY = "ts_active_fragments"
+
+#: Context key carrying the packages ``ts-extra`` must load on the contract
+#: path: ``Requires.packages`` merged with the packages implied by the active
+#: rows.
+REQUIRES_PACKAGES_KEY = "ts_requires_packages"
+
+#: Fragments that are configuration, not contracts: always active.
+_ALWAYS_ACTIVE = ("ts-fonts", "ts-extra")
+
+
+def _clean_strings(values: Any) -> list[str]:
+    if not values:
+        return []
+    if isinstance(values, str):
+        return [values]
+    if isinstance(values, Mapping):
+        return [str(key) for key in values]
+    try:
+        return [str(item) for item in values if item is not None]
+    except TypeError:
+        return []
+
+
+def activate_from_requires(
+    requires: Mapping[str, Any] | None,
+    *,
+    front_matter: Mapping[str, Any] | None = None,
+) -> set[str]:
+    """Map a writer's ``Requires`` onto the set of active fragments.
+
+    Implements the activation table of ``fragment-contracts.md`` §2:
+
+    - every row of ``FRAGMENTS`` named in ``requires["fragments"]``;
+    - ``ts-index`` when ``requires["index"]`` lists a registry;
+    - ``ts-bibliography`` when ``requires["bibliography"]`` is set or a
+      citation was recorded;
+    - ``ts-glossary`` when the writer emitted an acronym, or the front matter
+      declares ``glossary`` / ``acronyms``;
+    - ``ts-fonts`` and ``ts-extra`` always (configuration, not contracts).
+
+    ``ts-geometry`` and ``ts-frame`` stay governed by their own configuration
+    and are not part of the result.
+    """
+    payload: Mapping[str, Any] = requires or {}
+    active: set[str] = set(_clean_strings(payload.get("fragments")))
+    if _clean_strings(payload.get("index")):
+        active.add("ts-index")
+    if bool(payload.get("bibliography")) or _clean_strings(payload.get("citations")):
+        active.add("ts-bibliography")
+    if _clean_strings(payload.get("acronyms")):
+        active.add("ts-glossary")
+    if front_matter:
+        press = front_matter.get("press")
+        sections: list[Mapping[str, Any]] = [front_matter]
+        if isinstance(press, Mapping):
+            sections.append(press)
+        for section in sections:
+            if section.get("glossary") or section.get("acronyms"):
+                active.add("ts-glossary")
+                break
+    active.update(_ALWAYS_ACTIVE)
+    return active
+
+
+def extra_packages_from_requires(
+    requires: Mapping[str, Any] | None,
+    active: Iterable[str] | None = None,
+) -> list[str]:
+    """``Requires.packages`` merged with the packages implied by the active rows.
+
+    This is the list ``ts-extra`` loads on the contract path (and the
+    ``tlmgr`` hint list); the order is the writer's, then the table's.
+    """
+    from texsmith.core.fragments.contracts import implied_packages
+
+    payload: Mapping[str, Any] = requires or {}
+    names = set(active) if active is not None else activate_from_requires(payload)
+    ordered: dict[str, None] = {}
+    for package in _clean_strings(payload.get("packages")):
+        ordered.setdefault(package, None)
+    for package in implied_packages(names):
+        ordered.setdefault(package, None)
+    return list(ordered)
+
+
+def contract_active(context: Mapping[str, Any], name: str) -> bool | None:
+    """Whether ``name`` was activated from ``Requires`` in ``context``.
+
+    Returns ``None`` when the context carries no activation set, so a fragment
+    can fall back to its legacy detection.
+    """
+    active = context.get(ACTIVE_FRAGMENTS_KEY)
+    if active is None:
+        return None
+    if isinstance(active, str):
+        return active == name
+    try:
+        return name in set(active)
+    except TypeError:
+        return None
+
+
+def inject_requires(
+    context: dict[str, Any],
+    requires: Mapping[str, Any] | None,
+    *,
+    front_matter: Mapping[str, Any] | None = None,
+) -> set[str]:
+    """Populate ``context`` with the activation set and the package list.
+
+    Returns the active fragment names. The caller (the tmark reader path)
+    still decides which fragments the template lists; this only settles
+    which of the contract rows render and what ``ts-extra`` loads.
+    """
+    active = activate_from_requires(requires, front_matter=front_matter)
+    context[ACTIVE_FRAGMENTS_KEY] = sorted(active)
+    context[REQUIRES_PACKAGES_KEY] = extra_packages_from_requires(requires, active)
+    payload: Mapping[str, Any] = requires or {}
+    registries = [name for name in _clean_strings(payload.get("index")) if name]
+    context.setdefault("index_registries", registries)
+    if payload.get("shell_escape"):
+        context["requires_shell_escape"] = True
+    return active
+
+
+__all__ = [
+    "ACTIVE_FRAGMENTS_KEY",
+    "REQUIRES_PACKAGES_KEY",
+    "FragmentModifiers",
+    "activate_from_requires",
+    "contract_active",
+    "extra_packages_from_requires",
+    "inject_requires",
+    "merge_fragments",
+    "parse_modifiers",
+]

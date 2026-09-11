@@ -7,26 +7,51 @@ while staying configurable from front matter or your own extensions.
 
 ## Built-in fragments
 
+Most built-in fragments are **contract fragments**: they define the macros
+the tmark writer emits for a construct (`\tsmark`, `tscallout`, `tscode`,
+`\tskeys`, …), listed per fragment in `tmark.fragments()` and documented in
+[Contract macros](partials.md). A contract fragment renders when the writer
+names it in `Requires.fragments` (on the legacy Jinja path, when its macros
+appear in the rendered content).
+
 `ts-geometry`
 : page size/orientation glue that mirrors `press.paper`/`press.geometry` options.
 
+`ts-typesetting`
+: paragraph spacing, leading and line numbers (inline, when configured), and the
+  contract macros `\tslead`, `\tsmark`, `\tsdivider`, `\tsepigraph`, `\tsaside`,
+  `\tsprogress`, `\tsicon` and the `tsdiv` container (`ts-typesetting.sty`, when
+  the writer requires it).
+
+`ts-fonts`
+: font selection driven by `fonts.family`, script fallback fonts, and the
+  `\tsscript` / `\tsemoji` switches.
+
 `ts-extra`
-: opt-in aux packages detected from the rendered content (hyperref, soul, ulem, etc.).
+: aux packages: `Requires.packages` of the writer merged with the packages the
+  active contract fragments imply (on the legacy path, detected from the
+  rendered content: hyperref, soul, ulem, etc.).
 
 `ts-keystrokes`
-: renders `\keystroke{…}` shortcuts with styled TikZ boxes when they appear in content.
+: `\tskeys{Ctrl,Alt,Del}` (and the legacy `\keystroke{…}`) as styled TikZ boxes.
 
 `ts-callouts`
-: admonition/callout boxes generated from callout definitions.
+: the `tscallout` environment (and the legacy `callout` box) generated from the
+  callout definitions and `press.callouts.*`.
 
 `ts-code`
-: unified minted/tcolorbox code listing style.
+: the `tscode` environment and `\tscodeinline`, over minted, listings or
+  fvextra according to `code.engine`.
+
+`ts-critic`
+: critic markup: `\tsins`, `\tsdel`, `\tssubst`, `\tscomment`.
 
 `ts-index`
-: central imakeidx/macros glue, selects texindy/makeindex and runs `\makeindex` when entries are present.
+: `\tsindex`, central imakeidx glue, one `\makeindex[name=…]` per registry of
+  `Requires.index`, texindy/makeindex selection.
 
 `ts-glossary`
-: glossary and acronym wiring: loads `glossaries`, runs `\makeglossaries` when needed, and materializes acronym definitions from front matter with configurable styles.
+: `\tsgls` / `\tsacr` and the glossary wiring: loads `glossaries`, runs `\makeglossaries` when needed, and materializes acronym definitions from front matter with configurable styles.
 
 `ts-bibliography`
 : bibliography helper that wires `biblatex` into the rendered document.

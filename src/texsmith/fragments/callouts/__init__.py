@@ -1,12 +1,13 @@
 from __future__ import annotations
 
 from collections.abc import Mapping
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, ClassVar
 
 from texsmith.core.fragments.activation import required_fragment
 from texsmith.core.fragments.base import BaseFragment, FragmentPiece
+from texsmith.core.fragments.resolution import contract_active
 from texsmith.core.templates.manifest import TemplateAttributeSpec
 
 
@@ -14,16 +15,41 @@ from texsmith.core.templates.manifest import TemplateAttributeSpec
 class CalloutsConfig:
     style: str | None
     uses_callouts: bool
+    #: ``kind`` → default title of a ``tscallout`` without ``title=``.
+    words: Mapping[str, str] = field(default_factory=dict)
 
     @classmethod
     def from_context(cls, context: Mapping[str, Any]) -> CalloutsConfig:
+        active = contract_active(context, "ts-callouts")
         return cls(
             style=context.get("callout_style"),
-            uses_callouts=_detect_callouts(context),
+            uses_callouts=_detect_callouts(context) if active is None else active,
+            words=_callout_words(context),
         )
 
     def inject_into(self, context: dict[str, Any]) -> None:
         context["ts_callouts_style"] = self.style
+        context["ts_callout_words"] = dict(self.words)
+
+
+def _callout_words(context: Mapping[str, Any]) -> dict[str, str]:
+    """Default titles: the capitalised kind, tmark's admonition labels on top."""
+    words: dict[str, str] = {}
+    definitions = context.get("callouts_definitions")
+    if isinstance(definitions, Mapping):
+        for name in definitions:
+            key = str(name)
+            words[key] = key[:1].upper() + key[1:]
+    try:
+        import tmark  # type: ignore[import-not-found]
+
+        rows = tmark.registries().get("admonitions", [])
+    except Exception:
+        rows = []
+    for row in rows:
+        if isinstance(row, Mapping) and row.get("name") and row.get("label"):
+            words[str(row["name"])] = str(row["label"])
+    return words
 
 
 class CalloutsFragment(BaseFragment[CalloutsConfig]):

@@ -8,5 +8,41 @@
 \BLOCK{ endif }
 
 \makeindex
+\BLOCK{ for registry in ts_index_registries | default([]) }
+\BLOCK{ if registry }
+\makeindex[name=\VAR{registry}, title={\VAR{registry|capitalize|latex_escape}}]
+\BLOCK{ endif }
+\BLOCK{ endfor }
+
+% ---------------------------------------------------------------------------
+% Contract macro (fragment-contracts.md §1):
+%   \tsindex[registry=r, main]{sort@formatted!sub}
+% Zero-width: the writer prints the visible term before it. ``main`` sets
+% the page number in bold; ``registry`` selects a named index declared above
+% (Requires.index lists them). Unknown keys are ignored.
+\RequirePackage{pgfkeys}
+\newif\ifts@index@main
+\pgfkeys{/ts/index/.cd,
+  registry/.store in=\ts@index@registry,
+  main/.is if=ts@index@main,
+  .unknown/.code={},
+}
+\newcommand{\ts@index@entry}[2]{\index[#1]{#2}}
+\NewDocumentCommand{\tsindex}{O{}m}{%
+  \begingroup
+  \def\ts@index@registry{}%
+  \ts@index@mainfalse
+  \pgfkeys{/ts/index/.cd,#1}%
+  \ifx\ts@index@registry\@empty
+    \ifts@index@main\index{#2|textbf}\else\index{#2}\fi
+  \else
+    \ifts@index@main
+      \expandafter\ts@index@entry\expandafter{\ts@index@registry}{#2|textbf}%
+    \else
+      \expandafter\ts@index@entry\expandafter{\ts@index@registry}{#2}%
+    \fi
+  \fi
+  \endgroup
+}
 
 \endinput

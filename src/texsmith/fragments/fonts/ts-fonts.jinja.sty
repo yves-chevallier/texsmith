@@ -8,6 +8,18 @@
 \RequirePackage{iftex}
 % Fallback definition replaced when emoji fonts are available.
 \providecommand{\texsmithEmoji}[1]{\textbf{!}}
+% Contract macros (fragment-contracts.md §1): \tsscript{slug}{text} switches
+% to the fallback font declared for a script (\text<slug>, declared below
+% from the scripts pass; transparent when no fallback font exists) and
+% \tsemoji{…} typesets an emoji through the emoji font.
+\NewDocumentCommand{\tsscript}{mm}{%
+  \ifcsname text#1\endcsname
+    \csname text#1\endcsname{#2}%
+  \else
+    #2%
+  \fi
+}
+\NewDocumentCommand{\tsemoji}{m}{\texsmithEmoji{#1}}
 \catcode"2135=\active
 \protected\def^^^^2135{\ensuremath{\aleph}}
 % Map U+200B (zero-width space) to a zero-width breakable skip.

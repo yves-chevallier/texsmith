@@ -6,20 +6,32 @@ from pathlib import Path
 from typing import Any, ClassVar
 
 from texsmith.core.fragments.base import BaseFragment, FragmentPiece
+from texsmith.core.fragments.resolution import contract_active
 
 
 @dataclass(frozen=True)
 class IndexConfig:
     has_index: bool
+    #: Named registries (``Requires.index``) → ``\makeindex[name=…]``.
+    registries: tuple[str, ...] = ()
 
     @classmethod
     def from_context(cls, context: Mapping[str, Any]) -> IndexConfig:
         has_flag = context.get("has_index")
         entries = context.get("index_terms")
-        return cls(has_index=bool(has_flag) or bool(entries))
+        has_index = bool(has_flag) or bool(entries)
+        active = contract_active(context, "ts-index")
+        if active is not None:
+            has_index = has_index or active
+        raw = context.get("index_registries") or ()
+        registries = tuple(
+            dict.fromkeys(str(name) for name in raw if isinstance(name, str) and name.strip())
+        )
+        return cls(has_index=has_index, registries=registries)
 
     def inject_into(self, context: dict[str, Any]) -> None:
         context["ts_index_enabled"] = self.has_index
+        context["ts_index_registries"] = list(self.registries)
 
 
 class IndexFragment(BaseFragment[IndexConfig]):

@@ -1,0 +1,20 @@
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{ts-critic}[2026/09/11 TeXSmith critic markup (generated)]
+% Contract macros of the ``ts-critic`` fragment (fragment-contracts.md §1):
+% \tsins{…}, \tsdel{…}, \tssubst{old}{new}, \tscomment{…}. The former
+% add/addition, del/deletion, substitution and comment partials named boxes
+% no fragment defined (goodbox, commentbox); the colours below stand in.
+
+\RequirePackage[normalem]{ulem}
+\RequirePackage{xcolor}
+
+\providecolor{tsCriticIns}{HTML}{1B7F3B}
+\providecolor{tsCriticDel}{HTML}{B3261E}
+\providecolor{tsCriticComment}{HTML}{6B6B6B}
+
+\NewDocumentCommand{\tsins}{m}{{\color{tsCriticIns}\uline{#1}}}
+\NewDocumentCommand{\tsdel}{m}{{\color{tsCriticDel}\xout{#1}}}
+\NewDocumentCommand{\tssubst}{mm}{\tsdel{#1}\ \tsins{#2}}
+\NewDocumentCommand{\tscomment}{m}{{\color{tsCriticComment}\itshape /* #1 */}}
+
+\endinput

@@ -1,0 +1,212 @@
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{ts-typesetting}[2026/09/11 TeXSmith typesetting contract macros (generated)]
+% Contract macros of the ``ts-typesetting`` fragment (fragment-contracts.md
+% §1, §3): \tslead, \tsmark, \tsdivider, \tsepigraph, \tsaside, \tsprogress,
+% \tsicon and the tsdiv environment. Keys are pgfkeys families under
+% /ts/<name>/; unknown keys are ignored so an older fragment survives a newer
+% writer. A template restyles a construct after the extra_packages slot by
+% redefining the macro with the same signature.
+
+\RequirePackage{iftex}
+\RequirePackage{xcolor}
+\RequirePackage{graphicx}
+\RequirePackage{pgfkeys}
+\RequirePackage{epigraph}
+\RequirePackage{multicol}
+\RequirePackage{marginnote}
+\RequirePackage{progressbar}
+\ifLuaTeX
+  \RequirePackage{lua-ul}
+\fi
+\providecommand{\phantomsection}{}
+
+% ---------------------------------------------------------------- \tslead
+% Lead-in of a paragraph (Para.lead): a run-in bold line.
+\NewDocumentCommand{\tslead}{m}{\par\noindent\textbf{#1}\par\nobreak\smallskip}
+
+% ---------------------------------------------------------------- \tsmark
+% Highlight (==text==). soul breaks with ucharclasses on XeTeX (coloured
+% text instead), lua-ul on LuaTeX, a colour box on pdfTeX.
+\ifXeTeX
+  \NewDocumentCommand{\tsmark}{m}{\textcolor{yellow}{#1}}
+\else
+  \ifLuaTeX
+    \NewDocumentCommand{\tsmark}{m}{%
+      \begingroup
+      \setulcolor{yellow}%
+      \ul{#1}%
+      \endgroup
+    }
+  \else
+    \NewDocumentCommand{\tsmark}{m}{%
+      \begingroup
+      \setlength{\fboxsep}{0.8pt}%
+      \colorbox{yellow}{#1}%
+      \endgroup
+    }
+  \fi
+\fi
+
+% ------------------------------------------------------------- \tsdivider
+% A thematic break (---): paged templates render \clearpage (decisions X2).
+\NewDocumentCommand{\tsdivider}{}{\clearpage}
+
+% ------------------------------------------------------------ \tsepigraph
+\pgfkeys{/ts/epigraph/.cd,
+  source/.store in=\ts@epigraph@source,
+  .unknown/.code={},
+}
+\NewDocumentCommand{\tsepigraph}{O{}m}{%
+  \begingroup
+  \def\ts@epigraph@source{}%
+  \pgfkeys{/ts/epigraph/.cd,#1}%
+  \ifx\ts@epigraph@source\@empty
+    \epigraph{\itshape ``#2''}{}%
+  \else
+    \epigraph{\itshape ``#2''}{--- \textit{\ts@epigraph@source}}%
+  \fi
+  \endgroup
+}
+
+% --------------------------------------------------------------- \tsaside
+% A margin note; side=left|inner reverses the margin. Notes are typeset at
+% \footnotesize with a tolerant line breaker, and \marginparwidth is clamped
+% so a note never overflows the page edge (was the marginnote block of
+% ts-extra).
+\pgfkeys{/ts/aside/.cd,
+  side/.store in=\ts@aside@side,
+  .unknown/.code={},
+}
+\def\ts@aside@left{left}
+\def\ts@aside@inner{inner}
+\NewDocumentCommand{\tsaside}{O{}m}{%
+  \begingroup
+  \def\ts@aside@side{right}%
+  \pgfkeys{/ts/aside/.cd,#1}%
+  \ifx\ts@aside@side\ts@aside@left
+    {\reversemarginpar\marginnote{#2}}%
+  \else
+    \ifx\ts@aside@side\ts@aside@inner
+      {\reversemarginpar\marginnote{#2}}%
+    \else
+      \marginnote{#2}%
+    \fi
+  \fi
+  \endgroup
+}
+\renewcommand*{\marginfont}{%
+  \footnotesize
+  \sloppy
+  \emergencystretch=1em
+  \hyphenpenalty=50
+  \exhyphenpenalty=50
+}
+\newlength{\ts@aside@avail}
+\newlength{\ts@aside@alt}
+\newlength{\ts@aside@buf}
+\setlength{\ts@aside@buf}{6mm}
+\AtBeginDocument{%
+  \setlength{\ts@aside@avail}{\dimexpr\paperwidth-\textwidth-1in-\oddsidemargin-\marginparsep-\ts@aside@buf\relax}%
+  \ifdim\ts@aside@avail<\z@\setlength{\ts@aside@avail}{\z@}\fi
+  \if@twoside
+    \setlength{\ts@aside@alt}{\dimexpr1in+\evensidemargin-\marginparsep-\ts@aside@buf\relax}%
+    \ifdim\ts@aside@alt<\z@\setlength{\ts@aside@alt}{\z@}\fi
+    \ifdim\ts@aside@alt<\ts@aside@avail
+      \setlength{\ts@aside@avail}{\ts@aside@alt}%
+    \fi
+  \fi
+  \ifdim\ts@aside@avail<\marginparwidth
+    \setlength{\marginparwidth}{\ts@aside@avail}%
+  \fi
+}
+
+% ------------------------------------------------------------ \tsprogress
+% \tsprogress[thin]{0.45}{label}: a progress bar followed by its label.
+\newif\ifts@progress@thin
+\pgfkeys{/ts/progress/.cd,
+  thin/.is if=ts@progress@thin,
+  .unknown/.code={},
+}
+\NewDocumentCommand{\tsprogress}{O{}mm}{%
+  \begingroup
+  \ts@progress@thinfalse
+  \pgfkeys{/ts/progress/.cd,#1}%
+  \ifts@progress@thin
+    \def\ts@progress@height{6pt}%
+  \else
+    \def\ts@progress@height{12pt}%
+  \fi
+  {\progressbar[width=9cm,heighta=\ts@progress@height,roundnessr=0.1,borderwidth=1pt,linecolor=black,filledcolor=black!60,emptycolor=black!10]{#2} #3}\par
+  \endgroup
+}
+
+% ---------------------------------------------------------------- \tsicon
+% An inline icon (emoji artifact mode, Image{.icon}).
+\NewDocumentCommand{\tsicon}{m}{\includegraphics[width=1em]{#1}}
+
+% ---------------------------------------------------------------- \tslogo
+% \tslogo{XeLaTeX}: a TeX logo word (typography.tex-logos). \TeX, \LaTeX
+% and \LaTeXe are the kernel's and the writer emits them directly; the
+% others go through hologo. An unknown name is printed as text.
+\RequirePackage{hologo}
+\def\ts@logo@XeTeX{\hologo{XeTeX}}
+\def\ts@logo@XeLaTeX{\hologo{XeLaTeX}}
+\def\ts@logo@LuaTeX{\hologo{LuaTeX}}
+\def\ts@logo@LuaLaTeX{\hologo{LuaLaTeX}}
+\def\ts@logo@pdfTeX{\hologo{pdfTeX}}
+\def\ts@logo@pdfLaTeX{\hologo{pdfLaTeX}}
+\def\ts@logo@BibTeX{\hologo{BibTeX}}
+\def\ts@logo@BibLaTeX{Bib\LaTeX}
+\def\ts@logo@ConTeXt{\hologo{ConTeXt}}
+\def\ts@logo@TeX{\TeX}
+\def\ts@logo@LaTeX{\LaTeX}
+\expandafter\def\csname ts@logo@LaTeX2e\endcsname{\LaTeXe}
+\NewDocumentCommand{\tslogo}{m}{%
+  \ifcsname ts@logo@#1\endcsname
+    \csname ts@logo@#1\endcsname{}%
+  \else
+    #1%
+  \fi
+}
+
+% ------------------------------------------------------------------ tsdiv
+% \begin{tsdiv}{name}[keys] … \end{tsdiv}: the generic container. A name
+% with a tsdiv@<name> environment (defined with \NewDocumentEnvironment and
+% one optional argument, the raw key list) is dispatched to it; any other
+% name is transparent. Keys: cols (multicolumn, default 2), title (tab), id.
+\pgfkeys{/ts/div/.cd,
+  cols/.store in=\ts@div@cols,
+  title/.store in=\ts@div@title,
+  id/.store in=\ts@div@id,
+  class/.store in=\ts@div@class,
+  .unknown/.code={},
+}
+\NewDocumentEnvironment{tsdiv}{m O{}}{%
+  \def\ts@div@cols{2}%
+  \def\ts@div@title{}%
+  \def\ts@div@id{}%
+  \def\ts@div@class{}%
+  \pgfkeys{/ts/div/.cd,#2}%
+  \ifx\ts@div@id\@empty\else\phantomsection\label{\ts@div@id}\fi
+  \ifcsname tsdiv@#1\endcsname
+    \csname tsdiv@#1\endcsname[#2]%
+  \fi
+}{%
+  \ifcsname endtsdiv@#1\endcsname
+    \csname endtsdiv@#1\endcsname
+  \fi
+}
+\NewDocumentEnvironment{tsdiv@multicolumn}{O{}}{%
+  \begin{multicols}{\ts@div@cols}%
+}{%
+  \end{multicols}%
+}
+\NewDocumentEnvironment{tsdiv@tab}{O{}}{%
+  \ifx\ts@div@title\@empty\else
+    \par\noindent\textbf{\ts@div@title}\par\nobreak\smallskip
+  \fi
+}{%
+  \par
+}
+
+\endinput

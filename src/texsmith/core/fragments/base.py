@@ -20,6 +20,15 @@ class FragmentPiece:
     kind: FragmentKind = "package"
     slot: str = "extra_packages"
     output_name: str | None = None
+    #: Context key that must be truthy for the piece to render; ``None``
+    #: renders the piece whenever the fragment renders.
+    condition: str | None = None
+
+    def is_enabled(self, context: Mapping[str, Any]) -> bool:
+        """Whether the piece renders under ``context``."""
+        if self.condition is None:
+            return True
+        return bool(context.get(self.condition))
 
     @classmethod
     def from_mapping(cls, payload: Mapping[str, Any], *, base_dir: Path) -> FragmentPiece:

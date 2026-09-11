@@ -26,6 +26,14 @@
 \usepackage[\VAR{language|default('english')}]{babel}
 \usepackage[colorlinks=true, linkcolor=DarkBlue, urlcolor=DarkBlue, citecolor=DarkBlue]{hyperref}
 \VAR{extra_packages}
+% Contract macros (fragment-contracts.md §4): the book typesets inline code
+% without break opportunities. This redefinition replaces the deprecated
+% ``override`` partials of the manifest (codeblock.tex, codeinline.tex),
+% which the legacy path still honours until 0.8.0. Guarded: ts-code is only
+% loaded when the document has code.
+\ifcsname tscodeinline\endcsname
+  \RenewDocumentCommand{\tscodeinline}{O{}m}{\mbox{\texttt{#2}}}
+\fi
 \usepackage{emptypage}
 \usepackage{fixtoc} % Custom package to fix TOC number widths
 

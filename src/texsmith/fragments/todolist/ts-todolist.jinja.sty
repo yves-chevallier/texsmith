@@ -19,3 +19,18 @@
 \newcommand{\wontfix}{%
   \rlap{$\square$}{\large\hspace{1pt}\xmark}%
 }
+
+% ---------------------------------------------------------------------------
+% Contract environment and markers (fragment-contracts.md §1):
+%   \begin{tstasklist} \item[\tsdone] … \item[\tstodo] … \item[\tspartial] … \end{tstasklist}
+\RequirePackage{graphicx}
+\newlist{tstasklist}{itemize}{2}
+\setlist[tstasklist]{label=$\square$, leftmargin=*}
+\NewDocumentCommand{\tstodo}{}{$\square$}
+\NewDocumentCommand{\tsdone}{}{%
+  \rlap{$\square$}{\raisebox{2pt}{\large\hspace{1pt}\cmark}}%
+  \hspace{-2.5pt}%
+}
+\NewDocumentCommand{\tspartial}{}{%
+  \rlap{$\square$}{\hspace{1.4pt}\raisebox{0.55pt}{\scalebox{0.62}{$\blacksquare$}}}%
+}

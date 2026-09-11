@@ -138,3 +138,229 @@
 \VAR{pygments_style_defs|default('')}
 \BLOCK{ endif }
 \BLOCK{ endif }
+
+% ---------------------------------------------------------------------------
+% Contract environment and macro (fragment-contracts.md §5):
+%   \begin{tscode}[lang=py, title={…}, caption={…}, linenums, hl_lines={2-3,7},
+%                  id=lst:x, stretch=0.5, class={wide}, engine=pygments]
+%   …verbatim body…
+%   \end{tscode}
+%   \tscodeinline[lang=py]{escaped text}
+% The body is verbatim in every engine (a tcolorbox listing for the two
+% highlighter packages, fvextra otherwise; engine=pygments marks a body of
+% \PY macros). Keys live under /ts/code/; unknown keys are ignored.
+% A template restyles the box with \tcbset{/ts/code/.append style={…}} and a
+% class with /ts/code/class/<name>/.style={…} (tcolorbox key lists).
+\makeatletter
+\providecommand{\phantomsection}{}
+\pgfkeys{/ts/code/.cd,
+  lang/.store in=\ts@code@lang,
+  title/.store in=\ts@code@title,
+  caption/.store in=\ts@code@caption,
+  linenums/.store in=\ts@code@linenums,
+  linenums/.default=1,
+  hl_lines/.store in=\ts@code@hllines,
+  id/.store in=\ts@code@id,
+  stretch/.store in=\ts@code@stretch,
+  engine/.store in=\ts@code@engine,
+  class/.store in=\ts@code@class,
+  .unknown/.code={},
+}
+\pgfkeys{/ts/code/.style={}}
+\def\ts@code@text{text}
+\def\ts@code@pygments{pygments}
+\newcommand{\ts@code@reset}{%
+  \def\ts@code@lang{text}\def\ts@code@title{}\def\ts@code@caption{}%
+  \def\ts@code@linenums{}\def\ts@code@hllines{}\def\ts@code@id{}%
+  \def\ts@code@stretch{}\def\ts@code@engine{}\def\ts@code@class{}%
+}
+% The box title: the title, else the caption, both when both are given.
+\newcommand{\ts@code@settitle}{%
+  \ifx\ts@code@title\@empty
+    \let\ts@code@boxtitle\ts@code@caption
+  \else
+    \ifx\ts@code@caption\@empty
+      \let\ts@code@boxtitle\ts@code@title
+    \else
+      \def\ts@code@boxtitle{\ts@code@title{} --- \ts@code@caption}%
+    \fi
+  \fi
+}
+% tcolorbox options shared by every engine: title, anchor, restyle hooks.
+% (etoolbox's \appto / \eappto, loaded by tcolorbox: an appended part is
+% expanded once, never the parts already stored.)
+\newcommand{\ts@code@boxopts}{%
+  \ts@code@settitle
+  \def\ts@code@opts{/ts/code}%
+  \ifx\ts@code@id\@empty\else
+    \eappto\ts@code@opts{, phantom={\noexpand\phantomsection\noexpand\label{\ts@code@id}}}%
+  \fi
+  \@for\ts@code@c:=\ts@code@class\do{%
+    \pgfkeysifdefined{/ts/code/class/\ts@code@c/.@cmd}{%
+      \eappto\ts@code@opts{, /ts/code/class/\ts@code@c}%
+    }{}%
+  }%
+  \ifx\ts@code@boxtitle\@empty\else
+    \appto\ts@code@opts{, title={\ts@code@boxtitle}, list entry={\protect\numberline{\thetcbcounter}\ts@code@boxtitle}}%
+  \fi
+}
+\NewDocumentCommand{\tscodeinline}{O{}m}{\texttt{#2}}
+
+\BLOCK{ if _code_engine == "minted" }
+\tcbset{ts code base/.style={%
+  breakable,
+  listing only,
+  enhanced,
+  colback=white,
+  colframe=black!90,
+  colbacktitle=white,
+  coltitle=black,
+  pad at break*=1mm,
+  toptitle=0.15em,
+  bottomtitle=0.1em,
+  boxrule=0.07em,
+  fonttitle=\bfseries,
+  top=1mm,
+  arc=0.5mm,
+  bottom=1mm,
+  before title={\hspace*{-0.9em}},
+}}
+\newcommand{\ts@code@engineopts}{%
+  \edef\ts@code@mopts{tabsize=4,breaklines,xleftmargin=-0.75em,fontsize=\noexpand\footnotesize,highlightcolor=gray!30,ignorelexererrors}%
+  \ifx\ts@code@linenums\@empty\else
+    \edef\ts@code@mopts{\ts@code@mopts,linenos,firstnumber=\ts@code@linenums}%
+  \fi
+  \ifx\ts@code@hllines\@empty\else
+    \edef\ts@code@mopts{\ts@code@mopts,highlightlines={\ts@code@hllines}}%
+  \fi
+  \ifx\ts@code@stretch\@empty\else
+    \edef\ts@code@mopts{\ts@code@mopts,baselinestretch=\ts@code@stretch}%
+  \fi
+  \appto\ts@code@opts{, minted language=\ts@code@lang, minted options={\ts@code@mopts}}%
+}
+\tcbset{ts code setup/.code={%
+  \ts@code@reset
+  \pgfkeys{/ts/code/.cd,#1}%
+  \ts@code@boxopts
+  \ts@code@engineopts
+  \expandafter\pgfkeysalso\expandafter{\ts@code@opts}%
+}}
+\newtcblisting[auto counter,number within=section,list inside=mypyg]{tscode}[1][]{%
+  ts code base,
+  ts code setup={#1},
+}
+\BLOCK{ elif _code_engine == "listings" }
+\tcbset{ts code base/.style={%
+  breakable,
+  enhanced,
+  listing only,
+  colback=white,
+  colframe=black!90,
+  colbacktitle=white,
+  coltitle=black,
+  pad at break*=1mm,
+  toptitle=0.15em,
+  bottomtitle=0.1em,
+  boxrule=0.07em,
+  fonttitle=\bfseries,
+  top=1mm,
+  left=1mm,
+  arc=0.5mm,
+  bottom=1mm,
+}}
+\newcommand{\ts@code@engineopts}{%
+  \edef\ts@code@lopts{breaklines=true,columns=fullflexible}%
+  \ifx\ts@code@lang\ts@code@text\else
+    \edef\ts@code@lopts{\ts@code@lopts,language=\ts@code@lang}%
+  \fi
+  \ifx\ts@code@linenums\@empty\else
+    \edef\ts@code@lopts{\ts@code@lopts,numbers=left,firstnumber=\ts@code@linenums,stepnumber=1}%
+  \fi
+  \appto\ts@code@opts{, listing options={\ts@code@lopts}}%
+}
+\tcbset{ts code setup/.code={%
+  \ts@code@reset
+  \pgfkeys{/ts/code/.cd,#1}%
+  \ts@code@boxopts
+  \ts@code@engineopts
+  \expandafter\pgfkeysalso\expandafter{\ts@code@opts}%
+}}
+\newtcblisting[auto counter,number within=section,list inside=mypyg]{tscode}[1][]{%
+  ts code base,
+  ts code setup={#1},
+}
+\BLOCK{ else }
+\tcbset{ts code base/.style={%
+  breakable,
+  enhanced,
+  colback=white,
+  colframe=black!90,
+  colbacktitle=white,
+  coltitle=black,
+  pad at break*=1mm,
+  toptitle=0.15em,
+  bottomtitle=0.1em,
+  boxrule=0.07em,
+  fonttitle=\bfseries,
+  top=1mm,
+  left=1mm,
+  arc=0.5mm,
+  bottom=1mm,
+}}
+\newtcolorbox[auto counter,number within=section,list inside=mypyg]{ts@codebox}[1][]{%
+  ts code base,
+  #1,
+}
+% Verbatim options: \PY command characters only for a pygments body.
+\newcommand{\ts@code@engineopts}{%
+  \ifx\ts@code@engine\ts@code@pygments
+    \edef\ts@code@vopts{breaklines,breakanywhere,highlightcolor=gray!20,commandchars=\noexpand\\\noexpand\{\noexpand\}}%
+  \else
+    \edef\ts@code@vopts{breaklines,breakanywhere,highlightcolor=gray!20}%
+  \fi
+  \ifx\ts@code@linenums\@empty\else
+    \edef\ts@code@vopts{\ts@code@vopts,numbers=left,firstnumber=\ts@code@linenums,stepnumber=1}%
+  \fi
+  \ifx\ts@code@hllines\@empty\else
+    \edef\ts@code@vopts{\ts@code@vopts,highlightlines={\ts@code@hllines}}%
+  \fi
+  \ifx\ts@code@stretch\@empty\else
+    \edef\ts@code@vopts{\ts@code@vopts,baselinestretch=\ts@code@stretch}%
+  \fi
+}
+% The body is captured verbatim into a file at \begin{tscode} (nothing may
+% look past the end of that line before fancyvrb scans; a tcolorbox would)
+% and typeset from it at \end{tscode} — the classic VerbatimOut pattern. The
+% optional argument must follow \begin{tscode} immediately (!O), so a body
+% whose first line starts with ``['' is never taken for the key list.
+\newcommand{\ts@codebox@begin}[1]{\begin{ts@codebox}[#1]}
+\newcommand{\ts@code@input}[1]{\VerbatimInput[#1]{\jobname.tscode}}
+% Looking for the optional argument tokenised the end of the \begin line
+% (a space token); fancyvrb would then take the body's first line for the
+% rest of that line. Eat that space and hand fancyvrb an explicit line end.
+\begingroup\lccode`\~=`\^^M\lowercase{\endgroup\def\ts@code@eol{~}}
+\def\ts@code@vout#1{\begin{VerbatimOut}{\jobname.tscode}#1}
+\def\ts@code@go{\expandafter\ts@code@vout\expandafter{\ts@code@eol}}
+\expandafter\def\expandafter\ts@code@eatsp\space{\ts@code@go}
+\def\ts@code@cont{%
+  \ifx\ts@next\@sptoken
+    \expandafter\ts@code@eatsp
+  \else
+    \expandafter\ts@code@go
+  \fi
+}
+\NewDocumentEnvironment{tscode}{!O{}}{%
+  \ts@code@reset
+  \pgfkeys{/ts/code/.cd,#1}%
+  \ts@code@boxopts
+  \ts@code@engineopts
+  \VerbatimEnvironment
+  \futurelet\ts@next\ts@code@cont
+}{%
+  \end{VerbatimOut}%
+  \expandafter\ts@codebox@begin\expandafter{\ts@code@opts}%
+  \expandafter\ts@code@input\expandafter{\ts@code@vopts}%
+  \end{ts@codebox}%
+}
+\BLOCK{ endif }
+\makeatother
