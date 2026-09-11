@@ -1,0 +1,163 @@
+{
+  "file": 0,
+  "front_matter": {
+    "id": 0,
+    "span": [
+      0,
+      0,
+      0
+    ],
+    "keys": {}
+  },
+  "blocks": [
+    {
+      "type": "Header",
+      "id": 1,
+      "span": [
+        0,
+        0,
+        5
+      ],
+      "level": 1,
+      "content": [
+        {
+          "type": "Str",
+          "id": 2,
+          "span": [
+            0,
+            2,
+            5
+          ],
+          "text": "Top"
+        }
+      ]
+    },
+    {
+      "type": "Header",
+      "id": 3,
+      "span": [
+        0,
+        7,
+        18
+      ],
+      "level": 3,
+      "content": [
+        {
+          "type": "Str",
+          "id": 4,
+          "span": [
+            0,
+            11,
+            18
+          ],
+          "text": "Skipped"
+        }
+      ]
+    },
+    {
+      "type": "Para",
+      "id": 5,
+      "span": [
+        0,
+        20,
+        43
+      ],
+      "content": [
+        {
+          "type": "Str",
+          "id": 8,
+          "span": [
+            0,
+            33,
+            43
+          ],
+          "text": "Promoted."
+        }
+      ],
+      "lead": [
+        {
+          "type": "Str",
+          "id": 7,
+          "span": [
+            0,
+            27,
+            32
+          ],
+          "text": "Note."
+        }
+      ]
+    },
+    {
+      "type": "Table",
+      "id": 9,
+      "span": [
+        0,
+        45,
+        68
+      ],
+      "model": {
+        "settings": {
+          "width": "auto"
+        },
+        "columns": [
+          {
+            "type": "Leaf",
+            "name": "a"
+          }
+        ],
+        "rows": [
+          {
+            "type": "Data",
+            "cells": [
+              {
+                "content": [
+                  {
+                    "type": "Str",
+                    "id": 11,
+                    "span": [
+                      0,
+                      63,
+                      64
+                    ],
+                    "text": "1"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "type": "Caption",
+      "id": 12,
+      "span": [
+        0,
+        70,
+        88
+      ],
+      "kind": "table",
+      "content": [
+        {
+          "type": "Str",
+          "id": 13,
+          "span": [
+            0,
+            70,
+            80
+          ],
+          "text": "T."
+        }
+      ],
+      "attrs": {
+        "id": "fig:t",
+        "id_span": [
+          0,
+          82,
+          87
+        ]
+      },
+      "position": "after"
+    }
+  ]
+}

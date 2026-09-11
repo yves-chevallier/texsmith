@@ -1,0 +1,97 @@
+{
+  "file": 0,
+  "front_matter": {
+    "id": 0,
+    "span": [
+      0,
+      0,
+      0
+    ],
+    "keys": {}
+  },
+  "blocks": [
+    {
+      "type": "Para",
+      "id": 1,
+      "span": [
+        0,
+        0,
+        77
+      ],
+      "content": [
+        {
+          "type": "Str",
+          "id": 2,
+          "span": [
+            0,
+            0,
+            5
+          ],
+          "text": "Call "
+        },
+        {
+          "type": "Code",
+          "id": 3,
+          "span": [
+            0,
+            5,
+            29
+          ],
+          "text": "print(1)",
+          "lang": "py"
+        },
+        {
+          "type": "Str",
+          "id": 4,
+          "span": [
+            0,
+            29,
+            33
+          ],
+          "text": " or "
+        },
+        {
+          "type": "Code",
+          "id": 5,
+          "span": [
+            0,
+            33,
+            57
+          ],
+          "text": "print(1)",
+          "lang": "py"
+        },
+        {
+          "type": "Str",
+          "id": 6,
+          "span": [
+            0,
+            57,
+            68
+          ],
+          "text": " but never "
+        },
+        {
+          "type": "Code",
+          "id": 7,
+          "span": [
+            0,
+            68,
+            76
+          ],
+          "text": "rm -rf"
+        },
+        {
+          "type": "Str",
+          "id": 8,
+          "span": [
+            0,
+            76,
+            77
+          ],
+          "text": "."
+        }
+      ]
+    }
+  ]
+}

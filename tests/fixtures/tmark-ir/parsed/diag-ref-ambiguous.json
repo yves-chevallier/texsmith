@@ -1,0 +1,105 @@
+{
+  "file": 0,
+  "front_matter": {
+    "id": 1,
+    "span": [
+      0,
+      0,
+      83
+    ],
+    "raw": "---\npress:\n  sources:\n    bibliography:\n      stock: {type: misc, title: Stock}\n---",
+    "keys": {
+      "press": {
+        "sources": {
+          "bibliography": {
+            "stock": {
+              "type": "misc",
+              "title": "Stock"
+            }
+          }
+        }
+      }
+    }
+  },
+  "blocks": [
+    {
+      "type": "Para",
+      "id": 2,
+      "span": [
+        0,
+        85,
+        125
+      ],
+      "content": [
+        {
+          "type": "Span",
+          "id": 3,
+          "span": [
+            0,
+            85,
+            105
+          ],
+          "content": [
+            {
+              "type": "Str",
+              "id": 4,
+              "span": [
+                0,
+                86,
+                96
+              ],
+              "text": "This claim"
+            }
+          ],
+          "attrs": {
+            "id": "stock",
+            "id_span": [
+              0,
+              99,
+              104
+            ]
+          }
+        },
+        {
+          "type": "Str",
+          "id": 5,
+          "span": [
+            0,
+            105,
+            118
+          ],
+          "text": " is cited as "
+        },
+        {
+          "type": "Ref",
+          "id": 6,
+          "span": [
+            0,
+            118,
+            124
+          ],
+          "items": [
+            {
+              "key": "stock",
+              "key_span": [
+                0,
+                119,
+                124
+              ]
+            }
+          ]
+        },
+        {
+          "type": "Str",
+          "id": 7,
+          "span": [
+            0,
+            124,
+            125
+          ],
+          "text": "."
+        }
+      ]
+    }
+  ]
+}

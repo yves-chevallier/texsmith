@@ -1,0 +1,72 @@
+{
+  "file": 0,
+  "front_matter": {
+    "id": 0,
+    "span": [
+      0,
+      0,
+      0
+    ],
+    "keys": {}
+  },
+  "blocks": [
+    {
+      "type": "CodeBlock",
+      "id": 1,
+      "span": [
+        0,
+        0,
+        92
+      ],
+      "text": "def bubble_sort(items): ...",
+      "lang": "python",
+      "options": {
+        "kv": [
+          [
+            "title",
+            "bubble_sort.py"
+          ],
+          [
+            "linenums",
+            "1"
+          ],
+          [
+            "hl_lines",
+            "2-3"
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Caption",
+      "id": 2,
+      "span": [
+        0,
+        94,
+        144
+      ],
+      "kind": "listing",
+      "content": [
+        {
+          "type": "Str",
+          "id": 3,
+          "span": [
+            0,
+            94,
+            131
+          ],
+          "text": "Bubble sort, naive version."
+        }
+      ],
+      "attrs": {
+        "id": "lst:bubble",
+        "id_span": [
+          0,
+          133,
+          143
+        ]
+      },
+      "position": "after"
+    }
+  ]
+}

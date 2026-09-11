@@ -1,0 +1,77 @@
+{
+  "file": 0,
+  "front_matter": {
+    "id": 0,
+    "span": [
+      0,
+      0,
+      0
+    ],
+    "keys": {}
+  },
+  "blocks": [
+    {
+      "type": "Para",
+      "id": 1,
+      "span": [
+        0,
+        0,
+        52
+      ],
+      "content": [
+        {
+          "type": "Str",
+          "id": 2,
+          "span": [
+            0,
+            0,
+            12
+          ],
+          "text": "As shown by "
+        },
+        {
+          "type": "Ref",
+          "id": 3,
+          "span": [
+            0,
+            12,
+            51
+          ],
+          "items": [
+            {
+              "prefix": "see",
+              "key": "ein05",
+              "key_span": [
+                0,
+                18,
+                23
+              ],
+              "suffix": "pp. 33-35"
+            },
+            {
+              "suppress_author": true,
+              "key": "AI2027",
+              "key_span": [
+                0,
+                37,
+                43
+              ],
+              "suffix": "ch. 1"
+            }
+          ],
+          "bracketed": true
+        },
+        {
+          "type": "Str",
+          "id": 4,
+          "span": [
+            0,
+            51,
+            52
+          ],
+          "text": "."
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,154 @@
+{
+  "file": 0,
+  "front_matter": {
+    "id": 0,
+    "span": [
+      0,
+      0,
+      0
+    ],
+    "keys": {}
+  },
+  "blocks": [
+    {
+      "type": "Table",
+      "id": 1,
+      "span": [
+        0,
+        0,
+        147
+      ],
+      "model": {
+        "settings": {
+          "width": "auto"
+        },
+        "columns": [
+          {
+            "type": "Leaf",
+            "name": "Fruit"
+          },
+          {
+            "type": "Group",
+            "name": "Warehouses",
+            "columns": [
+              {
+                "type": "Leaf",
+                "name": "Geneva"
+              },
+              {
+                "type": "Leaf",
+                "name": "Zurich"
+              }
+            ]
+          }
+        ],
+        "rows": [
+          {
+            "type": "Data",
+            "cells": [
+              {
+                "content": [
+                  {
+                    "type": "Str",
+                    "id": 3,
+                    "span": [
+                      0,
+                      0,
+                      6
+                    ],
+                    "text": "Apples"
+                  }
+                ]
+              },
+              {
+                "content": [
+                  {
+                    "type": "Str",
+                    "id": 5,
+                    "span": [
+                      0,
+                      0,
+                      1
+                    ],
+                    "text": "3"
+                  }
+                ]
+              },
+              {
+                "content": [
+                  {
+                    "type": "Str",
+                    "id": 7,
+                    "span": [
+                      0,
+                      0,
+                      1
+                    ],
+                    "text": "4"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "type": "Data",
+            "cells": [
+              {
+                "content": [
+                  {
+                    "type": "Str",
+                    "id": 9,
+                    "span": [
+                      0,
+                      0,
+                      5
+                    ],
+                    "text": "Total"
+                  }
+                ],
+                "cols": 3
+              },
+              {
+                "absorbed": true
+              },
+              {
+                "absorbed": true
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "type": "Caption",
+      "id": 10,
+      "span": [
+        0,
+        149,
+        188
+      ],
+      "kind": "table",
+      "content": [
+        {
+          "type": "Str",
+          "id": 11,
+          "span": [
+            0,
+            149,
+            176
+          ],
+          "text": "Stock by warehouse."
+        }
+      ],
+      "attrs": {
+        "id": "tbl:stock",
+        "id_span": [
+          0,
+          178,
+          187
+        ]
+      },
+      "position": "after"
+    }
+  ]
+}

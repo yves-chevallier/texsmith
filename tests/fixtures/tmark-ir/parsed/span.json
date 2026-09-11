@@ -1,0 +1,138 @@
+{
+  "file": 0,
+  "front_matter": {
+    "id": 0,
+    "span": [
+      0,
+      0,
+      0
+    ],
+    "keys": {}
+  },
+  "blocks": [
+    {
+      "type": "Para",
+      "id": 1,
+      "span": [
+        0,
+        0,
+        100
+      ],
+      "content": [
+        {
+          "type": "Str",
+          "id": 2,
+          "span": [
+            0,
+            0,
+            13
+          ],
+          "text": "An anchor on "
+        },
+        {
+          "type": "Span",
+          "id": 3,
+          "span": [
+            0,
+            13,
+            37
+          ],
+          "content": [
+            {
+              "type": "Str",
+              "id": 4,
+              "span": [
+                0,
+                14,
+                24
+              ],
+              "text": "this claim"
+            }
+          ],
+          "attrs": {
+            "id": "claim:one",
+            "id_span": [
+              0,
+              27,
+              36
+            ]
+          }
+        },
+        {
+          "type": "Str",
+          "id": 5,
+          "span": [
+            0,
+            37,
+            41
+          ],
+          "text": ", a "
+        },
+        {
+          "type": "Span",
+          "id": 6,
+          "span": [
+            0,
+            41,
+            77
+          ],
+          "content": [
+            {
+              "type": "Str",
+              "id": 7,
+              "span": [
+                0,
+                42,
+                55
+              ],
+              "text": "quote with a "
+            },
+            {
+              "type": "Link",
+              "id": 8,
+              "span": [
+                0,
+                55,
+                67
+              ],
+              "content": [
+                {
+                  "type": "Str",
+                  "id": 9,
+                  "span": [
+                    0,
+                    56,
+                    60
+                  ],
+                  "text": "link"
+                }
+              ],
+              "target": {
+                "type": "Document",
+                "value": "x.md"
+              }
+            }
+          ],
+          "attrs": {
+            "kv": [
+              [
+                "lang",
+                "en"
+              ]
+            ]
+          }
+        },
+        {
+          "type": "Str",
+          "id": 10,
+          "span": [
+            0,
+            77,
+            100
+          ],
+          "text": ", and [plain brackets]."
+        }
+      ]
+    }
+  ]
+}

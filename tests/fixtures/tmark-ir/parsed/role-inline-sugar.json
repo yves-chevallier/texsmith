@@ -1,0 +1,245 @@
+{
+  "file": 0,
+  "front_matter": {
+    "id": 0,
+    "span": [
+      0,
+      0,
+      0
+    ],
+    "keys": {}
+  },
+  "blocks": [
+    {
+      "type": "Para",
+      "id": 1,
+      "span": [
+        0,
+        0,
+        103
+      ],
+      "content": [
+        {
+          "type": "Str",
+          "id": 2,
+          "span": [
+            0,
+            0,
+            5
+          ],
+          "text": "Some "
+        },
+        {
+          "type": "Highlight",
+          "id": 3,
+          "span": [
+            0,
+            5,
+            19
+          ],
+          "content": [
+            {
+              "type": "Str",
+              "id": 4,
+              "span": [
+                0,
+                12,
+                18
+              ],
+              "text": "marked"
+            }
+          ]
+        },
+        {
+          "type": "Str",
+          "id": 5,
+          "span": [
+            0,
+            19,
+            21
+          ],
+          "text": ", "
+        },
+        {
+          "type": "Strikeout",
+          "id": 6,
+          "span": [
+            0,
+            21,
+            35
+          ],
+          "content": [
+            {
+              "type": "Str",
+              "id": 7,
+              "span": [
+                0,
+                27,
+                34
+              ],
+              "text": "deleted"
+            }
+          ]
+        },
+        {
+          "type": "Str",
+          "id": 8,
+          "span": [
+            0,
+            35,
+            38
+          ],
+          "text": ", H"
+        },
+        {
+          "type": "Subscript",
+          "id": 9,
+          "span": [
+            0,
+            38,
+            46
+          ],
+          "content": [
+            {
+              "type": "Str",
+              "id": 10,
+              "span": [
+                0,
+                44,
+                45
+              ],
+              "text": "2"
+            }
+          ]
+        },
+        {
+          "type": "Str",
+          "id": 11,
+          "span": [
+            0,
+            46,
+            53
+          ],
+          "text": "O, E=mc"
+        },
+        {
+          "type": "Superscript",
+          "id": 12,
+          "span": [
+            0,
+            53,
+            61
+          ],
+          "content": [
+            {
+              "type": "Str",
+              "id": 13,
+              "span": [
+                0,
+                59,
+                60
+              ],
+              "text": "2"
+            }
+          ]
+        },
+        {
+          "type": "Str",
+          "id": 14,
+          "span": [
+            0,
+            61,
+            63
+          ],
+          "text": ", "
+        },
+        {
+          "type": "Keystroke",
+          "id": 15,
+          "span": [
+            0,
+            63,
+            81
+          ],
+          "keys": [
+            "ctrl",
+            "alt",
+            "s"
+          ]
+        },
+        {
+          "type": "Str",
+          "id": 16,
+          "span": [
+            0,
+            81,
+            83
+          ],
+          "text": ", "
+        },
+        {
+          "type": "Strong",
+          "id": 17,
+          "span": [
+            0,
+            83,
+            91
+          ],
+          "content": [
+            {
+              "type": "Str",
+              "id": 18,
+              "span": [
+                0,
+                85,
+                89
+              ],
+              "text": "bold"
+            }
+          ]
+        },
+        {
+          "type": "Str",
+          "id": 19,
+          "span": [
+            0,
+            91,
+            96
+          ],
+          "text": " and "
+        },
+        {
+          "type": "Emph",
+          "id": 20,
+          "span": [
+            0,
+            96,
+            102
+          ],
+          "content": [
+            {
+              "type": "Str",
+              "id": 21,
+              "span": [
+                0,
+                97,
+                101
+              ],
+              "text": "emph"
+            }
+          ]
+        },
+        {
+          "type": "Str",
+          "id": 22,
+          "span": [
+            0,
+            102,
+            103
+          ],
+          "text": "."
+        }
+      ]
+    }
+  ]
+}

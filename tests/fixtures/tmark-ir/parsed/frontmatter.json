@@ -1,0 +1,70 @@
+{
+  "file": 0,
+  "front_matter": {
+    "id": 1,
+    "span": [
+      0,
+      0,
+      104
+    ],
+    "raw": "---\ntitle: Firmware Review\nlang: fr\npress:\n  template: article\n  features:\n    paragraph.lead: false\n---",
+    "keys": {
+      "title": "Firmware Review",
+      "lang": "fr",
+      "press": {
+        "features": {
+          "paragraph.lead": false
+        }
+      }
+    },
+    "extra": {
+      "press": {
+        "template": "article"
+      }
+    }
+  },
+  "blocks": [
+    {
+      "type": "Para",
+      "id": 2,
+      "span": [
+        0,
+        106,
+        143
+      ],
+      "content": [
+        {
+          "type": "Strong",
+          "id": 3,
+          "span": [
+            0,
+            106,
+            121
+          ],
+          "content": [
+            {
+              "type": "Str",
+              "id": 4,
+              "span": [
+                0,
+                108,
+                119
+              ],
+              "text": "Not a lead."
+            }
+          ]
+        },
+        {
+          "type": "Str",
+          "id": 5,
+          "span": [
+            0,
+            121,
+            143
+          ],
+          "text": " With the feature off."
+        }
+      ]
+    }
+  ]
+}

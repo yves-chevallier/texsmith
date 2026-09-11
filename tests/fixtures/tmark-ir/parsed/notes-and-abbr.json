@@ -1,0 +1,121 @@
+{
+  "file": 0,
+  "front_matter": {
+    "id": 0,
+    "span": [
+      0,
+      0,
+      0
+    ],
+    "keys": {}
+  },
+  "blocks": [
+    {
+      "type": "Para",
+      "id": 1,
+      "span": [
+        0,
+        0,
+        67
+      ],
+      "content": [
+        {
+          "type": "Str",
+          "id": 2,
+          "span": [
+            0,
+            0,
+            13
+          ],
+          "text": "The HTML spec"
+        },
+        {
+          "type": "Note",
+          "id": 3,
+          "span": [
+            0,
+            13,
+            17
+          ],
+          "label": "1"
+        },
+        {
+          "type": "Str",
+          "id": 4,
+          "span": [
+            0,
+            17,
+            44
+          ],
+          "text": " is maintained by the W3C. "
+        },
+        {
+          "type": "Comment",
+          "id": 5,
+          "span": [
+            0,
+            44,
+            67
+          ],
+          "text": " check the year "
+        }
+      ]
+    }
+  ],
+  "abbreviations": [
+    {
+      "id": 9,
+      "span": [
+        0,
+        97,
+        131
+      ],
+      "key": "HTML",
+      "expansion": "HyperText Markup Language"
+    },
+    {
+      "id": 10,
+      "span": [
+        0,
+        132,
+        165
+      ],
+      "key": "W3C",
+      "expansion": "World Wide Web Consortium"
+    }
+  ],
+  "footnotes": [
+    {
+      "id": 6,
+      "span": [
+        0,
+        69,
+        96
+      ],
+      "label": "1",
+      "content": [
+        {
+          "type": "Para",
+          "id": 7,
+          "span": [
+            0,
+            75,
+            95
+          ],
+          "content": [
+            {
+              "type": "Str",
+              "id": 8,
+              "span": [
+                0,
+                75,
+                95
+              ],
+              "text": "The living standard."
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

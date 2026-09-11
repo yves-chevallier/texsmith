@@ -1,0 +1,47 @@
+{
+  "file": 0,
+  "front_matter": {
+    "id": 0,
+    "span": [
+      0,
+      0,
+      0
+    ],
+    "keys": {}
+  },
+  "blocks": [
+    {
+      "type": "Para",
+      "id": 1,
+      "span": [
+        0,
+        0,
+        66
+      ],
+      "content": [
+        {
+          "type": "Str",
+          "id": 4,
+          "span": [
+            0,
+            22,
+            66
+          ],
+          "text": "The device powers the flash before the SoC."
+        }
+      ],
+      "lead": [
+        {
+          "type": "Str",
+          "id": 3,
+          "span": [
+            0,
+            7,
+            21
+          ],
+          "text": "Boot sequence."
+        }
+      ]
+    }
+  ]
+}

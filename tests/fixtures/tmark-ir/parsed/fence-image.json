@@ -1,0 +1,95 @@
+{
+  "file": 0,
+  "front_matter": {
+    "id": 0,
+    "span": [
+      0,
+      0,
+      0
+    ],
+    "keys": {}
+  },
+  "blocks": [
+    {
+      "type": "Para",
+      "id": 1,
+      "span": [
+        0,
+        0,
+        60
+      ],
+      "content": [
+        {
+          "type": "Image",
+          "id": 2,
+          "span": [
+            0,
+            0,
+            60
+          ],
+          "src": "",
+          "attrs": {
+            "kv": [
+              [
+                "generate",
+                "python"
+              ],
+              [
+                "code",
+                "plt.plot([1, 2, 4, 8])"
+              ],
+              [
+                "include",
+                "plot.py"
+              ]
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "type": "Para",
+      "id": 3,
+      "span": [
+        0,
+        62,
+        105
+      ],
+      "content": [
+        {
+          "type": "Image",
+          "id": 4,
+          "span": [
+            0,
+            62,
+            105
+          ],
+          "src": "",
+          "attrs": {
+            "kv": [
+              [
+                "generate",
+                "mermaid"
+              ],
+              [
+                "code",
+                "flowchart LR\n  A --> B"
+              ]
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "type": "CodeBlock",
+      "id": 5,
+      "span": [
+        0,
+        107,
+        149
+      ],
+      "text": "flowchart LR\n  A --> B",
+      "lang": "mermaid"
+    }
+  ]
+}

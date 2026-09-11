@@ -1,0 +1,92 @@
+{
+  "file": 0,
+  "front_matter": {
+    "id": 0,
+    "span": [
+      0,
+      0,
+      0
+    ],
+    "keys": {}
+  },
+  "blocks": [
+    {
+      "type": "Para",
+      "id": 1,
+      "span": [
+        0,
+        0,
+        58
+      ],
+      "content": [
+        {
+          "type": "CounterItem",
+          "id": 2,
+          "span": [
+            0,
+            0,
+            17
+          ],
+          "prefix": "rq",
+          "key": "one",
+          "key_span": [
+            0,
+            13,
+            16
+          ]
+        },
+        {
+          "type": "Str",
+          "id": 3,
+          "span": [
+            0,
+            17,
+            58
+          ],
+          "text": " A requirement with an undeclared series."
+        }
+      ]
+    },
+    {
+      "type": "Para",
+      "id": 4,
+      "span": [
+        0,
+        60,
+        91
+      ],
+      "content": [
+        {
+          "type": "Image",
+          "id": 5,
+          "span": [
+            0,
+            60,
+            91
+          ],
+          "src": "trace.png",
+          "alt": [
+            {
+              "type": "Str",
+              "id": 7,
+              "span": [
+                0,
+                60,
+                65
+              ],
+              "text": "Trace"
+            }
+          ],
+          "attrs": {
+            "id": "tbl:trace",
+            "id_span": [
+              0,
+              81,
+              90
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}
