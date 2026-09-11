@@ -1,0 +1,109 @@
+\documentclass[a4paper,twoside]{article}
+
+\usepackage{morewrites}
+
+\usepackage[svgnames,dvipsnames,x11names]{xcolor}
+\usepackage{graphicx}
+\usepackage[english]{babel}
+\usepackage[colorlinks=true, linkcolor=NavyBlue, urlcolor=NavyBlue, citecolor=NavyBlue]{hyperref}
+\usepackage[a4paper]{geometry}
+\usepackage{ts-fonts}
+\usepackage{amsmath}
+\usepackage{float}
+\usepackage{seqsplit}
+\usepackage{ts-code}
+
+\usepackage{lastpage}
+\usepackage{refcount}
+\makeatletter
+\def\ps@plain{
+  \let\@oddhead\@empty
+  \let\@evenhead\@empty
+  \def\@oddfoot{
+    \hfil
+    \ifnum\getpagerefnumber{LastPage}>1\relax
+      \thepage
+    \fi
+    \hfil}
+  \let\@evenfoot\@oddfoot
+}
+\makeatother
+
+\title{Progress Bars}
+\author{}\date{}
+
+\begin{document}
+
+\maketitle
+
+\thispagestyle{plain}
+The \texttt{texsmith.progressbar} extension mirrors the \href{https://facelessuser.github.io/pymdown-extensions/extensions/progressbar/}{\texttt{pymdownx.progressbar}} syntax and
+converts it into \LaTeX{} commands powered by the
+\href{https://ctan.org/pkg/progressbar}{\texttt{progressbar}} package. It is enabled by default, so you can
+drop the \texttt{[=75\% "Done"]} shorthand in your Markdown and keep both the HTML preview and the PDF build in sync.
+
+\section{Syntax}\label{syntax}
+
+\begin{code}{markdown}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+[=25\PYZpc{} \PYZdq{}Research\PYZdq{}]
+[=50\PYZpc{} \PYZdq{}Implementation\PYZdq{}]
+[=75\PYZpc{} \PYZdq{}Review\PYZdq{}]
+[=100\PYZpc{} \PYZdq{}Launch\PYZdq{}]\PYZob{}: .thin\PYZcb{}
+\end{Verbatim}
+\end{code}
+\begin{itemize}
+\item{} Values must be percentages (\texttt{0 – 100}). TeXSmith clamps the values if needed.
+\item{} The quoted label is optional; when omitted the percentage is used.
+\item{} Trailing attribute lists (\texttt{\{: .class \#id \}}) attach CSS classes and HTML attributes.
+  Use the \texttt{.thin} class to halve the bar height (e.g. for tables or dense summaries).
+
+\end{itemize}
+\section{LaTeX output}\label{latex-output}
+
+During rendering, TeXSmith emits a \texttt{\textbackslash{}progressbar} call with the following defaults:
+
+\begin{code}{latex}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+\PY{n+nb}{\PYZob{}}\PY{k}{\PYZbs{}progressbar}[
+  width=9cm,
+  heighta=12pt,
+  roundnessr=0.1,
+  borderwidth=1pt,
+  linecolor=black,
+  filledcolor=black!60,
+  emptycolor=black!10
+]\PY{n+nb}{\PYZob{}}0.73\PY{n+nb}{\PYZcb{}} Launch\PY{n+nb}{\PYZcb{}}
+\end{Verbatim}
+\end{code}
+The \texttt{.thin} class switches \texttt{heighta} to \texttt{6pt}. If you need more control, wrap the Markdown block
+in a raw \LaTeX{} fence and tweak the options directly.
+
+\section{Example project}\label{example-project}
+
+Use the bundled \texttt{examples/progressbar} project for smoke tests or screenshots:
+
+\begin{code}{bash}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+\PY{n+nb}{cd}\PY{+w}{ }examples/progressbar
+texsmith\PY{+w}{ }progressbar.md\PY{+w}{ }\PYZhy{}\PYZhy{}template\PY{+w}{ }article\PY{+w}{ }\PYZhy{}\PYZhy{}output\PYZhy{}dir\PY{+w}{ }build\PY{+w}{ }\PYZhy{}\PYZhy{}build
+\end{Verbatim}
+\end{code}
+\begin{figure}[H]
+    \centering
+
+    \ifdefined\adjustbox
+
+        \adjustbox{max width=\textwidth}{
+            \includegraphics[width=\linewidth]{snippet-<HASH>.pdf}
+        }
+
+    \else
+
+        \includegraphics[width=\linewidth]{snippet-<HASH>.pdf}
+
+    \fi
+
+\end{figure}
+
+\end{document}

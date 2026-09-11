@@ -1,0 +1,64 @@
+\documentclass[a4paper,twoside]{article}
+
+\usepackage{morewrites}
+
+\usepackage[svgnames,dvipsnames,x11names]{xcolor}
+\usepackage{graphicx}
+\usepackage[english]{babel}
+\usepackage[colorlinks=true, linkcolor=NavyBlue, urlcolor=NavyBlue, citecolor=NavyBlue]{hyperref}
+\usepackage[a4paper]{geometry}
+\usepackage{ts-fonts}
+\usepackage{csquotes}
+\usepackage{float}
+\usepackage{seqsplit}
+
+\usepackage{lastpage}
+\usepackage{refcount}
+\makeatletter
+\def\ps@plain{
+  \let\@oddhead\@empty
+  \let\@evenhead\@empty
+  \def\@oddfoot{
+    \hfil
+    \ifnum\getpagerefnumber{LastPage}>1\relax
+      \thepage
+    \fi
+    \hfil}
+  \let\@evenfoot\@oddfoot
+}
+\makeatother
+
+\title{Booby}
+\author{Yves Chevallier}\date{November 16, 2025}
+
+\begin{document}
+
+\maketitle
+
+\section{Introduction}\label{introduction}
+
+Boobies are seabirds in the genus \emph{Sula}, family Sulidae. They are
+large, long-winged birds that plunge-dive for fish. The name \enquote{booby}
+originates from the Spanish word \enquote{bobo}, meaning \enquote{stupid} or \enquote{clown},
+due to the birds' apparent lack of fear of humans.
+
+\begin{figure}[H]
+    \centering
+
+    \includegraphics[width=0.3\linewidth]{booby.png}
+
+    \caption[Booby]{Booby}
+\end{figure}
+
+\section{Particularities}\label{particularities}
+
+Boobies have several distinctive features:
+
+\begin{itemize}
+\item{} They have brightly colored feet, which they use in mating displays.
+\item{} They are known for their spectacular diving ability, plunging into
+  the water from great heights to catch fish.
+
+\end{itemize}
+
+\end{document}

@@ -1,0 +1,219 @@
+\documentclass[a4paper,twoside]{article}
+
+\usepackage{morewrites}
+
+\usepackage[svgnames,dvipsnames,x11names]{xcolor}
+\usepackage{graphicx}
+\usepackage[english]{babel}
+\usepackage[colorlinks=true, linkcolor=NavyBlue, urlcolor=NavyBlue, citecolor=NavyBlue]{hyperref}
+\usepackage[a4paper]{geometry}
+\usepackage{ts-fonts}
+\usepackage{csquotes}
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{amsmath}
+\usepackage{float}
+\usepackage{seqsplit}
+\newcolumntype{Y}{>{\centering\arraybackslash}X}
+\newcolumntype{Z}{>{\raggedleft\arraybackslash}X}
+\usepackage{ts-callouts}
+\usepackage{ts-code}
+
+\usepackage{lastpage}
+\usepackage{refcount}
+\makeatletter
+\def\ps@plain{
+  \let\@oddhead\@empty
+  \let\@evenhead\@empty
+  \def\@oddfoot{
+    \hfil
+    \ifnum\getpagerefnumber{LastPage}>1\relax
+      \thepage
+    \fi
+    \hfil}
+  \let\@evenfoot\@oddfoot
+}
+\makeatother
+
+\title{Cross-document references}
+\author{}\date{}
+
+\begin{document}
+
+\maketitle
+
+\thispagestyle{plain}
+A counter number only exists inside the conversion that allocated it. A second
+document citing \texttt{FW-\allowbreak{}10} has no way to know what \texttt{FW-\allowbreak{}10} is, and --- worse --- no way
+to notice when a renumbering turns it into \texttt{FW-\allowbreak{}12}. Hard-coded numbers in a
+sister document break silently, which is exactly the maintenance
+\hyperref[snippet:<HASH>]{custom counters} remove \emph{inside} a document.
+
+TeXSmith closes the loop the way DocBook's \emph{target database} and Sphinx's
+\texttt{objects.inv} do: every conversion publishes a small JSON \textbf{inventory} next to
+its output, and a citing document declares the inventories it depends on.
+
+\begin{code}{yaml}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+\PY{c+c1}{\PYZsh{} firmware\PYZhy{}review.md — the document that publishes}
+\PY{n+nn}{\PYZhy{}\PYZhy{}\PYZhy{}}
+\PY{n+nt}{title}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{Revue}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{firmware}
+\PY{n+nt}{id}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{RHE\PYZhy{}423}
+\PY{n+nt}{counters}\PY{p}{:}
+\PY{+w}{  }\PY{n+nt}{fw}\PY{p}{:}
+\PY{+w}{    }\PY{n+nt}{name}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{Constat}
+\PY{+w}{    }\PY{n+nt}{format}\PY{p}{:}\PY{+w}{ }\PY{l+s}{\PYZdq{}}\PY{l+s}{FW\PYZhy{}\PYZob{}n:02d\PYZcb{}}\PY{l+s}{\PYZdq{}}
+\PY{n+nn}{\PYZhy{}\PYZhy{}\PYZhy{}}
+\end{Verbatim}
+\end{code}
+\begin{code}{yaml}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+\PY{c+c1}{\PYZsh{} hardware\PYZhy{}review.md — the document that cites}
+\PY{n+nn}{\PYZhy{}\PYZhy{}\PYZhy{}}
+\PY{n+nt}{title}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{Revue}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{hardware}
+\PY{n+nt}{crossrefs}\PY{p}{:}
+\PY{+w}{  }\PY{n+nt}{fwrev}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{build/firmware\PYZhy{}review.refs.json}
+\PY{n+nn}{\PYZhy{}\PYZhy{}\PYZhy{}}
+\end{Verbatim}
+\end{code}
+\begin{code}{markdown}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+L\PYZsq{}écart est écrasé par l\PYZsq{}étalement spectral (voir \PY{n+ni}{@fwrev:fw:pas}\PYZhy{}de\PYZhy{}temps).
+\end{Verbatim}
+\end{code}
+renders as
+
+\begin{displayquote}
+
+L'écart est écrasé par l'étalement spectral (voir RHE-423-FW-10 p. 14).
+
+\end{displayquote}
+\section{Identifying a document}\label{identifying-a-document}
+
+\texttt{id} is a free label --- a contract number, a report reference, whatever your
+organisation numbers documents with (\texttt{document-\allowbreak{}id} is accepted as an alias). When the target document declares one,
+a citation concatenates it with the item's label: \texttt{RHE-\allowbreak{}423} + \texttt{FW-\allowbreak{}10} \(\rightarrow\)
+\textbf{\texttt{RHE-\allowbreak{}423-\allowbreak{}FW-\allowbreak{}10}}. That is what makes the reference unambiguous outside the
+document that defines it.
+
+It is optional. Without it, a citation falls back to naming the document by its
+title --- \texttt{FW-\allowbreak{}10 (Revue firmware, p. 14)} --- and without a title either, to the
+bare label.
+
+\section{The inventory}\label{the-inventory}
+
+Each conversion writes \texttt{<document>.refs.json} beside its \texttt{.tex}:
+
+\begin{code}{json}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+\PY{p}{\PYZob{}}
+\PY{+w}{  }\PY{n+nt}{\PYZdq{}schema\PYZdq{}}\PY{p}{:}\PY{+w}{ }\PY{l+m+mi}{1}\PY{p}{,}
+\PY{+w}{  }\PY{n+nt}{\PYZdq{}document\PYZdq{}}\PY{p}{:}\PY{+w}{ }\PY{p}{\PYZob{}}
+\PY{+w}{    }\PY{n+nt}{\PYZdq{}id\PYZdq{}}\PY{p}{:}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}RHE\PYZhy{}423\PYZdq{}}\PY{p}{,}
+\PY{+w}{    }\PY{n+nt}{\PYZdq{}title\PYZdq{}}\PY{p}{:}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}Revue firmware\PYZdq{}}\PY{p}{,}
+\PY{+w}{    }\PY{n+nt}{\PYZdq{}output\PYZdq{}}\PY{p}{:}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}firmware\PYZhy{}review.pdf\PYZdq{}}\PY{p}{,}
+\PY{+w}{    }\PY{n+nt}{\PYZdq{}source\PYZdq{}}\PY{p}{:}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}../firmware\PYZhy{}review.md\PYZdq{}}\PY{p}{,}
+\PY{+w}{    }\PY{n+nt}{\PYZdq{}source\PYZus{}sha256\PYZdq{}}\PY{p}{:}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}8b66c613…\PYZdq{}}
+\PY{+w}{  }\PY{p}{\PYZcb{},}
+\PY{+w}{  }\PY{n+nt}{\PYZdq{}anchors\PYZdq{}}\PY{p}{:}\PY{+w}{ }\PY{p}{\PYZob{}}
+\PY{+w}{    }\PY{n+nt}{\PYZdq{}fw:pas\PYZhy{}de\PYZhy{}temps\PYZdq{}}\PY{p}{:}\PY{+w}{ }\PY{p}{\PYZob{}}\PY{+w}{ }\PY{n+nt}{\PYZdq{}counter\PYZdq{}}\PY{p}{:}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}fw\PYZdq{}}\PY{p}{,}\PY{+w}{ }\PY{n+nt}{\PYZdq{}label\PYZdq{}}\PY{p}{:}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}FW\PYZhy{}10\PYZdq{}}\PY{p}{,}\PY{+w}{ }\PY{n+nt}{\PYZdq{}page\PYZdq{}}\PY{p}{:}\PY{+w}{ }\PY{l+m+mi}{14}\PY{+w}{ }\PY{p}{\PYZcb{}}
+\PY{+w}{  }\PY{p}{\PYZcb{}}
+\PY{p}{\PYZcb{}}
+\end{Verbatim}
+\end{code}
+It is delivered next to the artifact you asked for: in the directory for
+\texttt{-\allowbreak{}o dir}, beside the PDF for \texttt{-\allowbreak{}o report.pdf}. Its \texttt{document.source} is stored
+relative to its own location and is rewritten when it moves, so the staleness
+check keeps working.
+
+It is written in two passes, because the two halves of a reference become known
+at different times. The keys and their labels are known while converting; the
+\textbf{page numbers only exist once \LaTeX{} has run}, and are harvested from the
+\texttt{.aux} afterwards --- the same source the \texttt{xr} package reads. A conversion without
+\texttt{-\allowbreak{}-\allowbreak{}build} therefore publishes an inventory without pages, and citations simply
+omit the page.
+
+\begin{callout}[callout tip]{Commit the inventory}
+It is a build artifact, but committing it makes renumbering \emph{diffable}:
+\texttt{git diff} shows \texttt{FW-\allowbreak{}04 \(\rightarrow\) FW-\allowbreak{}10} before you publish. For a contractual
+document, that diff is the review gate that catches a renumbering before it
+reaches a reader.
+\end{callout}
+\section{Declaring and citing}\label{declaring-and-citing}
+
+\begin{code}{yaml}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+\PY{n+nt}{crossrefs}\PY{p}{:}
+\PY{+w}{  }\PY{n+nt}{fwrev}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{build/firmware\PYZhy{}review.refs.json}\PY{+w}{ }\PY{c+c1}{\PYZsh{} shorthand}
+\PY{+w}{  }\PY{n+nt}{hwrev}\PY{p}{:}
+\PY{+w}{    }\PY{n+nt}{inventory}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{../hardware/build/hardware\PYZhy{}review.refs.json}
+\end{Verbatim}
+\end{code}
+Paths are relative to the citing document. The alias is then the first segment
+of the reference: \texttt{@fwrev:fw:pas-\allowbreak{}de-\allowbreak{}temps}.
+
+Resolution is \textbf{explicit}: an alias never falls back to a local counter, and a
+local counter can never be shadowed by an external one. \texttt{@fw:x} is always this
+document's item, \texttt{@fwrev:fw:x} is always the other document's.
+
+\section{An external citation is text, not a link}\label{an-external-citation-is-text-not-a-link}
+
+The target lives in a different PDF, so TeXSmith emits the formatted reference
+as plain text rather than a \texttt{\textbackslash{}hyperref} that would resolve to nothing. Local
+references keep their live link.
+
+\section{Diagnostics}\label{diagnostics}
+
+This is the part that earns the feature. All of these are
+\hyperref[snippet:<HASH>]{diagnostics}, shown by default and promotable to hard
+failures with \texttt{-\allowbreak{}-\allowbreak{}strict} (or \texttt{press.features.strict: true}):
+
+\begin{center}
+\begin{tabularx}{\linewidth}{>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X}
+\toprule
+\textbf{Situation} & \textbf{Behaviour} \\
+
+\midrule
+the key is not published by the declared inventory & warning, and the citation renders as \texttt{[?fwrev:fw:disparu]} \\
+the inventory file does not exist yet & warning, citations render as \texttt{[?…]} \\
+the inventory's source changed since it was written & warning: the numbers you are citing may already be wrong \\
+the inventory's source no longer resolves at all & warning: staleness can no longer be checked \\
+the inventory uses a newer schema & warning, inventory ignored \\
+
+\bottomrule
+\end{tabularx}
+\end{center}
+
+Warnings are attributed to the \textbf{citing document}, not to a TeXSmith source
+line:
+
+\begin{code}{text}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+review/hardware\PYZhy{}review.md: warning ref\PYZhy{}unresolved: Cross\PYZhy{}reference \PYZsq{}@fwrev:fw:disparu\PYZsq{} is not published by …
+\end{Verbatim}
+\end{code}
+An unresolved citation is deliberately \textbf{visible in the output}. A silently
+dropped reference is how a contractual document ships a hole.
+
+\section{Build order}\label{build-order}
+
+\texttt{hardware-\allowbreak{}review.pdf} now depends on \texttt{firmware-\allowbreak{}review.refs.json}, which is a
+Makefile edge:
+
+\begin{code}{makefile}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+\PY{n+nf}{build/hardware\PYZhy{}review.pdf}\PY{o}{:}\PY{+w}{ }\PY{n}{hardware}\PYZhy{}\PY{n}{review}.\PY{n}{md} \PY{n}{build}/\PY{n}{firmware}\PYZhy{}\PY{n}{review}.\PY{n}{refs}.\PY{n}{json}
+\end{Verbatim}
+\end{code}
+Two documents citing each other need two passes, exactly like \LaTeX{}'s own
+\texttt{.aux}: a missing inventory is a warning and not a failure, so the first build
+produces the inventories and the second resolves the citations.
+
+\section{Not implemented yet}\label{not-implemented-yet}
+
+Links from one PDF into another (\texttt{xr-\allowbreak{}hyper} does this with a PDF-viewer \texttt{GoToR}
+action), sections, figures and tables in the inventory (only counters are
+published yet), custom citation formats, and any form of automatic build
+ordering.
+
+\end{document}

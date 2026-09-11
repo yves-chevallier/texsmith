@@ -1,0 +1,145 @@
+\documentclass[a4paper,twoside]{article}
+
+\usepackage{morewrites}
+
+\usepackage[svgnames,dvipsnames,x11names]{xcolor}
+\usepackage{graphicx}
+\usepackage[english]{babel}
+\usepackage[colorlinks=true, linkcolor=NavyBlue, urlcolor=NavyBlue, citecolor=NavyBlue]{hyperref}
+\usepackage[a4paper]{geometry}
+\usepackage{ts-fonts}
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{amsmath}
+\usepackage{float}
+\usepackage{seqsplit}
+\newcolumntype{Y}{>{\centering\arraybackslash}X}
+\newcolumntype{Z}{>{\raggedleft\arraybackslash}X}
+\usepackage{ts-code}
+
+\usepackage{lastpage}
+\usepackage{refcount}
+\makeatletter
+\def\ps@plain{
+  \let\@oddhead\@empty
+  \let\@evenhead\@empty
+  \def\@oddfoot{
+    \hfil
+    \ifnum\getpagerefnumber{LastPage}>1\relax
+      \thepage
+    \fi
+    \hfil}
+  \let\@evenfoot\@oddfoot
+}
+\makeatother
+
+\title{Emoji Support}
+\author{}\date{}
+\setlength{\emergencystretch}{3em}
+\widowpenalties 3 10000 10000 150
+\clubpenalties  3 10000 10000 150
+\displaywidowpenalty 10000
+\renewenvironment{abstract}{
+  \small
+  \begin{center}{\bfseries\abstractname}\end{center}
+  \begin{quotation}
+}{\end{quotation}}
+\makeatletter
+\newcount\ts@affilcnt
+\newcount\ts@loopcnt
+\renewcommand{\thanks}[1]{
+  \stepcounter{footnote}
+  \protected@xdef\@thefnmark{\thefootnote}
+  \@footnotemark
+  \global\advance\ts@affilcnt\@ne
+  \expandafter\xdef\csname ts@affilM\the\ts@affilcnt\endcsname{\@thefnmark}
+  \expandafter\gdef\csname ts@affilT\the\ts@affilcnt\endcsname{#1}
+}
+\newcommand\tsreplayfn{
+  \ts@loopcnt\z@
+  \loop
+    \advance\ts@loopcnt\@ne
+    \ifnum\ts@loopcnt>\ts@affilcnt\else
+      \xdef\@thefnmark{\csname ts@affilM\the\ts@loopcnt\endcsname}
+      \@footnotetext{\csname ts@affilT\the\ts@loopcnt\endcsname}
+  \repeat
+}
+\makeatother
+
+\begin{document}
+
+\twocolumn[{
+\maketitle
+}]
+\tsreplayfn
+
+\thispagestyle{plain}
+\section{Introduction}\label{introduction}
+
+TeXSmith renders emoji as glyphs when you pick a font flavour:
+
+\begin{code}{yaml}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+\PY{n+nt}{press}\PY{p}{:}
+\PY{+w}{  }\PY{n+nt}{fonts}\PY{p}{:}
+\PY{+w}{    }\PY{n+nt}{emoji}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{black}
+\end{Verbatim}
+\end{code}
+You can choose among four built-in options:
+
+\begin{description}
+\item[{ \texttt{black} }] OpenMoji Black (default).
+\item[{ \texttt{color} }] Noto Color Emoji.
+\item[{ \texttt{twemoji} }] Use the \texttt{twemoji} package as fallback.
+\item[{ \texttt{artifact} }] Download emoji as images using Twemoji.
+
+\end{description}
+Any other name is treated as a custom font family to load directly.
+
+Engines:
+
+\begin{itemize}
+\item{} LuaLaTeX relies on \texttt{luaotfload} to add the emoji font as a fallback.
+\item{} XeLaTeX/Tectonic use \texttt{ucharclasses} to automatically switch to the emoji font on the U+1F000--U+1FAFF range.
+You can type emoji directly in Markdown or LaTeX source.
+
+\end{itemize}
+\newpage
+\section{Examples}\label{examples}
+
+\begin{center}
+\begin{tabularx}{\linewidth}{>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X}
+\toprule
+\textbf{Emoji} & \textbf{Description} \\
+
+\midrule
+\texsmithEmoji{😊} & Smiling face with smiling eyes \\
+\texsmithEmoji{🚀} & Rocket \\
+\texsmithEmoji{🍕} & Pizza \\
+\texsmithEmoji{🎉} & Party popper \\
+\texsmithEmoji{🐍} & Snake \\
+\texsmithEmoji{🌍} & Globe showing Europe-Africa \\
+\texsmithEmoji{💻} & Laptop computer \\
+\texsmithEmoji{📚} & Books \\
+\texsmithEmoji{🎨} & Artist palette \\
+\texsmithEmoji{👽} & Alien \\
+\texsmithEmoji{👋} & Waving hand \\
+\texsmithEmoji{🤖} & Robot \\
+\texsmithEmoji{🦄} & Unicorn \\
+\texsmithEmoji{🧠} & Brain \\
+\texsmithEmoji{🛸} & Flying saucer \\
+\texsmithEmoji{🛰️} & Satellite \\
+\texsmithEmoji{🐙} & Octopus \\
+\texsmithEmoji{📝} & Memo \\
+\texsmithEmoji{📋} & Note \\
+\texsmithEmoji{⭐} & Star \\
+\texsmithEmoji{✅} & Check mark \\
+\texsmithEmoji{❌} & Cross mark \\
+\texsmithEmoji{🧪} & Experiment \\
+\texsmithEmoji{💡} & Light Bulb \\
+
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\end{document}

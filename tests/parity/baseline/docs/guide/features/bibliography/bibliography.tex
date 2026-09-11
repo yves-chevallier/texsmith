@@ -1,0 +1,127 @@
+\documentclass[a4paper,twoside]{article}
+
+\usepackage{morewrites}
+
+\usepackage[svgnames,dvipsnames,x11names]{xcolor}
+\usepackage{graphicx}
+\usepackage[english]{babel}
+\usepackage[colorlinks=true, linkcolor=NavyBlue, urlcolor=NavyBlue, citecolor=NavyBlue]{hyperref}
+\usepackage[a4paper]{geometry}
+\usepackage{ts-fonts}
+\usepackage{amsmath}
+\usepackage{float}
+\usepackage{seqsplit}
+\usepackage{ts-code}
+
+\usepackage{lastpage}
+\usepackage{refcount}
+\makeatletter
+\def\ps@plain{
+  \let\@oddhead\@empty
+  \let\@evenhead\@empty
+  \def\@oddfoot{
+    \hfil
+    \ifnum\getpagerefnumber{LastPage}>1\relax
+      \thepage
+    \fi
+    \hfil}
+  \let\@evenfoot\@oddfoot
+}
+\makeatother
+
+\title{Bibliography}
+\author{}\date{}
+
+\begin{document}
+
+\maketitle
+
+\thispagestyle{plain}
+TeXSmith reads bibliographic data from BibTeX files and from YAML front matter. Use it to keep citations and references tidy in academic writing, technical docs, or any project that wants repeatable citation management.
+
+\section{Using Bibliography Files}\label{using-bibliography-files}
+
+Pass one or more \texttt{.bib} files on the command line:
+
+\begin{code}{bash}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+texsmith\PY{+w}{ }docs/chapter.md\PY{+w}{ }references.bib
+\end{Verbatim}
+\end{code}
+You can also add \texttt{file1.bib file2.bib} as positional inputs alongside a MkDocs site so every page sees the same pool of references.
+
+\section{Using the front matter}\label{using-the-front-matter}
+
+You can declare bibliography entries directly in the YAML front matter of your Markdown documents:
+
+\begin{code}{yaml}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+\PY{n+nt}{bibliography}\PY{p}{:}
+\PY{+w}{  }\PY{c+c1}{\PYZsh{} Extract citation from DOI}
+\PY{+w}{  }\PY{n+nt}{citation\PYZhy{}keyword}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{https://doi.org/10.1000/xyz123}
+\PY{+w}{  }\PY{c+c1}{\PYZsh{} Manual bibliography entry}
+\PY{+w}{  }\PY{n+nt}{AI2027}\PY{p}{:}
+\PY{+w}{    }\PY{n+nt}{type}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{misc}
+\PY{+w}{    }\PY{n+nt}{title}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{AI}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{2027}
+\PY{+w}{    }\PY{n+nt}{date}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{2025\PYZhy{}04\PYZhy{}03}
+\PY{+w}{    }\PY{n+nt}{url}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{https://ai\PYZhy{}2027.com/ai\PYZhy{}2027.pdf}
+\PY{+w}{    }\PY{n+nt}{authors}\PY{p}{:}
+\PY{+w}{      }\PY{p+pIndicator}{\PYZhy{}}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{Daniel}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{Kokotajlo}
+\PY{+w}{      }\PY{p+pIndicator}{\PYZhy{}}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{Scott}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{Alexander}
+\PY{+w}{      }\PY{p+pIndicator}{\PYZhy{}}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{Thomas}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{Larsen}
+\PY{+w}{      }\PY{p+pIndicator}{\PYZhy{}}\PY{+w}{ }\PY{n+nt}{first}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{Eli}
+\PY{+w}{        }\PY{n+nt}{last}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{Lifland}
+\PY{+w}{      }\PY{p+pIndicator}{\PYZhy{}}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{Romeo}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{Dean}
+\end{Verbatim}
+\end{code}
+The format mirrors BibTeX, translated to YAML by \texttt{pybtex}.
+
+Two approaches:
+
+\begin{enumerate}
+\item Provide a DOI link; TeXSmith resolves it into a full BibTeX entry.
+\item Provide a manual entry with the fields you need.
+
+\end{enumerate}
+See the [academic paper][cheese] example or the [book][einstein] example.
+
+\section{Citation Syntax}\label{citation-syntax}
+
+Citations use the footnote-style syntax:
+
+\begin{code}{yaml}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+\PY{n+nn}{\PYZhy{}\PYZhy{}\PYZhy{}}
+\PY{n+nt}{bibliography}\PY{p}{:}
+\PY{+w}{  }\PY{n+nt}{WADHWANI20111713}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{https://doi.org/10.3168/jds.2010\PYZhy{}3952}
+\PY{n+nn}{\PYZhy{}\PYZhy{}\PYZhy{}}
+\PY{c+c1}{\PYZsh{} Introduction}
+
+\PY{l+lScalar+lScalarPlain}{Cheese}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{exhibits}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{unique}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{melting}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{properties}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{[\PYZca{}WADHWANI20111713].}
+\end{Verbatim}
+\end{code}
+Which renders into:
+
+\begin{figure}[H]
+    \centering
+
+    \ifdefined\adjustbox
+
+        \adjustbox{max width=\textwidth}{
+            \includegraphics[width=0.7\linewidth]{snippet-<HASH>.pdf}
+        }
+
+    \else
+
+        \includegraphics[width=0.7\linewidth]{snippet-<HASH>.pdf}
+
+    \fi
+
+\end{figure}
+If a citation key is missing from your bibliography, TeXSmith leaves it as a regular footnote. If a footnote exists with the same key, the footnote wins over the bibliography entry.
+
+\section{BibTeX}\label{bibtex}
+
+BibTeX is an old, loosely specified format with many dialects (\texttt{bibtex}, \texttt{bibtex8}, \texttt{pbibtex}, and more). The most complete parser is \href{https://en.wikipedia.org/wiki/Biber\_(LaTeX)}{biber}, but it is Perl-based and not embeddable. TeXSmith relies on \href{https://pybtex.org/}{pybtex}, which covers the common cases.
+
+\end{document}

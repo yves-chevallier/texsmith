@@ -1,0 +1,109 @@
+\documentclass[a4paper,twoside]{article}
+
+\usepackage{morewrites}
+
+\usepackage[svgnames,dvipsnames,x11names]{xcolor}
+\usepackage{graphicx}
+\usepackage[english]{babel}
+\usepackage[colorlinks=true, linkcolor=NavyBlue, urlcolor=NavyBlue, citecolor=NavyBlue]{hyperref}
+\usepackage[a4paper]{geometry}
+\usepackage{ts-fonts}
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{amsmath}
+\usepackage{float}
+\usepackage{seqsplit}
+\newcolumntype{Y}{>{\centering\arraybackslash}X}
+\newcolumntype{Z}{>{\raggedleft\arraybackslash}X}
+\usepackage{ts-code}
+
+\usepackage{lastpage}
+\usepackage{refcount}
+\makeatletter
+\def\ps@plain{
+  \let\@oddhead\@empty
+  \let\@evenhead\@empty
+  \def\@oddfoot{
+    \hfil
+    \ifnum\getpagerefnumber{LastPage}>1\relax
+      \thepage
+    \fi
+    \hfil}
+  \let\@evenfoot\@oddfoot
+}
+\makeatother
+
+\title{Integration with MkDocs}
+\author{}\date{}
+
+\begin{document}
+
+\maketitle
+
+\thispagestyle{plain}
+TeXSmith can be seamlessly integrated with MkDocs, a popular static site generator for project documentation. This allows you to leverage MkDocs' powerful features while utilizing TeXSmith for document generation.
+
+The integration is achieved through the \texttt{mkdocs-\allowbreak{}texsmith} plugin, which processes TeXSmith documents during the MkDocs build process.
+
+\section{Configuration}\label{configuration}
+
+To enable TeXSmith in your MkDocs project, you need to add the \texttt{mkdocs-\allowbreak{}texsmith} plugin to your \texttt{mkdocs.yml} configuration file:
+
+\begin{code}{yaml}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+\PY{n+nt}{plugins}\PY{p}{:}
+\PY{+w}{  }\PY{p+pIndicator}{\PYZhy{}}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{texsmith}
+\end{Verbatim}
+\end{code}
+You can configure additional options for the TeXSmith plugin as needed:
+
+\begin{center}
+\begin{tabularx}{\linewidth}{>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X}
+\toprule
+\textbf{Option} & \textbf{Description} & \textbf{Default} \\
+
+\midrule
+\texttt{template} & Template to use for rendering the site & \texttt{book} \\
+\texttt{build\_dir} & Directory where TeXSmith outputs are stored & \texttt{site} \\
+
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\subsection{Multiple documents}\label{multiple-documents}
+
+You can either generate a single document from your MkDocs site or multiple documents from different sections.
+
+\begin{code}{yaml}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+\PY{n+nt}{plugins}\PY{p}{:}
+\PY{+w}{    }\PY{p+pIndicator}{\PYZhy{}}\PY{+w}{ }\PY{n+nt}{texsmith}\PY{p}{:}
+\PY{+w}{      }\PY{n+nt}{books}\PY{p}{:}
+\PY{+w}{        }\PY{p+pIndicator}{\PYZhy{}}\PY{+w}{ }\PY{n+nt}{template}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{book}
+\PY{+w}{          }\PY{n+nt}{folder}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{foolists}
+\PY{+w}{          }\PY{n+nt}{root}\PY{p}{:}\PY{+w}{ }\PY{l+s}{\PYZdq{}}\PY{l+s}{foo}\PY{l+s}{\PYZdq{}}
+\PY{+w}{          }\PY{n+nt}{base\PYZus{}level}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{\PYZhy{}1}
+\PY{+w}{        }\PY{p+pIndicator}{\PYZhy{}}\PY{+w}{ }\PY{n+nt}{template}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{article}
+\PY{+w}{          }\PY{n+nt}{folder}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{bariers}
+\PY{+w}{          }\PY{n+nt}{root}\PY{p}{:}\PY{+w}{ }\PY{l+s}{\PYZdq{}}\PY{l+s}{bar}\PY{l+s}{\PYZdq{}}
+\end{Verbatim}
+\end{code}
+\section{Serve}\label{serve}
+
+During development with \texttt{mkdocs serve}, the TeXSmith plugin can fetch assets from the web (e.g. images, citations) and compile PDF snippets on the fly. This allows for a smooth writing experience with instant feedback.
+
+\section{Build}\label{build}
+
+When you run \texttt{mkdocs build}, the TeXSmith plugin processes all TeXSmith documents in your project, generating the corresponding PDFs and integrating them into the final site output. By default the output directory is \texttt{press/}.
+
+You can tell TeXSmith to build the PDF during the process with the \texttt{build} option in your mkdocs.yml:
+
+\begin{code}{yaml}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+\PY{n+nt}{plugins}\PY{p}{:}
+\PY{+w}{  }\PY{p+pIndicator}{\PYZhy{}}\PY{+w}{ }\PY{n+nt}{texsmith}\PY{p}{:}
+\PY{+w}{      }\PY{n+nt}{build}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{true}
+\end{Verbatim}
+\end{code}
+
+\end{document}

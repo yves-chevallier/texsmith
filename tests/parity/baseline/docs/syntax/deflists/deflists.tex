@@ -1,0 +1,87 @@
+\documentclass[a4paper,twoside]{article}
+
+\usepackage{morewrites}
+
+\usepackage[svgnames,dvipsnames,x11names]{xcolor}
+\usepackage{graphicx}
+\usepackage[english]{babel}
+\usepackage[colorlinks=true, linkcolor=NavyBlue, urlcolor=NavyBlue, citecolor=NavyBlue]{hyperref}
+\usepackage[a4paper]{geometry}
+\usepackage{ts-fonts}
+\usepackage{amsmath}
+\usepackage{float}
+\usepackage{seqsplit}
+\usepackage{ts-code}
+
+\usepackage{lastpage}
+\usepackage{refcount}
+\makeatletter
+\def\ps@plain{
+  \let\@oddhead\@empty
+  \let\@evenhead\@empty
+  \def\@oddfoot{
+    \hfil
+    \ifnum\getpagerefnumber{LastPage}>1\relax
+      \thepage
+    \fi
+    \hfil}
+  \let\@evenfoot\@oddfoot
+}
+\makeatother
+
+\title{Definition Lists}
+\author{}\date{}
+
+\begin{document}
+
+\maketitle
+
+\thispagestyle{plain}
+Definition lists pair a term with one or more definitions. Markdown sticks to a simple pattern:
+
+\begin{code}{markdown}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+Apple
+:   Pomaceous fruit of plants of the genus Malus in
+    the family Rosaceae.
+
+Orange
+:   The fruit of an evergreen tree of the genus Citrus.
+\end{Verbatim}
+\end{code}
+Which renders as:
+
+\begin{description}
+\item[{ Apple }] Pomaceous fruit of plants of the genus Malus in
+the family Rosaceae.
+\item[{ Orange }] The fruit of an evergreen tree of the genus Citrus.
+
+\end{description}
+\LaTeX{} output:
+
+\begin{code}{latex}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+\PY{k}{\PYZbs{}begin}\PY{n+nb}{\PYZob{}}description\PY{n+nb}{\PYZcb{}}
+\PY{k}{\PYZbs{}item}\PY{n+na}{[Apple]} Pomaceous fruit of plants of the genus Malus in the family Rosaceae.
+\PY{k}{\PYZbs{}item}\PY{n+na}{[Orange]} The fruit of an evergreen tree of the genus Citrus.
+\PY{k}{\PYZbs{}end}\PY{n+nb}{\PYZob{}}description\PY{n+nb}{\PYZcb{}}
+\end{Verbatim}
+\end{code}
+\begin{figure}[H]
+    \centering
+
+    \ifdefined\adjustbox
+
+        \adjustbox{max width=\textwidth}{
+            \includegraphics[width=\linewidth]{snippet-<HASH>.pdf}
+        }
+
+    \else
+
+        \includegraphics[width=\linewidth]{snippet-<HASH>.pdf}
+
+    \fi
+
+\end{figure}
+
+\end{document}

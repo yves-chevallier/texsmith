@@ -1,0 +1,286 @@
+\documentclass[a4paper,twoside]{article}
+
+\usepackage{morewrites}
+
+\usepackage[svgnames,dvipsnames,x11names]{xcolor}
+\usepackage{graphicx}
+\usepackage[english]{babel}
+\usepackage[colorlinks=true, linkcolor=NavyBlue, urlcolor=NavyBlue, citecolor=NavyBlue]{hyperref}
+\usepackage[a4paper]{geometry}
+\usepackage{ts-fonts}
+\usepackage{csquotes}
+\usepackage{amsmath}
+\usepackage{float}
+\usepackage{seqsplit}
+\usepackage{ts-callouts}
+\usepackage{ts-code}
+
+\usepackage{lastpage}
+\usepackage{refcount}
+\makeatletter
+\def\ps@plain{
+  \let\@oddhead\@empty
+  \let\@evenhead\@empty
+  \def\@oddfoot{
+    \hfil
+    \ifnum\getpagerefnumber{LastPage}>1\relax
+      \thepage
+    \fi
+    \hfil}
+  \let\@evenfoot\@oddfoot
+}
+\makeatother
+
+\title{References}
+\author{}\date{}
+
+\begin{document}
+
+\maketitle
+
+\thispagestyle{plain}
+We define several types of references that can be used throughout the documentation:
+
+\begin{description}
+\item[{ Internal References }] These are links that point to other sections within the same document or to other documents within the same project.
+\item[{ External References }] These are links that point to resources outside of the current project, such as websites or external documents.
+\item[{ Bibliographic References }] These are citations that refer to external publications, articles, or books. They are often formatted using a specific citation style (e.g., APA, MLA) and may include a bibliography section at the end of the document.
+\item[{ Footnotes }] Footnotes provide additional information or citations without cluttering the main text. They are typically indicated by a superscript number in the text, with the corresponding footnote text provided at the bottom of the page or section.
+\item[{ Equations }] Mathematical equations can be included in the document using LaTeX syntax. Equations can be labeled and referenced throughout the text.
+\item[{ Tables }] Tables are used to present data in a structured format with rows and columns. They can be labeled and referenced within the document.
+\item[{ Figures }] Figures are images, charts, or diagrams included in the document. They can be labeled and referenced throughout the text.
+\item[{ Listings/Code Blocks }] Code blocks are used to display code snippets in various programming languages. They can be labeled and referenced within the document.
+\item[{ Tags/Index }] Tags or index entries allow you to associate keywords with specific sections or topics in the document, making it easier to locate related information.
+
+\end{description}
+\section{Internal References}\label{internal-references}
+
+You can reference another section in the same document or cross-link to other files in the project.
+
+Linking to another file? TeXSmith targets the destination's main heading and drops a proper hyperlink---handy for navigation-friendly PDFs without any manual tinkering.
+
+\begin{code}{markdown}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+See the [\PY{n+nt}{Code Examples}](\PY{n+na}{code.md}) for more details.
+\end{Verbatim}
+\end{code}
+Skip the link text and TeXSmith injects the section number for the print build automatically.
+\texttt{See the section [](code.md) for more details.
+}
+
+\begin{code}{markdown}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+\PY{g+gu}{\PYZsh{}\PYZsh{} Section Title \PYZob{}\PYZsh{}sec:section\PYZhy{}title\PYZcb{}}
+
+Placeholder text that other sections can reference.
+
+\PY{g+gu}{\PYZsh{}\PYZsh{} Other Section}
+
+Check section @[sec:section\PYZhy{}title] for more details.
+\end{Verbatim}
+\end{code}
+The brackets are optional when the label is a single word made of letters,
+digits and \texttt{\_ : . -\allowbreak{}} characters, so \texttt{@sec:section-\allowbreak{}title} works too. Trailing
+sentence punctuation stays out of the label (\texttt{…voir @sec:intro.} references
+\texttt{sec:intro}). E-mail addresses and \texttt{@} inside words or URLs are left alone;
+write \texttt{\textbackslash{}@} to force a literal \texttt{@} where the shorthand would otherwise apply.
+
+\subsection{Custom counters}\label{custom-counters}
+
+Document-specific series (findings, requirements, bugs) declared under
+\texttt{counters:} in the front matter reuse the very same \texttt{@prefix:key} shorthand,
+resolving to their formatted number instead of a section number. See
+\hyperref[snippet:<HASH>]{Custom counters}.
+
+\subsection{Cross-document references}\label{cross-document-references}
+
+\texttt{@alias:key} resolves against another document's published inventory, declared
+under \texttt{crossrefs:} in the front matter. See
+\hyperref[snippet:<HASH>]{Cross-document references}.
+
+\subsection{Autorefs}\label{autorefs}
+
+When the \texttt{mkdocs-\allowbreak{}autorefs} extension is enabled, you can use the \texttt{[text][label]} syntax to generate automatic references to headings.
+
+\section{External References}\label{external-references}
+
+Reference external resources (HTTP/HTTPS) with vanilla Markdown link syntax:
+
+\begin{code}{markdown}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+For more information, visit the [\PY{n+nt}{TeXSmith Website}](\PY{n+na}{https://texsmith.org}).
+You can also check our GitHub repository at https://github.com/yves\PYZhy{}chevallier/texsmith.
+\end{Verbatim}
+\end{code}
+Printed output uses the usual \LaTeX{} link commands:
+
+\begin{code}{latex}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+For more information, visit the \PY{k}{\PYZbs{}href}\PY{n+nb}{\PYZob{}}https://texsmith.org\PY{n+nb}{\PYZcb{}}\PY{n+nb}{\PYZob{}}TeXSmith Website\PY{n+nb}{\PYZcb{}}.
+You can also check our GitHub repository at \PY{k}{\PYZbs{}url}\PY{n+nb}{\PYZob{}}https://github.com/yves\PYZhy{}chevallier/texsmith\PY{n+nb}{\PYZcb{}}.
+\end{Verbatim}
+\end{code}
+\section{Bibliographic References}\label{bibliographic-references}
+
+Markdown lacks native bibliography support, so TeXSmith reuses the footnote syntax and BibTeX/front matter keys. See the documentation on \hyperref[snippet:<HASH>]{Bibliography management} for more details.
+
+\begin{code}{markdown}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+\PYZhy{}\PYZhy{}\PYZhy{}
+bibliography:
+\PY{g+gu}{  einstein1905: https://doi.org/10.1002/andp.19053221004}
+\PY{g+gu}{\PYZhy{}\PYZhy{}\PYZhy{}}
+Einstein\PYZsq{}s theory of relativity revolutionized physics. [\PYZca{}einstein1905]
+\end{Verbatim}
+\end{code}
+\section{Footnotes}\label{footnotes}
+
+Use footnotes to park side comments without cluttering the main text. Markdown marks them with superscript numbers; the rendered document moves the details to the bottom of the page or section.
+
+\begin{code}{markdown}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+This is a sample sentence with a footnote.[\PYZca{}1]
+
+[\PY{n+nl}{\PYZca{}1}]: \PY{n+na}{This is the footnote text that provides additional information.}
+\end{Verbatim}
+\end{code}
+Footnotes are limited to one line in print---keep them tight.
+
+\section{Equations}\label{equations}
+
+You can include mathematical equations in your document using \LaTeX{} syntax and use \texttt{\textbackslash{}label\{\}} to reference them later.
+
+\begin{code}{markdown}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+\PYZbs{}begin\PYZob{}equation\PYZcb{}
+E = mc\PYZca{}2
+\PYZbs{}label\PYZob{}eq:einstein\PYZcb{}
+\PYZbs{}end\PYZob{}equation\PYZcb{}
+
+As shown in Equation \PYZdl{}\PYZbs{}eqref\PYZob{}eq:einstein\PYZcb{}\PYZdl{}, energy is equal to mass times the speed of light squared.
+\end{Verbatim}
+\end{code}
+For consistency, TeXSmith provides the shorthand \texttt{@[label]} to reference it.
+
+\begin{code}{markdown}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+As shown in Equation @[eq:einstein], energy is equal to mass times the speed of light squared.
+\end{Verbatim}
+\end{code}
+\section{Figures}\label{figures}
+
+Give a figure a caption block with an \texttt{id} and reference it anywhere with the
+\texttt{@[label]} shorthand. The \texttt{id} is emitted verbatim as the \LaTeX{} \texttt{\textbackslash{}label}.
+
+\begin{code}{markdown}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+![\PY{n+nt}{Sample Figure}](\PY{n+na}{image\PYZhy{}url.jpg})
+
+/// caption
+    attrs: \PYZob{}id: sample\PYZhy{}figure\PYZcb{}
+This is the caption for the figure.
+///
+
+As shown in Figure @[sample\PYZhy{}figure], the data illustrates...
+\end{Verbatim}
+\end{code}
+\begin{callout}[callout warning]{Warning}
+The \texttt{id} may not contain a colon: \texttt{pymdown-\allowbreak{}extensions} rejects
+identifiers such as \texttt{fig:sample-\allowbreak{}figure}, and the whole \texttt{/// caption}
+block then silently falls back to plain text (TeXSmith emits a warning
+when this happens). Use plain identifiers like \texttt{sample-\allowbreak{}figure}.
+\end{callout}
+Both web and print outputs number figures automatically, though the actual numbers may differ because each layout floats content differently.
+
+\section{Tables}\label{tables}
+
+Tables present structured data; give them a caption line with a label so you
+can reference them later. The \texttt{Table:} line goes directly above the table.
+
+\begin{code}{markdown}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+Table: A sample table for cross\PYZhy{}references. \PYZob{}\PYZsh{}tbl:sample\PYZhy{}table\PYZcb{}
+
+| Header 1 | Header 2 |
+|\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}|\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}|
+| Cell 1   | Cell 2   |
+
+Check Table @[tbl:sample\PYZhy{}table] for more details.
+\end{Verbatim}
+\end{code}
+\section{Code Block References}\label{code-block-references}
+
+Labelled, cross-referenceable code listings are not implemented yet: fenced
+code blocks accept a \texttt{title} (rendered as the listing header) but carry no
+label, so there is no \texttt{@[...]} target for them. Track the feature before
+relying on it.
+
+\section{Tags and Index Entries}\label{tags-and-index-entries}
+
+Add tags or index entries to associate keywords with specific sections or topics in the document.
+
+\begin{code}{markdown}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+This section covers advanced sorting algorithms. \PYZob{}index\PYZcb{}[algorithm]
+\end{Verbatim}
+\end{code}
+See the section [Index / Tags][index-tags] for more details on how to manage index entries.
+
+\section{Naming Conventions}\label{naming-conventions}
+
+Before hypertext, references revolved around numbers: pages, figures, tables, equations.
+
+\begin{code}{text}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+1. Section
+
+  Some Text
+
+  Table 7: An example table
+         +\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}+
+         | Table |
+         +\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}+
+
+         +\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}+
+         | Figure |
+         +\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}+
+  Figure 42: An example figure
+
+2. Another Section
+
+  See Table 7 for more details. The Figure 42 illustrates the concept.
+  Everything is explained in Section 1.
+\end{Verbatim}
+\end{code}
+\subsection{French}\label{french}
+
+In French, the reference type stays lowercase unless it begins the sentence.
+
+\begin{displayquote}
+
+Voir le tableau 7 pour plus de détails. La figure 42 illustre le concept.
+Le tout est expliqué à la section 1.
+
+\end{displayquote}
+\subsection{English}\label{english}
+
+In English we capitalize the reference type and skip the article (``Table 7,'' not ``the Table 7'').
+
+\begin{displayquote}
+
+See Table 7 for more details. Figure 42 illustrates the concept.
+Everything is explained in Section 1.
+
+\end{displayquote}
+\subsection{German}\label{german}
+
+German capitalizes the reference type too.
+
+\begin{displayquote}
+
+Siehe Tabelle 7 für weitere Details. Abbildung 42 veranschaulicht das Konzept.
+Alles wird in Abschnitt 1 erklärt.
+
+\end{displayquote}
+
+\end{document}

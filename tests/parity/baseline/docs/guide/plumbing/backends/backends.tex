@@ -1,0 +1,180 @@
+\documentclass[a4paper,twoside]{article}
+
+\usepackage{morewrites}
+
+\usepackage[svgnames,dvipsnames,x11names]{xcolor}
+\usepackage{graphicx}
+\usepackage[english]{babel}
+\usepackage[colorlinks=true, linkcolor=NavyBlue, urlcolor=NavyBlue, citecolor=NavyBlue]{hyperref}
+\usepackage[a4paper]{geometry}
+\usepackage{ts-fonts}
+\usepackage{amsmath}
+\usepackage{float}
+\usepackage{seqsplit}
+\usepackage{ts-callouts}
+\usepackage{ts-code}
+
+\usepackage{lastpage}
+\usepackage{refcount}
+\makeatletter
+\def\ps@plain{
+  \let\@oddhead\@empty
+  \let\@evenhead\@empty
+  \def\@oddfoot{
+    \hfil
+    \ifnum\getpagerefnumber{LastPage}>1\relax
+      \thepage
+    \fi
+    \hfil}
+  \let\@evenfoot\@oddfoot
+}
+\makeatother
+
+\title{Output backends}
+\author{}\date{}
+
+\begin{document}
+
+\maketitle
+
+\thispagestyle{plain}
+TeXSmith lowers every document into a typed intermediate representation (IR)
+and then emits a backend from that IR:
+
+\begin{code}{text}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+read(HTML) → IR (texsmith.ir) → write(IR) → LaTeX | Typst
+\end{Verbatim}
+\end{code}
+Because both backends consume the \textbf{same} IR (the readers and the IR are
+untouched), you choose the output format with a single flag:
+
+\begin{code}{bash}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+texsmith\PY{+w}{ }doc.md\PY{+w}{ }\PYZhy{}tarticle\PY{+w}{ }\PYZhy{}\PYZhy{}format\PY{+w}{ }latex\PY{+w}{   }\PY{c+c1}{\PYZsh{} default}
+texsmith\PY{+w}{ }doc.md\PY{+w}{ }\PYZhy{}tarticle\PY{+w}{ }\PYZhy{}\PYZhy{}format\PY{+w}{ }typst
+\end{Verbatim}
+\end{code}
+\texttt{-\allowbreak{}-\allowbreak{}format} is case-insensitive and accepts \texttt{latex} (default) or \texttt{typst}.
+
+\section{LaTeX backend (default)}\label{latex-backend-default}
+
+The \LaTeX{} backend (\texttt{texsmith.writers.latex}) is the full-featured path: it
+drives the template/fragment runtime, fonts and script matching, glossary and
+index engines, asset transformers, and compiles through a TeX engine
+(Tectonic by default, or \texttt{latexmk} with \texttt{-\allowbreak{}-\allowbreak{}engine lualatex} / \texttt{-\allowbreak{}-\allowbreak{}engine
+xelatex}). This is the backend assumed throughout most of this documentation.
+
+\section{Typst backend}\label{typst-backend}
+
+\begin{callout}[callout warning]{Experimental}
+The Typst backend is \textbf{experimental}. The \LaTeX{} backend remains the
+default and the supported path; Typst covers a subset of it, leans on the
+third-party \texttt{mitex} package for math (which can fail on some constructs ---
+see below), and approximates or drops a few constructs. Use it for new,
+Typst-first documents and check the output; do not assume \LaTeX{}-level
+fidelity yet.
+\end{callout}
+\href{https://typst.app}{Typst} is a modern, Rust-based typesetting system. The
+Typst backend (\texttt{texsmith.writers.typst}) emits a compilable \texttt{.typ} source from
+the same IR. It is a lean, Typst-native path and intentionally covers a
+\textbf{subset} of the \LaTeX{} backend (see \hyperref[scope-and-limitations]{Scope}).
+
+\begin{code}{bash}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+\PY{c+c1}{\PYZsh{} Emit a .typ file (no compiler required)}
+texsmith\PY{+w}{ }doc.md\PY{+w}{ }\PYZhy{}tarticle\PY{+w}{ }\PYZhy{}\PYZhy{}format\PY{+w}{ }typst\PY{+w}{ }\PYZhy{}\PYZhy{}output\PY{+w}{ }build/
+
+\PY{c+c1}{\PYZsh{} Emit and compile to PDF}
+texsmith\PY{+w}{ }doc.md\PY{+w}{ }\PYZhy{}tarticle\PY{+w}{ }\PYZhy{}\PYZhy{}format\PY{+w}{ }typst\PY{+w}{ }\PYZhy{}\PYZhy{}build\PY{+w}{ }\PYZhy{}\PYZhy{}output\PY{+w}{ }build/
+\end{Verbatim}
+\end{code}
+Without a template, the body is wrapped in a minimal standalone preamble. With
+the \textbf{article} or \textbf{book} template, the body is wrapped in the template's
+Typst scaffolding (title, authors, date, abstract, table of contents,
+sectioning, and a native Typst bibliography).
+
+\begin{callout}[callout note]{Typst output and \LaTeX{}-only flags}
+\texttt{-\allowbreak{}-\allowbreak{}format typst} cannot be combined with \texttt{-\allowbreak{}-\allowbreak{}html}, \texttt{-\allowbreak{}-\allowbreak{}template-\allowbreak{}info}, or
+\texttt{-\allowbreak{}-\allowbreak{}template-\allowbreak{}scaffold}: those inspect the \LaTeX{} fragment/engine machinery,
+which the Typst path does not use.
+\end{callout}
+\subsection{Installing a Typst compiler}\label{installing-a-typst-compiler}
+
+Emitting the \texttt{.typ} source never needs a compiler; compilation does. Two paths
+are supported, tried in this order:
+
+\textbf{Embedded compiler (pure pip)}\par
+
+The \texttt{typst} PyPI package embeds the Rust compiler, so nothing needs to be
+on your \texttt{PATH}:
+
+\begin{code}{bash}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+pip\PY{+w}{ }install\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}texsmith[typst]\PYZdq{}}
+\PY{c+c1}{\PYZsh{} or}
+uv\PY{+w}{ }pip\PY{+w}{ }install\PY{+w}{ }\PYZhy{}e\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}.[typst]\PYZdq{}}
+\PY{c+c1}{\PYZsh{} or}
+uv\PY{+w}{ }tool\PY{+w}{ }install\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}texsmith[typst]\PYZdq{}}
+\end{Verbatim}
+\end{code}
+\textbf{System binary}\par
+
+Install \texttt{typst} on your \texttt{PATH} and TeXSmith detects it automatically as a
+fallback:
+
+\begin{code}{bash}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+brew\PY{+w}{ }install\PY{+w}{ }typst\PY{+w}{          }\PY{c+c1}{\PYZsh{} Homebrew}
+cargo\PY{+w}{ }install\PY{+w}{ }typst\PYZhy{}cli\PY{+w}{      }\PY{c+c1}{\PYZsh{} Cargo}
+\PY{c+c1}{\PYZsh{} or download a release from https://github.com/typst/typst/releases}
+\end{Verbatim}
+\end{code}
+\begin{callout}[callout warning]{Prefer the system binary for recent math}
+The compiler embedded in the \texttt{typst} PyPI package can lag behind recent
+Typst releases. Math is rendered through the \texttt{mitex} package (a \LaTeX{}-math
+renderer for Typst); documents that rely on a recent \texttt{mitex} may \textbf{fail}
+with the embedded compiler where an up-to-date system binary only emits a
+warning. For math-heavy documents, prefer the system binary.
+\end{callout}
+If no compiler is available, the \texttt{.typ} is still written and TeXSmith reports
+that compilation was skipped, with an actionable install hint.
+
+\subsection{Scope and limitations}\label{scope-and-limitations}
+
+The Typst backend covers a real templated document (article and book) and the
+common Markdown/HTML constructs:
+
+\begin{itemize}
+\item{} Document structure, paragraphs, and headings.
+\item{} Inline emphasis (emphasis, strong, strikeout, underline, highlight, small
+  caps, sub/superscript, quotes), inline code, and links.
+\item{} Code blocks, block quotes, bullet and ordered lists, definition lists,
+  admonitions, horizontal rules.
+\item{} Images, figures, simple (GFM) tables, and rich (\texttt{yaml} / \texttt{data-\allowbreak{}ts}) tables
+  rebuilt as a native Typst \texttt{\#table}.
+\item{} Footnotes, TeX logos, keystrokes, progress bars.
+\item{} Math (rendered through the Typst \texttt{mitex} package) and equation
+  cross-references (\texttt{\#ref}).
+\item{} Native citations (\texttt{\#cite}) resolved against the bibliography collection the
+  CLI builds (\texttt{.bib} files plus inline DOI), wired through \texttt{\#bibliography(...)}.
+
+\end{itemize}
+Approximated or dropped on the Typst path (no exact equivalent --- the content is
+preserved as closely as possible rather than producing wrong output):
+
+\begin{itemize}
+\item{} \texttt{MarginNote} renders as a \texttt{\#footnote} (the \texttt{side} hint has no counterpart).
+\item{} Index entries (\texttt{<abbr>} markers) keep their visible text but emit no index
+  marker --- Typst has no \texttt{makeindex} equivalent here.
+\item{} Remote (\texttt{http(s)://}, \texttt{data:}) or unresolved local images are dropped to keep
+  the document compilable.
+\item{} The LaTeX-only glossary/index engines and the fragment system are not used on
+  the Typst path.
+
+\end{itemize}
+Any IR node that still has \textbf{no} Typst emitter raises an explicit, localised
+\texttt{TypstWriteError} (naming the node and the backend) rather than emitting wrong
+output. For anything beyond this subset, use the default \LaTeX{} backend.
+
+\end{document}

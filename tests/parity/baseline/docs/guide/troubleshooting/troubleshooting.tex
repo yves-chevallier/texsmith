@@ -1,0 +1,107 @@
+\documentclass[a4paper,twoside]{article}
+
+\usepackage{morewrites}
+
+\usepackage[svgnames,dvipsnames,x11names]{xcolor}
+\usepackage{graphicx}
+\usepackage[english]{babel}
+\usepackage[colorlinks=true, linkcolor=NavyBlue, urlcolor=NavyBlue, citecolor=NavyBlue]{hyperref}
+\usepackage[a4paper]{geometry}
+\usepackage{ts-fonts}
+\usepackage{amsmath}
+\usepackage{float}
+\usepackage{seqsplit}
+
+\usepackage{lastpage}
+\usepackage{refcount}
+\makeatletter
+\def\ps@plain{
+  \let\@oddhead\@empty
+  \let\@evenhead\@empty
+  \def\@oddfoot{
+    \hfil
+    \ifnum\getpagerefnumber{LastPage}>1\relax
+      \thepage
+    \fi
+    \hfil}
+  \let\@evenfoot\@oddfoot
+}
+\makeatother
+
+\title{Troubleshooting LaTeX Builds}
+\author{}\date{}
+
+\begin{document}
+
+\maketitle
+
+\thispagestyle{plain}
+Running \texttt{texsmith -\allowbreak{}-\allowbreak{}build} shells out to your selected engine (Tectonic by default, \texttt{latexmk} when \texttt{-\allowbreak{}-\allowbreak{}engine} is set to \texttt{xelatex}/\texttt{lualatex}), \texttt{bibtex}/\texttt{biber}, and any template assets declared in \texttt{manifest.toml}. When those tools fail, the CLI will highlight the failing step and (optionally) open the log file. Use this page to decode the most common issues.
+
+\section{Enable rich diagnostics}\label{enable-rich-diagnostics}
+
+\begin{itemize}
+\item{} Add \texttt{-\allowbreak{}v} or \texttt{-\allowbreak{}vv} to surface structured diagnostics from the conversion pipeline (missing slots, unresolved citations, asset copy failures).
+\item{} Pass \texttt{-\allowbreak{}-\allowbreak{}debug} to print full Python tracebacks if TeXSmith itself throws.
+\item{} Combine \texttt{-\allowbreak{}-\allowbreak{}classic-\allowbreak{}output} with CI logs when you need deterministic engine output, or keep the default rich output locally for incremental updates.
+\item{} When the engine exits non-zero, re-run with \texttt{-\allowbreak{}-\allowbreak{}open-\allowbreak{}log} to jump directly into the \texttt{.log} file.
+
+\end{itemize}
+\section{latexmk not found}\label{latexmk-not-found}
+
+\textbf{Symptom:} \texttt{latexmk: command not found} or TeXSmith reports it cannot spawn the binary.
+
+\textbf{Fix:} Ensure your TeX Live/MacTeX/MiKTeX distribution added \texttt{latexmk} to \texttt{PATH}. On macOS, \texttt{eval "\$(/usr/libexec/path\_helper -\allowbreak{}s)"} after installing MacTeX. On Windows, open the ``\LaTeX{} apps'' PowerShell and run TeXSmith from there.
+
+\section{tectonic not found}\label{tectonic-not-found}
+
+\textbf{Symptom:} \texttt{tectonic: command not found} or TeXSmith reports missing dependencies before starting the build.
+
+\textbf{Fix:} Install Tectonic from your package manager (\texttt{brew install tectonic}, \texttt{apt install tectonic}, or \texttt{cargo install tectonic}) or download a prebuilt binary from \href{https://tectonic-typesetting.github.io/}{https://tectonic-typesetting.github.io/}. Ensure the \texttt{tectonic} executable is on \texttt{PATH} before re-running TeXSmith. You can also switch to \texttt{-\allowbreak{}-\allowbreak{}engine lualatex}/\texttt{xelatex} to keep using \texttt{latexmk}.
+
+\section{Missing tlmgr packages}\label{missing-tlmgr-packages}
+
+\textbf{Symptom:} \texttt{LaTeX Error: File <package>.sty not found}.
+
+\textbf{Fix:} Run \texttt{texsmith -\allowbreak{}-\allowbreak{}template <NAME> -\allowbreak{}-\allowbreak{}template-\allowbreak{}info} and install the listed tlmgr packages (\texttt{tlmgr install ...}). Distributions with minimal profiles (BasicTeX, MikTeX) require this step for every template.
+
+\section{Shell-escape blocked}\label{shell-escape-blocked}
+
+\textbf{Symptom:} \texttt{shell escape feature is not enabled} when templates run \texttt{minted}, \texttt{gnuplot}, or diagram converters.
+
+\textbf{Fix:} \texttt{texsmith -\allowbreak{}-\allowbreak{}template-\allowbreak{}info} indicates whether \texttt{shell\_escape} is required. Re-run \texttt{texsmith -\allowbreak{}-\allowbreak{}build -\allowbreak{}-\allowbreak{}classic-\allowbreak{}output} to confirm the flag. With \texttt{-\allowbreak{}-\allowbreak{}engine lualatex}/\texttt{xelatex}, edit your TeX Live config or pass \texttt{latexmk -\allowbreak{}shell-\allowbreak{}escape} by exporting \texttt{LATEXMKOPT="-\allowbreak{}shell-\allowbreak{}escape"}. If you're using Tectonic, switch to \texttt{-\allowbreak{}-\allowbreak{}engine lualatex} when you need tighter control over \texttt{-\allowbreak{}shell-\allowbreak{}escape}.
+
+\section{Bibliography failures}\label{bibliography-failures}
+
+\textbf{Symptom:} \texttt{biber}/\texttt{bibtex} errors such as \texttt{I couldn't open database file} or duplicate citation keys.
+
+\tslead{Fix:}
+
+\begin{itemize}
+\item{} Run \texttt{texsmith references.bib -\allowbreak{}-\allowbreak{}list-\allowbreak{}bibliography} to validate files before building.
+\item{} Make sure every bibliography file you pass as input exists and is UTF-8 encoded.
+\item{} If \texttt{biber} complains about encoding, add \texttt{encoding = "UTF-\allowbreak{}8"} to your template manifest bibliography section or normalise via \texttt{pybtex}.
+
+\end{itemize}
+\section{Figures or diagrams missing}\label{figures-or-diagrams-missing}
+
+\textbf{Symptom:} Placeholder boxes in the PDF and warnings like \texttt{Converter 'mermaid' is disabled}.
+
+\textbf{Fix:} Install optional converters (Docker + \texttt{minlag/mermaid-\allowbreak{}cli}, Draw.io CLI, etc.) or register custom converters in \texttt{texsmith.adapters.transformers}. Use \texttt{-\allowbreak{}-\allowbreak{}no-\allowbreak{}fallback-\allowbreak{}converters} during debugging to make missing dependencies fail fast.
+
+\section{Fonts or language mismatches}\label{fonts-or-language-mismatches}
+
+\textbf{Symptom:} \texttt{Package polyglossia Error} or \texttt{fontspec} warnings after switching languages.
+
+\textbf{Fix:} Ensure the \texttt{press.language} metadata (front matter or CLI \texttt{-\allowbreak{}-\allowbreak{}language}) maps to a Babel/Polyglossia identifier. Refer to \texttt{texsmith -\allowbreak{}-\allowbreak{}template-\allowbreak{}info} to confirm defaults and install any necessary language packages (e.g., \texttt{tlmgr install babel-\allowbreak{}french}).
+
+\section{Still stuck?}\label{still-stuck}
+
+\begin{enumerate}
+\item Re-run with \texttt{-\allowbreak{}-\allowbreak{}debug -\allowbreak{}-\allowbreak{}classic-\allowbreak{}output -\allowbreak{}vv} to capture both TeXSmith diagnostics and raw \texttt{latexmk} logs.
+\item Attach the failing \texttt{.log} plus your template manifest when filing an issue.
+\item Mention your TeX distribution and operating system so maintainers can reproduce the environment.
+
+\end{enumerate}
+
+\end{document}

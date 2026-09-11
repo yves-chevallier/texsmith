@@ -1,0 +1,146 @@
+\documentclass[a4paper,twoside]{article}
+
+\usepackage{morewrites}
+
+\usepackage[svgnames,dvipsnames,x11names]{xcolor}
+\usepackage{graphicx}
+\usepackage[english]{babel}
+\usepackage[colorlinks=true, linkcolor=NavyBlue, urlcolor=NavyBlue, citecolor=NavyBlue]{hyperref}
+\usepackage[a4paper]{geometry}
+\usepackage{ts-fonts}
+\usepackage{amsmath}
+\usepackage{float}
+\usepackage{seqsplit}
+\usepackage{ts-code}
+
+\usepackage{lastpage}
+\usepackage{refcount}
+\makeatletter
+\def\ps@plain{
+  \let\@oddhead\@empty
+  \let\@evenhead\@empty
+  \def\@oddfoot{
+    \hfil
+    \ifnum\getpagerefnumber{LastPage}>1\relax
+      \thepage
+    \fi
+    \hfil}
+  \let\@evenfoot\@oddfoot
+}
+\makeatother
+
+\title{Template Cookbook}
+\author{}\date{}
+
+\begin{document}
+
+\maketitle
+
+\thispagestyle{plain}
+This cookbook collects repeatable patterns for building and iterating on TeXSmith templates. Use it in combination with the \hyperref[snippet:<HASH>]{Templates primer} when you need concrete commands or Jinja snippets.
+
+\section{Clone a starter and rename it}\label{clone-a-starter-and-rename-it}
+
+\begin{code}{bash}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+cp\PY{+w}{ }\PYZhy{}R\PY{+w}{ }src/texsmith/templates/article\PY{+w}{ }texsmith\PYZhy{}template\PYZhy{}report
+\PY{n+nb}{cd}\PY{+w}{ }texsmith\PYZhy{}template\PYZhy{}report
+
+\PY{c+c1}{\PYZsh{} Update package metadata}
+rg\PY{+w}{ }\PYZhy{}l\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}article\PYZdq{}}\PY{+w}{ }\PY{p}{|}\PY{+w}{ }xargs\PY{+w}{ }sed\PY{+w}{ }\PYZhy{}i\PY{+w}{ }\PY{l+s+s1}{\PYZsq{}s/article/report/g\PYZsq{}}
+\end{Verbatim}
+\end{code}
+Adjust \texttt{pyproject.toml} (name, version), \texttt{template/manifest.toml} (template attributes), and \texttt{README.md}. Keep \texttt{tests/} so you can run \texttt{uv run pytest} after each change.
+
+\section{Inspect metadata with \texttt{template info}}\label{inspect-metadata-with-texttt-template-info}
+
+\begin{code}{bash}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+texsmith\PY{+w}{ }\PYZhy{}\PYZhy{}template\PY{+w}{ }./texsmith\PYZhy{}template\PYZhy{}report\PY{+w}{ }\PYZhy{}\PYZhy{}template\PYZhy{}info
+\end{Verbatim}
+\end{code}
+Use the output to validate:
+
+\begin{itemize}
+\item{} Slots and their depth/offsets.
+\item{} Attribute defaults and normalizers (escape rules, \texttt{required} flags).
+\item{} Declared assets and whether they require templating.
+\item{} TeX Live year, tlmgr packages, and shell-escape requirements.
+
+\end{itemize}
+\subsection{Tip}\label{tip}
+
+Run the command inside CI to log tlmgr prerequisites, then cache \texttt{tlmgr install ...} between builds.
+
+\section{Map MkDocs sections to slots}\label{map-mkdocs-sections-to-slots}
+
+When a template defines slots such as \texttt{frontmatter}, \texttt{mainmatter}, and \texttt{appendix}, wire documents via CLI selectors:
+
+\begin{code}{bash}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+texsmith\PY{+w}{ }docs/intro.md\PY{+w}{ }docs/manual.md\PY{+w}{ }docs/appendix.md\PY{+w}{ }\PY{l+s+se}{\PYZbs{}}
+\PY{+w}{  }\PYZhy{}\PYZhy{}template\PY{+w}{ }texsmith\PYZhy{}template\PYZhy{}report\PY{+w}{ }\PY{l+s+se}{\PYZbs{}}
+\PY{+w}{  }\PYZhy{}\PYZhy{}slot\PY{+w}{ }frontmatter:docs/intro.md\PY{+w}{ }\PY{l+s+se}{\PYZbs{}}
+\PY{+w}{  }\PYZhy{}\PYZhy{}slot\PY{+w}{ }mainmatter:docs/manual.md\PY{+w}{ }\PY{l+s+se}{\PYZbs{}}
+\PY{+w}{  }\PYZhy{}\PYZhy{}slot\PY{+w}{ }appendix:docs/appendix.md\PYZsh{}appendix\PYZhy{}a\PY{+w}{ }\PY{l+s+se}{\PYZbs{}}
+\PY{+w}{  }\PYZhy{}\PYZhy{}output\PYZhy{}dir\PY{+w}{ }build/report\PY{+w}{ }\PY{l+s+se}{\PYZbs{}}
+\PY{+w}{  }\PYZhy{}\PYZhy{}build
+\end{Verbatim}
+\end{code}
+The \texttt{\#appendix-\allowbreak{}a} selector pulls only the section with that ID. Mix selectors freely (IDs, headings, \texttt{@document}) to keep Markdown sources modular.
+
+\section{Override partials}\label{override-partials}
+
+Place overrides under \texttt{overrides/partials/}. Update \texttt{manifest.toml}:
+
+\begin{code}{toml}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+\PY{k}{[}\PY{k}{latex}\PY{k}{.}\PY{k}{template}\PY{k}{]}
+\PY{n}{override}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{p}{[}\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{partials/bold.tex}\PY{l+s+s2}{\PYZdq{}}\PY{p}{]}
+\end{Verbatim}
+\end{code}
+Then create \texttt{overrides/partials/bold.tex}:
+
+\begin{code}{tex}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+\PY{k}{\PYZbs{}textbf}\PY{n+nb}{\PYZob{}}\PY{c}{\PYZpc{}}
+  \PY{k}{\PYZbs{}BLOCK}\PY{n+nb}{\PYZob{}} if attrs.emphasis \PY{n+nb}{\PYZcb{}}\PY{c}{\PYZpc{}}
+    \PY{k}{\PYZbs{}VAR}\PY{n+nb}{\PYZob{}}attrs.emphasis\PY{n+nb}{\PYZcb{}}\PYZti{}\PY{c}{\PYZpc{}}
+  \PY{k}{\PYZbs{}BLOCK}\PY{n+nb}{\PYZob{}} endif \PY{n+nb}{\PYZcb{}}\PY{c}{\PYZpc{}}
+  \PY{k}{\PYZbs{}VAR}\PY{n+nb}{\PYZob{}}text\PY{n+nb}{\PYZcb{}}\PY{c}{\PYZpc{}}
+\PY{n+nb}{\PYZcb{}}
+\end{Verbatim}
+\end{code}
+The renderer will prefer this file over the built-in partial when emitting bold spans.
+
+\section{Inject custom assets}\label{inject-custom-assets}
+
+Add extra files (preamble snippets, latexmk config, fonts) through the \texttt{[latex.template.assets]} table:
+
+\begin{code}{toml}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+\PY{k}{[}\PY{k}{latex}\PY{k}{.}\PY{k}{template}\PY{k}{.}\PY{k}{assets}\PY{k}{]}
+\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{.latexmkrc}\PY{l+s+s2}{\PYZdq{}}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{p}{\PYZob{}}\PY{+w}{ }\PY{n}{source}\PY{+w}{ }\PY{p}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{template/assets/latexmkrc}\PY{l+s+s2}{\PYZdq{}}\PY{+w}{ }\PY{p}{\PYZcb{}}
+\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{fonts/MySerif.otf}\PY{l+s+s2}{\PYZdq{}}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{p}{\PYZob{}}\PY{+w}{ }\PY{n}{source}\PY{+w}{ }\PY{p}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{template/assets/fonts/MySerif.otf}\PY{l+s+s2}{\PYZdq{}}\PY{+w}{ }\PY{p}{\PYZcb{}}
+\end{Verbatim}
+\end{code}
+Assets are copied to the render directory. Combine this with \texttt{latexmkrc} options (\texttt{-\allowbreak{}shell-\allowbreak{}escape}) or fontspec helpers to keep users from editing the generated output manually.
+
+\section{Publish and version responsibly}\label{publish-and-version-responsibly}
+
+\begin{itemize}
+\item{} Set \texttt{compat.texsmith = ">=0.3,<0.4"} so incompatible engine changes fail fast.
+\item{} Tag template releases with the same TeX Live year used in \texttt{manifest.toml}.
+\item{} Document tlmgr packages, slot names, and attribute changes in your README so downstream projects can upgrade with confidence.
+
+\end{itemize}
+\section{Further reading}\label{further-reading}
+
+\begin{itemize}
+\item{} \hyperref[snippet:<HASH>]{Templates primer} -- attribute schema, manifest format, and slot mechanics.
+\item{} \hyperref[snippet:<HASH>]{API High-Level Workflows} -- use \texttt{ConversionService} to assemble slots programmatically.
+\item{} \hyperref[snippet:<HASH>]{Troubleshooting} -- debugging latexmk, shell-escape, and bibliography issues once your template ships.
+
+\end{itemize}
+
+\end{document}

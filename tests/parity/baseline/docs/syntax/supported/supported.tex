@@ -1,0 +1,231 @@
+\documentclass[a4paper,twoside]{article}
+
+\usepackage{morewrites}
+
+\usepackage[svgnames,dvipsnames,x11names]{xcolor}
+\usepackage{graphicx}
+\usepackage[english]{babel}
+\usepackage[colorlinks=true, linkcolor=NavyBlue, urlcolor=NavyBlue, citecolor=NavyBlue]{hyperref}
+\usepackage[a4paper]{geometry}
+\usepackage{ts-fonts}
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{amsmath}
+\usepackage{float}
+\usepackage{seqsplit}
+\newcolumntype{Y}{>{\centering\arraybackslash}X}
+\newcolumntype{Z}{>{\raggedleft\arraybackslash}X}
+\usepackage{ts-callouts}
+\usepackage{ts-code}
+
+\usepackage{lastpage}
+\usepackage{refcount}
+\makeatletter
+\def\ps@plain{
+  \let\@oddhead\@empty
+  \let\@evenhead\@empty
+  \def\@oddfoot{
+    \hfil
+    \ifnum\getpagerefnumber{LastPage}>1\relax
+      \thepage
+    \fi
+    \hfil}
+  \let\@evenfoot\@oddfoot
+}
+\makeatother
+
+\title{Supported Markdown Syntax}
+\author{}\date{}
+
+\begin{document}
+
+\maketitle
+
+\thispagestyle{plain}
+TeXSmith bundles Python-Markdown together with a curated set of PyMdown
+extensions. The combination lets you author rich documentation while keeping
+output predictable for \LaTeX{} conversion. This page summarizes the syntax you can
+use out of the box and points to the extension behind each feature.
+
+\begin{callout}[callout info]{Renderer defaults}
+The CLI and API both enable the exact same extension list defined in
+\texttt{texsmith.adapters.markdown.DEFAULT\_MARKDOWN\_EXTENSIONS}. You can always
+override the list with CLI flags or API options, but the features below are
+available without additional configuration.
+\end{callout}
+\section{Core Markdown (Always On)}\label{core-markdown-always-on}
+
+\begin{code}{markdown}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+\PY{g+gh}{\PYZsh{} Heading 1}
+\PY{g+gu}{\PYZsh{}\PYZsh{} Heading 2}
+\PY{g+gu}{\PYZsh{}\PYZsh{}\PYZsh{} Heading 3}
+
+\PY{g+gs}{**bold**}, \PY{g+ge}{*italic*}, \PY{g+gd}{\PYZti{}\PYZti{}strikethrough\PYZti{}\PYZti{}}, \PY{l+s+sb}{`inline code`}
+
+[\PY{n+nt}{Links}](\PY{n+na}{https://www.example.com}) and ![\PY{n+nt}{images}](\PY{n+na}{assets/logo.svg})
+
+\PY{k}{\PYZgt{} }\PY{g+ge}{Blockquote text}
+
+\PY{k}{\PYZhy{}}\PY{+w}{ }Unordered item
+\PY{+w}{  }\PY{k}{\PYZhy{}}\PY{+w}{ }Nested item
+\PY{k}{1.} Ordered item
+\PY{k}{2.} Next item
+
+\PY{g+gu}{Horizontal rules:}
+\PY{g+gu}{\PYZhy{}\PYZhy{}\PYZhy{}}
+\end{Verbatim}
+\end{code}
+All standard Markdown constructs---headings, emphasis, lists, code blocks,
+blockquotes, links, images, and horizontal rules---render exactly as you would
+expect. In \LaTeX{} output, horizontal rules become \texttt{\textbackslash{}clearpage} page breaks rather
+than a literal line. TeXSmith relies on fenced code blocks by default, so triple
+backticks (\texttt{``}) are the recommended way to author code samples.
+
+\section{Extension Cheat Sheet}\label{extension-cheat-sheet}
+
+\begin{center}
+\begin{tabularx}{\linewidth}{>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X}
+\toprule
+\textbf{Feature} & \textbf{Extension} & \textbf{Package} & \textbf{Example} \\
+
+\midrule
+Definition lists & \texttt{def\_list} & \texttt{markdown} & \texttt{Term: Definition} \\
+Footnotes & \texttt{footnotes} & \texttt{markdown} & \texttt{Footnote ref1} \\
+Abbreviations & \texttt{abbr} & \texttt{markdown} & \texttt{*[HTML]: HyperText Markup Language} \\
+Admonitions & \texttt{admonition} & \texttt{markdown} & \texttt{!!! note  Body} \\
+Attribute lists & \texttt{attr\_list} & \texttt{markdown} & \texttt{![Alt](image.png)\{ width="50\%" \}} \\
+Tables & \texttt{tables} & \texttt{markdown} & Pipe-delimited tables \\
+Markdown in HTML & \texttt{md\_in\_html} & \texttt{markdown} & Markdown inside custom \texttt{<div>} blocks \\
+SmartyPants & \texttt{pymdownx.smartsymbols} & \texttt{pymdown-\allowbreak{}extensions} & Auto-converts quotes/dashes \\
+Highlighted code & \texttt{pymdownx.highlight} & \texttt{pymdown-\allowbreak{}extensions} & Adds syntax highlighting + anchors \\
+Inline highlighting & \texttt{pymdownx.inlinehilite} & \texttt{pymdown-\allowbreak{}extensions} & \texttt{print("hi")} \\
+Details/summary & \texttt{pymdownx.details} & \texttt{pymdown-\allowbreak{}extensions} & \texttt{???+ note Title} \\
+SuperFences & \texttt{pymdownx.superfences} & \texttt{pymdown-\allowbreak{}extensions} & Nest code fences safely \\
+Task lists & \texttt{pymdownx.tasklist} & \texttt{pymdown-\allowbreak{}extensions} & \texttt{-\allowbreak{} [x] Done} \\
+Better emphasis & \texttt{pymdownx.betterem} & \texttt{pymdown-\allowbreak{}extensions} & Fixes edge cases with underscores \\
+MagicLink & \texttt{pymdownx.magiclink} & \texttt{pymdown-\allowbreak{}extensions} & Autolinks URLs/issues \\
+Keys & \texttt{pymdownx.keys} & \texttt{pymdown-\allowbreak{}extensions} & \texttt{Ctrl+Alt+Del} \\
+Tabbed content & \texttt{pymdownx.tabbed} & \texttt{pymdown-\allowbreak{}extensions} & Content tabs \\
+Snippets & \texttt{pymdownx.snippets} & \texttt{pymdown-\allowbreak{}extensions} & Include external Markdown snippets \\
+Caret markup & \texttt{pymdownx.caret} & \texttt{pymdown-\allowbreak{}extensions} & \texttt{insert} \\
+Mark (highlight) & \texttt{pymdownx.mark} & \texttt{pymdown-\allowbreak{}extensions} & \texttt{highlight} \\
+Tilde syntax & \texttt{pymdownx.tilde} & \texttt{pymdown-\allowbreak{}extensions} & Subscript / superscript \\
+Critic markup & \texttt{pymdownx.critic} & \texttt{pymdown-\allowbreak{}extensions} & Editorial annotations \\
+Emoji & \texttt{pymdownx.emoji} & \texttt{pymdown-\allowbreak{}extensions} & \texttt{:sparkles:} or \texttt{:fontawesome-\allowbreak{}regular-\allowbreak{}face-\allowbreak{}smile:} \\
+Fancy lists & \texttt{pymdownx.fancylists} & \texttt{pymdown-\allowbreak{}extensions} & Extended list markers \\
+Blocks caption & \texttt{pymdownx.blocks.caption} & \texttt{pymdown-\allowbreak{}extensions} & Captions for fenced blocks \\
+Blocks HTML & \texttt{pymdownx.blocks.html} & \texttt{pymdown-\allowbreak{}extensions} & Named block wrappers \\
+Snippets of LaTeX & \texttt{texsmith.extensions.latex\_raw} & bundled & Raw LaTeX fence \\
+Missing footnotes guard & \texttt{texsmith.extensions.missing\_footnotes} & bundled & Warns when references lack definitions \\
+
+\bottomrule
+\end{tabularx}
+\end{center}
+
+Want a generated table of contents? Add the Python-Markdown \texttt{toc} extension with \texttt{-\allowbreak{}x toc} or \texttt{-\allowbreak{}-\allowbreak{}enable-\allowbreak{}extension toc}---it is no longer enabled by default.
+
+Use the table above as a quick pointer. The following sections provide more
+context and runnable examples.
+
+\section{Working with Admonitions}\label{working-with-admonitions}
+
+\begin{code}{markdown}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+!!! warning \PYZdq{}LaTeX toolchain\PYZdq{}
+    Remember to install TeX Live, MiKTeX, or MacTeX before running \PY{l+s+sb}{`texsmith \PYZhy{}\PYZhy{}build`}.
+\end{Verbatim}
+\end{code}
+Admonitions render as highlighted callouts in HTML and as tcolorbox blocks in the
+\LaTeX{} output. Combine them with tabs or details blocks to create layered
+walkthroughs.
+
+\section{Tables and Definition Lists}\label{tables-and-definition-lists}
+
+\begin{code}{markdown}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+| Option | Description |
+| \PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{} | \PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{} |
+| \PY{l+s+sb}{`\PYZhy{}\PYZhy{}list\PYZhy{}extensions`} | Prints enabled Markdown extensions |
+| \PY{l+s+sb}{`\PYZhy{}\PYZhy{}debug`} | Shows full tracebacks |
+
+Term
+: Definition content
+\end{Verbatim}
+\end{code}
+Tables use the Python-Markdown \texttt{tables} extension while definition lists come
+from \texttt{def\_list}. Both convert cleanly into \LaTeX{} environments.
+
+\section{Task Lists and Checkboxes}\label{task-lists-and-checkboxes}
+
+\begin{code}{markdown}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+\PY{k}{\PYZhy{} }\PY{k}{[x]} Validate MkDocs navigation
+\PY{k}{\PYZhy{} }\PY{k}{[ ]} Document template slots
+\end{Verbatim}
+\end{code}
+Task lists automatically render checkboxes in HTML. In \LaTeX{} they become custom
+itemize entries with inline symbols.
+
+\section{Keyboard Shortcuts}\label{keyboard-shortcuts}
+
+\begin{code}{markdown}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+Use ++ctrl+s++ to save changes and ++ctrl+shift+b++ to build the docs.
+\end{Verbatim}
+\end{code}
+The \texttt{pymdownx.keys} extension turns the markup above into keyboard glyphs, which
+carry across to PDFs through the TeXSmith formatter.
+
+\section{Embedding Raw LaTeX}\label{embedding-raw-latex}
+
+Use the \texttt{/// latex} fence when native \LaTeX{} is required:
+
+\begin{code}{markdown}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+/// latex
+\PYZbs{}begin\PYZob{}align\PYZcb{}
+E \PYZam{}= mc\PYZca{}2 \PYZbs{}\PYZbs{}
+\PYZbs{}nabla \PYZbs{}cdot \PYZbs{}vec\PYZob{}E\PYZcb{} \PYZam{}= \PYZbs{}frac\PYZob{}\PYZbs{}rho\PYZcb{}\PYZob{}\PYZbs{}varepsilon\PYZus{}0\PYZcb{}
+\PYZbs{}end\PYZob{}align\PYZcb{}
+///
+\end{Verbatim}
+\end{code}
+TeXSmith passes the block straight to the renderer, letting you mix handcrafted
+\LaTeX{} with converted Markdown content. For inline adjustments, drop
+\texttt{\{latex\}[commands]} right into the paragraph:
+
+\begin{code}{markdown}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+The chapter ends here \PYZob{}latex\PYZcb{}[\PYZbs{}clearpage] before appendices.
+\end{Verbatim}
+\end{code}
+\section{Snippet Includes}\label{snippet-includes}
+
+The \texttt{pymdownx.snippets} extension lets you avoid duplication:
+
+\begin{code}{markdown}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+\PYZhy{}\PYZhy{}8\PYZlt{}\PYZhy{}\PYZhy{} \PYZdq{}includes/built\PYZhy{}in\PYZhy{}tasks.md\PYZdq{}
+\end{Verbatim}
+\end{code}
+Create an \texttt{includes} directory under \texttt{docs/} and share fragments across pages.
+The same mechanism can pull example Markdown from the samples used in automated
+tests, keeping docs and fixtures aligned.
+
+\section{When You Need More}\label{when-you-need-more}
+
+\begin{itemize}
+\item{} Use \texttt{texsmith -\allowbreak{}-\allowbreak{}list-\allowbreak{}extensions} to see the live extension list.
+\item{} Disable or add extensions via the \texttt{-\allowbreak{}-\allowbreak{}enable-\allowbreak{}extension} and \texttt{-\allowbreak{}-\allowbreak{}disable-\allowbreak{}extension}
+  flags in \texttt{texsmith} or through \texttt{ConversionRequest.markdown\_extensions}
+  in the API.
+\item{} If a feature relies on a third-party executable (for example Mermaid to PDF),
+  make sure the binary is available on the build worker before running
+  \texttt{texsmith -\allowbreak{}-\allowbreak{}build}.
+
+\end{itemize}
+With these extensions enabled, TeXSmith can faithfully render everything from
+simple README-style guides to complex, reference-heavy manuals.
+
+\end{document}

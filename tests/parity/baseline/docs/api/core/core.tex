@@ -1,0 +1,83 @@
+\documentclass[a4paper,twoside]{article}
+
+\usepackage{morewrites}
+
+\usepackage[svgnames,dvipsnames,x11names]{xcolor}
+\usepackage{graphicx}
+\usepackage[english]{babel}
+\usepackage[colorlinks=true, linkcolor=NavyBlue, urlcolor=NavyBlue, citecolor=NavyBlue]{hyperref}
+\usepackage[a4paper]{geometry}
+\usepackage{ts-fonts}
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{float}
+\usepackage{seqsplit}
+\newcolumntype{Y}{>{\centering\arraybackslash}X}
+\newcolumntype{Z}{>{\raggedleft\arraybackslash}X}
+
+\usepackage{lastpage}
+\usepackage{refcount}
+\makeatletter
+\def\ps@plain{
+  \let\@oddhead\@empty
+  \let\@evenhead\@empty
+  \def\@oddfoot{
+    \hfil
+    \ifnum\getpagerefnumber{LastPage}>1\relax
+      \thepage
+    \fi
+    \hfil}
+  \let\@evenfoot\@oddfoot
+}
+\makeatother
+
+\title{Core}
+\author{}\date{}
+
+\begin{document}
+
+\maketitle
+
+\thispagestyle{plain}
+::: texsmith.core.config
+
+::: texsmith.core.context
+
+::: texsmith.core.conversion\_contexts
+
+::: texsmith.core.conversion
+
+\section{Diagnostics emitters}\label{diagnostics-emitters}
+
+\texttt{texsmith.core.diagnostics} defines the \texttt{DiagnosticEmitter} protocol plus a few
+stock implementations. Pass any emitter into \texttt{ConversionService},
+\texttt{convert\_documents}, or \texttt{TemplateSession} to intercept warnings, errors, and
+structured events.
+
+\begin{center}
+\begin{tabularx}{\linewidth}{>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X}
+\toprule
+\textbf{Emitter} & \textbf{Description} & \textbf{Typical usage} \\
+
+\midrule
+\texttt{CliEmitter} (\texttt{texsmith.ui.cli.diagnostics}) & Rich-powered emitter used by the Typer CLI. Respects \texttt{-\allowbreak{}v} and \texttt{-\allowbreak{}-\allowbreak{}debug}, paints warnings as panels, and streams structured events to the diagnostics sidebar. & Default when running \texttt{texsmith}. Import it in automation scripts when you want human-friendly output. \\
+\texttt{LoggingEmitter} & Forwards \texttt{warning}, \texttt{error}, and \texttt{event} calls to the standard \texttt{logging} module. & Daemons, notebooks, or services that rely on existing logging policy. \\
+\texttt{NullEmitter} & No-op implementation. Useful when you want silent conversions or plan to capture diagnostics out-of-band. & Unit tests and benchmarking. \\
+
+\bottomrule
+\end{tabularx}
+\end{center}
+
+Emitters expose a \texttt{debug\_enabled} flag so downstream handlers can decide whether
+to include stack traces or expensive state dumps. Implement your own to route
+diagnostics to metrics systems or structured loggers.
+
+::: texsmith.core.diagnostics
+
+::: texsmith.core.exceptions
+
+::: texsmith.adapters.latex.utils
+
+::: texsmith.adapters.docker
+
+\end{document}

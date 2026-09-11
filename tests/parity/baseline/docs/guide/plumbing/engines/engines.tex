@@ -1,0 +1,84 @@
+\documentclass[a4paper,twoside]{article}
+
+\usepackage{morewrites}
+
+\usepackage[svgnames,dvipsnames,x11names]{xcolor}
+\usepackage{graphicx}
+\usepackage[english]{babel}
+\usepackage[colorlinks=true, linkcolor=NavyBlue, urlcolor=NavyBlue, citecolor=NavyBlue]{hyperref}
+\usepackage[a4paper]{geometry}
+\usepackage{ts-fonts}
+\usepackage{amsmath}
+\usepackage{float}
+\usepackage{seqsplit}
+
+\usepackage{lastpage}
+\usepackage{refcount}
+\makeatletter
+\def\ps@plain{
+  \let\@oddhead\@empty
+  \let\@evenhead\@empty
+  \def\@oddfoot{
+    \hfil
+    \ifnum\getpagerefnumber{LastPage}>1\relax
+      \thepage
+    \fi
+    \hfil}
+  \let\@evenfoot\@oddfoot
+}
+\makeatother
+
+\title{TeX Engines}
+\author{}\date{}
+
+\begin{document}
+
+\maketitle
+
+\thispagestyle{plain}
+TeX has grown far beyond Knuth's original engine, evolving into a whole ecosystem of specialized typesetting machines. Each engine inherits the soul of classic TeX but adds its own twist---some focusing on programmability, others on Unicode, scripting, or a modern toolchain experience. Together they form a strange but delightful family tree where 1980s design meets cutting-edge typography.
+
+\section{TeX}\label{tex}
+
+The original TeX engine, created by Donald Knuth, is the minimalist mathematical core of the entire ecosystem. It's deterministic, stable to the point of obsession, and designed so its output will match \emph{forever}. It handles typesetting with surgical precision but offers no frills---no Unicode, no PDF output, and no modern scripting hooks. Pure, legendary, and a little bit stubborn.
+
+\section{E-TeX}\label{e-tex}
+
+e-TeX extends TeX with much-needed programming features without altering the underlying output. It adds new registers, improved conditionals, and tracing tools, making it a favorite for macro designers and format creators (like \LaTeX{}). Think of it as TeX with a Swiss-army-knife upgrade.
+
+\section{pdfTeX}\label{pdftex}
+
+pdfTeX brought TeX into the era of digital documents by producing PDF natively instead of going through DVI. It introduced microtypography---character protrusion, font expansion, and other subtle magic that makes text look professionally polished. Most modern \LaTeX{} distributions still rely heavily on pdfTeX.
+
+\section{XeTeX}\label{xetex}
+
+XeTeX is the engine that finally made TeX feel Unicode-native. It uses system fonts directly (TrueType, OpenType), supports complex scripts naturally, and works beautifully for multilingual documents. If you need Arabic, Chinese, Hindi, or emoji without pain, XeTeX is your friend.
+
+\section{LuaTeX}\label{luatex}
+
+LuaTeX embeds a full Lua interpreter into the engine, effectively giving TeX a programmable runtime. This allows deep customization, dynamic content generation, and powerful extensions like \texttt{luaotfload} and \texttt{luametalatex}. It's the most flexible and hackable TeX engine, almost a TeX/Lua hybrid organism.
+
+\section{Tectonic}\label{tectonic}
+
+Tectonic is a modern, Rust-powered TeX engine aiming for reproducibility and user-friendliness. It automatically fetches missing packages, builds in a sandboxed environment, and removes the traditional ``TeX installation anxiety.'' It tries to make TeX behave like a modern build tool with zero configuration.
+
+\section{Omega ($\Omega$) / Aleph ($\aleph$)}\label{omega-o-aleph}
+
+Omega (and its successor Aleph) were early attempts at adding Unicode and advanced multilingual typesetting. They never became mainstream, but their ideas paved the way for XeTeX and LuaTeX.
+
+\section{pTeX / upTeX}\label{ptex-uptex}
+
+Specialized engines designed for Japanese typesetting. pTeX handles vertical writing and Japanese line-breaking rules, while upTeX brings Unicode support to that world. They're essential in the Japanese TeX community.
+
+\section{Which to prefer?}\label{which-to-prefer}
+
+That a debate as old as TeX itself still rages on is a testament to its complexity and versatility. For most users, \textbf{pdfTeX} or \textbf{LuaTeX} (with \LaTeX{} macros) will cover nearly all needs. Some facts:
+
+\begin{enumerate}
+\item Tectonic is so smooth, it downloads packages automatically, making it great for newcomers. No need to install a heavy TeX distribution.
+\item LuaLaTeX is the only engine that supports both protrusion and font expansion (microtypography) along with Lua scripting, which yields smoother PDF output.
+\item XeLaTeX has similar results to Tectonic but allows \texttt{-\allowbreak{}-\allowbreak{}shell-\allowbreak{}escape} for minted code highlighting.
+
+\end{enumerate}
+
+\end{document}

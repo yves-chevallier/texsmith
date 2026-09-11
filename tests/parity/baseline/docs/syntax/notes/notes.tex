@@ -1,0 +1,468 @@
+\documentclass[a4paper,twoside]{article}
+
+\usepackage{morewrites}
+
+\usepackage[svgnames,dvipsnames,x11names]{xcolor}
+\usepackage{graphicx}
+\usepackage[english]{babel}
+\usepackage[colorlinks=true, linkcolor=NavyBlue, urlcolor=NavyBlue, citecolor=NavyBlue]{hyperref}
+\usepackage[a4paper]{geometry}
+\usepackage{ts-fonts}
+\usepackage[normalem]{ulem}
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{amsmath}
+\usepackage{float}
+\usepackage{seqsplit}
+\newcolumntype{Y}{>{\centering\arraybackslash}X}
+\newcolumntype{Z}{>{\raggedleft\arraybackslash}X}
+\usepackage{ts-code}
+
+\usepackage{lastpage}
+\usepackage{refcount}
+\makeatletter
+\def\ps@plain{
+  \let\@oddhead\@empty
+  \let\@evenhead\@empty
+  \def\@oddfoot{
+    \hfil
+    \ifnum\getpagerefnumber{LastPage}>1\relax
+      \thepage
+    \fi
+    \hfil}
+  \let\@evenfoot\@oddfoot
+}
+\makeatother
+
+\title{Notes on TeXSmith Extensions}
+\author{}\date{}
+
+\begin{document}
+
+\maketitle
+
+\thispagestyle{plain}
+TeXSmith ships with laser-focused extensions to close the \LaTeX{}-sized gaps that stock Markdown leaves behind. They cooperate with MkDocs and MkDocs Material, tagging the HTML with enough metadata for the \LaTeX{} renderer to finish the heavy lifting.
+
+\begin{itemize}
+\item{} Index entries double as Lunr tags in MkDocs and page references in LaTeX.
+\item{} Glossary entries and acronyms keep terminology consistent.
+\item{} Citations and cross-references wire figures, tables, equations, and bibliography entries together.
+\item{} Raw LaTeX fences and inline snippets let you sprinkle precise TeX without polluting the HTML build.
+
+\end{itemize}
+\section{Syntax}\label{syntax}
+
+The syntax for these helpers follows a few rules:
+
+\begin{enumerate}
+\item Easy to type in Markdown.
+\item Friendly with standard Markdown parsers.
+\item Collision-free with existing extensions.
+\item Minimal visual noise in the raw text.
+
+\end{enumerate}
+\subsection{Syntax shorthand}\label{syntax-shorthand}
+
+\begin{description}
+\item[{ \texttt{@[]} Smart references }] Expands to the proper label for the referenced object. Figures become \texttt{Figure X}, tables render as \texttt{Table Y}, sections as \texttt{Section Z}, equations as \texttt{(N)}, theorems as \texttt{Theorem M}, and so on.
+\item[{ \texttt{\^{}[]} Footnotes/bibliographic citations }] Resolves to either an inline footnote (if defined locally) or a bibliography citation.
+\item[{ \texttt{\{index\}[...]} Index entries }] Inserts one or more index terms. They stay invisible in HTML yet show up as tags in Lunr and as \texttt{\textbackslash{}index\{\}} entries in LaTeX.
+\item[{ \texttt{\{margin\}[...]\{side?\}} Margin notes }] Renders as \texttt{\textbackslash{}marginnote\{…\}} from the LaTeX \texttt{marginnote} package (auto-loaded on first use). The optional suffix \texttt{\{l\}} / \texttt{\{r\}} / \texttt{\{o\}} / \texttt{\{i\}} forces a margin; without it the note follows the document's default (right in \texttt{oneside}, outer in \texttt{twoside}).
+
+\end{description}
+Quick reference:
+
+\begin{itemize}
+\item{} \texttt{[](:)} Add content block
+\item{} \texttt{@()} Cross-reference helper
+\item{} \texttt{\^{}[]} / \texttt{\textbackslash{}cite\{\}} Bibliographic citation
+\item{} \texttt{\{index\}[term]} / \texttt{\textbackslash{}index\{\}} Index entry
+\item{} \texttt{\{margin\}[note]\{l|r|o|i\}?} / \texttt{\textbackslash{}marginnote\{\}} Margin note
+
+\end{itemize}
+\section{Other extensions}\label{other-extensions}
+
+\begin{itemize}
+\item{} Epigraphs: define \texttt{epigraph} blocks in front matter or mark blockquotes with the \texttt{epigraph} class to route them through the LaTeX epigraph macro.
+\item{} Drop caps: Material's \texttt{lettering} syntax (\texttt{:[A](Natoly)}) produces LaTeX lettrine output automatically.
+\item{} Wikipedia shortcodes keep working; they simply render as annotated links in both HTML and LaTeX.
+
+\end{itemize}
+\section{Index}\label{index}
+
+Printed indexes convey intent with typography:
+
+\begin{itemize}
+\item{} Normal text: the topic is discussed.
+\item{} Italic: quick mention only.
+\item{} Bold: this section focuses on the topic.
+\item{} Bold italic: primary topic plus ancillary references.
+\item{} Nested entries: group related terms.
+
+\end{itemize}
+Use \texttt{\{index\}} plus multiple \texttt{[brackets]} to build entries. Append \texttt{\{b\}}, \texttt{\{i\}}, or \texttt{\{bi\}} to tweak the style, and specify \texttt{\{index:registry\}} when you want to file the entry under a custom registry (handy for multi-index books).
+
+\begin{code}{md}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+Do you know the Gulliver\PYZsq{}s Travels tale about the egg dispute?
+\PYZob{}index\PYZcb{}[endianness]\PYZob{}i\PYZcb{}
+
+\PYZob{}index\PYZcb{}[endianness]\PYZob{}bi\PYZcb{}
+\PYZob{}index\PYZcb{}[endianness]\PYZob{}b\PYZcb{}
+\PYZob{}index\PYZcb{}[byte order][endianness]\PYZob{}i\PYZcb{}
+\PYZob{}index:physics\PYZcb{}[relativity]\PYZob{}b\PYZcb{}
+\end{Verbatim}
+\end{code}
+\section{Margin notes}\label{margin-notes}
+
+Drop short asides into the margin with the \texttt{\{margin\}[…]\{side?\}} inline syntax.
+An optional single-letter suffix selects the side:
+
+\begin{center}
+\begin{tabularx}{\linewidth}{>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X}
+\toprule
+\textbf{Suffix} & \textbf{Semantics} \\
+
+\midrule
+(none) & document default --- right in \texttt{oneside}, outer in \texttt{twoside} \\
+\texttt{\{l\}} & force the left margin (scoped \texttt{\textbackslash{}reversemarginpar}) \\
+\texttt{\{r\}} & force the right margin \\
+\texttt{\{o\}} & outer --- MVP alias of \texttt{\{r\}} \\
+\texttt{\{i\}} & inner --- MVP alias of \texttt{\{l\}} \\
+
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\begin{code}{md}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+Hooke\PYZsq{}s law\PYZob{}margin\PYZcb{}[linear only at small strain] holds
+below the yield point, but non\PYZhy{}linear effects\PYZob{}margin\PYZcb{}[see
+\PY{g+gs}{**Prandtl 1921**} for the classical derivation]\PYZob{}l\PYZcb{} dominate
+above it.
+\end{Verbatim}
+\end{code}
+The note compiles down to a \texttt{\textbackslash{}marginnote\{…\}} call from the \LaTeX{} \texttt{marginnote}
+package, which TeXSmith's \texttt{ts-\allowbreak{}extra} fragment auto-loads when it spots the
+command in the rendered output. A forced left side wraps the call in a
+group that locally applies \texttt{\textbackslash{}reversemarginpar}, so subsequent notes go
+back to the default placement.
+
+Inline Markdown inside the note (\texttt{**bold**}, \texttt{*italic*}, \texttt{`code`},
+\texttt{[links](…)}) is preserved and runs through the standard inline handlers
+on the way to \LaTeX{}.
+
+\subsection{Width}\label{width}
+
+Margin notes never bleed past the page edge. \texttt{ts-\allowbreak{}extra} ships three
+defensive layers alongside \texttt{\textbackslash{}usepackage\{marginnote\}}:
+
+\begin{enumerate}
+\item \textbf{Geometry-aware clamp.} An \texttt{\textbackslash{}AtBeginDocument} hook clamps
+   \texttt{\textbackslash{}marginparwidth} to whatever horizontal space the document's geometry
+   actually reserves for the margin --- the smaller of the recto outer
+   margin and, in \texttt{twoside} documents, the verso outer margin as well ---
+   minus \texttt{\textbackslash{}marginparsep} and a 6 mm safety buffer.
+\item \textbf{Line-breaker tolerance.} \texttt{\textbackslash{}marginfont} includes \texttt{\textbackslash{}sloppy},
+   \texttt{\textbackslash{}emergencystretch=1em} and \texttt{\textbackslash{}hyphenpenalty=50} so a long technical
+   word, URL or German compound hyphenates (or stretches inter-word
+   spacing) rather than poking past the margin box edge.
+\item \textbf{Footnote-size body.} Notes default to \texttt{\textbackslash{}footnotesize} so multi-word
+   notes still fit in narrow margins.
+
+\end{enumerate}
+That means a \texttt{geometry} block like
+
+\begin{code}{yaml}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+\PY{n+nt}{press}\PY{p}{:}
+\PY{+w}{  }\PY{n+nt}{geometry}\PY{p}{:}
+\PY{+w}{    }\PY{n+nt}{left}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{3cm}
+\PY{+w}{    }\PY{n+nt}{right}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{4cm}
+\end{Verbatim}
+\end{code}
+automatically yields notes that fit on both recto and verso pages --- no
+manual \texttt{marginparwidth=…} tweak needed.
+
+\subsection{Font size}\label{font-size}
+
+Because printed margins are narrow, margin notes default to \texttt{\textbackslash{}footnotesize}
+so multi-word notes fit without overflowing. Override the default from your
+own preamble (or a custom \texttt{ts-\allowbreak{}extra} snippet) if you want a different
+treatment:
+
+\begin{code}{latex}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+\PY{k}{\PYZbs{}renewcommand}\PY{k}{*}\PY{n+nb}{\PYZob{}}\PY{k}{\PYZbs{}marginfont}\PY{n+nb}{\PYZcb{}}\PY{n+nb}{\PYZob{}}\PY{k}{\PYZbs{}small}\PY{k}{\PYZbs{}itshape}\PY{n+nb}{\PYZcb{}}
+\end{Verbatim}
+\end{code}
+\texttt{\textbackslash{}marginfont} is part of the \texttt{marginnote} package and is applied
+automatically to every note.
+
+\section{Citations}\label{citations}
+
+Bibliographic references land in two ways:
+
+\begin{enumerate}
+\item Point TeXSmith at one or more \texttt{.bib} files and cite entries using \texttt{\^{}[]}.
+\item Declare references directly in front matter via DOIs or inline metadata.
+
+\end{enumerate}
+\begin{code}{yaml}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+\PY{n+nn}{\PYZhy{}\PYZhy{}\PYZhy{}}
+\PY{n+nt}{bibliography}\PY{p}{:}
+\PY{+w}{  }\PY{c+c1}{\PYZsh{} Just DOI entry, TeXSmith will fetch the rest}
+\PY{+w}{  }\PY{n+nt}{ein05}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{https://doi.org/10.1002/andp.19053221004}
+\PY{+w}{  }\PY{c+c1}{\PYZsh{} Manual entry}
+\PY{+w}{  }\PY{n+nt}{KOFINAS2025}\PY{p}{:}
+\PY{+w}{    }\PY{n+nt}{type}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{article}
+\PY{+w}{    }\PY{n+nt}{title}\PY{p}{:}\PY{+w}{ }\PY{p+pIndicator}{|}
+\PY{+w}{        }\PY{n+no}{The impact of generative AI on academic integrity of authentic}
+\PY{+w}{        }\PY{n+no}{assessments within a higher education context}
+\PY{+w}{    }\PY{n+nt}{authors}\PY{p}{:}
+\PY{+w}{      }\PY{p+pIndicator}{\PYZhy{}}\PY{+w}{ }\PY{n+nt}{name}\PY{p}{:}\PY{+w}{ }\PY{l+s}{\PYZdq{}}\PY{l+s}{Alexander}\PY{n+nv}{ }\PY{l+s}{K.}\PY{n+nv}{ }\PY{l+s}{Kofinas}\PY{l+s}{\PYZdq{}}
+\PY{+w}{        }\PY{n+nt}{affiliation}\PY{p}{:}\PY{+w}{ }\PY{l+s}{\PYZdq{}}\PY{l+s}{University}\PY{n+nv}{ }\PY{l+s}{of}\PY{n+nv}{ }\PY{l+s}{Example}\PY{l+s}{\PYZdq{}}
+\PY{+w}{      }\PY{p+pIndicator}{\PYZhy{}}\PY{+w}{ }\PY{l+s}{\PYZdq{}}\PY{l+s}{Crystal}\PY{n+nv}{ }\PY{l+s}{Han\PYZhy{}Huei}\PY{n+nv}{ }\PY{l+s}{Tsay}\PY{l+s}{\PYZdq{}}
+\PY{+w}{      }\PY{p+pIndicator}{\PYZhy{}}\PY{+w}{ }\PY{l+s}{\PYZdq{}}\PY{l+s}{David}\PY{n+nv}{ }\PY{l+s}{Pike}\PY{l+s}{\PYZdq{}}
+\PY{+w}{    }\PY{n+nt}{journal}\PY{p}{:}\PY{+w}{ }\PY{l+s}{\PYZdq{}}\PY{l+s}{British}\PY{n+nv}{ }\PY{l+s}{Journal}\PY{n+nv}{ }\PY{l+s}{of}\PY{n+nv}{ }\PY{l+s}{Educational}\PY{n+nv}{ }\PY{l+s}{Technology}\PY{l+s}{\PYZdq{}}
+\PY{+w}{    }\PY{n+nt}{date}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{2025\PYZhy{}03}
+\PY{+w}{    }\PY{n+nt}{volume}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{56}
+\PY{+w}{    }\PY{n+nt}{number}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{6}
+\PY{+w}{    }\PY{n+nt}{pages}\PY{p}{:}\PY{+w}{ }\PY{l+s}{\PYZdq{}}\PY{l+s}{2522\PYZhy{}2549}\PY{l+s}{\PYZdq{}}
+\PY{+w}{    }\PY{n+nt}{url}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{https://doi.org/10.1111/bjet.13585}
+\PY{n+nn}{\PYZhy{}\PYZhy{}\PYZhy{}}
+\PY{l+lScalar+lScalarPlain}{We}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{know}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{that}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{time}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{is}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{relative}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{\PYZca{}[ein05]}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{and}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{recent}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{work}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{explores}
+\PY{l+lScalar+lScalarPlain}{assessment}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{\PYZca{}[KOFINAS2025].}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{You}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{can}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{also}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{cite}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{multiple}
+\PY{l+lScalar+lScalarPlain}{references}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{\PYZca{}[ein05,KOFINAS2025].}
+\end{Verbatim}
+\end{code}
+Or with the CLI:
+
+\begin{code}{sh}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+texsmith\PY{+w}{ }article.md\PY{+w}{ }article.bib
+\end{Verbatim}
+\end{code}
+Or directly in Python:
+
+\begin{code}{python}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+\PY{k+kn}{from}\PY{+w}{ }\PY{n+nn}{pathlib}\PY{+w}{ }\PY{k+kn}{import} \PY{n}{Path}
+
+\PY{k+kn}{from}\PY{+w}{ }\PY{n+nn}{texsmith}\PY{+w}{ }\PY{k+kn}{import} \PY{n}{ConversionRequest}\PY{p}{,} \PY{n}{ConversionService}
+
+\PY{n}{service} \PY{o}{=} \PY{n}{ConversionService}\PY{p}{(}\PY{p}{)}
+\PY{n}{request} \PY{o}{=} \PY{n}{ConversionRequest}\PY{p}{(}
+    \PY{n}{documents}\PY{o}{=}\PY{p}{[}\PY{n}{Path}\PY{p}{(}\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{article.md}\PY{l+s+s2}{\PYZdq{}}\PY{p}{)}\PY{p}{]}\PY{p}{,}
+    \PY{n}{bibliography\PYZus{}files}\PY{o}{=}\PY{p}{[}\PY{n}{Path}\PY{p}{(}\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{article.bib}\PY{l+s+s2}{\PYZdq{}}\PY{p}{)}\PY{p}{]}
+\PY{p}{)}
+\PY{n}{response} \PY{o}{=} \PY{n}{service}\PY{o}{.}\PY{n}{execute}\PY{p}{(}\PY{n}{request}\PY{p}{)}
+\PY{n}{tex\PYZus{}path} \PY{o}{=} \PY{n}{response}\PY{o}{.}\PY{n}{render\PYZus{}result}\PY{o}{.}\PY{n}{main\PYZus{}tex\PYZus{}path}
+\PY{n+nb}{print}\PY{p}{(}\PY{l+s+sa}{f}\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{LaTeX written to: }\PY{l+s+si}{\PYZob{}}\PY{n}{tex\PYZus{}path}\PY{l+s+si}{\PYZcb{}}\PY{l+s+s2}{\PYZdq{}}\PY{p}{)}
+\end{Verbatim}
+\end{code}
+\section{Math}\label{math}
+
+Inline math uses the standard Markdown-friendly delimiters: \texttt{\$...\$} or \texttt{\textbackslash{}(...\textbackslash{})} for inline spans, \texttt{\$\$...\$\$} or \texttt{\textbackslash{}[...\textbackslash{}]} for display mode. Most Markdown engines (including MkDocs) pass these through untouched.
+
+Numbered equations are not part of Markdown itself, so TeXSmith handles the heavy lifting for you.
+
+\begin{code}{md}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+\PYZob{}\PYZsh{}pythagoras\PYZcb{}
+: \PYZdl{}\PYZdl{}a\PYZca{}2 + b\PYZca{}2 = c\PYZca{}2\PYZdl{}\PYZdl{}
+
+From @[pythagoras], we know that...
+\end{Verbatim}
+\end{code}
+The equation receives an automatic number and can be referenced inline.
+
+\section{Theorems}\label{theorems}
+
+Use admonitions to define theorems, lemmas, definitions, and friends.
+
+\begin{code}{md}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+!!! theorem \PYZdq{}Pythagorean Theorem\PYZdq{} \PYZob{}\PYZsh{}thm:pythagoras\PYZcb{}
+    This is a theorem about right triangles and can be summarized in the next
+    equation
+    \PYZdl{}\PYZdl{} x\PYZca{}2 + y\PYZca{}2 = z\PYZca{}2 \PYZdl{}\PYZdl{}
+\end{Verbatim}
+\end{code}
+It will be rendered as:
+
+\begin{code}{latex}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+\PY{k}{\PYZbs{}begin}\PY{n+nb}{\PYZob{}}theorem\PY{n+nb}{\PYZcb{}}[Pythagorean theorem]
+\PY{k}{\PYZbs{}label}\PY{n+nb}{\PYZob{}}pythagorean\PY{n+nb}{\PYZcb{}}
+This is a theorem about right triangles and can be summarized in the next
+equation
+\PY{l+s+sb}{\PYZbs{}[}\PY{n+nb}{ x}\PY{n+nb}{\PYZca{}}\PY{l+m}{2}\PY{n+nb}{ }\PY{o}{+}\PY{n+nb}{ y}\PY{n+nb}{\PYZca{}}\PY{l+m}{2}\PY{n+nb}{ }\PY{o}{=}\PY{n+nb}{ z}\PY{n+nb}{\PYZca{}}\PY{l+m}{2}\PY{n+nb}{ }\PY{l+s}{\PYZbs{}]}
+\PY{k}{\PYZbs{}end}\PY{n+nb}{\PYZob{}}theorem\PY{n+nb}{\PYZcb{}}
+\end{Verbatim}
+\end{code}
+TeXSmith automatically generates the following admonition types:
+
+\begin{itemize}
+\item{} Theorem (\texsmithEmoji{📐})
+\item{} Corollary (\texsmithEmoji{🧾})
+\item{} Lemma (\texsmithEmoji{📜})
+\item{} Proof (\texsmithEmoji{🔍})
+
+\end{itemize}
+\section{Glossary}\label{glossary}
+
+Specific terms live in the glossary; shorthand belongs in the acronym list. Keep them separate so TeXSmith can decide when to expand, hyperlink, or index each one.
+
+\begin{description}
+\item[{ Glossary entries }] Definitions for full terms, whether single words or multi-word concepts.
+\item[{ Acronyms }] Shortened forms such as NASA or UNESCO, often with an expanded description.
+
+\end{description}
+Define both collections in front matter:
+
+\begin{code}{yaml}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+\PY{n+nt}{acronyms}\PY{p}{:}
+\PY{+w}{  }\PY{n+nt}{nasa}\PY{p}{:}
+\PY{+w}{    }\PY{n+nt}{name}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{NASA}
+\PY{+w}{    }\PY{n+nt}{description}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{National}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{Aeronautics}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{and}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{Space}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{Administration}
+\PY{+w}{  }\PY{n+nt}{unesco}\PY{p}{:}
+\PY{+w}{    }\PY{n+nt}{name}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{UNESCO}
+\PY{+w}{    }\PY{n+nt}{description}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{United}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{Nations}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{Educational,}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{Scientific}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{and}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{Cultural}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{Organization}
+\PY{n+nt}{glossary}\PY{p}{:}
+\PY{+w}{  }\PY{n+nt}{solid}\PY{p}{:}
+\PY{+w}{    }\PY{n+nt}{name}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{S.O.L.I.D.}
+\PY{+w}{    }\PY{n+nt}{description}\PY{p}{:}\PY{+w}{ }\PY{p+pIndicator}{|}
+\PY{+w}{        }\PY{n+no}{Acronym for five design principles intended to make software designs}
+\PY{+w}{        }\PY{n+no}{more understandable, flexible, and maintainable.}
+
+\PY{+w}{        }\PY{n+no}{1. Single Responsibility Principle}
+\PY{+w}{        }\PY{n+no}{2. Open/Closed Principle}
+\PY{+w}{        }\PY{n+no}{3. Liskov Substitution Principle}
+\PY{+w}{        }\PY{n+no}{4. Interface Segregation Principle}
+\PY{+w}{        }\PY{n+no}{5. Dependency Inversion Principle}
+\PY{+w}{  }\PY{n+nt}{liskov}\PY{p}{:}
+\PY{+w}{    }\PY{n+nt}{name}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{Liskov}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{Substitution}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{Principle}
+\PY{+w}{    }\PY{n+nt}{description}\PY{p}{:}\PY{+w}{ }\PY{p+pIndicator}{|}
+\PY{+w}{        }\PY{n+no}{The Liskov Substitution Principle (LSP) states that objects of a}
+\PY{+w}{        }\PY{n+no}{superclass should be replaceable with objects of a subclass without}
+\PY{+w}{        }\PY{n+no}{affecting the correctness of the program. In other words, if S is a}
+\PY{+w}{        }\PY{n+no}{subtype of T, then objects of type T in a program may be replaced with}
+\PY{+w}{        }\PY{n+no}{objects of type S without altering any of the desirable properties of}
+\PY{+w}{        }\PY{n+no}{that program (e.g., correctness).}
+\end{Verbatim}
+\end{code}
+Inside the Markdown document you can reference glossary entries with the \texttt{gls:} prefix:
+
+\begin{code}{md}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+From the well\PYZhy{}known [](gls:solid) principles, the following class must
+be [](gls:liskov) Substitution Principle\PYZhy{}compliant.
+\end{Verbatim}
+\end{code}
+\subsection{Wikipedia}\label{wikipedia}
+
+Many glossary-worthy entries live on Wikipedia, and TeXSmith can pull their summaries automatically.
+
+\begin{code}{md}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+From the well\PYZhy{}known [\PY{n+nt}{SOLID}](\PY{n+na}{https://en.wikipedia.org/wiki/SOLID})
+\end{Verbatim}
+\end{code}
+When enabled, TeXSmith converts Wikipedia links into glossary entries for the printed document.
+
+\begin{code}{toml}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+\PY{k}{[}\PY{k}{texsmith}\PY{k}{.}\PY{k}{extensions}\PY{k}{]}
+\PY{n}{wikipedia\PYZus{}glossary}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{k+kc}{true}
+\end{Verbatim}
+\end{code}
+\section{Caption}\label{caption}
+
+\begin{description}
+\item[{ TeXSmith style }] Here is a figure with a caption:
+
+\begin{code}{md}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+A diagram with 25\PYZpc{} width
+: ![\PY{n+nt}{Diagram example}](\PY{n+na}{../examples/diagrams.png})\PYZob{}width=25\PYZpc{}\PYZcb{}
+
+Table Caption Avec une grosse famille de chats  \PYZob{}\PYZsh{}bigcats\PYZcb{}
+: | Cat Name    | Age | Color      |
+  | \PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{} | \PYZhy{}\PYZhy{}\PYZhy{}:| \PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{} |
+  | Whiskers    |  2  | Tabby      |
+  | Mittens     |  5  | Black      |
+\end{Verbatim}
+\end{code}
+\item[{ Pymarkdown style }] Here is a figure with a caption:
+
+\begin{code}{md}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+![\PY{n+nt}{Diagram example}](\PY{n+na}{../examples/diagrams.png})\PYZob{}width=25\PYZpc{}\PYZcb{}
+
+/// figure\PYZhy{}caption
+    attrs: \PYZob{}\PYZsh{}foobar\PYZcb{}
+    Avec un chocolat violet qui sent la \PY{g+gs}{**vanille**}
+///
+\end{Verbatim}
+\end{code}
+
+\end{description}
+\section{Formatting}\label{formatting}
+
+Plain Markdown covers \textbf{bold}, \emph{italic}, and \texttt{inline code}. PyMdown extensions add \sout{strikethrough}, \ifXeTeX
+  \providecommand{\texsmithHighlight}[1]{\textcolor{yellow}{#1}}
+  \providecommand{\hl}[1]{\textcolor{yellow}{#1}}
+\else
+  \ifLuaTeX
+    \RequirePackage{lua-ul}
+    \providecommand{\texsmithHighlight}[1]{
+      \begingroup
+      \setulcolor{yellow}
+      \ul{#1}
+      \endgroup
+    }
+    \providecommand{\hl}[1]{\texsmithHighlight{#1}}
+  \else
+    \providecommand{\texsmithHighlight}[1]{
+      \begingroup
+      \setlength{\fboxsep}{0.8pt}
+      \colorbox{yellow}{#1}
+      \endgroup
+    }
+  \fi
+\fi
+
+\texsmithHighlight{highlighted text}, \uline{inserted text}.
+
+Small capitals are missing from the spec, so TeXSmith repurposes the double-underscore syntax for that effect:
+
+\begin{code}{markdown}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+\PY{g+gs}{\PYZus{}\PYZus{}Small Capitals\PYZus{}\PYZus{}}
+\end{Verbatim}
+\end{code}
+which renders as:
+
+\begin{code}{latex}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+\PY{k}{\PYZbs{}textsc}\PY{n+nb}{\PYZob{}}Small Capitals\PY{n+nb}{\PYZcb{}}
+\end{Verbatim}
+\end{code}
+\section{Tables}\label{tables}
+
+One of the limitations of Markdown is the lack of support for complex table features such as multi-row and multi-column cells, cell alignment, and captions.
+
+When a table is too large to fit on the page, try:
+
+\begin{itemize}
+\item{} Slightly resizing the table to fit the available width.
+\item{} Allowing cells to wrap across multiple lines.
+\item{} Rotating the table to landscape orientation.
+
+\end{itemize}
+
+\end{document}

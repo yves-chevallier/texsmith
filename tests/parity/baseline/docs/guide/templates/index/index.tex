@@ -1,0 +1,422 @@
+\documentclass[a4paper,twoside]{article}
+
+\usepackage{morewrites}
+
+\usepackage[svgnames,dvipsnames,x11names]{xcolor}
+\usepackage{graphicx}
+\usepackage[english]{babel}
+\usepackage[colorlinks=true, linkcolor=NavyBlue, urlcolor=NavyBlue, citecolor=NavyBlue]{hyperref}
+\usepackage[a4paper]{geometry}
+\usepackage{ts-fonts}
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{amsmath}
+\usepackage{float}
+\usepackage{seqsplit}
+\newcolumntype{Y}{>{\centering\arraybackslash}X}
+\newcolumntype{Z}{>{\raggedleft\arraybackslash}X}
+\usepackage{ts-code}
+
+\usepackage{lastpage}
+\usepackage{refcount}
+\makeatletter
+\def\ps@plain{
+  \let\@oddhead\@empty
+  \let\@evenhead\@empty
+  \def\@oddfoot{
+    \hfil
+    \ifnum\getpagerefnumber{LastPage}>1\relax
+      \thepage
+    \fi
+    \hfil}
+  \let\@evenfoot\@oddfoot
+}
+\makeatother
+
+\title{Templates}
+\author{}\date{}
+
+\begin{document}
+
+\maketitle
+
+\thispagestyle{plain}
+TeXSmith templates define the \LaTeX{} skeleton that wraps converted Markdown. Each
+template bundles assets, slot definitions, attribute schemas, and build metadata
+so you can aim the renderer at anything from articles to slide decks.
+
+Templates are a core feature that allows TeXSmith to be extended for different
+use cases. You may use:
+
+\begin{itemize}
+\item{} Custom project templates stored in a \texttt{templates/} folder.
+\item{} Local user templates installed in your \texttt{\textasciitilde{}/.texsmith/templates/} folder.
+\item{} Published templates installed from PyPI.
+\item{} Built-in templates included with TeXSmith.
+
+\end{itemize}
+\section{Built-in templates}\label{built-in-templates}
+
+TeXSmith includes standard templates for common document types:
+
+\begin{itemize}
+\item{} \texttt{article}: academic-style article layout with title page, abstract, and sections.
+\item{} \texttt{book}: book-style layout with parts, chapters, preface, table of contents, appendices, and optional \texttt{part} base-level override.
+\item{} \texttt{letter}: formal letters with sender/recipient metadata, fold marks, and signature.
+\item{} \texttt{snippet}: standalone \texttt{tikzpicture} frame for screenshots, stickers, and snippets.
+
+\end{itemize}
+Invoke them in the CLI with \texttt{-\allowbreak{}tarticle} or \texttt{-\allowbreak{}tletter}. Additional community templates remain available under \texttt{templates/} or as separate PyPI packages.
+
+Take a look at built-in fragments for full configuration options.
+
+\section{Quick start}\label{quick-start}
+
+\begin{code}{bash}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+\PY{c+c1}{\PYZsh{} 1. Inspect a built\PYZhy{}in template}
+texsmith\PY{+w}{ }\PYZhy{}\PYZhy{}template\PY{+w}{ }article\PY{+w}{ }\PYZhy{}\PYZhy{}template\PYZhy{}info
+
+\PY{c+c1}{\PYZsh{} 2. Render a document with template slots + build}
+texsmith\PY{+w}{ }docs/intro.md\PY{+w}{ }\PY{l+s+se}{\PYZbs{}}
+\PY{+w}{  }\PYZhy{}\PYZhy{}template\PY{+w}{ }article\PY{+w}{ }\PY{l+s+se}{\PYZbs{}}
+\PY{+w}{  }\PYZhy{}\PYZhy{}slot\PY{+w}{ }mainmatter:@document\PY{+w}{ }\PY{l+s+se}{\PYZbs{}}
+\PY{+w}{  }\PYZhy{}\PYZhy{}output\PYZhy{}dir\PY{+w}{ }build/article\PY{+w}{ }\PY{l+s+se}{\PYZbs{}}
+\PY{+w}{  }\PYZhy{}\PYZhy{}build
+\end{Verbatim}
+\end{code}
+Need a blank template skeleton? Use the scaffold flag to copy any template into
+your working tree:
+
+\begin{code}{bash}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+texsmith\PY{+w}{ }\PYZhy{}\PYZhy{}template\PY{+w}{ }article\PY{+w}{ }\PYZhy{}\PYZhy{}template\PYZhy{}scaffold\PY{+w}{ }my\PYZhy{}template
+\PY{n+nb}{cd}\PY{+w}{ }my\PYZhy{}template
+uv\PY{+w}{ }run\PY{+w}{ }hatch\PY{+w}{ }build\PY{+w}{  }\PY{c+c1}{\PYZsh{} optional packaging smoke test}
+\end{Verbatim}
+\end{code}
+Publish by pointing \texttt{pyproject.toml} to the \texttt{template/} package, then \texttt{uv publish} or \texttt{twine upload dist/*}.
+For in-depth patterns (overrides, slots, metadata), see the \hyperref[snippet:<HASH>]{Template Cookbook}.
+
+\section{Write your own TeXSmith templates}\label{write-your-own-texsmith-templates}
+
+TeXSmith uses Jinja2 templates to assemble \LaTeX{} documents from converted
+Markdown fragments. You can create your own templates to control the layout,
+styling, and structure of the final output.
+
+You may start by copying an existing template package and modifying it to suit
+your needs. Templates can either be published on PyPI for easy distribution or kept locally for personal use. By default, TeXSmith will look for templates installed in the current Python environment or in the current working directory under a \texttt{templates/} folder.
+
+\subsection{Structure}\label{structure}
+
+\begin{code}{text}{}{baselinestretch=0.5, }
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+├── README.md
+├── \PYZus{}\PYZus{}init\PYZus{}\PYZus{}.py
+├── pyproject.toml
+├── overrides
+│   └── fragment.tex
+└── template
+    ├── assets
+    │   └── latexmkrc
+    ├── manifest.toml
+    ├── template.tex
+    └── .sty, .cls...
+\end{Verbatim}
+\end{code}
+\subsection{TOML manifest}\label{toml-manifest}
+
+The \texttt{manifest.toml} file describes the template and its metadata.
+
+\begin{code}{toml}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+\PY{k}{[}\PY{k}{compat}\PY{k}{]}
+\PY{c+c1}{\PYZsh{} Specify the compatible TeXSmith versions. Do not forget}
+\PY{c+c1}{\PYZsh{} to set a maximum version to avoid future incompatibilities.}
+\PY{n}{texsmith}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{\PYZgt{}=0.1,\PYZlt{}1.0}\PY{l+s+s2}{\PYZdq{}}
+
+\PY{k}{[}\PY{k}{latex}\PY{k}{.}\PY{k}{template}\PY{k}{]}
+\PY{n}{name}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{acme}\PY{l+s+s2}{\PYZdq{}}
+\PY{n}{version}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{0.1.0}\PY{l+s+s2}{\PYZdq{}}
+\PY{n}{entrypoint}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{template/template.tex}\PY{l+s+s2}{\PYZdq{}}
+\PY{c+c1}{\PYZsh{} Useful for generic docker images or CI pipelines, where}
+\PY{c+c1}{\PYZsh{} we only install the required packages.}
+\PY{n}{texlive\PYZus{}year}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+m+mi}{2023}
+\PY{n}{tlmgr\PYZus{}packages}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{p}{[}
+\PY{+w}{    }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{babel}\PY{l+s+s2}{\PYZdq{}}\PY{p}{,}
+\PY{+w}{    }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{geometry}\PY{l+s+s2}{\PYZdq{}}\PY{p}{,}
+\PY{+w}{    }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{hyperref}\PY{l+s+s2}{\PYZdq{}}\PY{p}{,}
+\PY{+w}{    }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{microtype}\PY{l+s+s2}{\PYZdq{}}\PY{p}{,}
+\PY{+w}{    }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{fontspec}\PY{l+s+s2}{\PYZdq{}}\PY{p}{,}
+\PY{+w}{    }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{biblatex}\PY{l+s+s2}{\PYZdq{}}\PY{p}{,}
+\PY{p}{]}
+
+\PY{c+c1}{\PYZsh{} Attributes:}
+\PY{c+c1}{\PYZsh{} \PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}}
+\PY{c+c1}{\PYZsh{} Attributes are declared as nested tables describing the type, default}
+\PY{c+c1}{\PYZsh{} value, and optional normalisation rules for each entry. Types are inferred}
+\PY{c+c1}{\PYZsh{} from the default when omitted.}
+\PY{k}{[}\PY{k}{latex}\PY{k}{.}\PY{k}{template}\PY{k}{.}\PY{k}{attributes}\PY{k}{.}\PY{k}{base\PYZus{}level}\PY{k}{]}
+\PY{n}{default}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+m+mi}{1}
+\PY{n}{type}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{integer}\PY{l+s+s2}{\PYZdq{}}
+
+\PY{k}{[}\PY{k}{latex}\PY{k}{.}\PY{k}{template}\PY{k}{.}\PY{k}{attributes}\PY{k}{.}\PY{k}{title}\PY{k}{]}
+\PY{n}{default}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{Title}\PY{l+s+s2}{\PYZdq{}}
+\PY{n}{type}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{string}\PY{l+s+s2}{\PYZdq{}}
+\PY{n}{escape}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{latex}\PY{l+s+s2}{\PYZdq{}}
+\PY{n}{allow\PYZus{}empty}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{k+kc}{false}
+
+\PY{k}{[}\PY{k}{latex}\PY{k}{.}\PY{k}{template}\PY{k}{.}\PY{k}{attributes}\PY{k}{.}\PY{k}{subtitle}\PY{k}{]}
+\PY{n}{default}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{\PYZdq{}}
+\PY{n}{type}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{string}\PY{l+s+s2}{\PYZdq{}}
+\PY{n}{escape}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{latex}\PY{l+s+s2}{\PYZdq{}}
+
+\PY{k}{[}\PY{k}{latex}\PY{k}{.}\PY{k}{template}\PY{k}{.}\PY{k}{attributes}\PY{k}{.}\PY{k}{author}\PY{k}{]}
+\PY{n}{default}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{John Doe}\PY{l+s+s2}{\PYZdq{}}
+\PY{n}{type}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{string}\PY{l+s+s2}{\PYZdq{}}
+\PY{n}{escape}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{latex}\PY{l+s+s2}{\PYZdq{}}
+
+\PY{k}{[}\PY{k}{latex}\PY{k}{.}\PY{k}{template}\PY{k}{.}\PY{k}{attributes}\PY{k}{.}\PY{k}{date}\PY{k}{]}
+\PY{n}{default}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+se}{\PYZbs{}\PYZbs{}}\PY{l+s+s2}{today}\PY{l+s+s2}{\PYZdq{}}
+\PY{n}{type}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{string}\PY{l+s+s2}{\PYZdq{}}
+\PY{n}{escape}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{latex}\PY{l+s+s2}{\PYZdq{}}
+
+\PY{k}{[}\PY{k}{latex}\PY{k}{.}\PY{k}{template}\PY{k}{.}\PY{k}{attributes}\PY{k}{.}\PY{k}{language}\PY{k}{]}
+\PY{n}{default}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{english}\PY{l+s+s2}{\PYZdq{}}
+\PY{n}{type}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{string}\PY{l+s+s2}{\PYZdq{}}
+\PY{n}{normaliser}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{babel\PYZus{}language}\PY{l+s+s2}{\PYZdq{}}
+
+\PY{k}{[}\PY{k}{latex}\PY{k}{.}\PY{k}{template}\PY{k}{.}\PY{k}{attributes}\PY{k}{.}\PY{k}{paper}\PY{k}{]}
+\PY{n}{default}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{a4paper}\PY{l+s+s2}{\PYZdq{}}
+\PY{n}{type}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{string}\PY{l+s+s2}{\PYZdq{}}
+\PY{n}{normaliser}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{paper\PYZus{}option}\PY{l+s+s2}{\PYZdq{}}
+
+\PY{k}{[}\PY{k}{latex}\PY{k}{.}\PY{k}{template}\PY{k}{.}\PY{k}{attributes}\PY{k}{.}\PY{k}{orientation}\PY{k}{]}
+\PY{n}{default}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{portrait}\PY{l+s+s2}{\PYZdq{}}
+\PY{n}{type}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{string}\PY{l+s+s2}{\PYZdq{}}
+\PY{n}{normaliser}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{orientation}\PY{l+s+s2}{\PYZdq{}}
+\PY{n}{choices}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{p}{[}\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{portrait}\PY{l+s+s2}{\PYZdq{}}\PY{p}{,}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{landscape}\PY{l+s+s2}{\PYZdq{}}\PY{p}{]}
+
+\PY{k}{[}\PY{k}{latex}\PY{k}{.}\PY{k}{template}\PY{k}{.}\PY{k}{attributes}\PY{k}{.}\PY{k}{bibliography\PYZus{}style}\PY{k}{]}
+\PY{n}{default}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{numeric}\PY{l+s+s2}{\PYZdq{}}
+\PY{n}{type}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{string}\PY{l+s+s2}{\PYZdq{}}
+
+\PY{c+c1}{\PYZsh{} Slots definition:}
+\PY{c+c1}{\PYZsh{} \PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}}
+\PY{c+c1}{\PYZsh{} Each slot represents a section of the document that can be filled}
+\PY{c+c1}{\PYZsh{} with content. The \PYZsq{}depth\PYZsq{} parameter indicates the LaTeX sectioning}
+\PY{c+c1}{\PYZsh{} command to use.}
+\PY{k}{[}\PY{k}{latex}\PY{k}{.}\PY{k}{template}\PY{k}{.}\PY{k}{slots}\PY{k}{.}\PY{k}{mainmatter}\PY{k}{]}
+\PY{n}{default}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{k+kc}{true}
+\PY{n}{depth}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{section}\PY{l+s+s2}{\PYZdq{}}
+
+\PY{k}{[}\PY{k}{latex}\PY{k}{.}\PY{k}{template}\PY{k}{.}\PY{k}{slots}\PY{k}{.}\PY{k}{abstract}\PY{k}{]}
+\PY{n}{depth}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{section}\PY{l+s+s2}{\PYZdq{}}
+\PY{n}{strip\PYZus{}heading}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{k+kc}{true}
+
+\PY{c+c1}{\PYZsh{} Additional Assets:}
+\PY{c+c1}{\PYZsh{} \PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}}
+\PY{c+c1}{\PYZsh{} All additional assets to be included in the template package.}
+\PY{c+c1}{\PYZsh{} They will be copied to the working directory when the template is used.}
+\PY{k}{[}\PY{k}{latex}\PY{k}{.}\PY{k}{template}\PY{k}{.}\PY{k}{assets}\PY{k}{]}
+\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{.latexmkrc}\PY{l+s+s2}{\PYZdq{}}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{p}{\PYZob{}}\PY{+w}{ }\PY{n}{source}\PY{+w}{ }\PY{p}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{template/assets/latexmkrc}\PY{l+s+s2}{\PYZdq{}}\PY{+w}{ }\PY{p}{\PYZcb{}}
+\end{Verbatim}
+\end{code}
+\subsubsection{Attribute schema}\label{attribute-schema}
+
+Each attribute table accepts the following keys:
+
+\begin{itemize}
+\item{} \texttt{default}: (required) the value injected when no override is provided.
+\item{} \texttt{type}: optional primitive among \texttt{string}, \texttt{integer}, \texttt{float}, \texttt{boolean}, \texttt{list}, \texttt{mapping}, \texttt{any}. When omitted TeXSmith infers a type from \texttt{default}.
+\item{} \texttt{sources}: the lookup paths (dot notation) used to pull overrides from document front matter. If omitted, TeXSmith probes \texttt{press.press.<name>}, \texttt{press.<name>}, then \texttt{<name>}.
+\item{} \texttt{allow\_empty}: when \texttt{false}, empty strings are coerced to \texttt{None} so templates fall back to defaults.
+\item{} \texttt{required}: when \texttt{true}, a missing override raises a \texttt{TemplateError}.
+\item{} \texttt{choices}: restricts string/integer values to the provided list.
+\item{} \texttt{escape}: currently supports \texttt{latex} to automatically escape special characters coming from user input.
+\item{} \texttt{normaliser}: a built-in normaliser name \textbf{or} a \texttt{"module:callable"} import reference pointing at your own callable that post-processes the value (see below).
+
+\end{itemize}
+Attributes are resolved before \texttt{WrappableTemplate.prepare\_context} runs, meaning template classes only need to handle presentation-specific tweaks (for example, combining authors, building option strings, or removing temporary keys).
+
+\subsection{Attribute ownership \& precedence}\label{attribute-ownership-precedence}
+
+\begin{itemize}
+\item{} Each attribute belongs to a single owner (template by default, fragment when declared in \texttt{fragment.toml}). Conflicting owners raise a \texttt{TemplateError}.
+\item{} Overrides flow: CLI/front matter \(\rightarrow\) attribute resolver (type coercion, normalisers) \(\rightarrow\) template emitters/fragment defaults. Empty strings are dropped when \texttt{allow\_empty = false}.
+\item{} Attributes no longer live under ad-hoc dotted names (\texttt{press.*}); normalisation collapses supported aliases onto the declared attribute name.
+
+\end{itemize}
+\subsection{Template slots and built-ins}\label{template-slots-and-built-ins}
+
+\begin{itemize}
+\item{} Templates must declare at least one slot; \texttt{mainmatter} is the default when absent. Slots surface \texttt{depth}, \texttt{offset}, \texttt{strip\_heading}, and optional \texttt{base\_level}.
+\item{} Built-in \texttt{article} exposes \texttt{mainmatter}, \texttt{abstract}, \texttt{appendix}, and \texttt{backmatter}. \texttt{book} inserts \texttt{appendix} before \texttt{backmatter} and supports \texttt{part} toggling. \texttt{letter} uses \texttt{mainmatter} only.
+\item{} Deprecated attributes removed from built-ins: \texttt{article}/\texttt{book} no longer accept \texttt{cover}, \texttt{covercolor}, \texttt{twocolumn}, or template-owned \texttt{emoji}. Backmatter/preamble overrides moved into fragments where applicable.
+
+\end{itemize}
+\subsubsection{Built-in normalisers}\label{built-in-normalisers}
+
+\begin{center}
+\begin{tabularx}{\linewidth}{>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X}
+\toprule
+\textbf{Name} & \textbf{Purpose} \\
+
+\midrule
+\texttt{paper\_option} & Validates paper sizes and emits \texttt{<size>paper} strings (for example \texttt{letterpaper}). \\
+\texttt{orientation} & Normalises orientation flags and guarantees \texttt{portrait} or \texttt{landscape}. \\
+\texttt{babel\_language} & Maps ISO-like language codes to Babel identifiers (for example \texttt{fr} \(\rightarrow\) \texttt{french}). \\
+
+\bottomrule
+\end{tabularx}
+\end{center}
+
+Normalisers run after type coercion and before escaping. They can also reuse existing defaults to provide fallbacks (\texttt{paper\_option} and \texttt{orientation} do this).
+
+\subsubsection{Custom normalisers from template packages}\label{custom-normalisers-from-template-packages}
+
+Beyond the built-in names, \texttt{normaliser} accepts a fully-qualified callable
+reference so a template package can supply its own normaliser without touching
+TeXSmith internals. Use the \texttt{"package.module:callable"} form (the dotted
+\texttt{"package.module.callable"} form is also accepted):
+
+\begin{code}{toml}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+\PY{k}{[}\PY{k}{latex}\PY{k}{.}\PY{k}{template}\PY{k}{.}\PY{k}{attributes}\PY{k}{.}\PY{k}{rules}\PY{k}{]}
+\PY{n}{type}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{any}\PY{l+s+s2}{\PYZdq{}}
+\PY{n}{normaliser}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{texsmith\PYZus{}template\PYZus{}exam.rules:resolve\PYZus{}attribute}\PY{l+s+s2}{\PYZdq{}}
+\end{Verbatim}
+\end{code}
+The referenced object is imported (and cached) when the manifest is loaded, and
+must honour the normaliser contract:
+
+\begin{code}{python}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+\PY{k}{def}\PY{+w}{ }\PY{n+nf}{resolve\PYZus{}attribute}\PY{p}{(}\PY{n}{value}\PY{p}{,} \PY{n}{spec}\PY{p}{,} \PY{n}{fallback}\PY{p}{)}\PY{p}{:}
+    \PY{c+c1}{\PYZsh{} value:    the already type\PYZhy{}coerced attribute value}
+    \PY{c+c1}{\PYZsh{} spec:     the TemplateAttributeSpec (use spec.name in error messages)}
+    \PY{c+c1}{\PYZsh{} fallback: the attribute\PYZsq{}s resolved default}
+    \PY{c+c1}{\PYZsh{} returns:  the normalised value}
+    \PY{o}{.}\PY{o}{.}\PY{o}{.}
+\end{Verbatim}
+\end{code}
+If the module or attribute cannot be found, or the target is not callable,
+TeXSmith raises a \texttt{TemplateError} naming the offending template, attribute, and
+\texttt{normaliser} value.
+
+Authors who prefer a short registry name can instead call
+\texttt{texsmith.core.templates.register\_attribute\_normaliser(name, func)} at import
+time and reference it by \texttt{name}. Registering over a built-in name raises a
+\texttt{TemplateError} unless \texttt{override=True} is passed. The \texttt{"module:callable"} form is
+collision-free and needs no registration, so it is generally preferred.
+
+\subsubsection{Metadata overrides}\label{metadata-overrides}
+
+At runtime TeXSmith merges template defaults with document front matter. By default, overrides come from the \texttt{press} section:
+
+\begin{code}{yaml}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+\PY{n+nn}{\PYZhy{}\PYZhy{}\PYZhy{}}
+\PY{n+nt}{press}\PY{p}{:}
+\PY{+w}{  }\PY{n+nt}{title}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{Sample}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{Article}
+\PY{+w}{  }\PY{n+nt}{subtitle}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{Insights}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{on}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{Cheese}
+\PY{+w}{  }\PY{n+nt}{language}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{fr}
+\PY{+w}{  }\PY{n+nt}{authors}\PY{p}{:}
+\PY{+w}{    }\PY{p+pIndicator}{\PYZhy{}}\PY{+w}{ }\PY{n+nt}{name}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{Ada}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{Lovelace}
+\PY{+w}{      }\PY{n+nt}{affiliation}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{Analytical}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{Engine}
+\PY{+w}{    }\PY{p+pIndicator}{\PYZhy{}}\PY{+w}{ }\PY{n+nt}{name}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{Grace}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{Hopper}
+\PY{n+nn}{\PYZhy{}\PYZhy{}\PYZhy{}}
+\end{Verbatim}
+\end{code}
+With the manifest above TeXSmith will:
+
+\begin{itemize}
+\item{} Escape \texttt{title} and \texttt{subtitle} for LaTeX compatibility.
+\item{} Map \texttt{language: fr} to \texttt{french}.
+\item{} Normalise author collections so individual templates can format them consistently.
+\item{} Populate both defaults (\texttt{author}) and structured data (\texttt{authors}) that template classes can consume.
+
+\end{itemize}
+To pull metadata from alternative locations add explicit \texttt{sources}:
+
+\begin{code}{toml}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+\PY{k}{[}\PY{k}{latex}\PY{k}{.}\PY{k}{template}\PY{k}{.}\PY{k}{attributes}\PY{k}{.}\PY{k}{project\PYZus{}code}\PY{k}{]}
+\PY{n}{default}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{\PYZdq{}}
+\PY{n}{type}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{string}\PY{l+s+s2}{\PYZdq{}}
+\PY{n}{sources}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{p}{[}\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{press.project.code}\PY{l+s+s2}{\PYZdq{}}\PY{p}{,}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{project.code}\PY{l+s+s2}{\PYZdq{}}\PY{p}{]}
+\PY{n}{allow\PYZus{}empty}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{k+kc}{false}
+\end{Verbatim}
+\end{code}
+\subsubsection{Slots}\label{slots}
+
+Slots control where converted content is injected. Each entry allows:
+
+\begin{itemize}
+\item{} \texttt{depth}: maps to a LaTeX sectioning command (\texttt{section}, \texttt{chapter}, etc.).
+\item{} \texttt{base\_level} and \texttt{offset}: fine tune heading levels when rendering.
+\item{} \texttt{default}: mark exactly one slot as the primary sink for content.
+\item{} \texttt{strip\_heading}: remove the first heading when populating the slot (useful for abstracts).
+
+\end{itemize}
+Slots become Jinja variables inside the template (\texttt{\textbackslash{}VAR\{abstract\}}, \texttt{\textbackslash{}VAR\{mainmatter\}}).
+
+\subsection{Overrides}\label{overrides}
+
+TeXSmith uses partials to render different parts of the document such as bold text with \texttt{adapters/latex/partials/bold.tex}:
+
+\begin{code}{tex}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+\PY{k}{\PYZbs{}textbf}\PY{n+nb}{\PYZob{}}\PY{k}{\PYZbs{}VAR}\PY{n+nb}{\PYZob{}}text\PY{n+nb}{\PYZcb{}}\PY{n+nb}{\PYZcb{}}
+\end{Verbatim}
+\end{code}
+You may want to override some of these partials to customize the output of specific Markdown elements. To do so, create an \texttt{overrides/} folder in your template package and add the partials you want to override.
+
+When the manifest lists \texttt{latex.template.override = ["partials/bold.tex"]}, TeXSmith searches the following locations in order:
+
+\begin{enumerate}
+\item \texttt{<template>/overrides/}
+\item \texttt{<template>/template/overrides/}
+\item The template root itself.
+\item A sibling \texttt{overrides/} directory next to the template package.
+
+\end{enumerate}
+Placeholders inside override files can use the same Jinja syntax (\texttt{\textbackslash{}VAR\{...\}}, \texttt{\textbackslash{}BLOCK\{...\}}).
+
+\subsection{Slot strategies}\label{slot-strategies}
+
+Slots determine how multiple Markdown documents (or sections) flow into the
+\LaTeX{} structure. Typical patterns:
+
+\begin{itemize}
+\item{} \textbf{Single document, single slot} -- map the only input with \texttt{-\allowbreak{}-\allowbreak{}slot mainmatter:@document}.
+\item{} \textbf{Front matter + main matter} -- convert two files (eg \texttt{intro.md},
+  \texttt{book.md}) and pass \texttt{-\allowbreak{}-\allowbreak{}slot frontmatter:intro.md} and \texttt{-\allowbreak{}-\allowbreak{}slot mainmatter:book.md}.
+\item{} \textbf{Selective sections} -- reference headings or IDs:
+  \texttt{-\allowbreak{}-\allowbreak{}slot abstract:paper.md:@abstract -\allowbreak{}-\allowbreak{}slot mainmatter:paper.md:"Results"} injects
+  only the abstract heading and the ``Results'' section into separate slots.
+\item{} \textbf{Per-language appendices} -- define slots (\texttt{appendix\_en}, \texttt{appendix\_fr}) and use front-matter metadata (\texttt{press.slot.appendix\_en: docs/en.md}) so automation scripts do not need to pass CLI flags.
+
+\end{itemize}
+Slots are resolved by the document slot mapping across CLI flags, front matter (\texttt{press.slot.*}), and API overrides, so mix and match whichever suits your workflow.
+
+\subsection{Testing your template}\label{testing-your-template}
+
+Before publishing, run the built-in test suite against your template:
+
+\begin{code}{bash}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+uv\PY{+w}{ }run\PY{+w}{ }pytest\PY{+w}{ }tests/test\PYZus{}template\PYZus{}attributes.py
+\end{Verbatim}
+\end{code}
+This repository includes examples for the bundled templates; copy one into your package and adjust expectations to match your manifest. Automated tests help ensure attributes, slots, and metadata mappings keep working as the TeXSmith runtime evolves.
+
+\section{Next steps}\label{next-steps}
+
+\begin{itemize}
+\item{} Study the \hyperref[snippet:<HASH>]{Template Cookbook} for practical recipes (title pages, metadata bindings, bibliography tweaks).
+\item{} Browse the \hyperref[snippet:<HASH>]{API high-level guide} to orchestrate templates programmatically with \texttt{ConversionService}.
+
+\end{itemize}
+
+\end{document}

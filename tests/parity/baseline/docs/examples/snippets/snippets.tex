@@ -1,0 +1,118 @@
+\documentclass[a4paper,twoside]{article}
+
+\usepackage{morewrites}
+
+\usepackage[svgnames,dvipsnames,x11names]{xcolor}
+\usepackage{graphicx}
+\usepackage[english]{babel}
+\usepackage[colorlinks=true, linkcolor=NavyBlue, urlcolor=NavyBlue, citecolor=NavyBlue]{hyperref}
+\usepackage[a4paper]{geometry}
+\usepackage{ts-fonts}
+\usepackage{amsmath}
+\usepackage{float}
+\usepackage{seqsplit}
+\usepackage{ts-code}
+
+\usepackage{lastpage}
+\usepackage{refcount}
+\makeatletter
+\def\ps@plain{
+  \let\@oddhead\@empty
+  \let\@evenhead\@empty
+  \def\@oddfoot{
+    \hfil
+    \ifnum\getpagerefnumber{LastPage}>1\relax
+      \thepage
+    \fi
+    \hfil}
+  \let\@evenfoot\@oddfoot
+}
+\makeatother
+
+\title{Snippet Blocks}
+\author{}\date{}
+
+\begin{document}
+
+\maketitle
+
+\thispagestyle{plain}
+TeXSmith renders fenced blocks with the \texttt{.snippet} class into PDF/PNG pairs and injects them into the page with a download link. Snippets now accept a concise YAML payload instead of \texttt{data-\allowbreak{}*} attributes, and the PNG preview is left unframed so you can wrap it with the \texttt{ts-\allowbreak{}frame} fragment when needed.
+
+\section{YAML-driven snippets}\label{yaml-driven-snippets}
+
+Use a YAML fence to point TeXSmith at your sources, working directory, and extra template options. The width of the rendered preview comes from the fence attribute.
+
+\begin{code}{md}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+\PY{l+s+sb}{```}\PY{l+s+sb}{yaml}\PY{+w}{ }\PYZob{}.snippet\PYZcb{}
+\PY{n+nt}{layout}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{2x2}
+\PY{n+nt}{cwd}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{../../examples/paper}
+\PY{n+nt}{sources}\PY{p}{:}
+\PY{+w}{  }\PY{p+pIndicator}{\PYZhy{}}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{cheese.md}
+\PY{+w}{  }\PY{p+pIndicator}{\PYZhy{}}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{cheese.bib}
+\PY{n+nt}{template}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{article}
+\PY{n+nt}{width}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{70\PYZpc{}}
+\PY{n+nt}{fragments}\PY{p}{:}
+\PY{+w}{  }\PY{l+lScalar+lScalarPlain}{ts\PYZhy{}frame}
+\PY{n+nt}{press}\PY{p}{:}
+\PY{+w}{  }\PY{n+nt}{frame}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{true}
+\PY{l+s+sb}{```}
+\end{Verbatim}
+\end{code}
+\begin{itemize}
+\item{} \texttt{cwd} is the directory where TeXSmith runs, resolving relative sources.
+\item{} \texttt{sources} mirrors the CLI arguments: Markdown inputs and auxiliary files like \texttt{.bib}.
+\item{} \texttt{layout} arranges multiple PDF pages on the preview grid.
+\item{} \texttt{press} merges into the template context (fragments, format, etc.).
+
+\end{itemize}
+\section{Inline Markdown with front matter}\label{inline-markdown-with-front-matter}
+
+You can also render inline Markdown. Front matter drives the template choice and fragment selection while the body becomes the snippet content.
+
+\begin{code}{md}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+\PY{g+gu}{```md \PYZob{}.snippet caption=\PYZdq{}Inline snippet\PYZdq{} width=\PYZdq{}65\PYZpc{}\PYZdq{}\PYZcb{}}
+\PY{g+gu}{\PYZhy{}\PYZhy{}\PYZhy{}}
+template: snippet
+fragments:
+  ts\PYZhy{}frame:
+press:
+\PY{g+gu}{  frame: true}
+\PY{g+gu}{\PYZhy{}\PYZhy{}\PYZhy{}}
+\PY{g+gh}{\PYZsh{} Section}
+
+Some content...
+```
+\end{Verbatim}
+\end{code}
+\begin{figure}[H]
+    \centering
+
+    \ifdefined\adjustbox
+
+        \adjustbox{max width=\textwidth}{
+            \includegraphics[width=\linewidth]{snippet-<HASH>.pdf}
+        }
+
+    \else
+
+        \includegraphics[width=\linewidth]{snippet-<HASH>.pdf}
+
+    \fi
+
+\end{figure}
+\section{Reusing a configuration file}\label{reusing-a-configuration-file}
+
+When the same snippet settings are shared across pages, point the fence to a YAML config and keep the block body empty or minimal.
+
+\begin{code}{md}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+\PY{l+s+sb}{```}\PY{l+s+sb}{md}\PY{+w}{ }\PYZob{}.snippet config=\PYZdq{}snippet\PYZhy{}configs/letter.yml\PYZdq{} caption=\PYZdq{}Config\PYZhy{}driven snippet\PYZdq{} width=\PYZdq{}70\PYZpc{}\PYZdq{}\PYZcb{}
+\PY{l+s+sb}{```}
+\end{Verbatim}
+\end{code}
+The configuration lives alongside this page at \texttt{docs/examples/snippet-\allowbreak{}configs/letter.yml}.
+
+\end{document}

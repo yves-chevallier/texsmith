@@ -1,0 +1,85 @@
+\documentclass[a4paper,twoside]{article}
+
+\usepackage{morewrites}
+
+\usepackage[svgnames,dvipsnames,x11names]{xcolor}
+\usepackage{graphicx}
+\usepackage[english]{babel}
+\usepackage[colorlinks=true, linkcolor=NavyBlue, urlcolor=NavyBlue, citecolor=NavyBlue]{hyperref}
+\usepackage[a4paper]{geometry}
+\usepackage{ts-fonts}
+\usepackage{amsmath}
+\usepackage{float}
+\usepackage{seqsplit}
+\usepackage{ts-code}
+
+\usepackage{lastpage}
+\usepackage{refcount}
+\makeatletter
+\def\ps@plain{
+  \let\@oddhead\@empty
+  \let\@evenhead\@empty
+  \def\@oddfoot{
+    \hfil
+    \ifnum\getpagerefnumber{LastPage}>1\relax
+      \thepage
+    \fi
+    \hfil}
+  \let\@evenfoot\@oddfoot
+}
+\makeatother
+
+\title{Contributing}
+\author{}\date{}
+
+\begin{document}
+
+\maketitle
+
+\thispagestyle{plain}
+I welcome contributions from the community to help improve TeXSmith! Whether it's reporting bugs, suggesting new features, or submitting code changes, your input is valuable. Here's how you can contribute:
+
+\begin{description}
+\item[{ Reporting issues }] If you encounter any bugs or issues while using TeXSmith, please \href{https://github.com/yves-chevallier/texsmith/issues}{report them}.
+\item[{ Suggesting features }] Have an idea for a new feature or improvement? We'd love to \href{https://github.com/yves-chevallier/texsmith/issues}{hear it}!
+\item[{ Submitting code changes }] If you'd like to contribute code, please fork the repository, make your changes, and submit a \href{https://github.com/yves-chevallier/texsmith/pulls}{pull request}. Make sure to follow the coding style and include tests for any new functionality.
+\item[{ Improving documentation }] Help us keep the documentation up-to-date and comprehensive by suggesting edits or additions.
+\item[{ Documentation priorities }] Check the [Release Notes][releasenotes] \& Compatibility page and open issues to see which doc sections need attention when the engine evolves.
+\item[{ Develop templates }] Create and share your own LaTeX templates for TeXSmith users to use.
+
+\end{description}
+TeXSmith is a newly developed project and is not ready for production use yet, but you can test it out and help us improve it.
+
+\section{Run the tests}\label{run-the-tests}
+
+\begin{code}{bash}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+git\PY{+w}{ }clone\PY{+w}{ }https://github.com/yves\PYZhy{}chevallier/texsmith.git
+\PY{n+nb}{cd}\PY{+w}{ }texsmith
+uv\PY{+w}{ }sync
+uv\PY{+w}{ }run\PY{+w}{ }pytest
+\end{Verbatim}
+\end{code}
+\section{Build the documentation locally}\label{build-the-documentation-locally}
+
+\begin{code}{bash}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+uv\PY{+w}{ }sync\PY{+w}{ }\PYZhy{}\PYZhy{}group\PY{+w}{ }docs
+uv\PY{+w}{ }run\PY{+w}{ }mkdocs\PY{+w}{ }serve
+\end{Verbatim}
+\end{code}
+\section{Test CI}\label{test-ci}
+
+To test the Continuous Integration (CI) using GitHub Actions, we need \texttt{act} installed on your local machine:
+
+\begin{code}{bash}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+curl\PY{+w}{ }\PYZhy{}s\PY{+w}{ }https://raw.githubusercontent.com/nektos/act/master/install.sh\PY{+w}{ }\PY{p}{|}\PY{+w}{ }sudo\PY{+w}{ }bash
+git\PY{+w}{ }clone\PY{+w}{ }https://github.com/yves\PYZhy{}chevallier/texsmith.git
+\PY{n+nb}{cd}\PY{+w}{ }texsmith
+act\PY{+w}{ }\PYZhy{}j\PY{+w}{ }build
+\end{Verbatim}
+\end{code}
+This would require a \textbf{lot} of disk space, as it uses Docker containers to simulate the GitHub Actions environment. Select the \emph{medium} size image when prompted.
+
+\end{document}

@@ -1,0 +1,108 @@
+\documentclass[a4paper,twoside]{article}
+
+\usepackage{morewrites}
+
+\usepackage[svgnames,dvipsnames,x11names]{xcolor}
+\usepackage{graphicx}
+\usepackage[english]{babel}
+\usepackage[colorlinks=true, linkcolor=NavyBlue, urlcolor=NavyBlue, citecolor=NavyBlue]{hyperref}
+\usepackage[a4paper]{geometry}
+\usepackage{ts-fonts}
+\usepackage{amsmath}
+\usepackage{float}
+\usepackage{seqsplit}
+\usepackage{ts-code}
+
+\usepackage{lastpage}
+\usepackage{refcount}
+\makeatletter
+\def\ps@plain{
+  \let\@oddhead\@empty
+  \let\@evenhead\@empty
+  \def\@oddfoot{
+    \hfil
+    \ifnum\getpagerefnumber{LastPage}>1\relax
+      \thepage
+    \fi
+    \hfil}
+  \let\@evenfoot\@oddfoot
+}
+\makeatother
+
+\title{Book}
+\author{}\date{}
+
+\begin{document}
+
+\maketitle
+
+\label{einstein}
+
+\thispagestyle{plain}
+For this example we want to render homage to Albert Einstein by creating a small book using the \href{https://en.wikipedia.org/wiki/Albert\_Einstein}{Wikipedia}
+as our source.
+
+The text was converted to \LaTeX{} then built using the \texttt{book} template.
+
+This example demonstrates the use of front matter for citations, abbreviations, glossary, and index.
+
+For this example, we decided to use a small paper size (A5) and a sans serif font (Adventor). The book is structured in parts and specific slots are used for the colophon, dedication, and preface. Here is the front matter used for this example:
+
+\begin{code}{yaml}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+\PY{n+nt}{title}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{Albert}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{Einstein}
+\PY{n+nt}{subtitle}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{His}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{Life}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{and}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{Achievements}
+\PY{n+nt}{date}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{2025\PYZhy{}03\PYZhy{}15}
+\PY{n+nt}{edition}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{Wikipedia}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{Adaptation}
+\PY{n+nt}{author}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{Wikipedia}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{Contributors}
+\PY{n+nt}{publisher}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{Wikipedia}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{Sourcebooks}
+\PY{n+nt}{imprint}\PY{p}{:}
+\PY{+w}{  }\PY{n+nt}{thanks}\PY{p}{:}\PY{+w}{ }\PY{p+pIndicator}{|}
+\PY{+w}{    }\PY{n+no}{Adapted from the Wikipedia article “Albert Einstein” (retrieved ).}
+\PY{+w}{    }\PY{n+no}{Thank you to the Wikipedia contributors whose work makes this example}
+\PY{+w}{    }\PY{n+no}{possible.}
+\PY{+w}{  }\PY{n+nt}{copyright}\PY{p}{:}\PY{+w}{ }\PY{p+pIndicator}{|}
+\PY{+w}{    }\PY{n+no}{Wikipedia contributors. Text licensed under Creative Commons Attribution\PYZhy{}ShareAlike}
+\PY{+w}{    }\PY{n+no}{International (CC BY\PYZhy{}SA).}
+\PY{+w}{  }\PY{n+nt}{license}\PY{p}{:}\PY{+w}{ }\PY{p+pIndicator}{|}
+\PY{+w}{    }\PY{n+no}{This TeXSmith example is derived from Wikipedia and is not affiliated}
+\PY{+w}{    }\PY{n+no}{with TeXSmith. Reuse must credit Wikipedia and share under CC BY\PYZhy{}SA .}
+\PY{n+nt}{press}\PY{p}{:}
+\PY{+w}{  }\PY{n+nt}{paper}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{a5}
+\PY{+w}{  }\PY{n+nt}{template}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{book}
+\PY{+w}{  }\PY{n+nt}{base\PYZus{}level}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{part}
+\PY{+w}{  }\PY{n+nt}{fonts}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{adventor}
+\PY{+w}{  }\PY{n+nt}{admonition\PYZus{}style}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{classic}
+\PY{+w}{  }\PY{n+nt}{slots}\PY{p}{:}
+\PY{+w}{    }\PY{n+nt}{colophon}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{Colophon}
+\PY{+w}{    }\PY{n+nt}{dedication}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{Dedication}
+\PY{+w}{    }\PY{n+nt}{preface}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{Preface}
+\end{Verbatim}
+\end{code}
+\begin{figure}[H]
+    \centering
+
+    \ifdefined\adjustbox
+
+        \adjustbox{max width=\textwidth}{
+            \includegraphics[width=\linewidth]{snippet-<HASH>.pdf}
+        }
+
+    \else
+
+        \includegraphics[width=\linewidth]{snippet-<HASH>.pdf}
+
+    \fi
+
+\end{figure}
+The example can be built independently using the CLI in the \texttt{examples/book/} folder. The engine can be chosen between \texttt{tectonic}, \texttt{xelatex}, and \texttt{lualatex}
+as follows:
+
+\begin{code}{bash}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+texsmith\PY{+w}{ }book.md\PY{+w}{ }<STEM>.bib\PY{+w}{ }\PYZhy{}\PYZhy{}template\PY{+w}{ }book\PY{+w}{ }\PYZhy{}\PYZhy{}build\PY{+w}{ }\PYZhy{}\PYZhy{}engine\PY{+w}{ }tectonic
+\end{Verbatim}
+\end{code}
+The power of TeXSmith is that it can generate such complex documents from simple Markdown with no \LaTeX{} knowledge required and no \LaTeX{} toolchain installed. Fonts, toolchain, and image conversion are all handled automatically by TeXSmith in a single command.
+
+\end{document}

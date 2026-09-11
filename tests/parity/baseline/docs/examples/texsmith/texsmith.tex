@@ -1,0 +1,53 @@
+\documentclass[a4paper,twoside]{article}
+
+\usepackage{morewrites}
+
+\usepackage[svgnames,dvipsnames,x11names]{xcolor}
+\usepackage{graphicx}
+\usepackage[english]{babel}
+\usepackage[colorlinks=true, linkcolor=NavyBlue, urlcolor=NavyBlue, citecolor=NavyBlue]{hyperref}
+\usepackage[a4paper]{geometry}
+\usepackage{ts-fonts}
+\usepackage{amsmath}
+\usepackage{float}
+\usepackage{seqsplit}
+\usepackage{ts-code}
+
+\usepackage{lastpage}
+\usepackage{refcount}
+\makeatletter
+\def\ps@plain{
+  \let\@oddhead\@empty
+  \let\@evenhead\@empty
+  \def\@oddfoot{
+    \hfil
+    \ifnum\getpagerefnumber{LastPage}>1\relax
+      \thepage
+    \fi
+    \hfil}
+  \let\@evenfoot\@oddfoot
+}
+\makeatother
+
+\title{TeXSmith}
+\author{}\date{}
+
+\begin{document}
+
+\maketitle
+
+\thispagestyle{plain}
+And of course, the grand finale---the true climax of the project---is that this very documentation can itself be converted into a \LaTeX{} document using TeXSmith.
+
+\begin{code}{bash}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+git\PY{+w}{ }clone\PY{+w}{ }https://github.com/yves\PYZhy{}chevallier/texsmith.git
+\PY{n+nb}{cd}\PY{+w}{ }texsmith
+uv\PY{+w}{ }sync\PY{+w}{ }\PYZhy{}\PYZhy{}with\PY{+w}{ }docs
+\PY{n+nb}{export}\PY{+w}{ }\PY{n+nv}{TEXSMITH\PYZus{}MKDOCS\PYZus{}BUILD}\PY{o}{=}\PY{l+m}{1}\PY{+w}{ }\PY{c+c1}{\PYZsh{} Enable PDF build}
+uv\PY{+w}{ }run\PY{+w}{ }texsmith\PY{+w}{ }mkdocs\PY{+w}{ }build
+\end{Verbatim}
+\end{code}
+You can download it directly from the \href{https://github.com/yves-chevallier/texsmith/releases}{release page}.
+
+\end{document}

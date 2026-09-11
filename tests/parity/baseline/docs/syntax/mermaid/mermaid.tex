@@ -1,0 +1,160 @@
+\documentclass[a4paper,twoside]{article}
+
+\usepackage{morewrites}
+
+\usepackage[svgnames,dvipsnames,x11names]{xcolor}
+\usepackage{graphicx}
+\usepackage[english]{babel}
+\usepackage[colorlinks=true, linkcolor=NavyBlue, urlcolor=NavyBlue, citecolor=NavyBlue]{hyperref}
+\usepackage[a4paper]{geometry}
+\usepackage{ts-fonts}
+\usepackage{amsmath}
+\usepackage{float}
+\usepackage{seqsplit}
+\usepackage{ts-code}
+
+\usepackage{lastpage}
+\usepackage{refcount}
+\makeatletter
+\def\ps@plain{
+  \let\@oddhead\@empty
+  \let\@evenhead\@empty
+  \def\@oddfoot{
+    \hfil
+    \ifnum\getpagerefnumber{LastPage}>1\relax
+      \thepage
+    \fi
+    \hfil}
+  \let\@evenfoot\@oddfoot
+}
+\makeatother
+
+\title{Mermaid Diagrams}
+\author{}\date{}
+
+\begin{document}
+
+\maketitle
+
+\thispagestyle{plain}
+Just like MkDocs, TeXSmith understands \href{https://mermaid.js.org}{Mermaid} diagrams. Browsers render them on the fly, but PDFs need static assets, so TeXSmith converts each diagram into a vector PDF during the build. That requires either:
+
+\begin{enumerate}
+\item Installing \texttt{mermaid-\allowbreak{}cli} and its dependencies in your environment, or
+\item Using Docker with the pulled image \texttt{mermaidjs/mermaid-\allowbreak{}cli}.
+
+\end{enumerate}
+\section{Inline diagram}\label{inline-diagram}
+
+\begin{code}{markdown}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+\PY{l+s+sb}{```}\PY{l+s+sb}{mermaid}
+\PY{l+s}{flowchart LR}
+\PY{l+s}{    A \PYZhy{}\PYZhy{}\PYZgt{} B}
+\PY{l+s}{    B \PYZhy{}\PYZhy{}\PYZgt{} C}
+\PY{l+s+sb}{```}
+\end{Verbatim}
+\end{code}
+\begin{figure}[H]
+    \centering
+
+    \ifdefined\adjustbox
+
+        \adjustbox{max width=\textwidth}{
+            \includegraphics[width=\linewidth]{<HASH>.pdf}
+        }
+
+    \else
+
+        \includegraphics[width=\linewidth]{<HASH>.pdf}
+
+    \fi
+
+\end{figure}
+\section{External diagrams}\label{external-diagrams}
+
+Sometimes diagrams live better outside the Markdown. TeXSmith supports:
+
+\begin{enumerate}
+\item Reference external \texttt{.mmd} / \texttt{.mermaid} files.
+\item Embed Mermaid Live snippets using \texttt{pako:} URLs for live editing.
+
+\end{enumerate}
+The \texttt{texsmith.extensions.mermaid} extension sniffs out these references, pulls the content in, and treats inline/external sources the same way.
+
+Using a \texttt{mmd} file is as simple as including an image:
+
+\begin{code}{markdown}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+![\PY{n+nt}{Build pipeline}](\PY{n+na}{../assets/mermaid.mmd})
+\end{Verbatim}
+\end{code}
+\begin{figure}[H]
+    \centering
+
+    \ifdefined\adjustbox
+
+        \adjustbox{max width=\textwidth}{
+            \includegraphics[width=\linewidth]{<HASH>.pdf}
+        }
+
+    \else
+
+        \includegraphics[width=\linewidth]{<HASH>.pdf}
+
+    \fi
+
+\end{figure}
+
+Mermaid Live encodes diagrams via Pako (a compression library) so you can share/edit them through URLs:
+
+\begin{code}{markdown}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+![\PY{n+nt}{Online Diagram}](\PY{n+na}{https://mermaid.live/edit\PYZsh{}pako:eNpVTctugzAQ\PYZus{}BVrT4lEEMQEiA\PYZus{}tIemt7aE9tX}
+\PY{n+na}{EODl4eSrAtY5q2iH8vEBGpe1jtzOzMdJBpicAgv\PYZhy{}hrVgrryPMbV2SYxg1o8T7uJVmtHoipsvNhXxWkNcfby8hMU}
+\PY{n+na}{pV3O3E6iQKbx\PYZus{}6mVfmgcHjVHMaPxqE5vOgvJLm2V2El0Qon9jjXobnX\PYZus{}Iv4wGbO0GbxpOQSPChsJYE526IHNdpa}
+\PY{n+na}{jBC60cjBlVgjBzacUtgzB676wWOE\PYZhy{}tS6nm1Wt0UJLBeXZkCtkcLhvhKFFfWdtagk2p1ulQO23tApBFgH38DCMPG}
+\PY{n+na}{TMKI0TKKABkHswQ\PYZhy{}wlPrxOtrSKNnSOA2SsPfgd2oN\PYZus{}DTZ9H9\PYZus{}ZXFC})
+\end{Verbatim}
+\end{code}
+When TeXSmith renders HTML/PDF it wraps the image with a link to the Mermaid Live editor. Click the preview to inspect the source:
+
+\begin{figure}[H]
+    \centering
+
+    \ifdefined\adjustbox
+
+        \adjustbox{max width=\textwidth}{
+            \includegraphics[width=\linewidth]{<HASH>.pdf}
+        }
+
+    \else
+
+        \includegraphics[width=\linewidth]{<HASH>.pdf}
+
+    \fi
+
+\end{figure}
+\section{LaTeX Rendering}\label{latex-rendering}
+
+Here's how the diagrams look once TeXSmith embeds them:
+
+\section{Conversion by TeXSmith}\label{conversion-by-texsmith}
+
+All Mermaid diagrams are converted to PDF and included with \texttt{\textbackslash{}includegraphics}
+so they integrate cleanly with templates and \LaTeX{} floats.
+
+Printed output might deserve a different theme. Point \texttt{mermaid\_config} to a JSON config (front matter or CLI \texttt{-\allowbreak{}-\allowbreak{}attribute press.mermaid\_config=...}) to override:
+
+\begin{code}{yaml}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+\PY{n+nn}{\PYZhy{}\PYZhy{}\PYZhy{}}
+\PY{n+nt}{press}\PY{p}{:}
+\PY{+w}{  }\PY{n+nt}{mermaid\PYZus{}config}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{mermaid\PYZhy{}config.json}
+\PY{n+nn}{\PYZhy{}\PYZhy{}\PYZhy{}}
+\end{Verbatim}
+\end{code}
+Alternatively, you can add a \texttt{mermaid-\allowbreak{}config.json} file to the \texttt{\textasciitilde{}/.texsmith/} directory
+to apply it globally to all your TeXSmith projects.
+
+\end{document}

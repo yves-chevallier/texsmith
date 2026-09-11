@@ -13,10 +13,23 @@ for d in …; do make -C examples/$d OUTPUT_ROOT=build-baseline ENGINE=tectonic 
 | LaTeX (tectonic) | 23 / 23 examples build a PDF |
 | Typst | 21 / 23 build; `markdown` and `math` fail inside `mitex` 0.2.6 (`unknown variable: diff`, `unknown symbol modifier`) on `\begin{aligned}` math. Pre-existing, not a migration regression. |
 
-The `.tex` / `.typ` files under `build-baseline/` are the legacy outputs the
-parity harness (plan §4, task 4.1) compares against. They are not committed
-(`build*/` is ignored); regenerate them with the command above from the
-commit that precedes any writer change.
+The `.tex` / `.typ` files under `build-baseline/` are the raw legacy outputs.
+The parity harness (plan §4, task 4.1; design in `writers-and-passes.md` §5)
+keeps its own, *normalised* copy under `tests/parity/baseline/<id>/`, one
+directory per entry of `tests/parity/corpus.yml` (every example command line
+and every `docs/**/*.md` page, both backends). That copy **is committed**:
+
+```sh
+uv run python scripts/parity.py baseline          # re-render the legacy reader and rewrite it
+uv run python scripts/parity.py baseline --check  # what CI runs on every PR: exit 1 on drift
+uv run python scripts/parity.py list              # entries, requirements, what can run here
+```
+
+Entries whose toolchain is missing (`requires:` in the corpus — a diagram
+renderer, network for remote assets, a LaTeX engine for nested snippet
+builds) are reported as *skipped*, never as passed; the PR job skips the
+diagram and snippet entries on purpose, the nightly `parity-pdf` workflow
+runs everything and the PDF pixel diff.
 
 Goal of the whole migration, restated: the same 23 (+ `mkdocs`) examples
 build again, from sources rewritten in canonical TMark, through the tmark

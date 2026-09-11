@@ -1,0 +1,175 @@
+\documentclass[a4paper,twoside]{article}
+
+\usepackage{morewrites}
+
+\usepackage[svgnames,dvipsnames,x11names]{xcolor}
+\usepackage{graphicx}
+\usepackage[english]{babel}
+\usepackage[colorlinks=true, linkcolor=NavyBlue, urlcolor=NavyBlue, citecolor=NavyBlue]{hyperref}
+\usepackage[a4paper]{geometry}
+\usepackage{ts-fonts}
+\usepackage{amsmath}
+\usepackage{float}
+\usepackage{seqsplit}
+\usepackage{ts-code}
+
+\usepackage{lastpage}
+\usepackage{refcount}
+\makeatletter
+\def\ps@plain{
+  \let\@oddhead\@empty
+  \let\@evenhead\@empty
+  \def\@oddfoot{
+    \hfil
+    \ifnum\getpagerefnumber{LastPage}>1\relax
+      \thepage
+    \fi
+    \hfil}
+  \let\@evenfoot\@oddfoot
+}
+\makeatother
+
+\begin{document}
+
+\section{Standalone Plugins}\label{standalone-plugins}
+
+Some ideas on standalone plugins that can be developed and shared independently or included in TeXSmith by default. These are some features that I can use myself and that can be useful to others.
+
+\subsection{Epigraph}\label{epigraph}
+
+Integrate epigraph support via a dedicated plugin. The goal is to let users insert epigraphs easily from Markdown files. It can be declared as a fragment and declared in the document via front matter:
+
+\begin{code}{yaml}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+\PY{n+nt}{epigraph}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{text}
+\PY{n+nt}{epigraph}\PY{p}{:}
+\PY{+w}{  }\PY{n+nt}{quote}\PY{p}{:}\PY{+w}{ }\PY{l+s}{\PYZdq{}}\PY{l+s}{To}\PY{n+nv}{ }\PY{l+s}{be,}\PY{n+nv}{ }\PY{l+s}{or}\PY{n+nv}{ }\PY{l+s}{not}\PY{n+nv}{ }\PY{l+s}{to}\PY{n+nv}{ }\PY{l+s}{be,}\PY{n+nv}{ }\PY{l+s}{that}\PY{n+nv}{ }\PY{l+s}{is}\PY{n+nv}{ }\PY{l+s}{the}\PY{n+nv}{ }\PY{l+s}{question.}\PY{l+s}{\PYZdq{}}
+\PY{+w}{  }\PY{n+nt}{source}\PY{p}{:}\PY{+w}{ }\PY{l+s}{\PYZdq{}}\PY{l+s}{William}\PY{n+nv}{ }\PY{l+s}{Shakespeare,}\PY{n+nv}{ }\PY{l+s}{Hamlet}\PY{l+s}{\PYZdq{}}
+\end{Verbatim}
+\end{code}
+This is inserted into the \LaTeX{} output using the \texttt{epigraph} package:
+
+\begin{code}{latex}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+\PY{k}{\PYZbs{}usepackage}\PY{n+nb}{\PYZob{}}epigraph\PY{n+nb}{\PYZcb{}}
+\PY{k}{\PYZbs{}setlength}\PY{k}{\PYZbs{}epigraphwidth}\PY{n+nb}{\PYZob{}}0.6\PY{k}{\PYZbs{}textwidth}\PY{n+nb}{\PYZcb{}}
+\PY{k}{\PYZbs{}setlength}\PY{k}{\PYZbs{}epigraphrule}\PY{n+nb}{\PYZob{}}0pt\PY{n+nb}{\PYZcb{}}
+\end{Verbatim}
+\end{code}
+Then, at the desired location in the document:
+
+\begin{code}{latex}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+\PY{k}{\PYZbs{}epigraph}\PY{n+nb}{\PYZob{}}To be, or not to be, that is the question.\PY{n+nb}{\PYZcb{}}\PY{n+nb}{\PYZob{}}William Shakespeare, \PY{k}{\PYZbs{}textit}\PY{n+nb}{\PYZob{}}Hamlet\PY{n+nb}{\PYZcb{}}\PY{n+nb}{\PYZcb{}}
+\end{Verbatim}
+\end{code}
+\subsection{SvgBob}\label{svgbob}
+
+This can be a good example of a standalone TeXSmith plugin that allows rendering ASCII art diagrams using Svgbob.
+
+\href{https://github.com/ivanceras/svgbob}{Svgbob} lets you sketch diagrams using ASCII art. Save the source with a \texttt{.bob} extension (or keep it inline) and link to it like any other image:
+
+\begin{code}{markdown}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+![\PY{n+nt}{Sequence diagram}](\PY{n+na}{assets/pipeline.bob})
+\end{Verbatim}
+\end{code}
+During the build TeXSmith calls the bundled Svgbob converter, generates a PDF, and inserts it into the final \LaTeX{} output. Cached artifacts prevent repeated rendering when the source diagram stays the same.
+
+SVGBob can be installed on Ubuntu via:
+
+\begin{code}{bash}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+cargo\PY{+w}{ }install\PY{+w}{ }svgbob\PYZus{}cli
+\end{Verbatim}
+\end{code}
+It is installed by default into \texttt{svgbob\_cli} or \texttt{\textasciitilde{}/.cargo/bin/svgbob\_cli}. We want to check both, warn if the binary is missing, and allow users to override the path via configuration.
+
+We can insert the image in both ways:
+
+\begin{code}{markdown}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+\PY{l+s+sb}{```}\PY{l+s+sb}{svgbob}
+\PY{l+s}{       +10\PYZhy{}15V           \PYZus{}\PYZus{}\PYZus{}0,047R}
+\PY{l+s}{      *\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}o\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}o\PYZhy{}|\PYZus{}\PYZus{}\PYZus{}|\PYZhy{}o\PYZhy{}\PYZhy{}o\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}o\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}o\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}.}
+\PY{l+s}{    + |         |     |       |  |         |    |       |}
+\PY{l+s}{    \PYZhy{}===\PYZhy{}      \PYZus{}|\PYZus{}    |       | .+.        |    |       |}
+\PY{l+s}{    \PYZhy{}===\PYZhy{}      .\PYZhy{}.    |       | | | 2k2    |    |       |}
+\PY{l+s}{    \PYZhy{}===\PYZhy{}    470| +   |       | | |        |    |      \PYZus{}|\PYZus{}}
+\PY{l+s}{    \PYZhy{} |       uF|     \PYZsq{}\PYZhy{}\PYZhy{}.    | \PYZsq{}+\PYZsq{}       .+.   |      \PYZbs{} / LED}
+\PY{l+s}{      +\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}o        |6   |7 |8    1k | |   |      \PYZhy{}+\PYZhy{}}
+\PY{l+s}{             \PYZus{}\PYZus{}\PYZus{}|\PYZus{}\PYZus{}\PYZus{}   .\PYZhy{}+\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}+\PYZhy{}\PYZhy{}+\PYZhy{}\PYZhy{}.     | |   |       |}
+\PY{l+s}{              \PYZhy{}═══\PYZhy{}    |            |     \PYZsq{}+\PYZsq{}   |       |}
+\PY{l+s}{                \PYZhy{}      |            |1     |  |/  BC    |}
+\PY{l+s}{               GND     |            +\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}o\PYZhy{}\PYZhy{}+   547   |}
+\PY{l+s}{                       |            |      |  |`\PYZgt{}       |}
+\PY{l+s}{                       |            |     ,+.   |       |}
+\PY{l+s}{               .\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}+            | 220R| |   o\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}||\PYZhy{}+  IRF9Z34}
+\PY{l+s}{               |       |            |     | |   |    |+\PYZhy{}\PYZgt{}}
+\PY{l+s}{               |       |  MC34063   |     `+\PYZsq{}   |    ||\PYZhy{}+}
+\PY{l+s}{               |       |            |      |    |       |  BYV29     \PYZhy{}12V6}
+\PY{l+s}{               |       |            |      \PYZsq{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZsq{}       o\PYZhy{}\PYZhy{}|\PYZlt{}\PYZhy{}o\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}o\PYZhy{}\PYZhy{}X OUT}
+\PY{l+s}{ 6000 micro  \PYZhy{} | +     |            |2                  |     |    |}
+\PY{l+s}{ Farad, 40V \PYZus{}\PYZus{}\PYZus{}|\PYZus{}\PYZus{}\PYZus{}\PYZus{}\PYZus{}  |            |\PYZhy{}\PYZhy{}o                C|    |    |}
+\PY{l+s}{ Capacitor  \PYZti{} \PYZti{} \PYZti{} \PYZti{} \PYZti{}  |            | GND         30uH  C|    |   \PYZhy{}\PYZhy{}\PYZhy{} 470}
+\PY{l+s}{                      |            |3      1nF         C|    |   \PYZsh{}\PYZsh{}\PYZsh{}  uF}
+\PY{l+s}{               |       |            |\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}||\PYZhy{}\PYZhy{}.       |     |    | +}
+\PY{l+s}{               |       \PYZsq{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}+\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}+\PYZhy{}\PYZsq{}           |      GND    |   GND}
+\PY{l+s}{               |            5|   4|             |             |}
+\PY{l+s}{               |             |    \PYZsq{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}o\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}o}
+\PY{l+s}{               |             |                           \PYZus{}\PYZus{}\PYZus{}  |}
+\PY{l+s}{               `\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}*\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}/\PYZbs{}/\PYZbs{}/\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}o\PYZhy{}\PYZhy{}|\PYZus{}\PYZus{}\PYZus{}|\PYZhy{}\PYZsq{}}
+\PY{l+s}{                                     2k              |       1k0}
+\PY{l+s}{                                                    .+.}
+\PY{l+s}{                                                    | | 5k6 + 3k3}
+\PY{l+s}{                                                    | | in Serie}
+\PY{l+s}{                                                    \PYZsq{}+\PYZsq{}}
+\PY{l+s}{                                                     |}
+\PY{l+s}{                                                    GND}
+\PY{l+s+sb}{```}
+\end{Verbatim}
+\end{code}
+If Svgbob is not available, diagrams can be skipped with a warning and rendered as code blocks.
+
+\subsection{CircuitTikZ}\label{circuittikz}
+
+The \href{https://circuit2tikz.tf.fau.de/designer/}{CircuitTikZ designer} helps produce circuit diagrams from the browser. Export the generated TikZ snippet and wrap it in a raw \LaTeX{} fence:
+
+\begin{code}{markdown}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+\PY{l+s+sb}{```}\PY{l+s+sb}{latex}\PY{+w}{ }\PYZob{} circuitikz \PYZcb{}
+\PY{k}{\PYZbs{}begin}\PY{n+nb}{\PYZob{}}circuitikz\PY{n+nb}{\PYZcb{}}
+    \PY{k}{\PYZbs{}draw} (0,0) to[battery] (0,2)
+          \PYZhy{}\PYZhy{} (3,2) to[R=R] (3,0) \PYZhy{}\PYZhy{} (0,0);
+\PY{k}{\PYZbs{}end}\PY{n+nb}{\PYZob{}}circuitikz\PY{n+nb}{\PYZcb{}}
+\PY{l+s+sb}{```}
+\end{Verbatim}
+\end{code}
+Raw blocks bypass the HTML output but remain in the \LaTeX{} build. To keep the TikZ code in a separate file, include it via \texttt{\textbackslash{}input\{\}} inside a raw fence and store the \texttt{.tex} asset alongside the Markdown.
+
+\section{Module Design Principles}\label{module-design-principles}
+
+Verify that TeXSmith respects these design principles:
+
+\begin{itemize}
+\item{} Modules can inject, extend, and redefine functionality.
+\item{} Modules remain deterministic through topological ordering.
+\item{} Modules foster reusability and remixing.
+\item{} Modules cooperate through well-defined contracts.
+
+\end{itemize}
+\section{Visual Tweaks}\label{visual-tweaks}
+
+\begin{itemize}
+\item{} Reduce line height for code that uses Unicode box characters.
+\item{} Restyle inserted text (currently green and overly rounded); see ``Formatting inserted text''.
+\item{} \texttt{\{\textasciitilde{}\textasciitilde{}deleted text\textasciitilde{}\textasciitilde{}\}} should drop the curly braces, which currently leak into the output.
+
+\end{itemize}
+\section{Issues}\label{issues}
+
+\subsection{Markdown Package Issues}\label{markdown-package-issues}
+
+\texttt{mkdocstrings} autorefs define heading anchors via \texttt{[]()\{\#\}}, which triggers Markdown lint violations. Find a syntax or lint configuration that avoids false positives.
+
+\end{document}

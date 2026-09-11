@@ -1,0 +1,390 @@
+# Parity corpus (specs/migration/writers-and-passes.md §5, plan task 4.1).
+#
+# Every entry is one `texsmith` command line, run from `cwd` with `args`, with
+# `--build` removed (and `-M`/`--makefile-deps`, which the CLI only accepts
+# together with `--build`). The harness appends `-o <out dir>` itself and adds
+# `--reader <name>` only when the installed CLI knows the option.
+#
+# Fields
+#   id        unique; a typst variant of an example is `<id>@typst`
+#   cwd       directory the command runs from (relative to the repository root)
+#   args      the command line as in the example's Makefile, minus --build/-M
+#   backend   latex | typst (what the `.tex`/`.typ` output is)
+#   requires  tools the entry needs; when one is missing the entry is *skipped*
+#             and reported as such, never as passed:
+#     docker   a diagram renderer for mermaid/draw.io — the Docker daemon, or
+#              one of the backends `--diagrams-backend auto` falls back to
+#              (Playwright Chromium, a local `mmdc`/`drawio` CLI)
+#     network  remote assets that are not cached under tests/parity/cache
+#              (DOI lookups *are* cached there, so a DOI alone needs no network)
+#     fonts    font files provisioned on first use (Noto Color Emoji, OpenMoji):
+#              satisfied by a populated TEXSMITH_HOME/fonts or by network
+#     typst    the Typst compiler, needed only by `parity.py pdf`
+#     tectonic a LaTeX engine for nested builds (`.snippet` fences); also the
+#              engine `parity.py pdf` uses for LaTeX entries
+#
+# Excluded on purpose:
+#   examples/mkdocs         a site build driven by mkdocs.yml, not a texsmith
+#                           command line; it joins the corpus as one entry once
+#                           the MkDocs companion (plan task 3.9) lands
+#   examples/recipe         API/template example: `cake.yml` through a local
+#                           template, exercised by tests/test_api_service.py
+#   examples/custom-render  API example (`counter.py`), no CLI invocation
+
+docs:
+  # One entry per page, `<path without .md>` as id, rendered standalone with
+  # `-tarticle` from the repository root, once per backend (`@typst` suffix).
+  glob: "docs/**/*.md"
+  cwd: .
+  args: ["-tarticle"]
+  backends: [latex, typst]
+  # Pages that need more than the offline toolchain.
+  requires:
+    - paths:
+        - docs/syntax/mermaid.md        # mermaid fences, .mmd asset, mermaid.live pako URLs
+        - docs/syntax/index.md          # mermaid fence in the feature matrix
+        - docs/syntax/images.md         # .drawio figures
+        - docs/examples/diagrams.md     # mermaid fence + .drawio figure
+        - docs/guide/plumbing/pipeline.md   # workflow.drawio
+      requires: [docker]
+    - paths:
+        - docs/about/author.md          # GitHub avatar
+        - docs/syntax/captions.md       # picsum.photos placeholders
+        - docs/syntax/images.md         # picsum.photos placeholders
+        - docs/syntax/mermaid.md        # mermaid.live URLs
+      requires: [network]
+    - paths:                            # `.snippet` fences → nested LaTeX builds
+        - docs/examples/book.md
+        - docs/examples/colorful.md
+        - docs/examples/cooking.md
+        - docs/examples/diagrams.md
+        - docs/examples/languages.md
+        - docs/examples/letters.md
+        - docs/examples/paper.md
+        - docs/examples/snippets.md
+        - docs/guide/features/acronyms.md
+        - docs/guide/features/bibliography.md
+        - docs/guide/fragments/geometry.md
+        - docs/guide/getting-started.md
+        - docs/syntax/abbr.md
+        - docs/syntax/admonitions.md
+        - docs/syntax/code.md
+        - docs/syntax/math.md
+      requires: [tectonic]
+  exclude: []
+
+examples:
+  # ---- examples/abbr ------------------------------------------------------
+  - id: abbr
+    cwd: examples/abbr
+    args: [abbreviations.md, -tarticle]
+    backend: latex
+  - id: abbr@typst
+    cwd: examples/abbr
+    args: [abbreviations.md, -tarticle, --format, typst]
+    backend: typst
+    requires: [typst]
+
+  # ---- examples/admonition (one entry per callouts.style) -----------------
+  - id: admonition-classic
+    cwd: examples/admonition
+    args: [admonition.md, -tarticle, -acallouts.style=classic]
+    backend: latex
+  - id: admonition-minimal
+    cwd: examples/admonition
+    args: [admonition.md, -tarticle, -acallouts.style=minimal]
+    backend: latex
+  - id: admonition-fancy
+    cwd: examples/admonition
+    args: [admonition.md, -tarticle, -acallouts.style=fancy, -afonts.emoji=color]
+    backend: latex
+    requires: [fonts]
+  - id: admonition-classic@typst
+    cwd: examples/admonition
+    args: [admonition.md, -tarticle, --format, typst, -acallouts.style=classic]
+    backend: typst
+    requires: [typst]
+  - id: admonition-minimal@typst
+    cwd: examples/admonition
+    args: [admonition.md, -tarticle, --format, typst, -acallouts.style=minimal]
+    backend: typst
+    requires: [typst]
+  - id: admonition-fancy@typst
+    cwd: examples/admonition
+    args: [admonition.md, -tarticle, --format, typst, -acallouts.style=fancy]
+    backend: typst
+    requires: [typst]
+
+  # ---- examples/booby -----------------------------------------------------
+  - id: booby
+    cwd: examples/booby
+    args: [booby.md, -tarticle]
+    backend: latex
+  - id: booby@typst
+    cwd: examples/booby
+    args: [booby.md, -tarticle, --format, typst]
+    backend: typst
+    requires: [typst]
+
+  # ---- examples/book (five remote photographs, ~3 MiB: not cached) --------
+  - id: book
+    cwd: examples/book
+    args: [book.md, book.bib, -tbook, -abibliography_style=numeric]
+    backend: latex
+    requires: [network]
+  - id: book@typst
+    cwd: examples/book
+    args: [book.md, book.bib, -tbook, --format, typst]
+    backend: typst
+    requires: [network, typst]
+
+  # ---- examples/code (no template: bare fragments) ------------------------
+  - id: code-block
+    cwd: examples/code
+    args: [code-block.md]
+    backend: latex
+  - id: code-inline
+    cwd: examples/code
+    args: [code-inline.md]
+    backend: latex
+  - id: code-block@typst
+    cwd: examples/code
+    args: [code-block.md, --format, typst]
+    backend: typst
+    requires: [typst]
+  - id: code-inline@typst
+    cwd: examples/code
+    args: [code-inline.md, --format, typst]
+    backend: typst
+    requires: [typst]
+
+  # ---- examples/colorful (local template from manifest.toml) --------------
+  - id: colorful
+    cwd: examples/colorful
+    args: [colorful.md]
+    backend: latex
+  - id: colorful@typst
+    cwd: examples/colorful
+    args: [colorful.md, --format, typst]
+    backend: typst
+    requires: [typst]
+
+  # ---- examples/counters --------------------------------------------------
+  - id: counters
+    cwd: examples/counters
+    args: [counters.md, -tarticle]
+    backend: latex
+  - id: counters@typst
+    cwd: examples/counters
+    args: [counters.md, -tarticle, --format, typst]
+    backend: typst
+    requires: [typst]
+
+  # ---- examples/diagrams (mermaid fence + pgcd.drawio) --------------------
+  - id: diagrams
+    cwd: examples/diagrams
+    args: [diagrams.md, -tarticle]
+    backend: latex
+    requires: [docker]
+  - id: diagrams@typst
+    cwd: examples/diagrams
+    args: [diagrams.md, -tarticle, --format, typst]
+    backend: typst
+    requires: [docker, typst]
+
+  # ---- examples/dialects --------------------------------------------------
+  - id: dialects
+    cwd: examples/dialects
+    args: [dialects.md, -tarticle]
+    backend: latex
+  - id: dialects@typst
+    cwd: examples/dialects
+    args: [dialects.md, -tarticle, --format, typst]
+    backend: typst
+    requires: [typst]
+
+  # ---- examples/emoji (bw + default always; color is LuaLaTeX-only) -------
+  - id: emoji-bw
+    cwd: examples/emoji
+    args: [emoji.md, -tarticle, -afonts.emoji=black]
+    backend: latex
+  - id: emoji-default
+    cwd: examples/emoji
+    args: [emoji.md, -tarticle]
+    backend: latex
+  - id: emoji-color
+    cwd: examples/emoji
+    args: [emoji.md, -tarticle, -afonts.emoji=color, --engine=lualatex]
+    backend: latex
+    requires: [fonts]
+  - id: emoji@typst
+    cwd: examples/emoji
+    args: [emoji.md, -tarticle, --format, typst]
+    backend: typst
+    requires: [typst]
+
+  # ---- examples/fonts -----------------------------------------------------
+  - id: fonts
+    cwd: examples/fonts
+    args: [fonts.md, -tarticle]
+    backend: latex
+  - id: fonts@typst
+    cwd: examples/fonts
+    args: [fonts.md, -tarticle, --format, typst]
+    backend: typst
+    requires: [typst]
+
+  # ---- examples/glossary --------------------------------------------------
+  - id: glossary
+    cwd: examples/glossary
+    args: [glossary.md, -tarticle]
+    backend: latex
+  - id: glossary@typst
+    cwd: examples/glossary
+    args: [glossary.md, -tarticle, --format, typst]
+    backend: typst
+    requires: [typst]
+
+  # ---- examples/index -----------------------------------------------------
+  - id: index
+    cwd: examples/index
+    args: [index.md, -tarticle]
+    backend: latex
+  - id: index@typst
+    cwd: examples/index
+    args: [index.md, -tarticle, --format, typst]
+    backend: typst
+    requires: [typst]
+
+  # ---- examples/letter (one entry per national standard) ------------------
+  - id: letter-din
+    cwd: examples/letter
+    args: [letter.md, -tletter, -aformat=din]
+    backend: latex
+  - id: letter-sn
+    cwd: examples/letter
+    args: [letter.md, -tletter, -aformat=sn]
+    backend: latex
+  - id: letter-nf
+    cwd: examples/letter
+    args: [letter.md, -tletter, -aformat=nf]
+    backend: latex
+  - id: letter@typst
+    cwd: examples/letter
+    args: [letter.md, -tletter, --format, typst]
+    backend: typst
+    requires: [typst]
+
+  # ---- examples/marginnote ------------------------------------------------
+  - id: marginnote
+    cwd: examples/marginnote
+    args: [marginnote.md, -tarticle]
+    backend: latex
+  - id: marginnote@typst
+    cwd: examples/marginnote
+    args: [marginnote.md, -tarticle, --format, typst]
+    backend: typst
+    requires: [typst]
+
+  # ---- examples/markdown (features.md has a mermaid fence) ----------------
+  - id: markdown
+    cwd: examples/markdown
+    args: [features.md, -tarticle]
+    backend: latex
+    requires: [docker]
+  - id: markdown@typst
+    cwd: examples/markdown
+    args: [features.md, -tarticle, --format, typst]
+    backend: typst
+    requires: [docker, typst]
+
+  # ---- examples/math ------------------------------------------------------
+  - id: math
+    cwd: examples/math
+    args: [math.md, -tarticle, '-apress.override.preamble=\usepackage{csquotes}']
+    backend: latex
+  - id: math@typst
+    cwd: examples/math
+    args: [math.md, -tarticle, --format, typst]
+    backend: typst
+    requires: [typst]
+
+  # ---- examples/mermaid ---------------------------------------------------
+  - id: mermaid
+    cwd: examples/mermaid
+    args: [mermaid.md, -tarticle]
+    backend: latex
+    requires: [docker]
+  - id: mermaid@typst
+    cwd: examples/mermaid
+    args: [mermaid.md, -tarticle, --format, typst]
+    backend: typst
+    requires: [docker, typst]
+
+  # ---- examples/multi-document (main.tex + a/b/c.tex; a/b/c.typ) ----------
+  - id: multi-document
+    cwd: examples/multi-document
+    args: [a.md, b.md, c.md, config.yml, -tarticle]
+    backend: latex
+  - id: multi-document@typst
+    cwd: examples/multi-document
+    args: [a.md, b.md, c.md, config.yml, -tarticle, --format, typst]
+    backend: typst
+    requires: [typst]
+
+  # ---- examples/paper (DOI lookups, served from tests/parity/cache) -------
+  - id: paper
+    cwd: examples/paper
+    args: [cheese.md, cheese.bib, -tarticle]
+    backend: latex
+  - id: paper@typst
+    cwd: examples/paper
+    args: [cheese.md, cheese.bib, -tarticle, --format, typst]
+    backend: typst
+    requires: [typst]
+
+  # ---- examples/progressbar -----------------------------------------------
+  - id: progressbar
+    cwd: examples/progressbar
+    args: [progressbar.md, -tarticle, '-apress.override.preamble=\usepackage{progressbar}']
+    backend: latex
+  - id: progressbar@typst
+    cwd: examples/progressbar
+    args: [progressbar.md, -tarticle, --format, typst]
+    backend: typst
+    requires: [typst]
+
+  # ---- examples/snippet (.snippet fences → nested LaTeX builds) -----------
+  - id: snippet
+    cwd: examples/snippet
+    args: [docs/index.md, -tarticle]
+    backend: latex
+    requires: [tectonic]
+  - id: snippet@typst
+    cwd: examples/snippet
+    args: [docs/index.md, -tarticle, --format, typst]
+    backend: typst
+    requires: [tectonic, typst]
+
+  # ---- examples/tables ----------------------------------------------------
+  - id: tables
+    cwd: examples/tables
+    args: [tables.md, -tarticle]
+    backend: latex
+  - id: tables@typst
+    cwd: examples/tables
+    args: [tables.md, -tarticle, --format, typst]
+    backend: typst
+    requires: [typst]
+
+  # ---- examples/typst-* (Typst-only examples) -----------------------------
+  - id: typst-article
+    cwd: examples/typst-article
+    args: [article.md, --format, typst]
+    backend: typst
+    requires: [typst]
+  - id: typst-hello
+    cwd: examples/typst-hello
+    args: [hello.md, --format, typst]
+    backend: typst
+    requires: [typst]

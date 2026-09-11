@@ -1,0 +1,175 @@
+\documentclass[a4paper,twoside]{article}
+
+\usepackage{morewrites}
+
+\usepackage[svgnames,dvipsnames,x11names]{xcolor}
+\usepackage{graphicx}
+\usepackage[english]{babel}
+\usepackage[colorlinks=true, linkcolor=NavyBlue, urlcolor=NavyBlue, citecolor=NavyBlue]{hyperref}
+\usepackage[a4paper]{geometry}
+\usepackage{ts-fonts}
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{amsmath}
+\usepackage{float}
+\usepackage{seqsplit}
+\newcolumntype{Y}{>{\centering\arraybackslash}X}
+\newcolumntype{Z}{>{\raggedleft\arraybackslash}X}
+\usepackage{ts-code}
+
+\usepackage{lastpage}
+\usepackage{refcount}
+\makeatletter
+\def\ps@plain{
+  \let\@oddhead\@empty
+  \let\@evenhead\@empty
+  \def\@oddfoot{
+    \hfil
+    \ifnum\getpagerefnumber{LastPage}>1\relax
+      \thepage
+    \fi
+    \hfil}
+  \let\@evenfoot\@oddfoot
+}
+\makeatother
+
+\title{TeXSmith Extensions}
+\author{}\date{}
+
+\begin{document}
+
+\maketitle
+
+\thispagestyle{plain}
+TeXSmith ships its Markdown extensions directly inside the \texttt{texsmith}
+distribution. Once \texttt{pip install texsmith} is done, you can use them via the
+extension modules (\texttt{texsmith.extensions.smallcaps}, \texttt{texsmith.extensions.index},
+...) or the entry-point aliases registered in \texttt{pyproject.toml}. The exact set
+enabled by the conversion pipeline is \texttt{texsmith.adapters.markdown.DEFAULT\_MARKDOWN\_EXTENSIONS}.
+
+Every extension follows the same structure:
+
+\begin{itemize}
+\item{} A Python-Markdown class or \texttt{makeExtension()} factory available as
+  \texttt{texsmith.extensions.<name>}.
+\item{} Optional reader lowerings (\texttt{@reads}) and writer emitters (\texttt{@writes}) that
+  teach the IR pipeline how to deal with the extra HTML nodes created by the
+  Markdown layer (see \hyperref[snippet:<HASH>]{Readers \& Writers}).
+\item{} Optional MkDocs plugins that keep search indexes in sync.
+
+\end{itemize}
+\section{Built-in extensions}\label{built-in-extensions}
+
+In order to align Markdown with \LaTeX{} capabilities, TeXSmith provides the
+following extensions under the \texttt{texsmith} namespace:
+
+\begin{center}
+\begin{tabularx}{\linewidth}{>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X}
+\toprule
+\textbf{Module} & \textbf{Purpose} \\
+
+\midrule
+\texttt{texsmith.extensions.smallcaps} & \texttt{\_\_text\_\_} syntax mapped to \texttt{<span class="texsmith-\allowbreak{}smallcaps">}. \\
+\texttt{texsmith.extensions.latex\_raw} & \texttt{/// latex} fences and \texttt{\{latex\}[x]} inline snippets injected as hidden HTML. \\
+\texttt{texsmith.extensions.latex\_text} & Styles the literal \texttt{LaTeX} token in running text. \\
+\texttt{texsmith.extensions.missing\_footnotes} & Warns about references to undefined footnotes. \\
+\texttt{texsmith.extensions.multi\_citations} & Normalises \texttt{[\^{}foo,bar]} blocks to footnotes. \\
+\texttt{texsmith.extensions.mermaid} & Inlines Mermaid diagrams pointed to by Markdown images. \\
+\texttt{texsmith.extensions.texlogos} & Replaces TeX logo keywords with accessible HTML spans. \\
+\texttt{texsmith.extensions.index} & Adds the \texttt{\#[tag]} syntax, LaTeX index entries and an MkDocs plugin. \\
+\texttt{texsmith.extensions.counters} & Adds the \texttt{\#\{prefix:key\}} custom-counter syntax and an MkDocs plugin. \\
+
+\bottomrule
+\end{tabularx}
+\end{center}
+
+Inspect the pipeline's default extension list programmatically:
+
+\begin{code}{python}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+\PY{o}{\PYZgt{}\PYZgt{}}\PY{o}{\PYZgt{}} \PY{k+kn}{from}\PY{+w}{ }\PY{n+nn}{texsmith}\PY{n+nn}{.}\PY{n+nn}{adapters}\PY{n+nn}{.}\PY{n+nn}{markdown}\PY{+w}{ }\PY{k+kn}{import} \PY{n}{DEFAULT\PYZus{}MARKDOWN\PYZus{}EXTENSIONS}
+\PY{o}{\PYZgt{}\PYZgt{}}\PY{o}{\PYZgt{}} \PY{p}{[}\PY{n}{e} \PY{k}{for} \PY{n}{e} \PY{o+ow}{in} \PY{n}{DEFAULT\PYZus{}MARKDOWN\PYZus{}EXTENSIONS} \PY{k}{if} \PY{n}{e}\PY{o}{.}\PY{n}{startswith}\PY{p}{(}\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{texsmith.}\PY{l+s+s2}{\PYZdq{}}\PY{p}{)}\PY{p}{]}\PY{p}{[}\PY{p}{:}\PY{l+m+mi}{2}\PY{p}{]}
+\PY{p}{[}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{texsmith.extensions.index:TexsmithIndexExtension}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,} \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{texsmith.extensions.multi\PYZus{}citations:MultiCitationExtension}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]}
+\end{Verbatim}
+\end{code}
+\section{Using the extensions with Python Markdown}\label{using-the-extensions-with-python-markdown}
+
+Pass the \texttt{module:attribute} strings (the same form used in
+\texttt{DEFAULT\_MARKDOWN\_EXTENSIONS}) straight to Python Markdown:
+
+\begin{code}{python}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+\PY{k+kn}{from}\PY{+w}{ }\PY{n+nn}{markdown}\PY{+w}{ }\PY{k+kn}{import} \PY{n}{Markdown}
+
+\PY{n}{md} \PY{o}{=} \PY{n}{Markdown}\PY{p}{(}
+    \PY{n}{extensions}\PY{o}{=}\PY{p}{[}
+        \PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{texsmith.extensions.smallcaps:SmallCapsExtension}\PY{l+s+s2}{\PYZdq{}}\PY{p}{,}
+        \PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{texsmith.extensions.texlogos:TexLogosExtension}\PY{l+s+s2}{\PYZdq{}}\PY{p}{,}
+        \PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{texsmith.extensions.index:TexsmithIndexExtension}\PY{l+s+s2}{\PYZdq{}}\PY{p}{,}
+    \PY{p}{]}
+\PY{p}{)}
+\PY{n}{html} \PY{o}{=} \PY{n}{md}\PY{o}{.}\PY{n}{convert}\PY{p}{(}\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{`\PYZsh{}[LaTeX]` renders a TeX logo and an index entry.}\PY{l+s+s2}{\PYZdq{}}\PY{p}{)}
+\end{Verbatim}
+\end{code}
+If you prefer the explicit class names the following also works:
+
+\begin{code}{python}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+\PY{k+kn}{from}\PY{+w}{ }\PY{n+nn}{texsmith}\PY{n+nn}{.}\PY{n+nn}{extensions}\PY{n+nn}{.}\PY{n+nn}{index}\PY{+w}{ }\PY{k+kn}{import} \PY{n}{TexsmithIndexExtension}
+
+\PY{n}{md} \PY{o}{=} \PY{n}{Markdown}\PY{p}{(}\PY{n}{extensions}\PY{o}{=}\PY{p}{[}\PY{n}{TexsmithIndexExtension}\PY{p}{(}\PY{p}{)}\PY{p}{]}\PY{p}{)}
+\end{Verbatim}
+\end{code}
+\section{Register extensions in MkDocs}\label{register-extensions-in-mkdocs}
+
+Once TeXSmith is installed you can reference the modules directly from
+\texttt{mkdocs.yml}:
+
+\begin{code}{yaml}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+\PY{n+nt}{markdown\PYZus{}extensions}\PY{p}{:}
+\PY{+w}{  }\PY{p+pIndicator}{\PYZhy{}}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{texsmith.index}
+\PY{+w}{  }\PY{p+pIndicator}{\PYZhy{}}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{texsmith.texlogos}
+\PY{+w}{  }\PY{p+pIndicator}{\PYZhy{}}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{texsmith.extensions.smallcaps}
+\end{Verbatim}
+\end{code}
+(\texttt{texsmith.index} and \texttt{texsmith.texlogos} are registered entry-point aliases for
+\texttt{texsmith.extensions.index} / \texttt{texsmith.extensions.texlogos}.)
+
+The index extension also publishes an MkDocs plugin that injects collected tags
+into the \texttt{search\_index.json}. Enable it next to the Markdown extension:
+
+\begin{code}{yaml}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+\PY{n+nt}{plugins}\PY{p}{:}
+\PY{+w}{  }\PY{p+pIndicator}{\PYZhy{}}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{texsmith.index}
+\end{Verbatim}
+\end{code}
+When you use \texttt{mkdocs-\allowbreak{}texsmith} the plugin automatically appends both the
+Markdown extension and the MkDocs plugin unless you disable it with the
+\texttt{inject\_markdown\_extension} option.
+
+\section{Integrating with the LaTeX renderer}\label{integrating-with-the-latex-renderer}
+
+TeXSmith renders through a typed IR: \texttt{read(HTML) \(\rightarrow\) IR \(\rightarrow\) write(IR) \(\rightarrow\) LaTeX}.
+Extensions that need \LaTeX{} output add a reader lowering (\texttt{@reads}, HTML \(\rightarrow\) IR)
+and a writer emitter (\texttt{@writes}, IR \(\rightarrow\) \LaTeX{}) instead of mutating HTML. See
+\hyperref[snippet:<HASH>]{Readers \& Writers} for the decorators and a complete,
+runnable example (\texttt{examples/custom-\allowbreak{}render/counter.py}).
+
+\section{Write your own extensions}\label{write-your-own-extensions}
+
+You can create custom Markdown extensions that plug into TeXSmith's conversion
+pipeline. Refer to the API documentation for details on
+the extension points and how to register your extension with TeXSmith.
+
+\subsection{Pipeline placement \& precedence}\label{pipeline-placement-precedence}
+
+\begin{itemize}
+\item{} Markdown extensions run before slot extraction and fragment rendering; any HTML they emit flows through the same pipeline.
+\item{} Reader lowerings (\texttt{@reads}) are selected by \texttt{(level, tag)} and priority; the resulting IR is then emitted by writer emitters (\texttt{@writes}) dispatched on node type.
+\item{} Extensions should not override template partials directly---expose fragment partials or attributes instead so precedence stays transparent.
+
+\end{itemize}
+
+\end{document}

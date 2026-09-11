@@ -1,0 +1,284 @@
+\documentclass[a4paper,twoside]{article}
+
+\usepackage{morewrites}
+
+\usepackage[svgnames,dvipsnames,x11names]{xcolor}
+\usepackage{graphicx}
+\usepackage[english]{babel}
+\usepackage[colorlinks=true, linkcolor=NavyBlue, urlcolor=NavyBlue, citecolor=NavyBlue]{hyperref}
+\usepackage[a4paper]{geometry}
+\usepackage{ts-fonts}
+\usepackage{csquotes}
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{amsmath}
+\usepackage{float}
+\usepackage{seqsplit}
+\newcolumntype{Y}{>{\centering\arraybackslash}X}
+\newcolumntype{Z}{>{\raggedleft\arraybackslash}X}
+\usepackage{ts-callouts}
+\usepackage{ts-code}
+
+\usepackage{lastpage}
+\usepackage{refcount}
+\makeatletter
+\def\ps@plain{
+  \let\@oddhead\@empty
+  \let\@evenhead\@empty
+  \def\@oddfoot{
+    \hfil
+    \ifnum\getpagerefnumber{LastPage}>1\relax
+      \thepage
+    \fi
+    \hfil}
+  \let\@evenfoot\@oddfoot
+}
+\makeatother
+
+\title{Custom counters}
+\author{}\date{}
+
+\begin{document}
+
+\maketitle
+
+\thispagestyle{plain}
+Technical documents number things that \LaTeX{} knows nothing about: findings,
+requirements, bugs, risks, test cases. TeXSmith lets you declare such a series
+in the front matter, mark each item in the body, and reference it anywhere ---
+the numbers are computed by TeXSmith rather than by the backend, so the \LaTeX{}
+build, the Typst build and --- with the companion plugin --- the MkDocs site all
+show the same values.
+
+\begin{code}{markdown}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+\PYZhy{}\PYZhy{}\PYZhy{}
+counters:
+  n:
+    name: Requirement
+\PY{g+gu}{    format: \PYZdq{}N\PYZhy{}\PYZob{}n:02d\PYZcb{}\PYZdq{}}
+\PY{g+gu}{\PYZhy{}\PYZhy{}\PYZhy{}}
+
+| Id | Requirement |
+| \PYZhy{}\PYZhy{}\PYZhy{} | \PYZhy{}\PYZhy{}\PYZhy{} |
+| \PYZsh{}\PYZob{}n:joy\PYZcb{} | Everyone shall be happy |
+| \PYZsh{}\PYZob{}n:respect\PYZcb{} | Everyone shall respect the others |
+
+Smile in every circumstance (@n:joy) and do no harm to others (@n:respect).
+\end{Verbatim}
+\end{code}
+renders as
+
+\begin{center}
+\begin{tabularx}{\linewidth}{>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X}
+\toprule
+\textbf{Id} & \textbf{Requirement} \\
+
+\midrule
+N-01 & Everyone shall be happy \\
+N-02 & Everyone shall respect the others \\
+
+\bottomrule
+\end{tabularx}
+\end{center}
+
+Smile in every circumstance (N-01) and do no harm to others (N-02).
+
+Both \texttt{N-\allowbreak{}01} occurrences are the same PDF anchor: the table cell is the target,
+the parenthesised one is a clickable link.
+
+\section{Declaring a counter}\label{declaring-a-counter}
+
+Each key under \texttt{counters:} is the \textbf{prefix} used by the markers.
+
+\begin{code}{yaml}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+\PY{n+nt}{counters}\PY{p}{:}
+\PY{+w}{  }\PY{n+nt}{n}\PY{p}{:}
+\PY{+w}{    }\PY{n+nt}{name}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{Requirement}\PY{+w}{       }\PY{c+c1}{\PYZsh{} human\PYZhy{}readable name, used in diagnostics}
+\PY{+w}{    }\PY{n+nt}{format}\PY{p}{:}\PY{+w}{ }\PY{l+s}{\PYZdq{}}\PY{l+s}{N\PYZhy{}\PYZob{}n:02d\PYZcb{}}\PY{l+s}{\PYZdq{}}\PY{+w}{     }\PY{c+c1}{\PYZsh{} optional, defaults to \PYZdq{}\PYZob{}n\PYZcb{}\PYZdq{}}
+\PY{+w}{    }\PY{n+nt}{start}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{1}\PY{+w}{                }\PY{c+c1}{\PYZsh{} optional, defaults to 1}
+\end{Verbatim}
+\end{code}
+\texttt{format} is a Python format string. Three fields are available:
+
+\begin{center}
+\begin{tabularx}{\linewidth}{>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X}
+\toprule
+\textbf{Field} & \textbf{Meaning} \\
+
+\midrule
+\texttt{n} & the counter value (\texttt{1}, \texttt{2}, ...), so \texttt{\{n:02d\}} pads it \\
+\texttt{prefix} & the counter prefix (\texttt{n}) \\
+\texttt{key} & the item key (\texttt{joy}) \\
+
+\bottomrule
+\end{tabularx}
+\end{center}
+
+The format string is validated when the document is parsed; an invalid one
+(\texttt{\{oops\}}, unbalanced braces) raises a \texttt{CounterValidationError}.
+
+Unlike \texttt{glossary:}, a counter has no string shorthand: each entry is a mapping,
+because a series without a \texttt{format} is rarely what you want.
+
+A prefix must match \texttt{[A-\allowbreak{}Za-\allowbreak{}z][A-\allowbreak{}Za-\allowbreak{}z0-\allowbreak{}9\_-\allowbreak{}]*} and must not shadow one of the
+conventional built-in prefixes --- \texttt{sec}, \texttt{fig}, \texttt{tbl}, \texttt{eq}, \texttt{lst}, \texttt{app},
+\texttt{chap}, \texttt{part}, \texttt{note} --- which stay reserved for regular labels.
+
+\section{Marking an item}\label{marking-an-item}
+
+\subsection{\texttt{\#\{prefix:key\}} --- define and print}\label{texttt-prefix-key-define-and-print}
+
+The marker prints the formatted number and becomes the reference target.
+
+\begin{code}{markdown}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+\PY{g+gh}{\PYZsh{}\PYZob{}fw:boot\PYZhy{}loop\PYZcb{} The firmware reboots when the watchdog fires.}
+\end{Verbatim}
+\end{code}
+It is a plain inline construct: it works in a paragraph, a table cell, a list
+item, an admonition title, a heading. Numbers are allocated in document order.
+
+The marker is inert unless its prefix is declared: \texttt{\#\{name\}} (no colon),
+\texttt{\#\{sh:var\}} with \texttt{sh} undeclared, or \texttt{\#\{n:joy\}} in a document without a
+\texttt{counters:} section all stay literal text. This keeps Ruby/CoffeeScript
+interpolations (\texttt{\#\{user.name\}}) intact. Inside code spans and fenced blocks
+nothing is ever substituted, and \texttt{\textbackslash{}\#\{n:joy\}} forces a literal.
+
+\subsection{\texttt{\{\#prefix:key\}} --- define silently}\label{texttt-prefix-key-define-silently}
+
+Any element carrying an \texttt{id} whose prefix is declared is numbered too, without
+printing anything. This is the usual \texttt{attr\_list} syntax, so it attaches to
+headings, figures and tables:
+
+\begin{code}{markdown}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+\PY{g+gu}{\PYZsh{}\PYZsh{} Boot loop \PYZob{}\PYZsh{}fw:boot\PYZhy{}loop\PYZcb{}}
+
+![\PY{n+nt}{Watchdog trace}](\PY{n+na}{trace.png})\PYZob{}\PYZsh{}fw:trace\PYZcb{}
+\end{Verbatim}
+\end{code}
+\texttt{@fw:boot-\allowbreak{}loop} then resolves to \texttt{FW-\allowbreak{}01} even though the number appears nowhere
+in the heading.
+
+\begin{callout}[callout warning]{Position matters for \texttt{\{\#…\}}}
+\texttt{attr\_list} consumes \texttt{\{\#…\}} at the end of a heading, on an image, or on a
+line of its own after a block. In the middle of a sentence it stays literal
+text --- use \texttt{\#\{…\}} there.
+\end{callout}
+\section{Referencing an item}\label{referencing-an-item}
+
+\texttt{@prefix:key} (or \texttt{@[prefix:key]}) prints the formatted number as a hyperlink.
+This is the regular \hyperref[snippet:<HASH>]{cross-reference shorthand}; a declared
+prefix simply routes it to the counter registry.
+
+\begin{code}{markdown}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+The watchdog issue (@fw:boot\PYZhy{}loop) is fixed in 1.4.2.
+\end{Verbatim}
+\end{code}
+The reference prints the number alone --- \texttt{FW-\allowbreak{}01}, not \texttt{Finding FW-\allowbreak{}01}. Write the
+noun yourself, as you would for a section. The \texttt{name:} field is only used in
+diagnostics.
+
+\section{Diagnostics}\label{diagnostics}
+
+\begin{center}
+\begin{tabularx}{\linewidth}{>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X}
+\toprule
+\textbf{Situation} & \textbf{Behaviour} \\
+
+\midrule
+\texttt{@n:missing} --- no such item & warning, the reference renders empty \\
+\texttt{\#\{n:joy\}} twice with the same key & warning, both print the first number \\
+\texttt{\#\{x:joy\}} --- undeclared prefix & left as literal text, no warning \\
+invalid \texttt{format} or prefix & \texttt{CounterValidationError} at parse time \\
+
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\section{Scope and stability}\label{scope-and-stability}
+
+Numbers are allocated per conversion, in document order, and shared across all
+the documents of a multi-document build --- \texttt{a.md}, \texttt{b.md} and \texttt{c.md} continue a
+single series rather than restarting.
+
+\begin{callout}[callout danger]{Numbers are positional}
+Inserting an item renumbers every item after it. When the identifiers leave
+the document --- a finding quoted in an audit report, a requirement cited in a
+test plan --- that renumbering breaks the external traceability silently.
+Pin the values with a dedicated \texttt{start:} per counter and stable ordering, or
+keep the volatile numbering for internal documents only. Explicit pinning is
+planned but not implemented yet.
+\end{callout}
+\section{Backend mapping}\label{backend-mapping}
+
+\begin{center}
+\begin{tabularx}{\linewidth}{>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X}
+\toprule
+\textbf{} & \textbf{Definition} & \textbf{Reference} \\
+
+\midrule
+LaTeX & \texttt{\textbackslash{}phantomsection\textbackslash{}label\{n:joy\}N-\allowbreak{}01} & \texttt{\textbackslash{}hyperref[n:joy]\{N-\allowbreak{}01\}} \\
+Typst & \texttt{N-\allowbreak{}01<n:joy>} & \texttt{\#link(<n:joy>)[N-\allowbreak{}01]} \\
+HTML & \texttt{<span class="ts-\allowbreak{}counter" data-\allowbreak{}counter="n" data-\allowbreak{}key="joy" id="n:joy">N-\allowbreak{}01</span>} & \texttt{<a href="\#n:joy">N-\allowbreak{}01</a>} \\
+
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\texttt{\textbackslash{}phantomsection} is what makes the \texttt{hyperref} anchor land on the item rather
+than on the enclosing section, and it lets \texttt{\textbackslash{}pageref\{n:joy\}} work.
+
+\section{On a MkDocs site}\label{on-a-mkdocs-site}
+
+A MkDocs build never goes through TeXSmith's front-matter parsing, so counters
+need their companion plugin to render on the site:
+
+\begin{code}{yaml}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+\PY{n+nt}{plugins}\PY{p}{:}
+\PY{+w}{  }\PY{p+pIndicator}{\PYZhy{}}\PY{+w}{ }\PY{n+nt}{texsmith.counters}\PY{p}{:}
+\PY{+w}{      }\PY{n+nt}{counters}\PY{p}{:}\PY{+w}{ }\PY{c+c1}{\PYZsh{} optional site\PYZhy{}wide declarations}
+\PY{+w}{        }\PY{n+nt}{req}\PY{p}{:}
+\PY{+w}{          }\PY{n+nt}{name}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{Requirement}
+\PY{+w}{          }\PY{n+nt}{format}\PY{p}{:}\PY{+w}{ }\PY{l+s}{\PYZdq{}}\PY{l+s}{REQ\PYZhy{}\PYZob{}n:03d\PYZcb{}}\PY{l+s}{\PYZdq{}}
+\PY{+w}{          }\PY{n+nt}{start}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{100}
+\end{Verbatim}
+\end{code}
+The plugin enables the \texttt{texsmith.extensions.counters} and
+\texttt{texsmith.extensions.references} Markdown extensions on its own (set
+\texttt{inject\_markdown\_extension: false} / \texttt{inject\_reference\_extension: false} to wire
+them by hand). Counters declared under the plugin's \texttt{counters:} key apply to the
+whole site; a page may declare its own in its front matter, and every
+declaration is visible from every page --- a series defined in \texttt{findings.md} is
+referenceable from \texttt{index.md}.
+
+Numbering is \textbf{site-wide, in navigation order}: a pre-pass walks the nav before
+any page is converted and reserves a value for every marker, so a reference on
+the first page resolves to an item defined on the last one. Cross-page
+references are rewritten to point at the page that defines the item
+(\texttt{<a href="findings/\#fw:watchdog">FW-\allowbreak{}01</a>}); same-page ones keep a local
+anchor.
+
+\begin{callout}[callout warning]{The pre-pass reads the raw Markdown}
+It strips fenced blocks and inline code spans, then scans what remains. A
+marker of a \emph{declared} prefix written as an example in plain prose --- rather
+than in a code span --- is counted by the pre-pass, and consumes a number.
+\end{callout}
+\section{Citing an item from another document}\label{citing-an-item-from-another-document}
+
+A number allocated here means nothing in a sister document, and a renumbering
+breaks every hard-coded \texttt{FW-\allowbreak{}10} it contains. Publish an inventory and cite it
+explicitly --- see \hyperref[snippet:<HASH>]{Cross-document references}.
+
+\section{Not implemented yet}\label{not-implemented-yet}
+
+Auto-generated listings (a \enquote{List of requirements} table), extra per-item
+attributes (status, priority, source), back-references ("cited on pages 4,
+12"), hierarchical numbering (\texttt{FW-\allowbreak{}3.2}) and per-chapter resets are deliberately
+out of the first iteration.
+
+\end{document}
