@@ -1932,6 +1932,7 @@ dependencies = [
     { name = "pyyaml" },
     { name = "requests" },
     { name = "rich" },
+    { name = "tmark" },
     { name = "tomli", marker = "python_full_version < '3.11'" },
     { name = "typer" },
     { name = "unicodeblocks" },
@@ -1984,6 +1985,7 @@ requires-dist = [
     { name = "pyyaml", specifier = ">=6.0.3" },
     { name = "requests", specifier = ">=2.32.5" },
     { name = "rich", specifier = ">=13.9.0" },
+    { name = "tmark", editable = "../tmark/crates/tmark-py" },
     { name = "tomli", marker = "python_full_version < '3.11'", specifier = ">=2.0.1" },
     { name = "typer", specifier = ">=0.12.5" },
     { name = "typst", marker = "extra == 'typst'", specifier = ">=0.15" },
@@ -2030,6 +2032,10 @@ sdist = { url = "https://files.pythonhosted.org/packages/a3/ae/2ca4913e5c0f09781
 wheels = [
     { url = "https://files.pythonhosted.org/packages/60/45/c7b5c3168458db837e8ceab06dc77824e18202679d0463f0e8f002143a97/tinycss2-1.5.1-py3-none-any.whl", hash = "sha256:3415ba0f5839c062696996998176c4a3751d18b7edaaeeb658c9ce21ec150661", size = 28404, upload-time = "2025-11-23T10:29:08.676Z" },
 ]
+
+[[package]]
+name = "tmark"
+source = { editable = "../tmark/crates/tmark-py" }
 
 [[package]]
 name = "tomli"

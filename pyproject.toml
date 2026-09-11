@@ -53,6 +53,9 @@ dependencies = [
     "playwright>=1.56.0",
     "pyxindy>=0.0.7",
     "requests>=2.32.5",
+    # The TMark core (parser, IR, printer, registries, writers). During the
+    # migration it is built from the sibling checkout, see [tool.uv.sources].
+    "tmark",
 ]
 [project.optional-dependencies]
 typst = ["typst>=0.15"]
@@ -141,6 +144,7 @@ members = [
 
 [tool.uv.sources]
 mkdocs-texsmith = { workspace = true }
+tmark = { path = "../tmark/crates/tmark-py", editable = true }
 
 [tool.pytest.ini_options]
 addopts = []
