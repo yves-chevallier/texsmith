@@ -155,6 +155,17 @@ class PassContext:
     template: SlotTemplate = field(default_factory=SlotTemplate)
     #: ``latex`` | ``typst`` | ``html`` — the backend the bodies are written for.
     backend: str = "latex"
+    #: The generation flags of the request (``GenerationStrategy``): whether
+    #: images are copied next to the output, converted to PDF, named by hash.
+    copy_assets: bool = True
+    convert_assets: bool = False
+    hash_assets: bool = False
+    #: What the passes hand back besides the document, keyed by name: the
+    #: copied assets (``assets``), the font summaries of the ``scripts`` pass
+    #: (``script_usage``, ``fallback_summary``), the ``emoji_mode`` the
+    #: ``emoji`` pass resolved. Also where a test injects a helper (a fake
+    #: ``script_detector``).
+    values: dict[str, Any] = field(default_factory=dict)
 
 
 def diagnostic_span(span: model.Span | None) -> Span:
@@ -194,8 +205,8 @@ def spec(
 
 
 #: The passes in their default order; ``resolve`` (Rust) runs between the
-#: ``pre`` and the ``post`` stage. ``snippet``, ``assets``, ``doi``, ``emoji``,
-#: ``scripts``, ``include`` and ``highlight`` are registered no-ops for now.
+#: ``pre`` and the ``post`` stage. ``snippet``, ``doi``, ``include`` and
+#: ``highlight`` are registered no-ops for now.
 DEFAULT_PIPELINE: tuple[str, ...] = (
     "include",
     "var",

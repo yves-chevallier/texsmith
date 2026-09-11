@@ -289,6 +289,7 @@ def _render_document(
     if binding is None:  # pragma: no cover - defensive safeguard
         raise RuntimeError("Conversion context is missing a template binding.")
 
+    ir_assets: dict[str, Path] = {}
     if document.reader == "tmark":
         # The IR path: passes, one ``tmark.resolve``, one ``tmark.write`` per
         # slot body; ``Requires`` drives the fragment flags of the state.
@@ -311,6 +312,7 @@ def _render_document(
             "document_state": ir_result.document_state,
             "renderer": None,
         }
+        ir_assets = ir_result.assets
     else:
         render_result = _render_html_slots(
             context=context,
@@ -395,6 +397,8 @@ def _render_document(
             asset_map = {str(key): Path(path) for key, path in renderer.assets.items()}
         except Exception as exc:
             emitter.warning(f"Could not collect asset map: {exc}")
+    elif ir_assets:
+        asset_map = dict(ir_assets)
 
     return ConversionResult(
         latex_output=latex_output,

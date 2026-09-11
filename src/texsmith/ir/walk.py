@@ -13,6 +13,9 @@ the tmark-shaped models:
   (list items, table cells, footnotes).
 * :func:`map_tree` — rebuild bottom-up; ``fn`` sees nodes only, records and
   tuples are rebuilt around them and unchanged subtrees are reused.
+* :func:`map_inlines` — rebuild the inline lists: ``fn`` may return one
+  inline or a tuple of them (spliced into the parent's list), and ``skip``
+  fences off subtrees (a code span, an emoji span) from the rewrite.
 * :class:`NodeVisitor` — ``visit_<ClassName>`` double dispatch along the MRO.
 * :func:`plain_text` — tmark's ``plain_text``: the text of ``Str``, ``Code``,
   ``Math`` and ``Abbr``, breaks as spaces, formatting containers and links
@@ -29,7 +32,15 @@ from texsmith.ir import model
 from texsmith.ir.model import Inline, Node, Record
 
 
-__all__ = ["NodeVisitor", "children", "iter_child_fields", "map_tree", "plain_text", "walk"]
+__all__ = [
+    "NodeVisitor",
+    "children",
+    "iter_child_fields",
+    "map_inlines",
+    "map_tree",
+    "plain_text",
+    "walk",
+]
 
 T = TypeVar("T", bound=Node | Record)
 
@@ -126,6 +137,66 @@ def map_tree(root: T, fn: Callable[[Node], Node]) -> T:
     unchanged is reused. ``id`` and ``span`` travel with ``replace``.
     """
     return _map_value(root, fn)
+
+
+InlineMap = Callable[[Inline], "Inline | tuple[Inline, ...]"]
+
+
+def _map_inline_value(value: Any, fn: InlineMap, skip: Callable[[Node], bool]) -> Any:
+    if isinstance(value, Node):
+        if skip(value):
+            return value
+        rebuilt = _map_inline_fields(value, fn, skip)
+        return fn(rebuilt) if isinstance(rebuilt, Inline) else rebuilt
+    if isinstance(value, tuple):
+        items: list[Any] = []
+        changed = False
+        for item in value:
+            mapped = _map_inline_value(item, fn, skip)
+            if isinstance(item, Inline) and isinstance(mapped, tuple):
+                items.extend(mapped)
+                changed = True
+                continue
+            if mapped is not item:
+                changed = True
+            items.append(mapped)
+        return tuple(items) if changed else value
+    if isinstance(value, Record):
+        return _map_inline_fields(value, fn, skip)
+    return value
+
+
+def _map_inline_fields(obj: T, fn: InlineMap, skip: Callable[[Node], bool]) -> T:
+    changes: dict[str, Any] = {}
+    for name, value in iter_child_fields(obj):
+        mapped = _map_inline_value(value, fn, skip)
+        if mapped is not value:
+            changes[name] = mapped
+    return replace(obj, **changes) if changes else obj
+
+
+def _never(node: Node) -> bool:
+    del node
+    return False
+
+
+def map_inlines(
+    root: T,
+    fn: InlineMap,
+    *,
+    skip: Callable[[Node], bool] = _never,
+) -> T:
+    """Return a new tree with ``fn`` applied to every inline, bottom-up.
+
+    Like :func:`map_tree` but for the inline lists: ``fn`` sees every
+    :class:`~texsmith.ir.model.Inline` (children first) and returns either a
+    replacement inline or a tuple of inlines, which is spliced in place of the
+    node in its parent's list (an empty tuple drops it). Blocks and records
+    are rebuilt around the changes; ``skip(node)`` fences off a subtree — a
+    node it accepts is kept as is, its descendants unseen. Unchanged subtrees
+    are reused, ``id`` and ``span`` travel with ``replace``.
+    """
+    return _map_inline_value(root, fn, skip)
 
 
 class NodeVisitor:

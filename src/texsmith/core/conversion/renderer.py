@@ -363,8 +363,14 @@ class TemplateRenderer:
             return fallback_manager.scan_text(text)
 
         # Compute fallback summary across all slot content for font fragments.
+        # On the tmark path the ``scripts`` pass already summarised the IR of
+        # every document (``DocumentState.fonts_scanned``); the LaTeX is not
+        # scanned again.
         concatenated_text = "".join(render_slot_content.values())
-        if concatenated_text:
+        scanned_by_passes = bool(fragments) and all(
+            getattr(fragment.document_state, "fonts_scanned", False) for fragment in fragments
+        )
+        if concatenated_text and not scanned_by_passes:
             try:
                 raw_summary = _scan_fallback(concatenated_text)
             except Exception as exc:

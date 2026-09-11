@@ -7,7 +7,7 @@ import pytest
 from texsmith.passes import REGISTRY, build_pipeline
 
 
-STUBS = ("include", "snippet", "assets", "doi", "emoji", "scripts", "highlight")
+STUBS = ("include", "snippet", "doi", "highlight")
 
 
 @pytest.mark.parametrize("name", STUBS)
