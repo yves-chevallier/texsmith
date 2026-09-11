@@ -69,6 +69,7 @@ from .._options import (
     OutputPathOption,
     ParserOption,
     QuietOption,
+    ReaderOption,
     SelectorOption,
     SlotsOption,
     StrictOption,
@@ -409,6 +410,7 @@ def render(
     output: OutputPathOption = None,
     selector: SelectorOption = _REQUEST_DEFAULTS.selector,
     full_document: FullDocumentOption = _REQUEST_DEFAULTS.full_document,
+    reader: ReaderOption = _REQUEST_DEFAULTS.reader,
     base_level: BaseLevelOption = str(_REQUEST_DEFAULTS.base_level),
     strip_heading: StripHeadingOption = _REQUEST_DEFAULTS.strip_heading_all,
     no_promote_title: NoPromoteTitleOption = not _REQUEST_DEFAULTS.promote_title,
@@ -558,6 +560,11 @@ def render(
             )
         if html_only:
             raise typer.BadParameter("--format typst cannot be combined with --html.")
+    reader = (reader or "html").strip().lower()
+    if reader not in {"html", "tmark"}:
+        raise typer.BadParameter("--reader must be 'html' or 'tmark'.")
+    if html_only and reader == "tmark":
+        raise typer.BadParameter("--html needs the html reader; drop --reader tmark.")
     if html_only:
         build_pdf = False
         template = None
@@ -867,6 +874,7 @@ def render(
         slot_assignments=slot_assignments,
         selector=selector,
         full_document=full_document,
+        reader=reader,
         base_level=resolved_base_level,
         strip_heading_all=strip_heading if build_pdf else False,
         strip_heading_first_document=False if build_pdf else strip_heading,

@@ -187,6 +187,7 @@ class ConversionService:
                     title_strategy=strategy,
                     numbered=request.numbered,
                     emitter=emitter,
+                    reader=request.reader,
                 )
             else:
                 document = Document.from_html(
