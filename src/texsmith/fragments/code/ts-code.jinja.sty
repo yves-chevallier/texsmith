@@ -349,18 +349,37 @@
     \expandafter\ts@code@go
   \fi
 }
-\NewDocumentEnvironment{tscode}{!O{}}{%
-  \ts@code@reset
-  \pgfkeys{/ts/code/.cd,#1}%
-  \ts@code@boxopts
-  \ts@code@engineopts
-  \VerbatimEnvironment
-  \futurelet\ts@next\ts@code@cont
-}{%
+% engine=pygments (decisions.md X3): the highlight pass already rendered
+% the body as LaTeX — a Verbatim environment of \PY macros, line numbers
+% and highlighted lines included — so the environment is a plain box around
+% ordinary LaTeX; only stretch is applied here, through \baselinestretch,
+% which fancyvrb's default baselinestretch=auto keeps.
+\newcommand{\ts@code@finish@raw}{\end{ts@codebox}}
+\newcommand{\ts@code@finish@capture}{%
   \end{VerbatimOut}%
   \expandafter\ts@codebox@begin\expandafter{\ts@code@opts}%
   \expandafter\ts@code@input\expandafter{\ts@code@vopts}%
   \end{ts@codebox}%
 }
+\NewDocumentEnvironment{tscode}{!O{}}{%
+  \ts@code@reset
+  \pgfkeys{/ts/code/.cd,#1}%
+  \ts@code@boxopts
+  \ts@code@engineopts
+  \ifx\ts@code@engine\ts@code@pygments
+    \let\ts@code@finish\ts@code@finish@raw
+    \expandafter\ts@codebox@begin\expandafter{\ts@code@opts}%
+    \ifx\ts@code@stretch\@empty\else
+      \renewcommand{\baselinestretch}{\ts@code@stretch}\selectfont
+    \fi
+  \else
+    \let\ts@code@finish\ts@code@finish@capture
+    \expandafter\ts@code@capturestart
+  \fi
+}{%
+  \ts@code@finish
+}
+% Past the \fi, so \futurelet peeks the token after \begin{tscode}[…].
+\newcommand{\ts@code@capturestart}{\VerbatimEnvironment\futurelet\ts@next\ts@code@cont}
 \BLOCK{ endif }
 \makeatother
