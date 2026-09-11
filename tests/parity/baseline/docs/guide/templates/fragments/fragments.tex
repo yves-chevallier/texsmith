@@ -1,0 +1,178 @@
+\documentclass[a4paper,twoside]{article}
+
+\usepackage{morewrites}
+
+\usepackage[svgnames,dvipsnames,x11names]{xcolor}
+\usepackage{graphicx}
+\usepackage[english]{babel}
+\usepackage[colorlinks=true, linkcolor=NavyBlue, urlcolor=NavyBlue, citecolor=NavyBlue]{hyperref}
+\usepackage[a4paper]{geometry}
+\usepackage{ts-fonts}
+\usepackage{amsmath}
+\usepackage{float}
+\usepackage{seqsplit}
+\usepackage{ts-code}
+
+\usepackage{lastpage}
+\usepackage{refcount}
+\makeatletter
+\def\ps@plain{
+  \let\@oddhead\@empty
+  \let\@evenhead\@empty
+  \def\@oddfoot{
+    \hfil
+    \ifnum\getpagerefnumber{LastPage}>1\relax
+      \thepage
+    \fi
+    \hfil}
+  \let\@evenfoot\@oddfoot
+}
+\makeatother
+
+\title{Template fragments}
+\author{}\date{}
+
+\begin{document}
+
+\maketitle
+
+\thispagestyle{plain}
+Fragments are small, pluggable \LaTeX{} packages (\texttt{.sty} rendered from Jinja) that
+TeXSmith can inject into any template at \texttt{\textbackslash{}VAR\{extra\_packages\}}. They keep
+shared logic (callouts, code listings, ...) out of individual templates
+while staying configurable from front matter or your own extensions.
+
+\section{Built-in fragments}\label{built-in-fragments}
+
+\begin{description}
+\item[{ \texttt{ts-\allowbreak{}geometry} }] page size/orientation glue that mirrors \texttt{press.paper}/\texttt{press.geometry} options.
+\item[{ \texttt{ts-\allowbreak{}extra} }] opt-in aux packages detected from the rendered content (hyperref, soul, ulem, etc.).
+\item[{ \texttt{ts-\allowbreak{}keystrokes} }] renders \texttt{\textbackslash{}keystroke\{…\}} shortcuts with styled TikZ boxes when they appear in content.
+\item[{ \texttt{ts-\allowbreak{}callouts} }] admonition/callout boxes generated from callout definitions.
+\item[{ \texttt{ts-\allowbreak{}code} }] unified minted/tcolorbox code listing style.
+\item[{ \texttt{ts-\allowbreak{}index} }] central imakeidx/macros glue, selects texindy/makeindex and runs \texttt{\textbackslash{}makeindex} when entries are present.
+\item[{ \texttt{ts-\allowbreak{}glossary} }] glossary and acronym wiring: loads \texttt{glossaries}, runs \texttt{\textbackslash{}makeglossaries} when needed, and materializes acronym definitions from front matter with configurable styles.
+\item[{ \texttt{ts-\allowbreak{}bibliography} }] bibliography helper that wires \texttt{biblatex} into the rendered document.
+  By default, raw URLs in entries are suppressed and the entry title becomes
+  a clickable hyperlink to the entry's \texttt{url} field --- this avoids the
+  overfull/underfull \texttt{\textbackslash{}hbox} warnings that long URLs typically cause in
+  justified bibliographies. Set \texttt{bibliography\_show\_urls: true} in the
+  document front matter to print the full URL inline instead (same behaviour
+  as biblatex's stock styles).
+\item[{ \texttt{ts-\allowbreak{}todolist} }] checklist helpers providing \texttt{\textbackslash{}done}, \texttt{\textbackslash{}wontfix}, and the \texttt{todolist} environment when they are referenced.
+
+\end{description}
+All built-in templates default to rendering these fragments. They are
+written into the build directory as \texttt{ts-\allowbreak{}*.sty} and loaded via
+\texttt{\textbackslash{}usepackage\{...\}} in the generated TeX.
+
+\section{Using fragments in documents}\label{using-fragments-in-documents}
+
+Fragments are declared under the \texttt{press.fragments} key in front matter. Each
+entry is either the name of a built-in fragment or a path to a custom Jinja
+template (absolute or relative to the Markdown file).
+
+\subsection{Explicit list (replaces template defaults)}\label{explicit-list-replaces-template-defaults}
+
+Provide a plain list to replace the template's default fragment set entirely:
+
+\begin{code}{yaml}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+\PY{n+nn}{\PYZhy{}\PYZhy{}\PYZhy{}}
+\PY{n+nt}{press}\PY{p}{:}
+\PY{+w}{  }\PY{n+nt}{template}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{article}
+\PY{+w}{  }\PY{n+nt}{fragments}\PY{p}{:}
+\PY{+w}{    }\PY{p+pIndicator}{\PYZhy{}}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{ts\PYZhy{}callouts}
+\PY{+w}{    }\PY{p+pIndicator}{\PYZhy{}}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{ts\PYZhy{}code}
+\PY{+w}{    }\PY{p+pIndicator}{\PYZhy{}}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{ts\PYZhy{}glossary}
+\PY{+w}{    }\PY{p+pIndicator}{\PYZhy{}}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{fragments/foo.jinja.sty}\PY{+w}{  }\PY{c+c1}{\PYZsh{} custom fragment located next to your doc}
+\PY{+w}{  }\PY{n+nt}{foo}\PY{p}{:}
+\PY{+w}{    }\PY{n+nt}{value}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{42}\PY{+w}{         }\PY{c+c1}{\PYZsh{} variables consumed by foo.jinja.sty}
+\PY{n+nn}{\PYZhy{}\PYZhy{}\PYZhy{}}
+\end{Verbatim}
+\end{code}
+\subsection{Modifier dict (extends template defaults)}\label{modifier-dict-extends-template-defaults}
+
+When you only need to add or remove a few fragments without restating the full
+list, use the dict form with any combination of \texttt{append}, \texttt{prepend}, and
+\texttt{disable}:
+
+\begin{code}{yaml}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+\PY{n+nn}{\PYZhy{}\PYZhy{}\PYZhy{}}
+\PY{n+nt}{press}\PY{p}{:}
+\PY{+w}{  }\PY{n+nt}{template}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{article}
+\PY{+w}{  }\PY{n+nt}{fragments}\PY{p}{:}
+\PY{+w}{    }\PY{n+nt}{append}\PY{p}{:}
+\PY{+w}{      }\PY{p+pIndicator}{\PYZhy{}}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{./fragments/heiglogo}\PY{+w}{   }\PY{c+c1}{\PYZsh{} add a custom fragment at the end}
+\PY{+w}{    }\PY{n+nt}{prepend}\PY{p}{:}
+\PY{+w}{      }\PY{p+pIndicator}{\PYZhy{}}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{./fragments/header}\PY{+w}{     }\PY{c+c1}{\PYZsh{} add a fragment at the start}
+\PY{+w}{    }\PY{n+nt}{disable}\PY{p}{:}
+\PY{+w}{      }\PY{p+pIndicator}{\PYZhy{}}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{ts\PYZhy{}geometry}\PY{+w}{            }\PY{c+c1}{\PYZsh{} remove a specific built\PYZhy{}in fragment}
+\PY{n+nn}{\PYZhy{}\PYZhy{}\PYZhy{}}
+\end{Verbatim}
+\end{code}
+All three keys are optional. Omitted keys leave the corresponding part of the
+default list unchanged. \texttt{disable} is applied first (before \texttt{prepend}/\texttt{append}),
+so the same fragment cannot appear in both \texttt{disable} and \texttt{prepend}/\texttt{append}.
+
+TeXSmith renders each fragment into the output directory and injects the
+corresponding \texttt{\textbackslash{}usepackage\{…\}} lines into \texttt{\textbackslash{}VAR\{extra\_packages\}}.
+
+\subsection{What a fragment looks like}\label{what-a-fragment-looks-like}
+
+Fragments are plain Jinja templates that output \LaTeX{}. The package name is the
+stem of the file unless it is a built-in registered name.
+
+\begin{code}{tex}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+\PY{c}{\PYZpc{} fragments/foo.jinja.sty}
+\PY{k}{\PYZbs{}ProvidesPackage}\PY{n+nb}{\PYZob{}}foo\PY{n+nb}{\PYZcb{}}[2025/01/01 Example fragment]
+\PY{k}{\PYZbs{}newcommand}\PY{n+nb}{\PYZob{}}\PY{k}{\PYZbs{}FooValue}\PY{n+nb}{\PYZcb{}}\PY{n+nb}{\PYZob{}}\PY{k}{\PYZbs{}VAR}\PY{n+nb}{\PYZob{}}foo.value|default(0)\PY{n+nb}{\PYZcb{}}\PY{n+nb}{\PYZcb{}}
+\end{Verbatim}
+\end{code}
+With the front matter above, the generated build will contain \texttt{foo.sty} and the
+document preamble will include \texttt{\textbackslash{}usepackage\{foo\}}.
+
+\section{Template authors: allowing fragments}\label{template-authors-allowing-fragments}
+
+To consume fragments, a template needs a placeholder where TeXSmith can inject
+the \texttt{\textbackslash{}usepackage} lines. Add \texttt{\textbackslash{}VAR\{extra\_packages\}} near the top of your
+preamble---typically next to other package imports. No TOML manifest changes are
+required; the core runtime resolves fragments before rendering.
+
+Built-in templates already include this placeholder and opt into
+\texttt{ts-\allowbreak{}geometry}, \texttt{ts-\allowbreak{}extra}, \texttt{ts-\allowbreak{}keystrokes}, \texttt{ts-\allowbreak{}callouts}, \texttt{ts-\allowbreak{}code},
+\texttt{ts-\allowbreak{}glossary}, \texttt{ts-\allowbreak{}index}, \texttt{ts-\allowbreak{}bibliography}, and \texttt{ts-\allowbreak{}todolist} via the template
+runtime extras; conditional fragments only render when their macros are present
+in the rendered \LaTeX{}. Third-party templates can also declare default fragments
+in their \texttt{TemplateRuntime.extras["fragments"]} or let users supply their own
+through front matter.
+
+\subsection{Passing variables to fragments}\label{passing-variables-to-fragments}
+
+Any values under \texttt{press} (or other front matter keys) are merged into the
+template rendering context. If your fragment expects a variable such as
+\texttt{foo.value}, document it and read it directly in the Jinja template. Unknown
+keys are ignored.
+
+\section{CLI and API integration}\label{cli-and-api-integration}
+
+CLI usage is automatic once \texttt{press.fragments} is present. For API consumers:
+
+\begin{code}{python}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+\PY{k+kn}{from}\PY{+w}{ }\PY{n+nn}{texsmith}\PY{+w}{ }\PY{k+kn}{import} \PY{n}{Document}\PY{p}{,} \PY{n}{TemplateSession}
+\PY{k+kn}{from}\PY{+w}{ }\PY{n+nn}{texsmith}\PY{n+nn}{.}\PY{n+nn}{core}\PY{n+nn}{.}\PY{n+nn}{templates}\PY{+w}{ }\PY{k+kn}{import} \PY{n}{load\PYZus{}template\PYZus{}runtime}
+
+\PY{n}{session} \PY{o}{=} \PY{n}{TemplateSession}\PY{p}{(}\PY{n}{load\PYZus{}template\PYZus{}runtime}\PY{p}{(}\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{article}\PY{l+s+s2}{\PYZdq{}}\PY{p}{)}\PY{p}{)}
+\PY{n}{session}\PY{o}{.}\PY{n}{add\PYZus{}document}\PY{p}{(}\PY{n}{Document}\PY{o}{.}\PY{n}{from\PYZus{}markdown}\PY{p}{(}\PY{n}{path\PYZus{}to\PYZus{}md}\PY{p}{)}\PY{p}{)}
+\PY{n}{result} \PY{o}{=} \PY{n}{session}\PY{o}{.}\PY{n}{render}\PY{p}{(}\PY{n}{output\PYZus{}dir}\PY{p}{)}
+\PY{c+c1}{\PYZsh{} result.main\PYZus{}tex\PYZus{}path already includes the rendered fragments}
+\end{Verbatim}
+\end{code}
+Custom fragments may live anywhere; relative paths are resolved against the
+document's directory. Built-in names are always available without shipping
+assets in your template package.
+
+\end{document}

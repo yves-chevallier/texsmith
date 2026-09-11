@@ -1,0 +1,66 @@
+\documentclass[a4paper,twoside]{article}
+
+\usepackage{morewrites}
+
+\usepackage[svgnames,dvipsnames,x11names]{xcolor}
+\usepackage{graphicx}
+\usepackage[english]{babel}
+\usepackage[colorlinks=true, linkcolor=NavyBlue, urlcolor=NavyBlue, citecolor=NavyBlue]{hyperref}
+\usepackage[a4paper]{geometry}
+\usepackage{ts-fonts}
+\usepackage{amsmath}
+\usepackage{float}
+\usepackage{seqsplit}
+\usepackage{ts-code}
+
+\usepackage{lastpage}
+\usepackage{refcount}
+\makeatletter
+\def\ps@plain{
+  \let\@oddhead\@empty
+  \let\@evenhead\@empty
+  \def\@oddfoot{
+    \hfil
+    \ifnum\getpagerefnumber{LastPage}>1\relax
+      \thepage
+    \fi
+    \hfil}
+  \let\@evenfoot\@oddfoot
+}
+\makeatother
+
+\title{Custom Attributes}
+\author{}\date{}
+
+\begin{document}
+
+\maketitle
+
+\thispagestyle{plain}
+These are the stalwarts borrowed from PHP Markdown Extra and bundled directly with Python-Markdown.
+
+\begin{code}{text}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+pip install markdown
+\end{Verbatim}
+\end{code}
+\section{Attribute Lists}\label{attribute-lists}
+
+Attribute Lists add lightweight metadata to headings, paragraphs, images, links, and more. Drop a brace block right after the element:
+
+\begin{code}{markdown}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+\PY{g+gh}{\PYZsh{} Header 1 \PYZob{}\PYZsh{}header1 .class1 key=\PYZdq{}value\PYZdq{}\PYZcb{}}
+
+This is a paragraph with a class and an ID.
+\PYZob{}: \PY{n+ni}{\PYZsh{}para1} .text key=\PYZdq{}value\PYZdq{} \PYZcb{}
+
+![\PY{n+nt}{Alt text}](\PY{n+na}{image.jpg})\PYZob{}\PYZsh{}img1 .responsive width=\PYZdq{}300\PYZdq{}\PYZcb{}
+
+| set on td    | set on em   |
+|\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}|\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}|
+| \PY{g+ge}{*a*} \PYZob{} .foo \PYZcb{} | \PY{g+ge}{*b*}\PYZob{} .foo \PYZcb{} |
+\end{Verbatim}
+\end{code}
+
+\end{document}

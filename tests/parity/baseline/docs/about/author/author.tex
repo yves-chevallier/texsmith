@@ -1,0 +1,50 @@
+\documentclass[a4paper,twoside]{article}
+
+\usepackage{morewrites}
+
+\usepackage[svgnames,dvipsnames,x11names]{xcolor}
+\usepackage{graphicx}
+\usepackage[english]{babel}
+\usepackage[colorlinks=true, linkcolor=NavyBlue, urlcolor=NavyBlue, citecolor=NavyBlue]{hyperref}
+\usepackage[a4paper]{geometry}
+\usepackage{ts-fonts}
+\usepackage{float}
+\usepackage{seqsplit}
+
+\usepackage{lastpage}
+\usepackage{refcount}
+\makeatletter
+\def\ps@plain{
+  \let\@oddhead\@empty
+  \let\@evenhead\@empty
+  \def\@oddfoot{
+    \hfil
+    \ifnum\getpagerefnumber{LastPage}>1\relax
+      \thepage
+    \fi
+    \hfil}
+  \let\@evenfoot\@oddfoot
+}
+\makeatother
+
+\title{Author}
+\author{}\date{}
+
+\begin{document}
+
+\maketitle
+
+\thispagestyle{plain}
+\begin{figure}[H]
+    \centering
+
+    \includegraphics[width=0.5\linewidth]{52489316.jpg}
+
+    \caption[Yves Chevallier]{Yves Chevallier}
+\end{figure}
+
+I'm Yves Chevallier, the creator and maintainer of TeXSmith. I work full-time as an associate professor at \href{https://www.heig-vd.ch}{HEIG-VD} in Switzerland, where I teach software engineering. My research interests revolve around software architecture, meta-generation, and---naturally---documentation tooling. Before drifting into academia, I trained as an electronics engineer with a focus on real-time embedded systems for motion-control applications.
+
+I originally built TeXSmith mostly for fun---and partly to see how far AI-assisted tooling can be pushed. Judging by the pace of progress, this was probably a terrible idea: my job may well be obsolete in a few years.
+
+\end{document}

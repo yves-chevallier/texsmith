@@ -1,0 +1,69 @@
+\documentclass[a4paper,twoside]{article}
+
+\usepackage{morewrites}
+
+\usepackage[svgnames,dvipsnames,x11names]{xcolor}
+\usepackage{graphicx}
+\usepackage[english]{babel}
+\usepackage[colorlinks=true, linkcolor=NavyBlue, urlcolor=NavyBlue, citecolor=NavyBlue]{hyperref}
+\usepackage[a4paper]{geometry}
+\usepackage{ts-fonts}
+\usepackage{float}
+\usepackage{seqsplit}
+
+\usepackage{lastpage}
+\usepackage{refcount}
+\makeatletter
+\def\ps@plain{
+  \let\@oddhead\@empty
+  \let\@evenhead\@empty
+  \def\@oddfoot{
+    \hfil
+    \ifnum\getpagerefnumber{LastPage}>1\relax
+      \thepage
+    \fi
+    \hfil}
+  \let\@evenfoot\@oddfoot
+}
+\makeatother
+
+\title{Tectonic Engine}
+\author{}\date{}
+
+\begin{document}
+
+\maketitle
+
+\thispagestyle{plain}
+Tectonic is the default PDF engine in TeXSmith. It bundles automatic package
+fetching, fast incremental builds, and minimal setup -- ideal for CI pipelines and
+lightweight containers. You can switch to \texttt{latexmk} with \texttt{-\allowbreak{}-\allowbreak{}engine lualatex} or
+\texttt{-\allowbreak{}-\allowbreak{}engine xelatex} when you need full control of the traditional toolchain.
+
+\section{Install Tectonic}\label{install-tectonic}
+
+\begin{itemize}
+\item{} \textbf{macOS:} \texttt{brew install tectonic}
+\item{} \textbf{Ubuntu/Debian:} \texttt{sudo apt install tectonic} (or \texttt{cargo install tectonic})
+\item{} \textbf{Fedora:} \texttt{sudo dnf install tectonic}
+\item{} \textbf{Windows:} \texttt{scoop install tectonic} or \texttt{choco install tectonic}
+\item{} \textbf{Fallback:} grab a prebuilt archive from \href{https://tectonic-typesetting.github.io/}{https://tectonic-typesetting.github.io/} and put
+  the \texttt{tectonic} binary on your \texttt{PATH}.
+
+\end{itemize}
+After installation, run \texttt{tectonic -\allowbreak{}-\allowbreak{}version} to confirm the binary is available.
+
+\section{Building with Tectonic}\label{building-with-tectonic}
+
+\begin{itemize}
+\item{} CLI: \texttt{texsmith notes.md -\allowbreak{}-\allowbreak{}template article -\allowbreak{}-\allowbreak{}build} uses Tectonic automatically.
+\item{} Latexmk: add \texttt{-\allowbreak{}-\allowbreak{}engine lualatex} (or \texttt{-\allowbreak{}-\allowbreak{}engine xelatex}) to opt into the latexmk +
+  \texttt{.latexmkrc} flow.
+\item{} API: call \texttt{ConversionService.build\_pdf(render\_result, engine="tectonic")} after
+  rendering a template.
+
+\end{itemize}
+TeXSmith still checks for optional helpers -- \texttt{biber}, \texttt{makeindex}/\texttt{texindy},
+\texttt{makeglossaries} -- and reports anything missing before the engine runs.
+
+\end{document}

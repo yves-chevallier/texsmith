@@ -1,0 +1,131 @@
+\documentclass[a4paper,twoside]{article}
+
+\usepackage{morewrites}
+
+\usepackage[svgnames,dvipsnames,x11names]{xcolor}
+\usepackage{graphicx}
+\usepackage[english]{babel}
+\usepackage[colorlinks=true, linkcolor=NavyBlue, urlcolor=NavyBlue, citecolor=NavyBlue]{hyperref}
+\usepackage[a4paper]{geometry}
+\usepackage{ts-fonts}
+\usepackage{csquotes}
+\usepackage{amsmath}
+\usepackage{float}
+\usepackage{seqsplit}
+\usepackage{ts-code}
+
+\usepackage{lastpage}
+\usepackage{refcount}
+\makeatletter
+\def\ps@plain{
+  \let\@oddhead\@empty
+  \let\@evenhead\@empty
+  \def\@oddfoot{
+    \hfil
+    \ifnum\getpagerefnumber{LastPage}>1\relax
+      \thepage
+    \fi
+    \hfil}
+  \let\@evenfoot\@oddfoot
+}
+\makeatother
+
+\title{Index Generation}
+\author{}\date{}
+
+\begin{document}
+
+\maketitle
+
+\label{index-tags}
+
+\thispagestyle{plain}
+In static site generators such as MkDocs, every build emits a \texttt{search\_index.json}
+file consumed by Lunr.js or Wasabi directly in the browser. It lists every word
+encountered in the documentation along with its locations, enabling instant
+client-side search. That automation works wonderfully for HTML, but printed
+documents require a static index compiled ahead of time.
+
+Traditional \LaTeX{} editing relies on \texttt{\textbackslash{}index\{term\}} commands sprinkled throughout
+the source. After compilation you run \texttt{makeindex} or \texttt{xindy}, which produces the
+final index file included near the end of the document. TeXSmith mirrors that
+workflow: it turns Markdown annotations into \LaTeX{} \texttt{\textbackslash{}index\{...\}} calls and
+triggers \texttt{makeindex}/\texttt{xindy} while building the PDF.
+
+The \LaTeX{} form still looks familiar:
+
+\begin{code}{latex}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+\PY{k}{\PYZbs{}index}\PY{n+nb}{\PYZob{}}term!subterm\PY{n+nb}{\PYZcb{}}
+\PY{k}{\PYZbs{}index}\PY{n+nb}{\PYZob{}}another term\PY{n+nb}{\PYZcb{}}
+\PY{k}{\PYZbs{}index}\PY{n+nb}{\PYZob{}}\PY{k}{\PYZbs{}textbf}\PY{n+nb}{\PYZob{}}important term\PY{n+nb}{\PYZcb{}}\PY{n+nb}{\PYZcb{}}
+\PY{k}{\PYZbs{}index}\PY{n+nb}{\PYZob{}}\PY{k}{\PYZbs{}emph}\PY{n+nb}{\PYZob{}}emphasized term\PY{n+nb}{\PYZcb{}}\PY{n+nb}{\PYZcb{}}
+\end{Verbatim}
+\end{code}
+Thus, index entries can:
+
+\begin{itemize}
+\item{} be nested up to 3 levels,
+\item{} be rendered in bold, italic, or both,
+\item{} appear multiple times in the document, with all page numbers listed.
+
+\end{itemize}
+To mimic this behavior in Markdown, the \texttt{texsmith.index} extension provides the
+hashtag syntax:
+
+\begin{code}{markdown}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+\PY{g+gh}{\PYZsh{}[a] One level index entry in the default index}
+\PY{g+gh}{\PYZsh{}[a][b][c] Three\PYZhy{}level entry in the default index}
+\PYZob{}index:registry\PYZcb{}[Foo][Bar] Entry nested twice under the \PY{l+s+sb}{`registry`} index
+\PY{g+gh}{\PYZsh{}[*a*] Formatted index entry in default index}
+\PY{g+gh}{\PYZsh{}[**a**] Bold formatted index entry in default index}
+\PY{g+gh}{\PYZsh{}[***a***] Bold italic formatted index entry in default index}
+\PY{g+gh}{\PYZsh{}[a] \PYZsh{}[b] Multiple index entries in one place}
+\end{Verbatim}
+\end{code}
+\section{Emphasis and Formatting}\label{emphasis-and-formatting}
+
+Printed indexes often differentiate how important an entry is within a section:
+
+\begin{itemize}
+\item{} Normal text: the term is discussed in that section (default).
+\item{} \textbf{Bold}: the term is the main topic of that section.
+\item{} \emph{Italic}: the term is mentioned but not deeply discussed.
+\item{} \textbf{\emph{Bold italic}}: the term is the main topic and also referenced elsewhere in the same section.
+
+\end{itemize}
+Because the hashtag syntax accepts Markdown formatting, just wrap the indexed term
+in the appropriate markers (e.g. \texttt{\#[**topic**]}).
+
+\section{Nested Entries}\label{nested-entries}
+
+Consider a cooking book where you want to index the recipe for \enquote{Chocolate Cake}. You might want to add
+an index entry for \enquote{Cake} with a sub-entry for \enquote{Chocolate} and also in \enquote{Chocolate Cake}:
+
+\begin{code}{markdown}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+\PY{g+gu}{\PYZsh{}\PYZsh{} Chocolate Cake}
+
+\PY{g+gh}{\PYZsh{}[cake][**chocolate**] \PYZsh{}[chocolate cake]}
+\end{Verbatim}
+\end{code}
+\LaTeX{} only supports up to 3 levels of nesting:
+
+\begin{code}{markdown}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+\PY{g+gh}{\PYZsh{}[cake]}
+\PY{g+gh}{\PYZsh{}[cake][**chocolate**]}
+\PY{g+gh}{\PYZsh{}[dessert][cake][chocolate]}
+\end{Verbatim}
+\end{code}
+\section{Tags}\label{tags}
+
+In MkDocs, search powered by Lunr.js automatically adds tags on headings to improve searchability.
+From an HTML perspective the extension emits invisible spans such as
+\texttt{<span class="ts-\allowbreak{}hashtag" data-\allowbreak{}tag="term" data-\allowbreak{}style="b">}. The \LaTeX{} renderer
+converts them into the proper \texttt{\textbackslash{}index\{...\}} call while the MkDocs plugin collects
+the same metadata to enrich Lunr's search index. This keeps the PDF index and the
+interactive site search in sync even though they are generated through different pipelines.
+
+\end{document}

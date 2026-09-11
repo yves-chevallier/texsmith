@@ -1,0 +1,59 @@
+\documentclass[a4paper,twoside]{article}
+
+\usepackage{morewrites}
+
+\usepackage[svgnames,dvipsnames,x11names]{xcolor}
+\usepackage{graphicx}
+\usepackage[english]{babel}
+\usepackage[colorlinks=true, linkcolor=NavyBlue, urlcolor=NavyBlue, citecolor=NavyBlue]{hyperref}
+\usepackage[a4paper]{geometry}
+\usepackage{ts-fonts}
+\usepackage{amsmath}
+\usepackage{float}
+\usepackage{seqsplit}
+
+\usepackage{lastpage}
+\usepackage{refcount}
+\makeatletter
+\def\ps@plain{
+  \let\@oddhead\@empty
+  \let\@evenhead\@empty
+  \def\@oddfoot{
+    \hfil
+    \ifnum\getpagerefnumber{LastPage}>1\relax
+      \thepage
+    \fi
+    \hfil}
+  \let\@evenfoot\@oddfoot
+}
+\makeatother
+
+\title{TeXSmith API Overview}
+\author{}\date{}
+
+\begin{document}
+
+\maketitle
+
+\thispagestyle{plain}
+The API reference is generated with \textbf{mkdocstrings} to stay in sync with the codebase. This section is organized into themed pages so you can quickly locate the module you need.
+
+Each page uses \texttt{module.path} directives; mkdocstrings resolves them at build time and renders docstrings, signatures, and cross-references.
+
+\section{API Sections}\label{api-sections}
+
+\begin{description}
+\item[{ \hyperref[snippet:<HASH>]{\texttt{high-\allowbreak{}level}} }] High-level orchestration helpers (\texttt{ConversionService}, \texttt{TemplateSession}) for programmatic conversions and template sessions.
+\item[{ \hyperref[snippet:<HASH>]{\texttt{core}} }] Core package modules (\texttt{texsmith}, configuration, contexts, conversion helpers, etc.).
+\item[{ \hyperref[snippet:<HASH>]{\texttt{bibliography}} }] Bibliography tooling (BibTeX parsing, DOI resolution, issue reporting).
+\item[{ \hyperref[snippet:<HASH>]{\texttt{cli}} }] Command-line entry points and utilities.
+\item[{ \hyperref[snippet:<HASH>]{\texttt{handlers}} }] Readers and writers of the typed IR pipeline (\texttt{read(HTML) \(\rightarrow\) IR \(\rightarrow\) write(IR) \(\rightarrow\) LaTeX}), with the \texttt{@reads} / \texttt{@writes} decorators.
+\item[{ \hyperref[snippet:<HASH>]{\texttt{latex}} }] LaTeX infrastructure (formatter, renderer, templates).
+\item[{ \hyperref[snippet:<HASH>]{\texttt{markdown}} }] Markdown conversion helpers and custom extensions.
+\item[{ \hyperref[snippet:<HASH>]{\texttt{plugins}} }] Optional integrations (MkDocs Material-specific handlers).
+\item[{ \hyperref[snippet:<HASH>]{\texttt{transformers}} }] Asset conversion strategies (SVG, Draw.io, Mermaid, remote images).
+
+\end{description}
+Use the navigation sidebar to jump to any section or follow the links above for more detail.
+
+\end{document}

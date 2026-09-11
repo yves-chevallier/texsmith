@@ -1,0 +1,133 @@
+\documentclass[a4paper,twoside]{article}
+
+\usepackage{morewrites}
+
+\usepackage[svgnames,dvipsnames,x11names]{xcolor}
+\usepackage{graphicx}
+\usepackage[english]{babel}
+\usepackage[colorlinks=true, linkcolor=NavyBlue, urlcolor=NavyBlue, citecolor=NavyBlue]{hyperref}
+\usepackage[a4paper]{geometry}
+\usepackage{ts-fonts}
+\usepackage{amsmath}
+\usepackage{float}
+\usepackage{seqsplit}
+\usepackage{ts-code}
+
+\usepackage{lastpage}
+\usepackage{refcount}
+\makeatletter
+\def\ps@plain{
+  \let\@oddhead\@empty
+  \let\@evenhead\@empty
+  \def\@oddfoot{
+    \hfil
+    \ifnum\getpagerefnumber{LastPage}>1\relax
+      \thepage
+    \fi
+    \hfil}
+  \let\@evenfoot\@oddfoot
+}
+\makeatother
+
+\title{Custom Transformers}
+\author{}\date{}
+
+\begin{document}
+
+\maketitle
+
+\thispagestyle{plain}
+Transformers convert non-PDF assets (Mermaid, Draw.io, bitmap images) into PDF
+fragments before the \LaTeX{} renderer emits \texttt{\textbackslash{}includegraphics}. When the built-in
+strategies do not cover your workflow, register custom converters via
+\texttt{texsmith.adapters.transformers.register\_converter}.
+
+\section{Building a converter}\label{building-a-converter}
+
+\begin{code}{python}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+\PY{k+kn}{from}\PY{+w}{ }\PY{n+nn}{pathlib}\PY{+w}{ }\PY{k+kn}{import} \PY{n}{Path}
+
+\PY{k+kn}{from}\PY{+w}{ }\PY{n+nn}{texsmith}\PY{n+nn}{.}\PY{n+nn}{adapters}\PY{n+nn}{.}\PY{n+nn}{transformers}\PY{+w}{ }\PY{k+kn}{import} \PY{n}{register\PYZus{}converter}
+\PY{k+kn}{from}\PY{+w}{ }\PY{n+nn}{texsmith}\PY{n+nn}{.}\PY{n+nn}{adapters}\PY{n+nn}{.}\PY{n+nn}{transformers}\PY{n+nn}{.}\PY{n+nn}{base}\PY{+w}{ }\PY{k+kn}{import} \PY{n}{CachedConversionStrategy}
+\PY{k+kn}{from}\PY{+w}{ }\PY{n+nn}{texsmith}\PY{n+nn}{.}\PY{n+nn}{core}\PY{n+nn}{.}\PY{n+nn}{exceptions}\PY{+w}{ }\PY{k+kn}{import} \PY{n}{TransformerExecutionError}
+
+\PY{k}{class}\PY{+w}{ }\PY{n+nc}{PlantumlToPdf}\PY{p}{(}\PY{n}{CachedConversionStrategy}\PY{p}{)}\PY{p}{:}
+    \PY{n}{suffix} \PY{o}{=} \PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{.pdf}\PY{l+s+s2}{\PYZdq{}}
+
+    \PY{k}{def}\PY{+w}{ }\PY{n+nf+fm}{\PYZus{}\PYZus{}init\PYZus{}\PYZus{}}\PY{p}{(}\PY{n+nb+bp}{self}\PY{p}{)} \PY{o}{\PYZhy{}}\PY{o}{\PYZgt{}} \PY{k+kc}{None}\PY{p}{:}
+        \PY{n+nb}{super}\PY{p}{(}\PY{p}{)}\PY{o}{.}\PY{n+nf+fm}{\PYZus{}\PYZus{}init\PYZus{}\PYZus{}}\PY{p}{(}\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{plantuml}\PY{l+s+s2}{\PYZdq{}}\PY{p}{)}
+
+    \PY{k}{def}\PY{+w}{ }\PY{n+nf}{\PYZus{}perform\PYZus{}conversion}\PY{p}{(}\PY{n+nb+bp}{self}\PY{p}{,} \PY{n}{source}\PY{p}{:} \PY{n}{Path} \PY{o}{|} \PY{n+nb}{str}\PY{p}{,} \PY{o}{*}\PY{p}{,} \PY{n}{target}\PY{p}{:} \PY{n}{Path}\PY{p}{,} \PY{n}{cache\PYZus{}dir}\PY{p}{:} \PY{n}{Path}\PY{p}{,} \PY{o}{*}\PY{o}{*}\PY{n}{options}\PY{p}{)}\PY{p}{:}
+        \PY{n}{jar} \PY{o}{=} \PY{n}{Path}\PY{p}{(}\PY{n}{options}\PY{o}{.}\PY{n}{get}\PY{p}{(}\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{jar}\PY{l+s+s2}{\PYZdq{}}\PY{p}{,} \PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{plantuml.jar}\PY{l+s+s2}{\PYZdq{}}\PY{p}{)}\PY{p}{)}
+        \PY{k}{if} \PY{o+ow}{not} \PY{n}{jar}\PY{o}{.}\PY{n}{exists}\PY{p}{(}\PY{p}{)}\PY{p}{:}
+            \PY{k}{raise} \PY{n}{TransformerExecutionError}\PY{p}{(}\PY{l+s+sa}{f}\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{PlantUML jar not found at }\PY{l+s+si}{\PYZob{}}\PY{n}{jar}\PY{l+s+si}{\PYZcb{}}\PY{l+s+s2}{\PYZdq{}}\PY{p}{)}
+
+        \PY{n}{command} \PY{o}{=} \PY{p}{[}
+            \PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{java}\PY{l+s+s2}{\PYZdq{}}\PY{p}{,}
+            \PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{\PYZhy{}jar}\PY{l+s+s2}{\PYZdq{}}\PY{p}{,}
+            \PY{n+nb}{str}\PY{p}{(}\PY{n}{jar}\PY{p}{)}\PY{p}{,}
+            \PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{\PYZhy{}tpdf}\PY{l+s+s2}{\PYZdq{}}\PY{p}{,}
+            \PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{\PYZhy{}pipe}\PY{l+s+s2}{\PYZdq{}}\PY{p}{,}
+        \PY{p}{]}
+        \PY{c+c1}{\PYZsh{} write the PlantUML source to stdin}
+        \PY{k+kn}{import}\PY{+w}{ }\PY{n+nn}{subprocess}
+
+        \PY{n}{result} \PY{o}{=} \PY{n}{subprocess}\PY{o}{.}\PY{n}{run}\PY{p}{(}
+            \PY{n}{command}\PY{p}{,}
+            \PY{n+nb}{input}\PY{o}{=}\PY{n}{Path}\PY{p}{(}\PY{n}{source}\PY{p}{)}\PY{o}{.}\PY{n}{read\PYZus{}text}\PY{p}{(}\PY{n}{encoding}\PY{o}{=}\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{utf\PYZhy{}8}\PY{l+s+s2}{\PYZdq{}}\PY{p}{)}\PY{p}{,}
+            \PY{n}{text}\PY{o}{=}\PY{k+kc}{True}\PY{p}{,}
+            \PY{n}{capture\PYZus{}output}\PY{o}{=}\PY{k+kc}{True}\PY{p}{,}
+            \PY{n}{check}\PY{o}{=}\PY{k+kc}{False}\PY{p}{,}
+        \PY{p}{)}
+        \PY{k}{if} \PY{n}{result}\PY{o}{.}\PY{n}{returncode} \PY{o}{!=} \PY{l+m+mi}{0}\PY{p}{:}
+            \PY{k}{raise} \PY{n}{TransformerExecutionError}\PY{p}{(}\PY{n}{result}\PY{o}{.}\PY{n}{stderr}\PY{o}{.}\PY{n}{strip}\PY{p}{(}\PY{p}{)} \PY{o+ow}{or} \PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{plantuml failed}\PY{l+s+s2}{\PYZdq{}}\PY{p}{)}
+
+        \PY{n}{target}\PY{o}{.}\PY{n}{write\PYZus{}bytes}\PY{p}{(}\PY{n}{result}\PY{o}{.}\PY{n}{stdout}\PY{o}{.}\PY{n}{encode}\PY{p}{(}\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{utf\PYZhy{}8}\PY{l+s+s2}{\PYZdq{}}\PY{p}{)}\PY{p}{)}
+        \PY{k}{return} \PY{n}{target}
+
+\PY{n}{register\PYZus{}converter}\PY{p}{(}\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{plantuml}\PY{l+s+s2}{\PYZdq{}}\PY{p}{,} \PY{n}{PlantumlToPdf}\PY{p}{(}\PY{p}{)}\PY{p}{)}
+\end{Verbatim}
+\end{code}
+The base class adds caching, stable file naming, and retry/backoff hooks. Supply
+your own \texttt{suffix} when the converter emits something other than \texttt{.pdf}.
+
+\section{Wiring the converter}\label{wiring-the-converter}
+
+\begin{enumerate}
+\item Import the module before converting documents (e.g., in \texttt{docs/hooks/mkdocs\_hooks.py}
+   or a standalone script).
+\item Reference the converter name inside handlers or templates. For example, add a
+   handler that detects \texttt{<pre class="language-\allowbreak{}plantuml">} blocks and calls
+   \texttt{registry.convert("plantuml", ...)}.
+\item Ship optional dependencies (CLI tools, Docker images) alongside the template
+   README so users know how to enable the converter.
+
+\end{enumerate}
+\section{Handling fallbacks}\label{handling-fallbacks}
+
+When TeXSmith cannot find a converter, it installs placeholder strategies that
+emit visible warnings and \texttt{TODO} boxes in the \LaTeX{} output. Use these helpers to
+control that behavior:
+
+\begin{itemize}
+\item{} \texttt{texsmith.adapters.transformers.has\_converter("mermaid")} -- check whether a
+  converter is registered before assuming the dependency exists.
+\item{} \texttt{texsmith.core.conversion.attempt\_transformer\_fallback} -- internal helper
+  the CLI uses to install placeholder converters when optional dependencies are
+  missing. Call this only if you need to mimic the CLI's resilience.
+
+\end{itemize}
+\section{Further reading}\label{further-reading}
+
+\begin{itemize}
+\item{} \hyperref[snippet:<HASH>]{\texttt{texsmith.adapters.transformers.base}} -- reference for
+  \texttt{CachedConversionStrategy}.
+\item{} \hyperref[snippet:<HASH>]{\texttt{texsmith.writers.latex.media}} -- real-world examples
+  of how converters integrate with the LaTeX writer.
+\item{} \hyperref[snippet:<HASH>]{Template Cookbook} -- packaging
+  recommendations so your templates document converter prerequisites.
+
+\end{itemize}
+
+\end{document}

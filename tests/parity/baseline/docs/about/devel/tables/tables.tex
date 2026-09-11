@@ -1,0 +1,221 @@
+\documentclass[a4paper,twoside]{article}
+
+\usepackage{morewrites}
+
+\usepackage[svgnames,dvipsnames,x11names]{xcolor}
+\usepackage{graphicx}
+\usepackage[english]{babel}
+\usepackage[colorlinks=true, linkcolor=NavyBlue, urlcolor=NavyBlue, citecolor=NavyBlue]{hyperref}
+\usepackage[a4paper]{geometry}
+\usepackage{ts-fonts}
+\usepackage{tabularx}
+\usepackage{amsmath}
+\usepackage{float}
+\usepackage{seqsplit}
+\newcolumntype{Y}{>{\centering\arraybackslash}X}
+\newcolumntype{Z}{>{\raggedleft\arraybackslash}X}
+\usepackage{ts-code}
+
+\usepackage{lastpage}
+\usepackage{refcount}
+\makeatletter
+\def\ps@plain{
+  \let\@oddhead\@empty
+  \let\@evenhead\@empty
+  \def\@oddfoot{
+    \hfil
+    \ifnum\getpagerefnumber{LastPage}>1\relax
+      \thepage
+    \fi
+    \hfil}
+  \let\@evenfoot\@oddfoot
+}
+\makeatother
+
+\title{Tables}
+\author{}\date{}
+
+\begin{document}
+
+\maketitle
+
+\thispagestyle{plain}
+\section{Complex Tables}\label{complex-tables}
+
+Markdown offers limited table configuration---only column alignment by default. PyMdown provides captions, and superfences can inject more metadata, but we still miss:
+
+\begin{itemize}
+\item{} Table width (auto vs. full width)
+\item{} Resizing oversized tables
+\item{} Orientation (portrait vs. landscape)
+\item{} Column and row spanning
+\item{} Horizontal and vertical separator lines
+\item{} Column widths (fixed, auto, relative)
+
+\end{itemize}
+\subsection{Extended Markdown Table Syntax}\label{extended-markdown-table-syntax}
+
+Leverage Pymdown's table extension to add more metadata directly in Markdown. For example:
+The \texttt{texsmith.spantable} extension lets us span cells in standard Markdown tables.
+
+The \texttt{>>>} syntax will span cells horizontally, the \texttt{vvv} syntax will span cells vertically.
+
+\begin{code}{markdown}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+| Header 1 | Header 2 | Header 3 |
+|:\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}|:\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}:|\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}:|
+| Cell 1   | Cell 2   | Cell 3   |
+| Cell 4   | \PYZgt{}\PYZgt{}\PYZgt{}      | Cell 6   |
+| Cell 7   | Cell 8   | Cell 11  |
+| Cell 9   |          | vvv      |
+\end{Verbatim}
+\end{code}
+\subsection{Cmidrule example}\label{cmidrule-example}
+
+\begin{code}{latex}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+\PY{k}{\PYZbs{}begin}\PY{n+nb}{\PYZob{}}tabular\PY{n+nb}{\PYZcb{}}\PY{n+nb}{\PYZob{}}@\PY{n+nb}{\PYZob{}}\PY{n+nb}{\PYZcb{}}lll@\PY{n+nb}{\PYZob{}}\PY{n+nb}{\PYZcb{}}\PY{n+nb}{\PYZcb{}}
+\PY{k}{\PYZbs{}toprule}
+\PY{n+nb}{\PYZam{}} \PY{k}{\PYZbs{}multicolumn}\PY{n+nb}{\PYZob{}}2\PY{n+nb}{\PYZcb{}}\PY{n+nb}{\PYZob{}}c\PY{n+nb}{\PYZcb{}}\PY{n+nb}{\PYZob{}}Reaction\PY{n+nb}{\PYZcb{}} \PY{k}{\PYZbs{}\PYZbs{}}
+\PY{k}{\PYZbs{}cmidrule}(l)\PY{n+nb}{\PYZob{}}2\PYZhy{}3\PY{n+nb}{\PYZcb{}}
+Person \PY{n+nb}{\PYZam{}} Face \PY{n+nb}{\PYZam{}} Exclamation \PY{k}{\PYZbs{}\PYZbs{}}
+\PY{k}{\PYZbs{}midrule}
+\PY{k}{\PYZbs{}multirow}\PY{n+na}{[t]}\PY{n+nb}{\PYZob{}}2\PY{n+nb}{\PYZcb{}}\PY{n+nb}{\PYZob{}}*\PY{n+nb}{\PYZcb{}}\PY{n+nb}{\PYZob{}}VIPs\PY{n+nb}{\PYZcb{}} \PY{n+nb}{\PYZam{}} :) \PY{n+nb}{\PYZam{}} Nice \PY{k}{\PYZbs{}\PYZbs{}}
+\PY{n+nb}{\PYZam{}} :] \PY{n+nb}{\PYZam{}} Sleek \PY{k}{\PYZbs{}\PYZbs{}}
+Others \PY{n+nb}{\PYZam{}} \PY{k}{\PYZbs{}multicolumn}\PY{n+nb}{\PYZob{}}2\PY{n+nb}{\PYZcb{}}\PY{n+nb}{\PYZob{}}c\PY{n+nb}{\PYZcb{}}\PY{n+nb}{\PYZob{}}Not available\PY{n+nb}{\PYZcb{}} \PY{k}{\PYZbs{}\PYZbs{}}
+\PY{k}{\PYZbs{}bottomrule}
+\PY{k}{\PYZbs{}end}\PY{n+nb}{\PYZob{}}tabular\PY{n+nb}{\PYZcb{}}
+\end{Verbatim}
+\end{code}
+\subsection{Align to decimal points}\label{align-to-decimal-points}
+
+Find a syntax to align numbers to dot. \texttt{lS@\{\}}
+
+\subsection{Raw table syntax}\label{raw-table-syntax}
+
+Superfences do not work directly with tables, so define a \texttt{table} fence that accepts YAML options:
+
+\begin{code}{markdown}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+\PY{l+s+sb}{```}\PY{l+s+sb}{table}
+\PY{l+s}{width: full}
+\PY{l+s}{caption: Sample Table}
+\PY{l+s}{label: tbl:sample}
+\PY{l+s}{header: true}
+\PY{l+s}{print:}
+\PY{l+s}{  orientation: landscape}
+\PY{l+s}{  resize: true}
+\PY{l+s}{columns:}
+\PY{l+s}{  \PYZhy{} alignment: left}
+\PY{l+s}{    width: auto}
+\PY{l+s}{  \PYZhy{} alignment: center}
+\PY{l+s}{    width: 2cm}
+\PY{l+s}{  \PYZhy{} alignment: right}
+\PY{l+s}{    width: auto}
+\PY{l+s}{rows:}
+\PY{l+s}{  \PYZhy{} height: auto}
+\PY{l+s}{    alignment: top}
+\PY{l+s}{    span: [2, auto]}
+\PY{l+s}{data:}
+\PY{l+s}{  \PYZhy{} [Cell 1, Cell 2, Cell 3]}
+\PY{l+s}{  \PYZhy{} [Cell 4, null, Cell 6]}
+\PY{l+s}{  \PYZhy{} [Cell 7, Cell 8, null]}
+\PY{l+s+sb}{```}
+\end{Verbatim}
+\end{code}
+The goal is to convert Markdown tables into \LaTeX{} tables with automatic line breaks so that columns wrap gracefully when a table is too wide.
+
+\section{Shrink-to-fit vs Auto-expand}\label{shrink-to-fit-vs-auto-expand}
+
+Long tables et auto-ajustement.
+
+\begin{code}{latex}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+\PY{k}{\PYZbs{}documentclass}\PY{n+nb}{\PYZob{}}article\PY{n+nb}{\PYZcb{}}
+\PY{k}{\PYZbs{}usepackage}\PY{n+na}{[margin=2cm]}\PY{n+nb}{\PYZob{}}geometry\PY{n+nb}{\PYZcb{}}
+\PY{k}{\PYZbs{}usepackage}\PY{n+nb}{\PYZob{}}booktabs\PY{n+nb}{\PYZcb{}}
+\PY{k}{\PYZbs{}usepackage}\PY{n+na}{[french]}\PY{n+nb}{\PYZob{}}babel\PY{n+nb}{\PYZcb{}}
+\PY{k}{\PYZbs{}usepackage}\PY{n+nb}{\PYZob{}}array\PY{n+nb}{\PYZcb{}}
+
+\PY{c}{\PYZpc{} ltablex : Le pont entre tabularx et longtable}
+\PY{k}{\PYZbs{}usepackage}\PY{n+nb}{\PYZob{}}ltablex\PY{n+nb}{\PYZcb{}}
+
+\PY{c}{\PYZpc{} IMPORTANT : On NE met PAS \PYZbs{}keepXColumns ici.}
+\PY{c}{\PYZpc{} Sans cette commande, ltablex va calculer si le tableau a besoin}
+\PY{c}{\PYZpc{} de toute la largeur ou non.}
+
+\PY{k}{\PYZbs{}begin}\PY{n+nb}{\PYZob{}}document\PY{n+nb}{\PYZcb{}}
+
+\PY{k}{\PYZbs{}section}\PY{k}{*}\PY{n+nb}{\PYZob{}}Cas 1 : Table petite (Compacte)\PY{n+nb}{\PYZcb{}}
+\PY{c}{\PYZpc{} Ici, comme le texte est court, le tableau ne prendra pas toute la page}
+\PY{c}{\PYZpc{} Les colonnes X vont se comporter comme des colonnes \PYZsq{}l\PYZsq{}}
+\PY{k}{\PYZbs{}begin}\PY{n+nb}{\PYZob{}}tabularx\PY{n+nb}{\PYZcb{}}\PY{n+nb}{\PYZob{}}\PY{k}{\PYZbs{}textwidth}\PY{n+nb}{\PYZcb{}}\PY{n+nb}{\PYZob{}}lXX\PY{n+nb}{\PYZcb{}}
+    \PY{k}{\PYZbs{}toprule}
+    \PY{k}{\PYZbs{}textbf}\PY{n+nb}{\PYZob{}}ID\PY{n+nb}{\PYZcb{}} \PY{n+nb}{\PYZam{}} \PY{k}{\PYZbs{}textbf}\PY{n+nb}{\PYZob{}}Statut\PY{n+nb}{\PYZcb{}} \PY{n+nb}{\PYZam{}} \PY{k}{\PYZbs{}textbf}\PY{n+nb}{\PYZob{}}Note\PY{n+nb}{\PYZcb{}} \PY{k}{\PYZbs{}\PYZbs{}}
+    \PY{k}{\PYZbs{}midrule}
+    \PY{k}{\PYZbs{}endfirsthead}
+    1 \PY{n+nb}{\PYZam{}} OK \PY{n+nb}{\PYZam{}} R.A.S. \PY{k}{\PYZbs{}\PYZbs{}}
+    \PY{k}{\PYZbs{}midrule}
+\PY{k}{\PYZbs{}end}\PY{n+nb}{\PYZob{}}tabularx\PY{n+nb}{\PYZcb{}}
+
+\PY{k}{\PYZbs{}vspace}\PY{n+nb}{\PYZob{}}2cm\PY{n+nb}{\PYZcb{}}
+
+\PY{k}{\PYZbs{}section}\PY{k}{*}\PY{n+nb}{\PYZob{}}Cas 2 : Table large (Extension automatique)\PY{n+nb}{\PYZcb{}}
+\PY{c}{\PYZpc{} Ici, le texte est long. Le tableau va détecter qu\PYZsq{}il dépasse,}
+\PY{c}{\PYZpc{} s\PYZsq{}étendre jusqu\PYZsq{}à \PYZbs{}textwidth, et activer le retour à la ligne.}
+\PY{k}{\PYZbs{}begin}\PY{n+nb}{\PYZob{}}tabularx\PY{n+nb}{\PYZcb{}}\PY{n+nb}{\PYZob{}}\PY{k}{\PYZbs{}textwidth}\PY{n+nb}{\PYZcb{}}\PY{n+nb}{\PYZob{}}lXX\PY{n+nb}{\PYZcb{}}
+    \PY{k}{\PYZbs{}toprule}
+    \PY{k}{\PYZbs{}textbf}\PY{n+nb}{\PYZob{}}ID\PY{n+nb}{\PYZcb{}} \PY{n+nb}{\PYZam{}} \PY{k}{\PYZbs{}textbf}\PY{n+nb}{\PYZob{}}Description\PY{n+nb}{\PYZcb{}} \PY{n+nb}{\PYZam{}} \PY{k}{\PYZbs{}textbf}\PY{n+nb}{\PYZob{}}Analyse\PY{n+nb}{\PYZcb{}} \PY{k}{\PYZbs{}\PYZbs{}}
+    \PY{k}{\PYZbs{}midrule}
+    \PY{k}{\PYZbs{}endfirsthead}
+
+    \PY{k}{\PYZbs{}textbf}\PY{n+nb}{\PYZob{}}ID\PY{n+nb}{\PYZcb{}} \PY{n+nb}{\PYZam{}} \PY{k}{\PYZbs{}textbf}\PY{n+nb}{\PYZob{}}Description\PY{n+nb}{\PYZcb{}} \PY{n+nb}{\PYZam{}} \PY{k}{\PYZbs{}textbf}\PY{n+nb}{\PYZob{}}Analyse\PY{n+nb}{\PYZcb{}} \PY{k}{\PYZbs{}\PYZbs{}}
+    \PY{k}{\PYZbs{}midrule}
+    \PY{k}{\PYZbs{}endhead}
+
+    204 \PY{n+nb}{\PYZam{}}
+    Ici j\PYZsq{}ai un texte suffisamment long pour justifier que le tableau prenne toute la largeur disponible sur la page. \PY{n+nb}{\PYZam{}}
+    Et ici une autre colonne qui va se partager l\PYZsq{}espace restant équitablement avec la colonne précédente. \PY{k}{\PYZbs{}\PYZbs{}}
+
+    205 \PY{n+nb}{\PYZam{}} Test de remplissage \PY{n+nb}{\PYZam{}} Encore du texte... \PY{k}{\PYZbs{}\PYZbs{}}
+    \PY{k}{\PYZbs{}bottomrule}
+\PY{k}{\PYZbs{}end}\PY{n+nb}{\PYZob{}}tabularx\PY{n+nb}{\PYZcb{}}
+\PY{k}{\PYZbs{}end}\PY{n+nb}{\PYZob{}}document\PY{n+nb}{\PYZcb{}}
+\end{Verbatim}
+\end{code}
+We could use a tester to have a rough idea if the table will fit or not, and decide to use \texttt{tabularx} or \texttt{ltablex} accordingly.
+
+\begin{code}{tex}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+\PY{k}{\PYZbs{}documentclass}\PY{n+nb}{\PYZob{}}article\PY{n+nb}{\PYZcb{}}
+\PY{k}{\PYZbs{}usepackage}\PY{n+nb}{\PYZob{}}booktabs\PY{n+nb}{\PYZcb{}}
+\PY{k}{\PYZbs{}usepackage}\PY{n+nb}{\PYZob{}}tabularx\PY{n+nb}{\PYZcb{}} \PY{c}{\PYZpc{} ou tabularray (tblr), etc.}
+
+\PY{k}{\PYZbs{}newsavebox}\PY{n+nb}{\PYZob{}}\PY{k}{\PYZbs{}tblbox}\PY{n+nb}{\PYZcb{}}
+
+\PY{k}{\PYZbs{}begin}\PY{n+nb}{\PYZob{}}document\PY{n+nb}{\PYZcb{}}
+\PY{k}{\PYZbs{}typeout}\PY{n+nb}{\PYZob{}}TEXTWIDTH\PY{n+nb}{\PYZus{}}PT=\PY{k}{\PYZbs{}the}\PY{k}{\PYZbs{}textwidth}\PY{n+nb}{\PYZcb{}}
+\PY{k}{\PYZbs{}typeout}\PY{n+nb}{\PYZob{}}LINEWIDTH\PY{n+nb}{\PYZus{}}PT=\PY{k}{\PYZbs{}the}\PY{k}{\PYZbs{}linewidth}\PY{n+nb}{\PYZcb{}}
+\PY{k}{\PYZbs{}typeout}\PY{n+nb}{\PYZob{}}COLUMNWIDTH\PY{n+nb}{\PYZus{}}PT=\PY{k}{\PYZbs{}the}\PY{k}{\PYZbs{}columnwidth}\PY{n+nb}{\PYZcb{}}
+\PY{k}{\PYZbs{}typeout}\PY{n+nb}{\PYZob{}}PAPERWIDTH\PY{n+nb}{\PYZus{}}PT=\PY{k}{\PYZbs{}the}\PY{k}{\PYZbs{}paperwidth}\PY{n+nb}{\PYZcb{}}
+\PY{k}{\PYZbs{}typeout}\PY{n+nb}{\PYZob{}}PAPERHEIGHT\PY{n+nb}{\PYZus{}}PT=\PY{k}{\PYZbs{}the}\PY{k}{\PYZbs{}paperheight}\PY{n+nb}{\PYZcb{}}
+\PY{k}{\PYZbs{}thispagestyle}\PY{n+nb}{\PYZob{}}empty\PY{n+nb}{\PYZcb{}}
+
+\PY{k}{\PYZbs{}sbox}\PY{n+nb}{\PYZob{}}\PY{k}{\PYZbs{}tblbox}\PY{n+nb}{\PYZcb{}}\PY{n+nb}{\PYZob{}}\PY{c}{\PYZpc{}}
+  \PY{k}{\PYZbs{}begin}\PY{n+nb}{\PYZob{}}tabular\PY{n+nb}{\PYZcb{}}\PY{n+nb}{\PYZob{}}l l r\PY{n+nb}{\PYZcb{}}
+    \PY{k}{\PYZbs{}toprule}
+    Item \PY{n+nb}{\PYZam{}} Description \PY{n+nb}{\PYZam{}} Price\PY{k}{\PYZbs{}\PYZbs{}}
+    \PY{k}{\PYZbs{}midrule}
+    Pink Rabbit \PY{n+nb}{\PYZam{}} A small pink puppet made of soft fur. \PY{n+nb}{\PYZam{}} \PY{k}{\PYZbs{}\PYZdl{}}10\PY{k}{\PYZbs{}\PYZbs{}}
+    \PY{k}{\PYZbs{}bottomrule}
+  \PY{k}{\PYZbs{}end}\PY{n+nb}{\PYZob{}}tabular\PY{n+nb}{\PYZcb{}}\PY{c}{\PYZpc{}}
+\PY{n+nb}{\PYZcb{}}
+
+\PY{k}{\PYZbs{}typeout}\PY{n+nb}{\PYZob{}}TABLE\PY{n+nb}{\PYZus{}}WD\PY{n+nb}{\PYZus{}}PT=\PY{k}{\PYZbs{}the}\PY{k}{\PYZbs{}wd}\PY{k}{\PYZbs{}tblbox}\PY{n+nb}{\PYZcb{}}
+\PY{k}{\PYZbs{}typeout}\PY{n+nb}{\PYZob{}}TABLE\PY{n+nb}{\PYZus{}}HT\PY{n+nb}{\PYZus{}}PT=\PY{k}{\PYZbs{}the}\PY{k}{\PYZbs{}dimexpr}\PY{k}{\PYZbs{}ht}\PY{k}{\PYZbs{}tblbox}+\PY{k}{\PYZbs{}dp}\PY{k}{\PYZbs{}tblbox}\PY{k}{\PYZbs{}relax}\PY{n+nb}{\PYZcb{}}
+
+\PY{k}{\PYZbs{}end}\PY{n+nb}{\PYZob{}}document\PY{n+nb}{\PYZcb{}}
+\end{Verbatim}
+\end{code}
+
+\end{document}

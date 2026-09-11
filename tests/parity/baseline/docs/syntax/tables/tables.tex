@@ -1,0 +1,533 @@
+\documentclass[a4paper,twoside]{article}
+
+\usepackage{morewrites}
+
+\usepackage[svgnames,dvipsnames,x11names]{xcolor}
+\usepackage{graphicx}
+\usepackage[english]{babel}
+\usepackage[colorlinks=true, linkcolor=NavyBlue, urlcolor=NavyBlue, citecolor=NavyBlue]{hyperref}
+\usepackage[a4paper]{geometry}
+\usepackage{ts-fonts}
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{amsmath}
+\usepackage{float}
+\usepackage{seqsplit}
+\newcolumntype{Y}{>{\centering\arraybackslash}X}
+\newcolumntype{Z}{>{\raggedleft\arraybackslash}X}
+\usepackage{ts-code}
+
+\usepackage{lastpage}
+\usepackage{refcount}
+\makeatletter
+\def\ps@plain{
+  \let\@oddhead\@empty
+  \let\@evenhead\@empty
+  \def\@oddfoot{
+    \hfil
+    \ifnum\getpagerefnumber{LastPage}>1\relax
+      \thepage
+    \fi
+    \hfil}
+  \let\@evenfoot\@oddfoot
+}
+\makeatother
+
+\title{Tables}
+\author{}\date{}
+
+\begin{document}
+
+\maketitle
+
+\thispagestyle{plain}
+Markdown pipe tables are cute until they meet real reports. The minute you
+need grouped headers, wrapped text, row spans, totals, or a table that behaves
+properly in \LaTeX{}, plain Markdown turns into duct tape. TeXSmith keeps the
+simple syntax for simple tables and adds a declarative \texttt{yaml table} fence for
+the serious stuff.
+
+Use the right level of power:
+
+\begin{itemize}
+\item{} Plain Markdown table: quick two-dimensional data, no layout drama.
+\item{} Plain Markdown table + \texttt{yaml table-\allowbreak{}config}: keep the pipe table, add LaTeX
+  layout metadata.
+\item{} \texttt{yaml table}: describe the whole table as structured data when spans,
+  grouped headers, footers, or validation matter.
+
+\end{itemize}
+\section{Captions and Labels}\label{captions-and-labels}
+
+Put the standard TeXSmith caption line directly before the table:
+
+\begin{code}{markdown}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+Table: Fruit stock by warehouse \PYZob{}\PYZsh{}tbl:stock\PYZcb{}
+
+\PY{l+s+sb}{```}\PY{l+s+sb}{yaml}\PY{+w}{ }table
+\PY{n+nt}{columns}\PY{p}{:}\PY{+w}{ }\PY{p+pIndicator}{[}\PY{n+nv}{Fruit}\PY{p+pIndicator}{,}\PY{+w}{ }\PY{n+nv}{Geneva}\PY{p+pIndicator}{,}\PY{+w}{ }\PY{n+nv}{Zurich}\PY{p+pIndicator}{,}\PY{+w}{ }\PY{n+nv}{Basel}\PY{p+pIndicator}{]}
+\PY{n+nt}{rows}\PY{p}{:}
+\PY{+w}{  }\PY{p+pIndicator}{\PYZhy{}}\PY{+w}{ }\PY{p+pIndicator}{[}\PY{n+nv}{Apples}\PY{p+pIndicator}{,}\PY{+w}{   }\PY{n+nv}{120}\PY{p+pIndicator}{,}\PY{+w}{ }\PY{n+nv}{180}\PY{p+pIndicator}{,}\PY{+w}{ }\PY{n+nv}{90}\PY{p+pIndicator}{]}
+\PY{+w}{  }\PY{p+pIndicator}{\PYZhy{}}\PY{+w}{ }\PY{p+pIndicator}{[}\PY{n+nv}{Pears}\PY{p+pIndicator}{,}\PY{+w}{    }\PY{n+nv}{45}\PY{p+pIndicator}{,}\PY{+w}{  }\PY{n+nv}{\PYZti{}}\PY{p+pIndicator}{,}\PY{+w}{   }\PY{n+nv}{110}\PY{p+pIndicator}{]}
+\PY{l+s+sb}{```}
+\end{Verbatim}
+\end{code}
+The \texttt{\{\#tbl:stock\}} part becomes the \LaTeX{} \texttt{\textbackslash{}label\{tbl:stock\}} and can be
+referenced like any other table. The caption line also works before plain
+Markdown tables.
+
+\section{Full YAML Tables}\label{full-yaml-tables}
+
+A full YAML table is a fenced code block whose info string is exactly
+\texttt{yaml table}:
+
+\begin{code}{markdown}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+\PY{l+s+sb}{```}\PY{l+s+sb}{yaml}\PY{+w}{ }table
+\PY{n+nt}{columns}\PY{p}{:}\PY{+w}{ }\PY{p+pIndicator}{[}\PY{n+nv}{Fruit}\PY{p+pIndicator}{,}\PY{+w}{ }\PY{n+nv}{Geneva}\PY{p+pIndicator}{,}\PY{+w}{ }\PY{n+nv}{Zurich}\PY{p+pIndicator}{,}\PY{+w}{ }\PY{n+nv}{Basel}\PY{p+pIndicator}{]}
+\PY{n+nt}{rows}\PY{p}{:}
+\PY{+w}{  }\PY{p+pIndicator}{\PYZhy{}}\PY{+w}{ }\PY{p+pIndicator}{[}\PY{n+nv}{Apples}\PY{p+pIndicator}{,}\PY{+w}{   }\PY{n+nv}{120}\PY{p+pIndicator}{,}\PY{+w}{ }\PY{n+nv}{180}\PY{p+pIndicator}{,}\PY{+w}{ }\PY{n+nv}{90}\PY{p+pIndicator}{]}
+\PY{+w}{  }\PY{p+pIndicator}{\PYZhy{}}\PY{+w}{ }\PY{p+pIndicator}{[}\PY{n+nv}{Pears}\PY{p+pIndicator}{,}\PY{+w}{    }\PY{n+nv}{45}\PY{p+pIndicator}{,}\PY{+w}{  }\PY{n+nv}{\PYZti{}}\PY{p+pIndicator}{,}\PY{+w}{   }\PY{n+nv}{110}\PY{p+pIndicator}{]}
+\PY{+w}{  }\PY{p+pIndicator}{\PYZhy{}}\PY{+w}{ }\PY{n+nt}{separator}\PY{p}{:}\PY{+w}{ }\PY{p+pIndicator}{\PYZob{}}\PY{n+nt}{label}\PY{p}{:}\PY{+w}{ }\PY{n+nv}{Seasonal}\PY{n+nv}{ }\PY{n+nv}{shortage}\PY{p+pIndicator}{\PYZcb{}}
+\PY{+w}{  }\PY{p+pIndicator}{\PYZhy{}}\PY{+w}{ }\PY{p+pIndicator}{[}\PY{n+nv}{Apricots}\PY{p+pIndicator}{,}\PY{+w}{ }\PY{n+nv}{5}\PY{p+pIndicator}{,}\PY{+w}{   }\PY{n+nv}{0}\PY{p+pIndicator}{,}\PY{+w}{   }\PY{n+nv}{12}\PY{p+pIndicator}{]}
+\PY{n+nt}{footer}\PY{p}{:}
+\PY{+w}{  }\PY{p+pIndicator}{\PYZhy{}}\PY{+w}{ }\PY{p+pIndicator}{[}\PY{n+nv}{Total}\PY{p+pIndicator}{,}\PY{+w}{ }\PY{n+nv}{170}\PY{p+pIndicator}{,}\PY{+w}{ }\PY{n+nv}{180}\PY{p+pIndicator}{,}\PY{+w}{ }\PY{n+nv}{212}\PY{p+pIndicator}{]}
+\PY{l+s+sb}{```}
+\end{Verbatim}
+\end{code}
+Top-level keys:
+
+\begin{center}
+\begin{tabularx}{\linewidth}{>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X}
+\toprule
+\textbf{Key} & \textbf{Purpose} \\
+
+\midrule
+\texttt{table} & Optional table-level settings: width, placement, long-table mode. \\
+\texttt{columns} & Required column tree. Needs at least two leaf columns. \\
+\texttt{rows} & Body rows and separators. \\
+\texttt{footer} & Summary rows rendered after an extra rule. \\
+
+\bottomrule
+\end{tabularx}
+\end{center}
+
+The first column is the row-label column. In positional rows, the first item
+becomes that label and the remaining items fill the data columns.
+
+\texttt{\textasciitilde{}} is YAML null. In normal cells it renders as empty. In span rectangles it
+is also the explicit ``this slot is absorbed'' marker, so the validator knows
+you meant it.
+
+\section{Columns}\label{columns}
+
+The short form is just a list of names:
+
+\begin{code}{yaml}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+\PY{n+nt}{columns}\PY{p}{:}\PY{+w}{ }\PY{p+pIndicator}{[}\PY{n+nv}{Article}\PY{p+pIndicator}{,}\PY{+w}{ }\PY{n+nv}{Editor}\PY{p+pIndicator}{,}\PY{+w}{ }\PY{n+nv}{Status}\PY{p+pIndicator}{,}\PY{+w}{ }\PY{n+nv}{Pages}\PY{p+pIndicator}{]}
+\end{Verbatim}
+\end{code}
+For metadata, use mappings:
+
+\begin{code}{yaml}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+\PY{n+nt}{columns}\PY{p}{:}
+\PY{+w}{  }\PY{p+pIndicator}{\PYZhy{}}\PY{+w}{ }\PY{n+nt}{name}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{Requirement}
+\PY{+w}{    }\PY{n+nt}{width}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{25\PYZpc{}}
+\PY{+w}{    }\PY{n+nt}{align}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{l}
+\PY{+w}{  }\PY{p+pIndicator}{\PYZhy{}}\PY{+w}{ }\PY{n+nt}{name}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{Description}
+\PY{+w}{    }\PY{n+nt}{align}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{justify}
+\PY{+w}{  }\PY{p+pIndicator}{\PYZhy{}}\PY{+w}{ }\PY{n+nt}{name}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{Priority}
+\PY{+w}{    }\PY{n+nt}{width}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{15\PYZpc{}}
+\PY{+w}{    }\PY{n+nt}{align}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{center}
+\end{Verbatim}
+\end{code}
+Column attributes:
+
+\begin{center}
+\begin{tabularx}{\linewidth}{>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X}
+\toprule
+\textbf{Attribute} & \textbf{Values} \\
+
+\midrule
+\texttt{align} & \texttt{l}, \texttt{c}, \texttt{r}, \texttt{j}, or long forms: \texttt{left}, \texttt{center}, \texttt{centre}, \texttt{right}, \texttt{justify}, \texttt{justified}. \\
+\texttt{width} & \texttt{auto}, \texttt{X}, a percentage such as \texttt{25\%}, or a raw LaTeX length such as \texttt{3cm}. \\
+\texttt{width-\allowbreak{}group} & Any identifier. Columns with the same group share the same width. \\
+
+\bottomrule
+\end{tabularx}
+\end{center}
+
+Grouped columns are recursive:
+
+\begin{code}{yaml}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+\PY{n+nt}{columns}\PY{p}{:}
+\PY{+w}{  }\PY{p+pIndicator}{\PYZhy{}}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{Product}
+\PY{+w}{  }\PY{p+pIndicator}{\PYZhy{}}\PY{+w}{ }\PY{n+nt}{name}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{FY23}
+\PY{+w}{    }\PY{n+nt}{columns}\PY{p}{:}\PY{+w}{ }\PY{p+pIndicator}{[}\PY{n+nv}{Q1}\PY{p+pIndicator}{,}\PY{+w}{ }\PY{n+nv}{Q2}\PY{p+pIndicator}{,}\PY{+w}{ }\PY{n+nv}{Q3}\PY{p+pIndicator}{,}\PY{+w}{ }\PY{n+nv}{Q4}\PY{p+pIndicator}{]}
+\PY{+w}{    }\PY{n+nt}{width\PYZhy{}group}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{quarter}
+\PY{+w}{  }\PY{p+pIndicator}{\PYZhy{}}\PY{+w}{ }\PY{n+nt}{name}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{FY24}
+\PY{+w}{    }\PY{n+nt}{columns}\PY{p}{:}\PY{+w}{ }\PY{p+pIndicator}{[}\PY{n+nv}{Q1}\PY{p+pIndicator}{,}\PY{+w}{ }\PY{n+nv}{Q2}\PY{p+pIndicator}{,}\PY{+w}{ }\PY{n+nv}{Q3}\PY{p+pIndicator}{,}\PY{+w}{ }\PY{n+nv}{Q4}\PY{p+pIndicator}{]}
+\PY{+w}{    }\PY{n+nt}{width\PYZhy{}group}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{quarter}
+\end{Verbatim}
+\end{code}
+Groups can carry \texttt{align}, \texttt{width}, and \texttt{width-\allowbreak{}group}; those attributes
+propagate to their leaf columns unless a child overrides them. Nested groups
+produce multiple header rows and \texttt{\textbackslash{}cmidrule} strokes in \LaTeX{}.
+
+\section{Rows}\label{rows}
+
+The most compact form is positional:
+
+\begin{code}{yaml}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+\PY{n+nt}{rows}\PY{p}{:}
+\PY{+w}{  }\PY{p+pIndicator}{\PYZhy{}}\PY{+w}{ }\PY{p+pIndicator}{[}\PY{n+nv}{Apples}\PY{p+pIndicator}{,}\PY{+w}{ }\PY{n+nv}{120}\PY{p+pIndicator}{,}\PY{+w}{ }\PY{n+nv}{180}\PY{p+pIndicator}{,}\PY{+w}{ }\PY{n+nv}{90}\PY{p+pIndicator}{]}
+\PY{+w}{  }\PY{p+pIndicator}{\PYZhy{}}\PY{+w}{ }\PY{p+pIndicator}{[}\PY{n+nv}{Pears}\PY{p+pIndicator}{,}\PY{+w}{  }\PY{n+nv}{45}\PY{p+pIndicator}{,}\PY{+w}{  }\PY{n+nv}{\PYZti{}}\PY{p+pIndicator}{,}\PY{+w}{   }\PY{n+nv}{110}\PY{p+pIndicator}{]}
+\end{Verbatim}
+\end{code}
+For grouped columns, a list cell fills the leaves of that group:
+
+\begin{code}{yaml}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+\PY{n+nt}{columns}\PY{p}{:}
+\PY{+w}{  }\PY{p+pIndicator}{\PYZhy{}}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{Product}
+\PY{+w}{  }\PY{p+pIndicator}{\PYZhy{}}\PY{+w}{ }\PY{n+nt}{name}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{FY24}
+\PY{+w}{    }\PY{n+nt}{columns}\PY{p}{:}\PY{+w}{ }\PY{p+pIndicator}{[}\PY{n+nv}{Q1}\PY{p+pIndicator}{,}\PY{+w}{ }\PY{n+nv}{Q2}\PY{p+pIndicator}{,}\PY{+w}{ }\PY{n+nv}{Q3}\PY{p+pIndicator}{,}\PY{+w}{ }\PY{n+nv}{Q4}\PY{p+pIndicator}{]}
+\PY{n+nt}{rows}\PY{p}{:}
+\PY{+w}{  }\PY{p+pIndicator}{\PYZhy{}}\PY{+w}{ }\PY{p+pIndicator}{[}\PY{n+nv}{Apples}\PY{p+pIndicator}{,}\PY{+w}{ }\PY{p+pIndicator}{[}\PY{n+nv}{130}\PY{p+pIndicator}{,}\PY{+w}{ }\PY{n+nv}{145}\PY{p+pIndicator}{,}\PY{+w}{ }\PY{n+nv}{160}\PY{p+pIndicator}{,}\PY{+w}{ }\PY{n+nv}{150}\PY{p+pIndicator}{]}\PY{p+pIndicator}{]}
+\end{Verbatim}
+\end{code}
+Named-row mode trades brevity for typo detection. The row maps data by
+top-level column name, and missing columns render empty:
+
+\begin{code}{yaml}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+\PY{n+nt}{columns}\PY{p}{:}
+\PY{+w}{  }\PY{p+pIndicator}{\PYZhy{}}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{Product}
+\PY{+w}{  }\PY{p+pIndicator}{\PYZhy{}}\PY{+w}{ }\PY{n+nt}{name}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{FY23}
+\PY{+w}{    }\PY{n+nt}{columns}\PY{p}{:}\PY{+w}{ }\PY{p+pIndicator}{[}\PY{n+nv}{Q1}\PY{p+pIndicator}{,}\PY{+w}{ }\PY{n+nv}{Q2}\PY{p+pIndicator}{,}\PY{+w}{ }\PY{n+nv}{Q3}\PY{p+pIndicator}{,}\PY{+w}{ }\PY{n+nv}{Q4}\PY{p+pIndicator}{]}
+\PY{+w}{  }\PY{p+pIndicator}{\PYZhy{}}\PY{+w}{ }\PY{n+nt}{name}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{FY24}
+\PY{+w}{    }\PY{n+nt}{columns}\PY{p}{:}\PY{+w}{ }\PY{p+pIndicator}{[}\PY{n+nv}{Q1}\PY{p+pIndicator}{,}\PY{+w}{ }\PY{n+nv}{Q2}\PY{p+pIndicator}{,}\PY{+w}{ }\PY{n+nv}{Q3}\PY{p+pIndicator}{,}\PY{+w}{ }\PY{n+nv}{Q4}\PY{p+pIndicator}{]}
+\PY{n+nt}{rows}\PY{p}{:}
+\PY{+w}{  }\PY{p+pIndicator}{\PYZhy{}}\PY{+w}{ }\PY{n+nt}{Apples}\PY{p}{:}\PY{+w}{  }\PY{p+pIndicator}{\PYZob{}}\PY{n+nt}{FY23}\PY{p}{:}\PY{+w}{ }\PY{p+pIndicator}{[}\PY{n+nv}{120}\PY{p+pIndicator}{,}\PY{+w}{ }\PY{n+nv}{135}\PY{p+pIndicator}{,}\PY{+w}{ }\PY{n+nv}{150}\PY{p+pIndicator}{,}\PY{+w}{ }\PY{n+nv}{140}\PY{p+pIndicator}{]}\PY{p+pIndicator}{,}\PY{n+nt}{ FY24}\PY{p}{:}\PY{+w}{ }\PY{p+pIndicator}{[}\PY{n+nv}{130}\PY{p+pIndicator}{,}\PY{+w}{ }\PY{n+nv}{145}\PY{p+pIndicator}{,}\PY{+w}{ }\PY{n+nv}{160}\PY{p+pIndicator}{,}\PY{+w}{ }\PY{n+nv}{150}\PY{p+pIndicator}{]}\PY{p+pIndicator}{\PYZcb{}}
+\PY{+w}{  }\PY{p+pIndicator}{\PYZhy{}}\PY{+w}{ }\PY{n+nt}{label}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{Cherries}
+\PY{+w}{    }\PY{n+nt}{cells}\PY{p}{:}\PY{+w}{ }\PY{p+pIndicator}{\PYZob{}}\PY{n+nt}{FY23}\PY{p}{:}\PY{+w}{ }\PY{p+pIndicator}{[}\PY{n+nv}{\PYZti{}}\PY{p+pIndicator}{,}\PY{+w}{ }\PY{n+nv}{\PYZti{}}\PY{p+pIndicator}{,}\PY{+w}{ }\PY{n+nv}{45}\PY{p+pIndicator}{,}\PY{+w}{ }\PY{n+nv}{0}\PY{p+pIndicator}{]}\PY{p+pIndicator}{\PYZcb{}}
+\end{Verbatim}
+\end{code}
+If you misspell \texttt{FY23}, TeXSmith fails locally with an inline table error
+instead of silently producing a broken PDF.
+
+\section{Separators and Footers}\label{separators-and-footers}
+
+A separator inserts a horizontal rule. It can also label a body section:
+
+\begin{code}{yaml}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+\PY{n+nt}{rows}\PY{p}{:}
+\PY{+w}{  }\PY{p+pIndicator}{\PYZhy{}}\PY{+w}{ }\PY{p+pIndicator}{[}\PY{n+nv}{Apples}\PY{p+pIndicator}{,}\PY{+w}{ }\PY{n+nv}{120}\PY{p+pIndicator}{,}\PY{+w}{ }\PY{n+nv}{180}\PY{p+pIndicator}{,}\PY{+w}{ }\PY{n+nv}{90}\PY{p+pIndicator}{]}
+\PY{+w}{  }\PY{p+pIndicator}{\PYZhy{}}\PY{+w}{ }\PY{n+nt}{separator}\PY{p}{:}\PY{+w}{ }\PY{p+pIndicator}{\PYZob{}}\PY{n+nt}{label}\PY{p}{:}\PY{+w}{ }\PY{n+nv}{Seasonal}\PY{n+nv}{ }\PY{n+nv}{shortage}\PY{p+pIndicator}{\PYZcb{}}
+\PY{+w}{  }\PY{p+pIndicator}{\PYZhy{}}\PY{+w}{ }\PY{p+pIndicator}{[}\PY{n+nv}{Apricots}\PY{p+pIndicator}{,}\PY{+w}{ }\PY{n+nv}{5}\PY{p+pIndicator}{,}\PY{+w}{ }\PY{n+nv}{0}\PY{p+pIndicator}{,}\PY{+w}{ }\PY{n+nv}{12}\PY{p+pIndicator}{]}
+\PY{n+nt}{footer}\PY{p}{:}
+\PY{+w}{  }\PY{p+pIndicator}{\PYZhy{}}\PY{+w}{ }\PY{p+pIndicator}{[}\PY{n+nv}{Total}\PY{p+pIndicator}{,}\PY{+w}{ }\PY{n+nv}{125}\PY{p+pIndicator}{,}\PY{+w}{ }\PY{n+nv}{180}\PY{p+pIndicator}{,}\PY{+w}{ }\PY{n+nv}{102}\PY{p+pIndicator}{]}
+\end{Verbatim}
+\end{code}
+Equivalent separator forms:
+
+\begin{code}{yaml}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+\PY{p+pIndicator}{\PYZhy{}}\PY{+w}{ }\PY{n+nt}{separator}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{true}
+\PY{p+pIndicator}{\PYZhy{}}\PY{+w}{ }\PY{n+nt}{separator}\PY{p}{:}
+\PY{+w}{    }\PY{n+nt}{label}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{Seasonal}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{shortage}
+\PY{p+pIndicator}{\PYZhy{}}\PY{+w}{ }\PY{n+nt}{separator}\PY{p}{:}
+\PY{+w}{    }\PY{n+nt}{label}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{Grand}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{totals}
+\PY{+w}{    }\PY{n+nt}{double\PYZhy{}rule}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{true}
+\end{Verbatim}
+\end{code}
+Footer rows use the same row syntax as body rows.
+
+\section{Rich Cells and Spans}\label{rich-cells-and-spans}
+
+A scalar cell is enough most of the time. When you need spans or a local
+alignment override, promote the cell to a mapping:
+
+\begin{code}{yaml}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+\PY{p+pIndicator}{\PYZob{}}\PY{n+nt}{value}\PY{p}{:}\PY{+w}{ }\PY{n+nv}{Maria}\PY{p+pIndicator}{,}\PY{n+nt}{ rows}\PY{p}{:}\PY{+w}{ }\PY{n+nv}{2}\PY{p+pIndicator}{\PYZcb{}}
+\PY{p+pIndicator}{\PYZob{}}\PY{n+nt}{value}\PY{p}{:}\PY{+w}{ }\PY{l+s}{\PYZdq{}}\PY{l+s}{\PYZdl{}570k}\PY{l+s}{\PYZdq{}}\PY{p+pIndicator}{,}\PY{n+nt}{ cols}\PY{p}{:}\PY{+w}{ }\PY{n+nv}{4}\PY{p+pIndicator}{,}\PY{n+nt}{ align}\PY{p}{:}\PY{+w}{ }\PY{n+nv}{c}\PY{p+pIndicator}{\PYZcb{}}
+\PY{p+pIndicator}{\PYZob{}}\PY{n+nt}{value}\PY{p}{:}\PY{+w}{ }\PY{l+s}{\PYZdq{}}\PY{l+s}{Merged}\PY{n+nv}{ }\PY{l+s}{2x3}\PY{l+s}{\PYZdq{}}\PY{p+pIndicator}{,}\PY{n+nt}{ rows}\PY{p}{:}\PY{+w}{ }\PY{n+nv}{2}\PY{p+pIndicator}{,}\PY{n+nt}{ cols}\PY{p}{:}\PY{+w}{ }\PY{n+nv}{3}\PY{p+pIndicator}{,}\PY{n+nt}{ align}\PY{p}{:}\PY{+w}{ }\PY{n+nv}{center}\PY{p+pIndicator}{\PYZcb{}}
+\end{Verbatim}
+\end{code}
+Row spans require the absorbed cells below to be \texttt{\textasciitilde{}}:
+
+\begin{code}{markdown}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+Table: Article assignments \PYZob{}\PYZsh{}tbl:articles\PYZcb{}
+
+\PY{l+s+sb}{```}\PY{l+s+sb}{yaml}\PY{+w}{ }table
+\PY{n+nt}{columns}\PY{p}{:}\PY{+w}{ }\PY{p+pIndicator}{[}\PY{n+nv}{Article}\PY{p+pIndicator}{,}\PY{+w}{ }\PY{n+nv}{Editor}\PY{p+pIndicator}{,}\PY{+w}{ }\PY{n+nv}{Status}\PY{p+pIndicator}{,}\PY{+w}{ }\PY{n+nv}{Pages}\PY{p+pIndicator}{]}
+\PY{n+nt}{rows}\PY{p}{:}
+\PY{+w}{  }\PY{p+pIndicator}{\PYZhy{}}\PY{+w}{ }\PY{p+pIndicator}{[}\PY{n+nv}{Alpha}\PY{p+pIndicator}{,}\PY{+w}{ }\PY{p+pIndicator}{\PYZob{}}\PY{n+nt}{value}\PY{p}{:}\PY{+w}{ }\PY{n+nv}{Maria}\PY{p+pIndicator}{,}\PY{n+nt}{ rows}\PY{p}{:}\PY{+w}{ }\PY{n+nv}{2}\PY{p+pIndicator}{\PYZcb{}}\PY{p+pIndicator}{,}\PY{+w}{ }\PY{n+nv}{Draft}\PY{p+pIndicator}{,}\PY{+w}{     }\PY{n+nv}{12}\PY{p+pIndicator}{]}
+\PY{+w}{  }\PY{p+pIndicator}{\PYZhy{}}\PY{+w}{ }\PY{p+pIndicator}{[}\PY{n+nv}{Beta}\PY{p+pIndicator}{,}\PY{+w}{  }\PY{n+nv}{\PYZti{}}\PY{p+pIndicator}{,}\PY{+w}{                        }\PY{n+nv}{Review}\PY{p+pIndicator}{,}\PY{+w}{   }\PY{n+nv}{18}\PY{p+pIndicator}{]}
+\PY{+w}{  }\PY{p+pIndicator}{\PYZhy{}}\PY{+w}{ }\PY{p+pIndicator}{[}\PY{n+nv}{Gamma}\PY{p+pIndicator}{,}\PY{+w}{ }\PY{n+nv}{John}\PY{p+pIndicator}{,}\PY{+w}{                     }\PY{n+nv}{Published}\PY{p+pIndicator}{,}\PY{+w}{ }\PY{n+nv}{24}\PY{p+pIndicator}{]}
+\PY{l+s+sb}{```}
+\end{Verbatim}
+\end{code}
+Column spans consume consecutive leaf columns:
+
+\begin{code}{markdown}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+Table: Annual totals across all four quarters
+
+\PY{l+s+sb}{```}\PY{l+s+sb}{yaml}\PY{+w}{ }table
+\PY{n+nt}{columns}\PY{p}{:}
+\PY{+w}{  }\PY{p+pIndicator}{\PYZhy{}}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{Metric}
+\PY{+w}{  }\PY{p+pIndicator}{\PYZhy{}}\PY{+w}{ }\PY{n+nt}{name}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{2024}
+\PY{+w}{    }\PY{n+nt}{columns}\PY{p}{:}\PY{+w}{ }\PY{p+pIndicator}{[}\PY{n+nv}{Q1}\PY{p+pIndicator}{,}\PY{+w}{ }\PY{n+nv}{Q2}\PY{p+pIndicator}{,}\PY{+w}{ }\PY{n+nv}{Q3}\PY{p+pIndicator}{,}\PY{+w}{ }\PY{n+nv}{Q4}\PY{p+pIndicator}{]}
+\PY{n+nt}{rows}\PY{p}{:}
+\PY{+w}{  }\PY{p+pIndicator}{\PYZhy{}}\PY{+w}{ }\PY{p+pIndicator}{[}\PY{n+nv}{Revenue}\PY{p+pIndicator}{,}\PY{+w}{ }\PY{p+pIndicator}{[}\PY{n+nv}{120}\PY{p+pIndicator}{,}\PY{+w}{ }\PY{n+nv}{130}\PY{p+pIndicator}{,}\PY{+w}{ }\PY{n+nv}{150}\PY{p+pIndicator}{,}\PY{+w}{ }\PY{n+nv}{170}\PY{p+pIndicator}{]}\PY{p+pIndicator}{]}
+\PY{+w}{  }\PY{p+pIndicator}{\PYZhy{}}\PY{+w}{ }\PY{p+pIndicator}{[}\PY{n+nv}{Cost}\PY{p+pIndicator}{,}\PY{+w}{    }\PY{p+pIndicator}{[}\PY{n+nv}{80}\PY{p+pIndicator}{,}\PY{+w}{  }\PY{n+nv}{85}\PY{p+pIndicator}{,}\PY{+w}{  }\PY{n+nv}{90}\PY{p+pIndicator}{,}\PY{+w}{  }\PY{n+nv}{95}\PY{p+pIndicator}{]}\PY{p+pIndicator}{]}
+\PY{+w}{  }\PY{p+pIndicator}{\PYZhy{}}\PY{+w}{ }\PY{n+nt}{separator}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{true}
+\PY{+w}{  }\PY{p+pIndicator}{\PYZhy{}}\PY{+w}{ }\PY{p+pIndicator}{[}\PY{n+nv}{Gross}\PY{p+pIndicator}{,}\PY{+w}{   }\PY{p+pIndicator}{\PYZob{}}\PY{n+nt}{value}\PY{p}{:}\PY{+w}{ }\PY{l+s}{\PYZdq{}}\PY{l+s}{\PYZdl{}570k}\PY{l+s}{\PYZdq{}}\PY{p+pIndicator}{,}\PY{n+nt}{ cols}\PY{p}{:}\PY{+w}{ }\PY{n+nv}{4}\PY{p+pIndicator}{,}\PY{n+nt}{ align}\PY{p}{:}\PY{+w}{ }\PY{n+nv}{c}\PY{p+pIndicator}{\PYZcb{}}\PY{p+pIndicator}{]}
+\PY{l+s+sb}{```}
+\end{Verbatim}
+\end{code}
+A cell can span a rectangle. Every absorbed slot must be acknowledged:
+
+\begin{code}{yaml}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+\PY{n+nt}{columns}\PY{p}{:}\PY{+w}{ }\PY{p+pIndicator}{[}\PY{n+nv}{A}\PY{p+pIndicator}{,}\PY{+w}{ }\PY{n+nv}{B}\PY{p+pIndicator}{,}\PY{+w}{ }\PY{n+nv}{C}\PY{p+pIndicator}{,}\PY{+w}{ }\PY{n+nv}{D}\PY{p+pIndicator}{]}
+\PY{n+nt}{rows}\PY{p}{:}
+\PY{+w}{  }\PY{p+pIndicator}{\PYZhy{}}\PY{+w}{ }\PY{p+pIndicator}{[}\PY{n+nv}{r1}\PY{p+pIndicator}{,}\PY{+w}{ }\PY{p+pIndicator}{\PYZob{}}\PY{n+nt}{value}\PY{p}{:}\PY{+w}{ }\PY{l+s}{\PYZdq{}}\PY{l+s}{Merged}\PY{n+nv}{ }\PY{l+s}{2x3}\PY{l+s}{\PYZdq{}}\PY{p+pIndicator}{,}\PY{n+nt}{ rows}\PY{p}{:}\PY{+w}{ }\PY{n+nv}{2}\PY{p+pIndicator}{,}\PY{n+nt}{ cols}\PY{p}{:}\PY{+w}{ }\PY{n+nv}{3}\PY{p+pIndicator}{,}\PY{n+nt}{ align}\PY{p}{:}\PY{+w}{ }\PY{n+nv}{c}\PY{p+pIndicator}{\PYZcb{}}\PY{p+pIndicator}{]}
+\PY{+w}{  }\PY{p+pIndicator}{\PYZhy{}}\PY{+w}{ }\PY{p+pIndicator}{[}\PY{n+nv}{r2}\PY{p+pIndicator}{,}\PY{+w}{ }\PY{n+nv}{\PYZti{}}\PY{p+pIndicator}{,}\PY{+w}{                                                 }\PY{n+nv}{\PYZti{}}\PY{p+pIndicator}{,}\PY{+w}{ }\PY{n+nv}{\PYZti{}}\PY{p+pIndicator}{]}
+\PY{+w}{  }\PY{p+pIndicator}{\PYZhy{}}\PY{+w}{ }\PY{p+pIndicator}{[}\PY{n+nv}{r3}\PY{p+pIndicator}{,}\PY{+w}{ }\PY{n+nv}{x}\PY{p+pIndicator}{,}\PY{+w}{ }\PY{n+nv}{y}\PY{p+pIndicator}{,}\PY{+w}{ }\PY{n+nv}{z}\PY{p+pIndicator}{]}
+\end{Verbatim}
+\end{code}
+\section{Widths and LaTeX Environments}\label{widths-and-latex-environments}
+
+By default, \texttt{table.width} is \texttt{auto}, which selects a natural-width \texttt{tabular}
+unless a column asks for flexible width. Setting a table width usually selects
+\texttt{tabularx}:
+
+\begin{code}{yaml}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+\PY{n+nt}{table}\PY{p}{:}
+\PY{+w}{  }\PY{n+nt}{width}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{90\PYZpc{}}
+\PY{n+nt}{columns}\PY{p}{:}
+\PY{+w}{  }\PY{p+pIndicator}{\PYZhy{}}\PY{+w}{ }\PY{n+nt}{name}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{Requirement}
+\PY{+w}{    }\PY{n+nt}{width}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{25\PYZpc{}}
+\PY{+w}{    }\PY{n+nt}{align}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{left}
+\PY{+w}{  }\PY{p+pIndicator}{\PYZhy{}}\PY{+w}{ }\PY{n+nt}{name}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{Description}
+\PY{+w}{    }\PY{n+nt}{align}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{justify}
+\PY{+w}{  }\PY{p+pIndicator}{\PYZhy{}}\PY{+w}{ }\PY{n+nt}{name}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{Priority}
+\PY{+w}{    }\PY{n+nt}{width}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{15\PYZpc{}}
+\PY{+w}{    }\PY{n+nt}{align}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{center}
+\end{Verbatim}
+\end{code}
+Width rules:
+
+\begin{itemize}
+\item{} \texttt{table.width: auto} means natural table width.
+\item{} \texttt{table.width: 100\%} means \texttt{\textbackslash{}linewidth}; other percentages scale from it.
+\item{} \texttt{width: X} marks a column as the flexible \texttt{tabularx} column.
+\item{} \texttt{width: auto} on a column is also treated as a flexible \texttt{X} column.
+\item{} \texttt{width-\allowbreak{}group: quarter} makes all matching columns equal-width \texttt{X} columns
+  when no explicit width is supplied.
+\item{} Raw strings such as \texttt{2.5cm} are passed through as LaTeX lengths.
+
+\end{itemize}
+You can force long-table rendering:
+
+\begin{code}{yaml}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+\PY{n+nt}{table}\PY{p}{:}
+\PY{+w}{  }\PY{n+nt}{long}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{true}
+\end{Verbatim}
+\end{code}
+\texttt{long: auto} is the default. \texttt{placement} accepts \LaTeX{} float placement
+letters such as \texttt{htbp}:
+
+\begin{code}{yaml}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+\PY{n+nt}{table}\PY{p}{:}
+\PY{+w}{  }\PY{n+nt}{placement}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{htbp}
+\end{Verbatim}
+\end{code}
+\section{Markdown Inside Cells}\label{markdown-inside-cells}
+
+Inline Markdown survives inside cells:
+
+\begin{code}{yaml}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+\PY{n+nt}{columns}\PY{p}{:}\PY{+w}{ }\PY{p+pIndicator}{[}\PY{n+nv}{Requirement}\PY{p+pIndicator}{,}\PY{+w}{ }\PY{n+nv}{Notes}\PY{p+pIndicator}{]}
+\PY{n+nt}{rows}\PY{p}{:}
+\PY{+w}{  }\PY{p+pIndicator}{\PYZhy{}}\PY{+w}{ }\PY{p+pIndicator}{[}\PY{n+nv}{REQ\PYZhy{}001}\PY{p+pIndicator}{,}\PY{+w}{ }\PY{l+s}{\PYZdq{}}\PY{l+s}{**Must**}\PY{n+nv}{ }\PY{l+s}{support}\PY{n+nv}{ }\PY{l+s}{`CSV`}\PY{n+nv}{ }\PY{l+s}{import}\PY{l+s}{\PYZdq{}}\PY{p+pIndicator}{]}
+\PY{+w}{  }\PY{p+pIndicator}{\PYZhy{}}\PY{+w}{ }\PY{p+pIndicator}{[}\PY{n+nv}{REQ\PYZhy{}002}\PY{p+pIndicator}{,}\PY{+w}{ }\PY{l+s}{\PYZdq{}}\PY{l+s}{See}\PY{n+nv}{ }\PY{l+s}{[the}\PY{n+nv}{ }\PY{l+s}{spec](./spec.md)}\PY{n+nv}{ }\PY{l+s}{before}\PY{n+nv}{ }\PY{l+s}{shipping}\PY{l+s}{\PYZdq{}}\PY{p+pIndicator}{]}
+\end{Verbatim}
+\end{code}
+Keep the values quoted when Markdown punctuation would otherwise confuse YAML.
+
+\section{Plain Markdown Tables with \texttt{yaml table-\allowbreak{}config}}\label{plain-markdown-tables-with-texttt-yaml-table-allowbreak-config}
+
+For small tables, pipe syntax is still the fastest input. Add a
+\texttt{yaml table-\allowbreak{}config} fence immediately after the table to route it through the
+same \LaTeX{} table renderer:
+
+\begin{code}{markdown}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+Table: Inventaire des cours d\PYZsq{}informatique. \PYZob{}\PYZsh{}tbl:cours\PYZcb{}
+
+| Abbr.      | Sem. | Nom du cours                          | Orientations | Charge |
+| \PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{} | \PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{} | \PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{} | \PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{} | \PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{} |
+| Info1      | S1   | Informatique 1                        | E,M,A,N      | 120    |
+| MicroInfo  | S1   | Microcontrôleurs et microinformatique | E,M,A,N      | 120    |
+| Info2      | S2   | Informatique 2                        | E,M,A,N      | 100    |
+
+\PY{l+s+sb}{```}\PY{l+s+sb}{yaml}\PY{+w}{ }table\PYZhy{}config
+\PY{n+nt}{columns}\PY{p}{:}
+\PY{+w}{  }\PY{p+pIndicator}{\PYZhy{}}\PY{+w}{ }\PY{p+pIndicator}{\PYZob{}}\PY{n+nt}{align}\PY{p}{:}\PY{+w}{ }\PY{n+nv}{left}\PY{p+pIndicator}{\PYZcb{}}
+\PY{+w}{  }\PY{p+pIndicator}{\PYZhy{}}\PY{+w}{ }\PY{p+pIndicator}{\PYZob{}}\PY{n+nt}{align}\PY{p}{:}\PY{+w}{ }\PY{n+nv}{right}\PY{p+pIndicator}{\PYZcb{}}
+\PY{+w}{  }\PY{p+pIndicator}{\PYZhy{}}\PY{+w}{ }\PY{p+pIndicator}{\PYZob{}}\PY{n+nt}{align}\PY{p}{:}\PY{+w}{ }\PY{n+nv}{justify}\PY{p+pIndicator}{,}\PY{n+nt}{ width}\PY{p}{:}\PY{+w}{ }\PY{n+nv}{X}\PY{p+pIndicator}{\PYZcb{}}
+\PY{+w}{  }\PY{p+pIndicator}{\PYZhy{}}\PY{+w}{ }\PY{p+pIndicator}{\PYZob{}}\PY{n+nt}{align}\PY{p}{:}\PY{+w}{ }\PY{n+nv}{left}\PY{p+pIndicator}{\PYZcb{}}
+\PY{+w}{  }\PY{p+pIndicator}{\PYZhy{}}\PY{+w}{ }\PY{p+pIndicator}{\PYZob{}}\PY{n+nt}{align}\PY{p}{:}\PY{+w}{ }\PY{n+nv}{right}\PY{p+pIndicator}{\PYZcb{}}
+\PY{l+s+sb}{```}
+\end{Verbatim}
+\end{code}
+\texttt{columns} is matched positionally against the Markdown table columns. The
+example above produces a \texttt{lrXlr} column spec: the course-name column wraps and
+absorbs the remaining line width, while the other columns keep natural width.
+
+\texttt{yaml table-\allowbreak{}config} accepts:
+
+\begin{code}{yaml}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+\PY{n+nt}{table}\PY{p}{:}
+\PY{+w}{  }\PY{n+nt}{width}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{100\PYZpc{}}
+\PY{+w}{  }\PY{n+nt}{placement}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{htbp}
+\PY{+w}{  }\PY{n+nt}{long}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{auto}
+\PY{n+nt}{columns}\PY{p}{:}
+\PY{+w}{  }\PY{p+pIndicator}{\PYZhy{}}\PY{+w}{ }\PY{p+pIndicator}{\PYZob{}}\PY{n+nt}{align}\PY{p}{:}\PY{+w}{ }\PY{n+nv}{left}\PY{p+pIndicator}{\PYZcb{}}
+\PY{+w}{  }\PY{p+pIndicator}{\PYZhy{}}\PY{+w}{ }\PY{p+pIndicator}{\PYZob{}}\PY{n+nt}{align}\PY{p}{:}\PY{+w}{ }\PY{n+nv}{right}\PY{p+pIndicator}{,}\PY{n+nt}{ width}\PY{p}{:}\PY{+w}{ }\PY{n+nv}{X}\PY{p+pIndicator}{\PYZcb{}}
+\PY{+w}{  }\PY{p+pIndicator}{\PYZhy{}}\PY{+w}{ }\PY{p+pIndicator}{\PYZob{}}\PY{n+nt}{align}\PY{p}{:}\PY{+w}{ }\PY{n+nv}{center}\PY{p+pIndicator}{,}\PY{n+nt}{ width\PYZhy{}group}\PY{p}{:}\PY{+w}{ }\PY{n+nv}{metrics}\PY{p+pIndicator}{\PYZcb{}}
+\end{Verbatim}
+\end{code}
+It does not add grouped headers, spans, separators, or footers to a Markdown
+table. Use full \texttt{yaml table} when the structure itself is complex.
+
+\section{Complete Examples}\label{complete-examples}
+
+\subsection{Grouped Financial Header}\label{grouped-financial-header}
+
+\begin{code}{markdown}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+Table: Quarterly sales by product (2023\PYZhy{}2024)
+
+\PY{l+s+sb}{```}\PY{l+s+sb}{yaml}\PY{+w}{ }table
+\PY{n+nt}{table}\PY{p}{:}
+\PY{+w}{  }\PY{n+nt}{width}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{100\PYZpc{}}
+\PY{n+nt}{columns}\PY{p}{:}
+\PY{+w}{  }\PY{p+pIndicator}{\PYZhy{}}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{Product}
+\PY{+w}{  }\PY{p+pIndicator}{\PYZhy{}}\PY{+w}{ }\PY{n+nt}{name}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{FY23}
+\PY{+w}{    }\PY{n+nt}{columns}\PY{p}{:}\PY{+w}{ }\PY{p+pIndicator}{[}\PY{n+nv}{Q1}\PY{p+pIndicator}{,}\PY{+w}{ }\PY{n+nv}{Q2}\PY{p+pIndicator}{,}\PY{+w}{ }\PY{n+nv}{Q3}\PY{p+pIndicator}{,}\PY{+w}{ }\PY{n+nv}{Q4}\PY{p+pIndicator}{]}
+\PY{+w}{    }\PY{n+nt}{width\PYZhy{}group}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{quarter}
+\PY{+w}{  }\PY{p+pIndicator}{\PYZhy{}}\PY{+w}{ }\PY{n+nt}{name}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{FY24}
+\PY{+w}{    }\PY{n+nt}{columns}\PY{p}{:}\PY{+w}{ }\PY{p+pIndicator}{[}\PY{n+nv}{Q1}\PY{p+pIndicator}{,}\PY{+w}{ }\PY{n+nv}{Q2}\PY{p+pIndicator}{,}\PY{+w}{ }\PY{n+nv}{Q3}\PY{p+pIndicator}{,}\PY{+w}{ }\PY{n+nv}{Q4}\PY{p+pIndicator}{]}
+\PY{+w}{    }\PY{n+nt}{width\PYZhy{}group}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{quarter}
+\PY{n+nt}{rows}\PY{p}{:}
+\PY{+w}{  }\PY{p+pIndicator}{\PYZhy{}}\PY{+w}{ }\PY{p+pIndicator}{[}\PY{n+nv}{Apples}\PY{p+pIndicator}{,}\PY{+w}{   }\PY{p+pIndicator}{[}\PY{n+nv}{120}\PY{p+pIndicator}{,}\PY{+w}{ }\PY{n+nv}{135}\PY{p+pIndicator}{,}\PY{+w}{ }\PY{n+nv}{150}\PY{p+pIndicator}{,}\PY{+w}{ }\PY{n+nv}{140}\PY{p+pIndicator}{]}\PY{p+pIndicator}{,}\PY{+w}{ }\PY{p+pIndicator}{[}\PY{n+nv}{130}\PY{p+pIndicator}{,}\PY{+w}{ }\PY{n+nv}{145}\PY{p+pIndicator}{,}\PY{+w}{ }\PY{n+nv}{160}\PY{p+pIndicator}{,}\PY{+w}{ }\PY{n+nv}{150}\PY{p+pIndicator}{]}\PY{p+pIndicator}{]}
+\PY{+w}{  }\PY{p+pIndicator}{\PYZhy{}}\PY{+w}{ }\PY{p+pIndicator}{[}\PY{n+nv}{Pears}\PY{p+pIndicator}{,}\PY{+w}{    }\PY{p+pIndicator}{[}\PY{n+nv}{80}\PY{p+pIndicator}{,}\PY{+w}{  }\PY{n+nv}{90}\PY{p+pIndicator}{,}\PY{+w}{  }\PY{n+nv}{110}\PY{p+pIndicator}{,}\PY{+w}{ }\PY{n+nv}{85}\PY{p+pIndicator}{]}\PY{p+pIndicator}{,}\PY{+w}{  }\PY{p+pIndicator}{[}\PY{n+nv}{85}\PY{p+pIndicator}{,}\PY{+w}{  }\PY{n+nv}{95}\PY{p+pIndicator}{,}\PY{+w}{  }\PY{n+nv}{115}\PY{p+pIndicator}{,}\PY{+w}{ }\PY{n+nv}{90}\PY{p+pIndicator}{]}\PY{p+pIndicator}{]}
+\PY{+w}{  }\PY{p+pIndicator}{\PYZhy{}}\PY{+w}{ }\PY{p+pIndicator}{[}\PY{n+nv}{Peaches}\PY{p+pIndicator}{,}\PY{+w}{  }\PY{p+pIndicator}{[}\PY{n+nv}{60}\PY{p+pIndicator}{,}\PY{+w}{  }\PY{n+nv}{95}\PY{p+pIndicator}{,}\PY{+w}{  }\PY{n+nv}{110}\PY{p+pIndicator}{,}\PY{+w}{ }\PY{n+nv}{40}\PY{p+pIndicator}{]}\PY{p+pIndicator}{,}\PY{+w}{  }\PY{p+pIndicator}{[}\PY{n+nv}{55}\PY{p+pIndicator}{,}\PY{+w}{  }\PY{n+nv}{100}\PY{p+pIndicator}{,}\PY{+w}{ }\PY{n+nv}{120}\PY{p+pIndicator}{,}\PY{+w}{ }\PY{n+nv}{45}\PY{p+pIndicator}{]}\PY{p+pIndicator}{]}
+\PY{+w}{  }\PY{p+pIndicator}{\PYZhy{}}\PY{+w}{ }\PY{n+nt}{separator}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{true}
+\PY{+w}{  }\PY{p+pIndicator}{\PYZhy{}}\PY{+w}{ }\PY{p+pIndicator}{[}\PY{n+nv}{Cherries}\PY{p+pIndicator}{,}\PY{+w}{ }\PY{p+pIndicator}{[}\PY{n+nv}{\PYZti{}}\PY{p+pIndicator}{,}\PY{+w}{   }\PY{n+nv}{\PYZti{}}\PY{p+pIndicator}{,}\PY{+w}{   }\PY{n+nv}{45}\PY{p+pIndicator}{,}\PY{+w}{  }\PY{n+nv}{0}\PY{p+pIndicator}{]}\PY{p+pIndicator}{,}\PY{+w}{   }\PY{p+pIndicator}{[}\PY{n+nv}{\PYZti{}}\PY{p+pIndicator}{,}\PY{+w}{   }\PY{n+nv}{\PYZti{}}\PY{p+pIndicator}{,}\PY{+w}{   }\PY{n+nv}{50}\PY{p+pIndicator}{,}\PY{+w}{  }\PY{n+nv}{0}\PY{p+pIndicator}{]}\PY{p+pIndicator}{]}
+\PY{+w}{  }\PY{p+pIndicator}{\PYZhy{}}\PY{+w}{ }\PY{p+pIndicator}{[}\PY{n+nv}{Plums}\PY{p+pIndicator}{,}\PY{+w}{    }\PY{p+pIndicator}{[}\PY{n+nv}{0}\PY{p+pIndicator}{,}\PY{+w}{   }\PY{n+nv}{0}\PY{p+pIndicator}{,}\PY{+w}{   }\PY{n+nv}{30}\PY{p+pIndicator}{,}\PY{+w}{  }\PY{n+nv}{75}\PY{p+pIndicator}{]}\PY{p+pIndicator}{,}\PY{+w}{  }\PY{p+pIndicator}{[}\PY{n+nv}{0}\PY{p+pIndicator}{,}\PY{+w}{   }\PY{n+nv}{0}\PY{p+pIndicator}{,}\PY{+w}{   }\PY{n+nv}{35}\PY{p+pIndicator}{,}\PY{+w}{  }\PY{n+nv}{80}\PY{p+pIndicator}{]}\PY{p+pIndicator}{]}
+\PY{n+nt}{footer}\PY{p}{:}
+\PY{+w}{  }\PY{p+pIndicator}{\PYZhy{}}\PY{+w}{ }\PY{p+pIndicator}{[}\PY{n+nv}{Total}\PY{p+pIndicator}{,}\PY{+w}{ }\PY{p+pIndicator}{[}\PY{n+nv}{260}\PY{p+pIndicator}{,}\PY{+w}{ }\PY{n+nv}{320}\PY{p+pIndicator}{,}\PY{+w}{ }\PY{n+nv}{445}\PY{p+pIndicator}{,}\PY{+w}{ }\PY{n+nv}{340}\PY{p+pIndicator}{]}\PY{p+pIndicator}{,}\PY{+w}{ }\PY{p+pIndicator}{[}\PY{n+nv}{270}\PY{p+pIndicator}{,}\PY{+w}{ }\PY{n+nv}{340}\PY{p+pIndicator}{,}\PY{+w}{ }\PY{n+nv}{480}\PY{p+pIndicator}{,}\PY{+w}{ }\PY{n+nv}{365}\PY{p+pIndicator}{]}\PY{p+pIndicator}{]}
+\PY{l+s+sb}{```}
+\end{Verbatim}
+\end{code}
+\subsection{Three-Level Header}\label{three-level-header}
+
+\begin{code}{markdown}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+Table: Monthly sales breakdown for 2024
+
+\PY{l+s+sb}{```}\PY{l+s+sb}{yaml}\PY{+w}{ }table
+\PY{n+nt}{columns}\PY{p}{:}
+\PY{+w}{  }\PY{p+pIndicator}{\PYZhy{}}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{Product}
+\PY{+w}{  }\PY{p+pIndicator}{\PYZhy{}}\PY{+w}{ }\PY{n+nt}{name}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{2024}
+\PY{+w}{    }\PY{n+nt}{columns}\PY{p}{:}
+\PY{+w}{      }\PY{p+pIndicator}{\PYZhy{}}\PY{+w}{ }\PY{n+nt}{name}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{Q1}
+\PY{+w}{        }\PY{n+nt}{columns}\PY{p}{:}\PY{+w}{ }\PY{p+pIndicator}{[}\PY{n+nv}{Jan}\PY{p+pIndicator}{,}\PY{+w}{ }\PY{n+nv}{Feb}\PY{p+pIndicator}{,}\PY{+w}{ }\PY{n+nv}{Mar}\PY{p+pIndicator}{]}
+\PY{+w}{      }\PY{p+pIndicator}{\PYZhy{}}\PY{+w}{ }\PY{n+nt}{name}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{Q2}
+\PY{+w}{        }\PY{n+nt}{columns}\PY{p}{:}\PY{+w}{ }\PY{p+pIndicator}{[}\PY{n+nv}{Apr}\PY{p+pIndicator}{,}\PY{+w}{ }\PY{n+nv}{May}\PY{p+pIndicator}{,}\PY{+w}{ }\PY{n+nv}{Jun}\PY{p+pIndicator}{]}
+\PY{n+nt}{rows}\PY{p}{:}
+\PY{+w}{  }\PY{p+pIndicator}{\PYZhy{}}\PY{+w}{ }\PY{p+pIndicator}{[}\PY{n+nv}{Alpha}\PY{p+pIndicator}{,}\PY{+w}{ }\PY{p+pIndicator}{[}\PY{n+nv}{10}\PY{p+pIndicator}{,}\PY{+w}{ }\PY{n+nv}{12}\PY{p+pIndicator}{,}\PY{+w}{ }\PY{n+nv}{15}\PY{p+pIndicator}{,}\PY{+w}{ }\PY{n+nv}{18}\PY{p+pIndicator}{,}\PY{+w}{ }\PY{n+nv}{20}\PY{p+pIndicator}{,}\PY{+w}{ }\PY{n+nv}{22}\PY{p+pIndicator}{]}\PY{p+pIndicator}{]}
+\PY{+w}{  }\PY{p+pIndicator}{\PYZhy{}}\PY{+w}{ }\PY{p+pIndicator}{[}\PY{n+nv}{Beta}\PY{p+pIndicator}{,}\PY{+w}{  }\PY{p+pIndicator}{[}\PY{n+nv}{\PYZti{}}\PY{p+pIndicator}{,}\PY{+w}{  }\PY{n+nv}{\PYZti{}}\PY{p+pIndicator}{,}\PY{+w}{  }\PY{n+nv}{5}\PY{p+pIndicator}{,}\PY{+w}{  }\PY{n+nv}{8}\PY{p+pIndicator}{,}\PY{+w}{  }\PY{n+nv}{10}\PY{p+pIndicator}{,}\PY{+w}{ }\PY{n+nv}{12}\PY{p+pIndicator}{]}\PY{p+pIndicator}{]}
+\PY{l+s+sb}{```}
+\end{Verbatim}
+\end{code}
+\subsection{Fixed Columns plus Flexible Text}\label{fixed-columns-plus-flexible-text}
+
+\begin{code}{markdown}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+Table: Product requirements (fixed + flexible columns)
+
+\PY{l+s+sb}{```}\PY{l+s+sb}{yaml}\PY{+w}{ }table
+\PY{n+nt}{table}\PY{p}{:}
+\PY{+w}{  }\PY{n+nt}{width}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{90\PYZpc{}}
+\PY{n+nt}{columns}\PY{p}{:}
+\PY{+w}{  }\PY{p+pIndicator}{\PYZhy{}}\PY{+w}{ }\PY{n+nt}{name}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{Requirement}
+\PY{+w}{    }\PY{n+nt}{width}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{25\PYZpc{}}
+\PY{+w}{    }\PY{n+nt}{align}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{l}
+\PY{+w}{  }\PY{p+pIndicator}{\PYZhy{}}\PY{+w}{ }\PY{n+nt}{name}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{Description}
+\PY{+w}{    }\PY{n+nt}{align}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{j}
+\PY{+w}{  }\PY{p+pIndicator}{\PYZhy{}}\PY{+w}{ }\PY{n+nt}{name}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{Priority}
+\PY{+w}{    }\PY{n+nt}{width}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{15\PYZpc{}}
+\PY{+w}{    }\PY{n+nt}{align}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{c}
+\PY{n+nt}{rows}\PY{p}{:}
+\PY{+w}{  }\PY{p+pIndicator}{\PYZhy{}}\PY{+w}{ }\PY{p+pIndicator}{[}\PY{n+nv}{REQ\PYZhy{}001}\PY{p+pIndicator}{,}\PY{+w}{ }\PY{l+s}{\PYZdq{}}\PY{l+s}{The}\PY{n+nv}{ }\PY{l+s}{system}\PY{n+nv}{ }\PY{l+s}{must}\PY{n+nv}{ }\PY{l+s}{support}\PY{n+nv}{ }\PY{l+s}{CSV}\PY{n+nv}{ }\PY{l+s}{import}\PY{n+nv}{ }\PY{l+s}{with}\PY{n+nv}{ }\PY{l+s}{automatic}\PY{n+nv}{ }\PY{l+s}{delimiter}\PY{n+nv}{ }\PY{l+s}{detection.}\PY{l+s}{\PYZdq{}}\PY{p+pIndicator}{,}\PY{+w}{ }\PY{n+nv}{High}\PY{p+pIndicator}{]}
+\PY{+w}{  }\PY{p+pIndicator}{\PYZhy{}}\PY{+w}{ }\PY{p+pIndicator}{[}\PY{n+nv}{REQ\PYZhy{}002}\PY{p+pIndicator}{,}\PY{+w}{ }\PY{l+s}{\PYZdq{}}\PY{l+s}{PDF}\PY{n+nv}{ }\PY{l+s}{exports}\PY{n+nv}{ }\PY{l+s}{must}\PY{n+nv}{ }\PY{l+s}{follow}\PY{n+nv}{ }\PY{l+s}{the}\PY{n+nv}{ }\PY{l+s}{brand}\PY{n+nv}{ }\PY{l+s}{guidelines}\PY{n+nv}{ }\PY{l+s}{(logo,}\PY{n+nv}{ }\PY{l+s}{colours,}\PY{n+nv}{ }\PY{l+s}{margins).}\PY{l+s}{\PYZdq{}}\PY{p+pIndicator}{,}\PY{+w}{ }\PY{n+nv}{Medium}\PY{p+pIndicator}{]}
+\PY{+w}{  }\PY{p+pIndicator}{\PYZhy{}}\PY{+w}{ }\PY{p+pIndicator}{[}\PY{n+nv}{REQ\PYZhy{}003}\PY{p+pIndicator}{,}\PY{+w}{ }\PY{l+s}{\PYZdq{}}\PY{l+s}{The}\PY{n+nv}{ }\PY{l+s}{UI}\PY{n+nv}{ }\PY{l+s}{must}\PY{n+nv}{ }\PY{l+s}{be}\PY{n+nv}{ }\PY{l+s}{fully}\PY{n+nv}{ }\PY{l+s}{keyboard}\PY{n+nv}{ }\PY{l+s}{accessible}\PY{n+nv}{ }\PY{l+s}{(WCAG}\PY{n+nv}{ }\PY{l+s}{2.1}\PY{n+nv}{ }\PY{l+s}{AA).}\PY{l+s}{\PYZdq{}}\PY{p+pIndicator}{,}\PY{+w}{ }\PY{n+nv}{High}\PY{p+pIndicator}{]}
+\PY{l+s+sb}{```}
+\end{Verbatim}
+\end{code}
+\section{Validation Errors}\label{validation-errors}
+
+The YAML table parser validates the table before the \LaTeX{} renderer sees it.
+When something is wrong, TeXSmith emits an inline error block and keeps the
+document buildable.
+
+Common failures:
+
+\begin{itemize}
+\item{} Unknown top-level keys.
+\item{} Missing \texttt{columns}.
+\item{} Rows with too many or too few cells.
+\item{} Unknown column names in named-row mode.
+\item{} Span rectangles whose absorbed slots are not \texttt{\textasciitilde{}}.
+\item{} Invalid alignment values.
+\item{} Invalid percentage widths.
+
+\end{itemize}
+Example:
+
+\begin{code}{markdown}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+\PY{l+s+sb}{```}\PY{l+s+sb}{yaml}\PY{+w}{ }table
+\PY{n+nt}{columns}\PY{p}{:}
+\PY{+w}{  }\PY{p+pIndicator}{\PYZhy{}}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{Year}
+\PY{+w}{  }\PY{p+pIndicator}{\PYZhy{}}\PY{+w}{ }\PY{n+nt}{name}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{Actual}
+\PY{+w}{    }\PY{n+nt}{columns}\PY{p}{:}\PY{+w}{ }\PY{p+pIndicator}{[}\PY{n+nv}{H1}\PY{p+pIndicator}{,}\PY{+w}{ }\PY{n+nv}{H2}\PY{p+pIndicator}{]}
+\PY{n+nt}{rows}\PY{p}{:}
+\PY{+w}{  }\PY{p+pIndicator}{\PYZhy{}}\PY{+w}{ }\PY{n+nt}{2024}\PY{p}{:}\PY{+w}{ }\PY{p+pIndicator}{\PYZob{}}\PY{n+nt}{Acutal}\PY{p}{:}\PY{+w}{ }\PY{p+pIndicator}{[}\PY{n+nv}{6}\PY{p+pIndicator}{,}\PY{+w}{ }\PY{n+nv}{7}\PY{p+pIndicator}{]}\PY{p+pIndicator}{\PYZcb{}}
+\PY{l+s+sb}{```}
+\end{Verbatim}
+\end{code}
+The typo \texttt{Acutal} is reported with the available column names. That is the
+point of making complex tables data-shaped instead of pretending that pipe
+tables are a database.
+
+\end{document}

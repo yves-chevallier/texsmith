@@ -1,0 +1,72 @@
+\documentclass[a4paper,twoside]{article}
+
+\usepackage{morewrites}
+
+\usepackage[svgnames,dvipsnames,x11names]{xcolor}
+\usepackage{graphicx}
+\usepackage[english]{babel}
+\usepackage[colorlinks=true, linkcolor=NavyBlue, urlcolor=NavyBlue, citecolor=NavyBlue]{hyperref}
+\usepackage[a4paper]{geometry}
+\usepackage{ts-fonts}
+\usepackage{float}
+\usepackage{seqsplit}
+\usepackage{ts-glossary}
+
+\usepackage{lastpage}
+\usepackage{refcount}
+\makeatletter
+\def\ps@plain{
+  \let\@oddhead\@empty
+  \let\@evenhead\@empty
+  \def\@oddfoot{
+    \hfil
+    \ifnum\getpagerefnumber{LastPage}>1\relax
+      \thepage
+    \fi
+    \hfil}
+  \let\@evenfoot\@oddfoot
+}
+\makeatother
+
+\title{Structured glossary demo}
+\author{}\date{}
+
+\begin{document}
+
+\maketitle
+\tableofcontents
+
+\section{Introduction}\label{introduction}
+
+This document showcases TeXSmith's structured glossary support. Definitions
+live in the YAML front matter: each entry has a description and may be attached
+to a group. TeXSmith renders, in declaration order, one table per group plus a
+default table for entries that were left ungrouped.
+
+\section{Technical acronyms}\label{technical-acronyms}
+
+A REST \acrshort{API} exchanges \acrshort{JSON} messages over \acrshort{HTTP}. The first occurrence of every
+acronym --- \acrshort{API}, \acrshort{HTTP}, \acrshort{JSON} --- is automatically replaced with \texttt{\textbackslash{}acrshort\{...\}},
+without writing any \texttt{\textbackslash{}gls\{...\}} by hand.
+
+\section{Institutional acronyms}\label{institutional-acronyms}
+
+The \acrshort{UN} coordinates international relief efforts; the \acrshort{WHO} publishes its health
+recommendations.
+
+\section{Ungrouped acronym}\label{ungrouped-acronym}
+
+A \acrshort{DOI} uniquely identifies a scientific publication. With no group attached, it
+is listed in the default acronym table.
+
+\section{Mixing with the legacy syntax}\label{mixing-with-the-legacy-syntax}
+
+The classic Markdown \texttt{*[KEY]: ...} syntax keeps working and merges with the
+front-matter definitions.
+
+\acrshort{NMR} remains a cornerstone of modern molecular analysis.
+
+\printglossary[type=\acronymtype]\printglossary[type=technical, title={Technical acronyms}]
+\printglossary[type=institutional, title={Institutional acronyms}]
+
+\end{document}

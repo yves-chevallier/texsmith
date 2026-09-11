@@ -1,0 +1,58 @@
+\documentclass[a4paper,twoside]{article}
+
+\usepackage{morewrites}
+
+\usepackage[svgnames,dvipsnames,x11names]{xcolor}
+\usepackage{graphicx}
+\usepackage[english]{babel}
+\usepackage[colorlinks=true, linkcolor=NavyBlue, urlcolor=NavyBlue, citecolor=NavyBlue]{hyperref}
+\usepackage[a4paper]{geometry}
+\usepackage{ts-fonts}
+\usepackage{float}
+\usepackage{seqsplit}
+
+\usepackage{lastpage}
+\usepackage{refcount}
+\makeatletter
+\def\ps@plain{
+  \let\@oddhead\@empty
+  \let\@evenhead\@empty
+  \def\@oddfoot{
+    \hfil
+    \ifnum\getpagerefnumber{LastPage}>1\relax
+      \thepage
+    \fi
+    \hfil}
+  \let\@evenfoot\@oddfoot
+}
+\makeatother
+
+\title{LaTeX}
+\author{}\date{}
+
+\begin{document}
+
+\maketitle
+
+\thispagestyle{plain}
+::: texsmith.adapters.latex
+
+::: texsmith.adapters.latex.formatter
+
+::: texsmith.adapters.latex.renderer
+
+::: texsmith.adapters.latex.engines.<STEM>.log
+
+::: texsmith.adapters.latex.utils
+
+::: texsmith.core.templates
+
+::: texsmith.core.templates.base
+
+::: texsmith.core.templates.loader
+
+::: texsmith.core.templates.manifest
+
+::: texsmith.core.templates.runtime
+
+\end{document}

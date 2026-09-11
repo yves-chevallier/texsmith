@@ -1,0 +1,377 @@
+\documentclass[a4paper,twoside]{article}
+
+\usepackage{morewrites}
+
+\usepackage[svgnames,dvipsnames,x11names]{xcolor}
+\usepackage{graphicx}
+\usepackage[english]{babel}
+\usepackage[colorlinks=true, linkcolor=NavyBlue, urlcolor=NavyBlue, citecolor=NavyBlue]{hyperref}
+\usepackage[a4paper]{geometry}
+\usepackage{ts-fonts}
+\usepackage{csquotes}
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{amsmath}
+\usepackage{float}
+\usepackage{seqsplit}
+\newcolumntype{Y}{>{\centering\arraybackslash}X}
+\newcolumntype{Z}{>{\raggedleft\arraybackslash}X}
+\usepackage{ts-code}
+\usepackage{ts-todolist}
+
+\usepackage{lastpage}
+\usepackage{refcount}
+\makeatletter
+\def\ps@plain{
+  \let\@oddhead\@empty
+  \let\@evenhead\@empty
+  \def\@oddfoot{
+    \hfil
+    \ifnum\getpagerefnumber{LastPage}>1\relax
+      \thepage
+    \fi
+    \hfil}
+  \let\@evenfoot\@oddfoot
+}
+\makeatother
+
+\title{Development Roadmap}
+\author{}\date{}
+
+\begin{document}
+
+\maketitle
+
+\thispagestyle{plain}
+Roadmap and development notes for TeXSmith. I keep this file as a running checklist of features to implement, refactorings to perform, and documentation to write. It will remain part of TeXSmith until version 1.0.0 ships.
+
+\section{Roadmap}\label{roadmap}
+
+\begin{todolist}
+\item[\done] Simplify the attributes SSOT for templates and fragments
+\item[\done] Deploy to PyPI
+\item[\done] WARNING -  Unresolved mustache \texttt{\{\{callouts.style\}\}} in template attributes; leaving placeholder as-is.
+\item[\done] Attribute redundancy (\texttt{numbered}, \texttt{press.numbered}, etc.)
+\item[\done] Refactoring snippets and fixing snippet templates
+\item[\done] Font: mono fallback for missing characters
+\item Global user configuration (.texsmith/config.yml)
+\item Unified Fences Syntax
+\item Multicolumns
+\item Font Size
+\item Center/Right alignment
+\item Language
+\item LaTeX only / HTML only
+\item LaTeX raw
+\item More examples
+\item University exam
+\item Student quiz
+\item Multiline Acronyms
+\item Support for \texttt{inserted text} and \texttt{\{\textasciitilde{}\textasciitilde{}deleted text\textasciitilde{}\textasciitilde{}\}} (goodbox)
+\item Index: support for multi-indexes
+\item Cross-references (cleveref package)
+\item Enhanced tables: add with controls (auto, fixed width, \texttt{tabulary}, etc.)
+\item Support table orientation (rotate very large tables)
+\item CI: uv run mkdocs build \#--strict not yet ready
+\item Support for \texttt{tocloft} package to customize list of figures/tables
+\item Support for \texttt{enumitem} package to customize lists
+\item Develop submodules as standalone plugins
+\item Epigraph Plugin
+\item Letterine
+\item Custom variables to insert in a document using mustaches
+
+\end{todolist}
+\section{Unified Fences Syntax}\label{unified-fences-syntax}
+
+Markdown format has evolves like a living spece and multiple syntaxes coexists for different purposes. While MyST chose to only use backticks for any blocks (code, admonition), it seems more natural to use different fence styles for different purposes:
+
+\begin{itemize}
+\item{} \texttt{```} for code blocks and special blocks (Mermaid, LaTeX, custom tables, etc.) that require processing
+\item{} \texttt{<language>} Language highlighting for code blocks
+\item{} \texttt{mermaid} for Mermaid diagrams
+\item{} \texttt{svgbob} for SVGBob diagrams
+\item{} \texttt{tikz} for TikZ diagrams
+\item{} \texttt{table} for custom tables
+\item{} \texttt{python figure} for Python-generated figures
+\item{} \texttt{!!!} and \texttt{???} for admonitions and promoted text (notes, warnings, tips, etc.)
+\item{} \texttt{:::} or \texttt{///} for custom containers environments (center, right, language, font size, LaTeX only, HTML only, raw LaTeX, etc.)
+\item{} \texttt{align center} for centered text
+\item{} \texttt{align right} for right-aligned text
+\item{} \texttt{language <lang>} for language-specific content
+\item{} \texttt{font large} for font size adjustments
+\item{} \texttt{font small} for font size adjustments
+
+\end{itemize}
+which can add captions to figures or tables, but discrimination of target (figure or table) is
+not done automatically you must specify \texttt{figure-\allowbreak{}caption} or \texttt{table-\allowbreak{}caption}
+
+MyST Directives support adding options/arguments using this syntax:
+
+\begin{code}{md}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+```\PYZob{}directive\PYZcb{}
+:option: value
+```
+
+\PYZob{}rolename\PYZcb{}`text`
+\end{Verbatim}
+\end{code}
+\begin{code}{md}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+:::\PYZob{}note\PYZcb{}
+Admonition
+:::
+\end{Verbatim}
+\end{code}
+The subfigures with the \texttt{| \^{}1} syntax work, but this is not optimal for \LaTeX{} rendering, and the reference ID generated with \texttt{attrs: \{id: static-\allowbreak{}id\}} can be misleading.
+
+TeXSmith offers a more convenient way of adding figures using the admonition style
+
+\begin{code}{md}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+/// figure \PYZob{} \PY{n+ni}{\PYZsh{}reference} \PYZcb{}
+
+   ![\PY{n+nt}{alt}](\PY{n+na}{image.png})
+
+   Caption...
+\end{Verbatim}
+\end{code}
+You can automatically use subfigures with the following. The layout attribute will dictate how the figures are arranged in the output (\texttt{2:1} two figures horizontally, \texttt{2:2} four figures in two columns with two rows).
+
+\begin{code}{md}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+/// figure \PYZob{} \PY{n+ni}{\PYZsh{}reference} layout=\PYZdq{}2:1\PYZdq{} \PYZcb{}
+
+   ![\PY{n+nt}{a}](\PY{n+na}{image.png})
+   ![\PY{n+nt}{b}](\PY{n+na}{image.png})
+
+   We see in (a) a figure and in (b) another one.
+\end{Verbatim}
+\end{code}
+To refer to figures, use the \texttt{[](reference)} which will be replaced by the element number.
+
+\begin{code}{markdown}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+We see in Figure [](duck) that the animal has two legs.
+\end{Verbatim}
+\end{code}
+\section{Tectonic log}\label{tectonic-log}
+
+We want to mute false warnings and not display them:
+
+\begin{code}{perl}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+\PY{l+s+sr}{/\PYZca{}warning:\PYZbs{}s*.*?:\PYZbs{}d+:\PYZbs{}s*Requested font.*?at.*\PYZdl{}/}
+\PY{l+s+sr}{/\PYZca{}warning:\PYZbs{}s*.*?:\PYZbs{}d+:\PYZbs{}s*Unknown feature.*?in font.*\PYZdl{}/}
+\end{Verbatim}
+\end{code}
+Recent matrix runs with TeX Gyre (bonum/pagella/termes/schola/heros/adventor/cursor) trigger
+many Tectonic warnings like \texttt{Unknown feature '} or repeated \texttt{Requested font} lines; output is
+otherwise correct. Keep these noted as benign until we wire the log filter above or document a
+flag to silence them.
+
+\section{Features}\label{features}
+
+\subsection{Mermaid color configuration}\label{mermaid-color-configuration}
+
+Je remarque que les diagrammes Mermaid qui sont créés apparaissent avec un fond gris dans le PDF. Mais nous avions configuré un style Mermaid global a TeXSmith pour avoir des diagrammes b\&w dans le PDF final. Il n'est probablement plus activé ou pris en compte. Il faut vérifier cela et corriger le problème.
+
+La gestion du cache des assets est aussi à vérifier et la rendre dépendante de la configuration mermaid (si on change le style, il faut regénérer les diagrammes), ou alors si l'exécutable ou la version de l'image docker utilisée change.
+
+On ajoute aussi cette vérification pour les assets drawio.
+
+\subsection{MkDocs Linking Issues}\label{mkdocs-linking-issues}
+
+MkDocs currently fails to resolve links to other pages. For example, \texttt{[High-\allowbreak{}Level Workflows](api/high-\allowbreak{}level.md)} becomes \texttt{\textbackslash{}ref\{snippet:...} but the referenced snippet is never defined. Replacing the syntax with \texttt{\textbackslash{}ref} builds successfully but still fails at runtime. Investigate and fix the resolver so links work throughout the site.
+
+Also note that the scientific paper ``cheese'' example prematurely closes code blocks after a snippet. Identify why the snippet terminates early and correct it.
+
+\subsection{Acronyms multiline}\label{acronyms-multiline}
+
+The following doesn't work; it should either warn or join the different lines together.
+
+\begin{code}{markdown}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+\PY{g+gh}{\PYZsh{} Acronyms}
+
+The National Aeronautics and Space Administration NASA is responsible for the
+civilian space program.
+
+*[NASA]:
+    Line 1
+    Line 2
+\end{Verbatim}
+\end{code}
+\subsection{Font style with mono}\label{font-style-with-mono}
+
+We want to support combinations of font styles with the monospace font. For example:
+
+\begin{code}{markdown}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+*\PY{l+s+sb}{`abc`}*
+***`abc`***
+\PY{g+gs}{\PYZus{}\PYZus{}*`abc`*\PYZus{}\PYZus{}}
+\end{Verbatim}
+\end{code}
+\subsection{Fences the gros bordel}\label{fences-the-gros-bordel}
+
+\subsubsection{Code}\label{code}
+
+We only use \texttt{```} fences for code blocks or other special blocks like Mermaid, \LaTeX{}, custom tables, etc. No other uses should be allowed.
+
+\subsubsection{Admonitions}\label{admonitions}
+
+We prefer the MkDocs admonition syntax as it is more flexible and better supported.
+
+\begin{code}{md}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+!!! note \PYZdq{}Note Title\PYZdq{}
+
+    This is the content of the note.
+
+??? info \PYZdq{}Foldable Info Title\PYZdq{}
+
+    This is the content of the info.
+\end{Verbatim}
+\end{code}
+\subsubsection{Fenced custom}\label{fenced-custom}
+
+The \texttt{:::} syntax is reserved for custom containers like \texttt{center}, \texttt{right}, \texttt{language}, etc. No other uses should be allowed.
+
+\paragraph{Font Size}\label{font-size}\mbox{}\\
+
+\begin{displayquote}
+
+tiny, small, large, huge, enormous
+Other synonyms: tiny, scriptsize, footnotesize, small, normalsize, large, Large, LARGE, huge, Huge
+Other english synonyms: tiny, very small, small, normal, big, very big, huge, enormous
+
+\end{displayquote}
+
+\begin{center}
+\begin{tabularx}{\linewidth}{>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X}
+\toprule
+\textbf{Adjective(s) (EN)} & \textbf{LaTeX} & \textbf{HTML correspondance (CSS)} \\
+
+\midrule
+tiny, very tiny & \textbackslash{}tiny   (\(\approx\) 5 pt) & \texttt{<span style="font-\allowbreak{}size:0.5em">...</span>} \\
+very small & \textbackslash{}scriptsize (\(\approx\) 7 pt) & \texttt{<span style="font-\allowbreak{}size:0.7em">...</span>} \\
+footnote-sized & \textbackslash{}footnotesize (\(\approx\) 8 pt) & \texttt{<span style="font-\allowbreak{}size:0.8em">...</span>} \\
+small & \textbackslash{}small (\(\approx\) 9 pt) & \texttt{<span style="font-\allowbreak{}size:0.9em">...</span>} \\
+normal & \textbackslash{}normalsize (\(\approx\) 10 pt) & \texttt{<span style="font-\allowbreak{}size:1em">...</span>} \\
+big & \textbackslash{}large (\(\approx\) 12 pt) & \texttt{<span style="font-\allowbreak{}size:1.2em">...</span>} \\
+very big & \textbackslash{}Large (\(\approx\) 14.4 pt) & \texttt{<span style="font-\allowbreak{}size:1.4em">...</span>} \\
+between big and huge & \textbackslash{}LARGE (\(\approx\) 17.3 pt) & \texttt{<span style="font-\allowbreak{}size:1.7em">...</span>} \\
+huge & \textbackslash{}huge (\(\approx\) 20.7 pt) & \texttt{<span style="font-\allowbreak{}size:2.1em">...</span>} \\
+enormous, gigantic & \textbackslash{}Huge (\(\approx\) 24.9 pt) & \texttt{<span style="font-\allowbreak{}size:2.5em">...</span>} \\
+
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\begin{code}{text}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+::: font large
+This text is large.
+:::
+\end{Verbatim}
+\end{code}
+\paragraph{Center/Right alignment}\label{center-right-alignment}\mbox{}\\
+
+\begin{code}{md}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+::: center
+texte
+:::
+
+::: right
+texte
+:::
+\end{Verbatim}
+\end{code}
+\paragraph{Alignment}\label{alignment}\mbox{}\\
+
+\begin{code}{text}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+::: align center
+This text is centered.
+:::
+
+::: align right
+This text is right\PYZhy{}aligned.
+:::
+
+::: language arabic
+\end{Verbatim}
+\end{code}
+We use the syntax \texttt{verb} + \texttt{option} after the opening \texttt{:::} to specify the type of container and any relevant options.
+
+\begin{code}{text}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+::: latex only
+This LaTeX\PYZhy{}only content will be included in the LaTeX output but ignored in HTML.
+:::
+
+::: html only
+This HTML\PYZhy{}only content will be included in the HTML output but ignored in LaTeX.
+:::
+\end{Verbatim}
+\end{code}
+We can use raw \LaTeX{} blocks for more complex \LaTeX{} content that doesn't fit well in Markdown:
+
+\begin{code}{text}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+::: latex raw
+\PYZbs{}clearpage
+:::
+\end{Verbatim}
+\end{code}
+With SuperFences we support extra HTML attributes for custom containers:
+
+\begin{code}{text}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+::: language arabic \PYZob{}\PYZsh{}custom\PYZhy{}id .custom\PYZhy{}class data\PYZhy{}attr=\PYZdq{}value\PYZdq{}\PYZcb{}
+This is Arabic content with custom HTML attributes.
+:::
+\end{Verbatim}
+\end{code}
+Each \texttt{:::} container is converted into a \texttt{<div>} with the specified attributes in HTML, while \LaTeX{} processes the content according to the container type.
+
+\subsubsection{GFM Support for admonitions}\label{gfm-support-for-admonitions}
+
+We want TeXSmith to support GitHub Flavored Markdown (GFM) admonitions as well. This includes the ability to create notes, warnings, tips, and other types of admonitions using the GFM syntax.
+
+\begin{code}{md}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+\PY{k}{\PYZgt{} }\PY{g+ge}{[!NOTE]}
+\PY{k}{\PYZgt{} }\PY{g+ge}{This is a note admonition.}
+\end{Verbatim}
+\end{code}
+This is converted to the exact same output as the MkDocs admonition syntax. It is equivalent to:
+
+\begin{code}{md}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+!!! note
+    This is a note admonition.
+\end{Verbatim}
+\end{code}
+\subsection{Figure References}\label{figure-references}
+
+Printed references depend on the document language. In English we would write, ``The elephant shown in Figure 1 is large.'' The \LaTeX{} equivalent is \texttt{The elephant shown in Figure\textasciitilde{}\textbackslash{}ref\{fig:elephant\} is large.} Pymdown lets us write:
+
+\begin{code}{markdown}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+The elephant shown in figure [\PYZsh{}fig:elephant] is large.
+\end{Verbatim}
+\end{code}
+\begin{code}{latex}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+\PY{k}{\PYZbs{}hyperref}\PY{n+na}{[fig:elephant]}\PY{n+nb}{\PYZob{}}Figure\PYZti{}\PY{k}{\PYZbs{}ref}\PY{k}{*}\PY{n+nb}{\PYZob{}}fig:elephant\PY{n+nb}{\PYZcb{}}\PY{n+nb}{\PYZcb{}}
+
+\PY{k}{\PYZbs{}usepackage}\PY{n+na}{[nameinlink]}\PY{n+nb}{\PYZob{}}cleveref\PY{n+nb}{\PYZcb{}}
+The elephant shown in \PY{k}{\PYZbs{}Cref}\PY{n+nb}{\PYZob{}}fig:elephant\PY{n+nb}{\PYZcb{}} is large.
+The same sentence in French typography would translate to “The elephant shown in \PY{k}{\PYZbs{}cref}\PY{n+nb}{\PYZob{}}fig:elephant\PY{n+nb}{\PYZcb{}} is large,” keeping “figure” lowercase.
+\end{Verbatim}
+\end{code}
+In scientific English we capitalize ``Figure'', while French typography keeps ``figure'' lowercase.
+
+\end{document}

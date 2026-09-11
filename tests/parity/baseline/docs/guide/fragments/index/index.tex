@@ -1,0 +1,203 @@
+\documentclass[a4paper,twoside]{article}
+
+\usepackage{morewrites}
+
+\usepackage[svgnames,dvipsnames,x11names]{xcolor}
+\usepackage{graphicx}
+\usepackage[english]{babel}
+\usepackage[colorlinks=true, linkcolor=NavyBlue, urlcolor=NavyBlue, citecolor=NavyBlue]{hyperref}
+\usepackage[a4paper]{geometry}
+\usepackage{ts-fonts}
+\usepackage{amsmath}
+\usepackage{float}
+\usepackage{seqsplit}
+\usepackage{ts-code}
+
+\usepackage{lastpage}
+\usepackage{refcount}
+\makeatletter
+\def\ps@plain{
+  \let\@oddhead\@empty
+  \let\@evenhead\@empty
+  \def\@oddfoot{
+    \hfil
+    \ifnum\getpagerefnumber{LastPage}>1\relax
+      \thepage
+    \fi
+    \hfil}
+  \let\@evenfoot\@oddfoot
+}
+\makeatother
+
+\title{Fragments}
+\author{}\date{}
+
+\begin{document}
+
+\maketitle
+
+\thispagestyle{plain}
+Fragments are reusable \LaTeX{} snippets injected into template slots. Built-in fragments (e.g., geometry, fonts, glossary, index) and custom ones share the same structure:
+
+\begin{itemize}
+\item{} \texttt{fragment.toml} with \texttt{name}, \texttt{description}, and either an \texttt{entrypoint} or a \texttt{files} list.
+\item{} Optional \texttt{attributes} section describing fragment-owned attributes (ownership enforced).
+\item{} Optional \texttt{partials} block for fragment-scoped partial overrides and \texttt{required\_partials} for dependencies.
+\item{} Optional \texttt{should\_render} logic (via entrypoint) to render only when needed.
+
+\end{itemize}
+\section{Manifest shape}\label{manifest-shape}
+
+\begin{code}{toml}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+\PY{n}{name}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{my\PYZhy{}fragment}\PY{l+s+s2}{\PYZdq{}}
+\PY{n}{description}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{Short description.}\PY{l+s+s2}{\PYZdq{}}
+
+\PY{k}{[}\PY{k}{files}\PY{k}{.}\PY{k}{0}\PY{k}{]}
+\PY{n}{path}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{my\PYZhy{}fragment.jinja.sty}\PY{l+s+s2}{\PYZdq{}}\PY{+w}{  }\PY{c+c1}{\PYZsh{} or .tex}
+\PY{n}{slot}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{extra\PYZus{}packages}\PY{l+s+s2}{\PYZdq{}}
+\PY{n}{type}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{package}\PY{l+s+s2}{\PYZdq{}}\PY{+w}{                }\PY{c+c1}{\PYZsh{} package | input | inline}
+\PY{n}{output}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{my\PYZhy{}fragment}\PY{l+s+s2}{\PYZdq{}}
+
+\PY{k}{[}\PY{k}{attributes}\PY{k}{.}\PY{k}{option}\PY{k}{]}
+\PY{n}{default}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{k+kc}{true}
+\PY{n}{type}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{boolean}\PY{l+s+s2}{\PYZdq{}}
+\PY{n}{sources}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{p}{[}\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{press.option}\PY{l+s+s2}{\PYZdq{}}\PY{p}{,}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{option}\PY{l+s+s2}{\PYZdq{}}\PY{p}{]}
+\PY{n}{description}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{Controls feature X.}\PY{l+s+s2}{\PYZdq{}}
+\end{Verbatim}
+\end{code}
+If you prefer Python logic, point \texttt{entrypoint} at a callable returning a \texttt{BaseFragment} instance.
+
+\section{Fragment pieces}\label{fragment-pieces}
+
+\begin{itemize}
+\item{} \texttt{package}: rendered to a \texttt{.sty} file and injected via \texttt{\textbackslash{}usepackage} into the target slot.
+\item{} \texttt{input}: rendered to \texttt{.tex} and injected via \texttt{\textbackslash{}input\{\}} into the target slot.
+\item{} \texttt{inline}: rendered string injected directly into the slot variable (no file emitted).
+
+\end{itemize}
+Slots are validated against the template at render time; inline injections must match declared slots or template variables.
+
+\section{Attributes}\label{attributes}
+
+Fragments can declare attributes (ownership enforced) and resolve overrides using the same \texttt{TemplateAttributeSpec} model as templates. Attribute defaults are injected into the context before rendering fragment pieces. Attribute ownership matters: if two fragments (or a template) claim the same attribute name, TeXSmith raises a \texttt{TemplateError}. Keep each attribute owned by a single fragment or the template to avoid conflicts.
+
+\section{Partials}\label{partials}
+
+Fragments can ship their own partials so feature-specific rendering stays close to the feature:
+
+\begin{code}{toml}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+\PY{n}{partials}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{p}{[}\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{strong.tex}\PY{l+s+s2}{\PYZdq{}}\PY{p}{,}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{codeblock.tex}\PY{l+s+s2}{\PYZdq{}}\PY{p}{]}\PY{+w}{         }\PY{c+c1}{\PYZsh{} list form}
+\PY{n}{required\PYZus{}partials}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{p}{[}\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{heading}\PY{l+s+s2}{\PYZdq{}}\PY{p}{]}\PY{+w}{                    }\PY{c+c1}{\PYZsh{} fail fast if missing}
+\end{Verbatim}
+\end{code}
+or as a mapping when paths and names differ:
+
+\begin{code}{toml}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+\PY{k}{[}\PY{k}{partials}\PY{k}{]}
+\PY{n}{codeinline}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{overrides/inline/code.tex}\PY{l+s+s2}{\PYZdq{}}
+\end{Verbatim}
+\end{code}
+Partial precedence is template overrides > fragment overrides > core defaults. Duplicate fragment providers for the same partial abort the render.
+
+\section{Runtime loading}\label{runtime-loading}
+
+\begin{itemize}
+\item{} Built-ins are discovered under \texttt{src/texsmith/fragments/**/fragment.toml}.
+\item{} Custom fragments can be passed via \texttt{press.fragments} in front matter or CLI attributes.
+\item{} The registry uses manifest metadata first; entrypoint is a fallback.
+\item{} \textbf{Entrypoint contract (Python)}: Must expose a module attribute \texttt{fragment} that is a \texttt{BaseFragment} instance. Legacy \texttt{create\_fragment()} factories are no longer used.
+
+\end{itemize}
+\section{Fragment contract (Python)}\label{fragment-contract-python}
+
+\begin{itemize}
+\item{} Implement a \texttt{BaseFragment[Config]} subclass with:
+\item{} class attributes: \texttt{name}, \texttt{description}, \texttt{pieces}, \texttt{attributes} (TemplateAttributeSpec map), optional \texttt{context\_defaults}, \texttt{partials}, \texttt{required\_partials}, \texttt{source}.
+\item{} methods: \texttt{build\_config(context, overrides=None) -\allowbreak{}> Config}, \texttt{inject(config, context, overrides=None) -\allowbreak{}> None}, \texttt{should\_render(config) -\allowbreak{}> bool}.
+\item{} Define a \texttt{Config} dataclass with \texttt{from\_context(...)} and \texttt{inject\_into(context)} methods (plus helpers like \texttt{enabled()}).
+\item{} Export \texttt{fragment = YourFragment()} from \texttt{\_\_init\_\_.py}; point \texttt{fragment.toml} \texttt{entrypoint} to \texttt{texsmith.fragments.yourname:fragment}.
+\item{} Injection flow: registry merges attribute defaults, builds config, calls \texttt{inject}, then checks \texttt{should\_render} before rendering pieces.
+
+\end{itemize}
+\subsection{Minimal example}\label{minimal-example}
+
+\texttt{src/texsmith/fragments/example/\_\_init\_\_.py}
+\texttt{from dataclasses import dataclass
+from pathlib import Path
+from typing import Any, Mapping
+
+from texsmith.core.fragments.base import BaseFragment, FragmentPiece
+from texsmith.core.templates.manifest import TemplateAttributeSpec
+
+@dataclass(frozen=True)
+class ExampleConfig:
+    message: str | None
+
+    @classmethod
+    def from\_context(cls, ctx: Mapping[str, Any]) -\allowbreak{}> "ExampleConfig":
+        return cls(message=ctx.get("example\_message"))
+
+    def inject\_into(self, ctx: dict[str, Any]) -\allowbreak{}> None:
+        ctx["ts\_example\_message"] = self.message or "Hello"
+
+    def enabled(self) -\allowbreak{}> bool:
+        return bool(self.message)
+
+class ExampleFragment(BaseFragment[ExampleConfig]):
+    name = "ts-\allowbreak{}example"
+    description = "Tiny example fragment."
+    pieces = [
+        FragmentPiece(
+            template\_path=Path(\_\_file\_\_).with\_name("ts-\allowbreak{}example.jinja.tex"),
+            kind="inline",
+            slot="extra\_packages",
+        )
+    ]
+    attributes = \{
+        "example\_message": TemplateAttributeSpec(
+            default=None,
+            type="string",
+            sources=["press.example.message", "example.message"],
+        )
+    \}
+    context\_defaults: dict[str, Any] = \{"extra\_packages": ""\}
+    config\_cls = ExampleConfig
+    source = Path(\_\_file\_\_).with\_name("ts-\allowbreak{}example.jinja.tex")
+
+    def build\_config(self, context: Mapping[str, Any], overrides=None) -\allowbreak{}> ExampleConfig:
+        return self.config\_cls.from\_context(context)
+
+    def inject(self, config: ExampleConfig, context: dict[str, Any], overrides=None) -\allowbreak{}> None:
+        config.inject\_into(context)
+
+    def should\_render(self, config: ExampleConfig) -\allowbreak{}> bool:
+        return config.enabled()
+
+fragment = ExampleFragment()
+}
+
+\texttt{src/texsmith/fragments/example/fragment.toml}
+\texttt{name = "ts-\allowbreak{}example"
+description = "Tiny example fragment."
+entrypoint = "texsmith.fragments.example:fragment"
+
+[[files]]
+path = "ts-\allowbreak{}example.jinja.tex"
+slot = "extra\_packages"
+type = "inline"
+}
+
+\section{Migration notes for fragment authors}\label{migration-notes-for-fragment-authors}
+
+\begin{itemize}
+\item{} Prefer \texttt{fragment.toml} with \texttt{files}, \texttt{attributes}, and optional \texttt{partials}/\texttt{required\_partials}; use an entrypoint only when you need Python logic.
+\item{} If using Python, return a \texttt{BaseFragment} instance via \texttt{fragment}; \texttt{create\_fragment()} and \texttt{FragmentDefinition} shims have been removed.
+\item{} Declare attribute ownership (implicit \texttt{owner = <fragment name>}) to avoid collisions with templates or other fragments.
+\item{} Keep slot targets aligned with template variables; inline targets must reference declared slots or template variables, otherwise a \texttt{TemplateError} is raised.
+
+\end{itemize}
+
+\end{document}

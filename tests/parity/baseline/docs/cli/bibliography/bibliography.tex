@@ -1,0 +1,122 @@
+\documentclass[a4paper,twoside]{article}
+
+\usepackage{morewrites}
+
+\usepackage[svgnames,dvipsnames,x11names]{xcolor}
+\usepackage{graphicx}
+\usepackage[english]{babel}
+\usepackage[colorlinks=true, linkcolor=NavyBlue, urlcolor=NavyBlue, citecolor=NavyBlue]{hyperref}
+\usepackage[a4paper]{geometry}
+\usepackage{ts-fonts}
+\usepackage{amsmath}
+\usepackage{float}
+\usepackage{seqsplit}
+\usepackage{ts-code}
+
+\usepackage{lastpage}
+\usepackage{refcount}
+\makeatletter
+\def\ps@plain{
+  \let\@oddhead\@empty
+  \let\@evenhead\@empty
+  \def\@oddfoot{
+    \hfil
+    \ifnum\getpagerefnumber{LastPage}>1\relax
+      \thepage
+    \fi
+    \hfil}
+  \let\@evenfoot\@oddfoot
+}
+\makeatother
+
+\title{Bibliography}
+\author{}\date{}
+
+\begin{document}
+
+\maketitle
+
+\thispagestyle{plain}
+\section{Add Bibliography Entries}\label{add-bibliography-entries}
+
+To include bibliography entries in your document, provide one or more BibTeX files as inputs when running TeXSmith. TeXSmith will parse these files and integrate the references into your document during the conversion process. For example:
+
+\begin{code}{bash}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+texsmith\PY{+w}{ }paper.md\PY{+w}{ }nature.bib\PY{+w}{ }ieee.bib\PY{+w}{ }\PYZhy{}o\PY{+w}{ }paper.pdf
+\end{Verbatim}
+\end{code}
+\section{List Bibliography Entries}\label{list-bibliography-entries}
+
+Use the \texttt{-\allowbreak{}-\allowbreak{}list-\allowbreak{}bibliography} flag to inspect BibTeX files before running a conversion or build. It helps catch parsing issues, duplicate entries, and empty datasets early in your workflow. For example in the \texttt{paper} example project:
+
+\begin{code}{text}{}{baselinestretch=0.5, }
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+\PYZdl{} texsmith cheese.md cheese.bib \PYZhy{}\PYZhy{}list\PYZhy{}bibliography
+
+                    Bibliography Files
+┌──────────────────────────────────────────────┬─────────┐
+│ File                                         │ Entries │
+├──────────────────────────────────────────────┼─────────┤
+│ /home/ycr/texsmith/examples/paper/cheese.bib │       2 │
+│ Total                                        │       2 │
+└──────────────────────────────────────────────┴─────────┘
+                              Jaoac2019 (article)
+  Title    Determination of Moisture in Cheese and Cheese Products
+  Year     2019
+  Journal  Journal of AOAC INTERNATIONAL
+  Authors  Jr Bradley Robert L, Margaret A Vanderwarn
+  Sources  /home/ycr/texsmith/examples/paper/cheese.bib
+  Abstract Variables related to oven\PYZhy{}drying samples of cheese and cheese
+           products to determine moisture...
+  Doi      10.1093/jaoac/84.2.570
+  Eprint   https://academic.oup.com/jaoac/article\PYZhy{}pdf/84/2/570/32415847/jaoac…
+  Issn     1060\PYZhy{}3271
+  Month    11
+  Number   2
+  Pages    570\PYZhy{}592
+  Url      https://doi.org/10.1093/jaoac/84.2.570
+  Volume   84
+
+                             Prentice1993 (inbook)
+  Title     Cheese Rheology
+  Year      1993
+  Authors   J. H. Prentice, K. R. Langley, R. J. Marshall
+  Sources   /home/ycr/texsmith/examples/paper/cheese.bib
+  Abstract  Rheology is formally defined as the study of the flow and
+            deformation of matter...
+  Address   Boston, MA
+  Booktitle Cheese: Chemistry, Physics and Microbiology: Volume 1 General
+            Aspects
+  Doi       10.1007/978\PYZhy{}1\PYZhy{}4615\PYZhy{}2650\PYZhy{}6\PYZus{}8
+  Isbn      978\PYZhy{}1\PYZhy{}4615\PYZhy{}2650\PYZhy{}6
+  Pages     303\PYZhy{}\PYZhy{}340
+  Publisher Springer US
+  Url       https://doi.org/10.1007/978\PYZhy{}1\PYZhy{}4615\PYZhy{}2650\PYZhy{}6\PYZus{}8
+
+    Bibliography Summary
+┌───────────────────┬───────┐
+│ Category          │ Count │
+├───────────────────┼───────┤
+│ Total entries     │     2 │
+│ From cheese.bib   │     2 │
+│ From front matter │     0 │
+│ From DOI fetches  │     0 │
+└───────────────────┴───────┘
+\end{Verbatim}
+\end{code}
+\section{Behaviour}\label{behaviour}
+
+TeXSmith loads every provided \texttt{.bib} file using \texttt{pybtex} and analyzes their contents, checks for duplicate keys, and verifies parsing integrity. It emits warnings for any issues found and prints a summary table of the number of entries per file.
+
+The \texttt{-\allowbreak{}-\allowbreak{}list-\allowbreak{}bibliography} flag has the following behavior:
+
+\begin{itemize}
+\item{} Prints a formatted table summarising the number of entries per file.
+\item{} Emits warnings for files that fail to parse, contain duplicate keys, or are empty.
+\item{} Highlights issues detected by TeXSmith's bibliography loader (e.g. conflicting entries sourced from multiple files).
+\item{} Exits before rendering anything else, so you can run it as a fast preflight step.
+
+\end{itemize}
+
+\end{document}

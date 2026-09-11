@@ -1,0 +1,63 @@
+\documentclass[a4paper,twoside]{article}
+
+\usepackage{morewrites}
+
+\usepackage[svgnames,dvipsnames,x11names]{xcolor}
+\usepackage{graphicx}
+\usepackage[english]{babel}
+\usepackage[colorlinks=true, linkcolor=NavyBlue, urlcolor=NavyBlue, citecolor=NavyBlue]{hyperref}
+\usepackage[a4paper]{geometry}
+\usepackage{ts-fonts}
+\usepackage{amsmath}
+\usepackage{float}
+\usepackage{seqsplit}
+\usepackage{ts-code}
+
+\usepackage{lastpage}
+\usepackage{refcount}
+\makeatletter
+\def\ps@plain{
+  \let\@oddhead\@empty
+  \let\@evenhead\@empty
+  \def\@oddfoot{
+    \hfil
+    \ifnum\getpagerefnumber{LastPage}>1\relax
+      \thepage
+    \fi
+    \hfil}
+  \let\@evenfoot\@oddfoot
+}
+\makeatother
+
+\title{Global user configuration}
+\author{}\date{}
+
+\begin{document}
+
+\maketitle
+
+\thispagestyle{plain}
+We want TeXSmith to support a global user configuration file located at \texttt{.texsmith/config.yml}. This file allows users to set their preferred defaults for templates, Mermaid styles, compilation options, and paper formats. The configuration file is optional and can be placed in the current working directory or any parent directory.
+
+This only affects CLI usage of TeXSmith. The API remains robust and does not depend on any global configuration, except for the cache directory.
+
+A config file could be:
+
+\begin{code}{yaml}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+\PY{n+nt}{template}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{article}
+\PY{n+nt}{engine}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{tectonic}
+\PY{n+nt}{paper}\PY{p}{:}
+\PY{+w}{  }\PY{n+nt}{format}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{a4}
+\PY{+w}{  }\PY{n+nt}{orientation}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{portrait}
+\PY{n+nt}{mermaid}\PY{p}{:}
+\PY{+w}{  }\PY{n+nt}{theme}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{neutral}
+\PY{n+nt}{callouts}\PY{p}{:}
+\PY{+w}{  }\PY{n+nt}{style}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{fancy}
+\end{Verbatim}
+\end{code}
+The format is not rigidly defined. It is used to set default values for command-line options. Command-line options always take precedence over configuration file settings, and YAML front matter in Markdown files has the highest precedence.
+
+Fragments, plugins, and everything else inherit from this global configuration when using the CLI.
+
+\end{document}

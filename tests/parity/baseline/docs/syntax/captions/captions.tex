@@ -1,0 +1,227 @@
+\documentclass[a4paper,twoside]{article}
+
+\usepackage{morewrites}
+
+\usepackage[svgnames,dvipsnames,x11names]{xcolor}
+\usepackage{graphicx}
+\usepackage[english]{babel}
+\usepackage[colorlinks=true, linkcolor=NavyBlue, urlcolor=NavyBlue, citecolor=NavyBlue]{hyperref}
+\usepackage[a4paper]{geometry}
+\usepackage{ts-fonts}
+\usepackage{csquotes}
+\usepackage{amsmath}
+\usepackage{float}
+\usepackage{seqsplit}
+\usepackage{ts-callouts}
+\usepackage{ts-code}
+
+\usepackage{lastpage}
+\usepackage{refcount}
+\makeatletter
+\def\ps@plain{
+  \let\@oddhead\@empty
+  \let\@evenhead\@empty
+  \def\@oddfoot{
+    \hfil
+    \ifnum\getpagerefnumber{LastPage}>1\relax
+      \thepage
+    \fi
+    \hfil}
+  \let\@evenfoot\@oddfoot
+}
+\makeatother
+
+\title{Captions}
+\author{}\date{}
+
+\begin{document}
+
+\maketitle
+
+\thispagestyle{plain}
+Markdown doesn't ship with a native caption primitive for figures or tables. The closest thing is image \texttt{alt} text:
+
+\begin{code}{md}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+![\PY{n+nt}{This is the alt text}](\PY{n+na}{image.png})
+\end{Verbatim}
+\end{code}
+Alt text exists for accessibility, not for captions. Some browsers show it as a tooltip, but it is not a real caption and you can't style it separately. Moreover, since it is inserted in an HTML tag's attribute, it can't contain block elements or complex formatting.
+
+Fortunately, \texttt{pymdownx.blocks.captions} adds proper caption blocks:
+
+\begin{code}{md}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+As seen in [\PY{n+nt}{this figure}](\PY{n+na}{\PYZsh{}my\PYZhy{}figure}), the results are significant.
+
+![\PY{n+nt}{This is the alt text}](\PY{n+na}{https://picsum.photos/400/150})
+
+/// caption
+    attrs: \PYZob{}id: my\PYZhy{}figure\PYZcb{}
+This is the caption for the figure.
+///
+\end{Verbatim}
+\end{code}
+\begin{callout}[callout warning]{Identifier restrictions}
+The \texttt{id} is declared through the block's YAML options and may not contain
+a colon: \texttt{pymdown-\allowbreak{}extensions} rejects identifiers such as
+\texttt{fig:my-\allowbreak{}figure}, and the whole block then silently degrades to plain
+text (TeXSmith emits a warning when it detects this). The shorthand
+header form \texttt{/// caption \#my-\allowbreak{}figure} is likewise not supported by
+\texttt{pymdown-\allowbreak{}extensions} --- always use the \texttt{attrs:} option shown above.
+\end{callout}
+Enable numbering and each document gets its own sequence starting at 1.
+
+\begin{figure}[H]
+    \centering
+
+    \ifdefined\adjustbox
+
+        \adjustbox{max width=\textwidth}{
+            \includegraphics[width=\linewidth]{snippet-<HASH>.pdf}
+        }
+
+    \else
+
+        \includegraphics[width=\linewidth]{snippet-<HASH>.pdf}
+
+    \fi
+
+\end{figure}
+\section{LaTeX}\label{latex}
+
+\LaTeX{} wraps figures/tables in \texttt{figure}/\texttt{table} environments, uses \texttt{\textbackslash{}caption\{\}} for the text, and \texttt{\textbackslash{}label\{\}} for cross-references:
+
+\begin{code}{latex}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+As seen in Figure \PY{k}{\PYZbs{}ref}\PY{n+nb}{\PYZob{}}fig:my\PYZhy{}figure\PY{n+nb}{\PYZcb{}}, the results are significant.
+
+\PY{k}{\PYZbs{}begin}\PY{n+nb}{\PYZob{}}figure\PY{n+nb}{\PYZcb{}}[htbp]
+  \PY{k}{\PYZbs{}centering}
+  \PY{k}{\PYZbs{}includegraphics}\PY{n+nb}{\PYZob{}}image.png\PY{n+nb}{\PYZcb{}}
+  \PY{k}{\PYZbs{}caption}\PY{n+nb}{\PYZob{}}This is the caption for the figure.\PY{n+nb}{\PYZcb{}}
+  \PY{k}{\PYZbs{}label}\PY{n+nb}{\PYZob{}}fig:my\PYZhy{}figure\PY{n+nb}{\PYZcb{}}
+\PY{k}{\PYZbs{}end}\PY{n+nb}{\PYZob{}}figure\PY{n+nb}{\PYZcb{}}
+\end{Verbatim}
+\end{code}
+\section{Addressing issues}\label{addressing-issues}
+
+\begin{enumerate}
+\item Consistent numbering across a document
+\item Easy cross-references
+\item Short captions for lists of figures/tables
+
+\end{enumerate}
+\subsection{Coherent numbering}\label{coherent-numbering}
+
+Markdown headings aren't numbered, so figures/tables can't piggyback on heading numbering. On the web that's fine---hyperlinks rule the navigation story---but in print numbering is essential. Guideline:
+
+\begin{displayquote}
+
+Printed documents shall have numbered heading elements, figures, and tables for cross-referencing. Web documents, however, should not have numbered headings, figures, or tables, relying instead on hyperlinks for navigation.
+
+\end{displayquote}
+Printed \LaTeX{} floats figures and tables, so writers can't assume a caption stays ``above'' or ``below'' the reference. HTML is literal: the figure stays where you put it.
+
+\begin{displayquote}
+
+On printed documents, the words \enquote{above} and \enquote{below} when referring to figures and tables shall never be used, as their position may vary due to floating. On web documents, \enquote{above} and \enquote{below} may be used, as figures and tables appear exactly where they are defined.
+
+\end{displayquote}
+\subsection{Cross-referencing captions}\label{cross-referencing-captions}
+
+That rule complicates cross-references: web versions prefer ``this figure below,'' whereas \LaTeX{} wants ``Figure 2.'' Examples:
+
+\begin{code}{md}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+As seen in [\PY{n+nt}{this figure below}](\PY{n+na}{\PYZsh{}my\PYZhy{}figure}), the results are significant.
+
+As seen [\PY{n+nt}{here}](\PY{n+na}{\PYZsh{}my\PYZhy{}figure}), the results are significant.
+
+The results [\PY{n+nt}{shown}](\PY{n+na}{\PYZsh{}my\PYZhy{}figure}) are significant.
+\end{Verbatim}
+\end{code}
+In \LaTeX{} you'd use:
+
+\begin{code}{latex}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+As seen in Figure \PY{k}{\PYZbs{}ref}\PY{n+nb}{\PYZob{}}fig:my\PYZhy{}figure\PY{n+nb}{\PYZcb{}}, the results are significant.
+\end{Verbatim}
+\end{code}
+Language adds another wrinkle: ``Figure'' in English, ``figure'' (lowercase) in French mid-sentence, ``Abbildung'' in German, and so on. Hardcoding wording would be brittle.
+
+Fortunately \texttt{pymdownx.blocks.captions} tracks IDs, so TeXSmith can bridge both worlds with a shared syntax:
+
+\begin{code}{md}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+As seen in [](\PYZsh{}my\PYZhy{}figure), the results are significant.
+\end{Verbatim}
+\end{code}
+An empty-text link to a caption id is decorated with the assigned number. The HTML output looks like:
+
+\begin{code}{html}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+As seen in \PY{p}{\PYZlt{}}\PY{n+nt}{a} \PY{n+na}{href}\PY{o}{=}\PY{l+s}{\PYZdq{}\PYZsh{}my\PYZhy{}figure\PYZdq{}}\PY{p}{\PYZgt{}}Figure \PY{p}{\PYZlt{}}\PY{n+nt}{span} \PY{n+na}{class}\PY{o}{=}\PY{l+s}{\PYZdq{}caption\PYZhy{}number\PYZdq{}}\PY{p}{\PYZgt{}}1\PY{p}{\PYZlt{}}\PY{p}{/}\PY{n+nt}{span}\PY{p}{\PYZgt{}}\PY{p}{\PYZlt{}}\PY{p}{/}\PY{n+nt}{a}\PY{p}{\PYZgt{}}, the results are significant.
+\end{Verbatim}
+\end{code}
+In \LaTeX{} (the caption id is emitted verbatim as the \texttt{\textbackslash{}label}):
+
+\begin{code}{latex}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+As seen in Figure \PY{k}{\PYZbs{}ref}\PY{n+nb}{\PYZob{}}my\PYZhy{}figure\PY{n+nb}{\PYZcb{}}, the results are significant.
+\end{Verbatim}
+\end{code}
+Or with \texttt{cleveref}:
+
+\begin{code}{latex}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+As seen in \PY{k}{\PYZbs{}Cref}\PY{n+nb}{\PYZob{}}my\PYZhy{}figure\PY{n+nb}{\PYZcb{}}, the results are significant.
+\end{Verbatim}
+\end{code}
+Pandoc users write \texttt{\{@fig:my-\allowbreak{}figure\}}; the idea is the same.
+
+\subsection{Short caption names}\label{short-caption-names}
+
+Printed lists of figures appreciate a condensed caption. \LaTeX{} handles this via the optional \texttt{\textbackslash{}caption[]} argument:
+
+\begin{code}{latex}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+\PY{k}{\PYZbs{}caption}\PY{n+na}{[Short caption for list of figures]}\PY{n+nb}{\PYZob{}}This is the caption for the figure.\PY{n+nb}{\PYZcb{}}
+\end{Verbatim}
+\end{code}
+TeXSmith reuses the Markdown \texttt{alt} text as that short entry:
+
+\begin{code}{md}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+![\PY{n+nt}{Short caption for list of figures}](\PY{n+na}{image.png})
+
+/// figure\PYZhy{}caption
+    attrs: \PYZob{}id: my\PYZhy{}figure\PYZcb{}
+This is the caption for the figure.
+///
+\end{Verbatim}
+\end{code}
+The current syntax is a bit verbose. In the future we'd like a shorthand along these lines:
+
+\begin{code}{md}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+![\PY{n+nt}{Short caption}](\PY{n+na}{image.png})\PYZob{}\PYZsh{}my\PYZhy{}figure\PYZcb{}
+
+Caption: This is the caption for the figure.
+\end{Verbatim}
+\end{code}
+\section{Tables}\label{tables}
+
+Tables follow the same pattern:
+
+\begin{code}{md}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+Table: This is the caption for the table. \PYZob{}\PYZsh{}my\PYZhy{}table\PYZcb{}
+
+| Header 1 | Header 2 |
+|\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}|\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}|
+| Cell 1   | Cell 2   |
+\end{Verbatim}
+\end{code}
+
+\end{document}

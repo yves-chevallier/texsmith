@@ -1,0 +1,247 @@
+\documentclass[a4paper,twoside]{article}
+
+\usepackage{morewrites}
+
+\usepackage[svgnames,dvipsnames,x11names]{xcolor}
+\usepackage{graphicx}
+\usepackage[english]{babel}
+\usepackage[colorlinks=true, linkcolor=NavyBlue, urlcolor=NavyBlue, citecolor=NavyBlue]{hyperref}
+\usepackage[a4paper]{geometry}
+\usepackage{ts-fonts}
+\usepackage{csquotes}
+\usepackage{amsmath}
+\usepackage{float}
+\usepackage{seqsplit}
+\usepackage{ts-callouts}
+\usepackage{ts-code}
+
+\usepackage{lastpage}
+\usepackage{refcount}
+\makeatletter
+\def\ps@plain{
+  \let\@oddhead\@empty
+  \let\@evenhead\@empty
+  \def\@oddfoot{
+    \hfil
+    \ifnum\getpagerefnumber{LastPage}>1\relax
+      \thepage
+    \fi
+    \hfil}
+  \let\@evenfoot\@oddfoot
+}
+\makeatother
+
+\title{Math Extension}
+\author{}\date{}
+
+\begin{document}
+
+\maketitle
+
+\thispagestyle{plain}
+\LaTeX{} is the gold standard for math notation. TeXSmith relies on the same syntax that MathJax/Arithmatex understand.
+
+\section{Inline Math}\label{inline-math}
+
+Inline math uses the usual delimiters \texttt{\textbackslash{}( ... \textbackslash{})} or \texttt{\$ ... \$}:
+
+\begin{code}{markdown}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+The quadratic formula is given by \PYZbs{}(x = \PYZbs{}frac\PYZob{}\PYZhy{}b \PYZbs{}pm \PYZbs{}sqrt\PYZob{}b\PYZca{}2 \PYZhy{} 4ac\PYZcb{}\PYZcb{}\PYZob{}2a\PYZcb{}\PYZbs{})
+or \PYZdl{}x = \PYZbs{}frac\PYZob{}\PYZhy{}b \PYZbs{}pm \PYZbs{}sqrt\PYZob{}b\PYZca{}2 \PYZhy{} 4ac\PYZcb{}\PYZcb{}\PYZob{}2a\PYZcb{}\PYZdl{}.
+\end{Verbatim}
+\end{code}
+Rendered as:
+
+\begin{displayquote}
+
+The quadratic formula is given by $x = \frac{-b \pm \sqrt{b^2 - 4ac}}{2a}$
+or $x = \frac{-b \pm \sqrt{b^2 - 4ac}}{2a}$.
+
+\end{displayquote}
+\begin{callout}[callout note]{Note}
+Skip the spaces right after \texttt{\$} or \texttt{\textbackslash{}(}---they confuse the parser.
+\end{callout}
+\section{Block Math}\label{block-math}
+
+\subsection{Simple equations}\label{simple-equations}
+
+Example: Schrödinger's equation in the non-relativistic case:
+
+\begin{code}{latex}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+\PY{l+s+sb}{\PYZdl{}\PYZdl{}}
+\PY{n+nv}{\PYZbs{}imath}\PY{n+nb}{ }\PY{n+nv}{\PYZbs{}hbar}\PY{n+nb}{ }\PY{n+nv}{\PYZbs{}frac}\PY{n+nb}{\PYZob{}}\PY{n+nv}{\PYZbs{}partial}\PY{n+nb}{\PYZcb{}}\PY{n+nb}{\PYZob{}}\PY{n+nv}{\PYZbs{}partial}\PY{n+nb}{ t}\PY{n+nb}{\PYZcb{}}\PY{n+nb}{ }\PY{n+nv}{\PYZbs{}Psi}\PY{o}{(}\PY{n+nv}{\PYZbs{}mathbf}\PY{n+nb}{\PYZob{}}\PY{n+nb}{r}\PY{n+nb}{\PYZcb{}}\PY{n+nb}{,t}\PY{o}{)}\PY{n+nb}{ }\PY{o}{=}
+\PY{n+nv}{\PYZbs{}left}\PY{o}{[}\PY{n+nb}{ }\PY{o}{\PYZhy{}}\PY{n+nv}{\PYZbs{}frac}\PY{n+nb}{\PYZob{}}\PY{n+nv}{\PYZbs{}hbar}\PY{n+nb}{\PYZca{}}\PY{l+m}{2}\PY{n+nb}{\PYZcb{}}\PY{n+nb}{\PYZob{}}\PY{l+m}{2}\PY{n+nb}{m}\PY{n+nb}{\PYZcb{}}\PY{n+nb}{ }\PY{n+nv}{\PYZbs{}nabla}\PY{n+nb}{\PYZca{}}\PY{l+m}{2}\PY{n+nb}{ }\PY{o}{+}\PY{n+nb}{ V}\PY{o}{(}\PY{n+nv}{\PYZbs{}mathbf}\PY{n+nb}{\PYZob{}}\PY{n+nb}{r}\PY{n+nb}{\PYZcb{}}\PY{n+nb}{,t}\PY{o}{)}\PY{n+nb}{ }\PY{n+nv}{\PYZbs{}right}\PY{o}{]}\PY{n+nb}{ }\PY{n+nv}{\PYZbs{}Psi}\PY{o}{(}\PY{n+nv}{\PYZbs{}mathbf}\PY{n+nb}{\PYZob{}}\PY{n+nb}{r}\PY{n+nb}{\PYZcb{}}\PY{n+nb}{,t}\PY{o}{)}
+\PY{l+s}{\PYZdl{}\PYZdl{}}
+\end{Verbatim}
+\end{code}
+
+$$
+\imath \hbar \frac{\partial}{\partial t} \Psi(\mathbf{r},t) =
+\left[ -\frac{\hbar^2}{2m} \nabla^2 + V(\mathbf{r},t) \right] \Psi(\mathbf{r},t)
+$$
+
+\subsection{Multiple equations}\label{multiple-equations}
+
+\begin{code}{latex}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+\PY{l+s+sb}{\PYZdl{}\PYZdl{}}
+\PY{n+nv}{\PYZbs{}begin}\PY{n+nb}{\PYZob{}}\PY{n+nb}{align}\PY{o}{*}\PY{n+nb}{\PYZcb{}}
+\PY{n+nv}{\PYZbs{}nabla}\PY{n+nb}{ }\PY{n+nv}{\PYZbs{}cdot}\PY{n+nb}{ }\PY{n+nv}{\PYZbs{}vec}\PY{n+nb}{\PYZob{}}\PY{n+nb}{E}\PY{n+nb}{\PYZcb{}}\PY{n+nb}{ }\PY{n+nb}{\PYZam{}}\PY{o}{=}\PY{n+nb}{ }\PY{n+nv}{\PYZbs{}frac}\PY{n+nb}{\PYZob{}}\PY{n+nv}{\PYZbs{}rho}\PY{n+nb}{\PYZcb{}}\PY{n+nb}{\PYZob{}}\PY{n+nv}{\PYZbs{}varepsilon}\PY{n+nb}{\PYZus{}}\PY{l+m}{0}\PY{n+nb}{\PYZcb{}}\PY{n+nb}{ }\PY{n+nv}{\PYZbs{}quad}\PY{n+nb}{ }\PY{n+nb}{\PYZam{}}\PY{n+nb}{\PYZam{}}\PY{n+nv}{\PYZbs{}text}\PY{n+nb}{\PYZob{}}\PY{n+nb}{Gauss Law}\PY{n+nb}{\PYZcb{}}\PY{n+nv}{\PYZbs{}\PYZbs{}}\PY{o}{[}\PY{l+m}{4}\PY{n+nb}{pt}\PY{o}{]}
+\PY{n+nv}{\PYZbs{}nabla}\PY{n+nb}{ }\PY{n+nv}{\PYZbs{}cdot}\PY{n+nb}{ }\PY{n+nv}{\PYZbs{}vec}\PY{n+nb}{\PYZob{}}\PY{n+nb}{B}\PY{n+nb}{\PYZcb{}}\PY{n+nb}{ }\PY{n+nb}{\PYZam{}}\PY{o}{=}\PY{n+nb}{ }\PY{l+m}{0}\PY{n+nb}{ }\PY{n+nv}{\PYZbs{}quad}\PY{n+nb}{ }\PY{n+nb}{\PYZam{}}\PY{n+nb}{\PYZam{}}\PY{n+nv}{\PYZbs{}text}\PY{n+nb}{\PYZob{}}\PY{n+nb}{Gauss\PYZsq{}s law for electricity}\PY{n+nb}{\PYZcb{}}\PY{n+nv}{\PYZbs{}\PYZbs{}}\PY{o}{[}\PY{l+m}{4}\PY{n+nb}{pt}\PY{o}{]}
+\PY{n+nv}{\PYZbs{}nabla}\PY{n+nb}{ }\PY{n+nv}{\PYZbs{}times}\PY{n+nb}{ }\PY{n+nv}{\PYZbs{}vec}\PY{n+nb}{\PYZob{}}\PY{n+nb}{E}\PY{n+nb}{\PYZcb{}}\PY{n+nb}{ }\PY{n+nb}{\PYZam{}}\PY{o}{=}\PY{n+nb}{ }\PY{o}{\PYZhy{}}\PY{n+nv}{\PYZbs{},}\PY{n+nv}{\PYZbs{}frac}\PY{n+nb}{\PYZob{}}\PY{n+nv}{\PYZbs{}partial}\PY{n+nb}{ }\PY{n+nv}{\PYZbs{}vec}\PY{n+nb}{\PYZob{}}\PY{n+nb}{B}\PY{n+nb}{\PYZcb{}}\PY{n+nb}{\PYZcb{}}\PY{n+nb}{\PYZob{}}\PY{n+nv}{\PYZbs{}partial}\PY{n+nb}{ t}\PY{n+nb}{\PYZcb{}}
+\PY{n+nb}{    }\PY{n+nv}{\PYZbs{}quad}\PY{n+nb}{ }\PY{n+nb}{\PYZam{}}\PY{n+nb}{\PYZam{}}\PY{n+nv}{\PYZbs{}text}\PY{n+nb}{\PYZob{}}\PY{n+nb}{Faraday\PYZsq{}s law}\PY{n+nb}{\PYZcb{}}\PY{n+nv}{\PYZbs{}\PYZbs{}}\PY{o}{[}\PY{l+m}{4}\PY{n+nb}{pt}\PY{o}{]}
+\PY{n+nv}{\PYZbs{}nabla}\PY{n+nb}{ }\PY{n+nv}{\PYZbs{}times}\PY{n+nb}{ }\PY{n+nv}{\PYZbs{}vec}\PY{n+nb}{\PYZob{}}\PY{n+nb}{B}\PY{n+nb}{\PYZcb{}}\PY{n+nb}{ }\PY{n+nb}{\PYZam{}}\PY{o}{=}\PY{n+nb}{ }\PY{n+nv}{\PYZbs{}mu}\PY{n+nb}{\PYZus{}}\PY{l+m}{0}\PY{n+nb}{ }\PY{n+nv}{\PYZbs{}vec}\PY{n+nb}{\PYZob{}}\PY{n+nb}{J}\PY{n+nb}{\PYZcb{}}\PY{n+nb}{ }\PY{o}{+}\PY{n+nb}{ }\PY{n+nv}{\PYZbs{}mu}\PY{n+nb}{\PYZus{}}\PY{l+m}{0}\PY{n+nb}{ }\PY{n+nv}{\PYZbs{}varepsilon}\PY{n+nb}{\PYZus{}}\PY{l+m}{0}
+\PY{n+nb}{    }\PY{n+nv}{\PYZbs{}frac}\PY{n+nb}{\PYZob{}}\PY{n+nv}{\PYZbs{}partial}\PY{n+nb}{ }\PY{n+nv}{\PYZbs{}vec}\PY{n+nb}{\PYZob{}}\PY{n+nb}{E}\PY{n+nb}{\PYZcb{}}\PY{n+nb}{\PYZcb{}}\PY{n+nb}{\PYZob{}}\PY{n+nv}{\PYZbs{}partial}\PY{n+nb}{ t}\PY{n+nb}{\PYZcb{}}
+\PY{n+nv}{\PYZbs{}quad}\PY{n+nb}{ }\PY{n+nb}{\PYZam{}}\PY{n+nb}{\PYZam{}}\PY{n+nv}{\PYZbs{}text}\PY{n+nb}{\PYZob{}}\PY{n+nb}{Ampère}\PY{o}{\PYZhy{}}\PY{n+nb}{Maxwell law}\PY{n+nb}{\PYZcb{}}
+\PY{n+nv}{\PYZbs{}end}\PY{n+nb}{\PYZob{}}\PY{n+nb}{align}\PY{o}{*}\PY{n+nb}{\PYZcb{}}
+\PY{l+s}{\PYZdl{}\PYZdl{}}
+\end{Verbatim}
+\end{code}
+
+\begin{align*}
+\nabla \cdot \vec{E} &= \frac{\rho}{\varepsilon_0} \quad &&\text{Gauss Law}\\[4pt]
+\nabla \cdot \vec{B} &= 0 \quad &&\text{Gauss's law for electricity}\\[4pt]
+\nabla \times \vec{E} &= -\,\frac{\partial \vec{B}}{\partial t}
+    \quad &&\text{Faraday's law}\\[4pt]
+\nabla \times \vec{B} &= \mu_0 \vec{J} + \mu_0 \varepsilon_0
+    \frac{\partial \vec{E}}{\partial t}
+\quad &&\text{Ampère-Maxwell law}
+\end{align*}
+
+\subsection{Numbered equation}\label{numbered-equation}
+
+Wrap an equation inside \texttt{\textbackslash{}begin\{equation\}...\textbackslash{}end\{equation\}} (or \texttt{equation*}) to control numbering. Example: the relativistic gravitational field equation:
+
+\begin{code}{latex}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+The equation \PY{l+s}{\PYZdl{}}\PY{n+nv}{\PYZbs{}eqref}\PY{n+nb}{\PYZob{}}\PY{n+nb}{eq:gravity}\PY{n+nb}{\PYZcb{}}\PY{l+s}{\PYZdl{}} describes the fundamental interaction of
+gravitation as a result of spacetime being curved by matter and energy.
+
+\PY{l+s+sb}{\PYZdl{}\PYZdl{}}
+\PY{n+nv}{\PYZbs{}begin}\PY{n+nb}{\PYZob{}}\PY{n+nb}{equation}\PY{n+nb}{\PYZcb{}}\PY{n+nb}{ }\PY{n+nv}{\PYZbs{}label}\PY{n+nb}{\PYZob{}}\PY{n+nb}{eq:gravity}\PY{n+nb}{\PYZcb{}}
+\PY{n+nb}{R}\PY{n+nb}{\PYZus{}}\PY{n+nb}{\PYZob{}}\PY{n+nv}{\PYZbs{}mu}\PY{n+nb}{ }\PY{n+nv}{\PYZbs{}nu}\PY{n+nb}{\PYZcb{}}\PY{n+nb}{ }\PY{o}{\PYZhy{}}\PY{n+nb}{ }\PY{n+nv}{\PYZbs{}frac}\PY{n+nb}{\PYZob{}}\PY{l+m}{1}\PY{n+nb}{\PYZcb{}}\PY{n+nb}{\PYZob{}}\PY{l+m}{2}\PY{n+nb}{\PYZcb{}}\PY{n+nb}{ R g}\PY{n+nb}{\PYZus{}}\PY{n+nb}{\PYZob{}}\PY{n+nv}{\PYZbs{}mu}\PY{n+nb}{ }\PY{n+nv}{\PYZbs{}nu}\PY{n+nb}{\PYZcb{}}\PY{n+nb}{ }\PY{o}{+}\PY{n+nb}{ }\PY{n+nv}{\PYZbs{}Lambda}\PY{n+nb}{ g}\PY{n+nb}{\PYZus{}}\PY{n+nb}{\PYZob{}}\PY{n+nv}{\PYZbs{}mu}\PY{n+nb}{ }\PY{n+nv}{\PYZbs{}nu}\PY{n+nb}{\PYZcb{}}\PY{n+nb}{ }\PY{o}{=}
+\PY{n+nb}{    }\PY{n+nv}{\PYZbs{}frac}\PY{n+nb}{\PYZob{}}\PY{l+m}{8}\PY{n+nb}{ }\PY{n+nv}{\PYZbs{}pi}\PY{n+nb}{ G}\PY{n+nb}{\PYZcb{}}\PY{n+nb}{\PYZob{}}\PY{n+nb}{c}\PY{n+nb}{\PYZca{}}\PY{l+m}{4}\PY{n+nb}{\PYZcb{}}\PY{n+nb}{ T}\PY{n+nb}{\PYZus{}}\PY{n+nb}{\PYZob{}}\PY{n+nv}{\PYZbs{}mu}\PY{n+nb}{ }\PY{n+nv}{\PYZbs{}nu}\PY{n+nb}{\PYZcb{}}
+\PY{n+nv}{\PYZbs{}end}\PY{n+nb}{\PYZob{}}\PY{n+nb}{equation}\PY{n+nb}{\PYZcb{}}
+\PY{l+s}{\PYZdl{}\PYZdl{}}
+\end{Verbatim}
+\end{code}
+The equation $\eqref{eq:gravity}$ describes the fundamental interaction of gravitation as a result of spacetime being curved by matter and energy.
+
+\begin{equation} \label{eq:gravity}
+R_{\mu \nu} - \frac{1}{2} R g_{\mu \nu} + \Lambda g_{\mu \nu} = \frac{8 \pi G}{c^4} T_{\mu \nu}
+\end{equation}
+
+Reference numbered equations via \texttt{\textbackslash{}label\{\}} and drop \texttt{\$\textbackslash{}eqref\{...\}\$} in Markdown.
+
+In an aligned environment, you can number individual lines using the \texttt{\textbackslash{}label\{\}} command:
+
+\begin{code}{latex}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+As we see in \PY{l+s}{\PYZdl{}}\PY{n+nv}{\PYZbs{}eqref}\PY{n+nb}{\PYZob{}}\PY{n+nb}{eq:max}\PY{l+m}{2}\PY{n+nb}{\PYZcb{}}\PY{l+s}{\PYZdl{}}, the magnetic flux through any closed surface is zero;
+this implies that there are no magnetic monopoles.
+
+\PY{l+s+sb}{\PYZdl{}\PYZdl{}}
+\PY{n+nv}{\PYZbs{}begin}\PY{n+nb}{\PYZob{}}\PY{n+nb}{align}\PY{n+nb}{\PYZcb{}}
+\PY{n+nv}{\PYZbs{}oint}\PY{n+nb}{\PYZus{}}\PY{n+nb}{\PYZob{}}\PY{n+nv}{\PYZbs{}partial}\PY{n+nb}{ V}\PY{n+nb}{\PYZcb{}}\PY{n+nb}{ }\PY{n+nv}{\PYZbs{}vec}\PY{n+nb}{\PYZob{}}\PY{n+nb}{E}\PY{n+nb}{\PYZcb{}}\PY{n+nb}{ }\PY{n+nv}{\PYZbs{}cdot}\PY{n+nb}{ d}\PY{n+nv}{\PYZbs{}vec}\PY{n+nb}{\PYZob{}}\PY{n+nb}{S}\PY{n+nb}{\PYZcb{}}\PY{n+nb}{ }\PY{n+nb}{\PYZam{}}\PY{o}{=}\PY{n+nb}{ }\PY{n+nv}{\PYZbs{}frac}\PY{n+nb}{\PYZob{}}\PY{n+nb}{Q}\PY{n+nb}{\PYZus{}}\PY{n+nb}{\PYZob{}}\PY{n+nv}{\PYZbs{}text}\PY{n+nb}{\PYZob{}}\PY{n+nb}{int}\PY{n+nb}{\PYZcb{}}\PY{n+nb}{\PYZcb{}}\PY{n+nb}{\PYZcb{}}\PY{n+nb}{\PYZob{}}\PY{n+nv}{\PYZbs{}varepsilon}\PY{n+nb}{\PYZus{}}\PY{l+m}{0}\PY{n+nb}{\PYZcb{}}
+\PY{n+nb}{    }\PY{n+nv}{\PYZbs{}label}\PY{n+nb}{\PYZob{}}\PY{n+nb}{eq:max}\PY{l+m}{1}\PY{n+nb}{\PYZcb{}}\PY{n+nb}{ }\PY{n+nv}{\PYZbs{}\PYZbs{}}\PY{o}{[}\PY{l+m}{6}\PY{n+nb}{pt}\PY{o}{]}
+\PY{n+nv}{\PYZbs{}oint}\PY{n+nb}{\PYZus{}}\PY{n+nb}{\PYZob{}}\PY{n+nv}{\PYZbs{}partial}\PY{n+nb}{ V}\PY{n+nb}{\PYZcb{}}\PY{n+nb}{ }\PY{n+nv}{\PYZbs{}vec}\PY{n+nb}{\PYZob{}}\PY{n+nb}{B}\PY{n+nb}{\PYZcb{}}\PY{n+nb}{ }\PY{n+nv}{\PYZbs{}cdot}\PY{n+nb}{ d}\PY{n+nv}{\PYZbs{}vec}\PY{n+nb}{\PYZob{}}\PY{n+nb}{S}\PY{n+nb}{\PYZcb{}}\PY{n+nb}{ }\PY{n+nb}{\PYZam{}}\PY{o}{=}\PY{n+nb}{ }\PY{l+m}{0}\PY{n+nb}{ }\PY{n+nv}{\PYZbs{}label}\PY{n+nb}{\PYZob{}}\PY{n+nb}{eq:max}\PY{l+m}{2}\PY{n+nb}{\PYZcb{}}\PY{n+nb}{ }\PY{n+nv}{\PYZbs{}\PYZbs{}}\PY{o}{[}\PY{l+m}{6}\PY{n+nb}{pt}\PY{o}{]}
+\PY{n+nv}{\PYZbs{}oint}\PY{n+nb}{\PYZus{}}\PY{n+nb}{\PYZob{}}\PY{n+nv}{\PYZbs{}partial}\PY{n+nb}{ S}\PY{n+nb}{\PYZcb{}}\PY{n+nb}{ }\PY{n+nv}{\PYZbs{}vec}\PY{n+nb}{\PYZob{}}\PY{n+nb}{E}\PY{n+nb}{\PYZcb{}}\PY{n+nb}{ }\PY{n+nv}{\PYZbs{}cdot}\PY{n+nb}{ d}\PY{n+nv}{\PYZbs{}vec}\PY{n+nb}{\PYZob{}}\PY{n+nv}{\PYZbs{}ell}\PY{n+nb}{\PYZcb{}}\PY{n+nb}{ }\PY{n+nb}{\PYZam{}}\PY{o}{=}\PY{n+nb}{ }\PY{o}{\PYZhy{}}\PY{n+nv}{\PYZbs{},}\PY{n+nv}{\PYZbs{}frac}\PY{n+nb}{\PYZob{}}\PY{n+nb}{d}\PY{n+nb}{\PYZcb{}}\PY{n+nb}{\PYZob{}}\PY{n+nb}{dt}\PY{n+nb}{\PYZcb{}}\PY{n+nb}{ }\PY{n+nv}{\PYZbs{}int}\PY{n+nb}{\PYZus{}}\PY{n+nb}{\PYZob{}}\PY{n+nb}{S}\PY{n+nb}{\PYZcb{}}\PY{n+nb}{ }\PY{n+nv}{\PYZbs{}vec}\PY{n+nb}{\PYZob{}}\PY{n+nb}{B}\PY{n+nb}{\PYZcb{}}
+\PY{n+nb}{    }\PY{n+nv}{\PYZbs{}cdot}\PY{n+nb}{ d}\PY{n+nv}{\PYZbs{}vec}\PY{n+nb}{\PYZob{}}\PY{n+nb}{S}\PY{n+nb}{\PYZcb{}}\PY{n+nb}{ }\PY{n+nv}{\PYZbs{}label}\PY{n+nb}{\PYZob{}}\PY{n+nb}{eq:max}\PY{l+m}{3}\PY{n+nb}{\PYZcb{}}\PY{n+nb}{ }\PY{n+nv}{\PYZbs{}\PYZbs{}}\PY{o}{[}\PY{l+m}{6}\PY{n+nb}{pt}\PY{o}{]}
+\PY{n+nv}{\PYZbs{}oint}\PY{n+nb}{\PYZus{}}\PY{n+nb}{\PYZob{}}\PY{n+nv}{\PYZbs{}partial}\PY{n+nb}{ S}\PY{n+nb}{\PYZcb{}}\PY{n+nb}{ }\PY{n+nv}{\PYZbs{}vec}\PY{n+nb}{\PYZob{}}\PY{n+nb}{B}\PY{n+nb}{\PYZcb{}}\PY{n+nb}{ }\PY{n+nv}{\PYZbs{}cdot}\PY{n+nb}{ d}\PY{n+nv}{\PYZbs{}vec}\PY{n+nb}{\PYZob{}}\PY{n+nv}{\PYZbs{}ell}\PY{n+nb}{\PYZcb{}}\PY{n+nb}{ }\PY{n+nb}{\PYZam{}}\PY{o}{=}\PY{n+nb}{ }\PY{n+nv}{\PYZbs{}mu}\PY{n+nb}{\PYZus{}}\PY{l+m}{0}\PY{n+nb}{ I}\PY{n+nb}{\PYZus{}}\PY{n+nb}{\PYZob{}}\PY{n+nv}{\PYZbs{}text}\PY{n+nb}{\PYZob{}}\PY{n+nb}{int}\PY{n+nb}{\PYZcb{}}\PY{n+nb}{\PYZcb{}}
+\PY{o}{+}\PY{n+nb}{ }\PY{n+nv}{\PYZbs{}mu}\PY{n+nb}{\PYZus{}}\PY{l+m}{0}\PY{n+nb}{ }\PY{n+nv}{\PYZbs{}varepsilon}\PY{n+nb}{\PYZus{}}\PY{l+m}{0}\PY{n+nb}{ }\PY{n+nv}{\PYZbs{}frac}\PY{n+nb}{\PYZob{}}\PY{n+nb}{d}\PY{n+nb}{\PYZcb{}}\PY{n+nb}{\PYZob{}}\PY{n+nb}{dt}\PY{n+nb}{\PYZcb{}}\PY{n+nb}{ }\PY{n+nv}{\PYZbs{}int}\PY{n+nb}{\PYZus{}}\PY{n+nb}{\PYZob{}}\PY{n+nb}{S}\PY{n+nb}{\PYZcb{}}\PY{n+nb}{ }\PY{n+nv}{\PYZbs{}vec}\PY{n+nb}{\PYZob{}}\PY{n+nb}{E}\PY{n+nb}{\PYZcb{}}\PY{n+nb}{ }\PY{n+nv}{\PYZbs{}cdot}\PY{n+nb}{ d}\PY{n+nv}{\PYZbs{}vec}\PY{n+nb}{\PYZob{}}\PY{n+nb}{S}\PY{n+nb}{\PYZcb{}}\PY{n+nb}{ }\PY{n+nv}{\PYZbs{}label}\PY{n+nb}{\PYZob{}}\PY{n+nb}{eq:max}\PY{l+m}{4}\PY{n+nb}{\PYZcb{}}
+\PY{n+nv}{\PYZbs{}end}\PY{n+nb}{\PYZob{}}\PY{n+nb}{align}\PY{n+nb}{\PYZcb{}}
+\PY{l+s}{\PYZdl{}\PYZdl{}}
+\end{Verbatim}
+\end{code}
+As we see in $\eqref{eq:max2}$, the magnetic flux through a closed surface is zero, implying the lack of magnetic monopoles.
+
+\begin{align}
+\oint_{\partial V} \vec{E} \cdot d\vec{S} &= \frac{Q_{\text{int}}}{\varepsilon_0} \label{eq:max1} \\[6pt]
+\oint_{\partial V} \vec{B} \cdot d\vec{S} &= 0 \label{eq:max2} \\[6pt]
+\oint_{\partial S} \vec{E} \cdot d\vec{\ell} &= -\,\frac{d}{dt} \int_{S} \vec{B} \cdot d\vec{S} \label{eq:max3} \\[6pt]
+\oint_{\partial S} \vec{B} \cdot d\vec{\ell} &= \mu_0 I_{\text{int}}
++ \mu_0 \varepsilon_0 \frac{d}{dt} \int_{S} \vec{E} \cdot d\vec{S} \label{eq:max4}
+\end{align}
+
+\section{MkDocs Configuration}\label{mkdocs-configuration}
+
+Running under MkDocs? Enable Arithmatex/MathJax and let it handle numbering:
+
+\begin{code}{yaml}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+\PY{n+nt}{markdown\PYZus{}extensions}\PY{p}{:}
+\PY{+w}{  }\PY{p+pIndicator}{\PYZhy{}}\PY{+w}{ }\PY{n+nt}{pymdownx.arithmatex}\PY{p}{:}
+\PY{+w}{      }\PY{n+nt}{generic}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{true}
+\PY{n+nt}{extra\PYZus{}javascript}\PY{p}{:}
+\PY{+w}{  }\PY{p+pIndicator}{\PYZhy{}}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{js/mathjax.js}
+\PY{+w}{  }\PY{p+pIndicator}{\PYZhy{}}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{https://unpkg.com/mathjax@3/es5/tex\PYZhy{}mml\PYZhy{}chtml.js}
+\end{Verbatim}
+\end{code}
+In the \texttt{js/mathjax.js} file, include the following MathJax configuration:
+
+\begin{code}{javascript}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+\PY{n+nb}{window}\PY{p}{.}\PY{n+nx}{MathJax}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{p}{\PYZob{}}
+\PY{+w}{  }\PY{n+nx}{tex}\PY{o}{:}\PY{+w}{ }\PY{p}{\PYZob{}}
+\PY{+w}{    }\PY{n+nx}{inlineMath}\PY{o}{:}\PY{+w}{ }\PY{p}{[}\PY{p}{[}\PY{l+s+s1}{\PYZsq{}\PYZbs{}\PYZbs{}(\PYZsq{}}\PY{p}{,}\PY{+w}{ }\PY{l+s+s1}{\PYZsq{}\PYZbs{}\PYZbs{})\PYZsq{}}\PY{p}{]}\PY{p}{]}\PY{p}{,}
+\PY{+w}{    }\PY{n+nx}{displayMath}\PY{o}{:}\PY{+w}{ }\PY{p}{[}\PY{p}{[}\PY{l+s+s1}{\PYZsq{}\PYZdl{}\PYZdl{}\PYZsq{}}\PY{p}{,}\PY{+w}{ }\PY{l+s+s1}{\PYZsq{}\PYZdl{}\PYZdl{}\PYZsq{}}\PY{p}{]}\PY{p}{,}\PY{+w}{ }\PY{p}{[}\PY{l+s+s1}{\PYZsq{}\PYZbs{}\PYZbs{}[\PYZsq{}}\PY{p}{,}\PY{+w}{ }\PY{l+s+s1}{\PYZsq{}\PYZbs{}\PYZbs{}]\PYZsq{}}\PY{p}{]}\PY{p}{]}\PY{p}{,}
+\PY{+w}{    }\PY{n+nx}{tags}\PY{o}{:}\PY{+w}{ }\PY{l+s+s1}{\PYZsq{}ams\PYZsq{}}\PY{p}{,}
+\PY{+w}{    }\PY{n+nx}{packages}\PY{o}{:}\PY{+w}{ }\PY{p}{\PYZob{}}\PY{l+s+s1}{\PYZsq{}[+]\PYZsq{}}\PY{o}{:}\PY{+w}{ }\PY{p}{[}\PY{l+s+s1}{\PYZsq{}ams\PYZsq{}}\PY{p}{]}\PY{p}{\PYZcb{}}
+\PY{+w}{  }\PY{p}{\PYZcb{}}\PY{p}{,}
+\PY{+w}{  }\PY{n+nx}{options}\PY{o}{:}\PY{+w}{ }\PY{p}{\PYZob{}}
+\PY{+w}{    }\PY{n+nx}{ignoreHtmlClass}\PY{o}{:}\PY{+w}{ }\PY{l+s+s1}{\PYZsq{}.*\PYZsq{}}\PY{p}{,}
+\PY{+w}{    }\PY{n+nx}{processHtmlClass}\PY{o}{:}\PY{+w}{ }\PY{l+s+s1}{\PYZsq{}arithmatex\PYZsq{}}
+\PY{+w}{  }\PY{p}{\PYZcb{}}
+\PY{p}{\PYZcb{}}\PY{p}{;}
+\end{Verbatim}
+\end{code}
+\section{With LaTeX output}\label{with-latex-output}
+
+Here's what the above snippets look like once rendered through TeXSmith:
+
+\begin{figure}[H]
+    \centering
+
+    \ifdefined\adjustbox
+
+        \adjustbox{max width=\textwidth}{
+            \includegraphics[width=\linewidth]{snippet-<HASH>.pdf}
+        }
+
+    \else
+
+        \includegraphics[width=\linewidth]{snippet-<HASH>.pdf}
+
+    \fi
+
+\end{figure}
+With the source:
+
+\begin{code}{markdown}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+The Schrödinger equation in a non\PYZhy{}relativistic case is written as:
+
+\PYZdl{}\PYZdl{}
+\PYZbs{}imath \PYZbs{}hbar \PYZbs{}frac\PYZob{}\PYZbs{}partial\PYZcb{}\PYZob{}\PYZbs{}partial t\PYZcb{} \PYZbs{}Psi(\PYZbs{}mathbf\PYZob{}r\PYZcb{},t) =
+\PYZbs{}left[ \PYZhy{}\PYZbs{}frac\PYZob{}\PYZbs{}hbar\PYZca{}2\PYZcb{}\PYZob{}2m\PYZcb{} \PYZbs{}nabla\PYZca{}2 + V(\PYZbs{}mathbf\PYZob{}r\PYZcb{},t) \PYZbs{}right] \PYZbs{}Psi(\PYZbs{}mathbf\PYZob{}r\PYZcb{},t)
+\PYZdl{}\PYZdl{}
+
+And the set of Maxwell\PYZsq{}s equations in differential form. The magnetic flux \PYZdl{}\PYZbs{}eqref\PYZob{}eq:max2\PYZcb{}\PYZdl{} through any closed surface is zero, which implies that there are no magnetic monopoles.
+
+\PYZdl{}\PYZdl{}
+\PYZbs{}begin\PYZob{}align\PYZcb{}
+\PYZbs{}nabla \PYZbs{}cdot \PYZbs{}vec\PYZob{}E\PYZcb{} \PYZam{}= \PYZbs{}frac\PYZob{}\PYZbs{}rho\PYZcb{}\PYZob{}\PYZbs{}varepsilon\PYZus{}0\PYZcb{} \PYZbs{}quad \PYZam{}\PYZam{}\PYZbs{}text\PYZob{}Gauss Law\PYZcb{}\PYZbs{}\PYZbs{}[4pt]
+\PYZbs{}nabla \PYZbs{}cdot \PYZbs{}vec\PYZob{}B\PYZcb{} \PYZam{}= 0 \PYZbs{}quad \PYZam{}\PYZam{}\PYZbs{}text\PYZob{}Gauss\PYZsq{}s law for electricity\PYZcb{} \PYZbs{}label\PYZob{}eq:max2\PYZcb{}\PYZbs{}\PYZbs{}[4pt]
+\PYZbs{}nabla \PYZbs{}times \PYZbs{}vec\PYZob{}E\PYZcb{} \PYZam{}= \PYZhy{}\PYZbs{},\PYZbs{}frac\PYZob{}\PYZbs{}partial \PYZbs{}vec\PYZob{}B\PYZcb{}\PYZcb{}\PYZob{}\PYZbs{}partial t\PYZcb{}
+    \PYZbs{}quad \PYZam{}\PYZam{}\PYZbs{}text\PYZob{}Faraday\PYZsq{}s law\PYZcb{}\PYZbs{}\PYZbs{}[4pt]
+\PYZbs{}nabla \PYZbs{}times \PYZbs{}vec\PYZob{}B\PYZcb{} \PYZam{}= \PYZbs{}mu\PY{g+ge}{\PYZus{}0 \PYZbs{}vec\PYZob{}J\PYZcb{} + \PYZbs{}mu\PYZus{}}0 \PYZbs{}varepsilon\PYZus{}0
+    \PYZbs{}frac\PYZob{}\PYZbs{}partial \PYZbs{}vec\PYZob{}E\PYZcb{}\PYZcb{}\PYZob{}\PYZbs{}partial t\PYZcb{}
+\PYZbs{}quad \PYZam{}\PYZam{}\PYZbs{}text\PYZob{}Ampère\PYZhy{}Maxwell law\PYZcb{}
+\PYZbs{}end\PYZob{}align\PYZcb{}
+\PYZdl{}\PYZdl{}
+\end{Verbatim}
+\end{code}
+
+\end{document}

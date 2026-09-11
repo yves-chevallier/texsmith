@@ -1,0 +1,109 @@
+\documentclass[a4paper,twoside]{article}
+
+\usepackage{morewrites}
+
+\usepackage[svgnames,dvipsnames,x11names]{xcolor}
+\usepackage{graphicx}
+\usepackage[english]{babel}
+\usepackage[colorlinks=true, linkcolor=NavyBlue, urlcolor=NavyBlue, citecolor=NavyBlue]{hyperref}
+\usepackage[a4paper]{geometry}
+\usepackage{ts-fonts}
+\usepackage{amsmath}
+\usepackage{float}
+\usepackage{seqsplit}
+\usepackage{ts-callouts}
+\usepackage{ts-code}
+
+\usepackage{lastpage}
+\usepackage{refcount}
+\makeatletter
+\def\ps@plain{
+  \let\@oddhead\@empty
+  \let\@evenhead\@empty
+  \def\@oddfoot{
+    \hfil
+    \ifnum\getpagerefnumber{LastPage}>1\relax
+      \thepage
+    \fi
+    \hfil}
+  \let\@evenfoot\@oddfoot
+}
+\makeatother
+
+\title{Research Paper}
+\author{}\date{}
+
+\begin{document}
+
+\maketitle
+
+\label{cheese}
+
+\thispagestyle{plain}
+This example shows how TeXSmith can be used to write scientific papers with
+Markdown source, bibliographies, and figures. It uses the \texttt{article} template
+package, which provides a standard article layout with support for
+citations, cross-references, and floating figures/tables.
+
+The documentation preview uses the default A4 portrait layout. Click the image
+to download the PDF.
+
+\begin{figure}[H]
+    \centering
+
+    \ifdefined\adjustbox
+
+        \adjustbox{max width=\textwidth}{
+            \includegraphics[width=0.7\linewidth]{snippet-<HASH>.pdf}
+        }
+
+    \else
+
+        \includegraphics[width=0.7\linewidth]{snippet-<HASH>.pdf}
+
+    \fi
+
+\end{figure}
+Here is the source code for this example:
+
+\textbf{Article}\par
+
+\begin{code}{markdown}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+
+\end{Verbatim}
+\end{code}
+\textbf{Bibliography}\par
+
+\begin{code}{bibtex}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+
+\end{Verbatim}
+\end{code}
+To render the example manually:
+
+\begin{code}{bash}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+texsmith\PY{+w}{ }cheese.md\PY{+w}{ }cheese.bib\PY{+w}{ }\PYZhy{}tarticle\PY{+w}{ }\PYZhy{}\PYZhy{}build
+\end{Verbatim}
+\end{code}
+\begin{callout}[callout info]{Info}
+Naturally, this article isn't an actual research paper! It's AI-generated
+content cooked up purely for demo purposes. One reference \emph{is} real, though---the one
+containing the original figure. I don't own the rights to that figure; I simply
+redrew it in vector form. All author names and the contents of the other references
+are completely fictional. Any resemblance to real people or publications is
+entirely coincidental... unless the cheese overlords say otherwise.
+\end{callout}
+\begin{callout}[callout note]{Note}
+I came up with this example because: (1) as a Swiss person, cheese is basically
+part of my operating system, and (2) when I was a student, a friend of mine did
+his PhD on cheese and collected delightfully absurd cheese-related research that
+nobody would imagine studying scientifically.
+
+I initially thought about an article on how Swiss music---specifically yodeling---might
+influence cheese ripening. But, well... rheology felt slightly more scientifically
+defensible.
+\end{callout}
+
+\end{document}

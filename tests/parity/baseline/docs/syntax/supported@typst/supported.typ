@@ -1,0 +1,195 @@
+#set document(
+  title: "Supported Markdown Syntax",
+)
+#set page(
+  paper: "a4",
+  margin: 2.5cm,
+  numbering: none,
+  footer: context {
+    if counter(page).final().first() > 1 {
+      align(center)[#counter(page).get().first()]
+    }
+  },
+)
+#set text(font: "New Computer Modern", size: 11pt, lang: "en")
+#set par(justify: true)
+#show heading: set block(above: 1.8em, below: 1.0em)
+#set heading(numbering: "1.1")
+
+#align(center)[
+  #text(size: 1.8em, weight: "bold")[Supported Markdown Syntax]
+]
+#v(1.5em)
+
+TeXSmith bundles Python-Markdown together with a curated set of PyMdown
+extensions. The combination lets you author rich documentation while keeping
+output predictable for LaTeX conversion. This page summarizes the syntax you can
+use out of the box and points to the extension behind each feature.
+
+#block(width: 100%, radius: 2pt, stroke: (left: 1.5pt + rgb("#00B8D4"), rest: 0.4pt + rgb("#00B8D4")))[
+  #block(width: 100%, fill: rgb("#00B8D4").lighten(90%), inset: (x: 8pt, y: 4pt))[#text(weight: "bold", fill: rgb("#00B8D4"))[ℹ#h(0.4em)Renderer defaults]]
+  #block(width: 100%, inset: (x: 8pt, y: 6pt))[
+    The CLI and API both enable the exact same extension list defined in
+    `texsmith.adapters.markdown.DEFAULT_MARKDOWN_EXTENSIONS`. You can always
+    override the list with CLI flags or API options, but the features below are
+    available without additional configuration.
+  ]
+]
+
+= Core Markdown (Always On)
+
+```markdown
+# Heading 1
+## Heading 2
+### Heading 3
+
+**bold**, *italic*, ~~strikethrough~~, `inline code`
+
+[Links](https://www.example.com) and ![images](assets/logo.svg)
+
+> Blockquote text
+
+- Unordered item
+  - Nested item
+1. Ordered item
+2. Next item
+
+Horizontal rules:
+---
+```
+
+All standard Markdown constructs—headings, emphasis, lists, code blocks,
+blockquotes, links, images, and horizontal rules—render exactly as you would
+expect. In LaTeX output, horizontal rules become `\clearpage` page breaks rather
+than a literal line. TeXSmith relies on fenced code blocks by default, so triple
+backticks (``` `` ```) are the recommended way to author code samples.
+
+= Extension Cheat Sheet
+
+#table(
+  columns: 4,
+  align: (left, left, left, left),
+  table.header([Feature], [Extension], [Package], [Example]),
+  [Definition lists], [`def_list`], [`markdown`], [`Term: Definition`],
+  [Footnotes], [`footnotes`], [`markdown`], [`Footnote ref1`],
+  [Abbreviations], [`abbr`], [`markdown`], [`*[HTML]: HyperText Markup Language`],
+  [Admonitions], [`admonition`], [`markdown`], [`!!! note  Body`],
+  [Attribute lists], [`attr_list`], [`markdown`], [`![Alt](image.png){ width="50%" }`],
+  [Tables], [`tables`], [`markdown`], [Pipe-delimited tables],
+  [Markdown in HTML], [`md_in_html`], [`markdown`], [Markdown inside custom `<div>` blocks],
+  [SmartyPants], [`pymdownx.smartsymbols`], [`pymdown-extensions`], [Auto-converts quotes/dashes],
+  [Highlighted code], [`pymdownx.highlight`], [`pymdown-extensions`], [Adds syntax highlighting + anchors],
+  [Inline highlighting], [`pymdownx.inlinehilite`], [`pymdown-extensions`], [`print("hi")`],
+  [Details/summary], [`pymdownx.details`], [`pymdown-extensions`], [`???+ note Title`],
+  [SuperFences], [`pymdownx.superfences`], [`pymdown-extensions`], [Nest code fences safely],
+  [Task lists], [`pymdownx.tasklist`], [`pymdown-extensions`], [`- [x] Done`],
+  [Better emphasis], [`pymdownx.betterem`], [`pymdown-extensions`], [Fixes edge cases with underscores],
+  [MagicLink], [`pymdownx.magiclink`], [`pymdown-extensions`], [Autolinks URLs/issues],
+  [Keys], [`pymdownx.keys`], [`pymdown-extensions`], [`Ctrl+Alt+Del`],
+  [Tabbed content], [`pymdownx.tabbed`], [`pymdown-extensions`], [Content tabs],
+  [Snippets], [`pymdownx.snippets`], [`pymdown-extensions`], [Include external Markdown snippets],
+  [Caret markup], [`pymdownx.caret`], [`pymdown-extensions`], [`insert`],
+  [Mark (highlight)], [`pymdownx.mark`], [`pymdown-extensions`], [`highlight`],
+  [Tilde syntax], [`pymdownx.tilde`], [`pymdown-extensions`], [Subscript / superscript],
+  [Critic markup], [`pymdownx.critic`], [`pymdown-extensions`], [Editorial annotations],
+  [Emoji], [`pymdownx.emoji`], [`pymdown-extensions`], [`:sparkles:` or `:fontawesome-regular-face-smile:`],
+  [Fancy lists], [`pymdownx.fancylists`], [`pymdown-extensions`], [Extended list markers],
+  [Blocks caption], [`pymdownx.blocks.caption`], [`pymdown-extensions`], [Captions for fenced blocks],
+  [Blocks HTML], [`pymdownx.blocks.html`], [`pymdown-extensions`], [Named block wrappers],
+  [Snippets of LaTeX], [`texsmith.extensions.latex_raw`], [bundled], [Raw LaTeX fence],
+  [Missing footnotes guard], [`texsmith.extensions.missing_footnotes`], [bundled], [Warns when references lack definitions],
+)
+
+Want a generated table of contents? Add the Python-Markdown `toc` extension with `-x toc` or `--enable-extension toc`—it is no longer enabled by default.
+
+Use the table above as a quick pointer. The following sections provide more
+context and runnable examples.
+
+= Working with Admonitions
+
+```markdown
+!!! warning "LaTeX toolchain"
+    Remember to install TeX Live, MiKTeX, or MacTeX before running `texsmith --build`.
+```
+
+Admonitions render as highlighted callouts in HTML and as tcolorbox blocks in the
+LaTeX output. Combine them with tabs or details blocks to create layered
+walkthroughs.
+
+= Tables and Definition Lists
+
+```markdown
+| Option | Description |
+| ------ | ----------- |
+| `--list-extensions` | Prints enabled Markdown extensions |
+| `--debug` | Shows full tracebacks |
+
+Term
+: Definition content
+```
+
+Tables use the Python-Markdown `tables` extension while definition lists come
+from `def_list`. Both convert cleanly into LaTeX environments.
+
+= Task Lists and Checkboxes
+
+```markdown
+- [x] Validate MkDocs navigation
+- [ ] Document template slots
+```
+
+Task lists automatically render checkboxes in HTML. In LaTeX they become custom
+itemize entries with inline symbols.
+
+= Keyboard Shortcuts
+
+```markdown
+Use ++ctrl+s++ to save changes and ++ctrl+shift+b++ to build the docs.
+```
+
+The `pymdownx.keys` extension turns the markup above into keyboard glyphs, which
+carry across to PDFs through the TeXSmith formatter.
+
+= Embedding Raw LaTeX
+
+Use the `/// latex` fence when native LaTeX is required:
+
+```markdown
+\begin{align}
+E &= mc^2 \\
+\nabla \cdot \vec{E} &= \frac{\rho}{\varepsilon_0}
+\end{align}
+```
+
+TeXSmith passes the block straight to the renderer, letting you mix handcrafted
+LaTeX with converted Markdown content. For inline adjustments, drop
+`{latex}[commands]` right into the paragraph:
+
+```markdown
+The chapter ends here {latex}[\clearpage] before appendices.
+```
+
+= Snippet Includes
+
+The `pymdownx.snippets` extension lets you avoid duplication:
+
+```markdown
+--8<-- "includes/built-in-tasks.md"
+```
+
+Create an `includes` directory under `docs/` and share fragments across pages.
+The same mechanism can pull example Markdown from the samples used in automated
+tests, keeping docs and fixtures aligned.
+
+= When You Need More
+
+- Use `texsmith --list-extensions` to see the live extension list.
+- Disable or add extensions via the `--enable-extension` and `--disable-extension`
+    flags in `texsmith` or through `ConversionRequest.markdown_extensions`
+    in the API.
+- If a feature relies on a third-party executable (for example Mermaid to PDF),
+    make sure the binary is available on the build worker before running
+    `texsmith --build`.
+
+With these extensions enabled, TeXSmith can faithfully render everything from
+simple README-style guides to complex, reference-heavy manuals.

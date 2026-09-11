@@ -1,0 +1,260 @@
+\documentclass[a4paper,twoside]{article}
+
+\usepackage{morewrites}
+
+\usepackage[svgnames,dvipsnames,x11names]{xcolor}
+\usepackage{graphicx}
+\usepackage[english]{babel}
+\usepackage[colorlinks=true, linkcolor=NavyBlue, urlcolor=NavyBlue, citecolor=NavyBlue]{hyperref}
+\usepackage[a4paper]{geometry}
+\usepackage{ts-fonts}
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{amsmath}
+\usepackage{float}
+\usepackage{seqsplit}
+\newcolumntype{Y}{>{\centering\arraybackslash}X}
+\newcolumntype{Z}{>{\raggedleft\arraybackslash}X}
+\usepackage{ts-code}
+
+\usepackage{lastpage}
+\usepackage{refcount}
+\makeatletter
+\def\ps@plain{
+  \let\@oddhead\@empty
+  \let\@evenhead\@empty
+  \def\@oddfoot{
+    \hfil
+    \ifnum\getpagerefnumber{LastPage}>1\relax
+      \thepage
+    \fi
+    \hfil}
+  \let\@evenfoot\@oddfoot
+}
+\makeatother
+
+\title{Markdown}
+\author{}\date{}
+
+\begin{document}
+
+\maketitle
+
+\thispagestyle{plain}
+If Markdown is new to you, start with the \href{https://www.markdownguide.org/basic-syntax/}{canonical guide}.
+
+The original spec is spartan---tables, diagrams, and other niceties didn't exist.
+
+Over time new \emph{flavours} sprouted to fill the gaps. Because TeXSmith initially targeted MkDocs, it aligns with \href{https://python-markdown.github.io/extensions/}{Python-Markdown} (MkDocs' engine) plus the usual suspects like \href{https://facelessuser.github.io/pymdown-extensions/}{Pymdown Extensions}.
+
+For printed documentation, especially for scientific or technical reports, some additional features are required:
+
+\begin{itemize}
+\item{} Citations and bibliographies
+\item{} Cross-references
+\item{} Diagrams (Mermaid, Graphviz, Vega)
+\item{} Mathematical formulas (LaTeX math)
+\item{} Index
+\item{} Glossary and acronyms
+\item{} Rich tables (span, multi-line cells, etc.)
+\item{} Direct LaTeX injections using fenced \texttt{/// latex} blocks or inline \texttt{\{latex\}[...]} snippets that stay hidden in HTML but reach the LaTeX output unchanged
+
+\end{itemize}
+\section{Markdown is a mess}\label{markdown-is-a-mess}
+
+So many flavours, so many extensions, so many incompatible syntaxes---it's a jungle. CommonMark tried to herd the cats and mostly succeeded, but fragmentation remains. MyST brought Sphinx-style goodies to Markdown, yet it isn't MkDocs-compatible, so TeXSmith had to chart its own course.
+
+\begin{figure}[H]
+    \centering
+
+    \href{https://imgs.xkcd.com/comics/standards.png}{
+    \includegraphics[width=0.6\linewidth]{standards.pdf}
+    }
+
+    \caption[How Standards Proliferate]{How Standards Proliferate}
+\end{figure}
+
+Source: xkcd\footnote{\href{https://xkcd.com/927/}{xkcd:927}}.
+
+TeXSmith is unapologetically opinionated: it curates a stack, sprinkles extra sauce on top, and calls the bundle \textbf{Tmark} (TeXSmith Markdown).
+
+\section{TeXSmith compatibility}\label{texsmith-compatibility}
+
+\subsection{CommonMark}\label{commonmark}
+
+\href{https://commonmark.org/help/}{CommonMark} is the standardized, modern version of Markdown.
+
+\begin{center}
+\begin{tabularx}{\linewidth}{>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X}
+\toprule
+\textbf{Feature} & \textbf{Syntax} & \textbf{Supported} \\
+
+\midrule
+Italic & \texttt{*x*} & Yes \\
+Bold & \texttt{**x**} & Yes \\
+Heading & \texttt{\# H} & Yes \\
+Links & \texttt{[Text](url)} & Yes \\
+Images & \texttt{![Alt](url)} & Yes \\
+Inline Code & \texttt{`code`} & Yes \\
+Footnotes & \texttt{[\^{}1]} & Yes \\
+Tables &  & Yes \\
+Blockquotes & \texttt{> Quote} & Yes \\
+Ordered Lists & \texttt{1. Item} & Yes \\
+Unordered Lists & \texttt{-\allowbreak{} Item} & Yes \\
+Horizontal Rules & \texttt{-\allowbreak{}-\allowbreak{}-\allowbreak{}} & Yes \\
+Superscript & \texttt{\^{}x\^{}} & Yes \\
+Subscript & \texttt{\textasciitilde{}x\textasciitilde{}} & Yes \\
+Strikethrough & \texttt{\textasciitilde{}\textasciitilde{}x\textasciitilde{}\textasciitilde{}} & Yes \\
+
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\subsection{GitHub Flavored Markdown (GFM)}\label{github-flavored-markdown-gfm}
+
+\href{https://github.github.com/gfm/}{GFM} is the version of Markdown used by GitHub, which extends CommonMark with additional features.
+
+\begin{center}
+\begin{tabularx}{\linewidth}{>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X}
+\toprule
+\textbf{Feature} & \textbf{Syntax} & \textbf{Supported} \\
+
+\midrule
+Separator & \texttt{***}, \texttt{\_\_\_} & Yes \\
+
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\subsection{Python Markdown}\label{python-markdown}
+
+\href{https://python-markdown.github.io/}{Python-Markdown} is the Markdown engine used by MkDocs. It extends CommonMark with a variety of features through extensions.
+
+\begin{center}
+\begin{tabularx}{\linewidth}{>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X}
+\toprule
+\textbf{Feature} & \textbf{Syntax} & \textbf{Extension} & \textbf{Supported} \\
+
+\midrule
+Definition Lists & \texttt{: def} & \texttt{def\_list} & Yes \\
+Admonitions & \texttt{!!! note} & \texttt{admonition} & Yes \\
+Inline Math & \texttt{\$\textbackslash{}sqrt\{x\}\$} & \texttt{mdx\_math} & Yes \\
+SmartyPants & \texttt{<< >>}, \texttt{...}, \texttt{-\allowbreak{}-\allowbreak{}}, \texttt{-\allowbreak{}-\allowbreak{}-\allowbreak{}} & \texttt{smarty} & Yes \\
+WikiLinks & \texttt{[[Wiki link]]} & \texttt{wikilinks} & Yes \\
+
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\subsection{PyMdown Extensions}\label{pymdown-extensions}
+
+\href{https://facelessuser.github.io/pymdown-extensions/}{Pymdown Extensions} is a popular collection of Markdown extensions for Python-Markdown, which adds many useful features.
+
+\begin{center}
+\begin{tabularx}{\linewidth}{>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X}
+\toprule
+\textbf{Feature} & \textbf{Syntax} & \textbf{Extension} & \textbf{Supported} \\
+
+\midrule
+Better Emphasis & \texttt{***x***} & \texttt{pymdownx.betterem} & Yes \\
+Superscript & \texttt{x\^{}2\^{}} & \texttt{pymdownx.caret} & Yes \\
+Underline & \texttt{\^{}\^{}x\^{}\^{}} & \texttt{pymdownx.caret} & Yes \\
+Strikethrough & \texttt{\textasciitilde{}\textasciitilde{}x\textasciitilde{}\textasciitilde{}} & \texttt{pymdownx.tilde} & Yes \\
+Collapsible Sections & \texttt{??? note} & \texttt{pymdownx.details} & Yes \\
+Emoji & \texttt{:smile:} & \texttt{pymdownx.emoji} & Yes \\
+Code Highlight & \texttt{`\#!php echo "Hello";`} & \texttt{pymdownx.inlinehilite} & Yes \\
+Keys & \texttt{++ctrl+a++} & \texttt{pymdownx.keys} & Yes \\
+Magic Links & \texttt{https://acme.com} & \texttt{pymdownx.magiclink} & Yes \\
+Highlight & \texttt{==x==} & \texttt{pymdownx.mark} & Yes \\
+Smart Symbols & \texttt{(c)} & \texttt{pymdownx.smartsymbols} & Yes \\
+Task Lists & \texttt{-\allowbreak{} [ ]} & \texttt{pymdownx.tasklist} & Yes \\
+
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\subsection{TeXSmith Extensions}\label{texsmith-extensions}
+
+\begin{center}
+\begin{tabularx}{\linewidth}{>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X}
+\toprule
+\textbf{Feature} & \textbf{Syntax} & \textbf{Extension} \\
+
+\midrule
+Small Caps & \texttt{\^{}\^{}x\^{}\^{}} & \texttt{texsmith.extensions.smallcaps} \\
+Mermaid & \texttt{![](diagram.mmd)} & \texttt{texsmith.extensions.mermaid} \\
+Progress Bars & \texttt{[=75\% "Done"]} & \texttt{texsmith.progressbar} \\
+Bibliography & \texttt{[\^{}citekey]} & \texttt{texsmith.bibliography} \\
+Index Entries & \texttt{\{index\}[entry]} (use \texttt{\{index:registry\}[entry]} to target another registry; add more \texttt{[level]} brackets for nesting) & \texttt{texsmith.index} \\
+Acronyms & \texttt{ACME (Acme Corporation)} & \texttt{texsmith.acronyms} \\
+Raw LaTeX & \texttt{/// latex}, \texttt{\{latex\}[x]} & \texttt{texsmith.extensions.latex\_raw} \\
+LaTeX Text & \texttt{LaTeX}, \texttt{TeXSmith} & \texttt{texsmith.latex} \\
+
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\section{Default Extensions}\label{default-extensions}
+
+\begin{itemize}
+\item{} Python Markdown
+\item{} abbr
+\item{} admonition
+\item{} attr\_list
+\item{} def\_list
+\item{} footnotes
+\item{} smarty
+\item{} tables
+\item{} mdx\_math
+\item{} md\_in\_html
+\item{} TeXSmith
+\item{} texsmith.extensions.multi\_citations:MultiCitationExtension
+\item{} texsmith.extensions.latex\_raw:LatexRawExtension
+\item{} texsmith.extensions.missing\_footnotes:MissingFootnotesExtension
+\item{} texsmith.extensions.latex\_text:LatexTextExtension
+\item{} texsmith.extensions.smallcaps:SmallCapsExtension
+\item{} texsmith.extensions.progressbar:ProgressBarExtension
+\item{} Pymdown Extensions
+\item{} pymdownx.betterem
+\item{} pymdownx.blocks.caption
+\item{} pymdownx.blocks.html
+\item{} pymdownx.caret
+\item{} pymdownx.critic
+\item{} pymdownx.details
+\item{} pymdownx.emoji
+\item{} pymdownx.fancylists
+\item{} pymdownx.highlight
+\item{} pymdownx.inlinehilite
+\item{} pymdownx.keys
+\item{} pymdownx.magiclink
+\item{} pymdownx.mark
+\item{} pymdownx.saneheaders
+\item{} pymdownx.smartsymbols
+\item{} pymdownx.snippets
+\item{} pymdownx.superfences
+\item{} pymdownx.tabbed
+\item{} pymdownx.tasklist
+\item{} pymdownx.tilde
+
+\end{itemize}
+\section{Raw LaTeX Snippets (\texttt{/// latex}, \texttt{\{latex\}[...]})}\label{raw-latex-snippets-texttt-latex-texttt-latex}
+
+When you need to insert \LaTeX{} that must not appear in the HTML build, use the dedicated fence:
+
+\begin{code}{md}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+/// latex
+\PYZbs{}newcommand\PYZob{}\PYZbs{}R\PYZcb{}\PYZob{}\PYZbs{}mathbb\PYZob{}R\PYZcb{}\PYZcb{}
+///
+\end{Verbatim}
+\end{code}
+For inline tweaks, drop \texttt{\{latex\}[payload]} anywhere inside your paragraph:
+
+\begin{code}{md}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+Section break \PYZob{}latex\PYZcb{}[\PYZbs{}clearpage] before the next topic.
+\end{Verbatim}
+\end{code}
+Both syntaxes create hidden nodes (\texttt{<p>} for blocks, \texttt{<span>} for inline) so the fragments remain invisible online. During the HTML \(\rightarrow\) \LaTeX{} conversion, TeXSmith spots these nodes and drops the original payload straight into the final document. This makes it safe to declare macros, page tweaks, or any advanced snippet without impacting the web version.
+
+\end{document}

@@ -1,0 +1,60 @@
+\documentclass[a4paper,twoside]{article}
+
+\usepackage{morewrites}
+
+\usepackage[svgnames,dvipsnames,x11names]{xcolor}
+\usepackage{graphicx}
+\usepackage[english]{babel}
+\usepackage[colorlinks=true, linkcolor=NavyBlue, urlcolor=NavyBlue, citecolor=NavyBlue]{hyperref}
+\usepackage[a4paper]{geometry}
+\usepackage{ts-fonts}
+\usepackage{amsmath}
+\usepackage{float}
+\usepackage{seqsplit}
+\usepackage{ts-code}
+
+\usepackage{lastpage}
+\usepackage{refcount}
+\makeatletter
+\def\ps@plain{
+  \let\@oddhead\@empty
+  \let\@evenhead\@empty
+  \def\@oddfoot{
+    \hfil
+    \ifnum\getpagerefnumber{LastPage}>1\relax
+      \thepage
+    \fi
+    \hfil}
+  \let\@evenfoot\@oddfoot
+}
+\makeatother
+
+\title{Fonts and scripts}
+\author{}\date{}
+
+\begin{document}
+
+\maketitle
+
+TeXSmith automatically wraps non‑Latin scripts in moving arguments (headings, captions, index entries, ...) with per‑script font macros, using a cached lookup built from the Noto family. This gives fast, consistent multilingual output without manual fontspec boilerplate.
+
+\section{Inspect detected fallback fonts}\label{inspect-detected-fallback-fonts}
+
+Use the render command with \texttt{-\allowbreak{}-\allowbreak{}fonts-\allowbreak{}info} to display the scripts and fonts that were detected during a build. The flag works for both direct \LaTeX{} output and full template renders:
+
+\begin{code}{bash}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+uv\PY{+w}{ }run\PY{+w}{ }texsmith\PY{+w}{ }examples/dialects/dialects.md\PY{+w}{ }\PYZhy{}\PYZhy{}template\PY{+w}{ }article\PY{+w}{ }\PYZhy{}\PYZhy{}fonts\PYZhy{}info
+\end{Verbatim}
+\end{code}
+The report includes:
+
+\begin{itemize}
+\item{} the script name and the generated LaTeX commands (\texttt{\textbackslash{}text<slug>} / \texttt{\textbackslash{}<slug>font});
+\item{} the font family chosen for that script (from the cached fallback index);
+\item{} the number of codepoints seen for that script in the current render.
+
+\end{itemize}
+When Rich is available, the information is shown as a table; otherwise a plaintext list is printed. The option is non-intrusive and does not change the output artefacts.
+
+\end{document}

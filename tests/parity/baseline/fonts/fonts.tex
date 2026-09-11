@@ -1,0 +1,86 @@
+\documentclass[a4paper,twoside]{article}
+
+\usepackage{morewrites}
+
+\usepackage[svgnames,dvipsnames,x11names]{xcolor}
+\usepackage{graphicx}
+\usepackage[english]{babel}
+\usepackage[colorlinks=true, linkcolor=NavyBlue, urlcolor=NavyBlue, citecolor=NavyBlue]{hyperref}
+\usepackage[a4paper]{geometry}
+\usepackage{ts-fonts}
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{float}
+\usepackage{seqsplit}
+\newcolumntype{Y}{>{\centering\arraybackslash}X}
+\newcolumntype{Z}{>{\raggedleft\arraybackslash}X}
+
+\usepackage{lastpage}
+\usepackage{refcount}
+\makeatletter
+\def\ps@plain{
+  \let\@oddhead\@empty
+  \let\@evenhead\@empty
+  \def\@oddfoot{
+    \hfil
+    \ifnum\getpagerefnumber{LastPage}>1\relax
+      \thepage
+    \fi
+    \hfil}
+  \let\@evenfoot\@oddfoot
+}
+\makeatother
+
+\title{Font styles}
+\author{}\date{}
+
+\begin{document}
+
+\maketitle
+
+\thispagestyle{plain}
+
+\begin{center}
+\begin{tabularx}{\linewidth}{>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X}
+\toprule
+\textbf{\#} & \textbf{i} & \textbf{b} & \textbf{m} & \textbf{s} & \textbf{c} & \textbf{Exemple} \\
+
+\midrule
+1 &  &  &  &  &  & The quick brown fox jumps over 012345 \\
+2 & x &  &  &  &  & \emph{The quick brown fox jumps over 012345} \\
+3 &  & x &  &  &  & \textbf{The quick brown fox jumps over 012345} \\
+4 &  &  & x &  &  & \texttt{The quick brown fox jumps over 012345} \\
+5 &  &  &  & x &  & The quick brown fox jumps over 012345 \\
+6 &  &  &  &  & x & \textsc{The quick brown fox jumps over 012345} \\
+7 & x & x &  &  &  & \textbf{\emph{The quick brown fox jumps over 012345}} \\
+8 & x &  & x &  &  & \emph{\texttt{The quick brown fox jumps over 012345}} \\
+9 & x &  &  & x &  & \emph{The quick brown fox jumps over 012345} \\
+10 & x &  &  &  & x & \emph{\textsc{The quick brown fox jumps over 012345}} \\
+11 &  & x & x &  &  & \textbf{\texttt{The quick brown fox jumps over 012345}} \\
+12 &  & x &  & x &  & \textbf{The quick brown fox jumps over 012345} \\
+13 &  & x &  &  & x & \textsc{The quick brown fox jumps over 012345} \\
+14 &  &  & x & x &  & \texttt{The quick brown fox jumps over 012345} \\
+15 &  &  & x &  & x & \textsc{\texttt{The quick brown fox jumps over 012345}} \\
+16 &  &  &  & x & x & \textsc{The quick brown fox jumps over 012345} \\
+17 & x & x & x &  &  & \textbf{\emph{\texttt{The quick brown fox jumps over 012345}}} \\
+18 & x & x &  & x &  & \textbf{\emph{The quick brown fox jumps over 012345}} \\
+19 & x & x &  &  & x & \textsc{The quick brown fox jumps over 012345} \\
+20 & x &  & x & x &  & \emph{\texttt{The quick brown fox jumps over 012345}} \\
+21 & x &  & x &  & x & \textsc{\texttt{The quick brown fox jumps over 012345}} \\
+22 & x &  &  & x & x & \emph{\textsc{The quick brown fox jumps over 012345}} \\
+23 &  & x & x & x &  & \textbf{\texttt{The quick brown fox jumps over 012345}} \\
+24 &  & x & x &  & x & \textsc{\texttt{The quick brown fox jumps over 012345}} \\
+25 &  & x &  & x & x & \textsc{The quick brown fox jumps over 012345} \\
+26 &  &  & x & x & x & \textsc{\texttt{The quick brown fox jumps over 012345}} \\
+27 & x & x & x & x &  & \textbf{\emph{\texttt{The quick brown fox jumps over 012345}}} \\
+28 & x & x & x &  & x & \textsc{\texttt{The quick brown fox jumps over 012345}} \\
+29 & x & x &  & x & x & \textsc{The quick brown fox jumps over 012345} \\
+30 & x &  & x & x & x & \textsc{\texttt{The quick brown fox jumps over 012345}} \\
+31 &  & x & x & x & x & \textsc{\texttt{The quick brown fox jumps over 012345}} \\
+32 & x & x & x & x & x & \textsc{\texttt{The quick brown fox jumps over 012345}} \\
+
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\end{document}

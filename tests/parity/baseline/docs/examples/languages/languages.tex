@@ -1,0 +1,84 @@
+\documentclass[a4paper,twoside]{article}
+
+\usepackage{morewrites}
+
+\usepackage[svgnames,dvipsnames,x11names]{xcolor}
+\usepackage{graphicx}
+\usepackage[english]{babel}
+\usepackage[colorlinks=true, linkcolor=NavyBlue, urlcolor=NavyBlue, citecolor=NavyBlue]{hyperref}
+\usepackage[a4paper]{geometry}
+\usepackage{ts-fonts}
+\usepackage{amsmath}
+\usepackage{float}
+\usepackage{seqsplit}
+\usepackage{ts-code}
+
+\usepackage{lastpage}
+\usepackage{refcount}
+\makeatletter
+\def\ps@plain{
+  \let\@oddhead\@empty
+  \let\@evenhead\@empty
+  \def\@oddfoot{
+    \hfil
+    \ifnum\getpagerefnumber{LastPage}>1\relax
+      \thepage
+    \fi
+    \hfil}
+  \let\@evenfoot\@oddfoot
+}
+\makeatother
+
+\title{Languages}
+\author{}\date{}
+
+\begin{document}
+
+\maketitle
+
+\thispagestyle{plain}
+TeXSmith speaks more than Markdown---it speaks your language. Noto fonts ship in, so \LaTeX{} stops tripping over glyphs while browsers casually fall back. Most scripts just work out of the box; typographic nuances for highly specialized scripts (Arabic, Japanese, etc.) can be layered in if or when you need them.
+
+Below, we render a dialect sampler through the \texttt{article} template and lay two PDF pages side-by-side (\texttt{layout: 2x1}). Click to fetch the PDF.
+
+\begin{figure}[H]
+    \centering
+
+    \ifdefined\adjustbox
+
+        \adjustbox{max width=\textwidth}{
+            \includegraphics[width=\linewidth]{snippet-<HASH>.pdf}
+        }
+
+    \else
+
+        \includegraphics[width=\linewidth]{snippet-<HASH>.pdf}
+
+    \fi
+
+\end{figure}
+Source:
+
+\begin{code}{markdown}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+
+\end{Verbatim}
+\end{code}
+Build it locally:
+
+\begin{code}{bash}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+texsmith\PY{+w}{ }build\PY{+w}{ }dialects.md\PY{+w}{ }\PYZhy{}tarticle\PY{+w}{ }\PYZhy{}\PYZhy{}build
+\end{Verbatim}
+\end{code}
+\section{Fallbacks}\label{fallbacks}
+
+Font fallback is... complicated---almost \emph{passionately} so. In a browser, the mechanism is straightforward: if a glyph is missing in the first font, the engine walks the font stack and tries the next one, and the next one, until it eventually finds something that contains the character. For obscure Unicode blocks or emoji, Chrome and other modern browsers ultimately fall back to Google's Noto super-family, which covers most of the Unicode universe.
+
+\LaTeX{}, on the other hand, does \textbf{not} provide automatic font fallback in the same way. With classic pdf\LaTeX{} there is no real fallback mechanism at all; if a glyph isn't in the selected font, you simply get a missing-glyph warning or a tofu box.
+
+Lua\LaTeX{} changes the game: thanks to the \texttt{luaotfload} package, it \emph{can} perform font fallback, but you must explicitly define fallback fonts in your document or template.
+
+However, for this to work, those fallback fonts need to actually \emph{exist} on your TeX system. And this is where it gets tricky: installing Noto fonts via TeX Live (\texttt{tlmgr}) or via system packages like \texttt{apt install fonts-\allowbreak{}noto} is often incomplete, because distributions usually ship only a subset of the full Noto collection. For full Unicode coverage (emoji, rare historical scripts, CJK extensions, etc.), you often need to manually download and install the complete font set from Google's official Noto Fonts repository.
+
+\end{document}

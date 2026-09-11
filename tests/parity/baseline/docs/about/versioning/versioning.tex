@@ -1,0 +1,42 @@
+\documentclass[a4paper,twoside]{article}
+
+\usepackage{morewrites}
+
+\usepackage[svgnames,dvipsnames,x11names]{xcolor}
+\usepackage{graphicx}
+\usepackage[english]{babel}
+\usepackage[colorlinks=true, linkcolor=NavyBlue, urlcolor=NavyBlue, citecolor=NavyBlue]{hyperref}
+\usepackage[a4paper]{geometry}
+\usepackage{ts-fonts}
+\usepackage{float}
+\usepackage{seqsplit}
+
+\usepackage{lastpage}
+\usepackage{refcount}
+\makeatletter
+\def\ps@plain{
+  \let\@oddhead\@empty
+  \let\@evenhead\@empty
+  \def\@oddfoot{
+    \hfil
+    \ifnum\getpagerefnumber{LastPage}>1\relax
+      \thepage
+    \fi
+    \hfil}
+  \let\@evenfoot\@oddfoot
+}
+\makeatother
+
+\title{Versioning}
+\author{}\date{}
+
+\begin{document}
+
+\maketitle
+
+\thispagestyle{plain}
+TeXSmith follows \href{https://semver.org/spec/v2.0.0.html}{Semantic Versioning 2.0.0}. Each release version is identified by a three-part number: \texttt{MAJOR.MINOR.PATCH}. We will therefore ensure that no breaking changes are introduced in minor or patch releases.
+
+However, versions prior to \texttt{1.0.0} are considered initial development releases, and as such, the public API may change at any time without notice. Users are advised to expect potential breaking changes when upgrading between pre-1.0.0 versions. As we are not yet near a stable release, TeXSmith is not recommended for production use at this time. Testing and feedback from early adopters are highly appreciated to help us improve the tool.
+
+\end{document}

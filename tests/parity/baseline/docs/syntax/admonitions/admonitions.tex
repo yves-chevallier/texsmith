@@ -1,0 +1,182 @@
+\documentclass[a4paper,twoside]{article}
+
+\usepackage{morewrites}
+
+\usepackage[svgnames,dvipsnames,x11names]{xcolor}
+\usepackage{graphicx}
+\usepackage[english]{babel}
+\usepackage[colorlinks=true, linkcolor=NavyBlue, urlcolor=NavyBlue, citecolor=NavyBlue]{hyperref}
+\usepackage[a4paper]{geometry}
+\usepackage{ts-fonts}
+\usepackage{amsmath}
+\usepackage{float}
+\usepackage{seqsplit}
+\usepackage{ts-callouts}
+\usepackage{ts-code}
+
+\usepackage{lastpage}
+\usepackage{refcount}
+\makeatletter
+\def\ps@plain{
+  \let\@oddhead\@empty
+  \let\@evenhead\@empty
+  \def\@oddfoot{
+    \hfil
+    \ifnum\getpagerefnumber{LastPage}>1\relax
+      \thepage
+    \fi
+    \hfil}
+  \let\@evenfoot\@oddfoot
+}
+\makeatother
+
+\title{Admonitions}
+\author{}\date{}
+
+\begin{document}
+
+\maketitle
+
+\thispagestyle{plain}
+Admonitions are little callout blocks for surfacing notes, warnings, tips, and whatever else you need to highlight. Python-Markdown's \texttt{admonition} extension powers them.
+
+You can render them in two flavors. The plain/static variant looks like this:
+
+\begin{code}{markdown}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+!!! note \PYZdq{}This is a Note\PYZdq{}
+    Any number of other indented Markdown elements.
+
+    This is the second paragraph.
+\end{Verbatim}
+\end{code}
+\begin{callout}[callout note]{This is a Note}
+Any number of other indented Markdown elements.
+
+This is the second paragraph.
+\end{callout}
+Prefer collapsible callouts? Use the foldable form:
+
+\begin{code}{markdown}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+??? note \PYZdq{}This is a Note\PYZdq{}
+    Any number of other indented markdown elements.
+
+    This is the second paragraph.
+\end{Verbatim}
+\end{code}
+\begin{callout}[callout note]{This is a Note}
+Any number of other indented markdown elements.
+
+This is the second paragraph.
+\end{callout}
+\section{LaTeX Rendering}\label{latex-rendering}
+
+TeXSmith maps admonitions onto the \texttt{tcolorbox} package automatically, so they come through in \LaTeX{} without extra work. Template authors can still restyle them via the preamble or dedicated slots.
+
+Built-in templates like \texttt{article} and \texttt{book} ship with sensible defaults. Tweak the look by setting \texttt{callout\_style} in front matter (or via \texttt{-\allowbreak{}-\allowbreak{}attribute callout\_style=<style>}):
+
+\begin{code}{yaml}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+\PY{n+nn}{\PYZhy{}\PYZhy{}\PYZhy{}}
+\PY{n+nt}{press}\PY{p}{:}
+\PY{+w}{  }\PY{n+nt}{callout\PYZus{}style}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{classic}\PY{+w}{  }\PY{c+c1}{\PYZsh{} fancy | classic | minimal}
+\PY{n+nn}{\PYZhy{}\PYZhy{}\PYZhy{}}
+\end{Verbatim}
+\end{code}
+\begin{itemize}
+\item{} \texttt{fancy} (default): colored headings with icons.
+\item{} \texttt{classic}: black-and-white layout with a bold left rule.
+\item{} \texttt{minimal}: subtle border, rounded corners, and no icons.
+
+\end{itemize}
+\textbf{Fancy Admonitions}\par
+
+\begin{figure}[H]
+    \centering
+
+    \ifdefined\adjustbox
+
+        \adjustbox{max width=\textwidth}{
+            \includegraphics[width=\linewidth]{snippet-<HASH>.pdf}
+        }
+
+    \else
+
+        \includegraphics[width=\linewidth]{snippet-<HASH>.pdf}
+
+    \fi
+
+\end{figure}
+\textbf{Classic Admonitions}\par
+
+\begin{figure}[H]
+    \centering
+
+    \ifdefined\adjustbox
+
+        \adjustbox{max width=\textwidth}{
+            \includegraphics[width=\linewidth]{snippet-<HASH>.pdf}
+        }
+
+    \else
+
+        \includegraphics[width=\linewidth]{snippet-<HASH>.pdf}
+
+    \fi
+
+\end{figure}
+\textbf{Minimal Admonitions}\par
+
+\begin{figure}[H]
+    \centering
+
+    \ifdefined\adjustbox
+
+        \adjustbox{max width=\textwidth}{
+            \includegraphics[width=\linewidth]{snippet-<HASH>.pdf}
+        }
+
+    \else
+
+        \includegraphics[width=\linewidth]{snippet-<HASH>.pdf}
+
+    \fi
+
+\end{figure}
+\section{Built-in Admonition Types}\label{built-in-admonition-types}
+
+The following admonition types are built into the \texttt{admonition} extension:
+
+\begin{callout}[callout note]{Note}
+A Note
+\end{callout}
+\begin{callout}[callout tip]{Tip}
+A Tip
+\end{callout}
+\begin{callout}[callout warning]{Warning}
+A Warning
+\end{callout}
+\begin{callout}[callout important]{Important}
+An important notice
+\end{callout}
+\begin{callout}[callout danger]{Danger}
+A danger notice
+\end{callout}
+\begin{callout}[callout info]{Info}
+An info notice
+\end{callout}
+\begin{callout}[callout hint]{Hint}
+A Hint
+\end{callout}
+\begin{callout}[callout info]{Seealso}
+A see-also notice
+\end{callout}
+\begin{callout}[callout question]{Question}
+A question notice
+\end{callout}
+\begin{callout}[callout abstract]{Abstract}
+An abstract
+\end{callout}
+
+\end{document}

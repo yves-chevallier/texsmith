@@ -1,0 +1,69 @@
+\documentclass[a4paper,twoside]{article}
+
+\usepackage{morewrites}
+
+\usepackage[svgnames,dvipsnames,x11names]{xcolor}
+\usepackage{graphicx}
+\usepackage[english]{babel}
+\usepackage[colorlinks=true, linkcolor=NavyBlue, urlcolor=NavyBlue, citecolor=NavyBlue]{hyperref}
+\usepackage[a4paper]{geometry}
+\usepackage{ts-fonts}
+\usepackage{amsmath}
+\usepackage{float}
+\usepackage{seqsplit}
+\usepackage{ts-code}
+
+\usepackage{lastpage}
+\usepackage{refcount}
+\makeatletter
+\def\ps@plain{
+  \let\@oddhead\@empty
+  \let\@evenhead\@empty
+  \def\@oddfoot{
+    \hfil
+    \ifnum\getpagerefnumber{LastPage}>1\relax
+      \thepage
+    \fi
+    \hfil}
+  \let\@evenfoot\@oddfoot
+}
+\makeatother
+
+\title{Mermaid Configuration}
+\author{}\date{}
+
+\begin{document}
+
+\maketitle
+
+\thispagestyle{plain}
+TeXSmith will automatically pick up a \texttt{mermaid-\allowbreak{}config.json} located at the root of a template (next to \texttt{manifest.toml}). The diagrams module passes this config to Mermaid for all diagrams rendered with that template.
+
+\section{Using a Built-in Template}\label{using-a-built-in-template}
+
+The built-in \texttt{article} template ships with a \texttt{mermaid-\allowbreak{}config.json}. To inspect or override it:
+
+\begin{code}{bash}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+texsmith\PY{+w}{ }\PYZhy{}\PYZhy{}template\PYZhy{}info\PY{+w}{ }\PYZhy{}\PYZhy{}template\PY{+w}{ }article
+texsmith\PY{+w}{ }templates\PY{+w}{  }\PY{c+c1}{\PYZsh{} list all discoverable templates}
+\end{Verbatim}
+\end{code}
+To customize, copy the file, adjust options, and point to your modified template directory:
+
+\begin{code}{bash}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+cp\PY{+w}{ }\PYZhy{}r\PY{+w}{ }\PY{k}{\PYZdl{}(}python\PY{+w}{ }\PYZhy{}\PY{+w}{ }\PY{l+s}{\PYZlt{}\PYZlt{}\PYZsq{}PY\PYZsq{}\PYZbs{}nfrom texsmith.core.templates import load\PYZus{}template\PYZbs{}nfrom pathlib import Path\PYZbs{}nt = load\PYZus{}template(\PYZsq{}article\PYZsq{})\PYZbs{}nprint(t.root)\PYZbs{}nPY}\PY{k}{)}\PY{+w}{ }./templates/article\PY{l+s+se}{\PYZbs{}n}\PY{c+c1}{\PYZsh{} edit ./templates/article/mermaid\PYZhy{}config.json\PYZbs{}ntexsmith doc.md \PYZhy{}\PYZhy{}template ./templates/article}
+\end{Verbatim}
+\end{code}
+\section{Adding Mermaid Config to a Custom Template}\label{adding-mermaid-config-to-a-custom-template}
+
+\begin{enumerate}
+\item Place \texttt{mermaid-\allowbreak{}config.json} at the template root (same level as \texttt{manifest.toml}).
+\item TeXSmith will expose the path via \texttt{template.extras["mermaid\_config"]} so the renderer can pass it to Mermaid.
+\item No manifest changes are required; the presence of the file is enough.
+
+\end{enumerate}
+Typical options include theme, font, backgroundColor, and securityLevel. See \href{https://mermaid.js.org/config/theming.html}{https://mermaid.js.org/config/theming.html} for full reference.
+
+\end{document}

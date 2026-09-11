@@ -1,0 +1,155 @@
+\documentclass[a4paper,twoside]{article}
+
+\usepackage{morewrites}
+
+\usepackage[svgnames,dvipsnames,x11names]{xcolor}
+\usepackage{graphicx}
+\usepackage[english]{babel}
+\usepackage[colorlinks=true, linkcolor=NavyBlue, urlcolor=NavyBlue, citecolor=NavyBlue]{hyperref}
+\usepackage[a4paper]{geometry}
+\usepackage{ts-fonts}
+\usepackage{amsmath}
+\usepackage{float}
+\usepackage{seqsplit}
+\usepackage{ts-callouts}
+\usepackage{ts-code}
+
+\usepackage{lastpage}
+\usepackage{refcount}
+\makeatletter
+\def\ps@plain{
+  \let\@oddhead\@empty
+  \let\@evenhead\@empty
+  \def\@oddfoot{
+    \hfil
+    \ifnum\getpagerefnumber{LastPage}>1\relax
+      \thepage
+    \fi
+    \hfil}
+  \let\@evenfoot\@oddfoot
+}
+\makeatother
+
+\title{Code}
+\author{}\date{}
+
+\begin{document}
+
+\maketitle
+
+\thispagestyle{plain}
+Code fences are one of Markdown's greatest hits: drop a triple backtick block, label it, and you get nicely formatted snippets. TeXSmith leans on the \texttt{minted} package for \LaTeX{} output. It's a bit slower than \texttt{listings}, but the highlighting is richer, it speaks more languages, and its Unicode support (especially under Xe\LaTeX{}/Lua\LaTeX{}) is top-notch.
+
+\section{Code Blocks}\label{code-blocks}
+
+You can insert code snippets and specify options for syntax highlighting.
+
+\begin{itemize}
+\item{} Line numbers with \texttt{linenums="1"}
+\item{} Title with \texttt{title="filename.ext"}
+\item{} Highlight specific lines with \texttt{hl\_lines="2-\allowbreak{}3"}
+
+\end{itemize}
+\subsection{Name your code blocks}\label{name-your-code-blocks}
+
+\begin{code}{py}{bubble\_sort.py}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+\PY{k}{def}\PY{+w}{ }\PY{n+nf}{bubble\PYZus{}sort}\PY{p}{(}\PY{n}{items}\PY{p}{)}\PY{p}{:}
+    \PY{k}{for} \PY{n}{i} \PY{o+ow}{in} \PY{n+nb}{range}\PY{p}{(}\PY{n+nb}{len}\PY{p}{(}\PY{n}{items}\PY{p}{)}\PY{p}{)}\PY{p}{:}
+        \PY{k}{for} \PY{n}{j} \PY{o+ow}{in} \PY{n+nb}{range}\PY{p}{(}\PY{n+nb}{len}\PY{p}{(}\PY{n}{items}\PY{p}{)} \PY{o}{\PYZhy{}} \PY{l+m+mi}{1} \PY{o}{\PYZhy{}} \PY{n}{i}\PY{p}{)}\PY{p}{:}
+            \PY{k}{if} \PY{n}{items}\PY{p}{[}\PY{n}{j}\PY{p}{]} \PY{o}{\PYZgt{}} \PY{n}{items}\PY{p}{[}\PY{n}{j} \PY{o}{+} \PY{l+m+mi}{1}\PY{p}{]}\PY{p}{:}
+                \PY{n}{items}\PY{p}{[}\PY{n}{j}\PY{p}{]}\PY{p}{,} \PY{n}{items}\PY{p}{[}\PY{n}{j} \PY{o}{+} \PY{l+m+mi}{1}\PY{p}{]} \PY{o}{=} \PY{n}{items}\PY{p}{[}\PY{n}{j} \PY{o}{+} \PY{l+m+mi}{1}\PY{p}{]}\PY{p}{,} \PY{n}{items}\PY{p}{[}\PY{n}{j}\PY{p}{]}
+\end{Verbatim}
+\end{code}
+\subsection{Add line numbers}\label{add-line-numbers}
+
+\begin{code}{javascript}{}{linenos, }
+\begin{Verbatim}[commandchars=\\\{\},numbers=left,firstnumber=1,stepnumber=1,breaklines, breakanywhere, commandchars=\\\{\}]
+\PY{k+kd}{function}\PY{+w}{ }\PY{n+nx}{bubbleSort}\PY{p}{(}\PY{n+nx}{items}\PY{p}{)}\PY{+w}{ }\PY{p}{\PYZob{}}
+\PY{+w}{    }\PY{k}{for}\PY{+w}{ }\PY{p}{(}\PY{k+kd}{let}\PY{+w}{ }\PY{n+nx}{i}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+m+mf}{0}\PY{p}{;}\PY{+w}{ }\PY{n+nx}{i}\PY{+w}{ }\PY{o}{\PYZlt{}}\PY{+w}{ }\PY{n+nx}{items}\PY{p}{.}\PY{n+nx}{length}\PY{p}{;}\PY{+w}{ }\PY{n+nx}{i}\PY{o}{++}\PY{p}{)}\PY{+w}{ }\PY{p}{\PYZob{}}
+\PY{+w}{        }\PY{k}{for}\PY{+w}{ }\PY{p}{(}\PY{k+kd}{let}\PY{+w}{ }\PY{n+nx}{j}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+m+mf}{0}\PY{p}{;}\PY{+w}{ }\PY{n+nx}{j}\PY{+w}{ }\PY{o}{\PYZlt{}}\PY{+w}{ }\PY{n+nx}{items}\PY{p}{.}\PY{n+nx}{length}\PY{+w}{ }\PY{o}{\PYZhy{}}\PY{+w}{ }\PY{l+m+mf}{1}\PY{+w}{ }\PY{o}{\PYZhy{}}\PY{+w}{ }\PY{n+nx}{i}\PY{p}{;}\PY{+w}{ }\PY{n+nx}{j}\PY{o}{++}\PY{p}{)}\PY{+w}{ }\PY{p}{\PYZob{}}
+\PY{+w}{            }\PY{k}{if}\PY{+w}{ }\PY{p}{(}\PY{n+nx}{items}\PY{p}{[}\PY{n+nx}{j}\PY{p}{]}\PY{+w}{ }\PY{o}{\PYZgt{}}\PY{+w}{ }\PY{n+nx}{items}\PY{p}{[}\PY{n+nx}{j}\PY{+w}{ }\PY{o}{+}\PY{+w}{ }\PY{l+m+mf}{1}\PY{p}{]}\PY{p}{)}\PY{+w}{ }\PY{p}{\PYZob{}}
+\PY{+w}{                }\PY{p}{[}\PY{n+nx}{items}\PY{p}{[}\PY{n+nx}{j}\PY{p}{]}\PY{p}{,}\PY{+w}{ }\PY{n+nx}{items}\PY{p}{[}\PY{n+nx}{j}\PY{+w}{ }\PY{o}{+}\PY{+w}{ }\PY{l+m+mf}{1}\PY{p}{]}\PY{p}{]}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{p}{[}\PY{n+nx}{items}\PY{p}{[}\PY{n+nx}{j}\PY{+w}{ }\PY{o}{+}\PY{+w}{ }\PY{l+m+mf}{1}\PY{p}{]}\PY{p}{,}\PY{+w}{ }\PY{n+nx}{items}\PY{p}{[}\PY{n+nx}{j}\PY{p}{]}\PY{p}{]}\PY{p}{;}
+\PY{+w}{            }\PY{p}{\PYZcb{}}
+\PY{+w}{        }\PY{p}{\PYZcb{}}
+\PY{+w}{    }\PY{p}{\PYZcb{}}
+\PY{p}{\PYZcb{}}
+\end{Verbatim}
+\end{code}
+\subsection{Highlight specific lines}\label{highlight-specific-lines}
+
+\begin{code}{lisp}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\},highlightlines={2-3}]
+\PY{p}{(}\PY{n+nb}{defun}\PY{+w}{ }\PY{n+nv}{bubble\PYZhy{}sort}\PY{+w}{ }\PY{p}{(}\PY{n+nv}{items}\PY{p}{)}
+\PY{+w}{  }\PY{p}{(}\PY{n+nb}{dotimes}\PY{+w}{ }\PY{p}{(}\PY{n+nv}{i}\PY{+w}{ }\PY{p}{(}\PY{n+nb}{length}\PY{+w}{ }\PY{n+nv}{items}\PY{p}{)}\PY{p}{)}
+\PY{+w}{    }\PY{p}{(}\PY{n+nb}{dotimes}\PY{+w}{ }\PY{p}{(}\PY{n+nv}{j}\PY{+w}{ }\PY{p}{(}\PY{n+nb}{\PYZhy{}}\PY{+w}{ }\PY{p}{(}\PY{n+nb}{length}\PY{+w}{ }\PY{n+nv}{items}\PY{p}{)}\PY{+w}{ }\PY{l+m+mi}{1}\PY{+w}{ }\PY{n+nv}{i}\PY{p}{)}\PY{p}{)}
+\PY{+w}{      }\PY{p}{(}\PY{n+nb}{when}\PY{+w}{ }\PY{p}{(}\PY{n+nb}{\PYZgt{}}\PY{+w}{ }\PY{p}{(}\PY{n+nb}{nth}\PY{+w}{ }\PY{n+nv}{j}\PY{+w}{ }\PY{n+nv}{items}\PY{p}{)}\PY{+w}{ }\PY{p}{(}\PY{n+nb}{nth}\PY{+w}{ }\PY{p}{(}\PY{n+nb}{+}\PY{+w}{ }\PY{n+nv}{j}\PY{+w}{ }\PY{l+m+mi}{1}\PY{p}{)}\PY{+w}{ }\PY{n+nv}{items}\PY{p}{)}\PY{p}{)}
+\PY{+w}{        }\PY{p}{(}\PY{n+nb}{rotatef}\PY{+w}{ }\PY{p}{(}\PY{n+nb}{nth}\PY{+w}{ }\PY{n+nv}{j}\PY{+w}{ }\PY{n+nv}{items}\PY{p}{)}\PY{+w}{ }\PY{p}{(}\PY{n+nb}{nth}\PY{+w}{ }\PY{p}{(}\PY{n+nb}{+}\PY{+w}{ }\PY{n+nv}{j}\PY{+w}{ }\PY{l+m+mi}{1}\PY{p}{)}\PY{+w}{ }\PY{n+nv}{items}\PY{p}{)}\PY{p}{)}\PY{p}{)}\PY{p}{)}\PY{p}{)}\PY{p}{)}
+\end{Verbatim}
+\end{code}
+\subsection{Snippets}\label{snippets}
+
+With \texttt{pymdownx.snippets} you can pull code from external files, keeping samples reusable across docs.
+
+\begin{code}{markdown}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+\PY{l+s+sb}{```}\PY{l+s+sb}{python}
+\PY{o}{\PYZhy{}}\PY{o}{\PYZhy{}}\PY{l+m+mi}{8}\PY{o}{\PYZlt{}}\PY{o}{\PYZhy{}}\PY{o}{\PYZhy{}} \PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{examples/code/bubble\PYZus{}sort.py}\PY{l+s+s2}{\PYZdq{}}
+\PY{l+s+sb}{```}
+\end{Verbatim}
+\end{code}
+\begin{callout}[callout tip]{Tip}
+If you're using MkDocs, ensure that the \texttt{base\_path} for snippets is correctly set in your configuration to point to the directory containing your code files.
+
+A safe configuration would be:
+
+\begin{code}{yaml}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+\PY{p+pIndicator}{\PYZhy{}}\PY{+w}{ }\PY{n+nt}{pymdownx.snippets}\PY{p}{:}
+\PY{+w}{    }\PY{n+nt}{check\PYZus{}paths}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{true}
+\PY{+w}{    }\PY{n+nt}{base\PYZus{}path}\PY{p}{:}\PY{+w}{ }\PY{k+kt}{!relative}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{\PYZdl{}config\PYZus{}dir}
+\end{Verbatim}
+\end{code}
+\end{callout}
+\subsection{With LaTeX output}\label{with-latex-output}
+
+Here's what the above examples look like when rendered with TeXSmith:
+
+\section{Inline Code}\label{inline-code}
+
+You can also include inline code snippets using backticks \texttt{`} like this:
+
+\subsection{Unformatted}\label{unformatted}
+
+\begin{code}{markdown}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+To sort a list in Python, you can use the \PY{l+s+sb}{`sorted()`} function.
+\end{Verbatim}
+\end{code}
+It will simply be rendered as monospaced text in \LaTeX{}:
+
+\begin{code}{text}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+To sort a list in Python, you can use the \PYZbs{}texttt\PYZob{}sorted()\PYZcb{} function.
+\end{Verbatim}
+\end{code}
+\subsection{Highlighted}\label{highlighted}
+
+Inline code can also be highlighted thanks to the Pymdownx \texttt{inlinehilite} extension.
+
+\begin{code}{markdown}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+You can use `` \PY{l+s+sb}{`\PYZsh{}!py print(\PYZdq{}Hello, World!\PYZdq{})`} `` to display a message in Python.
+
+\PY{k}{\PYZgt{} }\PY{g+ge}{You can use `\PYZsh{}!py print(\PYZdq{}Hello, World!\PYZdq{})` to display a message in Python.}
+\end{Verbatim}
+\end{code}
+With TeXSmith this example renders as follows:
+
+\begin{code}{markdown}{}{}
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+
+\end{Verbatim}
+\end{code}
+
+\end{document}
