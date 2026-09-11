@@ -1,0 +1,63 @@
+{
+  "file": 0,
+  "front_matter": {
+    "id": 1,
+    "span": [
+      0,
+      0,
+      87
+    ],
+    "raw": "---\npress:\n  declare:\n    counters:\n      fw: {name: Finding, format: \"FW-{n:02d}\"}\n---",
+    "keys": {
+      "press": {
+        "declare": {
+          "counters": {
+            "fw": {
+              "name": "Finding",
+              "format": "FW-{n:02d}"
+            }
+          }
+        }
+      }
+    }
+  },
+  "blocks": [
+    {
+      "type": "Para",
+      "id": 2,
+      "span": [
+        0,
+        89,
+        158
+      ],
+      "content": [
+        {
+          "type": "CounterItem",
+          "id": 3,
+          "span": [
+            0,
+            89,
+            112
+          ],
+          "prefix": "fw",
+          "key": "boot-loop",
+          "key_span": [
+            0,
+            102,
+            111
+          ]
+        },
+        {
+          "type": "Str",
+          "id": 4,
+          "span": [
+            0,
+            112,
+            158
+          ],
+          "text": " The firmware reboots when the watchdog fires."
+        }
+      ]
+    }
+  ]
+}

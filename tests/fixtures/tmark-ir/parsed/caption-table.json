@@ -1,0 +1,104 @@
+{
+  "file": 0,
+  "front_matter": {
+    "id": 0,
+    "span": [
+      0,
+      0,
+      0
+    ],
+    "keys": {}
+  },
+  "blocks": [
+    {
+      "type": "Table",
+      "id": 1,
+      "span": [
+        0,
+        0,
+        41
+      ],
+      "model": {
+        "settings": {
+          "width": "auto"
+        },
+        "columns": [
+          {
+            "type": "Leaf",
+            "name": "A"
+          },
+          {
+            "type": "Leaf",
+            "name": "B"
+          }
+        ],
+        "rows": [
+          {
+            "type": "Data",
+            "cells": [
+              {
+                "content": [
+                  {
+                    "type": "Str",
+                    "id": 4,
+                    "span": [
+                      0,
+                      30,
+                      31
+                    ],
+                    "text": "1"
+                  }
+                ]
+              },
+              {
+                "content": [
+                  {
+                    "type": "Str",
+                    "id": 5,
+                    "span": [
+                      0,
+                      36,
+                      37
+                    ],
+                    "text": "2"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "type": "Caption",
+      "id": 6,
+      "span": [
+        0,
+        43,
+        69
+      ],
+      "kind": "table",
+      "content": [
+        {
+          "type": "Str",
+          "id": 7,
+          "span": [
+            0,
+            43,
+            57
+          ],
+          "text": "Stock."
+        }
+      ],
+      "attrs": {
+        "id": "tbl:stock",
+        "id_span": [
+          0,
+          59,
+          68
+        ]
+      },
+      "position": "after"
+    }
+  ]
+}

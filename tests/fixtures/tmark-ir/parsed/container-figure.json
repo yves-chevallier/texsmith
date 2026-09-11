@@ -1,0 +1,144 @@
+{
+  "file": 0,
+  "front_matter": {
+    "id": 0,
+    "span": [
+      0,
+      0,
+      0
+    ],
+    "keys": {}
+  },
+  "blocks": [
+    {
+      "type": "Figure",
+      "id": 1,
+      "span": [
+        0,
+        0,
+        149
+      ],
+      "content": [
+        {
+          "type": "Para",
+          "id": 2,
+          "span": [
+            0,
+            20,
+            80
+          ],
+          "content": [
+            {
+              "type": "Image",
+              "id": 3,
+              "span": [
+                0,
+                20,
+                48
+              ],
+              "src": "boot.png",
+              "alt": [
+                {
+                  "type": "Str",
+                  "id": 5,
+                  "span": [
+                    0,
+                    20,
+                    24
+                  ],
+                  "text": "Boot"
+                }
+              ],
+              "attrs": {
+                "id": "fig:boot",
+                "id_span": [
+                  0,
+                  39,
+                  47
+                ]
+              }
+            },
+            {
+              "type": "SoftBreak",
+              "id": 6,
+              "span": [
+                0,
+                48,
+                49
+              ]
+            },
+            {
+              "type": "Image",
+              "id": 7,
+              "span": [
+                0,
+                49,
+                80
+              ],
+              "src": "crash.png",
+              "alt": [
+                {
+                  "type": "Str",
+                  "id": 9,
+                  "span": [
+                    0,
+                    49,
+                    54
+                  ],
+                  "text": "Crash"
+                }
+              ],
+              "attrs": {
+                "id": "fig:crash",
+                "id_span": [
+                  0,
+                  70,
+                  79
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "type": "Caption",
+          "id": 10,
+          "span": [
+            0,
+            82,
+            145
+          ],
+          "kind": "figure",
+          "content": [
+            {
+              "type": "Str",
+              "id": 11,
+              "span": [
+                0,
+                82,
+                132
+              ],
+              "text": "Watchdog traces before and after the fix."
+            }
+          ],
+          "attrs": {
+            "id": "fig:traces",
+            "id_span": [
+              0,
+              134,
+              144
+            ]
+          },
+          "position": "after"
+        }
+      ],
+      "attrs": {
+        "kv": [
+          [
+            "cols",
+            "2"
+          ]
+        ]
+      }
+    }
+  ]
+}

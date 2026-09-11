@@ -1,0 +1,103 @@
+{
+  "file": 0,
+  "front_matter": {
+    "id": 0,
+    "span": [
+      0,
+      0,
+      0
+    ],
+    "keys": {}
+  },
+  "blocks": [
+    {
+      "type": "Para",
+      "id": 1,
+      "span": [
+        0,
+        0,
+        23
+      ],
+      "content": [
+        {
+          "type": "Str",
+          "id": 2,
+          "span": [
+            0,
+            0,
+            7
+          ],
+          "text": "Inline "
+        },
+        {
+          "type": "Math",
+          "id": 3,
+          "span": [
+            0,
+            7,
+            12
+          ],
+          "text": "a^2"
+        },
+        {
+          "type": "Str",
+          "id": 4,
+          "span": [
+            0,
+            12,
+            17
+          ],
+          "text": " and "
+        },
+        {
+          "type": "Math",
+          "id": 5,
+          "span": [
+            0,
+            17,
+            22
+          ],
+          "text": "b^2"
+        },
+        {
+          "type": "Str",
+          "id": 6,
+          "span": [
+            0,
+            22,
+            23
+          ],
+          "text": "."
+        }
+      ]
+    },
+    {
+      "type": "MathBlock",
+      "id": 7,
+      "span": [
+        0,
+        25,
+        46
+      ],
+      "text": "a^2 + b^2 = c^2"
+    },
+    {
+      "type": "MathBlock",
+      "id": 8,
+      "span": [
+        0,
+        48,
+        77
+      ],
+      "text": "e = mc^2",
+      "attrs": {
+        "id": "eq:einstein",
+        "id_span": [
+          0,
+          65,
+          76
+        ]
+      }
+    }
+  ]
+}

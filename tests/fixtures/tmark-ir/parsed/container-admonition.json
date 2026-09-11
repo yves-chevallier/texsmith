@@ -1,0 +1,79 @@
+{
+  "file": 0,
+  "front_matter": {
+    "id": 0,
+    "span": [
+      0,
+      0,
+      0
+    ],
+    "keys": {}
+  },
+  "blocks": [
+    {
+      "type": "Admonition",
+      "id": 1,
+      "span": [
+        0,
+        0,
+        85
+      ],
+      "kind": "warning",
+      "title": [
+        {
+          "type": "Str",
+          "id": 7,
+          "span": [
+            0,
+            0,
+            15
+          ],
+          "text": "LaTeX toolchain"
+        }
+      ],
+      "content": [
+        {
+          "type": "Para",
+          "id": 2,
+          "span": [
+            0,
+            38,
+            81
+          ],
+          "content": [
+            {
+              "type": "Str",
+              "id": 3,
+              "span": [
+                0,
+                38,
+                62
+              ],
+              "text": "Install TeX Live before "
+            },
+            {
+              "type": "Code",
+              "id": 4,
+              "span": [
+                0,
+                62,
+                80
+              ],
+              "text": "texsmith --build"
+            },
+            {
+              "type": "Str",
+              "id": 5,
+              "span": [
+                0,
+                80,
+                81
+              ],
+              "text": "."
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,198 @@
+{
+  "file": 0,
+  "front_matter": {
+    "id": 0,
+    "span": [
+      0,
+      0,
+      0
+    ],
+    "keys": {}
+  },
+  "blocks": [
+    {
+      "type": "BulletList",
+      "id": 1,
+      "span": [
+        0,
+        0,
+        4
+      ],
+      "items": [
+        {
+          "content": [
+            {
+              "type": "Para",
+              "id": 2,
+              "span": [
+                0,
+                2,
+                3
+              ],
+              "content": [
+                {
+                  "type": "Str",
+                  "id": 3,
+                  "span": [
+                    0,
+                    2,
+                    3
+                  ],
+                  "text": "a"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "BulletList",
+      "id": 4,
+      "span": [
+        0,
+        5,
+        9
+      ],
+      "items": [
+        {
+          "content": [
+            {
+              "type": "Para",
+              "id": 5,
+              "span": [
+                0,
+                7,
+                8
+              ],
+              "content": [
+                {
+                  "type": "Str",
+                  "id": 6,
+                  "span": [
+                    0,
+                    7,
+                    8
+                  ],
+                  "text": "b"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "OrderedList",
+      "id": 7,
+      "span": [
+        0,
+        10,
+        15
+      ],
+      "items": [
+        {
+          "content": [
+            {
+              "type": "Para",
+              "id": 8,
+              "span": [
+                0,
+                13,
+                14
+              ],
+              "content": [
+                {
+                  "type": "Str",
+                  "id": 9,
+                  "span": [
+                    0,
+                    13,
+                    14
+                  ],
+                  "text": "c"
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "start": 1,
+      "style": "decimal"
+    },
+    {
+      "type": "OrderedList",
+      "id": 10,
+      "span": [
+        0,
+        16,
+        21
+      ],
+      "items": [
+        {
+          "content": [
+            {
+              "type": "Para",
+              "id": 11,
+              "span": [
+                0,
+                19,
+                20
+              ],
+              "content": [
+                {
+                  "type": "Str",
+                  "id": 12,
+                  "span": [
+                    0,
+                    19,
+                    20
+                  ],
+                  "text": "d"
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "start": 1,
+      "style": "decimal"
+    },
+    {
+      "type": "BulletList",
+      "id": 13,
+      "span": [
+        0,
+        22,
+        25
+      ],
+      "items": [
+        {
+          "content": [
+            {
+              "type": "Para",
+              "id": 14,
+              "span": [
+                0,
+                24,
+                25
+              ],
+              "content": [
+                {
+                  "type": "Str",
+                  "id": 15,
+                  "span": [
+                    0,
+                    24,
+                    25
+                  ],
+                  "text": "e"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

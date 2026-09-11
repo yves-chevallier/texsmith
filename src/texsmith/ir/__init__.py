@@ -8,6 +8,15 @@ produced by every reader. See :mod:`texsmith.ir.nodes` for the sealed
 
 from __future__ import annotations
 
+# The tmark-shaped models (``model``, ``codec``, ``walk``) live beside the
+# legacy ``nodes`` during the migration (specs/tmark-migration.md R3); the
+# legacy tree stays the default export until phase 3.8. The ``walk`` module
+# is imported first so that the legacy ``ir.walk`` *function* below keeps the
+# name: a submodule only binds itself on its package when it is first loaded.
+import texsmith.ir.walk as _walk_module  # isort: split
+
+
+from texsmith.ir import codec, model
 from texsmith.ir.nodes import (
     Admonition,
     AnyNode,
@@ -65,6 +74,14 @@ from texsmith.ir.visitor import (
     map_tree,
     walk,
 )
+
+
+del _walk_module
+
+_mismatch = codec.wheel_schema_mismatch()
+if _mismatch is not None:
+    raise ImportError(_mismatch)
+del _mismatch
 
 
 __all__ = [
