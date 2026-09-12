@@ -46,8 +46,6 @@ for e in corpus["examples"]:
         "--project",
         str(ROOT),
         "texsmith",
-        "--reader",
-        "tmark",
         *args,
         "-o",
         str(outdir),

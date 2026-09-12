@@ -2,15 +2,14 @@
 """Parity harness for the TeXSmith → TMark migration (plan task 4.1).
 
 Renders every entry of ``tests/parity/corpus.yml`` (the examples' command lines
-and every ``docs/**/*.md`` page) with the legacy ``html`` reader and, once the
-CLI grows ``--reader``, with the ``tmark`` reader; normalises the ``.tex`` /
-``.typ`` outputs; diffs them modulo ``tests/parity/allow.yml``.
+and every ``docs/**/*.md`` page); normalises the ``.tex`` / ``.typ`` outputs;
+diffs them modulo ``tests/parity/allow.yml``.
 
 Subcommands::
 
-    parity.py baseline [--check]        legacy outputs → tests/parity/baseline/
-    parity.py render --reader R --out D one reader, raw outputs, no diff
-    parity.py diff                      both readers, allow-list, per-entry table
+    parity.py baseline [--check]        outputs → tests/parity/baseline/
+    parity.py render --out D            raw outputs, no diff
+    parity.py diff                      allow-list, per-entry table
     parity.py pdf --entries ID...       build both sides, rasterise, pixel diff
     parity.py list                      corpus entries and which are runnable
     parity.py seed-cache                copy the DOI cache back into tests/parity/cache
@@ -49,8 +48,11 @@ BASELINE_DIR = PARITY_DIR / "baseline"
 SEED_CACHE_DIR = PARITY_DIR / "cache"
 BUILD_DIR = ROOT / "build" / "parity"
 
-LEGACY_READER = "html"
-READERS = ("html", "tmark")
+#: The one reader left since 0.8: ``tmark.parse`` for a Markdown source, the
+#: ``HtmlReader`` for an ``.html`` input. ``--reader`` went with the
+#: Python-Markdown pipeline, so the harness passes no reader flag at all.
+READERS = ("tmark",)
+LEGACY_READER = "tmark"
 BACKENDS = ("latex", "typst")
 KNOWN_REQUIREMENTS = frozenset({"docker", "network", "fonts", "typst", "tectonic"})
 RENDER_TIMEOUT = 3600  # nested snippet builds on a cold cache are slow
@@ -96,10 +98,8 @@ class Entry:
         stems = [Path(arg).stem for arg in self.args if arg.lower().endswith((".md", ".html"))]
         return (*stems[:1], "main") if len(stems) == 1 else ("main",)
 
-    def command(self, *, reader: str | None, out_dir: Path, build: bool = False) -> list[str]:
+    def command(self, *, out_dir: Path, build: bool = False) -> list[str]:
         argv = [*self.args, "-o", str(out_dir)]
-        if reader is not None:
-            argv += ["--reader", reader]
         if build:
             argv.append("--build")
         return argv
@@ -381,28 +381,12 @@ def missing_requirements(
 # ------------------------------------------------------------------------ rendering
 
 
-@cache
-def cli_knows_reader() -> bool:
-    """Whether the installed CLI accepts ``--reader`` (phase 3.2)."""
-    try:
-        import inspect
-
-        from texsmith.ui.cli.commands.render import render
-    except Exception:  # pragma: no cover - texsmith not importable
-        return False
-    return "reader" in inspect.signature(render).parameters
-
-
 def reader_flag(reader: str) -> str | None:
-    """The ``--reader`` value to pass, or ``None`` when the CLI has no such option."""
+    """Always ``None``: the CLI has one reader and no ``--reader`` option."""
     if reader not in READERS:
-        raise ParityError(f"unknown reader {reader!r}; expected one of {READERS}")
-    if cli_knows_reader():
-        return reader
-    if reader != LEGACY_READER:
         raise ParityError(
-            f"the installed texsmith CLI has no --reader option yet; only the legacy "
-            f"{LEGACY_READER!r} reader can be rendered (requested {reader!r})"
+            f"unknown reader {reader!r}: since 0.8 the CLI reads Markdown with tmark "
+            f"only (expected one of {READERS})"
         )
     return None
 
@@ -474,7 +458,6 @@ class RenderResult:
 def render_entry(
     entry: Entry,
     *,
-    reader: str,
     out_dir: Path,
     env: dict[str, str],
     build: bool = False,
@@ -487,7 +470,7 @@ def render_entry(
         sys.executable,
         "-c",
         "from texsmith.ui.cli.app import main; main()",
-        *entry.command(reader=reader_flag(reader), out_dir=out_dir, build=build),
+        *entry.command(out_dir=out_dir, build=build),
     ]
     started = time.monotonic()
     try:
@@ -526,7 +509,7 @@ def render_many(
 
     def work(entry: Entry) -> RenderResult:
         return render_entry(
-            entry, reader=reader, out_dir=out_root / entry.entry_id, env=env, build=build
+            entry, out_dir=out_root / entry.entry_id, env=env, build=build
         )
 
     with ThreadPoolExecutor(max_workers=max(1, jobs)) as pool:
@@ -1198,7 +1181,7 @@ def cmd_list(args: argparse.Namespace) -> int:
         print(
             f"{entry.entry_id:<48} {entry.backend:<7} {','.join(sorted(entry.requires)) or '-':<28} {state}"
         )
-    print(f"\n{len(entries)} entries; CLI knows --reader: {'yes' if cli_knows_reader() else 'no'}")
+    print(f"\n{len(entries)} entries")
     return 0
 
 
@@ -1217,7 +1200,7 @@ def cmd_render(args: argparse.Namespace) -> int:
         reports.append(EntryReport(entry, "rendered", ", ".join(p.name for p in result.outputs())))
     print_table(
         reports,
-        title=f"render --reader {args.reader} → {out_root.relative_to(ROOT) if out_root.is_relative_to(ROOT) else out_root}",
+        title=f"render → {out_root.relative_to(ROOT) if out_root.is_relative_to(ROOT) else out_root}",
     )
     return exit_code(reports)
 
@@ -1284,9 +1267,9 @@ def cmd_baseline(args: argparse.Namespace) -> int:
             reports.append(EntryReport(entry, "written", ", ".join(sorted(files))))
     if args.check:
         _write_diffs(reports, BUILD_DIR / "check")
-        print_table(reports, title="baseline --check (legacy reader vs tests/parity/baseline)")
+        print_table(reports, title="baseline --check (rendered vs tests/parity/baseline)")
     else:
-        print_table(reports, title="baseline (legacy reader → tests/parity/baseline)")
+        print_table(reports, title="baseline (rendered → tests/parity/baseline)")
         for report in reports:
             if report.status == SKIPPED and _baseline_dir(report.entry).is_dir():
                 print(f"kept the committed baseline of skipped entry {report.entry.entry_id}")
