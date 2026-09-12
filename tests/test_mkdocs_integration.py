@@ -238,6 +238,21 @@ def test_book_is_built_from_the_page_sources(tmp_path: Path) -> None:
 
 
 @pytest.mark.usefixtures("_stubbed_converters")
+def test_a_press_reader_html_page_comes_from_the_rendered_html(tmp_path: Path) -> None:
+    """``press.reader: html`` reads the page MkDocs rendered, not its Markdown."""
+    _site_dir, press = build_mini_site(tmp_path)
+    book = press / "mini"
+    rendered = (book / "pages" / "rendered-md.tex").read_text(encoding="utf-8")
+    # Material turned ``++ctrl+x++`` and ``==a highlight==`` into markup the
+    # Markdown path would never have seen; the HtmlReader carries both.
+    assert "\\tskeys{Ctrl,X}" in rendered
+    assert "\\tsmark{a highlight}" in rendered
+    # The snapshot it was read from is kept; no Markdown source was stored.
+    assert (book / "html" / "rendered.html").exists()
+    assert not (book / "sources" / "rendered.md").exists()
+
+
+@pytest.mark.usefixtures("_stubbed_converters")
 def test_book_pdf_export(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     """``TEXSMITH_BUILD=1`` compiles the book; skipped without tectonic."""
     if _tectonic_binary() is None:
