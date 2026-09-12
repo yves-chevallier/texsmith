@@ -27,7 +27,7 @@ sets it, so a missing PDF fails the target.
 | abbr | yes | nothing (already canonical) |
 | admonition | yes | 17 `!!!` → `:::`; the seven types `:::` does not predeclare (`caution summary success failure bug quote`, custom `unicorn`) declared under `press.declare.admonitions`. The LaTeX is byte-identical to the `!!!` build. |
 | booby | yes | nothing |
-| book | yes | 91 `^[key]` / `^[k1,k2]` → `@key` / `@[k1; k2]` / `@doi:…`, 6 `/// caption` → a `Figure:` line after the image, `press.admonition_style` → `press.callouts.style` |
+| book | yes | 91 `^[key]` / `^[k1,k2]` → `@key` / `@[k1; k2]` / `@doi:…`, 6 `/// caption` → a `Figure:` line after the image, `press.admonition_style` → `press.callouts.style` (inert either way: `admonition_style` was read by nothing in `src/`, and `book.md` has no callout) |
 | code | yes | `` `#!c …` `` → `{code lang=c}[…]` (×2) |
 | colorful | yes | nothing |
 | counters (not in `examples/Makefile`) | yes | top-level `counters:` → `press.declare.counters`, 10 `#{p:k}` → `{counter}(p:k)` |
@@ -72,8 +72,12 @@ error except the five in `tables.md`. What is left:
 | `lead-promotion` | 1 | features | Info. The leading `**text**` of the *Bold* section is the section's subject; `{lead}[…]` would make the demo lie. |
 | `table-row-width`, `table-span`, `table-column-unknown` | 5 | tables | Errors on purpose: the "Error cases" section of `tables.md` demonstrates what validation rejects, and the document renders each as an inline error callout. |
 
-`ref-unresolved` appears on `book.md` and `paper/cheese.md` only when `check`
-is run without the sibling `.bib`; `tmark check book.md book.bib` is clean.
+`ref-unresolved` appears on `book.md`, `paper/cheese.md` and
+`paper/docs/cheese.md` only when `check` is run without the sibling `.bib`:
+`tmark check book.md book.bib` and `tmark check cheese.md cheese.bib` are
+clean. The twin under `paper/docs/` needed one addition — it cites
+`WADHWANI20111713`, whose DOI is declared in the sibling `cheese.md` only, so
+the declaration was copied into its own `press.sources.bibliography`.
 
 ## 4. Findings
 
