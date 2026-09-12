@@ -94,6 +94,23 @@ optional `fix` / `related` are tmark's fields; `origin` says which tool found
 it (`texsmith` or `tmark`); `path`, `line` and `col` are the printed location,
 `null` when the record has none.
 
+## Deprecated spellings
+
+A `deprecated` warning names the canonical replacement:
+
+```text
+report.md:16:18: warning deprecated: `[^key]` is deprecated, write `@key`
+```
+
+These are the only findings a tool can fix for you:
+
+```sh
+tmark lint --fix --diff report.md   # preview
+tmark lint --fix report.md          # apply in place
+```
+
+See [Migrating to TMark](migration.md) for the full table and its horizons.
+
 ## Codes
 
 The codes TeXSmith emits itself are listed in `texsmith.diagnostics.codes`

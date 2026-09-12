@@ -136,6 +136,22 @@ If you want to customize the layout, choose a template with `--template article`
 
 You may want to pass additional LaTeX options such as `-apaper=a4` or `-amargin=1in` to tweak page geometry:
 
+## Check a document before you build
+
+TeXSmith reads [TMark](../syntax/index.md), and the `tmark` toolchain checks a
+document without rendering anything:
+
+```bash
+tmark check --strict document.md   # parse, resolve and lint; exit 1 on any finding
+tmark lint --fix --diff document.md # preview the rewrite of deprecated spellings
+tmark lint --fix document.md        # apply it in place
+```
+
+`check` reports what the converter will see: unresolved references, undeclared
+counter prefixes, malformed tables, deprecated spellings. Coming from TeXSmith
+0.6? Every spelling you know still works, and
+[Migrating to TMark](migration.md) lists what changed and what rewrites it.
+
 ## Optional prerequisites
 
 LaTeX distribution

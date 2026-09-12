@@ -34,7 +34,8 @@ press:
   template: book
   base_level: part
   fonts: adventor
-  admonition_style: classic
+  callouts:
+    style: classic
   slots:
     colophon: Colophon
     dedication: Dedication

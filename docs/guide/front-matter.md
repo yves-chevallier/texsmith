@@ -4,9 +4,70 @@ Every Markdown document can carry a small block of metadata at the very top, fen
 
 A guiding principle: **keep content and form apart**. Templates, font sizes, margins, paper format, and other typographic knobs belong in the front matter; the body should care only about ideas, sentences, and equations. Other tools take a different stance, see [Quarkdown](https://quarkdown.com/), which weaves configuration directly into the document body. Both are valid, but TeXSmith favors the separation, your future self will thank you when swapping templates without touching a single paragraph.
 
+## The shape of the front matter
+
+Document metadata stays at the **root**, because that is where MkDocs, Pandoc
+and editors read it. Everything TeXSmith owns may sit under `press:` — a
+namespace, not a category, whose only job is to keep those keys out of a static
+site generator's way. When the same key appears in both places, `press` wins.
+
+```yaml
+---
+title: Firmware Review          # omitted → the first heading is promoted
+authors: [{name: Ada Lovelace, affiliation: Analytical Engine}]
+date: 2025-03-15                # ISO date | string | "commit"
+lang: en-GB                     # hyphenation, quotes, typographic spacing
+id: RHE-423                     # document identifier for cross-document references
+
+press:
+  template: book                # article | book | letter | a user template
+  base_level: chapter           # what a top-level `#` maps to
+  callouts:
+    style: fancy                # fancy | classic | minimal
+  details: expand               # expand | reference
+  code: {engine: pygments}
+  slots: {abstract: Abstract}
+
+  declare:                      # kinds: what things *are*
+    counters: {…}
+    admonitions: {…}
+    glossary: {…}
+    acronyms: {…}
+
+  sources:                      # where references resolve
+    bibliography: {…}
+    crossrefs: {…}
+
+  features:                     # the switch registry
+    figures.exec: true
+---
+```
+
+Four groups, and the split is the same one the body follows: `declare` says a
+"Solution" callout *exists*, belongs to the group "Solutions" and is referred to
+as "See page N"; the form keys (`template`, `callouts`, `code`, …) say it is
+blue with a graduation-cap icon. A document is re-skinned by replacing the form
+keys alone.
+
+All sections are validated with pydantic: an unknown key fails at parse time,
+not in the PDF.
+
+!!! note "The 0.6 layout is deprecated"
+    Top-level `bibliography:`, `crossrefs:`, `counters:`, `glossary:`,
+    `acronyms:` and `admonitions:` are still read, with a deprecation warning
+    naming the replacement. `tmark lint --fix FILE` moves them; the table is in
+    [Migrating to TMark](migration.md).
+
+## Moustaches
+
+Any front-matter value is available in the body as `{{ key }}` or
+`{{ press.template }}`, resolved after parsing and never inside code spans or
+fenced blocks. Moustaches are substitution, not templating: no logic, no loops,
+no filters. An unresolved moustache warns and is left in place, visibly.
+
 ## Press
 
-The `press` block holds everything related to the printed (or PDF'd) artifact, title, authors, template choice, and any template-specific slots:
+The `press` block holds everything related to the printed (or PDF'd) artifact: the template choice, typographic options, and template-specific slots.
 
 ```yaml
 press:
@@ -20,10 +81,6 @@ press:
     abstract: Abstract
 ```
 
-!!! note
-
-    The `press` section is optional. Keys like `title` and `authors` may also live at the root of the front matter, and TeXSmith will pick them up just fine. Nesting them under `press` keeps things tidy and avoids stepping on the toes of other static site generators that may want the root-level keys for themselves.
-
 Each template exposes its own set of attributes (cover styles, sidebar toggles, custom slots, …). Head over to the [Template Guide](templates/index.md) for the full menu.
 
 ## Bibliography
@@ -31,38 +88,42 @@ Each template exposes its own set of attributes (cover styles, sidebar toggles, 
 References can be declared inline, right next to the document that cites them, no external `.bib` file required (though one still works if you prefer). Mix DOI shortcuts with fully-spelled-out entries as needed:
 
 ```yaml
-bibliography:
-  AB2020: doi:10.1000/xyz123
-  CD2019:
-    type: book
-    author: "John Doe"
-    title: "Example Book"
-    year: "2019"
+press:
+  sources:
+    bibliography:
+      AB2020: doi:10.1000/xyz123
+      CD2019:
+        type: book
+        author: "John Doe"
+        title: "Example Book"
+        year: "2019"
 ```
 
-The full syntax, supported entry types, and resolution rules are documented in the [Bibliography Guide](features/bibliography.md).
+Cite them with `@AB2020` or `@[CD2019, p. 12]`. The full syntax, supported entry types, and resolution rules are documented in the [Bibliography Guide](features/bibliography.md).
 
 ## Glossary
 
 When the glossary feature is enabled, entries are declared in the front matter and grouped into logical tables. Symbols, acronyms, and domain-specific jargon all coexist peacefully:
 
 ```yaml
-glossary:
-  style: long # or short
-  groups: # Grouping in different tables (optional)
-    symbols: Mathematical symbols and notations
-    corporate: Organizational terms
-    technology: Technology-related terms
-  entries:
-    "$\\phi$":
-      group: symbols
-      description: Angle in radians
-    ONU:
-      group: corporate
-      description: United Nations Organization
-    AI:
-      group: technology
-      description: Artificial Intelligence
+press:
+  declare:
+    glossary:
+      style: long # or short
+      groups: # Grouping in different tables (optional)
+        symbols: Mathematical symbols and notations
+        corporate: Organizational terms
+        technology: Technology-related terms
+      entries:
+        "$\\phi$":
+          group: symbols
+          description: Angle in radians
+        ONU:
+          group: corporate
+          description: United Nations Organization
+        AI:
+          group: technology
+          description: Artificial Intelligence
 ```
 
 See the [Glossary Guide](fragments/glossary.md) for sorting behavior, cross-references, and styling options.
@@ -70,19 +131,25 @@ See the [Glossary Guide](fragments/glossary.md) for sorting behavior, cross-refe
 ## Counters
 
 Document-specific numbered series — findings, requirements, bugs, test cases —
-are declared under `counters:`. Each key is the prefix used by the `#{…}`
-markers and the `@…` references in the body:
+are declared under `press.declare.counters`. Each key is the prefix used by the
+`#(…)` markers and the `@…` references in the body:
 
 ```yaml
-counters:
-  n:
-    name: Requirement # human-readable name, used in diagnostics
-    format: "N-{n:02d}" # optional, defaults to "{n}"
-    start: 1 # optional, defaults to 1
-  fw:
-    name: Firmware finding
-    format: "FW-{n:02d}"
+press:
+  declare:
+    counters:
+      n:
+        name: Requirement # human-readable name, used in diagnostics
+        format: "N-{n:02d}" # optional, defaults to "{n}"
+        start: 1 # optional, defaults to 1
+      fw:
+        name: Firmware finding
+        format: "FW-{n:02d}"
 ```
+
+The predeclared prefixes (`sec`, `fig`, `tbl`, `lst`, `eq`, `thm`, `note`,
+`gls`, `doi`) are entries of the same registry, and their fields can be
+overridden the same way (`fig: {scope: document}`).
 
 See [Custom counters](../syntax/counters.md) for the marker syntax, the
 numbering scope and the backend mapping.
@@ -90,13 +157,29 @@ numbering scope and the backend mapping.
 ## Cross-document references
 
 `id` gives the document a free identifier (a contract or report number);
-`crossrefs:` declares the inventories published by the documents it cites:
+`press.sources.crossrefs` declares the inventories published by the documents it
+cites:
 
 ```yaml
 id: RHE-424
-crossrefs:
-  fwrev: build/firmware-review.refs.json
+press:
+  sources:
+    crossrefs:
+      fwrev: build/firmware-review.refs.json
 ```
 
 A citation then reads `@fwrev:fw:pas-de-temps` and renders as
 `RHE-423-FW-10 p. 14`. See [Cross-document references](../syntax/crossrefs.md).
+
+## Features
+
+Every switchable behaviour has a dotted name and a default. `press.features`
+flips entries, and nothing else in the front matter does.
+
+```yaml
+press:
+  features:
+    figures.exec: true        # execute `python image` fences
+    glossary.wikipedia: true  # fetch glossary summaries from Wikipedia links
+    paragraph.lead: false     # stop promoting a leading strong span
+```

@@ -28,11 +28,12 @@ Obviously everything built with TeXSmith can also be rendered in this very Markd
 
 ![Euclidean GCD](pgcd.drawio)
 
-/// caption
-Euclidean algorithm for the greatest common divisor
-///
+Figure: Euclidean algorithm for the greatest common divisor. {#fig:pgcd}
 
 ### Mermaid Diagram
+
+A bare `mermaid` fence is sugar for `mermaid image` and is kept indefinitely,
+because that is what MkDocs Material renders natively.
 
 ```mermaid
 %% Vegetable harvesting algorithm
