@@ -39,9 +39,8 @@ have a familiar shorthand as sugar; both produce the same node.
 profile. `__` duplicates `**`, and academic writing needs small caps far more
 than a second bold — and the difference is visible, not silent.
 
-<!-- The `.snippet` fence below is the input of the PDF preview, not an example:
-     it is rendered by the 0.6 reader until `ConversionRequest.reader` flips to
-     tmark, so it keeps the sugar spelling. tmark-check: skip -->
+<!-- The `.snippet` fence below is the input of the PDF preview, not an
+     example: the page shows what it renders to, never its body. tmark-check: skip -->
 
 ```md { .snippet }
 The quick brown fox jumps over the lazy dog. *(regular)*
