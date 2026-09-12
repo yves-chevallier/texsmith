@@ -1,7 +1,7 @@
 \NeedsTeXFormat{LaTeX2e}
 \ProvidesPackage{ts-typesetting}[2026/09/11 TeXSmith typesetting contract macros (generated)]
 % Contract macros of the ``ts-typesetting`` fragment (fragment-contracts.md
-% §1, §3): \tslead, \tsmark, \tsdivider, \tsepigraph, \tsaside, \tsprogress,
+% §1, §3): \tslead, \tsmark, \tsdivider, \tsrule, \tsepigraph, \tsaside, \tsprogress,
 % \tsicon and the tsdiv environment. Keys are pgfkeys families under
 % /ts/<name>/; unknown keys are ignored so an older fragment survives a newer
 % writer. A template restyles a construct after the extra_packages slot by
@@ -48,8 +48,37 @@
 \fi
 
 % ------------------------------------------------------------- \tsdivider
-% A thematic break (---): paged templates render \clearpage (decisions X2).
+% A thematic break (---) at the top level of the document: paged templates
+% render \clearpage (decisions X2).
 \NewDocumentCommand{\tsdivider}{}{\clearpage}
+
+% ---------------------------------------------------------------- \tsrule
+% The same thematic break inside a container (quote, callout, figure, div,
+% list item, cell, aside, note): a separator, never a page break — breaking
+% the page there would tear the container in two (challenge C48). A
+% full-width rule with a skip on each side; width, thickness and the skips
+% are /ts/rule/ keys, so a template restyles it like its neighbours.
+\pgfkeys{/ts/rule/.cd,
+  width/.store in=\ts@rule@width,
+  thickness/.store in=\ts@rule@thickness,
+  above/.store in=\ts@rule@above,
+  below/.store in=\ts@rule@below,
+  .unknown/.code={},
+}
+\def\ts@rule@width{\linewidth}
+\def\ts@rule@thickness{0.4pt}
+\def\ts@rule@above{\medskipamount}
+\def\ts@rule@below{\medskipamount}
+\NewDocumentCommand{\tsrule}{O{}}{%
+  \par
+  \begingroup
+  \pgfkeys{/ts/rule/.cd,#1}%
+  \addvspace{\ts@rule@above}%
+  \noindent\rule{\ts@rule@width}{\ts@rule@thickness}%
+  \par
+  \addvspace{\ts@rule@below}%
+  \endgroup
+}
 
 % ------------------------------------------------------------ \tsepigraph
 \pgfkeys{/ts/epigraph/.cd,

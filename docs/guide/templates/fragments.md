@@ -19,7 +19,7 @@ appear in the rendered content).
 
 `ts-typesetting`
 : paragraph spacing, leading and line numbers (inline, when configured), and the
-  contract macros `\tslead`, `\tsmark`, `\tsdivider`, `\tsepigraph`, `\tsaside`,
+  contract macros `\tslead`, `\tsmark`, `\tsdivider`, `\tsrule`, `\tsepigraph`, `\tsaside`,
   `\tsprogress`, `\tsicon` and the `tsdiv` container (`ts-typesetting.sty`, when
   the writer requires it).
 

@@ -52,8 +52,19 @@
 // Highlight is native (#highlight); kept for symmetry with \tsmark.
 #let ts-mark(body) = highlight(body)
 
-// A thematic break: paged output turns the page (decisions X2).
+// A thematic break at the top level of the document: paged output turns the
+// page (decisions X2).
 #let ts-divider() = pagebreak(weak: true)
+
+// The same thematic break inside a container (quote, callout, figure, div,
+// list item, cell, aside, note): a separator, never a page break — Typst
+// rejects a page break inside a container outright (challenge C48).
+#let ts-rule() = block(
+  width: 100%,
+  above: 0.8em,
+  below: 0.8em,
+  line(length: 100%, stroke: 0.4pt + luma(60%)),
+)
 
 // #ts-epigraph(source: [..])[body]
 #let ts-epigraph(source: none, body) = {

@@ -203,7 +203,14 @@ def test_typesetting_sty_only_on_the_contract_path(tmp_path: Path) -> None:
     result = render_fragments(["ts-typesetting"], context=contract, output_dir=tmp_path / "b")
     assert result.packages == ["ts-typesetting"]
     sty = (tmp_path / "b" / "ts-typesetting.sty").read_text(encoding="utf-8")
-    for macro in ("\\tslead", "\\tsmark", "\\tsdivider", "\\tsepigraph", "\\tsaside"):
+    for macro in (
+        "\\tslead",
+        "\\tsmark",
+        "\\tsdivider",
+        "\\tsrule",
+        "\\tsepigraph",
+        "\\tsaside",
+    ):
         assert f"\\NewDocumentCommand{{{macro}}}" in sty
     assert "\\NewDocumentEnvironment{tsdiv}" in sty
 
@@ -392,6 +399,18 @@ of text, two columns of text, two columns of text, two columns of text.
 Tab body.
 \end{tsdiv}
 
+\begin{tscallout}[kind=note, title={A rule in a container}]
+Before the rule.
+
+\tsrule
+
+After the rule.
+\end{tscallout}
+
+\begin{tsdiv}{gadget}
+\tsrule[width=0.5\linewidth, thickness=1pt, above=2pt, below=2pt]
+\end{tsdiv}
+
 \tsdivider
 
 Listing \ref{lst:bubble}, note \ref{note1}.
@@ -577,6 +596,20 @@ def bubble(xs): pass
 #ts-div("multicolumn", cols: 2)[Two columns of text, two columns of text, two columns of text.]
 #ts-div("tab", title: [Tab title])[Tab body.]
 
+#quote(block: true)[
+Before the rule.
+
+#ts-rule()
+
+After the rule.
+]
+
+#ts-callout(kind: "note")[
+Before.
+#ts-rule()
+After.
+]
+
 #ts-divider()
 
 Listing @lst:bubble.
@@ -588,6 +621,7 @@ def test_typst_library_exists_and_names_every_contract() -> None:
     for name in (
         "ts-lead",
         "ts-divider",
+        "ts-rule",
         "ts-epigraph",
         "ts-aside",
         "ts-progress",
