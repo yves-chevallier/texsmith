@@ -1,6 +1,6 @@
 """TeXSmith IR models generated from the tmark IR schema. Do not edit.
 tmark version: 0.0.0
-schema sha256: 8f5eca86d2b87fed49ec62dde0882bc223aee75c09954863d2da708ffa243da6
+schema sha256: f42ba5936dace417a5323c7f9c7feea17aa568537c23b27a9b8b863125c2ee5c
 
 Regenerate with ``scripts/gen_ir_models.py`` (``--check`` in CI). Every node is a
 frozen, slotted dataclass; ``id`` and ``span`` do not take part in equality or
@@ -15,7 +15,7 @@ from typing import Any, ClassVar, Final, Literal, NamedTuple, TypeAlias
 
 
 TMARK_VERSION: Final = '0.0.0'
-SCHEMA_HASH: Final = '8f5eca86d2b87fed49ec62dde0882bc223aee75c09954863d2da708ffa243da6'
+SCHEMA_HASH: Final = 'f42ba5936dace417a5323c7f9c7feea17aa568537c23b27a9b8b863125c2ee5c'
 
 #: A JSON value the schema leaves untyped (front-matter blobs).
 JsonValue: TypeAlias = Any
@@ -260,6 +260,7 @@ class ColumnGroup(Column):
     columns: tuple[Column, ...]
     name: str
     align: Align | None = None
+    title: tuple[Inline, ...] = ()
     width: str | None = None
     width_group: str | None = None
 
@@ -411,6 +412,7 @@ class LeafColumn(Column):
     type: ClassVar[Literal["Leaf"]] = "Leaf"
     align: Align | None = None
     name: str | None = None
+    title: tuple[Inline, ...] = ()
     width: str | None = None
     width_group: str | None = None
 
@@ -1012,6 +1014,7 @@ FIELDS: Final[dict[type, tuple[FieldSpec, ...]]] = {
         FieldSpec("columns", ("list", ("union", Column)), "required", None),
         FieldSpec("name", ("str",), "required", None),
         FieldSpec("align", ("opt", ("enum", Align)), "skip", None),
+        FieldSpec("title", ("list", ("union", Inline)), "skip", ()),
         FieldSpec("width", ("opt", ("str",)), "skip", None),
         FieldSpec("width_group", ("opt", ("str",)), "skip", None),
     ),
@@ -1154,6 +1157,7 @@ FIELDS: Final[dict[type, tuple[FieldSpec, ...]]] = {
     LeafColumn: (
         FieldSpec("align", ("opt", ("enum", Align)), "skip", None),
         FieldSpec("name", ("opt", ("str",)), "skip", None),
+        FieldSpec("title", ("list", ("union", Inline)), "skip", ()),
         FieldSpec("width", ("opt", ("str",)), "skip", None),
         FieldSpec("width_group", ("opt", ("str",)), "skip", None),
     ),
