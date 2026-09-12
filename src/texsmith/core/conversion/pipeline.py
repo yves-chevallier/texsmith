@@ -1,7 +1,7 @@
 """The IR path of the conversion core: passes → ``tmark.resolve`` → ``tmark.write`` per slot.
 
 Used by :func:`texsmith.core.conversion.core._render_document` when the
-document was read with ``reader="tmark"`` (``specs/tmark-migration.md`` §2,
+document was parsed into the IR (``specs/tmark-migration.md`` §2,
 phase 3.5). The legacy HTML path is untouched: this module produces the same
 ``slot_outputs`` / :class:`DocumentState` pair it does, so bibliography
 writing and :func:`wrap_template_document` run unchanged afterwards.
@@ -308,7 +308,7 @@ def render_ir_document(
     """Run the passes, resolve once, write every slot body; union the ``Requires``."""
     document = context.document
     if document.ir is None:
-        raise ValueError("render_ir_document needs a document read with reader='tmark'")
+        raise ValueError("render_ir_document needs a document parsed into the IR")
     request = context.request
 
     sink = _forwarding_sink(document, emitter)

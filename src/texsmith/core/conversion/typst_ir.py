@@ -1,7 +1,7 @@
 """The Typst backend on the IR path (task 3.7, minimal for this wave).
 
 ``render_typst_document`` (``core/conversion/typst.py``) delegates here when
-the document was read with ``reader="tmark"``: the same passes as the LaTeX
+the document was parsed into the IR: the same passes as the LaTeX
 path, one ``tmark.resolve``, one ``tmark.write(…, "typst")`` per slot body,
 and either the standalone preamble or the template's ``[typst.template]``
 scaffolding around the bodies. The ``#ts-*`` contract functions the writer
@@ -130,7 +130,7 @@ def render_typst_from_ir(
     )
 
     if document.ir is None:
-        raise ValueError("render_typst_from_ir needs a document read with reader='tmark'")
+        raise ValueError("render_typst_from_ir needs a document parsed into the IR")
     active_emitter = emitter or NullEmitter()
     front_matter = _front_matter(document)
     overrides = _press_overrides(dict(front_matter))

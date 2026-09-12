@@ -1,5 +1,5 @@
 """Migration loop (plan §4, phases 3-4): copy each example of the parity corpus,
-rewrite its sources with ``tmark lint --fix`` and build it with ``--reader tmark``.
+rewrite its sources with ``tmark lint --fix`` and build it.
 
 Usage: ``uv run python scripts/migrate_examples.py OUT_DIR [ID ...]`` (OUT_DIR under
 the repository, e.g. ``build-migr``: the snap ``typst`` binary cannot read ``/tmp``).
@@ -70,4 +70,4 @@ for e in corpus["examples"]:
     rows.append((e["id"], status, hint))
     print(f"{e['id']:<28} {status:<5} {hint}", flush=True)
 ok = sum(1 for r in rows if r[1] == "PDF")
-print(f"\n{ok}/{len(rows)} examples build through --reader tmark")
+print(f"\n{ok}/{len(rows)} examples build")
