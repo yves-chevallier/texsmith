@@ -20,14 +20,22 @@ from texsmith.core.bibliography.collection import BibliographyCollection
 from texsmith.core.context import DocumentState
 from texsmith.core.conversion_contexts import ConversionContext, GenerationStrategy
 from texsmith.core.diagnostics import DiagnosticEmitter, NullEmitter
+from texsmith.core.templates import resolve_template_language
 from texsmith.core.templates.typst import TypstTemplate, load_typst_template
 from texsmith.passes import PassContext, SlotTemplate, build_pipeline, run_pipeline
 from texsmith.writers.typst import render_document
 
 from .bodies import Body, Requires, build_writer_options, write_body
 from .models import ConversionRequest
-from .pipeline import apply_pass_values, build_pass_context
-from .resolution import ResolutionChain, bibliography_paths, resolve_pass
+from .pipeline import apply_pass_values, build_pass_context, processed_lang
+from .resolution import (
+    ResolutionChain,
+    bibliography_paths,
+    numbering_mode,
+    resolve_pass,
+    tmark_language,
+    writer_numbering,
+)
 
 
 if TYPE_CHECKING:  # pragma: no cover - typing only
@@ -144,7 +152,9 @@ def render_typst_from_ir(
         document=document,
         request=request,
         output_dir=output_dir if output_dir is not None else document.source_path.parent,
-        language=document.language or "english",
+        # The LaTeX path resolves the language in ``resolve_conversion_context``;
+        # the Typst entry point gets the document straight from ``prepare_documents``.
+        language=document.language or resolve_template_language(None, front_matter),
         generation=GenerationStrategy(),
         template_overrides={**overrides, **options},
         slot_requests=requests,
@@ -166,18 +176,27 @@ def render_typst_from_ir(
     )
     if chain is None:
         chain = ResolutionChain(bibliography=bibliography_paths(bibliography_files))
-    processed = run_pipeline(document, ctx, build_pipeline(), resolve=resolve_pass(chain))
+    # Same inputs as the LaTeX path: the resolved language as tmark's BCP 47
+    # ``lang`` and the ``--numbering`` mode from the template overrides.
+    language = tmark_language(context.language) or processed_lang(document)
+    mode = numbering_mode(context.template_overrides)
+    processed = run_pipeline(
+        document,
+        ctx,
+        build_pipeline(),
+        resolve=resolve_pass(chain, lang=language, numbering=mode),
+    )
     assert processed.ir is not None
 
     bodies: dict[str, Body] = {}
     requires = Requires()
-    language = processed.keys.lang or None
     for slot_body in processed.bodies:
         writer_options = build_writer_options(
             backend="typst",
             language=language,
             base_level=slot_body.base_level,
             numbered=slot_body.numbered,
+            numbering=writer_numbering(mode),
         )
         body = write_body(
             processed.ir,

@@ -23,6 +23,8 @@ What the tmark path still lacks before the flip (plan phase 4):
 - the parity triage: `scripts/parity.py diff` between the readers, the
   allow-list of intended differences (`\tsdivider`, contract macros instead
   of partials, zero-width collapse, script spans next to a backslash);
-- `ResolveOptions.lang` / `numbering` from the CLI, `--strict` semantics
-  for the `deprecated` warnings the examples still carry before their
-  sources are rewritten.
+- done since: `ResolveOptions.lang` from the document language,
+  `--numbering {backend,tmark}`, and `--deprecated {warning,info,off}` /
+  `press.diagnostics.deprecated` as the transition knob for `--strict`;
+  open on the tmark side: the writers do not yet use `lang` for the label
+  words (`PREFIX_NAMES`).

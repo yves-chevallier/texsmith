@@ -16,14 +16,14 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 import copy
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 from texsmith.core.bibliography.collection import BibliographyCollection
 from texsmith.core.context import DocumentState
 from texsmith.core.fragments.activation import apply_requires
-from texsmith.diagnostics import Diagnostic, DiagnosticSink
+from texsmith.diagnostics import Diagnostic, DiagnosticSink, Severity
 from texsmith.fonts.fallback import merge_fallback_summaries
 from texsmith.fonts.scripts import merge_script_usage
 from texsmith.passes import IdAllocator, PassContext, SlotTemplate, build_pipeline, run_pipeline
@@ -31,7 +31,14 @@ from texsmith.readers.loader import TexsmithLoader
 
 from ..diagnostics import DiagnosticEmitter
 from .bodies import Body, Requires, build_writer_options, write_body
-from .resolution import ResolutionChain, bibliography_paths, resolve_pass
+from .resolution import (
+    ResolutionChain,
+    bibliography_paths,
+    numbering_mode,
+    resolve_pass,
+    tmark_language,
+    writer_numbering,
+)
 from .templates import _build_mustache_defaults
 
 
@@ -44,13 +51,69 @@ if TYPE_CHECKING:  # pragma: no cover - typing only
 
 
 __all__ = [
+    "DEPRECATED_CODES",
+    "DEPRECATED_LEVELS",
     "IrRenderResult",
     "absorb_pass_bibliography",
     "apply_pass_values",
     "build_pass_context",
+    "demote_deprecated",
+    "deprecated_level",
+    "processed_lang",
     "render_ir_document",
     "slot_template_of",
 ]
+
+#: tmark's records for legacy spellings the ``tmark lint --fix`` rewrite removes.
+DEPRECATED_CODES: frozenset[str] = frozenset({"deprecated", "deprecated-frontmatter-key"})
+
+#: ``--deprecated`` / ``press.diagnostics.deprecated``: how those records are reported.
+DEPRECATED_LEVELS: tuple[str, ...] = ("warning", "info", "off")
+
+
+def deprecated_level(front_matter: Mapping[str, Any] | None, explicit: str | None = None) -> str:
+    """The level the deprecation records are reported at (``warning`` by default).
+
+    ``explicit`` is the CLI's ``--deprecated``; without it the front matter's
+    ``press.diagnostics.deprecated`` decides. (``press.features`` is a boolean
+    map in tmark, so the three-valued switch lives beside it.) An unknown
+    value is the default.
+    """
+    for candidate in (explicit, _lookup_deprecated(front_matter)):
+        if isinstance(candidate, str) and candidate.strip().lower() in DEPRECATED_LEVELS:
+            return candidate.strip().lower()
+    return "warning"
+
+
+def _lookup_deprecated(front_matter: Mapping[str, Any] | None) -> str | None:
+    if not isinstance(front_matter, Mapping):
+        return None
+    press = front_matter.get("press")
+    section = press.get("diagnostics") if isinstance(press, Mapping) else None
+    if section is None:
+        section = front_matter.get("diagnostics")
+    if not isinstance(section, Mapping):
+        return None
+    value = section.get("deprecated")
+    if isinstance(value, bool):
+        return "warning" if value else "off"
+    return value if isinstance(value, str) else None
+
+
+def demote_deprecated(record: Diagnostic, level: str) -> Diagnostic | None:
+    """``record`` as ``level`` reports it: unchanged, lowered to ``info`` or dropped (``None``).
+
+    Only the :data:`DEPRECATED_CODES` are touched; every other record passes
+    as is, whatever the level. Applied before the ``--strict`` check, so the
+    legacy spellings the examples still carry do not fail a strict run.
+    """
+    if record.code not in DEPRECATED_CODES or level == "warning":
+        return record
+    if level == "off":
+        return None
+    if record.severity <= Severity.INFO:
+        return record
+    return replace(record, severity=Severity.INFO)
 
 
 @dataclass(slots=True)
@@ -82,6 +145,13 @@ def slot_template_of(
         ),
         base_level=binding.base_level or 0,
     )
+
+
+def processed_lang(document: Document) -> str | None:
+    """The front matter's ``lang`` key as tmark parsed it (the writer's former source)."""
+    keys = getattr(document, "keys", None)
+    lang = getattr(keys, "lang", None)
+    return lang if isinstance(lang, str) and lang.strip() else None
 
 
 def _forwarding_sink(document: Document, emitter: DiagnosticEmitter) -> DiagnosticSink:
@@ -224,11 +294,20 @@ def render_ir_document(
     if chain is None:
         chain = ResolutionChain(bibliography=bibliography_paths(request.bibliography_files))
 
-    processed = run_pipeline(document, ctx, build_pipeline(), resolve=resolve_pass(chain))
+    # The resolved document language (``--language`` or the front matter, a
+    # babel name) as tmark's BCP 47 ``lang``, for ``resolve`` and the writer
+    # alike; the ``--numbering`` mode travels in the template overrides.
+    language = tmark_language(context.language) or processed_lang(document)
+    mode = numbering_mode(context.template_overrides, request.template_options)
+    processed = run_pipeline(
+        document,
+        ctx,
+        build_pipeline(),
+        resolve=resolve_pass(chain, lang=language, numbering=mode),
+    )
     assert processed.ir is not None
     absorb_pass_bibliography(context, ctx.bibliography)
 
-    language = processed.keys.lang or None
     slot_outputs: dict[str, str] = {}
     bodies: dict[str, Body] = {}
     requires = Requires()
@@ -240,6 +319,7 @@ def render_ir_document(
             legacy_accents=request.legacy_latex_accents,
             base_level=slot_body.base_level,
             numbered=slot_body.numbered,
+            numbering=writer_numbering(mode),
         )
         body = write_body(
             processed.ir,
