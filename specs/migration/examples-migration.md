@@ -256,7 +256,8 @@ abbreviation definitions (finding F1 of `examples-flip.md`, decision X5 —
 `examples/glossary` was precisely the trigger it named). Item 3's passes all
 run on the default path. Item 6 (non-mechanical edits) is done except
 `custom-render`, which still drives the API through a raw-HTML hook and wants
-an IR pass. Item 7 (docs and the `writing-texsmith` skill) is **not** part of
+an IR pass — since closed by deletion: phase 5 removed the example with the
+`@reads` / `@writes` decorators it existed to demonstrate. Item 7 (docs and the `writing-texsmith` skill) is **not** part of
 this task: `docs/cli/index.md` and the changelog were updated for the new
 default, the syntax pages and the skill are plan task 5.3.
 

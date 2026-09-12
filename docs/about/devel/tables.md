@@ -1,6 +1,19 @@
 
 # Tables
 
+**Mostly settled.** The answer TeXSmith shipped is the `yaml table` fence,
+which the TMark parser reads and validates: grouped headers, column widths
+(fixed, auto, relative), a `width-group` that makes several columns share one
+width, per-column and per-group alignment, row and column spans (the absorbed
+cells written as `~`), separators, and a caption line after the fence. The
+table model is specified and round-trips through `tmark fmt`, and a shape it
+cannot express is rejected with a `table-*` diagnostic rather than silently
+flattened. See [Tables](../../syntax/tables.md).
+
+What is still open from the list below is table **orientation** (rotating a
+very large table) and the width-control knobs (`tabulary` and friends); both
+are roadmap items.
+
 ## Complex Tables
 
 Markdown offers limited table configuration—only column alignment by default. PyMdown provides captions, and superfences can inject more metadata, but we still miss:
@@ -14,10 +27,9 @@ Markdown offers limited table configuration—only column alignment by default. 
 
 ### Extended Markdown Table Syntax
 
-Leverage Pymdown’s table extension to add more metadata directly in Markdown. For example:
-The `texsmith.spantable` extension lets us span cells in standard Markdown tables.
-
-The `>>>` syntax will span cells horizontally, the `vvv` syntax will span cells vertically.
+An idea that was considered and not taken: extending the pipe-table syntax
+itself so a cell could span, with `>>>` spanning horizontally and `vvv`
+spanning vertically.
 
 ```markdown
 | Header 1 | Header 2 | Header 3 |

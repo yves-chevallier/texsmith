@@ -247,3 +247,31 @@ TeXSmith, ordered:
    limitation, as with today's regex pre-pass.
 6. **Bibliography on the web.** Built-in author-year only; `mkdocs-bibtex`
    sites use `citations: passthrough`. CSL on the web is not planned.
+
+## Closing note — what shipped
+
+The recommendation was taken whole: one `texsmith` MkDocs plugin renders the
+site and exports the PDF, and `lower_web` is Rust. `on_nav` pre-passes every
+page with `tmark.parse` + `tmark.resolve(numbering="all")`, `start` chained in
+navigation order, and builds the site label map; `on_page_markdown` resolves
+each page against that map minus its own labels and splices its constructs with
+`tmark.lower_web`; `on_post_build` builds every book from the stored sources
+through the same reader path the CLI uses, seeding one `ResolutionChain` where
+the site's chain stood before the book's first page. `mkdocs.yml` needs no
+Markdown extension of its own — `on_config` turns on the five the lowering
+relies on when they are absent — and `assets/texsmith/texsmith.css` ships the
+shapes the lowering emits. `examples/mkdocs` exercises every row of the
+per-construct table.
+
+The two old plugins are deprecated aliases that log a warning and do nothing;
+they are removed in 0.8. A page that still wants the Python-Markdown rendering
+sets `press.reader: html` in its front matter and goes through
+`Document.from_html(page.content)` — the escape hatch the *reader* keeps now
+that the CLI has no `--reader` option.
+
+Of the open questions: (2) dotted container names are read as foreign
+directives, closed by the next dedent, which removes the collision with the
+MkDocs ecosystem. Still open: (1) chapter-scoped numbering on the web (the site
+shows `Figure 12` where the `book` template prints `3.2`); (3) `md_in_html`
+span mode on `<td>`; (5) labels a macro generates, which the pre-pass reading
+raw sources cannot see; (6) bibliography on the web, still author-year only.

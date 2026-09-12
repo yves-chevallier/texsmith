@@ -30,7 +30,8 @@ TeXSmith depends on several third-party components. When you redistribute TeXSmi
   - OpenMoji (emoji glyphs and font): CC BY-SA 4.0 for the artwork and SIL Open Font License 1.1 for the font files.
   - Noto fonts (Google): primarily SIL Open Font License 1.1; Noto Color Emoji is Apache License 2.0.
   - IBM Plex: SIL Open Font License 1.1.
-- **Python libraries (non-exhaustive)** – Markdown (BSD-3-Clause), PyMdown Extensions (MIT), Beautiful Soup (MIT), Requests (Apache-2.0), Jinja2 (BSD-3-Clause), PyBtex (MIT), TQDM (MIT). Each library carries its own permissive license; see the packages for full texts.
+- **The TMark core** – TeXSmith parses its Markdown and writes its LaTeX, Typst and HTML bodies with [TMark](https://github.com/yves-chevallier/tmark), a Rust library distributed as the `tmark` Python wheel. It carries its own license; see the package for the full text.
+- **Python libraries (non-exhaustive)** – Beautiful Soup (MIT), Requests (Apache-2.0), Jinja2 (BSD-3-Clause), PyBtex (MIT), Pygments (BSD-2-Clause), Pydantic (MIT), PyMuPDF (AGPL-3.0 or commercial), Typer (MIT). Each library carries its own license; see the packages for full texts. Markdown and PyMdown Extensions were dependencies until the TMark migration and are no longer required.
 - **External tools invoked but not bundled** – Tectonic (MIT), Mermaid CLI / `@mermaid-js/mermaid-cli` (MIT), Draw.io CLI (Apache-2.0), latexmk (GPL/Artistic-2.0, distributed with TeX Live), biber/bibtex (per their upstream licenses). Users must comply with these tools’ licenses when installing and running them.
 
 If you distribute TeXSmith together with any of these assets or tools, include the corresponding license texts and attribution files. When in doubt, consult each upstream project’s LICENSE file.

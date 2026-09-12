@@ -312,3 +312,30 @@ print", so a `note-multiline` diagnostic and a drop; (e) `Div{name=script}`
 for `::: script`: keep, or lower to spans in the pass and delete the block
 form; (f) `Requires.assets` once the assets pass rewrites `src` before
 writing: keep it as the copy list; the pass owns conversion.
+
+## 7. Closing note — what shipped
+
+Both lists landed. The LaTeX and Typst writers cover every construct of the
+migration catalogue, the `FRAGMENTS` table is the registry the fragments are
+checked against, and the passes of §3 run in the order given, with `snippet`
+handing its previews to `assets` rather than rendering them itself.
+`Requires` → fragment activation replaced the content sniffers, and the
+harness of §5 is the gate: `parity.py baseline --check` on every PR, the
+nightly `parity-pdf` workflow adding the four-entry pixel diff.
+
+The two open questions that had to be settled before the flip were:
+
+- **(a) `HorizontalRule`.** `\tsdivider` won over a bare `\clearpage`
+  (decision X2), and then split in two: `\tsdivider` at the top level,
+  `\tsrule` / `#ts-rule()` inside a container, because a page break inside a
+  box tears it and Typst refuses it outright.
+- **(b) heading ids without `{#id}`.** The writer labels a heading only for an
+  explicit id or an implicit one a reference targets, and the implicit slug is
+  GitHub's rule, which is what the docs' `[text](#slug)` links now follow.
+
+Still open, and now each needing its own reproduction rather than a harness
+run: (c) which of `press.declare.acronyms` and `*[X]:` wins on a duplicate key;
+(d) a `Note` with a multi-line body; (e) whether the block form of
+`::: script` earns its keep; (f) `Requires.assets` as the copy list once the
+`assets` pass has rewritten `src`. The `diff` subcommand these were measured
+with is deleted — see `parity-triage.md` §7.
