@@ -44,7 +44,36 @@ Markdown doesn't have to be flat text. Here's how we wire live \href{https://mer
 Here is the source:
 \begin{tscode}[lang=markdown, engine=pygments]
 \begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
-[include: examples/diagrams/diagrams.md not found]
+\PYZhy{}\PYZhy{}\PYZhy{}
+press:
+  subtitle: \PYZdq{}An Overview of drawio and mermaid diagram integration\PYZdq{}
+  paper:
+\PY{g+gu}{    margin: 2cm}
+\PY{g+gu}{\PYZhy{}\PYZhy{}\PYZhy{}}
+\PY{g+gh}{\PYZsh{} Diagram Integration}
+
+You can embed Draw.io or Mermaid diagrams directly in Markdown. This keeps
+technical documentation close to the visuals it describes, and the package
+takes care of converting each diagram to an image that the final LaTeX
+document can reference automatically.
+
+\PY{g+gu}{\PYZsh{}\PYZsh{} Draw.io Diagram}
+
+![\PY{n+nt}{Euclidean GCD}](\PY{n+na}{pgcd.drawio})\PYZob{}width=60\PYZpc{}\PYZcb{}
+
+Figure: Euclidean algorithm for the greatest common divisor
+
+\PY{g+gu}{\PYZsh{}\PYZsh{} Mermaid Diagram}
+
+\PY{l+s+sb}{```}\PY{l+s+sb}{mermaid}\PY{+w}{ }image width=\PYZdq{}80\PYZpc{}\PYZdq{}
+\PY{l+s}{\PYZpc{}\PYZpc{} Vegetable harvesting algorithm}
+\PY{l+s}{flowchart LR}
+\PY{l+s}{    start(Start) \PYZhy{}\PYZhy{}\PYZgt{} pick[Dig up]}
+\PY{l+s}{    pick \PYZhy{}\PYZhy{}\PYZgt{} if\PYZob{}Cabbages?\PYZcb{}}
+\PY{l+s}{    if \PYZhy{}\PYZhy{}No\PYZhy{}\PYZhy{}\PYZgt{} step[Move forward one step]}
+\PY{l+s}{    step \PYZhy{}\PYZhy{}\PYZgt{} pick}
+\PY{l+s}{    if \PYZhy{}\PYZhy{}Yes\PYZhy{}\PYZhy{}\PYZgt{} stop(End)}
+\PY{l+s+sb}{```}
 \end{Verbatim}
 \end{tscode}
 \section{Rendered Markdown}

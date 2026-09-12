@@ -181,7 +181,37 @@ To illustrate the relationship between stiffness, temperature, and deformation
 rate, the theoretical expression (Eq. 1) was implemented in \textbf{Python} as follows:
 \begin{tscode}[lang=python, linenums, engine=pygments]
 \begin{Verbatim}[commandchars=\\\{\},numbers=left,firstnumber=1,stepnumber=1,breaklines, breakanywhere, commandchars=\\\{\}]
-\PY{p}{[}\PY{n}{include}\PY{p}{:} \PY{n}{examples}\PY{o}{/}\PY{n}{paper}\PY{o}{/}\PY{n}{code}\PY{o}{.}\PY{n}{py} \PY{o+ow}{not} \PY{n}{found}\PY{p}{]}
+\PY{k+kn}{import}\PY{+w}{ }\PY{n+nn}{matplotlib}\PY{n+nn}{.}\PY{n+nn}{pyplot}\PY{+w}{ }\PY{k}{as}\PY{+w}{ }\PY{n+nn}{plt}
+\PY{k+kn}{import}\PY{+w}{ }\PY{n+nn}{numpy}\PY{+w}{ }\PY{k}{as}\PY{+w}{ }\PY{n+nn}{np}
+\PY{k+kn}{import}\PY{+w}{ }\PY{n+nn}{numpy}\PY{n+nn}{.}\PY{n+nn}{typing}\PY{+w}{ }\PY{k}{as}\PY{+w}{ }\PY{n+nn}{npt}
+
+\PY{c+c1}{\PYZsh{} Constants}
+\PY{n}{E0} \PY{o}{=} \PY{l+m+mf}{50.0}  \PY{c+c1}{\PYZsh{} Reference modulus (MPa)}
+\PY{n}{T0} \PY{o}{=} \PY{l+m+mf}{10.0}  \PY{c+c1}{\PYZsh{} Reference temperature (°C)}
+\PY{n}{alpha} \PY{o}{=} \PY{l+m+mf}{0.02}  \PY{c+c1}{\PYZsh{} Thermal softening coefficient}
+\PY{n}{beta} \PY{o}{=} \PY{l+m+mf}{0.15}  \PY{c+c1}{\PYZsh{} Strain\PYZhy{}rate sensitivity}
+\PY{n}{eps\PYZus{}dot0} \PY{o}{=} \PY{l+m+mf}{1.0}  \PY{c+c1}{\PYZsh{} Reference strain rate}
+
+\PY{n}{ArrayLike} \PY{o}{=} \PY{n}{npt}\PY{o}{.}\PY{n}{NDArray}\PY{p}{[}\PY{n}{np}\PY{o}{.}\PY{n}{float64}\PY{p}{]} \PY{o}{|} \PY{n+nb}{float}
+
+\PY{k}{def}\PY{+w}{ }\PY{n+nf}{modulus}\PY{p}{(}\PY{n}{temperature}\PY{p}{:} \PY{n}{ArrayLike}\PY{p}{,} \PY{n}{strain\PYZus{}rate}\PY{p}{:} \PY{n+nb}{float}\PY{p}{)} \PY{o}{\PYZhy{}}\PY{o}{\PYZgt{}} \PY{n}{ArrayLike}\PY{p}{:}
+\PY{+w}{    }\PY{l+s+sd}{\PYZdq{}\PYZdq{}\PYZdq{}Return elastic modulus as a function of temperature and strain rate.\PYZdq{}\PYZdq{}\PYZdq{}}
+    \PY{k}{return} \PY{n}{E0} \PY{o}{*} \PY{p}{(}\PY{l+m+mi}{1} \PY{o}{\PYZhy{}} \PY{n}{alpha} \PY{o}{*} \PY{p}{(}\PY{n}{temperature} \PY{o}{\PYZhy{}} \PY{n}{T0}\PY{p}{)}\PY{p}{)} \PY{o}{*} \PY{p}{(}\PY{l+m+mi}{1} \PY{o}{+} \PY{n}{beta} \PY{o}{*} \PY{n}{np}\PY{o}{.}\PY{n}{log}\PY{p}{(}\PY{n}{strain\PYZus{}rate} \PY{o}{/} \PY{n}{eps\PYZus{}dot0}\PY{p}{)}\PY{p}{)}
+
+\PY{c+c1}{\PYZsh{} Compute modulus for a range of temperatures}
+\PY{n}{temperatures} \PY{o}{=} \PY{n}{np}\PY{o}{.}\PY{n}{linspace}\PY{p}{(}\PY{l+m+mi}{5}\PY{p}{,} \PY{l+m+mi}{25}\PY{p}{,} \PY{l+m+mi}{100}\PY{p}{)}
+\PY{n}{rates} \PY{o}{=} \PY{p}{[}\PY{l+m+mf}{0.1}\PY{p}{,} \PY{l+m+mi}{1}\PY{p}{,} \PY{l+m+mi}{10}\PY{p}{]}
+
+\PY{n}{plt}\PY{o}{.}\PY{n}{figure}\PY{p}{(}\PY{n}{figsize}\PY{o}{=}\PY{p}{(}\PY{l+m+mi}{6}\PY{p}{,} \PY{l+m+mi}{4}\PY{p}{)}\PY{p}{)}
+\PY{k}{for} \PY{n}{r} \PY{o+ow}{in} \PY{n}{rates}\PY{p}{:}
+    \PY{n}{plt}\PY{o}{.}\PY{n}{plot}\PY{p}{(}\PY{n}{temperatures}\PY{p}{,} \PY{n}{modulus}\PY{p}{(}\PY{n}{temperatures}\PY{p}{,} \PY{n}{r}\PY{p}{)}\PY{p}{,} \PY{n}{label}\PY{o}{=}\PY{l+s+sa}{f}\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{ε̇ = }\PY{l+s+si}{\PYZob{}}\PY{n}{r}\PY{l+s+si}{\PYZcb{}}\PY{l+s+s2}{ s⁻¹}\PY{l+s+s2}{\PYZdq{}}\PY{p}{)}
+\PY{n}{plt}\PY{o}{.}\PY{n}{xlabel}\PY{p}{(}\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{Temperature (°C)}\PY{l+s+s2}{\PYZdq{}}\PY{p}{)}
+\PY{n}{plt}\PY{o}{.}\PY{n}{ylabel}\PY{p}{(}\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{Elastic Modulus E (MPa)}\PY{l+s+s2}{\PYZdq{}}\PY{p}{)}
+\PY{n}{plt}\PY{o}{.}\PY{n}{title}\PY{p}{(}\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{Temperature Dependence of Cheese Stiffness}\PY{l+s+s2}{\PYZdq{}}\PY{p}{)}
+\PY{n}{plt}\PY{o}{.}\PY{n}{legend}\PY{p}{(}\PY{p}{)}
+\PY{n}{plt}\PY{o}{.}\PY{n}{grid}\PY{p}{(}\PY{k+kc}{True}\PY{p}{)}
+\PY{n}{plt}\PY{o}{.}\PY{n}{tight\PYZus{}layout}\PY{p}{(}\PY{p}{)}
+\PY{n}{plt}\PY{o}{.}\PY{n}{show}\PY{p}{(}\PY{p}{)}
 \end{Verbatim}
 \end{tscode}
 This computational approach allows the parametric exploration of cheese stiffness
