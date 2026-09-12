@@ -41,11 +41,15 @@ Closed by task 4.3 (details in `examples-flip.md`, closing section of
 
 Still open before 0.7.0:
 
-- **`tests/parity/baseline/` is now stale.** It holds the legacy-reader render
-  of each corpus entry, keyed on sources this task rewrote, so
+- **`tests/parity/baseline/` is now stale, and cannot simply be re-recorded.**
+  It holds the *legacy-reader* render of each corpus entry, keyed on sources
+  this task rewrote; the legacy reader does not understand the canonical
+  spellings, so re-recording it would freeze the wrong output (`{.thin}` and
+  `{raw latex}(…)` come out as literal text — `examples-flip.md` F8).
   `scripts/parity.py baseline --check` reports drift on every rewritten
-  example. Re-recording it (and re-reading the allow-list against the new
-  sources) belongs to the parity triage, not here.
+  example. Whether the harness keeps a pre-flip copy of the sources, compares
+  only the entries that did not change spelling, or drops the legacy side
+  altogether is the parity triage's call.
 - the parity diff itself (`scripts/parity.py diff` between the readers) and
   its allow-list of intended differences;
 - the MkDocs companion on `lower_web` (`examples/mkdocs` builds, its plugin

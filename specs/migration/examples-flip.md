@@ -166,6 +166,35 @@ but `EXAMPLES` in `examples/Makefile` does not list them, so
 `make -C examples all` never builds them. All three build; whether to add them
 is a call for the Makefile's owner, so `EXAMPLES` is left as it was.
 
+### F8 — the rewritten examples no longer build through `--reader html`
+
+The canonical spellings are canonical for TMark, not for Python-Markdown, so a
+rewritten source rendered by the legacy reader comes out wrong — silently,
+because the legacy path has no diagnostic for a spelling it does not know. Two
+measured cases, from `parity.py baseline --check`:
+
+```diff
+### progressbar/progressbar.tex
+-{\progressbar[width=9cm,…]{0.75} Review}\par
++[=75\% \enquote{Review}]\{.candystripe\}
+
+### index/index.tex
+-\clearpage
++\{raw latex\}(\textbackslash{}clearpage)
+```
+
+`attr_list` wants `{: .x}`, and `{raw latex}(…)` is not the `{latex}[…]` the
+legacy extension registers. This is expected and is the point of the flip, but
+it fixes the meaning of the escape hatch: **`--reader html` is for a document
+still written in the 0.6 spellings**, not a way to render a canonical one. The
+docs and the changelog entry say so.
+
+Its consequence is on the parity harness, not here: `tests/parity/baseline/`
+holds the *legacy* render of every corpus entry, keyed on sources this task
+rewrote, so `parity.py baseline --check` now reports drift on each rewritten
+example. Re-recording the baseline — or freezing a pre-flip copy of the
+sources for it — is the parity triage's call.
+
 ### F7 — `uv run pytest` with no path collects `vendor/tmark`
 
 The `vendor/tmark` symlink the migration asks for is inside the repository and
