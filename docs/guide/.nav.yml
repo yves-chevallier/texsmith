@@ -1,5 +1,6 @@
 nav:
   - getting-started.md
+  - Migrating to TMark: migration.md
   - front-matter.md
   - metadata.md
   - extensions.md

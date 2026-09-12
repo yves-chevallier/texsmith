@@ -47,27 +47,25 @@ texsmith docs/intro.md docs/manual.md docs/appendix.md \
 
 The `#appendix-a` selector pulls only the section with that ID. Mix selectors freely (IDs, headings, `@document`) to keep Markdown sources modular.
 
-## Override partials
+## Restyle a construct
 
-Place overrides under `overrides/partials/`. Update `manifest.toml`:
+Redefine its contract macro in the template's `.tex`, after
+`\VAR{extra_packages}`:
 
-```toml
-[latex.template]
-override = ["partials/bold.tex"]
+```latex
+\VAR{extra_packages}
+% Callouts without a frame, inline code without break opportunities.
+\tcbset{/ts/callout/.append style={frame hidden, boxrule=0pt}}
+\RenewDocumentCommand{\tscodeinline}{O{}m}{\mbox{\texttt{#2}}}
+\RenewDocumentCommand{\tsdivider}{}{\bigskip\hrule\bigskip}
 ```
 
-Then create `overrides/partials/bold.tex`:
+Guard the redefinition when the fragment is conditional (`ts-code` only loads
+when the document has code): `\ifcsname tscodeinline\endcsname … \fi`.
 
-```tex
-\textbf{%
-  \BLOCK{ if attrs.emphasis }%
-    \VAR{attrs.emphasis}~%
-  \BLOCK{ endif }%
-  \VAR{text}%
-}
-```
-
-The renderer will prefer this file over the built-in partial when emitting bold spans.
+See [Contract macros](partials.md) for every macro and its keys. The former
+`latex.template.override` mechanism is deprecated in 0.7.0 and removed in
+0.8.0.
 
 ## Inject custom assets
 

@@ -28,18 +28,34 @@ Thus, index entries can:
 - be rendered in bold, italic, or both,
 - appear multiple times in the document, with all page numbers listed.
 
-To mimic this behavior in Markdown, the `texsmith.index` extension provides the
-hashtag syntax:
+TMark spells an index entry with the `index` role, and `#[…]` is its shorthand —
+`#` defines, and the term is *content*, hence the brackets. The two spellings
+are one node.
 
-```markdown
-#[a] One level index entry in the default index
-#[a][b][c] Three-level entry in the default index
-{index:registry}[Foo][Bar] Entry nested twice under the `registry` index
-#[*a*] Formatted index entry in default index
-#[**a**] Bold formatted index entry in default index
-#[***a***] Bold italic formatted index entry in default index
-#[a] #[b] Multiple index entries in one place
+```md
+{index}[endianness]                     one level, default registry
+#[endianness]                           the same thing, shorthand
+
+#[byte order][endianness]               nested (three levels at most)
+
+{index main=true}[endianness]           main topic: a bold page number
+#[**endianness**]                       the same thing, shorthand
+
+#[*endianness*]                         emphasis is content markup
+
+{index registry=physics}[Foo][Bar]      nested twice under a named registry
+
+#[cake] #[chocolate]                    several entries in one place
 ```
+
+A registry other than the default is named by `registry=`; it is created on
+first use and each produces its own index at the position the template chooses.
+
+!!! note "`{index:reg}` and the `{b}` / `{i}` suffixes are deprecated"
+    The 0.6 spellings `{index:registry}[…]` and `{index}[…]{b}` / `{i}` are
+    still parsed with a deprecation warning. `tmark lint --fix` rewrites them to
+    `{index registry=…}[…]` and `{index main=true}[…]`; italics become content
+    markup. See [Migrating to TMark](../migration.md).
 
 ## Emphasis and Formatting
 
@@ -50,15 +66,16 @@ Printed indexes often differentiate how important an entry is within a section:
 - *Italic*: the term is mentioned but not deeply discussed.
 - ***Bold italic***: the term is the main topic and also referenced elsewhere in the same section.
 
-Because the hashtag syntax accepts Markdown formatting, just wrap the indexed term
-in the appropriate markers (e.g. `#[**topic**]`).
+Emphasis inside the term is content markup, so wrap the indexed term in the
+appropriate markers (`#[*topic*]`); "main topic" is the `main=true` attribute,
+for which `#[**topic**]` is the shorthand.
 
 ## Nested Entries
 
 Consider a cooking book where you want to index the recipe for "Chocolate Cake". You might want to add
 an index entry for "Cake" with a sub-entry for "Chocolate" and also in "Chocolate Cake":
 
-```markdown
+```md
 ## Chocolate Cake
 
 #[cake][**chocolate**] #[chocolate cake]
@@ -66,17 +83,21 @@ an index entry for "Cake" with a sub-entry for "Chocolate" and also in "Chocolat
 
 LaTeX only supports up to 3 levels of nesting:
 
-```markdown
+```md
 #[cake]
+
 #[cake][**chocolate**]
+
 #[dessert][cake][chocolate]
 ```
 
 ## Tags
 
-In MkDocs, search powered by Lunr.js automatically adds tags on headings to improve searchability.
-From an HTML perspective the extension emits invisible spans such as
-`<span class="ts-hashtag" data-tag="term" data-style="b">`. The LaTeX renderer
-converts them into the proper `\index{...}` call while the MkDocs plugin collects
-the same metadata to enrich Lunr’s search index. This keeps the PDF index and the
-interactive site search in sync even though they are generated through different pipelines.
+In MkDocs, search powered by Lunr.js automatically adds tags on headings to
+improve searchability. An index entry is a **zero-width** node: the whitespace
+on both sides collapses to one space and disappears before punctuation, so it
+never shows in the flow. The LaTeX writer emits `\tsindex[registry=r,
+main]{sort@formatted!sub}` from the `ts-index` fragment, and the MkDocs plugin
+collects the same entries to enrich Lunr's search index. This keeps the PDF
+index and the interactive site search in sync even though they are generated
+through different pipelines.

@@ -45,19 +45,42 @@ Pipeline parity
   so automation scripts and ad-hoc conversions stay in sync.
 
 Template-friendly
-: Wrap multiple documents into a single LaTeX project,
-  map fragments into template slots, and customise the runtime with Jinja2.
+: Wrap multiple documents into a single LaTeX project, map bodies into template
+  slots, and restyle any construct by redefining its contract macro.
 
 Diagnostics you can trust
 : Structured emitter APIs and CLI verbosity
   flags surface the context you need when something goes wrong.
 
+## The dialect
+
+TeXSmith reads [TMark](syntax/index.md): [CommonMark](https://commonmark.org/),
+plus the extension set every MkDocs site already loads, plus exactly four
+syntactic families for what print needs — attributes, roles, container
+directives and data directives — and two sigils: **`#` defines, `@` refers**.
+
+```md
+See @fig:trace and @sec:boot; the measurement is from @ein05.
+
+![Trace](trace.png){width=60%}
+
+Figure: The watchdog firing twice. {#fig:trace}
+
+::: warning {title="LaTeX toolchain"}
+Install TeX Live before `texsmith --build`.
+:::
+```
+
+It has a specification, a parser, a canonical printer and a linter, so
+`tmark check FILE` tells you exactly what the converter read, and
+`tmark lint --fix FILE` rewrites an older document into the canonical spelling.
+Upgrading from TeXSmith 0.6? See [Migrating to TMark](guide/migration.md).
+
 ## How is it different from Pandoc?
 
-[Pandoc](https://pandoc.org/) is a powerhouse, but reproducing an extended Markdown syntax other than
-[CommonMark](https://commonmark.org/) or [GitHub-flavored Markdown](https://github.github.com/gfm/) document in
-Pandoc requires custom filters and ongoing maintenance. TeXSmith focuses on MkDocs Markdown
-with Pymdown extensions, delivering parity out of the box:
+[Pandoc](https://pandoc.org/) is a powerhouse, but reproducing an extended
+Markdown dialect in Pandoc requires custom filters and ongoing maintenance.
+TeXSmith delivers parity with the MkDocs world out of the box:
 
 - Handles Material-only components such as tabbed content, callouts, and
   keyboard keys.
@@ -65,6 +88,8 @@ with Pymdown extensions, delivering parity out of the box:
   into the LaTeX build step.
 - Exposes the same primitives via the CLI and Python API, so automation scripts
   match what authors do locally.
+- Every construct says how it degrades elsewhere, and Pandoc's own citation
+  grammar is accepted for import.
 
 Use both tools together when it makes sense; reach for TeXSmith when MkDocs → LaTeX
 compatibility is the priority.

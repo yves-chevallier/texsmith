@@ -4,11 +4,12 @@ LaTeX is the gold standard for math notation. TeXSmith relies on the same syntax
 
 ## Inline Math
 
-Inline math uses the usual delimiters `\( ... \)` or `$ ... $`:
+Inline math is `$ ... $`. GitHub renders it natively, so it is the canonical
+spelling; `\( ... \)` is accepted as a compatibility layer for LaTeX habits.
 
-```markdown
-The quadratic formula is given by \(x = \frac{-b \pm \sqrt{b^2 - 4ac}}{2a}\)
-or $x = \frac{-b \pm \sqrt{b^2 - 4ac}}{2a}$.
+```md
+The quadratic formula is given by $x = \frac{-b \pm \sqrt{b^2 - 4ac}}{2a}$,
+or \(x = \frac{-b \pm \sqrt{b^2 - 4ac}}{2a}\) in the LaTeX-flavoured form.
 ```
 
 Rendered as:
@@ -67,7 +68,24 @@ $$
 
 ### Numbered equation
 
-Wrap an equation inside `\begin{equation}...\end{equation}` (or `equation*`) to control numbering. Example: the relativistic gravitational field equation:
+The canonical spelling attaches an anchor to the display block, Quarto-style,
+and refers to it with `@`:
+
+```md
+$$
+R_{\mu \nu} - \frac{1}{2} R g_{\mu \nu} + \Lambda g_{\mu \nu} =
+    \frac{8 \pi G}{c^4} T_{\mu \nu}
+$$ {#eq:gravity}
+
+@eq:gravity describes the fundamental interaction of gravitation as a result of
+spacetime being curved by matter and energy.
+```
+
+Equations take an anchor but no caption line: print never captions them.
+
+The LaTeX-flavoured form — `\begin{equation}...\end{equation}` (or `equation*`)
+with `\label`, referenced with `$\eqref{...}$` — keeps working as a
+compatibility layer. Example: the relativistic gravitational field equation:
 
 ```latex
 The equation $\eqref{eq:gravity}$ describes the fundamental interaction of
@@ -88,8 +106,6 @@ $$
 R_{\mu \nu} - \frac{1}{2} R g_{\mu \nu} + \Lambda g_{\mu \nu} = \frac{8 \pi G}{c^4} T_{\mu \nu}
 \end{equation}
 $$
-
-Reference numbered equations via `\label{}` and drop `$\eqref{...}$` in Markdown.
 
 In an aligned environment, you can number individual lines using the `\label{}` command:
 

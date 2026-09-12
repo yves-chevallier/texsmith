@@ -1,14 +1,15 @@
 # Admonitions
 
-Admonitions are little callout blocks for surfacing notes, warnings, tips, and whatever else you need to highlight. Python-Markdown’s `admonition` extension powers them.
+Admonitions — callouts — are little blocks for surfacing notes, warnings, tips,
+and whatever else you need to highlight. In TMark they are **containers**, and
+the canonical spelling is the `:::` fence:
 
-You can render them in two flavors. The plain/static variant looks like this:
+```md
+::: note {title="This is a Note"}
+Any number of other Markdown elements.
 
-```markdown
-!!! note "This is a Note"
-    Any number of other indented Markdown elements.
-
-    This is the second paragraph.
+This is the second paragraph.
+:::
 ```
 
 !!! note "This is a Note"
@@ -16,36 +17,66 @@ You can render them in two flavors. The plain/static variant looks like this:
 
     This is the second paragraph.
 
-Prefer collapsible callouts? Use the foldable form:
+Folding is an attribute, not a second fence family:
 
-```markdown
-??? note "This is a Note"
-    Any number of other indented markdown elements.
+```md
+::: note {title="This is a Note" collapsed=true}
+Any number of other Markdown elements.
 
-    This is the second paragraph.
+This is the second paragraph.
+:::
 ```
 
 ??? note "This is a Note"
     Any number of other indented markdown elements.
 
     This is the second paragraph.
+
+!!! info "The PyMdownX spellings are kept indefinitely"
+    `!!! note "Title"` and `??? note "Title"` (collapsed) / `???+` (expanded)
+    remain accepted sugar for callouts, because MkDocs Material renders them
+    natively. They are one node whatever the spelling. Use whichever suits the
+    document; `:::` is what the printer emits.
+
+Print has no folding, so the strategy is declared once:
+
+```yaml
+press:
+  details: expand      # expand (default) | reference
+```
+
+`reference` moves the body of a collapsed callout to a grouped end-section
+(“Solutions”, “Warnings”, …) and leaves a “See page N” link in its place.
 
 ## LaTeX Rendering
 
-TeXSmith maps admonitions onto the `tcolorbox` package automatically, so they come through in LaTeX without extra work. Template authors can still restyle them via the preamble or dedicated slots.
+TeXSmith maps callouts onto the `tcolorbox` package through the `ts-callouts`
+fragment, which provides the `tscallout` environment:
 
-Built-in templates like `article` and `book` ship with sensible defaults. Tweak the look by setting `callout_style` in front matter (or via `--attribute callout_style=<style>`):
+```latex
+\begin{tscallout}[kind=note, title={This is a Note}]
+…
+\end{tscallout}
+```
+
+Template authors restyle them by redefining that environment or by appending to
+its `pgfkeys` family. Set the global look with `press.callouts.style` (or via
+`--attribute press.callouts.style=<style>`):
 
 ```yaml
 ---
 press:
-  callout_style: classic  # fancy | classic | minimal
+  callouts:
+    style: classic  # fancy | classic | minimal
 ---
 ```
 
 - `fancy` (default): colored headings with icons.
 - `classic`: black-and-white layout with a bold left rule.
 - `minimal`: subtle border, rounded corners, and no icons.
+
+`press.callout_style` and `press.admonition_style` are the deprecated names of
+that key.
 
 === "Fancy Admonitions"
 
@@ -55,7 +86,8 @@ press:
       - admonition.md
     press:
       template: article
-      callout_style: fancy
+      callouts:
+        style: fancy
     ```
 
 === "Classic Admonitions"
@@ -66,7 +98,8 @@ press:
       - admonition.md
     press:
       template: article
-      callout_style: classic
+      callouts:
+        style: classic
     ```
 
 === "Minimal Admonitions"
@@ -77,12 +110,46 @@ press:
       - admonition.md
     press:
       template: article
-      callout_style: minimal
+      callouts:
+        style: minimal
     ```
+
+## Custom types
+
+A new *kind* of callout is a declaration, not a new container name. Declare what
+it **is** under `press.declare`, and how it **looks** under `press.callouts`:
+
+```yaml
+press:
+  declare:
+    admonitions:
+      solution:
+        name: Solution
+        group: Solutions                          # section title under `reference`
+        reference: "See page {page} for the solution"
+  callouts:
+    solution: {icon: "🎓", color: "#123456"}      # quote it: a bare # starts a YAML comment
+```
+
+```md
+---
+press:
+  declare:
+    admonitions:
+      solution: {name: Solution, group: Solutions}
+---
+
+::: solution {title="Exercise 3"}
+Apply the chain rule twice.
+:::
+```
+
+Theorem environments are exactly this, with a counter attached — see
+[Theorems](notes.md#theorems).
 
 ## Built-in Admonition Types
 
-The following admonition types are built into the `admonition` extension:
+The following types are built in:
 
 !!! note
     A Note
@@ -113,3 +180,42 @@ The following admonition types are built into the `admonition` extension:
 
 !!! abstract
     An abstract
+
+## Content tabs
+
+A `tabs` container holds `tab` containers, each with a `title=`:
+
+```md
+:::: tabs
+::: tab {title=Windows}
+Windows is a Microsoft operating system.
+:::
+::: tab {title=Linux}
+Linux is an open-source operating system.
+:::
+::::
+```
+
+On the web the reader sees one at a time; print has no interaction, so the
+paged writers render the tabs in sequence, each as a titled block. The
+PyMdownX spelling `=== "Windows"` followed by its four-space-indented body is
+accepted indefinitely — MkDocs Material renders it natively, and this very page
+uses it above — but `:::` is the canonical form and what the printer emits.
+
+## Other containers
+
+The container names TMark knows form a closed registry. Besides the callout
+types, `aside`, `figure`, `tabs` and `tab`, there are two layout containers:
+
+```md
+::: multicolumn {cols=2}
+The content flows in two columns.
+:::
+
+::: div {.grid .cards}
+A container that means nothing: a hook for classes and an id.
+:::
+```
+
+A `::: name` whose name is unknown raises `container-unknown` and renders its
+content transparently rather than silently becoming a `<div>`.

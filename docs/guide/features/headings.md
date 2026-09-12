@@ -4,6 +4,19 @@ Headings are your document's scaffold: Markdown `#` marks become LaTeX `\section
 
 Markdown is loose: some files start at `##`, others at `###`, and multi-file builds mix it all. TeXSmith computes offsets per fragment to line things up: find the shallowest heading, derive an offset, then add the template base level. This page walks that math, how title promotion changes it, and how slots keep fragments independent.
 
+Two Pandoc classes act one heading at a time: `.unnumbered` takes a heading out
+of the numbering sequence, and `.unlisted` additionally keeps it out of the table
+of contents. The document-level default is `press.numbered` (`true`).
+
+```md
+## Acknowledgements {.unnumbered .unlisted}
+```
+
+A heading with no `{#id}` still has an implicit id — GitHub's slug of its plain
+text — so `[](#acknowledgements)` resolves. Because that id changes whenever the
+title is edited, referring to one raises the `ref-implicit-id` hint: give the
+heading an explicit `{#sec:…}`.
+
 ## How offsets are computed
 
 1. Drop any sections routed to slots (e.g. `abstract`) before aligning the remaining content for that slot.
@@ -45,7 +58,9 @@ Classic LaTeX classes anchor headings differently: `article` tops out at `\secti
 
 Promotion lifts the first heading into the document title. Because that heading leaves the body, the next shallowest heading drives the offset. Promotion is on by default: if there is no metadata title and the first heading is uniquely the shallowest, it is promoted and skipped in the offset math.
 
-A declared `title` in front matter disables promotion. So do `--no-promote-title` on the CLI and `TitleStrategy.NONE` in the Python API.
+A declared `title` in front matter disables promotion, and `title: null` opts
+out explicitly. `--no-promote-title` on the CLI and `TitleStrategy.NONE` in the
+Python API do the same; `title: null` is the spelling the front matter owns.
 
 `--strip-heading` / `TitleStrategy.DROP` removes the first heading without promoting it.
 
@@ -68,6 +83,6 @@ When rendering multiple documents, each document (and each of its slot fragments
 
 - Offsets are `1 - shallowest_heading_level` after promotion/slot stripping.
 - Effective base = template slot base + document `base_level` + fragment offset.
-- Promotion is default; disable with `--no-promote-title` or a declared title.
+- Promotion is default; disable with `title: null` or a declared title.
 - Slots are aligned independently; moving a heading to a slot never changes the
   offset of the remaining content.

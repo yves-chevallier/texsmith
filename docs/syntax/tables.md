@@ -29,10 +29,12 @@ rows:
 Table: Fruit stock by warehouse {#tbl:stock}
 ````
 
-The `{#tbl:stock}` part becomes the LaTeX `\label{tbl:stock}` and can be
-referenced like any other table. The caption line also works with plain
-Markdown tables, and the line placed *before* the table is accepted as well
-(see [captions](captions.md#caption-lines) for the attachment rule).
+The `{#tbl:stock}` part becomes the LaTeX `\label{tbl:stock}`, and `@tbl:stock`
+refers to it. The caption line works the same on a plain Markdown table. Its
+canonical position is **after** the block — after the `table-config` fence when
+there is one — and a `Table:` line before the table stays accepted for Pandoc
+compatibility (see [captions](captions.md#caption-lines-in-detail) for the
+attachment rule).
 
 ## Full YAML Tables
 
@@ -195,8 +197,6 @@ alignment override, promote the cell to a mapping:
 Row spans require the absorbed cells below to be `~`:
 
 ````markdown
-Table: Article assignments {#tbl:articles}
-
 ```yaml table
 columns: [Article, Editor, Status, Pages]
 rows:
@@ -204,13 +204,13 @@ rows:
   - [Beta,  ~,                        Review,   18]
   - [Gamma, John,                     Published, 24]
 ```
+
+Table: Article assignments {#tbl:articles}
 ````
 
 Column spans consume consecutive leaf columns:
 
 ````markdown
-Table: Annual totals across all four quarters
-
 ```yaml table
 columns:
   - Metric
@@ -222,6 +222,8 @@ rows:
   - separator: true
   - [Gross,   {value: "$570k", cols: 4, align: c}]
 ```
+
+Table: Annual totals across all four quarters
 ````
 
 A cell can span a rectangle. Every absorbed slot must be acknowledged:
@@ -299,8 +301,6 @@ For small tables, pipe syntax is still the fastest input. Add a
 same LaTeX table renderer:
 
 ````markdown
-Table: Inventaire des cours d'informatique. {#tbl:cours}
-
 | Abbr.      | Sem. | Nom du cours                          | Orientations | Charge |
 | ---------- | ---- | ------------------------------------- | ------------ | ------ |
 | Info1      | S1   | Informatique 1                        | E,M,A,N      | 120    |
@@ -315,6 +315,8 @@ columns:
   - {align: left}
   - {align: right}
 ```
+
+Table: Inventaire des cours d'informatique. {#tbl:cours}
 ````
 
 `columns` is matched positionally against the Markdown table columns. The
@@ -342,8 +344,6 @@ table. Use full `yaml table` when the structure itself is complex.
 ### Grouped Financial Header
 
 ````markdown
-Table: Quarterly sales by product (2023-2024)
-
 ```yaml table
 table:
   width: 100%
@@ -365,13 +365,13 @@ rows:
 footer:
   - [Total, [260, 320, 445, 340], [270, 340, 480, 365]]
 ```
+
+Table: Quarterly sales by product (2023-2024)
 ````
 
 ### Three-Level Header
 
 ````markdown
-Table: Monthly sales breakdown for 2024
-
 ```yaml table
 columns:
   - Product
@@ -385,13 +385,13 @@ rows:
   - [Alpha, [10, 12, 15, 18, 20, 22]]
   - [Beta,  [~,  ~,  5,  8,  10, 12]]
 ```
+
+Table: Monthly sales breakdown for 2024
 ````
 
 ### Fixed Columns plus Flexible Text
 
 ````markdown
-Table: Product requirements (fixed + flexible columns)
-
 ```yaml table
 table:
   width: 90%
@@ -409,6 +409,8 @@ rows:
   - [REQ-002, "PDF exports must follow the brand guidelines (logo, colours, margins).", Medium]
   - [REQ-003, "The UI must be fully keyboard accessible (WCAG 2.1 AA).", High]
 ```
+
+Table: Product requirements (fixed + flexible columns)
 ````
 
 ## Validation Errors
@@ -428,6 +430,8 @@ Common failures:
 - Invalid percentage widths.
 
 Example:
+
+<!-- tmark-check: skip -->
 
 ````markdown
 ```yaml table

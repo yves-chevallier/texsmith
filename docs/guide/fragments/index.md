@@ -4,7 +4,7 @@ Fragments are reusable LaTeX snippets injected into template slots. Built-in fra
 
 - `fragment.toml` with `name`, `description`, and either an `entrypoint` or a `files` list.
 - Optional `attributes` section describing fragment-owned attributes (ownership enforced).
-- Optional `partials` block for fragment-scoped partial overrides and `required_partials` for dependencies.
+- A `provides` list naming the [contract macros](../templates/partials.md) the fragment defines; a fragment that replaces another must provide every entry of its row.
 - Optional `should_render` logic (via entrypoint) to render only when needed.
 
 ## Manifest shape
@@ -40,23 +40,35 @@ Slots are validated against the template at render time; inline injections must 
 
 Fragments can declare attributes (ownership enforced) and resolve overrides using the same `TemplateAttributeSpec` model as templates. Attribute defaults are injected into the context before rendering fragment pieces. Attribute ownership matters: if two fragments (or a template) claim the same attribute name, TeXSmith raises a `TemplateError`. Keep each attribute owned by a single fragment or the template to avoid conflicts.
 
-## Partials
+## Contract macros
 
-Fragments can ship their own partials so feature-specific rendering stays close to the feature:
-
-```toml
-partials = ["strong.tex", "codeblock.tex"]         # list form
-required_partials = ["heading"]                    # fail fast if missing
-```
-
-or as a mapping when paths and names differ:
+A fragment defines the macros and environments the writers name, and says so:
 
 ```toml
-[partials]
-codeinline = "overrides/inline/code.tex"
+provides = ["tscode", "tscodeinline"]
 ```
 
-Partial precedence is template overrides > fragment overrides > core defaults. Duplicate fragment providers for the same partial abort the render.
+The writer activates a fragment through `Requires.fragments`: a body that emits
+`\begin{tscode}` pulls in `ts-code`, one that emits `\tsindex` pulls in
+`ts-index`. A macro the writer names, a fragment must define — the check runs at
+load time against `tmark.fragments()`, so an incomplete replacement fails early
+instead of producing an undefined control sequence.
+
+Replace a bundled fragment outright with `press.fragments`:
+
+```yaml
+press:
+  fragments:
+    disable: [ts-code]
+    append: [./my-code.sty]
+```
+
+See [Contract macros](../templates/partials.md) for the table of macros and
+their keys.
+
+!!! warning "Jinja partials are no longer the rendering layer"
+    A fragment's `partials` and `required_partials` keys are deprecated in
+    0.7.0 — they warn and are ignored — and removed in 0.8.0.
 
 ## Runtime loading
 
@@ -68,7 +80,7 @@ Partial precedence is template overrides > fragment overrides > core defaults. D
 ## Fragment contract (Python)
 
 - Implement a `BaseFragment[Config]` subclass with:
-  - class attributes: `name`, `description`, `pieces`, `attributes` (TemplateAttributeSpec map), optional `context_defaults`, `partials`, `required_partials`, `source`.
+  - class attributes: `name`, `description`, `pieces`, `attributes` (TemplateAttributeSpec map), optional `context_defaults`, `provides`, `source`.
   - methods: `build_config(context, overrides=None) -> Config`, `inject(config, context, overrides=None) -> None`, `should_render(config) -> bool`.
 - Define a `Config` dataclass with `from_context(...)` and `inject_into(context)` methods (plus helpers like `enabled()`).
 - Export `fragment = YourFragment()` from `__init__.py`; point `fragment.toml` `entrypoint` to `texsmith.fragments.yourname:fragment`.
@@ -149,7 +161,7 @@ type = "inline"
 
 ## Migration notes for fragment authors
 
-- Prefer `fragment.toml` with `files`, `attributes`, and optional `partials`/`required_partials`; use an entrypoint only when you need Python logic.
+- Prefer `fragment.toml` with `files`, `attributes`, and `provides`; use an entrypoint only when you need Python logic.
 - If using Python, return a `BaseFragment` instance via `fragment`; `create_fragment()` and `FragmentDefinition` shims have been removed.
 - Declare attribute ownership (implicit `owner = <fragment name>`) to avoid collisions with templates or other fragments.
 - Keep slot targets aligned with template variables; inline targets must reference declared slots or template variables, otherwise a `TemplateError` is raised.

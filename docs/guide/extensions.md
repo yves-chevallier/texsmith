@@ -1,85 +1,98 @@
-# TeXSmith Extensions
+# Extending TeXSmith
 
-TeXSmith ships its Markdown extensions directly inside the `texsmith`
-distribution. Once `pip install texsmith` is done, you can use them via the
-extension modules (`texsmith.extensions.smallcaps`, `texsmith.extensions.index`,
-...) or the entry-point aliases registered in `pyproject.toml`. The exact set
-enabled by the conversion pipeline is `texsmith.adapters.markdown.DEFAULT_MARKDOWN_EXTENSIONS`.
+TeXSmith's dialect is [TMark](../syntax/index.md), and TMark is a **closed**
+language: the four syntactic families, the role registry and the container
+registry do not grow per project. That is the point — a construct you have never
+seen is still readable, and a document still renders somewhere else.
 
-Every extension follows the same structure:
+So "writing an extension" is not "adding syntax". It is one of four things:
 
-- A Python-Markdown class or `makeExtension()` factory available as
-  `texsmith.extensions.<name>`.
-- Optional reader lowerings (`@reads`) and writer emitters (`@writes`) that
-  teach the IR pipeline how to deal with the extra HTML nodes created by the
-  Markdown layer (see [Readers & Writers](../api/handlers.md)).
-- Optional MkDocs plugins that keep search indexes in sync.
+| You want to… | Do this |
+| ------------ | ------- |
+| add a new *kind* of callout (Solution, Exercise, Risk) | declare it under `press.declare.admonitions` |
+| add a new numbered series (findings, requirements) | declare it under `press.declare.counters` |
+| wrap content in something the template styles | use `::: div {.class}` and style the class |
+| compute something at build time (fetch, convert, execute) | write an **IR pass** |
+| change how a construct *looks* | redefine its **contract macro**, or replace the fragment |
 
-## Built-in extensions
+The first two are pure front matter and need no code:
+[Admonitions](../syntax/admonitions.md#custom-types) and
+[Custom counters](../syntax/counters.md).
 
-In order to align Markdown with LaTeX capabilities, TeXSmith provides the
-following extensions under the `texsmith` namespace:
+## Containers
 
-| Module                       | Purpose                                                              |
-| ---------------------------- | -------------------------------------------------------------------- |
-| `texsmith.extensions.smallcaps`         | `__text__` syntax mapped to `<span class="texsmith-smallcaps">`.     |
-| `texsmith.extensions.latex_raw`         | `/// latex` fences and `{latex}[x]` inline snippets injected as hidden HTML. |
-| `texsmith.extensions.latex_text`        | Styles the literal `LaTeX` token in running text.                    |
-| `texsmith.extensions.missing_footnotes` | Warns about references to undefined footnotes.                       |
-| `texsmith.extensions.multi_citations`   | Normalises `^[foo,bar]` blocks to footnotes.                         |
-| `texsmith.extensions.mermaid`           | Inlines Mermaid diagrams pointed to by Markdown images.              |
-| `texsmith.extensions.texlogos`          | Replaces TeX logo keywords with accessible HTML spans.               |
-| `texsmith.extensions.index`             | Adds the `#[tag]` syntax, LaTeX index entries and an MkDocs plugin.  |
-| `texsmith.extensions.counters`          | Adds the `#{prefix:key}` custom-counter syntax and an MkDocs plugin. |
+A container is the escape hatch for structure. The container names TMark knows
+are a **closed** registry — the callout types (built-in and declared), `aside`,
+`figure`, `tabs`, `tab`, `multicolumn` and `div` — and there is deliberately no
+mechanism to add a name: a template that renders a name the registry does not
+know has extended the language.
 
-Inspect the pipeline's default extension list programmatically:
+`::: div` is the container that means nothing: a hook for classes and an id.
 
-```python
->>> from texsmith.adapters.markdown import DEFAULT_MARKDOWN_EXTENSIONS
->>> [e for e in DEFAULT_MARKDOWN_EXTENSIONS if e.startswith("texsmith.")][:2]
-['texsmith.extensions.index:TexsmithIndexExtension', 'texsmith.extensions.multi_citations:MultiCitationExtension']
+```md
+::: div {#s1 .sidebar}
+Content the template lays out.
+:::
 ```
 
-## Using the extensions with Python Markdown
+Every layout container lowers to one contract on the paged backends —
+`\begin{tsdiv}{name}[attrs]`, `#ts-div("name", ..)` — dispatched on the name,
+with `#id` forwarded as `id`, classes as `class={a,b}` and `key=val` as is
+(`lang` and `media` never). Style the class:
 
-Pass the `module:attribute` strings (the same form used in
-`DEFAULT_MARKDOWN_EXTENSIONS`) straight to Python Markdown:
-
-```python
-from markdown import Markdown
-
-md = Markdown(
-    extensions=[
-        "texsmith.extensions.smallcaps:SmallCapsExtension",
-        "texsmith.extensions.texlogos:TexLogosExtension",
-        "texsmith.extensions.index:TexsmithIndexExtension",
-    ]
-)
-html = md.convert("`#[LaTeX]` renders a TeX logo and an index entry.")
+```latex
+\tcbset{/ts/div/class/sidebar/.style={grow to left by=2cm}}
 ```
 
-If you prefer the explicit class names the following also works:
+On the web the same container is `<div class="sidebar">`, which is exactly what
+a site stylesheet needs. A name the registry does not know raises
+`container-unknown` and renders its content transparently, rather than silently
+becoming an unstyled `<div>`.
+
+## IR passes
+
+Anything that has to *compute* — read a file, convert a diagram, call a
+network service, execute a fence — is a pass: a pure function
+`(Document, PassContext) -> Document` over the IR, running either before
+`tmark.resolve` (`pre`) or after it (`post`).
 
 ```python
-from texsmith.extensions.index import TexsmithIndexExtension
+from texsmith.core.documents import Document
+from texsmith.passes import PassContext, spec
 
-md = Markdown(extensions=[TexsmithIndexExtension()])
+
+@spec("exam-questions", stage="pre", after=("include",))
+def run(document: Document, ctx: PassContext) -> Document:
+    ...
 ```
 
-## Register extensions in MkDocs
+Declare a template's passes in its manifest so they apply only while that
+template renders:
 
-Once TeXSmith is installed you can reference the modules directly from
-`mkdocs.yml`:
+```toml
+[latex.template]
+passes = ["my_exam_pkg.questions:run"]
+```
+
+The full contract — ordering, diagnostics, the rules a pass must not break — is
+in [IR passes and fragment contracts](../api/handlers.md).
+
+## Fragments and contract macros
+
+The writers emit a fixed macro or environment per construct (`\tslead`,
+`\tsaside`, `\tskeys`, `tscallout`, `tscode`, …), and a fragment must define
+every macro the writer can name. Restyle through the `pgfkeys` family, redefine
+the macro with the same signature, or replace the fragment outright:
 
 ```yaml
-markdown_extensions:
-  - texsmith.index
-  - texsmith.texlogos
-  - texsmith.extensions.smallcaps
+press:
+  fragments:
+    disable: [ts-code]
+    append: [./my-code.sty]
 ```
 
-(`texsmith.index` and `texsmith.texlogos` are registered entry-point aliases for
-`texsmith.extensions.index` / `texsmith.extensions.texlogos`.)
+See [Contract macros](templates/partials.md) for the construct-to-macro table
+and [Fragments](fragments/index.md) for how a fragment is built.
 
 On a MkDocs site the index entries reach `search_index.json` through the
 [`texsmith` plugin](mkdocs.md), which collects them from the rendered pages
@@ -88,22 +101,22 @@ and injects them after the `search` plugin wrote its index. The separate
 disappears in 0.8; the `texsmith.index` *Markdown extension* above is
 unaffected.
 
-## Integrating with the LaTeX renderer
+!!! note "The Python-Markdown extensions are transitional"
+    `texsmith.extensions.*` still ships the Python-Markdown implementations of
+    the 0.6 syntax (`smallcaps`, `latex_raw`, `multi_citations`, `mermaid`,
+    `index`, `counters`, …) so that an existing MkDocs site keeps building
+    during the migration. They are not the conversion path any more — TeXSmith
+    parses with tmark — and they are removed in 0.8.0 together with the
+    spellings they implement. See [Migrating to TMark](migration.md).
 
-TeXSmith renders through a typed IR: `read(HTML) → IR → write(IR) → LaTeX`.
-Extensions that need LaTeX output add a reader lowering (`@reads`, HTML → IR)
-and a writer emitter (`@writes`, IR → LaTeX) instead of mutating HTML. See
-[Readers & Writers](../api/handlers.md) for the decorators and a complete,
-runnable example (`examples/custom-render/counter.py`).
+## Inspecting what the parser read
 
-## Write your own extensions
+```bash
+tmark parse report.md      # the IR as JSON
+tmark check --strict FILE  # parse, resolve and lint
+tmark write --to latex --map FILE  # the body, its source map and its Requires
+```
 
-You can create custom Markdown extensions that plug into TeXSmith's conversion
-pipeline. Refer to the API documentation for details on
-the extension points and how to register your extension with TeXSmith.
-
-### Pipeline placement & precedence
-
-- Markdown extensions run before slot extraction and fragment rendering; any HTML they emit flows through the same pipeline.
-- Reader lowerings (`@reads`) are selected by `(level, tag)` and priority; the resulting IR is then emitted by writer emitters (`@writes`) dispatched on node type.
-- Extensions should not override template partials directly—expose fragment partials or attributes instead so precedence stays transparent.
+`Requires` is what a construct demands of the template: packages, fragments,
+shell escape, assets, citations, index registries, counter series. If your
+extension needs the template to do something, that is where it says so.

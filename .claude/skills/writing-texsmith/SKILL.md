@@ -1,21 +1,27 @@
 ---
 name: writing-texsmith
-description: Author Markdown documents for TeXSmith (the Markdown/HTML → LaTeX/Typst converter). Use whenever writing or editing a .md file meant to be rendered to PDF with `texsmith` — covers YAML front matter, templates & slots, page breaks with `---`, definition lists, figures/tables with captions and cross-references, admonitions, math, code, and the syntax gotchas that make a build fail.
+description: Author Markdown documents for TeXSmith (the TMark → LaTeX/Typst converter). Use whenever writing or editing a .md file meant to be rendered to PDF with `texsmith` — covers YAML front matter, templates & slots, page breaks with `---`, definition lists, figures/tables with captions and cross-references, callouts, math, code, references and citations with `@`, index entries with `#[…]`, and the syntax gotchas that make a build fail.
 ---
 
 # Writing documents for TeXSmith
 
-TeXSmith converts **Markdown** into **LaTeX** (default) or **Typst**, then optionally
-compiles a PDF. You author plain Markdown enriched with a few PyMdown extensions and a
-handful of TeXSmith-specific conventions. This skill is the reference for producing
+TeXSmith converts **TMark** — CommonMark plus the extension set every MkDocs site
+loads, plus four syntactic families for what print needs — into **LaTeX** (default) or
+**Typst**, then optionally compiles a PDF. This skill is the reference for producing
 `.md` sources that render cleanly on the first build.
 
 **Golden rule — separate content from form.** Everything about *appearance* (template,
 paper size, fonts, margins, callout style, title, authors) lives in the **YAML front
 matter**. The body carries only ideas, prose, and equations. Never hardcode LaTeX
-styling in the body unless there is no Markdown equivalent.
+styling in the body unless there is no TMark equivalent.
+
+**Check your work.** `tmark check --strict document.md` parses, resolves and lints the
+file: unresolved references, undeclared counter prefixes, malformed tables, deprecated
+spellings. `tmark lint --fix document.md` rewrites the deprecated spellings (use
+`--diff` or `--stdout` to preview). Run it before handing a document off.
 
 Build command (for reference — you author the `.md`, the user builds):
+
 ```bash
 texsmith document.md -o build/ --build            # LaTeX → PDF (Tectonic)
 texsmith document.md references.bib -t book -o build/ --build
@@ -24,13 +30,35 @@ texsmith document.md --format typst -o build/ --build
 
 ---
 
+## 0. The two sigils and the four families
+
+Everything TMark adds on top of CommonMark is one of four shapes, and two inline
+sigils: **`#` defines, `@` refers.**
+
+| Family | Shape | Example |
+| ------ | ----- | ------- |
+| Attributes | `{…}` *after* the element | `![Trace](t.png){width=60%}` |
+| Roles | name *before* the content | `{aside}[see Prandtl 1921]`, `{raw latex}(\clearpage)` |
+| Containers | `::: name {attrs}` … `:::` | `::: warning {title="…"}` |
+| Data directives | fence info `<lang> <node>` | ```` ```yaml table ````, ```` ```latex raw ```` |
+
+Roles take **brackets** when the payload is content the reader sees and Markdown parses
+(`{index}[endianness]`), **parentheses** when it is a verbatim argument the processor
+consumes (`{include}(chapter.md)`, `{raw latex}(\newpage)`). Never both.
+
+Attribute lists hold `#id`, `.class` and `key=value`, space-separated, quoted when the
+value has spaces. There are no bare-word attributes: write `{collapsed=true}`.
+Attributes need a host; for running text, wrap it in a span: `[this claim]{#claim:one}`.
+
+---
+
 ## 1. YAML front matter (mandatory scaffolding)
 
 A document opens with a YAML island fenced by `---` at the **very top** of the file
-(line 1). Put typographic config under a `press:` block; `title`/`authors`/`date` may
-sit either under `press:` or at the root.
+(line 1). Document metadata (`title`, `authors`, `date`, `lang`, `id`) stays at the
+**root**, where MkDocs and Pandoc read it; everything TeXSmith owns goes under `press:`.
 
-```markdown
+```md
 ---
 title: Albert Einstein
 subtitle: His Life and Achievements
@@ -39,15 +67,25 @@ authors:
     affiliation: Analytical Engine
   - name: Grace Hopper
 date: 2025-03-15        # ISO date, or "commit" for last git commit date
+lang: en-GB
 press:
   template: book        # article (default) | book | letter
   paper: a4             # a4 | a5 | letter …
   base_level: chapter   # part | chapter | section — what the top `#` maps to
   fonts: adventor
-  callout_style: fancy  # fancy (default) | classic | minimal
+  callouts:
+    style: fancy        # fancy (default) | classic | minimal
   slots:
     abstract: Abstract    # map a "## Abstract" section into the template's slot
     preface: Preface
+  declare:              # kinds: what things *are* (§12)
+    counters:
+      fw: {name: Finding, format: "FW-{n:02d}"}
+  sources:              # where references resolve (§12)
+    bibliography:
+      einstein1905: https://doi.org/10.1002/andp.19053221004
+  features:             # the switch registry
+    figures.exec: false
 ---
 ```
 
@@ -55,7 +93,7 @@ Key fields:
 
 `template`
 :   `article` (default), `book`, or `letter`. Pick `book` for long multi-chapter
-    documents, `letter` for correspondence (see §11), `article` otherwise.
+    documents, `letter` for correspondence (see §15), `article` otherwise.
 
 `title`
 :   If omitted, TeXSmith promotes the document's **first heading** to the title.
@@ -78,20 +116,26 @@ Key fields:
     preface, dedication, colophon…). Inspect a template's slots with
     `texsmith -t <template> --template-info` before wiring them.
 
-Inline **bibliography** and **glossary** also live in front matter — see §9 and §10.
+Any front-matter value is available in the body as `{{ key }}` or `{{ press.template }}`
+— substitution only, no logic.
+
+⚠️ **Deprecated:** top-level `bibliography:`, `crossrefs:`, `counters:`, `glossary:`,
+`acronyms:`, `admonitions:` and `press.callout_style` are the 0.6 layout. They still
+work and warn; `tmark lint --fix` moves them.
 
 ---
 
 ## 2. Document structure & page breaks
 
 Headings use standard `#`…`######`. Numbering and the mapping to LaTeX sectioning is
-driven by `base_level`, so **do not** manually number headings.
+driven by `base_level`, so **do not** manually number headings. Two classes act one
+heading at a time: `{.unnumbered}` and `{.unlisted}`.
 
-**Page break = a horizontal rule.** A line containing only `---` (with a blank line
-before and after) renders as `\clearpage` in LaTeX. This is the *only* way to force a
-page break from Markdown.
+**Page break = a divider.** A line containing only `---` (with a blank line before and
+after) is a divider node, which the paged templates render as `\clearpage`. This is the
+way to force a page break from Markdown; the web shows `<hr>`.
 
-```markdown
+```md
 Last paragraph of the current page.
 
 ---
@@ -101,34 +145,46 @@ First paragraph of the next page.
 
 ⚠️ **Gotcha:** because `---` is a page break, never use it as a decorative section
 separator. The `---` at the very top of the file is the front-matter fence, not a rule.
-To break inline instead of using a rule, drop `{latex}[\clearpage]` into a paragraph.
+To break inline instead, drop `{raw latex}(\clearpage)` into a paragraph.
 
 ---
 
 ## 3. Text formatting
 
-```markdown
+Each inline node has a role as its canonical spelling and, usually, a familiar
+shorthand as sugar. Both produce the same node.
+
+```md
 *italic*   **bold**   ***bold italic***   ~~strikethrough~~   `inline code`
-__small capitals__
+
+{sc}[small capitals]   {mark}[highlight]   {sub}[2]   {sup}[3]   {keys}[ctrl+s]
 ```
 
-⚠️ **Gotcha:** `__double underscores__` render as **small capitals**, *not* bold. Use
-`**` for bold. A standalone paragraph made of a single short bold span (< 80 chars) is
-promoted to a lead-in pseudo-heading (`\tslead`), handy for labelling.
+⚠️ **Gotchas:** `__double underscores__` render as **small capitals**, not bold — that
+is a deliberate deviation from GFM, and `{sc}[…]` is the spelling to prefer. `_` never
+opens emphasis inside a word, so `snake_case_name` stays literal.
+
+A run-in heading that opens a paragraph is `{lead}[Boot sequence.] The device powers…`.
+A paragraph starting with a short strong span (< 80 chars) is promoted to one
+automatically.
 
 ---
 
 ## 4. Lists
 
-```markdown
+```md
 - Unordered
   - Nested
+
 1. Ordered
 2. Next
 
 - [x] Completed task
 - [ ] Pending task
 ```
+
+⚠️ **Gotcha:** nest to the *content column* of the parent (two spaces after `- `, three
+after `1. `). Four spaces under a `- ` parent is an indented code block.
 
 ---
 
@@ -138,7 +194,7 @@ A term on its own line, then one or more definitions each introduced by `:` foll
 **at least one space** (align continuation lines under the text). Leave a blank line
 between entries.
 
-```markdown
+```md
 Apple
 :   Pomaceous fruit of plants of the genus Malus in
     the family Rosaceae.
@@ -152,19 +208,43 @@ references, and parameter documentation.
 
 ---
 
-## 6. Admonitions (callouts)
+## 6. Callouts (admonitions)
 
-```markdown
-!!! note "Optional title"
-    Indented body — any Markdown, multiple paragraphs allowed.
+The canonical spelling is a container; folding is an attribute, not a second fence.
 
-??? tip "Collapsible"
-    Use `???` for a foldable callout, `???+` for one open by default.
+```md
+::: note {title="Optional title"}
+Any Markdown, multiple paragraphs allowed.
+:::
+
+::: tip {title="Collapsible" collapsed=true}
+Folded on the web; `press.details` decides what print does.
+:::
 ```
 
 Built-in types: `note`, `tip`, `warning`, `important`, `danger`, `info`, `hint`,
-`seealso`, `question`, `abstract`. Rendered as `tcolorbox` blocks; style is set globally
-via `callout_style` in front matter (`fancy` | `classic` | `minimal`).
+`seealso`, `question`, `abstract`; plus `theorem`, `lemma`, `corollary`, `proposition`,
+`definition`, `proof`. Rendered as `tcolorbox` blocks; style is set globally via
+`press.callouts.style` (`fancy` | `classic` | `minimal`).
+
+The PyMdownX spellings `!!! note "Title"` and `??? note "Title"` stay accepted
+indefinitely (MkDocs Material renders them natively) and are one node with the `:::`
+form. Use `:::` in new documents, `!!!` when the same file must look right on a
+Material site that has not been converted.
+
+A new *kind* of callout is a declaration, not new syntax:
+
+```yaml
+press:
+  declare:
+    admonitions:
+      solution: {name: Solution, group: Solutions}
+  callouts:
+    solution: {icon: "🎓", color: "#123456"}
+```
+
+Content tabs are a container too: `::: tabs` holding `::: tab {title=Windows}` blocks
+(nest with `::::`). `=== "Windows"` is kept indefinitely for the same reason as `!!!`.
 
 ---
 
@@ -172,36 +252,46 @@ via `callout_style` in front matter (`fancy` | `classic` | `minimal`).
 
 Basic image with optional width (percentage or absolute length):
 
-```markdown
+```md
 ![Alt text](assets/photo.jpg){width=60%}
 ```
 
-To make it a **numbered, cross-referenceable figure**, follow the image with a
-`/// caption` block. Attach an id with `attrs: {id: fig:my-figure}` — always prefix
-figure ids with `fig:`.
+To make it a **numbered, cross-referenceable figure**, follow it with a **caption
+line** — a paragraph of its own, `Kind: text {#id}`, adjacent to the float:
 
-```markdown
+```md
 ![Short caption for the list of figures](assets/photo.jpg){width=60%}
 
-/// caption
-    attrs: {id: fig:my-figure}
-This is the full caption shown under the figure.
-///
+Figure: This is the full caption shown under the figure. {#fig:my-figure}
 ```
+
+The kinds are `Figure:`, `Table:` and `Listing:`. Always prefix ids with `fig:`,
+`tbl:` or `lst:`.
 
 - The image **alt text** is reused as the short caption in the List of Figures.
-- Reference it with the `@[label]` shorthand or an empty-text link to `#fig:…`:
+- Refer to it with `@`, or with a textual link when the prose should carry the wording:
 
-```markdown
-As shown in Figure @[fig:my-figure], the result is clear.
-As shown in Figure @fig:my-figure, brackets are optional for one-word labels.
-As seen in [](#fig:my-figure), the result is clear.
+```md
+As shown in @fig:my-figure, the result is clear.
+As seen in [this figure](#fig:my-figure), the result is clear.
 ```
 
-Any link whose fragment starts with `fig:` (or `tab:`, `sec:`, `eq:`, `code:`) is
-auto-decorated with its number and the locale-correct label word ("Figure"/"figure"/
-"Abbildung"…). **Never** hardcode "Figure 3" — let numbering resolve it, and avoid the
-words "above"/"below" (floats move in print).
+**Never** hardcode "Figure 3" — let numbering resolve it — and avoid the words
+"above"/"below" (floats move in print; `tmark lint` flags them).
+
+Subfigures are a container:
+
+```md
+::: figure {cols=2}
+![Boot](boot.png){#fig:boot}
+![Crash](crash.png){#fig:crash}
+
+Figure: Watchdog traces before and after the fix. {#fig:traces}
+:::
+```
+
+⚠️ **Deprecated:** `/// caption` and `/// figure-caption` with an indented `attrs:`
+line. Their id could not contain a colon, so `fig:x` silently degraded.
 
 ---
 
@@ -209,22 +299,22 @@ words "above"/"below" (floats move in print).
 
 ### Simple pipe tables
 
-```markdown
-Table: Caption for the table. {#tbl:stock}
-
+```md
 | Option        | Description                     |
 | ------------- | ------------------------------- |
 | `--build`     | Compile the PDF after rendering |
 | `--debug`     | Show full tracebacks            |
+
+Table: Caption for the table. {#tbl:options}
 ```
 
-The `Table: … {#tbl:label}` line directly **before** the table sets its caption and
-label. Reference with `Table @[tbl:stock]`.
+The caption line goes **after** the table (a line before it is accepted for Pandoc
+compatibility but is not what the printer emits). Refer to it with `@tbl:options`.
 
-Add layout metadata to a pipe table with a `yaml table-config` fence immediately after
-it (positional column specs — no spans/footers):
+Add layout metadata with a `yaml table-config` fence immediately after the table;
+canonical order is table, `table-config`, caption line.
 
-````markdown
+````md
 | Abbr. | Course        | Load |
 | ----- | ------------- | ---- |
 | Info1 | Informatique  | 120  |
@@ -235,6 +325,8 @@ columns:
   - {align: justify, width: X}   # X = flexible column that wraps
   - {align: right}
 ```
+
+Table: Course load. {#tbl:courses}
 ````
 
 ### Rich tables (spans, grouped headers, footers)
@@ -243,9 +335,7 @@ Use a `yaml table` fence when you need grouped headers, row/column spans, separa
 footers. It is validated before rendering, so typos fail locally instead of producing a
 broken PDF.
 
-````markdown
-Table: Quarterly sales {#tbl:sales}
-
+````md
 ```yaml table
 table:
   width: 100%
@@ -259,8 +349,10 @@ rows:
   - separator: {label: Seasonal}
   - [Cherries, {value: "n/a", cols: 4, align: c}]
 footer:
-  - [Total, [—, —, —, —]]
+  - [Total, ["—", "—", "—", "—"]]
 ```
+
+Table: Quarterly sales. {#tbl:sales}
 ````
 
 Rules to remember: `~` is an empty cell **and** the "absorbed by a span" marker (every
@@ -271,9 +363,10 @@ values that contain Markdown/YAML punctuation. See the table docs for the full s
 
 ## 9. Math
 
-Uses LaTeX/MathJax syntax. Inline with `$…$` or `\(…\)`; display with `$$…$$`.
+Uses LaTeX/MathJax syntax. Inline with `$…$` (canonical; `\(…\)` is a compatibility
+layer); display with `$$…$$`.
 
-```markdown
+```md
 Inline: $x = \frac{-b \pm \sqrt{b^2 - 4ac}}{2a}$.
 
 $$
@@ -284,58 +377,86 @@ $$
 
 ⚠️ **Gotcha:** no space right after the opening `$` or `\(` — `$ x$` breaks the parser.
 
-Numbered / referenceable equations use `\label{}` inside an `equation`/`align`
-environment (wrapped in `$$`), referenced with `$\eqref{…}$` or the `@[label]` shorthand:
+A numbered equation takes an **anchor after the closing delimiter**, and is referred to
+like anything else. Equations have an anchor but never a caption line.
 
-```markdown
+```md
 $$
-\begin{equation} \label{eq:einstein}
 E = mc^2
-\end{equation}
-$$
+$$ {#eq:einstein}
 
-As shown in Equation @[eq:einstein], energy equals mass times $c^2$.
+As shown in @eq:einstein, energy equals mass times $c^2$.
 ```
+
+The LaTeX-flavoured form (`\begin{equation}\label{eq:x}…` inside `$$`, referenced with
+`$\eqref{eq:x}$`) keeps working as a compatibility layer.
 
 ---
 
 ## 10. Code blocks
 
-Fenced blocks with a language and optional attributes:
+A fenced code block is a data directive whose node word defaults to `code`:
 
-````markdown
+````md
 ```python title="bubble_sort.py" linenums="1" hl_lines="2-3"
 def bubble_sort(items):
     for i in range(len(items)):
         ...
 ```
+
+Listing: Bubble sort, naive version. {#lst:bubble}
 ````
 
-Options: `title="…"`, `linenums="1"`, `hl_lines="2-3"`. Highlighted with Pygments by
-default (`press.code.engine` also accepts `listings`, `verbatim`, `minted`).
-Inline highlighted code: `` `#!py print("hi")` ``. To make a listing referenceable,
-wrap it in a `!!! listing {#code:label}` admonition and reference it with
-`Listing @[code:label]`.
+Options: `title="…"`, `linenums="1"`, `hl_lines="2-3"`, `include="path"` (read the code
+from a file at render time). A `Listing:` caption line makes the block a numbered,
+referenceable listing — the same rule as every other float, referred to with
+`@lst:bubble`.
+
+Highlighted with Pygments by default (`press.code.engine` also accepts `listings`,
+`verbatim`, `minted`). Inline highlighted code is `{code py}[print("hi")]`, or the
+PyMdownX sugar `` `#!py print("hi")` ``.
 
 Long inline code overflowing the margin? Let it wrap on identifier separators, and
 optionally drop its colouring, with `press.code.inline: {breaks: "_./", plain: true}`.
 
+To splice a whole Markdown file, use the `include` role alone on its line:
+`{include}(chapters/boot.md)`. It parses the file as TMark, so nested fences are safe
+and relative paths inside it are rebased. `--8<-- "file"` is the deprecated sugar.
+
 ---
 
-## 11. Cross-references & links
+## 11. Cross-references, citations & links
 
-| Goal                         | Syntax                                  |
-| ---------------------------- | --------------------------------------- |
-| External URL                 | `[text](https://…)` or bare `https://…` |
-| Link to another project file | `[text](other.md)`                      |
-| Section number (auto)        | `[](other.md)` (empty text)             |
-| Numbered figure/table/eq…    | `@[fig:x]`, `@[tbl:x]`, `@[eq:x]`        |
-| Footnote                     | `text[^1]` + `[^1]: note text.`          |
-| Index / tag entry            | `topic {index}[keyword]`                 |
+**One sigil for referring: `@`.** The registry the key belongs to decides what it
+renders as.
 
-Footnotes are limited to one line in print — keep them tight. Citations reuse footnote
-syntax with a bibliography key: `Einstein's work.[^einstein1905]` where the key is
-defined in front matter or a `.bib` file.
+| Goal | Syntax |
+| ---- | ------ |
+| External URL | `[text](https://…)` or bare `https://…` |
+| Link to another project file | `[text](other.md)` |
+| Section number (auto) | `[](other.md)` (empty text) |
+| Numbered figure/table/eq/listing/section | `@fig:x`, `@tbl:x`, `@eq:x`, `@lst:x`, `@sec:x` |
+| Several at once, or with a locator | `@[fig:boot; fig:crash]`, `@[tbl:stock, column 3]` |
+| Start of a sentence | `@Fig:x` (capitalises the label word) |
+| Citation, narrative | `@einstein1905` |
+| Citation, parenthetical | `@[einstein1905, p. 33]`, `@[-einstein1905]` |
+| A DOI cited in place | `@doi:10.1002/andp.19053221004` |
+| Glossary term | `@gls:solid` |
+| Cross-document | `@fwrev:fw:pas-de-temps` |
+| Footnote | `text[^1]` + `[^1]: note text.` |
+| Index entry | `#[keyword]` or `{index}[keyword]` |
+| Counter item | `#(fw:boot-loop)` defines *and* prints; `@fw:boot-loop` refers |
+
+Brackets follow the sigil and are optional: bare `@key` takes one word, and the
+bracketed form is required as soon as the reference contains a space. Trailing sentence
+punctuation stays out of the key. `@` never fires inside a word, an e-mail address or a
+URL; write `\@` to force a literal one, and `\#` for a literal hash before `[` or `(`.
+
+Footnotes are limited to one line in print — keep them tight.
+
+⚠️ **Deprecated:** `[^key]` and `^[k1,k2]` as *citations*, `[](gls:term)`,
+`#{prefix:key}`, `{index:reg}[…]`, `{index}[…]{b}`. Real footnotes (`[^1]` with a
+definition) are untouched.
 
 ---
 
@@ -344,55 +465,102 @@ defined in front matter or a `.bib` file.
 **Bibliography** — inline entries or DOI shortcuts (a `.bib` file also works):
 
 ```yaml
-bibliography:
-  einstein1905: https://doi.org/10.1002/andp.19053221004
-  CD2019:
-    type: book
-    author: "John Doe"
-    title: "Example Book"
-    year: "2019"
+press:
+  sources:
+    bibliography:
+      einstein1905: https://doi.org/10.1002/andp.19053221004
+      CD2019:
+        type: book
+        author: "John Doe"
+        title: "Example Book"
+        year: "2019"
 ```
 
-**Glossary** (when the feature is enabled):
+**Glossary and acronyms:**
 
 ```yaml
-glossary:
-  style: long          # long | short
-  groups:
-    symbols: Mathematical symbols
-  entries:
-    "$\\phi$":
-      group: symbols
-      description: Angle in radians
-    AI:
-      description: Artificial Intelligence
+press:
+  declare:
+    glossary:
+      style: long          # long | short
+      groups:
+        symbols: Mathematical symbols
+      entries:
+        "$\\phi$":
+          group: symbols
+          description: Angle in radians
+        AI:
+          description: Artificial Intelligence
+```
+
+Acronyms can also be declared in the body, PHP-Markdown-Extra style:
+
+```md
+The HTML spec is maintained by the W3C.
+
+*[HTML]: HyperText Markup Language
+*[W3C]: World Wide Web Consortium
+```
+
+**Custom counters** — findings, requirements, risks:
+
+```yaml
+press:
+  declare:
+    counters:
+      fw: {name: Finding, format: "FW-{n:02d}", start: 1, scope: document}
 ```
 
 ---
 
-## 13. Escaping to raw LaTeX
+## 13. Asides and margin notes
 
-Only when Markdown has no equivalent. Block form:
+```md
+Hooke's law {aside}[linear only at small strain] holds below the yield point, but
+non-linear effects {aside side=left}[see **Prandtl 1921**] dominate above it.
 
-```markdown
-/// latex
+::: aside
+A longer **marginal note** attached to the preceding paragraph.
+:::
+```
+
+`side=` is `left` | `right` | `outer` | `inner`; the default lives in `press.aside`. An
+aside is zero-width in the flow, so the spaces around it collapse. (`{margin}[…]{l}` is
+the deprecated 0.6 spelling.)
+
+---
+
+## 14. Escaping to raw LaTeX
+
+Only when TMark has no equivalent. Every escape hatch is spelled with the word `raw`,
+is tagged with its backend, and is invisible to the others.
+
+````md
+```latex raw
 \begin{align}
 E &= mc^2 \\
 \nabla \cdot \vec{E} &= \frac{\rho}{\varepsilon_0}
 \end{align}
-///
 ```
+````
 
-Inline form inside a paragraph: `The section ends here {latex}[\clearpage] before the appendix.`
+Inline form inside a paragraph: `The section ends here {raw latex}(\clearpage) before
+the appendix.` The payload is verbatim — parentheses, never brackets. `typst raw` /
+`{raw typst}(…)` and `html raw` / `{raw html}(…)` work the same way.
+
+⚠️ **Deprecated:** `/// latex … ///` and `{latex}[…]`.
+
+Where a whole element belongs to one medium, prefer the `media=` attribute over
+mirrored raw blocks: `[web only]{media=web}`, `::: note {media=print}`.
 
 ---
 
-## 14. The `letter` template
+## 15. The `letter` template
 
 For correspondence, the whole structure lives in front matter; the body is the letter
 text and the first heading is the salutation.
 
-```markdown
+```md
 ---
 press:
   template: letter
@@ -422,14 +590,19 @@ Body of the letter…
 
 Before handing off a TeXSmith document, verify:
 
-- [ ] Front matter is at line 1, fenced by `---`, valid YAML, with a `template`.
+- [ ] `tmark check --strict document.md` is clean (or every remaining line is understood).
+- [ ] Front matter is at line 1, fenced by `---`, valid YAML, with a `template`;
+      TeXSmith keys under `press:`, metadata at the root.
 - [ ] Headings are **not** manually numbered; `base_level` matches the template.
 - [ ] `---` is used **only** for intentional page breaks (blank line before/after).
-- [ ] Bold is `**…**`; `__…__` was used only where small caps are actually wanted.
-- [ ] No space after `$`/`\(` in math; every `\label` referenced with `@[…]`/`\eqref`.
-- [ ] Figures use `![alt](src){width=…}` + `/// caption` with an `id: fig:…`.
-- [ ] Cross-references use `@[label]` / empty-text links — no hardcoded numbers or
+- [ ] Bold is `**…**`; small caps is `{sc}[…]` (or `__…__` knowingly).
+- [ ] Nested list items are indented to the parent's content column.
+- [ ] No space after `$`/`\(` in math; a numbered equation carries `$$ … $$ {#eq:x}`.
+- [ ] Figures use `![alt](src){width=…}` followed by a `Figure: … {#fig:…}` line.
+- [ ] Cross-references and citations use `@…` — no hardcoded numbers, no
       "above"/"below".
-- [ ] Tables needing spans/grouped headers use `yaml table`; span slots are `~`.
-- [ ] Every citation key (`[^key]`) exists in `bibliography` front matter or a `.bib`.
-- [ ] Raw LaTeX confined to `/// latex … ///` or `{latex}[…]`.
+- [ ] Tables needing spans/grouped headers use `yaml table`; span slots are `~`; the
+      caption line comes after the table.
+- [ ] Every citation key exists in `press.sources.bibliography` or a `.bib` file.
+- [ ] Raw LaTeX confined to a ```` ```latex raw ```` fence or `{raw latex}(…)`.
+- [ ] No deprecated spelling left: `tmark lint --fix --diff document.md` shows nothing.

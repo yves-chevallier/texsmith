@@ -1,9 +1,10 @@
 # Progress Bars
 
-The `texsmith.progressbar` extension mirrors the [`pymdownx.progressbar`][pymdownx] syntax and
-converts it into LaTeX commands powered by the
-[`progressbar`](https://ctan.org/pkg/progressbar) package. It is enabled by default, so you can
-drop the `[=75% "Done"]` shorthand in your Markdown and keep both the HTML preview and the PDF build in sync.
+A progress bar is an inline node with a value and an optional label. The
+spelling is PyMdownX's and is the canonical one, so the HTML preview and the
+PDF build stay in sync out of the box; in print it becomes a `\tsprogress`
+call from the `ts-typesetting` fragment, over the
+[`progressbar`](https://ctan.org/pkg/progressbar) package.
 
 ## Syntax
 
@@ -11,17 +12,25 @@ drop the `[=75% "Done"]` shorthand in your Markdown and keep both the HTML previ
 [=25% "Research"]
 [=50% "Implementation"]
 [=75% "Review"]
-[=100% "Launch"]{: .thin}
+[=100% "Launch"]{.thin}
 ````
 
 - Values must be percentages (`0 – 100`). TeXSmith clamps the values if needed.
 - The quoted label is optional; when omitted the percentage is used.
-- Trailing attribute lists (`{: .class #id }`) attach CSS classes and HTML attributes.
-  Use the `.thin` class to halve the bar height (e.g. for tables or dense summaries).
+- A trailing attribute list (`{.class #id}`) attaches on any host. Use the
+  `.thin` class to halve the bar height (e.g. for tables or dense summaries);
+  other classes reach the web stylesheet and are ignored in print.
+- The bar is **inline**, so it fits in a table cell. Consecutive bars on
+  separate lines are separate paragraphs or hard-broken lines, and the template
+  chooses the width.
+- The fraction form `[=9/20 "Review"]` and the `{: .thin}` attribute spelling
+  are deprecated sugar, normalised by `tmark lint --fix`; see
+  [Migrating to TMark](../guide/migration.md).
 
 ## LaTeX output
 
-During rendering, TeXSmith emits a `\progressbar` call with the following defaults:
+The writer emits `\tsprogress[thin]{0.45}{label}`; the fragment expands it to a
+`\progressbar` call with the following defaults:
 
 ```latex
 {\progressbar[
@@ -35,8 +44,8 @@ During rendering, TeXSmith emits a `\progressbar` call with the following defaul
 ]{0.73} Launch}
 ```
 
-The `.thin` class switches `heighta` to `6pt`. If you need more control, wrap the Markdown block
-in a raw LaTeX fence and tweak the options directly.
+The `.thin` class switches `heighta` to `6pt`. For more control, redefine
+`\tsprogress` in your template or append to its `pgfkeys` family.
 
 ## Example project
 
@@ -47,13 +56,13 @@ cd examples/progressbar
 texsmith progressbar.md --template article --output-dir build --build
 ```
 
+<!-- The `.snippet` fence below is the input of the PDF preview, not an example:
+     it is rendered by the 0.6 reader until `ConversionRequest.reader` flips to
+     tmark, so it keeps the sugar spelling. tmark-check: skip -->
+
 ````md { .snippet }
 [=25% "Research"]
 [=50% "Implementation"]
 [=75% "Review"]
 [=100% "Launch"]{: .thin}
 ````
-
-
-
-[pymdownx]: https://facelessuser.github.io/pymdown-extensions/extensions/progressbar/
