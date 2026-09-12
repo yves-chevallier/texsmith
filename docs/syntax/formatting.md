@@ -44,19 +44,17 @@ than a second bold — and the difference is visible, not silent.
      tmark, so it keeps the sugar spelling. tmark-check: skip -->
 
 ```md { .snippet }
-*(regular)* The quick brown fox jumps over the lazy dog.
+The quick brown fox jumps over the lazy dog. *(regular)*
 
-*(italic)* *The quick brown fox jumps over the lazy dog.*
+*The quick brown fox jumps over the lazy dog.* *(italic)*
 
-*(bold)* **The quick brown fox jumps over the lazy dog.**
+**The quick brown fox jumps over the lazy dog.** *(bold)*
 
-*(bold italic)* ***The quick brown fox jumps over the lazy dog.***
+***The quick brown fox jumps over the lazy dog.*** *(bold italic)*
 
-*(strikethrough)* ~~The quick brown fox jumps over the lazy dog.~~
+~~The quick brown fox jumps over the lazy dog.~~ *(strikethrough)*
 
-*(small capitals)* __The quick brown fox jumps over the lazy dog.__
-
-*(highlight)* ==The quick brown fox== and *(keys)* ++ctrl+s++.
+__The quick brown fox jumps over the lazy dog.__ *(small capitals)*
 ```
 
 Delimiters stack for bold italic, and `_` never opens emphasis inside a word,
@@ -114,7 +112,7 @@ Override `\tslead` in a custom preamble snippet to change the visual style — f
     In MkDocs, you need to specify how to render small capitals using a custom CSS:
 
     ```css
-    .smallcaps {
+    .texsmith-smallcaps {
         font-variant: small-caps;
         letter-spacing: 0.04em;
     }
