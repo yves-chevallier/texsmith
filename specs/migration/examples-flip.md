@@ -22,6 +22,14 @@ One `make -C examples/<name> all` per example (LaTeX **and** Typst where the
 example has a Typst target), `ARTIFACTS_DIR` set as the top-level Makefile
 sets it, so a missing PDF fails the target.
 
+`uv run make -C examples all` itself **halts** at `examples/markdown`'s Typst
+PDF — its `all` recipe is a `set -e` shell loop, so `-k` does not carry it
+past the failure and the ten examples after `markdown` in `EXAMPLES` are never
+reached in one invocation. The failure is the mitex one of F2, pre-existing
+and Typst-only; `markdown`'s own LaTeX PDF builds. Driving the examples one by
+one (what the table below reports) is the way to see the whole picture until
+mitex is fixed or `markdown.md` stops feeding it `\begin{aligned}`.
+
 | Example | Builds | What changed in its source |
 | ------- | ------ | -------------------------- |
 | abbr | yes | nothing (already canonical) |
