@@ -94,6 +94,15 @@ def wrap_template_document(
         else:
             manifest_fragments = getattr(template.info, "fragments", None)
             fragment_names = list(manifest_fragments or [])
+    # A contract a body named must be loaded, whatever the caller asked for: a
+    # fragment that is never rendered cannot activate itself on
+    # ``ts_required_fragments``, and the macro stays undefined. The callers pass
+    # an explicit list wherever one is configured — the snippet compiler always
+    # does — so without this union a nested build loses the fragments its own
+    # body requires.
+    fragment_names = list(
+        dict.fromkeys([*fragment_names, *sorted(document_state.required_fragments)])
+    )
 
     template_context = template.prepare_context(
         main_slot_content,
