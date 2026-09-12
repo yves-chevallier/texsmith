@@ -19,7 +19,6 @@ from texsmith.core.fragments.activation import REQUIRED_FRAGMENTS_KEY, REQUIRED_
 from texsmith.core.fragments.resolution import inject_requires
 from texsmith.core.templates import TemplateRuntime
 from texsmith.core.templates.manifest import TemplateError
-from texsmith.fonts.scripts import render_script_macros
 
 from ..context import DocumentState
 from .base import WrappableTemplate, _detect_index_engine
@@ -278,14 +277,6 @@ def wrap_template_document(
             parts: list[str] = [base] if base else []
             parts.extend(injections)
             template_context[variable_name] = "\n".join(part for part in parts if part)
-
-    script_macros = render_script_macros(getattr(document_state, "script_usage", []))
-    if script_macros:
-        existing_extra = template_context.get("extra_packages", "")
-        template_context["extra_packages"] = "\n".join(
-            part for part in (existing_extra, script_macros) if part
-        )
-        template_context["script_macros"] = script_macros
 
     final_slots = (
         processed_override_slots if processed_override_slots is not None else resolved_slots

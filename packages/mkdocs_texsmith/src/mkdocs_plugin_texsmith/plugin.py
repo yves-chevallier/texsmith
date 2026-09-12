@@ -42,7 +42,6 @@ from mkdocs.structure.pages import Page
 from mkdocs.utils import log
 from rich.console import Console
 from slugify import slugify
-from texsmith.adapters.latex import LaTeXFormatter
 from texsmith.adapters.latex.engines import (
     EngineFeatures,
     LatexMessage,
@@ -636,11 +635,6 @@ class LatexPlugin(BasePlugin):
         parser_backend = self.config.get("parser") or "lxml"
         copy_assets = bool(self.config.get("copy_assets", True))
 
-        formatter_overrides = dict(template_runtime.formatter_overrides)
-        heading_formatter = LaTeXFormatter()
-        for name, override_path in formatter_overrides.items():
-            heading_formatter.override_template(name, override_path)
-
         bibliography_files = [
             *self._global_bibliography,
             *runtime.extras.bibliography,
@@ -766,11 +760,11 @@ class LatexPlugin(BasePlugin):
 
             if not entry.is_page:
                 if entry.title and effective_level >= slot_base:
-                    fragment = heading_formatter.render_template(
-                        "heading",
+                    fragment = _nav_heading(
                         entry.title,
                         level=effective_level,
                         numbered=entry.numbered,
+                        lang=runtime_language,
                     )
                     target_buffer_embed.append(fragment)
                     target_buffer_link.append(fragment)
@@ -1643,6 +1637,29 @@ class LatexPlugin(BasePlugin):
                 return Path(os.path.relpath(target, base))
             except ValueError:
                 return target
+
+
+def _nav_heading(title: str, *, level: int, numbered: bool, lang: str | None) -> str:
+    """The LaTeX heading of a nav section — a nav entry that is not a page.
+
+    A section of the nav has no source, so there is nothing to parse: build the
+    one-header document the writer expects and let ``tmark.write`` choose the
+    sectioning command for ``level``, exactly as it does for a page's own
+    headers.
+    """
+    from texsmith.core.conversion.bodies import build_writer_options
+    from texsmith.ir import codec, model
+    import tmark
+
+    document = model.Document(
+        blocks=(model.Header(level=1, content=(model.Str(text=title),)),)
+    )
+    payload = codec.encode_document(document)
+    payload["tmark"] = tmark.version()
+    options = build_writer_options(
+        backend="latex", language=lang, base_level=level, numbered=numbered
+    )
+    return str(tmark.write(payload, "latex", options).get("text") or "")
 
 
 def _press_reader(meta: Mapping[str, Any]) -> str | None:

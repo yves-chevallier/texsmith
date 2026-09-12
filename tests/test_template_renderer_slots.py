@@ -67,7 +67,6 @@ def _runtime_with_slots(
         requires_shell_escape=False,
         slots=slots,
         default_slot=default_slot,
-        formatter_overrides={},
         base_level=0,
         extras={},
     )

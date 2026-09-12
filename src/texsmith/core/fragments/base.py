@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from collections.abc import Mapping, Sequence
+from collections.abc import Mapping
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, ClassVar, Generic, Literal, TypeVar
@@ -91,8 +91,6 @@ class BaseFragment(ABC, Generic[C]):
     attributes: ClassVar[dict[str, TemplateAttributeSpec]]
     config_cls: ClassVar[type[C]]
     context_defaults: ClassVar[dict[str, Any]] = {}
-    partials: ClassVar[Mapping[str, Path | str] | Sequence[Path | str]] = ()
-    required_partials: ClassVar[Sequence[str]] = ()
     source: ClassVar[Path | None] = None
 
     def build_config(

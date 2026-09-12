@@ -15,7 +15,6 @@ except ModuleNotFoundError:  # Python 3.10
     import tomli as tomllib
 
 from texsmith.core.fragments.base import BaseFragment, FragmentKind, FragmentPiece
-from texsmith.core.partials import normalise_partial_key
 from texsmith.core.templates.base import _build_environment
 from texsmith.core.templates.manifest import (
     TemplateAttributeResolver,
@@ -23,39 +22,6 @@ from texsmith.core.templates.manifest import (
     TemplateError,
     _import_object,
 )
-
-
-def _warn_deprecated_partials(owner: str, partials: Sequence[str]) -> None:
-    """Warn that fragment ``partials`` are deprecated (fragment-contracts.md §4).
-
-    The Jinja partials stop being the rendering layer in 0.7.0; a construct is
-    restyled by redefining its contract macro. The warning names the macro that
-    replaces each overridden partial.
-    """
-    from texsmith.core.fragments.contracts import replacement_for_partial
-
-    if not partials:
-        return
-    mapping = ", ".join(f"{name} -> {replacement_for_partial(name)}" for name in partials)
-    warnings.warn(
-        f"Fragment '{owner}' declares 'partials', which is deprecated and will be "
-        f"removed in 0.8.0: override a construct by redefining its contract macro "
-        f"in the template ({mapping}). See docs/guide/templates/partials.md.",
-        FutureWarning,
-        stacklevel=3,
-    )
-
-
-def _warn_deprecated_required_partials(owner: str, required: Iterable[str]) -> None:
-    """Warn that ``required_partials`` is deprecated (fragment-contracts.md §4)."""
-    names = ", ".join(sorted(required))
-    warnings.warn(
-        f"'{owner}' declares 'required_partials' ({names}), which is deprecated and "
-        f"will be removed in 0.8.0: a replacement fragment is checked against the "
-        f"'provides' list of tmark.fragments() instead.",
-        FutureWarning,
-        stacklevel=3,
-    )
 
 
 @dataclass(slots=True)
@@ -70,8 +36,6 @@ class FragmentDefinition:
     context_injector: Callable[[dict[str, Any], Mapping[str, Any] | None], None] | None = None
     should_render: Callable[[Mapping[str, Any]], bool] | None = None
     attributes: dict[str, TemplateAttributeSpec] = field(default_factory=dict)
-    partials: Mapping[str, Path] | Sequence[Path | str] = field(default_factory=dict)
-    required_partials: set[str] = field(default_factory=set)
     _attribute_resolver: TemplateAttributeResolver | None = field(
         init=False, repr=False, default=None
     )
@@ -94,10 +58,6 @@ class FragmentDefinition:
             object.__setattr__(self, "attributes", normalised)
             object.__setattr__(self, "_attribute_resolver", TemplateAttributeResolver(normalised))
 
-        base_dir = self._resolve_base_dir()
-        resolved_partials = self._normalise_partials(base_dir)
-        object.__setattr__(self, "partials", resolved_partials)
-        object.__setattr__(self, "required_partials", self._normalise_required_partials())
 
     def attribute_defaults(self) -> dict[str, Any]:
         """Return defaults for fragment-managed attributes."""
@@ -110,72 +70,6 @@ class FragmentDefinition:
         if self._attribute_resolver is None:
             return {}
         return self._attribute_resolver.merge(overrides)
-
-    def iter_partials(self) -> Iterable[tuple[str, Path]]:
-        """Yield resolved partial overrides."""
-        return self.partials.items()
-
-    def _resolve_base_dir(self) -> Path:
-        if self.source is not None:
-            return (self.source if self.source.is_dir() else self.source.parent).resolve()
-        if self.pieces:
-            return self.pieces[0].template_path.parent
-        return Path().resolve()
-
-    def _normalise_partials(self, base_dir: Path) -> dict[str, Path]:
-        raw_partials = self.partials or {}
-        resolved: dict[str, Path] = {}
-        entries: Iterable[tuple[str | None, Path | str]]
-
-        if isinstance(raw_partials, Mapping):
-            entries = [(key, value) for key, value in raw_partials.items()]
-        elif isinstance(raw_partials, Sequence) and not isinstance(raw_partials, (str, bytes)):
-            entries = [(None, entry) for entry in raw_partials]
-        else:
-            return resolved
-
-        _warn_deprecated_partials(
-            self.name,
-            [
-                str(name_hint) if name_hint is not None else str(payload)
-                for name_hint, payload in entries
-            ],
-        )
-
-        for name_hint, payload in entries:
-            path_value = Path(payload)
-            resolved_path = (
-                path_value if path_value.is_absolute() else (base_dir / path_value).resolve()
-            )
-            if not resolved_path.exists():
-                raise TemplateError(
-                    f"Partial '{payload}' declared by fragment '{self.name}' is missing: {resolved_path}"
-                )
-
-            candidate_name = (
-                str(name_hint) if name_hint is not None else path_value.with_suffix("").as_posix()
-            )
-            normalised = normalise_partial_key(candidate_name)
-            if not normalised:
-                raise TemplateError(
-                    f"Fragment '{self.name}' declared a partial with an empty name."
-                )
-            if normalised in resolved:
-                raise TemplateError(
-                    f"Fragment '{self.name}' declares partial '{normalised}' more than once."
-                )
-            resolved[normalised] = resolved_path
-        return resolved
-
-    def _normalise_required_partials(self) -> set[str]:
-        required: set[str] = set()
-        for entry in self.required_partials or set():
-            key = normalise_partial_key(str(entry))
-            if key:
-                required.add(key)
-        if required:
-            _warn_deprecated_required_partials(self.name, required)
-        return required
 
     @classmethod
     def from_manifest(cls, manifest_path: Path) -> BaseFragment[Any] | FragmentDefinition:
@@ -217,25 +111,6 @@ class FragmentDefinition:
                     if isinstance(value, Mapping)
                     else TemplateAttributeSpec.model_validate({"default": value})
                 )
-        partials: Mapping[str, Path | str] | Sequence[Path | str] = {}
-        partial_entries = payload.get("partials")
-        if isinstance(partial_entries, (Mapping, list, tuple)):
-            partials = partial_entries
-        elif partial_entries is not None:
-            raise TemplateError("Fragment manifest 'partials' must be a list or mapping.")
-
-        required_partials: set[str] = set()
-        required_entries = payload.get("required_partials") or ()
-        if isinstance(required_entries, Sequence) and not isinstance(
-            required_entries, (str, bytes)
-        ):
-            for entry in required_entries:
-                if not isinstance(entry, str):
-                    raise TemplateError("Fragment 'required_partials' entries must be strings.")
-                required_partials.add(entry)
-        elif required_entries:
-            raise TemplateError("Fragment manifest 'required_partials' must be a list of strings.")
-
         return cls(
             name=name,
             pieces=pieces,
@@ -243,8 +118,6 @@ class FragmentDefinition:
             source=manifest_path,
             context_defaults={},
             attributes=attributes,
-            partials=partials,
-            required_partials=required_partials,
         )
 
     @classmethod
@@ -313,64 +186,6 @@ def _normalise_fragment_attributes(
     return normalised, resolver
 
 
-def _normalise_partials_from_fragment(
-    fragment: BaseFragment[Any],
-) -> tuple[dict[str, Path], set[str]]:
-    base_dir = _fragment_base_dir(fragment)
-    resolved: dict[str, Path] = {}
-    raw_partials = getattr(fragment, "partials", {}) or {}
-    entries: Iterable[tuple[str | None, Path | str]]
-
-    if isinstance(raw_partials, Mapping):
-        entries = [(key, value) for key, value in raw_partials.items()]
-    elif isinstance(raw_partials, Sequence) and not isinstance(raw_partials, (str, bytes)):
-        entries = [(None, entry) for entry in raw_partials]
-    else:
-        entries = []
-
-    if entries:
-        _warn_deprecated_partials(
-            fragment.name,
-            [
-                str(name_hint) if name_hint is not None else str(payload)
-                for name_hint, payload in entries
-            ],
-        )
-
-    for name_hint, payload in entries:
-        path_value = Path(payload)
-        resolved_path = (
-            path_value if path_value.is_absolute() else (base_dir / path_value).resolve()
-        )
-        if not resolved_path.exists():
-            raise TemplateError(
-                f"Partial '{payload}' declared by fragment '{fragment.name}' is missing: {resolved_path}"
-            )
-
-        candidate_name = (
-            str(name_hint) if name_hint is not None else path_value.with_suffix("").as_posix()
-        )
-        normalised = normalise_partial_key(candidate_name)
-        if not normalised:
-            raise TemplateError(
-                f"Fragment '{fragment.name}' declared a partial with an empty name."
-            )
-        if normalised in resolved:
-            raise TemplateError(
-                f"Fragment '{fragment.name}' declares partial '{normalised}' more than once."
-            )
-        resolved[normalised] = resolved_path
-
-    required: set[str] = set()
-    for entry in getattr(fragment, "required_partials", ()) or set():
-        key = normalise_partial_key(str(entry))
-        if key:
-            required.add(key)
-    if required:
-        _warn_deprecated_required_partials(fragment.name, required)
-    return resolved, required
-
-
 class FragmentRegistry:
     """Central registry resolving fragment templates."""
 
@@ -380,8 +195,6 @@ class FragmentRegistry:
         self._fragments: dict[str, BaseFragment[Any] | FragmentDefinition] = {}
         self._attributes: dict[str, dict[str, TemplateAttributeSpec]] = {}
         self._attribute_resolvers: dict[str, TemplateAttributeResolver] = {}
-        self._partials: dict[str, dict[str, Path]] = {}
-        self._required_partials: dict[str, set[str]] = {}
         self._discover_builtins()
         self._discover_entry_points()
 
@@ -394,12 +207,6 @@ class FragmentRegistry:
 
     def attribute_resolver_for(self, name: str) -> TemplateAttributeResolver | None:
         return self._attribute_resolvers.get(name)
-
-    def partials_for(self, name: str) -> dict[str, Path]:
-        return self._partials.get(name, {})
-
-    def required_partials_for(self, name: str) -> set[str]:
-        return self._required_partials.get(name, set())
 
     def register_fragment(
         self,
@@ -512,11 +319,6 @@ class FragmentRegistry:
                 self._attributes[fragment.name] = normalised_attributes
             if resolver:
                 self._attribute_resolvers[fragment.name] = resolver
-            partials, required_partials = _normalise_partials_from_fragment(fragment)
-            if partials:
-                self._partials[fragment.name] = partials
-            if required_partials:
-                self._required_partials[fragment.name] = required_partials
             return
 
         self._fragments.setdefault(fragment.name, fragment)
@@ -637,49 +439,6 @@ def inject_fragment_attributes(
             context[key] = value
             injected[key] = value
     return injected
-
-
-def collect_fragment_partials(
-    names: Iterable[str],
-    *,
-    source_dir: Path | None = None,
-) -> tuple[dict[str, Path], dict[str, set[str]], dict[str, str]]:
-    """Return partial overrides and requirements declared by the selected fragments."""
-    overrides: dict[str, Path] = {}
-    required_by: dict[str, set[str]] = {}
-    providers: dict[str, str] = {}
-
-    for fragment in _resolve_fragments(names, source_dir=source_dir):
-        if isinstance(fragment, FragmentDefinition):
-            for partial_name, partial_path in fragment.iter_partials():
-                if partial_name in overrides:
-                    existing = providers.get(partial_name, "unknown fragment")
-                    raise TemplateError(
-                        f"Partial '{partial_name}' provided by fragment '{fragment.name}' "
-                        f"conflicts with '{existing}'."
-                    )
-                overrides[partial_name] = partial_path
-                providers[partial_name] = fragment.name
-
-            for required in fragment.required_partials:
-                required_by.setdefault(required, set()).add(fragment.name)
-            continue
-
-        partial_map = FRAGMENT_REGISTRY.partials_for(fragment.name)
-        for partial_name, partial_path in partial_map.items():
-            if partial_name in overrides:
-                existing = providers.get(partial_name, "unknown fragment")
-                raise TemplateError(
-                    f"Partial '{partial_name}' provided by fragment '{fragment.name}' "
-                    f"conflicts with '{existing}'."
-                )
-            overrides[partial_name] = partial_path
-            providers[partial_name] = fragment.name
-
-        for required in FRAGMENT_REGISTRY.required_partials_for(fragment.name):
-            required_by.setdefault(required, set()).add(fragment.name)
-
-    return overrides, required_by, providers
 
 
 def render_fragments(
@@ -837,7 +596,6 @@ __all__ = [
     "FragmentRegistry",
     "FragmentRenderResult",
     "collect_fragment_attribute_defaults",
-    "collect_fragment_partials",
     "inject_fragment_attributes",
     "register_fragment",
     "render_fragments",

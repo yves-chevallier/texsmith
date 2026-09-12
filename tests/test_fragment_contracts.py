@@ -15,7 +15,6 @@ import os
 from pathlib import Path
 import re
 import shutil
-import warnings
 
 import pytest
 
@@ -29,7 +28,6 @@ from texsmith.core.fragments import (
 from texsmith.core.fragments.contracts import (
     fragment_contract,
     fragment_contracts,
-    replacement_for_partial,
 )
 from texsmith.core.fragments.resolution import (
     ACTIVE_FRAGMENTS_KEY,
@@ -39,7 +37,6 @@ from texsmith.core.fragments.resolution import (
     extra_packages_from_requires,
     inject_requires,
 )
-from texsmith.core.templates import load_template_runtime
 from texsmith.core.templates.typst import TYPST_LIBRARY_PATH, copy_typst_library
 
 
@@ -211,51 +208,6 @@ def test_typesetting_sty_only_on_the_contract_path(tmp_path: Path) -> None:
 # --------------------------------------------------------------------------
 # Deprecations (§4)
 # --------------------------------------------------------------------------
-
-
-def test_template_override_warns_and_names_the_macro(tmp_path: Path) -> None:
-    root = tmp_path / "tpl"
-    (root / "overrides").mkdir(parents=True)
-    (root / "overrides" / "codeinline.tex").write_text("X", encoding="utf-8")
-    (root / "template.tex").write_text("\\VAR{extra_packages}\n\\VAR{mainmatter}", encoding="utf-8")
-    (root / "manifest.toml").write_text(
-        "[latex.template]\nname = 'dep'\nversion = '0.0.0'\nentrypoint = 'template.tex'\n"
-        "override = ['codeinline.tex']\nrequired_partials = ['strong']\n",
-        encoding="utf-8",
-    )
-    with pytest.warns(FutureWarning) as record:
-        load_template_runtime(str(root))
-    messages = [str(w.message) for w in record]
-    assert any("latex.template.override" in m and "\\tscodeinline" in m for m in messages)
-    assert any("required_partials" in m for m in messages)
-
-
-def test_fragment_partials_warn(tmp_path: Path) -> None:
-    root = tmp_path / "frag"
-    root.mkdir()
-    (root / "noop.tex").write_text("", encoding="utf-8")
-    (root / "strong.tex").write_text("S", encoding="utf-8")
-    (root / "fragment.toml").write_text(
-        "name = 'dep-frag'\npartials = ['strong.tex']\n"
-        'files = [{ path = "noop.tex", type = "inline", slot = "extra_packages" }]\n',
-        encoding="utf-8",
-    )
-    with pytest.warns(FutureWarning, match="partials"):
-        FragmentDefinition.from_manifest(root / "fragment.toml")
-
-
-def test_bundled_templates_keep_their_legacy_hooks_but_warn() -> None:
-    with warnings.catch_warnings(record=True) as record:
-        warnings.simplefilter("always")
-        runtime = load_template_runtime("book")
-    assert "codeblock" in runtime.formatter_overrides
-    assert any(isinstance(w.message, FutureWarning) for w in record)
-
-
-def test_replacement_for_partial_covers_the_triage_table() -> None:
-    assert replacement_for_partial("codeinline.tex").startswith("\\tscodeinline")
-    assert replacement_for_partial("callout") == "tscallout (ts-callouts)"
-    assert "tsdiv@tab" in replacement_for_partial("tabbed")
 
 
 def test_book_and_letter_redefine_after_extra_packages() -> None:

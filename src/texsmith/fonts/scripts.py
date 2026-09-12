@@ -499,21 +499,3 @@ def render_moving_text(
     return rendered
 
 
-def render_script_macros(usages: Iterable[Mapping[str, str | None]]) -> str:
-    """Render LaTeX macros declaring script-specific font commands."""
-    from texsmith.adapters.latex.formatter import LaTeXFormatter
-
-    scripts = sorted(
-        (dict(entry) for entry in usages if entry.get("slug")),
-        key=lambda entry: str(entry.get("slug")),
-    )
-    if not scripts:
-        return ""
-    from texsmith.adapters.latex.formatter import TemplateNotFoundError
-
-    formatter = LaTeXFormatter()
-    try:
-        return formatter.render_template("script_macros", scripts=scripts)
-    except TemplateNotFoundError:
-        # When the script_macros partial is not available, skip emitting anything.
-        return ""

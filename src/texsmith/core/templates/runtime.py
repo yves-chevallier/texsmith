@@ -18,10 +18,6 @@ from .manifest import (
 )
 
 
-if TYPE_CHECKING:
-    from texsmith.adapters.latex.formatter import LaTeXFormatter
-
-
 @dataclass(slots=True)
 class TemplateRuntime:
     """Resolved template metadata reused across conversions."""
@@ -32,9 +28,7 @@ class TemplateRuntime:
     requires_shell_escape: bool
     slots: dict[str, TemplateSlot]
     default_slot: str
-    formatter_overrides: dict[str, Path]
     base_level: int | None
-    required_partials: set[str] = field(default_factory=set)
     extras: dict[str, Any] = field(default_factory=dict)
 
 
@@ -47,22 +41,14 @@ class TemplateBinding:
     name: str | None
     engine: str | None
     requires_shell_escape: bool
-    formatter_overrides: dict[str, Path]
     slots: dict[str, TemplateSlot]
     default_slot: str
     base_level: int | None
-    required_partials: set[str] = field(default_factory=set)
 
     def slot_levels(self, *, offset: int = 0) -> dict[str, int]:
         """Return the resolved base level for each slot."""
         base = (self.base_level or 0) + offset
         return {name: slot.resolve_level(base) for name, slot in self.slots.items()}
-
-    def apply_formatter_overrides(self, formatter: LaTeXFormatter) -> None:
-        """Apply template-provided overrides to a formatter."""
-        for key, override_path in self.formatter_overrides.items():
-            formatter.override_template(key, override_path)
-
 
 def coerce_base_level(value: Any, *, allow_none: bool = True) -> int | None:
     """Normalise base-level metadata to an integer or ``None``."""
@@ -225,54 +211,15 @@ def resolve_template_language(
     return DEFAULT_TEMPLATE_LANGUAGE
 
 
-def _warn_deprecated_template_hooks(template_instance: WrappableTemplate) -> None:
-    """Warn about the manifest hooks the contract macros replace.
-
-    fragment-contracts.md §4: ``latex.template.override`` and
-    ``required_partials`` are deprecated in 0.7.0 (a construct is restyled by
-    redefining its ``ts*`` macro in the template), as are the ``readers`` and
-    ``writer`` hooks of 0.4.1 (custom constructs are ``::: name`` containers
-    rendered by ``tsdiv`` or an IR pass under ``[latex.template] passes``).
-    All four are removed in 0.8.0. They keep working meanwhile.
-    """
-    from texsmith.core.fragments.contracts import replacement_for_partial
-
-    info = template_instance.info
-    name = info.name
-    if info.override:
-        mapping = ", ".join(
-            f"{entry} -> {replacement_for_partial(entry)}" for entry in info.override
-        )
-        warnings.warn(
-            f"Template '{name}' declares 'latex.template.override', which is deprecated "
-            f"and will be removed in 0.8.0: override a construct by redefining its "
-            f"contract macro after \\VAR{{extra_packages}} in the template ({mapping}). "
-            f"See docs/guide/templates/partials.md.",
-            FutureWarning,
-            stacklevel=3,
-        )
-    if info.required_partials:
-        names = ", ".join(info.required_partials)
-        warnings.warn(
-            f"Template '{name}' declares 'required_partials' ({names}), which is "
-            f"deprecated and will be removed in 0.8.0: a replacement fragment is "
-            f"checked against the 'provides' list of tmark.fragments() instead.",
-            FutureWarning,
-            stacklevel=3,
-        )
-
-
 def load_template_runtime(template: str) -> TemplateRuntime:
     """Resolve template metadata for repeated conversions."""
     template_instance = load_template(template)
-    _warn_deprecated_template_hooks(template_instance)
 
     template_base = coerce_base_level(
         template_instance.info.get_attribute_default("base_level"),
     )
 
     slots, default_slot = template_instance.info.resolve_slots()
-    formatter_overrides = dict(template_instance.iter_formatter_overrides())
     extras_payload = getattr(template_instance, "extras", {}) or {}
     extras = {key: value for key, value in extras_payload.items()}
     declared_fragments = (
@@ -292,9 +239,7 @@ def load_template_runtime(template: str) -> TemplateRuntime:
         requires_shell_escape=bool(template_instance.info.shell_escape),
         slots=slots,
         default_slot=default_slot,
-        formatter_overrides=formatter_overrides,
         base_level=template_base,
-        required_partials=set(template_instance.info.required_partials or []),
         extras=extras,
     )
 
@@ -330,11 +275,9 @@ def resolve_template_binding(
             name=runtime.name,
             engine=runtime.engine,
             requires_shell_escape=runtime.requires_shell_escape,
-            formatter_overrides=dict(runtime.formatter_overrides),
             slots=runtime.slots,
             default_slot=runtime.default_slot,
             base_level=binding_base_level,
-            required_partials=set(runtime.required_partials),
         )
     else:
         binding = TemplateBinding(
@@ -343,11 +286,9 @@ def resolve_template_binding(
             name=None,
             engine=None,
             requires_shell_escape=False,
-            formatter_overrides={},
             slots={"mainmatter": TemplateSlot(default=True)},
             default_slot="mainmatter",
             base_level=None,
-            required_partials=set(),
         )
 
     base_override = coerce_base_level(extract_base_level_override(template_overrides))

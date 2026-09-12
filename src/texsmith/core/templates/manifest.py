@@ -29,7 +29,6 @@ from texsmith.adapters.latex.utils import escape_latex_chars
 from texsmith.core.code_options import normalise_inline_options
 from texsmith.core.exceptions import LatexRenderingError
 from texsmith.core.metadata import PressMetadataError, normalise_press_metadata
-from texsmith.core.partials import normalise_partial_key
 from texsmith.core.templates.languages import _map_babel_language, _map_bcp47_language
 
 
@@ -722,8 +721,6 @@ class TemplateInfo(BaseModel):
     texlive_year: int | None = None
     tlmgr_packages: list[str] = Field(default_factory=list)
     fragments: list[str] | None = None
-    override: list[str] = Field(default_factory=list)
-    required_partials: list[str] = Field(default_factory=list)
     attributes: dict[str, TemplateAttributeSpec] = Field(default_factory=dict)
     assets: dict[str, TemplateAsset] = Field(default_factory=dict)
     slots: dict[str, TemplateSlot] = Field(default_factory=dict)
@@ -788,14 +785,6 @@ class TemplateInfo(BaseModel):
                     ) from exc
         self._attribute_resolver = TemplateAttributeResolver(self.attributes)
         self._attribute_defaults = self._attribute_resolver.defaults()
-        normalised_required: list[str] = []
-        for entry in self.required_partials or []:
-            if not isinstance(entry, str):
-                continue
-            key = normalise_partial_key(entry)
-            if key:
-                normalised_required.append(key)
-        self.required_partials = normalised_required
         return self
 
     def resolve_slots(self) -> tuple[dict[str, TemplateSlot], str]:

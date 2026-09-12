@@ -64,7 +64,7 @@ Guard the redefinition when the fragment is conditional (`ts-code` only loads
 when the document has code): `\ifcsname tscodeinline\endcsname … \fi`.
 
 See [Contract macros](partials.md) for every macro and its keys. The former
-`latex.template.override` mechanism is deprecated in 0.7.0 and removed in
+`latex.template.override` mechanism was deprecated in 0.7.0 and is removed in
 0.8.0.
 
 ## Inject custom assets

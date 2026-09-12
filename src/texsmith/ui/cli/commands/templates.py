@@ -168,7 +168,6 @@ def show_template_info(identifier: str) -> None:
         typer.echo(f"Template root: {template.root}")
         typer.echo(f"TeX Live year: {info.texlive_year or '-'}")
         typer.echo(f"tlmgr packages: {_format_list(info.tlmgr_packages)}")
-        typer.echo(f"Formatter overrides: {_format_list(info.override)}")
 
         if info.attributes:
             typer.echo("Attributes:")
@@ -239,7 +238,6 @@ def show_template_info(identifier: str) -> None:
     summary.add_row("Template root", str(template.root))
     summary.add_row("TeX Live year", str(info.texlive_year) if info.texlive_year else "-")
     summary.add_row("tlmgr packages", _format_list(info.tlmgr_packages))
-    summary.add_row("Formatter overrides", _format_list(info.override))
 
     console.print(
         RichPanel(

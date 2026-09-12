@@ -174,78 +174,6 @@ FRAGMENT_OWNED_PACKAGES: frozenset[str] = frozenset(
 PACKAGE_OPTIONS: Mapping[str, str] = {"ulem": "normalem", "hyphenat": "htt"}
 
 
-#: Former Jinja partial → the macro or structural LaTeX that replaces it
-#: (fragment-contracts.md §1). Used by the deprecation warnings of
-#: ``latex.template.override`` and fragment ``partials``.
-PARTIAL_MACROS: Mapping[str, str] = {
-    "italic": "\\emph (structural, emitted by the writer)",
-    "strong": "\\textbf (structural)",
-    "smallcaps": "\\textsc (structural)",
-    "subscript": "\\textsubscript (structural)",
-    "superscript": "\\textsuperscript (structural)",
-    "strikethrough": "\\sout (structural)",
-    "underline": "\\uline (structural)",
-    "enquote": "\\enquote (structural)",
-    "blockquote": "displayquote (structural)",
-    "highlight": "\\tsmark (ts-typesetting)",
-    "lead": "\\tslead (ts-typesetting)",
-    "horizontal_rule": "\\tsdivider (ts-typesetting)",
-    "epigraph": "\\tsepigraph (ts-typesetting)",
-    "multicolumn": "tsdiv@multicolumn (ts-typesetting)",
-    "tabbed": "tsdiv@tab (ts-typesetting)",
-    "icon": "\\tsicon (ts-typesetting)",
-    "counter": "\\leavevmode\\phantomsection\\label (structural)",
-    "label": "\\phantomsection\\label (structural)",
-    "ref": "\\hyperref / \\ref (structural)",
-    "href": "\\href (structural)",
-    "url": "\\url (structural)",
-    "footnote": "\\footnote (structural)",
-    "citation": "\\cite / \\parencite / \\textcite (ts-bibliography fallbacks)",
-    "acronym": "\\tsacr (ts-glossary)",
-    "glossary": "\\tsgls (ts-glossary)",
-    "list_acronyms": "the acronyms slot (ts-glossary)",
-    "list_glossary": "the glossary backmatter (ts-glossary)",
-    "index": "\\tsindex (ts-index)",
-    "keystroke": "\\tskeys (ts-keystrokes)",
-    "choices": "tstasklist with \\tsdone, \\tstodo, \\tspartial (ts-todolist)",
-    "unordered_list": "itemize (structural)",
-    "ordered_list": "enumerate (structural)",
-    "description_list": "description (structural)",
-    "heading": "\\section and friends (structural)",
-    "pagestyle": "dropped; the template emits \\thispagestyle after \\maketitle",
-    "figure": "figure (structural)",
-    "figure_tcolorbox": "center + \\captionof{figure} (structural)",
-    "table": "table / tabularx / longtable (structural)",
-    "yaml_table": "table / tabularx / longtable (structural)",
-    "callout": "tscallout (ts-callouts)",
-    "codeblock": "tscode (ts-code)",
-    "codeblock_listings": "tscode (ts-code, engine listings)",
-    "codeblock_verbatim": "tscode (ts-code, engine verbatim)",
-    "codeblock_pygments": "tscode (ts-code, engine pygments)",
-    "codeinline": "\\tscodeinline (ts-code)",
-    "codeinlinett": "\\tscodeinline (ts-code)",
-    "add": "\\tsins (ts-critic)",
-    "addition": "\\tsins (ts-critic)",
-    "del": "\\tsdel (ts-critic)",
-    "deletion": "\\tsdel (ts-critic)",
-    "substitution": "\\tssubst (ts-critic)",
-    "comment": "\\tscomment (ts-critic)",
-    "regex": "dropped; \\href{…}{\\tscodeinline{…}} by composition",
-    "include": "\\input (structural)",
-    "exercises_solutions": "a template-level partial",
-}
-
-
-def replacement_for_partial(name: str) -> str:
-    """Name the macro that replaces the partial ``name`` (fragment-contracts.md §1)."""
-    key = str(name or "").strip()
-    for suffix in (".jinja.tex", ".tex", ".jinja"):
-        if key.endswith(suffix):
-            key = key[: -len(suffix)]
-    key = key.replace("/", "_").replace("-", "_")
-    return PARTIAL_MACROS.get(key, "a macro redefinition in the template")
-
-
 def missing_provides(name: str, defined: Iterable[str]) -> list[str]:
     """Return the ``provides`` entries of contract ``name`` absent from ``defined``."""
     row = fragment_contract(name)
@@ -263,7 +191,6 @@ def is_contract_fragment(value: Any) -> bool:
 __all__ = [
     "FRAGMENT_OWNED_PACKAGES",
     "PACKAGE_OPTIONS",
-    "PARTIAL_MACROS",
     "FragmentContract",
     "contract_names",
     "fragment_contract",
@@ -271,5 +198,4 @@ __all__ = [
     "implied_packages",
     "is_contract_fragment",
     "missing_provides",
-    "replacement_for_partial",
 ]
