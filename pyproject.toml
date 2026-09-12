@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 [project]
 name = "texsmith"
 dynamic = ["version"]
-description = "A Markdown to LaTeX converter."
+description = "A TMark (Markdown) to LaTeX and Typst converter."
 readme = "README.md"
 license = "MIT"
 requires-python = ">=3.10"
@@ -34,7 +34,6 @@ dependencies = [
     "cairosvg>=2.8.2",
     "emoji>=2.12.1",
     "jinja2>=3.1.6",
-    "markdown>=3.7",
     "pillow>=12.0.0",
     "pint>=0.24",
     "pybtex>=0.24.0",
@@ -42,8 +41,6 @@ dependencies = [
     "pypdf>=6.1.1",
     "pygments>=2.18.0",
     "pylatexenc>=2.10",
-    "pymdown-extensions>=10.9",
-    "python-markdown-math>=0.9",
     "pymupdf>=1.24.3",
     "python-slugify>=8.0.4",
     "pyyaml>=6.0.3",
@@ -70,7 +67,7 @@ raw-options = { local_scheme = "no-local-version" }
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/texsmith"]
-include = ["src/texsmith/adapters/latex/xindy/*.xdy", "src/texsmith/writers/typst/*.typ"]
+include = ["src/texsmith/adapters/latex/xindy/*.xdy"]
 
 [tool.hatch.build]
 exclude = [

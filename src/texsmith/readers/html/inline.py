@@ -414,30 +414,28 @@ _ALT_MARKUP_RE = re.compile(r"[*_`\[<]")
 _ALT_PARSER = None
 
 
-def alt_inlines(alt: str, ctx: ReadContext) -> tuple[model.Inline, ...]:
-    """Lower an ``alt`` attribute, parsing the inline Markdown it carries.
+def alt_inlines(alt: str, _ctx: ReadContext) -> tuple[model.Inline, ...]:
+    """Lower an ``alt`` attribute, parsing the inline markup it carries.
 
-    Python-Markdown copies the image description verbatim into ``alt``, so
+    A Markdown renderer copies the image description verbatim into ``alt``, so
     ``![anti-*windup*](x.png)`` reaches the HTML with its asterisks intact.
     The alt doubles as the figure caption (and as its short caption), where
-    the emphasis the author wrote must not ship as literal punctuation.
+    the emphasis the author wrote must not ship as literal punctuation — so the
+    text goes back through ``tmark.parse``, the parser the rest of the pipeline
+    uses, and its first paragraph's inlines are the answer.
     """
     if not alt:
         return ()
     if not _ALT_MARKUP_RE.search(alt):
         return (model.Str(alt),)
 
-    global _ALT_PARSER
-    if _ALT_PARSER is None:
-        from markdown import Markdown
+    from texsmith.readers.tmark import read
 
-        _ALT_PARSER = Markdown()
-    from bs4 import BeautifulSoup
-
-    _ALT_PARSER.reset()
-    fragment = BeautifulSoup(_ALT_PARSER.convert(alt), "html.parser")
-    paragraph = fragment.find("p")
-    return ctx.inline_content(paragraph if paragraph is not None else fragment)
+    document, _diagnostics = read(alt, name="<alt>")
+    for block in document.blocks:
+        if isinstance(block, model.Para):
+            return tuple(block.content)
+    return (model.Str(alt),)
 
 
 @reads("script", level=ReadLevel.ANY, name="math_script")

@@ -1714,18 +1714,6 @@ wheels = [
 ]
 
 [[package]]
-name = "python-markdown-math"
-version = "0.9"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "markdown" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/4c/68/fbea05ec6fb318bdcf56ea47596605614554f51d77bfd14f6fb481139ad8/python_markdown_math-0.9.tar.gz", hash = "sha256:567395553dc4941e79b3789a1096dcabb3fda9539d150d558ef3507948b264a3", size = 8680, upload-time = "2025-04-10T10:10:31.84Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/eb/68/ecf3535c40845de2efd8ac2d092dd5fca0868219fa3684d9e58ef7abeece/python_markdown_math-0.9-py3-none-any.whl", hash = "sha256:ac9932df517a5c0f6d01c56e7a44d065eca4a420893ac45f7a6937c67cb41e86", size = 6046, upload-time = "2025-04-10T10:10:30.318Z" },
-]
-
-[[package]]
 name = "python-slugify"
 version = "8.0.4"
 source = { registry = "https://pypi.org/simple" }
@@ -1914,7 +1902,6 @@ dependencies = [
     { name = "cairosvg" },
     { name = "emoji" },
     { name = "jinja2" },
-    { name = "markdown" },
     { name = "pillow" },
     { name = "pint", version = "0.24.4", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
     { name = "pint", version = "0.25.2", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
@@ -1923,10 +1910,8 @@ dependencies = [
     { name = "pydantic" },
     { name = "pygments" },
     { name = "pylatexenc" },
-    { name = "pymdown-extensions" },
     { name = "pymupdf" },
     { name = "pypdf" },
-    { name = "python-markdown-math" },
     { name = "python-slugify" },
     { name = "pyxindy" },
     { name = "pyyaml" },
@@ -1968,7 +1953,6 @@ requires-dist = [
     { name = "cairosvg", specifier = ">=2.8.2" },
     { name = "emoji", specifier = ">=2.12.1" },
     { name = "jinja2", specifier = ">=3.1.6" },
-    { name = "markdown", specifier = ">=3.7" },
     { name = "pillow", specifier = ">=12.0.0" },
     { name = "pint", specifier = ">=0.24" },
     { name = "playwright", specifier = ">=1.56.0" },
@@ -1976,10 +1960,8 @@ requires-dist = [
     { name = "pydantic", specifier = ">=2.7.0" },
     { name = "pygments", specifier = ">=2.18.0" },
     { name = "pylatexenc", specifier = ">=2.10" },
-    { name = "pymdown-extensions", specifier = ">=10.9" },
     { name = "pymupdf", specifier = ">=1.24.3" },
     { name = "pypdf", specifier = ">=6.1.1" },
-    { name = "python-markdown-math", specifier = ">=0.9" },
     { name = "python-slugify", specifier = ">=8.0.4" },
     { name = "pyxindy", specifier = ">=0.0.7" },
     { name = "pyyaml", specifier = ">=6.0.3" },
