@@ -1,4 +1,4 @@
-"""Unit tests for the parity harness (scripts/parity.py): normaliser and allow-list."""
+"""Unit tests for the regression harness (scripts/parity.py): normaliser, allow-list, gates."""
 
 from __future__ import annotations
 
@@ -273,6 +273,34 @@ def test_committed_allow_list_loads(parity):
     assert all(e.reason for e in entries)
 
 
+def test_load_allow_list_keeps_expired_entries_when_lenient(parity, tmp_path, capsys):
+    # `diff` is migration-only and outlives the release its entries were written
+    # for, so an expired entry is a warning there, not a failed load.
+    path = _write_allow(
+        tmp_path,
+        """
+        - id: gone
+          kind: rewrite
+          files: ["**/*.tex"]
+          from: a
+          to: b
+          reason: "an intended difference of the migration"
+          expires: 0.6.0
+        """,
+    )
+    with pytest.raises(parity.ParityError, match="expired"):
+        parity.load_allow_list(path, current_version="0.7.0")
+    entries = parity.load_allow_list(path, current_version="0.7.0", strict=False)
+    assert [e.allow_id for e in entries] == ["gone"]
+    assert "past their expiry" in capsys.readouterr().out
+
+
+def test_malformed_allow_list_fails_even_when_lenient(parity, tmp_path):
+    path = _write_allow(tmp_path, "- id: x\n  kind: nope\n  files: ['*']\n  reason: r\n")
+    with pytest.raises(parity.ParityError, match="kind"):
+        parity.load_allow_list(path, current_version="0.7.0", strict=False)
+
+
 def test_compare_texts_rewrite_and_hunk(parity, tmp_path):
     path = _write_allow(
         tmp_path,
@@ -441,3 +469,95 @@ def test_missing_requirements_honours_without(parity):
     entry = parity.Entry("x", ".", ("x.md",), "latex", frozenset({"docker", "typst"}))
     assert "docker" in parity.missing_requirements(entry, without=["docker"])
     assert "docker" not in parity.missing_requirements(entry, without=["docker"], ignore=["docker"])
+
+
+# ------------------------------------------------------------ subcommand wiring
+
+
+def test_baseline_and_render_default_to_the_cli_reader(parity):
+    """The gate records the reader the CLI actually uses, not the legacy one."""
+    assert parity.DEFAULT_READER == "tmark"
+    args = parity.build_parser().parse_args(["render", "--out", "x"])
+    assert args.reader == "tmark"
+    # …and `html` stays reachable as the escape hatch for an unmigrated document.
+    assert parity.build_parser().parse_args(["render", "--out", "x", "--reader", "html"]).reader
+
+
+def test_diff_refuses_a_whole_corpus_run(parity, capsys):
+    """The cross-reader comparison only makes sense on a legacy-spelled entry set."""
+    assert parity.main(["diff"]) == 2
+    message = capsys.readouterr().err
+    assert "--only" in message and "baseline --check" in message
+
+
+def test_diff_rejects_an_only_glob_that_matches_nothing(parity, capsys):
+    assert parity.main(["diff", "--only", "no-such-entry-*"]) == 2
+    assert "matched no corpus entry" in capsys.readouterr().err
+
+
+def test_pdf_check_needs_baseline(parity, capsys):
+    assert parity.main(["pdf", "--check", "--entries", "abbr"]) == 2
+    assert "--baseline" in capsys.readouterr().err
+
+
+def test_pdf_baseline_has_a_default_entry_set(parity):
+    args = parity.build_parser().parse_args(["pdf", "--baseline"])
+    assert args.entries is None
+    corpus = {entry.entry_id: entry for entry in parity.load_corpus()}
+    assert [e.entry_id for e in parity._pdf_baseline_entries(args, corpus)] == list(
+        parity.PDF_BASELINE_ENTRIES
+    )
+
+
+# ---------------------------------------------------------------- pdf baseline
+
+
+def test_page_text_collapses_whitespace(parity):
+    assert parity.page_text("  a\n b \t c \n\n") == "a b c"
+
+
+def test_pdf_digest_records_text_size_and_ink(parity, tmp_path):
+    pdf = _pdf_with_text(tmp_path / "one.pdf", ["Hello parity", "page two"])
+    pages = parity.pdf_digest(pdf, dpi=50)
+    assert [p["text"] for p in pages] == ["Hello parity", "page two"]
+    assert all(p["size"] == pages[0]["size"] for p in pages)
+    assert 0 < pages[0]["ink"] < 0.1
+    # Same input, same record: the digest is what gets committed.
+    assert (
+        parity.pdf_digest(_pdf_with_text(tmp_path / "two.pdf", ["Hello parity"]), dpi=50)[0]
+        == (pages[0])
+    )
+
+
+def test_compare_pdf_digest(parity):
+    recorded = [{"size": [100, 200], "ink": 0.01, "text": "Hello"}]
+    assert parity.compare_pdf_digest(recorded, recorded)[0] == parity.IDENTICAL
+
+    status, detail = parity.compare_pdf_digest(recorded, recorded * 2)
+    assert status == parity.DIFFERS and "page count 1 vs 2" in detail
+
+    status, detail = parity.compare_pdf_digest(recorded, [{**recorded[0], "text": "Goodbye"}])
+    assert status == parity.DIFFERS and "text layer changed" in detail
+
+    status, detail = parity.compare_pdf_digest(recorded, [{**recorded[0], "size": [100, 300]}])
+    assert status == parity.DIFFERS and "raster" in detail
+
+    # Ink moves within the tolerance (antialiasing, a font metric) and is let through…
+    nudged = {**recorded[0], "ink": 0.01 + parity.INK_TOLERANCE / 2}
+    assert parity.compare_pdf_digest(recorded, [nudged])[0] == parity.IDENTICAL
+    # …beyond it, it is a finding.
+    moved = {**recorded[0], "ink": 0.01 + parity.INK_TOLERANCE * 2}
+    status, detail = parity.compare_pdf_digest(recorded, [moved])
+    assert status == parity.DIFFERS and "ink" in detail
+
+
+def test_committed_pdf_baseline_is_well_formed(parity):
+    import json
+
+    payload = json.loads(parity.PDF_BASELINE_PATH.read_text(encoding="utf-8"))
+    assert payload["reader"] == parity.DEFAULT_READER
+    assert payload["dpi"] == parity.build_parser().parse_args(["pdf", "--baseline"]).dpi
+    documents = payload["documents"]
+    assert {name.split("/")[0] for name in documents} == set(parity.PDF_BASELINE_ENTRIES)
+    for pages in documents.values():
+        assert pages and all({"size", "ink", "text"} == set(page) for page in pages)

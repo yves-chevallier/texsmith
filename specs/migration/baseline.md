@@ -20,10 +20,14 @@ directory per entry of `tests/parity/corpus.yml` (every example command line
 and every `docs/**/*.md` page, both backends). That copy **is committed**:
 
 ```sh
-uv run python scripts/parity.py baseline          # re-render the legacy reader and rewrite it
+uv run python scripts/parity.py baseline          # re-render the tmark reader and rewrite it
 uv run python scripts/parity.py baseline --check  # what CI runs on every PR: exit 1 on drift
 uv run python scripts/parity.py list              # entries, requirements, what can run here
 ```
+
+Since the flip that copy records the **tmark** reader — the CLI default — so it
+is a regression gate on the shipped path, not a memory of the legacy one
+(`writers-and-passes.md` §5).
 
 Entries whose toolchain is missing (`requires:` in the corpus — a diagram
 renderer, network for remote assets, a LaTeX engine for nested snippet

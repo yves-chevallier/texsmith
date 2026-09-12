@@ -110,13 +110,18 @@ jobs:
           cd ${GITHUB_WORKSPACE}/examples/diagrams && uv run texsmith --build -obuild diagrams.md
 
   parity:
-    # Text-only parity gate (specs/migration/writers-and-passes.md §5): re-render
-    # the corpus with the legacy reader and diff it against the committed
-    # tests/parity/baseline. Entries that need a diagram renderer or a nested
-    # LaTeX build are skipped here (they run in `parity-pdf`); the DOI cache is
-    # served from tests/parity/cache, so only the remote-asset entries (book,
-    # a few docs pages) use the network.
-    name: Parity (baseline check)
+    # Text-only regression gate (specs/migration/writers-and-passes.md §5):
+    # re-render the corpus with the *tmark* reader — the CLI default, and what
+    # every example and docs page is written for — and diff it against the
+    # committed tests/parity/baseline. Any difference is either a regression or
+    # a change whose author re-records the baseline in a reviewed diff; there is
+    # no allow-list here, both sides come from the same reader.
+    #
+    # The `--without` set is exactly the one the baseline was recorded with:
+    # entries needing a diagram renderer, a nested LaTeX build or the network
+    # are skipped and keep their record. The nightly `parity-pdf` workflow runs
+    # the same check with the full toolchain, plus the PDF gate.
+    name: Regression (tmark baseline check)
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -151,8 +156,10 @@ jobs:
           path: ~/.texsmith/fonts
           key: texsmith-fonts-${{ runner.os }}-${{ hashFiles('src/texsmith/fonts/**') }}
 
-      - name: Check the legacy baseline
-        run: uv run python scripts/parity.py baseline --check --without docker --without tectonic
+      - name: Check the tmark baseline
+        run: >-
+          uv run python scripts/parity.py baseline --check
+          --without docker --without tectonic --without network --jobs 4
 
       - name: Upload diffs
         if: failure()

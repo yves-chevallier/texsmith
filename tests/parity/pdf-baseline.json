@@ -1,0 +1,95 @@
+{
+  "reader": "tmark",
+  "dpi": 100,
+  "ink_tolerance": 0.002,
+  "documents": {
+    "abbr/abbreviations.pdf": [
+      {
+        "size": [
+          827,
+          1170
+        ],
+        "ink": 0.01597,
+        "text": "Abbreviations In modern chemical analysis, techniques like NMR, FTIR, and GC-MS are essential for iden- tifying compounds, while methods such as HPLC and ICP-OES provide high-precision quan- tification of analytes across a wide range of matrices. Researchers often rely on computational tools like DFT and Molecular Dynamics to model reaction pathways and molecular behavior, supported by data from X-ray Diffraction for crystalline structure determination. Acronyms DFT Density Functional Theory 1 FTIR Fourier Transform Infrared Spectroscopy 1 GC-MS Gas Chromatography\u2013Mass Spectrometry 1 HPLC High-Performance Liquid Chromatography 1 ICP-OES Inductively Coupled Plasma\u2013Optical Emission Spectroscopy 1 NMR Nuclear Magnetic Resonance 1"
+      }
+    ],
+    "counters/counters.pdf": [
+      {
+        "size": [
+          827,
+          1170
+        ],
+        "ink": 0.02819,
+        "text": "Firmware Review Report Sensor node, release candidate 1.4.2-rc1 Firmware Quality Board March 12, 2026 Contents 1 Scope 1 2 Requirements under review 1 3 Findings 2 3.1 Summary . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 2 3.2 Watchdog fed from an interrupt handler . . . . . . . . . . . . . . . . . . . . . . . 2 3.3 Over-the-air update leaves no bootable image . . . . . . . . . . . . . . . . . . . . 2 3.4 Session key seeded from the boot counter . . . . . . . . . . . . . . . . . . . . . . 3 3.5 Log buffer wiped on reset . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 3 3.6 Additional observation . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 3 4 Follow-up 3 5 A note on undeclared prefixes 3 1 Scope This report reviews release candidate 1.4.2-rc1 of the sensor node firmware. Two numbered series run through it: findings raised by the review board, and the requirements they are checked against. Both are declared in the YAML front matter under press.declare.counters, so TeXSmith allocates the numbers and both backends \u2014 LATEX and Typst \u2014 print the same ones. The requirement series starts at 100 because it continues the numbering of the system specifi- cation; the finding series starts at 1, the default. The board considers one issue blocking, finding FW-01, which is described further down \u2014 a reference may point forward as well as backward. 2 Requirements under review The four requirements below were selected for this review. The identifier in the first column is a definition marker, #{prefix:key}: it prints the formatted number and becomes the anchor every later reference links to. 1"
+      },
+      {
+        "size": [
+          827,
+          1170
+        ],
+        "ink": 0.03731,
+        "text": "Id Requirement Verification REQ-100 The watchdog shall reset the node within two seconds of a stalled main loop. Fault injection REQ-101 An interrupted over-the-air update shall leave the previous image bootable. Power-cut campaign REQ-102 The session key shall be derived from at least 128 bits of hardware entropy. Code review REQ-103 The node shall retain the last 64 log records across a reset. Manual inspection Requirement REQ-102 was added after last year\u2019s security audit and had never been verified before this review. 3 Findings 3.1 Summary The review raised five findings; the three severe ones are summarised below. As in the require- ment table, the identifiers are defined right in the first column. Id Severity Component Summary FW-01 Blocking hal/watchdog.c The watchdog is fed from the I2C completion handler. FW-02 Blocking ota/apply.c A power cut during the swap leaves no bootable image. FW-03 Major crypto/session.c The session key is seeded from the boot counter. 3.2 Watchdog fed from an interrupt handler Feeding the watchdog from the I2C completion handler means the timer keeps being serviced while the main loop is stalled on a contended bus. Finding FW-01 therefore violates REQ-100 \u2014 on a saturated bus the node stayed unresponsive for more than forty seconds without ever resetting. 3.3 Over-the-air update leaves no bootable image The updater erases the active slot before validating the incoming image. A power cut in that window bricks the node, which is exactly what REQ-101 forbids; see FW-02. 2"
+      },
+      {
+        "size": [
+          827,
+          1170
+        ],
+        "ink": 0.03913,
+        "text": "3.4 Session key seeded from the boot counter The seed passed to the key derivation function is the 32-bit boot counter, so a freshly provisioned node produces a predictable session key. Finding FW-03 is raised against REQ-102. 3.5 Log buffer wiped on reset The heading above carries a {#prefix:key} attribute, a silent definition: the number appears nowhere in the title, yet the finding is allocated one and can be referenced like any other. The log ring buffer lives in a .bss section that the startup code zeroes, so no record survives a reset and REQ-103 is not met. Finding FW-04 was reported by the field team before the review started. 3.6 Additional observation Definition markers are ordinary inline constructs and work in running prose too. While repro- ducing the watchdog campaign we also noticed FW-05, the real-time clock drifting by roughly four seconds a day at 60 \u00b0C. No requirement covers clock accuracy, so this finding is recorded for information only. 4 Follow-up Findings FW-01 and FW-02 block the release and must be fixed in 1.4.2-rc2. Finding FW-03 is scheduled for 1.5.0 together with the hardware entropy source. The remaining two, FW-04 and FW-05, are deferred to the maintenance backlog. A reference prints the number and nothing else \u2014 FW-01, not Finding FW-01. The sur- rounding noun is written by the author, exactly as for a section cross-reference; the name: field of the counter is only used in TeXSmith\u2019s diagnostics. 5 A note on undeclared prefixes A marker is substituted only when its prefix is declared in the front matter. The firmware\u2019s Ruby log formatter interpolates values into its message template: spelled out in prose, it uses #{node.id} for the node identifier and #{sensor:temp} for the reading. Neither node nor sensor is a declared counter, so both markers survive into the PDF unchanged \u2014 Ruby and CoffeeScript interpolations are never mangled, and no warning is emitted. Only fw and req are declared here, and only those are substituted. 3"
+      }
+    ],
+    "index/index.pdf": [
+      {
+        "size": [
+          414,
+          583
+        ],
+        "ink": 0.0242,
+        "text": "Index Example This document demonstrates the index gen- eration with TeXSmith. You can nest, format and create multiple index entries for terms. 1 Granny Smith A tart apple variety often used in baking and cooking. Known for its bright green skin and crisp texture. 1"
+      },
+      {
+        "size": [
+          414,
+          583
+        ],
+        "ink": 0.0088,
+        "text": "2 Fuji A sweet and juicy apple variety that originated in Japan. It has a dense flesh and a balanced flavor. 2"
+      },
+      {
+        "size": [
+          414,
+          583
+        ],
+        "ink": 0.01089,
+        "text": "3 Honeycrisp A popular apple variety known for its crisp tex- ture and sweet-tart flavor. It has a distinctive red and yellow skin. 3"
+      },
+      {
+        "size": [
+          414,
+          583
+        ],
+        "ink": 0.00539,
+        "text": "Index apple, 1\u20133 Fuji, 2 Granny Smith, 1 Honeycrisp, 3 juicy, 2 4"
+      }
+    ],
+    "marginnote/marginnote.pdf": [
+      {
+        "size": [
+          827,
+          1170
+        ],
+        "ink": 0.03574,
+        "text": "Margin Notes The {aside}[\u2026] inline extension TeXSmith 1 Margin Notes TeXSmith\u2019s margin-note extension adds a single inline shorthand to the unified {keyword}[content] family already used by {index}[term] and {raw latex}(payload). The syntax is: {aside side=\u2026}[note text] where side is an optional placement \u2014 left, right, outer or inner \u2014 selecting a margin explicitly. It compiles down to \\marginnote{\u2026} from the marginnote LATEX package (auto- loaded on first use). 1.1 Default placement No su\ufb00ix means the document\u2019s default side. In a oneside layout that\u2019s the right margin; in a twoside layout, the outer margin (so the note flips automatically between recto and verso pages). Most readers appreciate a short quip default note that sits beside the paragraph without interrupting the flow. When margin notes are kept brief and self-contained, they feel like a friendly aside rather than a distraction. 1.2 Forced side Force the left margin with side=left and the right margin with side=right. Because the switch is scoped to a LATEX group, subsequent unqualified notes still follow the document\u2019s default placement. Some diagrams read better when labelled on the left left-hand pointer , while running commentary fits the right-hand margin right-hand commentary more naturally. Mixing the two in close succession is fine \u2014 each note is independent. 1.3 Inline formatting Margin notes pass through the full inline-Markdown parser, so they support the usual bold, italic, inline code, and links. Viscoelastic materials can be approximated as linear Hooke\u2019s law applies at small strain where the stress is proportional to the strain under moderate stress, but non-linear effects dominate above the yield point. 1"
+      },
+      {
+        "size": [
+          827,
+          1170
+        ],
+        "ink": 0.01486,
+        "text": "1.4 Longer notes The package handles multi-sentence notes gracefully. They line-wrap in the margin and do not disturb the main text\u2019s baseline grid. Longer notes wrap over several lines and keep flowing down the margin. Keep them concise so the reader can scan them without losing the thread of the main text. Below, a denser example mixing sides and inline styles: \u2022 Classical mechanics see Newton, Prin 1687 predates the calculus of variations. \u2022 Modern formulations rely on Lagrangians or Hamiltonians for energy-based analyses and variational principles. \u2022 Quantum mechanics introduces non-commuting observables follows in the 20th century. 1.5 Inner / Outer In a twoside layout \u2014 like this article \u2014 {o} (outer) and {i} (inner) are MVP aliases of {r} and {l} respectively. On single-side documents they behave identically to their counterparts. 2"
+      }
+    ]
+  }
+}

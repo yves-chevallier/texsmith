@@ -1,19 +1,26 @@
 #!/usr/bin/env python3
-"""Parity harness for the TeXSmith → TMark migration (plan task 4.1).
+"""Regression harness over the TeXSmith corpus (``tests/parity/corpus.yml``).
 
-Renders every entry of ``tests/parity/corpus.yml`` (the examples' command lines
-and every ``docs/**/*.md`` page) with the legacy ``html`` reader and, once the
-CLI grows ``--reader``, with the ``tmark`` reader; normalises the ``.tex`` /
-``.typ`` outputs; diffs them modulo ``tests/parity/allow.yml``.
+It renders every entry of the corpus — the examples' command lines and every
+``docs/**/*.md`` page — through the **tmark** reader, the CLI default, and
+compares the normalised ``.tex`` / ``.typ`` against a committed baseline. Any
+unreviewed change to the rendered output fails the gate; an intended one is
+re-recorded in a diff a human reads.
 
 Subcommands::
 
-    parity.py baseline [--check]        legacy outputs → tests/parity/baseline/
+    parity.py baseline [--check]        tmark outputs → tests/parity/baseline/
     parity.py render --reader R --out D one reader, raw outputs, no diff
-    parity.py diff                      both readers, allow-list, per-entry table
-    parity.py pdf --entries ID...       build both sides, rasterise, pixel diff
+    parity.py pdf [--baseline [--check]] rasterise and compare PDFs
     parity.py list                      corpus entries and which are runnable
     parity.py seed-cache                copy the DOI cache back into tests/parity/cache
+    parity.py diff --only GLOB          *migration only*: html vs tmark on one entry set
+
+``diff`` is the cross-reader comparison the migration was built on (plan task
+4.1). It is retired as a gate: ``examples/**`` and ``docs/**`` are written in
+canonical TMark, which the legacy ``html`` reader cannot parse, so a whole-corpus
+run reports noise. It is kept to audit a document that has *not* been migrated
+yet, and therefore refuses to run without an explicit ``--only`` entry set.
 
 Design: specs/migration/writers-and-passes.md §5.
 """
@@ -47,9 +54,14 @@ CORPUS_PATH = PARITY_DIR / "corpus.yml"
 ALLOW_PATH = PARITY_DIR / "allow.yml"
 BASELINE_DIR = PARITY_DIR / "baseline"
 SEED_CACHE_DIR = PARITY_DIR / "cache"
+PDF_BASELINE_PATH = PARITY_DIR / "pdf-baseline.json"
 BUILD_DIR = ROOT / "build" / "parity"
 
 LEGACY_READER = "html"
+# What the CLI reads with when ``--reader`` is absent, and what the baseline
+# records. An ``.html`` input still goes through the HtmlReader whatever this
+# says; ``--reader html`` survives one release as an escape hatch.
+DEFAULT_READER = "tmark"
 READERS = ("html", "tmark")
 BACKENDS = ("latex", "typst")
 KNOWN_REQUIREMENTS = frozenset({"docker", "network", "fonts", "typst", "tectonic"})
@@ -393,18 +405,16 @@ def cli_knows_reader() -> bool:
     return "reader" in inspect.signature(render).parameters
 
 
-def reader_flag(reader: str) -> str | None:
-    """The ``--reader`` value to pass, or ``None`` when the CLI has no such option."""
+def reader_flag(reader: str) -> str:
+    """The ``--reader`` value to pass; the harness always pins the reader explicitly."""
     if reader not in READERS:
         raise ParityError(f"unknown reader {reader!r}; expected one of {READERS}")
-    if cli_knows_reader():
-        return reader
-    if reader != LEGACY_READER:
+    if not cli_knows_reader():
         raise ParityError(
-            f"the installed texsmith CLI has no --reader option yet; only the legacy "
-            f"{LEGACY_READER!r} reader can be rendered (requested {reader!r})"
+            "the installed texsmith CLI has no --reader option; the harness needs it "
+            "to pin the reader it renders with (run `uv sync`)"
         )
-    return None
+    return reader
 
 
 SHARED_CACHE_NAMESPACES = ("texmf", "playwright", "snippets")
@@ -895,6 +905,14 @@ class AllowEntry:
         return any(glob_to_regex(glob).match(relpath) for glob in self.files)
 
 
+class _AllowExpiredError(Exception):
+    """A well-formed allow-list entry whose expiry has been reached."""
+
+    def __init__(self, entry: AllowEntry, message: str) -> None:
+        super().__init__(message)
+        self.entry = entry
+
+
 def parse_version(text: str) -> tuple[int, ...]:
     """Leading numeric components of a version (``0.6.1.dev7`` → ``(0, 6, 1)``)."""
     parts: list[int] = []
@@ -942,9 +960,19 @@ def texsmith_version() -> str:
 
 
 def load_allow_list(
-    path: Path = ALLOW_PATH, *, current_version: str | None = None
+    path: Path = ALLOW_PATH, *, current_version: str | None = None, strict: bool = True
 ) -> list[AllowEntry]:
-    """Load and validate ``allow.yml``; expired entries are an error."""
+    """Load and validate ``allow.yml``.
+
+    The only load-time rejection that can go stale is the expiry: an entry whose
+    ``expires`` version has been reached fails the load, so nobody can leave a
+    dead waiver behind. That rule belongs to a gate, and the allow-list now has
+    exactly one consumer — the migration-only ``diff``, which is no longer a
+    gate and outlives the release its entries were written for. ``strict=False``
+    therefore keeps an expired entry with a warning instead of failing, which is
+    what ``diff`` asks for; there is nothing to relax for ``baseline``, which
+    reads no allow-list at all (see ``_check_baseline``).
+    """
     raw = yaml.safe_load(path.read_text(encoding="utf-8")) if path.is_file() else []
     if raw is None:
         raw = []
@@ -953,8 +981,20 @@ def load_allow_list(
     current = parse_version(current_version or texsmith_version())
     entries: list[AllowEntry] = []
     seen: set[str] = set()
+    expired: list[str] = []
     for index, item in enumerate(raw):
-        entries.append(_allow_entry(item, index=index, current=current, seen=seen))
+        try:
+            entries.append(_allow_entry(item, index=index, current=current, seen=seen))
+        except _AllowExpiredError as exc:
+            if strict:
+                raise ParityError(str(exc)) from exc
+            expired.append(exc.entry.allow_id)
+            entries.append(exc.entry)
+    if expired:
+        print(
+            f"parity: {len(expired)} allow-list entries are past their expiry and were kept "
+            f"anyway ({', '.join(expired)}); they describe the migration, not a live gate"
+        )
     return entries
 
 
@@ -981,11 +1021,6 @@ def _allow_entry(item: Any, *, index: int, current: tuple[int, ...], seen: set[s
         raise ParityError(f"allow-list: {what}.files must be a non-empty list of globs")
     reason = _require_str(item, "reason", what=what)
     expires = parse_version(_require_str(item, "expires", what=what))
-    if current >= expires:
-        raise ParityError(
-            f"allow-list: {what} expired at {'.'.join(map(str, expires))} "
-            f"(current {'.'.join(map(str, current))}); fix or remove it"
-        )
     allowed_keys = {"id", "kind", "files", "reason", "expires"}
     if kind == "rewrite":
         allowed_keys |= {"from", "to"}
@@ -1004,7 +1039,7 @@ def _allow_entry(item: Any, *, index: int, current: tuple[int, ...], seen: set[s
     unknown = set(item) - allowed_keys
     if unknown:
         raise ParityError(f"allow-list: {what} has unknown keys {sorted(unknown)}")
-    return AllowEntry(
+    entry = AllowEntry(
         allow_id=allow_id,
         kind=kind,
         files=tuple(files),
@@ -1014,6 +1049,13 @@ def _allow_entry(item: Any, *, index: int, current: tuple[int, ...], seen: set[s
         rewrite_to=rewrite_to,
         pattern=pattern,
     )
+    if current >= expires:
+        raise _AllowExpiredError(
+            entry,
+            f"allow-list: {what} expired at {'.'.join(map(str, expires))} "
+            f"(current {'.'.join(map(str, current))}); fix or remove it",
+        )
+    return entry
 
 
 def apply_rewrites(text: str, relpath: str, allow: Iterable[AllowEntry]) -> str:
@@ -1236,6 +1278,12 @@ def _write_baseline(entry: Entry, files: dict[str, str]) -> None:
 
 
 def _check_baseline(entry: Entry, files: dict[str, str]) -> EntryReport:
+    """Diff a fresh render against the committed one — no allow-list, on purpose.
+
+    Both sides come from the same reader, so there is no such thing as an
+    intended difference here: a change is either a regression or a change the
+    author re-records with ``parity.py baseline`` and a reviewer reads.
+    """
     target = _baseline_dir(entry)
     if not target.is_dir():
         return EntryReport(entry, MISSING, "run `parity.py baseline` to record it")
@@ -1261,7 +1309,7 @@ def cmd_baseline(args: argparse.Namespace) -> int:
     entries = select_entries(load_corpus(), args.only)
     runnable, skipped = _partition(entries, without=args.without, ignore=("typst",))
     results = render_many(
-        runnable, reader=LEGACY_READER, out_root=BUILD_DIR / LEGACY_READER, jobs=args.jobs
+        runnable, reader=DEFAULT_READER, out_root=BUILD_DIR / DEFAULT_READER, jobs=args.jobs
     )
     reports: list[EntryReport] = [*skipped]
     for entry in runnable:
@@ -1284,9 +1332,12 @@ def cmd_baseline(args: argparse.Namespace) -> int:
             reports.append(EntryReport(entry, "written", ", ".join(sorted(files))))
     if args.check:
         _write_diffs(reports, BUILD_DIR / "check")
-        print_table(reports, title="baseline --check (legacy reader vs tests/parity/baseline)")
+        print_table(
+            reports,
+            title=f"baseline --check ({DEFAULT_READER} reader vs tests/parity/baseline)",
+        )
     else:
-        print_table(reports, title="baseline (legacy reader → tests/parity/baseline)")
+        print_table(reports, title=f"baseline ({DEFAULT_READER} reader → tests/parity/baseline)")
         for report in reports:
             if report.status == SKIPPED and _baseline_dir(report.entry).is_dir():
                 print(f"kept the committed baseline of skipped entry {report.entry.entry_id}")
@@ -1294,10 +1345,21 @@ def cmd_baseline(args: argparse.Namespace) -> int:
 
 
 def cmd_diff(args: argparse.Namespace) -> int:
-    allow = load_allow_list()
+    if not args.only:
+        raise ParityError(
+            "diff compares two readers, and only a legacy-spelled document can be read by "
+            "both: examples/** and docs/** are canonical TMark, which the html reader "
+            "renders as literal text, so a whole-corpus run reports noise. It belongs to "
+            "the migration and is kept to audit a document that has not been migrated yet "
+            "— name that entry set explicitly with --only GLOB (repeatable). The gate on "
+            "the tmark path is `parity.py baseline --check`."
+        )
+    allow = load_allow_list(strict=False)
     reader_flag(args.reader_a)
     reader_flag(args.reader_b)
     entries = select_entries(load_corpus(), args.only)
+    if not entries:
+        raise ParityError(f"--only {args.only} matched no corpus entry")
     runnable, skipped = _partition(entries, without=args.without, ignore=("typst",))
     results_a = render_many(
         runnable, reader=args.reader_a, out_root=BUILD_DIR / args.reader_a, jobs=args.jobs
@@ -1469,7 +1531,183 @@ def compare_pdfs(
     return status, pages, detail
 
 
+# ------------------------------------------------------------------ pdf baseline
+
+# The entries the nightly job guards: one acronym-heavy page, the counter
+# contract, the index and the margin notes — the four the triage's §6 pixel diff
+# already covered, and the four whose fragments are most easily broken.
+PDF_BASELINE_ENTRIES = ("abbr", "counters", "index", "marginnote")
+# Absolute tolerance on a page's ink coverage. A pixel-exact figure is not
+# reproducible across machines (see `pdf_digest`), so a page passes when its
+# text layer is identical and its ink moved by less than this.
+INK_TOLERANCE = 0.002
+_PAGE_TEXT_WS_RE = re.compile(r"\s+")
+
+
+def page_text(text: str) -> str:
+    """A page's text layer with every whitespace run collapsed to one space."""
+    return _PAGE_TEXT_WS_RE.sub(" ", text).strip()
+
+
+def pdf_digest(pdf: Path, *, dpi: int) -> list[dict[str, Any]]:
+    """Per-page record of a built PDF: raster size, ink coverage, text layer.
+
+    Deliberately **not** a hash of the page bitmap. A sha256 over the pixels is
+    all-or-nothing, and three things under it are not pinned: tectonic fetches
+    whatever TeX bundle is current, TeXSmith downloads its fonts on first use,
+    and pymupdf's rasteriser changes its antialiasing between releases — any of
+    the three flips every hash while the document is unchanged. (The two-reader
+    pixel diff above lives with that by comparing two PDFs built *in the same
+    run*, with a 0.1 % threshold and a one-pixel dilation; a committed file has
+    no such luxury.) So the committed record is what survives a toolchain bump:
+    the page count, the text layer verbatim — which is also readable in a
+    ``git diff``, so a change to the rendering shows up as the changed sentence
+    — the raster size, and the ink coverage within ``INK_TOLERANCE``.
+
+    The cost is stated once here: a layout-only change that keeps the text and
+    moves less ink than the tolerance (a figure shifted a few millimetres) is
+    invisible to this gate. `parity.py pdf` without `--baseline` still sees it.
+    """
+    images, texts = _rasterise(pdf, dpi=dpi)
+    pages: list[dict[str, Any]] = []
+    for image, text in zip(images, texts, strict=True):
+        ink = _ink(image).histogram()[255] / float(image.width * image.height)
+        pages.append(
+            {"size": [image.width, image.height], "ink": round(ink, 5), "text": page_text(text)}
+        )
+    return pages
+
+
+def compare_pdf_digest(
+    recorded: Sequence[dict[str, Any]], fresh: Sequence[dict[str, Any]]
+) -> tuple[str, str]:
+    """``(status, detail)`` for one document's committed record against a fresh one."""
+    if len(recorded) != len(fresh):
+        return DIFFERS, f"page count {len(recorded)} vs {len(fresh)}"
+    problems: list[str] = []
+    for number, (old, new) in enumerate(zip(recorded, fresh, strict=True), start=1):
+        if list(old["size"]) != list(new["size"]):
+            problems.append(f"page {number}: raster {old['size']} → {new['size']}")
+        if old["text"] != new["text"]:
+            problems.append(f"page {number}: the text layer changed")
+        elif abs(old["ink"] - new["ink"]) > INK_TOLERANCE:
+            problems.append(
+                f"page {number}: ink {old['ink']:.5f} → {new['ink']:.5f} "
+                f"(tolerance {INK_TOLERANCE})"
+            )
+    if problems:
+        return DIFFERS, "; ".join(problems)
+    return IDENTICAL, f"{len(fresh)} pages, text identical, ink within {INK_TOLERANCE}"
+
+
+def _pdf_baseline_entries(args: argparse.Namespace, corpus: dict[str, Entry]) -> list[Entry]:
+    wanted = args.entries or list(PDF_BASELINE_ENTRIES)
+    unknown = [entry_id for entry_id in wanted if entry_id not in corpus]
+    if unknown:
+        raise ParityError(f"unknown corpus entries: {', '.join(unknown)}")
+    return [corpus[entry_id] for entry_id in wanted]
+
+
+def cmd_pdf_baseline(args: argparse.Namespace) -> int:
+    """Build the tmark path's PDFs and record/check them against the committed digest."""
+    corpus = {entry.entry_id: entry for entry in load_corpus()}
+    entries = _pdf_baseline_entries(args, corpus)
+    _require_pdf_toolchain(entries)
+    runnable, skipped = _partition(entries, without=args.without)
+    pdf_root = BUILD_DIR / "pdf"
+    results = render_many(
+        runnable,
+        reader=DEFAULT_READER,
+        out_root=pdf_root / DEFAULT_READER,
+        jobs=args.jobs,
+        build=True,
+    )
+    committed: dict[str, Any] = {}
+    if args.check:
+        if not PDF_BASELINE_PATH.is_file():
+            raise ParityError(
+                f"{PDF_BASELINE_PATH.relative_to(ROOT)} does not exist; "
+                f"record it with `parity.py pdf --baseline`"
+            )
+        stored = json.loads(PDF_BASELINE_PATH.read_text(encoding="utf-8"))
+        if stored.get("dpi") != args.dpi:
+            raise ParityError(
+                f"the committed pdf baseline was recorded at {stored.get('dpi')} dpi, "
+                f"not {args.dpi}; pass --dpi {stored.get('dpi')} or re-record it"
+            )
+        committed = stored.get("documents") or {}
+
+    reports: list[EntryReport] = [*skipped]
+    documents: dict[str, Any] = {}
+    for entry in runnable:
+        result = results[entry.entry_id]
+        if not result.ok:
+            reports.append(error_report(result))
+            continue
+        pdfs = result.pdfs()
+        if not pdfs:
+            reports.append(EntryReport(entry, ERROR, "no pdf output"))
+            continue
+        status, details = IDENTICAL, []
+        for pdf in pdfs:
+            name = f"{entry.entry_id}/{pdf.name}"
+            pages = pdf_digest(pdf, dpi=args.dpi)
+            documents[name] = pages
+            if not args.check:
+                details.append(f"{pdf.name}: {len(pages)} pages")
+                continue
+            if name not in committed:
+                status = MISSING
+                details.append(f"{pdf.name}: not in the committed record")
+                continue
+            verdict, detail = compare_pdf_digest(committed[name], pages)
+            details.append(f"{pdf.name}: {detail}")
+            if verdict == DIFFERS:
+                status = DIFFERS
+        reports.append(
+            EntryReport(entry, "recorded" if not args.check else status, "; ".join(details))
+        )
+
+    pdf_root.mkdir(parents=True, exist_ok=True)
+    payload = {
+        "reader": DEFAULT_READER,
+        "dpi": args.dpi,
+        "ink_tolerance": INK_TOLERANCE,
+        "documents": documents,
+    }
+    if args.check:
+        (pdf_root / "digest.json").write_text(json.dumps(payload, indent=2), encoding="utf-8")
+        print_table(
+            reports,
+            title=f"pdf --baseline --check ({DEFAULT_READER} reader vs "
+            f"{PDF_BASELINE_PATH.relative_to(ROOT)})",
+        )
+    else:
+        PDF_BASELINE_PATH.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
+        print_table(
+            reports,
+            title=f"pdf --baseline ({DEFAULT_READER} reader → "
+            f"{PDF_BASELINE_PATH.relative_to(ROOT)})",
+        )
+    return exit_code(reports)
+
+
+def _require_pdf_toolchain(entries: Sequence[Entry]) -> None:
+    for entry in entries:
+        needed = "typst" if entry.backend == "typst" else "tectonic"
+        if not REQUIREMENT_CHECKS[needed]():
+            raise ParityError(f"{entry.entry_id}: {needed} is required to build its PDF")
+
+
 def cmd_pdf(args: argparse.Namespace) -> int:
+    if args.baseline:
+        return cmd_pdf_baseline(args)
+    if args.check:
+        raise ParityError("pdf --check only means something together with --baseline")
+    if not args.entries:
+        raise ParityError(
+            "pdf needs --entries ID... (or --baseline, which has its own default set)"
+        )
     reader_flag(args.reader_a)
     reader_flag(args.reader_b)
     corpus = {entry.entry_id: entry for entry in load_corpus()}
@@ -1477,10 +1715,7 @@ def cmd_pdf(args: argparse.Namespace) -> int:
     if unknown:
         raise ParityError(f"unknown corpus entries: {', '.join(unknown)}")
     entries = [corpus[entry_id] for entry_id in args.entries]
-    for entry in entries:
-        needed = "typst" if entry.backend == "typst" else "tectonic"
-        if not REQUIREMENT_CHECKS[needed]():
-            raise ParityError(f"{entry.entry_id}: {needed} is required to build its PDF")
+    _require_pdf_toolchain(entries)
     runnable, skipped = _partition(entries, without=args.without)
     pdf_root = BUILD_DIR / "pdf"
     results_a = render_many(
@@ -1581,7 +1816,17 @@ def build_parser() -> argparse.ArgumentParser:
 
     p_baseline = sub.add_parser(
         "baseline",
-        help="render the legacy reader into tests/parity/baseline (or --check against it)",
+        help=f"render the {DEFAULT_READER} reader (the CLI default) into "
+        f"tests/parity/baseline (or --check against it)",
+        description=(
+            f"Record, or check, the regression baseline of the {DEFAULT_READER} reader — the "
+            "reader the CLI uses when --reader is absent, and the one every example and "
+            "docs page is written for. Recording rewrites tests/parity/baseline/<id>/, "
+            "which is committed, so an intended change to the rendered output lands in a "
+            "diff a reviewer reads. --check re-renders and fails on any difference: there "
+            "is no allow-list here, because both sides come from the same reader."
+        ),
+        formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     p_baseline.add_argument(
         "--check",
@@ -1592,21 +1837,78 @@ def build_parser() -> argparse.ArgumentParser:
     p_baseline.set_defaults(func=cmd_baseline)
 
     p_render = sub.add_parser("render", help="render every entry with one reader (raw outputs)")
-    p_render.add_argument("--reader", choices=READERS, default=LEGACY_READER)
+    p_render.add_argument(
+        "--reader",
+        choices=READERS,
+        default=DEFAULT_READER,
+        help="reader to pin (default: %(default)s, the CLI default). An .html input goes "
+        "through the HtmlReader whatever this says; 'html' is the escape hatch for a "
+        "document still written in the legacy spellings, kept for one release.",
+    )
     p_render.add_argument("--out", required=True, metavar="DIR")
     _add_common(p_render)
     p_render.set_defaults(func=cmd_render)
 
-    p_diff = sub.add_parser("diff", help="render both readers, diff modulo the allow-list")
+    p_diff = sub.add_parser(
+        "diff",
+        help="MIGRATION ONLY: html vs tmark on an explicit --only entry set",
+        description=(
+            "Compare two readers on the same sources, modulo tests/parity/allow.yml.\n\n"
+            "This belongs to the TeXSmith → TMark migration (plan task 4.1) and is no "
+            "longer a gate. examples/** and docs/** are written in canonical TMark, which "
+            "the legacy html reader cannot parse — it renders '{.thin}', "
+            "'{raw latex}(…)' and '::: tabs' as literal text — so a whole-corpus run "
+            "reports noise rather than findings. What it is still good for is auditing a "
+            "single document that has *not* been migrated yet, which is why it refuses to "
+            "run without an explicit --only entry set.\n\n"
+            "The allow-list is loaded leniently here: an entry past its expiry is kept "
+            "with a warning instead of failing the load, because these entries describe a "
+            "migration that is over and the release they were written for has moved on. "
+            "The gate on the tmark path is `parity.py baseline --check`."
+        ),
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
     p_diff.add_argument("--reader-a", choices=READERS, default=LEGACY_READER)
-    p_diff.add_argument("--reader-b", choices=READERS, default="tmark")
+    p_diff.add_argument("--reader-b", choices=READERS, default=DEFAULT_READER)
     _add_common(p_diff)
     p_diff.set_defaults(func=cmd_diff)
 
-    p_pdf = sub.add_parser("pdf", help="build both sides and pixel-diff the PDFs")
-    p_pdf.add_argument("--entries", nargs="+", required=True, metavar="ID")
+    p_pdf = sub.add_parser(
+        "pdf",
+        help="rasterise built PDFs: two readers by default, or --baseline against "
+        "tests/parity/pdf-baseline.json",
+        description=(
+            "Build the PDFs and compare them page by page.\n\n"
+            "Default: two readers in the same run, pixel-diffed after a one-pixel "
+            "dilation — the migration comparison, kept for the same reason `diff` is.\n\n"
+            "--baseline: build only the "
+            f"{DEFAULT_READER} path and record each page's text layer, raster size and ink "
+            "coverage into tests/parity/pdf-baseline.json (committed); --baseline --check "
+            "rebuilds and compares against it, so the nightly job guards the rendering "
+            "rather than the migration. Its default entry set is "
+            f"{' '.join(PDF_BASELINE_ENTRIES)}."
+        ),
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
+    p_pdf.add_argument(
+        "--entries",
+        nargs="+",
+        metavar="ID",
+        help=f"corpus entries to build (required; --baseline defaults to "
+        f"{' '.join(PDF_BASELINE_ENTRIES)})",
+    )
+    p_pdf.add_argument(
+        "--baseline",
+        action="store_true",
+        help=f"record the {DEFAULT_READER} path into tests/parity/pdf-baseline.json",
+    )
+    p_pdf.add_argument(
+        "--check",
+        action="store_true",
+        help="with --baseline: compare against the committed record instead of rewriting it",
+    )
     p_pdf.add_argument("--reader-a", choices=READERS, default=LEGACY_READER)
-    p_pdf.add_argument("--reader-b", choices=READERS, default="tmark")
+    p_pdf.add_argument("--reader-b", choices=READERS, default=DEFAULT_READER)
     p_pdf.add_argument("--dpi", type=int, default=100)
     p_pdf.add_argument(
         "--threshold",

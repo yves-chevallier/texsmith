@@ -540,3 +540,56 @@ than a side effect of the rename. It was taken: **always the short form**
 
 Severity: **medium** — visible in every document that uses acronyms.
 **Decided and fixed**: see O5 above; `abbr` is now pixel-identical.
+
+## 7. Closing note — the cross-reader comparison is retired
+
+This document records a measurement that can no longer be repeated as it was
+taken. `scripts/parity.py diff` renders the *same* source with both readers, and
+since the flip every source in `examples/**` and `docs/**` is canonical TMark,
+which the legacy `html` reader cannot parse — it renders `{.thin}`,
+`{raw latex}(…)` and `::: tabs` as literal text. A whole-corpus run therefore
+reports noise, not findings, and the numbers in §1 and §1.1 are a snapshot of
+the sources as they stood on 2026-09-12, before the rewrite.
+
+`diff` and `tests/parity/allow.yml` are kept, migration-only: `diff` refuses to
+run without an explicit `--only` entry set, and it is there to audit one
+document that has *not* been migrated yet. Its allow-list is loaded leniently —
+an entry past its `expires` is a warning, not a failed load — because these
+entries describe a migration that is over. What replaces it as a gate is
+`parity.py baseline --check`, which re-renders the corpus through the tmark
+reader and compares it to a committed record (`writers-and-passes.md` §5,
+`status.md`, "What the harness measures now"). The baseline was re-recorded from
+the tmark path on 2026-09-12; the legacy renders this file's tables were
+computed against are gone from the tree.
+
+**Findings closed.** F1, F2, F7, F10, F11's `uses_eqnref` item and F12/O5 on the
+TeXSmith side, each with its commit in §3; F3, F4, F5 and F6 on the tmark side.
+§4's L1–L8 are improvements the new path brought and need no follow-up.
+
+**Findings still open**, none of them measurable by the harness any more — each
+now needs its own reproduction, and the ones in the writer or the parser belong
+to tmark:
+
+- **F8** — `--8<--- "file"` (three or more dashes, which `pymdownx.snippets`
+  accepts and every occurrence in the corpus uses) is not lowered to an
+  `Include`, and the `;--8<--` escape is not consumed. tmark parser; being
+  fixed at the time of writing.
+- **F9** — the `[^1]` footnotes of `docs/assets/examples/cheese`. Narrowed to
+  F8's stray `;`: closes with it, worth re-checking after.
+- **F11**, the tmark-core items: emphasis nesting order (`*_x_*` vs `_*x*_`, and
+  the extra `\emph` in a small-caps cell); a code span whose text reads as a
+  task item being parsed as one; `\begin{enumerate}` / `\begin{description}`
+  appearing or disappearing around nested lists.
+- **O2** — a link to a local `.md` file loses its target silently. Documented
+  and allow-listed, but it deserves a diagnostic.
+- **O3** — `numbered: false` also sets `outlined: false` on a Typst heading.
+  Still undecided.
+- **O4** — the unresolved citation in `docs/assets/examples/cheese`: `[?key]`
+  is the documented spelling, so the question is why the key does not resolve.
+- **O1** — whether the harness should diff with one line of context. Moot for
+  the baseline gate, which prints whole hunks for review; it only ever mattered
+  for the allow-list patterns.
+
+§6's PDF pixel diff is likewise a two-reader measurement. What guards the
+rendering now is `parity.py pdf --baseline --check` over the same four entries
+(`abbr counters index marginnote`), against `tests/parity/pdf-baseline.json`.
