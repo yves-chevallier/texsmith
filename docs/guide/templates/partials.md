@@ -20,7 +20,8 @@ are ignored, so an older fragment survives a newer writer.
 | --- | --- | --- | --- |
 | `ts-typesetting` | `\tslead{…}` | — | lead-in of a paragraph (run-in bold line) |
 | | `\tsmark{…}` | — | highlight; coloured text on XeTeX, `lua-ul` on LuaTeX, a colour box otherwise |
-| | `\tsdivider` | — | thematic break; `\clearpage` by default |
+| | `\tsdivider` | — | thematic break at the top level of the document; `\clearpage` by default |
+| | `\tsrule[keys]` | `width`, `thickness`, `above`, `below` | the same thematic break inside a container (quote, callout, figure, div, list item, cell, aside, note); a full-width rule, never a page break |
 | | `\tsepigraph[source={…}]{…}` | `source` | `epigraph` |
 | | `\tsaside[side=left]{…}` | `side` (`left`, `right`, `inner`, `outer`) | `marginnote`, with the margin font and width clamp |
 | | `\tsprogress[thin]{0.45}{label}` | `thin` | `progressbar` |
@@ -67,6 +68,7 @@ fragments are `\usepackage`d there):
     ```latex
     \RenewDocumentCommand{\tscodeinline}{O{}m}{\mbox{\texttt{#2}}}
     \RenewDocumentCommand{\tsdivider}{}{\bigskip\hrule\bigskip}
+    \pgfkeys{/ts/rule/.cd, thickness=1pt, width=0.4\linewidth}
     \RenewDocumentEnvironment{tsdiv@multicolumn}{O{}}{\begin{multicols}{3}}{\end{multicols}}
     ```
 
@@ -95,7 +97,7 @@ on the legacy path and warn, naming the replacement — and are removed in
 | `italic`, `strong`, `smallcaps`, `subscript`, `superscript`, `strikethrough`, `underline`, `enquote`, `blockquote` | structural LaTeX from the writer |
 | `highlight` | `\tsmark` |
 | `lead` | `\tslead` |
-| `horizontal_rule` | `\tsdivider` |
+| `horizontal_rule` | `\tsdivider` (top level), `\tsrule` (in a container) |
 | `epigraph` | `\tsepigraph` |
 | `multicolumn`, `tabbed` | `tsdiv@multicolumn`, `tsdiv@tab` |
 | `icon` | `\tsicon` |

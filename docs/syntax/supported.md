@@ -37,7 +37,10 @@ Dividers:
 All standard CommonMark constructs render as you would expect. A `---` line is
 a **divider**: the web shows `<hr>`, and the paged writers emit `\tsdivider`,
 which the `ts-typesetting` fragment defines as a page break — a template
-redefines it at will.
+redefines it at will. Inside a container — a block quote, a callout, a figure,
+a `:::` div, a list item — the same `---` emits `\tsrule` instead (`<hr
+class="rule">` on the web): a separator, never a page break, because a page
+break there would tear the container in two.
 
 ## Cheat sheet
 
