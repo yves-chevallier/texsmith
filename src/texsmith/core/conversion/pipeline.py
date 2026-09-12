@@ -265,6 +265,27 @@ def apply_pass_values(
                 )
 
 
+def _declare_glossary(state: DocumentState, resolved: Mapping[str, Any] | None) -> None:
+    """Declare the document's glossary terms so ``\\tsgls{key}`` has an entry.
+
+    ``resolve`` returns the merged ``press.declare.glossary`` of the document
+    and its includes; the writer emits ``\\tsgls{key}`` with the key as
+    written, so the entry is declared under that exact key (no slugification)
+    and an entry a previous document of the batch declared is left alone.
+    """
+    terms = (resolved or {}).get("glossary")
+    if not isinstance(terms, Mapping):
+        return
+    for key, description in terms.items():
+        name = str(key).strip()
+        text = str(description).strip()
+        if not name or not text or name in state.acronyms:
+            continue
+        state.acronyms[name] = (name, text)
+        state.abbreviations.setdefault(name, text)
+        state.acronym_keys.setdefault(name, name)
+
+
 def render_ir_document(
     *,
     context: ConversionContext,
@@ -350,6 +371,7 @@ def render_ir_document(
         abbreviations=processed.ir.abbreviations,
         template_shell_escape=bool(binding.requires_shell_escape) if binding else False,
     )
+    _declare_glossary(state, processed.resolved)
     apply_pass_values(ctx, state, context.template_overrides)
 
     processed.diagnostics.extend(record for record in sink if record not in processed.diagnostics)

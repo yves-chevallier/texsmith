@@ -48,7 +48,7 @@ You can visit the [MkDocs website](https://www.mkdocs.org/) for more information
 
 ### Images
 
-![MkDocs Logo](https://www.mkdocs.org/assets/images/mkdocs-logo-512.png)
+![MkDocs Logo](trace.svg)
 
 ### Definition Lists
 

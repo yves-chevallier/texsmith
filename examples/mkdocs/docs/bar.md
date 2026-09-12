@@ -9,3 +9,7 @@ Donec vel mauris quam. Aliquam erat volutpat.
 ## Bar Baz
 
 Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas.
+
+Requirement #(req:reset) is declared site-wide in `mkdocs.yml` and referenced
+from the [constructs page](constructs.md), which numbers its findings after
+this page's @fw:watchdog.

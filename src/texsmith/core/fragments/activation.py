@@ -88,13 +88,26 @@ def apply_requires(
     abbreviations: Iterable[model.AbbrDef] = (),
     template_shell_escape: bool = False,
 ) -> DocumentState:
-    """Record the union of the bodies' ``Requires`` on ``state`` (in place, returned)."""
+    """Record the union of the bodies' ``Requires`` on ``state`` (in place, returned).
+
+    The record accumulates: a batch (the CLI in input order, a MkDocs book in
+    navigation order) threads one :class:`DocumentState` through every
+    document, and the template is wrapped once, at the end — so a contract
+    named by the *first* page (``\\tslead`` on page one, ``ts-typesetting``)
+    must still be active when the last page names none.
+    """
     state.contract_path = True
-    state.required_fragments = set(requires.fragments)
-    implied = implied_packages(requires.fragments)
-    state.required_packages = [pkg for pkg in requires.packages if pkg not in implied]
-    state.has_index_entries = bool(requires.index)
-    state.index_registries = list(requires.index)
+    state.required_fragments = set(state.required_fragments) | set(requires.fragments)
+    implied = implied_packages(state.required_fragments)
+    state.required_packages = list(
+        dict.fromkeys(
+            pkg
+            for pkg in (*state.required_packages, *requires.packages)
+            if pkg not in implied
+        )
+    )
+    state.has_index_entries = bool(state.has_index_entries or requires.index)
+    state.index_registries = list(dict.fromkeys((*state.index_registries, *requires.index)))
     state.requires_shell_escape = bool(
         state.requires_shell_escape or requires.shell_escape or template_shell_escape
     )
@@ -105,9 +118,11 @@ def apply_requires(
     # with collision suffixes), the same ``remember_abbreviation`` applies, so
     # registering the definitions in document order reproduces the keys.
     wanted = set(requires.acronyms)
+    # A key an earlier document of the batch already wrote stays in the glossary.
+    known = set(state.acronyms)
     for definition in abbreviations:
         key = state.remember_abbreviation(definition.key, definition.expansion)
-        if key and key not in wanted:
+        if key and key not in wanted and key not in known:
             # Defined but never written: keep the definition out of the
             # glossary, ``ts-glossary`` declares only the keys that appear.
             state.acronyms.pop(key, None)
