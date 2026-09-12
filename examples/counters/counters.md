@@ -22,7 +22,7 @@ press:
 This report reviews release candidate 1.4.2-rc1 of the sensor node firmware.
 Two numbered series run through it: findings raised by the review board, and
 the requirements they are checked against. Both are declared in the YAML front
-matter under `counters:`, so TeXSmith allocates the numbers and both backends —
+matter under `press.declare.counters`, so TeXSmith allocates the numbers and both backends —
 LaTeX and Typst — print the same ones.
 
 The requirement series starts at `100` because it continues the numbering of
