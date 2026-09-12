@@ -14,6 +14,15 @@ You can insert code snippets and specify options in the info string.
 - Highlight specific lines with `hl_lines="2-3"`
 - An external source with `include="path/to/file"`
 
+The info string may also end with a full attribute list in braces, which is
+where a class or an id lives:
+
+````md
+```python {.wide title="hanoi.py"}
+print(1)
+```
+````
+
 The highlighting engine is global, set with `press.code.engine`: `pygments`
 (the default, Tectonic-safe), `listings`, `verbatim` or `minted` (which needs
 shell escape).

@@ -232,6 +232,16 @@ Rendered by whatever the template defines for this class.
 :::
 ```
 
+A CommonMark HTML block whose opening tag carries the `markdown` attribute —
+Python-Markdown's `md_in_html` — is sugar for a container named after the tag,
+its `id` and `class` becoming the attribute list. `<div markdown>` is therefore
+`::: div`, kept indefinitely because it is the only container spelling a
+Python-Markdown site renders; any other tag is an unknown container, with the
+diagnostic. HTML **without** the attribute is raw: CommonMark passes it through
+as typed, and the paged writers drop it like any foreign raw, so
+`<span class="x">text</span>` prints "text" and `<br>` prints nothing — a break
+that must reach print is Markdown's hard break.
+
 A layout container reaches the paged backends through one contract —
 `\begin{tsdiv}{name}[attrs]` and `#ts-div("name", ..)` — dispatched on the name
 with the attributes forwarded as keys (`#id` as `id`, classes as

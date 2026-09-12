@@ -107,11 +107,14 @@ role:
 {lead}[Boot sequence.] The device powers the flash before the SoC…
 ```
 
-A paragraph whose first inline is a strong span shorter than 80 characters is
-promoted to a lead-in automatically while the `paragraph.lead` feature is on
-(the default; off under `strict`). The promotion is sugar, not magic: it is
-named, switchable, and `tmark lint --fix` rewrites it to the role. Either way
-TeXSmith emits `\tslead{…}`, defined as:
+A paragraph whose **whole** content is a strong span shorter than 80 characters
+is promoted to a lead-in automatically while the `paragraph.lead` feature is on
+(the default; off under `strict`). A strong span that merely *opens* a
+paragraph is a bold run-in and stays one — promoting it would move the rest of
+the sentence into a paragraph of its own, since `\tslead` breaks the paragraph
+around the lead-in — and a bold-only list item is a label, not a lead-in. The
+promotion is sugar, not magic: it is named, switchable, and `tmark lint --fix`
+rewrites it to the role. Either way TeXSmith emits `\tslead{…}`, defined as:
 
 ```latex
 \providecommand{\tslead}[1]{\par\noindent\textbf{#1}\par\nobreak\smallskip}
@@ -137,10 +140,12 @@ La synthèse récapitule, pilier par pilier, les forces et faiblesses…
 
 Written as `**Sens critique**` on a line of its own, the same two labels are
 promoted to lead-ins automatically and `tmark lint` says so
-(`lead-promotion`). The rule fires when the paragraph opens with a strong span
-and nothing else precedes it, and the strong text is shorter than 80
-characters. Bold spans inside running prose (`Some **bold** text.`) and bold
-paragraphs over the threshold keep their `\textbf{…}` rendering.
+(`lead-promotion`). The rule fires only when the paragraph *is* that strong
+span and nothing else, and its plain text is shorter than 80 characters. Bold
+spans inside running prose (`Some **bold** text.`), a run-in such as
+`**Leading bold:** followed by text`, and bold paragraphs over the threshold
+all keep their `\textbf{…}` rendering. The `{lead}[…]` role, by contrast, always
+takes what follows it on the paragraph, whatever the feature says.
 
 Override `\tslead` in a custom preamble snippet to change the visual style — for instance, to add a coloured rule, switch to small caps, or replace the `\smallskip` with `\medskip`:
 

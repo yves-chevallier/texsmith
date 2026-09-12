@@ -181,8 +181,9 @@ is a deliberate deviation from GFM, and `{sc}[…]` is the spelling to prefer. `
 opens emphasis inside a word, so `snake_case_name` stays literal.
 
 A run-in heading that opens a paragraph is `{lead}[Boot sequence.] The device powers…`.
-A paragraph starting with a short strong span (< 80 chars) is promoted to one
-automatically.
+A paragraph whose **whole** content is a strong span under 80 characters is promoted to
+one automatically; a strong span that merely *opens* a paragraph stays a bold run-in,
+and a bold-only list item stays a label.
 
 `^^x^^` is **not** a TMark construct: with the feature `inline.insert` off (the default)
 it is literal text and raises `feature-off`; on, it is sugar for `{underline}[x]`. Write
@@ -533,7 +534,8 @@ URL; write `\@` to force a literal one, and `\#` for a literal hash before `[` o
 Footnotes are limited to one line in print — keep them tight.
 
 A standalone anchor — one you want to refer to but that no heading, image or caption
-line hosts — is the span `[]{#id}`.
+line hosts — is the span `[]{#id}`. A bare `@key` must begin with a letter, so a
+Zotero-style key such as `1RgTv` is only reachable bracketed: `@[1RgTv]`.
 
 ⚠️ **Deprecated:** `[^key]` and `^[k1,k2]` as *citations*, `[](gls:term)`,
 `#{prefix:key}`, `{index:reg}[…]`, `{index}[…]{b}`, and `[](){#id}` for an anchor
