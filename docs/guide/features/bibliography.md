@@ -70,17 +70,19 @@ Cheese exhibits unique melting properties @WADHWANI20111713.
 
 Which renders into:
 
+<!-- The `.snippet` fence below is the input of the PDF preview, not an example:
+     it is rendered by the 0.6 reader until `ConversionRequest.reader` flips to
+     tmark, so it keeps the sugar spelling. tmark-check: skip -->
+
 ```md {.snippet caption="Demo"}
 ---
 width: 70%
-press:
-  sources:
-    bibliography:
-      WADHWANI20111713: https://doi.org/10.3168/jds.2010-3952
+bibliography:
+  WADHWANI20111713: https://doi.org/10.3168/jds.2010-3952
 ---
 # Introduction
 
-Cheese exhibits unique melting properties @WADHWANI20111713.
+Cheese exhibits unique melting properties [^WADHWANI20111713].
 ```
 
 `@key` is the in-text (narrative) citation and `@[key, locator]` the

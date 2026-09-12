@@ -56,9 +56,13 @@ cd examples/progressbar
 texsmith progressbar.md --template article --output-dir build --build
 ```
 
+<!-- The `.snippet` fence below is the input of the PDF preview, not an example:
+     it is rendered by the 0.6 reader until `ConversionRequest.reader` flips to
+     tmark, so it keeps the sugar spelling. tmark-check: skip -->
+
 ````md { .snippet }
 [=25% "Research"]
 [=50% "Implementation"]
 [=75% "Review"]
-[=100% "Launch"]{.thin}
+[=100% "Launch"]{: .thin}
 ````

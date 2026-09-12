@@ -39,6 +39,10 @@ have a familiar shorthand as sugar; both produce the same node.
 profile. `__` duplicates `**`, and academic writing needs small caps far more
 than a second bold — and the difference is visible, not silent.
 
+<!-- The `.snippet` fence below is the input of the PDF preview, not an example:
+     it is rendered by the 0.6 reader until `ConversionRequest.reader` flips to
+     tmark, so it keeps the sugar spelling. tmark-check: skip -->
+
 ```md { .snippet }
 *(regular)* The quick brown fox jumps over the lazy dog.
 
@@ -50,9 +54,9 @@ than a second bold — and the difference is visible, not silent.
 
 *(strikethrough)* ~~The quick brown fox jumps over the lazy dog.~~
 
-*(small capitals)* {sc}[The quick brown fox jumps over the lazy dog.]
+*(small capitals)* __The quick brown fox jumps over the lazy dog.__
 
-*(highlight)* {mark}[The quick brown fox] and *(keys)* {keys}[ctrl+s].
+*(highlight)* ==The quick brown fox== and *(keys)* ++ctrl+s++.
 ```
 
 Delimiters stack for bold italic, and `_` never opens emphasis inside a word,
