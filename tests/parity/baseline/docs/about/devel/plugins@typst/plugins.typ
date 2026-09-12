@@ -115,7 +115,7 @@ If Svgbob is not available, diagrams can be skipped with a warning and rendered 
 The #link("https://circuit2tikz.tf.fau.de/designer/")[CircuitTikZ designer] helps produce circuit diagrams from the browser. Export the generated TikZ snippet and wrap it in a raw #ts-logo("LaTeX") fence:
 
 ````markdown
-```latex { circuitikz }
+```latex raw
 \begin{circuitikz}
     \draw (0,0) to[battery] (0,2)
           -- (3,2) to[R=R] (3,0) -- (0,0);
@@ -123,7 +123,9 @@ The #link("https://circuit2tikz.tf.fau.de/designer/")[CircuitTikZ designer] help
 ```
 ````
 
-Raw blocks bypass the HTML output but remain in the #ts-logo("LaTeX") build. To keep the TikZ code in a separate file, include it via `\input{}` inside a raw fence and store the `.tex` asset alongside the Markdown.
+`latex raw` is the canonical spelling of a raw fence; `/// latex … ///` is read
+as deprecated sugar for it and `tmark lint –fix` rewrites it. Raw blocks bypass
+the HTML output but remain in the #ts-logo("LaTeX") build. To keep the TikZ code in a separate file, include it via `\input{}` inside a raw fence and store the `.tex` asset alongside the Markdown.
 
 = Module Design Principles
 
@@ -137,11 +139,16 @@ Verify that TeXSmith respects these design principles:
 = Visual Tweaks
 
 - Reduce line height for code that uses Unicode box characters.
-- Restyle inserted text (currently green and overly rounded); see “Formatting inserted text”.
-- `{~~deleted text~~}` should drop the curly braces, which currently leak into the output.
+- Critic markup is not lowered by the parser yet: `{++inserted++}`,
+`{–deleted–}`, `{~~old~~new~~}` and `{>>comment<<}` stay literal text and
+raise `compat-unsupported`, so the curly braces no longer leak silently —
+they are reported. The `ts-critic` fragment already defines `\tsins`,
+`\tsdel`, `\tssubst` and `\tscomment` over `ulem` and `xcolor`; restyle
+them by redefining the macros in your template, and revisit the colours once
+the writers emit them.
 
 = Issues
 
 == Markdown Package Issues
 
-`mkdocstrings` autorefs define heading anchors via `[](){#}`, which triggers Markdown lint violations. Find a syntax or lint configuration that avoids false positives.
+`mkdocstrings` autorefs define heading anchors via `[](){#id}`, which triggers Markdown lint violations. TMark reads the pair as the anchor it was meant to be (it used to produce an empty `\url{}` and lose the `\label`), reports it as `deprecated` and offers `[]{#id}` as the fix — which is the spelling to prefer once autorefs indexes it.

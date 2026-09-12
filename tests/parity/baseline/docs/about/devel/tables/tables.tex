@@ -38,6 +38,18 @@
 \author{}\date{}
 \begin{document}
 \maketitle
+\textbf{Mostly settled.} The answer TeXSmith shipped is the \tscodeinline{yaml table} fence,
+which the TMark parser reads and validates: grouped headers, column widths
+(fixed, auto, relative), a \tscodeinline{width-\allowbreak{}group} that makes several columns share one
+width, per-column and per-group alignment, row and column spans (the absorbed
+cells written as \tscodeinline{\textasciitilde{}}), separators, and a caption line after the fence. The
+table model is specified and round-trips through \tscodeinline{tmark fmt}, and a shape it
+cannot express is rejected with a \tscodeinline{table-\allowbreak{}*} diagnostic rather than silently
+flattened. See Tables.
+
+What is still open from the list below is table \textbf{orientation} (rotating a
+very large table) and the width-control knobs (\tscodeinline{tabulary} and friends); both
+are roadmap items.
 \section{Complex Tables}
 Markdown offers limited table configuration---only column alignment by default. PyMdown provides captions, and superfences can inject more metadata, but we still miss:
 \begin{itemize}
@@ -49,10 +61,9 @@ Markdown offers limited table configuration---only column alignment by default. 
 \item Column widths (fixed, auto, relative)
 \end{itemize}
 \subsection{Extended Markdown Table Syntax}
-Leverage Pymdown's table extension to add more metadata directly in Markdown. For example:
-The \tscodeinline{texsmith.spantable} extension lets us span cells in standard Markdown tables.
-
-The \tscodeinline{>>>} syntax will span cells horizontally, the \tscodeinline{vvv} syntax will span cells vertically.
+An idea that was considered and not taken: extending the pipe-table syntax
+itself so a cell could span, with \tscodeinline{>>>} spanning horizontally and \tscodeinline{vvv}
+spanning vertically.
 \begin{tscode}[lang=markdown, engine=pygments]
 \begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
 | Header 1 | Header 2 | Header 3 |

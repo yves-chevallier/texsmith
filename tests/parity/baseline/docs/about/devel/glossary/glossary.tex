@@ -49,23 +49,27 @@ The MkDocs \href{https://realtimeprojects.github.io/mkdocs-ezglossary}{ezglossar
 \PY{n+nb}{\PYZcb{}}
 \end{Verbatim}
 \end{tscode}
-\tscodeinline{\textbackslash{}gls} uses the standard form, \tscodeinline{\textbackslash{}Gls} capitalizes the first letter, \tscodeinline{\textbackslash{}glspl} gives the plural, and \tscodeinline{\textbackslash{}Glspl} capitalizes the plural. The first use of the term falls back to the \tscodeinline{first} form when present, otherwise \tscodeinline{name}. Markdown alone cannot express all of that. One option is to define glossary entries in front matter:
+\tscodeinline{\textbackslash{}gls} uses the standard form, \tscodeinline{\textbackslash{}Gls} capitalizes the first letter, \tscodeinline{\textbackslash{}glspl} gives the plural, and \tscodeinline{\textbackslash{}Glspl} capitalizes the plural. The first use of the term falls back to the \tscodeinline{first} form when present, otherwise \tscodeinline{name}. Markdown alone cannot express all of that. \textbf{What shipped} is the front-matter
+declaration, under \tscodeinline{press.declare.glossary} (the top-level \tscodeinline{glossary:} key is
+read as deprecated sugar):
 \begin{tscode}[lang=yml, engine=pygments]
 \begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
-glossary:
-  html:
-    name: HTML
-    plural: HTMLs
-    description: \PYZgt{}
-      HyperText Markup Language, the standard markup language for
-      documents designed to be displayed in a web browser.
-    first: HyperText Markup Language (HTML)
+press:
+  declare:
+    glossary:
+      entries:
+        HTML: HyperText Markup Language
 \end{Verbatim}
 \end{tscode}
-Place an anchor where the term is defined:
-\begin{tscode}[lang=markdown, engine=pygments]
-\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
-The \PY{g+gs}{**HTML**}\PYZob{}\PYZsh{}gls\PYZhy{}html\PYZcb{} is the standard markup language for web pages...
-\end{Verbatim}
-\end{tscode}
+Every occurrence of a declared key in the prose becomes \tscodeinline{\textbackslash{}tsacr\{HTML\}}, which
+\tscodeinline{ts-\allowbreak{}glossary} defines as \tscodeinline{\textbackslash{}acrshort} --- always the short form, deliberately: the
+author never writes the call, so a first-use expansion would rewrite prose
+nobody typed and make the printed document say something different from the web
+profile, where the key stays inside \tscodeinline{<abbr>}. A glossary \emph{term} reference is
+written by the author as \tscodeinline{@gls:term} and becomes \tscodeinline{\textbackslash{}tsgls}, which is \tscodeinline{\textbackslash{}gls} and
+therefore follows the \tscodeinline{glossaries} conventions.
+
+What is \textbf{still open} is the rest of a \tscodeinline{\textbackslash{}newglossaryentry}: \tscodeinline{plural}, \tscodeinline{first}
+and a forced \tscodeinline{text} have no spelling yet, and neither does the popup/tooltip
+presentation on the web side.
 \end{document}

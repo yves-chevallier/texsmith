@@ -124,7 +124,7 @@ If Svgbob is not available, diagrams can be skipped with a warning and rendered 
 The \href{https://circuit2tikz.tf.fau.de/designer/}{CircuitTikZ designer} helps produce circuit diagrams from the browser. Export the generated TikZ snippet and wrap it in a raw \LaTeX{} fence:
 \begin{tscode}[lang=markdown, engine=pygments]
 \begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
-\PY{l+s+sb}{```}\PY{l+s+sb}{latex}\PY{+w}{ }\PYZob{} circuitikz \PYZcb{}
+\PY{l+s+sb}{```}\PY{l+s+sb}{latex}\PY{+w}{ }raw
 \PY{k}{\PYZbs{}begin}\PY{n+nb}{\PYZob{}}circuitikz\PY{n+nb}{\PYZcb{}}
     \PY{k}{\PYZbs{}draw} (0,0) to[battery] (0,2)
           \PYZhy{}\PYZhy{} (3,2) to[R=R] (3,0) \PYZhy{}\PYZhy{} (0,0);
@@ -132,7 +132,9 @@ The \href{https://circuit2tikz.tf.fau.de/designer/}{CircuitTikZ designer} helps 
 \PY{l+s+sb}{```}
 \end{Verbatim}
 \end{tscode}
-Raw blocks bypass the HTML output but remain in the \LaTeX{} build. To keep the TikZ code in a separate file, include it via \tscodeinline{\textbackslash{}input\{\}} inside a raw fence and store the \tscodeinline{.tex} asset alongside the Markdown.
+\tscodeinline{latex raw} is the canonical spelling of a raw fence; \tscodeinline{/// latex … ///} is read
+as deprecated sugar for it and \tscodeinline{tmark lint -\allowbreak{}-\allowbreak{}fix} rewrites it. Raw blocks bypass
+the HTML output but remain in the \LaTeX{} build. To keep the TikZ code in a separate file, include it via \tscodeinline{\textbackslash{}input\{\}} inside a raw fence and store the \tscodeinline{.tex} asset alongside the Markdown.
 \section{Module Design Principles}
 Verify that TeXSmith respects these design principles:
 \begin{itemize}
@@ -144,10 +146,15 @@ Verify that TeXSmith respects these design principles:
 \section{Visual Tweaks}
 \begin{itemize}
 \item Reduce line height for code that uses Unicode box characters.
-\item Restyle inserted text (currently green and overly rounded); see ``Formatting inserted text''.
-\item \tscodeinline{\{\textasciitilde{}\textasciitilde{}deleted text\textasciitilde{}\textasciitilde{}\}} should drop the curly braces, which currently leak into the output.
+\item Critic markup is not lowered by the parser yet: \tscodeinline{\{++inserted++\}},
+\tscodeinline{\{-\allowbreak{}-\allowbreak{}deleted-\allowbreak{}-\allowbreak{}\}}, \tscodeinline{\{\textasciitilde{}\textasciitilde{}old\textasciitilde{}\textasciitilde{}new\textasciitilde{}\textasciitilde{}\}} and \tscodeinline{\{>>comment<<\}} stay literal text and
+raise \tscodeinline{compat-\allowbreak{}unsupported}, so the curly braces no longer leak silently ---
+they are reported. The \tscodeinline{ts-\allowbreak{}critic} fragment already defines \tscodeinline{\textbackslash{}tsins},
+\tscodeinline{\textbackslash{}tsdel}, \tscodeinline{\textbackslash{}tssubst} and \tscodeinline{\textbackslash{}tscomment} over \tscodeinline{ulem} and \tscodeinline{xcolor}; restyle
+them by redefining the macros in your template, and revisit the colours once
+the writers emit them.
 \end{itemize}
 \section{Issues}
 \subsection{Markdown Package Issues}
-\tscodeinline{mkdocstrings} autorefs define heading anchors via \tscodeinline{[]()\{\#\}}, which triggers Markdown lint violations. Find a syntax or lint configuration that avoids false positives.
+\tscodeinline{mkdocstrings} autorefs define heading anchors via \tscodeinline{[]()\{\#id\}}, which triggers Markdown lint violations. TMark reads the pair as the anchor it was meant to be (it used to produce an empty \tscodeinline{\textbackslash{}url\{\}} and lose the \tscodeinline{\textbackslash{}label}), reports it as \tscodeinline{deprecated} and offers \tscodeinline{[]\{\#id\}} as the fix --- which is the spelling to prefer once autorefs indexes it.
 \end{document}

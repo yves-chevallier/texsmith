@@ -34,21 +34,26 @@ The MkDocs #link("https://realtimeprojects.github.io/mkdocs-ezglossary")[ezgloss
 }
 ```
 
-`\gls` uses the standard form, `\Gls` capitalizes the first letter, `\glspl` gives the plural, and `\Glspl` capitalizes the plural. The first use of the term falls back to the `first` form when present, otherwise `name`. Markdown alone cannot express all of that. One option is to define glossary entries in front matter:
+`\gls` uses the standard form, `\Gls` capitalizes the first letter, `\glspl` gives the plural, and `\Glspl` capitalizes the plural. The first use of the term falls back to the `first` form when present, otherwise `name`. Markdown alone cannot express all of that. *What shipped* is the front-matter
+declaration, under `press.declare.glossary` (the top-level `glossary:` key is
+read as deprecated sugar):
 
 ```yml
-glossary:
-  html:
-    name: HTML
-    plural: HTMLs
-    description: >
-      HyperText Markup Language, the standard markup language for
-      documents designed to be displayed in a web browser.
-    first: HyperText Markup Language (HTML)
+press:
+  declare:
+    glossary:
+      entries:
+        HTML: HyperText Markup Language
 ```
 
-Place an anchor where the term is defined:
+Every occurrence of a declared key in the prose becomes `\tsacr{HTML}`, which
+`ts-glossary` defines as `\acrshort` — always the short form, deliberately: the
+author never writes the call, so a first-use expansion would rewrite prose
+nobody typed and make the printed document say something different from the web
+profile, where the key stays inside `<abbr>`. A glossary _term_ reference is
+written by the author as `@gls:term` and becomes `\tsgls`, which is `\gls` and
+therefore follows the `glossaries` conventions.
 
-```markdown
-The **HTML**{#gls-html} is the standard markup language for web pages...
-```
+What is *still open* is the rest of a `\newglossaryentry`: `plural`, `first`
+and a forced `text` have no spelling yet, and neither does the popup/tooltip
+presentation on the web side.

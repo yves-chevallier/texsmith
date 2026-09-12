@@ -40,7 +40,42 @@
 \begin{document}
 \maketitle
 \phantomsection\label{releasenotes}
-Use this page to see what changed in each TeXSmith release and which \LaTeX{} prerequisites (\TeX{} Live year, \tscodeinline{tlmgr} packages, shell-escape requirements) the bundled templates expect. Update your automation and CI images accordingly before bumping versions.
+Use this page to see what changed in each TeXSmith release, what the current
+architecture is, and which \LaTeX{} prerequisites (\TeX{} Live year, \tscodeinline{tlmgr}
+packages, shell-escape requirements) the bundled templates expect. Update your
+automation and CI images accordingly before bumping versions.
+
+The narrative record of every release is \tscodeinline{CHANGELOG.md} at the root of the
+repository; this page is the compatibility summary that goes with it.
+\section{What TeXSmith is made of today}
+TeXSmith reads \textbf{TMark} --- CommonMark plus the extension set every MkDocs site
+already uses, plus the constructs a printed document needs --- and it does so
+with the TMark parser, not with Python-Markdown. A conversion runs in four
+steps:
+\begin{enumerate}
+\item \tscodeinline{tmark.parse} turns the source into the document IR.
+\item TeXSmith's \textbf{passes} do the work that needs a file, a clock, a process or a
+socket: \tscodeinline{include}, \tscodeinline{snippet}, \tscodeinline{assets} (diagram and image conversion),
+\tscodeinline{highlight} (Pygments), \tscodeinline{doi}, \tscodeinline{emoji}, \tscodeinline{scripts}, \tscodeinline{var}, \tscodeinline{title}, \tscodeinline{slots},
+\tscodeinline{headings}, \tscodeinline{glossary}.
+\item \tscodeinline{tmark.resolve} allocates the numbers and resolves every \tscodeinline{@} reference,
+reading the \tscodeinline{.bib} files and the \tscodeinline{refs.json} inventories through a loader
+TeXSmith supplies.
+\item \tscodeinline{tmark.write} emits the \LaTeX{} and Typst bodies; \tscodeinline{tmark.lower\_web} emits the
+HTML a MkDocs page shows.
+\end{enumerate}
+Everything else is still TeXSmith's: templates, fragments, fonts, the engines
+(Tectonic, latexmk, Docker), bibliography output, the cross-reference inventory
+writer, the CLI and the MkDocs plugin.
+
+Each construct in a body is \textbf{one contract macro} --- \tscodeinline{\textbackslash{}tscallout}, \tscodeinline{tscode},
+\tscodeinline{\textbackslash{}tskeys}, \tscodeinline{\textbackslash{}tslead}, \tscodeinline{\textbackslash{}tsaside}, \tscodeinline{\textbackslash{}tsindex}, ... --- defined by the \tscodeinline{ts-\allowbreak{}*}
+fragment that the body's \tscodeinline{Requires} pulls into the preamble, with
+\tscodeinline{templates/common/texsmith.typ} as the Typst mirror. Redefining that macro in
+your template is how you restyle a construct; the Jinja partial mechanism, the
+\tscodeinline{latex.template.override} hook, \tscodeinline{partials} / \tscodeinline{required\_partials} and the
+template-scoped \tscodeinline{readers} / \tscodeinline{writer} hooks no longer exist. See
+Templates for the former-partial \tsscript{symbols}{\(\rightarrow\) }macro map.
 \section{TeXSmith releases}
 \begin{center}
 \begin{tabularx}{\linewidth}{>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X}
@@ -48,34 +83,82 @@ Use this page to see what changed in each TeXSmith release and which \LaTeX{} pr
 \textbf{Version} & \textbf{Highlights} & \textbf{Notes} \\
 \midrule
 \tscodeinline{0.1.0} & Unified conversion engine (\tscodeinline{ConversionService}, slot assignments, diagnostics emitters), Typer CLI with \tscodeinline{render}/\tscodeinline{bibliography}, initial template catalog (article, book), diagram adapters (Mermaid, Draw.io, Svgbob), MkDocs integration hooks. & Requires Python 3.10+, MkDocs \tsscript{mathematics}{\(\geq\) }1.6 for docs. Templates target \TeX{} Live 2023. \\
-\tscodeinline{0.4.0} & Fragment manifest/ABC (attributes, partials, slot validation), explicit partial precedence (template > fragment > core), template discovery order (built-ins \tsscript{symbols}{\(\rightarrow\) }packages \tsscript{symbols}{\(\rightarrow\) }local \tsscript{symbols}{\(\rightarrow\) }\tscodeinline{\textasciitilde{}/.texsmith/templates}), improved \tscodeinline{-\allowbreak{}-\allowbreak{}template-\allowbreak{}info} output (slots, fragments, attribute columns). & Update custom fragments to \tscodeinline{fragment.toml} + \tscodeinline{partials}/\tscodeinline{required\_partials}; remove legacy template attributes (cover/twocolumn/backmatter/emoji) and use fragment-provided options instead. Use \tscodeinline{texsmith templates} to confirm discovery. \\
+\tscodeinline{0.4.0} & Fragment manifest/ABC (attributes, partials, slot validation), explicit partial precedence (template > fragment > core), template discovery order (built-ins \tsscript{symbols}{\(\rightarrow\) }packages \tsscript{symbols}{\(\rightarrow\) }local \tsscript{symbols}{\(\rightarrow\) }\tscodeinline{\textasciitilde{}/.texsmith/templates}), improved \tscodeinline{-\allowbreak{}-\allowbreak{}template-\allowbreak{}info} output (slots, fragments, attribute columns). & Historical: the \tscodeinline{partials} / \tscodeinline{required\_partials} keys this release introduced are removed in the TMark release below. Template discovery and \tscodeinline{fragment.toml} attributes are unchanged. \\
+\tscodeinline{0.5.0} & \tscodeinline{@[label]} cross-reference shorthand; Typst cross-reference targets (heading, figure and table labels). & \tscodeinline{@[…]} is now spelled \tscodeinline{@label}; both are read. \\
+\tscodeinline{0.6.0} & Custom counters, cross-document references (\tscodeinline{<document>.refs.json} inventories, \tscodeinline{crossrefs:}), inline-code wrapping (\tscodeinline{code.inline}), draw.io page-size export (\tscodeinline{crop=false}). & Last release on the Python-Markdown pipeline. A document written for 0.6 still builds; run \tscodeinline{tmark lint -\allowbreak{}-\allowbreak{}fix} to move it to the canonical spellings. \\
+\emph{Unreleased} & TeXSmith reads Markdown with the TMark parser and writes its \LaTeX{}, Typst and HTML bodies with the TMark writers. A construct is a contract macro a \tscodeinline{ts-\allowbreak{}*} fragment provides. One MkDocs plugin numbers a site and its PDF export alike. Diagnostics have one shape, a position, \tscodeinline{-\allowbreak{}-\allowbreak{}strict} and \tscodeinline{-\allowbreak{}-\allowbreak{}diagnostics-\allowbreak{}json}; \tscodeinline{-\allowbreak{}-\allowbreak{}numbering} and \tscodeinline{-\allowbreak{}-\allowbreak{}deprecated} are new. & The Python-Markdown pipeline, its 17 extensions, the Python writers, the hand-written IR and the 45 Jinja partials are removed, and with them \tscodeinline{-\allowbreak{}-\allowbreak{}reader}, \tscodeinline{-\allowbreak{}-\allowbreak{}html}, \tscodeinline{-\allowbreak{}-\allowbreak{}debug-\allowbreak{}html}, \tscodeinline{-\allowbreak{}-\allowbreak{}list-\allowbreak{}extensions}, \tscodeinline{-\allowbreak{}x} / \tscodeinline{-\allowbreak{}X} and the four template hooks. Read Migrating to TMark first; \tscodeinline{tmark lint -\allowbreak{}-\allowbreak{}fix} does the mechanical rewrites. \\
 \bottomrule
 \end{tabularx}
 \end{center}
-Future releases will append to this table with new features, migration notes, and API changes. If you upgrade past the compatibility range declared in a template manifest (\tscodeinline{[compat]}), update the template and rerun its smoke tests.
+If you upgrade past the compatibility range declared in a template manifest
+(\tscodeinline{[compat]}), update the template and rerun its smoke tests.
+\section{Supported syntax}
+The dialect is specified, not accumulated from whichever plugins happen to be
+installed: Syntax is the reference, and
+Supported constructs is the per-construct table.
+Three things are worth knowing before you upgrade:
+\begin{itemize}
+\item \textbf{The 0.6 spellings still parse.} Most of them are deprecated sugar with a
+stated horizon; \tscodeinline{tmark lint} names each one and \tscodeinline{tmark lint -\allowbreak{}-\allowbreak{}fix} rewrites
+the mechanical ones in place. The spellings MkDocs Material or Pandoc renders
+natively (\tscodeinline{!!! note}, \tscodeinline{=== "Tab"}, \tscodeinline{<div markdown>}, \tscodeinline{\textasciitilde{}\textasciitilde{}del\textasciitilde{}\textasciitilde{}}, \tscodeinline{==mark==},
+\tscodeinline{++Ctrl+C++}, \tscodeinline{:smile:}, a bare \tscodeinline{```mermaid} fence) are kept
+indefinitely.
+\item \textbf{A CommonMark parser reads a few things differently}, and no fixer can
+repair that: lazy continuation lines, list indentation to the parent's
+content column, no emphasis inside a word, HTML block boundaries, entity
+decoding, and attribute lists that need a host. The list is in
+Migrating to TMark.
+\item \textbf{Critic markup is not lowered yet.} \tscodeinline{\{++added++\}}, \tscodeinline{\{-\allowbreak{}-\allowbreak{}removed-\allowbreak{}-\allowbreak{}\}},
+\tscodeinline{\{\textasciitilde{}\textasciitilde{}old\textasciitilde{}\textasciitilde{}new\textasciitilde{}\textasciitilde{}\}} and \tscodeinline{\{>>comment<<\}} stay literal text and raise
+\tscodeinline{compat-\allowbreak{}unsupported}, so a \tscodeinline{-\allowbreak{}-\allowbreak{}strict} run catches them. The \tscodeinline{ts-\allowbreak{}critic}
+fragment already defines \tscodeinline{\textbackslash{}tsins}, \tscodeinline{\textbackslash{}tsdel}, \tscodeinline{\textbackslash{}tssubst} and \tscodeinline{\textbackslash{}tscomment} for
+the day the writers emit them.
+\end{itemize}
 \section{Template compatibility matrix}
 \begin{center}
 \begin{tabularx}{\linewidth}{>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X}
 \toprule
 \textbf{Template} & \textbf{Version} & \textbf{TeX Live year} & \textbf{Shell escape} & \textbf{Key \tscodeinline{tlmgr} packages} & \textbf{Notes} \\
 \midrule
-\tscodeinline{article} & 0.1.0 & 2023 & Required (minted) & \tscodeinline{babel}, \tscodeinline{geometry}, \tscodeinline{hyperref}, \tscodeinline{microtype}, \tscodeinline{lmodern}, \tscodeinline{textcomp}, \tscodeinline{fontspec}, \tscodeinline{biblatex} & Provides \tscodeinline{mainmatter} + \tscodeinline{abstract} slots, ships custom \tscodeinline{.latexmkrc} with minted settings. \\
-\tscodeinline{book} & 0.2.0 & 2023 & Required (minted) & \tscodeinline{babel}, \tscodeinline{babel-\allowbreak{}french}, \tscodeinline{csquotes}, \tscodeinline{fontspec}, \tscodeinline{fancyvrb}, \tscodeinline{geometry}, \tscodeinline{hyperref}, \tscodeinline{longtable}, \tscodeinline{microtype}, \tscodeinline{titlesec}, \tscodeinline{titletoc}, \tscodeinline{xcolor}, \tscodeinline{xunicode} & Adds chapter-aware slots (\tscodeinline{frontmatter}, \tscodeinline{mainmatter}, \tscodeinline{appendix}), reuses shared callouts/utility styles, ships cover assets. \\
+\tscodeinline{article} & 0.1.0 & 2023 & Only with \tscodeinline{code.engine: minted} & \tscodeinline{babel}, \tscodeinline{geometry}, \tscodeinline{hyperref}, \tscodeinline{microtype}, \tscodeinline{lmodern}, \tscodeinline{textcomp}, \tscodeinline{fontspec}, \tscodeinline{biblatex} & Provides \tscodeinline{mainmatter} + \tscodeinline{abstract} slots, ships a custom \tscodeinline{.latexmkrc}. \\
+\tscodeinline{book} & 0.2.0 & 2023 & Only with \tscodeinline{code.engine: minted} & \tscodeinline{babel}, \tscodeinline{babel-\allowbreak{}french}, \tscodeinline{csquotes}, \tscodeinline{fontspec}, \tscodeinline{fancyvrb}, \tscodeinline{geometry}, \tscodeinline{hyperref}, \tscodeinline{longtable}, \tscodeinline{microtype}, \tscodeinline{titlesec}, \tscodeinline{titletoc}, \tscodeinline{xcolor}, \tscodeinline{xunicode} & Adds chapter-aware slots (\tscodeinline{frontmatter}, \tscodeinline{mainmatter}, \tscodeinline{appendix}), reuses shared callouts/utility styles, ships cover assets. Redefines \tscodeinline{\textbackslash{}tscodeinline} after \tscodeinline{\textbackslash{}VAR\{extra\_packages\}}, which is the supported way to restyle a construct. \\
 \bottomrule
 \end{tabularx}
 \end{center}
+Neither bundled template declares \tscodeinline{shell\_escape} any more: the generated
+\tscodeinline{.latexmkrc} turns \tscodeinline{-\allowbreak{}-\allowbreak{}shell-\allowbreak{}escape} on only when \tscodeinline{code.engine} is \tscodeinline{minted}, and
+the default engine is \tscodeinline{pygments}, which pre-renders the highlighting in Python.
+A document that never asks for \tscodeinline{minted} therefore compiles in a sandbox that
+forbids shell escape.
+
 To inspect third-party or local templates, run:
 \begin{tscode}[lang=bash, engine=pygments]
 \begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
 texsmith\PY{+w}{ }\PYZhy{}\PYZhy{}template\PY{+w}{ }\PYZlt{}name\PYZhy{}or\PYZhy{}path\PYZgt{}\PY{+w}{ }\PYZhy{}\PYZhy{}template\PYZhy{}info
 \end{Verbatim}
 \end{tscode}
-The command lists \TeX{} Live requirements, shell-escape expectations, slot definitions, and declared assets.
+The command lists \TeX{} Live requirements, shell-escape expectations, slot
+definitions, and declared assets.
 \section{Upgrade checklist}
 \begin{enumerate}
-\item Run \tscodeinline{uv run mkdocs build} to confirm docs compile without warnings on the new release.
-\item Update your \TeX{} Live image with any new packages referenced in the table above or in \tscodeinline{template-\allowbreak{}info}.
-\item Rebuild the examples (\tscodeinline{docs/examples/index.md}) and confirm smoke tests still pass.
-\item Capture notable migrations (CLI flags, metadata schema changes) in this page and link PRs or release notes for future reference.
+\item Run \tscodeinline{tmark lint -\allowbreak{}-\allowbreak{}fix -\allowbreak{}-\allowbreak{}diff} over your sources, read the diff, then apply
+it on a clean tree.
+\item Convert with \tscodeinline{-\allowbreak{}-\allowbreak{}strict} (or \tscodeinline{press.features.strict: true}) once, and read
+what it reports; \tscodeinline{-\allowbreak{}-\allowbreak{}deprecated info} keeps the legacy-spelling warnings out
+of the gate while you work through the rest.
+\item If you maintain a template or a fragment, replace every \tscodeinline{partials},
+\tscodeinline{required\_partials}, \tscodeinline{override}, \tscodeinline{readers} and \tscodeinline{writer} declaration with a
+redefinition of the contract macro
+(map).
+\item Drop \tscodeinline{texsmith.*} entries from \tscodeinline{markdown\_extensions:} in \tscodeinline{mkdocs.yml},
+replace the \tscodeinline{texsmith.counters} and \tscodeinline{texsmith.index} plugins with the single
+\tscodeinline{texsmith} plugin, and move any \tscodeinline{counters:} under its \tscodeinline{declare.counters}.
+\item Run \tscodeinline{uv run mkdocs build} to confirm the docs compile without warnings on
+the new release.
+\item Update your \TeX{} Live image with any new packages referenced in the table
+above or in \tscodeinline{-\allowbreak{}-\allowbreak{}template-\allowbreak{}info}.
+\item Rebuild the examples (\tscodeinline{docs/examples/index.md}) and confirm the smoke tests
+still pass.
 \end{enumerate}
 \end{document}

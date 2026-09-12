@@ -33,12 +33,21 @@ TeXSmith is a newly developed project and is not ready for production use yet, b
 
 = Run the tests
 
+TeXSmith parses and writes through #link("https://github.com/yves-chevallier/tmark")[TMark],
+whose wheel is built from a checkout of that repository under `vendor/tmark`
+(`[tool.uv.sources]` points at it, and `vendor/tmark` is gitignored). You need a
+Rust toolchain, because `maturin` builds the extension module:
+
 ```bash
 git clone https://github.com/yves-chevallier/texsmith.git
 cd texsmith
+git clone --branch texsmith-migration \
+    https://github.com/yves-chevallier/tmark.git vendor/tmark
 uv sync
 uv run pytest
 ```
+
+The CI workflows do exactly this, so a failure here is reproducible there.
 
 = Build the documentation locally
 

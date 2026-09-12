@@ -30,20 +30,21 @@ Roadmap and development notes for TeXSmith. I keep this file as a running checkl
 - #ts-task("done")[Attribute redundancy (`numbered`, `press.numbered`, etc.)]
 - #ts-task("done")[Refactoring snippets and fixing snippet templates]
 - #ts-task("done")[Font: mono fallback for missing characters]
-- #ts-task("open")[Global user configuration (.texsmith/config.yml)]
-- #ts-task("open")[Unified Fences Syntax
-- #ts-task("open")[Multicolumns]
-- #ts-task("open")[Font Size]
-- #ts-task("open")[Center/Right alignment]
+- #ts-task("done")[Unified fences syntax — settled by the TMark specification, see below
+- #ts-task("done")[Multicolumns (`::: multicolumn`)]
+- #ts-task("done")[#ts-logo("LaTeX") raw (a ```` ```latex raw ```` fence)]
+- #ts-task("open")[Font size]
+- #ts-task("open")[Center/right alignment]
 - #ts-task("open")[Language]
-- #ts-task("open")[#ts-logo("LaTeX") only / HTML only]
-- #ts-task("open")[#ts-logo("LaTeX") raw]]
+- #ts-task("open")[#ts-logo("LaTeX") only / HTML only]]
+- #ts-task("done")[Index: support for multi-indexes (`{index registry=…}[…]`, one `\makeindex[name=…]` per registry)]
+- #ts-task("done")[Custom variables to insert in a document using mustaches (the `var` pass)]
+- #ts-task("open")[Global user configuration (.texsmith/config.yml)]
 - #ts-task("open")[More examples
 - #ts-task("open")[University exam]]
 - #ts-task("open")[Student quiz]
 - #ts-task("open")[Multiline Acronyms]
-- #ts-task("open")[Support for `{++inserted text++}` and `{~~deleted text~~}` (goodbox)]
-- #ts-task("open")[Index: support for multi-indexes]
+- #ts-task("open")[Critic markup: `{++inserted++}`, `{–deleted–}`, `{~~old~~new~~}`, `{>>comment<<}` — the `ts-critic` fragment defines `\tsins`, `\tsdel`, `\tssubst` and `\tscomment`; the parser does not lower them yet and reports `compat-unsupported`]
 - #ts-task("open")[Cross-references (cleveref package)]
 - #ts-task("open")[Enhanced tables: add with controls (auto, fixed width, `tabulary`, etc.)]
 - #ts-task("open")[Support table orientation (rotate very large tables)]
@@ -52,10 +53,26 @@ Roadmap and development notes for TeXSmith. I keep this file as a running checkl
 - #ts-task("open")[Support for `enumitem` package to customize lists]
 - #ts-task("open")[Develop submodules as standalone plugins
 - #ts-task("open")[Epigraph Plugin]
-- #ts-task("open")[Letterine]
-- #ts-task("open")[Custom variables to insert in a document using mustaches]]
+- #ts-task("open")[Letterine]]
 
 = Unified Fences Syntax
+
+*Settled.* The question below is answered by the TMark specification, which
+is what TeXSmith parses now: ```` ``` ```` fences are code and processed blocks
+(`mermaid`, `svgbob`, `tikz`, `yaml table`, `latex raw`), and `:::` opens a
+container whose name is a registered one (`note`, `warning`, `figure`, `aside`,
+`tabs`, `tab`, `multicolumn`, `div`, …), with an attribute list for its options
+(`::: note {title="Title" collapsed=true}`). `!!!` / `???` callouts, `///`
+blocks and `=== "Tab"` content tabs are read as deprecated sugar for the `:::`
+spellings, and an unregistered name raises `container-unknown` and falls back to
+a transparent `tsdiv`. Syntax is the reference and
+Supported constructs the per-construct table;
+Migrating to TMark lists each legacy spelling with
+its horizon. What is left open is the _set of containers_: font size, alignment
+and language containers are not registered yet, which is what the roadmap item
+above tracks.
+
+The original note is kept below for the reasoning, not for the syntax.
 
 Markdown format has evolves like a living spece and multiple syntaxes coexists for different purposes. While MyST chose to only use backticks for any blocks (code, admonition), it seems more natural to use different fence styles for different purposes:
 
@@ -146,9 +163,23 @@ On ajoute aussi cette vérification pour les assets drawio.
 
 == MkDocs Linking Issues
 
-MkDocs currently fails to resolve links to other pages. For example, `[High-Level Workflows](api/high-level.md)` becomes `\ref{snippet:...` but the referenced snippet is never defined. Replacing the syntax with `\ref` builds successfully but still fails at runtime. Investigate and fix the resolver so links work throughout the site.
+*Half solved.* A `@label` reference now resolves across the whole site: the
+`texsmith` MkDocs plugin pre-passes every page, builds one site-wide label map
+in navigation order and resolves each page against it, relativising a location
+in another page as `other.md#id`; a key nobody publishes reports
+`ref-unresolved` with the page path instead of emitting a dangling `\ref`.
 
-Also note that the scientific paper “cheese” example prematurely closes code blocks after a snippet. Identify why the snippet terminates early and correct it.
+What is still open is a plain Markdown link to another _file_ —
+`[High-Level Workflows](api/high-level.md)` — whose target is dropped silently
+by the paged writers: the `.md` path means nothing in a PDF and nothing
+rewrites it to the numbered section it points at. It deserves at least a
+diagnostic (parity triage open point O2). Prefer `@sec:high-level` in a
+document meant to be printed as well as browsed.
+
+The scientific paper “cheese” example no longer closes its code blocks early:
+its `—8<— "…"` includes were reaching the document as literal text, because
+only the exact `–8<–` spelling was recognised, and the stray `;` escape
+prefix broke the footnote definitions beside them. Both are read now.
 
 == Acronyms multiline
 
@@ -302,11 +333,21 @@ This is converted to the exact same output as the MkDocs admonition syntax. It i
 
 == Figure References
 
-Printed references depend on the document language. In English we would write, “The elephant shown in Figure 1 is large.” The #ts-logo("LaTeX") equivalent is `The elephant shown in Figure~\ref{fig:elephant} is large.` Pymdown lets us write:
+*The language half is done.* A cross-reference names its counter in the
+resolved language — the writer option, else the resolution's `lang`, else the
+front matter's, else English — so a French document writes `Table 1` where an
+English one writes `Table~1`, and the word agrees with the caption babel
+prints, because babel keeps owning `\figurename` and `\tablename`. A `name`
+declared under `press.declare.counters` survives the localisation.
+
+The spelling is `@fig:elephant`:
 
 ```markdown
-The elephant shown in figure [#fig:elephant] is large.
+The elephant shown in @fig:elephant is large.
 ```
+
+What remains open is `cleveref`, whose capitalisation rules are a better answer
+than a per-language word table:
 
 ```latex
 \hyperref[fig:elephant]{Figure~\ref*{fig:elephant}}

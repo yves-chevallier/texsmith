@@ -46,14 +46,21 @@ I welcome contributions from the community to help improve TeXSmith! Whether it'
 \end{description}
 TeXSmith is a newly developed project and is not ready for production use yet, but you can test it out and help us improve it.
 \section{Run the tests}
+TeXSmith parses and writes through \href{https://github.com/yves-chevallier/tmark}{TMark},
+whose wheel is built from a checkout of that repository under \tscodeinline{vendor/tmark}
+(\tscodeinline{[tool.uv.sources]} points at it, and \tscodeinline{vendor/tmark} is gitignored). You need a
+Rust toolchain, because \tscodeinline{maturin} builds the extension module:
 \begin{tscode}[lang=bash, engine=pygments]
 \begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
 git\PY{+w}{ }clone\PY{+w}{ }https://github.com/yves\PYZhy{}chevallier/texsmith.git
 \PY{n+nb}{cd}\PY{+w}{ }texsmith
+git\PY{+w}{ }clone\PY{+w}{ }\PYZhy{}\PYZhy{}branch\PY{+w}{ }texsmith\PYZhy{}migration\PY{+w}{ }\PY{l+s+se}{\PYZbs{}}
+\PY{+w}{    }https://github.com/yves\PYZhy{}chevallier/tmark.git\PY{+w}{ }vendor/tmark
 uv\PY{+w}{ }sync
 uv\PY{+w}{ }run\PY{+w}{ }pytest
 \end{Verbatim}
 \end{tscode}
+The CI workflows do exactly this, so a failure here is reproducible there.
 \section{Build the documentation locally}
 \begin{tscode}[lang=bash, engine=pygments]
 \begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]

@@ -53,24 +53,25 @@ Roadmap and development notes for TeXSmith. I keep this file as a running checkl
 \item[\tsdone] Attribute redundancy (\tscodeinline{numbered}, \tscodeinline{press.numbered}, etc.)
 \item[\tsdone] Refactoring snippets and fixing snippet templates
 \item[\tsdone] Font: mono fallback for missing characters
-\item[\tstodo] Global user configuration (.texsmith/config.yml)
-\item[\tstodo] Unified Fences Syntax
+\item[\tsdone] Unified fences syntax --- settled by the TMark specification, see below
 \begin{tstasklist}
-\item[\tstodo] Multicolumns
-\item[\tstodo] Font Size
-\item[\tstodo] Center/Right alignment
+\item[\tsdone] Multicolumns (\tscodeinline{::: multicolumn})
+\item[\tsdone] \LaTeX{} raw (a \tscodeinline{```latex raw} fence)
+\item[\tstodo] Font size
+\item[\tstodo] Center/right alignment
 \item[\tstodo] Language
 \item[\tstodo] \LaTeX{} only / HTML only
-\item[\tstodo] \LaTeX{} raw
 \end{tstasklist}
+\item[\tsdone] Index: support for multi-indexes (\tscodeinline{\{index registry=…\}[…]}, one \tscodeinline{\textbackslash{}makeindex[name=…]} per registry)
+\item[\tsdone] Custom variables to insert in a document using mustaches (the \tscodeinline{var} pass)
+\item[\tstodo] Global user configuration (.texsmith/config.yml)
 \item[\tstodo] More examples
 \begin{tstasklist}
 \item[\tstodo] University exam
 \end{tstasklist}
 \item[\tstodo] Student quiz
 \item[\tstodo] Multiline Acronyms
-\item[\tstodo] Support for \tscodeinline{\{++inserted text++\}} and \tscodeinline{\{\textasciitilde{}\textasciitilde{}deleted text\textasciitilde{}\textasciitilde{}\}} (goodbox)
-\item[\tstodo] Index: support for multi-indexes
+\item[\tstodo] Critic markup: \tscodeinline{\{++inserted++\}}, \tscodeinline{\{-\allowbreak{}-\allowbreak{}deleted-\allowbreak{}-\allowbreak{}\}}, \tscodeinline{\{\textasciitilde{}\textasciitilde{}old\textasciitilde{}\textasciitilde{}new\textasciitilde{}\textasciitilde{}\}}, \tscodeinline{\{>>comment<<\}} --- the \tscodeinline{ts-\allowbreak{}critic} fragment defines \tscodeinline{\textbackslash{}tsins}, \tscodeinline{\textbackslash{}tsdel}, \tscodeinline{\textbackslash{}tssubst} and \tscodeinline{\textbackslash{}tscomment}; the parser does not lower them yet and reports \tscodeinline{compat-\allowbreak{}unsupported}
 \item[\tstodo] Cross-references (cleveref package)
 \item[\tstodo] Enhanced tables: add with controls (auto, fixed width, \tscodeinline{tabulary}, etc.)
 \item[\tstodo] Support table orientation (rotate very large tables)
@@ -81,10 +82,26 @@ Roadmap and development notes for TeXSmith. I keep this file as a running checkl
 \begin{tstasklist}
 \item[\tstodo] Epigraph Plugin
 \item[\tstodo] Letterine
-\item[\tstodo] Custom variables to insert in a document using mustaches
 \end{tstasklist}
 \end{tstasklist}
 \section{Unified Fences Syntax}
+\textbf{Settled.} The question below is answered by the TMark specification, which
+is what TeXSmith parses now: \tscodeinline{```} fences are code and processed blocks
+(\tscodeinline{mermaid}, \tscodeinline{svgbob}, \tscodeinline{tikz}, \tscodeinline{yaml table}, \tscodeinline{latex raw}), and \tscodeinline{:::} opens a
+container whose name is a registered one (\tscodeinline{note}, \tscodeinline{warning}, \tscodeinline{figure}, \tscodeinline{aside},
+\tscodeinline{tabs}, \tscodeinline{tab}, \tscodeinline{multicolumn}, \tscodeinline{div}, ...), with an attribute list for its options
+(\tscodeinline{::: note \{title="Title" collapsed=true\}}). \tscodeinline{!!!} / \tscodeinline{???} callouts, \tscodeinline{///}
+blocks and \tscodeinline{=== "Tab"} content tabs are read as deprecated sugar for the \tscodeinline{:::}
+spellings, and an unregistered name raises \tscodeinline{container-\allowbreak{}unknown} and falls back to
+a transparent \tscodeinline{tsdiv}. Syntax is the reference and
+Supported constructs the per-construct table;
+Migrating to TMark lists each legacy spelling with
+its horizon. What is left open is the \emph{set of containers}: font size, alignment
+and language containers are not registered yet, which is what the roadmap item
+above tracks.
+
+The original note is kept below for the reasoning, not for the syntax.
+
 Markdown format has evolves like a living spece and multiple syntaxes coexists for different purposes. While MyST chose to only use backticks for any blocks (code, admonition), it seems more natural to use different fence styles for different purposes:
 \begin{itemize}
 \item \tscodeinline{```} for code blocks and special blocks (Mermaid, \LaTeX{}, custom tables, etc.) that require processing
@@ -175,9 +192,23 @@ La gestion du cache des assets est aussi à vérifier et la rendre dépendante d
 
 On ajoute aussi cette vérification pour les assets drawio.
 \subsection{MkDocs Linking Issues}
-MkDocs currently fails to resolve links to other pages. For example, \tscodeinline{[High-\allowbreak{}Level Workflows](api/high-\allowbreak{}level.md)} becomes \tscodeinline{\textbackslash{}ref\{snippet:...} but the referenced snippet is never defined. Replacing the syntax with \tscodeinline{\textbackslash{}ref} builds successfully but still fails at runtime. Investigate and fix the resolver so links work throughout the site.
+\textbf{Half solved.} A \tscodeinline{@label} reference now resolves across the whole site: the
+\tscodeinline{texsmith} MkDocs plugin pre-passes every page, builds one site-wide label map
+in navigation order and resolves each page against it, relativising a location
+in another page as \tscodeinline{other.md\#id}; a key nobody publishes reports
+\tscodeinline{ref-\allowbreak{}unresolved} with the page path instead of emitting a dangling \tscodeinline{\textbackslash{}ref}.
 
-Also note that the scientific paper ``cheese'' example prematurely closes code blocks after a snippet. Identify why the snippet terminates early and correct it.
+What is still open is a plain Markdown link to another \emph{file} ---
+\tscodeinline{[High-\allowbreak{}Level Workflows](api/high-\allowbreak{}level.md)} --- whose target is dropped silently
+by the paged writers: the \tscodeinline{.md} path means nothing in a PDF and nothing
+rewrites it to the numbered section it points at. It deserves at least a
+diagnostic (parity triage open point O2). Prefer \tscodeinline{@sec:high-\allowbreak{}level} in a
+document meant to be printed as well as browsed.
+
+The scientific paper ``cheese'' example no longer closes its code blocks early:
+its \tscodeinline{-\allowbreak{}-\allowbreak{}-\allowbreak{}8<-\allowbreak{}-\allowbreak{}-\allowbreak{} "…"} includes were reaching the document as literal text, because
+only the exact \tscodeinline{-\allowbreak{}-\allowbreak{}8<-\allowbreak{}-\allowbreak{}} spelling was recognised, and the stray \tscodeinline{;} escape
+prefix broke the footnote definitions beside them. Both are read now.
 \subsection{Acronyms multiline}
 The following doesn't work; it should either warn or join the different lines together.
 \begin{tscode}[lang=markdown, engine=pygments]
@@ -321,12 +352,21 @@ This is converted to the exact same output as the MkDocs admonition syntax. It i
 \end{Verbatim}
 \end{tscode}
 \subsection{Figure References}
-Printed references depend on the document language. In English we would write, ``The elephant shown in Figure 1 is large.'' The \LaTeX{} equivalent is \tscodeinline{The elephant shown in Figure\textasciitilde{}\textbackslash{}ref\{fig:elephant\} is large.} Pymdown lets us write:
+\textbf{The language half is done.} A cross-reference names its counter in the
+resolved language --- the writer option, else the resolution's \tscodeinline{lang}, else the
+front matter's, else English --- so a French document writes \tscodeinline{Table 1} where an
+English one writes \tscodeinline{Table\textasciitilde{}1}, and the word agrees with the caption babel
+prints, because babel keeps owning \tscodeinline{\textbackslash{}figurename} and \tscodeinline{\textbackslash{}tablename}. A \tscodeinline{name}
+declared under \tscodeinline{press.declare.counters} survives the localisation.
+
+The spelling is \tscodeinline{@fig:elephant}:
 \begin{tscode}[lang=markdown, engine=pygments]
 \begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
-The elephant shown in figure [\PYZsh{}fig:elephant] is large.
+The elephant shown in \PY{n+ni}{@fig:elephant} is large.
 \end{Verbatim}
 \end{tscode}
+What remains open is \tscodeinline{cleveref}, whose capitalisation rules are a better answer
+than a per-language word table:
 \begin{tscode}[lang=latex, engine=pygments]
 \begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
 \PY{k}{\PYZbs{}hyperref}\PY{n+na}{[fig:elephant]}\PY{n+nb}{\PYZob{}}Figure\PYZti{}\PY{k}{\PYZbs{}ref}\PY{k}{*}\PY{n+nb}{\PYZob{}}fig:elephant\PY{n+nb}{\PYZcb{}}\PY{n+nb}{\PYZcb{}}
