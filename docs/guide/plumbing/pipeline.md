@@ -1,39 +1,149 @@
 # How does TeXSmith work?
 
-TeXSmith ingests **Markdown** (`.md`), **HTML** (`.html`), **YAML** (`.yaml`), and **BibTeX** (`.bib`), then runs them through a conversion pipeline to produce LaTeX or a finished PDF.
+TeXSmith ingests **Markdown** (`.md`), **HTML** (`.html`), **YAML** (`.yaml`),
+and **BibTeX** (`.bib`), then runs them through a conversion pipeline to produce
+LaTeX, Typst, or a finished PDF.
 
-Templates define the layout and expose slots that get filled with content from your sources. The template also relies on **fragments** which are extra layers for extending the features such as a bibliography, glossary, fonts, page geometry, or other typesetting options.
+Templates define the layout and expose slots that get filled with content from
+your sources. The template also relies on **fragments** — extra layers that add
+a bibliography, glossary, fonts, page geometry, or other typesetting options.
 
 ![Workflow diagram of TeXSmith](../../assets/workflow.drawio)
 
+## The shape of the pipeline
+
+```text
+.md ──tmark.parse──▶ IR ──TeXSmith passes──▶ IR' ──tmark.resolve(loader)──▶ Resolved
+                            include · snippet · assets · doi · var · emoji ·
+                            scripts · title · slots · headings · highlight
+                                                                          │
+      ┌───────────────────────────────────────────────────────────────────┘
+      ▼
+  tmark.write(IR', "latex" | "typst" | "html") ──▶ Body { text, map, requires }
+      │
+      └─▶ Requires → fragments → preamble; text → template slots; engines → PDF
+```
+
+Two rules keep the boundary honest. A function that needs a file, a clock, a
+process or a socket is **TeXSmith's** (or hides behind a `Loader`). A writer
+that needs to know the template, the font, the packages or the geometry is
+asking for a **fragment contract**, not an option.
+
+What lives where:
+
+| Concern | Owner |
+| ------- | ----- |
+| Parsing, the IR, resolution, the canonical printer, the linter | tmark (Rust) |
+| The LaTeX / Typst / HTML writers | tmark (Rust) |
+| Templates, fragments, fonts, engines | TeXSmith |
+| Includes, executed fences, diagram conversion, asset hashing | TeXSmith passes |
+| Bibliography output (pybtex, DOI fetch, CSL) | TeXSmith |
+| Cross-document inventory writing | TeXSmith |
+| The CLI and the MkDocs companion | TeXSmith |
+
 ## Internal pipeline
 
-1. **Collect and classify inputs**
-   The CLI and `ConversionService` accept Markdown/HTML documents, optional front matter YAML, and bibliography files. `split_inputs` peels off `.bib`/`.bibtex`, treats a lone YAML file as the only document when needed, and normalises any provided front matter. When documents share front matter, it is deep-merged into each `Document`, with `press.*` metadata validated up front to avoid surprises later.
+1. **Collect and classify inputs.**
+   The CLI and `ConversionService` accept Markdown/HTML documents, optional
+   front matter YAML, and bibliography files. `split_inputs` peels off
+   `.bib`/`.bibtex`, treats a lone YAML file as the only document when needed,
+   and normalises any provided front matter. When documents share front matter,
+   it is deep-merged into each `Document`, with `press.*` metadata validated up
+   front to avoid surprises later.
 
-2. **Normalise documents to HTML**
-   `Document.from_markdown` runs Python-Markdown with the bundled extensions (smallcaps, texlogos, index, Mermaid, raw LaTeX fences, etc.), extracts front matter, and caches the resulting HTML. `Document.from_html` can either keep the whole file or extract a selector (`article.md-content__inner` by default). Heading strategies are decided here (keep, drop, or promote the first heading into `press.title`), numbering defaults are resolved, and slot directives declared in front matter (`press.slot.*`) are seeded into the document slot mapping.
+2. **Parse to the IR.**
+   `tmark.parse` reads the source and produces the intermediate representation:
+   a typed tree with a committed JSON schema, plus the front matter and a source
+   span for every node. `texsmith.ir.model` is the generated Python mirror of
+   that schema, so the Python side never hand-writes the node catalogue. Parse
+   diagnostics — including the deprecation warnings of
+   [Migrating to TMark](../migration.md) — land in the render's
+   `DiagnosticSink`. An `.html` input goes through `texsmith.readers.html`
+   instead and joins the same IR at this point.
 
-3. **Bind the template and attributes**
-   `bind_template` resolves which template runtime to use (`TemplateBinding`) and which slots exist. Template attributes declared in `manifest.toml` (`TemplateAttributeSpec`) are merged in a strict order: template defaults → fragment defaults → front matter (`press.*` or direct fields) → CLI/session overrides. Attribute ownership is enforced so two fragments or the template cannot claim the same attribute. Before anything renders, mustache placeholders in HTML, front matter, and template overrides are expanded against the merged context so later stages see concrete values.
+3. **Run the `pre` passes.**
+   A pass is a pure function `(Document, PassContext) -> Document` over the
+   generated models: it never mutates its input, returns the same object when it
+   has nothing to do, and never raises — a failure becomes a visible literal in
+   the output plus a diagnostic at the node's span. The bundled `pre` passes are
+   the ones that need I/O, which is exactly why they are Python's:
 
-4. **Split content into slots**
-   Slot requests come from CLI `--slot`, front matter, or defaults. `extract_slot_fragments` walks the HTML to find the requested headings/IDs, pulls those sections out, and assigns them to template slots (abstract, mainmatter, appendix, etc.). Base heading levels and offsets are computed per slot so sectioning commands line up with the template’s depth configuration. Any missing selectors produce warnings and the remainder of the document flows into the default slot.
+    | Pass | What it does |
+    | ---- | ------------ |
+    | `include` | splices `{include}(file)` and fence `include=` sources, rebasing relative paths |
+    | `snippet` | renders `.snippet` fences into preview figures |
+    | `assets` | converts and hashes images and diagrams (mermaid, draw.io, SVG) |
+    | `doi` | fetches pending DOIs into a generated `.bib` |
+    | `var` | expands `{{ key }}` moustaches against the front matter |
+    | `title` | promotes the first heading to the document title |
+    | `emoji` | picks the emoji rendering mode and its assets |
+    | `scripts` | detects non-Latin runs and chooses fallback font families |
 
-5. **Prime context, fragments, and attributes**
-   The binder context prepares runtime defaults: language, code engine/style, callout definitions, diagram backend, emoji mode, and bibliography map. Active fragments are resolved (from template extras or explicit overrides) and each fragment injects its context defaults plus owned attributes. Fragments are small, declarative building blocks (`fragment.toml` or a Python `BaseFragment`) that emit pieces into specific slots (`package`/`input`/`inline`). Examples: `ts-geometry`, `ts-fonts`, `ts-bibliography`, `ts-index`, glossary, code. A fragment may skip rendering via `should_render` (for example, bibliography and index fragments only activate when citations or index entries exist).
+    Order is declared, not implicit: each pass registers a `PassSpec` with
+    `after=`, and `build_pipeline` performs a stable topological sort that raises
+    `PassOrderError` on a cycle. A template or plugin registers its own the same
+    way.
 
-6. **Resolve partials**
-   LaTeX output is assembled from Jinja partials (one per Markdown/HTML construct). The precedence is explicit: template overrides (`manifest.toml` `latex.template.override`) → fragment partials → core defaults in `src/texsmith/adapters/latex/partials`. Both templates and fragments can declare `required_partials`; missing providers abort with a `TemplateError`. TeXSmith tracks which provider owns each partial so diagnostics clearly name the culprit.
+4. **Bind the template and attributes.**
+   `bind_template` resolves which template runtime to use and which slots exist.
+   Template attributes declared in `manifest.toml` are merged in a strict order:
+   template defaults → fragment defaults → front matter (`press.*`) →
+   CLI/session overrides. Attribute ownership is enforced so two fragments (or
+   the template) cannot claim the same attribute.
 
-7. **Render HTML fragments through the IR**
-   Each slot fragment is rendered through `LaTeXRenderer`, a thin orchestrator over a single read→write path: the legacy `HtmlReader` (`texsmith.readers.html_legacy`) lowers the HTML into the legacy intermediate representation (`texsmith.ir.nodes`; an `.html` input goes through `texsmith.readers.html` and the tmark writers instead), and the `LaTeXWriter` (`texsmith.writers.latex`) emits LaTeX from that IR (reusing the Jinja partials from step 6 via the `LaTeXFormatter`). Reader lowerings register with `@reads` and return IR nodes; writer emitters register with `@writes` and dispatch by node type — a node without an emitter raises a clear error. Fallback converters are registered when external tools are unavailable. Runtime data (base_level, numbered flag, drop_title, bibliography map, partial providers, language, diagram backend) flows through the writer state, and the `DocumentState` accumulates headings, citations, index terms, script usage/fallback font summaries, glossaries, snippets, callouts, and asset references so later stages can emit the right packages and backmatter. The Typst backend (`--format typst`) reuses the same reader and IR, swapping in the `TypstWriter` (see [Output backends](backends.md)).
+5. **Resolve once.**
+   `tmark.resolve` walks the whole document with a `Loader` supplied by
+   TeXSmith and turns every anchor, reference, citation and counter item into a
+   resolved label: "Figure 3", "FW-01", a citation key, a glossary entry, a
+   cross-document inventory hit. Resolution happens **once**, over the whole
+   document, so numbering is consistent across slots and unresolved references
+   are reported with their span instead of silently disappearing.
 
-8. **Fonts and script matching**
-   As text is rendered, the script detector (`texsmith.fonts.scripts`) scans moving arguments (headings, captions, index entries) and wraps non-Latin runs in dedicated LaTeX macros. A cached fallback index built from Noto coverage data chooses per-script font families and emits both font-switching commands and summary stats. The `--fonts-info` flag surfaces the detected scripts, chosen families, and counts after the run.
+6. **Run the `post` passes.**
+   These only slice the block list or compute per-body options, so the
+   `Resolved` of the whole document stays valid: `slots` splits the tree into
+   the template's slots, `headings` computes the per-slot heading offset, and
+   `highlight` renders Pygments payloads for the LaTeX backend.
 
-9. **Bibliography and index resolution**
-   Bibliography data comes from `.bib` files plus optional inline front matter entries (including DOI lookups with caching). Only cited keys are written to a generated `texsmith-bibliography.bib`, keeping outputs lean. Citations recorded in `DocumentState` trigger the `ts-bibliography` fragment, which injects package setup and backmatter hooks. Index terms collected by the Markdown extension set `has_index`/`index_terms`, enabling the `ts-index` fragment to load `imakeidx` helpers and drop the `\printindex` block into the `fragment_backmatter` slot.
+7. **Write one body per slot.**
+   `tmark.write(ir, backend)` emits the body text for `latex`, `typst` or
+   `html`, together with a **source map** (for SyncTeX) and a `Requires`
+   record. `Requires` is the writer's demand on the template, and it is what
+   makes the boundary work: the packages the body needs, the `ts-*` fragments
+   that must provide its contract macros, whether shell escape is required, the
+   assets to copy, whether a bibliography exists, and the cited keys, acronyms,
+   index registries and counter series actually used.
 
-10. **Template wrap and emission**
-    Slot outputs are merged back into the template entrypoint via `wrap_template_document`, alongside template/fragment attributes, required assets, and optional manifest/debug artefacts. When running under `TemplateSession`, the fragments are also materialised as `.tex` files so templates can `\input{}` or `\usepackage{}` them. The resulting `TemplateRenderResult` carries the main `.tex` path, per-fragment outputs, bibliography path (if any), selected template engine, and shell-escape requirement, ready for `texsmith pdf`/Tectonic to produce the final PDF.
+8. **Activate fragments from `Requires`.**
+   The unioned `Requires` of every slot drives fragment activation: a body that
+   emits `\tscallout` pulls in `ts-callouts`, one that emits `\tsindex` pulls in
+   `ts-index`, and so on. A macro the writer names, a fragment must define — the
+   check is by construction rather than by sniffing the rendered LaTeX. See
+   [Contract macros](../templates/partials.md).
+
+9. **Fonts, bibliography and index.**
+   The script usage collected by the `scripts` pass chooses per-script font
+   families and emits font-switching commands; `--fonts-info` surfaces the
+   detected scripts and counts. Only the cited keys are written to the
+   generated `texsmith-bibliography.bib`, keeping outputs lean. The index
+   registries listed in `Requires` decide which `\printindex` blocks the
+   `ts-index` fragment drops into the backmatter.
+
+10. **Template wrap and emission.**
+    Slot bodies are merged back into the template entrypoint by
+    `wrap_template_document`, alongside template/fragment attributes, required
+    assets, and optional manifest/debug artefacts. The resulting
+    `TemplateRenderResult` carries the main `.tex` (or `.typ`) path, per-fragment
+    outputs, the bibliography path, the selected engine and its shell-escape
+    requirement, ready for Tectonic, latexmk or the Typst compiler to produce the
+    final PDF. Each conversion also publishes its `.refs.json`
+    [inventory](../../syntax/crossrefs.md) for other documents to cite.
+
+## Inspecting a stage
+
+```bash
+tmark parse report.md            # the IR as JSON, diagnostics on stderr
+tmark check --strict report.md   # parse, resolve and lint
+tmark write --to latex report.md # the body a slot receives (--map for Requires)
+texsmith report.md --debug       # keep the intermediate artefacts
+```

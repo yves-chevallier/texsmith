@@ -292,22 +292,28 @@ Slots become Jinja variables inside the template (`\VAR{abstract}`, `\VAR{mainma
 
 ### Overrides
 
-TeXSmith uses partials to render different parts of the document such as bold text with `adapters/latex/partials/bold.tex`:
+The LaTeX body comes from tmark's writer, which emits a fixed macro or
+environment per construct. Structural constructs (emphasis, lists, headings,
+figures, tables, links, footnotes) are plain LaTeX the writer owns; everything a
+template may want to restyle is a **contract macro** provided by a `ts-*`
+fragment. Redefine it in your template's `.tex`, after `\VAR{extra_packages}`
+(that is where the fragments are `\usepackage`d):
 
-```tex
-\textbf{\VAR{text}}
+```latex
+\VAR{extra_packages}
+\tcbset{/ts/code/.append style={frame hidden, boxrule=0pt}}
+\RenewDocumentCommand{\tscodeinline}{O{}m}{\texttt{#2}}
+\RenewDocumentEnvironment{tsdiv@multicolumn}{O{}}{\begin{multicols}{3}}{\end{multicols}}
 ```
 
-You may want to override some of these partials to customize the output of specific Markdown elements. To do so, create an `overrides/` folder in your template package and add the partials you want to override.
+See [Contract macros](partials.md) for the full table of macros, their keys and
+the three levels of override.
 
-When the manifest lists `latex.template.override = ["partials/bold.tex"]`, TeXSmith searches the following locations in order:
-
-1. `<template>/overrides/`
-2. `<template>/template/overrides/`
-3. The template root itself.
-4. A sibling `overrides/` directory next to the template package.
-
-Placeholders inside override files can use the same Jinja syntax (`\VAR{...}`, `\BLOCK{...}`).
+!!! warning "Jinja partials are no longer the rendering layer"
+    `latex.template.override`, fragment `partials` and `required_partials` are
+    deprecated in 0.7.0 — they warn and are ignored — and removed in 0.8.0.
+    [Contract macros](partials.md#former-partials) maps every former partial to
+    its replacement macro.
 
 ### Slot strategies
 
