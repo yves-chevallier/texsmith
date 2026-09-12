@@ -701,7 +701,7 @@ def test_width_accepts_explicit_x_marker() -> None:
 
 
 def test_table_config_parses_basic_payload() -> None:
-    from texsmith.extensions.tables import parse_table_config, synthesise_table_for_config
+    from texsmith.extensions.tables.schema import parse_table_config, synthesise_table_for_config
 
     config = parse_table_config(
         _load(
@@ -725,7 +725,7 @@ def test_table_config_parses_basic_payload() -> None:
 
 
 def test_table_config_columns_default_to_natural_when_missing() -> None:
-    from texsmith.extensions.tables import parse_table_config, synthesise_table_for_config
+    from texsmith.extensions.tables.schema import parse_table_config, synthesise_table_for_config
 
     config = parse_table_config(_load("columns: []"))
     synthetic = synthesise_table_for_config(config, n_columns=4)
@@ -734,7 +734,7 @@ def test_table_config_columns_default_to_natural_when_missing() -> None:
 
 
 def test_table_config_rejects_unknown_keys() -> None:
-    from texsmith.extensions.tables import parse_table_config
+    from texsmith.extensions.tables.schema import parse_table_config
 
     with pytest.raises(ValueError, match="unknown top-level"):
         parse_table_config({"columns": [], "weird": True})

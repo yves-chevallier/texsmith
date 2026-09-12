@@ -6,11 +6,32 @@ import zlib
 from PIL import Image  # type: ignore[import]
 import pytest
 
-from texsmith.adapters.latex import LaTeXRenderer
 from texsmith.adapters.transformers import image2pdf, register_converter, registry
 import texsmith.adapters.transformers.strategies as strategies
-from texsmith.core.config import BookConfig
+from texsmith.core.conversion.core import convert_documents
+from texsmith.core.conversion.models import ConversionRequest
+from texsmith.core.documents import Document
 from texsmith.core.exceptions import TransformerExecutionError
+
+
+def render_markdown(tmp_path: Path, body: str, **request_options: object) -> tuple[str, dict]:
+    """Render ``body`` through the passes and return ``(latex, asset map)``.
+
+    The ``assets`` pass drives the converters of this module: it resolves each
+    ``Image``, hands the file (or the Mermaid source) to the registered
+    converter and rewrites ``src`` to the stored artefact.
+    """
+    source = tmp_path / "doc.md"
+    source.write_text(body, encoding="utf-8")
+    bundle = convert_documents(
+        [Document.from_markdown(source)],
+        output_dir=tmp_path / "build",
+        settings=ConversionRequest(documents=[source], **request_options),
+        wrap_document=False,
+    )
+    fragment = bundle.fragments[0]
+    assert fragment.conversion is not None
+    return fragment.latex, dict(fragment.conversion.assets_map)
 
 
 class _StubConverter:
@@ -25,26 +46,6 @@ class _StubConverter:
         data = self.payload.encode("utf-8") if isinstance(self.payload, str) else self.payload
         artefact.write_bytes(data)
         return artefact
-
-
-class _RecordingEmitter:
-    def __init__(self, *, debug_enabled: bool = False):
-        self.debug_enabled = debug_enabled
-        self.warnings: list[tuple[str, BaseException | None]] = []
-
-    def warning(self, message: str, exc: BaseException | None = None) -> None:
-        self.warnings.append((message, exc))
-
-    def error(
-        self, message: str, exc: BaseException | None = None
-    ) -> None:  # pragma: no cover - unused
-        raise AssertionError(f"error emitted unexpectedly: {message}") from exc
-
-    def event(self, name: str, payload: dict) -> None:  # pragma: no cover - unused
-        raise AssertionError(f"event emitted unexpectedly: {name} -> {payload}")
-
-    def diagnostic(self, diagnostic: object) -> None:  # pragma: no cover - unused
-        raise AssertionError(f"diagnostic emitted unexpectedly: {diagnostic}")
 
 
 _FAKE_PDF = b"%PDF-1.4\n1 0 obj<<>>\nendobj\nxref\n0 1\n0000000000 65535 f \ntrailer<<>>\nstartxref\n9\n%%EOF"
@@ -100,110 +101,83 @@ def _make_drawio_cli(tmp_path: Path) -> Path:
     return script
 
 
-@pytest.fixture
-def renderer(tmp_path: Path) -> LaTeXRenderer:
-    config = BookConfig(project_dir=tmp_path)
-    return LaTeXRenderer(
-        config=config,
-        output_root=tmp_path / "build",
-        parser="html.parser",
-    )
-
-
-def test_png_image_preserves_name_by_default(renderer: LaTeXRenderer, tmp_path: Path) -> None:
+def test_png_image_preserves_name_by_default(tmp_path: Path) -> None:
     source_file = tmp_path / "figure.png"
     Image.new("RGB", (16, 16), color="blue").save(source_file)
 
-    html = '<p><img src="figure.png" alt="Example Figure"></p>'
-    latex = renderer.render(html, runtime={"source_dir": tmp_path})
+    latex, assets = render_markdown(tmp_path, "![Example Figure](figure.png)\n")
 
     assert "\\includegraphics" in latex
     assert "figure.png" in latex
 
-    stored = renderer.assets.lookup(str(source_file))
-    assert stored is not None
+    stored = assets[str(source_file)]
     assert stored.exists()
     assert stored.suffix.lower() == ".png"
 
 
-def test_linked_image_wraps_includegraphics(renderer: LaTeXRenderer, tmp_path: Path) -> None:
+def test_linked_image_wraps_includegraphics(tmp_path: Path) -> None:
     source_file = tmp_path / "linked.png"
     Image.new("RGB", (16, 16), color="blue").save(source_file)
 
-    html = '<p><a href="https://example.com"><img src="linked.png" alt="Example Figure" width="60%"></a></p>'
-    latex = renderer.render(html, runtime={"source_dir": tmp_path})
+    latex, assets = render_markdown(
+        tmp_path,
+        "[![Example Figure](linked.png){width=60%}](https://example.com)\n",
+    )
 
-    assert r"\href{https://example.com}{%" in latex
-    assert "\\includegraphics" in latex
+    assert r"\href{https://example.com}{" in latex
+    assert "\\includegraphics[width=0.6\\linewidth]" in latex
     assert "linked.png" in latex
 
-    stored = renderer.assets.lookup(str(source_file))
-    assert stored is not None
+    stored = next(path for key, path in assets.items() if key.startswith(str(source_file)))
     assert stored.exists()
     assert stored.suffix.lower() == ".png"
 
 
-def test_mkdocs_theme_variants_are_stripped(renderer: LaTeXRenderer, tmp_path: Path) -> None:
+def test_mkdocs_theme_variants_are_stripped(tmp_path: Path) -> None:
     source_file = tmp_path / "logo.png"
     Image.new("RGB", (16, 16), color="red").save(source_file)
 
     for fragment in ("only-light", "only-dark"):
-        html = f'<p><img src="logo.png#{fragment}" alt="Logo"></p>'
-        latex = renderer.render(html, runtime={"source_dir": tmp_path})
+        work = tmp_path / fragment
+        work.mkdir()
+        Image.new("RGB", (16, 16), color="red").save(work / "logo.png")
+        latex, assets = render_markdown(work, f"![Logo](logo.png#{fragment})\n")
 
         assert "\\includegraphics" in latex
         assert f"#{fragment}" not in latex
-
-        stored = renderer.assets.lookup(str(source_file))
-        assert stored is not None
-        assert stored.exists()
+        assert assets[str(work / "logo.png")].exists()
 
 
 def test_convert_assets_forces_png_conversion(tmp_path: Path) -> None:
-    config = BookConfig(project_dir=tmp_path)
-    renderer = LaTeXRenderer(
-        config=config,
-        output_root=tmp_path / "build",
-        parser="html.parser",
-        convert_assets=True,
-    )
-
     source_file = tmp_path / "diagram.png"
     Image.new("RGB", (16, 16), color="green").save(source_file)
 
-    html = '<p><img src="diagram.png" alt="Converted"></p>'
-    latex = renderer.render(html, runtime={"source_dir": tmp_path})
+    latex, assets = render_markdown(
+        tmp_path, "![Converted](diagram.png)\n", convert_assets=True
+    )
 
     assert "diagram.pdf" in latex
-
-    stored = renderer.assets.lookup(str(source_file))
-    assert stored is not None
-    assert stored.suffix.lower() == ".pdf"
+    assert assets[str(source_file)].suffix.lower() == ".pdf"
 
 
-def test_drawio_image_conversion(renderer: LaTeXRenderer, tmp_path: Path) -> None:
+def test_drawio_image_conversion(tmp_path: Path) -> None:
     source_file = tmp_path / "diagram.drawio"
     source_file.write_text("<mxfile />", encoding="utf-8")
 
     original = registry.get("drawio")
     register_converter("drawio", _StubConverter("diagram"))
     try:
-        html = '<p><img src="diagram.drawio" alt="PGCD Diagram"></p>'
-        latex = renderer.render(html, runtime={"source_dir": tmp_path})
+        latex, assets = render_markdown(tmp_path, "![PGCD Diagram](diagram.drawio)\n")
 
         assert "\\includegraphics" in latex
         assert "diagram.pdf" in latex
         assert "PGCD Diagram" in latex
-
-        assets = dict(renderer.assets.items())
         assert any("diagram.drawio" in key for key in assets)
     finally:
         register_converter("drawio", original)
 
 
-def test_drawio_prefers_local_cli(
-    monkeypatch: pytest.MonkeyPatch, renderer: LaTeXRenderer, tmp_path: Path
-) -> None:
+def test_drawio_prefers_local_cli(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     script = _make_drawio_cli(tmp_path)
     diagram = tmp_path / "diagram.drawio"
     diagram.write_text("<mxfile />", encoding="utf-8")
@@ -223,13 +197,12 @@ def test_drawio_prefers_local_cli(
 
     monkeypatch.setattr(shutil, "which", _fake_which)
 
-    html = '<p><img src="diagram.drawio" alt="Graph"></p>'
-    latex = renderer.render(html, runtime={"source_dir": tmp_path})
+    latex, _assets = render_markdown(tmp_path, "![Graph](diagram.drawio)\n")
     assert "\\includegraphics" in latex
 
 
 def test_drawio_cli_warns_when_using_hint_path(
-    monkeypatch: pytest.MonkeyPatch, renderer: LaTeXRenderer, tmp_path: Path
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
 ) -> None:
     script_dir = tmp_path / "snap" / "bin"
     script_dir.mkdir(parents=True, exist_ok=True)
@@ -247,9 +220,8 @@ def test_drawio_cli_warns_when_using_hint_path(
 
     monkeypatch.setattr(strategies, "run_container", _fail_docker)
 
-    html = '<p><img src="diagram.drawio" alt="Graph"></p>'
     with pytest.warns(UserWarning, match="drawio"):
-        renderer.render(html, runtime={"source_dir": tmp_path, "diagrams_backend": "local"})
+        render_markdown(tmp_path, "![Graph](diagram.drawio)\n", diagrams_backend="local")
 
 
 def test_drawio_cli_failure_falls_back_to_docker(
@@ -306,34 +278,24 @@ def test_drawio_cli_and_docker_failure(monkeypatch: pytest.MonkeyPatch, tmp_path
     assert "Docker fallback also failed" in message
 
 
-def test_mermaid_block_conversion(renderer: LaTeXRenderer, tmp_path: Path) -> None:
+MERMAID_FENCE = "```mermaid\n%% Influence Graph\nflowchart LR\n    A --> B\n    B --> C\n```\n"
+
+
+def test_mermaid_block_conversion(tmp_path: Path) -> None:
     original = registry.get("mermaid")
     register_converter("mermaid", _StubConverter("mermaid"))
     try:
-        html = """
-        <div class="highlight">
-            <pre><code>%% Influence Graph
-flowchart LR
-    A --> B
-    B --> C
-</code></pre>
-        </div>
-        """
-        latex = renderer.render(html, runtime={"source_dir": tmp_path})
+        latex, assets = render_markdown(tmp_path, MERMAID_FENCE)
 
         assert "\\includegraphics" in latex
         assert "mermaid.pdf" in latex
         assert "Influence Graph" in latex
-
-        assets = dict(renderer.assets.items())
         assert any(key.startswith("mermaid::") for key in assets)
     finally:
         register_converter("mermaid", original)
 
 
-def test_mermaid_block_falls_back_when_converter_fails(
-    renderer: LaTeXRenderer, tmp_path: Path
-) -> None:
+def test_mermaid_block_falls_back_when_converter_fails(tmp_path: Path) -> None:
     original = registry.get("mermaid")
 
     def _failing_converter(*_args, **_kwargs):
@@ -341,23 +303,13 @@ def test_mermaid_block_falls_back_when_converter_fails(
 
     register_converter("mermaid", _failing_converter)
     try:
-        html = """
-        <div class="highlight">
-            <pre><code>%% Influence Graph
-flowchart LR
-    A --> B
-</code></pre>
-        </div>
-        """
-        latex = renderer.render(html, runtime={"source_dir": tmp_path})
+        latex, _assets = render_markdown(tmp_path, MERMAID_FENCE)
         assert "[Influence Graph unavailable]" in latex
     finally:
         register_converter("mermaid", original)
 
 
-def test_mermaid_prefers_local_cli(
-    monkeypatch: pytest.MonkeyPatch, renderer: LaTeXRenderer, tmp_path: Path
-) -> None:
+def test_mermaid_prefers_local_cli(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     script = _make_mermaid_cli(tmp_path)
 
     monkeypatch.setattr(strategies, "normalise_pdf_version", lambda *_args, **_kwargs: None)
@@ -375,19 +327,12 @@ def test_mermaid_prefers_local_cli(
 
     monkeypatch.setattr(shutil, "which", _fake_which)
 
-    html = """
-    <div class="highlight">
-        <pre><code>flowchart LR
-A --> B
-    </code></pre>
-        </div>
-        """
-    latex = renderer.render(html, runtime={"source_dir": tmp_path, "diagrams_backend": "local"})
+    latex, _assets = render_markdown(tmp_path, MERMAID_FENCE, diagrams_backend="local")
     assert "\\includegraphics" in latex
 
 
 def test_mermaid_cli_warns_when_using_hint_path(
-    monkeypatch: pytest.MonkeyPatch, renderer: LaTeXRenderer, tmp_path: Path
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
 ) -> None:
     script_dir = tmp_path / "snap" / "bin"
     script_dir.mkdir(parents=True, exist_ok=True)
@@ -408,15 +353,8 @@ def test_mermaid_cli_warns_when_using_hint_path(
 
     monkeypatch.setattr(strategies, "run_container", _fail_docker)
 
-    html = """
-    <div class="highlight">
-        <pre><code>flowchart LR
-A --> B
-</code></pre>
-    </div>
-    """
     with pytest.warns(UserWarning, match="mmdc"):
-        renderer.render(html, runtime={"source_dir": tmp_path, "diagrams_backend": "local"})
+        render_markdown(tmp_path, MERMAID_FENCE, diagrams_backend="local")
 
 
 def test_mermaid_cli_failure_falls_back_to_docker(
@@ -478,146 +416,30 @@ def test_mermaid_cli_and_docker_failure(monkeypatch: pytest.MonkeyPatch, tmp_pat
     assert "Docker fallback also failed" in message
 
 
-def test_mermaid_warning_uses_emitter(renderer: LaTeXRenderer, tmp_path: Path) -> None:
-    original = registry.get("mermaid")
-
-    def _failing_converter(*_args, **_kwargs):
-        raise TransformerExecutionError("Docker executable could not be located.")
-
-    register_converter("mermaid", _failing_converter)
-    emitter = _RecordingEmitter()
-
-    try:
-        html = """
-        <div class="highlight">
-            <pre><code>flowchart LR
-    A --> B
-</code></pre>
-        </div>
-        """
-        renderer.render(html, runtime={"source_dir": tmp_path, "emitter": emitter})
-        assert emitter.warnings, "expected warning to be emitted via emitter"
-        message, exc = emitter.warnings[-1]
-        assert "Mermaid diagram could not be rendered" in message
-        assert "Run with --debug" in message
-        assert "Docker executable could not be located" in message
-        assert exc is None
-    finally:
-        register_converter("mermaid", original)
-
-
-def test_mermaid_warning_includes_details_when_debug(
-    renderer: LaTeXRenderer, tmp_path: Path
-) -> None:
-    original = registry.get("mermaid")
-
-    def _failing_converter(*_args, **_kwargs):
-        raise TransformerExecutionError("Docker executable could not be located.")
-
-    register_converter("mermaid", _failing_converter)
-    emitter = _RecordingEmitter(debug_enabled=True)
-
-    try:
-        html = """
-        <div class="highlight">
-            <pre><code>flowchart LR
-    A --> B
-</code></pre>
-        </div>
-        """
-        renderer.render(html, runtime={"source_dir": tmp_path, "emitter": emitter})
-        assert emitter.warnings, "expected warning to be emitted via emitter"
-        message, exc = emitter.warnings[-1]
-        assert "Details" in message
-        assert exc is not None
-    finally:
-        register_converter("mermaid", original)
-
-
-def test_unicode_emoji_converts_to_icon(renderer: LaTeXRenderer, tmp_path: Path) -> None:
-    original = registry.get("fetch-image")
-    register_converter("fetch-image", _StubConverter("emoji-icon"))
-    try:
-        html = "<p>Math 🧮 icon</p>"
-        latex = renderer.render(html, runtime={"source_dir": tmp_path})
-        assert "\\texsmithEmoji{🧮}" in latex
-
-        assets = dict(renderer.assets.items())
-        assert not any("twemoji.maxcdn.com" in key for key in assets)
-    finally:
-        register_converter("fetch-image", original)
-
-
-def test_renderer_emits_unicode_accents_by_default(renderer: LaTeXRenderer) -> None:
-    html = "<p>éclair — ligature œ</p>"
-    latex = renderer.render(html)
+def test_unicode_accents_are_emitted_by_default(tmp_path: Path) -> None:
+    latex, _assets = render_markdown(tmp_path, "éclair --- ligature œ\n")
 
     assert "éclair --- ligature œ" in latex
 
 
-def test_renderer_supports_legacy_accent_mode(tmp_path: Path) -> None:
-    legacy_renderer = LaTeXRenderer(
-        config=BookConfig(project_dir=tmp_path, legacy_latex_accents=True),
-        output_root=tmp_path / "build-legacy",
-    )
-    latex = legacy_renderer.render("<p>éclair</p>")
-
-    assert "\\'{e}" in latex
-
-
-def test_twemoji_image_conversion(renderer: LaTeXRenderer) -> None:
-    original = registry.get("fetch-image")
-    register_converter("fetch-image", _StubConverter("twemoji"))
-    try:
-        html = "<p><img class='twemoji' src='https://example.com/emoji.svg' alt='rocket'></p>"
-        latex = renderer.render(html)
-        assert "\\texsmithEmoji{rocket}" in latex
-        assets = dict(renderer.assets.items())
-        assert "https://example.com/emoji.svg" not in assets
-    finally:
-        register_converter("fetch-image", original)
-
-
-def test_twemoji_inline_svg_conversion(renderer: LaTeXRenderer) -> None:
-    original = registry.get("svg")
-    register_converter("svg", _StubConverter("twemoji-inline"))
-    try:
-        html = """
-        <p>
-            <span class="twemoji" title="sparkles">
-                <svg xmlns="http://www.w3.org/2000/svg"><path d="M0"/></svg>
-            </span>
-        </p>
-        """
-        latex = renderer.render(html)
-        assert "\\texsmithEmoji{sparkles}" in latex
-        assets = dict(renderer.assets.items())
-        assert not any(key.startswith("twemoji::") for key in assets)
-    finally:
-        register_converter("svg", original)
-
-
-def test_mermaid_image_from_file(renderer: LaTeXRenderer, tmp_path: Path) -> None:
+def test_mermaid_image_from_file(tmp_path: Path) -> None:
     source_file = tmp_path / "diagram.mmd"
     source_file.write_text("%% Local Diagram\nflowchart LR\n    A --> B\n", encoding="utf-8")
 
     original = registry.get("mermaid")
     register_converter("mermaid", _StubConverter("mermaid-file"))
     try:
-        html = '<p><img src="diagram.mmd" alt="Alt caption"></p>'
-        latex = renderer.render(html, runtime={"source_dir": tmp_path})
+        latex, assets = render_markdown(tmp_path, "![Alt caption](diagram.mmd)\n")
 
         assert "\\includegraphics" in latex
         assert "mermaid-file.pdf" in latex
         assert "Local Diagram" in latex
-
-        assets = dict(renderer.assets.items())
         assert any(key.startswith("mermaid::") for key in assets)
     finally:
         register_converter("mermaid", original)
 
 
-def test_mermaid_image_from_live_url(renderer: LaTeXRenderer) -> None:
+def test_mermaid_image_from_live_url(tmp_path: Path) -> None:
     original = registry.get("mermaid")
     register_converter("mermaid", _StubConverter("mermaid-live"))
     try:
@@ -625,34 +447,12 @@ def test_mermaid_image_from_live_url(renderer: LaTeXRenderer) -> None:
         compressed = zlib.compress(diagram.encode("utf-8"))
         encoded = base64.urlsafe_b64encode(compressed).decode("ascii").rstrip("=")
         url = f"https://mermaid.live/edit#pako:{encoded}"
-        html = f'<p><img src="{url}" alt="Flowchart diagram"></p>'
 
-        latex = renderer.render(html)
+        latex, assets = render_markdown(tmp_path, f"![Flowchart diagram]({url})\n")
 
         assert "\\includegraphics" in latex
         assert "mermaid-live.pdf" in latex
-        assert "Flowchart diagram" not in latex
-
-        assets = dict(renderer.assets.items())
         assert any(key.startswith("mermaid::") for key in assets)
-    finally:
-        register_converter("mermaid", original)
-
-
-def test_mermaid_pre_block_with_source_attribute(renderer: LaTeXRenderer) -> None:
-    original = registry.get("mermaid")
-    register_converter("mermaid", _StubConverter("mermaid-pre"))
-    try:
-        diagram = "flowchart LR\n    A --> B\n"
-        compressed = zlib.compress(diagram.encode("utf-8"))
-        encoded = base64.urlsafe_b64encode(compressed).decode("ascii").rstrip("=")
-        url = f"https://mermaid.live/edit#pako:{encoded}"
-        html = f'<pre class="mermaid" data-mermaid-source="{url}">garbled</pre>'
-
-        latex = renderer.render(html)
-
-        assert "\\includegraphics" in latex
-        assert "mermaid-pre.pdf" in latex
     finally:
         register_converter("mermaid", original)
 

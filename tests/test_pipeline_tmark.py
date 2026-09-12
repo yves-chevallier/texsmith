@@ -1,4 +1,4 @@
-"""The IR path end to end: ``--reader tmark`` on the examples (no PDF build).
+"""The IR path end to end: the tmark reader on the examples (no PDF build).
 
 The bodies come from ``tmark.write``; the template wrapping is the legacy
 one. The ``ts-*`` contract macros (``\\tsacr``, ``\\tscodeinline``, …) are
@@ -55,8 +55,6 @@ def test_abbr_example_renders_acronyms_from_tmark(tmp_path: Path) -> None:
     out = tmp_path / "abbr"
     _render(
         [
-            "--reader",
-            "tmark",
             str(EXAMPLES / "abbr" / "abbreviations.md"),
             "-o",
             str(out),
@@ -79,8 +77,6 @@ def test_counters_example_numbers_through_resolve(tmp_path: Path) -> None:
     out = tmp_path / "counters"
     _render(
         [
-            "--reader",
-            "tmark",
             str(EXAMPLES / "counters" / "counters.md"),
             "-o",
             str(out),
@@ -104,8 +100,6 @@ def test_code_example_highlights_through_the_pass(tmp_path: Path) -> None:
     out = tmp_path / "code"
     _render(
         [
-            "--reader",
-            "tmark",
             str(EXAMPLES / "code" / "code-block.md"),
             "-o",
             str(out),
@@ -131,8 +125,6 @@ def test_features_example_splices_the_fence_include(tmp_path: Path) -> None:
     out = tmp_path / "features"
     _render(
         [
-            "--reader",
-            "tmark",
             str(EXAMPLES / "markdown" / "features.md"),
             "-o",
             str(out),
@@ -174,8 +166,6 @@ def test_snippet_example_renders_the_previews(
     out = tmp_path / "snippet"
     _render(
         [
-            "--reader",
-            "tmark",
             str(EXAMPLES / "snippet" / "docs" / "index.md"),
             "-o",
             str(out),
@@ -210,8 +200,6 @@ def test_snippet_example_typst_takes_the_png(
     out = tmp_path / "snippet-typst"
     _render(
         [
-            "--reader",
-            "tmark",
             str(EXAMPLES / "snippet" / "docs" / "index.md"),
             "--format",
             "typst",
@@ -229,8 +217,6 @@ def test_typst_hello_example_writes_a_typst_body(tmp_path: Path) -> None:
     out = tmp_path / "hello"
     _render(
         [
-            "--reader",
-            "tmark",
             str(EXAMPLES / "typst-hello" / "hello.md"),
             "--format",
             "typst",
@@ -250,8 +236,6 @@ def test_typst_templated_uses_the_scaffolding(tmp_path: Path) -> None:
     out = tmp_path / "hello-article"
     _render(
         [
-            "--reader",
-            "tmark",
             str(EXAMPLES / "typst-hello" / "hello.md"),
             "--format",
             "typst",
@@ -267,13 +251,11 @@ def test_typst_templated_uses_the_scaffolding(tmp_path: Path) -> None:
     assert "#let ts-divider()" in typ
 
 
-def test_debug_html_dumps_the_ir(tmp_path: Path) -> None:
+def test_debug_ir_dumps_the_ir(tmp_path: Path) -> None:
     out = tmp_path / "dbg"
     _render(
         [
-            "--reader",
-            "tmark",
-            "--debug-html",
+            "--debug-ir",
             str(EXAMPLES / "abbr" / "abbreviations.md"),
             "-o",
             str(out),
@@ -284,40 +266,13 @@ def test_debug_html_dumps_the_ir(tmp_path: Path) -> None:
     dump = json.loads((out / "abbreviations.ir.json").read_text(encoding="utf-8"))
     assert dump["blocks"][0]["type"] == "Header"
     assert [entry["key"] for entry in dump["abbreviations"]][:2] == ["NMR", "FTIR"]
-    assert not (out / "abbreviations.debug.html").exists()
 
 
-def test_tmark_is_the_default_reader(tmp_path: Path) -> None:
+def test_tmark_reads_every_markdown_source(tmp_path: Path) -> None:
     out = tmp_path / "default"
     _render([str(EXAMPLES / "abbr" / "abbreviations.md"), "-o", str(out), "-t", "article"])
     body = _body(out / "abbreviations.tex")
     assert "\\tsacr{" in body
-
-
-def test_the_html_reader_stays_available(tmp_path: Path) -> None:
-    out = tmp_path / "legacy"
-    _render(
-        [
-            "--reader",
-            "html",
-            str(EXAMPLES / "abbr" / "abbreviations.md"),
-            "-o",
-            str(out),
-            "-t",
-            "article",
-        ]
-    )
-    body = _body(out / "abbreviations.tex")
-    assert "\\acrshort{NMR}" in body
-    assert "\\tsacr{" not in body
-
-
-def test_html_output_rejects_the_tmark_reader() -> None:
-    result = CliRunner().invoke(
-        app, ["--reader", "tmark", "--html", str(EXAMPLES / "abbr" / "abbreviations.md")]
-    )
-    assert result.exit_code != 0
-    assert "--html needs the html reader" in result.output
 
 
 def test_counter_start_is_chained_across_a_batch(tmp_path: Path) -> None:
@@ -332,7 +287,6 @@ def test_counter_start_is_chained_across_a_batch(tmp_path: Path) -> None:
         documents=[first, second],
         template="article",
         render_dir=tmp_path / "out",
-        reader="tmark",
         embed_fragments=True,
     )
     response = ConversionService().execute(request)
@@ -456,7 +410,7 @@ def test_assets_emoji_and_scripts_passes_reach_the_tex(tmp_path: Path, monkeypat
     )
     out = tmp_path / "out"
     try:
-        _render(["--reader", "tmark", str(source), "-o", str(out), "-t", "article"])
+        _render([str(source), "-o", str(out), "-t", "article"])
     finally:
         register_converter("mermaid", saved)
 
@@ -503,8 +457,6 @@ def test_typst_bibliography_includes_the_doi_pass_entries(tmp_path: Path) -> Non
     _seed_doi_cache(out, "10.1000/cached", "Doe_2020")
     _render(
         [
-            "--reader",
-            "tmark",
             str(source),
             str(bib),
             "--format",
@@ -563,7 +515,7 @@ def test_typst_assets_and_pass_values(tmp_path: Path, monkeypatch) -> None:
     out = tmp_path / "out"
     state = DocumentState()
     try:
-        document = Document.from_markdown(source, reader="tmark").prepare_for_conversion()
+        document = Document.from_markdown(source).prepare_for_conversion()
         typ = render_typst_from_ir(document, template="article", output_dir=out, state=state)
     finally:
         register_converter("mermaid", saved)
@@ -653,13 +605,13 @@ def test_resolve_receives_the_resolved_language_on_both_backends(
     source = tmp_path / "rapport.md"
     source.write_text("---\nlanguage: french\n---\n# Bonjour\n\nTexte.\n", encoding="utf-8")
     seen = _capture_resolve_options(monkeypatch)
-    _render(["--reader", "tmark", str(source), "-o", str(tmp_path / "tex")])
-    _render(["--reader", "tmark", str(source), "--format", "typst", "-o", str(tmp_path / "typ")])
+    _render([str(source), "-o", str(tmp_path / "tex")])
+    _render([str(source), "--format", "typst", "-o", str(tmp_path / "typ")])
     assert [options["lang"] for options in seen] == ["fr", "fr"]
     assert all("numbering" not in options for options in seen)
     # ``--language`` wins over the front matter, as it does for babel.
     seen.clear()
-    _render(["--reader", "tmark", "-l", "ngerman", str(source), "-o", str(tmp_path / "de")])
+    _render(["-l", "ngerman", str(source), "-o", str(tmp_path / "de")])
     assert seen[0]["lang"] == "de"
 
 
@@ -692,11 +644,9 @@ def test_numbering_tmark_prints_the_same_numbers_in_tex_and_typ(
     source.write_text(NUMBERED_FLOATS, encoding="utf-8")
     seen = _capture_resolve_options(monkeypatch)
     out = tmp_path / "out"
-    _render(["--reader", "tmark", "--numbering", "tmark", str(source), "-o", str(out / "tex")])
+    _render(["--numbering", "tmark", str(source), "-o", str(out / "tex")])
     _render(
         [
-            "--reader",
-            "tmark",
             "--numbering",
             "tmark",
             "--format",
@@ -718,7 +668,7 @@ def test_numbering_tmark_prints_the_same_numbers_in_tex_and_typ(
     assert "#link(<sec:intro>)[Section 1]" in typ
     # The default leaves the numbers to each backend.
     seen.clear()
-    _render(["--reader", "tmark", str(source), "-o", str(out / "backend")])
+    _render([str(source), "-o", str(out / "backend")])
     assert "numbering" not in seen[0]
     backend_tex = (out / "backend" / "floats.tex").read_text(encoding="utf-8")
     assert "Table~\\ref{tbl:one}" in backend_tex
@@ -746,7 +696,7 @@ def test_counters_example_numbers_agree_across_backends_under_tmark_numbering(
     tmp_path: Path,
 ) -> None:
     source = EXAMPLES / "counters" / "counters.md"
-    common = ["--reader", "tmark", "--numbering", "tmark", str(source)]
+    common = ["--numbering", "tmark", str(source)]
     _render([*common, "-o", str(tmp_path / "tex"), "-t", "article"])
     _render([*common, "--format", "typst", "-o", str(tmp_path / "typ")])
     tex_definitions, tex_references = _tex_numbers(_body(tmp_path / "tex" / "counters.tex"))
@@ -766,7 +716,7 @@ def test_counters_example_numbers_agree_across_backends_under_tmark_numbering(
 def test_numbering_option_is_validated() -> None:
     result = CliRunner().invoke(
         app,
-        ["--reader", "tmark", "--numbering", "latex", str(EXAMPLES / "counters" / "counters.md")],
+        ["--numbering", "latex", str(EXAMPLES / "counters" / "counters.md")],
     )
     assert result.exit_code != 0
     assert "--numbering must be 'backend' or 'tmark'" in result.output

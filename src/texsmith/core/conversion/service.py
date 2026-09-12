@@ -30,11 +30,10 @@ from texsmith.adapters.latex.tectonic import (
     select_makeglossaries,
     select_tectonic_binary,
 )
-from texsmith.adapters.markdown import split_front_matter
 
-from ..counters import clear_registry as clear_counters_registry
 from ..diagnostics import DiagnosticEmitter
 from ..documents import Document, TitleStrategy, front_matter_has_title
+from ..front_matter import split_front_matter
 from ..templates.session import TemplateRenderResult, TemplateSession, get_template
 from .core import ConversionBundle, convert_documents
 from .debug import ConversionError, ensure_emitter
@@ -155,8 +154,6 @@ class ConversionService:
     def prepare_documents(self, request: ConversionRequest) -> _PreparedBatch:
         """Normalise input sources into :class:`Document` instances so conversion steps operate on consistent objects."""
         emitter = ensure_emitter(request.emitter)
-        # One continuous counter series per batch, restarting on every conversion.
-        clear_counters_registry()
         documents: list[Document] = []
         mapping: dict[Path, Document] = {}
         shared_front_matter = _normalise_front_matter(request.front_matter)
@@ -179,7 +176,6 @@ class ConversionService:
             if input_kind is InputKind.MARKDOWN:
                 document = Document.from_markdown(
                     path,
-                    extensions=list(request.markdown_extensions),
                     base_level=request.base_level,
                     promote_title=extract_title,
                     strip_heading=effective_strip,
@@ -187,7 +183,6 @@ class ConversionService:
                     title_strategy=strategy,
                     numbered=request.numbered,
                     emitter=emitter,
-                    reader=request.reader,
                 )
             else:
                 document = Document.from_html(
@@ -416,18 +411,26 @@ def _publish_reference_inventory(
     stem: str,
 ) -> None:
     """Publish the ``*.refs.json`` other documents cite this one through."""
-    from texsmith.core.crossrefs import publish_inventory
+    from texsmith.core.crossrefs import anchors_from_resolved, publish_inventory
 
     primary = documents[0] if documents else None
-    metadata = dict(primary.front_matter) if primary is not None else {}
-    if primary is not None and not metadata.get("title") and primary.extracted_title:
+    if primary is None:
+        return
+    metadata = dict(primary.front_matter)
+    if not metadata.get("title") and primary.extracted_title:
         metadata["title"] = primary.extracted_title
+    # One inventory per build: the anchors of every document of the batch, in
+    # conversion order, since they share one continuous counter series.
+    anchors = {}
+    for document in documents:
+        anchors.update(anchors_from_resolved(document.resolved))
     try:
         publish_inventory(
             output_dir=output_dir,
             stem=stem,
             metadata=metadata,
-            source_path=primary.source_path if primary is not None else None,
+            source_path=primary.source_path,
+            anchors=anchors,
         )
     except OSError as exc:  # pragma: no cover - the conversion itself succeeded
         logger.warning("Could not write the cross-reference inventory: %s", exc)

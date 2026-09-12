@@ -4,11 +4,9 @@ from __future__ import annotations
 
 from pathlib import Path
 
-import pytest
-
 from texsmith.core.conversion.inputs import InputKind
 from texsmith.core.diagnostics import LoggingEmitter
-from texsmith.core.documents import READERS, Document, SlotPlan, TitleStrategy
+from texsmith.core.documents import Document, SlotPlan, TitleStrategy
 from texsmith.diagnostics import DiagnosticSink, FileTable
 from texsmith.ir import model
 from texsmith.ir.model import MISSING
@@ -118,7 +116,7 @@ def test_memory_loader_joins_like_the_file_system() -> None:
 
 def test_from_markdown_with_the_tmark_reader(tmp_path: Path) -> None:
     path = _write(tmp_path)
-    document = Document.from_markdown(path, reader="tmark")
+    document = Document.from_markdown(path)
 
     assert document.reader == "tmark"
     assert document.kind is InputKind.MARKDOWN
@@ -136,32 +134,17 @@ def test_from_markdown_with_the_tmark_reader(tmp_path: Path) -> None:
     assert document.slots.selectors is document.slot_selectors
 
 
-def test_reader_default_is_html(tmp_path: Path) -> None:
-    path = _write(tmp_path)
-    document = Document.from_markdown(path)
-    assert document.reader == "html"
-    assert document.ir is None
-    assert document.keys.title is MISSING
-    assert "<h1" in document.html
-    assert READERS == ("html", "tmark")
-
-
-def test_unknown_reader_is_rejected(tmp_path: Path) -> None:
-    with pytest.raises(ValueError, match="Unknown reader"):
-        Document.from_markdown(_write(tmp_path), reader="pandoc")
-
-
 def test_parse_diagnostics_reach_the_emitter_with_their_file(tmp_path: Path) -> None:
     emitter = LoggingEmitter()
     path = _write(tmp_path)
-    document = Document.from_markdown(path, reader="tmark", emitter=emitter)
+    document = Document.from_markdown(path, emitter=emitter)
     assert document.files is emitter.files
     assert emitter.files.path(0) == path
     codes = [record.code for record in emitter.sink]
     assert "deprecated-frontmatter-key" in codes
     # A second document of the batch gets the next file id.
     second = Document.from_markdown(
-        _write(tmp_path, "# Second\n", "second.md"), reader="tmark", emitter=emitter
+        _write(tmp_path, "# Second\n", "second.md"), emitter=emitter
     )
     assert second.ir is not None
     assert second.ir.file == 1
@@ -170,7 +153,7 @@ def test_parse_diagnostics_reach_the_emitter_with_their_file(tmp_path: Path) -> 
 
 def test_prepare_for_conversion_reads_headings_from_the_ir(tmp_path: Path) -> None:
     path = _write(tmp_path, "# Only Title\n\nBody.\n\n## Sub\n\nMore.\n")
-    document = Document.from_markdown(path, reader="tmark", promote_title=True)
+    document = Document.from_markdown(path, promote_title=True)
     assert document.title_strategy is TitleStrategy.PROMOTE_METADATA
     assert document.first_heading_level() == 1
     prepared = document.prepare_for_conversion()
@@ -181,7 +164,7 @@ def test_prepare_for_conversion_reads_headings_from_the_ir(tmp_path: Path) -> No
 
 def test_title_promotion_needs_a_unique_level(tmp_path: Path) -> None:
     path = _write(tmp_path, "# One\n\n# Two\n")
-    document = Document.from_markdown(path, reader="tmark", promote_title=True)
+    document = Document.from_markdown(path, promote_title=True)
     prepared = document.prepare_for_conversion()
     assert prepared.extracted_title is None
     assert prepared.drop_title is False
@@ -189,7 +172,7 @@ def test_title_promotion_needs_a_unique_level(tmp_path: Path) -> None:
 
 def test_front_matter_flags_and_slots(tmp_path: Path) -> None:
     text = "---\ntitle: T\nnumbered: false\nslots:\n  abstract: Summary\n---\n# Summary\n\nx\n"
-    document = Document.from_markdown(_write(tmp_path, text), reader="tmark")
+    document = Document.from_markdown(_write(tmp_path, text))
     assert document.numbered is False
     assert document.slot_selectors == {"abstract": "Summary"}
     prepared = document.prepare_for_conversion()
@@ -197,7 +180,7 @@ def test_front_matter_flags_and_slots(tmp_path: Path) -> None:
 
 
 def test_copy_shares_ir_and_files(tmp_path: Path) -> None:
-    document = Document.from_markdown(_write(tmp_path), reader="tmark")
+    document = Document.from_markdown(_write(tmp_path))
     clone = document.copy()
     assert clone.ir is document.ir
     assert clone.files is document.files
@@ -208,7 +191,7 @@ def test_copy_shares_ir_and_files(tmp_path: Path) -> None:
 
 def test_evolve_keeps_the_prepared_decision(tmp_path: Path) -> None:
     path = _write(tmp_path, "# Title\n\nBody.\n")
-    document = Document.from_markdown(path, reader="tmark", promote_title=True)
+    document = Document.from_markdown(path, promote_title=True)
     prepared = document.prepare_for_conversion()
     assert prepared.ir is not None
     evolved = prepared.evolve(ir=model.Document(blocks=prepared.ir.blocks[1:]))
@@ -227,5 +210,5 @@ def test_from_html_reads_the_fragment_into_the_ir(tmp_path: Path) -> None:
     assert document.files.path(document.ir.file) == path
     assert document.files.text(document.ir.file) == ""
     assert document.keys is not None and document.keys.title is MISSING
-    assert "<h1>Hi</h1>" in document.html  # kept for ``--html`` and the debug snapshot
+    assert "<h1>Hi</h1>" in document.html  # the extracted fragment, kept on the document
     assert [header.level for header in document.top_level_headers()] == [1]

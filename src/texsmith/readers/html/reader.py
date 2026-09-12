@@ -117,12 +117,13 @@ _INLINE_TAGS: frozenset[str] = frozenset({"img", "script", "ts-marginnote"})
 def build_reader_registry(extra_modules: Iterable[object] = ()) -> ReaderRegistry:
     """Assemble a registry from the bundled lowering modules plus ``extra_modules``.
 
-    The bundled modules are collected first; any ``extra_modules`` (e.g. a
-    template's ``@reads`` module) are layered on top. Because
-    :meth:`ReaderRegistry.candidates` orders by descending priority (stable on
-    registration order), an extra handler declaring a higher ``priority`` than a
-    bundled one for the same tag is tried first and may return ``NotHandled`` to
-    fall through to the bundled handler.
+    The bundled modules are collected first; any ``extra_modules`` are layered
+    on top. Because :meth:`ReaderRegistry.candidates` orders by descending
+    priority (stable on registration order), an extra handler declaring a higher
+    ``priority`` than a bundled one for the same tag is tried first and may
+    return ``NotHandled`` to fall through to the bundled handler. Nothing in the
+    tree passes ``extra_modules`` since the template ``readers`` hook went: the
+    seam is the reader's own composition point.
     """
     registry = ReaderRegistry()
     for module in (_inline, _blocks, _extensions, *extra_modules):

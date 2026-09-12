@@ -1,43 +1,32 @@
-"""Tests for cross-document references: inventories, citations and diagnostics."""
+"""Tests for the cross-document reference inventory TeXSmith publishes.
+
+Reading an inventory and resolving ``@alias:key`` against it is tmark's since
+0.8 (decision D4 of ``specs/tmark-migration.md``); what is tested here is the
+writing half: the payload, the anchors of a finished ``tmark.resolve``, the page
+numbers harvested from the ``.aux`` and the relocation that keeps
+``document.source`` resolvable.
+"""
 
 from __future__ import annotations
 
-from collections.abc import Iterator
-from contextlib import contextmanager
 import json
 from pathlib import Path
 
-from bs4 import BeautifulSoup
-import pytest
-
-from texsmith.adapters.latex import LaTeXRenderer
-from texsmith.adapters.markdown import DEFAULT_MARKDOWN_EXTENSIONS, render_markdown
-from texsmith.core.counters import clear_registry
+from texsmith.core.conversion.models import ConversionRequest
+from texsmith.core.conversion.service import ConversionService
 from texsmith.core.crossrefs import (
     SCHEMA_VERSION,
     Anchor,
-    CrossRefValidationError,
     DocumentIdentity,
+    anchors_from_resolved,
     attach_pages,
     build_payload,
     document_identifier,
     harvest_aux,
-    load_inventory,
-    parse_front_matter_crossrefs,
     publish_inventory,
     relocate_inventory,
-    render_reference,
     write_inventory,
 )
-from texsmith.core.diagnostics import LoggingEmitter, use_emitter
-from texsmith.diagnostics import DiagnosticSink
-
-
-@pytest.fixture(autouse=True)
-def _clear_counter_registry() -> Iterator[None]:
-    clear_registry()
-    yield
-    clear_registry()
 
 
 def _write_inventory(
@@ -65,152 +54,99 @@ def _write_inventory(
     return write_inventory(directory / f"{stem}.refs.json", payload)
 
 
-# ---------------------------------------------------------------------------
-# Front matter
-# ---------------------------------------------------------------------------
-
-
-def test_parse_returns_empty_mapping_when_crossrefs_absent() -> None:
-    assert parse_front_matter_crossrefs({"title": "x"}) == {}
-    assert parse_front_matter_crossrefs(None) == {}
-
-
-def test_parse_accepts_the_string_shorthand(tmp_path: Path) -> None:
-    sources = parse_front_matter_crossrefs(
-        {"crossrefs": {"fwrev": "build/firmware-review.refs.json"}}, base_path=tmp_path
-    )
-    assert sources["fwrev"] == (tmp_path / "build/firmware-review.refs.json").resolve()
-
-
-def test_parse_accepts_the_mapping_form(tmp_path: Path) -> None:
-    sources = parse_front_matter_crossrefs(
-        {"crossrefs": {"fwrev": {"inventory": "a.refs.json"}}},
-        base_path=tmp_path,
-    )
-    assert sources["fwrev"] == (tmp_path / "a.refs.json").resolve()
-
-
-def test_parse_rejects_a_non_mapping_section() -> None:
-    with pytest.raises(CrossRefValidationError):
-        parse_front_matter_crossrefs({"crossrefs": ["a"]})
-
-
-def test_parse_rejects_an_unknown_option() -> None:
-    with pytest.raises(CrossRefValidationError):
-        parse_front_matter_crossrefs({"crossrefs": {"a": {"inventory": "x", "colour": "red"}}})
-
-
-def test_parse_rejects_a_missing_inventory_path() -> None:
-    with pytest.raises(CrossRefValidationError):
-        parse_front_matter_crossrefs({"crossrefs": {"a": {}}})
-
-
-def test_parse_rejects_an_entry_that_is_neither_string_nor_mapping() -> None:
-    with pytest.raises(CrossRefValidationError):
-        parse_front_matter_crossrefs({"crossrefs": {"a": 42}})
+def _anchors(path: Path) -> dict[str, dict]:
+    return json.loads(path.read_text(encoding="utf-8"))["anchors"]
 
 
 # ---------------------------------------------------------------------------
-# Formatting
+# Payload
 # ---------------------------------------------------------------------------
 
 
-def test_a_citation_concatenates_the_document_id() -> None:
-    identity = DocumentIdentity(id="RHE-423", title="Revue firmware")
-    anchor = Anchor(key="fw:x", label="FW-10", page=14)
-    assert render_reference(identity, anchor) == "RHE-423-FW-10 p. 14"
-
-
-def test_a_citation_falls_back_to_the_title_without_a_document_id() -> None:
-    identity = DocumentIdentity(title="Revue firmware")
-    anchor = Anchor(key="fw:x", label="FW-10", page=14)
-    assert render_reference(identity, anchor) == "FW-10 (Revue firmware, p. 14)"
-
-
-def test_a_citation_falls_back_to_the_bare_label_without_any_identity() -> None:
-    assert render_reference(DocumentIdentity(), Anchor(key="fw:x", label="FW-10")) == "FW-10"
-
-
-def test_a_citation_omits_the_page_until_the_target_is_built() -> None:
-    identity = DocumentIdentity(id="RHE-423", title="Revue firmware")
-    assert render_reference(identity, Anchor(key="fw:x", label="FW-10")) == "RHE-423-FW-10"
-
-
-# ---------------------------------------------------------------------------
-# Inventory round trip
-# ---------------------------------------------------------------------------
-
-
-def test_inventory_round_trip(tmp_path: Path) -> None:
+def test_inventory_payload_is_stable(tmp_path: Path) -> None:
     path = _write_inventory(tmp_path)
     payload = json.loads(path.read_text(encoding="utf-8"))
     assert payload["schema"] == SCHEMA_VERSION
     assert payload["document"]["id"] == "RHE-423"
-
-    inventory = load_inventory(path)
-    assert inventory is not None
-    anchor = inventory.anchor("fw:pas-de-temps")
-    assert anchor is not None
-    assert (anchor.label, anchor.page) == ("FW-10", 14)
-
-
-def test_missing_inventory_warns_and_returns_none(tmp_path: Path) -> None:
-    with _collect() as sink:
-        assert load_inventory(tmp_path / "absent.refs.json") is None
-    (message,) = _reported(sink, "crossref-inventory-missing")
-    assert "is missing" in message
-
-
-def test_unknown_schema_warns_and_returns_none(tmp_path: Path) -> None:
-    path = tmp_path / "x.refs.json"
-    path.write_text(json.dumps({"schema": 99, "anchors": {}}), encoding="utf-8")
-    with _collect() as sink:
-        assert load_inventory(path) is None
-    (message,) = _reported(sink, "crossref-inventory-missing")
-    assert "schema" in message
-
-
-def test_stale_inventory_warns(tmp_path: Path) -> None:
-    source = tmp_path / "firmware-review.md"
-    source.write_text("# a\n", encoding="utf-8")
-    path = _write_inventory(tmp_path, source="firmware-review.md", source_sha256="0" * 64)
-    with _collect() as sink:
-        load_inventory(path)
-    (message,) = _reported(sink, "crossref-inventory-stale")
-    assert "out of date" in message
-
-
-def test_publish_inventory_exports_the_allocated_counters(tmp_path: Path) -> None:
-    source = tmp_path / "doc.md"
-    source.write_text(
-        "---\ncounters:\n  fw:\n    name: Constat\n    format: 'FW-{n:02d}'\n---\n#{fw:a} et #{fw:b}\n",
-        encoding="utf-8",
-    )
-    render_markdown(source.read_text(encoding="utf-8"), extensions=DEFAULT_MARKDOWN_EXTENSIONS)
-
-    path = publish_inventory(
-        output_dir=tmp_path / "build",
-        stem="doc",
-        metadata={"document-id": "RHE-1", "title": "Doc"},
-        source_path=source,
-    )
-    assert path is not None
-    inventory = load_inventory(path)
-    assert inventory is not None
-    assert inventory.document.id == "RHE-1"
-    assert {key: anchor.label for key, anchor in inventory.anchors.items()} == {
-        "fw:a": "FW-01",
-        "fw:b": "FW-02",
+    assert payload["anchors"]["fw:pas-de-temps"] == {
+        "counter": "fw",
+        "label": "FW-10",
+        "page": 14,
     }
+
+
+def test_an_anchor_without_a_page_omits_the_key(tmp_path: Path) -> None:
+    path = _write_inventory(tmp_path, page=None)
+    assert "page" not in _anchors(path)["fw:pas-de-temps"]
+
+
+# ---------------------------------------------------------------------------
+# Anchors of a resolution
+# ---------------------------------------------------------------------------
+
+
+def test_anchors_come_from_the_resolved_counter_items() -> None:
+    resolved = {
+        "labels": [
+            {"id": "intro", "prefix": "sec", "host": "header", "title": "Intro"},
+            {"id": "fw:a", "prefix": "fw", "host": "counter_item", "formatted": "FW-01"},
+            {"id": "fw:b", "prefix": "fw", "host": "counter_item", "formatted": "FW-02"},
+        ]
+    }
+    anchors = anchors_from_resolved(resolved)
+    # A header is numbered by the backend, so it is not citable across documents.
+    assert set(anchors) == {"fw:a", "fw:b"}
+    assert anchors["fw:a"] == Anchor(key="fw:a", label="FW-01", counter="fw")
+
+
+def test_anchors_of_an_unresolved_document_are_empty() -> None:
+    assert anchors_from_resolved(None) == {}
+    assert anchors_from_resolved({}) == {}
 
 
 def test_publish_inventory_writes_nothing_without_anchors(tmp_path: Path) -> None:
     assert (
         publish_inventory(
-            output_dir=tmp_path, stem="doc", metadata={"document-id": "X"}, source_path=None
+            output_dir=tmp_path,
+            stem="doc",
+            metadata={"document-id": "X"},
+            source_path=None,
+            anchors={},
         )
         is None
     )
+
+
+def test_a_conversion_publishes_the_counters_it_allocated(tmp_path: Path) -> None:
+    source = tmp_path / "doc.md"
+    source.write_text(
+        "---\n"
+        "id: RHE-1\n"
+        "title: Doc\n"
+        "press:\n"
+        "  declare:\n"
+        "    counters:\n"
+        "      fw:\n"
+        "        name: Constat\n"
+        '        format: "FW-{n:02d}"\n'
+        "---\n"
+        "\n"
+        "# Doc\n"
+        "\n"
+        "Constat {counter}(fw:a) puis {counter}(fw:b).\n",
+        encoding="utf-8",
+    )
+    out = tmp_path / "build"
+    ConversionService().execute(ConversionRequest(documents=[source], render_dir=out))
+
+    published = out / "doc.refs.json"
+    assert published.exists()
+    payload = json.loads(published.read_text(encoding="utf-8"))
+    assert payload["document"]["id"] == "RHE-1"
+    assert {key: anchor["label"] for key, anchor in payload["anchors"].items()} == {
+        "fw:a": "FW-01",
+        "fw:b": "FW-02",
+    }
 
 
 # ---------------------------------------------------------------------------
@@ -241,98 +177,7 @@ def test_attach_pages_folds_the_pages_into_the_inventory(tmp_path: Path) -> None
     aux.write_text(r"\newlabel{fw:pas-de-temps}{{1}{14}{}{}{}}" "\n", encoding="utf-8")
 
     assert attach_pages(path, aux) == 1
-    inventory = load_inventory(path)
-    assert inventory is not None
-    anchor = inventory.anchor("fw:pas-de-temps")
-    assert anchor is not None and anchor.page == 14
-
-
-# ---------------------------------------------------------------------------
-# End to end through Markdown
-# ---------------------------------------------------------------------------
-
-
-def _render(source: str, base_path: Path) -> str:
-    return render_markdown(source, extensions=DEFAULT_MARKDOWN_EXTENSIONS, base_path=base_path).html
-
-
-@contextmanager
-def _collect() -> Iterator[DiagnosticSink]:
-    """Capture the diagnostics the code under test reports."""
-    emitter = LoggingEmitter()
-    with use_emitter(emitter):
-        yield emitter.sink
-
-
-def _reported(sink: DiagnosticSink, code: str) -> list[str]:
-    return [diagnostic.message for diagnostic in sink if diagnostic.code == code]
-
-
-CITING = """\
----
-title: Revue hardware
-crossrefs:
-  fwrev: firmware-review.refs.json
----
-Voir @fwrev:fw:pas-de-temps ici.
-"""
-
-
-def test_external_citation_renders_the_published_label(tmp_path: Path) -> None:
-    _write_inventory(tmp_path)
-    soup = BeautifulSoup(_render(CITING, tmp_path), "html.parser")
-    assert soup.get_text().strip() == "Voir RHE-423-FW-10 p. 14 ici."
-
-
-def test_external_citation_is_not_a_local_link(tmp_path: Path) -> None:
-    # The target lives in another PDF: a local \ref would be a dead link.
-    _write_inventory(tmp_path)
-    soup = BeautifulSoup(_render(CITING, tmp_path), "html.parser")
-    anchor = soup.find("a")
-    assert anchor is not None
-    assert anchor.get("href") is None
-
-
-def test_external_citation_reaches_latex_as_plain_text(tmp_path: Path) -> None:
-    _write_inventory(tmp_path)
-    latex = LaTeXRenderer().render(_render(CITING, tmp_path))
-    assert "RHE-423-FW-10 p. 14" in latex
-    assert "hyperref" not in latex
-
-
-def test_unpublished_key_stays_visible_and_warns(tmp_path: Path) -> None:
-    _write_inventory(tmp_path)
-    source = CITING.replace("fw:pas-de-temps", "fw:disparu")
-    with _collect() as sink:
-        html = _render(source, tmp_path)
-    assert "[?fwrev:fw:disparu]" in BeautifulSoup(html, "html.parser").get_text()
-    (message,) = _reported(sink, "ref-unresolved")
-    assert "is not published" in message
-
-
-def test_an_undeclared_alias_is_left_to_the_regular_reference_machinery(tmp_path: Path) -> None:
-    html = _render("Voir @autre:fw:x ici.\n", tmp_path)
-    soup = BeautifulSoup(html, "html.parser")
-    assert soup.find("a", href="#autre:fw:x") is not None
-
-
-def test_a_local_counter_keeps_its_live_link(tmp_path: Path) -> None:
-    _write_inventory(tmp_path)
-    source = """\
----
-counters:
-  hw:
-    name: Constat
-    format: "HW-{n:02d}"
-crossrefs:
-  fwrev: firmware-review.refs.json
----
-#{hw:a} puis @hw:a et @fwrev:fw:pas-de-temps.
-"""
-    soup = BeautifulSoup(_render(source, tmp_path), "html.parser")
-    local = soup.find("a", href="#hw:a")
-    assert local is not None and local.get_text() == "HW-01"
-    assert "RHE-423-FW-10 p. 14" in soup.get_text()
+    assert _anchors(path)["fw:pas-de-temps"]["page"] == 14
 
 
 # ---------------------------------------------------------------------------
@@ -373,18 +218,10 @@ def test_relocate_inventory_keeps_the_source_path_resolvable(tmp_path: Path) -> 
     assert delivered is not None
     payload = json.loads(delivered.read_text(encoding="utf-8"))
     # Copied verbatim, ``../firmware-review.md`` would no longer resolve from
-    # ``dist/`` and the staleness check would go quietly inoperative.
+    # ``dist/`` and tmark's staleness check would go quietly inoperative.
     assert (delivered.parent / payload["document"]["source"]).resolve() == source.resolve()
 
 
 def test_relocate_inventory_is_a_no_op_in_place(tmp_path: Path) -> None:
     inventory = _write_inventory(tmp_path)
     assert relocate_inventory(inventory, tmp_path) == inventory
-
-
-def test_an_unresolvable_source_warns(tmp_path: Path) -> None:
-    path = _write_inventory(tmp_path, source="../gone.md", source_sha256="0" * 64)
-    with _collect() as sink:
-        load_inventory(path)
-    (message,) = _reported(sink, "crossref-inventory-stale")
-    assert "does not resolve" in message

@@ -21,9 +21,10 @@ decorators of 0.6 map onto them:
 | `[latex.template] writer` | redefine the contract macro in the template's `.tex` |
 | fragment `partials`, `required_partials` | the fragment's `provides` list |
 
-`readers`, `writer`, `latex.template.override`, fragment `partials` and
-`required_partials` are deprecated in 0.7.0 (they warn and are ignored) and
-removed in 0.8.0.
+All five — `readers`, `writer`, `latex.template.override`, fragment
+`partials` and `required_partials` — were deprecated in 0.7.0 and are gone in
+0.8.0: neither the template manifest nor `fragment.toml` reads them any more, so
+a package that still declares one converts as if it did not.
 
 ## IR passes
 

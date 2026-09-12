@@ -41,20 +41,6 @@ SelectorOption = Annotated[
     ),
 ]
 
-ReaderOption = Annotated[
-    str,
-    typer.Option(
-        "--reader",
-        help=(
-            "Markdown reader: 'tmark' (the TMark parser and writers, the default) "
-            "or 'html' (Python-Markdown → HTML → IR; kept for '.html' inputs and "
-            "as an escape hatch for one release)."
-        ),
-        rich_help_panel=INPUTS_PANEL,
-        case_sensitive=False,
-    ),
-]
-
 FullDocumentOption = Annotated[
     bool,
     typer.Option(
@@ -211,11 +197,11 @@ MakefileDepsOption = Annotated[
     ),
 ]
 
-DebugHtmlOption = Annotated[
+DebugIrOption = Annotated[
     bool | None,
     typer.Option(
-        "--debug-html",
-        help="Persist intermediate HTML snapshots (inherits from --debug when omitted).",
+        "--debug-ir",
+        help="Persist the tmark IR of each document as '<stem>.ir.json' (inherits from --debug when omitted).",
         rich_help_panel=DIAGNOSTICS_PANEL,
     ),
 ]
@@ -226,15 +212,6 @@ TemplateInfoOption = Annotated[
         "--template-info",
         help="Display template metadata and exit.",
         rich_help_panel=DIAGNOSTICS_PANEL,
-    ),
-]
-
-HtmlOnlyOption = Annotated[
-    bool,
-    typer.Option(
-        "--html",
-        help="Output intermediate HTML instead of LaTeX/PDF.",
-        rich_help_panel=OUTPUT_PANEL,
     ),
 ]
 
@@ -269,33 +246,6 @@ SlotsOption = Annotated[
         ),
         show_default=False,
         rich_help_panel=TEMPLATE_PANEL,
-    ),
-]
-
-MarkdownExtensionsOption = Annotated[
-    list[str] | None,
-    typer.Option(
-        "--enable-extension",
-        "-x",
-        help=(
-            "Additional Markdown extensions to enable (comma or space separated values are accepted)."
-        ),
-        show_default=False,
-        rich_help_panel=RENDERING_PANEL,
-    ),
-]
-
-DisableMarkdownExtensionsOption = Annotated[
-    list[str] | None,
-    typer.Option(
-        "--disable-extension",
-        "-X",
-        help=(
-            "Markdown extensions to disable. Provide a comma separated list or repeat the option "
-            "multiple times. Use --list-extensions to see the extensions enabled by default."
-        ),
-        show_default=False,
-        rich_help_panel=RENDERING_PANEL,
     ),
 ]
 
@@ -382,9 +332,9 @@ DeprecatedOption = Annotated[
         "--deprecated",
         metavar="LEVEL",
         help=(
-            "How tmark's 'deprecated' and 'deprecated-frontmatter-key' records are reported "
-            "on the tmark reader: 'warning' (default), 'info' or 'off'. Applied before "
-            "--strict, so legacy spellings do not fail a strict run. Also set by "
+            "How tmark's 'deprecated' and 'deprecated-frontmatter-key' records are "
+            "reported: 'warning' (default), 'info' or 'off'. Applied before --strict, so "
+            "legacy spellings do not fail a strict run. Also set by "
             "'press.diagnostics.deprecated' in the front matter."
         ),
         rich_help_panel=DIAGNOSTICS_PANEL,
@@ -398,9 +348,9 @@ NumberingOption = Annotated[
         "--numbering",
         metavar="MODE",
         help=(
-            "Who numbers figures, tables, listings, equations and sections on the tmark "
-            "reader: 'backend' (default; LaTeX and Typst allocate their own numbers) or "
-            "'tmark' (tmark allocates them at resolve time, identical in .tex and .typ)."
+            "Who numbers figures, tables, listings, equations and sections: 'backend' "
+            "(default; LaTeX and Typst allocate their own numbers) or 'tmark' (tmark "
+            "allocates them at resolve time, identical in .tex and .typ)."
         ),
         rich_help_panel=RENDERING_PANEL,
         case_sensitive=False,

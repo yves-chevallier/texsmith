@@ -31,14 +31,14 @@ def _render(tmp_path: Path, code_options: dict[str, Any] | None, body: str = BOD
 def test_default_breaks_only_on_hyphens(tmp_path: Path) -> None:
     tex = _render(tmp_path, None, "Voir `some_long.name-here` ici.\n")
 
-    assert "\\texttt{some\\_long.name-\\allowbreak{}here}" in tex
+    assert "\\tscodeinline{some\\_long.name-\\allowbreak{}here}" in tex
 
 
 def test_declared_breaks_apply_to_plain_inline_code(tmp_path: Path) -> None:
     tex = _render(tmp_path, {"inline": {"breaks": "_./"}})
 
     assert (
-        "\\texttt{texsmith.\\allowbreak{}core.\\allowbreak{}conversion\\_\\allowbreak{}options}"
+        "\\tscodeinline{texsmith.\\allowbreak{}core.\\allowbreak{}conversion\\_\\allowbreak{}options}"
         in tex
     )
 
@@ -54,7 +54,7 @@ def test_declared_breaks_apply_to_highlighted_inline_code(tmp_path: Path) -> Non
 def test_plain_mode_drops_highlighting_of_inline_code(tmp_path: Path) -> None:
     tex = _render(tmp_path, {"inline": {"plain": True, "breaks": "_."}})
 
-    assert "\\texttt{some\\_\\allowbreak{}long.\\allowbreak{}name}" in tex
+    assert "\\tscodeinline{some\\_\\allowbreak{}long.\\allowbreak{}name}" in tex
     assert "\\PY{n}{some" not in tex
 
 
@@ -62,7 +62,7 @@ def test_plain_mode_keeps_code_blocks_highlighted(tmp_path: Path) -> None:
     body = "Voir `some_long.name` ici.\n\n```python\nprint('hi')\n```\n"
     tex = _render(tmp_path, {"inline": {"plain": True}}, body)
 
-    assert "\\texttt{some\\_long.name}" in tex
+    assert "\\tscodeinline{some\\_long.name}" in tex
     assert "\\PY{" in tex
 
 
@@ -70,19 +70,19 @@ def test_plain_mode_bypasses_minted_for_inline_code(tmp_path: Path) -> None:
     tex = _render(tmp_path, {"engine": "minted", "inline": {"plain": True, "breaks": "_."}})
 
     assert "\\mintinline" not in tex
-    assert "\\texttt{some\\_\\allowbreak{}long.\\allowbreak{}name}" in tex
+    assert "\\tscodeinline{some\\_\\allowbreak{}long.\\allowbreak{}name}" in tex
 
 
 def test_breaks_all_covers_common_punctuation(tmp_path: Path) -> None:
     tex = _render(tmp_path, {"inline": {"breaks": "all"}}, "Voir `a_b.c/d` ici.\n")
 
-    assert "\\texttt{a\\_\\allowbreak{}b.\\allowbreak{}c/\\allowbreak{}d}" in tex
+    assert "\\tscodeinline{a\\_\\allowbreak{}b.\\allowbreak{}c/\\allowbreak{}d}" in tex
 
 
 def test_breaks_none_disables_break_points(tmp_path: Path) -> None:
     tex = _render(tmp_path, {"inline": {"breaks": "none"}}, "Voir `a-b` ici.\n")
 
-    assert "\\texttt{a-b}" in tex
+    assert "\\tscodeinline{a-b}" in tex
 
 
 def test_normalise_inline_options_defaults() -> None:

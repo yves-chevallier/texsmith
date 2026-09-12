@@ -599,48 +599,35 @@ def test_single_column_table_falls_back_to_div() -> None:
 # Rich (yaml / data-ts) tables: the model is rebuilt with its spans
 # ---------------------------------------------------------------------------
 
+# The ``data-ts-table`` markup a rich table reaches the reader as. The producer
+# was the ``yaml table`` Markdown extension, deleted in phase 5; the reader's
+# reconstruction is still what a captured page needs, so the shapes are frozen
+# here rather than generated.
+SETTINGS = '<table data-ts-table="1" data-ts-env="tabularx" data-ts-colspec="l&gt;{\\raggedleft\\arraybackslash}p{\\dimexpr 3cm-2\\tabcolsep\\relax}&gt;{\\raggedright\\arraybackslash}X" data-ts-width="0.8\\linewidth" data-ts-placement="htbp"><thead><tr data-ts-role="header"><th scope="col">Item</th><th scope="col">W</th><th scope="col">Note</th></tr></thead><tbody><tr data-ts-role="body"><th scope="row">A</th><td>1</td><td>ok</td></tr></tbody></table>'
 
-def _rich_table(payload: dict, **kw) -> ir.Table:
-    """Render a yaml-table payload to its ``data-ts`` HTML, then lower it."""
-    from texsmith.extensions.tables.html import render_table_html
-    from texsmith.extensions.tables.schema import parse_table
+GROUPS = '<table data-ts-table="1" data-ts-env="tabular" data-ts-colspec="llll"><thead><tr data-ts-role="header"><th scope="col" rowspan="2">Item</th><th scope="col" colspan="2">Specs</th><th scope="col" rowspan="2">Note</th></tr><tr data-ts-role="header"><th scope="col">W</th><th scope="col">H</th></tr></thead><tbody><tr data-ts-role="body"><th scope="row">A</th><td>1</td><td>2</td><td>ok</td></tr><tr data-ts-role="separator" data-ts-rule="double" data-ts-sep-label="mid"><td colspan="4">mid</td></tr><tr data-ts-role="body"><th scope="row">B</th><td colspan="2">span</td><td>note</td></tr></tbody></table>'
 
-    html = render_table_html(parse_table(payload), **kw)
+MULTIROW = '<table data-ts-table="1" data-ts-env="tabular" data-ts-colspec="lll"><thead><tr data-ts-role="header"><th scope="col">k</th><th scope="col">a</th><th scope="col">b</th></tr></thead><tbody><tr data-ts-role="body"><th scope="row">r1</th><td rowspan="2">tall</td><td>x</td></tr><tr data-ts-role="body"><th scope="row">r2</th><td>y</td></tr><tr data-ts-role="body"><th scope="row">r3</th><td>p</td><td>q</td></tr></tbody></table>'
+
+RICH_INLINE = '<table data-ts-table="1" data-ts-env="tabular" data-ts-colspec="lll"><thead><tr data-ts-role="header"><th scope="col">k</th><th scope="col">a</th><th scope="col">b</th></tr></thead><tbody><tr data-ts-role="body"><th scope="row">r</th><td><strong>bold</strong></td><td><code>code</code></td></tr></tbody></table>'
+
+CAPTIONED = '<table data-ts-table="1" data-ts-env="tabular" data-ts-colspec="ll" id="tbl:x"><caption>Cap</caption><thead><tr data-ts-role="header"><th scope="col">k</th><th scope="col">a</th></tr></thead><tbody><tr data-ts-role="body"><th scope="row">r</th><td>1</td></tr></tbody></table>'
+
+
+def _rich_table(html: str) -> ir.Table:
+    """Lower a ``data-ts-table`` ``<table>`` and return the rebuilt model."""
     block = read(html).blocks[0]
     assert isinstance(block, ir.Table)
     return block
 
 
 def test_rich_table_carries_settings() -> None:
-    block = _rich_table(
-        {
-            "table": {"width": "80%", "placement": "htbp"},
-            "columns": [
-                {"name": "Item"},
-                {"name": "W", "width": "3cm", "align": "r"},
-                {"name": "Note", "width": "X"},
-            ],
-            "rows": [["A", 1, "ok"]],
-        }
-    )
+    block = _rich_table(SETTINGS)
     assert block.model.settings == ir.TableSettings(placement="htbp", width="80%")
 
 
 def test_rich_table_rebuilds_groups_spans_and_separators() -> None:
-    block = _rich_table(
-        {
-            "columns": [
-                {"name": "Item"},
-                {"name": "Specs", "columns": [{"name": "W"}, {"name": "H"}]},
-                {"name": "Note"},
-            ],
-            "rows": [
-                ["A", [1, 2], "ok"],
-                {"separator": {"label": "mid", "double-rule": True}},
-                ["B", {"value": "span", "cols": 2}, "note"],
-            ],
-        }
-    )
+    block = _rich_table(GROUPS)
     model = block.model
     # Column group recovered from the two-level header.
     group = model.columns[1]
@@ -657,16 +644,7 @@ def test_rich_table_rebuilds_groups_spans_and_separators() -> None:
 
 
 def test_rich_table_multirow_matches_the_parser_matrix() -> None:
-    block = _rich_table(
-        {
-            "columns": [{"name": "k"}, {"name": "a"}, {"name": "b"}],
-            "rows": [
-                ["r1", {"value": "tall", "rows": 2}, "x"],
-                ["r2", None, "y"],
-                ["r3", "p", "q"],
-            ],
-        }
-    )
+    block = _rich_table(MULTIROW)
     rows = block.model.rows
     assert rows[0] == ir.DataRow(
         cells=(
@@ -685,12 +663,7 @@ def test_rich_table_multirow_matches_the_parser_matrix() -> None:
 
 
 def test_rich_table_cells_carry_rich_inline() -> None:
-    block = _rich_table(
-        {
-            "columns": [{"name": "k"}, {"name": "a"}, {"name": "b"}],
-            "rows": [["r", "**bold**", "`code`"]],
-        }
-    )
+    block = _rich_table(RICH_INLINE)
     (row,) = block.model.rows
     assert isinstance(row, ir.DataRow)
     assert row.cells[1].content == (ir.Strong(content=(ir.Str("bold"),)),)
@@ -698,13 +671,7 @@ def test_rich_table_cells_carry_rich_inline() -> None:
 
 
 def test_rich_table_caption_and_label() -> None:
-    from texsmith.extensions.tables.html import render_table_html
-    from texsmith.extensions.tables.schema import parse_table
-
-    html = render_table_html(
-        parse_table({"columns": ["k", "a"], "rows": [["r", 1]]}), caption="Cap", label="tbl:x"
-    )
-    table, caption = read(html).blocks
+    table, caption = read(CAPTIONED).blocks
     assert isinstance(table, ir.Table)
     assert caption == ir.Caption(
         kind=ir.CaptionKind.TABLE, attrs=ir.Attrs(id="tbl:x"), content=(ir.Str("Cap"),)
@@ -795,42 +762,49 @@ def test_reads_decorator_and_custom_registry() -> None:
 # ---------------------------------------------------------------------------
 
 
-def test_markdown_to_html_to_ir_no_silent_loss() -> None:
-    from texsmith.adapters.markdown import DEFAULT_MARKDOWN_EXTENSIONS, render_markdown
+#: A page in the shape MkDocs Material renders: every major construct, as the
+#: ``press.reader: html`` fallback and a ``.html`` input actually see it.
+MATERIAL_PAGE = """\
+<h1 id="title">Title</h1>
+<p>A paragraph with <strong>bold</strong>, <em>italic</em>, <code>code</code> \
+and a <a href="https://x.io">link</a>.</p>
+<ul>
+<li>one</li>
+<li>two</li>
+</ul>
+<ol>
+<li>first</li>
+<li>second</li>
+</ol>
+<blockquote>
+<p>a quote</p>
+</blockquote>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>inside the note</p>
+</div>
+<table>
+<thead>
+<tr><th>A</th><th>B</th></tr>
+</thead>
+<tbody>
+<tr><td>1</td><td>2</td></tr>
+</tbody>
+</table>
+<div class="highlight"><pre><code class="language-python">print('hi')
+</code></pre></div>
+<dl>
+<dt>Term</dt>
+<dd>Definition</dd>
+</dl>
+"""
+
+
+def test_a_rendered_page_reaches_the_ir_without_silent_loss() -> None:
     from texsmith.ir import codec
 
-    source = "\n".join(
-        [
-            "# Title",
-            "",
-            "A paragraph with **bold**, *italic*, `code` and a [link](https://x.io).",
-            "",
-            "- one",
-            "- two",
-            "",
-            "1. first",
-            "2. second",
-            "",
-            "> a quote",
-            "",
-            "!!! note",
-            "    inside the note",
-            "",
-            "| A | B |",
-            "|---|---|",
-            "| 1 | 2 |",
-            "",
-            "```python",
-            "print('hi')",
-            "```",
-            "",
-            "Term",
-            ": Definition",
-        ]
-    )
-    document = render_markdown(source, extensions=DEFAULT_MARKDOWN_EXTENSIONS)
     emitter = _CollectingEmitter()
-    doc = HtmlReader(diagnostics=emitter).read(document.html)
+    doc = HtmlReader(diagnostics=emitter).read(MATERIAL_PAGE)
 
     kinds = {type(n).__name__ for n in walk(doc)}
     # The major constructs all surface as their typed nodes.

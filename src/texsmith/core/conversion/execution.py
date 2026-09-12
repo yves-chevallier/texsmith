@@ -19,11 +19,7 @@ from texsmith.core.templates.runtime import (
 from .debug import ensure_emitter, raise_conversion_error
 from .inputs import InlineBibliographyValidationError, extract_front_matter_bibliography
 from .models import ConversionRequest
-from .templates import (
-    _build_mustache_defaults,
-    _merge_template_overrides,
-    _replace_mustaches_in_html,
-)
+from .templates import _build_mustache_defaults, _merge_template_overrides
 
 
 def resolve_conversion_context(
@@ -119,16 +115,6 @@ def resolve_conversion_context(
             str(document.source_path),
         )
     )
-    merged_contexts = (overrides, document.front_matter)
-    document.set_html(
-        _replace_mustaches_in_html(
-            document.html,
-            merged_contexts,
-            emitter=emitter,
-            source=str(document.source_path),
-        )
-    )
-
     bibliography_paths = list(bibliography_files or request.bibliography_files)
     issue_signatures = seen_bibliography_issues if seen_bibliography_issues is not None else set()
     bibliography_collection: BibliographyCollection | None = (

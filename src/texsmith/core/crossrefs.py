@@ -1,4 +1,4 @@
-"""Cross-document references: publishing and consuming reference inventories.
+"""Cross-document references: publishing the reference inventory of a build.
 
 A counter number only exists inside the conversion that allocated it, so a
 second document citing ``FW-10`` has no way to know what ``FW-10`` is — and no
@@ -17,12 +17,19 @@ A reference is rendered from the target document's own identity: when it
 declares a ``document-id`` (a free label such as ``RHE-423``) the citation
 concatenates it with the anchor's label (``RHE-423-FW-10``), otherwise it falls
 back to naming the document by its title.
+
+Reading an inventory is tmark's: its registry loads the sources a document
+declares under ``press.sources.crossrefs`` through the ``Loader`` and resolves
+``@alias:key`` at resolve time (decision D4). What stays here is the writing
+half — the payload, the anchors of a finished resolution, the page numbers
+harvested from the ``.aux`` and the relocation that keeps ``document.source``
+resolvable.
 """
 
 from __future__ import annotations
 
 from collections.abc import Mapping
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from hashlib import sha256
 import json
 import os
@@ -30,28 +37,12 @@ from pathlib import Path
 import re
 from typing import Any
 
-from texsmith.core.diagnostics import emit_diagnostic
-
-
-def _warn(code: str, message: str, origin: Path | str | None) -> None:
-    """Report an authoring defect, attributed to the citing document.
-
-    A broken cross-reference is a hole in the document, not a debug detail, so
-    it goes to the active diagnostic emitter (the CLI prints it, ``--strict``
-    fails on it) rather than to a log nobody reads.
-    """
-    emit_diagnostic(code, message, origin=origin)
-
 
 #: Bumped when the on-disk shape changes in a way older readers cannot handle.
 SCHEMA_VERSION = 1
 
 #: Suffix of the published inventory, sibling of the rendered document.
 INVENTORY_SUFFIX = ".refs.json"
-
-
-class CrossRefValidationError(ValueError):
-    """Raised when the front-matter ``crossrefs`` section is invalid."""
 
 
 @dataclass(frozen=True, slots=True)
@@ -73,257 +64,6 @@ class DocumentIdentity:
     output: str = ""
     source: str = ""
     source_sha256: str = ""
-
-
-@dataclass(frozen=True, slots=True)
-class Inventory:
-    """A parsed ``*.refs.json`` document."""
-
-    document: DocumentIdentity
-    anchors: dict[str, Anchor] = field(default_factory=dict)
-    path: Path | None = None
-
-    def anchor(self, key: str) -> Anchor | None:
-        """Return the anchor published under ``key``, if any."""
-        return self.anchors.get(key)
-
-
-# ---------------------------------------------------------------------------
-# Front matter
-# ---------------------------------------------------------------------------
-
-
-def parse_front_matter_crossrefs(
-    metadata: Mapping[str, Any] | None,
-    *,
-    base_path: Path | str | None = None,
-) -> dict[str, Path]:
-    """Validate the ``crossrefs:`` front-matter section into ``alias -> path``.
-
-    Paths are resolved against ``base_path`` — the directory of the citing
-    document — so a relative ``../build/x.refs.json`` means what it reads like.
-    """
-    if not isinstance(metadata, Mapping):
-        return {}
-
-    raw = metadata.get("crossrefs")
-    if raw is None:
-        return {}
-    if not isinstance(raw, Mapping):
-        raise CrossRefValidationError(
-            "Front-matter 'crossrefs' must be a mapping of alias -> inventory path."
-        )
-
-    root = Path(base_path) if base_path is not None else Path()
-    sources: dict[str, Path] = {}
-    for raw_alias, value in raw.items():
-        alias = str(raw_alias).strip()
-        if not alias:
-            raise CrossRefValidationError("A cross-reference alias may not be empty.")
-
-        if isinstance(value, str):
-            # Shorthand: ``fwrev: ../build/firmware-review.refs.json``.
-            inventory = value.strip()
-        elif isinstance(value, Mapping):
-            unknown = set(value) - {"inventory"}
-            if unknown:
-                raise CrossRefValidationError(
-                    f"Cross-reference '{alias}' has unknown option(s): "
-                    f"{', '.join(sorted(unknown))}."
-                )
-            inventory = str(value.get("inventory") or "").strip()
-        else:
-            raise CrossRefValidationError(
-                f"Cross-reference '{alias}' must be a path or a mapping, "
-                f"got {type(value).__name__}."
-            )
-
-        if not inventory:
-            raise CrossRefValidationError(f"Cross-reference '{alias}' has no 'inventory' path.")
-        sources[alias] = (root / inventory).resolve()
-
-    return sources
-
-
-# ---------------------------------------------------------------------------
-# Reading
-# ---------------------------------------------------------------------------
-
-
-def load_inventory(path: Path | str, *, origin: Path | str | None = None) -> Inventory | None:
-    """Read an inventory from disk, warning (not raising) when unusable.
-
-    ``origin`` is the citing document, used to attribute the warnings.
-    """
-    candidate = Path(path)
-    try:
-        payload = json.loads(candidate.read_text(encoding="utf-8"))
-    except FileNotFoundError:
-        _warn(
-            "crossref-inventory-missing",
-            f"Cross-reference inventory '{candidate}' is missing; "
-            "build the document it describes first.",
-            origin,
-        )
-        return None
-    except (OSError, json.JSONDecodeError) as exc:
-        _warn(
-            "crossref-inventory-missing",
-            f"Cross-reference inventory '{candidate}' could not be read: {exc}",
-            origin,
-        )
-        return None
-
-    if not isinstance(payload, Mapping):
-        _warn(
-            "crossref-inventory-missing",
-            f"Cross-reference inventory '{candidate}' is not a JSON object.",
-            origin,
-        )
-        return None
-    schema = payload.get("schema")
-    if schema != SCHEMA_VERSION:
-        _warn(
-            "crossref-inventory-missing",
-            f"Cross-reference inventory '{candidate}' uses schema {schema}, "
-            f"this TeXSmith reads {SCHEMA_VERSION}.",
-            origin,
-        )
-        return None
-
-    raw_document = payload.get("document")
-    document = DocumentIdentity(
-        id=str((raw_document or {}).get("id") or ""),
-        title=str((raw_document or {}).get("title") or ""),
-        output=str((raw_document or {}).get("output") or ""),
-        source=str((raw_document or {}).get("source") or ""),
-        source_sha256=str((raw_document or {}).get("source_sha256") or ""),
-    )
-
-    anchors: dict[str, Anchor] = {}
-    for key, raw_anchor in (payload.get("anchors") or {}).items():
-        if not isinstance(raw_anchor, Mapping):
-            continue
-        page = raw_anchor.get("page")
-        anchors[str(key)] = Anchor(
-            key=str(key),
-            label=str(raw_anchor.get("label") or ""),
-            counter=str(raw_anchor.get("counter") or ""),
-            page=int(page) if isinstance(page, int) else None,
-        )
-
-    inventory = Inventory(document=document, anchors=anchors, path=candidate)
-    _warn_if_stale(inventory, origin=origin)
-    return inventory
-
-
-def _warn_if_stale(inventory: Inventory, *, origin: Path | str | None = None) -> None:
-    """Warn when the described source has changed since the inventory was written.
-
-    A stale inventory silently reintroduces exactly the drift the feature
-    exists to remove, so this is the one check worth paying for on every read.
-    """
-    identity = inventory.document
-    if not identity.source or not identity.source_sha256 or inventory.path is None:
-        return
-    source = (inventory.path.parent / identity.source).resolve()
-    try:
-        digest = sha256(source.read_bytes()).hexdigest()
-    except OSError:
-        # Silence here would be the worst outcome: the inventory claims to know
-        # what it describes, but nothing can check that claim any more.
-        _warn(
-            "crossref-inventory-stale",
-            f"Cross-reference inventory '{inventory.path}' records a source "
-            f"('{identity.source}') that does not resolve; it can no longer be "
-            "checked for staleness.",
-            origin,
-        )
-        return
-    if digest != identity.source_sha256:
-        _warn(
-            "crossref-inventory-stale",
-            f"Cross-reference inventory '{inventory.path}' is out of date: "
-            f"'{source}' changed since it was written. Rebuild that document.",
-            origin,
-        )
-
-
-# ---------------------------------------------------------------------------
-# Rendering a citation
-# ---------------------------------------------------------------------------
-
-
-def render_reference(identity: DocumentIdentity, anchor: Anchor) -> str:
-    """Return the text a ``@alias:key`` citation renders to.
-
-    ``RHE-423-FW-10 p. 14`` when the target declares an ``id``; ``FW-10 (Revue
-    firmware, p. 14)`` when only its title identifies it; and the bare label
-    when it has neither — which is still better than dropping the reference.
-    The page is omitted until the target has been built at least once.
-    """
-    if identity.id:
-        suffix = f" p. {anchor.page}" if anchor.page is not None else ""
-        return f"{identity.id}-{anchor.label}{suffix}"
-    if identity.title:
-        suffix = f", p. {anchor.page}" if anchor.page is not None else ""
-        return f"{anchor.label} ({identity.title}{suffix})"
-    suffix = f" p. {anchor.page}" if anchor.page is not None else ""
-    return f"{anchor.label}{suffix}"
-
-
-@dataclass(slots=True)
-class CrossRefResolver:
-    """Resolve ``alias:key`` citations against the declared inventories.
-
-    Inventories are read on first use, so a document that declares a dependency
-    it never cites pays nothing — and the "missing inventory" warning is raised
-    once per alias rather than once per citation.
-    """
-
-    sources: dict[str, Path] = field(default_factory=dict)
-    origin: Path | str | None = None
-    _inventories: dict[str, Inventory | None] = field(default_factory=dict)
-    _missing: set[str] = field(default_factory=set)
-
-    def knows(self, alias: str) -> bool:
-        """Whether ``alias`` was declared in the front matter."""
-        return alias in self.sources
-
-    def inventory(self, alias: str) -> Inventory | None:
-        """Return (and cache) the inventory declared under ``alias``."""
-        if alias not in self._inventories:
-            path = self.sources.get(alias)
-            self._inventories[alias] = (
-                load_inventory(path, origin=self.origin) if path is not None else None
-            )
-        return self._inventories[alias]
-
-    def resolve(self, alias: str, key: str) -> str | None:
-        """Return the rendered citation, or ``None`` after warning about it."""
-        if alias not in self.sources:
-            return None
-        inventory = self.inventory(alias)
-        if inventory is None:
-            return None
-        anchor = inventory.anchor(key)
-        if anchor is None:
-            token = f"{alias}:{key}"
-            if token not in self._missing:
-                self._missing.add(token)
-                _warn(
-                    "ref-unresolved",
-                    f"Cross-reference '@{token}' is not published by "
-                    f"'{inventory.path}'; it may have been renamed or removed.",
-                    self.origin,
-                )
-            return None
-        return render_reference(inventory.document, anchor)
-
-    @property
-    def unresolved(self) -> tuple[str, ...]:
-        """Citations that could not be resolved, for a strict-mode gate."""
-        return tuple(sorted(self._missing))
 
 
 # ---------------------------------------------------------------------------
@@ -365,20 +105,33 @@ def write_inventory(path: Path | str, payload: Mapping[str, Any]) -> Path:
     return target
 
 
-def anchors_from_counters() -> dict[str, Anchor]:
-    """Return the citable anchors allocated by the counter registry."""
-    from texsmith.core.counters import get_registry
+#: The ``labels`` host of a ``{counter}(prefix:key)`` item in a ``tmark.resolve``
+#: result. Headers, floats and theorem kinds are numbered by the backend and are
+#: not citable across documents; a declared counter series is.
+_COUNTER_HOST = "counter_item"
 
-    registry = get_registry()
+
+def anchors_from_resolved(resolved: Mapping[str, Any] | None) -> dict[str, Anchor]:
+    """The citable anchors of a ``tmark.resolve`` result, keyed by ``prefix:key``.
+
+    Every label tmark allocated for a declared counter series becomes an anchor
+    carrying its formatted number, which is exactly what a citing document
+    prints for ``@alias:prefix:key``.
+    """
+    if not isinstance(resolved, Mapping):
+        return {}
     anchors: dict[str, Anchor] = {}
-    for prefix, keys in registry.snapshot().items():
-        for key in keys:
-            identifier = f"{prefix}:{key}"
-            anchors[identifier] = Anchor(
-                key=identifier,
-                label=registry.render(prefix, key) or "",
-                counter=prefix,
-            )
+    for label in resolved.get("labels") or ():
+        if not isinstance(label, Mapping) or label.get("host") != _COUNTER_HOST:
+            continue
+        identifier = str(label.get("id") or "").strip()
+        if not identifier:
+            continue
+        anchors[identifier] = Anchor(
+            key=identifier,
+            label=str(label.get("formatted") or ""),
+            counter=str(label.get("prefix") or "") or None,
+        )
     return anchors
 
 
@@ -405,10 +158,10 @@ def publish_inventory(
     stem: str,
     metadata: Mapping[str, Any] | None,
     source_path: Path | str | None,
+    anchors: Mapping[str, Anchor],
     output_name: str = "",
 ) -> Path | None:
     """Write the inventory of a finished conversion, or ``None`` if it has nothing to publish."""
-    anchors = anchors_from_counters()
     if not anchors:
         return None
 
@@ -430,7 +183,7 @@ def publish_inventory(
     )
     return write_inventory(
         directory / f"{stem}{INVENTORY_SUFFIX}",
-        build_payload(anchors=anchors, identity=identity),
+        build_payload(anchors=dict(anchors), identity=identity),
     )
 
 
@@ -572,20 +325,14 @@ __all__ = [
     "INVENTORY_SUFFIX",
     "SCHEMA_VERSION",
     "Anchor",
-    "CrossRefResolver",
-    "CrossRefValidationError",
     "DocumentIdentity",
-    "Inventory",
-    "anchors_from_counters",
+    "anchors_from_resolved",
     "attach_pages",
     "build_payload",
     "document_identifier",
     "harvest_aux",
-    "load_inventory",
-    "parse_front_matter_crossrefs",
     "publish_inventory",
     "relocate_inventory",
-    "render_reference",
     "source_digest",
     "write_inventory",
 ]

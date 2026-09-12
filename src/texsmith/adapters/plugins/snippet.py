@@ -15,7 +15,7 @@ import tempfile
 from typing import Any
 
 from bs4 import BeautifulSoup
-from bs4.element import NavigableString, Tag
+from bs4.element import Tag
 
 
 try:  # Optional dependency: only needed when generating snippet previews.
@@ -26,12 +26,6 @@ except ModuleNotFoundError:  # pragma: no cover - optional dependency
 import yaml
 
 from texsmith.adapters.html_utils import coerce_attribute, gather_classes
-from texsmith.adapters.markdown import (
-    DEFAULT_MARKDOWN_EXTENSIONS,
-    render_markdown,
-    split_front_matter,
-)
-from texsmith.core.context import RenderContextLike
 from texsmith.core.conversion import ConversionRequest
 from texsmith.core.conversion.inputs import InputKind
 from texsmith.core.diagnostics import DiagnosticEmitter
@@ -42,6 +36,7 @@ from texsmith.core.documents import (
     front_matter_has_title,
 )
 from texsmith.core.exceptions import AssetMissingError, InvalidNodeError, LatexRenderingError
+from texsmith.core.front_matter import split_front_matter
 from texsmith.core.metadata import PressMetadataError, normalise_press_metadata
 from texsmith.core.templates import TemplateError, TemplateRuntime, load_template_runtime
 from texsmith.core.templates.session import TemplateSession
@@ -453,13 +448,6 @@ def _snippet_template_version() -> str | None:
         return None
     version = getattr(info, "version", None)
     return str(version) if version is not None else None
-
-
-def _resolve_emitter(context: RenderContextLike) -> DiagnosticEmitter | None:
-    emitter = context.runtime.get("emitter")
-    if isinstance(emitter, DiagnosticEmitter):
-        return emitter
-    return None
 
 
 def _resolve_snippet_dump_dir() -> Path | None:
@@ -976,32 +964,24 @@ def _build_document_from_markup(
     suppress_title: bool,
     front_matter: Mapping[str, Any] | None = None,
 ) -> Document:
-    rendered = render_markdown(
+    """Parse a fence's inline body as a document of its own.
+
+    ``source_path`` names a file that does not exist — the fence lives inside
+    the host document — but it sits in ``base_dir`` so includes and assets
+    resolve against the host's directory, as they did when the snippet was a
+    nested Markdown render.
+    """
+    return Document.from_markdown_text(
         content,
-        extensions=list(DEFAULT_MARKDOWN_EXTENSIONS),
-        base_path=base_dir,
-    )
-    title_strategy = _resolve_title_strategy(
-        explicit=TitleStrategy.DROP if drop_title else None,
+        base_dir / source_path.name,
         promote_title=promote_title,
         strip_heading=drop_title,
-        has_declared_title=front_matter_has_title(rendered.front_matter),
-    )
-    merged_front_matter = dict(rendered.front_matter)
-    if front_matter:
-        merged_front_matter.update(front_matter)
-    document = Document(
-        source_path=source_path,
-        kind=InputKind.MARKDOWN,
-        _html=rendered.html,
-        _front_matter=merged_front_matter,
+        suppress_title=suppress_title,
         base_level=0,
-        title_strategy=title_strategy,
+        title_strategy=TitleStrategy.DROP if drop_title else None,
         numbered=False,
-        suppress_title_metadata=suppress_title,
+        front_matter_overrides=front_matter,
     )
-    document._initialise_slots_from_front_matter()  # noqa: SLF001
-    return document
 
 
 def _build_document_from_yaml(
@@ -1638,66 +1618,6 @@ def ensure_snippet_assets(
     return assets
 
 
-def _render_snippet_assets(block: SnippetBlock, context: RenderContextLike) -> SnippetAssets:
-    emitter = _resolve_emitter(context)
-    document_path = context.runtime.get("document_path")
-    source_dir = context.runtime.get("source_dir")
-    host_path = _resolve_host_path(document_path, source_dir)
-    return ensure_snippet_assets(
-        block,
-        output_dir=context.assets.output_root / SNIPPET_DIR,
-        source_path=host_path or (context.assets.output_root / "snippet.md"),
-        emitter=emitter,
-    )
-
-
-def render_snippet_latex(html: str, context: RenderContextLike) -> str:
-    """Render a preserved ``.snippet`` HTML element to a LaTeX figure string.
-
-    Single entry point used by the LaTeX writer: it unwraps the stored snippet
-    markup, parses the fence (resolving file inclusions against the document via
-    the render context), compiles the preview assets, registers the artefact and
-    emits the figure. Keeps all snippet-HTML handling inside this plugin instead
-    of leaking BeautifulSoup and the block internals into the writer.
-    """
-    from bs4 import BeautifulSoup
-
-    soup = BeautifulSoup(html, "html.parser")
-    element = soup.find(["div", "pre"])
-    if element is None:
-        return ""
-
-    host_path = _resolve_host_path(
-        context.runtime.get("document_path"), context.runtime.get("source_dir")
-    )
-    block = _extract_snippet_block(element, host_path=host_path)
-    if block is None:
-        return ""
-
-    assets = _render_snippet_assets(block, context)
-    context.assets.register(f"snippet::{block.digest}", assets.pdf)
-    return str(_render_figure(context, assets, block))
-
-
-def _render_figure(
-    context: RenderContextLike, assets: SnippetAssets, block: SnippetBlock
-) -> NavigableString:
-    template_name = context.runtime.get("figure_template", "figure")
-    # Prefer PDF for LaTeX; PNGs are optional previews and may be missing.
-    figure_source = assets.pdf
-    latex_path = context.assets.latex_path(figure_source)
-    latex = context.formatter.render_template(
-        template_name,
-        path=latex_path,
-        caption=block.caption,
-        shortcaption=block.caption,
-        label=block.label,
-        width=block.figure_width,
-        adjustbox=True,
-    )
-    return NavigableString(latex)
-
-
 def _merge_fragment_defaults(
     overrides: Mapping[str, Any] | None, runtime: TemplateRuntime | None
 ) -> dict[str, Any]:
@@ -1800,6 +1720,5 @@ __all__ = [
     "asset_filename",
     "build_snippet_block",
     "ensure_snippet_assets",
-    "render_snippet_latex",
     "rewrite_html_snippets",
 ]

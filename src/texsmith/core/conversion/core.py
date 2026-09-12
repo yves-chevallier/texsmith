@@ -2,23 +2,18 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable, Iterable, Mapping, Sequence
+from collections.abc import Iterable, Mapping, Sequence
 import copy
 import dataclasses
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
-from texsmith.adapters.latex.formatter import LaTeXFormatter
-from texsmith.adapters.latex.renderer import LaTeXRenderer
 from texsmith.core.bibliography.collection import BibliographyCollection
-from texsmith.core.callouts import DEFAULT_CALLOUTS, merge_callouts, normalise_callouts
 from texsmith.core.code_options import normalise_inline_options
 from texsmith.core.context import DocumentState
 from texsmith.core.conversion_contexts import ConversionContext
 from texsmith.core.documents import Document
-from texsmith.core.exceptions import LatexRenderingError
-from texsmith.core.fragments import collect_fragment_partials
 from texsmith.core.templates import (
     TemplateBinding,
     TemplateError,
@@ -31,8 +26,6 @@ from ._utils import build_unique_stem_map
 from .debug import (
     debug_enabled,
     ensure_emitter,
-    format_user_friendly_render_error,
-    persist_debug_artifacts,
     persist_debug_ir,
     raise_conversion_error,
     record_event,
@@ -42,11 +35,7 @@ from .models import ConversionRequest
 from .pipeline import render_ir_document
 from .renderer import TemplateFragment
 from .resolution import ResolutionChain, bibliography_paths
-from .templates import (
-    SlotFragment,
-    bind_template,
-    extract_slot_fragments,
-)
+from .templates import bind_template
 
 
 @dataclass(slots=True)
@@ -265,64 +254,43 @@ def _render_document(
     document = context.document
     request = context.request
     strategy = context.generation
-    legacy_latex_accents = request.legacy_latex_accents
 
-    renderer_kwargs: dict[str, Any] = {
-        "output_root": context.output_dir,
-        "copy_assets": strategy.copy_assets,
-        "convert_assets": strategy.convert_assets,
-        "hash_assets": strategy.hash_assets,
-        "parser": request.parser or "html.parser",
-    }
-
-    if request.persist_debug_html:
-        # The intermediate HTML of the legacy path (and of an HTML input: the
-        # extracted fragment) and the IR of the tmark path, whichever exist.
-        if document.html:
-            persist_debug_artifacts(context.output_dir, document.source_path, document.html)
-        if document.ir is not None:
-            persist_debug_ir(context.output_dir, document.source_path, document.ir)
+    if request.persist_debug_ir and document.ir is not None:
+        persist_debug_ir(context.output_dir, document.source_path, document.ir)
 
     binding = context.template_binding
     if binding is None:  # pragma: no cover - defensive safeguard
         raise RuntimeError("Conversion context is missing a template binding.")
 
-    ir_assets: dict[str, Path] = {}
-    if document.ir is not None:
-        # The IR path: passes, one ``tmark.resolve``, one ``tmark.write`` per
-        # slot body; ``Requires`` drives the fragment flags of the state.
-        try:
-            ir_result = render_ir_document(
-                context=context,
-                binding=binding,
-                emitter=emitter,
-                backend="latex",
-                chain=context.resolution,
-                initial_state=initial_state,
-                code_options=_resolve_code_options(binding, context.template_overrides),
-            )
-        except TemplateError as exc:
-            if debug_enabled(emitter):
-                raise
-            raise_conversion_error(emitter, str(exc), exc)
-        render_result = {
-            "slot_outputs": ir_result.slot_outputs,
-            "document_state": ir_result.document_state,
-            "renderer": None,
-        }
-        ir_assets = ir_result.assets
-    else:
-        render_result = _render_html_slots(
+    # The passes, one ``tmark.resolve``, one ``tmark.write`` per slot body;
+    # ``Requires`` drives the fragment flags of the state.
+    try:
+        ir_result = render_ir_document(
             context=context,
             binding=binding,
             emitter=emitter,
+            backend="latex",
+            chain=context.resolution,
             initial_state=initial_state,
-            renderer_kwargs=renderer_kwargs,
-            legacy_latex_accents=legacy_latex_accents,
+            code_options=_resolve_code_options(binding, context.template_overrides),
         )
-    slot_outputs = render_result["slot_outputs"]
-    document_state = render_result["document_state"]
-    renderer = render_result["renderer"]
+    except TemplateError as exc:
+        if debug_enabled(emitter):
+            raise
+        raise_conversion_error(emitter, str(exc), exc)
+    slot_outputs = ir_result.slot_outputs
+    # The resolution travels back onto the caller's document: the service
+    # publishes its reference inventory from the labels tmark allocated.
+    document.resolved = ir_result.document.resolved
+    document_state = ir_result.document_state
+    if initial_state is not None:
+        # A batch of linked fragments shares one state object: the template
+        # wrapper reads the first fragment's state, so what a later document
+        # requires (a ``ts-code`` body, an index, a citation) has to land on the
+        # very object the earlier fragments carry, not on a copy of it.
+        _copy_document_state(initial_state, document_state)
+        document_state = initial_state
+    ir_assets = ir_result.assets
 
     default_content = slot_outputs.get(binding.default_slot)
     if default_content is None:
@@ -389,14 +357,7 @@ def _render_document(
                 exc,
             )
 
-    asset_map: dict[str, Path] = {}
-    if renderer is not None:
-        try:
-            asset_map = {str(key): Path(path) for key, path in renderer.assets.items()}
-        except Exception as exc:
-            emitter.warning(f"Could not collect asset map: {exc}")
-    elif ir_assets:
-        asset_map = dict(ir_assets)
+    asset_map: dict[str, Path] = dict(ir_assets)
 
     return ConversionResult(
         latex_output=latex_output,
@@ -419,320 +380,10 @@ def _render_document(
     )
 
 
-def _render_html_slots(
-    *,
-    context: ConversionContext,
-    binding: TemplateBinding,
-    emitter: DiagnosticEmitter,
-    initial_state: DocumentState | None,
-    renderer_kwargs: dict[str, Any],
-    legacy_latex_accents: bool,
-) -> dict[str, Any]:
-    """The legacy path: split the HTML into slots and render each through the HTML reader."""
-    document = context.document
-    slot_base_levels = binding.slot_levels()
-
-    runtime_common = _build_runtime_common(
-        binding=binding,
-        context=context,
-        emitter=emitter,
-    )
-
-    active_slot_requests = context.slot_requests
-
-    parser_backend = str(renderer_kwargs.get("parser", "html.parser"))
-    slot_fragments, missing_slots = extract_slot_fragments(
-        document.html,
-        active_slot_requests,
-        binding.default_slot,
-        slot_definitions=binding.slots,
-        parser_backend=parser_backend,
-        slot_options=document.slot_options,
-    )
-    for message in missing_slots:
-        emitter.warning(message)
-
-    manual_base_level = document.base_level
-    drop_title_flag = bool(document.drop_title)
-    if drop_title_flag and document.slot_requests and not context.slot_requests:
-        drop_title_flag = False
-
-    fragment_offsets: dict[str, int] = {}
-    for fragment in slot_fragments:
-        levels = list(getattr(fragment, "heading_levels", []) or [])
-        if drop_title_flag and fragment.name == binding.default_slot and levels:
-            levels = levels[1:]
-        if not levels:
-            fragment_offsets[fragment.name] = 0
-        else:
-            fragment_offsets[fragment.name] = 1 - min(levels)
-
-    try:
-        return _render_slot_fragments(
-            slot_fragments=slot_fragments,
-            binding=binding,
-            runtime_common=runtime_common,
-            slot_base_levels=slot_base_levels,
-            fragment_offsets=fragment_offsets,
-            manual_base_level=manual_base_level,
-            renderer_kwargs=renderer_kwargs,
-            initial_state=initial_state,
-            drop_title_flag=drop_title_flag,
-            context=context,
-            legacy_latex_accents=legacy_latex_accents,
-            emitter=emitter,
-        )
-    except TemplateError as exc:
-        if debug_enabled(emitter):
-            raise
-        raise_conversion_error(emitter, str(exc), exc)
-        raise AssertionError("unreachable") from exc  # pragma: no cover
-
-
-def _build_runtime_common(
-    *,
-    binding: TemplateBinding,
-    context: ConversionContext,
-    emitter: DiagnosticEmitter,
-) -> dict[str, object]:
-    """Prepare immutable runtime metadata shared across fragment rendering."""
-    document = context.document
-    strategy = context.generation
-    diagrams_backend = context.request.diagrams_backend
-    http_user_agent = context.request.http_user_agent
-    code_options = _resolve_code_options(binding, context.template_overrides)
-
-    runtime_common: dict[str, object] = {
-        "numbered": document.numbered,
-        "source_dir": document.source_path.parent,
-        "document_path": document.source_path,
-        "copy_assets": strategy.copy_assets,
-        "convert_assets": strategy.convert_assets,
-        "hash_assets": strategy.hash_assets,
-        "language": context.language,
-        "emitter": emitter,
-        "template_overrides": dict(context.template_overrides),
-    }
-    if isinstance(http_user_agent, str) and http_user_agent.strip():
-        runtime_common["http_user_agent"] = http_user_agent.strip()
-    template_callouts = context.template_overrides.get("callouts")
-    runtime_common["callouts_definitions"] = normalise_callouts(
-        merge_callouts(
-            DEFAULT_CALLOUTS,
-            template_callouts if isinstance(template_callouts, Mapping) else None,
-        )
-    )
-    runtime_common["bibliography"] = context.bibliography_map
-    runtime_common["bibliography_collection"] = context.bibliography_collection
-    if binding.name is not None:
-        runtime_common["template"] = binding.name
-    runtime_common["code"] = code_options
-    runtime_common["diagrams_backend"] = diagrams_backend or "playwright"
-    mermaid_config = context.template_overrides.get("mermaid_config") or (
-        context.template_overrides.get("press") or {}
-    ).get("mermaid_config")
-    if not mermaid_config and binding.runtime and binding.runtime.extras:
-        mermaid_config = binding.runtime.extras.get("mermaid_config")
-    if mermaid_config:
-        runtime_common["mermaid_config"] = mermaid_config
-    # Document-wide default for draw.io exports; ``{crop=false}`` on an image
-    # still wins over it.
-    drawio_crop = context.template_overrides.get("drawio_crop")
-    if drawio_crop is None:
-        press = context.template_overrides.get("press")
-        drawio_crop = press.get("drawio_crop") if isinstance(press, Mapping) else None
-    if drawio_crop is not None:
-        runtime_common["drawio_crop"] = drawio_crop
-    if strategy.persist_manifest:
-        runtime_common["generate_manifest"] = True
-    emoji_mode = _extract_emoji_mode(context.template_overrides)
-    if not emoji_mode:
-        emoji_mode = _extract_emoji_mode(document.front_matter)
-    if emoji_mode:
-        runtime_common["emoji_mode"] = emoji_mode
-        context.template_overrides.setdefault("emoji", emoji_mode)
-        if emoji_mode != "artifact":
-            runtime_common.setdefault("emoji_command", r"\texsmithEmoji")
-
-    return runtime_common
-
-
-def _apply_template_render_extensions(renderer: LaTeXRenderer, binding: TemplateBinding) -> None:
-    """Wire a selected template's custom ``@reads``/``@writes`` into ``renderer``.
-
-    Reads the ``readers`` / ``writer`` hooks forwarded onto the binding's runtime
-    extras and applies them to the renderer's reader-registry / writer-class
-    seams. Scoped to this template; a no-op when none are declared.
-    """
-    runtime = binding.runtime
-    if runtime is None:
-        return
-    readers = runtime.extras.get("readers") or []
-    writer = runtime.extras.get("writer")
-    if not readers and not writer:
-        return
-    from texsmith.core.templates.extensions import apply_render_extensions
-
-    apply_render_extensions(renderer, readers=readers, writer=writer)
-
-
-def _render_slot_fragments(
-    *,
-    slot_fragments: list[SlotFragment],
-    binding: TemplateBinding,
-    runtime_common: dict[str, object],
-    slot_base_levels: Mapping[str, int],
-    fragment_offsets: Mapping[str, int],
-    manual_base_level: int,
-    renderer_kwargs: dict[str, Any],
-    initial_state: DocumentState | None,
-    drop_title_flag: bool,
-    context: ConversionContext,
-    legacy_latex_accents: bool,
-    emitter: DiagnosticEmitter,
-) -> dict[str, Any]:
-    """Render slot fragments for the document into LaTeX slot outputs."""
-    formatter = LaTeXFormatter()
-    formatter.legacy_latex_accents = legacy_latex_accents
-    code_opts = runtime_common.get("code") or {}
-    formatter.default_code_engine = code_opts.get("engine", formatter.default_code_engine)
-    style_override = code_opts.get("style", formatter.default_code_style)
-    if not isinstance(style_override, str):
-        style_override = str(style_override or "")
-    formatter.default_code_style = style_override.strip() or formatter.default_code_style
-    inline_opts = normalise_inline_options(code_opts.get("inline"))
-    formatter.code_inline_plain = bool(inline_opts["plain"])
-    formatter.code_inline_breaks = str(inline_opts["breaks"])
-    available_templates = formatter.template_names
-    partial_providers: dict[str, str] = dict.fromkeys(available_templates, "core")
-    fragment_names = _resolve_active_fragments(binding, context.template_overrides)
-    fragment_source_dir = _resolve_fragment_source_dir(context.template_overrides, context)
-    required_partials: dict[str, set[str]] = {}
-    if fragment_names:
-        fragment_overrides, fragment_required, fragment_providers = collect_fragment_partials(
-            fragment_names,
-            source_dir=fragment_source_dir,
-        )
-        for key, override_path in fragment_overrides.items():
-            formatter.override_template(key, override_path)
-            partial_providers[key] = fragment_providers.get(key, "fragment")
-        for key, owners in fragment_required.items():
-            required_partials.setdefault(key, set()).update(owners)
-
-    binding.apply_formatter_overrides(formatter)
-    template_provider = binding.name or "template"
-    for key in binding.formatter_overrides:
-        partial_providers[key] = template_provider
-    if binding.required_partials:
-        for name in binding.required_partials:
-            required_partials.setdefault(name, set()).add(template_provider)
-
-    available_partials = set(available_templates)
-    missing_partials = [name for name in required_partials if name not in available_partials]
-    if missing_partials:
-        details = []
-        for name in sorted(missing_partials):
-            owners = ", ".join(sorted(required_partials.get(name, set()))) or "unknown providers"
-            details.append(f"partial '{name}' required by {owners}")
-        raise TemplateError(f"Missing {', '.join(details)}.")
-    runtime_common["partial_providers"] = partial_providers
-    renderer: LaTeXRenderer | None = None
-
-    def renderer_factory() -> LaTeXRenderer:
-        nonlocal renderer
-        if renderer is None:
-            renderer = LaTeXRenderer(
-                config=context.config,
-                formatter=formatter,
-                **renderer_kwargs,
-            )
-            _apply_template_render_extensions(renderer, binding)
-        return renderer
-
-    slot_outputs: dict[str, str] = {}
-    document_state: DocumentState | None = initial_state
-    for fragment in slot_fragments:
-        runtime_fragment = dict(runtime_common)
-        base_value = slot_base_levels.get(fragment.name, binding.base_level or 0)
-        fragment_offset = fragment_offsets.get(fragment.name, 0)
-        base_offset = manual_base_level + fragment_offset
-        runtime_fragment["base_level"] = base_value + base_offset
-        if fragment.name == "preface":
-            runtime_fragment["numbered"] = False
-        if drop_title_flag and fragment.name == binding.default_slot:
-            runtime_fragment["drop_title"] = True
-            drop_title_flag = False
-        fragment_output = ""
-        try:
-            fragment_output, document_state = render_with_fallback(
-                renderer_factory,
-                fragment.html,
-                runtime_fragment,
-                context.bibliography_map,
-                state=document_state,
-                emitter=emitter,
-            )
-        except LatexRenderingError as exc:
-            if debug_enabled(emitter):
-                raise
-            message = format_user_friendly_render_error(exc)
-            raise_conversion_error(emitter, message, exc)
-        existing_fragment = slot_outputs.get(fragment.name, "")
-        slot_outputs[fragment.name] = f"{existing_fragment}{fragment_output}"
-
-    if document_state is None:
-        document_state = DocumentState(bibliography=dict(context.bibliography_map))
-
-    return {
-        "slot_outputs": slot_outputs,
-        "document_state": document_state,
-        "renderer": renderer,
-    }
-
-
-def copy_document_state(target: DocumentState, source: DocumentState) -> None:
-    """Synchronise ``target`` with a source ``DocumentState`` instance."""
-    for metadata_field in dataclasses.fields(DocumentState):
-        setattr(
-            target,
-            metadata_field.name,
-            copy.deepcopy(getattr(source, metadata_field.name)),
-        )
-
-
-def render_with_fallback(
-    renderer_factory: Callable[[], LaTeXRenderer],
-    html: str,
-    runtime: dict[str, object],
-    bibliography: Mapping[str, dict[str, Any]] | None = None,
-    *,
-    state: DocumentState | None = None,
-    emitter: DiagnosticEmitter | None = None,
-) -> tuple[str, DocumentState]:
-    """Render HTML to LaTeX."""
-    emitter = ensure_emitter(emitter)
-    bibliography_payload = dict(bibliography or {})
-    base_state = state
-
-    current_state = (
-        copy.deepcopy(base_state)
-        if base_state is not None
-        else DocumentState(bibliography=dict(bibliography_payload))
-    )
-
-    renderer = renderer_factory()
-    output = renderer.render(
-        html,
-        runtime=runtime,
-        state=current_state,
-        emitter=emitter,
-    )
-
-    if base_state is not None:
-        copy_document_state(base_state, current_state)
-        return output, base_state
-
-    return output, current_state
+def _copy_document_state(target: DocumentState, source: DocumentState) -> None:
+    """Synchronise ``target`` in place with a freshly produced ``DocumentState``."""
+    for state_field in dataclasses.fields(DocumentState):
+        setattr(target, state_field.name, copy.deepcopy(getattr(source, state_field.name)))
 
 
 @dataclass(slots=True)
@@ -877,7 +528,5 @@ __all__ = [
     "LaTeXFragment",
     "convert_document",
     "convert_documents",
-    "copy_document_state",
-    "render_with_fallback",
     "to_template_fragments",
 ]

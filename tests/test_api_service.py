@@ -162,7 +162,6 @@ def test_prepare_documents_handles_markdown_and_html(tmp_path: Path) -> None:
         documents=[markdown, html],
         bibliography_files=[],
         selector="article.md-content__inner",
-        markdown_extensions=[],
         base_level=0,
         strip_heading_first_document=True,
         promote_title=False,
@@ -302,7 +301,6 @@ def test_prepare_documents_applies_slot_assignments(tmp_path: Path) -> None:
                 SlotAssignment(slot="main", selector=None, include_document=True),
             ]
         },
-        markdown_extensions=[],
     )
 
     prepared = service.prepare_documents(request)
@@ -341,7 +339,6 @@ Body text.
                 SlotAssignment(slot="mainmatter", selector=None, include_document=True),
             ]
         },
-        markdown_extensions=[],
     )
 
     prepared = service.prepare_documents(request)
@@ -395,7 +392,6 @@ Body text.
     request = ConversionRequest(
         documents=[source],
         bibliography_files=[],
-        markdown_extensions=[],
         template=str(template_dir),
         render_dir=tmp_path / "build",
         emitter=emitter,
@@ -495,7 +491,6 @@ def test_execute_without_template_returns_bundle(tmp_path: Path) -> None:
     request = ConversionRequest(
         documents=[source],
         bibliography_files=[],
-        markdown_extensions=[],
     )
     prepared = service.prepare_documents(request)
 
@@ -516,7 +511,6 @@ def test_execute_with_template_returns_render_result(tmp_path: Path) -> None:
     request = ConversionRequest(
         documents=[source],
         bibliography_files=[],
-        markdown_extensions=[],
         template=str(template_dir),
         render_dir=render_dir,
     )

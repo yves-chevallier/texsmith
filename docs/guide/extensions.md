@@ -98,16 +98,16 @@ On a MkDocs site the index entries reach `search_index.json` through the
 [`texsmith` plugin](mkdocs.md), which collects them from the rendered pages
 and injects them after the `search` plugin wrote its index. The separate
 `texsmith.index` MkDocs *plugin* is deprecated — it warns and does nothing, and
-disappears in 0.8; the `texsmith.index` *Markdown extension* above is
-unaffected.
+disappears in 0.8; and the `texsmith.index` *Markdown extension* went with the
+Python-Markdown pipeline.
 
-!!! note "The Python-Markdown extensions are transitional"
-    `texsmith.extensions.*` still ships the Python-Markdown implementations of
-    the 0.6 syntax (`smallcaps`, `latex_raw`, `multi_citations`, `mermaid`,
-    `index`, `counters`, …) so that an existing MkDocs site keeps building
-    during the migration. They are not the conversion path any more — TeXSmith
-    parses with tmark — and they are removed in 0.8.0 together with the
-    spellings they implement. See [Migrating to TMark](migration.md).
+!!! note "The Python-Markdown extensions are gone"
+    TeXSmith shipped 17 Python-Markdown extensions (`smallcaps`, `latex_raw`,
+    `multi_citations`, `mermaid`, `index`, `counters`, …) and registered them as
+    `markdown.extensions` entry points. They are removed in 0.8.0 together with
+    the spellings they implemented: tmark parses every Markdown source, and a
+    site that listed `texsmith.*` under `markdown_extensions` must drop those
+    entries. See [Migrating to TMark](migration.md).
 
 ## Inspecting what the parser read
 

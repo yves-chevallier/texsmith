@@ -23,7 +23,6 @@ tlmgr_packages = [
     "xcolor",
     "xunicode",
 ]
-override = ["codeblock.tex", "codeinline.tex"]
 fragments = [
     "ts-geometry",
     "ts-typesetting",

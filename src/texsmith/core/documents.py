@@ -9,20 +9,18 @@ Architecture
 
 Implementation Rationale
 : Conversions often need multiple passes over the same document, such as preview
-  and templated export. By storing canonicalised HTML and front-matter snapshots
-  we avoid repeated Markdown or HTML parsing.
+  and templated export. By storing the parsed IR and a front-matter snapshot we
+  avoid repeated parsing.
 : A dedicated abstraction makes it easy to inspect or mutate front matter in
   higher layers while keeping a single document shape throughout the conversion engine.
-: Two readers feed the same shape during the TMark migration
-  (``specs/migration/python-ir-and-passes.md`` §2). ``from_markdown`` with
-  ``reader="html"`` (the default) keeps the Markdown → HTML path and its
-  canonicalised HTML for the legacy writers; ``reader="tmark"`` parses the
-  source with ``tmark.parse`` and ``from_html`` lowers an HTML page with the
-  ``HtmlReader`` — both store the generated IR (:attr:`Document.ir`), the
-  build's :class:`FileTable`, the reader diagnostics and, once the passes
+: Two readers feed the same shape
+  (``specs/migration/python-ir-and-passes.md`` §2): ``from_markdown`` parses a
+  Markdown source with ``tmark.parse`` and ``from_html`` lowers an HTML page
+  with the ``HtmlReader`` — both store the generated IR (:attr:`Document.ir`),
+  the build's :class:`FileTable`, the reader diagnostics and, once the passes
   ran, the per-slot bodies, and render through the tmark writers. The
-  ``front_matter`` mapping is the legacy view of the same YAML for both, so the
-  template machinery does not change.
+  ``front_matter`` mapping is the plain YAML view for both, so the template
+  machinery does not change.
 
 Usage Example
 :
@@ -52,12 +50,6 @@ from texsmith.diagnostics import Diagnostic, FileTable
 from texsmith.ir import model as irm
 from texsmith.ir.walk import plain_text
 
-from ..adapters.markdown import (
-    DEFAULT_MARKDOWN_EXTENSIONS,
-    MarkdownConversionError,
-    render_markdown,
-    split_front_matter,
-)
 from .conversion.debug import ConversionError, debug_enabled
 from .conversion.inputs import (
     DOCUMENT_SELECTOR_SENTINEL,
@@ -66,8 +58,8 @@ from .conversion.inputs import (
     extract_content,
     extract_front_matter_slots,
 )
-from .diagnostics import DiagnosticEmitter, NullEmitter, use_emitter
-from .heading_analysis import HeadingInspector, HeadingLevelScanner
+from .diagnostics import DiagnosticEmitter, NullEmitter
+from .front_matter import split_front_matter
 from .metadata import PressMetadataError, normalise_press_metadata
 from .templates.runtime import coerce_base_level
 
@@ -77,15 +69,11 @@ if TYPE_CHECKING:  # pragma: no cover - typing only
 
 
 __all__ = [
-    "READERS",
     "Document",
     "SlotPlan",
     "TitleStrategy",
     "front_matter_has_title",
 ]
-
-#: The readers ``from_markdown`` accepts (``--reader``).
-READERS: tuple[str, ...] = ("html", "tmark")
 
 _SLOT_WILDCARDS: set[str] = {
     DOCUMENT_SELECTOR_SENTINEL,
@@ -249,11 +237,10 @@ class Document:
     slot_requests: dict[str, str] = field(default_factory=dict)
     language: str | None = None
     bibliography: dict[str, Any] = field(default_factory=dict)
-    #: ``"tmark"`` (``tmark.parse`` → :attr:`ir`) or ``"html"``: the ``HtmlReader``
-    #: on an HTML input (→ :attr:`ir`), the legacy Markdown → HTML path otherwise.
-    reader: str = "html"
-    #: The IR of the source (``ir.file`` is its :attr:`files` id); ``None`` on the
-    #: legacy path, which renders :attr:`html` through the Python writers.
+    #: Which reader produced :attr:`ir`: ``"tmark"`` (``tmark.parse`` on a
+    #: Markdown source) or ``"html"`` (the ``HtmlReader`` on an HTML page).
+    reader: str = "tmark"
+    #: The IR of the source (``ir.file`` is its :attr:`files` id).
     ir: irm.Document | None = None
     #: ``FileId -> SourceFile``; id 0 is the source, includes and loaded files follow.
     files: FileTable = field(default_factory=FileTable)
@@ -270,7 +257,6 @@ class Document:
         cls,
         path: Path,
         *,
-        extensions: Iterable[str] | None = None,
         promote_title: bool = False,
         strip_heading: bool = False,
         suppress_title: bool = False,
@@ -278,76 +264,18 @@ class Document:
         title_strategy: TitleStrategy | None = None,
         numbered: bool = True,
         emitter: DiagnosticEmitter | None = None,
-        reader: str = "html",
     ) -> Document:
-        """Create a document from a Markdown file.
-
-        ``reader="html"`` renders the Markdown to HTML (cached for reuse);
-        ``reader="tmark"`` parses it with ``tmark.parse`` and keeps the IR.
-        """
-        if reader not in READERS:
-            raise ValueError(f"Unknown reader '{reader}'; expected one of {', '.join(READERS)}")
-        active_emitter = emitter or NullEmitter()
-
-        if reader == "tmark":
-            return cls._from_tmark(
-                path,
-                promote_title=promote_title,
-                strip_heading=strip_heading,
-                suppress_title=suppress_title,
-                base_level=base_level,
-                title_strategy=title_strategy,
-                numbered=numbered,
-                emitter=active_emitter,
-            )
-
-        # The counter and cross-reference extensions hold no emitter: they
-        # report through the one installed here.
-        try:
-            with use_emitter(emitter):
-                rendered = render_markdown(
-                    path.read_text(encoding="utf-8"),
-                    list(extensions or DEFAULT_MARKDOWN_EXTENSIONS),
-                    base_path=path.parent,
-                    document_path=path,
-                )
-        except (OSError, MarkdownConversionError) as exc:
-            message = f"Failed to convert Markdown source '{path}': {exc}"
-            active_emitter.error(message, exc if isinstance(exc, Exception) else None)
-            raise ConversionError(message) from (
-                exc if isinstance(exc, Exception) else ConversionError(message)
-            )
-
-        try:
-            resolved_base_level = coerce_base_level(base_level, allow_none=False)
-        except Exception as exc:  # pragma: no cover - defensive
-            message = f"Invalid base level '{base_level}': {exc}"
-            active_emitter.error(message, exc if isinstance(exc, Exception) else None)
-            raise ConversionError(message) from (
-                exc if isinstance(exc, Exception) else ConversionError(message)
-            )
-
-        declared_title = front_matter_has_title(rendered.front_matter)
-        strategy = _resolve_title_strategy(
-            explicit=title_strategy,
+        """Create a document from a Markdown file: ``tmark.parse`` into :attr:`ir`."""
+        return cls._from_tmark(
+            path,
             promote_title=promote_title,
             strip_heading=strip_heading,
-            has_declared_title=declared_title,
+            suppress_title=suppress_title,
+            base_level=base_level,
+            title_strategy=title_strategy,
+            numbered=numbered,
+            emitter=emitter or NullEmitter(),
         )
-        front_numbered = _front_matter_numbered(rendered.front_matter)
-        numbered_flag = numbered if front_numbered is None else front_numbered
-        document = cls(
-            source_path=path,
-            kind=InputKind.MARKDOWN,
-            _html=rendered.html,
-            _front_matter=rendered.front_matter,
-            base_level=resolved_base_level,
-            title_strategy=strategy,
-            numbered=numbered_flag,
-            suppress_title_metadata=suppress_title,
-        )
-        document._initialise_slots_from_front_matter()
-        return document
 
     @classmethod
     def _from_tmark(
@@ -363,14 +291,49 @@ class Document:
         emitter: DiagnosticEmitter,
     ) -> Document:
         """Parse ``path`` with tmark; the parse diagnostics go to ``emitter`` and the document."""
-        from ..readers import tmark as tmark_reader
-
         try:
             text = path.read_text(encoding="utf-8")
         except OSError as exc:
             message = f"Failed to read Markdown source '{path}': {exc}"
             emitter.error(message, exc)
             raise ConversionError(message) from exc
+
+        return cls.from_markdown_text(
+            text,
+            path,
+            promote_title=promote_title,
+            strip_heading=strip_heading,
+            suppress_title=suppress_title,
+            base_level=base_level,
+            title_strategy=title_strategy,
+            numbered=numbered,
+            emitter=emitter,
+        )
+
+    @classmethod
+    def from_markdown_text(
+        cls,
+        text: str,
+        path: Path,
+        *,
+        promote_title: bool = False,
+        strip_heading: bool = False,
+        suppress_title: bool = False,
+        base_level: int | str = 0,
+        title_strategy: TitleStrategy | None = None,
+        numbered: bool = True,
+        front_matter_overrides: Mapping[str, Any] | None = None,
+        emitter: DiagnosticEmitter | None = None,
+    ) -> Document:
+        """Parse an in-memory Markdown ``text`` that belongs at ``path``.
+
+        ``path`` is what the diagnostics name and what relative includes and
+        assets resolve against; it does not have to exist, which is how the
+        snippet compiler builds a document out of a fence's body.
+        """
+        from ..readers import tmark as tmark_reader
+
+        emitter = emitter or NullEmitter()
 
         # ``press.declare.glossary`` entries reach the body as the abbreviation
         # definitions the legacy path synthesised for ``markdown.abbr``: tmark
@@ -401,6 +364,8 @@ class Document:
             strip_heading=strip_heading,
             has_declared_title=declared_title,
         )
+        if front_matter_overrides:
+            front_matter = {**front_matter, **dict(front_matter_overrides)}
         front_numbered = _front_matter_numbered(front_matter)
         document = cls(
             source_path=path,
@@ -690,44 +655,8 @@ class Document:
                 self.slot_options.update(base_options)
         self._invalidate_prepared()
 
-    @classmethod
-    def _resolve_heading_alignment(cls, html: str, strategy: TitleStrategy) -> int:
-        if strategy is not TitleStrategy.KEEP:
-            return 0
-
-        scanner = HeadingLevelScanner()
-        try:
-            scanner.feed(html)
-        finally:
-            scanner.close()
-
-        minimum = scanner.minimum_level
-        if minimum is None or minimum <= 1:
-            return 0
-        return minimum - 1
-
     def _extract_promoted_title(self) -> tuple[str | None, bool]:
-        """Return the promoted title and whether the heading should be dropped."""
-        if self.ir is not None:
-            return self._extract_promoted_title_ir()
-        inspector = HeadingInspector()
-        try:
-            inspector.feed(self._html)
-        finally:
-            inspector.close()
-
-        if inspector.first_level is None:
-            return None, False
-
-        level_count = inspector.level_counts.get(inspector.first_level, 0)
-        if level_count != 1:
-            return None, False
-
-        text = "".join(inspector.parts).strip()
-        return (text or None, bool(text))
-
-    def _extract_promoted_title_ir(self) -> tuple[str | None, bool]:
-        """The IR twin of :meth:`_extract_promoted_title`: first top-level header, unique at its level."""
+        """The title a leading top-level header promotes to, unique at its level."""
         headers = self.top_level_headers()
         if not headers:
             return None, False
@@ -739,15 +668,8 @@ class Document:
 
     def _first_heading_level(self) -> int | None:
         """Return the level of the first heading in the document, if any."""
-        if self.ir is not None:
-            headers = self.top_level_headers()
-            return headers[0].level if headers else None
-        inspector = HeadingInspector()
-        try:
-            inspector.feed(self._html)
-        finally:
-            inspector.close()
-        return inspector.first_level
+        headers = self.top_level_headers()
+        return headers[0].level if headers else None
 
     def first_heading_level(self) -> int | None:
         """Public accessor for the first heading level in the document."""

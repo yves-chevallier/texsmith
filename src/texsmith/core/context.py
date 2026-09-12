@@ -15,7 +15,6 @@ from .exceptions import AssetMissingError
 
 
 if TYPE_CHECKING:  # pragma: no cover - typing only
-    from texsmith.adapters.latex.formatter import LaTeXFormatter
 
     from .config import BookConfig
 
@@ -195,9 +194,6 @@ class RenderContextLike(Protocol):
     def config(self) -> BookConfig: ...
 
     @property
-    def formatter(self) -> LaTeXFormatter: ...
-
-    @property
     def assets(self) -> AssetRegistry: ...
 
     @property
@@ -209,10 +205,9 @@ class RenderContextLike(Protocol):
 
 @dataclass
 class RenderContext:
-    """Shared context passed to every handler during rendering."""
+    """Shared context passed to the asset helpers during a conversion."""
 
     config: BookConfig
-    formatter: LaTeXFormatter
     document: Any
     assets: AssetRegistry
     state: DocumentState = field(default_factory=DocumentState)

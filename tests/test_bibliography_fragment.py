@@ -18,9 +18,7 @@ def test_fragment_injects_biblatex_and_csquotes(tmp_path: Path) -> None:
             """
             # Cheese
 
-            Some text with a citation[^LAWRENCE19841632].
-
-            [^LAWRENCE19841632]: See bibliography.
+            Some text with a citation @LAWRENCE19841632.
             """
         ).strip()
         + "\n",
@@ -54,9 +52,7 @@ def _bibliography_doc(tmp_path: Path) -> Path:
             """
             # Cheese
 
-            Some text with a citation[^LAWRENCE19841632].
-
-            [^LAWRENCE19841632]: See bibliography.
+            Some text with a citation @LAWRENCE19841632.
             """
         ).strip()
         + "\n",

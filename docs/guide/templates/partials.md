@@ -88,9 +88,8 @@ when the document has code): `\ifcsname tscodeinline\endcsname … \fi`.
 Until 0.6 the LaTeX came from Jinja partials under
 `src/texsmith/adapters/latex/partials`, overridable per template
 (`latex.template.override`) and per fragment (`partials`,
-`required_partials`). Those hooks are deprecated in 0.7.0 — they still work
-on the legacy path and warn, naming the replacement — and are removed in
-0.8.0. The mapping:
+`required_partials`). The partials and all three hooks are gone in 0.8.0: the
+writer names a macro and a fragment defines it. The mapping:
 
 | Former partial | Replacement |
 | --- | --- |

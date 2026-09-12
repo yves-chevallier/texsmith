@@ -19,7 +19,6 @@ from texsmith.core.fragments.activation import REQUIRED_FRAGMENTS_KEY, REQUIRED_
 from texsmith.core.fragments.resolution import inject_requires
 from texsmith.core.templates import TemplateRuntime
 from texsmith.core.templates.manifest import TemplateError
-from texsmith.fonts.scripts import render_script_macros
 
 from ..context import DocumentState
 from .base import WrappableTemplate, _detect_index_engine
@@ -125,14 +124,7 @@ def wrap_template_document(
     template_context["has_index"] = bool(index_terms)
     template_context["index_terms"] = [tuple(term) for term in index_terms]
 
-    registry_entries = index_terms
-    try:  # pragma: no cover - optional dependency
-        from texsmith.extensions.index import get_registry
-    except ModuleNotFoundError:
-        template_context["index_registry"] = [tuple(term) for term in registry_entries]
-    else:
-        snapshot = sorted(get_registry().snapshot())
-        template_context["index_registry"] = [tuple(term) for term in snapshot]
+    template_context["index_registry"] = [tuple(term) for term in index_terms]
     _merge_front_matter_glossary(document_state, overrides_payload, template_context)
     template_context["acronyms"] = document_state.acronyms.copy()
     template_context["acronym_groups"] = list(document_state.acronym_groups)
@@ -285,14 +277,6 @@ def wrap_template_document(
             parts: list[str] = [base] if base else []
             parts.extend(injections)
             template_context[variable_name] = "\n".join(part for part in parts if part)
-
-    script_macros = render_script_macros(getattr(document_state, "script_usage", []))
-    if script_macros:
-        existing_extra = template_context.get("extra_packages", "")
-        template_context["extra_packages"] = "\n".join(
-            part for part in (existing_extra, script_macros) if part
-        )
-        template_context["script_macros"] = script_macros
 
     final_slots = (
         processed_override_slots if processed_override_slots is not None else resolved_slots

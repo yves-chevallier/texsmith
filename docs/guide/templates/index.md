@@ -310,10 +310,10 @@ See [Contract macros](partials.md) for the full table of macros, their keys and
 the three levels of override.
 
 !!! warning "Jinja partials are no longer the rendering layer"
-    `latex.template.override`, fragment `partials` and `required_partials` are
-    deprecated in 0.7.0 — they warn and are ignored — and removed in 0.8.0.
-    [Contract macros](partials.md#former-partials) maps every former partial to
-    its replacement macro.
+    `latex.template.override`, fragment `partials` and `required_partials` were
+    deprecated in 0.7.0 and are removed in 0.8.0: the manifest no longer reads
+    them. [Contract macros](partials.md#former-partials) maps every former
+    partial to its replacement macro.
 
 ### Slot strategies
 

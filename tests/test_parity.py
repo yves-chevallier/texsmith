@@ -362,7 +362,7 @@ def test_corpus_loads_and_is_well_formed(parity):
     assert len(ids) == len(set(ids))
     assert "abbr" in ids and "abbr@typst" in ids
     assert "docs/syntax/tables" in ids and "docs/syntax/tables@typst" in ids
-    assert not any(e.entry_id.startswith(("mkdocs", "recipe", "custom-render")) for e in entries)
+    assert not any(e.entry_id.startswith(("mkdocs", "recipe")) for e in entries)
     for entry in entries:
         assert "--build" not in entry.args
         assert entry.requires <= parity.KNOWN_REQUIREMENTS
@@ -381,16 +381,17 @@ def test_entry_command_and_stems(parity):
         "multi", "examples/multi-document", ("a.md", "b.md", "config.yml"), "latex"
     )
     assert multi.stems == ("main",)
-    assert entry.command(reader=None, out_dir=Path("/o")) == [
+    assert entry.command(out_dir=Path("/o")) == [
         "cheese.md",
         "cheese.bib",
         "-tarticle",
         "-o",
         "/o",
     ]
-    assert entry.command(reader="tmark", out_dir=Path("/o"), build=True)[-3:] == [
-        "--reader",
-        "tmark",
+    # The CLI has one reader and no ``--reader`` option: no flag is ever passed.
+    assert entry.command(out_dir=Path("/o"), build=True)[-3:] == [
+        "-o",
+        "/o",
         "--build",
     ]
 

@@ -24,10 +24,10 @@ from typing import Any
 
 import pytest
 
-from texsmith.adapters.markdown import split_front_matter
 from texsmith.adapters.transformers import registry as converter_registry
 from texsmith.core.conversion.inputs import InputKind, SlotOptions
 from texsmith.core.documents import Document, TitleStrategy
+from texsmith.core.front_matter import split_front_matter
 from texsmith.diagnostics import DiagnosticSink, FileTable
 from texsmith.fonts.fallback import FallbackEntry, FallbackIndex, FallbackLookup
 from texsmith.fonts.scripts import ScriptDetector
