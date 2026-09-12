@@ -6,6 +6,7 @@ from texsmith.passes import (  # noqa: F401
     assets,
     doi,
     emoji,
+    glossary,
     headings,
     highlight,
     include,

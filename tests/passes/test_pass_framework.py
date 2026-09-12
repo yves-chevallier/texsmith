@@ -29,16 +29,16 @@ def test_default_pipeline_keeps_listed_order_and_stages() -> None:
     pipeline = build_pipeline()
     assert tuple(item.name for item in pipeline) == DEFAULT_PIPELINE
     stages = [item.stage for item in pipeline]
-    assert stages == ["pre"] * 8 + ["post"] * 3
+    assert stages == ["pre"] * 9 + ["post"] * 3
     assert stages.index("post") == len(DEFAULT_PIPELINE) - 3
 
 
 def test_extra_pass_is_placed_after_its_dependency() -> None:
-    extra = PassSpec(name="glossary", run=_noop, after=("var",))
+    extra = PassSpec(name="wordcount", run=_noop, after=("var",))
     names = [item.name for item in build_pipeline(extra=[extra])]
-    assert names.index("glossary") > names.index("var")
+    assert names.index("wordcount") > names.index("var")
     # Listed order is stable: nothing else moved.
-    assert [name for name in names if name != "glossary"] == list(DEFAULT_PIPELINE)
+    assert [name for name in names if name != "wordcount"] == list(DEFAULT_PIPELINE)
 
 
 def test_after_constraint_moves_a_listed_pass() -> None:
