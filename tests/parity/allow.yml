@@ -66,7 +66,7 @@
 - id: code-block-begin
   kind: hunk
   files: ["**/*.tex"]
-  pattern: '\A-\\begin\{code\}\{([^}]*)\}\{[^}]*\}\{[^}]*\}\n\+\\begin\{tscode\}\[lang=\1(?:, (?:title=\{.*\}|linenums|stretch=[\d.]+|hl_lines=\{[^}]*\}|id=[^,\]]+))*, engine=pygments\]\Z'
+  pattern: '\A(?:-\\label\{[^{}]*\}\n)*-\\begin\{code\}\{([^}]*)\}\{[^}]*\}\{[^}]*\}\n\+\\begin\{tscode\}\[lang=\1(?:, (?:title=\{.*\}|linenums|stretch=[\d.]+|hl_lines=\{[^}]*\}|id=[^,\]]+))*, engine=pygments\]\Z'
   reason: "fragment-contracts.md §1 codeblock: \\begin{code}{lang}{title}{opts} → \\begin{tscode}[lang=, title=, linenums, hl_lines=, stretch=, engine=pygments] (decisions.md X3)"
   expires: 0.8.0
 - id: callout-end
@@ -79,7 +79,7 @@
 - id: callout-begin
   kind: hunk
   files: ["**/*.tex"]
-  pattern: '\A-\\begin\{callout\}\[callout ([a-z]+)\]\{.*\}\n\+\\begin\{tscallout\}\[kind=(?:\1|seealso)(?:, title=\{.*\})?(?:, id=[^,\]]+)?(?:, collapsed)?\]\Z'
+  pattern: '\A(?:-\\label\{[^{}]*\}\n)*-\\begin\{callout\}\[callout ([a-z]+)\]\{.*\}\n\+\\begin\{tscallout\}\[kind=(?:\1|seealso)(?:, title=\{.*\})?(?:, id=[^,\]]+)?(?:, collapsed)?\]\Z'
   reason: "fragment-contracts.md §1 callout: [callout kind]{Title} → [kind=, title={…}] (title omitted when it is the kind's default word; `Seealso` → kind=seealso)"
   expires: 0.8.0
 - id: acronym
@@ -147,7 +147,7 @@
 - id: progress-bar
   kind: hunk
   files: ["**/*.tex"]
-  pattern: '\A(?:-\{\\progressbar\[[^\]]*\]\{[\d.]+\} .*\}\\par\n)+(?:\+\\tsprogress(?:\[[a-z]+\])?\{[\d.]+\}\{.*\}(?:\n|\Z))+\Z'
+  pattern: '\A(?:-(?:\{\\progressbar\[[^\]]*\]\{[\d.]+\} .*\}\\par)?\n)+(?:\+\\tsprogress(?:\[[a-z]+\])?\{[\d.]+\}\{.*\}(?:\n|\Z))+\Z'
   reason: "fragment-contracts.md §1: ProgressBar → \\tsprogress[thin]{0.45}{label} (ts-typesetting); the macro expands to the legacy \\progressbar line"
   expires: 0.8.0
 - id: autolink-url
@@ -233,12 +233,6 @@
   expires: 0.8.0
 
 # ---------------------------------------------------------------- Typst
-- id: typst-prelude
-  kind: hunk
-  files: ["**/*.typ"]
-  pattern: '\A(?:\+\n)?\+#let ts-callout-colors = \(\n(?:\+.*(?:\n|\Z))*\Z'
-  reason: "fragment-contracts.md §1 Typst column: the `#ts-…` prelude (texsmith.typ) is inlined in each file until it is copied next to the .typ; legacy inlined each construct per instance"
-  expires: 0.8.0
 - id: typst-logo-latex2e
   kind: rewrite
   files: ["**/*.typ"]
@@ -323,7 +317,7 @@
 - id: typst-progress
   kind: hunk
   files: ["**/*.typ"]
-  pattern: '\A(?:-#box\(width: 9cm, height: \d+pt.*\n)+(?:\+#ts-progress\([\d.]+, label: "[^"]*"(?:, (?:class: \([^)]*\)|thin: true))*\)(?:\n|\Z))+\Z'
+  pattern: '\A(?:-(?:#box\(width: 9cm, height: \d+pt.*)?\n)+(?:\+#ts-progress\([\d.]+, label: "[^"]*"(?:, (?:class: \([^)]*\)|thin: true))*\)(?:\n|\Z))+\Z'
   reason: "fragment-contracts.md §1: ProgressBar → #ts-progress(value, label:, thin:)"
   expires: 0.8.0
 - id: typst-task
@@ -341,8 +335,71 @@
 - id: typst-directive
   kind: hunk
   files: ["**/*.typ", "**/*.tex"]
-  pattern: '\A(?:-::: [\w.\\_]+(?:\n|\Z))+\Z'
+  pattern: '\A(?:-(?:::: [\w.<>\\_-]+)?(?:\n|\Z))+\Z'
   reason: "tmark spec: `::: module.path` is a directive (mkdocstrings), not text; legacy printed it (legacy bug L3, parity-triage.md)"
+  expires: 0.8.0
+
+# A legacy callout is three nested `#block(…)` lines plus a bold title line and
+# one or two closing `]`; the tmark writer emits the `#ts-callout` contract.
+# The body between them is unchanged, so the hunk is the envelope only.
+- id: typst-callout-envelope
+  kind: hunk
+  files: ["**/*.typ"]
+  pattern: '\A(?:-(?:#block\(width: 100%[^\n]*|#text\(weight: "bold"\)\[[^\n]*|\]+|)\n)+(?:\+(?:#ts-callout\((?:kind: "[a-z]+")(?:, title: \[[^\n]*\])?(?:, id: "[^"]*")?(?:, collapsed: true)?\)\[|\]+|)(?:\n|\Z))+\Z'
+  reason: "fragment-contracts.md §1 callout (Typst): #ts-callout(kind:, title:)[…] replaces the per-instance #block/#text envelope the legacy writer inlined"
+  expires: 0.8.0
+# `#ts-code(…)[ ``` … ``` ]` wraps the fence when the block carries a title,
+# line numbers or highlighted lines; the closing `]` rides on the closing fence.
+- id: typst-code-wrapper
+  kind: hunk
+  files: ["**/*.typ"]
+  pattern: '\A(?:-(?:```[a-zA-Z0-9_+-]*|)\n)*(?:\+(?:#ts-code\([^\n]*\)\[|```[a-zA-Z0-9_+-]*\]?|\]|)(?:\n|\Z))+\Z'
+  reason: "fragment-contracts.md §1 codeblock (Typst): title/linenums/hl_lines wrap the raw fence in #ts-code(…)[…]; the legacy writer dropped those attributes and the fence language (legacy bug L1, parity-triage.md)"
+  expires: 0.8.0
+# Inline code that carries a language becomes `#raw(lang: "…", "…")` so Typst
+# highlights it; the legacy writer emitted an unlabelled raw span.
+- id: typst-raw-inline
+  kind: hunk
+  files: ["**/*.typ"]
+  pattern: '\A(?:-[^\n]*\n)+(?:\+[^\n]*#raw\(lang: "[a-zA-Z0-9_+-]+", [^\n]*(?:\n|\Z))+\Z'
+  reason: "fragment-contracts.md §1 codeinline (Typst): a fenced language becomes #raw(lang: …); the legacy span also swallowed the whitespace tokens (legacy bug L4, parity-triage.md)"
+  expires: 0.8.0
+# writers-and-passes.md §3 links pass: a link whose target is a local `.md`
+# file has no meaning in a single-document render; the text stays, the target
+# goes. Same rule as `snippet-link` on the LaTeX side.
+- id: typst-link-local-md
+  kind: hunk
+  files: ["**/*.typ"]
+  pattern: '\A(?:-[^\n]*#link\("[^"]*\.md(?:#[^"]*)?"\)\[[^\n]*\n)+(?:\+[^\n]*(?:\n|\Z))+\Z'
+  reason: "writers-and-passes.md §3 links pass: a local .md target is dropped and the link text stays (open point O2, parity-triage.md)"
+  expires: 0.8.0
+# A document with `numbered: false` gets an explicit `#heading(…)` call instead
+# of the `=` shorthand, so the writer can spell `numbering: none`.
+- id: typst-heading-unnumbered
+  kind: hunk
+  files: ["**/*.typ"]
+  pattern: '\A(?:-=+ [^\n]*\n)+(?:\+#heading\(level: \d+, numbering: none, outlined: false\)\[[^\n]*\](?:\n|\Z))+\Z'
+  reason: "fragment-contracts.md §1 heading (Typst): `numbered: false` is spelled on the heading call; `outlined: false` is open point O3 (parity-triage.md)"
+  expires: 0.8.0
+- id: typst-tabbed
+  kind: hunk
+  files: ["**/*.typ"]
+  pattern: '#ts-div\("tab"'
+  reason: "fragment-contracts.md §1 tabbed (Typst): `=== \"Title\"` → #ts-div(\"tab\", title: …)[…]; legacy printed a bold line"
+  expires: 0.8.0
+
+- id: task-todo-marker
+  kind: rewrite
+  files: ["**/*.tex"]
+  from: '\item[\tstodo] '
+  to: '\item '
+  reason: "fragment-contracts.md §1 choices: an unchecked task is \\item[\\tstodo] (ts-todolist); the legacy writer left it as a bare \\item, so the box was missing"
+  expires: 0.8.0
+- id: typst-callout-depth
+  kind: hunk
+  files: ["**/*.typ"]
+  pattern: '\A-(.*)\]\]\n\+\1\]\Z'
+  reason: "fragment-contracts.md §1 callout (Typst): #ts-callout is one content block where the legacy writer nested two #block calls, so the body closes one bracket earlier"
   expires: 0.8.0
 
 # ------------------------------------------------------ writer behaviours
@@ -357,37 +414,15 @@
 # The tmark writer labels a heading only for an explicit `{#id}` or an implicit
 # id a reference targets (latex/mod.rs header(); writers-and-passes.md §6 open
 # question (b)); legacy labelled every heading with its slug. Decision D1 in
-# parity-triage.md. A zero-context hunk merges a heading with the changed line
-# that follows it, hence the combined forms.
+# parity-triage.md. The normaliser splits a sectioning command's trailing
+# `\label{…}` onto its own line, so the heading itself matches and only the
+# surplus label lines remain; a caption's label is never split, so losing a
+# float label still shows up as a changed `\caption…` line.
 - id: heading-label-implicit
   kind: hunk
   files: ["**/*.tex"]
-  pattern: '\A-\\((?:sub)*section|paragraph|subparagraph|chapter|part)(\*?)\{(.*)\}\\label\{[^}]*\}\n\+\\\1\2\{\3\}\Z'
+  pattern: '\A(?:-\\label\{[^{}]*\}\n?)+\Z'
   reason: "tmark latex writer header(): implicit heading ids are not labelled unless referenced (parity-triage.md D1)"
-  expires: 0.8.0
-- id: heading-label-implicit-pair
-  kind: hunk
-  files: ["**/*.tex"]
-  pattern: '\A-\\((?:sub)*section|paragraph|subparagraph|chapter|part)(\*?)\{(.*)\}\\label\{[^}]*\}\n-\\((?:sub)*section|paragraph|subparagraph|chapter|part)(\*?)\{(.*)\}\\label\{[^}]*\}\n\+\\\1\2\{\3\}\n\+\\\4\5\{\6\}\Z'
-  reason: "tmark latex writer header(): two adjacent headings (parity-triage.md D1)"
-  expires: 0.8.0
-- id: heading-label-implicit-code
-  kind: hunk
-  files: ["**/*.tex"]
-  pattern: '\A-\\((?:sub)*section|paragraph|subparagraph|chapter|part)(\*?)\{(.*)\}\\label\{[^}]*\}\n-\\begin\{code\}\{([^}]*)\}\{[^}]*\}\{[^}]*\}\n\+\\\1\2\{\3\}\n\+\\begin\{tscode\}\[lang=(?:\4|\w+)(?:, (?:title=\{.*\}|linenums|stretch=[\d.]+|hl_lines=\{[^}]*\}|id=[^,\]]+))*, engine=pygments\]\Z'
-  reason: "tmark latex writer header() + fragment-contracts.md §1 codeblock: a heading directly followed by a fence (parity-triage.md D1)"
-  expires: 0.8.0
-- id: heading-label-implicit-pair-code
-  kind: hunk
-  files: ["**/*.tex"]
-  pattern: '\A-\\((?:sub)*section|paragraph|subparagraph|chapter|part)(\*?)\{(.*)\}\\label\{[^}]*\}\n-\\((?:sub)*section|paragraph|subparagraph|chapter|part)(\*?)\{(.*)\}\\label\{[^}]*\}\n-\\begin\{code\}\{([^}]*)\}\{[^}]*\}\{[^}]*\}\n\+\\\1\2\{\3\}\n\+\\\4\5\{\6\}\n\+\\begin\{tscode\}\[lang=(?:\7|\w+)(?:, (?:title=\{.*\}|linenums|stretch=[\d.]+|hl_lines=\{[^}]*\}|id=[^,\]]+))*, engine=pygments\]\Z'
-  reason: "tmark latex writer header() + fragment-contracts.md §1 codeblock: two headings then a fence (parity-triage.md D1)"
-  expires: 0.8.0
-- id: heading-label-implicit-callout
-  kind: hunk
-  files: ["**/*.tex"]
-  pattern: '\A-\\((?:sub)*section|paragraph|subparagraph|chapter|part)(\*?)\{(.*)\}\\label\{[^}]*\}\n-\\begin\{callout\}\[callout ([a-z]+)\]\{.*\}\n\+\\\1\2\{\3\}\n\+\\begin\{tscallout\}\[kind=(?:\4|seealso)(?:, title=\{.*\})?(?:, id=[^,\]]+)?(?:, collapsed)?\]\Z'
-  reason: "tmark latex writer header() + fragment-contracts.md §1 callout: a heading directly followed by a callout (parity-triage.md D1)"
   expires: 0.8.0
 - id: index-zero-width
   kind: hunk
@@ -400,7 +435,7 @@
   files: ["**/*.tex"]
   from: '\tsscript{symbols}{\(\rightarrow\) }'
   to: '\(\rightarrow\) '
-  reason: "writers-and-passes.md §3 scripts pass: `→` is classified before the writer maps it to \\(\\rightarrow\\); legacy mapped first (finding F12, low)"
+  reason: "writers-and-passes.md §3 scripts pass: `→` is classified before the writer maps it to \\(\\rightarrow\\); legacy mapped first (finding F7, parity-triage.md)"
   expires: 0.8.0
 - id: script-symbol-arrow-tight
   kind: rewrite
@@ -430,35 +465,174 @@
   to: '− '
   reason: "writers-and-passes.md §3 scripts pass (see script-symbol-arrow)"
   expires: 0.8.0
+# fragment-contracts.md §1 / decisions.md X4: `Span{script=slug}` was
+# `\text<slug>{…}`, it is now `\tsscript{slug}{…}`. The macro name is folded
+# onto the contract spelling here; what the rewrite leaves behind is the pass
+# behaviour of writers-and-passes.md §3 decision R4 (a run is split at a soft
+# break and a run next to a backslash is wrapped), allow-listed just below.
+- id: script-japanese
+  kind: rewrite
+  files: ["**/*.tex"]
+  from: '\textjapanese{'
+  to: '\tsscript{japanese}{'
+  reason: "fragment-contracts.md §1: Span{script=japanese} → \\tsscript{japanese}{…}"
+  expires: 0.8.0
+- id: script-syriacfull
+  kind: rewrite
+  files: ["**/*.tex"]
+  from: '\textsyriacfull{'
+  to: '\tsscript{syriacfull}{'
+  reason: "fragment-contracts.md §1: Span{script=syriacfull} → \\tsscript{syriacfull}{…}"
+  expires: 0.8.0
+- id: script-arabics
+  kind: rewrite
+  files: ["**/*.tex"]
+  from: '\textarabics{'
+  to: '\tsscript{arabics}{'
+  reason: "fragment-contracts.md §1: Span{script=arabics} → \\tsscript{arabics}{…}"
+  expires: 0.8.0
+- id: script-greek
+  kind: rewrite
+  files: ["**/*.tex"]
+  from: '\textgreek{'
+  to: '\tsscript{greek}{'
+  reason: "fragment-contracts.md §1: Span{script=greek} → \\tsscript{greek}{…}"
+  expires: 0.8.0
+- id: script-korean
+  kind: rewrite
+  files: ["**/*.tex"]
+  from: '\textkorean{'
+  to: '\tsscript{korean}{'
+  reason: "fragment-contracts.md §1: Span{script=korean} → \\tsscript{korean}{…}"
+  expires: 0.8.0
+- id: script-chinese
+  kind: rewrite
+  files: ["**/*.tex"]
+  from: '\textchinese{'
+  to: '\tsscript{chinese}{'
+  reason: "fragment-contracts.md §1: Span{script=chinese} → \\tsscript{chinese}{…}"
+  expires: 0.8.0
+- id: script-devanagari
+  kind: rewrite
+  files: ["**/*.tex"]
+  from: '\textdevanagari{'
+  to: '\tsscript{devanagari}{'
+  reason: "fragment-contracts.md §1: Span{script=devanagari} → \\tsscript{devanagari}{…}"
+  expires: 0.8.0
+- id: script-sinhala
+  kind: rewrite
+  files: ["**/*.tex"]
+  from: '\textsinhala{'
+  to: '\tsscript{sinhala}{'
+  reason: "fragment-contracts.md §1: Span{script=sinhala} → \\tsscript{sinhala}{…}"
+  expires: 0.8.0
+- id: script-khmer
+  kind: rewrite
+  files: ["**/*.tex"]
+  from: '\textkhmer{'
+  to: '\tsscript{khmer}{'
+  reason: "fragment-contracts.md §1: Span{script=khmer} → \\tsscript{khmer}{…}"
+  expires: 0.8.0
+- id: script-telugu
+  kind: rewrite
+  files: ["**/*.tex"]
+  from: '\texttelugu{'
+  to: '\tsscript{telugu}{'
+  reason: "fragment-contracts.md §1: Span{script=telugu} → \\tsscript{telugu}{…}"
+  expires: 0.8.0
+- id: script-bengali
+  kind: rewrite
+  files: ["**/*.tex"]
+  from: '\textbengali{'
+  to: '\tsscript{bengali}{'
+  reason: "fragment-contracts.md §1: Span{script=bengali} → \\tsscript{bengali}{…}"
+  expires: 0.8.0
+- id: script-georgianfull
+  kind: rewrite
+  files: ["**/*.tex"]
+  from: '\textgeorgianfull{'
+  to: '\tsscript{georgianfull}{'
+  reason: "fragment-contracts.md §1: Span{script=georgianfull} → \\tsscript{georgianfull}{…}"
+  expires: 0.8.0
+- id: script-armenian
+  kind: rewrite
+  files: ["**/*.tex"]
+  from: '\textarmenian{'
+  to: '\tsscript{armenian}{'
+  reason: "fragment-contracts.md §1: Span{script=armenian} → \\tsscript{armenian}{…}"
+  expires: 0.8.0
+- id: script-cyrillics
+  kind: rewrite
+  files: ["**/*.tex"]
+  from: '\textcyrillics{'
+  to: '\tsscript{cyrillics}{'
+  reason: "fragment-contracts.md §1: Span{script=cyrillics} → \\tsscript{cyrillics}{…}"
+  expires: 0.8.0
+- id: script-hebrew
+  kind: rewrite
+  files: ["**/*.tex"]
+  from: '\texthebrew{'
+  to: '\tsscript{hebrew}{'
+  reason: "fragment-contracts.md §1: Span{script=hebrew} → \\tsscript{hebrew}{…}"
+  expires: 0.8.0
+- id: script-thai
+  kind: rewrite
+  files: ["**/*.tex"]
+  from: '\textthai{'
+  to: '\tsscript{thai}{'
+  reason: "fragment-contracts.md §1: Span{script=thai} → \\tsscript{thai}{…}"
+  expires: 0.8.0
+- id: script-tibetan
+  kind: rewrite
+  files: ["**/*.tex"]
+  from: '\texttibetan{'
+  to: '\tsscript{tibetan}{'
+  reason: "fragment-contracts.md §1: Span{script=tibetan} → \\tsscript{tibetan}{…}"
+  expires: 0.8.0
+- id: script-tamil
+  kind: rewrite
+  files: ["**/*.tex"]
+  from: '\texttamil{'
+  to: '\tsscript{tamil}{'
+  reason: "fragment-contracts.md §1: Span{script=tamil} → \\tsscript{tamil}{…}"
+  expires: 0.8.0
+- id: script-ethiopicfull
+  kind: rewrite
+  files: ["**/*.tex"]
+  from: '\textethiopicfull{'
+  to: '\tsscript{ethiopicfull}{'
+  reason: "fragment-contracts.md §1: Span{script=ethiopicfull} → \\tsscript{ethiopicfull}{…}"
+  expires: 0.8.0
+- id: script-myanmarfull
+  kind: rewrite
+  files: ["**/*.tex"]
+  from: '\textmyanmarfull{'
+  to: '\tsscript{myanmarfull}{'
+  reason: "fragment-contracts.md §1: Span{script=myanmarfull} → \\tsscript{myanmarfull}{…}"
+  expires: 0.8.0
 - id: script-spans
   kind: hunk
-  files: ["**/*.tex"]
-  pattern: '\A(?:-(?=.*\\text(?:japanese|syriacfull|arabics|greek|korean|chinese|devanagari|sinhala|khmer|telugu|bengali|georgianfull|armenian|cyrillics|hebrew|thai|tibetan|tamil|ethiopicfull|myanmarfull)\{).*\n)+(?:\+(?=.*\\tsscript\{[a-z]+\}\{).*(?:\n|\Z))+\Z'
-  reason: "fragment-contracts.md §1: Span{script=slug} → \\tsscript{slug}{…}; the pass splits a run at a soft break and wraps runs next to a backslash the legacy skipped (writers-and-passes.md §3 decision R4)"
+  files: ["dialects/*.tex", "docs/**/*.tex"]
+  pattern: '\A(?:-(?:\\label\{[^{}]*\}|(?=[^\n]*\\tsscript\{)[^\n]*|[^\\\n]*)\n)+(?:\+[^\n]*\\tsscript\{[a-z]+\}\{[^\n]*(?:\n|\Z))+\Z'
+  reason: "writers-and-passes.md §3 decision R4: the scripts pass splits a run at a soft break and wraps a run next to a backslash that the legacy Str scan skipped; after the script-<slug> rewrites only that re-grouping is left"
   expires: 0.8.0
 - id: snippet-figure
   kind: hunk
   files: ["docs/**/*.tex"]
-  pattern: '\A(?=[\s\S]*^-.*\{snippet-<HASH>\.pdf\}$)(?=[\s\S]*^\+\\begin\{tscode\}\[lang=(?:md|markdown), class=\{snippet\}, engine=pygments\]$)[\s\S]*\Z'
+  pattern: '\A(?:-(?:\\ifdefined\\adjustbox|\\adjustbox\{max width=\\textwidth\}\{|\}|\\else|\\fi|\\includegraphics\[[^\]]*\]\{snippet-<HASH>\.pdf\}|\\begin\{figure\}\[H\]|\\centering|\\end\{figure\}|)(?:\n|\Z))+(?:\+.*(?:\n|\Z))*\Z'
   reason: "status.md: the snippet pass (nested preview builds) is in progress; the fence renders as a code block meanwhile"
   expires: 0.8.0
 - id: snippet-link
   kind: hunk
   files: ["docs/**/*.tex"]
-  pattern: '\A-(.*)\\hyperref\[snippet:<HASH>\]\{([^{}]*)\}(.*)\n\+\1\2\3\Z'
+  pattern: '\A-(.*)\\hyperref\[snippet:<HASH>\]\{((?:[^{}]|\{[^{}]*\})*)\}(.*)\n\+\1\2\3\Z'
   reason: "writers-and-passes.md §3 links pass: the `snippet` fallback of writer.py:734 for a local .md target is dropped; the text stays"
-  expires: 0.8.0
-- id: snippet-link-twice
-  kind: hunk
-  files: ["docs/**/*.tex"]
-  pattern: '\A-(.*)\\hyperref\[snippet:<HASH>\]\{([^{}]*)\}(.*)\\hyperref\[snippet:<HASH>\]\{([^{}]*)\}(.*)\n\+\1\2\3\4\5\Z'
-  reason: "writers-and-passes.md §3 links pass (see snippet-link)"
   expires: 0.8.0
 - id: table-error-callout
   kind: hunk
   files: ["tables/*.tex", "docs/syntax/tables/*.tex"]
-  pattern: '\A-\\begin\{callout\}\[callout default\]\{YAML table error\}\n-\\begin\{code\}\{text\}\{\}\{\}\n-\\begin\{Verbatim\}.*\n-.*\n-\\end\{Verbatim\}\n-\\end\{tscode\}\n-\\end\{tscallout\}\n(?:\+.*(?:\n|\Z))+\Z'
-  reason: "decisions.md X9: an invalid YAML table is a diagnostic (table-row-width, table-column-unknown, table-span); legacy printed an error callout in the document (finding F9 discusses the padded render)"
+  pattern: '\A(?:-\\label\{[^{}]*\}\n)*-\\begin\{callout\}\[callout default\]\{YAML table error\}\n-\\begin\{code\}\{text\}\{\}\{\}\n-\\begin\{Verbatim\}.*\n-.*\n-\\end\{Verbatim\}\n-\\end\{tscode\}\n-\\end\{tscallout\}\n(?:\+.*(?:\n|\Z))+\Z'
+  reason: "decisions.md X9: an invalid YAML table is a diagnostic (table-row-width, table-column-unknown, table-span); legacy printed an error callout in the document"
   expires: 0.8.0
 - id: figure-short-caption
   kind: hunk
