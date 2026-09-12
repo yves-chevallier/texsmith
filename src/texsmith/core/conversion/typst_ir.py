@@ -60,6 +60,17 @@ def _uses_mitex(requires: Requires) -> bool:
     return any("mitex" in package for package in requires.packages)
 
 
+def _uses_eqnref(requires: Requires) -> bool:
+    """Whether a display equation carries a label the document references.
+
+    The Typst writer names ``ts-equations`` when it emits an equation label or
+    a ``#ref`` to one (``writers-and-passes.md`` §4); the scaffolding turns
+    ``math.equation(numbering)`` on for it. The legacy path read the same
+    thing from ``TypstWriterState.runtime["uses_eqnref"]``.
+    """
+    return "ts-equations" in requires.fragments
+
+
 def typst_bibliography(
     document: Document,
     bibliography_files: Sequence[Path],
@@ -231,6 +242,7 @@ def render_typst_from_ir(
             f"{prelude}\n\n{mainmatter}",
             title=title,
             uses_mitex=_uses_mitex(requires),
+            uses_eqnref=_uses_eqnref(requires),
         )
 
     _collection, bib_resource = typst_bibliography(
@@ -273,7 +285,7 @@ def render_typst_from_ir(
     template_context["has_bibliography"] = bool(requires.bibliography and bib_resource)
     template_context["bibliography_resource"] = bib_resource or ""
     template_context["uses_mitex"] = _uses_mitex(requires)
-    template_context["uses_eqnref"] = False
+    template_context["uses_eqnref"] = _uses_eqnref(requires)
     return typst_template.render(template_context)
 
 
