@@ -47,7 +47,9 @@ def test_runs_math_letters_and_summary(harness, fake_script_detector) -> None:
     ]
     # Code is untouched, the emoji span is fenced off, ASCII text is shared.
     assert [node.text for node in walk(out.ir) if isinstance(node, model.Code)] == ["код"]
-    spans_by_key = [dict(node.attrs.kv) for node in walk(out.ir) if isinstance(node, model.SpanNode)]
+    spans_by_key = [
+        dict(node.attrs.kv) for node in walk(out.ir) if isinstance(node, model.SpanNode)
+    ]
     assert {"emoji": "😀"} in spans_by_key
     assert out.ir.blocks[0] is document.ir.blocks[0]
 
