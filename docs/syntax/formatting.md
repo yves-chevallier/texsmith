@@ -59,6 +59,45 @@ __The quick brown fox jumps over the lazy dog.__ *(small capitals)*
 Delimiters stack for bold italic, and `_` never opens emphasis inside a word,
 so `snake_case_name` stays literal.
 
+## Underline and `^^x^^`
+
+Underline has a role and no default sugar: print typography treats the
+underline as a typewriter relic, and the obvious spelling `__x__` went to small
+caps instead.
+
+`^^x^^` — PyMdownX's caret "insert" — is not a TMark construct. With the
+feature `inline.insert` off, which is the default, it is literal text and
+raises the hint `feature-off`. Switched on, it is sugar for `{underline}[x]`:
+one node whatever the spelling, and the printer emits the role.
+
+```md
+---
+press:
+  features:
+    inline.insert: true
+---
+
+Now {underline}[inserted] text, or ^^inserted^^ in sugar.
+```
+
+## Substitutions
+
+Three things are rewritten while a run of text is scanned, all of them
+producing ordinary text rather than a node:
+
+- `(c)`, `-->`, `1/2` and their siblings, and a `"straight-quoted"` phrase,
+  which is why quotes reach the PDF as `\enquote{…}` in the document's
+  language — see [Smart symbols and quotes](symbols.md);
+- `:smile:`, which expands to the character, while a Material icon shortcode
+  becomes a web-only span that print drops — see
+  [Emoji and icons](emoji.md).
+
+`LaTeX`, `XeLaTeX`, `BibTeX` and their siblings, written as plain words, are
+set as logos by the writers: there is no node and no role, the words stay
+ordinary text, and the rule is the feature `typography.tex-logos` (on, whole
+words only, never inside code, math, raw passthroughs, link destinations or
+attribute values).
+
 ## Lead-in paragraphs (`{lead}[…]`)
 
 A *lead-in* — a short run-in heading that opens a paragraph — has an explicit
