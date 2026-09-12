@@ -86,6 +86,20 @@ NoTitleOption = Annotated[
     ),
 ]
 
+IncludePathOption = Annotated[
+    list[Path] | None,
+    typer.Option(
+        "--include-path",
+        metavar="PATH",
+        help=(
+            "Directory an include falls back to when its path does not resolve "
+            "against the including file (can be repeated, searched in order)."
+        ),
+        show_default=False,
+        rich_help_panel=INPUTS_PANEL,
+    ),
+]
+
 ParserOption = Annotated[
     str | None,
     typer.Option(

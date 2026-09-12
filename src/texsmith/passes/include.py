@@ -19,6 +19,14 @@ Two forms, both consumed here so that ``tmark.resolve`` sees one document and
   fence, which the parser turns into exactly this option) takes the file's
   text, read relative to the file the fence sits in; the option is consumed.
 
+Both forms fall back to ``ctx.include_paths`` — the search path of
+``--include-path``, ``press.include_paths`` and the site's
+``pymdownx.snippets`` base path — when the document-relative lookup misses, so
+the canonical ``{include}(file)`` keeps its exact meaning while the deprecated
+spelling, whose paths were written against a base path the site configured,
+still finds its file. The path actually read is the one registered and named
+in diagnostics.
+
 A file that cannot be loaded becomes the visible literal
 ``Para([Str("[include: x not found]")])`` (a code fence keeps the literal as
 its text) with ``include-missing`` at the node's span, tmark's own message.
@@ -39,7 +47,7 @@ from texsmith.ir import codec, model
 from texsmith.ir.model import Node, Record
 from texsmith.ir.walk import map_tree
 from texsmith.passes import PassContext, diagnostic_span, highest_id, spec
-from texsmith.readers.loader import join
+from texsmith.readers.loader import join, join_dir
 
 
 if TYPE_CHECKING:  # pragma: no cover - typing only
@@ -173,13 +181,39 @@ class _Splicer:
             span=span,
         )
 
+    def _resolve(self, from_path: str, rel: str) -> tuple[str, str] | None:
+        """``(path, text)`` of the file ``rel`` names, or ``None`` when nothing holds it.
+
+        The including file's directory decides first — the spec's §Includes
+        rule, the only one ``{include}(file)`` ever needs. Only when that
+        misses does ``ctx.include_paths`` get a turn, in order: the deprecated
+        ``--8<-- "path"`` spelling is written against the snippet base path of
+        the site, not against the page. The path returned is the file actually
+        read, so the file table and every diagnostic name a real one.
+        """
+        text = self.ctx.loader.load(from_path, rel)
+        if text is not None:
+            return join(from_path, rel), text
+        for directory in self.ctx.include_paths:
+            target = join_dir(directory, rel)
+            # ``target`` is absolute: the loader's own join returns it as is.
+            text = self.ctx.loader.load(from_path, target)
+            if text is not None:
+                return target, text
+        return None
+
     def _splice(
         self, include: model.Include, origin: str, chain: frozenset[str]
     ) -> tuple[model.Block, ...]:
         rel = include.path
         from_path = join(origin, include.base) if include.base else origin
-        target = join(from_path, rel)
         span = diagnostic_span(include.span)
+
+        found = self._resolve(from_path, rel)
+        if found is None:
+            self.ctx.diagnostics.emit("include-missing", span, f"included file `{rel}` not found")
+            return (self._literal(f"[include: {rel} not found]", include.span),)
+        target, text = found
         if target in chain:
             self.ctx.diagnostics.emit(
                 "include-cycle",
@@ -187,11 +221,6 @@ class _Splicer:
                 f"included file `{rel}` is already being included; skipped",
             )
             return (self._literal(f"[include: {rel} skipped, cycle]", include.span),)
-
-        text = self.ctx.loader.load(from_path, rel)
-        if text is None:
-            self.ctx.diagnostics.emit("include-missing", span, f"included file `{rel}` not found")
-            return (self._literal(f"[include: {rel} not found]", include.span),)
 
         file_id = self.ctx.files.find(target)
         if file_id is None:
@@ -218,15 +247,15 @@ class _Splicer:
         options = replace(
             block.options, kv=tuple(item for item in block.options.kv if item[0] != "include")
         )
-        text = self.ctx.loader.load(origin, rel)
-        if text is None:
+        found = self._resolve(origin, rel)
+        if found is None:
             self.ctx.diagnostics.emit(
                 "include-missing",
                 diagnostic_span(block.span),
                 f"included file `{rel}` not found",
             )
             return replace(block, text=f"[include: {rel} not found]", options=options)
-        return replace(block, text=text, options=options)
+        return replace(block, text=found[1], options=options)
 
 
 def _origin_of(document: Document, ctx: PassContext) -> str:

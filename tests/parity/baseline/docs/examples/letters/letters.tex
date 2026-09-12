@@ -97,21 +97,471 @@ Here is the source code for the letter example used above:
 \begin{tsdiv}{tab}[title=Letter]
 \begin{tscode}[lang=markdown, engine=pygments]
 \begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
-[include: examples/letter/letter.md not found]
+\PYZhy{}\PYZhy{}\PYZhy{}
+press:
+  template: letter
+  date: 1903\PYZhy{}07\PYZhy{}14
+  signature: marie\PYZhy{}curie.svg
+  back\PYZhy{}address: Laboratory of Physics and Chemistry, Sorbonne Univ., Paris
+  from:
+    name: Marie Skłodowska Curie
+    address: |
+      Laboratory of Physics and Chemistry
+      Sorbonne University
+      75005 Paris, France
+  to:
+    name: Leonardo da Vinci
+    address: |
+      Casa di Leonardo
+      Near the Church of Santa Croce
+      Florence, Republic of Florence (c. 1500)
+  ps: |
+    How did you manage to withstand the ravages of time?
+\PY{g+gu}{    You should have been dead for 384 years by now.}
+\PY{g+gu}{\PYZhy{}\PYZhy{}\PYZhy{}}
+\PY{g+gh}{\PYZsh{} Dear Maestro Leonardo}
+
+I have received your latest letter—delivered, I assume, by whatever ingenious flying
+machine you are currently testing—and feel compelled to clarify a few scientific
+misunderstandings before you accidentally remove yourself from the timeline.
+
+First, while your enthusiasm for \PYZdq{}radiant essences\PYZdq{} is admirable, radioactivity is
+not a universal power source. Your idea for a \PYZdq{}self\PYZhy{}illuminating mechanical bird,
+animated by glowing stones\PYZdq{} is creative, but such stones would send you flying only
+toward the afterlife. Please wear gloves—preferably very thick ones.
+
+Second, I examined the sketch you enclosed, a contraption somewhere between a windmill,
+a cauldron, and an umbrella. I cannot determine its purpose, but I urge caution. If it
+is meant to rotate, do not sit inside it. If it is meant to boil, do not sit inside it.
+If it is meant to do both… absolutely do not sit inside it.
+
+Lastly, you asked whether radioactive materials might accelerate human creativity.
+A flattering thought, but the glow around me is scientific, not \PYZhy{}\PYZhy{} as you
+suggested \PYZhy{}\PYZhy{} \PYZdq{}proof of a supernatural muse.\PYZdq{} Should you begin to glow,
+I advise stepping away quickly.
+
+I remain deeply impressed by your mind, your sketches, and your relentless curiosity.
+Should you need help with physics—or with identifying substances that should not go
+into flying machines—I remain at your service.
+
+With great scientific affection,
 \end{Verbatim}
 \end{tscode}
 \end{tsdiv}
 \begin{tsdiv}{tab}[title=Template]
 \begin{tscode}[lang=latex, engine=pygments]
 \begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
-[include: src/texsmith/templates/letter/template/template.tex not found]
+\PY{k}{\PYZbs{}documentclass}[
+  paper=a4,
+  parskip=half,
+  firstfoot=false,
+  enlargefirstpage=true,
+]\PY{n+nb}{\PYZob{}}scrlttr2\PY{n+nb}{\PYZcb{}}
+\PY{k}{\PYZbs{}usepackage}\PY{n+nb}{\PYZob{}}xcolor\PY{n+nb}{\PYZcb{}}
+\PY{k}{\PYZbs{}definecolor}\PY{n+nb}{\PYZob{}}texsmithLinkColor\PY{n+nb}{\PYZcb{}}\PY{n+nb}{\PYZob{}}HTML\PY{n+nb}{\PYZcb{}}\PY{n+nb}{\PYZob{}}0B3D91\PY{n+nb}{\PYZcb{}}
+\PY{k}{\PYZbs{}VAR}\PY{n+nb}{\PYZob{}}extra\PY{n+nb}{\PYZus{}}packages\PY{n+nb}{\PYZcb{}}
+\PY{c}{\PYZpc{} Contract macros (fragment\PYZhy{}contracts.md §4): a letter keeps its callouts}
+\PY{c}{\PYZpc{} flat — a thin rule on the left, no rounded frame — by restyling the}
+\PY{c}{\PYZpc{} tscallout box through its pgfkeys family. Guarded: ts\PYZhy{}callouts is only}
+\PY{c}{\PYZpc{} loaded when the document has a callout.}
+\PY{k}{\PYZbs{}ifcsname} tscallout\PY{k}{\PYZbs{}endcsname}
+  \PY{k}{\PYZbs{}tcbset}\PY{n+nb}{\PYZob{}}/ts/callout/.append style=\PY{n+nb}{\PYZob{}}arc=0mm, boxrule=0mm, frame hidden, borderline west=\PY{n+nb}{\PYZob{}}0.3mm\PY{n+nb}{\PYZcb{}}\PY{n+nb}{\PYZob{}}0mm\PY{n+nb}{\PYZcb{}}\PY{n+nb}{\PYZob{}}black!70\PY{n+nb}{\PYZcb{}}\PY{n+nb}{\PYZcb{}}\PY{n+nb}{\PYZcb{}}
+\PY{k}{\PYZbs{}fi}
+\PY{k}{\PYZbs{}usepackage}\PY{n+nb}{\PYZob{}}graphicx\PY{n+nb}{\PYZcb{}}
+\PY{k}{\PYZbs{}usepackage}\PY{n+na}{[\PYZbs{}VAR\PYZob{}babel\PYZus{}language|default(\PYZsq{}english\PYZsq{})\PYZcb{}]}\PY{n+nb}{\PYZob{}}babel\PY{n+nb}{\PYZcb{}}
+\PY{k}{\PYZbs{}usepackage}[
+    colorlinks=true,
+    linkcolor=texsmithLinkColor,
+    urlcolor=texsmithLinkColor,
+    citecolor=texsmithLinkColor]\PY{n+nb}{\PYZob{}}hyperref\PY{n+nb}{\PYZcb{}}
+\PY{k}{\PYZbs{}LoadLetterOption}\PY{n+nb}{\PYZob{}}\PY{k}{\PYZbs{}VAR}\PY{n+nb}{\PYZob{}}letter\PY{n+nb}{\PYZus{}}standard\PY{n+nb}{\PYZus{}}option\PY{n+nb}{\PYZcb{}}\PY{n+nb}{\PYZcb{}}
+\PY{k}{\PYZbs{}KOMAoptions}\PY{n+nb}{\PYZob{}}foldmarks=\PY{k}{\PYZbs{}VAR}\PY{n+nb}{\PYZob{}}foldmarks\PY{n+nb}{\PYZus{}}option\PY{n+nb}{\PYZcb{}}\PY{n+nb}{\PYZcb{}}
+\PY{k}{\PYZbs{}BLOCK}\PY{n+nb}{\PYZob{}} set margin\PY{n+nb}{\PYZus{}}style = margin|default(\PYZsq{}default\PYZsq{})|lower \PY{n+nb}{\PYZcb{}}
+\PY{k}{\PYZbs{}BLOCK}\PY{n+nb}{\PYZob{}} set margin\PY{n+nb}{\PYZus{}}literal = margin\PY{n+nb}{\PYZus{}}style not in [\PYZdq{}narrow\PYZdq{}, \PYZdq{}default\PYZdq{}, \PYZdq{}wide\PYZdq{}] \PY{n+nb}{\PYZcb{}}
+\PY{k}{\PYZbs{}BLOCK}\PY{n+nb}{\PYZob{}} if margin\PY{n+nb}{\PYZus{}}style == \PYZdq{}narrow\PYZdq{} \PY{n+nb}{\PYZcb{}}
+\PY{k}{\PYZbs{}KOMAoptions}\PY{n+nb}{\PYZob{}}fromalign=left, backaddress=false\PY{n+nb}{\PYZcb{}}
+\PY{k}{\PYZbs{}setlength}\PY{n+nb}{\PYZob{}}\PY{k}{\PYZbs{}oddsidemargin}\PY{n+nb}{\PYZcb{}}\PY{n+nb}{\PYZob{}}1cm\PY{n+nb}{\PYZcb{}}
+\PY{k}{\PYZbs{}BLOCK}\PY{n+nb}{\PYZob{}} elif margin\PY{n+nb}{\PYZus{}}style == \PYZdq{}wide\PYZdq{} \PY{n+nb}{\PYZcb{}}
+\PY{k}{\PYZbs{}KOMAoptions}\PY{n+nb}{\PYZob{}}fromalign=left, backaddress=false\PY{n+nb}{\PYZcb{}}
+\PY{k}{\PYZbs{}setlength}\PY{n+nb}{\PYZob{}}\PY{k}{\PYZbs{}oddsidemargin}\PY{n+nb}{\PYZcb{}}\PY{n+nb}{\PYZob{}}2cm\PY{n+nb}{\PYZcb{}}
+\PY{k}{\PYZbs{}BLOCK}\PY{n+nb}{\PYZob{}} elif margin\PY{n+nb}{\PYZus{}}literal \PY{n+nb}{\PYZcb{}}
+\PY{k}{\PYZbs{}KOMAoptions}\PY{n+nb}{\PYZob{}}fromalign=left, backaddress=false\PY{n+nb}{\PYZcb{}}
+\PY{k}{\PYZbs{}setlength}\PY{n+nb}{\PYZob{}}\PY{k}{\PYZbs{}oddsidemargin}\PY{n+nb}{\PYZcb{}}\PY{n+nb}{\PYZob{}}0cm\PY{n+nb}{\PYZcb{}}
+\PY{k}{\PYZbs{}addtolength}\PY{n+nb}{\PYZob{}}\PY{k}{\PYZbs{}textwidth}\PY{n+nb}{\PYZcb{}}\PY{n+nb}{\PYZob{}}\PYZhy{}\PY{k}{\PYZbs{}VAR}\PY{n+nb}{\PYZob{}}margin\PY{n+nb}{\PYZcb{}}\PY{n+nb}{\PYZcb{}}
+\PY{k}{\PYZbs{}BLOCK}\PY{n+nb}{\PYZob{}} endif \PY{n+nb}{\PYZcb{}}
+\PY{k}{\PYZbs{}BLOCK}\PY{n+nb}{\PYZob{}} if use\PY{n+nb}{\PYZus{}}cursive\PY{n+nb}{\PYZus{}}signature \PY{n+nb}{\PYZcb{}}
+\PY{k}{\PYZbs{}setmainfont}\PY{n+na}{[Path=fonts/,Extension=.otf,Ligatures=Common,Mapping=]}\PY{n+nb}{\PYZob{}}modernline\PY{n+nb}{\PYZcb{}}
+\PY{k}{\PYZbs{}newcommand}\PY{n+nb}{\PYZob{}}\PY{k}{\PYZbs{}TexsmithLetterEndash}\PY{n+nb}{\PYZcb{}}\PY{n+nb}{\PYZob{}}\PY{k}{\PYZbs{}kern}0.05em\PYZhy{}\PY{k}{\PYZbs{}kern}0.05em\PY{n+nb}{\PYZcb{}}
+\PY{k}{\PYZbs{}newcommand}\PY{n+nb}{\PYZob{}}\PY{k}{\PYZbs{}TexsmithLetterEmdash}\PY{n+nb}{\PYZcb{}}\PY{n+nb}{\PYZob{}}\PY{k}{\PYZbs{}kern}0.05em\PYZhy{}\PY{k}{\PYZbs{}kern}0.05em\PYZhy{}\PY{k}{\PYZbs{}kern}0.05em\PY{n+nb}{\PYZcb{}}
+\PY{k}{\PYZbs{}catcode}\PYZdq{}2013=\PY{k}{\PYZbs{}active}
+\PY{k}{\PYZbs{}catcode}\PYZdq{}2014=\PY{k}{\PYZbs{}active}
+\PY{k}{\PYZbs{}begingroup}\PY{k}{\PYZbs{}lccode}`\PYZti{}=\PYZdq{}2013\PY{k}{\PYZbs{}lowercase}\PY{n+nb}{\PYZob{}}\PY{k}{\PYZbs{}endgroup}\PY{k}{\PYZbs{}protected}\PY{k}{\PYZbs{}def}\PYZti{}\PY{n+nb}{\PYZcb{}}\PY{n+nb}{\PYZob{}}\PY{k}{\PYZbs{}TexsmithLetterEndash}\PY{n+nb}{\PYZcb{}}
+\PY{k}{\PYZbs{}begingroup}\PY{k}{\PYZbs{}lccode}`\PYZti{}=\PYZdq{}2014\PY{k}{\PYZbs{}lowercase}\PY{n+nb}{\PYZob{}}\PY{k}{\PYZbs{}endgroup}\PY{k}{\PYZbs{}protected}\PY{k}{\PYZbs{}def}\PYZti{}\PY{n+nb}{\PYZcb{}}\PY{n+nb}{\PYZob{}}\PY{k}{\PYZbs{}TexsmithLetterEmdash}\PY{n+nb}{\PYZcb{}}
+\PY{k}{\PYZbs{}BLOCK}\PY{n+nb}{\PYZob{}} endif \PY{n+nb}{\PYZcb{}}
+
+\PY{k}{\PYZbs{}BLOCK}\PY{n+nb}{\PYZob{}} if preamble \PY{n+nb}{\PYZcb{}}
+\PY{c}{\PYZpc{} Custom document preamble injected from overrides.}
+\PY{k}{\PYZbs{}VAR}\PY{n+nb}{\PYZob{}}preamble\PY{n+nb}{\PYZcb{}}
+
+\PY{k}{\PYZbs{}BLOCK}\PY{n+nb}{\PYZob{}} endif \PY{n+nb}{\PYZcb{}}
+
+\PY{k}{\PYZbs{}BLOCK}\PY{n+nb}{\PYZob{}} if use\PY{n+nb}{\PYZus{}}cursive\PY{n+nb}{\PYZus{}}signature \PY{n+nb}{\PYZcb{}}
+\PY{k}{\PYZbs{}newfontfamily}\PY{k}{\PYZbs{}SignatureFont}\PY{n+na}{[Path=fonts/,Extension=.otf]}\PY{n+nb}{\PYZob{}}modernline\PY{n+nb}{\PYZcb{}}
+\PY{k}{\PYZbs{}newcommand}\PY{n+nb}{\PYZob{}}\PY{k}{\PYZbs{}SignatureText}\PY{n+nb}{\PYZcb{}}[1]\PY{n+nb}{\PYZob{}}\PY{n+nb}{\PYZob{}}\PY{k}{\PYZbs{}SignatureFont} \PYZsh{}1\PY{n+nb}{\PYZcb{}}\PY{n+nb}{\PYZcb{}}
+\PY{k}{\PYZbs{}BLOCK}\PY{n+nb}{\PYZob{}} else \PY{n+nb}{\PYZcb{}}
+\PY{k}{\PYZbs{}newcommand}\PY{n+nb}{\PYZob{}}\PY{k}{\PYZbs{}SignatureText}\PY{n+nb}{\PYZcb{}}[1]\PY{n+nb}{\PYZob{}}\PYZsh{}1\PY{n+nb}{\PYZcb{}}
+\PY{k}{\PYZbs{}BLOCK}\PY{n+nb}{\PYZob{}} endif \PY{n+nb}{\PYZcb{}}
+
+\PY{k}{\PYZbs{}newcommand}\PY{n+nb}{\PYZob{}}\PY{k}{\PYZbs{}SignatureBlock}\PY{n+nb}{\PYZcb{}}\PY{n+nb}{\PYZob{}}\PY{c}{\PYZpc{}}
+\PY{k}{\PYZbs{}BLOCK}\PY{n+nb}{\PYZob{}} if has\PY{n+nb}{\PYZus{}}signature\PY{n+nb}{\PYZus{}}image \PY{n+nb}{\PYZcb{}}
+  \PY{k}{\PYZbs{}includegraphics}\PY{n+na}{[height=1.6cm]}\PY{n+nb}{\PYZob{}}\PY{k}{\PYZbs{}VAR}\PY{n+nb}{\PYZob{}}signature\PY{n+nb}{\PYZus{}}image\PY{n+nb}{\PYZus{}}path\PY{n+nb}{\PYZcb{}}\PY{n+nb}{\PYZcb{}}
+  \PY{k}{\PYZbs{}\PYZbs{}}\PY{n+na}{[\PYZhy{}0.25\PYZbs{}baselineskip]}\PY{c}{\PYZpc{}}
+\PY{k}{\PYZbs{}BLOCK}\PY{n+nb}{\PYZob{}} endif \PY{n+nb}{\PYZcb{}}
+  \PY{k}{\PYZbs{}SignatureText}\PY{n+nb}{\PYZob{}}\PY{k}{\PYZbs{}VAR}\PY{n+nb}{\PYZob{}}signature\PY{n+nb}{\PYZus{}}text\PY{n+nb}{\PYZcb{}}\PY{n+nb}{\PYZcb{}}\PY{c}{\PYZpc{}}
+\PY{n+nb}{\PYZcb{}}
+
+\PY{k}{\PYZbs{}setkomavar}\PY{n+nb}{\PYZob{}}fromname\PY{n+nb}{\PYZcb{}}\PY{n+nb}{\PYZob{}}\PY{k}{\PYZbs{}VAR}\PY{n+nb}{\PYZob{}}from\PY{n+nb}{\PYZus{}}name\PY{n+nb}{\PYZcb{}}\PY{n+nb}{\PYZcb{}}
+\PY{k}{\PYZbs{}setkomavar}\PY{n+nb}{\PYZob{}}fromaddress\PY{n+nb}{\PYZcb{}}\PY{n+nb}{\PYZob{}}\PY{c}{\PYZpc{}}
+\PY{k}{\PYZbs{}BLOCK}\PY{n+nb}{\PYZob{}} if has\PY{n+nb}{\PYZus{}}sender\PY{n+nb}{\PYZus{}}address \PY{n+nb}{\PYZcb{}}
+  \PY{k}{\PYZbs{}VAR}\PY{n+nb}{\PYZob{}}from\PY{n+nb}{\PYZus{}}address\PY{n+nb}{\PYZus{}}lines|join(\PYZsq{}\PY{k}{\PYZbs{}\PYZbs{}}\PY{k}{\PYZbs{}\PYZbs{}}\PY{k}{\PYZbs{}n}\PYZsq{})\PY{n+nb}{\PYZcb{}}
+\PY{k}{\PYZbs{}BLOCK}\PY{n+nb}{\PYZob{}} endif \PY{n+nb}{\PYZcb{}}
+\PY{n+nb}{\PYZcb{}}
+\PY{k}{\PYZbs{}BLOCK}\PY{n+nb}{\PYZob{}} if from\PY{n+nb}{\PYZus{}}location\PY{n+nb}{\PYZus{}}value \PYZhy{}\PY{n+nb}{\PYZcb{}}
+\PY{k}{\PYZbs{}setkomavar}\PY{n+nb}{\PYZob{}}location\PY{n+nb}{\PYZcb{}}\PY{n+nb}{\PYZob{}}\PY{k}{\PYZbs{}VAR}\PY{n+nb}{\PYZob{}}from\PY{n+nb}{\PYZus{}}location\PY{n+nb}{\PYZus{}}value\PY{n+nb}{\PYZcb{}}\PY{n+nb}{\PYZcb{}}\PY{k}{\PYZbs{}BLOCK}\PY{n+nb}{\PYZob{}} endif \PY{n+nb}{\PYZcb{}}
+\PY{k}{\PYZbs{}BLOCK}\PY{n+nb}{\PYZob{}} set effective\PY{n+nb}{\PYZus{}}date = date\PY{n+nb}{\PYZus{}}value|default(\PYZsq{}\PYZsq{})|trim \PY{n+nb}{\PYZcb{}}
+\PY{k}{\PYZbs{}setkomavar}\PY{n+nb}{\PYZob{}}date\PY{n+nb}{\PYZcb{}}\PY{n+nb}{\PYZob{}}\PY{k}{\PYZbs{}BLOCK}\PY{n+nb}{\PYZob{}} if effective\PY{n+nb}{\PYZus{}}date \PYZhy{}\PY{n+nb}{\PYZcb{}}
+\PY{k}{\PYZbs{}VAR}\PY{n+nb}{\PYZob{}}date\PY{n+nb}{\PYZus{}}value\PY{n+nb}{\PYZcb{}}\PY{k}{\PYZbs{}BLOCK}\PY{n+nb}{\PYZob{}} else \PY{n+nb}{\PYZcb{}}\PY{k}{\PYZbs{}today}\PY{k}{\PYZbs{}BLOCK}\PY{n+nb}{\PYZob{}} endif \PY{n+nb}{\PYZcb{}}\PY{n+nb}{\PYZcb{}}
+\PY{k}{\PYZbs{}BLOCK}\PY{n+nb}{\PYZob{}} if has\PY{n+nb}{\PYZus{}}subject \PY{n+nb}{\PYZcb{}}
+\PY{k}{\PYZbs{}setkomavar}\PY{n+nb}{\PYZob{}}subject\PY{n+nb}{\PYZcb{}}\PY{n+nb}{\PYZob{}}\PY{k}{\PYZbs{}VAR}\PY{n+nb}{\PYZob{}}object\PY{n+nb}{\PYZus{}}value\PY{n+nb}{\PYZcb{}}\PY{n+nb}{\PYZcb{}}
+\PY{k}{\PYZbs{}setkomavar}\PY{k}{*}\PY{n+nb}{\PYZob{}}subject\PY{n+nb}{\PYZcb{}}\PY{n+nb}{\PYZob{}}\PY{k}{\PYZbs{}VAR}\PY{n+nb}{\PYZob{}}subject\PY{n+nb}{\PYZus{}}prefix\PY{n+nb}{\PYZcb{}}\PY{n+nb}{\PYZcb{}}
+\PY{k}{\PYZbs{}BLOCK}\PY{n+nb}{\PYZob{}} endif \PY{n+nb}{\PYZcb{}}
+\PY{k}{\PYZbs{}setkomavar}\PY{n+nb}{\PYZob{}}signature\PY{n+nb}{\PYZcb{}}\PY{n+nb}{\PYZob{}}\PY{k}{\PYZbs{}SignatureBlock}\PY{n+nb}{\PYZcb{}}
+\PY{k}{\PYZbs{}BLOCK}\PY{n+nb}{\PYZob{}} if has\PY{n+nb}{\PYZus{}}back\PY{n+nb}{\PYZus{}}address \PY{n+nb}{\PYZcb{}}
+\PY{k}{\PYZbs{}setkomavar}\PY{n+nb}{\PYZob{}}backaddress\PY{n+nb}{\PYZcb{}}\PY{n+nb}{\PYZob{}}\PY{c}{\PYZpc{}}
+  \PY{k}{\PYZbs{}VAR}\PY{n+nb}{\PYZob{}}back\PY{n+nb}{\PYZus{}}address\PY{n+nb}{\PYZus{}}lines|join(\PYZsq{}\PY{k}{\PYZbs{}\PYZbs{}}\PY{k}{\PYZbs{}\PYZbs{}}\PY{k}{\PYZbs{}n}\PYZsq{})\PY{n+nb}{\PYZcb{}}
+\PY{n+nb}{\PYZcb{}}
+\PY{k}{\PYZbs{}BLOCK}\PY{n+nb}{\PYZob{}} endif \PY{n+nb}{\PYZcb{}}
+\PY{k}{\PYZbs{}BLOCK}\PY{n+nb}{\PYZob{}} if reference\PY{n+nb}{\PYZus{}}value \PY{n+nb}{\PYZcb{}}
+\PY{k}{\PYZbs{}setkomavar}\PY{n+nb}{\PYZob{}}myref\PY{n+nb}{\PYZcb{}}\PY{n+nb}{\PYZob{}}\PY{k}{\PYZbs{}VAR}\PY{n+nb}{\PYZob{}}reference\PY{n+nb}{\PYZus{}}value\PY{n+nb}{\PYZcb{}}\PY{n+nb}{\PYZcb{}}
+\PY{k}{\PYZbs{}BLOCK}\PY{n+nb}{\PYZob{}} endif \PY{n+nb}{\PYZcb{}}
+\PY{k}{\PYZbs{}BLOCK}\PY{n+nb}{\PYZob{}} if not reference\PY{n+nb}{\PYZus{}}fields\PY{n+nb}{\PYZus{}}enabled \PY{n+nb}{\PYZcb{}}
+\PY{k}{\PYZbs{}removereffields}
+\PY{k}{\PYZbs{}BLOCK}\PY{n+nb}{\PYZob{}} endif \PY{n+nb}{\PYZcb{}}
+\PY{k}{\PYZbs{}renewcommand}\PY{k}{*}\PY{n+nb}{\PYZob{}}\PY{k}{\PYZbs{}raggedsignature}\PY{n+nb}{\PYZcb{}}\PY{n+nb}{\PYZob{}}\PY{k}{\PYZbs{}VAR}\PY{n+nb}{\PYZob{}}signature\PY{n+nb}{\PYZus{}}alignment\PY{n+nb}{\PYZus{}}command\PY{n+nb}{\PYZcb{}}\PY{n+nb}{\PYZcb{}}
+
+\PY{k}{\PYZbs{}begin}\PY{n+nb}{\PYZob{}}document\PY{n+nb}{\PYZcb{}}
+
+\PY{k}{\PYZbs{}begin}\PY{n+nb}{\PYZob{}}letter\PY{n+nb}{\PYZcb{}}\PY{n+nb}{\PYZob{}}\PY{c}{\PYZpc{}}
+\PY{k}{\PYZbs{}BLOCK}\PY{n+nb}{\PYZob{}} if has\PY{n+nb}{\PYZus{}}recipient\PY{n+nb}{\PYZus{}}address \PY{n+nb}{\PYZcb{}}
+  \PY{k}{\PYZbs{}VAR}\PY{n+nb}{\PYZob{}}to\PY{n+nb}{\PYZus{}}address\PY{n+nb}{\PYZus{}}lines|join(\PYZsq{}\PY{k}{\PYZbs{}\PYZbs{}}\PY{k}{\PYZbs{}\PYZbs{}}\PY{k}{\PYZbs{}n}  \PYZsq{})\PY{n+nb}{\PYZcb{}}
+\PY{k}{\PYZbs{}BLOCK}\PY{n+nb}{\PYZob{}} else \PY{n+nb}{\PYZcb{}}
+  \PY{k}{\PYZbs{}VAR}\PY{n+nb}{\PYZob{}}to\PY{n+nb}{\PYZus{}}name\PY{n+nb}{\PYZcb{}}
+\PY{k}{\PYZbs{}BLOCK}\PY{n+nb}{\PYZob{}} endif \PY{n+nb}{\PYZcb{}}
+\PY{n+nb}{\PYZcb{}}
+
+\PY{k}{\PYZbs{}opening}\PY{n+nb}{\PYZob{}}\PY{k}{\PYZbs{}VAR}\PY{n+nb}{\PYZob{}}opening\PY{n+nb}{\PYZus{}}text\PY{n+nb}{\PYZcb{}}\PY{n+nb}{\PYZcb{}}
+
+\PY{k}{\PYZbs{}VAR}\PY{n+nb}{\PYZob{}}mainmatter\PY{n+nb}{\PYZcb{}}
+
+\PY{k}{\PYZbs{}VAR}\PY{n+nb}{\PYZob{}}backmatter\PY{n+nb}{\PYZcb{}}
+\PY{k}{\PYZbs{}VAR}\PY{n+nb}{\PYZob{}}fragment\PY{n+nb}{\PYZus{}}backmatter\PY{n+nb}{\PYZcb{}}
+
+\PY{k}{\PYZbs{}BLOCK}\PY{n+nb}{\PYZob{}} if has\PY{n+nb}{\PYZus{}}closing \PY{n+nb}{\PYZcb{}}
+\PY{k}{\PYZbs{}closing}\PY{n+nb}{\PYZob{}}\PY{k}{\PYZbs{}VAR}\PY{n+nb}{\PYZob{}}closing\PY{n+nb}{\PYZus{}}text\PY{n+nb}{\PYZcb{}}\PY{n+nb}{\PYZcb{}}
+\PY{k}{\PYZbs{}BLOCK}\PY{n+nb}{\PYZob{}} endif \PY{n+nb}{\PYZcb{}}
+\PY{k}{\PYZbs{}BLOCK}\PY{n+nb}{\PYZob{}} if has\PY{n+nb}{\PYZus{}}postscript \PY{n+nb}{\PYZcb{}}
+\PY{k}{\PYZbs{}ps}\PY{n+nb}{\PYZob{}}PS: \PY{k}{\PYZbs{}VAR}\PY{n+nb}{\PYZob{}}postscript\PY{n+nb}{\PYZus{}}text\PY{n+nb}{\PYZcb{}}\PY{n+nb}{\PYZcb{}}
+\PY{k}{\PYZbs{}BLOCK}\PY{n+nb}{\PYZob{}} endif \PY{n+nb}{\PYZcb{}}
+
+\PY{k}{\PYZbs{}end}\PY{n+nb}{\PYZob{}}letter\PY{n+nb}{\PYZcb{}}
+\PY{k}{\PYZbs{}BLOCK}\PY{n+nb}{\PYZob{}} if not page\PY{n+nb}{\PYZus{}}numbers \PY{n+nb}{\PYZcb{}}
+\PY{k}{\PYZbs{}pagenumbering}\PY{n+nb}{\PYZob{}}gobble\PY{n+nb}{\PYZcb{}}
+\PY{k}{\PYZbs{}thispagestyle}\PY{n+nb}{\PYZob{}}empty\PY{n+nb}{\PYZcb{}}
+\PY{k}{\PYZbs{}pagestyle}\PY{n+nb}{\PYZob{}}empty\PY{n+nb}{\PYZcb{}}
+\PY{k}{\PYZbs{}BLOCK}\PY{n+nb}{\PYZob{}} endif \PY{n+nb}{\PYZcb{}}
+
+\PY{k}{\PYZbs{}end}\PY{n+nb}{\PYZob{}}document\PY{n+nb}{\PYZcb{}}
 \end{Verbatim}
 \end{tscode}
 \end{tsdiv}
 \begin{tsdiv}{tab}[title=Manifest]
 \begin{tscode}[lang=toml, engine=pygments]
 \begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
-\PY{k}{[}\PY{k}{include}\PY{err}{:}\PY{+w}{ }\PY{k}{src}\PY{err}{/}\PY{k}{texsmith}\PY{err}{/}\PY{k}{templates}\PY{err}{/}\PY{k}{letter}\PY{err}{/}\PY{k}{manifest}\PY{k}{.}\PY{k}{toml}\PY{+w}{ }\PY{k}{not}\PY{+w}{ }\PY{k}{found}\PY{k}{]}
+\PY{k}{[}\PY{k}{compat}\PY{k}{]}
+\PY{n}{texsmith}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{\PYZgt{}=0.6,\PYZlt{}1.0}\PY{l+s+s2}{\PYZdq{}}
+
+\PY{k}{[}\PY{k}{latex}\PY{k}{.}\PY{k}{template}\PY{k}{]}
+\PY{n}{name}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{formal\PYZhy{}letter}\PY{l+s+s2}{\PYZdq{}}
+\PY{n}{version}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{0.1.0}\PY{l+s+s2}{\PYZdq{}}
+\PY{n}{entrypoint}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{template/template.tex}\PY{l+s+s2}{\PYZdq{}}
+\PY{n}{engine}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{xelatex}\PY{l+s+s2}{\PYZdq{}}
+\PY{n}{shell\PYZus{}escape}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{k+kc}{false}
+\PY{n}{texlive\PYZus{}year}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+m+mi}{2023}
+\PY{n}{tlmgr\PYZus{}packages}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{p}{[}
+\PY{+w}{    }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{babel}\PY{l+s+s2}{\PYZdq{}}\PY{p}{,}
+\PY{+w}{    }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{fontspec}\PY{l+s+s2}{\PYZdq{}}\PY{p}{,}
+\PY{+w}{    }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{microtype}\PY{l+s+s2}{\PYZdq{}}\PY{p}{,}
+\PY{+w}{    }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{koma\PYZhy{}script}\PY{l+s+s2}{\PYZdq{}}\PY{p}{,}
+\PY{p}{]}
+\PY{n}{description}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}\PYZdq{}\PYZdq{}}
+\PY{l+s+s2}{Formal letter template based on KOMA\PYZhy{}Script with configurable}
+\PY{l+s+s2}{sender/recipient and standards.}\PY{l+s+s2}{\PYZdq{}\PYZdq{}\PYZdq{}}
+
+\PY{n}{fragments}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{p}{[}
+\PY{+w}{    }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{ts\PYZhy{}fonts}\PY{l+s+s2}{\PYZdq{}}\PY{p}{,}
+\PY{+w}{    }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{ts\PYZhy{}extra}\PY{l+s+s2}{\PYZdq{}}\PY{p}{,}
+\PY{+w}{    }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{ts\PYZhy{}keystrokes}\PY{l+s+s2}{\PYZdq{}}\PY{p}{,}
+\PY{+w}{    }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{ts\PYZhy{}callouts}\PY{l+s+s2}{\PYZdq{}}\PY{p}{,}
+\PY{+w}{    }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{ts\PYZhy{}code}\PY{l+s+s2}{\PYZdq{}}\PY{p}{,}
+\PY{+w}{    }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{ts\PYZhy{}glossary}\PY{l+s+s2}{\PYZdq{}}\PY{p}{,}
+\PY{+w}{    }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{ts\PYZhy{}bibliography}\PY{l+s+s2}{\PYZdq{}}\PY{p}{,}
+\PY{+w}{    }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{ts\PYZhy{}todolist}\PY{l+s+s2}{\PYZdq{}}\PY{p}{,}
+\PY{p}{]}
+
+\PY{k}{[}\PY{k}{latex}\PY{k}{.}\PY{k}{template}\PY{k}{.}\PY{k}{attributes}\PY{k}{.}\PY{k}{cursive}\PY{k}{]}
+\PY{n}{default}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{k+kc}{false}
+\PY{n}{type}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{boolean}\PY{l+s+s2}{\PYZdq{}}
+\PY{n}{sources}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{p}{[}\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{cursive}\PY{l+s+s2}{\PYZdq{}}\PY{p}{]}
+\PY{n}{description}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{Toggle cursive signature font.}\PY{l+s+s2}{\PYZdq{}}
+
+\PY{k}{[}\PY{k}{latex}\PY{k}{.}\PY{k}{template}\PY{k}{.}\PY{k}{attributes}\PY{k}{.}\PY{k}{language}\PY{k}{]}
+\PY{n}{default}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{en\PYZhy{}UK}\PY{l+s+s2}{\PYZdq{}}
+\PY{n}{type}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{string}\PY{l+s+s2}{\PYZdq{}}
+\PY{n}{allow\PYZus{}empty}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{k+kc}{false}
+\PY{n}{sources}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{p}{[}\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{language}\PY{l+s+s2}{\PYZdq{}}\PY{p}{]}
+\PY{n}{description}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{Language for babel.}\PY{l+s+s2}{\PYZdq{}}
+
+\PY{k}{[}\PY{k}{latex}\PY{k}{.}\PY{k}{template}\PY{k}{.}\PY{k}{attributes}\PY{k}{.}\PY{k}{standard}\PY{k}{]}
+\PY{n}{default}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{\PYZdq{}}
+\PY{n}{type}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{string}\PY{l+s+s2}{\PYZdq{}}
+\PY{n}{sources}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{p}{[}\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{standard}\PY{l+s+s2}{\PYZdq{}}\PY{p}{,}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{format}\PY{l+s+s2}{\PYZdq{}}\PY{p}{]}
+\PY{n}{description}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{Letter standard/format (e.g., sn, nf).}\PY{l+s+s2}{\PYZdq{}}
+
+\PY{k}{[}\PY{k}{latex}\PY{k}{.}\PY{k}{template}\PY{k}{.}\PY{k}{attributes}\PY{k}{.}\PY{k}{date}\PY{k}{]}
+\PY{n}{default}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{\PYZdq{}}
+\PY{n}{type}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{string}\PY{l+s+s2}{\PYZdq{}}
+\PY{n}{escape}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{latex}\PY{l+s+s2}{\PYZdq{}}
+\PY{n}{allow\PYZus{}empty}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{k+kc}{true}
+\PY{n}{sources}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{p}{[}\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{date}\PY{l+s+s2}{\PYZdq{}}\PY{p}{]}
+
+\PY{k}{[}\PY{k}{latex}\PY{k}{.}\PY{k}{template}\PY{k}{.}\PY{k}{attributes}\PY{k}{.}\PY{k}{object}\PY{k}{]}
+\PY{n}{default}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{\PYZdq{}}
+\PY{n}{type}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{string}\PY{l+s+s2}{\PYZdq{}}
+\PY{n}{escape}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{latex}\PY{l+s+s2}{\PYZdq{}}
+\PY{n}{sources}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{p}{[}\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{object}\PY{l+s+s2}{\PYZdq{}}\PY{p}{]}
+\PY{n}{description}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{Subject line.}\PY{l+s+s2}{\PYZdq{}}
+
+\PY{k}{[}\PY{k}{latex}\PY{k}{.}\PY{k}{template}\PY{k}{.}\PY{k}{attributes}\PY{k}{.}\PY{k}{from\PYZus{}name}\PY{k}{]}
+\PY{n}{default}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{\PYZdq{}}
+\PY{n}{type}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{string}\PY{l+s+s2}{\PYZdq{}}
+\PY{n}{escape}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{latex}\PY{l+s+s2}{\PYZdq{}}
+\PY{n}{allow\PYZus{}empty}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{k+kc}{false}
+\PY{n}{required}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{k+kc}{true}
+\PY{n}{sources}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{p}{[}\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{from\PYZus{}name}\PY{l+s+s2}{\PYZdq{}}\PY{p}{]}
+\PY{n}{description}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{Sender full name.}\PY{l+s+s2}{\PYZdq{}}
+
+\PY{k}{[}\PY{k}{latex}\PY{k}{.}\PY{k}{template}\PY{k}{.}\PY{k}{attributes}\PY{k}{.}\PY{k}{from\PYZus{}address}\PY{k}{]}
+\PY{n}{default}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{p}{[}\PY{p}{]}
+\PY{n}{type}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{list}\PY{l+s+s2}{\PYZdq{}}
+\PY{n}{sources}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{p}{[}\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{from\PYZus{}address}\PY{l+s+s2}{\PYZdq{}}\PY{p}{]}
+
+\PY{k}{[}\PY{k}{latex}\PY{k}{.}\PY{k}{template}\PY{k}{.}\PY{k}{attributes}\PY{k}{.}\PY{k}{back\PYZus{}address}\PY{k}{]}
+\PY{n}{default}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{\PYZdq{}}
+\PY{n}{type}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{string}\PY{l+s+s2}{\PYZdq{}}
+\PY{n}{escape}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{latex}\PY{l+s+s2}{\PYZdq{}}
+\PY{n}{sources}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{p}{[}\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{back\PYZus{}address}\PY{l+s+s2}{\PYZdq{}}\PY{p}{]}
+
+\PY{k}{[}\PY{k}{latex}\PY{k}{.}\PY{k}{template}\PY{k}{.}\PY{k}{attributes}\PY{k}{.}\PY{k}{from\PYZus{}location}\PY{k}{]}
+\PY{n}{default}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{\PYZdq{}}
+\PY{n}{type}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{string}\PY{l+s+s2}{\PYZdq{}}
+\PY{n}{escape}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{latex}\PY{l+s+s2}{\PYZdq{}}
+\PY{n}{sources}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{p}{[}\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{from\PYZus{}location}\PY{l+s+s2}{\PYZdq{}}\PY{p}{]}
+
+\PY{k}{[}\PY{k}{latex}\PY{k}{.}\PY{k}{template}\PY{k}{.}\PY{k}{attributes}\PY{k}{.}\PY{k}{to\PYZus{}name}\PY{k}{]}
+\PY{n}{default}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{\PYZdq{}}
+\PY{n}{type}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{string}\PY{l+s+s2}{\PYZdq{}}
+\PY{n}{escape}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{latex}\PY{l+s+s2}{\PYZdq{}}
+\PY{n}{allow\PYZus{}empty}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{k+kc}{false}
+\PY{n}{required}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{k+kc}{true}
+\PY{n}{sources}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{p}{[}\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{to\PYZus{}name}\PY{l+s+s2}{\PYZdq{}}\PY{p}{]}
+\PY{n}{description}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{Recipient full name.}\PY{l+s+s2}{\PYZdq{}}
+
+\PY{k}{[}\PY{k}{latex}\PY{k}{.}\PY{k}{template}\PY{k}{.}\PY{k}{attributes}\PY{k}{.}\PY{k}{to\PYZus{}address}\PY{k}{]}
+\PY{n}{default}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{p}{[}\PY{p}{]}
+\PY{n}{type}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{list}\PY{l+s+s2}{\PYZdq{}}
+\PY{n}{sources}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{p}{[}\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{to\PYZus{}address}\PY{l+s+s2}{\PYZdq{}}\PY{p}{]}
+
+\PY{k}{[}\PY{k}{latex}\PY{k}{.}\PY{k}{template}\PY{k}{.}\PY{k}{attributes}\PY{k}{.}\PY{k}{closing}\PY{k}{]}
+\PY{n}{default}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{\PYZdq{}}
+\PY{n}{type}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{string}\PY{l+s+s2}{\PYZdq{}}
+\PY{n}{escape}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{latex}\PY{l+s+s2}{\PYZdq{}}
+\PY{n}{sources}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{p}{[}\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{closing}\PY{l+s+s2}{\PYZdq{}}\PY{p}{]}
+\PY{n}{description}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{Closing phrase.}\PY{l+s+s2}{\PYZdq{}}
+
+\PY{k}{[}\PY{k}{latex}\PY{k}{.}\PY{k}{template}\PY{k}{.}\PY{k}{attributes}\PY{k}{.}\PY{k}{opening}\PY{k}{]}
+\PY{n}{default}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{\PYZdq{}}
+\PY{n}{type}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{string}\PY{l+s+s2}{\PYZdq{}}
+\PY{n}{escape}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{latex}\PY{l+s+s2}{\PYZdq{}}
+\PY{n}{sources}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{p}{[}\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{opening}\PY{l+s+s2}{\PYZdq{}}\PY{p}{]}
+\PY{n}{description}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{Opening phrase.}\PY{l+s+s2}{\PYZdq{}}
+
+\PY{k}{[}\PY{k}{latex}\PY{k}{.}\PY{k}{template}\PY{k}{.}\PY{k}{attributes}\PY{k}{.}\PY{k}{signature}\PY{k}{]}
+\PY{n}{default}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{\PYZdq{}}
+\PY{n}{type}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{any}\PY{l+s+s2}{\PYZdq{}}
+\PY{n}{sources}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{p}{[}\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{signature}\PY{l+s+s2}{\PYZdq{}}\PY{p}{]}
+\PY{n}{description}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{Signature block (text or raw LaTeX).}\PY{l+s+s2}{\PYZdq{}}
+
+\PY{k}{[}\PY{k}{latex}\PY{k}{.}\PY{k}{template}\PY{k}{.}\PY{k}{attributes}\PY{k}{.}\PY{k}{source\PYZus{}dir}\PY{k}{]}
+\PY{n}{default}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{\PYZdq{}}
+\PY{n}{type}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{string}\PY{l+s+s2}{\PYZdq{}}
+\PY{n}{allow\PYZus{}empty}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{k+kc}{true}
+\PY{n}{format}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{raw}\PY{l+s+s2}{\PYZdq{}}
+\PY{n}{sources}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{p}{[}\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{source\PYZus{}dir}\PY{l+s+s2}{\PYZdq{}}\PY{p}{]}
+
+\PY{k}{[}\PY{k}{latex}\PY{k}{.}\PY{k}{template}\PY{k}{.}\PY{k}{attributes}\PY{k}{.}\PY{k}{output\PYZus{}dir}\PY{k}{]}
+\PY{n}{default}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{\PYZdq{}}
+\PY{n}{type}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{string}\PY{l+s+s2}{\PYZdq{}}
+\PY{n}{allow\PYZus{}empty}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{k+kc}{true}
+\PY{n}{format}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{raw}\PY{l+s+s2}{\PYZdq{}}
+\PY{n}{sources}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{p}{[}\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{output\PYZus{}dir}\PY{l+s+s2}{\PYZdq{}}\PY{p}{]}
+
+\PY{k}{[}\PY{k}{latex}\PY{k}{.}\PY{k}{template}\PY{k}{.}\PY{k}{attributes}\PY{k}{.}\PY{k}{signature\PYZus{}align}\PY{k}{]}
+\PY{n}{default}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{left}\PY{l+s+s2}{\PYZdq{}}
+\PY{n}{type}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{string}\PY{l+s+s2}{\PYZdq{}}
+\PY{n}{sources}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{p}{[}\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{signature\PYZus{}align}\PY{l+s+s2}{\PYZdq{}}\PY{p}{]}
+
+\PY{k}{[}\PY{k}{latex}\PY{k}{.}\PY{k}{template}\PY{k}{.}\PY{k}{attributes}\PY{k}{.}\PY{k}{reference}\PY{k}{]}
+\PY{n}{default}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{\PYZdq{}}
+\PY{n}{type}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{string}\PY{l+s+s2}{\PYZdq{}}
+\PY{n}{escape}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{latex}\PY{l+s+s2}{\PYZdq{}}
+\PY{n}{sources}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{p}{[}\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{reference}\PY{l+s+s2}{\PYZdq{}}\PY{p}{]}
+\PY{n}{description}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{Reference field content.}\PY{l+s+s2}{\PYZdq{}}
+
+\PY{k}{[}\PY{k}{latex}\PY{k}{.}\PY{k}{template}\PY{k}{.}\PY{k}{attributes}\PY{k}{.}\PY{k}{reference\PYZus{}fields}\PY{k}{]}
+\PY{n}{default}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{k+kc}{false}
+\PY{n}{type}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{boolean}\PY{l+s+s2}{\PYZdq{}}
+\PY{n}{sources}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{p}{[}\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{reference\PYZus{}fields}\PY{l+s+s2}{\PYZdq{}}\PY{p}{]}
+\PY{n}{description}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{Whether to render reference fields block.}\PY{l+s+s2}{\PYZdq{}}
+
+\PY{k}{[}\PY{k}{latex}\PY{k}{.}\PY{k}{template}\PY{k}{.}\PY{k}{attributes}\PY{k}{.}\PY{k}{postscript}\PY{k}{]}
+\PY{n}{default}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{\PYZdq{}}
+\PY{n}{type}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{string}\PY{l+s+s2}{\PYZdq{}}
+\PY{n}{escape}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{latex}\PY{l+s+s2}{\PYZdq{}}
+\PY{n}{sources}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{p}{[}\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{postscript}\PY{l+s+s2}{\PYZdq{}}\PY{p}{]}
+\PY{n}{description}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{Postscript paragraph.}\PY{l+s+s2}{\PYZdq{}}
+
+\PY{k}{[}\PY{k}{latex}\PY{k}{.}\PY{k}{template}\PY{k}{.}\PY{k}{attributes}\PY{k}{.}\PY{k}{fold\PYZus{}marks}\PY{k}{]}
+\PY{n}{default}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{k+kc}{false}
+\PY{n}{type}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{boolean}\PY{l+s+s2}{\PYZdq{}}
+\PY{n}{sources}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{p}{[}\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{fold\PYZus{}marks}\PY{l+s+s2}{\PYZdq{}}\PY{p}{]}
+\PY{n}{description}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{Toggle fold marks.}\PY{l+s+s2}{\PYZdq{}}
+
+\PY{k}{[}\PY{k}{latex}\PY{k}{.}\PY{k}{template}\PY{k}{.}\PY{k}{attributes}\PY{k}{.}\PY{k}{margin}\PY{k}{]}
+\PY{n}{default}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{default}\PY{l+s+s2}{\PYZdq{}}
+\PY{n}{type}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{string}\PY{l+s+s2}{\PYZdq{}}
+\PY{n}{normaliser}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{margin\PYZus{}style}\PY{l+s+s2}{\PYZdq{}}
+\PY{n}{sources}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{p}{[}\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{margin}\PY{l+s+s2}{\PYZdq{}}\PY{p}{]}
+\PY{n}{description}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{Margin style (default, wide, narrow).}\PY{l+s+s2}{\PYZdq{}}
+
+\PY{k}{[}\PY{k}{latex}\PY{k}{.}\PY{k}{template}\PY{k}{.}\PY{k}{attributes}\PY{k}{.}\PY{k}{preamble}\PY{k}{]}
+\PY{n}{default}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{\PYZdq{}}
+\PY{n}{type}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{string}\PY{l+s+s2}{\PYZdq{}}
+\PY{n}{allow\PYZus{}empty}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{k+kc}{true}
+\PY{n}{sources}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{p}{[}\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{preamble}\PY{l+s+s2}{\PYZdq{}}\PY{p}{]}
+
+\PY{k}{[}\PY{k}{latex}\PY{k}{.}\PY{k}{template}\PY{k}{.}\PY{k}{attributes}\PY{k}{.}\PY{k}{page\PYZus{}numbers}\PY{k}{]}
+\PY{n}{default}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{k+kc}{false}
+\PY{n}{type}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{boolean}\PY{l+s+s2}{\PYZdq{}}
+\PY{n}{sources}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{p}{[}\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{page\PYZus{}numbers}\PY{l+s+s2}{\PYZdq{}}\PY{p}{]}
+\PY{n}{description}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{Enable page numbers.}\PY{l+s+s2}{\PYZdq{}}
+
+\PY{k}{[}\PY{k}{latex}\PY{k}{.}\PY{k}{template}\PY{k}{.}\PY{k}{slots}\PY{k}{.}\PY{k}{mainmatter}\PY{k}{]}
+\PY{n}{default}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{k+kc}{true}
+\PY{n}{base\PYZus{}level}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+m+mi}{10}
+\PY{n}{strip\PYZus{}heading}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{k+kc}{true}
+
+\PY{k}{[}\PY{k}{latex}\PY{k}{.}\PY{k}{template}\PY{k}{.}\PY{k}{slots}\PY{k}{.}\PY{k}{backmatter}\PY{k}{]}
+\PY{n}{strip\PYZus{}heading}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{k+kc}{true}
+
+\PY{k}{[}\PY{k}{latex}\PY{k}{.}\PY{k}{template}\PY{k}{.}\PY{k}{assets}\PY{k}{]}
+\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{fonts/modernline.otf}\PY{l+s+s2}{\PYZdq{}}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{p}{\PYZob{}}\PY{+w}{ }\PY{n}{source}\PY{+w}{ }\PY{p}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{fonts/modernline.otf}\PY{l+s+s2}{\PYZdq{}}\PY{+w}{ }\PY{p}{\PYZcb{}}
+
+\PY{c+c1}{\PYZsh{} \PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{} \PYZsh{}}
+\PY{c+c1}{\PYZsh{} Typst backend: a clean business\PYZhy{}letter layout. The LaTeX backend\PYZsq{}s KOMA\PYZhy{}Script}
+\PY{c+c1}{\PYZsh{} national standards (DIN/SN/NF) collapse to a single Typst layout; sender /}
+\PY{c+c1}{\PYZsh{} recipient blocks read the nested ``from`` / ``to`` front matter directly.}
+\PY{c+c1}{\PYZsh{} \PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{} \PYZsh{}}
+\PY{k}{[}\PY{k}{typst}\PY{k}{.}\PY{k}{template}\PY{k}{]}
+\PY{n}{name}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{formal\PYZhy{}letter}\PY{l+s+s2}{\PYZdq{}}
+\PY{n}{version}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{0.1.0}\PY{l+s+s2}{\PYZdq{}}
+\PY{n}{entrypoint}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{template/template.typ}\PY{l+s+s2}{\PYZdq{}}
+
+\PY{k}{[}\PY{k}{typst}\PY{k}{.}\PY{k}{template}\PY{k}{.}\PY{k}{attributes}\PY{k}{.}\PY{k}{language}\PY{k}{]}
+\PY{n}{default}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{en}\PY{l+s+s2}{\PYZdq{}}
+\PY{n}{type}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{string}\PY{l+s+s2}{\PYZdq{}}
+\PY{n}{allow\PYZus{}empty}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{k+kc}{false}
+\PY{n}{normaliser}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{bcp47\PYZus{}language}\PY{l+s+s2}{\PYZdq{}}
+\PY{n}{sources}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{p}{[}\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{language}\PY{l+s+s2}{\PYZdq{}}\PY{p}{,}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{lang}\PY{l+s+s2}{\PYZdq{}}\PY{p}{]}
+
+\PY{k}{[}\PY{k}{typst}\PY{k}{.}\PY{k}{template}\PY{k}{.}\PY{k}{attributes}\PY{k}{.}\PY{k}{from\PYZus{}name}\PY{k}{]}
+\PY{n}{default}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{\PYZdq{}}
+\PY{n}{type}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{string}\PY{l+s+s2}{\PYZdq{}}
+\PY{n}{allow\PYZus{}empty}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{k+kc}{true}
+\PY{n}{format}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{raw}\PY{l+s+s2}{\PYZdq{}}
+\PY{n}{sources}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{p}{[}\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{from.name}\PY{l+s+s2}{\PYZdq{}}\PY{p}{,}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{from\PYZus{}name}\PY{l+s+s2}{\PYZdq{}}\PY{p}{]}
+
+\PY{k}{[}\PY{k}{typst}\PY{k}{.}\PY{k}{template}\PY{k}{.}\PY{k}{attributes}\PY{k}{.}\PY{k}{from\PYZus{}address}\PY{k}{]}
+\PY{n}{default}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{\PYZdq{}}
+\PY{n}{type}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{string}\PY{l+s+s2}{\PYZdq{}}
+\PY{n}{allow\PYZus{}empty}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{k+kc}{true}
+\PY{n}{format}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{raw}\PY{l+s+s2}{\PYZdq{}}
+\PY{n}{sources}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{p}{[}\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{from.address}\PY{l+s+s2}{\PYZdq{}}\PY{p}{,}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{from\PYZus{}address}\PY{l+s+s2}{\PYZdq{}}\PY{p}{]}
+
+\PY{k}{[}\PY{k}{typst}\PY{k}{.}\PY{k}{template}\PY{k}{.}\PY{k}{attributes}\PY{k}{.}\PY{k}{to\PYZus{}name}\PY{k}{]}
+\PY{n}{default}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{\PYZdq{}}
+\PY{n}{type}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{string}\PY{l+s+s2}{\PYZdq{}}
+\PY{n}{allow\PYZus{}empty}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{k+kc}{true}
+\PY{n}{format}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{raw}\PY{l+s+s2}{\PYZdq{}}
+\PY{n}{sources}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{p}{[}\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{to.name}\PY{l+s+s2}{\PYZdq{}}\PY{p}{,}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{to\PYZus{}name}\PY{l+s+s2}{\PYZdq{}}\PY{p}{]}
+
+\PY{k}{[}\PY{k}{typst}\PY{k}{.}\PY{k}{template}\PY{k}{.}\PY{k}{attributes}\PY{k}{.}\PY{k}{to\PYZus{}address}\PY{k}{]}
+\PY{n}{default}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{\PYZdq{}}
+\PY{n}{type}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{string}\PY{l+s+s2}{\PYZdq{}}
+\PY{n}{allow\PYZus{}empty}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{k+kc}{true}
+\PY{n}{format}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{raw}\PY{l+s+s2}{\PYZdq{}}
+\PY{n}{sources}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{p}{[}\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{to.address}\PY{l+s+s2}{\PYZdq{}}\PY{p}{,}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{to\PYZus{}address}\PY{l+s+s2}{\PYZdq{}}\PY{p}{]}
+
+\PY{k}{[}\PY{k}{typst}\PY{k}{.}\PY{k}{template}\PY{k}{.}\PY{k}{attributes}\PY{k}{.}\PY{k}{date}\PY{k}{]}
+\PY{n}{default}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{\PYZdq{}}
+\PY{n}{type}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{string}\PY{l+s+s2}{\PYZdq{}}
+\PY{n}{allow\PYZus{}empty}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{k+kc}{true}
+\PY{n}{format}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{raw}\PY{l+s+s2}{\PYZdq{}}
+\PY{n}{sources}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{p}{[}\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{date}\PY{l+s+s2}{\PYZdq{}}\PY{p}{]}
+
+\PY{k}{[}\PY{k}{typst}\PY{k}{.}\PY{k}{template}\PY{k}{.}\PY{k}{attributes}\PY{k}{.}\PY{k}{back\PYZus{}address}\PY{k}{]}
+\PY{n}{default}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{\PYZdq{}}
+\PY{n}{type}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{string}\PY{l+s+s2}{\PYZdq{}}
+\PY{n}{allow\PYZus{}empty}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{k+kc}{true}
+\PY{n}{format}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{raw}\PY{l+s+s2}{\PYZdq{}}
+\PY{n}{sources}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{p}{[}\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{back\PYZhy{}address}\PY{l+s+s2}{\PYZdq{}}\PY{p}{,}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{back\PYZus{}address}\PY{l+s+s2}{\PYZdq{}}\PY{p}{]}
+
+\PY{k}{[}\PY{k}{typst}\PY{k}{.}\PY{k}{template}\PY{k}{.}\PY{k}{attributes}\PY{k}{.}\PY{k}{signature}\PY{k}{]}
+\PY{n}{default}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{\PYZdq{}}
+\PY{n}{type}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{string}\PY{l+s+s2}{\PYZdq{}}
+\PY{n}{allow\PYZus{}empty}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{k+kc}{true}
+\PY{n}{format}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{raw}\PY{l+s+s2}{\PYZdq{}}
+\PY{n}{sources}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{p}{[}\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{signature}\PY{l+s+s2}{\PYZdq{}}\PY{p}{]}
+
+\PY{k}{[}\PY{k}{typst}\PY{k}{.}\PY{k}{template}\PY{k}{.}\PY{k}{attributes}\PY{k}{.}\PY{k}{postscript}\PY{k}{]}
+\PY{n}{default}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{\PYZdq{}}
+\PY{n}{type}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{string}\PY{l+s+s2}{\PYZdq{}}
+\PY{n}{allow\PYZus{}empty}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{k+kc}{true}
+\PY{n}{format}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{raw}\PY{l+s+s2}{\PYZdq{}}
+\PY{n}{sources}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{p}{[}\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{ps}\PY{l+s+s2}{\PYZdq{}}\PY{p}{,}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{postscript}\PY{l+s+s2}{\PYZdq{}}\PY{p}{]}
+
+\PY{k}{[}\PY{k}{typst}\PY{k}{.}\PY{k}{template}\PY{k}{.}\PY{k}{slots}\PY{k}{.}\PY{k}{mainmatter}\PY{k}{]}
+\PY{n}{default}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{k+kc}{true}
+\PY{n}{strip\PYZus{}heading}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{k+kc}{true}
 \end{Verbatim}
 \end{tscode}
 \end{tsdiv}

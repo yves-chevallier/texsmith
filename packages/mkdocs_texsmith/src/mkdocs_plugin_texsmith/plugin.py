@@ -105,6 +105,47 @@ REQUIRED_MARKDOWN_EXTENSIONS = (
 CSS_URI = "assets/texsmith/texsmith.css"
 
 
+def _snippet_base_paths(config: MkDocsConfig) -> list[Path]:
+    """The ``base_path`` of the site's ``pymdownx.snippets``, as directories.
+
+    The deprecated ``--8<-- "path"`` include resolves against that base path,
+    not against the page, so the PDF export has to search it too. MkDocs keeps
+    every extension's options in ``config.mdx_configs``, keyed by the
+    extension name, exactly as written in ``mkdocs.yml``; the value may be one
+    path or a list, and a ``!relative`` tag arrives as a placeholder object
+    that spells itself out through :func:`os.fspath` (``!relative $config_dir``
+    is the directory of ``mkdocs.yml``). Anything else — the extension absent,
+    an option we cannot read as a path — yields no search path rather than a
+    guess.
+    """
+    configs = getattr(config, "mdx_configs", None)
+    if not isinstance(configs, Mapping):
+        return []
+    section = configs.get("pymdownx.snippets")
+    if not isinstance(section, Mapping):
+        return []
+    raw = section.get("base_path")
+    if raw is None:
+        return []
+    candidates = raw if isinstance(raw, list | tuple) else [raw]
+    paths: list[Path] = []
+    for candidate in candidates:
+        try:
+            path = Path(os.fspath(candidate))
+        except TypeError:
+            log.warning(
+                "Ignoring 'pymdownx.snippets.base_path' entry %r: not a path.",
+                candidate,
+            )
+            continue
+        if not path.is_absolute():
+            path = Path(config.config_file_path).parent / path
+        resolved = Path(os.path.normpath(path))
+        if resolved not in paths:
+            paths.append(resolved)
+    return paths
+
+
 @dataclass(slots=True)
 class BookExtras:
     """Container for plugin-specific book options."""
@@ -198,6 +239,7 @@ class LatexPlugin(BasePlugin):
         self._page_sources: dict[str, Path] = {}
         self._global_bibliography: list[Path] = []
         self._global_template_overrides: dict[str, Any] = {}
+        self._snippet_base_paths: list[Path] = []
         self._nav: Navigation | None = None
         self._diagnostic_emitter: LoggingEmitter | None = None
         self._auto_build = False
@@ -262,6 +304,7 @@ class LatexPlugin(BasePlugin):
         self._global_bibliography = self._coerce_paths(
             self.config.get("bibliography") or []
         )
+        self._snippet_base_paths = _snippet_base_paths(config)
         self._global_template_overrides = dict(
             self.config.get("template_overrides") or {}
         )
@@ -736,6 +779,7 @@ class LatexPlugin(BasePlugin):
             parser=parser_backend,
             copy_assets=copy_assets,
             language=runtime_language,
+            default_include_paths=list(self._snippet_base_paths),
             emitter=emitter,
         )
         chain = ResolutionChain(

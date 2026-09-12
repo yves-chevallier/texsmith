@@ -1,3 +1,9 @@
+---
+press:
+  include_paths:
+    - ../..
+---
+
 # Getting Started
 
 In our journey to typeset beautiful documents with TeXSmith, we'll start with the basics:

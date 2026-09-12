@@ -81,21 +81,195 @@ The manifest defines defaults, available attributes, and where they get injected
 \begin{tsdiv}{tab}[title=colorful.md]
 \begin{tscode}[lang=md, engine=pygments]
 \begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
-[include: examples/colorful/colorful.md not found]
+\PYZhy{}\PYZhy{}\PYZhy{}
+title: Colorful Manifesto
+press:
+  template: .
+  colors:
+    nw: \PYZdq{}\PYZsh{}FF5A5F\PYZdq{}
+    ne: \PYZdq{}\PYZsh{}FFC857\PYZdq{}
+    sw: \PYZdq{}\PYZsh{}30C39E\PYZdq{}
+    se: \PYZdq{}\PYZsh{}2D7DD2\PYZdq{}
+  slots:
+    nw: Northwest
+    ne: Northeast
+    sw: Southwest
+\PY{g+gu}{    se: Southeast}
+\PY{g+gu}{\PYZhy{}\PYZhy{}\PYZhy{}}
+\PY{g+gu}{\PYZsh{}\PYZsh{} Northwest}
+
+In the age of AI, our greatest power is not computation \PYZhy{}\PYZhy{} but compassion.
+Let us rise above the machines we create, and redefine what it means to be human.
+
+\PY{g+gu}{\PYZsh{}\PYZsh{} Northeast}
+
+The planet is speaking through storms and silence. Climate change is our final
+reminder: protect the world that protects us, before the last leaf falls.
+
+\PY{g+gu}{\PYZsh{}\PYZsh{} Southwest}
+
+We invented technology to connect souls \PYZhy{}\PYZhy{} not isolate them. In the glow of
+progress, choose presence, choose people, choose purpose.
+
+\PY{g+gu}{\PYZsh{}\PYZsh{} Southeast}
+
+The future is not written in code or carbon. It is shaped by every act of
+courage we dare today. Humanity’s masterpiece is still ahead.
 \end{Verbatim}
 \end{tscode}
 \end{tsdiv}
 \begin{tsdiv}{tab}[title=manifest.toml]
 \begin{tscode}[lang=toml, engine=pygments]
 \begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
-\PY{k}{[}\PY{k}{include}\PY{err}{:}\PY{+w}{ }\PY{k}{examples}\PY{err}{/}\PY{k}{colorful}\PY{err}{/}\PY{k}{manifest}\PY{k}{.}\PY{k}{toml}\PY{+w}{ }\PY{k}{not}\PY{+w}{ }\PY{k}{found}\PY{k}{]}
+\PY{k}{[}\PY{k}{compat}\PY{k}{]}
+\PY{n}{texsmith}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{\PYZgt{}=0.6,\PYZlt{}1.0}\PY{l+s+s2}{\PYZdq{}}
+
+\PY{k}{[}\PY{k}{latex}\PY{k}{.}\PY{k}{template}\PY{k}{]}
+\PY{n}{name}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{colorful\PYZhy{}grid}\PY{l+s+s2}{\PYZdq{}}
+\PY{n}{version}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{0.1.0}\PY{l+s+s2}{\PYZdq{}}
+\PY{n}{entrypoint}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{template.tex}\PY{l+s+s2}{\PYZdq{}}
+\PY{n}{engine}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{lualatex}\PY{l+s+s2}{\PYZdq{}}
+\PY{n}{shell\PYZus{}escape}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{k+kc}{false}
+\PY{n}{texlive\PYZus{}year}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+m+mi}{2023}
+\PY{n}{tlmgr\PYZus{}packages}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{p}{[}
+\PY{+w}{    }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{geometry}\PY{l+s+s2}{\PYZdq{}}\PY{p}{,}
+\PY{+w}{    }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{fontspec}\PY{l+s+s2}{\PYZdq{}}\PY{p}{,}
+\PY{+w}{    }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{xcolor}\PY{l+s+s2}{\PYZdq{}}\PY{p}{,}
+\PY{+w}{    }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{pgf}\PY{l+s+s2}{\PYZdq{}}\PY{p}{,}
+\PY{p}{]}
+
+\PY{k}{[}\PY{k}{latex}\PY{k}{.}\PY{k}{template}\PY{k}{.}\PY{k}{attributes}\PY{k}{.}\PY{k}{colors}\PY{k}{]}
+\PY{n}{type}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{mapping}\PY{l+s+s2}{\PYZdq{}}
+\PY{n}{sources}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{p}{[}\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{press.colors}\PY{l+s+s2}{\PYZdq{}}\PY{p}{,}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{colors}\PY{l+s+s2}{\PYZdq{}}\PY{p}{]}
+
+\PY{k}{[}\PY{k}{latex}\PY{k}{.}\PY{k}{template}\PY{k}{.}\PY{k}{attributes}\PY{k}{.}\PY{k}{colors}\PY{k}{.}\PY{k}{default}\PY{k}{]}
+\PY{n}{nw}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{strongpink}\PY{l+s+s2}{\PYZdq{}}
+\PY{n}{ne}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{strongyellow}\PY{l+s+s2}{\PYZdq{}}
+\PY{n}{sw}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{stronggreen}\PY{l+s+s2}{\PYZdq{}}
+\PY{n}{se}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{strongblue}\PY{l+s+s2}{\PYZdq{}}
+
+\PY{k}{[}\PY{k}{latex}\PY{k}{.}\PY{k}{template}\PY{k}{.}\PY{k}{slots}\PY{k}{.}\PY{k}{nw}\PY{k}{]}
+\PY{n}{default}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{k+kc}{true}
+\PY{n}{depth}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{section}\PY{l+s+s2}{\PYZdq{}}
+\PY{n}{strip\PYZus{}heading}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{k+kc}{true}
+
+\PY{k}{[}\PY{k}{latex}\PY{k}{.}\PY{k}{template}\PY{k}{.}\PY{k}{slots}\PY{k}{.}\PY{k}{ne}\PY{k}{]}
+\PY{n}{depth}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{section}\PY{l+s+s2}{\PYZdq{}}
+\PY{n}{strip\PYZus{}heading}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{k+kc}{true}
+
+\PY{k}{[}\PY{k}{latex}\PY{k}{.}\PY{k}{template}\PY{k}{.}\PY{k}{slots}\PY{k}{.}\PY{k}{sw}\PY{k}{]}
+\PY{n}{depth}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{section}\PY{l+s+s2}{\PYZdq{}}
+\PY{n}{strip\PYZus{}heading}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{k+kc}{true}
+
+\PY{k}{[}\PY{k}{latex}\PY{k}{.}\PY{k}{template}\PY{k}{.}\PY{k}{slots}\PY{k}{.}\PY{k}{se}\PY{k}{]}
+\PY{n}{depth}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{section}\PY{l+s+s2}{\PYZdq{}}
+\PY{n}{strip\PYZus{}heading}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{k+kc}{true}
+
+\PY{k}{[}\PY{k}{latex}\PY{k}{.}\PY{k}{template}\PY{k}{.}\PY{k}{slots}\PY{k}{.}\PY{k}{mainmatter}\PY{k}{]}
+\PY{n}{default}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{k+kc}{false}
+
+\PY{c+c1}{\PYZsh{} \PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{} \PYZsh{}}
+\PY{c+c1}{\PYZsh{} Typst backend: a native 2x2 colour\PYZhy{}grid poster (parallel to the TikZ LaTeX}
+\PY{c+c1}{\PYZsh{} template). Each quadrant is a declared slot filled from the matching section.}
+\PY{c+c1}{\PYZsh{} \PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{} \PYZsh{}}
+\PY{k}{[}\PY{k}{typst}\PY{k}{.}\PY{k}{template}\PY{k}{]}
+\PY{n}{name}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{colorful\PYZhy{}grid}\PY{l+s+s2}{\PYZdq{}}
+\PY{n}{version}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{0.1.0}\PY{l+s+s2}{\PYZdq{}}
+\PY{n}{entrypoint}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{template.typ}\PY{l+s+s2}{\PYZdq{}}
+
+\PY{k}{[}\PY{k}{typst}\PY{k}{.}\PY{k}{template}\PY{k}{.}\PY{k}{attributes}\PY{k}{.}\PY{k}{colors}\PY{k}{]}
+\PY{n}{type}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{mapping}\PY{l+s+s2}{\PYZdq{}}
+\PY{n}{sources}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{p}{[}\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{press.colors}\PY{l+s+s2}{\PYZdq{}}\PY{p}{,}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{colors}\PY{l+s+s2}{\PYZdq{}}\PY{p}{]}
+
+\PY{k}{[}\PY{k}{typst}\PY{k}{.}\PY{k}{template}\PY{k}{.}\PY{k}{attributes}\PY{k}{.}\PY{k}{colors}\PY{k}{.}\PY{k}{default}\PY{k}{]}
+\PY{n}{nw}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{\PYZsh{}FF5A5F}\PY{l+s+s2}{\PYZdq{}}
+\PY{n}{ne}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{\PYZsh{}FFC857}\PY{l+s+s2}{\PYZdq{}}
+\PY{n}{sw}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{\PYZsh{}30C39E}\PY{l+s+s2}{\PYZdq{}}
+\PY{n}{se}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{\PYZsh{}2D7DD2}\PY{l+s+s2}{\PYZdq{}}
+
+\PY{k}{[}\PY{k}{typst}\PY{k}{.}\PY{k}{template}\PY{k}{.}\PY{k}{slots}\PY{k}{.}\PY{k}{nw}\PY{k}{]}
+\PY{n}{depth}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{section}\PY{l+s+s2}{\PYZdq{}}
+\PY{n}{strip\PYZus{}heading}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{k+kc}{true}
+
+\PY{k}{[}\PY{k}{typst}\PY{k}{.}\PY{k}{template}\PY{k}{.}\PY{k}{slots}\PY{k}{.}\PY{k}{ne}\PY{k}{]}
+\PY{n}{depth}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{section}\PY{l+s+s2}{\PYZdq{}}
+\PY{n}{strip\PYZus{}heading}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{k+kc}{true}
+
+\PY{k}{[}\PY{k}{typst}\PY{k}{.}\PY{k}{template}\PY{k}{.}\PY{k}{slots}\PY{k}{.}\PY{k}{sw}\PY{k}{]}
+\PY{n}{depth}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{section}\PY{l+s+s2}{\PYZdq{}}
+\PY{n}{strip\PYZus{}heading}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{k+kc}{true}
+
+\PY{k}{[}\PY{k}{typst}\PY{k}{.}\PY{k}{template}\PY{k}{.}\PY{k}{slots}\PY{k}{.}\PY{k}{se}\PY{k}{]}
+\PY{n}{depth}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{section}\PY{l+s+s2}{\PYZdq{}}
+\PY{n}{strip\PYZus{}heading}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{k+kc}{true}
+
+\PY{k}{[}\PY{k}{typst}\PY{k}{.}\PY{k}{template}\PY{k}{.}\PY{k}{slots}\PY{k}{.}\PY{k}{mainmatter}\PY{k}{]}
+\PY{n}{default}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{k+kc}{true}
 \end{Verbatim}
 \end{tscode}
 \end{tsdiv}
 \begin{tsdiv}{tab}[title=template.tex]
 \begin{tscode}[lang=tex, engine=pygments]
 \begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
-[include: examples/colorful/template.tex not found]
+\PY{k}{\PYZbs{}documentclass}\PY{n+nb}{\PYZob{}}article\PY{n+nb}{\PYZcb{}}
+\PY{k}{\PYZbs{}usepackage}\PY{n+na}{[paperwidth=20cm, paperheight=20cm, margin=0cm]}\PY{n+nb}{\PYZob{}}geometry\PY{n+nb}{\PYZcb{}}
+\PY{k}{\PYZbs{}usepackage}\PY{n+nb}{\PYZob{}}fontspec\PY{n+nb}{\PYZcb{}}
+
+\PY{k}{\PYZbs{}setsansfont}\PY{n+nb}{\PYZob{}}texgyreheros\PYZhy{}regular.otf\PY{n+nb}{\PYZcb{}}[
+    BoldFont       = texgyreheros\PYZhy{}bold.otf,
+    ItalicFont     = texgyreheros\PYZhy{}italic.otf,
+    BoldItalicFont = texgyreheros\PYZhy{}bolditalic.otf
+]
+\PY{k}{\PYZbs{}renewcommand}\PY{n+nb}{\PYZob{}}\PY{k}{\PYZbs{}familydefault}\PY{n+nb}{\PYZcb{}}\PY{n+nb}{\PYZob{}}\PY{k}{\PYZbs{}sfdefault}\PY{n+nb}{\PYZcb{}}
+
+\PY{k}{\PYZbs{}usepackage}\PY{n+nb}{\PYZob{}}tikz\PY{n+nb}{\PYZcb{}}
+\PY{k}{\PYZbs{}usetikzlibrary}\PY{n+nb}{\PYZob{}}calc\PY{n+nb}{\PYZcb{}}
+\PY{k}{\PYZbs{}usepackage}\PY{n+nb}{\PYZob{}}xcolor\PY{n+nb}{\PYZcb{}}
+
+\PY{k}{\PYZbs{}definecolor}\PY{n+nb}{\PYZob{}}strongpink\PY{n+nb}{\PYZcb{}}\PY{n+nb}{\PYZob{}}RGB\PY{n+nb}{\PYZcb{}}\PY{n+nb}{\PYZob{}}255,105,180\PY{n+nb}{\PYZcb{}}
+\PY{k}{\PYZbs{}definecolor}\PY{n+nb}{\PYZob{}}strongyellow\PY{n+nb}{\PYZcb{}}\PY{n+nb}{\PYZob{}}RGB\PY{n+nb}{\PYZcb{}}\PY{n+nb}{\PYZob{}}255,215,0\PY{n+nb}{\PYZcb{}}
+\PY{k}{\PYZbs{}definecolor}\PY{n+nb}{\PYZob{}}stronggreen\PY{n+nb}{\PYZcb{}}\PY{n+nb}{\PYZob{}}RGB\PY{n+nb}{\PYZcb{}}\PY{n+nb}{\PYZob{}}0,200,150\PY{n+nb}{\PYZcb{}}
+\PY{k}{\PYZbs{}definecolor}\PY{n+nb}{\PYZob{}}strongblue\PY{n+nb}{\PYZcb{}}\PY{n+nb}{\PYZob{}}RGB\PY{n+nb}{\PYZcb{}}\PY{n+nb}{\PYZob{}}100,149,237\PY{n+nb}{\PYZcb{}}
+
+\PY{k}{\PYZbs{}pagestyle}\PY{n+nb}{\PYZob{}}empty\PY{n+nb}{\PYZcb{}}
+
+\PY{k}{\PYZbs{}BLOCK}\PY{n+nb}{\PYZob{}} set squares = [
+  \PY{n+nb}{\PYZob{}}\PYZdq{}slot\PYZdq{}: \PYZdq{}nw\PYZdq{}, \PYZdq{}origin\PYZdq{}: \PYZdq{}0,0\PYZdq{}, \PYZdq{}center\PYZdq{}: \PYZdq{}5,5\PYZdq{},
+   \PYZdq{}label\PYZdq{}: \PYZdq{}NW\PYZdq{}, \PYZdq{}content\PYZdq{}: nw, \PYZdq{}color\PYZdq{}: colors.nw\PY{n+nb}{\PYZcb{}},
+  \PY{n+nb}{\PYZob{}}\PYZdq{}slot\PYZdq{}: \PYZdq{}ne\PYZdq{}, \PYZdq{}origin\PYZdq{}: \PYZdq{}10,0\PYZdq{}, \PYZdq{}center\PYZdq{}: \PYZdq{}15,5\PYZdq{},
+   \PYZdq{}label\PYZdq{}: \PYZdq{}NE\PYZdq{}, \PYZdq{}content\PYZdq{}: ne, \PYZdq{}color\PYZdq{}: colors.ne\PY{n+nb}{\PYZcb{}},
+  \PY{n+nb}{\PYZob{}}\PYZdq{}slot\PYZdq{}: \PYZdq{}sw\PYZdq{}, \PYZdq{}origin\PYZdq{}: \PYZdq{}0,10\PYZdq{}, \PYZdq{}center\PYZdq{}: \PYZdq{}5,15\PYZdq{},
+   \PYZdq{}label\PYZdq{}: \PYZdq{}SW\PYZdq{}, \PYZdq{}content\PYZdq{}: sw, \PYZdq{}color\PYZdq{}: colors.sw\PY{n+nb}{\PYZcb{}},
+  \PY{n+nb}{\PYZob{}}\PYZdq{}slot\PYZdq{}: \PYZdq{}se\PYZdq{}, \PYZdq{}origin\PYZdq{}: \PYZdq{}10,10\PYZdq{}, \PYZdq{}center\PYZdq{}: \PYZdq{}15,15\PYZdq{},
+   \PYZdq{}label\PYZdq{}: \PYZdq{}SE\PYZdq{}, \PYZdq{}content\PYZdq{}: se, \PYZdq{}color\PYZdq{}: colors.se\PY{n+nb}{\PYZcb{}},
+] \PY{n+nb}{\PYZcb{}}
+
+\PY{k}{\PYZbs{}begin}\PY{n+nb}{\PYZob{}}document\PY{n+nb}{\PYZcb{}}
+\PY{k}{\PYZbs{}begin}\PY{n+nb}{\PYZob{}}tikzpicture\PY{n+nb}{\PYZcb{}}[remember picture,overlay,x=1cm,y=1cm]
+  \PY{k}{\PYZbs{}coordinate} (SW) at (current page.south west);
+  \PY{k}{\PYZbs{}def}\PY{k}{\PYZbs{}boxwidth}\PY{n+nb}{\PYZob{}}7.5cm\PY{n+nb}{\PYZcb{}}
+
+  \PY{k}{\PYZbs{}BLOCK}\PY{n+nb}{\PYZob{}} for square in squares \PY{n+nb}{\PYZcb{}}
+  \PY{k}{\PYZbs{}BLOCK}\PY{n+nb}{\PYZob{}} set color\PY{n+nb}{\PYZus{}}name = \PYZdq{}slotcolor\PYZhy{}\PYZdq{} \PYZti{} square.slot \PY{n+nb}{\PYZcb{}}
+  \PY{k}{\PYZbs{}BLOCK}\PY{n+nb}{\PYZob{}} set color\PY{n+nb}{\PYZus{}}value = square.color | default(\PYZsq{}\PYZsq{}, true) \PY{n+nb}{\PYZcb{}}
+  \PY{k}{\PYZbs{}BLOCK}\PY{n+nb}{\PYZob{}} if color\PY{n+nb}{\PYZus{}}value and color\PY{n+nb}{\PYZus{}}value.startswith(\PYZsq{}\PYZsh{}\PYZsq{}) \PY{n+nb}{\PYZcb{}}
+  \PY{k}{\PYZbs{}definecolor}\PY{n+nb}{\PYZob{}}\PY{k}{\PYZbs{}VAR}\PY{n+nb}{\PYZob{}}color\PY{n+nb}{\PYZus{}}name\PY{n+nb}{\PYZcb{}}\PY{n+nb}{\PYZcb{}}\PY{n+nb}{\PYZob{}}HTML\PY{n+nb}{\PYZcb{}}\PY{n+nb}{\PYZob{}}\PY{k}{\PYZbs{}VAR}\PY{n+nb}{\PYZob{}}color\PY{n+nb}{\PYZus{}}value|replace(\PYZsq{}\PYZsh{}\PYZsq{}, \PYZsq{}\PYZsq{})\PY{n+nb}{\PYZcb{}}\PY{n+nb}{\PYZcb{}}
+  \PY{k}{\PYZbs{}BLOCK}\PY{n+nb}{\PYZob{}} elif color\PY{n+nb}{\PYZus{}}value and \PYZsq{},\PYZsq{} in color\PY{n+nb}{\PYZus{}}value \PY{n+nb}{\PYZcb{}}
+  \PY{k}{\PYZbs{}definecolor}\PY{n+nb}{\PYZob{}}\PY{k}{\PYZbs{}VAR}\PY{n+nb}{\PYZob{}}color\PY{n+nb}{\PYZus{}}name\PY{n+nb}{\PYZcb{}}\PY{n+nb}{\PYZcb{}}\PY{n+nb}{\PYZob{}}RGB\PY{n+nb}{\PYZcb{}}\PY{n+nb}{\PYZob{}}\PY{k}{\PYZbs{}VAR}\PY{n+nb}{\PYZob{}}color\PY{n+nb}{\PYZus{}}value\PY{n+nb}{\PYZcb{}}\PY{n+nb}{\PYZcb{}}
+  \PY{k}{\PYZbs{}BLOCK}\PY{n+nb}{\PYZob{}} elif color\PY{n+nb}{\PYZus{}}value \PY{n+nb}{\PYZcb{}}
+  \PY{k}{\PYZbs{}colorlet}\PY{n+nb}{\PYZob{}}\PY{k}{\PYZbs{}VAR}\PY{n+nb}{\PYZob{}}color\PY{n+nb}{\PYZus{}}name\PY{n+nb}{\PYZcb{}}\PY{n+nb}{\PYZcb{}}\PY{n+nb}{\PYZob{}}\PY{k}{\PYZbs{}VAR}\PY{n+nb}{\PYZob{}}color\PY{n+nb}{\PYZus{}}value\PY{n+nb}{\PYZcb{}}\PY{n+nb}{\PYZcb{}}
+  \PY{k}{\PYZbs{}BLOCK}\PY{n+nb}{\PYZob{}} else \PY{n+nb}{\PYZcb{}}
+  \PY{k}{\PYZbs{}colorlet}\PY{n+nb}{\PYZob{}}\PY{k}{\PYZbs{}VAR}\PY{n+nb}{\PYZob{}}color\PY{n+nb}{\PYZus{}}name\PY{n+nb}{\PYZcb{}}\PY{n+nb}{\PYZcb{}}\PY{n+nb}{\PYZob{}}black\PY{n+nb}{\PYZcb{}}
+  \PY{k}{\PYZbs{}BLOCK}\PY{n+nb}{\PYZob{}} endif \PY{n+nb}{\PYZcb{}}
+
+  \PY{k}{\PYZbs{}fill}\PY{n+na}{[\PYZbs{}VAR\PYZob{}color\PYZus{}name\PYZcb{}]} (\PY{l+s}{\PYZdl{}}\PY{o}{(}\PY{n+nb}{SW}\PY{o}{)}\PY{o}{+}\PY{o}{(}\PY{n+nv}{\PYZbs{}VAR}\PY{n+nb}{\PYZob{}}\PY{n+nb}{square.origin}\PY{n+nb}{\PYZcb{}}\PY{o}{)}\PY{l+s}{\PYZdl{}}) rectangle ++(10,10);
+  \PY{k}{\PYZbs{}node}\PY{n+na}{[text=white,font=\PYZbs{}bfseries\PYZbs{}Large,align=center]}
+  at (\PY{l+s}{\PYZdl{}}\PY{o}{(}\PY{n+nb}{SW}\PY{o}{)}\PY{o}{+}\PY{o}{(}\PY{n+nv}{\PYZbs{}VAR}\PY{n+nb}{\PYZob{}}\PY{n+nb}{square.center}\PY{n+nb}{\PYZcb{}}\PY{o}{)}\PY{l+s}{\PYZdl{}})
+  \PY{n+nb}{\PYZob{}}\PY{k}{\PYZbs{}parbox}\PY{n+nb}{\PYZob{}}\PY{k}{\PYZbs{}boxwidth}\PY{n+nb}{\PYZcb{}}\PY{n+nb}{\PYZob{}}\PY{c}{\PYZpc{}}
+    \PY{k}{\PYZbs{}VAR}\PY{n+nb}{\PYZob{}}square.content|default(\PYZsq{}Slot \PYZsq{} \PYZti{} square.label, true)|trim\PY{n+nb}{\PYZcb{}}\PY{n+nb}{\PYZcb{}}\PY{n+nb}{\PYZcb{}};
+  \PY{k}{\PYZbs{}BLOCK}\PY{n+nb}{\PYZob{}} endfor \PY{n+nb}{\PYZcb{}}
+\PY{k}{\PYZbs{}end}\PY{n+nb}{\PYZob{}}tikzpicture\PY{n+nb}{\PYZcb{}}
+\PY{k}{\PYZbs{}end}\PY{n+nb}{\PYZob{}}document\PY{n+nb}{\PYZcb{}}
 \end{Verbatim}
 \end{tscode}
 \end{tsdiv}

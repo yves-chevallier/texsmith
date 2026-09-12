@@ -18,8 +18,11 @@
 \usepackage{graphicx}
 \usepackage{tcolorbox}
 \usepackage{fvextra}
+\usepackage{tabularx}
 \usepackage{amsmath}
 \usepackage{seqsplit}
+\newcolumntype{Y}{>{\centering\arraybackslash}X}
+\newcolumntype{Z}{>{\raggedleft\arraybackslash}X}
 \renewcommand*{\marginfont}{
 \footnotesize
 \sloppy
@@ -80,21 +83,332 @@ The authoring surface is pure data: \textbf{YAML} fields flow into a \LaTeX{} te
 \begin{tsdiv}{tab}[title=cake.yml]
 \begin{tscode}[lang=yaml, engine=pygments]
 \begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
-\PY{p+pIndicator}{[}\PY{n+nv}{include}\PY{p+pIndicator}{:}\PY{+w}{ }\PY{n+nv}{examples/recipe/cake.yml}\PY{n+nv}{ }\PY{n+nv}{not}\PY{n+nv}{ }\PY{n+nv}{found}\PY{p+pIndicator}{]}
+\PY{n+nn}{\PYZhy{}\PYZhy{}\PYZhy{}}
+\PY{n+nt}{title}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{Gâteau}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{aux}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{noix}
+\PY{n+nt}{description}\PY{p}{:}\PY{+w}{ }\PY{p+pIndicator}{|}
+\PY{+w}{  }\PY{n+no}{Ce gâteau aux noix séduit dès la première bouchée par son équilibre parfait}
+\PY{+w}{  }\PY{n+no}{entre une pâte sablée délicatement friable et une farce généreuse mêlant}
+\PY{+w}{  }\PY{n+no}{noix croquantes, caramel doré et miel parfumé. Doux sans être lourd,}
+\PY{+w}{  }\PY{n+no}{riche sans être écœurant, il offre une texture fondante relevée par}
+\PY{+w}{  }\PY{n+no}{le croustillant des noix et la profondeur du caramel. Servi tiède}
+\PY{+w}{  }\PY{n+no}{ou à température ambiante, il dégage un parfum chaleureux et}
+\PY{+w}{  }\PY{n+no}{gourmand qui évoque les desserts traditionnels d\PYZsq{}automne, tout en}
+\PY{+w}{  }\PY{n+no}{offrant une élégance rustique irrésistible. Une véritable tentation}
+\PY{+w}{  }\PY{n+no}{pour tous les amateurs de saveurs authentiques et de pâtisseries raffinées.}
+\PY{n+nt}{notes}\PY{p}{:}\PY{+w}{ }\PY{p+pIndicator}{\PYZgt{}}
+\PY{+w}{  }\PY{n+no}{Se conserve env. 2 semaines au réfrigérateur bien emballé.}
+\PY{n+nt}{time}\PY{p}{:}
+\PY{+w}{  }\PY{n+nt}{total}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{140}
+\PY{+w}{  }\PY{n+nt}{preparation}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{50}
+\PY{+w}{  }\PY{n+nt}{cooking}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{40}
+\PY{n+nt}{sections}\PY{p}{:}
+\PY{+w}{  }\PY{p+pIndicator}{\PYZhy{}}\PY{+w}{ }\PY{n+nt}{title}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{Préparation}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{du}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{moule}
+\PY{+w}{    }\PY{n+nt}{instructions}\PY{p}{:}
+\PY{+w}{      }\PY{p+pIndicator}{\PYZhy{}}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{Préparer}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{le}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{moule.}
+\PY{+w}{  }\PY{p+pIndicator}{\PYZhy{}}\PY{+w}{ }\PY{n+nt}{title}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{Pâte}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{sablée}
+\PY{+w}{    }\PY{n+nt}{steps}\PY{p}{:}
+\PY{+w}{      }\PY{p+pIndicator}{\PYZhy{}}\PY{+w}{ }\PY{n+nt}{ingredients}\PY{p}{:}
+\PY{+w}{          }\PY{p+pIndicator}{\PYZhy{}}\PY{+w}{ }\PY{n+nt}{quantity}\PY{p}{:}
+\PY{+w}{              }\PY{n+nt}{amount}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{150}
+\PY{+w}{              }\PY{n+nt}{unit}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{g}
+\PY{+w}{            }\PY{n+nt}{name}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{farine}
+\PY{+w}{          }\PY{p+pIndicator}{\PYZhy{}}\PY{+w}{ }\PY{n+nt}{quantity}\PY{p}{:}
+\PY{+w}{              }\PY{n+nt}{amount}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{100}
+\PY{+w}{              }\PY{n+nt}{unit}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{g}
+\PY{+w}{            }\PY{n+nt}{name}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{sucre}
+\PY{+w}{          }\PY{p+pIndicator}{\PYZhy{}}\PY{+w}{ }\PY{n+nt}{quantity}\PY{p}{:}
+\PY{+w}{              }\PY{n+nt}{amount}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{1}
+\PY{+w}{              }\PY{n+nt}{unit}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{pincée}
+\PY{+w}{            }\PY{n+nt}{name}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{sel}
+\PY{+w}{        }\PY{n+nt}{instructions}\PY{p}{:}
+\PY{+w}{          }\PY{p+pIndicator}{\PYZhy{}}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{Mettre}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{dans}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{un}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{saladier.}
+\PY{+w}{      }\PY{p+pIndicator}{\PYZhy{}}\PY{+w}{ }\PY{n+nt}{ingredients}\PY{p}{:}
+\PY{+w}{          }\PY{p+pIndicator}{\PYZhy{}}\PY{+w}{ }\PY{n+nt}{quantity}\PY{p}{:}
+\PY{+w}{              }\PY{n+nt}{amount}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{100}
+\PY{+w}{              }\PY{n+nt}{unit}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{g}
+\PY{+w}{            }\PY{n+nt}{name}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{beurre}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{froid}
+\PY{+w}{        }\PY{n+nt}{instructions}\PY{p}{:}
+\PY{+w}{          }\PY{p+pIndicator}{\PYZhy{}}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{Couper}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{en}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{morceaux,}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{ajouter.}
+\PY{+w}{          }\PY{p+pIndicator}{\PYZhy{}}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{\PYZlt{}}
+\PY{+w}{            }\PY{l+lScalar+lScalarPlain}{Travailler}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{soigneusement}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{à}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{la}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{main}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{jusqu\PYZsq{}à}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{ce}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{que}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{la}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{préparation}
+\PY{+w}{            }\PY{l+lScalar+lScalarPlain}{soit}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{friable.}
+\PY{+w}{      }\PY{p+pIndicator}{\PYZhy{}}\PY{+w}{ }\PY{n+nt}{ingredients}\PY{p}{:}
+\PY{+w}{          }\PY{p+pIndicator}{\PYZhy{}}\PY{+w}{ }\PY{n+nt}{quantity}\PY{p}{:}
+\PY{+w}{              }\PY{n+nt}{amount}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{1}
+\PY{+w}{            }\PY{n+nt}{name}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{œuf}
+\PY{+w}{        }\PY{n+nt}{instructions}\PY{p}{:}
+\PY{+w}{          }\PY{p+pIndicator}{\PYZhy{}}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{Ajouter.}
+\PY{+w}{          }\PY{p+pIndicator}{\PYZhy{}}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{Travailler}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{rapidement}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{à}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{la}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{main,}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{ne}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{pas}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{pétrir.}
+\PY{+w}{          }\PY{p+pIndicator}{\PYZhy{}}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{Couvrir}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{et}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{mettre}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{au}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{réfrigérateur}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{30}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{minutes.}
+\PY{+w}{        }\PY{n+nt}{time}\PY{p}{:}
+\PY{+w}{          }\PY{n+nt}{refrigeration}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{30}
+\PY{+w}{  }\PY{p+pIndicator}{\PYZhy{}}\PY{+w}{ }\PY{n+nt}{title}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{Farce}
+\PY{+w}{    }\PY{n+nt}{steps}\PY{p}{:}
+\PY{+w}{      }\PY{p+pIndicator}{\PYZhy{}}\PY{+w}{ }\PY{n+nt}{ingredients}\PY{p}{:}
+\PY{+w}{          }\PY{p+pIndicator}{\PYZhy{}}\PY{+w}{ }\PY{n+nt}{name}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{noix}
+\PY{+w}{            }\PY{n+nt}{quantity}\PY{p}{:}
+\PY{+w}{              }\PY{n+nt}{amount}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{130}
+\PY{+w}{              }\PY{n+nt}{unit}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{g}
+\PY{+w}{        }\PY{n+nt}{instructions}\PY{p}{:}
+\PY{+w}{          }\PY{p+pIndicator}{\PYZhy{}}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{Hacher}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{grossièrement,}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{réserver.}
+\PY{+w}{      }\PY{p+pIndicator}{\PYZhy{}}\PY{+w}{ }\PY{n+nt}{ingredients}\PY{p}{:}
+\PY{+w}{          }\PY{p+pIndicator}{\PYZhy{}}\PY{+w}{ }\PY{n+nt}{quantity}\PY{p}{:}
+\PY{+w}{              }\PY{n+nt}{amount}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{100}
+\PY{+w}{              }\PY{n+nt}{unit}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{g}
+\PY{+w}{            }\PY{n+nt}{name}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{sucre}
+\PY{+w}{          }\PY{p+pIndicator}{\PYZhy{}}\PY{+w}{ }\PY{n+nt}{quantity}\PY{p}{:}
+\PY{+w}{              }\PY{n+nt}{amount}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{2}
+\PY{+w}{              }\PY{n+nt}{unit}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{cs}
+\PY{+w}{            }\PY{n+nt}{name}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{eau}
+\PY{+w}{        }\PY{n+nt}{instructions}\PY{p}{:}
+\PY{+w}{          }\PY{p+pIndicator}{\PYZhy{}}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{Verser}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{dans}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{une}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{grande}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{casserole.}
+\PY{+w}{          }\PY{p+pIndicator}{\PYZhy{}}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{Chauffer}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{à}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{feu}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{très}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{vif}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{jusqu\PYZsq{}à}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{dissolution}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{du}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{sucre,}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{revenir}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{à}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{feu}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{vif.}
+\PY{+w}{          }\PY{p+pIndicator}{\PYZhy{}}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{Tourner}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{légèrement}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{la}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{casserole.}
+\PY{+w}{          }\PY{p+pIndicator}{\PYZhy{}}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{Faire}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{caraméliser}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{sans}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{remuer}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{jusqu\PYZsq{}à}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{ce}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{que}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{la}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{couleur}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{devienne}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{noisette.}
+\PY{+w}{          }\PY{p+pIndicator}{\PYZhy{}}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{Retirer}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{la}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{casserole}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{du}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{feu.}
+\PY{+w}{      }\PY{p+pIndicator}{\PYZhy{}}\PY{+w}{ }\PY{n+nt}{ingredients}\PY{p}{:}
+\PY{+w}{          }\PY{p+pIndicator}{\PYZhy{}}\PY{+w}{ }\PY{n+nt}{quantity}\PY{p}{:}
+\PY{+w}{              }\PY{n+nt}{amount}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{1.25}
+\PY{+w}{              }\PY{n+nt}{unit}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{dl}
+\PY{+w}{            }\PY{n+nt}{name}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{crème}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{entière}
+\PY{+w}{        }\PY{n+nt}{instructions}\PY{p}{:}
+\PY{+w}{          }\PY{p+pIndicator}{\PYZhy{}}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{Ajouter,}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{mélanger}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{à}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{la}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{cuillère}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{de}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{cuisine.}
+\PY{+w}{          }\PY{p+pIndicator}{\PYZhy{}}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{\PYZlt{}}
+\PY{+w}{            }\PY{l+lScalar+lScalarPlain}{Réchauffer}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{à}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{petit}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{feu}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{en}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{remuant}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{jusqu\PYZsq{}à}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{dissolution}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{complète}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{du}
+\PY{+w}{            }\PY{l+lScalar+lScalarPlain}{caramel,}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{porter}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{à}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{ébullition}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{env.}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{10}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{min.}
+\PY{+w}{        }\PY{n+nt}{time}\PY{p}{:}
+\PY{+w}{          }\PY{n+nt}{cooking}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{10}
+\PY{+w}{      }\PY{p+pIndicator}{\PYZhy{}}\PY{+w}{ }\PY{n+nt}{ingredients}\PY{p}{:}
+\PY{+w}{          }\PY{p+pIndicator}{\PYZhy{}}\PY{+w}{ }\PY{n+nt}{name}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{miel}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{liquide}
+\PY{+w}{            }\PY{n+nt}{quantity}\PY{p}{:}
+\PY{+w}{              }\PY{n+nt}{amount}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{1.5}
+\PY{+w}{              }\PY{n+nt}{unit}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{cs}
+\PY{+w}{        }\PY{n+nt}{instructions}\PY{p}{:}
+\PY{+w}{          }\PY{p+pIndicator}{\PYZhy{}}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{Ajouter,}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{mélanger,}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{laisser}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{refroidir.}
+\PY{+w}{  }\PY{p+pIndicator}{\PYZhy{}}\PY{+w}{ }\PY{n+nt}{title}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{Assemblage}
+\PY{+w}{    }\PY{n+nt}{steps}\PY{p}{:}
+\PY{+w}{      }\PY{p+pIndicator}{\PYZhy{}}\PY{+w}{ }\PY{n+nt}{ingredients}\PY{p}{:}
+\PY{+w}{          }\PY{p+pIndicator}{\PYZhy{}}\PY{+w}{ }\PY{n+nt}{name}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{farine}
+\PY{+w}{            }\PY{n+nt}{quantity}\PY{p}{:}
+\PY{+w}{              }\PY{n+nt}{text}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{un}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{peu}
+\PY{+w}{        }\PY{n+nt}{instructions}\PY{p}{:}
+\PY{+w}{          }\PY{p+pIndicator}{\PYZhy{}}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{Partager}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{la}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{pâte}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{en}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{3}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{portions}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{régulières.}
+\PY{+w}{          }\PY{p+pIndicator}{\PYZhy{}}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{\PYZlt{}}
+\PY{+w}{            }\PY{l+lScalar+lScalarPlain}{Étaler}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{1}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{portion}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{en}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{un}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{cercle}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{d\PYZsq{}environ}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{4}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{mm}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{d\PYZsq{}épaisseur}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{sur}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{un}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{peu}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{de}
+\PY{+w}{            }\PY{l+lScalar+lScalarPlain}{farine.}
+\PY{+w}{          }\PY{p+pIndicator}{\PYZhy{}}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{Poser}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{dans}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{le}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{moule}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{préparé.}
+\PY{+w}{          }\PY{p+pIndicator}{\PYZhy{}}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{Piquer}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{avec}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{une}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{fourchette.}
+\PY{+w}{      }\PY{p+pIndicator}{\PYZhy{}}\PY{+w}{ }\PY{n+nt}{ingredients}\PY{p}{:}
+\PY{+w}{          }\PY{p+pIndicator}{\PYZhy{}}\PY{+w}{ }\PY{n+nt}{name}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{farine}
+\PY{+w}{            }\PY{n+nt}{quantity}\PY{p}{:}
+\PY{+w}{              }\PY{n+nt}{text}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{un}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{peu}
+\PY{+w}{        }\PY{n+nt}{instructions}\PY{p}{:}
+\PY{+w}{          }\PY{p+pIndicator}{\PYZhy{}}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{Former}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{un}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{rouleau}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{avec}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{la}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{deuxième}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{portion}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{de}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{pâte.}
+\PY{+w}{          }\PY{p+pIndicator}{\PYZhy{}}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{Appuyer}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{sur}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{les}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{bords}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{du}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{moule}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{jusqu\PYZsq{}à}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{obtenir}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{un}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{bord}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{d\PYZsq{}environ}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{4}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{cm}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{de}
+\PY{+w}{            }\PY{l+lScalar+lScalarPlain}{hauteur.}
+\PY{+w}{      }\PY{p+pIndicator}{\PYZhy{}}\PY{+w}{ }\PY{n+nt}{instructions}\PY{p}{:}
+\PY{+w}{          }\PY{p+pIndicator}{\PYZhy{}}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{Répartir}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{la}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{farce}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{sur}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{le}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{fond}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{de}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{pâte.}
+\PY{+w}{          }\PY{p+pIndicator}{\PYZhy{}}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{Replier}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{le}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{bord}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{qui}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{dépasse}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{sur}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{la}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{farce.}
+\PY{+w}{          }\PY{p+pIndicator}{\PYZhy{}}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{\PYZlt{}}
+\PY{+w}{            }\PY{l+lScalar+lScalarPlain}{Étaler}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{la}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{dernière}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{portion}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{en}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{un}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{cercle}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{d\PYZsq{}environ}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{4}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{mm}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{et}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{poser}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{sur}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{la}
+\PY{+w}{            }\PY{l+lScalar+lScalarPlain}{farce.}
+\PY{+w}{          }\PY{p+pIndicator}{\PYZhy{}}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{Piquer}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{avec}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{une}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{fourchette.}
+\PY{+w}{          }\PY{p+pIndicator}{\PYZhy{}}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{Cuire}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{dans}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{le}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{bas}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{du}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{four,}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{200°C,}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{40\PYZhy{}50}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{min.}
+\PY{+w}{        }\PY{n+nt}{time}\PY{p}{:}
+\PY{+w}{          }\PY{n+nt}{cooking}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{40}
+\PY{n+nn}{\PYZhy{}\PYZhy{}\PYZhy{}}
 \end{Verbatim}
 \end{tscode}
 \end{tsdiv}
 \begin{tsdiv}{tab}[title=manifest.toml]
 \begin{tscode}[lang=toml, engine=pygments]
 \begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
-\PY{k}{[}\PY{k}{include}\PY{err}{:}\PY{+w}{ }\PY{k}{examples}\PY{err}{/}\PY{k}{recipe}\PY{err}{/}\PY{k}{manifest}\PY{k}{.}\PY{k}{toml}\PY{+w}{ }\PY{k}{not}\PY{+w}{ }\PY{k}{found}\PY{k}{]}
+\PY{k}{[}\PY{k}{compat}\PY{k}{]}
+\PY{n}{texsmith}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{\PYZgt{}=0.6,\PYZlt{}1.0}\PY{l+s+s2}{\PYZdq{}}
+
+\PY{k}{[}\PY{k}{latex}\PY{k}{.}\PY{k}{template}\PY{k}{]}
+\PY{n}{name}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{recipe}\PY{l+s+s2}{\PYZdq{}}
+\PY{n}{version}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{0.1.0}\PY{l+s+s2}{\PYZdq{}}
+\PY{n}{entrypoint}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{template.tex}\PY{l+s+s2}{\PYZdq{}}
+\PY{n}{engine}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{lualatex}\PY{l+s+s2}{\PYZdq{}}
+\PY{n}{texlive\PYZus{}year}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+m+mi}{2023}
+\PY{n}{tlmgr\PYZus{}packages}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{p}{[}
+\PY{+w}{    }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{geometry}\PY{l+s+s2}{\PYZdq{}}\PY{p}{,}
+\PY{+w}{    }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{fontspec}\PY{l+s+s2}{\PYZdq{}}\PY{p}{,}
+\PY{+w}{    }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{pgf}\PY{l+s+s2}{\PYZdq{}}\PY{p}{,}
+\PY{+w}{    }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{tabularx}\PY{l+s+s2}{\PYZdq{}}\PY{p}{,}
+\PY{+w}{    }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{multirow}\PY{l+s+s2}{\PYZdq{}}\PY{p}{,}
+\PY{+w}{    }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{xcolor}\PY{l+s+s2}{\PYZdq{}}\PY{p}{,}
+\PY{p}{]}
+
+\PY{k}{[}\PY{k}{latex}\PY{k}{.}\PY{k}{template}\PY{k}{.}\PY{k}{assets}\PY{k}{]}
+\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{tikz\PYZhy{}cookingsymbols.sty}\PY{l+s+s2}{\PYZdq{}}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{p}{\PYZob{}}\PY{+w}{ }\PY{n}{source}\PY{+w}{ }\PY{p}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{tikz\PYZhy{}cookingsymbols.sty}\PY{l+s+s2}{\PYZdq{}}\PY{+w}{ }\PY{p}{\PYZcb{}}
+
+\PY{k}{[}\PY{k}{latex}\PY{k}{.}\PY{k}{template}\PY{k}{.}\PY{k}{slots}\PY{k}{.}\PY{k}{mainmatter}\PY{k}{]}
+\PY{n}{default}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{k+kc}{true}
+
+\PY{k}{[}\PY{k}{latex}\PY{k}{.}\PY{k}{template}\PY{k}{.}\PY{k}{attributes}\PY{k}{.}\PY{k}{preamble}\PY{k}{]}
+\PY{n}{default}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{\PYZdq{}}
+\PY{n}{type}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{string}\PY{l+s+s2}{\PYZdq{}}
+\PY{n}{allow\PYZus{}empty}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{k+kc}{true}
+
+\PY{c+c1}{\PYZsh{} \PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{} \PYZsh{}}
+\PY{c+c1}{\PYZsh{} Typst backend: a native recipe card rendered directly from the YAML front}
+\PY{c+c1}{\PYZsh{} matter (data\PYZhy{}driven, like the LaTeX template — the document body is unused).}
+\PY{c+c1}{\PYZsh{} \PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{} \PYZsh{}}
+\PY{k}{[}\PY{k}{typst}\PY{k}{.}\PY{k}{template}\PY{k}{]}
+\PY{n}{name}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{recipe}\PY{l+s+s2}{\PYZdq{}}
+\PY{n}{version}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{0.1.0}\PY{l+s+s2}{\PYZdq{}}
+\PY{n}{entrypoint}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{template.typ}\PY{l+s+s2}{\PYZdq{}}
+
+\PY{k}{[}\PY{k}{typst}\PY{k}{.}\PY{k}{template}\PY{k}{.}\PY{k}{slots}\PY{k}{.}\PY{k}{mainmatter}\PY{k}{]}
+\PY{n}{default}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{k+kc}{true}
+
+\PY{k}{[}\PY{k}{typst}\PY{k}{.}\PY{k}{template}\PY{k}{.}\PY{k}{attributes}\PY{k}{.}\PY{k}{preamble}\PY{k}{]}
+\PY{n}{default}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{\PYZdq{}}
+\PY{n}{type}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{string}\PY{l+s+s2}{\PYZdq{}}
+\PY{n}{allow\PYZus{}empty}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{k+kc}{true}
 \end{Verbatim}
 \end{tscode}
 \end{tsdiv}
 \begin{tsdiv}{tab}[title=template.tex]
 \begin{tscode}[lang=tex, engine=pygments]
 \begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
-[include: examples/recipe/template.tex not found]
+\PY{k}{\PYZbs{}documentclass}\PY{n+nb}{\PYZob{}}article\PY{n+nb}{\PYZcb{}}
+\PY{k}{\PYZbs{}usepackage}\PY{n+na}{[a4paper, top=2cm, left=2cm, right=2cm, bottom=1cm]}\PY{n+nb}{\PYZob{}}geometry\PY{n+nb}{\PYZcb{}}
+\PY{k}{\PYZbs{}usepackage}\PY{n+nb}{\PYZob{}}fontspec\PY{n+nb}{\PYZcb{}}
+\PY{k}{\PYZbs{}usepackage}\PY{n+nb}{\PYZob{}}tikz\PYZhy{}cookingsymbols\PY{n+nb}{\PYZcb{}}
+\PY{k}{\PYZbs{}usepackage}\PY{n+nb}{\PYZob{}}tabularx\PY{n+nb}{\PYZcb{}}
+\PY{k}{\PYZbs{}usepackage}\PY{n+nb}{\PYZob{}}multirow\PY{n+nb}{\PYZcb{}}
+\PY{k}{\PYZbs{}usepackage}\PY{n+nb}{\PYZob{}}enumitem\PY{n+nb}{\PYZcb{}}
+\PY{k}{\PYZbs{}usepackage}\PY{n+nb}{\PYZob{}}array\PY{n+nb}{\PYZcb{}}
+\PY{k}{\PYZbs{}BLOCK}\PY{n+nb}{\PYZob{}} if extra\PY{n+nb}{\PYZus{}}packages \PY{n+nb}{\PYZcb{}}
+\PY{k}{\PYZbs{}VAR}\PY{n+nb}{\PYZob{}}extra\PY{n+nb}{\PYZus{}}packages\PY{n+nb}{\PYZcb{}}
+\PY{k}{\PYZbs{}BLOCK}\PY{n+nb}{\PYZob{}} endif \PY{n+nb}{\PYZcb{}}
+
+\PY{k}{\PYZbs{}BLOCK}\PY{n+nb}{\PYZob{}} if preamble \PY{n+nb}{\PYZcb{}}
+\PY{k}{\PYZbs{}VAR}\PY{n+nb}{\PYZob{}}preamble\PY{n+nb}{\PYZcb{}}
+
+\PY{k}{\PYZbs{}BLOCK}\PY{n+nb}{\PYZob{}} endif \PY{n+nb}{\PYZcb{}}
+
+\PY{k}{\PYZbs{}setlist}\PY{n+na}{[itemize]}\PY{n+nb}{\PYZob{}}leftmargin=*,nosep\PY{n+nb}{\PYZcb{}}
+\PY{k}{\PYZbs{}renewcommand}\PY{n+nb}{\PYZob{}}\PY{k}{\PYZbs{}familydefault}\PY{n+nb}{\PYZcb{}}\PY{n+nb}{\PYZob{}}\PY{k}{\PYZbs{}sfdefault}\PY{n+nb}{\PYZcb{}}
+\PY{k}{\PYZbs{}setlength}\PY{n+nb}{\PYZob{}}\PY{k}{\PYZbs{}parindent}\PY{n+nb}{\PYZcb{}}\PY{n+nb}{\PYZob{}}0pt\PY{n+nb}{\PYZcb{}}
+\PY{k}{\PYZbs{}setlength}\PY{n+nb}{\PYZob{}}\PY{k}{\PYZbs{}parskip}\PY{n+nb}{\PYZcb{}}\PY{n+nb}{\PYZob{}}0.5em\PY{n+nb}{\PYZcb{}}
+
+\PY{k}{\PYZbs{}newlength}\PY{n+nb}{\PYZob{}}\PY{k}{\PYZbs{}colA}\PY{n+nb}{\PYZcb{}}
+\PY{k}{\PYZbs{}newlength}\PY{n+nb}{\PYZob{}}\PY{k}{\PYZbs{}colB}\PY{n+nb}{\PYZcb{}}
+\PY{k}{\PYZbs{}setlength}\PY{n+nb}{\PYZob{}}\PY{k}{\PYZbs{}colA}\PY{n+nb}{\PYZcb{}}\PY{n+nb}{\PYZob{}}0.07\PY{k}{\PYZbs{}textwidth}\PY{n+nb}{\PYZcb{}}
+\PY{k}{\PYZbs{}setlength}\PY{n+nb}{\PYZob{}}\PY{k}{\PYZbs{}colB}\PY{n+nb}{\PYZcb{}}\PY{n+nb}{\PYZob{}}0.15\PY{k}{\PYZbs{}textwidth}\PY{n+nb}{\PYZcb{}}
+\PY{k}{\PYZbs{}newcolumntype}\PY{n+nb}{\PYZob{}}A\PY{n+nb}{\PYZcb{}}\PY{n+nb}{\PYZob{}}\PYZgt{}\PY{n+nb}{\PYZob{}}\PY{k}{\PYZbs{}raggedright}\PY{k}{\PYZbs{}arraybackslash}\PY{n+nb}{\PYZcb{}}p\PY{n+nb}{\PYZob{}}\PY{k}{\PYZbs{}colA}\PY{n+nb}{\PYZcb{}}\PY{n+nb}{\PYZcb{}}
+\PY{k}{\PYZbs{}newcolumntype}\PY{n+nb}{\PYZob{}}B\PY{n+nb}{\PYZcb{}}\PY{n+nb}{\PYZob{}}\PYZgt{}\PY{n+nb}{\PYZob{}}\PY{k}{\PYZbs{}raggedright}\PY{k}{\PYZbs{}arraybackslash}\PY{n+nb}{\PYZcb{}}p\PY{n+nb}{\PYZob{}}\PY{k}{\PYZbs{}colB}\PY{n+nb}{\PYZcb{}}\PY{n+nb}{\PYZcb{}}
+\PY{k}{\PYZbs{}newcolumntype}\PY{n+nb}{\PYZob{}}C\PY{n+nb}{\PYZcb{}}\PY{n+nb}{\PYZob{}}\PYZgt{}\PY{n+nb}{\PYZob{}}\PY{k}{\PYZbs{}raggedright}\PY{k}{\PYZbs{}arraybackslash}\PY{n+nb}{\PYZcb{}}X\PY{n+nb}{\PYZcb{}}
+
+\PY{k}{\PYZbs{}BLOCK}\PY{n+nb}{\PYZob{}} macro quantity(value) \PYZhy{}\PY{n+nb}{\PYZcb{}}
+\PY{k}{\PYZbs{}BLOCK}\PY{n+nb}{\PYZob{}} if value is mapping \PYZhy{}\PY{n+nb}{\PYZcb{}}
+  \PY{k}{\PYZbs{}BLOCK}\PY{n+nb}{\PYZob{}} if value.text \PYZhy{}\PY{n+nb}{\PYZcb{}}
+    \PY{k}{\PYZbs{}VAR}\PY{n+nb}{\PYZob{}}value.text\PY{n+nb}{\PYZcb{}}
+  \PY{k}{\PYZbs{}BLOCK}\PY{n+nb}{\PYZob{}} elif value.amount is defined \PYZhy{}\PY{n+nb}{\PYZcb{}}
+    \PY{k}{\PYZbs{}VAR}\PY{n+nb}{\PYZob{}}value.amount\PY{n+nb}{\PYZcb{}}\PY{k}{\PYZbs{}BLOCK}\PY{n+nb}{\PYZob{}} if value.unit \PY{n+nb}{\PYZcb{}}\PYZti{}\PY{k}{\PYZbs{}VAR}\PY{n+nb}{\PYZob{}}value.unit\PY{n+nb}{\PYZcb{}}\PY{k}{\PYZbs{}BLOCK}\PY{n+nb}{\PYZob{}} endif \PY{n+nb}{\PYZcb{}}
+  \PY{k}{\PYZbs{}BLOCK}\PY{n+nb}{\PYZob{}} else \PYZhy{}\PY{n+nb}{\PYZcb{}}
+  \PY{k}{\PYZbs{}BLOCK}\PY{n+nb}{\PYZob{}} endif \PYZhy{}\PY{n+nb}{\PYZcb{}}
+\PY{k}{\PYZbs{}BLOCK}\PY{n+nb}{\PYZob{}} elif value is number \PYZhy{}\PY{n+nb}{\PYZcb{}}
+  \PY{k}{\PYZbs{}VAR}\PY{n+nb}{\PYZob{}}value\PY{n+nb}{\PYZcb{}}
+\PY{k}{\PYZbs{}BLOCK}\PY{n+nb}{\PYZob{}} elif value \PYZhy{}\PY{n+nb}{\PYZcb{}}
+  \PY{k}{\PYZbs{}VAR}\PY{n+nb}{\PYZob{}}value\PY{n+nb}{\PYZcb{}}
+\PY{k}{\PYZbs{}BLOCK}\PY{n+nb}{\PYZob{}} endif \PYZhy{}\PY{n+nb}{\PYZcb{}}
+\PY{k}{\PYZbs{}BLOCK}\PY{n+nb}{\PYZob{}} endmacro \PY{n+nb}{\PYZcb{}}
+
+\PY{k}{\PYZbs{}BLOCK}\PY{n+nb}{\PYZob{}} set recipe\PY{n+nb}{\PYZus{}}documents = documents | default([], true) \PY{n+nb}{\PYZcb{}}
+
+\PY{k}{\PYZbs{}begin}\PY{n+nb}{\PYZob{}}document\PY{n+nb}{\PYZcb{}}
+\PY{k}{\PYZbs{}pagestyle}\PY{n+nb}{\PYZob{}}empty\PY{n+nb}{\PYZcb{}}
+\PY{k}{\PYZbs{}BLOCK}\PY{n+nb}{\PYZob{}} if recipe\PY{n+nb}{\PYZus{}}documents \PY{n+nb}{\PYZcb{}}
+\PY{k}{\PYZbs{}BLOCK}\PY{n+nb}{\PYZob{}} for doc in recipe\PY{n+nb}{\PYZus{}}documents \PY{n+nb}{\PYZcb{}}
+\PY{k}{\PYZbs{}BLOCK}\PY{n+nb}{\PYZob{}} set data = doc.front\PY{n+nb}{\PYZus{}}matter | default(\PY{n+nb}{\PYZob{}}\PY{n+nb}{\PYZcb{}}, true) \PY{n+nb}{\PYZcb{}}
+\PY{k}{\PYZbs{}BLOCK}\PY{n+nb}{\PYZob{}} set recipe = data.recipe if data.recipe is defined else data \PY{n+nb}{\PYZcb{}}
+\PY{k}{\PYZbs{}BLOCK}\PY{n+nb}{\PYZob{}} if loop.index \PYZgt{} 1 \PY{n+nb}{\PYZcb{}}\PY{k}{\PYZbs{}newpage}\PY{k}{\PYZbs{}BLOCK}\PY{n+nb}{\PYZob{}} endif \PY{n+nb}{\PYZcb{}}
+
+\PY{n+nb}{\PYZob{}}\PY{k}{\PYZbs{}Huge}\PY{k}{\PYZbs{}bfseries} \PY{k}{\PYZbs{}VAR}\PY{n+nb}{\PYZob{}}recipe.title | default(\PYZsq{}Recette\PYZsq{}, true)\PY{n+nb}{\PYZcb{}}\PY{n+nb}{\PYZcb{}}\PY{k}{\PYZbs{}par}
+\PY{k}{\PYZbs{}vspace}\PY{n+nb}{\PYZob{}}2cm\PY{n+nb}{\PYZcb{}}
+\PY{k}{\PYZbs{}noindent}
+\PY{k}{\PYZbs{}begin}\PY{n+nb}{\PYZob{}}minipage\PY{n+nb}{\PYZcb{}}[t]\PY{n+nb}{\PYZob{}}0.3\PY{k}{\PYZbs{}textwidth}\PY{n+nb}{\PYZcb{}}
+\PY{k}{\PYZbs{}vspace}\PY{n+nb}{\PYZob{}}0pt\PY{n+nb}{\PYZcb{}}\PY{c}{\PYZpc{}}
+\PY{k}{\PYZbs{}rule}\PY{n+nb}{\PYZob{}}\PY{k}{\PYZbs{}linewidth}\PY{n+nb}{\PYZcb{}}\PY{n+nb}{\PYZob{}}1.5pt\PY{n+nb}{\PYZcb{}}
+\PY{k}{\PYZbs{}BLOCK}\PY{n+nb}{\PYZob{}} set time = recipe.time | default(\PY{n+nb}{\PYZob{}}\PY{n+nb}{\PYZcb{}}, true) \PY{n+nb}{\PYZcb{}}
+\PY{k}{\PYZbs{}TopBottomHeat}\PY{k}{\PYZbs{}quad}\PY{n+nb}{\PYZob{}}\PY{n+nb}{\PYZcb{}} temps total \PY{k}{\PYZbs{}textbf}\PY{n+nb}{\PYZob{}}\PY{k}{\PYZbs{}VAR}\PY{n+nb}{\PYZob{}}time.total | default(\PYZsq{}\PYZhy{}\PYZhy{}\PYZsq{}, true)\PY{n+nb}{\PYZcb{}}\PY{n+nb}{\PYZcb{}}\PYZti{}min \PY{k}{\PYZbs{}\PYZbs{}}
+\PY{k}{\PYZbs{}Grill}\PY{k}{\PYZbs{}quad}\PY{n+nb}{\PYZob{}}\PY{n+nb}{\PYZcb{}} préparation \PY{k}{\PYZbs{}textbf}\PY{n+nb}{\PYZob{}}\PY{k}{\PYZbs{}VAR}\PY{n+nb}{\PYZob{}}time.preparation | default(\PYZsq{}\PYZhy{}\PYZhy{}\PYZsq{}, true)\PY{n+nb}{\PYZcb{}}\PY{n+nb}{\PYZcb{}}\PYZti{}min \PY{k}{\PYZbs{}\PYZbs{}}
+\PY{k}{\PYZbs{}ConvectionOven}\PY{k}{\PYZbs{}quad}\PY{n+nb}{\PYZob{}}\PY{n+nb}{\PYZcb{}} cuisson \PY{k}{\PYZbs{}textbf}\PY{n+nb}{\PYZob{}}\PY{k}{\PYZbs{}VAR}\PY{n+nb}{\PYZob{}}time.cooking | default(\PYZsq{}\PYZhy{}\PYZhy{}\PYZsq{}, true)\PY{n+nb}{\PYZcb{}}\PY{n+nb}{\PYZcb{}}\PYZti{}min \PY{k}{\PYZbs{}\PYZbs{}}
+\PY{k}{\PYZbs{}rule}\PY{n+nb}{\PYZob{}}\PY{k}{\PYZbs{}linewidth}\PY{n+nb}{\PYZcb{}}\PY{n+nb}{\PYZob{}}1.5pt\PY{n+nb}{\PYZcb{}}
+
+\PY{k}{\PYZbs{}BLOCK}\PY{n+nb}{\PYZob{}} if recipe.description \PY{n+nb}{\PYZcb{}}
+\PY{k}{\PYZbs{}subsection}\PY{k}{*}\PY{n+nb}{\PYZob{}}Description\PY{n+nb}{\PYZcb{}}
+\PY{k}{\PYZbs{}VAR}\PY{n+nb}{\PYZob{}}recipe.description\PY{n+nb}{\PYZcb{}}
+\PY{k}{\PYZbs{}BLOCK}\PY{n+nb}{\PYZob{}} endif \PY{n+nb}{\PYZcb{}}
+
+\PY{k}{\PYZbs{}subsection}\PY{k}{*}\PY{n+nb}{\PYZob{}}Conseils\PY{n+nb}{\PYZcb{}}
+
+\PY{k}{\PYZbs{}VAR}\PY{n+nb}{\PYZob{}}recipe.notes | default(\PYZsq{}Aucun conseil enregistré.\PYZsq{}, true)\PY{n+nb}{\PYZcb{}}
+
+\PY{k}{\PYZbs{}end}\PY{n+nb}{\PYZob{}}minipage\PY{n+nb}{\PYZcb{}}
+\PY{k}{\PYZbs{}hfill}
+\PY{k}{\PYZbs{}begin}\PY{n+nb}{\PYZob{}}minipage\PY{n+nb}{\PYZcb{}}[t]\PY{n+nb}{\PYZob{}}0.68\PY{k}{\PYZbs{}textwidth}\PY{n+nb}{\PYZcb{}}
+\PY{k}{\PYZbs{}vspace}\PY{n+nb}{\PYZob{}}0pt\PY{n+nb}{\PYZcb{}}\PY{c}{\PYZpc{}}
+\PY{k}{\PYZbs{}BLOCK}\PY{n+nb}{\PYZob{}} for section in recipe.sections | default([], true) \PY{n+nb}{\PYZcb{}}
+\PY{k}{\PYZbs{}textbf}\PY{n+nb}{\PYZob{}}\PY{k}{\PYZbs{}VAR}\PY{n+nb}{\PYZob{}}section.title | default(\PYZsq{}Étape\PYZsq{}, true)\PY{n+nb}{\PYZcb{}}\PY{n+nb}{\PYZcb{}}\PY{k}{\PYZbs{}vskip} 0.75em
+
+\PY{k}{\PYZbs{}BLOCK}\PY{n+nb}{\PYZob{}} if section.instructions \PY{n+nb}{\PYZcb{}}
+\PY{k}{\PYZbs{}begin}\PY{n+nb}{\PYZob{}}itemize\PY{n+nb}{\PYZcb{}}
+\PY{k}{\PYZbs{}BLOCK}\PY{n+nb}{\PYZob{}} for instruction in section.instructions \PY{n+nb}{\PYZcb{}}
+  \PY{k}{\PYZbs{}item} \PY{k}{\PYZbs{}VAR}\PY{n+nb}{\PYZob{}}instruction\PY{n+nb}{\PYZcb{}}
+\PY{k}{\PYZbs{}BLOCK}\PY{n+nb}{\PYZob{}} endfor \PY{n+nb}{\PYZcb{}}
+\PY{k}{\PYZbs{}end}\PY{n+nb}{\PYZob{}}itemize\PY{n+nb}{\PYZcb{}}
+\PY{k}{\PYZbs{}BLOCK}\PY{n+nb}{\PYZob{}} endif \PY{n+nb}{\PYZcb{}}
+
+\PY{k}{\PYZbs{}BLOCK}\PY{n+nb}{\PYZob{}} if section.steps \PY{n+nb}{\PYZcb{}}
+\PY{k}{\PYZbs{}begin}\PY{n+nb}{\PYZob{}}tabularx\PY{n+nb}{\PYZcb{}}\PY{n+nb}{\PYZob{}}\PY{k}{\PYZbs{}textwidth}\PY{n+nb}{\PYZcb{}}\PY{n+nb}{\PYZob{}}@\PY{n+nb}{\PYZob{}}\PY{n+nb}{\PYZcb{}}A B C@\PY{n+nb}{\PYZob{}}\PY{n+nb}{\PYZcb{}}\PY{n+nb}{\PYZcb{}}
+\PY{k}{\PYZbs{}BLOCK}\PY{n+nb}{\PYZob{}} for step in section.steps \PY{n+nb}{\PYZcb{}}
+\PY{k}{\PYZbs{}BLOCK}\PY{n+nb}{\PYZob{}} set raw\PY{n+nb}{\PYZus{}}items = step.ingredients | default([], true) \PY{n+nb}{\PYZcb{}}
+\PY{k}{\PYZbs{}BLOCK}\PY{n+nb}{\PYZob{}} if raw\PY{n+nb}{\PYZus{}}items is mapping \PY{n+nb}{\PYZcb{}}
+  \PY{k}{\PYZbs{}BLOCK}\PY{n+nb}{\PYZob{}} set ingredients = [raw\PY{n+nb}{\PYZus{}}items] \PY{n+nb}{\PYZcb{}}
+\PY{k}{\PYZbs{}BLOCK}\PY{n+nb}{\PYZob{}} elif raw\PY{n+nb}{\PYZus{}}items is iterable and raw\PY{n+nb}{\PYZus{}}items is not string \PY{n+nb}{\PYZcb{}}
+  \PY{k}{\PYZbs{}BLOCK}\PY{n+nb}{\PYZob{}} set ingredients = raw\PY{n+nb}{\PYZus{}}items \PY{n+nb}{\PYZcb{}}
+\PY{k}{\PYZbs{}BLOCK}\PY{n+nb}{\PYZob{}} else \PY{n+nb}{\PYZcb{}}
+  \PY{k}{\PYZbs{}BLOCK}\PY{n+nb}{\PYZob{}} set ingredients = [] \PY{n+nb}{\PYZcb{}}
+\PY{k}{\PYZbs{}BLOCK}\PY{n+nb}{\PYZob{}} endif \PY{n+nb}{\PYZcb{}}
+\PY{k}{\PYZbs{}BLOCK}\PY{n+nb}{\PYZob{}} set note = step.instructions | default([], true) \PY{n+nb}{\PYZcb{}}
+\PY{k}{\PYZbs{}BLOCK}\PY{n+nb}{\PYZob{}} set note\PY{n+nb}{\PYZus{}}text = note | join(\PYZsq{} \PY{k}{\PYZbs{}\PYZbs{}}newline \PYZsq{}) \PY{n+nb}{\PYZcb{}}
+\PY{k}{\PYZbs{}BLOCK}\PY{n+nb}{\PYZob{}} if ingredients \PY{n+nb}{\PYZcb{}}
+  \PY{k}{\PYZbs{}BLOCK}\PY{n+nb}{\PYZob{}} for ingredient in ingredients \PY{n+nb}{\PYZcb{}}
+    \PY{k}{\PYZbs{}VAR}\PY{n+nb}{\PYZob{}}quantity(ingredient.quantity | default(\PYZsq{}\PYZsq{}, true))\PY{n+nb}{\PYZcb{}} \PY{n+nb}{\PYZam{}}
+    \PY{k}{\PYZbs{}VAR}\PY{n+nb}{\PYZob{}}ingredient.name | default(ingredient.step | default(\PYZsq{}\PYZsq{}, true), true)\PY{n+nb}{\PYZcb{}} \PY{n+nb}{\PYZam{}}
+    \PY{k}{\PYZbs{}BLOCK}\PY{n+nb}{\PYZob{}} if loop.first \PY{n+nb}{\PYZcb{}}
+      \PY{k}{\PYZbs{}VAR}\PY{n+nb}{\PYZob{}}note\PY{n+nb}{\PYZus{}}text\PY{n+nb}{\PYZcb{}}
+    \PY{k}{\PYZbs{}BLOCK}\PY{n+nb}{\PYZob{}} endif \PY{n+nb}{\PYZcb{}}\PY{k}{\PYZbs{}\PYZbs{}}
+  \PY{k}{\PYZbs{}BLOCK}\PY{n+nb}{\PYZob{}} endfor \PY{n+nb}{\PYZcb{}}
+\PY{k}{\PYZbs{}BLOCK}\PY{n+nb}{\PYZob{}} else \PY{n+nb}{\PYZcb{}}
+  \PY{n+nb}{\PYZam{}} \PY{n+nb}{\PYZam{}} \PY{k}{\PYZbs{}VAR}\PY{n+nb}{\PYZob{}}note\PY{n+nb}{\PYZus{}}text\PY{n+nb}{\PYZcb{}}\PY{k}{\PYZbs{}\PYZbs{}}
+\PY{k}{\PYZbs{}BLOCK}\PY{n+nb}{\PYZob{}} endif \PY{n+nb}{\PYZcb{}}
+\PY{k}{\PYZbs{}BLOCK}\PY{n+nb}{\PYZob{}} if not loop.last \PY{n+nb}{\PYZcb{}}
+\PY{k}{\PYZbs{}multicolumn}\PY{n+nb}{\PYZob{}}3\PY{n+nb}{\PYZcb{}}\PY{n+nb}{\PYZob{}}@\PY{n+nb}{\PYZob{}}\PY{n+nb}{\PYZcb{}}l\PY{n+nb}{\PYZcb{}}\PY{n+nb}{\PYZob{}}\PY{k}{\PYZbs{}rule}\PY{n+nb}{\PYZob{}}\PY{k}{\PYZbs{}textwidth}\PY{n+nb}{\PYZcb{}}\PY{n+nb}{\PYZob{}}0.2pt\PY{n+nb}{\PYZcb{}}\PY{n+nb}{\PYZcb{}}\PY{k}{\PYZbs{}\PYZbs{}}
+\PY{k}{\PYZbs{}BLOCK}\PY{n+nb}{\PYZob{}} endif \PY{n+nb}{\PYZcb{}}
+\PY{k}{\PYZbs{}BLOCK}\PY{n+nb}{\PYZob{}} endfor \PY{n+nb}{\PYZcb{}}
+\PY{k}{\PYZbs{}end}\PY{n+nb}{\PYZob{}}tabularx\PY{n+nb}{\PYZcb{}}
+\PY{k}{\PYZbs{}BLOCK}\PY{n+nb}{\PYZob{}} endif \PY{n+nb}{\PYZcb{}}
+
+\PY{k}{\PYZbs{}vspace}\PY{n+nb}{\PYZob{}}1em\PY{n+nb}{\PYZcb{}}
+\PY{k}{\PYZbs{}BLOCK}\PY{n+nb}{\PYZob{}} endfor \PY{n+nb}{\PYZcb{}}
+\PY{k}{\PYZbs{}end}\PY{n+nb}{\PYZob{}}minipage\PY{n+nb}{\PYZcb{}}
+
+\PY{k}{\PYZbs{}BLOCK}\PY{n+nb}{\PYZob{}} endfor \PY{n+nb}{\PYZcb{}}
+\PY{k}{\PYZbs{}BLOCK}\PY{n+nb}{\PYZob{}} endif \PY{n+nb}{\PYZcb{}}
+
+\PY{k}{\PYZbs{}BLOCK}\PY{n+nb}{\PYZob{}} if mainmatter and mainmatter.strip() \PY{n+nb}{\PYZcb{}}
+\PY{k}{\PYZbs{}newpage}
+\PY{k}{\PYZbs{}VAR}\PY{n+nb}{\PYZob{}}mainmatter\PY{n+nb}{\PYZcb{}}
+\PY{k}{\PYZbs{}BLOCK}\PY{n+nb}{\PYZob{}} endif \PY{n+nb}{\PYZcb{}}
+
+\PY{k}{\PYZbs{}end}\PY{n+nb}{\PYZob{}}document\PY{n+nb}{\PYZcb{}}
 \end{Verbatim}
 \end{tscode}
 \end{tsdiv}

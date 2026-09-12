@@ -113,6 +113,9 @@ $ texsmith --help
 `--parser`
 : Specify the BeautifulSoup parser backend to use when parsing HTML input. The default is `html.parser`, but you can choose other parsers like `lxml` if they are installed.
 
+`--include-path PATH`
+: A directory an include falls back to when its path does not resolve against the file that writes it. Repeat the option to name several; they are searched in the order given. The including file's own directory always comes first, so `{include}(file)` keeps the meaning the [syntax reference](../syntax/index.md) gives it — the search path only rescues a path written against somewhere else, which is what the deprecated `--8<-- "file"` spelling does: MkDocs resolves those against the `base_path` of `pymdownx.snippets`, usually the directory of `mkdocs.yml`. A document can carry the same list itself as `press.include_paths` in its front matter, written relative to the document; `--include-path` is searched before it, and the MkDocs plugin's own `base_path` after it.
+
 ### Structure Options
 
 `--base-level`
