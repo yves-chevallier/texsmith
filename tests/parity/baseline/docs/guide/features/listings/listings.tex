@@ -7,11 +7,47 @@
 \usepackage[english]{babel}
 \usepackage[colorlinks=true, linkcolor=NavyBlue, urlcolor=NavyBlue, citecolor=NavyBlue]{hyperref}
 \usepackage[a4paper]{geometry}
+\usepackage{ts-typesetting}
 \usepackage{ts-fonts}
 \usepackage{csquotes}
+\usepackage{xcolor}
+\usepackage{epigraph}
+\usepackage{marginnote}
+\usepackage{multicol}
+\usepackage{progressbar}
+\usepackage{graphicx}
+\usepackage{tcolorbox}
+\usepackage{fvextra}
 \usepackage{amsmath}
 \usepackage{float}
 \usepackage{seqsplit}
+\renewcommand*{\marginfont}{
+\footnotesize
+\sloppy
+\emergencystretch=1em
+\hyphenpenalty=50
+\exhyphenpenalty=50
+}
+\newlength{\tsmarginparavail}
+\newlength{\tsmarginparalt}
+\newlength{\tsmarginparbuf}
+\setlength{\tsmarginparbuf}{6mm}
+\makeatletter
+\AtBeginDocument{
+\setlength{\tsmarginparavail}{\dimexpr\paperwidth-\textwidth-1in-\oddsidemargin-\marginparsep-\tsmarginparbuf\relax}
+\ifdim\tsmarginparavail<\z@\setlength{\tsmarginparavail}{\z@}\fi
+\if@twoside
+\setlength{\tsmarginparalt}{\dimexpr1in+\evensidemargin-\marginparsep-\tsmarginparbuf\relax}
+\ifdim\tsmarginparalt<\z@\setlength{\tsmarginparalt}{\z@}\fi
+\ifdim\tsmarginparalt<\tsmarginparavail
+\setlength{\tsmarginparavail}{\tsmarginparalt}
+\fi
+\fi
+\ifdim\tsmarginparavail<\marginparwidth
+\setlength{\marginparwidth}{\tsmarginparavail}
+\fi
+}
+\makeatother
 \usepackage{ts-callouts}
 \usepackage{ts-code}
 
@@ -19,40 +55,32 @@
 \usepackage{refcount}
 \makeatletter
 \def\ps@plain{
-  \let\@oddhead\@empty
-  \let\@evenhead\@empty
-  \def\@oddfoot{
-    \hfil
-    \ifnum\getpagerefnumber{LastPage}>1\relax
-      \thepage
-    \fi
-    \hfil}
-  \let\@evenfoot\@oddfoot
+\let\@oddhead\@empty
+\let\@evenhead\@empty
+\def\@oddfoot{
+\hfil
+\ifnum\getpagerefnumber{LastPage}>1\relax
+\thepage
+\fi
+\hfil}
+\let\@evenfoot\@oddfoot
 }
 \makeatother
 
 \title{Code listings}
 \author{}\date{}
-
 \begin{document}
-
 \maketitle
-
-\thispagestyle{plain}
-TeXSmith bundles a single fragment, \texttt{ts-\allowbreak{}code}, that can render fenced code blocks with four different engines:
-
+TeXSmith bundles a single fragment, \tscodeinline{ts-\allowbreak{}code}, that can render fenced code blocks with four different engines:
 \begin{description}
-\item[{ \texttt{pygments} (default) }] highlights code with Pygments at render time and injects the generated macros into \texttt{ts-\allowbreak{}code.sty}. No shell escape is required and the output works with XeLaTeX and Tectonic. Not suited for editing the LaTeX output directly.
-\item[{ \texttt{listings} }] uses the LaTeX \texttt{listings} package inside a \texttt{tcolorbox}. Good for pure LaTeX workflows without shell escape, but no automatic line highlighting.
-\item[{ \texttt{verbatim} }] plain \texttt{fvextra}/\texttt{Verbatim} output wrapped in a tcolorbox. Useful when you want zero styling or external dependencies.
-\item[{ \texttt{minted} }] Enhanced version of listings that shells out to \texttt{pygmentize}. This needs \texttt{-\allowbreak{}-\allowbreak{}shell-\allowbreak{}escape} and is disabled by default for compatibility with sandboxed engines such as Tectonic.
-
+\item[{\tscodeinline{pygments} (default)}] highlights code with Pygments at render time and injects the generated macros into \tscodeinline{ts-\allowbreak{}code.sty}. No shell escape is required and the output works with \tslogo{XeLaTeX} and Tectonic. Not suited for editing the \LaTeX{} output directly.
+\item[{\tscodeinline{listings}}] uses the \LaTeX{} \tscodeinline{listings} package inside a \tscodeinline{tcolorbox}. Good for pure \LaTeX{} workflows without shell escape, but no automatic line highlighting.
+\item[{\tscodeinline{verbatim}}] plain \tscodeinline{fvextra}/\tscodeinline{Verbatim} output wrapped in a tcolorbox. Useful when you want zero styling or external dependencies.
+\item[{\tscodeinline{minted}}] Enhanced version of listings that shells out to \tscodeinline{pygmentize}. This needs \tscodeinline{-\allowbreak{}-\allowbreak{}shell-\allowbreak{}escape} and is disabled by default for compatibility with sandboxed engines such as Tectonic.
 \end{description}
-\section{Choosing an engine}\label{choosing-an-engine}
-
+\section{Choosing an engine}
 If you need to use one, pick the engine in front matter or via the CLI template override:
-
-\begin{code}{yaml}{}{}
+\begin{tscode}[lang=yaml, engine=pygments]
 \begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
 \PY{n+nn}{\PYZhy{}\PYZhy{}\PYZhy{}}
 \PY{n+nt}{press}\PY{p}{:}
@@ -60,21 +88,18 @@ If you need to use one, pick the engine in front matter or via the CLI template 
 \PY{+w}{    }\PY{n+nt}{engine}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{listings}\PY{+w}{  }\PY{c+c1}{\PYZsh{} verbatim | listings | minted | pygments}
 \PY{n+nn}{\PYZhy{}\PYZhy{}\PYZhy{}}
 \end{Verbatim}
-\end{code}
-\begin{code}{bash}{}{}
+\end{tscode}
+\begin{tscode}[lang=bash, engine=pygments]
 \begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
 texsmith\PY{+w}{ }input.md\PY{+w}{ }\PYZhy{}a\PY{+w}{ }code.engine\PY{o}{=}verbatim
 \end{Verbatim}
-\end{code}
-The choice is global for a render. Inline code spans follow the engine too: \texttt{pygments} highlights them in place, \texttt{minted} wraps them in \texttt{\textbackslash{}mintinline}, and \texttt{listings}/\texttt{verbatim} fall back to plain \texttt{\textbackslash{}texttt\{…\}}.
+\end{tscode}
+The choice is global for a render. Inline code spans follow the engine too: \tscodeinline{pygments} highlights them in place, \tscodeinline{minted} wraps them in \tscodeinline{\textbackslash{}mintinline}, and \tscodeinline{listings}/\tscodeinline{verbatim} fall back to plain \tscodeinline{\textbackslash{}texttt\{…\}}.
+\section{Inline code wrapping}
+A fenced block always wraps: every engine is configured with \tscodeinline{breaklines} (and \tscodeinline{breakanywhere} for \tscodeinline{fvextra}), so a long line folds inside the box instead of running past it. An \emph{inline} span has no such luxury --- it sits in a justified paragraph and \TeX{} will not break it on its own, so a long identifier such as \tscodeinline{texsmith.core.conversion\_options} pushes into the margin.
 
-\section{Inline code wrapping}\label{inline-code-wrapping}
-
-A fenced block always wraps: every engine is configured with \texttt{breaklines} (and \texttt{breakanywhere} for \texttt{fvextra}), so a long line folds inside the box instead of running past it. An \emph{inline} span has no such luxury --- it sits in a justified paragraph and TeX will not break it on its own, so a long identifier such as \texttt{texsmith.core.conversion\_options} pushes into the margin.
-
-The \texttt{code.inline} section declares where such a span may break:
-
-\begin{code}{yaml}{}{}
+The \tscodeinline{code.inline} section declares where such a span may break:
+\begin{tscode}[lang=yaml, engine=pygments]
 \begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
 \PY{n+nn}{\PYZhy{}\PYZhy{}\PYZhy{}}
 \PY{n+nt}{press}\PY{p}{:}
@@ -84,33 +109,26 @@ The \texttt{code.inline} section declares where such a span may break:
 \PY{+w}{      }\PY{n+nt}{breaks}\PY{p}{:}\PY{+w}{ }\PY{l+s}{\PYZdq{}}\PY{l+s}{\PYZus{}./}\PY{l+s}{\PYZdq{}}\PY{+w}{        }\PY{c+c1}{\PYZsh{} insert a break opportunity after each of these characters}
 \PY{n+nn}{\PYZhy{}\PYZhy{}\PYZhy{}}
 \end{Verbatim}
-\end{code}
+\end{tscode}
 \begin{description}
-\item[{ \texttt{breaks} }] The characters after which an \texttt{\textbackslash{}allowbreak} is inserted. Defaults to \texttt{-\allowbreak{}}, which is what TeXSmith has always done. Use \texttt{all} (or \texttt{true}) for the full punctuation set \texttt{-\allowbreak{}\_./\textbackslash{}:;,|@+=\&\#\%}, and \texttt{none} (or \texttt{false}) to disable breaking entirely. Letters, digits and whitespace are ignored: breaking mid-word hurts legibility more than a slight overflow. Breaks are inserted in highlighted spans too, between the Pygments macros rather than inside them, so the colours survive.
-\item[{ \texttt{plain} }] When true, inline spans are rendered as \texttt{\textbackslash{}texttt\{…\}} with no syntax colouring, whatever the engine --- the \enquote{simple mono} mode. Blocks keep their highlighting. This is the only way to get break opportunities under the \texttt{minted} engine, whose \texttt{\textbackslash{}mintinline} is verbatim and cannot host an \texttt{\textbackslash{}allowbreak}; and a document that only has inline spans no longer requests the shell escape \texttt{\textbackslash{}mintinline} would have needed.
-
+\item[{\tscodeinline{breaks}}] The characters after which an \tscodeinline{\textbackslash{}allowbreak} is inserted. Defaults to \tscodeinline{-\allowbreak{}}, which is what TeXSmith has always done. Use \tscodeinline{all} (or \tscodeinline{true}) for the full punctuation set \tscodeinline{-\allowbreak{}\_./\textbackslash{}:;,|@+=\&\#\%}, and \tscodeinline{none} (or \tscodeinline{false}) to disable breaking entirely. Letters, digits and whitespace are ignored: breaking mid-word hurts legibility more than a slight overflow. Breaks are inserted in highlighted spans too, between the Pygments macros rather than inside them, so the colours survive.
+\item[{\tscodeinline{plain}}] When true, inline spans are rendered as \tscodeinline{\textbackslash{}texttt\{…\}} with no syntax colouring, whatever the engine --- the \enquote{simple mono} mode. Blocks keep their highlighting. This is the only way to get break opportunities under the \tscodeinline{minted} engine, whose \tscodeinline{\textbackslash{}mintinline} is verbatim and cannot host an \tscodeinline{\textbackslash{}allowbreak}; and a document that only has inline spans no longer requests the shell escape \tscodeinline{\textbackslash{}mintinline} would have needed.
 \end{description}
 Both keys work as CLI overrides as well:
-
-\begin{code}{bash}{}{}
+\begin{tscode}[lang=bash, engine=pygments]
 \begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
 texsmith\PY{+w}{ }input.md\PY{+w}{ }\PYZhy{}a\PY{+w}{ }code.inline.plain\PY{o}{=}\PY{n+nb}{true}\PY{+w}{ }\PYZhy{}a\PY{+w}{ }code.inline.breaks\PY{o}{=}\PYZus{}./
 \end{Verbatim}
-\end{code}
-\section{Pygments pipeline details}\label{pygments-pipeline-details}
+\end{tscode}
+\section{Pygments pipeline details}
+When \tscodeinline{code.engine=pygments}, TeXSmith runs Pygments during conversion and writes the highlighted \LaTeX{} directly into the \tscodeinline{code} environment. All required style definitions are collected once per render and injected into \tscodeinline{ts-\allowbreak{}code.sty}, so no external calls are made during \LaTeX{} compilation. Highlighted lines and line numbers from the Markdown source are preserved.
 
-When \texttt{code.engine=pygments}, TeXSmith runs Pygments during conversion and writes the highlighted \LaTeX{} directly into the \texttt{code} environment. All required style definitions are collected once per render and injected into \texttt{ts-\allowbreak{}code.sty}, so no external calls are made during \LaTeX{} compilation. Highlighted lines and line numbers from the Markdown source are preserved.
+This engine is the most flexible and works with all \TeX{} engines supported by TeXSmith, including Tectonic.
 
-This engine is the most flexible and works with all TeX engines supported by TeXSmith, including Tectonic.
-
-Furthermore, it is much faster than \texttt{minted} since it avoids shelling out during \LaTeX{} compilation.
-
-\section{Shell-escape behavior}\label{shell-escape-behavior}
-
-Shell escape is requested automatically when the minted engine is active or other features need it. With \texttt{pygments}, \texttt{listings}, or \texttt{verbatim}, \texttt{.latexmkrc} will not add \texttt{-\allowbreak{}-\allowbreak{}shell-\allowbreak{}escape}, keeping builds compatible with engines like Tectonic.
-
-\begin{callout}[callout note]{Note}
-By default TeX disables shell escape for security reasons. Only enable it if you trust the source of your documents. Shell escape allows \LaTeX{} to run arbitrary commands on your system during compilation. This behavior is strongly discouraged by the Tectonic team and disabled by default.
-\end{callout}
-
+Furthermore, it is much faster than \tscodeinline{minted} since it avoids shelling out during \LaTeX{} compilation.
+\section{Shell-escape behavior}
+Shell escape is requested automatically when the minted engine is active or other features need it. With \tscodeinline{pygments}, \tscodeinline{listings}, or \tscodeinline{verbatim}, \tscodeinline{.latexmkrc} will not add \tscodeinline{-\allowbreak{}-\allowbreak{}shell-\allowbreak{}escape}, keeping builds compatible with engines like Tectonic.
+\begin{tscallout}[kind=note]
+By default \TeX{} disables shell escape for security reasons. Only enable it if you trust the source of your documents. Shell escape allows \LaTeX{} to run arbitrary commands on your system during compilation. This behavior is strongly discouraged by the Tectonic team and disabled by default.
+\end{tscallout}
 \end{document}

@@ -19,7 +19,7 @@ than one block of prose to typeset.
 
 You can combine _emphasis_, *strong emphasis*, and `code`. External links
 look like #link("https://typst.app")[the Typst website]. Inline math such as
-#mi(```a^2 + b^2 = c^2```) flows in the text.
+#mi(`a^2 + b^2 = c^2`) flows in the text.
 
 == Lists
 
@@ -27,8 +27,8 @@ An unordered list:
 
 - first item
 - second item with nested points
-  - nested one
-  - nested two
+- nested one
+- nested two
 - third item
 
 An ordered list:
@@ -40,8 +40,7 @@ An ordered list:
 == A block quote
 
 #quote(block: true)[
-  The IR is a pure tree; the writer chooses the backend syntax.
-]
+The IR is a pure tree; the writer chooses the backend syntax.]
 
 == Code
 
@@ -54,18 +53,18 @@ def greet(name):
 
 A display equation:
 
-#mitex(```E = m c^2```)
+#mitex(`E = m c^2`)
 
 == A simple table
 
 #table(
-  columns: 2,
-  align: (left, left),
-  table.header([Language], [Year]),
-  [Markdown], [2004],
-  [Pandoc], [2006],
+columns: 2,
+align: (left, left),
+table.header([Language], [Year]),
+[Markdown], [2004],
+[Pandoc], [2006],
 )
 
-#line(length: 100%)
+#ts-divider()
 
 The end.

@@ -8,43 +8,39 @@
 \usepackage[colorlinks=true, linkcolor=NavyBlue, urlcolor=NavyBlue, citecolor=NavyBlue]{hyperref}
 \usepackage[a4paper]{geometry}
 \usepackage{ts-fonts}
+\usepackage{tcolorbox}
+\usepackage{fvextra}
 \usepackage{amsmath}
 \usepackage{float}
 \usepackage{seqsplit}
+\usepackage{ts-code}
 
 \usepackage{lastpage}
 \usepackage{refcount}
 \makeatletter
 \def\ps@plain{
-  \let\@oddhead\@empty
-  \let\@evenhead\@empty
-  \def\@oddfoot{
-    \hfil
-    \ifnum\getpagerefnumber{LastPage}>1\relax
-      \thepage
-    \fi
-    \hfil}
-  \let\@evenfoot\@oddfoot
+\let\@oddhead\@empty
+\let\@evenhead\@empty
+\def\@oddfoot{
+\hfil
+\ifnum\getpagerefnumber{LastPage}>1\relax
+\thepage
+\fi
+\hfil}
+\let\@evenfoot\@oddfoot
 }
 \makeatother
 
 \title{Arguments}
 \author{}\date{}
-
 \begin{document}
-
 \maketitle
-
-\thispagestyle{plain}
-\section{Attribute ownership \& consumers}\label{attribute-ownership-consumers}
-
+\section{Attribute ownership \& consumers}
 \begin{itemize}
-\item{} \textbf{Owner}: each attribute belongs to either the template (default) or a fragment (\texttt{fragment.toml} attributes set \texttt{owner = <fragment name>} implicitly). Conflicting owners raise a \texttt{TemplateError}.
-\item{} \textbf{Emitter}: templates can surface derived attributes through \texttt{emit} in \texttt{manifest.toml} so renderers see both declared attributes and emitted helpers (for example, \texttt{callout\_style} or \texttt{code.engine}).
-\item{} \textbf{Consumer}: any template/fragment/renderer code that reads the attribute. Consumers should only read attributes they own or that are explicitly emitted.
-\item{} Precedence: CLI/front matter overrides \(\rightarrow\) attribute resolver (type coercion, normaliser, escape) \(\rightarrow\) emitted defaults \(\rightarrow\) render-time context.
-
+\item \textbf{Owner}: each attribute belongs to either the template (default) or a fragment (\tscodeinline{fragment.toml} attributes set \tscodeinline{owner = <fragment name>} implicitly). Conflicting owners raise a \tscodeinline{TemplateError}.
+\item \textbf{Emitter}: templates can surface derived attributes through \tscodeinline{emit} in \tscodeinline{manifest.toml} so renderers see both declared attributes and emitted helpers (for example, \tscodeinline{callout\_style} or \tscodeinline{code.engine}).
+\item \textbf{Consumer}: any template/fragment/renderer code that reads the attribute. Consumers should only read attributes they own or that are explicitly emitted.
+\item Precedence: CLI/front matter overrides \tsscript{symbols}{\(\rightarrow\) }attribute resolver (type coercion, normaliser, escape) \tsscript{symbols}{\(\rightarrow\) }emitted defaults \tsscript{symbols}{\(\rightarrow\) }render-time context.
 \end{itemize}
 When adding new attributes, pick a single owner (template or fragment) and document the sources that are allowed to override it.
-
 \end{document}

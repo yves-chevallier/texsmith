@@ -1,16 +1,16 @@
 #set document(
-  title: "TeXSmith Markdown Syntax",
-  author: ("Yves Chevallier",),
+title: "TeXSmith Markdown Syntax",
+author: ("Yves Chevallier"),
 )
 #set page(
-  paper: "a4",
-  margin: 2.5cm,
-  numbering: none,
-  footer: context {
-    if counter(page).final().first() > 1 {
-      align(center)[#counter(page).get().first()]
-    }
-  },
+paper: "a4",
+margin: 2.5cm,
+numbering: none,
+footer: context {
+if counter(page).final().first() > 1 {
+align(center)[#counter(page).get().first()]
+}
+},
 )
 #set text(font: "New Computer Modern", size: 11pt, lang: "en")
 #set par(justify: true)
@@ -18,17 +18,15 @@
 #set heading(numbering: "1.1")
 
 #align(center)[
-  #text(size: 1.8em, weight: "bold")[TeXSmith Markdown Syntax]
-]
+#text(size: 1.8em, weight: "bold")[TeXSmith Markdown Syntax]]
 #align(center)[
-  Yves Chevallier]
+Yves Chevallier]
 #v(1.5em)
 
 #block(width: 100%, inset: (x: 2em))[
-  #align(center)[#text(weight: "bold")[Abstract]]
-  #v(0.5em)
-This document provides a comprehensive overview of Markdown syntax features and extensions supported by TeXSmith. It serves as a reference guide for users looking to leverage Markdown's capabilities in their documents. This is meant to be a cheatsheet of supported features and a test suite for custom templates.
-]
+#align(center)[#text(weight: "bold")[Abstract]]
+#v(0.5em)
+This document provides a comprehensive overview of Markdown syntax features and extensions supported by TeXSmith. It serves as a reference guide for users looking to leverage Markdown's capabilities in their documents. This is meant to be a cheatsheet of supported features and a test suite for custom templates.]
 #v(1em)
 
 #outline()
@@ -38,7 +36,7 @@ This document provides a comprehensive overview of Markdown syntax features and 
 
 == Headings
 
-Demonstrates the Markdown heading hierarchy from level 1 to level 5. Note that in Markdown only six levels are defined: `#` to `######`. In LaTeX, however, there are less levels (e.g., `\section`, `\subsection`, `\subsubsection`, `\paragraph`, `\subparagraph`). The last one is usually simply converted to bold text.
+Demonstrates the Markdown heading hierarchy from level 1 to level 5. Note that in Markdown only six levels are defined: `#` to `######`. In #ts-logo("LaTeX"), however, there are less levels (e.g., `\section`, `\subsection`, `\subsubsection`, `\paragraph`, `\subparagraph`). The last one is usually simply converted to bold text.
 
 ```md
 # Heading 1
@@ -64,15 +62,14 @@ Lorem ipsum dolor sit amet.
 
 == Bold
 
-Shows how to emphasise text with bold weight. Simply translated to `\textbf{…}` in LaTeX.
+Shows how to emphasise text with bold weight. Simply translated to `\textbf{…}` in #ts-logo("LaTeX").
 
 ```md
 **text** or **t**ex**t**
 ```
 
 #quote(block: true)[
-  *text* or *t*ex*t*
-]
+*text* or *t*ex*t*]
 
 == Italic
 
@@ -83,8 +80,7 @@ This _text_ or *text* is italic.
 ```
 
 #quote(block: true)[
-  This _text_ or _text_ is italic.
-]
+This _text_ or _text_ is italic.]
 
 == Strikethrough
 
@@ -95,20 +91,20 @@ We ~~do not~~ want this.
 ```
 
 #quote(block: true)[
-  We #strike[do not] want this.
-]
+We #strike[do not] want this.]
 
 == Underline
 
-With caret, mark and tilde extension from PyMdownX it is also possible to underline text.
+The `{underline}` role underlines text. PyMdownX's `^^text^^` spells the same
+node, but only with the `inline.insert` feature enabled; without it the carets
+are literal.
 
 ```md
-^^text^^
+{underline}[text]
 ```
 
 #quote(block: true)[
-  #underline[text]
-]
+#underline[text]]
 
 == Inline Code / Code Blocks
 
@@ -121,12 +117,11 @@ print("Hello")
 ````
 
 #quote(block: true)[
-  This entry is `inline code`, or can be in a fenced code block:
+This entry is `inline code`, or can be in a fenced code block:
 
-  ```python
-  print("Hello")
-  ```
-]
+```python
+print("Hello")
+```]
 
 == Hyperlinks
 
@@ -138,9 +133,8 @@ his nobel prize and the theory of relativity.
 ```
 
 #quote(block: true)[
-  The German-bord pysicist #link("https://en.wikipedia.org/wiki/Albert_Einstein")[Albert Einstein] is famous for
-  his nobel prize and the theory of relativity.
-]
+The German-bord pysicist #link("https://en.wikipedia.org/wiki/Albert_Einstein")[Albert Einstein] is famous for
+his nobel prize and the theory of relativity.]
 
 == Images
 
@@ -151,8 +145,10 @@ Embeds remote or local images.
 ```
 
 #quote(block: true)[
-
-]
+#figure(
+image("200.jpg"),
+caption: [Random Picture],
+)]
 
 == Lists
 
@@ -165,10 +161,9 @@ Embeds remote or local images.
 ```
 
 #quote(block: true)[
-  - First
-  - Second
-    - Subitem
-]
+- First
+- Second
+- Subitem]
 
 == Enumerated Lists
 
@@ -182,13 +177,12 @@ Embeds remote or local images.
 ```
 
 #quote(block: true)[
-  + Numbered first
-  + Numbered second
-    + Sub-numbered
-      + Sub-sub-numbered
-      + Sub-sub-numbered
-    + Sub-numbered
-]
++ Numbered first
++ Numbered second
++ Sub-numbered
+a. Sub-sub-numbered
+b. Sub-sub-numbered
++ Sub-numbered]
 
 == Blockquotes
 
@@ -199,20 +193,18 @@ Highlights quotations or cited text.
 ```
 
 #quote(block: true)[
-  Quote
-]
+Quote]
 
 == Horizontal Rules
 
 Adds a visual separator between sections.
 
 ```md
------
+---
 ```
 
 #quote(block: true)[
-  #line(length: 100%)
-]
+#ts-divider()]
 
 = TeXSmith Markdown Extensions
 
@@ -229,8 +221,7 @@ This is __small capitals__.
 ```
 
 #quote(block: true)[
-  This is #smallcaps[small capitals].
-]
+This is #smallcaps[small capitals].]
 
 = Advanced Syntax Extensions (Non-Standard)
 
@@ -244,14 +235,13 @@ This is __small capitals__.
 ```
 
 #quote(block: true)[
-  #table(
-    columns: 2,
-    align: (left, left),
-    table.header([Column 1], [Column 2]),
-    [Value 1], [Value 2],
-    [Value 3], [Value 4],
-  )
-]
+#table(
+columns: 2,
+align: (left, left),
+table.header([Column 1], [Column 2]),
+[Value 1], [Value 2],
+[Value 3], [Value 4],
+)]
 
 == Footnotes
 
@@ -264,8 +254,7 @@ Text with note[^1].
 ```
 
 #quote(block: true)[
-  Text with note#footnote[Here is the note.].
-]
+Text with note#footnote[Here is the note.].]
 
 == Abbreviations
 
@@ -280,8 +269,7 @@ The HTML standard.
 ```
 
 #quote(block: true)[
-  The HTML standard.
-]
+The #ts-acr("HTML") standard.]
 
 == Definition Lists
 
@@ -300,11 +288,10 @@ Another term
 ```
 
 #quote(block: true)[
-  / Term: Definition of the term
-  / Another term: Another definition with a longer description that spans
-  multiple lines and
-  is indented properly.
-]
+/ Term: Definition of the term
+/ Another term: Another definition with a longer description that spans
+multiple lines and
+is indented properly.]
 
 == Admonitions (Alert / Info / Tip Blocks)
 
@@ -313,28 +300,23 @@ _Package: `pip install markdown` or `pymdown-extensions` (for advanced styles)_
 _Description: Emphasises callouts such as notes and warnings._
 
 ```md
-!!! note
-    This is a note.
+::: note
+This is a note.
+:::
 
-??? warning
-    This is a warning.
+::: warning {collapsed=true}
+This is a warning.
+:::
 ```
 
-The `???` syntax creates a collapsible block in HTML output only.
+`collapsed=true` creates a collapsible block in #ts-acr("HTML") output only. PyMdownX's
+`!!! note` / `??? warning` spell the same containers.
 
-#block(width: 100%, radius: 2pt, stroke: (left: 1.5pt + rgb("#448AFF"), rest: 0.4pt + rgb("#448AFF")))[
-  #block(width: 100%, fill: rgb("#448AFF").lighten(90%), inset: (x: 8pt, y: 4pt))[#text(weight: "bold", fill: rgb("#448AFF"))[📝#h(0.4em)Note]]
-  #block(width: 100%, inset: (x: 8pt, y: 6pt))[
-    This is a note.
-  ]
-]
+#ts-callout(kind: "note")[
+This is a note.]
 
-#block(width: 100%, radius: 2pt, stroke: (left: 1.5pt + rgb("#FFB200"), rest: 0.4pt + rgb("#FFB200")))[
-  #block(width: 100%, fill: rgb("#FFB200").lighten(90%), inset: (x: 8pt, y: 4pt))[#text(weight: "bold", fill: rgb("#FFB200"))[⚠#h(0.4em)Warning]]
-  #block(width: 100%, inset: (x: 8pt, y: 6pt))[
-    This is a warning.
-  ]
-]
+#ts-callout(kind: "warning", collapsed: true)[
+This is a warning.]
 
 == SuperFences (Enhanced Fenced Code + Nested Blocks)
 
@@ -343,33 +325,36 @@ _Package: `pip install pymdown-extensions`_
 _Description: Allows nested fences (e.g., Mermaid diagrams inside fences)._
 
 ````md
-```mermaid { width=20% }
+```mermaid image width="20%"
 graph TD;
   A-->B;
 ```
 ````
 
 #quote(block: true)[
-  #image("<HASH>.png")
-]
+#figure(
+image("<HASH>.png", width: 20%),
+)]
 
-== Raw LaTeX Blocks and Inline Snippets
+== Raw #ts-logo("LaTeX") Blocks and Inline Snippets
 
 _Extension: `texsmith.markdown_extensions.latex_raw`_
 _Package: shipped with TeXSmith_
-_Description: Embeds raw LaTeX that is injected verbatim._
+_Description: Embeds raw #ts-logo("LaTeX") that is injected verbatim._
 
-```md
+````md
+```latex raw
 \clearpage
 ```
+````
 
 Inline variant:
 
 ```md
-Insert... {latex}[\clearpage] anywhere in the paragraph.
+Insert... {raw latex}(\clearpage) anywhere in the paragraph.
 ```
 
-Insert...  anywhere in the paragraph.
+Insert... anywhere in the paragraph.
 
 == Emoji
 
@@ -383,9 +368,8 @@ _Description: Converts shortcodes into emoji._
 ```
 
 #quote(block: true)[
-  😄
-  ❤️
-]
+#ts-emoji[😄]
+#ts-emoji[❤️]]
 
 You can also use Unicode emoji directly (not currently supported in mono environments). It will use OpenMoji black by default in TeXSmith unless you specify another font for emoji in the configuration.
 
@@ -395,9 +379,8 @@ You can also use Unicode emoji directly (not currently supported in mono environ
 ```
 
 #quote(block: true)[
-  😊 🚀 🍕 🎉 🐍 🌍 💻
-  📚 🎨 👽 👋 🤖 🦄 🧠
-]
+#ts-emoji[😊] #ts-emoji[🚀] #ts-emoji[🍕] #ts-emoji[🎉] #ts-emoji[🐍] #ts-emoji[🌍] #ts-emoji[💻]
+#ts-emoji[📚] #ts-emoji[🎨] #ts-emoji[👽] #ts-emoji[👋] #ts-emoji[🤖] #ts-emoji[🦄] #ts-emoji[🧠]]
 
 == Task Lists
 
@@ -411,9 +394,8 @@ _Description: Creates interactive checklists._
 ```
 
 #quote(block: true)[
-  - Done
-  - To do
-]
+- #ts-task("done")[Done]
+- #ts-task("open")[To do]]
 
 == Highlight / Mark
 
@@ -429,11 +411,10 @@ and then release waste products.
 ```
 
 #quote(block: true)[
-  #highlight[Cellular respiration is a set of metabolic reactions] that take place in the
-  cells of organisms. Its #highlight[primary] function is to convert biochemical energy
-  from nutrients into #highlight[adenosine triphosphate (ATP)], and then release waste
-  products.
-]
+#highlight[Cellular respiration is a set of metabolic reactions] that take place in the
+cells of organisms. Its #highlight[primary] function is to convert biochemical energy
+from nutrients into #highlight[adenosine triphosphate (ATP)], and then release waste
+products.]
 
 == Tilde / Subscript / Superscript
 
@@ -448,10 +429,9 @@ H₂O, E = mc²
 ```
 
 #quote(block: true)[
-  H#sub[2]O, E = mc#super[2]
+H#sub[2]O, E = mc#super[2]
 
-  H₂O, E = mc²
-]
+H₂O, E = mc²]
 
 == SmartSymbols
 
@@ -464,15 +444,14 @@ _Description: Automatically substitutes typographic punctuation._
 ```
 
 #quote(block: true)[
-  "Smart quotes", ellipses..., en-dash –, em-dash —
-]
+"Smart quotes", ellipses..., en-dash –, em-dash —]
 
-== Better Math / LaTeX
+== Better Math / #ts-logo("LaTeX")
 
 _Extension: `pymdownx.arithmatex`_
 _Package: `pip install pymdown-extensions`_
 _Rendering engines: depends on KaTeX or MathJax._
-_Description: Typesets mathematical formulas with LaTeX syntax._
+_Description: Typesets mathematical formulas with #ts-logo("LaTeX") syntax._
 
 ```md
 The differential form of Maxwell's equations:
@@ -489,16 +468,15 @@ $$
 ```
 
 #quote(block: true)[
-  The differential form of Maxwell's equations:
+The differential form of Maxwell's equations:
 
-  #mitex(```\begin{aligned}
-  \nabla \cdot \mathbf{E} &= \frac{\rho}{\varepsilon_0} \\
-  \nabla \cdot \mathbf{B} &= 0 \\
-  \nabla \times \mathbf{E} &= -\frac{\partial \mathbf{B}}{\partial t} \\
-  \nabla \times \mathbf{B} &= \mu_0 \mathbf{J} + \mu_0 \varepsilon_0
-  \frac{\partial \mathbf{E}}{\partial t}
-  \end{aligned}```)
-]
+#mitex(`\begin{aligned}
+\nabla \cdot \mathbf{E} &= \frac{\rho}{\varepsilon_0} \\
+\nabla \cdot \mathbf{B} &= 0 \\
+\nabla \times \mathbf{E} &= -\frac{\partial \mathbf{B}}{\partial t} \\
+\nabla \times \mathbf{B} &= \mu_0 \mathbf{J} + \mu_0 \varepsilon_0
+\frac{\partial \mathbf{E}}{\partial t}
+\end{aligned}`)]
 
 == MagicLink (Automatic GitHub / Issue Links)
 
@@ -511,8 +489,7 @@ https://github.comuser/project#1
 ```
 
 #quote(block: true)[
-  #link("https://github.comuser/project#1")[https://github.comuser/project\#1]
-]
+#link("https://github.comuser/project#1")]
 
 == ProgressBar
 
@@ -524,16 +501,13 @@ _Description: Visualises progress as textual bars._
 [=25% "Research"]
 [=50% "Implementation"]
 [=75% "Review"]
-[=100% "Launch"]{: .thin}
+[=100% "Launch"]{.thin}
 ```
 
-#box(width: 9cm, height: 12pt, radius: 1pt, stroke: 0.5pt, fill: luma(90%), clip: true)[#box(width: 25%, height: 100%, fill: luma(40%))[]] Research
-
-#box(width: 9cm, height: 12pt, radius: 1pt, stroke: 0.5pt, fill: luma(90%), clip: true)[#box(width: 50%, height: 100%, fill: luma(40%))[]] Implementation
-
-#box(width: 9cm, height: 12pt, radius: 1pt, stroke: 0.5pt, fill: luma(90%), clip: true)[#box(width: 75%, height: 100%, fill: luma(40%))[]] Review
-
-#box(width: 9cm, height: 6pt, radius: 1pt, stroke: 0.5pt, fill: luma(90%), clip: true)[#box(width: 100%, height: 100%, fill: luma(40%))[]] Launch
+#ts-progress(0.25, label: "Research")
+#ts-progress(0.5, label: "Implementation")
+#ts-progress(0.75, label: "Review")
+#ts-progress(1, label: "Launch", thin: true)
 
 == Details / Collapsible Blocks
 
@@ -542,19 +516,14 @@ _Package: `pip install pymdown-extensions`_
 _Description: Creates collapsible disclosure sections._
 
 ```md
-???+ note "Title"
-
-    Collapsible content.
+::: note {title=Title collapsed=false}
+Collapsible content.
+:::
 ```
 
 #quote(block: true)[
-  #block(width: 100%, radius: 2pt, stroke: (left: 1.5pt + rgb("#448AFF"), rest: 0.4pt + rgb("#448AFF")))[
-    #block(width: 100%, fill: rgb("#448AFF").lighten(90%), inset: (x: 8pt, y: 4pt))[#text(weight: "bold", fill: rgb("#448AFF"))[📝#h(0.4em)Title]]
-    #block(width: 100%, inset: (x: 8pt, y: 6pt))[
-      Collapsible content.
-    ]
-  ]
-]
+#ts-callout(kind: "note", title: [Title], collapsed: false)[
+Collapsible content.]]
 
 == Keys (Keyboard Display)
 
@@ -567,8 +536,7 @@ _Description: Shows keyboard shortcuts with consistent styling._
 ```
 
 #quote(block: true)[
-  #box(stroke: 0.5pt, inset: (x: 3pt), outset: (y: 2pt))[control]+#box(stroke: 0.5pt, inset: (x: 3pt), outset: (y: 2pt))[c]
-]
+#ts-keys("Ctrl", "C")]
 
 == Tab Blocks (Tabbed Content)
 
@@ -577,18 +545,21 @@ _Package: `pip install pymdown-extensions`_
 _Description: Groups content in tabbed panes._
 
 ```md
-=== "Windows"
-
+:::: tabs
+::: tab {title=Windows}
 Windows is a Microsoft operating system.
-
-=== "Linux"
-
+:::
+::: tab {title=Linux}
 Linux is an open-source operating system.
+:::
+::::
 ```
 
-Windows is a Microsoft operating system.
+#ts-div("tab", title: "Windows")[
+Windows is a Microsoft operating system.]
 
-Linux is an open-source operating system.
+#ts-div("tab", title: "Linux")[
+Linux is an open-source operating system.]
 
 == Meta-Data / Front Matter
 
@@ -614,33 +585,7 @@ _Description: Includes content from other Markdown files._
 Permits you to include content from other Markdown files.
 
 ````md
-```python
-from __future__ import annotations
-
-from collections.abc import Iterable
-
-Move = tuple[int, str, str]
-
-def tower_of_hanoi(n: int, source: str, destination: str, auxiliary: str) -> list[Move]:
-    """Compute the move sequence for the Tower of Hanoi puzzle."""
-    moves: list[Move] = []
-
-    def _solve(disks: int, start: str, end: str, spare: str) -> None:
-        if disks == 0:
-            return
-        _solve(disks - 1, start, spare, end)
-        moves.append((disks, start, end))
-        _solve(disks - 1, spare, end, start)
-
-    _solve(n, source, destination, auxiliary)
-    return moves
-
-def render_solution(moves: Iterable[Move]) -> str:
-    """Return a human-readable description of the move sequence."""
-    return "\n".join(
-        f"Move disk {disk} from source {start} to destination {end}" for disk, start, end in moves
-    )
-
+```python include="hanoi.py"
 ```
 ````
 
@@ -693,24 +638,22 @@ _Package: `pymdown-extensions`_
 ```
 
 #quote(block: true)[
-  *_bold and italic_*
+#ts-lead[_bold and italic_]
 
-  *_bold and italic_*
-]
+_*bold and italic*_]
 
 == Long Dash (—)
 
 _Description: Notes how em-dashes are handled differently by parsers._
 
-No current extension automatically handles the em dash in Markdown. In LaTeX you use `--` for an en dash and `---` for an em dash. The `---` sequence can be confusing in Markdown because it is also used for horizontal rules; however, some parsers such as `markdown-it-py` interpret it contextually. Experiment as needed.
+No current extension automatically handles the em dash in Markdown. In #ts-logo("LaTeX") you use `–` for an en dash and `—` for an em dash. The `—` sequence can be confusing in Markdown because it is also used for horizontal rules; however, some parsers such as `markdown-it-py` interpret it contextually. Experiment as needed.
 
 ```md
 Achiles -- the swifest runner -- was fast, but not as fast as the tortoise.
 ```
 
 #quote(block: true)[
-  Achiles – the swifest runner – was fast, but not as fast as the tortoise.
-]
+Achiles – the swifest runner – was fast, but not as fast as the tortoise.]
 
 == Additional Syntax
 
@@ -728,15 +671,15 @@ _Description: Highlights extra syntaxes such as callouts and directives._
 _Description: Summarises less common Markdown dialects and their strengths._
 
 #table(
-  columns: 3,
-  align: (left, left, left),
-  table.header([Dialect], [Highlights], [Package]),
-  [*MultiMarkdown*], [Tables, footnotes, citations, extended metadata], [`multimarkdown`],
-  [*RMarkdown*], [Executable code (knitr), math, tables], [`rmarkdown` (R)],
-  [*kramdown*], [Math, footnotes, block IAL, definition lists], [(Ruby)],
-  [*CommonMark Ext.*], [Full GFM support], [`cmarkgfm`],
-  [*Ghost / Jekyll*], [“Liquid tags” (`{% include %}`)], [Liquid engine],
-  [*MkDocs Material*], [PyMdownX support + Snippets + Tabs + Admonitions], [`mkdocs-material`],
+columns: 3,
+align: (left, left, left),
+table.header([Dialect], [Highlights], [Package]),
+[*MultiMarkdown*], [Tables, footnotes, citations, extended metadata], [`multimarkdown`],
+[*RMarkdown*], [Executable code (knitr), math, tables], [`rmarkdown` (R)],
+[*kramdown*], [Math, footnotes, block IAL, definition lists], [(Ruby)],
+[*CommonMark Ext.*], [Full GFM support], [`cmarkgfm`],
+[*Ghost / Jekyll*], [“Liquid tags” (`{% include %}`)], [Liquid engine],
+[*MkDocs Material*], [PyMdownX support + Snippets + Tabs + Admonitions], [`mkdocs-material`],
 )
 
 #v(1em)

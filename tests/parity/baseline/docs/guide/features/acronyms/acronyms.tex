@@ -8,8 +8,12 @@
 \usepackage[colorlinks=true, linkcolor=NavyBlue, urlcolor=NavyBlue, citecolor=NavyBlue]{hyperref}
 \usepackage[a4paper]{geometry}
 \usepackage{ts-fonts}
-\usepackage{amsmath}
 \usepackage{float}
+\usepackage{graphicx}
+\usepackage{tcolorbox}
+\usepackage{xcolor}
+\usepackage{fvextra}
+\usepackage{amsmath}
 \usepackage{seqsplit}
 \usepackage{ts-callouts}
 \usepackage{ts-code}
@@ -18,58 +22,39 @@
 \usepackage{refcount}
 \makeatletter
 \def\ps@plain{
-  \let\@oddhead\@empty
-  \let\@evenhead\@empty
-  \def\@oddfoot{
-    \hfil
-    \ifnum\getpagerefnumber{LastPage}>1\relax
-      \thepage
-    \fi
-    \hfil}
-  \let\@evenfoot\@oddfoot
+\let\@oddhead\@empty
+\let\@evenhead\@empty
+\def\@oddfoot{
+\hfil
+\ifnum\getpagerefnumber{LastPage}>1\relax
+\thepage
+\fi
+\hfil}
+\let\@evenfoot\@oddfoot
 }
 \makeatother
 
 \title{Acronyms}
 \author{}\date{}
-
 \begin{document}
-
 \maketitle
-
-\thispagestyle{plain}
 Acronyms are abbreviations formed from the initial components of words or phrases, usually individual letters (e.g., NASA, HTML). They are commonly used in technical writing to simplify complex terms and improve readability.
-
-\section{Syntax}\label{syntax}
-
-Following the pattern in MkDocs and the \texttt{abbr} extension, TeXSmith supports defining acronyms like this:
-
-\begin{code}{md}{}{}
+\section{Syntax}
+Following the pattern in MkDocs and the \tscodeinline{abbr} extension, TeXSmith supports defining acronyms like this:
+\begin{tscode}[lang=md, engine=pygments]
 \begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
 The National Aeronautics and Space Administration NASA is responsible for the
 civilian space program.
 
 *[NASA]: National Aeronautics and Space Administration is responsible for the civilian space program. APOLLO 11 was one of its most famous missions in which humans first landed on the Moon.
 \end{Verbatim}
-\end{code}
+\end{tscode}
 \begin{figure}[H]
-    \centering
-
-    \ifdefined\adjustbox
-
-        \adjustbox{max width=\textwidth}{
-            \includegraphics[width=\linewidth]{snippet-<HASH>.pdf}
-        }
-
-    \else
-
-        \includegraphics[width=\linewidth]{snippet-<HASH>.pdf}
-
-    \fi
-
+\centering
+\includegraphics[width=\linewidth]{snippet-<HASH>.pdf}
+\caption[Demo]{Demo}
 \end{figure}
-\begin{callout}[callout note]{Note}
+\begin{tscallout}[kind=note]
 Due to \LaTeX{} limitations, acronyms must be in a single paragraph. Multi-paragraph acronyms are not yet supported.
-\end{callout}
-
+\end{tscallout}
 \end{document}

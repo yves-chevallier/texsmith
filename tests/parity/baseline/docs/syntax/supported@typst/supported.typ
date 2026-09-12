@@ -1,15 +1,15 @@
 #set document(
-  title: "Supported Markdown Syntax",
+title: "Supported Markdown Syntax",
 )
 #set page(
-  paper: "a4",
-  margin: 2.5cm,
-  numbering: none,
-  footer: context {
-    if counter(page).final().first() > 1 {
-      align(center)[#counter(page).get().first()]
-    }
-  },
+paper: "a4",
+margin: 2.5cm,
+numbering: none,
+footer: context {
+if counter(page).final().first() > 1 {
+align(center)[#counter(page).get().first()]
+}
+},
 )
 #set text(font: "New Computer Modern", size: 11pt, lang: "en")
 #set par(justify: true)
@@ -17,28 +17,22 @@
 #set heading(numbering: "1.1")
 
 #align(center)[
-  #text(size: 1.8em, weight: "bold")[Supported Markdown Syntax]
-]
+#text(size: 1.8em, weight: "bold")[Supported Markdown Syntax]]
 #v(1.5em)
 
-TeXSmith bundles Python-Markdown together with a curated set of PyMdown
-extensions. The combination lets you author rich documentation while keeping
-output predictable for LaTeX conversion. This page summarizes the syntax you can
-use out of the box and points to the extension behind each feature.
+TeXSmith reads TMark: CommonMark plus the extension set every
+MkDocs site already loads, plus the four families that cover what print needs.
+This page is the quick tour; each row links to the page that explains the
+construct.
 
-#block(width: 100%, radius: 2pt, stroke: (left: 1.5pt + rgb("#00B8D4"), rest: 0.4pt + rgb("#00B8D4")))[
-  #block(width: 100%, fill: rgb("#00B8D4").lighten(90%), inset: (x: 8pt, y: 4pt))[#text(weight: "bold", fill: rgb("#00B8D4"))[ℹ#h(0.4em)Renderer defaults]]
-  #block(width: 100%, inset: (x: 8pt, y: 6pt))[
-    The CLI and API both enable the exact same extension list defined in
-    `texsmith.adapters.markdown.DEFAULT_MARKDOWN_EXTENSIONS`. You can always
-    override the list with CLI flags or API options, but the features below are
-    available without additional configuration.
-  ]
-]
+#ts-callout(kind: "info", title: [One dialect, no configuration])[
+There is no extension list to enable. The parser is the same for the CLI,
+the Python API and the MkDocs plugin, and `tmark check FILE` tells you
+exactly what it read.]
 
 = Core Markdown (Always On)
 
-```markdown
+```md
 # Heading 1
 ## Heading 2
 ### Heading 3
@@ -51,145 +45,163 @@ use out of the box and points to the extension behind each feature.
 
 - Unordered item
   - Nested item
+
 1. Ordered item
 2. Next item
 
-Horizontal rules:
+Dividers:
+
 ---
 ```
 
-All standard Markdown constructs—headings, emphasis, lists, code blocks,
-blockquotes, links, images, and horizontal rules—render exactly as you would
-expect. In LaTeX output, horizontal rules become `\clearpage` page breaks rather
-than a literal line. TeXSmith relies on fenced code blocks by default, so triple
-backticks (``` `` ```) are the recommended way to author code samples.
+All standard CommonMark constructs render as you would expect. A `—` line is
+a *divider*: the web shows `<hr>`, and the paged writers emit `\tsdivider`,
+which the `ts-typesetting` fragment defines as a page break — a template
+redefines it at will.
 
-= Extension Cheat Sheet
+= Cheat sheet
 
 #table(
-  columns: 4,
-  align: (left, left, left, left),
-  table.header([Feature], [Extension], [Package], [Example]),
-  [Definition lists], [`def_list`], [`markdown`], [`Term: Definition`],
-  [Footnotes], [`footnotes`], [`markdown`], [`Footnote ref1`],
-  [Abbreviations], [`abbr`], [`markdown`], [`*[HTML]: HyperText Markup Language`],
-  [Admonitions], [`admonition`], [`markdown`], [`!!! note  Body`],
-  [Attribute lists], [`attr_list`], [`markdown`], [`![Alt](image.png){ width="50%" }`],
-  [Tables], [`tables`], [`markdown`], [Pipe-delimited tables],
-  [Markdown in HTML], [`md_in_html`], [`markdown`], [Markdown inside custom `<div>` blocks],
-  [SmartyPants], [`pymdownx.smartsymbols`], [`pymdown-extensions`], [Auto-converts quotes/dashes],
-  [Highlighted code], [`pymdownx.highlight`], [`pymdown-extensions`], [Adds syntax highlighting + anchors],
-  [Inline highlighting], [`pymdownx.inlinehilite`], [`pymdown-extensions`], [`print("hi")`],
-  [Details/summary], [`pymdownx.details`], [`pymdown-extensions`], [`???+ note Title`],
-  [SuperFences], [`pymdownx.superfences`], [`pymdown-extensions`], [Nest code fences safely],
-  [Task lists], [`pymdownx.tasklist`], [`pymdown-extensions`], [`- [x] Done`],
-  [Better emphasis], [`pymdownx.betterem`], [`pymdown-extensions`], [Fixes edge cases with underscores],
-  [MagicLink], [`pymdownx.magiclink`], [`pymdown-extensions`], [Autolinks URLs/issues],
-  [Keys], [`pymdownx.keys`], [`pymdown-extensions`], [`Ctrl+Alt+Del`],
-  [Tabbed content], [`pymdownx.tabbed`], [`pymdown-extensions`], [Content tabs],
-  [Snippets], [`pymdownx.snippets`], [`pymdown-extensions`], [Include external Markdown snippets],
-  [Caret markup], [`pymdownx.caret`], [`pymdown-extensions`], [`insert`],
-  [Mark (highlight)], [`pymdownx.mark`], [`pymdown-extensions`], [`highlight`],
-  [Tilde syntax], [`pymdownx.tilde`], [`pymdown-extensions`], [Subscript / superscript],
-  [Critic markup], [`pymdownx.critic`], [`pymdown-extensions`], [Editorial annotations],
-  [Emoji], [`pymdownx.emoji`], [`pymdown-extensions`], [`:sparkles:` or `:fontawesome-regular-face-smile:`],
-  [Fancy lists], [`pymdownx.fancylists`], [`pymdown-extensions`], [Extended list markers],
-  [Blocks caption], [`pymdownx.blocks.caption`], [`pymdown-extensions`], [Captions for fenced blocks],
-  [Blocks HTML], [`pymdownx.blocks.html`], [`pymdown-extensions`], [Named block wrappers],
-  [Snippets of LaTeX], [`texsmith.extensions.latex_raw`], [bundled], [Raw LaTeX fence],
-  [Missing footnotes guard], [`texsmith.extensions.missing_footnotes`], [bundled], [Warns when references lack definitions],
+columns: 3,
+align: (left, left, left),
+table.header([Feature], [Canonical spelling], [Class]),
+[Definition lists], [Term: Definition], [E],
+[Footnotes], [`[^1]` with a `[^1]: …` definition], [C],
+[Abbreviations], [`*[HTML]: HyperText Markup Language`], [E],
+[Callouts], [`::: note {title="…"}` (sugar `!!! note "…"`)], [D / E],
+[Collapsible callouts], [`::: note {collapsed=true}` (sugar `??? note`)], [D / E],
+[Attribute lists], [`![Alt](image.png){width=50%}`], [E],
+[Tables], [pipe tables, ```` ```yaml table ````], [C / D],
+[Captions], [`Figure: … {#fig:x}` after the float], [D],
+[Containers], [`::: div`, `::: multicolumn {cols=2}`, `::: figure`], [D],
+[Content tabs], [`::: tabs` + `::: tab {title=…}` (sugar `=== "…"`)], [D / E],
+[Highlighted code], [```` ```py title="x.py" linenums="1" ````], [E],
+[Inline highlighting], [`` `#!py print("hi")` `` or `{code py}[print(1)]`], [E],
+[Task lists], [`- [x] Done`], [C],
+[Keys], [`{keys}[ctrl+alt+del]` (sugar `++ctrl+alt+del++`)], [E],
+[Highlight], [`{mark}[x]` (sugar `==x==`)], [E],
+[Small caps], [`{sc}[x]` (sugar `__x__`)], [X1],
+[Subscript / superscript], [`{sub}[x]` / `{sup}[x]` (sugar `~x~`, `^x^`)], [X3 / E],
+[Emoji], [`:sparkles:`], [E],
+[Autolinks], [bare URLs], [E],
+[Critic markup], [`{++added++}`, `{–removed–}`], [E],
+[Math], [`$x$`, `$$…$$ {#eq:x}`], [C],
+[Progress bars], [`[=75% "Done"]`], [E],
+[Index entries], [`{index}[term]`, `#[term]`], [X5],
+[Counter items], [`#(fw:key)`], [X5],
+[References & citations], [`@key`, `@[key, p. 3]`], [X4],
+[Glossary references], [`@gls:term`], [D],
+[Asides / margin notes], [`{aside}[…]`, `::: aside`], [D],
+[Raw passthrough], [`{raw latex}(…)`, ```` ```latex raw ````], [D],
+[Includes], [`{include}(file.md)`], [D],
+[Diagrams], [`![Pipeline](pipeline.mmd)`, ```` ```mermaid image ````], [C / E],
 )
 
-Want a generated table of contents? Add the Python-Markdown `toc` extension with `-x toc` or `--enable-extension toc`—it is no longer enabled by default.
+Classes are the degradation classes of #link("index.md#degradation-classes")[TMark]:
+what a renderer other than TeXSmith shows for the same bytes.
 
-Use the table above as a quick pointer. The following sections provide more
-context and runnable examples.
+= Working with callouts
 
-= Working with Admonitions
+```md
+::: warning {title="LaTeX toolchain"}
+Remember to install TeX Live, MiKTeX, or MacTeX before running `texsmith --build`.
+:::
+```
 
-```markdown
+The PyMdownX spelling stays accepted indefinitely, because MkDocs Material
+renders it natively:
+
+```md
 !!! warning "LaTeX toolchain"
     Remember to install TeX Live, MiKTeX, or MacTeX before running `texsmith --build`.
 ```
 
-Admonitions render as highlighted callouts in HTML and as tcolorbox blocks in the
-LaTeX output. Combine them with tabs or details blocks to create layered
-walkthroughs.
+Callouts render as highlighted boxes in HTML and as `tcolorbox` blocks in the
+#ts-logo("LaTeX") output. See Admonitions.
 
-= Tables and Definition Lists
+= Tables and definition lists
 
-```markdown
+```md
 | Option | Description |
 | ------ | ----------- |
-| `--list-extensions` | Prints enabled Markdown extensions |
+| `--list-extensions` | Prints the enabled constructs |
 | `--debug` | Shows full tracebacks |
+
+Table: Selected command-line options. {#tbl:options}
 
 Term
 : Definition content
 ```
 
-Tables use the Python-Markdown `tables` extension while definition lists come
-from `def_list`. Both convert cleanly into LaTeX environments.
+Both convert cleanly into #ts-logo("LaTeX") environments. For spans, grouped headers,
+footers and validation, see Tables.
 
-= Task Lists and Checkboxes
+= Task lists and checkboxes
 
-```markdown
+```md
 - [x] Validate MkDocs navigation
 - [ ] Document template slots
 ```
 
-Task lists automatically render checkboxes in HTML. In LaTeX they become custom
-itemize entries with inline symbols.
+Task lists render checkboxes in HTML. In #ts-logo("LaTeX") they become `tstasklist` entries
+with inline symbols.
 
-= Keyboard Shortcuts
+= Keyboard shortcuts
 
-```markdown
-Use ++ctrl+s++ to save changes and ++ctrl+shift+b++ to build the docs.
+```md
+Use {keys}[ctrl+s] to save changes and {keys}[ctrl+shift+b] to build the docs.
 ```
 
-The `pymdownx.keys` extension turns the markup above into keyboard glyphs, which
-carry across to PDFs through the TeXSmith formatter.
+The PyMdownX spelling `++ctrl+s++` is sugar for the same node and renders
+identically. Both reach the PDF as `\tskeys{…}`.
 
-= Embedding Raw LaTeX
+= Embedding raw #ts-logo("LaTeX")
 
-Use the `/// latex` fence when native LaTeX is required:
+Use a `latex raw` fence when native #ts-logo("LaTeX") is required:
 
-```markdown
+````md
+```latex raw
 \begin{align}
 E &= mc^2 \\
 \nabla \cdot \vec{E} &= \frac{\rho}{\varepsilon_0}
 \end{align}
 ```
+````
 
-TeXSmith passes the block straight to the renderer, letting you mix handcrafted
-LaTeX with converted Markdown content. For inline adjustments, drop
-`{latex}[commands]` right into the paragraph:
+TeXSmith passes the block straight to the #ts-logo("LaTeX") writer; the Typst and HTML
+writers ignore it. For inline adjustments, use the `raw` role:
 
-```markdown
-The chapter ends here {latex}[\clearpage] before appendices.
+```md
+The chapter ends here {raw latex}(\clearpage) before appendices.
 ```
 
-= Snippet Includes
+`/// latex … ///` and `{latex}[…]` are the 0.6 spellings: still parsed, now
+deprecated. See Migrating to TMark.
 
-The `pymdownx.snippets` extension lets you avoid duplication:
+= Includes
 
-```markdown
---8<-- "includes/built-in-tasks.md"
+```md
+{include}(includes/built-in-tasks.md)
 ```
 
-Create an `includes` directory under `docs/` and share fragments across pages.
-The same mechanism can pull example Markdown from the samples used in automated
-tests, keeping docs and fixtures aligned.
+The file is parsed as TMark and spliced into the document, so nested fences are
+safe and relative paths inside it are rebased. To pull a code sample from a
+file without inlining it, put `include=` on the fence:
 
-= When You Need More
+````md
+```python include="examples/code/bubble_sort.py"
+```
+````
 
-- Use `texsmith --list-extensions` to see the live extension list.
-- Disable or add extensions via the `--enable-extension` and `--disable-extension`
-    flags in `texsmith` or through `ConversionRequest.markdown_extensions`
-    in the API.
-- If a feature relies on a third-party executable (for example Mermaid to PDF),
-    make sure the binary is available on the build worker before running
-    `texsmith --build`.
+The PyMdownX snippet syntax `–8<– "file"` is accepted as deprecated sugar.
 
-With these extensions enabled, TeXSmith can faithfully render everything from
-simple README-style guides to complex, reference-heavy manuals.
+= When you need more
+
+- `tmark check FILE` parses, resolves and lints a document; `–strict` turns
+warnings into failures.
+- `tmark lint –fix FILE` rewrites deprecated spellings.
+- `tmark parse FILE` prints the intermediate representation as JSON — the
+ground truth about what the parser read.
+- If a feature relies on a third-party executable (Mermaid to PDF, draw.io
+export), make sure the binary is available on the build worker before running
+`texsmith –build`.

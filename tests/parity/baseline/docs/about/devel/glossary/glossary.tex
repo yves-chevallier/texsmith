@@ -8,6 +8,8 @@
 \usepackage[colorlinks=true, linkcolor=NavyBlue, urlcolor=NavyBlue, citecolor=NavyBlue]{hyperref}
 \usepackage[a4paper]{geometry}
 \usepackage{ts-fonts}
+\usepackage{tcolorbox}
+\usepackage{fvextra}
 \usepackage{amsmath}
 \usepackage{float}
 \usepackage{seqsplit}
@@ -17,31 +19,26 @@
 \usepackage{refcount}
 \makeatletter
 \def\ps@plain{
-  \let\@oddhead\@empty
-  \let\@evenhead\@empty
-  \def\@oddfoot{
-    \hfil
-    \ifnum\getpagerefnumber{LastPage}>1\relax
-      \thepage
-    \fi
-    \hfil}
-  \let\@evenfoot\@oddfoot
+\let\@oddhead\@empty
+\let\@evenhead\@empty
+\def\@oddfoot{
+\hfil
+\ifnum\getpagerefnumber{LastPage}>1\relax
+\thepage
+\fi
+\hfil}
+\let\@evenfoot\@oddfoot
 }
 \makeatother
 
 \title{Glossary}
 \author{}\date{}
-
 \begin{document}
-
 \maketitle
-
-\thispagestyle{plain}
 The MkDocs \href{https://realtimeprojects.github.io/mkdocs-ezglossary}{ezglossary} plugin exists, but the syntax is unintuitive (for example, the semicolon separator) and does not handle spaced or formatted entries well. Ideally, readers should be able to access the glossary as a popup, tooltip, or link.
 
-\LaTeX{} glossaries usually rely on the \texttt{glossaries} package and definitions declared in the preamble via \texttt{\textbackslash{}newglossaryentry}:
-
-\begin{code}{latex}{}{}
+\LaTeX{} glossaries usually rely on the \tscodeinline{glossaries} package and definitions declared in the preamble via \tscodeinline{\textbackslash{}newglossaryentry}:
+\begin{tscode}[lang=latex, engine=pygments]
 \begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
 \PY{k}{\PYZbs{}newglossaryentry}\PY{n+nb}{\PYZob{}}key\PY{n+nb}{\PYZcb{}}\PY{n+nb}{\PYZob{}}
   name=\PY{n+nb}{\PYZob{}}singular form\PY{n+nb}{\PYZcb{}},
@@ -51,10 +48,9 @@ The MkDocs \href{https://realtimeprojects.github.io/mkdocs-ezglossary}{ezglossar
   text=\PY{n+nb}{\PYZob{}}normal form (if you want to force it)\PY{n+nb}{\PYZcb{}},
 \PY{n+nb}{\PYZcb{}}
 \end{Verbatim}
-\end{code}
-\texttt{\textbackslash{}gls} uses the standard form, \texttt{\textbackslash{}Gls} capitalizes the first letter, \texttt{\textbackslash{}glspl} gives the plural, and \texttt{\textbackslash{}Glspl} capitalizes the plural. The first use of the term falls back to the \texttt{first} form when present, otherwise \texttt{name}. Markdown alone cannot express all of that. One option is to define glossary entries in front matter:
-
-\begin{code}{text}{}{}
+\end{tscode}
+\tscodeinline{\textbackslash{}gls} uses the standard form, \tscodeinline{\textbackslash{}Gls} capitalizes the first letter, \tscodeinline{\textbackslash{}glspl} gives the plural, and \tscodeinline{\textbackslash{}Glspl} capitalizes the plural. The first use of the term falls back to the \tscodeinline{first} form when present, otherwise \tscodeinline{name}. Markdown alone cannot express all of that. One option is to define glossary entries in front matter:
+\begin{tscode}[lang=yml, engine=pygments]
 \begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
 glossary:
   html:
@@ -65,13 +61,11 @@ glossary:
       documents designed to be displayed in a web browser.
     first: HyperText Markup Language (HTML)
 \end{Verbatim}
-\end{code}
+\end{tscode}
 Place an anchor where the term is defined:
-
-\begin{code}{markdown}{}{}
+\begin{tscode}[lang=markdown, engine=pygments]
 \begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
 The \PY{g+gs}{**HTML**}\PYZob{}\PYZsh{}gls\PYZhy{}html\PYZcb{} is the standard markup language for web pages...
 \end{Verbatim}
-\end{code}
-
+\end{tscode}
 \end{document}

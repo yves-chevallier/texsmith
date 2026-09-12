@@ -1,15 +1,15 @@
 #set document(
-  title: "Structured glossary demo",
+title: "Structured glossary demo",
 )
 #set page(
-  paper: "a4",
-  margin: 2.5cm,
-  numbering: none,
-  footer: context {
-    if counter(page).final().first() > 1 {
-      align(center)[#counter(page).get().first()]
-    }
-  },
+paper: "a4",
+margin: 2.5cm,
+numbering: none,
+footer: context {
+if counter(page).final().first() > 1 {
+align(center)[#counter(page).get().first()]
+}
+},
 )
 #set text(font: "New Computer Modern", size: 11pt, lang: "en")
 #set par(justify: true)
@@ -17,8 +17,7 @@
 #set heading(numbering: "1.1")
 
 #align(center)[
-  #text(size: 1.8em, weight: "bold")[Structured glossary demo]
-]
+#text(size: 1.8em, weight: "bold")[Structured glossary demo]]
 #v(1.5em)
 
 #outline()
@@ -33,18 +32,18 @@ default table for entries that were left ungrouped.
 
 = Technical acronyms
 
-A REST API exchanges JSON messages over HTTP. The first occurrence of every
-acronym — API, HTTP, JSON — is automatically replaced with `\acrshort{...}`,
+A REST #ts-acr("API") exchanges #ts-acr("JSON") messages over #ts-acr("HTTP"). The first occurrence of every
+acronym — #ts-acr("API"), #ts-acr("HTTP"), #ts-acr("JSON") — is automatically replaced with `\acrshort{...}`,
 without writing any `\gls{...}` by hand.
 
 = Institutional acronyms
 
-The UN coordinates international relief efforts; the WHO publishes its health
+The #ts-acr("UN") coordinates international relief efforts; the #ts-acr("WHO") publishes its health
 recommendations.
 
 = Ungrouped acronym
 
-A DOI uniquely identifies a scientific publication. With no group attached, it
+A #ts-acr("DOI") uniquely identifies a scientific publication. With no group attached, it
 is listed in the default acronym table.
 
 = Mixing with the legacy syntax
@@ -52,7 +51,7 @@ is listed in the default acronym table.
 The classic Markdown `*[KEY]: ...` syntax keeps working and merges with the
 front-matter definitions.
 
-NMR remains a cornerstone of modern molecular analysis.
+#ts-acr("NMR") remains a cornerstone of modern molecular analysis.
 
 #v(1em)
 #heading(numbering: none)[Acronyms]

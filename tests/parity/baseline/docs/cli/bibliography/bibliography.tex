@@ -7,50 +7,78 @@
 \usepackage[english]{babel}
 \usepackage[colorlinks=true, linkcolor=NavyBlue, urlcolor=NavyBlue, citecolor=NavyBlue]{hyperref}
 \usepackage[a4paper]{geometry}
+\usepackage{ts-typesetting}
 \usepackage{ts-fonts}
+\usepackage{xcolor}
+\usepackage{epigraph}
+\usepackage{marginnote}
+\usepackage{multicol}
+\usepackage{progressbar}
+\usepackage{graphicx}
+\usepackage{tcolorbox}
+\usepackage{fvextra}
 \usepackage{amsmath}
 \usepackage{float}
 \usepackage{seqsplit}
+\renewcommand*{\marginfont}{
+\footnotesize
+\sloppy
+\emergencystretch=1em
+\hyphenpenalty=50
+\exhyphenpenalty=50
+}
+\newlength{\tsmarginparavail}
+\newlength{\tsmarginparalt}
+\newlength{\tsmarginparbuf}
+\setlength{\tsmarginparbuf}{6mm}
+\makeatletter
+\AtBeginDocument{
+\setlength{\tsmarginparavail}{\dimexpr\paperwidth-\textwidth-1in-\oddsidemargin-\marginparsep-\tsmarginparbuf\relax}
+\ifdim\tsmarginparavail<\z@\setlength{\tsmarginparavail}{\z@}\fi
+\if@twoside
+\setlength{\tsmarginparalt}{\dimexpr1in+\evensidemargin-\marginparsep-\tsmarginparbuf\relax}
+\ifdim\tsmarginparalt<\z@\setlength{\tsmarginparalt}{\z@}\fi
+\ifdim\tsmarginparalt<\tsmarginparavail
+\setlength{\tsmarginparavail}{\tsmarginparalt}
+\fi
+\fi
+\ifdim\tsmarginparavail<\marginparwidth
+\setlength{\marginparwidth}{\tsmarginparavail}
+\fi
+}
+\makeatother
 \usepackage{ts-code}
 
 \usepackage{lastpage}
 \usepackage{refcount}
 \makeatletter
 \def\ps@plain{
-  \let\@oddhead\@empty
-  \let\@evenhead\@empty
-  \def\@oddfoot{
-    \hfil
-    \ifnum\getpagerefnumber{LastPage}>1\relax
-      \thepage
-    \fi
-    \hfil}
-  \let\@evenfoot\@oddfoot
+\let\@oddhead\@empty
+\let\@evenhead\@empty
+\def\@oddfoot{
+\hfil
+\ifnum\getpagerefnumber{LastPage}>1\relax
+\thepage
+\fi
+\hfil}
+\let\@evenfoot\@oddfoot
 }
 \makeatother
 
 \title{Bibliography}
 \author{}\date{}
-
 \begin{document}
-
 \maketitle
-
-\thispagestyle{plain}
-\section{Add Bibliography Entries}\label{add-bibliography-entries}
-
-To include bibliography entries in your document, provide one or more BibTeX files as inputs when running TeXSmith. TeXSmith will parse these files and integrate the references into your document during the conversion process. For example:
-
-\begin{code}{bash}{}{}
+\section{Add Bibliography Entries}
+To include bibliography entries in your document, provide one or more \tslogo{BibTeX} files as inputs when running TeXSmith. TeXSmith will parse these files and integrate the references into your document during the conversion process. For example:
+\begin{tscode}[lang=bash, engine=pygments]
 \begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
 texsmith\PY{+w}{ }paper.md\PY{+w}{ }nature.bib\PY{+w}{ }ieee.bib\PY{+w}{ }\PYZhy{}o\PY{+w}{ }paper.pdf
 \end{Verbatim}
-\end{code}
-\section{List Bibliography Entries}\label{list-bibliography-entries}
-
-Use the \texttt{-\allowbreak{}-\allowbreak{}list-\allowbreak{}bibliography} flag to inspect BibTeX files before running a conversion or build. It helps catch parsing issues, duplicate entries, and empty datasets early in your workflow. For example in the \texttt{paper} example project:
-
-\begin{code}{text}{}{baselinestretch=0.5, }
+\end{tscode}
+\section{List Bibliography Entries}
+Use the \tscodeinline{-\allowbreak{}-\allowbreak{}list-\allowbreak{}bibliography} flag to inspect \tslogo{BibTeX} files before running a conversion or build. It helps catch parsing issues, duplicate entries, and empty datasets early in your workflow. For example in the \tscodeinline{paper} example project:
+\begin{tscode}[lang=text, stretch=0.5, engine=pygments]
 \begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
 \PYZdl{} texsmith cheese.md cheese.bib \PYZhy{}\PYZhy{}list\PYZhy{}bibliography
 
@@ -104,19 +132,15 @@ Use the \texttt{-\allowbreak{}-\allowbreak{}list-\allowbreak{}bibliography} flag
 │ From DOI fetches  │     0 │
 └───────────────────┴───────┘
 \end{Verbatim}
-\end{code}
-\section{Behaviour}\label{behaviour}
+\end{tscode}
+\section{Behaviour}
+TeXSmith loads every provided \tscodeinline{.bib} file using \tscodeinline{pybtex} and analyzes their contents, checks for duplicate keys, and verifies parsing integrity. It emits warnings for any issues found and prints a summary table of the number of entries per file.
 
-TeXSmith loads every provided \texttt{.bib} file using \texttt{pybtex} and analyzes their contents, checks for duplicate keys, and verifies parsing integrity. It emits warnings for any issues found and prints a summary table of the number of entries per file.
-
-The \texttt{-\allowbreak{}-\allowbreak{}list-\allowbreak{}bibliography} flag has the following behavior:
-
+The \tscodeinline{-\allowbreak{}-\allowbreak{}list-\allowbreak{}bibliography} flag has the following behavior:
 \begin{itemize}
-\item{} Prints a formatted table summarising the number of entries per file.
-\item{} Emits warnings for files that fail to parse, contain duplicate keys, or are empty.
-\item{} Highlights issues detected by TeXSmith's bibliography loader (e.g. conflicting entries sourced from multiple files).
-\item{} Exits before rendering anything else, so you can run it as a fast preflight step.
-
+\item Prints a formatted table summarising the number of entries per file.
+\item Emits warnings for files that fail to parse, contain duplicate keys, or are empty.
+\item Highlights issues detected by TeXSmith's bibliography loader (e.g. conflicting entries sourced from multiple files).
+\item Exits before rendering anything else, so you can run it as a fast preflight step.
 \end{itemize}
-
 \end{document}

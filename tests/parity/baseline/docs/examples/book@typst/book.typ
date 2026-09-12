@@ -1,29 +1,31 @@
 #set document(
-  title: "",
+title: "Book",
 )
 #set page(
-  paper: "a4",
-  margin: 2.5cm,
-  numbering: none,
-  footer: context {
-    if counter(page).final().first() > 1 {
-      align(center)[#counter(page).get().first()]
-    }
-  },
+paper: "a4",
+margin: 2.5cm,
+numbering: none,
+footer: context {
+if counter(page).final().first() > 1 {
+align(center)[#counter(page).get().first()]
+}
+},
 )
 #set text(font: "New Computer Modern", size: 11pt, lang: "en")
 #set par(justify: true)
 #show heading: set block(above: 1.8em, below: 1.0em)
 #set heading(numbering: "1.1")
 
-<einstein>
+#align(center)[
+#text(size: 1.8em, weight: "bold")[Book]]
+#v(1.5em)
 
-= Book
+#metadata(none) <einstein>
 
 For this example we want to render homage to Albert Einstein by creating a small book using the #link("https://en.wikipedia.org/wiki/Albert_Einstein")[Wikipedia]
 as our source.
 
-The text was converted to LaTeX then built using the `book` template.
+The text was converted to #ts-logo("LaTeX") then built using the `book` template.
 
 This example demonstrates the use of front matter for citations, abbreviations, glossary, and index.
 
@@ -52,12 +54,27 @@ press:
   template: book
   base_level: part
   fonts: adventor
-  admonition_style: classic
+  callouts:
+    style: classic
   slots:
     colophon: Colophon
     dedication: Dedication
     preface: Preface
 ```
+
+#ts-code(class: ("snippet"))[
+```yaml
+layout: 4x2
+cwd: ../../examples/book
+sources:
+  - book.md
+  - <STEM>.bib
+template: book
+fragments:
+  ts-frame:
+press:
+  frame: true
+```]
 
 The example can be built independently using the CLI in the `examples/book/` folder. The engine can be chosen between `tectonic`, `xelatex`, and `lualatex`
 as follows:
@@ -66,4 +83,4 @@ as follows:
 texsmith book.md <STEM>.bib --template book --build --engine tectonic
 ```
 
-The power of TeXSmith is that it can generate such complex documents from simple Markdown with no LaTeX knowledge required and no LaTeX toolchain installed. Fonts, toolchain, and image conversion are all handled automatically by TeXSmith in a single command.
+The power of TeXSmith is that it can generate such complex documents from simple Markdown with no #ts-logo("LaTeX") knowledge required and no #ts-logo("LaTeX") toolchain installed. Fonts, toolchain, and image conversion are all handled automatically by TeXSmith in a single command.

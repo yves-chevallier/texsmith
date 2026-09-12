@@ -8,8 +8,11 @@
 \usepackage[colorlinks=true, linkcolor=NavyBlue, urlcolor=NavyBlue, citecolor=NavyBlue]{hyperref}
 \usepackage[a4paper]{geometry}
 \usepackage{ts-fonts}
-\usepackage{amsmath}
 \usepackage{float}
+\usepackage{graphicx}
+\usepackage{tcolorbox}
+\usepackage{fvextra}
+\usepackage{amsmath}
 \usepackage{seqsplit}
 \usepackage{ts-code}
 
@@ -17,98 +20,76 @@
 \usepackage{refcount}
 \makeatletter
 \def\ps@plain{
-  \let\@oddhead\@empty
-  \let\@evenhead\@empty
-  \def\@oddfoot{
-    \hfil
-    \ifnum\getpagerefnumber{LastPage}>1\relax
-      \thepage
-    \fi
-    \hfil}
-  \let\@evenfoot\@oddfoot
+\let\@oddhead\@empty
+\let\@evenhead\@empty
+\def\@oddfoot{
+\hfil
+\ifnum\getpagerefnumber{LastPage}>1\relax
+\thepage
+\fi
+\hfil}
+\let\@evenfoot\@oddfoot
 }
 \makeatother
 
 \title{Mermaid Diagrams}
 \author{}\date{}
-
 \begin{document}
-
 \maketitle
-
-\thispagestyle{plain}
 Just like MkDocs, TeXSmith understands \href{https://mermaid.js.org}{Mermaid} diagrams. Browsers render them on the fly, but PDFs need static assets, so TeXSmith converts each diagram into a vector PDF during the build. That requires either:
-
 \begin{enumerate}
-\item Installing \texttt{mermaid-\allowbreak{}cli} and its dependencies in your environment, or
-\item Using Docker with the pulled image \texttt{mermaidjs/mermaid-\allowbreak{}cli}.
-
+\item Installing \tscodeinline{mermaid-\allowbreak{}cli} and its dependencies in your environment, or
+\item Using Docker with the pulled image \tscodeinline{mermaidjs/mermaid-\allowbreak{}cli}.
 \end{enumerate}
-\section{Inline diagram}\label{inline-diagram}
-
-\begin{code}{markdown}{}{}
+\section{Inline diagram}
+A Mermaid fence is a data directive whose node word is \tscodeinline{image}:
+\begin{tscode}[lang=md, engine=pygments]
 \begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
-\PY{l+s+sb}{```}\PY{l+s+sb}{mermaid}
+\PY{l+s+sb}{```}\PY{l+s+sb}{mermaid}\PY{+w}{ }image
 \PY{l+s}{flowchart LR}
 \PY{l+s}{    A \PYZhy{}\PYZhy{}\PYZgt{} B}
 \PY{l+s}{    B \PYZhy{}\PYZhy{}\PYZgt{} C}
 \PY{l+s+sb}{```}
 \end{Verbatim}
-\end{code}
+\end{tscode}
+A bare \tscodeinline{```mermaid} fence means the same thing --- \tscodeinline{image} is the one
+default that is not \tscodeinline{code}, because that is what MkDocs Material and every
+Mermaid-aware renderer do with it. The sugar is kept indefinitely for exactly
+that reason. To \emph{show} the source as a listing instead, ask for \tscodeinline{mermaid code}:
+\begin{tscode}[lang=md, engine=pygments]
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+\PY{l+s+sb}{```}\PY{l+s+sb}{mermaid}\PY{+w}{ }code
+\PY{l+s}{flowchart LR}
+\PY{l+s}{    A \PYZhy{}\PYZhy{}\PYZgt{} B}
+\PY{l+s+sb}{```}
+\end{Verbatim}
+\end{tscode}
 \begin{figure}[H]
-    \centering
-
-    \ifdefined\adjustbox
-
-        \adjustbox{max width=\textwidth}{
-            \includegraphics[width=\linewidth]{<HASH>.pdf}
-        }
-
-    \else
-
-        \includegraphics[width=\linewidth]{<HASH>.pdf}
-
-    \fi
-
+\centering
+\includegraphics[width=\linewidth]{<HASH>.pdf}
 \end{figure}
-\section{External diagrams}\label{external-diagrams}
-
+\section{External diagrams}
 Sometimes diagrams live better outside the Markdown. TeXSmith supports:
-
 \begin{enumerate}
-\item Reference external \texttt{.mmd} / \texttt{.mermaid} files.
-\item Embed Mermaid Live snippets using \texttt{pako:} URLs for live editing.
-
+\item Reference external \tscodeinline{.mmd} / \tscodeinline{.mermaid} files.
+\item Embed Mermaid Live snippets using \tscodeinline{pako:} URLs for live editing.
 \end{enumerate}
-The \texttt{texsmith.extensions.mermaid} extension sniffs out these references, pulls the content in, and treats inline/external sources the same way.
+Diagram sources \emph{are} images: the extension recognises the format from the
+path and converts inline and external sources the same way.
 
-Using a \texttt{mmd} file is as simple as including an image:
-
-\begin{code}{markdown}{}{}
+Using a \tscodeinline{.mmd} file is as simple as including an image:
+\begin{tscode}[lang=md, engine=pygments]
 \begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
 ![\PY{n+nt}{Build pipeline}](\PY{n+na}{../assets/mermaid.mmd})
 \end{Verbatim}
-\end{code}
+\end{tscode}
 \begin{figure}[H]
-    \centering
-
-    \ifdefined\adjustbox
-
-        \adjustbox{max width=\textwidth}{
-            \includegraphics[width=\linewidth]{<HASH>.pdf}
-        }
-
-    \else
-
-        \includegraphics[width=\linewidth]{<HASH>.pdf}
-
-    \fi
-
+\centering
+\includegraphics[width=\linewidth]{<HASH>.pdf}
+\caption{Build pipeline}
 \end{figure}
-
 Mermaid Live encodes diagrams via Pako (a compression library) so you can share/edit them through URLs:
-
-\begin{code}{markdown}{}{}
+\begin{tscode}[lang=md, engine=pygments]
 \begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
 ![\PY{n+nt}{Online Diagram}](\PY{n+na}{https://mermaid.live/edit\PYZsh{}pako:eNpVTctugzAQ\PYZus{}BVrT4lEEMQEiA\PYZus{}tIemt7aE9tX}
 \PY{n+na}{EODl4eSrAtY5q2iH8vEBGpe1jtzOzMdJBpicAgv\PYZhy{}hrVgrryPMbV2SYxg1o8T7uJVmtHoipsvNhXxWkNcfby8hMU}
@@ -116,45 +97,40 @@ Mermaid Live encodes diagrams via Pako (a compression library) so you can share/
 \PY{n+na}{jBC60cjBlVgjBzacUtgzB676wWOE\PYZhy{}tS6nm1Wt0UJLBeXZkCtkcLhvhKFFfWdtagk2p1ulQO23tApBFgH38DCMPG}
 \PY{n+na}{TMKI0TKKABkHswQ\PYZhy{}wlPrxOtrSKNnSOA2SsPfgd2oN\PYZus{}DTZ9H9\PYZus{}ZXFC})
 \end{Verbatim}
-\end{code}
+\end{tscode}
 When TeXSmith renders HTML/PDF it wraps the image with a link to the Mermaid Live editor. Click the preview to inspect the source:
-
 \begin{figure}[H]
-    \centering
-
-    \ifdefined\adjustbox
-
-        \adjustbox{max width=\textwidth}{
-            \includegraphics[width=\linewidth]{<HASH>.pdf}
-        }
-
-    \else
-
-        \includegraphics[width=\linewidth]{<HASH>.pdf}
-
-    \fi
-
+\centering
+\includegraphics[width=\linewidth]{<HASH>.pdf}
+\caption{Example Pako}
 \end{figure}
-\section{LaTeX Rendering}\label{latex-rendering}
-
+\section{\LaTeX{} Rendering}
 Here's how the diagrams look once TeXSmith embeds them:
-
-\section{Conversion by TeXSmith}\label{conversion-by-texsmith}
-
-All Mermaid diagrams are converted to PDF and included with \texttt{\textbackslash{}includegraphics}
+\begin{figure}[H]
+\centering
+\includegraphics[width=\linewidth]{snippet-<HASH>.pdf}
+\end{figure}
+\section{Conversion by TeXSmith}
+All Mermaid diagrams are converted to PDF and included with \tscodeinline{\textbackslash{}includegraphics}
 so they integrate cleanly with templates and \LaTeX{} floats.
 
-Printed output might deserve a different theme. Point \texttt{mermaid\_config} to a JSON config (front matter or CLI \texttt{-\allowbreak{}-\allowbreak{}attribute press.mermaid\_config=...}) to override:
+Add a caption line to promote the diagram to a numbered figure:
+\begin{tscode}[lang=md, engine=pygments]
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+![\PY{n+nt}{Build pipeline}](\PY{n+na}{../assets/mermaid.mmd})
 
-\begin{code}{yaml}{}{}
+Figure: The documentation build pipeline. \PYZob{}\PYZsh{}fig:pipeline\PYZcb{}
+\end{Verbatim}
+\end{tscode}
+Printed output might deserve a different theme. Point \tscodeinline{mermaid\_config} to a JSON config (front matter or CLI \tscodeinline{-\allowbreak{}-\allowbreak{}attribute press.mermaid\_config=...}) to override:
+\begin{tscode}[lang=yaml, engine=pygments]
 \begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
 \PY{n+nn}{\PYZhy{}\PYZhy{}\PYZhy{}}
 \PY{n+nt}{press}\PY{p}{:}
 \PY{+w}{  }\PY{n+nt}{mermaid\PYZus{}config}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{mermaid\PYZhy{}config.json}
 \PY{n+nn}{\PYZhy{}\PYZhy{}\PYZhy{}}
 \end{Verbatim}
-\end{code}
-Alternatively, you can add a \texttt{mermaid-\allowbreak{}config.json} file to the \texttt{\textasciitilde{}/.texsmith/} directory
+\end{tscode}
+Alternatively, you can add a \tscodeinline{mermaid-\allowbreak{}config.json} file to the \tscodeinline{\textasciitilde{}/.texsmith/} directory
 to apply it globally to all your TeXSmith projects.
-
 \end{document}

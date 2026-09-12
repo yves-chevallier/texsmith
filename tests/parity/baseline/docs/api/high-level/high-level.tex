@@ -8,6 +8,9 @@
 \usepackage[colorlinks=true, linkcolor=NavyBlue, urlcolor=NavyBlue, citecolor=NavyBlue]{hyperref}
 \usepackage[a4paper]{geometry}
 \usepackage{ts-fonts}
+\usepackage{tcolorbox}
+\usepackage{xcolor}
+\usepackage{fvextra}
 \usepackage{amsmath}
 \usepackage{float}
 \usepackage{seqsplit}
@@ -18,39 +21,32 @@
 \usepackage{refcount}
 \makeatletter
 \def\ps@plain{
-  \let\@oddhead\@empty
-  \let\@evenhead\@empty
-  \def\@oddfoot{
-    \hfil
-    \ifnum\getpagerefnumber{LastPage}>1\relax
-      \thepage
-    \fi
-    \hfil}
-  \let\@evenfoot\@oddfoot
+\let\@oddhead\@empty
+\let\@evenhead\@empty
+\def\@oddfoot{
+\hfil
+\ifnum\getpagerefnumber{LastPage}>1\relax
+\thepage
+\fi
+\hfil}
+\let\@evenfoot\@oddfoot
 }
 \makeatother
 
 \title{High-Level Workflows}
 \author{}\date{}
-
 \begin{document}
-
 \maketitle
-
-\section{High-Level Workflows}\label{high-level-workflows}
-
+\section{High-Level Workflows}
 TeXSmith exposes a thin, expressive façade over the lower-level conversion primitives. Mix and match Markdown, HTML, and template-aware documents without touching the CLI or re-implementing glue code.
 
-This page showcases the building blocks you are most likely to use in scripts, services, or notebooks. All examples assume \texttt{pip install texsmith} (or \texttt{uv tool install texsmith}) plus any template packages you rely on.
-
-\begin{callout}[callout tip]{Run the snippets}
-Save the examples into a file and execute them with \texttt{uv run python example.py}. The snippets rely only on fixtures you create alongside the script.
-\end{callout}
-\subsection{Convert a handful of documents}\label{convert-a-handful-of-documents}
-
-Use \texttt{Document.from\_markdown} / \texttt{Document.from\_html} to normalise inputs, then hand everything to \texttt{convert\_documents}. The bundle returned by \texttt{convert\_documents} keeps every fragment, output path, and the raw \LaTeX{} handy:
-
-\begin{code}{python}{}{}
+This page showcases the building blocks you are most likely to use in scripts, services, or notebooks. All examples assume \tscodeinline{pip install texsmith} (or \tscodeinline{uv tool install texsmith}) plus any template packages you rely on.
+\begin{tscallout}[kind=tip, title={Run the snippets}]
+Save the examples into a file and execute them with \tscodeinline{uv run python example.py}. The snippets rely only on fixtures you create alongside the script.
+\end{tscallout}
+\subsection{Convert a handful of documents}
+Use \tscodeinline{Document.from\_markdown} / \tscodeinline{Document.from\_html} to normalise inputs, then hand everything to \tscodeinline{convert\_documents}. The bundle returned by \tscodeinline{convert\_documents} keeps every fragment, output path, and the raw \LaTeX{} handy:
+\begin{tscode}[lang=python, engine=pygments]
 \begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
 \PY{k+kn}{from}\PY{+w}{ }\PY{n+nn}{pathlib}\PY{+w}{ }\PY{k+kn}{import} \PY{n}{Path}
 
@@ -71,12 +67,11 @@ Use \texttt{Document.from\_markdown} / \texttt{Document.from\_html} to normalise
 \PY{k}{for} \PY{n}{fragment} \PY{o+ow}{in} \PY{n}{bundle}\PY{o}{.}\PY{n}{fragments}\PY{p}{:}
     \PY{n+nb}{print}\PY{p}{(}\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{Rendered fragment}\PY{l+s+s2}{\PYZdq{}}\PY{p}{,} \PY{n}{fragment}\PY{o}{.}\PY{n}{stem}\PY{p}{,} \PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{→}\PY{l+s+s2}{\PYZdq{}}\PY{p}{,} \PY{n}{fragment}\PY{o}{.}\PY{n}{output\PYZus{}path}\PY{p}{)}
 \end{Verbatim}
-\end{code}
-\texttt{ConversionRequest} carries conversion settings (parser, fallbacks, manifest emission, etc.) in addition to document inputs. When you omit \texttt{output\_dir}, the bundle stays in memory---perfect for unit tests or further processing.
+\end{tscode}
+\tscodeinline{ConversionRequest} carries conversion settings (parser, fallbacks, manifest emission, etc.) in addition to document inputs. When you omit \tscodeinline{output\_dir}, the bundle stays in memory---perfect for unit tests or further processing.
 
 Use it to opt into legacy \LaTeX{} accent macros (default is Unicode output):
-
-\begin{code}{python}{}{}
+\begin{tscode}[lang=python, engine=pygments]
 \begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
 \PY{k+kn}{from}\PY{+w}{ }\PY{n+nn}{pathlib}\PY{+w}{ }\PY{k+kn}{import} \PY{n}{Path}
 
@@ -85,17 +80,14 @@ Use it to opt into legacy \LaTeX{} accent macros (default is Unicode output):
 \PY{n}{settings} \PY{o}{=} \PY{n}{ConversionRequest}\PY{p}{(}\PY{n}{legacy\PYZus{}latex\PYZus{}accents}\PY{o}{=}\PY{k+kc}{True}\PY{p}{)}
 \PY{n}{bundle} \PY{o}{=} \PY{n}{convert\PYZus{}documents}\PY{p}{(}\PY{p}{[}\PY{n}{Document}\PY{o}{.}\PY{n}{from\PYZus{}markdown}\PY{p}{(}\PY{n}{Path}\PY{p}{(}\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{intro.md}\PY{l+s+s2}{\PYZdq{}}\PY{p}{)}\PY{p}{)}\PY{p}{]}\PY{p}{,} \PY{n}{settings}\PY{o}{=}\PY{n}{settings}\PY{p}{)}
 \end{Verbatim}
-\end{code}
-\subsection{Drive the pipeline with \texttt{ConversionService}}\label{drive-the-pipeline-with-texttt-conversionservice}
-
-If you need the exact orchestration used by the CLI, rely on \texttt{ConversionService}. It exposes two steps:
-
+\end{tscode}
+\subsection{Drive the pipeline with \tscodeinline{ConversionService}}
+If you need the exact orchestration used by the CLI, rely on \tscodeinline{ConversionService}. It exposes two steps:
 \begin{enumerate}
-\item \texttt{prepare\_documents(request)} splits inputs, normalises Markdown/HTML, applies slot assignments, and returns a \texttt{ConversionPrepared} payload.
-\item \texttt{execute(request, prepared=...)} renders the documents, optionally through a template, and produces a \texttt{ConversionResponse} with the bundle plus emitted diagnostics.
-
+\item \tscodeinline{prepare\_documents(request)} splits inputs, normalises Markdown/HTML, applies slot assignments, and returns a \tscodeinline{ConversionPrepared} payload.
+\item \tscodeinline{execute(request, prepared=...)} renders the documents, optionally through a template, and produces a \tscodeinline{ConversionResponse} with the bundle plus emitted diagnostics.
 \end{enumerate}
-\begin{code}{python}{}{}
+\begin{tscode}[lang=python, engine=pygments]
 \begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
 \PY{k+kn}{from}\PY{+w}{ }\PY{n+nn}{pathlib}\PY{+w}{ }\PY{k+kn}{import} \PY{n}{Path}
 
@@ -116,14 +108,11 @@ If you need the exact orchestration used by the CLI, rely on \texttt{ConversionS
 \PY{k}{for} \PY{n}{event} \PY{o+ow}{in} \PY{n}{response}\PY{o}{.}\PY{n}{diagnostics}\PY{p}{:}
     \PY{n+nb}{print}\PY{p}{(}\PY{n}{event}\PY{o}{.}\PY{n}{name}\PY{p}{,} \PY{n}{event}\PY{o}{.}\PY{n}{payload}\PY{p}{)}
 \end{Verbatim}
-\end{code}
-The CLI passes a \texttt{CliEmitter} via \texttt{ConversionRequest.emitter} so warnings surface nicely. Library callers can supply their own emitter or accept the default \texttt{NullEmitter}.
-
-\subsection{Work with templates programmatically}\label{work-with-templates-programmatically}
-
-\texttt{TemplateSession} wraps template discovery, option management, slot assignments, and final rendering (the heavy lifting lives in \texttt{texsmith.core.conversion.TemplateRenderer}).  Anything you can do from the CLI works here too, but you get a richer, Pythonic surface:
-
-\begin{code}{python}{}{}
+\end{tscode}
+The CLI passes a \tscodeinline{CliEmitter} via \tscodeinline{ConversionRequest.emitter} so warnings surface nicely. Library callers can supply their own emitter or accept the default \tscodeinline{NullEmitter}.
+\subsection{Work with templates programmatically}
+\tscodeinline{TemplateSession} wraps template discovery, option management, slot assignments, and final rendering (the heavy lifting lives in \tscodeinline{texsmith.core.conversion.TemplateRenderer}).  Anything you can do from the CLI works here too, but you get a richer, Pythonic surface:
+\begin{tscode}[lang=python, engine=pygments]
 \begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
 \PY{k+kn}{from}\PY{+w}{ }\PY{n+nn}{pathlib}\PY{+w}{ }\PY{k+kn}{import} \PY{n}{Path}
 
@@ -152,24 +141,19 @@ The CLI passes a \texttt{CliEmitter} via \texttt{ConversionRequest.emitter} so w
 \PY{n+nb}{print}\PY{p}{(}\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{LaTeX fragments:}\PY{l+s+s2}{\PYZdq{}}\PY{p}{,} \PY{n}{result}\PY{o}{.}\PY{n}{fragment\PYZus{}paths}\PY{p}{)}
 \PY{n+nb}{print}\PY{p}{(}\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{Template engine:}\PY{l+s+s2}{\PYZdq{}}\PY{p}{,} \PY{n}{result}\PY{o}{.}\PY{n}{template\PYZus{}engine}\PY{p}{)}
 \end{Verbatim}
-\end{code}
-Need bibliography support? Register \texttt{.bib} files with \texttt{session.add\_bibliography(...)} before calling \texttt{render}. Every slot override (\texttt{Document.assign\_slot}) and metadata tweak flows straight through to the template runtime.
+\end{tscode}
+Need bibliography support? Register \tscodeinline{.bib} files with \tscodeinline{session.add\_bibliography(...)} before calling \tscodeinline{render}. Every slot override (\tscodeinline{Document.assign\_slot}) and metadata tweak flows straight through to the template runtime.
+\begin{tscallout}[kind=note]
+For practical slot recipes (front matter/main matter splits, appendix routing, overrides) see the Template Cookbook.
+\end{tscallout}
+\subsection{Reuse the same plumbing as the CLI}
+\tscodeinline{texsmith} relies on these high-level primitives. Inspect the CLI command and you will notice the same API surface shown above. Scripts and command-line invocations stay aligned, and new features land in one place.
 
-\begin{callout}[callout note]{Note}
-For practical slot recipes (front matter/main matter splits, appendix routing, overrides) see the \hyperref[snippet:<HASH>]{Template Cookbook}.
-\end{callout}
-\subsection{Reuse the same plumbing as the CLI}\label{reuse-the-same-plumbing-as-the-cli}
-
-\texttt{texsmith} relies on these high-level primitives. Inspect the CLI command and you will notice the same API surface shown above. Scripts and command-line invocations stay aligned, and new features land in one place.
-
-For a complete reference, browse the API browser or explore the source directly in \texttt{src/texsmith/core/}.
-
-\begin{callout}[callout info]{Seealso}
+For a complete reference, browse the API browser or explore the source directly in \tscodeinline{src/texsmith/core/}.
+\begin{tscallout}[kind=seealso]
 \begin{itemize}
-\item{} \hyperref[snippet:<HASH>]{Command-line Overview} explains how these APIs surface through Typer commands.
-\item{} \hyperref[snippet:<HASH>]{Core Engine} documents the lower-level modules if you need to plug into diagnostics or templating internals.
-
+\item Command-line Overview explains how these APIs surface through Typer commands.
+\item Core Engine documents the lower-level modules if you need to plug into diagnostics or templating internals.
 \end{itemize}
-\end{callout}
-
+\end{tscallout}
 \end{document}

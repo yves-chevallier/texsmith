@@ -1,15 +1,15 @@
 #set document(
-  title: "Diagnostics",
+title: "Diagnostics",
 )
 #set page(
-  paper: "a4",
-  margin: 2.5cm,
-  numbering: none,
-  footer: context {
-    if counter(page).final().first() > 1 {
-      align(center)[#counter(page).get().first()]
-    }
-  },
+paper: "a4",
+margin: 2.5cm,
+numbering: none,
+footer: context {
+if counter(page).final().first() > 1 {
+align(center)[#counter(page).get().first()]
+}
+},
 )
 #set text(font: "New Computer Modern", size: 11pt, lang: "en")
 #set par(justify: true)
@@ -17,8 +17,7 @@
 #set heading(numbering: "1.1")
 
 #align(center)[
-  #text(size: 1.8em, weight: "bold")[Diagnostics]
-]
+#text(size: 1.8em, weight: "bold")[Diagnostics]]
 #v(1.5em)
 
 TeXSmith reports what it could not do well — a missing image, a
@@ -33,14 +32,14 @@ report.md:12:5: warning ref-unresolved: Counter reference '@n:missing' has no ma
 ```
 
 #table(
-  columns: 2,
-  align: (left, left),
-  table.header([Part], [Meaning]),
-  [`report.md`], [the file the finding belongs to],
-  [`12:5`], [1-based line and 1-based *byte* column of the construct (`tmark check` prints the same numbers)],
-  [`warning`], [the severity],
-  [`ref-unresolved`], [a stable kebab-case code; grep for it, filter on it in CI],
-  [the rest], [one sentence naming the construct],
+columns: 2,
+align: (left, left),
+table.header([Part], [Meaning]),
+[`report.md`], [the file the finding belongs to],
+[`12:5`], [1-based line and 1-based *byte* column of the construct (`tmark check` prints the same numbers)],
+[`warning`], [the severity],
+[`ref-unresolved`], [a stable kebab-case code; grep for it, filter on it in CI],
+[the rest], [one sentence naming the construct],
 )
 
 A finding without a position prints the file name only
@@ -53,13 +52,13 @@ a duplicate key) follow, indented under the line.
 = Severities
 
 #table(
-  columns: 3,
-  align: (left, left, left),
-  table.header([Severity], [Meaning], [`--strict`]),
-  [`hint`], [a style nit; nothing is wrong with the output], [ignored],
-  [`info`], [something was done on your behalf (a root key overriding `press`)], [ignored],
-  [`warning`], [the output has a visible defect (`[?key]`, an empty number, a missing image)], [fails],
-  [`error`], [a stage could not complete; the run usually stops], [fails],
+columns: 3,
+align: (left, left, left),
+table.header([Severity], [Meaning], [`–strict`]),
+[`hint`], [a style nit; nothing is wrong with the output], [ignored],
+[`info`], [something was done on your behalf (a root key overriding `press`)], [ignored],
+[`warning`], [the output has a visible defect (`[?key]`, an empty number, a missing image)], [fails],
+[`error`], [a stage could not complete; the run usually stops], [fails],
 )
 
 Warnings and errors are always shown. `-q` hides hints and info lines (they
@@ -71,14 +70,14 @@ When at least one warning or error was recorded, the run ends with a summary:
 0 errors, 2 warnings
 ```
 
-= `--strict`
+= `–strict`
 
 ```sh
 texsmith report.md --build --strict
 ```
 
-`--strict` exits with status 1 when any warning or error was recorded. The
-check runs *after the LaTeX is written and before the engine runs*, so the
+`–strict` exits with status 1 when any warning or error was recorded. The
+check runs *after the #ts-logo("LaTeX") is written and before the engine runs*, so the
 `.tex` is there to inspect and no PDF is produced from a document with a known
 hole. The same switch lives in the front matter, for documents that must never
 ship with an unresolved reference:
@@ -89,10 +88,10 @@ press:
     strict: true
 ```
 
-`--strict` replaces the former `PYTHONWARNINGS=error`: these findings are no
+`–strict` replaces the former `PYTHONWARNINGS=error`: these findings are no
 longer Python warnings and that variable no longer promotes them.
 
-= `--diagnostics-json`
+= `–diagnostics-json`
 
 ```sh
 texsmith report.md --diagnostics-json build/diagnostics.json
@@ -120,6 +119,23 @@ for editors and CI:
 optional `fix` / `related` are tmark's fields; `origin` says which tool found
 it (`texsmith` or `tmark`); `path`, `line` and `col` are the printed location,
 `null` when the record has none.
+
+= Deprecated spellings
+
+A `deprecated` warning names the canonical replacement:
+
+```
+report.md:16:18: warning deprecated: `[^key]` is deprecated, write `@key`
+```
+
+These are the only findings a tool can fix for you:
+
+```sh
+tmark lint --fix --diff report.md   # preview
+tmark lint --fix report.md          # apply in place
+```
+
+See Migrating to TMark for the full table and its horizons.
 
 = Codes
 

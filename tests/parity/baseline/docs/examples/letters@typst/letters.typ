@@ -1,15 +1,15 @@
 #set document(
-  title: "Letters",
+title: "Letters",
 )
 #set page(
-  paper: "a4",
-  margin: 2.5cm,
-  numbering: none,
-  footer: context {
-    if counter(page).final().first() > 1 {
-      align(center)[#counter(page).get().first()]
-    }
-  },
+paper: "a4",
+margin: 2.5cm,
+numbering: none,
+footer: context {
+if counter(page).final().first() > 1 {
+align(center)[#counter(page).get().first()]
+}
+},
 )
 #set text(font: "New Computer Modern", size: 11pt, lang: "en")
 #set par(justify: true)
@@ -17,27 +17,47 @@
 #set heading(numbering: "1.1")
 
 #align(center)[
-  #text(size: 1.8em, weight: "bold")[Letters]
-]
+#text(size: 1.8em, weight: "bold")[Letters]]
 #v(1.5em)
 
 TeXSmith includes a built-in letter template based on the KOMA-Script `scrlttr2` class. Below are three examples of letters formatted according to different national standards: *DIN* (Germany), *SN* (Switzerland), and *NF* (France).
 
 The letter template is built into TeXSmith; to use it, set `-tletter` on the command line or `template: letter` in your document front matter.
 
+#ts-div("tab", title: "DIN (Germany)")[
+#figure(
+image("snippet-<HASH>.png", width: 70%),
+caption: [Download PDF],
+)]
+
+#ts-div("tab", title: "SN (Switzerland)")[
+#figure(
+image("snippet-<HASH>.png", width: 70%),
+caption: [Download PDF],
+)]
+
+#ts-div("tab", title: "NF (France)")[
+#figure(
+image("snippet-<HASH>.png", width: 70%),
+caption: [Download PDF],
+)]
+
 Here is the source code for the letter example used above:
 
+#ts-div("tab", title: "Letter")[
 ```markdown
+[include: examples/letter/letter.md not found]
+```]
 
-```
-
+#ts-div("tab", title: "Template")[
 ```latex
+[include: src/texsmith/templates/letter/template/template.tex not found]
+```]
 
-```
-
+#ts-div("tab", title: "Manifest")[
 ```toml
-
-```
+[include: src/texsmith/templates/letter/manifest.toml not found]
+```]
 
 To build the examples, use the following commands:
 
@@ -65,7 +85,7 @@ The former French AFNOR standard *NF Z 11-001*, replaced by ISO 269 back in 1998
 
 = Why We Ultimately Chose scrlttr2
 
-While our documentation already covers the underlying standards that govern letter layout, what actually matters in practice is finding a tool that can embody these rules with precision, consistency, and a healthy respect for typographic sanity. This is the point where LaTeX—and specifically KOMA-Script’s `scrlttr2`—quietly distinguishes itself from the rest. Designed in the German tradition of rigorous typesetting, `scrlttr2` follows the logic of formal letter standards with an almost pedantic accuracy, offering a layout engine that behaves predictably and stays faithful to the structural constraints imposed by modern correspondence norms. Yet it remains flexible enough to emulate the conventions of other national styles without falling apart or requiring awkward hacks.
+While our documentation already covers the underlying standards that govern letter layout, what actually matters in practice is finding a tool that can embody these rules with precision, consistency, and a healthy respect for typographic sanity. This is the point where #ts-logo("LaTeX")—and specifically KOMA-Script’s `scrlttr2`—quietly distinguishes itself from the rest. Designed in the German tradition of rigorous typesetting, `scrlttr2` follows the logic of formal letter standards with an almost pedantic accuracy, offering a layout engine that behaves predictably and stays faithful to the structural constraints imposed by modern correspondence norms. Yet it remains flexible enough to emulate the conventions of other national styles without falling apart or requiring awkward hacks.
 
 In short, choosing `scrlttr2` was less about tradition and more about engineering. It gives us a letter typesetting engine that is standards-aware, robust enough for large-scale automation, and structured enough to keep our layouts consistent across contexts. It is not the easiest tool, nor the most forgiving, but for anyone who values correctness, longevity, and the quiet satisfaction of seeing a letter snap perfectly into place, it is simply the right one.
 

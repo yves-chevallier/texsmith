@@ -1,15 +1,15 @@
 #set document(
-  title: "Limitations",
+title: "Limitations",
 )
 #set page(
-  paper: "a4",
-  margin: 2.5cm,
-  numbering: none,
-  footer: context {
-    if counter(page).final().first() > 1 {
-      align(center)[#counter(page).get().first()]
-    }
-  },
+paper: "a4",
+margin: 2.5cm,
+numbering: none,
+footer: context {
+if counter(page).final().first() > 1 {
+align(center)[#counter(page).get().first()]
+}
+},
 )
 #set text(font: "New Computer Modern", size: 11pt, lang: "en")
 #set par(justify: true)
@@ -17,8 +17,7 @@
 #set heading(numbering: "1.1")
 
 #align(center)[
-  #text(size: 1.8em, weight: "bold")[Limitations]
-]
+#text(size: 1.8em, weight: "bold")[Limitations]]
 #v(1.5em)
 
 = Highlighting with `ucharclasses`
@@ -41,4 +40,4 @@ The `ucharclasses` package allows you to define font transitions based on Unicod
 \end{document}
 ```
 
-TeXSmith is meant to be compatible with XeLaTeX and LuaLaTeX, but due to the way `ucharclasses` handles font transitions, it may interfere with the highlighting functionality provided by `soul`. When TeXSmith detects XeLaTeX it now disables `soul` and falls back to a plain yellow `\hl{...}` (no box). With LuaLaTeX it loads `lua-ul` instead of `soul`, keeping underlines without tripping over `ucharclasses`. Output therefore differs slightly between XeLaTeX and LuaLaTeX, but both builds succeed.
+TeXSmith is meant to be compatible with #ts-logo("XeLaTeX") and #ts-logo("LuaLaTeX"), but due to the way `ucharclasses` handles font transitions, it may interfere with the highlighting functionality provided by `soul`. When TeXSmith detects #ts-logo("XeLaTeX") it now disables `soul` and falls back to a plain yellow `\hl{...}` (no box). With #ts-logo("LuaLaTeX") it loads `lua-ul` instead of `soul`, keeping underlines without tripping over `ucharclasses`. Output therefore differs slightly between #ts-logo("XeLaTeX") and #ts-logo("LuaLaTeX"), but both builds succeed.

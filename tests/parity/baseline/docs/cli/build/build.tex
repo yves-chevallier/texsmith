@@ -8,6 +8,8 @@
 \usepackage[colorlinks=true, linkcolor=NavyBlue, urlcolor=NavyBlue, citecolor=NavyBlue]{hyperref}
 \usepackage[a4paper]{geometry}
 \usepackage{ts-fonts}
+\usepackage{tcolorbox}
+\usepackage{fvextra}
 \usepackage{amsmath}
 \usepackage{float}
 \usepackage{seqsplit}
@@ -17,34 +19,28 @@
 \usepackage{refcount}
 \makeatletter
 \def\ps@plain{
-  \let\@oddhead\@empty
-  \let\@evenhead\@empty
-  \def\@oddfoot{
-    \hfil
-    \ifnum\getpagerefnumber{LastPage}>1\relax
-      \thepage
-    \fi
-    \hfil}
-  \let\@evenfoot\@oddfoot
+\let\@oddhead\@empty
+\let\@evenhead\@empty
+\def\@oddfoot{
+\hfil
+\ifnum\getpagerefnumber{LastPage}>1\relax
+\thepage
+\fi
+\hfil}
+\let\@evenfoot\@oddfoot
 }
 \makeatother
 
 \title{Build}
 \author{}\date{}
-
 \begin{document}
-
 \maketitle
-
-\thispagestyle{plain}
-To build your \LaTeX{} document into a PDF, use the \texttt{-\allowbreak{}-\allowbreak{}build} (or \texttt{-\allowbreak{}b}) option. This command compiles the generated \LaTeX{} file using the default engine. TeXSmith uses \texttt{tectonic} by default as it is the only self-contained \LaTeX{} engine, but you can configure it to use \texttt{lualatex} or \texttt{xelatex} via \texttt{latexmk} if preferred. Here is an example of a simple document built with different engines:
-
-\begin{code}{bash}{}{}
+To build your \LaTeX{} document into a PDF, use the \tscodeinline{-\allowbreak{}-\allowbreak{}build} (or \tscodeinline{-\allowbreak{}b}) option. This command compiles the generated \LaTeX{} file using the default engine. TeXSmith uses \tscodeinline{tectonic} by default as it is the only self-contained \LaTeX{} engine, but you can configure it to use \tscodeinline{lualatex} or \tscodeinline{xelatex} via \tscodeinline{latexmk} if preferred. Here is an example of a simple document built with different engines:
+\begin{tscode}[lang=bash, engine=pygments]
 \begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
 \PYZdl{}\PY{+w}{ }uv\PY{+w}{ }run\PY{+w}{ }texsmith\PY{+w}{ }cheese.md\PY{+w}{ }cheese.bib\PY{+w}{ }\PYZhy{}tarticle\PY{+w}{ }\PYZhy{}\PYZhy{}build\PY{+w}{ }\PYZhy{}\PYZhy{}engine\PY{o}{=}xelatex
 \PYZdl{}\PY{+w}{ }uv\PY{+w}{ }run\PY{+w}{ }texsmith\PY{+w}{ }cheese.md\PY{+w}{ }cheese.bib\PY{+w}{ }\PYZhy{}tarticle\PY{+w}{ }\PYZhy{}\PYZhy{}build\PY{+w}{ }\PYZhy{}\PYZhy{}engine\PY{o}{=}lualatex
 \PYZdl{}\PY{+w}{ }uv\PY{+w}{ }run\PY{+w}{ }texsmith\PY{+w}{ }cheese.md\PY{+w}{ }cheese.bib\PY{+w}{ }\PYZhy{}tarticle\PY{+w}{ }\PYZhy{}\PYZhy{}build\PY{+w}{ }\PYZhy{}\PYZhy{}engine\PY{o}{=}tectonic
 \end{Verbatim}
-\end{code}
-
+\end{tscode}
 \end{document}

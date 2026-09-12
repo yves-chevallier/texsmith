@@ -8,6 +8,8 @@
 \usepackage[colorlinks=true, linkcolor=NavyBlue, urlcolor=NavyBlue, citecolor=NavyBlue]{hyperref}
 \usepackage[a4paper]{geometry}
 \usepackage{ts-fonts}
+\usepackage{tcolorbox}
+\usepackage{fvextra}
 \usepackage{amsmath}
 \usepackage{float}
 \usepackage{seqsplit}
@@ -17,42 +19,33 @@
 \usepackage{refcount}
 \makeatletter
 \def\ps@plain{
-  \let\@oddhead\@empty
-  \let\@evenhead\@empty
-  \def\@oddfoot{
-    \hfil
-    \ifnum\getpagerefnumber{LastPage}>1\relax
-      \thepage
-    \fi
-    \hfil}
-  \let\@evenfoot\@oddfoot
+\let\@oddhead\@empty
+\let\@evenhead\@empty
+\def\@oddfoot{
+\hfil
+\ifnum\getpagerefnumber{LastPage}>1\relax
+\thepage
+\fi
+\hfil}
+\let\@evenfoot\@oddfoot
 }
 \makeatother
 
 \title{Templates}
 \author{}\date{}
-
 \begin{document}
-
 \maketitle
-
-\thispagestyle{plain}
 Templates are predefined \LaTeX{} document structures that dictate the overall layout, style, and organization of your final document. TeXSmith includes several built-in templates for common document types, and you can also create and use custom templates.
-
-\section{Use a template}\label{use-a-template}
-
-TeXSmith provides some templates out of the box to help you get started with common document types. You can specify a template using the \texttt{-\allowbreak{}-\allowbreak{}template} (or \texttt{-\allowbreak{}t}) option followed by the template name.
-
-\begin{code}{bash}{}{}
+\section{Use a template}
+TeXSmith provides some templates out of the box to help you get started with common document types. You can specify a template using the \tscodeinline{-\allowbreak{}-\allowbreak{}template} (or \tscodeinline{-\allowbreak{}t}) option followed by the template name.
+\begin{tscode}[lang=bash, engine=pygments]
 \begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
 texsmith\PY{+w}{ }document.md\PY{+w}{ }\PYZhy{}\PYZhy{}template\PY{+w}{ }article
 \end{Verbatim}
-\end{code}
-\section{Listing Available Templates}\label{listing-available-templates}
-
-To see the list of available templates, use the \texttt{-\allowbreak{}-\allowbreak{}list-\allowbreak{}templates} flag:
-
-\begin{code}{text}{}{baselinestretch=0.5, }
+\end{tscode}
+\section{Listing Available Templates}
+To see the list of available templates, use the \tscodeinline{-\allowbreak{}-\allowbreak{}list-\allowbreak{}templates} flag:
+\begin{tscode}[lang=text, stretch=0.5, engine=pygments]
 \begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
 ➜ uv run texsmith \PYZhy{}\PYZhy{}list\PYZhy{}templates
                            Available Templates
@@ -65,42 +58,33 @@ To see the list of available templates, use the \texttt{-\allowbreak{}-\allowbre
 │ snippet  │ builtin │ /home/ycr/texsmith/src/texsmith/templates/snippet │
 └──────────┴─────────┴───────────────────────────────────────────────────┘
 \end{Verbatim}
-\end{code}
-Each template comes with its own set of slots, styles, and configurations tailored for specific document types. For example, the \texttt{article} template is suitable for academic papers, while the \texttt{book} template is designed for longer documents with chapters and parts.
-
-\section{Explore Template Details}\label{explore-template-details}
-
-You can inspect the details of a specific template using the \texttt{-\allowbreak{}-\allowbreak{}template-\allowbreak{}info} flag. This command provides information about the template's metadata, slots, attributes, and assets.
-
-\begin{code}{bash}{}{}
+\end{tscode}
+Each template comes with its own set of slots, styles, and configurations tailored for specific document types. For example, the \tscodeinline{article} template is suitable for academic papers, while the \tscodeinline{book} template is designed for longer documents with chapters and parts.
+\section{Explore Template Details}
+You can inspect the details of a specific template using the \tscodeinline{-\allowbreak{}-\allowbreak{}template-\allowbreak{}info} flag. This command provides information about the template's metadata, slots, attributes, and assets.
+\begin{tscode}[lang=bash, engine=pygments]
 \begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
 texsmith\PY{+w}{ }\PYZhy{}\PYZhy{}template\PY{+w}{ }article\PY{+w}{ }\PYZhy{}\PYZhy{}template\PYZhy{}info
 \end{Verbatim}
-\end{code}
+\end{tscode}
 It will display a summary of the template, including:
-
 \begin{itemize}
-\item{} List of attributes and their types (e.g., authors, columns, date, language...)
-\item{} List of assets included in the template (e.g. style files, images...)
-\item{} List of fragments (\texttt{ts-\allowbreak{}geometry}, \texttt{ts-\allowbreak{}typesetting}, ...) that the template uses.
-\item{} List of slots available for content injection.
-
+\item List of attributes and their types (e.g., authors, columns, date, language...)
+\item List of assets included in the template (e.g. style files, images...)
+\item List of fragments (\tscodeinline{ts-\allowbreak{}geometry}, \tscodeinline{ts-\allowbreak{}typesetting}, ...) that the template uses.
+\item List of slots available for content injection.
 \end{itemize}
-\section{Scaffolding Custom Templates}\label{scaffolding-custom-templates}
-
-One goal of TeXSmith is to make it easy to create and share custom templates. You can scaffold a new template by copying an existing one and modifying it to suit your needs. Use the \texttt{-\allowbreak{}-\allowbreak{}template-\allowbreak{}scaffold} flag to copy a template to a local directory:
-
-\begin{code}{bash}{}{}
+\section{Scaffolding Custom Templates}
+One goal of TeXSmith is to make it easy to create and share custom templates. You can scaffold a new template by copying an existing one and modifying it to suit your needs. Use the \tscodeinline{-\allowbreak{}-\allowbreak{}template-\allowbreak{}scaffold} flag to copy a template to a local directory:
+\begin{tscode}[lang=bash, engine=pygments]
 \begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
 texsmith\PY{+w}{ }\PYZhy{}\PYZhy{}template\PY{+w}{ }article\PY{+w}{ }\PYZhy{}\PYZhy{}template\PYZhy{}scaffold\PY{+w}{ }my\PYZhy{}custom\PYZhy{}template/
 \end{Verbatim}
-\end{code}
-Then edit the files in \texttt{my-\allowbreak{}custom-\allowbreak{}template/} to customize the layout, styles, and slots as needed, and use your custom template by specifying its path:
-
-\begin{code}{bash}{}{}
+\end{tscode}
+Then edit the files in \tscodeinline{my-\allowbreak{}custom-\allowbreak{}template/} to customize the layout, styles, and slots as needed, and use your custom template by specifying its path:
+\begin{tscode}[lang=bash, engine=pygments]
 \begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
 texsmith\PY{+w}{ }document.md\PY{+w}{ }\PYZhy{}\PYZhy{}template\PY{+w}{ }./my\PYZhy{}custom\PYZhy{}template/
 \end{Verbatim}
-\end{code}
-
+\end{tscode}
 \end{document}

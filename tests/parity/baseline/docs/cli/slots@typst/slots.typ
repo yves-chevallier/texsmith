@@ -1,15 +1,15 @@
 #set document(
-  title: "Managing Slots",
+title: "Managing Slots",
 )
 #set page(
-  paper: "a4",
-  margin: 2.5cm,
-  numbering: none,
-  footer: context {
-    if counter(page).final().first() > 1 {
-      align(center)[#counter(page).get().first()]
-    }
-  },
+paper: "a4",
+margin: 2.5cm,
+numbering: none,
+footer: context {
+if counter(page).final().first() > 1 {
+align(center)[#counter(page).get().first()]
+}
+},
 )
 #set text(font: "New Computer Modern", size: 11pt, lang: "en")
 #set par(justify: true)
@@ -17,11 +17,10 @@
 #set heading(numbering: "1.1")
 
 #align(center)[
-  #text(size: 1.8em, weight: "bold")[Managing Slots]
-]
+#text(size: 1.8em, weight: "bold")[Managing Slots]]
 #v(1.5em)
 
-Slots are placeholders in the LaTeX template where specific document sections can be injected. Use the `--slot` (or `-s`) option to map input documents to these slots. For example, to inject `abstract.md` into the `abstract` slot and `dedication.md` into the `dedication` slot of a book template, run:
+Slots are placeholders in the #ts-logo("LaTeX") template where specific document sections can be injected. Use the `–slot` (or `-s`) option to map input documents to these slots. For example, to inject `abstract.md` into the `abstract` slot and `dedication.md` into the `dedication` slot of a book template, run:
 
 ```bash
 texsmith abstract.md dedication.md chapter*.md \
@@ -30,7 +29,7 @@ texsmith abstract.md dedication.md chapter*.md \
   --slot dedication:dedication.md
 ```
 
-To see the available slots for a given template, use the `--template-info` flag:
+To see the available slots for a given template, use the `–template-info` flag:
 
 ```
 $ uv run texsmith -tbook --template-info

@@ -8,6 +8,8 @@
 \usepackage[colorlinks=true, linkcolor=NavyBlue, urlcolor=NavyBlue, citecolor=NavyBlue]{hyperref}
 \usepackage[a4paper]{geometry}
 \usepackage{ts-fonts}
+\usepackage{tcolorbox}
+\usepackage{fvextra}
 \usepackage{amsmath}
 \usepackage{float}
 \usepackage{seqsplit}
@@ -17,36 +19,30 @@
 \usepackage{refcount}
 \makeatletter
 \def\ps@plain{
-  \let\@oddhead\@empty
-  \let\@evenhead\@empty
-  \def\@oddfoot{
-    \hfil
-    \ifnum\getpagerefnumber{LastPage}>1\relax
-      \thepage
-    \fi
-    \hfil}
-  \let\@evenfoot\@oddfoot
+\let\@oddhead\@empty
+\let\@evenhead\@empty
+\def\@oddfoot{
+\hfil
+\ifnum\getpagerefnumber{LastPage}>1\relax
+\thepage
+\fi
+\hfil}
+\let\@evenfoot\@oddfoot
 }
 \makeatother
 
 \title{Plugin API}
 \author{}\date{}
-
 \begin{document}
-
 \maketitle
-
-\thispagestyle{plain}
 Plugins bundle opinionated HTML post-processors and asset helpers so you can
-extend TeXSmith without patching the core read \(\rightarrow\) IR \(\rightarrow\) write pipeline.
+extend TeXSmith without patching the core read \tsscript{symbols}{\(\rightarrow\) }IR \tsscript{symbols}{\(\rightarrow\) }write pipeline.
 
-\texttt{texsmith.plugins} exposes a namespace package populated by the MkDocs hook in
-\texttt{docs/hooks/mkdocs\_hooks.py}, re-exporting the maintained plugin modules under
-\texttt{texsmith.adapters.plugins}.
-
-\section{Loading plugins}\label{loading-plugins}
-
-\begin{code}{python}{}{}
+\tscodeinline{texsmith.plugins} exposes a namespace package populated by the MkDocs hook in
+\tscodeinline{docs/hooks/mkdocs\_hooks.py}, re-exporting the maintained plugin modules under
+\tscodeinline{texsmith.adapters.plugins}.
+\section{Loading plugins}
+\begin{tscode}[lang=python, engine=pygments]
 \begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
 \PY{k+kn}{import}\PY{+w}{ }\PY{n+nn}{texsmith}\PY{n+nn}{.}\PY{n+nn}{plugins}\PY{n+nn}{.}\PY{n+nn}{snippet}  \PY{c+c1}{\PYZsh{} noqa: F401}
 
@@ -54,24 +50,16 @@ extend TeXSmith without patching the core read \(\rightarrow\) IR \(\rightarrow\
 
 \PY{n}{bundle} \PY{o}{=} \PY{n}{convert\PYZus{}documents}\PY{p}{(}\PY{p}{[}\PY{n}{Document}\PY{o}{.}\PY{n}{from\PYZus{}markdown}\PY{p}{(}\PY{n}{Path}\PY{p}{(}\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{intro.md}\PY{l+s+s2}{\PYZdq{}}\PY{p}{)}\PY{p}{)}\PY{p}{]}\PY{p}{)}
 \end{Verbatim}
-\end{code}
-\section{Authoring your own plugin}\label{authoring-your-own-plugin}
-
+\end{tscode}
+\section{Authoring your own plugin}
 \begin{enumerate}
-\item Create a module (e.g., \texttt{texsmith.plugins.acme}) exposing a Markdown
-   extension and/or the HTML rewriting helpers your documents need.
-\item Declare entry points or instruct consumers to \texttt{import texsmith.plugins.acme}
-   before rendering.
+\item Create a module (e.g., \tscodeinline{texsmith.plugins.acme}) exposing a Markdown
+extension and/or the HTML rewriting helpers your documents need.
+\item Declare entry points or instruct consumers to \tscodeinline{import texsmith.plugins.acme}
+before rendering.
 \item Optionally provide a MkDocs plugin/hook so documentation builds load your
-   plugin automatically.
-
+plugin automatically.
 \end{enumerate}
 Keep plugin modules small and focused.
-
-\section{Reference}\label{reference}
-
-::: texsmith.plugins
-
-::: texsmith.plugins.snippet
-
+\section{Reference}
 \end{document}

@@ -1,15 +1,15 @@
 #set document(
-  title: "TeXSmith",
+title: "TeXSmith",
 )
 #set page(
-  paper: "a4",
-  margin: 2.5cm,
-  numbering: none,
-  footer: context {
-    if counter(page).final().first() > 1 {
-      align(center)[#counter(page).get().first()]
-    }
-  },
+paper: "a4",
+margin: 2.5cm,
+numbering: none,
+footer: context {
+if counter(page).final().first() > 1 {
+align(center)[#counter(page).get().first()]
+}
+},
 )
 #set text(font: "New Computer Modern", size: 11pt, lang: "en")
 #set par(justify: true)
@@ -17,11 +17,10 @@
 #set heading(numbering: "1.1")
 
 #align(center)[
-  #text(size: 1.8em, weight: "bold")[TeXSmith]
-]
+#text(size: 1.8em, weight: "bold")[TeXSmith]]
 #v(1.5em)
 
-And of course, the grand finale—the true climax of the project—is that this very documentation can itself be converted into a LaTeX document using TeXSmith.
+And of course, the grand finale—the true climax of the project—is that this very documentation can itself be converted into a #ts-logo("LaTeX") document using TeXSmith.
 
 ```bash
 git clone https://github.com/yves-chevallier/texsmith.git

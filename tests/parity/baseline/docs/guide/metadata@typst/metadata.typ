@@ -1,15 +1,15 @@
 #set document(
-  title: "Metadata Conventions",
+title: "Metadata Conventions",
 )
 #set page(
-  paper: "a4",
-  margin: 2.5cm,
-  numbering: none,
-  footer: context {
-    if counter(page).final().first() > 1 {
-      align(center)[#counter(page).get().first()]
-    }
-  },
+paper: "a4",
+margin: 2.5cm,
+numbering: none,
+footer: context {
+if counter(page).final().first() > 1 {
+align(center)[#counter(page).get().first()]
+}
+},
 )
 #set text(font: "New Computer Modern", size: 11pt, lang: "en")
 #set par(justify: true)
@@ -17,11 +17,10 @@
 #set heading(numbering: "1.1")
 
 #align(center)[
-  #text(size: 1.8em, weight: "bold")[Metadata Conventions]
-]
+#text(size: 1.8em, weight: "bold")[Metadata Conventions]]
 #v(1.5em)
 
-TeXSmith normalizes a handful of common front matter fields so that templates and fragments can lean on a single canonical name. External configuration files, CLI `--attribute` overrides, and Markdown `press.*` blocks are all merged into one flat namespace before the template resolver runs, so manifests can simply reference the final attribute (e.g. `emoji`, `glossary_style`, `width`) without worrying about where it originally came from. The full `press` tree is still kept around for backwards compatibility, but no other part of the codebase needs to dig through dotted `press.*` paths anymore.
+TeXSmith normalizes a handful of common front matter fields so that templates and fragments can lean on a single canonical name. External configuration files, CLI `–attribute` overrides, and Markdown `press.*` blocks are all merged into one flat namespace before the template resolver runs, so manifests can simply reference the final attribute (e.g. `emoji`, `glossary_style`, `width`) without worrying about where it originally came from. The full `press` tree is still kept around for backwards compatibility, but no other part of the codebase needs to dig through dotted `press.*` paths anymore.
 
 = Title & Subtitle
 
@@ -100,7 +99,7 @@ date: commit
 
 The special `commit` value resolves to the date of the most recent Git commit touching the document, perfect for stamping a "last updated" date without ever editing it by hand.
 
-Once rendered, the date is formatted according to the template's locale. `2024-07-01` lands as "July 1, 2024" in an English template, or "1 de julio de 2024" in a Spanish one. LaTeX (with a little help from `babel`) handles the linguistic gymnastics.
+Once rendered, the date is formatted according to the template's locale. `2024-07-01` lands as "July 1, 2024" in an English template, or "1 de julio de 2024" in a Spanish one. #ts-logo("LaTeX") (with a little help from `babel`) handles the linguistic gymnastics.
 
 = Version
 
@@ -121,4 +120,4 @@ The special `git` value resolves to the latest Git tag (falling back to a short 
 
 = Fragments' Metadata
 
-Fragments, the small, composable extensions that plug into a LaTeX template, can declare their own metadata schema in a `fragment.toml` file. Their attributes get merged into the same flat namespace as everything else, so a fragment-defined key looks no different from a built-in one at render time. See the #link("fragments/index.md")[Fragment Guide] for the full declaration syntax and resolution rules.
+Fragments, the small, composable extensions that plug into a #ts-logo("LaTeX") template, can declare their own metadata schema in a `fragment.toml` file. Their attributes get merged into the same flat namespace as everything else, so a fragment-defined key looks no different from a built-in one at render time. See the Fragment Guide for the full declaration syntax and resolution rules.

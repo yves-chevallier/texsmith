@@ -3,11 +3,10 @@
 #set par(justify: true)
 
 #text(size: 9pt, fill: luma(40%))[
-  #strong[Marie Skłodowska Curie]#linebreak()
-  Laboratory of Physics and Chemistry#linebreak()
-  Sorbonne University#linebreak()
-  75005 Paris, France
-]
+#strong[Marie Skłodowska Curie]#linebreak()
+Laboratory of Physics and Chemistry#linebreak()
+Sorbonne University#linebreak()
+75005 Paris, France]
 
 #v(1.2em)
 #align(right)[July 14, 1903]

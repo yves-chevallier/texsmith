@@ -8,8 +8,11 @@
 \usepackage[colorlinks=true, linkcolor=NavyBlue, urlcolor=NavyBlue, citecolor=NavyBlue]{hyperref}
 \usepackage[a4paper]{geometry}
 \usepackage{ts-fonts}
-\usepackage{amsmath}
 \usepackage{float}
+\usepackage{graphicx}
+\usepackage{tcolorbox}
+\usepackage{fvextra}
+\usepackage{amsmath}
 \usepackage{seqsplit}
 \usepackage{ts-code}
 
@@ -17,90 +20,81 @@
 \usepackage{refcount}
 \makeatletter
 \def\ps@plain{
-  \let\@oddhead\@empty
-  \let\@evenhead\@empty
-  \def\@oddfoot{
-    \hfil
-    \ifnum\getpagerefnumber{LastPage}>1\relax
-      \thepage
-    \fi
-    \hfil}
-  \let\@evenfoot\@oddfoot
+\let\@oddhead\@empty
+\let\@evenhead\@empty
+\def\@oddfoot{
+\hfil
+\ifnum\getpagerefnumber{LastPage}>1\relax
+\thepage
+\fi
+\hfil}
+\let\@evenfoot\@oddfoot
 }
 \makeatother
 
 \title{Images}
 \author{}\date{}
-
 \begin{document}
-
 \maketitle
-
-\thispagestyle{plain}
 Images can be included in Markdown using the following syntax:
-
-\begin{code}{md}{}{}
+\begin{tscode}[lang=md, engine=pygments]
 \begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
 ![\PY{n+nt}{Alt text}](\PY{n+na}{https://picsum.photos/400/150})\PYZob{}width=50\PYZpc{}\PYZcb{}
 \end{Verbatim}
-\end{code}
-The width attribute is useful to scale images directly in the Markdown source.
+\end{tscode}
+The attribute list scales the image directly in the source. \tscodeinline{width}, \tscodeinline{align},
+\tscodeinline{media} and per-format options (draw.io's \tscodeinline{crop=}) all live there.
 
+An image with a caption line or an anchor is \emph{promoted} to a numbered float; a
+bare image stays inline.
+\begin{tscode}[lang=md, engine=pygments]
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+![\PY{n+nt}{Short caption for the list of figures}](\PY{n+na}{https://picsum.photos/400/150})\PYZob{}width=50\PYZpc{}\PYZcb{}
+
+Figure: The long caption, with \PY{g+gs}{**Markdown**}. \PYZob{}\PYZsh{}fig:noise\PYZcb{}
+\end{Verbatim}
+\end{tscode}
+A video or audio source (\tscodeinline{![Demo](demo.mp4)}) is a player on the web and, in
+print, its poster frame with the URL as a textual reference;
+\tscodeinline{\{media=web\}} hides it from print altogether.
 \begin{figure}[H]
-    \centering
-
-    \ifdefined\adjustbox
-
-        \adjustbox{max width=\textwidth}{
-            \includegraphics[width=\linewidth]{snippet-<HASH>.pdf}
-        }
-
-    \else
-
-        \includegraphics[width=\linewidth]{snippet-<HASH>.pdf}
-
-    \fi
-
+\centering
+\includegraphics[width=\linewidth]{snippet-<HASH>.pdf}
 \end{figure}
-\section{Draw.io diagrams}\label{draw-io-diagrams}
-
-A \texttt{.drawio} file included as an image is exported to a vector PDF during the
+\section{Draw.io diagrams}
+A \tscodeinline{.drawio} file included as an image is exported to a vector PDF during the
 build:
-
-\begin{code}{md}{}{}
+\begin{tscode}[lang=md, engine=pygments]
 \begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
 ![\PY{n+nt}{Euclidean GCD}](\PY{n+na}{pgcd.drawio})\PYZob{}width=60\PYZpc{}\PYZcb{}
 \end{Verbatim}
-\end{code}
+\end{tscode}
 The export is \emph{cropped} to the drawing by default --- the surrounding canvas the
 diagram sits on is discarded, so the figure carries no unexpected white margin
-and \texttt{width=} scales the drawing itself. When the page layout is part of the
+and \tscodeinline{width=} scales the drawing itself. When the page layout is part of the
 diagram (a frame, a title block, deliberate margins, several drawings placed at
-fixed positions on the same sheet), ask for the page instead with \texttt{crop=false}:
-
-\begin{code}{md}{}{}
+fixed positions on the same sheet), ask for the page instead with \tscodeinline{crop=false}:
+\begin{tscode}[lang=md, engine=pygments]
 \begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
 ![\PY{n+nt}{Site plan}](\PY{n+na}{plan.drawio})\PYZob{}width=100\PYZpc{} crop=false\PYZcb{}
 \end{Verbatim}
-\end{code}
+\end{tscode}
 This is draw.io's \emph{Size: Page Size} export: the output covers the page(s) the
-drawing spans, at the \texttt{pageWidth} / \texttt{pageHeight} of the diagram, whichever
-backend (\texttt{playwright}, \texttt{local}, \texttt{docker}) performs the conversion.
+drawing spans, at the \tscodeinline{pageWidth} / \tscodeinline{pageHeight} of the diagram, whichever
+backend (\tscodeinline{playwright}, \tscodeinline{local}, \tscodeinline{docker}) performs the conversion.
 
 The same diagram can appear both ways in one document; each variant is exported
 and stored as its own asset.
 
-To flip the default for a whole document, set \texttt{drawio\_crop} in the front matter
-(or \texttt{-\allowbreak{}-\allowbreak{}attribute press.drawio\_crop=false} on the command line); an image
+To flip the default for a whole document, set \tscodeinline{drawio\_crop} in the front matter
+(or \tscodeinline{-\allowbreak{}-\allowbreak{}attribute press.drawio\_crop=false} on the command line); an image
 attribute still wins over it:
-
-\begin{code}{yaml}{}{}
+\begin{tscode}[lang=yaml, engine=pygments]
 \begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
 \PY{n+nn}{\PYZhy{}\PYZhy{}\PYZhy{}}
 \PY{n+nt}{press}\PY{p}{:}
 \PY{+w}{  }\PY{n+nt}{drawio\PYZus{}crop}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{false}
 \PY{n+nn}{\PYZhy{}\PYZhy{}\PYZhy{}}
 \end{Verbatim}
-\end{code}
-
+\end{tscode}
 \end{document}

@@ -9,6 +9,9 @@
 \usepackage[a4paper]{geometry}
 \usepackage{ts-fonts}
 \usepackage{csquotes}
+\usepackage{tcolorbox}
+\usepackage{xcolor}
+\usepackage{fvextra}
 \usepackage{amsmath}
 \usepackage{float}
 \usepackage{seqsplit}
@@ -19,56 +22,74 @@
 \usepackage{refcount}
 \makeatletter
 \def\ps@plain{
-  \let\@oddhead\@empty
-  \let\@evenhead\@empty
-  \def\@oddfoot{
-    \hfil
-    \ifnum\getpagerefnumber{LastPage}>1\relax
-      \thepage
-    \fi
-    \hfil}
-  \let\@evenfoot\@oddfoot
+\let\@oddhead\@empty
+\let\@evenhead\@empty
+\def\@oddfoot{
+\hfil
+\ifnum\getpagerefnumber{LastPage}>1\relax
+\thepage
+\fi
+\hfil}
+\let\@evenfoot\@oddfoot
 }
 \makeatother
 
 \title{References}
 \author{}\date{}
-
 \begin{document}
-
 \maketitle
+TMark has \textbf{one sigil for referring}: \tscodeinline{@}. Whatever the target --- a section, a
+figure, a table, an equation, a custom counter, a glossary term, a bibliography
+entry, another document --- you write \tscodeinline{@key}, and the registry the key belongs to
+decides what the reference renders as.
 
-\thispagestyle{plain}
+The mnemonic is short: \textbf{\tscodeinline{\#} defines, \tscodeinline{@} refers.}
+
 We define several types of references that can be used throughout the documentation:
-
 \begin{description}
-\item[{ Internal References }] These are links that point to other sections within the same document or to other documents within the same project.
-\item[{ External References }] These are links that point to resources outside of the current project, such as websites or external documents.
-\item[{ Bibliographic References }] These are citations that refer to external publications, articles, or books. They are often formatted using a specific citation style (e.g., APA, MLA) and may include a bibliography section at the end of the document.
-\item[{ Footnotes }] Footnotes provide additional information or citations without cluttering the main text. They are typically indicated by a superscript number in the text, with the corresponding footnote text provided at the bottom of the page or section.
-\item[{ Equations }] Mathematical equations can be included in the document using LaTeX syntax. Equations can be labeled and referenced throughout the text.
-\item[{ Tables }] Tables are used to present data in a structured format with rows and columns. They can be labeled and referenced within the document.
-\item[{ Figures }] Figures are images, charts, or diagrams included in the document. They can be labeled and referenced throughout the text.
-\item[{ Listings/Code Blocks }] Code blocks are used to display code snippets in various programming languages. They can be labeled and referenced within the document.
-\item[{ Tags/Index }] Tags or index entries allow you to associate keywords with specific sections or topics in the document, making it easier to locate related information.
-
+\item[{Internal References}] Links that point to other sections within the same document or to other documents within the same project.
+\item[{External References}] Links that point to resources outside of the current project, such as websites or external documents.
+\item[{Bibliographic References}] Citations that refer to external publications, articles, or books. They are formatted using a citation style (APA, MLA, ...) and gather into a bibliography.
+\item[{Footnotes}] Additional information parked at the bottom of the page, marked with a superscript number.
+\item[{Equations, Tables, Figures, Listings}] Numbered floats with an anchor, referenced by their key.
+\item[{Tags/Index}] Keywords associated with a section or topic, gathered into a printed index.
 \end{description}
-\section{Internal References}\label{internal-references}
+\section{The two forms of \tscodeinline{@}}
+\begin{tscode}[lang=md, engine=pygments]
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+\PY{n+ni}{@sec:intro}                   bare, in\PYZhy{}text: \PYZdq{}section 2\PYZdq{}
+\PY{n+ni}{@Sec:intro}                   capitalised prefix, for the start of a sentence
+@[fig:boot; fig:crash]       grouped → \PYZdq{}figures 1 and 2\PYZdq{}
+@[tbl:stock, column 3]       with a suffix → \PYZdq{}table 4, column 3\PYZdq{}
+[](\PYZsh{}sec:intro)               empty\PYZhy{}link form, for pure\PYZhy{}Markdown toolchains
+[](other.md)                 section number of another document\PYZsq{}s main heading
+\end{Verbatim}
+\end{tscode}
+The brackets follow the sigil and are \textbf{optional}: a bare \tscodeinline{@key} takes one word
+of \tscodeinline{[A-\allowbreak{}Za-\allowbreak{}z0-\allowbreak{}9\_:.-\allowbreak{}]} and ends on an alphanumeric, so trailing sentence
+punctuation stays out (\tscodeinline{…voir @sec:intro.} references \tscodeinline{sec:intro}). The
+bracketed form is required as soon as the reference contains a space --- a
+locator, a suffix, or several keys separated by \tscodeinline{;}.
 
+E-mail addresses, URLs and \tscodeinline{@} inside a word never match; write \tscodeinline{\textbackslash{}@} to force a
+literal \tscodeinline{@} where the sigil would otherwise fire. An unresolved reference
+renders visibly as \tscodeinline{[?key]} and warns.
+\section{Internal References}
 You can reference another section in the same document or cross-link to other files in the project.
 
 Linking to another file? TeXSmith targets the destination's main heading and drops a proper hyperlink---handy for navigation-friendly PDFs without any manual tinkering.
-
-\begin{code}{markdown}{}{}
+\begin{tscode}[lang=md, engine=pygments]
 \begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
 See the [\PY{n+nt}{Code Examples}](\PY{n+na}{code.md}) for more details.
 \end{Verbatim}
-\end{code}
+\end{tscode}
 Skip the link text and TeXSmith injects the section number for the print build automatically.
-\texttt{See the section [](code.md) for more details.
-}
-
-\begin{code}{markdown}{}{}
+\begin{tscode}[lang=md, engine=pygments]
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+See the section [](code.md) for more details.
+\end{Verbatim}
+\end{tscode}
+\begin{tscode}[lang=md, engine=pygments]
 \begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
 \PY{g+gu}{\PYZsh{}\PYZsh{} Section Title \PYZob{}\PYZsh{}sec:section\PYZhy{}title\PYZcb{}}
 
@@ -76,161 +97,147 @@ Placeholder text that other sections can reference.
 
 \PY{g+gu}{\PYZsh{}\PYZsh{} Other Section}
 
-Check section @[sec:section\PYZhy{}title] for more details.
+Check \PY{n+ni}{@sec:section}\PYZhy{}title for more details.
 \end{Verbatim}
-\end{code}
-The brackets are optional when the label is a single word made of letters,
-digits and \texttt{\_ : . -\allowbreak{}} characters, so \texttt{@sec:section-\allowbreak{}title} works too. Trailing
-sentence punctuation stays out of the label (\texttt{…voir @sec:intro.} references
-\texttt{sec:intro}). E-mail addresses and \texttt{@} inside words or URLs are left alone;
-write \texttt{\textbackslash{}@} to force a literal \texttt{@} where the shorthand would otherwise apply.
-
-\subsection{Custom counters}\label{custom-counters}
-
+\end{tscode}
+A heading with no \tscodeinline{\{\#id\}} still has an \emph{implicit} id --- GitHub's slug of its
+plain text --- so \tscodeinline{[](\#other-\allowbreak{}section)} resolves. Because that id changes whenever
+the title is edited, referring to one raises the \tscodeinline{ref-\allowbreak{}implicit-\allowbreak{}id} hint: give
+the heading an explicit \tscodeinline{\{\#sec:…\}}.
+\subsection{Custom counters}
 Document-specific series (findings, requirements, bugs) declared under
-\texttt{counters:} in the front matter reuse the very same \texttt{@prefix:key} shorthand,
-resolving to their formatted number instead of a section number. See
-\hyperref[snippet:<HASH>]{Custom counters}.
-
-\subsection{Cross-document references}\label{cross-document-references}
-
-\texttt{@alias:key} resolves against another document's published inventory, declared
-under \texttt{crossrefs:} in the front matter. See
-\hyperref[snippet:<HASH>]{Cross-document references}.
-
-\subsection{Autorefs}\label{autorefs}
-
-When the \texttt{mkdocs-\allowbreak{}autorefs} extension is enabled, you can use the \texttt{[text][label]} syntax to generate automatic references to headings.
-
-\section{External References}\label{external-references}
-
+\tscodeinline{press.declare.counters} in the front matter reuse the very same \tscodeinline{@prefix:key}
+form, resolving to their formatted number instead of a section number. See
+Custom counters.
+\subsection{Cross-document references}
+\tscodeinline{@alias:key} resolves against another document's published inventory, declared
+under \tscodeinline{press.sources.crossrefs} in the front matter. See
+Cross-document references.
+\subsection{Autorefs}
+When the \tscodeinline{mkdocs-\allowbreak{}autorefs} extension is enabled, you can use the \tscodeinline{[text][label]} syntax to generate automatic references to headings.
+\section{External References}
 Reference external resources (HTTP/HTTPS) with vanilla Markdown link syntax:
-
-\begin{code}{markdown}{}{}
+\begin{tscode}[lang=md, engine=pygments]
 \begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
 For more information, visit the [\PY{n+nt}{TeXSmith Website}](\PY{n+na}{https://texsmith.org}).
-You can also check our GitHub repository at https://github.com/yves\PYZhy{}chevallier/texsmith.
+You can also check our repository at https://github.com/yves\PYZhy{}chevallier/texsmith.
 \end{Verbatim}
-\end{code}
+\end{tscode}
 Printed output uses the usual \LaTeX{} link commands:
-
-\begin{code}{latex}{}{}
+\begin{tscode}[lang=latex, engine=pygments]
 \begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
 For more information, visit the \PY{k}{\PYZbs{}href}\PY{n+nb}{\PYZob{}}https://texsmith.org\PY{n+nb}{\PYZcb{}}\PY{n+nb}{\PYZob{}}TeXSmith Website\PY{n+nb}{\PYZcb{}}.
-You can also check our GitHub repository at \PY{k}{\PYZbs{}url}\PY{n+nb}{\PYZob{}}https://github.com/yves\PYZhy{}chevallier/texsmith\PY{n+nb}{\PYZcb{}}.
+You can also check our repository at \PY{k}{\PYZbs{}url}\PY{n+nb}{\PYZob{}}https://github.com/yves\PYZhy{}chevallier/texsmith\PY{n+nb}{\PYZcb{}}.
 \end{Verbatim}
-\end{code}
-\section{Bibliographic References}\label{bibliographic-references}
-
-Markdown lacks native bibliography support, so TeXSmith reuses the footnote syntax and BibTeX/front matter keys. See the documentation on \hyperref[snippet:<HASH>]{Bibliography management} for more details.
-
-\begin{code}{markdown}{}{}
+\end{tscode}
+\section{Bibliographic References}
+A citation is the same sigil against the bibliography registry. \tscodeinline{@key} is the
+in-text (narrative) citation, \tscodeinline{@[key, locator]} the parenthetical one, and
+\tscodeinline{@[-\allowbreak{}key]} suppresses the author.
+\begin{tscode}[lang=md, engine=pygments]
 \begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
 \PYZhy{}\PYZhy{}\PYZhy{}
-bibliography:
-\PY{g+gu}{  einstein1905: https://doi.org/10.1002/andp.19053221004}
+press:
+  sources:
+    bibliography:
+\PY{g+gu}{      ein05: https://doi.org/10.1002/andp.19053221004}
 \PY{g+gu}{\PYZhy{}\PYZhy{}\PYZhy{}}
-Einstein\PYZsq{}s theory of relativity revolutionized physics. [\PYZca{}einstein1905]
+
+Einstein\PYZsq{}s theory of relativity revolutionized physics \PY{n+ni}{@ein05}.
+As shown by @[ein05, p. 33], and elsewhere @[see ein05, pp. 33\PYZhy{}35].
 \end{Verbatim}
-\end{code}
-\section{Footnotes}\label{footnotes}
-
+\end{tscode}
+A DOI can be cited in place through the predeclared \tscodeinline{doi} prefix, without a
+front-matter entry: \tscodeinline{@doi:10.1002/andp.19053221004}.
+\begin{tscallout}[kind=note, title={The footnote spelling of a citation is deprecated}]
+TeXSmith 0.6 spelled citations \tscodeinline{[\^{}key]} and \tscodeinline{\^{}[k1,k2]}, borrowing the
+footnote syntax. Both are still accepted with a deprecation warning; once
+they are retired, \tscodeinline{\^{}[…]} becomes an inline footnote (Pandoc's meaning).
+\tscodeinline{tmark lint -\allowbreak{}-\allowbreak{}fix} rewrites them to \tscodeinline{@key} and \tscodeinline{@[k1; k2]}. Real footnotes
+(\tscodeinline{[\^{}1]} with a definition) are untouched.
+\end{tscallout}
+See Bibliography management for the
+sources, and Migrating to TMark for the rewrite.
+\section{Footnotes}
 Use footnotes to park side comments without cluttering the main text. Markdown marks them with superscript numbers; the rendered document moves the details to the bottom of the page or section.
-
-\begin{code}{markdown}{}{}
+\begin{tscode}[lang=md, engine=pygments]
 \begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
 This is a sample sentence with a footnote.[\PYZca{}1]
 
 [\PY{n+nl}{\PYZca{}1}]: \PY{n+na}{This is the footnote text that provides additional information.}
 \end{Verbatim}
-\end{code}
+\end{tscode}
 Footnotes are limited to one line in print---keep them tight.
-
-\section{Equations}\label{equations}
-
-You can include mathematical equations in your document using \LaTeX{} syntax and use \texttt{\textbackslash{}label\{\}} to reference them later.
-
-\begin{code}{markdown}{}{}
+\section{Equations}
+Display math takes an anchor after the closing delimiter, Quarto-style, and is
+referenced like any other numbered object:
+\begin{tscode}[lang=md, engine=pygments]
 \begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
-\PYZbs{}begin\PYZob{}equation\PYZcb{}
+\PYZdl{}\PYZdl{}
 E = mc\PYZca{}2
-\PYZbs{}label\PYZob{}eq:einstein\PYZcb{}
-\PYZbs{}end\PYZob{}equation\PYZcb{}
+\PYZdl{}\PYZdl{} \PYZob{}\PYZsh{}eq:einstein\PYZcb{}
 
-As shown in Equation \PYZdl{}\PYZbs{}eqref\PYZob{}eq:einstein\PYZcb{}\PYZdl{}, energy is equal to mass times the speed of light squared.
+As shown in \PY{n+ni}{@eq:einstein}, energy is equal to mass times the speed of light
+squared.
 \end{Verbatim}
-\end{code}
-For consistency, TeXSmith provides the shorthand \texttt{@[label]} to reference it.
-
-\begin{code}{markdown}{}{}
-\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
-As shown in Equation @[eq:einstein], energy is equal to mass times the speed of light squared.
-\end{Verbatim}
-\end{code}
-\section{Figures}\label{figures}
-
-Give a figure a caption block with an \texttt{id} and reference it anywhere with the
-\texttt{@[label]} shorthand. The \texttt{id} is emitted verbatim as the \LaTeX{} \texttt{\textbackslash{}label}.
-
-\begin{code}{markdown}{}{}
+\end{tscode}
+The \LaTeX{}-flavoured compatibility forms keep working: \tscodeinline{\textbackslash{}begin\{equation\}
+\textbackslash{}label\{eq:x\} … \textbackslash{}end\{equation\}} inside \tscodeinline{\$\$}, referenced with \tscodeinline{\$\textbackslash{}eqref\{eq:x\}\$}.
+\section{Figures}
+Give a figure a caption line with an id and refer to it with \tscodeinline{@}:
+\begin{tscode}[lang=md, engine=pygments]
 \begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
 ![\PY{n+nt}{Sample Figure}](\PY{n+na}{image\PYZhy{}url.jpg})
 
-/// caption
-    attrs: \PYZob{}id: sample\PYZhy{}figure\PYZcb{}
-This is the caption for the figure.
-///
+Figure: This is the caption for the figure. \PYZob{}\PYZsh{}fig:sample\PYZcb{}
 
-As shown in Figure @[sample\PYZhy{}figure], the data illustrates...
+As shown in \PY{n+ni}{@fig:sample}, the data illustrates…
 \end{Verbatim}
-\end{code}
-\begin{callout}[callout warning]{Warning}
-The \texttt{id} may not contain a colon: \texttt{pymdown-\allowbreak{}extensions} rejects
-identifiers such as \texttt{fig:sample-\allowbreak{}figure}, and the whole \texttt{/// caption}
-block then silently falls back to plain text (TeXSmith emits a warning
-when this happens). Use plain identifiers like \texttt{sample-\allowbreak{}figure}.
-\end{callout}
-Both web and print outputs number figures automatically, though the actual numbers may differ because each layout floats content differently.
-
-\section{Tables}\label{tables}
-
-Tables present structured data; give them a caption line with a label so you
-can reference them later. The \texttt{Table:} line goes directly above the table.
-
-\begin{code}{markdown}{}{}
+\end{tscode}
+The id is emitted verbatim as the \LaTeX{} \tscodeinline{\textbackslash{}label}. Both web and print outputs
+number figures automatically, though the actual numbers may differ because each
+layout floats content differently.
+\section{Tables}
+Tables take a caption line too; the canonical position is after the table.
+\begin{tscode}[lang=md, engine=pygments]
 \begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
-Table: A sample table for cross\PYZhy{}references. \PYZob{}\PYZsh{}tbl:sample\PYZhy{}table\PYZcb{}
-
 | Header 1 | Header 2 |
 |\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}|\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}|
 | Cell 1   | Cell 2   |
 
-Check Table @[tbl:sample\PYZhy{}table] for more details.
+Table: A sample table for cross\PYZhy{}references. \PYZob{}\PYZsh{}tbl:sample\PYZcb{}
+
+Check \PY{n+ni}{@tbl:sample} for more details.
 \end{Verbatim}
-\end{code}
-\section{Code Block References}\label{code-block-references}
-
-Labelled, cross-referenceable code listings are not implemented yet: fenced
-code blocks accept a \texttt{title} (rendered as the listing header) but carry no
-label, so there is no \texttt{@[...]} target for them. Track the feature before
-relying on it.
-
-\section{Tags and Index Entries}\label{tags-and-index-entries}
-
-Add tags or index entries to associate keywords with specific sections or topics in the document.
-
-\begin{code}{markdown}{}{}
+\end{tscode}
+\section{Code Block References}
+A \tscodeinline{Listing:} caption line promotes a fenced code block to a numbered,
+referenceable listing:
+\begin{tscode}[lang=md, engine=pygments]
 \begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
-This section covers advanced sorting algorithms. \PYZob{}index\PYZcb{}[algorithm]
+\PY{l+s+sb}{```}\PY{l+s+sb}{python}\PY{+w}{ }title=\PYZdq{}bubble\PYZus{}sort.py\PYZdq{}
+\PY{k}{def}\PY{+w}{ }\PY{n+nf}{bubble\PYZus{}sort}\PY{p}{(}\PY{n}{items}\PY{p}{)}\PY{p}{:} \PY{o}{.}\PY{o}{.}\PY{o}{.}
+\PY{l+s+sb}{```}
+
+Listing: Bubble sort, naive version. \PYZob{}\PYZsh{}lst:bubble\PYZcb{}
+
+\PY{n+ni}{@lst:bubble} is quadratic in the worst case.
 \end{Verbatim}
-\end{code}
-See the section [Index / Tags][index-tags] for more details on how to manage index entries.
-
-\section{Naming Conventions}\label{naming-conventions}
-
+\end{tscode}
+\section{Tags and Index Entries}
+Add index entries to associate keywords with specific topics. Defining is the
+other sigil:
+\begin{tscode}[lang=md, engine=pygments]
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+This section covers advanced sorting algorithms. \PYZsh{}[algorithm]
+\end{Verbatim}
+\end{tscode}
+The canonical role form is \tscodeinline{\{index\}[algorithm]}; \tscodeinline{\#[…]} is its shorthand, and
+both produce the same node. See Index / Tags for
+nesting, main entries and named registries.
+\section{Naming Conventions}
 Before hypertext, references revolved around numbers: pages, figures, tables, equations.
-
-\begin{code}{text}{}{}
+\begin{tscode}[lang=text, engine=pygments]
 \begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
 1. Section
 
@@ -251,36 +258,25 @@ Before hypertext, references revolved around numbers: pages, figures, tables, eq
   See Table 7 for more details. The Figure 42 illustrates the concept.
   Everything is explained in Section 1.
 \end{Verbatim}
-\end{code}
-\subsection{French}\label{french}
-
+\end{tscode}
+The counter registry carries the label word per language, so the same \tscodeinline{@}
+reference reads correctly in every locale.
+\subsection{French}
 In French, the reference type stays lowercase unless it begins the sentence.
-
 \begin{displayquote}
-
 Voir le tableau 7 pour plus de détails. La figure 42 illustre le concept.
 Le tout est expliqué à la section 1.
-
 \end{displayquote}
-\subsection{English}\label{english}
-
+\subsection{English}
 In English we capitalize the reference type and skip the article (``Table 7,'' not ``the Table 7'').
-
 \begin{displayquote}
-
 See Table 7 for more details. Figure 42 illustrates the concept.
 Everything is explained in Section 1.
-
 \end{displayquote}
-\subsection{German}\label{german}
-
+\subsection{German}
 German capitalizes the reference type too.
-
 \begin{displayquote}
-
 Siehe Tabelle 7 für weitere Details. Abbildung 42 veranschaulicht das Konzept.
 Alles wird in Abschnitt 1 erklärt.
-
 \end{displayquote}
-
 \end{document}

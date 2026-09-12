@@ -1,15 +1,15 @@
 #set document(
-  title: "Readers & Writers",
+title: "IR passes and fragment contracts",
 )
 #set page(
-  paper: "a4",
-  margin: 2.5cm,
-  numbering: none,
-  footer: context {
-    if counter(page).final().first() > 1 {
-      align(center)[#counter(page).get().first()]
-    }
-  },
+paper: "a4",
+margin: 2.5cm,
+numbering: none,
+footer: context {
+if counter(page).final().first() > 1 {
+align(center)[#counter(page).get().first()]
+}
+},
 )
 #set text(font: "New Computer Modern", size: 11pt, lang: "en")
 #set par(justify: true)
@@ -17,79 +17,72 @@
 #set heading(numbering: "1.1")
 
 #align(center)[
-  #text(size: 1.8em, weight: "bold")[Readers & Writers]
-]
+#text(size: 1.8em, weight: "bold")[IR passes and fragment contracts]]
 #v(1.5em)
 
-TeXSmith converts a document through a typed intermediate representation (IR):
+TeXSmith no longer reads HTML with a bs4 reader and no longer emits #ts-logo("LaTeX") from
+Python. The parser, the intermediate representation, the resolver and the
+writers are tmark's; what remains on the Python side is the part that needs the
+filesystem, the network and a process — and the part that decides what a
+construct _looks like_.
 
 ```
-read(HTML) → IR (texsmith.ir) → write(IR) → LaTeX
+tmark.parse ─▶ IR ─▶ TeXSmith passes ─▶ tmark.resolve ─▶ tmark.write ─▶ Body { text, map, requires }
 ```
 
-A *reader* lowers BeautifulSoup nodes into backend-agnostic IR nodes, and a
-*writer* emits a backend (LaTeX) from that IR. Custom constructs are added in
-two halves that mirror how the built-in constructs work.
+There are therefore two extension points, and the `@reads` / `@writes`
+decorators of 0.6 map onto them:
 
-= Reader lowerings — `@reads`
+#table(
+columns: 2,
+align: (left, left),
+table.header([0.6 hook], [0.7 replacement]),
+[`@reads` lowering (HTML #ts-script("symbols")[→ ]IR)], [a TMark *container* (`::: name`) plus, when it computes something, an *IR pass*],
+[`@writes` emitter (IR #ts-script("symbols")[→ ]#ts-logo("LaTeX"))], [a *contract macro* provided by a fragment, redefined by the template],
+[`[latex.template] readers`], [`[latex.template] passes = ["pkg.module:pass"]`],
+[`[latex.template] writer`], [redefine the contract macro in the template's `.tex`],
+[fragment `partials`, `required_partials`], [the fragment's `provides` list],
+)
 
-A reader lowering is a callable decorated with `@reads(*tags, level, priority,
-name)`. It *returns* an IR node (never mutates the tree). Returning
-`NotHandled` lets the next candidate — or the generic fallback — run.
+`readers`, `writer`, `latex.template.override`, fragment `partials` and
+`required_partials` are deprecated in 0.7.0 (they warn and are ignored) and
+removed in 0.8.0.
+
+= IR passes
+
+A pass is a pure function `(Document, PassContext) -> Document` over the
+generated IR models. It never mutates its input, returns the same object when it
+has nothing to do, and otherwise rebuilds the tree with `document.evolve(...)`.
+Failures never raise: a node is replaced by a visible literal and a diagnostic
+is emitted at its span. An exception escaping a pass is a bug.
+
+Two stages surround the one Rust step in the middle:
+
+/ `pre`: before `tmark.resolve`. A `pre` pass may add, remove or rewrite blocks — this
+is where includes are spliced, diagrams converted, DOIs fetched, moustaches
+expanded.
+/ `post`: after `tmark.resolve`. A `post` pass only slices the block list or computes
+per-body options, so that the `Resolved` of the whole document stays valid.
 
 ```python
-from bs4 import Tag
+from texsmith.core.documents import Document
+from texsmith.ir import model
+from texsmith.passes import PassContext, spec
 
-from texsmith.ir import nodes as ir
-from texsmith.readers.html.registry import NotHandled, ReadLevel, reads
-
-@reads("span", level=ReadLevel.INLINE, name="data_counter", priority=50)
-def read_data_counter(tag: Tag, ctx) -> ir.Span | object:
-    classes = tag.get("class") or []
-    tokens = {classes} if isinstance(classes, str) else set(classes)
-    if "data-counter" not in tokens:
-        return NotHandled
-    return ir.Span(content=(), attrs=(("role", "counter"),))
+@spec("exam-questions", stage="pre", after=("include",))
+def run(document: Document, ctx: PassContext) -> Document:
+    ir = document.ir
+    if ir is None:
+        return document
+    blocks = tuple(_number(block) for block in ir.blocks)
+    if blocks == ir.blocks:
+        return document          # nothing to do: hand back the same object
+    return document.evolve(ir=ir.model_copy(update={"blocks": blocks}))
 ```
 
-= Writer emitters — `@writes`
-
-A writer emitter is a method decorated with `@writes(NodeType)` on a
-`LaTeXWriter` subclass. Dispatch is typed by node class via the MRO; a node
-without an emitter raises a clear `LaTeXWriteError`.
-
-```python
-from texsmith.ir import nodes as ir
-from texsmith.writers.latex import LaTeXWriter, writes
-
-class CountingWriter(LaTeXWriter):
-    @writes(ir.Span)
-    def _counter_span(self, node: ir.Span) -> str:
-        if dict(node.attrs).get("role") == "counter":
-            value = self.state.state.next_counter("data-counter")
-            return f"\\counter{{{value}}}"
-        return super()._span(node)
-```
-
-See #link("https://github.com/texsmith/texsmith/blob/main/examples/custom-render/counter.py")[`examples/custom-render/counter.py`]
-for a complete, runnable extension wiring both halves into a `LaTeXRenderer`.
-
-#block(width: 100%, radius: 2pt, stroke: (left: 1.5pt + rgb("#00BFA5"), rest: 0.4pt + rgb("#00BFA5")))[
-  #block(width: 100%, fill: rgb("#00BFA5").lighten(90%), inset: (x: 8pt, y: 4pt))[#text(weight: "bold", fill: rgb("#00BFA5"))[⭐#h(0.4em)Tip]]
-  #block(width: 100%, inset: (x: 8pt, y: 6pt))[
-    Keep the IR semantic and backend-neutral: encode hints via `Span`/`Div`
-    `attrs` (e.g. `("role", "counter")`) rather than backend strings. Only the
-    writer knows about LaTeX.
-  ]
-]
-
-= Shipping readers & writers in a template
-
-When custom constructs belong to a specific *template* (an exam, a thesis, a
-poster…), declare the reader modules and the writer subclass in that template's
-`[latex.template]` manifest section. TeXSmith resolves them when the template is
-selected and applies them to the renderer *for that template only* — other
-templates keep the default bundled read→write path.
+Order is declared, never implicit: a `PassSpec` names the passes it must run
+`after`, and `build_pipeline` performs a stable topological sort that raises
+`PassOrderError` on a cycle. Declare a template's passes in its manifest:
 
 ```toml
 [latex.template]
@@ -98,45 +91,106 @@ version = "1.0.0"
 entrypoint = "template/template.tex"
 engine = "lualatex"
 
-# Modules whose @reads lowerings are layered on top of the bundled registry.
-# A higher-priority handler may return NotHandled to fall through to a core one.
-readers = ["my_exam_pkg.reader"]
-
-# A "module:Class" reference to a LaTeXWriter subclass adding/overriding @writes.
-writer = "my_exam_pkg.writer:ExamLaTeXWriter"
+passes = ["my_exam_pkg.questions:run"]
 ```
 
-- *`readers`* — a list of importable module paths. Every `@reads`-decorated
-    callable found in each module is registered, layered on top of the bundled
-    HTML→IR lowerings (`texsmith.readers.html.build_reader_registry`).
-- *`writer`* — a `"module:Class"` reference to a `LaTeXWriter` subclass. It is
-    validated at render time (must subclass `LaTeXWriter`), then used as the
-    template's writer so its `@writes` emitters and overrides take effect.
+They are resolved with the same import machinery as attribute normalisers and
+fragment entrypoints, so a typo fails early with an actionable `TemplateError`,
+and they apply *only while the declaring template renders* — exam-style rules
+would corrupt unrelated documents, so there is no global entry point.
 
-Both are resolved with the same import machinery as attribute normalisers and
-fragment entrypoints, so a typo or a bad reference fails early with an
-actionable `TemplateError`. A template that declares neither is unaffected.
+Keep passes semantic and backend-neutral: a pass rewrites IR nodes and their
+attributes, never #ts-logo("LaTeX") strings. The one exception is deliberate and narrow —
+the bundled `highlight` pass turns code blocks into `RawBlock{format=latex}`
+holding a Pygments payload, because that work is Python-only and reuses the
+`latex raw` path rather than making the writer Pygments-aware.
 
-#block(width: 100%, radius: 2pt, stroke: (left: 1.5pt + rgb("#448AFF"), rest: 0.4pt + rgb("#448AFF")))[
-  #block(width: 100%, fill: rgb("#448AFF").lighten(90%), inset: (x: 8pt, y: 4pt))[#text(weight: "bold", fill: rgb("#448AFF"))[📝#h(0.4em)Scope]]
-  #block(width: 100%, inset: (x: 8pt, y: 6pt))[
-    These hooks are *template-scoped by design*. Because exam-style rules
-    (e.g. mapping every `h1` to `\question`) would corrupt unrelated documents,
-    they are never registered globally — only while the declaring template
-    renders. There is no global reader/writer entry point.
-  ]
-]
+= Custom constructs
 
-Inside an extension, read template front-matter overrides from
-`self.state.runtime["template_overrides"]` (already populated by the pipeline);
-keep cross-node state on `self.state.state` (the `DocumentState`) and harvest it
-in a pre-pass over the IR (`texsmith.ir.visitor.walk`) rather than mutating
-shared state during emission.
+The container names TMark knows are a *closed* registry: the callout types
+(built-in and declared), `aside`, `figure`, `tabs`, `tab`, `multicolumn` and
+`div`. A new _kind_ of thing is a declaration under
+`press.declare.admonitions`, not a new container name; a wrapper the template
+styles is `::: div` with a class.
+
+```md
+::: div {#s1 .sidebar}
+Content.
+:::
+```
+
+On the paged backends every layout container is rendered by one contract,
+`\begin{tsdiv}{name}[attrs]` (`#ts-div("name", ..)` in Typst), dispatched on the
+name with the attributes forwarded as keys: `#id` becomes `id`, classes become
+`class={a,b}`, `key=val` is forwarded as is (`lang` and `media` never are). A
+template styles a class through the `pgfkeys` family, or redefines the
+environment for a name it knows:
+
+```latex
+\tcbset{/ts/div/class/sidebar/.style={grow to left by=2cm}}
+\RenewDocumentEnvironment{tsdiv@multicolumn}{O{}}{\begin{multicols}{3}}{\end{multicols}}
+```
+
+A container name the registry does not know raises `container-unknown` and
+renders its content transparently.
+
+= Contract macros
+
+The writers emit a fixed macro or environment per construct, and a fragment must
+define every macro the writer can name. Naming is regular: macros are
+`\ts<name>`, environments `ts<name>`, lowercase, one word per construct. At most
+one optional keyval group comes first, then the mandatory arguments, content
+last.
+
+```latex
+\tslead{…}
+\tsaside[side=left]{…}
+\tsprogress[thin]{0.45}{Launch}
+\tskeys{Ctrl,Alt,Del}
+\tsindex[registry=physics, main]{sort@formatted!sub}
+\begin{tscallout}[kind=warning, title={…}, id=w1, collapsed] … \end{tscallout}
+\begin{tscode}[lang=py, title={bubble\_sort.py}, linenums=1, hl_lines={2-3}] … \end{tscode}
+\tscodeinline[lang=py]{xs.sort()}
+```
+
+Options are `pgfkeys` keyvals under `/ts/<name>/`, and every family ignores
+unknown keys, so an older fragment survives a newer writer. Only keys with a
+value are serialised; booleans are bare, text is escaped and braced, lists are
+braced with commas. Typst mirrors each contract with one hyphenated function
+(`#ts-callout`, `#ts-keys`) whose named arguments match the keys.
+
+Which fragment provides which macro is the writer's `Requires.fragments`: a body
+that emits `\tscallout` activates `ts-callouts`, one that emits `\tsindex`
+activates `ts-index`. Activation is by construction, not by sniffing the
+rendered #ts-logo("LaTeX").
+
+= Overriding a construct
+
+Three levels, in increasing order of violence. All of them go in the template's
+`.tex`, after `\VAR{extra_packages}` (that is where fragments are
+`\usepackage`d).
+
+```latex
+\VAR{extra_packages}
+% (a) restyle through the pgfkeys family
+\tcbset{/ts/code/.append style={frame hidden, boxrule=0pt}}
+
+% (b) redefine the macro, same signature
+\RenewDocumentCommand{\tscodeinline}{O{}m}{\texttt{#2}}
+\RenewDocumentEnvironment{tsdiv@multicolumn}{O{}}{\begin{multicols}{3}}{\end{multicols}}
+```
+
+```yaml
+# (c) replace the fragment outright
+press:
+  fragments:
+    disable: [ts-code]
+    append: [./my-code.sty]
+```
+
+A replacement fragment must define every entry of the fragment's `provides`
+list; the check runs at load time against `tmark.fragments()`. See
+Contract macros for the full table mapping
+each construct to its macro.
 
 = Reference
-
-::: texsmith.readers.html.registry
-
-::: texsmith.readers.html.reader
-
-::: texsmith.writers.latex

@@ -8,6 +8,8 @@
 \usepackage[colorlinks=true, linkcolor=NavyBlue, urlcolor=NavyBlue, citecolor=NavyBlue]{hyperref}
 \usepackage[a4paper]{geometry}
 \usepackage{ts-fonts}
+\usepackage{tcolorbox}
+\usepackage{fvextra}
 \usepackage{amsmath}
 \usepackage{float}
 \usepackage{seqsplit}
@@ -17,33 +19,26 @@
 \usepackage{refcount}
 \makeatletter
 \def\ps@plain{
-  \let\@oddhead\@empty
-  \let\@evenhead\@empty
-  \def\@oddfoot{
-    \hfil
-    \ifnum\getpagerefnumber{LastPage}>1\relax
-      \thepage
-    \fi
-    \hfil}
-  \let\@evenfoot\@oddfoot
+\let\@oddhead\@empty
+\let\@evenhead\@empty
+\def\@oddfoot{
+\hfil
+\ifnum\getpagerefnumber{LastPage}>1\relax
+\thepage
+\fi
+\hfil}
+\let\@evenfoot\@oddfoot
 }
 \makeatother
 
 \title{Typesetting controls}
 \author{}\date{}
-
 \begin{document}
-
 \maketitle
-
-\thispagestyle{plain}
-TeXSmith bundles a \texttt{ts-\allowbreak{}typesetting} fragment that tweaks basic paragraph layout, line spacing, and optional line numbers. By default it stays silent---nothing is injected unless you set one of its options.
-
-\section{Configuration}\label{configuration}
-
-All keys live under \texttt{press.typesetting} (short aliases also work: \texttt{press.paragraph}, \texttt{paragraph}, etc.).
-
-\begin{code}{yaml}{}{}
+TeXSmith bundles a \tscodeinline{ts-\allowbreak{}typesetting} fragment that tweaks basic paragraph layout, line spacing, and optional line numbers. By default it stays silent---nothing is injected unless you set one of its options.
+\section{Configuration}
+All keys live under \tscodeinline{press.typesetting} (short aliases also work: \tscodeinline{press.paragraph}, \tscodeinline{paragraph}, etc.).
+\begin{tscode}[lang=yaml, engine=pygments]
 \begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
 \PY{n+nt}{press}\PY{p}{:}
 \PY{+w}{  }\PY{n+nt}{typesetting}\PY{p}{:}
@@ -53,23 +48,18 @@ All keys live under \texttt{press.typesetting} (short aliases also work: \texttt
 \PY{+w}{    }\PY{n+nt}{leading}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{onehalf}\PY{+w}{  }\PY{c+c1}{\PYZsh{} single | onehalf | double | \PYZlt{}length\PYZgt{} | \PYZlt{}number factor\PYZgt{}}
 \PY{+w}{    }\PY{n+nt}{lineno}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{true}\PY{+w}{      }\PY{c+c1}{\PYZsh{} turn on margin line numbers}
 \end{Verbatim}
-\end{code}
+\end{tscode}
 \begin{itemize}
-\item{} \texttt{paragraph.indent} controls \texttt{\textbackslash{}parindent} plus the memoir/article \texttt{\textbackslash{}@afterindent…} switches. \texttt{auto} leaves the first paragraph flush and indents the following ones; \texttt{true} always indents; \texttt{false} disables indentation.
-\item{} \texttt{paragraph.spacing} sets \texttt{\textbackslash{}parskip} to your length (leave empty for the template's original value).
-\item{} \texttt{leading} sets line spacing. \texttt{single}, \texttt{onehalf}, and \texttt{double} call the usual spacing commands. A numeric value applies a stretch factor (\texttt{1.2} \(\rightarrow\) 1.2\(\times\)). A length sets \texttt{\textbackslash{}baselineskip} directly (\texttt{1em}, \texttt{14pt}, etc.).
-\item{} \texttt{lineno: true} loads the \texttt{lineno} package and enables \texttt{\textbackslash{}linenumbers} for the whole document.
-
+\item \tscodeinline{paragraph.indent} controls \tscodeinline{\textbackslash{}parindent} plus the memoir/article \tscodeinline{\textbackslash{}@afterindent…} switches. \tscodeinline{auto} leaves the first paragraph flush and indents the following ones; \tscodeinline{true} always indents; \tscodeinline{false} disables indentation.
+\item \tscodeinline{paragraph.spacing} sets \tscodeinline{\textbackslash{}parskip} to your length (leave empty for the template's original value).
+\item \tscodeinline{leading} sets line spacing. \tscodeinline{single}, \tscodeinline{onehalf}, and \tscodeinline{double} call the usual spacing commands. A numeric value applies a stretch factor (\tscodeinline{1.2} \tsscript{symbols}{\(\rightarrow\) }1.2\(\times\)). A length sets \tscodeinline{\textbackslash{}baselineskip} directly (\tscodeinline{1em}, \tscodeinline{14pt}, etc.).
+\item \tscodeinline{lineno: true} loads the \tscodeinline{lineno} package and enables \tscodeinline{\textbackslash{}linenumbers} for the whole document.
 \end{itemize}
-\subsection{Class-aware spacing}\label{class-aware-spacing}
-
+\subsection{Class-aware spacing}
 \begin{itemize}
-\item{} On \texttt{memoir}, the fragment uses the class-provided \texttt{\textbackslash{}SingleSpacing}, \texttt{\textbackslash{}OnehalfSpacing}, and \texttt{\textbackslash{}DoubleSpacing} when available, falling back to \texttt{\textbackslash{}baselinestretch} updates.
-\item{} On other classes (article, report...), it loads \texttt{setspace} and uses \texttt{\textbackslash{}singlespacing}, \texttt{\textbackslash{}onehalfspacing}, or \texttt{\textbackslash{}doublespacing}.
-
+\item On \tscodeinline{memoir}, the fragment uses the class-provided \tscodeinline{\textbackslash{}SingleSpacing}, \tscodeinline{\textbackslash{}OnehalfSpacing}, and \tscodeinline{\textbackslash{}DoubleSpacing} when available, falling back to \tscodeinline{\textbackslash{}baselinestretch} updates.
+\item On other classes (article, report...), it loads \tscodeinline{setspace} and uses \tscodeinline{\textbackslash{}singlespacing}, \tscodeinline{\textbackslash{}onehalfspacing}, or \tscodeinline{\textbackslash{}doublespacing}.
 \end{itemize}
-\subsection{Templates}\label{templates}
-
-The built-in \texttt{article} and \texttt{book} templates inject \texttt{ts-\allowbreak{}typesetting} directly (no \texttt{\textbackslash{}usepackage} file to manage). If you don't set any of the options above, the fragment emits nothing and the templates' stock spacing stays unchanged.
-
+\subsection{Templates}
+The built-in \tscodeinline{article} and \tscodeinline{book} templates inject \tscodeinline{ts-\allowbreak{}typesetting} directly (no \tscodeinline{\textbackslash{}usepackage} file to manage). If you don't set any of the options above, the fragment emits nothing and the templates' stock spacing stays unchanged.
 \end{document}

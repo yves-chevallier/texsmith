@@ -1,15 +1,15 @@
 #set document(
-  title: "Fragments",
+title: "Fragments",
 )
 #set page(
-  paper: "a4",
-  margin: 2.5cm,
-  numbering: none,
-  footer: context {
-    if counter(page).final().first() > 1 {
-      align(center)[#counter(page).get().first()]
-    }
-  },
+paper: "a4",
+margin: 2.5cm,
+numbering: none,
+footer: context {
+if counter(page).final().first() > 1 {
+align(center)[#counter(page).get().first()]
+}
+},
 )
 #set text(font: "New Computer Modern", size: 11pt, lang: "en")
 #set par(justify: true)
@@ -17,15 +17,14 @@
 #set heading(numbering: "1.1")
 
 #align(center)[
-  #text(size: 1.8em, weight: "bold")[Fragments]
-]
+#text(size: 1.8em, weight: "bold")[Fragments]]
 #v(1.5em)
 
-Fragments are reusable LaTeX snippets injected into template slots. Built-in fragments (e.g., geometry, fonts, glossary, index) and custom ones share the same structure:
+Fragments are reusable #ts-logo("LaTeX") snippets injected into template slots. Built-in fragments (e.g., geometry, fonts, glossary, index) and custom ones share the same structure:
 
 - `fragment.toml` with `name`, `description`, and either an `entrypoint` or a `files` list.
 - Optional `attributes` section describing fragment-owned attributes (ownership enforced).
-- Optional `partials` block for fragment-scoped partial overrides and `required_partials` for dependencies.
+- A `provides` list naming the contract macros the fragment defines; a fragment that replaces another must provide every entry of its row.
 - Optional `should_render` logic (via entrypoint) to render only when needed.
 
 = Manifest shape
@@ -61,23 +60,35 @@ Slots are validated against the template at render time; inline injections must 
 
 Fragments can declare attributes (ownership enforced) and resolve overrides using the same `TemplateAttributeSpec` model as templates. Attribute defaults are injected into the context before rendering fragment pieces. Attribute ownership matters: if two fragments (or a template) claim the same attribute name, TeXSmith raises a `TemplateError`. Keep each attribute owned by a single fragment or the template to avoid conflicts.
 
-= Partials
+= Contract macros
 
-Fragments can ship their own partials so feature-specific rendering stays close to the feature:
-
-```toml
-partials = ["strong.tex", "codeblock.tex"]         # list form
-required_partials = ["heading"]                    # fail fast if missing
-```
-
-or as a mapping when paths and names differ:
+A fragment defines the macros and environments the writers name, and says so:
 
 ```toml
-[partials]
-codeinline = "overrides/inline/code.tex"
+provides = ["tscode", "tscodeinline"]
 ```
 
-Partial precedence is template overrides \> fragment overrides \> core defaults. Duplicate fragment providers for the same partial abort the render.
+The writer activates a fragment through `Requires.fragments`: a body that emits
+`\begin{tscode}` pulls in `ts-code`, one that emits `\tsindex` pulls in
+`ts-index`. A macro the writer names, a fragment must define — the check runs at
+load time against `tmark.fragments()`, so an incomplete replacement fails early
+instead of producing an undefined control sequence.
+
+Replace a bundled fragment outright with `press.fragments`:
+
+```yaml
+press:
+  fragments:
+    disable: [ts-code]
+    append: [./my-code.sty]
+```
+
+See Contract macros for the table of macros and
+their keys.
+
+#ts-callout(kind: "warning", title: [Jinja partials are no longer the rendering layer])[
+A fragment's `partials` and `required_partials` keys are deprecated in
+0.7.0 — they warn and are ignored — and removed in 0.8.0.]
 
 = Runtime loading
 
@@ -89,7 +100,7 @@ Partial precedence is template overrides \> fragment overrides \> core defaults.
 = Fragment contract (Python)
 
 - Implement a `BaseFragment[Config]` subclass with:
-- class attributes: `name`, `description`, `pieces`, `attributes` (TemplateAttributeSpec map), optional `context_defaults`, `partials`, `required_partials`, `source`.
+- class attributes: `name`, `description`, `pieces`, `attributes` (TemplateAttributeSpec map), optional `context_defaults`, `provides`, `source`.
 - methods: `build_config(context, overrides=None) -> Config`, `inject(config, context, overrides=None) -> None`, `should_render(config) -> bool`.
 - Define a `Config` dataclass with `from_context(...)` and `inject_into(context)` methods (plus helpers like `enabled()`).
 - Export `fragment = YourFragment()` from `__init__.py`; point `fragment.toml` `entrypoint` to `texsmith.fragments.yourname:fragment`.
@@ -98,7 +109,9 @@ Partial precedence is template overrides \> fragment overrides \> core defaults.
 == Minimal example
 
 `src/texsmith/fragments/example/__init__.py`
-`from dataclasses import dataclass
+
+```python
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Mapping
 
@@ -150,10 +163,12 @@ class ExampleFragment(BaseFragment[ExampleConfig]):
         return config.enabled()
 
 fragment = ExampleFragment()
-`
+```
 
 `src/texsmith/fragments/example/fragment.toml`
-`name = "ts-example"
+
+```toml
+name = "ts-example"
 description = "Tiny example fragment."
 entrypoint = "texsmith.fragments.example:fragment"
 
@@ -161,11 +176,11 @@ entrypoint = "texsmith.fragments.example:fragment"
 path = "ts-example.jinja.tex"
 slot = "extra_packages"
 type = "inline"
-`
+```
 
 = Migration notes for fragment authors
 
-- Prefer `fragment.toml` with `files`, `attributes`, and optional `partials`/`required_partials`; use an entrypoint only when you need Python logic.
+- Prefer `fragment.toml` with `files`, `attributes`, and `provides`; use an entrypoint only when you need Python logic.
 - If using Python, return a `BaseFragment` instance via `fragment`; `create_fragment()` and `FragmentDefinition` shims have been removed.
 - Declare attribute ownership (implicit `owner = <fragment name>`) to avoid collisions with templates or other fragments.
 - Keep slot targets aligned with template variables; inline targets must reference declared slots or template variables, otherwise a `TemplateError` is raised.

@@ -8,6 +8,10 @@
 \usepackage[colorlinks=true, linkcolor=NavyBlue, urlcolor=NavyBlue, citecolor=NavyBlue]{hyperref}
 \usepackage[a4paper]{geometry}
 \usepackage{ts-fonts}
+\usepackage{csquotes}
+\usepackage{tcolorbox}
+\usepackage{xcolor}
+\usepackage{fvextra}
 \usepackage{amsmath}
 \usepackage{float}
 \usepackage{seqsplit}
@@ -18,35 +22,85 @@
 \usepackage{refcount}
 \makeatletter
 \def\ps@plain{
-  \let\@oddhead\@empty
-  \let\@evenhead\@empty
-  \def\@oddfoot{
-    \hfil
-    \ifnum\getpagerefnumber{LastPage}>1\relax
-      \thepage
-    \fi
-    \hfil}
-  \let\@evenfoot\@oddfoot
+\let\@oddhead\@empty
+\let\@evenhead\@empty
+\def\@oddfoot{
+\hfil
+\ifnum\getpagerefnumber{LastPage}>1\relax
+\thepage
+\fi
+\hfil}
+\let\@evenfoot\@oddfoot
 }
 \makeatother
 
 \title{YAML Front Matter}
 \author{}\date{}
-
 \begin{document}
-
 \maketitle
-
-\thispagestyle{plain}
-Every Markdown document can carry a small block of metadata at the very top, fenced by \texttt{-\allowbreak{}-\allowbreak{}-\allowbreak{}} markers. This is the \textbf{front matter}: a YAML island living rent-free above your prose. Static site generators like MkDocs read it to drive per-page configuration, and TeXSmith hooks into the same convention to steer how a document is parsed, typeset, and ultimately rendered to \LaTeX{} or PDF.
+Every Markdown document can carry a small block of metadata at the very top, fenced by \tscodeinline{-\allowbreak{}-\allowbreak{}-\allowbreak{}} markers. This is the \textbf{front matter}: a YAML island living rent-free above your prose. Static site generators like MkDocs read it to drive per-page configuration, and TeXSmith hooks into the same convention to steer how a document is parsed, typeset, and ultimately rendered to \LaTeX{} or PDF.
 
 A guiding principle: \textbf{keep content and form apart}. Templates, font sizes, margins, paper format, and other typographic knobs belong in the front matter; the body should care only about ideas, sentences, and equations. Other tools take a different stance, see \href{https://quarkdown.com/}{Quarkdown}, which weaves configuration directly into the document body. Both are valid, but TeXSmith favors the separation, your future self will thank you when swapping templates without touching a single paragraph.
+\section{The shape of the front matter}
+Document metadata stays at the \textbf{root}, because that is where MkDocs, Pandoc
+and editors read it. Everything TeXSmith owns may sit under \tscodeinline{press:} --- a
+namespace, not a category, whose only job is to keep those keys out of a static
+site generator's way. When the same key appears in both places, \tscodeinline{press} wins.
+\begin{tscode}[lang=yaml, engine=pygments]
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+\PY{n+nn}{\PYZhy{}\PYZhy{}\PYZhy{}}
+\PY{n+nt}{title}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{Firmware}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{Review}\PY{+w}{          }\PY{c+c1}{\PYZsh{} omitted → the first heading is promoted}
+\PY{n+nt}{authors}\PY{p}{:}\PY{+w}{ }\PY{p+pIndicator}{[}\PY{p+pIndicator}{\PYZob{}}\PY{n+nt}{name}\PY{p}{:}\PY{+w}{ }\PY{n+nv}{Ada}\PY{n+nv}{ }\PY{n+nv}{Lovelace}\PY{p+pIndicator}{,}\PY{n+nt}{ affiliation}\PY{p}{:}\PY{+w}{ }\PY{n+nv}{Analytical}\PY{n+nv}{ }\PY{n+nv}{Engine}\PY{p+pIndicator}{\PYZcb{}}\PY{p+pIndicator}{]}
+\PY{n+nt}{date}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{2025\PYZhy{}03\PYZhy{}15}\PY{+w}{                }\PY{c+c1}{\PYZsh{} ISO date | string | \PYZdq{}commit\PYZdq{}}
+\PY{n+nt}{lang}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{en\PYZhy{}GB}\PY{+w}{                     }\PY{c+c1}{\PYZsh{} hyphenation, quotes, typographic spacing}
+\PY{n+nt}{id}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{RHE\PYZhy{}423}\PY{+w}{                     }\PY{c+c1}{\PYZsh{} document identifier for cross\PYZhy{}document references}
 
-\section{Press}\label{press}
+\PY{n+nt}{press}\PY{p}{:}
+\PY{+w}{  }\PY{n+nt}{template}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{book}\PY{+w}{                }\PY{c+c1}{\PYZsh{} article | book | letter | a user template}
+\PY{+w}{  }\PY{n+nt}{base\PYZus{}level}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{chapter}\PY{+w}{           }\PY{c+c1}{\PYZsh{} what a top\PYZhy{}level `\PYZsh{}` maps to}
+\PY{+w}{  }\PY{n+nt}{callouts}\PY{p}{:}
+\PY{+w}{    }\PY{n+nt}{style}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{fancy}\PY{+w}{                }\PY{c+c1}{\PYZsh{} fancy | classic | minimal}
+\PY{+w}{  }\PY{n+nt}{details}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{expand}\PY{+w}{               }\PY{c+c1}{\PYZsh{} expand | reference}
+\PY{+w}{  }\PY{n+nt}{code}\PY{p}{:}\PY{+w}{ }\PY{p+pIndicator}{\PYZob{}}\PY{n+nt}{engine}\PY{p}{:}\PY{+w}{ }\PY{n+nv}{pygments}\PY{p+pIndicator}{\PYZcb{}}
+\PY{+w}{  }\PY{n+nt}{slots}\PY{p}{:}\PY{+w}{ }\PY{p+pIndicator}{\PYZob{}}\PY{n+nt}{abstract}\PY{p}{:}\PY{+w}{ }\PY{n+nv}{Abstract}\PY{p+pIndicator}{\PYZcb{}}
 
-The \texttt{press} block holds everything related to the printed (or PDF'd) artifact, title, authors, template choice, and any template-specific slots:
+\PY{+w}{  }\PY{n+nt}{declare}\PY{p}{:}\PY{+w}{                      }\PY{c+c1}{\PYZsh{} kinds: what things *are*}
+\PY{+w}{    }\PY{n+nt}{counters}\PY{p}{:}\PY{+w}{ }\PY{p+pIndicator}{\PYZob{}}\PY{n+nv}{…}\PY{p+pIndicator}{\PYZcb{}}
+\PY{+w}{    }\PY{n+nt}{admonitions}\PY{p}{:}\PY{+w}{ }\PY{p+pIndicator}{\PYZob{}}\PY{n+nv}{…}\PY{p+pIndicator}{\PYZcb{}}
+\PY{+w}{    }\PY{n+nt}{glossary}\PY{p}{:}\PY{+w}{ }\PY{p+pIndicator}{\PYZob{}}\PY{n+nv}{…}\PY{p+pIndicator}{\PYZcb{}}
+\PY{+w}{    }\PY{n+nt}{acronyms}\PY{p}{:}\PY{+w}{ }\PY{p+pIndicator}{\PYZob{}}\PY{n+nv}{…}\PY{p+pIndicator}{\PYZcb{}}
 
-\begin{code}{yaml}{}{}
+\PY{+w}{  }\PY{n+nt}{sources}\PY{p}{:}\PY{+w}{                      }\PY{c+c1}{\PYZsh{} where references resolve}
+\PY{+w}{    }\PY{n+nt}{bibliography}\PY{p}{:}\PY{+w}{ }\PY{p+pIndicator}{\PYZob{}}\PY{n+nv}{…}\PY{p+pIndicator}{\PYZcb{}}
+\PY{+w}{    }\PY{n+nt}{crossrefs}\PY{p}{:}\PY{+w}{ }\PY{p+pIndicator}{\PYZob{}}\PY{n+nv}{…}\PY{p+pIndicator}{\PYZcb{}}
+
+\PY{+w}{  }\PY{n+nt}{features}\PY{p}{:}\PY{+w}{                     }\PY{c+c1}{\PYZsh{} the switch registry}
+\PY{+w}{    }\PY{n+nt}{figures.exec}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{true}
+\PY{n+nn}{\PYZhy{}\PYZhy{}\PYZhy{}}
+\end{Verbatim}
+\end{tscode}
+Four groups, and the split is the same one the body follows: \tscodeinline{declare} says a
+\enquote{Solution} callout \emph{exists}, belongs to the group \enquote{Solutions} and is referred to
+as \enquote{See page N}; the form keys (\tscodeinline{template}, \tscodeinline{callouts}, \tscodeinline{code}, ...) say it is
+blue with a graduation-cap icon. A document is re-skinned by replacing the form
+keys alone.
+
+All sections are validated with pydantic: an unknown key fails at parse time,
+not in the PDF.
+\begin{tscallout}[kind=note, title={The 0.6 layout is deprecated}]
+Top-level \tscodeinline{bibliography:}, \tscodeinline{crossrefs:}, \tscodeinline{counters:}, \tscodeinline{glossary:},
+\tscodeinline{acronyms:} and \tscodeinline{admonitions:} are still read, with a deprecation warning
+naming the replacement. \tscodeinline{tmark lint -\allowbreak{}-\allowbreak{}fix FILE} moves them; the table is in
+Migrating to TMark.
+\end{tscallout}
+\section{Moustaches}
+Any front-matter value is available in the body as \tscodeinline{\{\{ key \}\}} or
+\tscodeinline{\{\{ press.template \}\}}, resolved after parsing and never inside code spans or
+fenced blocks. Moustaches are substitution, not templating: no logic, no loops,
+no filters. An unresolved moustache warns and is left in place, visibly.
+\section{Press}
+The \tscodeinline{press} block holds everything related to the printed (or PDF'd) artifact: the template choice, typographic options, and template-specific slots.
+\begin{tscode}[lang=yaml, engine=pygments]
 \begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
 \PY{n+nt}{press}\PY{p}{:}
 \PY{+w}{  }\PY{n+nt}{title}\PY{p}{:}\PY{+w}{ }\PY{l+s}{\PYZdq{}}\PY{l+s}{My}\PY{n+nv}{ }\PY{l+s}{Document}\PY{n+nv}{ }\PY{l+s}{Title}\PY{l+s}{\PYZdq{}}
@@ -58,89 +112,98 @@ The \texttt{press} block holds everything related to the printed (or PDF'd) arti
 \PY{+w}{  }\PY{n+nt}{slots}\PY{p}{:}
 \PY{+w}{    }\PY{n+nt}{abstract}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{Abstract}
 \end{Verbatim}
-\end{code}
-\begin{callout}[callout note]{Note}
-The \texttt{press} section is optional. Keys like \texttt{title} and \texttt{authors} may also live at the root of the front matter, and TeXSmith will pick them up just fine. Nesting them under \texttt{press} keeps things tidy and avoids stepping on the toes of other static site generators that may want the root-level keys for themselves.
-\end{callout}
-Each template exposes its own set of attributes (cover styles, sidebar toggles, custom slots, ...). Head over to the \hyperref[snippet:<HASH>]{Template Guide} for the full menu.
-
-\section{Bibliography}\label{bibliography}
-
-References can be declared inline, right next to the document that cites them, no external \texttt{.bib} file required (though one still works if you prefer). Mix DOI shortcuts with fully-spelled-out entries as needed:
-
-\begin{code}{yaml}{}{}
+\end{tscode}
+Each template exposes its own set of attributes (cover styles, sidebar toggles, custom slots, ...). Head over to the Template Guide for the full menu.
+\section{Bibliography}
+References can be declared inline, right next to the document that cites them, no external \tscodeinline{.bib} file required (though one still works if you prefer). Mix DOI shortcuts with fully-spelled-out entries as needed:
+\begin{tscode}[lang=yaml, engine=pygments]
 \begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
-\PY{n+nt}{bibliography}\PY{p}{:}
-\PY{+w}{  }\PY{n+nt}{AB2020}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{doi:10.1000/xyz123}
-\PY{+w}{  }\PY{n+nt}{CD2019}\PY{p}{:}
-\PY{+w}{    }\PY{n+nt}{type}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{book}
-\PY{+w}{    }\PY{n+nt}{author}\PY{p}{:}\PY{+w}{ }\PY{l+s}{\PYZdq{}}\PY{l+s}{John}\PY{n+nv}{ }\PY{l+s}{Doe}\PY{l+s}{\PYZdq{}}
-\PY{+w}{    }\PY{n+nt}{title}\PY{p}{:}\PY{+w}{ }\PY{l+s}{\PYZdq{}}\PY{l+s}{Example}\PY{n+nv}{ }\PY{l+s}{Book}\PY{l+s}{\PYZdq{}}
-\PY{+w}{    }\PY{n+nt}{year}\PY{p}{:}\PY{+w}{ }\PY{l+s}{\PYZdq{}}\PY{l+s}{2019}\PY{l+s}{\PYZdq{}}
+\PY{n+nt}{press}\PY{p}{:}
+\PY{+w}{  }\PY{n+nt}{sources}\PY{p}{:}
+\PY{+w}{    }\PY{n+nt}{bibliography}\PY{p}{:}
+\PY{+w}{      }\PY{n+nt}{AB2020}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{doi:10.1000/xyz123}
+\PY{+w}{      }\PY{n+nt}{CD2019}\PY{p}{:}
+\PY{+w}{        }\PY{n+nt}{type}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{book}
+\PY{+w}{        }\PY{n+nt}{author}\PY{p}{:}\PY{+w}{ }\PY{l+s}{\PYZdq{}}\PY{l+s}{John}\PY{n+nv}{ }\PY{l+s}{Doe}\PY{l+s}{\PYZdq{}}
+\PY{+w}{        }\PY{n+nt}{title}\PY{p}{:}\PY{+w}{ }\PY{l+s}{\PYZdq{}}\PY{l+s}{Example}\PY{n+nv}{ }\PY{l+s}{Book}\PY{l+s}{\PYZdq{}}
+\PY{+w}{        }\PY{n+nt}{year}\PY{p}{:}\PY{+w}{ }\PY{l+s}{\PYZdq{}}\PY{l+s}{2019}\PY{l+s}{\PYZdq{}}
 \end{Verbatim}
-\end{code}
-The full syntax, supported entry types, and resolution rules are documented in the \hyperref[snippet:<HASH>]{Bibliography Guide}.
-
-\section{Glossary}\label{glossary}
-
+\end{tscode}
+Cite them with \tscodeinline{@AB2020} or \tscodeinline{@[CD2019, p. 12]}. The full syntax, supported entry types, and resolution rules are documented in the Bibliography Guide.
+\section{Glossary}
 When the glossary feature is enabled, entries are declared in the front matter and grouped into logical tables. Symbols, acronyms, and domain-specific jargon all coexist peacefully:
-
-\begin{code}{yaml}{}{}
+\begin{tscode}[lang=yaml, engine=pygments]
 \begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
-\PY{n+nt}{glossary}\PY{p}{:}
-\PY{+w}{  }\PY{n+nt}{style}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{long}\PY{+w}{ }\PY{c+c1}{\PYZsh{} or short}
-\PY{+w}{  }\PY{n+nt}{groups}\PY{p}{:}\PY{+w}{ }\PY{c+c1}{\PYZsh{} Grouping in different tables (optional)}
-\PY{+w}{    }\PY{n+nt}{symbols}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{Mathematical}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{symbols}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{and}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{notations}
-\PY{+w}{    }\PY{n+nt}{corporate}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{Organizational}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{terms}
-\PY{+w}{    }\PY{n+nt}{technology}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{Technology\PYZhy{}related}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{terms}
-\PY{+w}{  }\PY{n+nt}{entries}\PY{p}{:}
-\PY{+w}{    }\PY{l+s}{\PYZdq{}}\PY{l+s}{\PYZdl{}}\PY{l+s}{\PYZbs{}\PYZbs{}}\PY{l+s}{phi\PYZdl{}}\PY{l+s}{\PYZdq{}}\PY{p+pIndicator}{:}
-\PY{+w}{      }\PY{n+nt}{group}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{symbols}
-\PY{+w}{      }\PY{n+nt}{description}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{Angle}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{in}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{radians}
-\PY{+w}{    }\PY{n+nt}{ONU}\PY{p}{:}
-\PY{+w}{      }\PY{n+nt}{group}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{corporate}
-\PY{+w}{      }\PY{n+nt}{description}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{United}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{Nations}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{Organization}
-\PY{+w}{    }\PY{n+nt}{AI}\PY{p}{:}
-\PY{+w}{      }\PY{n+nt}{group}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{technology}
-\PY{+w}{      }\PY{n+nt}{description}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{Artificial}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{Intelligence}
+\PY{n+nt}{press}\PY{p}{:}
+\PY{+w}{  }\PY{n+nt}{declare}\PY{p}{:}
+\PY{+w}{    }\PY{n+nt}{glossary}\PY{p}{:}
+\PY{+w}{      }\PY{n+nt}{style}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{long}\PY{+w}{ }\PY{c+c1}{\PYZsh{} or short}
+\PY{+w}{      }\PY{n+nt}{groups}\PY{p}{:}\PY{+w}{ }\PY{c+c1}{\PYZsh{} Grouping in different tables (optional)}
+\PY{+w}{        }\PY{n+nt}{symbols}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{Mathematical}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{symbols}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{and}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{notations}
+\PY{+w}{        }\PY{n+nt}{corporate}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{Organizational}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{terms}
+\PY{+w}{        }\PY{n+nt}{technology}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{Technology\PYZhy{}related}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{terms}
+\PY{+w}{      }\PY{n+nt}{entries}\PY{p}{:}
+\PY{+w}{        }\PY{l+s}{\PYZdq{}}\PY{l+s}{\PYZdl{}}\PY{l+s}{\PYZbs{}\PYZbs{}}\PY{l+s}{phi\PYZdl{}}\PY{l+s}{\PYZdq{}}\PY{p+pIndicator}{:}
+\PY{+w}{          }\PY{n+nt}{group}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{symbols}
+\PY{+w}{          }\PY{n+nt}{description}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{Angle}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{in}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{radians}
+\PY{+w}{        }\PY{n+nt}{ONU}\PY{p}{:}
+\PY{+w}{          }\PY{n+nt}{group}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{corporate}
+\PY{+w}{          }\PY{n+nt}{description}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{United}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{Nations}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{Organization}
+\PY{+w}{        }\PY{n+nt}{AI}\PY{p}{:}
+\PY{+w}{          }\PY{n+nt}{group}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{technology}
+\PY{+w}{          }\PY{n+nt}{description}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{Artificial}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{Intelligence}
 \end{Verbatim}
-\end{code}
-See the \hyperref[snippet:<HASH>]{Glossary Guide} for sorting behavior, cross-references, and styling options.
-
-\section{Counters}\label{counters}
-
+\end{tscode}
+See the Glossary Guide for sorting behavior, cross-references, and styling options.
+\section{Counters}
 Document-specific numbered series --- findings, requirements, bugs, test cases ---
-are declared under \texttt{counters:}. Each key is the prefix used by the \texttt{\#\{…\}}
-markers and the \texttt{@…} references in the body:
-
-\begin{code}{yaml}{}{}
+are declared under \tscodeinline{press.declare.counters}. Each key is the prefix used by the
+\tscodeinline{\#(…)} markers and the \tscodeinline{@…} references in the body:
+\begin{tscode}[lang=yaml, engine=pygments]
 \begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
-\PY{n+nt}{counters}\PY{p}{:}
-\PY{+w}{  }\PY{n+nt}{n}\PY{p}{:}
-\PY{+w}{    }\PY{n+nt}{name}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{Requirement}\PY{+w}{ }\PY{c+c1}{\PYZsh{} human\PYZhy{}readable name, used in diagnostics}
-\PY{+w}{    }\PY{n+nt}{format}\PY{p}{:}\PY{+w}{ }\PY{l+s}{\PYZdq{}}\PY{l+s}{N\PYZhy{}\PYZob{}n:02d\PYZcb{}}\PY{l+s}{\PYZdq{}}\PY{+w}{ }\PY{c+c1}{\PYZsh{} optional, defaults to \PYZdq{}\PYZob{}n\PYZcb{}\PYZdq{}}
-\PY{+w}{    }\PY{n+nt}{start}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{1}\PY{+w}{ }\PY{c+c1}{\PYZsh{} optional, defaults to 1}
-\PY{+w}{  }\PY{n+nt}{fw}\PY{p}{:}
-\PY{+w}{    }\PY{n+nt}{name}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{Firmware}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{finding}
-\PY{+w}{    }\PY{n+nt}{format}\PY{p}{:}\PY{+w}{ }\PY{l+s}{\PYZdq{}}\PY{l+s}{FW\PYZhy{}\PYZob{}n:02d\PYZcb{}}\PY{l+s}{\PYZdq{}}
+\PY{n+nt}{press}\PY{p}{:}
+\PY{+w}{  }\PY{n+nt}{declare}\PY{p}{:}
+\PY{+w}{    }\PY{n+nt}{counters}\PY{p}{:}
+\PY{+w}{      }\PY{n+nt}{n}\PY{p}{:}
+\PY{+w}{        }\PY{n+nt}{name}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{Requirement}\PY{+w}{ }\PY{c+c1}{\PYZsh{} human\PYZhy{}readable name, used in diagnostics}
+\PY{+w}{        }\PY{n+nt}{format}\PY{p}{:}\PY{+w}{ }\PY{l+s}{\PYZdq{}}\PY{l+s}{N\PYZhy{}\PYZob{}n:02d\PYZcb{}}\PY{l+s}{\PYZdq{}}\PY{+w}{ }\PY{c+c1}{\PYZsh{} optional, defaults to \PYZdq{}\PYZob{}n\PYZcb{}\PYZdq{}}
+\PY{+w}{        }\PY{n+nt}{start}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{1}\PY{+w}{ }\PY{c+c1}{\PYZsh{} optional, defaults to 1}
+\PY{+w}{      }\PY{n+nt}{fw}\PY{p}{:}
+\PY{+w}{        }\PY{n+nt}{name}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{Firmware}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{finding}
+\PY{+w}{        }\PY{n+nt}{format}\PY{p}{:}\PY{+w}{ }\PY{l+s}{\PYZdq{}}\PY{l+s}{FW\PYZhy{}\PYZob{}n:02d\PYZcb{}}\PY{l+s}{\PYZdq{}}
 \end{Verbatim}
-\end{code}
-See \hyperref[snippet:<HASH>]{Custom counters} for the marker syntax, the
+\end{tscode}
+The predeclared prefixes (\tscodeinline{sec}, \tscodeinline{fig}, \tscodeinline{tbl}, \tscodeinline{lst}, \tscodeinline{eq}, \tscodeinline{thm}, \tscodeinline{note},
+\tscodeinline{gls}, \tscodeinline{doi}) are entries of the same registry, and their fields can be
+overridden the same way (\tscodeinline{fig: \{scope: document\}}).
+
+See Custom counters for the marker syntax, the
 numbering scope and the backend mapping.
-
-\section{Cross-document references}\label{cross-document-references}
-
-\texttt{id} gives the document a free identifier (a contract or report number);
-\texttt{crossrefs:} declares the inventories published by the documents it cites:
-
-\begin{code}{yaml}{}{}
+\section{Cross-document references}
+\tscodeinline{id} gives the document a free identifier (a contract or report number);
+\tscodeinline{press.sources.crossrefs} declares the inventories published by the documents it
+cites:
+\begin{tscode}[lang=yaml, engine=pygments]
 \begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
 \PY{n+nt}{id}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{RHE\PYZhy{}424}
-\PY{n+nt}{crossrefs}\PY{p}{:}
-\PY{+w}{  }\PY{n+nt}{fwrev}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{build/firmware\PYZhy{}review.refs.json}
+\PY{n+nt}{press}\PY{p}{:}
+\PY{+w}{  }\PY{n+nt}{sources}\PY{p}{:}
+\PY{+w}{    }\PY{n+nt}{crossrefs}\PY{p}{:}
+\PY{+w}{      }\PY{n+nt}{fwrev}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{build/firmware\PYZhy{}review.refs.json}
 \end{Verbatim}
-\end{code}
-A citation then reads \texttt{@fwrev:fw:pas-\allowbreak{}de-\allowbreak{}temps} and renders as
-\texttt{RHE-\allowbreak{}423-\allowbreak{}FW-\allowbreak{}10 p. 14}. See \hyperref[snippet:<HASH>]{Cross-document references}.
-
+\end{tscode}
+A citation then reads \tscodeinline{@fwrev:fw:pas-\allowbreak{}de-\allowbreak{}temps} and renders as
+\tscodeinline{RHE-\allowbreak{}423-\allowbreak{}FW-\allowbreak{}10 p. 14}. See Cross-document references.
+\section{Features}
+Every switchable behaviour has a dotted name and a default. \tscodeinline{press.features}
+flips entries, and nothing else in the front matter does.
+\begin{tscode}[lang=yaml, engine=pygments]
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+\PY{n+nt}{press}\PY{p}{:}
+\PY{+w}{  }\PY{n+nt}{features}\PY{p}{:}
+\PY{+w}{    }\PY{n+nt}{figures.exec}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{true}\PY{+w}{        }\PY{c+c1}{\PYZsh{} execute `python image` fences}
+\PY{+w}{    }\PY{n+nt}{glossary.wikipedia}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{true}\PY{+w}{  }\PY{c+c1}{\PYZsh{} fetch glossary summaries from Wikipedia links}
+\PY{+w}{    }\PY{n+nt}{paragraph.lead}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{false}\PY{+w}{     }\PY{c+c1}{\PYZsh{} stop promoting a leading strong span}
+\end{Verbatim}
+\end{tscode}
 \end{document}

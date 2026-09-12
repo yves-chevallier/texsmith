@@ -1,15 +1,15 @@
 #set document(
-  title: "Templates",
+title: "Templates",
 )
 #set page(
-  paper: "a4",
-  margin: 2.5cm,
-  numbering: none,
-  footer: context {
-    if counter(page).final().first() > 1 {
-      align(center)[#counter(page).get().first()]
-    }
-  },
+paper: "a4",
+margin: 2.5cm,
+numbering: none,
+footer: context {
+if counter(page).final().first() > 1 {
+align(center)[#counter(page).get().first()]
+}
+},
 )
 #set text(font: "New Computer Modern", size: 11pt, lang: "en")
 #set par(justify: true)
@@ -17,11 +17,10 @@
 #set heading(numbering: "1.1")
 
 #align(center)[
-  #text(size: 1.8em, weight: "bold")[Templates]
-]
+#text(size: 1.8em, weight: "bold")[Templates]]
 #v(1.5em)
 
-TeXSmith templates define the LaTeX skeleton that wraps converted Markdown. Each
+TeXSmith templates define the #ts-logo("LaTeX") skeleton that wraps converted Markdown. Each
 template bundles assets, slot definitions, attribute schemas, and build metadata
 so you can aim the renderer at anything from articles to slide decks.
 
@@ -70,11 +69,11 @@ uv run hatch build  # optional packaging smoke test
 ```
 
 Publish by pointing `pyproject.toml` to the `template/` package, then `uv publish` or `twine upload dist/*`.
-For in-depth patterns (overrides, slots, metadata), see the #link("template-cookbook.md")[Template Cookbook].
+For in-depth patterns (overrides, slots, metadata), see the Template Cookbook.
 
 = Write your own TeXSmith templates
 
-TeXSmith uses Jinja2 templates to assemble LaTeX documents from converted
+TeXSmith uses Jinja2 templates to assemble #ts-logo("LaTeX") documents from converted
 Markdown fragments. You can create your own templates to control the layout,
 styling, and structure of the final output.
 
@@ -212,7 +211,7 @@ Attributes are resolved before `WrappableTemplate.prepare_context` runs, meaning
 == Attribute ownership & precedence
 
 - Each attribute belongs to a single owner (template by default, fragment when declared in `fragment.toml`). Conflicting owners raise a `TemplateError`.
-- Overrides flow: CLI/front matter → attribute resolver (type coercion, normalisers) → template emitters/fragment defaults. Empty strings are dropped when `allow_empty = false`.
+- Overrides flow: CLI/front matter #ts-script("symbols")[→ ]attribute resolver (type coercion, normalisers) #ts-script("symbols")[→ ]template emitters/fragment defaults. Empty strings are dropped when `allow_empty = false`.
 - Attributes no longer live under ad-hoc dotted names (`press.*`); normalisation collapses supported aliases onto the declared attribute name.
 
 == Template slots and built-ins
@@ -224,12 +223,12 @@ Attributes are resolved before `WrappableTemplate.prepare_context` runs, meaning
 === Built-in normalisers
 
 #table(
-  columns: 2,
-  align: (left, left),
-  table.header([Name], [Purpose]),
-  [`paper_option`], [Validates paper sizes and emits `<size>paper` strings (for example `letterpaper`).],
-  [`orientation`], [Normalises orientation flags and guarantees `portrait` or `landscape`.],
-  [`babel_language`], [Maps ISO-like language codes to Babel identifiers (for example `fr` → `french`).],
+columns: 2,
+align: (left, left),
+table.header([Name], [Purpose]),
+[`paper_option`], [Validates paper sizes and emits `<size>paper` strings (for example `letterpaper`).],
+[`orientation`], [Normalises orientation flags and guarantees `portrait` or `landscape`.],
+[`babel_language`], [Maps ISO-like language codes to Babel identifiers (for example `fr` #ts-script("symbols")[→ ]`french`).],
 )
 
 Normalisers run after type coercion and before escaping. They can also reuse existing defaults to provide fallbacks (`paper_option` and `orientation` do this).
@@ -288,7 +287,7 @@ press:
 
 With the manifest above TeXSmith will:
 
-- Escape `title` and `subtitle` for LaTeX compatibility.
+- Escape `title` and `subtitle` for #ts-logo("LaTeX") compatibility.
 - Map `language: fr` to `french`.
 - Normalise author collections so individual templates can format them consistently.
 - Populate both defaults (`author`) and structured data (`authors`) that template classes can consume.
@@ -307,7 +306,7 @@ allow_empty = false
 
 Slots control where converted content is injected. Each entry allows:
 
-- `depth`: maps to a LaTeX sectioning command (`section`, `chapter`, etc.).
+- `depth`: maps to a #ts-logo("LaTeX") sectioning command (`section`, `chapter`, etc.).
 - `base_level` and `offset`: fine tune heading levels when rendering.
 - `default`: mark exactly one slot as the primary sink for content.
 - `strip_heading`: remove the first heading when populating the slot (useful for abstracts).
@@ -316,34 +315,40 @@ Slots become Jinja variables inside the template (`\VAR{abstract}`, `\VAR{mainma
 
 == Overrides
 
-TeXSmith uses partials to render different parts of the document such as bold text with `adapters/latex/partials/bold.tex`:
+The #ts-logo("LaTeX") body comes from tmark's writer, which emits a fixed macro or
+environment per construct. Structural constructs (emphasis, lists, headings,
+figures, tables, links, footnotes) are plain #ts-logo("LaTeX") the writer owns; everything a
+template may want to restyle is a *contract macro* provided by a `ts-*`
+fragment. Redefine it in your template's `.tex`, after `\VAR{extra_packages}`
+(that is where the fragments are `\usepackage`d):
 
-```tex
-\textbf{\VAR{text}}
+```latex
+\VAR{extra_packages}
+\tcbset{/ts/code/.append style={frame hidden, boxrule=0pt}}
+\RenewDocumentCommand{\tscodeinline}{O{}m}{\texttt{#2}}
+\RenewDocumentEnvironment{tsdiv@multicolumn}{O{}}{\begin{multicols}{3}}{\end{multicols}}
 ```
 
-You may want to override some of these partials to customize the output of specific Markdown elements. To do so, create an `overrides/` folder in your template package and add the partials you want to override.
+See Contract macros for the full table of macros, their keys and
+the three levels of override.
 
-When the manifest lists `latex.template.override = ["partials/bold.tex"]`, TeXSmith searches the following locations in order:
-
-+ `<template>/overrides/`
-+ `<template>/template/overrides/`
-+ The template root itself.
-+ A sibling `overrides/` directory next to the template package.
-
-Placeholders inside override files can use the same Jinja syntax (`\VAR{...}`, `\BLOCK{...}`).
+#ts-callout(kind: "warning", title: [Jinja partials are no longer the rendering layer])[
+`latex.template.override`, fragment `partials` and `required_partials` are
+deprecated in 0.7.0 — they warn and are ignored — and removed in 0.8.0.
+#link("partials.md#former-partials")[Contract macros] maps every former partial to
+its replacement macro.]
 
 == Slot strategies
 
 Slots determine how multiple Markdown documents (or sections) flow into the
-LaTeX structure. Typical patterns:
+#ts-logo("LaTeX") structure. Typical patterns:
 
-- *Single document, single slot* – map the only input with `--slot mainmatter:@document`.
+- *Single document, single slot* – map the only input with `–slot mainmatter:@document`.
 - *Front matter + main matter* – convert two files (eg `intro.md`,
-    `book.md`) and pass `--slot frontmatter:intro.md` and `--slot mainmatter:book.md`.
+`book.md`) and pass `–slot frontmatter:intro.md` and `–slot mainmatter:book.md`.
 - *Selective sections* – reference headings or IDs:
-    `--slot abstract:paper.md:@abstract --slot mainmatter:paper.md:"Results"` injects
-    only the abstract heading and the “Results” section into separate slots.
+`–slot abstract:paper.md:@abstract –slot mainmatter:paper.md:"Results"` injects
+only the abstract heading and the “Results” section into separate slots.
 - *Per-language appendices* – define slots (`appendix_en`, `appendix_fr`) and use front-matter metadata (`press.slot.appendix_en: docs/en.md`) so automation scripts do not need to pass CLI flags.
 
 Slots are resolved by the document slot mapping across CLI flags, front matter (`press.slot.*`), and API overrides, so mix and match whichever suits your workflow.
@@ -360,5 +365,5 @@ This repository includes examples for the bundled templates; copy one into your 
 
 = Next steps
 
-- Study the #link("template-cookbook.md")[Template Cookbook] for practical recipes (title pages, metadata bindings, bibliography tweaks).
-- Browse the #link("../../api/high-level.md")[API high-level guide] to orchestrate templates programmatically with `ConversionService`.
+- Study the Template Cookbook for practical recipes (title pages, metadata bindings, bibliography tweaks).
+- Browse the API high-level guide to orchestrate templates programmatically with `ConversionService`.

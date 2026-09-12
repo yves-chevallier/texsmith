@@ -7,10 +7,46 @@
 \usepackage[english]{babel}
 \usepackage[colorlinks=true, linkcolor=NavyBlue, urlcolor=NavyBlue, citecolor=NavyBlue]{hyperref}
 \usepackage[a4paper]{geometry}
+\usepackage{ts-typesetting}
 \usepackage{ts-fonts}
+\usepackage{xcolor}
+\usepackage{epigraph}
+\usepackage{marginnote}
+\usepackage{multicol}
+\usepackage{progressbar}
+\usepackage{graphicx}
+\usepackage{tcolorbox}
+\usepackage{fvextra}
 \usepackage{amsmath}
 \usepackage{float}
 \usepackage{seqsplit}
+\renewcommand*{\marginfont}{
+\footnotesize
+\sloppy
+\emergencystretch=1em
+\hyphenpenalty=50
+\exhyphenpenalty=50
+}
+\newlength{\tsmarginparavail}
+\newlength{\tsmarginparalt}
+\newlength{\tsmarginparbuf}
+\setlength{\tsmarginparbuf}{6mm}
+\makeatletter
+\AtBeginDocument{
+\setlength{\tsmarginparavail}{\dimexpr\paperwidth-\textwidth-1in-\oddsidemargin-\marginparsep-\tsmarginparbuf\relax}
+\ifdim\tsmarginparavail<\z@\setlength{\tsmarginparavail}{\z@}\fi
+\if@twoside
+\setlength{\tsmarginparalt}{\dimexpr1in+\evensidemargin-\marginparsep-\tsmarginparbuf\relax}
+\ifdim\tsmarginparalt<\z@\setlength{\tsmarginparalt}{\z@}\fi
+\ifdim\tsmarginparalt<\tsmarginparavail
+\setlength{\tsmarginparavail}{\tsmarginparalt}
+\fi
+\fi
+\ifdim\tsmarginparavail<\marginparwidth
+\setlength{\marginparwidth}{\tsmarginparavail}
+\fi
+}
+\makeatother
 \usepackage{ts-callouts}
 \usepackage{ts-code}
 
@@ -18,84 +54,75 @@
 \usepackage{refcount}
 \makeatletter
 \def\ps@plain{
-  \let\@oddhead\@empty
-  \let\@evenhead\@empty
-  \def\@oddfoot{
-    \hfil
-    \ifnum\getpagerefnumber{LastPage}>1\relax
-      \thepage
-    \fi
-    \hfil}
-  \let\@evenfoot\@oddfoot
+\let\@oddhead\@empty
+\let\@evenhead\@empty
+\def\@oddfoot{
+\hfil
+\ifnum\getpagerefnumber{LastPage}>1\relax
+\thepage
+\fi
+\hfil}
+\let\@evenfoot\@oddfoot
 }
 \makeatother
 
 \title{Research Paper}
 \author{}\date{}
-
 \begin{document}
-
 \maketitle
-
-\label{cheese}
-
-\thispagestyle{plain}
+\phantomsection\label{cheese}
 This example shows how TeXSmith can be used to write scientific papers with
-Markdown source, bibliographies, and figures. It uses the \texttt{article} template
+Markdown source, bibliographies, and figures. It uses the \tscodeinline{article} template
 package, which provides a standard article layout with support for
 citations, cross-references, and floating figures/tables.
 
 The documentation preview uses the default A4 portrait layout. Click the image
 to download the PDF.
-
-\begin{figure}[H]
-    \centering
-
-    \ifdefined\adjustbox
-
-        \adjustbox{max width=\textwidth}{
-            \includegraphics[width=0.7\linewidth]{snippet-<HASH>.pdf}
-        }
-
-    \else
-
-        \includegraphics[width=0.7\linewidth]{snippet-<HASH>.pdf}
-
-    \fi
-
-\end{figure}
+\begin{tscode}[lang=yaml, class={snippet}, caption={Download PDF}, engine=pygments]
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+\PY{n+nt}{width}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{70\PYZpc{}}
+\PY{n+nt}{fragments}\PY{p}{:}
+\PY{+w}{  }\PY{l+lScalar+lScalarPlain}{ts\PYZhy{}frame}
+\PY{n+nt}{press}\PY{p}{:}
+\PY{+w}{  }\PY{n+nt}{frame}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{true}
+\PY{n+nt}{layout}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{2x2}
+\PY{n+nt}{cwd}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{../../examples/paper}
+\PY{n+nt}{sources}\PY{p}{:}
+\PY{+w}{  }\PY{p+pIndicator}{\PYZhy{}}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{cheese.md}
+\PY{+w}{  }\PY{p+pIndicator}{\PYZhy{}}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{cheese.bib}
+\PY{n+nt}{template}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{article}
+\end{Verbatim}
+\end{tscode}
 Here is the source code for this example:
-
-\textbf{Article}\par
-
-\begin{code}{markdown}{}{}
+\begin{tsdiv}{tab}[title=Article]
+\begin{tscode}[lang=markdown, engine=pygments]
 \begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
-
+[include: docs/assets/examples/cheese.md not found]
 \end{Verbatim}
-\end{code}
-\textbf{Bibliography}\par
-
-\begin{code}{bibtex}{}{}
+\end{tscode}
+\end{tsdiv}
+\begin{tsdiv}{tab}[title=Bibliography]
+\begin{tscode}[lang=bibtex, engine=pygments]
 \begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
-
+\PY{c}{[include: docs/assets/examples/cheese.bib not found]}
 \end{Verbatim}
-\end{code}
+\end{tscode}
+\end{tsdiv}
 To render the example manually:
-
-\begin{code}{bash}{}{}
+\begin{tscode}[lang=bash, engine=pygments]
 \begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
 texsmith\PY{+w}{ }cheese.md\PY{+w}{ }cheese.bib\PY{+w}{ }\PYZhy{}tarticle\PY{+w}{ }\PYZhy{}\PYZhy{}build
 \end{Verbatim}
-\end{code}
-\begin{callout}[callout info]{Info}
+\end{tscode}
+\begin{tscallout}[kind=info]
 Naturally, this article isn't an actual research paper! It's AI-generated
 content cooked up purely for demo purposes. One reference \emph{is} real, though---the one
 containing the original figure. I don't own the rights to that figure; I simply
 redrew it in vector form. All author names and the contents of the other references
 are completely fictional. Any resemblance to real people or publications is
 entirely coincidental... unless the cheese overlords say otherwise.
-\end{callout}
-\begin{callout}[callout note]{Note}
+\end{tscallout}
+\begin{tscallout}[kind=note]
 I came up with this example because: (1) as a Swiss person, cheese is basically
 part of my operating system, and (2) when I was a student, a friend of mine did
 his PhD on cheese and collected delightfully absurd cheese-related research that
@@ -104,6 +131,5 @@ nobody would imagine studying scientifically.
 I initially thought about an article on how Swiss music---specifically yodeling---might
 influence cheese ripening. But, well... rheology felt slightly more scientifically
 defensible.
-\end{callout}
-
+\end{tscallout}
 \end{document}

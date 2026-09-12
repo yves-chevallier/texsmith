@@ -1,15 +1,15 @@
 #set document(
-  title: "Examples",
+title: "Examples",
 )
 #set page(
-  paper: "a4",
-  margin: 2.5cm,
-  numbering: none,
-  footer: context {
-    if counter(page).final().first() > 1 {
-      align(center)[#counter(page).get().first()]
-    }
-  },
+paper: "a4",
+margin: 2.5cm,
+numbering: none,
+footer: context {
+if counter(page).final().first() > 1 {
+align(center)[#counter(page).get().first()]
+}
+},
 )
 #set text(font: "New Computer Modern", size: 11pt, lang: "en")
 #set par(justify: true)
@@ -17,8 +17,7 @@
 #set heading(numbering: "1.1")
 
 #align(center)[
-  #text(size: 1.8em, weight: "bold")[Examples]
-]
+#text(size: 1.8em, weight: "bold")[Examples]]
 #v(1.5em)
 
 Great documentation shines brightest with real examples — so here are a few to get you started. These showcase TeXSmith’s range across various document types and creative workflows:
@@ -29,7 +28,7 @@ Great documentation shines brightest with real examples — so here are a few to
 - Cooking recipes
 - Diagrams
 - Academic articles
-- #link("snippets.md")[Snippet blocks] for embedding PDF previews
+- Snippet blocks for embedding PDF previews
 - ...
 
 Each example lives in its own folder inside the `examples/` directory of the #link("https://github.com/yves-chevallier/texsmith/tree/master/examples")[TeXSmith repository]. Feel free to dive into the source files, front matter, and templates to see exactly how each document is assembled.

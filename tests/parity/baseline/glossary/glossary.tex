@@ -8,65 +8,55 @@
 \usepackage[colorlinks=true, linkcolor=NavyBlue, urlcolor=NavyBlue, citecolor=NavyBlue]{hyperref}
 \usepackage[a4paper]{geometry}
 \usepackage{ts-fonts}
+\usepackage{tcolorbox}
+\usepackage{fvextra}
 \usepackage{float}
 \usepackage{seqsplit}
+\usepackage{ts-code}
 \usepackage{ts-glossary}
 
 \usepackage{lastpage}
 \usepackage{refcount}
 \makeatletter
 \def\ps@plain{
-  \let\@oddhead\@empty
-  \let\@evenhead\@empty
-  \def\@oddfoot{
-    \hfil
-    \ifnum\getpagerefnumber{LastPage}>1\relax
-      \thepage
-    \fi
-    \hfil}
-  \let\@evenfoot\@oddfoot
+\let\@oddhead\@empty
+\let\@evenhead\@empty
+\def\@oddfoot{
+\hfil
+\ifnum\getpagerefnumber{LastPage}>1\relax
+\thepage
+\fi
+\hfil}
+\let\@evenfoot\@oddfoot
 }
 \makeatother
 
 \title{Structured glossary demo}
 \author{}\date{}
-
 \begin{document}
-
 \maketitle
 \tableofcontents
-
-\section{Introduction}\label{introduction}
-
+\section{Introduction}
 This document showcases TeXSmith's structured glossary support. Definitions
 live in the YAML front matter: each entry has a description and may be attached
 to a group. TeXSmith renders, in declaration order, one table per group plus a
 default table for entries that were left ungrouped.
-
-\section{Technical acronyms}\label{technical-acronyms}
-
-A REST \acrshort{API} exchanges \acrshort{JSON} messages over \acrshort{HTTP}. The first occurrence of every
-acronym --- \acrshort{API}, \acrshort{HTTP}, \acrshort{JSON} --- is automatically replaced with \texttt{\textbackslash{}acrshort\{...\}},
-without writing any \texttt{\textbackslash{}gls\{...\}} by hand.
-
-\section{Institutional acronyms}\label{institutional-acronyms}
-
-The \acrshort{UN} coordinates international relief efforts; the \acrshort{WHO} publishes its health
+\section{Technical acronyms}
+A REST \tsacr{API} exchanges \tsacr{JSON} messages over \tsacr{HTTP}. The first occurrence of every
+acronym --- \tsacr{API}, \tsacr{HTTP}, \tsacr{JSON} --- is automatically replaced with \tscodeinline{\textbackslash{}acrshort\{...\}},
+without writing any \tscodeinline{\textbackslash{}gls\{...\}} by hand.
+\section{Institutional acronyms}
+The \tsacr{UN} coordinates international relief efforts; the \tsacr{WHO} publishes its health
 recommendations.
-
-\section{Ungrouped acronym}\label{ungrouped-acronym}
-
-A \acrshort{DOI} uniquely identifies a scientific publication. With no group attached, it
+\section{Ungrouped acronym}
+A \tsacr{DOI} uniquely identifies a scientific publication. With no group attached, it
 is listed in the default acronym table.
-
-\section{Mixing with the legacy syntax}\label{mixing-with-the-legacy-syntax}
-
-The classic Markdown \texttt{*[KEY]: ...} syntax keeps working and merges with the
+\section{Mixing with the legacy syntax}
+The classic Markdown \tscodeinline{*[KEY]: ...} syntax keeps working and merges with the
 front-matter definitions.
 
-\acrshort{NMR} remains a cornerstone of modern molecular analysis.
+\tsacr{NMR} remains a cornerstone of modern molecular analysis.
 
 \printglossary[type=\acronymtype]\printglossary[type=technical, title={Technical acronyms}]
 \printglossary[type=institutional, title={Institutional acronyms}]
-
 \end{document}

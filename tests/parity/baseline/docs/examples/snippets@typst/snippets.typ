@@ -1,15 +1,15 @@
 #set document(
-  title: "Snippet Blocks",
+title: "Snippet Blocks",
 )
 #set page(
-  paper: "a4",
-  margin: 2.5cm,
-  numbering: none,
-  footer: context {
-    if counter(page).final().first() > 1 {
-      align(center)[#counter(page).get().first()]
-    }
-  },
+paper: "a4",
+margin: 2.5cm,
+numbering: none,
+footer: context {
+if counter(page).final().first() > 1 {
+align(center)[#counter(page).get().first()]
+}
+},
 )
 #set text(font: "New Computer Modern", size: 11pt, lang: "en")
 #set par(justify: true)
@@ -17,8 +17,7 @@
 #set heading(numbering: "1.1")
 
 #align(center)[
-  #text(size: 1.8em, weight: "bold")[Snippet Blocks]
-]
+#text(size: 1.8em, weight: "bold")[Snippet Blocks]]
 #v(1.5em)
 
 TeXSmith renders fenced blocks with the `.snippet` class into PDF/PNG pairs and injects them into the page with a download link. Snippets now accept a concise YAML payload instead of `data-*` attributes, and the PNG preview is left unframed so you can wrap it with the `ts-frame` fragment when needed.
@@ -66,6 +65,11 @@ press:
 Some content...
 ```
 ````
+
+#figure(
+image("snippet-<HASH>.png", width: 65%),
+caption: [Inline snippet],
+)
 
 = Reusing a configuration file
 

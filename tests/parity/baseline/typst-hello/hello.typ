@@ -11,6 +11,6 @@ This is the *smallest* possible TeXSmith document rendered through the
 _Typst_ backend. It exercises a paragraph with `inline code`, a
 #link("https://typst.app")[link], and a horizontal rule.
 
-#line(length: 100%)
+#ts-divider()
 
 That is all.

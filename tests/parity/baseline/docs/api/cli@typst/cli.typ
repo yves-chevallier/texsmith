@@ -1,15 +1,15 @@
 #set document(
-  title: "CLI",
+title: "CLI",
 )
 #set page(
-  paper: "a4",
-  margin: 2.5cm,
-  numbering: none,
-  footer: context {
-    if counter(page).final().first() > 1 {
-      align(center)[#counter(page).get().first()]
-    }
-  },
+paper: "a4",
+margin: 2.5cm,
+numbering: none,
+footer: context {
+if counter(page).final().first() > 1 {
+align(center)[#counter(page).get().first()]
+}
+},
 )
 #set text(font: "New Computer Modern", size: 11pt, lang: "en")
 #set par(justify: true)
@@ -17,18 +17,5 @@
 #set heading(numbering: "1.1")
 
 #align(center)[
-  #text(size: 1.8em, weight: "bold")[CLI]
-]
+#text(size: 1.8em, weight: "bold")[CLI]]
 #v(1.5em)
-
-::: texsmith.ui.cli
-
-::: texsmith.ui.cli.app
-
-::: texsmith.ui.cli.state
-
-::: texsmith.ui.cli.utils
-
-::: texsmith.ui.cli.bibliography
-
-::: texsmith.ui.cli.commands

@@ -15,44 +15,20 @@
 \usepackage{refcount}
 \makeatletter
 \def\ps@plain{
-  \let\@oddhead\@empty
-  \let\@evenhead\@empty
-  \def\@oddfoot{
-    \hfil
-    \ifnum\getpagerefnumber{LastPage}>1\relax
-      \thepage
-    \fi
-    \hfil}
-  \let\@evenfoot\@oddfoot
+\let\@oddhead\@empty
+\let\@evenhead\@empty
+\def\@oddfoot{
+\hfil
+\ifnum\getpagerefnumber{LastPage}>1\relax
+\thepage
+\fi
+\hfil}
+\let\@evenfoot\@oddfoot
 }
 \makeatother
 
 \title{LaTeX}
 \author{}\date{}
-
 \begin{document}
-
 \maketitle
-
-\thispagestyle{plain}
-::: texsmith.adapters.latex
-
-::: texsmith.adapters.latex.formatter
-
-::: texsmith.adapters.latex.renderer
-
-::: texsmith.adapters.latex.engines.<STEM>.log
-
-::: texsmith.adapters.latex.utils
-
-::: texsmith.core.templates
-
-::: texsmith.core.templates.base
-
-::: texsmith.core.templates.loader
-
-::: texsmith.core.templates.manifest
-
-::: texsmith.core.templates.runtime
-
 \end{document}

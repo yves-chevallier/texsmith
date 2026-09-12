@@ -1,15 +1,15 @@
 #set document(
-  title: "Bibliography",
+title: "Bibliography",
 )
 #set page(
-  paper: "a4",
-  margin: 2.5cm,
-  numbering: none,
-  footer: context {
-    if counter(page).final().first() > 1 {
-      align(center)[#counter(page).get().first()]
-    }
-  },
+paper: "a4",
+margin: 2.5cm,
+numbering: none,
+footer: context {
+if counter(page).final().first() > 1 {
+align(center)[#counter(page).get().first()]
+}
+},
 )
 #set text(font: "New Computer Modern", size: 11pt, lang: "en")
 #set par(justify: true)
@@ -17,13 +17,12 @@
 #set heading(numbering: "1.1")
 
 #align(center)[
-  #text(size: 1.8em, weight: "bold")[Bibliography]
-]
+#text(size: 1.8em, weight: "bold")[Bibliography]]
 #v(1.5em)
 
 = Add Bibliography Entries
 
-To include bibliography entries in your document, provide one or more BibTeX files as inputs when running TeXSmith. TeXSmith will parse these files and integrate the references into your document during the conversion process. For example:
+To include bibliography entries in your document, provide one or more #ts-logo("BibTeX") files as inputs when running TeXSmith. TeXSmith will parse these files and integrate the references into your document during the conversion process. For example:
 
 ```bash
 texsmith paper.md nature.bib ieee.bib -o paper.pdf
@@ -31,7 +30,7 @@ texsmith paper.md nature.bib ieee.bib -o paper.pdf
 
 = List Bibliography Entries
 
-Use the `--list-bibliography` flag to inspect BibTeX files before running a conversion or build. It helps catch parsing issues, duplicate entries, and empty datasets early in your workflow. For example in the `paper` example project:
+Use the `–list-bibliography` flag to inspect #ts-logo("BibTeX") files before running a conversion or build. It helps catch parsing issues, duplicate entries, and empty datasets early in your workflow. For example in the `paper` example project:
 
 ```
 $ texsmith cheese.md cheese.bib --list-bibliography
@@ -91,7 +90,7 @@ $ texsmith cheese.md cheese.bib --list-bibliography
 
 TeXSmith loads every provided `.bib` file using `pybtex` and analyzes their contents, checks for duplicate keys, and verifies parsing integrity. It emits warnings for any issues found and prints a summary table of the number of entries per file.
 
-The `--list-bibliography` flag has the following behavior:
+The `–list-bibliography` flag has the following behavior:
 
 - Prints a formatted table summarising the number of entries per file.
 - Emits warnings for files that fail to parse, contain duplicate keys, or are empty.

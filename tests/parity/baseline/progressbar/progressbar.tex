@@ -7,53 +7,79 @@
 \usepackage[english]{babel}
 \usepackage[colorlinks=true, linkcolor=NavyBlue, urlcolor=NavyBlue, citecolor=NavyBlue]{hyperref}
 \usepackage[a4paper]{geometry}
+\usepackage{ts-typesetting}
 \usepackage{ts-fonts}
+\usepackage{xcolor}
+\usepackage{epigraph}
+\usepackage{marginnote}
+\usepackage{multicol}
 \usepackage{progressbar}
+\usepackage{graphicx}
+\usepackage{tcolorbox}
+\usepackage{fvextra}
 \usepackage{amsmath}
 \usepackage{float}
 \usepackage{seqsplit}
+\renewcommand*{\marginfont}{
+\footnotesize
+\sloppy
+\emergencystretch=1em
+\hyphenpenalty=50
+\exhyphenpenalty=50
+}
+\newlength{\tsmarginparavail}
+\newlength{\tsmarginparalt}
+\newlength{\tsmarginparbuf}
+\setlength{\tsmarginparbuf}{6mm}
+\makeatletter
+\AtBeginDocument{
+\setlength{\tsmarginparavail}{\dimexpr\paperwidth-\textwidth-1in-\oddsidemargin-\marginparsep-\tsmarginparbuf\relax}
+\ifdim\tsmarginparavail<\z@\setlength{\tsmarginparavail}{\z@}\fi
+\if@twoside
+\setlength{\tsmarginparalt}{\dimexpr1in+\evensidemargin-\marginparsep-\tsmarginparbuf\relax}
+\ifdim\tsmarginparalt<\z@\setlength{\tsmarginparalt}{\z@}\fi
+\ifdim\tsmarginparalt<\tsmarginparavail
+\setlength{\tsmarginparavail}{\tsmarginparalt}
+\fi
+\fi
+\ifdim\tsmarginparavail<\marginparwidth
+\setlength{\marginparwidth}{\tsmarginparavail}
+\fi
+}
+\makeatother
 \usepackage{ts-code}
 
 \usepackage{lastpage}
 \usepackage{refcount}
 \makeatletter
 \def\ps@plain{
-  \let\@oddhead\@empty
-  \let\@evenhead\@empty
-  \def\@oddfoot{
-    \hfil
-    \ifnum\getpagerefnumber{LastPage}>1\relax
-      \thepage
-    \fi
-    \hfil}
-  \let\@evenfoot\@oddfoot
+\let\@oddhead\@empty
+\let\@evenhead\@empty
+\def\@oddfoot{
+\hfil
+\ifnum\getpagerefnumber{LastPage}>1\relax
+\thepage
+\fi
+\hfil}
+\let\@evenfoot\@oddfoot
 }
 \makeatother
 
 \title{Progress Bars}
 \author{}\date{}
-
 \begin{document}
-
 \maketitle
-
-\thispagestyle{plain}
-The \texttt{texsmith.progressbar} extension renders Markdown shorthand into \LaTeX{} progress bars:
-
-\begin{code}{text}{}{}
+The \tscodeinline{texsmith.progressbar} extension renders Markdown shorthand into \LaTeX{} progress bars:
+\begin{tscode}[lang=text, engine=pygments]
 \begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
 [=25\PYZpc{} \PYZdq{}Research\PYZdq{}]
 [=50\PYZpc{} \PYZdq{}Implementation\PYZdq{}]
 [=75\PYZpc{} \PYZdq{}Review\PYZdq{}]\PYZob{}: .candystripe\PYZcb{}
 [=100\PYZpc{} \PYZdq{}Launch\PYZdq{}]\PYZob{}: .thin\PYZcb{}
 \end{Verbatim}
-\end{code}
-{\progressbar[width=9cm,heighta=12pt,roundnessr=0.1,borderwidth=1pt,linecolor=black,filledcolor=black!60,emptycolor=black!10]{0.25} Research}\par
-
-{\progressbar[width=9cm,heighta=12pt,roundnessr=0.1,borderwidth=1pt,linecolor=black,filledcolor=black!60,emptycolor=black!10]{0.5} Implementation}\par
-
-{\progressbar[width=9cm,heighta=12pt,roundnessr=0.1,borderwidth=1pt,linecolor=black,filledcolor=black!60,emptycolor=black!10]{0.75} Review}\par
-
-{\progressbar[width=9cm,heighta=6pt,roundnessr=0.1,borderwidth=1pt,linecolor=black,filledcolor=black!60,emptycolor=black!10]{1} Launch}\par
-
+\end{tscode}
+\tsprogress{0.25}{Research}
+\tsprogress{0.5}{Implementation}
+\tsprogress[candystripe]{0.75}{Review}
+\tsprogress[thin]{1}{Launch}
 \end{document}

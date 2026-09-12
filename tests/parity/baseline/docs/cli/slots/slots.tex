@@ -9,6 +9,8 @@
 \usepackage[a4paper]{geometry}
 \usepackage{ts-fonts}
 \usepackage{csquotes}
+\usepackage{tcolorbox}
+\usepackage{fvextra}
 \usepackage{amsmath}
 \usepackage{float}
 \usepackage{seqsplit}
@@ -18,39 +20,33 @@
 \usepackage{refcount}
 \makeatletter
 \def\ps@plain{
-  \let\@oddhead\@empty
-  \let\@evenhead\@empty
-  \def\@oddfoot{
-    \hfil
-    \ifnum\getpagerefnumber{LastPage}>1\relax
-      \thepage
-    \fi
-    \hfil}
-  \let\@evenfoot\@oddfoot
+\let\@oddhead\@empty
+\let\@evenhead\@empty
+\def\@oddfoot{
+\hfil
+\ifnum\getpagerefnumber{LastPage}>1\relax
+\thepage
+\fi
+\hfil}
+\let\@evenfoot\@oddfoot
 }
 \makeatother
 
 \title{Managing Slots}
 \author{}\date{}
-
 \begin{document}
-
 \maketitle
-
-\thispagestyle{plain}
-Slots are placeholders in the \LaTeX{} template where specific document sections can be injected. Use the \texttt{-\allowbreak{}-\allowbreak{}slot} (or \texttt{-\allowbreak{}s}) option to map input documents to these slots. For example, to inject \texttt{abstract.md} into the \texttt{abstract} slot and \texttt{dedication.md} into the \texttt{dedication} slot of a book template, run:
-
-\begin{code}{bash}{}{}
+Slots are placeholders in the \LaTeX{} template where specific document sections can be injected. Use the \tscodeinline{-\allowbreak{}-\allowbreak{}slot} (or \tscodeinline{-\allowbreak{}s}) option to map input documents to these slots. For example, to inject \tscodeinline{abstract.md} into the \tscodeinline{abstract} slot and \tscodeinline{dedication.md} into the \tscodeinline{dedication} slot of a book template, run:
+\begin{tscode}[lang=bash, engine=pygments]
 \begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
 texsmith\PY{+w}{ }abstract.md\PY{+w}{ }dedication.md\PY{+w}{ }chapter*.md\PY{+w}{ }\PY{l+s+se}{\PYZbs{}}
 \PY{+w}{  }\PYZhy{}\PYZhy{}template\PY{+w}{ }book\PY{+w}{ }\PY{l+s+se}{\PYZbs{}}
 \PY{+w}{  }\PYZhy{}\PYZhy{}slot\PY{+w}{ }abstract:abstract.md\PY{+w}{ }\PY{l+s+se}{\PYZbs{}}
 \PY{+w}{  }\PYZhy{}\PYZhy{}slot\PY{+w}{ }dedication:dedication.md
 \end{Verbatim}
-\end{code}
-To see the available slots for a given template, use the \texttt{-\allowbreak{}-\allowbreak{}template-\allowbreak{}info} flag:
-
-\begin{code}{text}{}{baselinestretch=0.5, }
+\end{tscode}
+To see the available slots for a given template, use the \tscodeinline{-\allowbreak{}-\allowbreak{}template-\allowbreak{}info} flag:
+\begin{tscode}[lang=text, stretch=0.5, engine=pygments]
 \begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
 \PYZdl{} uv run texsmith \PYZhy{}tbook \PYZhy{}\PYZhy{}template\PYZhy{}info
 ...
@@ -68,15 +64,13 @@ To see the available slots for a given template, use the \texttt{-\allowbreak{}-
 │ preface    │         │         0 │       \PYZhy{} │      0 │          0 │    no     │
 └────────────┴─────────┴───────────┴─────────┴────────┴────────────┴───────────┘
 \end{Verbatim}
-\end{code}
-You can also extract sections from a single document using the \texttt{slot:Section Name} syntax. For example, to inject the \enquote{Abstract} section from \texttt{main.md} into the \texttt{abstract} slot:
-
-\begin{code}{bash}{}{}
+\end{tscode}
+You can also extract sections from a single document using the \tscodeinline{slot:Section Name} syntax. For example, to inject the \enquote{Abstract} section from \tscodeinline{main.md} into the \tscodeinline{abstract} slot:
+\begin{tscode}[lang=bash, engine=pygments]
 \begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
 texsmith\PY{+w}{ }main.md\PY{+w}{ }\PY{l+s+se}{\PYZbs{}}
 \PY{+w}{  }\PYZhy{}\PYZhy{}template\PY{+w}{ }article\PY{+w}{ }\PY{l+s+se}{\PYZbs{}}
 \PY{+w}{  }\PYZhy{}\PYZhy{}slot\PY{+w}{ }abstract:slot:Abstract
 \end{Verbatim}
-\end{code}
-
+\end{tscode}
 \end{document}

@@ -1,15 +1,15 @@
 #set document(
-  title: "Admonitions / Callouts",
+title: "Admonitions / Callouts",
 )
 #set page(
-  paper: "a4",
-  margin: 2.5cm,
-  numbering: none,
-  footer: context {
-    if counter(page).final().first() > 1 {
-      align(center)[#counter(page).get().first()]
-    }
-  },
+paper: "a4",
+margin: 2.5cm,
+numbering: none,
+footer: context {
+if counter(page).final().first() > 1 {
+align(center)[#counter(page).get().first()]
+}
+},
 )
 #set text(font: "New Computer Modern", size: 11pt, lang: "en")
 #set par(justify: true)
@@ -18,112 +18,60 @@
 #set heading(numbering: "1.1")
 
 #align(center)[
-  #text(size: 1.8em, weight: "bold")[Admonitions / Callouts]
-  #linebreak()
-  #text(size: 1.2em)[An Overview of **minimal** framed elements]
-]
+#text(size: 1.8em, weight: "bold")[Admonitions / Callouts]
+#linebreak()
+#text(size: 1.2em)[An Overview of **{{callouts.style}}** framed elements]]
 #v(1.5em)
 
-#block(width: 100%, radius: 1pt, inset: 8pt, stroke: 0.5pt + black)[
-  #text(weight: "bold")[#upper[Note]]
+#ts-callout(kind: "note")[
+Highlights extra information that’s useful but not critical, helping readers understand nuances.]
 
-  Highlights extra information that’s useful but not critical, helping readers understand nuances.
-]
+#ts-callout(kind: "tip")[
+Offers a practical hint that makes the task easier, saving the reader time or effort.]
 
-#block(width: 100%, radius: 1pt, inset: 8pt, stroke: 0.5pt + black)[
-  #text(weight: "bold")[#upper[Tip]]
+#ts-callout(kind: "warning")[
+Draws attention to something that could cause problems if ignored, helping avoid mistakes.]
 
-  Offers a practical hint that makes the task easier, saving the reader time or effort.
-]
+#ts-callout(kind: "caution")[
+Signals a potentially risky action, encouraging the reader to proceed carefully.]
 
-#block(width: 100%, radius: 1pt, inset: 8pt, stroke: 0.5pt + black)[
-  #text(weight: "bold")[#upper[Warning]]
+#ts-callout(kind: "important")[
+Emphasizes key information the reader must not overlook to ensure proper understanding.]
 
-  Draws attention to something that could cause problems if ignored, helping avoid mistakes.
-]
+#ts-callout(kind: "danger")[
+Flags a serious hazard that could break things or cause real harm if mishandled.]
 
-#block(width: 100%, radius: 1pt, inset: 8pt, stroke: 0.5pt + black)[
-  #text(weight: "bold")[#upper[Caution]]
+#ts-callout(kind: "info")[
+Provides neutral, factual context that supports understanding without urgency.]
 
-  Signals a potentially risky action, encouraging the reader to proceed carefully.
-]
+#ts-callout(kind: "hint")[
+Gives a gentle clue that helps the reader figure something out without revealing everything.]
 
-#block(width: 100%, radius: 1pt, inset: 8pt, stroke: 0.5pt + black)[
-  #text(weight: "bold")[#upper[Important]]
+#ts-callout(kind: "seealso")[
+Points to related material so the reader can explore deeper or connected topics.]
 
-  Emphasizes key information the reader must not overlook to ensure proper understanding.
-]
+#ts-callout(kind: "question")[
+Raises an inquiry that prompts reflection or introduces a point the reader should consider.]
 
-#block(width: 100%, radius: 1pt, inset: 8pt, stroke: 0.5pt + black)[
-  #text(weight: "bold")[#upper[Danger]]
+#ts-callout(kind: "abstract")[
+Summarizes the core ideas to help the reader grasp the purpose of a section or document quickly.]
 
-  Flags a serious hazard that could break things or cause real harm if mishandled.
-]
+#ts-callout(kind: "summary")[
+Recaps key points so the reader can retain the most important information at a glance.]
 
-#block(width: 100%, radius: 1pt, inset: 8pt, stroke: 0.5pt + black)[
-  #text(weight: "bold")[#upper[Info]]
+#ts-callout(kind: "success")[
+Celebrates a positive outcome or achievement, reinforcing good practices and results.]
 
-  Provides neutral, factual context that supports understanding without urgency.
-]
+#ts-callout(kind: "failure")[
+Highlights a setback or error, helping the reader learn from mistakes and avoid them in the future]
 
-#block(width: 100%, radius: 1pt, inset: 8pt, stroke: 0.5pt + black)[
-  #text(weight: "bold")[#upper[Hint]]
+#ts-callout(kind: "bug")[
+Identifies a known issue or problem, guiding the reader on what to watch out for.]
 
-  Gives a gentle clue that helps the reader figure something out without revealing everything.
-]
+#ts-callout(kind: "quote")[
+Presents a relevant quotation that adds authority or perspective to the content.]
 
-#block(width: 100%, radius: 1pt, inset: 8pt, stroke: 0.5pt + black)[
-  #text(weight: "bold")[#upper[Seealso]]
+#heading(level: 1, numbering: none, outlined: false)[Custom Admonition]
 
-  Points to related material so the reader can explore deeper or connected topics.
-]
-
-#block(width: 100%, radius: 1pt, inset: 8pt, stroke: 0.5pt + black)[
-  #text(weight: "bold")[#upper[Question]]
-
-  Raises an inquiry that prompts reflection or introduces a point the reader should consider.
-]
-
-#block(width: 100%, radius: 1pt, inset: 8pt, stroke: 0.5pt + black)[
-  #text(weight: "bold")[#upper[Abstract]]
-
-  Summarizes the core ideas to help the reader grasp the purpose of a section or document quickly.
-]
-
-#block(width: 100%, radius: 1pt, inset: 8pt, stroke: 0.5pt + black)[
-  #text(weight: "bold")[#upper[Summary]]
-
-  Recaps key points so the reader can retain the most important information at a glance.
-]
-
-#block(width: 100%, radius: 1pt, inset: 8pt, stroke: 0.5pt + black)[
-  #text(weight: "bold")[#upper[Success]]
-
-  Celebrates a positive outcome or achievement, reinforcing good practices and results.
-]
-
-#block(width: 100%, radius: 1pt, inset: 8pt, stroke: 0.5pt + black)[
-  #text(weight: "bold")[#upper[Failure]]
-
-  Highlights a setback or error, helping the reader learn from mistakes and avoid them in the future
-]
-
-#block(width: 100%, radius: 1pt, inset: 8pt, stroke: 0.5pt + black)[
-  #text(weight: "bold")[#upper[Bug]]
-
-  Identifies a known issue or problem, guiding the reader on what to watch out for.
-]
-
-#block(width: 100%, radius: 1pt, inset: 8pt, stroke: 0.5pt + black)[
-  #text(weight: "bold")[#upper[Quote]]
-
-  Presents a relevant quotation that adds authority or perspective to the content.
-]
-
-= Custom Admonition
-
-#block(width: 100%, radius: 1pt, inset: 8pt, stroke: 0.5pt + black)[
-  #text(weight: "bold")[#upper[Unicorn]]
-
-  A custom admonition with a unicorn theme, adding a whimsical touch to the information presented.
-]
+#ts-callout(kind: "unicorn")[
+A custom admonition with a unicorn theme, adding a whimsical touch to the information presented.]

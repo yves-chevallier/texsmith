@@ -8,47 +8,43 @@
 \usepackage[colorlinks=true, linkcolor=NavyBlue, urlcolor=NavyBlue, citecolor=NavyBlue]{hyperref}
 \usepackage[a4paper]{geometry}
 \usepackage{ts-fonts}
+\usepackage{tcolorbox}
+\usepackage{fvextra}
 \usepackage{float}
 \usepackage{seqsplit}
+\usepackage{ts-code}
 
 \usepackage{lastpage}
 \usepackage{refcount}
 \makeatletter
 \def\ps@plain{
-  \let\@oddhead\@empty
-  \let\@evenhead\@empty
-  \def\@oddfoot{
-    \hfil
-    \ifnum\getpagerefnumber{LastPage}>1\relax
-      \thepage
-    \fi
-    \hfil}
-  \let\@evenfoot\@oddfoot
+\let\@oddhead\@empty
+\let\@evenhead\@empty
+\def\@oddfoot{
+\hfil
+\ifnum\getpagerefnumber{LastPage}>1\relax
+\thepage
+\fi
+\hfil}
+\let\@evenfoot\@oddfoot
 }
 \makeatother
 
 \title{Glossary}
 \author{}\date{}
-
 \begin{document}
-
 \maketitle
-
-\thispagestyle{plain}
 In online documentation, a glossary doesn't make much sense because you can
 search for terms directly and you have hyperlinks. However, in printed documents, a
 glossary can be very useful to provide definitions of terms used in the text.
 
-TeXSmith adds support for glossaries through the \texttt{glossary} extension, which
+TeXSmith adds support for glossaries through the \tscodeinline{glossary} extension, which
 allows you to define glossary entries in your Markdown files and generate a
 glossary section in the output document.
 
 The fragment is automatically included when needed:
-
 \begin{itemize}
-\item{} If you use acronyms or abbreviations.
-\item{} If you define glossary entries using the \texttt{glossary} directive.
-
+\item If you use acronyms or abbreviations.
+\item If you define glossary entries using the \tscodeinline{glossary} directive.
 \end{itemize}
-
 \end{document}

@@ -1,16 +1,16 @@
 #set document(
-  title: "Firmware Review Report",
-  author: ("Firmware Quality Board",),
+title: "Firmware Review Report",
+author: ("Firmware Quality Board"),
 )
 #set page(
-  paper: "a4",
-  margin: 2.5cm,
-  numbering: none,
-  footer: context {
-    if counter(page).final().first() > 1 {
-      align(center)[#counter(page).get().first()]
-    }
-  },
+paper: "a4",
+margin: 2.5cm,
+numbering: none,
+footer: context {
+if counter(page).final().first() > 1 {
+align(center)[#counter(page).get().first()]
+}
+},
 )
 #set text(font: "New Computer Modern", size: 11pt, lang: "en")
 #set par(justify: true)
@@ -18,12 +18,11 @@
 #set heading(numbering: "1.1")
 
 #align(center)[
-  #text(size: 1.8em, weight: "bold")[Firmware Review Report]
-  #linebreak()
-  #text(size: 1.2em)[Sensor node, release candidate 1.4.2-rc1]
-]
+#text(size: 1.8em, weight: "bold")[Firmware Review Report]
+#linebreak()
+#text(size: 1.2em)[Sensor node, release candidate 1.4.2-rc1]]
 #align(center)[
-  Firmware Quality Board]
+Firmware Quality Board]
 #align(center)[March 12, 2026]
 #v(1.5em)
 
@@ -35,8 +34,8 @@
 This report reviews release candidate 1.4.2-rc1 of the sensor node firmware.
 Two numbered series run through it: findings raised by the review board, and
 the requirements they are checked against. Both are declared in the YAML front
-matter under `counters:`, so TeXSmith allocates the numbers and both backends —
-LaTeX and Typst — print the same ones.
+matter under `press.declare.counters`, so TeXSmith allocates the numbers and both backends —
+#ts-logo("LaTeX") and Typst — print the same ones.
 
 The requirement series starts at `100` because it continues the numbering of
 the system specification; the finding series starts at `1`, the default. The
@@ -50,13 +49,13 @@ the first column is a definition marker, `#{prefix:key}`: it prints the
 formatted number and becomes the anchor every later reference links to.
 
 #table(
-  columns: 3,
-  align: (left, left, left),
-  table.header([Id], [Requirement], [Verification]),
-  [REQ-100<req:watchdog-reset>], [The watchdog shall reset the node within two seconds of a stalled main loop.], [Fault injection],
-  [REQ-101<req:ota-rollback>], [An interrupted over-the-air update shall leave the previous image bootable.], [Power-cut campaign],
-  [REQ-102<req:key-entropy>], [The session key shall be derived from at least 128 bits of hardware entropy.], [Code review],
-  [REQ-103<req:log-retention>], [The node shall retain the last 64 log records across a reset.], [Manual inspection],
+columns: 3,
+align: (left, left, left),
+table.header([Id], [Requirement], [Verification]),
+[REQ-100<req:watchdog-reset>], [The watchdog shall reset the node within two seconds of a stalled main loop.], [Fault injection],
+[REQ-101<req:ota-rollback>], [An interrupted over-the-air update shall leave the previous image bootable.], [Power-cut campaign],
+[REQ-102<req:key-entropy>], [The session key shall be derived from at least 128 bits of hardware entropy.], [Code review],
+[REQ-103<req:log-retention>], [The node shall retain the last 64 log records across a reset.], [Manual inspection],
 )
 
 Requirement #link(<req:key-entropy>)[REQ-102] was added after last year's security audit and had
@@ -71,12 +70,12 @@ As in the requirement table, the identifiers are defined right in the first
 column.
 
 #table(
-  columns: 4,
-  align: (left, left, left, left),
-  table.header([Id], [Severity], [Component], [Summary]),
-  [FW-01<fw:watchdog>], [Blocking], [`hal/watchdog.c`], [The watchdog is fed from the I2C completion handler.],
-  [FW-02<fw:ota-brick>], [Blocking], [`ota/apply.c`], [A power cut during the swap leaves no bootable image.],
-  [FW-03<fw:key-entropy>], [Major], [`crypto/session.c`], [The session key is seeded from the boot counter.],
+columns: 4,
+align: (left, left, left, left),
+table.header([Id], [Severity], [Component], [Summary]),
+[FW-01<fw:watchdog>], [Blocking], [`hal/watchdog.c`], [The watchdog is fed from the I2C completion handler.],
+[FW-02<fw:ota-brick>], [Blocking], [`ota/apply.c`], [A power cut during the swap leaves no bootable image.],
+[FW-03<fw:key-entropy>], [Major], [`crypto/session.c`], [The session key is seeded from the boot counter.],
 )
 
 == Watchdog fed from an interrupt handler

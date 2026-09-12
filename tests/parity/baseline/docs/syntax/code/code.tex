@@ -8,51 +8,51 @@
 \usepackage[colorlinks=true, linkcolor=NavyBlue, urlcolor=NavyBlue, citecolor=NavyBlue]{hyperref}
 \usepackage[a4paper]{geometry}
 \usepackage{ts-fonts}
-\usepackage{amsmath}
 \usepackage{float}
+\usepackage{graphicx}
+\usepackage{tcolorbox}
+\usepackage{fvextra}
+\usepackage{amsmath}
 \usepackage{seqsplit}
-\usepackage{ts-callouts}
 \usepackage{ts-code}
 
 \usepackage{lastpage}
 \usepackage{refcount}
 \makeatletter
 \def\ps@plain{
-  \let\@oddhead\@empty
-  \let\@evenhead\@empty
-  \def\@oddfoot{
-    \hfil
-    \ifnum\getpagerefnumber{LastPage}>1\relax
-      \thepage
-    \fi
-    \hfil}
-  \let\@evenfoot\@oddfoot
+\let\@oddhead\@empty
+\let\@evenhead\@empty
+\def\@oddfoot{
+\hfil
+\ifnum\getpagerefnumber{LastPage}>1\relax
+\thepage
+\fi
+\hfil}
+\let\@evenfoot\@oddfoot
 }
 \makeatother
 
 \title{Code}
 \author{}\date{}
-
 \begin{document}
-
 \maketitle
-
-\thispagestyle{plain}
-Code fences are one of Markdown's greatest hits: drop a triple backtick block, label it, and you get nicely formatted snippets. TeXSmith leans on the \texttt{minted} package for \LaTeX{} output. It's a bit slower than \texttt{listings}, but the highlighting is richer, it speaks more languages, and its Unicode support (especially under Xe\LaTeX{}/Lua\LaTeX{}) is top-notch.
-
-\section{Code Blocks}\label{code-blocks}
-
-You can insert code snippets and specify options for syntax highlighting.
-
+Code fences are one of Markdown's greatest hits: drop a triple backtick block,
+label it, and you get nicely formatted snippets. A fenced code block is the
+degenerate case of TMark's \href{index.md\#four-syntactic-families}{data-directive family}:
+its info string is \tscodeinline{<lang> <node>}, and the node word defaults to \tscodeinline{code}.
+\section{Code Blocks}
+You can insert code snippets and specify options in the info string.
 \begin{itemize}
-\item{} Line numbers with \texttt{linenums="1"}
-\item{} Title with \texttt{title="filename.ext"}
-\item{} Highlight specific lines with \texttt{hl\_lines="2-\allowbreak{}3"}
-
+\item Line numbers with \tscodeinline{linenums="1"}
+\item Title with \tscodeinline{title="filename.ext"}
+\item Highlight specific lines with \tscodeinline{hl\_lines="2-\allowbreak{}3"}
+\item An external source with \tscodeinline{include="path/to/file"}
 \end{itemize}
-\subsection{Name your code blocks}\label{name-your-code-blocks}
-
-\begin{code}{py}{bubble\_sort.py}{}
+The highlighting engine is global, set with \tscodeinline{press.code.engine}: \tscodeinline{pygments}
+(the default, Tectonic-safe), \tscodeinline{listings}, \tscodeinline{verbatim} or \tscodeinline{minted} (which needs
+shell escape).
+\subsection{Name your code blocks}
+\begin{tscode}[lang=py, title={bubble\_sort.py}, engine=pygments]
 \begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
 \PY{k}{def}\PY{+w}{ }\PY{n+nf}{bubble\PYZus{}sort}\PY{p}{(}\PY{n}{items}\PY{p}{)}\PY{p}{:}
     \PY{k}{for} \PY{n}{i} \PY{o+ow}{in} \PY{n+nb}{range}\PY{p}{(}\PY{n+nb}{len}\PY{p}{(}\PY{n}{items}\PY{p}{)}\PY{p}{)}\PY{p}{:}
@@ -60,10 +60,9 @@ You can insert code snippets and specify options for syntax highlighting.
             \PY{k}{if} \PY{n}{items}\PY{p}{[}\PY{n}{j}\PY{p}{]} \PY{o}{\PYZgt{}} \PY{n}{items}\PY{p}{[}\PY{n}{j} \PY{o}{+} \PY{l+m+mi}{1}\PY{p}{]}\PY{p}{:}
                 \PY{n}{items}\PY{p}{[}\PY{n}{j}\PY{p}{]}\PY{p}{,} \PY{n}{items}\PY{p}{[}\PY{n}{j} \PY{o}{+} \PY{l+m+mi}{1}\PY{p}{]} \PY{o}{=} \PY{n}{items}\PY{p}{[}\PY{n}{j} \PY{o}{+} \PY{l+m+mi}{1}\PY{p}{]}\PY{p}{,} \PY{n}{items}\PY{p}{[}\PY{n}{j}\PY{p}{]}
 \end{Verbatim}
-\end{code}
-\subsection{Add line numbers}\label{add-line-numbers}
-
-\begin{code}{javascript}{}{linenos, }
+\end{tscode}
+\subsection{Add line numbers}
+\begin{tscode}[lang=javascript, linenums, engine=pygments]
 \begin{Verbatim}[commandchars=\\\{\},numbers=left,firstnumber=1,stepnumber=1,breaklines, breakanywhere, commandchars=\\\{\}]
 \PY{k+kd}{function}\PY{+w}{ }\PY{n+nx}{bubbleSort}\PY{p}{(}\PY{n+nx}{items}\PY{p}{)}\PY{+w}{ }\PY{p}{\PYZob{}}
 \PY{+w}{    }\PY{k}{for}\PY{+w}{ }\PY{p}{(}\PY{k+kd}{let}\PY{+w}{ }\PY{n+nx}{i}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+m+mf}{0}\PY{p}{;}\PY{+w}{ }\PY{n+nx}{i}\PY{+w}{ }\PY{o}{\PYZlt{}}\PY{+w}{ }\PY{n+nx}{items}\PY{p}{.}\PY{n+nx}{length}\PY{p}{;}\PY{+w}{ }\PY{n+nx}{i}\PY{o}{++}\PY{p}{)}\PY{+w}{ }\PY{p}{\PYZob{}}
@@ -75,10 +74,9 @@ You can insert code snippets and specify options for syntax highlighting.
 \PY{+w}{    }\PY{p}{\PYZcb{}}
 \PY{p}{\PYZcb{}}
 \end{Verbatim}
-\end{code}
-\subsection{Highlight specific lines}\label{highlight-specific-lines}
-
-\begin{code}{lisp}{}{}
+\end{tscode}
+\subsection{Highlight specific lines}
+\begin{tscode}[lang=lisp, hl_lines={2-3}, engine=pygments]
 \begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\},highlightlines={2-3}]
 \PY{p}{(}\PY{n+nb}{defun}\PY{+w}{ }\PY{n+nv}{bubble\PYZhy{}sort}\PY{+w}{ }\PY{p}{(}\PY{n+nv}{items}\PY{p}{)}
 \PY{+w}{  }\PY{p}{(}\PY{n+nb}{dotimes}\PY{+w}{ }\PY{p}{(}\PY{n+nv}{i}\PY{+w}{ }\PY{p}{(}\PY{n+nb}{length}\PY{+w}{ }\PY{n+nv}{items}\PY{p}{)}\PY{p}{)}
@@ -86,70 +84,80 @@ You can insert code snippets and specify options for syntax highlighting.
 \PY{+w}{      }\PY{p}{(}\PY{n+nb}{when}\PY{+w}{ }\PY{p}{(}\PY{n+nb}{\PYZgt{}}\PY{+w}{ }\PY{p}{(}\PY{n+nb}{nth}\PY{+w}{ }\PY{n+nv}{j}\PY{+w}{ }\PY{n+nv}{items}\PY{p}{)}\PY{+w}{ }\PY{p}{(}\PY{n+nb}{nth}\PY{+w}{ }\PY{p}{(}\PY{n+nb}{+}\PY{+w}{ }\PY{n+nv}{j}\PY{+w}{ }\PY{l+m+mi}{1}\PY{p}{)}\PY{+w}{ }\PY{n+nv}{items}\PY{p}{)}\PY{p}{)}
 \PY{+w}{        }\PY{p}{(}\PY{n+nb}{rotatef}\PY{+w}{ }\PY{p}{(}\PY{n+nb}{nth}\PY{+w}{ }\PY{n+nv}{j}\PY{+w}{ }\PY{n+nv}{items}\PY{p}{)}\PY{+w}{ }\PY{p}{(}\PY{n+nb}{nth}\PY{+w}{ }\PY{p}{(}\PY{n+nb}{+}\PY{+w}{ }\PY{n+nv}{j}\PY{+w}{ }\PY{l+m+mi}{1}\PY{p}{)}\PY{+w}{ }\PY{n+nv}{items}\PY{p}{)}\PY{p}{)}\PY{p}{)}\PY{p}{)}\PY{p}{)}\PY{p}{)}
 \end{Verbatim}
-\end{code}
-\subsection{Snippets}\label{snippets}
-
-With \texttt{pymdownx.snippets} you can pull code from external files, keeping samples reusable across docs.
-
-\begin{code}{markdown}{}{}
+\end{tscode}
+\subsection{External sources}
+Put \tscodeinline{include=} on the info string to read the code from a file at render time,
+keeping samples reusable across docs. The file is never pasted into the source,
+so a fence inside it is just text.
+\begin{tscode}[lang=md, engine=pygments]
 \begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
-\PY{l+s+sb}{```}\PY{l+s+sb}{python}
-\PY{o}{\PYZhy{}}\PY{o}{\PYZhy{}}\PY{l+m+mi}{8}\PY{o}{\PYZlt{}}\PY{o}{\PYZhy{}}\PY{o}{\PYZhy{}} \PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{examples/code/bubble\PYZus{}sort.py}\PY{l+s+s2}{\PYZdq{}}
+\PY{l+s+sb}{```}\PY{l+s+sb}{python}\PY{+w}{ }include=\PYZdq{}examples/code/bubble\PYZus{}sort.py\PYZdq{} title=\PYZdq{}bubble\PYZus{}sort.py\PYZdq{}
 \PY{l+s+sb}{```}
 \end{Verbatim}
-\end{code}
-\begin{callout}[callout tip]{Tip}
-If you're using MkDocs, ensure that the \texttt{base\_path} for snippets is correctly set in your configuration to point to the directory containing your code files.
-
-A safe configuration would be:
-
-\begin{code}{yaml}{}{}
+\end{tscode}
+To splice a whole Markdown file into the document instead, use the \tscodeinline{include}
+role on a line of its own:
+\begin{tscode}[lang=md, engine=pygments]
 \begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
-\PY{p+pIndicator}{\PYZhy{}}\PY{+w}{ }\PY{n+nt}{pymdownx.snippets}\PY{p}{:}
-\PY{+w}{    }\PY{n+nt}{check\PYZus{}paths}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{true}
-\PY{+w}{    }\PY{n+nt}{base\PYZus{}path}\PY{p}{:}\PY{+w}{ }\PY{k+kt}{!relative}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{\PYZdl{}config\PYZus{}dir}
+\PYZob{}include\PYZcb{}(examples/code/bubble\PYZus{}sort.md)
 \end{Verbatim}
-\end{code}
-\end{callout}
-\subsection{With LaTeX output}\label{with-latex-output}
-
+\end{tscode}
+The PyMdownX snippet syntax \tscodeinline{-\allowbreak{}-\allowbreak{}8<-\allowbreak{}-\allowbreak{} "file"} is accepted as deprecated sugar; it
+pastes text before parsing, which breaks on nested fences, and it never rebases
+relative paths. See Migrating to TMark.
+\subsection{With \LaTeX{} output}
 Here's what the above examples look like when rendered with TeXSmith:
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.6\linewidth]{snippet-<HASH>.pdf}
+\end{figure}
+\subsection{Captioned listings}
+A \tscodeinline{Listing:} caption line promotes a code block to a numbered, referenceable
+listing --- the same rule as every other float:
+\begin{tscode}[lang=md, engine=pygments]
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+\PY{l+s+sb}{```}\PY{l+s+sb}{python}\PY{+w}{ }title=\PYZdq{}bubble\PYZus{}sort.py\PYZdq{}
+\PY{k}{def}\PY{+w}{ }\PY{n+nf}{bubble\PYZus{}sort}\PY{p}{(}\PY{n}{items}\PY{p}{)}\PY{p}{:} \PY{o}{.}\PY{o}{.}\PY{o}{.}
+\PY{l+s+sb}{```}
 
-\section{Inline Code}\label{inline-code}
+Listing: Bubble sort, naive version. \PYZob{}\PYZsh{}lst:bubble\PYZcb{}
 
-You can also include inline code snippets using backticks \texttt{`} like this:
-
-\subsection{Unformatted}\label{unformatted}
-
-\begin{code}{markdown}{}{}
+\PY{n+ni}{@lst:bubble} is quadratic in the worst case.
+\end{Verbatim}
+\end{tscode}
+\section{Inline Code}
+You can also include inline code snippets using backticks \tscodeinline{`} like this:
+\subsection{Unformatted}
+\begin{tscode}[lang=markdown, engine=pygments]
 \begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
 To sort a list in Python, you can use the \PY{l+s+sb}{`sorted()`} function.
 \end{Verbatim}
-\end{code}
+\end{tscode}
 It will simply be rendered as monospaced text in \LaTeX{}:
-
-\begin{code}{text}{}{}
+\begin{tscode}[lang=text, engine=pygments]
 \begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
 To sort a list in Python, you can use the \PYZbs{}texttt\PYZob{}sorted()\PYZcb{} function.
 \end{Verbatim}
-\end{code}
-\subsection{Highlighted}\label{highlighted}
-
-Inline code can also be highlighted thanks to the Pymdownx \texttt{inlinehilite} extension.
-
-\begin{code}{markdown}{}{}
+\end{tscode}
+\subsection{Highlighted}
+Inline code can also be highlighted. The canonical spelling is the \tscodeinline{code} role,
+whose positional argument is the language; the PyMdownX \tscodeinline{\#!lang} shebang is
+sugar for the same node.
+\begin{tscode}[lang=md, engine=pygments]
 \begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
-You can use `` \PY{l+s+sb}{`\PYZsh{}!py print(\PYZdq{}Hello, World!\PYZdq{})`} `` to display a message in Python.
+You can use \PYZob{}code py\PYZcb{}[print(\PYZdq{}Hello, World!\PYZdq{})] to display a message in Python.
 
-\PY{k}{\PYZgt{} }\PY{g+ge}{You can use `\PYZsh{}!py print(\PYZdq{}Hello, World!\PYZdq{})` to display a message in Python.}
+You can use \PY{l+s+sb}{`\PYZsh{}!py print(\PYZdq{}Hello, World!\PYZdq{})`} to display a message in Python.
 \end{Verbatim}
-\end{code}
+\end{tscode}
 With TeXSmith this example renders as follows:
-
-\begin{code}{markdown}{}{}
+\begin{tscode}[lang=markdown, engine=pygments]
 \begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
-
+[include: examples/code/code\PYZhy{}inline.md not found]
 \end{Verbatim}
-\end{code}
-
+\end{tscode}
+\begin{figure}[H]
+\centering
+\includegraphics[width=\linewidth]{snippet-<HASH>.pdf}
+\end{figure}
 \end{document}

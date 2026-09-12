@@ -1,15 +1,15 @@
 #set document(
-  title: "Development Roadmap",
+title: "Development Roadmap",
 )
 #set page(
-  paper: "a4",
-  margin: 2.5cm,
-  numbering: none,
-  footer: context {
-    if counter(page).final().first() > 1 {
-      align(center)[#counter(page).get().first()]
-    }
-  },
+paper: "a4",
+margin: 2.5cm,
+numbering: none,
+footer: context {
+if counter(page).final().first() > 1 {
+align(center)[#counter(page).get().first()]
+}
+},
 )
 #set text(font: "New Computer Modern", size: 11pt, lang: "en")
 #set par(justify: true)
@@ -17,50 +17,49 @@
 #set heading(numbering: "1.1")
 
 #align(center)[
-  #text(size: 1.8em, weight: "bold")[Development Roadmap]
-]
+#text(size: 1.8em, weight: "bold")[Development Roadmap]]
 #v(1.5em)
 
 Roadmap and development notes for TeXSmith. I keep this file as a running checklist of features to implement, refactorings to perform, and documentation to write. It will remain part of TeXSmith until version 1.0.0 ships.
 
 = Roadmap
 
-- Simplify the attributes SSOT for templates and fragments
-- Deploy to PyPI
-- WARNING -  Unresolved mustache `{{callouts.style}}` in template attributes; leaving placeholder as-is.
-- Attribute redundancy (`numbered`, `press.numbered`, etc.)
-- Refactoring snippets and fixing snippet templates
-- Font: mono fallback for missing characters
-- Global user configuration (.texsmith/config.yml)
-- Unified Fences Syntax
-- Multicolumns
-- Font Size
-- Center/Right alignment
-- Language
-- LaTeX only / HTML only
-- LaTeX raw
-- More examples
-- University exam
-- Student quiz
-- Multiline Acronyms
-- Support for `inserted text` and `{~~deleted text~~}` (goodbox)
-- Index: support for multi-indexes
-- Cross-references (cleveref package)
-- Enhanced tables: add with controls (auto, fixed width, `tabulary`, etc.)
-- Support table orientation (rotate very large tables)
-- CI: uv run mkdocs build \#–strict not yet ready
-- Support for `tocloft` package to customize list of figures/tables
-- Support for `enumitem` package to customize lists
-- Develop submodules as standalone plugins
-- Epigraph Plugin
-- Letterine
-- Custom variables to insert in a document using mustaches
+- #ts-task("done")[Simplify the attributes SSOT for templates and fragments]
+- #ts-task("done")[Deploy to PyPI]
+- #ts-task("done")[WARNING -  Unresolved mustache `{{callouts.style}}` in template attributes; leaving placeholder as-is.]
+- #ts-task("done")[Attribute redundancy (`numbered`, `press.numbered`, etc.)]
+- #ts-task("done")[Refactoring snippets and fixing snippet templates]
+- #ts-task("done")[Font: mono fallback for missing characters]
+- #ts-task("open")[Global user configuration (.texsmith/config.yml)]
+- #ts-task("open")[Unified Fences Syntax
+- #ts-task("open")[Multicolumns]
+- #ts-task("open")[Font Size]
+- #ts-task("open")[Center/Right alignment]
+- #ts-task("open")[Language]
+- #ts-task("open")[#ts-logo("LaTeX") only / HTML only]
+- #ts-task("open")[#ts-logo("LaTeX") raw]]
+- #ts-task("open")[More examples
+- #ts-task("open")[University exam]]
+- #ts-task("open")[Student quiz]
+- #ts-task("open")[Multiline Acronyms]
+- #ts-task("open")[Support for `{++inserted text++}` and `{~~deleted text~~}` (goodbox)]
+- #ts-task("open")[Index: support for multi-indexes]
+- #ts-task("open")[Cross-references (cleveref package)]
+- #ts-task("open")[Enhanced tables: add with controls (auto, fixed width, `tabulary`, etc.)]
+- #ts-task("open")[Support table orientation (rotate very large tables)]
+- #ts-task("open")[CI: uv run mkdocs build \#–strict not yet ready]
+- #ts-task("open")[Support for `tocloft` package to customize list of figures/tables]
+- #ts-task("open")[Support for `enumitem` package to customize lists]
+- #ts-task("open")[Develop submodules as standalone plugins
+- #ts-task("open")[Epigraph Plugin]
+- #ts-task("open")[Letterine]
+- #ts-task("open")[Custom variables to insert in a document using mustaches]]
 
 = Unified Fences Syntax
 
 Markdown format has evolves like a living spece and multiple syntaxes coexists for different purposes. While MyST chose to only use backticks for any blocks (code, admonition), it seems more natural to use different fence styles for different purposes:
 
-- ```` ``` ```` for code blocks and special blocks (Mermaid, LaTeX, custom tables, etc.) that require processing
+- ```` ``` ```` for code blocks and special blocks (Mermaid, #ts-logo("LaTeX"), custom tables, etc.) that require processing
 - `<language>` Language highlighting for code blocks
 - `mermaid` for Mermaid diagrams
 - `svgbob` for SVGBob diagrams
@@ -68,7 +67,7 @@ Markdown format has evolves like a living spece and multiple syntaxes coexists f
 - `table` for custom tables
 - `python figure` for Python-generated figures
 - `!!!` and `???` for admonitions and promoted text (notes, warnings, tips, etc.)
-- `:::` or `///` for custom containers environments (center, right, language, font size, LaTeX only, HTML only, raw LaTeX, etc.)
+- `:::` or `///` for custom containers environments (center, right, language, font size, #ts-logo("LaTeX") only, HTML only, raw #ts-logo("LaTeX"), etc.)
 - `align center` for centered text
 - `align right` for right-aligned text
 - `language <lang>` for language-specific content
@@ -94,7 +93,7 @@ Admonition
 :::
 ```
 
-The subfigures with the `| ^1` syntax work, but this is not optimal for LaTeX rendering, and the reference ID generated with `attrs: {id: static-id}` can be misleading.
+The subfigures with the `| ^1` syntax work, but this is not optimal for #ts-logo("LaTeX") rendering, and the reference ID generated with `attrs: {id: static-id}` can be misleading.
 
 TeXSmith offers a more convenient way of adding figures using the admonition style
 
@@ -130,7 +129,7 @@ We want to mute false warnings and not display them:
 /^warning:\s*.*?:\d+:\s*Unknown feature.*?in font.*$/
 ```
 
-Recent matrix runs with TeX Gyre (bonum/pagella/termes/schola/heros/adventor/cursor) trigger
+Recent matrix runs with #ts-logo("TeX") Gyre (bonum/pagella/termes/schola/heros/adventor/cursor) trigger
 many Tectonic warnings like `Unknown feature '` or repeated `Requested font` lines; output is
 otherwise correct. Keep these noted as benign until we wire the log filter above or document a
 flag to silence them.
@@ -180,7 +179,7 @@ __*`abc`*__
 
 === Code
 
-We only use ```` ``` ```` fences for code blocks or other special blocks like Mermaid, LaTeX, custom tables, etc. No other uses should be allowed.
+We only use ```` ``` ```` fences for code blocks or other special blocks like Mermaid, #ts-logo("LaTeX"), custom tables, etc. No other uses should be allowed.
 
 === Admonitions
 
@@ -203,25 +202,24 @@ The `:::` syntax is reserved for custom containers like `center`, `right`, `lang
 ==== Font Size
 
 #quote(block: true)[
-  tiny, small, large, huge, enormous
-  Other synonyms: tiny, scriptsize, footnotesize, small, normalsize, large, Large, LARGE, huge, Huge
-  Other english synonyms: tiny, very small, small, normal, big, very big, huge, enormous
-]
+tiny, small, large, huge, enormous
+Other synonyms: tiny, scriptsize, footnotesize, small, normalsize, large, Large, LARGE, huge, Huge
+Other english synonyms: tiny, very small, small, normal, big, very big, huge, enormous]
 
 #table(
-  columns: 3,
-  align: (left, left, left),
-  table.header([Adjective(s) (EN)], [LaTeX], [HTML correspondance (CSS)]),
-  [tiny, very tiny], [\\tiny   (≈ 5 pt)], [`<span style="font-size:0.5em">...</span>`],
-  [very small], [\\scriptsize (≈ 7 pt)], [`<span style="font-size:0.7em">...</span>`],
-  [footnote-sized], [\\footnotesize (≈ 8 pt)], [`<span style="font-size:0.8em">...</span>`],
-  [small], [\\small (≈ 9 pt)], [`<span style="font-size:0.9em">...</span>`],
-  [normal], [\\normalsize (≈ 10 pt)], [`<span style="font-size:1em">...</span>`],
-  [big], [\\large (≈ 12 pt)], [`<span style="font-size:1.2em">...</span>`],
-  [very big], [\\Large (≈ 14.4 pt)], [`<span style="font-size:1.4em">...</span>`],
-  [between big and huge], [\\LARGE (≈ 17.3 pt)], [`<span style="font-size:1.7em">...</span>`],
-  [huge], [\\huge (≈ 20.7 pt)], [`<span style="font-size:2.1em">...</span>`],
-  [enormous, gigantic], [\\Huge (≈ 24.9 pt)], [`<span style="font-size:2.5em">...</span>`],
+columns: 3,
+align: (left, left, left),
+table.header([Adjective(s) (EN)], [LaTeX], [HTML correspondance (CSS)]),
+[tiny, very tiny], [\\tiny   (#ts-script("mathematics")[≈ ]5 pt)], [`<span style="font-size:0.5em">...</span>`],
+[very small], [\\scriptsize (#ts-script("mathematics")[≈ ]7 pt)], [`<span style="font-size:0.7em">...</span>`],
+[footnote-sized], [\\footnotesize (#ts-script("mathematics")[≈ ]8 pt)], [`<span style="font-size:0.8em">...</span>`],
+[small], [\\small (#ts-script("mathematics")[≈ ]9 pt)], [`<span style="font-size:0.9em">...</span>`],
+[normal], [\\normalsize (#ts-script("mathematics")[≈ ]10 pt)], [`<span style="font-size:1em">...</span>  `],
+[big], [\\large (#ts-script("mathematics")[≈ ]12 pt)], [`<span style="font-size:1.2em">...</span>`],
+[very big], [\\Large (#ts-script("mathematics")[≈ ]14.4 pt)], [`<span style="font-size:1.4em">...</span>`],
+[between big and huge], [\\LARGE (#ts-script("mathematics")[≈ ]17.3 pt)], [`<span style="font-size:1.7em">...</span>`],
+[huge], [\\huge (#ts-script("mathematics")[≈ ]20.7 pt)], [`<span style="font-size:2.1em">...</span>`],
+[enormous, gigantic], [\\Huge (#ts-script("mathematics")[≈ ]24.9 pt)], [`<span style="font-size:2.5em">...</span>`],
 )
 
 ```
@@ -268,7 +266,7 @@ This HTML-only content will be included in the HTML output but ignored in LaTeX.
 :::
 ```
 
-We can use raw LaTeX blocks for more complex LaTeX content that doesn't fit well in Markdown:
+We can use raw #ts-logo("LaTeX") blocks for more complex #ts-logo("LaTeX") content that doesn't fit well in Markdown:
 
 ```
 ::: latex raw
@@ -284,7 +282,7 @@ This is Arabic content with custom HTML attributes.
 :::
 ```
 
-Each `:::` container is converted into a `<div>` with the specified attributes in HTML, while LaTeX processes the content according to the container type.
+Each `:::` container is converted into a `<div>` with the specified attributes in HTML, while #ts-logo("LaTeX") processes the content according to the container type.
 
 === GFM Support for admonitions
 
@@ -304,7 +302,7 @@ This is converted to the exact same output as the MkDocs admonition syntax. It i
 
 == Figure References
 
-Printed references depend on the document language. In English we would write, “The elephant shown in Figure 1 is large.” The LaTeX equivalent is `The elephant shown in Figure~\ref{fig:elephant} is large.` Pymdown lets us write:
+Printed references depend on the document language. In English we would write, “The elephant shown in Figure 1 is large.” The #ts-logo("LaTeX") equivalent is `The elephant shown in Figure~\ref{fig:elephant} is large.` Pymdown lets us write:
 
 ```markdown
 The elephant shown in figure [#fig:elephant] is large.

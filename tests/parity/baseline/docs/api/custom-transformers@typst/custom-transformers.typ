@@ -1,15 +1,15 @@
 #set document(
-  title: "Custom Transformers",
+title: "Custom Transformers",
 )
 #set page(
-  paper: "a4",
-  margin: 2.5cm,
-  numbering: none,
-  footer: context {
-    if counter(page).final().first() > 1 {
-      align(center)[#counter(page).get().first()]
-    }
-  },
+paper: "a4",
+margin: 2.5cm,
+numbering: none,
+footer: context {
+if counter(page).final().first() > 1 {
+align(center)[#counter(page).get().first()]
+}
+},
 )
 #set text(font: "New Computer Modern", size: 11pt, lang: "en")
 #set par(justify: true)
@@ -17,12 +17,11 @@
 #set heading(numbering: "1.1")
 
 #align(center)[
-  #text(size: 1.8em, weight: "bold")[Custom Transformers]
-]
+#text(size: 1.8em, weight: "bold")[Custom Transformers]]
 #v(1.5em)
 
 Transformers convert non-PDF assets (Mermaid, Draw.io, bitmap images) into PDF
-fragments before the LaTeX renderer emits `\includegraphics`. When the built-in
+fragments before the #ts-logo("LaTeX") renderer emits `\includegraphics`. When the built-in
 strategies do not cover your workflow, register custom converters via
 `texsmith.adapters.transformers.register_converter`.
 
@@ -78,30 +77,30 @@ your own `suffix` when the converter emits something other than `.pdf`.
 = Wiring the converter
 
 + Import the module before converting documents (e.g., in `docs/hooks/mkdocs_hooks.py`
-     or a standalone script).
+or a standalone script).
 + Reference the converter name inside handlers or templates. For example, add a
-     handler that detects `<pre class="language-plantuml">` blocks and calls
-     `registry.convert("plantuml", ...)`.
+handler that detects `<pre class="language-plantuml">` blocks and calls
+`registry.convert("plantuml", ...)`.
 + Ship optional dependencies (CLI tools, Docker images) alongside the template
-     README so users know how to enable the converter.
+README so users know how to enable the converter.
 
 = Handling fallbacks
 
 When TeXSmith cannot find a converter, it installs placeholder strategies that
-emit visible warnings and `TODO` boxes in the LaTeX output. Use these helpers to
+emit visible warnings and `TODO` boxes in the #ts-logo("LaTeX") output. Use these helpers to
 control that behavior:
 
 - `texsmith.adapters.transformers.has_converter("mermaid")` – check whether a
-    converter is registered before assuming the dependency exists.
+converter is registered before assuming the dependency exists.
 - `texsmith.core.conversion.attempt_transformer_fallback` – internal helper
-    the CLI uses to install placeholder converters when optional dependencies are
-    missing. Call this only if you need to mimic the CLI’s resilience.
+the CLI uses to install placeholder converters when optional dependencies are
+missing. Call this only if you need to mimic the CLI’s resilience.
 
 = Further reading
 
-- #link("transformers.md")[`texsmith.adapters.transformers.base`] – reference for
-    `CachedConversionStrategy`.
-- #link("../api/handlers.md")[`texsmith.writers.latex.media`] – real-world examples
-    of how converters integrate with the LaTeX writer.
-- #link("../guide/templates/template-cookbook.md")[Template Cookbook] – packaging
-    recommendations so your templates document converter prerequisites.
+- `texsmith.adapters.transformers.base` – reference for
+`CachedConversionStrategy`.
+- `texsmith.writers.latex.media` – real-world examples
+of how converters integrate with the #ts-logo("LaTeX") writer.
+- Template Cookbook – packaging
+recommendations so your templates document converter prerequisites.

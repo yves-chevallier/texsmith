@@ -1,15 +1,15 @@
 #set document(
-  title: "Language Support",
+title: "Language Support",
 )
 #set page(
-  paper: "a4",
-  margin: 2.5cm,
-  numbering: none,
-  footer: context {
-    if counter(page).final().first() > 1 {
-      align(center)[#counter(page).get().first()]
-    }
-  },
+paper: "a4",
+margin: 2.5cm,
+numbering: none,
+footer: context {
+if counter(page).final().first() > 1 {
+align(center)[#counter(page).get().first()]
+}
+},
 )
 #set text(font: "New Computer Modern", size: 11pt, lang: "en")
 #set par(justify: true)
@@ -17,8 +17,7 @@
 #set heading(numbering: "1.1")
 
 #align(center)[
-  #text(size: 1.8em, weight: "bold")[Language Support]
-]
+#text(size: 1.8em, weight: "bold")[Language Support]]
 #v(1.5em)
 
 TeXSmith can render documents in multiple languages and scripts, including those with
@@ -26,135 +25,124 @@ complex typesetting requirements. Below are examples of various languages and sc
 supported by TeXSmith, showcasing its versatility in handling diverse linguistic
 content.
 
-= Japanese (日本語) – Haiku & Classical Poetry
+= Japanese (#ts-script("chinese")[日本語]) – Haiku & Classical Poetry
 
 Source (public domain): Matsuo Bashō, Oku no Hosomichi (1694)
 
 #quote(block: true)[
-  月日は百代の過客にして、行きかふ年も旅人なり。
+#ts-script("japanese")[月日は百代の過客にして、行きかふ年も旅人なり。]
 
-  舟に乗り、馬に乗りて、初秋の風に吹かれつつ、
+#ts-script("japanese")[舟に乗り、馬に乗りて、初秋の風に吹かれつつ、]
 
-  道のべの小草を分け、山川を越えて、
+#ts-script("japanese")[道のべの小草を分け、山川を越えて、]
 
-  心にかかる景色を求めて歩みゆく。
-]
+#ts-script("japanese")[心にかかる景色を求めて歩みゆく。]]
 
 = Syriac
 
-Source (public domain): Peshitta – Gospel of Matthew (5#super[th] century)
+Source (public domain): Peshitta – Gospel of Matthew (5th century)
 
 #quote(block: true)[
-  ܛܘܒܝܗܘܢ ܠܡܣܟܢ̈ܐ ܒܪܘܚܐ، ܕܕܝܠܗܘܢ ܗܝ ܡܠܟܘܬܐ ܕܫܡܝ̈ܐ.
-  ܛܘܒܝܗܘܢ ܠܐܒܝ̈ܠܐ، ܕܗܢܘܢ ܢܬܒܝܐܘܢ.
-  ܛܘܒܝܗܘܢ ܠܡܟܝ̈ܟܐ، ܕܗܢܘܢ ܢܪܬܘܢ ܠܐܪܥܐ.
-  ܛܘܒܝܗܘܢ ܠܐܝܠܝܢ ܕܟܦܢܝܢ ܘܨܗܝܢ ܠܟܐܢܘܬܐ، ܕܗܢܘܢ ܢܣܒܥܘܢ.
-]
+#ts-script("syriacfull")[ܛܘܒܝܗܘܢ ܠܡܣܟܢ̈ܐ ܒܪܘܚܐ]#ts-script("arabics")[، ]#ts-script("syriacfull")[ܕܕܝܠܗܘܢ ܗܝ ܡܠܟܘܬܐ ܕܫܡܝ̈ܐ].
+#ts-script("syriacfull")[ܛܘܒܝܗܘܢ ܠܐܒܝ̈ܠܐ]#ts-script("arabics")[، ]#ts-script("syriacfull")[ܕܗܢܘܢ ܢܬܒܝܐܘܢ].
+#ts-script("syriacfull")[ܛܘܒܝܗܘܢ ܠܡܟܝ̈ܟܐ]#ts-script("arabics")[، ]#ts-script("syriacfull")[ܕܗܢܘܢ ܢܪܬܘܢ ܠܐܪܥܐ].
+#ts-script("syriacfull")[ܛܘܒܝܗܘܢ ܠܐܝܠܝܢ ܕܟܦܢܝܢ ܘܨܗܝܢ ܠܟܐܢܘܬܐ]#ts-script("arabics")[، ]#ts-script("syriacfull")[ܕܗܢܘܢ ܢܣܒܥܘܢ].]
 
-= Greek (Ancient Greek – Ἑλληνικά)
+= Greek (Ancient Greek – #ts-script("greek")[Ἑλληνικά])
 
-Source (public domain): Homer, _Odyssey_ (8#super[th] century BC)
+Source (public domain): Homer, _Odyssey_ (8th century BC)
 
 #quote(block: true)[
-  ἄνδρα μοι ἔννεπε, Μοῦσα, πολύτροπον, ὃς μάλα πολλὰ
-  πλάγχθη, ἐπεὶ Τροίης ἱερὸν πτολίεθρον ἔπερσεν·
-  πολλῶν δ' ἀνθρώπων ἴδεν ἄστεα καὶ νόον ἔγνω,
-  πολλὰ δ' ὅ γ' ἐν πόντῳ πάθεν ἄλγεα ὃν κατὰ θυμόν,
-  ἀρνύμενος ἥν τε ψυχὴν καὶ νόστον ἑταίρων.
-]
+#ts-script("greek")[ἄνδρα μοι ἔννεπε], #ts-script("greek")[Μοῦσα], #ts-script("greek")[πολύτροπον], #ts-script("greek")[ὃς μάλα πολλὰ]
+#ts-script("greek")[πλάγχθη], #ts-script("greek")[ἐπεὶ Τροίης ἱερὸν πτολίεθρον ἔπερσεν]·
+#ts-script("greek")[πολλῶν δ]' #ts-script("greek")[ἀνθρώπων ἴδεν ἄστεα καὶ νόον ἔγνω],
+#ts-script("greek")[πολλὰ δ]' #ts-script("greek")[ὅ γ]' #ts-script("greek")[ἐν πόντῳ πάθεν ἄλγεα ὃν κατὰ θυμόν],
+#ts-script("greek")[ἀρνύμενος ἥν τε ψυχὴν καὶ νόστον ἑταίρων].]
 
-= Korean (한국어 – 古典시)
+= Korean (#ts-script("korean")[한국어 ]– #ts-script("korean")[古典시])
 
 Source (public domain): Jeong Mong-ju (1337–1392), _Dansimga_
 
 #quote(block: true)[
-  이 몸이 죽고 죽어 일백 번 고쳐 죽어
-  백골이 진토되어 넋이라도 있고 없고
-  임 향한 일편단심이야 가실 줄이 있으랴
-  어찌 한 마음 변치 않으리오.
-]
+#ts-script("korean")[이 몸이 죽고 죽어 일백 번 고쳐 죽어]
+#ts-script("korean")[백골이 진토되어 넋이라도 있고 없고]
+#ts-script("korean")[임 향한 일편단심이야 가실 줄이 있으랴]
+#ts-script("korean")[어찌 한 마음 변치 않으리오].]
 
-= Chinese Traditional (繁體中文 – Classical Chinese)
+= Chinese Traditional (#ts-script("chinese")[繁體中文 ]– Classical Chinese)
 
-Source (public domain): Tao Yuanming (365–427), _歸園田居_
+Source (public domain): Tao Yuanming (365–427), _#ts-script("chinese")[歸園田居]_
 
 #quote(block: true)[
-  少無適俗韻，性本愛丘山。
+#ts-script("chinese")[少無適俗韻，性本愛丘山。]
 
-  誤落塵網中，一去三十年。
+#ts-script("chinese")[誤落塵網中，一去三十年。]
 
-  羈鳥戀舊林，池魚思故淵。
+#ts-script("chinese")[羈鳥戀舊林，池魚思故淵。]
 
-  開荒南野際，守拙歸園田。
+#ts-script("chinese")[開荒南野際，守拙歸園田。]
 
-  久在樊籠裡，復得返自然。
-]
+#ts-script("chinese")[久在樊籠裡，復得返自然。]]
 
 = Arabic
 
-Source (public domain): Imru’ al-Qays (6#super[th] century), _Mu‘allaqāt_
+Source (public domain): Imru’ al-Qays (6th century), _Mu‘allaqāt_
 
 #quote(block: true)[
-  قِفا نَبْكِ مِنْ ذِكرَى حبيبٍ ومَنزِلِ
-  بِسِقطِ اللِّوَى بَيْنَ الدَّخول فَحَوْمَلِ
-  فَتُوضِحَ فَالمِقراةِ لَم يَعفُ رَسمُها
-  لِما نَسَجَتها مِن جَنُوبٍ وشَمألِ
-  تَرَى بَعَرَ الأرْآمِ في عَرَصاتِها
-  وَقِيْعانِها كَأنَّهُ حَبُّ فُلْفُلِ
-]
+#ts-script("arabics")[قِفا نَبْكِ مِنْ ذِكرَى حبيبٍ ومَنزِلِ]
+#ts-script("arabics")[بِسِقطِ اللِّوَى بَيْنَ الدَّخول فَحَوْمَلِ]
+#ts-script("arabics")[فَتُوضِحَ فَالمِقراةِ لَم يَعفُ رَسمُها]
+#ts-script("arabics")[لِما نَسَجَتها مِن جَنُوبٍ وشَمألِ]
+#ts-script("arabics")[تَرَى بَعَرَ الأرْآمِ في عَرَصاتِها]
+#ts-script("arabics")[وَقِيْعانِها كَأنَّهُ حَبُّ فُلْفُلِ]]
 
-= Devanagari (देवनागरी – Sanskrit)
+= Devanagari (#ts-script("devanagari")[देवनागरी ]– Sanskrit)
 
 Source (public domain): Bhagavad Gītā (2.20)
 
 #quote(block: true)[
-  न जायते म्रियते वा कदाचिन्
-  नायं भूत्वा भविता वा न भूयः।
-  अजो नित्यः शाश्वतोऽयं पुराणो
-  न हन्यते हन्यमाने शरीरे॥
-]
+#ts-script("devanagari")[न जायते म्रियते वा कदाचिन्]
+#ts-script("devanagari")[नायं भूत्वा भविता वा न भूयः।]
+#ts-script("devanagari")[अजो नित्यः शाश्वतोऽयं पुराणो]
+#ts-script("devanagari")[न हन्यते हन्यमाने शरीरे॥]]
 
-= Urdu (اُردُو – Classical Poetry)
+= Urdu (#ts-script("arabics")[اُردُو ]– Classical Poetry)
 
 Source (public domain): Mir Taqi Mir (1723–1810)
 
 #quote(block: true)[
-  عشق ایک مِیرُی آفت ہے
-  دل کو لے کر ڈوب ہی جاتی ہے
-  درد کی لہر اٹھتی جائے
-  اشک بھی ساتھ بہہ ہی جاتے ہیں
-]
+#ts-script("arabics")[عشق ایک مِیرُی آفت ہے]
+#ts-script("arabics")[دل کو لے کر ڈوب ہی جاتی ہے]
+#ts-script("arabics")[درد کی لہر اٹھتی جائے]
+#ts-script("arabics")[اشک بھی ساتھ بہہ ہی جاتے ہیں]]
 
-= Sinhala (සිංහල)
+= Sinhala (#ts-script("sinhala")[සිංහල])
 
 Source (public domain): Classical Sandesa-style verse
 
 #quote(block: true)[
-  සඳ එළිය පුරා රැය නිල් සිලුවෙන් හැඬේලා
-  සඳහනෙකු මෙන් සිත් තුළ හඬක් වී පාවෙයි।
-  සිහිනෙන් පාරවල් හරහා ලංවීය මල් සුවඳක්
-  සරත් රැයේ සුවිසෙලිනි මනමේ තනුවේ රැදී.
-]
+#ts-script("sinhala")[සඳ එළිය පුරා රැය නිල් සිලුවෙන් හැඬේලා]
+#ts-script("sinhala")[සඳහනෙකු මෙන් සිත් තුළ හඬක් වී පාවෙයි]#ts-script("devanagari")[।]
+#ts-script("sinhala")[සිහිනෙන් පාරවල් හරහා ලංවීය මල් සුවඳක්]
+#ts-script("sinhala")[සරත් රැයේ සුවිසෙලිනි මනමේ තනුවේ රැදී].]
 
-= Khmer (ខ្មែរ)
+= Khmer (#ts-script("khmer")[ខ្មែរ])
 
 Source (public domain): Classical Khmer poetic style (Chbab form)
 
 #quote(block: true)[
-  យប់ស្ថប់ត្រង់ ព្រៃស្រពន់សូរ ស្ទឹងស្ទូងតាមស្រមោលដើមឈើ
+#ts-script("khmer")[យប់ស្ថប់ត្រង់ ព្រៃស្រពន់សូរ ស្ទឹងស្ទូងតាមស្រមោលដើមឈើ]
 
-  ខ្យល់អូលីល មកពីភ្នំឆ្ងាយ ប៉ះមកដល់ចិត្តអើយឆ្ងាយណា
+#ts-script("khmer")[ខ្យល់អូលីល មកពីភ្នំឆ្ងាយ ប៉ះមកដល់ចិត្តអើយឆ្ងាយណា]
 
-  សូរសត្វបក្សី លេបលាន់តាមសែន ក្លិនផ្កាឈូករាត្រីរំលេច។
-]
+#ts-script("khmer")[សូរសត្វបក្សី លេបលាន់តាមសែន ក្លិនផ្កាឈូករាត្រីរំលេច។]]
 
-= Telugu (తెలుగు)
+= Telugu (#ts-script("telugu")[తెలుగు])
 
-Source (public domain): Nannaya (11#super[th] century), _Andhra Mahābhāratam_
+Source (public domain): Nannaya (11th century), _Andhra Mahābhāratam_
 
 #quote(block: true)[
-  నన్నయ భট্টుని వాక్కులు నదీవేగమువలె ప్రవహించి
-  పాండవ కథామృతము లోకమును నింపెను।
-  ధర్మమునకు మార్గదర్శి పాండవుని గాథలతో
-  తెలుగు భాషకు తొలిమకుటం కీర్తి ప్రసరించెనె.
-]
+#ts-script("telugu")[నన్నయ భ]#ts-script("bengali")[ট্ট]#ts-script("telugu")[ుని వాక్కులు నదీవేగమువలె ప్రవహించి]
+#ts-script("telugu")[పాండవ కథామృతము లోకమును నింపెను]#ts-script("devanagari")[।]
+#ts-script("telugu")[ధర్మమునకు మార్గదర్శి పాండవుని గాథలతో]
+#ts-script("telugu")[తెలుగు భాషకు తొలిమకుటం కీర్తి ప్రసరించెనె].]

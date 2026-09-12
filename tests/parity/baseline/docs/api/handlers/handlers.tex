@@ -8,106 +8,101 @@
 \usepackage[colorlinks=true, linkcolor=NavyBlue, urlcolor=NavyBlue, citecolor=NavyBlue]{hyperref}
 \usepackage[a4paper]{geometry}
 \usepackage{ts-fonts}
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{tcolorbox}
+\usepackage{fvextra}
 \usepackage{amsmath}
 \usepackage{float}
 \usepackage{seqsplit}
-\usepackage{ts-callouts}
+\newcolumntype{Y}{>{\centering\arraybackslash}X}
+\newcolumntype{Z}{>{\raggedleft\arraybackslash}X}
 \usepackage{ts-code}
 
 \usepackage{lastpage}
 \usepackage{refcount}
 \makeatletter
 \def\ps@plain{
-  \let\@oddhead\@empty
-  \let\@evenhead\@empty
-  \def\@oddfoot{
-    \hfil
-    \ifnum\getpagerefnumber{LastPage}>1\relax
-      \thepage
-    \fi
-    \hfil}
-  \let\@evenfoot\@oddfoot
+\let\@oddhead\@empty
+\let\@evenhead\@empty
+\def\@oddfoot{
+\hfil
+\ifnum\getpagerefnumber{LastPage}>1\relax
+\thepage
+\fi
+\hfil}
+\let\@evenfoot\@oddfoot
 }
 \makeatother
 
-\title{Readers \& Writers}
+\title{IR passes and fragment contracts}
 \author{}\date{}
-
 \begin{document}
-
 \maketitle
-
-\thispagestyle{plain}
-TeXSmith converts a document through a typed intermediate representation (IR):
-
-\begin{code}{text}{}{}
+TeXSmith no longer reads HTML with a bs4 reader and no longer emits \LaTeX{} from
+Python. The parser, the intermediate representation, the resolver and the
+writers are tmark's; what remains on the Python side is the part that needs the
+filesystem, the network and a process --- and the part that decides what a
+construct \emph{looks like}.
+\begin{tscode}[lang=text, stretch=0.5, engine=pygments]
 \begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
-read(HTML) → IR (texsmith.ir) → write(IR) → LaTeX
+tmark.parse ─▶ IR ─▶ TeXSmith passes ─▶ tmark.resolve ─▶ tmark.write ─▶ Body \PYZob{} text, map, requires \PYZcb{}
 \end{Verbatim}
-\end{code}
-A \textbf{reader} lowers BeautifulSoup nodes into backend-agnostic IR nodes, and a
-\textbf{writer} emits a backend (\LaTeX{}) from that IR. Custom constructs are added in
-two halves that mirror how the built-in constructs work.
+\end{tscode}
+There are therefore two extension points, and the \tscodeinline{@reads} / \tscodeinline{@writes}
+decorators of 0.6 map onto them:
+\begin{center}
+\begin{tabularx}{\linewidth}{>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X}
+\toprule
+\textbf{0.6 hook} & \textbf{0.7 replacement} \\
+\midrule
+\tscodeinline{@reads} lowering (HTML \tsscript{symbols}{\(\rightarrow\) }IR) & a TMark \textbf{container} (\tscodeinline{::: name}) plus, when it computes something, an \textbf{IR pass} \\
+\tscodeinline{@writes} emitter (IR \tsscript{symbols}{\(\rightarrow\) }\LaTeX{}) & a \textbf{contract macro} provided by a fragment, redefined by the template \\
+\tscodeinline{[latex.template] readers} & \tscodeinline{[latex.template] passes = ["pkg.module:pass"]} \\
+\tscodeinline{[latex.template] writer} & redefine the contract macro in the template's \tscodeinline{.tex} \\
+fragment \tscodeinline{partials}, \tscodeinline{required\_partials} & the fragment's \tscodeinline{provides} list \\
+\bottomrule
+\end{tabularx}
+\end{center}
+\tscodeinline{readers}, \tscodeinline{writer}, \tscodeinline{latex.template.override}, fragment \tscodeinline{partials} and
+\tscodeinline{required\_partials} are deprecated in 0.7.0 (they warn and are ignored) and
+removed in 0.8.0.
+\section{IR passes}
+A pass is a pure function \tscodeinline{(Document, PassContext) -\allowbreak{}> Document} over the
+generated IR models. It never mutates its input, returns the same object when it
+has nothing to do, and otherwise rebuilds the tree with \tscodeinline{document.evolve(...)}.
+Failures never raise: a node is replaced by a visible literal and a diagnostic
+is emitted at its span. An exception escaping a pass is a bug.
 
-\section{Reader lowerings --- \texttt{@reads}}\label{reader-lowerings-texttt-reads}
-
-A reader lowering is a callable decorated with \texttt{@reads(*tags, level, priority,
-name)}. It \textbf{returns} an IR node (never mutates the tree). Returning
-\texttt{NotHandled} lets the next candidate --- or the generic fallback --- run.
-
-\begin{code}{python}{}{}
+Two stages surround the one Rust step in the middle:
+\begin{description}
+\item[{\tscodeinline{pre}}] before \tscodeinline{tmark.resolve}. A \tscodeinline{pre} pass may add, remove or rewrite blocks --- this
+is where includes are spliced, diagrams converted, DOIs fetched, moustaches
+expanded.
+\item[{\tscodeinline{post}}] after \tscodeinline{tmark.resolve}. A \tscodeinline{post} pass only slices the block list or computes
+per-body options, so that the \tscodeinline{Resolved} of the whole document stays valid.
+\end{description}
+\begin{tscode}[lang=python, engine=pygments]
 \begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
-\PY{k+kn}{from}\PY{+w}{ }\PY{n+nn}{bs4}\PY{+w}{ }\PY{k+kn}{import} \PY{n}{Tag}
+\PY{k+kn}{from}\PY{+w}{ }\PY{n+nn}{texsmith}\PY{n+nn}{.}\PY{n+nn}{core}\PY{n+nn}{.}\PY{n+nn}{documents}\PY{+w}{ }\PY{k+kn}{import} \PY{n}{Document}
+\PY{k+kn}{from}\PY{+w}{ }\PY{n+nn}{texsmith}\PY{n+nn}{.}\PY{n+nn}{ir}\PY{+w}{ }\PY{k+kn}{import} \PY{n}{model}
+\PY{k+kn}{from}\PY{+w}{ }\PY{n+nn}{texsmith}\PY{n+nn}{.}\PY{n+nn}{passes}\PY{+w}{ }\PY{k+kn}{import} \PY{n}{PassContext}\PY{p}{,} \PY{n}{spec}
 
-\PY{k+kn}{from}\PY{+w}{ }\PY{n+nn}{texsmith}\PY{n+nn}{.}\PY{n+nn}{ir}\PY{+w}{ }\PY{k+kn}{import} \PY{n}{nodes} \PY{k}{as} \PY{n}{ir}
-\PY{k+kn}{from}\PY{+w}{ }\PY{n+nn}{texsmith}\PY{n+nn}{.}\PY{n+nn}{readers}\PY{n+nn}{.}\PY{n+nn}{html}\PY{n+nn}{.}\PY{n+nn}{registry}\PY{+w}{ }\PY{k+kn}{import} \PY{n}{NotHandled}\PY{p}{,} \PY{n}{ReadLevel}\PY{p}{,} \PY{n}{reads}
-
-\PY{n+nd}{@reads}\PY{p}{(}\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{span}\PY{l+s+s2}{\PYZdq{}}\PY{p}{,} \PY{n}{level}\PY{o}{=}\PY{n}{ReadLevel}\PY{o}{.}\PY{n}{INLINE}\PY{p}{,} \PY{n}{name}\PY{o}{=}\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{data\PYZus{}counter}\PY{l+s+s2}{\PYZdq{}}\PY{p}{,} \PY{n}{priority}\PY{o}{=}\PY{l+m+mi}{50}\PY{p}{)}
-\PY{k}{def}\PY{+w}{ }\PY{n+nf}{read\PYZus{}data\PYZus{}counter}\PY{p}{(}\PY{n}{tag}\PY{p}{:} \PY{n}{Tag}\PY{p}{,} \PY{n}{ctx}\PY{p}{)} \PY{o}{\PYZhy{}}\PY{o}{\PYZgt{}} \PY{n}{ir}\PY{o}{.}\PY{n}{Span} \PY{o}{|} \PY{n+nb}{object}\PY{p}{:}
-    \PY{n}{classes} \PY{o}{=} \PY{n}{tag}\PY{o}{.}\PY{n}{get}\PY{p}{(}\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{class}\PY{l+s+s2}{\PYZdq{}}\PY{p}{)} \PY{o+ow}{or} \PY{p}{[}\PY{p}{]}
-    \PY{n}{tokens} \PY{o}{=} \PY{p}{\PYZob{}}\PY{n}{classes}\PY{p}{\PYZcb{}} \PY{k}{if} \PY{n+nb}{isinstance}\PY{p}{(}\PY{n}{classes}\PY{p}{,} \PY{n+nb}{str}\PY{p}{)} \PY{k}{else} \PY{n+nb}{set}\PY{p}{(}\PY{n}{classes}\PY{p}{)}
-    \PY{k}{if} \PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{data\PYZhy{}counter}\PY{l+s+s2}{\PYZdq{}} \PY{o+ow}{not} \PY{o+ow}{in} \PY{n}{tokens}\PY{p}{:}
-        \PY{k}{return} \PY{n}{NotHandled}
-    \PY{k}{return} \PY{n}{ir}\PY{o}{.}\PY{n}{Span}\PY{p}{(}\PY{n}{content}\PY{o}{=}\PY{p}{(}\PY{p}{)}\PY{p}{,} \PY{n}{attrs}\PY{o}{=}\PY{p}{(}\PY{p}{(}\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{role}\PY{l+s+s2}{\PYZdq{}}\PY{p}{,} \PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{counter}\PY{l+s+s2}{\PYZdq{}}\PY{p}{)}\PY{p}{,}\PY{p}{)}\PY{p}{)}
+\PY{n+nd}{@spec}\PY{p}{(}\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{exam\PYZhy{}questions}\PY{l+s+s2}{\PYZdq{}}\PY{p}{,} \PY{n}{stage}\PY{o}{=}\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{pre}\PY{l+s+s2}{\PYZdq{}}\PY{p}{,} \PY{n}{after}\PY{o}{=}\PY{p}{(}\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{include}\PY{l+s+s2}{\PYZdq{}}\PY{p}{,}\PY{p}{)}\PY{p}{)}
+\PY{k}{def}\PY{+w}{ }\PY{n+nf}{run}\PY{p}{(}\PY{n}{document}\PY{p}{:} \PY{n}{Document}\PY{p}{,} \PY{n}{ctx}\PY{p}{:} \PY{n}{PassContext}\PY{p}{)} \PY{o}{\PYZhy{}}\PY{o}{\PYZgt{}} \PY{n}{Document}\PY{p}{:}
+    \PY{n}{ir} \PY{o}{=} \PY{n}{document}\PY{o}{.}\PY{n}{ir}
+    \PY{k}{if} \PY{n}{ir} \PY{o+ow}{is} \PY{k+kc}{None}\PY{p}{:}
+        \PY{k}{return} \PY{n}{document}
+    \PY{n}{blocks} \PY{o}{=} \PY{n+nb}{tuple}\PY{p}{(}\PY{n}{\PYZus{}number}\PY{p}{(}\PY{n}{block}\PY{p}{)} \PY{k}{for} \PY{n}{block} \PY{o+ow}{in} \PY{n}{ir}\PY{o}{.}\PY{n}{blocks}\PY{p}{)}
+    \PY{k}{if} \PY{n}{blocks} \PY{o}{==} \PY{n}{ir}\PY{o}{.}\PY{n}{blocks}\PY{p}{:}
+        \PY{k}{return} \PY{n}{document}          \PY{c+c1}{\PYZsh{} nothing to do: hand back the same object}
+    \PY{k}{return} \PY{n}{document}\PY{o}{.}\PY{n}{evolve}\PY{p}{(}\PY{n}{ir}\PY{o}{=}\PY{n}{ir}\PY{o}{.}\PY{n}{model\PYZus{}copy}\PY{p}{(}\PY{n}{update}\PY{o}{=}\PY{p}{\PYZob{}}\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{blocks}\PY{l+s+s2}{\PYZdq{}}\PY{p}{:} \PY{n}{blocks}\PY{p}{\PYZcb{}}\PY{p}{)}\PY{p}{)}
 \end{Verbatim}
-\end{code}
-\section{Writer emitters --- \texttt{@writes}}\label{writer-emitters-texttt-writes}
-
-A writer emitter is a method decorated with \texttt{@writes(NodeType)} on a
-\texttt{LaTeXWriter} subclass. Dispatch is typed by node class via the MRO; a node
-without an emitter raises a clear \texttt{LaTeXWriteError}.
-
-\begin{code}{python}{}{}
-\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
-\PY{k+kn}{from}\PY{+w}{ }\PY{n+nn}{texsmith}\PY{n+nn}{.}\PY{n+nn}{ir}\PY{+w}{ }\PY{k+kn}{import} \PY{n}{nodes} \PY{k}{as} \PY{n}{ir}
-\PY{k+kn}{from}\PY{+w}{ }\PY{n+nn}{texsmith}\PY{n+nn}{.}\PY{n+nn}{writers}\PY{n+nn}{.}\PY{n+nn}{latex}\PY{+w}{ }\PY{k+kn}{import} \PY{n}{LaTeXWriter}\PY{p}{,} \PY{n}{writes}
-
-\PY{k}{class}\PY{+w}{ }\PY{n+nc}{CountingWriter}\PY{p}{(}\PY{n}{LaTeXWriter}\PY{p}{)}\PY{p}{:}
-    \PY{n+nd}{@writes}\PY{p}{(}\PY{n}{ir}\PY{o}{.}\PY{n}{Span}\PY{p}{)}
-    \PY{k}{def}\PY{+w}{ }\PY{n+nf}{\PYZus{}counter\PYZus{}span}\PY{p}{(}\PY{n+nb+bp}{self}\PY{p}{,} \PY{n}{node}\PY{p}{:} \PY{n}{ir}\PY{o}{.}\PY{n}{Span}\PY{p}{)} \PY{o}{\PYZhy{}}\PY{o}{\PYZgt{}} \PY{n+nb}{str}\PY{p}{:}
-        \PY{k}{if} \PY{n+nb}{dict}\PY{p}{(}\PY{n}{node}\PY{o}{.}\PY{n}{attrs}\PY{p}{)}\PY{o}{.}\PY{n}{get}\PY{p}{(}\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{role}\PY{l+s+s2}{\PYZdq{}}\PY{p}{)} \PY{o}{==} \PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{counter}\PY{l+s+s2}{\PYZdq{}}\PY{p}{:}
-            \PY{n}{value} \PY{o}{=} \PY{n+nb+bp}{self}\PY{o}{.}\PY{n}{state}\PY{o}{.}\PY{n}{state}\PY{o}{.}\PY{n}{next\PYZus{}counter}\PY{p}{(}\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{data\PYZhy{}counter}\PY{l+s+s2}{\PYZdq{}}\PY{p}{)}
-            \PY{k}{return} \PY{l+s+sa}{f}\PY{l+s+s2}{\PYZdq{}}\PY{l+s+se}{\PYZbs{}\PYZbs{}}\PY{l+s+s2}{counter}\PY{l+s+se}{\PYZob{}\PYZob{}}\PY{l+s+si}{\PYZob{}}\PY{n}{value}\PY{l+s+si}{\PYZcb{}}\PY{l+s+se}{\PYZcb{}\PYZcb{}}\PY{l+s+s2}{\PYZdq{}}
-        \PY{k}{return} \PY{n+nb}{super}\PY{p}{(}\PY{p}{)}\PY{o}{.}\PY{n}{\PYZus{}span}\PY{p}{(}\PY{n}{node}\PY{p}{)}
-\end{Verbatim}
-\end{code}
-See \href{https://github.com/texsmith/texsmith/blob/main/examples/custom-render/counter.py}{\texttt{examples/custom-\allowbreak{}render/counter.py}}
-for a complete, runnable extension wiring both halves into a \texttt{LaTeXRenderer}.
-
-\begin{callout}[callout tip]{Tip}
-Keep the IR semantic and backend-neutral: encode hints via \texttt{Span}/\texttt{Div}
-\texttt{attrs} (e.g. \texttt{("role", "counter")}) rather than backend strings. Only the
-writer knows about \LaTeX{}.
-\end{callout}
-\section{Shipping readers \& writers in a template}\label{shipping-readers-writers-in-a-template}
-
-When custom constructs belong to a specific \textbf{template} (an exam, a thesis, a
-poster...), declare the reader modules and the writer subclass in that template's
-\texttt{[latex.template]} manifest section. TeXSmith resolves them when the template is
-selected and applies them to the renderer \textbf{for that template only} --- other
-templates keep the default bundled read\(\rightarrow\)write path.
-
-\begin{code}{toml}{}{}
+\end{tscode}
+Order is declared, never implicit: a \tscodeinline{PassSpec} names the passes it must run
+\tscodeinline{after}, and \tscodeinline{build\_pipeline} performs a stable topological sort that raises
+\tscodeinline{PassOrderError} on a cycle. Declare a template's passes in its manifest:
+\begin{tscode}[lang=toml, engine=pygments]
 \begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
 \PY{k}{[}\PY{k}{latex}\PY{k}{.}\PY{k}{template}\PY{k}{]}
 \PY{n}{name}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{exam}\PY{l+s+s2}{\PYZdq{}}
@@ -115,45 +110,101 @@ templates keep the default bundled read\(\rightarrow\)write path.
 \PY{n}{entrypoint}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{template/template.tex}\PY{l+s+s2}{\PYZdq{}}
 \PY{n}{engine}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{lualatex}\PY{l+s+s2}{\PYZdq{}}
 
-\PY{c+c1}{\PYZsh{} Modules whose @reads lowerings are layered on top of the bundled registry.}
-\PY{c+c1}{\PYZsh{} A higher\PYZhy{}priority handler may return NotHandled to fall through to a core one.}
-\PY{n}{readers}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{p}{[}\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{my\PYZus{}exam\PYZus{}pkg.reader}\PY{l+s+s2}{\PYZdq{}}\PY{p}{]}
-
-\PY{c+c1}{\PYZsh{} A \PYZdq{}module:Class\PYZdq{} reference to a LaTeXWriter subclass adding/overriding @writes.}
-\PY{n}{writer}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{my\PYZus{}exam\PYZus{}pkg.writer:ExamLaTeXWriter}\PY{l+s+s2}{\PYZdq{}}
+\PY{n}{passes}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{p}{[}\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{my\PYZus{}exam\PYZus{}pkg.questions:run}\PY{l+s+s2}{\PYZdq{}}\PY{p}{]}
 \end{Verbatim}
-\end{code}
-\begin{itemize}
-\item{} \textbf{\texttt{readers}} --- a list of importable module paths. Every \texttt{@reads}-decorated
-  callable found in each module is registered, layered on top of the bundled
-  HTML\(\rightarrow\)IR lowerings (\texttt{texsmith.readers.html.build\_reader\_registry}).
-\item{} \textbf{\texttt{writer}} --- a \texttt{"module:Class"} reference to a \texttt{LaTeXWriter} subclass. It is
-  validated at render time (must subclass \texttt{LaTeXWriter}), then used as the
-  template's writer so its \texttt{@writes} emitters and overrides take effect.
+\end{tscode}
+They are resolved with the same import machinery as attribute normalisers and
+fragment entrypoints, so a typo fails early with an actionable \tscodeinline{TemplateError},
+and they apply \textbf{only while the declaring template renders} --- exam-style rules
+would corrupt unrelated documents, so there is no global entry point.
 
-\end{itemize}
-Both are resolved with the same import machinery as attribute normalisers and
-fragment entrypoints, so a typo or a bad reference fails early with an
-actionable \texttt{TemplateError}. A template that declares neither is unaffected.
+Keep passes semantic and backend-neutral: a pass rewrites IR nodes and their
+attributes, never \LaTeX{} strings. The one exception is deliberate and narrow ---
+the bundled \tscodeinline{highlight} pass turns code blocks into \tscodeinline{RawBlock\{format=latex\}}
+holding a Pygments payload, because that work is Python-only and reuses the
+\tscodeinline{latex raw} path rather than making the writer Pygments-aware.
+\section{Custom constructs}
+The container names TMark knows are a \textbf{closed} registry: the callout types
+(built-in and declared), \tscodeinline{aside}, \tscodeinline{figure}, \tscodeinline{tabs}, \tscodeinline{tab}, \tscodeinline{multicolumn} and
+\tscodeinline{div}. A new \emph{kind} of thing is a declaration under
+\tscodeinline{press.declare.admonitions}, not a new container name; a wrapper the template
+styles is \tscodeinline{::: div} with a class.
+\begin{tscode}[lang=md, engine=pygments]
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+::: div \PYZob{}\PYZsh{}s1 .sidebar\PYZcb{}
+Content.
+:::
+\end{Verbatim}
+\end{tscode}
+On the paged backends every layout container is rendered by one contract,
+\tscodeinline{\textbackslash{}begin\{tsdiv\}\{name\}[attrs]} (\tscodeinline{\#ts-\allowbreak{}div("name", ..)} in Typst), dispatched on the
+name with the attributes forwarded as keys: \tscodeinline{\#id} becomes \tscodeinline{id}, classes become
+\tscodeinline{class=\{a,b\}}, \tscodeinline{key=val} is forwarded as is (\tscodeinline{lang} and \tscodeinline{media} never are). A
+template styles a class through the \tscodeinline{pgfkeys} family, or redefines the
+environment for a name it knows:
+\begin{tscode}[lang=latex, engine=pygments]
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+\PY{k}{\PYZbs{}tcbset}\PY{n+nb}{\PYZob{}}/ts/div/class/sidebar/.style=\PY{n+nb}{\PYZob{}}grow to left by=2cm\PY{n+nb}{\PYZcb{}}\PY{n+nb}{\PYZcb{}}
+\PY{k}{\PYZbs{}RenewDocumentEnvironment}\PY{n+nb}{\PYZob{}}tsdiv@multicolumn\PY{n+nb}{\PYZcb{}}\PY{n+nb}{\PYZob{}}O\PY{n+nb}{\PYZob{}}\PY{n+nb}{\PYZcb{}}\PY{n+nb}{\PYZcb{}}\PY{n+nb}{\PYZob{}}\PY{k}{\PYZbs{}begin}\PY{n+nb}{\PYZob{}}multicols\PY{n+nb}{\PYZcb{}}\PY{n+nb}{\PYZob{}}3\PY{n+nb}{\PYZcb{}}\PY{n+nb}{\PYZcb{}}\PY{n+nb}{\PYZob{}}\PY{k}{\PYZbs{}end}\PY{n+nb}{\PYZob{}}multicols\PY{n+nb}{\PYZcb{}}\PY{n+nb}{\PYZcb{}}
+\end{Verbatim}
+\end{tscode}
+A container name the registry does not know raises \tscodeinline{container-\allowbreak{}unknown} and
+renders its content transparently.
+\section{Contract macros}
+The writers emit a fixed macro or environment per construct, and a fragment must
+define every macro the writer can name. Naming is regular: macros are
+\tscodeinline{\textbackslash{}ts<name>}, environments \tscodeinline{ts<name>}, lowercase, one word per construct. At most
+one optional keyval group comes first, then the mandatory arguments, content
+last.
+\begin{tscode}[lang=latex, engine=pygments]
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+\PY{k}{\PYZbs{}tslead}\PY{n+nb}{\PYZob{}}…\PY{n+nb}{\PYZcb{}}
+\PY{k}{\PYZbs{}tsaside}\PY{n+na}{[side=left]}\PY{n+nb}{\PYZob{}}…\PY{n+nb}{\PYZcb{}}
+\PY{k}{\PYZbs{}tsprogress}\PY{n+na}{[thin]}\PY{n+nb}{\PYZob{}}0.45\PY{n+nb}{\PYZcb{}}\PY{n+nb}{\PYZob{}}Launch\PY{n+nb}{\PYZcb{}}
+\PY{k}{\PYZbs{}tskeys}\PY{n+nb}{\PYZob{}}Ctrl,Alt,Del\PY{n+nb}{\PYZcb{}}
+\PY{k}{\PYZbs{}tsindex}\PY{n+na}{[registry=physics, main]}\PY{n+nb}{\PYZob{}}sort@formatted!sub\PY{n+nb}{\PYZcb{}}
+\PY{k}{\PYZbs{}begin}\PY{n+nb}{\PYZob{}}tscallout\PY{n+nb}{\PYZcb{}}[kind=warning, title=\PY{n+nb}{\PYZob{}}…\PY{n+nb}{\PYZcb{}}, id=w1, collapsed] … \PY{k}{\PYZbs{}end}\PY{n+nb}{\PYZob{}}tscallout\PY{n+nb}{\PYZcb{}}
+\PY{k}{\PYZbs{}begin}\PY{n+nb}{\PYZob{}}tscode\PY{n+nb}{\PYZcb{}}[lang=py, title=\PY{n+nb}{\PYZob{}}bubble\PY{k}{\PYZbs{}\PYZus{}sort}.py\PY{n+nb}{\PYZcb{}}, linenums=1, hl\PY{n+nb}{\PYZus{}}lines=\PY{n+nb}{\PYZob{}}2\PYZhy{}3\PY{n+nb}{\PYZcb{}}] … \PY{k}{\PYZbs{}end}\PY{n+nb}{\PYZob{}}tscode\PY{n+nb}{\PYZcb{}}
+\PY{k}{\PYZbs{}tscodeinline}\PY{n+na}{[lang=py]}\PY{n+nb}{\PYZob{}}xs.sort()\PY{n+nb}{\PYZcb{}}
+\end{Verbatim}
+\end{tscode}
+Options are \tscodeinline{pgfkeys} keyvals under \tscodeinline{/ts/<name>/}, and every family ignores
+unknown keys, so an older fragment survives a newer writer. Only keys with a
+value are serialised; booleans are bare, text is escaped and braced, lists are
+braced with commas. Typst mirrors each contract with one hyphenated function
+(\tscodeinline{\#ts-\allowbreak{}callout}, \tscodeinline{\#ts-\allowbreak{}keys}) whose named arguments match the keys.
 
-\begin{callout}[callout note]{Scope}
-These hooks are \textbf{template-scoped by design}. Because exam-style rules
-(e.g. mapping every \texttt{h1} to \texttt{\textbackslash{}question}) would corrupt unrelated documents,
-they are never registered globally --- only while the declaring template
-renders. There is no global reader/writer entry point.
-\end{callout}
-Inside an extension, read template front-matter overrides from
-\texttt{self.state.runtime["template\_overrides"]} (already populated by the pipeline);
-keep cross-node state on \texttt{self.state.state} (the \texttt{DocumentState}) and harvest it
-in a pre-pass over the IR (\texttt{texsmith.ir.visitor.walk}) rather than mutating
-shared state during emission.
+Which fragment provides which macro is the writer's \tscodeinline{Requires.fragments}: a body
+that emits \tscodeinline{\textbackslash{}tscallout} activates \tscodeinline{ts-\allowbreak{}callouts}, one that emits \tscodeinline{\textbackslash{}tsindex}
+activates \tscodeinline{ts-\allowbreak{}index}. Activation is by construction, not by sniffing the
+rendered \LaTeX{}.
+\section{Overriding a construct}
+Three levels, in increasing order of violence. All of them go in the template's
+\tscodeinline{.tex}, after \tscodeinline{\textbackslash{}VAR\{extra\_packages\}} (that is where fragments are
+\tscodeinline{\textbackslash{}usepackage}d).
+\begin{tscode}[lang=latex, engine=pygments]
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+\PY{k}{\PYZbs{}VAR}\PY{n+nb}{\PYZob{}}extra\PY{n+nb}{\PYZus{}}packages\PY{n+nb}{\PYZcb{}}
+\PY{c}{\PYZpc{} (a) restyle through the pgfkeys family}
+\PY{k}{\PYZbs{}tcbset}\PY{n+nb}{\PYZob{}}/ts/code/.append style=\PY{n+nb}{\PYZob{}}frame hidden, boxrule=0pt\PY{n+nb}{\PYZcb{}}\PY{n+nb}{\PYZcb{}}
 
-\section{Reference}\label{reference}
-
-::: texsmith.readers.html.registry
-
-::: texsmith.readers.html.reader
-
-::: texsmith.writers.latex
-
+\PY{c}{\PYZpc{} (b) redefine the macro, same signature}
+\PY{k}{\PYZbs{}RenewDocumentCommand}\PY{n+nb}{\PYZob{}}\PY{k}{\PYZbs{}tscodeinline}\PY{n+nb}{\PYZcb{}}\PY{n+nb}{\PYZob{}}O\PY{n+nb}{\PYZob{}}\PY{n+nb}{\PYZcb{}}m\PY{n+nb}{\PYZcb{}}\PY{n+nb}{\PYZob{}}\PY{k}{\PYZbs{}texttt}\PY{n+nb}{\PYZob{}}\PYZsh{}2\PY{n+nb}{\PYZcb{}}\PY{n+nb}{\PYZcb{}}
+\PY{k}{\PYZbs{}RenewDocumentEnvironment}\PY{n+nb}{\PYZob{}}tsdiv@multicolumn\PY{n+nb}{\PYZcb{}}\PY{n+nb}{\PYZob{}}O\PY{n+nb}{\PYZob{}}\PY{n+nb}{\PYZcb{}}\PY{n+nb}{\PYZcb{}}\PY{n+nb}{\PYZob{}}\PY{k}{\PYZbs{}begin}\PY{n+nb}{\PYZob{}}multicols\PY{n+nb}{\PYZcb{}}\PY{n+nb}{\PYZob{}}3\PY{n+nb}{\PYZcb{}}\PY{n+nb}{\PYZcb{}}\PY{n+nb}{\PYZob{}}\PY{k}{\PYZbs{}end}\PY{n+nb}{\PYZob{}}multicols\PY{n+nb}{\PYZcb{}}\PY{n+nb}{\PYZcb{}}
+\end{Verbatim}
+\end{tscode}
+\begin{tscode}[lang=yaml, engine=pygments]
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+\PY{c+c1}{\PYZsh{} (c) replace the fragment outright}
+\PY{n+nt}{press}\PY{p}{:}
+\PY{+w}{  }\PY{n+nt}{fragments}\PY{p}{:}
+\PY{+w}{    }\PY{n+nt}{disable}\PY{p}{:}\PY{+w}{ }\PY{p+pIndicator}{[}\PY{n+nv}{ts\PYZhy{}code}\PY{p+pIndicator}{]}
+\PY{+w}{    }\PY{n+nt}{append}\PY{p}{:}\PY{+w}{ }\PY{p+pIndicator}{[}\PY{n+nv}{./my\PYZhy{}code.sty}\PY{p+pIndicator}{]}
+\end{Verbatim}
+\end{tscode}
+A replacement fragment must define every entry of the fragment's \tscodeinline{provides}
+list; the check runs at load time against \tscodeinline{tmark.fragments()}. See
+Contract macros for the full table mapping
+each construct to its macro.
+\section{Reference}
 \end{document}

@@ -6,16 +6,18 @@
 
 == Name your code blocks
 
+#ts-code(title: [Bubble Sort Algorithm])[
 ```py
 def bubble_sort(items):
     for i in range(len(items)):
         for j in range(len(items) - 1 - i):
             if items[j] > items[j + 1]:
                 items[j], items[j + 1] = items[j + 1], items[j]
-```
+```]
 
 == Add line numbers
 
+#ts-code(linenums: 1)[
 ```javascript
 function bubbleSort(items) {
     for (let i = 0; i < items.length; i++) {
@@ -26,14 +28,15 @@ function bubbleSort(items) {
         }
     }
 }
-```
+```]
 
 == Highlight specific lines
 
+#ts-code(hl-lines: ("2-3"))[
 ```lisp
 (defun bubble-sort (items)
   (dotimes (i (length items))
     (dotimes (j (- (length items) 1 i))
       (when (> (nth j items) (nth (+ j 1) items))
         (rotatef (nth j items) (nth (+ j 1) items))))))
-```
+```]

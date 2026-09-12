@@ -8,59 +8,93 @@
 \usepackage[colorlinks=true, linkcolor=NavyBlue, urlcolor=NavyBlue, citecolor=NavyBlue]{hyperref}
 \usepackage[a4paper]{geometry}
 \usepackage{ts-fonts}
+\usepackage{tcolorbox}
+\usepackage{xcolor}
+\usepackage{fvextra}
 \usepackage{amsmath}
 \usepackage{float}
 \usepackage{seqsplit}
+\usepackage{ts-callouts}
 \usepackage{ts-code}
 
 \usepackage{lastpage}
 \usepackage{refcount}
 \makeatletter
 \def\ps@plain{
-  \let\@oddhead\@empty
-  \let\@evenhead\@empty
-  \def\@oddfoot{
-    \hfil
-    \ifnum\getpagerefnumber{LastPage}>1\relax
-      \thepage
-    \fi
-    \hfil}
-  \let\@evenfoot\@oddfoot
+\let\@oddhead\@empty
+\let\@evenhead\@empty
+\def\@oddfoot{
+\hfil
+\ifnum\getpagerefnumber{LastPage}>1\relax
+\thepage
+\fi
+\hfil}
+\let\@evenfoot\@oddfoot
 }
 \makeatother
 
-\title{Custom Attributes}
+\title{Attributes}
 \author{}\date{}
-
 \begin{document}
-
 \maketitle
-
-\thispagestyle{plain}
-These are the stalwarts borrowed from PHP Markdown Extra and bundled directly with Python-Markdown.
-
-\begin{code}{text}{}{}
+Attributes are the first of TMark's \href{index.md\#four-syntactic-families}{four families}:
+they decorate an element that already exists, and they are written in braces
+\textbf{after} it.
+\begin{tscode}[lang=md, engine=pygments]
 \begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
-pip install markdown
+\PY{g+gh}{\PYZsh{} Header 1 \PYZob{}\PYZsh{}sec:header .class1 key=\PYZdq{}value\PYZdq{}\PYZcb{}}
+
+![\PY{n+nt}{Alt text}](\PY{n+na}{image.jpg})\PYZob{}\PYZsh{}fig:img .responsive width=\PYZdq{}300\PYZdq{}\PYZcb{}
+
+[A phrase with an anchor]\PYZob{}\PYZsh{}claim:one\PYZcb{}
+
+[this taylor]\PYZob{}lang=en\PYZcb{}
+
+| set on the cell | set on the emphasis |
+| \PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{} | \PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{} |
+| [\PY{g+ge}{*a*}]\PYZob{}.foo\PYZcb{}     | \PY{g+ge}{*b*}\PYZob{}.foo\PYZcb{}           |
 \end{Verbatim}
-\end{code}
-\section{Attribute Lists}\label{attribute-lists}
+\end{tscode}
+Grammar: \tscodeinline{\{}, then any number of \tscodeinline{\#id}, \tscodeinline{.class} and \tscodeinline{key=value} items separated
+by spaces, then \tscodeinline{\}}. Values containing spaces are double-quoted, and inside a
+quoted value \tscodeinline{\textbackslash{}"} stands for a quote.
 
-Attribute Lists add lightweight metadata to headings, paragraphs, images, links, and more. Drop a brace block right after the element:
+There are \textbf{no bare-word attributes}: write \tscodeinline{\{collapsed=true\}}, not
+\tscodeinline{\{collapsed\}}. That restriction is what makes attributes and roles disjoint
+grammars --- an attribute list begins with \tscodeinline{\#}, \tscodeinline{.} or \tscodeinline{key=}, a role head with a
+bare identifier --- so a brace group that is neither (\tscodeinline{\{foo\}} in running text)
+stays literal text.
+\section{Attributes need a host}
+Headings, images, links, fenced blocks, tables, caption lines and display math
+are hosts. A brace group with nothing to attach to is literal text and raises
+\tscodeinline{attributes-\allowbreak{}no-\allowbreak{}host}.
 
-\begin{code}{markdown}{}{}
+Where you want attributes on a piece of running text, use an \textbf{anonymous span},
+Pandoc-style: \tscodeinline{[text]\{attrs\}}. The span exists for properties of a piece of text
+rather than a new kind of node --- an anchor on a phrase, the language of a
+quotation, a media restriction.
+\section{Three universal attributes}
+\begin{description}
+\item[{\tscodeinline{\#id}}] An anchor. \tscodeinline{@id} then refers to it, and the host decides which counter the
+anchor joins: a heading is a section, a \tscodeinline{Table:} line is a table, an image
+is a figure.
+\item[{\tscodeinline{lang=}}] The language of the element, for hyphenation, quotes and typographic
+spacing. The document default is the root \tscodeinline{lang:} key.
+\item[{\tscodeinline{media=}}] Where the element is rendered: \tscodeinline{all} (default), \tscodeinline{print} or \tscodeinline{web}. A word, a
+paragraph, a code block, a callout or a video restricted to one medium is
+the escape hatch when symmetry is impossible, and it replaces mirrored
+\tscodeinline{latex raw} / \tscodeinline{html raw} blocks.
+\end{description}
+\begin{tscode}[lang=md, engine=pygments]
 \begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
-\PY{g+gh}{\PYZsh{} Header 1 \PYZob{}\PYZsh{}header1 .class1 key=\PYZdq{}value\PYZdq{}\PYZcb{}}
-
-This is a paragraph with a class and an ID.
-\PYZob{}: \PY{n+ni}{\PYZsh{}para1} .text key=\PYZdq{}value\PYZdq{} \PYZcb{}
-
-![\PY{n+nt}{Alt text}](\PY{n+na}{image.jpg})\PYZob{}\PYZsh{}img1 .responsive width=\PYZdq{}300\PYZdq{}\PYZcb{}
-
-| set on td    | set on em   |
-|\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}|\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}|
-| \PY{g+ge}{*a*} \PYZob{} .foo \PYZcb{} | \PY{g+ge}{*b*}\PYZob{} .foo \PYZcb{} |
+The demo is [online only]\PYZob{}media=web\PYZcb{}, and here is the [printed table]\PYZob{}media=print\PYZcb{}.
 \end{Verbatim}
-\end{code}
-
+\end{tscode}
+\begin{tscallout}[kind=note, title={\tscodeinline{\{: .class\}} is deprecated}]
+Python-Markdown's \tscodeinline{attr\_list} puts a colon right after the brace
+(\tscodeinline{\{: .thin \#id\}}). That spelling is accepted on every host as sugar, with a
+deprecation warning, and the printer drops the colon.
+\tscodeinline{tmark lint -\allowbreak{}-\allowbreak{}fix} rewrites it; see
+Migrating to TMark.
+\end{tscallout}
 \end{document}

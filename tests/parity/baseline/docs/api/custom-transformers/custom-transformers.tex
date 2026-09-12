@@ -8,6 +8,8 @@
 \usepackage[colorlinks=true, linkcolor=NavyBlue, urlcolor=NavyBlue, citecolor=NavyBlue]{hyperref}
 \usepackage[a4paper]{geometry}
 \usepackage{ts-fonts}
+\usepackage{tcolorbox}
+\usepackage{fvextra}
 \usepackage{amsmath}
 \usepackage{float}
 \usepackage{seqsplit}
@@ -17,34 +19,28 @@
 \usepackage{refcount}
 \makeatletter
 \def\ps@plain{
-  \let\@oddhead\@empty
-  \let\@evenhead\@empty
-  \def\@oddfoot{
-    \hfil
-    \ifnum\getpagerefnumber{LastPage}>1\relax
-      \thepage
-    \fi
-    \hfil}
-  \let\@evenfoot\@oddfoot
+\let\@oddhead\@empty
+\let\@evenhead\@empty
+\def\@oddfoot{
+\hfil
+\ifnum\getpagerefnumber{LastPage}>1\relax
+\thepage
+\fi
+\hfil}
+\let\@evenfoot\@oddfoot
 }
 \makeatother
 
 \title{Custom Transformers}
 \author{}\date{}
-
 \begin{document}
-
 \maketitle
-
-\thispagestyle{plain}
 Transformers convert non-PDF assets (Mermaid, Draw.io, bitmap images) into PDF
-fragments before the \LaTeX{} renderer emits \texttt{\textbackslash{}includegraphics}. When the built-in
+fragments before the \LaTeX{} renderer emits \tscodeinline{\textbackslash{}includegraphics}. When the built-in
 strategies do not cover your workflow, register custom converters via
-\texttt{texsmith.adapters.transformers.register\_converter}.
-
-\section{Building a converter}\label{building-a-converter}
-
-\begin{code}{python}{}{}
+\tscodeinline{texsmith.adapters.transformers.register\_converter}.
+\section{Building a converter}
+\begin{tscode}[lang=python, engine=pygments]
 \begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
 \PY{k+kn}{from}\PY{+w}{ }\PY{n+nn}{pathlib}\PY{+w}{ }\PY{k+kn}{import} \PY{n}{Path}
 
@@ -88,46 +84,37 @@ strategies do not cover your workflow, register custom converters via
 
 \PY{n}{register\PYZus{}converter}\PY{p}{(}\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{plantuml}\PY{l+s+s2}{\PYZdq{}}\PY{p}{,} \PY{n}{PlantumlToPdf}\PY{p}{(}\PY{p}{)}\PY{p}{)}
 \end{Verbatim}
-\end{code}
+\end{tscode}
 The base class adds caching, stable file naming, and retry/backoff hooks. Supply
-your own \texttt{suffix} when the converter emits something other than \texttt{.pdf}.
-
-\section{Wiring the converter}\label{wiring-the-converter}
-
+your own \tscodeinline{suffix} when the converter emits something other than \tscodeinline{.pdf}.
+\section{Wiring the converter}
 \begin{enumerate}
-\item Import the module before converting documents (e.g., in \texttt{docs/hooks/mkdocs\_hooks.py}
-   or a standalone script).
+\item Import the module before converting documents (e.g., in \tscodeinline{docs/hooks/mkdocs\_hooks.py}
+or a standalone script).
 \item Reference the converter name inside handlers or templates. For example, add a
-   handler that detects \texttt{<pre class="language-\allowbreak{}plantuml">} blocks and calls
-   \texttt{registry.convert("plantuml", ...)}.
+handler that detects \tscodeinline{<pre class="language-\allowbreak{}plantuml">} blocks and calls
+\tscodeinline{registry.convert("plantuml", ...)}.
 \item Ship optional dependencies (CLI tools, Docker images) alongside the template
-   README so users know how to enable the converter.
-
+README so users know how to enable the converter.
 \end{enumerate}
-\section{Handling fallbacks}\label{handling-fallbacks}
-
+\section{Handling fallbacks}
 When TeXSmith cannot find a converter, it installs placeholder strategies that
-emit visible warnings and \texttt{TODO} boxes in the \LaTeX{} output. Use these helpers to
+emit visible warnings and \tscodeinline{TODO} boxes in the \LaTeX{} output. Use these helpers to
 control that behavior:
-
 \begin{itemize}
-\item{} \texttt{texsmith.adapters.transformers.has\_converter("mermaid")} -- check whether a
-  converter is registered before assuming the dependency exists.
-\item{} \texttt{texsmith.core.conversion.attempt\_transformer\_fallback} -- internal helper
-  the CLI uses to install placeholder converters when optional dependencies are
-  missing. Call this only if you need to mimic the CLI's resilience.
-
+\item \tscodeinline{texsmith.adapters.transformers.has\_converter("mermaid")} -- check whether a
+converter is registered before assuming the dependency exists.
+\item \tscodeinline{texsmith.core.conversion.attempt\_transformer\_fallback} -- internal helper
+the CLI uses to install placeholder converters when optional dependencies are
+missing. Call this only if you need to mimic the CLI's resilience.
 \end{itemize}
-\section{Further reading}\label{further-reading}
-
+\section{Further reading}
 \begin{itemize}
-\item{} \hyperref[snippet:<HASH>]{\texttt{texsmith.adapters.transformers.base}} -- reference for
-  \texttt{CachedConversionStrategy}.
-\item{} \hyperref[snippet:<HASH>]{\texttt{texsmith.writers.latex.media}} -- real-world examples
-  of how converters integrate with the LaTeX writer.
-\item{} \hyperref[snippet:<HASH>]{Template Cookbook} -- packaging
-  recommendations so your templates document converter prerequisites.
-
+\item \tscodeinline{texsmith.adapters.transformers.base} -- reference for
+\tscodeinline{CachedConversionStrategy}.
+\item \tscodeinline{texsmith.writers.latex.media} -- real-world examples
+of how converters integrate with the \LaTeX{} writer.
+\item Template Cookbook -- packaging
+recommendations so your templates document converter prerequisites.
 \end{itemize}
-
 \end{document}

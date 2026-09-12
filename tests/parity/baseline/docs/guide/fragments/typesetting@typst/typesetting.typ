@@ -1,15 +1,15 @@
 #set document(
-  title: "Typesetting controls",
+title: "Typesetting controls",
 )
 #set page(
-  paper: "a4",
-  margin: 2.5cm,
-  numbering: none,
-  footer: context {
-    if counter(page).final().first() > 1 {
-      align(center)[#counter(page).get().first()]
-    }
-  },
+paper: "a4",
+margin: 2.5cm,
+numbering: none,
+footer: context {
+if counter(page).final().first() > 1 {
+align(center)[#counter(page).get().first()]
+}
+},
 )
 #set text(font: "New Computer Modern", size: 11pt, lang: "en")
 #set par(justify: true)
@@ -17,8 +17,7 @@
 #set heading(numbering: "1.1")
 
 #align(center)[
-  #text(size: 1.8em, weight: "bold")[Typesetting controls]
-]
+#text(size: 1.8em, weight: "bold")[Typesetting controls]]
 #v(1.5em)
 
 TeXSmith bundles a `ts-typesetting` fragment that tweaks basic paragraph layout, line spacing, and optional line numbers. By default it stays silent—nothing is injected unless you set one of its options.
@@ -39,7 +38,7 @@ press:
 
 - `paragraph.indent` controls `\parindent` plus the memoir/article `\@afterindent…` switches. `auto` leaves the first paragraph flush and indents the following ones; `true` always indents; `false` disables indentation.
 - `paragraph.spacing` sets `\parskip` to your length (leave empty for the template’s original value).
-- `leading` sets line spacing. `single`, `onehalf`, and `double` call the usual spacing commands. A numeric value applies a stretch factor (`1.2` → 1.2×). A length sets `\baselineskip` directly (`1em`, `14pt`, etc.).
+- `leading` sets line spacing. `single`, `onehalf`, and `double` call the usual spacing commands. A numeric value applies a stretch factor (`1.2` #ts-script("symbols")[→ ]1.2×). A length sets `\baselineskip` directly (`1em`, `14pt`, etc.).
 - `lineno: true` loads the `lineno` package and enables `\linenumbers` for the whole document.
 
 == Class-aware spacing

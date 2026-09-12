@@ -8,47 +8,44 @@
 \usepackage[colorlinks=true, linkcolor=NavyBlue, urlcolor=NavyBlue, citecolor=NavyBlue]{hyperref}
 \usepackage[a4paper]{geometry}
 \usepackage{ts-fonts}
+\usepackage{tcolorbox}
+\usepackage{xcolor}
+\usepackage{fvextra}
 \usepackage{amsmath}
 \usepackage{float}
 \usepackage{seqsplit}
+\usepackage{ts-callouts}
 \usepackage{ts-code}
 
 \usepackage{lastpage}
 \usepackage{refcount}
 \makeatletter
 \def\ps@plain{
-  \let\@oddhead\@empty
-  \let\@evenhead\@empty
-  \def\@oddfoot{
-    \hfil
-    \ifnum\getpagerefnumber{LastPage}>1\relax
-      \thepage
-    \fi
-    \hfil}
-  \let\@evenfoot\@oddfoot
+\let\@oddhead\@empty
+\let\@evenhead\@empty
+\def\@oddfoot{
+\hfil
+\ifnum\getpagerefnumber{LastPage}>1\relax
+\thepage
+\fi
+\hfil}
+\let\@evenfoot\@oddfoot
 }
 \makeatother
 
 \title{Fragments}
 \author{}\date{}
-
 \begin{document}
-
 \maketitle
-
-\thispagestyle{plain}
 Fragments are reusable \LaTeX{} snippets injected into template slots. Built-in fragments (e.g., geometry, fonts, glossary, index) and custom ones share the same structure:
-
 \begin{itemize}
-\item{} \texttt{fragment.toml} with \texttt{name}, \texttt{description}, and either an \texttt{entrypoint} or a \texttt{files} list.
-\item{} Optional \texttt{attributes} section describing fragment-owned attributes (ownership enforced).
-\item{} Optional \texttt{partials} block for fragment-scoped partial overrides and \texttt{required\_partials} for dependencies.
-\item{} Optional \texttt{should\_render} logic (via entrypoint) to render only when needed.
-
+\item \tscodeinline{fragment.toml} with \tscodeinline{name}, \tscodeinline{description}, and either an \tscodeinline{entrypoint} or a \tscodeinline{files} list.
+\item Optional \tscodeinline{attributes} section describing fragment-owned attributes (ownership enforced).
+\item A \tscodeinline{provides} list naming the contract macros the fragment defines; a fragment that replaces another must provide every entry of its row.
+\item Optional \tscodeinline{should\_render} logic (via entrypoint) to render only when needed.
 \end{itemize}
-\section{Manifest shape}\label{manifest-shape}
-
-\begin{code}{toml}{}{}
+\section{Manifest shape}
+\begin{tscode}[lang=toml, engine=pygments]
 \begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
 \PY{n}{name}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{my\PYZhy{}fragment}\PY{l+s+s2}{\PYZdq{}}
 \PY{n}{description}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{Short description.}\PY{l+s+s2}{\PYZdq{}}
@@ -65,139 +62,139 @@ Fragments are reusable \LaTeX{} snippets injected into template slots. Built-in 
 \PY{n}{sources}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{p}{[}\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{press.option}\PY{l+s+s2}{\PYZdq{}}\PY{p}{,}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{option}\PY{l+s+s2}{\PYZdq{}}\PY{p}{]}
 \PY{n}{description}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{Controls feature X.}\PY{l+s+s2}{\PYZdq{}}
 \end{Verbatim}
-\end{code}
-If you prefer Python logic, point \texttt{entrypoint} at a callable returning a \texttt{BaseFragment} instance.
-
-\section{Fragment pieces}\label{fragment-pieces}
-
+\end{tscode}
+If you prefer Python logic, point \tscodeinline{entrypoint} at a callable returning a \tscodeinline{BaseFragment} instance.
+\section{Fragment pieces}
 \begin{itemize}
-\item{} \texttt{package}: rendered to a \texttt{.sty} file and injected via \texttt{\textbackslash{}usepackage} into the target slot.
-\item{} \texttt{input}: rendered to \texttt{.tex} and injected via \texttt{\textbackslash{}input\{\}} into the target slot.
-\item{} \texttt{inline}: rendered string injected directly into the slot variable (no file emitted).
-
+\item \tscodeinline{package}: rendered to a \tscodeinline{.sty} file and injected via \tscodeinline{\textbackslash{}usepackage} into the target slot.
+\item \tscodeinline{input}: rendered to \tscodeinline{.tex} and injected via \tscodeinline{\textbackslash{}input\{\}} into the target slot.
+\item \tscodeinline{inline}: rendered string injected directly into the slot variable (no file emitted).
 \end{itemize}
 Slots are validated against the template at render time; inline injections must match declared slots or template variables.
-
-\section{Attributes}\label{attributes}
-
-Fragments can declare attributes (ownership enforced) and resolve overrides using the same \texttt{TemplateAttributeSpec} model as templates. Attribute defaults are injected into the context before rendering fragment pieces. Attribute ownership matters: if two fragments (or a template) claim the same attribute name, TeXSmith raises a \texttt{TemplateError}. Keep each attribute owned by a single fragment or the template to avoid conflicts.
-
-\section{Partials}\label{partials}
-
-Fragments can ship their own partials so feature-specific rendering stays close to the feature:
-
-\begin{code}{toml}{}{}
+\section{Attributes}
+Fragments can declare attributes (ownership enforced) and resolve overrides using the same \tscodeinline{TemplateAttributeSpec} model as templates. Attribute defaults are injected into the context before rendering fragment pieces. Attribute ownership matters: if two fragments (or a template) claim the same attribute name, TeXSmith raises a \tscodeinline{TemplateError}. Keep each attribute owned by a single fragment or the template to avoid conflicts.
+\section{Contract macros}
+A fragment defines the macros and environments the writers name, and says so:
+\begin{tscode}[lang=toml, engine=pygments]
 \begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
-\PY{n}{partials}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{p}{[}\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{strong.tex}\PY{l+s+s2}{\PYZdq{}}\PY{p}{,}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{codeblock.tex}\PY{l+s+s2}{\PYZdq{}}\PY{p}{]}\PY{+w}{         }\PY{c+c1}{\PYZsh{} list form}
-\PY{n}{required\PYZus{}partials}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{p}{[}\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{heading}\PY{l+s+s2}{\PYZdq{}}\PY{p}{]}\PY{+w}{                    }\PY{c+c1}{\PYZsh{} fail fast if missing}
+\PY{n}{provides}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{p}{[}\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{tscode}\PY{l+s+s2}{\PYZdq{}}\PY{p}{,}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{tscodeinline}\PY{l+s+s2}{\PYZdq{}}\PY{p}{]}
 \end{Verbatim}
-\end{code}
-or as a mapping when paths and names differ:
+\end{tscode}
+The writer activates a fragment through \tscodeinline{Requires.fragments}: a body that emits
+\tscodeinline{\textbackslash{}begin\{tscode\}} pulls in \tscodeinline{ts-\allowbreak{}code}, one that emits \tscodeinline{\textbackslash{}tsindex} pulls in
+\tscodeinline{ts-\allowbreak{}index}. A macro the writer names, a fragment must define --- the check runs at
+load time against \tscodeinline{tmark.fragments()}, so an incomplete replacement fails early
+instead of producing an undefined control sequence.
 
-\begin{code}{toml}{}{}
+Replace a bundled fragment outright with \tscodeinline{press.fragments}:
+\begin{tscode}[lang=yaml, engine=pygments]
 \begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
-\PY{k}{[}\PY{k}{partials}\PY{k}{]}
-\PY{n}{codeinline}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{overrides/inline/code.tex}\PY{l+s+s2}{\PYZdq{}}
+\PY{n+nt}{press}\PY{p}{:}
+\PY{+w}{  }\PY{n+nt}{fragments}\PY{p}{:}
+\PY{+w}{    }\PY{n+nt}{disable}\PY{p}{:}\PY{+w}{ }\PY{p+pIndicator}{[}\PY{n+nv}{ts\PYZhy{}code}\PY{p+pIndicator}{]}
+\PY{+w}{    }\PY{n+nt}{append}\PY{p}{:}\PY{+w}{ }\PY{p+pIndicator}{[}\PY{n+nv}{./my\PYZhy{}code.sty}\PY{p+pIndicator}{]}
 \end{Verbatim}
-\end{code}
-Partial precedence is template overrides > fragment overrides > core defaults. Duplicate fragment providers for the same partial abort the render.
-
-\section{Runtime loading}\label{runtime-loading}
-
+\end{tscode}
+See Contract macros for the table of macros and
+their keys.
+\begin{tscallout}[kind=warning, title={Jinja partials are no longer the rendering layer}]
+A fragment's \tscodeinline{partials} and \tscodeinline{required\_partials} keys are deprecated in
+0.7.0 --- they warn and are ignored --- and removed in 0.8.0.
+\end{tscallout}
+\section{Runtime loading}
 \begin{itemize}
-\item{} Built-ins are discovered under \texttt{src/texsmith/fragments/**/fragment.toml}.
-\item{} Custom fragments can be passed via \texttt{press.fragments} in front matter or CLI attributes.
-\item{} The registry uses manifest metadata first; entrypoint is a fallback.
-\item{} \textbf{Entrypoint contract (Python)}: Must expose a module attribute \texttt{fragment} that is a \texttt{BaseFragment} instance. Legacy \texttt{create\_fragment()} factories are no longer used.
-
+\item Built-ins are discovered under \tscodeinline{src/texsmith/fragments/**/fragment.toml}.
+\item Custom fragments can be passed via \tscodeinline{press.fragments} in front matter or CLI attributes.
+\item The registry uses manifest metadata first; entrypoint is a fallback.
+\item \textbf{Entrypoint contract (Python)}: Must expose a module attribute \tscodeinline{fragment} that is a \tscodeinline{BaseFragment} instance. Legacy \tscodeinline{create\_fragment()} factories are no longer used.
 \end{itemize}
-\section{Fragment contract (Python)}\label{fragment-contract-python}
-
+\section{Fragment contract (Python)}
 \begin{itemize}
-\item{} Implement a \texttt{BaseFragment[Config]} subclass with:
-\item{} class attributes: \texttt{name}, \texttt{description}, \texttt{pieces}, \texttt{attributes} (TemplateAttributeSpec map), optional \texttt{context\_defaults}, \texttt{partials}, \texttt{required\_partials}, \texttt{source}.
-\item{} methods: \texttt{build\_config(context, overrides=None) -\allowbreak{}> Config}, \texttt{inject(config, context, overrides=None) -\allowbreak{}> None}, \texttt{should\_render(config) -\allowbreak{}> bool}.
-\item{} Define a \texttt{Config} dataclass with \texttt{from\_context(...)} and \texttt{inject\_into(context)} methods (plus helpers like \texttt{enabled()}).
-\item{} Export \texttt{fragment = YourFragment()} from \texttt{\_\_init\_\_.py}; point \texttt{fragment.toml} \texttt{entrypoint} to \texttt{texsmith.fragments.yourname:fragment}.
-\item{} Injection flow: registry merges attribute defaults, builds config, calls \texttt{inject}, then checks \texttt{should\_render} before rendering pieces.
-
-\end{itemize}
-\subsection{Minimal example}\label{minimal-example}
-
-\texttt{src/texsmith/fragments/example/\_\_init\_\_.py}
-\texttt{from dataclasses import dataclass
-from pathlib import Path
-from typing import Any, Mapping
-
-from texsmith.core.fragments.base import BaseFragment, FragmentPiece
-from texsmith.core.templates.manifest import TemplateAttributeSpec
-
-@dataclass(frozen=True)
-class ExampleConfig:
-    message: str | None
-
-    @classmethod
-    def from\_context(cls, ctx: Mapping[str, Any]) -\allowbreak{}> "ExampleConfig":
-        return cls(message=ctx.get("example\_message"))
-
-    def inject\_into(self, ctx: dict[str, Any]) -\allowbreak{}> None:
-        ctx["ts\_example\_message"] = self.message or "Hello"
-
-    def enabled(self) -\allowbreak{}> bool:
-        return bool(self.message)
-
-class ExampleFragment(BaseFragment[ExampleConfig]):
-    name = "ts-\allowbreak{}example"
-    description = "Tiny example fragment."
-    pieces = [
-        FragmentPiece(
-            template\_path=Path(\_\_file\_\_).with\_name("ts-\allowbreak{}example.jinja.tex"),
-            kind="inline",
-            slot="extra\_packages",
-        )
-    ]
-    attributes = \{
-        "example\_message": TemplateAttributeSpec(
-            default=None,
-            type="string",
-            sources=["press.example.message", "example.message"],
-        )
-    \}
-    context\_defaults: dict[str, Any] = \{"extra\_packages": ""\}
-    config\_cls = ExampleConfig
-    source = Path(\_\_file\_\_).with\_name("ts-\allowbreak{}example.jinja.tex")
-
-    def build\_config(self, context: Mapping[str, Any], overrides=None) -\allowbreak{}> ExampleConfig:
-        return self.config\_cls.from\_context(context)
-
-    def inject(self, config: ExampleConfig, context: dict[str, Any], overrides=None) -\allowbreak{}> None:
-        config.inject\_into(context)
-
-    def should\_render(self, config: ExampleConfig) -\allowbreak{}> bool:
-        return config.enabled()
-
-fragment = ExampleFragment()
-}
-
-\texttt{src/texsmith/fragments/example/fragment.toml}
-\texttt{name = "ts-\allowbreak{}example"
-description = "Tiny example fragment."
-entrypoint = "texsmith.fragments.example:fragment"
-
-[[files]]
-path = "ts-\allowbreak{}example.jinja.tex"
-slot = "extra\_packages"
-type = "inline"
-}
-
-\section{Migration notes for fragment authors}\label{migration-notes-for-fragment-authors}
-
+\item Implement a \tscodeinline{BaseFragment[Config]} subclass with:
 \begin{itemize}
-\item{} Prefer \texttt{fragment.toml} with \texttt{files}, \texttt{attributes}, and optional \texttt{partials}/\texttt{required\_partials}; use an entrypoint only when you need Python logic.
-\item{} If using Python, return a \texttt{BaseFragment} instance via \texttt{fragment}; \texttt{create\_fragment()} and \texttt{FragmentDefinition} shims have been removed.
-\item{} Declare attribute ownership (implicit \texttt{owner = <fragment name>}) to avoid collisions with templates or other fragments.
-\item{} Keep slot targets aligned with template variables; inline targets must reference declared slots or template variables, otherwise a \texttt{TemplateError} is raised.
-
+\item class attributes: \tscodeinline{name}, \tscodeinline{description}, \tscodeinline{pieces}, \tscodeinline{attributes} (TemplateAttributeSpec map), optional \tscodeinline{context\_defaults}, \tscodeinline{provides}, \tscodeinline{source}.
+\item methods: \tscodeinline{build\_config(context, overrides=None) -\allowbreak{}> Config}, \tscodeinline{inject(config, context, overrides=None) -\allowbreak{}> None}, \tscodeinline{should\_render(config) -\allowbreak{}> bool}.
 \end{itemize}
+\item Define a \tscodeinline{Config} dataclass with \tscodeinline{from\_context(...)} and \tscodeinline{inject\_into(context)} methods (plus helpers like \tscodeinline{enabled()}).
+\item Export \tscodeinline{fragment = YourFragment()} from \tscodeinline{\_\_init\_\_.py}; point \tscodeinline{fragment.toml} \tscodeinline{entrypoint} to \tscodeinline{texsmith.fragments.yourname:fragment}.
+\item Injection flow: registry merges attribute defaults, builds config, calls \tscodeinline{inject}, then checks \tscodeinline{should\_render} before rendering pieces.
+\end{itemize}
+\subsection{Minimal example}
+\tscodeinline{src/texsmith/fragments/example/\_\_init\_\_.py}
+\begin{tscode}[lang=python, engine=pygments]
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+\PY{k+kn}{from}\PY{+w}{ }\PY{n+nn}{dataclasses}\PY{+w}{ }\PY{k+kn}{import} \PY{n}{dataclass}
+\PY{k+kn}{from}\PY{+w}{ }\PY{n+nn}{pathlib}\PY{+w}{ }\PY{k+kn}{import} \PY{n}{Path}
+\PY{k+kn}{from}\PY{+w}{ }\PY{n+nn}{typing}\PY{+w}{ }\PY{k+kn}{import} \PY{n}{Any}\PY{p}{,} \PY{n}{Mapping}
 
+\PY{k+kn}{from}\PY{+w}{ }\PY{n+nn}{texsmith}\PY{n+nn}{.}\PY{n+nn}{core}\PY{n+nn}{.}\PY{n+nn}{fragments}\PY{n+nn}{.}\PY{n+nn}{base}\PY{+w}{ }\PY{k+kn}{import} \PY{n}{BaseFragment}\PY{p}{,} \PY{n}{FragmentPiece}
+\PY{k+kn}{from}\PY{+w}{ }\PY{n+nn}{texsmith}\PY{n+nn}{.}\PY{n+nn}{core}\PY{n+nn}{.}\PY{n+nn}{templates}\PY{n+nn}{.}\PY{n+nn}{manifest}\PY{+w}{ }\PY{k+kn}{import} \PY{n}{TemplateAttributeSpec}
+
+\PY{n+nd}{@dataclass}\PY{p}{(}\PY{n}{frozen}\PY{o}{=}\PY{k+kc}{True}\PY{p}{)}
+\PY{k}{class}\PY{+w}{ }\PY{n+nc}{ExampleConfig}\PY{p}{:}
+    \PY{n}{message}\PY{p}{:} \PY{n+nb}{str} \PY{o}{|} \PY{k+kc}{None}
+
+    \PY{n+nd}{@classmethod}
+    \PY{k}{def}\PY{+w}{ }\PY{n+nf}{from\PYZus{}context}\PY{p}{(}\PY{n+nb+bp}{cls}\PY{p}{,} \PY{n}{ctx}\PY{p}{:} \PY{n}{Mapping}\PY{p}{[}\PY{n+nb}{str}\PY{p}{,} \PY{n}{Any}\PY{p}{]}\PY{p}{)} \PY{o}{\PYZhy{}}\PY{o}{\PYZgt{}} \PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{ExampleConfig}\PY{l+s+s2}{\PYZdq{}}\PY{p}{:}
+        \PY{k}{return} \PY{n+nb+bp}{cls}\PY{p}{(}\PY{n}{message}\PY{o}{=}\PY{n}{ctx}\PY{o}{.}\PY{n}{get}\PY{p}{(}\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{example\PYZus{}message}\PY{l+s+s2}{\PYZdq{}}\PY{p}{)}\PY{p}{)}
+
+    \PY{k}{def}\PY{+w}{ }\PY{n+nf}{inject\PYZus{}into}\PY{p}{(}\PY{n+nb+bp}{self}\PY{p}{,} \PY{n}{ctx}\PY{p}{:} \PY{n+nb}{dict}\PY{p}{[}\PY{n+nb}{str}\PY{p}{,} \PY{n}{Any}\PY{p}{]}\PY{p}{)} \PY{o}{\PYZhy{}}\PY{o}{\PYZgt{}} \PY{k+kc}{None}\PY{p}{:}
+        \PY{n}{ctx}\PY{p}{[}\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{ts\PYZus{}example\PYZus{}message}\PY{l+s+s2}{\PYZdq{}}\PY{p}{]} \PY{o}{=} \PY{n+nb+bp}{self}\PY{o}{.}\PY{n}{message} \PY{o+ow}{or} \PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{Hello}\PY{l+s+s2}{\PYZdq{}}
+
+    \PY{k}{def}\PY{+w}{ }\PY{n+nf}{enabled}\PY{p}{(}\PY{n+nb+bp}{self}\PY{p}{)} \PY{o}{\PYZhy{}}\PY{o}{\PYZgt{}} \PY{n+nb}{bool}\PY{p}{:}
+        \PY{k}{return} \PY{n+nb}{bool}\PY{p}{(}\PY{n+nb+bp}{self}\PY{o}{.}\PY{n}{message}\PY{p}{)}
+
+\PY{k}{class}\PY{+w}{ }\PY{n+nc}{ExampleFragment}\PY{p}{(}\PY{n}{BaseFragment}\PY{p}{[}\PY{n}{ExampleConfig}\PY{p}{]}\PY{p}{)}\PY{p}{:}
+    \PY{n}{name} \PY{o}{=} \PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{ts\PYZhy{}example}\PY{l+s+s2}{\PYZdq{}}
+    \PY{n}{description} \PY{o}{=} \PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{Tiny example fragment.}\PY{l+s+s2}{\PYZdq{}}
+    \PY{n}{pieces} \PY{o}{=} \PY{p}{[}
+        \PY{n}{FragmentPiece}\PY{p}{(}
+            \PY{n}{template\PYZus{}path}\PY{o}{=}\PY{n}{Path}\PY{p}{(}\PY{n+nv+vm}{\PYZus{}\PYZus{}file\PYZus{}\PYZus{}}\PY{p}{)}\PY{o}{.}\PY{n}{with\PYZus{}name}\PY{p}{(}\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{ts\PYZhy{}example.jinja.tex}\PY{l+s+s2}{\PYZdq{}}\PY{p}{)}\PY{p}{,}
+            \PY{n}{kind}\PY{o}{=}\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{inline}\PY{l+s+s2}{\PYZdq{}}\PY{p}{,}
+            \PY{n}{slot}\PY{o}{=}\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{extra\PYZus{}packages}\PY{l+s+s2}{\PYZdq{}}\PY{p}{,}
+        \PY{p}{)}
+    \PY{p}{]}
+    \PY{n}{attributes} \PY{o}{=} \PY{p}{\PYZob{}}
+        \PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{example\PYZus{}message}\PY{l+s+s2}{\PYZdq{}}\PY{p}{:} \PY{n}{TemplateAttributeSpec}\PY{p}{(}
+            \PY{n}{default}\PY{o}{=}\PY{k+kc}{None}\PY{p}{,}
+            \PY{n+nb}{type}\PY{o}{=}\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{string}\PY{l+s+s2}{\PYZdq{}}\PY{p}{,}
+            \PY{n}{sources}\PY{o}{=}\PY{p}{[}\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{press.example.message}\PY{l+s+s2}{\PYZdq{}}\PY{p}{,} \PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{example.message}\PY{l+s+s2}{\PYZdq{}}\PY{p}{]}\PY{p}{,}
+        \PY{p}{)}
+    \PY{p}{\PYZcb{}}
+    \PY{n}{context\PYZus{}defaults}\PY{p}{:} \PY{n+nb}{dict}\PY{p}{[}\PY{n+nb}{str}\PY{p}{,} \PY{n}{Any}\PY{p}{]} \PY{o}{=} \PY{p}{\PYZob{}}\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{extra\PYZus{}packages}\PY{l+s+s2}{\PYZdq{}}\PY{p}{:} \PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{\PYZdq{}}\PY{p}{\PYZcb{}}
+    \PY{n}{config\PYZus{}cls} \PY{o}{=} \PY{n}{ExampleConfig}
+    \PY{n}{source} \PY{o}{=} \PY{n}{Path}\PY{p}{(}\PY{n+nv+vm}{\PYZus{}\PYZus{}file\PYZus{}\PYZus{}}\PY{p}{)}\PY{o}{.}\PY{n}{with\PYZus{}name}\PY{p}{(}\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{ts\PYZhy{}example.jinja.tex}\PY{l+s+s2}{\PYZdq{}}\PY{p}{)}
+
+    \PY{k}{def}\PY{+w}{ }\PY{n+nf}{build\PYZus{}config}\PY{p}{(}\PY{n+nb+bp}{self}\PY{p}{,} \PY{n}{context}\PY{p}{:} \PY{n}{Mapping}\PY{p}{[}\PY{n+nb}{str}\PY{p}{,} \PY{n}{Any}\PY{p}{]}\PY{p}{,} \PY{n}{overrides}\PY{o}{=}\PY{k+kc}{None}\PY{p}{)} \PY{o}{\PYZhy{}}\PY{o}{\PYZgt{}} \PY{n}{ExampleConfig}\PY{p}{:}
+        \PY{k}{return} \PY{n+nb+bp}{self}\PY{o}{.}\PY{n}{config\PYZus{}cls}\PY{o}{.}\PY{n}{from\PYZus{}context}\PY{p}{(}\PY{n}{context}\PY{p}{)}
+
+    \PY{k}{def}\PY{+w}{ }\PY{n+nf}{inject}\PY{p}{(}\PY{n+nb+bp}{self}\PY{p}{,} \PY{n}{config}\PY{p}{:} \PY{n}{ExampleConfig}\PY{p}{,} \PY{n}{context}\PY{p}{:} \PY{n+nb}{dict}\PY{p}{[}\PY{n+nb}{str}\PY{p}{,} \PY{n}{Any}\PY{p}{]}\PY{p}{,} \PY{n}{overrides}\PY{o}{=}\PY{k+kc}{None}\PY{p}{)} \PY{o}{\PYZhy{}}\PY{o}{\PYZgt{}} \PY{k+kc}{None}\PY{p}{:}
+        \PY{n}{config}\PY{o}{.}\PY{n}{inject\PYZus{}into}\PY{p}{(}\PY{n}{context}\PY{p}{)}
+
+    \PY{k}{def}\PY{+w}{ }\PY{n+nf}{should\PYZus{}render}\PY{p}{(}\PY{n+nb+bp}{self}\PY{p}{,} \PY{n}{config}\PY{p}{:} \PY{n}{ExampleConfig}\PY{p}{)} \PY{o}{\PYZhy{}}\PY{o}{\PYZgt{}} \PY{n+nb}{bool}\PY{p}{:}
+        \PY{k}{return} \PY{n}{config}\PY{o}{.}\PY{n}{enabled}\PY{p}{(}\PY{p}{)}
+
+\PY{n}{fragment} \PY{o}{=} \PY{n}{ExampleFragment}\PY{p}{(}\PY{p}{)}
+\end{Verbatim}
+\end{tscode}
+\tscodeinline{src/texsmith/fragments/example/fragment.toml}
+\begin{tscode}[lang=toml, engine=pygments]
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+\PY{n}{name}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{ts\PYZhy{}example}\PY{l+s+s2}{\PYZdq{}}
+\PY{n}{description}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{Tiny example fragment.}\PY{l+s+s2}{\PYZdq{}}
+\PY{n}{entrypoint}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{texsmith.fragments.example:fragment}\PY{l+s+s2}{\PYZdq{}}
+
+\PY{k}{[[}\PY{k}{files}\PY{k}{]]}
+\PY{n}{path}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{ts\PYZhy{}example.jinja.tex}\PY{l+s+s2}{\PYZdq{}}
+\PY{n}{slot}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{extra\PYZus{}packages}\PY{l+s+s2}{\PYZdq{}}
+\PY{n}{type}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{inline}\PY{l+s+s2}{\PYZdq{}}
+\end{Verbatim}
+\end{tscode}
+\section{Migration notes for fragment authors}
+\begin{itemize}
+\item Prefer \tscodeinline{fragment.toml} with \tscodeinline{files}, \tscodeinline{attributes}, and \tscodeinline{provides}; use an entrypoint only when you need Python logic.
+\item If using Python, return a \tscodeinline{BaseFragment} instance via \tscodeinline{fragment}; \tscodeinline{create\_fragment()} and \tscodeinline{FragmentDefinition} shims have been removed.
+\item Declare attribute ownership (implicit \tscodeinline{owner = <fragment name>}) to avoid collisions with templates or other fragments.
+\item Keep slot targets aligned with template variables; inline targets must reference declared slots or template variables, otherwise a \tscodeinline{TemplateError} is raised.
+\end{itemize}
 \end{document}

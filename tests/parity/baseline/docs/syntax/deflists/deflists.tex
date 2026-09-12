@@ -8,8 +8,11 @@
 \usepackage[colorlinks=true, linkcolor=NavyBlue, urlcolor=NavyBlue, citecolor=NavyBlue]{hyperref}
 \usepackage[a4paper]{geometry}
 \usepackage{ts-fonts}
-\usepackage{amsmath}
 \usepackage{float}
+\usepackage{graphicx}
+\usepackage{tcolorbox}
+\usepackage{fvextra}
+\usepackage{amsmath}
 \usepackage{seqsplit}
 \usepackage{ts-code}
 
@@ -17,29 +20,24 @@
 \usepackage{refcount}
 \makeatletter
 \def\ps@plain{
-  \let\@oddhead\@empty
-  \let\@evenhead\@empty
-  \def\@oddfoot{
-    \hfil
-    \ifnum\getpagerefnumber{LastPage}>1\relax
-      \thepage
-    \fi
-    \hfil}
-  \let\@evenfoot\@oddfoot
+\let\@oddhead\@empty
+\let\@evenhead\@empty
+\def\@oddfoot{
+\hfil
+\ifnum\getpagerefnumber{LastPage}>1\relax
+\thepage
+\fi
+\hfil}
+\let\@evenfoot\@oddfoot
 }
 \makeatother
 
 \title{Definition Lists}
 \author{}\date{}
-
 \begin{document}
-
 \maketitle
-
-\thispagestyle{plain}
 Definition lists pair a term with one or more definitions. Markdown sticks to a simple pattern:
-
-\begin{code}{markdown}{}{}
+\begin{tscode}[lang=markdown, engine=pygments]
 \begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
 Apple
 :   Pomaceous fruit of plants of the genus Malus in
@@ -48,40 +46,24 @@ Apple
 Orange
 :   The fruit of an evergreen tree of the genus Citrus.
 \end{Verbatim}
-\end{code}
+\end{tscode}
 Which renders as:
-
 \begin{description}
-\item[{ Apple }] Pomaceous fruit of plants of the genus Malus in
+\item[{Apple}] Pomaceous fruit of plants of the genus Malus in
 the family Rosaceae.
-\item[{ Orange }] The fruit of an evergreen tree of the genus Citrus.
-
+\item[{Orange}] The fruit of an evergreen tree of the genus Citrus.
 \end{description}
 \LaTeX{} output:
-
-\begin{code}{latex}{}{}
+\begin{tscode}[lang=latex, engine=pygments]
 \begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
 \PY{k}{\PYZbs{}begin}\PY{n+nb}{\PYZob{}}description\PY{n+nb}{\PYZcb{}}
 \PY{k}{\PYZbs{}item}\PY{n+na}{[Apple]} Pomaceous fruit of plants of the genus Malus in the family Rosaceae.
 \PY{k}{\PYZbs{}item}\PY{n+na}{[Orange]} The fruit of an evergreen tree of the genus Citrus.
 \PY{k}{\PYZbs{}end}\PY{n+nb}{\PYZob{}}description\PY{n+nb}{\PYZcb{}}
 \end{Verbatim}
-\end{code}
+\end{tscode}
 \begin{figure}[H]
-    \centering
-
-    \ifdefined\adjustbox
-
-        \adjustbox{max width=\textwidth}{
-            \includegraphics[width=\linewidth]{snippet-<HASH>.pdf}
-        }
-
-    \else
-
-        \includegraphics[width=\linewidth]{snippet-<HASH>.pdf}
-
-    \fi
-
+\centering
+\includegraphics[width=\linewidth]{snippet-<HASH>.pdf}
 \end{figure}
-
 \end{document}

@@ -1,25 +1,22 @@
 #set document(
-  title: "Standalone Plugins",
+title: "",
 )
 #set page(
-  paper: "a4",
-  margin: 2.5cm,
-  numbering: none,
-  footer: context {
-    if counter(page).final().first() > 1 {
-      align(center)[#counter(page).get().first()]
-    }
-  },
+paper: "a4",
+margin: 2.5cm,
+numbering: none,
+footer: context {
+if counter(page).final().first() > 1 {
+align(center)[#counter(page).get().first()]
+}
+},
 )
 #set text(font: "New Computer Modern", size: 11pt, lang: "en")
 #set par(justify: true)
 #show heading: set block(above: 1.8em, below: 1.0em)
 #set heading(numbering: "1.1")
 
-#align(center)[
-  #text(size: 1.8em, weight: "bold")[Standalone Plugins]
-]
-#v(1.5em)
+= Standalone Plugins
 
 Some ideas on standalone plugins that can be developed and shared independently or included in TeXSmith by default. These are some features that I can use myself and that can be useful to others.
 
@@ -34,7 +31,7 @@ epigraph:
   source: "William Shakespeare, Hamlet"
 ```
 
-This is inserted into the LaTeX output using the `epigraph` package:
+This is inserted into the #ts-logo("LaTeX") output using the `epigraph` package:
 
 ```latex
 \usepackage{epigraph}
@@ -58,7 +55,7 @@ This can be a good example of a standalone TeXSmith plugin that allows rendering
 ![Sequence diagram](assets/pipeline.bob)
 ```
 
-During the build TeXSmith calls the bundled Svgbob converter, generates a PDF, and inserts it into the final LaTeX output. Cached artifacts prevent repeated rendering when the source diagram stays the same.
+During the build TeXSmith calls the bundled Svgbob converter, generates a PDF, and inserts it into the final #ts-logo("LaTeX") output. Cached artifacts prevent repeated rendering when the source diagram stays the same.
 
 SVGBob can be installed on Ubuntu via:
 
@@ -115,7 +112,7 @@ If Svgbob is not available, diagrams can be skipped with a warning and rendered 
 
 == CircuitTikZ
 
-The #link("https://circuit2tikz.tf.fau.de/designer/")[CircuitTikZ designer] helps produce circuit diagrams from the browser. Export the generated TikZ snippet and wrap it in a raw LaTeX fence:
+The #link("https://circuit2tikz.tf.fau.de/designer/")[CircuitTikZ designer] helps produce circuit diagrams from the browser. Export the generated TikZ snippet and wrap it in a raw #ts-logo("LaTeX") fence:
 
 ````markdown
 ```latex { circuitikz }
@@ -126,7 +123,7 @@ The #link("https://circuit2tikz.tf.fau.de/designer/")[CircuitTikZ designer] help
 ```
 ````
 
-Raw blocks bypass the HTML output but remain in the LaTeX build. To keep the TikZ code in a separate file, include it via `\input{}` inside a raw fence and store the `.tex` asset alongside the Markdown.
+Raw blocks bypass the HTML output but remain in the #ts-logo("LaTeX") build. To keep the TikZ code in a separate file, include it via `\input{}` inside a raw fence and store the `.tex` asset alongside the Markdown.
 
 = Module Design Principles
 

@@ -8,8 +8,11 @@
 \usepackage[colorlinks=true, linkcolor=NavyBlue, urlcolor=NavyBlue, citecolor=NavyBlue]{hyperref}
 \usepackage[a4paper]{geometry}
 \usepackage{ts-fonts}
-\usepackage{amsmath}
 \usepackage{float}
+\usepackage{graphicx}
+\usepackage{tcolorbox}
+\usepackage{fvextra}
+\usepackage{amsmath}
 \usepackage{seqsplit}
 \usepackage{ts-code}
 \usepackage{ts-glossary}
@@ -18,117 +21,100 @@
 \usepackage{refcount}
 \makeatletter
 \def\ps@plain{
-  \let\@oddhead\@empty
-  \let\@evenhead\@empty
-  \def\@oddfoot{
-    \hfil
-    \ifnum\getpagerefnumber{LastPage}>1\relax
-      \thepage
-    \fi
-    \hfil}
-  \let\@evenfoot\@oddfoot
+\let\@oddhead\@empty
+\let\@evenhead\@empty
+\def\@oddfoot{
+\hfil
+\ifnum\getpagerefnumber{LastPage}>1\relax
+\thepage
+\fi
+\hfil}
+\let\@evenfoot\@oddfoot
 }
 \makeatother
 
 \title{Abbreviations / Acronyms}
 \author{}\date{}
-
 \begin{document}
-
 \maketitle
-
-\thispagestyle{plain}
-Abbreviations are a lightweight mechanism to define acronyms and their expansions. They are rendered in \LaTeX{} with the \texttt{glossaries} package, which provides a rich set of commands for formatting and indexing.
-
-\begin{code}{markdown}{}{}
+Abbreviations are a lightweight mechanism to define acronyms and their
+expansions. The spelling is PHP-Markdown-Extra's \tscodeinline{abbr}, which every MkDocs site
+renders; in \LaTeX{} they go through the \tscodeinline{glossaries} package, which provides a
+rich set of commands for formatting and indexing.
+\begin{tscode}[lang=md, engine=pygments]
 \begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
 The HTML specification is maintained by the W3C.
 
 *[HTML]: HyperText Markup Language
 *[W3C]: World Wide Web Consortium
 \end{Verbatim}
-\end{code}
+\end{tscode}
 TeXSmith renders that snippet as:
-
-\begin{code}{text}{}{}
+\begin{tscode}[lang=text, engine=pygments]
 \begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
 \PYZdl{} texsmith abbr.md
 The \PYZbs{}acrshort\PYZob{}HTML\PYZcb{} specification is maintained by the \PYZbs{}acrshort\PYZob{}W3C\PYZcb{}.
 \end{Verbatim}
-\end{code}
+\end{tscode}
 Which displays as:
-
 \begin{figure}[H]
-    \centering
-
-    \ifdefined\adjustbox
-
-        \adjustbox{max width=\textwidth}{
-            \includegraphics[width=\linewidth]{snippet-<HASH>.pdf}
-        }
-
-    \else
-
-        \includegraphics[width=\linewidth]{snippet-<HASH>.pdf}
-
-    \fi
-
+\centering
+\includegraphics[width=0.65\linewidth]{snippet-<HASH>.pdf}
 \end{figure}
-Of course, this also works on this \acrshort{HTML} site. Try hovering over the abbreviations.
+Of course, this also works on this \tsacr{HTML} site. Try hovering over the abbreviations.
 
 Acronyms are collected automatically during the \LaTeX{} pass:
-
-\begin{code}{text}{}{}
+\begin{tscode}[lang=text, engine=pygments]
 \begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
 \PYZdl{} uv run texsmith test.md \PYZhy{}tarticle 1\PYZgt{}/dev/null
 \PYZdl{} rg newacronym build/test.tex
 92:\PYZbs{}newacronym\PYZob{}HTML\PYZcb{}\PYZob{}HTML\PYZcb{}\PYZob{}HyperText Markup Language\PYZcb{}
 93:\PYZbs{}newacronym\PYZob{}W3C\PYZcb{}\PYZob{}W3C\PYZcb{}\PYZob{}World Wide Web Consortium\PYZcb{}
 \end{Verbatim}
-\end{code}
-\section{Front-matter glossary}\label{front-matter-glossary}
-
-For longer documents you can declare acronyms in a structured \texttt{glossary:} section
-in the YAML front matter. Each entry carries an explicit description and may be
-attached to a group; TeXSmith renders one localised \texttt{\textbackslash{}printglossary} table per
+\end{tscode}
+\section{Front-matter glossary}
+For longer documents you can declare acronyms under \tscodeinline{press.declare.glossary} in
+the YAML front matter. Each entry carries an explicit description and may be
+attached to a group; TeXSmith renders one localised \tscodeinline{\textbackslash{}printglossary} table per
 group (in declaration order) followed by a default table for ungrouped entries.
-The legacy \texttt{*[KEY]: …} body syntax keeps working and merges with the
-front-matter entries.
-
-\begin{code}{yaml}{}{}
+The \tscodeinline{*[KEY]: …} body syntax keeps working and merges with the front-matter
+entries.
+\begin{tscode}[lang=yaml, engine=pygments]
 \begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
 \PY{n+nn}{\PYZhy{}\PYZhy{}\PYZhy{}}
-\PY{n+nt}{glossary}\PY{p}{:}
-\PY{+w}{  }\PY{n+nt}{style}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{long}\PY{+w}{           }\PY{c+c1}{\PYZsh{} default; any glossaries\PYZhy{}package style works}
-\PY{+w}{  }\PY{n+nt}{groups}\PY{p}{:}
-\PY{+w}{    }\PY{n+nt}{technique}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{Acronymes}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{techniques}
-\PY{+w}{    }\PY{n+nt}{institutionnel}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{Acronymes}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{institutionnels}
-\PY{+w}{  }\PY{n+nt}{entries}\PY{p}{:}
-\PY{+w}{    }\PY{n+nt}{API}\PY{p}{:}
-\PY{+w}{      }\PY{n+nt}{group}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{technique}
-\PY{+w}{      }\PY{n+nt}{description}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{Application}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{Programming}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{Interface}
-\PY{+w}{    }\PY{n+nt}{ONU}\PY{p}{:}
-\PY{+w}{      }\PY{n+nt}{group}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{institutionnel}
-\PY{+w}{      }\PY{n+nt}{description}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{Organisation}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{des}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{Nations}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{Unies}
-\PY{+w}{    }\PY{n+nt}{DOI}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{Digital}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{Object}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{Identifier}\PY{+w}{   }\PY{c+c1}{\PYZsh{} short form: ungrouped, description only}
+\PY{n+nt}{press}\PY{p}{:}
+\PY{+w}{  }\PY{n+nt}{declare}\PY{p}{:}
+\PY{+w}{    }\PY{n+nt}{glossary}\PY{p}{:}
+\PY{+w}{      }\PY{n+nt}{style}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{long}\PY{+w}{           }\PY{c+c1}{\PYZsh{} default; any glossaries\PYZhy{}package style works}
+\PY{+w}{      }\PY{n+nt}{groups}\PY{p}{:}
+\PY{+w}{        }\PY{n+nt}{technique}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{Acronymes}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{techniques}
+\PY{+w}{        }\PY{n+nt}{institutionnel}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{Acronymes}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{institutionnels}
+\PY{+w}{      }\PY{n+nt}{entries}\PY{p}{:}
+\PY{+w}{        }\PY{n+nt}{API}\PY{p}{:}
+\PY{+w}{          }\PY{n+nt}{group}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{technique}
+\PY{+w}{          }\PY{n+nt}{description}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{Application}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{Programming}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{Interface}
+\PY{+w}{        }\PY{n+nt}{ONU}\PY{p}{:}
+\PY{+w}{          }\PY{n+nt}{group}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{institutionnel}
+\PY{+w}{          }\PY{n+nt}{description}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{Organisation}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{des}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{Nations}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{Unies}
+\PY{+w}{        }\PY{n+nt}{DOI}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{Digital}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{Object}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{Identifier}\PY{+w}{   }\PY{c+c1}{\PYZsh{} short form: ungrouped, description only}
 \PY{n+nn}{\PYZhy{}\PYZhy{}\PYZhy{}}
 \end{Verbatim}
-\end{code}
+\end{tscode}
+A top-level \tscodeinline{glossary:} key is the deprecated spelling; \tscodeinline{tmark lint -\allowbreak{}-\allowbreak{}fix}
+moves it under \tscodeinline{press.declare}.
+
 The section is validated with pydantic, so unknown keys, missing descriptions,
 or references to undeclared groups raise a clear error at conversion time. The
 default acronym-table title follows the document language (it expands to
-\texttt{\textbackslash{}acronymname} from the \texttt{glossaries} package, which is localised by \texttt{babel}).
-
-\subsection{Automatic substitution and limitations}\label{automatic-substitution-and-limitations}
-
-Unlike \LaTeX{}, TeXSmith does \textbf{not} require \texttt{\textbackslash{}gls\{…\}} / \texttt{\textbackslash{}Gls\{…\}} calls in the
+\tscodeinline{\textbackslash{}acronymname} from the \tscodeinline{glossaries} package, which is localised by \tscodeinline{babel}).
+\subsection{Automatic substitution and limitations}
+Unlike \LaTeX{}, TeXSmith does \textbf{not} require \tscodeinline{\textbackslash{}gls\{…\}} / \tscodeinline{\textbackslash{}Gls\{…\}} calls in the
 source: the converter scans the body and replaces every \textbf{strict, case-sensitive}
-match of an acronym key with \texttt{\textbackslash{}acrshort\{KEY\}}. As a consequence, casing helpers
-such as \texttt{\textbackslash{}Gls}, \texttt{\textbackslash{}GLS}, \texttt{\textbackslash{}acrlong}, etc. are not synthesised --- the substitution
+match of an acronym key with \tscodeinline{\textbackslash{}acrshort\{KEY\}}. As a consequence, casing helpers
+such as \tscodeinline{\textbackslash{}Gls}, \tscodeinline{\textbackslash{}GLS}, \tscodeinline{\textbackslash{}acrlong}, etc. are not synthesised --- the substitution
 is the same regardless of where the acronym appears in the text. If you need
-those forms, drop down to raw \LaTeX{} (e.g. with an explicit \texttt{\textbackslash{}Gls\{KEY\}} written
-as a raw-\LaTeX{} inline).
+those forms, drop down to a raw passthrough:
+\tscodeinline{\{raw latex\}(\textbackslash{}Gls\{KEY\})}.
 
 \printglossary[type=\acronymtype]
-
 \end{document}

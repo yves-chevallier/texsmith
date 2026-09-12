@@ -1,15 +1,15 @@
 #set document(
-  title: "Tables",
+title: "Tables",
 )
 #set page(
-  paper: "a4",
-  margin: 2.5cm,
-  numbering: none,
-  footer: context {
-    if counter(page).final().first() > 1 {
-      align(center)[#counter(page).get().first()]
-    }
-  },
+paper: "a4",
+margin: 2.5cm,
+numbering: none,
+footer: context {
+if counter(page).final().first() > 1 {
+align(center)[#counter(page).get().first()]
+}
+},
 )
 #set text(font: "New Computer Modern", size: 11pt, lang: "en")
 #set par(justify: true)
@@ -17,23 +17,22 @@
 #set heading(numbering: "1.1")
 
 #align(center)[
-  #text(size: 1.8em, weight: "bold")[Tables]
-]
+#text(size: 1.8em, weight: "bold")[Tables]]
 #v(1.5em)
 
 Markdown pipe tables are cute until they meet real reports. The minute you
 need grouped headers, wrapped text, row spans, totals, or a table that behaves
-properly in LaTeX, plain Markdown turns into duct tape. TeXSmith keeps the
+properly in #ts-logo("LaTeX"), plain Markdown turns into duct tape. TeXSmith keeps the
 simple syntax for simple tables and adds a declarative `yaml table` fence for
 the serious stuff.
 
 Use the right level of power:
 
 - Plain Markdown table: quick two-dimensional data, no layout drama.
-- Plain Markdown table + `yaml table-config`: keep the pipe table, add LaTeX
-    layout metadata.
+- Plain Markdown table + `yaml table-config`: keep the pipe table, add #ts-logo("LaTeX")
+layout metadata.
 - `yaml table`: describe the whole table as structured data when spans,
-    grouped headers, footers, or validation matter.
+grouped headers, footers, or validation matter.
 
 = Captions and Labels
 
@@ -50,10 +49,12 @@ rows:
 Table: Fruit stock by warehouse {#tbl:stock}
 ````
 
-The `{#tbl:stock}` part becomes the LaTeX `\label{tbl:stock}` and can be
-referenced like any other table. The caption line also works with plain
-Markdown tables, and the line placed _before_ the table is accepted as well
-(see #link("captions.md#caption-lines")[captions] for the attachment rule).
+The `{#tbl:stock}` part becomes the #ts-logo("LaTeX") `\label{tbl:stock}`, and `@tbl:stock`
+refers to it. The caption line works the same on a plain Markdown table. Its
+canonical position is *after* the block — after the `table-config` fence when
+there is one — and a `Table:` line before the table stays accepted for Pandoc
+compatibility (see #link("captions.md#caption-lines-in-detail")[captions] for the
+attachment rule).
 
 = Full YAML Tables
 
@@ -76,13 +77,13 @@ footer:
 Top-level keys:
 
 #table(
-  columns: 2,
-  align: (left, left),
-  table.header([Key], [Purpose]),
-  [`table`], [Optional table-level settings: width, placement, long-table mode.],
-  [`columns`], [Required column tree. Needs at least two leaf columns.],
-  [`rows`], [Body rows and separators.],
-  [`footer`], [Summary rows rendered after an extra rule.],
+columns: 2,
+align: (left, left),
+table.header([Key], [Purpose]),
+[`table`], [Optional table-level settings: width, placement, long-table mode.],
+[`columns`], [Required column tree. Needs at least two leaf columns.],
+[`rows`], [Body rows and separators.],
+[`footer`], [Summary rows rendered after an extra rule.],
 )
 
 The first column is the row-label column. In positional rows, the first item
@@ -117,12 +118,12 @@ columns:
 Column attributes:
 
 #table(
-  columns: 2,
-  align: (left, left),
-  table.header([Attribute], [Values]),
-  [`align`], [`l`, `c`, `r`, `j`, or long forms: `left`, `center`, `centre`, `right`, `justify`, `justified`.],
-  [`width`], [`auto`, `X`, a percentage such as `25%`, or a raw LaTeX length such as `3cm`.],
-  [`width-group`], [Any identifier. Columns with the same group share the same width.],
+columns: 2,
+align: (left, left),
+table.header([Attribute], [Values]),
+[`align`], [`l`, `c`, `r`, `j`, or long forms: `left`, `center`, `centre`, `right`, `justify`, `justified`.],
+[`width`], [`auto`, `X`, a percentage such as `25%`, or a raw #ts-logo("LaTeX") length such as `3cm`.],
+[`width-group`], [Any identifier. Columns with the same group share the same width.],
 )
 
 Grouped columns are recursive:
@@ -140,7 +141,7 @@ columns:
 
 Groups can carry `align`, `width`, and `width-group`; those attributes
 propagate to their leaf columns unless a child overrides them. Nested groups
-produce multiple header rows and `\cmidrule` strokes in LaTeX.
+produce multiple header rows and `\cmidrule` strokes in #ts-logo("LaTeX").
 
 = Rows
 
@@ -222,8 +223,6 @@ alignment override, promote the cell to a mapping:
 Row spans require the absorbed cells below to be `~`:
 
 ````markdown
-Table: Article assignments {#tbl:articles}
-
 ```yaml table
 columns: [Article, Editor, Status, Pages]
 rows:
@@ -231,13 +230,13 @@ rows:
   - [Beta,  ~,                        Review,   18]
   - [Gamma, John,                     Published, 24]
 ```
+
+Table: Article assignments {#tbl:articles}
 ````
 
 Column spans consume consecutive leaf columns:
 
 ````markdown
-Table: Annual totals across all four quarters
-
 ```yaml table
 columns:
   - Metric
@@ -249,6 +248,8 @@ rows:
   - separator: true
   - [Gross,   {value: "$570k", cols: 4, align: c}]
 ```
+
+Table: Annual totals across all four quarters
 ````
 
 A cell can span a rectangle. Every absorbed slot must be acknowledged:
@@ -261,7 +262,7 @@ rows:
   - [r3, x, y, z]
 ```
 
-= Widths and LaTeX Environments
+= Widths and #ts-logo("LaTeX") Environments
 
 By default, `table.width` is `auto`, which selects a natural-width `tabular`
 unless a column asks for flexible width. Setting a table width usually selects
@@ -288,8 +289,8 @@ Width rules:
 - `width: X` marks a column as the flexible `tabularx` column.
 - `width: auto` on a column is also treated as a flexible `X` column.
 - `width-group: quarter` makes all matching columns equal-width `X` columns
-    when no explicit width is supplied.
-- Raw strings such as `2.5cm` are passed through as LaTeX lengths.
+when no explicit width is supplied.
+- Raw strings such as `2.5cm` are passed through as #ts-logo("LaTeX") lengths.
 
 You can force long-table rendering:
 
@@ -298,7 +299,7 @@ table:
   long: true
 ```
 
-`long: auto` is the default. `placement` accepts LaTeX float placement
+`long: auto` is the default. `placement` accepts #ts-logo("LaTeX") float placement
 letters such as `htbp`:
 
 ```yaml
@@ -323,11 +324,9 @@ Keep the values quoted when Markdown punctuation would otherwise confuse YAML.
 
 For small tables, pipe syntax is still the fastest input. Add a
 `yaml table-config` fence immediately after the table to route it through the
-same LaTeX table renderer:
+same #ts-logo("LaTeX") table renderer:
 
 ````markdown
-Table: Inventaire des cours d'informatique. {#tbl:cours}
-
 | Abbr.      | Sem. | Nom du cours                          | Orientations | Charge |
 | ---------- | ---- | ------------------------------------- | ------------ | ------ |
 | Info1      | S1   | Informatique 1                        | E,M,A,N      | 120    |
@@ -342,6 +341,8 @@ columns:
   - {align: left}
   - {align: right}
 ```
+
+Table: Inventaire des cours d'informatique. {#tbl:cours}
 ````
 
 `columns` is matched positionally against the Markdown table columns. The
@@ -369,8 +370,6 @@ table. Use full `yaml table` when the structure itself is complex.
 == Grouped Financial Header
 
 ````markdown
-Table: Quarterly sales by product (2023-2024)
-
 ```yaml table
 table:
   width: 100%
@@ -392,13 +391,13 @@ rows:
 footer:
   - [Total, [260, 320, 445, 340], [270, 340, 480, 365]]
 ```
+
+Table: Quarterly sales by product (2023-2024)
 ````
 
 == Three-Level Header
 
 ````markdown
-Table: Monthly sales breakdown for 2024
-
 ```yaml table
 columns:
   - Product
@@ -412,13 +411,13 @@ rows:
   - [Alpha, [10, 12, 15, 18, 20, 22]]
   - [Beta,  [~,  ~,  5,  8,  10, 12]]
 ```
+
+Table: Monthly sales breakdown for 2024
 ````
 
 == Fixed Columns plus Flexible Text
 
 ````markdown
-Table: Product requirements (fixed + flexible columns)
-
 ```yaml table
 table:
   width: 90%
@@ -436,11 +435,13 @@ rows:
   - [REQ-002, "PDF exports must follow the brand guidelines (logo, colours, margins).", Medium]
   - [REQ-003, "The UI must be fully keyboard accessible (WCAG 2.1 AA).", High]
 ```
+
+Table: Product requirements (fixed + flexible columns)
 ````
 
 = Validation Errors
 
-The YAML table parser validates the table before the LaTeX renderer sees it.
+The YAML table parser validates the table before the #ts-logo("LaTeX") renderer sees it.
 When something is wrong, TeXSmith emits an inline error block and keeps the
 document buildable.
 

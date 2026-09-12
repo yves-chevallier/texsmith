@@ -10,100 +10,157 @@
 \usepackage{ts-fonts}
 \usepackage{booktabs}
 \usepackage{tabularx}
+\usepackage{tcolorbox}
+\usepackage{xcolor}
+\usepackage{fvextra}
 \usepackage{amsmath}
 \usepackage{float}
 \usepackage{seqsplit}
 \newcolumntype{Y}{>{\centering\arraybackslash}X}
 \newcolumntype{Z}{>{\raggedleft\arraybackslash}X}
+\usepackage{ts-callouts}
 \usepackage{ts-code}
 
 \usepackage{lastpage}
 \usepackage{refcount}
 \makeatletter
 \def\ps@plain{
-  \let\@oddhead\@empty
-  \let\@evenhead\@empty
-  \def\@oddfoot{
-    \hfil
-    \ifnum\getpagerefnumber{LastPage}>1\relax
-      \thepage
-    \fi
-    \hfil}
-  \let\@evenfoot\@oddfoot
+\let\@oddhead\@empty
+\let\@evenhead\@empty
+\def\@oddfoot{
+\hfil
+\ifnum\getpagerefnumber{LastPage}>1\relax
+\thepage
+\fi
+\hfil}
+\let\@evenfoot\@oddfoot
 }
 \makeatother
 
 \title{Integration with MkDocs}
 \author{}\date{}
-
 \begin{document}
-
 \maketitle
-
-\thispagestyle{plain}
-TeXSmith can be seamlessly integrated with MkDocs, a popular static site generator for project documentation. This allows you to leverage MkDocs' powerful features while utilizing TeXSmith for document generation.
-
-The integration is achieved through the \texttt{mkdocs-\allowbreak{}texsmith} plugin, which processes TeXSmith documents during the MkDocs build process.
-
-\section{Configuration}\label{configuration}
-
-To enable TeXSmith in your MkDocs project, you need to add the \texttt{mkdocs-\allowbreak{}texsmith} plugin to your \texttt{mkdocs.yml} configuration file:
-
-\begin{code}{yaml}{}{}
+One plugin, \tscodeinline{texsmith}, carries the whole integration: it renders the TMark
+constructs on the site \emph{and} exports the same sources as a PDF. Add it to
+\tscodeinline{mkdocs.yml} and nothing else:
+\begin{tscode}[lang=yaml, engine=pygments]
 \begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
 \PY{n+nt}{plugins}\PY{p}{:}
+\PY{+w}{  }\PY{p+pIndicator}{\PYZhy{}}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{search}
 \PY{+w}{  }\PY{p+pIndicator}{\PYZhy{}}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{texsmith}
 \end{Verbatim}
-\end{code}
-You can configure additional options for the TeXSmith plugin as needed:
+\end{tscode}
+No Markdown extension to wire by hand. The plugin turns on the five extensions
+its output relies on --- \tscodeinline{attr\_list}, \tscodeinline{md\_in\_html}, \tscodeinline{admonition},
+\tscodeinline{pymdownx.details} and \tscodeinline{pymdownx.superfences} --- when they are absent, and ships
+a small stylesheet (\tscodeinline{assets/texsmith/texsmith.css}: asides, the subfigure grid,
+caption labels, counter spans) through \tscodeinline{extra\_css}. Set
+\tscodeinline{inject\_markdown\_extensions: false} or \tscodeinline{css: false} to take either over.
+\begin{tscallout}[kind=warning, title={The \tscodeinline{texsmith.counters} and \tscodeinline{texsmith.index} plugins are gone}]
+Both jobs belong to \tscodeinline{texsmith} now. The two entry points still load, log a
+warning and do nothing; they disappear in 0.8. Remove them from \tscodeinline{plugins:}
+and move any \tscodeinline{counters:} you declared under them to \tscodeinline{declare.counters}
+(below).
+\end{tscallout}
+\section{What the plugin does to a page}
+Before Python-Markdown runs, every page goes through \tscodeinline{tmark}:
+\begin{enumerate}
+\item a \textbf{pre-pass} parses and resolves every page in navigation order, chaining
+the counters from one page to the next, and collects the labels of the whole
+site;
+\item each page is then resolved again against that site map and \textbf{lowered}: each
+TMark construct is replaced by the Markdown or HTML Material renders --- a
+callout becomes an admonition, a figure a \tscodeinline{<figure>}, a counter item a
+\tscodeinline{<span class="ts-\allowbreak{}counter">} --- and every other byte is left alone.
+\end{enumerate}
+So Material's own syntax (\tscodeinline{++ctrl+alt+del++}, \tscodeinline{==marked==}, tab sets, emoji,
+mermaid fences, an \tscodeinline{mkdocstrings} block) passes through untouched, and a
+construct TeXSmith owns renders the same way it does in the PDF.
 
+Diagnostics are reported with the page path: \tscodeinline{docs/findings.md:12:5: warning
+ref-\allowbreak{}unresolved: …}.
+\section{Site-wide declarations}
+Counters declared under the plugin's \tscodeinline{declare:} key apply to every page, as
+\tscodeinline{press.declare} does in a page's front matter:
+\begin{tscode}[lang=yaml, engine=pygments]
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+\PY{n+nt}{plugins}\PY{p}{:}
+\PY{+w}{  }\PY{p+pIndicator}{\PYZhy{}}\PY{+w}{ }\PY{n+nt}{texsmith}\PY{p}{:}
+\PY{+w}{      }\PY{n+nt}{declare}\PY{p}{:}
+\PY{+w}{        }\PY{n+nt}{counters}\PY{p}{:}
+\PY{+w}{          }\PY{n+nt}{req}\PY{p}{:}
+\PY{+w}{            }\PY{n+nt}{name}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{Requirement}
+\PY{+w}{            }\PY{n+nt}{format}\PY{p}{:}\PY{+w}{ }\PY{l+s}{\PYZdq{}}\PY{l+s}{REQ\PYZhy{}\PYZob{}n:03d\PYZcb{}}\PY{l+s}{\PYZdq{}}
+\PY{+w}{            }\PY{n+nt}{start}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{100}
+\end{Verbatim}
+\end{tscode}
+A page may still declare its own in its front matter; the page's declaration
+wins over the site's for the same prefix. See
+Counters for the numbering rules.
+\section{Options}
 \begin{center}
 \begin{tabularx}{\linewidth}{>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X}
 \toprule
 \textbf{Option} & \textbf{Description} & \textbf{Default} \\
-
 \midrule
-\texttt{template} & Template to use for rendering the site & \texttt{book} \\
-\texttt{build\_dir} & Directory where TeXSmith outputs are stored & \texttt{site} \\
-
+\tscodeinline{enabled} & Turn the plugin off entirely & \tscodeinline{true} \\
+\tscodeinline{template} & Template used for the books & \tscodeinline{book} \\
+\tscodeinline{build\_dir} & Where the \tscodeinline{.tex}, the assets and the PDF land & \tscodeinline{press} \\
+\tscodeinline{declare} & Site-wide declarations (\tscodeinline{declare.counters}) & \tscodeinline{\{\}} \\
+\tscodeinline{web} & \tscodeinline{tmark.lower\_web} options: \tscodeinline{sections} (\tscodeinline{title} | \tscodeinline{number}), \tscodeinline{citations} (\tscodeinline{inline} | \tscodeinline{passthrough}), \tscodeinline{css\_prefix} & \tscodeinline{\{\}} \\
+\tscodeinline{inject\_markdown\_extensions} & Enable the extensions the lowering relies on & \tscodeinline{true} \\
+\tscodeinline{css} & Ship and register \tscodeinline{texsmith.css} & \tscodeinline{true} \\
+\tscodeinline{language} & Document language, else the theme's & \emph{theme} \\
+\tscodeinline{bibliography} & \tscodeinline{.bib} files shared by every book & \tscodeinline{[]} \\
+\tscodeinline{books} & The documents to export (below) & \tscodeinline{[]} \\
+\tscodeinline{template\_overrides} & Template attributes for every book & \tscodeinline{\{\}} \\
+\tscodeinline{copy\_assets} / \tscodeinline{clean\_assets} & Copy the referenced assets / prune the unused ones & \tscodeinline{true} \\
+\tscodeinline{save\_html} & Keep a snapshot of each page's rendered HTML & \tscodeinline{false} \\
+\tscodeinline{embed\_fragments} & Inline the page fragments instead of \tscodeinline{\textbackslash{}input} & \tscodeinline{false} \\
 \bottomrule
 \end{tabularx}
 \end{center}
-
-\subsection{Multiple documents}\label{multiple-documents}
-
-You can either generate a single document from your MkDocs site or multiple documents from different sections.
-
-\begin{code}{yaml}{}{}
+\section{Books}
+A book is one PDF built from a section of the navigation. Several may be
+declared; \tscodeinline{root: "\_\_texsmith\_full\_navigation\_\_"} takes the whole site.
+\begin{tscode}[lang=yaml, engine=pygments]
 \begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
 \PY{n+nt}{plugins}\PY{p}{:}
-\PY{+w}{    }\PY{p+pIndicator}{\PYZhy{}}\PY{+w}{ }\PY{n+nt}{texsmith}\PY{p}{:}
+\PY{+w}{  }\PY{p+pIndicator}{\PYZhy{}}\PY{+w}{ }\PY{n+nt}{texsmith}\PY{p}{:}
 \PY{+w}{      }\PY{n+nt}{books}\PY{p}{:}
 \PY{+w}{        }\PY{p+pIndicator}{\PYZhy{}}\PY{+w}{ }\PY{n+nt}{template}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{book}
+\PY{+w}{          }\PY{n+nt}{title}\PY{p}{:}\PY{+w}{ }\PY{l+s}{\PYZdq{}}\PY{l+s}{Foo,}\PY{n+nv}{ }\PY{l+s}{the}\PY{n+nv}{ }\PY{l+s}{complete}\PY{n+nv}{ }\PY{l+s}{guide}\PY{l+s}{\PYZdq{}}
 \PY{+w}{          }\PY{n+nt}{folder}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{foolists}
 \PY{+w}{          }\PY{n+nt}{root}\PY{p}{:}\PY{+w}{ }\PY{l+s}{\PYZdq{}}\PY{l+s}{foo}\PY{l+s}{\PYZdq{}}
 \PY{+w}{          }\PY{n+nt}{base\PYZus{}level}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{\PYZhy{}1}
 \PY{+w}{        }\PY{p+pIndicator}{\PYZhy{}}\PY{+w}{ }\PY{n+nt}{template}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{article}
-\PY{+w}{          }\PY{n+nt}{folder}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{bariers}
+\PY{+w}{          }\PY{n+nt}{folder}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{barriers}
 \PY{+w}{          }\PY{n+nt}{root}\PY{p}{:}\PY{+w}{ }\PY{l+s}{\PYZdq{}}\PY{l+s}{bar}\PY{l+s}{\PYZdq{}}
 \end{Verbatim}
-\end{code}
-\section{Serve}\label{serve}
+\end{tscode}
+The PDF is built from each page's \textbf{source} --- the Markdown MkDocs handed the
+plugin, macros expanded, with the page metadata and the site declarations back
+in front of it --- read through the tmark reader, not from the rendered HTML. The
+exact input is written next to the output under \tscodeinline{<build\_dir>/<folder>/sources/},
+so what the PDF was built from is always inspectable. The counters are seeded
+where the site's chain stood before the book's first page, so \tscodeinline{FW-\allowbreak{}10} is
+\tscodeinline{FW-\allowbreak{}10} on both media.
 
-During development with \texttt{mkdocs serve}, the TeXSmith plugin can fetch assets from the web (e.g. images, citations) and compile PDF snippets on the fly. This allows for a smooth writing experience with instant feedback.
-
-\section{Build}\label{build}
-
-When you run \texttt{mkdocs build}, the TeXSmith plugin processes all TeXSmith documents in your project, generating the corresponding PDFs and integrating them into the final site output. By default the output directory is \texttt{press/}.
-
-You can tell TeXSmith to build the PDF during the process with the \texttt{build} option in your mkdocs.yml:
-
-\begin{code}{yaml}{}{}
+A page whose front matter says \tscodeinline{press: \{reader: html\}} is read from its
+rendered HTML instead --- the escape hatch for a page whose content is produced
+by another MkDocs plugin.
+\section{Serve}
+Under \tscodeinline{mkdocs serve} the plugin lowers the pages and reports diagnostics but
+builds no book: the PDF is a \tscodeinline{mkdocs build} matter.
+\section{Build}
+\tscodeinline{mkdocs build} writes every book's \tscodeinline{.tex} and its assets under \tscodeinline{press/}. Set
+\tscodeinline{TEXSMITH\_BUILD=1} to compile the PDF in the same run:
+\begin{tscode}[lang=console, engine=pygments]
 \begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
-\PY{n+nt}{plugins}\PY{p}{:}
-\PY{+w}{  }\PY{p+pIndicator}{\PYZhy{}}\PY{+w}{ }\PY{n+nt}{texsmith}\PY{p}{:}
-\PY{+w}{      }\PY{n+nt}{build}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{true}
+\PY{g+gp}{\PYZdl{} }\PY{n+nv}{TEXSMITH\PYZus{}BUILD}\PY{o}{=}\PY{l+m}{1}\PY{+w}{ }mkdocs\PY{+w}{ }build
 \end{Verbatim}
-\end{code}
-
+\end{tscode}
+A complete example lives in \tscodeinline{examples/mkdocs} (\tscodeinline{make -\allowbreak{}C examples/mkdocs} builds
+the site and the PDF).
 \end{document}

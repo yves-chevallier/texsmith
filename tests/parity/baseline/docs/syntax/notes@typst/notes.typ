@@ -1,15 +1,15 @@
 #set document(
-  title: "Notes on TeXSmith Extensions",
+title: "Notes, asides, index and glossary",
 )
 #set page(
-  paper: "a4",
-  margin: 2.5cm,
-  numbering: none,
-  footer: context {
-    if counter(page).final().first() > 1 {
-      align(center)[#counter(page).get().first()]
-    }
-  },
+paper: "a4",
+margin: 2.5cm,
+numbering: none,
+footer: context {
+if counter(page).final().first() > 1 {
+align(center)[#counter(page).get().first()]
+}
+},
 )
 #set text(font: "New Computer Modern", size: 11pt, lang: "en")
 #set par(justify: true)
@@ -17,46 +17,41 @@
 #set heading(numbering: "1.1")
 
 #align(center)[
-  #text(size: 1.8em, weight: "bold")[Notes on TeXSmith Extensions]
-]
+#text(size: 1.8em, weight: "bold")[Notes, asides, index and glossary]]
 #v(1.5em)
 
-TeXSmith ships with laser-focused extensions to close the LaTeX-sized gaps that stock Markdown leaves behind. They cooperate with MkDocs and MkDocs Material, tagging the HTML with enough metadata for the LaTeX renderer to finish the heavy lifting.
+This page collects the constructs that close the #ts-logo("LaTeX")-sized gaps stock Markdown
+leaves behind: index entries, asides, citations, theorems, the glossary and the
+acronym list. They cooperate with MkDocs and MkDocs Material, and carry enough
+structure for the paged writers to finish the job.
 
-- Index entries double as Lunr tags in MkDocs and page references in LaTeX.
+- Index entries double as Lunr tags in MkDocs and page references in #ts-logo("LaTeX").
 - Glossary entries and acronyms keep terminology consistent.
-- Citations and cross-references wire figures, tables, equations, and bibliography entries together.
-- Raw LaTeX fences and inline snippets let you sprinkle precise TeX without polluting the HTML build.
+- Citations and cross-references wire figures, tables, equations and
+bibliography entries together.
+- Raw fences and roles let you sprinkle precise #ts-logo("TeX") without polluting the web
+build.
 
-= Syntax
+= Syntax at a glance
 
-The syntax for these helpers follows a few rules:
+The syntax follows a few rules: easy to type, friendly with standard Markdown
+parsers, collision-free, and quiet in the raw text.
 
-+ Easy to type in Markdown.
-+ Friendly with standard Markdown parsers.
-+ Collision-free with existing extensions.
-+ Minimal visual noise in the raw text.
+/ `@key`, `@[key, p. 3]`: Refer. The registry the key belongs to decides what it renders as: a figure
+becomes “Figure 3”, a table “Table 4”, a section “Section 2”, a
+bibliography key a citation, `@gls:term` a glossary reference.
+/ `{index}[term]` / `#[term]`: Define an index entry. Invisible in the flow, a tag in Lunr, an `\index{}`
+entry in #ts-logo("LaTeX").
+/ `#(prefix:key)` / `{counter}(prefix:key)`: Define _and print_ a numbered item where no host element exists.
+/ `{aside}[…]` / `{aside side=left}[…]`: A remark tangential to the flow. The print templates put it in the margin;
+a web template may render a sidebar.
+/ `[^1]` with a `[^1]: …` definition: A real footnote, CommonMark's own spelling, untouched.
 
-== Syntax shorthand
-
-/ `@[]` Smart references: Expands to the proper label for the referenced object. Figures become `Figure X`, tables render as `Table Y`, sections as `Section Z`, equations as `(N)`, theorems as `Theorem M`, and so on.
-/ `^[]` Footnotes/bibliographic citations: Resolves to either an inline footnote (if defined locally) or a bibliography citation.
-/ `{index}[...]` Index entries: Inserts one or more index terms. They stay invisible in HTML yet show up as tags in Lunr and as `\index{}` entries in LaTeX.
-/ `{margin}[...]{side?}` Margin notes: Renders as `\marginnote{…}` from the LaTeX `marginnote` package (auto-loaded on first use). The optional suffix `{l}` / `{r}` / `{o}` / `{i}` forces a margin; without it the note follows the document's default (right in `oneside`, outer in `twoside`).
-
-Quick reference:
-
-- `[](:)` Add content block
-- `@()` Cross-reference helper
-- `^[]` / `\cite{}` Bibliographic citation
-- `{index}[term]` / `\index{}` Index entry
-- `{margin}[note]{l|r|o|i}?` / `\marginnote{}` Margin note
-
-= Other extensions
-
-- Epigraphs: define `epigraph` blocks in front matter or mark blockquotes with the `epigraph` class to route them through the LaTeX epigraph macro.
-- Drop caps: Material’s `lettering` syntax (`:[A](Natoly)`) produces LaTeX lettrine output automatically.
-- Wikipedia shortcodes keep working; they simply render as annotated links in both HTML and LaTeX.
+#ts-callout(kind: "note", title: [0.6 spellings])[
+`^[key]` / `[^key]` for citations, `{margin}[…]{l}` for asides and
+`{index:reg}[…]{b}` for index options are still parsed with a deprecation
+warning. `tmark lint –fix` rewrites them; the table is in
+Migrating to TMark.]
 
 = Index
 
@@ -65,70 +60,91 @@ Printed indexes convey intent with typography:
 - Normal text: the topic is discussed.
 - Italic: quick mention only.
 - Bold: this section focuses on the topic.
-- Bold italic: primary topic plus ancillary references.
 - Nested entries: group related terms.
 
-Use `{index}` plus multiple `[brackets]` to build entries. Append `{b}`, `{i}`, or `{bi}` to tweak the style, and specify `{index:registry}` when you want to file the entry under a custom registry (handy for multi-index books).
+The canonical spelling is the `index` role. Extra bracket groups nest (three
+levels at most); `main=true` marks the main topic (a bold page number);
+`registry=` files the entry under a named index, which is created on first use
+and printed where the template chooses.
 
 ```md
-Do you know the Gulliver's Travels tale about the egg dispute?
-{index}[endianness]{i}
+Do you know the Gulliver's Travels tale about the egg dispute? {index}[endianness]
 
-{index}[endianness]{bi}
-{index}[endianness]{b}
-{index}[byte order][endianness]{i}
-{index:physics}[relativity]{b}
+{index}[*endianness*]
+
+{index main=true}[endianness]
+
+{index}[byte order][endianness]
+
+{index registry=physics main=true}[relativity]
 ```
 
-= Margin notes
+Emphasis inside the term is content markup, so the italic form is simply
+`{index}[*term*]`. The shorthand `#[…]` is the same node:
 
-Drop short asides into the margin with the `{margin}[…]{side?}` inline syntax.
-An optional single-letter suffix selects the side:
+```md
+The device is little-endian. #[endianness]
+
+#[byte order][endianness]
+```
+
+= Asides (margin notes)
+
+Drop a short remark out of the flow with the `aside` role. `side=` is a layout
+hint of the same standing as `width=` on an image; the default lives in
+`press.aside` (right in `oneside`, outer in `twoside`).
 
 #table(
-  columns: 2,
-  align: (left, left),
-  table.header([Suffix], [Semantics]),
-  [(none)], [document default — right in `oneside`, outer in `twoside`],
-  [`{l}`], [force the left margin (scoped `\reversemarginpar`)],
-  [`{r}`], [force the right margin],
-  [`{o}`], [outer — MVP alias of `{r}`],
-  [`{i}`], [inner — MVP alias of `{l}`],
+columns: 2,
+align: (left, left),
+table.header([`side=`], [Semantics]),
+[(none)], [document default],
+[`left`], [force the left margin (scoped `\reversemarginpar`)],
+[`right`], [force the right margin],
+[`outer`], [outer margin],
+[`inner`], [inner margin],
 )
 
 ```md
-Hooke's law{margin}[linear only at small strain] holds
-below the yield point, but non-linear effects{margin}[see
-**Prandtl 1921** for the classical derivation]{l} dominate
-above it.
+Hooke's law {aside}[linear only at small strain] holds below the yield point,
+but non-linear effects {aside side=left}[see **Prandtl 1921** for the classical
+derivation] dominate above it.
 ```
 
-The note compiles down to a `\marginnote{…}` call from the LaTeX `marginnote`
-package, which TeXSmith's `ts-extra` fragment auto-loads when it spots the
-command in the rendered output. A forced left side wraps the call in a
-group that locally applies `\reversemarginpar`, so subsequent notes go
-back to the default placement.
+An aside has *zero width* in the flow: the whitespace on both sides collapses
+to one space and disappears before punctuation, so
+`Je suis un chien {aside}[remarque].` renders as “Je suis un chien.” with the
+note attached to the preceding word.
+
+Longer asides are a container:
+
+```md
+::: aside
+A **marginal note** attached to the preceding paragraph.
+:::
+```
 
 Inline Markdown inside the note (`**bold**`, `*italic*`, `` `code` ``,
-`[links](…)`) is preserved and runs through the standard inline handlers
-on the way to LaTeX.
+`[links](…)`) is preserved all the way to #ts-logo("LaTeX"), where the node becomes
+`\tsaside[side=left]{…}` from the `ts-typesetting` fragment, over the
+`marginnote` package.
 
 == Width
 
-Margin notes never bleed past the page edge. `ts-extra` ships three
-defensive layers alongside `\usepackage{marginnote}`:
+Margin notes never bleed past the page edge. The fragment ships three defensive
+layers alongside `\usepackage{marginnote}`:
 
 + *Geometry-aware clamp.* An `\AtBeginDocument` hook clamps
-     `\marginparwidth` to whatever horizontal space the document's geometry
-     actually reserves for the margin — the smaller of the recto outer
-     margin and, in `twoside` documents, the verso outer margin as well —
-     minus `\marginparsep` and a 6 mm safety buffer.
+`\marginparwidth` to whatever horizontal space the document's geometry
+actually reserves for the margin — the smaller of the recto outer
+margin and, in `twoside` documents, the verso outer margin as well —
+minus `\marginparsep` and a 6 mm safety buffer.
 + *Line-breaker tolerance.* `\marginfont` includes `\sloppy`,
-     `\emergencystretch=1em` and `\hyphenpenalty=50` so a long technical
-     word, URL or German compound hyphenates (or stretches inter-word
-     spacing) rather than poking past the margin box edge.
+`\emergencystretch=1em` and `\hyphenpenalty=50` so a long technical
+word, URL or German compound hyphenates (or stretches inter-word
+spacing) rather than poking past the margin box edge.
 + *Footnote-size body.* Notes default to `\footnotesize` so multi-word
-     notes still fit in narrow margins.
+notes still fit in narrow margins.
 
 That means a `geometry` block like
 
@@ -144,52 +160,55 @@ manual `marginparwidth=…` tweak needed.
 
 == Font size
 
-Because printed margins are narrow, margin notes default to `\footnotesize`
-so multi-word notes fit without overflowing. Override the default from your
-own preamble (or a custom `ts-extra` snippet) if you want a different
-treatment:
+Because printed margins are narrow, asides default to `\footnotesize` so
+multi-word notes fit without overflowing. Override the default from your own
+preamble if you want a different treatment:
 
 ```latex
 \renewcommand*{\marginfont}{\small\itshape}
 ```
 
-`\marginfont` is part of the `marginnote` package and is applied
-automatically to every note.
-
 = Citations
 
 Bibliographic references land in two ways:
 
-+ Point TeXSmith at one or more `.bib` files and cite entries using `^[]`.
++ Point TeXSmith at one or more `.bib` files and cite entries with `@key`.
 + Declare references directly in front matter via DOIs or inline metadata.
 
-```yaml
+```md
 ---
-bibliography:
-  # Just DOI entry, TeXSmith will fetch the rest
-  ein05: https://doi.org/10.1002/andp.19053221004
-  # Manual entry
-  KOFINAS2025:
-    type: article
-    title: |
-        The impact of generative AI on academic integrity of authentic
-        assessments within a higher education context
-    authors:
-      - name: "Alexander K. Kofinas"
-        affiliation: "University of Example"
-      - "Crystal Han-Huei Tsay"
-      - "David Pike"
-    journal: "British Journal of Educational Technology"
-    date: 2025-03
-    volume: 56
-    number: 6
-    pages: "2522-2549"
-    url: https://doi.org/10.1111/bjet.13585
+press:
+  sources:
+    bibliography:
+      # Just a DOI: TeXSmith fetches the rest
+      ein05: https://doi.org/10.1002/andp.19053221004
+      # Manual entry
+      KOFINAS2025:
+        type: article
+        title: |
+          The impact of generative AI on academic integrity of authentic
+          assessments within a higher education context
+        authors:
+          - name: "Alexander K. Kofinas"
+            affiliation: "University of Example"
+          - "Crystal Han-Huei Tsay"
+          - "David Pike"
+        journal: "British Journal of Educational Technology"
+        date: 2025-03
+        volume: 56
+        number: 6
+        pages: "2522-2549"
+        url: https://doi.org/10.1111/bjet.13585
 ---
-We know that time is relative ^[ein05] and recent work explores
-assessment ^[KOFINAS2025]. You can also cite multiple
-references ^[ein05,KOFINAS2025].
+
+We know that time is relative @ein05 and recent work explores assessment
+@KOFINAS2025. You can also cite several references at once
+@[ein05; KOFINAS2025], add a locator @[ein05, p. 33], or suppress the author
+@[-ein05].
 ```
+
+A DOI can be cited in place, without a front-matter entry, through the
+predeclared `doi` prefix: `@doi:10.1002/andp.19053221004`.
 
 Or with the CLI:
 
@@ -216,151 +235,124 @@ print(f"LaTeX written to: {tex_path}")
 
 = Math
 
-Inline math uses the standard Markdown-friendly delimiters: `$...$` or `\(...\)` for inline spans, `$$...$$` or `\[...\]` for display mode. Most Markdown engines (including MkDocs) pass these through untouched.
+Inline math is `$…$`; `\(…\)` is accepted as a #ts-logo("LaTeX")-habit compatibility layer.
+Display math is `$$…$$`, with `\[…\]` accepted the same way. Skip the space
+right after the opening delimiter.
 
-Numbered equations are not part of Markdown itself, so TeXSmith handles the heavy lifting for you.
+Numbered equations attach an anchor to the display block, Quarto-style:
 
 ```md
-{#pythagoras}
-: $$a^2 + b^2 = c^2$$
+$$
+a^2 + b^2 = c^2
+$$ {#eq:pythagoras}
 
-From @[pythagoras], we know that...
+From @eq:pythagoras, we know that…
 ```
 
-The equation receives an automatic number and can be referenced inline.
+Equations have an anchor but no caption line: print never captions them.
 
 = Theorems
 
-Use admonitions to define theorems, lemmas, definitions, and friends.
+Theorem environments are callout types with a counter. `theorem`, `lemma`,
+`corollary`, `proposition`, `definition` and `proof` are predeclared (`proof`
+has no counter).
 
 ```md
-!!! theorem "Pythagorean Theorem" {#thm:pythagoras}
-    This is a theorem about right triangles and can be summarized in the next
-    equation
-    $$ x^2 + y^2 = z^2 $$
+::: theorem {title="Pythagorean theorem" #thm:pythagoras}
+This is a theorem about right triangles and can be summarized in the next
+equation.
+
+$$ x^2 + y^2 = z^2 $$
+:::
+
+@thm:pythagoras is the oldest of them all.
 ```
 
-It will be rendered as:
+It renders as:
 
 ```latex
 \begin{theorem}[Pythagorean theorem]
-\label{pythagorean}
+\label{thm:pythagoras}
 This is a theorem about right triangles and can be summarized in the next
-equation
+equation.
 \[ x^2 + y^2 = z^2 \]
 \end{theorem}
 ```
 
-TeXSmith automatically generates the following admonition types:
+Declare your own, and say whether it shares a series:
 
-- Theorem (📐)
-- Corollary (🧾)
-- Lemma (📜)
-- Proof (🔍)
+```yaml
+press:
+  declare:
+    admonitions:
+      remark: {name: Remark, counter: eq}   # Springer style: shares the equation counter
+```
 
 = Glossary
 
-Specific terms live in the glossary; shorthand belongs in the acronym list. Keep them separate so TeXSmith can decide when to expand, hyperlink, or index each one.
+Specific terms live in the glossary; shorthand belongs in the acronym list. Keep
+them separate so TeXSmith can decide when to expand, hyperlink, or index each
+one.
 
 / Glossary entries: Definitions for full terms, whether single words or multi-word concepts.
 / Acronyms: Shortened forms such as NASA or UNESCO, often with an expanded description.
 
-Define both collections in front matter:
+Declare both under `press.declare`:
 
 ```yaml
-acronyms:
-  nasa:
-    name: NASA
-    description: National Aeronautics and Space Administration
-  unesco:
-    name: UNESCO
-    description: United Nations Educational, Scientific and Cultural Organization
-glossary:
-  solid:
-    name: S.O.L.I.D.
-    description: |
-        Acronym for five design principles intended to make software designs
-        more understandable, flexible, and maintainable.
-
-        1. Single Responsibility Principle
-        2. Open/Closed Principle
-        3. Liskov Substitution Principle
-        4. Interface Segregation Principle
-        5. Dependency Inversion Principle
-  liskov:
-    name: Liskov Substitution Principle
-    description: |
-        The Liskov Substitution Principle (LSP) states that objects of a
-        superclass should be replaceable with objects of a subclass without
-        affecting the correctness of the program. In other words, if S is a
-        subtype of T, then objects of type T in a program may be replaced with
-        objects of type S without altering any of the desirable properties of
-        that program (e.g., correctness).
+press:
+  declare:
+    acronyms:
+      nasa:
+        name: NASA
+        description: National Aeronautics and Space Administration
+      unesco:
+        name: UNESCO
+        description: United Nations Educational, Scientific and Cultural Organization
+    glossary:
+      solid:
+        name: S.O.L.I.D.
+        description: |
+          Acronym for five design principles intended to make software designs
+          more understandable, flexible, and maintainable.
+      liskov:
+        name: Liskov Substitution Principle
+        description: |
+          Objects of a superclass shall be replaceable with objects of a
+          subclass without affecting the correctness of the program.
 ```
 
-Inside the Markdown document you can reference glossary entries with the `gls:` prefix:
+A glossary entry is a referenceable object like any other, so it uses `@` and
+the predeclared `gls` prefix:
 
 ```md
-From the well-known [](gls:solid) principles, the following class must
-be [](gls:liskov) Substitution Principle-compliant.
+From the well-known @gls:solid principles, the following class must comply with
+@gls:liskov.
 ```
+
+The 0.6 spelling `[](gls:term)` is still accepted with a deprecation warning.
 
 == Wikipedia
 
-Many glossary-worthy entries live on Wikipedia, and TeXSmith can pull their summaries automatically.
+Many glossary-worthy entries live on Wikipedia, and TeXSmith can pull their
+summaries automatically. Network access is opt-in:
 
 ```md
-From the well-known [SOLID](https://en.wikipedia.org/wiki/SOLID)
+From the well-known [SOLID](https://en.wikipedia.org/wiki/SOLID) principles…
 ```
 
-When enabled, TeXSmith converts Wikipedia links into glossary entries for the printed document.
-
-```toml
-[texsmith.extensions]
-wikipedia_glossary = true
+```yaml
+press:
+  features:
+    glossary.wikipedia: true
 ```
 
-= Caption
+= Other constructs
 
-/ TeXSmith style: Here is a figure with a caption: ```md
-A diagram with 25% width
-: ![Diagram example](../examples/diagrams.png){width=25%}
-
-Table Caption Avec une grosse famille de chats  {#bigcats}
-: | Cat Name    | Age | Color      |
-  | ----------- | ---:| ---------- |
-  | Whiskers    |  2  | Tabby      |
-  | Mittens     |  5  | Black      |
-```
-/ Pymarkdown style: Here is a figure with a caption: ```md
-![Diagram example](../examples/diagrams.png){width=25%}
-
-    attrs: {#foobar}
-    Avec un chocolat violet qui sent la **vanille**
-```
-
-= Formatting
-
-Plain Markdown covers *bold*, _italic_, and `inline code`. PyMdown extensions add #strike[strikethrough], #highlight[highlighted text], #underline[inserted text].
-
-Small capitals are missing from the spec, so TeXSmith repurposes the double-underscore syntax for that effect:
-
-```markdown
-__Small Capitals__
-```
-
-which renders as:
-
-```latex
-\textsc{Small Capitals}
-```
-
-= Tables
-
-One of the limitations of Markdown is the lack of support for complex table features such as multi-row and multi-column cells, cell alignment, and captions.
-
-When a table is too large to fit on the page, try:
-
-- Slightly resizing the table to fit the available width.
-- Allowing cells to wrap across multiple lines.
-- Rotating the table to landscape orientation.
+- *Epigraphs*: tag a blockquote `{.epigraph}`, or set the front-matter
+`epigraph:` key to place one before the first heading.
+- *Lead-ins*: `{lead}[Boot sequence.] The device powers…` sets a run-in
+heading. A paragraph that opens with a short strong span is promoted to one
+automatically while the `paragraph.lead` feature is on.
+- *Comments*: `<!– note to self –>`, inline or block. The node survives the
+round-trip and is stripped in every backend by default.

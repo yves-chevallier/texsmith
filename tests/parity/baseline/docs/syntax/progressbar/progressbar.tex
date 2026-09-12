@@ -8,8 +8,11 @@
 \usepackage[colorlinks=true, linkcolor=NavyBlue, urlcolor=NavyBlue, citecolor=NavyBlue]{hyperref}
 \usepackage[a4paper]{geometry}
 \usepackage{ts-fonts}
-\usepackage{amsmath}
 \usepackage{float}
+\usepackage{graphicx}
+\usepackage{tcolorbox}
+\usepackage{fvextra}
+\usepackage{amsmath}
 \usepackage{seqsplit}
 \usepackage{ts-code}
 
@@ -17,53 +20,53 @@
 \usepackage{refcount}
 \makeatletter
 \def\ps@plain{
-  \let\@oddhead\@empty
-  \let\@evenhead\@empty
-  \def\@oddfoot{
-    \hfil
-    \ifnum\getpagerefnumber{LastPage}>1\relax
-      \thepage
-    \fi
-    \hfil}
-  \let\@evenfoot\@oddfoot
+\let\@oddhead\@empty
+\let\@evenhead\@empty
+\def\@oddfoot{
+\hfil
+\ifnum\getpagerefnumber{LastPage}>1\relax
+\thepage
+\fi
+\hfil}
+\let\@evenfoot\@oddfoot
 }
 \makeatother
 
 \title{Progress Bars}
 \author{}\date{}
-
 \begin{document}
-
 \maketitle
-
-\thispagestyle{plain}
-The \texttt{texsmith.progressbar} extension mirrors the \href{https://facelessuser.github.io/pymdown-extensions/extensions/progressbar/}{\texttt{pymdownx.progressbar}} syntax and
-converts it into \LaTeX{} commands powered by the
-\href{https://ctan.org/pkg/progressbar}{\texttt{progressbar}} package. It is enabled by default, so you can
-drop the \texttt{[=75\% "Done"]} shorthand in your Markdown and keep both the HTML preview and the PDF build in sync.
-
-\section{Syntax}\label{syntax}
-
-\begin{code}{markdown}{}{}
+A progress bar is an inline node with a value and an optional label. The
+spelling is PyMdownX's and is the canonical one, so the HTML preview and the
+PDF build stay in sync out of the box; in print it becomes a \tscodeinline{\textbackslash{}tsprogress}
+call from the \tscodeinline{ts-\allowbreak{}typesetting} fragment, over the
+\href{https://ctan.org/pkg/progressbar}{\tscodeinline{progressbar}} package.
+\section{Syntax}
+\begin{tscode}[lang=markdown, engine=pygments]
 \begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
 [=25\PYZpc{} \PYZdq{}Research\PYZdq{}]
 [=50\PYZpc{} \PYZdq{}Implementation\PYZdq{}]
 [=75\PYZpc{} \PYZdq{}Review\PYZdq{}]
-[=100\PYZpc{} \PYZdq{}Launch\PYZdq{}]\PYZob{}: .thin\PYZcb{}
+[=100\PYZpc{} \PYZdq{}Launch\PYZdq{}]\PYZob{}.thin\PYZcb{}
 \end{Verbatim}
-\end{code}
+\end{tscode}
 \begin{itemize}
-\item{} Values must be percentages (\texttt{0 – 100}). TeXSmith clamps the values if needed.
-\item{} The quoted label is optional; when omitted the percentage is used.
-\item{} Trailing attribute lists (\texttt{\{: .class \#id \}}) attach CSS classes and HTML attributes.
-  Use the \texttt{.thin} class to halve the bar height (e.g. for tables or dense summaries).
-
+\item Values must be percentages (\tscodeinline{0 – 100}). TeXSmith clamps the values if needed.
+\item The quoted label is optional; when omitted the percentage is used.
+\item A trailing attribute list (\tscodeinline{\{.class \#id\}}) attaches on any host. Use the
+\tscodeinline{.thin} class to halve the bar height (e.g. for tables or dense summaries);
+other classes reach the web stylesheet and are ignored in print.
+\item The bar is \textbf{inline}, so it fits in a table cell. Consecutive bars on
+separate lines are separate paragraphs or hard-broken lines, and the template
+chooses the width.
+\item The fraction form \tscodeinline{[=9/20 "Review"]} and the \tscodeinline{\{: .thin\}} attribute spelling
+are deprecated sugar, normalised by \tscodeinline{tmark lint -\allowbreak{}-\allowbreak{}fix}; see
+Migrating to TMark.
 \end{itemize}
-\section{LaTeX output}\label{latex-output}
-
-During rendering, TeXSmith emits a \texttt{\textbackslash{}progressbar} call with the following defaults:
-
-\begin{code}{latex}{}{}
+\section{\LaTeX{} output}
+The writer emits \tscodeinline{\textbackslash{}tsprogress[thin]\{0.45\}\{label\}}; the fragment expands it to a
+\tscodeinline{\textbackslash{}progressbar} call with the following defaults:
+\begin{tscode}[lang=latex, engine=pygments]
 \begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
 \PY{n+nb}{\PYZob{}}\PY{k}{\PYZbs{}progressbar}[
   width=9cm,
@@ -75,35 +78,19 @@ During rendering, TeXSmith emits a \texttt{\textbackslash{}progressbar} call wit
   emptycolor=black!10
 ]\PY{n+nb}{\PYZob{}}0.73\PY{n+nb}{\PYZcb{}} Launch\PY{n+nb}{\PYZcb{}}
 \end{Verbatim}
-\end{code}
-The \texttt{.thin} class switches \texttt{heighta} to \texttt{6pt}. If you need more control, wrap the Markdown block
-in a raw \LaTeX{} fence and tweak the options directly.
-
-\section{Example project}\label{example-project}
-
-Use the bundled \texttt{examples/progressbar} project for smoke tests or screenshots:
-
-\begin{code}{bash}{}{}
+\end{tscode}
+The \tscodeinline{.thin} class switches \tscodeinline{heighta} to \tscodeinline{6pt}. For more control, redefine
+\tscodeinline{\textbackslash{}tsprogress} in your template or append to its \tscodeinline{pgfkeys} family.
+\section{Example project}
+Use the bundled \tscodeinline{examples/progressbar} project for smoke tests or screenshots:
+\begin{tscode}[lang=bash, engine=pygments]
 \begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
 \PY{n+nb}{cd}\PY{+w}{ }examples/progressbar
 texsmith\PY{+w}{ }progressbar.md\PY{+w}{ }\PYZhy{}\PYZhy{}template\PY{+w}{ }article\PY{+w}{ }\PYZhy{}\PYZhy{}output\PYZhy{}dir\PY{+w}{ }build\PY{+w}{ }\PYZhy{}\PYZhy{}build
 \end{Verbatim}
-\end{code}
+\end{tscode}
 \begin{figure}[H]
-    \centering
-
-    \ifdefined\adjustbox
-
-        \adjustbox{max width=\textwidth}{
-            \includegraphics[width=\linewidth]{snippet-<HASH>.pdf}
-        }
-
-    \else
-
-        \includegraphics[width=\linewidth]{snippet-<HASH>.pdf}
-
-    \fi
-
+\centering
+\includegraphics[width=\linewidth]{snippet-<HASH>.pdf}
 \end{figure}
-
 \end{document}

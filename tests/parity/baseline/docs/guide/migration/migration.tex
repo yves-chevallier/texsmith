@@ -1,0 +1,248 @@
+\documentclass[a4paper,twoside]{article}
+
+\usepackage{morewrites}
+
+\usepackage[svgnames,dvipsnames,x11names]{xcolor}
+\usepackage{graphicx}
+\usepackage[english]{babel}
+\usepackage[colorlinks=true, linkcolor=NavyBlue, urlcolor=NavyBlue, citecolor=NavyBlue]{hyperref}
+\usepackage[a4paper]{geometry}
+\usepackage{ts-fonts}
+\usepackage{booktabs}
+\usepackage{csquotes}
+\usepackage{tabularx}
+\usepackage{tcolorbox}
+\usepackage{fvextra}
+\usepackage{amsmath}
+\usepackage{float}
+\usepackage{seqsplit}
+\newcolumntype{Y}{>{\centering\arraybackslash}X}
+\newcolumntype{Z}{>{\raggedleft\arraybackslash}X}
+\usepackage{ts-code}
+
+\usepackage{lastpage}
+\usepackage{refcount}
+\makeatletter
+\def\ps@plain{
+\let\@oddhead\@empty
+\let\@evenhead\@empty
+\def\@oddfoot{
+\hfil
+\ifnum\getpagerefnumber{LastPage}>1\relax
+\thepage
+\fi
+\hfil}
+\let\@evenfoot\@oddfoot
+}
+\makeatother
+
+\title{Migrating to TMark}
+\author{}\date{}
+\begin{document}
+\maketitle
+TeXSmith 0.7 parses its Markdown with \href{https://github.com/yves-chevallier/tmark}{TMark},
+a CommonMark parser with a specified extension set, instead of Python-Markdown
+and its plugin stack. Every spelling TeXSmith 0.6 understood is still accepted,
+but most of them are now \emph{deprecated sugar}: the parser warns, and the
+canonical spelling is what the documentation teaches and what the printer
+emits.
+
+Nothing in your corpus breaks on the day you upgrade. This page tells you what
+to change, how to change it in one command, and which behaviours differ because
+the parser changed.
+\section{One command}
+\tscodeinline{tmark lint} reports every deprecated spelling with its replacement, and
+\tscodeinline{-\allowbreak{}-\allowbreak{}fix} rewrites them:
+\begin{tscode}[lang=bash, engine=pygments]
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+tmark\PY{+w}{ }lint\PY{+w}{ }report.md\PY{+w}{              }\PY{c+c1}{\PYZsh{} list what would change}
+tmark\PY{+w}{ }lint\PY{+w}{ }\PYZhy{}\PYZhy{}fix\PY{+w}{ }\PYZhy{}\PYZhy{}diff\PY{+w}{ }report.md\PY{+w}{ }\PY{c+c1}{\PYZsh{} preview the rewrite as a unified diff}
+tmark\PY{+w}{ }lint\PY{+w}{ }\PYZhy{}\PYZhy{}fix\PY{+w}{ }\PYZhy{}\PYZhy{}stdout\PY{+w}{ }report.md\PY{+w}{ }\PYZgt{}\PY{+w}{ }fixed.md
+tmark\PY{+w}{ }lint\PY{+w}{ }\PYZhy{}\PYZhy{}fix\PY{+w}{ }report.md\PY{+w}{        }\PY{c+c1}{\PYZsh{} rewrite the file in place}
+\end{Verbatim}
+\end{tscode}
+\tscodeinline{-\allowbreak{}-\allowbreak{}fix} only applies the \emph{safe} fixes --- the mechanical one-to-one rewrites of
+the table below. Without \tscodeinline{-\allowbreak{}-\allowbreak{}stdout} or \tscodeinline{-\allowbreak{}-\allowbreak{}diff} the files are rewritten in
+place, so run it on a clean working tree.
+
+A whole tree at once:
+\begin{tscode}[lang=bash, engine=pygments]
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+tmark\PY{+w}{ }lint\PY{+w}{ }\PYZhy{}\PYZhy{}fix\PY{+w}{ }docs/**/*.md
+\end{Verbatim}
+\end{tscode}
+Run \tscodeinline{tmark lint -\allowbreak{}-\allowbreak{}strict} afterwards: what remains is either a genuine
+diagnostic or one of the sugars kept indefinitely.
+\section{What changes}
+Every row is accepted today. \enquote{fmt} in the \emph{Horizon} column means the spelling
+is scheduled for removal once \tscodeinline{tmark fmt} has shipped long enough to have
+rewritten the corpus; \enquote{indefinite} means it is part of the dialect's
+compatibility promise and is not going away --- usually because MkDocs Material
+or Pandoc renders it natively.
+\subsection{Inline constructs}
+\begin{center}
+\begin{tabularx}{\linewidth}{>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X}
+\toprule
+\textbf{Legacy} & \textbf{Canonical} & \textbf{Horizon} \\
+\midrule
+\tscodeinline{[\^{}key]} citation & \tscodeinline{@key} & fmt; \tscodeinline{[\^{}1]} stays a \emph{footnote} \\
+\tscodeinline{\^{}[k1,k2]} citation & \tscodeinline{@[k1; k2]} & fmt; \tscodeinline{\^{}[…]} then becomes an inline footnote \\
+\tscodeinline{[@key, p. 3]} (Pandoc) & \tscodeinline{@[key, p. 3]} & indefinite (Pandoc import) \\
+\tscodeinline{@https://doi.org/10.…} & \tscodeinline{@doi:10.…} & indefinite (sugar) \\
+\tscodeinline{[](gls:term)} & \tscodeinline{@gls:term} & fmt \\
+\tscodeinline{\{latex\}[\textbackslash{}clearpage]} & \tscodeinline{\{raw latex\}(\textbackslash{}clearpage)} & fmt \\
+\tscodeinline{\{typst\}[…]}, \tscodeinline{\{html\}[…]} & \tscodeinline{\{raw typst\}(…)}, \tscodeinline{\{raw html\}(…)} & fmt \\
+\tscodeinline{\{margin\}[…]} & \tscodeinline{\{aside\}[…]} & fmt \\
+\tscodeinline{\{margin\}[…]\{l\}} / \tscodeinline{\{r\}} / \tscodeinline{\{o\}} / \tscodeinline{\{i\}} & \tscodeinline{\{aside side=left\}[…]} / \tscodeinline{right} / \tscodeinline{outer} / \tscodeinline{inner} & fmt \\
+\tscodeinline{\#\{prefix:key\}} counter marker & \tscodeinline{\#(prefix:key)} & fmt \\
+\tscodeinline{\{index:registry\}[…]} & \tscodeinline{\{index registry=…\}[…]} & fmt \\
+\tscodeinline{\{index\}[…]\{b\}} & \tscodeinline{\{index main=true\}[…]} & fmt \\
+\tscodeinline{\{index\}[…]\{i\}} & content markup: \tscodeinline{\{index\}[*term*]} & fmt \\
+\tscodeinline{\{: .thin \#id\}} attribute list & \tscodeinline{\{.thin \#id\}} & fmt \\
+\tscodeinline{[=9/20 "Review"]} & \tscodeinline{[=45\% "Review"]} & fmt \\
+\bottomrule
+\end{tabularx}
+\end{center}
+\subsection{Blocks}
+\begin{center}
+\begin{tabularx}{\linewidth}{>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X}
+\toprule
+\textbf{Legacy} & \textbf{Canonical} & \textbf{Horizon} \\
+\midrule
+\tscodeinline{/// latex … ///} & a \tscodeinline{```latex raw} fence & fmt \\
+\tscodeinline{latex render} fence (draft 2) & \tscodeinline{```latex raw} & never shipped \\
+\tscodeinline{/// caption} with an indented \tscodeinline{attrs:} line & a \tscodeinline{Figure:} / \tscodeinline{Table:} / \tscodeinline{Listing:} caption line & fmt \\
+\tscodeinline{/// figure-\allowbreak{}caption} & \tscodeinline{Figure: … \{\#fig:x\}} & fmt \\
+\tscodeinline{-\allowbreak{}-\allowbreak{}8<-\allowbreak{}-\allowbreak{} "file"} & \tscodeinline{\{include\}(file)} & fmt \\
+\tscodeinline{::: margin} & \tscodeinline{::: aside} & fmt \\
+\tscodeinline{Table:} line \emph{before} the table & \tscodeinline{Table:} line \emph{after} the table & indefinite (Pandoc accepts both) \\
+\tscodeinline{!!! note} / \tscodeinline{??? note} callouts & \tscodeinline{::: note \{title="…" collapsed=true\}} & indefinite (Material renders them) \\
+\tscodeinline{=== "Windows"} content tabs & \tscodeinline{::: tabs} + \tscodeinline{::: tab \{title=Windows\}} & indefinite (Material renders them) \\
+\tscodeinline{<div markdown>} & \tscodeinline{::: div} & indefinite (the only container a Python-Markdown site renders) \\
+bare \tscodeinline{```mermaid} fence & \tscodeinline{```mermaid image} & indefinite (MkDocs renders it) \\
+\bottomrule
+\end{tabularx}
+\end{center}
+\subsection{Front matter}
+\begin{center}
+\begin{tabularx}{\linewidth}{>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X}
+\toprule
+\textbf{Legacy} & \textbf{Canonical} & \textbf{Horizon} \\
+\midrule
+top-level \tscodeinline{bibliography:} & \tscodeinline{press.sources.bibliography} & fmt \\
+top-level \tscodeinline{crossrefs:} & \tscodeinline{press.sources.crossrefs} & fmt \\
+top-level \tscodeinline{counters:} & \tscodeinline{press.declare.counters} & fmt \\
+top-level \tscodeinline{glossary:} & \tscodeinline{press.declare.glossary} & fmt \\
+top-level \tscodeinline{acronyms:} & \tscodeinline{press.declare.acronyms} & fmt \\
+top-level \tscodeinline{admonitions:} & \tscodeinline{press.declare.admonitions} & fmt \\
+\tscodeinline{admonitions.<type>.icon} / \tscodeinline{.color} & \tscodeinline{press.callouts.<type>} & fmt \\
+\tscodeinline{press.callout\_style}, \tscodeinline{press.admonition\_style} & \tscodeinline{press.callouts.style} & fmt \\
+\tscodeinline{-\allowbreak{}-\allowbreak{}no-\allowbreak{}promote-\allowbreak{}title} & \tscodeinline{title: null} & indefinite \\
+\bottomrule
+\end{tabularx}
+\end{center}
+\tscodeinline{title}, \tscodeinline{authors}, \tscodeinline{date}, \tscodeinline{lang} and \tscodeinline{id} stay at the \textbf{root} of the front
+matter: that is where MkDocs, Pandoc and editors read them. Only the keys
+TeXSmith owns move under \tscodeinline{press:}, and even those may still sit at the root ---
+\tscodeinline{press} is a namespace that keeps them out of a static-site generator's way,
+not a requirement.
+
+Before:
+\begin{tscode}[lang=yaml, engine=pygments]
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+\PY{n+nn}{\PYZhy{}\PYZhy{}\PYZhy{}}
+\PY{n+nt}{title}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{Revue}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{firmware}
+\PY{n+nt}{counters}\PY{p}{:}
+\PY{+w}{  }\PY{n+nt}{fw}\PY{p}{:}\PY{+w}{ }\PY{p+pIndicator}{\PYZob{}}\PY{n+nt}{name}\PY{p}{:}\PY{+w}{ }\PY{n+nv}{Constat}\PY{p+pIndicator}{,}\PY{n+nt}{ format}\PY{p}{:}\PY{+w}{ }\PY{l+s}{\PYZdq{}}\PY{l+s}{FW\PYZhy{}\PYZob{}n:02d\PYZcb{}}\PY{l+s}{\PYZdq{}}\PY{p+pIndicator}{\PYZcb{}}
+\PY{n+nt}{bibliography}\PY{p}{:}
+\PY{+w}{  }\PY{n+nt}{ein05}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{https://doi.org/10.1002/andp.19053221004}
+\PY{n+nt}{crossrefs}\PY{p}{:}
+\PY{+w}{  }\PY{n+nt}{fwrev}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{build/firmware\PYZhy{}review.refs.json}
+\PY{n+nt}{press}\PY{p}{:}
+\PY{+w}{  }\PY{n+nt}{callout\PYZus{}style}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{classic}
+\PY{n+nn}{\PYZhy{}\PYZhy{}\PYZhy{}}
+\end{Verbatim}
+\end{tscode}
+After:
+\begin{tscode}[lang=yaml, engine=pygments]
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+\PY{n+nn}{\PYZhy{}\PYZhy{}\PYZhy{}}
+\PY{n+nt}{title}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{Revue}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{firmware}
+\PY{n+nt}{press}\PY{p}{:}
+\PY{+w}{  }\PY{n+nt}{callouts}\PY{p}{:}
+\PY{+w}{    }\PY{n+nt}{style}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{classic}
+\PY{+w}{  }\PY{n+nt}{declare}\PY{p}{:}
+\PY{+w}{    }\PY{n+nt}{counters}\PY{p}{:}
+\PY{+w}{      }\PY{n+nt}{fw}\PY{p}{:}\PY{+w}{ }\PY{p+pIndicator}{\PYZob{}}\PY{n+nt}{name}\PY{p}{:}\PY{+w}{ }\PY{n+nv}{Constat}\PY{p+pIndicator}{,}\PY{n+nt}{ format}\PY{p}{:}\PY{+w}{ }\PY{l+s}{\PYZdq{}}\PY{l+s}{FW\PYZhy{}\PYZob{}n:02d\PYZcb{}}\PY{l+s}{\PYZdq{}}\PY{p+pIndicator}{\PYZcb{}}
+\PY{+w}{  }\PY{n+nt}{sources}\PY{p}{:}
+\PY{+w}{    }\PY{n+nt}{bibliography}\PY{p}{:}
+\PY{+w}{      }\PY{n+nt}{ein05}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{https://doi.org/10.1002/andp.19053221004}
+\PY{+w}{    }\PY{n+nt}{crossrefs}\PY{p}{:}
+\PY{+w}{      }\PY{n+nt}{fwrev}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{build/firmware\PYZhy{}review.refs.json}
+\PY{n+nn}{\PYZhy{}\PYZhy{}\PYZhy{}}
+\end{Verbatim}
+\end{tscode}
+\section{Behaviour changes that are not bugs}
+These are not deprecations: they are places where a CommonMark parser reads
+your bytes differently from Python-Markdown. \tscodeinline{tmark lint -\allowbreak{}-\allowbreak{}fix} cannot repair
+them, because in each case the \emph{old} reading was the accident.
+\begin{description}
+\item[{Lazy continuation lines}] CommonMark continues a paragraph inside a block quote or a list item even
+when the continuation line carries no marker. A line following \tscodeinline{> quote}
+with no \tscodeinline{>} joins the quote instead of starting a new paragraph. Put a
+blank line where you meant a break.
+\item[{List indentation}] A nested list item must be indented to the \emph{content column} of its parent
+(three spaces after \tscodeinline{1. }, two after \tscodeinline{-\allowbreak{} }), not by an arbitrary four. Lists
+indented by four spaces under a \tscodeinline{-\allowbreak{} } parent become indented code blocks.
+Conversely, a continuation paragraph inside a list item needs the content
+column too.
+\item[{\tscodeinline{\_} inside words}] CommonMark never opens emphasis inside a word, so \tscodeinline{snake\_case\_name} and
+\tscodeinline{file\_name\_here} stay literal. Python-Markdown's \tscodeinline{betterem} did the same,
+but the plain \tscodeinline{markdown} behaviour did not: documents that relied on
+\tscodeinline{a\_b\_c} rendering as emphasis now show the underscores.
+\item[{HTML blocks}] CommonMark's seven HTML-block kinds decide where an HTML block ends. Raw
+HTML is kept as typed and dropped by the paged writers. A \tscodeinline{<div>} whose
+body must be parsed as Markdown needs the \tscodeinline{markdown} attribute, and the
+canonical spelling is \tscodeinline{::: div} anyway.
+\item[{Entity handling}] Named and numeric HTML entities (\tscodeinline{\&nbsp;}, \tscodeinline{\&\#x2014;}) are decoded to the
+character they name, in every backend. An ampersand that is not an entity
+stays an ampersand; write \tscodeinline{\&amp;} when you mean the character in HTML
+output.
+\item[{Attribute lists need a host}] \tscodeinline{\{\#id .class\}} attaches to the element \emph{immediately} before it (or to the
+heading it terminates). A brace group with nothing to attach to is literal
+text and raises \tscodeinline{attributes-\allowbreak{}no-\allowbreak{}host}. Where you want attributes on a piece
+of running text, wrap it in an anonymous span: \tscodeinline{[this claim]\{\#claim:one\}}.
+The Python-Markdown spelling \tscodeinline{\{: …\}} is accepted and deprecated.
+\item[{\tscodeinline{\textbackslash{}@} and \tscodeinline{\textbackslash{}\#} escapes}] \tscodeinline{@} before a word and \tscodeinline{\#} before \tscodeinline{[} or \tscodeinline{(} are now sigils. They are
+guarded --- \tscodeinline{@} never fires inside an e-mail address, a URL, a word or code,
+and \tscodeinline{\#[} or \tscodeinline{\#(} followed by a non-space does not occur in prose --- but
+where you do need the literal character, escape it: \tscodeinline{\textbackslash{}@}, \tscodeinline{\textbackslash{}\#}.
+\end{description}
+Two further deviations from GFM are deliberate and long-standing in TeXSmith:
+\tscodeinline{\_\_text\_\_} is small caps, not a second bold, and \tscodeinline{-\allowbreak{}-\allowbreak{}-\allowbreak{}} on its own line is a
+divider that the paged templates render as a page break. Both are disabled by
+the \tscodeinline{strict} profile.
+\section{A migration session}
+\begin{tscode}[lang=bash, engine=pygments]
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+\PY{c+c1}{\PYZsh{} 1. See what the corpus looks like today.}
+tmark\PY{+w}{ }lint\PY{+w}{ }docs/**/*.md\PY{+w}{ }\PY{l+m}{2}\PYZgt{}\PY{p}{\PYZam{}}\PY{l+m}{1}\PY{+w}{ }\PY{p}{|}\PY{+w}{ }tee\PY{+w}{ }/tmp/before.txt
+
+\PY{c+c1}{\PYZsh{} 2. Preview the mechanical rewrites.}
+tmark\PY{+w}{ }lint\PY{+w}{ }\PYZhy{}\PYZhy{}fix\PY{+w}{ }\PYZhy{}\PYZhy{}diff\PY{+w}{ }docs/**/*.md\PY{+w}{ }\PY{p}{|}\PY{+w}{ }less
+
+\PY{c+c1}{\PYZsh{} 3. Apply them on a clean tree, then review the diff.}
+tmark\PY{+w}{ }lint\PY{+w}{ }\PYZhy{}\PYZhy{}fix\PY{+w}{ }docs/**/*.md
+git\PY{+w}{ }diff
+
+\PY{c+c1}{\PYZsh{} 4. What remains needs a human: read it with \PYZhy{}\PYZhy{}strict.}
+tmark\PY{+w}{ }lint\PY{+w}{ }\PYZhy{}\PYZhy{}strict\PY{+w}{ }docs/**/*.md
+\end{Verbatim}
+\end{tscode}
+Then rebuild the documents and compare the PDFs. The constructs most likely to
+move are the ones the CommonMark rules above touch --- nested lists and block
+quotes --- not the ones \tscodeinline{-\allowbreak{}-\allowbreak{}fix} rewrote.
+
+See also Diagnostics for the diagnostic codes and how to
+promote a warning to a hard failure.
+\end{document}

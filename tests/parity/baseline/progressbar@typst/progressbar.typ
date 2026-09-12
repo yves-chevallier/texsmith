@@ -1,15 +1,15 @@
 #set document(
-  title: "Progress Bars",
+title: "Progress Bars",
 )
 #set page(
-  paper: "a4",
-  margin: 2.5cm,
-  numbering: none,
-  footer: context {
-    if counter(page).final().first() > 1 {
-      align(center)[#counter(page).get().first()]
-    }
-  },
+paper: "a4",
+margin: 2.5cm,
+numbering: none,
+footer: context {
+if counter(page).final().first() > 1 {
+align(center)[#counter(page).get().first()]
+}
+},
 )
 #set text(font: "New Computer Modern", size: 11pt, lang: "en")
 #set par(justify: true)
@@ -17,11 +17,10 @@
 #set heading(numbering: "1.1")
 
 #align(center)[
-  #text(size: 1.8em, weight: "bold")[Progress Bars]
-]
+#text(size: 1.8em, weight: "bold")[Progress Bars]]
 #v(1.5em)
 
-The `texsmith.progressbar` extension renders Markdown shorthand into LaTeX progress bars:
+The `texsmith.progressbar` extension renders Markdown shorthand into #ts-logo("LaTeX") progress bars:
 
 ```
 [=25% "Research"]
@@ -30,10 +29,7 @@ The `texsmith.progressbar` extension renders Markdown shorthand into LaTeX progr
 [=100% "Launch"]{: .thin}
 ```
 
-#box(width: 9cm, height: 12pt, radius: 1pt, stroke: 0.5pt, fill: luma(90%), clip: true)[#box(width: 25%, height: 100%, fill: luma(40%))[]] Research
-
-#box(width: 9cm, height: 12pt, radius: 1pt, stroke: 0.5pt, fill: luma(90%), clip: true)[#box(width: 50%, height: 100%, fill: luma(40%))[]] Implementation
-
-#box(width: 9cm, height: 12pt, radius: 1pt, stroke: 0.5pt, fill: luma(90%), clip: true)[#box(width: 75%, height: 100%, fill: luma(40%))[]] Review
-
-#box(width: 9cm, height: 6pt, radius: 1pt, stroke: 0.5pt, fill: luma(90%), clip: true)[#box(width: 100%, height: 100%, fill: luma(40%))[]] Launch
+#ts-progress(0.25, label: "Research")
+#ts-progress(0.5, label: "Implementation")
+#ts-progress(0.75, label: "Review", class: ("candystripe"))
+#ts-progress(1, label: "Launch", thin: true)

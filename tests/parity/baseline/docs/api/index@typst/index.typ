@@ -1,15 +1,15 @@
 #set document(
-  title: "TeXSmith API Overview",
+title: "TeXSmith API Overview",
 )
 #set page(
-  paper: "a4",
-  margin: 2.5cm,
-  numbering: none,
-  footer: context {
-    if counter(page).final().first() > 1 {
-      align(center)[#counter(page).get().first()]
-    }
-  },
+paper: "a4",
+margin: 2.5cm,
+numbering: none,
+footer: context {
+if counter(page).final().first() > 1 {
+align(center)[#counter(page).get().first()]
+}
+},
 )
 #set text(font: "New Computer Modern", size: 11pt, lang: "en")
 #set par(justify: true)
@@ -17,24 +17,23 @@
 #set heading(numbering: "1.1")
 
 #align(center)[
-  #text(size: 1.8em, weight: "bold")[TeXSmith API Overview]
-]
+#text(size: 1.8em, weight: "bold")[TeXSmith API Overview]]
 #v(1.5em)
 
 The API reference is generated with *mkdocstrings* to stay in sync with the codebase. This section is organized into themed pages so you can quickly locate the module you need.
 
-Each page uses `module.path` directives; mkdocstrings resolves them at build time and renders docstrings, signatures, and cross-references.
+Each page uses `::: module.path` directives; mkdocstrings resolves them at build time and renders docstrings, signatures, and cross-references.
 
 = API Sections
 
-/ #link("high-level.md")[`high-level`]: High-level orchestration helpers (`ConversionService`, `TemplateSession`) for programmatic conversions and template sessions.
-/ #link("core.md")[`core`]: Core package modules (`texsmith`, configuration, contexts, conversion helpers, etc.).
-/ #link("bibliography.md")[`bibliography`]: Bibliography tooling (BibTeX parsing, DOI resolution, issue reporting).
-/ #link("cli.md")[`cli`]: Command-line entry points and utilities.
-/ #link("handlers.md")[`handlers`]: Readers and writers of the typed IR pipeline (`read(HTML) → IR → write(IR) → LaTeX`), with the `@reads` / `@writes` decorators.
-/ #link("latex.md")[`latex`]: LaTeX infrastructure (formatter, renderer, templates).
-/ #link("markdown.md")[`markdown`]: Markdown conversion helpers and custom extensions.
-/ #link("plugins.md")[`plugins`]: Optional integrations (MkDocs Material-specific handlers).
-/ #link("transformers.md")[`transformers`]: Asset conversion strategies (SVG, Draw.io, Mermaid, remote images).
+/ `high-level`: High-level orchestration helpers (`ConversionService`, `TemplateSession`) for programmatic conversions and template sessions.
+/ `core`: Core package modules (`texsmith`, configuration, contexts, conversion helpers, etc.).
+/ `bibliography`: Bibliography tooling (#ts-logo("BibTeX") parsing, DOI resolution, issue reporting).
+/ `cli`: Command-line entry points and utilities.
+/ `handlers`: IR passes and fragment contracts — the two extension points of the `parse → IR → passes → resolve → write` pipeline.
+/ `latex`: #ts-logo("LaTeX") infrastructure (formatter, renderer, templates).
+/ `markdown`: Markdown conversion helpers and custom extensions.
+/ `plugins`: Optional integrations (MkDocs Material-specific handlers).
+/ `transformers`: Asset conversion strategies (SVG, Draw.io, Mermaid, remote images).
 
 Use the navigation sidebar to jump to any section or follow the links above for more detail.

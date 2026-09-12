@@ -7,29 +7,65 @@
 \usepackage[english]{babel}
 \usepackage[colorlinks=true, linkcolor=NavyBlue, urlcolor=NavyBlue, citecolor=NavyBlue]{hyperref}
 \usepackage[a4paper]{geometry}
+\usepackage{ts-typesetting}
 \usepackage{ts-fonts}
 \usepackage{booktabs}
 \usepackage{tabularx}
+\usepackage{xcolor}
+\usepackage{epigraph}
+\usepackage{marginnote}
+\usepackage{multicol}
+\usepackage{progressbar}
+\usepackage{graphicx}
+\usepackage{tcolorbox}
+\usepackage{fvextra}
 \usepackage{amsmath}
 \usepackage{float}
 \usepackage{seqsplit}
 \newcolumntype{Y}{>{\centering\arraybackslash}X}
 \newcolumntype{Z}{>{\raggedleft\arraybackslash}X}
+\renewcommand*{\marginfont}{
+\footnotesize
+\sloppy
+\emergencystretch=1em
+\hyphenpenalty=50
+\exhyphenpenalty=50
+}
+\newlength{\tsmarginparavail}
+\newlength{\tsmarginparalt}
+\newlength{\tsmarginparbuf}
+\setlength{\tsmarginparbuf}{6mm}
+\makeatletter
+\AtBeginDocument{
+\setlength{\tsmarginparavail}{\dimexpr\paperwidth-\textwidth-1in-\oddsidemargin-\marginparsep-\tsmarginparbuf\relax}
+\ifdim\tsmarginparavail<\z@\setlength{\tsmarginparavail}{\z@}\fi
+\if@twoside
+\setlength{\tsmarginparalt}{\dimexpr1in+\evensidemargin-\marginparsep-\tsmarginparbuf\relax}
+\ifdim\tsmarginparalt<\z@\setlength{\tsmarginparalt}{\z@}\fi
+\ifdim\tsmarginparalt<\tsmarginparavail
+\setlength{\tsmarginparavail}{\tsmarginparalt}
+\fi
+\fi
+\ifdim\tsmarginparavail<\marginparwidth
+\setlength{\marginparwidth}{\tsmarginparavail}
+\fi
+}
+\makeatother
 \usepackage{ts-code}
 
 \usepackage{lastpage}
 \usepackage{refcount}
 \makeatletter
 \def\ps@plain{
-  \let\@oddhead\@empty
-  \let\@evenhead\@empty
-  \def\@oddfoot{
-    \hfil
-    \ifnum\getpagerefnumber{LastPage}>1\relax
-      \thepage
-    \fi
-    \hfil}
-  \let\@evenfoot\@oddfoot
+\let\@oddhead\@empty
+\let\@evenhead\@empty
+\def\@oddfoot{
+\hfil
+\ifnum\getpagerefnumber{LastPage}>1\relax
+\thepage
+\fi
+\hfil}
+\let\@evenfoot\@oddfoot
 }
 \makeatother
 
@@ -40,106 +76,92 @@
 \clubpenalties  3 10000 10000 150
 \displaywidowpenalty 10000
 \renewenvironment{abstract}{
-  \small
-  \begin{center}{\bfseries\abstractname}\end{center}
-  \begin{quotation}
+\small
+\begin{center}{\bfseries\abstractname}\end{center}
+\begin{quotation}
 }{\end{quotation}}
 \makeatletter
 \newcount\ts@affilcnt
 \newcount\ts@loopcnt
 \renewcommand{\thanks}[1]{
-  \stepcounter{footnote}
-  \protected@xdef\@thefnmark{\thefootnote}
-  \@footnotemark
-  \global\advance\ts@affilcnt\@ne
-  \expandafter\xdef\csname ts@affilM\the\ts@affilcnt\endcsname{\@thefnmark}
-  \expandafter\gdef\csname ts@affilT\the\ts@affilcnt\endcsname{#1}
+\stepcounter{footnote}
+\protected@xdef\@thefnmark{\thefootnote}
+\@footnotemark
+\global\advance\ts@affilcnt\@ne
+\expandafter\xdef\csname ts@affilM\the\ts@affilcnt\endcsname{\@thefnmark}
+\expandafter\gdef\csname ts@affilT\the\ts@affilcnt\endcsname{#1}
 }
 \newcommand\tsreplayfn{
-  \ts@loopcnt\z@
-  \loop
-    \advance\ts@loopcnt\@ne
-    \ifnum\ts@loopcnt>\ts@affilcnt\else
-      \xdef\@thefnmark{\csname ts@affilM\the\ts@loopcnt\endcsname}
-      \@footnotetext{\csname ts@affilT\the\ts@loopcnt\endcsname}
-  \repeat
+\ts@loopcnt\z@
+\loop
+\advance\ts@loopcnt\@ne
+\ifnum\ts@loopcnt>\ts@affilcnt\else
+\xdef\@thefnmark{\csname ts@affilM\the\ts@loopcnt\endcsname}
+\@footnotetext{\csname ts@affilT\the\ts@loopcnt\endcsname}
+\repeat
 }
 \makeatother
-
 \begin{document}
-
 \twocolumn[{
 \maketitle
 }]
 \tsreplayfn
-
-\thispagestyle{plain}
-\section{Introduction}\label{introduction}
-
+\section{Introduction}
 TeXSmith renders emoji as glyphs when you pick a font flavour:
-
-\begin{code}{yaml}{}{}
+\begin{tscode}[lang=yaml, engine=pygments]
 \begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
 \PY{n+nt}{press}\PY{p}{:}
 \PY{+w}{  }\PY{n+nt}{fonts}\PY{p}{:}
 \PY{+w}{    }\PY{n+nt}{emoji}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{black}
 \end{Verbatim}
-\end{code}
+\end{tscode}
 You can choose among four built-in options:
-
 \begin{description}
-\item[{ \texttt{black} }] OpenMoji Black (default).
-\item[{ \texttt{color} }] Noto Color Emoji.
-\item[{ \texttt{twemoji} }] Use the \texttt{twemoji} package as fallback.
-\item[{ \texttt{artifact} }] Download emoji as images using Twemoji.
-
+\item[{\tscodeinline{black}}] OpenMoji Black (default).
+\item[{\tscodeinline{color}}] Noto Color Emoji.
+\item[{\tscodeinline{twemoji}}] Use the \tscodeinline{twemoji} package as fallback.
+\item[{\tscodeinline{artifact}}] Download emoji as images using Twemoji.
 \end{description}
 Any other name is treated as a custom font family to load directly.
 
 Engines:
-
 \begin{itemize}
-\item{} LuaLaTeX relies on \texttt{luaotfload} to add the emoji font as a fallback.
-\item{} XeLaTeX/Tectonic use \texttt{ucharclasses} to automatically switch to the emoji font on the U+1F000--U+1FAFF range.
-You can type emoji directly in Markdown or LaTeX source.
-
+\item \tslogo{LuaLaTeX} relies on \tscodeinline{luaotfload} to add the emoji font as a fallback.
+\item \tslogo{XeLaTeX}/Tectonic use \tscodeinline{ucharclasses} to automatically switch to the emoji font on the U+1F000--U+1FAFF range.
+You can type emoji directly in Markdown or \LaTeX{} source.
 \end{itemize}
 \newpage
-\section{Examples}\label{examples}
-
+\section{Examples}
 \begin{center}
 \begin{tabularx}{\linewidth}{>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X}
 \toprule
 \textbf{Emoji} & \textbf{Description} \\
-
 \midrule
-\texsmithEmoji{😊} & Smiling face with smiling eyes \\
-\texsmithEmoji{🚀} & Rocket \\
-\texsmithEmoji{🍕} & Pizza \\
-\texsmithEmoji{🎉} & Party popper \\
-\texsmithEmoji{🐍} & Snake \\
-\texsmithEmoji{🌍} & Globe showing Europe-Africa \\
-\texsmithEmoji{💻} & Laptop computer \\
-\texsmithEmoji{📚} & Books \\
-\texsmithEmoji{🎨} & Artist palette \\
-\texsmithEmoji{👽} & Alien \\
-\texsmithEmoji{👋} & Waving hand \\
-\texsmithEmoji{🤖} & Robot \\
-\texsmithEmoji{🦄} & Unicorn \\
-\texsmithEmoji{🧠} & Brain \\
-\texsmithEmoji{🛸} & Flying saucer \\
-\texsmithEmoji{🛰️} & Satellite \\
-\texsmithEmoji{🐙} & Octopus \\
-\texsmithEmoji{📝} & Memo \\
-\texsmithEmoji{📋} & Note \\
-\texsmithEmoji{⭐} & Star \\
-\texsmithEmoji{✅} & Check mark \\
-\texsmithEmoji{❌} & Cross mark \\
-\texsmithEmoji{🧪} & Experiment \\
-\texsmithEmoji{💡} & Light Bulb \\
-
+\tsemoji{😊} & Smiling face with smiling eyes \\
+\tsemoji{🚀} & Rocket \\
+\tsemoji{🍕} & Pizza \\
+\tsemoji{🎉} & Party popper \\
+\tsemoji{🐍} & Snake \\
+\tsemoji{🌍} & Globe showing Europe-Africa \\
+\tsemoji{💻} & Laptop computer \\
+\tsemoji{📚} & Books \\
+\tsemoji{🎨} & Artist palette \\
+\tsemoji{👽} & Alien \\
+\tsemoji{👋} & Waving hand \\
+\tsemoji{🤖} & Robot \\
+\tsemoji{🦄} & Unicorn \\
+\tsemoji{🧠} & Brain \\
+\tsemoji{🛸} & Flying saucer \\
+\tsemoji{🛰️} & Satellite \\
+\tsemoji{🐙} & Octopus \\
+\tsemoji{📝} & Memo \\
+\tsemoji{📋} & Note \\
+\tsemoji{⭐} & Star \\
+\tsemoji{✅} & Check mark \\
+\tsemoji{❌} & Cross mark \\
+\tsemoji{🧪} & Experiment \\
+\tsemoji{💡} & Light Bulb \\
 \bottomrule
 \end{tabularx}
 \end{center}
-
 \end{document}

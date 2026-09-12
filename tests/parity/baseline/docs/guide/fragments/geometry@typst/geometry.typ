@@ -1,15 +1,15 @@
 #set document(
-  title: "Geometry Fragment",
+title: "Geometry Fragment",
 )
 #set page(
-  paper: "a4",
-  margin: 2.5cm,
-  numbering: none,
-  footer: context {
-    if counter(page).final().first() > 1 {
-      align(center)[#counter(page).get().first()]
-    }
-  },
+paper: "a4",
+margin: 2.5cm,
+numbering: none,
+footer: context {
+if counter(page).final().first() > 1 {
+align(center)[#counter(page).get().first()]
+}
+},
 )
 #set text(font: "New Computer Modern", size: 11pt, lang: "en")
 #set par(justify: true)
@@ -17,15 +17,14 @@
 #set heading(numbering: "1.1")
 
 #align(center)[
-  #text(size: 1.8em, weight: "bold")[Geometry Fragment]
-]
+#text(size: 1.8em, weight: "bold")[Geometry Fragment]]
 #v(1.5em)
 
-The geometry fragment allows you to customize the page layout of your document, including paper size, orientation, margins, and adding watermarks. It relies on the LaTeX `geometry` package to manage these settings and uses TikZ for watermarking if you want any.
+The geometry fragment allows you to customize the page layout of your document, including paper size, orientation, margins, and adding watermarks. It relies on the #ts-logo("LaTeX") `geometry` package to manage these settings and uses TikZ for watermarking if you want any.
 
 = Paper format
 
-We support standard paper formats recognized by the LaTeX `geometry` package. You can specify the format using the `paper.format` key. For example, to set the paper size to A5, you would use:
+We support standard paper formats recognized by the #ts-logo("LaTeX") `geometry` package. You can specify the format using the `paper.format` key. For example, to set the paper size to A5, you would use:
 
 ```yaml
 press:
@@ -34,19 +33,15 @@ press:
 
 The supported formats include but are not limited to: a0, a1, a2, a3, a4, a5, a6, b0, b1, b2, b3, b4, b5, b6, c0, c1, c2, c3, c4, c5, c6, letter, legal, executive, ansia, ansib, ansic, ansid, ansie.
 
-#block(width: 100%, radius: 2pt, stroke: (left: 1.5pt + rgb("#448AFF"), rest: 0.4pt + rgb("#448AFF")))[
-  #block(width: 100%, fill: rgb("#448AFF").lighten(90%), inset: (x: 8pt, y: 4pt))[#text(weight: "bold", fill: rgb("#448AFF"))[📝#h(0.4em)Note]]
-  #block(width: 100%, inset: (x: 8pt, y: 6pt))[
-    The default format is `a4`, in contrast to LaTeX’s `letter` default.
-    Globally, only the United States, Canada, Mexico, and a few Caribbean
-    countries primarily use the `letter` size – roughly 500 million people. The
-    rest of the world, representing more than 6 billion people, relies on `a4`
-    as the standard paper size. Given this overwhelming majority, TeXSmith
-    defaults to `a4` to better serve its global user base. Sorry, folks in the
-    US, Canada, and Mexico – TeXSmith is opinionated and has chosen the
-    broadest consensus!
-  ]
-]
+#ts-callout(kind: "note")[
+The default format is `a4`, in contrast to #ts-logo("LaTeX")’s `letter` default.
+Globally, only the United States, Canada, Mexico, and a few Caribbean
+countries primarily use the `letter` size – roughly 500 million people. The
+rest of the world, representing more than 6 billion people, relies on `a4`
+as the standard paper size. Given this overwhelming majority, TeXSmith
+defaults to `a4` to better serve its global user base. Sorry, folks in the
+US, Canada, and Mexico – TeXSmith is opinionated and has chosen the
+broadest consensus!]
 
 = Orientation
 
@@ -109,6 +104,10 @@ press:
 This document demonstrates custom page geometry settings using the geometry fragment.
 ```
 
+#figure(
+image("snippet-<HASH>.png", width: 70%),
+)
+
 Here's another example with custom paper width:
 
 ```md
@@ -122,3 +121,7 @@ press:
 ---
 $$ E=mc^2 $$
 ```
+
+#figure(
+image("snippet-<HASH>.png", width: 70%),
+)

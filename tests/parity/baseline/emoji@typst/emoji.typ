@@ -1,15 +1,15 @@
 #set document(
-  title: "Emoji Support",
+title: "Emoji Support",
 )
 #set page(
-  paper: "a4",
-  margin: 2.5cm,
-  numbering: none,
-  footer: context {
-    if counter(page).final().first() > 1 {
-      align(center)[#counter(page).get().first()]
-    }
-  },
+paper: "a4",
+margin: 2.5cm,
+numbering: none,
+footer: context {
+if counter(page).final().first() > 1 {
+align(center)[#counter(page).get().first()]
+}
+},
 )
 #set text(font: "New Computer Modern", size: 11pt, lang: "en")
 #set par(justify: true)
@@ -18,8 +18,7 @@
 #set heading(numbering: "1.1")
 
 #align(center)[
-  #text(size: 1.8em, weight: "bold")[Emoji Support]
-]
+#text(size: 1.8em, weight: "bold")[Emoji Support]]
 #v(1.5em)
 
 = Introduction
@@ -43,38 +42,38 @@ Any other name is treated as a custom font family to load directly.
 
 Engines:
 
-- LuaLaTeX relies on `luaotfload` to add the emoji font as a fallback.
-- XeLaTeX/Tectonic use `ucharclasses` to automatically switch to the emoji font on the U+1F000–U+1FAFF range.
-  You can type emoji directly in Markdown or LaTeX source.
+- #ts-logo("LuaLaTeX") relies on `luaotfload` to add the emoji font as a fallback.
+- #ts-logo("XeLaTeX")/Tectonic use `ucharclasses` to automatically switch to the emoji font on the U+1F000–U+1FAFF range.
+You can type emoji directly in Markdown or #ts-logo("LaTeX") source.
 
 = Examples
 
 #table(
-  columns: 2,
-  align: (left, left),
-  table.header([Emoji], [Description]),
-  [😊], [Smiling face with smiling eyes],
-  [🚀], [Rocket],
-  [🍕], [Pizza],
-  [🎉], [Party popper],
-  [🐍], [Snake],
-  [🌍], [Globe showing Europe-Africa],
-  [💻], [Laptop computer],
-  [📚], [Books],
-  [🎨], [Artist palette],
-  [👽], [Alien],
-  [👋], [Waving hand],
-  [🤖], [Robot],
-  [🦄], [Unicorn],
-  [🧠], [Brain],
-  [🛸], [Flying saucer],
-  [🛰️], [Satellite],
-  [🐙], [Octopus],
-  [📝], [Memo],
-  [📋], [Note],
-  [⭐], [Star],
-  [✅], [Check mark],
-  [❌], [Cross mark],
-  [🧪], [Experiment],
-  [💡], [Light Bulb],
+columns: 2,
+align: (left, left),
+table.header([Emoji], [Description]),
+[#ts-emoji[😊]], [Smiling face with smiling eyes],
+[#ts-emoji[🚀]], [Rocket],
+[#ts-emoji[🍕]], [Pizza],
+[#ts-emoji[🎉]], [Party popper],
+[#ts-emoji[🐍]], [Snake],
+[#ts-emoji[🌍]], [Globe showing Europe-Africa],
+[#ts-emoji[💻]], [Laptop computer],
+[#ts-emoji[📚]], [Books],
+[#ts-emoji[🎨]], [Artist palette],
+[#ts-emoji[👽]], [Alien],
+[#ts-emoji[👋]], [Waving hand],
+[#ts-emoji[🤖]], [Robot],
+[#ts-emoji[🦄]], [Unicorn],
+[#ts-emoji[🧠]], [Brain],
+[#ts-emoji[🛸]], [Flying saucer],
+[#ts-emoji[🛰️]], [Satellite],
+[#ts-emoji[🐙]], [Octopus],
+[#ts-emoji[📝]], [Memo],
+[#ts-emoji[📋]], [Note],
+[#ts-emoji[⭐]], [Star],
+[#ts-emoji[✅]], [Check mark],
+[#ts-emoji[❌]], [Cross mark],
+[#ts-emoji[🧪]], [Experiment],
+[#ts-emoji[💡]], [Light Bulb],
 )

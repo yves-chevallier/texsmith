@@ -1,15 +1,15 @@
 #set document(
-  title: "Output backends",
+title: "Output backends",
 )
 #set page(
-  paper: "a4",
-  margin: 2.5cm,
-  numbering: none,
-  footer: context {
-    if counter(page).final().first() > 1 {
-      align(center)[#counter(page).get().first()]
-    }
-  },
+paper: "a4",
+margin: 2.5cm,
+numbering: none,
+footer: context {
+if counter(page).final().first() > 1 {
+align(center)[#counter(page).get().first()]
+}
+},
 )
 #set text(font: "New Computer Modern", size: 11pt, lang: "en")
 #set par(justify: true)
@@ -17,8 +17,7 @@
 #set heading(numbering: "1.1")
 
 #align(center)[
-  #text(size: 1.8em, weight: "bold")[Output backends]
-]
+#text(size: 1.8em, weight: "bold")[Output backends]]
 #v(1.5em)
 
 TeXSmith lowers every document into a typed intermediate representation (IR)
@@ -36,34 +35,30 @@ texsmith doc.md -tarticle --format latex   # default
 texsmith doc.md -tarticle --format typst
 ```
 
-`--format` is case-insensitive and accepts `latex` (default) or `typst`.
+`–format` is case-insensitive and accepts `latex` (default) or `typst`.
 
-= LaTeX backend (default)
+= #ts-logo("LaTeX") backend (default)
 
-The LaTeX backend (`texsmith.writers.latex`) is the full-featured path: it
+The #ts-logo("LaTeX") backend (`texsmith.writers.latex`) is the full-featured path: it
 drives the template/fragment runtime, fonts and script matching, glossary and
-index engines, asset transformers, and compiles through a TeX engine
-(Tectonic by default, or `latexmk` with `--engine lualatex` / `--engine
+index engines, asset transformers, and compiles through a #ts-logo("TeX") engine
+(Tectonic by default, or `latexmk` with `–engine lualatex` / `–engine
 xelatex`). This is the backend assumed throughout most of this documentation.
 
 = Typst backend
 
-#block(width: 100%, radius: 2pt, stroke: (left: 1.5pt + rgb("#FFB200"), rest: 0.4pt + rgb("#FFB200")))[
-  #block(width: 100%, fill: rgb("#FFB200").lighten(90%), inset: (x: 8pt, y: 4pt))[#text(weight: "bold", fill: rgb("#FFB200"))[⚠#h(0.4em)Experimental]]
-  #block(width: 100%, inset: (x: 8pt, y: 6pt))[
-    The Typst backend is *experimental*. The LaTeX backend remains the
-    default and the supported path; Typst covers a subset of it, leans on the
-    third-party `mitex` package for math (which can fail on some constructs —
-    see below), and approximates or drops a few constructs. Use it for new,
-    Typst-first documents and check the output; do not assume LaTeX-level
-    fidelity yet.
-  ]
-]
+#ts-callout(kind: "warning", title: [Experimental])[
+The Typst backend is *experimental*. The #ts-logo("LaTeX") backend remains the
+default and the supported path; Typst covers a subset of it, leans on the
+third-party `mitex` package for math (which can fail on some constructs —
+see below), and approximates or drops a few constructs. Use it for new,
+Typst-first documents and check the output; do not assume #ts-logo("LaTeX")-level
+fidelity yet.]
 
 #link("https://typst.app")[Typst] is a modern, Rust-based typesetting system. The
 Typst backend (`texsmith.writers.typst`) emits a compilable `.typ` source from
 the same IR. It is a lean, Typst-native path and intentionally covers a
-*subset* of the LaTeX backend (see #link(<scope-and-limitations>)[Scope]).
+*subset* of the #ts-logo("LaTeX") backend (see #link(<scope-and-limitations>)[Scope]).
 
 ```bash
 # Emit a .typ file (no compiler required)
@@ -78,20 +73,17 @@ the *article* or *book* template, the body is wrapped in the template's
 Typst scaffolding (title, authors, date, abstract, table of contents,
 sectioning, and a native Typst bibliography).
 
-#block(width: 100%, radius: 2pt, stroke: (left: 1.5pt + rgb("#448AFF"), rest: 0.4pt + rgb("#448AFF")))[
-  #block(width: 100%, fill: rgb("#448AFF").lighten(90%), inset: (x: 8pt, y: 4pt))[#text(weight: "bold", fill: rgb("#448AFF"))[📝#h(0.4em)Typst output and LaTeX-only flags]]
-  #block(width: 100%, inset: (x: 8pt, y: 6pt))[
-    `--format typst` cannot be combined with `--html`, `--template-info`, or
-    `--template-scaffold`: those inspect the LaTeX fragment/engine machinery,
-    which the Typst path does not use.
-  ]
-]
+#ts-callout(kind: "note", title: [Typst output and #ts-logo("LaTeX")-only flags])[
+`–format typst` cannot be combined with `–html`, `–template-info`, or
+`–template-scaffold`: those inspect the #ts-logo("LaTeX") fragment/engine machinery,
+which the Typst path does not use.]
 
 == Installing a Typst compiler
 
 Emitting the `.typ` source never needs a compiler; compilation does. Two paths
 are supported, tried in this order:
 
+#ts-div("tab", title: "Embedded compiler (pure pip)")[
 The `typst` PyPI package embeds the Rust compiler, so nothing needs to be
 on your `PATH`:
 
@@ -101,8 +93,9 @@ pip install "texsmith[typst]"
 uv pip install -e ".[typst]"
 # or
 uv tool install "texsmith[typst]"
-```
+```]
 
+#ts-div("tab", title: "System binary")[
 Install `typst` on your `PATH` and TeXSmith detects it automatically as a
 fallback:
 
@@ -110,51 +103,47 @@ fallback:
 brew install typst          # Homebrew
 cargo install typst-cli      # Cargo
 # or download a release from https://github.com/typst/typst/releases
-```
+```]
 
-#block(width: 100%, radius: 2pt, stroke: (left: 1.5pt + rgb("#FFB200"), rest: 0.4pt + rgb("#FFB200")))[
-  #block(width: 100%, fill: rgb("#FFB200").lighten(90%), inset: (x: 8pt, y: 4pt))[#text(weight: "bold", fill: rgb("#FFB200"))[⚠#h(0.4em)Prefer the system binary for recent math]]
-  #block(width: 100%, inset: (x: 8pt, y: 6pt))[
-    The compiler embedded in the `typst` PyPI package can lag behind recent
-    Typst releases. Math is rendered through the `mitex` package (a LaTeX-math
-    renderer for Typst); documents that rely on a recent `mitex` may *fail*
-    with the embedded compiler where an up-to-date system binary only emits a
-    warning. For math-heavy documents, prefer the system binary.
-  ]
-]
+#ts-callout(kind: "warning", title: [Prefer the system binary for recent math])[
+The compiler embedded in the `typst` PyPI package can lag behind recent
+Typst releases. Math is rendered through the `mitex` package (a #ts-logo("LaTeX")-math
+renderer for Typst); documents that rely on a recent `mitex` may *fail*
+with the embedded compiler where an up-to-date system binary only emits a
+warning. For math-heavy documents, prefer the system binary.]
 
 If no compiler is available, the `.typ` is still written and TeXSmith reports
 that compilation was skipped, with an actionable install hint.
 
-== Scope and limitations
+== Scope and limitations <scope-and-limitations>
 
 The Typst backend covers a real templated document (article and book) and the
 common Markdown/HTML constructs:
 
 - Document structure, paragraphs, and headings.
 - Inline emphasis (emphasis, strong, strikeout, underline, highlight, small
-    caps, sub/superscript, quotes), inline code, and links.
+caps, sub/superscript, quotes), inline code, and links.
 - Code blocks, block quotes, bullet and ordered lists, definition lists,
-    admonitions, horizontal rules.
+admonitions, horizontal rules.
 - Images, figures, simple (GFM) tables, and rich (`yaml` / `data-ts`) tables
-    rebuilt as a native Typst `#table`.
-- Footnotes, TeX logos, keystrokes, progress bars.
+rebuilt as a native Typst `#table`.
+- Footnotes, #ts-logo("TeX") logos, keystrokes, progress bars.
 - Math (rendered through the Typst `mitex` package) and equation
-    cross-references (`#ref`).
+cross-references (`#ref`).
 - Native citations (`#cite`) resolved against the bibliography collection the
-    CLI builds (`.bib` files plus inline DOI), wired through `#bibliography(...)`.
+CLI builds (`.bib` files plus inline DOI), wired through `#bibliography(...)`.
 
 Approximated or dropped on the Typst path (no exact equivalent — the content is
 preserved as closely as possible rather than producing wrong output):
 
 - `MarginNote` renders as a `#footnote` (the `side` hint has no counterpart).
 - Index entries (`<abbr>` markers) keep their visible text but emit no index
-    marker — Typst has no `makeindex` equivalent here.
+marker — Typst has no `makeindex` equivalent here.
 - Remote (`http(s)://`, `data:`) or unresolved local images are dropped to keep
-    the document compilable.
-- The LaTeX-only glossary/index engines and the fragment system are not used on
-    the Typst path.
+the document compilable.
+- The #ts-logo("LaTeX")-only glossary/index engines and the fragment system are not used on
+the Typst path.
 
 Any IR node that still has *no* Typst emitter raises an explicit, localised
 `TypstWriteError` (naming the node and the backend) rather than emitting wrong
-output. For anything beyond this subset, use the default LaTeX backend.
+output. For anything beyond this subset, use the default #ts-logo("LaTeX") backend.

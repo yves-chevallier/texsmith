@@ -10,6 +10,8 @@
 \usepackage{ts-fonts}
 \usepackage{booktabs}
 \usepackage{tabularx}
+\usepackage{tcolorbox}
+\usepackage{fvextra}
 \usepackage{amsmath}
 \usepackage{float}
 \usepackage{seqsplit}
@@ -21,79 +23,59 @@
 \usepackage{refcount}
 \makeatletter
 \def\ps@plain{
-  \let\@oddhead\@empty
-  \let\@evenhead\@empty
-  \def\@oddfoot{
-    \hfil
-    \ifnum\getpagerefnumber{LastPage}>1\relax
-      \thepage
-    \fi
-    \hfil}
-  \let\@evenfoot\@oddfoot
+\let\@oddhead\@empty
+\let\@evenhead\@empty
+\def\@oddfoot{
+\hfil
+\ifnum\getpagerefnumber{LastPage}>1\relax
+\thepage
+\fi
+\hfil}
+\let\@evenfoot\@oddfoot
 }
 \makeatother
 
 \title{Release Notes \& Compatibility}
 \author{}\date{}
-
 \begin{document}
-
 \maketitle
-
-\label{releasenotes}
-
-\thispagestyle{plain}
-Use this page to see what changed in each TeXSmith release and which \LaTeX{} prerequisites (TeX Live year, \texttt{tlmgr} packages, shell-escape requirements) the bundled templates expect. Update your automation and CI images accordingly before bumping versions.
-
-\section{TeXSmith releases}\label{texsmith-releases}
-
+\phantomsection\label{releasenotes}
+Use this page to see what changed in each TeXSmith release and which \LaTeX{} prerequisites (\TeX{} Live year, \tscodeinline{tlmgr} packages, shell-escape requirements) the bundled templates expect. Update your automation and CI images accordingly before bumping versions.
+\section{TeXSmith releases}
 \begin{center}
 \begin{tabularx}{\linewidth}{>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X}
 \toprule
 \textbf{Version} & \textbf{Highlights} & \textbf{Notes} \\
-
 \midrule
-\texttt{0.1.0} & Unified conversion engine (\texttt{ConversionService}, slot assignments, diagnostics emitters), Typer CLI with \texttt{render}/\texttt{bibliography}, initial template catalog (article, book), diagram adapters (Mermaid, Draw.io, Svgbob), MkDocs integration hooks. & Requires Python 3.10+, MkDocs \(\geq\) 1.6 for docs. Templates target TeX Live 2023. \\
-\texttt{0.4.0} & Fragment manifest/ABC (attributes, partials, slot validation), explicit partial precedence (template > fragment > core), template discovery order (built-ins \(\rightarrow\) packages \(\rightarrow\) local \(\rightarrow\) \texttt{\textasciitilde{}/.texsmith/templates}), improved \texttt{-\allowbreak{}-\allowbreak{}template-\allowbreak{}info} output (slots, fragments, attribute columns). & Update custom fragments to \texttt{fragment.toml} + \texttt{partials}/\texttt{required\_partials}; remove legacy template attributes (cover/twocolumn/backmatter/emoji) and use fragment-provided options instead. Use \texttt{texsmith templates} to confirm discovery. \\
-
+\tscodeinline{0.1.0} & Unified conversion engine (\tscodeinline{ConversionService}, slot assignments, diagnostics emitters), Typer CLI with \tscodeinline{render}/\tscodeinline{bibliography}, initial template catalog (article, book), diagram adapters (Mermaid, Draw.io, Svgbob), MkDocs integration hooks. & Requires Python 3.10+, MkDocs \tsscript{mathematics}{\(\geq\) }1.6 for docs. Templates target \TeX{} Live 2023. \\
+\tscodeinline{0.4.0} & Fragment manifest/ABC (attributes, partials, slot validation), explicit partial precedence (template > fragment > core), template discovery order (built-ins \tsscript{symbols}{\(\rightarrow\) }packages \tsscript{symbols}{\(\rightarrow\) }local \tsscript{symbols}{\(\rightarrow\) }\tscodeinline{\textasciitilde{}/.texsmith/templates}), improved \tscodeinline{-\allowbreak{}-\allowbreak{}template-\allowbreak{}info} output (slots, fragments, attribute columns). & Update custom fragments to \tscodeinline{fragment.toml} + \tscodeinline{partials}/\tscodeinline{required\_partials}; remove legacy template attributes (cover/twocolumn/backmatter/emoji) and use fragment-provided options instead. Use \tscodeinline{texsmith templates} to confirm discovery. \\
 \bottomrule
 \end{tabularx}
 \end{center}
-
-Future releases will append to this table with new features, migration notes, and API changes. If you upgrade past the compatibility range declared in a template manifest (\texttt{[compat]}), update the template and rerun its smoke tests.
-
-\section{Template compatibility matrix}\label{template-compatibility-matrix}
-
+Future releases will append to this table with new features, migration notes, and API changes. If you upgrade past the compatibility range declared in a template manifest (\tscodeinline{[compat]}), update the template and rerun its smoke tests.
+\section{Template compatibility matrix}
 \begin{center}
 \begin{tabularx}{\linewidth}{>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X}
 \toprule
-\textbf{Template} & \textbf{Version} & \textbf{TeX Live year} & \textbf{Shell escape} & \textbf{Key \texttt{tlmgr} packages} & \textbf{Notes} \\
-
+\textbf{Template} & \textbf{Version} & \textbf{TeX Live year} & \textbf{Shell escape} & \textbf{Key \tscodeinline{tlmgr} packages} & \textbf{Notes} \\
 \midrule
-\texttt{article} & 0.1.0 & 2023 & Required (minted) & \texttt{babel}, \texttt{geometry}, \texttt{hyperref}, \texttt{microtype}, \texttt{lmodern}, \texttt{textcomp}, \texttt{fontspec}, \texttt{biblatex} & Provides \texttt{mainmatter} + \texttt{abstract} slots, ships custom \texttt{.latexmkrc} with minted settings. \\
-\texttt{book} & 0.2.0 & 2023 & Required (minted) & \texttt{babel}, \texttt{babel-\allowbreak{}french}, \texttt{csquotes}, \texttt{fontspec}, \texttt{fancyvrb}, \texttt{geometry}, \texttt{hyperref}, \texttt{longtable}, \texttt{microtype}, \texttt{titlesec}, \texttt{titletoc}, \texttt{xcolor}, \texttt{xunicode} & Adds chapter-aware slots (\texttt{frontmatter}, \texttt{mainmatter}, \texttt{appendix}), reuses shared callouts/utility styles, ships cover assets. \\
-
+\tscodeinline{article} & 0.1.0 & 2023 & Required (minted) & \tscodeinline{babel}, \tscodeinline{geometry}, \tscodeinline{hyperref}, \tscodeinline{microtype}, \tscodeinline{lmodern}, \tscodeinline{textcomp}, \tscodeinline{fontspec}, \tscodeinline{biblatex} & Provides \tscodeinline{mainmatter} + \tscodeinline{abstract} slots, ships custom \tscodeinline{.latexmkrc} with minted settings. \\
+\tscodeinline{book} & 0.2.0 & 2023 & Required (minted) & \tscodeinline{babel}, \tscodeinline{babel-\allowbreak{}french}, \tscodeinline{csquotes}, \tscodeinline{fontspec}, \tscodeinline{fancyvrb}, \tscodeinline{geometry}, \tscodeinline{hyperref}, \tscodeinline{longtable}, \tscodeinline{microtype}, \tscodeinline{titlesec}, \tscodeinline{titletoc}, \tscodeinline{xcolor}, \tscodeinline{xunicode} & Adds chapter-aware slots (\tscodeinline{frontmatter}, \tscodeinline{mainmatter}, \tscodeinline{appendix}), reuses shared callouts/utility styles, ships cover assets. \\
 \bottomrule
 \end{tabularx}
 \end{center}
-
 To inspect third-party or local templates, run:
-
-\begin{code}{bash}{}{}
+\begin{tscode}[lang=bash, engine=pygments]
 \begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
 texsmith\PY{+w}{ }\PYZhy{}\PYZhy{}template\PY{+w}{ }\PYZlt{}name\PYZhy{}or\PYZhy{}path\PYZgt{}\PY{+w}{ }\PYZhy{}\PYZhy{}template\PYZhy{}info
 \end{Verbatim}
-\end{code}
-The command lists TeX Live requirements, shell-escape expectations, slot definitions, and declared assets.
-
-\section{Upgrade checklist}\label{upgrade-checklist}
-
+\end{tscode}
+The command lists \TeX{} Live requirements, shell-escape expectations, slot definitions, and declared assets.
+\section{Upgrade checklist}
 \begin{enumerate}
-\item Run \texttt{uv run mkdocs build} to confirm docs compile without warnings on the new release.
-\item Update your TeX Live image with any new packages referenced in the table above or in \texttt{template-\allowbreak{}info}.
-\item Rebuild the examples (\texttt{docs/examples/index.md}) and confirm smoke tests still pass.
+\item Run \tscodeinline{uv run mkdocs build} to confirm docs compile without warnings on the new release.
+\item Update your \TeX{} Live image with any new packages referenced in the table above or in \tscodeinline{template-\allowbreak{}info}.
+\item Rebuild the examples (\tscodeinline{docs/examples/index.md}) and confirm smoke tests still pass.
 \item Capture notable migrations (CLI flags, metadata schema changes) in this page and link PRs or release notes for future reference.
-
 \end{enumerate}
-
 \end{document}

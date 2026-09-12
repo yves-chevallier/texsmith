@@ -1,15 +1,15 @@
 #set document(
-  title: "Tables",
+title: "Tables",
 )
 #set page(
-  paper: "a4",
-  margin: 2.5cm,
-  numbering: none,
-  footer: context {
-    if counter(page).final().first() > 1 {
-      align(center)[#counter(page).get().first()]
-    }
-  },
+paper: "a4",
+margin: 2.5cm,
+numbering: none,
+footer: context {
+if counter(page).final().first() > 1 {
+align(center)[#counter(page).get().first()]
+}
+},
 )
 #set text(font: "New Computer Modern", size: 11pt, lang: "en")
 #set par(justify: true)
@@ -17,8 +17,7 @@
 #set heading(numbering: "1.1")
 
 #align(center)[
-  #text(size: 1.8em, weight: "bold")[Tables]
-]
+#text(size: 1.8em, weight: "bold")[Tables]]
 #v(1.5em)
 
 = Complex Tables
@@ -99,7 +98,7 @@ data:
 ```
 ````
 
-The goal is to convert Markdown tables into LaTeX tables with automatic line breaks so that columns wrap gracefully when a table is too wide.
+The goal is to convert Markdown tables into #ts-logo("LaTeX") tables with automatic line breaks so that columns wrap gracefully when a table is too wide.
 
 = Shrink-to-fit vs Auto-expand
 

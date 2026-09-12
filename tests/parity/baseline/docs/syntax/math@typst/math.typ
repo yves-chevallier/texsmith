@@ -1,15 +1,15 @@
 #set document(
-  title: "Math Extension",
+title: "Math Extension",
 )
 #set page(
-  paper: "a4",
-  margin: 2.5cm,
-  numbering: none,
-  footer: context {
-    if counter(page).final().first() > 1 {
-      align(center)[#counter(page).get().first()]
-    }
-  },
+paper: "a4",
+margin: 2.5cm,
+numbering: none,
+footer: context {
+if counter(page).final().first() > 1 {
+align(center)[#counter(page).get().first()]
+}
+},
 )
 #set text(font: "New Computer Modern", size: 11pt, lang: "en")
 #set par(justify: true)
@@ -18,34 +18,29 @@
 #set heading(numbering: "1.1")
 
 #align(center)[
-  #text(size: 1.8em, weight: "bold")[Math Extension]
-]
+#text(size: 1.8em, weight: "bold")[Math Extension]]
 #v(1.5em)
 
-LaTeX is the gold standard for math notation. TeXSmith relies on the same syntax that MathJax/Arithmatex understand.
+#ts-logo("LaTeX") is the gold standard for math notation. TeXSmith relies on the same syntax that MathJax/Arithmatex understand.
 
 = Inline Math
 
-Inline math uses the usual delimiters `\( ... \)` or `$ ... $`:
+Inline math is `$ ... $`. GitHub renders it natively, so it is the canonical
+spelling; `\( ... \)` is accepted as a compatibility layer for #ts-logo("LaTeX") habits.
 
-```markdown
-The quadratic formula is given by \(x = \frac{-b \pm \sqrt{b^2 - 4ac}}{2a}\)
-or $x = \frac{-b \pm \sqrt{b^2 - 4ac}}{2a}$.
+```md
+The quadratic formula is given by $x = \frac{-b \pm \sqrt{b^2 - 4ac}}{2a}$,
+or \(x = \frac{-b \pm \sqrt{b^2 - 4ac}}{2a}\) in the LaTeX-flavoured form.
 ```
 
 Rendered as:
 
 #quote(block: true)[
-  The quadratic formula is given by #mi(```x = \frac{-b \pm \sqrt{b^2 - 4ac}}{2a}```)
-  or #mi(```x = \frac{-b \pm \sqrt{b^2 - 4ac}}{2a}```).
-]
+The quadratic formula is given by #mi(`x = \frac{-b \pm \sqrt{b^2 - 4ac}}{2a}`)
+or #mi(`x = \frac{-b \pm \sqrt{b^2 - 4ac}}{2a}`).]
 
-#block(width: 100%, radius: 2pt, stroke: (left: 1.5pt + rgb("#448AFF"), rest: 0.4pt + rgb("#448AFF")))[
-  #block(width: 100%, fill: rgb("#448AFF").lighten(90%), inset: (x: 8pt, y: 4pt))[#text(weight: "bold", fill: rgb("#448AFF"))[📝#h(0.4em)Note]]
-  #block(width: 100%, inset: (x: 8pt, y: 6pt))[
-    Skip the spaces right after `$` or `\(`—they confuse the parser.
-  ]
-]
+#ts-callout(kind: "note")[
+Skip the spaces right after `$` or `\(`—they confuse the parser.]
 
 = Block Math
 
@@ -60,8 +55,8 @@ $$
 $$
 ```
 
-#mitex(```\imath \hbar \frac{\partial}{\partial t} \Psi(\mathbf{r},t) =
-\left[ -\frac{\hbar^2}{2m} \nabla^2 + V(\mathbf{r},t) \right] \Psi(\mathbf{r},t)```)
+#mitex(`\imath \hbar \frac{\partial}{\partial t} \Psi(\mathbf{r},t) =
+\left[ -\frac{\hbar^2}{2m} \nabla^2 + V(\mathbf{r},t) \right] \Psi(\mathbf{r},t)`)
 
 == Multiple equations
 
@@ -79,19 +74,36 @@ $$
 $$
 ```
 
-#mitex(```\begin{align*}
+#mitex(`\begin{align*}
 \nabla \cdot \vec{E} &= \frac{\rho}{\varepsilon_0} \quad &&\text{Gauss Law}\\[4pt]
 \nabla \cdot \vec{B} &= 0 \quad &&\text{Gauss's law for electricity}\\[4pt]
 \nabla \times \vec{E} &= -\,\frac{\partial \vec{B}}{\partial t}
-    \quad &&\text{Faraday's law}\\[4pt]
+\quad &&\text{Faraday's law}\\[4pt]
 \nabla \times \vec{B} &= \mu_0 \vec{J} + \mu_0 \varepsilon_0
-    \frac{\partial \vec{E}}{\partial t}
+\frac{\partial \vec{E}}{\partial t}
 \quad &&\text{Ampère-Maxwell law}
-\end{align*}```)
+\end{align*}`)
 
 == Numbered equation
 
-Wrap an equation inside `\begin{equation}...\end{equation}` (or `equation*`) to control numbering. Example: the relativistic gravitational field equation:
+The canonical spelling attaches an anchor to the display block, Quarto-style,
+and refers to it with `@`:
+
+```md
+$$
+R_{\mu \nu} - \frac{1}{2} R g_{\mu \nu} + \Lambda g_{\mu \nu} =
+    \frac{8 \pi G}{c^4} T_{\mu \nu}
+$$ {#eq:gravity}
+
+@eq:gravity describes the fundamental interaction of gravitation as a result of
+spacetime being curved by matter and energy.
+```
+
+Equations take an anchor but no caption line: print never captions them.
+
+The #ts-logo("LaTeX")-flavoured form — `\begin{equation}...\end{equation}` (or `equation*`)
+with `\label`, referenced with `$\eqref{...}$` — keeps working as a
+compatibility layer. Example: the relativistic gravitational field equation:
 
 ```latex
 The equation $\eqref{eq:gravity}$ describes the fundamental interaction of
@@ -107,11 +119,9 @@ $$
 
 The equation #ref(<eq:gravity>) describes the fundamental interaction of gravitation as a result of spacetime being curved by matter and energy.
 
-#mitex(```\begin{equation}
+#mitex(`\begin{equation}
 R_{\mu \nu} - \frac{1}{2} R g_{\mu \nu} + \Lambda g_{\mu \nu} = \frac{8 \pi G}{c^4} T_{\mu \nu}
-\end{equation}```) <eq:gravity>
-
-Reference numbered equations via `\label{}` and drop `$\eqref{...}$` in Markdown.
+\end{equation}`) <eq:gravity>
 
 In an aligned environment, you can number individual lines using the `\label{}` command:
 
@@ -134,13 +144,13 @@ $$
 
 As we see in #ref(<eq:max2>), the magnetic flux through a closed surface is zero, implying the lack of magnetic monopoles.
 
-#mitex(```\begin{align}
+#mitex(`\begin{align}
 \oint_{\partial V} \vec{E} \cdot d\vec{S} &= \frac{Q_{\text{int}}}{\varepsilon_0}  \\[6pt]
 \oint_{\partial V} \vec{B} \cdot d\vec{S} &= 0  \\[6pt]
 \oint_{\partial S} \vec{E} \cdot d\vec{\ell} &= -\,\frac{d}{dt} \int_{S} \vec{B} \cdot d\vec{S}  \\[6pt]
 \oint_{\partial S} \vec{B} \cdot d\vec{\ell} &= \mu_0 I_{\text{int}}
 + \mu_0 \varepsilon_0 \frac{d}{dt} \int_{S} \vec{E} \cdot d\vec{S}
-\end{align}```) <eq:max1>
+\end{align}`) <eq:max1>
 
 = MkDocs Configuration
 
@@ -172,9 +182,13 @@ window.MathJax = {
 };
 ```
 
-= With LaTeX output
+= With #ts-logo("LaTeX") output
 
 Here’s what the above snippets look like once rendered through TeXSmith:
+
+#figure(
+image("snippet-<HASH>.png", width: 60%),
+)
 
 With the source:
 

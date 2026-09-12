@@ -1,15 +1,15 @@
 #set document(
-  title: "Markdown Conversion",
+title: "Markdown Conversion",
 )
 #set page(
-  paper: "a4",
-  margin: 2.5cm,
-  numbering: none,
-  footer: context {
-    if counter(page).final().first() > 1 {
-      align(center)[#counter(page).get().first()]
-    }
-  },
+paper: "a4",
+margin: 2.5cm,
+numbering: none,
+footer: context {
+if counter(page).final().first() > 1 {
+align(center)[#counter(page).get().first()]
+}
+},
 )
 #set text(font: "New Computer Modern", size: 11pt, lang: "en")
 #set par(justify: true)
@@ -17,12 +17,5 @@
 #set heading(numbering: "1.1")
 
 #align(center)[
-  #text(size: 1.8em, weight: "bold")[Markdown Conversion]
-]
+#text(size: 1.8em, weight: "bold")[Markdown Conversion]]
 #v(1.5em)
-
-::: texsmith.adapters.markdown
-
-::: texsmith.extensions
-
-::: texsmith.extensions.missing\_footnotes

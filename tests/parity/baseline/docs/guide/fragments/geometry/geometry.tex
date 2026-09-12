@@ -8,8 +8,12 @@
 \usepackage[colorlinks=true, linkcolor=NavyBlue, urlcolor=NavyBlue, citecolor=NavyBlue]{hyperref}
 \usepackage[a4paper]{geometry}
 \usepackage{ts-fonts}
-\usepackage{amsmath}
 \usepackage{float}
+\usepackage{graphicx}
+\usepackage{tcolorbox}
+\usepackage{xcolor}
+\usepackage{fvextra}
+\usepackage{amsmath}
 \usepackage{seqsplit}
 \usepackage{ts-callouts}
 \usepackage{ts-code}
@@ -18,75 +22,62 @@
 \usepackage{refcount}
 \makeatletter
 \def\ps@plain{
-  \let\@oddhead\@empty
-  \let\@evenhead\@empty
-  \def\@oddfoot{
-    \hfil
-    \ifnum\getpagerefnumber{LastPage}>1\relax
-      \thepage
-    \fi
-    \hfil}
-  \let\@evenfoot\@oddfoot
+\let\@oddhead\@empty
+\let\@evenhead\@empty
+\def\@oddfoot{
+\hfil
+\ifnum\getpagerefnumber{LastPage}>1\relax
+\thepage
+\fi
+\hfil}
+\let\@evenfoot\@oddfoot
 }
 \makeatother
 
 \title{Geometry Fragment}
 \author{}\date{}
-
 \begin{document}
-
 \maketitle
-
-\thispagestyle{plain}
-The geometry fragment allows you to customize the page layout of your document, including paper size, orientation, margins, and adding watermarks. It relies on the \LaTeX{} \texttt{geometry} package to manage these settings and uses TikZ for watermarking if you want any.
-
-\section{Paper format}\label{paper-format}
-
-We support standard paper formats recognized by the \LaTeX{} \texttt{geometry} package. You can specify the format using the \texttt{paper.format} key. For example, to set the paper size to A5, you would use:
-
-\begin{code}{yaml}{}{}
+The geometry fragment allows you to customize the page layout of your document, including paper size, orientation, margins, and adding watermarks. It relies on the \LaTeX{} \tscodeinline{geometry} package to manage these settings and uses TikZ for watermarking if you want any.
+\section{Paper format}
+We support standard paper formats recognized by the \LaTeX{} \tscodeinline{geometry} package. You can specify the format using the \tscodeinline{paper.format} key. For example, to set the paper size to A5, you would use:
+\begin{tscode}[lang=yaml, engine=pygments]
 \begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
 \PY{n+nt}{press}\PY{p}{:}
 \PY{+w}{  }\PY{n+nt}{paper}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{a5}
 \end{Verbatim}
-\end{code}
+\end{tscode}
 The supported formats include but are not limited to: a0, a1, a2, a3, a4, a5, a6, b0, b1, b2, b3, b4, b5, b6, c0, c1, c2, c3, c4, c5, c6, letter, legal, executive, ansia, ansib, ansic, ansid, ansie.
-
-\begin{callout}[callout note]{Note}
-The default format is \texttt{a4}, in contrast to \LaTeX{}'s \texttt{letter} default.
+\begin{tscallout}[kind=note]
+The default format is \tscodeinline{a4}, in contrast to \LaTeX{}'s \tscodeinline{letter} default.
 Globally, only the United States, Canada, Mexico, and a few Caribbean
-countries primarily use the \texttt{letter} size -- roughly 500 million people. The
-rest of the world, representing more than 6 billion people, relies on \texttt{a4}
+countries primarily use the \tscodeinline{letter} size -- roughly 500 million people. The
+rest of the world, representing more than 6 billion people, relies on \tscodeinline{a4}
 as the standard paper size. Given this overwhelming majority, TeXSmith
-defaults to \texttt{a4} to better serve its global user base. Sorry, folks in the
+defaults to \tscodeinline{a4} to better serve its global user base. Sorry, folks in the
 US, Canada, and Mexico -- TeXSmith is opinionated and has chosen the
 broadest consensus!
-\end{callout}
-\section{Orientation}\label{orientation}
-
-You can set the page orientation using the \texttt{paper.orientation} key. The possible values are \texttt{portrait} and \texttt{landscape}. For example, to set the orientation to landscape, you would use:
-
-\begin{code}{yaml}{}{}
+\end{tscallout}
+\section{Orientation}
+You can set the page orientation using the \tscodeinline{paper.orientation} key. The possible values are \tscodeinline{portrait} and \tscodeinline{landscape}. For example, to set the orientation to landscape, you would use:
+\begin{tscode}[lang=yaml, engine=pygments]
 \begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
 \PY{n+nt}{press}\PY{p}{:}
 \PY{+w}{  }\PY{n+nt}{paper}\PY{p}{:}
 \PY{+w}{    }\PY{n+nt}{orientation}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{landscape}
 \end{Verbatim}
-\end{code}
-\section{Margins}\label{margins}
-
-You can customize the page margins using the \texttt{paper.margin} key. You can either specify a single value for all margins or provide an object with specific margins. For example:
-
-\begin{code}{yaml}{}{}
+\end{tscode}
+\section{Margins}
+You can customize the page margins using the \tscodeinline{paper.margin} key. You can either specify a single value for all margins or provide an object with specific margins. For example:
+\begin{tscode}[lang=yaml, engine=pygments]
 \begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
 \PY{n+nt}{press}\PY{p}{:}
 \PY{+w}{  }\PY{n+nt}{paper}\PY{p}{:}
 \PY{+w}{    }\PY{n+nt}{margin}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{2cm}
 \end{Verbatim}
-\end{code}
+\end{tscode}
 Or for specific margins:
-
-\begin{code}{yaml}{}{}
+\begin{tscode}[lang=yaml, engine=pygments]
 \begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
 \PY{n+nt}{press}\PY{p}{:}
 \PY{+w}{  }\PY{n+nt}{paper}\PY{p}{:}
@@ -96,21 +87,18 @@ Or for specific margins:
 \PY{+w}{      }\PY{n+nt}{top}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{4cm}
 \PY{+w}{      }\PY{n+nt}{bottom}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{5cm}
 \end{Verbatim}
-\end{code}
-Or use predefined margin settings like \texttt{narrow}, \texttt{moderate}, or \texttt{wide}:
-
-\begin{code}{yaml}{}{}
+\end{tscode}
+Or use predefined margin settings like \tscodeinline{narrow}, \tscodeinline{moderate}, or \tscodeinline{wide}:
+\begin{tscode}[lang=yaml, engine=pygments]
 \begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
 \PY{n+nt}{press}\PY{p}{:}
 \PY{+w}{  }\PY{n+nt}{paper}\PY{p}{:}
 \PY{+w}{    }\PY{n+nt}{margin}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{narrow}
 \end{Verbatim}
-\end{code}
-\section{Examples}\label{examples}
-
+\end{tscode}
+\section{Examples}
 Here is an example configuration that sets the paper size to C5, uses landscape orientation, adds a frame, customizes the margins, and includes a watermark:
-
-\begin{code}{md}{}{}
+\begin{tscode}[lang=md, engine=pygments]
 \begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
 \PYZhy{}\PYZhy{}\PYZhy{}
 press:
@@ -127,26 +115,13 @@ press:
 
 This document demonstrates custom page geometry settings using the geometry fragment.
 \end{Verbatim}
-\end{code}
+\end{tscode}
 \begin{figure}[H]
-    \centering
-
-    \ifdefined\adjustbox
-
-        \adjustbox{max width=\textwidth}{
-            \includegraphics[width=0.7\linewidth]{snippet-<HASH>.pdf}
-        }
-
-    \else
-
-        \includegraphics[width=0.7\linewidth]{snippet-<HASH>.pdf}
-
-    \fi
-
+\centering
+\includegraphics[width=0.7\linewidth]{snippet-<HASH>.pdf}
 \end{figure}
 Here's another example with custom paper width:
-
-\begin{code}{md}{}{}
+\begin{tscode}[lang=md, engine=pygments]
 \begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
 \PYZhy{}\PYZhy{}\PYZhy{}
 press:
@@ -158,22 +133,9 @@ press:
 \PY{g+gu}{\PYZhy{}\PYZhy{}\PYZhy{}}
 \PYZdl{}\PYZdl{} E=mc\PYZca{}2 \PYZdl{}\PYZdl{}
 \end{Verbatim}
-\end{code}
+\end{tscode}
 \begin{figure}[H]
-    \centering
-
-    \ifdefined\adjustbox
-
-        \adjustbox{max width=\textwidth}{
-            \includegraphics[width=0.7\linewidth]{snippet-<HASH>.pdf}
-        }
-
-    \else
-
-        \includegraphics[width=0.7\linewidth]{snippet-<HASH>.pdf}
-
-    \fi
-
+\centering
+\includegraphics[width=0.7\linewidth]{snippet-<HASH>.pdf}
 \end{figure}
-
 \end{document}

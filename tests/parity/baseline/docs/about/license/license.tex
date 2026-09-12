@@ -9,36 +9,35 @@
 \usepackage[a4paper]{geometry}
 \usepackage{ts-fonts}
 \usepackage{csquotes}
+\usepackage{tcolorbox}
+\usepackage{fvextra}
 \usepackage{float}
 \usepackage{seqsplit}
+\usepackage{ts-code}
 
 \usepackage{lastpage}
 \usepackage{refcount}
 \makeatletter
 \def\ps@plain{
-  \let\@oddhead\@empty
-  \let\@evenhead\@empty
-  \def\@oddfoot{
-    \hfil
-    \ifnum\getpagerefnumber{LastPage}>1\relax
-      \thepage
-    \fi
-    \hfil}
-  \let\@evenfoot\@oddfoot
+\let\@oddhead\@empty
+\let\@evenhead\@empty
+\def\@oddfoot{
+\hfil
+\ifnum\getpagerefnumber{LastPage}>1\relax
+\thepage
+\fi
+\hfil}
+\let\@evenfoot\@oddfoot
 }
 \makeatother
 
 \title{License}
 \author{}\date{}
-
 \begin{document}
-
 \maketitle
-
-\thispagestyle{plain}
 TeXSmith is licensed under the terms of the MIT License.
 
-Copyright \texsmithEmoji{©} 2025 Yves Chevallier
+Copyright \tsemoji{©} 2025 Yves Chevallier
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the \enquote{Software}), to deal
@@ -57,20 +56,17 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
-
-\section{Third-Party Licenses and Notices}\label{third-party-licenses-and-notices}
-
+\section{Third-Party Licenses and Notices}
 TeXSmith depends on several third-party components. When you redistribute TeXSmith or ship built assets that include any of the items below, you must also follow their licenses and attribution rules.
-
 \begin{itemize}
-\item{} \textbf{Bundled/downloaded assets}
-\item{} OpenMoji (emoji glyphs and font): CC BY-SA 4.0 for the artwork and SIL Open Font License 1.1 for the font files.
-\item{} Noto fonts (Google): primarily SIL Open Font License 1.1; Noto Color Emoji is Apache License 2.0.
-\item{} IBM Plex: SIL Open Font License 1.1.
-\item{} \textbf{Python libraries (non-exhaustive)} -- Markdown (BSD-3-Clause), PyMdown Extensions (MIT), Beautiful Soup (MIT), Requests (Apache-2.0), Jinja2 (BSD-3-Clause), PyBtex (MIT), TQDM (MIT). Each library carries its own permissive license; see the packages for full texts.
-\item{} \textbf{External tools invoked but not bundled} -- Tectonic (MIT), Mermaid CLI / \texttt{@mermaid-\allowbreak{}js/mermaid-\allowbreak{}cli} (MIT), Draw.io CLI (Apache-2.0), latexmk (GPL/Artistic-2.0, distributed with TeX Live), biber/bibtex (per their upstream licenses). Users must comply with these tools' licenses when installing and running them.
-
+\item \textbf{Bundled/downloaded assets}
+\begin{itemize}
+\item OpenMoji (emoji glyphs and font): CC BY-SA 4.0 for the artwork and SIL Open Font License 1.1 for the font files.
+\item Noto fonts (Google): primarily SIL Open Font License 1.1; Noto Color Emoji is Apache License 2.0.
+\item IBM Plex: SIL Open Font License 1.1.
+\end{itemize}
+\item \textbf{Python libraries (non-exhaustive)} -- Markdown (BSD-3-Clause), PyMdown Extensions (MIT), Beautiful Soup (MIT), Requests (Apache-2.0), Jinja2 (BSD-3-Clause), PyBtex (MIT), TQDM (MIT). Each library carries its own permissive license; see the packages for full texts.
+\item \textbf{External tools invoked but not bundled} -- Tectonic (MIT), Mermaid CLI / \tscodeinline{@mermaid-\allowbreak{}js/mermaid-\allowbreak{}cli} (MIT), Draw.io CLI (Apache-2.0), latexmk (GPL/Artistic-2.0, distributed with \TeX{} Live), biber/bibtex (per their upstream licenses). Users must comply with these tools' licenses when installing and running them.
 \end{itemize}
 If you distribute TeXSmith together with any of these assets or tools, include the corresponding license texts and attribution files. When in doubt, consult each upstream project's LICENSE file.
-
 \end{document}

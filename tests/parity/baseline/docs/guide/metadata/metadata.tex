@@ -9,6 +9,8 @@
 \usepackage[a4paper]{geometry}
 \usepackage{ts-fonts}
 \usepackage{csquotes}
+\usepackage{tcolorbox}
+\usepackage{fvextra}
 \usepackage{amsmath}
 \usepackage{float}
 \usepackage{seqsplit}
@@ -18,62 +20,53 @@
 \usepackage{refcount}
 \makeatletter
 \def\ps@plain{
-  \let\@oddhead\@empty
-  \let\@evenhead\@empty
-  \def\@oddfoot{
-    \hfil
-    \ifnum\getpagerefnumber{LastPage}>1\relax
-      \thepage
-    \fi
-    \hfil}
-  \let\@evenfoot\@oddfoot
+\let\@oddhead\@empty
+\let\@evenhead\@empty
+\def\@oddfoot{
+\hfil
+\ifnum\getpagerefnumber{LastPage}>1\relax
+\thepage
+\fi
+\hfil}
+\let\@evenfoot\@oddfoot
 }
 \makeatother
 
 \title{Metadata Conventions}
 \author{}\date{}
-
 \begin{document}
-
 \maketitle
+TeXSmith normalizes a handful of common front matter fields so that templates and fragments can lean on a single canonical name. External configuration files, CLI \tscodeinline{-\allowbreak{}-\allowbreak{}attribute} overrides, and Markdown \tscodeinline{press.*} blocks are all merged into one flat namespace before the template resolver runs, so manifests can simply reference the final attribute (e.g. \tscodeinline{emoji}, \tscodeinline{glossary\_style}, \tscodeinline{width}) without worrying about where it originally came from. The full \tscodeinline{press} tree is still kept around for backwards compatibility, but no other part of the codebase needs to dig through dotted \tscodeinline{press.*} paths anymore.
+\section{Title \& Subtitle}
+\tscodeinline{title} and \tscodeinline{subtitle} do exactly what the tin says: declare them in the front matter and they become the document's title and subtitle inside the template.
 
-\thispagestyle{plain}
-TeXSmith normalizes a handful of common front matter fields so that templates and fragments can lean on a single canonical name. External configuration files, CLI \texttt{-\allowbreak{}-\allowbreak{}attribute} overrides, and Markdown \texttt{press.*} blocks are all merged into one flat namespace before the template resolver runs, so manifests can simply reference the final attribute (e.g. \texttt{emoji}, \texttt{glossary\_style}, \texttt{width}) without worrying about where it originally came from. The full \texttt{press} tree is still kept around for backwards compatibility, but no other part of the codebase needs to dig through dotted \texttt{press.*} paths anymore.
-
-\section{Title \& Subtitle}\label{title-subtitle}
-
-\texttt{title} and \texttt{subtitle} do exactly what the tin says: declare them in the front matter and they become the document's title and subtitle inside the template.
-
-\texttt{title} is not strictly required. If omitted, TeXSmith falls back to the first heading in the document, on the assumption that you probably meant \emph{that} to be the title. To opt out of this fallback (and render with no title at all), set \texttt{title: null} explicitly:
-
-\begin{code}{md}{}{}
+\tscodeinline{title} is not strictly required. If omitted, TeXSmith falls back to the first heading in the document, on the assumption that you probably meant \emph{that} to be the title. To opt out of this fallback (and render with no title at all), set \tscodeinline{title: null} explicitly:
+\begin{tscode}[lang=md, engine=pygments]
 \begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
 \PYZhy{}\PYZhy{}\PYZhy{}
 \PY{g+gu}{subtitle: \PYZdq{}An In\PYZhy{}depth Exploration\PYZdq{}}
 \PY{g+gu}{\PYZhy{}\PYZhy{}\PYZhy{}}
 \PY{g+gh}{\PYZsh{} This section heading will not be used as the title}
 \end{Verbatim}
-\end{code}
-\begin{code}{md}{}{}
+\end{tscode}
+\begin{tscode}[lang=md, engine=pygments]
 \begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
 \PYZhy{}\PYZhy{}\PYZhy{}
 \PY{g+gu}{title: Some Title}
 \PY{g+gu}{\PYZhy{}\PYZhy{}\PYZhy{}}
 \PY{g+gh}{\PYZsh{} This section heading will not be used as the title}
 \end{Verbatim}
-\end{code}
-\section{Authors}\label{authors}
-
-Author metadata is validated with Pydantic and normalized into a list of objects shaped like \texttt{\{ name, affiliation \}}. The parser is forgiving on input, several syntaxes are accepted, all of which collapse to the same canonical structure:
-
-\begin{code}{yaml}{}{}
+\end{tscode}
+\section{Authors}
+Author metadata is validated with Pydantic and normalized into a list of objects shaped like \tscodeinline{\{ name, affiliation \}}. The parser is forgiving on input, several syntaxes are accepted, all of which collapse to the same canonical structure:
+\begin{tscode}[lang=yaml, engine=pygments]
 \begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
 \PY{n+nn}{\PYZhy{}\PYZhy{}\PYZhy{}}
 \PY{n+nt}{authors}\PY{p}{:}\PY{+w}{ }\PY{l+s}{\PYZdq{}}\PY{l+s}{Ada}\PY{n+nv}{ }\PY{l+s}{Lovelace}\PY{l+s}{\PYZdq{}}
 \PY{n+nn}{\PYZhy{}\PYZhy{}\PYZhy{}}
 \end{Verbatim}
-\end{code}
-\begin{code}{yaml}{}{}
+\end{tscode}
+\begin{tscode}[lang=yaml, engine=pygments]
 \begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
 \PY{n+nn}{\PYZhy{}\PYZhy{}\PYZhy{}}
 \PY{n+nt}{authors}\PY{p}{:}
@@ -81,8 +74,8 @@ Author metadata is validated with Pydantic and normalized into a list of objects
 \PY{+w}{  }\PY{p+pIndicator}{\PYZhy{}}\PY{+w}{ }\PY{l+s}{\PYZdq{}}\PY{l+s}{Grace}\PY{n+nv}{ }\PY{l+s}{Hopper}\PY{l+s}{\PYZdq{}}
 \PY{n+nn}{\PYZhy{}\PYZhy{}\PYZhy{}}
 \end{Verbatim}
-\end{code}
-\begin{code}{yaml}{}{}
+\end{tscode}
+\begin{tscode}[lang=yaml, engine=pygments]
 \begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
 \PY{n+nn}{\PYZhy{}\PYZhy{}\PYZhy{}}
 \PY{n+nt}{authors}\PY{p}{:}
@@ -92,8 +85,8 @@ Author metadata is validated with Pydantic and normalized into a list of objects
 \PY{+w}{    }\PY{n+nt}{affiliation}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{US}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{Navy}
 \PY{n+nn}{\PYZhy{}\PYZhy{}\PYZhy{}}
 \end{Verbatim}
-\end{code}
-\begin{code}{yaml}{}{}
+\end{tscode}
+\begin{tscode}[lang=yaml, engine=pygments]
 \begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
 \PY{n+nn}{\PYZhy{}\PYZhy{}\PYZhy{}}
 \PY{n+nt}{authors}\PY{p}{:}
@@ -101,16 +94,13 @@ Author metadata is validated with Pydantic and normalized into a list of objects
 \PY{+w}{  }\PY{n+nt}{affiliation}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{Analytical}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{Engine}
 \PY{n+nn}{\PYZhy{}\PYZhy{}\PYZhy{}}
 \end{Verbatim}
-\end{code}
-Each entry is trimmed, validated, and stored as \texttt{\{ "name": ..., "affiliation": ... \}}. A missing \texttt{name} is a hard error: TeXSmith bails out before the template render even starts, so you never end up with a half-credited document.
+\end{tscode}
+Each entry is trimmed, validated, and stored as \tscodeinline{\{ "name": ..., "affiliation": ... \}}. A missing \tscodeinline{name} is a hard error: TeXSmith bails out before the template render even starts, so you never end up with a half-credited document.
 
-The legacy singular \texttt{author} key is still understood by the parser for backwards compatibility, but the plural \texttt{authors} is the canonical form, prefer it whenever you can.
-
-\section{Date}\label{date}
-
-The \texttt{date} field is parsed into a real \texttt{datetime} object, which means templates can apply the \texttt{date} filter to format it however they please. Several input shapes are accepted:
-
-\begin{code}{yaml}{}{}
+The legacy singular \tscodeinline{author} key is still understood by the parser for backwards compatibility, but the plural \tscodeinline{authors} is the canonical form, prefer it whenever you can.
+\section{Date}
+The \tscodeinline{date} field is parsed into a real \tscodeinline{datetime} object, which means templates can apply the \tscodeinline{date} filter to format it however they please. Several input shapes are accepted:
+\begin{tscode}[lang=yaml, engine=pygments]
 \begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
 \PY{n+nn}{\PYZhy{}\PYZhy{}\PYZhy{}}
 \PY{n+nt}{date}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{2024\PYZhy{}07\PYZhy{}01}\PY{+w}{ }\PY{c+c1}{\PYZsh{} ISO format}
@@ -121,16 +111,13 @@ The \texttt{date} field is parsed into a real \texttt{datetime} object, which me
 \PY{+w}{  }\PY{n+nt}{day}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{1}
 \PY{n+nt}{date}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{commit}
 \end{Verbatim}
-\end{code}
-The special \texttt{commit} value resolves to the date of the most recent Git commit touching the document, perfect for stamping a \enquote{last updated} date without ever editing it by hand.
+\end{tscode}
+The special \tscodeinline{commit} value resolves to the date of the most recent Git commit touching the document, perfect for stamping a \enquote{last updated} date without ever editing it by hand.
 
-Once rendered, the date is formatted according to the template's locale. \texttt{2024-\allowbreak{}07-\allowbreak{}01} lands as \enquote{July 1, 2024} in an English template, or \enquote{1 de julio de 2024} in a Spanish one. \LaTeX{} (with a little help from \texttt{babel}) handles the linguistic gymnastics.
-
-\section{Version}\label{version}
-
-The \texttt{version} field is a free-form label describing where the document sits in its lifecycle. It is intentionally unopinionated, anything goes: semver, calendar versioning, a Git ref, or a human-readable tag like \enquote{Confidential Draft}.
-
-\begin{code}{yaml}{}{}
+Once rendered, the date is formatted according to the template's locale. \tscodeinline{2024-\allowbreak{}07-\allowbreak{}01} lands as \enquote{July 1, 2024} in an English template, or \enquote{1 de julio de 2024} in a Spanish one. \LaTeX{} (with a little help from \tscodeinline{babel}) handles the linguistic gymnastics.
+\section{Version}
+The \tscodeinline{version} field is a free-form label describing where the document sits in its lifecycle. It is intentionally unopinionated, anything goes: semver, calendar versioning, a Git ref, or a human-readable tag like \enquote{Confidential Draft}.
+\begin{tscode}[lang=yaml, engine=pygments]
 \begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
 \PY{n+nn}{\PYZhy{}\PYZhy{}\PYZhy{}}
 \PY{n+nt}{version}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{Confidential}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{Draft}\PY{+w}{ }\PY{c+c1}{\PYZsh{} Arbitrary string}
@@ -141,11 +128,8 @@ The \texttt{version} field is a free-form label describing where the document si
 \PY{+w}{  }\PY{n+nt}{patch}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{0}
 \PY{n+nt}{version}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{git}
 \end{Verbatim}
-\end{code}
-The special \texttt{git} value resolves to the latest Git tag (falling back to a short commit hash if no tag exists), giving you automatic, repository-driven versioning with zero manual upkeep.
-
-\section{Fragments' Metadata}\label{fragments-metadata}
-
-Fragments, the small, composable extensions that plug into a \LaTeX{} template, can declare their own metadata schema in a \texttt{fragment.toml} file. Their attributes get merged into the same flat namespace as everything else, so a fragment-defined key looks no different from a built-in one at render time. See the \hyperref[snippet:<HASH>]{Fragment Guide} for the full declaration syntax and resolution rules.
-
+\end{tscode}
+The special \tscodeinline{git} value resolves to the latest Git tag (falling back to a short commit hash if no tag exists), giving you automatic, repository-driven versioning with zero manual upkeep.
+\section{Fragments' Metadata}
+Fragments, the small, composable extensions that plug into a \LaTeX{} template, can declare their own metadata schema in a \tscodeinline{fragment.toml} file. Their attributes get merged into the same flat namespace as everything else, so a fragment-defined key looks no different from a built-in one at render time. See the Fragment Guide for the full declaration syntax and resolution rules.
 \end{document}

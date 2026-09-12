@@ -7,54 +7,187 @@
 \usepackage[english]{babel}
 \usepackage[colorlinks=true, linkcolor=NavyBlue, urlcolor=NavyBlue, citecolor=NavyBlue]{hyperref}
 \usepackage[a4paper]{geometry}
+\usepackage{ts-typesetting}
 \usepackage{ts-fonts}
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{xcolor}
+\usepackage{epigraph}
+\usepackage{marginnote}
+\usepackage{multicol}
+\usepackage{progressbar}
+\usepackage{graphicx}
+\usepackage{tcolorbox}
+\usepackage{fvextra}
+\usepackage{amsmath}
 \usepackage{float}
 \usepackage{seqsplit}
+\newcolumntype{Y}{>{\centering\arraybackslash}X}
+\newcolumntype{Z}{>{\raggedleft\arraybackslash}X}
+\renewcommand*{\marginfont}{
+\footnotesize
+\sloppy
+\emergencystretch=1em
+\hyphenpenalty=50
+\exhyphenpenalty=50
+}
+\newlength{\tsmarginparavail}
+\newlength{\tsmarginparalt}
+\newlength{\tsmarginparbuf}
+\setlength{\tsmarginparbuf}{6mm}
+\makeatletter
+\AtBeginDocument{
+\setlength{\tsmarginparavail}{\dimexpr\paperwidth-\textwidth-1in-\oddsidemargin-\marginparsep-\tsmarginparbuf\relax}
+\ifdim\tsmarginparavail<\z@\setlength{\tsmarginparavail}{\z@}\fi
+\if@twoside
+\setlength{\tsmarginparalt}{\dimexpr1in+\evensidemargin-\marginparsep-\tsmarginparbuf\relax}
+\ifdim\tsmarginparalt<\z@\setlength{\tsmarginparalt}{\z@}\fi
+\ifdim\tsmarginparalt<\tsmarginparavail
+\setlength{\tsmarginparavail}{\tsmarginparalt}
+\fi
+\fi
+\ifdim\tsmarginparavail<\marginparwidth
+\setlength{\marginparwidth}{\tsmarginparavail}
+\fi
+}
+\makeatother
+\usepackage{ts-code}
 
 \usepackage{lastpage}
 \usepackage{refcount}
 \makeatletter
 \def\ps@plain{
-  \let\@oddhead\@empty
-  \let\@evenhead\@empty
-  \def\@oddfoot{
-    \hfil
-    \ifnum\getpagerefnumber{LastPage}>1\relax
-      \thepage
-    \fi
-    \hfil}
-  \let\@evenfoot\@oddfoot
+\let\@oddhead\@empty
+\let\@evenhead\@empty
+\def\@oddfoot{
+\hfil
+\ifnum\getpagerefnumber{LastPage}>1\relax
+\thepage
+\fi
+\hfil}
+\let\@evenfoot\@oddfoot
 }
 \makeatother
 
-\title{Partials \& Override Precedence}
+\title{Contract macros}
 \author{}\date{}
-
 \begin{document}
-
 \maketitle
+The \LaTeX{} body of a document comes from tmark's writer, which emits a
+fixed macro or environment per construct. Structural constructs (emphasis,
+lists, headings, figures, tables, links, footnotes) are plain \LaTeX{} the
+writer owns; the constructs a template may want to restyle are \textbf{contract
+macros} provided by the \tscodeinline{ts-\allowbreak{}*} fragments. The writer names the fragment in
+\tscodeinline{Requires.fragments}; the fragment defines the macros; a template restyles a
+construct by redefining its macro.
 
-\thispagestyle{plain}
-TeXSmith renders \LaTeX{} through reusable partials (Jinja templates) for list items, code blocks, images, etc. The override order is \textbf{explicit and enforced}:
+The table of contracts is \tscodeinline{tmark.fragments()} (\tscodeinline{FRAGMENTS} in
+\tscodeinline{tmark\_ir::registry}); the names follow one convention: macros \tscodeinline{\textbackslash{}ts<name>},
+environments \tscodeinline{ts<name>}, at most one optional keyval group first, content
+last. Keys are parsed with \tscodeinline{pgfkeys} under \tscodeinline{/ts/<name>/} and unknown keys
+are ignored, so an older fragment survives a newer writer.
+\section{The macros}
+\begin{center}
+\begin{tabularx}{\linewidth}{>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X}
+\toprule
+\textbf{Fragment} & \textbf{Macro / environment} & \textbf{Keys} & \textbf{Notes} \\
+\midrule
+\tscodeinline{ts-\allowbreak{}typesetting} & \tscodeinline{\textbackslash{}tslead\{…\}} & --- & lead-in of a paragraph (run-in bold line) \\
+& \tscodeinline{\textbackslash{}tsmark\{…\}} & --- & highlight; coloured text on \tslogo{XeTeX}, \tscodeinline{lua-\allowbreak{}ul} on \tslogo{LuaTeX}, a colour box otherwise \\
+& \tscodeinline{\textbackslash{}tsdivider} & --- & thematic break; \tscodeinline{\textbackslash{}clearpage} by default \\
+& \tscodeinline{\textbackslash{}tsepigraph[source=\{…\}]\{…\}} & \tscodeinline{source} & \tscodeinline{epigraph} \\
+& \tscodeinline{\textbackslash{}tsaside[side=left]\{…\}} & \tscodeinline{side} (\tscodeinline{left}, \tscodeinline{right}, \tscodeinline{inner}, \tscodeinline{outer}) & \tscodeinline{marginnote}, with the margin font and width clamp \\
+& \tscodeinline{\textbackslash{}tsprogress[thin]\{0.45\}\{label\}} & \tscodeinline{thin} & \tscodeinline{progressbar} \\
+& \tscodeinline{\textbackslash{}tsicon\{path\}} & --- & \tscodeinline{\textbackslash{}includegraphics[width=1em]} \\
+& \tscodeinline{\textbackslash{}tslogo\{XeLaTeX\}} & --- & a \TeX{} logo word (\tscodeinline{typography.tex-\allowbreak{}logos}) through \tscodeinline{hologo}; \tscodeinline{\textbackslash{}TeX}, \tscodeinline{\textbackslash{}LaTeX}, \tscodeinline{\textbackslash{}LaTeXe} are the kernel's \\
+& \tscodeinline{\textbackslash{}begin\{tsdiv\}\{name\}[keys]…\textbackslash{}end\{tsdiv\}} & \tscodeinline{cols}, \tscodeinline{title}, \tscodeinline{id}, \tscodeinline{class} & dispatches to \tscodeinline{tsdiv@<name>}; \tscodeinline{multicolumn} and \tscodeinline{tab} are defined, any other name is transparent \\
+\tscodeinline{ts-\allowbreak{}callouts} & \tscodeinline{\textbackslash{}begin\{tscallout\}[kind=note, title=\{…\}, id=x, class=\{a,b\}, collapsed]…\textbackslash{}end\{tscallout\}} & \tscodeinline{kind}, \tscodeinline{title}, \tscodeinline{id}, \tscodeinline{class}, \tscodeinline{collapsed} & today's \tscodeinline{callout} box styles and the \tscodeinline{press.callouts.*} colours and icons; an unknown kind is \tscodeinline{default}, a missing title is the kind's word \\
+\tscodeinline{ts-\allowbreak{}code} & \tscodeinline{\textbackslash{}begin\{tscode\}[lang=py, title=\{…\}, caption=\{…\}, linenums, hl\_lines=\{2-\allowbreak{}3,7\}, id=lst:x, stretch=0.5, engine=pygments]…\textbackslash{}end\{tscode\}} & \tscodeinline{lang}, \tscodeinline{title}, \tscodeinline{caption}, \tscodeinline{linenums}, \tscodeinline{hl\_lines}, \tscodeinline{id}, \tscodeinline{stretch}, \tscodeinline{engine}, \tscodeinline{class} & verbatim body in every engine; the engine comes from \tscodeinline{code.engine} (\tscodeinline{pygments}, \tscodeinline{minted}, \tscodeinline{listings}, \tscodeinline{verbatim}) \\
+& \tscodeinline{\textbackslash{}tscodeinline[lang=py]\{…\}} & \tscodeinline{lang} & escaped text, \tscodeinline{\textbackslash{}texttt} \\
+\tscodeinline{ts-\allowbreak{}keystrokes} & \tscodeinline{\textbackslash{}tskeys\{Ctrl,Alt,Del\}} & --- & one box per key, joined by \tscodeinline{+}; a literal comma is braced (\tscodeinline{\{,\}}) \\
+\tscodeinline{ts-\allowbreak{}todolist} & \tscodeinline{\textbackslash{}begin\{tstasklist\}\textbackslash{}item[\textbackslash{}tsdone] … \textbackslash{}item[\textbackslash{}tstodo] … \textbackslash{}item[\textbackslash{}tspartial] …\textbackslash{}end\{tstasklist\}} & --- & \tscodeinline{enumitem} list with \tscodeinline{amssymb}/\tscodeinline{pifont} markers \\
+\tscodeinline{ts-\allowbreak{}glossary} & \tscodeinline{\textbackslash{}tsgls\{key\}}, \tscodeinline{\textbackslash{}tsacr\{key\}} & --- & \tscodeinline{\textbackslash{}gls} \\
+\tscodeinline{ts-\allowbreak{}index} & \tscodeinline{\textbackslash{}tsindex[registry=r, main]\{sort@formatted!sub\}} & \tscodeinline{registry}, \tscodeinline{main} & zero-width; \tscodeinline{\textbackslash{}makeindex[name=r]} per registry of \tscodeinline{Requires.index} \\
+\tscodeinline{ts-\allowbreak{}bibliography} & \tscodeinline{\textbackslash{}parencite}, \tscodeinline{\textbackslash{}textcite} & --- & fallbacks onto \tscodeinline{\textbackslash{}cite} when no \tscodeinline{.bib} loads \tscodeinline{biblatex} \\
+\tscodeinline{ts-\allowbreak{}fonts} & \tscodeinline{\textbackslash{}tsscript\{slug\}\{…\}}, \tscodeinline{\textbackslash{}tsemoji\{…\}} & --- & the \tscodeinline{\textbackslash{}text<slug>} fallback font, the emoji font \\
+\tscodeinline{ts-\allowbreak{}critic} & \tscodeinline{\textbackslash{}tsins\{…\}}, \tscodeinline{\textbackslash{}tsdel\{…\}}, \tscodeinline{\textbackslash{}tssubst\{old\}\{new\}}, \tscodeinline{\textbackslash{}tscomment\{…\}} & --- & critic markup \\
+\bottomrule
+\end{tabularx}
+\end{center}
+Identity: for a contract macro the writer passes \tscodeinline{id=}; the fragment places
+\tscodeinline{\textbackslash{}phantomsection\textbackslash{}label}. Attributes of a container are forwarded as keys
+(\tscodeinline{\#id} \tsscript{symbols}{\(\rightarrow\) }\tscodeinline{id}, classes \tsscript{symbols}{\(\rightarrow\) }\tscodeinline{class=\{a,b\}}, \tscodeinline{key=val} as is); \tscodeinline{lang} and \tscodeinline{media}
+never are.
 
+The Typst writer emits one hyphenated function per contract (\tscodeinline{\#ts-\allowbreak{}callout},
+\tscodeinline{\#ts-\allowbreak{}code}, \tscodeinline{\#ts-\allowbreak{}keys}, ...) with the same argument names, defined in
+\tscodeinline{src/texsmith/templates/common/texsmith.typ}, copied next to the \tscodeinline{.typ}.
+\section{Overriding a construct}
+Three levels, in the template's \tscodeinline{.tex} after \tscodeinline{\textbackslash{}VAR\{extra\_packages\}} (the
+fragments are \tscodeinline{\textbackslash{}usepackage}d there):
 \begin{enumerate}
-\item \textbf{Template overrides} --- declared under \texttt{latex.template.override} in \texttt{manifest.toml}. These always win.
-\item \textbf{Fragment overrides} --- declared via \texttt{partials} in \texttt{fragment.toml} or a fragment entrypoint. They apply after core defaults but are superseded by template overrides.
-\item \textbf{Core defaults} --- shipped with TeXSmith (\texttt{src/texsmith/adapters/latex/partials}).
-
+\item \textbf{Restyle through the pgfkeys family.} \tscodeinline{tscallout} and \tscodeinline{tscode} are
+\tscodeinline{tcolorbox} boxes; the family style is appended to their options, and a
+class named in \tscodeinline{class=\{…\}} applies \tscodeinline{/ts/<name>/class/<class>} when it is
+defined:
+\begin{tscode}[lang=latex, engine=pygments]
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+\PY{k}{\PYZbs{}tcbset}\PY{n+nb}{\PYZob{}}/ts/code/.append style=\PY{n+nb}{\PYZob{}}frame hidden, boxrule=0pt\PY{n+nb}{\PYZcb{}}\PY{n+nb}{\PYZcb{}}
+\PY{k}{\PYZbs{}tcbset}\PY{n+nb}{\PYZob{}}/ts/callout/class/wide/.style=\PY{n+nb}{\PYZob{}}grow to left by=2cm\PY{n+nb}{\PYZcb{}}\PY{n+nb}{\PYZcb{}}
+\end{Verbatim}
+\end{tscode}
+\item \textbf{Redefine the macro, same signature.}
+\begin{tscode}[lang=latex, engine=pygments]
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+\PY{k}{\PYZbs{}RenewDocumentCommand}\PY{n+nb}{\PYZob{}}\PY{k}{\PYZbs{}tscodeinline}\PY{n+nb}{\PYZcb{}}\PY{n+nb}{\PYZob{}}O\PY{n+nb}{\PYZob{}}\PY{n+nb}{\PYZcb{}}m\PY{n+nb}{\PYZcb{}}\PY{n+nb}{\PYZob{}}\PY{k}{\PYZbs{}mbox}\PY{n+nb}{\PYZob{}}\PY{k}{\PYZbs{}texttt}\PY{n+nb}{\PYZob{}}\PYZsh{}2\PY{n+nb}{\PYZcb{}}\PY{n+nb}{\PYZcb{}}\PY{n+nb}{\PYZcb{}}
+\PY{k}{\PYZbs{}RenewDocumentCommand}\PY{n+nb}{\PYZob{}}\PY{k}{\PYZbs{}tsdivider}\PY{n+nb}{\PYZcb{}}\PY{n+nb}{\PYZob{}}\PY{n+nb}{\PYZcb{}}\PY{n+nb}{\PYZob{}}\PY{k}{\PYZbs{}bigskip}\PY{k}{\PYZbs{}hrule}\PY{k}{\PYZbs{}bigskip}\PY{n+nb}{\PYZcb{}}
+\PY{k}{\PYZbs{}RenewDocumentEnvironment}\PY{n+nb}{\PYZob{}}tsdiv@multicolumn\PY{n+nb}{\PYZcb{}}\PY{n+nb}{\PYZob{}}O\PY{n+nb}{\PYZob{}}\PY{n+nb}{\PYZcb{}}\PY{n+nb}{\PYZcb{}}\PY{n+nb}{\PYZob{}}\PY{k}{\PYZbs{}begin}\PY{n+nb}{\PYZob{}}multicols\PY{n+nb}{\PYZcb{}}\PY{n+nb}{\PYZob{}}3\PY{n+nb}{\PYZcb{}}\PY{n+nb}{\PYZcb{}}\PY{n+nb}{\PYZob{}}\PY{k}{\PYZbs{}end}\PY{n+nb}{\PYZob{}}multicols\PY{n+nb}{\PYZcb{}}\PY{n+nb}{\PYZcb{}}
+\end{Verbatim}
+\end{tscode}
+A custom \tscodeinline{::: name} container is a \tscodeinline{tsdiv@name} environment defined the
+same way (one optional argument, the raw key list; the parsed keys are in
+\tscodeinline{\textbackslash{}ts@div@cols}, \tscodeinline{\textbackslash{}ts@div@title}, \tscodeinline{\textbackslash{}ts@div@id}).
+\item \textbf{Replace the fragment.} \tscodeinline{press.fragments: \{disable: [ts-\allowbreak{}code], append:
+[./my-\allowbreak{}code.sty]\}}; the replacement must define every \tscodeinline{provides} entry of
+its row in \tscodeinline{tmark.fragments()}.
 \end{enumerate}
-Conflicts \& requirements:
-- Two fragments cannot override the same partial; TeXSmith raises a \texttt{TemplateError}.
-- Templates and fragments can declare \texttt{required\_partials} (list of names without extensions). Missing entries abort the render with a clear error.
-- Providers are tracked so diagnostics can point to the template or fragment responsible.
-
-Usage:
-- Templates: list override paths in \texttt{manifest.toml} under \texttt{latex.template.override} (relative to the template root, \texttt{template/overrides}, or \texttt{overrides/}).
-- Fragments: add \texttt{partials = ["strong.tex", "codeblock.tex"]} (or a \texttt{\{ name = "path" \}} mapping) plus optional \texttt{required\_partials} inside \texttt{fragment.toml}. Entry points may return the same fields on the \texttt{Fragment} object.
-
-Guidance:
-- Prefer template overrides for document-wide styling or publisher branding.
-- Use fragment overrides to co-locate rendering tweaks with the feature they own (callouts, code, glossary).
-- Keep a single source of truth per partial; if a fragment needs to opt out, expose a fragment attribute instead of overlapping overrides.
-
+Guard a redefinition when the fragment is conditional (\tscodeinline{ts-\allowbreak{}code} only loads
+when the document has code): \tscodeinline{\textbackslash{}ifcsname tscodeinline\textbackslash{}endcsname … \textbackslash{}fi}.
+\section{Former partials}
+Until 0.6 the \LaTeX{} came from Jinja partials under
+\tscodeinline{src/texsmith/adapters/latex/partials}, overridable per template
+(\tscodeinline{latex.template.override}) and per fragment (\tscodeinline{partials},
+\tscodeinline{required\_partials}). Those hooks are deprecated in 0.7.0 --- they still work
+on the legacy path and warn, naming the replacement --- and are removed in
+0.8.0. The mapping:
+\begin{center}
+\begin{tabularx}{\linewidth}{>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X}
+\toprule
+\textbf{Former partial} & \textbf{Replacement} \\
+\midrule
+\tscodeinline{italic}, \tscodeinline{strong}, \tscodeinline{smallcaps}, \tscodeinline{subscript}, \tscodeinline{superscript}, \tscodeinline{strikethrough}, \tscodeinline{underline}, \tscodeinline{enquote}, \tscodeinline{blockquote} & structural \LaTeX{} from the writer \\
+\tscodeinline{highlight} & \tscodeinline{\textbackslash{}tsmark} \\
+\tscodeinline{lead} & \tscodeinline{\textbackslash{}tslead} \\
+\tscodeinline{horizontal\_rule} & \tscodeinline{\textbackslash{}tsdivider} \\
+\tscodeinline{epigraph} & \tscodeinline{\textbackslash{}tsepigraph} \\
+\tscodeinline{multicolumn}, \tscodeinline{tabbed} & \tscodeinline{tsdiv@multicolumn}, \tscodeinline{tsdiv@tab} \\
+\tscodeinline{icon} & \tscodeinline{\textbackslash{}tsicon} \\
+\tscodeinline{counter}, \tscodeinline{label}, \tscodeinline{ref}, \tscodeinline{href}, \tscodeinline{url}, \tscodeinline{footnote}, \tscodeinline{include} & structural \\
+\tscodeinline{citation} & \tscodeinline{\textbackslash{}cite} (structural); \tscodeinline{\textbackslash{}parencite}/\tscodeinline{\textbackslash{}textcite} fallbacks in \tscodeinline{ts-\allowbreak{}bibliography} \\
+\tscodeinline{acronym}, \tscodeinline{glossary} & \tscodeinline{\textbackslash{}tsacr}, \tscodeinline{\textbackslash{}tsgls} \\
+\tscodeinline{list\_acronyms}, \tscodeinline{list\_glossary} & the \tscodeinline{ts-\allowbreak{}glossary} backmatter \\
+\tscodeinline{index} & \tscodeinline{\textbackslash{}tsindex} \\
+\tscodeinline{keystroke} & \tscodeinline{\textbackslash{}tskeys} \\
+\tscodeinline{choices} & \tscodeinline{tstasklist} \\
+\tscodeinline{unordered\_list}, \tscodeinline{ordered\_list}, \tscodeinline{description\_list}, \tscodeinline{heading}, \tscodeinline{figure}, \tscodeinline{figure\_tcolorbox}, \tscodeinline{table}, \tscodeinline{yaml\_table} & structural \\
+\tscodeinline{pagestyle} & dropped; the template emits \tscodeinline{\textbackslash{}thispagestyle} after \tscodeinline{\textbackslash{}maketitle} \\
+\tscodeinline{callout} & \tscodeinline{tscallout} \\
+\tscodeinline{codeblock}, \tscodeinline{codeblock\_listings}, \tscodeinline{codeblock\_verbatim}, \tscodeinline{codeblock\_pygments} & \tscodeinline{tscode} \\
+\tscodeinline{codeinline}, \tscodeinline{codeinlinett} & \tscodeinline{\textbackslash{}tscodeinline} \\
+\tscodeinline{add}, \tscodeinline{addition}, \tscodeinline{del}, \tscodeinline{deletion}, \tscodeinline{substitution}, \tscodeinline{comment} & \tscodeinline{\textbackslash{}tsins}, \tscodeinline{\textbackslash{}tsdel}, \tscodeinline{\textbackslash{}tssubst}, \tscodeinline{\textbackslash{}tscomment} \\
+\tscodeinline{regex} & dropped; \tscodeinline{\textbackslash{}href\{…\}\{\textbackslash{}tscodeinline\{…\}\}} by composition \\
+\tscodeinline{exercises\_solutions} & a template-level partial \\
+\bottomrule
+\end{tabularx}
+\end{center}
 \end{document}

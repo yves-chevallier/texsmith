@@ -7,124 +7,148 @@
 \usepackage[english]{babel}
 \usepackage[colorlinks=true, linkcolor=NavyBlue, urlcolor=NavyBlue, citecolor=NavyBlue]{hyperref}
 \usepackage[a4paper]{geometry}
+\usepackage{ts-typesetting}
 \usepackage{ts-fonts}
+\usepackage{xcolor}
+\usepackage{epigraph}
+\usepackage{marginnote}
+\usepackage{multicol}
+\usepackage{progressbar}
+\usepackage{graphicx}
+\usepackage{tcolorbox}
+\usepackage{fvextra}
 \usepackage{amsmath}
 \usepackage{float}
 \usepackage{seqsplit}
+\renewcommand*{\marginfont}{
+\footnotesize
+\sloppy
+\emergencystretch=1em
+\hyphenpenalty=50
+\exhyphenpenalty=50
+}
+\newlength{\tsmarginparavail}
+\newlength{\tsmarginparalt}
+\newlength{\tsmarginparbuf}
+\setlength{\tsmarginparbuf}{6mm}
+\makeatletter
+\AtBeginDocument{
+\setlength{\tsmarginparavail}{\dimexpr\paperwidth-\textwidth-1in-\oddsidemargin-\marginparsep-\tsmarginparbuf\relax}
+\ifdim\tsmarginparavail<\z@\setlength{\tsmarginparavail}{\z@}\fi
+\if@twoside
+\setlength{\tsmarginparalt}{\dimexpr1in+\evensidemargin-\marginparsep-\tsmarginparbuf\relax}
+\ifdim\tsmarginparalt<\z@\setlength{\tsmarginparalt}{\z@}\fi
+\ifdim\tsmarginparalt<\tsmarginparavail
+\setlength{\tsmarginparavail}{\tsmarginparalt}
+\fi
+\fi
+\ifdim\tsmarginparavail<\marginparwidth
+\setlength{\marginparwidth}{\tsmarginparavail}
+\fi
+}
+\makeatother
 \usepackage{ts-code}
 
 \usepackage{lastpage}
 \usepackage{refcount}
 \makeatletter
 \def\ps@plain{
-  \let\@oddhead\@empty
-  \let\@evenhead\@empty
-  \def\@oddfoot{
-    \hfil
-    \ifnum\getpagerefnumber{LastPage}>1\relax
-      \thepage
-    \fi
-    \hfil}
-  \let\@evenfoot\@oddfoot
+\let\@oddhead\@empty
+\let\@evenhead\@empty
+\def\@oddfoot{
+\hfil
+\ifnum\getpagerefnumber{LastPage}>1\relax
+\thepage
+\fi
+\hfil}
+\let\@evenfoot\@oddfoot
 }
 \makeatother
 
 \title{Headings}
 \author{}\date{}
-
 \begin{document}
-
 \maketitle
+Headings are your document's scaffold: Markdown \tscodeinline{\#} marks become \LaTeX{} \tscodeinline{\textbackslash{}section}, \tscodeinline{\textbackslash{}subsection}, and friends. TeXSmith retunes them using template settings, document base levels, and promotion rules so the hierarchy stays sane even when the source is messy.
 
-\thispagestyle{plain}
-Headings are your document's scaffold: Markdown \texttt{\#} marks become \LaTeX{} \texttt{\textbackslash{}section}, \texttt{\textbackslash{}subsection}, and friends. TeXSmith retunes them using template settings, document base levels, and promotion rules so the hierarchy stays sane even when the source is messy.
+Markdown is loose: some files start at \tscodeinline{\#\#}, others at \tscodeinline{\#\#\#}, and multi-file builds mix it all. TeXSmith computes offsets per fragment to line things up: find the shallowest heading, derive an offset, then add the template base level. This page walks that math, how title promotion changes it, and how slots keep fragments independent.
 
-Markdown is loose: some files start at \texttt{\#\#}, others at \texttt{\#\#\#}, and multi-file builds mix it all. TeXSmith computes offsets per fragment to line things up: find the shallowest heading, derive an offset, then add the template base level. This page walks that math, how title promotion changes it, and how slots keep fragments independent.
-
-\section{How offsets are computed}\label{how-offsets-are-computed}
-
+Two Pandoc classes act one heading at a time: \tscodeinline{.unnumbered} takes a heading out
+of the numbering sequence, and \tscodeinline{.unlisted} additionally keeps it out of the table
+of contents. The document-level default is \tscodeinline{press.numbered} (\tscodeinline{true}).
+\begin{tscode}[lang=md, engine=pygments]
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+\PY{g+gu}{\PYZsh{}\PYZsh{} Acknowledgements \PYZob{}.unnumbered .unlisted\PYZcb{}}
+\end{Verbatim}
+\end{tscode}
+A heading with no \tscodeinline{\{\#id\}} still has an implicit id --- GitHub's slug of its plain
+text --- so \tscodeinline{[](\#acknowledgements)} resolves. Because that id changes whenever the
+title is edited, referring to one raises the \tscodeinline{ref-\allowbreak{}implicit-\allowbreak{}id} hint: give the
+heading an explicit \tscodeinline{\{\#sec:…\}}.
+\section{How offsets are computed}
 \begin{enumerate}
-\item Drop any sections routed to slots (e.g. \texttt{abstract}) before aligning the remaining content for that slot.
+\item Drop any sections routed to slots (e.g. \tscodeinline{abstract}) before aligning the remaining content for that slot.
 \item If promotion is on and the first heading is uniquely the highest, it becomes metadata and is ignored for offsets.
 \item Look at the shallowest heading that remains:
-
-\end{enumerate}
 \begin{itemize}
-\item{} \texttt{<h1>} \(\rightarrow\) offset \texttt{0}
-\item{} \texttt{<h2>} \(\rightarrow\) offset \texttt{-\allowbreak{}1}
-\item{} \texttt{<h3>} \(\rightarrow\) offset \texttt{-\allowbreak{}2}
-\item{} No headings \(\rightarrow\) offset \texttt{0}
-
+\item \tscodeinline{<h1>} \tsscript{symbols}{\(\rightarrow\) }offset \tscodeinline{0}
+\item \tscodeinline{<h2>} \tsscript{symbols}{\(\rightarrow\) }offset \tscodeinline{-\allowbreak{}1}
+\item \tscodeinline{<h3>} \tsscript{symbols}{\(\rightarrow\) }offset \tscodeinline{-\allowbreak{}2}
+\item No headings \tsscript{symbols}{\(\rightarrow\) }offset \tscodeinline{0}
 \end{itemize}
-\begin{enumerate}
 \item The effective base level for a fragment is:
-
-\end{enumerate}
-\begin{code}{text}{}{}
+\begin{tscode}[lang=text, engine=pygments]
 \begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
 template slot base + document base\PYZus{}level + fragment offset
 \end{Verbatim}
-\end{code}
-\begin{enumerate}
-\item The rendered LaTeX level is \texttt{html\_level + effective\_base -\allowbreak{} 1}.
-
+\end{tscode}
+\item The rendered \LaTeX{} level is \tscodeinline{html\_level + effective\_base -\allowbreak{} 1}.
 \end{enumerate}
 Offsets are per fragment: each slot fragment gets its own pass, so moving a heading into an abstract slot cannot force the main matter down a level.
-
-\section{Template and document base levels}\label{template-and-document-base-levels}
-
-Classic \LaTeX{} classes anchor headings differently: \texttt{article} tops out at \texttt{\textbackslash{}section}, while \texttt{memoir} can start at \texttt{\textbackslash{}chapter} or \texttt{\textbackslash{}part}. Templates encode that base level per slot: abstract as a section, main matter as a chapter, etc. Adjust it per document via front matter or CLI; the template default is used if you set nothing.
-
-\textbf{Front matter}\par
-
-\begin{code}{yaml}{}{}
+\section{Template and document base levels}
+Classic \LaTeX{} classes anchor headings differently: \tscodeinline{article} tops out at \tscodeinline{\textbackslash{}section}, while \tscodeinline{memoir} can start at \tscodeinline{\textbackslash{}chapter} or \tscodeinline{\textbackslash{}part}. Templates encode that base level per slot: abstract as a section, main matter as a chapter, etc. Adjust it per document via front matter or CLI; the template default is used if you set nothing.
+\begin{tsdiv}{tab}[title={Front matter}]
+\begin{tscode}[lang=yaml, engine=pygments]
 \begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
 \PY{n+nt}{press}\PY{p}{:}
 \PY{+w}{  }\PY{n+nt}{template}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{book}
 \PY{+w}{  }\PY{n+nt}{base\PYZus{}level}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{chapter}\PY{+w}{ }\PY{c+c1}{\PYZsh{} To not use parts by default}
 \end{Verbatim}
-\end{code}
-\textbf{CLI}\par
-
-\begin{code}{bash}{}{}
+\end{tscode}
+\end{tsdiv}
+\begin{tsdiv}{tab}[title=CLI]
+\begin{tscode}[lang=bash, engine=pygments]
 \begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
 texsmith\PY{+w}{ }doc.md\PY{+w}{ }\PYZhy{}\PYZhy{}template\PY{+w}{ }book\PY{+w}{ }\PYZhy{}\PYZhy{}base\PYZhy{}level\PY{+w}{ }chapter
 \end{Verbatim}
-\end{code}
-\section{Promotion rules}\label{promotion-rules}
-
+\end{tscode}
+\end{tsdiv}
+\section{Promotion rules}
 Promotion lifts the first heading into the document title. Because that heading leaves the body, the next shallowest heading drives the offset. Promotion is on by default: if there is no metadata title and the first heading is uniquely the shallowest, it is promoted and skipped in the offset math.
 
-A declared \texttt{title} in front matter disables promotion. So do \texttt{-\allowbreak{}-\allowbreak{}no-\allowbreak{}promote-\allowbreak{}title} on the CLI and \texttt{TitleStrategy.NONE} in the Python API.
+A declared \tscodeinline{title} in front matter disables promotion, and \tscodeinline{title: null} opts
+out explicitly. \tscodeinline{-\allowbreak{}-\allowbreak{}no-\allowbreak{}promote-\allowbreak{}title} on the CLI and \tscodeinline{TitleStrategy.NONE} in the
+Python API do the same; \tscodeinline{title: null} is the spelling the front matter owns.
 
-\texttt{-\allowbreak{}-\allowbreak{}strip-\allowbreak{}heading} / \texttt{TitleStrategy.DROP} removes the first heading without promoting it.
+\tscodeinline{-\allowbreak{}-\allowbreak{}strip-\allowbreak{}heading} / \tscodeinline{TitleStrategy.DROP} removes the first heading without promoting it.
 
-Want an explicit title plus promotion? Declare \texttt{title}, keep promotion on, and the declared title wins while headings are still measured against the remaining body.
-
-\section{Worked examples}\label{worked-examples}
-
-All examples use the \texttt{article} template (\texttt{base\_level=section}):
-
+Want an explicit title plus promotion? Declare \tscodeinline{title}, keep promotion on, and the declared title wins while headings are still measured against the remaining body.
+\section{Worked examples}
+All examples use the \tscodeinline{article} template (\tscodeinline{base\_level=section}):
 \begin{itemize}
-\item{} Metadata title present; headings start at \texttt{\#\#}: fragment offset \texttt{-\allowbreak{}1} + template base \texttt{1} \(\rightarrow\) first heading renders as \texttt{\textbackslash{}section}, nested \texttt{\#\#\#} as \texttt{\textbackslash{}subsection}.
-\item{} No metadata title; first heading is \texttt{\# Title}: it is promoted and ignored for offsets, so the remaining \texttt{\#\#} headings still become \texttt{\textbackslash{}section}.
-\item{} Headings begin at \texttt{\#\#} with no \texttt{\#} anywhere: offset \texttt{-\allowbreak{}1} again, so the highest heading still aligns to \texttt{\textbackslash{}section}.
-\item{} Slot extraction: if \texttt{\# Abstract} is routed to the \texttt{abstract} slot and stripped there, the remaining main-matter fragment starts at \texttt{\#\#} and is aligned to \texttt{\textbackslash{}section} (the removed \texttt{\#} does not push sections down to subsections).
-
+\item Metadata title present; headings start at \tscodeinline{\#\#}: fragment offset \tscodeinline{-\allowbreak{}1} + template base \tscodeinline{1} \tsscript{symbols}{\(\rightarrow\) }first heading renders as \tscodeinline{\textbackslash{}section}, nested \tscodeinline{\#\#\#} as \tscodeinline{\textbackslash{}subsection}.
+\item No metadata title; first heading is \tscodeinline{\# Title}: it is promoted and ignored for offsets, so the remaining \tscodeinline{\#\#} headings still become \tscodeinline{\textbackslash{}section}.
+\item Headings begin at \tscodeinline{\#\#} with no \tscodeinline{\#} anywhere: offset \tscodeinline{-\allowbreak{}1} again, so the highest heading still aligns to \tscodeinline{\textbackslash{}section}.
+\item Slot extraction: if \tscodeinline{\# Abstract} is routed to the \tscodeinline{abstract} slot and stripped there, the remaining main-matter fragment starts at \tscodeinline{\#\#} and is aligned to \tscodeinline{\textbackslash{}section} (the removed \tscodeinline{\#} does not push sections down to subsections).
 \end{itemize}
-\section{Multidocument behavior}\label{multidocument-behavior}
-
+\section{Multidocument behavior}
 When rendering multiple documents, each document (and each of its slot fragments) computes its own offset independently. A root title in a multi-file build does not block promotion in subdocuments, and each slot still adds the template base level before applying the fragment offset.
-
-\section{Quick reference}\label{quick-reference}
-
+\section{Quick reference}
 \begin{itemize}
-\item{} Offsets are \texttt{1 -\allowbreak{} shallowest\_heading\_level} after promotion/slot stripping.
-\item{} Effective base = template slot base + document \texttt{base\_level} + fragment offset.
-\item{} Promotion is default; disable with \texttt{-\allowbreak{}-\allowbreak{}no-\allowbreak{}promote-\allowbreak{}title} or a declared title.
-\item{} Slots are aligned independently; moving a heading to a slot never changes the
-  offset of the remaining content.
-
+\item Offsets are \tscodeinline{1 -\allowbreak{} shallowest\_heading\_level} after promotion/slot stripping.
+\item Effective base = template slot base + document \tscodeinline{base\_level} + fragment offset.
+\item Promotion is default; disable with \tscodeinline{title: null} or a declared title.
+\item Slots are aligned independently; moving a heading to a slot never changes the
+offset of the remaining content.
 \end{itemize}
-
 \end{document}

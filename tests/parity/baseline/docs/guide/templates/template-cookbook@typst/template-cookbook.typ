@@ -1,15 +1,15 @@
 #set document(
-  title: "Template Cookbook",
+title: "Template Cookbook",
 )
 #set page(
-  paper: "a4",
-  margin: 2.5cm,
-  numbering: none,
-  footer: context {
-    if counter(page).final().first() > 1 {
-      align(center)[#counter(page).get().first()]
-    }
-  },
+paper: "a4",
+margin: 2.5cm,
+numbering: none,
+footer: context {
+if counter(page).final().first() > 1 {
+align(center)[#counter(page).get().first()]
+}
+},
 )
 #set text(font: "New Computer Modern", size: 11pt, lang: "en")
 #set par(justify: true)
@@ -17,11 +17,10 @@
 #set heading(numbering: "1.1")
 
 #align(center)[
-  #text(size: 1.8em, weight: "bold")[Template Cookbook]
-]
+#text(size: 1.8em, weight: "bold")[Template Cookbook]]
 #v(1.5em)
 
-This cookbook collects repeatable patterns for building and iterating on TeXSmith templates. Use it in combination with the #link("index.md")[Templates primer] when you need concrete commands or Jinja snippets.
+This cookbook collects repeatable patterns for building and iterating on TeXSmith templates. Use it in combination with the Templates primer when you need concrete commands or Jinja snippets.
 
 = Clone a starter and rename it
 
@@ -46,7 +45,7 @@ Use the output to validate:
 - Slots and their depth/offsets.
 - Attribute defaults and normalizers (escape rules, `required` flags).
 - Declared assets and whether they require templating.
-- TeX Live year, tlmgr packages, and shell-escape requirements.
+- #ts-logo("TeX") Live year, tlmgr packages, and shell-escape requirements.
 
 == Tip
 
@@ -68,27 +67,25 @@ texsmith docs/intro.md docs/manual.md docs/appendix.md \
 
 The `#appendix-a` selector pulls only the section with that ID. Mix selectors freely (IDs, headings, `@document`) to keep Markdown sources modular.
 
-= Override partials
+= Restyle a construct
 
-Place overrides under `overrides/partials/`. Update `manifest.toml`:
+Redefine its contract macro in the template's `.tex`, after
+`\VAR{extra_packages}`:
 
-```toml
-[latex.template]
-override = ["partials/bold.tex"]
+```latex
+\VAR{extra_packages}
+% Callouts without a frame, inline code without break opportunities.
+\tcbset{/ts/callout/.append style={frame hidden, boxrule=0pt}}
+\RenewDocumentCommand{\tscodeinline}{O{}m}{\mbox{\texttt{#2}}}
+\RenewDocumentCommand{\tsdivider}{}{\bigskip\hrule\bigskip}
 ```
 
-Then create `overrides/partials/bold.tex`:
+Guard the redefinition when the fragment is conditional (`ts-code` only loads
+when the document has code): `\ifcsname tscodeinline\endcsname … \fi`.
 
-```tex
-\textbf{%
-  \BLOCK{ if attrs.emphasis }%
-    \VAR{attrs.emphasis}~%
-  \BLOCK{ endif }%
-  \VAR{text}%
-}
-```
-
-The renderer will prefer this file over the built-in partial when emitting bold spans.
+See Contract macros for every macro and its keys. The former
+`latex.template.override` mechanism is deprecated in 0.7.0 and removed in
+0.8.0.
 
 = Inject custom assets
 
@@ -105,11 +102,11 @@ Assets are copied to the render directory. Combine this with `latexmkrc` options
 = Publish and version responsibly
 
 - Set `compat.texsmith = ">=0.3,<0.4"` so incompatible engine changes fail fast.
-- Tag template releases with the same TeX Live year used in `manifest.toml`.
+- Tag template releases with the same #ts-logo("TeX") Live year used in `manifest.toml`.
 - Document tlmgr packages, slot names, and attribute changes in your README so downstream projects can upgrade with confidence.
 
 = Further reading
 
-- #link("index.md")[Templates primer] – attribute schema, manifest format, and slot mechanics.
-- #link("../../api/high-level.md")[API High-Level Workflows] – use `ConversionService` to assemble slots programmatically.
-- #link("../troubleshooting.md")[Troubleshooting] – debugging latexmk, shell-escape, and bibliography issues once your template ships.
+- Templates primer – attribute schema, manifest format, and slot mechanics.
+- API High-Level Workflows – use `ConversionService` to assemble slots programmatically.
+- Troubleshooting – debugging latexmk, shell-escape, and bibliography issues once your template ships.

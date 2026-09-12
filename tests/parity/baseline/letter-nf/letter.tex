@@ -1,8 +1,8 @@
 \documentclass[
-  paper=a4,
-  parskip=half,
-  firstfoot=false,
-  enlargefirstpage=true,
+paper=a4,
+parskip=half,
+firstfoot=false,
+enlargefirstpage=true,
 ]{scrlttr2}
 \usepackage{xcolor}
 \definecolor{texsmithLinkColor}{HTML}{0B3D91}
@@ -10,27 +10,30 @@
 \usepackage{csquotes}
 \usepackage{float}
 \usepackage{seqsplit}
+\ifcsname tscallout\endcsname
+\tcbset{/ts/callout/.append style={arc=0mm, boxrule=0mm, frame hidden, borderline west={0.3mm}{0mm}{black!70}}}
+\fi
 \usepackage{graphicx}
 \usepackage[british]{babel}
 \usepackage[
-    colorlinks=true,
-    linkcolor=texsmithLinkColor,
-    urlcolor=texsmithLinkColor,
-    citecolor=texsmithLinkColor]{hyperref}
+colorlinks=true,
+linkcolor=texsmithLinkColor,
+urlcolor=texsmithLinkColor,
+citecolor=texsmithLinkColor]{hyperref}
 \LoadLetterOption{NF}
 \KOMAoptions{foldmarks=false}
 
 \newcommand{\SignatureText}[1]{#1}
 
 \newcommand{\SignatureBlock}{
-  \includegraphics[height=1.6cm]{<HASH>.pdf}
-  \\[-0.25\baselineskip]
-  \SignatureText{Marie Skłodowska Curie}
+\includegraphics[height=1.6cm]{<HASH>.pdf}
+\\[-0.25\baselineskip]
+\SignatureText{Marie Skłodowska Curie}
 }
 
 \setkomavar{fromname}{Marie Skłodowska Curie}
 \setkomavar{fromaddress}{
-  Laboratory of Physics and Chemistry\\
+Laboratory of Physics and Chemistry\\
 Sorbonne University\\
 75005 Paris\\
 France
@@ -39,15 +42,13 @@ France
 \setkomavar{signature}{\SignatureBlock}
 \removereffields
 \renewcommand*{\raggedsignature}{\raggedleft}
-
 \begin{document}
-
 \begin{letter}{
-  Leonardo da Vinci\\
-  Casa di Leonardo\\
-  Near the Church of Santa Croce\\
-  Florence\\
-  Republic of Florence (c. 1500)
+Leonardo da Vinci\\
+Casa di Leonardo\\
+Near the Church of Santa Croce\\
+Florence\\
+Republic of Florence (c. 1500)
 }
 
 \opening{Dear Maestro Leonardo}
@@ -78,10 +79,8 @@ into flying machines---I remain at your service.
 \closing{With great scientific affection,}
 \ps{PS: How did you manage to withstand the ravages of time?
 You should have been dead for 384 years by now.}
-
 \end{letter}
 \pagenumbering{gobble}
 \thispagestyle{empty}
 \pagestyle{empty}
-
 \end{document}

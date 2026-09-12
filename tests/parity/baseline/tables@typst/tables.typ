@@ -1,15 +1,15 @@
 #set document(
-  title: "Advanced Tables Formatting",
+title: "Advanced Tables Formatting",
 )
 #set page(
-  paper: "a4",
-  margin: 2.5cm,
-  numbering: none,
-  footer: context {
-    if counter(page).final().first() > 1 {
-      align(center)[#counter(page).get().first()]
-    }
-  },
+paper: "a4",
+margin: 2.5cm,
+numbering: none,
+footer: context {
+if counter(page).final().first() > 1 {
+align(center)[#counter(page).get().first()]
+}
+},
 )
 #set text(font: "New Computer Modern", size: 11pt, lang: "en")
 #set par(justify: true)
@@ -17,14 +17,13 @@
 #set heading(numbering: "1.1")
 
 #align(center)[
-  #text(size: 1.8em, weight: "bold")[Advanced Tables Formatting]
-]
+#text(size: 1.8em, weight: "bold")[Advanced Tables Formatting]]
 #v(1.5em)
 
-One true missing feature in Markdown and in most LaTeX documents is the
+One true missing feature in Markdown and in most #ts-logo("LaTeX") documents is the
 ability to describe complex tables without tedious boilerplate. The standard
 Markdown specification is too restrictive — no multi-line cells, no multi-row
-or multi-column cells, no meta-information — and raw LaTeX tables require too
+or multi-column cells, no meta-information — and raw #ts-logo("LaTeX") tables require too
 much scaffolding. TeXSmith keeps Markdown for simple tables and introduces a
 YAML-based description for the complex ones.
 
@@ -39,8 +38,8 @@ The supported features are:
 - Overall table width (`auto`, a percentage of `\linewidth`, or a fixed length)
 - Markdown formatting preserved inside cells
 - Captions and labels via the standard `Table: …` syntax
-- Full HTML output with enough meta-information for the LaTeX renderer to
-    pick the right environment (`tabular`, `tabularx`, or `longtable`)
+- Full HTML output with enough meta-information for the #ts-logo("LaTeX") renderer to
+pick the right environment (`tabular`, `tabularx`, or `longtable`)
 
 Each section below shows the YAML source on the left and the rendered table
 right after, so you can compare input and output at a glance.
@@ -55,12 +54,12 @@ referenceable label.
 Notable attributes:
 
 - The first column is the *label column* (its values become the row
-    headers); subsequent columns hold data.
+headers); subsequent columns hold data.
 - `~` (YAML null) marks an empty cell.
 - A `separator:` row inserts a horizontal rule and may carry a `label:` for
-    a section title.
+a section title.
 - The `footer:` block produces summary rows separated from the body by an
-    extra rule.
+extra rule.
 
 Source:
 
@@ -78,19 +77,19 @@ footer:
 Rendered:
 
 #figure(
-  table(
-    columns: 4,
-    align: (left, left, left, left),
-    table.header([Fruit], [Geneva], [Zurich], [Basel]),
-    [Apples], [120], [180], [90],
-    [Pears], [45], [], [110],
-    table.hline(),
-    table.cell(colspan: 4)[_Seasonal shortage_],
-    [Apricots], [5], [0], [12],
-    table.hline(),
-    [Total], [170], [180], [212],
-  ),
-  caption: [Fruit stock by warehouse],
+table(
+columns: 4,
+align: (left, left, left, left),
+table.header([Fruit], [Geneva], [Zurich], [Basel]),
+[Apples], [120], [180], [90],
+[Pears], [45], [], [110],
+table.hline(),
+table.cell(colspan: 4)[_Seasonal shortage_],
+[Apricots], [5], [0], [12],
+table.hline(),
+[Total], [170], [180], [212],
+),
+caption: [Fruit stock by warehouse],
 ) <tbl:stock>
 
 The table above can be referenced with `[see @tbl:stock]` like any other
@@ -105,13 +104,13 @@ propagates to their leaves.
 Notable attributes:
 
 - `table.width: 100%` forces the table to span `\linewidth` and selects
-    `tabularx` as the LaTeX environment.
+`tabularx` as the #ts-logo("LaTeX") environment.
 - `width-group: <id>` makes every column carrying the same identifier share
-    the same width — perfect for keeping the FY23 and FY24 quarters aligned.
+the same width — perfect for keeping the FY23 and FY24 quarters aligned.
 - The label column (`Product`) is left auto-sized; only the columns inside
-    width-groups absorb the remaining horizontal space.
+width-groups absorb the remaining horizontal space.
 - A list cell `[120, 135, 150, 140]` fills a grouped column's leaves
-    positionally; `~` inside such a list leaves an empty leaf.
+positionally; `~` inside such a list leaves an empty leaf.
 
 Source:
 
@@ -140,20 +139,20 @@ footer:
 Rendered:
 
 #figure(
-  table(
-    columns: 9,
-    align: (left, left, left, left, left, left, left, left, left),
-    table.header(table.cell(rowspan: 2)[Product], table.cell(colspan: 4)[FY23], table.cell(colspan: 4)[FY24], [Q1], [Q2], [Q3], [Q4], [Q1], [Q2], [Q3], [Q4]),
-    [Apples], [120], [135], [150], [140], [130], [145], [160], [150],
-    [Pears], [80], [90], [110], [85], [85], [95], [115], [90],
-    [Peaches], [60], [95], [110], [40], [55], [100], [120], [45],
-    table.hline(),
-    [Cherries], [], [], [45], [0], [], [], [50], [0],
-    [Plums], [0], [0], [30], [75], [0], [0], [35], [80],
-    table.hline(),
-    [Total], [260], [320], [445], [340], [270], [340], [480], [365],
-  ),
-  caption: [Quarterly sales by product (2023-2024)],
+table(
+columns: 9,
+align: (left, left, left, left, left, left, left, left, left),
+table.header(table.cell(rowspan: 2)[Product], table.cell(colspan: 4, align: center)[FY23], table.cell(colspan: 4, align: center)[FY24], [Q1], [Q2], [Q3], [Q4], [Q1], [Q2], [Q3], [Q4]),
+[Apples], [120], [135], [150], [140], [130], [145], [160], [150],
+[Pears], [80], [90], [110], [85], [85], [95], [115], [90],
+[Peaches], [60], [95], [110], [40], [55], [100], [120], [45],
+table.hline(),
+[Cherries], [], [], [45], [0], [], [], [50], [0],
+[Plums], [0], [0], [30], [75], [0], [0], [35], [80],
+table.hline(),
+[Total], [260], [320], [445], [340], [270], [340], [480], [365],
+),
+caption: [Quarterly sales by product (2023-2024)],
 )
 
 = Named-row mode
@@ -165,9 +164,9 @@ names are caught as validation errors.
 Notable attributes:
 
 - Shorthand form `{Apples: {FY23: [...], FY24: [...]}}` — the row's only key
-    is the label, mapped to a dict of column-name → value.
+is the label, mapped to a dict of column-name #ts-script("symbols")[→ ]value.
 - Explicit form `{label: …, cells: {…}}` lets you spell things out and
-    document each row.
+document each row.
 - Listing only some columns is fine; the others render as empty cells.
 
 Source:
@@ -191,30 +190,30 @@ rows:
 Rendered:
 
 #figure(
-  table(
-    columns: 9,
-    align: (left, left, left, left, left, left, left, left, left),
-    table.header(table.cell(rowspan: 2)[Product], table.cell(colspan: 4)[FY23], table.cell(colspan: 4)[FY24], [Q1], [Q2], [Q3], [Q4], [Q1], [Q2], [Q3], [Q4]),
-    [Apples], [120], [135], [150], [140], [130], [145], [160], [150],
-    [Pears], [80], [90], [110], [85], [85], [95], [115], [90],
-    [Peaches], [60], [95], [110], [40], [55], [100], [120], [45],
-    table.hline(),
-    [Cherries], [], [], [45], [0], [], [], [], [],
-  ),
-  caption: [Same sales, named-row mode],
+table(
+columns: 9,
+align: (left, left, left, left, left, left, left, left, left),
+table.header(table.cell(rowspan: 2)[Product], table.cell(colspan: 4, align: center)[FY23], table.cell(colspan: 4, align: center)[FY24], [Q1], [Q2], [Q3], [Q4], [Q1], [Q2], [Q3], [Q4]),
+[Apples], [120], [135], [150], [140], [130], [145], [160], [150],
+[Pears], [80], [90], [110], [85], [85], [95], [115], [90],
+[Peaches], [60], [95], [110], [40], [55], [100], [120], [45],
+table.hline(),
+[Cherries], [], [], [45], [0], [], [], [], [],
+),
+caption: [Same sales, named-row mode],
 )
 
 = Three-level headers
 
 Headers can nest arbitrarily deeply. The example below shows a
-year → quarter → month hierarchy that produces three header rows with
+year #ts-script("symbols")[→ ]quarter #ts-script("symbols")[→ ]month hierarchy that produces three header rows with
 `\cmidrule` strokes between groupings.
 
 Notable attributes:
 
 - Each `name + columns` block adds one extra header level.
 - A single list cell `[10, 12, 15, 18, 20, 22]` flattens across all leaves of
-    the outer group regardless of nesting depth.
+the outer group regardless of nesting depth.
 
 Source:
 
@@ -235,14 +234,14 @@ rows:
 Rendered:
 
 #figure(
-  table(
-    columns: 7,
-    align: (left, left, left, left, left, left, left),
-    table.header(table.cell(rowspan: 3)[Product], table.cell(colspan: 6)[2024], table.cell(colspan: 3)[Q1], table.cell(colspan: 3)[Q2], [Jan], [Feb], [Mar], [Apr], [May], [Jun]),
-    [Alpha], [10], [12], [15], [18], [20], [22],
-    [Beta], [], [], [5], [8], [10], [12],
-  ),
-  caption: [Monthly sales breakdown for 2024],
+table(
+columns: 7,
+align: (left, left, left, left, left, left, left),
+table.header(table.cell(rowspan: 3)[Product], table.cell(colspan: 6, align: center)[2024], table.cell(colspan: 3, align: center)[Q1], table.cell(colspan: 3, align: center)[Q2], [Jan], [Feb], [Mar], [Apr], [May], [Jun]),
+[Alpha], [10], [12], [15], [18], [20], [22],
+[Beta], [], [], [5], [8], [10], [12],
+),
+caption: [Monthly sales breakdown for 2024],
 )
 
 = Multi-row cell in the body
@@ -254,10 +253,10 @@ acknowledge the absorption — the validator refuses anything else.
 
 Notable attributes:
 
-- `{value: Maria, rows: 2}` — span two rows, value rendered via LaTeX
-    `\multirow`.
+- `{value: Maria, rows: 2}` — span two rows, value rendered via #ts-logo("LaTeX")
+`\multirow`.
 - The absorbing `~` is required (the validator rejects a stray real value
-    there with a clear error).
+there with a clear error).
 
 Source:
 
@@ -272,15 +271,15 @@ rows:
 Rendered:
 
 #figure(
-  table(
-    columns: 4,
-    align: (left, left, left, left),
-    table.header([Article], [Editor], [Status], [Pages]),
-    [Alpha], table.cell(rowspan: 2)[Maria], [Draft], [12],
-    [Beta], [Review], [18],
-    [Gamma], [John], [Published], [24],
-  ),
-  caption: [Article assignments (same editor spans two rows)],
+table(
+columns: 4,
+align: (left, left, left, left),
+table.header([Article], [Editor], [Status], [Pages]),
+[Alpha], table.cell(rowspan: 2)[Maria], [Draft], [12],
+[Beta], [Review], [18],
+[Gamma], [John], [Published], [24],
+),
+caption: [Article assignments (same editor spans two rows)],
 )
 
 = Multi-column cell in the body
@@ -292,7 +291,7 @@ Notable attributes:
 
 - `cols: 4` consumes the four leaves of the `2024` group in one cell.
 - `align: c` overrides the column's default alignment for this cell only
-    (rendered via LaTeX `\multicolumn{N}{c}{…}`).
+(rendered via #ts-logo("LaTeX") `\multicolumn{N}{c}{…}`).
 
 Source:
 
@@ -311,16 +310,16 @@ rows:
 Rendered:
 
 #figure(
-  table(
-    columns: 5,
-    align: (left, left, left, left, left),
-    table.header(table.cell(rowspan: 2)[Metric], table.cell(colspan: 4)[2024], [Q1], [Q2], [Q3], [Q4]),
-    [Revenue], [120], [130], [150], [170],
-    [Cost], [80], [85], [90], [95],
-    table.hline(),
-    [Gross], table.cell(colspan: 4, align: center)[\$570k],
-  ),
-  caption: [Annual totals across all four quarters],
+table(
+columns: 5,
+align: (left, left, left, left, left),
+table.header(table.cell(rowspan: 2)[Metric], table.cell(colspan: 4, align: center)[2024], [Q1], [Q2], [Q3], [Q4]),
+[Revenue], [120], [130], [150], [170],
+[Cost], [80], [85], [90], [95],
+table.hline(),
+[Gross], table.cell(colspan: 4, align: center)[\$570k],
+),
+caption: [Annual totals across all four quarters],
 )
 
 = Mixed block (rowspan × colspan)
@@ -331,7 +330,7 @@ form a `rows × cols` block and must all be filled with `~`.
 Notable attributes:
 
 - `{value: "Merged 2x3", rows: 2, cols: 3, align: c}` — a single declaration
-    drives both the LaTeX `\multirow` and `\multicolumn` emission.
+drives both the #ts-logo("LaTeX") `\multirow` and `\multicolumn` emission.
 - The absorbed row needs `~` for each of the three absorbed columns.
 
 Source:
@@ -347,15 +346,15 @@ rows:
 Rendered:
 
 #figure(
-  table(
-    columns: 4,
-    align: (left, left, left, left),
-    table.header([A], [B], [C], [D]),
-    [r1], table.cell(colspan: 3, rowspan: 2, align: center)[Merged 2x3],
-    [r2],
-    [r3], [x], [y], [z],
-  ),
-  caption: [2×3 merged block highlight],
+table(
+columns: 4,
+align: (left, left, left, left),
+table.header([A], [B], [C], [D]),
+[r1], table.cell(colspan: 3, rowspan: 2, align: center)[Merged 2x3],
+[r2],
+[r3], [x], [y], [z],
+),
+caption: [2×3 merged block highlight],
 )
 
 = Width control
@@ -372,10 +371,10 @@ the same `width-group` are forced to match.
 Notable attributes:
 
 - `align: j` (justified) is applied to the `Description` column, which is
-    the only one without an explicit width — it becomes the flexible `X`
-    column that absorbs the remainder.
+the only one without an explicit width — it becomes the flexible `X`
+column that absorbs the remainder.
 - `align: l` and `align: c` set left and centre alignment on the fixed
-    columns.
+columns.
 
 Source:
 
@@ -400,15 +399,15 @@ rows:
 Rendered:
 
 #figure(
-  table(
-    columns: 3,
-    align: (left, left, left),
-    table.header([Requirement], [Description], [Priority]),
-    [REQ-001], [The system must support CSV import with automatic delimiter detection.], [High],
-    [REQ-002], [PDF exports must follow the brand guidelines (logo, colours, margins).], [Medium],
-    [REQ-003], [The UI must be fully keyboard accessible (WCAG 2.1 AA).], [High],
-  ),
-  caption: [Product requirements (fixed + flexible columns)],
+table(
+columns: (25%, auto, 15%),
+align: (left, left, center),
+table.header([Requirement], [Description], [Priority]),
+[REQ-001], [The system must support CSV import with automatic delimiter detection.], [High],
+[REQ-002], [PDF exports must follow the brand guidelines (logo, colours, margins).], [Medium],
+[REQ-003], [The UI must be fully keyboard accessible (WCAG 2.1 AA).], [High],
+),
+caption: [Product requirements (fixed + flexible columns)],
 )
 
 == Equal-width columns via width-group
@@ -416,7 +415,7 @@ Rendered:
 Notable attributes:
 
 - All four quarter columns share `width-group: quarter`, so `tabularx`
-    divides the available width equally between them.
+divides the available width equally between them.
 - `Category` has no width and no group — it stays auto-sized.
 
 Source:
@@ -445,35 +444,35 @@ footer:
 Rendered:
 
 #figure(
-  table(
-    columns: 5,
-    align: (left, left, left, left, left),
-    table.header([Category], [Q1], [Q2], [Q3], [Q4]),
-    [Salaries], [120000], [122000], [121000], [125000],
-    [Equipment], [15000], [8000], [22000], [11000],
-    [Contractors], [30000], [32000], [28000], [35000],
-    table.hline(),
-    [Total], [165000], [162000], [171000], [171000],
-  ),
-  caption: [Quarterly budget (equal-width columns via width-group)],
+table(
+columns: 5,
+align: (left, left, left, left, left),
+table.header([Category], [Q1], [Q2], [Q3], [Q4]),
+[Salaries], [120000], [122000], [121000], [125000],
+[Equipment], [15000], [8000], [22000], [11000],
+[Contractors], [30000], [32000], [28000], [35000],
+table.hline(),
+[Total], [165000], [162000], [171000], [171000],
+),
+caption: [Quarterly budget (equal-width columns via width-group)],
 )
 
 = Headerless tables
 
 Sometimes a table is just a two-column key/value summary — no real column
 headers, only the rows themselves. Omit the `name` field on every column and
-the renderer drops the `<thead>` (and the corresponding LaTeX `\midrule`)
+the renderer drops the `<thead>` (and the corresponding #ts-logo("LaTeX") `\midrule`)
 so the body sits directly under the `\toprule`. The columns still accept
 `align`, `width`, and `width-group` exactly as in a regular table.
 
 Notable attributes:
 
-- No `name:` on any column → no header rows emitted.
+- No `name:` on any column #ts-script("symbols")[→ ]no header rows emitted.
 - The first column remains the *label column*; row labels still take the
-    first cell of each row.
+first cell of each row.
 - Per-column `align` and `width` keep their usual meaning, so a typical
-    headerless layout is a fixed-width key column plus a justified value
-    column that absorbs the remainder of the line.
+headerless layout is a fixed-width key column plus a justified value
+column that absorbs the remainder of the line.
 
 Source:
 
@@ -495,19 +494,19 @@ rows:
 Rendered:
 
 #table(
-  columns: 2,
-  align: (left, left),
-  [Project codename], [Northwind],
-  [Workload estimate], [25 × 7 = 175 hours],
-  [Supervised sessions], [7 × 16 = 112 periods],
-  [Independent study], [175 − 112 = 63 hours],
-  [Theory / practice mix], [50 % theory, 50 % lab],
+columns: (40%, auto),
+align: (left, left),
+[Project codename], [Northwind],
+[Workload estimate], [25 × 7 = 175 hours],
+[Supervised sessions], [7 × 16 = 112 periods],
+[Independent study], [175 #ts-script("mathematics")[− ]112 = 63 hours],
+[Theory / practice mix], [50 % theory, 50 % lab],
 )
 
 = Plain Markdown tables, qualified by `yaml table-config`
 
 Markdown's pipe table syntax stays the most ergonomic input format for short,
-literal tables. To give those tables real LaTeX semantics — picking
+literal tables. To give those tables real #ts-logo("LaTeX") semantics — picking
 `tabularx`, choosing alignment per column, marking one column as the
 flexible (`X`) one — drop a `yaml table-config` fence right below the
 markdown table:
@@ -515,18 +514,18 @@ markdown table:
 Notable attributes:
 
 - The fence is a regular code block whose info string is `yaml table-config`.
-    It must directly follow the table (only the standard blank line in
-    between).
+It must directly follow the table (only the standard blank line in
+between).
 - `columns` is matched *positionally* to the markdown columns; no `name`
-    is required.
+is required.
 - `align` accepts both short forms (`l`, `c`, `r`, `j`) and long forms
-    (`left`, `center`, `right`, `justify`).
+(`left`, `center`, `right`, `justify`).
 - `width: X` (case-insensitive) marks a column as the flexible one — it
-    becomes the LaTeX `X` column that absorbs the remaining width. Other
-    columns size to their content. The renderer automatically switches the
-    table to `tabularx{\linewidth}{…}`.
+becomes the #ts-logo("LaTeX") `X` column that absorbs the remaining width. Other
+columns size to their content. The renderer automatically switches the
+table to `tabularx{\linewidth}{…}`.
 - Standard `width` values (percentages, lengths) and `width-group` work
-    the same as in full yaml-tables.
+the same as in full yaml-tables.
 
 Source:
 
@@ -552,15 +551,15 @@ columns:
 Rendered:
 
 #figure(
-  table(
-    columns: 5,
-    align: (left, left, left, left, left),
-    table.header([Abbr.], [Sem.], [Nom du cours], [Orientations], [Charge]),
-    [Info1], [S1], [Informatique 1], [E,M,A,N], [120],
-    [MicroInfo], [S1], [Microcontrôleurs et microinformatique], [E,M,A,N], [120],
-    [Info2], [S2], [Informatique 2], [E,M,A,N], [100],
-  ),
-  caption: [Inventaire des cours d'informatique.],
+table(
+columns: (auto, auto, 1fr, auto, auto),
+align: (left, right, left, left, right),
+table.header([Abbr.], [Sem.], [Nom du cours], [Orientations], [Charge]),
+[Info1], [S1], [Informatique 1], [E,M,A,N], [120],
+[MicroInfo], [S1], [Microcontrôleurs et microinformatique], [E,M,A,N], [120],
+[Info2], [S2], [Informatique 2], [E,M,A,N], [100],
+),
+caption: [Inventaire des cours d'informatique.],
 ) <tbl:cours>
 
 The colspec produced is `lrXlr`: `Nom du cours` is the only column to wrap
@@ -585,14 +584,12 @@ rows:
 
 Rendered:
 
-#block(width: 100%, radius: 2pt, stroke: (left: 1.5pt + rgb("#808080"), rest: 0.4pt + rgb("#808080")))[
-  #block(width: 100%, fill: rgb("#808080").lighten(90%), inset: (x: 8pt, y: 4pt))[#text(weight: "bold", fill: rgb("#808080"))[🎤#h(0.4em)YAML table error]]
-  #block(width: 100%, inset: (x: 8pt, y: 6pt))[
-    ```
-    body row 'x' covers 2 leaf cell(s); expected 3
-    ```
-  ]
-]
+#table(
+columns: 4,
+align: (left, left, left, left),
+table.header([A], [B], [C], [D]),
+[x], [1], [2], [],
+)
 
 == Unknown column in named-row mode
 
@@ -610,14 +607,12 @@ rows:
 
 Rendered:
 
-#block(width: 100%, radius: 2pt, stroke: (left: 1.5pt + rgb("#808080"), rest: 0.4pt + rgb("#808080")))[
-  #block(width: 100%, fill: rgb("#808080").lighten(90%), inset: (x: 8pt, y: 4pt))[#text(weight: "bold", fill: rgb("#808080"))[🎤#h(0.4em)YAML table error]]
-  #block(width: 100%, inset: (x: 8pt, y: 6pt))[
-    ```
-    named row 2024: unknown column(s) ['Acutal']; available columns: ['Actual']
-    ```
-  ]
-]
+#table(
+columns: 3,
+align: (left, left, left),
+table.header(table.cell(rowspan: 2)[Year], table.cell(colspan: 2, align: center)[Actual], [H1], [H2]),
+[2024], [], [],
+)
 
 == Multirow / multicolumn rectangle not absorbed
 
@@ -633,11 +628,10 @@ rows:
 
 Rendered:
 
-#block(width: 100%, radius: 2pt, stroke: (left: 1.5pt + rgb("#808080"), rest: 0.4pt + rgb("#808080")))[
-  #block(width: 100%, fill: rgb("#808080").lighten(90%), inset: (x: 8pt, y: 4pt))[#text(weight: "bold", fill: rgb("#808080"))[🎤#h(0.4em)YAML table error]]
-  #block(width: 100%, inset: (x: 8pt, y: 6pt))[
-    ```
-    body row 'r1' covers 2 leaf cell(s); expected 3
-    ```
-  ]
-]
+#table(
+columns: 4,
+align: (left, left, left, left),
+table.header([A], [B], [C], [D]),
+[r1], table.cell(colspan: 2, rowspan: 2)[Block], [],
+[r2], [c],
+)

@@ -9,252 +9,303 @@
 \usepackage[a4paper]{geometry}
 \usepackage{ts-fonts}
 \usepackage{booktabs}
-\usepackage{tabularx}
-\usepackage{amsmath}
 \usepackage{float}
+\usepackage{graphicx}
+\usepackage{tabularx}
+\usepackage{tcolorbox}
+\usepackage{xcolor}
+\usepackage{fvextra}
+\usepackage{amsmath}
 \usepackage{seqsplit}
 \newcolumntype{Y}{>{\centering\arraybackslash}X}
 \newcolumntype{Z}{>{\raggedleft\arraybackslash}X}
+\usepackage{ts-callouts}
 \usepackage{ts-code}
 
 \usepackage{lastpage}
 \usepackage{refcount}
 \makeatletter
 \def\ps@plain{
-  \let\@oddhead\@empty
-  \let\@evenhead\@empty
-  \def\@oddfoot{
-    \hfil
-    \ifnum\getpagerefnumber{LastPage}>1\relax
-      \thepage
-    \fi
-    \hfil}
-  \let\@evenfoot\@oddfoot
+\let\@oddhead\@empty
+\let\@evenhead\@empty
+\def\@oddfoot{
+\hfil
+\ifnum\getpagerefnumber{LastPage}>1\relax
+\thepage
+\fi
+\hfil}
+\let\@evenfoot\@oddfoot
 }
 \makeatother
 
-\title{Markdown}
+\title{TMark}
 \author{}\date{}
-
 \begin{document}
-
 \maketitle
-
-\thispagestyle{plain}
 If Markdown is new to you, start with the \href{https://www.markdownguide.org/basic-syntax/}{canonical guide}.
 
 The original spec is spartan---tables, diagrams, and other niceties didn't exist.
 
-Over time new \emph{flavours} sprouted to fill the gaps. Because TeXSmith initially targeted MkDocs, it aligns with \href{https://python-markdown.github.io/extensions/}{Python-Markdown} (MkDocs' engine) plus the usual suspects like \href{https://facelessuser.github.io/pymdown-extensions/}{Pymdown Extensions}.
-
-For printed documentation, especially for scientific or technical reports, some additional features are required:
-
+Over time new \emph{flavours} sprouted to fill the gaps. For printed documentation,
+especially for scientific or technical reports, more is required still:
 \begin{itemize}
-\item{} Citations and bibliographies
-\item{} Cross-references
-\item{} Diagrams (Mermaid, Graphviz, Vega)
-\item{} Mathematical formulas (LaTeX math)
-\item{} Index
-\item{} Glossary and acronyms
-\item{} Rich tables (span, multi-line cells, etc.)
-\item{} Direct LaTeX injections using fenced \texttt{/// latex} blocks or inline \texttt{\{latex\}[...]} snippets that stay hidden in HTML but reach the LaTeX output unchanged
-
+\item Citations and bibliographies
+\item Cross-references
+\item Diagrams (Mermaid, draw.io, Vega)
+\item Mathematical formulas (\LaTeX{} math)
+\item Index
+\item Glossary and acronyms
+\item Rich tables (spans, multi-line cells, grouped headers)
+\item Raw passthrough to one backend without polluting the others
 \end{itemize}
-\section{Markdown is a mess}\label{markdown-is-a-mess}
-
+\textbf{TMark} (TeXSmith Markdown) is the dialect TeXSmith reads: CommonMark, plus
+the extension set every MkDocs site already loads, plus exactly four syntactic
+families for everything print needs. It has a
+\href{https://github.com/yves-chevallier/tmark}{specification}, a parser, a printer
+and a linter, and one canonical spelling per construct.
+\section{Markdown is a mess}
 So many flavours, so many extensions, so many incompatible syntaxes---it's a jungle. CommonMark tried to herd the cats and mostly succeeded, but fragmentation remains. MyST brought Sphinx-style goodies to Markdown, yet it isn't MkDocs-compatible, so TeXSmith had to chart its own course.
-
 \begin{figure}[H]
-    \centering
-
-    \href{https://imgs.xkcd.com/comics/standards.png}{
-    \includegraphics[width=0.6\linewidth]{standards.pdf}
-    }
-
-    \caption[How Standards Proliferate]{How Standards Proliferate}
+\centering
+\href{https://imgs.xkcd.com/comics/standards.png}{\includegraphics[width=0.6\linewidth]{standards.pdf}}
+\caption{How Standards Proliferate}
 \end{figure}
-
 Source: xkcd\footnote{\href{https://xkcd.com/927/}{xkcd:927}}.
 
-TeXSmith is unapologetically opinionated: it curates a stack, sprinkles extra sauce on top, and calls the bundle \textbf{Tmark} (TeXSmith Markdown).
+TMark's answer is not another pile of extensions: it is a closed set of rules,
+so that a construct you have never seen can still be read.
+\section{Four syntactic families}
+Beyond core CommonMark (headings, paragraphs, lists, quotes, emphasis, links,
+images, fenced code), TMark adds exactly four families. Every construct on the
+following pages is an instance of one of them.
 
-\section{TeXSmith compatibility}\label{texsmith-compatibility}
+\textbf{Attributes} decorate the element before them.
+\begin{tscode}[lang=md, engine=pygments]
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+\PY{g+gu}{\PYZsh{}\PYZsh{} Boot sequence \PYZob{}\PYZsh{}sec:boot\PYZcb{}}
 
-\subsection{CommonMark}\label{commonmark}
+![\PY{n+nt}{Trace}](\PY{n+na}{trace.png})\PYZob{}width=60\PYZpc{}\PYZcb{}
+\end{Verbatim}
+\end{tscode}
+A brace group holds \tscodeinline{\#id}, \tscodeinline{.class} and \tscodeinline{key=value} items, separated by spaces;
+values with spaces are double-quoted. There are no bare-word attributes: write
+\tscodeinline{\{collapsed=true\}}, not \tscodeinline{\{collapsed\}}. Attributes need a host; where you want
+them on a piece of running text, wrap it in a span: \tscodeinline{[this claim]\{\#claim:one\}}.
 
-\href{https://commonmark.org/help/}{CommonMark} is the standardized, modern version of Markdown.
+\textbf{Roles} create semantic inline nodes; the name comes before the content.
+\begin{tscode}[lang=md, engine=pygments]
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+\PYZob{}index\PYZcb{}[endianness] \PYZob{}aside\PYZcb{}[see Prandtl 1921] \PYZob{}raw latex\PYZcb{}(\PYZbs{}clearpage)
 
+\PYZob{}include\PYZcb{}(chapter.md)
+\end{Verbatim}
+\end{tscode}
+Brackets and parentheses follow the rule Markdown links already apply in
+\tscodeinline{[content](argument)}: brackets hold \textbf{content}, parsed as Markdown and read by
+the reader; parentheses hold a verbatim \textbf{argument} the processor consumes.
+\tscodeinline{\{aside\}[see **Prandtl**]} is content; \tscodeinline{\{raw latex\}(\textbackslash{}textbf\{x\})} and
+\tscodeinline{\{include\}(chapter.md)} are arguments, and nothing inside them is ever
+Markdown.
+
+\textbf{Container directives} hold Markdown.
+\begin{tscode}[lang=md, engine=pygments]
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+::: figure \PYZob{}cols=2\PYZcb{}
+![\PY{n+nt}{Boot}](\PY{n+na}{boot.png})
+![\PY{n+nt}{Crash}](\PY{n+na}{crash.png})
+
+Figure: Watchdog traces. \PYZob{}\PYZsh{}fig:traces\PYZcb{}
+:::
+\end{Verbatim}
+\end{tscode}
+Nesting is by fence length (\tscodeinline{::::} outside \tscodeinline{:::}), as in Pandoc.
+
+\textbf{Data directives} hold non-Markdown content in a fenced code block whose info
+string is \tscodeinline{<lang> <node>}. The second word names the node the fence produces and
+defaults to \tscodeinline{code}, so an ordinary code block is the degenerate case.
+\begin{tscode}[lang=md, engine=pygments]
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+\PY{l+s+sb}{```}\PY{l+s+sb}{python}\PY{+w}{ }image
+\PY{k+kn}{import}\PY{+w}{ }\PY{n+nn}{matplotlib}\PY{n+nn}{.}\PY{n+nn}{pyplot}\PY{+w}{ }\PY{k}{as}\PY{+w}{ }\PY{n+nn}{plt}
+\PY{n}{plt}\PY{o}{.}\PY{n}{plot}\PY{p}{(}\PY{p}{[}\PY{l+m+mi}{1}\PY{p}{,} \PY{l+m+mi}{2}\PY{p}{,} \PY{l+m+mi}{4}\PY{p}{,} \PY{l+m+mi}{8}\PY{p}{]}\PY{p}{)}
+\PY{n}{plt}\PY{o}{.}\PY{n}{savefig}\PY{p}{(}\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{out.pdf}\PY{l+s+s2}{\PYZdq{}}\PY{p}{)}
+\PY{l+s+sb}{```}
+
+\PY{l+s+sb}{```}\PY{l+s+sb}{yaml}\PY{+w}{ }table
+\PY{n+nt}{columns}\PY{p}{:}\PY{+w}{ }\PY{p+pIndicator}{[}\PY{n+nv}{A}\PY{p+pIndicator}{,}\PY{+w}{ }\PY{n+nv}{B}\PY{p+pIndicator}{]}
+\PY{n+nt}{rows}\PY{p}{:}\PY{+w}{ }\PY{p+pIndicator}{[}\PY{p+pIndicator}{[}\PY{n+nv}{1}\PY{p+pIndicator}{,}\PY{+w}{ }\PY{n+nv}{2}\PY{p+pIndicator}{]}\PY{p+pIndicator}{]}
+\PY{l+s+sb}{```}
+\end{Verbatim}
+\end{tscode}
+The node words are \tscodeinline{code}, \tscodeinline{table}, \tscodeinline{table-\allowbreak{}config}, \tscodeinline{image} and \tscodeinline{raw}.
+\section{Two sigils}
+TMark reserves two inline sigils, each with one meaning.
+\begin{center}
+\begin{tabularx}{\linewidth}{>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X}
+\toprule
+\textbf{Sigil} & \textbf{Meaning} & \textbf{In braces (attribute)} & \textbf{Before brackets (node)} \\
+\midrule
+\tscodeinline{\#} & define & \tscodeinline{\{\#id\}} names an existing host element & \tscodeinline{\#[term]} an index entry (content), \tscodeinline{\#(fw:key)} a counter item (argument) \\
+\tscodeinline{@} & refer & (none) & \tscodeinline{@key} bare, \tscodeinline{@[key …]} bracketed \\
+\bottomrule
+\end{tabularx}
+\end{center}
+\textbf{\tscodeinline{\#} defines, \tscodeinline{@} refers} is the mnemonic the whole reference system hangs on.
+\tscodeinline{@} resolves against named registries: a declared counter prefix, \tscodeinline{gls:} for the
+glossary, \tscodeinline{doi:} for a DOI, and otherwise the bibliography. Both sigils are
+guarded --- \tscodeinline{@} never fires inside a word, an e-mail address or a URL, and \tscodeinline{\#[}
+or \tscodeinline{\#(} followed by a non-space does not occur in prose --- and both escape with
+a backslash: \tscodeinline{\textbackslash{}@}, \tscodeinline{\textbackslash{}\#}.
+\section{Degradation classes}
+Every construct says what a renderer \emph{other} than TeXSmith shows for the same
+bytes.
+\begin{description}
+\item[{C, compatible}] Renders identically in CommonMark and GFM.
+\item[{E, extension-compatible}] Not CommonMark, but identical under the standard extension set every MkDocs
+and Python-Markdown site already loads.
+\item[{D, degrades}] Foreign renderers show something readable but unstyled: a code block, a
+literal \tscodeinline{!!! note} line, a \tscodeinline{Table:} paragraph.
+\item[{X, diverges}] The same bytes \emph{mean something else} in GFM. There are five, and they are
+listed below.
+\end{description}
+\begin{center}
+\begin{tabularx}{\linewidth}{>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X}
+\toprule
+\textbf{\#} & \textbf{Syntax} & \textbf{GFM meaning} & \textbf{TMark meaning} \\
+\midrule
+X1 & \tscodeinline{\_\_text\_\_} & bold & small caps \\
+X2 & \tscodeinline{-\allowbreak{}-\allowbreak{}-\allowbreak{}} & horizontal rule & divider; a page break in paged media \\
+X3 & \tscodeinline{\textasciitilde{}x\textasciitilde{}} & strikethrough & subscript \\
+X4 & \tscodeinline{@word} & literal & reference or citation \\
+X5 & \tscodeinline{\#[…]}, \tscodeinline{\#(…)} & literal & index entry, counter item \\
+\bottomrule
+\end{tabularx}
+\end{center}
+X1 and X2 are disabled by the \tscodeinline{strict} profile, for teams that co-render their
+sources on GitHub.
+\section{Compatibility}
+\subsection{CommonMark}
+\href{https://commonmark.org/help/}{CommonMark} is the standardized, modern version of Markdown, and TMark's substrate.
 \begin{center}
 \begin{tabularx}{\linewidth}{>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X}
 \toprule
 \textbf{Feature} & \textbf{Syntax} & \textbf{Supported} \\
-
 \midrule
-Italic & \texttt{*x*} & Yes \\
-Bold & \texttt{**x**} & Yes \\
-Heading & \texttt{\# H} & Yes \\
-Links & \texttt{[Text](url)} & Yes \\
-Images & \texttt{![Alt](url)} & Yes \\
-Inline Code & \texttt{`code`} & Yes \\
-Footnotes & \texttt{[\^{}1]} & Yes \\
-Tables &  & Yes \\
-Blockquotes & \texttt{> Quote} & Yes \\
-Ordered Lists & \texttt{1. Item} & Yes \\
-Unordered Lists & \texttt{-\allowbreak{} Item} & Yes \\
-Horizontal Rules & \texttt{-\allowbreak{}-\allowbreak{}-\allowbreak{}} & Yes \\
-Superscript & \texttt{\^{}x\^{}} & Yes \\
-Subscript & \texttt{\textasciitilde{}x\textasciitilde{}} & Yes \\
-Strikethrough & \texttt{\textasciitilde{}\textasciitilde{}x\textasciitilde{}\textasciitilde{}} & Yes \\
-
+Italic & \tscodeinline{*x*} & Yes \\
+Bold & \tscodeinline{**x**} & Yes \\
+Heading & \tscodeinline{\# H} & Yes \\
+Links & \tscodeinline{[Text](url)} & Yes \\
+Images & \tscodeinline{![Alt](url)} & Yes \\
+Inline Code & \tscodeinline{`code`} & Yes \\
+Footnotes & \tscodeinline{[\^{}1]} & Yes \\
+Tables & pipe tables & Yes \\
+Blockquotes & \tscodeinline{> Quote} & Yes \\
+Ordered Lists & \tscodeinline{1. Item} & Yes \\
+Unordered Lists & \tscodeinline{-\allowbreak{} Item} & Yes \\
+Dividers & \tscodeinline{-\allowbreak{}-\allowbreak{}-\allowbreak{}} & Yes (X2) \\
+Superscript & \tscodeinline{\^{}x\^{}} & Yes \\
+Subscript & \tscodeinline{\textasciitilde{}x\textasciitilde{}} & Yes (X3) \\
+Strikethrough & \tscodeinline{\textasciitilde{}\textasciitilde{}x\textasciitilde{}\textasciitilde{}} & Yes \\
 \bottomrule
 \end{tabularx}
 \end{center}
-
-\subsection{GitHub Flavored Markdown (GFM)}\label{github-flavored-markdown-gfm}
-
-\href{https://github.github.com/gfm/}{GFM} is the version of Markdown used by GitHub, which extends CommonMark with additional features.
-
+\subsection{The standard extension set}
+These are the extensions that define class E: they are what MkDocs, MkDocs
+Material and Zensical already load, and TMark never redefines what they do.
 \begin{center}
 \begin{tabularx}{\linewidth}{>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X}
 \toprule
-\textbf{Feature} & \textbf{Syntax} & \textbf{Supported} \\
-
+\textbf{Package} & \textbf{Extensions} & \textbf{Constructs} \\
 \midrule
-Separator & \texttt{***}, \texttt{\_\_\_} & Yes \\
-
+Python-Markdown & \tscodeinline{extra} (\tscodeinline{abbr}, \tscodeinline{attr\_list}, \tscodeinline{def\_list}, \tscodeinline{fenced\_code}, \tscodeinline{footnotes}, \tscodeinline{md\_in\_html}, \tscodeinline{tables}), \tscodeinline{admonition}, \tscodeinline{toc} & acronyms, attributes, definition lists, footnotes, pipe tables, \tscodeinline{!!!} callouts, \tscodeinline{<div markdown>}, \tscodeinline{[TOC]} \\
+PyMdownX & \tscodeinline{superfences}, \tscodeinline{highlight}, \tscodeinline{inlinehilite}, \tscodeinline{snippets}, \tscodeinline{arithmatex} & nested fences, code options, \tscodeinline{\#!lang} inline code, includes, math \\
+PyMdownX & \tscodeinline{caret}, \tscodeinline{tilde}, \tscodeinline{mark}, \tscodeinline{keys}, \tscodeinline{betterem}, \tscodeinline{smartsymbols}, \tscodeinline{emoji}, \tscodeinline{magiclink}, \tscodeinline{critic} & \tscodeinline{\^{}x\^{}}, \tscodeinline{\textasciitilde{}x\textasciitilde{}}, \tscodeinline{==x==}, \tscodeinline{++ctrl+s++}, smart symbols, emoji, bare URLs, critic markup \\
+PyMdownX & \tscodeinline{details}, \tscodeinline{tasklist}, \tscodeinline{fancylists}, \tscodeinline{progressbar}, \tscodeinline{tabbed} & \tscodeinline{???} callouts, task items, list markers, progress bars, tabs \\
 \bottomrule
 \end{tabularx}
 \end{center}
-
-\subsection{Python Markdown}\label{python-markdown}
-
-\href{https://python-markdown.github.io/}{Python-Markdown} is the Markdown engine used by MkDocs. It extends CommonMark with a variety of features through extensions.
-
-\begin{center}
-\begin{tabularx}{\linewidth}{>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X}
-\toprule
-\textbf{Feature} & \textbf{Syntax} & \textbf{Extension} & \textbf{Supported} \\
-
-\midrule
-Definition Lists & \texttt{: def} & \texttt{def\_list} & Yes \\
-Admonitions & \texttt{!!! note} & \texttt{admonition} & Yes \\
-Inline Math & \texttt{\$\textbackslash{}sqrt\{x\}\$} & \texttt{mdx\_math} & Yes \\
-SmartyPants & \texttt{<< >>}, \texttt{...}, \texttt{-\allowbreak{}-\allowbreak{}}, \texttt{-\allowbreak{}-\allowbreak{}-\allowbreak{}} & \texttt{smarty} & Yes \\
-WikiLinks & \texttt{[[Wiki link]]} & \texttt{wikilinks} & Yes \\
-
-\bottomrule
-\end{tabularx}
-\end{center}
-
-\subsection{PyMdown Extensions}\label{pymdown-extensions}
-
-\href{https://facelessuser.github.io/pymdown-extensions/}{Pymdown Extensions} is a popular collection of Markdown extensions for Python-Markdown, which adds many useful features.
-
-\begin{center}
-\begin{tabularx}{\linewidth}{>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X}
-\toprule
-\textbf{Feature} & \textbf{Syntax} & \textbf{Extension} & \textbf{Supported} \\
-
-\midrule
-Better Emphasis & \texttt{***x***} & \texttt{pymdownx.betterem} & Yes \\
-Superscript & \texttt{x\^{}2\^{}} & \texttt{pymdownx.caret} & Yes \\
-Underline & \texttt{\^{}\^{}x\^{}\^{}} & \texttt{pymdownx.caret} & Yes \\
-Strikethrough & \texttt{\textasciitilde{}\textasciitilde{}x\textasciitilde{}\textasciitilde{}} & \texttt{pymdownx.tilde} & Yes \\
-Collapsible Sections & \texttt{??? note} & \texttt{pymdownx.details} & Yes \\
-Emoji & \texttt{:smile:} & \texttt{pymdownx.emoji} & Yes \\
-Code Highlight & \texttt{`\#!php echo "Hello";`} & \texttt{pymdownx.inlinehilite} & Yes \\
-Keys & \texttt{++ctrl+a++} & \texttt{pymdownx.keys} & Yes \\
-Magic Links & \texttt{https://acme.com} & \texttt{pymdownx.magiclink} & Yes \\
-Highlight & \texttt{==x==} & \texttt{pymdownx.mark} & Yes \\
-Smart Symbols & \texttt{(c)} & \texttt{pymdownx.smartsymbols} & Yes \\
-Task Lists & \texttt{-\allowbreak{} [ ]} & \texttt{pymdownx.tasklist} & Yes \\
-
-\bottomrule
-\end{tabularx}
-\end{center}
-
-\subsection{TeXSmith Extensions}\label{texsmith-extensions}
-
+\subsection{What TMark adds}
 \begin{center}
 \begin{tabularx}{\linewidth}{>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X}
 \toprule
-\textbf{Feature} & \textbf{Syntax} & \textbf{Extension} \\
-
+\textbf{Feature} & \textbf{Canonical spelling} & \textbf{Page} \\
 \midrule
-Small Caps & \texttt{\^{}\^{}x\^{}\^{}} & \texttt{texsmith.extensions.smallcaps} \\
-Mermaid & \texttt{![](diagram.mmd)} & \texttt{texsmith.extensions.mermaid} \\
-Progress Bars & \texttt{[=75\% "Done"]} & \texttt{texsmith.progressbar} \\
-Bibliography & \texttt{[\^{}citekey]} & \texttt{texsmith.bibliography} \\
-Index Entries & \texttt{\{index\}[entry]} (use \texttt{\{index:registry\}[entry]} to target another registry; add more \texttt{[level]} brackets for nesting) & \texttt{texsmith.index} \\
-Acronyms & \texttt{ACME (Acme Corporation)} & \texttt{texsmith.acronyms} \\
-Raw LaTeX & \texttt{/// latex}, \texttt{\{latex\}[x]} & \texttt{texsmith.extensions.latex\_raw} \\
-LaTeX Text & \texttt{LaTeX}, \texttt{TeXSmith} & \texttt{texsmith.latex} \\
-
+Small caps & \tscodeinline{\{sc\}[x]} (sugar \tscodeinline{\_\_x\_\_}) & Formatting \\
+Margin notes / asides & \tscodeinline{\{aside\}[…]}, \tscodeinline{::: aside} & Notes \\
+Index entries & \tscodeinline{\{index\}[term]}, \tscodeinline{\#[term]} & Tags \\
+Counter items & \tscodeinline{\#(fw:key)}, \tscodeinline{\{counter\}(fw:key)} & Counters \\
+References and citations & \tscodeinline{@key}, \tscodeinline{@[key, p. 3]} & References \\
+Glossary references & \tscodeinline{@gls:term} & \href{notes.md\#glossary}{Notes} \\
+Caption lines & \tscodeinline{Figure: … \{\#fig:x\}} & Captions \\
+Structured tables & \tscodeinline{```yaml table} & Tables \\
+Raw passthrough & \tscodeinline{\{raw latex\}(…)}, \tscodeinline{```latex raw} & below \\
+Includes & \tscodeinline{\{include\}(file.md)} & below \\
+Progress bars & \tscodeinline{[=75\% "Done"]} & Progress bars \\
+Containers & \tscodeinline{::: name \{attrs\}} & Admonitions \\
 \bottomrule
 \end{tabularx}
 \end{center}
+\section{Raw passthrough}
+Escape hatches are explicit, backend-tagged and invisible to other backends.
+They are all spelled with the one word \tscodeinline{raw}.
 
-\section{Default Extensions}\label{default-extensions}
-
-\begin{itemize}
-\item{} Python Markdown
-\item{} abbr
-\item{} admonition
-\item{} attr\_list
-\item{} def\_list
-\item{} footnotes
-\item{} smarty
-\item{} tables
-\item{} mdx\_math
-\item{} md\_in\_html
-\item{} TeXSmith
-\item{} texsmith.extensions.multi\_citations:MultiCitationExtension
-\item{} texsmith.extensions.latex\_raw:LatexRawExtension
-\item{} texsmith.extensions.missing\_footnotes:MissingFootnotesExtension
-\item{} texsmith.extensions.latex\_text:LatexTextExtension
-\item{} texsmith.extensions.smallcaps:SmallCapsExtension
-\item{} texsmith.extensions.progressbar:ProgressBarExtension
-\item{} Pymdown Extensions
-\item{} pymdownx.betterem
-\item{} pymdownx.blocks.caption
-\item{} pymdownx.blocks.html
-\item{} pymdownx.caret
-\item{} pymdownx.critic
-\item{} pymdownx.details
-\item{} pymdownx.emoji
-\item{} pymdownx.fancylists
-\item{} pymdownx.highlight
-\item{} pymdownx.inlinehilite
-\item{} pymdownx.keys
-\item{} pymdownx.magiclink
-\item{} pymdownx.mark
-\item{} pymdownx.saneheaders
-\item{} pymdownx.smartsymbols
-\item{} pymdownx.snippets
-\item{} pymdownx.superfences
-\item{} pymdownx.tabbed
-\item{} pymdownx.tasklist
-\item{} pymdownx.tilde
-
-\end{itemize}
-\section{Raw LaTeX Snippets (\texttt{/// latex}, \texttt{\{latex\}[...]})}\label{raw-latex-snippets-texttt-latex-texttt-latex}
-
-When you need to insert \LaTeX{} that must not appear in the HTML build, use the dedicated fence:
-
-\begin{code}{md}{}{}
+Block form --- a data directive whose node word is \tscodeinline{raw}:
+\begin{tscode}[lang=md, engine=pygments]
 \begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
-/// latex
-\PYZbs{}newcommand\PYZob{}\PYZbs{}R\PYZcb{}\PYZob{}\PYZbs{}mathbb\PYZob{}R\PYZcb{}\PYZcb{}
-///
+\PY{l+s+sb}{```}\PY{l+s+sb}{latex}\PY{+w}{ }raw
+\PY{k}{\PYZbs{}newcommand}\PY{n+nb}{\PYZob{}}\PY{k}{\PYZbs{}R}\PY{n+nb}{\PYZcb{}}\PY{n+nb}{\PYZob{}}\PY{k}{\PYZbs{}mathbb}\PY{n+nb}{\PYZob{}}R\PY{n+nb}{\PYZcb{}}\PY{n+nb}{\PYZcb{}}
+\PY{l+s+sb}{```}
 \end{Verbatim}
-\end{code}
-For inline tweaks, drop \texttt{\{latex\}[payload]} anywhere inside your paragraph:
-
-\begin{code}{md}{}{}
+\end{tscode}
+Inline form --- a role whose payload is an argument, hence the parentheses:
+\begin{tscode}[lang=md, engine=pygments]
 \begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
-Section break \PYZob{}latex\PYZcb{}[\PYZbs{}clearpage] before the next topic.
+Section break \PYZob{}raw latex\PYZcb{}(\PYZbs{}clearpage) before the next topic.
 \end{Verbatim}
-\end{code}
-Both syntaxes create hidden nodes (\texttt{<p>} for blocks, \texttt{<span>} for inline) so the fragments remain invisible online. During the HTML \(\rightarrow\) \LaTeX{} conversion, TeXSmith spots these nodes and drops the original payload straight into the final document. This makes it safe to declare macros, page tweaks, or any advanced snippet without impacting the web version.
+\end{tscode}
+\tscodeinline{typst raw} / \tscodeinline{\{raw typst\}(…)} and \tscodeinline{html raw} / \tscodeinline{\{raw html\}(…)} work the same
+way. A \tscodeinline{latex raw} fence is ignored by the Typst and HTML backends, and vice
+versa, which is precisely how one document targets three outputs.
+\begin{tscallout}[kind=note, title={The 0.6 spellings are deprecated}]
+\tscodeinline{/// latex … ///} and \tscodeinline{\{latex\}[…]} are still parsed with a deprecation
+warning. \tscodeinline{tmark lint -\allowbreak{}-\allowbreak{}fix} rewrites both; see
+Migrating to TMark.
+\end{tscallout}
+\section{Includes}
+A block include is the \tscodeinline{include} role alone on its line; the path is an
+argument.
+\begin{tscode}[lang=md, engine=pygments]
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+\PYZob{}include\PYZcb{}(chapters/boot.md)
 
+\PYZob{}include base=chapters\PYZcb{}(boot.md)
+\end{Verbatim}
+\end{tscode}
+The included file is parsed as TMark and its blocks are spliced into the
+document, so a fenced block inside it is content and cannot close anything in
+the including file. Relative paths inside it resolve against its own directory;
+\tscodeinline{base=} overrides. Fenced code takes \tscodeinline{include="file"} on its info string
+instead of inlining content.
+\begin{tscallout}[kind=note, title={\tscodeinline{-\allowbreak{}-\allowbreak{}8<-\allowbreak{}-\allowbreak{} \textbackslash{}"file\textbackslash{}"} is deprecated}]
+The PyMdownX snippet syntax is accepted as sugar. It pastes text \emph{before}
+parsing, which breaks on nested fences, and it never rebases paths.
+\tscodeinline{tmark lint -\allowbreak{}-\allowbreak{}fix} rewrites it to \tscodeinline{\{include\}(file)}.
+\end{tscallout}
+\section{Features}
+Every switchable behaviour has a dotted name and a default; \tscodeinline{press.features} in
+the front matter flips entries, and nothing else does.
+\begin{center}
+\begin{tabularx}{\linewidth}{>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X}
+\toprule
+\textbf{Feature} & \textbf{Default} & \textbf{Effect} \\
+\midrule
+\tscodeinline{paragraph.lead} & on & promote a leading short strong span to \tscodeinline{\{lead\}[…]} \\
+\tscodeinline{table.decimal-\allowbreak{}align} & on & align numeric right-aligned columns on the decimal point \\
+\tscodeinline{tasklist.partial} & off & \tscodeinline{-\allowbreak{} [.]} partial task items \\
+\tscodeinline{figures.exec} & off & execute \tscodeinline{python image} fences \\
+\tscodeinline{glossary.wikipedia} & off & fetch glossary summaries from Wikipedia links \\
+\tscodeinline{inline.insert} & off & \tscodeinline{\^{}\^{}x\^{}\^{}} as \tscodeinline{\{underline\}[x]} \\
+\bottomrule
+\end{tabularx}
+\end{center}
 \end{document}

@@ -1,15 +1,15 @@
 #set document(
-  title: "Glossary",
+title: "Glossary",
 )
 #set page(
-  paper: "a4",
-  margin: 2.5cm,
-  numbering: none,
-  footer: context {
-    if counter(page).final().first() > 1 {
-      align(center)[#counter(page).get().first()]
-    }
-  },
+paper: "a4",
+margin: 2.5cm,
+numbering: none,
+footer: context {
+if counter(page).final().first() > 1 {
+align(center)[#counter(page).get().first()]
+}
+},
 )
 #set text(font: "New Computer Modern", size: 11pt, lang: "en")
 #set par(justify: true)
@@ -17,13 +17,12 @@
 #set heading(numbering: "1.1")
 
 #align(center)[
-  #text(size: 1.8em, weight: "bold")[Glossary]
-]
+#text(size: 1.8em, weight: "bold")[Glossary]]
 #v(1.5em)
 
 The MkDocs #link("https://realtimeprojects.github.io/mkdocs-ezglossary")[ezglossary] plugin exists, but the syntax is unintuitive (for example, the semicolon separator) and does not handle spaced or formatted entries well. Ideally, readers should be able to access the glossary as a popup, tooltip, or link.
 
-LaTeX glossaries usually rely on the `glossaries` package and definitions declared in the preamble via `\newglossaryentry`:
+#ts-logo("LaTeX") glossaries usually rely on the `glossaries` package and definitions declared in the preamble via `\newglossaryentry`:
 
 ```latex
 \newglossaryentry{key}{
@@ -37,7 +36,7 @@ LaTeX glossaries usually rely on the `glossaries` package and definitions declar
 
 `\gls` uses the standard form, `\Gls` capitalizes the first letter, `\glspl` gives the plural, and `\Glspl` capitalizes the plural. The first use of the term falls back to the `first` form when present, otherwise `name`. Markdown alone cannot express all of that. One option is to define glossary entries in front matter:
 
-```
+```yml
 glossary:
   html:
     name: HTML

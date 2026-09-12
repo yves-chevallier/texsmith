@@ -7,41 +7,71 @@
 \usepackage[english]{babel}
 \usepackage[colorlinks=true, linkcolor=NavyBlue, urlcolor=NavyBlue, citecolor=NavyBlue]{hyperref}
 \usepackage[a4paper]{geometry}
+\usepackage{ts-typesetting}
 \usepackage{ts-fonts}
+\usepackage{xcolor}
+\usepackage{epigraph}
+\usepackage{marginnote}
+\usepackage{multicol}
+\usepackage{progressbar}
+\usepackage{graphicx}
+\usepackage{tcolorbox}
+\usepackage{fvextra}
 \usepackage{amsmath}
 \usepackage{float}
 \usepackage{seqsplit}
+\renewcommand*{\marginfont}{
+\footnotesize
+\sloppy
+\emergencystretch=1em
+\hyphenpenalty=50
+\exhyphenpenalty=50
+}
+\newlength{\tsmarginparavail}
+\newlength{\tsmarginparalt}
+\newlength{\tsmarginparbuf}
+\setlength{\tsmarginparbuf}{6mm}
+\makeatletter
+\AtBeginDocument{
+\setlength{\tsmarginparavail}{\dimexpr\paperwidth-\textwidth-1in-\oddsidemargin-\marginparsep-\tsmarginparbuf\relax}
+\ifdim\tsmarginparavail<\z@\setlength{\tsmarginparavail}{\z@}\fi
+\if@twoside
+\setlength{\tsmarginparalt}{\dimexpr1in+\evensidemargin-\marginparsep-\tsmarginparbuf\relax}
+\ifdim\tsmarginparalt<\z@\setlength{\tsmarginparalt}{\z@}\fi
+\ifdim\tsmarginparalt<\tsmarginparavail
+\setlength{\tsmarginparavail}{\tsmarginparalt}
+\fi
+\fi
+\ifdim\tsmarginparavail<\marginparwidth
+\setlength{\marginparwidth}{\tsmarginparavail}
+\fi
+}
+\makeatother
 \usepackage{ts-code}
 
 \usepackage{lastpage}
 \usepackage{refcount}
 \makeatletter
 \def\ps@plain{
-  \let\@oddhead\@empty
-  \let\@evenhead\@empty
-  \def\@oddfoot{
-    \hfil
-    \ifnum\getpagerefnumber{LastPage}>1\relax
-      \thepage
-    \fi
-    \hfil}
-  \let\@evenfoot\@oddfoot
+\let\@oddhead\@empty
+\let\@evenhead\@empty
+\def\@oddfoot{
+\hfil
+\ifnum\getpagerefnumber{LastPage}>1\relax
+\thepage
+\fi
+\hfil}
+\let\@evenfoot\@oddfoot
 }
 \makeatother
 
 \title{Limitations}
 \author{}\date{}
-
 \begin{document}
-
 \maketitle
-
-\thispagestyle{plain}
-\section{Highlighting with \texttt{ucharclasses}}\label{highlighting-with-texttt-ucharclasses}
-
-The \texttt{ucharclasses} package allows you to define font transitions based on Unicode character classes. However, when using it in combination with the \texttt{soul} package for highlighting, there can be compatibility issues. For example, the following code may not work as expected:
-
-\begin{code}{latex}{}{}
+\section{Highlighting with \tscodeinline{ucharclasses}}
+The \tscodeinline{ucharclasses} package allows you to define font transitions based on Unicode character classes. However, when using it in combination with the \tscodeinline{soul} package for highlighting, there can be compatibility issues. For example, the following code may not work as expected:
+\begin{tscode}[lang=latex, engine=pygments]
 \begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
 \PY{k}{\PYZbs{}documentclass}\PY{n+nb}{\PYZob{}}article\PY{n+nb}{\PYZcb{}}
 \PY{k}{\PYZbs{}usepackage}\PY{n+nb}{\PYZob{}}soul\PY{n+nb}{\PYZcb{}}
@@ -57,7 +87,6 @@ The \texttt{ucharclasses} package allows you to define font transitions based on
 \PY{k}{\PYZbs{}hl}\PY{n+nb}{\PYZob{}}Foobar\PY{n+nb}{\PYZcb{}}
 \PY{k}{\PYZbs{}end}\PY{n+nb}{\PYZob{}}document\PY{n+nb}{\PYZcb{}}
 \end{Verbatim}
-\end{code}
-TeXSmith is meant to be compatible with Xe\LaTeX{} and Lua\LaTeX{}, but due to the way \texttt{ucharclasses} handles font transitions, it may interfere with the highlighting functionality provided by \texttt{soul}. When TeXSmith detects Xe\LaTeX{} it now disables \texttt{soul} and falls back to a plain yellow \texttt{\textbackslash{}hl\{...\}} (no box). With Lua\LaTeX{} it loads \texttt{lua-\allowbreak{}ul} instead of \texttt{soul}, keeping underlines without tripping over \texttt{ucharclasses}. Output therefore differs slightly between Xe\LaTeX{} and Lua\LaTeX{}, but both builds succeed.
-
+\end{tscode}
+TeXSmith is meant to be compatible with \tslogo{XeLaTeX} and \tslogo{LuaLaTeX}, but due to the way \tscodeinline{ucharclasses} handles font transitions, it may interfere with the highlighting functionality provided by \tscodeinline{soul}. When TeXSmith detects \tslogo{XeLaTeX} it now disables \tscodeinline{soul} and falls back to a plain yellow \tscodeinline{\textbackslash{}hl\{...\}} (no box). With \tslogo{LuaLaTeX} it loads \tscodeinline{lua-\allowbreak{}ul} instead of \tscodeinline{soul}, keeping underlines without tripping over \tscodeinline{ucharclasses}. Output therefore differs slightly between \tslogo{XeLaTeX} and \tslogo{LuaLaTeX}, but both builds succeed.
 \end{document}

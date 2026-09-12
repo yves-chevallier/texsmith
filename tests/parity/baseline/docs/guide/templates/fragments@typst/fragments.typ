@@ -1,15 +1,15 @@
 #set document(
-  title: "Template fragments",
+title: "Template fragments",
 )
 #set page(
-  paper: "a4",
-  margin: 2.5cm,
-  numbering: none,
-  footer: context {
-    if counter(page).final().first() > 1 {
-      align(center)[#counter(page).get().first()]
-    }
-  },
+paper: "a4",
+margin: 2.5cm,
+numbering: none,
+footer: context {
+if counter(page).final().first() > 1 {
+align(center)[#counter(page).get().first()]
+}
+},
 )
 #set text(font: "New Computer Modern", size: 11pt, lang: "en")
 #set par(justify: true)
@@ -17,36 +17,68 @@
 #set heading(numbering: "1.1")
 
 #align(center)[
-  #text(size: 1.8em, weight: "bold")[Template fragments]
-]
+#text(size: 1.8em, weight: "bold")[Template fragments]]
 #v(1.5em)
 
-Fragments are small, pluggable LaTeX packages (`.sty` rendered from Jinja) that
+Fragments are small, pluggable #ts-logo("LaTeX") packages (`.sty` rendered from Jinja) that
 TeXSmith can inject into any template at `\VAR{extra_packages}`. They keep
 shared logic (callouts, code listings, …) out of individual templates
 while staying configurable from front matter or your own extensions.
 
 = Built-in fragments
 
+Most built-in fragments are *contract fragments*: they define the macros
+the tmark writer emits for a construct (`\tsmark`, `tscallout`, `tscode`,
+`\tskeys`, …), listed per fragment in `tmark.fragments()` and documented in
+Contract macros. A contract fragment renders when the writer
+names it in `Requires.fragments` (on the legacy Jinja path, when its macros
+appear in the rendered content).
+
 / `ts-geometry`: page size/orientation glue that mirrors `press.paper`/`press.geometry` options.
-/ `ts-extra`: opt-in aux packages detected from the rendered content (hyperref, soul, ulem, etc.).
-/ `ts-keystrokes`: renders `\keystroke{…}` shortcuts with styled TikZ boxes when they appear in content.
-/ `ts-callouts`: admonition/callout boxes generated from callout definitions.
-/ `ts-code`: unified minted/tcolorbox code listing style.
-/ `ts-index`: central imakeidx/macros glue, selects texindy/makeindex and runs `\makeindex` when entries are present.
-/ `ts-glossary`: glossary and acronym wiring: loads `glossaries`, runs `\makeglossaries` when needed, and materializes acronym definitions from front matter with configurable styles.
+/ `ts-typesetting`: paragraph spacing, leading and line numbers (inline, when configured), and the
+
+contract macros `\tslead`, `\tsmark`, `\tsdivider`, `\tsepigraph`, `\tsaside`,
+`\tsprogress`, `\tsicon` and the `tsdiv` container (`ts-typesetting.sty`, when
+the writer requires it).
+
+/ `ts-fonts`: font selection driven by `fonts.family`, script fallback fonts, and the
+
+`\tsscript` / `\tsemoji` switches.
+
+/ `ts-extra`: aux packages: `Requires.packages` of the writer merged with the packages the
+
+active contract fragments imply (on the legacy path, detected from the
+rendered content: hyperref, soul, ulem, etc.).
+
+/ `ts-keystrokes`: `\tskeys{Ctrl,Alt,Del}` (and the legacy `\keystroke{…}`) as styled TikZ boxes.
+/ `ts-callouts`: the `tscallout` environment (and the legacy `callout` box) generated from the
+
+callout definitions and `press.callouts.*`.
+
+/ `ts-code`: the `tscode` environment and `\tscodeinline`, over minted, listings or
+
+fvextra according to `code.engine`.
+
+/ `ts-critic`: critic markup: `\tsins`, `\tsdel`, `\tssubst`, `\tscomment`.
+/ `ts-index`: `\tsindex`, central imakeidx glue, one `\makeindex[name=…]` per registry of
+
+`Requires.index`, texindy/makeindex selection.
+
+/ `ts-glossary`: `\tsgls` / `\tsacr` and the glossary wiring: loads `glossaries`, runs `\makeglossaries` when needed, and materializes acronym definitions from front matter with configurable styles.
 / `ts-bibliography`: bibliography helper that wires `biblatex` into the rendered document.
-  By default, raw URLs in entries are suppressed and the entry title becomes
-  a clickable hyperlink to the entry's `url` field — this avoids the
-  overfull/underfull `\hbox` warnings that long URLs typically cause in
-  justified bibliographies. Set `bibliography_show_urls: true` in the
-  document front matter to print the full URL inline instead (same behaviour
-  as biblatex's stock styles).
+
+By default, raw URLs in entries are suppressed and the entry title becomes
+a clickable hyperlink to the entry's `url` field — this avoids the
+overfull/underfull `\hbox` warnings that long URLs typically cause in
+justified bibliographies. Set `bibliography_show_urls: true` in the
+document front matter to print the full URL inline instead (same behaviour
+as biblatex's stock styles).
+
 / `ts-todolist`: checklist helpers providing `\done`, `\wontfix`, and the `todolist` environment when they are referenced.
 
 All built-in templates default to rendering these fragments. They are
 written into the build directory as `ts-*.sty` and loaded via
-`\usepackage{...}` in the generated TeX.
+`\usepackage{...}` in the generated #ts-logo("TeX").
 
 = Using fragments in documents
 
@@ -101,7 +133,7 @@ corresponding `\usepackage{…}` lines into `\VAR{extra_packages}`.
 
 == What a fragment looks like
 
-Fragments are plain Jinja templates that output LaTeX. The package name is the
+Fragments are plain Jinja templates that output #ts-logo("LaTeX"). The package name is the
 stem of the file unless it is a built-in registered name.
 
 ```tex
@@ -124,7 +156,7 @@ Built-in templates already include this placeholder and opt into
 `ts-geometry`, `ts-extra`, `ts-keystrokes`, `ts-callouts`, `ts-code`,
 `ts-glossary`, `ts-index`, `ts-bibliography`, and `ts-todolist` via the template
 runtime extras; conditional fragments only render when their macros are present
-in the rendered LaTeX. Third-party templates can also declare default fragments
+in the rendered #ts-logo("LaTeX"). Third-party templates can also declare default fragments
 in their `TemplateRuntime.extras["fragments"]` or let users supply their own
 through front matter.
 

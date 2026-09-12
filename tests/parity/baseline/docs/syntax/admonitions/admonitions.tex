@@ -7,10 +7,46 @@
 \usepackage[english]{babel}
 \usepackage[colorlinks=true, linkcolor=NavyBlue, urlcolor=NavyBlue, citecolor=NavyBlue]{hyperref}
 \usepackage[a4paper]{geometry}
+\usepackage{ts-typesetting}
 \usepackage{ts-fonts}
-\usepackage{amsmath}
 \usepackage{float}
+\usepackage{xcolor}
+\usepackage{epigraph}
+\usepackage{marginnote}
+\usepackage{multicol}
+\usepackage{progressbar}
+\usepackage{graphicx}
+\usepackage{tcolorbox}
+\usepackage{fvextra}
+\usepackage{amsmath}
 \usepackage{seqsplit}
+\renewcommand*{\marginfont}{
+\footnotesize
+\sloppy
+\emergencystretch=1em
+\hyphenpenalty=50
+\exhyphenpenalty=50
+}
+\newlength{\tsmarginparavail}
+\newlength{\tsmarginparalt}
+\newlength{\tsmarginparbuf}
+\setlength{\tsmarginparbuf}{6mm}
+\makeatletter
+\AtBeginDocument{
+\setlength{\tsmarginparavail}{\dimexpr\paperwidth-\textwidth-1in-\oddsidemargin-\marginparsep-\tsmarginparbuf\relax}
+\ifdim\tsmarginparavail<\z@\setlength{\tsmarginparavail}{\z@}\fi
+\if@twoside
+\setlength{\tsmarginparalt}{\dimexpr1in+\evensidemargin-\marginparsep-\tsmarginparbuf\relax}
+\ifdim\tsmarginparalt<\z@\setlength{\tsmarginparalt}{\z@}\fi
+\ifdim\tsmarginparalt<\tsmarginparavail
+\setlength{\tsmarginparavail}{\tsmarginparalt}
+\fi
+\fi
+\ifdim\tsmarginparavail<\marginparwidth
+\setlength{\marginparwidth}{\tsmarginparavail}
+\fi
+}
+\makeatother
 \usepackage{ts-callouts}
 \usepackage{ts-code}
 
@@ -18,165 +54,216 @@
 \usepackage{refcount}
 \makeatletter
 \def\ps@plain{
-  \let\@oddhead\@empty
-  \let\@evenhead\@empty
-  \def\@oddfoot{
-    \hfil
-    \ifnum\getpagerefnumber{LastPage}>1\relax
-      \thepage
-    \fi
-    \hfil}
-  \let\@evenfoot\@oddfoot
+\let\@oddhead\@empty
+\let\@evenhead\@empty
+\def\@oddfoot{
+\hfil
+\ifnum\getpagerefnumber{LastPage}>1\relax
+\thepage
+\fi
+\hfil}
+\let\@evenfoot\@oddfoot
 }
 \makeatother
 
 \title{Admonitions}
 \author{}\date{}
-
 \begin{document}
-
 \maketitle
-
-\thispagestyle{plain}
-Admonitions are little callout blocks for surfacing notes, warnings, tips, and whatever else you need to highlight. Python-Markdown's \texttt{admonition} extension powers them.
-
-You can render them in two flavors. The plain/static variant looks like this:
-
-\begin{code}{markdown}{}{}
+Admonitions --- callouts --- are little blocks for surfacing notes, warnings, tips,
+and whatever else you need to highlight. In TMark they are \textbf{containers}, and
+the canonical spelling is the \tscodeinline{:::} fence:
+\begin{tscode}[lang=md, engine=pygments]
 \begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
-!!! note \PYZdq{}This is a Note\PYZdq{}
-    Any number of other indented Markdown elements.
+::: note \PYZob{}title=\PYZdq{}This is a Note\PYZdq{}\PYZcb{}
+Any number of other Markdown elements.
 
-    This is the second paragraph.
+This is the second paragraph.
+:::
 \end{Verbatim}
-\end{code}
-\begin{callout}[callout note]{This is a Note}
+\end{tscode}
+\begin{tscallout}[kind=note, title={This is a Note}]
 Any number of other indented Markdown elements.
 
 This is the second paragraph.
-\end{callout}
-Prefer collapsible callouts? Use the foldable form:
-
-\begin{code}{markdown}{}{}
+\end{tscallout}
+Folding is an attribute, not a second fence family:
+\begin{tscode}[lang=md, engine=pygments]
 \begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
-??? note \PYZdq{}This is a Note\PYZdq{}
-    Any number of other indented markdown elements.
+::: note \PYZob{}title=\PYZdq{}This is a Note\PYZdq{} collapsed=true\PYZcb{}
+Any number of other Markdown elements.
 
-    This is the second paragraph.
+This is the second paragraph.
+:::
 \end{Verbatim}
-\end{code}
-\begin{callout}[callout note]{This is a Note}
+\end{tscode}
+\begin{tscallout}[kind=note, title={This is a Note}, collapsed]
 Any number of other indented markdown elements.
 
 This is the second paragraph.
-\end{callout}
-\section{LaTeX Rendering}\label{latex-rendering}
-
-TeXSmith maps admonitions onto the \texttt{tcolorbox} package automatically, so they come through in \LaTeX{} without extra work. Template authors can still restyle them via the preamble or dedicated slots.
-
-Built-in templates like \texttt{article} and \texttt{book} ship with sensible defaults. Tweak the look by setting \texttt{callout\_style} in front matter (or via \texttt{-\allowbreak{}-\allowbreak{}attribute callout\_style=<style>}):
-
-\begin{code}{yaml}{}{}
+\end{tscallout}
+\begin{tscallout}[kind=info, title={The PyMdownX spellings are kept indefinitely}]
+\tscodeinline{!!! note "Title"} and \tscodeinline{??? note "Title"} (collapsed) / \tscodeinline{???+} (expanded)
+remain accepted sugar for callouts, because MkDocs Material renders them
+natively. They are one node whatever the spelling. Use whichever suits the
+document; \tscodeinline{:::} is what the printer emits.
+\end{tscallout}
+Print has no folding, so the strategy is declared once:
+\begin{tscode}[lang=yaml, engine=pygments]
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+\PY{n+nt}{press}\PY{p}{:}
+\PY{+w}{  }\PY{n+nt}{details}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{expand}\PY{+w}{      }\PY{c+c1}{\PYZsh{} expand (default) | reference}
+\end{Verbatim}
+\end{tscode}
+\tscodeinline{reference} moves the body of a collapsed callout to a grouped end-section
+(``Solutions'', ``Warnings'', ...) and leaves a ``See page N'' link in its place.
+\section{\LaTeX{} Rendering}
+TeXSmith maps callouts onto the \tscodeinline{tcolorbox} package through the \tscodeinline{ts-\allowbreak{}callouts}
+fragment, which provides the \tscodeinline{tscallout} environment:
+\begin{tscode}[lang=latex, engine=pygments]
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+\PY{k}{\PYZbs{}begin}\PY{n+nb}{\PYZob{}}tscallout\PY{n+nb}{\PYZcb{}}[kind=note, title=\PY{n+nb}{\PYZob{}}This is a Note\PY{n+nb}{\PYZcb{}}]
+…
+\PY{k}{\PYZbs{}end}\PY{n+nb}{\PYZob{}}tscallout\PY{n+nb}{\PYZcb{}}
+\end{Verbatim}
+\end{tscode}
+Template authors restyle them by redefining that environment or by appending to
+its \tscodeinline{pgfkeys} family. Set the global look with \tscodeinline{press.callouts.style} (or via
+\tscodeinline{-\allowbreak{}-\allowbreak{}attribute press.callouts.style=<style>}):
+\begin{tscode}[lang=yaml, engine=pygments]
 \begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
 \PY{n+nn}{\PYZhy{}\PYZhy{}\PYZhy{}}
 \PY{n+nt}{press}\PY{p}{:}
-\PY{+w}{  }\PY{n+nt}{callout\PYZus{}style}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{classic}\PY{+w}{  }\PY{c+c1}{\PYZsh{} fancy | classic | minimal}
+\PY{+w}{  }\PY{n+nt}{callouts}\PY{p}{:}
+\PY{+w}{    }\PY{n+nt}{style}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{classic}\PY{+w}{  }\PY{c+c1}{\PYZsh{} fancy | classic | minimal}
 \PY{n+nn}{\PYZhy{}\PYZhy{}\PYZhy{}}
 \end{Verbatim}
-\end{code}
+\end{tscode}
 \begin{itemize}
-\item{} \texttt{fancy} (default): colored headings with icons.
-\item{} \texttt{classic}: black-and-white layout with a bold left rule.
-\item{} \texttt{minimal}: subtle border, rounded corners, and no icons.
-
+\item \tscodeinline{fancy} (default): colored headings with icons.
+\item \tscodeinline{classic}: black-and-white layout with a bold left rule.
+\item \tscodeinline{minimal}: subtle border, rounded corners, and no icons.
 \end{itemize}
-\textbf{Fancy Admonitions}\par
-
+\tscodeinline{press.callout\_style} and \tscodeinline{press.admonition\_style} are the deprecated names of
+that key.
+\begin{tsdiv}{tab}[title={Fancy Admonitions}]
 \begin{figure}[H]
-    \centering
-
-    \ifdefined\adjustbox
-
-        \adjustbox{max width=\textwidth}{
-            \includegraphics[width=\linewidth]{snippet-<HASH>.pdf}
-        }
-
-    \else
-
-        \includegraphics[width=\linewidth]{snippet-<HASH>.pdf}
-
-    \fi
-
+\centering
+\includegraphics[width=0.7\linewidth]{snippet-<HASH>.pdf}
+\caption[Demo]{Demo}
 \end{figure}
-\textbf{Classic Admonitions}\par
-
+\end{tsdiv}
+\begin{tsdiv}{tab}[title={Classic Admonitions}]
 \begin{figure}[H]
-    \centering
-
-    \ifdefined\adjustbox
-
-        \adjustbox{max width=\textwidth}{
-            \includegraphics[width=\linewidth]{snippet-<HASH>.pdf}
-        }
-
-    \else
-
-        \includegraphics[width=\linewidth]{snippet-<HASH>.pdf}
-
-    \fi
-
+\centering
+\includegraphics[width=0.7\linewidth]{snippet-<HASH>.pdf}
+\caption[Demo]{Demo}
 \end{figure}
-\textbf{Minimal Admonitions}\par
-
+\end{tsdiv}
+\begin{tsdiv}{tab}[title={Minimal Admonitions}]
 \begin{figure}[H]
-    \centering
-
-    \ifdefined\adjustbox
-
-        \adjustbox{max width=\textwidth}{
-            \includegraphics[width=\linewidth]{snippet-<HASH>.pdf}
-        }
-
-    \else
-
-        \includegraphics[width=\linewidth]{snippet-<HASH>.pdf}
-
-    \fi
-
+\centering
+\includegraphics[width=0.7\linewidth]{snippet-<HASH>.pdf}
+\caption[Demo]{Demo}
 \end{figure}
-\section{Built-in Admonition Types}\label{built-in-admonition-types}
+\end{tsdiv}
+\section{Custom types}
+A new \emph{kind} of callout is a declaration, not a new container name. Declare what
+it \textbf{is} under \tscodeinline{press.declare}, and how it \textbf{looks} under \tscodeinline{press.callouts}:
+\begin{tscode}[lang=yaml, engine=pygments]
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+\PY{n+nt}{press}\PY{p}{:}
+\PY{+w}{  }\PY{n+nt}{declare}\PY{p}{:}
+\PY{+w}{    }\PY{n+nt}{admonitions}\PY{p}{:}
+\PY{+w}{      }\PY{n+nt}{solution}\PY{p}{:}
+\PY{+w}{        }\PY{n+nt}{name}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{Solution}
+\PY{+w}{        }\PY{n+nt}{group}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{Solutions}\PY{+w}{                          }\PY{c+c1}{\PYZsh{} section title under `reference`}
+\PY{+w}{        }\PY{n+nt}{reference}\PY{p}{:}\PY{+w}{ }\PY{l+s}{\PYZdq{}}\PY{l+s}{See}\PY{n+nv}{ }\PY{l+s}{page}\PY{n+nv}{ }\PY{l+s}{\PYZob{}page\PYZcb{}}\PY{n+nv}{ }\PY{l+s}{for}\PY{n+nv}{ }\PY{l+s}{the}\PY{n+nv}{ }\PY{l+s}{solution}\PY{l+s}{\PYZdq{}}
+\PY{+w}{  }\PY{n+nt}{callouts}\PY{p}{:}
+\PY{+w}{    }\PY{n+nt}{solution}\PY{p}{:}\PY{+w}{ }\PY{p+pIndicator}{\PYZob{}}\PY{n+nt}{icon}\PY{p}{:}\PY{+w}{ }\PY{l+s}{\PYZdq{}}\PY{l+s}{🎓}\PY{l+s}{\PYZdq{}}\PY{p+pIndicator}{,}\PY{n+nt}{ color}\PY{p}{:}\PY{+w}{ }\PY{l+s}{\PYZdq{}}\PY{l+s}{\PYZsh{}123456}\PY{l+s}{\PYZdq{}}\PY{p+pIndicator}{\PYZcb{}}\PY{+w}{      }\PY{c+c1}{\PYZsh{} quote it: a bare \PYZsh{} starts a YAML comment}
+\end{Verbatim}
+\end{tscode}
+\begin{tscode}[lang=md, engine=pygments]
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+\PYZhy{}\PYZhy{}\PYZhy{}
+press:
+  declare:
+    admonitions:
+\PY{g+gu}{      solution: \PYZob{}name: Solution, group: Solutions\PYZcb{}}
+\PY{g+gu}{\PYZhy{}\PYZhy{}\PYZhy{}}
 
-The following admonition types are built into the \texttt{admonition} extension:
-
-\begin{callout}[callout note]{Note}
+::: solution \PYZob{}title=\PYZdq{}Exercise 3\PYZdq{}\PYZcb{}
+Apply the chain rule twice.
+:::
+\end{Verbatim}
+\end{tscode}
+Theorem environments are exactly this, with a counter attached --- see
+\href{notes.md\#theorems}{Theorems}.
+\section{Built-in Admonition Types}
+The following types are built in:
+\begin{tscallout}[kind=note]
 A Note
-\end{callout}
-\begin{callout}[callout tip]{Tip}
+\end{tscallout}
+\begin{tscallout}[kind=tip]
 A Tip
-\end{callout}
-\begin{callout}[callout warning]{Warning}
+\end{tscallout}
+\begin{tscallout}[kind=warning]
 A Warning
-\end{callout}
-\begin{callout}[callout important]{Important}
+\end{tscallout}
+\begin{tscallout}[kind=important]
 An important notice
-\end{callout}
-\begin{callout}[callout danger]{Danger}
+\end{tscallout}
+\begin{tscallout}[kind=danger]
 A danger notice
-\end{callout}
-\begin{callout}[callout info]{Info}
+\end{tscallout}
+\begin{tscallout}[kind=info]
 An info notice
-\end{callout}
-\begin{callout}[callout hint]{Hint}
+\end{tscallout}
+\begin{tscallout}[kind=hint]
 A Hint
-\end{callout}
-\begin{callout}[callout info]{Seealso}
+\end{tscallout}
+\begin{tscallout}[kind=seealso]
 A see-also notice
-\end{callout}
-\begin{callout}[callout question]{Question}
+\end{tscallout}
+\begin{tscallout}[kind=question]
 A question notice
-\end{callout}
-\begin{callout}[callout abstract]{Abstract}
+\end{tscallout}
+\begin{tscallout}[kind=abstract]
 An abstract
-\end{callout}
+\end{tscallout}
+\section{Content tabs}
+A \tscodeinline{tabs} container holds \tscodeinline{tab} containers, each with a \tscodeinline{title=}:
+\begin{tscode}[lang=md, engine=pygments]
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+:::: tabs
+::: tab \PYZob{}title=Windows\PYZcb{}
+Windows is a Microsoft operating system.
+:::
+::: tab \PYZob{}title=Linux\PYZcb{}
+Linux is an open\PYZhy{}source operating system.
+:::
+::::
+\end{Verbatim}
+\end{tscode}
+On the web the reader sees one at a time; print has no interaction, so the
+paged writers render the tabs in sequence, each as a titled block. The
+PyMdownX spelling \tscodeinline{=== "Windows"} followed by its four-space-indented body is
+accepted indefinitely --- MkDocs Material renders it natively, and this very page
+uses it above --- but \tscodeinline{:::} is the canonical form and what the printer emits.
+\section{Other containers}
+The container names TMark knows form a closed registry. Besides the callout
+types, \tscodeinline{aside}, \tscodeinline{figure}, \tscodeinline{tabs} and \tscodeinline{tab}, there are two layout containers:
+\begin{tscode}[lang=md, engine=pygments]
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+::: multicolumn \PYZob{}cols=2\PYZcb{}
+The content flows in two columns.
+:::
 
+::: div \PYZob{}.grid .cards\PYZcb{}
+A container that means nothing: a hook for classes and an id.
+:::
+\end{Verbatim}
+\end{tscode}
+A \tscodeinline{::: name} whose name is unknown raises \tscodeinline{container-\allowbreak{}unknown} and renders its
+content transparently rather than silently becoming a \tscodeinline{<div>}.
 \end{document}

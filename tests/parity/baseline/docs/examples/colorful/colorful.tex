@@ -7,82 +7,100 @@
 \usepackage[english]{babel}
 \usepackage[colorlinks=true, linkcolor=NavyBlue, urlcolor=NavyBlue, citecolor=NavyBlue]{hyperref}
 \usepackage[a4paper]{geometry}
+\usepackage{ts-typesetting}
 \usepackage{ts-fonts}
-\usepackage{amsmath}
 \usepackage{float}
+\usepackage{xcolor}
+\usepackage{epigraph}
+\usepackage{marginnote}
+\usepackage{multicol}
+\usepackage{progressbar}
+\usepackage{graphicx}
+\usepackage{tcolorbox}
+\usepackage{fvextra}
+\usepackage{amsmath}
 \usepackage{seqsplit}
+\renewcommand*{\marginfont}{
+\footnotesize
+\sloppy
+\emergencystretch=1em
+\hyphenpenalty=50
+\exhyphenpenalty=50
+}
+\newlength{\tsmarginparavail}
+\newlength{\tsmarginparalt}
+\newlength{\tsmarginparbuf}
+\setlength{\tsmarginparbuf}{6mm}
+\makeatletter
+\AtBeginDocument{
+\setlength{\tsmarginparavail}{\dimexpr\paperwidth-\textwidth-1in-\oddsidemargin-\marginparsep-\tsmarginparbuf\relax}
+\ifdim\tsmarginparavail<\z@\setlength{\tsmarginparavail}{\z@}\fi
+\if@twoside
+\setlength{\tsmarginparalt}{\dimexpr1in+\evensidemargin-\marginparsep-\tsmarginparbuf\relax}
+\ifdim\tsmarginparalt<\z@\setlength{\tsmarginparalt}{\z@}\fi
+\ifdim\tsmarginparalt<\tsmarginparavail
+\setlength{\tsmarginparavail}{\tsmarginparalt}
+\fi
+\fi
+\ifdim\tsmarginparavail<\marginparwidth
+\setlength{\marginparwidth}{\tsmarginparavail}
+\fi
+}
+\makeatother
 \usepackage{ts-code}
 
 \usepackage{lastpage}
 \usepackage{refcount}
 \makeatletter
 \def\ps@plain{
-  \let\@oddhead\@empty
-  \let\@evenhead\@empty
-  \def\@oddfoot{
-    \hfil
-    \ifnum\getpagerefnumber{LastPage}>1\relax
-      \thepage
-    \fi
-    \hfil}
-  \let\@evenfoot\@oddfoot
+\let\@oddhead\@empty
+\let\@evenhead\@empty
+\def\@oddfoot{
+\hfil
+\ifnum\getpagerefnumber{LastPage}>1\relax
+\thepage
+\fi
+\hfil}
+\let\@evenfoot\@oddfoot
 }
 \makeatother
 
 \title{Colorful Squares}
 \author{}\date{}
-
 \begin{document}
-
 \maketitle
-
-\thispagestyle{plain}
 This example shows off a custom poster-ish template with four slots wired through a local template. Front matter steers colors, slot routing, and layout---no \LaTeX{} tweaks needed.
-
 \begin{figure}[H]
-    \centering
-
-    \ifdefined\adjustbox
-
-        \adjustbox{max width=\textwidth}{
-            \includegraphics[width=\linewidth]{snippet-<HASH>.pdf}
-        }
-
-    \else
-
-        \includegraphics[width=\linewidth]{snippet-<HASH>.pdf}
-
-    \fi
-
+\centering
+\includegraphics[width=0.6\linewidth]{snippet-<HASH>.pdf}
+\caption[Demo]{Demo}
 \end{figure}
-The YAML front matter picks the locally defined template (\texttt{.}), sets the palette, and feeds each slot. Colors live under \texttt{colors}, and slot content under \texttt{slots}.
+The YAML front matter picks the locally defined template (\tscodeinline{.}), sets the palette, and feeds each slot. Colors live under \tscodeinline{colors}, and slot content under \tscodeinline{slots}.
 
 The manifest defines defaults, available attributes, and where they get injected.
-
-\textbf{colorful.md}\par
-
-\begin{code}{md}{}{}
+\begin{tsdiv}{tab}[title=colorful.md]
+\begin{tscode}[lang=md, engine=pygments]
 \begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
-
+[include: examples/colorful/colorful.md not found]
 \end{Verbatim}
-\end{code}
-\textbf{manifest.toml}\par
-
-\begin{code}{toml}{}{}
+\end{tscode}
+\end{tsdiv}
+\begin{tsdiv}{tab}[title=manifest.toml]
+\begin{tscode}[lang=toml, engine=pygments]
 \begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
-
+\PY{k}{[}\PY{k}{include}\PY{err}{:}\PY{+w}{ }\PY{k}{examples}\PY{err}{/}\PY{k}{colorful}\PY{err}{/}\PY{k}{manifest}\PY{k}{.}\PY{k}{toml}\PY{+w}{ }\PY{k}{not}\PY{+w}{ }\PY{k}{found}\PY{k}{]}
 \end{Verbatim}
-\end{code}
-\textbf{template.tex}\par
-
-\begin{code}{tex}{}{}
+\end{tscode}
+\end{tsdiv}
+\begin{tsdiv}{tab}[title=template.tex]
+\begin{tscode}[lang=tex, engine=pygments]
 \begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
-
+[include: examples/colorful/template.tex not found]
 \end{Verbatim}
-\end{code}
+\end{tscode}
+\end{tsdiv}
 Build it with:
-
-\begin{code}{text}{}{baselinestretch=0.5, }
+\begin{tscode}[lang=text, stretch=0.5, engine=pygments]
 \begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
 \PYZdl{} ls
 colorful.md  manifest.toml  template.tex
@@ -93,6 +111,5 @@ colorful.md  manifest.toml  template.tex
 │ PDF           │ <STEM>.pdf                        │
 └───────────────┴─────────────────────────────────────┘
 \end{Verbatim}
-\end{code}
-
+\end{tscode}
 \end{document}

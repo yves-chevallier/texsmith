@@ -1,15 +1,15 @@
 #set document(
-  title: "High-Level Workflows",
+title: "High-Level Workflows",
 )
 #set page(
-  paper: "a4",
-  margin: 2.5cm,
-  numbering: none,
-  footer: context {
-    if counter(page).final().first() > 1 {
-      align(center)[#counter(page).get().first()]
-    }
-  },
+paper: "a4",
+margin: 2.5cm,
+numbering: none,
+footer: context {
+if counter(page).final().first() > 1 {
+align(center)[#counter(page).get().first()]
+}
+},
 )
 #set text(font: "New Computer Modern", size: 11pt, lang: "en")
 #set par(justify: true)
@@ -17,8 +17,7 @@
 #set heading(numbering: "1.1")
 
 #align(center)[
-  #text(size: 1.8em, weight: "bold")[High-Level Workflows]
-]
+#text(size: 1.8em, weight: "bold")[High-Level Workflows]]
 #v(1.5em)
 
 = High-Level Workflows
@@ -27,16 +26,12 @@ TeXSmith exposes a thin, expressive façade over the lower-level conversion prim
 
 This page showcases the building blocks you are most likely to use in scripts, services, or notebooks. All examples assume `pip install texsmith` (or `uv tool install texsmith`) plus any template packages you rely on.
 
-#block(width: 100%, radius: 2pt, stroke: (left: 1.5pt + rgb("#00BFA5"), rest: 0.4pt + rgb("#00BFA5")))[
-  #block(width: 100%, fill: rgb("#00BFA5").lighten(90%), inset: (x: 8pt, y: 4pt))[#text(weight: "bold", fill: rgb("#00BFA5"))[⭐#h(0.4em)Run the snippets]]
-  #block(width: 100%, inset: (x: 8pt, y: 6pt))[
-    Save the examples into a file and execute them with `uv run python example.py`. The snippets rely only on fixtures you create alongside the script.
-  ]
-]
+#ts-callout(kind: "tip", title: [Run the snippets])[
+Save the examples into a file and execute them with `uv run python example.py`. The snippets rely only on fixtures you create alongside the script.]
 
 == Convert a handful of documents
 
-Use `Document.from_markdown` / `Document.from_html` to normalise inputs, then hand everything to `convert_documents`. The bundle returned by `convert_documents` keeps every fragment, output path, and the raw LaTeX handy:
+Use `Document.from_markdown` / `Document.from_html` to normalise inputs, then hand everything to `convert_documents`. The bundle returned by `convert_documents` keeps every fragment, output path, and the raw #ts-logo("LaTeX") handy:
 
 ```python
 from pathlib import Path
@@ -61,7 +56,7 @@ for fragment in bundle.fragments:
 
 `ConversionRequest` carries conversion settings (parser, fallbacks, manifest emission, etc.) in addition to document inputs. When you omit `output_dir`, the bundle stays in memory—perfect for unit tests or further processing.
 
-Use it to opt into legacy LaTeX accent macros (default is Unicode output):
+Use it to opt into legacy #ts-logo("LaTeX") accent macros (default is Unicode output):
 
 ```python
 from pathlib import Path
@@ -137,12 +132,8 @@ print("Template engine:", result.template_engine)
 
 Need bibliography support? Register `.bib` files with `session.add_bibliography(...)` before calling `render`. Every slot override (`Document.assign_slot`) and metadata tweak flows straight through to the template runtime.
 
-#block(width: 100%, radius: 2pt, stroke: (left: 1.5pt + rgb("#448AFF"), rest: 0.4pt + rgb("#448AFF")))[
-  #block(width: 100%, fill: rgb("#448AFF").lighten(90%), inset: (x: 8pt, y: 4pt))[#text(weight: "bold", fill: rgb("#448AFF"))[📝#h(0.4em)Note]]
-  #block(width: 100%, inset: (x: 8pt, y: 6pt))[
-    For practical slot recipes (front matter/main matter splits, appendix routing, overrides) see the #link("../guide/templates/template-cookbook.md")[Template Cookbook].
-  ]
-]
+#ts-callout(kind: "note")[
+For practical slot recipes (front matter/main matter splits, appendix routing, overrides) see the Template Cookbook.]
 
 == Reuse the same plumbing as the CLI
 
@@ -150,10 +141,6 @@ Need bibliography support? Register `.bib` files with `session.add_bibliography(
 
 For a complete reference, browse the API browser or explore the source directly in `src/texsmith/core/`.
 
-#block(width: 100%, radius: 2pt, stroke: (left: 1.5pt + rgb("#808080"), rest: 0.4pt + rgb("#808080")))[
-  #block(width: 100%, fill: rgb("#808080").lighten(90%), inset: (x: 8pt, y: 4pt))[#text(weight: "bold", fill: rgb("#808080"))[🎤#h(0.4em)Seealso]]
-  #block(width: 100%, inset: (x: 8pt, y: 6pt))[
-    - #link("../cli/index.md")[Command-line Overview] explains how these APIs surface through Typer commands.
-    - #link("core.md")[Core Engine] documents the lower-level modules if you need to plug into diagnostics or templating internals.
-  ]
-]
+#ts-callout(kind: "seealso")[
+- Command-line Overview explains how these APIs surface through Typer commands.
+- Core Engine documents the lower-level modules if you need to plug into diagnostics or templating internals.]

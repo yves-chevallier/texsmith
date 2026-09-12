@@ -15,26 +15,21 @@
 \usepackage{refcount}
 \makeatletter
 \def\ps@plain{
-  \let\@oddhead\@empty
-  \let\@evenhead\@empty
-  \def\@oddfoot{
-    \hfil
-    \ifnum\getpagerefnumber{LastPage}>1\relax
-      \thepage
-    \fi
-    \hfil}
-  \let\@evenfoot\@oddfoot
+\let\@oddhead\@empty
+\let\@evenhead\@empty
+\def\@oddfoot{
+\hfil
+\ifnum\getpagerefnumber{LastPage}>1\relax
+\thepage
+\fi
+\hfil}
+\let\@evenfoot\@oddfoot
 }
 \makeatother
 
 \title{Plumbing}
 \author{}\date{}
-
 \begin{document}
-
 \maketitle
-
-\thispagestyle{plain}
 This section dives into the inner workings of TeXSmith, exploring its architecture, core components, and the mechanisms that enable its seamless integration of Markdown and \LaTeX{}. Whether you're curious about how TeXSmith processes documents or interested in extending its capabilities, this guide offers a concise overview of the plumbing that powers TeXSmith.
-
 \end{document}

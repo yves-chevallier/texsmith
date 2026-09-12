@@ -7,54 +7,78 @@
 \usepackage[english]{babel}
 \usepackage[colorlinks=true, linkcolor=NavyBlue, urlcolor=NavyBlue, citecolor=NavyBlue]{hyperref}
 \usepackage[a4paper]{geometry}
+\usepackage{ts-typesetting}
 \usepackage{ts-fonts}
 \usepackage{csquotes}
+\usepackage{xcolor}
+\usepackage{epigraph}
+\usepackage{marginnote}
+\usepackage{multicol}
+\usepackage{progressbar}
+\usepackage{graphicx}
 \usepackage{float}
 \usepackage{seqsplit}
+\renewcommand*{\marginfont}{
+\footnotesize
+\sloppy
+\emergencystretch=1em
+\hyphenpenalty=50
+\exhyphenpenalty=50
+}
+\newlength{\tsmarginparavail}
+\newlength{\tsmarginparalt}
+\newlength{\tsmarginparbuf}
+\setlength{\tsmarginparbuf}{6mm}
+\makeatletter
+\AtBeginDocument{
+\setlength{\tsmarginparavail}{\dimexpr\paperwidth-\textwidth-1in-\oddsidemargin-\marginparsep-\tsmarginparbuf\relax}
+\ifdim\tsmarginparavail<\z@\setlength{\tsmarginparavail}{\z@}\fi
+\if@twoside
+\setlength{\tsmarginparalt}{\dimexpr1in+\evensidemargin-\marginparsep-\tsmarginparbuf\relax}
+\ifdim\tsmarginparalt<\z@\setlength{\tsmarginparalt}{\z@}\fi
+\ifdim\tsmarginparalt<\tsmarginparavail
+\setlength{\tsmarginparavail}{\tsmarginparalt}
+\fi
+\fi
+\ifdim\tsmarginparavail<\marginparwidth
+\setlength{\marginparwidth}{\tsmarginparavail}
+\fi
+}
+\makeatother
 
 \usepackage{lastpage}
 \usepackage{refcount}
 \makeatletter
 \def\ps@plain{
-  \let\@oddhead\@empty
-  \let\@evenhead\@empty
-  \def\@oddfoot{
-    \hfil
-    \ifnum\getpagerefnumber{LastPage}>1\relax
-      \thepage
-    \fi
-    \hfil}
-  \let\@evenfoot\@oddfoot
+\let\@oddhead\@empty
+\let\@evenhead\@empty
+\def\@oddfoot{
+\hfil
+\ifnum\getpagerefnumber{LastPage}>1\relax
+\thepage
+\fi
+\hfil}
+\let\@evenfoot\@oddfoot
 }
 \makeatother
 
 \title{About}
 \author{}\date{}
-
 \begin{document}
-
 \maketitle
-
-\thispagestyle{plain}
 TeXSmith was originally created by Yves Chevallier in 2025 to address the need for a seamless workflow between Markdown-based documentation and \LaTeX{}-based publishing, initially for his own academic \href{https://heig-tin-info.github.io/handbook/}{courses} at HEIG-VD.
 
 Aside from \href{https://pandoc.org/}{Pandoc}---written in \href{https://en.wikipedia.org/wiki/Haskell}{Haskell} and not directly suited for \href{https://www.mkdocs.org/}{MkDocs}---there were no tools capable of converting MkDocs-flavored Markdown into \LaTeX{} while preserving the original content's semantic intent.
 
 Because developing such an ambitious toolchain was a substantial and time-consuming effort, I postponed the project until I discovered the remarkable power of OpenAI Codex, which helped me bootstrap the initial version of TeXSmith in just a few days. I wanted to extract the core MkDocs-to-\LaTeX{} code used in my online course and turn it into a standalone, general-purpose tool that anyone needing to convert MkDocs content to \LaTeX{} could use. That is how TeXSmith was born.
+\section{Branding}
+This project is \textbf{not affiliated with \TeX{}, \LaTeX{}, or the \LaTeX{} Project}. It merely produces \LaTeX{}-compatible output and interacts with the \TeX{} toolchain in the same way any document-generation utility would. All trademarks belong to their respective owners.
 
-\section{Branding}\label{branding}
-
-This project is \textbf{not affiliated with TeX, \LaTeX{}, or the \LaTeX{} Project}. It merely produces \LaTeX{}-compatible output and interacts with the TeX toolchain in the same way any document-generation utility would. All trademarks belong to their respective owners.
-
-By convention within the TeX community, the names \emph{TeX} and \emph{\LaTeX{}} are used with care. \href{https://en.wikipedia.org/wiki/Donald\_Knuth}{Donald Knuth} famously stated:
-
+By convention within the \TeX{} community, the names \emph{\TeX{}} and \emph{\LaTeX{}} are used with care. \href{https://en.wikipedia.org/wiki/Donald\_Knuth}{Donald Knuth} famously stated:
 \begin{displayquote}
-
-\tslead{“TeX is not to be changed; only Knuth himself may change TeX.”}
-
+\tslead{``\TeX{} is not to be changed; only Knuth himself may change \TeX{}.''}
 \end{displayquote}
-This is not a legal trademark declaration but a long-standing cultural rule: any system that calls itself \emph{TeX} must be fully compatible with Knuth's canonical implementation. Similarly, the \LaTeX{} Project requires that only implementations conforming to the \LaTeX{} format may use the name \emph{\LaTeX{}}.
+This is not a legal trademark declaration but a long-standing cultural rule: any system that calls itself \emph{\TeX{}} must be fully compatible with Knuth's canonical implementation. Similarly, the \LaTeX{} Project requires that only implementations conforming to the \LaTeX{} format may use the name \emph{\LaTeX{}}.
 
-In keeping with these established norms, this project does \textbf{not} claim to be a TeX or \LaTeX{} implementation, nor does it modify or replace them. It is simply a tool that \emph{generates} \LaTeX{} code as output, leaving the actual typesetting to standard, community-maintained engines.
-
+In keeping with these established norms, this project does \textbf{not} claim to be a \TeX{} or \LaTeX{} implementation, nor does it modify or replace them. It is simply a tool that \emph{generates} \LaTeX{} code as output, leaving the actual typesetting to standard, community-maintained engines.
 \end{document}

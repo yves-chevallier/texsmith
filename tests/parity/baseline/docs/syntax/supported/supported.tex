@@ -10,6 +10,9 @@
 \usepackage{ts-fonts}
 \usepackage{booktabs}
 \usepackage{tabularx}
+\usepackage{tcolorbox}
+\usepackage{xcolor}
+\usepackage{fvextra}
 \usepackage{amsmath}
 \usepackage{float}
 \usepackage{seqsplit}
@@ -22,40 +25,33 @@
 \usepackage{refcount}
 \makeatletter
 \def\ps@plain{
-  \let\@oddhead\@empty
-  \let\@evenhead\@empty
-  \def\@oddfoot{
-    \hfil
-    \ifnum\getpagerefnumber{LastPage}>1\relax
-      \thepage
-    \fi
-    \hfil}
-  \let\@evenfoot\@oddfoot
+\let\@oddhead\@empty
+\let\@evenhead\@empty
+\def\@oddfoot{
+\hfil
+\ifnum\getpagerefnumber{LastPage}>1\relax
+\thepage
+\fi
+\hfil}
+\let\@evenfoot\@oddfoot
 }
 \makeatother
 
 \title{Supported Markdown Syntax}
 \author{}\date{}
-
 \begin{document}
-
 \maketitle
-
-\thispagestyle{plain}
-TeXSmith bundles Python-Markdown together with a curated set of PyMdown
-extensions. The combination lets you author rich documentation while keeping
-output predictable for \LaTeX{} conversion. This page summarizes the syntax you can
-use out of the box and points to the extension behind each feature.
-
-\begin{callout}[callout info]{Renderer defaults}
-The CLI and API both enable the exact same extension list defined in
-\texttt{texsmith.adapters.markdown.DEFAULT\_MARKDOWN\_EXTENSIONS}. You can always
-override the list with CLI flags or API options, but the features below are
-available without additional configuration.
-\end{callout}
-\section{Core Markdown (Always On)}\label{core-markdown-always-on}
-
-\begin{code}{markdown}{}{}
+TeXSmith reads TMark: CommonMark plus the extension set every
+MkDocs site already loads, plus the four families that cover what print needs.
+This page is the quick tour; each row links to the page that explains the
+construct.
+\begin{tscallout}[kind=info, title={One dialect, no configuration}]
+There is no extension list to enable. The parser is the same for the CLI,
+the Python API and the MkDocs plugin, and \tscodeinline{tmark check FILE} tells you
+exactly what it read.
+\end{tscallout}
+\section{Core Markdown (Always On)}
+\begin{tscode}[lang=md, engine=pygments]
 \begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
 \PY{g+gh}{\PYZsh{} Heading 1}
 \PY{g+gu}{\PYZsh{}\PYZsh{} Heading 2}
@@ -69,163 +65,157 @@ available without additional configuration.
 
 \PY{k}{\PYZhy{}}\PY{+w}{ }Unordered item
 \PY{+w}{  }\PY{k}{\PYZhy{}}\PY{+w}{ }Nested item
+
 \PY{k}{1.} Ordered item
 \PY{k}{2.} Next item
 
-\PY{g+gu}{Horizontal rules:}
-\PY{g+gu}{\PYZhy{}\PYZhy{}\PYZhy{}}
+Dividers:
+
+\PYZhy{}\PYZhy{}\PYZhy{}
 \end{Verbatim}
-\end{code}
-All standard Markdown constructs---headings, emphasis, lists, code blocks,
-blockquotes, links, images, and horizontal rules---render exactly as you would
-expect. In \LaTeX{} output, horizontal rules become \texttt{\textbackslash{}clearpage} page breaks rather
-than a literal line. TeXSmith relies on fenced code blocks by default, so triple
-backticks (\texttt{``}) are the recommended way to author code samples.
-
-\section{Extension Cheat Sheet}\label{extension-cheat-sheet}
-
+\end{tscode}
+All standard CommonMark constructs render as you would expect. A \tscodeinline{-\allowbreak{}-\allowbreak{}-\allowbreak{}} line is
+a \textbf{divider}: the web shows \tscodeinline{<hr>}, and the paged writers emit \tscodeinline{\textbackslash{}tsdivider},
+which the \tscodeinline{ts-\allowbreak{}typesetting} fragment defines as a page break --- a template
+redefines it at will.
+\section{Cheat sheet}
 \begin{center}
-\begin{tabularx}{\linewidth}{>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X}
+\begin{tabularx}{\linewidth}{>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X}
 \toprule
-\textbf{Feature} & \textbf{Extension} & \textbf{Package} & \textbf{Example} \\
-
+\textbf{Feature} & \textbf{Canonical spelling} & \textbf{Class} \\
 \midrule
-Definition lists & \texttt{def\_list} & \texttt{markdown} & \texttt{Term: Definition} \\
-Footnotes & \texttt{footnotes} & \texttt{markdown} & \texttt{Footnote ref1} \\
-Abbreviations & \texttt{abbr} & \texttt{markdown} & \texttt{*[HTML]: HyperText Markup Language} \\
-Admonitions & \texttt{admonition} & \texttt{markdown} & \texttt{!!! note  Body} \\
-Attribute lists & \texttt{attr\_list} & \texttt{markdown} & \texttt{![Alt](image.png)\{ width="50\%" \}} \\
-Tables & \texttt{tables} & \texttt{markdown} & Pipe-delimited tables \\
-Markdown in HTML & \texttt{md\_in\_html} & \texttt{markdown} & Markdown inside custom \texttt{<div>} blocks \\
-SmartyPants & \texttt{pymdownx.smartsymbols} & \texttt{pymdown-\allowbreak{}extensions} & Auto-converts quotes/dashes \\
-Highlighted code & \texttt{pymdownx.highlight} & \texttt{pymdown-\allowbreak{}extensions} & Adds syntax highlighting + anchors \\
-Inline highlighting & \texttt{pymdownx.inlinehilite} & \texttt{pymdown-\allowbreak{}extensions} & \texttt{print("hi")} \\
-Details/summary & \texttt{pymdownx.details} & \texttt{pymdown-\allowbreak{}extensions} & \texttt{???+ note Title} \\
-SuperFences & \texttt{pymdownx.superfences} & \texttt{pymdown-\allowbreak{}extensions} & Nest code fences safely \\
-Task lists & \texttt{pymdownx.tasklist} & \texttt{pymdown-\allowbreak{}extensions} & \texttt{-\allowbreak{} [x] Done} \\
-Better emphasis & \texttt{pymdownx.betterem} & \texttt{pymdown-\allowbreak{}extensions} & Fixes edge cases with underscores \\
-MagicLink & \texttt{pymdownx.magiclink} & \texttt{pymdown-\allowbreak{}extensions} & Autolinks URLs/issues \\
-Keys & \texttt{pymdownx.keys} & \texttt{pymdown-\allowbreak{}extensions} & \texttt{Ctrl+Alt+Del} \\
-Tabbed content & \texttt{pymdownx.tabbed} & \texttt{pymdown-\allowbreak{}extensions} & Content tabs \\
-Snippets & \texttt{pymdownx.snippets} & \texttt{pymdown-\allowbreak{}extensions} & Include external Markdown snippets \\
-Caret markup & \texttt{pymdownx.caret} & \texttt{pymdown-\allowbreak{}extensions} & \texttt{insert} \\
-Mark (highlight) & \texttt{pymdownx.mark} & \texttt{pymdown-\allowbreak{}extensions} & \texttt{highlight} \\
-Tilde syntax & \texttt{pymdownx.tilde} & \texttt{pymdown-\allowbreak{}extensions} & Subscript / superscript \\
-Critic markup & \texttt{pymdownx.critic} & \texttt{pymdown-\allowbreak{}extensions} & Editorial annotations \\
-Emoji & \texttt{pymdownx.emoji} & \texttt{pymdown-\allowbreak{}extensions} & \texttt{:sparkles:} or \texttt{:fontawesome-\allowbreak{}regular-\allowbreak{}face-\allowbreak{}smile:} \\
-Fancy lists & \texttt{pymdownx.fancylists} & \texttt{pymdown-\allowbreak{}extensions} & Extended list markers \\
-Blocks caption & \texttt{pymdownx.blocks.caption} & \texttt{pymdown-\allowbreak{}extensions} & Captions for fenced blocks \\
-Blocks HTML & \texttt{pymdownx.blocks.html} & \texttt{pymdown-\allowbreak{}extensions} & Named block wrappers \\
-Snippets of LaTeX & \texttt{texsmith.extensions.latex\_raw} & bundled & Raw LaTeX fence \\
-Missing footnotes guard & \texttt{texsmith.extensions.missing\_footnotes} & bundled & Warns when references lack definitions \\
-
+Definition lists & Term: Definition & E \\
+Footnotes & \tscodeinline{[\^{}1]} with a \tscodeinline{[\^{}1]: …} definition & C \\
+Abbreviations & \tscodeinline{*[HTML]: HyperText Markup Language} & E \\
+Callouts & \tscodeinline{::: note \{title="…"\}} (sugar \tscodeinline{!!! note "…"}) & D / E \\
+Collapsible callouts & \tscodeinline{::: note \{collapsed=true\}} (sugar \tscodeinline{??? note}) & D / E \\
+Attribute lists & \tscodeinline{![Alt](image.png)\{width=50\%\}} & E \\
+Tables & pipe tables, \tscodeinline{```yaml table} & C / D \\
+Captions & \tscodeinline{Figure: … \{\#fig:x\}} after the float & D \\
+Containers & \tscodeinline{::: div}, \tscodeinline{::: multicolumn \{cols=2\}}, \tscodeinline{::: figure} & D \\
+Content tabs & \tscodeinline{::: tabs} + \tscodeinline{::: tab \{title=…\}} (sugar \tscodeinline{=== "…"}) & D / E \\
+Highlighted code & \tscodeinline{```py title="x.py" linenums="1"} & E \\
+Inline highlighting & \tscodeinline{`\#!py print("hi")`} or \tscodeinline{\{code py\}[print(1)]} & E \\
+Task lists & \tscodeinline{-\allowbreak{} [x] Done} & C \\
+Keys & \tscodeinline{\{keys\}[ctrl+alt+del]} (sugar \tscodeinline{++ctrl+alt+del++}) & E \\
+Highlight & \tscodeinline{\{mark\}[x]} (sugar \tscodeinline{==x==}) & E \\
+Small caps & \tscodeinline{\{sc\}[x]} (sugar \tscodeinline{\_\_x\_\_}) & X1 \\
+Subscript / superscript & \tscodeinline{\{sub\}[x]} / \tscodeinline{\{sup\}[x]} (sugar \tscodeinline{\textasciitilde{}x\textasciitilde{}}, \tscodeinline{\^{}x\^{}}) & X3 / E \\
+Emoji & \tscodeinline{:sparkles:} & E \\
+Autolinks & bare URLs & E \\
+Critic markup & \tscodeinline{\{++added++\}}, \tscodeinline{\{-\allowbreak{}-\allowbreak{}removed-\allowbreak{}-\allowbreak{}\}} & E \\
+Math & \tscodeinline{\$x\$}, \tscodeinline{\$\$…\$\$ \{\#eq:x\}} & C \\
+Progress bars & \tscodeinline{[=75\% "Done"]} & E \\
+Index entries & \tscodeinline{\{index\}[term]}, \tscodeinline{\#[term]} & X5 \\
+Counter items & \tscodeinline{\#(fw:key)} & X5 \\
+References \& citations & \tscodeinline{@key}, \tscodeinline{@[key, p. 3]} & X4 \\
+Glossary references & \tscodeinline{@gls:term} & D \\
+Asides / margin notes & \tscodeinline{\{aside\}[…]}, \tscodeinline{::: aside} & D \\
+Raw passthrough & \tscodeinline{\{raw latex\}(…)}, \tscodeinline{```latex raw} & D \\
+Includes & \tscodeinline{\{include\}(file.md)} & D \\
+Diagrams & \tscodeinline{![Pipeline](pipeline.mmd)}, \tscodeinline{```mermaid image} & C / E \\
 \bottomrule
 \end{tabularx}
 \end{center}
-
-Want a generated table of contents? Add the Python-Markdown \texttt{toc} extension with \texttt{-\allowbreak{}x toc} or \texttt{-\allowbreak{}-\allowbreak{}enable-\allowbreak{}extension toc}---it is no longer enabled by default.
-
-Use the table above as a quick pointer. The following sections provide more
-context and runnable examples.
-
-\section{Working with Admonitions}\label{working-with-admonitions}
-
-\begin{code}{markdown}{}{}
+Classes are the degradation classes of \href{index.md\#degradation-classes}{TMark}:
+what a renderer other than TeXSmith shows for the same bytes.
+\section{Working with callouts}
+\begin{tscode}[lang=md, engine=pygments]
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+::: warning \PYZob{}title=\PYZdq{}LaTeX toolchain\PYZdq{}\PYZcb{}
+Remember to install TeX Live, MiKTeX, or MacTeX before running \PY{l+s+sb}{`texsmith \PYZhy{}\PYZhy{}build`}.
+:::
+\end{Verbatim}
+\end{tscode}
+The PyMdownX spelling stays accepted indefinitely, because MkDocs Material
+renders it natively:
+\begin{tscode}[lang=md, engine=pygments]
 \begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
 !!! warning \PYZdq{}LaTeX toolchain\PYZdq{}
     Remember to install TeX Live, MiKTeX, or MacTeX before running \PY{l+s+sb}{`texsmith \PYZhy{}\PYZhy{}build`}.
 \end{Verbatim}
-\end{code}
-Admonitions render as highlighted callouts in HTML and as tcolorbox blocks in the
-\LaTeX{} output. Combine them with tabs or details blocks to create layered
-walkthroughs.
-
-\section{Tables and Definition Lists}\label{tables-and-definition-lists}
-
-\begin{code}{markdown}{}{}
+\end{tscode}
+Callouts render as highlighted boxes in HTML and as \tscodeinline{tcolorbox} blocks in the
+\LaTeX{} output. See Admonitions.
+\section{Tables and definition lists}
+\begin{tscode}[lang=md, engine=pygments]
 \begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
 | Option | Description |
 | \PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{} | \PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{} |
-| \PY{l+s+sb}{`\PYZhy{}\PYZhy{}list\PYZhy{}extensions`} | Prints enabled Markdown extensions |
+| \PY{l+s+sb}{`\PYZhy{}\PYZhy{}list\PYZhy{}extensions`} | Prints the enabled constructs |
 | \PY{l+s+sb}{`\PYZhy{}\PYZhy{}debug`} | Shows full tracebacks |
+
+Table: Selected command\PYZhy{}line options. \PYZob{}\PYZsh{}tbl:options\PYZcb{}
 
 Term
 : Definition content
 \end{Verbatim}
-\end{code}
-Tables use the Python-Markdown \texttt{tables} extension while definition lists come
-from \texttt{def\_list}. Both convert cleanly into \LaTeX{} environments.
-
-\section{Task Lists and Checkboxes}\label{task-lists-and-checkboxes}
-
-\begin{code}{markdown}{}{}
+\end{tscode}
+Both convert cleanly into \LaTeX{} environments. For spans, grouped headers,
+footers and validation, see Tables.
+\section{Task lists and checkboxes}
+\begin{tscode}[lang=md, engine=pygments]
 \begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
 \PY{k}{\PYZhy{} }\PY{k}{[x]} Validate MkDocs navigation
 \PY{k}{\PYZhy{} }\PY{k}{[ ]} Document template slots
 \end{Verbatim}
-\end{code}
-Task lists automatically render checkboxes in HTML. In \LaTeX{} they become custom
-itemize entries with inline symbols.
-
-\section{Keyboard Shortcuts}\label{keyboard-shortcuts}
-
-\begin{code}{markdown}{}{}
+\end{tscode}
+Task lists render checkboxes in HTML. In \LaTeX{} they become \tscodeinline{tstasklist} entries
+with inline symbols.
+\section{Keyboard shortcuts}
+\begin{tscode}[lang=md, engine=pygments]
 \begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
-Use ++ctrl+s++ to save changes and ++ctrl+shift+b++ to build the docs.
+Use \PYZob{}keys\PYZcb{}[ctrl+s] to save changes and \PYZob{}keys\PYZcb{}[ctrl+shift+b] to build the docs.
 \end{Verbatim}
-\end{code}
-The \texttt{pymdownx.keys} extension turns the markup above into keyboard glyphs, which
-carry across to PDFs through the TeXSmith formatter.
-
-\section{Embedding Raw LaTeX}\label{embedding-raw-latex}
-
-Use the \texttt{/// latex} fence when native \LaTeX{} is required:
-
-\begin{code}{markdown}{}{}
+\end{tscode}
+The PyMdownX spelling \tscodeinline{++ctrl+s++} is sugar for the same node and renders
+identically. Both reach the PDF as \tscodeinline{\textbackslash{}tskeys\{…\}}.
+\section{Embedding raw \LaTeX{}}
+Use a \tscodeinline{latex raw} fence when native \LaTeX{} is required:
+\begin{tscode}[lang=md, engine=pygments]
 \begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
-/// latex
-\PYZbs{}begin\PYZob{}align\PYZcb{}
-E \PYZam{}= mc\PYZca{}2 \PYZbs{}\PYZbs{}
-\PYZbs{}nabla \PYZbs{}cdot \PYZbs{}vec\PYZob{}E\PYZcb{} \PYZam{}= \PYZbs{}frac\PYZob{}\PYZbs{}rho\PYZcb{}\PYZob{}\PYZbs{}varepsilon\PYZus{}0\PYZcb{}
-\PYZbs{}end\PYZob{}align\PYZcb{}
-///
+\PY{l+s+sb}{```}\PY{l+s+sb}{latex}\PY{+w}{ }raw
+\PY{k}{\PYZbs{}begin}\PY{n+nb}{\PYZob{}}align\PY{n+nb}{\PYZcb{}}
+E \PY{n+nb}{\PYZam{}}= mc\PY{n+nb}{\PYZca{}}2 \PY{k}{\PYZbs{}\PYZbs{}}
+\PY{k}{\PYZbs{}nabla} \PY{k}{\PYZbs{}cdot} \PY{k}{\PYZbs{}vec}\PY{n+nb}{\PYZob{}}E\PY{n+nb}{\PYZcb{}} \PY{n+nb}{\PYZam{}}= \PY{k}{\PYZbs{}frac}\PY{n+nb}{\PYZob{}}\PY{k}{\PYZbs{}rho}\PY{n+nb}{\PYZcb{}}\PY{n+nb}{\PYZob{}}\PY{k}{\PYZbs{}varepsilon\PYZus{}}0\PY{n+nb}{\PYZcb{}}
+\PY{k}{\PYZbs{}end}\PY{n+nb}{\PYZob{}}align\PY{n+nb}{\PYZcb{}}
+\PY{l+s+sb}{```}
 \end{Verbatim}
-\end{code}
-TeXSmith passes the block straight to the renderer, letting you mix handcrafted
-\LaTeX{} with converted Markdown content. For inline adjustments, drop
-\texttt{\{latex\}[commands]} right into the paragraph:
-
-\begin{code}{markdown}{}{}
+\end{tscode}
+TeXSmith passes the block straight to the \LaTeX{} writer; the Typst and HTML
+writers ignore it. For inline adjustments, use the \tscodeinline{raw} role:
+\begin{tscode}[lang=md, engine=pygments]
 \begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
-The chapter ends here \PYZob{}latex\PYZcb{}[\PYZbs{}clearpage] before appendices.
+The chapter ends here \PYZob{}raw latex\PYZcb{}(\PYZbs{}clearpage) before appendices.
 \end{Verbatim}
-\end{code}
-\section{Snippet Includes}\label{snippet-includes}
-
-The \texttt{pymdownx.snippets} extension lets you avoid duplication:
-
-\begin{code}{markdown}{}{}
+\end{tscode}
+\tscodeinline{/// latex … ///} and \tscodeinline{\{latex\}[…]} are the 0.6 spellings: still parsed, now
+deprecated. See Migrating to TMark.
+\section{Includes}
+\begin{tscode}[lang=md, engine=pygments]
 \begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
-\PYZhy{}\PYZhy{}8\PYZlt{}\PYZhy{}\PYZhy{} \PYZdq{}includes/built\PYZhy{}in\PYZhy{}tasks.md\PYZdq{}
+\PYZob{}include\PYZcb{}(includes/built\PYZhy{}in\PYZhy{}tasks.md)
 \end{Verbatim}
-\end{code}
-Create an \texttt{includes} directory under \texttt{docs/} and share fragments across pages.
-The same mechanism can pull example Markdown from the samples used in automated
-tests, keeping docs and fixtures aligned.
-
-\section{When You Need More}\label{when-you-need-more}
-
+\end{tscode}
+The file is parsed as TMark and spliced into the document, so nested fences are
+safe and relative paths inside it are rebased. To pull a code sample from a
+file without inlining it, put \tscodeinline{include=} on the fence:
+\begin{tscode}[lang=md, engine=pygments]
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+\PY{l+s+sb}{```}\PY{l+s+sb}{python}\PY{+w}{ }include=\PYZdq{}examples/code/bubble\PYZus{}sort.py\PYZdq{}
+\PY{l+s+sb}{```}
+\end{Verbatim}
+\end{tscode}
+The PyMdownX snippet syntax \tscodeinline{-\allowbreak{}-\allowbreak{}8<-\allowbreak{}-\allowbreak{} "file"} is accepted as deprecated sugar.
+\section{When you need more}
 \begin{itemize}
-\item{} Use \texttt{texsmith -\allowbreak{}-\allowbreak{}list-\allowbreak{}extensions} to see the live extension list.
-\item{} Disable or add extensions via the \texttt{-\allowbreak{}-\allowbreak{}enable-\allowbreak{}extension} and \texttt{-\allowbreak{}-\allowbreak{}disable-\allowbreak{}extension}
-  flags in \texttt{texsmith} or through \texttt{ConversionRequest.markdown\_extensions}
-  in the API.
-\item{} If a feature relies on a third-party executable (for example Mermaid to PDF),
-  make sure the binary is available on the build worker before running
-  \texttt{texsmith -\allowbreak{}-\allowbreak{}build}.
-
+\item \tscodeinline{tmark check FILE} parses, resolves and lints a document; \tscodeinline{-\allowbreak{}-\allowbreak{}strict} turns
+warnings into failures.
+\item \tscodeinline{tmark lint -\allowbreak{}-\allowbreak{}fix FILE} rewrites deprecated spellings.
+\item \tscodeinline{tmark parse FILE} prints the intermediate representation as JSON --- the
+ground truth about what the parser read.
+\item If a feature relies on a third-party executable (Mermaid to PDF, draw.io
+export), make sure the binary is available on the build worker before running
+\tscodeinline{texsmith -\allowbreak{}-\allowbreak{}build}.
 \end{itemize}
-With these extensions enabled, TeXSmith can faithfully render everything from
-simple README-style guides to complex, reference-heavy manuals.
-
 \end{document}

@@ -10,69 +10,62 @@
 \usepackage{ts-fonts}
 \usepackage{booktabs}
 \usepackage{tabularx}
+\usepackage{tcolorbox}
+\usepackage{xcolor}
+\usepackage{fvextra}
 \usepackage{amsmath}
 \usepackage{float}
 \usepackage{seqsplit}
 \newcolumntype{Y}{>{\centering\arraybackslash}X}
 \newcolumntype{Z}{>{\raggedleft\arraybackslash}X}
+\usepackage{ts-callouts}
 \usepackage{ts-code}
 
 \usepackage{lastpage}
 \usepackage{refcount}
 \makeatletter
 \def\ps@plain{
-  \let\@oddhead\@empty
-  \let\@evenhead\@empty
-  \def\@oddfoot{
-    \hfil
-    \ifnum\getpagerefnumber{LastPage}>1\relax
-      \thepage
-    \fi
-    \hfil}
-  \let\@evenfoot\@oddfoot
+\let\@oddhead\@empty
+\let\@evenhead\@empty
+\def\@oddfoot{
+\hfil
+\ifnum\getpagerefnumber{LastPage}>1\relax
+\thepage
+\fi
+\hfil}
+\let\@evenfoot\@oddfoot
 }
 \makeatother
 
 \title{Templates}
 \author{}\date{}
-
 \begin{document}
-
 \maketitle
-
-\thispagestyle{plain}
 TeXSmith templates define the \LaTeX{} skeleton that wraps converted Markdown. Each
 template bundles assets, slot definitions, attribute schemas, and build metadata
 so you can aim the renderer at anything from articles to slide decks.
 
 Templates are a core feature that allows TeXSmith to be extended for different
 use cases. You may use:
-
 \begin{itemize}
-\item{} Custom project templates stored in a \texttt{templates/} folder.
-\item{} Local user templates installed in your \texttt{\textasciitilde{}/.texsmith/templates/} folder.
-\item{} Published templates installed from PyPI.
-\item{} Built-in templates included with TeXSmith.
-
+\item Custom project templates stored in a \tscodeinline{templates/} folder.
+\item Local user templates installed in your \tscodeinline{\textasciitilde{}/.texsmith/templates/} folder.
+\item Published templates installed from PyPI.
+\item Built-in templates included with TeXSmith.
 \end{itemize}
-\section{Built-in templates}\label{built-in-templates}
-
+\section{Built-in templates}
 TeXSmith includes standard templates for common document types:
-
 \begin{itemize}
-\item{} \texttt{article}: academic-style article layout with title page, abstract, and sections.
-\item{} \texttt{book}: book-style layout with parts, chapters, preface, table of contents, appendices, and optional \texttt{part} base-level override.
-\item{} \texttt{letter}: formal letters with sender/recipient metadata, fold marks, and signature.
-\item{} \texttt{snippet}: standalone \texttt{tikzpicture} frame for screenshots, stickers, and snippets.
-
+\item \tscodeinline{article}: academic-style article layout with title page, abstract, and sections.
+\item \tscodeinline{book}: book-style layout with parts, chapters, preface, table of contents, appendices, and optional \tscodeinline{part} base-level override.
+\item \tscodeinline{letter}: formal letters with sender/recipient metadata, fold marks, and signature.
+\item \tscodeinline{snippet}: standalone \tscodeinline{tikzpicture} frame for screenshots, stickers, and snippets.
 \end{itemize}
-Invoke them in the CLI with \texttt{-\allowbreak{}tarticle} or \texttt{-\allowbreak{}tletter}. Additional community templates remain available under \texttt{templates/} or as separate PyPI packages.
+Invoke them in the CLI with \tscodeinline{-\allowbreak{}tarticle} or \tscodeinline{-\allowbreak{}tletter}. Additional community templates remain available under \tscodeinline{templates/} or as separate PyPI packages.
 
 Take a look at built-in fragments for full configuration options.
-
-\section{Quick start}\label{quick-start}
-
-\begin{code}{bash}{}{}
+\section{Quick start}
+\begin{tscode}[lang=bash, engine=pygments]
 \begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
 \PY{c+c1}{\PYZsh{} 1. Inspect a built\PYZhy{}in template}
 texsmith\PY{+w}{ }\PYZhy{}\PYZhy{}template\PY{+w}{ }article\PY{+w}{ }\PYZhy{}\PYZhy{}template\PYZhy{}info
@@ -84,32 +77,27 @@ texsmith\PY{+w}{ }docs/intro.md\PY{+w}{ }\PY{l+s+se}{\PYZbs{}}
 \PY{+w}{  }\PYZhy{}\PYZhy{}output\PYZhy{}dir\PY{+w}{ }build/article\PY{+w}{ }\PY{l+s+se}{\PYZbs{}}
 \PY{+w}{  }\PYZhy{}\PYZhy{}build
 \end{Verbatim}
-\end{code}
+\end{tscode}
 Need a blank template skeleton? Use the scaffold flag to copy any template into
 your working tree:
-
-\begin{code}{bash}{}{}
+\begin{tscode}[lang=bash, engine=pygments]
 \begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
 texsmith\PY{+w}{ }\PYZhy{}\PYZhy{}template\PY{+w}{ }article\PY{+w}{ }\PYZhy{}\PYZhy{}template\PYZhy{}scaffold\PY{+w}{ }my\PYZhy{}template
 \PY{n+nb}{cd}\PY{+w}{ }my\PYZhy{}template
 uv\PY{+w}{ }run\PY{+w}{ }hatch\PY{+w}{ }build\PY{+w}{  }\PY{c+c1}{\PYZsh{} optional packaging smoke test}
 \end{Verbatim}
-\end{code}
-Publish by pointing \texttt{pyproject.toml} to the \texttt{template/} package, then \texttt{uv publish} or \texttt{twine upload dist/*}.
-For in-depth patterns (overrides, slots, metadata), see the \hyperref[snippet:<HASH>]{Template Cookbook}.
-
-\section{Write your own TeXSmith templates}\label{write-your-own-texsmith-templates}
-
+\end{tscode}
+Publish by pointing \tscodeinline{pyproject.toml} to the \tscodeinline{template/} package, then \tscodeinline{uv publish} or \tscodeinline{twine upload dist/*}.
+For in-depth patterns (overrides, slots, metadata), see the Template Cookbook.
+\section{Write your own TeXSmith templates}
 TeXSmith uses Jinja2 templates to assemble \LaTeX{} documents from converted
 Markdown fragments. You can create your own templates to control the layout,
 styling, and structure of the final output.
 
 You may start by copying an existing template package and modifying it to suit
-your needs. Templates can either be published on PyPI for easy distribution or kept locally for personal use. By default, TeXSmith will look for templates installed in the current Python environment or in the current working directory under a \texttt{templates/} folder.
-
-\subsection{Structure}\label{structure}
-
-\begin{code}{text}{}{baselinestretch=0.5, }
+your needs. Templates can either be published on PyPI for easy distribution or kept locally for personal use. By default, TeXSmith will look for templates installed in the current Python environment or in the current working directory under a \tscodeinline{templates/} folder.
+\subsection{Structure}
+\begin{tscode}[lang=text, stretch=0.5, engine=pygments]
 \begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
 ├── README.md
 ├── \PYZus{}\PYZus{}init\PYZus{}\PYZus{}.py
@@ -123,12 +111,10 @@ your needs. Templates can either be published on PyPI for easy distribution or k
     ├── template.tex
     └── .sty, .cls...
 \end{Verbatim}
-\end{code}
-\subsection{TOML manifest}\label{toml-manifest}
-
-The \texttt{manifest.toml} file describes the template and its metadata.
-
-\begin{code}{toml}{}{}
+\end{tscode}
+\subsection{TOML manifest}
+The \tscodeinline{manifest.toml} file describes the template and its metadata.
+\begin{tscode}[lang=toml, engine=pygments]
 \begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
 \PY{k}{[}\PY{k}{compat}\PY{k}{]}
 \PY{c+c1}{\PYZsh{} Specify the compatible TeXSmith versions. Do not forget}
@@ -221,76 +207,60 @@ The \texttt{manifest.toml} file describes the template and its metadata.
 \PY{k}{[}\PY{k}{latex}\PY{k}{.}\PY{k}{template}\PY{k}{.}\PY{k}{assets}\PY{k}{]}
 \PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{.latexmkrc}\PY{l+s+s2}{\PYZdq{}}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{p}{\PYZob{}}\PY{+w}{ }\PY{n}{source}\PY{+w}{ }\PY{p}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{template/assets/latexmkrc}\PY{l+s+s2}{\PYZdq{}}\PY{+w}{ }\PY{p}{\PYZcb{}}
 \end{Verbatim}
-\end{code}
-\subsubsection{Attribute schema}\label{attribute-schema}
-
+\end{tscode}
+\subsubsection{Attribute schema}
 Each attribute table accepts the following keys:
-
 \begin{itemize}
-\item{} \texttt{default}: (required) the value injected when no override is provided.
-\item{} \texttt{type}: optional primitive among \texttt{string}, \texttt{integer}, \texttt{float}, \texttt{boolean}, \texttt{list}, \texttt{mapping}, \texttt{any}. When omitted TeXSmith infers a type from \texttt{default}.
-\item{} \texttt{sources}: the lookup paths (dot notation) used to pull overrides from document front matter. If omitted, TeXSmith probes \texttt{press.press.<name>}, \texttt{press.<name>}, then \texttt{<name>}.
-\item{} \texttt{allow\_empty}: when \texttt{false}, empty strings are coerced to \texttt{None} so templates fall back to defaults.
-\item{} \texttt{required}: when \texttt{true}, a missing override raises a \texttt{TemplateError}.
-\item{} \texttt{choices}: restricts string/integer values to the provided list.
-\item{} \texttt{escape}: currently supports \texttt{latex} to automatically escape special characters coming from user input.
-\item{} \texttt{normaliser}: a built-in normaliser name \textbf{or} a \texttt{"module:callable"} import reference pointing at your own callable that post-processes the value (see below).
-
+\item \tscodeinline{default}: (required) the value injected when no override is provided.
+\item \tscodeinline{type}: optional primitive among \tscodeinline{string}, \tscodeinline{integer}, \tscodeinline{float}, \tscodeinline{boolean}, \tscodeinline{list}, \tscodeinline{mapping}, \tscodeinline{any}. When omitted TeXSmith infers a type from \tscodeinline{default}.
+\item \tscodeinline{sources}: the lookup paths (dot notation) used to pull overrides from document front matter. If omitted, TeXSmith probes \tscodeinline{press.press.<name>}, \tscodeinline{press.<name>}, then \tscodeinline{<name>}.
+\item \tscodeinline{allow\_empty}: when \tscodeinline{false}, empty strings are coerced to \tscodeinline{None} so templates fall back to defaults.
+\item \tscodeinline{required}: when \tscodeinline{true}, a missing override raises a \tscodeinline{TemplateError}.
+\item \tscodeinline{choices}: restricts string/integer values to the provided list.
+\item \tscodeinline{escape}: currently supports \tscodeinline{latex} to automatically escape special characters coming from user input.
+\item \tscodeinline{normaliser}: a built-in normaliser name \textbf{or} a \tscodeinline{"module:callable"} import reference pointing at your own callable that post-processes the value (see below).
 \end{itemize}
-Attributes are resolved before \texttt{WrappableTemplate.prepare\_context} runs, meaning template classes only need to handle presentation-specific tweaks (for example, combining authors, building option strings, or removing temporary keys).
-
-\subsection{Attribute ownership \& precedence}\label{attribute-ownership-precedence}
-
+Attributes are resolved before \tscodeinline{WrappableTemplate.prepare\_context} runs, meaning template classes only need to handle presentation-specific tweaks (for example, combining authors, building option strings, or removing temporary keys).
+\subsection{Attribute ownership \& precedence}
 \begin{itemize}
-\item{} Each attribute belongs to a single owner (template by default, fragment when declared in \texttt{fragment.toml}). Conflicting owners raise a \texttt{TemplateError}.
-\item{} Overrides flow: CLI/front matter \(\rightarrow\) attribute resolver (type coercion, normalisers) \(\rightarrow\) template emitters/fragment defaults. Empty strings are dropped when \texttt{allow\_empty = false}.
-\item{} Attributes no longer live under ad-hoc dotted names (\texttt{press.*}); normalisation collapses supported aliases onto the declared attribute name.
-
+\item Each attribute belongs to a single owner (template by default, fragment when declared in \tscodeinline{fragment.toml}). Conflicting owners raise a \tscodeinline{TemplateError}.
+\item Overrides flow: CLI/front matter \tsscript{symbols}{\(\rightarrow\) }attribute resolver (type coercion, normalisers) \tsscript{symbols}{\(\rightarrow\) }template emitters/fragment defaults. Empty strings are dropped when \tscodeinline{allow\_empty = false}.
+\item Attributes no longer live under ad-hoc dotted names (\tscodeinline{press.*}); normalisation collapses supported aliases onto the declared attribute name.
 \end{itemize}
-\subsection{Template slots and built-ins}\label{template-slots-and-built-ins}
-
+\subsection{Template slots and built-ins}
 \begin{itemize}
-\item{} Templates must declare at least one slot; \texttt{mainmatter} is the default when absent. Slots surface \texttt{depth}, \texttt{offset}, \texttt{strip\_heading}, and optional \texttt{base\_level}.
-\item{} Built-in \texttt{article} exposes \texttt{mainmatter}, \texttt{abstract}, \texttt{appendix}, and \texttt{backmatter}. \texttt{book} inserts \texttt{appendix} before \texttt{backmatter} and supports \texttt{part} toggling. \texttt{letter} uses \texttt{mainmatter} only.
-\item{} Deprecated attributes removed from built-ins: \texttt{article}/\texttt{book} no longer accept \texttt{cover}, \texttt{covercolor}, \texttt{twocolumn}, or template-owned \texttt{emoji}. Backmatter/preamble overrides moved into fragments where applicable.
-
+\item Templates must declare at least one slot; \tscodeinline{mainmatter} is the default when absent. Slots surface \tscodeinline{depth}, \tscodeinline{offset}, \tscodeinline{strip\_heading}, and optional \tscodeinline{base\_level}.
+\item Built-in \tscodeinline{article} exposes \tscodeinline{mainmatter}, \tscodeinline{abstract}, \tscodeinline{appendix}, and \tscodeinline{backmatter}. \tscodeinline{book} inserts \tscodeinline{appendix} before \tscodeinline{backmatter} and supports \tscodeinline{part} toggling. \tscodeinline{letter} uses \tscodeinline{mainmatter} only.
+\item Deprecated attributes removed from built-ins: \tscodeinline{article}/\tscodeinline{book} no longer accept \tscodeinline{cover}, \tscodeinline{covercolor}, \tscodeinline{twocolumn}, or template-owned \tscodeinline{emoji}. Backmatter/preamble overrides moved into fragments where applicable.
 \end{itemize}
-\subsubsection{Built-in normalisers}\label{built-in-normalisers}
-
+\subsubsection{Built-in normalisers}
 \begin{center}
 \begin{tabularx}{\linewidth}{>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X}
 \toprule
 \textbf{Name} & \textbf{Purpose} \\
-
 \midrule
-\texttt{paper\_option} & Validates paper sizes and emits \texttt{<size>paper} strings (for example \texttt{letterpaper}). \\
-\texttt{orientation} & Normalises orientation flags and guarantees \texttt{portrait} or \texttt{landscape}. \\
-\texttt{babel\_language} & Maps ISO-like language codes to Babel identifiers (for example \texttt{fr} \(\rightarrow\) \texttt{french}). \\
-
+\tscodeinline{paper\_option} & Validates paper sizes and emits \tscodeinline{<size>paper} strings (for example \tscodeinline{letterpaper}). \\
+\tscodeinline{orientation} & Normalises orientation flags and guarantees \tscodeinline{portrait} or \tscodeinline{landscape}. \\
+\tscodeinline{babel\_language} & Maps ISO-like language codes to Babel identifiers (for example \tscodeinline{fr} \tsscript{symbols}{\(\rightarrow\) }\tscodeinline{french}). \\
 \bottomrule
 \end{tabularx}
 \end{center}
-
-Normalisers run after type coercion and before escaping. They can also reuse existing defaults to provide fallbacks (\texttt{paper\_option} and \texttt{orientation} do this).
-
-\subsubsection{Custom normalisers from template packages}\label{custom-normalisers-from-template-packages}
-
-Beyond the built-in names, \texttt{normaliser} accepts a fully-qualified callable
+Normalisers run after type coercion and before escaping. They can also reuse existing defaults to provide fallbacks (\tscodeinline{paper\_option} and \tscodeinline{orientation} do this).
+\subsubsection{Custom normalisers from template packages}
+Beyond the built-in names, \tscodeinline{normaliser} accepts a fully-qualified callable
 reference so a template package can supply its own normaliser without touching
-TeXSmith internals. Use the \texttt{"package.module:callable"} form (the dotted
-\texttt{"package.module.callable"} form is also accepted):
-
-\begin{code}{toml}{}{}
+TeXSmith internals. Use the \tscodeinline{"package.module:callable"} form (the dotted
+\tscodeinline{"package.module.callable"} form is also accepted):
+\begin{tscode}[lang=toml, engine=pygments]
 \begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
 \PY{k}{[}\PY{k}{latex}\PY{k}{.}\PY{k}{template}\PY{k}{.}\PY{k}{attributes}\PY{k}{.}\PY{k}{rules}\PY{k}{]}
 \PY{n}{type}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{any}\PY{l+s+s2}{\PYZdq{}}
 \PY{n}{normaliser}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{texsmith\PYZus{}template\PYZus{}exam.rules:resolve\PYZus{}attribute}\PY{l+s+s2}{\PYZdq{}}
 \end{Verbatim}
-\end{code}
+\end{tscode}
 The referenced object is imported (and cached) when the manifest is loaded, and
 must honour the normaliser contract:
-
-\begin{code}{python}{}{}
+\begin{tscode}[lang=python, engine=pygments]
 \begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
 \PY{k}{def}\PY{+w}{ }\PY{n+nf}{resolve\PYZus{}attribute}\PY{p}{(}\PY{n}{value}\PY{p}{,} \PY{n}{spec}\PY{p}{,} \PY{n}{fallback}\PY{p}{)}\PY{p}{:}
     \PY{c+c1}{\PYZsh{} value:    the already type\PYZhy{}coerced attribute value}
@@ -299,22 +269,19 @@ must honour the normaliser contract:
     \PY{c+c1}{\PYZsh{} returns:  the normalised value}
     \PY{o}{.}\PY{o}{.}\PY{o}{.}
 \end{Verbatim}
-\end{code}
+\end{tscode}
 If the module or attribute cannot be found, or the target is not callable,
-TeXSmith raises a \texttt{TemplateError} naming the offending template, attribute, and
-\texttt{normaliser} value.
+TeXSmith raises a \tscodeinline{TemplateError} naming the offending template, attribute, and
+\tscodeinline{normaliser} value.
 
 Authors who prefer a short registry name can instead call
-\texttt{texsmith.core.templates.register\_attribute\_normaliser(name, func)} at import
-time and reference it by \texttt{name}. Registering over a built-in name raises a
-\texttt{TemplateError} unless \texttt{override=True} is passed. The \texttt{"module:callable"} form is
+\tscodeinline{texsmith.core.templates.register\_attribute\_normaliser(name, func)} at import
+time and reference it by \tscodeinline{name}. Registering over a built-in name raises a
+\tscodeinline{TemplateError} unless \tscodeinline{override=True} is passed. The \tscodeinline{"module:callable"} form is
 collision-free and needs no registration, so it is generally preferred.
-
-\subsubsection{Metadata overrides}\label{metadata-overrides}
-
-At runtime TeXSmith merges template defaults with document front matter. By default, overrides come from the \texttt{press} section:
-
-\begin{code}{yaml}{}{}
+\subsubsection{Metadata overrides}
+At runtime TeXSmith merges template defaults with document front matter. By default, overrides come from the \tscodeinline{press} section:
+\begin{tscode}[lang=yaml, engine=pygments]
 \begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
 \PY{n+nn}{\PYZhy{}\PYZhy{}\PYZhy{}}
 \PY{n+nt}{press}\PY{p}{:}
@@ -327,19 +294,16 @@ At runtime TeXSmith merges template defaults with document front matter. By defa
 \PY{+w}{    }\PY{p+pIndicator}{\PYZhy{}}\PY{+w}{ }\PY{n+nt}{name}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{Grace}\PY{l+lScalar+lScalarPlain}{ }\PY{l+lScalar+lScalarPlain}{Hopper}
 \PY{n+nn}{\PYZhy{}\PYZhy{}\PYZhy{}}
 \end{Verbatim}
-\end{code}
+\end{tscode}
 With the manifest above TeXSmith will:
-
 \begin{itemize}
-\item{} Escape \texttt{title} and \texttt{subtitle} for LaTeX compatibility.
-\item{} Map \texttt{language: fr} to \texttt{french}.
-\item{} Normalise author collections so individual templates can format them consistently.
-\item{} Populate both defaults (\texttt{author}) and structured data (\texttt{authors}) that template classes can consume.
-
+\item Escape \tscodeinline{title} and \tscodeinline{subtitle} for \LaTeX{} compatibility.
+\item Map \tscodeinline{language: fr} to \tscodeinline{french}.
+\item Normalise author collections so individual templates can format them consistently.
+\item Populate both defaults (\tscodeinline{author}) and structured data (\tscodeinline{authors}) that template classes can consume.
 \end{itemize}
-To pull metadata from alternative locations add explicit \texttt{sources}:
-
-\begin{code}{toml}{}{}
+To pull metadata from alternative locations add explicit \tscodeinline{sources}:
+\begin{tscode}[lang=toml, engine=pygments]
 \begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
 \PY{k}{[}\PY{k}{latex}\PY{k}{.}\PY{k}{template}\PY{k}{.}\PY{k}{attributes}\PY{k}{.}\PY{k}{project\PYZus{}code}\PY{k}{]}
 \PY{n}{default}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{\PYZdq{}}
@@ -347,76 +311,63 @@ To pull metadata from alternative locations add explicit \texttt{sources}:
 \PY{n}{sources}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{p}{[}\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{press.project.code}\PY{l+s+s2}{\PYZdq{}}\PY{p}{,}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{project.code}\PY{l+s+s2}{\PYZdq{}}\PY{p}{]}
 \PY{n}{allow\PYZus{}empty}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{k+kc}{false}
 \end{Verbatim}
-\end{code}
-\subsubsection{Slots}\label{slots}
-
+\end{tscode}
+\subsubsection{Slots}
 Slots control where converted content is injected. Each entry allows:
-
 \begin{itemize}
-\item{} \texttt{depth}: maps to a LaTeX sectioning command (\texttt{section}, \texttt{chapter}, etc.).
-\item{} \texttt{base\_level} and \texttt{offset}: fine tune heading levels when rendering.
-\item{} \texttt{default}: mark exactly one slot as the primary sink for content.
-\item{} \texttt{strip\_heading}: remove the first heading when populating the slot (useful for abstracts).
-
+\item \tscodeinline{depth}: maps to a \LaTeX{} sectioning command (\tscodeinline{section}, \tscodeinline{chapter}, etc.).
+\item \tscodeinline{base\_level} and \tscodeinline{offset}: fine tune heading levels when rendering.
+\item \tscodeinline{default}: mark exactly one slot as the primary sink for content.
+\item \tscodeinline{strip\_heading}: remove the first heading when populating the slot (useful for abstracts).
 \end{itemize}
-Slots become Jinja variables inside the template (\texttt{\textbackslash{}VAR\{abstract\}}, \texttt{\textbackslash{}VAR\{mainmatter\}}).
-
-\subsection{Overrides}\label{overrides}
-
-TeXSmith uses partials to render different parts of the document such as bold text with \texttt{adapters/latex/partials/bold.tex}:
-
-\begin{code}{tex}{}{}
+Slots become Jinja variables inside the template (\tscodeinline{\textbackslash{}VAR\{abstract\}}, \tscodeinline{\textbackslash{}VAR\{mainmatter\}}).
+\subsection{Overrides}
+The \LaTeX{} body comes from tmark's writer, which emits a fixed macro or
+environment per construct. Structural constructs (emphasis, lists, headings,
+figures, tables, links, footnotes) are plain \LaTeX{} the writer owns; everything a
+template may want to restyle is a \textbf{contract macro} provided by a \tscodeinline{ts-\allowbreak{}*}
+fragment. Redefine it in your template's \tscodeinline{.tex}, after \tscodeinline{\textbackslash{}VAR\{extra\_packages\}}
+(that is where the fragments are \tscodeinline{\textbackslash{}usepackage}d):
+\begin{tscode}[lang=latex, engine=pygments]
 \begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
-\PY{k}{\PYZbs{}textbf}\PY{n+nb}{\PYZob{}}\PY{k}{\PYZbs{}VAR}\PY{n+nb}{\PYZob{}}text\PY{n+nb}{\PYZcb{}}\PY{n+nb}{\PYZcb{}}
+\PY{k}{\PYZbs{}VAR}\PY{n+nb}{\PYZob{}}extra\PY{n+nb}{\PYZus{}}packages\PY{n+nb}{\PYZcb{}}
+\PY{k}{\PYZbs{}tcbset}\PY{n+nb}{\PYZob{}}/ts/code/.append style=\PY{n+nb}{\PYZob{}}frame hidden, boxrule=0pt\PY{n+nb}{\PYZcb{}}\PY{n+nb}{\PYZcb{}}
+\PY{k}{\PYZbs{}RenewDocumentCommand}\PY{n+nb}{\PYZob{}}\PY{k}{\PYZbs{}tscodeinline}\PY{n+nb}{\PYZcb{}}\PY{n+nb}{\PYZob{}}O\PY{n+nb}{\PYZob{}}\PY{n+nb}{\PYZcb{}}m\PY{n+nb}{\PYZcb{}}\PY{n+nb}{\PYZob{}}\PY{k}{\PYZbs{}texttt}\PY{n+nb}{\PYZob{}}\PYZsh{}2\PY{n+nb}{\PYZcb{}}\PY{n+nb}{\PYZcb{}}
+\PY{k}{\PYZbs{}RenewDocumentEnvironment}\PY{n+nb}{\PYZob{}}tsdiv@multicolumn\PY{n+nb}{\PYZcb{}}\PY{n+nb}{\PYZob{}}O\PY{n+nb}{\PYZob{}}\PY{n+nb}{\PYZcb{}}\PY{n+nb}{\PYZcb{}}\PY{n+nb}{\PYZob{}}\PY{k}{\PYZbs{}begin}\PY{n+nb}{\PYZob{}}multicols\PY{n+nb}{\PYZcb{}}\PY{n+nb}{\PYZob{}}3\PY{n+nb}{\PYZcb{}}\PY{n+nb}{\PYZcb{}}\PY{n+nb}{\PYZob{}}\PY{k}{\PYZbs{}end}\PY{n+nb}{\PYZob{}}multicols\PY{n+nb}{\PYZcb{}}\PY{n+nb}{\PYZcb{}}
 \end{Verbatim}
-\end{code}
-You may want to override some of these partials to customize the output of specific Markdown elements. To do so, create an \texttt{overrides/} folder in your template package and add the partials you want to override.
-
-When the manifest lists \texttt{latex.template.override = ["partials/bold.tex"]}, TeXSmith searches the following locations in order:
-
-\begin{enumerate}
-\item \texttt{<template>/overrides/}
-\item \texttt{<template>/template/overrides/}
-\item The template root itself.
-\item A sibling \texttt{overrides/} directory next to the template package.
-
-\end{enumerate}
-Placeholders inside override files can use the same Jinja syntax (\texttt{\textbackslash{}VAR\{...\}}, \texttt{\textbackslash{}BLOCK\{...\}}).
-
-\subsection{Slot strategies}\label{slot-strategies}
-
+\end{tscode}
+See Contract macros for the full table of macros, their keys and
+the three levels of override.
+\begin{tscallout}[kind=warning, title={Jinja partials are no longer the rendering layer}]
+\tscodeinline{latex.template.override}, fragment \tscodeinline{partials} and \tscodeinline{required\_partials} are
+deprecated in 0.7.0 --- they warn and are ignored --- and removed in 0.8.0.
+\href{partials.md\#former-partials}{Contract macros} maps every former partial to
+its replacement macro.
+\end{tscallout}
+\subsection{Slot strategies}
 Slots determine how multiple Markdown documents (or sections) flow into the
 \LaTeX{} structure. Typical patterns:
-
 \begin{itemize}
-\item{} \textbf{Single document, single slot} -- map the only input with \texttt{-\allowbreak{}-\allowbreak{}slot mainmatter:@document}.
-\item{} \textbf{Front matter + main matter} -- convert two files (eg \texttt{intro.md},
-  \texttt{book.md}) and pass \texttt{-\allowbreak{}-\allowbreak{}slot frontmatter:intro.md} and \texttt{-\allowbreak{}-\allowbreak{}slot mainmatter:book.md}.
-\item{} \textbf{Selective sections} -- reference headings or IDs:
-  \texttt{-\allowbreak{}-\allowbreak{}slot abstract:paper.md:@abstract -\allowbreak{}-\allowbreak{}slot mainmatter:paper.md:"Results"} injects
-  only the abstract heading and the ``Results'' section into separate slots.
-\item{} \textbf{Per-language appendices} -- define slots (\texttt{appendix\_en}, \texttt{appendix\_fr}) and use front-matter metadata (\texttt{press.slot.appendix\_en: docs/en.md}) so automation scripts do not need to pass CLI flags.
-
+\item \textbf{Single document, single slot} -- map the only input with \tscodeinline{-\allowbreak{}-\allowbreak{}slot mainmatter:@document}.
+\item \textbf{Front matter + main matter} -- convert two files (eg \tscodeinline{intro.md},
+\tscodeinline{book.md}) and pass \tscodeinline{-\allowbreak{}-\allowbreak{}slot frontmatter:intro.md} and \tscodeinline{-\allowbreak{}-\allowbreak{}slot mainmatter:book.md}.
+\item \textbf{Selective sections} -- reference headings or IDs:
+\tscodeinline{-\allowbreak{}-\allowbreak{}slot abstract:paper.md:@abstract -\allowbreak{}-\allowbreak{}slot mainmatter:paper.md:"Results"} injects
+only the abstract heading and the ``Results'' section into separate slots.
+\item \textbf{Per-language appendices} -- define slots (\tscodeinline{appendix\_en}, \tscodeinline{appendix\_fr}) and use front-matter metadata (\tscodeinline{press.slot.appendix\_en: docs/en.md}) so automation scripts do not need to pass CLI flags.
 \end{itemize}
-Slots are resolved by the document slot mapping across CLI flags, front matter (\texttt{press.slot.*}), and API overrides, so mix and match whichever suits your workflow.
-
-\subsection{Testing your template}\label{testing-your-template}
-
+Slots are resolved by the document slot mapping across CLI flags, front matter (\tscodeinline{press.slot.*}), and API overrides, so mix and match whichever suits your workflow.
+\subsection{Testing your template}
 Before publishing, run the built-in test suite against your template:
-
-\begin{code}{bash}{}{}
+\begin{tscode}[lang=bash, engine=pygments]
 \begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
 uv\PY{+w}{ }run\PY{+w}{ }pytest\PY{+w}{ }tests/test\PYZus{}template\PYZus{}attributes.py
 \end{Verbatim}
-\end{code}
+\end{tscode}
 This repository includes examples for the bundled templates; copy one into your package and adjust expectations to match your manifest. Automated tests help ensure attributes, slots, and metadata mappings keep working as the TeXSmith runtime evolves.
-
-\section{Next steps}\label{next-steps}
-
+\section{Next steps}
 \begin{itemize}
-\item{} Study the \hyperref[snippet:<HASH>]{Template Cookbook} for practical recipes (title pages, metadata bindings, bibliography tweaks).
-\item{} Browse the \hyperref[snippet:<HASH>]{API high-level guide} to orchestrate templates programmatically with \texttt{ConversionService}.
-
+\item Study the Template Cookbook for practical recipes (title pages, metadata bindings, bibliography tweaks).
+\item Browse the API high-level guide to orchestrate templates programmatically with \tscodeinline{ConversionService}.
 \end{itemize}
-
 \end{document}

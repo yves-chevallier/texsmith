@@ -1,15 +1,15 @@
 #set document(
-  title: "Cross-document references",
+title: "Cross-document references",
 )
 #set page(
-  paper: "a4",
-  margin: 2.5cm,
-  numbering: none,
-  footer: context {
-    if counter(page).final().first() > 1 {
-      align(center)[#counter(page).get().first()]
-    }
-  },
+paper: "a4",
+margin: 2.5cm,
+numbering: none,
+footer: context {
+if counter(page).final().first() > 1 {
+align(center)[#counter(page).get().first()]
+}
+},
 )
 #set text(font: "New Computer Modern", size: 11pt, lang: "en")
 #set par(justify: true)
@@ -17,15 +17,14 @@
 #set heading(numbering: "1.1")
 
 #align(center)[
-  #text(size: 1.8em, weight: "bold")[Cross-document references]
-]
+#text(size: 1.8em, weight: "bold")[Cross-document references]]
 #v(1.5em)
 
 A counter number only exists inside the conversion that allocated it. A second
 document citing `FW-10` has no way to know what `FW-10` is, and — worse — no way
 to notice when a renumbering turns it into `FW-12`. Hard-coded numbers in a
 sister document break silently, which is exactly the maintenance
-#link("counters.md")[custom counters] remove _inside_ a document.
+custom counters remove _inside_ a document.
 
 TeXSmith closes the loop the way DocBook's _target database_ and Sphinx's
 `objects.inv` do: every conversion publishes a small JSON *inventory* next to
@@ -36,10 +35,12 @@ its output, and a citing document declares the inventories it depends on.
 ---
 title: Revue firmware
 id: RHE-423
-counters:
-  fw:
-    name: Constat
-    format: "FW-{n:02d}"
+press:
+  declare:
+    counters:
+      fw:
+        name: Constat
+        format: "FW-{n:02d}"
 ---
 ```
 
@@ -47,26 +48,27 @@ counters:
 # hardware-review.md — the document that cites
 ---
 title: Revue hardware
-crossrefs:
-  fwrev: build/firmware-review.refs.json
+press:
+  sources:
+    crossrefs:
+      fwrev: build/firmware-review.refs.json
 ---
 ```
 
-```markdown
+```md
 L'écart est écrasé par l'étalement spectral (voir @fwrev:fw:pas-de-temps).
 ```
 
 renders as
 
 #quote(block: true)[
-  L'écart est écrasé par l'étalement spectral (voir RHE-423-FW-10 p. 14).
-]
+L'écart est écrasé par l'étalement spectral (voir RHE-423-FW-10 p. 14).]
 
 = Identifying a document
 
 `id` is a free label — a contract number, a report reference, whatever your
 organisation numbers documents with (`document-id` is accepted as an alias). When the target document declares one,
-a citation concatenates it with the item's label: `RHE-423` + `FW-10` →
+a citation concatenates it with the item's label: `RHE-423` + `FW-10` #ts-script("symbols")[→]
 *`RHE-423-FW-10`*. That is what makes the reference unambiguous outside the
 document that defines it.
 
@@ -101,29 +103,30 @@ check keeps working.
 
 It is written in two passes, because the two halves of a reference become known
 at different times. The keys and their labels are known while converting; the
-*page numbers only exist once LaTeX has run*, and are harvested from the
+*page numbers only exist once #ts-logo("LaTeX") has run*, and are harvested from the
 `.aux` afterwards — the same source the `xr` package reads. A conversion without
-`--build` therefore publishes an inventory without pages, and citations simply
+`–build` therefore publishes an inventory without pages, and citations simply
 omit the page.
 
-#block(width: 100%, radius: 2pt, stroke: (left: 1.5pt + rgb("#00BFA5"), rest: 0.4pt + rgb("#00BFA5")))[
-  #block(width: 100%, fill: rgb("#00BFA5").lighten(90%), inset: (x: 8pt, y: 4pt))[#text(weight: "bold", fill: rgb("#00BFA5"))[⭐#h(0.4em)Commit the inventory]]
-  #block(width: 100%, inset: (x: 8pt, y: 6pt))[
-    It is a build artifact, but committing it makes renumbering _diffable_:
-    `git diff` shows `FW-04 → FW-10` before you publish. For a contractual
-    document, that diff is the review gate that catches a renumbering before it
-    reaches a reader.
-  ]
-]
+#ts-callout(kind: "tip", title: [Commit the inventory])[
+It is a build artifact, but committing it makes renumbering _diffable_:
+`git diff` shows `FW-04 → FW-10` before you publish. For a contractual
+document, that diff is the review gate that catches a renumbering before it
+reaches a reader.]
 
 = Declaring and citing
 
 ```yaml
-crossrefs:
-  fwrev: build/firmware-review.refs.json # shorthand
-  hwrev:
-    inventory: ../hardware/build/hardware-review.refs.json
+press:
+  sources:
+    crossrefs:
+      fwrev: build/firmware-review.refs.json # shorthand
+      hwrev:
+        inventory: ../hardware/build/hardware-review.refs.json
 ```
+
+A top-level `crossrefs:` key is the deprecated spelling; `tmark lint –fix`
+moves it under `press.sources`.
 
 Paths are relative to the citing document. The alias is then the first segment
 of the reference: `@fwrev:fw:pas-de-temps`.
@@ -141,18 +144,18 @@ references keep their live link.
 = Diagnostics
 
 This is the part that earns the feature. All of these are
-#link("../guide/diagnostics.md")[diagnostics], shown by default and promotable to hard
-failures with `--strict` (or `press.features.strict: true`):
+diagnostics, shown by default and promotable to hard
+failures with `–strict` (or `press.features.strict: true`):
 
 #table(
-  columns: 2,
-  align: (left, left),
-  table.header([Situation], [Behaviour]),
-  [the key is not published by the declared inventory], [warning, and the citation renders as `[?fwrev:fw:disparu]`],
-  [the inventory file does not exist yet], [warning, citations render as `[?…]`],
-  [the inventory's source changed since it was written], [warning: the numbers you are citing may already be wrong],
-  [the inventory's source no longer resolves at all], [warning: staleness can no longer be checked],
-  [the inventory uses a newer schema], [warning, inventory ignored],
+columns: 2,
+align: (left, left),
+table.header([Situation], [Behaviour]),
+[the key is not published by the declared inventory], [warning, and the citation renders as `[?fwrev:fw:disparu]`],
+[the inventory file does not exist yet], [warning, citations render as `[?…]`],
+[the inventory's source changed since it was written], [warning: the numbers you are citing may already be wrong],
+[the inventory's source no longer resolves at all], [warning: staleness can no longer be checked],
+[the inventory uses a newer schema], [warning, inventory ignored],
 )
 
 Warnings are attributed to the *citing document*, not to a TeXSmith source
@@ -174,7 +177,7 @@ Makefile edge:
 build/hardware-review.pdf: hardware-review.md build/firmware-review.refs.json
 ```
 
-Two documents citing each other need two passes, exactly like LaTeX's own
+Two documents citing each other need two passes, exactly like #ts-logo("LaTeX")'s own
 `.aux`: a missing inventory is a warning and not a failure, so the first build
 produces the inventories and the second resolves the citations.
 

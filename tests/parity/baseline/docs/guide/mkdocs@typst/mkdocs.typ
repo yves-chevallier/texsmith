@@ -1,15 +1,15 @@
 #set document(
-  title: "Integration with MkDocs",
+title: "Integration with MkDocs",
 )
 #set page(
-  paper: "a4",
-  margin: 2.5cm,
-  numbering: none,
-  footer: context {
-    if counter(page).final().first() > 1 {
-      align(center)[#counter(page).get().first()]
-    }
-  },
+paper: "a4",
+margin: 2.5cm,
+numbering: none,
+footer: context {
+if counter(page).final().first() > 1 {
+align(center)[#counter(page).get().first()]
+}
+},
 )
 #set text(font: "New Computer Modern", size: 11pt, lang: "en")
 #set par(justify: true)
@@ -17,62 +17,137 @@
 #set heading(numbering: "1.1")
 
 #align(center)[
-  #text(size: 1.8em, weight: "bold")[Integration with MkDocs]
-]
+#text(size: 1.8em, weight: "bold")[Integration with MkDocs]]
 #v(1.5em)
 
-TeXSmith can be seamlessly integrated with MkDocs, a popular static site generator for project documentation. This allows you to leverage MkDocs' powerful features while utilizing TeXSmith for document generation.
-
-The integration is achieved through the `mkdocs-texsmith` plugin, which processes TeXSmith documents during the MkDocs build process.
-
-= Configuration
-
-To enable TeXSmith in your MkDocs project, you need to add the `mkdocs-texsmith` plugin to your `mkdocs.yml` configuration file:
+One plugin, `texsmith`, carries the whole integration: it renders the TMark
+constructs on the site _and_ exports the same sources as a PDF. Add it to
+`mkdocs.yml` and nothing else:
 
 ```yaml
 plugins:
+  - search
   - texsmith
 ```
 
-You can configure additional options for the TeXSmith plugin as needed:
+No Markdown extension to wire by hand. The plugin turns on the five extensions
+its output relies on — `attr_list`, `md_in_html`, `admonition`,
+`pymdownx.details` and `pymdownx.superfences` — when they are absent, and ships
+a small stylesheet (`assets/texsmith/texsmith.css`: asides, the subfigure grid,
+caption labels, counter spans) through `extra_css`. Set
+`inject_markdown_extensions: false` or `css: false` to take either over.
 
-#table(
-  columns: 3,
-  align: (left, left, left),
-  table.header([Option], [Description], [Default]),
-  [`template`], [Template to use for rendering the site], [`book`],
-  [`build_dir`], [Directory where TeXSmith outputs are stored], [`site`],
-)
+#ts-callout(kind: "warning", title: [The `texsmith.counters` and `texsmith.index` plugins are gone])[
+Both jobs belong to `texsmith` now. The two entry points still load, log a
+warning and do nothing; they disappear in 0.8. Remove them from `plugins:`
+and move any `counters:` you declared under them to `declare.counters`
+(below).]
 
-== Multiple documents
+= What the plugin does to a page
 
-You can either generate a single document from your MkDocs site or multiple documents from different sections.
+Before Python-Markdown runs, every page goes through `tmark`:
 
-```yaml
-plugins:
-    - texsmith:
-      books:
-        - template: book
-          folder: foolists
-          root: "foo"
-          base_level: -1
-        - template: article
-          folder: bariers
-          root: "bar"
-```
++ a *pre-pass* parses and resolves every page in navigation order, chaining
+the counters from one page to the next, and collects the labels of the whole
+site;
++ each page is then resolved again against that site map and *lowered*: each
+TMark construct is replaced by the Markdown or HTML Material renders — a
+callout becomes an admonition, a figure a `<figure>`, a counter item a
+`<span class="ts-counter">` — and every other byte is left alone.
 
-= Serve
+So Material's own syntax (`++ctrl+alt+del++`, `==marked==`, tab sets, emoji,
+mermaid fences, an `mkdocstrings` block) passes through untouched, and a
+construct TeXSmith owns renders the same way it does in the PDF.
 
-During development with `mkdocs serve`, the TeXSmith plugin can fetch assets from the web (e.g. images, citations) and compile PDF snippets on the fly. This allows for a smooth writing experience with instant feedback.
+Diagnostics are reported with the page path: `docs/findings.md:12:5: warning
+ref-unresolved: …`.
 
-= Build
+= Site-wide declarations
 
-When you run `mkdocs build`, the TeXSmith plugin processes all TeXSmith documents in your project, generating the corresponding PDFs and integrating them into the final site output. By default the output directory is `press/`.
-
-You can tell TeXSmith to build the PDF during the process with the `build` option in your mkdocs.yml:
+Counters declared under the plugin's `declare:` key apply to every page, as
+`press.declare` does in a page's front matter:
 
 ```yaml
 plugins:
   - texsmith:
-      build: true
+      declare:
+        counters:
+          req:
+            name: Requirement
+            format: "REQ-{n:03d}"
+            start: 100
 ```
+
+A page may still declare its own in its front matter; the page's declaration
+wins over the site's for the same prefix. See
+Counters for the numbering rules.
+
+= Options
+
+#table(
+columns: 3,
+align: (left, left, left),
+table.header([Option], [Description], [Default]),
+[`enabled`], [Turn the plugin off entirely], [`true`],
+[`template`], [Template used for the books], [`book`],
+[`build_dir`], [Where the `.tex`, the assets and the PDF land], [`press`],
+[`declare`], [Site-wide declarations (`declare.counters`)], [`{}`],
+[`web`], [`tmark.lower_web` options: `sections` (`title` | `number`), `citations` (`inline` | `passthrough`), `css_prefix`], [`{}`],
+[`inject_markdown_extensions`], [Enable the extensions the lowering relies on], [`true`],
+[`css`], [Ship and register `texsmith.css`], [`true`],
+[`language`], [Document language, else the theme's], [_theme_],
+[`bibliography`], [`.bib` files shared by every book], [`[]`],
+[`books`], [The documents to export (below)], [`[]`],
+[`template_overrides`], [Template attributes for every book], [`{}`],
+[`copy_assets` / `clean_assets`], [Copy the referenced assets / prune the unused ones], [`true`],
+[`save_html`], [Keep a snapshot of each page's rendered HTML], [`false`],
+[`embed_fragments`], [Inline the page fragments instead of `\input`], [`false`],
+)
+
+= Books
+
+A book is one PDF built from a section of the navigation. Several may be
+declared; `root: "__texsmith_full_navigation__"` takes the whole site.
+
+```yaml
+plugins:
+  - texsmith:
+      books:
+        - template: book
+          title: "Foo, the complete guide"
+          folder: foolists
+          root: "foo"
+          base_level: -1
+        - template: article
+          folder: barriers
+          root: "bar"
+```
+
+The PDF is built from each page's *source* — the Markdown MkDocs handed the
+plugin, macros expanded, with the page metadata and the site declarations back
+in front of it — read through the tmark reader, not from the rendered HTML. The
+exact input is written next to the output under `<build_dir>/<folder>/sources/`,
+so what the PDF was built from is always inspectable. The counters are seeded
+where the site's chain stood before the book's first page, so `FW-10` is
+`FW-10` on both media.
+
+A page whose front matter says `press: {reader: html}` is read from its
+rendered HTML instead — the escape hatch for a page whose content is produced
+by another MkDocs plugin.
+
+= Serve
+
+Under `mkdocs serve` the plugin lowers the pages and reports diagnostics but
+builds no book: the PDF is a `mkdocs build` matter.
+
+= Build
+
+`mkdocs build` writes every book's `.tex` and its assets under `press/`. Set
+`TEXSMITH_BUILD=1` to compile the PDF in the same run:
+
+```console
+$ TEXSMITH_BUILD=1 mkdocs build
+```
+
+A complete example lives in `examples/mkdocs` (`make -C examples/mkdocs` builds
+the site and the PDF).

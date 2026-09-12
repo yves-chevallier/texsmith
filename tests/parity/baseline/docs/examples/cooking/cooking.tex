@@ -7,10 +7,46 @@
 \usepackage[english]{babel}
 \usepackage[colorlinks=true, linkcolor=NavyBlue, urlcolor=NavyBlue, citecolor=NavyBlue]{hyperref}
 \usepackage[a4paper]{geometry}
+\usepackage{ts-typesetting}
 \usepackage{ts-fonts}
-\usepackage{amsmath}
 \usepackage{float}
+\usepackage{xcolor}
+\usepackage{epigraph}
+\usepackage{marginnote}
+\usepackage{multicol}
+\usepackage{progressbar}
+\usepackage{graphicx}
+\usepackage{tcolorbox}
+\usepackage{fvextra}
+\usepackage{amsmath}
 \usepackage{seqsplit}
+\renewcommand*{\marginfont}{
+\footnotesize
+\sloppy
+\emergencystretch=1em
+\hyphenpenalty=50
+\exhyphenpenalty=50
+}
+\newlength{\tsmarginparavail}
+\newlength{\tsmarginparalt}
+\newlength{\tsmarginparbuf}
+\setlength{\tsmarginparbuf}{6mm}
+\makeatletter
+\AtBeginDocument{
+\setlength{\tsmarginparavail}{\dimexpr\paperwidth-\textwidth-1in-\oddsidemargin-\marginparsep-\tsmarginparbuf\relax}
+\ifdim\tsmarginparavail<\z@\setlength{\tsmarginparavail}{\z@}\fi
+\if@twoside
+\setlength{\tsmarginparalt}{\dimexpr1in+\evensidemargin-\marginparsep-\tsmarginparbuf\relax}
+\ifdim\tsmarginparalt<\z@\setlength{\tsmarginparalt}{\z@}\fi
+\ifdim\tsmarginparalt<\tsmarginparavail
+\setlength{\tsmarginparavail}{\tsmarginparalt}
+\fi
+\fi
+\ifdim\tsmarginparavail<\marginparwidth
+\setlength{\marginparwidth}{\tsmarginparavail}
+\fi
+}
+\makeatother
 \usepackage{ts-callouts}
 \usepackage{ts-code}
 
@@ -18,71 +54,53 @@
 \usepackage{refcount}
 \makeatletter
 \def\ps@plain{
-  \let\@oddhead\@empty
-  \let\@evenhead\@empty
-  \def\@oddfoot{
-    \hfil
-    \ifnum\getpagerefnumber{LastPage}>1\relax
-      \thepage
-    \fi
-    \hfil}
-  \let\@evenfoot\@oddfoot
+\let\@oddhead\@empty
+\let\@evenhead\@empty
+\def\@oddfoot{
+\hfil
+\ifnum\getpagerefnumber{LastPage}>1\relax
+\thepage
+\fi
+\hfil}
+\let\@evenfoot\@oddfoot
 }
 \makeatother
 
 \title{Cooking Recipes}
 \author{}\date{}
-
 \begin{document}
-
 \maketitle
-
-\thispagestyle{plain}
-TeXSmith isn't just for papers and slides -- it can plate up gorgeous recipes straight from structured data. Here's a French walnut cake expressed as YAML, pushed through a custom \texttt{recipe} template. Click the card to grab the PDF.
-
+TeXSmith isn't just for papers and slides -- it can plate up gorgeous recipes straight from structured data. Here's a French walnut cake expressed as YAML, pushed through a custom \tscodeinline{recipe} template. Click the card to grab the PDF.
 \begin{figure}[H]
-    \centering
-
-    \ifdefined\adjustbox
-
-        \adjustbox{max width=\textwidth}{
-            \includegraphics[width=0.6\linewidth]{snippet-<HASH>.pdf}
-        }
-
-    \else
-
-        \includegraphics[width=0.6\linewidth]{snippet-<HASH>.pdf}
-
-    \fi
-
+\centering
+\includegraphics[width=0.6\linewidth]{snippet-<HASH>.pdf}
+\caption[Demo]{Demo}
 \end{figure}
 The authoring surface is pure data: \textbf{YAML} fields flow into a \LaTeX{} template, no Markdown gymnastics required. Swap the YAML for a DB/API payload and you've got a pipeline-ready recipe generator for your site or app.
-
-\textbf{cake.yml}\par
-
-\begin{code}{yaml}{}{}
+\begin{tsdiv}{tab}[title=cake.yml]
+\begin{tscode}[lang=yaml, engine=pygments]
 \begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
-
+\PY{p+pIndicator}{[}\PY{n+nv}{include}\PY{p+pIndicator}{:}\PY{+w}{ }\PY{n+nv}{examples/recipe/cake.yml}\PY{n+nv}{ }\PY{n+nv}{not}\PY{n+nv}{ }\PY{n+nv}{found}\PY{p+pIndicator}{]}
 \end{Verbatim}
-\end{code}
-\textbf{manifest.toml}\par
-
-\begin{code}{toml}{}{}
+\end{tscode}
+\end{tsdiv}
+\begin{tsdiv}{tab}[title=manifest.toml]
+\begin{tscode}[lang=toml, engine=pygments]
 \begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
-
+\PY{k}{[}\PY{k}{include}\PY{err}{:}\PY{+w}{ }\PY{k}{examples}\PY{err}{/}\PY{k}{recipe}\PY{err}{/}\PY{k}{manifest}\PY{k}{.}\PY{k}{toml}\PY{+w}{ }\PY{k}{not}\PY{+w}{ }\PY{k}{found}\PY{k}{]}
 \end{Verbatim}
-\end{code}
-\textbf{template.tex}\par
-
-\begin{code}{tex}{}{}
+\end{tscode}
+\end{tsdiv}
+\begin{tsdiv}{tab}[title=template.tex]
+\begin{tscode}[lang=tex, engine=pygments]
 \begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
-
+[include: examples/recipe/template.tex not found]
 \end{Verbatim}
-\end{code}
-\begin{callout}[callout note]{Note}
+\end{tscode}
+\end{tsdiv}
+\begin{tscallout}[kind=note]
 The recipe layout used in this template was inspired by the Cours de cuisine created by M.-C. Bolle back in 1978. She produced an exceptional cookbook for the Department of Public Instruction of the Canton of Geneva, Switzerland.
 
 I've never seen recipes presented quite this way anywhere else -- it's a uniquely clever system -- but I find it incredibly practical and efficient.
-\end{callout}
-
+\end{tscallout}
 \end{document}

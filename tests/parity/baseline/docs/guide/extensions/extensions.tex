@@ -9,167 +9,153 @@
 \usepackage[a4paper]{geometry}
 \usepackage{ts-fonts}
 \usepackage{booktabs}
+\usepackage{csquotes}
 \usepackage{tabularx}
+\usepackage{tcolorbox}
+\usepackage{xcolor}
+\usepackage{fvextra}
 \usepackage{amsmath}
 \usepackage{float}
 \usepackage{seqsplit}
 \newcolumntype{Y}{>{\centering\arraybackslash}X}
 \newcolumntype{Z}{>{\raggedleft\arraybackslash}X}
+\usepackage{ts-callouts}
 \usepackage{ts-code}
 
 \usepackage{lastpage}
 \usepackage{refcount}
 \makeatletter
 \def\ps@plain{
-  \let\@oddhead\@empty
-  \let\@evenhead\@empty
-  \def\@oddfoot{
-    \hfil
-    \ifnum\getpagerefnumber{LastPage}>1\relax
-      \thepage
-    \fi
-    \hfil}
-  \let\@evenfoot\@oddfoot
+\let\@oddhead\@empty
+\let\@evenhead\@empty
+\def\@oddfoot{
+\hfil
+\ifnum\getpagerefnumber{LastPage}>1\relax
+\thepage
+\fi
+\hfil}
+\let\@evenfoot\@oddfoot
 }
 \makeatother
 
-\title{TeXSmith Extensions}
+\title{Extending TeXSmith}
 \author{}\date{}
-
 \begin{document}
-
 \maketitle
+TeXSmith's dialect is TMark, and TMark is a \textbf{closed}
+language: the four syntactic families, the role registry and the container
+registry do not grow per project. That is the point --- a construct you have never
+seen is still readable, and a document still renders somewhere else.
 
-\thispagestyle{plain}
-TeXSmith ships its Markdown extensions directly inside the \texttt{texsmith}
-distribution. Once \texttt{pip install texsmith} is done, you can use them via the
-extension modules (\texttt{texsmith.extensions.smallcaps}, \texttt{texsmith.extensions.index},
-...) or the entry-point aliases registered in \texttt{pyproject.toml}. The exact set
-enabled by the conversion pipeline is \texttt{texsmith.adapters.markdown.DEFAULT\_MARKDOWN\_EXTENSIONS}.
-
-Every extension follows the same structure:
-
-\begin{itemize}
-\item{} A Python-Markdown class or \texttt{makeExtension()} factory available as
-  \texttt{texsmith.extensions.<name>}.
-\item{} Optional reader lowerings (\texttt{@reads}) and writer emitters (\texttt{@writes}) that
-  teach the IR pipeline how to deal with the extra HTML nodes created by the
-  Markdown layer (see \hyperref[snippet:<HASH>]{Readers \& Writers}).
-\item{} Optional MkDocs plugins that keep search indexes in sync.
-
-\end{itemize}
-\section{Built-in extensions}\label{built-in-extensions}
-
-In order to align Markdown with \LaTeX{} capabilities, TeXSmith provides the
-following extensions under the \texttt{texsmith} namespace:
-
+So \enquote{writing an extension} is not \enquote{adding syntax}. It is one of four things:
 \begin{center}
 \begin{tabularx}{\linewidth}{>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X}
 \toprule
-\textbf{Module} & \textbf{Purpose} \\
-
+\textbf{You want to...} & \textbf{Do this} \\
 \midrule
-\texttt{texsmith.extensions.smallcaps} & \texttt{\_\_text\_\_} syntax mapped to \texttt{<span class="texsmith-\allowbreak{}smallcaps">}. \\
-\texttt{texsmith.extensions.latex\_raw} & \texttt{/// latex} fences and \texttt{\{latex\}[x]} inline snippets injected as hidden HTML. \\
-\texttt{texsmith.extensions.latex\_text} & Styles the literal \texttt{LaTeX} token in running text. \\
-\texttt{texsmith.extensions.missing\_footnotes} & Warns about references to undefined footnotes. \\
-\texttt{texsmith.extensions.multi\_citations} & Normalises \texttt{[\^{}foo,bar]} blocks to footnotes. \\
-\texttt{texsmith.extensions.mermaid} & Inlines Mermaid diagrams pointed to by Markdown images. \\
-\texttt{texsmith.extensions.texlogos} & Replaces TeX logo keywords with accessible HTML spans. \\
-\texttt{texsmith.extensions.index} & Adds the \texttt{\#[tag]} syntax, LaTeX index entries and an MkDocs plugin. \\
-\texttt{texsmith.extensions.counters} & Adds the \texttt{\#\{prefix:key\}} custom-counter syntax and an MkDocs plugin. \\
-
+add a new \emph{kind} of callout (Solution, Exercise, Risk) & declare it under \tscodeinline{press.declare.admonitions} \\
+add a new numbered series (findings, requirements) & declare it under \tscodeinline{press.declare.counters} \\
+wrap content in something the template styles & use \tscodeinline{::: div \{.class\}} and style the class \\
+compute something at build time (fetch, convert, execute) & write an \textbf{IR pass} \\
+change how a construct \emph{looks} & redefine its \textbf{contract macro}, or replace the fragment \\
 \bottomrule
 \end{tabularx}
 \end{center}
+The first two are pure front matter and need no code:
+\href{../syntax/admonitions.md\#custom-types}{Admonitions} and
+Custom counters.
+\section{Containers}
+A container is the escape hatch for structure. The container names TMark knows
+are a \textbf{closed} registry --- the callout types (built-in and declared), \tscodeinline{aside},
+\tscodeinline{figure}, \tscodeinline{tabs}, \tscodeinline{tab}, \tscodeinline{multicolumn} and \tscodeinline{div} --- and there is deliberately no
+mechanism to add a name: a template that renders a name the registry does not
+know has extended the language.
 
-Inspect the pipeline's default extension list programmatically:
-
-\begin{code}{python}{}{}
+\tscodeinline{::: div} is the container that means nothing: a hook for classes and an id.
+\begin{tscode}[lang=md, engine=pygments]
 \begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
-\PY{o}{\PYZgt{}\PYZgt{}}\PY{o}{\PYZgt{}} \PY{k+kn}{from}\PY{+w}{ }\PY{n+nn}{texsmith}\PY{n+nn}{.}\PY{n+nn}{adapters}\PY{n+nn}{.}\PY{n+nn}{markdown}\PY{+w}{ }\PY{k+kn}{import} \PY{n}{DEFAULT\PYZus{}MARKDOWN\PYZus{}EXTENSIONS}
-\PY{o}{\PYZgt{}\PYZgt{}}\PY{o}{\PYZgt{}} \PY{p}{[}\PY{n}{e} \PY{k}{for} \PY{n}{e} \PY{o+ow}{in} \PY{n}{DEFAULT\PYZus{}MARKDOWN\PYZus{}EXTENSIONS} \PY{k}{if} \PY{n}{e}\PY{o}{.}\PY{n}{startswith}\PY{p}{(}\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{texsmith.}\PY{l+s+s2}{\PYZdq{}}\PY{p}{)}\PY{p}{]}\PY{p}{[}\PY{p}{:}\PY{l+m+mi}{2}\PY{p}{]}
-\PY{p}{[}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{texsmith.extensions.index:TexsmithIndexExtension}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,} \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{texsmith.extensions.multi\PYZus{}citations:MultiCitationExtension}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]}
+::: div \PYZob{}\PYZsh{}s1 .sidebar\PYZcb{}
+Content the template lays out.
+:::
 \end{Verbatim}
-\end{code}
-\section{Using the extensions with Python Markdown}\label{using-the-extensions-with-python-markdown}
-
-Pass the \texttt{module:attribute} strings (the same form used in
-\texttt{DEFAULT\_MARKDOWN\_EXTENSIONS}) straight to Python Markdown:
-
-\begin{code}{python}{}{}
+\end{tscode}
+Every layout container lowers to one contract on the paged backends ---
+\tscodeinline{\textbackslash{}begin\{tsdiv\}\{name\}[attrs]}, \tscodeinline{\#ts-\allowbreak{}div("name", ..)} --- dispatched on the name,
+with \tscodeinline{\#id} forwarded as \tscodeinline{id}, classes as \tscodeinline{class=\{a,b\}} and \tscodeinline{key=val} as is
+(\tscodeinline{lang} and \tscodeinline{media} never). Style the class:
+\begin{tscode}[lang=latex, engine=pygments]
 \begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
-\PY{k+kn}{from}\PY{+w}{ }\PY{n+nn}{markdown}\PY{+w}{ }\PY{k+kn}{import} \PY{n}{Markdown}
-
-\PY{n}{md} \PY{o}{=} \PY{n}{Markdown}\PY{p}{(}
-    \PY{n}{extensions}\PY{o}{=}\PY{p}{[}
-        \PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{texsmith.extensions.smallcaps:SmallCapsExtension}\PY{l+s+s2}{\PYZdq{}}\PY{p}{,}
-        \PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{texsmith.extensions.texlogos:TexLogosExtension}\PY{l+s+s2}{\PYZdq{}}\PY{p}{,}
-        \PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{texsmith.extensions.index:TexsmithIndexExtension}\PY{l+s+s2}{\PYZdq{}}\PY{p}{,}
-    \PY{p}{]}
-\PY{p}{)}
-\PY{n}{html} \PY{o}{=} \PY{n}{md}\PY{o}{.}\PY{n}{convert}\PY{p}{(}\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{`\PYZsh{}[LaTeX]` renders a TeX logo and an index entry.}\PY{l+s+s2}{\PYZdq{}}\PY{p}{)}
+\PY{k}{\PYZbs{}tcbset}\PY{n+nb}{\PYZob{}}/ts/div/class/sidebar/.style=\PY{n+nb}{\PYZob{}}grow to left by=2cm\PY{n+nb}{\PYZcb{}}\PY{n+nb}{\PYZcb{}}
 \end{Verbatim}
-\end{code}
-If you prefer the explicit class names the following also works:
-
-\begin{code}{python}{}{}
+\end{tscode}
+On the web the same container is \tscodeinline{<div class="sidebar">}, which is exactly what
+a site stylesheet needs. A name the registry does not know raises
+\tscodeinline{container-\allowbreak{}unknown} and renders its content transparently, rather than silently
+becoming an unstyled \tscodeinline{<div>}.
+\section{IR passes}
+Anything that has to \emph{compute} --- read a file, convert a diagram, call a
+network service, execute a fence --- is a pass: a pure function
+\tscodeinline{(Document, PassContext) -\allowbreak{}> Document} over the IR, running either before
+\tscodeinline{tmark.resolve} (\tscodeinline{pre}) or after it (\tscodeinline{post}).
+\begin{tscode}[lang=python, engine=pygments]
 \begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
-\PY{k+kn}{from}\PY{+w}{ }\PY{n+nn}{texsmith}\PY{n+nn}{.}\PY{n+nn}{extensions}\PY{n+nn}{.}\PY{n+nn}{index}\PY{+w}{ }\PY{k+kn}{import} \PY{n}{TexsmithIndexExtension}
+\PY{k+kn}{from}\PY{+w}{ }\PY{n+nn}{texsmith}\PY{n+nn}{.}\PY{n+nn}{core}\PY{n+nn}{.}\PY{n+nn}{documents}\PY{+w}{ }\PY{k+kn}{import} \PY{n}{Document}
+\PY{k+kn}{from}\PY{+w}{ }\PY{n+nn}{texsmith}\PY{n+nn}{.}\PY{n+nn}{passes}\PY{+w}{ }\PY{k+kn}{import} \PY{n}{PassContext}\PY{p}{,} \PY{n}{spec}
 
-\PY{n}{md} \PY{o}{=} \PY{n}{Markdown}\PY{p}{(}\PY{n}{extensions}\PY{o}{=}\PY{p}{[}\PY{n}{TexsmithIndexExtension}\PY{p}{(}\PY{p}{)}\PY{p}{]}\PY{p}{)}
+\PY{n+nd}{@spec}\PY{p}{(}\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{exam\PYZhy{}questions}\PY{l+s+s2}{\PYZdq{}}\PY{p}{,} \PY{n}{stage}\PY{o}{=}\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{pre}\PY{l+s+s2}{\PYZdq{}}\PY{p}{,} \PY{n}{after}\PY{o}{=}\PY{p}{(}\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{include}\PY{l+s+s2}{\PYZdq{}}\PY{p}{,}\PY{p}{)}\PY{p}{)}
+\PY{k}{def}\PY{+w}{ }\PY{n+nf}{run}\PY{p}{(}\PY{n}{document}\PY{p}{:} \PY{n}{Document}\PY{p}{,} \PY{n}{ctx}\PY{p}{:} \PY{n}{PassContext}\PY{p}{)} \PY{o}{\PYZhy{}}\PY{o}{\PYZgt{}} \PY{n}{Document}\PY{p}{:}
+    \PY{o}{.}\PY{o}{.}\PY{o}{.}
 \end{Verbatim}
-\end{code}
-\section{Register extensions in MkDocs}\label{register-extensions-in-mkdocs}
-
-Once TeXSmith is installed you can reference the modules directly from
-\texttt{mkdocs.yml}:
-
-\begin{code}{yaml}{}{}
+\end{tscode}
+Declare a template's passes in its manifest so they apply only while that
+template renders:
+\begin{tscode}[lang=toml, engine=pygments]
 \begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
-\PY{n+nt}{markdown\PYZus{}extensions}\PY{p}{:}
-\PY{+w}{  }\PY{p+pIndicator}{\PYZhy{}}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{texsmith.index}
-\PY{+w}{  }\PY{p+pIndicator}{\PYZhy{}}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{texsmith.texlogos}
-\PY{+w}{  }\PY{p+pIndicator}{\PYZhy{}}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{texsmith.extensions.smallcaps}
+\PY{k}{[}\PY{k}{latex}\PY{k}{.}\PY{k}{template}\PY{k}{]}
+\PY{n}{passes}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{p}{[}\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{my\PYZus{}exam\PYZus{}pkg.questions:run}\PY{l+s+s2}{\PYZdq{}}\PY{p}{]}
 \end{Verbatim}
-\end{code}
-(\texttt{texsmith.index} and \texttt{texsmith.texlogos} are registered entry-point aliases for
-\texttt{texsmith.extensions.index} / \texttt{texsmith.extensions.texlogos}.)
-
-The index extension also publishes an MkDocs plugin that injects collected tags
-into the \texttt{search\_index.json}. Enable it next to the Markdown extension:
-
-\begin{code}{yaml}{}{}
+\end{tscode}
+The full contract --- ordering, diagnostics, the rules a pass must not break --- is
+in IR passes and fragment contracts.
+\section{Fragments and contract macros}
+The writers emit a fixed macro or environment per construct (\tscodeinline{\textbackslash{}tslead},
+\tscodeinline{\textbackslash{}tsaside}, \tscodeinline{\textbackslash{}tskeys}, \tscodeinline{tscallout}, \tscodeinline{tscode}, ...), and a fragment must define
+every macro the writer can name. Restyle through the \tscodeinline{pgfkeys} family, redefine
+the macro with the same signature, or replace the fragment outright:
+\begin{tscode}[lang=yaml, engine=pygments]
 \begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
-\PY{n+nt}{plugins}\PY{p}{:}
-\PY{+w}{  }\PY{p+pIndicator}{\PYZhy{}}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{texsmith.index}
+\PY{n+nt}{press}\PY{p}{:}
+\PY{+w}{  }\PY{n+nt}{fragments}\PY{p}{:}
+\PY{+w}{    }\PY{n+nt}{disable}\PY{p}{:}\PY{+w}{ }\PY{p+pIndicator}{[}\PY{n+nv}{ts\PYZhy{}code}\PY{p+pIndicator}{]}
+\PY{+w}{    }\PY{n+nt}{append}\PY{p}{:}\PY{+w}{ }\PY{p+pIndicator}{[}\PY{n+nv}{./my\PYZhy{}code.sty}\PY{p+pIndicator}{]}
 \end{Verbatim}
-\end{code}
-When you use \texttt{mkdocs-\allowbreak{}texsmith} the plugin automatically appends both the
-Markdown extension and the MkDocs plugin unless you disable it with the
-\texttt{inject\_markdown\_extension} option.
+\end{tscode}
+See Contract macros for the construct-to-macro table
+and Fragments for how a fragment is built.
 
-\section{Integrating with the LaTeX renderer}\label{integrating-with-the-latex-renderer}
-
-TeXSmith renders through a typed IR: \texttt{read(HTML) \(\rightarrow\) IR \(\rightarrow\) write(IR) \(\rightarrow\) LaTeX}.
-Extensions that need \LaTeX{} output add a reader lowering (\texttt{@reads}, HTML \(\rightarrow\) IR)
-and a writer emitter (\texttt{@writes}, IR \(\rightarrow\) \LaTeX{}) instead of mutating HTML. See
-\hyperref[snippet:<HASH>]{Readers \& Writers} for the decorators and a complete,
-runnable example (\texttt{examples/custom-\allowbreak{}render/counter.py}).
-
-\section{Write your own extensions}\label{write-your-own-extensions}
-
-You can create custom Markdown extensions that plug into TeXSmith's conversion
-pipeline. Refer to the API documentation for details on
-the extension points and how to register your extension with TeXSmith.
-
-\subsection{Pipeline placement \& precedence}\label{pipeline-placement-precedence}
-
-\begin{itemize}
-\item{} Markdown extensions run before slot extraction and fragment rendering; any HTML they emit flows through the same pipeline.
-\item{} Reader lowerings (\texttt{@reads}) are selected by \texttt{(level, tag)} and priority; the resulting IR is then emitted by writer emitters (\texttt{@writes}) dispatched on node type.
-\item{} Extensions should not override template partials directly---expose fragment partials or attributes instead so precedence stays transparent.
-
-\end{itemize}
-
+On a MkDocs site the index entries reach \tscodeinline{search\_index.json} through the
+\tscodeinline{texsmith} plugin, which collects them from the rendered pages
+and injects them after the \tscodeinline{search} plugin wrote its index. The separate
+\tscodeinline{texsmith.index} MkDocs \emph{plugin} is deprecated --- it warns and does nothing, and
+disappears in 0.8; the \tscodeinline{texsmith.index} \emph{Markdown extension} above is
+unaffected.
+\begin{tscallout}[kind=note, title={The Python-Markdown extensions are transitional}]
+\tscodeinline{texsmith.extensions.*} still ships the Python-Markdown implementations of
+the 0.6 syntax (\tscodeinline{smallcaps}, \tscodeinline{latex\_raw}, \tscodeinline{multi\_citations}, \tscodeinline{mermaid},
+\tscodeinline{index}, \tscodeinline{counters}, ...) so that an existing MkDocs site keeps building
+during the migration. They are not the conversion path any more --- TeXSmith
+parses with tmark --- and they are removed in 0.8.0 together with the
+spellings they implement. See Migrating to TMark.
+\end{tscallout}
+\section{Inspecting what the parser read}
+\begin{tscode}[lang=bash, engine=pygments]
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+tmark\PY{+w}{ }parse\PY{+w}{ }report.md\PY{+w}{      }\PY{c+c1}{\PYZsh{} the IR as JSON}
+tmark\PY{+w}{ }check\PY{+w}{ }\PYZhy{}\PYZhy{}strict\PY{+w}{ }FILE\PY{+w}{  }\PY{c+c1}{\PYZsh{} parse, resolve and lint}
+tmark\PY{+w}{ }write\PY{+w}{ }\PYZhy{}\PYZhy{}to\PY{+w}{ }latex\PY{+w}{ }\PYZhy{}\PYZhy{}map\PY{+w}{ }FILE\PY{+w}{  }\PY{c+c1}{\PYZsh{} the body, its source map and its Requires}
+\end{Verbatim}
+\end{tscode}
+\tscodeinline{Requires} is what a construct demands of the template: packages, fragments,
+shell escape, assets, citations, index registries, counter series. If your
+extension needs the template to do something, that is where it says so.
 \end{document}

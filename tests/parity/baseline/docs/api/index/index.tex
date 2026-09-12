@@ -7,53 +7,82 @@
 \usepackage[english]{babel}
 \usepackage[colorlinks=true, linkcolor=NavyBlue, urlcolor=NavyBlue, citecolor=NavyBlue]{hyperref}
 \usepackage[a4paper]{geometry}
+\usepackage{ts-typesetting}
 \usepackage{ts-fonts}
+\usepackage{xcolor}
+\usepackage{epigraph}
+\usepackage{marginnote}
+\usepackage{multicol}
+\usepackage{progressbar}
+\usepackage{graphicx}
+\usepackage{tcolorbox}
+\usepackage{fvextra}
 \usepackage{amsmath}
 \usepackage{float}
 \usepackage{seqsplit}
+\renewcommand*{\marginfont}{
+\footnotesize
+\sloppy
+\emergencystretch=1em
+\hyphenpenalty=50
+\exhyphenpenalty=50
+}
+\newlength{\tsmarginparavail}
+\newlength{\tsmarginparalt}
+\newlength{\tsmarginparbuf}
+\setlength{\tsmarginparbuf}{6mm}
+\makeatletter
+\AtBeginDocument{
+\setlength{\tsmarginparavail}{\dimexpr\paperwidth-\textwidth-1in-\oddsidemargin-\marginparsep-\tsmarginparbuf\relax}
+\ifdim\tsmarginparavail<\z@\setlength{\tsmarginparavail}{\z@}\fi
+\if@twoside
+\setlength{\tsmarginparalt}{\dimexpr1in+\evensidemargin-\marginparsep-\tsmarginparbuf\relax}
+\ifdim\tsmarginparalt<\z@\setlength{\tsmarginparalt}{\z@}\fi
+\ifdim\tsmarginparalt<\tsmarginparavail
+\setlength{\tsmarginparavail}{\tsmarginparalt}
+\fi
+\fi
+\ifdim\tsmarginparavail<\marginparwidth
+\setlength{\marginparwidth}{\tsmarginparavail}
+\fi
+}
+\makeatother
+\usepackage{ts-code}
 
 \usepackage{lastpage}
 \usepackage{refcount}
 \makeatletter
 \def\ps@plain{
-  \let\@oddhead\@empty
-  \let\@evenhead\@empty
-  \def\@oddfoot{
-    \hfil
-    \ifnum\getpagerefnumber{LastPage}>1\relax
-      \thepage
-    \fi
-    \hfil}
-  \let\@evenfoot\@oddfoot
+\let\@oddhead\@empty
+\let\@evenhead\@empty
+\def\@oddfoot{
+\hfil
+\ifnum\getpagerefnumber{LastPage}>1\relax
+\thepage
+\fi
+\hfil}
+\let\@evenfoot\@oddfoot
 }
 \makeatother
 
 \title{TeXSmith API Overview}
 \author{}\date{}
-
 \begin{document}
-
 \maketitle
-
-\thispagestyle{plain}
 The API reference is generated with \textbf{mkdocstrings} to stay in sync with the codebase. This section is organized into themed pages so you can quickly locate the module you need.
 
-Each page uses \texttt{module.path} directives; mkdocstrings resolves them at build time and renders docstrings, signatures, and cross-references.
-
-\section{API Sections}\label{api-sections}
-
+Each page uses \tscodeinline{::: module.path} directives; mkdocstrings resolves them at build time and renders docstrings, signatures, and cross-references.
+\section{API Sections}
 \begin{description}
-\item[{ \hyperref[snippet:<HASH>]{\texttt{high-\allowbreak{}level}} }] High-level orchestration helpers (\texttt{ConversionService}, \texttt{TemplateSession}) for programmatic conversions and template sessions.
-\item[{ \hyperref[snippet:<HASH>]{\texttt{core}} }] Core package modules (\texttt{texsmith}, configuration, contexts, conversion helpers, etc.).
-\item[{ \hyperref[snippet:<HASH>]{\texttt{bibliography}} }] Bibliography tooling (BibTeX parsing, DOI resolution, issue reporting).
-\item[{ \hyperref[snippet:<HASH>]{\texttt{cli}} }] Command-line entry points and utilities.
-\item[{ \hyperref[snippet:<HASH>]{\texttt{handlers}} }] Readers and writers of the typed IR pipeline (\texttt{read(HTML) \(\rightarrow\) IR \(\rightarrow\) write(IR) \(\rightarrow\) LaTeX}), with the \texttt{@reads} / \texttt{@writes} decorators.
-\item[{ \hyperref[snippet:<HASH>]{\texttt{latex}} }] LaTeX infrastructure (formatter, renderer, templates).
-\item[{ \hyperref[snippet:<HASH>]{\texttt{markdown}} }] Markdown conversion helpers and custom extensions.
-\item[{ \hyperref[snippet:<HASH>]{\texttt{plugins}} }] Optional integrations (MkDocs Material-specific handlers).
-\item[{ \hyperref[snippet:<HASH>]{\texttt{transformers}} }] Asset conversion strategies (SVG, Draw.io, Mermaid, remote images).
-
+\item[{\tscodeinline{high-\allowbreak{}level}}] High-level orchestration helpers (\tscodeinline{ConversionService}, \tscodeinline{TemplateSession}) for programmatic conversions and template sessions.
+\item[{\tscodeinline{core}}] Core package modules (\tscodeinline{texsmith}, configuration, contexts, conversion helpers, etc.).
+\item[{\tscodeinline{bibliography}}] Bibliography tooling (\tslogo{BibTeX} parsing, DOI resolution, issue reporting).
+\item[{\tscodeinline{cli}}] Command-line entry points and utilities.
+\item[{\tscodeinline{handlers}}] IR passes and fragment contracts --- the two extension points of the \tscodeinline{parse \(\rightarrow\) IR \(\rightarrow\) passes \(\rightarrow\) resolve \(\rightarrow\) write} pipeline.
+\item[{\tscodeinline{latex}}] \LaTeX{} infrastructure (formatter, renderer, templates).
+\item[{\tscodeinline{markdown}}] Markdown conversion helpers and custom extensions.
+\item[{\tscodeinline{plugins}}] Optional integrations (MkDocs Material-specific handlers).
+\item[{\tscodeinline{transformers}}] Asset conversion strategies (SVG, Draw.io, Mermaid, remote images).
 \end{description}
 Use the navigation sidebar to jump to any section or follow the links above for more detail.
-
 \end{document}

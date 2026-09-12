@@ -8,6 +8,8 @@
 \usepackage[colorlinks=true, linkcolor=NavyBlue, urlcolor=NavyBlue, citecolor=NavyBlue]{hyperref}
 \usepackage[a4paper]{geometry}
 \usepackage{ts-fonts}
+\usepackage{tcolorbox}
+\usepackage{fvextra}
 \usepackage{tabularx}
 \usepackage{amsmath}
 \usepackage{float}
@@ -20,47 +22,38 @@
 \usepackage{refcount}
 \makeatletter
 \def\ps@plain{
-  \let\@oddhead\@empty
-  \let\@evenhead\@empty
-  \def\@oddfoot{
-    \hfil
-    \ifnum\getpagerefnumber{LastPage}>1\relax
-      \thepage
-    \fi
-    \hfil}
-  \let\@evenfoot\@oddfoot
+\let\@oddhead\@empty
+\let\@evenhead\@empty
+\def\@oddfoot{
+\hfil
+\ifnum\getpagerefnumber{LastPage}>1\relax
+\thepage
+\fi
+\hfil}
+\let\@evenfoot\@oddfoot
 }
 \makeatother
 
 \title{Tables}
 \author{}\date{}
-
 \begin{document}
-
 \maketitle
-
-\thispagestyle{plain}
-\section{Complex Tables}\label{complex-tables}
-
+\section{Complex Tables}
 Markdown offers limited table configuration---only column alignment by default. PyMdown provides captions, and superfences can inject more metadata, but we still miss:
-
 \begin{itemize}
-\item{} Table width (auto vs. full width)
-\item{} Resizing oversized tables
-\item{} Orientation (portrait vs. landscape)
-\item{} Column and row spanning
-\item{} Horizontal and vertical separator lines
-\item{} Column widths (fixed, auto, relative)
-
+\item Table width (auto vs. full width)
+\item Resizing oversized tables
+\item Orientation (portrait vs. landscape)
+\item Column and row spanning
+\item Horizontal and vertical separator lines
+\item Column widths (fixed, auto, relative)
 \end{itemize}
-\subsection{Extended Markdown Table Syntax}\label{extended-markdown-table-syntax}
-
+\subsection{Extended Markdown Table Syntax}
 Leverage Pymdown's table extension to add more metadata directly in Markdown. For example:
-The \texttt{texsmith.spantable} extension lets us span cells in standard Markdown tables.
+The \tscodeinline{texsmith.spantable} extension lets us span cells in standard Markdown tables.
 
-The \texttt{>>>} syntax will span cells horizontally, the \texttt{vvv} syntax will span cells vertically.
-
-\begin{code}{markdown}{}{}
+The \tscodeinline{>>>} syntax will span cells horizontally, the \tscodeinline{vvv} syntax will span cells vertically.
+\begin{tscode}[lang=markdown, engine=pygments]
 \begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
 | Header 1 | Header 2 | Header 3 |
 |:\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}|:\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}:|\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}:|
@@ -69,10 +62,9 @@ The \texttt{>>>} syntax will span cells horizontally, the \texttt{vvv} syntax wi
 | Cell 7   | Cell 8   | Cell 11  |
 | Cell 9   |          | vvv      |
 \end{Verbatim}
-\end{code}
-\subsection{Cmidrule example}\label{cmidrule-example}
-
-\begin{code}{latex}{}{}
+\end{tscode}
+\subsection{Cmidrule example}
+\begin{tscode}[lang=latex, engine=pygments]
 \begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
 \PY{k}{\PYZbs{}begin}\PY{n+nb}{\PYZob{}}tabular\PY{n+nb}{\PYZcb{}}\PY{n+nb}{\PYZob{}}@\PY{n+nb}{\PYZob{}}\PY{n+nb}{\PYZcb{}}lll@\PY{n+nb}{\PYZob{}}\PY{n+nb}{\PYZcb{}}\PY{n+nb}{\PYZcb{}}
 \PY{k}{\PYZbs{}toprule}
@@ -86,16 +78,12 @@ Others \PY{n+nb}{\PYZam{}} \PY{k}{\PYZbs{}multicolumn}\PY{n+nb}{\PYZob{}}2\PY{n+
 \PY{k}{\PYZbs{}bottomrule}
 \PY{k}{\PYZbs{}end}\PY{n+nb}{\PYZob{}}tabular\PY{n+nb}{\PYZcb{}}
 \end{Verbatim}
-\end{code}
-\subsection{Align to decimal points}\label{align-to-decimal-points}
-
-Find a syntax to align numbers to dot. \texttt{lS@\{\}}
-
-\subsection{Raw table syntax}\label{raw-table-syntax}
-
-Superfences do not work directly with tables, so define a \texttt{table} fence that accepts YAML options:
-
-\begin{code}{markdown}{}{}
+\end{tscode}
+\subsection{Align to decimal points}
+Find a syntax to align numbers to dot. \tscodeinline{lS@\{\}}
+\subsection{Raw table syntax}
+Superfences do not work directly with tables, so define a \tscodeinline{table} fence that accepts YAML options:
+\begin{tscode}[lang=markdown, engine=pygments]
 \begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
 \PY{l+s+sb}{```}\PY{l+s+sb}{table}
 \PY{l+s}{width: full}
@@ -122,14 +110,11 @@ Superfences do not work directly with tables, so define a \texttt{table} fence t
 \PY{l+s}{  \PYZhy{} [Cell 7, Cell 8, null]}
 \PY{l+s+sb}{```}
 \end{Verbatim}
-\end{code}
+\end{tscode}
 The goal is to convert Markdown tables into \LaTeX{} tables with automatic line breaks so that columns wrap gracefully when a table is too wide.
-
-\section{Shrink-to-fit vs Auto-expand}\label{shrink-to-fit-vs-auto-expand}
-
+\section{Shrink-to-fit vs Auto-expand}
 Long tables et auto-ajustement.
-
-\begin{code}{latex}{}{}
+\begin{tscode}[lang=latex, engine=pygments]
 \begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
 \PY{k}{\PYZbs{}documentclass}\PY{n+nb}{\PYZob{}}article\PY{n+nb}{\PYZcb{}}
 \PY{k}{\PYZbs{}usepackage}\PY{n+na}{[margin=2cm]}\PY{n+nb}{\PYZob{}}geometry\PY{n+nb}{\PYZcb{}}
@@ -182,10 +167,9 @@ Long tables et auto-ajustement.
 \PY{k}{\PYZbs{}end}\PY{n+nb}{\PYZob{}}tabularx\PY{n+nb}{\PYZcb{}}
 \PY{k}{\PYZbs{}end}\PY{n+nb}{\PYZob{}}document\PY{n+nb}{\PYZcb{}}
 \end{Verbatim}
-\end{code}
-We could use a tester to have a rough idea if the table will fit or not, and decide to use \texttt{tabularx} or \texttt{ltablex} accordingly.
-
-\begin{code}{tex}{}{}
+\end{tscode}
+We could use a tester to have a rough idea if the table will fit or not, and decide to use \tscodeinline{tabularx} or \tscodeinline{ltablex} accordingly.
+\begin{tscode}[lang=tex, engine=pygments]
 \begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
 \PY{k}{\PYZbs{}documentclass}\PY{n+nb}{\PYZob{}}article\PY{n+nb}{\PYZcb{}}
 \PY{k}{\PYZbs{}usepackage}\PY{n+nb}{\PYZob{}}booktabs\PY{n+nb}{\PYZcb{}}
@@ -216,6 +200,5 @@ We could use a tester to have a rough idea if the table will fit or not, and dec
 
 \PY{k}{\PYZbs{}end}\PY{n+nb}{\PYZob{}}document\PY{n+nb}{\PYZcb{}}
 \end{Verbatim}
-\end{code}
-
+\end{tscode}
 \end{document}

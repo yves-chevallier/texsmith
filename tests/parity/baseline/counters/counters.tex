@@ -10,150 +10,123 @@
 \usepackage{ts-fonts}
 \usepackage{booktabs}
 \usepackage{tabularx}
+\usepackage{tcolorbox}
+\usepackage{fvextra}
 \usepackage{float}
 \usepackage{seqsplit}
 \newcolumntype{Y}{>{\centering\arraybackslash}X}
 \newcolumntype{Z}{>{\raggedleft\arraybackslash}X}
+\usepackage{ts-code}
 
 \usepackage{lastpage}
 \usepackage{refcount}
 \makeatletter
 \def\ps@plain{
-  \let\@oddhead\@empty
-  \let\@evenhead\@empty
-  \def\@oddfoot{
-    \hfil
-    \ifnum\getpagerefnumber{LastPage}>1\relax
-      \thepage
-    \fi
-    \hfil}
-  \let\@evenfoot\@oddfoot
+\let\@oddhead\@empty
+\let\@evenhead\@empty
+\def\@oddfoot{
+\hfil
+\ifnum\getpagerefnumber{LastPage}>1\relax
+\thepage
+\fi
+\hfil}
+\let\@evenfoot\@oddfoot
 }
 \makeatother
 
 \title{Firmware Review Report\\[0.5em]\large Sensor node, release candidate 1.4.2-rc1}
 \author{Firmware Quality Board}\date{March 12, 2026}
-
 \begin{document}
-
 \maketitle
 \tableofcontents
-
-\section{Scope}\label{scope}
-
+\section{Scope}
 This report reviews release candidate 1.4.2-rc1 of the sensor node firmware.
 Two numbered series run through it: findings raised by the review board, and
 the requirements they are checked against. Both are declared in the YAML front
-matter under \texttt{counters:}, so TeXSmith allocates the numbers and both backends ---
+matter under \tscodeinline{press.declare.counters}, so TeXSmith allocates the numbers and both backends ---
 \LaTeX{} and Typst --- print the same ones.
 
-The requirement series starts at \texttt{100} because it continues the numbering of
-the system specification; the finding series starts at \texttt{1}, the default. The
+The requirement series starts at \tscodeinline{100} because it continues the numbering of
+the system specification; the finding series starts at \tscodeinline{1}, the default. The
 board considers one issue blocking, finding \hyperref[fw:watchdog]{FW-01}, which is described
 further down --- a reference may point forward as well as backward.
-
-\section{Requirements under review}\label{requirements-under-review}
-
+\section{Requirements under review}
 The four requirements below were selected for this review. The identifier in
-the first column is a definition marker, \texttt{\#\{prefix:key\}}: it prints the
+the first column is a definition marker, \tscodeinline{\#\{prefix:key\}}: it prints the
 formatted number and becomes the anchor every later reference links to.
-
 \begin{center}
 \begin{tabularx}{\linewidth}{>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X}
 \toprule
 \textbf{Id} & \textbf{Requirement} & \textbf{Verification} \\
-
 \midrule
 \leavevmode\phantomsection\label{req:watchdog-reset}REQ-100 & The watchdog shall reset the node within two seconds of a stalled main loop. & Fault injection \\
 \leavevmode\phantomsection\label{req:ota-rollback}REQ-101 & An interrupted over-the-air update shall leave the previous image bootable. & Power-cut campaign \\
 \leavevmode\phantomsection\label{req:key-entropy}REQ-102 & The session key shall be derived from at least 128 bits of hardware entropy. & Code review \\
 \leavevmode\phantomsection\label{req:log-retention}REQ-103 & The node shall retain the last 64 log records across a reset. & Manual inspection \\
-
 \bottomrule
 \end{tabularx}
 \end{center}
-
 Requirement \hyperref[req:key-entropy]{REQ-102} was added after last year's security audit and had
 never been verified before this review.
-
-\section{Findings}\label{findings}
-
-\subsection{Summary}\label{summary}
-
+\section{Findings}
+\subsection{Summary}
 The review raised five findings; the three severe ones are summarised below.
 As in the requirement table, the identifiers are defined right in the first
 column.
-
 \begin{center}
 \begin{tabularx}{\linewidth}{>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X}
 \toprule
 \textbf{Id} & \textbf{Severity} & \textbf{Component} & \textbf{Summary} \\
-
 \midrule
-\leavevmode\phantomsection\label{fw:watchdog}FW-01 & Blocking & \texttt{hal/watchdog.c} & The watchdog is fed from the I2C completion handler. \\
-\leavevmode\phantomsection\label{fw:ota-brick}FW-02 & Blocking & \texttt{ota/apply.c} & A power cut during the swap leaves no bootable image. \\
-\leavevmode\phantomsection\label{fw:key-entropy}FW-03 & Major & \texttt{crypto/session.c} & The session key is seeded from the boot counter. \\
-
+\leavevmode\phantomsection\label{fw:watchdog}FW-01 & Blocking & \tscodeinline{hal/watchdog.c} & The watchdog is fed from the I2C completion handler. \\
+\leavevmode\phantomsection\label{fw:ota-brick}FW-02 & Blocking & \tscodeinline{ota/apply.c} & A power cut during the swap leaves no bootable image. \\
+\leavevmode\phantomsection\label{fw:key-entropy}FW-03 & Major & \tscodeinline{crypto/session.c} & The session key is seeded from the boot counter. \\
 \bottomrule
 \end{tabularx}
 \end{center}
-
-\subsection{Watchdog fed from an interrupt handler}\label{watchdog-fed-from-an-interrupt-handler}
-
+\subsection{Watchdog fed from an interrupt handler}
 Feeding the watchdog from the I2C completion handler means the timer keeps
 being serviced while the main loop is stalled on a contended bus. Finding
 \hyperref[fw:watchdog]{FW-01} therefore violates \hyperref[req:watchdog-reset]{REQ-100} --- on a saturated bus the
 node stayed unresponsive for more than forty seconds without ever resetting.
-
-\subsection{Over-the-air update leaves no bootable image}\label{over-the-air-update-leaves-no-bootable-image}
-
+\subsection{Over-the-air update leaves no bootable image}
 The updater erases the active slot before validating the incoming image. A
 power cut in that window bricks the node, which is exactly what
 \hyperref[req:ota-rollback]{REQ-101} forbids; see \hyperref[fw:ota-brick]{FW-02}.
-
-\subsection{Session key seeded from the boot counter}\label{session-key-seeded-from-the-boot-counter}
-
+\subsection{Session key seeded from the boot counter}
 The seed passed to the key derivation function is the 32-bit boot counter, so a
 freshly provisioned node produces a predictable session key. Finding
 \hyperref[fw:key-entropy]{FW-03} is raised against \hyperref[req:key-entropy]{REQ-102}.
-
-\subsection{Log buffer wiped on reset}\label{fw:log-wrap}
-
-The heading above carries a \texttt{\{\#prefix:key\}} attribute, a \emph{silent} definition:
+\subsection{Log buffer wiped on reset}
+\label{fw:log-wrap}
+The heading above carries a \tscodeinline{\{\#prefix:key\}} attribute, a \emph{silent} definition:
 the number appears nowhere in the title, yet the finding is allocated one and
-can be referenced like any other. The log ring buffer lives in a \texttt{.bss}
+can be referenced like any other. The log ring buffer lives in a \tscodeinline{.bss}
 section that the startup code zeroes, so no record survives a reset and
 \hyperref[req:log-retention]{REQ-103} is not met. Finding \hyperref[fw:log-wrap]{FW-04} was reported by the field
 team before the review started.
-
-\subsection{Additional observation}\label{additional-observation}
-
+\subsection{Additional observation}
 Definition markers are ordinary inline constructs and work in running prose
 too. While reproducing the watchdog campaign we also noticed \leavevmode\phantomsection\label{fw:rtc-drift}FW-05,
 the real-time clock drifting by roughly four seconds a day at 60 °C. No
 requirement covers clock accuracy, so this finding is recorded for information
 only.
-
-\section{Follow-up}\label{follow-up}
-
+\section{Follow-up}
 Findings \hyperref[fw:watchdog]{FW-01} and \hyperref[fw:ota-brick]{FW-02} block the release and must be fixed in
 1.4.2-rc2. Finding \hyperref[fw:key-entropy]{FW-03} is scheduled for 1.5.0 together with the
 hardware entropy source. The remaining two, \hyperref[fw:log-wrap]{FW-04} and \hyperref[fw:rtc-drift]{FW-05}, are
 deferred to the maintenance backlog.
 
-A reference prints the number and nothing else --- \texttt{FW-\allowbreak{}01}, not \texttt{Finding FW-\allowbreak{}01}.
+A reference prints the number and nothing else --- \tscodeinline{FW-\allowbreak{}01}, not \tscodeinline{Finding FW-\allowbreak{}01}.
 The surrounding noun is written by the author, exactly as for a section
-cross-reference; the \texttt{name:} field of the counter is only used in TeXSmith's
+cross-reference; the \tscodeinline{name:} field of the counter is only used in TeXSmith's
 diagnostics.
-
-\section{A note on undeclared prefixes}\label{a-note-on-undeclared-prefixes}
-
+\section{A note on undeclared prefixes}
 A marker is substituted only when its prefix is declared in the front matter.
 The firmware's Ruby log formatter interpolates values into its message
 template: spelled out in prose, it uses \#\{node.id\} for the node identifier and
-\#\{sensor:temp\} for the reading. Neither \texttt{node} nor \texttt{sensor} is a declared
+\#\{sensor:temp\} for the reading. Neither \tscodeinline{node} nor \tscodeinline{sensor} is a declared
 counter, so both markers survive into the PDF unchanged --- Ruby and CoffeeScript
-interpolations are never mangled, and no warning is emitted. Only \texttt{fw} and
-\texttt{req} are declared here, and only those are substituted.
-
+interpolations are never mangled, and no warning is emitted. Only \tscodeinline{fw} and
+\tscodeinline{req} are declared here, and only those are substituted.
 \end{document}

@@ -1,15 +1,15 @@
 #set document(
-  title: "Code",
+title: "Code",
 )
 #set page(
-  paper: "a4",
-  margin: 2.5cm,
-  numbering: none,
-  footer: context {
-    if counter(page).final().first() > 1 {
-      align(center)[#counter(page).get().first()]
-    }
-  },
+paper: "a4",
+margin: 2.5cm,
+numbering: none,
+footer: context {
+if counter(page).final().first() > 1 {
+align(center)[#counter(page).get().first()]
+}
+},
 )
 #set text(font: "New Computer Modern", size: 11pt, lang: "en")
 #set par(justify: true)
@@ -17,32 +17,41 @@
 #set heading(numbering: "1.1")
 
 #align(center)[
-  #text(size: 1.8em, weight: "bold")[Code]
-]
+#text(size: 1.8em, weight: "bold")[Code]]
 #v(1.5em)
 
-Code fences are one of Markdown’s greatest hits: drop a triple backtick block, label it, and you get nicely formatted snippets. TeXSmith leans on the `minted` package for LaTeX output. It’s a bit slower than `listings`, but the highlighting is richer, it speaks more languages, and its Unicode support (especially under XeLaTeX/LuaLaTeX) is top-notch.
+Code fences are one of Markdown’s greatest hits: drop a triple backtick block,
+label it, and you get nicely formatted snippets. A fenced code block is the
+degenerate case of TMark's #link("index.md#four-syntactic-families")[data-directive family]:
+its info string is `<lang> <node>`, and the node word defaults to `code`.
 
 = Code Blocks
 
-You can insert code snippets and specify options for syntax highlighting.
+You can insert code snippets and specify options in the info string.
 
 - Line numbers with `linenums="1"`
 - Title with `title="filename.ext"`
 - Highlight specific lines with `hl_lines="2-3"`
+- An external source with `include="path/to/file"`
+
+The highlighting engine is global, set with `press.code.engine`: `pygments`
+(the default, Tectonic-safe), `listings`, `verbatim` or `minted` (which needs
+shell escape).
 
 == Name your code blocks
 
+#ts-code(title: [bubble\_sort.py])[
 ```py
 def bubble_sort(items):
     for i in range(len(items)):
         for j in range(len(items) - 1 - i):
             if items[j] > items[j + 1]:
                 items[j], items[j + 1] = items[j + 1], items[j]
-```
+```]
 
 == Add line numbers
 
+#ts-code(linenums: 1)[
 ```javascript
 function bubbleSort(items) {
     for (let i = 0; i < items.length; i++) {
@@ -53,46 +62,63 @@ function bubbleSort(items) {
         }
     }
 }
-```
+```]
 
 == Highlight specific lines
 
+#ts-code(hl-lines: ("2-3"))[
 ```lisp
 (defun bubble-sort (items)
   (dotimes (i (length items))
     (dotimes (j (- (length items) 1 i))
       (when (> (nth j items) (nth (+ j 1) items))
         (rotatef (nth j items) (nth (+ j 1) items))))))
-```
+```]
 
-== Snippets
+== External sources
 
-With `pymdownx.snippets` you can pull code from external files, keeping samples reusable across docs.
+Put `include=` on the info string to read the code from a file at render time,
+keeping samples reusable across docs. The file is never pasted into the source,
+so a fence inside it is just text.
 
-````markdown
-```python
---8<-- "examples/code/bubble_sort.py"
+````md
+```python include="examples/code/bubble_sort.py" title="bubble_sort.py"
 ```
 ````
 
-#block(width: 100%, radius: 2pt, stroke: (left: 1.5pt + rgb("#00BFA5"), rest: 0.4pt + rgb("#00BFA5")))[
-  #block(width: 100%, fill: rgb("#00BFA5").lighten(90%), inset: (x: 8pt, y: 4pt))[#text(weight: "bold", fill: rgb("#00BFA5"))[⭐#h(0.4em)Tip]]
-  #block(width: 100%, inset: (x: 8pt, y: 6pt))[
-    If you're using MkDocs, ensure that the `base_path` for snippets is correctly set in your configuration to point to the directory containing your code files.
+To splice a whole Markdown file into the document instead, use the `include`
+role on a line of its own:
 
-    A safe configuration would be:
+```md
+{include}(examples/code/bubble_sort.md)
+```
 
-    ```yaml
-    - pymdownx.snippets:
-        check_paths: true
-        base_path: !relative $config_dir
-    ```
-  ]
-]
+The PyMdownX snippet syntax `–8<– "file"` is accepted as deprecated sugar; it
+pastes text before parsing, which breaks on nested fences, and it never rebases
+relative paths. See Migrating to TMark.
 
-== With LaTeX output
+== With #ts-logo("LaTeX") output
 
 Here’s what the above examples look like when rendered with TeXSmith:
+
+#figure(
+image("snippet-<HASH>.png", width: 60%),
+)
+
+== Captioned listings
+
+A `Listing:` caption line promotes a code block to a numbered, referenceable
+listing — the same rule as every other float:
+
+````md
+```python title="bubble_sort.py"
+def bubble_sort(items): ...
+```
+
+Listing: Bubble sort, naive version. {#lst:bubble}
+
+@lst:bubble is quadratic in the worst case.
+````
 
 = Inline Code
 
@@ -104,7 +130,7 @@ You can also include inline code snippets using backticks `` ` `` like this:
 To sort a list in Python, you can use the `sorted()` function.
 ```
 
-It will simply be rendered as monospaced text in LaTeX:
+It will simply be rendered as monospaced text in #ts-logo("LaTeX"):
 
 ```
 To sort a list in Python, you can use the \texttt{sorted()} function.
@@ -112,16 +138,22 @@ To sort a list in Python, you can use the \texttt{sorted()} function.
 
 == Highlighted
 
-Inline code can also be highlighted thanks to the Pymdownx `inlinehilite` extension.
+Inline code can also be highlighted. The canonical spelling is the `code` role,
+whose positional argument is the language; the PyMdownX `#!lang` shebang is
+sugar for the same node.
 
-```markdown
-You can use `` `#!py print("Hello, World!")` `` to display a message in Python.
+```md
+You can use {code py}[print("Hello, World!")] to display a message in Python.
 
-> You can use `#!py print("Hello, World!")` to display a message in Python.
+You can use `#!py print("Hello, World!")` to display a message in Python.
 ```
 
 With TeXSmith this example renders as follows:
 
 ```markdown
-
+[include: examples/code/code-inline.md not found]
 ```
+
+#figure(
+image("snippet-<HASH>.png"),
+)

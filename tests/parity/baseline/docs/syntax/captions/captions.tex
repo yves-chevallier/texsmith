@@ -9,8 +9,12 @@
 \usepackage[a4paper]{geometry}
 \usepackage{ts-fonts}
 \usepackage{csquotes}
-\usepackage{amsmath}
 \usepackage{float}
+\usepackage{graphicx}
+\usepackage{tcolorbox}
+\usepackage{xcolor}
+\usepackage{fvextra}
+\usepackage{amsmath}
 \usepackage{seqsplit}
 \usepackage{ts-callouts}
 \usepackage{ts-code}
@@ -19,212 +23,158 @@
 \usepackage{refcount}
 \makeatletter
 \def\ps@plain{
-  \let\@oddhead\@empty
-  \let\@evenhead\@empty
-  \def\@oddfoot{
-    \hfil
-    \ifnum\getpagerefnumber{LastPage}>1\relax
-      \thepage
-    \fi
-    \hfil}
-  \let\@evenfoot\@oddfoot
+\let\@oddhead\@empty
+\let\@evenhead\@empty
+\def\@oddfoot{
+\hfil
+\ifnum\getpagerefnumber{LastPage}>1\relax
+\thepage
+\fi
+\hfil}
+\let\@evenfoot\@oddfoot
 }
 \makeatother
 
 \title{Captions}
 \author{}\date{}
-
 \begin{document}
-
 \maketitle
-
-\thispagestyle{plain}
-Markdown doesn't ship with a native caption primitive for figures or tables. The closest thing is image \texttt{alt} text:
-
-\begin{code}{md}{}{}
+Markdown doesn't ship with a native caption primitive for figures or tables. The closest thing is image \tscodeinline{alt} text:
+\begin{tscode}[lang=md, engine=pygments]
 \begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
 ![\PY{n+nt}{This is the alt text}](\PY{n+na}{image.png})
 \end{Verbatim}
-\end{code}
+\end{tscode}
 Alt text exists for accessibility, not for captions. Some browsers show it as a tooltip, but it is not a real caption and you can't style it separately. Moreover, since it is inserted in an HTML tag's attribute, it can't contain block elements or complex formatting.
 
-Fortunately, \texttt{pymdownx.blocks.captions} adds proper caption blocks:
-
-\begin{code}{md}{}{}
+TMark's answer is the \textbf{caption line}: a paragraph of its own, adjacent to the
+float, spelled \tscodeinline{Kind: text \{\#id\}}.
+\begin{tscode}[lang=md, engine=pygments]
 \begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
-As seen in [\PY{n+nt}{this figure}](\PY{n+na}{\PYZsh{}my\PYZhy{}figure}), the results are significant.
+As seen in \PY{n+ni}{@fig:results}, the results are significant.
 
 ![\PY{n+nt}{This is the alt text}](\PY{n+na}{https://picsum.photos/400/150})
 
-/// caption
-    attrs: \PYZob{}id: my\PYZhy{}figure\PYZcb{}
-This is the caption for the figure.
-///
+Figure: This is the caption for the figure. \PYZob{}\PYZsh{}fig:results\PYZcb{}
 \end{Verbatim}
-\end{code}
-\begin{callout}[callout warning]{Identifier restrictions}
-The \texttt{id} is declared through the block's YAML options and may not contain
-a colon: \texttt{pymdown-\allowbreak{}extensions} rejects identifiers such as
-\texttt{fig:my-\allowbreak{}figure}, and the whole block then silently degrades to plain
-text (TeXSmith emits a warning when it detects this). The shorthand
-header form \texttt{/// caption \#my-\allowbreak{}figure} is likewise not supported by
-\texttt{pymdown-\allowbreak{}extensions} --- always use the \texttt{attrs:} option shown above.
-\end{callout}
-Enable numbering and each document gets its own sequence starting at 1.
-
+\end{tscode}
+The kinds are \tscodeinline{Figure:}, \tscodeinline{Table:} and \tscodeinline{Listing:}. The attribute list is
+optional and is a full one (\tscodeinline{\{\#fig:plot .wide\}}); its \tscodeinline{\#id} is the float's
+anchor. Prefixed ids (\tscodeinline{fig:}, \tscodeinline{tbl:}, \tscodeinline{lst:}) are the recommended convention
+and are what \tscodeinline{@} references read best.
 \begin{figure}[H]
-    \centering
-
-    \ifdefined\adjustbox
-
-        \adjustbox{max width=\textwidth}{
-            \includegraphics[width=\linewidth]{snippet-<HASH>.pdf}
-        }
-
-    \else
-
-        \includegraphics[width=\linewidth]{snippet-<HASH>.pdf}
-
-    \fi
-
+\centering
+\includegraphics[width=\linewidth]{snippet-<HASH>.pdf}
 \end{figure}
-\section{LaTeX}\label{latex}
-
-\LaTeX{} wraps figures/tables in \texttt{figure}/\texttt{table} environments, uses \texttt{\textbackslash{}caption\{\}} for the text, and \texttt{\textbackslash{}label\{\}} for cross-references:
-
-\begin{code}{latex}{}{}
+\begin{tscallout}[kind=note, title={The PyMdownX caption block is deprecated}]
+\tscodeinline{/// caption} and \tscodeinline{/// figure-\allowbreak{}caption} with an indented \tscodeinline{attrs:} line are
+still parsed, with a deprecation warning, until \tscodeinline{tmark fmt} has had time to
+rewrite the corpus (see Migrating to TMark). Their
+id could not contain a colon --- \tscodeinline{pymdown-\allowbreak{}extensions} rejected \tscodeinline{fig:results}
+and the block silently degraded to plain text --- which is exactly the trap a
+canonical spelling must not have. \tscodeinline{tmark lint -\allowbreak{}-\allowbreak{}fix} converts them.
+\end{tscallout}
+Enable numbering and each document gets its own sequence starting at 1.
+\section{\LaTeX{}}
+\LaTeX{} wraps figures/tables in \tscodeinline{figure}/\tscodeinline{table} environments, uses \tscodeinline{\textbackslash{}caption\{\}} for the text, and \tscodeinline{\textbackslash{}label\{\}} for cross-references:
+\begin{tscode}[lang=latex, engine=pygments]
 \begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
-As seen in Figure \PY{k}{\PYZbs{}ref}\PY{n+nb}{\PYZob{}}fig:my\PYZhy{}figure\PY{n+nb}{\PYZcb{}}, the results are significant.
+As seen in Figure \PY{k}{\PYZbs{}ref}\PY{n+nb}{\PYZob{}}fig:results\PY{n+nb}{\PYZcb{}}, the results are significant.
 
 \PY{k}{\PYZbs{}begin}\PY{n+nb}{\PYZob{}}figure\PY{n+nb}{\PYZcb{}}[htbp]
   \PY{k}{\PYZbs{}centering}
   \PY{k}{\PYZbs{}includegraphics}\PY{n+nb}{\PYZob{}}image.png\PY{n+nb}{\PYZcb{}}
   \PY{k}{\PYZbs{}caption}\PY{n+nb}{\PYZob{}}This is the caption for the figure.\PY{n+nb}{\PYZcb{}}
-  \PY{k}{\PYZbs{}label}\PY{n+nb}{\PYZob{}}fig:my\PYZhy{}figure\PY{n+nb}{\PYZcb{}}
+  \PY{k}{\PYZbs{}label}\PY{n+nb}{\PYZob{}}fig:results\PY{n+nb}{\PYZcb{}}
 \PY{k}{\PYZbs{}end}\PY{n+nb}{\PYZob{}}figure\PY{n+nb}{\PYZcb{}}
 \end{Verbatim}
-\end{code}
-\section{Addressing issues}\label{addressing-issues}
-
+\end{tscode}
+\section{Addressing issues}
 \begin{enumerate}
 \item Consistent numbering across a document
 \item Easy cross-references
 \item Short captions for lists of figures/tables
-
 \end{enumerate}
-\subsection{Coherent numbering}\label{coherent-numbering}
-
+\subsection{Coherent numbering}
 Markdown headings aren't numbered, so figures/tables can't piggyback on heading numbering. On the web that's fine---hyperlinks rule the navigation story---but in print numbering is essential. Guideline:
-
 \begin{displayquote}
-
 Printed documents shall have numbered heading elements, figures, and tables for cross-referencing. Web documents, however, should not have numbered headings, figures, or tables, relying instead on hyperlinks for navigation.
-
 \end{displayquote}
 Printed \LaTeX{} floats figures and tables, so writers can't assume a caption stays ``above'' or ``below'' the reference. HTML is literal: the figure stays where you put it.
-
 \begin{displayquote}
-
 On printed documents, the words \enquote{above} and \enquote{below} when referring to figures and tables shall never be used, as their position may vary due to floating. On web documents, \enquote{above} and \enquote{below} may be used, as figures and tables appear exactly where they are defined.
-
 \end{displayquote}
-\subsection{Cross-referencing captions}\label{cross-referencing-captions}
-
-That rule complicates cross-references: web versions prefer ``this figure below,'' whereas \LaTeX{} wants ``Figure 2.'' Examples:
-
-\begin{code}{md}{}{}
+\tscodeinline{tmark lint} flags a position word next to a reference (\tscodeinline{position-\allowbreak{}word}) for
+exactly this reason.
+\subsection{Cross-referencing captions}
+That rule complicates cross-references: web versions prefer ``this figure below,'' whereas \LaTeX{} wants ``Figure 2.'' A \emph{textual} reference lets you write the prose and keeps the number out of the body:
+\begin{tscode}[lang=md, engine=pygments]
 \begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
-As seen in [\PY{n+nt}{this figure below}](\PY{n+na}{\PYZsh{}my\PYZhy{}figure}), the results are significant.
+As seen in [\PY{n+nt}{this figure}](\PY{n+na}{\PYZsh{}fig:results}), the results are significant.
 
-As seen [\PY{n+nt}{here}](\PY{n+na}{\PYZsh{}my\PYZhy{}figure}), the results are significant.
+As seen [\PY{n+nt}{here}](\PY{n+na}{\PYZsh{}fig:results}), the results are significant.
 
-The results [\PY{n+nt}{shown}](\PY{n+na}{\PYZsh{}my\PYZhy{}figure}) are significant.
+The results [\PY{n+nt}{shown}](\PY{n+na}{\PYZsh{}fig:results}) are significant.
 \end{Verbatim}
-\end{code}
-In \LaTeX{} you'd use:
-
-\begin{code}{latex}{}{}
+\end{tscode}
+On the web the text is the link and nothing is added. In paged media a
+hyperlink is not enough, so the template appends a locator whose shape is
+declared per medium:
+\begin{tscode}[lang=yaml, engine=pygments]
 \begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
-As seen in Figure \PY{k}{\PYZbs{}ref}\PY{n+nb}{\PYZob{}}fig:my\PYZhy{}figure\PY{n+nb}{\PYZcb{}}, the results are significant.
+\PY{n+nt}{press}\PY{p}{:}
+\PY{+w}{  }\PY{n+nt}{refs}\PY{p}{:}
+\PY{+w}{    }\PY{n+nt}{textual}\PY{p}{:}
+\PY{+w}{      }\PY{n+nt}{print}\PY{p}{:}\PY{+w}{ }\PY{l+s}{\PYZdq{}}\PY{l+s}{\PYZob{}text\PYZcb{}}\PY{n+nv}{ }\PY{l+s}{(\PYZob{}number\PYZcb{})}\PY{l+s}{\PYZdq{}}\PY{+w}{   }\PY{c+c1}{\PYZsh{} \PYZdq{}this figure (3)\PYZdq{}, or \PYZdq{}\PYZob{}text\PYZcb{} (p. \PYZob{}page\PYZcb{})\PYZdq{}}
+\PY{+w}{      }\PY{n+nt}{web}\PY{p}{:}\PY{+w}{ }\PY{l+s}{\PYZdq{}}\PY{l+s}{\PYZob{}text\PYZcb{}}\PY{l+s}{\PYZdq{}}
 \end{Verbatim}
-\end{code}
-Language adds another wrinkle: ``Figure'' in English, ``figure'' (lowercase) in French mid-sentence, ``Abbildung'' in German, and so on. Hardcoding wording would be brittle.
-
-Fortunately \texttt{pymdownx.blocks.captions} tracks IDs, so TeXSmith can bridge both worlds with a shared syntax:
-
-\begin{code}{md}{}{}
+\end{tscode}
+When you want the number \emph{in} the prose, refer with the \tscodeinline{@} sigil and let the
+counter render the label word:
+\begin{tscode}[lang=md, engine=pygments]
 \begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
-As seen in [](\PYZsh{}my\PYZhy{}figure), the results are significant.
+As seen in \PY{n+ni}{@fig:results}, the results are significant.
 \end{Verbatim}
-\end{code}
-An empty-text link to a caption id is decorated with the assigned number. The HTML output looks like:
+\end{tscode}
+Language is handled by the counter registry, not by you: ``Figure'' in English,
+``figure'' (lowercase) mid-sentence in French, ``Abbildung'' in German.
+\tscodeinline{@Fig:results} capitalises the label word at the start of a sentence.
 
-\begin{code}{html}{}{}
+In \LaTeX{} the caption id is emitted verbatim as the \tscodeinline{\textbackslash{}label}:
+\begin{tscode}[lang=latex, engine=pygments]
 \begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
-As seen in \PY{p}{\PYZlt{}}\PY{n+nt}{a} \PY{n+na}{href}\PY{o}{=}\PY{l+s}{\PYZdq{}\PYZsh{}my\PYZhy{}figure\PYZdq{}}\PY{p}{\PYZgt{}}Figure \PY{p}{\PYZlt{}}\PY{n+nt}{span} \PY{n+na}{class}\PY{o}{=}\PY{l+s}{\PYZdq{}caption\PYZhy{}number\PYZdq{}}\PY{p}{\PYZgt{}}1\PY{p}{\PYZlt{}}\PY{p}{/}\PY{n+nt}{span}\PY{p}{\PYZgt{}}\PY{p}{\PYZlt{}}\PY{p}{/}\PY{n+nt}{a}\PY{p}{\PYZgt{}}, the results are significant.
+As seen in Figure \PY{k}{\PYZbs{}ref}\PY{n+nb}{\PYZob{}}fig:results\PY{n+nb}{\PYZcb{}}, the results are significant.
 \end{Verbatim}
-\end{code}
-In \LaTeX{} (the caption id is emitted verbatim as the \texttt{\textbackslash{}label}):
-
-\begin{code}{latex}{}{}
-\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
-As seen in Figure \PY{k}{\PYZbs{}ref}\PY{n+nb}{\PYZob{}}my\PYZhy{}figure\PY{n+nb}{\PYZcb{}}, the results are significant.
-\end{Verbatim}
-\end{code}
-Or with \texttt{cleveref}:
-
-\begin{code}{latex}{}{}
-\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
-As seen in \PY{k}{\PYZbs{}Cref}\PY{n+nb}{\PYZob{}}my\PYZhy{}figure\PY{n+nb}{\PYZcb{}}, the results are significant.
-\end{Verbatim}
-\end{code}
-Pandoc users write \texttt{\{@fig:my-\allowbreak{}figure\}}; the idea is the same.
-
-\subsection{Short caption names}\label{short-caption-names}
-
-Printed lists of figures appreciate a condensed caption. \LaTeX{} handles this via the optional \texttt{\textbackslash{}caption[]} argument:
-
-\begin{code}{latex}{}{}
+\end{tscode}
+The empty-link form \tscodeinline{[](\#fig:results)} is the class-C fallback for pure-Markdown
+toolchains and resolves to the same reference.
+\subsection{Short caption names}
+Printed lists of figures appreciate a condensed caption. \LaTeX{} handles this via the optional \tscodeinline{\textbackslash{}caption[]} argument:
+\begin{tscode}[lang=latex, engine=pygments]
 \begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
 \PY{k}{\PYZbs{}caption}\PY{n+na}{[Short caption for list of figures]}\PY{n+nb}{\PYZob{}}This is the caption for the figure.\PY{n+nb}{\PYZcb{}}
 \end{Verbatim}
-\end{code}
-TeXSmith reuses the Markdown \texttt{alt} text as that short entry:
-
-\begin{code}{md}{}{}
+\end{tscode}
+TMark reuses the Markdown \tscodeinline{alt} text as that short entry, and the caption line
+carries the long one:
+\begin{tscode}[lang=md, engine=pygments]
 \begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
-![\PY{n+nt}{Short caption for list of figures}](\PY{n+na}{image.png})
+![\PY{n+nt}{Short caption for the list of figures}](\PY{n+na}{image.png})
 
-/// figure\PYZhy{}caption
-    attrs: \PYZob{}id: my\PYZhy{}figure\PYZcb{}
-This is the caption for the figure.
-///
+Figure: This is the caption for the figure, with \PY{g+gs}{**Markdown**}. \PYZob{}\PYZsh{}fig:results\PYZcb{}
 \end{Verbatim}
-\end{code}
-\section{Caption lines}\label{caption-lines}
-
-The block form is verbose, and its id may not contain a colon. The caption
-\emph{line} is the shorthand: the paragraph right after the float, spelled
-\texttt{Kind: text \{\#id\}}, with \texttt{Figure:}, \texttt{Table:} or \texttt{Listing:} as the kind. This
-is TMark's canonical spelling, and the one \texttt{tmark fmt} prints.
-
-\begin{code}{md}{}{}
-\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
-![\PY{n+nt}{Short caption for the list of figures}](\PY{n+na}{image.png})\PYZob{}width=70\PYZpc{}\PYZcb{}
-
-Figure: This is the caption for the figure. \PYZob{}\PYZsh{}fig:my\PYZhy{}figure\PYZcb{}
-\end{Verbatim}
-\end{code}
-\begin{code}{md}{}{}
+\end{tscode}
+\section{Caption lines in detail}
+\begin{tscode}[lang=md, engine=pygments]
 \begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
 | Header 1 | Header 2 |
 |\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}|\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}|
 | Cell 1   | Cell 2   |
 
-Table: This is the caption for the table. \PYZob{}\PYZsh{}tbl:my\PYZhy{}table\PYZcb{}
+Table: This is the caption for the table. \PYZob{}\PYZsh{}tbl:sample\PYZcb{}
 \end{Verbatim}
-\end{code}
-\begin{code}{md}{}{}
+\end{tscode}
+\begin{tscode}[lang=md, engine=pygments]
 \begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
 \PY{l+s+sb}{```}\PY{l+s+sb}{python}
 \PY{k}{def}\PY{+w}{ }\PY{n+nf}{bubble\PYZus{}sort}\PY{p}{(}\PY{n}{items}\PY{p}{)}\PY{p}{:} \PY{o}{.}\PY{o}{.}\PY{o}{.}
@@ -232,31 +182,32 @@ Table: This is the caption for the table. \PYZob{}\PYZsh{}tbl:my\PYZhy{}table\PY
 
 Listing: Bubble sort, naive version. \PYZob{}\PYZsh{}lst:bubble\PYZcb{}
 \end{Verbatim}
-\end{code}
-The attribute list is optional and may be a full one (\texttt{\{\#fig:plot .wide\}});
-its \texttt{\#id} is the float's anchor, and ids with a prefix (\texttt{fig:}, \texttt{tbl:},
-\texttt{lst:}) are fine here. The image \texttt{alt} stays the short caption. A \texttt{Figure:}
-line renders exactly like the \texttt{/// caption} block above; a \texttt{Listing:} line
-makes the code block a numbered listing whose caption is the block's title
-and whose id is its label, in \LaTeX{} as in Typst.
+\end{tscode}
+A \tscodeinline{Listing:} line makes the code block a numbered listing whose caption is the
+block's header and whose id is its label, in \LaTeX{} as in Typst.
 
-The line attaches to the float \emph{before} it when that float is of the matching
-kind and has no caption yet, otherwise to the float \emph{after} it --- so the
-\texttt{Table:} line before its table keeps working. A \texttt{Figure:} line under a table,
-or a caption line with no float next to it, is left as a plain paragraph.
+The canonical \textbf{source} position is \emph{after} the block; where the caption is
+\emph{printed} (above a table, below a figure) is the template's business. A
+\tscodeinline{Table:} line placed before the table is accepted for Pandoc compatibility, and
+the printer never emits it.
 
-\section{Tables}\label{tables}
-
-Tables follow the same pattern:
-
-\begin{code}{md}{}{}
+The attachment rule is one rule for every kind: a caption line attaches to the
+block \emph{before} it when that block is a float that has no caption yet, otherwise
+to the float \emph{after} it. Inside a \tscodeinline{::: figure} container a caption with no such
+neighbour is the caption of the figure itself. A caption line with no float
+next to it stays a plain paragraph and raises \tscodeinline{caption-\allowbreak{}no-\allowbreak{}host}.
+\section{Subfigures}
+A \tscodeinline{::: figure} container groups images; each becomes a subfigure, and the
+caption is a \tscodeinline{Figure:} line like everywhere else:
+\begin{tscode}[lang=md, engine=pygments]
 \begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
-| Header 1 | Header 2 |
-|\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}|\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}|
-| Cell 1   | Cell 2   |
+::: figure \PYZob{}cols=2\PYZcb{}
+![\PY{n+nt}{Boot}](\PY{n+na}{boot.png})\PYZob{}\PYZsh{}fig:boot\PYZcb{}
+![\PY{n+nt}{Crash}](\PY{n+na}{crash.png})\PYZob{}\PYZsh{}fig:crash\PYZcb{}
 
-Table: This is the caption for the table. \PYZob{}\PYZsh{}my\PYZhy{}table\PYZcb{}
+Figure: Watchdog traces before and after the fix. \PYZob{}\PYZsh{}fig:traces\PYZcb{}
+:::
 \end{Verbatim}
-\end{code}
-
+\end{tscode}
+This renders ``Figure 1'' with ``(a)'', ``(b)''; \tscodeinline{@fig:crash} yields ``figure 1b''.
 \end{document}

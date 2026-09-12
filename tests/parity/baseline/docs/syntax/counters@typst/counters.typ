@@ -1,15 +1,15 @@
 #set document(
-  title: "Custom counters",
+title: "Custom counters",
 )
 #set page(
-  paper: "a4",
-  margin: 2.5cm,
-  numbering: none,
-  footer: context {
-    if counter(page).final().first() > 1 {
-      align(center)[#counter(page).get().first()]
-    }
-  },
+paper: "a4",
+margin: 2.5cm,
+numbering: none,
+footer: context {
+if counter(page).final().first() > 1 {
+align(center)[#counter(page).get().first()]
+}
+},
 )
 #set text(font: "New Computer Modern", size: 11pt, lang: "en")
 #set par(justify: true)
@@ -17,14 +17,13 @@
 #set heading(numbering: "1.1")
 
 #align(center)[
-  #text(size: 1.8em, weight: "bold")[Custom counters]
-]
+#text(size: 1.8em, weight: "bold")[Custom counters]]
 #v(1.5em)
 
-Technical documents number things that LaTeX knows nothing about: findings,
+Technical documents number things that #ts-logo("LaTeX") knows nothing about: findings,
 requirements, bugs, risks, test cases. TeXSmith lets you declare such a series
 in the front matter, mark each item in the body, and reference it anywhere —
-the numbers are computed by TeXSmith rather than by the backend, so the LaTeX
+the numbers are computed by TeXSmith rather than by the backend, so the #ts-logo("LaTeX")
 build, the Typst build and — with the companion plugin — the MkDocs site all
 show the same values.
 
@@ -47,11 +46,11 @@ Smile in every circumstance (@n:joy) and do no harm to others (@n:respect).
 renders as
 
 #table(
-  columns: 2,
-  align: (left, left),
-  table.header([Id], [Requirement]),
-  [N-01], [Everyone shall be happy],
-  [N-02], [Everyone shall respect the others],
+columns: 2,
+align: (left, left),
+table.header([Id], [Requirement]),
+[N-01], [Everyone shall be happy],
+[N-02], [Everyone shall respect the others],
 )
 
 Smile in every circumstance (N-01) and do no harm to others (N-02).
@@ -74,12 +73,12 @@ counters:
 `format` is a Python format string. Three fields are available:
 
 #table(
-  columns: 2,
-  align: (left, left),
-  table.header([Field], [Meaning]),
-  [`n`], [the counter value (`1`, `2`, …), so `{n:02d}` pads it],
-  [`prefix`], [the counter prefix (`n`)],
-  [`key`], [the item key (`joy`)],
+columns: 2,
+align: (left, left),
+table.header([Field], [Meaning]),
+[`n`], [the counter value (`1`, `2`, …), so `{n:02d}` pads it],
+[`prefix`], [the counter prefix (`n`)],
+[`key`], [the item key (`joy`)],
 )
 
 The format string is validated when the document is parsed; an invalid one
@@ -126,19 +125,15 @@ headings, figures and tables:
 `@fw:boot-loop` then resolves to `FW-01` even though the number appears nowhere
 in the heading.
 
-#block(width: 100%, radius: 2pt, stroke: (left: 1.5pt + rgb("#FFB200"), rest: 0.4pt + rgb("#FFB200")))[
-  #block(width: 100%, fill: rgb("#FFB200").lighten(90%), inset: (x: 8pt, y: 4pt))[#text(weight: "bold", fill: rgb("#FFB200"))[⚠#h(0.4em)Position matters for `{#…}`]]
-  #block(width: 100%, inset: (x: 8pt, y: 6pt))[
-    `attr_list` consumes `{#…}` at the end of a heading, on an image, or on a
-    line of its own after a block. In the middle of a sentence it stays literal
-    text — use `#{…}` there.
-  ]
-]
+#ts-callout(kind: "warning", title: [Position matters for `{#…}`])[
+`attr_list` consumes `{#…}` at the end of a heading, on an image, or on a
+line of its own after a block. In the middle of a sentence it stays literal
+text — use `#{…}` there.]
 
 = Referencing an item
 
 `@prefix:key` (or `@[prefix:key]`) prints the formatted number as a hyperlink.
-This is the regular #link("references.md")[cross-reference shorthand]; a declared
+This is the regular cross-reference shorthand; a declared
 prefix simply routes it to the counter registry.
 
 ```markdown
@@ -152,13 +147,13 @@ diagnostics.
 = Diagnostics
 
 #table(
-  columns: 2,
-  align: (left, left),
-  table.header([Situation], [Behaviour]),
-  [`@n:missing` — no such item], [warning, the reference renders empty],
-  [`#{n:joy}` twice with the same key], [warning, both print the first number],
-  [`#{x:joy}` — undeclared prefix], [left as literal text, no warning],
-  [invalid `format` or prefix], [`CounterValidationError` at parse time],
+columns: 2,
+align: (left, left),
+table.header([Situation], [Behaviour]),
+[`@n:missing` — no such item], [warning, the reference renders empty],
+[`#{n:joy}` twice with the same key], [warning, both print the first number],
+[`#{x:joy}` — undeclared prefix], [left as literal text, no warning],
+[invalid `format` or prefix], [`CounterValidationError` at parse time],
 )
 
 = Scope and stability
@@ -167,27 +162,23 @@ Numbers are allocated per conversion, in document order, and shared across all
 the documents of a multi-document build — `a.md`, `b.md` and `c.md` continue a
 single series rather than restarting.
 
-#block(width: 100%, radius: 2pt, stroke: (left: 1.5pt + rgb("#C62828"), rest: 0.4pt + rgb("#C62828")))[
-  #block(width: 100%, fill: rgb("#C62828").lighten(90%), inset: (x: 8pt, y: 4pt))[#text(weight: "bold", fill: rgb("#C62828"))[🔥#h(0.4em)Numbers are positional]]
-  #block(width: 100%, inset: (x: 8pt, y: 6pt))[
-    Inserting an item renumbers every item after it. When the identifiers leave
-    the document — a finding quoted in an audit report, a requirement cited in a
-    test plan — that renumbering breaks the external traceability silently.
-    Pin the values with a dedicated `start:` per counter and stable ordering, or
-    keep the volatile numbering for internal documents only. Explicit pinning is
-    planned but not implemented yet.
-  ]
-]
+#ts-callout(kind: "danger", title: [Numbers are positional])[
+Inserting an item renumbers every item after it. When the identifiers leave
+the document — a finding quoted in an audit report, a requirement cited in a
+test plan — that renumbering breaks the external traceability silently.
+Pin the values with a dedicated `start:` per counter and stable ordering, or
+keep the volatile numbering for internal documents only. Explicit pinning is
+planned but not implemented yet.]
 
 = Backend mapping
 
 #table(
-  columns: 3,
-  align: (left, left, left),
-  table.header([], [Definition], [Reference]),
-  [LaTeX], [`\phantomsection\label{n:joy}N-01`], [`\hyperref[n:joy]{N-01}`],
-  [Typst], [`N-01<n:joy>`], [`#link(<n:joy>)[N-01]`],
-  [HTML], [`<span class="ts-counter" data-counter="n" data-key="joy" id="n:joy">N-01</span>`], [`<a href="#n:joy">N-01</a>`],
+columns: 3,
+align: (left, left, left),
+table.header([], [Definition], [Reference]),
+[#ts-logo("LaTeX")], [`\phantomsection\label{n:joy}N-01`], [`\hyperref[n:joy]{N-01}`],
+[Typst], [`N-01<n:joy>`], [`#link(<n:joy>)[N-01]`],
+[HTML], [`<span class="ts-counter" data-counter="n" data-key="joy" id="n:joy">N-01</span>`], [`<a href="#n:joy">N-01</a>`],
 )
 
 `\phantomsection` is what makes the `hyperref` anchor land on the item rather
@@ -195,48 +186,41 @@ than on the enclosing section, and it lets `\pageref{n:joy}` work.
 
 = On a MkDocs site
 
-A MkDocs build never goes through TeXSmith's front-matter parsing, so counters
-need their companion plugin to render on the site:
+The `texsmith` MkDocs plugin renders counters on the site.
+One plugin, no Markdown extension to wire:
 
 ```yaml
 plugins:
-  - texsmith.counters:
-      counters: # optional site-wide declarations
-        req:
-          name: Requirement
-          format: "REQ-{n:03d}"
-          start: 100
+  - texsmith:
+      declare:
+        counters: # optional site-wide declarations
+          req:
+            name: Requirement
+            format: "REQ-{n:03d}"
+            start: 100
 ```
 
-The plugin enables the `texsmith.extensions.counters` and
-`texsmith.extensions.references` Markdown extensions on its own (set
-`inject_markdown_extension: false` / `inject_reference_extension: false` to wire
-them by hand). Counters declared under the plugin's `counters:` key apply to the
-whole site; a page may declare its own in its front matter, and every
-declaration is visible from every page — a series defined in `findings.md` is
-referenceable from `index.md`.
+Counters declared under `declare.counters` apply to the whole site; a page may
+declare its own under `press.declare.counters` in its front matter, and the
+page's declaration wins for the same prefix. Every _item_ is visible from every
+page — a series defined in `findings.md` is referenceable from `index.md`.
 
-Numbering is *site-wide, in navigation order*: a pre-pass walks the nav before
-any page is converted and reserves a value for every marker, so a reference on
-the first page resolves to an item defined on the last one. Cross-page
-references are rewritten to point at the page that defines the item
-(`<a href="findings/#fw:watchdog">FW-01</a>`); same-page ones keep a local
-anchor.
+Numbering is *site-wide, in navigation order*: a pre-pass parses and resolves
+every page before any of them is converted, chaining each page's counters after
+the previous page's, so a reference on the first page resolves to an item
+defined on the last one. Cross-page references are rewritten to point at the
+page that defines the item (`<a href="findings/#fw:watchdog">FW-01</a>`);
+same-page ones keep a local anchor (`<a href="#fw:watchdog">FW-01</a>`).
 
-#block(width: 100%, radius: 2pt, stroke: (left: 1.5pt + rgb("#FFB200"), rest: 0.4pt + rgb("#FFB200")))[
-  #block(width: 100%, fill: rgb("#FFB200").lighten(90%), inset: (x: 8pt, y: 4pt))[#text(weight: "bold", fill: rgb("#FFB200"))[⚠#h(0.4em)The pre-pass reads the raw Markdown]]
-  #block(width: 100%, inset: (x: 8pt, y: 6pt))[
-    It strips fenced blocks and inline code spans, then scans what remains. A
-    marker of a _declared_ prefix written as an example in plain prose — rather
-    than in a code span — is counted by the pre-pass, and consumes a number.
-  ]
-]
+The pre-pass parses the page rather than scanning it, so a marker inside a
+fence or a code span is never counted, and `#{user.name}` in prose stays the
+literal text it is.
 
 = Citing an item from another document
 
 A number allocated here means nothing in a sister document, and a renumbering
 breaks every hard-coded `FW-10` it contains. Publish an inventory and cite it
-explicitly — see #link("crossrefs.md")[Cross-document references].
+explicitly — see Cross-document references.
 
 = Not implemented yet
 

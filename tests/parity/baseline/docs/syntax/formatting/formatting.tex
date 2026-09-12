@@ -8,9 +8,17 @@
 \usepackage[colorlinks=true, linkcolor=NavyBlue, urlcolor=NavyBlue, citecolor=NavyBlue]{hyperref}
 \usepackage[a4paper]{geometry}
 \usepackage{ts-fonts}
-\usepackage{amsmath}
+\usepackage{booktabs}
 \usepackage{float}
+\usepackage{graphicx}
+\usepackage{tabularx}
+\usepackage{tcolorbox}
+\usepackage{xcolor}
+\usepackage{fvextra}
+\usepackage{amsmath}
 \usepackage{seqsplit}
+\newcolumntype{Y}{>{\centering\arraybackslash}X}
+\newcolumntype{Z}{>{\raggedleft\arraybackslash}X}
 \usepackage{ts-callouts}
 \usepackage{ts-code}
 
@@ -18,117 +26,136 @@
 \usepackage{refcount}
 \makeatletter
 \def\ps@plain{
-  \let\@oddhead\@empty
-  \let\@evenhead\@empty
-  \def\@oddfoot{
-    \hfil
-    \ifnum\getpagerefnumber{LastPage}>1\relax
-      \thepage
-    \fi
-    \hfil}
-  \let\@evenfoot\@oddfoot
+\let\@oddhead\@empty
+\let\@evenhead\@empty
+\def\@oddfoot{
+\hfil
+\ifnum\getpagerefnumber{LastPage}>1\relax
+\thepage
+\fi
+\hfil}
+\let\@evenfoot\@oddfoot
 }
 \makeatother
 
 \title{Text Formatting}
 \author{}\date{}
-
 \begin{document}
-
 \maketitle
-
-\thispagestyle{plain}
-Like vanilla Markdown, you can apply basic text formatting using a variety of delimiters. TeXSmith extends this with small capitals support.
-
-\begin{code}{markdown}{}{}
+Like vanilla Markdown, you can apply basic text formatting using a variety of
+delimiters. Every inline node has a \textbf{role} as its canonical spelling, and most
+have a familiar shorthand as sugar; both produce the same node.
+\begin{center}
+\begin{tabularx}{\linewidth}{>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X}
+\toprule
+\textbf{Node} & \textbf{Canonical} & \textbf{Sugar} & \textbf{LaTeX} \\
+\midrule
+Emphasis & \tscodeinline{*x*} & \tscodeinline{\_x\_} & \tscodeinline{\textbackslash{}emph} \\
+Strong & \tscodeinline{**x**} & (none) & \tscodeinline{\textbackslash{}textbf} \\
+Small caps & \tscodeinline{\{sc\}[x]} & \tscodeinline{\_\_x\_\_} (X1) & \tscodeinline{\textbackslash{}textsc} \\
+Strikeout & \tscodeinline{\{del\}[x]} & \tscodeinline{\textasciitilde{}\textasciitilde{}x\textasciitilde{}\textasciitilde{}} & \tscodeinline{\textbackslash{}sout} \\
+Underline & \tscodeinline{\{underline\}[x]} & \tscodeinline{\^{}\^{}x\^{}\^{}}, only with \tscodeinline{inline.insert} on & \tscodeinline{\textbackslash{}uline} \\
+Highlight & \tscodeinline{\{mark\}[x]} & \tscodeinline{==x==} & \tscodeinline{\textbackslash{}tsmark} \\
+Subscript & \tscodeinline{\{sub\}[x]} & \tscodeinline{\textasciitilde{}x\textasciitilde{}} (X3) & \tscodeinline{\textbackslash{}textsubscript} \\
+Superscript & \tscodeinline{\{sup\}[x]} & \tscodeinline{\^{}x\^{}} & \tscodeinline{\textbackslash{}textsuperscript} \\
+Keystroke & \tscodeinline{\{keys\}[ctrl+s]} & \tscodeinline{++ctrl+s++} & \tscodeinline{\textbackslash{}tskeys} \\
+Code & \tscodeinline{`x`} & (none) & engine-dependent \\
+Highlighted code & \tscodeinline{\{code py\}[print(1)]} & \tscodeinline{`\#!py print(1)`} & engine-dependent \\
+\bottomrule
+\end{tabularx}
+\end{center}
+\begin{tscode}[lang=md, engine=pygments]
 \begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
-The quick brown fox jumps over the lazy dog. \PY{g+ge}{*(regular)*}
+\PY{g+ge}{*(regular)*} The quick brown fox jumps over the lazy dog.
 
-\PY{g+ge}{*The quick brown fox jumps over the lazy dog.*} \PY{g+ge}{*(italic)*}
+\PY{g+ge}{*(italic)*} \PY{g+ge}{*The quick brown fox jumps over the lazy dog.*}
 
-\PY{g+gs}{**The quick brown fox jumps over the lazy dog.**} \PY{g+ge}{*(bold)*}
+\PY{g+ge}{*(bold)*} \PY{g+gs}{**The quick brown fox jumps over the lazy dog.**}
 
-***The quick brown fox jumps over the lazy dog.*** \PY{g+ge}{*(bold italic)*}
+\PY{g+ge}{*(bold italic)*} ***The quick brown fox jumps over the lazy dog.***
 
-\PY{g+gd}{\PYZti{}\PYZti{}The quick brown fox jumps over the lazy dog.\PYZti{}\PYZti{}} \PY{g+ge}{*(strikethrough)*}
+\PY{g+ge}{*(strikethrough)*} \PY{g+gd}{\PYZti{}\PYZti{}The quick brown fox jumps over the lazy dog.\PYZti{}\PYZti{}}
 
-\PY{g+gs}{\PYZus{}\PYZus{}The quick brown fox jumps over the lazy dog.\PYZus{}\PYZus{}} \PY{g+ge}{*(small capitals)*}
+\PY{g+ge}{*(small capitals)*} \PYZob{}sc\PYZcb{}[The quick brown fox jumps over the lazy dog.]
+
+\PY{g+ge}{*(highlight)*} \PYZob{}mark\PYZcb{}[The quick brown fox] and \PY{g+ge}{*(keys)*} \PYZob{}keys\PYZcb{}[ctrl+s].
 \end{Verbatim}
-\end{code}
+\end{tscode}
+\tscodeinline{\_\_x\_\_} is small caps, not a second bold: that is deviation X1 of the
+\href{index.md\#degradation-classes}{degradation classes}, disabled by the \tscodeinline{strict}
+profile. \tscodeinline{\_\_} duplicates \tscodeinline{**}, and academic writing needs small caps far more
+than a second bold --- and the difference is visible, not silent.
 \begin{figure}[H]
-    \centering
-
-    \ifdefined\adjustbox
-
-        \adjustbox{max width=\textwidth}{
-            \includegraphics[width=\linewidth]{snippet-<HASH>.pdf}
-        }
-
-    \else
-
-        \includegraphics[width=\linewidth]{snippet-<HASH>.pdf}
-
-    \fi
-
+\centering
+\includegraphics[width=\linewidth]{snippet-<HASH>.pdf}
 \end{figure}
-The \texttt{pymdownx.betterem} extension lets you stack delimiters for bold italic.
-
-\section{Standalone bold paragraphs (\texttt{\textbackslash{}tslead})}\label{standalone-bold-paragraphs-texttt-textbackslash-tslead}
-
-A paragraph whose only content is a short bold span (under 80 characters) is promoted to a lead-in pseudo-heading rather than rendered as a plain \texttt{\textbackslash{}textbf\{…\}}. TeXSmith emits \texttt{\textbackslash{}tslead\{…\}}, defined as:
-
-\begin{code}{latex}{}{}
+Delimiters stack for bold italic, and \tscodeinline{\_} never opens emphasis inside a word,
+so \tscodeinline{snake\_case\_name} stays literal.
+\section{Lead-in paragraphs (\tscodeinline{\{lead\}[…]})}
+A \emph{lead-in} --- a short run-in heading that opens a paragraph --- has an explicit
+role:
+\begin{tscode}[lang=md, engine=pygments]
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+\PYZob{}lead\PYZcb{}[Boot sequence.] The device powers the flash before the SoC…
+\end{Verbatim}
+\end{tscode}
+A paragraph whose first inline is a strong span shorter than 80 characters is
+promoted to a lead-in automatically while the \tscodeinline{paragraph.lead} feature is on
+(the default; off under \tscodeinline{strict}). The promotion is sugar, not magic: it is
+named, switchable, and \tscodeinline{tmark lint -\allowbreak{}-\allowbreak{}fix} rewrites it to the role. Either way
+TeXSmith emits \tscodeinline{\textbackslash{}tslead\{…\}}, defined as:
+\begin{tscode}[lang=latex, engine=pygments]
 \begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
 \PY{k}{\PYZbs{}providecommand}\PY{n+nb}{\PYZob{}}\PY{k}{\PYZbs{}tslead}\PY{n+nb}{\PYZcb{}}[1]\PY{n+nb}{\PYZob{}}\PY{k}{\PYZbs{}par}\PY{k}{\PYZbs{}noindent}\PY{k}{\PYZbs{}textbf}\PY{n+nb}{\PYZob{}}\PYZsh{}1\PY{n+nb}{\PYZcb{}}\PY{k}{\PYZbs{}par}\PY{k}{\PYZbs{}nobreak}\PY{k}{\PYZbs{}smallskip}\PY{n+nb}{\PYZcb{}}
 \end{Verbatim}
-\end{code}
-This guarantees a no-indent paragraph break and a small vertical breather, so the label looks identical regardless of what precedes it. Without this, \texttt{**Méthodologie**} wedged between two tables (\texttt{\textbackslash{}end\{center\}} ... \texttt{\textbackslash{}textbf\{…\}} ... \texttt{\textbackslash{}begin\{center\}}) would render flush left while the same construct after running prose would be indented by \texttt{babel-\allowbreak{}french}'s \texttt{\textbackslash{}parindent}. With \texttt{\textbackslash{}tslead}, both cases align.
-
-\begin{code}{markdown}{}{}
+\end{tscode}
+This guarantees a no-indent paragraph break and a small vertical breather, so the label looks identical regardless of what precedes it. Without this, \tscodeinline{**Méthodologie**} wedged between two tables (\tscodeinline{\textbackslash{}end\{center\}} ... \tscodeinline{\textbackslash{}textbf\{…\}} ... \tscodeinline{\textbackslash{}begin\{center\}}) would render flush left while the same construct after running prose would be indented by \tscodeinline{babel-\allowbreak{}french}'s \tscodeinline{\textbackslash{}parindent}. With \tscodeinline{\textbackslash{}tslead}, both cases align.
+\begin{tscode}[lang=md, engine=pygments]
 \begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
 La synthèse récapitule, pilier par pilier, les forces et faiblesses…
 
-\PY{g+gs}{**Sens critique**}
+\PYZob{}lead\PYZcb{}[Sens critique]
 
 | Python | C |
 |\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}|\PYZhy{}\PYZhy{}\PYZhy{}|
 | Faible | Fort |
 
-\PY{g+gs}{**Méthodologie**}
+\PYZob{}lead\PYZcb{}[Méthodologie]
 
 | Python | C |
 |\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}|\PYZhy{}\PYZhy{}\PYZhy{}|
 | Correcte | Forte |
 \end{Verbatim}
-\end{code}
-The rule fires when the \texttt{<p>} contains exactly one \texttt{<strong>} child and nothing else (whitespace aside), and the bold's plain-text content is shorter than 80 characters. Bold spans inside running prose (\texttt{Some **bold** text.}), bold paragraphs over the threshold, and bold labels synthesised by other extensions (e.g. \texttt{tabbed-\allowbreak{}set} labels, which sit inside a \texttt{<div>}) keep their original \texttt{\textbackslash{}textbf\{…\}} rendering.
+\end{tscode}
+Written as \tscodeinline{**Sens critique**} on a line of its own, the same two labels are
+promoted to lead-ins automatically and \tscodeinline{tmark lint} says so
+(\tscodeinline{lead-\allowbreak{}promotion}). The rule fires when the paragraph opens with a strong span
+and nothing else precedes it, and the strong text is shorter than 80
+characters. Bold spans inside running prose (\tscodeinline{Some **bold** text.}) and bold
+paragraphs over the threshold keep their \tscodeinline{\textbackslash{}textbf\{…\}} rendering.
 
-Override \texttt{\textbackslash{}tslead} in a custom preamble snippet to change the visual style --- for instance, to add a coloured rule, switch to small caps, or replace the \texttt{\textbackslash{}smallskip} with \texttt{\textbackslash{}medskip}:
-
-\begin{code}{latex}{}{}
+Override \tscodeinline{\textbackslash{}tslead} in a custom preamble snippet to change the visual style --- for instance, to add a coloured rule, switch to small caps, or replace the \tscodeinline{\textbackslash{}smallskip} with \tscodeinline{\textbackslash{}medskip}:
+\begin{tscode}[lang=latex, engine=pygments]
 \begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
 \PY{k}{\PYZbs{}renewcommand}\PY{n+nb}{\PYZob{}}\PY{k}{\PYZbs{}tslead}\PY{n+nb}{\PYZcb{}}[1]\PY{n+nb}{\PYZob{}}\PY{k}{\PYZbs{}par}\PY{k}{\PYZbs{}noindent}\PY{k}{\PYZbs{}textsc}\PY{n+nb}{\PYZob{}}\PYZsh{}1\PY{n+nb}{\PYZcb{}}\PY{k}{\PYZbs{}par}\PY{k}{\PYZbs{}nobreak}\PY{k}{\PYZbs{}medskip}\PY{n+nb}{\PYZcb{}}
 \end{Verbatim}
-\end{code}
-\begin{callout}[callout note]{Note}
+\end{tscode}
+\begin{tscallout}[kind=note]
 In MkDocs, you need to specify how to render small capitals using a custom CSS:
-
-\begin{code}{css}{}{}
+\begin{tscode}[lang=css, engine=pygments]
 \begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
 \PY{p}{.}\PY{n+nc}{texsmith\PYZhy{}smallcaps}\PY{+w}{ }\PY{p}{\PYZob{}}
 \PY{+w}{    }\PY{k}{font\PYZhy{}variant}\PY{p}{:}\PY{+w}{ }\PY{k+kc}{small\PYZhy{}caps}\PY{p}{;}
 \PY{+w}{    }\PY{k}{letter\PYZhy{}spacing}\PY{p}{:}\PY{+w}{ }\PY{l+m+mf}{0.04}\PY{k+kt}{em}\PY{p}{;}
 \PY{p}{\PYZcb{}}
 \end{Verbatim}
-\end{code}
-Then, include this CSS in your MkDocs configuration under \texttt{extra\_css}:
-
-\begin{code}{yaml}{}{}
+\end{tscode}
+Then, include this CSS in your MkDocs configuration under \tscodeinline{extra\_css}:
+\begin{tscode}[lang=yaml, engine=pygments]
 \begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
 \PY{n+nt}{extra\PYZus{}css}\PY{p}{:}
 \PY{+w}{  }\PY{p+pIndicator}{\PYZhy{}}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{stylesheets/smallcaps.css}
 \end{Verbatim}
-\end{code}
-\end{callout}
-
+\end{tscode}
+\end{tscallout}
 \end{document}

@@ -1,15 +1,15 @@
 #set document(
-  title: "Getting Started",
+title: "Getting Started",
 )
 #set page(
-  paper: "a4",
-  margin: 2.5cm,
-  numbering: none,
-  footer: context {
-    if counter(page).final().first() > 1 {
-      align(center)[#counter(page).get().first()]
-    }
-  },
+paper: "a4",
+margin: 2.5cm,
+numbering: none,
+footer: context {
+if counter(page).final().first() > 1 {
+align(center)[#counter(page).get().first()]
+}
+},
 )
 #set text(font: "New Computer Modern", size: 11pt, lang: "en")
 #set par(justify: true)
@@ -17,13 +17,12 @@
 #set heading(numbering: "1.1")
 
 #align(center)[
-  #text(size: 1.8em, weight: "bold")[Getting Started]
-]
+#text(size: 1.8em, weight: "bold")[Getting Started]]
 #v(1.5em)
 
 In our journey to typeset beautiful documents with TeXSmith, we'll start with the basics:
 
-+ Turn Markdown or HTML into LaTeX/PDF.
++ Turn Markdown or HTML into #ts-logo("LaTeX")/PDF.
 + Drop TeXSmith into an existing MkDocs site.
 + Drive it from Python.
 
@@ -33,36 +32,42 @@ Hop to the section you need or read straight through for the big picture.
 
 To install TeXSmith, use your preferred Python package manager:
 
+#ts-div("tab", title: "pip")[
 ```bash
 pip install texsmith
-```
+```]
 
+#ts-div("tab", title: "pipx")[
 ```bash
 pipx install texsmith
-```
+```]
 
+#ts-div("tab", title: "uv")[
 ```bash
 uv tool install texsmith
-```
+```]
 
-For basic use, you don't need anything else. TeXSmith bundles Tectonic for LaTeX builds and will auto-install the required tools on demand.
+For basic use, you don't need anything else. TeXSmith bundles Tectonic for #ts-logo("LaTeX") builds and will auto-install the required tools on demand.
 
-To build with the *Typst* backend (`--format typst`), install the embedded compiler as an extra so no system binary is required:
+To build with the *Typst* backend (`–format typst`), install the embedded compiler as an extra so no system binary is required:
 
+#ts-div("tab", title: "pip")[
 ```bash
 pip install "texsmith[typst]"
-```
+```]
 
+#ts-div("tab", title: "uv")[
 ```bash
 uv tool install "texsmith[typst]"
-```
+```]
 
-A system `typst` binary on your `PATH` is detected automatically as a fallback. See #link("plumbing/backends.md")[Output backends] for details and the math caveat.
+A system `typst` binary on your `PATH` is detected automatically as a fallback. See Output backends for details and the math caveat.
 
-= Convert a Markdown file to LaTeX
+= Convert a Markdown file to #ts-logo("LaTeX")
 
-By default TeXSmith writes LaTeX to stdout. Pipe it or direct it into a folder. HTML works too:
+By default TeXSmith writes #ts-logo("LaTeX") to stdout. Pipe it or direct it into a folder. HTML works too:
 
+#ts-div("tab", title: "Here document")[
 ```
 cat << EOF | texsmith
 # Title
@@ -81,29 +86,31 @@ Some \textbf{bold} text.
 \item{} Bar
 
 \end{itemize}
-```
+```]
 
+#ts-div("tab", title: "From file")[
 ```
 $ echo "# Title\nSome **bold** text." > sample.md
 $ texsmith sample.md --output build/
 \chapter{Title}\label{title}
 
 Some \textbf{bold} text.
-```
+```]
 
+#ts-div("tab", title: "HTML")[
 ```
 $ echo "<h1>Title</h1><p>Some <strong>bold</strong> text.</p>" > sample.html
 $ texsmith sample.html
 \chapter{Title}
 Some \textbf{bold} text.
-```
+```]
 
 = Generate a PDF
 
 Want the full PDF? Start with our playful #link("https://en.wikipedia.org/wiki/Booby")[booby] example or create your own `booby.md`:
 
 ```markdown
-
+[include: examples/booby/booby.md not found]
 ```
 
 Notice the front matter up top: it carries the title, author, date, and template to use.
@@ -118,28 +125,49 @@ With Tectonic as the default engine, fonts, packages, and dependencies resolve t
 
 Enjoy a fresh PDF at `build/booby.pdf`:
 
-Peek inside `build/` to find `booby.tex`. Swap `--template` when you want a different LaTeX project layout or polish level:
+#figure(
+image("snippet-<HASH>.png", width: 70%),
+caption: [Demo],
+)
+
+Peek inside `build/` to find `booby.tex`. Swap `–template` when you want a different #ts-logo("LaTeX") project layout or polish level:
 
 ```bash
 texsmith booby.md --template article --output-dir build
 ```
 
-The default toolchain is `tectonic`, which auto-installs itself and required packages. If you prefer using your system LaTeX installation, specify `--engine lualatex` or `--engine xelatex` instead. Both commands yield `doc.pdf` in the current directory. Open it to see the rendered output.
+The default toolchain is `tectonic`, which auto-installs itself and required packages. If you prefer using your system #ts-logo("LaTeX") installation, specify `–engine lualatex` or `–engine xelatex` instead. Both commands yield `doc.pdf` in the current directory. Open it to see the rendered output.
 
-If you want to customize the layout, choose a template with `--template article`, `--template book` or `--template your-own-template`.
+If you want to customize the layout, choose a template with `–template article`, `–template book` or `–template your-own-template`.
 
-You may want to pass additional LaTeX options such as `-apaper=a4` or `-amargin=1in` to tweak page geometry:
+You may want to pass additional #ts-logo("LaTeX") options such as `-apaper=a4` or `-amargin=1in` to tweak page geometry:
+
+= Check a document before you build
+
+TeXSmith reads TMark, and the `tmark` toolchain checks a
+document without rendering anything:
+
+```bash
+tmark check --strict document.md   # parse, resolve and lint; exit 1 on any finding
+tmark lint --fix --diff document.md # preview the rewrite of deprecated spellings
+tmark lint --fix document.md        # apply it in place
+```
+
+`check` reports what the converter will see: unresolved references, undeclared
+counter prefixes, malformed tables, deprecated spellings. Coming from TeXSmith
+0.6? Every spelling you know still works, and
+Migrating to TMark lists what changed and what rewrites it.
 
 = Optional prerequisites
 
-/ LaTeX distribution: Install TeX Live, MiKTeX, or MacTeX if you want TeXSmith to hand off builds to `latexmk` (`--engine lualatex` / `--engine xelatex`). The default route uses Tectonic, which auto-installs itself and required packages.
-/ Typst compiler: Needed only for `--format typst --build`. Install the embedded compiler with `pip install "texsmith[typst]"`, or put a `typst` binary on your `PATH`. Emitting the `.typ` source (without `--build`) needs no compiler. See #link("plumbing/backends.md")[Output backends].
+/ #ts-logo("LaTeX") distribution: Install #ts-logo("TeX") Live, MiKTeX, or MacTeX if you want TeXSmith to hand off builds to `latexmk` (`–engine lualatex` / `–engine xelatex`). The default route uses Tectonic, which auto-installs itself and required packages.
+/ Typst compiler: Needed only for `–format typst –build`. Install the embedded compiler with `pip install "texsmith[typst]"`, or put a `typst` binary on your `PATH`. Emitting the `.typ` source (without `–build`) needs no compiler. See Output backends.
 / Diagram tooling: Mermaid-to-PDF (`minlag/mermaid-cli`) conversion falls back to Docker. Install Docker Desktop (with WSL integration on Windows) or register your own converter if Mermaid diagrams are common in your docs.
 
-Draw.io and Mermaid diagrams try a Playwright exporter first (cached under `~/.cache/texsmith/playwright`), then the local CLI, then Docker (`rlespinasse/drawio-desktop-headless` / `minlag/mermaid-cli`). Use `--diagrams-backend=playwright|local|docker` to pin a specific backend.
+Draw.io and Mermaid diagrams try a Playwright exporter first (cached under `~/.cache/texsmith/playwright`), then the local CLI, then Docker (`rlespinasse/drawio-desktop-headless` / `minlag/mermaid-cli`). Use `–diagrams-backend=playwright|local|docker` to pin a specific backend.
 
 / Fonts: TeXSmith ships with Noto fallback for wide Unicode coverage. Add your own fonts if you want a specific script or branded look.
-/ Legacy LaTeX accents: By default TeXSmith emits Unicode glyphs. If you need legacy LaTeX accent macros, pass `--legacy-latex-accents` on the CLI or set `ConversionRequest(legacy_latex_accents=True)` in the API.
+/ Legacy #ts-logo("LaTeX") accents: By default TeXSmith emits Unicode glyphs. If you need legacy #ts-logo("LaTeX") accent macros, pass `–legacy-latex-accents` on the CLI or set `ConversionRequest(legacy_latex_accents=True)` in the API.
 
 = Use the Python API
 
@@ -175,15 +203,11 @@ texsmith build/site/guides/overview/index.html \
   docs/references.bib
 ```
 
-#block(width: 100%, radius: 2pt, stroke: (left: 1.5pt + rgb("#00BFA5"), rest: 0.4pt + rgb("#00BFA5")))[
-  #block(width: 100%, fill: rgb("#00BFA5").lighten(90%), inset: (x: 8pt, y: 4pt))[#text(weight: "bold", fill: rgb("#00BFA5"))[⭐#h(0.4em)Tip]]
-  #block(width: 100%, inset: (x: 8pt, y: 6pt))[
-    The default selector (`article.md-content__inner`) already matches MkDocs Material content; skip `--selector` unless you heavily customise templates.
+#ts-callout(kind: "tip")[
+The default selector (`article.md-content__inner`) already matches MkDocs Material content; skip `–selector` unless you heavily customise templates.
 
-    When your site spans multiple documents, repeat the command per page and stitch them together with template slots (for example, `--slot mainmatter:build/site/manual/index.html`).
+When your site spans multiple documents, repeat the command per page and stitch them together with template slots (for example, `–slot mainmatter:build/site/manual/index.html`).
 
-    For live previews, point TeXSmith at the temporary site directory that `mkdocs serve` prints on startup.
+For live previews, point TeXSmith at the temporary site directory that `mkdocs serve` prints on startup.
 
-    Once the LaTeX bundle looks good, add `--build` to invoke your engine of choice or wire it into CI so MkDocs HTML → TeXSmith PDF runs on every build.
-  ]
-]
+Once the #ts-logo("LaTeX") bundle looks good, add `–build` to invoke your engine of choice or wire it into CI so MkDocs HTML #ts-script("symbols")[→ ]TeXSmith PDF runs on every build.]

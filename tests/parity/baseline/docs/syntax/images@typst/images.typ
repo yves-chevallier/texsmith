@@ -1,15 +1,15 @@
 #set document(
-  title: "Images",
+title: "Images",
 )
 #set page(
-  paper: "a4",
-  margin: 2.5cm,
-  numbering: none,
-  footer: context {
-    if counter(page).final().first() > 1 {
-      align(center)[#counter(page).get().first()]
-    }
-  },
+paper: "a4",
+margin: 2.5cm,
+numbering: none,
+footer: context {
+if counter(page).final().first() > 1 {
+align(center)[#counter(page).get().first()]
+}
+},
 )
 #set text(font: "New Computer Modern", size: 11pt, lang: "en")
 #set par(justify: true)
@@ -17,8 +17,7 @@
 #set heading(numbering: "1.1")
 
 #align(center)[
-  #text(size: 1.8em, weight: "bold")[Images]
-]
+#text(size: 1.8em, weight: "bold")[Images]]
 #v(1.5em)
 
 Images can be included in Markdown using the following syntax:
@@ -27,7 +26,25 @@ Images can be included in Markdown using the following syntax:
 ![Alt text](https://picsum.photos/400/150){width=50%}
 ```
 
-The width attribute is useful to scale images directly in the Markdown source.
+The attribute list scales the image directly in the source. `width`, `align`,
+`media` and per-format options (draw.io's `crop=`) all live there.
+
+An image with a caption line or an anchor is _promoted_ to a numbered float; a
+bare image stays inline.
+
+```md
+![Short caption for the list of figures](https://picsum.photos/400/150){width=50%}
+
+Figure: The long caption, with **Markdown**. {#fig:noise}
+```
+
+A video or audio source (`![Demo](demo.mp4)`) is a player on the web and, in
+print, its poster frame with the URL as a textual reference;
+`{media=web}` hides it from print altogether.
+
+#figure(
+image("snippet-<HASH>.png"),
+)
 
 = Draw.io diagrams
 
@@ -56,7 +73,7 @@ The same diagram can appear both ways in one document; each variant is exported
 and stored as its own asset.
 
 To flip the default for a whole document, set `drawio_crop` in the front matter
-(or `--attribute press.drawio_crop=false` on the command line); an image
+(or `–attribute press.drawio_crop=false` on the command line); an image
 attribute still wins over it:
 
 ```yaml

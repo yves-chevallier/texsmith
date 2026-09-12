@@ -8,6 +8,8 @@
 \usepackage[colorlinks=true, linkcolor=NavyBlue, urlcolor=NavyBlue, citecolor=NavyBlue]{hyperref}
 \usepackage[a4paper]{geometry}
 \usepackage{ts-fonts}
+\usepackage{tcolorbox}
+\usepackage{fvextra}
 \usepackage{amsmath}
 \usepackage{float}
 \usepackage{seqsplit}
@@ -17,57 +19,49 @@
 \usepackage{refcount}
 \makeatletter
 \def\ps@plain{
-  \let\@oddhead\@empty
-  \let\@evenhead\@empty
-  \def\@oddfoot{
-    \hfil
-    \ifnum\getpagerefnumber{LastPage}>1\relax
-      \thepage
-    \fi
-    \hfil}
-  \let\@evenfoot\@oddfoot
+\let\@oddhead\@empty
+\let\@evenhead\@empty
+\def\@oddfoot{
+\hfil
+\ifnum\getpagerefnumber{LastPage}>1\relax
+\thepage
+\fi
+\hfil}
+\let\@evenfoot\@oddfoot
 }
 \makeatother
 
 \title{Template Discovery}
 \author{}\date{}
-
 \begin{document}
-
 \maketitle
-
-\thispagestyle{plain}
 TeXSmith finds templates from multiple locations in a deterministic order:
-
 \begin{enumerate}
-\item \textbf{Built-ins}: shipped with TeXSmith (\texttt{article}, \texttt{book}, \texttt{letter}, \texttt{snippet}).
-\item \textbf{Installed packages}: PyPI distributions named \texttt{texsmith-\allowbreak{}template-\allowbreak{}*} (or exposing the \texttt{texsmith.templates} entry point).
-\item \textbf{Local tree}: current working directory and any ancestor \texttt{templates/} folder. Any \texttt{manifest.toml}/\texttt{template/manifest.toml} or \texttt{\_\_init\_\_.py} counts as a template root.
-\item \textbf{User directory}: \texttt{\textasciitilde{}/.texsmith/templates/<name>} (same structure as local).
-
+\item \textbf{Built-ins}: shipped with TeXSmith (\tscodeinline{article}, \tscodeinline{book}, \tscodeinline{letter}, \tscodeinline{snippet}).
+\item \textbf{Installed packages}: PyPI distributions named \tscodeinline{texsmith-\allowbreak{}template-\allowbreak{}*} (or exposing the \tscodeinline{texsmith.templates} entry point).
+\item \textbf{Local tree}: current working directory and any ancestor \tscodeinline{templates/} folder. Any \tscodeinline{manifest.toml}/\tscodeinline{template/manifest.toml} or \tscodeinline{\_\_init\_\_.py} counts as a template root.
+\item \textbf{User directory}: \tscodeinline{\textasciitilde{}/.texsmith/templates/<name>} (same structure as local).
 \end{enumerate}
 Use the CLI to inspect what was found:
-
-\begin{code}{bash}{}{}
+\begin{tscode}[lang=bash, engine=pygments]
 \begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
 texsmith\PY{+w}{ }\PYZhy{}\PYZhy{}template\PYZhy{}info\PY{+w}{ }\PYZhy{}\PYZhy{}template\PY{+w}{ }article
 texsmith\PY{+w}{ }templates\PY{+w}{  }\PY{c+c1}{\PYZsh{} list all visible templates}
 \end{Verbatim}
-\end{code}
-A valid template root contains either \texttt{manifest.toml} or \texttt{template/manifest.toml}; an \texttt{\_\_init\_\_.py} alongside these allows specialized Python logic.
+\end{tscode}
+A valid template root contains either \tscodeinline{manifest.toml} or \tscodeinline{template/manifest.toml}; an \tscodeinline{\_\_init\_\_.py} alongside these allows specialized Python logic.
 
 Notes:
-- Passing an explicit path (\texttt{-\allowbreak{}-\allowbreak{}template ./templates/custom}) bypasses discovery order.
-- Package roots win over same-named local folders; local folders win over the home directory.
-- Template manifests can include a \texttt{mermaid-\allowbreak{}config.json} at the root; \texttt{-\allowbreak{}-\allowbreak{}template-\allowbreak{}info} will surface it.
-
+\begin{itemize}
+\item Passing an explicit path (\tscodeinline{-\allowbreak{}-\allowbreak{}template ./templates/custom}) bypasses discovery order.
+\item Package roots win over same-named local folders; local folders win over the home directory.
+\item Template manifests can include a \tscodeinline{mermaid-\allowbreak{}config.json} at the root; \tscodeinline{-\allowbreak{}-\allowbreak{}template-\allowbreak{}info} will surface it.
+\end{itemize}
 To scaffold a built-in for customization:
-
-\begin{code}{bash}{}{}
+\begin{tscode}[lang=bash, engine=pygments]
 \begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
 texsmith\PY{+w}{ }templates\PY{+w}{ }scaffold\PY{+w}{ }article\PY{+w}{ }./templates/article
 \end{Verbatim}
-\end{code}
-Then point \texttt{-\allowbreak{}-\allowbreak{}template} to that path. Any \texttt{mermaid-\allowbreak{}config.json} placed at the template root will be picked up automatically.
-
+\end{tscode}
+Then point \tscodeinline{-\allowbreak{}-\allowbreak{}template} to that path. Any \tscodeinline{mermaid-\allowbreak{}config.json} placed at the template root will be picked up automatically.
 \end{document}
