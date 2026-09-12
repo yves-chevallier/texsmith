@@ -12,6 +12,7 @@ from texsmith.readers.loader import MemoryLoader
 
 FIXTURES = Path(__file__).resolve().parent
 PARTS = FIXTURES / "include" / "parts"
+SHARED = FIXTURES / "include" / "shared"
 
 
 def _loader() -> MemoryLoader:
@@ -19,6 +20,15 @@ def _loader() -> MemoryLoader:
     files = {str(path): path.read_text("utf-8") for path in PARTS.rglob("*") if path.is_file()}
     files[str(FIXTURES / "include" / "cycle.md")] = (FIXTURES / "include" / "cycle.md").read_text(
         "utf-8"
+    )
+    return MemoryLoader(files)
+
+
+def _search_loader() -> MemoryLoader:
+    """``parts/`` beside the document plus ``shared/``, the search path's directory."""
+    files = {str(path): path.read_text("utf-8") for path in PARTS.rglob("*") if path.is_file()}
+    files.update(
+        {str(path): path.read_text("utf-8") for path in SHARED.rglob("*") if path.is_file()}
     )
     return MemoryLoader(files)
 
@@ -134,3 +144,63 @@ def test_pass_is_identity_without_includes(harness) -> None:
     ctx = harness.context(document)
     assert harness.run("include", document, ctx) is document
     assert len(ctx.diagnostics) == 0
+
+
+def test_search_path_catches_what_the_document_directory_misses(harness) -> None:
+    document = harness.load("include", "search")
+    ctx = harness.context(document, loader=_search_loader(), include_paths=(SHARED,))
+    out = harness.run("include", document, ctx)
+    assert out.ir is not None
+
+    # A path that resolves beside the document is read there (the spec's rule),
+    # one that does not is looked up in the search path.
+    headers = [
+        (block.level, plain_text(block.content))
+        for block in out.ir.blocks
+        if isinstance(block, model.Header)
+    ]
+    assert headers == [(1, "Search"), (2, "Near"), (2, "Far")]
+
+    # The file actually read is the one registered, so a diagnostic names it.
+    assert [Path(ctx.files.path(index)) for index in ctx.files] == [
+        FIXTURES / "include" / "search.md",
+        PARTS / "near.md",
+        SHARED / "far.md",
+    ]
+
+    # The fence form has the same provenance and the same fallback.
+    codes = [node for node in walk(out.ir) if isinstance(node, model.CodeBlock)]
+    assert [code.text for code in codes] == ['print("far")\n']
+    assert all("include" not in dict(code.options.kv) for code in codes)
+
+    # A file no directory holds keeps the visible literal and the diagnostic.
+    literals = [
+        node.text
+        for node in walk(out.ir)
+        if isinstance(node, model.Str) and node.text.startswith("[include:")
+    ]
+    assert literals == ["[include: nowhere.md not found]"]
+    assert [record.code for record in ctx.diagnostics] == ["include-missing"]
+
+
+def test_without_a_search_path_only_the_document_directory_counts(harness) -> None:
+    document = harness.load("include", "search")
+    ctx = harness.context(document, loader=_search_loader())
+    out = harness.run("include", document, ctx)
+    assert out.ir is not None
+
+    headers = [
+        (block.level, plain_text(block.content))
+        for block in out.ir.blocks
+        if isinstance(block, model.Header)
+    ]
+    assert headers == [(1, "Search"), (2, "Near")]
+    literals = [
+        node.text
+        for node in walk(out.ir)
+        if isinstance(node, model.Str) and node.text.startswith("[include:")
+    ]
+    assert literals == ["[include: far.md not found]", "[include: nowhere.md not found]"]
+    codes = [node for node in walk(out.ir) if isinstance(node, model.CodeBlock)]
+    assert [code.text for code in codes] == ["[include: far-snippet.py not found]"]
+    assert [record.code for record in ctx.diagnostics] == ["include-missing"] * 3

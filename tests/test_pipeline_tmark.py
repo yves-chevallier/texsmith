@@ -19,6 +19,7 @@ from typer.testing import CliRunner
 from texsmith.core.context import DocumentState
 from texsmith.core.conversion import ConversionRequest, resolution
 from texsmith.core.conversion.bodies import Requires, build_writer_options
+from texsmith.core.conversion.pipeline import include_search_path
 from texsmith.core.conversion.resolution import (
     NUMBERING_OVERRIDE_KEY,
     PREDECLARED_SERIES,
@@ -30,6 +31,7 @@ from texsmith.core.conversion.resolution import (
     writer_numbering,
 )
 from texsmith.core.conversion.service import ConversionService
+from texsmith.core.documents import Document
 from texsmith.core.fragments.activation import apply_requires, required_fragment
 from texsmith.ir import model
 from texsmith.ui.cli import app
@@ -136,6 +138,68 @@ def test_features_example_splices_the_fence_include(tmp_path: Path) -> None:
     # ``--8<-- "hanoi.py"`` inside the python fence: the include pass read the file.
     assert "\\PY{n+nf}{tower\\PYZus{}of\\PYZus{}hanoi}" in body
     assert "[include:" not in body
+
+
+def _page_with_a_far_include(tmp_path: Path, front_matter: str = "") -> tuple[Path, Path]:
+    """A page whose include only resolves from ``tmp_path``; returns ``(page, out)``."""
+    (tmp_path / "shared").mkdir()
+    (tmp_path / "shared" / "note.md").write_text("Far and away.\n", encoding="utf-8")
+    pages = tmp_path / "pages"
+    pages.mkdir()
+    page = pages / "page.md"
+    page.write_text(f"{front_matter}# Page\n\n{{include}}(shared/note.md)\n", encoding="utf-8")
+    return page, tmp_path / "out"
+
+
+def test_include_path_option_resolves_what_the_page_directory_misses(tmp_path: Path) -> None:
+    page, out = _page_with_a_far_include(tmp_path)
+    _render([str(page), "-o", str(out), "-t", "article", "--include-path", str(tmp_path)])
+    body = _body(out / "page.tex")
+    assert "Far and away." in body
+    assert "[include:" not in body
+
+
+def test_front_matter_include_paths_resolve_relative_to_the_document(tmp_path: Path) -> None:
+    page, out = _page_with_a_far_include(
+        tmp_path, front_matter="---\npress:\n  include_paths:\n    - ..\n---\n\n"
+    )
+    _render([str(page), "-o", str(out), "-t", "article"])
+    body = _body(out / "page.tex")
+    assert "Far and away." in body
+    assert "[include:" not in body
+
+
+def test_include_search_path_orders_and_normalises_its_sources(tmp_path: Path) -> None:
+    pages = tmp_path / "pages"
+    pages.mkdir()
+    page = pages / "page.md"
+    page.write_text(
+        "---\npress:\n  include_paths:\n    - ../shared\n---\n\n# Page\n",
+        encoding="utf-8",
+    )
+    document = Document.from_markdown(page)
+
+    # Nothing but the front matter without a request.
+    assert include_search_path(None, document) == (tmp_path / "shared",)
+
+    # ``--include-path`` leads, the front matter follows, the host's comes last;
+    # a directory named twice keeps its first place.
+    request = ConversionRequest(
+        include_paths=[tmp_path / "cli"],
+        default_include_paths=[tmp_path / "site", tmp_path / "cli"],
+    )
+    assert include_search_path(request, document) == (
+        tmp_path / "cli",
+        tmp_path / "shared",
+        tmp_path / "site",
+    )
+
+    # A relative entry of the request is read from the current directory.
+    relative = ConversionRequest(include_paths=[Path("elsewhere")])
+    assert include_search_path(relative, document) == (
+        Path.cwd() / "elsewhere",
+        tmp_path / "shared",
+    )
 
 
 def _fake_snippet_renderer(monkeypatch: pytest.MonkeyPatch) -> list[str]:

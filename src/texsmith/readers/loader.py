@@ -19,7 +19,7 @@ from pathlib import Path, PurePath
 from texsmith.diagnostics import NO_SPAN, DiagnosticSink, FileTable
 
 
-__all__ = ["MemoryLoader", "TexsmithLoader", "join"]
+__all__ = ["MemoryLoader", "TexsmithLoader", "join", "join_dir"]
 
 
 def join(from_path: str | PurePath, rel: str) -> str:
@@ -31,11 +31,22 @@ def join(from_path: str | PurePath, rel: str) -> str:
     segments dropped, ``..`` folded into the previous segment when there is
     one. No symlink resolution, so TeXSmith and tmark print the same name.
     """
+    origin = PurePath(from_path)
+    return join_dir(origin.parent if origin.suffix else origin, rel)
+
+
+def join_dir(directory: str | PurePath, rel: str) -> str:
+    """Resolve ``rel`` against ``directory`` itself, never against its parent.
+
+    :func:`join` reads its first argument as a file and tells a directory from
+    it by the extension; the include search path
+    (:attr:`~texsmith.passes.PassContext.include_paths`) already holds
+    directories, and one whose last segment carries a dot would lose it.
+    """
     target = PurePath(rel)
     if target.is_absolute():
         return str(target)
-    origin = PurePath(from_path)
-    base = origin.parent if origin.suffix else origin
+    base = PurePath(directory)
     parts: list[str] = []
     for part in (*base.parts, *target.parts):
         if part == ".":

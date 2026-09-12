@@ -149,6 +149,10 @@ class PassContext:
     diagnostics: DiagnosticSink = field(default_factory=DiagnosticSink)
     loader: Any = field(default_factory=MemoryLoader)
     output_dir: Path = field(default_factory=Path.cwd)
+    #: Absolute directories the ``include`` pass falls back to when a path does
+    #: not resolve against the including file, in order (``--include-path``,
+    #: ``press.include_paths``, the site's ``pymdownx.snippets`` base path).
+    include_paths: tuple[Path, ...] = ()
     request: ConversionRequest | None = None
     #: Mustache contexts, first match wins (template overrides, front matter, defaults).
     contexts: tuple[Mapping[str, Any], ...] = ()

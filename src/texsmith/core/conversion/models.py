@@ -30,6 +30,15 @@ class ConversionRequest:
     front_matter_paths: Sequence[Path] = field(default_factory=tuple)
     slot_assignments: Mapping[Path, Sequence[SlotAssignment]] = field(default_factory=dict)
 
+    #: Directories an include falls back to when its path does not resolve
+    #: against the including file (``--include-path``). Searched first, before
+    #: the document's own ``press.include_paths``.
+    include_paths: Sequence[Path] = field(default_factory=tuple)
+    #: The same search path, supplied by the host rather than by the user (the
+    #: MkDocs companion passes the site's ``pymdownx.snippets`` base path here).
+    #: Searched last, after the document's ``press.include_paths``.
+    default_include_paths: Sequence[Path] = field(default_factory=tuple)
+
     selector: str = "article.md-content__inner"
     full_document: bool = False
     base_level: int = 0

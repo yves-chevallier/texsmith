@@ -14,10 +14,11 @@ is appended to ``Document.diagnostics`` at the end.
 
 from __future__ import annotations
 
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 import copy
 from dataclasses import dataclass, field, replace
-from pathlib import Path
+import os
+from pathlib import Path, PurePath
 from typing import TYPE_CHECKING, Any
 
 from texsmith.core.bibliography.collection import BibliographyCollection
@@ -49,6 +50,8 @@ if TYPE_CHECKING:  # pragma: no cover - typing only
     from texsmith.core.documents import Document
     from texsmith.core.templates import TemplateBinding
 
+    from .models import ConversionRequest
+
 
 __all__ = [
     "DEPRECATED_CODES",
@@ -59,6 +62,7 @@ __all__ = [
     "build_pass_context",
     "demote_deprecated",
     "deprecated_level",
+    "include_search_path",
     "processed_lang",
     "render_ir_document",
     "slot_template_of",
@@ -154,6 +158,56 @@ def processed_lang(document: Document) -> str | None:
     return lang if isinstance(lang, str) and lang.strip() else None
 
 
+def _front_matter_include_paths(front_matter: Mapping[str, Any] | None) -> tuple[str, ...]:
+    """The ``press.include_paths`` list of the front matter, a lone string accepted."""
+    if not isinstance(front_matter, Mapping):
+        return ()
+    press = front_matter.get("press")
+    value = press.get("include_paths") if isinstance(press, Mapping) else None
+    if isinstance(value, str | PurePath):
+        value = [value]
+    if not isinstance(value, Sequence):
+        return ()
+    return tuple(
+        str(item).strip()
+        for item in value
+        if isinstance(item, str | PurePath) and str(item).strip()
+    )
+
+
+def include_search_path(request: ConversionRequest | None, document: Document) -> tuple[Path, ...]:
+    """The directories the ``include`` pass falls back to, most specific first.
+
+    ``--include-path`` leads (``request.include_paths``), then the document's
+    own ``press.include_paths``, written relative to it, then whatever the host
+    supplied — the MkDocs companion hands over the ``base_path`` of the site's
+    ``pymdownx.snippets``, which is what the deprecated ``--8<-- "path"``
+    spelling was always resolved against. Entries are made absolute (against
+    the current directory for the request's, against the document's directory
+    for the front matter's), normalised textually like
+    :func:`~texsmith.readers.loader.join` and listed once.
+    """
+    ordered: list[Path] = []
+
+    def add(raw: str | Path, anchor: Path) -> None:
+        path = Path(raw)
+        absolute = path if path.is_absolute() else anchor / path
+        entry = Path(os.path.normpath(absolute))
+        if entry not in ordered:
+            ordered.append(entry)
+
+    cwd = Path.cwd()
+    source = document.source_path
+    base = Path(source).parent if source is not None else cwd
+    for raw in request.include_paths if request is not None else ():
+        add(raw, cwd)
+    for raw in _front_matter_include_paths(document.front_matter):
+        add(raw, base)
+    for raw in request.default_include_paths if request is not None else ():
+        add(raw, cwd)
+    return tuple(ordered)
+
+
 def _forwarding_sink(document: Document, emitter: DiagnosticEmitter) -> DiagnosticSink:
     def forward(record: Diagnostic, cause: BaseException | None) -> None:
         del cause
@@ -192,6 +246,7 @@ def build_pass_context(
         diagnostics=active_sink,
         loader=TexsmithLoader(document.files, active_sink),
         output_dir=context.output_dir,
+        include_paths=include_search_path(context.request, document),
         request=context.request,
         contexts=contexts,
         emitter=emitter,
