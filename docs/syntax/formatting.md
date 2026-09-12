@@ -84,23 +84,25 @@ This guarantees a no-indent paragraph break and a small vertical breather, so th
 ```md
 La synthèse récapitule, pilier par pilier, les forces et faiblesses…
 
-**Sens critique**
+{lead}[Sens critique]
 
 | Python | C |
 |--------|---|
 | Faible | Fort |
 
-**Méthodologie**
+{lead}[Méthodologie]
 
 | Python | C |
 |--------|---|
 | Correcte | Forte |
 ```
 
-The rule fires when the paragraph opens with a strong span and nothing else
-precedes it, and the strong text is shorter than 80 characters. Bold spans
-inside running prose (`Some **bold** text.`) and bold paragraphs over the
-threshold keep their `\textbf{…}` rendering.
+Written as `**Sens critique**` on a line of its own, the same two labels are
+promoted to lead-ins automatically and `tmark lint` says so
+(`lead-promotion`). The rule fires when the paragraph opens with a strong span
+and nothing else precedes it, and the strong text is shorter than 80
+characters. Bold spans inside running prose (`Some **bold** text.`) and bold
+paragraphs over the threshold keep their `\textbf{…}` rendering.
 
 Override `\tslead` in a custom preamble snippet to change the visual style — for instance, to add a coloured rule, switch to small caps, or replace the `\smallskip` with `\medskip`:
 
