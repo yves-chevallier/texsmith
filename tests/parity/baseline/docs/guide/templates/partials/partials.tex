@@ -94,7 +94,8 @@ are ignored, so an older fragment survives a newer writer.
 \midrule
 \tscodeinline{ts-\allowbreak{}typesetting} & \tscodeinline{\textbackslash{}tslead\{…\}} & --- & lead-in of a paragraph (run-in bold line) \\
 & \tscodeinline{\textbackslash{}tsmark\{…\}} & --- & highlight; coloured text on \tslogo{XeTeX}, \tscodeinline{lua-\allowbreak{}ul} on \tslogo{LuaTeX}, a colour box otherwise \\
-& \tscodeinline{\textbackslash{}tsdivider} & --- & thematic break; \tscodeinline{\textbackslash{}clearpage} by default \\
+& \tscodeinline{\textbackslash{}tsdivider} & --- & thematic break at the top level of the document; \tscodeinline{\textbackslash{}clearpage} by default \\
+& \tscodeinline{\textbackslash{}tsrule[keys]} & \tscodeinline{width}, \tscodeinline{thickness}, \tscodeinline{above}, \tscodeinline{below} & the same thematic break inside a container (quote, callout, figure, div, list item, cell, aside, note); a full-width rule, never a page break \\
 & \tscodeinline{\textbackslash{}tsepigraph[source=\{…\}]\{…\}} & \tscodeinline{source} & \tscodeinline{epigraph} \\
 & \tscodeinline{\textbackslash{}tsaside[side=left]\{…\}} & \tscodeinline{side} (\tscodeinline{left}, \tscodeinline{right}, \tscodeinline{inner}, \tscodeinline{outer}) & \tscodeinline{marginnote}, with the margin font and width clamp \\
 & \tscodeinline{\textbackslash{}tsprogress[thin]\{0.45\}\{label\}} & \tscodeinline{thin} & \tscodeinline{progressbar} \\
@@ -141,6 +142,7 @@ defined:
 \begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
 \PY{k}{\PYZbs{}RenewDocumentCommand}\PY{n+nb}{\PYZob{}}\PY{k}{\PYZbs{}tscodeinline}\PY{n+nb}{\PYZcb{}}\PY{n+nb}{\PYZob{}}O\PY{n+nb}{\PYZob{}}\PY{n+nb}{\PYZcb{}}m\PY{n+nb}{\PYZcb{}}\PY{n+nb}{\PYZob{}}\PY{k}{\PYZbs{}mbox}\PY{n+nb}{\PYZob{}}\PY{k}{\PYZbs{}texttt}\PY{n+nb}{\PYZob{}}\PYZsh{}2\PY{n+nb}{\PYZcb{}}\PY{n+nb}{\PYZcb{}}\PY{n+nb}{\PYZcb{}}
 \PY{k}{\PYZbs{}RenewDocumentCommand}\PY{n+nb}{\PYZob{}}\PY{k}{\PYZbs{}tsdivider}\PY{n+nb}{\PYZcb{}}\PY{n+nb}{\PYZob{}}\PY{n+nb}{\PYZcb{}}\PY{n+nb}{\PYZob{}}\PY{k}{\PYZbs{}bigskip}\PY{k}{\PYZbs{}hrule}\PY{k}{\PYZbs{}bigskip}\PY{n+nb}{\PYZcb{}}
+\PY{k}{\PYZbs{}pgfkeys}\PY{n+nb}{\PYZob{}}/ts/rule/.cd, thickness=1pt, width=0.4\PY{k}{\PYZbs{}linewidth}\PY{n+nb}{\PYZcb{}}
 \PY{k}{\PYZbs{}RenewDocumentEnvironment}\PY{n+nb}{\PYZob{}}tsdiv@multicolumn\PY{n+nb}{\PYZcb{}}\PY{n+nb}{\PYZob{}}O\PY{n+nb}{\PYZob{}}\PY{n+nb}{\PYZcb{}}\PY{n+nb}{\PYZcb{}}\PY{n+nb}{\PYZob{}}\PY{k}{\PYZbs{}begin}\PY{n+nb}{\PYZob{}}multicols\PY{n+nb}{\PYZcb{}}\PY{n+nb}{\PYZob{}}3\PY{n+nb}{\PYZcb{}}\PY{n+nb}{\PYZcb{}}\PY{n+nb}{\PYZob{}}\PY{k}{\PYZbs{}end}\PY{n+nb}{\PYZob{}}multicols\PY{n+nb}{\PYZcb{}}\PY{n+nb}{\PYZcb{}}
 \end{Verbatim}
 \end{tscode}
@@ -168,7 +170,7 @@ on the legacy path and warn, naming the replacement --- and are removed in
 \tscodeinline{italic}, \tscodeinline{strong}, \tscodeinline{smallcaps}, \tscodeinline{subscript}, \tscodeinline{superscript}, \tscodeinline{strikethrough}, \tscodeinline{underline}, \tscodeinline{enquote}, \tscodeinline{blockquote} & structural \LaTeX{} from the writer \\
 \tscodeinline{highlight} & \tscodeinline{\textbackslash{}tsmark} \\
 \tscodeinline{lead} & \tscodeinline{\textbackslash{}tslead} \\
-\tscodeinline{horizontal\_rule} & \tscodeinline{\textbackslash{}tsdivider} \\
+\tscodeinline{horizontal\_rule} & \tscodeinline{\textbackslash{}tsdivider} (top level), \tscodeinline{\textbackslash{}tsrule} (in a container) \\
 \tscodeinline{epigraph} & \tscodeinline{\textbackslash{}tsepigraph} \\
 \tscodeinline{multicolumn}, \tscodeinline{tabbed} & \tscodeinline{tsdiv@multicolumn}, \tscodeinline{tsdiv@tab} \\
 \tscodeinline{icon} & \tscodeinline{\textbackslash{}tsicon} \\

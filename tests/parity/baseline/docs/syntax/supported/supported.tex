@@ -77,7 +77,10 @@ Dividers:
 All standard CommonMark constructs render as you would expect. A \tscodeinline{-\allowbreak{}-\allowbreak{}-\allowbreak{}} line is
 a \textbf{divider}: the web shows \tscodeinline{<hr>}, and the paged writers emit \tscodeinline{\textbackslash{}tsdivider},
 which the \tscodeinline{ts-\allowbreak{}typesetting} fragment defines as a page break --- a template
-redefines it at will.
+redefines it at will. Inside a container --- a block quote, a callout, a figure,
+a \tscodeinline{:::} div, a list item --- the same \tscodeinline{-\allowbreak{}-\allowbreak{}-\allowbreak{}} emits \tscodeinline{\textbackslash{}tsrule} instead (\tscodeinline{<hr
+class="rule">} on the web): a separator, never a page break, because a page
+break there would tear the container in two.
 \section{Cheat sheet}
 \begin{center}
 \begin{tabularx}{\linewidth}{>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X}

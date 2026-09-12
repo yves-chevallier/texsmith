@@ -42,7 +42,8 @@ align: (left, left, left, left),
 table.header([Fragment], [Macro / environment], [Keys], [Notes]),
 [`ts-typesetting`], [`\tslead{…}`], [—], [lead-in of a paragraph (run-in bold line)],
 [], [`\tsmark{…}`], [—], [highlight; coloured text on #ts-logo("XeTeX"), `lua-ul` on #ts-logo("LuaTeX"), a colour box otherwise],
-[], [`\tsdivider`], [—], [thematic break; `\clearpage` by default],
+[], [`\tsdivider`], [—], [thematic break at the top level of the document; `\clearpage` by default],
+[], [`\tsrule[keys]`], [`width`, `thickness`, `above`, `below`], [the same thematic break inside a container (quote, callout, figure, div, list item, cell, aside, note); a full-width rule, never a page break],
 [], [`\tsepigraph[source={…}]{…}`], [`source`], [`epigraph`],
 [], [`\tsaside[side=left]{…}`], [`side` (`left`, `right`, `inner`, `outer`)], [`marginnote`, with the margin font and width clamp],
 [], [`\tsprogress[thin]{0.45}{label}`], [`thin`], [`progressbar`],
@@ -87,6 +88,7 @@ defined:
   ```latex
   \RenewDocumentCommand{\tscodeinline}{O{}m}{\mbox{\texttt{#2}}}
   \RenewDocumentCommand{\tsdivider}{}{\bigskip\hrule\bigskip}
+  \pgfkeys{/ts/rule/.cd, thickness=1pt, width=0.4\linewidth}
   \RenewDocumentEnvironment{tsdiv@multicolumn}{O{}}{\begin{multicols}{3}}{\end{multicols}}
   ```
 A custom `::: name` container is a `tsdiv@name` environment defined the
@@ -115,7 +117,7 @@ table.header([Former partial], [Replacement]),
 [`italic`, `strong`, `smallcaps`, `subscript`, `superscript`, `strikethrough`, `underline`, `enquote`, `blockquote`], [structural #ts-logo("LaTeX") from the writer],
 [`highlight`], [`\tsmark`],
 [`lead`], [`\tslead`],
-[`horizontal_rule`], [`\tsdivider`],
+[`horizontal_rule`], [`\tsdivider` (top level), `\tsrule` (in a container)],
 [`epigraph`], [`\tsepigraph`],
 [`multicolumn`, `tabbed`], [`tsdiv@multicolumn`, `tsdiv@tab`],
 [`icon`], [`\tsicon`],
