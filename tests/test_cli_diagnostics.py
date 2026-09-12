@@ -12,17 +12,20 @@ from texsmith.ui.cli import app
 
 DUPLICATE_COUNTER = """\
 ---
-counters:
-  n:
-    name: Requirement
-    format: "N-{n:02d}"
+press:
+  declare:
+    counters:
+      n:
+        name: Requirement
+        format: "N-{n:02d}"
 ---
-First #{n:joy} and again #{n:joy}.
+First {counter}(n:joy) and again {counter}(n:joy).
 """
 
 STRICT_FRONT_MATTER = DUPLICATE_COUNTER.replace(
-    "counters:",
-    "press:\n  features:\n    strict: true\ncounters:",
+    "press:\n",
+    "press:\n  features:\n    strict: true\n",
+    1,
 )
 
 
@@ -36,10 +39,7 @@ def test_authoring_defects_print_as_diagnostics(tmp_path: Path) -> None:
     source = _write(tmp_path, DUPLICATE_COUNTER)
     result = CliRunner().invoke(app, [str(source)])
     assert result.exit_code == 0, result.output
-    assert (
-        f"{source}: warning label-duplicate: Counter 'n:joy' is defined more than once; "
-        "keeping the first number." in result.output
-    )
+    assert f"{source}:9:34: warning label-duplicate: `#n:joy` is defined twice" in result.output
     assert "0 errors, 1 warning" in result.output
 
 
@@ -54,7 +54,9 @@ def test_strict_fails_after_rendering(tmp_path: Path) -> None:
 
 
 def test_strict_passes_a_clean_document(tmp_path: Path) -> None:
-    source = _write(tmp_path, DUPLICATE_COUNTER.replace("again #{n:joy}", "then #{n:respect}"))
+    source = _write(
+        tmp_path, DUPLICATE_COUNTER.replace("again {counter}(n:joy)", "then {counter}(n:respect)")
+    )
     result = CliRunner().invoke(app, [str(source), "--strict"])
     assert result.exit_code == 0, result.output
     assert "label-duplicate" not in result.output
@@ -78,14 +80,16 @@ def test_diagnostics_json_dumps_the_records(tmp_path: Path) -> None:
     (record,) = payload
     assert record["code"] == "label-duplicate"
     assert record["severity"] == "warning"
-    assert record["origin"] == "texsmith"
+    assert record["origin"] == "tmark"
     assert record["path"] == str(source)
-    assert record["line"] is None and record["col"] is None
-    assert record["span"][1:] == [0, 0]
+    assert (record["line"], record["col"]) == (9, 34)
+    assert record["related"][0][1] == "first definition"
 
 
 def test_diagnostics_json_is_written_for_a_clean_run(tmp_path: Path) -> None:
-    source = _write(tmp_path, DUPLICATE_COUNTER.replace("again #{n:joy}", "then #{n:respect}"))
+    source = _write(
+        tmp_path, DUPLICATE_COUNTER.replace("again {counter}(n:joy)", "then {counter}(n:respect)")
+    )
     dump = tmp_path / "diagnostics.json"
     result = CliRunner().invoke(app, [str(source), "--diagnostics-json", str(dump)])
     assert result.exit_code == 0, result.output

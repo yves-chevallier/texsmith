@@ -273,7 +273,7 @@ def test_render_from_stdin(monkeypatch: Any) -> None:
     runner = CliRunner()
     result = runner.invoke(
         app,
-        [],
+        ["--reader", "html"],
         input="# Title\n\nSome **bold** text.\n",
     )
 
@@ -301,6 +301,8 @@ def test_default_markdown_extensions(monkeypatch: Any) -> None:
         result = runner.invoke(
             app,
             [
+                "--reader",
+                "html",
                 str(markdown_file),
             ],
         )
@@ -330,6 +332,8 @@ def test_markdown_extensions_option_extends_defaults(monkeypatch: Any) -> None:
         result = runner.invoke(
             app,
             [
+                "--reader",
+                "html",
                 str(markdown_file),
                 "--enable-extension",
                 "custom_extension,another_extension",
@@ -366,6 +370,8 @@ def test_disable_markdown_extensions_option(tmp_path: Path, monkeypatch: Any) ->
     result = runner.invoke(
         app,
         [
+            "--reader",
+            "html",
             str(markdown_file),
             "--output-dir",
             str(tmp_path / "output"),
@@ -1520,7 +1526,7 @@ def test_html_output_with_template_metadata(tmp_path: Path) -> None:
         encoding="utf-8",
     )
 
-    result = runner.invoke(app, [str(doc), "--html"])
+    result = runner.invoke(app, [str(doc), "--reader", "html", "--html"])
 
     output_file = tmp_path / "build" / "doc.html"
     assert result.exit_code == 0, result.stdout

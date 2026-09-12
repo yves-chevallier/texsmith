@@ -140,14 +140,33 @@ def _coerce_group(key: str, value: Any) -> GlossaryGroupModel:
     )
 
 
+def _raw_glossary(front_matter: Mapping[str, Any]) -> Any:
+    """The glossary section, canonical spelling first.
+
+    TMark declares it under ``press.declare.glossary``; the top-level
+    ``glossary:`` of TeXSmith 0.6 stays accepted (``tmark lint --fix`` rewrites
+    it, and ``tmark check`` reports it as ``deprecated-frontmatter-key``).
+    """
+    press = front_matter.get("press")
+    for scope in (press if isinstance(press, Mapping) else None, front_matter):
+        if not isinstance(scope, Mapping):
+            continue
+        declare = scope.get("declare")
+        if isinstance(declare, Mapping) and declare.get("glossary") is not None:
+            return declare["glossary"]
+    if isinstance(press, Mapping) and press.get("glossary") is not None:
+        return press["glossary"]
+    return front_matter.get("glossary")
+
+
 def parse_front_matter_glossary(
     front_matter: Mapping[str, Any] | None,
 ) -> GlossaryFrontMatter | None:
-    """Validate and normalise the ``glossary:`` front-matter section."""
+    """Validate and normalise the ``press.declare.glossary`` front-matter section."""
     if not isinstance(front_matter, Mapping):
         return None
 
-    raw = front_matter.get("glossary")
+    raw = _raw_glossary(front_matter)
     if raw is None or isinstance(raw, bool):
         return None
     if isinstance(raw, str):

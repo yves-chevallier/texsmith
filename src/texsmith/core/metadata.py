@@ -220,7 +220,25 @@ def _normalise_press_authors(metadata: MutableMapping[str, Any]) -> None:
     metadata["authors"] = normalized
 
 
+def _hoist_declared_glossary(press_payload: MutableMapping[str, Any]) -> None:
+    """``press.declare.glossary`` (canonical) feeds the ``glossary`` section.
+
+    TMark declares the acronym tables under ``press.declare.glossary``; TeXSmith
+    has read them from a ``glossary:`` section since 0.5. The canonical spelling
+    wins, the old one keeps working (``tmark check`` reports it as
+    ``deprecated-frontmatter-key``).
+    """
+    declare = press_payload.get("declare")
+    if not isinstance(declare, Mapping):
+        return
+    declared = declare.get("glossary")
+    if declared is None or press_payload.get("glossary") is not None:
+        return
+    press_payload["glossary"] = copy.deepcopy(declared)
+
+
 def _flatten_press_aliases(press_payload: MutableMapping[str, Any]) -> None:
+    _hoist_declared_glossary(press_payload)
     for (section, key), target in _NESTED_ALIAS_MAP.items():
         nested = press_payload.get(section)
         if not isinstance(nested, Mapping):

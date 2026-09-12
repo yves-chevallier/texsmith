@@ -590,7 +590,7 @@ def render(
             )
         if html_only:
             raise typer.BadParameter("--format typst cannot be combined with --html.")
-    reader = (reader or "html").strip().lower()
+    reader = (reader or "tmark").strip().lower()
     if reader not in {"html", "tmark"}:
         raise typer.BadParameter("--reader must be 'html' or 'tmark'.")
     if html_only and reader == "tmark":

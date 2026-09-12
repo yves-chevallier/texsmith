@@ -39,8 +39,9 @@ class ConversionRequest:
     suppress_title: bool = False
     numbered: bool = True
     markdown_extensions: Sequence[str] = field(default_factory=list)
-    #: ``"html"`` (Markdown → HTML → legacy IR) or ``"tmark"`` (``tmark.parse`` → IR).
-    reader: str = "html"
+    #: ``"tmark"`` (``tmark.parse`` → IR, the default) or ``"html"`` (Markdown →
+    #: HTML → legacy IR, the escape hatch kept for one release).
+    reader: str = "tmark"
 
     template: str | None = None
     render_dir: Path | None = None

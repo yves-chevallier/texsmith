@@ -148,19 +148,21 @@ def test_front_matter_glossary_renders_groups_and_localised_title() -> None:
     source = """---
 title: Glossary demo
 language: french
-glossary:
-  style: long
-  groups:
-    tech: Acronymes techniques
-    inst: Acronymes institutionnels
-  entries:
-    API:
-      group: tech
-      description: Application Programming Interface
-    ONU:
-      group: inst
-      description: Organisation des Nations Unies
-    XYZ: Plain ungrouped acronym
+press:
+  declare:
+    glossary:
+      style: long
+      groups:
+        tech: Acronymes techniques
+        inst: Acronymes institutionnels
+      entries:
+        API:
+          group: tech
+          description: Application Programming Interface
+        ONU:
+          group: inst
+          description: Organisation des Nations Unies
+        XYZ: Plain ungrouped acronym
 ---
 
 # Sample
@@ -192,10 +194,10 @@ The API is used. The ONU was founded in 1945. XYZ is here.
         assert "\\newacronym{XYZ}{XYZ}{Plain ungrouped acronym}" in sty
         assert "\\setglossarystyle{long}" in sty
 
-        # Body acronyms get \acrshort substitution from the synthesised abbr lines.
-        assert "\\acrshort{API}" in tex
-        assert "\\acrshort{ONU}" in tex
-        assert "\\acrshort{XYZ}" in tex
+        # Body acronyms get the \tsacr contract macro from the synthesised abbr lines.
+        assert "\\tsacr{API}" in tex
+        assert "\\tsacr{ONU}" in tex
+        assert "\\tsacr{XYZ}" in tex
 
         # Backmatter: ungrouped table first (using default \acronymname title), then
         # one \printglossary per group in declaration order. No bare \printglossary
@@ -214,9 +216,11 @@ The API is used. The ONU was founded in 1945. XYZ is here.
 def test_front_matter_glossary_merges_with_body_definitions() -> None:
     source = """---
 title: Mixed
-glossary:
-  entries:
-    API: Application Programming Interface
+press:
+  declare:
+    glossary:
+      entries:
+        API: Application Programming Interface
 ---
 
 API and NMR are common acronyms.
@@ -237,13 +241,17 @@ API and NMR are common acronyms.
 
         assert "\\newacronym{API}{API}{Application Programming Interface}" in sty
         assert "\\newacronym{NMR}{NMR}{Nuclear Magnetic Resonance}" in sty
-        assert "\\acrshort{API}" in tex
-        assert "\\acrshort{NMR}" in tex
+        assert "\\tsacr{API}" in tex
+        assert "\\tsacr{NMR}" in tex
 
 
 @pytestmark_render
 def test_front_matter_glossary_includes_unused_entries() -> None:
-    """Entries declared in the front matter must appear even if absent from the body."""
+    """Entries declared in the front matter must appear even if absent from the body.
+
+    Written with the deprecated top-level ``glossary:`` spelling on purpose: it
+    keeps working beside the canonical ``press.declare.glossary``.
+    """
     source = """---
 title: Unused
 glossary:
@@ -281,9 +289,11 @@ def test_front_matter_glossary_leaves_math_payloads_untouched() -> None:
     """
     source = """---
 title: Math glossary
-glossary:
-  entries:
-    PWM: Pulse Width Modulation
+press:
+  declare:
+    glossary:
+      entries:
+        PWM: Pulse Width Modulation
 ---
 
 # Sample
@@ -306,7 +316,7 @@ $$
         tex = (out_dir / "doc.tex").read_text(encoding="utf-8")
 
         # Prose occurrence is substituted; the two math occurrences are not.
-        assert tex.count("\\acrshort{PWM}") == 1
+        assert tex.count("\\tsacr{PWM}") == 1
         assert "$\\Delta I_{pp} = V_{bus}/(4 L f_{PWM})$" in tex
         assert "f_{PWM} = 44" in tex
         # The formula must not have been escaped into literal text.

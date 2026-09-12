@@ -287,9 +287,26 @@ def test_debug_html_dumps_the_ir(tmp_path: Path) -> None:
     assert not (out / "abbreviations.debug.html").exists()
 
 
-def test_html_reader_stays_the_default(tmp_path: Path) -> None:
-    out = tmp_path / "legacy"
+def test_tmark_is_the_default_reader(tmp_path: Path) -> None:
+    out = tmp_path / "default"
     _render([str(EXAMPLES / "abbr" / "abbreviations.md"), "-o", str(out), "-t", "article"])
+    body = _body(out / "abbreviations.tex")
+    assert "\\tsacr{" in body
+
+
+def test_the_html_reader_stays_available(tmp_path: Path) -> None:
+    out = tmp_path / "legacy"
+    _render(
+        [
+            "--reader",
+            "html",
+            str(EXAMPLES / "abbr" / "abbreviations.md"),
+            "-o",
+            str(out),
+            "-t",
+            "article",
+        ]
+    )
     body = _body(out / "abbreviations.tex")
     assert "\\acrshort{NMR}" in body
     assert "\\tsacr{" not in body

@@ -46,8 +46,9 @@ ReaderOption = Annotated[
     typer.Option(
         "--reader",
         help=(
-            "Markdown reader: 'html' (Python-Markdown → HTML → IR, the default) or "
-            "'tmark' (the TMark parser and writers; migration path)."
+            "Markdown reader: 'tmark' (the TMark parser and writers, the default) "
+            "or 'html' (Python-Markdown → HTML → IR; kept for '.html' inputs and "
+            "as an escape hatch for one release)."
         ),
         rich_help_panel=INPUTS_PANEL,
         case_sensitive=False,

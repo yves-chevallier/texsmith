@@ -190,6 +190,31 @@ def _front_matter_numbered(metadata: Mapping[str, Any] | None) -> bool | None:
     return _coerce_bool(payload.get("numbered"))
 
 
+def _append_front_matter_abbreviations(text: str, emitter: DiagnosticEmitter) -> str:
+    """Append the ``*[KEY]: description`` lines of the front-matter glossary.
+
+    ``press.declare.glossary.entries`` declares acronyms without writing an
+    abbreviation definition for each; the legacy path synthesised those lines
+    for ``markdown.abbr`` before rendering. The tmark reader does the same at
+    the end of the source, where the appended lines move no existing span.
+    """
+    from .glossary import (
+        GlossaryValidationError,
+        append_synthetic_abbr_lines,
+        parse_front_matter_glossary,
+    )
+
+    front_matter, _body = split_front_matter(text)
+    try:
+        glossary = parse_front_matter_glossary(front_matter)
+    except GlossaryValidationError as exc:
+        emitter.warning(str(exc))
+        return text
+    if glossary is None or not glossary.has_entries:
+        return text
+    return append_synthetic_abbr_lines(text, glossary)
+
+
 @dataclass(slots=True)
 class SlotPlan:
     """The slot requests of a document: selectors, wildcard inclusions, options.
@@ -346,6 +371,12 @@ class Document:
             message = f"Failed to read Markdown source '{path}': {exc}"
             emitter.error(message, exc)
             raise ConversionError(message) from exc
+
+        # ``press.declare.glossary`` entries reach the body as the abbreviation
+        # definitions the legacy path synthesised for ``markdown.abbr``: tmark
+        # then lowers every occurrence to an ``Abbr`` and the writers to
+        # ``\\tsacr{…}``. Appended at the end, so no span of the text above moves.
+        text = _append_front_matter_abbreviations(text, emitter)
 
         # The build's file table is the emitter's when it has one, so every
         # diagnostic of the batch renders with its file name; a document then
