@@ -401,6 +401,12 @@
   pattern: '\A-(.*)\]\]\n\+\1\]\Z'
   reason: "fragment-contracts.md §1 callout (Typst): #ts-callout is one content block where the legacy writer nested two #block calls, so the body closes one bracket earlier"
   expires: 0.8.0
+- id: typst-inline-image-box
+  kind: hunk
+  files: ["**/*.typ"]
+  pattern: '\A(?:-#image\(.*\)\n)+\+#box\(image\(.*\)\)(?:\n\+#box\(image\(.*\)\))*\Z'
+  reason: "writers-and-passes.md §2 Media: the tmark Typst writer boxes an inline image (#box(image(…))) so it never breaks; the legacy writer emitted a bare #image"
+  expires: 0.8.0
 
 # ------------------------------------------------------ writer behaviours
 # writers-and-passes.md §2: intended behaviour changes of the LaTeX writer.

@@ -240,26 +240,33 @@ def _build_image_map(
     the emitted path points at the copy. Remote URLs and missing files map to an
     empty string so the writer drops the reference (keeping the document
     compilable without a fetch/toolchain dependency).
+
+    A MkDocs Material theme variant (``a.svg#only-light``) is stripped before
+    the lookup, as the LaTeX writer does (``_strip_mkdocs_theme_variant``):
+    with the fragment left on, ``source_dir / src`` named no file and both
+    halves of a light/dark pair were silently dropped (parity triage F10).
     """
     import shutil
     from urllib.parse import urlparse
 
     from texsmith.ir.visitor import walk
+    from texsmith.writers.latex.writer import _strip_mkdocs_theme_variant
 
     mapping: dict[str, str] = {}
     for node in walk(ir_document):
         if not isinstance(node, ir.Image):
             continue
-        src = node.src
-        if src in mapping:
+        key = node.src
+        if key in mapping:
             continue
+        src = _strip_mkdocs_theme_variant(key)
         scheme = urlparse(src).scheme
         if scheme in {"http", "https", "data"}:
-            mapping[src] = ""
+            mapping[key] = ""
             continue
         candidate = (source_dir / src).resolve()
         if not candidate.is_file() or output_dir is None:
-            mapping[src] = ""
+            mapping[key] = ""
             continue
         rel = src if not Path(src).is_absolute() else candidate.name
         destination = (output_dir / rel).resolve()
@@ -267,9 +274,9 @@ def _build_image_map(
             destination.parent.mkdir(parents=True, exist_ok=True)
             shutil.copy2(candidate, destination)
         except OSError:
-            mapping[src] = ""
+            mapping[key] = ""
             continue
-        mapping[src] = rel
+        mapping[key] = rel
     return mapping
 
 

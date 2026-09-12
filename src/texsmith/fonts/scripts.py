@@ -23,7 +23,19 @@ from texsmith.fonts.logging import FontPipelineLogger
 from texsmith.fonts.pipeline import generate_noto_metadata, generate_ucharclasses_data
 
 
-_SKIP_GROUPS = {"latin", "common", "punctuation", "other"}
+# Groups that are not a writing system, so a run of them needs no font switch
+# and no ``\tsscript`` wrapper: ``SuperscriptsAndSubscripts`` is a ucharclasses
+# *block*, and its characters are served by the document's own serif face — the
+# writers already typeset them as ``\textsuperscript``/``\textsubscript``
+# (parity triage F7, where ``s⁻¹`` became
+# ``s\tsscript{superscriptsandsubscripts}{\textsuperscript{-}}\textsuperscript{1}``).
+_SKIP_GROUPS = {
+    "latin",
+    "common",
+    "punctuation",
+    "other",
+    "superscriptsandsubscripts",
+}
 
 # Prefer native math macros for single-letter Greek/hebrew math symbols to avoid
 # relying on \textgreek wrappers when a math glyph already exists.

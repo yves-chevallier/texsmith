@@ -272,15 +272,24 @@ def _declare_glossary(state: DocumentState, resolved: Mapping[str, Any] | None) 
     and its includes; the writer emits ``\\tsgls{key}`` with the key as
     written, so the entry is declared under that exact key (no slugification)
     and an entry a previous document of the batch declared is left alone.
+
+    tmark case-folds those keys (``tmark-registry``'s ``collect::glossary``,
+    and ``@gls:`` resolves against the folded form), while ``\\tsacr`` keeps
+    the acronym's own spelling: an acronym that is both declared and written
+    would otherwise be declared twice — ``\\newacronym{NMR}`` beside
+    ``\\newacronym{nmr}`` — and printed twice in the glossary. So a term a
+    cased variant already declares is skipped.
     """
     terms = (resolved or {}).get("glossary")
     if not isinstance(terms, Mapping):
         return
+    folded = {name.casefold() for name in state.acronyms}
     for key, description in terms.items():
         name = str(key).strip()
         text = str(description).strip()
-        if not name or not text or name in state.acronyms:
+        if not name or not text or name.casefold() in folded:
             continue
+        folded.add(name.casefold())
         state.acronyms[name] = (name, text)
         state.abbreviations.setdefault(name, text)
         state.acronym_keys.setdefault(name, name)

@@ -48,7 +48,7 @@ each construct is inlined per instance).
 | href, url | W | `\href{url}{text}`, bare autolink `\url{url}` | — | `hyperref` | `#link("url")[…]` |
 | footnote | W | `\footnote{…}` | — | — | `#footnote[…]` |
 | citation | W | `\cite{k1,k2}`, `\cite[post]{k}`, `\parencite`/`\textcite` per `RefItem`; `Requires.bibliography=true` | ts-bibliography provides `\parencite`/`\textcite` fallbacks when no `.bib` | `biblatex` (with `.bib`) \| `thebibliography` | `#cite(<k>)` |
-| acronym, glossary | C | `\tsgls{key}`; `Abbr` → `\tsacr{key}` | ts-glossary | `glossaries[acronym]` | `#ts-gls(key)` → text |
+| acronym, glossary | C | `\tsgls{key}` = `\gls` (first use expands, the author writes the call); `Abbr` → `\tsacr{key}` = **`\acrshort`**, the short form wherever it stands — decision O5, `parity-triage.md` §6 | ts-glossary | `glossaries[acronym]` | `#ts-gls(key)` → text, `#ts-acr(key)` → key |
 | list_acronyms, list_glossary | T | orphans; `ts-glossary.sty` already generates `\newacronym`/`\newglossaryentry` from `Document.abbreviations` + front matter | ts-glossary | — | `acronyms` slot (exists) |
 | index | C | `\tsindex[registry=r, main]{sort@formatted!sub}` (zero-width; `Requires.index` lists registries) | ts-index | `imakeidx` | `#ts-index(..)` no-op (open question 6) |
 | keystroke | C | `\tskeys{Ctrl,Alt,Del}` (label table `KEY_LABELS` shared by writers in `common.rs`; a literal comma is braced) | ts-keystrokes | `tikz` | `#ts-keys("Ctrl","Alt")` |
