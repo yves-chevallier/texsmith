@@ -85,13 +85,15 @@ We ~~do not~~ want this.
 
 ### Underline
 
-With caret, mark and tilde extension from PyMdownX it is also possible to underline text.
+The `{underline}` role underlines text. PyMdownX's `^^text^^` spells the same
+node, but only with the `inline.insert` feature enabled; without it the carets
+are literal.
 
 ```md
-^^text^^
+{underline}[text]
 ```
 
-> ^^text^^
+> {underline}[text]
 
 ### Inline Code / Code Blocks
 
@@ -178,10 +180,10 @@ Highlights quotations or cited text.
 Adds a visual separator between sections.
 
 ```md
------
+---
 ```
 
-> -----
+> ---
 
 
 ## TeXSmith Markdown Extensions
@@ -277,20 +279,25 @@ _Package: `pip install markdown` or `pymdown-extensions` (for advanced styles)_
 _Description: Emphasises callouts such as notes and warnings._
 
 ```md
-!!! note
-    This is a note.
+::: note
+This is a note.
+:::
 
-??? warning
-    This is a warning.
+::: warning {collapsed=true}
+This is a warning.
+:::
 ```
 
-The `???` syntax creates a collapsible block in HTML output only.
+`collapsed=true` creates a collapsible block in HTML output only. PyMdownX's
+`!!! note` / `??? warning` spell the same containers.
 
-!!! note
-    This is a note.
+::: note
+This is a note.
+:::
 
-??? warning
-    This is a warning.
+::: warning {collapsed=true}
+This is a warning.
+:::
 
 ### SuperFences (Enhanced Fenced Code + Nested Blocks)
 
@@ -299,13 +306,13 @@ _Package: `pip install pymdown-extensions`_
 _Description: Allows nested fences (e.g., Mermaid diagrams inside fences)._
 
 ````md
-```mermaid { width=20% }
+```mermaid image width="20%"
 graph TD;
   A-->B;
 ```
 ````
 
-> ```mermaid { width=20% }
+> ```mermaid image width="20%"
 > graph TD;
 >   A-->B;
 > ```
@@ -316,23 +323,23 @@ _Extension: `texsmith.markdown_extensions.latex_raw`_
 _Package: shipped with TeXSmith_
 _Description: Embeds raw LaTeX that is injected verbatim._
 
-```md
-/// latex
+````md
+```latex raw
 \clearpage
-///
 ```
+````
 
-/// latex
+```latex raw
 \clearpage
-///
+```
 
 Inline variant:
 
 ```md
-Insert... {latex}[\clearpage] anywhere in the paragraph.
+Insert... {raw latex}(\clearpage) anywhere in the paragraph.
 ```
 
-Insert... {latex}[\clearpage] anywhere in the paragraph.
+Insert... {raw latex}(\clearpage) anywhere in the paragraph.
 
 ### Emoji
 
@@ -473,13 +480,13 @@ _Description: Visualises progress as textual bars._
 [=25% "Research"]
 [=50% "Implementation"]
 [=75% "Review"]
-[=100% "Launch"]{: .thin}
+[=100% "Launch"]{.thin}
 ````
 
 [=25% "Research"]
 [=50% "Implementation"]
 [=75% "Review"]
-[=100% "Launch"]{: .thin}
+[=100% "Launch"]{.thin}
 
 ### Details / Collapsible Blocks
 
@@ -488,14 +495,14 @@ _Package: `pip install pymdown-extensions`_
 _Description: Creates collapsible disclosure sections._
 
 ```md
-???+ note "Title"
-
-    Collapsible content.
+::: note {title=Title collapsed=false}
+Collapsible content.
+:::
 ```
 
-> ???+ note "Title"
->
->     Collapsible content.
+> ::: note {title=Title collapsed=false}
+> Collapsible content.
+> :::
 
 ### Keys (Keyboard Display)
 
@@ -515,23 +522,25 @@ _Extension: `pymdownx.tabbed`_
 _Package: `pip install pymdown-extensions`_
 _Description: Groups content in tabbed panes._
 
-```md
-=== "Windows"
-
+````md
+:::: tabs
+::: tab {title=Windows}
 Windows is a Microsoft operating system.
-
-=== "Linux"
-
+:::
+::: tab {title=Linux}
 Linux is an open-source operating system.
-```
+:::
+::::
+````
 
-=== "Windows"
-
+:::: tabs
+::: tab {title=Windows}
 Windows is a Microsoft operating system.
-
-=== "Linux"
-
+:::
+::: tab {title=Linux}
 Linux is an open-source operating system.
+:::
+::::
 
 ### Meta-Data / Front Matter
 
@@ -557,13 +566,11 @@ _Description: Includes content from other Markdown files._
 Permits you to include content from other Markdown files.
 
 ````md
-```python
---8<-- "hanoi.py"
+```python include="hanoi.py"
 ```
 ````
 
-```python
---8<-- "hanoi.py"
+```python include="hanoi.py"
 ```
 
 ### EscapeAll

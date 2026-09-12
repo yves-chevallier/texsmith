@@ -2,7 +2,7 @@
 
 ## Inline diagram
 
-```mermaid
+```mermaid image
 flowchart LR
     A --> B
     B --> C

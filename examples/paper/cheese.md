@@ -10,8 +10,9 @@ press:
   date: October 20, 2025
   slots:
     abstract: Abstract
-bibliography:
-  WADHWANI20111713: https://doi.org/10.3168/jds.2010-3952
+  sources:
+    bibliography:
+      WADHWANI20111713: https://doi.org/10.3168/jds.2010-3952
 
 ---
 # Mechanical Stiffness and Malleability of Hard Cheese
@@ -36,12 +37,12 @@ Cheese, though traditionally perceived as a food product, can also be regarded
 as a **soft viscoelastic solid**, whose rheological response depends on both time
 and temperature. The interplay between its **elastic stiffness** --- resistance
 to deformation --- and **malleability** --- the capacity to deform without
-fracture --- defines its sensory and functional attributes [^Prentice1993].
+fracture --- defines its sensory and functional attributes @Prentice1993.
 
 The mechanical performance of hard cheeses arises from their intricate
 **protein–fat–moisture matrix**. Protein cross-linking, crystalline calcium
 phosphate domains, and residual fat globules act as reinforcing or plasticizing
-agents depending on aging and composition [^Jaoac2019]. Understanding these
+agents depending on aging and composition @Jaoac2019. Understanding these
 parameters is crucial not only for consumer perception (texture, crumble,
 brittleness) but also for industrial operations such as slicing, shredding,
 and packaging.
@@ -92,23 +93,20 @@ on composition and aging.
 Thermal analysis using **Differential Scanning Calorimetry (DSC)** allows the
 determination of onset and peak melting temperatures. In contrast, high-moisture
 cheeses such as Mozzarella [^1] exhibit lower melting points and greater
-stretchability due to reduced protein cross-link density [^WADHWANI20111713].
-The figure [](#melting-behavior) illustrates the melting behavior of Mozzarella
+stretchability due to reduced protein cross-link density @WADHWANI20111713.
+@melting-behavior illustrates the melting behavior of Mozzarella
 cheese, highlighting its unique rheological response upon heating.
 
-![Cheese melting behavior](mozzarella.svg){ width=80% }
+![Cheese melting behavior](mozzarella.svg){width=80%}
 
-/// figure-caption
-    attrs: {id: melting-behavior}
-Melting behavior of high-moisture cheese (Mozzarella) illustrating stretchability
-upon heating
-///
+Figure: Melting behavior of high-moisture cheese (Mozzarella) illustrating stretchability
+upon heating {#melting-behavior}
 
 ## Materials and Methods
 
 ### Samples Preparation
 
-Three commercial hard cheese types were selected for analysis [](#cheese-samples).
+Three commercial hard cheese types were selected for analysis (@cheese-samples).
 Cylindrical specimens (20 mm diameter × 20 mm height) were extracted from the core
 regions and equilibrated at **10 °C** for 12 h prior to testing to minimize
 moisture gradients.
@@ -119,10 +117,7 @@ moisture gradients.
 | Comté               | 18           | 33                   | 30              |
 | Cheddar             | 12           | 36                   | 32              |
 
-/// table-caption
-    attrs: {id: cheese-samples}
-Characteristics of hard cheese samples used in the study
-///
+Table: Characteristics of hard cheese samples used in the study {#cheese-samples}
 
 ### Mechanical Testing
 
@@ -130,7 +125,7 @@ Compression tests were carried out using a **TA-XT2 texture analyzer** equipped
 with a 50 kg load cell. Specimens were compressed at three nominal strain rates
 (0.1, 1, and 10 s⁻¹) to 20 % strain. The **elastic modulus (E)** was obtained
 from the initial linear region (0–5 % strain) of the stress–strain curve. The
-table [](#mechanical-results) summarizes the measured moduli.
+@mechanical-results summarizes the measured moduli.
 
 | Cheese Type         | Strain Rate (s⁻¹) | Temperature (°C) | Elastic Modulus E (MPa) |
 | ------------------- | ----------------: | ---------------: | ----------------------: |
@@ -139,10 +134,7 @@ table [](#mechanical-results) summarizes the measured moduli.
 | Comté               |               0.1 |               10 |                    44.2 |
 | Cheddar             |               0.1 |               10 |                    38.7 |
 
-/// table-caption
-    attrs: {id: mechanical-results}
-Measured elastic moduli of hard cheese samples at varying strain rates
-///
+Table: Measured elastic moduli of hard cheese samples at varying strain rates {#mechanical-results}
 
 The increasing modulus with strain rate reflects the time-dependent viscoelastic
 response typical of aged dairy matrices.

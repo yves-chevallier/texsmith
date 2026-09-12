@@ -16,7 +16,7 @@ than one block of prose to typeset.
 
 You can combine *emphasis*, **strong emphasis**, and `code`. External links
 look like [the Typst website](https://typst.app). Inline math such as
-\(a^2 + b^2 = c^2\) flows in the text.
+$a^2 + b^2 = c^2$ flows in the text.
 
 ## Lists
 

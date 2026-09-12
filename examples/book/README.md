@@ -24,10 +24,10 @@ perl -pi -e 's/<!--.*?-->//gm' article.md
 perl -CS -Mutf8 -pi -e 's/\[\[(?!File)([^\]\|]+)\]\]/$1/gm' article.md
 perl -CS -Mutf8 -pi -e 's/\[\[(?!File).*?(?>\|)([^\]]+)\]\]/$1/gm' article.md
 
-perl -pi -e 's/<ref name="([a-zA-Z0-9]{5})"\/>/^[\1]/gm' article.md
-perl -pi -e 's/<ref>.*?doi=([^\s]+).*?<\/ref>/^[\1]/gm' article.md
+perl -pi -e 's/<ref name="([a-zA-Z0-9]{5})"\/>/@\1/gm' article.md
+perl -pi -e 's/<ref>.*?doi=([^\s]+).*?<\/ref>/@\1/gm' article.md
 perl -pi -e 's/<ref>\{\{cite web.*?\}\}<\/ref>//gm' article.md
-perl -pi -e 's/<ref name=[^\]]+>.*?doi=([^\s]+).*?<\/ref>/^[\1]/gm' article.md
+perl -pi -e 's/<ref name=[^\]]+>.*?doi=([^\s]+).*?<\/ref>/@\1/gm' article.md
 
 perl -pi -e 's/\[\[File:.*?\]\]//gm' article.md
 perl -pi -e 's/<ref>.*?<\/ref>//gm' article.md

@@ -108,7 +108,7 @@ $ texsmith --help
 : Specify the BeautifulSoup parser backend to use when parsing HTML input. The default is `html.parser`, but you can choose other parsers like `lxml` if they are installed.
 
 `--reader`
-: Which Markdown reader parses `.md` inputs: `html` (the default — Python-Markdown renders HTML that TeXSmith lowers to its IR) or `tmark` (the TMark parser and writers; the bodies then come from `tmark.write` and `--debug-html` dumps the parsed IR as `<stem>.ir.json`). The `tmark` reader is the migration path and does not support `--html`.
+: Which Markdown reader parses `.md` inputs: `tmark` (the default — the TMark parser and writers; the bodies come from `tmark.write` and `--debug-html` dumps the parsed IR as `<stem>.ir.json`) or `html` (Python-Markdown renders HTML that TeXSmith lowers to its IR). An `.html` input always goes through the HTML reader, whatever this option says. `--reader html` is the escape hatch for a document still written in the legacy spellings and is kept for one release; `tmark lint --fix FILE` rewrites such a document into canonical TMark. The `tmark` reader does not support `--html`.
 
 ### Structure Options
 
