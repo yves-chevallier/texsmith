@@ -168,7 +168,6 @@ def test_drawio_crop_attribute_flows_from_the_image_to_the_converter(tmp_path, m
 
 
 def test_image_reader_keeps_the_crop_attribute():
-
     from texsmith.readers.html import HtmlReader
 
     reader = HtmlReader()

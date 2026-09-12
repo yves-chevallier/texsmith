@@ -123,5 +123,3 @@ def test_snippet_template_normalises() -> None:
     assert context["callout_style"] == "minimal"
     assert context["emoji"] == "symbola"
     assert context["width"]
-
-

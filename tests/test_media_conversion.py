@@ -152,9 +152,7 @@ def test_convert_assets_forces_png_conversion(tmp_path: Path) -> None:
     source_file = tmp_path / "diagram.png"
     Image.new("RGB", (16, 16), color="green").save(source_file)
 
-    latex, assets = render_markdown(
-        tmp_path, "![Converted](diagram.png)\n", convert_assets=True
-    )
+    latex, assets = render_markdown(tmp_path, "![Converted](diagram.png)\n", convert_assets=True)
 
     assert "diagram.pdf" in latex
     assert assets[str(source_file)].suffix.lower() == ".pdf"
