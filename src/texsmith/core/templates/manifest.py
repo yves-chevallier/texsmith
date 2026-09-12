@@ -26,7 +26,6 @@ from pydantic import (
 )
 
 from texsmith.adapters.latex.utils import escape_latex_chars
-from texsmith.adapters.markdown import DEFAULT_MARKDOWN_EXTENSIONS, render_markdown
 from texsmith.core.code_options import normalise_inline_options
 from texsmith.core.exceptions import LatexRenderingError
 from texsmith.core.metadata import PressMetadataError, normalise_press_metadata
@@ -140,38 +139,20 @@ def _normalise_sources(payload: Any) -> list[str]:
 
 
 def _render_attribute_markdown(value: str) -> str:
-    """Render a short Markdown snippet into LaTeX-safe text."""
-    doc = render_markdown(value, DEFAULT_MARKDOWN_EXTENSIONS)
-    html = doc.html
-    soup = BeautifulSoup(html, "html.parser")
+    """Render a short Markdown snippet (``format = "markdown"``) into LaTeX.
 
-    def render_node(node: Tag | NavigableString) -> str:
-        if isinstance(node, NavigableString):
-            return escape_latex_chars(str(node))
+    A template attribute is a line or two of prose — an imprint paragraph, a
+    subtitle — so it goes through the same parser and writer as the body:
+    ``tmark.parse`` then ``tmark.write(…, "latex")``. A construct that needs a
+    fragment (inline code wants ``ts-code``) is the template's business; the
+    attribute itself carries no ``Requires``.
+    """
+    import tmark
 
-        name = (node.name or "").lower()
-        classes = set(node.get("class") or [])
-        rendered_children = "".join(render_node(child) for child in node.children)
+    from texsmith.readers.tmark import parse_payload
 
-        if name in {"strong", "b"}:
-            return rf"\textbf{{{rendered_children}}}"
-        if name in {"em", "i"}:
-            return rf"\emph{{{rendered_children}}}"
-        if name == "code":
-            return rf"\texttt{{{rendered_children}}}"
-        if name == "span" and "texsmith-smallcaps" in classes:
-            return rf"\textsc{{{rendered_children}}}"
-        if name == "br":
-            return r"\\"
-        if name == "p":
-            return rendered_children + "\n\n"
-        if name == "li":
-            return "- " + rendered_children + "\n"
-        return rendered_children
-
-    body = soup.body if soup.body else soup
-    rendered = "".join(render_node(child) for child in body.children)
-    return rendered.strip()
+    payload = parse_payload(value, name="<template attribute>")
+    return str(tmark.write(payload, "latex", {}).get("text") or "").strip()
 
 
 _ATTRIBUTE_NORMALISERS: dict[str, Callable[[Any, TemplateAttributeSpec, Any], Any]] = {}

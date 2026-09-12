@@ -22,10 +22,7 @@ Each page uses `::: module.path` directives; mkdocstrings resolves them at build
 : IR passes and fragment contracts — the two extension points of the `parse → IR → passes → resolve → write` pipeline.
 
 [`latex`](latex.md)
-: LaTeX infrastructure (formatter, renderer, templates).
-
-[`markdown`](markdown.md)
-: Markdown conversion helpers and custom extensions.
+: LaTeX infrastructure (formatter, escaping, templates).
 
 [`plugins`](plugins.md)
 : Optional integrations (MkDocs Material-specific handlers).

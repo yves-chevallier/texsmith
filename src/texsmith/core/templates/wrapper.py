@@ -125,14 +125,7 @@ def wrap_template_document(
     template_context["has_index"] = bool(index_terms)
     template_context["index_terms"] = [tuple(term) for term in index_terms]
 
-    registry_entries = index_terms
-    try:  # pragma: no cover - optional dependency
-        from texsmith.extensions.index import get_registry
-    except ModuleNotFoundError:
-        template_context["index_registry"] = [tuple(term) for term in registry_entries]
-    else:
-        snapshot = sorted(get_registry().snapshot())
-        template_context["index_registry"] = [tuple(term) for term in snapshot]
+    template_context["index_registry"] = [tuple(term) for term in index_terms]
     _merge_front_matter_glossary(document_state, overrides_payload, template_context)
     template_context["acronyms"] = document_state.acronyms.copy()
     template_context["acronym_groups"] = list(document_state.acronym_groups)

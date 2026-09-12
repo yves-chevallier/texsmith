@@ -4,8 +4,6 @@
 
 ::: texsmith.adapters.latex.formatter
 
-::: texsmith.adapters.latex.renderer
-
 ::: texsmith.adapters.latex.engines.latex.log
 
 ::: texsmith.adapters.latex.utils

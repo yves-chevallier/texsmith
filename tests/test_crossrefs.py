@@ -9,8 +9,7 @@ from pathlib import Path
 
 import pytest
 
-from texsmith.adapters.markdown import DEFAULT_MARKDOWN_EXTENSIONS, render_markdown
-from texsmith.core.counters import clear_registry
+from texsmith.core.counters import CounterSpec, clear_registry, get_registry
 from texsmith.core.crossrefs import (
     SCHEMA_VERSION,
     Anchor,
@@ -192,11 +191,11 @@ def test_stale_inventory_warns(tmp_path: Path) -> None:
 
 def test_publish_inventory_exports_the_allocated_counters(tmp_path: Path) -> None:
     source = tmp_path / "doc.md"
-    source.write_text(
-        "---\ncounters:\n  fw:\n    name: Constat\n    format: 'FW-{n:02d}'\n---\n#{fw:a} et #{fw:b}\n",
-        encoding="utf-8",
-    )
-    render_markdown(source.read_text(encoding="utf-8"), extensions=DEFAULT_MARKDOWN_EXTENSIONS)
+    source.write_text("# Doc\n", encoding="utf-8")
+    registry = get_registry()
+    registry.declare({"fw": CounterSpec(prefix="fw", name="Constat", format="FW-{n:02d}")})
+    registry.allocate("fw", "a")
+    registry.allocate("fw", "b")
 
     path = publish_inventory(
         output_dir=tmp_path / "build",

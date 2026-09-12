@@ -1,11 +1,15 @@
-"""TeXSmith's bundled Python-Markdown extensions.
+"""What is left of TeXSmith's bundled Markdown extensions.
 
-Each submodule ships a ``markdown.Extension`` (and, for ``index``, an MkDocs
-plugin). The authoritative list of extensions enabled by the conversion
-pipeline lives in
-:data:`texsmith.adapters.markdown.DEFAULT_MARKDOWN_EXTENSIONS`; the same entries
-are also exposed to third-party Markdown/MkDocs setups via the entry points
-declared in ``pyproject.toml``.
+The 17 Python-Markdown extensions are gone with the Python-Markdown pipeline
+(phase 5 of ``specs/tmark-migration.md``): tmark parses every Markdown source
+and its registries own the constructs they used to add. Two data modules
+survive because :mod:`texsmith.readers.html` — the reader for ``.html`` input
+and the MkDocs ``press.reader: html`` fallback — still needs them:
+
+* :mod:`texsmith.extensions.tables` — the validated table model an HTML
+  ``<table>`` is rebuilt into before it becomes a ``TableModel``;
+* :mod:`texsmith.extensions.texlogos` — the TeX logo catalogue the inline
+  lowering keys on.
 """
 
 from __future__ import annotations

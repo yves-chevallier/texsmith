@@ -292,14 +292,49 @@ class Document:
         emitter: DiagnosticEmitter,
     ) -> Document:
         """Parse ``path`` with tmark; the parse diagnostics go to ``emitter`` and the document."""
-        from ..readers import tmark as tmark_reader
-
         try:
             text = path.read_text(encoding="utf-8")
         except OSError as exc:
             message = f"Failed to read Markdown source '{path}': {exc}"
             emitter.error(message, exc)
             raise ConversionError(message) from exc
+
+        return cls.from_markdown_text(
+            text,
+            path,
+            promote_title=promote_title,
+            strip_heading=strip_heading,
+            suppress_title=suppress_title,
+            base_level=base_level,
+            title_strategy=title_strategy,
+            numbered=numbered,
+            emitter=emitter,
+        )
+
+    @classmethod
+    def from_markdown_text(
+        cls,
+        text: str,
+        path: Path,
+        *,
+        promote_title: bool = False,
+        strip_heading: bool = False,
+        suppress_title: bool = False,
+        base_level: int | str = 0,
+        title_strategy: TitleStrategy | None = None,
+        numbered: bool = True,
+        front_matter_overrides: Mapping[str, Any] | None = None,
+        emitter: DiagnosticEmitter | None = None,
+    ) -> Document:
+        """Parse an in-memory Markdown ``text`` that belongs at ``path``.
+
+        ``path`` is what the diagnostics name and what relative includes and
+        assets resolve against; it does not have to exist, which is how the
+        snippet compiler builds a document out of a fence's body.
+        """
+        from ..readers import tmark as tmark_reader
+
+        emitter = emitter or NullEmitter()
 
         # ``press.declare.glossary`` entries reach the body as the abbreviation
         # definitions the legacy path synthesised for ``markdown.abbr``: tmark
@@ -330,6 +365,8 @@ class Document:
             strip_heading=strip_heading,
             has_declared_title=declared_title,
         )
+        if front_matter_overrides:
+            front_matter = {**front_matter, **dict(front_matter_overrides)}
         front_numbered = _front_matter_numbered(front_matter)
         document = cls(
             source_path=path,

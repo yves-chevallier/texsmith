@@ -32,10 +32,11 @@ TeXSmith is migrating onto the `tmark` Rust core (`~/tmark`): parser, IR,
 printer, registries, writers. The plan is `specs/tmark-migration.md`, the
 design notes are under `specs/migration/`. Rules while it lasts:
 
-- The Python-Markdown extensions under `texsmith/extensions/` are **frozen**:
-  no new syntax there. New syntax goes through the TMark spec and parser.
-- Syntax is unified in the tmark reader, not in the legacy path (decision D0).
-- Nothing of the legacy path is deleted before the parity gate (phase 4) is green.
+- The Python-Markdown pipeline is gone (phase 5): no Markdown extensions, no
+  Python writers, no hand-written IR. New syntax goes through the TMark spec
+  and parser, never through a Python shim.
+- `texsmith/extensions/` keeps two data modules only — the table schema and the
+  TeX logo catalogue — because `readers/html` still needs them.
 
 ## Working agreements
 

@@ -34,9 +34,6 @@ $ texsmith --help
 
 ### Diagnostics Options
 
-`--list-extensions`
-: Print a list of all Markdown extensions that are enabled by default during conversion. This is useful for understanding how your Markdown will be processed.
-
 `--list-templates`
 : List all discoverable templates, along with their origins and paths.
 
@@ -46,8 +43,8 @@ $ texsmith --help
 `--debug`
 : Enable detailed debugging output for the CLI. This includes full Python tracebacks when unexpected exceptions occur, which can help diagnose issues during conversion or rendering.
 
-`--debug-html`
-: Save intermediate HTML snapshots generated during the conversion process. This can help diagnose issues related to HTML parsing or content extraction.
+`--debug-ir`
+: Save the parsed IR of each document as `<stem>.ir.json` next to the output. This is what the passes see and what `tmark.write` turns into a body, so it is the first place to look when a construct does not render as expected.
 
 `-q`, `--quiet`
 : Hide `hint` and `info` diagnostics. Warnings and errors are always shown.
@@ -81,11 +78,8 @@ $ texsmith --help
 `--makefile-deps`
 : When building PDFs, generate a Makefile-compatible `.d` dependency file alongside the output. This can be useful for integrating TeXSmith into larger build systems.
 
-`--html`
-: Instead of generating LaTeX or PDF output, emit the intermediate HTML produced during the conversion process. This is useful for inspecting how your Markdown is transformed into HTML.
-
 `--format`
-: Choose the output backend: `latex` (default) or `typst`. Both backends consume the same intermediate representation; `typst` emits a `.typ` source (add `--build` to compile it to PDF). The Typst path does not support `--html`, `--template-info`, or `--template-scaffold`. See [Output backends](../guide/plumbing/backends.md) for installation and scope.
+: Choose the output backend: `latex` (default) or `typst`. Both backends consume the same intermediate representation; `typst` emits a `.typ` source (add `--build` to compile it to PDF). The Typst path does not support `--template-info` or `--template-scaffold`. See [Output backends](../guide/plumbing/backends.md) for installation and scope.
 
 `--engine`
 : Specify the LaTeX engine to use when compiling the rendered document into a PDF (LaTeX backend only). Supported engines include `tectonic`, `lualatex`, and `xelatex`. The default is `tectonic`.
@@ -106,9 +100,6 @@ $ texsmith --help
 
 `--parser`
 : Specify the BeautifulSoup parser backend to use when parsing HTML input. The default is `html.parser`, but you can choose other parsers like `lxml` if they are installed.
-
-`--reader`
-: Which Markdown reader parses `.md` inputs: `tmark` (the default — the TMark parser and writers; the bodies come from `tmark.write` and `--debug-html` dumps the parsed IR as `<stem>.ir.json`) or `html` (Python-Markdown renders HTML that TeXSmith lowers to its IR). An `.html` input always goes through the HTML reader, whatever this option says. `--reader html` is the escape hatch for a document still written in the legacy spellings and is kept for one release; `tmark lint --fix FILE` rewrites such a document into canonical TMark. The `tmark` reader does not support `--html`.
 
 ### Structure Options
 
@@ -160,12 +151,6 @@ $ texsmith --help
 
 `--numbering MODE`
 : Who allocates the numbers of the predeclared series — figures, tables, listings, equations, sections and the theorem kinds — on the `tmark` reader. `backend` (the default) leaves them to LaTeX and Typst, each numbering its own floats as it always did, so a `Figure 3.2` in the PDF may be a `Figure 12` in the Typst output. `tmark` makes TMark allocate them once, at resolve time, in document order and continuously across the documents of a batch (`ResolveOptions.numbering: all`), and both writers print those numbers in the cross-references: `\hyperref[tbl:one]{Table~1}` in the `.tex`, `#link(<tbl:one>)[Table 1]` in the `.typ`, identical on both backends. Only labelled items (a caption with `{#fig:x}`) take a number; the float's own caption is still numbered by the backend, so use `tmark` numbering where the two must agree (the web profile, a site built page by page) and keep `backend` for a print-only document with chapter-scoped numbers. User counters declared under `press.declare.counters` are always TMark-numbered, whatever the mode.
-
-`--enable-extension`, `-x`
-: Enable additional Markdown extensions during conversion. You can repeat this option multiple times or provide a comma-separated list of extensions to activate.
-
-`--disable-extension`, `-X`
-: Disable specific Markdown extensions during conversion. You can repeat this option multiple times or provide a comma-separated list of extensions to deactivate.
 
 ## Quick Start
 
