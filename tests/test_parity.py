@@ -116,6 +116,67 @@ def test_normalise_typ_rules(parity):
     assert "\n\n\n" not in result
 
 
+def test_strip_typst_prelude_drops_only_the_contract_bindings(parity):
+    text = textwrap.dedent(
+        """
+        #let ts-callout-colors = (
+          note: (bg: rgb("ecf3ff"), frame: rgb("448aff")),
+        )
+        #let ts-mark(body) = highlight(body)
+        #let ts-logo(name) = {
+          if name == "TeX" { ts-tex } else { name }
+        }
+        #let mine = 1
+        A paragraph mentioning ts-mark in prose.
+        """
+    )
+    result = parity.strip_typst_prelude(text)
+    assert "ts-callout-colors" not in result
+    assert "rgb(" not in result
+    assert "#let ts-mark" not in result
+    assert "#let ts-logo" not in result
+    assert 'if name == "TeX"' not in result
+    assert "#let mine = 1" in result  # only the `ts-` contract bindings go
+    assert "A paragraph mentioning ts-mark in prose." in result
+
+
+def test_strip_typst_prelude_keeps_a_raw_fence(parity):
+    text = "```typ\n#let ts-mark(body) = highlight(body)\n```\n"
+    assert parity.strip_typst_prelude(text) == text
+
+
+def test_tidy_typ_layout_closes_a_fence_that_carries_a_bracket(parity):
+    text = textwrap.dedent(
+        """
+        #ts-code(linenums: 1)[
+        ```python
+            indented = 1
+        ```]
+            after the fence
+        """
+    )
+    result = parity.tidy_typ_layout(text)
+    assert "    indented = 1" in result  # inside the fence: indentation kept
+    assert "\nafter the fence" in result  # outside: indentation dropped
+
+
+def test_tidy_typ_layout_trims_a_content_block(parity):
+    text = '#ts-callout(kind: "note")[\n\nBody.\n\n]\n'
+    assert parity.tidy_typ_layout(text) == '#ts-callout(kind: "note")[\nBody.]\n'
+
+
+def test_tidy_tex_layout_splits_a_heading_label(parity):
+    text = "\\section{Intro}\\label{intro}\n\\caption{Fig}\\label{fig}\n"
+    result = parity.tidy_tex_layout(text)
+    assert result.startswith("\\section{Intro}\n\\label{intro}\n")
+    assert "\\caption{Fig}\\label{fig}" in result  # a float label is never split
+
+
+def test_tidy_tex_layout_drops_a_blank_next_to_page_furniture(parity):
+    text = "\\tsreplayfn\n\n\\thispagestyle{plain}\n\\section{A}\n"
+    assert "\n\n" not in parity.tidy_tex_layout(text)
+
+
 def test_extract_body(parity):
     text = "\\documentclass{article}\n% x\n\\begin{document}\n\nHello\n\n\n\\end{document}\n"
     assert parity.extract_body(text) == "Hello\n"
