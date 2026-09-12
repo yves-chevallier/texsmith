@@ -16,7 +16,7 @@
       "span": [
         0,
         0,
-        39
+        24
       ],
       "content": [
         {
@@ -25,9 +25,9 @@
           "span": [
             0,
             0,
-            39
+            24
           ],
-          "text": "A {--deleted--} word, a [[Wiki Page]]."
+          "text": "A word, a [[Wiki Page]]."
         }
       ]
     },
@@ -36,8 +36,8 @@
       "id": 3,
       "span": [
         0,
-        41,
-        60
+        26,
+        45
       ],
       "content": [
         {
@@ -45,8 +45,8 @@
           "id": 4,
           "span": [
             0,
-            41,
-            60
+            26,
+            45
           ],
           "text": "a. first fancy item"
         }

@@ -1,6 +1,6 @@
 """TeXSmith IR models generated from the tmark IR schema. Do not edit.
 tmark version: 0.0.0
-schema sha256: f42ba5936dace417a5323c7f9c7feea17aa568537c23b27a9b8b863125c2ee5c
+schema sha256: b72987141242043c940233fc24a594f0e6ed91b15f01b8d7b98c7714360b9c43
 
 Regenerate with ``scripts/gen_ir_models.py`` (``--check`` in CI). Every node is a
 frozen, slotted dataclass; ``id`` and ``span`` do not take part in equality or
@@ -15,7 +15,7 @@ from typing import Any, ClassVar, Final, Literal, NamedTuple, TypeAlias
 
 
 TMARK_VERSION: Final = '0.0.0'
-SCHEMA_HASH: Final = 'f42ba5936dace417a5323c7f9c7feea17aa568537c23b27a9b8b863125c2ee5c'
+SCHEMA_HASH: Final = 'b72987141242043c940233fc24a594f0e6ed91b15f01b8d7b98c7714360b9c43'
 
 #: A JSON value the schema leaves untyped (front-matter blobs).
 JsonValue: TypeAlias = Any
@@ -312,16 +312,6 @@ class DataRow(Row):
 
 
 @dataclass(frozen=True, slots=True)
-class Declare(Record):
-    """`declare`: what things *are*. Spec §Front matter, §Counters, §Admonition, §Glossary and acronyms."""
-
-    acronyms: JsonValue = None
-    admonitions: dict[str, AdmonitionDecl] = field(default_factory=dict)
-    counters: dict[str, CounterDecl] = field(default_factory=dict)
-    glossary: JsonValue = None
-
-
-@dataclass(frozen=True, slots=True)
 class DefinitionList(Block):
     """PHP-Markdown-Extra definition list. Spec §DefinitionList. Each item is a term and its definitions."""
 
@@ -361,6 +351,32 @@ class Footnote(Record):
     content: tuple[Block, ...] = ()
     id: int = field(default=0, compare=False, kw_only=True)
     span: Span = field(default=NO_SPAN, compare=False, kw_only=True)
+
+
+@dataclass(frozen=True, slots=True)
+class GlossaryDecl(Record):
+    """The glossary declaration, `declare.glossary`. Spec §Glossary and acronyms: two spellings reach this one struct."""
+
+    entries: dict[str, GlossaryEntry] = field(default_factory=dict)
+    groups: dict[str, GlossaryGroup] = field(default_factory=dict)
+    style: str | None = None
+
+
+@dataclass(frozen=True, slots=True)
+class GlossaryEntry(Record):
+    """A glossary term. `api: An interface` sets `description`; the object form takes `name` (the short form), `description`, `long` and the `group` the entry belongs to."""
+
+    description: str | None = None
+    group: str | None = None
+    long: str | None = None
+    name: str | None = None
+
+
+@dataclass(frozen=True, slots=True)
+class GlossaryGroup(Record):
+    """A glossary group: `core: Core terms` or `core: {title: Core terms}`."""
+
+    title: str = ""
 
 
 @dataclass(frozen=True, slots=True)
@@ -688,6 +704,16 @@ class CodeBlock(Block):
 
 
 @dataclass(frozen=True, slots=True)
+class Declare(Record):
+    """`declare`: what things *are*. Spec §Front matter, §Counters, §Admonition, §Glossary and acronyms."""
+
+    acronyms: JsonValue = None
+    admonitions: dict[str, AdmonitionDecl] = field(default_factory=dict)
+    counters: dict[str, CounterDecl] = field(default_factory=dict)
+    glossary: GlossaryDecl = field(default_factory=GlossaryDecl)
+
+
+@dataclass(frozen=True, slots=True)
 class Div(Block):
     """Any other `::: name` container. Spec §Div: the names of the closed registry (`registry::CONTAINERS`: `tabs`, `tab`, `multicolumn`, `div`) and, with a `container-unknown` diagnostic, any other name, kept so the printer round-trips it."""
 
@@ -736,16 +762,6 @@ class MathBlock(Block):
 
 
 @dataclass(frozen=True, slots=True)
-class Press(Record):
-    """The `press` namespace, restricted to the keys TMark reads."""
-
-    base_level: str | None = None
-    declare: Declare = field(default_factory=Declare)
-    features: dict[str, bool] = field(default_factory=dict)
-    sources: Sources = field(default_factory=Sources)
-
-
-@dataclass(frozen=True, slots=True)
 class ProgressBar(Inline):
     """`[=45% "Review"]{.thin}`. Spec §ProgressBar: an inline bar with a `value` from 0 to 100 (clamped) and an optional `label` (the percentage when absent); `.thin` and the other classes are attributes."""
 
@@ -785,6 +801,26 @@ class TableModel(Record):
 
 
 @dataclass(frozen=True, slots=True)
+class Press(Record):
+    """The `press` namespace, restricted to the keys TMark reads."""
+
+    base_level: str | None = None
+    declare: Declare = field(default_factory=Declare)
+    features: dict[str, bool] = field(default_factory=dict)
+    sources: Sources = field(default_factory=Sources)
+
+
+@dataclass(frozen=True, slots=True)
+class Table(Block):
+    """A table of any rung of the ladder. Spec §Table."""
+
+    type: ClassVar[Literal["Table"]] = "Table"
+    attrs: Attrs = field(default_factory=Attrs)
+    model: TableModel = field(default_factory=TableModel)
+    source: str | None = None
+
+
+@dataclass(frozen=True, slots=True)
 class Keys(Record):
     """The typed subset of the front matter (spec §Front matter). Serialises to the canonical layout: metadata at the root, the rest under `press`."""
 
@@ -796,16 +832,6 @@ class Keys(Record):
     press: Press = field(default_factory=Press)
     subtitle: str | None = None
     title: str | None | Missing = MISSING
-
-
-@dataclass(frozen=True, slots=True)
-class Table(Block):
-    """A table of any rung of the ladder. Spec §Table."""
-
-    type: ClassVar[Literal["Table"]] = "Table"
-    attrs: Attrs = field(default_factory=Attrs)
-    model: TableModel = field(default_factory=TableModel)
-    source: str | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -1050,7 +1076,7 @@ FIELDS: Final[dict[type, tuple[FieldSpec, ...]]] = {
         FieldSpec("acronyms", ("any",), "skip", None),
         FieldSpec("admonitions", ("map", ("record", AdmonitionDecl)), "skip", dict, True),
         FieldSpec("counters", ("map", ("record", CounterDecl)), "skip", dict, True),
-        FieldSpec("glossary", ("any",), "skip", None),
+        FieldSpec("glossary", ("record", GlossaryDecl), "skip", GlossaryDecl, True),
     ),
     DefinitionList: (
         FieldSpec("items", ("list", ("tuple", (("list", ("union", Inline)), ("list", ("list", ("union", Block))),))), "skip", ()),
@@ -1102,6 +1128,20 @@ FIELDS: Final[dict[type, tuple[FieldSpec, ...]]] = {
         FieldSpec("raw", ("str",), "skip", ""),
         FieldSpec("id", ("int",), "always", 0),
         FieldSpec("span", ("span",), "always", NO_SPAN),
+    ),
+    GlossaryDecl: (
+        FieldSpec("entries", ("map", ("record", GlossaryEntry)), "skip", dict, True),
+        FieldSpec("groups", ("map", ("record", GlossaryGroup)), "skip", dict, True),
+        FieldSpec("style", ("opt", ("str",)), "skip", None),
+    ),
+    GlossaryEntry: (
+        FieldSpec("description", ("opt", ("str",)), "skip", None),
+        FieldSpec("group", ("opt", ("str",)), "skip", None),
+        FieldSpec("long", ("opt", ("str",)), "skip", None),
+        FieldSpec("name", ("opt", ("str",)), "skip", None),
+    ),
+    GlossaryGroup: (
+        FieldSpec("title", ("str",), "skip", ""),
     ),
     Header: (
         FieldSpec("level", ("int",), "required", None),
@@ -1394,6 +1434,9 @@ __all__ = [
     "Figure",
     "Footnote",
     "FrontMatter",
+    "GlossaryDecl",
+    "GlossaryEntry",
+    "GlossaryGroup",
     "Header",
     "Highlight",
     "HorizontalRule",

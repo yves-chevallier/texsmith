@@ -1,0 +1,139 @@
+{
+  "file": 0,
+  "front_matter": {
+    "id": 1,
+    "span": [
+      0,
+      0,
+      152
+    ],
+    "raw": "---\npress:\n  declare:\n    glossary:\n      api: An application programming interface.\n      solid: {name: SOLID, description: Five design principles}\n---",
+    "keys": {
+      "press": {
+        "declare": {
+          "glossary": {
+            "entries": {
+              "api": {
+                "description": "An application programming interface."
+              },
+              "solid": {
+                "name": "SOLID",
+                "description": "Five design principles"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "blocks": [
+    {
+      "type": "Para",
+      "id": 2,
+      "span": [
+        0,
+        154,
+        205
+      ],
+      "content": [
+        {
+          "type": "Str",
+          "id": 3,
+          "span": [
+            0,
+            154,
+            157
+          ],
+          "text": "An "
+        },
+        {
+          "type": "Ref",
+          "id": 4,
+          "span": [
+            0,
+            157,
+            165
+          ],
+          "items": [
+            {
+              "key": "gls:api",
+              "key_span": [
+                0,
+                158,
+                165
+              ]
+            }
+          ]
+        },
+        {
+          "type": "Str",
+          "id": 5,
+          "span": [
+            0,
+            165,
+            175
+          ],
+          "text": " built on "
+        },
+        {
+          "type": "Ref",
+          "id": 6,
+          "span": [
+            0,
+            175,
+            185
+          ],
+          "items": [
+            {
+              "key": "gls:solid",
+              "key_span": [
+                0,
+                176,
+                185
+              ]
+            }
+          ]
+        },
+        {
+          "type": "Str",
+          "id": 7,
+          "span": [
+            0,
+            185,
+            195
+          ],
+          "text": ", but not "
+        },
+        {
+          "type": "Ref",
+          "id": 8,
+          "span": [
+            0,
+            195,
+            204
+          ],
+          "items": [
+            {
+              "key": "gls:nope",
+              "key_span": [
+                0,
+                196,
+                204
+              ]
+            }
+          ]
+        },
+        {
+          "type": "Str",
+          "id": 9,
+          "span": [
+            0,
+            204,
+            205
+          ],
+          "text": "."
+        }
+      ]
+    }
+  ]
+}

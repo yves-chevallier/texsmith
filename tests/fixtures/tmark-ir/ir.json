@@ -1352,7 +1352,12 @@
           }
         },
         "glossary": {
-          "description": "Structure owned by TeXSmith for now; kept as JSON."
+          "description": "Spec §Glossary and acronyms: both accepted spellings of the declaration land in the same struct.",
+          "allOf": [
+            {
+              "$ref": "#/definitions/GlossaryDecl"
+            }
+          ]
         }
       }
     },
@@ -1452,6 +1457,74 @@
               "$ref": "#/definitions/Span"
             }
           ]
+        }
+      }
+    },
+    "GlossaryDecl": {
+      "description": "The glossary declaration, `declare.glossary`. Spec §Glossary and acronyms: two spellings reach this one struct.\n\nThe *flat* spelling is a mapping of term to definition (`api: An interface`, or `api: {name, description}`); the *structured* one names its parts (`style`, `groups`, `entries`) and keeps the terms under `entries`. The two may be mixed: `style`, `groups` and `entries` are structural wherever they appear at the top level, every other key there is a term. A term of one of those three names is therefore only writable under `entries` — where it wins over a flat key of the same name. `glossary: long` (TeXSmith 0.6) names a style and no term.\n\n`style` and `groups` are not terms and never reach the glossary registry: they are form, read from here by the consumer that renders the per-group tables (TeXSmith's `ts-glossary` fragment).",
+      "type": "object",
+      "properties": {
+        "entries": {
+          "description": "The terms, whichever spelling declared them.",
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/GlossaryEntry"
+          }
+        },
+        "groups": {
+          "description": "Group key to its heading; a template prints one table per group.",
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/GlossaryGroup"
+          }
+        },
+        "style": {
+          "description": "A `glossaries`-package style name (`long`, `altlist`, …).",
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "GlossaryEntry": {
+      "description": "A glossary term. `api: An interface` sets `description`; the object form takes `name` (the short form), `description`, `long` and the `group` the entry belongs to.",
+      "type": "object",
+      "properties": {
+        "description": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "group": {
+          "description": "Key of the `groups` entry this term is listed under.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "long": {
+          "description": "The expanded form of an acronym, when it differs from the description.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "name": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "GlossaryGroup": {
+      "description": "A glossary group: `core: Core terms` or `core: {title: Core terms}`.",
+      "type": "object",
+      "properties": {
+        "title": {
+          "type": "string"
         }
       }
     },

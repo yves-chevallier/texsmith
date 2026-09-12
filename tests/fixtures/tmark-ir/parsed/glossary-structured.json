@@ -1,0 +1,113 @@
+{
+  "file": 0,
+  "front_matter": {
+    "id": 1,
+    "span": [
+      0,
+      0,
+      207
+    ],
+    "raw": "---\npress:\n  declare:\n    glossary:\n      style: long\n      groups:\n        core: Core terms\n      entries:\n        api:\n          group: core\n          description: An application programming interface.\n---",
+    "keys": {
+      "press": {
+        "declare": {
+          "glossary": {
+            "style": "long",
+            "groups": {
+              "core": {
+                "title": "Core terms"
+              }
+            },
+            "entries": {
+              "api": {
+                "description": "An application programming interface.",
+                "group": "core"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "blocks": [
+    {
+      "type": "Para",
+      "id": 2,
+      "span": [
+        0,
+        209,
+        267
+      ],
+      "content": [
+        {
+          "type": "Str",
+          "id": 3,
+          "span": [
+            0,
+            209,
+            212
+          ],
+          "text": "An "
+        },
+        {
+          "type": "Ref",
+          "id": 4,
+          "span": [
+            0,
+            212,
+            220
+          ],
+          "items": [
+            {
+              "key": "gls:api",
+              "key_span": [
+                0,
+                213,
+                220
+              ]
+            }
+          ]
+        },
+        {
+          "type": "Str",
+          "id": 5,
+          "span": [
+            0,
+            220,
+            244
+          ],
+          "text": " of the core group, but "
+        },
+        {
+          "type": "Ref",
+          "id": 6,
+          "span": [
+            0,
+            244,
+            255
+          ],
+          "items": [
+            {
+              "key": "gls:groups",
+              "key_span": [
+                0,
+                245,
+                255
+              ]
+            }
+          ]
+        },
+        {
+          "type": "Str",
+          "id": 7,
+          "span": [
+            0,
+            255,
+            267
+          ],
+          "text": " is no term."
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,103 @@
+{
+  "file": 0,
+  "front_matter": {
+    "id": 0,
+    "span": [
+      0,
+      0,
+      0
+    ],
+    "keys": {}
+  },
+  "blocks": [
+    {
+      "type": "Para",
+      "id": 1,
+      "span": [
+        0,
+        0,
+        39
+      ],
+      "content": [
+        {
+          "type": "Str",
+          "id": 2,
+          "span": [
+            0,
+            0,
+            8
+          ],
+          "text": "Call it "
+        },
+        {
+          "type": "Span",
+          "id": 3,
+          "span": [
+            0,
+            8,
+            27
+          ],
+          "content": [
+            {
+              "type": "Strikeout",
+              "id": 4,
+              "span": [
+                0,
+                11,
+                17
+              ],
+              "content": [
+                {
+                  "type": "Str",
+                  "id": 6,
+                  "span": [
+                    0,
+                    11,
+                    17
+                  ],
+                  "text": "colour"
+                }
+              ]
+            },
+            {
+              "type": "Underline",
+              "id": 7,
+              "span": [
+                0,
+                19,
+                24
+              ],
+              "content": [
+                {
+                  "type": "Str",
+                  "id": 9,
+                  "span": [
+                    0,
+                    19,
+                    24
+                  ],
+                  "text": "color"
+                }
+              ]
+            }
+          ],
+          "attrs": {
+            "classes": [
+              "critic"
+            ]
+          }
+        },
+        {
+          "type": "Str",
+          "id": 10,
+          "span": [
+            0,
+            27,
+            39
+          ],
+          "text": " everywhere."
+        }
+      ]
+    }
+  ]
+}

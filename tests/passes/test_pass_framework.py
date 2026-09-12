@@ -29,7 +29,7 @@ def test_default_pipeline_keeps_listed_order_and_stages() -> None:
     pipeline = build_pipeline()
     assert tuple(item.name for item in pipeline) == DEFAULT_PIPELINE
     stages = [item.stage for item in pipeline]
-    assert stages == ["pre"] * 9 + ["post"] * 3
+    assert stages == ["pre"] * 8 + ["post"] * 3
     assert stages.index("post") == len(DEFAULT_PIPELINE) - 3
 
 

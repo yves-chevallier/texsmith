@@ -1,0 +1,103 @@
+{
+  "file": 0,
+  "front_matter": {
+    "id": 0,
+    "span": [
+      0,
+      0,
+      0
+    ],
+    "keys": {}
+  },
+  "blocks": [
+    {
+      "type": "Para",
+      "id": 1,
+      "span": [
+        0,
+        0,
+        42
+      ],
+      "content": [
+        {
+          "type": "Str",
+          "id": 2,
+          "span": [
+            0,
+            0,
+            15
+          ],
+          "text": "The release is "
+        },
+        {
+          "type": "Span",
+          "id": 3,
+          "span": [
+            0,
+            15,
+            37
+          ],
+          "content": [
+            {
+              "type": "Underline",
+              "id": 4,
+              "span": [
+                0,
+                18,
+                34
+              ],
+              "content": [
+                {
+                  "type": "Str",
+                  "id": 6,
+                  "span": [
+                    0,
+                    18,
+                    25
+                  ],
+                  "text": "almost "
+                },
+                {
+                  "type": "Strong",
+                  "id": 7,
+                  "span": [
+                    0,
+                    25,
+                    34
+                  ],
+                  "content": [
+                    {
+                      "type": "Str",
+                      "id": 8,
+                      "span": [
+                        0,
+                        27,
+                        32
+                      ],
+                      "text": "ready"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "attrs": {
+            "classes": [
+              "critic"
+            ]
+          }
+        },
+        {
+          "type": "Str",
+          "id": 9,
+          "span": [
+            0,
+            37,
+            42
+          ],
+          "text": " now."
+        }
+      ]
+    }
+  ]
+}

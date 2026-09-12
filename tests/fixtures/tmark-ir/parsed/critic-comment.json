@@ -1,0 +1,61 @@
+{
+  "file": 0,
+  "front_matter": {
+    "id": 0,
+    "span": [
+      0,
+      0,
+      0
+    ],
+    "keys": {}
+  },
+  "blocks": [
+    {
+      "type": "Para",
+      "id": 1,
+      "span": [
+        0,
+        0,
+        38
+      ],
+      "content": [
+        {
+          "type": "Str",
+          "id": 2,
+          "span": [
+            0,
+            0,
+            17
+          ],
+          "text": "The proof holds. "
+        },
+        {
+          "type": "Span",
+          "id": 3,
+          "span": [
+            0,
+            17,
+            38
+          ],
+          "content": [
+            {
+              "type": "Comment",
+              "id": 4,
+              "span": [
+                0,
+                20,
+                35
+              ],
+              "text": "cite Knuth here"
+            }
+          ],
+          "attrs": {
+            "classes": [
+              "critic"
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -222,7 +222,6 @@ def spec(
 #: ``pre`` and the ``post`` stage.
 DEFAULT_PIPELINE: tuple[str, ...] = (
     "include",
-    "glossary",
     "var",
     "title",
     "snippet",

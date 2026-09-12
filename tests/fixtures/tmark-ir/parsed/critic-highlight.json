@@ -1,0 +1,66 @@
+{
+  "file": 0,
+  "front_matter": {
+    "id": 0,
+    "span": [
+      0,
+      0,
+      0
+    ],
+    "keys": {}
+  },
+  "blocks": [
+    {
+      "type": "Para",
+      "id": 1,
+      "span": [
+        0,
+        0,
+        43
+      ],
+      "content": [
+        {
+          "type": "Str",
+          "id": 2,
+          "span": [
+            0,
+            0,
+            5
+          ],
+          "text": "Keep "
+        },
+        {
+          "type": "Highlight",
+          "id": 3,
+          "span": [
+            0,
+            5,
+            26
+          ],
+          "content": [
+            {
+              "type": "Str",
+              "id": 4,
+              "span": [
+                0,
+                12,
+                25
+              ],
+              "text": "this sentence"
+            }
+          ]
+        },
+        {
+          "type": "Str",
+          "id": 5,
+          "span": [
+            0,
+            26,
+            43
+          ],
+          "text": " for the summary."
+        }
+      ]
+    }
+  ]
+}

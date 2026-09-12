@@ -261,7 +261,9 @@ def test_front_matter_extra_and_json_blobs() -> None:
     doc = decode_document(data)
     assert doc.front_matter.extra == {"press": {"template": "article"}}
     assert doc.front_matter.keys.press.declare.acronyms == {"HTML": "HyperText"}
-    assert doc.front_matter.keys.press.declare.glossary is None
+    # `declare.glossary` is typed now (tmark C50): absent means an empty
+    # declaration, not `None`.
+    assert doc.front_matter.keys.press.declare.glossary == model.GlossaryDecl()
     assert structural(doc) == data
     assert model.FrontMatter().extra == {}
 

@@ -60,6 +60,68 @@
           "text": "Second page."
         }
       ]
+    },
+    {
+      "type": "BlockQuote",
+      "id": 6,
+      "span": [
+        0,
+        32,
+        78
+      ],
+      "content": [
+        {
+          "type": "Para",
+          "id": 7,
+          "span": [
+            0,
+            34,
+            50
+          ],
+          "content": [
+            {
+              "type": "Str",
+              "id": 8,
+              "span": [
+                0,
+                34,
+                50
+              ],
+              "text": "Before the rule."
+            }
+          ]
+        },
+        {
+          "type": "HorizontalRule",
+          "id": 9,
+          "span": [
+            0,
+            55,
+            58
+          ]
+        },
+        {
+          "type": "Para",
+          "id": 10,
+          "span": [
+            0,
+            63,
+            78
+          ],
+          "content": [
+            {
+              "type": "Str",
+              "id": 11,
+              "span": [
+                0,
+                63,
+                78
+              ],
+              "text": "After the rule."
+            }
+          ]
+        }
+      ]
     }
   ]
 }
