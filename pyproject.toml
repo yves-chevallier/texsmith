@@ -144,6 +144,11 @@ tmark = { path = "vendor/tmark/crates/tmark-py", editable = true }
 
 [tool.pytest.ini_options]
 addopts = []
+# `vendor/tmark` is a checkout of the tmark repository (the wheel is built
+# from it); its own Python tests carry their own fixtures and must not be
+# collected here.
+testpaths = ["tests", "packages"]
+norecursedirs = ["vendor", "build*", ".claude", "examples"]
 
 [tool.ruff]
 line-length = 100
