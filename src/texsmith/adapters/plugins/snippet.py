@@ -476,6 +476,7 @@ def _hash_payload(
     suppress_title: bool = False,
     transparent_corner: bool = False,
     fold_size: float | None = None,
+    front_matter: Mapping[str, Any] | None = None,
 ) -> str:
     def _hash_file(path: Path) -> str:
         try:
@@ -508,6 +509,11 @@ def _hash_payload(
         "transparent_corner": transparent_corner,
         "fold_size": fold_size,
     }
+    if front_matter:
+        # The keys forwarded to the document itself now reach the body tmark
+        # parses, so a preview cached before they did must not be reused. Only
+        # written when there are any, to leave every other digest where it was.
+        payload["front_matter"] = _normalise(dict(front_matter))
     encoded = json.dumps(payload, sort_keys=True).encode("utf-8")
     return hashlib.sha256(encoded).hexdigest()
 
@@ -823,15 +829,12 @@ def build_snippet_block(
         config_from_file = _load_yaml_mapping(config_payload)
 
     config_from_body: dict[str, Any] = {}
-    document_front_matter: dict[str, Any] = {}
     inline_content: str | None = None
     if language in {"yaml", "yml"}:
         config_from_body = _load_yaml_mapping(raw_content)
     else:
         metadata, body = split_front_matter(raw_content)
         config_from_body = dict(metadata or {})
-        if "bibliography" in config_from_body:
-            document_front_matter = {"bibliography": config_from_body["bibliography"]}
         if body.strip():
             inline_content = body
         if not config_from_body and inline_content is not None:
@@ -887,6 +890,10 @@ def build_snippet_block(
     _merge_press_section(template_overrides, fragments)
     template_overrides.setdefault("glossary_inline", True)
 
+    document_front_matter = (
+        _document_front_matter(merged_config, press_overrides) if inline_content is not None else {}
+    )
+
     layout = _resolve_layout_value(layout_literal)
     preview_dogear = _frame_dogear_enabled(template_overrides)
     preview_fold_size = None
@@ -911,6 +918,7 @@ def build_snippet_block(
         suppress_title=suppress_title_value,
         transparent_corner=preview_dogear,
         fold_size=preview_fold_size,
+        front_matter=document_front_matter,
     )
 
     return SnippetBlock(
@@ -953,6 +961,48 @@ def _build_document(
     )
 
 
+def _document_front_matter(config: Mapping[str, Any], press: Any) -> dict[str, Any]:
+    """The fence keys that belong to the previewed document, not to the preview.
+
+    Everything a fence declares is read as snippet configuration, but
+    ``bibliography`` describes the document's own sources: it has to travel to
+    the nested build as front matter. Both spellings are taken — the
+    deprecated top-level one and ``press.sources.bibliography`` — and each is
+    forwarded as written, so tmark applies the same migration it applies to a
+    standalone document.
+    """
+    forwarded: dict[str, Any] = {}
+    legacy = config.get("bibliography")
+    if legacy is not None:
+        forwarded["bibliography"] = legacy
+    sources = press.get("sources") if isinstance(press, Mapping) else None
+    declared = sources.get("bibliography") if isinstance(sources, Mapping) else None
+    if declared is not None:
+        forwarded["press"] = {"sources": {"bibliography": declared}}
+    return forwarded
+
+
+def _front_matter_prelude(front_matter: Mapping[str, Any] | None) -> str:
+    """The fence's document keys written back as the YAML block tmark parses.
+
+    A fence's own YAML is peeled off before the block is built — most of it
+    configures the preview, not the document — so the keys that do belong to
+    the document (``bibliography``) reach :class:`Document` as a mapping
+    handed aside. That mapping only ever fed the legacy front matter; the
+    passes read the *typed* front matter of the IR, which exists solely
+    because tmark parsed the block itself. Re-emitting the block ahead of the
+    body is what makes ``press.sources.bibliography`` visible to the ``doi``
+    pass, so a preview resolves the citation its standalone twin resolves.
+    """
+    if not front_matter:
+        return ""
+    try:
+        body = yaml.safe_dump(dict(front_matter), sort_keys=False, allow_unicode=True).strip()
+    except yaml.YAMLError:  # pragma: no cover - defensive: the mapping came from YAML
+        return ""
+    return f"---\n{body}\n---\n\n" if body else ""
+
+
 def _build_document_from_markup(
     content: str,
     source_path: Path,
@@ -971,7 +1021,7 @@ def _build_document_from_markup(
     nested Markdown render.
     """
     return Document.from_markdown_text(
-        content,
+        _front_matter_prelude(front_matter) + content,
         base_dir / source_path.name,
         promote_title=promote_title,
         strip_heading=drop_title,
