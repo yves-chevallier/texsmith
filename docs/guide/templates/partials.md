@@ -33,11 +33,12 @@ are ignored, so an older fragment survives a newer writer.
 | | `\tscodeinline[lang=py]{…}` | `lang` | escaped text, `\texttt` |
 | `ts-keystrokes` | `\tskeys{Ctrl,Alt,Del}` | — | one box per key, joined by `+`; a literal comma is braced (`{,}`) |
 | `ts-todolist` | `\begin{tstasklist}\item[\tsdone] … \item[\tstodo] … \item[\tspartial] …\end{tstasklist}` | — | `enumitem` list with `amssymb`/`pifont` markers |
-| `ts-glossary` | `\tsgls{key}`, `\tsacr{key}` | — | `\gls` |
+| `ts-glossary` | `\tsgls{key}`, `\tsacr{key}` | — | `\tsgls` is `\gls` (first use expands); `\tsacr` is `\acrshort`, the **short** form wherever it stands |
 | `ts-index` | `\tsindex[registry=r, main]{sort@formatted!sub}` | `registry`, `main` | zero-width; `\makeindex[name=r]` per registry of `Requires.index` |
 | `ts-bibliography` | `\parencite`, `\textcite` | — | fallbacks onto `\cite` when no `.bib` loads `biblatex` |
 | `ts-fonts` | `\tsscript{slug}{…}`, `\tsemoji{…}` | — | the `\text<slug>` fallback font, the emoji font |
 | `ts-critic` | `\tsins{…}`, `\tsdel{…}`, `\tssubst{old}{new}`, `\tscomment{…}` | — | critic markup |
+| `ts-equations` | — | — | a marker, not a package: the writer names it when an equation carries a label, so the Typst template knows to number equations. Nothing to define on the LaTeX side |
 
 Identity: for a contract macro the writer passes `id=`; the fragment places
 `\phantomsection\label`. Attributes of a container are forwarded as keys
@@ -46,7 +47,10 @@ never are.
 
 The Typst writer emits one hyphenated function per contract (`#ts-callout`,
 `#ts-code`, `#ts-keys`, …) with the same argument names, defined in
-`src/texsmith/templates/common/texsmith.typ`, copied next to the `.typ`.
+`src/texsmith/templates/common/texsmith.typ`. That library is inlined ahead of
+the body in the generated `.typ`, so the file compiles on its own; a Typst
+template redefines a function after it, as a LaTeX template redefines a macro
+after `\VAR{extra_packages}`.
 
 ## Overriding a construct
 

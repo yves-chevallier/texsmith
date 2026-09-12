@@ -5,7 +5,7 @@ This cookbook collects repeatable patterns for building and iterating on TeXSmit
 ## Clone a starter and rename it
 
 ```bash
-cp -R src/texsmith/templates/article texsmith-template-report
+texsmith --template article --template-scaffold texsmith-template-report
 cd texsmith-template-report
 
 # Update package metadata
@@ -14,7 +14,7 @@ rg -l "article" | xargs sed -i 's/article/report/g'
 
 Adjust `pyproject.toml` (name, version), `template/manifest.toml` (template attributes), and `README.md`. Keep `tests/` so you can run `uv run pytest` after each change.
 
-## Inspect metadata with `template info`
+## Inspect metadata with `--template-info`
 
 ```bash
 texsmith --template ./texsmith-template-report --template-info
@@ -63,9 +63,9 @@ Redefine its contract macro in the template's `.tex`, after
 Guard the redefinition when the fragment is conditional (`ts-code` only loads
 when the document has code): `\ifcsname tscodeinline\endcsname … \fi`.
 
-See [Contract macros](partials.md) for every macro and its keys. The former
-`latex.template.override` mechanism was deprecated in 0.7.0 and is removed in
-0.8.0.
+See [Contract macros](partials.md) for every macro and its keys, and for the
+two heavier levels: restyling through the `pgfkeys` family, and replacing the
+fragment outright.
 
 ## Inject custom assets
 
@@ -81,7 +81,7 @@ Assets are copied to the render directory. Combine this with `latexmkrc` options
 
 ## Publish and version responsibly
 
-- Set `compat.texsmith = ">=0.3,<0.4"` so incompatible engine changes fail fast.
+- Set `compat.texsmith` to a range with an upper bound (`">=0.8,<0.9"`) so an incompatible runtime change fails fast instead of producing a wrong PDF.
 - Tag template releases with the same TeX Live year used in `manifest.toml`.
 - Document tlmgr packages, slot names, and attribute changes in your README so downstream projects can upgrade with confidence.
 

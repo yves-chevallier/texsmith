@@ -71,17 +71,21 @@ Cheese exhibits unique melting properties @WADHWANI20111713.
 Which renders into:
 
 <!-- The `.snippet` fence below is the input of the PDF preview, not an
-     example: the page shows what it renders to, never its body. tmark-check: skip -->
+     example: the page shows what it renders to, never its body. It carries the
+     `width` the preview needs beside the document's own front matter, so it is
+     not byte-identical to the block above. -->
 
 ```md {.snippet caption="Demo"}
 ---
 width: 70%
-bibliography:
-  WADHWANI20111713: https://doi.org/10.3168/jds.2010-3952
+press:
+  sources:
+    bibliography:
+      WADHWANI20111713: https://doi.org/10.3168/jds.2010-3952
 ---
 # Introduction
 
-Cheese exhibits unique melting properties [^WADHWANI20111713].
+Cheese exhibits unique melting properties @WADHWANI20111713.
 ```
 
 `@key` is the in-text (narrative) citation and `@[key, locator]` the

@@ -10,38 +10,39 @@ while staying configurable from front matter or your own extensions.
 Most built-in fragments are **contract fragments**: they define the macros
 the tmark writer emits for a construct (`\tsmark`, `tscallout`, `tscode`,
 `\tskeys`, …), listed per fragment in `tmark.fragments()` and documented in
-[Contract macros](partials.md). A contract fragment renders when the writer
-names it in `Requires.fragments` (on the legacy Jinja path, when its macros
-appear in the rendered content).
+[Contract macros](partials.md). A contract fragment is activated by the writer:
+a body that emits `\begin{tscallout}` names `ts-callouts` in its
+`Requires.fragments`, and TeXSmith renders it — by construction, never by
+sniffing the emitted LaTeX for a macro name. The remaining fragments are
+configuration and render when their options say so.
 
 `ts-geometry`
-: page size/orientation glue that mirrors `press.paper`/`press.geometry` options.
+: page size/orientation glue that mirrors `press.paper`/`press.geometry` options. Configuration, not a contract.
 
 `ts-typesetting`
-: paragraph spacing, leading and line numbers (inline, when configured), and the
-  contract macros `\tslead`, `\tsmark`, `\tsdivider`, `\tsrule`, `\tsepigraph`, `\tsaside`,
-  `\tsprogress`, `\tsicon` and the `tsdiv` container (`ts-typesetting.sty`, when
-  the writer requires it).
+: paragraph spacing, leading and line numbers (when configured), and the
+  contract macros `\tslead`, `\tsmark`, `\tsdivider`, `\tsrule`, `\tsepigraph`,
+  `\tsaside`, `\tsprogress`, `\tsicon`, `\tslogo` and the `tsdiv` container.
 
 `ts-fonts`
 : font selection driven by `fonts.family`, script fallback fonts, and the
   `\tsscript` / `\tsemoji` switches.
 
 `ts-extra`
-: aux packages: `Requires.packages` of the writer merged with the packages the
-  active contract fragments imply (on the legacy path, detected from the
-  rendered content: hyperref, soul, ulem, etc.).
+: aux packages: the writer's `Requires.packages` minus the packages the active
+  contract fragments already load.
 
 `ts-keystrokes`
-: `\tskeys{Ctrl,Alt,Del}` (and the legacy `\keystroke{…}`) as styled TikZ boxes.
+: `\tskeys{Ctrl,Alt,Del}` as styled TikZ boxes, one per key, joined by `+`.
 
 `ts-callouts`
-: the `tscallout` environment (and the legacy `callout` box) generated from the
-  callout definitions and `press.callouts.*`.
+: the `tscallout` environment, generated from the callout definitions
+  (built-in and `press.declare.admonitions`) and the `press.callouts.*` colours,
+  icons and style.
 
 `ts-code`
-: the `tscode` environment and `\tscodeinline`, over minted, listings or
-  fvextra according to `code.engine`.
+: the `tscode` environment and `\tscodeinline`, over pygments, minted, listings
+  or fvextra according to `code.engine`.
 
 `ts-critic`
 : critic markup: `\tsins`, `\tsdel`, `\tssubst`, `\tscomment`.
@@ -54,20 +55,26 @@ appear in the rendered content).
 : `\tsgls` / `\tsacr` and the glossary wiring: loads `glossaries`, runs `\makeglossaries` when needed, and materializes acronym definitions from front matter with configurable styles.
 
 `ts-bibliography`
-: bibliography helper that wires `biblatex` into the rendered document.
-  By default, raw URLs in entries are suppressed and the entry title becomes
-  a clickable hyperlink to the entry's `url` field — this avoids the
-  overfull/underfull `\hbox` warnings that long URLs typically cause in
-  justified bibliographies. Set `bibliography_show_urls: true` in the
+: `\parencite` / `\textcite` fallbacks when no `.bib` loaded `biblatex`, plus
+  the bibliography wiring. By default, raw URLs in entries are suppressed and
+  the entry title becomes a clickable hyperlink to the entry's `url` field —
+  this avoids the overfull/underfull `\hbox` warnings that long URLs typically
+  cause in justified bibliographies. Set `bibliography_show_urls: true` in the
   document front matter to print the full URL inline instead (same behaviour
   as biblatex's stock styles).
 
 `ts-todolist`
-: checklist helpers providing `\done`, `\wontfix`, and the `todolist` environment when they are referenced.
+: the `tstasklist` environment and its `\tsdone`, `\tstodo` and `\tspartial`
+  markers, for a Markdown task list.
 
-All built-in templates default to rendering these fragments. They are
-written into the build directory as `ts-*.sty` and loaded via
-`\usepackage{...}` in the generated TeX.
+`ts-frame`
+: an optional page frame with an optional folded corner (`press.frame`).
+  Configuration, not a contract; the snippet previews in this documentation use
+  it.
+
+Templates default to the contract fragments plus the configuration ones they
+need. Each is written into the build directory as `ts-*.sty` and loaded via
+`\usepackage{…}` at `\VAR{extra_packages}`.
 
 ## Using fragments in documents
 
@@ -116,6 +123,14 @@ press:
 All three keys are optional. Omitted keys leave the corresponding part of the
 default list unchanged. `disable` is applied first (before `prepend`/`append`),
 so the same fragment cannot appear in both `disable` and `prepend`/`append`.
+`--enable-fragment` / `-f` and `--disable-fragment` / `-F` apply the same two
+operations from the command line.
+
+Disabling a **contract** fragment does not remove it: the writer still names it
+in `Requires.fragments`, so the macros the body emits stay defined. To change
+what a construct looks like, redefine its contract macro or replace the
+fragment with one that provides the same list — see
+[Contract macros](partials.md#overriding-a-construct).
 
 TeXSmith renders each fragment into the output directory and injects the
 corresponding `\usepackage{…}` lines into `\VAR{extra_packages}`.
@@ -141,13 +156,12 @@ the `\usepackage` lines. Add `\VAR{extra_packages}` near the top of your
 preamble—typically next to other package imports. No TOML manifest changes are
 required; the core runtime resolves fragments before rendering.
 
-Built-in templates already include this placeholder and opt into
-`ts-geometry`, `ts-extra`, `ts-keystrokes`, `ts-callouts`, `ts-code`,
-`ts-glossary`, `ts-index`, `ts-bibliography`, and `ts-todolist` via the template
-runtime extras; conditional fragments only render when their macros are present
-in the rendered LaTeX. Third-party templates can also declare default fragments
-in their `TemplateRuntime.extras["fragments"]` or let users supply their own
-through front matter.
+Built-in templates already include this placeholder and declare their default
+fragment set through the template runtime extras; a contract fragment renders
+only when a body's `Requires.fragments` names it, so a document without code
+carries no `ts-code.sty`. Third-party templates can declare their own defaults
+in `TemplateRuntime.extras["fragments"]`, or let users supply theirs through
+`press.fragments` and `-f` / `-F` on the command line.
 
 ### Passing variables to fragments
 

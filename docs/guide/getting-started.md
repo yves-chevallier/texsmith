@@ -55,7 +55,7 @@ By default TeXSmith writes LaTeX to stdout. Pipe it or direct it into a folder. 
 === "Here document"
 
     ```text
-    cat << EOF | texsmith
+    $ cat << EOF | texsmith
     # Title
 
     Some **bold** text.
@@ -63,35 +63,40 @@ By default TeXSmith writes LaTeX to stdout. Pipe it or direct it into a folder. 
     - Foo
     - Bar
     EOF
-    \section{Title}\label{title}
+    \section{Title}
 
     Some \textbf{bold} text.
 
     \begin{itemize}
-    \item{} Foo
-    \item{} Bar
-
+    \item Foo
+    \item Bar
     \end{itemize}
     ```
 
 === "From file"
 
     ```text
-    $ echo "# Title\nSome **bold** text." > sample.md
-    $ texsmith sample.md --output build/
-    \chapter{Title}\label{title}
+    $ printf '# Title\n\nSome **bold** text.\n' > sample.md
+    $ texsmith sample.md
+    \section{Title}
 
     Some \textbf{bold} text.
     ```
+
+    Add `--output build/` to write `build/sample.tex` instead of printing.
 
 === "HTML"
 
     ```text
     $ echo "<h1>Title</h1><p>Some <strong>bold</strong> text.</p>" > sample.html
     $ texsmith sample.html
-    \chapter{Title}
+    \section{Title}
+
     Some \textbf{bold} text.
     ```
+
+    An `.html` input is read by the HTML reader (`--selector`, `--parser`,
+    `--full-document` steer it) and joins the same IR as a Markdown source.
 
 ## Generate a PDF
 
@@ -151,6 +156,18 @@ tmark lint --fix document.md        # apply it in place
 counter prefixes, malformed tables, deprecated spellings. Coming from TeXSmith
 0.6? Every spelling you know still works, and
 [Migrating to TMark](migration.md) lists what changed and what rewrites it.
+
+`texsmith` reports the same findings in the same shape while it renders. Add
+`--strict` to refuse to build a PDF from a document that has any, `-q` to hide
+the hints and info lines, and `--diagnostics-json FILE` to hand the lot to an
+editor or to CI:
+
+```bash
+texsmith report.md --build --strict --deprecated info
+```
+
+`--deprecated info` keeps the 0.6 spellings from failing a strict run while you
+work through them. See [Diagnostics](diagnostics.md).
 
 ## Optional prerequisites
 
