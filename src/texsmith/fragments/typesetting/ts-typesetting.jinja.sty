@@ -16,6 +16,8 @@
 \RequirePackage{marginnote}
 \RequirePackage{progressbar}
 \ifLuaTeX
+  % luacolor first: lua-ul refuses a coloured highlight without it.
+  \RequirePackage{luacolor}
   \RequirePackage{lua-ul}
 \fi
 \providecommand{\phantomsection}{}
@@ -31,12 +33,8 @@
   \NewDocumentCommand{\tsmark}{m}{\textcolor{yellow}{#1}}
 \else
   \ifLuaTeX
-    \NewDocumentCommand{\tsmark}{m}{%
-      \begingroup
-      \setulcolor{yellow}%
-      \ul{#1}%
-      \endgroup
-    }
+    % lua-ul, not soul: `\highLight[<colour>]{<text>}` is its interface.
+    \NewDocumentCommand{\tsmark}{m}{\highLight[yellow]{#1}}
   \else
     \NewDocumentCommand{\tsmark}{m}{%
       \begingroup

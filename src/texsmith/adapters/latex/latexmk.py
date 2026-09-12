@@ -121,7 +121,12 @@ def build_latexmkrc_content(
         lines.append(f"$makeindex = '{_perl_escape(makeindex)}';\n")
 
     if has_glossary:
-        glossaries_cmd = pyxindy.latexmk_makeglossaries_command()
+        # `system` takes the argv list, not a shell string: a path with a
+        # space or a quote in it then needs no quoting, and `$base` cannot be
+        # mistaken for part of the program name.
+        argv = ", ".join(
+            f"'{_perl_escape(token)}'" for token in pyxindy.glossary_command_tokens()
+        )
         lines.extend(
             [
                 "add_cus_dep('glo', 'gls', 0, 'run_makeglossaries');\n",
@@ -129,8 +134,7 @@ def build_latexmkrc_content(
                 "\n",
                 "sub run_makeglossaries {\n",
                 "  my ($base) = @_;\n",
-                f'  my $cmd = "{_perl_escape(glossaries_cmd)}";\n',
-                "  return system($cmd);\n",
+                f"  return system({argv}, $base);\n",
                 "}\n",
             ]
         )
