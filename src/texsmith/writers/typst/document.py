@@ -16,7 +16,7 @@ def render_document(
     """Wrap a Typst writer ``body`` into a standalone, compilable document."""
     lines: list[str] = []
     if uses_mitex:
-        lines.append('#import "@preview/mitex:0.2.6": mi, mitex')
+        lines.append('#import "@preview/mitex:0.2.7": mi, mitex')
     lines += [
         "#set page(margin: 2.5cm)",
         '#set text(font: "New Computer Modern", size: 11pt)',

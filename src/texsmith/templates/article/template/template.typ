@@ -2,7 +2,7 @@
    Rendered with standard Jinja delimiters; the document body (mainmatter /
    abstract) is produced by TypstWriter. #}
 {% if uses_mitex %}
-#import "@preview/mitex:0.2.6": mi, mitex
+#import "@preview/mitex:0.2.7": mi, mitex
 {% endif %}
 #set document(
   title: "{{ title | replace('"', '\\"') }}",
