@@ -33,7 +33,7 @@ Check the installed version with `texsmith --version` or in Python with `texsmit
 - **Typed IR with multiple backends** – Documents are parsed into a typed intermediate representation, run through TeXSmith's IR passes, resolved, and emitted as **LaTeX** (default) or **Typst** (experimental) via `--format`.
 - **Template-first runtime** – Bundle multiple fragments into slots, merge front matter metadata, and emit LaTeX projects ready for Tectonic or latexmk with Docker-friendly manifests.
 - **CLI and Python parity** – The Typer-powered CLI wraps the same ConversionService you can consume as a library, making CI/CD and notebooks behave like local runs.
-- **Actionable diagnostics** – Structured emitters, verbosity switches, and `--debug` traces keep build issues debuggable even in automated pipelines.
+- **Actionable diagnostics** – Every finding, from the Rust parser or from TeXSmith, prints in one shape with a stable code. `--strict` refuses to build a PDF from a document that has one, `--diagnostics-json` hands the lot to an editor or CI, and `--deprecated` keeps 0.6 spellings from failing a strict run while you migrate.
 - **Extensible converters** – Add IR passes, redefine a construct's contract macro in a fragment or template, or ship diagram transformers (Mermaid, Draw.io, Svgbob) that plug directly into the pipeline.
 
 ## Installation
@@ -47,7 +47,7 @@ pip install texsmith
 pipx install texsmith
 ```
 
-TeXSmith targets Python 3.10+ and expects a LaTeX distribution (TeX Live, MiKTeX, or MacTeX) when you pass `--build` with the default LaTeX backend. Optional converters such as Mermaid rely on Docker (`minlag/mermaid-cli`) unless you register custom handlers.
+TeXSmith targets Python 3.10+ and expects a LaTeX distribution (TeX Live, MiKTeX, or MacTeX) when you pass `--build` with the default LaTeX backend. Optional converters such as Mermaid try a Playwright exporter first, then a local CLI, then Docker (`minlag/mermaid-cli`); `--diagrams-backend` pins one, and you can register your own with `texsmith.adapters.transformers.register_converter`.
 
 To build with the **Typst** backend (`--format typst`), install the embedded compiler as an extra:
 
@@ -74,20 +74,22 @@ Browse the full documentation at [yves-chevallier.github.io/texsmith](https://yv
 
 - [Getting Started](docs/guide/getting-started.md): installation, prerequisites, and API snippets.
 - [CLI Reference](docs/cli/index.md): every flag, including the template inspector.
-- [Markdown Directory](docs/markdown/supported.md): exhaustive syntax coverage.
-- [API Reference](docs/api/index.md): ConversionService, TemplateSession, handlers, and plugins.
-- [Template Cookbook](docs/guide/template-cookbook.md): practical recipes for slots, overrides, packaging, and testing.
-- [Release Notes & Compatibility](docs/guide/release-notes.md): TeXSmith feature history plus template/TeX Live requirements.
+- [Syntax](docs/syntax/index.md): the TMark dialect, construct by construct.
+- [Migrating to TMark](docs/guide/migration.md): what changed since 0.6 and what `tmark lint --fix` rewrites.
+- [API Reference](docs/api/index.md): ConversionService, TemplateSession, IR passes, and plugins.
+- [Template Cookbook](docs/guide/templates/template-cookbook.md): practical recipes for slots, contract macros, packaging, and testing.
+- [Diagnostics](docs/guide/diagnostics.md): the finding format, `--strict`, `--deprecated`, `--diagnostics-json`.
+- [Release Notes](docs/about/release-notes.md): TeXSmith feature history plus template/TeX Live requirements.
 
 ## Template catalog
 
 Inspect templates by name or path to understand their slots, metadata attributes, TeX Live requirements, and declared assets:
 
 ```bash
-texsmith --template article --template-info
-# or inspect a local path
-texsmith --template ./templates/nature --template-info
-texsmith templates  # view discovery order across built-ins/packages/local/home
+texsmith --list-templates                        # discovery order: built-ins, packages, local, home
+texsmith --template article --template-info      # one template's slots, attributes, tlmgr packages
+texsmith --template ./templates/nature --template-info   # or a local path
+texsmith --template article --template-scaffold ./templates/mine   # copy one to edit
 ```
 
 Use this command before wiring slots or when you need to confirm which tlmgr packages to preinstall in CI.
@@ -104,18 +106,31 @@ Each example ships build instructions inside [`docs/examples/index.md`](docs/exa
 
 ## Project layout
 
-The source tree is organised around three top-level namespaces:
+```text
+src/texsmith/
+├── readers/      tmark.parse for Markdown; the bs4 HtmlReader for .html
+├── ir/           the generated Python mirror of tmark's IR schema, plus walkers
+├── passes/       the IR passes (include, glossary, var, title, snippet, assets,
+│                 doi, emoji, scripts | slots, headings, highlight)
+├── writers/      what stays Python-side of the writers: escaping, asset naming,
+│                 the Typst document wrapper
+├── diagnostics/  the one diagnostic shape, its codes, the sink and file table
+├── templates/    the built-in templates (article, book, letter, snippet)
+├── fragments/    the ts-* fragments that define the contract macros
+├── core/         conversion orchestration, documents, bibliography, templates
+├── adapters/     LaTeX engines, diagram transformers, Docker, MkDocs plugins
+└── ui/cli/       the Typer CLI
+```
 
-- `texsmith.core` contains the conversion pipeline, document models, diagnostics, and template helpers.
-- `texsmith.adapters` hosts infrastructure integrations such as Markdown parsing, LaTeX rendering, Docker helpers, and transformer utilities.
-- `texsmith.ui` provides end-user interfaces, including the Typer-powered CLI.
+The MkDocs companion is a separate workspace package, `packages/mkdocs_texsmith`.
 
 ## Core architecture highlights
 
-- `ConversionService` encapsulates the orchestration that previously lived in `texsmith.api.service` helpers. Provide a `ConversionRequest` and receive a `ConversionResponse` with rendered bundles and diagnostics.
-- `TemplateRenderer` now owns slot aggregation and LaTeX assembly. `TemplateSession` focuses on session state, template options, and bibliography tracking.
-- `DocumentSlots` unify slot directives from front matter, CLI flags, and programmatic overrides. Every entry point now speaks the same data model.
-- `DiagnosticEmitter` replaces ad-hoc callback bags so warnings, errors, and structured events flow through a predictable interface (CLI uses `CliEmitter`; libraries can plug in their own).
+- `ConversionService` is the single orchestrator behind both the CLI and the library. Provide a `ConversionRequest`, get a `ConversionResponse` carrying either a `ConversionBundle` or a `TemplateRenderResult`.
+- A construct is rendered by a **contract macro** a `ts-*` fragment provides, not by a template-side partial. The writer names the fragment it needs in `Requires.fragments`, so activation is by construction; redefining the macro is how a template restyles the construct.
+- `TemplateRenderer` owns slot aggregation and LaTeX assembly. `TemplateSession` focuses on session state, template options, and bibliography tracking.
+- Slot directives from front matter, CLI flags, and programmatic overrides converge on one data model, so every entry point behaves the same.
+- Every finding — from tmark or from TeXSmith — is one `Diagnostic` in one shape, gated by `--strict` and dumped by `--diagnostics-json`. `DiagnosticEmitter` decides where they are shown (CLI uses `CliEmitter`; libraries can plug in their own).
 - Fragments use a `BaseFragment` + config dataclass model (`fragment = YourFragment()` export referenced by `fragment.toml` entrypoints). No legacy factories remain.
 
 ### Programmatic conversions with `ConversionService`
@@ -136,12 +151,13 @@ prepared = service.prepare_documents(request)
 response = service.execute(request, prepared=prepared)
 
 print("Main TeX:", response.render_result.main_tex_path)
-print("Diagnostics:", [event.name for event in response.diagnostics])
+for record in response.documents[0].diagnostics:
+    print(record.severity, record.code, record.message)
 ```
 
 If you only need a quick conversion, the high-level helpers (`texsmith.Document`, `texsmith.convert_documents`, `texsmith.TemplateSession`) continue to work, but they now reuse the same ConversionService plumbing as the CLI.
 
-> Refer to `UPGRADE.md` for release notes and migration guidance from earlier builds.
+> Upgrading from 0.6? [Migrating to TMark](docs/guide/migration.md) lists every changed spelling and what `tmark lint --fix` rewrites; `CHANGELOG.md` has the release history.
 
 ## Render pipeline
 
@@ -165,6 +181,12 @@ tmark.parse → IR → TeXSmith passes → tmark.resolve → tmark.write → LaT
   environment, and the fragment named in `Requires.fragments` defines it —
   redefining that macro is how a template overrides a construct's look.
 
+Resolution happens **once**, over the whole document, so numbering and
+cross-references are consistent across slots. `--numbering tmark` moves the
+numbers of figures, tables, listings, equations and sections into that single
+resolve, making the `.tex` and the `.typ` print identical numbers.
+
 Select the backend with `--format {latex,typst}`. See the
-[Output backends guide](docs/guide/plumbing/backends.md) and the
+[Output backends guide](docs/guide/plumbing/backends.md), the
+[pipeline walkthrough](docs/guide/plumbing/pipeline.md) and the
 [IR passes & fragment contracts reference](docs/api/handlers.md).

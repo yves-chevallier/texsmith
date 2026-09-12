@@ -90,8 +90,9 @@ a bibliography, glossary, fonts, page geometry, or other typesetting options.
 \begin{tscode}[lang=text, stretch=0.5, engine=pygments]
 \begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
 .md ──tmark.parse──▶ IR ──TeXSmith passes──▶ IR\PYZsq{} ──tmark.resolve(loader)──▶ Resolved
-                            include · snippet · assets · doi · var · emoji ·
-                            scripts · title · slots · headings · highlight
+                     pre:  include · glossary · var · title · snippet ·
+                           assets · doi · emoji · scripts
+                     post: slots · headings · highlight
                                                                           │
       ┌───────────────────────────────────────────────────────────────────┘
       ▼
@@ -143,28 +144,33 @@ instead and joins the same IR at this point.
 A pass is a pure function \tscodeinline{(Document, PassContext) -\allowbreak{}> Document} over the
 generated models: it never mutates its input, returns the same object when it
 has nothing to do, and never raises --- a failure becomes a visible literal in
-the output plus a diagnostic at the node's span. The bundled \tscodeinline{pre} passes are
-the ones that need I/O, which is exactly why they are Python's:
+the output plus a diagnostic at the node's span. Most \tscodeinline{pre} passes need I/O,
+which is exactly why they are Python's. In their declared order:
 \begin{center}
-\begin{tabularx}{\linewidth}{>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X}
+\begin{tabularx}{\linewidth}{>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X}
 \toprule
-\textbf{Pass} & \textbf{What it does} \\
+\textbf{Pass} & \textbf{I/O} & \textbf{What it does} \\
 \midrule
-\tscodeinline{include} & splices \tscodeinline{\{include\}(file)} and fence \tscodeinline{include=} sources, rebasing relative paths \\
-\tscodeinline{snippet} & renders \tscodeinline{.snippet} fences into preview figures \\
-\tscodeinline{assets} & converts and hashes images and diagrams (mermaid, draw.io, SVG) \\
-\tscodeinline{doi} & fetches pending DOIs into a generated \tscodeinline{.bib} \\
-\tscodeinline{var} & expands \tscodeinline{\{\{ key \}\}} moustaches against the front matter \\
-\tscodeinline{title} & promotes the first heading to the document title \\
-\tscodeinline{emoji} & picks the emoji rendering mode and its assets \\
-\tscodeinline{scripts} & detects non-Latin runs and chooses fallback font families \\
+\tscodeinline{include} & yes & splices \tscodeinline{\{include\}(file)} and fence \tscodeinline{include=} sources, rebasing relative paths \\
+\tscodeinline{glossary} &  & validates the structured \tscodeinline{press.declare.glossary} section and declares one abbreviation per entry, so the prose substitutes the key and the backmatter lists it \\
+\tscodeinline{var} &  & expands \tscodeinline{\{\{ key \}\}} moustaches against the front matter \\
+\tscodeinline{title} &  & promotes the first heading to the document title \\
+\tscodeinline{snippet} & yes & renders \tscodeinline{.snippet} fences into preview figures \\
+\tscodeinline{assets} & yes & converts and hashes images and diagrams (mermaid, draw.io, SVG) \\
+\tscodeinline{doi} & yes & fetches pending DOIs into a generated \tscodeinline{.bib} \\
+\tscodeinline{emoji} & yes & picks the emoji rendering mode and its assets \\
+\tscodeinline{scripts} & yes & detects non-Latin runs and chooses fallback font families \\
 \bottomrule
 \end{tabularx}
 \end{center}
 Order is declared, not implicit: each pass registers a \tscodeinline{PassSpec} with
 \tscodeinline{after=}, and \tscodeinline{build\_pipeline} performs a stable topological sort that raises
-\tscodeinline{PassOrderError} on a cycle. A template or plugin registers its own the same
-way.
+\tscodeinline{PassOrderError} on a cycle --- so the table reads as a listing, not as a
+contract, and the constraints are what actually hold (\tscodeinline{assets} after
+\tscodeinline{include} and \tscodeinline{snippet}, \tscodeinline{emoji} after \tscodeinline{assets}, \tscodeinline{scripts} after \tscodeinline{var} and
+\tscodeinline{emoji}). A template or plugin registers its own the same way, and a \tscodeinline{pre}
+pass declared \tscodeinline{after} a \tscodeinline{post} pass is refused. \tscodeinline{DEFAULT\_PIPELINE} in
+\tscodeinline{texsmith.passes} is the list the CLI runs.
 \item \textbf{Bind the template and attributes.}
 \tscodeinline{bind\_template} resolves which template runtime to use and which slots exist.
 Template attributes declared in \tscodeinline{manifest.toml} are merged in a strict order:

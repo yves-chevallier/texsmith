@@ -5,7 +5,8 @@ hide:
 # Welcome to TeXSmith
 
 **TeXSmith** turns [Markdown](https://www.markdownguide.org/) into
-press-ready [LaTeX](https://www.latex-project.org/). Keep your
+press-ready [LaTeX](https://www.latex-project.org/) — or
+[Typst](https://typst.app), with `--format typst`. Keep your
 docs authored in Markdown, then compile polished PDFs for print,
 journals, or long-form review packages—without maintaining several sources of truth. No need to learn LaTeX, install heavy toolchains, or wrestle with complex conversion setups.
 
@@ -49,8 +50,9 @@ Template-friendly
   slots, and restyle any construct by redefining its contract macro.
 
 Diagnostics you can trust
-: Structured emitter APIs and CLI verbosity
-  flags surface the context you need when something goes wrong.
+: Every finding prints in one shape with a stable code, whether the Rust parser
+  or TeXSmith found it. [`--strict`](guide/diagnostics.md) refuses to build a
+  PDF from a document that has one.
 
 ## The dialect
 

@@ -8,8 +8,11 @@
 \usepackage[colorlinks=true, linkcolor=NavyBlue, urlcolor=NavyBlue, citecolor=NavyBlue]{hyperref}
 \usepackage[a4paper]{geometry}
 \usepackage{ts-fonts}
+\usepackage{tcolorbox}
+\usepackage{fvextra}
 \usepackage{float}
 \usepackage{seqsplit}
+\usepackage{ts-code}
 
 \usepackage{lastpage}
 \usepackage{refcount}
@@ -31,4 +34,7 @@
 \author{}\date{}
 \begin{document}
 \maketitle
+The \LaTeX{} body itself comes from tmark's writer; what stays on the Python side
+is the escaping table the templates and fonts reuse, the asset plumbing, the
+Pygments bridge of the \tscodeinline{highlight} pass, and the template runtime.
 \end{document}

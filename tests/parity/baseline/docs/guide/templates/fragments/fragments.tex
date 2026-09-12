@@ -43,34 +43,35 @@ while staying configurable from front matter or your own extensions.
 Most built-in fragments are \textbf{contract fragments}: they define the macros
 the tmark writer emits for a construct (\tscodeinline{\textbackslash{}tsmark}, \tscodeinline{tscallout}, \tscodeinline{tscode},
 \tscodeinline{\textbackslash{}tskeys}, ...), listed per fragment in \tscodeinline{tmark.fragments()} and documented in
-Contract macros. A contract fragment renders when the writer
-names it in \tscodeinline{Requires.fragments} (on the legacy Jinja path, when its macros
-appear in the rendered content).
+Contract macros. A contract fragment is activated by the writer:
+a body that emits \tscodeinline{\textbackslash{}begin\{tscallout\}} names \tscodeinline{ts-\allowbreak{}callouts} in its
+\tscodeinline{Requires.fragments}, and TeXSmith renders it --- by construction, never by
+sniffing the emitted \LaTeX{} for a macro name. The remaining fragments are
+configuration and render when their options say so.
 \begin{description}
-\item[{\tscodeinline{ts-\allowbreak{}geometry}}] page size/orientation glue that mirrors \tscodeinline{press.paper}/\tscodeinline{press.geometry} options.
-\item[{\tscodeinline{ts-\allowbreak{}typesetting}}] paragraph spacing, leading and line numbers (inline, when configured), and the
+\item[{\tscodeinline{ts-\allowbreak{}geometry}}] page size/orientation glue that mirrors \tscodeinline{press.paper}/\tscodeinline{press.geometry} options. Configuration, not a contract.
+\item[{\tscodeinline{ts-\allowbreak{}typesetting}}] paragraph spacing, leading and line numbers (when configured), and the
 \end{description}
-contract macros \tscodeinline{\textbackslash{}tslead}, \tscodeinline{\textbackslash{}tsmark}, \tscodeinline{\textbackslash{}tsdivider}, \tscodeinline{\textbackslash{}tsrule}, \tscodeinline{\textbackslash{}tsepigraph}, \tscodeinline{\textbackslash{}tsaside},
-\tscodeinline{\textbackslash{}tsprogress}, \tscodeinline{\textbackslash{}tsicon} and the \tscodeinline{tsdiv} container (\tscodeinline{ts-\allowbreak{}typesetting.sty}, when
-the writer requires it).
+contract macros \tscodeinline{\textbackslash{}tslead}, \tscodeinline{\textbackslash{}tsmark}, \tscodeinline{\textbackslash{}tsdivider}, \tscodeinline{\textbackslash{}tsrule}, \tscodeinline{\textbackslash{}tsepigraph},
+\tscodeinline{\textbackslash{}tsaside}, \tscodeinline{\textbackslash{}tsprogress}, \tscodeinline{\textbackslash{}tsicon}, \tscodeinline{\textbackslash{}tslogo} and the \tscodeinline{tsdiv} container.
 \begin{description}
 \item[{\tscodeinline{ts-\allowbreak{}fonts}}] font selection driven by \tscodeinline{fonts.family}, script fallback fonts, and the
 \end{description}
 \tscodeinline{\textbackslash{}tsscript} / \tscodeinline{\textbackslash{}tsemoji} switches.
 \begin{description}
-\item[{\tscodeinline{ts-\allowbreak{}extra}}] aux packages: \tscodeinline{Requires.packages} of the writer merged with the packages the
+\item[{\tscodeinline{ts-\allowbreak{}extra}}] aux packages: the writer's \tscodeinline{Requires.packages} minus the packages the active
 \end{description}
-active contract fragments imply (on the legacy path, detected from the
-rendered content: hyperref, soul, ulem, etc.).
+contract fragments already load.
 \begin{description}
-\item[{\tscodeinline{ts-\allowbreak{}keystrokes}}] \tscodeinline{\textbackslash{}tskeys\{Ctrl,Alt,Del\}} (and the legacy \tscodeinline{\textbackslash{}keystroke\{…\}}) as styled TikZ boxes.
-\item[{\tscodeinline{ts-\allowbreak{}callouts}}] the \tscodeinline{tscallout} environment (and the legacy \tscodeinline{callout} box) generated from the
+\item[{\tscodeinline{ts-\allowbreak{}keystrokes}}] \tscodeinline{\textbackslash{}tskeys\{Ctrl,Alt,Del\}} as styled TikZ boxes, one per key, joined by \tscodeinline{+}.
+\item[{\tscodeinline{ts-\allowbreak{}callouts}}] the \tscodeinline{tscallout} environment, generated from the callout definitions
 \end{description}
-callout definitions and \tscodeinline{press.callouts.*}.
+(built-in and \tscodeinline{press.declare.admonitions}) and the \tscodeinline{press.callouts.*} colours,
+icons and style.
 \begin{description}
-\item[{\tscodeinline{ts-\allowbreak{}code}}] the \tscodeinline{tscode} environment and \tscodeinline{\textbackslash{}tscodeinline}, over minted, listings or
+\item[{\tscodeinline{ts-\allowbreak{}code}}] the \tscodeinline{tscode} environment and \tscodeinline{\textbackslash{}tscodeinline}, over pygments, minted, listings
 \end{description}
-fvextra according to \tscodeinline{code.engine}.
+or fvextra according to \tscodeinline{code.engine}.
 \begin{description}
 \item[{\tscodeinline{ts-\allowbreak{}critic}}] critic markup: \tscodeinline{\textbackslash{}tsins}, \tscodeinline{\textbackslash{}tsdel}, \tscodeinline{\textbackslash{}tssubst}, \tscodeinline{\textbackslash{}tscomment}.
 \item[{\tscodeinline{ts-\allowbreak{}index}}] \tscodeinline{\textbackslash{}tsindex}, central imakeidx glue, one \tscodeinline{\textbackslash{}makeindex[name=…]} per registry of
@@ -78,20 +79,27 @@ fvextra according to \tscodeinline{code.engine}.
 \tscodeinline{Requires.index}, texindy/makeindex selection.
 \begin{description}
 \item[{\tscodeinline{ts-\allowbreak{}glossary}}] \tscodeinline{\textbackslash{}tsgls} / \tscodeinline{\textbackslash{}tsacr} and the glossary wiring: loads \tscodeinline{glossaries}, runs \tscodeinline{\textbackslash{}makeglossaries} when needed, and materializes acronym definitions from front matter with configurable styles.
-\item[{\tscodeinline{ts-\allowbreak{}bibliography}}] bibliography helper that wires \tscodeinline{biblatex} into the rendered document.
+\item[{\tscodeinline{ts-\allowbreak{}bibliography}}] \tscodeinline{\textbackslash{}parencite} / \tscodeinline{\textbackslash{}textcite} fallbacks when no \tscodeinline{.bib} loaded \tscodeinline{biblatex}, plus
 \end{description}
-By default, raw URLs in entries are suppressed and the entry title becomes
-a clickable hyperlink to the entry's \tscodeinline{url} field --- this avoids the
-overfull/underfull \tscodeinline{\textbackslash{}hbox} warnings that long URLs typically cause in
-justified bibliographies. Set \tscodeinline{bibliography\_show\_urls: true} in the
+the bibliography wiring. By default, raw URLs in entries are suppressed and
+the entry title becomes a clickable hyperlink to the entry's \tscodeinline{url} field ---
+this avoids the overfull/underfull \tscodeinline{\textbackslash{}hbox} warnings that long URLs typically
+cause in justified bibliographies. Set \tscodeinline{bibliography\_show\_urls: true} in the
 document front matter to print the full URL inline instead (same behaviour
 as biblatex's stock styles).
 \begin{description}
-\item[{\tscodeinline{ts-\allowbreak{}todolist}}] checklist helpers providing \tscodeinline{\textbackslash{}done}, \tscodeinline{\textbackslash{}wontfix}, and the \tscodeinline{todolist} environment when they are referenced.
+\item[{\tscodeinline{ts-\allowbreak{}todolist}}] the \tscodeinline{tstasklist} environment and its \tscodeinline{\textbackslash{}tsdone}, \tscodeinline{\textbackslash{}tstodo} and \tscodeinline{\textbackslash{}tspartial}
 \end{description}
-All built-in templates default to rendering these fragments. They are
-written into the build directory as \tscodeinline{ts-\allowbreak{}*.sty} and loaded via
-\tscodeinline{\textbackslash{}usepackage\{...\}} in the generated \TeX{}.
+markers, for a Markdown task list.
+\begin{description}
+\item[{\tscodeinline{ts-\allowbreak{}frame}}] an optional page frame with an optional folded corner (\tscodeinline{press.frame}).
+\end{description}
+Configuration, not a contract; the snippet previews in this documentation use
+it.
+
+Templates default to the contract fragments plus the configuration ones they
+need. Each is written into the build directory as \tscodeinline{ts-\allowbreak{}*.sty} and loaded via
+\tscodeinline{\textbackslash{}usepackage\{…\}} at \tscodeinline{\textbackslash{}VAR\{extra\_packages\}}.
 \section{Using fragments in documents}
 Fragments are declared under the \tscodeinline{press.fragments} key in front matter. Each
 entry is either the name of a built-in fragment or a path to a custom Jinja
@@ -135,6 +143,14 @@ list, use the dict form with any combination of \tscodeinline{append}, \tscodein
 All three keys are optional. Omitted keys leave the corresponding part of the
 default list unchanged. \tscodeinline{disable} is applied first (before \tscodeinline{prepend}/\tscodeinline{append}),
 so the same fragment cannot appear in both \tscodeinline{disable} and \tscodeinline{prepend}/\tscodeinline{append}.
+\tscodeinline{-\allowbreak{}-\allowbreak{}enable-\allowbreak{}fragment} / \tscodeinline{-\allowbreak{}f} and \tscodeinline{-\allowbreak{}-\allowbreak{}disable-\allowbreak{}fragment} / \tscodeinline{-\allowbreak{}F} apply the same two
+operations from the command line.
+
+Disabling a \textbf{contract} fragment does not remove it: the writer still names it
+in \tscodeinline{Requires.fragments}, so the macros the body emits stay defined. To change
+what a construct looks like, redefine its contract macro or replace the
+fragment with one that provides the same list --- see
+\href{partials.md\#overriding-a-construct}{Contract macros}.
 
 TeXSmith renders each fragment into the output directory and injects the
 corresponding \tscodeinline{\textbackslash{}usepackage\{…\}} lines into \tscodeinline{\textbackslash{}VAR\{extra\_packages\}}.
@@ -156,13 +172,12 @@ the \tscodeinline{\textbackslash{}usepackage} lines. Add \tscodeinline{\textback
 preamble---typically next to other package imports. No TOML manifest changes are
 required; the core runtime resolves fragments before rendering.
 
-Built-in templates already include this placeholder and opt into
-\tscodeinline{ts-\allowbreak{}geometry}, \tscodeinline{ts-\allowbreak{}extra}, \tscodeinline{ts-\allowbreak{}keystrokes}, \tscodeinline{ts-\allowbreak{}callouts}, \tscodeinline{ts-\allowbreak{}code},
-\tscodeinline{ts-\allowbreak{}glossary}, \tscodeinline{ts-\allowbreak{}index}, \tscodeinline{ts-\allowbreak{}bibliography}, and \tscodeinline{ts-\allowbreak{}todolist} via the template
-runtime extras; conditional fragments only render when their macros are present
-in the rendered \LaTeX{}. Third-party templates can also declare default fragments
-in their \tscodeinline{TemplateRuntime.extras["fragments"]} or let users supply their own
-through front matter.
+Built-in templates already include this placeholder and declare their default
+fragment set through the template runtime extras; a contract fragment renders
+only when a body's \tscodeinline{Requires.fragments} names it, so a document without code
+carries no \tscodeinline{ts-\allowbreak{}code.sty}. Third-party templates can declare their own defaults
+in \tscodeinline{TemplateRuntime.extras["fragments"]}, or let users supply theirs through
+\tscodeinline{press.fragments} and \tscodeinline{-\allowbreak{}f} / \tscodeinline{-\allowbreak{}F} on the command line.
 \subsection{Passing variables to fragments}
 Any values under \tscodeinline{press} (or other front matter keys) are merged into the
 template rendering context. If your fragment expects a variable such as

@@ -39,7 +39,8 @@
 \begin{document}
 \maketitle
 \textbf{TeXSmith} turns \href{https://www.markdownguide.org/}{Markdown} into
-press-ready \href{https://www.latex-project.org/}{\LaTeX{}}. Keep your
+press-ready \href{https://www.latex-project.org/}{\LaTeX{}} --- or
+\href{https://typst.app}{Typst}, with \tscodeinline{-\allowbreak{}-\allowbreak{}format typst}. Keep your
 docs authored in Markdown, then compile polished PDFs for print,
 journals, or long-form review packages---without maintaining several sources of truth. No need to learn \LaTeX{}, install heavy toolchains, or wrestle with complex conversion setups.
 \includegraphics[width=0.5\linewidth]{ts-light.pdf}
@@ -78,9 +79,10 @@ so automation scripts and ad-hoc conversions stay in sync.
 \end{description}
 slots, and restyle any construct by redefining its contract macro.
 \begin{description}
-\item[{Diagnostics you can trust}] Structured emitter APIs and CLI verbosity
+\item[{Diagnostics you can trust}] Every finding prints in one shape with a stable code, whether the Rust parser
 \end{description}
-flags surface the context you need when something goes wrong.
+or TeXSmith found it. \tscodeinline{-\allowbreak{}-\allowbreak{}strict} refuses to build a
+PDF from a document that has one.
 \section{The dialect}
 TeXSmith reads TMark: \href{https://commonmark.org/}{CommonMark},
 plus the extension set every MkDocs site already loads, plus exactly four

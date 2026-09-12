@@ -41,9 +41,9 @@ from texsmith import Document, convert_documents
 docs = [
     Document.from_markdown(
         Path("foo.md"),
-        heading="section",  # named levels map to LaTeX sectioning commands
+        base_level="section",  # named levels map to LaTeX sectioning commands
     ),
-    Document.from_markdown(Path("bar.md"), heading=0),
+    Document.from_markdown(Path("bar.md"), base_level=0),
     Document.from_html(Path("baz.html"), selector="main.article__content"),
 ]
 
@@ -54,7 +54,12 @@ for fragment in bundle.fragments:
     print("Rendered fragment", fragment.stem, "→", fragment.output_path)
 ```
 
-`ConversionRequest` carries conversion settings (parser, fallbacks, manifest emission, etc.) in addition to document inputs. When you omit `output_dir`, the bundle stays in memory—perfect for unit tests or further processing.
+`from_markdown` parses the source with tmark into `Document.ir`; `from_html`
+reads an `.html` file into the same IR through the HTML reader, which is why
+`selector`, `parser` and `full_document` only exist there. There is no `reader`
+argument on either: a Markdown source has exactly one reader.
+
+`ConversionRequest` carries conversion settings (selector, asset handling, manifest emission, etc.) in addition to document inputs. When you omit `output_dir`, the bundle stays in memory—perfect for unit tests or further processing.
 
 Use it to opt into legacy #ts-logo("LaTeX") accent macros (default is Unicode output):
 
@@ -71,13 +76,16 @@ bundle = convert_documents([Document.from_markdown(Path("intro.md"))], settings=
 
 If you need the exact orchestration used by the CLI, rely on `ConversionService`. It exposes two steps:
 
-+ `prepare_documents(request)` splits inputs, normalises Markdown/HTML, applies slot assignments, and returns a `ConversionPrepared` payload.
-+ `execute(request, prepared=...)` renders the documents, optionally through a template, and produces a `ConversionResponse` with the bundle plus emitted diagnostics.
++ `prepare_documents(request)` splits inputs, parses each one into its IR, applies slot assignments, and returns a prepared batch.
++ `execute(request, prepared=...)` runs the passes, resolves once, writes one body per slot, wraps them in the template, and produces a `ConversionResponse` with the bundle plus emitted diagnostics.
+
+A third step, `build_pdf(render_result, engine=...)`, hands the rendered project to Tectonic, latexmk or the Typst compiler.
 
 ```python
 from pathlib import Path
 
 from texsmith import ConversionRequest, ConversionService
+from texsmith.core.diagnostics import LoggingEmitter
 
 service = ConversionService()
 request = ConversionRequest(
@@ -86,20 +94,31 @@ request = ConversionRequest(
     template="article",
     render_dir=Path("build"),
     bibliography_files=[Path("refs.bib")],
-    debug=True,
+    persist_debug_ir=True,  # keep each document's <stem>.ir.json
+    emitter=LoggingEmitter(),
 )
 prepared = service.prepare_documents(request)
 response = service.execute(request, prepared=prepared)
 
-for event in response.diagnostics:
-    print(event.name, event.payload)
+print("Main TeX:", response.render_result.main_tex_path)
+for record in response.documents[0].diagnostics:
+    print(record.severity, record.code, record.message)
 ```
 
-The CLI passes a `CliEmitter` via `ConversionRequest.emitter` so warnings surface nicely. Library callers can supply their own emitter or accept the default `NullEmitter`.
+Diagnostics reach a caller two ways: as they happen, through the emitter passed
+on `ConversionRequest.emitter` (the CLI passes a `CliEmitter`, libraries get the
+silent `NullEmitter` by default, `LoggingEmitter` forwards to `logging`); and
+afterwards, as the `Diagnostic` records kept on each `Document`. `–strict`,
+`–deprecated` and `–diagnostics-json` are the CLI's own reading of those same
+records, not fields of the request.
+
+`response.result` is a `ConversionBundle` without a template and a
+`TemplateRenderResult` with one; `response.bundle` and `response.render_result`
+are the guarded accessors, and `response.is_template` says which applies.
 
 == Work with templates programmatically
 
-`TemplateSession` wraps template discovery, option management, slot assignments, and final rendering (the heavy lifting lives in `texsmith.core.conversion.TemplateRenderer`).  Anything you can do from the CLI works here too, but you get a richer, Pythonic surface:
+`TemplateSession` wraps template discovery, option management, slot assignments, and final rendering (the heavy lifting lives in `texsmith.core.conversion.renderer.TemplateRenderer`).  Anything you can do from the CLI works here too, but you get a richer, Pythonic surface:
 
 ```python
 from pathlib import Path
@@ -116,10 +135,8 @@ options["date"] = "2024-06-01"
 session.set_options(options)
 
 # Prepare documents
-default_extensions = None  # use built-in defaults
-foo = Document.from_markdown(Path("foo.md"), extensions=default_extensions)
-abstract = Document.from_markdown(Path("abstract.md"), extensions=default_extensions)
-abstract.drop_title = True
+foo = Document.from_markdown(Path("foo.md"))
+abstract = Document.from_markdown(Path("abstract.md"), strip_heading=True)
 
 session.add_document(foo)
 session.add_document(abstract, slot="abstract")

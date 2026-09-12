@@ -10,8 +10,8 @@ TeXSmith finds templates from multiple locations in a deterministic order:
 Use the CLI to inspect what was found:
 
 ```bash
-texsmith --template-info --template article
-texsmith templates  # list all visible templates
+texsmith --list-templates                    # every visible template, with its origin
+texsmith --template article --template-info  # one template's slots and attributes
 ```
 
 A valid template root contains either `manifest.toml` or `template/manifest.toml`; an `__init__.py` alongside these allows specialized Python logic.
@@ -24,7 +24,7 @@ Notes:
 To scaffold a built-in for customization:
 
 ```bash
-texsmith templates scaffold article ./templates/article
+texsmith --template article --template-scaffold ./templates/article
 ```
 
 Then point `--template` to that path. Any `mermaid-config.json` placed at the template root will be picked up automatically.

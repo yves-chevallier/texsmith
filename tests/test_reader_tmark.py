@@ -143,9 +143,7 @@ def test_parse_diagnostics_reach_the_emitter_with_their_file(tmp_path: Path) -> 
     codes = [record.code for record in emitter.sink]
     assert "deprecated-frontmatter-key" in codes
     # A second document of the batch gets the next file id.
-    second = Document.from_markdown(
-        _write(tmp_path, "# Second\n", "second.md"), emitter=emitter
-    )
+    second = Document.from_markdown(_write(tmp_path, "# Second\n", "second.md"), emitter=emitter)
     assert second.ir is not None
     assert second.ir.file == 1
     assert emitter.files.path(1) == tmp_path / "second.md"

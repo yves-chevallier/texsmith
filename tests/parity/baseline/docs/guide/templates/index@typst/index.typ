@@ -84,17 +84,20 @@ your needs. Templates can either be published on PyPI for easy distribution or k
 
 ```
 ├── README.md
-├── __init__.py
-├── pyproject.toml
-├── overrides
-│   └── fragment.tex
+├── __init__.py          # optional: a WrappableTemplate subclass, custom normalisers
+├── pyproject.toml       # only to publish the template as a package
 └── template
     ├── assets
     │   └── latexmkrc
     ├── manifest.toml
-    ├── template.tex
+    ├── template.tex     # the LaTeX entrypoint
+    ├── template.typ     # optional: the Typst scaffolding, [typst.template]
+    ├── mermaid-config.json  # optional
     └── .sty, .cls...
 ```
+
+`texsmith –template article –template-scaffold DEST` writes exactly this
+shape for a built-in, which is the quickest way to see a real one.
 
 == TOML manifest
 
@@ -110,6 +113,9 @@ texsmith = ">=0.1,<1.0"
 name = "acme"
 version = "0.1.0"
 entrypoint = "template/template.tex"
+# IR passes this template needs, resolved with the same import machinery as
+# attribute normalisers and applied only while this template renders.
+passes = ["acme_pkg.questions:run"]
 # Useful for generic docker images or CI pipelines, where
 # we only install the required packages.
 texlive_year = 2023
@@ -191,6 +197,12 @@ strip_heading = true
 # They will be copied to the working directory when the template is used.
 [latex.template.assets]
 ".latexmkrc" = { source = "template/assets/latexmkrc" }
+
+# The Typst half, for a template that also serves --format typst. Same shape:
+# its own entrypoint, attributes and slots. A template without it still
+# renders to Typst, in the standalone preamble.
+[typst.template]
+entrypoint = "template/template.typ"
 ```
 
 === Attribute schema

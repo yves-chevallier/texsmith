@@ -47,7 +47,7 @@ Running `texsmith --build` shells out to your selected engine (Tectonic by defau
 
 **Symptom:** Placeholder boxes in the PDF and warnings like `Converter 'mermaid' is disabled`.
 
-**Fix:** Install optional converters (Docker + `minlag/mermaid-cli`, Draw.io CLI, etc.) or register custom converters in `texsmith.adapters.transformers`. Use `--no-fallback-converters` during debugging to make missing dependencies fail fast.
+**Fix:** Install optional converters (Docker + `minlag/mermaid-cli`, Draw.io CLI, etc.) or register custom converters in `texsmith.adapters.transformers`. Pin the backend with `--diagrams-backend playwright|local|docker` to see which one is failing instead of letting the automatic fallback swallow it, and add `-vv` to print what each attempt tried.
 
 ## Fonts or language mismatches
 

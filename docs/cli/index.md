@@ -11,6 +11,9 @@ $ texsmith --help
 
 ### General Options
 
+`--version`
+: Print the installed TeXSmith version and exit. The same value is available in Python as `texsmith.get_version()`.
+
 `--diagrams-backend`
 : When TeXSmith discovers diagrams in your Markdown (e.g., Mermaid or Draw.io), it needs to convert them into image files that LaTeX can include. This option forces a specific backend for that conversion, overriding the automatic selection logic. Supported backends include `playwright` (headless browser), `local` (locally installed CLI tools), and `docker` (containerized tools).
 
@@ -26,6 +29,9 @@ $ texsmith --help
 `--legacy-latex-accents`
 : By default, TeXSmith emits Unicode characters for accented letters and ligatures (e.g., é, ñ, æ) when generating LaTeX output. This option switches to using legacy LaTeX macros (e.g., `\'{e}`, `\~{n}`, `\ae{}`) instead, which may be necessary for compatibility with older LaTeX engines or templates.
 
+`--template-scaffold DEST`
+: Copy the template selected with `--template` into `DEST` and exit, so you can edit a copy of a built-in instead of starting from a blank directory. See [Templates](templates.md#scaffolding-custom-templates).
+
 `--install-completion`, `--show-completion`
 : Install or display shell completion scripts for the TeXSmith CLI. This enhances your terminal experience by providing auto-completion for commands and options.
 
@@ -40,8 +46,11 @@ $ texsmith --help
 `--list-bibliography`
 : Display a summary of all bibliography entries found in the provided `.bib` files, front matter, or DOI links. This is useful for validating bibliography sources without performing a full document render.
 
+`-v`, `--verbose`
+: Increase CLI verbosity; repeat it (`-vv`) for more. At `-v` a diagnostic also prints its suggested fix and related locations, indented under its line.
+
 `--debug`
-: Enable detailed debugging output for the CLI. This includes full Python tracebacks when unexpected exceptions occur, which can help diagnose issues during conversion or rendering.
+: Enable detailed debugging output for the CLI. This includes full Python tracebacks when unexpected exceptions occur, which can help diagnose issues during conversion or rendering. It also turns `--debug-ir` on unless that flag is given explicitly.
 
 `--debug-ir`
 : Save the parsed IR of each document as `<stem>.ir.json` next to the output. This is what the passes see and what `tmark.write` turns into a body, so it is the first place to look when a construct does not render as expected.
@@ -60,6 +69,9 @@ $ texsmith --help
 
 `--open-log`
 : If LaTeX compilation fails during the build step, automatically open the `latexmk` log file using the system's default viewer. This makes it easier to inspect compilation errors.
+
+`--dump-snippets DIR`
+: Copy the sources of every `.snippet` fence render (the generated `.tex` and its auxiliary files) into `DIR`, so a preview that comes out wrong can be compiled by hand.
 
 `--template-info`
 : Show manifest metadata for the template selected via `--template`, including its attributes, assets, and slots.
@@ -120,6 +132,9 @@ $ texsmith --help
 `--template`, `-t`
 : Select a LaTeX template to use during conversion. You can provide a local path, an entry point, or a built-in slug such as `article`, `book`, or `letter`.
 
+`--enable-fragment`, `-f` / `--disable-fragment`, `-F`
+: Add or remove one [fragment](../guide/templates/fragments.md) for this render, on top of what the template defaults and `press.fragments` decided. Repeat either to name several. A contract fragment the writer requires cannot be dropped this way — a body that emits `\tscallout` still activates `ts-callouts`.
+
 `--attribute`, `-a`
 : Override template attributes by providing key=value pairs. This allows you to customize template behavior without modifying the template files directly. You can repeat this option multiple times to set multiple attributes.
 
@@ -127,9 +142,6 @@ $ texsmith --help
 : Inject specific document sections into designated template slots using the syntax `slot:Section`. You can repeat this option multiple times to map multiple sections to different slots in the template.
 
 ### Rendering Options
-
-`--no-fallback-converters`
-: Disable the registration of placeholder converters that TeXSmith uses when Docker is unavailable. This ensures that only fully supported conversion paths are used.
 
 `--no-copy-assets`, `-C`
 : Control whether remote assets (e.g., images, diagrams) are copied to the output directory during rendering. By default, assets are copied to ensure they are available for LaTeX compilation. You can disable this behavior.

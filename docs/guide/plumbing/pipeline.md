@@ -14,8 +14,9 @@ a bibliography, glossary, fonts, page geometry, or other typesetting options.
 
 ```text
 .md ──tmark.parse──▶ IR ──TeXSmith passes──▶ IR' ──tmark.resolve(loader)──▶ Resolved
-                            include · snippet · assets · doi · var · emoji ·
-                            scripts · title · slots · headings · highlight
+                     pre:  include · glossary · var · title · snippet ·
+                           assets · doi · emoji · scripts
+                     post: slots · headings · highlight
                                                                           │
       ┌───────────────────────────────────────────────────────────────────┘
       ▼
@@ -65,24 +66,29 @@ What lives where:
    A pass is a pure function `(Document, PassContext) -> Document` over the
    generated models: it never mutates its input, returns the same object when it
    has nothing to do, and never raises — a failure becomes a visible literal in
-   the output plus a diagnostic at the node's span. The bundled `pre` passes are
-   the ones that need I/O, which is exactly why they are Python's:
+   the output plus a diagnostic at the node's span. Most `pre` passes need I/O,
+   which is exactly why they are Python's. In their declared order:
 
-    | Pass | What it does |
-    | ---- | ------------ |
-    | `include` | splices `{include}(file)` and fence `include=` sources, rebasing relative paths |
-    | `snippet` | renders `.snippet` fences into preview figures |
-    | `assets` | converts and hashes images and diagrams (mermaid, draw.io, SVG) |
-    | `doi` | fetches pending DOIs into a generated `.bib` |
-    | `var` | expands `{{ key }}` moustaches against the front matter |
-    | `title` | promotes the first heading to the document title |
-    | `emoji` | picks the emoji rendering mode and its assets |
-    | `scripts` | detects non-Latin runs and chooses fallback font families |
+    | Pass | I/O | What it does |
+    | ---- | --- | ------------ |
+    | `include` | yes | splices `{include}(file)` and fence `include=` sources, rebasing relative paths |
+    | `glossary` | | validates the structured `press.declare.glossary` section and declares one abbreviation per entry, so the prose substitutes the key and the backmatter lists it |
+    | `var` | | expands `{{ key }}` moustaches against the front matter |
+    | `title` | | promotes the first heading to the document title |
+    | `snippet` | yes | renders `.snippet` fences into preview figures |
+    | `assets` | yes | converts and hashes images and diagrams (mermaid, draw.io, SVG) |
+    | `doi` | yes | fetches pending DOIs into a generated `.bib` |
+    | `emoji` | yes | picks the emoji rendering mode and its assets |
+    | `scripts` | yes | detects non-Latin runs and chooses fallback font families |
 
     Order is declared, not implicit: each pass registers a `PassSpec` with
     `after=`, and `build_pipeline` performs a stable topological sort that raises
-    `PassOrderError` on a cycle. A template or plugin registers its own the same
-    way.
+    `PassOrderError` on a cycle — so the table reads as a listing, not as a
+    contract, and the constraints are what actually hold (`assets` after
+    `include` and `snippet`, `emoji` after `assets`, `scripts` after `var` and
+    `emoji`). A template or plugin registers its own the same way, and a `pre`
+    pass declared `after` a `post` pass is refused. `DEFAULT_PIPELINE` in
+    `texsmith.passes` is the list the CLI runs.
 
 4. **Bind the template and attributes.**
    `bind_template` resolves which template runtime to use and which slots exist.

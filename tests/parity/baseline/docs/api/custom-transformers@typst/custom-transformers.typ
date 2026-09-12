@@ -20,9 +20,11 @@ align(center)[#counter(page).get().first()]
 #text(size: 1.8em, weight: "bold")[Custom Transformers]]
 #v(1.5em)
 
-Transformers convert non-PDF assets (Mermaid, Draw.io, bitmap images) into PDF
-fragments before the #ts-logo("LaTeX") renderer emits `\includegraphics`. When the built-in
-strategies do not cover your workflow, register custom converters via
+Transformers convert non-PDF assets (Mermaid, Draw.io, bitmap images) into files
+#ts-logo("LaTeX") can include. They are driven by the #link("handlers.md#ir-passes")[`assets` pass],
+which rewrites each image node to point at the converted file before
+`tmark.write` emits the figure. When the built-in strategies do not cover your
+workflow, register custom converters via
 `texsmith.adapters.transformers.register_converter`.
 
 = Building a converter
@@ -78,23 +80,24 @@ your own `suffix` when the converter emits something other than `.pdf`.
 
 + Import the module before converting documents (e.g., in `docs/hooks/mkdocs_hooks.py`
 or a standalone script).
-+ Reference the converter name inside handlers or templates. For example, add a
-handler that detects `<pre class="language-plantuml">` blocks and calls
-`registry.convert("plantuml", ...)`.
++ Reach it from an #link("handlers.md#ir-passes")[IR pass]: register a `pre` pass that
+walks the tree for the nodes it owns — a `CodeBlock` with `lang="plantuml"`,
+say — and calls `registry.convert("plantuml", …)`, replacing the node with an
+`Image` that points at the result. Declare it on your template
+(`[latex.template] passes = […]`) so it applies only while that template
+renders.
 + Ship optional dependencies (CLI tools, Docker images) alongside the template
 README so users know how to enable the converter.
 
 = Handling fallbacks
 
-When TeXSmith cannot find a converter, it installs placeholder strategies that
-emit visible warnings and `TODO` boxes in the #ts-logo("LaTeX") output. Use these helpers to
-control that behavior:
-
-- `texsmith.adapters.transformers.has_converter("mermaid")` – check whether a
-converter is registered before assuming the dependency exists.
-- `texsmith.core.conversion.attempt_transformer_fallback` – internal helper
-the CLI uses to install placeholder converters when optional dependencies are
-missing. Call this only if you need to mimic the CLI’s resilience.
+When TeXSmith cannot find a converter, the `assets` pass leaves a visible
+literal in the output and emits a diagnostic at the node's span rather than
+failing the render — a pass never raises. Use
+`texsmith.adapters.transformers.has_converter("mermaid")` to check whether a
+converter is registered before assuming the dependency exists, and
+`–diagrams-backend playwright|local|docker` to pin which backend is tried
+instead of letting the automatic fallback pick.
 
 = Further reading
 

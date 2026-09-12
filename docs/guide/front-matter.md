@@ -40,6 +40,9 @@ press:
 
   features:                     # the switch registry
     figures.exec: true
+
+  diagnostics:                  # how findings are reported
+    deprecated: info
 ---
 ```
 
@@ -182,4 +185,26 @@ press:
     figures.exec: true        # execute `python image` fences
     glossary.wikipedia: true  # fetch glossary summaries from Wikipedia links
     paragraph.lead: false     # stop promoting a leading strong span
+    strict: true              # never build a PDF from a document with a finding
 ```
+
+`strict` is the front-matter twin of `--strict`: the build stops with exit
+status 1 when any warning or error was recorded, after the `.tex` is written
+and before the engine runs. Either spelling turns it on; there is no way to
+turn it back off from the command line.
+
+## Diagnostics
+
+`press.features` is a boolean map, so the one three-valued knob lives beside it
+rather than inside it:
+
+```yaml
+press:
+  diagnostics:
+    deprecated: info          # warning (default) | info | off
+```
+
+It sets the level the parser's two transition codes — `deprecated` and
+`deprecated-frontmatter-key` — are reported at, so a document still written in
+the 0.6 spellings does not fail its own `strict: true`. `--deprecated` on the
+command line wins over it. See [Diagnostics](diagnostics.md#-deprecated).

@@ -39,7 +39,7 @@ This cookbook collects repeatable patterns for building and iterating on TeXSmit
 \section{Clone a starter and rename it}
 \begin{tscode}[lang=bash, engine=pygments]
 \begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
-cp\PY{+w}{ }\PYZhy{}R\PY{+w}{ }src/texsmith/templates/article\PY{+w}{ }texsmith\PYZhy{}template\PYZhy{}report
+texsmith\PY{+w}{ }\PYZhy{}\PYZhy{}template\PY{+w}{ }article\PY{+w}{ }\PYZhy{}\PYZhy{}template\PYZhy{}scaffold\PY{+w}{ }texsmith\PYZhy{}template\PYZhy{}report
 \PY{n+nb}{cd}\PY{+w}{ }texsmith\PYZhy{}template\PYZhy{}report
 
 \PY{c+c1}{\PYZsh{} Update package metadata}
@@ -47,7 +47,7 @@ rg\PY{+w}{ }\PYZhy{}l\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}article\PYZdq{}}\PY{+w}{ }\PY
 \end{Verbatim}
 \end{tscode}
 Adjust \tscodeinline{pyproject.toml} (name, version), \tscodeinline{template/manifest.toml} (template attributes), and \tscodeinline{README.md}. Keep \tscodeinline{tests/} so you can run \tscodeinline{uv run pytest} after each change.
-\section{Inspect metadata with \tscodeinline{template info}}
+\section{Inspect metadata with \tscodeinline{-\allowbreak{}-\allowbreak{}template-\allowbreak{}info}}
 \begin{tscode}[lang=bash, engine=pygments]
 \begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
 texsmith\PY{+w}{ }\PYZhy{}\PYZhy{}template\PY{+w}{ }./texsmith\PYZhy{}template\PYZhy{}report\PY{+w}{ }\PYZhy{}\PYZhy{}template\PYZhy{}info
@@ -91,9 +91,9 @@ Redefine its contract macro in the template's \tscodeinline{.tex}, after
 Guard the redefinition when the fragment is conditional (\tscodeinline{ts-\allowbreak{}code} only loads
 when the document has code): \tscodeinline{\textbackslash{}ifcsname tscodeinline\textbackslash{}endcsname … \textbackslash{}fi}.
 
-See Contract macros for every macro and its keys. The former
-\tscodeinline{latex.template.override} mechanism was deprecated in 0.7.0 and is removed in
-0.8.0.
+See Contract macros for every macro and its keys, and for the
+two heavier levels: restyling through the \tscodeinline{pgfkeys} family, and replacing the
+fragment outright.
 \section{Inject custom assets}
 Add extra files (preamble snippets, latexmk config, fonts) through the \tscodeinline{[latex.template.assets]} table:
 \begin{tscode}[lang=toml, engine=pygments]
@@ -106,7 +106,7 @@ Add extra files (preamble snippets, latexmk config, fonts) through the \tscodein
 Assets are copied to the render directory. Combine this with \tscodeinline{latexmkrc} options (\tscodeinline{-\allowbreak{}shell-\allowbreak{}escape}) or fontspec helpers to keep users from editing the generated output manually.
 \section{Publish and version responsibly}
 \begin{itemize}
-\item Set \tscodeinline{compat.texsmith = ">=0.3,<0.4"} so incompatible engine changes fail fast.
+\item Set \tscodeinline{compat.texsmith} to a range with an upper bound (\tscodeinline{">=0.8,<0.9"}) so an incompatible runtime change fails fast instead of producing a wrong PDF.
 \item Tag template releases with the same \TeX{} Live year used in \tscodeinline{manifest.toml}.
 \item Document tlmgr packages, slot names, and attribute changes in your README so downstream projects can upgrade with confidence.
 \end{itemize}

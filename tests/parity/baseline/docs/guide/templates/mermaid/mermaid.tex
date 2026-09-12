@@ -35,24 +35,26 @@
 \author{}\date{}
 \begin{document}
 \maketitle
-TeXSmith will automatically pick up a \tscodeinline{mermaid-\allowbreak{}config.json} located at the root of a template (next to \tscodeinline{manifest.toml}). The diagrams module passes this config to Mermaid for all diagrams rendered with that template.
+TeXSmith will automatically pick up a \tscodeinline{mermaid-\allowbreak{}config.json} sitting next to the template's \tscodeinline{manifest.toml}. The \tscodeinline{assets} pass passes this config to Mermaid for every diagram rendered with that template.
 \section{Using a Built-in Template}
 The built-in \tscodeinline{article} template ships with a \tscodeinline{mermaid-\allowbreak{}config.json}. To inspect or override it:
 \begin{tscode}[lang=bash, engine=pygments]
 \begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
-texsmith\PY{+w}{ }\PYZhy{}\PYZhy{}template\PYZhy{}info\PY{+w}{ }\PYZhy{}\PYZhy{}template\PY{+w}{ }article
-texsmith\PY{+w}{ }templates\PY{+w}{  }\PY{c+c1}{\PYZsh{} list all discoverable templates}
+texsmith\PY{+w}{ }\PYZhy{}\PYZhy{}list\PYZhy{}templates\PY{+w}{                    }\PY{c+c1}{\PYZsh{} every discoverable template and its path}
+texsmith\PY{+w}{ }\PYZhy{}\PYZhy{}template\PY{+w}{ }article\PY{+w}{ }\PYZhy{}\PYZhy{}template\PYZhy{}info\PY{+w}{  }\PY{c+c1}{\PYZsh{} what this one declares}
 \end{Verbatim}
 \end{tscode}
-To customize, copy the file, adjust options, and point to your modified template directory:
+To customize, scaffold the template into your tree, adjust the file, and point \tscodeinline{-\allowbreak{}-\allowbreak{}template} at the copy:
 \begin{tscode}[lang=bash, engine=pygments]
 \begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
-cp\PY{+w}{ }\PYZhy{}r\PY{+w}{ }\PY{k}{\PYZdl{}(}python\PY{+w}{ }\PYZhy{}\PY{+w}{ }\PY{l+s}{\PYZlt{}\PYZlt{}\PYZsq{}PY\PYZsq{}\PYZbs{}nfrom texsmith.core.templates import load\PYZus{}template\PYZbs{}nfrom pathlib import Path\PYZbs{}nt = load\PYZus{}template(\PYZsq{}article\PYZsq{})\PYZbs{}nprint(t.root)\PYZbs{}nPY}\PY{k}{)}\PY{+w}{ }./templates/article\PY{l+s+se}{\PYZbs{}n}\PY{c+c1}{\PYZsh{} edit ./templates/article/mermaid\PYZhy{}config.json\PYZbs{}ntexsmith doc.md \PYZhy{}\PYZhy{}template ./templates/article}
+texsmith\PY{+w}{ }\PYZhy{}\PYZhy{}template\PY{+w}{ }article\PY{+w}{ }\PYZhy{}\PYZhy{}template\PYZhy{}scaffold\PY{+w}{ }./templates/article
+\PY{n+nv}{\PYZdl{}EDITOR}\PY{+w}{ }./templates/article/template/mermaid\PYZhy{}config.json
+texsmith\PY{+w}{ }doc.md\PY{+w}{ }\PYZhy{}\PYZhy{}template\PY{+w}{ }./templates/article
 \end{Verbatim}
 \end{tscode}
 \section{Adding Mermaid Config to a Custom Template}
 \begin{enumerate}
-\item Place \tscodeinline{mermaid-\allowbreak{}config.json} at the template root (same level as \tscodeinline{manifest.toml}).
+\item Place \tscodeinline{mermaid-\allowbreak{}config.json} next to \tscodeinline{manifest.toml}.
 \item TeXSmith will expose the path via \tscodeinline{template.extras["mermaid\_config"]} so the renderer can pass it to Mermaid.
 \item No manifest changes are required; the presence of the file is enough.
 \end{enumerate}

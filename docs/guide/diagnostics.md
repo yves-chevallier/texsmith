@@ -111,6 +111,42 @@ tmark lint --fix report.md          # apply in place
 
 See [Migrating to TMark](migration.md) for the full table and its horizons.
 
+### `--deprecated`
+
+Until a document has been rewritten those warnings would fail `--strict` on
+their own, which is the wrong way round: a legacy spelling is a chore, not a
+hole in the output. `--deprecated` sets the level the two transition codes —
+`deprecated` and `deprecated-frontmatter-key` — are reported at, and nothing
+else:
+
+```sh
+texsmith report.md --build --strict --deprecated info
+```
+
+`warning`
+:   the default; they read as any other warning and fail `--strict`.
+
+`info`
+:   they are lowered to `info` records: still printed, ignored by `--strict`,
+    hidden by `-q`.
+
+`off`
+:   they are dropped entirely — absent from the terminal, from the counts and
+    from `--diagnostics-json`.
+
+The level is applied **before** the strict check and before the JSON dump, so
+what you see is what `--strict` judged. Front matter sets the same knob for a
+document that must carry it into every build:
+
+```yaml
+press:
+  diagnostics:
+    deprecated: info
+```
+
+The CLI option wins over the front matter. Every other warning is untouched by
+either.
+
 ## Codes
 
 The codes TeXSmith emits itself are listed in `texsmith.diagnostics.codes`

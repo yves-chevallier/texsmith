@@ -38,13 +38,19 @@ In online documentation, a glossary doesn't make much sense because you can
 search for terms directly and you have hyperlinks. However, in printed documents, a
 glossary can be very useful to provide definitions of terms used in the text.
 
-TeXSmith adds support for glossaries through the \tscodeinline{glossary} extension, which
-allows you to define glossary entries in your Markdown files and generate a
-glossary section in the output document.
+TeXSmith supports glossaries through the \tscodeinline{ts-\allowbreak{}glossary} fragment: declare the
+entries in the front matter under \tscodeinline{press.declare.glossary} (and the acronyms
+under \tscodeinline{press.declare.acronyms}, or inline with \tscodeinline{*[KEY]: …}), and the fragment
+loads \tscodeinline{glossaries}, declares every entry and prints the backmatter.
 
-The fragment is automatically included when needed:
-\begin{itemize}
-\item If you use acronyms or abbreviations.
-\item If you define glossary entries using the \tscodeinline{glossary} directive.
-\end{itemize}
+Nothing has to be enabled by hand. The fragment is activated by the writer,
+which names it in \tscodeinline{Requires.fragments} as soon as a body emits \tscodeinline{\textbackslash{}tsgls} or
+\tscodeinline{\textbackslash{}tsacr} --- that is, as soon as the document actually uses a glossary term or an
+acronym. A document that declares none carries no \tscodeinline{ts-\allowbreak{}glossary.sty}.
+
+\tscodeinline{\textbackslash{}tsgls\{key\}} is \tscodeinline{\textbackslash{}gls} (the first use expands, later ones use the short form);
+\tscodeinline{\textbackslash{}tsacr\{key\}} is \tscodeinline{\textbackslash{}acrshort}, the short form wherever it stands.
+
+The declaration syntax, the groups and the sorting rules are in
+\href{../front-matter.md\#glossary}{YAML Front Matter}.
 \end{document}

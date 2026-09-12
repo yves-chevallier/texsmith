@@ -27,7 +27,6 @@ import yaml
 
 from texsmith.adapters.html_utils import coerce_attribute, gather_classes
 from texsmith.core.conversion import ConversionRequest
-from texsmith.core.conversion.inputs import InputKind
 from texsmith.core.diagnostics import DiagnosticEmitter
 from texsmith.core.documents import (
     Document,
@@ -1012,18 +1011,20 @@ def _build_document_from_yaml(
         strip_heading=drop_title,
         has_declared_title=front_matter_has_title(payload),
     )
-    document = Document(
-        source_path=source_path,
-        kind=InputKind.MARKDOWN,
-        _html="",
-        _front_matter=dict(payload),
+    # An empty body parsed by tmark, with the YAML as its front matter: the
+    # render path needs an ``ir`` on every document, a data-only source
+    # included (``render_ir_document`` refuses a document without one).
+    return Document.from_markdown_text(
+        "",
+        source_path,
+        promote_title=promote_title,
+        strip_heading=drop_title,
+        suppress_title=suppress_title,
         base_level=0,
         title_strategy=title_strategy,
         numbered=False,
-        suppress_title_metadata=suppress_title,
+        front_matter_overrides=payload,
     )
-    document._initialise_slots_from_front_matter()  # noqa: SLF001
-    return document
 
 
 def _build_documents_from_sources(

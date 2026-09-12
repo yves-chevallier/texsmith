@@ -74,11 +74,12 @@ TeXSmith lowers every document into a typed intermediate representation (IR)
 and then emits a backend from that IR:
 \begin{tscode}[lang=text, engine=pygments]
 \begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
-read(HTML) → IR (texsmith.ir) → write(IR) → LaTeX | Typst
+tmark.parse → IR → TeXSmith passes → tmark.resolve → tmark.write → LaTeX | Typst
 \end{Verbatim}
 \end{tscode}
-Because both backends consume the \textbf{same} IR (the readers and the IR are
-untouched), you choose the output format with a single flag:
+Both backends are fed by the \textbf{same} IR, the same passes and the same single
+resolve: only the last step differs. So you choose the output format with a
+single flag:
 \begin{tscode}[lang=bash, engine=pygments]
 \begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
 texsmith\PY{+w}{ }doc.md\PY{+w}{ }\PYZhy{}tarticle\PY{+w}{ }\PYZhy{}\PYZhy{}format\PY{+w}{ }latex\PY{+w}{   }\PY{c+c1}{\PYZsh{} default}
@@ -87,9 +88,10 @@ texsmith\PY{+w}{ }doc.md\PY{+w}{ }\PYZhy{}tarticle\PY{+w}{ }\PYZhy{}\PYZhy{}form
 \end{tscode}
 \tscodeinline{-\allowbreak{}-\allowbreak{}format} is case-insensitive and accepts \tscodeinline{latex} (default) or \tscodeinline{typst}.
 \section{\LaTeX{} backend (default)}
-The \LaTeX{} backend (\tscodeinline{texsmith.writers.latex}) is the full-featured path: it
-drives the template/fragment runtime, fonts and script matching, glossary and
-index engines, asset transformers, and compiles through a \TeX{} engine
+The \LaTeX{} body comes from tmark's \LaTeX{} writer; the \LaTeX{} backend around it is
+the full-featured path: it drives the template/fragment runtime, fonts and
+script matching, glossary and index engines, asset transformers, and compiles
+through a \TeX{} engine
 (Tectonic by default, or \tscodeinline{latexmk} with \tscodeinline{-\allowbreak{}-\allowbreak{}engine lualatex} / \tscodeinline{-\allowbreak{}-\allowbreak{}engine
 xelatex}). This is the backend assumed throughout most of this documentation.
 \section{Typst backend}
@@ -101,10 +103,10 @@ see below), and approximates or drops a few constructs. Use it for new,
 Typst-first documents and check the output; do not assume \LaTeX{}-level
 fidelity yet.
 \end{tscallout}
-\href{https://typst.app}{Typst} is a modern, Rust-based typesetting system. The
-Typst backend (\tscodeinline{texsmith.writers.typst}) emits a compilable \tscodeinline{.typ} source from
-the same IR. It is a lean, Typst-native path and intentionally covers a
-\textbf{subset} of the \LaTeX{} backend (see \hyperref[scope-and-limitations]{Scope}).
+\href{https://typst.app}{Typst} is a modern, Rust-based typesetting system. The body
+comes from tmark's Typst writer; \tscodeinline{texsmith.writers.typst} wraps it into a
+compilable \tscodeinline{.typ} source. It is a lean, Typst-native path and intentionally
+covers a \textbf{subset} of the \LaTeX{} backend (see \hyperref[scope-and-limitations]{Scope}).
 \begin{tscode}[lang=bash, engine=pygments]
 \begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
 \PY{c+c1}{\PYZsh{} Emit a .typ file (no compiler required)}
@@ -118,8 +120,26 @@ Without a template, the body is wrapped in a minimal standalone preamble. With
 the \textbf{article} or \textbf{book} template, the body is wrapped in the template's
 Typst scaffolding (title, authors, date, abstract, table of contents,
 sectioning, and a native Typst bibliography).
+\subsection{What the \tscodeinline{.typ} carries}
+The Typst writer calls one \tscodeinline{\#ts-\allowbreak{}…} function per contract, the mirror of the
+\LaTeX{} contract macros --- \tscodeinline{\#ts-\allowbreak{}callout}, \tscodeinline{\#ts-\allowbreak{}code}, \tscodeinline{\#ts-\allowbreak{}keys}, \tscodeinline{\#ts-\allowbreak{}gls}, and
+so on. They are defined in \tscodeinline{src/texsmith/templates/common/texsmith.typ}, and
+that library is \textbf{inlined ahead of the body} in the generated \tscodeinline{.typ}, so the
+file compiles on its own with nothing beside it. A template redefines a
+function after that point, the way a \LaTeX{} template redefines a contract macro
+after \tscodeinline{\textbackslash{}VAR\{extra\_packages\}}. See Contract macros.
+
+Math is the one external dependency, and it is pinned: a document with math
+opens with
+\begin{tscode}[lang=typst, engine=pygments]
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+\PY{k+kn}{\PYZsh{}import}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}@preview/mitex:0.2.7\PYZdq{}}\PY{p}{:}\PY{+w}{ }\PY{n+nv}{mi}\PY{p}{,}\PY{+w}{ }\PY{n+nv}{mitex}
+\end{Verbatim}
+\end{tscode}
+which Typst fetches from its package registry on first compile. Nothing else is
+imported.
 \begin{tscallout}[kind=note, title={Typst output and \LaTeX{}-only flags}]
-\tscodeinline{-\allowbreak{}-\allowbreak{}format typst} cannot be combined with \tscodeinline{-\allowbreak{}-\allowbreak{}html}, \tscodeinline{-\allowbreak{}-\allowbreak{}template-\allowbreak{}info}, or
+\tscodeinline{-\allowbreak{}-\allowbreak{}format typst} cannot be combined with \tscodeinline{-\allowbreak{}-\allowbreak{}template-\allowbreak{}info} or
 \tscodeinline{-\allowbreak{}-\allowbreak{}template-\allowbreak{}scaffold}: those inspect the \LaTeX{} fragment/engine machinery,
 which the Typst path does not use.
 \end{tscallout}
@@ -185,8 +205,12 @@ preserved as closely as possible rather than producing wrong output):
 marker --- Typst has no \tscodeinline{makeindex} equivalent here.
 \item Remote (\tscodeinline{http(s)://}, \tscodeinline{data:}) or unresolved local images are dropped to keep
 the document compilable.
-\item The \LaTeX{}-only glossary/index engines and the fragment system are not used on
-the Typst path.
+\item The \tscodeinline{ts-\allowbreak{}*} fragments themselves are \LaTeX{} packages and are not loaded on the
+Typst path: the \tscodeinline{\#ts-\allowbreak{}…} functions of \tscodeinline{texsmith.typ} stand in for them, so a
+fragment's \LaTeX{}-only configuration (the glossary and index engines,
+\tscodeinline{ts-\allowbreak{}geometry}, \tscodeinline{ts-\allowbreak{}frame}) has no effect there. Acronyms still reach the
+backmatter, and the \tscodeinline{-\allowbreak{}-\allowbreak{}numbering tmark} mode makes the two backends print the
+same numbers.
 \end{itemize}
 Any IR node that still has \textbf{no} Typst emitter raises an explicit, localised
 \tscodeinline{TypstWriteError} (naming the node and the backend) rather than emitting wrong
