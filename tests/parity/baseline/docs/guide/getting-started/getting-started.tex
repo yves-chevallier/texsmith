@@ -123,7 +123,7 @@ By default TeXSmith writes \LaTeX{} to stdout. Pipe it or direct it into a folde
 \begin{tsdiv}{tab}[title={Here document}]
 \begin{tscode}[lang=text, engine=pygments]
 \begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
-cat \PYZlt{}\PYZlt{} EOF | texsmith
+\PYZdl{} cat \PYZlt{}\PYZlt{} EOF | texsmith
 \PYZsh{} Title
 
 Some **bold** text.
@@ -131,14 +131,13 @@ Some **bold** text.
 \PYZhy{} Foo
 \PYZhy{} Bar
 EOF
-\PYZbs{}section\PYZob{}Title\PYZcb{}\PYZbs{}label\PYZob{}title\PYZcb{}
+\PYZbs{}section\PYZob{}Title\PYZcb{}
 
 Some \PYZbs{}textbf\PYZob{}bold\PYZcb{} text.
 
 \PYZbs{}begin\PYZob{}itemize\PYZcb{}
-\PYZbs{}item\PYZob{}\PYZcb{} Foo
-\PYZbs{}item\PYZob{}\PYZcb{} Bar
-
+\PYZbs{}item Foo
+\PYZbs{}item Bar
 \PYZbs{}end\PYZob{}itemize\PYZcb{}
 \end{Verbatim}
 \end{tscode}
@@ -146,23 +145,27 @@ Some \PYZbs{}textbf\PYZob{}bold\PYZcb{} text.
 \begin{tsdiv}{tab}[title={From file}]
 \begin{tscode}[lang=text, engine=pygments]
 \begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
-\PYZdl{} echo \PYZdq{}\PYZsh{} Title\PYZbs{}nSome **bold** text.\PYZdq{} \PYZgt{} sample.md
-\PYZdl{} texsmith sample.md \PYZhy{}\PYZhy{}output build/
-\PYZbs{}chapter\PYZob{}Title\PYZcb{}\PYZbs{}label\PYZob{}title\PYZcb{}
+\PYZdl{} printf \PYZsq{}\PYZsh{} Title\PYZbs{}n\PYZbs{}nSome **bold** text.\PYZbs{}n\PYZsq{} \PYZgt{} sample.md
+\PYZdl{} texsmith sample.md
+\PYZbs{}section\PYZob{}Title\PYZcb{}
 
 Some \PYZbs{}textbf\PYZob{}bold\PYZcb{} text.
 \end{Verbatim}
 \end{tscode}
+Add \tscodeinline{-\allowbreak{}-\allowbreak{}output build/} to write \tscodeinline{build/sample.tex} instead of printing.
 \end{tsdiv}
 \begin{tsdiv}{tab}[title=HTML]
 \begin{tscode}[lang=text, engine=pygments]
 \begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
 \PYZdl{} echo \PYZdq{}\PYZlt{}h1\PYZgt{}Title\PYZlt{}/h1\PYZgt{}\PYZlt{}p\PYZgt{}Some \PYZlt{}strong\PYZgt{}bold\PYZlt{}/strong\PYZgt{} text.\PYZlt{}/p\PYZgt{}\PYZdq{} \PYZgt{} sample.html
 \PYZdl{} texsmith sample.html
-\PYZbs{}chapter\PYZob{}Title\PYZcb{}
+\PYZbs{}section\PYZob{}Title\PYZcb{}
+
 Some \PYZbs{}textbf\PYZob{}bold\PYZcb{} text.
 \end{Verbatim}
 \end{tscode}
+An \tscodeinline{.html} input is read by the HTML reader (\tscodeinline{-\allowbreak{}-\allowbreak{}selector}, \tscodeinline{-\allowbreak{}-\allowbreak{}parser},
+\tscodeinline{-\allowbreak{}-\allowbreak{}full-\allowbreak{}document} steer it) and joins the same IR as a Markdown source.
 \end{tsdiv}
 \section{Generate a PDF}
 Want the full PDF? Start with our playful \href{https://en.wikipedia.org/wiki/Booby}{booby} example or create your own \tscodeinline{booby.md}:
@@ -212,6 +215,18 @@ tmark\PY{+w}{ }lint\PY{+w}{ }\PYZhy{}\PYZhy{}fix\PY{+w}{ }document.md\PY{+w}{   
 counter prefixes, malformed tables, deprecated spellings. Coming from TeXSmith
 0.6? Every spelling you know still works, and
 Migrating to TMark lists what changed and what rewrites it.
+
+\tscodeinline{texsmith} reports the same findings in the same shape while it renders. Add
+\tscodeinline{-\allowbreak{}-\allowbreak{}strict} to refuse to build a PDF from a document that has any, \tscodeinline{-\allowbreak{}q} to hide
+the hints and info lines, and \tscodeinline{-\allowbreak{}-\allowbreak{}diagnostics-\allowbreak{}json FILE} to hand the lot to an
+editor or to CI:
+\begin{tscode}[lang=bash, engine=pygments]
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+texsmith\PY{+w}{ }report.md\PY{+w}{ }\PYZhy{}\PYZhy{}build\PY{+w}{ }\PYZhy{}\PYZhy{}strict\PY{+w}{ }\PYZhy{}\PYZhy{}deprecated\PY{+w}{ }info
+\end{Verbatim}
+\end{tscode}
+\tscodeinline{-\allowbreak{}-\allowbreak{}deprecated info} keeps the 0.6 spellings from failing a strict run while you
+work through them. See Diagnostics.
 \section{Optional prerequisites}
 \begin{description}
 \item[{\LaTeX{} distribution}] Install \TeX{} Live, MiKTeX, or MacTeX if you want TeXSmith to hand off builds to \tscodeinline{latexmk} (\tscodeinline{-\allowbreak{}-\allowbreak{}engine lualatex} / \tscodeinline{-\allowbreak{}-\allowbreak{}engine xelatex}). The default route uses Tectonic, which auto-installs itself and required packages.

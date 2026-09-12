@@ -105,7 +105,7 @@ Running \tscodeinline{texsmith -\allowbreak{}-\allowbreak{}build} shells out to 
 \section{Figures or diagrams missing}
 \textbf{Symptom:} Placeholder boxes in the PDF and warnings like \tscodeinline{Converter 'mermaid' is disabled}.
 
-\textbf{Fix:} Install optional converters (Docker + \tscodeinline{minlag/mermaid-\allowbreak{}cli}, Draw.io CLI, etc.) or register custom converters in \tscodeinline{texsmith.adapters.transformers}. Use \tscodeinline{-\allowbreak{}-\allowbreak{}no-\allowbreak{}fallback-\allowbreak{}converters} during debugging to make missing dependencies fail fast.
+\textbf{Fix:} Install optional converters (Docker + \tscodeinline{minlag/mermaid-\allowbreak{}cli}, Draw.io CLI, etc.) or register custom converters in \tscodeinline{texsmith.adapters.transformers}. Pin the backend with \tscodeinline{-\allowbreak{}-\allowbreak{}diagrams-\allowbreak{}backend playwright|local|docker} to see which one is failing instead of letting the automatic fallback swallow it, and add \tscodeinline{-\allowbreak{}vv} to print what each attempt tried.
 \section{Fonts or language mismatches}
 \textbf{Symptom:} \tscodeinline{Package polyglossia Error} or \tscodeinline{fontspec} warnings after switching languages.
 

@@ -76,6 +76,9 @@ site generator's way. When the same key appears in both places, \tscodeinline{pr
 
 \PY{+w}{  }\PY{n+nt}{features}\PY{p}{:}\PY{+w}{                     }\PY{c+c1}{\PYZsh{} the switch registry}
 \PY{+w}{    }\PY{n+nt}{figures.exec}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{true}
+
+\PY{+w}{  }\PY{n+nt}{diagnostics}\PY{p}{:}\PY{+w}{                  }\PY{c+c1}{\PYZsh{} how findings are reported}
+\PY{+w}{    }\PY{n+nt}{deprecated}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{info}
 \PY{n+nn}{\PYZhy{}\PYZhy{}\PYZhy{}}
 \end{Verbatim}
 \end{tscode}
@@ -204,6 +207,25 @@ flips entries, and nothing else in the front matter does.
 \PY{+w}{    }\PY{n+nt}{figures.exec}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{true}\PY{+w}{        }\PY{c+c1}{\PYZsh{} execute `python image` fences}
 \PY{+w}{    }\PY{n+nt}{glossary.wikipedia}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{true}\PY{+w}{  }\PY{c+c1}{\PYZsh{} fetch glossary summaries from Wikipedia links}
 \PY{+w}{    }\PY{n+nt}{paragraph.lead}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{false}\PY{+w}{     }\PY{c+c1}{\PYZsh{} stop promoting a leading strong span}
+\PY{+w}{    }\PY{n+nt}{strict}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{true}\PY{+w}{              }\PY{c+c1}{\PYZsh{} never build a PDF from a document with a finding}
 \end{Verbatim}
 \end{tscode}
+\tscodeinline{strict} is the front-matter twin of \tscodeinline{-\allowbreak{}-\allowbreak{}strict}: the build stops with exit
+status 1 when any warning or error was recorded, after the \tscodeinline{.tex} is written
+and before the engine runs. Either spelling turns it on; there is no way to
+turn it back off from the command line.
+\section{Diagnostics}
+\tscodeinline{press.features} is a boolean map, so the one three-valued knob lives beside it
+rather than inside it:
+\begin{tscode}[lang=yaml, engine=pygments]
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+\PY{n+nt}{press}\PY{p}{:}
+\PY{+w}{  }\PY{n+nt}{diagnostics}\PY{p}{:}
+\PY{+w}{    }\PY{n+nt}{deprecated}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{info}\PY{+w}{          }\PY{c+c1}{\PYZsh{} warning (default) | info | off}
+\end{Verbatim}
+\end{tscode}
+It sets the level the parser's two transition codes --- \tscodeinline{deprecated} and
+\tscodeinline{deprecated-\allowbreak{}frontmatter-\allowbreak{}key} --- are reported at, so a document still written in
+the 0.6 spellings does not fail its own \tscodeinline{strict: true}. \tscodeinline{-\allowbreak{}-\allowbreak{}deprecated} on the
+command line wins over it. See \href{diagnostics.md\#-deprecated}{Diagnostics}.
 \end{document}

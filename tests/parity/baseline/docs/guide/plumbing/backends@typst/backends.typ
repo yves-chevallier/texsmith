@@ -24,11 +24,12 @@ TeXSmith lowers every document into a typed intermediate representation (IR)
 and then emits a backend from that IR:
 
 ```
-read(HTML) → IR (texsmith.ir) → write(IR) → LaTeX | Typst
+tmark.parse → IR → TeXSmith passes → tmark.resolve → tmark.write → LaTeX | Typst
 ```
 
-Because both backends consume the *same* IR (the readers and the IR are
-untouched), you choose the output format with a single flag:
+Both backends are fed by the *same* IR, the same passes and the same single
+resolve: only the last step differs. So you choose the output format with a
+single flag:
 
 ```bash
 texsmith doc.md -tarticle --format latex   # default
@@ -39,9 +40,10 @@ texsmith doc.md -tarticle --format typst
 
 = #ts-logo("LaTeX") backend (default)
 
-The #ts-logo("LaTeX") backend (`texsmith.writers.latex`) is the full-featured path: it
-drives the template/fragment runtime, fonts and script matching, glossary and
-index engines, asset transformers, and compiles through a #ts-logo("TeX") engine
+The #ts-logo("LaTeX") body comes from tmark's #ts-logo("LaTeX") writer; the #ts-logo("LaTeX") backend around it is
+the full-featured path: it drives the template/fragment runtime, fonts and
+script matching, glossary and index engines, asset transformers, and compiles
+through a #ts-logo("TeX") engine
 (Tectonic by default, or `latexmk` with `–engine lualatex` / `–engine
 xelatex`). This is the backend assumed throughout most of this documentation.
 
@@ -55,10 +57,10 @@ see below), and approximates or drops a few constructs. Use it for new,
 Typst-first documents and check the output; do not assume #ts-logo("LaTeX")-level
 fidelity yet.]
 
-#link("https://typst.app")[Typst] is a modern, Rust-based typesetting system. The
-Typst backend (`texsmith.writers.typst`) emits a compilable `.typ` source from
-the same IR. It is a lean, Typst-native path and intentionally covers a
-*subset* of the #ts-logo("LaTeX") backend (see #link(<scope-and-limitations>)[Scope]).
+#link("https://typst.app")[Typst] is a modern, Rust-based typesetting system. The body
+comes from tmark's Typst writer; `texsmith.writers.typst` wraps it into a
+compilable `.typ` source. It is a lean, Typst-native path and intentionally
+covers a *subset* of the #ts-logo("LaTeX") backend (see #link(<scope-and-limitations>)[Scope]).
 
 ```bash
 # Emit a .typ file (no compiler required)
@@ -73,8 +75,27 @@ the *article* or *book* template, the body is wrapped in the template's
 Typst scaffolding (title, authors, date, abstract, table of contents,
 sectioning, and a native Typst bibliography).
 
+== What the `.typ` carries
+
+The Typst writer calls one `#ts-…` function per contract, the mirror of the
+#ts-logo("LaTeX") contract macros — `#ts-callout`, `#ts-code`, `#ts-keys`, `#ts-gls`, and
+so on. They are defined in `src/texsmith/templates/common/texsmith.typ`, and
+that library is *inlined ahead of the body* in the generated `.typ`, so the
+file compiles on its own with nothing beside it. A template redefines a
+function after that point, the way a #ts-logo("LaTeX") template redefines a contract macro
+after `\VAR{extra_packages}`. See Contract macros.
+
+Math is the one external dependency, and it is pinned: a document with math
+opens with
+
+```typst
+```
+
+which Typst fetches from its package registry on first compile. Nothing else is
+imported.
+
 #ts-callout(kind: "note", title: [Typst output and #ts-logo("LaTeX")-only flags])[
-`–format typst` cannot be combined with `–html`, `–template-info`, or
+`–format typst` cannot be combined with `–template-info` or
 `–template-scaffold`: those inspect the #ts-logo("LaTeX") fragment/engine machinery,
 which the Typst path does not use.]
 
@@ -141,8 +162,12 @@ preserved as closely as possible rather than producing wrong output):
 marker — Typst has no `makeindex` equivalent here.
 - Remote (`http(s)://`, `data:`) or unresolved local images are dropped to keep
 the document compilable.
-- The #ts-logo("LaTeX")-only glossary/index engines and the fragment system are not used on
-the Typst path.
+- The `ts-*` fragments themselves are #ts-logo("LaTeX") packages and are not loaded on the
+Typst path: the `#ts-…` functions of `texsmith.typ` stand in for them, so a
+fragment's #ts-logo("LaTeX")-only configuration (the glossary and index engines,
+`ts-geometry`, `ts-frame`) has no effect there. Acronyms still reach the
+backmatter, and the `–numbering tmark` mode makes the two backends print the
+same numbers.
 
 Any IR node that still has *no* Typst emitter raises an explicit, localised
 `TypstWriteError` (naming the node and the backend) rather than emitting wrong

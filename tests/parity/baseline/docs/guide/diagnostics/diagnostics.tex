@@ -153,6 +153,36 @@ tmark\PY{+w}{ }lint\PY{+w}{ }\PYZhy{}\PYZhy{}fix\PY{+w}{ }report.md\PY{+w}{     
 \end{Verbatim}
 \end{tscode}
 See Migrating to TMark for the full table and its horizons.
+\subsection{\tscodeinline{-\allowbreak{}-\allowbreak{}deprecated}}
+Until a document has been rewritten those warnings would fail \tscodeinline{-\allowbreak{}-\allowbreak{}strict} on
+their own, which is the wrong way round: a legacy spelling is a chore, not a
+hole in the output. \tscodeinline{-\allowbreak{}-\allowbreak{}deprecated} sets the level the two transition codes ---
+\tscodeinline{deprecated} and \tscodeinline{deprecated-\allowbreak{}frontmatter-\allowbreak{}key} --- are reported at, and nothing
+else:
+\begin{tscode}[lang=sh, engine=pygments]
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+texsmith\PY{+w}{ }report.md\PY{+w}{ }\PYZhy{}\PYZhy{}build\PY{+w}{ }\PYZhy{}\PYZhy{}strict\PY{+w}{ }\PYZhy{}\PYZhy{}deprecated\PY{+w}{ }info
+\end{Verbatim}
+\end{tscode}
+\begin{description}
+\item[{\tscodeinline{warning}}] the default; they read as any other warning and fail \tscodeinline{-\allowbreak{}-\allowbreak{}strict}.
+\item[{\tscodeinline{info}}] they are lowered to \tscodeinline{info} records: still printed, ignored by \tscodeinline{-\allowbreak{}-\allowbreak{}strict},
+hidden by \tscodeinline{-\allowbreak{}q}.
+\item[{\tscodeinline{off}}] they are dropped entirely --- absent from the terminal, from the counts and
+from \tscodeinline{-\allowbreak{}-\allowbreak{}diagnostics-\allowbreak{}json}.
+\end{description}
+The level is applied \textbf{before} the strict check and before the JSON dump, so
+what you see is what \tscodeinline{-\allowbreak{}-\allowbreak{}strict} judged. Front matter sets the same knob for a
+document that must carry it into every build:
+\begin{tscode}[lang=yaml, engine=pygments]
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+\PY{n+nt}{press}\PY{p}{:}
+\PY{+w}{  }\PY{n+nt}{diagnostics}\PY{p}{:}
+\PY{+w}{    }\PY{n+nt}{deprecated}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{info}
+\end{Verbatim}
+\end{tscode}
+The CLI option wins over the front matter. Every other warning is untouched by
+either.
 \section{Codes}
 The codes TeXSmith emits itself are listed in \tscodeinline{texsmith.diagnostics.codes}
 with their default severity; a few reuse tmark's identifiers on purpose

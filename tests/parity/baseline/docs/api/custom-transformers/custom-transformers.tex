@@ -35,9 +35,11 @@
 \author{}\date{}
 \begin{document}
 \maketitle
-Transformers convert non-PDF assets (Mermaid, Draw.io, bitmap images) into PDF
-fragments before the \LaTeX{} renderer emits \tscodeinline{\textbackslash{}includegraphics}. When the built-in
-strategies do not cover your workflow, register custom converters via
+Transformers convert non-PDF assets (Mermaid, Draw.io, bitmap images) into files
+\LaTeX{} can include. They are driven by the \href{handlers.md\#ir-passes}{\tscodeinline{assets} pass},
+which rewrites each image node to point at the converted file before
+\tscodeinline{tmark.write} emits the figure. When the built-in strategies do not cover your
+workflow, register custom converters via
 \tscodeinline{texsmith.adapters.transformers.register\_converter}.
 \section{Building a converter}
 \begin{tscode}[lang=python, engine=pygments]
@@ -91,23 +93,23 @@ your own \tscodeinline{suffix} when the converter emits something other than \ts
 \begin{enumerate}
 \item Import the module before converting documents (e.g., in \tscodeinline{docs/hooks/mkdocs\_hooks.py}
 or a standalone script).
-\item Reference the converter name inside handlers or templates. For example, add a
-handler that detects \tscodeinline{<pre class="language-\allowbreak{}plantuml">} blocks and calls
-\tscodeinline{registry.convert("plantuml", ...)}.
+\item Reach it from an \href{handlers.md\#ir-passes}{IR pass}: register a \tscodeinline{pre} pass that
+walks the tree for the nodes it owns --- a \tscodeinline{CodeBlock} with \tscodeinline{lang="plantuml"},
+say --- and calls \tscodeinline{registry.convert("plantuml", …)}, replacing the node with an
+\tscodeinline{Image} that points at the result. Declare it on your template
+(\tscodeinline{[latex.template] passes = […]}) so it applies only while that template
+renders.
 \item Ship optional dependencies (CLI tools, Docker images) alongside the template
 README so users know how to enable the converter.
 \end{enumerate}
 \section{Handling fallbacks}
-When TeXSmith cannot find a converter, it installs placeholder strategies that
-emit visible warnings and \tscodeinline{TODO} boxes in the \LaTeX{} output. Use these helpers to
-control that behavior:
-\begin{itemize}
-\item \tscodeinline{texsmith.adapters.transformers.has\_converter("mermaid")} -- check whether a
-converter is registered before assuming the dependency exists.
-\item \tscodeinline{texsmith.core.conversion.attempt\_transformer\_fallback} -- internal helper
-the CLI uses to install placeholder converters when optional dependencies are
-missing. Call this only if you need to mimic the CLI's resilience.
-\end{itemize}
+When TeXSmith cannot find a converter, the \tscodeinline{assets} pass leaves a visible
+literal in the output and emits a diagnostic at the node's span rather than
+failing the render --- a pass never raises. Use
+\tscodeinline{texsmith.adapters.transformers.has\_converter("mermaid")} to check whether a
+converter is registered before assuming the dependency exists, and
+\tscodeinline{-\allowbreak{}-\allowbreak{}diagrams-\allowbreak{}backend playwright|local|docker} to pin which backend is tried
+instead of letting the automatic fallback pick.
 \section{Further reading}
 \begin{itemize}
 \item \tscodeinline{texsmith.adapters.transformers.base} -- reference for

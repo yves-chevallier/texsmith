@@ -21,7 +21,8 @@ align(center)[#counter(page).get().first()]
 #v(1.5em)
 
 *TeXSmith* turns #link("https://www.markdownguide.org/")[Markdown] into
-press-ready #link("https://www.latex-project.org/")[#ts-logo("LaTeX")]. Keep your
+press-ready #link("https://www.latex-project.org/")[#ts-logo("LaTeX")] — or
+#link("https://typst.app")[Typst], with `–format typst`. Keep your
 docs authored in Markdown, then compile polished PDFs for print,
 journals, or long-form review packages—without maintaining several sources of truth. No need to learn #ts-logo("LaTeX"), install heavy toolchains, or wrestle with complex conversion setups.
 
@@ -66,9 +67,10 @@ so automation scripts and ad-hoc conversions stay in sync.
 
 slots, and restyle any construct by redefining its contract macro.
 
-/ Diagnostics you can trust: Structured emitter APIs and CLI verbosity
+/ Diagnostics you can trust: Every finding prints in one shape with a stable code, whether the Rust parser
 
-flags surface the context you need when something goes wrong.
+or TeXSmith found it. `–strict` refuses to build a
+PDF from a document that has one.
 
 = The dialect
 

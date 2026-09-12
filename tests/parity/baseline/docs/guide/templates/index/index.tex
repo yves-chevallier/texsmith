@@ -100,18 +100,20 @@ your needs. Templates can either be published on PyPI for easy distribution or k
 \begin{tscode}[lang=text, stretch=0.5, engine=pygments]
 \begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
 ├── README.md
-├── \PYZus{}\PYZus{}init\PYZus{}\PYZus{}.py
-├── pyproject.toml
-├── overrides
-│   └── fragment.tex
+├── \PYZus{}\PYZus{}init\PYZus{}\PYZus{}.py          \PYZsh{} optional: a WrappableTemplate subclass, custom normalisers
+├── pyproject.toml       \PYZsh{} only to publish the template as a package
 └── template
     ├── assets
     │   └── latexmkrc
     ├── manifest.toml
-    ├── template.tex
+    ├── template.tex     \PYZsh{} the LaTeX entrypoint
+    ├── template.typ     \PYZsh{} optional: the Typst scaffolding, [typst.template]
+    ├── mermaid\PYZhy{}config.json  \PYZsh{} optional
     └── .sty, .cls...
 \end{Verbatim}
 \end{tscode}
+\tscodeinline{texsmith -\allowbreak{}-\allowbreak{}template article -\allowbreak{}-\allowbreak{}template-\allowbreak{}scaffold DEST} writes exactly this
+shape for a built-in, which is the quickest way to see a real one.
 \subsection{TOML manifest}
 The \tscodeinline{manifest.toml} file describes the template and its metadata.
 \begin{tscode}[lang=toml, engine=pygments]
@@ -125,6 +127,9 @@ The \tscodeinline{manifest.toml} file describes the template and its metadata.
 \PY{n}{name}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{acme}\PY{l+s+s2}{\PYZdq{}}
 \PY{n}{version}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{0.1.0}\PY{l+s+s2}{\PYZdq{}}
 \PY{n}{entrypoint}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{template/template.tex}\PY{l+s+s2}{\PYZdq{}}
+\PY{c+c1}{\PYZsh{} IR passes this template needs, resolved with the same import machinery as}
+\PY{c+c1}{\PYZsh{} attribute normalisers and applied only while this template renders.}
+\PY{n}{passes}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{p}{[}\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{acme\PYZus{}pkg.questions:run}\PY{l+s+s2}{\PYZdq{}}\PY{p}{]}
 \PY{c+c1}{\PYZsh{} Useful for generic docker images or CI pipelines, where}
 \PY{c+c1}{\PYZsh{} we only install the required packages.}
 \PY{n}{texlive\PYZus{}year}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+m+mi}{2023}
@@ -206,6 +211,12 @@ The \tscodeinline{manifest.toml} file describes the template and its metadata.
 \PY{c+c1}{\PYZsh{} They will be copied to the working directory when the template is used.}
 \PY{k}{[}\PY{k}{latex}\PY{k}{.}\PY{k}{template}\PY{k}{.}\PY{k}{assets}\PY{k}{]}
 \PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{.latexmkrc}\PY{l+s+s2}{\PYZdq{}}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{p}{\PYZob{}}\PY{+w}{ }\PY{n}{source}\PY{+w}{ }\PY{p}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{template/assets/latexmkrc}\PY{l+s+s2}{\PYZdq{}}\PY{+w}{ }\PY{p}{\PYZcb{}}
+
+\PY{c+c1}{\PYZsh{} The Typst half, for a template that also serves \PYZhy{}\PYZhy{}format typst. Same shape:}
+\PY{c+c1}{\PYZsh{} its own entrypoint, attributes and slots. A template without it still}
+\PY{c+c1}{\PYZsh{} renders to Typst, in the standalone preamble.}
+\PY{k}{[}\PY{k}{typst}\PY{k}{.}\PY{k}{template}\PY{k}{]}
+\PY{n}{entrypoint}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{template/template.typ}\PY{l+s+s2}{\PYZdq{}}
 \end{Verbatim}
 \end{tscode}
 \subsubsection{Attribute schema}

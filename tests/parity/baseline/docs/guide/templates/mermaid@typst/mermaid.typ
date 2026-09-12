@@ -20,26 +20,28 @@ align(center)[#counter(page).get().first()]
 #text(size: 1.8em, weight: "bold")[Mermaid Configuration]]
 #v(1.5em)
 
-TeXSmith will automatically pick up a `mermaid-config.json` located at the root of a template (next to `manifest.toml`). The diagrams module passes this config to Mermaid for all diagrams rendered with that template.
+TeXSmith will automatically pick up a `mermaid-config.json` sitting next to the template's `manifest.toml`. The `assets` pass passes this config to Mermaid for every diagram rendered with that template.
 
 = Using a Built-in Template
 
 The built-in `article` template ships with a `mermaid-config.json`. To inspect or override it:
 
 ```bash
-texsmith --template-info --template article
-texsmith templates  # list all discoverable templates
+texsmith --list-templates                    # every discoverable template and its path
+texsmith --template article --template-info  # what this one declares
 ```
 
-To customize, copy the file, adjust options, and point to your modified template directory:
+To customize, scaffold the template into your tree, adjust the file, and point `–template` at the copy:
 
 ```bash
-cp -r $(python - <<'PY'\nfrom texsmith.core.templates import load_template\nfrom pathlib import Path\nt = load_template('article')\nprint(t.root)\nPY) ./templates/article\n# edit ./templates/article/mermaid-config.json\ntexsmith doc.md --template ./templates/article
+texsmith --template article --template-scaffold ./templates/article
+$EDITOR ./templates/article/template/mermaid-config.json
+texsmith doc.md --template ./templates/article
 ```
 
 = Adding Mermaid Config to a Custom Template
 
-+ Place `mermaid-config.json` at the template root (same level as `manifest.toml`).
++ Place `mermaid-config.json` next to `manifest.toml`.
 + TeXSmith will expose the path via `template.extras["mermaid_config"]` so the renderer can pass it to Mermaid.
 + No manifest changes are required; the presence of the file is enough.
 

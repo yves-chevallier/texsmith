@@ -45,8 +45,8 @@ TeXSmith finds templates from multiple locations in a deterministic order:
 Use the CLI to inspect what was found:
 \begin{tscode}[lang=bash, engine=pygments]
 \begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
-texsmith\PY{+w}{ }\PYZhy{}\PYZhy{}template\PYZhy{}info\PY{+w}{ }\PYZhy{}\PYZhy{}template\PY{+w}{ }article
-texsmith\PY{+w}{ }templates\PY{+w}{  }\PY{c+c1}{\PYZsh{} list all visible templates}
+texsmith\PY{+w}{ }\PYZhy{}\PYZhy{}list\PYZhy{}templates\PY{+w}{                    }\PY{c+c1}{\PYZsh{} every visible template, with its origin}
+texsmith\PY{+w}{ }\PYZhy{}\PYZhy{}template\PY{+w}{ }article\PY{+w}{ }\PYZhy{}\PYZhy{}template\PYZhy{}info\PY{+w}{  }\PY{c+c1}{\PYZsh{} one template\PYZsq{}s slots and attributes}
 \end{Verbatim}
 \end{tscode}
 A valid template root contains either \tscodeinline{manifest.toml} or \tscodeinline{template/manifest.toml}; an \tscodeinline{\_\_init\_\_.py} alongside these allows specialized Python logic.
@@ -60,7 +60,7 @@ Notes:
 To scaffold a built-in for customization:
 \begin{tscode}[lang=bash, engine=pygments]
 \begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
-texsmith\PY{+w}{ }templates\PY{+w}{ }scaffold\PY{+w}{ }article\PY{+w}{ }./templates/article
+texsmith\PY{+w}{ }\PYZhy{}\PYZhy{}template\PY{+w}{ }article\PY{+w}{ }\PYZhy{}\PYZhy{}template\PYZhy{}scaffold\PY{+w}{ }./templates/article
 \end{Verbatim}
 \end{tscode}
 Then point \tscodeinline{-\allowbreak{}-\allowbreak{}template} to that path. Any \tscodeinline{mermaid-\allowbreak{}config.json} placed at the template root will be picked up automatically.

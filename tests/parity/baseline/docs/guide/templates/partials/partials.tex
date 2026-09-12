@@ -107,11 +107,12 @@ are ignored, so an older fragment survives a newer writer.
 & \tscodeinline{\textbackslash{}tscodeinline[lang=py]\{…\}} & \tscodeinline{lang} & escaped text, \tscodeinline{\textbackslash{}texttt} \\
 \tscodeinline{ts-\allowbreak{}keystrokes} & \tscodeinline{\textbackslash{}tskeys\{Ctrl,Alt,Del\}} & --- & one box per key, joined by \tscodeinline{+}; a literal comma is braced (\tscodeinline{\{,\}}) \\
 \tscodeinline{ts-\allowbreak{}todolist} & \tscodeinline{\textbackslash{}begin\{tstasklist\}\textbackslash{}item[\textbackslash{}tsdone] … \textbackslash{}item[\textbackslash{}tstodo] … \textbackslash{}item[\textbackslash{}tspartial] …\textbackslash{}end\{tstasklist\}} & --- & \tscodeinline{enumitem} list with \tscodeinline{amssymb}/\tscodeinline{pifont} markers \\
-\tscodeinline{ts-\allowbreak{}glossary} & \tscodeinline{\textbackslash{}tsgls\{key\}}, \tscodeinline{\textbackslash{}tsacr\{key\}} & --- & \tscodeinline{\textbackslash{}gls} \\
+\tscodeinline{ts-\allowbreak{}glossary} & \tscodeinline{\textbackslash{}tsgls\{key\}}, \tscodeinline{\textbackslash{}tsacr\{key\}} & --- & \tscodeinline{\textbackslash{}tsgls} is \tscodeinline{\textbackslash{}gls} (first use expands); \tscodeinline{\textbackslash{}tsacr} is \tscodeinline{\textbackslash{}acrshort}, the \textbf{short} form wherever it stands \\
 \tscodeinline{ts-\allowbreak{}index} & \tscodeinline{\textbackslash{}tsindex[registry=r, main]\{sort@formatted!sub\}} & \tscodeinline{registry}, \tscodeinline{main} & zero-width; \tscodeinline{\textbackslash{}makeindex[name=r]} per registry of \tscodeinline{Requires.index} \\
 \tscodeinline{ts-\allowbreak{}bibliography} & \tscodeinline{\textbackslash{}parencite}, \tscodeinline{\textbackslash{}textcite} & --- & fallbacks onto \tscodeinline{\textbackslash{}cite} when no \tscodeinline{.bib} loads \tscodeinline{biblatex} \\
 \tscodeinline{ts-\allowbreak{}fonts} & \tscodeinline{\textbackslash{}tsscript\{slug\}\{…\}}, \tscodeinline{\textbackslash{}tsemoji\{…\}} & --- & the \tscodeinline{\textbackslash{}text<slug>} fallback font, the emoji font \\
 \tscodeinline{ts-\allowbreak{}critic} & \tscodeinline{\textbackslash{}tsins\{…\}}, \tscodeinline{\textbackslash{}tsdel\{…\}}, \tscodeinline{\textbackslash{}tssubst\{old\}\{new\}}, \tscodeinline{\textbackslash{}tscomment\{…\}} & --- & critic markup \\
+\tscodeinline{ts-\allowbreak{}equations} & --- & --- & a marker, not a package: the writer names it when an equation carries a label, so the Typst template knows to number equations. Nothing to define on the \LaTeX{} side \\
 \bottomrule
 \end{tabularx}
 \end{center}
@@ -122,7 +123,10 @@ never are.
 
 The Typst writer emits one hyphenated function per contract (\tscodeinline{\#ts-\allowbreak{}callout},
 \tscodeinline{\#ts-\allowbreak{}code}, \tscodeinline{\#ts-\allowbreak{}keys}, ...) with the same argument names, defined in
-\tscodeinline{src/texsmith/templates/common/texsmith.typ}, copied next to the \tscodeinline{.typ}.
+\tscodeinline{src/texsmith/templates/common/texsmith.typ}. That library is inlined ahead of
+the body in the generated \tscodeinline{.typ}, so the file compiles on its own; a Typst
+template redefines a function after it, as a \LaTeX{} template redefines a macro
+after \tscodeinline{\textbackslash{}VAR\{extra\_packages\}}.
 \section{Overriding a construct}
 Three levels, in the template's \tscodeinline{.tex} after \tscodeinline{\textbackslash{}VAR\{extra\_packages\}} (the
 fragments are \tscodeinline{\textbackslash{}usepackage}d there):

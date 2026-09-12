@@ -55,9 +55,9 @@ Use \tscodeinline{Document.from\_markdown} / \tscodeinline{Document.from\_html} 
 \PY{n}{docs} \PY{o}{=} \PY{p}{[}
     \PY{n}{Document}\PY{o}{.}\PY{n}{from\PYZus{}markdown}\PY{p}{(}
         \PY{n}{Path}\PY{p}{(}\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{foo.md}\PY{l+s+s2}{\PYZdq{}}\PY{p}{)}\PY{p}{,}
-        \PY{n}{heading}\PY{o}{=}\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{section}\PY{l+s+s2}{\PYZdq{}}\PY{p}{,}  \PY{c+c1}{\PYZsh{} named levels map to LaTeX sectioning commands}
+        \PY{n}{base\PYZus{}level}\PY{o}{=}\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{section}\PY{l+s+s2}{\PYZdq{}}\PY{p}{,}  \PY{c+c1}{\PYZsh{} named levels map to LaTeX sectioning commands}
     \PY{p}{)}\PY{p}{,}
-    \PY{n}{Document}\PY{o}{.}\PY{n}{from\PYZus{}markdown}\PY{p}{(}\PY{n}{Path}\PY{p}{(}\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{bar.md}\PY{l+s+s2}{\PYZdq{}}\PY{p}{)}\PY{p}{,} \PY{n}{heading}\PY{o}{=}\PY{l+m+mi}{0}\PY{p}{)}\PY{p}{,}
+    \PY{n}{Document}\PY{o}{.}\PY{n}{from\PYZus{}markdown}\PY{p}{(}\PY{n}{Path}\PY{p}{(}\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{bar.md}\PY{l+s+s2}{\PYZdq{}}\PY{p}{)}\PY{p}{,} \PY{n}{base\PYZus{}level}\PY{o}{=}\PY{l+m+mi}{0}\PY{p}{)}\PY{p}{,}
     \PY{n}{Document}\PY{o}{.}\PY{n}{from\PYZus{}html}\PY{p}{(}\PY{n}{Path}\PY{p}{(}\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{baz.html}\PY{l+s+s2}{\PYZdq{}}\PY{p}{)}\PY{p}{,} \PY{n}{selector}\PY{o}{=}\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{main.article\PYZus{}\PYZus{}content}\PY{l+s+s2}{\PYZdq{}}\PY{p}{)}\PY{p}{,}
 \PY{p}{]}
 
@@ -68,7 +68,12 @@ Use \tscodeinline{Document.from\_markdown} / \tscodeinline{Document.from\_html} 
     \PY{n+nb}{print}\PY{p}{(}\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{Rendered fragment}\PY{l+s+s2}{\PYZdq{}}\PY{p}{,} \PY{n}{fragment}\PY{o}{.}\PY{n}{stem}\PY{p}{,} \PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{→}\PY{l+s+s2}{\PYZdq{}}\PY{p}{,} \PY{n}{fragment}\PY{o}{.}\PY{n}{output\PYZus{}path}\PY{p}{)}
 \end{Verbatim}
 \end{tscode}
-\tscodeinline{ConversionRequest} carries conversion settings (parser, fallbacks, manifest emission, etc.) in addition to document inputs. When you omit \tscodeinline{output\_dir}, the bundle stays in memory---perfect for unit tests or further processing.
+\tscodeinline{from\_markdown} parses the source with tmark into \tscodeinline{Document.ir}; \tscodeinline{from\_html}
+reads an \tscodeinline{.html} file into the same IR through the HTML reader, which is why
+\tscodeinline{selector}, \tscodeinline{parser} and \tscodeinline{full\_document} only exist there. There is no \tscodeinline{reader}
+argument on either: a Markdown source has exactly one reader.
+
+\tscodeinline{ConversionRequest} carries conversion settings (selector, asset handling, manifest emission, etc.) in addition to document inputs. When you omit \tscodeinline{output\_dir}, the bundle stays in memory---perfect for unit tests or further processing.
 
 Use it to opt into legacy \LaTeX{} accent macros (default is Unicode output):
 \begin{tscode}[lang=python, engine=pygments]
@@ -84,14 +89,16 @@ Use it to opt into legacy \LaTeX{} accent macros (default is Unicode output):
 \subsection{Drive the pipeline with \tscodeinline{ConversionService}}
 If you need the exact orchestration used by the CLI, rely on \tscodeinline{ConversionService}. It exposes two steps:
 \begin{enumerate}
-\item \tscodeinline{prepare\_documents(request)} splits inputs, normalises Markdown/HTML, applies slot assignments, and returns a \tscodeinline{ConversionPrepared} payload.
-\item \tscodeinline{execute(request, prepared=...)} renders the documents, optionally through a template, and produces a \tscodeinline{ConversionResponse} with the bundle plus emitted diagnostics.
+\item \tscodeinline{prepare\_documents(request)} splits inputs, parses each one into its IR, applies slot assignments, and returns a prepared batch.
+\item \tscodeinline{execute(request, prepared=...)} runs the passes, resolves once, writes one body per slot, wraps them in the template, and produces a \tscodeinline{ConversionResponse} with the bundle plus emitted diagnostics.
 \end{enumerate}
+A third step, \tscodeinline{build\_pdf(render\_result, engine=...)}, hands the rendered project to Tectonic, latexmk or the Typst compiler.
 \begin{tscode}[lang=python, engine=pygments]
 \begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
 \PY{k+kn}{from}\PY{+w}{ }\PY{n+nn}{pathlib}\PY{+w}{ }\PY{k+kn}{import} \PY{n}{Path}
 
 \PY{k+kn}{from}\PY{+w}{ }\PY{n+nn}{texsmith}\PY{+w}{ }\PY{k+kn}{import} \PY{n}{ConversionRequest}\PY{p}{,} \PY{n}{ConversionService}
+\PY{k+kn}{from}\PY{+w}{ }\PY{n+nn}{texsmith}\PY{n+nn}{.}\PY{n+nn}{core}\PY{n+nn}{.}\PY{n+nn}{diagnostics}\PY{+w}{ }\PY{k+kn}{import} \PY{n}{LoggingEmitter}
 
 \PY{n}{service} \PY{o}{=} \PY{n}{ConversionService}\PY{p}{(}\PY{p}{)}
 \PY{n}{request} \PY{o}{=} \PY{n}{ConversionRequest}\PY{p}{(}
@@ -100,18 +107,29 @@ If you need the exact orchestration used by the CLI, rely on \tscodeinline{Conve
     \PY{n}{template}\PY{o}{=}\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{article}\PY{l+s+s2}{\PYZdq{}}\PY{p}{,}
     \PY{n}{render\PYZus{}dir}\PY{o}{=}\PY{n}{Path}\PY{p}{(}\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{build}\PY{l+s+s2}{\PYZdq{}}\PY{p}{)}\PY{p}{,}
     \PY{n}{bibliography\PYZus{}files}\PY{o}{=}\PY{p}{[}\PY{n}{Path}\PY{p}{(}\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{refs.bib}\PY{l+s+s2}{\PYZdq{}}\PY{p}{)}\PY{p}{]}\PY{p}{,}
-    \PY{n}{debug}\PY{o}{=}\PY{k+kc}{True}\PY{p}{,}
+    \PY{n}{persist\PYZus{}debug\PYZus{}ir}\PY{o}{=}\PY{k+kc}{True}\PY{p}{,}  \PY{c+c1}{\PYZsh{} keep each document\PYZsq{}s \PYZlt{}stem\PYZgt{}.ir.json}
+    \PY{n}{emitter}\PY{o}{=}\PY{n}{LoggingEmitter}\PY{p}{(}\PY{p}{)}\PY{p}{,}
 \PY{p}{)}
 \PY{n}{prepared} \PY{o}{=} \PY{n}{service}\PY{o}{.}\PY{n}{prepare\PYZus{}documents}\PY{p}{(}\PY{n}{request}\PY{p}{)}
 \PY{n}{response} \PY{o}{=} \PY{n}{service}\PY{o}{.}\PY{n}{execute}\PY{p}{(}\PY{n}{request}\PY{p}{,} \PY{n}{prepared}\PY{o}{=}\PY{n}{prepared}\PY{p}{)}
 
-\PY{k}{for} \PY{n}{event} \PY{o+ow}{in} \PY{n}{response}\PY{o}{.}\PY{n}{diagnostics}\PY{p}{:}
-    \PY{n+nb}{print}\PY{p}{(}\PY{n}{event}\PY{o}{.}\PY{n}{name}\PY{p}{,} \PY{n}{event}\PY{o}{.}\PY{n}{payload}\PY{p}{)}
+\PY{n+nb}{print}\PY{p}{(}\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{Main TeX:}\PY{l+s+s2}{\PYZdq{}}\PY{p}{,} \PY{n}{response}\PY{o}{.}\PY{n}{render\PYZus{}result}\PY{o}{.}\PY{n}{main\PYZus{}tex\PYZus{}path}\PY{p}{)}
+\PY{k}{for} \PY{n}{record} \PY{o+ow}{in} \PY{n}{response}\PY{o}{.}\PY{n}{documents}\PY{p}{[}\PY{l+m+mi}{0}\PY{p}{]}\PY{o}{.}\PY{n}{diagnostics}\PY{p}{:}
+    \PY{n+nb}{print}\PY{p}{(}\PY{n}{record}\PY{o}{.}\PY{n}{severity}\PY{p}{,} \PY{n}{record}\PY{o}{.}\PY{n}{code}\PY{p}{,} \PY{n}{record}\PY{o}{.}\PY{n}{message}\PY{p}{)}
 \end{Verbatim}
 \end{tscode}
-The CLI passes a \tscodeinline{CliEmitter} via \tscodeinline{ConversionRequest.emitter} so warnings surface nicely. Library callers can supply their own emitter or accept the default \tscodeinline{NullEmitter}.
+Diagnostics reach a caller two ways: as they happen, through the emitter passed
+on \tscodeinline{ConversionRequest.emitter} (the CLI passes a \tscodeinline{CliEmitter}, libraries get the
+silent \tscodeinline{NullEmitter} by default, \tscodeinline{LoggingEmitter} forwards to \tscodeinline{logging}); and
+afterwards, as the \tscodeinline{Diagnostic} records kept on each \tscodeinline{Document}. \tscodeinline{-\allowbreak{}-\allowbreak{}strict},
+\tscodeinline{-\allowbreak{}-\allowbreak{}deprecated} and \tscodeinline{-\allowbreak{}-\allowbreak{}diagnostics-\allowbreak{}json} are the CLI's own reading of those same
+records, not fields of the request.
+
+\tscodeinline{response.result} is a \tscodeinline{ConversionBundle} without a template and a
+\tscodeinline{TemplateRenderResult} with one; \tscodeinline{response.bundle} and \tscodeinline{response.render\_result}
+are the guarded accessors, and \tscodeinline{response.is\_template} says which applies.
 \subsection{Work with templates programmatically}
-\tscodeinline{TemplateSession} wraps template discovery, option management, slot assignments, and final rendering (the heavy lifting lives in \tscodeinline{texsmith.core.conversion.TemplateRenderer}).  Anything you can do from the CLI works here too, but you get a richer, Pythonic surface:
+\tscodeinline{TemplateSession} wraps template discovery, option management, slot assignments, and final rendering (the heavy lifting lives in \tscodeinline{texsmith.core.conversion.renderer.TemplateRenderer}).  Anything you can do from the CLI works here too, but you get a richer, Pythonic surface:
 \begin{tscode}[lang=python, engine=pygments]
 \begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
 \PY{k+kn}{from}\PY{+w}{ }\PY{n+nn}{pathlib}\PY{+w}{ }\PY{k+kn}{import} \PY{n}{Path}
@@ -128,10 +146,8 @@ The CLI passes a \tscodeinline{CliEmitter} via \tscodeinline{ConversionRequest.e
 \PY{n}{session}\PY{o}{.}\PY{n}{set\PYZus{}options}\PY{p}{(}\PY{n}{options}\PY{p}{)}
 
 \PY{c+c1}{\PYZsh{} Prepare documents}
-\PY{n}{default\PYZus{}extensions} \PY{o}{=} \PY{k+kc}{None}  \PY{c+c1}{\PYZsh{} use built\PYZhy{}in defaults}
-\PY{n}{foo} \PY{o}{=} \PY{n}{Document}\PY{o}{.}\PY{n}{from\PYZus{}markdown}\PY{p}{(}\PY{n}{Path}\PY{p}{(}\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{foo.md}\PY{l+s+s2}{\PYZdq{}}\PY{p}{)}\PY{p}{,} \PY{n}{extensions}\PY{o}{=}\PY{n}{default\PYZus{}extensions}\PY{p}{)}
-\PY{n}{abstract} \PY{o}{=} \PY{n}{Document}\PY{o}{.}\PY{n}{from\PYZus{}markdown}\PY{p}{(}\PY{n}{Path}\PY{p}{(}\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{abstract.md}\PY{l+s+s2}{\PYZdq{}}\PY{p}{)}\PY{p}{,} \PY{n}{extensions}\PY{o}{=}\PY{n}{default\PYZus{}extensions}\PY{p}{)}
-\PY{n}{abstract}\PY{o}{.}\PY{n}{drop\PYZus{}title} \PY{o}{=} \PY{k+kc}{True}
+\PY{n}{foo} \PY{o}{=} \PY{n}{Document}\PY{o}{.}\PY{n}{from\PYZus{}markdown}\PY{p}{(}\PY{n}{Path}\PY{p}{(}\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{foo.md}\PY{l+s+s2}{\PYZdq{}}\PY{p}{)}\PY{p}{)}
+\PY{n}{abstract} \PY{o}{=} \PY{n}{Document}\PY{o}{.}\PY{n}{from\PYZus{}markdown}\PY{p}{(}\PY{n}{Path}\PY{p}{(}\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{abstract.md}\PY{l+s+s2}{\PYZdq{}}\PY{p}{)}\PY{p}{,} \PY{n}{strip\PYZus{}heading}\PY{o}{=}\PY{k+kc}{True}\PY{p}{)}
 
 \PY{n}{session}\PY{o}{.}\PY{n}{add\PYZus{}document}\PY{p}{(}\PY{n}{foo}\PY{p}{)}
 \PY{n}{session}\PY{o}{.}\PY{n}{add\PYZus{}document}\PY{p}{(}\PY{n}{abstract}\PY{p}{,} \PY{n}{slot}\PY{o}{=}\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{abstract}\PY{l+s+s2}{\PYZdq{}}\PY{p}{)}
