@@ -44,11 +44,6 @@ plugins:
 markdown_extensions:
   - abbr
   - admonition
-  - texsmith.texlogos
-  - texsmith.smallcaps
-  - texsmith.mermaid:
-      base_paths:
-        - !relative $config_dir/docs
   - pymdownx.superfences:
       custom_fences:
         - name: mermaid

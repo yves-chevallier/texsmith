@@ -29,7 +29,6 @@
 #                           the MkDocs companion (plan task 3.9) lands
 #   examples/recipe         API/template example: `cake.yml` through a local
 #                           template, exercised by tests/test_api_service.py
-#   examples/custom-render  API example (`counter.py`), no CLI invocation
 
 docs:
   # One entry per page, `<path without .md>` as id, rendered standalone with

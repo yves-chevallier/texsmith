@@ -334,7 +334,7 @@ def test_corpus_loads_and_is_well_formed(parity):
     assert len(ids) == len(set(ids))
     assert "abbr" in ids and "abbr@typst" in ids
     assert "docs/syntax/tables" in ids and "docs/syntax/tables@typst" in ids
-    assert not any(e.entry_id.startswith(("mkdocs", "recipe", "custom-render")) for e in entries)
+    assert not any(e.entry_id.startswith(("mkdocs", "recipe")) for e in entries)
     for entry in entries:
         assert "--build" not in entry.args
         assert entry.requires <= parity.KNOWN_REQUIREMENTS

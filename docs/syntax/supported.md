@@ -101,7 +101,7 @@ LaTeX output. See [Admonitions](admonitions.md).
 ```md
 | Option | Description |
 | ------ | ----------- |
-| `--list-extensions` | Prints the enabled constructs |
+| `--debug-ir` | Dumps the parsed IR next to the output |
 | `--debug` | Shows full tracebacks |
 
 Table: Selected command-line options. {#tbl:options}
