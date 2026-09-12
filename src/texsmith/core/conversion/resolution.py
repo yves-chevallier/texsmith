@@ -10,6 +10,15 @@ value after the previous document of the batch. :class:`ResolutionChain`
 threads that ``start`` through a batch (``ConversionService.execute`` in input
 order, MkDocs in nav order), replacing the shared global ``CounterRegistry``
 of the legacy path.
+
+Two more options come from the CLI (design 06 §Site-wide resolution):
+``lang``, the document language TeXSmith resolved (``--language`` or the
+front matter, a babel name such as ``french``) mapped to its BCP 47 primary
+subtag by :func:`tmark_language`; and ``numbering``, ``--numbering
+{backend,tmark}``: under ``tmark`` every predeclared series is numbered by
+tmark (``ResolveOptions.numbering = "all"``) and the writers print those
+numbers (``WriterOptions.numbering``), so ``.tex`` and ``.typ`` carry the
+same figure and table numbers.
 """
 
 from __future__ import annotations
@@ -21,6 +30,7 @@ from typing import TYPE_CHECKING, Any
 
 import tmark
 
+from texsmith.core.templates.languages import _map_bcp47_language
 from texsmith.diagnostics import DiagnosticSink
 from texsmith.ir import codec
 
@@ -31,12 +41,82 @@ if TYPE_CHECKING:  # pragma: no cover - typing only
 
 
 __all__ = [
+    "NUMBERING_MODES",
+    "NUMBERING_OVERRIDE_KEY",
+    "PREDECLARED_SERIES",
     "ResolutionChain",
     "ResolveOptions",
     "bibliography_paths",
+    "numbering_mode",
     "resolve_document",
+    "resolve_numbering",
     "resolve_pass",
+    "tmark_language",
+    "writer_numbering",
 ]
+
+#: ``--numbering``: who allocates the numbers of the predeclared series.
+NUMBERING_MODES: tuple[str, ...] = ("backend", "tmark")
+
+#: The template-override key the CLI stores ``--numbering`` under (the same
+#: private channel as ``_texsmith_latex_engine``), read by both IR backends.
+NUMBERING_OVERRIDE_KEY = "_texsmith_numbering"
+
+#: The predeclared series with a scope (design 06 §Numbering every series);
+#: ``gls`` and ``doi`` number nothing.
+PREDECLARED_SERIES: tuple[str, ...] = (
+    "part",
+    "chap",
+    "sec",
+    "app",
+    "fig",
+    "tbl",
+    "lst",
+    "eq",
+    "thm",
+    "note",
+)
+
+
+def tmark_language(language: str | None) -> str | None:
+    """The BCP 47 primary subtag of a TeXSmith language name, for tmark's ``lang``.
+
+    ``french`` → ``fr``, ``ngerman``/``german`` → ``de``, ``english`` → ``en``,
+    ``italian`` → ``it``, … (the inverse of the babel alias table); a tag such
+    as ``fr`` or ``fr-CH`` passes through as its primary subtag; an unknown
+    name is ``None`` so tmark falls back to the front matter's ``lang``.
+    """
+    return _map_bcp47_language(language)
+
+
+def numbering_mode(*sources: Mapping[str, Any] | None) -> str:
+    """The ``--numbering`` mode carried by the first of ``sources`` naming one (``backend`` else).
+
+    The sources are the template overrides of the conversion context and the
+    request's ``template_options`` — the latter reaches the context only when
+    a template is selected, so the fragment path reads it directly.
+    """
+    for overrides in sources:
+        if not isinstance(overrides, Mapping):
+            continue
+        value = overrides.get(NUMBERING_OVERRIDE_KEY)
+        if isinstance(value, str):
+            candidate = value.strip().lower()
+            if candidate in NUMBERING_MODES:
+                return candidate
+    return "backend"
+
+
+def resolve_numbering(mode: str | None) -> str | None:
+    """``ResolveOptions.numbering`` for a ``--numbering`` mode: ``all`` under ``tmark``."""
+    return "all" if mode == "tmark" else None
+
+
+def writer_numbering(mode: str | None) -> dict[str, str] | None:
+    """``WriterOptions.numbering`` for a ``--numbering`` mode: every predeclared series."""
+    if mode != "tmark":
+        return None
+    return dict.fromkeys(PREDECLARED_SERIES, "tmark")
 
 
 def bibliography_paths(files: Iterable[Path | str]) -> tuple[Path, ...]:
@@ -84,14 +164,26 @@ class ResolutionChain:
 
     bibliography: tuple[Path, ...] = ()
     start: dict[str, int] = field(default_factory=dict)
+    #: Batch defaults; :meth:`options_for` takes the per-document values.
     lang: str | None = None
+    #: A ``--numbering`` mode (``backend`` | ``tmark``), not tmark's spelling.
+    numbering: str | None = None
 
-    def options_for(self, document: Document) -> ResolveOptions:
+    def options_for(
+        self,
+        document: Document,
+        *,
+        lang: str | None = None,
+        numbering: str | None = None,
+    ) -> ResolveOptions:
+        """The options of this document's ``resolve``; explicit values win over the chain's."""
+        mode = numbering if numbering is not None else self.numbering
         return ResolveOptions(
             path=document.source_path.resolve(),
             bibliography=self.bibliography,
             start=dict(self.start),
-            lang=self.lang,
+            lang=lang if lang is not None else self.lang,
+            numbering=resolve_numbering(mode),
         )
 
     def advance(self, resolved: Mapping[str, Any]) -> None:
@@ -126,12 +218,21 @@ def resolve_document(
     return resolved
 
 
-def resolve_pass(chain: ResolutionChain) -> Any:
-    """The ``resolve`` step of :func:`texsmith.passes.run_pipeline`, bound to a chain."""
+def resolve_pass(
+    chain: ResolutionChain,
+    *,
+    lang: str | None = None,
+    numbering: str | None = None,
+) -> Any:
+    """The ``resolve`` step of :func:`texsmith.passes.run_pipeline`, bound to a chain.
+
+    ``lang`` is the document's language as tmark wants it (:func:`tmark_language`)
+    and ``numbering`` the ``--numbering`` mode; both default to the chain's.
+    """
 
     def run(document: Document, ctx: PassContext) -> Document:
         """Resolve ``document``; the ``.bib`` files written by the passes join the CLI ones."""
-        options = chain.options_for(document)
+        options = chain.options_for(document, lang=lang, numbering=numbering)
         if ctx.bibliography:
             # The ``.bib`` files the passes wrote (``doi``) follow the CLI ones.
             options.bibliography = bibliography_paths((*options.bibliography, *ctx.bibliography))

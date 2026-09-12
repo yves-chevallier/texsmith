@@ -1,0 +1,29 @@
+[
+  [
+    "snippet-build-failed",
+    [
+      0,
+      12,
+      73
+    ],
+    "snippet build failed: tectonic exited with status 1"
+  ],
+  [
+    "snippet-build-failed",
+    [
+      0,
+      75,
+      115
+    ],
+    "snippet build failed: the fence has neither inline content nor sources"
+  ],
+  [
+    "snippet-build-failed",
+    [
+      0,
+      117,
+      151
+    ],
+    "snippet build failed: The 'sources' field must be a list of paths."
+  ]
+]

@@ -48,6 +48,16 @@ _TABLE: tuple[CodeInfo, ...] = (
         Severity.WARNING,
         "An executed or rendered snippet failed; the fence is kept as code",
     ),
+    CodeInfo(
+        "reader-unsupported",
+        Severity.WARNING,
+        "An HTML construct the IR cannot express; kept as a generic Div or Span",
+    ),
+    CodeInfo(
+        "reader-unprocessed-block",
+        Severity.WARNING,
+        "A '///' block marker Python-Markdown left as prose",
+    ),
     CodeInfo("slot-missing", Severity.WARNING, "A slot selector matched no top-level heading"),
     CodeInfo(
         "slot-selector-unsupported",

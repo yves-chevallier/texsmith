@@ -276,21 +276,19 @@ def _render_document(
     }
 
     if request.persist_debug_html:
-        if document.reader == "tmark" and document.ir is not None:
+        # The intermediate HTML of the legacy path (and of an HTML input: the
+        # extracted fragment) and the IR of the tmark path, whichever exist.
+        if document.html:
+            persist_debug_artifacts(context.output_dir, document.source_path, document.html)
+        if document.ir is not None:
             persist_debug_ir(context.output_dir, document.source_path, document.ir)
-        else:
-            persist_debug_artifacts(
-                context.output_dir,
-                document.source_path,
-                document.html,
-            )
 
     binding = context.template_binding
     if binding is None:  # pragma: no cover - defensive safeguard
         raise RuntimeError("Conversion context is missing a template binding.")
 
     ir_assets: dict[str, Path] = {}
-    if document.reader == "tmark":
+    if document.ir is not None:
         # The IR path: passes, one ``tmark.resolve``, one ``tmark.write`` per
         # slot body; ``Requires`` drives the fragment flags of the state.
         try:

@@ -219,7 +219,7 @@ def spec(
 
 
 #: The passes in their default order; ``resolve`` (Rust) runs between the
-#: ``pre`` and the ``post`` stage. ``snippet`` is a registered no-op for now.
+#: ``pre`` and the ``post`` stage.
 DEFAULT_PIPELINE: tuple[str, ...] = (
     "include",
     "var",

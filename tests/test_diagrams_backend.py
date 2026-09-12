@@ -168,7 +168,7 @@ def test_drawio_crop_attribute_flows_from_the_image_to_the_converter(tmp_path, m
 def test_image_reader_keeps_the_crop_attribute():
     from bs4 import BeautifulSoup
 
-    from texsmith.readers.html.inline import read_image
+    from texsmith.readers.html_legacy.inline import read_image
 
     soup = BeautifulSoup('<img src="d.drawio" alt="x" crop="false" width="60%">', "html.parser")
     node = read_image(soup.img, None)

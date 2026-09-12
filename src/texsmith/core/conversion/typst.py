@@ -33,7 +33,7 @@ from texsmith.core.conversion.inputs import (
 from texsmith.core.metadata import PressMetadataError, normalise_press_metadata
 from texsmith.core.templates.typst import TypstTemplate, load_typst_template
 from texsmith.ir import nodes as ir
-from texsmith.readers.html import HtmlReader
+from texsmith.readers.html_legacy import HtmlReader
 from texsmith.writers.typst import TypstWriter, TypstWriterState, render_document
 from texsmith.writers.typst.build import compile_typst
 from texsmith.writers.typst.writer import citation_label
@@ -373,7 +373,7 @@ def render_typst_document(
     """
     from texsmith.writers.typst.diagrams import render_diagrams
 
-    if getattr(document, "reader", "html") == "tmark":
+    if getattr(document, "ir", None) is not None:
         from .typst_ir import render_typst_from_ir
 
         return render_typst_from_ir(

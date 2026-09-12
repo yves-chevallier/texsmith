@@ -55,6 +55,9 @@ $ texsmith --help
 `--strict`
 : Exit with status 1 when any warning or error was recorded, after the LaTeX is written and before the engine runs. `press.features.strict: true` in the front matter has the same effect. See [Diagnostics](../guide/diagnostics.md).
 
+`--deprecated LEVEL`
+: The transition knob of the `tmark` reader. TMark reports the legacy spellings it still accepts — root `counters:` instead of `press.declare.counters`, `#{prefix:key}` instead of `#(prefix:key)`, `[^key]` citations — as `deprecated` and `deprecated-frontmatter-key` warnings, which would fail `--strict` on a document that has not been rewritten yet (`tmark lint --fix` does the rewrite). `warning` (the default) keeps them as they are; `info` lowers them to `info` records, so they still print but do not fail `--strict` (and `-q` hides them); `off` drops them entirely. Applied before the strict check and the `--diagnostics-json` dump. `press.diagnostics.deprecated: info` (or `off`) in the front matter sets the same level; the CLI option wins. Every other warning is untouched.
+
 `--diagnostics-json PATH`
 : Write every recorded diagnostic to `PATH` as a JSON list, sorted by file and position, for editors and CI.
 
@@ -153,7 +156,10 @@ $ texsmith --help
 : Generate a `manifest.json` file alongside the LaTeX output, containing metadata about the rendered document, including input sources, template details, and rendering options.
 
 `--language`, `-l`
-: Specify the language code to pass to the LaTeX `babel` package. This affects hyphenation and language-specific typographic rules. If not provided, TeXSmith uses the language specified in the document metadata or defaults to English.
+: Specify the language code to pass to the LaTeX `babel` package. This affects hyphenation and language-specific typographic rules. If not provided, TeXSmith uses the language specified in the document metadata or defaults to English. On the `tmark` reader the same resolved language, as a BCP 47 primary subtag (`french` → `fr`, `ngerman` → `de`, `english` → `en`), is also handed to TMark's resolver and writers (`lang`), which pick the label words of the predeclared series from it.
+
+`--numbering MODE`
+: Who allocates the numbers of the predeclared series — figures, tables, listings, equations, sections and the theorem kinds — on the `tmark` reader. `backend` (the default) leaves them to LaTeX and Typst, each numbering its own floats as it always did, so a `Figure 3.2` in the PDF may be a `Figure 12` in the Typst output. `tmark` makes TMark allocate them once, at resolve time, in document order and continuously across the documents of a batch (`ResolveOptions.numbering: all`), and both writers print those numbers in the cross-references: `\hyperref[tbl:one]{Table~1}` in the `.tex`, `#link(<tbl:one>)[Table 1]` in the `.typ`, identical on both backends. Only labelled items (a caption with `{#fig:x}`) take a number; the float's own caption is still numbered by the backend, so use `tmark` numbering where the two must agree (the web profile, a site built page by page) and keep `backend` for a print-only document with chapter-scoped numbers. User counters declared under `press.declare.counters` are always TMark-numbered, whatever the mode.
 
 `--enable-extension`, `-x`
 : Enable additional Markdown extensions during conversion. You can repeat this option multiple times or provide a comma-separated list of extensions to activate.

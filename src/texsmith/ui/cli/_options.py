@@ -375,6 +375,37 @@ StrictOption = Annotated[
     ),
 ]
 
+DeprecatedOption = Annotated[
+    str | None,
+    typer.Option(
+        "--deprecated",
+        metavar="LEVEL",
+        help=(
+            "How tmark's 'deprecated' and 'deprecated-frontmatter-key' records are reported "
+            "on the tmark reader: 'warning' (default), 'info' or 'off'. Applied before "
+            "--strict, so legacy spellings do not fail a strict run. Also set by "
+            "'press.diagnostics.deprecated' in the front matter."
+        ),
+        rich_help_panel=DIAGNOSTICS_PANEL,
+        case_sensitive=False,
+    ),
+]
+
+NumberingOption = Annotated[
+    str,
+    typer.Option(
+        "--numbering",
+        metavar="MODE",
+        help=(
+            "Who numbers figures, tables, listings, equations and sections on the tmark "
+            "reader: 'backend' (default; LaTeX and Typst allocate their own numbers) or "
+            "'tmark' (tmark allocates them at resolve time, identical in .tex and .typ)."
+        ),
+        rich_help_panel=RENDERING_PANEL,
+        case_sensitive=False,
+    ),
+]
+
 DiagnosticsJsonOption = Annotated[
     Path | None,
     typer.Option(

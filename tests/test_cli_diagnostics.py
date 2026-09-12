@@ -97,3 +97,98 @@ def test_quiet_keeps_warnings(tmp_path: Path) -> None:
     result = CliRunner().invoke(app, [str(source), "-q"])
     assert result.exit_code == 0, result.output
     assert "warning label-duplicate" in result.output
+
+
+# -- the ``--deprecated`` transition knob on the tmark reader -----------------
+
+#: Legacy spellings tmark reports as ``deprecated-frontmatter-key`` (root
+#: ``counters``) and ``deprecated`` (``#{prefix:key}``); nothing else is wrong.
+LEGACY_SPELLINGS = """\
+---
+counters:
+  n:
+    format: "N-{n:02d}"
+---
+First #{n:joy}.
+"""
+
+
+def _tmark(source: Path, *extra: str) -> tuple[int, str]:
+    result = CliRunner().invoke(app, ["--reader", "tmark", str(source), *extra])
+    return result.exit_code, result.output
+
+
+def test_deprecated_records_fail_strict_by_default(tmp_path: Path) -> None:
+    source = _write(tmp_path, LEGACY_SPELLINGS)
+    code, output = _tmark(source, "--strict")
+    assert code == 1, output
+    assert "warning deprecated-frontmatter-key: `counters` is deprecated" in output
+    assert "warning deprecated: `#{prefix:key}` is deprecated" in output
+    assert "0 errors, 2 warnings" in output
+
+
+def test_deprecated_info_passes_strict_and_still_prints(tmp_path: Path) -> None:
+    source = _write(tmp_path, LEGACY_SPELLINGS)
+    code, output = _tmark(source, "--strict", "--deprecated", "info")
+    assert code == 0, output
+    assert "info deprecated-frontmatter-key: `counters` is deprecated" in output
+    assert "info deprecated: `#{prefix:key}` is deprecated" in output
+    assert "warning deprecated" not in output
+    assert "warnings" not in output, "nothing at warning level: no summary line"
+    # ``-q`` then hides them like any other info record.
+    code, output = _tmark(source, "--strict", "--deprecated", "info", "-q")
+    assert code == 0, output
+    assert not _reports_deprecated(output)
+
+
+def _reports_deprecated(output: str) -> bool:
+    """Whether a ``deprecated`` / ``deprecated-frontmatter-key`` record was printed.
+
+    (The pytest ``tmp_path`` of these tests spells ``deprecated`` too, so the
+    check is on the ``severity code:`` part of the line.)
+    """
+    return " deprecated: " in output or " deprecated-frontmatter-key: " in output
+
+
+def test_deprecated_off_drops_the_records(tmp_path: Path) -> None:
+    source = _write(tmp_path, LEGACY_SPELLINGS)
+    dump = tmp_path / "diagnostics.json"
+    code, output = _tmark(
+        source, "--strict", "--deprecated", "OFF", "--diagnostics-json", str(dump)
+    )
+    assert code == 0, output
+    assert not _reports_deprecated(output)
+    assert "errors" not in output, "nothing recorded, no summary"
+    assert json.loads(dump.read_text(encoding="utf-8")) == []
+
+
+def test_deprecated_level_leaves_other_warnings_alone(tmp_path: Path) -> None:
+    source = _write(tmp_path, LEGACY_SPELLINGS.replace("First #{n:joy}.", "#{n:joy} #{n:joy}"))
+    code, output = _tmark(source, "--strict", "--deprecated", "off")
+    assert code == 1, output
+    assert not _reports_deprecated(output)
+    assert "warning label-duplicate" in output
+    assert "0 errors, 1 warning" in output
+
+
+def test_front_matter_sets_the_deprecated_level(tmp_path: Path) -> None:
+    source = _write(
+        tmp_path,
+        LEGACY_SPELLINGS.replace(
+            "counters:", "press:\n  diagnostics:\n    deprecated: info\ncounters:"
+        ),
+    )
+    code, output = _tmark(source, "--strict")
+    assert code == 0, output
+    assert "info deprecated: `#{prefix:key}` is deprecated" in output
+    # The CLI switch wins over the front matter.
+    code, output = _tmark(source, "--strict", "--deprecated", "warning")
+    assert code == 1, output
+    assert "warning deprecated: `#{prefix:key}` is deprecated" in output
+
+
+def test_deprecated_option_is_validated(tmp_path: Path) -> None:
+    source = _write(tmp_path, LEGACY_SPELLINGS)
+    code, output = _tmark(source, "--deprecated", "loud")
+    assert code != 0
+    assert "--deprecated must be 'warning', 'info' or 'off'" in output
