@@ -39,3 +39,18 @@ runs everything plus `parity.py pdf --baseline --check`.
 Goal of the whole migration, restated: the same 23 (+ `mkdocs`) examples
 build again, from sources rewritten in canonical TMark, through the tmark
 reader and writers.
+
+## Closing note — what the baseline became
+
+That goal is met. Every entry of the parity corpus builds through the tmark
+path (32 / 32 LaTeX, 26 / 26 Typst; `status.md` has the measurement), from
+sources rewritten in canonical TMark, and the two `mitex` failures recorded
+above are gone — the pin moved to 0.2.7, which compiles the `\imath` and the
+`aligned` block that `markdown` and `math` carry.
+
+`build-baseline/` was a one-off snapshot of the legacy outputs and is not
+reproducible any more: the legacy pipeline is deleted, and every source under
+`examples/` is written in spellings it could not parse. What survives as the
+gate is the committed, normalised copy under `tests/parity/baseline/`, which
+`parity.py baseline --check` re-renders on every PR — with no allow-list, since
+both sides are now the same rendering of the same source.

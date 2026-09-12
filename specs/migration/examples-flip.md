@@ -228,3 +228,10 @@ else's feet.
 - `custom-render` still drives the API through a raw-HTML hook
   (`<span class="data-counter">`); rewriting it as an IR pass is
   examples-migration item TeXSmith-6, not part of the flip.
+
+**Since the flip.** Phase 5 deleted `examples/custom-render` with the
+`@reads` / `@writes` decorators it demonstrated, so item TeXSmith-6 is closed
+by deletion; the equivalent example, when someone writes one, is an IR pass
+declared under `[latex.template] passes`. The `mitex` pin moved to 0.2.7,
+which compiles the `\imath` and the `aligned` block `markdown` and `math`
+carry, and the whole corpus builds (`status.md`).

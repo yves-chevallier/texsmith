@@ -35,3 +35,27 @@ each. Wave 1 starts from these decisions:
 - TeXSmith `models`: `scripts/gen_ir_models.py`, `texsmith/ir/model.py`, `codec.py`, `walk.py`, tests.
 - TeXSmith `diagnostics`: `texsmith/diagnostics/{model,codes,sink}.py`, `FileTable`, `format_diagnostic`, CLI rendering, `--strict`, `--diagnostics-json`.
 - TeXSmith `captions` (running): task 0.1.
+
+## Closing note — what shipped
+
+All twelve decisions are implemented, and two were amended on contact with the
+corpus rather than overturned.
+
+- **X2** gained a second contract. `\tsdivider` = `\clearpage` is right at the
+  top level and wrong inside a container, where it tears a box in two and Typst
+  refuses it outright; the writers now pick `\tsrule` / `#ts-rule()` by their
+  own nesting (tmark challenge C48, commit `604dac2`).
+- **X5** was answered *yes*. Its own condition — `examples/glossary` and
+  `examples/abbr` failing — was met (parity triage F2), so `passes/glossary.py`
+  exists and appends one `AbbrDef` per front-matter entry.
+
+X1 (a writer option, not `Header.level`), X3 (`Div{name=code}` plus a
+`RawBlock` payload), X4 (`fragment-contracts.md` owns the macro names), X6
+("unique per file"), X7 (the citation tokenizer rule, which is what made a
+mechanical migration possible at all), X8 (`lower_web` in Rust), X9 (the table
+model fixed in tmark first), X10 (byte columns on both sides), X11 (top-level
+headings only) and X12 (`code.inline.breaks` read in both places) shipped as
+written.
+
+The waves all landed; what remains open is recorded per note, and the findings
+that outlived the migration are in `parity-triage.md` §7.

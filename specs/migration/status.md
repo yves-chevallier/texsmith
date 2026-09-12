@@ -67,9 +67,9 @@ until the fragment defines it. That failure is the intended alarm.
 
 ## Open
 
-- `Document.from_markdown(reader=…)` still defaults to the legacy reader
-  while `ConversionRequest.reader` defaults to `tmark`; a library caller
-  that omits it silently gets the other pipeline (it cost the snippet
-  previews a build). The default moves with the deletion of the legacy
-  path, which rewrites the tests that assert its output.
+- `Document.from_markdown` has no `reader` parameter any more, and neither has
+  `ConversionRequest`: a Markdown source has exactly one reader. The hazard
+  this entry recorded — a library caller silently getting the other pipeline,
+  which cost the snippet previews a build twice — is closed by deletion rather
+  than by a changed default.
 - The findings of `parity-triage.md` that remain open are listed there.

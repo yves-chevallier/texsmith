@@ -297,3 +297,27 @@ keep `MISSING` on `keys` only, or teach the press view too. (5) `Var` resolving 
 (`authors`): today stringified, `var-not-scalar` is stricter; keep the warning or join with `, `?
 (6) `writers-and-passes.md` runs `headings` before `slots` and writes the offset into
 `Header.level`; this note keeps `Header.level` and passes a writer option. Settle before S4.
+
+## 9. Closing note — what shipped
+
+S1–S6 all landed, and the pass list grew past section 3 on the way:
+`include`, `var`, `slots`, `headings`, `title`, `assets`, `doi`, `emoji`,
+`scripts`, `highlight`, `snippet` and `glossary` all run on the default path.
+`ir/model.py` is generated from TMark's schema and checked against it in CI, so
+a field added upstream fails the drift check rather than silently disagreeing;
+`texsmith/diagnostics/` is the sink every emitter now routes through, with
+`--strict`, `--diagnostics-json` and `-q` on the CLI.
+
+Section 2's `Document` is the only one left: `readers/html` was retargeted onto
+the same generated models, so `Document.from_html` fills `ir`, `files`, `keys`
+and `diagnostics` exactly as `from_markdown` does and an `.html` input takes
+the same passes → `resolve` → `write` path. `from_markdown` has no `reader`
+parameter any more — there is one reader — and `heading_analysis.py` is gone
+with the HTML scanning it did.
+
+Of the open questions: (2) is X10 (bytes on both sides); (3) is X11 (top-level
+headings only, `slot-nested-heading` otherwise); (6) is X1 (the base level is a
+writer option, `Header.level` stays the author's). Still open: (1) a per-heading
+unnumbered marker, which the spec has no spelling for; (4) `title: null` and the
+`MISSING` sentinel on the press view; (5) whether a `Var` resolving to a list
+should join with `, ` instead of warning `var-not-scalar`.

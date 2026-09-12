@@ -300,3 +300,36 @@ spec lacks — spec challenges (gap-audit rows "tabbed", "multicolumn"). (5)
 LaTeX enough for the poster/exam templates R2 names? (6) Typst index:
 `#ts-index` no-op or an `in-dexter` dependency? (7) Should `FRAGMENTS`
 carry a `typst: &[&str]` column so `texsmith.typ` is checked like the `.sty`?
+
+## 7. Closing note — what shipped
+
+The triage is implemented. Every `provides` entry of `tmark.fragments()` is a
+`\NewDocumentCommand` / `\NewDocumentEnvironment` in its fragment's `.sty`,
+with keyval options under `/ts/<name>/` and unknown keys ignored, and
+`src/texsmith/templates/common/texsmith.typ` is the Typst mirror with the same
+signatures. `activate_from_requires()` replaced the `_detect_*` content
+sniffers: a body's `Requires` decides which fragments the preamble loads.
+`ts-critic` is new, `book` and `letter` are converted, and
+`tests/test_fragment_contracts.py` builds a document exercising every macro —
+`test_every_provides_entry_is_defined` is the alarm that fires when a contract
+added on the tmark side has no definition here.
+
+Item (10) went further than "the ten orphan partials": phase 5 deleted all 45
+files of `adapters/latex/partials/`, `LaTeXFormatter`, `core/partials.py` and
+the four override hooks (`latex.template.override` and a template's
+`overrides/`, template and fragment `required_partials`, a fragment's
+`partials`, and the template-scoped `readers` / `writer` of 0.4.1). They are
+not deprecated: they are not read at all. Overriding a construct is redefining
+its macro after `\VAR{extra_packages}`, which `docs/guide/templates/partials.md`
+documents partial by partial.
+
+Of the open questions: (1) `KEY_LABELS` lives in the registry, reachable as
+`tmark.registries()["key_labels"]`; (4) the `::: tabs` / `::: tab` and
+`::: multicolumn` containers the spec lacked were added, so `tsdiv` has real
+sources; (5) `figure` stayed structural. Still open: (2) the acronym key
+sanitisation is not exposed as a shared `tmark.slug()`, so the writer and the
+fragment agree by convention rather than by construction; (3) `\cite` is still
+structural, not `\tscite`; (6) `#ts-index` is a no-op in Typst, awaiting a
+decision on an `in-dexter` dependency; (7) `FRAGMENTS` has no `typst:` column,
+which is why `texsmith.typ` and the crate's `assets/texsmith.typ` are two
+hand-kept copies (`status.md`, "Known duplication").
