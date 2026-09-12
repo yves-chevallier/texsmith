@@ -6,12 +6,13 @@ the parity corpus (`tests/parity/corpus.yml`), rewrite its sources with
 are already in canonical TMark, so the fixer is a no-op on them and the
 build is the real measurement.
 
-| Backend | Builds | Not built |
-| ------- | ------ | --------- |
-| LaTeX | 31 / 32 | `emoji-color` asks for `lualatex`, which this machine does not have (the legacy baseline could not build it either) |
-| Typst | 26 / 26 | — |
+| Backend | Builds |
+| ------- | ------ |
+| LaTeX | 32 / 32 |
+| Typst | 26 / 26 |
 
-57 of the 58 corpus entries. The `docs/` corpus (128 pages × both
+Every entry of the corpus, with TeX Live 2025 and its `lualatex` on the
+machine (`emoji-color` is the one entry that asks for it). The `docs/` corpus (128 pages × both
 backends) renders through the same path, and the documentation site
 builds with its PDF export (`TEXSMITH_BUILD=1 mkdocs build`).
 
