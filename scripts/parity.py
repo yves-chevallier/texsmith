@@ -565,6 +565,24 @@ _TYPST_IMAGE_RE = re.compile(r'(image\(\s*")[^"]*/([^"/]+)"')
 _TSLEAD_RE = re.compile(r"^\s*\\providecommand\{\\tslead\}")
 _TYP_COMMENT_RE = re.compile(r"^\s*//")
 _TYP_MITEX_RE = re.compile(r'^\s*#import\s+"@preview/mitex')
+# Lines around which a blank line carries no meaning in LaTeX: a block boundary
+# (environment, sectioning, list item, table row or rule, float furniture).
+_TEX_STRUCTURAL_RE = re.compile(
+    r"^\\(?:begin|end)\{"
+    r"|^\\(?:part|chapter|section|subsection|subsubsection|paragraph|subparagraph)\*?\{"
+    r"|^\\item\b"
+    r"|^\\(?:toprule|midrule|bottomrule|cmidrule|hline|centering|caption|label|includegraphics"
+    r"|vspace|maketitle|tableofcontents|clearpage|newpage|tsdivider|tsprogress|endfirsthead"
+    r"|endhead|multicolumn|phantomsection|adjustbox|ifdefined|else|fi)\b"
+    r"|^\{\\progressbar"
+    r"|\\\\$"
+)
+_TEX_SPLIT_RE = re.compile(r"(\\vspace\{[^{}]*\}|\\begin\{center\})(\\begin\{)")
+_TEX_ITEM_LABEL_RE = re.compile(r"^\\item\[\{ (.*) \}\]")
+_TEX_PY_WHITESPACE = "\\PY{+w}{ }"
+_TYP_FENCE_RE = re.compile(r"^\s*(`{3,})")
+_TYP_TRAILING_COMMA_RE = re.compile(r",\s*\)")
+_TYP_RAW_ARG_RE = re.compile(r"#(mi|mitex)\(```(.*?)```\)")
 
 
 def find_comment(line: str) -> int:
@@ -621,6 +639,92 @@ def collapse_blank_lines(text: str) -> str:
     return "\n".join(out) + "\n"
 
 
+def _tex_lines(text: str) -> list[tuple[str, bool]]:
+    """``(line, verbatim)`` pairs, tracking the same environment stack as the comment stripper."""
+    out: list[tuple[str, bool]] = []
+    stack: list[str] = []
+    for line in text.split("\n"):
+        if stack:
+            out.append((line, True))
+            match = _END_RE.search(line)
+            if match and match.group(1) == stack[-1]:
+                stack.pop()
+            continue
+        out.append((line, False))
+        match = _BEGIN_RE.search(line)
+        if match and match.group(1) in VERBATIM_ENVIRONMENTS:
+            stack.append(match.group(1))
+    return out
+
+
+def tidy_tex_layout(text: str) -> str:
+    """Layout-only normalisation outside verbatim environments (both sides).
+
+    Leading indentation is dropped (TeX ignores it), ``\\vspace{…}\\begin{…}`` and
+    ``\\begin{center}\\begin{…}`` are split onto two lines, ``\\item[{ x }]`` loses
+    its padding, an inline Pygments group ``{\\ttfamily …`` closed on the next
+    line is joined, ``\\PY{+w}{ }`` becomes a plain space, and a blank line next
+    to a block boundary (environment, sectioning, ``\\item``, table row…) is
+    dropped: none of these change what TeX typesets.
+    """
+    lines: list[tuple[str, bool]] = []
+    for raw, verbatim in _tex_lines(text):
+        if verbatim:
+            lines.append((raw, True))
+            continue
+        line = raw.lstrip()
+        if line.startswith("}") and lines and not lines[-1][1]:
+            previous = lines[-1][0]
+            if "{\\ttfamily " in previous and previous.count("{") > previous.count("}"):
+                lines[-1] = (previous + line, False)
+                continue
+        line = _TEX_ITEM_LABEL_RE.sub(r"\\item[{\1}]", line)
+        line = line.replace(_TEX_PY_WHITESPACE, " ")
+        for piece in _TEX_SPLIT_RE.sub(r"\1\n\2", line).split("\n"):
+            lines.append((piece, False))
+    out: list[str] = []
+    for index, (line, verbatim) in enumerate(lines):
+        if not verbatim and not line.strip():
+            before = lines[index - 1][0] if index > 0 else ""
+            after = lines[index + 1][0] if index + 1 < len(lines) else ""
+            if _TEX_STRUCTURAL_RE.search(before) or _TEX_STRUCTURAL_RE.search(after):
+                continue
+        out.append(line)
+    return "\n".join(out)
+
+
+def tidy_typ_layout(text: str) -> str:
+    """Layout-only normalisation outside raw fences (both sides).
+
+    Leading indentation is dropped, a line opening with ``]`` is joined to the
+    previous one (trailing whitespace in a content block is trimmed by Typst),
+    a trailing comma before ``)`` goes, ``#mi(```…```)`` becomes ``#mi(`…`)``
+    and ``--``/``---`` become the en/em dash they typeset as.
+    """
+    out: list[str] = []
+    fence = ""
+    for raw in text.split("\n"):
+        match = _TYP_FENCE_RE.match(raw)
+        if fence:
+            out.append(raw)
+            if match and len(match.group(1)) >= len(fence) and not raw.strip(" `"):
+                fence = ""
+            continue
+        if match:
+            fence = match.group(1)
+            out.append(raw)
+            continue
+        line = raw.lstrip()
+        if line.startswith("]") and out:
+            out[-1] += line
+            continue
+        line = _TYP_TRAILING_COMMA_RE.sub(")", line)
+        line = _TYP_RAW_ARG_RE.sub(r"#\1(`\2`)", line)
+        line = line.replace("---", "\u2014").replace("--", "\u2013")
+        out.append(line)
+    return "\n".join(out)
+
+
 def replace_stems(text: str, stems: Iterable[str]) -> str:
     """``<stem>.bib``, ``inline-doi-<stem>.bib``, ``<stem>.tex`` … → ``<STEM>``."""
     for stem in stems:
@@ -644,6 +748,7 @@ def normalise_tex(text: str, stems: Iterable[str] = ()) -> str:
     text = text.replace("\r\n", "\n")
     text = strip_tex_comments(text)
     text = "\n".join(line for line in text.split("\n") if not _TSLEAD_RE.match(line))
+    text = tidy_tex_layout(text)
     text = HASH_RE.sub("<HASH>", text)
     text = basename_assets(text)
     text = replace_stems(text, stems)
@@ -657,7 +762,7 @@ def normalise_typ(text: str, stems: Iterable[str] = ()) -> str:
         for line in text.split("\n")
         if not _TYP_COMMENT_RE.match(line) and not _TYP_MITEX_RE.match(line)
     ]
-    text = "\n".join(lines)
+    text = tidy_typ_layout("\n".join(lines))
     text = HASH_RE.sub("<HASH>", text)
     text = basename_assets(text)
     text = replace_stems(text, stems)
