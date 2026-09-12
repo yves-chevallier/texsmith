@@ -55,7 +55,7 @@ def test_custom_fragment_rendering(tmp_path: Path) -> None:
 
 def test_keystrokes_fragment_renders_when_used(tmp_path: Path) -> None:
     md = tmp_path / "doc.md"
-    md.write_text("Press \\keystroke{Ctrl}+\\keystroke{S}", encoding="utf-8")
+    md.write_text("Press ++ctrl+s++ to save.", encoding="utf-8")
 
     session = TemplateSession(load_template_runtime("article"))
     session.add_document(Document.from_markdown(md))
@@ -63,15 +63,13 @@ def test_keystrokes_fragment_renders_when_used(tmp_path: Path) -> None:
 
     tex_content = result.main_tex_path.read_text(encoding="utf-8")
     assert "\\usepackage{ts-keystrokes}" in tex_content
+    assert "\\tskeys{Ctrl,S}" in tex_content
     assert (tmp_path / "build" / "ts-keystrokes.sty").exists()
 
 
 def test_todolist_fragment_renders_when_used(tmp_path: Path) -> None:
     md = tmp_path / "doc.md"
-    md.write_text(
-        "\\begin{todolist}\n\\item\\done Task\n\\end{todolist}",
-        encoding="utf-8",
-    )
+    md.write_text("- [x] Task\n- [ ] Other task\n", encoding="utf-8")
 
     session = TemplateSession(load_template_runtime("article"))
     session.add_document(Document.from_markdown(md))
@@ -79,6 +77,7 @@ def test_todolist_fragment_renders_when_used(tmp_path: Path) -> None:
 
     tex_content = result.main_tex_path.read_text(encoding="utf-8")
     assert "\\usepackage{ts-todolist}" in tex_content
+    assert "\\begin{tstasklist}" in tex_content
     assert (tmp_path / "build" / "ts-todolist.sty").exists()
 
 

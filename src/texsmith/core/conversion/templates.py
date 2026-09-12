@@ -2,21 +2,15 @@
 
 from __future__ import annotations
 
-from collections.abc import Iterable, Mapping
-import contextlib
+from collections.abc import Mapping
 import copy
-from dataclasses import dataclass, field
 from pathlib import Path
-import re
 from typing import TYPE_CHECKING, Any
 
-from bs4 import BeautifulSoup, FeatureNotFound
-from bs4.element import NavigableString, Tag
 from pybtex.exceptions import PybtexError
 from slugify import slugify
 import yaml
 
-from ...adapters.html_utils import strip_html_comments
 from ..bibliography.collection import BibliographyCollection
 from ..bibliography.parsing import (
     bibliography_data_from_inline_entry,
@@ -25,10 +19,9 @@ from ..bibliography.parsing import (
 from ..config import BookConfig
 from ..conversion_contexts import ConversionContext
 from ..diagnostics import DiagnosticEmitter
-from ..mustache import replace_mustaches
-from ..templates import TemplateBinding, TemplateError, TemplateSlot, resolve_template_binding
+from ..templates import TemplateBinding, TemplateError, resolve_template_binding
 from .debug import debug_enabled, ensure_emitter, raise_conversion_error, record_event
-from .inputs import DOCUMENT_SELECTOR_SENTINEL, InlineBibliographyEntry, SlotOptions
+from .inputs import InlineBibliographyEntry
 
 
 if TYPE_CHECKING:  # pragma: no cover - typing only
@@ -36,9 +29,6 @@ if TYPE_CHECKING:  # pragma: no cover - typing only
 
 
 _DOI_SUPPORT: dict[str, Any] | None = None
-
-
-_MUSTACHE_SKIP_TAGS = {"code", "pre", "script", "style"}
 
 
 def _resolve_callout_style(*contexts: Mapping[str, Any] | None) -> str | None:
@@ -73,44 +63,6 @@ def _build_mustache_defaults(*contexts: Mapping[str, Any] | None) -> dict[str, A
     callout_style = _resolve_callout_style(*contexts) or "fancy"
     defaults["callouts"] = {"style": callout_style}
     return defaults
-
-
-def _replace_mustaches_in_html(
-    html: str,
-    contexts: tuple[Mapping[str, Any], Mapping[str, Any]],
-    *,
-    emitter: DiagnosticEmitter,
-    source: str,
-) -> str:
-    if "{{" not in html:
-        return html
-
-    soup = BeautifulSoup(html, "html.parser")
-    for node in soup.find_all(string=True):
-        if not isinstance(node, NavigableString):
-            continue
-        if node.parent and node.parent.name in _MUSTACHE_SKIP_TAGS:
-            continue
-        if node.find_parent(_MUSTACHE_SKIP_TAGS):
-            continue
-        raw = str(node)
-        if "{{" not in raw:
-            continue
-        replaced = replace_mustaches(raw, contexts, emitter=emitter, source=source)
-        if replaced != raw:
-            node.replace_with(replaced)
-
-    return str(soup)
-
-
-@dataclass(slots=True)
-class SlotFragment:
-    """HTML fragment mapped to a template slot with position metadata."""
-
-    name: str
-    html: str
-    position: int
-    heading_levels: list[int] = field(default_factory=list)
 
 
 def bind_template(
@@ -181,221 +133,6 @@ def _merge_template_overrides(
 
     _merge(merged, overrides)
     return merged
-
-
-def extract_slot_fragments(
-    html: str,
-    requests: Mapping[str, str],
-    default_slot: str,
-    *,
-    slot_definitions: Mapping[str, TemplateSlot],
-    parser_backend: str,
-    slot_options: Mapping[str, SlotOptions] | None = None,
-) -> tuple[list[SlotFragment], list[str]]:
-    """Split the HTML document into fragments mapped to template slots."""
-    try:
-        soup = BeautifulSoup(html, parser_backend)
-    except FeatureNotFound:
-        soup = BeautifulSoup(html, "html.parser")
-
-    strip_html_comments(soup)
-
-    container = soup.body or soup
-    document_html = "".join(str(node) for node in container.contents)
-
-    wildcard_values = {
-        DOCUMENT_SELECTOR_SENTINEL,
-        DOCUMENT_SELECTOR_SENTINEL.lower(),
-        "*",
-    }
-    full_document_slots: list[str] = []
-    filtered_requests: dict[str, str] = {}
-    for slot_name, selector in requests.items():
-        if not selector:
-            continue
-        token = selector.strip()
-        if token.lower() in wildcard_values:
-            full_document_slots.append(slot_name)
-            continue
-        filtered_requests[slot_name] = selector
-
-    headings: list[tuple[int, Tag]] = []
-    for index, heading in enumerate(container.find_all(re.compile(r"^h[1-6]$"), recursive=True)):
-        headings.append((index, heading))
-
-    matched: dict[str, tuple[int, Tag]] = {}
-    missing: list[str] = []
-    occupied_nodes: set[int] = set()
-    document_nodes = list(container.contents)
-
-    for slot_name, selector in filtered_requests.items():
-        if not selector:
-            continue
-        target_label = selector.lstrip("#")
-        matched_heading: tuple[int, Tag] | None = None
-        for index, heading in headings:
-            if id(heading) in occupied_nodes:
-                continue
-            node_id = heading.get("id")
-            if isinstance(node_id, str) and node_id == target_label:
-                matched_heading = (index, heading)
-                break
-        if matched_heading is None:
-            for index, heading in headings:
-                if id(heading) in occupied_nodes:
-                    continue
-                if heading.get_text(strip=True) == selector:
-                    matched_heading = (index, heading)
-                    break
-        if matched_heading is None:
-            missing.append(f"unable to locate section '{selector}' for slot '{slot_name}'")
-            continue
-        matched_index, heading = matched_heading
-        occupied_nodes.add(id(heading))
-        matched[slot_name] = (matched_index, heading)
-
-    fragments: list[SlotFragment] = []
-
-    for offset, slot_name in enumerate(full_document_slots):
-        fragments.append(
-            SlotFragment(
-                name=slot_name,
-                html=document_html,
-                position=-(len(full_document_slots) - offset),
-                heading_levels=_heading_levels_for_nodes(document_nodes),
-            )
-        )
-
-    options_map = dict(slot_options or {})
-
-    for slot_name, (order, heading) in sorted(matched.items(), key=lambda item: item[1][0]):
-        section_nodes = collect_section_nodes(heading)
-        slot_config = slot_definitions.get(slot_name)
-        slot_flags = options_map.get(slot_name, SlotOptions())
-        strip_heading = bool(slot_config.strip_heading) if slot_config else False
-        flatten = slot_flags.flatten
-        # ``flatten`` is strictly stronger than ``strip_heading``: it also
-        # promotes children up one heading level so a wrapper like ``# Appendix``
-        # with ``## A / ## B / ## C`` renders as independent sections
-        # (``\section{A}``, ``\section{B}``, …) rather than one section with
-        # subsections.
-        render_nodes = list(section_nodes)
-        if (strip_heading or flatten) and render_nodes:
-            render_nodes = render_nodes[1:]
-            while render_nodes and isinstance(render_nodes[0], NavigableString):
-                if str(render_nodes[0]).strip():
-                    break
-                render_nodes.pop(0)
-        html_fragment = "".join(str(node) for node in render_nodes)
-        fragments.append(
-            SlotFragment(
-                name=slot_name,
-                html=html_fragment,
-                position=order,
-                heading_levels=_heading_levels_for_nodes(render_nodes),
-            )
-        )
-        for node in section_nodes:
-            if hasattr(node, "extract"):
-                node.extract()
-
-    container = soup.body or soup
-    if full_document_slots:
-        remainder_html = ""
-    else:
-        remainder_html = "".join(str(node) for node in container.contents)
-
-    remainder_position = max(fragment.position for fragment in fragments) + 1 if fragments else 0
-
-    fragments.append(
-        SlotFragment(
-            name=default_slot,
-            html=remainder_html,
-            position=remainder_position,
-            heading_levels=_heading_levels_for_nodes(container.contents),
-        )
-    )
-
-    fragments.sort(key=lambda fragment: fragment.position)
-    return fragments, missing
-
-
-def _heading_levels_for_nodes(nodes: Iterable[Any]) -> list[int]:
-    """Return heading levels discovered in the given node sequence (document order)."""
-    levels: list[int] = []
-
-    def _walk(node: Any) -> None:
-        if isinstance(node, Tag):
-            if re.fullmatch(r"h[1-6]", node.name or ""):
-                with contextlib.suppress(ValueError):
-                    levels.append(heading_level_for(node))
-            for child in node.children:
-                _walk(child)
-
-    for node in nodes:
-        _walk(node)
-
-    return levels
-
-
-def collect_section_nodes(heading: Tag) -> list[Any]:
-    """Collect a heading node and its associated section content."""
-    nodes: list[Any] = [heading]
-    heading_level = heading_level_for(heading)
-    for sibling in heading.next_siblings:
-        if isinstance(sibling, NavigableString):
-            nodes.append(sibling)
-            continue
-        if isinstance(sibling, Tag):
-            if re.fullmatch(r"h[1-6]", sibling.name or ""):
-                sibling_level = heading_level_for(sibling)
-                if sibling_level <= heading_level:
-                    break
-            nodes.append(sibling)
-    return nodes
-
-
-def heading_level_for(node: Tag) -> int:
-    """Return the numeric level of a heading element."""
-    name = node.name or ""
-    if not re.fullmatch(r"h[1-6]", name):
-        raise ValueError(f"Expected heading element, got '{name}'.")
-    return int(name[1])
-
-
-def compute_heading_offset(
-    html: str,
-    *,
-    drop_first_heading: bool = False,
-    parser_backend: str = "html.parser",
-) -> int:
-    """Return the offset required to align the top heading to level 1.
-
-    The shallowest heading in the fragment counts as offset ``0``; headings
-    starting at ``<h2>`` therefore yield ``-1``. When ``drop_first_heading`` is
-    true the first heading is ignored to mirror title promotion.
-    """
-    try:
-        soup = BeautifulSoup(html, parser_backend)
-    except FeatureNotFound:
-        soup = BeautifulSoup(html, "html.parser")
-
-    headings = soup.find_all(re.compile(r"^h[1-6]$"), recursive=True)
-    if drop_first_heading and headings:
-        headings = headings[1:]
-
-    minimum: int | None = None
-    for heading in headings:
-        try:
-            level = heading_level_for(heading)
-        except ValueError:
-            continue
-        if minimum is None or level < minimum:
-            minimum = level
-
-    if minimum is None:
-        return 0
-    return 1 - minimum
 
 
 def _load_inline_bibliography(
@@ -593,11 +330,4 @@ def _ensure_doi_support() -> tuple[type[Exception], Any]:
     return _DOI_SUPPORT["lookup_error"], _DOI_SUPPORT["normalise"]
 
 
-__all__ = [
-    "SlotFragment",
-    "bind_template",
-    "collect_section_nodes",
-    "compute_heading_offset",
-    "extract_slot_fragments",
-    "heading_level_for",
-]
+__all__ = ["bind_template"]

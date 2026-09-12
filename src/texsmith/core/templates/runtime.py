@@ -260,18 +260,6 @@ def _warn_deprecated_template_hooks(template_instance: WrappableTemplate) -> Non
             FutureWarning,
             stacklevel=3,
         )
-    if info.readers or info.writer:
-        hooks = ", ".join(
-            hook for hook, used in (("readers", info.readers), ("writer", info.writer)) if used
-        )
-        warnings.warn(
-            f"Template '{name}' declares '{hooks}' under [latex.template], deprecated "
-            f"and removed in 0.8.0: custom constructs are '::: name' containers "
-            f"rendered by the tsdiv environment (a \\tsdiv@name definition in the "
-            f"template) or an IR pass declared under [latex.template] passes.",
-            FutureWarning,
-            stacklevel=3,
-        )
 
 
 def load_template_runtime(template: str) -> TemplateRuntime:
@@ -296,8 +284,6 @@ def load_template_runtime(template: str) -> TemplateRuntime:
         "fragments",
         declared_fragments if declared_fragments is not None else [],
     )
-    extras.setdefault("readers", list(template_instance.info.readers or []))
-    extras.setdefault("writer", template_instance.info.writer)
 
     return TemplateRuntime(
         instance=template_instance,

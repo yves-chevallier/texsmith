@@ -6,9 +6,9 @@ import markdown
 import pytest
 
 from texsmith.adapters.latex import LaTeXRenderer
+from texsmith.adapters.markdown import DEFAULT_MARKDOWN_EXTENSIONS
 from texsmith.core.bibliography import BibliographyCollection
 from texsmith.core.context import DocumentState
-from texsmith.ui.cli import DEFAULT_MARKDOWN_EXTENSIONS
 
 
 FIXTURE_BIB = Path(__file__).resolve().parent / "fixtures" / "bib" / "b.bib"

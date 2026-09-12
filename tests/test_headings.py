@@ -1,4 +1,5 @@
 from pathlib import Path
+import re
 
 import pytest
 
@@ -66,6 +67,20 @@ def test_drop_title_runtime_flag(renderer: LaTeXRenderer) -> None:
     assert state.headings == [{"level": 1, "text": "Subsection", "ref": "subsection"}]
 
 
+#: The sectioning commands of the ``article`` class, deepest level last. The
+#: heading levels are read back from the emitted LaTeX: the writer chooses the
+#: command, the ``headings`` pass chooses the level it stands for.
+_SECTIONING = ("section", "subsection", "subsubsection", "paragraph", "subparagraph")
+
+
+def _heading_levels(latex: str) -> list[int]:
+    """``[1, 2, …]`` for each sectioning command of ``latex``, in document order."""
+    levels: list[int] = []
+    for match in re.finditer(r"\\(" + "|".join(_SECTIONING) + r")\*?\{", latex):
+        levels.append(_SECTIONING.index(match.group(1)) + 1)
+    return levels
+
+
 def _render_headings(
     tmp_path: Path,
     markdown: str,
@@ -73,7 +88,7 @@ def _render_headings(
     template: str = "article",
     base_level: int = 0,
     promote_title: bool = True,
-) -> list[dict[str, object]]:
+) -> list[int]:
     source = tmp_path / "doc.md"
     source.write_text(markdown, encoding="utf-8")
     document = Document.from_markdown(
@@ -87,14 +102,11 @@ def _render_headings(
         template=template,
         wrap_document=False,
     )
-    conversion = bundle.fragments[0].conversion
-    assert conversion is not None
-    assert conversion.document_state is not None
-    return conversion.document_state.headings
+    return _heading_levels(bundle.fragments[0].latex)
 
 
 def test_headings_align_with_metadata_title(tmp_path: Path) -> None:
-    headings = _render_headings(
+    levels = _render_headings(
         tmp_path,
         """---
 title: Title
@@ -106,12 +118,11 @@ title: Title
 ### Subsection
 """,
     )
-    levels = [entry["level"] for entry in headings]
     assert levels == [1, 2, 2, 1, 2]
 
 
 def test_title_promotion_realigns_hierarchy(tmp_path: Path) -> None:
-    headings = _render_headings(
+    levels = _render_headings(
         tmp_path,
         """# Title
 ## Section
@@ -121,12 +132,11 @@ def test_title_promotion_realigns_hierarchy(tmp_path: Path) -> None:
 ### Subsection
 """,
     )
-    levels = [entry["level"] for entry in headings]
     assert levels == [1, 2, 2, 1, 2]
 
 
 def test_heading_offset_when_top_level_missing(tmp_path: Path) -> None:
-    headings = _render_headings(
+    levels = _render_headings(
         tmp_path,
         """## Section
 ### Subsection
@@ -135,7 +145,6 @@ def test_heading_offset_when_top_level_missing(tmp_path: Path) -> None:
 ### Subsection
 """,
     )
-    levels = [entry["level"] for entry in headings]
     assert levels == [1, 2, 2, 1, 2]
 
 
@@ -163,7 +172,7 @@ Text
     )
     conversion = bundle.fragments[0].conversion
     assert conversion is not None
-    state = conversion.document_state
-    assert state is not None
-    assert [entry["level"] for entry in state.headings] == [1]
-    assert state.headings[0]["text"] == "Intro"
+    # ``Abstract`` heads the slot and is consumed by it; ``Intro`` moves up a level.
+    abstract = conversion.slot_outputs["abstract"]
+    assert _heading_levels(abstract) == [1]
+    assert "\\section{Intro}" in abstract

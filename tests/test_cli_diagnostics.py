@@ -118,7 +118,7 @@ First #{n:joy}.
 
 
 def _tmark(source: Path, *extra: str) -> tuple[int, str]:
-    result = CliRunner().invoke(app, ["--reader", "tmark", str(source), *extra])
+    result = CliRunner().invoke(app, [str(source), *extra])
     return result.exit_code, result.output
 
 

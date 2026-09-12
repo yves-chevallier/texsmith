@@ -1,6 +1,5 @@
 import importlib
 from pathlib import Path
-import sys
 import types
 from typing import Any
 
@@ -12,7 +11,7 @@ from typer.testing import CliRunner
 from texsmith.adapters.latex import engines as engine
 from texsmith.adapters.latex.engines import LatexMessage, LatexMessageSeverity
 from texsmith.core.conversion.debug import ConversionError, raise_conversion_error
-from texsmith.ui.cli import DEFAULT_MARKDOWN_EXTENSIONS, app
+from texsmith.ui.cli import app
 from texsmith.ui.cli.commands import render as render_cmd
 import texsmith.ui.cli.state as cli_state
 
@@ -225,22 +224,7 @@ def test_copy_assets_disabled() -> None:
     assert "\\includegraphics" not in result.stdout
 
 
-def test_convert_markdown_file(monkeypatch: Any) -> None:
-    class DummyMarkdown:
-        def __init__(self, *args: object, **kwargs: object) -> None:
-            pass
-
-        def convert(self, text: str) -> str:
-            html_parts: list[str] = []
-            for line in text.splitlines():
-                if line.startswith("# "):
-                    html_parts.append(f"<h1>{line[2:].strip()}</h1>")
-                elif line.strip():
-                    html_parts.append(f"<p>{line.strip()}</p>")
-            return "".join(html_parts)
-
-    monkeypatch.setitem(sys.modules, "markdown", types.SimpleNamespace(Markdown=DummyMarkdown))
-
+def test_convert_markdown_file() -> None:
     runner = CliRunner()
     with runner.isolated_filesystem():
         markdown_file = Path("index.md")
@@ -260,141 +244,16 @@ def test_convert_markdown_file(monkeypatch: Any) -> None:
     assert "Paragraph text." in result.stdout
 
 
-def test_render_from_stdin(monkeypatch: Any) -> None:
-    class DummyMarkdown:
-        def __init__(self, *args: object, **kwargs: object) -> None:
-            pass
-
-        def convert(self, text: str) -> str:
-            return "<h1>Hello</h1>" if "# Title" in text else "<p>Body</p>"
-
-    monkeypatch.setitem(sys.modules, "markdown", types.SimpleNamespace(Markdown=DummyMarkdown))
-
+def test_render_from_stdin() -> None:
     runner = CliRunner()
     result = runner.invoke(
         app,
-        ["--reader", "html"],
-        input="# Title\n\nSome **bold** text.\n",
+        [],
+        input="# Hello\n\nSome **bold** text.\n",
     )
 
     assert result.exit_code == 0, result.stdout
     assert "\\section{Hello}" in result.stdout
-
-
-def test_default_markdown_extensions(monkeypatch: Any) -> None:
-    recorded: dict[str, list[str] | None] = {"extensions": None}
-
-    class DummyMarkdown:
-        def __init__(self, *args: object, **kwargs: object) -> None:
-            recorded["extensions"] = list(kwargs.get("extensions") or [])
-
-        def convert(self, _: str) -> str:
-            return "<p>content</p>"
-
-    monkeypatch.setitem(sys.modules, "markdown", types.SimpleNamespace(Markdown=DummyMarkdown))
-
-    runner = CliRunner()
-    with runner.isolated_filesystem():
-        markdown_file = Path("doc.md")
-        markdown_file.write_text("plain text", encoding="utf-8")
-
-        result = runner.invoke(
-            app,
-            [
-                "--reader",
-                "html",
-                str(markdown_file),
-            ],
-        )
-
-    assert result.exit_code == 0, result.stdout
-    assert recorded["extensions"] == DEFAULT_MARKDOWN_EXTENSIONS
-
-
-def test_markdown_extensions_option_extends_defaults(monkeypatch: Any) -> None:
-    recorded: dict[str, list[str] | None] = {"extensions": None}
-
-    class DummyMarkdown:
-        def __init__(self, *args: object, **kwargs: object) -> None:
-            recorded["extensions"] = list(kwargs.get("extensions") or [])
-
-        def convert(self, _: str) -> str:
-            return "<p>content</p>"
-
-    dummy_module = types.SimpleNamespace(Markdown=DummyMarkdown)
-    monkeypatch.setitem(sys.modules, "markdown", dummy_module)
-
-    runner = CliRunner()
-    with runner.isolated_filesystem():
-        markdown_file = Path("doc.md")
-        markdown_file.write_text("plain text", encoding="utf-8")
-
-        result = runner.invoke(
-            app,
-            [
-                "--reader",
-                "html",
-                str(markdown_file),
-                "--enable-extension",
-                "custom_extension,another_extension",
-                "-x",
-                "custom_extension",
-            ],
-        )
-
-    assert result.exit_code == 0, result.stdout
-    assert recorded["extensions"] == [
-        *DEFAULT_MARKDOWN_EXTENSIONS,
-        "custom_extension",
-        "another_extension",
-    ]
-
-
-def test_disable_markdown_extensions_option(tmp_path: Path, monkeypatch: Any) -> None:
-    recorded: dict[str, list[str] | None] = {"extensions": None}
-
-    class DummyMarkdown:
-        def __init__(self, *args: object, **kwargs: object) -> None:
-            recorded["extensions"] = list(kwargs.get("extensions") or [])
-
-        def convert(self, _: str) -> str:
-            return "<p>content</p>"
-
-    dummy_module = types.SimpleNamespace(Markdown=DummyMarkdown)
-    monkeypatch.setitem(sys.modules, "markdown", dummy_module)
-
-    markdown_file = tmp_path / "doc.md"
-    markdown_file.write_text("plain text", encoding="utf-8")
-
-    runner = CliRunner()
-    result = runner.invoke(
-        app,
-        [
-            "--reader",
-            "html",
-            str(markdown_file),
-            "--output-dir",
-            str(tmp_path / "output"),
-            "--disable-extension",
-            "footnotes, pymdownx.details",
-            "-X",
-            "pymdownx.magiclink",
-        ],
-    )
-
-    assert result.exit_code == 0, result.stdout
-    disabled = {"footnotes", "pymdownx.details", "pymdownx.magiclink"}
-    assert disabled.isdisjoint(set(recorded["extensions"] or []))
-    assert set(DEFAULT_MARKDOWN_EXTENSIONS) - disabled <= set(recorded["extensions"] or [])
-
-
-def test_list_extensions_option() -> None:
-    runner = CliRunner()
-    result = runner.invoke(app, ["--list-extensions"])
-
-    assert result.exit_code == 0, result.stdout
-    listed = [line for line in result.stdout.splitlines() if line]
-    assert listed == DEFAULT_MARKDOWN_EXTENSIONS
 
 
 def test_rejects_mkdocs_configuration(tmp_path: Path) -> None:
@@ -413,7 +272,7 @@ def test_rejects_mkdocs_configuration(tmp_path: Path) -> None:
     assert "configuration files are not supported" in result.stderr.lower()
 
 
-def test_mdx_math_extension_preserves_latex() -> None:
+def test_math_is_passed_through_verbatim() -> None:
     runner = CliRunner()
     with runner.isolated_filesystem():
         markdown_file = Path("math.md")
@@ -422,14 +281,7 @@ def test_mdx_math_extension_preserves_latex() -> None:
             encoding="utf-8",
         )
 
-        result = runner.invoke(
-            app,
-            [
-                str(markdown_file),
-                "-x",
-                "mdx_math",
-            ],
-        )
+        result = runner.invoke(app, [str(markdown_file)])
 
     assert result.exit_code == 0, result.stdout
     assert "$E = mc^2$" in result.stdout
@@ -919,7 +771,7 @@ def test_convert_template_outputs_summary(tmp_path: Path) -> None:
     assert "Main document" in result.stdout
 
 
-def test_convert_template_outputs_debug_html(tmp_path: Path) -> None:
+def test_convert_template_outputs_debug_ir(tmp_path: Path) -> None:
     runner = CliRunner()
     html_file = tmp_path / "index.html"
     html_file.write_text(
@@ -938,14 +790,14 @@ def test_convert_template_outputs_debug_html(tmp_path: Path) -> None:
             str(template_dir),
             "--output-dir",
             str(output_dir),
-            "--debug-html",
+            "--debug-ir",
         ],
     )
 
     assert result.exit_code == 0, result.stdout
-    debug_file = output_dir / "index.debug.html"
+    debug_file = output_dir / "index.ir.json"
     assert debug_file.exists()
-    assert "Debug HTML" in result.stdout
+    assert "Debug IR" in result.stdout
     assert str(debug_file) in result.stdout
 
 
@@ -1014,26 +866,6 @@ def test_slot_assignment_extracts_section_from_file(tmp_path: Path) -> None:
     assert "\\input{chapter2.backmatter.tex}" in content
     appendix_file = output_dir / "chapter2.backmatter.tex"
     assert "Appendix content." in appendix_file.read_text(encoding="utf-8")
-
-
-def test_convert_verbose_emits_extension_diagnostics(tmp_path: Path) -> None:
-    runner = CliRunner()
-    html_file = tmp_path / "index.html"
-    html_file.write_text(
-        "<article class='md-content__inner'><p>Body</p></article>",
-        encoding="utf-8",
-    )
-
-    result = runner.invoke(
-        app,
-        [
-            "--verbose",
-            str(html_file),
-        ],
-    )
-
-    assert result.exit_code == 0, result.stdout
-    assert "Extensions:" in result.stdout
 
 
 def test_convert_verbose_template_reports_overrides(tmp_path: Path) -> None:
@@ -1516,23 +1348,6 @@ def test_build_failure_reports_summary(tmp_path: Path, monkeypatch: Any) -> None
     assert "LaTeX failure" in result.stderr
     assert "Undefined control sequence" in result.stderr
     assert "index.log" in result.stderr
-
-
-def test_html_output_with_template_metadata(tmp_path: Path) -> None:
-    runner = CliRunner()
-    doc = tmp_path / "doc.md"
-    doc.write_text(
-        "---\npress:\n  template: article\n---\n# Title\n\nBody\n",
-        encoding="utf-8",
-    )
-
-    result = runner.invoke(app, [str(doc), "--reader", "html", "--html"])
-
-    output_file = tmp_path / "build" / "doc.html"
-    assert result.exit_code == 0, result.stdout
-    assert output_file.exists()
-    content = output_file.read_text(encoding="utf-8")
-    assert "<h1" in content and "Title" in content
 
 
 def test_cli_state_per_context_isolated() -> None:

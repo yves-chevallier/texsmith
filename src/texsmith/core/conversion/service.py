@@ -30,11 +30,10 @@ from texsmith.adapters.latex.tectonic import (
     select_makeglossaries,
     select_tectonic_binary,
 )
-from texsmith.adapters.markdown import split_front_matter
 
-from ..counters import clear_registry as clear_counters_registry
 from ..diagnostics import DiagnosticEmitter
 from ..documents import Document, TitleStrategy, front_matter_has_title
+from ..front_matter import split_front_matter
 from ..templates.session import TemplateRenderResult, TemplateSession, get_template
 from .core import ConversionBundle, convert_documents
 from .debug import ConversionError, ensure_emitter
@@ -155,8 +154,6 @@ class ConversionService:
     def prepare_documents(self, request: ConversionRequest) -> _PreparedBatch:
         """Normalise input sources into :class:`Document` instances so conversion steps operate on consistent objects."""
         emitter = ensure_emitter(request.emitter)
-        # One continuous counter series per batch, restarting on every conversion.
-        clear_counters_registry()
         documents: list[Document] = []
         mapping: dict[Path, Document] = {}
         shared_front_matter = _normalise_front_matter(request.front_matter)
@@ -179,7 +176,6 @@ class ConversionService:
             if input_kind is InputKind.MARKDOWN:
                 document = Document.from_markdown(
                     path,
-                    extensions=list(request.markdown_extensions),
                     base_level=request.base_level,
                     promote_title=extract_title,
                     strip_heading=effective_strip,
@@ -187,7 +183,6 @@ class ConversionService:
                     title_strategy=strategy,
                     numbered=request.numbered,
                     emitter=emitter,
-                    reader=request.reader,
                 )
             else:
                 document = Document.from_html(

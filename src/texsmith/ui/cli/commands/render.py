@@ -24,11 +24,6 @@ from texsmith.adapters.latex.engines import (
     resolve_engine,
     run_engine_command,
 )
-from texsmith.adapters.markdown import (
-    DEFAULT_MARKDOWN_EXTENSIONS,
-    resolve_markdown_extensions,
-    split_front_matter,
-)
 from texsmith.core.bibliography import BibliographyCollection
 from texsmith.core.conversion import ConversionRequest
 from texsmith.core.conversion.debug import ConversionError
@@ -41,11 +36,11 @@ from texsmith.core.conversion.pipeline import (
 from texsmith.core.conversion.resolution import NUMBERING_MODES, NUMBERING_OVERRIDE_KEY
 from texsmith.core.conversion.service import ConversionService
 from texsmith.core.conversion.typst import build_typst_pdf, render_typst_document
+from texsmith.core.front_matter import split_front_matter
 from texsmith.core.metadata import PressMetadataError, normalise_press_metadata
-from texsmith.core.templates import TemplateError, load_template
+from texsmith.core.templates import TemplateError
 from texsmith.core.templates.runtime import coerce_base_level
 from texsmith.diagnostics import Diagnostic
-from texsmith.fonts.html_scripts import wrap_scripts_in_html
 from texsmith.version import get_version
 
 from .._options import (
@@ -53,23 +48,20 @@ from .._options import (
     OUTPUT_PANEL,
     BaseLevelOption,
     ConvertAssetsOption,
-    DebugHtmlOption,
+    DebugIrOption,
     DeprecatedOption,
     DiagnosticsJsonOption,
     DisableFragmentOption,
-    DisableMarkdownExtensionsOption,
     EnableFragmentOption,
     FontsInfoOption,
     FormatOption,
     FullDocumentOption,
     HashAssetsOption,
-    HtmlOnlyOption,
     HttpUserAgentOption,
     InputPathArgument,
     LanguageOption,
     MakefileDepsOption,
     ManifestOptionWithShort,
-    MarkdownExtensionsOption,
     NoCopyAssetsOption,
     NoPromoteTitleOption,
     NoTitleOption,
@@ -78,7 +70,6 @@ from .._options import (
     OutputPathOption,
     ParserOption,
     QuietOption,
-    ReaderOption,
     SelectorOption,
     SlotsOption,
     StrictOption,
@@ -97,7 +88,6 @@ from ..presenter import (
     present_conversion_summary,
     present_diagnostics_summary,
     present_fonts_info,
-    present_html_summary,
     present_latex_failure,
     write_diagnostics_json,
 )
@@ -381,14 +371,6 @@ def render(
             is_eager=True,
         ),
     ] = False,
-    list_extensions: Annotated[
-        bool,
-        typer.Option(
-            "--list-extensions",
-            help="List Markdown extensions enabled by default and exit.",
-            rich_help_panel=DIAGNOSTICS_PANEL,
-        ),
-    ] = False,
     list_templates_flag: Annotated[
         bool,
         typer.Option(
@@ -439,7 +421,6 @@ def render(
     output: OutputPathOption = None,
     selector: SelectorOption = _REQUEST_DEFAULTS.selector,
     full_document: FullDocumentOption = _REQUEST_DEFAULTS.full_document,
-    reader: ReaderOption = _REQUEST_DEFAULTS.reader,
     base_level: BaseLevelOption = str(_REQUEST_DEFAULTS.base_level),
     strip_heading: StripHeadingOption = _REQUEST_DEFAULTS.strip_heading_all,
     no_promote_title: NoPromoteTitleOption = not _REQUEST_DEFAULTS.promote_title,
@@ -471,7 +452,7 @@ def render(
     enable_fragments: EnableFragmentOption = None,
     disable_fragments: DisableFragmentOption = None,
     template_attributes: TemplateAttributeOption = None,
-    debug_html: DebugHtmlOption = None,
+    debug_ir: DebugIrOption = None,
     classic_output: Annotated[
         bool,
         typer.Option(
@@ -479,7 +460,6 @@ def render(
             help=("Display raw latexmk output without parsing."),
         ),
     ] = False,
-    html_only: HtmlOnlyOption = False,
     output_format: FormatOption = "latex",
     build_pdf: Annotated[
         bool,
@@ -520,8 +500,6 @@ def render(
         ),
     ] = _REQUEST_DEFAULTS.legacy_latex_accents,
     slots: SlotsOption = None,
-    markdown_extensions: MarkdownExtensionsOption = None,
-    disable_markdown_extensions: DisableMarkdownExtensionsOption = None,
     open_log: OpenLogOption = False,
     snippet_dump_dir: Annotated[
         Path | None,
@@ -578,23 +556,14 @@ def render(
     output_format = (output_format or "latex").strip().lower()
     if output_format not in {"latex", "typst"}:
         raise typer.BadParameter("--format must be 'latex' or 'typst'.")
-    if output_format == "typst":
-        # The Typst backend emits a ``.typ`` via the shared IR. With a template
-        # it wraps the body in the template's [typst.template] scaffolding;
-        # without one it emits a standalone document. It does not use the LaTeX
-        # fragment/engine machinery, so template *info/scaffold* flags and --html
-        # remain unsupported here.
-        if template_info_flag or template_scaffold is not None:
-            raise typer.BadParameter(
-                "--format typst does not support --template-info/--template-scaffold."
-            )
-        if html_only:
-            raise typer.BadParameter("--format typst cannot be combined with --html.")
-    reader = (reader or "tmark").strip().lower()
-    if reader not in {"html", "tmark"}:
-        raise typer.BadParameter("--reader must be 'html' or 'tmark'.")
-    if html_only and reader == "tmark":
-        raise typer.BadParameter("--html needs the html reader; drop --reader tmark.")
+    # The Typst backend emits a ``.typ`` via the shared IR. With a template it
+    # wraps the body in the template's [typst.template] scaffolding; without one
+    # it emits a standalone document. It does not use the LaTeX fragment/engine
+    # machinery, so the template *info/scaffold* flags are unsupported here.
+    if output_format == "typst" and (template_info_flag or template_scaffold is not None):
+        raise typer.BadParameter(
+            "--format typst does not support --template-info/--template-scaffold."
+        )
     numbering = (numbering or "backend").strip().lower()
     if numbering not in NUMBERING_MODES:
         raise typer.BadParameter("--numbering must be 'backend' or 'tmark'.")
@@ -602,21 +571,11 @@ def render(
         deprecated = deprecated.strip().lower()
         if deprecated not in DEPRECATED_LEVELS:
             raise typer.BadParameter("--deprecated must be 'warning', 'info' or 'off'.")
-    if html_only:
-        build_pdf = False
-        template = None
-        template_info_flag = False
-        template_scaffold = None
     if print_context:
         build_pdf = False
 
     if snippet_dump_dir is not None:
         os.environ["TEXSMITH_SNIPPET_DUMP_DIR"] = str(snippet_dump_dir)
-
-    if list_extensions:
-        for extension in DEFAULT_MARKDOWN_EXTENSIONS:
-            typer.echo(extension)
-        raise typer.Exit()
 
     if list_templates_flag:
         list_templates()
@@ -809,22 +768,6 @@ def render(
     }:
         promote_title = False
 
-    template_markdown_extensions: list[str] = []
-    if template_selected and template:
-        # Defer template-resolution failures to the main pipeline, which
-        # reports them with full context; here we just skip the extensions.
-        with contextlib.suppress(TemplateError):
-            template_markdown_extensions = list(
-                load_template(template).manifest.latex.template.markdown_extensions
-            )
-
-    resolved_markdown_extensions = resolve_markdown_extensions(
-        markdown_extensions,
-        disable_markdown_extensions,
-        template=template_markdown_extensions,
-    )
-    extension_line = f"Extensions: {', '.join(resolved_markdown_extensions) or '(none)'}"
-
     emitter = _RenderEmitter(state=state, debug_enabled=debug_enabled(), deprecated=deprecated)
     presented_diagnostics = 0
 
@@ -836,10 +779,7 @@ def render(
         ``--strict`` stops the run.
         """
         nonlocal presented_diagnostics
-        lines: list[str] = []
-        if state.verbosity >= 1:
-            lines.append(extension_line)
-        lines.extend(consume_event_diagnostics(state))
+        lines: list[str] = list(consume_event_diagnostics(state))
         for line in lines:
             typer.echo(line)
         if len(emitter.sink) > presented_diagnostics:
@@ -855,7 +795,7 @@ def render(
             emit_error("Diagnostics were recorded and --strict is on.")
             raise typer.Exit(code=1)
 
-    debug_snapshot = debug_html if debug_html is not None else debug_enabled()
+    debug_snapshot = debug_ir if debug_ir is not None else debug_enabled()
 
     output_mode, output_target = determine_output_target(template_selected, document_paths, output)
     resolved_output_target = output_target.resolve() if output_target is not None else None
@@ -904,7 +844,7 @@ def render(
         convert_assets=convert_assets,
         hash_assets=hash_assets,
         manifest=manifest,
-        persist_debug_html=bool(debug_snapshot),
+        persist_debug_ir=bool(debug_snapshot),
         language=language,
         http_user_agent=http_user_agent,
         legacy_latex_accents=legacy_latex_accents,
@@ -916,14 +856,12 @@ def render(
         slot_assignments=slot_assignments,
         selector=selector,
         full_document=full_document,
-        reader=reader,
         base_level=resolved_base_level,
         strip_heading_all=strip_heading if build_pdf else False,
         strip_heading_first_document=False if build_pdf else strip_heading,
         promote_title=promote_title,
         suppress_title=no_title,
         numbered=numbered,
-        markdown_extensions=resolved_markdown_extensions,
         template=template,
         render_dir=request_render_dir,
         template_options=attribute_overrides,
@@ -1014,55 +952,6 @@ def render(
                 typer.echo(message)
                 if not ok and debug_enabled():
                     raise typer.Exit(code=1)
-        _flush_diagnostics()
-        return
-
-    if html_only:
-        html_fragments = []
-        for doc in prepared.documents:
-            processed_html = doc.html
-            try:
-                processed_html, _usage, _summary = wrap_scripts_in_html(processed_html)
-            except Exception:
-                processed_html = doc.html
-            html_fragments.append((doc.source_path, processed_html))
-        if output_mode == "stdout":
-            typer.echo("\n\n".join(fragment for _, fragment in html_fragments))
-            _flush_diagnostics()
-            return
-
-        summary_paths: list[Path] = []
-        if output_mode == "file":
-            if resolved_output_target is None:
-                raise typer.BadParameter("Output path is required when writing HTML to a file.")
-            try:
-                write_output_file(resolved_output_target, html_fragments[0][1])
-            except OSError as exc:
-                emit_error(str(exc), exception=exc)
-                raise typer.Exit(code=1) from exc
-            summary_paths.append(resolved_output_target)
-        elif output_mode in {"directory", "template"}:
-            if resolved_output_target is None:
-                raise typer.BadParameter("Output directory is required when writing HTML files.")
-            resolved_output_target.mkdir(parents=True, exist_ok=True)
-            for source_path, payload in html_fragments:
-                target = resolved_output_target / f"{source_path.stem}.html"
-                try:
-                    write_output_file(target, payload)
-                except OSError as exc:
-                    emit_error(str(exc), exception=exc)
-                    raise typer.Exit(code=1) from exc
-                summary_paths.append(target)
-        elif output_mode == "template-pdf":
-            raise typer.BadParameter("--html cannot be combined with a PDF output target.")
-        else:
-            raise RuntimeError(f"Unsupported output mode '{output_mode}' for HTML output.")
-
-        present_html_summary(
-            state=state,
-            output_mode=output_mode,
-            output_paths=summary_paths,
-        )
         _flush_diagnostics()
         return
 

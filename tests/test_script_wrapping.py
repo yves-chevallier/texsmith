@@ -26,8 +26,8 @@ def test_scripts_wrapped_in_moving_arguments(tmp_path: Path) -> None:
     result = session.render(build_dir)
 
     content = result.main_tex_path.read_text(encoding="utf-8")
-    assert "\\texttibetan{བོད" in content
-    assert "\\textbengali{বাংলা}" in content
+    assert "\\tsscript{tibetan}{བོད" in content
+    assert "\\tsscript{bengali}{বাংলা}" in content
     assert "\\section{Tibetan (" in content
     usage = result.context.get("fonts", {}).get("script_usage")
     assert usage, "Expected script usage to be propagated to template context"

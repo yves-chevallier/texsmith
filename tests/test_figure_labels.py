@@ -190,7 +190,7 @@ def _markdown_to_latex(source: str, tmp_path: Path) -> str:
     """Render Markdown through the production extension set into LaTeX."""
     import markdown
 
-    from texsmith.ui.cli import DEFAULT_MARKDOWN_EXTENSIONS
+    from texsmith.adapters.markdown import DEFAULT_MARKDOWN_EXTENSIONS
 
     html = markdown.Markdown(extensions=DEFAULT_MARKDOWN_EXTENSIONS).convert(source)
     renderer = LaTeXRenderer(

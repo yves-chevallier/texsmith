@@ -45,15 +45,8 @@ def record_event(
     ensure_emitter(emitter).event(event, payload)
 
 
-def persist_debug_artifacts(output_dir: Path, source: Path, html: str) -> None:
-    """Persist intermediate HTML snapshots to aid debugging."""
-    output_dir.mkdir(parents=True, exist_ok=True)
-    debug_path = output_dir / f"{source.stem}.debug.html"
-    debug_path.write_text(html, encoding="utf-8")
-
-
 def persist_debug_ir(output_dir: Path, source: Path, ir_document: Any) -> Path:
-    """Persist the tmark IR of a document as ``<stem>.ir.json`` (the ``--debug-html`` twin)."""
+    """Persist the tmark IR of a document as ``<stem>.ir.json`` (``--debug-ir``)."""
     import json
 
     from texsmith.ir.codec import encode_document
@@ -96,7 +89,6 @@ __all__ = [
     "ensure_emitter",
     "format_rendering_error",
     "format_user_friendly_render_error",
-    "persist_debug_artifacts",
     "persist_debug_ir",
     "raise_conversion_error",
     "record_event",

@@ -1,9 +1,8 @@
 import pytest
 
 from texsmith.adapters.latex import LaTeXRenderer
-from texsmith.adapters.markdown import render_markdown
+from texsmith.adapters.markdown import DEFAULT_MARKDOWN_EXTENSIONS, render_markdown
 from texsmith.core.config import BookConfig
-from texsmith.ui.cli import DEFAULT_MARKDOWN_EXTENSIONS
 
 
 markdown = pytest.importorskip("markdown")

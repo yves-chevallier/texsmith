@@ -375,13 +375,13 @@ def _detect_manifests(directory: Path) -> list[Path]:
     return sorted(path for path in directory.glob("*.json") if "manifest" in path.name.lower())
 
 
-def _detect_debug_html(directory: Path) -> list[Path]:
-    """Find debug HTML snapshots in the given directory.
+def _detect_debug_ir(directory: Path) -> list[Path]:
+    """Find the ``--debug-ir`` snapshots in the given directory.
 
     These snapshots are crucial for troubleshooting rendering issues. Pointing them
     out explicitly helps users find the diagnostic information they need.
     """
-    return sorted(directory.glob("*.debug.html"))
+    return sorted(directory.glob("*.ir.json"))
 
 
 def present_conversion_summary(
@@ -425,8 +425,8 @@ def present_conversion_summary(
             rows.append(("Manifest", _format_path(manifest), _size_details(manifest)))
         for asset in _detect_assets(main_dir):
             rows.append(("Asset", _format_path(asset), _size_details(asset)))
-        for debug_html in _detect_debug_html(main_dir):
-            rows.append(("Debug HTML", _format_path(debug_html), _size_details(debug_html)))
+        for debug_ir in _detect_debug_ir(main_dir):
+            rows.append(("Debug IR", _format_path(debug_ir), _size_details(debug_ir)))
         _render_summary(state, "", rows)
         return
 
@@ -445,27 +445,11 @@ def present_conversion_summary(
                 rows.append(("Manifest", _format_path(manifest), _size_details(manifest)))
             for asset in _detect_assets(output_path):
                 rows.append(("Asset", _format_path(asset), _size_details(asset)))
-            for debug_html in _detect_debug_html(output_path):
-                rows.append(("Debug HTML", _format_path(debug_html), _size_details(debug_html)))
+            for debug_ir in _detect_debug_ir(output_path):
+                rows.append(("Debug IR", _format_path(debug_ir), _size_details(debug_ir)))
 
     if rows:
         _render_summary(state, "Conversion Summary", rows)
-
-
-def present_html_summary(
-    *,
-    state: CLIState,
-    output_mode: str,
-    output_paths: list[Path],
-) -> None:
-    rows: list[tuple[str, str, str]] = []
-    if output_mode == "file" and output_paths:
-        rows.append(("HTML", _format_path(output_paths[0]), _size_details(output_paths[0])))
-    elif output_mode in {"directory", "template"}:
-        for path in output_paths:
-            rows.append(("HTML", _format_path(path), _size_details(path)))
-    if rows:
-        _render_summary(state, "HTML Output", rows)
 
 
 def present_build_summary(
@@ -499,8 +483,8 @@ def present_build_summary(
         rows.append(("Manifest", _format_path(manifest), _size_details(manifest)))
     for asset in _detect_assets(build_dir):
         rows.append(("Asset", _format_path(asset), _size_details(asset)))
-    for debug_html in _detect_debug_html(build_dir):
-        rows.append(("Debug HTML", _format_path(debug_html), _size_details(debug_html)))
+    for debug_ir in _detect_debug_ir(build_dir):
+        rows.append(("Debug IR", _format_path(debug_ir), _size_details(debug_ir)))
     _render_summary(state, "", rows)
 
 
@@ -668,7 +652,6 @@ __all__ = [
     "present_build_summary",
     "present_conversion_summary",
     "present_diagnostics_summary",
-    "present_html_summary",
     "present_latex_failure",
     "write_diagnostics_json",
 ]

@@ -38,10 +38,6 @@ class ConversionRequest:
     promote_title: bool = True
     suppress_title: bool = False
     numbered: bool = True
-    markdown_extensions: Sequence[str] = field(default_factory=list)
-    #: ``"tmark"`` (``tmark.parse`` → IR, the default) or ``"html"`` (Markdown →
-    #: HTML → legacy IR, the escape hatch kept for one release).
-    reader: str = "tmark"
 
     template: str | None = None
     render_dir: Path | None = None
@@ -55,7 +51,7 @@ class ConversionRequest:
     convert_assets: bool = False
     hash_assets: bool = False
     manifest: bool = False
-    persist_debug_html: bool = False
+    persist_debug_ir: bool = False
     language: str | None = None
     http_user_agent: str | None = None
     legacy_latex_accents: bool = False

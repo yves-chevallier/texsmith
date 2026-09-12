@@ -742,7 +742,6 @@ class LatexPlugin(BasePlugin):
             parser=parser_backend,
             copy_assets=copy_assets,
             language=runtime_language,
-            reader="tmark",
             emitter=emitter,
         )
         chain = ResolutionChain(
@@ -1042,7 +1041,6 @@ class LatexPlugin(BasePlugin):
             source_path = self._persist_source(output_root, entry.src_uri, record)
         document = Document.from_markdown(
             source_path,
-            reader="tmark",
             base_level=base_level,
             title_strategy=title_strategy,
             numbered=numbered,
