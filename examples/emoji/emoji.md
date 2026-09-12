@@ -36,9 +36,9 @@ Engines:
 - XeLaTeX/Tectonic use `ucharclasses` to automatically switch to the emoji font on the U+1F000–U+1FAFF range.
 You can type emoji directly in Markdown or LaTeX source.
 
-/// latex
+```latex raw
 \newpage
-///
+```
 
 ## Examples
 

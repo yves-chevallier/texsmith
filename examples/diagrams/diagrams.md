@@ -15,13 +15,11 @@ document can reference automatically.
 
 ![Euclidean GCD](pgcd.drawio){width=60%}
 
-/// caption
-Euclidean algorithm for the greatest common divisor
-///
+Figure: Euclidean algorithm for the greatest common divisor
 
 ## Mermaid Diagram
 
-```mermaid {width=80%}
+```mermaid image width="80%"
 %% Vegetable harvesting algorithm
 flowchart LR
     start(Start) --> pick[Dig up]

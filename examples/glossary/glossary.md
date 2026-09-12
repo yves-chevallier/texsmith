@@ -2,28 +2,30 @@
 title: Structured glossary demo
 language: english
 toc: true
-glossary:
-  style: long
-  groups:
-    technical: Technical acronyms
-    institutional: Institutional acronyms
-  entries:
-    API:
-      group: technical
-      description: Application Programming Interface
-    HTTP:
-      group: technical
-      description: HyperText Transfer Protocol
-    JSON:
-      group: technical
-      description: JavaScript Object Notation
-    UN:
-      group: institutional
-      description: United Nations
-    WHO:
-      group: institutional
-      description: World Health Organization
-    DOI: Digital Object Identifier
+press:
+  declare:
+    glossary:
+      style: long
+      groups:
+        technical: Technical acronyms
+        institutional: Institutional acronyms
+      entries:
+        API:
+          group: technical
+          description: Application Programming Interface
+        HTTP:
+          group: technical
+          description: HyperText Transfer Protocol
+        JSON:
+          group: technical
+          description: JavaScript Object Notation
+        UN:
+          group: institutional
+          description: United Nations
+        WHO:
+          group: institutional
+          description: World Health Organization
+        DOI: Digital Object Identifier
 ---
 
 # Introduction

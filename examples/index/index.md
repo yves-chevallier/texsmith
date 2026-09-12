@@ -8,20 +8,20 @@ This document demonstrates the index generation with TeXSmith. You can nest, for
 ## Granny Smith
 
 A tart apple variety often used in baking and cooking. Known for its bright green skin and crisp texture.
-#[Granny Smith] #[apple]
+{index}[Granny Smith] {index}[apple]
 
-{latex}[\clearpage]
+{raw latex}(\clearpage)
 
 ## Fuji
 
 A sweet and juicy apple variety that originated in Japan. It has a dense flesh and a balanced flavor.
 
-#[Fuji] #[apple] #[*juicy*]
+{index}[Fuji] {index}[apple] {index}[*juicy*]
 
-{latex}[\clearpage]
+{raw latex}(\clearpage)
 
 ## Honeycrisp
 
 A popular apple variety known for its crisp texture and sweet-tart flavor. It has a distinctive red and yellow skin.
 
-#[Honeycrisp] #[apple]
+{index}[Honeycrisp] {index}[apple]

@@ -5,14 +5,16 @@ author: Firmware Quality Board
 date: 2026-03-12
 language: english
 toc: true
-counters:
-  fw:
-    name: Finding
-    format: "FW-{n:02d}"
-  req:
-    name: Requirement
-    format: "REQ-{n:03d}"
-    start: 100
+press:
+  declare:
+    counters:
+      fw:
+        name: Finding
+        format: "FW-{n:02d}"
+      req:
+        name: Requirement
+        format: "REQ-{n:03d}"
+        start: 100
 ---
 
 # Scope
@@ -36,10 +38,10 @@ formatted number and becomes the anchor every later reference links to.
 
 | Id | Requirement | Verification |
 | --- | --- | --- |
-| #{req:watchdog-reset} | The watchdog shall reset the node within two seconds of a stalled main loop. | Fault injection |
-| #{req:ota-rollback} | An interrupted over-the-air update shall leave the previous image bootable. | Power-cut campaign |
-| #{req:key-entropy} | The session key shall be derived from at least 128 bits of hardware entropy. | Code review |
-| #{req:log-retention} | The node shall retain the last 64 log records across a reset. | Manual inspection |
+| {counter}(req:watchdog-reset) | The watchdog shall reset the node within two seconds of a stalled main loop. | Fault injection |
+| {counter}(req:ota-rollback) | An interrupted over-the-air update shall leave the previous image bootable. | Power-cut campaign |
+| {counter}(req:key-entropy) | The session key shall be derived from at least 128 bits of hardware entropy. | Code review |
+| {counter}(req:log-retention) | The node shall retain the last 64 log records across a reset. | Manual inspection |
 
 Requirement @req:key-entropy was added after last year's security audit and had
 never been verified before this review.
@@ -54,9 +56,9 @@ column.
 
 | Id | Severity | Component | Summary |
 | --- | --- | --- | --- |
-| #{fw:watchdog} | Blocking | `hal/watchdog.c` | The watchdog is fed from the I2C completion handler. |
-| #{fw:ota-brick} | Blocking | `ota/apply.c` | A power cut during the swap leaves no bootable image. |
-| #{fw:key-entropy} | Major | `crypto/session.c` | The session key is seeded from the boot counter. |
+| {counter}(fw:watchdog) | Blocking | `hal/watchdog.c` | The watchdog is fed from the I2C completion handler. |
+| {counter}(fw:ota-brick) | Blocking | `ota/apply.c` | A power cut during the swap leaves no bootable image. |
+| {counter}(fw:key-entropy) | Major | `crypto/session.c` | The session key is seeded from the boot counter. |
 
 ## Watchdog fed from an interrupt handler
 
@@ -89,7 +91,7 @@ team before the review started.
 ## Additional observation
 
 Definition markers are ordinary inline constructs and work in running prose
-too. While reproducing the watchdog campaign we also noticed #{fw:rtc-drift},
+too. While reproducing the watchdog campaign we also noticed {counter}(fw:rtc-drift),
 the real-time clock drifting by roughly four seconds a day at 60 °C. No
 requirement covers clock accuracy, so this finding is recorded for information
 only.
