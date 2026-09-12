@@ -10,6 +10,9 @@ press:
   date: October 20, 2025
   slots:
     abstract: Abstract
+  sources:
+    bibliography:
+      WADHWANI20111713: https://doi.org/10.3168/jds.2010-3952
 ---
 # Mechanical Stiffness and Malleability of Hard Cheese
 
