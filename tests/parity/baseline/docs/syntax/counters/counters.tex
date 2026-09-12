@@ -43,24 +43,24 @@
 \begin{document}
 \maketitle
 Technical documents number things that \LaTeX{} knows nothing about: findings,
-requirements, bugs, risks, test cases. TeXSmith lets you declare such a series
-in the front matter, mark each item in the body, and reference it anywhere ---
-the numbers are computed by TeXSmith rather than by the backend, so the \LaTeX{}
-build, the Typst build and --- with the companion plugin --- the MkDocs site all
-show the same values.
-\begin{tscode}[lang=markdown, engine=pygments]
+requirements, bugs, risks, test cases. Declare such a series under
+\tscodeinline{press.declare.counters}, define each item in the body, and refer to it with
+the ordinary \tscodeinline{@} sigil --- the numbers are computed by TeXSmith rather than by
+the backend, so the \LaTeX{} build, the Typst build and the MkDocs site all show
+the same values.
+\begin{tscode}[lang=md, engine=pygments]
 \begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
 \PYZhy{}\PYZhy{}\PYZhy{}
-counters:
-  n:
-    name: Requirement
-\PY{g+gu}{    format: \PYZdq{}N\PYZhy{}\PYZob{}n:02d\PYZcb{}\PYZdq{}}
+press:
+  declare:
+    counters:
+\PY{g+gu}{      n: \PYZob{}name: Requirement, format: \PYZdq{}N\PYZhy{}\PYZob{}n:02d\PYZcb{}\PYZdq{}\PYZcb{}}
 \PY{g+gu}{\PYZhy{}\PYZhy{}\PYZhy{}}
 
 | Id | Requirement |
 | \PYZhy{}\PYZhy{}\PYZhy{} | \PYZhy{}\PYZhy{}\PYZhy{} |
-| \PYZsh{}\PYZob{}n:joy\PYZcb{} | Everyone shall be happy |
-| \PYZsh{}\PYZob{}n:respect\PYZcb{} | Everyone shall respect the others |
+| \PYZob{}counter\PYZcb{}(n:joy) | Everyone shall be happy |
+| \PYZob{}counter\PYZcb{}(n:respect) | Everyone shall respect the others |
 
 Smile in every circumstance (@n:joy) and do no harm to others (@n:respect).
 \end{Verbatim}
@@ -80,101 +80,158 @@ Smile in every circumstance (N-01) and do no harm to others (N-02).
 
 Both \tscodeinline{N-\allowbreak{}01} occurrences are the same PDF anchor: the table cell is the target,
 the parenthesised one is a clickable link.
-\section{Declaring a counter}
-Each key under \tscodeinline{counters:} is the \textbf{prefix} used by the markers.
-\begin{tscode}[lang=yaml, engine=pygments]
-\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
-\PY{n+nt}{counters}\PY{p}{:}
-\PY{+w}{  }\PY{n+nt}{n}\PY{p}{:}
-\PY{+w}{    }\PY{n+nt}{name}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{Requirement}\PY{+w}{       }\PY{c+c1}{\PYZsh{} human\PYZhy{}readable name, used in diagnostics}
-\PY{+w}{    }\PY{n+nt}{format}\PY{p}{:}\PY{+w}{ }\PY{l+s}{\PYZdq{}}\PY{l+s}{N\PYZhy{}\PYZob{}n:02d\PYZcb{}}\PY{l+s}{\PYZdq{}}\PY{+w}{     }\PY{c+c1}{\PYZsh{} optional, defaults to \PYZdq{}\PYZob{}n\PYZcb{}\PYZdq{}}
-\PY{+w}{    }\PY{n+nt}{start}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{1}\PY{+w}{                }\PY{c+c1}{\PYZsh{} optional, defaults to 1}
-\end{Verbatim}
-\end{tscode}
-\tscodeinline{format} is a Python format string. Three fields are available:
+\section{One registry for every series}
+Every referenceable series is an entry of the \textbf{counter registry}, keyed by
+its prefix. The built-in prefixes are simply predeclared entries; there is no
+second mechanism for \enquote{reserved prefixes}.
 \begin{center}
-\begin{tabularx}{\linewidth}{>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X}
+\begin{tabularx}{\linewidth}{>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X}
 \toprule
-\textbf{Field} & \textbf{Meaning} \\
+\textbf{Prefix} & \textbf{Name} & \textbf{Scope} & \textbf{Numbered by} & \textbf{Applies to} \\
 \midrule
-\tscodeinline{n} & the counter value (\tscodeinline{1}, \tscodeinline{2}, ...), so \tscodeinline{\{n:02d\}} pads it \\
-\tscodeinline{prefix} & the counter prefix (\tscodeinline{n}) \\
-\tscodeinline{key} & the item key (\tscodeinline{joy}) \\
+\tscodeinline{part} \tscodeinline{chap} \tscodeinline{sec} \tscodeinline{app} & Part, Chapter, Section, Appendix & document & backend & headings \\
+\tscodeinline{fig} & Figure & chapter & backend & images, sub-figures \\
+\tscodeinline{tbl} & Table & chapter & backend & tables \\
+\tscodeinline{lst} & Listing & chapter & backend & code blocks \\
+\tscodeinline{eq} & Equation & chapter & backend & display math \\
+\tscodeinline{thm} & Theorem & chapter & backend & theorem-type callouts \\
+\tscodeinline{note} & Note & document & backend & footnotes \\
+\tscodeinline{gls} & --- & --- & --- & \href{notes.md\#glossary}{glossary entries} \\
+\tscodeinline{doi} & --- & --- & --- & \href{references.md\#bibliographic-references}{DOIs cited in place} \\
 \bottomrule
 \end{tabularx}
 \end{center}
-The format string is validated when the document is parsed; an invalid one
-(\tscodeinline{\{oops\}}, unbalanced braces) raises a \tscodeinline{CounterValidationError}.
-
-Unlike \tscodeinline{glossary:}, a counter has no string shorthand: each entry is a mapping,
-because a series without a \tscodeinline{format} is rarely what you want.
-
-A prefix must match \tscodeinline{[A-\allowbreak{}Za-\allowbreak{}z][A-\allowbreak{}Za-\allowbreak{}z0-\allowbreak{}9\_-\allowbreak{}]*} and must not shadow one of the
-conventional built-in prefixes --- \tscodeinline{sec}, \tscodeinline{fig}, \tscodeinline{tbl}, \tscodeinline{eq}, \tscodeinline{lst}, \tscodeinline{app},
-\tscodeinline{chap}, \tscodeinline{part}, \tscodeinline{note} --- which stay reserved for regular labels.
-\section{Marking an item}
-\subsection{\tscodeinline{\#\{prefix:key\}} --- define and print}
-The marker prints the formatted number and becomes the reference target.
-\begin{tscode}[lang=markdown, engine=pygments]
+A user-declared entry adds a series the backend knows nothing about:
+\begin{tscode}[lang=yaml, engine=pygments]
 \begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
-\PY{g+gh}{\PYZsh{}\PYZob{}fw:boot\PYZhy{}loop\PYZcb{} The firmware reboots when the watchdog fires.}
+\PY{n+nt}{press}\PY{p}{:}
+\PY{+w}{  }\PY{n+nt}{declare}\PY{p}{:}
+\PY{+w}{    }\PY{n+nt}{counters}\PY{p}{:}
+\PY{+w}{      }\PY{n+nt}{fw}\PY{p}{:}\PY{+w}{ }\PY{p+pIndicator}{\PYZob{}}\PY{n+nt}{name}\PY{p}{:}\PY{+w}{ }\PY{n+nv}{Finding}\PY{p+pIndicator}{,}\PY{n+nt}{ format}\PY{p}{:}\PY{+w}{ }\PY{l+s}{\PYZdq{}}\PY{l+s}{FW\PYZhy{}\PYZob{}n:02d\PYZcb{}}\PY{l+s}{\PYZdq{}}\PY{p+pIndicator}{,}\PY{n+nt}{ start}\PY{p}{:}\PY{+w}{ }\PY{n+nv}{1}\PY{p+pIndicator}{,}\PY{n+nt}{ scope}\PY{p}{:}\PY{+w}{ }\PY{n+nv}{document}\PY{p+pIndicator}{\PYZcb{}}
+\end{Verbatim}
+\end{tscode}
+\begin{description}
+\item[{\tscodeinline{name}}] The label word, used in references and diagnostics.
+\item[{\tscodeinline{format}}] A Python format string over the fields \tscodeinline{n} (the value), \tscodeinline{prefix} and
+\tscodeinline{key}; it defaults to \tscodeinline{"\{n\}"}, so \tscodeinline{"FW-\allowbreak{}\{n:02d\}"} pads to two digits. An
+invalid format (\tscodeinline{\{oops\}}, unbalanced braces) is an error at parse time.
+\item[{\tscodeinline{start}}] The first value; defaults to 1.
+\item[{\tscodeinline{scope}}] \tscodeinline{document | chapter | section}. It is a \textbf{hint} to whoever numbers the
+series: under site-wide numbering every series is \tscodeinline{document} and
+continuous, so the same document may print \enquote{Figure 3.2} and show
+\enquote{Figure 12}.
+\item[{\tscodeinline{ref}}] The template a reference renders, with the fields \tscodeinline{\{name\}} and \tscodeinline{\{number\}}.
+It defaults to \tscodeinline{"\{number\}"} when a \tscodeinline{format} is given --- a formatted number
+such as \tscodeinline{FW-\allowbreak{}01} is self-identifying --- and to \tscodeinline{"\{name\} \{number\}"} otherwise,
+which is what the predeclared entries use.
+\end{description}
+A prefix matches \tscodeinline{[A-\allowbreak{}Za-\allowbreak{}z][A-\allowbreak{}Za-\allowbreak{}z0-\allowbreak{}9\_-\allowbreak{}]*} and is matched case-insensitively, so
+\tscodeinline{@Fw:boot-\allowbreak{}loop} capitalises the label word at the start of a sentence. You may
+override the fields of a predeclared entry (\tscodeinline{fig: \{scope: document\}}) but not
+add a prefix that shadows a role name.
+\begin{tscallout}[kind=note, title={\tscodeinline{declare:} may sit at the root}]
+\tscodeinline{press} is an optional namespace: every key TMark reads may sit at the root
+of the front matter or under \tscodeinline{press:}, and \tscodeinline{press} wins when both are
+present. The namespace exists so that a file shared with a static site
+generator keeps the root free. A top-level \tscodeinline{counters:} key is the 0.6
+spelling, accepted with a deprecation warning; \tscodeinline{tmark lint -\allowbreak{}-\allowbreak{}fix} moves it
+under \tscodeinline{press.declare}. See Migrating to TMark.
+\end{tscallout}
+\section{Defining an item}
+\subsection{\tscodeinline{\{counter\}(prefix:key)} --- define and print}
+The canonical form is a role, and its key is an \textbf{argument}, hence the
+parentheses: nothing inside them is Markdown.
+\begin{tscode}[lang=md, engine=pygments]
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+\PYZhy{}\PYZhy{}\PYZhy{}
+press:
+  declare:
+    counters:
+\PY{g+gu}{      fw: \PYZob{}name: Finding, format: \PYZdq{}FW\PYZhy{}\PYZob{}n:02d\PYZcb{}\PYZdq{}\PYZcb{}}
+\PY{g+gu}{\PYZhy{}\PYZhy{}\PYZhy{}}
+
+\PYZob{}counter\PYZcb{}(fw:boot\PYZhy{}loop) The firmware reboots when the watchdog fires.
 \end{Verbatim}
 \end{tscode}
 It is a plain inline construct: it works in a paragraph, a table cell, a list
-item, an admonition title, a heading. Numbers are allocated in document order.
+item, a callout title, a heading. Numbers are allocated in document order.
 
-The marker is inert unless its prefix is declared: \tscodeinline{\#\{name\}} (no colon),
-\tscodeinline{\#\{sh:var\}} with \tscodeinline{sh} undeclared, or \tscodeinline{\#\{n:joy\}} in a document without a
-\tscodeinline{counters:} section all stay literal text. This keeps Ruby/CoffeeScript
-interpolations (\tscodeinline{\#\{user.name\}}) intact. Inside code spans and fenced blocks
-nothing is ever substituted, and \tscodeinline{\textbackslash{}\#\{n:joy\}} forces a literal.
+\emph{Shorthand:} \tscodeinline{\#(fw:boot-\allowbreak{}loop)} --- the \tscodeinline{\#} sigil with the same argument
+bracketing, one character shorter and the same node. \tscodeinline{\textbackslash{}\#} forces a literal
+\tscodeinline{\#}, and nothing is ever substituted inside a code span or a fenced block.
+\begin{tscallout}[kind=note, title={\tscodeinline{\#\{prefix:key\}} is deprecated}]
+The 0.6 marker is still recognised, and only when its prefix is
+\textbf{declared} --- so a Ruby or CoffeeScript interpolation such as
+\tscodeinline{\#\{user.name\}} in prose stays the literal text it is. \tscodeinline{tmark lint -\allowbreak{}-\allowbreak{}fix}
+rewrites it to \tscodeinline{\#(prefix:key)}.
+\end{tscallout}
 \subsection{\tscodeinline{\{\#prefix:key\}} --- define silently}
-Any element carrying an \tscodeinline{id} whose prefix is declared is numbered too, without
-printing anything. This is the usual \tscodeinline{attr\_list} syntax, so it attaches to
-headings, figures and tables:
-\begin{tscode}[lang=markdown, engine=pygments]
+Any element carrying an id whose prefix is declared is numbered too, without
+printing anything. This is the ordinary attribute syntax, so it
+attaches to headings, figures and tables:
+\begin{tscode}[lang=md, engine=pygments]
 \begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+\PYZhy{}\PYZhy{}\PYZhy{}
+press:
+  declare:
+    counters:
+\PY{g+gu}{      fw: \PYZob{}name: Finding, format: \PYZdq{}FW\PYZhy{}\PYZob{}n:02d\PYZcb{}\PYZdq{}\PYZcb{}}
+\PY{g+gu}{\PYZhy{}\PYZhy{}\PYZhy{}}
+
 \PY{g+gu}{\PYZsh{}\PYZsh{} Boot loop \PYZob{}\PYZsh{}fw:boot\PYZhy{}loop\PYZcb{}}
 
 ![\PY{n+nt}{Watchdog trace}](\PY{n+na}{trace.png})\PYZob{}\PYZsh{}fw:trace\PYZcb{}
-\end{Verbatim}
-\end{tscode}
-\tscodeinline{@fw:boot-\allowbreak{}loop} then resolves to \tscodeinline{FW-\allowbreak{}01} even though the number appears nowhere
-in the heading.
-\begin{tscallout}[kind=warning, title={Position matters for \tscodeinline{\{\#…\}}}]
-\tscodeinline{attr\_list} consumes \tscodeinline{\{\#…\}} at the end of a heading, on an image, or on a
-line of its own after a block. In the middle of a sentence it stays literal
-text --- use \tscodeinline{\#\{…\}} there.
-\end{tscallout}
-\section{Referencing an item}
-\tscodeinline{@prefix:key} (or \tscodeinline{@[prefix:key]}) prints the formatted number as a hyperlink.
-This is the regular cross-reference shorthand; a declared
-prefix simply routes it to the counter registry.
-\begin{tscode}[lang=markdown, engine=pygments]
-\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+
 The watchdog issue (@fw:boot\PYZhy{}loop) is fixed in 1.4.2.
 \end{Verbatim}
 \end{tscode}
-The reference prints the number alone --- \tscodeinline{FW-\allowbreak{}01}, not \tscodeinline{Finding FW-\allowbreak{}01}. Write the
-noun yourself, as you would for a section. The \tscodeinline{name:} field is only used in
-diagnostics.
+\tscodeinline{@fw:boot-\allowbreak{}loop} resolves to \tscodeinline{FW-\allowbreak{}01} even though the number appears nowhere in
+the heading.
+\begin{tscallout}[kind=warning, title={An attribute needs a host}]
+An attribute list is consumed at the end of a heading, on an image, or on a
+line of its own after a block. In the middle of a sentence, or in a table
+cell, it has nothing to attach to --- that is exactly the case
+\tscodeinline{\{counter\}(…)} exists for.
+\end{tscallout}
+\section{Referring to an item}
+\tscodeinline{@prefix:key}, or \tscodeinline{@[prefix:key]} when the reference contains a space. This is
+the regular reference sigil; a declared prefix simply routes
+it to the counter registry.
+\begin{tscode}[lang=md, engine=pygments]
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+\PYZhy{}\PYZhy{}\PYZhy{}
+press:
+  declare:
+    counters:
+\PY{g+gu}{      fw: \PYZob{}name: Finding, format: \PYZdq{}FW\PYZhy{}\PYZob{}n:02d\PYZcb{}\PYZdq{}\PYZcb{}}
+\PY{g+gu}{\PYZhy{}\PYZhy{}\PYZhy{}}
+
+\PYZob{}counter\PYZcb{}(fw:boot\PYZhy{}loop) The firmware reboots.
+
+The watchdog issue (@fw:boot\PYZhy{}loop) is fixed in 1.4.2.
+\end{Verbatim}
+\end{tscode}
+The reference renders the \tscodeinline{ref} template. With a \tscodeinline{format} declared that
+defaults to the number alone --- \tscodeinline{FW-\allowbreak{}01}, not \tscodeinline{Finding FW-\allowbreak{}01} --- so write the noun
+yourself, as you would for a section, or declare \tscodeinline{ref: "\{name\} \{number\}"}.
 \section{Diagnostics}
 \begin{center}
 \begin{tabularx}{\linewidth}{>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X}
 \toprule
-\textbf{Situation} & \textbf{Behaviour} \\
+\textbf{Situation} & \textbf{Code} \\
 \midrule
-\tscodeinline{@n:missing} --- no such item & warning, the reference renders empty \\
-\tscodeinline{\#\{n:joy\}} twice with the same key & warning, both print the first number \\
-\tscodeinline{\#\{x:joy\}} --- undeclared prefix & left as literal text, no warning \\
-invalid \tscodeinline{format} or prefix & \tscodeinline{CounterValidationError} at parse time \\
+\tscodeinline{@n:missing} --- no such item & \tscodeinline{ref-\allowbreak{}unresolved}, and a visible \tscodeinline{[?n:missing]} \\
+the same key defined twice & \tscodeinline{label-\allowbreak{}duplicate} \\
+\tscodeinline{\{counter\}(x:joy)} with \tscodeinline{x} undeclared & \tscodeinline{prefix-\allowbreak{}unknown} \\
+\tscodeinline{\{\#tbl:x\}} on a figure & \tscodeinline{prefix-\allowbreak{}host-\allowbreak{}mismatch} \\
+an invalid \tscodeinline{format} or prefix & an error at parse time \\
 \bottomrule
 \end{tabularx}
 \end{center}
 \section{Scope and stability}
-Numbers are allocated per conversion, in document order, and shared across all
-the documents of a multi-document build --- \tscodeinline{a.md}, \tscodeinline{b.md} and \tscodeinline{c.md} continue a
-single series rather than restarting.
+Numbers are allocated in document order and shared across all the documents of
+a multi-document build --- \tscodeinline{a.md}, \tscodeinline{b.md} and \tscodeinline{c.md} continue a single series
+rather than restarting.
 \begin{tscallout}[kind=danger, title={Numbers are positional}]
 Inserting an item renumbers every item after it. When the identifiers leave
 the document --- a finding quoted in an audit report, a requirement cited in a

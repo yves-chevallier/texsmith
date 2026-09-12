@@ -1,0 +1,125 @@
+\documentclass[a4paper,twoside]{article}
+
+\usepackage{morewrites}
+
+\usepackage[svgnames,dvipsnames,x11names]{xcolor}
+\usepackage{graphicx}
+\usepackage[english]{babel}
+\usepackage[colorlinks=true, linkcolor=NavyBlue, urlcolor=NavyBlue, citecolor=NavyBlue]{hyperref}
+\usepackage[a4paper]{geometry}
+\usepackage{ts-fonts}
+\usepackage{csquotes}
+\usepackage{tcolorbox}
+\usepackage{xcolor}
+\usepackage{fvextra}
+\usepackage{amsmath}
+\usepackage{float}
+\usepackage{seqsplit}
+\usepackage{ts-callouts}
+\usepackage{ts-code}
+
+\usepackage{lastpage}
+\usepackage{refcount}
+\makeatletter
+\def\ps@plain{
+\let\@oddhead\@empty
+\let\@evenhead\@empty
+\def\@oddfoot{
+\hfil
+\ifnum\getpagerefnumber{LastPage}>1\relax
+\thepage
+\fi
+\hfil}
+\let\@evenfoot\@oddfoot
+}
+\makeatother
+
+\title{Headings}
+\author{}\date{}
+\begin{document}
+\maketitle
+\tscodeinline{\#} to \tscodeinline{\#\#\#\#\#\#}, six levels, \textbf{never numbered by hand}. Numbering and the
+mapping to \LaTeX{} sectioning come from \tscodeinline{press.base\_level} and the template.
+Attributes go at the end of the line.
+\begin{tscode}[lang=md, engine=pygments]
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+\PY{g+gh}{\PYZsh{} Firmware review}
+
+\PY{g+gu}{\PYZsh{}\PYZsh{} Boot sequence \PYZob{}\PYZsh{}sec:boot\PYZcb{}}
+\end{Verbatim}
+\end{tscode}
+Headings are \emph{relative}: TeXSmith realigns a multi-file hierarchy on its own ---
+a per-fragment offset from the shallowest heading, plus the template slot base,
+plus \tscodeinline{press.base\_level} --- and promotes the first heading to the document title
+unless \tscodeinline{title:} is declared. That is processing, not syntax.
+\section{Implicit ids}
+A heading without \tscodeinline{\{\#id\}} still has an id, so the link forms resolve to it as
+they do on GitHub and on every Python-Markdown site:
+\begin{tscode}[lang=md, engine=pygments]
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+\PY{g+gu}{\PYZsh{}\PYZsh{} Boot sequence}
+
+See [](\PYZsh{}boot\PYZhy{}sequence) and [\PY{n+nt}{the boot sequence}](\PY{n+na}{\PYZsh{}boot\PYZhy{}sequence}).
+\end{Verbatim}
+\end{tscode}
+The rule is GitHub's: take the plain text of the heading (inline markup and
+code reduced to their text, zero-width nodes and the attribute list removed),
+NFC-normalise it, lower-case it, drop every character that is not a letter, a
+digit, a combining mark, a space, \tscodeinline{-\allowbreak{}} or \tscodeinline{\_}, and turn runs of spaces into one
+\tscodeinline{-\allowbreak{}}. A duplicate gets \tscodeinline{-\allowbreak{}1}, \tscodeinline{-\allowbreak{}2}, ... in document order. Accents and non-Latin
+scripts survive, as they do on GitHub and MkDocs Material.
+
+The implicit id is a label like any other --- \tscodeinline{@boot-\allowbreak{}sequence} renders
+\enquote{section 2} --- but it is derived at resolution, never stored and never printed,
+so the round-trip is untouched. An explicit \tscodeinline{\{\#id\}} replaces it: a heading has
+one id.
+\begin{tscallout}[kind=warning, title={A reference to an implicit id is hinted}]
+Editing the title changes the id and silently breaks every reference to it,
+so referring to one raises the hint \tscodeinline{ref-\allowbreak{}implicit-\allowbreak{}id}, which suggests you
+write \tscodeinline{\{\#id\}}. A site whose slugifier is not GitHub's (Python-Markdown's
+default \tscodeinline{toc} drops accents) needs an explicit id anyway --- which is the
+recommendation in any case.
+\end{tscallout}
+\section{Unnumbered and unlisted}
+Two classes, both Pandoc's, each applying to its own heading only:
+\begin{tscode}[lang=md, engine=pygments]
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+\PY{g+gh}{\PYZsh{} Preface \PYZob{}.unnumbered\PYZcb{}}
+
+\PY{g+gu}{\PYZsh{}\PYZsh{} Colophon \PYZob{}.unlisted\PYZcb{}}
+\end{Verbatim}
+\end{tscode}
+\begin{description}
+\item[{\tscodeinline{.unnumbered}}] Takes the heading out of the numbering sequence --- \tscodeinline{\textbackslash{}section*},
+\tscodeinline{numbering: none}, \tscodeinline{class="unnumbered"}.
+\item[{\tscodeinline{.unlisted}}] Does that \emph{and} keeps the heading out of the table of contents.
+\end{description}
+The document-level default is \tscodeinline{press.numbered}, true by default, which either
+class overrides one heading at a time.
+\begin{tscallout}[kind=note, title={\tscodeinline{\{-\allowbreak{}\}} is not an attribute list}]
+Pandoc's shorthand for an unnumbered heading relies on bare-word
+attributes, which TMark does not have (see Attributes), so
+\tscodeinline{\{-\allowbreak{}\}} stays literal text. The Pandoc importer rewrites it.
+\end{tscallout}
+\section{Anchors and references}
+A heading's \tscodeinline{\{\#id\}} is an anchor like any other, and the \textbf{host
+decides the counter}: a heading is a section, so \tscodeinline{@sec:boot} renders
+\enquote{section 2}. A prefix is required only where no host tells the kind --- or where
+you want the heading numbered in a custom series instead of its
+own:
+\begin{tscode}[lang=md, engine=pygments]
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+\PYZhy{}\PYZhy{}\PYZhy{}
+press:
+  declare:
+    counters:
+\PY{g+gu}{      fw: \PYZob{}name: Finding, format: \PYZdq{}FW\PYZhy{}\PYZob{}n:02d\PYZcb{}\PYZdq{}\PYZcb{}}
+\PY{g+gu}{\PYZhy{}\PYZhy{}\PYZhy{}}
+
+\PY{g+gu}{\PYZsh{}\PYZsh{} Boot loop \PYZob{}\PYZsh{}fw:boot\PYZhy{}loop\PYZcb{}}
+
+The watchdog issue (@fw:boot\PYZhy{}loop) is fixed in 1.4.2.
+\end{Verbatim}
+\end{tscode}
+See References for the reference forms.
+\end{document}

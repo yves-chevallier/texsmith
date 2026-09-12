@@ -7,14 +7,47 @@
 \usepackage[english]{babel}
 \usepackage[colorlinks=true, linkcolor=NavyBlue, urlcolor=NavyBlue, citecolor=NavyBlue]{hyperref}
 \usepackage[a4paper]{geometry}
+\usepackage{ts-typesetting}
 \usepackage{ts-fonts}
 \usepackage{csquotes}
-\usepackage{tcolorbox}
 \usepackage{xcolor}
+\usepackage{epigraph}
+\usepackage{marginnote}
+\usepackage{multicol}
+\usepackage{progressbar}
+\usepackage{graphicx}
+\usepackage{tcolorbox}
 \usepackage{fvextra}
 \usepackage{amsmath}
 \usepackage{float}
 \usepackage{seqsplit}
+\renewcommand*{\marginfont}{
+\footnotesize
+\sloppy
+\emergencystretch=1em
+\hyphenpenalty=50
+\exhyphenpenalty=50
+}
+\newlength{\tsmarginparavail}
+\newlength{\tsmarginparalt}
+\newlength{\tsmarginparbuf}
+\setlength{\tsmarginparbuf}{6mm}
+\makeatletter
+\AtBeginDocument{
+\setlength{\tsmarginparavail}{\dimexpr\paperwidth-\textwidth-1in-\oddsidemargin-\marginparsep-\tsmarginparbuf\relax}
+\ifdim\tsmarginparavail<\z@\setlength{\tsmarginparavail}{\z@}\fi
+\if@twoside
+\setlength{\tsmarginparalt}{\dimexpr1in+\evensidemargin-\marginparsep-\tsmarginparbuf\relax}
+\ifdim\tsmarginparalt<\z@\setlength{\tsmarginparalt}{\z@}\fi
+\ifdim\tsmarginparalt<\tsmarginparavail
+\setlength{\tsmarginparavail}{\tsmarginparalt}
+\fi
+\fi
+\ifdim\tsmarginparavail<\marginparwidth
+\setlength{\marginparwidth}{\tsmarginparavail}
+\fi
+}
+\makeatother
 \usepackage{ts-callouts}
 \usepackage{ts-code}
 
@@ -103,7 +136,8 @@ Check \PY{n+ni}{@sec:section}\PYZhy{}title for more details.
 A heading with no \tscodeinline{\{\#id\}} still has an \emph{implicit} id --- GitHub's slug of its
 plain text --- so \tscodeinline{[](\#other-\allowbreak{}section)} resolves. Because that id changes whenever
 the title is edited, referring to one raises the \tscodeinline{ref-\allowbreak{}implicit-\allowbreak{}id} hint: give
-the heading an explicit \tscodeinline{\{\#sec:…\}}.
+the heading an explicit \tscodeinline{\{\#sec:…\}}. See Headings for the slug
+rule and for \tscodeinline{.unnumbered} / \tscodeinline{.unlisted}.
 \subsection{Custom counters}
 Document-specific series (findings, requirements, bugs) declared under
 \tscodeinline{press.declare.counters} in the front matter reuse the very same \tscodeinline{@prefix:key}
@@ -149,6 +183,12 @@ As shown by @[ein05, p. 33], and elsewhere @[see ein05, pp. 33\PYZhy{}35].
 \end{tscode}
 A DOI can be cited in place through the predeclared \tscodeinline{doi} prefix, without a
 front-matter entry: \tscodeinline{@doi:10.1002/andp.19053221004}.
+\begin{tscallout}[kind=note, title={A key that starts with a digit needs the brackets}]
+A bare \tscodeinline{@key} must begin with a letter, so the keys Zotero and Better
+\tslogo{BibTeX} generate (\tscodeinline{1RgTv}, \tscodeinline{7HA7H}) are only reachable bracketed:
+\tscodeinline{@[1RgTv]}. The printer writes such a key that way too, never bare. An
+all-digit label stays a footnote.
+\end{tscallout}
 \begin{tscallout}[kind=note, title={The footnote spelling of a citation is deprecated}]
 TeXSmith 0.6 spelled citations \tscodeinline{[\^{}key]} and \tscodeinline{\^{}[k1,k2]}, borrowing the
 footnote syntax. Both are still accepted with a deprecation warning; once

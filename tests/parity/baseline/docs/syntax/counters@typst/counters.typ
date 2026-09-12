@@ -21,24 +21,24 @@ align(center)[#counter(page).get().first()]
 #v(1.5em)
 
 Technical documents number things that #ts-logo("LaTeX") knows nothing about: findings,
-requirements, bugs, risks, test cases. TeXSmith lets you declare such a series
-in the front matter, mark each item in the body, and reference it anywhere —
-the numbers are computed by TeXSmith rather than by the backend, so the #ts-logo("LaTeX")
-build, the Typst build and — with the companion plugin — the MkDocs site all
-show the same values.
+requirements, bugs, risks, test cases. Declare such a series under
+`press.declare.counters`, define each item in the body, and refer to it with
+the ordinary `@` sigil — the numbers are computed by TeXSmith rather than by
+the backend, so the #ts-logo("LaTeX") build, the Typst build and the MkDocs site all show
+the same values.
 
-```markdown
+```md
 ---
-counters:
-  n:
-    name: Requirement
-    format: "N-{n:02d}"
+press:
+  declare:
+    counters:
+      n: {name: Requirement, format: "N-{n:02d}"}
 ---
 
 | Id | Requirement |
 | --- | --- |
-| #{n:joy} | Everyone shall be happy |
-| #{n:respect} | Everyone shall respect the others |
+| {counter}(n:joy) | Everyone shall be happy |
+| {counter}(n:respect) | Everyone shall respect the others |
 
 Smile in every circumstance (@n:joy) and do no harm to others (@n:respect).
 ```
@@ -58,109 +58,165 @@ Smile in every circumstance (N-01) and do no harm to others (N-02).
 Both `N-01` occurrences are the same PDF anchor: the table cell is the target,
 the parenthesised one is a clickable link.
 
-= Declaring a counter
+= One registry for every series
 
-Each key under `counters:` is the *prefix* used by the markers.
-
-```yaml
-counters:
-  n:
-    name: Requirement       # human-readable name, used in diagnostics
-    format: "N-{n:02d}"     # optional, defaults to "{n}"
-    start: 1                # optional, defaults to 1
-```
-
-`format` is a Python format string. Three fields are available:
+Every referenceable series is an entry of the *counter registry*, keyed by
+its prefix. The built-in prefixes are simply predeclared entries; there is no
+second mechanism for "reserved prefixes".
 
 #table(
-columns: 2,
-align: (left, left),
-table.header([Field], [Meaning]),
-[`n`], [the counter value (`1`, `2`, …), so `{n:02d}` pads it],
-[`prefix`], [the counter prefix (`n`)],
-[`key`], [the item key (`joy`)],
+columns: 5,
+align: (left, left, left, left, left),
+table.header([Prefix], [Name], [Scope], [Numbered by], [Applies to]),
+[`part` `chap` `sec` `app`], [Part, Chapter, Section, Appendix], [document], [backend], [headings],
+[`fig`], [Figure], [chapter], [backend], [images, sub-figures],
+[`tbl`], [Table], [chapter], [backend], [tables],
+[`lst`], [Listing], [chapter], [backend], [code blocks],
+[`eq`], [Equation], [chapter], [backend], [display math],
+[`thm`], [Theorem], [chapter], [backend], [theorem-type callouts],
+[`note`], [Note], [document], [backend], [footnotes],
+[`gls`], [—], [—], [—], [#link("notes.md#glossary")[glossary entries]],
+[`doi`], [—], [—], [—], [#link("references.md#bibliographic-references")[DOIs cited in place]],
 )
 
-The format string is validated when the document is parsed; an invalid one
-(`{oops}`, unbalanced braces) raises a `CounterValidationError`.
+A user-declared entry adds a series the backend knows nothing about:
 
-Unlike `glossary:`, a counter has no string shorthand: each entry is a mapping,
-because a series without a `format` is rarely what you want.
+```yaml
+press:
+  declare:
+    counters:
+      fw: {name: Finding, format: "FW-{n:02d}", start: 1, scope: document}
+```
 
-A prefix must match `[A-Za-z][A-Za-z0-9_-]*` and must not shadow one of the
-conventional built-in prefixes — `sec`, `fig`, `tbl`, `eq`, `lst`, `app`,
-`chap`, `part`, `note` — which stay reserved for regular labels.
+/ `name`: The label word, used in references and diagnostics.
+/ `format`: A Python format string over the fields `n` (the value), `prefix` and
+`key`; it defaults to `"{n}"`, so `"FW-{n:02d}"` pads to two digits. An
+invalid format (`{oops}`, unbalanced braces) is an error at parse time.
+/ `start`: The first value; defaults to 1.
+/ `scope`: `document | chapter | section`. It is a *hint* to whoever numbers the
+series: under site-wide numbering every series is `document` and
+continuous, so the same document may print "Figure 3.2" and show
+"Figure 12".
+/ `ref`: The template a reference renders, with the fields `{name}` and `{number}`.
+It defaults to `"{number}"` when a `format` is given — a formatted number
+such as `FW-01` is self-identifying — and to `"{name} {number}"` otherwise,
+which is what the predeclared entries use.
 
-= Marking an item
+A prefix matches `[A-Za-z][A-Za-z0-9_-]*` and is matched case-insensitively, so
+`@Fw:boot-loop` capitalises the label word at the start of a sentence. You may
+override the fields of a predeclared entry (`fig: {scope: document}`) but not
+add a prefix that shadows a role name.
 
-== `#{prefix:key}` — define and print
+#ts-callout(kind: "note", title: [`declare:` may sit at the root])[
+`press` is an optional namespace: every key TMark reads may sit at the root
+of the front matter or under `press:`, and `press` wins when both are
+present. The namespace exists so that a file shared with a static site
+generator keeps the root free. A top-level `counters:` key is the 0.6
+spelling, accepted with a deprecation warning; `tmark lint –fix` moves it
+under `press.declare`. See Migrating to TMark.]
 
-The marker prints the formatted number and becomes the reference target.
+= Defining an item
 
-```markdown
-#{fw:boot-loop} The firmware reboots when the watchdog fires.
+== `{counter}(prefix:key)` — define and print
+
+The canonical form is a role, and its key is an *argument*, hence the
+parentheses: nothing inside them is Markdown.
+
+```md
+---
+press:
+  declare:
+    counters:
+      fw: {name: Finding, format: "FW-{n:02d}"}
+---
+
+{counter}(fw:boot-loop) The firmware reboots when the watchdog fires.
 ```
 
 It is a plain inline construct: it works in a paragraph, a table cell, a list
-item, an admonition title, a heading. Numbers are allocated in document order.
+item, a callout title, a heading. Numbers are allocated in document order.
 
-The marker is inert unless its prefix is declared: `#{name}` (no colon),
-`#{sh:var}` with `sh` undeclared, or `#{n:joy}` in a document without a
-`counters:` section all stay literal text. This keeps Ruby/CoffeeScript
-interpolations (`#{user.name}`) intact. Inside code spans and fenced blocks
-nothing is ever substituted, and `\#{n:joy}` forces a literal.
+_Shorthand:_ `#(fw:boot-loop)` — the `#` sigil with the same argument
+bracketing, one character shorter and the same node. `\#` forces a literal
+`#`, and nothing is ever substituted inside a code span or a fenced block.
+
+#ts-callout(kind: "note", title: [`#{prefix:key}` is deprecated])[
+The 0.6 marker is still recognised, and only when its prefix is
+*declared* — so a Ruby or CoffeeScript interpolation such as
+`#{user.name}` in prose stays the literal text it is. `tmark lint –fix`
+rewrites it to `#(prefix:key)`.]
 
 == `{#prefix:key}` — define silently
 
-Any element carrying an `id` whose prefix is declared is numbered too, without
-printing anything. This is the usual `attr_list` syntax, so it attaches to
-headings, figures and tables:
+Any element carrying an id whose prefix is declared is numbered too, without
+printing anything. This is the ordinary attribute syntax, so it
+attaches to headings, figures and tables:
 
-```markdown
+```md
+---
+press:
+  declare:
+    counters:
+      fw: {name: Finding, format: "FW-{n:02d}"}
+---
+
 ## Boot loop {#fw:boot-loop}
 
 ![Watchdog trace](trace.png){#fw:trace}
-```
 
-`@fw:boot-loop` then resolves to `FW-01` even though the number appears nowhere
-in the heading.
-
-#ts-callout(kind: "warning", title: [Position matters for `{#…}`])[
-`attr_list` consumes `{#…}` at the end of a heading, on an image, or on a
-line of its own after a block. In the middle of a sentence it stays literal
-text — use `#{…}` there.]
-
-= Referencing an item
-
-`@prefix:key` (or `@[prefix:key]`) prints the formatted number as a hyperlink.
-This is the regular cross-reference shorthand; a declared
-prefix simply routes it to the counter registry.
-
-```markdown
 The watchdog issue (@fw:boot-loop) is fixed in 1.4.2.
 ```
 
-The reference prints the number alone — `FW-01`, not `Finding FW-01`. Write the
-noun yourself, as you would for a section. The `name:` field is only used in
-diagnostics.
+`@fw:boot-loop` resolves to `FW-01` even though the number appears nowhere in
+the heading.
+
+#ts-callout(kind: "warning", title: [An attribute needs a host])[
+An attribute list is consumed at the end of a heading, on an image, or on a
+line of its own after a block. In the middle of a sentence, or in a table
+cell, it has nothing to attach to — that is exactly the case
+`{counter}(…)` exists for.]
+
+= Referring to an item
+
+`@prefix:key`, or `@[prefix:key]` when the reference contains a space. This is
+the regular reference sigil; a declared prefix simply routes
+it to the counter registry.
+
+```md
+---
+press:
+  declare:
+    counters:
+      fw: {name: Finding, format: "FW-{n:02d}"}
+---
+
+{counter}(fw:boot-loop) The firmware reboots.
+
+The watchdog issue (@fw:boot-loop) is fixed in 1.4.2.
+```
+
+The reference renders the `ref` template. With a `format` declared that
+defaults to the number alone — `FW-01`, not `Finding FW-01` — so write the noun
+yourself, as you would for a section, or declare `ref: "{name} {number}"`.
 
 = Diagnostics
 
 #table(
 columns: 2,
 align: (left, left),
-table.header([Situation], [Behaviour]),
-[`@n:missing` — no such item], [warning, the reference renders empty],
-[`#{n:joy}` twice with the same key], [warning, both print the first number],
-[`#{x:joy}` — undeclared prefix], [left as literal text, no warning],
-[invalid `format` or prefix], [`CounterValidationError` at parse time],
+table.header([Situation], [Code]),
+[`@n:missing` — no such item], [`ref-unresolved`, and a visible `[?n:missing]`],
+[the same key defined twice], [`label-duplicate`],
+[`{counter}(x:joy)` with `x` undeclared], [`prefix-unknown`],
+[`{#tbl:x}` on a figure], [`prefix-host-mismatch`],
+[an invalid `format` or prefix], [an error at parse time],
 )
 
 = Scope and stability
 
-Numbers are allocated per conversion, in document order, and shared across all
-the documents of a multi-document build — `a.md`, `b.md` and `c.md` continue a
-single series rather than restarting.
+Numbers are allocated in document order and shared across all the documents of
+a multi-document build — `a.md`, `b.md` and `c.md` continue a single series
+rather than restarting.
 
 #ts-callout(kind: "danger", title: [Numbers are positional])[
 Inserting an item renumbers every item after it. When the identifiers leave

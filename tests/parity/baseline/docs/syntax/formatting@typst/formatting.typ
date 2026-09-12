@@ -69,6 +69,45 @@ image("snippet-<HASH>.png"),
 Delimiters stack for bold italic, and `_` never opens emphasis inside a word,
 so `snake_case_name` stays literal.
 
+= Underline and `^^x^^`
+
+Underline has a role and no default sugar: print typography treats the
+underline as a typewriter relic, and the obvious spelling `__x__` went to small
+caps instead.
+
+`^^x^^` — PyMdownX's caret "insert" — is not a TMark construct. With the
+feature `inline.insert` off, which is the default, it is literal text and
+raises the hint `feature-off`. Switched on, it is sugar for `{underline}[x]`:
+one node whatever the spelling, and the printer emits the role.
+
+```md
+---
+press:
+  features:
+    inline.insert: true
+---
+
+Now {underline}[inserted] text, or ^^inserted^^ in sugar.
+```
+
+= Substitutions
+
+Three things are rewritten while a run of text is scanned, all of them
+producing ordinary text rather than a node:
+
+- `(c)`, `–>`, `1/2` and their siblings, and a `"straight-quoted"` phrase,
+which is why quotes reach the PDF as `\enquote{…}` in the document's
+language — see Smart symbols and quotes;
+- `:smile:`, which expands to the character, while a Material icon shortcode
+becomes a web-only span that print drops — see
+Emoji and icons.
+
+`LaTeX`, `XeLaTeX`, `BibTeX` and their siblings, written as plain words, are
+set as logos by the writers: there is no node and no role, the words stay
+ordinary text, and the rule is the feature `typography.tex-logos` (on, whole
+words only, never inside code, math, raw passthroughs, link destinations or
+attribute values).
+
 = Lead-in paragraphs (`{lead}[…]`)
 
 A _lead-in_ — a short run-in heading that opens a paragraph — has an explicit
@@ -78,11 +117,14 @@ role:
 {lead}[Boot sequence.] The device powers the flash before the SoC…
 ```
 
-A paragraph whose first inline is a strong span shorter than 80 characters is
-promoted to a lead-in automatically while the `paragraph.lead` feature is on
-(the default; off under `strict`). The promotion is sugar, not magic: it is
-named, switchable, and `tmark lint –fix` rewrites it to the role. Either way
-TeXSmith emits `\tslead{…}`, defined as:
+A paragraph whose *whole* content is a strong span shorter than 80 characters
+is promoted to a lead-in automatically while the `paragraph.lead` feature is on
+(the default; off under `strict`). A strong span that merely _opens_ a
+paragraph is a bold run-in and stays one — promoting it would move the rest of
+the sentence into a paragraph of its own, since `\tslead` breaks the paragraph
+around the lead-in — and a bold-only list item is a label, not a lead-in. The
+promotion is sugar, not magic: it is named, switchable, and `tmark lint –fix`
+rewrites it to the role. Either way TeXSmith emits `\tslead{…}`, defined as:
 
 ```latex
 \providecommand{\tslead}[1]{\par\noindent\textbf{#1}\par\nobreak\smallskip}
@@ -108,10 +150,12 @@ La synthèse récapitule, pilier par pilier, les forces et faiblesses…
 
 Written as `**Sens critique**` on a line of its own, the same two labels are
 promoted to lead-ins automatically and `tmark lint` says so
-(`lead-promotion`). The rule fires when the paragraph opens with a strong span
-and nothing else precedes it, and the strong text is shorter than 80
-characters. Bold spans inside running prose (`Some **bold** text.`) and bold
-paragraphs over the threshold keep their `\textbf{…}` rendering.
+(`lead-promotion`). The rule fires only when the paragraph _is_ that strong
+span and nothing else, and its plain text is shorter than 80 characters. Bold
+spans inside running prose (`Some **bold** text.`), a run-in such as
+`**Leading bold:** followed by text`, and bold paragraphs over the threshold
+all keep their `\textbf{…}` rendering. The `{lead}[…]` role, by contrast, always
+takes what follows it on the paragraph, whatever the feature says.
 
 Override `\tslead` in a custom preamble snippet to change the visual style — for instance, to add a coloured rule, switch to small caps, or replace the `\smallskip` with `\medskip`:
 

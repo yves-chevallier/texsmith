@@ -75,6 +75,13 @@ the escape hatch when symmetry is impossible, and it replaces mirrored
 The demo is [online only]{media=web}, and here is the [printed table]{media=print}.
 ```
 
+#ts-callout(kind: "note", title: [`[](){#id}` is deprecated])[
+An empty link hugging an attribute list — the MkDocs/autorefs anchor idiom
+— is the same anchor written the long way. An empty link is no link, so
+`[](){#id}` reads as the span `[]{#id}`, which is the canonical spelling.
+The older form used to leave a `\url{}` and a dangling `\hyperref` behind.
+`tmark lint –fix` rewrites it.]
+
 #ts-callout(kind: "note", title: [`{: .class}` is deprecated])[
 Python-Markdown's `attr_list` puts a colon right after the brace
 (`{: .thin #id}`). That spelling is accepted on every host as sugar, with a

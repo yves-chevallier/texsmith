@@ -105,6 +105,12 @@ Highlight & \tscodeinline{\{mark\}[x]} (sugar \tscodeinline{==x==}) & E \\
 Small caps & \tscodeinline{\{sc\}[x]} (sugar \tscodeinline{\_\_x\_\_}) & X1 \\
 Subscript / superscript & \tscodeinline{\{sub\}[x]} / \tscodeinline{\{sup\}[x]} (sugar \tscodeinline{\textasciitilde{}x\textasciitilde{}}, \tscodeinline{\^{}x\^{}}) & X3 / E \\
 Emoji & \tscodeinline{:sparkles:} & E \\
+Material icons & \tscodeinline{:material-\allowbreak{}cog:} (web only) & D \\
+Smart symbols & \tscodeinline{(c)}, \tscodeinline{-\allowbreak{}-\allowbreak{}>}, \tscodeinline{1/2} & E \\
+Quotes & \tscodeinline{"a phrase"} \tsscript{symbols}{\(\rightarrow\) }\tscodeinline{\textbackslash{}enquote\{…\}} & C \\
+Insert & \tscodeinline{\{underline\}[x]} (sugar \tscodeinline{\^{}\^{}x\^{}\^{}}, feature \tscodeinline{inline.insert}) & D \\
+Unnumbered heading & \tscodeinline{\# Preface \{.unnumbered\}} / \tscodeinline{\{.unlisted\}} --- Headings & E \\
+Anchor on a phrase & \tscodeinline{[this claim]\{\#claim:one\}} & D \\
 Autolinks & bare URLs & E \\
 Critic markup & \tscodeinline{\{++added++\}}, \tscodeinline{\{-\allowbreak{}-\allowbreak{}removed-\allowbreak{}-\allowbreak{}\}} & E \\
 Math & \tscodeinline{\$x\$}, \tscodeinline{\$\$…\$\$ \{\#eq:x\}} & C \\
@@ -117,6 +123,7 @@ Asides / margin notes & \tscodeinline{\{aside\}[…]}, \tscodeinline{::: aside} 
 Raw passthrough & \tscodeinline{\{raw latex\}(…)}, \tscodeinline{```latex raw} & D \\
 Includes & \tscodeinline{\{include\}(file.md)} & D \\
 Diagrams & \tscodeinline{![Pipeline](pipeline.mmd)}, \tscodeinline{```mermaid image} & C / E \\
+Foreign directives & \tscodeinline{[TOC]}, \tscodeinline{::: pkg.module} (kept verbatim, dropped in print) & E / D \\
 \bottomrule
 \end{tabularx}
 \end{center}
@@ -210,6 +217,17 @@ file without inlining it, put \tscodeinline{include=} on the fence:
 \end{Verbatim}
 \end{tscode}
 The PyMdownX snippet syntax \tscodeinline{-\allowbreak{}-\allowbreak{}8<-\allowbreak{}-\allowbreak{} "file"} is accepted as deprecated sugar.
+Its marker is \tscodeinline{-\allowbreak{}\{2,\}8<-\allowbreak{}\{2,\}}, so any dash count on either side is the same
+spelling (\tscodeinline{-\allowbreak{}-\allowbreak{}-\allowbreak{}8<-\allowbreak{}-\allowbreak{}-\allowbreak{}} included), and a leading \tscodeinline{;} disables the line. See
+\href{code.md\#external-sources}{Code}.
+\section{Foreign directives}
+\tscodeinline{[TOC]} and a \textbf{dotted} \tscodeinline{::: pkg.module} line --- mkdocstrings' syntax, its
+options in the indented YAML that follows --- are directives for a processor
+other than TMark. Both are kept verbatim, and both are \textbf{dropped by the paged
+writers}: the printed table of contents is \tscodeinline{press.toc}, and an API reference
+has no print form. A dotted directive raises the hint \tscodeinline{directive-\allowbreak{}foreign} so a
+print document does not lose a block without notice. See
+\href{admonitions.md\#foreign-directives}{Admonitions}.
 \section{When you need more}
 \begin{itemize}
 \item \tscodeinline{tmark check FILE} parses, resolves and lints a document; \tscodeinline{-\allowbreak{}-\allowbreak{}strict} turns

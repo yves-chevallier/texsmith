@@ -20,17 +20,36 @@ align(center)[#counter(page).get().first()]
 #text(size: 1.8em, weight: "bold")[Wiki Links]]
 #v(1.5em)
 
-MkDocs and Python-Markdown support the `[[Wiki Link]]` syntax via the `wikilinks`
-extension. TeXSmith keeps that behavior so you can link between pages without
-remembering exact file paths.
+`[[Page Title]]` belongs to the PyMdownX compatibility profile, not to TMark:
+there is no wiki-link node, and the printer never emits the spelling. It is
+listed as sugar for a link to the project file of that name.
 
-```markdown
+```md
 [[Getting Started]]
+
 [[Subfolder/Page Title|Custom label]]
 ```
 
-- The portion before the pipe resolves to a Markdown file (`Getting Started` #ts-script("symbols")[→]
+- The portion before the pipe names a Markdown file (`Getting Started` #ts-script("symbols")[→]
 `getting-started.md`).
-- Anything after `|` becomes the rendered link text.
-- When building PDFs, TeXSmith turns wiki links into standard hyperlinks, so the
-references remain navigable.
+- Anything after `|` is the link text.
+
+#ts-callout(kind: "warning", title: [Not implemented yet])[]
+
+```
+The parser recognises the spelling and reports `compat-unsupported`: the
+text stays literal rather than becoming a link. Do not rely on it in a
+document meant for print.
+```
+
+The canonical spelling is the link itself, which every renderer understands and
+whose broken targets are visible rather than silent:
+
+```md
+[Getting Started](getting-started.md)
+
+[Custom label](subfolder/page-title.md)
+```
+
+An empty-text link to another file (`[](getting-started.md)`) resolves to that
+document's section number in print — see References.

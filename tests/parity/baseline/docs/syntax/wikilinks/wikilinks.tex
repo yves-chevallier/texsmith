@@ -9,10 +9,12 @@
 \usepackage[a4paper]{geometry}
 \usepackage{ts-fonts}
 \usepackage{tcolorbox}
+\usepackage{xcolor}
 \usepackage{fvextra}
 \usepackage{amsmath}
 \usepackage{float}
 \usepackage{seqsplit}
+\usepackage{ts-callouts}
 \usepackage{ts-code}
 
 \usepackage{lastpage}
@@ -35,20 +37,39 @@
 \author{}\date{}
 \begin{document}
 \maketitle
-MkDocs and Python-Markdown support the \tscodeinline{[[Wiki Link]]} syntax via the \tscodeinline{wikilinks}
-extension. TeXSmith keeps that behavior so you can link between pages without
-remembering exact file paths.
-\begin{tscode}[lang=markdown, engine=pygments]
+\tscodeinline{[[Page Title]]} belongs to the PyMdownX compatibility profile, not to TMark:
+there is no wiki-link node, and the printer never emits the spelling. It is
+listed as sugar for a link to the project file of that name.
+\begin{tscode}[lang=md, engine=pygments]
 \begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
 [[Getting Started]]
+
 [[Subfolder/Page Title|Custom label]]
 \end{Verbatim}
 \end{tscode}
 \begin{itemize}
-\item The portion before the pipe resolves to a Markdown file (\tscodeinline{Getting Started} \tsscript{symbols}{\(\rightarrow\)}
+\item The portion before the pipe names a Markdown file (\tscodeinline{Getting Started} \tsscript{symbols}{\(\rightarrow\)}
 \tscodeinline{getting-\allowbreak{}started.md}).
-\item Anything after \tscodeinline{|} becomes the rendered link text.
-\item When building PDFs, TeXSmith turns wiki links into standard hyperlinks, so the
-references remain navigable.
+\item Anything after \tscodeinline{|} is the link text.
 \end{itemize}
+\begin{tscallout}[kind=warning, title={Not implemented yet}]
+\end{tscallout}
+\begin{tscode}[lang=text, engine=pygments]
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+The parser recognises the spelling and reports `compat\PYZhy{}unsupported`: the
+text stays literal rather than becoming a link. Do not rely on it in a
+document meant for print.
+\end{Verbatim}
+\end{tscode}
+The canonical spelling is the link itself, which every renderer understands and
+whose broken targets are visible rather than silent:
+\begin{tscode}[lang=md, engine=pygments]
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+[\PY{n+nt}{Getting Started}](\PY{n+na}{getting\PYZhy{}started.md})
+
+[\PY{n+nt}{Custom label}](\PY{n+na}{subfolder/page\PYZhy{}title.md})
+\end{Verbatim}
+\end{tscode}
+An empty-text link to another file (\tscodeinline{[](getting-\allowbreak{}started.md)}) resolves to that
+document's section number in print --- see References.
 \end{document}

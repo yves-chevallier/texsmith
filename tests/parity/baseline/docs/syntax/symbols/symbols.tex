@@ -1,0 +1,134 @@
+\documentclass[a4paper,twoside]{article}
+
+\usepackage{morewrites}
+
+\usepackage[svgnames,dvipsnames,x11names]{xcolor}
+\usepackage{graphicx}
+\usepackage[english]{babel}
+\usepackage[colorlinks=true, linkcolor=NavyBlue, urlcolor=NavyBlue, citecolor=NavyBlue]{hyperref}
+\usepackage[a4paper]{geometry}
+\usepackage{ts-fonts}
+\usepackage{booktabs}
+\usepackage{csquotes}
+\usepackage{tabularx}
+\usepackage{tcolorbox}
+\usepackage{xcolor}
+\usepackage{fvextra}
+\usepackage{amsmath}
+\usepackage{float}
+\usepackage{seqsplit}
+\newcolumntype{Y}{>{\centering\arraybackslash}X}
+\newcolumntype{Z}{>{\raggedleft\arraybackslash}X}
+\usepackage{ts-callouts}
+\usepackage{ts-code}
+
+\usepackage{lastpage}
+\usepackage{refcount}
+\makeatletter
+\def\ps@plain{
+\let\@oddhead\@empty
+\let\@evenhead\@empty
+\def\@oddfoot{
+\hfil
+\ifnum\getpagerefnumber{LastPage}>1\relax
+\thepage
+\fi
+\hfil}
+\let\@evenfoot\@oddfoot
+}
+\makeatother
+
+\title{Smart symbols and quotes}
+\author{}\date{}
+\begin{document}
+\maketitle
+Two substitutions run while TMark scans a run of text: the smart symbols of
+\tscodeinline{pymdownx.smartsymbols}, and TeXSmith's own double-quote pattern. Both produce
+ordinary text in the document model --- there is nothing to reference and nothing
+to configure per occurrence --- and both are class E: every MkDocs site already
+does the same.
+\section{Smart symbols}
+\begin{tscode}[lang=md, engine=pygments]
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+Copyright (c) 2025, tea (tm), reg (r), c/o Ada: 1/2 a cup, +/\PYZhy{} 3, 4 =/= 5, a \PYZhy{}\PYZhy{}\PYZgt{} b.
+\end{Verbatim}
+\end{tscode}
+renders as
+\begin{displayquote}
+Copyright \tsemoji{©} 2025, tea \tsemoji{™}, reg \tsemoji{®}, \tsscript{symbols}{℅ }Ada: ½ a cup, \(\pm\) 3, 4 \tsscript{mathematics}{\(\neq\) }5, a \tsscript{symbols}{\(\rightarrow\) }b.
+\end{displayquote}
+\begin{center}
+\begin{tabularx}{\linewidth}{>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X}
+\toprule
+\textbf{Group} & \textbf{Spellings} & \textbf{Result} \\
+\midrule
+Marks & \tscodeinline{(c)} \tscodeinline{(tm)} \tscodeinline{(r)} & \tsemoji{©} \tsemoji{™} \tsemoji{®} \\
+Care of & \tscodeinline{c/o} & \tsscript{symbols}{℅} \\
+Operators & \tscodeinline{+/-\allowbreak{}} \tscodeinline{=/=} & \(\pm\) \tsscript{mathematics}{\(\neq\)} \\
+Arrows & \tscodeinline{-\allowbreak{}-\allowbreak{}>} \tscodeinline{<-\allowbreak{}-\allowbreak{}} \tscodeinline{<-\allowbreak{}-\allowbreak{}>} & \tsscript{symbols}{\(\rightarrow\) \(\leftarrow\) }\tsemoji{↔} \\
+Fractions & \tscodeinline{1/2} \tscodeinline{1/4} \tscodeinline{3/4} \tscodeinline{1/3} \tscodeinline{2/3} \tscodeinline{1/5} ... \tscodeinline{7/8} & ½ ¼ ¾ \tsscript{symbols}{⅓ ⅔ ⅕ }... \tsscript{symbols}{⅞} \\
+\bottomrule
+\end{tabularx}
+\end{center}
+The extension's own boundaries apply: an arrow is not part of a longer run of
+dashes (\tscodeinline{-\allowbreak{}-\allowbreak{}-\allowbreak{}>} stays as typed), a fraction is not part of a longer number
+(\tscodeinline{11/2} and \tscodeinline{1/25} stay as typed), and \tscodeinline{c/o} must be a whole word.
+\begin{tscallout}[kind=note, title={What is \emph{not} substituted}]
+\begin{itemize}
+\item \textbf{Ordinal numbers.} \tscodeinline{1st} would be a superscript rather than a
+character, so it is left alone.
+\item \textbf{\tscodeinline{-\allowbreak{}-\allowbreak{}}, \tscodeinline{-\allowbreak{}-\allowbreak{}-\allowbreak{}} and \tscodeinline{...}.} Both paged backends typeset the ASCII
+spelling as the dash and the ellipsis on their own; converting them would
+gain nothing and lose the round-trip.
+\item \textbf{Anything in code.} No substitution fires inside a code span or a
+fenced block.
+\end{itemize}
+\end{tscallout}
+\section{Quotes}
+A straight-quoted phrase becomes a proper quotation, typeset for the document's
+language:
+\begin{tscode}[lang=md, engine=pygments]
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+He said \PYZdq{}straight quotes\PYZdq{}, \PY{l+s+sb}{`\PYZdq{}not in code\PYZdq{}`}, and \PYZbs{}\PYZdq{}not a quote\PYZdq{}.
+\end{Verbatim}
+\end{tscode}
+In \LaTeX{} that is \tscodeinline{\textbackslash{}enquote\{straight quotes\}}, so French gets guillemets, German
+gets low-high quotes and English gets curly quotes --- from the root \tscodeinline{lang:} key
+or the nearest \tscodeinline{lang=} attribute, never from the source spelling.
+
+Three rules bound it:
+\begin{itemize}
+\item \textbf{Double quotes only.} Single quotes are never paired: an apostrophe is not
+a quote.
+\item \textbf{One text run.} A pair whose quotes sit on either side of inline markup
+stays literal, because the scan reads a run of text and not the whole
+paragraph.
+\item \textbf{\tscodeinline{\textbackslash{}"} escapes.} A backslash before the opening quote leaves the phrase
+alone.
+\end{itemize}
+\begin{tscallout}[kind=tip, title={Why this matters for print}]
+\end{tscallout}
+\begin{tscode}[lang=text, engine=pygments]
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+Straight quotes in a PDF are a typographic error, and no template can fix
+them after the fact: by the time the text reaches LaTeX, the language is
+the only thing that knows which glyphs to use. Writing `\PYZdq{}…\PYZdq{}` and letting
+the substitution run is what puts `\PYZbs{}enquote\PYZob{}…\PYZcb{}` — and therefore the right
+glyphs — in the output.
+\end{Verbatim}
+\end{tscode}
+\section{Language-driven spacing}
+Punctuation spacing is not a substitution and never a construct in the body:
+the narrow no-break space before \tscodeinline{;}, \tscodeinline{:}, \tscodeinline{?} and \tscodeinline{!} in French, and the
+no-break space between a number and its unit, are applied by the backend from
+the document language. \tscodeinline{\&nbsp;} is accepted as an explicit override.
+
+A passage in another language is a span:
+\begin{tscode}[lang=md, engine=pygments]
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+A French sentence with [a quotation in English]\PYZob{}lang=en\PYZcb{} inside it.
+\end{Verbatim}
+\end{tscode}
+See also Emoji and icons for the other two colon-delimited
+substitutions.
+\end{document}

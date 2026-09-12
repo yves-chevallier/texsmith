@@ -90,6 +90,13 @@ the escape hatch when symmetry is impossible, and it replaces mirrored
 The demo is [online only]\PYZob{}media=web\PYZcb{}, and here is the [printed table]\PYZob{}media=print\PYZcb{}.
 \end{Verbatim}
 \end{tscode}
+\begin{tscallout}[kind=note, title={\tscodeinline{[]()\{\#id\}} is deprecated}]
+An empty link hugging an attribute list --- the MkDocs/autorefs anchor idiom
+--- is the same anchor written the long way. An empty link is no link, so
+\tscodeinline{[]()\{\#id\}} reads as the span \tscodeinline{[]\{\#id\}}, which is the canonical spelling.
+The older form used to leave a \tscodeinline{\textbackslash{}url\{\}} and a dangling \tscodeinline{\textbackslash{}hyperref} behind.
+\tscodeinline{tmark lint -\allowbreak{}-\allowbreak{}fix} rewrites it.
+\end{tscallout}
 \begin{tscallout}[kind=note, title={\tscodeinline{\{: .class\}} is deprecated}]
 Python-Markdown's \tscodeinline{attr\_list} puts a colon right after the brace
 (\tscodeinline{\{: .thin \#id\}}). That spelling is accepted on every host as sugar, with a

@@ -1,0 +1,101 @@
+\documentclass[a4paper,twoside]{article}
+
+\usepackage{morewrites}
+
+\usepackage[svgnames,dvipsnames,x11names]{xcolor}
+\usepackage{graphicx}
+\usepackage[english]{babel}
+\usepackage[colorlinks=true, linkcolor=NavyBlue, urlcolor=NavyBlue, citecolor=NavyBlue]{hyperref}
+\usepackage[a4paper]{geometry}
+\usepackage{ts-fonts}
+\usepackage{booktabs}
+\usepackage{csquotes}
+\usepackage{tabularx}
+\usepackage{tcolorbox}
+\usepackage{xcolor}
+\usepackage{fvextra}
+\usepackage{amsmath}
+\usepackage{float}
+\usepackage{seqsplit}
+\newcolumntype{Y}{>{\centering\arraybackslash}X}
+\newcolumntype{Z}{>{\raggedleft\arraybackslash}X}
+\usepackage{ts-callouts}
+\usepackage{ts-code}
+
+\usepackage{lastpage}
+\usepackage{refcount}
+\makeatletter
+\def\ps@plain{
+\let\@oddhead\@empty
+\let\@evenhead\@empty
+\def\@oddfoot{
+\hfil
+\ifnum\getpagerefnumber{LastPage}>1\relax
+\thepage
+\fi
+\hfil}
+\let\@evenfoot\@oddfoot
+}
+\makeatother
+
+\title{Emoji and icons}
+\author{}\date{}
+\begin{document}
+\maketitle
+Two colon-delimited shortcodes look alike and behave differently, because one
+names a \textbf{character} and the other names an \textbf{SVG that only a website has}.
+\section{Emoji}
+\tscodeinline{:smile:} is sugar for the character it names: the parser replaces it with the
+character, and that is what reaches every backend.
+\begin{tscode}[lang=md, engine=pygments]
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+Ship it :rocket: :smile: at 12:30:45.
+\end{Verbatim}
+\end{tscode}
+renders as
+\begin{displayquote}
+Ship it \tsemoji{🚀} \tsemoji{😄} at 12:30:45.
+\end{displayquote}
+The name table is GitHub's --- the \tscodeinline{gemoji} short names, which \tscodeinline{pymdownx.emoji}
+ships as one of its indexes. A colon-delimited word that is \textbf{not} in the
+table is literal text with no diagnostic, which is what keeps \tscodeinline{12:30:45} and
+\tscodeinline{a:b:c} safe. Nothing fires inside code.
+
+Class E, and GitHub renders the shortcodes too, so the source stays readable
+wherever it is pasted. How an emoji is \emph{set} in print --- a colour font, a
+monochrome one, an image --- is the template's business, not syntax.
+\section{Material icons}
+An icon shortcode names an SVG of the MkDocs Material theme, which no print
+backend and no icon-less site can honour. Four set prefixes are recognised:
+\begin{tscode}[lang=md, engine=pygments]
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+Click :material\PYZhy{}cog: Settings, :fontawesome\PYZhy{}solid\PYZhy{}check: to confirm,
+:octicons\PYZhy{}tag\PYZhy{}16: for a release, :simple\PYZhy{}github: for the repository.
+\end{Verbatim}
+\end{tscode}
+Such a shortcode lowers to a \textbf{web-only span} holding the shortcode as its
+text. The \tscodeinline{media=web} rule then removes it from print --- the spaces around it
+collapse, as for any \href{extra.md\#three-universal-attributes}{zero-width node} ---
+and the HTML writer emits \tscodeinline{<span class="icon">:material-\allowbreak{}cog:</span>} for the
+site's stylesheet or plugin to replace.
+
+The shortcode is its own canonical spelling: the printer writes such a span
+back as the shortcode, so the round-trip is exact.
+\begin{tscallout}[kind=warning, title={Icons do not reach the PDF}]
+\tscodeinline{tmark check} raises the hint \tscodeinline{icon-\allowbreak{}web-\allowbreak{}only} once per shortcode, so an
+author writing for print knows the icon is not there. Icons are decoration;
+a symbol that must reach print is an \textbf{emoji} or an \textbf{image}.
+\end{tscallout}
+\begin{center}
+\begin{tabularx}{\linewidth}{>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X}
+\toprule
+\textbf{Construct} & \textbf{Canonical} & \textbf{Print} & \textbf{Web} & \textbf{Class} \\
+\midrule
+\tscodeinline{:smile:} & the character & the character & the character & E \\
+\tscodeinline{:material-\allowbreak{}cog:} & the shortcode & dropped & \tscodeinline{<span class="icon">} & D \\
+\bottomrule
+\end{tabularx}
+\end{center}
+See also Smart symbols and quotes for the substitutions that run
+on ASCII punctuation.
+\end{document}
