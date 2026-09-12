@@ -1,3 +1,9 @@
+---
+press:
+  include_paths:
+    - ../..
+---
+
 # Cooking Recipes
 
 TeXSmith isn’t just for papers and slides -- it can plate up gorgeous recipes straight from structured data. Here’s a French walnut cake expressed as YAML, pushed through a custom `recipe` template. Click the card to grab the PDF.

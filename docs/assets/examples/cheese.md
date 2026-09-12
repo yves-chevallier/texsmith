@@ -1,5 +1,7 @@
 ---
 press:
+  include_paths:
+    - ../../..
   subtitle: >
     A Rheological Study on the Viscoelastic Properties of Aged Cheese Varieties
   authors:

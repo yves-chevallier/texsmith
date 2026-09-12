@@ -1,3 +1,9 @@
+---
+press:
+  include_paths:
+    - ../..
+---
+
 # Letters
 
 TeXSmith includes a built-in letter template based on the KOMA-Script `scrlttr2` class. Below are three examples of letters formatted according to different national standards: **DIN** (Germany), **SN** (Switzerland), and **NF** (France).

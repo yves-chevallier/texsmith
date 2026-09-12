@@ -1,3 +1,9 @@
+---
+press:
+  include_paths:
+    - ../..
+---
+
 [](){ #cheese }
 
 # Research Paper

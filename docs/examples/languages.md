@@ -1,3 +1,9 @@
+---
+press:
+  include_paths:
+    - ../..
+---
+
 # Languages
 
 TeXSmith speaks more than Markdown—it speaks your language. Noto fonts ship in, so LaTeX stops tripping over glyphs while browsers casually fall back. Most scripts just work out of the box; typographic nuances for highly specialized scripts (Arabic, Japanese, etc.) can be layered in if or when you need them.
