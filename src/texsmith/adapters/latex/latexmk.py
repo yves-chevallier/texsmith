@@ -124,9 +124,7 @@ def build_latexmkrc_content(
         # `system` takes the argv list, not a shell string: a path with a
         # space or a quote in it then needs no quoting, and `$base` cannot be
         # mistaken for part of the program name.
-        argv = ", ".join(
-            f"'{_perl_escape(token)}'" for token in pyxindy.glossary_command_tokens()
-        )
+        argv = ", ".join(f"'{_perl_escape(token)}'" for token in pyxindy.glossary_command_tokens())
         lines.extend(
             [
                 "add_cus_dep('glo', 'gls', 0, 'run_makeglossaries');\n",
