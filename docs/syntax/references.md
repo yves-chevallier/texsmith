@@ -77,7 +77,8 @@ Check @sec:section-title for more details.
 A heading with no `{#id}` still has an *implicit* id — GitHub's slug of its
 plain text — so `[](#other-section)` resolves. Because that id changes whenever
 the title is edited, referring to one raises the `ref-implicit-id` hint: give
-the heading an explicit `{#sec:…}`.
+the heading an explicit `{#sec:…}`. See [Headings](headings.md) for the slug
+rule and for `.unnumbered` / `.unlisted`.
 
 ### Custom counters
 
@@ -132,6 +133,12 @@ As shown by @[ein05, p. 33], and elsewhere @[see ein05, pp. 33-35].
 
 A DOI can be cited in place through the predeclared `doi` prefix, without a
 front-matter entry: `@doi:10.1002/andp.19053221004`.
+
+!!! note "A key that starts with a digit needs the brackets"
+    A bare `@key` must begin with a letter, so the keys Zotero and Better
+    BibTeX generate (`1RgTv`, `7HA7H`) are only reachable bracketed:
+    `@[1RgTv]`. The printer writes such a key that way too, never bare. An
+    all-digit label stays a footnote.
 
 !!! note "The footnote spelling of a citation is deprecated"
     TeXSmith 0.6 spelled citations `[^key]` and `^[k1,k2]`, borrowing the

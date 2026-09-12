@@ -129,11 +129,16 @@ work and warn; `tmark lint --fix` moves them.
 
 Headings use standard `#`…`######`. Numbering and the mapping to LaTeX sectioning is
 driven by `base_level`, so **do not** manually number headings. Two classes act one
-heading at a time: `{.unnumbered}` and `{.unlisted}`.
+heading at a time: `{.unnumbered}` (out of the numbering) and `{.unlisted}` (out of the
+numbering *and* the table of contents). Pandoc's `{-}` is not an attribute list — there
+are no bare-word attributes — so it stays literal text.
 
-**Page break = a divider.** A line containing only `---` (with a blank line before and
-after) is a divider node, which the paged templates render as `\clearpage`. This is the
-way to force a page break from Markdown; the web shows `<hr>`.
+A heading without `{#id}` still has an **implicit id**, GitHub's slug of its plain text
+(`## Boot sequence` → `#boot-sequence`), so `[](#boot-sequence)` resolves. But that id
+changes whenever the title is edited, so referring to one raises `ref-implicit-id`:
+**give an explicit `{#sec:…}` to every heading you refer to.**
+
+**`---` is a divider, and it has two contracts.**
 
 ```md
 Last paragraph of the current page.
@@ -143,9 +148,20 @@ Last paragraph of the current page.
 First paragraph of the next page.
 ```
 
-⚠️ **Gotcha:** because `---` is a page break, never use it as a decorative section
-separator. The `---` at the very top of the file is the front-matter fence, not a rule.
-To break inline instead, drop `{raw latex}(\clearpage)` into a paragraph.
+- **At the top level of the document**: a page break in paged media
+  (`\tsdivider` / `#ts-divider()`, which `ts-typesetting` defines as `\clearpage` /
+  `#pagebreak()` and a template may redefine), `<hr>` on the web.
+- **Inside any container** — a block quote, a callout, a figure, a `:::` div or tab, a
+  list item, a table cell, an aside, a footnote — a **separator that never breaks the
+  page** (`\tsrule` / `#ts-rule()` / `<hr class="rule">`). A page break there would tear
+  the container in two, and Typst refuses it outright.
+
+One node, two contracts; you write `---` in both places, and the writer picks from its
+own nesting.
+
+⚠️ **Gotcha:** because a top-level `---` is a page break, never use it as a decorative
+section separator. The `---` at the very top of the file is the front-matter fence, not
+a rule. To break inline instead, drop `{raw latex}(\clearpage)` into a paragraph.
 
 ---
 
@@ -165,8 +181,33 @@ is a deliberate deviation from GFM, and `{sc}[…]` is the spelling to prefer. `
 opens emphasis inside a word, so `snake_case_name` stays literal.
 
 A run-in heading that opens a paragraph is `{lead}[Boot sequence.] The device powers…`.
-A paragraph starting with a short strong span (< 80 chars) is promoted to one
-automatically.
+A paragraph whose **whole** content is a strong span under 80 characters is promoted to
+one automatically; a strong span that merely *opens* a paragraph stays a bold run-in,
+and a bold-only list item stays a label.
+
+`^^x^^` is **not** a TMark construct: with the feature `inline.insert` off (the default)
+it is literal text and raises `feature-off`; on, it is sugar for `{underline}[x]`. Write
+the role.
+
+**What is substituted for you**, all of it producing plain text, none of it configurable
+per occurrence:
+
+- `(c)` `(tm)` `(r)` `c/o` `+/-` `=/=` `-->` `<--` `<-->` and the common fractions
+  (`1/2`, `3/4`, …). `--`, `---`, `...` and ordinals (`1st`) are deliberately left as
+  typed.
+- A `"straight-quoted"` phrase becomes a real quotation — `\enquote{…}` in LaTeX — so the
+  glyphs follow the document's `lang:`. Double quotes only, within one run of text;
+  `\"` escapes.
+- `:smile:` expands to the character (GitHub's `gemoji` names; an unknown name is literal,
+  so `12:30:45` is safe). `:material-cog:` and the other three Material icon sets become
+  a **web-only span that print drops** (`icon-web-only`) — a symbol that must reach print
+  is an emoji or an image.
+- `LaTeX`, `XeLaTeX`, `BibTeX` and their siblings are set as logos by the writers.
+  Nothing to type.
+
+A progress bar is an inline node: `[=75% "Review"]`, optionally `{.thin}`. The
+percentage spelling is canonical; the fraction form `[=15/20 "…"]` and the
+Python-Markdown `{: .thin}` colon are deprecated.
 
 ---
 
@@ -244,7 +285,33 @@ press:
 ```
 
 Content tabs are a container too: `::: tabs` holding `::: tab {title=Windows}` blocks
-(nest with `::::`). `=== "Windows"` is kept indefinitely for the same reason as `!!!`.
+(nest with `::::` so the inner fences close against themselves). Print has no
+interaction, so the tabs are rendered in sequence as titled blocks. `=== "Windows"` plus
+its four-space-indented body is kept indefinitely for the same reason as `!!!`.
+
+```md
+:::: tabs
+::: tab {title=Windows}
+Windows is a Microsoft operating system.
+:::
+::: tab {title=Linux}
+Linux is an open-source operating system.
+:::
+::::
+```
+
+⚠️ **The registry of container names is closed**: the callout types (built-in and
+declared), `aside`, `figure`, `tabs`, `tab`, `multicolumn {cols=2}` and `div`. An
+unknown name raises `container-unknown` and renders its content transparently. There is
+no way to declare a new container name — a new *kind* of thing is a declared callout
+type, and a block that must look a particular way is `::: div {.class}` plus a template
+that knows the class.
+
+⚠️ **Foreign directives.** `[TOC]` and a **dotted** `::: pkg.module` line (mkdocstrings,
+options in the indented YAML that follows, no closing fence) are directives for another
+processor. TMark keeps them verbatim and the **paged writers drop them** — the printed
+table of contents is `press.toc`, and an API reference has no print form. Do not put
+either in a document meant for print.
 
 ---
 
@@ -289,6 +356,12 @@ Subfigures are a container:
 Figure: Watchdog traces before and after the fix. {#fig:traces}
 :::
 ```
+
+⚠️ **A sub-figure takes no number of its own.** The container advances the `fig` counter
+once and each image is that number plus a letter, so `@fig:crash` reads "figure 1b". A
+container with a single image *is* that figure, with no letter; a container holding a
+table, prose or a listing is a plain float whose images number normally; a container
+with no anchor and no caption numbers nothing.
 
 ⚠️ **Deprecated:** `/// caption` and `/// figure-caption` with an indented `attrs:`
 line. Their id could not contain a colon, so `fig:x` silently degraded.
@@ -421,7 +494,13 @@ optionally drop its colouring, with `press.code.inline: {breaks: "_./", plain: t
 
 To splice a whole Markdown file, use the `include` role alone on its line:
 `{include}(chapters/boot.md)`. It parses the file as TMark, so nested fences are safe
-and relative paths inside it are rebased. `--8<-- "file"` is the deprecated sugar.
+and relative paths inside it are rebased (`base=` overrides). It is a **block** role:
+`{include}(…)` inside a paragraph raises `include-inline` and stays literal text.
+
+`--8<-- "file"` is the deprecated sugar. Its marker is PyMdownX's `-{2,}8<-{2,}` — two
+or more dashes on **each** side, the two free to differ — so `--8<--`, `---8<---` and
+`--8<----` are one spelling, and none of them is a divider. A leading `;` is PyMdownX's
+escape: the line includes nothing and is the text it spells, less one `;`.
 
 ---
 
@@ -454,9 +533,14 @@ URL; write `\@` to force a literal one, and `\#` for a literal hash before `[` o
 
 Footnotes are limited to one line in print — keep them tight.
 
+A standalone anchor — one you want to refer to but that no heading, image or caption
+line hosts — is the span `[]{#id}`. A bare `@key` must begin with a letter, so a
+Zotero-style key such as `1RgTv` is only reachable bracketed: `@[1RgTv]`.
+
 ⚠️ **Deprecated:** `[^key]` and `^[k1,k2]` as *citations*, `[](gls:term)`,
-`#{prefix:key}`, `{index:reg}[…]`, `{index}[…]{b}`. Real footnotes (`[^1]` with a
-definition) are untouched.
+`#{prefix:key}`, `{index:reg}[…]`, `{index}[…]{b}`, and `[](){#id}` for an anchor
+(an empty link is no link: write `[]{#id}`). Real footnotes (`[^1]` with a definition)
+are untouched.
 
 ---
 
@@ -594,11 +678,19 @@ Before handing off a TeXSmith document, verify:
 - [ ] Front matter is at line 1, fenced by `---`, valid YAML, with a `template`;
       TeXSmith keys under `press:`, metadata at the root.
 - [ ] Headings are **not** manually numbered; `base_level` matches the template.
-- [ ] `---` is used **only** for intentional page breaks (blank line before/after).
+- [ ] A top-level `---` is used **only** for an intentional page break (blank line
+      before/after); inside a container the same `---` is a separator, which is what you
+      want there.
+- [ ] Every heading you refer to carries an explicit `{#id}` — an implicit id breaks
+      when the title is edited.
 - [ ] Bold is `**…**`; small caps is `{sc}[…]` (or `__…__` knowingly).
 - [ ] Nested list items are indented to the parent's content column.
 - [ ] No space after `$`/`\(` in math; a numbered equation carries `$$ … $$ {#eq:x}`.
-- [ ] Figures use `![alt](src){width=…}` followed by a `Figure: … {#fig:…}` line.
+- [ ] Figures use `![alt](src){width=…}` followed by a `Figure: … {#fig:…}` line;
+      sub-figures live in a `::: figure` container, which takes the number while the
+      images take letters.
+- [ ] Containers use a name from the closed registry; `::::` when nesting `tab` in
+      `tabs`; no `[TOC]` or dotted `::: pkg.module` in a print document.
 - [ ] Cross-references and citations use `@…` — no hardcoded numbers, no
       "above"/"below".
 - [ ] Tables needing spans/grouped headers use `yaml table`; span slots are `~`; the

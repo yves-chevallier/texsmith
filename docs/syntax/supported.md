@@ -64,6 +64,12 @@ break there would tear the container in two.
 | Small caps | `{sc}[x]` (sugar `__x__`) | X1 |
 | Subscript / superscript | `{sub}[x]` / `{sup}[x]` (sugar `~x~`, `^x^`) | X3 / E |
 | Emoji | `:sparkles:` | E |
+| Material icons | `:material-cog:` (web only) | D |
+| Smart symbols | `(c)`, `-->`, `1/2` | E |
+| Quotes | `"a phrase"` → `\enquote{…}` | C |
+| Insert | `{underline}[x]` (sugar `^^x^^`, feature `inline.insert`) | D |
+| Unnumbered heading | `# Preface {.unnumbered}` / `{.unlisted}` — [Headings](headings.md) | E |
+| Anchor on a phrase | `[this claim]{#claim:one}` | D |
 | Autolinks | bare URLs | E |
 | Critic markup | `{++added++}`, `{--removed--}` | E |
 | Math | `$x$`, `$$…$$ {#eq:x}` | C |
@@ -76,6 +82,7 @@ break there would tear the container in two.
 | Raw passthrough | `{raw latex}(…)`, ```` ```latex raw ```` | D |
 | Includes | `{include}(file.md)` | D |
 | Diagrams | `![Pipeline](pipeline.mmd)`, ```` ```mermaid image ```` | C / E |
+| Foreign directives | `[TOC]`, `::: pkg.module` (kept verbatim, dropped in print) | E / D |
 
 Classes are the degradation classes of [TMark](index.md#degradation-classes):
 what a renderer other than TeXSmith shows for the same bytes.
@@ -174,6 +181,19 @@ file without inlining it, put `include=` on the fence:
 ````
 
 The PyMdownX snippet syntax `--8<-- "file"` is accepted as deprecated sugar.
+Its marker is `-{2,}8<-{2,}`, so any dash count on either side is the same
+spelling (`---8<---` included), and a leading `;` disables the line. See
+[Code](code.md#external-sources).
+
+## Foreign directives
+
+`[TOC]` and a **dotted** `::: pkg.module` line — mkdocstrings' syntax, its
+options in the indented YAML that follows — are directives for a processor
+other than TMark. Both are kept verbatim, and both are **dropped by the paged
+writers**: the printed table of contents is `press.toc`, and an API reference
+has no print form. A dotted directive raises the hint `directive-foreign` so a
+print document does not lose a block without notice. See
+[Admonitions](admonitions.md#foreign-directives).
 
 ## When you need more
 
