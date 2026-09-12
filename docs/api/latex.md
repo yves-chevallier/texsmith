@@ -2,7 +2,7 @@
 
 ::: texsmith.adapters.latex
 
-::: texsmith.adapters.latex.formatter
+::: texsmith.writers.latex
 
 ::: texsmith.adapters.latex.engines.latex.log
 
