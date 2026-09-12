@@ -1,22 +1,29 @@
 # Lead-in paragraph
 
-Spec §Para: `{lead}[…]` is canonical; a short leading strong span is
-promoted by the `paragraph.lead` feature.
+Spec §Para: `{lead}[…]` is canonical; the `paragraph.lead` feature promotes
+a paragraph that *is* one strong span under 80 characters. A strong span
+that merely opens a paragraph stays a bold run-in.
 
 ## input
 
 ```md
-**Boot sequence.** The device powers the flash before the SoC.
+**Boot sequence.**
+
+**Leading bold:** the device powers the flash.
 ```
 
 ```md
-{lead}[Boot sequence.] The device powers the flash before the SoC.
+{lead}[Boot sequence.]
+
+**Leading bold:** the device powers the flash.
 ```
 
 ## canonical
 
 ```md
-{lead}[Boot sequence.] The device powers the flash before the SoC.
+{lead}[Boot sequence.]
+
+**Leading bold:** the device powers the flash.
 ```
 
 ## ir
@@ -26,16 +33,28 @@ promoted by the `paragraph.lead` feature.
   "blocks": [
     {
       "type": "Para",
-      "content": [
-        {
-          "type": "Str",
-          "text": "The device powers the flash before the SoC."
-        }
-      ],
       "lead": [
         {
           "type": "Str",
           "text": "Boot sequence."
+        }
+      ]
+    },
+    {
+      "type": "Para",
+      "content": [
+        {
+          "type": "Strong",
+          "content": [
+            {
+              "type": "Str",
+              "text": "Leading bold:"
+            }
+          ]
+        },
+        {
+          "type": "Str",
+          "text": " the device powers the flash."
         }
       ]
     }

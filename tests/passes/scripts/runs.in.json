@@ -105,6 +105,27 @@
       ],
       "content": [
         {
+          "type": "Strong",
+          "id": 10,
+          "span": [
+            0,
+            120,
+            136
+          ],
+          "content": [
+            {
+              "type": "Str",
+              "id": 11,
+              "span": [
+                0,
+                122,
+                134
+              ],
+              "text": "Жирный"
+            }
+          ]
+        },
+        {
           "type": "Str",
           "id": 12,
           "span": [
@@ -112,17 +133,26 @@
             136,
             195
           ],
-          "text": "text with an emoji 😀 and Tibetan བོད་ཡིག."
+          "text": " text with an emoji 😀 and Tibetan བོད་ཡིག."
         }
+      ]
+    },
+    {
+      "type": "Para",
+      "id": 13,
+      "span": [
+        0,
+        197,
+        213
       ],
       "lead": [
         {
           "type": "Str",
-          "id": 11,
+          "id": 15,
           "span": [
             0,
-            122,
-            134
+            199,
+            211
           ],
           "text": "Жирный"
         }

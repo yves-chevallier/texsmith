@@ -1,168 +1,193 @@
 {
-  "blocks": [
+ "blocks": [
+  {
+   "type": "Header",
+   "level": 1,
+   "content": [
     {
-      "type": "Header",
-      "level": 1,
-      "content": [
-        {
-          "type": "Str",
-          "text": "Scripts"
-        }
-      ]
-    },
-    {
-      "type": "Para",
-      "content": [
-        {
-          "type": "Str",
-          "text": "Hello "
-        },
-        {
-          "type": "Span",
-          "attrs": {
-            "kv": [
-              [
-                "script",
-                "cyrillics"
-              ]
-            ]
-          },
-          "content": [
-            {
-              "type": "Str",
-              "text": "Привет мир "
-            }
-          ]
-        },
-        {
-          "type": "Str",
-          "text": "and "
-        },
-        {
-          "type": "Span",
-          "attrs": {
-            "kv": [
-              [
-                "script",
-                "japanese"
-              ]
-            ]
-          },
-          "content": [
-            {
-              "type": "Str",
-              "text": "日本語のテキスト "
-            }
-          ]
-        },
-        {
-          "type": "Str",
-          "text": "text."
-        }
-      ]
-    },
-    {
-      "type": "Para",
-      "content": [
-        {
-          "type": "Str",
-          "text": "A lone "
-        },
-        {
-          "type": "Math",
-          "text": "\\Omega"
-        },
-        {
-          "type": "Str",
-          "text": " and "
-        },
-        {
-          "type": "Math",
-          "text": "\\aleph"
-        },
-        {
-          "type": "Str",
-          "text": " here, and "
-        },
-        {
-          "type": "Code",
-          "text": "код"
-        },
-        {
-          "type": "Str",
-          "text": " in code."
-        }
-      ]
-    },
-    {
-      "type": "Para",
-      "lead": [
-        {
-          "type": "Span",
-          "attrs": {
-            "kv": [
-              [
-                "script",
-                "cyrillics"
-              ]
-            ]
-          },
-          "content": [
-            {
-              "type": "Str",
-              "text": "Жирный"
-            }
-          ]
-        }
-      ],
-      "content": [
-        {
-          "type": "Str",
-          "text": "text with an emoji "
-        },
-        {
-          "type": "Span",
-          "attrs": {
-            "kv": [
-              [
-                "emoji",
-                "😀"
-              ]
-            ]
-          },
-          "content": [
-            {
-              "type": "Str",
-              "text": "😀"
-            }
-          ]
-        },
-        {
-          "type": "Str",
-          "text": " and Tibetan "
-        },
-        {
-          "type": "Span",
-          "attrs": {
-            "kv": [
-              [
-                "script",
-                "tibetan"
-              ]
-            ]
-          },
-          "content": [
-            {
-              "type": "Str",
-              "text": "བོད་ཡིག"
-            }
-          ]
-        },
-        {
-          "type": "Str",
-          "text": "."
-        }
-      ]
+     "type": "Str",
+     "text": "Scripts"
     }
-  ]
+   ]
+  },
+  {
+   "type": "Para",
+   "content": [
+    {
+     "type": "Str",
+     "text": "Hello "
+    },
+    {
+     "type": "Span",
+     "attrs": {
+      "kv": [
+       [
+        "script",
+        "cyrillics"
+       ]
+      ]
+     },
+     "content": [
+      {
+       "type": "Str",
+       "text": "Привет мир "
+      }
+     ]
+    },
+    {
+     "type": "Str",
+     "text": "and "
+    },
+    {
+     "type": "Span",
+     "attrs": {
+      "kv": [
+       [
+        "script",
+        "japanese"
+       ]
+      ]
+     },
+     "content": [
+      {
+       "type": "Str",
+       "text": "日本語のテキスト "
+      }
+     ]
+    },
+    {
+     "type": "Str",
+     "text": "text."
+    }
+   ]
+  },
+  {
+   "type": "Para",
+   "content": [
+    {
+     "type": "Str",
+     "text": "A lone "
+    },
+    {
+     "type": "Math",
+     "text": "\\Omega"
+    },
+    {
+     "type": "Str",
+     "text": " and "
+    },
+    {
+     "type": "Math",
+     "text": "\\aleph"
+    },
+    {
+     "type": "Str",
+     "text": " here, and "
+    },
+    {
+     "type": "Code",
+     "text": "код"
+    },
+    {
+     "type": "Str",
+     "text": " in code."
+    }
+   ]
+  },
+  {
+   "type": "Para",
+   "content": [
+    {
+     "type": "Strong",
+     "content": [
+      {
+       "type": "Span",
+       "attrs": {
+        "kv": [
+         [
+          "script",
+          "cyrillics"
+         ]
+        ]
+       },
+       "content": [
+        {
+         "type": "Str",
+         "text": "Жирный"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "type": "Str",
+     "text": " text with an emoji "
+    },
+    {
+     "type": "Span",
+     "attrs": {
+      "kv": [
+       [
+        "emoji",
+        "😀"
+       ]
+      ]
+     },
+     "content": [
+      {
+       "type": "Str",
+       "text": "😀"
+      }
+     ]
+    },
+    {
+     "type": "Str",
+     "text": " and Tibetan "
+    },
+    {
+     "type": "Span",
+     "attrs": {
+      "kv": [
+       [
+        "script",
+        "tibetan"
+       ]
+      ]
+     },
+     "content": [
+      {
+       "type": "Str",
+       "text": "བོད་ཡིག"
+      }
+     ]
+    },
+    {
+     "type": "Str",
+     "text": "."
+    }
+   ]
+  },
+  {
+   "type": "Para",
+   "lead": [
+    {
+     "type": "Span",
+     "attrs": {
+      "kv": [
+       [
+        "script",
+        "cyrillics"
+       ]
+      ]
+     },
+     "content": [
+      {
+       "type": "Str",
+       "text": "Жирный"
+      }
+     ]
+    }
+   ]
+  }
+ ]
 }

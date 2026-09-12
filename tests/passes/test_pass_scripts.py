@@ -38,6 +38,7 @@ def test_runs_math_letters_and_summary(harness, fake_script_detector) -> None:
         ("japanese", "日本語のテキスト "),  # the CJK vote: kana outnumber ideographs
         ("cyrillics", "Жирный"),
         ("tibetan", "བོད་ཡིག"),
+        ("cyrillics", "Жирный"),  # the lead-in paragraph
     ]
     # A lone Greek or Hebrew letter is math (``fonts/scripts.py:89-113``).
     assert [node.text for node in walk(out.ir) if isinstance(node, model.Math)] == [
@@ -46,8 +47,8 @@ def test_runs_math_letters_and_summary(harness, fake_script_detector) -> None:
     ]
     # Code is untouched, the emoji span is fenced off, ASCII text is shared.
     assert [node.text for node in walk(out.ir) if isinstance(node, model.Code)] == ["код"]
-    emoji = [node for node in walk(out.ir) if isinstance(node, model.SpanNode)]
-    assert dict(emoji[-2].attrs.kv) == {"emoji": "😀"}
+    spans_by_key = [dict(node.attrs.kv) for node in walk(out.ir) if isinstance(node, model.SpanNode)]
+    assert {"emoji": "😀"} in spans_by_key
     assert out.ir.blocks[0] is document.ir.blocks[0]
 
     # Span rule 2: a span and its text take the source ``Str``'s span, fresh ids.
@@ -81,9 +82,15 @@ def test_intended_difference_with_the_legacy_wrapper(harness, fake_script_detect
     document = harness.load("scripts", "runs")
     ctx = _context(harness, document, fake_script_detector)
     out = harness.run("scripts", document, ctx)
-    lead = out.ir.blocks[3].lead
+    # The paragraph that is one strong span is the lead-in (tmark C44); the
+    # one that merely starts with a strong span keeps it inline. Both carry a
+    # Cyrillic run the legacy wrapper would have skipped.
+    lead = out.ir.blocks[4].lead
     assert lead is not None and isinstance(lead[0], model.SpanNode)
     assert dict(lead[0].attrs.kv) == {"script": "cyrillics"}
+    strong = out.ir.blocks[3].content[0]
+    assert isinstance(strong, model.Strong)
+    assert dict(strong.content[0].attrs.kv) == {"script": "cyrillics"}
 
 
 def test_identity_for_ascii_documents(harness, fake_script_detector) -> None:

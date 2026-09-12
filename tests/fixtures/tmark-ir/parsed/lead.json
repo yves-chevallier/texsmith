@@ -16,19 +16,7 @@
       "span": [
         0,
         0,
-        66
-      ],
-      "content": [
-        {
-          "type": "Str",
-          "id": 4,
-          "span": [
-            0,
-            22,
-            66
-          ],
-          "text": "The device powers the flash before the SoC."
-        }
+        22
       ],
       "lead": [
         {
@@ -40,6 +28,48 @@
             21
           ],
           "text": "Boot sequence."
+        }
+      ]
+    },
+    {
+      "type": "Para",
+      "id": 4,
+      "span": [
+        0,
+        24,
+        70
+      ],
+      "content": [
+        {
+          "type": "Strong",
+          "id": 5,
+          "span": [
+            0,
+            24,
+            41
+          ],
+          "content": [
+            {
+              "type": "Str",
+              "id": 6,
+              "span": [
+                0,
+                26,
+                39
+              ],
+              "text": "Leading bold:"
+            }
+          ]
+        },
+        {
+          "type": "Str",
+          "id": 7,
+          "span": [
+            0,
+            41,
+            70
+          ],
+          "text": " the device powers the flash."
         }
       ]
     }

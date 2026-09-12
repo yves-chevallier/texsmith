@@ -114,8 +114,8 @@
               "id": 11,
               "span": [
                 0,
-                82,
-                132
+                90,
+                131
               ],
               "text": "Watchdog traces before and after the fix."
             }

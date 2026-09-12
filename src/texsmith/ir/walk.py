@@ -56,16 +56,35 @@ def _holds_nodes(value: Any) -> bool:
     return False
 
 
+#: Where a type's fields are not visited in declaration order. The dataclasses
+#: are generated from the JSON schema, whose properties schemars sorts
+#: alphabetically, so the order of ``TableModel`` says nothing; ``tmark_ir::walk``
+#: visits a table's column titles (the header row) before its body rows.
+_CHILD_ORDER: dict[str, tuple[str, ...]] = {
+    "TableModel": ("columns", "rows", "footer"),
+    "Para": ("lead", "content"),
+}
+
+
+def _ordered_fields(node: Node | Record) -> tuple[str, ...]:
+    names = tuple(f.name for f in fields(node))
+    order = _CHILD_ORDER.get(type(node).__name__)
+    if order is None:
+        return names
+    return order + tuple(name for name in names if name not in order)
+
+
 def iter_child_fields(node: Node | Record) -> Iterator[tuple[str, Any]]:
     """Yield ``(field_name, value)`` for each field holding child node(s).
 
     Scalar fields, enums, spans and records without nodes (``Attrs``, the
-    front matter, ``TableSettings``) are skipped.
+    front matter, ``TableSettings``) are skipped. The order is tmark's
+    pre-order (see :data:`_CHILD_ORDER`), not the declaration order.
     """
-    for f in fields(node):
-        value = getattr(node, f.name)
+    for name in _ordered_fields(node):
+        value = getattr(node, name)
         if _holds_nodes(value):
-            yield f.name, value
+            yield name, value
 
 
 def _iter_nodes(value: Any) -> Iterator[Node]:
@@ -76,15 +95,15 @@ def _iter_nodes(value: Any) -> Iterator[Node]:
         for item in value:
             yield from _iter_nodes(item)
     elif isinstance(value, Record):
-        for f in fields(value):
-            yield from _iter_nodes(getattr(value, f.name))
+        for name in _ordered_fields(value):
+            yield from _iter_nodes(getattr(value, name))
 
 
 def children(node: Node | Record) -> tuple[Node, ...]:
-    """The direct child nodes of ``node`` in field order."""
+    """The direct child nodes of ``node``, in tmark's pre-order."""
     result: list[Node] = []
-    for f in fields(node):
-        result.extend(_iter_nodes(getattr(node, f.name)))
+    for name in _ordered_fields(node):
+        result.extend(_iter_nodes(getattr(node, name)))
     return tuple(result)
 
 

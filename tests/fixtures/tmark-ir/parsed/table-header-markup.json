@@ -1,0 +1,184 @@
+{
+  "file": 0,
+  "front_matter": {
+    "id": 0,
+    "span": [
+      0,
+      0,
+      0
+    ],
+    "keys": {}
+  },
+  "blocks": [
+    {
+      "type": "Table",
+      "id": 1,
+      "span": [
+        0,
+        0,
+        182
+      ],
+      "model": {
+        "settings": {
+          "width": "auto"
+        },
+        "columns": [
+          {
+            "type": "Leaf",
+            "name": "Key tlmgr name",
+            "title": [
+              {
+                "type": "Str",
+                "id": 2,
+                "span": [
+                  0,
+                  2,
+                  6
+                ],
+                "text": "Key "
+              },
+              {
+                "type": "Code",
+                "id": 3,
+                "span": [
+                  0,
+                  6,
+                  13
+                ],
+                "text": "tlmgr"
+              },
+              {
+                "type": "Str",
+                "id": 4,
+                "span": [
+                  0,
+                  13,
+                  18
+                ],
+                "text": " name"
+              }
+            ]
+          },
+          {
+            "type": "Leaf",
+            "name": "Bold head",
+            "title": [
+              {
+                "type": "Strong",
+                "id": 5,
+                "span": [
+                  0,
+                  21,
+                  34
+                ],
+                "content": [
+                  {
+                    "type": "Str",
+                    "id": 6,
+                    "span": [
+                      0,
+                      23,
+                      32
+                    ],
+                    "text": "Bold head"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "type": "Leaf",
+            "name": "Link",
+            "title": [
+              {
+                "type": "Link",
+                "id": 7,
+                "span": [
+                  0,
+                  37,
+                  58
+                ],
+                "content": [
+                  {
+                    "type": "Str",
+                    "id": 8,
+                    "span": [
+                      0,
+                      38,
+                      42
+                    ],
+                    "text": "Link"
+                  }
+                ],
+                "target": {
+                  "type": "Url",
+                  "value": "https://e.org"
+                }
+              }
+            ]
+          }
+        ],
+        "rows": [
+          {
+            "type": "Data",
+            "cells": [
+              {
+                "content": [
+                  {
+                    "type": "Code",
+                    "id": 9,
+                    "span": [
+                      0,
+                      124,
+                      135
+                    ],
+                    "text": "body code"
+                  }
+                ]
+              },
+              {
+                "content": [
+                  {
+                    "type": "Emph",
+                    "id": 10,
+                    "span": [
+                      0,
+                      143,
+                      147
+                    ],
+                    "content": [
+                      {
+                        "type": "Str",
+                        "id": 11,
+                        "span": [
+                          0,
+                          144,
+                          146
+                        ],
+                        "text": "em"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "content": [
+                  {
+                    "type": "Str",
+                    "id": 12,
+                    "span": [
+                      0,
+                      159,
+                      164
+                    ],
+                    "text": "plain"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

@@ -66,7 +66,7 @@
           "id": 6,
           "span": [
             0,
-            39,
+            47,
             87
           ],
           "text": "Melting behavior of high-moisture cheese"
@@ -86,7 +86,7 @@
           "span": [
             0,
             88,
-            101
+            100
           ],
           "text": "upon heating"
         }
@@ -175,8 +175,8 @@
           "id": 15,
           "span": [
             0,
-            170,
-            197
+            177,
+            196
           ],
           "text": "Hard cheese samples"
         }

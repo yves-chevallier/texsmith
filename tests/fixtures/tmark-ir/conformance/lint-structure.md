@@ -10,7 +10,7 @@ promoted by `paragraph.lead` (information: the formatter writes the role).
 
 ### Skipped
 
-**Note.** Promoted.
+**Note.**
 
 | a |
 | - |
@@ -26,7 +26,7 @@ Table: T. {#fig:t}
 
 ### Skipped
 
-{lead}[Note.] Promoted.
+{lead}[Note.]
 
 | a   |
 | --- |
@@ -62,12 +62,6 @@ Table: T. {#fig:t}
     },
     {
       "type": "Para",
-      "content": [
-        {
-          "type": "Str",
-          "text": "Promoted."
-        }
-      ],
       "lead": [
         {
           "type": "Str",
@@ -125,7 +119,7 @@ Table: T. {#fig:t}
 
 ```text
 heading-skip @ 3:1-3:12
-lead-promotion @ 5:1-5:20
+lead-promotion @ 5:1-5:10
 caption-id-off-convention @ 11:1-11:19
 prefix-host-mismatch @ 11:1-11:19
 ```

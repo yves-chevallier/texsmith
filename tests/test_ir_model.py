@@ -115,6 +115,7 @@ def reference_walk(doc: model.Document) -> list[model.Node]:
                         for definition in definitions:
                             blocks(definition)
                 case model.Table(model=table):
+                    columns(table.columns)
                     for row in (*table.rows, *table.footer):
                         if isinstance(row, model.DataRow):
                             for cell in row.cells:
@@ -125,6 +126,14 @@ def reference_walk(doc: model.Document) -> list[model.Node]:
                     blocks(content)
                 case _:
                     pass
+
+    def columns(items: tuple[model.Column, ...]) -> None:
+        for column in items:
+            if isinstance(column, model.LeafColumn):
+                inlines(column.title)
+            else:
+                inlines(column.title)
+                columns(column.columns)
 
     def inlines(items: tuple[model.Inline, ...]) -> None:
         for inline in items:

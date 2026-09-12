@@ -94,7 +94,7 @@ def test_counters_example_numbers_through_resolve(tmp_path: Path) -> None:
     assert "\\label{fw:watchdog}FW-01" in body
     assert "\\label{req:log-retention}REQ-103" in body
     assert "\\hyperref[fw:watchdog]{FW-01}" in body
-    assert "\\tscodeinline{counters:}" in body
+    assert "\\tscodeinline{press.declare.counters}" in body
     assert "\\begin{tabularx}" in body
     # Undeclared prefixes survive verbatim.
     assert "node.id" in body

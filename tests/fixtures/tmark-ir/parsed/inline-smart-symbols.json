@@ -1,0 +1,108 @@
+{
+  "file": 0,
+  "front_matter": {
+    "id": 0,
+    "span": [
+      0,
+      0,
+      0
+    ],
+    "keys": {}
+  },
+  "blocks": [
+    {
+      "type": "Para",
+      "id": 1,
+      "span": [
+        0,
+        0,
+        78
+      ],
+      "content": [
+        {
+          "type": "Str",
+          "id": 2,
+          "span": [
+            0,
+            0,
+            78
+          ],
+          "text": "Copyright © 2025, tea ™, reg ®, ℅ Ada: ½ a cup, ± 3, 4 ≠ 5, a → b."
+        }
+      ]
+    },
+    {
+      "type": "Para",
+      "id": 3,
+      "span": [
+        0,
+        80,
+        143
+      ],
+      "content": [
+        {
+          "type": "Str",
+          "id": 4,
+          "span": [
+            0,
+            80,
+            88
+          ],
+          "text": "He said "
+        },
+        {
+          "type": "Quoted",
+          "id": 5,
+          "span": [
+            0,
+            88,
+            105
+          ],
+          "kind": "double",
+          "content": [
+            {
+              "type": "Str",
+              "id": 6,
+              "span": [
+                0,
+                89,
+                104
+              ],
+              "text": "straight quotes"
+            }
+          ]
+        },
+        {
+          "type": "Str",
+          "id": 7,
+          "span": [
+            0,
+            105,
+            107
+          ],
+          "text": ", "
+        },
+        {
+          "type": "Code",
+          "id": 8,
+          "span": [
+            0,
+            107,
+            122
+          ],
+          "text": "\"not in code\""
+        },
+        {
+          "type": "Str",
+          "id": 9,
+          "span": [
+            0,
+            122,
+            143
+          ],
+          "text": ", and \"not a quote\"."
+        }
+      ]
+    }
+  ]
+}

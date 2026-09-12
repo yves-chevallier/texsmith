@@ -1159,11 +1159,18 @@
               ]
             },
             "name": {
-              "description": "Python `LeafColumn.name`.",
+              "description": "Python `LeafColumn.name`: the header as plain text. It is the key of named-row mode and what a diagnostic names the column by, so it stays a string even when the header carries markup.",
               "type": [
                 "string",
                 "null"
               ]
+            },
+            "title": {
+              "description": "The header cell parsed as inline Markdown (spec §Table: \"Inline Markdown survives inside cells in all forms\"). Empty when the header is plain text, which is the common case: writers render `title` when it is set and escape `name` otherwise.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/Inline"
+              }
             },
             "type": {
               "type": "string",
@@ -1215,8 +1222,15 @@
               }
             },
             "name": {
-              "description": "Python `ColumnGroup.name`.",
+              "description": "Python `ColumnGroup.name`: the header as plain text, like [`LeafColumn::name`].",
               "type": "string"
+            },
+            "title": {
+              "description": "The group header parsed as inline Markdown, like [`LeafColumn::title`].",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/Inline"
+              }
             },
             "type": {
               "type": "string",

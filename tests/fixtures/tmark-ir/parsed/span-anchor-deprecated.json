@@ -11,37 +11,32 @@
   },
   "blocks": [
     {
-      "type": "Header",
+      "type": "Para",
       "id": 1,
       "span": [
         0,
         0,
-        26
+        13
       ],
-      "level": 2,
       "content": [
         {
-          "type": "Str",
+          "type": "Span",
           "id": 2,
           "span": [
             0,
-            3,
-            7
+            0,
+            13
           ],
-          "text": "Boot"
+          "attrs": {
+            "id": "myanchor",
+            "id_span": [
+              0,
+              4,
+              12
+            ]
+          }
         }
-      ],
-      "attrs": {
-        "id": "sec:boot",
-        "id_span": [
-          0,
-          10,
-          18
-        ],
-        "classes": [
-          "draft"
-        ]
-      }
+      ]
     }
   ]
 }

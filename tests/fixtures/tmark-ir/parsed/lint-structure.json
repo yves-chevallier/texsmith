@@ -60,19 +60,7 @@
       "span": [
         0,
         20,
-        43
-      ],
-      "content": [
-        {
-          "type": "Str",
-          "id": 8,
-          "span": [
-            0,
-            33,
-            43
-          ],
-          "text": "Promoted."
-        }
+        33
       ],
       "lead": [
         {
@@ -89,11 +77,11 @@
     },
     {
       "type": "Table",
-      "id": 9,
+      "id": 8,
       "span": [
         0,
-        45,
-        68
+        35,
+        58
       ],
       "model": {
         "settings": {
@@ -113,11 +101,11 @@
                 "content": [
                   {
                     "type": "Str",
-                    "id": 11,
+                    "id": 10,
                     "span": [
                       0,
-                      63,
-                      64
+                      53,
+                      54
                     ],
                     "text": "1"
                   }
@@ -130,21 +118,21 @@
     },
     {
       "type": "Caption",
-      "id": 12,
+      "id": 11,
       "span": [
         0,
-        70,
-        88
+        60,
+        78
       ],
       "kind": "table",
       "content": [
         {
           "type": "Str",
-          "id": 13,
+          "id": 12,
           "span": [
             0,
-            70,
-            80
+            67,
+            69
           ],
           "text": "T."
         }
@@ -153,8 +141,8 @@
         "id": "fig:t",
         "id_span": [
           0,
-          82,
-          87
+          72,
+          77
         ]
       },
       "position": "after"
