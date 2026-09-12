@@ -60,7 +60,6 @@ from .conversion.inputs import (
 )
 from .diagnostics import DiagnosticEmitter, NullEmitter
 from .front_matter import split_front_matter
-from .heading_analysis import HeadingInspector, HeadingLevelScanner
 from .metadata import PressMetadataError, normalise_press_metadata
 from .templates.runtime import coerce_base_level
 
@@ -656,44 +655,8 @@ class Document:
                 self.slot_options.update(base_options)
         self._invalidate_prepared()
 
-    @classmethod
-    def _resolve_heading_alignment(cls, html: str, strategy: TitleStrategy) -> int:
-        if strategy is not TitleStrategy.KEEP:
-            return 0
-
-        scanner = HeadingLevelScanner()
-        try:
-            scanner.feed(html)
-        finally:
-            scanner.close()
-
-        minimum = scanner.minimum_level
-        if minimum is None or minimum <= 1:
-            return 0
-        return minimum - 1
-
     def _extract_promoted_title(self) -> tuple[str | None, bool]:
-        """Return the promoted title and whether the heading should be dropped."""
-        if self.ir is not None:
-            return self._extract_promoted_title_ir()
-        inspector = HeadingInspector()
-        try:
-            inspector.feed(self._html)
-        finally:
-            inspector.close()
-
-        if inspector.first_level is None:
-            return None, False
-
-        level_count = inspector.level_counts.get(inspector.first_level, 0)
-        if level_count != 1:
-            return None, False
-
-        text = "".join(inspector.parts).strip()
-        return (text or None, bool(text))
-
-    def _extract_promoted_title_ir(self) -> tuple[str | None, bool]:
-        """The IR twin of :meth:`_extract_promoted_title`: first top-level header, unique at its level."""
+        """The title a leading top-level header promotes to, unique at its level."""
         headers = self.top_level_headers()
         if not headers:
             return None, False
@@ -705,15 +668,8 @@ class Document:
 
     def _first_heading_level(self) -> int | None:
         """Return the level of the first heading in the document, if any."""
-        if self.ir is not None:
-            headers = self.top_level_headers()
-            return headers[0].level if headers else None
-        inspector = HeadingInspector()
-        try:
-            inspector.feed(self._html)
-        finally:
-            inspector.close()
-        return inspector.first_level
+        headers = self.top_level_headers()
+        return headers[0].level if headers else None
 
     def first_heading_level(self) -> int | None:
         """Public accessor for the first heading level in the document."""

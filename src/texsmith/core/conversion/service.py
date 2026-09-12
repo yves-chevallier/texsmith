@@ -411,18 +411,26 @@ def _publish_reference_inventory(
     stem: str,
 ) -> None:
     """Publish the ``*.refs.json`` other documents cite this one through."""
-    from texsmith.core.crossrefs import publish_inventory
+    from texsmith.core.crossrefs import anchors_from_resolved, publish_inventory
 
     primary = documents[0] if documents else None
-    metadata = dict(primary.front_matter) if primary is not None else {}
-    if primary is not None and not metadata.get("title") and primary.extracted_title:
+    if primary is None:
+        return
+    metadata = dict(primary.front_matter)
+    if not metadata.get("title") and primary.extracted_title:
         metadata["title"] = primary.extracted_title
+    # One inventory per build: the anchors of every document of the batch, in
+    # conversion order, since they share one continuous counter series.
+    anchors = {}
+    for document in documents:
+        anchors.update(anchors_from_resolved(document.resolved))
     try:
         publish_inventory(
             output_dir=output_dir,
             stem=stem,
             metadata=metadata,
-            source_path=primary.source_path if primary is not None else None,
+            source_path=primary.source_path,
+            anchors=anchors,
         )
     except OSError as exc:  # pragma: no cover - the conversion itself succeeded
         logger.warning("Could not write the cross-reference inventory: %s", exc)

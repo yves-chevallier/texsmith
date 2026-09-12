@@ -279,6 +279,9 @@ def _render_document(
             raise
         raise_conversion_error(emitter, str(exc), exc)
     slot_outputs = ir_result.slot_outputs
+    # The resolution travels back onto the caller's document: the service
+    # publishes its reference inventory from the labels tmark allocated.
+    document.resolved = ir_result.document.resolved
     document_state = ir_result.document_state
     if initial_state is not None:
         # A batch of linked fragments shares one state object: the template
