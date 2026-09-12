@@ -215,8 +215,14 @@ def render_typst_from_ir(
     pass_state = state if state is not None else DocumentState()
     apply_pass_values(ctx, pass_state, context.template_overrides)
 
-    if not title and processed.extracted_title:
-        title = processed.extracted_title
+    if not title and typst_template is not None:
+        # The legacy Typst path promotes the leading top-level heading in
+        # ``_render_templated``/``_promote_title``; on the IR path the ``title``
+        # pass has already dropped that heading from the body, so the title has
+        # to come from the document's own promotion decision — without it the
+        # template renders ``title: ""``, no title block, and (in ``letter``) no
+        # salutation. Standalone keeps the heading in the body, as legacy does.
+        title = document.promoted_title()
     mainmatter = bodies.get(default_slot, Body(text="")).text
     prelude = typst_prelude()
 
@@ -240,6 +246,10 @@ def render_typst_from_ir(
     template_context["title"] = title
     template_context["author_names"] = author_names
     template_context["author_blocks"] = author_blocks
+    # The language the context resolved (``--language`` or the front matter);
+    # the scaffolding's ``lang:`` and the date filter read it. The legacy path
+    # only ever saw the front-matter attribute, so this is a ``setdefault``.
+    template_context.setdefault("language", context.language)
     date_value = template_context.get("date")
     if date_value:
         from texsmith.core.document_date import format_date

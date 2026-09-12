@@ -729,6 +729,27 @@ class Document:
         self.language = None
         self.bibliography = {}
 
+    def promoted_title(self) -> str:
+        """The title a leading unique top-level heading promotes to (``""`` when none).
+
+        :meth:`prepare_for_conversion` records it in :attr:`extracted_title`
+        for the LaTeX path, which calls it from ``resolve_conversion_context``.
+        The Typst entry points get the document straight from
+        ``prepare_documents``, before that runs, so they ask for the same
+        decision here: the strategy must be ``PROMOTE_METADATA`` (the front
+        matter declares no title), ``--no-title`` must not suppress it, and
+        the heading must be the unique one at its level — the exact condition
+        under which the ``title`` pass drops the heading from the body.
+        """
+        if self.extracted_title:
+            return self.extracted_title
+        if self.title_strategy is not TitleStrategy.PROMOTE_METADATA:
+            return ""
+        if self.suppress_title_metadata:
+            return ""
+        title, should_drop = self._extract_promoted_title()
+        return title if title and should_drop else ""
+
     def prepare_for_conversion(self) -> Document:
         """Normalise metadata and slot requests so the document is ready for conversion."""
         strategy = self.title_strategy
