@@ -38,6 +38,40 @@ The full-file (informative) table is 192 entries: 10 identical, 11
 allow-listed, 171 differing — it additionally sees the preamble, where the
 tmark path inlines `texsmith.typ` and a different fragment set.
 
+### 1.1 After the TeXSmith-side round (2026-09-12)
+
+The findings whose cause was in `src/texsmith/` are fixed — F1, F2, F7, F10,
+F11's `uses_eqnref` item and the O5 decision behind F12 — each with its
+commit named in §3. Measured with the tmark checkout of that afternoon (which
+meanwhile grew the F3/F4/F5/F6 fixes, so both columns were re-measured on the
+same one), body table over the whole offline corpus:
+
+| status | before | after |
+| ------ | ------ | ----- |
+| identical | 18 | **35** |
+| allow-listed | 54 | **85** |
+| differs | 120 | **72** |
+| skipped | 54 | 54 |
+| **total** | **246** | **246** |
+
+`--only 'docs/*'` alone (188 entries, 44 skipped), the scope that stays a
+meaningful cross-reader diff after the examples flip: 7 → **23** identical,
+37 → **62** allow-listed, 100 → **59** differing.
+
+On the tmark checkout the triage itself used, the same fixes took the body
+table from 15 / 47 / 130 to 32 / 76 / 84 (F1 alone: 15 / 47 / 130 → 32 / 73 /
+87).
+
+The PDF gate (§6) is clean: `abbr`, `counters`, `index` and `marginnote` are
+all *identical* now that `\tsacr` is `\acrshort`.
+
+No allow-list entry was made dead by these fixes; one entry was added
+(`typst-inline-image-box`, see F10). Two entries — `horizontal-rule-tsdivider`
+and `logo-latex2e` — no longer fire on this corpus, but they were already
+dead before this round (checked by instrumenting `hunk_allowed` /
+`apply_rewrites` on the base tree), so they belong to whoever owns the writer
+change that stopped emitting them.
+
 ## 2. How the hunks were classified
 
 **(a) Contract renames → `rewrite`.** The partial → contract macro renames of
@@ -104,7 +138,7 @@ purpose — they are counted as findings.
 Ranked by severity. Every reproduction is a complete document; render it
 twice with `--reader html` and `--reader tmark` and compare the body.
 
-### F1 — the Typst template gets no document metadata (78 entries)
+### F1 — the Typst template gets no document metadata (78 entries) — **fixed** (`1c8e1d6`)
 
 `#set document(title: "")`, no rendered title block, and in the `letter`
 template no `\opening` equivalent: `Dear Maestro Leonardo,` is simply absent
@@ -129,7 +163,20 @@ tmark writes `title: ""` and no title block at all.
 Severity: **high** — every Typst document loses its title page. It is also
 the single blocker keeping 84 Typst entries out of *allow-listed*.
 
-### F2 — front-matter `glossary.entries` are ignored (both backends)
+**Fixed** in `1c8e1d6`. The legacy Typst path promotes the leading top-level
+heading inside `_render_templated` (`_promote_title`) and the LaTeX path takes
+the same decision in `prepare_for_conversion`, which `resolve_conversion_context`
+calls; the Typst entry point gets the document straight from `prepare_documents`,
+before either runs, so `extracted_title` was `None` while the `title` pass had
+already dropped the heading from the body. Everything in the scaffolding hangs
+off `{% if title %}`, hence the subtitle, the author block, the date and the
+`letter` salutation going with it. `Document.promoted_title()` now states the
+decision once — `PROMOTE_METADATA`, not suppressed by `--no-title`, heading
+unique at its level, i.e. exactly when the `title` pass drops it — and the
+templated IR branch asks for it; the context also carries the resolved
+`language`. Standalone still keeps the heading in the body, as legacy does.
+
+### F2 — front-matter `glossary.entries` are ignored (both backends) — **fixed** (`afeff69`)
 
 Only acronyms declared with the inline `*[KEY]: …` syntax are recognised. An
 acronym defined in the front matter is printed as plain text and never reaches
@@ -158,7 +205,29 @@ the printed acronym list.
 
 Severity: **high** — silent loss of markup and of glossary entries.
 
-### F3 — inline markup is flattened in a table **header** cell
+**Fixed** in `afeff69`, by a `glossary` pass — so **decision X5 is revised**:
+it said "verify first, no pass by default" and named `examples/glossary` and
+`examples/abbr` as the test, and they fail, which is X5's own condition for
+adding one. The cause: the deprecated top-level `glossary:` key is hoisted
+whole into `press.declare.glossary`, where tmark reads a *flat* `term →
+definition` mapping (`tmark-registry`'s `collect::glossary`) — so `style`,
+`groups` and `entries` became three glossary terms
+(`\newacronym{style}{style}{long}`), the acronyms under `entries` became none,
+and the writer's `abbr::keys`, which knows `Document.abbreviations` and
+`declare.acronyms`, never saw them. The pass appends one `AbbrDef` per entry
+(the IR twin of `append_synthetic_abbr_lines`) and leaves `declare.glossary`
+holding only the flat terms it did not consume. `_declare_glossary` also
+skips a term a cased variant already declares: tmark case-folds
+`Resolved.glossary` while `\tsacr` keeps the acronym's spelling, so an acronym
+both declared and written was printed twice.
+
+The capstone on `tmark-migration` (`5dd9f8a`) meanwhile fixed the substitution
+half differently, by appending the synthetic `*[KEY]: …` lines to the source
+before `tmark.parse` (`documents._append_front_matter_abbreviations`). The two
+compose — the pass adds nothing for a key already defined — and the pass is
+still what keeps `style`/`groups`/`entries` out of the glossary.
+
+### F3 — inline markup is flattened in a table **header** cell — tmark core
 
 A header cell is rendered as plain text: inline code, strong, and — worst —
 links lose their target. Body cells are correct.
@@ -177,7 +246,7 @@ tmark: `\textbf{Key tlmgr name} & \textbf{Bold head} & \textbf{Link} \\`
 Severity: **high** — a hyperlink is destroyed with no diagnostic.
 Seen in `docs/about/release-notes`, `docs/syntax/supported`, `fonts`.
 
-### F4 — the lead-paragraph heuristic is inverted
+### F4 — the lead-paragraph heuristic is inverted — tmark core
 
 `writers-and-passes.md` §2 (Headings) defines `\tslead` as *a paragraph that
 is a single `Strong` under 80 characters*. The tmark writer does the opposite:
@@ -207,7 +276,7 @@ Severity: **medium-high** — `\tslead` adds `\par\noindent…\par\nobreak
 \smallskip`, so firing it mid-sentence breaks the paragraph. 11+ entries,
 both backends (`#ts-lead[…]` in Typst).
 
-### F5 — an anchor-only link becomes literal text and the label is lost
+### F5 — an anchor-only link becomes literal text and the label is lost — tmark core
 
 The `[](){ #id }` anchor idiom (used at the top of `docs/about/release-notes.md`)
 produces an empty `\url{}` followed by the escaped attribute list, and the
@@ -227,7 +296,7 @@ Typst is the same: `<releasenotes>` becomes `#link(""){\#releasenotes}`.
 
 Severity: **high** — a broken cross-reference plus visible garbage.
 
-### F6 — the SmartSymbols / smart-quote substitutions are not applied
+### F6 — the SmartSymbols / smart-quote substitutions are not applied — tmark core
 
 ```markdown
 # T
@@ -247,7 +316,11 @@ ASCII shorthands are affected. 6+ entries (`letter-din`, `booby`,
 
 Severity: **medium** — typography regression, no content loss.
 
-### F7 — the scripts pass misclassifies a Unicode superscript
+**tmark core**: the tmark spec's gap table already lists `` `(c)`, `(tm)`,
+`-->`, `1/2` `` as a `Str` the *parser* produces (class E, "smart symbols"),
+so nothing on the TeXSmith side can supply them.
+
+### F7 — the scripts pass misclassifies a Unicode superscript — **fixed** (`4540018`)
 
 `docs/assets/examples/cheese`, `s⁻¹`:
 
@@ -260,7 +333,14 @@ run is split between the sign and the digit.
 
 Severity: **medium** — wrong macro, and the superscript is broken in two.
 
-### F8 — `pymdownx.snippets` file includes are not expanded
+**Fixed** in `4540018`. `SuperscriptsAndSubscripts` is a ucharclasses *block*,
+not a writing system, and its fallback entry names the document's own serif
+face, so there is no font to switch to; it joins `latin`, `common`,
+`punctuation` and `other` in `_SKIP_GROUPS`. `cheese` now writes
+`s\textsuperscript{-1}`. Splitting the run between the sign and the digit is
+the tmark writer's, and is what the legacy grouping did differently.
+
+### F8 — `pymdownx.snippets` file includes are not expanded — tmark core
 
 `--8<--- "examples/paper/code.py"` survives verbatim into the output (inside a
 fence it is even syntax-highlighted as code); `docs/cli/index` keeps
@@ -273,7 +353,16 @@ legacy output does not have — likely a definition-list marker leaking.
 
 Severity: **medium** — the included file's content is missing.
 
-### F9 — `[^1]` footnotes are not recognised in `docs/assets/examples/cheese`
+**tmark core** (parser), verified: `tmark.parse` lowers `--8<-- "file"` to an
+`Include` node and a fence's `--8<-- "file"` to the `include=` option, both of
+which the `include` pass expands correctly. What it does not recognise is
+`--8<--- "file"` — `pymdownx.snippets` accepts `-{2,}8<-{2,}`, and every
+occurrence in the corpus (`docs/cli/index`, `docs/assets/examples/cheese`)
+uses three dashes. The stray leading `;` is the same marker's *escape*
+(`;--8<--` renders the marker literally), which the parser also does not
+consume. The legacy path expands all of these.
+
+### F9 — `[^1]` footnotes are not recognised in `docs/assets/examples/cheese` — tmark core
 
 `Mozzarella [\^{}1]` and `;[\^{}1]: A high-moisture cheese…` reach the output
 as literal text. A standalone footnote reproduction works on both readers, so
@@ -282,7 +371,12 @@ of F8) rather than footnotes as such.
 
 Severity: **medium**, needs narrowing.
 
-### F10 — a light/dark image pair is emitted twice (Typst)
+**tmark core**, and narrowed: the `;` of F8 is the trigger. Those lines are
+`;[^1]: …` in the source — the snippet escape prefix again — so the footnote
+definition is never recognised as one and the reference beside it stays
+literal.
+
+### F10 — a light/dark image pair is emitted twice (Typst) — **fixed** (`17852d1`), reclassified
 
 `docs/index@typst` gains both `#box(image("ts-light.svg", …))` and
 `#box(image("ts-dark.svg", …))`. `writers-and-passes.md` §2 (Media) says
@@ -290,23 +384,44 @@ Severity: **medium**, needs narrowing.
 
 Severity: **low-medium** — a duplicated logo.
 
+**Reclassified and fixed** in `17852d1`: the pair is not duplicated, the
+*legacy* Typst path lost both halves. `_build_image_map` resolved
+`assets/ts-light.svg#only-light` as a file name, found nothing, and mapped it
+to the empty string — which the writer reads as "drop this image". The LaTeX
+writer strips the theme variant before resolving
+(`_strip_mkdocs_theme_variant`) and emits both images, which is what tmark
+does; `writers-and-passes.md` §2 says the fragment is *stripped*, not that a
+variant is chosen. The Typst map now strips it too, keyed by the original
+`src`. What is left on that page is the `#box(…)` the tmark writer puts around
+an inline image so it cannot break — an intended difference, allow-listed as
+`typst-inline-image-box`.
+
 ### F11 — smaller items
 
 - `math@typst` loses `#set math.equation(numbering: "(1)")`, so display
-  equations are unnumbered.
+  equations are unnumbered. **Fixed** in `7f6ade6`: the scaffolding gates that
+  line on `uses_eqnref`, which the IR path set to a literal `False`. The Typst
+  writer already says it — it names the `ts-equations` fragment when it emits
+  an equation label or a reference to one — so the flag is that fragment being
+  in the union of the bodies' `Requires`, which is what the legacy path read
+  from `TypstWriterState.runtime["uses_eqnref"]`.
 - Emphasis nesting order is inverted: `*_x_*` (legacy) vs `_*x*_` (tmark),
   `\textsc{\tscodeinline{…}}` vs `\textsc{\emph{\tscodeinline{…}}}` in `fonts`.
   Visually equivalent in Typst; the extra `\emph` in the LaTeX small-caps cell
-  is a real difference.
+  is a real difference. **tmark core** (writer).
 - Inline code keeps the cell's trailing padding inside the span:
-  `\tscodeinline{…</span>  }` in `docs/about/devel/index`.
+  `\tscodeinline{…</span>  }` in `docs/about/devel/index`. Not a bug: the
+  source cell is `` `<span …></span>  ` `` and CommonMark strips a code span's
+  padding only when there is one on *both* sides, so tmark is right and
+  Python-Markdown was wrong — a §4 item rather than a finding.
 - A code span whose text looks like a task item is parsed as one:
   `` `- [x] Done` `` renders as a task item, not as code
-  (`docs/syntax/supported`).
+  (`docs/syntax/supported`). **tmark core** (parser).
 - `\begin{enumerate}` / `\begin{description}` appear or disappear around
   nested lists in `docs/guide/features/headings` and
-  `docs/guide/templates/fragments`.
+  `docs/guide/templates/fragments`. **tmark core** (writer).
 - `#heading(level: 1, numbering: none, outlined: false)` — see open point O3.
+  **tmark core** (writer).
 
 ## 4. Legacy bugs the tmark path fixes
 
@@ -362,10 +477,20 @@ Severity: **low-medium** — a duplicated logo.
   `numbered: false` gets `#heading(level: N, numbering: none, outlined: false)`.
   `numbered: false` should not by itself remove the heading from the outline.
   Allow-listed as `typst-heading-unnumbered` pending a decision.
-- **O5 — `\tsacr` first-use expansion.** See F12: the rename from
-  `\acrshort` to `\tsacr` also changed what the macro typesets. Decide
-  whether `ts-glossary` should expand on first use, and if so record it in
-  `fragment-contracts.md` §1 so the PDF gate can be re-baselined.
+- **O5 — `\tsacr` first-use expansion. Decided (`4841f9d`): always the short
+  form.** `ts-glossary` now defines `\tsacr` as `\acrshort`, not `\gls`. The
+  author never writes the call — the writer substitutes every strict,
+  case-sensitive match of a declared key, which `docs/syntax/abbr.md` states
+  as "replaces … with `\acrshort{KEY}` … the substitution is the same
+  regardless of where the acronym appears in the text" and the tmark spec
+  (§Glossary and acronyms) as "maps to `glossaries`' `\acrshort`" — so a
+  first-use expansion rewrites prose the author did not write and makes the
+  print output say something different from the web profile, where the key
+  stays inside `<abbr>`. The Typst contract already rendered the short form
+  (`#ts-acr(key) = key`), so the two backends were inconsistent too. `\tsgls`
+  keeps `\gls`: a glossary *term* reference (`@gls:term`) is written by the
+  author, and there the `glossaries` convention applies. Recorded in
+  `fragment-contracts.md` §1.
 - **O4 — unresolved citations.** `docs/assets/examples/cheese` renders
   `[?Prentice1993]` under tmark where legacy printed the bare key. `[?key]` is
   the documented spelling for an unresolved reference, so the real question is
@@ -381,18 +506,19 @@ Tectonic is provisioned by TeXSmith itself, so the command runs without any
 extra setup; all eight builds succeeded. Overlays and `report.json` are under
 `build/parity/pdf/`.
 
-| entry | pages | worst page | text layer | verdict |
-| ----- | ----- | ---------- | ---------- | ------- |
-| `abbr` | 1 | **2.115 %** (page 1) | differs on 1 page | **differs** |
-| `counters` | 3 | 0.000 % | identical | identical |
-| `index` | 4 | 0.000 % | identical | identical |
-| `marginnote` | 2 | 0.074 % (page 2) | identical | identical |
+| entry | pages | worst page | text layer | verdict | after `4841f9d` |
+| ----- | ----- | ---------- | ---------- | ------- | --------------- |
+| `abbr` | 1 | **2.115 %** (page 1) | differs on 1 page | **differs** | **identical**, 0.000 % |
+| `counters` | 3 | 0.000 % | identical | identical | identical |
+| `index` | 4 | 0.000 % | identical | identical | identical |
+| `marginnote` | 2 | 0.074 % (page 2) | identical | identical | identical |
 
 `counters`, `index` and `marginnote` are pixel-identical or within the 0.1 %
 threshold: `\tsindex`, `\tsaside` (including `side=left`) and the counter
-contract typeset exactly as the legacy macros did.
+contract typeset exactly as the legacy macros did. With O5 decided, the whole
+PDF gate is clean.
 
-### F12 — `\tsacr` expands the acronym on first use, `\acrshort` never did
+### F12 — `\tsacr` expands the acronym on first use, `\acrshort` never did — **decided and fixed** (`4841f9d`)
 
 This is what `abbr` differs on, and the text parity cannot see it: the
 `acronym` allow-list entry folds `\acrshort{key}` onto `\tsacr{key}`, but the
@@ -409,7 +535,8 @@ So `\tsacr` in `ts-glossary` behaves like `\gls`/`\acrfull` rather than
 `\acrshort`. Either is defensible — first-use expansion is the usual
 `glossaries` convention — but it is a change of rendered output that no text
 allow-list entry records, and it must be an explicit decision (**O5**) rather
-than a side effect of the rename. Until it is decided, the `abbr` PDF entry
-is expected to differ.
+than a side effect of the rename. It was taken: **always the short form**
+(O5), so `\tsacr` is `\acrshort` and the `abbr` PDF entry is identical again.
 
 Severity: **medium** — visible in every document that uses acronyms.
+**Decided and fixed**: see O5 above; `abbr` is now pixel-identical.
