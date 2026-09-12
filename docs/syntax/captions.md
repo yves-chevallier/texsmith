@@ -184,3 +184,20 @@ Figure: Watchdog traces before and after the fix. {#fig:traces}
 ```
 
 This renders “Figure 1” with “(a)”, “(b)”; `@fig:crash` yields “figure 1b”.
+
+!!! warning "A sub-figure takes no number of its own"
+    The **container** advances the `fig` counter once, and each image resolves
+    to that number suffixed with a letter in document order, lower case (`1a`,
+    `1b`, …, wrapping after `z`). A page with a plain figure and a
+    `::: figure` of two labelled images therefore numbers 1, then 2 with 2a and
+    2b — not 1, 2, 3, 4 — so a figure count over a whole book or site advances
+    once per container rather than once per image.
+
+The rest follows from the same rule:
+
+| The container holds | What happens |
+| ------------------- | ------------ |
+| only paragraphs of images | the images are sub-figures, lettered |
+| a single image | that image **is** the figure: one number, no letter |
+| a table, prose or a listing | a plain float; an image in it numbers like any other |
+| no anchor and no caption | nothing is numbered, sub-figures included |

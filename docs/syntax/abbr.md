@@ -16,8 +16,12 @@ TeXSmith renders that snippet as:
 
 ```text
 $ texsmith abbr.md
-The \acrshort{HTML} specification is maintained by the \acrshort{W3C}.
+The \tsacr{HTML} specification is maintained by the \tsacr{W3C}.
 ```
+
+`\tsacr{KEY}` renders the acronym's **short form**; `ts-typesetting` defines it
+over the `glossaries` package's `\acrshort`, and a template may redefine it.
+Typst gets the matching `#ts-acr("KEY")`, and the web writer emits `<abbr>`.
 
 Which displays as:
 
@@ -91,7 +95,7 @@ default acronym-table title follows the document language (it expands to
 
 Unlike LaTeX, TeXSmith does **not** require `\gls{…}` / `\Gls{…}` calls in the
 source: the converter scans the body and replaces every **strict, case-sensitive**
-match of an acronym key with `\acrshort{KEY}`. As a consequence, casing helpers
+match of an acronym key with `\tsacr{KEY}`. As a consequence, casing helpers
 such as `\Gls`, `\GLS`, `\acrlong`, etc. are not synthesised — the substitution
 is the same regardless of where the acronym appears in the text. If you need
 those forms, drop down to a raw passthrough:

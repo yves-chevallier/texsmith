@@ -22,6 +22,25 @@ A video or audio source (`![Demo](demo.mp4)`) is a player on the web and, in
 print, its poster frame with the URL as a textual reference;
 `{media=web}` hides it from print altogether.
 
+## Sub-figures
+
+A `::: figure` container groups images into one float:
+
+```md
+::: figure {cols=2}
+![Boot](boot.png){#fig:boot}
+![Crash](crash.png){#fig:crash}
+
+Figure: Watchdog traces before and after the fix. {#fig:traces}
+:::
+```
+
+The container takes **one** figure number and each image takes that number
+suffixed with a letter, so `@fig:crash` reads “figure 1b” and an image never
+consumes a number of the `fig` series on its own. The cases — a lone image, a
+container holding prose, a container with no caption — are spelled out under
+[Captions](captions.md#subfigures).
+
 ```md { .snippet }
 ![Alt text](https://picsum.photos/400/150){width=50%}
 ```

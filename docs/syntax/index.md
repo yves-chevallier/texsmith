@@ -80,7 +80,13 @@ Figure: Watchdog traces. {#fig:traces}
 :::
 ```
 
-Nesting is by fence length (`::::` outside `:::`), as in Pandoc.
+Nesting is by fence length (`::::` outside `:::`), as in Pandoc. The container
+names TMark knows are a **closed registry** — the callout types, `aside`,
+`figure`, `tabs`, `tab`, `multicolumn {cols=}` and `div` — so an unknown name
+raises `container-unknown` and renders its content transparently, and a
+template that needs a new look uses `::: div {.class}` rather than a new name.
+A **dotted** `::: pkg.module` line is not a container at all but a foreign
+directive, kept verbatim and dropped in print.
 
 **Data directives** hold non-Markdown content in a fenced code block whose info
 string is `<lang> <node>`. The second word names the node the fence produces and
@@ -188,7 +194,10 @@ Material and Zensical already load, and TMark never redefines what they do.
 
 | Feature | Canonical spelling | Page |
 | ------- | ------------------ | ---- |
+| Headings, implicit ids | `## Title {#sec:x}`, `{.unnumbered}` | [Headings](headings.md) |
 | Small caps | `{sc}[x]` (sugar `__x__`) | [Formatting](formatting.md) |
+| Smart symbols and quotes | `(c)`, `-->`, `"a phrase"` | [Symbols](symbols.md) |
+| Emoji and icons | `:smile:`, `:material-cog:` | [Emoji](emoji.md) |
 | Margin notes / asides | `{aside}[…]`, `::: aside` | [Notes](notes.md) |
 | Index entries | `{index}[term]`, `#[term]` | [Tags](../guide/features/tags.md) |
 | Counter items | `#(fw:key)`, `{counter}(fw:key)` | [Counters](counters.md) |
@@ -200,6 +209,8 @@ Material and Zensical already load, and TMark never redefines what they do.
 | Includes | `{include}(file.md)` | below |
 | Progress bars | `[=75% "Done"]` | [Progress bars](progressbar.md) |
 | Containers | `::: name {attrs}` | [Admonitions](admonitions.md) |
+| Content tabs | `::: tabs` + `::: tab {title=…}` | [Admonitions](admonitions.md#content-tabs) |
+| Foreign directives | `[TOC]`, `::: pkg.module` | [Admonitions](admonitions.md#foreign-directives) |
 
 ## Raw passthrough
 
