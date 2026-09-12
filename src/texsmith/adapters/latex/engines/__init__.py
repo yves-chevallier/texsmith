@@ -285,8 +285,6 @@ def build_tex_env(
     texmf_home = tex_cache_root / "texmf-home"
     texmf_var = tex_cache_root / "texmf-var"
     luatex_cache = tex_cache_root / "luatex-cache"
-
-    texmf_cache = tex_cache_root / "texmf-cache"
     texmf_config = tex_cache_root / "texmf-config"
     xdg_cache = tex_cache_root / "xdg-cache"
     tectonic_cache = tex_cache_root / "tectonic-cache"
@@ -296,7 +294,6 @@ def build_tex_env(
         texmf_var,
         texmf_config,
         luatex_cache,
-        texmf_cache,
         xdg_cache,
         tectonic_cache,
     ):
@@ -310,7 +307,12 @@ def build_tex_env(
     env["TEXMFCONFIG"] = str(texmf_config)
     env["LUATEXCACHE"] = str(luatex_cache)
     env["LUAOTFLOAD_CACHE"] = str(luatex_cache)
-    env["TEXMFCACHE"] = str(texmf_cache)
+    # TEXMFCACHE is deliberately left alone. A distribution defines it in
+    # terms of its own trees (Debian: `$TEXMFSYSVAR;$TEXMFVAR`), and pointing
+    # it at a directory outside them makes luaotfload's writable-path lookup
+    # come up empty: LuaTeX then dies with "no writeable cache path" before it
+    # can load a font. TEXMFVAR above already puts the font cache under this
+    # root (`texmf-var/luatex-cache/`), which is what the isolation is for.
     env.setdefault("XDG_CACHE_HOME", str(xdg_cache))
     env["TECTONIC_CACHE_DIR"] = str(tectonic_cache)
     if biber_path:

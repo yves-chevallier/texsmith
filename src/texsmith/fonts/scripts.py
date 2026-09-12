@@ -497,5 +497,3 @@ def render_moving_text(
     except Exception:
         pass
     return rendered
-
-

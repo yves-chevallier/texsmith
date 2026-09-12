@@ -58,7 +58,6 @@ class FragmentDefinition:
             object.__setattr__(self, "attributes", normalised)
             object.__setattr__(self, "_attribute_resolver", TemplateAttributeResolver(normalised))
 
-
     def attribute_defaults(self) -> dict[str, Any]:
         """Return defaults for fragment-managed attributes."""
         if self._attribute_resolver is None:
