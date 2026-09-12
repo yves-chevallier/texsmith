@@ -339,10 +339,10 @@ fragment. Redefine it in your template's \tscodeinline{.tex}, after \tscodeinlin
 See Contract macros for the full table of macros, their keys and
 the three levels of override.
 \begin{tscallout}[kind=warning, title={Jinja partials are no longer the rendering layer}]
-\tscodeinline{latex.template.override}, fragment \tscodeinline{partials} and \tscodeinline{required\_partials} are
-deprecated in 0.7.0 --- they warn and are ignored --- and removed in 0.8.0.
-\href{partials.md\#former-partials}{Contract macros} maps every former partial to
-its replacement macro.
+\tscodeinline{latex.template.override}, fragment \tscodeinline{partials} and \tscodeinline{required\_partials} were
+deprecated in 0.7.0 and are removed in 0.8.0: the manifest no longer reads
+them. \href{partials.md\#former-partials}{Contract macros} maps every former
+partial to its replacement macro.
 \end{tscallout}
 \subsection{Slot strategies}
 Slots determine how multiple Markdown documents (or sections) flow into the

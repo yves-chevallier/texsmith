@@ -100,7 +100,7 @@ missing. Call this only if you need to mimic the CLI’s resilience.
 
 - `texsmith.adapters.transformers.base` – reference for
 `CachedConversionStrategy`.
-- `texsmith.writers.latex.media` – real-world examples
-of how converters integrate with the #ts-logo("LaTeX") writer.
+- IR passes & fragment contracts – how the `assets`
+pass drives the converters registered here.
 - Template Cookbook – packaging
 recommendations so your templates document converter prerequisites.

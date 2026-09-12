@@ -127,7 +127,7 @@ Callouts render as highlighted boxes in HTML and as `tcolorbox` blocks in the
 ```md
 | Option | Description |
 | ------ | ----------- |
-| `--list-extensions` | Prints the enabled constructs |
+| `--debug-ir` | Dumps the parsed IR next to the output |
 | `--debug` | Shows full tracebacks |
 
 Table: Selected command-line options. {#tbl:options}

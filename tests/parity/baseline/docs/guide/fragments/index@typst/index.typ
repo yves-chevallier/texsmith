@@ -87,8 +87,8 @@ See Contract macros for the table of macros and
 their keys.
 
 #ts-callout(kind: "warning", title: [Jinja partials are no longer the rendering layer])[
-A fragment's `partials` and `required_partials` keys are deprecated in
-0.7.0 — they warn and are ignored — and removed in 0.8.0.]
+A fragment's `partials` and `required_partials` keys were deprecated in
+0.7.0 and are removed in 0.8.0: `fragment.toml` no longer reads them.]
 
 = Runtime loading
 

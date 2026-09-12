@@ -64,9 +64,10 @@ fragment \tscodeinline{partials}, \tscodeinline{required\_partials} & the fragme
 \bottomrule
 \end{tabularx}
 \end{center}
-\tscodeinline{readers}, \tscodeinline{writer}, \tscodeinline{latex.template.override}, fragment \tscodeinline{partials} and
-\tscodeinline{required\_partials} are deprecated in 0.7.0 (they warn and are ignored) and
-removed in 0.8.0.
+All five --- \tscodeinline{readers}, \tscodeinline{writer}, \tscodeinline{latex.template.override}, fragment
+\tscodeinline{partials} and \tscodeinline{required\_partials} --- were deprecated in 0.7.0 and are gone in
+0.8.0: neither the template manifest nor \tscodeinline{fragment.toml} reads them any more, so
+a package that still declares one converts as if it did not.
 \section{IR passes}
 A pass is a pure function \tscodeinline{(Document, PassContext) -\allowbreak{}> Document} over the
 generated IR models. It never mutates its input, returns the same object when it

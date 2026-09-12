@@ -137,15 +137,15 @@ On a MkDocs site the index entries reach \tscodeinline{search\_index.json} throu
 \tscodeinline{texsmith} plugin, which collects them from the rendered pages
 and injects them after the \tscodeinline{search} plugin wrote its index. The separate
 \tscodeinline{texsmith.index} MkDocs \emph{plugin} is deprecated --- it warns and does nothing, and
-disappears in 0.8; the \tscodeinline{texsmith.index} \emph{Markdown extension} above is
-unaffected.
-\begin{tscallout}[kind=note, title={The Python-Markdown extensions are transitional}]
-\tscodeinline{texsmith.extensions.*} still ships the Python-Markdown implementations of
-the 0.6 syntax (\tscodeinline{smallcaps}, \tscodeinline{latex\_raw}, \tscodeinline{multi\_citations}, \tscodeinline{mermaid},
-\tscodeinline{index}, \tscodeinline{counters}, ...) so that an existing MkDocs site keeps building
-during the migration. They are not the conversion path any more --- TeXSmith
-parses with tmark --- and they are removed in 0.8.0 together with the
-spellings they implement. See Migrating to TMark.
+disappears in 0.8; and the \tscodeinline{texsmith.index} \emph{Markdown extension} went with the
+Python-Markdown pipeline.
+\begin{tscallout}[kind=note, title={The Python-Markdown extensions are gone}]
+TeXSmith shipped 17 Python-Markdown extensions (\tscodeinline{smallcaps}, \tscodeinline{latex\_raw},
+\tscodeinline{multi\_citations}, \tscodeinline{mermaid}, \tscodeinline{index}, \tscodeinline{counters}, ...) and registered them as
+\tscodeinline{markdown.extensions} entry points. They are removed in 0.8.0 together with
+the spellings they implemented: tmark parses every Markdown source, and a
+site that listed \tscodeinline{texsmith.*} under \tscodeinline{markdown\_extensions} must drop those
+entries. See Migrating to TMark.
 \end{tscallout}
 \section{Inspecting what the parser read}
 \begin{tscode}[lang=bash, engine=pygments]

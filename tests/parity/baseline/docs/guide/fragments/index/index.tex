@@ -98,8 +98,8 @@ Replace a bundled fragment outright with \tscodeinline{press.fragments}:
 See Contract macros for the table of macros and
 their keys.
 \begin{tscallout}[kind=warning, title={Jinja partials are no longer the rendering layer}]
-A fragment's \tscodeinline{partials} and \tscodeinline{required\_partials} keys are deprecated in
-0.7.0 --- they warn and are ignored --- and removed in 0.8.0.
+A fragment's \tscodeinline{partials} and \tscodeinline{required\_partials} keys were deprecated in
+0.7.0 and are removed in 0.8.0: \tscodeinline{fragment.toml} no longer reads them.
 \end{tscallout}
 \section{Runtime loading}
 \begin{itemize}

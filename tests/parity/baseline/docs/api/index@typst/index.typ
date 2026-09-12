@@ -31,8 +31,7 @@ Each page uses `::: module.path` directives; mkdocstrings resolves them at build
 / `bibliography`: Bibliography tooling (#ts-logo("BibTeX") parsing, DOI resolution, issue reporting).
 / `cli`: Command-line entry points and utilities.
 / `handlers`: IR passes and fragment contracts — the two extension points of the `parse → IR → passes → resolve → write` pipeline.
-/ `latex`: #ts-logo("LaTeX") infrastructure (formatter, renderer, templates).
-/ `markdown`: Markdown conversion helpers and custom extensions.
+/ `latex`: #ts-logo("LaTeX") infrastructure (formatter, escaping, templates).
 / `plugins`: Optional integrations (MkDocs Material-specific handlers).
 / `transformers`: Asset conversion strategies (SVG, Draw.io, Mermaid, remote images).
 

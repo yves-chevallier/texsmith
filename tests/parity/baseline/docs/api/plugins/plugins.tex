@@ -35,8 +35,9 @@
 \author{}\date{}
 \begin{document}
 \maketitle
-Plugins bundle opinionated HTML post-processors and asset helpers so you can
-extend TeXSmith without patching the core read \tsscript{symbols}{\(\rightarrow\) }IR \tsscript{symbols}{\(\rightarrow\) }write pipeline.
+Plugins bundle the build-time helpers an IR pass drives --- the snippet
+compiler's nested build, the MkDocs site-side HTML rewriting --- so you can extend
+TeXSmith without patching the core parse \tsscript{symbols}{\(\rightarrow\) }IR \tsscript{symbols}{\(\rightarrow\) }write pipeline.
 
 \tscodeinline{texsmith.plugins} exposes a namespace package populated by the MkDocs hook in
 \tscodeinline{docs/hooks/mkdocs\_hooks.py}, re-exporting the maintained plugin modules under
@@ -53,8 +54,8 @@ extend TeXSmith without patching the core read \tsscript{symbols}{\(\rightarrow\
 \end{tscode}
 \section{Authoring your own plugin}
 \begin{enumerate}
-\item Create a module (e.g., \tscodeinline{texsmith.plugins.acme}) exposing a Markdown
-extension and/or the HTML rewriting helpers your documents need.
+\item Create a module (e.g., \tscodeinline{texsmith.plugins.acme}) exposing the build-time
+helpers your documents need, and an IR pass that calls them.
 \item Declare entry points or instruct consumers to \tscodeinline{import texsmith.plugins.acme}
 before rendering.
 \item Optionally provide a MkDocs plugin/hook so documentation builds load your
