@@ -2,8 +2,8 @@
 #
 # Every entry is one `texsmith` command line, run from `cwd` with `args`, with
 # `--build` removed (and `-M`/`--makefile-deps`, which the CLI only accepts
-# together with `--build`). The harness appends `-o <out dir>` itself and always
-# pins the reader with `--reader <name>`; `baseline` pins `tmark`, the default.
+# together with `--build`). The harness appends `-o <out dir>` itself and passes
+# nothing else: a Markdown source has exactly one reader.
 #
 # Fields
 #   id        unique; a typst variant of an example is `<id>@typst`

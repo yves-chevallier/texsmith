@@ -1,4 +1,4 @@
-"""Unit tests for the regression harness (scripts/parity.py): normaliser, allow-list, gates."""
+"""Unit tests for the regression harness (scripts/parity.py): normaliser, diffing, gates."""
 
 from __future__ import annotations
 
@@ -177,174 +177,24 @@ def test_tidy_tex_layout_drops_a_blank_next_to_page_furniture(parity):
     assert "\n\n" not in parity.tidy_tex_layout(text)
 
 
-def test_extract_body(parity):
-    text = "\\documentclass{article}\n% x\n\\begin{document}\n\nHello\n\n\n\\end{document}\n"
-    assert parity.extract_body(text) == "Hello\n"
-    fragment = "\\section{No envelope}\n"
-    assert parity.extract_body(fragment) == fragment
+# --------------------------------------------------------------- diffing
 
 
-# ------------------------------------------------------------- allow-list
+def test_compare_texts_reports_every_hunk(parity):
+    old = "\\item{} one\nsame\nText \\marginnote{aside}.\n"
+    new = "\\item one\nsame\nText\\marginnote{aside}.\n"
 
-
-def test_glob_to_regex(parity):
-    assert parity.glob_to_regex("**/*.tex").match("docs/syntax/tables/tables.tex")
-    assert parity.glob_to_regex("**/*.tex").match("abbr/abbreviations.tex")
-    assert parity.glob_to_regex("docs/syntax/**/*.tex").match("docs/syntax/tables/tables.tex")
-    assert not parity.glob_to_regex("docs/syntax/*.tex").match("docs/syntax/tables/tables.tex")
-    assert not parity.glob_to_regex("**/*.tex").match("abbr@typst/abbreviations.typ")
-
-
-def test_parse_version(parity):
-    assert parity.parse_version("0.6.1.dev7") == (0, 6, 1)
-    assert parity.parse_version("0.7.0") == (0, 7, 0)
-    with pytest.raises(parity.ParityError, match="not a version"):
-        parity.parse_version("dev")
-
-
-def _write_allow(tmp_path: Path, body: str) -> Path:
-    path = tmp_path / "allow.yml"
-    path.write_text(textwrap.dedent(body), encoding="utf-8")
-    return path
-
-
-def test_load_allow_list_validates(parity, tmp_path):
-    path = _write_allow(
-        tmp_path,
-        """
-        - id: item-braces
-          kind: rewrite
-          files: ["**/*.tex"]
-          from: '\\item{} '
-          to: '\\item '
-          reason: "unordered_list.tex artefact"
-          expires: 0.7.0
-        - id: zero-width
-          kind: hunk
-          files: ["docs/syntax/**/*.tex"]
-          pattern: '^-(.*) \\\\marginnote\\{(.*)\\}\\.$\\n^\\+\\1\\\\marginnote\\{\\2\\}\\.$'
-          reason: "spec zero-width collapse"
-          expires: 0.7.0
-        """,
-    )
-    entries = parity.load_allow_list(path, current_version="0.6.1.dev7")
-    assert [e.allow_id for e in entries] == ["item-braces", "zero-width"]
-    assert entries[0].rewrite_from == "\\item{} "
-    assert entries[1].pattern is not None
-
-
-@pytest.mark.parametrize(
-    ("body", "message"),
-    [
-        ("- id: x\n  kind: nope\n  files: ['*']\n  reason: r\n  expires: 9.0.0\n", "kind"),
-        (
-            "- id: x\n  kind: rewrite\n  files: []\n  from: a\n  reason: r\n  expires: 9.0.0\n",
-            "files",
-        ),
-        ("- id: x\n  kind: rewrite\n  files: ['*']\n  from: a\n  expires: 9.0.0\n", "reason"),
-        ("- id: x\n  kind: rewrite\n  files: ['*']\n  from: a\n  reason: r\n", "expires"),
-        (
-            "- id: x\n  kind: hunk\n  files: ['*']\n  pattern: '('\n  reason: r\n  expires: 9.0.0\n",
-            "regex",
-        ),
-        (
-            "- id: x\n  kind: hunk\n  files: ['*']\n  pattern: a\n  reason: r\n  expires: 9.0.0\n  extra: 1\n",
-            "unknown keys",
-        ),
-        (
-            "- id: x\n  kind: rewrite\n  files: ['*']\n  from: a\n  reason: r\n  expires: 0.6.0\n",
-            "expired",
-        ),
-        (
-            "- id: x\n  kind: rewrite\n  files: ['*']\n  from: a\n  reason: r\n  expires: 9.0.0\n"
-            "- id: x\n  kind: rewrite\n  files: ['*']\n  from: a\n  reason: r\n  expires: 9.0.0\n",
-            "duplicate",
-        ),
-    ],
-)
-def test_load_allow_list_rejects(parity, tmp_path, body, message):
-    path = _write_allow(tmp_path, body)
-    with pytest.raises(parity.ParityError, match=message):
-        parity.load_allow_list(path, current_version="0.6.1")
-
-
-def test_committed_allow_list_loads(parity):
-    entries = parity.load_allow_list(parity.ALLOW_PATH)
-    assert all(e.reason for e in entries)
-
-
-def test_load_allow_list_keeps_expired_entries_when_lenient(parity, tmp_path, capsys):
-    # `diff` is migration-only and outlives the release its entries were written
-    # for, so an expired entry is a warning there, not a failed load.
-    path = _write_allow(
-        tmp_path,
-        """
-        - id: gone
-          kind: rewrite
-          files: ["**/*.tex"]
-          from: a
-          to: b
-          reason: "an intended difference of the migration"
-          expires: 0.6.0
-        """,
-    )
-    with pytest.raises(parity.ParityError, match="expired"):
-        parity.load_allow_list(path, current_version="0.7.0")
-    entries = parity.load_allow_list(path, current_version="0.7.0", strict=False)
-    assert [e.allow_id for e in entries] == ["gone"]
-    assert "past their expiry" in capsys.readouterr().out
-
-
-def test_malformed_allow_list_fails_even_when_lenient(parity, tmp_path):
-    path = _write_allow(tmp_path, "- id: x\n  kind: nope\n  files: ['*']\n  reason: r\n")
-    with pytest.raises(parity.ParityError, match="kind"):
-        parity.load_allow_list(path, current_version="0.7.0", strict=False)
-
-
-def test_compare_texts_rewrite_and_hunk(parity, tmp_path):
-    path = _write_allow(
-        tmp_path,
-        r"""
-        - id: item-braces
-          kind: rewrite
-          files: ["**/*.tex"]
-          from: '\item{} '
-          to: '\item '
-          reason: "spelling"
-          expires: 9.0.0
-        - id: aside-space
-          kind: hunk
-          files: ["docs/**/*.tex"]
-          pattern: '^-(.*) \\marginnote\{(.*)\}\.$\n^\+\1\\marginnote\{\2\}\.$'
-          reason: "zero-width collapse"
-          expires: 9.0.0
-        """,
-    )
-    allow = parity.load_allow_list(path, current_version="0.6.1")
-    old = "\\item{} one\nText \\marginnote{aside}.\nsame\n"
-    new = "\\item one\nText\\marginnote{aside}.\nsame\n"
-
-    verdict = parity.compare_texts(old, new, relpath="docs/syntax/notes/notes.tex", allow=allow)
-    assert verdict.hunks == 1  # the \item line is rewritten away, the aside is one hunk
-    assert verdict.allowed == 1
-    assert verdict.status == parity.ALLOWED
-    assert verdict.diff == ""
-
-    # Outside docs/ the hunk pattern does not apply: the aside difference counts.
-    verdict = parity.compare_texts(old, new, relpath="abbr/abbreviations.tex", allow=allow)
+    verdict = parity.compare_texts(old, new, relpath="docs/syntax/notes/notes.tex")
     assert verdict.status == parity.DIFFERS
-    assert "marginnote" in verdict.diff
-
-    # A hunk that matches nothing is reported even where the pattern applies.
-    verdict = parity.compare_texts(old, new + "extra\n", relpath="docs/a/a.tex", allow=allow)
-    assert verdict.status == parity.DIFFERS
-    assert verdict.allowed == 1 and verdict.hunks == 2
+    assert verdict.hunks == 2  # there is no allow-list: both differences count
+    assert "item" in verdict.diff and "marginnote" in verdict.diff
 
 
 def test_compare_texts_identical(parity):
     verdict = parity.compare_texts("a\nb\n", "a\nb\n", relpath="x/x.tex")
     assert verdict.status == parity.IDENTICAL
     assert verdict.hunks == 0
+    assert verdict.diff == ""
 
 
 def test_split_hunks_counts(parity):
@@ -396,40 +246,6 @@ def test_entry_command_and_stems(parity):
     ]
 
 
-def test_compare_pages_pixel_diff_and_overlay(parity, tmp_path):
-    from PIL import Image, ImageDraw
-
-    size = (200, 100)
-    legacy = Image.new("L", size, 255)
-    ImageDraw.Draw(legacy).rectangle((10, 10, 60, 40), fill=0)
-    same = legacy.copy()
-    moved = Image.new("L", size, 255)
-    ImageDraw.Draw(moved).rectangle(
-        (11, 10, 61, 40), fill=0
-    )  # one pixel right: dilation absorbs it
-    far = Image.new("L", size, 255)
-    ImageDraw.Draw(far).rectangle((120, 50, 170, 80), fill=0)
-
-    identical = parity.compare_pages(
-        legacy, same, number=1, text_hunks=0, overlay_path=tmp_path / "a.png", threshold=0.001
-    )
-    assert identical.ratio == 0 and identical.overlay is None
-
-    shifted = parity.compare_pages(
-        legacy, moved, number=1, text_hunks=0, overlay_path=tmp_path / "b.png", threshold=0.001
-    )
-    assert shifted.ratio == 0
-
-    different = parity.compare_pages(
-        legacy, far, number=1, text_hunks=1, overlay_path=tmp_path / "c.png", threshold=0.001
-    )
-    assert different.ratio > 0.1
-    assert different.overlay == tmp_path / "c.png" and different.overlay.is_file()
-    overlay = Image.open(different.overlay).convert("RGB")
-    assert overlay.getpixel((30, 20)) == (220, 0, 0)  # legacy-only ink is red
-    assert overlay.getpixel((150, 65)) == (0, 160, 0)  # new-only ink is green
-
-
 def _pdf_with_text(path: Path, pages: list[str]) -> Path:
     import fitz
 
@@ -442,30 +258,6 @@ def _pdf_with_text(path: Path, pages: list[str]) -> Path:
     return path
 
 
-def test_compare_pdfs(parity, tmp_path):
-    legacy = _pdf_with_text(tmp_path / "legacy.pdf", ["Hello parity"])
-    same = _pdf_with_text(tmp_path / "same.pdf", ["Hello parity"])
-    other = _pdf_with_text(tmp_path / "other.pdf", ["Goodbye parity"])
-    longer = _pdf_with_text(tmp_path / "longer.pdf", ["Hello parity", "page two"])
-
-    status, pages, _detail = parity.compare_pdfs(
-        legacy, same, out_dir=tmp_path / "same", dpi=50, threshold=0.001
-    )
-    assert status == parity.IDENTICAL and len(pages) == 1 and pages[0].text_hunks == 0
-
-    status, pages, _detail = parity.compare_pdfs(
-        legacy, other, out_dir=tmp_path / "other", dpi=50, threshold=0.001
-    )
-    assert status == parity.DIFFERS
-    assert pages[0].text_hunks == 1  # the text layer classifies the change first
-    assert (tmp_path / "other" / "page-001.png").is_file()
-
-    status, pages, detail = parity.compare_pdfs(
-        legacy, longer, out_dir=tmp_path / "longer", dpi=50, threshold=0.001
-    )
-    assert status == parity.DIFFERS and pages == [] and "page count 1 vs 2" in detail
-
-
 def test_missing_requirements_honours_without(parity):
     entry = parity.Entry("x", ".", ("x.md",), "latex", frozenset({"docker", "typst"}))
     assert "docker" in parity.missing_requirements(entry, without=["docker"])
@@ -475,28 +267,25 @@ def test_missing_requirements_honours_without(parity):
 # ------------------------------------------------------------ subcommand wiring
 
 
-def test_baseline_and_render_default_to_the_cli_reader(parity):
-    """The gate records the reader the CLI actually uses, not the legacy one."""
-    assert parity.DEFAULT_READER == "tmark"
+def test_the_harness_pins_no_reader(parity):
+    """One reader, no flag: neither subcommand takes one, and nothing is passed."""
     args = parity.build_parser().parse_args(["render", "--out", "x"])
-    assert args.reader == "tmark"
-    # …and `html` stays reachable as the escape hatch for an unmigrated document.
-    assert parity.build_parser().parse_args(["render", "--out", "x", "--reader", "html"]).reader
+    assert not hasattr(args, "reader")
+    assert parity.build_parser().parse_args(["baseline", "--check"]).check
+    assert not any(name.endswith("READER") or name == "READERS" for name in vars(parity))
 
 
-def test_diff_refuses_a_whole_corpus_run(parity, capsys):
-    """The cross-reader comparison only makes sense on a legacy-spelled entry set."""
-    assert parity.main(["diff"]) == 2
-    message = capsys.readouterr().err
-    assert "--only" in message and "baseline --check" in message
+def test_the_diff_subcommand_is_gone(parity, capsys):
+    """It compared two readers; there is only one left, so it cannot run."""
+    with pytest.raises(SystemExit):
+        parity.build_parser().parse_args(["diff"])
+    assert "invalid choice" in capsys.readouterr().err
 
 
-def test_diff_rejects_an_only_glob_that_matches_nothing(parity, capsys):
-    assert parity.main(["diff", "--only", "no-such-entry-*"]) == 2
-    assert "matched no corpus entry" in capsys.readouterr().err
-
-
-def test_pdf_check_needs_baseline(parity, capsys):
+def test_pdf_needs_baseline(parity, capsys):
+    """`pdf` builds against the committed record or not at all."""
+    assert parity.main(["pdf", "--entries", "abbr"]) == 2
+    assert "--baseline" in capsys.readouterr().err
     assert parity.main(["pdf", "--check", "--entries", "abbr"]) == 2
     assert "--baseline" in capsys.readouterr().err
 
@@ -556,7 +345,6 @@ def test_committed_pdf_baseline_is_well_formed(parity):
     import json
 
     payload = json.loads(parity.PDF_BASELINE_PATH.read_text(encoding="utf-8"))
-    assert payload["reader"] == parity.DEFAULT_READER
     assert payload["dpi"] == parity.build_parser().parse_args(["pdf", "--baseline"]).dpi
     documents = payload["documents"]
     assert {name.split("/")[0] for name in documents} == set(parity.PDF_BASELINE_ENTRIES)

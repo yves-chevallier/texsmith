@@ -2,25 +2,22 @@
 """Regression harness over the TeXSmith corpus (``tests/parity/corpus.yml``).
 
 It renders every entry of the corpus — the examples' command lines and every
-``docs/**/*.md`` page — through the **tmark** reader, the CLI default, and
-compares the normalised ``.tex`` / ``.typ`` against a committed baseline. Any
-unreviewed change to the rendered output fails the gate; an intended one is
-re-recorded in a diff a human reads.
+``docs/**/*.md`` page — through the CLI and compares the normalised ``.tex`` /
+``.typ`` against a committed baseline. Any unreviewed change to the rendered
+output fails the gate; an intended one is re-recorded in a diff a human reads.
 
 Subcommands::
 
-    parity.py baseline [--check]        tmark outputs → tests/parity/baseline/
-    parity.py render --reader R --out D one reader, raw outputs, no diff
-    parity.py pdf [--baseline [--check]] rasterise and compare PDFs
+    parity.py baseline [--check]        corpus outputs → tests/parity/baseline/
+    parity.py render --out DIR          raw outputs, no diff
+    parity.py pdf --baseline [--check]  built PDFs → tests/parity/pdf-baseline.json
     parity.py list                      corpus entries and which are runnable
     parity.py seed-cache                copy the DOI cache back into tests/parity/cache
-    parity.py diff --only GLOB          *migration only*: html vs tmark on one entry set
 
-``diff`` is the cross-reader comparison the migration was built on (plan task
-4.1). It is retired as a gate: ``examples/**`` and ``docs/**`` are written in
-canonical TMark, which the legacy ``html`` reader cannot parse, so a whole-corpus
-run reports noise. It is kept to audit a document that has *not* been migrated
-yet, and therefore refuses to run without an explicit ``--only`` entry set.
+A Markdown source has exactly one reader — the CLI has no ``--reader`` option —
+so the harness pins nothing and never compares two readers. Every subcommand
+measures one rendering against a committed record of the same rendering: a
+difference is either a regression or a change its author re-records.
 
 Design: specs/migration/writers-and-passes.md §5.
 """
@@ -51,25 +48,17 @@ import yaml
 ROOT = Path(__file__).resolve().parents[1]
 PARITY_DIR = ROOT / "tests" / "parity"
 CORPUS_PATH = PARITY_DIR / "corpus.yml"
-ALLOW_PATH = PARITY_DIR / "allow.yml"
 BASELINE_DIR = PARITY_DIR / "baseline"
 SEED_CACHE_DIR = PARITY_DIR / "cache"
 PDF_BASELINE_PATH = PARITY_DIR / "pdf-baseline.json"
 BUILD_DIR = ROOT / "build" / "parity"
 
-LEGACY_READER = "html"
-# What the CLI reads with when ``--reader`` is absent, and what the baseline
-# records. An ``.html`` input still goes through the HtmlReader whatever this
-# says; ``--reader html`` survives one release as an escape hatch.
-DEFAULT_READER = "tmark"
-READERS = ("html", "tmark")
 BACKENDS = ("latex", "typst")
 KNOWN_REQUIREMENTS = frozenset({"docker", "network", "fonts", "typst", "tectonic"})
 RENDER_TIMEOUT = 3600  # nested snippet builds on a cold cache are slow
 
 # Statuses shown in the per-entry tables.
 IDENTICAL = "identical"
-ALLOWED = "allow-listed"
 DIFFERS = "differs"
 SKIPPED = "skipped"
 ERROR = "error"
@@ -78,7 +67,7 @@ FAILING = frozenset({DIFFERS, ERROR, MISSING})
 
 
 class ParityError(Exception):
-    """A configuration problem the user must fix (corpus, allow-list, toolchain)."""
+    """A configuration problem the user must fix (corpus, toolchain)."""
 
 
 # --------------------------------------------------------------------------- corpus
@@ -108,10 +97,8 @@ class Entry:
         stems = [Path(arg).stem for arg in self.args if arg.lower().endswith((".md", ".html"))]
         return (*stems[:1], "main") if len(stems) == 1 else ("main",)
 
-    def command(self, *, reader: str | None, out_dir: Path, build: bool = False) -> list[str]:
+    def command(self, *, out_dir: Path, build: bool = False) -> list[str]:
         argv = [*self.args, "-o", str(out_dir)]
-        if reader is not None:
-            argv += ["--reader", reader]
         if build:
             argv.append("--build")
         return argv
@@ -393,30 +380,6 @@ def missing_requirements(
 # ------------------------------------------------------------------------ rendering
 
 
-@cache
-def cli_knows_reader() -> bool:
-    """Whether the installed CLI accepts ``--reader`` (phase 3.2)."""
-    try:
-        import inspect
-
-        from texsmith.ui.cli.commands.render import render
-    except Exception:  # pragma: no cover - texsmith not importable
-        return False
-    return "reader" in inspect.signature(render).parameters
-
-
-def reader_flag(reader: str) -> str:
-    """The ``--reader`` value to pass; the harness always pins the reader explicitly."""
-    if reader not in READERS:
-        raise ParityError(f"unknown reader {reader!r}; expected one of {READERS}")
-    if not cli_knows_reader():
-        raise ParityError(
-            "the installed texsmith CLI has no --reader option; the harness needs it "
-            "to pin the reader it renders with (run `uv sync`)"
-        )
-    return reader
-
-
 SHARED_CACHE_NAMESPACES = ("texmf", "playwright", "snippets")
 
 
@@ -484,7 +447,6 @@ class RenderResult:
 def render_entry(
     entry: Entry,
     *,
-    reader: str,
     out_dir: Path,
     env: dict[str, str],
     build: bool = False,
@@ -497,7 +459,7 @@ def render_entry(
         sys.executable,
         "-c",
         "from texsmith.ui.cli.app import main; main()",
-        *entry.command(reader=reader_flag(reader), out_dir=out_dir, build=build),
+        *entry.command(out_dir=out_dir, build=build),
     ]
     started = time.monotonic()
     try:
@@ -524,7 +486,6 @@ def render_entry(
 def render_many(
     entries: Sequence[Entry],
     *,
-    reader: str,
     out_root: Path,
     jobs: int,
     build: bool = False,
@@ -535,16 +496,14 @@ def render_many(
     total = len(entries)
 
     def work(entry: Entry) -> RenderResult:
-        return render_entry(
-            entry, reader=reader, out_dir=out_root / entry.entry_id, env=env, build=build
-        )
+        return render_entry(entry, out_dir=out_root / entry.entry_id, env=env, build=build)
 
     with ThreadPoolExecutor(max_workers=max(1, jobs)) as pool:
         for index, result in enumerate(pool.map(work, entries), start=1):
             results[result.entry.entry_id] = result
             state = "ok" if result.ok else f"FAILED ({result.returncode})"
             print(
-                f"[{index:>3}/{total}] {reader:<5} {result.entry.entry_id:<48} {state} {result.seconds:5.1f}s"
+                f"[{index:>3}/{total}] {result.entry.entry_id:<48} {state} {result.seconds:5.1f}s"
             )
     return results
 
@@ -873,196 +832,7 @@ def normalise(text: str, suffix: str, stems: Iterable[str] = ()) -> str:
     return normalise_typ(text, stems) if suffix == ".typ" else normalise_tex(text, stems)
 
 
-def extract_body(text: str) -> str:
-    """The document body (between ``\\begin{document}`` and ``\\end{document}``).
-
-    Slot fragments and ``.typ`` files have no envelope: the whole file is the body.
-    """
-    start = text.find("\\begin{document}")
-    end = text.rfind("\\end{document}")
-    if start < 0 or end < 0 or end < start:
-        return text
-    start = text.find("\n", start)
-    body = text[start + 1 : end] if start >= 0 else ""
-    return collapse_blank_lines(body)
-
-
-# ----------------------------------------------------------------------- allow-list
-
-
-@dataclass(frozen=True)
-class AllowEntry:
-    allow_id: str
-    kind: str
-    files: tuple[str, ...]
-    reason: str
-    expires: tuple[int, ...]
-    rewrite_from: str = ""
-    rewrite_to: str = ""
-    pattern: re.Pattern[str] | None = None
-
-    def applies_to(self, relpath: str) -> bool:
-        return any(glob_to_regex(glob).match(relpath) for glob in self.files)
-
-
-class _AllowExpiredError(Exception):
-    """A well-formed allow-list entry whose expiry has been reached."""
-
-    def __init__(self, entry: AllowEntry, message: str) -> None:
-        super().__init__(message)
-        self.entry = entry
-
-
-def parse_version(text: str) -> tuple[int, ...]:
-    """Leading numeric components of a version (``0.6.1.dev7`` → ``(0, 6, 1)``)."""
-    parts: list[int] = []
-    for piece in str(text).split("."):
-        if not piece.isdigit():
-            break
-        parts.append(int(piece))
-    if not parts:
-        raise ParityError(f"not a version: {text!r}")
-    return tuple(parts)
-
-
-@cache
-def glob_to_regex(pattern: str) -> re.Pattern[str]:
-    """``**`` crosses ``/``, ``*`` and ``?`` do not; anchored at both ends."""
-    out = ""
-    index = 0
-    while index < len(pattern):
-        char = pattern[index]
-        if pattern.startswith("**/", index):
-            out += "(?:.*/)?"
-            index += 3
-            continue
-        if pattern.startswith("**", index):
-            out += ".*"
-            index += 2
-            continue
-        if char == "*":
-            out += "[^/]*"
-        elif char == "?":
-            out += "[^/]"
-        else:
-            out += re.escape(char)
-        index += 1
-    return re.compile(f"^{out}$")
-
-
-def texsmith_version() -> str:
-    try:
-        from importlib.metadata import version
-
-        return version("texsmith")
-    except Exception:  # pragma: no cover - not installed
-        return "0.0.0"
-
-
-def load_allow_list(
-    path: Path = ALLOW_PATH, *, current_version: str | None = None, strict: bool = True
-) -> list[AllowEntry]:
-    """Load and validate ``allow.yml``.
-
-    The only load-time rejection that can go stale is the expiry: an entry whose
-    ``expires`` version has been reached fails the load, so nobody can leave a
-    dead waiver behind. That rule belongs to a gate, and the allow-list now has
-    exactly one consumer — the migration-only ``diff``, which is no longer a
-    gate and outlives the release its entries were written for. ``strict=False``
-    therefore keeps an expired entry with a warning instead of failing, which is
-    what ``diff`` asks for; there is nothing to relax for ``baseline``, which
-    reads no allow-list at all (see ``_check_baseline``).
-    """
-    raw = yaml.safe_load(path.read_text(encoding="utf-8")) if path.is_file() else []
-    if raw is None:
-        raw = []
-    if not isinstance(raw, list):
-        raise ParityError(f"allow-list: {path} must be a list of entries")
-    current = parse_version(current_version or texsmith_version())
-    entries: list[AllowEntry] = []
-    seen: set[str] = set()
-    expired: list[str] = []
-    for index, item in enumerate(raw):
-        try:
-            entries.append(_allow_entry(item, index=index, current=current, seen=seen))
-        except _AllowExpiredError as exc:
-            if strict:
-                raise ParityError(str(exc)) from exc
-            expired.append(exc.entry.allow_id)
-            entries.append(exc.entry)
-    if expired:
-        print(
-            f"parity: {len(expired)} allow-list entries are past their expiry and were kept "
-            f"anyway ({', '.join(expired)}); they describe the migration, not a live gate"
-        )
-    return entries
-
-
-def _require_str(item: dict[str, Any], key: str, *, what: str) -> str:
-    value = item.get(key)
-    if not isinstance(value, str) or not value:
-        raise ParityError(f"allow-list: {what}.{key} must be a non-empty string")
-    return value
-
-
-def _allow_entry(item: Any, *, index: int, current: tuple[int, ...], seen: set[str]) -> AllowEntry:
-    if not isinstance(item, dict):
-        raise ParityError(f"allow-list: entry {index} must be a mapping")
-    allow_id = _require_str(item, "id", what=f"entry {index}")
-    what = f"[{allow_id}]"
-    if allow_id in seen:
-        raise ParityError(f"allow-list: duplicate id {allow_id!r}")
-    seen.add(allow_id)
-    kind = _require_str(item, "kind", what=what)
-    if kind not in {"rewrite", "hunk"}:
-        raise ParityError(f"allow-list: {what}.kind must be 'rewrite' or 'hunk', got {kind!r}")
-    files = item.get("files")
-    if not isinstance(files, list) or not files or not all(isinstance(f, str) for f in files):
-        raise ParityError(f"allow-list: {what}.files must be a non-empty list of globs")
-    reason = _require_str(item, "reason", what=what)
-    expires = parse_version(_require_str(item, "expires", what=what))
-    allowed_keys = {"id", "kind", "files", "reason", "expires"}
-    if kind == "rewrite":
-        allowed_keys |= {"from", "to"}
-        rewrite_from = _require_str(item, "from", what=what)
-        rewrite_to = item.get("to", "")
-        if not isinstance(rewrite_to, str):
-            raise ParityError(f"allow-list: {what}.to must be a string")
-        pattern = None
-    else:
-        allowed_keys |= {"pattern"}
-        rewrite_from = rewrite_to = ""
-        try:
-            pattern = re.compile(_require_str(item, "pattern", what=what), re.MULTILINE)
-        except re.error as exc:
-            raise ParityError(f"allow-list: {what}.pattern is not a valid regex: {exc}") from exc
-    unknown = set(item) - allowed_keys
-    if unknown:
-        raise ParityError(f"allow-list: {what} has unknown keys {sorted(unknown)}")
-    entry = AllowEntry(
-        allow_id=allow_id,
-        kind=kind,
-        files=tuple(files),
-        reason=reason,
-        expires=expires,
-        rewrite_from=rewrite_from,
-        rewrite_to=rewrite_to,
-        pattern=pattern,
-    )
-    if current >= expires:
-        raise _AllowExpiredError(
-            entry,
-            f"allow-list: {what} expired at {'.'.join(map(str, expires))} "
-            f"(current {'.'.join(map(str, current))}); fix or remove it",
-        )
-    return entry
-
-
-def apply_rewrites(text: str, relpath: str, allow: Iterable[AllowEntry]) -> str:
-    for entry in allow:
-        if entry.kind == "rewrite" and entry.applies_to(relpath):
-            text = text.replace(entry.rewrite_from, entry.rewrite_to)
-    return text
+# ----------------------------------------------------------------------- diffing
 
 
 @dataclass(frozen=True)
@@ -1093,47 +863,28 @@ def split_hunks(old: str, new: str, *, context: int = 0) -> list[Hunk]:
     return hunks
 
 
-def hunk_allowed(hunk: Hunk, relpath: str, allow: Iterable[AllowEntry]) -> AllowEntry | None:
-    """The first ``hunk`` allow-list entry matching this hunk, if any."""
-    for entry in allow:
-        if entry.kind != "hunk" or entry.pattern is None or not entry.applies_to(relpath):
-            continue
-        if entry.pattern.search(hunk.text):
-            return entry
-    return None
-
-
 @dataclass
 class FileVerdict:
     name: str
     hunks: int = 0
-    allowed: int = 0
     diff: str = ""
 
     @property
     def status(self) -> str:
-        if self.hunks == 0:
-            return IDENTICAL
-        return ALLOWED if self.allowed == self.hunks else DIFFERS
+        return IDENTICAL if self.hunks == 0 else DIFFERS
 
 
-def compare_texts(
-    old: str, new: str, *, relpath: str, allow: Sequence[AllowEntry] = ()
-) -> FileVerdict:
-    """Rewrite both sides, diff, classify every hunk against the allow-list."""
-    old = apply_rewrites(old, relpath, allow)
-    new = apply_rewrites(new, relpath, allow)
+def compare_texts(old: str, new: str, *, relpath: str) -> FileVerdict:
+    """Diff the committed text against a fresh one; every hunk is a finding.
+
+    There is no allow-list: both sides are the same rendering of the same
+    source, so a hunk is either a regression or a change its author re-records
+    with ``parity.py baseline``.
+    """
     hunks = split_hunks(old, new)
     verdict = FileVerdict(name=relpath, hunks=len(hunks))
-    unlisted: list[str] = []
-    for hunk in hunks:
-        matched = hunk_allowed(hunk, relpath, allow)
-        if matched is not None:
-            verdict.allowed += 1
-        else:
-            unlisted.append(f"{hunk.header}\n{hunk.text}")
-    if unlisted:
-        verdict.diff = "\n".join(unlisted) + "\n"
+    if hunks:
+        verdict.diff = "\n".join(f"{hunk.header}\n{hunk.text}" for hunk in hunks) + "\n"
     return verdict
 
 
@@ -1151,10 +902,6 @@ class EntryReport:
     def hunks(self) -> int:
         return sum(f.hunks for f in self.files)
 
-    @property
-    def allowed(self) -> int:
-        return sum(f.allowed for f in self.files)
-
 
 def print_table(reports: Sequence[EntryReport], *, title: str) -> None:
     print()
@@ -1162,9 +909,7 @@ def print_table(reports: Sequence[EntryReport], *, title: str) -> None:
     print("-" * len(title))
     width = max((len(r.entry.entry_id) for r in reports), default=10)
     for report in reports:
-        hunks = ""
-        if report.status in {ALLOWED, DIFFERS}:
-            hunks = f"{report.allowed}/{report.hunks} hunks allow-listed"
+        hunks = f"{report.hunks} differing hunks" if report.status == DIFFERS else ""
         detail = report.detail or hunks
         print(f"{report.entry.entry_id:<{width}}  {report.status:<16} {detail}")
     counts: dict[str, int] = {}
@@ -1240,16 +985,15 @@ def cmd_list(args: argparse.Namespace) -> int:
         print(
             f"{entry.entry_id:<48} {entry.backend:<7} {','.join(sorted(entry.requires)) or '-':<28} {state}"
         )
-    print(f"\n{len(entries)} entries; CLI knows --reader: {'yes' if cli_knows_reader() else 'no'}")
+    print(f"\n{len(entries)} entries")
     return 0
 
 
 def cmd_render(args: argparse.Namespace) -> int:
-    reader_flag(args.reader)  # fail early when the CLI cannot honour the reader
     entries = select_entries(load_corpus(), args.only)
     runnable, skipped = _partition(entries, without=args.without)
     out_root = Path(args.out).resolve()
-    results = render_many(runnable, reader=args.reader, out_root=out_root, jobs=args.jobs)
+    results = render_many(runnable, out_root=out_root, jobs=args.jobs)
     reports = [*skipped]
     for entry in runnable:
         result = results[entry.entry_id]
@@ -1259,7 +1003,7 @@ def cmd_render(args: argparse.Namespace) -> int:
         reports.append(EntryReport(entry, "rendered", ", ".join(p.name for p in result.outputs())))
     print_table(
         reports,
-        title=f"render --reader {args.reader} → {out_root.relative_to(ROOT) if out_root.is_relative_to(ROOT) else out_root}",
+        title=f"render → {out_root.relative_to(ROOT) if out_root.is_relative_to(ROOT) else out_root}",
     )
     return exit_code(reports)
 
@@ -1278,9 +1022,9 @@ def _write_baseline(entry: Entry, files: dict[str, str]) -> None:
 
 
 def _check_baseline(entry: Entry, files: dict[str, str]) -> EntryReport:
-    """Diff a fresh render against the committed one — no allow-list, on purpose.
+    """Diff a fresh render against the committed one — every hunk is a finding.
 
-    Both sides come from the same reader, so there is no such thing as an
+    Both sides come from the same rendering, so there is no such thing as an
     intended difference here: a change is either a regression or a change the
     author re-records with ``parity.py baseline`` and a reviewer reads.
     """
@@ -1308,9 +1052,7 @@ def _check_baseline(entry: Entry, files: dict[str, str]) -> EntryReport:
 def cmd_baseline(args: argparse.Namespace) -> int:
     entries = select_entries(load_corpus(), args.only)
     runnable, skipped = _partition(entries, without=args.without, ignore=("typst",))
-    results = render_many(
-        runnable, reader=DEFAULT_READER, out_root=BUILD_DIR / DEFAULT_READER, jobs=args.jobs
-    )
+    results = render_many(runnable, out_root=BUILD_DIR / "render", jobs=args.jobs)
     reports: list[EntryReport] = [*skipped]
     for entry in runnable:
         result = results[entry.entry_id]
@@ -1332,77 +1074,12 @@ def cmd_baseline(args: argparse.Namespace) -> int:
             reports.append(EntryReport(entry, "written", ", ".join(sorted(files))))
     if args.check:
         _write_diffs(reports, BUILD_DIR / "check")
-        print_table(
-            reports,
-            title=f"baseline --check ({DEFAULT_READER} reader vs tests/parity/baseline)",
-        )
+        print_table(reports, title="baseline --check (fresh render vs tests/parity/baseline)")
     else:
-        print_table(reports, title=f"baseline ({DEFAULT_READER} reader → tests/parity/baseline)")
+        print_table(reports, title="baseline (fresh render → tests/parity/baseline)")
         for report in reports:
             if report.status == SKIPPED and _baseline_dir(report.entry).is_dir():
                 print(f"kept the committed baseline of skipped entry {report.entry.entry_id}")
-    return exit_code(reports)
-
-
-def cmd_diff(args: argparse.Namespace) -> int:
-    if not args.only:
-        raise ParityError(
-            "diff compares two readers, and only a legacy-spelled document can be read by "
-            "both: examples/** and docs/** are canonical TMark, which the html reader "
-            "renders as literal text, so a whole-corpus run reports noise. It belongs to "
-            "the migration and is kept to audit a document that has not been migrated yet "
-            "— name that entry set explicitly with --only GLOB (repeatable). The gate on "
-            "the tmark path is `parity.py baseline --check`."
-        )
-    allow = load_allow_list(strict=False)
-    reader_flag(args.reader_a)
-    reader_flag(args.reader_b)
-    entries = select_entries(load_corpus(), args.only)
-    if not entries:
-        raise ParityError(f"--only {args.only} matched no corpus entry")
-    runnable, skipped = _partition(entries, without=args.without, ignore=("typst",))
-    results_a = render_many(
-        runnable, reader=args.reader_a, out_root=BUILD_DIR / args.reader_a, jobs=args.jobs
-    )
-    results_b = render_many(
-        runnable, reader=args.reader_b, out_root=BUILD_DIR / args.reader_b, jobs=args.jobs
-    )
-    reports: list[EntryReport] = [*skipped]
-    full_reports: list[EntryReport] = []
-    for entry in runnable:
-        result_a, result_b = results_a[entry.entry_id], results_b[entry.entry_id]
-        if not result_a.ok:
-            reports.append(error_report(result_a))
-            continue
-        if not result_b.ok:
-            reports.append(error_report(result_b))
-            continue
-        files_a, files_b = normalised_outputs(result_a), normalised_outputs(result_b)
-        body = EntryReport(entry, IDENTICAL)
-        full = EntryReport(entry, IDENTICAL)
-        for name in sorted(set(files_a) | set(files_b)):
-            relpath = f"{entry.entry_id}/{name}"
-            text_a, text_b = files_a.get(name, ""), files_b.get(name, "")
-            body.files.append(
-                compare_texts(
-                    extract_body(text_a), extract_body(text_b), relpath=relpath, allow=allow
-                )
-            )
-            full.files.append(compare_texts(text_a, text_b, relpath=relpath, allow=allow))
-        for report in (body, full):
-            statuses = {f.status for f in report.files}
-            if DIFFERS in statuses:
-                report.status = DIFFERS
-            elif ALLOWED in statuses:
-                report.status = ALLOWED
-        reports.append(body)
-        full_reports.append(full)
-    _write_diffs(reports, BUILD_DIR / "diff" / "body")
-    _write_diffs(full_reports, BUILD_DIR / "diff" / "full")
-    print_table(reports, title=f"diff {args.reader_a} vs {args.reader_b} — document body (gating)")
-    print_table(
-        full_reports, title=f"diff {args.reader_a} vs {args.reader_b} — full file (informative)"
-    )
     return exit_code(reports)
 
 
@@ -1444,93 +1121,6 @@ def _ink(image: Any) -> Any:
     return image.point(lambda value: 255 if value < 200 else 0)
 
 
-def _pad_to(image: Any, size: tuple[int, int], fill: int = 255) -> Any:
-    from PIL import Image
-
-    if image.size == size:
-        return image
-    canvas = Image.new("L", size, fill)
-    canvas.paste(image, (0, 0))
-    return canvas
-
-
-@dataclass
-class PageDiff:
-    number: int
-    ratio: float
-    text_hunks: int
-    overlay: Path | None = None
-
-
-def compare_pages(
-    legacy: Any,
-    new: Any,
-    *,
-    number: int,
-    text_hunks: int,
-    overlay_path: Path,
-    threshold: float,
-) -> PageDiff:
-    """Pixel-diff two page images after a one-pixel dilation of both sides."""
-    from PIL import Image, ImageChops, ImageFilter
-
-    size = (max(legacy.width, new.width), max(legacy.height, new.height))
-    legacy, new = _pad_to(legacy, size), _pad_to(new, size)
-    ink_a, ink_b = _ink(legacy), _ink(new)
-    dilated_a = ink_a.filter(ImageFilter.MaxFilter(3))
-    dilated_b = ink_b.filter(ImageFilter.MaxFilter(3))
-    only_a = ImageChops.subtract(ink_a, dilated_b)  # legacy ink with no new ink nearby
-    only_b = ImageChops.subtract(ink_b, dilated_a)
-    changed = only_a.histogram()[255] + only_b.histogram()[255]
-    ratio = changed / float(size[0] * size[1])
-    page = PageDiff(number=number, ratio=ratio, text_hunks=text_hunks)
-    if ratio > threshold or text_hunks:
-        overlay = Image.new("RGB", size, (255, 255, 255))
-        both = ImageChops.darker(ink_a, ink_b)
-        overlay.paste((96, 96, 96), mask=both)
-        overlay.paste((220, 0, 0), mask=only_a)
-        overlay.paste((0, 160, 0), mask=only_b)
-        overlay_path.parent.mkdir(parents=True, exist_ok=True)
-        overlay.save(overlay_path)
-        page.overlay = overlay_path
-    return page
-
-
-def compare_pdfs(
-    legacy_pdf: Path, new_pdf: Path, *, out_dir: Path, dpi: int, threshold: float
-) -> tuple[str, list[PageDiff], str]:
-    """Return ``(status, pages, detail)`` for two PDFs."""
-    images_a, texts_a = _rasterise(legacy_pdf, dpi=dpi)
-    images_b, texts_b = _rasterise(new_pdf, dpi=dpi)
-    if len(images_a) != len(images_b):
-        return DIFFERS, [], f"page count {len(images_a)} vs {len(images_b)}"
-    pages: list[PageDiff] = []
-    for number, (image_a, image_b, text_a, text_b) in enumerate(
-        zip(images_a, images_b, texts_a, texts_b, strict=True), start=1
-    ):
-        text_hunks = len(split_hunks(text_a, text_b))
-        pages.append(
-            compare_pages(
-                image_a,
-                image_b,
-                number=number,
-                text_hunks=text_hunks,
-                overlay_path=out_dir / f"page-{number:03d}.png",
-                threshold=threshold,
-            )
-        )
-    worst = max(pages, key=lambda p: p.ratio, default=None)
-    text_pages = sum(1 for p in pages if p.text_hunks)
-    detail = (
-        f"{len(pages)} pages, worst {worst.ratio * 100:.3f}% on page {worst.number}, "
-        f"text differs on {text_pages} page(s)"
-        if worst
-        else "no pages"
-    )
-    status = DIFFERS if any(p.ratio > threshold for p in pages) else IDENTICAL
-    return status, pages, detail
-
-
 # ------------------------------------------------------------------ pdf baseline
 
 # The entries the nightly job guards: one acronym-heavy page, the counter
@@ -1556,17 +1146,14 @@ def pdf_digest(pdf: Path, *, dpi: int) -> list[dict[str, Any]]:
     all-or-nothing, and three things under it are not pinned: tectonic fetches
     whatever TeX bundle is current, TeXSmith downloads its fonts on first use,
     and pymupdf's rasteriser changes its antialiasing between releases — any of
-    the three flips every hash while the document is unchanged. (The two-reader
-    pixel diff above lives with that by comparing two PDFs built *in the same
-    run*, with a 0.1 % threshold and a one-pixel dilation; a committed file has
-    no such luxury.) So the committed record is what survives a toolchain bump:
-    the page count, the text layer verbatim — which is also readable in a
-    ``git diff``, so a change to the rendering shows up as the changed sentence
+    the three flips every hash while the document is unchanged. So the committed
+    record is what survives a toolchain bump: the page count, the text layer verbatim — which is also readable in a
+    review diff, so a change to the rendering shows up as the changed sentence
     — the raster size, and the ink coverage within ``INK_TOLERANCE``.
 
     The cost is stated once here: a layout-only change that keeps the text and
     moves less ink than the tolerance (a figure shifted a few millimetres) is
-    invisible to this gate. `parity.py pdf` without `--baseline` still sees it.
+    invisible to this gate.
     """
     images, texts = _rasterise(pdf, dpi=dpi)
     pages: list[dict[str, Any]] = []
@@ -1608,20 +1195,19 @@ def _pdf_baseline_entries(args: argparse.Namespace, corpus: dict[str, Entry]) ->
     return [corpus[entry_id] for entry_id in wanted]
 
 
-def cmd_pdf_baseline(args: argparse.Namespace) -> int:
-    """Build the tmark path's PDFs and record/check them against the committed digest."""
+def cmd_pdf(args: argparse.Namespace) -> int:
+    """Build the corpus' PDFs and record — or check — them against the committed digest."""
+    if not args.baseline:
+        raise ParityError(
+            "pdf only runs as `pdf --baseline` (record) or `pdf --baseline --check` "
+            "(compare against tests/parity/pdf-baseline.json)"
+        )
     corpus = {entry.entry_id: entry for entry in load_corpus()}
     entries = _pdf_baseline_entries(args, corpus)
     _require_pdf_toolchain(entries)
     runnable, skipped = _partition(entries, without=args.without)
     pdf_root = BUILD_DIR / "pdf"
-    results = render_many(
-        runnable,
-        reader=DEFAULT_READER,
-        out_root=pdf_root / DEFAULT_READER,
-        jobs=args.jobs,
-        build=True,
-    )
+    results = render_many(runnable, out_root=pdf_root / "build", jobs=args.jobs, build=True)
     committed: dict[str, Any] = {}
     if args.check:
         if not PDF_BASELINE_PATH.is_file():
@@ -1670,7 +1256,6 @@ def cmd_pdf_baseline(args: argparse.Namespace) -> int:
 
     pdf_root.mkdir(parents=True, exist_ok=True)
     payload = {
-        "reader": DEFAULT_READER,
         "dpi": args.dpi,
         "ink_tolerance": INK_TOLERANCE,
         "documents": documents,
@@ -1679,15 +1264,13 @@ def cmd_pdf_baseline(args: argparse.Namespace) -> int:
         (pdf_root / "digest.json").write_text(json.dumps(payload, indent=2), encoding="utf-8")
         print_table(
             reports,
-            title=f"pdf --baseline --check ({DEFAULT_READER} reader vs "
-            f"{PDF_BASELINE_PATH.relative_to(ROOT)})",
+            title=f"pdf --baseline --check (fresh build vs {PDF_BASELINE_PATH.relative_to(ROOT)})",
         )
     else:
         PDF_BASELINE_PATH.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
         print_table(
             reports,
-            title=f"pdf --baseline ({DEFAULT_READER} reader → "
-            f"{PDF_BASELINE_PATH.relative_to(ROOT)})",
+            title=f"pdf --baseline (fresh build → {PDF_BASELINE_PATH.relative_to(ROOT)})",
         )
     return exit_code(reports)
 
@@ -1697,84 +1280,6 @@ def _require_pdf_toolchain(entries: Sequence[Entry]) -> None:
         needed = "typst" if entry.backend == "typst" else "tectonic"
         if not REQUIREMENT_CHECKS[needed]():
             raise ParityError(f"{entry.entry_id}: {needed} is required to build its PDF")
-
-
-def cmd_pdf(args: argparse.Namespace) -> int:
-    if args.baseline:
-        return cmd_pdf_baseline(args)
-    if args.check:
-        raise ParityError("pdf --check only means something together with --baseline")
-    if not args.entries:
-        raise ParityError(
-            "pdf needs --entries ID... (or --baseline, which has its own default set)"
-        )
-    reader_flag(args.reader_a)
-    reader_flag(args.reader_b)
-    corpus = {entry.entry_id: entry for entry in load_corpus()}
-    unknown = [entry_id for entry_id in args.entries if entry_id not in corpus]
-    if unknown:
-        raise ParityError(f"unknown corpus entries: {', '.join(unknown)}")
-    entries = [corpus[entry_id] for entry_id in args.entries]
-    _require_pdf_toolchain(entries)
-    runnable, skipped = _partition(entries, without=args.without)
-    pdf_root = BUILD_DIR / "pdf"
-    results_a = render_many(
-        runnable,
-        reader=args.reader_a,
-        out_root=pdf_root / args.reader_a,
-        jobs=args.jobs,
-        build=True,
-    )
-    results_b = render_many(
-        runnable,
-        reader=args.reader_b,
-        out_root=pdf_root / args.reader_b,
-        jobs=args.jobs,
-        build=True,
-    )
-    reports: list[EntryReport] = [*skipped]
-    summary: dict[str, Any] = {}
-    for entry in runnable:
-        result_a, result_b = results_a[entry.entry_id], results_b[entry.entry_id]
-        if not result_a.ok:
-            reports.append(error_report(result_a))
-            continue
-        if not result_b.ok:
-            reports.append(error_report(result_b))
-            continue
-        pdfs_a, pdfs_b = result_a.pdfs(), result_b.pdfs()
-        if not pdfs_a or not pdfs_b or len(pdfs_a) != len(pdfs_b):
-            reports.append(EntryReport(entry, ERROR, f"pdf outputs {len(pdfs_a)} vs {len(pdfs_b)}"))
-            continue
-        status, details = IDENTICAL, []
-        for pdf_a, pdf_b in zip(pdfs_a, pdfs_b, strict=True):
-            out_dir = pdf_root / entry.entry_id / pdf_a.stem
-            verdict, pages, detail = compare_pdfs(
-                pdf_a, pdf_b, out_dir=out_dir, dpi=args.dpi, threshold=args.threshold
-            )
-            details.append(f"{pdf_a.name}: {detail}")
-            summary[f"{entry.entry_id}/{pdf_a.name}"] = {
-                "status": verdict,
-                "pages": [
-                    {
-                        "page": p.number,
-                        "ratio": p.ratio,
-                        "text_hunks": p.text_hunks,
-                        "overlay": str(p.overlay.relative_to(ROOT)) if p.overlay else None,
-                    }
-                    for p in pages
-                ],
-            }
-            if verdict == DIFFERS:
-                status = DIFFERS
-        reports.append(EntryReport(entry, status, "; ".join(details)))
-    pdf_root.mkdir(parents=True, exist_ok=True)
-    (pdf_root / "report.json").write_text(json.dumps(summary, indent=2), encoding="utf-8")
-    print_table(
-        reports,
-        title=f"pdf {args.reader_a} (red) vs {args.reader_b} (green) — overlays under build/parity/pdf/",
-    )
-    return exit_code(reports)
 
 
 # -------------------------------------------------------------------------- main
@@ -1816,15 +1321,14 @@ def build_parser() -> argparse.ArgumentParser:
 
     p_baseline = sub.add_parser(
         "baseline",
-        help=f"render the {DEFAULT_READER} reader (the CLI default) into "
-        f"tests/parity/baseline (or --check against it)",
+        help="render every corpus entry into tests/parity/baseline (or --check against it)",
         description=(
-            f"Record, or check, the regression baseline of the {DEFAULT_READER} reader — the "
-            "reader the CLI uses when --reader is absent, and the one every example and "
-            "docs page is written for. Recording rewrites tests/parity/baseline/<id>/, "
+            "Record, or check, the regression baseline: the normalised .tex/.typ every "
+            "corpus entry renders to. Recording rewrites tests/parity/baseline/<id>/, "
             "which is committed, so an intended change to the rendered output lands in a "
-            "diff a reviewer reads. --check re-renders and fails on any difference: there "
-            "is no allow-list here, because both sides come from the same reader."
+            "review a human reads. --check re-renders and fails on any difference: both "
+            "sides are the same rendering of the same source, so there is no such thing "
+            "as an intended difference here and no allow-list to record one."
         ),
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
@@ -1836,57 +1340,21 @@ def build_parser() -> argparse.ArgumentParser:
     _add_common(p_baseline)
     p_baseline.set_defaults(func=cmd_baseline)
 
-    p_render = sub.add_parser("render", help="render every entry with one reader (raw outputs)")
-    p_render.add_argument(
-        "--reader",
-        choices=READERS,
-        default=DEFAULT_READER,
-        help="reader to pin (default: %(default)s, the CLI default). An .html input goes "
-        "through the HtmlReader whatever this says; 'html' is the escape hatch for a "
-        "document still written in the legacy spellings, kept for one release.",
+    p_render = sub.add_parser(
+        "render", help="render every entry into a directory (raw outputs, no comparison)"
     )
     p_render.add_argument("--out", required=True, metavar="DIR")
     _add_common(p_render)
     p_render.set_defaults(func=cmd_render)
 
-    p_diff = sub.add_parser(
-        "diff",
-        help="MIGRATION ONLY: html vs tmark on an explicit --only entry set",
-        description=(
-            "Compare two readers on the same sources, modulo tests/parity/allow.yml.\n\n"
-            "This belongs to the TeXSmith → TMark migration (plan task 4.1) and is no "
-            "longer a gate. examples/** and docs/** are written in canonical TMark, which "
-            "the legacy html reader cannot parse — it renders '{.thin}', "
-            "'{raw latex}(…)' and '::: tabs' as literal text — so a whole-corpus run "
-            "reports noise rather than findings. What it is still good for is auditing a "
-            "single document that has *not* been migrated yet, which is why it refuses to "
-            "run without an explicit --only entry set.\n\n"
-            "The allow-list is loaded leniently here: an entry past its expiry is kept "
-            "with a warning instead of failing the load, because these entries describe a "
-            "migration that is over and the release they were written for has moved on. "
-            "The gate on the tmark path is `parity.py baseline --check`."
-        ),
-        formatter_class=argparse.RawDescriptionHelpFormatter,
-    )
-    p_diff.add_argument("--reader-a", choices=READERS, default=LEGACY_READER)
-    p_diff.add_argument("--reader-b", choices=READERS, default=DEFAULT_READER)
-    _add_common(p_diff)
-    p_diff.set_defaults(func=cmd_diff)
-
     p_pdf = sub.add_parser(
         "pdf",
-        help="rasterise built PDFs: two readers by default, or --baseline against "
-        "tests/parity/pdf-baseline.json",
+        help="build the PDFs and record (or --check) tests/parity/pdf-baseline.json",
         description=(
-            "Build the PDFs and compare them page by page.\n\n"
-            "Default: two readers in the same run, pixel-diffed after a one-pixel "
-            "dilation — the migration comparison, kept for the same reason `diff` is.\n\n"
-            "--baseline: build only the "
-            f"{DEFAULT_READER} path and record each page's text layer, raster size and ink "
-            "coverage into tests/parity/pdf-baseline.json (committed); --baseline --check "
-            "rebuilds and compares against it, so the nightly job guards the rendering "
-            "rather than the migration. Its default entry set is "
-            f"{' '.join(PDF_BASELINE_ENTRIES)}."
+            "Build the PDFs with the full toolchain and record each page's text layer, "
+            "raster size and ink coverage into tests/parity/pdf-baseline.json, which is "
+            "committed; --baseline --check rebuilds and compares against it. The default "
+            f"entry set is {' '.join(PDF_BASELINE_ENTRIES)}."
         ),
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
@@ -1894,28 +1362,19 @@ def build_parser() -> argparse.ArgumentParser:
         "--entries",
         nargs="+",
         metavar="ID",
-        help=f"corpus entries to build (required; --baseline defaults to "
-        f"{' '.join(PDF_BASELINE_ENTRIES)})",
+        help=f"corpus entries to build (default: {' '.join(PDF_BASELINE_ENTRIES)})",
     )
     p_pdf.add_argument(
         "--baseline",
         action="store_true",
-        help=f"record the {DEFAULT_READER} path into tests/parity/pdf-baseline.json",
+        help="record the built PDFs into tests/parity/pdf-baseline.json (required)",
     )
     p_pdf.add_argument(
         "--check",
         action="store_true",
         help="with --baseline: compare against the committed record instead of rewriting it",
     )
-    p_pdf.add_argument("--reader-a", choices=READERS, default=LEGACY_READER)
-    p_pdf.add_argument("--reader-b", choices=READERS, default=DEFAULT_READER)
     p_pdf.add_argument("--dpi", type=int, default=100)
-    p_pdf.add_argument(
-        "--threshold",
-        type=float,
-        default=0.001,
-        help="max fraction of differing pixels per page (default 0.1%%)",
-    )
     _add_common(p_pdf)
     p_pdf.set_defaults(func=cmd_pdf)
 
