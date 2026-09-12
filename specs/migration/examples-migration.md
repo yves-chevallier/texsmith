@@ -227,3 +227,51 @@ Residual across the corpus: 0 `container-unknown`, 0 `frontmatter-yaml`, 0
 `deprecated`, 0 `deprecated-frontmatter-key` after `--fix`. What remains is
 the milestone-5 constructs (`compat-unsupported`), which the spec wave is
 deciding, and `.bib` discovery for the MkDocs-hosted paper.
+
+## 6. Closing section — the flip (plan 4.3, 2026-09-12)
+
+Every `.md` under `examples/` is now written in canonical TMark, in place, and
+`--reader` defaults to `tmark`. The per-example record of what changed, the
+build table, the diagnostics deliberately kept and the findings are in
+`examples-flip.md`; this section closes the work items of §4.
+
+**tmark items.** 1 (`--stdout`/`--diff`), 2 (citations), 3 (the `///` fix), 4
+(info-string attribute lists), 5 (front matter: string author, the
+`deprecated-frontmatter-key` YAML fix, `admonition_style`), 6 (the C20 rows), 8
+(a fence whose body is one snippet line) and 9 (silence → diagnostics) all
+landed and were exercised across the corpus: `tmark lint --fix` alone brought
+the 130 `deprecated`, 4 `deprecated-frontmatter-key` and 1 `frontmatter-yaml`
+records of §1 to zero. Item 7 (the table model) landed; `tables.md` keeps five
+`table-*` errors, which are the deliberate mistakes of its "Error cases"
+section. Item 11's `ProgressBar` and fancy lists parse; item 10's decisions are
+in the spec — tabs are `:::: tabs` / `::: tab {title=…}`, emoji shortcodes
+expand to the character, icon shortcodes are web-only, `^^x^^` needs the
+`inline.insert` feature. Nothing in the examples reports `compat-unsupported`
+any more.
+
+**TeXSmith items.** Item 2 (front matter) is done as far as the examples
+exercise it, plus two cases this task found: `press.declare.glossary` is read
+where `glossary:` was, and its entries reach the body again as synthesised
+abbreviation definitions (finding F1 of `examples-flip.md`, decision X5 —
+`examples/glossary` was precisely the trigger it named). Item 3's passes all
+run on the default path. Item 6 (non-mechanical edits) is done except
+`custom-render`, which still drives the API through a raw-HTML hook and wants
+an IR pass. Item 7 (docs and the `writing-texsmith` skill) is **not** part of
+this task: `docs/cli/index.md` and the changelog were updated for the new
+default, the syntax pages and the skill are plan task 5.3.
+
+**What the fixer did not cover**, and had to be written by hand against the
+spec: content tabs, `^^x^^`, `???+ note "Title"`, `!!!` → `:::` (sugar the
+fixer leaves alone by design), a `:::` callout of a type nobody declared,
+`[](#id)` → `@id`, `#[term]` → `{index}[term]`, `` `#!c …` `` →
+`{code lang=c}[…]`, a bare ```` ```mermaid ```` fence → ```` ```mermaid image ````,
+`\(…\)` → `$…$`, and the list-item continuations `lint --fix` flattens
+(finding F3).
+
+**What was deliberately left in a sugar spelling**, because the document
+exists to demonstrate it or because MkDocs Material renders it natively:
+`~~del~~`, `==mark==`, `^sup^`/`~sub~`, `++Ctrl+C++`, `__smallcaps__`,
+`:smile:`, `\(…\)` in `math.md`, and the `!!!` callout of `examples/mkdocs`.
+Those files are accepted by `tmark check --strict` but are not fixed points of
+`tmark fmt`; the gate this task drove to zero is `check --strict`, not
+`fmt --check`.
