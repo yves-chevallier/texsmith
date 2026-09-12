@@ -1060,6 +1060,10 @@ def _build_documents_from_sources(
             documents.append(
                 Document.from_markdown(
                     path,
+                    # A preview renders the same source the document does, so
+                    # it reads it the same way (`ConversionRequest.reader`'s
+                    # default, which `from_markdown` does not share yet).
+                    reader="tmark",
                     base_level=0,
                     title_strategy=None,
                     promote_title=promote_title,
