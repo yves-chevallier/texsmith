@@ -68,7 +68,7 @@ break there would tear the container in two.
 | Smart symbols | `(c)`, `-->`, `1/2` | E |
 | Quotes | `"a phrase"` → `\enquote{…}` | C |
 | Insert | `{underline}[x]` (sugar `^^x^^`, feature `inline.insert`) | D |
-| Unnumbered heading | `# Preface {.unnumbered}` / `{.unlisted}` | E |
+| Unnumbered heading | `# Preface {.unnumbered}` / `{.unlisted}` — [Headings](headings.md) | E |
 | Anchor on a phrase | `[this claim]{#claim:one}` | D |
 | Autolinks | bare URLs | E |
 | Critic markup | `{++added++}`, `{--removed--}` | E |

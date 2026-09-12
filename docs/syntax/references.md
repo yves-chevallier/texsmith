@@ -77,7 +77,8 @@ Check @sec:section-title for more details.
 A heading with no `{#id}` still has an *implicit* id — GitHub's slug of its
 plain text — so `[](#other-section)` resolves. Because that id changes whenever
 the title is edited, referring to one raises the `ref-implicit-id` hint: give
-the heading an explicit `{#sec:…}`.
+the heading an explicit `{#sec:…}`. See [Headings](headings.md) for the slug
+rule and for `.unnumbered` / `.unlisted`.
 
 ### Custom counters
 
