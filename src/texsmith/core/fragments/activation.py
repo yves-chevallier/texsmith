@@ -101,9 +101,7 @@ def apply_requires(
     implied = implied_packages(state.required_fragments)
     state.required_packages = list(
         dict.fromkeys(
-            pkg
-            for pkg in (*state.required_packages, *requires.packages)
-            if pkg not in implied
+            pkg for pkg in (*state.required_packages, *requires.packages) if pkg not in implied
         )
     )
     state.has_index_entries = bool(state.has_index_entries or requires.index)

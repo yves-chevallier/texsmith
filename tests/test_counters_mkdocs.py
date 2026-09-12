@@ -88,9 +88,7 @@ def build_site(root: Path, mkdocs_yml: str, pages: dict[str, str]) -> Path:
 @pytest.fixture
 def site(tmp_path: Path) -> dict[str, str]:
     """Build a two-page MkDocs site and return its rendered pages."""
-    site_dir = build_site(
-        tmp_path, MKDOCS_YML, {"index.md": INDEX_MD, "findings.md": FINDINGS_MD}
-    )
+    site_dir = build_site(tmp_path, MKDOCS_YML, {"index.md": INDEX_MD, "findings.md": FINDINGS_MD})
     return {
         "index": (site_dir / "index.html").read_text(encoding="utf-8"),
         "findings": (site_dir / "findings" / "index.html").read_text(encoding="utf-8"),

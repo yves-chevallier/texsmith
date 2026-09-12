@@ -178,9 +178,13 @@ class SiteIndex:
         )
         padded = "\n" * record.padding + body
         doc = tmark.parse(padded, file=self._display_path(path))
-        doc["front_matter"], record.front_matter_diagnostics = self._front_matter_node(
+        node, record.front_matter_diagnostics = self._front_matter_node(
             record.meta, file_id=0, node_id=max_node_id(doc) + 1
         )
+        # ``front_matter: null`` is not a tmark document: a page with neither
+        # metadata nor a site declaration keeps the node ``parse`` gave it.
+        if node is not None:
+            doc["front_matter"] = node
         resolved = tmark.resolve(doc, None, self._resolve_options(record))
         record.next_start = {
             str(prefix): int(value)
@@ -238,9 +242,11 @@ class SiteIndex:
         display = self._display_path(record.abs_src_path)
         file_id = int(files.add(display, padded))
         doc = tmark.parse(padded, file=display, file_id=file_id)
-        doc["front_matter"], front_diagnostics = self._front_matter_node(
+        node, front_diagnostics = self._front_matter_node(
             record.meta, file_id=file_id, node_id=max_node_id(doc) + 1
         )
+        if node is not None:
+            doc["front_matter"] = node
         options = self._resolve_options(record)
         options["book"] = self.book_for(record.src_uri)
         resolved = tmark.resolve(doc, None, options)

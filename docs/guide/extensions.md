@@ -81,17 +81,12 @@ markdown_extensions:
 (`texsmith.index` and `texsmith.texlogos` are registered entry-point aliases for
 `texsmith.extensions.index` / `texsmith.extensions.texlogos`.)
 
-The index extension also publishes an MkDocs plugin that injects collected tags
-into the `search_index.json`. Enable it next to the Markdown extension:
-
-```yaml
-plugins:
-  - texsmith.index
-```
-
-When you use `mkdocs-texsmith` the plugin automatically appends both the
-Markdown extension and the MkDocs plugin unless you disable it with the
-`inject_markdown_extension` option.
+On a MkDocs site the index entries reach `search_index.json` through the
+[`texsmith` plugin](mkdocs.md), which collects them from the rendered pages
+and injects them after the `search` plugin wrote its index. The separate
+`texsmith.index` MkDocs *plugin* is deprecated — it warns and does nothing, and
+disappears in 0.8; the `texsmith.index` *Markdown extension* above is
+unaffected.
 
 ## Integrating with the LaTeX renderer
 

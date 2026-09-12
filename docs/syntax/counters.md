@@ -154,38 +154,35 @@ than on the enclosing section, and it lets `\pageref{n:joy}` work.
 
 ## On a MkDocs site
 
-A MkDocs build never goes through TeXSmith's front-matter parsing, so counters
-need their companion plugin to render on the site:
+The [`texsmith` MkDocs plugin](../guide/mkdocs.md) renders counters on the site.
+One plugin, no Markdown extension to wire:
 
 ```yaml
 plugins:
-  - texsmith.counters:
-      counters: # optional site-wide declarations
-        req:
-          name: Requirement
-          format: "REQ-{n:03d}"
-          start: 100
+  - texsmith:
+      declare:
+        counters: # optional site-wide declarations
+          req:
+            name: Requirement
+            format: "REQ-{n:03d}"
+            start: 100
 ```
 
-The plugin enables the `texsmith.extensions.counters` and
-`texsmith.extensions.references` Markdown extensions on its own (set
-`inject_markdown_extension: false` / `inject_reference_extension: false` to wire
-them by hand). Counters declared under the plugin's `counters:` key apply to the
-whole site; a page may declare its own in its front matter, and every
-declaration is visible from every page — a series defined in `findings.md` is
-referenceable from `index.md`.
+Counters declared under `declare.counters` apply to the whole site; a page may
+declare its own under `press.declare.counters` in its front matter, and the
+page's declaration wins for the same prefix. Every *item* is visible from every
+page — a series defined in `findings.md` is referenceable from `index.md`.
 
-Numbering is **site-wide, in navigation order**: a pre-pass walks the nav before
-any page is converted and reserves a value for every marker, so a reference on
-the first page resolves to an item defined on the last one. Cross-page
-references are rewritten to point at the page that defines the item
-(`<a href="findings/#fw:watchdog">FW-01</a>`); same-page ones keep a local
-anchor.
+Numbering is **site-wide, in navigation order**: a pre-pass parses and resolves
+every page before any of them is converted, chaining each page's counters after
+the previous page's, so a reference on the first page resolves to an item
+defined on the last one. Cross-page references are rewritten to point at the
+page that defines the item (`<a href="findings/#fw:watchdog">FW-01</a>`);
+same-page ones keep a local anchor (`<a href="#fw:watchdog">FW-01</a>`).
 
-!!! warning "The pre-pass reads the raw Markdown"
-    It strips fenced blocks and inline code spans, then scans what remains. A
-    marker of a *declared* prefix written as an example in plain prose — rather
-    than in a code span — is counted by the pre-pass, and consumes a number.
+The pre-pass parses the page rather than scanning it, so a marker inside a
+fence or a code span is never counted, and `#{user.name}` in prose stays the
+literal text it is.
 
 ## Citing an item from another document
 

@@ -1,10 +1,12 @@
 ---
-counters:
-  fw:
-    name: Finding
-    format: "FW-{n:02d}"
-glossary:
-  watchdog: A timer that resets the board when the firmware stops kicking it.
+press:
+  declare:
+    counters:
+      fw:
+        name: Finding
+        format: "FW-{n:02d}"
+    glossary:
+      watchdog: A timer that resets the board when the firmware stops kicking it.
 ---
 
 # Every construct
@@ -103,13 +105,15 @@ A sentence with {aside side=left}[an inline aside], an index entry
 
 ## Inline roles
 
-{sc}[Small caps], __also small caps__, {keys}[Ctrl+S], {mark}[marked],
+{sc}[Small caps], __also small caps__, {keys}[ctrl+s], {mark}[marked],
 {del}[deleted], H{sub}[2]O, x{sup}[2], {code python}[print()],
 {underline}[underlined] and [a span]{#span-id .custom lang=fr}.
 
-{raw html}(<b>raw HTML on the site</b>) and {raw latex}(\textbf{raw LaTeX in print}).
+{raw html}(<b>Raw HTML: only the site sees this sentence.</b>)
+{raw latex}(\textbf{Raw LaTeX: only the PDF sees this sentence.})
 
-Only [on the site]{media=web}; only [in print]{media=print}.
+[This paragraph is web-only.]{media=web}
+[This paragraph is print-only.]{media=print}
 
 ::: note {media=print}
 A callout only the PDF carries.

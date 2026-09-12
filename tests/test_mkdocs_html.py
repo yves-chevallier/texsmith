@@ -207,7 +207,7 @@ def test_listing_and_equation(load_article: Callable[[str], BeautifulSoup]) -> N
     soup = load_article("constructs")
     listing = soup.find("figure", id="lst:hello")
     assert listing is not None and "ts-listing" in listing.get("class", [])
-    assert listing.select("div.highlight, pre") , "the fence renders as code inside the figure"
+    assert listing.select("div.highlight, pre"), "the fence renders as code inside the figure"
     assert listing.find("span", class_="ts-caption-label").get_text() == "Listing 1:"
     equation = soup.find("div", id="eq:einstein")
     assert equation is not None and "ts-equation" in equation.get("class", [])

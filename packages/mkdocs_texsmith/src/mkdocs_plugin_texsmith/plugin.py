@@ -435,9 +435,22 @@ class LatexPlugin(BasePlugin):
 
     @staticmethod
     def _inject_markdown_extensions(config: MkDocsConfig) -> None:
-        """Enable the extensions the lowered Markdown relies on, when absent."""
+        """Enable the extensions the lowered Markdown relies on, when absent.
+
+        ``markdown_extensions`` holds entry-point names, but another plugin
+        (``autorefs``) may have appended an ``Extension`` instance; such an
+        entry is matched by its module path and by its last segment, so
+        ``markdown.extensions.admonition`` counts as ``admonition``.
+        """
         extensions = list(config.markdown_extensions or [])
-        present = {name.split(":", 1)[0] for name in extensions}
+        present: set[str] = set()
+        for entry in extensions:
+            if isinstance(entry, str):
+                present.add(entry.split(":", 1)[0])
+                continue
+            module = type(entry).__module__
+            present.add(module)
+            present.add(module.rsplit(".", 1)[-1])
         for name in REQUIRED_MARKDOWN_EXTENSIONS:
             if name not in present:
                 extensions.append(name)
