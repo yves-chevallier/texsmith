@@ -572,15 +572,27 @@ _TEX_STRUCTURAL_RE = re.compile(
     r"|^\\(?:part|chapter|section|subsection|subsubsection|paragraph|subparagraph)\*?\{"
     r"|^\\item\b"
     r"|^\\(?:toprule|midrule|bottomrule|cmidrule|hline|centering|caption|label|includegraphics"
+    r"|thispagestyle|pagestyle"
     r"|vspace|maketitle|tableofcontents|clearpage|newpage|tsdivider|tsprogress|endfirsthead"
     r"|endhead|multicolumn|phantomsection|adjustbox|ifdefined|else|fi)\b"
     r"|^\{\\progressbar"
     r"|\\\\$"
 )
-_TEX_SPLIT_RE = re.compile(r"(\\vspace\{[^{}]*\}|\\begin\{center\})(\\begin\{)")
+_TEX_SPLIT_RE = re.compile(
+    r"(\\vspace\{[^{}]*\}|\\begin\{center\}|\\end\{[a-zA-Z@*]+\})(\\(?:begin|end)\{)"
+)
+# A `\label{…}` closing a *sectioning* command: TeX ignores the line break
+# before it, so putting it on its own line lets a label-only difference be a
+# hunk of its own instead of merging with the heading it follows. A caption's
+# label is deliberately left in place, so losing one stays visible.
+_TEX_LABEL_SPLIT_RE = re.compile(
+    r"^(\\(?:part|chapter|(?:sub)*section|paragraph|subparagraph)\*?\{.*\})"
+    r"(\\label\{[^{}]*\})$"
+)
 _TEX_ITEM_LABEL_RE = re.compile(r"^\\item\[\{ (.*) \}\]")
 _TEX_PY_WHITESPACE = "\\PY{+w}{ }"
 _TYP_FENCE_RE = re.compile(r"^\s*(`{3,})")
+_TYP_PRELUDE_RE = re.compile(r"^#let ts-[a-z0-9-]+")
 _TYP_TRAILING_COMMA_RE = re.compile(r",\s*\)")
 _TYP_RAW_ARG_RE = re.compile(r"#(mi|mitex)\(```(.*?)```\)")
 
@@ -662,7 +674,8 @@ def tidy_tex_layout(text: str) -> str:
 
     Leading indentation is dropped (TeX ignores it), ``\\vspace{…}\\begin{…}`` and
     ``\\begin{center}\\begin{…}`` are split onto two lines, ``\\item[{ x }]`` loses
-    its padding, an inline Pygments group ``{\\ttfamily …`` closed on the next
+    its padding, a trailing ``\\label{…}`` and a run of ``\\end{…}\\begin{…}`` are
+    split off, an inline Pygments group ``{\\ttfamily …`` closed on the next
     line is joined, ``\\PY{+w}{ }`` becomes a plain space, and a blank line next
     to a block boundary (environment, sectioning, ``\\item``, table row…) is
     dropped: none of these change what TeX typesets.
@@ -680,6 +693,7 @@ def tidy_tex_layout(text: str) -> str:
                 continue
         line = _TEX_ITEM_LABEL_RE.sub(r"\\item[{\1}]", line)
         line = line.replace(_TEX_PY_WHITESPACE, " ")
+        line = _TEX_LABEL_SPLIT_RE.sub(r"\1\n\2", line)
         for piece in _TEX_SPLIT_RE.sub(r"\1\n\2", line).split("\n"):
             lines.append((piece, False))
     out: list[str] = []
@@ -693,11 +707,81 @@ def tidy_tex_layout(text: str) -> str:
     return "\n".join(out)
 
 
+def _typ_fence_closes(raw: str, match: re.Match[str]) -> bool:
+    """Whether a backtick run ends a raw block rather than opening one.
+
+    A closing fence carries nothing but the brackets that close the call it sits
+    in — the tmark writer wraps a fence as ``#ts-code(…)[`` … ```` ```] ````, so
+    ``]``, ``)`` and ``,`` after the backticks still close the block.
+    """
+    return not raw[match.end() :].strip(" \t)],")
+
+
+def _typ_bracket_delta(line: str) -> int:
+    """Net bracket depth a Typst line opens, ignoring brackets inside strings."""
+    depth = 0
+    in_string = False
+    escape = False
+    for char in line:
+        if escape:
+            escape = False
+        elif char == "\\":
+            escape = True
+        elif char == '"':
+            in_string = not in_string
+        elif in_string:
+            continue
+        elif char in "([{":
+            depth += 1
+        elif char in ")]}":
+            depth -= 1
+    return depth
+
+
+def strip_typst_prelude(text: str) -> str:
+    """Drop the top-level ``#let ts-…`` bindings (both sides, outside raw fences).
+
+    The tmark Typst writer inlines ``texsmith.typ`` — the ``#ts-…`` contract
+    functions — at the top of every file until the module is copied next to the
+    ``.typ`` (fragment-contracts.md §1, Typst column). They are definitions, not
+    typeset content, and the legacy writer inlined the equivalent code at each
+    use site instead; this is the Typst twin of the ``\\providecommand{\\tslead}``
+    rule that writers-and-passes.md §5 already lists for LaTeX.
+    """
+    out: list[str] = []
+    fence = ""
+    depth = 0
+    dropping = False
+    for raw in text.split("\n"):
+        match = _TYP_FENCE_RE.match(raw)
+        if fence:
+            out.append(raw)
+            if match and len(match.group(1)) >= len(fence) and _typ_fence_closes(raw, match):
+                fence = ""
+            continue
+        if dropping:
+            depth += _typ_bracket_delta(raw)
+            if depth <= 0:
+                dropping = False
+            continue
+        if match:
+            fence = match.group(1)
+            out.append(raw)
+            continue
+        if _TYP_PRELUDE_RE.match(raw):
+            depth = _typ_bracket_delta(raw)
+            dropping = depth > 0
+            continue
+        out.append(raw)
+    return "\n".join(out)
+
+
 def tidy_typ_layout(text: str) -> str:
     """Layout-only normalisation outside raw fences (both sides).
 
     Leading indentation is dropped, a line opening with ``]`` is joined to the
-    previous one (trailing whitespace in a content block is trimmed by Typst),
+    previous non-blank one and a blank line just after ``[`` is dropped (Typst
+    trims the leading and trailing whitespace of a content block),
     a trailing comma before ``)`` goes, ``#mi(```…```)`` becomes ``#mi(`…`)``
     and ``--``/``---`` become the en/em dash they typeset as.
     """
@@ -707,7 +791,7 @@ def tidy_typ_layout(text: str) -> str:
         match = _TYP_FENCE_RE.match(raw)
         if fence:
             out.append(raw)
-            if match and len(match.group(1)) >= len(fence) and not raw.strip(" `"):
+            if match and len(match.group(1)) >= len(fence) and _typ_fence_closes(raw, match):
                 fence = ""
             continue
         if match:
@@ -715,8 +799,13 @@ def tidy_typ_layout(text: str) -> str:
             out.append(raw)
             continue
         line = raw.lstrip()
-        if line.startswith("]") and out:
-            out[-1] += line
+        if line.startswith("]"):
+            while out and not out[-1].strip():
+                out.pop()
+            if out:
+                out[-1] += line
+                continue
+        if not line and out and out[-1].endswith("["):
             continue
         line = _TYP_TRAILING_COMMA_RE.sub(")", line)
         line = _TYP_RAW_ARG_RE.sub(r"#\1(`\2`)", line)
@@ -762,7 +851,8 @@ def normalise_typ(text: str, stems: Iterable[str] = ()) -> str:
         for line in text.split("\n")
         if not _TYP_COMMENT_RE.match(line) and not _TYP_MITEX_RE.match(line)
     ]
-    text = tidy_typ_layout("\n".join(lines))
+    text = strip_typst_prelude("\n".join(lines))
+    text = tidy_typ_layout(text)
     text = HASH_RE.sub("<HASH>", text)
     text = basename_assets(text)
     text = replace_stems(text, stems)
