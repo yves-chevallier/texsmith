@@ -7,11 +7,25 @@ Just like MkDocs, TeXSmith understands [Mermaid](https://mermaid.js.org) diagram
 
 ## Inline diagram
 
-````markdown
-```mermaid
+A Mermaid fence is a data directive whose node word is `image`:
+
+````md
+```mermaid image
 flowchart LR
     A --> B
     B --> C
+```
+````
+
+A bare ```` ```mermaid ```` fence means the same thing — `image` is the one
+default that is not `code`, because that is what MkDocs Material and every
+Mermaid-aware renderer do with it. The sugar is kept indefinitely for exactly
+that reason. To *show* the source as a listing instead, ask for `mermaid code`:
+
+````md
+```mermaid code
+flowchart LR
+    A --> B
 ```
 ````
 
@@ -28,11 +42,12 @@ Sometimes diagrams live better outside the Markdown. TeXSmith supports:
 1. Reference external `.mmd` / `.mermaid` files.
 2. Embed Mermaid Live snippets using `pako:` URLs for live editing.
 
-The `texsmith.extensions.mermaid` extension sniffs out these references, pulls the content in, and treats inline/external sources the same way.
+Diagram sources *are* images: the extension recognises the format from the
+path and converts inline and external sources the same way.
 
-Using a `mmd` file is as simple as including an image:
+Using a `.mmd` file is as simple as including an image:
 
-```markdown
+```md
 ![Build pipeline](../assets/mermaid.mmd)
 ```
 
@@ -40,7 +55,7 @@ Using a `mmd` file is as simple as including an image:
 
 Mermaid Live encodes diagrams via Pako (a compression library) so you can share/edit them through URLs:
 
-```markdown
+```md
 ![Online Diagram](https://mermaid.live/edit#pako:eNpVTctugzAQ_BVrT4lEEMQEiA_tIemt7aE9tX
 EODl4eSrAtY5q2iH8vEBGpe1jtzOzMdJBpicAgv-hrVgrryPMbV2SYxg1o8T7uJVmtHoipsvNhXxWkNcfby8hMU
 pV3O3E6iQKbx_6mVfmgcHjVHMaPxqE5vOgvJLm2V2El0Qon9jjXobnX_Iv4wGbO0GbxpOQSPChsJYE526IHNdpa
@@ -64,6 +79,14 @@ Here’s how the diagrams look once TeXSmith embeds them:
 
 All Mermaid diagrams are converted to PDF and included with `\includegraphics`
 so they integrate cleanly with templates and LaTeX floats.
+
+Add a caption line to promote the diagram to a numbered figure:
+
+```md
+![Build pipeline](../assets/mermaid.mmd)
+
+Figure: The documentation build pipeline. {#fig:pipeline}
+```
 
 Printed output might deserve a different theme. Point `mermaid_config` to a JSON config (front matter or CLI `--attribute press.mermaid_config=...`) to override:
 

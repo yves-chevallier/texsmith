@@ -15,10 +15,12 @@ its output, and a citing document declares the inventories it depends on.
 ---
 title: Revue firmware
 id: RHE-423
-counters:
-  fw:
-    name: Constat
-    format: "FW-{n:02d}"
+press:
+  declare:
+    counters:
+      fw:
+        name: Constat
+        format: "FW-{n:02d}"
 ---
 ```
 
@@ -26,12 +28,14 @@ counters:
 # hardware-review.md — the document that cites
 ---
 title: Revue hardware
-crossrefs:
-  fwrev: build/firmware-review.refs.json
+press:
+  sources:
+    crossrefs:
+      fwrev: build/firmware-review.refs.json
 ---
 ```
 
-```markdown
+```md
 L'écart est écrasé par l'étalement spectral (voir @fwrev:fw:pas-de-temps).
 ```
 
@@ -92,11 +96,16 @@ omit the page.
 ## Declaring and citing
 
 ```yaml
-crossrefs:
-  fwrev: build/firmware-review.refs.json # shorthand
-  hwrev:
-    inventory: ../hardware/build/hardware-review.refs.json
+press:
+  sources:
+    crossrefs:
+      fwrev: build/firmware-review.refs.json # shorthand
+      hwrev:
+        inventory: ../hardware/build/hardware-review.refs.json
 ```
+
+A top-level `crossrefs:` key is the deprecated spelling; `tmark lint --fix`
+moves it under `press.sources`.
 
 Paths are relative to the citing document. The alias is then the first segment
 of the reference: `@fwrev:fw:pas-de-temps`.

@@ -1,33 +1,52 @@
 # References
 
+TMark has **one sigil for referring**: `@`. Whatever the target — a section, a
+figure, a table, an equation, a custom counter, a glossary term, a bibliography
+entry, another document — you write `@key`, and the registry the key belongs to
+decides what the reference renders as.
+
+The mnemonic is short: **`#` defines, `@` refers.**
+
 We define several types of references that can be used throughout the documentation:
 
 Internal References
-: These are links that point to other sections within the same document or to other documents within the same project.
+: Links that point to other sections within the same document or to other documents within the same project.
 
 External References
-: These are links that point to resources outside of the current project, such as websites or external documents.
+: Links that point to resources outside of the current project, such as websites or external documents.
 
 Bibliographic References
-: These are citations that refer to external publications, articles, or books. They are often formatted using a specific citation style (e.g., APA, MLA) and may include a bibliography section at the end of the document.
+: Citations that refer to external publications, articles, or books. They are formatted using a citation style (APA, MLA, …) and gather into a bibliography.
 
 Footnotes
-: Footnotes provide additional information or citations without cluttering the main text. They are typically indicated by a superscript number in the text, with the corresponding footnote text provided at the bottom of the page or section.
+: Additional information parked at the bottom of the page, marked with a superscript number.
 
-Equations
-: Mathematical equations can be included in the document using LaTeX syntax. Equations can be labeled and referenced throughout the text.
-
-Tables
-: Tables are used to present data in a structured format with rows and columns. They can be labeled and referenced within the document.
-
-Figures
-: Figures are images, charts, or diagrams included in the document. They can be labeled and referenced throughout the text.
-
-Listings/Code Blocks
-: Code blocks are used to display code snippets in various programming languages. They can be labeled and referenced within the document.
+Equations, Tables, Figures, Listings
+: Numbered floats with an anchor, referenced by their key.
 
 Tags/Index
-: Tags or index entries allow you to associate keywords with specific sections or topics in the document, making it easier to locate related information.
+: Keywords associated with a section or topic, gathered into a printed index.
+
+## The two forms of `@`
+
+```md
+@sec:intro                   bare, in-text: "section 2"
+@Sec:intro                   capitalised prefix, for the start of a sentence
+@[fig:boot; fig:crash]       grouped → "figures 1 and 2"
+@[tbl:stock, column 3]       with a suffix → "table 4, column 3"
+[](#sec:intro)               empty-link form, for pure-Markdown toolchains
+[](other.md)                 section number of another document's main heading
+```
+
+The brackets follow the sigil and are **optional**: a bare `@key` takes one word
+of `[A-Za-z0-9_:.-]` and ends on an alphanumeric, so trailing sentence
+punctuation stays out (`…voir @sec:intro.` references `sec:intro`). The
+bracketed form is required as soon as the reference contains a space — a
+locator, a suffix, or several keys separated by `;`.
+
+E-mail addresses, URLs and `@` inside a word never match; write `\@` to force a
+literal `@` where the sigil would otherwise fire. An unresolved reference
+renders visibly as `[?key]` and warns.
 
 ## Internal References
 
@@ -35,42 +54,42 @@ You can reference another section in the same document or cross-link to other fi
 
 Linking to another file? TeXSmith targets the destination’s main heading and drops a proper hyperlink—handy for navigation-friendly PDFs without any manual tinkering.
 
-```markdown
+```md
 See the [Code Examples](code.md) for more details.
 ```
 
 Skip the link text and TeXSmith injects the section number for the print build automatically.
-```markdown
+
+```md
 See the section [](code.md) for more details.
 ```
 
-```markdown
+```md
 ## Section Title {#sec:section-title}
 
 Placeholder text that other sections can reference.
 
 ## Other Section
 
-Check section @[sec:section-title] for more details.
+Check @sec:section-title for more details.
 ```
 
-The brackets are optional when the label is a single word made of letters,
-digits and `_ : . -` characters, so `@sec:section-title` works too. Trailing
-sentence punctuation stays out of the label (`…voir @sec:intro.` references
-`sec:intro`). E-mail addresses and `@` inside words or URLs are left alone;
-write `\@` to force a literal `@` where the shorthand would otherwise apply.
+A heading with no `{#id}` still has an *implicit* id — GitHub's slug of its
+plain text — so `[](#other-section)` resolves. Because that id changes whenever
+the title is edited, referring to one raises the `ref-implicit-id` hint: give
+the heading an explicit `{#sec:…}`.
 
 ### Custom counters
 
 Document-specific series (findings, requirements, bugs) declared under
-`counters:` in the front matter reuse the very same `@prefix:key` shorthand,
-resolving to their formatted number instead of a section number. See
+`press.declare.counters` in the front matter reuse the very same `@prefix:key`
+form, resolving to their formatted number instead of a section number. See
 [Custom counters](counters.md).
 
 ### Cross-document references
 
 `@alias:key` resolves against another document's published inventory, declared
-under `crossrefs:` in the front matter. See
+under `press.sources.crossrefs` in the front matter. See
 [Cross-document references](crossrefs.md).
 
 ### Autorefs
@@ -81,35 +100,54 @@ When the `mkdocs-autorefs` extension is enabled, you can use the `[text][label]`
 
 Reference external resources (HTTP/HTTPS) with vanilla Markdown link syntax:
 
-```markdown
+```md
 For more information, visit the [TeXSmith Website](https://texsmith.org).
-You can also check our GitHub repository at https://github.com/yves-chevallier/texsmith.
+You can also check our repository at https://github.com/yves-chevallier/texsmith.
 ```
 
 Printed output uses the usual LaTeX link commands:
 
 ```latex
 For more information, visit the \href{https://texsmith.org}{TeXSmith Website}.
-You can also check our GitHub repository at \url{https://github.com/yves-chevallier/texsmith}.
+You can also check our repository at \url{https://github.com/yves-chevallier/texsmith}.
 ```
 
 ## Bibliographic References
 
-Markdown lacks native bibliography support, so TeXSmith reuses the footnote syntax and BibTeX/front matter keys. See the documentation on [Bibliography management](../guide/features/bibliography.md) for more details.
+A citation is the same sigil against the bibliography registry. `@key` is the
+in-text (narrative) citation, `@[key, locator]` the parenthetical one, and
+`@[-key]` suppresses the author.
 
-```markdown
+```md
 ---
-bibliography:
-  einstein1905: https://doi.org/10.1002/andp.19053221004
+press:
+  sources:
+    bibliography:
+      ein05: https://doi.org/10.1002/andp.19053221004
 ---
-Einstein's theory of relativity revolutionized physics. [^einstein1905]
+
+Einstein's theory of relativity revolutionized physics @ein05.
+As shown by @[ein05, p. 33], and elsewhere @[see ein05, pp. 33-35].
 ```
+
+A DOI can be cited in place through the predeclared `doi` prefix, without a
+front-matter entry: `@doi:10.1002/andp.19053221004`.
+
+!!! note "The footnote spelling of a citation is deprecated"
+    TeXSmith 0.6 spelled citations `[^key]` and `^[k1,k2]`, borrowing the
+    footnote syntax. Both are still accepted with a deprecation warning; once
+    they are retired, `^[…]` becomes an inline footnote (Pandoc's meaning).
+    `tmark lint --fix` rewrites them to `@key` and `@[k1; k2]`. Real footnotes
+    (`[^1]` with a definition) are untouched.
+
+See [Bibliography management](../guide/features/bibliography.md) for the
+sources, and [Migrating to TMark](../guide/migration.md) for the rewrite.
 
 ## Footnotes
 
 Use footnotes to park side comments without cluttering the main text. Markdown marks them with superscript numbers; the rendered document moves the details to the bottom of the page or section.
 
-```markdown
+```md
 This is a sample sentence with a footnote.[^1]
 
 [^1]: This is the footnote text that provides additional information.
@@ -119,78 +157,78 @@ Footnotes are limited to one line in print—keep them tight.
 
 ## Equations
 
-You can include mathematical equations in your document using LaTeX syntax and use `\label{}` to reference them later.
+Display math takes an anchor after the closing delimiter, Quarto-style, and is
+referenced like any other numbered object:
 
-```markdown
-\begin{equation}
+```md
+$$
 E = mc^2
-\label{eq:einstein}
-\end{equation}
+$$ {#eq:einstein}
 
-As shown in Equation $\eqref{eq:einstein}$, energy is equal to mass times the speed of light squared.
+As shown in @eq:einstein, energy is equal to mass times the speed of light
+squared.
 ```
 
-For consistency, TeXSmith provides the shorthand `@[label]` to reference it.
-
-```markdown
-As shown in Equation @[eq:einstein], energy is equal to mass times the speed of light squared.
-```
+The LaTeX-flavoured compatibility forms keep working: `\begin{equation}
+\label{eq:x} … \end{equation}` inside `$$`, referenced with `$\eqref{eq:x}$`.
 
 ## Figures
 
-Give a figure a caption block with an `id` and reference it anywhere with the
-`@[label]` shorthand. The `id` is emitted verbatim as the LaTeX `\label`.
+Give a figure a caption line with an id and refer to it with `@`:
 
-```markdown
+```md
 ![Sample Figure](image-url.jpg)
 
-/// caption
-    attrs: {id: sample-figure}
-This is the caption for the figure.
-///
+Figure: This is the caption for the figure. {#fig:sample}
 
-As shown in Figure @[sample-figure], the data illustrates...
+As shown in @fig:sample, the data illustrates…
 ```
 
-!!! warning
-    The `id` may not contain a colon: `pymdown-extensions` rejects
-    identifiers such as `fig:sample-figure`, and the whole `/// caption`
-    block then silently falls back to plain text (TeXSmith emits a warning
-    when this happens). Use plain identifiers like `sample-figure`.
-
-Both web and print outputs number figures automatically, though the actual numbers may differ because each layout floats content differently.
+The id is emitted verbatim as the LaTeX `\label`. Both web and print outputs
+number figures automatically, though the actual numbers may differ because each
+layout floats content differently.
 
 ## Tables
 
-Tables present structured data; give them a caption line with a label so you
-can reference them later. The `Table:` line goes directly above the table.
+Tables take a caption line too; the canonical position is after the table.
 
-```markdown
-Table: A sample table for cross-references. {#tbl:sample-table}
-
+```md
 | Header 1 | Header 2 |
 |----------|----------|
 | Cell 1   | Cell 2   |
 
-Check Table @[tbl:sample-table] for more details.
+Table: A sample table for cross-references. {#tbl:sample}
+
+Check @tbl:sample for more details.
 ```
 
 ## Code Block References
 
-Labelled, cross-referenceable code listings are not implemented yet: fenced
-code blocks accept a `title` (rendered as the listing header) but carry no
-label, so there is no `@[...]` target for them. Track the feature before
-relying on it.
+A `Listing:` caption line promotes a fenced code block to a numbered,
+referenceable listing:
+
+````md
+```python title="bubble_sort.py"
+def bubble_sort(items): ...
+```
+
+Listing: Bubble sort, naive version. {#lst:bubble}
+
+@lst:bubble is quadratic in the worst case.
+````
 
 ## Tags and Index Entries
 
-Add tags or index entries to associate keywords with specific sections or topics in the document.
+Add index entries to associate keywords with specific topics. Defining is the
+other sigil:
 
-```markdown
-This section covers advanced sorting algorithms. {index}[algorithm]
+```md
+This section covers advanced sorting algorithms. #[algorithm]
 ```
 
-See the section [Index / Tags][index-tags] for more details on how to manage index entries.
+The canonical role form is `{index}[algorithm]`; `#[…]` is its shorthand, and
+both produce the same node. See [Index / Tags](../guide/features/tags.md) for
+nesting, main entries and named registries.
 
 ## Naming Conventions
 
@@ -216,6 +254,9 @@ Before hypertext, references revolved around numbers: pages, figures, tables, eq
   See Table 7 for more details. The Figure 42 illustrates the concept.
   Everything is explained in Section 1.
 ```
+
+The counter registry carries the label word per language, so the same `@`
+reference reads correctly in every locale.
 
 ### French
 
