@@ -192,16 +192,17 @@ migration path because the PDF pixel diff would differ anyway.
 
 ## 5. Regression harness (`scripts/parity.py`, task 4.1)
 
-> **What it measures now.** The harness was built to diff the legacy
-> Python-Markdown reader against the tmark reader on the same sources. That
-> comparison is over: `examples/**` and `docs/**` are written in canonical
-> TMark, which the legacy reader cannot parse, and the tmark reader is the CLI
-> default. What is left is the other half — a **regression gate on the tmark
-> path**: `parity.py baseline` records the corpus' normalised `.tex`/`.typ`
-> under `tests/parity/baseline/`, `baseline --check` re-renders and fails on any
-> unreviewed change. `diff` is retired as a gate and kept, migration-only, to
-> audit a document that has not been migrated yet. The paragraphs below
-> describe both, with the migration-era wording marked.
+> **What it measures now.** The harness was built to compare the legacy
+> Python-Markdown reader with the tmark reader on the same sources. That
+> comparison is over, and so is the legacy reader: it was deleted with the rest
+> of the Python pipeline in phase 5, and a Markdown source now has exactly one
+> reader — the CLI has no `--reader` option left to pin. What remains is the
+> other half, a **regression gate on the one rendering there is**:
+> `parity.py baseline` records the corpus' normalised `.tex`/`.typ` under
+> `tests/parity/baseline/`, `baseline --check` re-renders and fails on any
+> unreviewed change. The cross-reader `diff` subcommand and its allow-list
+> (`tests/parity/allow.yml`) are gone with it; what they found during the
+> migration is written up in `parity-triage.md`.
 
 **Corpus.** `docs/**/*.md` (93 pages, each rendered standalone with
 `-tarticle`, plus the whole book through the MkDocs plugin as one entry once
@@ -212,97 +213,52 @@ typst`) with `--build` removed: `{id, cwd, args, backend, requires:
 [docker|network|fonts]}`. Examples needing Docker (mermaid, diagrams) are
 skipped where the tool is missing and reported as skipped, never as passed.
 
-**Runs.** `parity.py render --reader {html,tmark} --out build/parity/<reader>/`
-renders each entry to `.tex`/`.typ` (no PDF); `--reader` defaults to `tmark`,
-the CLI default. `--reader html` stays for one release as the escape hatch for
-a document still written in the legacy spellings — and an `.html` input goes
-through the `HtmlReader` whatever `--reader` says.
+**Runs.** `parity.py render --out DIR` renders each entry to `.tex`/`.typ`
+(no PDF, no comparison) — the command line is the corpus entry plus `-o DIR`
+and nothing else.
 
-`parity.py baseline` renders **with the tmark reader**, normalises, and writes
+`parity.py baseline` renders, normalises, and writes
 `tests/parity/baseline/<id>/<stem>.{tex,typ}` — **committed**, so an intended
 change to the rendered output lands in a diff a reviewer reads and an
 unintended one cannot pass unnoticed. `baseline --check` re-renders and exits 1
-on any difference; it consults **no allow-list**, because both sides come from
-the same reader and there is no such thing as an intended difference there. An
-entry whose toolchain is missing is *skipped* and keeps its committed record.
-The `.bib`, DOI cache and remote-asset manifest are seeded from
-`tests/parity/cache/` so runs are offline and deterministic; the font metadata
-cache is seeded in CI.
+on any difference; it consults **no allow-list**, because both sides are the
+same rendering of the same source and there is no such thing as an intended
+difference there. An entry whose toolchain is missing is *skipped* and keeps its
+committed record. The `.bib`, DOI cache and remote-asset manifest are seeded
+from `tests/parity/cache/` so runs are offline and deterministic; the font
+metadata cache is seeded in CI.
 
-**Normalisation** (both sides, before diffing): body extracted between
-`\begin{document}` and `\end{document}` (or the slot `.tex` files) and
-compared first; the full file is a second, non-gating diff. Rules: strip
-lines that are `%` comments at column 0 and trailing `%…` outside verbatim
-environments (`code`, `Verbatim`, `minted`, `lstlisting`, tracked by an
-environment stack) — this also removes future line-marker comments; collapse
-blank-line runs to one; strip trailing whitespace; one newline at EOF;
-sha256 asset stems `[0-9a-f]{64}` → `<HASH>`; `.converted/` paths and
-remote-asset names → basename; the document stem → `<STEM>`
-(`inline-doi-<stem>.bib`, `main`); `\providecommand{\tslead}…` lines
-dropped (moves to a fragment). `.typ`: strip `//` comment lines, collapse
-blank lines, hash image names, strip the `#import "@preview/mitex…"` line.
+**Normalisation** (both sides, before diffing). Rules: strip lines that are `%`
+comments at column 0 and trailing `%…` outside verbatim environments (`code`,
+`Verbatim`, `minted`, `lstlisting`, tracked by an environment stack) — this also
+removes future line-marker comments; collapse blank-line runs to one; strip
+trailing whitespace; one newline at EOF; sha256 asset stems `[0-9a-f]{64}` →
+`<HASH>`; `.converted/` paths and remote-asset names → basename; the document
+stem → `<STEM>` (`inline-doi-<stem>.bib`, `main`);
+`\providecommand{\tslead}…` lines dropped (moves to a fragment); layout-only
+tidying outside verbatim (indentation, a sectioning `\label` split onto its own
+line, a blank line next to a block boundary). `.typ`: strip `//` comment lines,
+collapse blank lines, hash image names, strip the `#import "@preview/mitex…"`
+line and the top-level `#let ts-…` contract bindings the writer inlines.
 
-**Allow-list** `tests/parity/allow.yml` (*migration only* — `diff`'s, and only
-`diff`'s), one entry per intended difference between the two readers, each with
-an owner reason and an expiry:
+`parity.py baseline --check` prints a per-entry table (identical / differs, with
+the hunk count) and exits 1 on any difference, writing each entry's unified diff
+under `build/parity/check/`.
 
-```yaml
-- id: item-braces          # \item{} → \item
-  kind: rewrite            # applied to both sides before diffing
-  files: ["**/*.tex"]
-  from: '\item{} '
-  to: '\item '
-  reason: "unordered_list.tex artefact; changelog 0.7.0"
-  expires: 0.7.0
-- id: zero-width-aside
-  kind: hunk               # a diff hunk matching this regex is ignored
-  files: ["docs/syntax/*.tex"]
-  pattern: '^-(.*) \\marginnote\{(.*)\}\.$\n^\+\1\\marginnote\{\2\}\.$'
-  reason: "spec §Attributes zero-width collapse"
-  expires: 0.7.0
-```
+**PDF.** `parity.py pdf --baseline` builds a small entry set
+(`abbr counters index marginnote` by default) with tectonic (LaTeX) or
+`typst compile`, rasterises every page with pymupdf at 100 dpi
+(`page.get_pixmap`) and records `tests/parity/pdf-baseline.json`;
+`--baseline --check` rebuilds and compares. There is no other mode: the
+two-reader pixel diff went with the legacy reader.
 
-`parity.py diff` prints a per-entry table (identical / allow-listed /
-differs, with the hunk count) and exits 1 on any unlisted difference.
-
-**`diff` is migration-only, and says so.** It renders the *same* source with
-two readers, so it only means anything where both can read that source. Since
-the flip, `examples/**` and `docs/**` are canonical TMark: the legacy reader
-renders `{.thin}`, `{raw latex}(…)` and `::: tabs` as literal text, so a
-whole-corpus run reports noise, not findings. `diff` therefore **refuses to run
-without an explicit `--only GLOB` entry set** (and refuses a glob that matches
-nothing), and its `--help` states what it is for: auditing one document that has
-not been migrated yet.
-
-Its allow-list keeps working, loaded leniently: an entry whose `expires` version
-has been reached is kept **with a warning** instead of failing the load. That is
-the one load-time rule that can go stale, and the reasoning for relaxing it only
-here is that the allow-list now has exactly one consumer. `baseline` reads no
-allow-list at all, so there is nothing to keep strict on that side, and splitting
-`allow.yml` in two would leave one half empty. Everything else — an unknown
-`kind`, an empty `files`, a bad regex, a duplicate id — still fails the load in
-both modes.
-
-**PDF.** `parity.py pdf --entries …` builds both sides with tectonic
-(LaTeX) or `typst compile`, rasterises every page with pymupdf at 100 dpi
-(`page.get_pixmap`), compares page counts, then the pixel difference after
-a one-pixel dilation of both sides; fails when more than 0.1 % of a page
-differs; writes an overlay PNG (legacy red, new green, like
-`examples/multi-document/Makefile` `compare`) under `build/parity/pdf/`. A
-text-layer diff (`page.get_text()`) runs first as a cheap classifier. That
-two-reader mode is the migration comparison and stays the default.
-
-`parity.py pdf --baseline` builds **only the tmark path** for a small entry set
-(`abbr counters index marginnote` by default) and records
-`tests/parity/pdf-baseline.json`; `--baseline --check` rebuilds and compares.
 What is committed is deliberately **not** a hash of the page bitmap: a sha256
 over the pixels is all-or-nothing, and tectonic's TeX bundle, TeXSmith's
 downloaded fonts and pymupdf's antialiasing are none of them pinned — any of the
-three would flip every hash on an unchanged document. (The two-reader mode lives
-with that only because it compares two PDFs built in the *same* run.) The record
-holds, per page, the page count, the raster size at the recorded dpi, the text
-layer verbatim — readable in a `git diff`, so a change to the rendering shows up
-as the changed sentence — and the ink coverage, compared within an absolute
+three would flip every hash on an unchanged document. The record holds, per
+page, the page count, the raster size at the recorded dpi, the text layer
+verbatim — readable in a review diff, so a change to the rendering shows up as
+the changed sentence — and the ink coverage, compared within an absolute
 tolerance of 0.002. The cost, stated once: a layout-only change that keeps the
 text and moves less ink than the tolerance is invisible to this gate.
 
@@ -313,12 +269,11 @@ uv run python scripts/parity.py baseline --check \
     --without docker --without tectonic --without network --jobs 4
 ```
 
-— re-render the corpus with the tmark reader, diff against the committed
-baseline; text only, no diagram renderer, no LaTeX engine, no network, so the
-entries needing those are skipped and keep their record. The nightly
-`parity-pdf` workflow (also on the `parity-pdf` label) runs the same check with
-the full toolchain and then `parity.py pdf --baseline --check`, so what it
-guards is the rendering, not the migration.
+— re-render the corpus, diff against the committed baseline; text only, no
+diagram renderer, no LaTeX engine, no network, so the entries needing those are
+skipped and keep their record. The nightly `parity-pdf` workflow (also on the
+`parity-pdf` label) runs the same check with the full toolchain and then
+`parity.py pdf --baseline --check`, so what it guards is the built PDF.
 
 ## 6. Work items and open questions
 

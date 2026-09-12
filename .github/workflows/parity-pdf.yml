@@ -1,13 +1,13 @@
 name: Regression (full + PDF)
 
 # Full regression run (specs/migration/writers-and-passes.md §5): every corpus
-# entry through the tmark reader, including the ones that need a diagram
-# renderer (Playwright Chromium here, Docker in `--diagrams-backend auto`'s
-# last resort) and a LaTeX engine for nested snippet builds, plus the PDF gate.
+# entry, including the ones that need a diagram renderer (Playwright Chromium
+# here, Docker in `--diagrams-backend auto`'s last resort) and a LaTeX engine
+# for nested snippet builds, plus the PDF gate.
 #
-# What the PDF step guards is the *rendering*, not the migration: it rebuilds
-# four entries through tectonic and compares each page's text layer, raster size
-# and ink coverage against the committed tests/parity/pdf-baseline.json. Page
+# What the PDF step guards is the built PDF: it rebuilds four entries through
+# tectonic and compares each page's text layer, raster size and ink coverage
+# against the committed tests/parity/pdf-baseline.json. Page
 # bitmaps are not hashed — tectonic's TeX bundle, the downloaded fonts and
 # pymupdf's antialiasing are none of them pinned, so a hash would flip on an
 # unchanged document (§5, "PDF").
@@ -87,7 +87,7 @@ jobs:
             ~/.cache/texsmith/texmf
           key: texsmith-user-${{ runner.os }}-${{ hashFiles('uv.lock') }}
 
-      - name: Check the complete tmark baseline
+      - name: Check the complete baseline
         run: uv run python scripts/parity.py baseline --check --jobs 4
 
       - name: Check the PDF baseline (abbr counters index marginnote)
@@ -101,5 +101,4 @@ jobs:
           path: |
             build/parity/check/
             build/parity/pdf/digest.json
-            build/parity/pdf/**/*.png
           if-no-files-found: ignore

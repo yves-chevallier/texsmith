@@ -111,17 +111,17 @@ jobs:
 
   parity:
     # Text-only regression gate (specs/migration/writers-and-passes.md §5):
-    # re-render the corpus with the *tmark* reader — the CLI default, and what
-    # every example and docs page is written for — and diff it against the
-    # committed tests/parity/baseline. Any difference is either a regression or
-    # a change whose author re-records the baseline in a reviewed diff; there is
-    # no allow-list here, both sides come from the same reader.
+    # re-render the corpus — a Markdown source has exactly one reader, so this
+    # is the rendering every example and docs page gets — and diff it against
+    # the committed tests/parity/baseline. Any difference is either a regression
+    # or a change whose author re-records the baseline in a reviewed diff; there
+    # is no allow-list here, both sides are the same rendering.
     #
     # The `--without` set is exactly the one the baseline was recorded with:
     # entries needing a diagram renderer, a nested LaTeX build or the network
     # are skipped and keep their record. The nightly `parity-pdf` workflow runs
     # the same check with the full toolchain, plus the PDF gate.
-    name: Regression (tmark baseline check)
+    name: Regression (baseline check)
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -156,7 +156,7 @@ jobs:
           path: ~/.texsmith/fonts
           key: texsmith-fonts-${{ runner.os }}-${{ hashFiles('src/texsmith/fonts/**') }}
 
-      - name: Check the tmark baseline
+      - name: Check the baseline
         run: >-
           uv run python scripts/parity.py baseline --check
           --without docker --without tectonic --without network --jobs 4

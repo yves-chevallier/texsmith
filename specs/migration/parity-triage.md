@@ -1,9 +1,13 @@
 # Parity triage — legacy `html` reader vs the `tmark` reader
 
 Phase 4.2 of the migration plan. Records what
-`scripts/parity.py diff --reader-a html --reader-b tmark` reports over the
-whole corpus, which differences are intended (and therefore carried by
-`tests/parity/allow.yml` or by a normalisation rule), and which are bugs.
+`scripts/parity.py diff --reader-a html --reader-b tmark` reported over the
+whole corpus, which differences were intended (and therefore carried by
+`tests/parity/allow.yml` or by a normalisation rule), and which were bugs.
+
+> **Historical.** The `html` reader, the `diff` subcommand and
+> `tests/parity/allow.yml` have since been deleted; this file is what survives
+> of them. See §7.
 
 Run of 2026-09-12, on `tmark-migration` at `59ff0e8` merged into the triage
 branch, with `vendor/tmark` linked to the local tmark checkout:
@@ -541,26 +545,30 @@ than a side effect of the rename. It was taken: **always the short form**
 Severity: **medium** — visible in every document that uses acronyms.
 **Decided and fixed**: see O5 above; `abbr` is now pixel-identical.
 
-## 7. Closing note — the cross-reader comparison is retired
+## 7. Closing note — the cross-reader comparison is retired, and deleted
 
 This document records a measurement that can no longer be repeated as it was
-taken. `scripts/parity.py diff` renders the *same* source with both readers, and
-since the flip every source in `examples/**` and `docs/**` is canonical TMark,
-which the legacy `html` reader cannot parse — it renders `{.thin}`,
+taken. `scripts/parity.py diff` rendered the *same* source with both readers,
+and since the flip every source in `examples/**` and `docs/**` is canonical
+TMark, which the legacy `html` reader cannot parse — it rendered `{.thin}`,
 `{raw latex}(…)` and `::: tabs` as literal text. A whole-corpus run therefore
-reports noise, not findings, and the numbers in §1 and §1.1 are a snapshot of
+reported noise, not findings, and the numbers in §1 and §1.1 are a snapshot of
 the sources as they stood on 2026-09-12, before the rewrite.
 
-`diff` and `tests/parity/allow.yml` are kept, migration-only: `diff` refuses to
-run without an explicit `--only` entry set, and it is there to audit one
-document that has *not* been migrated yet. Its allow-list is loaded leniently —
-an entry past its `expires` is a warning, not a failed load — because these
-entries describe a migration that is over. What replaces it as a gate is
-`parity.py baseline --check`, which re-renders the corpus through the tmark
-reader and compares it to a committed record (`writers-and-passes.md` §5,
-`status.md`, "What the harness measures now"). The baseline was re-recorded from
-the tmark path on 2026-09-12; the legacy renders this file's tables were
-computed against are gone from the tree.
+Phase 5 then deleted the legacy pipeline outright — the Python-Markdown
+extensions, the Python writers, the hand-written IR, the `html` reader and the
+CLI's `--reader` option. With one reader left there is nothing for a
+cross-reader comparison to compare, so `diff` and `tests/parity/allow.yml` (86
+entries: 59 `rewrite`, 27 `hunk`) were deleted too. This file is what survives
+of them: the record of what the migration changed and why each difference was
+accepted. Do not expect to re-run the commands quoted above; read them as the
+minutes of a measurement.
+
+What replaces it as a gate is `parity.py baseline --check`, which re-renders the
+corpus and compares it to a committed record (`writers-and-passes.md` §5,
+`status.md`, "What the harness measures now"). The baseline was re-recorded on
+2026-09-12; the legacy renders this file's tables were computed against are gone
+from the tree.
 
 **Findings closed.** F1, F2, F7, F10, F11's `uses_eqnref` item and F12/O5 on the
 TeXSmith side, each with its commit in §3; F3, F4, F5 and F6 on the tmark side.

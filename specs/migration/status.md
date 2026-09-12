@@ -18,16 +18,16 @@ builds with its PDF export (`TEXSMITH_BUILD=1 mkdocs build`).
 ## What the harness measures now
 
 `scripts/parity.py` was built to diff the legacy reader against the tmark
-reader on the same sources. That comparison ended with the flip: the
-sources are canonical TMark, which the legacy reader cannot parse. The
-harness now records and checks a baseline of the **tmark** path, so a
-change to the parser, the writers or a pass shows up as a reviewable diff
-in `tests/parity/baseline/`.
+reader on the same sources. That comparison ended with the flip, and the
+legacy reader itself went with phase 5: a Markdown source has exactly one
+reader and the CLI has no `--reader` option. The harness now records and
+checks a baseline of that one rendering, so a change to the parser, the
+writers or a pass shows up as a reviewable diff in `tests/parity/baseline/`.
 
-`parity.py baseline` renders every corpus entry with the default reader,
-normalises it and writes `tests/parity/baseline/<id>/<stem>.{tex,typ}`, which
-is committed; `baseline --check` re-renders and fails on any difference, with
-no allow-list in the way — both sides come from the same reader, so a change
+`parity.py baseline` renders every corpus entry, normalises it and writes
+`tests/parity/baseline/<id>/<stem>.{tex,typ}`, which is committed;
+`baseline --check` re-renders and fails on any difference, with no allow-list
+in the way — both sides are the same rendering of the same source, so a change
 is either a regression or something an author re-records in a diff a reviewer
 reads. That is what the `parity` job of `ci.yml` runs on every PR, with
 `--without docker --without tectonic --without network`: the same set the
@@ -37,14 +37,14 @@ rebuilds `abbr`, `counters`, `index` and `marginnote` through tectonic and
 compares each page's text layer, raster size and ink coverage against
 `tests/parity/pdf-baseline.json` — page bitmaps are not hashed, because
 tectonic's TeX bundle, the downloaded fonts and pymupdf's antialiasing are
-none of them pinned. So the nightly guards the rendering rather than the
-migration.
+none of them pinned.
 
-`parity.py diff` and `tests/parity/allow.yml` survive, migration-only: `diff`
-refuses to run without an explicit `--only` entry set, it loads the allow-list
-leniently (an entry past its expiry is a warning, not a failed load), and its
-`--help` says it is there to audit a document that has not been migrated yet.
-The findings the allow-list encodes are closed out in `parity-triage.md` §7.
+What is left of the harness is `list`, `baseline [--check]`, `render --out`,
+`pdf --baseline [--check]` and `seed-cache`. The cross-reader `diff`
+subcommand and its allow-list (`tests/parity/allow.yml`, 86 entries) are
+deleted: they compared two readers, and only one is left. What they recorded
+about the migration is written up in `parity-triage.md`, which stays as the
+history of what changed and why.
 
 ## Known duplication
 
