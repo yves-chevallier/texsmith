@@ -1,3 +1,9 @@
+---
+press:
+  include_paths:
+    - ../..
+---
+
 # Mermaid Diagrams
 
 Just like MkDocs, TeXSmith understands [Mermaid](https://mermaid.js.org) diagrams. Browsers render them on the fly, but PDFs need static assets, so TeXSmith converts each diagram into a vector PDF during the build. That requires either:

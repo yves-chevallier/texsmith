@@ -1,3 +1,9 @@
+---
+press:
+  include_paths:
+    - ../..
+---
+
 # Code
 
 Code fences are one of Markdown’s greatest hits: drop a triple backtick block,

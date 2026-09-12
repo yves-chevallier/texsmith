@@ -34,6 +34,15 @@ You can insert code snippets and specify options in the info string.
 - Highlight specific lines with `hl_lines="2-3"`
 - An external source with `include="path/to/file"`
 
+The info string may also end with a full attribute list in braces, which is
+where a class or an id lives:
+
+````md
+```python {.wide title="hanoi.py"}
+print(1)
+```
+````
+
 The highlighting engine is global, set with `press.code.engine`: `pygments`
 (the default, Tectonic-safe), `listings`, `verbatim` or `minted` (which needs
 shell escape).
@@ -97,6 +106,32 @@ The PyMdownX snippet syntax `–8<– "file"` is accepted as deprecated sugar; i
 pastes text before parsing, which breaks on nested fences, and it never rebases
 relative paths. See Migrating to TMark.
 
+=== Any dash count is the same marker
+
+The marker is PyMdownX's own, `-{2,}8<-{2,}`: *two or more dashes on each
+side, the two sides free to differ*. `–8<–`, `—8<—`, `–8<—-` and
+`—–8<—–` are one spelling, and none of them is a divider. This matters
+because TeXSmith's own corpus writes three dashes throughout: for a long time
+only the two-dash form was recognised, so every one of those includes quietly
+stayed literal text.
+
+A `;` before the marker is PyMdownX's escape: the line includes nothing and is
+the text it spells, less one `;`, with no diagnostic — writing the marker is
+not the deprecated act. The rule holds for a fence whose body is one snippet
+line, and there the `;` is also what the printer writes, a fence body having no
+backslash escape of its own; in a paragraph the printer escapes the literal
+marker with a backslash instead.
+
+#table(
+columns: 2,
+align: (left, left),
+table.header([You wrote], [Normal form]),
+[`–8<– "chapters/boot.md"`], [`{include}(chapters/boot.md)`],
+[`—8<— "chapters/boot.md"`], [`{include}(chapters/boot.md)`],
+[a fence body `–8<– "hanoi.py"`], [```` ```python include="hanoi.py" ````],
+[`;—8<— "chapters/boot.md"`], [`\—8<— "chapters/boot.md"`],
+)
+
 == With #ts-logo("LaTeX") output
 
 Here’s what the above examples look like when rendered with TeXSmith:
@@ -151,7 +186,14 @@ You can use `#!py print("Hello, World!")` to display a message in Python.
 With TeXSmith this example renders as follows:
 
 ```markdown
-[include: examples/code/code-inline.md not found]
+# Inline Code
+
+In C the `strstr` function defined with the prototype
+{code lang=c}[char *strstr(const char *haystack, const char *needle);] is
+used to locate a substring within a string. It returns a pointer to the first occurrence of the substring
+`needle` in the string `haystack`, or `NULL` if the substring is not found.
+
+In Python, you can achieve similar functionality using the `find` method of strings for example: {code lang=python}[haystack.find(sub: int) -> int]. This method returns the lowest index of the substring if found in the string, otherwise it returns `-1`.
 ```
 
 #figure(

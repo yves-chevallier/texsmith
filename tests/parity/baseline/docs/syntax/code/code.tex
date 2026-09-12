@@ -8,12 +8,16 @@
 \usepackage[colorlinks=true, linkcolor=NavyBlue, urlcolor=NavyBlue, citecolor=NavyBlue]{hyperref}
 \usepackage[a4paper]{geometry}
 \usepackage{ts-fonts}
+\usepackage{booktabs}
 \usepackage{float}
 \usepackage{graphicx}
+\usepackage{tabularx}
 \usepackage{tcolorbox}
 \usepackage{fvextra}
 \usepackage{amsmath}
 \usepackage{seqsplit}
+\newcolumntype{Y}{>{\centering\arraybackslash}X}
+\newcolumntype{Z}{>{\raggedleft\arraybackslash}X}
 \usepackage{ts-code}
 
 \usepackage{lastpage}
@@ -48,6 +52,15 @@ You can insert code snippets and specify options in the info string.
 \item Highlight specific lines with \tscodeinline{hl\_lines="2-\allowbreak{}3"}
 \item An external source with \tscodeinline{include="path/to/file"}
 \end{itemize}
+The info string may also end with a full attribute list in braces, which is
+where a class or an id lives:
+\begin{tscode}[lang=md, engine=pygments]
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+\PY{l+s+sb}{```}\PY{l+s+sb}{python}\PY{+w}{ }\PYZob{}.wide title=\PYZdq{}hanoi.py\PYZdq{}\PYZcb{}
+\PY{n+nb}{print}\PY{p}{(}\PY{l+m+mi}{1}\PY{p}{)}
+\PY{l+s+sb}{```}
+\end{Verbatim}
+\end{tscode}
 The highlighting engine is global, set with \tscodeinline{press.code.engine}: \tscodeinline{pygments}
 (the default, Tectonic-safe), \tscodeinline{listings}, \tscodeinline{verbatim} or \tscodeinline{minted} (which needs
 shell escape).
@@ -105,6 +118,32 @@ role on a line of its own:
 The PyMdownX snippet syntax \tscodeinline{-\allowbreak{}-\allowbreak{}8<-\allowbreak{}-\allowbreak{} "file"} is accepted as deprecated sugar; it
 pastes text before parsing, which breaks on nested fences, and it never rebases
 relative paths. See Migrating to TMark.
+\subsubsection{Any dash count is the same marker}
+The marker is PyMdownX's own, \tscodeinline{-\allowbreak{}\{2,\}8<-\allowbreak{}\{2,\}}: \textbf{two or more dashes on each
+side, the two sides free to differ}. \tscodeinline{-\allowbreak{}-\allowbreak{}8<-\allowbreak{}-\allowbreak{}}, \tscodeinline{-\allowbreak{}-\allowbreak{}-\allowbreak{}8<-\allowbreak{}-\allowbreak{}-\allowbreak{}}, \tscodeinline{-\allowbreak{}-\allowbreak{}8<-\allowbreak{}-\allowbreak{}-\allowbreak{}-\allowbreak{}} and
+\tscodeinline{-\allowbreak{}-\allowbreak{}-\allowbreak{}-\allowbreak{}-\allowbreak{}8<-\allowbreak{}-\allowbreak{}-\allowbreak{}-\allowbreak{}-\allowbreak{}} are one spelling, and none of them is a divider. This matters
+because TeXSmith's own corpus writes three dashes throughout: for a long time
+only the two-dash form was recognised, so every one of those includes quietly
+stayed literal text.
+
+A \tscodeinline{;} before the marker is PyMdownX's escape: the line includes nothing and is
+the text it spells, less one \tscodeinline{;}, with no diagnostic --- writing the marker is
+not the deprecated act. The rule holds for a fence whose body is one snippet
+line, and there the \tscodeinline{;} is also what the printer writes, a fence body having no
+backslash escape of its own; in a paragraph the printer escapes the literal
+marker with a backslash instead.
+\begin{center}
+\begin{tabularx}{\linewidth}{>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X}
+\toprule
+\textbf{You wrote} & \textbf{Normal form} \\
+\midrule
+\tscodeinline{-\allowbreak{}-\allowbreak{}8<-\allowbreak{}-\allowbreak{} "chapters/boot.md"} & \tscodeinline{\{include\}(chapters/boot.md)} \\
+\tscodeinline{-\allowbreak{}-\allowbreak{}-\allowbreak{}8<-\allowbreak{}-\allowbreak{}-\allowbreak{} "chapters/boot.md"} & \tscodeinline{\{include\}(chapters/boot.md)} \\
+a fence body \tscodeinline{-\allowbreak{}-\allowbreak{}8<-\allowbreak{}-\allowbreak{} "hanoi.py"} & \tscodeinline{```python include="hanoi.py"} \\
+\tscodeinline{;-\allowbreak{}-\allowbreak{}-\allowbreak{}8<-\allowbreak{}-\allowbreak{}-\allowbreak{} "chapters/boot.md"} & \tscodeinline{\textbackslash{}-\allowbreak{}-\allowbreak{}-\allowbreak{}8<-\allowbreak{}-\allowbreak{}-\allowbreak{} "chapters/boot.md"} \\
+\bottomrule
+\end{tabularx}
+\end{center}
 \subsection{With \LaTeX{} output}
 Here's what the above examples look like when rendered with TeXSmith:
 \begin{figure}[H]
@@ -153,7 +192,14 @@ You can use \PY{l+s+sb}{`\PYZsh{}!py print(\PYZdq{}Hello, World!\PYZdq{})`} to d
 With TeXSmith this example renders as follows:
 \begin{tscode}[lang=markdown, engine=pygments]
 \begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
-[include: examples/code/code\PYZhy{}inline.md not found]
+\PY{g+gh}{\PYZsh{} Inline Code}
+
+In C the \PY{l+s+sb}{`strstr`} function defined with the prototype
+\PYZob{}code lang=c\PYZcb{}[char \PY{g+ge}{*strstr(const char *}haystack, const char *needle);] is
+used to locate a substring within a string. It returns a pointer to the first occurrence of the substring
+\PY{l+s+sb}{`needle`} in the string \PY{l+s+sb}{`haystack`}, or \PY{l+s+sb}{`NULL`} if the substring is not found.
+
+In Python, you can achieve similar functionality using the \PY{l+s+sb}{`find`} method of strings for example: \PYZob{}code lang=python\PYZcb{}[haystack.find(sub: int) \PYZhy{}\PYZgt{} int]. This method returns the lowest index of the substring if found in the string, otherwise it returns \PY{l+s+sb}{`\PYZhy{}1`}.
 \end{Verbatim}
 \end{tscode}
 \begin{figure}[H]
