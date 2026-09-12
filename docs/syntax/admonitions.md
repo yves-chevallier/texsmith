@@ -218,4 +218,52 @@ A container that means nothing: a hook for classes and an id.
 ```
 
 A `::: name` whose name is unknown raises `container-unknown` and renders its
-content transparently rather than silently becoming a `<div>`.
+content transparently rather than silently becoming a `<div>`. Nothing is lost
+— the name is kept so the printer round-trips the file — you are simply told
+the language does not know that word.
+
+There is **no mechanism to declare a container name**, on purpose: a new *kind*
+of thing is a declared callout type, and a block that must look a particular
+way is `::: div {.class}` plus a template that knows the class.
+
+```md
+::: div {.callout-sidebar}
+Rendered by whatever the template defines for this class.
+:::
+```
+
+A layout container reaches the paged backends through one contract —
+`\begin{tsdiv}{name}[attrs]` and `#ts-div("name", ..)` — dispatched on the name
+with the attributes forwarded as keys (`#id` as `id`, classes as
+`class={a,b}`, `key=val` as is; `lang` and `media` never), and `<div class="name
+…">` on the web. Redefining that contract for a name is how a template restyles
+a layout, tabs included.
+
+## Foreign directives
+
+A `:::` line whose name is **dotted** is not a container at all. It is a
+directive for another processor — mkdocstrings' syntax, its options in the
+indented YAML that follows, with no closing fence — and so is
+Python-Markdown's `[TOC]` paragraph.
+
+```md
+[TOC]
+
+::: texsmith.core.config
+    options:
+      members: true
+
+Next paragraph.
+```
+
+TMark interprets neither. Each becomes a raw block kept **verbatim**: the
+`[TOC]` form is the paragraph alone, the dotted form is the `:::` line plus
+every following line that is blank or indented by four spaces or more, so it
+closes at the first dedent and the container fence rules — matching `:::`,
+`container-unknown`, `container-unclosed` — never apply to it.
+
+The printer emits the block as typed; the HTML writer and the **paged writers
+emit nothing**, because the table of contents in print is `press.toc` and an
+API reference has no print form. `[TOC]` is silent; a dotted directive raises
+the hint `directive-foreign`, so a document meant for print does not lose a
+block without notice.
