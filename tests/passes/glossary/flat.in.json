@@ -1,0 +1,97 @@
+{
+  "tmark": "0.0.0",
+  "file": 0,
+  "front_matter": {
+    "id": 1,
+    "span": [
+      0,
+      0,
+      86
+    ],
+    "raw": "---\npress:\n  declare:\n    glossary:\n      watchdog: A timer that resets the system\n---",
+    "keys": {
+      "press": {
+        "declare": {
+          "glossary": {
+            "watchdog": "A timer that resets the system"
+          }
+        }
+      }
+    }
+  },
+  "blocks": [
+    {
+      "type": "Header",
+      "id": 2,
+      "span": [
+        0,
+        87,
+        94
+      ],
+      "level": 1,
+      "content": [
+        {
+          "type": "Str",
+          "id": 3,
+          "span": [
+            0,
+            89,
+            94
+          ],
+          "text": "Terms"
+        }
+      ]
+    },
+    {
+      "type": "Para",
+      "id": 4,
+      "span": [
+        0,
+        96,
+        122
+      ],
+      "content": [
+        {
+          "type": "Str",
+          "id": 5,
+          "span": [
+            0,
+            96,
+            98
+          ],
+          "text": "A "
+        },
+        {
+          "type": "Ref",
+          "id": 6,
+          "span": [
+            0,
+            98,
+            111
+          ],
+          "items": [
+            {
+              "key": "gls:watchdog",
+              "key_span": [
+                0,
+                99,
+                111
+              ]
+            }
+          ]
+        },
+        {
+          "type": "Str",
+          "id": 7,
+          "span": [
+            0,
+            111,
+            122
+          ],
+          "text": " reference."
+        }
+      ]
+    }
+  ],
+  "diagnostics": []
+}
