@@ -29,12 +29,12 @@ Check the installed version with `texsmith --version` or in Python with `texsmit
 
 ## Key features
 
-- **MkDocs-native Markdown** – Ships with the same Material + pymdown extension stack you use in MkDocs, so tabs, callouts, annotations, tooltips, and data tables survive the conversion.
-- **Typed IR with multiple backends** – Documents are lowered into a typed intermediate representation (`read(HTML) → IR → write(IR)`), then emitted as **LaTeX** (default) or **Typst** (experimental) via `--format`.
+- **TMark Markdown** – The [TMark](https://github.com/yves-chevallier/tmark) parser reads every Markdown source, so callouts, containers, data tables, counters and cross-references mean the same thing in the editor, on the site and in the PDF.
+- **Typed IR with multiple backends** – Documents are parsed into a typed intermediate representation, run through TeXSmith's IR passes, resolved, and emitted as **LaTeX** (default) or **Typst** (experimental) via `--format`.
 - **Template-first runtime** – Bundle multiple fragments into slots, merge front matter metadata, and emit LaTeX projects ready for Tectonic or latexmk with Docker-friendly manifests.
 - **CLI and Python parity** – The Typer-powered CLI wraps the same ConversionService you can consume as a library, making CI/CD and notebooks behave like local runs.
 - **Actionable diagnostics** – Structured emitters, verbosity switches, and `--debug` traces keep build issues debuggable even in automated pipelines.
-- **Extensible converters** – Override Markdown parsers, add reader lowerings (`@reads`) and writer emitters (`@writes`), or ship diagram transformers (Mermaid, Draw.io, Svgbob) that plug directly into the pipeline.
+- **Extensible converters** – Add IR passes, redefine a construct's contract macro in a fragment or template, or ship diagram transformers (Mermaid, Draw.io, Svgbob) that plug directly into the pipeline.
 
 ## Installation
 
@@ -145,25 +145,26 @@ If you only need a quick conversion, the high-level helpers (`texsmith.Document`
 
 ## Render pipeline
 
-TeXSmith lowers every document into a typed intermediate representation (IR)
+TeXSmith parses every document into a typed intermediate representation (IR)
 and then emits a backend from that IR:
 
 ```
-read(HTML) → IR (texsmith.ir) → write(IR) → LaTeX | Typst
+tmark.parse → IR → TeXSmith passes → tmark.resolve → tmark.write → LaTeX | Typst
 ```
 
-- **Readers** (`texsmith.readers.html`) turn BeautifulSoup nodes into
-  backend-agnostic IR nodes. A reader lowering is a callable decorated with
-  `@reads(*tags, level, priority, name)`; it *returns* an IR node and never
-  mutates the tree.
-- **IR** (`texsmith.ir`) is a typed, backend-neutral node tree. Semantic hints
-  travel as `Span`/`Div` attributes rather than backend strings.
-- **Writers** emit a backend from the IR. `texsmith.writers.latex.LaTeXWriter`
-  (default) and `texsmith.writers.typst.TypstWriter` register emitters with
-  `@writes(NodeType)`, dispatched by node class along the MRO. A node without
-  an emitter raises a clear, localised error naming the node and backend.
+- **Readers** produce the IR: `tmark.parse` for a Markdown source, and the
+  bs4-based `texsmith.readers.html` for an `.html` input or the MkDocs
+  `press.reader: html` fallback.
+- **IR** (`texsmith.ir.model`) is a typed, backend-neutral node tree generated
+  from tmark's committed schema. Semantic hints travel as `Span`/`Div`
+  attributes rather than backend strings.
+- **Passes** (`texsmith.passes`) are pure `Document → Document` functions doing
+  the work a writer cannot: includes, assets and diagrams, DOI lookups,
+  moustaches, snippets, slots, headings, font scripts, glossary entries.
+- **Writers** are tmark's. Each construct is emitted as a fixed macro or
+  environment, and the fragment named in `Requires.fragments` defines it —
+  redefining that macro is how a template overrides a construct's look.
 
 Select the backend with `--format {latex,typst}`. See the
 [Output backends guide](docs/guide/plumbing/backends.md) and the
-[Readers & Writers reference](docs/api/handlers.md) for the decorators and a
-runnable extension example.
+[IR passes & fragment contracts reference](docs/api/handlers.md).

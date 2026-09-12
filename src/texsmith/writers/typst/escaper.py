@@ -12,11 +12,14 @@ that Typst would otherwise interpret as markup at the *start* of content:
 ``-``/``+``/``/`` list markers and ``=`` headings are only special at line
 start, but escaping them everywhere is safe and keeps the emitter simple.
 
-The IR carries raw text in :class:`~texsmith.ir.Str`; the writer escapes it
-here, mirroring how the LaTeX backend owns :func:`escape_latex_chars`.
+The writer escapes the body; what stays here is what the Python side still
+interpolates into the template scaffolding, plus :func:`citation_label`, the
+label sanitisation the written ``.bib`` has to agree with.
 """
 
 from __future__ import annotations
+
+import re
 
 
 # Characters that are always syntactically meaningful in Typst markup and must
@@ -41,4 +44,18 @@ def escape_typst_chars(text: str) -> str:
     return "".join(out)
 
 
-__all__ = ["escape_typst_chars"]
+#: Typst label syntax (``<...>``) admits only these characters.
+_LABEL_SAFE_RE = re.compile(r"[^A-Za-z0-9_.:-]")
+
+
+def citation_label(key: str) -> str:
+    """Map a bibliography key to a Typst label (``<...>``).
+
+    Typst label syntax forbids whitespace and most punctuation; bibliography
+    keys are sanitised the same way the ``.bib`` is normalised so ``@key`` and
+    ``<key>`` agree with what the writer emitted.
+    """
+    return _LABEL_SAFE_RE.sub("-", key.strip())
+
+
+__all__ = ["citation_label", "escape_typst_chars"]

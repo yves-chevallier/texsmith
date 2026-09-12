@@ -7,10 +7,8 @@ from contextlib import contextmanager
 import json
 from pathlib import Path
 
-from bs4 import BeautifulSoup
 import pytest
 
-from texsmith.adapters.latex import LaTeXRenderer
 from texsmith.adapters.markdown import DEFAULT_MARKDOWN_EXTENSIONS, render_markdown
 from texsmith.core.counters import clear_registry
 from texsmith.core.crossrefs import (
@@ -38,6 +36,18 @@ def _clear_counter_registry() -> Iterator[None]:
     clear_registry()
     yield
     clear_registry()
+
+
+@contextmanager
+def _collect() -> Iterator[DiagnosticSink]:
+    """Capture the diagnostics the code under test reports."""
+    emitter = LoggingEmitter()
+    with use_emitter(emitter):
+        yield emitter.sink
+
+
+def _reported(sink: DiagnosticSink, code: str) -> list[str]:
+    return [diagnostic.message for diagnostic in sink if diagnostic.code == code]
 
 
 def _write_inventory(
@@ -245,94 +255,6 @@ def test_attach_pages_folds_the_pages_into_the_inventory(tmp_path: Path) -> None
     assert inventory is not None
     anchor = inventory.anchor("fw:pas-de-temps")
     assert anchor is not None and anchor.page == 14
-
-
-# ---------------------------------------------------------------------------
-# End to end through Markdown
-# ---------------------------------------------------------------------------
-
-
-def _render(source: str, base_path: Path) -> str:
-    return render_markdown(source, extensions=DEFAULT_MARKDOWN_EXTENSIONS, base_path=base_path).html
-
-
-@contextmanager
-def _collect() -> Iterator[DiagnosticSink]:
-    """Capture the diagnostics the code under test reports."""
-    emitter = LoggingEmitter()
-    with use_emitter(emitter):
-        yield emitter.sink
-
-
-def _reported(sink: DiagnosticSink, code: str) -> list[str]:
-    return [diagnostic.message for diagnostic in sink if diagnostic.code == code]
-
-
-CITING = """\
----
-title: Revue hardware
-crossrefs:
-  fwrev: firmware-review.refs.json
----
-Voir @fwrev:fw:pas-de-temps ici.
-"""
-
-
-def test_external_citation_renders_the_published_label(tmp_path: Path) -> None:
-    _write_inventory(tmp_path)
-    soup = BeautifulSoup(_render(CITING, tmp_path), "html.parser")
-    assert soup.get_text().strip() == "Voir RHE-423-FW-10 p. 14 ici."
-
-
-def test_external_citation_is_not_a_local_link(tmp_path: Path) -> None:
-    # The target lives in another PDF: a local \ref would be a dead link.
-    _write_inventory(tmp_path)
-    soup = BeautifulSoup(_render(CITING, tmp_path), "html.parser")
-    anchor = soup.find("a")
-    assert anchor is not None
-    assert anchor.get("href") is None
-
-
-def test_external_citation_reaches_latex_as_plain_text(tmp_path: Path) -> None:
-    _write_inventory(tmp_path)
-    latex = LaTeXRenderer().render(_render(CITING, tmp_path))
-    assert "RHE-423-FW-10 p. 14" in latex
-    assert "hyperref" not in latex
-
-
-def test_unpublished_key_stays_visible_and_warns(tmp_path: Path) -> None:
-    _write_inventory(tmp_path)
-    source = CITING.replace("fw:pas-de-temps", "fw:disparu")
-    with _collect() as sink:
-        html = _render(source, tmp_path)
-    assert "[?fwrev:fw:disparu]" in BeautifulSoup(html, "html.parser").get_text()
-    (message,) = _reported(sink, "ref-unresolved")
-    assert "is not published" in message
-
-
-def test_an_undeclared_alias_is_left_to_the_regular_reference_machinery(tmp_path: Path) -> None:
-    html = _render("Voir @autre:fw:x ici.\n", tmp_path)
-    soup = BeautifulSoup(html, "html.parser")
-    assert soup.find("a", href="#autre:fw:x") is not None
-
-
-def test_a_local_counter_keeps_its_live_link(tmp_path: Path) -> None:
-    _write_inventory(tmp_path)
-    source = """\
----
-counters:
-  hw:
-    name: Constat
-    format: "HW-{n:02d}"
-crossrefs:
-  fwrev: firmware-review.refs.json
----
-#{hw:a} puis @hw:a et @fwrev:fw:pas-de-temps.
-"""
-    soup = BeautifulSoup(_render(source, tmp_path), "html.parser")
-    local = soup.find("a", href="#hw:a")
-    assert local is not None and local.get_text() == "HW-01"
-    assert "RHE-423-FW-10 p. 14" in soup.get_text()
 
 
 # ---------------------------------------------------------------------------

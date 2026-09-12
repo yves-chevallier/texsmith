@@ -9,16 +9,12 @@ from collections.abc import Iterator
 import hashlib
 import os
 from pathlib import Path
-import re
 import shutil
 from urllib.parse import urlparse
 
-from bs4 import BeautifulSoup
 import pytest
 
-from texsmith.adapters.latex import LaTeXRenderer
 from texsmith.adapters.transformers import register_converter, registry
-from texsmith.core.config import BookConfig
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -127,82 +123,6 @@ def _tectonic_binary() -> Path | None:
         return None
     except Exception:  # pragma: no cover - network failures
         return None
-
-
-@pytest.mark.usefixtures("_stubbed_converters")
-def test_full_document_conversion(tmp_path: Path) -> None:
-    site_dir, _press = build_mini_site(tmp_path)
-
-    html_path = site_dir / "index.html"
-    assert html_path.exists(), "MkDocs build did not produce index.html"
-
-    html = html_path.read_text(encoding="utf-8")
-    soup = BeautifulSoup(html, "html.parser")
-    article = soup.select_one("article.md-content__inner")
-    assert article is not None, "Unable to locate main article content in HTML"
-    content_html = article.decode_contents()
-    renderer = LaTeXRenderer(
-        config=BookConfig(project_dir=site_dir),
-        output_root=tmp_path / "latex-build",
-        parser="html.parser",
-    )
-
-    latex_output = renderer.render(
-        content_html,
-        runtime={
-            "source_dir": site_dir,
-            "document_path": html_path,
-            "base_level": 0,
-            "numbered": True,
-        },
-    )
-
-    assert latex_output.strip(), "Rendered LaTeX output is empty."
-
-    expectations = [
-        r"\chapter{MkDocs test document}",
-        r"\section{Plain \textbf{Markdown} \emph{Features}}",
-        r"\begin{itemize}",
-        r"\begin{enumerate}",
-        r"print",  # Pygments inline output contains the verbatim print call
-        r"\href{https://www.mkdocs.org/}{MkDocs website}",
-        r"\caption[MkDocs Logo]{MkDocs Logo}",
-        (
-            r"\caption[Algorithme de calcul du PGCD d'Euclide]"
-            r"{Algorithme de calcul du PGCD d'Euclide}"
-        ),
-        (
-            r"\caption[Influences des langages de programmation]"
-            r"{Influences des langages de programmation}"
-        ),
-        r"\textbf{Python}\par",
-        r"\textbf{JavaScript}\par",
-        r"\begin{description}",
-        r"\begin{tabularx}",
-        r"\subsubsection{Heading Level 4}\label{custom-id}",
-        r"\paragraph{Heading Level 5}\label{heading-level-5}\mbox{}\\",
-        r"\texsmithHighlight{vulputate erat efficitur}",
-        r"\sout{Deleted text}",
-        r"H\textsubscript{2}O",
-        r"X\textsuperscript{2}",
-        r"\begin{todolist}",
-        r"\done",
-        r"\keystroke{Ctrl}+\keystroke{S}",
-        r"\keystroke{⌘}",
-        r"\begin{callout}[callout note]{A Simple Note}",
-        r"\begin{callout}[callout info]{Information Box}",
-        r"\begin{callout}[callout warning]{Warning}",
-        r"\begin{callout}[callout success]{Success}",
-    ]
-
-    for snippet in expectations:
-        assert snippet in latex_output, f"Expected to find snippet {snippet!r}"
-
-    assert "Hello" in latex_output and "name" in latex_output
-    assert "def greet(name):" in latex_output
-    assert re.search(r"\\footnote\{.*footnote", latex_output) is not None
-    assert r"\begin{callout}[callout note]{Expandable Section}" in latex_output
-    assert r"\texsmithEmoji{😂}" in latex_output
 
 
 @pytest.mark.usefixtures("_stubbed_converters")

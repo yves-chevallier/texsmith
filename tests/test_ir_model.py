@@ -540,17 +540,13 @@ def test_plain_text_matches_tmark() -> None:
 # --------------------------------------------------------------------------
 
 
-def test_legacy_exports_stay_and_new_modules_are_reachable() -> None:
-    from texsmith.ir import nodes
+def test_the_package_exports_the_generated_model_modules() -> None:
     from texsmith.ir.walk import walk as new_walk
 
-    assert ir.Span is nodes.Span  # the legacy inline node keeps the name
-    assert ir.walk is ir.visitor.walk  # the legacy function, not the module
-    assert callable(ir.walk)
     assert new_walk is walk
     assert ir.model is model
     assert ir.codec is codec
-    assert list(ir.walk(nodes.Para((nodes.Str("x"),))))[1] == nodes.Str("x")
+    assert ir.walk.walk is walk  # ``ir.walk`` is the module, not a function
 
 
 # --------------------------------------------------------------------------

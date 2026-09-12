@@ -108,6 +108,7 @@ def render_typst_from_ir(
     template: str | None = None,
     bibliography_files: Sequence[Path] = (),
     output_dir: Path | None = None,
+    diagrams_backend: str | None = None,
     template_options: Mapping[str, Any] | None = None,
     emitter: DiagnosticEmitter | None = None,
     chain: ResolutionChain | None = None,
@@ -158,6 +159,7 @@ def render_typst_from_ir(
         documents=[document.source_path],
         bibliography_files=list(bibliography_files),
         template=template,
+        diagrams_backend=diagrams_backend,
     )
     context = ConversionContext(
         document=document,

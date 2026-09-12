@@ -82,7 +82,7 @@ control that behavior:
 
 - [`texsmith.adapters.transformers.base`](transformers.md) – reference for
   `CachedConversionStrategy`.
-- [`texsmith.writers.latex.media`](../api/handlers.md) – real-world examples
-  of how converters integrate with the LaTeX writer.
+- [IR passes & fragment contracts](../api/handlers.md) – how the `assets`
+  pass drives the converters registered here.
 - [Template Cookbook](../guide/templates/template-cookbook.md) – packaging
   recommendations so your templates document converter prerequisites.
