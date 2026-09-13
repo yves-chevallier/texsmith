@@ -533,3 +533,34 @@ def test_templated_latexmkrc_skips_tools_when_fragments_absent(tmp_path: Path) -
     assert "\n\n\n" not in content
     for line in content.splitlines():
         assert line == line.rstrip()
+
+
+def test_two_documents_from_different_directories_render_together(tmp_path: Path) -> None:
+    """Provenance is per-document, so it must not collide in the shared overrides.
+
+    ``execution.py`` sets ``_source_dir``, ``_source_path`` and ``source_dir``
+    on the template overrides of every document; the conflict allowlist named
+    four paths and missed ``source_dir``, so a render of two documents whose
+    sources sit in different directories died with
+    ``Conflicting template override for 'source_dir'``.
+    """
+    first_dir = tmp_path / "a"
+    second_dir = tmp_path / "b"
+    first_dir.mkdir()
+    second_dir.mkdir()
+    (first_dir / "one.md").write_text("---\ntitle: Same\n---\n\n# One\n\nBody.\n", encoding="utf-8")
+    (second_dir / "two.md").write_text(
+        "---\ntitle: Same\n---\n\n# Two\n\nBody.\n", encoding="utf-8"
+    )
+
+    session = TemplateSession(runtime=load_template_runtime("article"))
+    for path in (first_dir / "one.md", second_dir / "two.md"):
+        document = Document.from_markdown(path)
+        document.prepare_for_conversion()
+        session.add_document(document)
+
+    result = session.render(tmp_path / "out")
+
+    assert result.main_tex_path.exists()
+    rendered = result.main_tex_path.read_text(encoding="utf-8")
+    assert "One" in rendered and "Two" in rendered

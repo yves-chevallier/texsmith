@@ -59,7 +59,13 @@ class TemplateRendererResult:
     context_attributes: list[dict[str, Any]] = field(default_factory=list)
 
 
-_SOFT_OVERRIDE_KEYS = {"press._source_dir", "press._source_path", "_source_dir", "_source_path"}
+#: Where a document came from. These are not template attributes: every
+#: document sets its own, so they always disagree in a multi-document render,
+#: and the wrapper — which runs once — takes the first. Matched on the leaf
+#: name, so a key nested under ``press`` needs no second entry: the allowlist
+#: this replaces spelled four paths and still missed ``source_dir``, which made
+#: rendering two documents from different directories impossible.
+_PROVENANCE_KEYS = frozenset({"_source_dir", "_source_path", "source_dir"})
 
 
 class FragmentOverrideError(TemplateError):
@@ -89,9 +95,9 @@ def _merge_overrides(
         if existing == value:
             continue
 
-        conflict_path = f"{namespace}.{key}" if namespace else key
-        if conflict_path in _SOFT_OVERRIDE_KEYS:
+        if key in _PROVENANCE_KEYS:
             continue
+        conflict_path = f"{namespace}.{key}" if namespace else key
         raise FragmentOverrideError(
             f"Conflicting template override for '{conflict_path}': {existing!r} vs {value!r}"
         )

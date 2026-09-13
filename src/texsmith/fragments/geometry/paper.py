@@ -72,6 +72,14 @@ def _normalise_margin(value: Any) -> str | dict[str, str] | None:
         if not cleaned:
             return None
         lowered = cleaned.lower()
+        # The three words the ``margin_style`` normaliser emits, and that the
+        # templates document: ``default`` means "no explicit margin", which is
+        # what an absent value means. Without it the word reached
+        # ``_normalise_dimension`` and raised; ``letter`` declares
+        # ``default = "default"`` and only escaped because it does not list
+        # ``ts-geometry`` among its fragments.
+        if lowered == "default":
+            return None
         if lowered == "narrow":
             return _normalise_dimension("1.5cm")
         if lowered == "wide":

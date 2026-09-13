@@ -177,3 +177,18 @@ def test_typesetting_invalid_leading_raises() -> None:
     ctx: dict[str, object] = {"typesetting_leading": 0}
     with pytest.raises(TemplateError):
         typesetting_fragment.build_config(ctx)
+
+
+def test_the_three_margin_words_the_templates_document_all_resolve() -> None:
+    """``margin_style`` emits ``default``/``narrow``/``wide``; geometry must know all three.
+
+    It knew two. ``default`` fell through to ``_normalise_dimension`` and
+    raised ``Unsupported dimension value 'default'``. The ``letter`` template
+    declares ``default = "default"`` with that normaliser and escaped only
+    because it does not list ``ts-geometry`` among its fragments.
+    """
+    from texsmith.fragments.geometry.paper import _normalise_margin
+
+    assert _normalise_margin("narrow") == "15mm"
+    assert _normalise_margin("wide") == "30mm"
+    assert _normalise_margin("default") is None
