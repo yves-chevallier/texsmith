@@ -20,7 +20,7 @@ from texsmith.core.conversion.core import (
 from texsmith.core.conversion.service import (
     ConversionResponse,
     ConversionService,
-    classify_input_source,
+    validate_input_source,
 )
 from texsmith.core.documents import Document, TitleStrategy
 from texsmith.core.templates import (
@@ -82,7 +82,6 @@ __all__ = [
     "__version__",
     "bibliography_data_from_string",
     "build_template_overrides",
-    "classify_input_source",
     "configure_user_dir",
     "convert_documents",
     "copy_template_assets",
@@ -93,4 +92,5 @@ __all__ = [
     "load_template_runtime",
     "resolve_template_language",
     "user_dir_context",
+    "validate_input_source",
 ]

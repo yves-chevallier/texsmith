@@ -108,7 +108,7 @@ Each example ships build instructions inside [`docs/examples/index.md`](docs/exa
 
 ```text
 src/texsmith/
-├── readers/      tmark.parse for Markdown; the bs4 HtmlReader for .html
+├── readers/      tmark.parse — the one reader
 ├── ir/           the generated Python mirror of tmark's IR schema, plus walkers
 ├── passes/       the IR passes (include, glossary, var, title, snippet, assets,
 │                 doi, emoji, scripts | slots, headings, highlight)
@@ -169,8 +169,7 @@ tmark.parse → IR → TeXSmith passes → tmark.resolve → tmark.write → LaT
 ```
 
 - **Readers** produce the IR: `tmark.parse` for a Markdown source, and the
-  bs4-based `texsmith.readers.html` for an `.html` input or the MkDocs
-  `press.reader: html` fallback.
+  one reader; an input is a Markdown source.
 - **IR** (`texsmith.ir.model`) is a typed, backend-neutral node tree generated
   from tmark's committed schema. Semantic hints travel as `Span`/`Div`
   attributes rather than backend strings.

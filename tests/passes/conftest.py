@@ -25,7 +25,7 @@ from typing import Any
 import pytest
 
 from texsmith.adapters.transformers import registry as converter_registry
-from texsmith.core.conversion.inputs import InputKind, SlotOptions
+from texsmith.core.conversion.inputs import SlotOptions
 from texsmith.core.documents import Document, TitleStrategy
 from texsmith.core.front_matter import split_front_matter
 from texsmith.diagnostics import DiagnosticSink, FileTable
@@ -79,13 +79,10 @@ class Harness:
         front_matter, _body = split_front_matter(text)
         document = Document(
             source_path=source,
-            kind=InputKind.MARKDOWN,
-            _html="",
             _front_matter=front_matter,
             base_level=base_level,
             title_strategy=title_strategy,
             numbered=numbered,
-            reader="tmark",
             ir=codec.decode_document(self.payload(pass_name, case)),
             files=files,
         )

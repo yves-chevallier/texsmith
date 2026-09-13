@@ -55,7 +55,6 @@ from .._options import (
     EnableFragmentOption,
     FontsInfoOption,
     FormatOption,
-    FullDocumentOption,
     HashAssetsOption,
     HttpUserAgentOption,
     IncludePathOption,
@@ -69,9 +68,7 @@ from .._options import (
     NumberingOption,
     OpenLogOption,
     OutputPathOption,
-    ParserOption,
     QuietOption,
-    SelectorOption,
     SlotsOption,
     StrictOption,
     StripHeadingOption,
@@ -420,13 +417,10 @@ def render(
         ),
     ] = None,
     output: OutputPathOption = None,
-    selector: SelectorOption = _REQUEST_DEFAULTS.selector,
-    full_document: FullDocumentOption = _REQUEST_DEFAULTS.full_document,
     base_level: BaseLevelOption = str(_REQUEST_DEFAULTS.base_level),
     strip_heading: StripHeadingOption = _REQUEST_DEFAULTS.strip_heading_all,
     no_promote_title: NoPromoteTitleOption = not _REQUEST_DEFAULTS.promote_title,
     no_title: NoTitleOption = _REQUEST_DEFAULTS.suppress_title,
-    parser: ParserOption = None,
     include_paths: IncludePathOption = None,
     no_copy_assets: NoCopyAssetsOption = not _REQUEST_DEFAULTS.copy_assets,
     convert_assets: ConvertAssetsOption = _REQUEST_DEFAULTS.convert_assets,
@@ -841,7 +835,6 @@ def render(
     request_render_dir = render_dir_path
 
     request = ConversionRequest(
-        parser=parser,
         copy_assets=copy_assets,
         convert_assets=convert_assets,
         hash_assets=hash_assets,
@@ -857,8 +850,6 @@ def render(
         front_matter_paths=shared_front_matter_paths,
         slot_assignments=slot_assignments,
         include_paths=list(include_paths or ()),
-        selector=selector,
-        full_document=full_document,
         base_level=resolved_base_level,
         strip_heading_all=strip_heading if build_pdf else False,
         strip_heading_first_document=False if build_pdf else strip_heading,
@@ -876,7 +867,6 @@ def render(
     state.record_event(
         "conversion_settings",
         {
-            "parser": parser or "auto",
             "copy_assets": copy_assets,
             "convert_assets": convert_assets,
             "hash_assets": hash_assets,

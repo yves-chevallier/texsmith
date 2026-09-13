@@ -1,6 +1,6 @@
 # IR passes and fragment contracts
 
-TeXSmith no longer reads HTML with a bs4 reader and no longer emits LaTeX from
+TeXSmith no longer reads HTML and no longer emits LaTeX from
 Python. The parser, the intermediate representation, the resolver and the
 writers are tmark's; what remains on the Python side is the part that needs the
 filesystem, the network and a process — and the part that decides what a

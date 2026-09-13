@@ -111,5 +111,5 @@ def test_wildcard_takes_the_whole_document(harness) -> None:
 
 def test_without_ir_the_pass_is_identity(harness) -> None:
     document = harness.load("slots", "wildcard")
-    plain = document.evolve(ir=None, reader="html")
+    plain = document.evolve(ir=None)
     assert harness.run("slots", plain) is plain

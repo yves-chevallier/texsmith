@@ -45,7 +45,7 @@ This page showcases the building blocks you are most likely to use in scripts, s
 Save the examples into a file and execute them with \tscodeinline{uv run python example.py}. The snippets rely only on fixtures you create alongside the script.
 \end{tscallout}
 \subsection{Convert a handful of documents}
-Use \tscodeinline{Document.from\_markdown} / \tscodeinline{Document.from\_html} to normalise inputs, then hand everything to \tscodeinline{convert\_documents}. The bundle returned by \tscodeinline{convert\_documents} keeps every fragment, output path, and the raw \LaTeX{} handy:
+Use \tscodeinline{Document.from\_markdown} to normalise inputs, then hand everything to \tscodeinline{convert\_documents}. The bundle returned by \tscodeinline{convert\_documents} keeps every fragment, output path, and the raw \LaTeX{} handy:
 \begin{tscode}[lang=python, engine=pygments]
 \begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
 \PY{k+kn}{from}\PY{+w}{ }\PY{n+nn}{pathlib}\PY{+w}{ }\PY{k+kn}{import} \PY{n}{Path}
@@ -58,7 +58,7 @@ Use \tscodeinline{Document.from\_markdown} / \tscodeinline{Document.from\_html} 
         \PY{n}{base\PYZus{}level}\PY{o}{=}\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{section}\PY{l+s+s2}{\PYZdq{}}\PY{p}{,}  \PY{c+c1}{\PYZsh{} named levels map to LaTeX sectioning commands}
     \PY{p}{)}\PY{p}{,}
     \PY{n}{Document}\PY{o}{.}\PY{n}{from\PYZus{}markdown}\PY{p}{(}\PY{n}{Path}\PY{p}{(}\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{bar.md}\PY{l+s+s2}{\PYZdq{}}\PY{p}{)}\PY{p}{,} \PY{n}{base\PYZus{}level}\PY{o}{=}\PY{l+m+mi}{0}\PY{p}{)}\PY{p}{,}
-    \PY{n}{Document}\PY{o}{.}\PY{n}{from\PYZus{}html}\PY{p}{(}\PY{n}{Path}\PY{p}{(}\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{baz.html}\PY{l+s+s2}{\PYZdq{}}\PY{p}{)}\PY{p}{,} \PY{n}{selector}\PY{o}{=}\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{main.article\PYZus{}\PYZus{}content}\PY{l+s+s2}{\PYZdq{}}\PY{p}{)}\PY{p}{,}
+    \PY{n}{Document}\PY{o}{.}\PY{n}{from\PYZus{}markdown}\PY{p}{(}\PY{n}{Path}\PY{p}{(}\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{baz.md}\PY{l+s+s2}{\PYZdq{}}\PY{p}{)}\PY{p}{,} \PY{n}{base\PYZus{}level}\PY{o}{=}\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{chapter}\PY{l+s+s2}{\PYZdq{}}\PY{p}{)}\PY{p}{,}
 \PY{p}{]}
 
 \PY{n}{bundle} \PY{o}{=} \PY{n}{convert\PYZus{}documents}\PY{p}{(}\PY{n}{docs}\PY{p}{,} \PY{n}{output\PYZus{}dir}\PY{o}{=}\PY{n}{Path}\PY{p}{(}\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{build}\PY{l+s+s2}{\PYZdq{}}\PY{p}{)}\PY{p}{)}
@@ -68,12 +68,10 @@ Use \tscodeinline{Document.from\_markdown} / \tscodeinline{Document.from\_html} 
     \PY{n+nb}{print}\PY{p}{(}\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{Rendered fragment}\PY{l+s+s2}{\PYZdq{}}\PY{p}{,} \PY{n}{fragment}\PY{o}{.}\PY{n}{stem}\PY{p}{,} \PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{→}\PY{l+s+s2}{\PYZdq{}}\PY{p}{,} \PY{n}{fragment}\PY{o}{.}\PY{n}{output\PYZus{}path}\PY{p}{)}
 \end{Verbatim}
 \end{tscode}
-\tscodeinline{from\_markdown} parses the source with tmark into \tscodeinline{Document.ir}; \tscodeinline{from\_html}
-reads an \tscodeinline{.html} file into the same IR through the HTML reader, which is why
-\tscodeinline{selector}, \tscodeinline{parser} and \tscodeinline{full\_document} only exist there. There is no \tscodeinline{reader}
-argument on either: a Markdown source has exactly one reader.
+\tscodeinline{from\_markdown} parses the source with tmark into \tscodeinline{Document.ir}. There is no
+\tscodeinline{reader} argument: a source has exactly one reader.
 
-\tscodeinline{ConversionRequest} carries conversion settings (selector, asset handling, manifest emission, etc.) in addition to document inputs. When you omit \tscodeinline{output\_dir}, the bundle stays in memory---perfect for unit tests or further processing.
+\tscodeinline{ConversionRequest} carries conversion settings (asset handling, manifest emission, etc.) in addition to document inputs. When you omit \tscodeinline{output\_dir}, the bundle stays in memory---perfect for unit tests or further processing.
 
 Use it to opt into legacy \LaTeX{} accent macros (default is Unicode output):
 \begin{tscode}[lang=python, engine=pygments]

@@ -74,7 +74,6 @@ wins over the site's for the same prefix. See
 | `inject_markdown_extensions` | Enable the extensions the lowering relies on | `true` |
 | `css` | Ship and register `texsmith.css` | `true` |
 | `language` | Document language, else the theme's | *theme* |
-| `parser` | BeautifulSoup backend for the pages read as HTML (`press.reader: html`) | `lxml` |
 | `bibliography` | `.bib` files shared by every book | `[]` |
 | `books` | The documents to export (below) | `[]` |
 | `template_overrides` | Template attributes for every book | `{}` |

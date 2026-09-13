@@ -31,7 +31,7 @@ Save the examples into a file and execute them with `uv run python example.py`. 
 
 == Convert a handful of documents
 
-Use `Document.from_markdown` / `Document.from_html` to normalise inputs, then hand everything to `convert_documents`. The bundle returned by `convert_documents` keeps every fragment, output path, and the raw #ts-logo("LaTeX") handy:
+Use `Document.from_markdown` to normalise inputs, then hand everything to `convert_documents`. The bundle returned by `convert_documents` keeps every fragment, output path, and the raw #ts-logo("LaTeX") handy:
 
 ```python
 from pathlib import Path
@@ -44,7 +44,7 @@ docs = [
         base_level="section",  # named levels map to LaTeX sectioning commands
     ),
     Document.from_markdown(Path("bar.md"), base_level=0),
-    Document.from_html(Path("baz.html"), selector="main.article__content"),
+    Document.from_markdown(Path("baz.md"), base_level="chapter"),
 ]
 
 bundle = convert_documents(docs, output_dir=Path("build"))
@@ -54,12 +54,10 @@ for fragment in bundle.fragments:
     print("Rendered fragment", fragment.stem, "→", fragment.output_path)
 ```
 
-`from_markdown` parses the source with tmark into `Document.ir`; `from_html`
-reads an `.html` file into the same IR through the HTML reader, which is why
-`selector`, `parser` and `full_document` only exist there. There is no `reader`
-argument on either: a Markdown source has exactly one reader.
+`from_markdown` parses the source with tmark into `Document.ir`. There is no
+`reader` argument: a source has exactly one reader.
 
-`ConversionRequest` carries conversion settings (selector, asset handling, manifest emission, etc.) in addition to document inputs. When you omit `output_dir`, the bundle stays in memory—perfect for unit tests or further processing.
+`ConversionRequest` carries conversion settings (asset handling, manifest emission, etc.) in addition to document inputs. When you omit `output_dir`, the bundle stays in memory—perfect for unit tests or further processing.
 
 Use it to opt into legacy #ts-logo("LaTeX") accent macros (default is Unicode output):
 

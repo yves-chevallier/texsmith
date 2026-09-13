@@ -4,12 +4,10 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from texsmith.core.conversion.inputs import InputKind
 from texsmith.core.diagnostics import LoggingEmitter
 from texsmith.core.documents import Document, SlotPlan, TitleStrategy
 from texsmith.diagnostics import DiagnosticSink, FileTable
 from texsmith.ir import model
-from texsmith.ir.model import MISSING
 from texsmith.readers import tmark as tmark_reader
 from texsmith.readers.loader import MemoryLoader, TexsmithLoader, join
 
@@ -118,9 +116,6 @@ def test_from_markdown_with_the_tmark_reader(tmp_path: Path) -> None:
     path = _write(tmp_path)
     document = Document.from_markdown(path)
 
-    assert document.reader == "tmark"
-    assert document.kind is InputKind.MARKDOWN
-    assert document.html == ""
     assert isinstance(document.ir, model.Document)
     assert document.files.path(0) == path
     assert document.files.text(0) == SOURCE
@@ -184,7 +179,6 @@ def test_copy_shares_ir_and_files(tmp_path: Path) -> None:
     assert clone.files is document.files
     assert clone.diagnostics == document.diagnostics
     assert clone.diagnostics is not document.diagnostics
-    assert clone.reader == "tmark"
 
 
 def test_evolve_keeps_the_prepared_decision(tmp_path: Path) -> None:
@@ -197,16 +191,3 @@ def test_evolve_keeps_the_prepared_decision(tmp_path: Path) -> None:
     assert evolved.extracted_title == "Title"
     assert evolved.files is prepared.files
     assert prepared.ir.blocks[0] is not None  # the input is untouched
-
-
-def test_from_html_reads_the_fragment_into_the_ir(tmp_path: Path) -> None:
-    path = tmp_path / "page.html"
-    path.write_text("<article class='md-content__inner'><h1>Hi</h1><p>x</p></article>", "utf-8")
-    document = Document.from_html(path)
-    assert document.reader == "html"
-    assert isinstance(document.ir, model.Document)
-    assert document.files.path(document.ir.file) == path
-    assert document.files.text(document.ir.file) == ""
-    assert document.keys is not None and document.keys.title is MISSING
-    assert "<h1>Hi</h1>" in document.html  # the extracted fragment, kept on the document
-    assert [header.level for header in document.top_level_headers()] == [1]

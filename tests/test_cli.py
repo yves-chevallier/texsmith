@@ -94,21 +94,16 @@ def test_emit_error_skips_logged_exception(monkeypatch: pytest.MonkeyPatch) -> N
 def test_convert_command() -> None:
     runner = CliRunner()
     with runner.isolated_filesystem():
-        html_file = Path("index.html")
-        html_file.write_text(
-            (
-                "<article class='md-content__inner'>"
-                "<h2 id='intro'>Introduction</h2>"
-                "<p>Body text.</p>"
-                "</article>"
-            ),
+        source = Path("index.md")
+        source.write_text(
+            "## Introduction {#intro}\n\nBody text.\n",
             encoding="utf-8",
         )
 
         result = runner.invoke(
             app,
             [
-                str(html_file),
+                str(source),
                 "--base-level",
                 "0",
             ],
@@ -121,20 +116,16 @@ def test_convert_command() -> None:
 def test_fonts_info_flag_displays_script_table() -> None:
     runner = CliRunner()
     with runner.isolated_filesystem():
-        html_file = Path("index.html")
-        html_file.write_text(
-            (
-                "<article class='md-content__inner'>"
-                "<h2 id='intro'>Tibetan (བོད་ ཡིག Bengali বাংলা)</h2>"
-                "</article>"
-            ),
+        source = Path("index.md")
+        source.write_text(
+            "## Tibetan (བོད་ ཡིག Bengali বাংলা) {#intro}\n",
             encoding="utf-8",
         )
 
         result = runner.invoke(
             app,
             [
-                str(html_file),
+                str(source),
                 "--base-level",
                 "0",
                 "--template",
@@ -153,16 +144,16 @@ def test_fonts_info_flag_displays_script_table() -> None:
 def test_template_alignment_defaults_to_section() -> None:
     runner = CliRunner()
     with runner.isolated_filesystem():
-        html_file = Path("index.html")
-        html_file.write_text(
-            "<article class='md-content__inner'><h2 id='intro'>Introduction</h2></article>",
+        source = Path("index.md")
+        source.write_text(
+            "## Introduction {#intro}\n",
             encoding="utf-8",
         )
 
         result = runner.invoke(
             app,
             [
-                str(html_file),
+                str(source),
                 "--template",
                 "article",
                 "--output",
@@ -183,16 +174,16 @@ def test_template_alignment_defaults_to_section() -> None:
 def test_strip_heading_option() -> None:
     runner = CliRunner()
     with runner.isolated_filesystem():
-        html_file = Path("index.html")
-        html_file.write_text(
-            "<article class='md-content__inner'><h1>Main</h1><h2 id='body'>Body</h2></article>",
+        source = Path("index.md")
+        source.write_text(
+            "# Main\n\n## Body {#body}\n",
             encoding="utf-8",
         )
 
         result = runner.invoke(
             app,
             [
-                str(html_file),
+                str(source),
                 "--strip-heading",
             ],
         )
@@ -205,16 +196,16 @@ def test_strip_heading_option() -> None:
 def test_copy_assets_disabled() -> None:
     runner = CliRunner()
     with runner.isolated_filesystem():
-        html_file = Path("index.html")
-        html_file.write_text(
-            "<article class='md-content__inner'><img src='logo.png' alt='Logo'></article>",
+        source = Path("index.md")
+        source.write_text(
+            "![Logo](logo.png)\n",
             encoding="utf-8",
         )
 
         result = runner.invoke(
             app,
             [
-                str(html_file),
+                str(source),
                 "--no-copy-assets",
             ],
         )
@@ -746,9 +737,9 @@ def test_multi_document_template_generates_inputs(tmp_path: Path) -> None:
 
 def test_convert_template_outputs_summary(tmp_path: Path) -> None:
     runner = CliRunner()
-    html_file = tmp_path / "index.html"
-    html_file.write_text(
-        "<article class='md-content__inner'><h2>Intro</h2></article>",
+    source = tmp_path / "index.md"
+    source.write_text(
+        "## Intro\n",
         encoding="utf-8",
     )
 
@@ -758,7 +749,7 @@ def test_convert_template_outputs_summary(tmp_path: Path) -> None:
     result = runner.invoke(
         app,
         [
-            str(html_file),
+            str(source),
             "--template",
             str(template_dir),
             "--output-dir",
@@ -773,9 +764,9 @@ def test_convert_template_outputs_summary(tmp_path: Path) -> None:
 
 def test_convert_template_outputs_debug_ir(tmp_path: Path) -> None:
     runner = CliRunner()
-    html_file = tmp_path / "index.html"
-    html_file.write_text(
-        "<article class='md-content__inner'><h2>Intro</h2></article>",
+    source = tmp_path / "index.md"
+    source.write_text(
+        "## Intro\n",
         encoding="utf-8",
     )
 
@@ -785,7 +776,7 @@ def test_convert_template_outputs_debug_ir(tmp_path: Path) -> None:
     result = runner.invoke(
         app,
         [
-            str(html_file),
+            str(source),
             "--template",
             str(template_dir),
             "--output-dir",
@@ -895,9 +886,9 @@ def test_convert_verbose_template_reports_overrides(tmp_path: Path) -> None:
 
 def test_build_without_template_defaults_to_article(tmp_path: Path, monkeypatch: Any) -> None:
     runner = CliRunner()
-    html_file = tmp_path / "index.html"
-    html_file.write_text(
-        "<article class='md-content__inner'><h2>Title</h2></article>",
+    source = tmp_path / "index.md"
+    source.write_text(
+        "## Title\n",
         encoding="utf-8",
     )
 
@@ -925,7 +916,7 @@ def test_build_without_template_defaults_to_article(tmp_path: Path, monkeypatch:
     result = runner.invoke(
         app,
         [
-            str(html_file),
+            str(source),
             "--output-dir",
             str(tmp_path / "output"),
             "--build",
@@ -938,9 +929,9 @@ def test_build_without_template_defaults_to_article(tmp_path: Path, monkeypatch:
 
 def test_build_defaults_to_rich_output(tmp_path: Path, monkeypatch: Any) -> None:
     runner = CliRunner()
-    html_file = tmp_path / "index.html"
-    html_file.write_text(
-        "<article class='md-content__inner'><p>Body</p></article>",
+    source = tmp_path / "index.md"
+    source.write_text(
+        "Body\n",
         encoding="utf-8",
     )
 
@@ -979,7 +970,7 @@ def test_build_defaults_to_rich_output(tmp_path: Path, monkeypatch: Any) -> None
     result = runner.invoke(
         app,
         [
-            str(html_file),
+            str(source),
             "--output-dir",
             str(output_dir),
             "--template",
@@ -1000,9 +991,9 @@ def test_build_defaults_to_rich_output(tmp_path: Path, monkeypatch: Any) -> None
 
 def test_system_flag_prefers_system_tectonic(tmp_path: Path, monkeypatch: Any) -> None:
     runner = CliRunner()
-    html_file = tmp_path / "index.html"
-    html_file.write_text(
-        "<article class='md-content__inner'><p>Body</p></article>",
+    source = tmp_path / "index.md"
+    source.write_text(
+        "Body\n",
         encoding="utf-8",
     )
 
@@ -1039,7 +1030,7 @@ def test_system_flag_prefers_system_tectonic(tmp_path: Path, monkeypatch: Any) -
     result = runner.invoke(
         app,
         [
-            str(html_file),
+            str(source),
             "--output-dir",
             str(output_dir),
             "--template",
@@ -1112,9 +1103,9 @@ def test_build_supports_multiple_documents(tmp_path: Path, monkeypatch: Any) -> 
 
 def test_build_invokes_latexmk(tmp_path: Path, monkeypatch: Any) -> None:
     runner = CliRunner()
-    html_file = tmp_path / "index.html"
-    html_file.write_text(
-        "<article class='md-content__inner'><p>Body</p></article>",
+    source = tmp_path / "index.md"
+    source.write_text(
+        "Body\n",
         encoding="utf-8",
     )
 
@@ -1146,7 +1137,7 @@ def test_build_invokes_latexmk(tmp_path: Path, monkeypatch: Any) -> None:
     result = runner.invoke(
         app,
         [
-            str(html_file),
+            str(source),
             "--output-dir",
             str(output_dir),
             "--template",
@@ -1176,16 +1167,8 @@ def test_build_invokes_latexmk(tmp_path: Path, monkeypatch: Any) -> None:
 
 def test_build_with_bibliography_forces_bibtex(tmp_path: Path, monkeypatch: Any) -> None:
     runner = CliRunner()
-    html_file = tmp_path / "index.html"
-    html_file.write_text(
-        (
-            "<article class='md-content__inner'>"
-            "<texsmith-missing-footnote data-footnote-id='Ref'>"
-            "</texsmith-missing-footnote>"
-            "</article>"
-        ),
-        encoding="utf-8",
-    )
+    source = tmp_path / "index.md"
+    source.write_text("Body @Ref\n", encoding="utf-8")
 
     bib_file = tmp_path / "refs.bib"
     bib_file.write_text(
@@ -1221,7 +1204,7 @@ def test_build_with_bibliography_forces_bibtex(tmp_path: Path, monkeypatch: Any)
     result = runner.invoke(
         app,
         [
-            str(html_file),
+            str(source),
             str(bib_file),
             "--output-dir",
             str(output_dir),
@@ -1242,9 +1225,9 @@ def test_build_with_bibliography_forces_bibtex(tmp_path: Path, monkeypatch: Any)
 
 def test_build_respects_shell_escape(tmp_path: Path, monkeypatch: Any) -> None:
     runner = CliRunner()
-    html_file = tmp_path / "index.html"
-    html_file.write_text(
-        "<article class='md-content__inner'><p>Body</p></article>",
+    source = tmp_path / "index.md"
+    source.write_text(
+        "Body\n",
         encoding="utf-8",
     )
 
@@ -1276,7 +1259,7 @@ def test_build_respects_shell_escape(tmp_path: Path, monkeypatch: Any) -> None:
     result = runner.invoke(
         app,
         [
-            str(html_file),
+            str(source),
             "--output-dir",
             str(output_dir),
             "--template",
@@ -1297,9 +1280,9 @@ def test_build_respects_shell_escape(tmp_path: Path, monkeypatch: Any) -> None:
 
 def test_build_failure_reports_summary(tmp_path: Path, monkeypatch: Any) -> None:
     runner = CliRunner()
-    html_file = tmp_path / "index.html"
-    html_file.write_text(
-        "<article class='md-content__inner'><p>Body</p></article>",
+    source = tmp_path / "index.md"
+    source.write_text(
+        "Body\n",
         encoding="utf-8",
     )
 
@@ -1335,7 +1318,7 @@ def test_build_failure_reports_summary(tmp_path: Path, monkeypatch: Any) -> None
     result = runner.invoke(
         app,
         [
-            str(html_file),
+            str(source),
             "--output-dir",
             str(output_dir),
             "--template",

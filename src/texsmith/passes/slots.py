@@ -1,7 +1,6 @@
 """The ``slots`` pass: split the block list into template slot bodies.
 
-Replaces ``extract_slot_fragments`` (bs4) on the IR path
-(``python-ir-and-passes.md`` §4, decision X11). Selector grammar kept from
+``python-ir-and-passes.md`` §4, decision X11. Selector grammar from
 ``parse_slot_mapping``: ``#id`` matches ``Header.attrs.id``, bare text
 matches the trimmed ``plain_text`` of a header (an id match is tried first,
 as before), ``@document`` / ``*`` take the whole document. Anything else
@@ -10,7 +9,7 @@ as before), ``@document`` / ``*`` take the whole document. Anything else
 Only **top-level** headers are candidates; a match inside a container emits
 ``slot-nested-heading``.
 
-Algorithm, mirroring the bs4 version: wildcard slots take the whole block
+Algorithm: wildcard slots take the whole block
 list (and the default slot then receives nothing); each requested slot, in
 request order, claims the first unclaimed top-level header by id then by
 text (none → ``slot-missing``); a section is the header plus the following

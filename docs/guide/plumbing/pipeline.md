@@ -1,8 +1,8 @@
 # How does TeXSmith work?
 
-TeXSmith ingests **Markdown** (`.md`), **HTML** (`.html`), **YAML** (`.yaml`),
-and **BibTeX** (`.bib`), then runs them through a conversion pipeline to produce
-LaTeX, Typst, or a finished PDF.
+TeXSmith ingests **Markdown** (`.md`), **YAML** (`.yaml`) and **BibTeX**
+(`.bib`), then runs them through a conversion pipeline to produce LaTeX, Typst,
+or a finished PDF.
 
 Templates define the layout and expose slots that get filled with content from
 your sources. The template also relies on **fragments** — extra layers that add
@@ -45,7 +45,7 @@ What lives where:
 ## Internal pipeline
 
 1. **Collect and classify inputs.**
-   The CLI and `ConversionService` accept Markdown/HTML documents, optional
+   The CLI and `ConversionService` accept Markdown documents, optional
    front matter YAML, and bibliography files. `split_inputs` peels off
    `.bib`/`.bibtex`, treats a lone YAML file as the only document when needed,
    and normalises any provided front matter. When documents share front matter,
@@ -59,8 +59,7 @@ What lives where:
    that schema, so the Python side never hand-writes the node catalogue. Parse
    diagnostics — including the deprecation warnings of
    [Migrating to TMark](../migration.md) — land in the render's
-   `DiagnosticSink`. An `.html` input goes through `texsmith.readers.html`
-   instead and joins the same IR at this point.
+   `DiagnosticSink`.
 
 3. **Run the `pre` passes.**
    A pass is a pure function `(Document, PassContext) -> Document` over the

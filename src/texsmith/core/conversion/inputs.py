@@ -5,11 +5,8 @@ from __future__ import annotations
 from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass, field
 from datetime import date, datetime
-from enum import Enum
 import re
 from typing import Any
-
-from bs4 import BeautifulSoup, FeatureNotFound
 
 
 DOCUMENT_SELECTOR_SENTINEL = "@document"
@@ -17,13 +14,6 @@ DOCUMENT_SELECTOR_SENTINEL = "@document"
 
 class UnsupportedInputError(Exception):
     """Raised when a CLI input argument cannot be processed."""
-
-
-class InputKind(Enum):
-    """Supported input modalities handled by the conversion pipeline."""
-
-    MARKDOWN = "markdown"
-    HTML = "html"
 
 
 class InlineBibliographyValidationError(ValueError):
@@ -442,27 +432,12 @@ def _validate_day(key: str, value: str) -> None:
         )
 
 
-def extract_content(html: str, selector: str) -> str:
-    """Extract and return the inner HTML for the first element matching selector."""
-    try:
-        soup = BeautifulSoup(html, "lxml")
-    except FeatureNotFound:
-        soup = BeautifulSoup(html, "html.parser")
-
-    element = soup.select_one(selector)
-    if element is None:
-        raise ValueError(f"Unable to locate content using selector '{selector}'.")
-    return element.decode_contents()
-
-
 __all__ = [
     "DOCUMENT_SELECTOR_SENTINEL",
     "InlineBibliographyEntry",
     "InlineBibliographyValidationError",
-    "InputKind",
     "UnsupportedInputError",
     "coerce_slot_selector",
-    "extract_content",
     "extract_front_matter_bibliography",
     "extract_front_matter_slots",
     "parse_slot_mapping",

@@ -13,13 +13,12 @@ Implementation Rationale
   avoid repeated parsing.
 : A dedicated abstraction makes it easy to inspect or mutate front matter in
   higher layers while keeping a single document shape throughout the conversion engine.
-: Two readers feed the same shape
+: One reader feeds the shape
   (``specs/migration/python-ir-and-passes.md`` §2): ``from_markdown`` parses a
-  Markdown source with ``tmark.parse`` and ``from_html`` lowers an HTML page
-  with the ``HtmlReader`` — both store the generated IR (:attr:`Document.ir`),
-  the build's :class:`FileTable`, the reader diagnostics and, once the passes
-  ran, the per-slot bodies, and render through the tmark writers. The
-  ``front_matter`` mapping is the plain YAML view for both, so the template
+  Markdown source with ``tmark.parse`` and stores the generated IR
+  (:attr:`Document.ir`), the build's :class:`FileTable`, the reader diagnostics
+  and, once the passes ran, the per-slot bodies, and renders through the tmark
+  writers. The ``front_matter`` mapping is the plain YAML view, so the template
   machinery does not change.
 
 Usage Example
@@ -50,12 +49,10 @@ from texsmith.diagnostics import Diagnostic, FileTable
 from texsmith.ir import model as irm
 from texsmith.ir.walk import plain_text
 
-from .conversion.debug import ConversionError, debug_enabled
+from .conversion.debug import ConversionError
 from .conversion.inputs import (
     DOCUMENT_SELECTOR_SENTINEL,
-    InputKind,
     SlotOptions,
-    extract_content,
     extract_front_matter_slots,
 )
 from .diagnostics import DiagnosticEmitter, NullEmitter
@@ -223,8 +220,6 @@ class Document:
     """Renderable document used by the high-level API."""
 
     source_path: Path
-    kind: InputKind
-    _html: str
     _front_matter: Mapping[str, Any]
     base_level: int = 0
     title_strategy: TitleStrategy = TitleStrategy.KEEP
@@ -237,9 +232,6 @@ class Document:
     slot_requests: dict[str, str] = field(default_factory=dict)
     language: str | None = None
     bibliography: dict[str, Any] = field(default_factory=dict)
-    #: Which reader produced :attr:`ir`: ``"tmark"`` (``tmark.parse`` on a
-    #: Markdown source) or ``"html"`` (the ``HtmlReader`` on an HTML page).
-    reader: str = "tmark"
     #: The IR of the source (``ir.file`` is its :attr:`files` id).
     ir: irm.Document | None = None
     #: ``FileId -> SourceFile``; id 0 is the source, includes and loaded files follow.
@@ -369,100 +361,14 @@ class Document:
         front_numbered = _front_matter_numbered(front_matter)
         document = cls(
             source_path=path,
-            kind=InputKind.MARKDOWN,
-            _html="",
             _front_matter=front_matter,
             base_level=resolved_base_level,
             title_strategy=strategy,
             numbered=numbered if front_numbered is None else front_numbered,
             suppress_title_metadata=suppress_title,
-            reader="tmark",
             ir=ir_document,
             files=files,
             diagnostics=list(diagnostics),
-        )
-        document._initialise_slots_from_front_matter()
-        return document
-
-    @classmethod
-    def from_html(
-        cls,
-        path: Path,
-        *,
-        selector: str = "article.md-content__inner",
-        promote_title: bool = False,
-        strip_heading: bool = False,
-        suppress_title: bool = False,
-        base_level: int | str = 0,
-        title_strategy: TitleStrategy | None = None,
-        numbered: bool = True,
-        full_document: bool = False,
-        emitter: DiagnosticEmitter | None = None,
-    ) -> Document:
-        """Create a document from an HTML file, extracting only the renderable region.
-
-        The fragment is lowered by the :class:`~texsmith.readers.html.HtmlReader`
-        into the generated IR (:attr:`ir`); the document then takes the tmark
-        writer path like a ``reader="tmark"`` Markdown source. The file enters
-        the build's :class:`FileTable` with an empty text (no source spans).
-        """
-        from ..readers.html import HtmlReader
-
-        active_emitter = emitter or NullEmitter()
-
-        try:
-            payload = path.read_text(encoding="utf-8")
-        except OSError as exc:
-            message = f"Failed to read HTML document '{path}': {exc}"
-            active_emitter.error(message, exc)
-            raise ConversionError(message) from exc
-
-        html = payload
-        if not full_document:
-            try:
-                html = extract_content(payload, selector)
-            except ValueError as exc:
-                if debug_enabled(active_emitter):
-                    message = (
-                        f"CSS selector '{selector}' was not found in '{path.name}'. "
-                        "Falling back to the full document."
-                    )
-                    active_emitter.warning(message, exc)
-
-        try:
-            resolved_base_level = coerce_base_level(base_level, allow_none=False)
-        except Exception as exc:  # pragma: no cover - defensive
-            message = f"Invalid base level '{base_level}': {exc}"
-            active_emitter.error(message, exc if isinstance(exc, Exception) else None)
-            raise ConversionError(message) from (
-                exc if isinstance(exc, Exception) else ConversionError(message)
-            )
-
-        strategy = _resolve_title_strategy(
-            explicit=title_strategy,
-            promote_title=promote_title,
-            strip_heading=strip_heading,
-            has_declared_title=False,
-        )
-        files = getattr(active_emitter, "files", None)
-        if not isinstance(files, FileTable):
-            files = FileTable()
-        file_id = files.add(path, "")
-        reader = HtmlReader(diagnostics=active_emitter)
-        ir_document = reader.read(html, file=file_id)
-        document = cls(
-            source_path=path,
-            kind=InputKind.HTML,
-            _html=html,
-            _front_matter={},
-            base_level=resolved_base_level,
-            title_strategy=strategy,
-            numbered=numbered,
-            suppress_title_metadata=suppress_title,
-            reader="html",
-            ir=ir_document,
-            files=files,
-            diagnostics=list(reader.diagnostics),
         )
         document._initialise_slots_from_front_matter()
         return document
@@ -471,8 +377,6 @@ class Document:
         """Return a deep copy of the document to isolate later slot or metadata changes."""
         return Document(
             source_path=self.source_path,
-            kind=self.kind,
-            _html=self._html,
             _front_matter=copy.deepcopy(self._front_matter),
             base_level=self.base_level,
             title_strategy=self.title_strategy,
@@ -485,7 +389,6 @@ class Document:
             slot_requests={},
             language=None,
             bibliography={},
-            reader=self.reader,
             ir=self.ir,
             files=self.files,
             diagnostics=list(self.diagnostics),
@@ -535,15 +438,6 @@ class Document:
         if self.ir is None:
             return []
         return [block for block in self.ir.blocks if isinstance(block, irm.Header)]
-
-    @property
-    def html(self) -> str:
-        """Return the intermediate HTML content."""
-        return self._html
-
-    def set_html(self, html: str) -> None:
-        """Replace the stored HTML payload."""
-        self._html = html
 
     @property
     def front_matter(self) -> Mapping[str, Any]:

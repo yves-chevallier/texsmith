@@ -151,17 +151,16 @@ def test_prepare_documents_merged_config_counts_as_single_press_source(tmp_path:
     assert front_matter.get("press", {}).get("language") == "fr"
 
 
-def test_prepare_documents_handles_markdown_and_html(tmp_path: Path) -> None:
+def test_strip_heading_first_document_only_drops_the_first_title(tmp_path: Path) -> None:
     service = ConversionService()
-    markdown = tmp_path / "chapter.md"
-    markdown.write_text("# Title\nBody", encoding="utf-8")
-    html = tmp_path / "chapter.html"
-    html.write_text("<article class='md-content__inner'>Body</article>", encoding="utf-8")
+    first = tmp_path / "chapter.md"
+    first.write_text("# Title\nBody", encoding="utf-8")
+    second = tmp_path / "appendix.md"
+    second.write_text("# Appendix\nBody", encoding="utf-8")
 
     request = ConversionRequest(
-        documents=[markdown, html],
+        documents=[first, second],
         bibliography_files=[],
-        selector="article.md-content__inner",
         base_level=0,
         strip_heading_first_document=True,
         promote_title=False,
@@ -171,9 +170,7 @@ def test_prepare_documents_handles_markdown_and_html(tmp_path: Path) -> None:
     prepared = service.prepare_documents(request)
 
     assert len(prepared.documents) == 2
-    assert prepared.documents[0].kind.name == "MARKDOWN"
     assert prepared.documents[0].title_strategy is TitleStrategy.DROP
-    assert prepared.documents[1].kind.name == "HTML"
     assert prepared.documents[1].title_strategy is TitleStrategy.KEEP
 
 

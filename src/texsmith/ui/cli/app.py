@@ -22,7 +22,7 @@ class HelpOnEmptyCommand(TyperCommand):
 
 
 app = typer.Typer(
-    help="Convert MkDocs HTML fragments into LaTeX.",
+    help="Convert Markdown into LaTeX, Typst or PDF.",
     context_settings={"help_option_names": ["--help"]},
 )
 

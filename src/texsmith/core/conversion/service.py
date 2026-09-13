@@ -38,7 +38,6 @@ from ..templates.session import TemplateRenderResult, TemplateSession, get_templ
 from .core import ConversionBundle, convert_documents
 from .debug import ConversionError, ensure_emitter
 from .inputs import (
-    InputKind,
     UnsupportedInputError,
     extract_front_matter_slots,
 )
@@ -49,7 +48,7 @@ __all__ = [
     "ConversionResponse",
     "ConversionService",
     "SplitInputsResult",
-    "classify_input_source",
+    "validate_input_source",
 ]
 
 
@@ -159,7 +158,7 @@ class ConversionService:
         shared_front_matter = _normalise_front_matter(request.front_matter)
 
         for index, path in enumerate(request.documents):
-            input_kind = classify_input_source(path)
+            validate_input_source(path)
             extract_title = request.promote_title and index == 0 and not request.suppress_title
             effective_strip = request.strip_heading_all or (
                 request.strip_heading_first_document and index == 0
@@ -173,30 +172,16 @@ class ConversionService:
             else:
                 strategy = None
 
-            if input_kind is InputKind.MARKDOWN:
-                document = Document.from_markdown(
-                    path,
-                    base_level=request.base_level,
-                    promote_title=extract_title,
-                    strip_heading=effective_strip,
-                    suppress_title=request.suppress_title,
-                    title_strategy=strategy,
-                    numbered=request.numbered,
-                    emitter=emitter,
-                )
-            else:
-                document = Document.from_html(
-                    path,
-                    selector=request.selector,
-                    base_level=request.base_level,
-                    promote_title=extract_title,
-                    strip_heading=effective_strip,
-                    suppress_title=request.suppress_title,
-                    title_strategy=strategy,
-                    numbered=request.numbered,
-                    full_document=request.full_document,
-                    emitter=emitter,
-                )
+            document = Document.from_markdown(
+                path,
+                base_level=request.base_level,
+                promote_title=extract_title,
+                strip_heading=effective_strip,
+                suppress_title=request.suppress_title,
+                title_strategy=strategy,
+                numbered=request.numbered,
+                emitter=emitter,
+            )
 
             documents.append(document)
             mapping[path] = document
@@ -544,20 +529,17 @@ def _collect_press_sources(
     return sources
 
 
-def classify_input_source(path: Path) -> InputKind:
-    """Determine the document kind based on filename suffix, rejecting unsupported types early."""
+def validate_input_source(path: Path) -> None:
+    """Reject an input whose suffix names something TeXSmith does not read."""
     suffix = path.suffix.lower()
     if suffix in {".md", ".markdown"}:
-        return InputKind.MARKDOWN
+        return
     if suffix in {".yaml", ".yml"}:
         if path.name.lower() in {"mkdocs.yml", "mkdocs.yaml"}:
             raise UnsupportedInputError("MkDocs configuration files are not supported.")
-        return InputKind.MARKDOWN
-    if suffix in {".html", ".htm"}:
-        return InputKind.HTML
+        return
     raise UnsupportedInputError(
-        f"Unsupported input file type '{suffix or '<none>'}'. "
-        "Provide a Markdown source (.md) or HTML document (.html)."
+        f"Unsupported input file type '{suffix or '<none>'}'. Provide a Markdown source (.md)."
     )
 
 

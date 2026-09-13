@@ -38,8 +38,8 @@ def _change_to_project_root(monkeypatch: pytest.MonkeyPatch) -> None:
 def test_render_template_writes_file() -> None:
     with TemporaryDirectory() as temp_dir:
         temp_path = Path(temp_dir)
-        source = temp_path / "sample.html"
-        source.write_text("<h1>Titre</h1>", encoding="utf-8")
+        source = temp_path / "sample.md"
+        source.write_text("# Titre\n", encoding="utf-8")
         output_dir = temp_path / "build"
 
         assert render is not None  # for type checkers

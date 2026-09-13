@@ -13,7 +13,7 @@
   against the site map, lowers it with ``tmark.lower_web`` and stores the
   source for the PDF;
 * ``on_page_content`` collects the ``ts-index`` tags for the search index;
-* ``on_post_page`` captures the rendered HTML (the ``press.reader: html``
+* ``on_post_page`` captures the rendered HTML (``save_html``) on the
   fallback) and rewrites the snippet URLs;
 * ``on_post_build`` builds the books from the stored sources through the
   tmark reader path and injects the tags into the lunr index.
@@ -205,7 +205,6 @@ class LatexPlugin(BasePlugin):
         ("enabled", config_options.Type(bool, default=True)),
         ("build_dir", config_options.Type(str, default="press")),
         ("template", config_options.Type(str, default="book")),
-        ("parser", config_options.Type(str, default="lxml")),
         ("copy_assets", config_options.Type(bool, default=True)),
         ("clean_assets", config_options.Type(bool, default=True)),
         ("save_html", config_options.Type(bool, default=False)),
@@ -675,7 +674,6 @@ class LatexPlugin(BasePlugin):
             for entry in runtime.entries:
                 entry.level += level_shift
 
-        parser_backend = self.config.get("parser") or "lxml"
         copy_assets = bool(self.config.get("copy_assets", True))
 
         bibliography_files = [
@@ -776,7 +774,6 @@ class LatexPlugin(BasePlugin):
         request = ConversionRequest(
             bibliography_files=list(bibliography_files),
             template=template_runtime.name,
-            parser=parser_backend,
             copy_assets=copy_assets,
             language=runtime_language,
             default_include_paths=list(self._snippet_base_paths),
@@ -832,7 +829,6 @@ class LatexPlugin(BasePlugin):
             document = self._page_document(
                 entry,
                 abs_src=abs_src,
-                html=html,
                 base_level=effective_level
                 - template_slot_levels.get(target_slot, template_base),
                 output_root=output_root,
@@ -1027,7 +1023,6 @@ class LatexPlugin(BasePlugin):
         entry: NavEntry,
         *,
         abs_src: Path,
-        html: str | None,
         base_level: int,
         output_root: Path,
         emitter: LoggingEmitter,
@@ -1037,8 +1032,7 @@ class LatexPlugin(BasePlugin):
         The source is the text MkDocs handed ``on_page_markdown`` (macros
         expanded), with the page metadata and the site declarations back in
         front of it, written under ``sources/`` of the book so the exact input
-        of the PDF is inspectable. A page with ``press.reader: html`` in its
-        front matter is read from its rendered ``page.content`` instead.
+        of the PDF is inspectable.
         """
         assert entry.src_uri is not None
         record = self._site.record(entry.src_uri) if self._site is not None else None
@@ -1052,26 +1046,6 @@ class LatexPlugin(BasePlugin):
         declared_numbered = meta.get("numbered")
         if isinstance(declared_numbered, bool):
             numbered = declared_numbered
-
-        if _press_reader(meta) == "html":
-            if html is None:
-                log.warning(
-                    "Skipping page '%s': 'press.reader: html' "
-                    "but no rendered HTML was captured.",
-                    entry.title,
-                )
-                return None
-            snapshot = self._persist_html_snapshot(output_root, entry.src_uri, html)
-            document = Document.from_html(
-                snapshot,
-                full_document=True,
-                base_level=base_level,
-                title_strategy=title_strategy,
-                numbered=numbered,
-                emitter=emitter,
-            )
-            # Relative assets resolve against the page, not the snapshot.
-            return document.evolve(source_path=abs_src)
 
         if record is None or not record.lowered:
             source_path = abs_src
@@ -1704,19 +1678,6 @@ def _nav_heading(title: str, *, level: int, numbered: bool, lang: str | None) ->
         backend="latex", language=lang, base_level=level, numbered=numbered
     )
     return str(tmark.write(payload, "latex", options).get("text") or "")
-
-
-def _press_reader(meta: Mapping[str, Any]) -> str | None:
-    """``press.reader`` of a page's front matter (``html``: the HtmlReader fallback)."""
-    press = meta.get("press")
-    if isinstance(press, Mapping):
-        reader = press.get("reader")
-        if isinstance(reader, str) and reader.strip():
-            return reader.strip().lower()
-    reader = meta.get("press.reader")
-    if isinstance(reader, str) and reader.strip():
-        return reader.strip().lower()
-    return None
 
 
 def _stylesheet() -> str:

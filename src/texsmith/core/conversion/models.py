@@ -39,8 +39,6 @@ class ConversionRequest:
     #: Searched last, after the document's ``press.include_paths``.
     default_include_paths: Sequence[Path] = field(default_factory=tuple)
 
-    selector: str = "article.md-content__inner"
-    full_document: bool = False
     base_level: int = 0
     strip_heading_all: bool = False
     strip_heading_first_document: bool = False
@@ -55,7 +53,6 @@ class ConversionRequest:
     enable_fragments: Sequence[str] = field(default_factory=tuple)
     disable_fragments: Sequence[str] = field(default_factory=tuple)
 
-    parser: str | None = None
     copy_assets: bool = True
     convert_assets: bool = False
     hash_assets: bool = False

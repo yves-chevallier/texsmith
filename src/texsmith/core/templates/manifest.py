@@ -15,7 +15,6 @@ try:  # Python >=3.11
     import tomllib  # type: ignore[attr-defined]
 except ModuleNotFoundError:  # Python 3.10
     import tomli as tomllib
-from bs4 import BeautifulSoup, NavigableString, Tag
 from pydantic import (
     BaseModel,
     ConfigDict,

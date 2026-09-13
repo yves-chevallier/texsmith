@@ -4,8 +4,6 @@ from texsmith.adapters.transformers.strategies import (
     DrawioToPdfStrategy,
     MermaidToPdfStrategy,
 )
-from texsmith.ir import model
-from texsmith.ir.walk import walk
 from texsmith.writers.latex import assets as _assets
 
 
@@ -165,16 +163,3 @@ def test_drawio_crop_attribute_flows_from_the_image_to_the_converter(tmp_path, m
     assert seen[2:] == [False, True]
 
     assert _assets._asset_key(src, None) != _assets._asset_key(src, {"crop": "false"})
-
-
-def test_image_reader_keeps_the_crop_attribute():
-    from texsmith.readers.html import HtmlReader
-
-    reader = HtmlReader()
-    doc = reader.read('<p><img src="d.drawio" alt="x" crop="false" width="60%"></p>')
-    image = next(node for node in walk(doc) if isinstance(node, model.Image))
-    assert dict(image.attrs.kv) == {"crop": "false", "width": "60%"}
-
-    plain = HtmlReader().read('<p><img src="a.png" alt="x"></p>')
-    bare = next(node for node in walk(plain) if isinstance(node, model.Image))
-    assert dict(bare.attrs.kv) == {}

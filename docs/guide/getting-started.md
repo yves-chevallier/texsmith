@@ -101,9 +101,6 @@ By default TeXSmith writes LaTeX to stdout. Pipe it or direct it into a folder. 
     Some \textbf{bold} text.
     ```
 
-    An `.html` input is read by the HTML reader (`--selector`, `--parser`,
-    `--full-document` steer it) and joins the same IR as a Markdown source.
-
 ## Generate a PDF
 
 Want the full PDF? Start with our playful [booby](https://en.wikipedia.org/wiki/Booby) example or create your own `booby.md`:
@@ -230,9 +227,7 @@ texsmith build/site/guides/overview/index.html \
 
 !!! tip
 
-    The default selector (`article.md-content__inner`) already matches MkDocs Material content; skip `--selector` unless you heavily customise templates.
-
-    When your site spans multiple documents, repeat the command per page and stitch them together with template slots (for example, `--slot mainmatter:build/site/manual/index.html`).
+    When your site spans multiple documents, repeat the command per page and stitch them together with template slots (for example, `--slot mainmatter:docs/manual/index.md`).
 
     For live previews, point TeXSmith at the temporary site directory that `mkdocs serve` prints on startup.
 

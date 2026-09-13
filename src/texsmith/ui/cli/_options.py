@@ -32,24 +32,6 @@ InputPathArgument = Annotated[
     ),
 ]
 
-SelectorOption = Annotated[
-    str,
-    typer.Option(
-        "--selector",
-        help="CSS selector to extract the MkDocs article content.",
-        rich_help_panel=INPUTS_PANEL,
-    ),
-]
-
-FullDocumentOption = Annotated[
-    bool,
-    typer.Option(
-        "--full-document",
-        help="Disable article extraction and render the entire HTML file.",
-        rich_help_panel=INPUTS_PANEL,
-    ),
-]
-
 BaseLevelOption = Annotated[
     str,
     typer.Option(
@@ -96,15 +78,6 @@ IncludePathOption = Annotated[
             "against the including file (can be repeated, searched in order)."
         ),
         show_default=False,
-        rich_help_panel=INPUTS_PANEL,
-    ),
-]
-
-ParserOption = Annotated[
-    str | None,
-    typer.Option(
-        "--parser",
-        help='BeautifulSoup parser backend to use (defaults to "html.parser").',
         rich_help_panel=INPUTS_PANEL,
     ),
 ]
