@@ -25,13 +25,15 @@ from texsmith.adapters.latex.engines import (
     run_engine_command,
 )
 from texsmith.core.bibliography import BibliographyCollection
-from texsmith.core.coerce import coerce_bool
 from texsmith.core.conversion import ConversionRequest
 from texsmith.core.conversion.inputs import UnsupportedInputError
-from texsmith.core.conversion.pipeline import (
+from texsmith.core.conversion.policy import (
     DEPRECATED_LEVELS,
+    declared_template,
     demote_deprecated,
     deprecated_level,
+    numbered_setting,
+    strict_enabled,
 )
 from texsmith.core.conversion.resolution import NUMBERING_MODES, NUMBERING_OVERRIDE_KEY
 from texsmith.core.conversion.service import ConversionService
@@ -159,21 +161,6 @@ def _load_front_matter(path: Path) -> Mapping[str, Any] | None:
     except OSError:
         return None
     return metadata if isinstance(metadata, dict) else {}
-
-
-def _extract_press_template(metadata: Mapping[str, Any] | None) -> str | None:
-    """Extract the template identifier declared in front matter."""
-    if not isinstance(metadata, Mapping):
-        return None
-
-    payload = dict(metadata)
-    with contextlib.suppress(PressMetadataError):
-        normalise_press_metadata(payload)
-
-    template_value = payload.get("template")
-    if isinstance(template_value, str) and (candidate := template_value.strip()):
-        return candidate
-    return None
 
 
 def _format_path_for_event(path: Path) -> str:
@@ -324,18 +311,6 @@ class _RenderEmitter(CliEmitter):
         record = demote_deprecated(diagnostic, self.deprecated)
         if record is not None:
             super().diagnostic(record, cause)
-
-
-def _lookup_bool(mapping: Mapping[str, Any] | None, path: tuple[str, ...]) -> bool | None:
-    """Walk a mapping to resolve a boolean-like value."""
-    if not isinstance(mapping, Mapping):
-        return None
-    cursor: Any = mapping
-    for key in path:
-        if not isinstance(cursor, Mapping) or key not in cursor:
-            return None
-        cursor = cursor[key]
-    return coerce_bool(cursor)
 
 
 def render(
@@ -598,7 +573,6 @@ def render(
             "Provide a Markdown (.md) or HTML (.html) source document or pipe content via stdin."
         )
 
-    numbered = True
     copy_assets = not no_copy_assets
     primary_front_matter: Mapping[str, Any] | None = shared_front_matter
     first_document = document_paths[0] if document_paths else None
@@ -615,11 +589,7 @@ def render(
         except PressMetadataError as exc:
             raise typer.BadParameter(str(exc)) from exc
 
-    fm_numbered = _lookup_bool(fm_payload, ("numbered",))
-    if fm_numbered is not None:
-        numbered = fm_numbered
-    if _lookup_bool(primary_front_matter, ("press", "features", "strict")):
-        strict = True
+    strict = strict_enabled(primary_front_matter, strict)
     # The transition knob: ``--deprecated`` over ``press.diagnostics.deprecated``.
     deprecated = deprecated_level(primary_front_matter, deprecated)
 
@@ -630,7 +600,7 @@ def render(
         and template is None
         and primary_front_matter is not None
     ):
-        metadata_template = _extract_press_template(primary_front_matter)
+        metadata_template = declared_template(primary_front_matter)
         if metadata_template:
             template = metadata_template
 
@@ -662,9 +632,7 @@ def render(
     if numbering != "backend":
         # Read by both IR backends (``core.conversion.resolution.numbering_mode``).
         attribute_overrides[NUMBERING_OVERRIDE_KEY] = numbering
-    attr_numbered = _lookup_bool(attribute_overrides, ("numbered",))
-    if attr_numbered is not None:
-        numbered = attr_numbered
+    numbered = numbered_setting(fm_payload, attribute_overrides)
     if attribute_overrides:
         state.record_event("template_attributes", {"values": attribute_overrides})
 

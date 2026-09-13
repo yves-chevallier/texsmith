@@ -16,7 +16,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
 import copy
-from dataclasses import dataclass, field, replace
+from dataclasses import dataclass, field
 import os
 from pathlib import Path, PurePath
 from typing import TYPE_CHECKING, Any
@@ -24,7 +24,7 @@ from typing import TYPE_CHECKING, Any
 from texsmith.core.bibliography.collection import BibliographyCollection
 from texsmith.core.context import DocumentState
 from texsmith.core.fragments.activation import apply_requires
-from texsmith.diagnostics import Diagnostic, DiagnosticEmitter, DiagnosticSink, Severity
+from texsmith.diagnostics import Diagnostic, DiagnosticEmitter, DiagnosticSink
 from texsmith.fonts.fallback import merge_fallback_summaries
 from texsmith.fonts.scripts import merge_script_usage
 from texsmith.passes import IdAllocator, PassContext, SlotTemplate, build_pipeline, run_pipeline
@@ -53,70 +53,15 @@ if TYPE_CHECKING:  # pragma: no cover - typing only
 
 
 __all__ = [
-    "DEPRECATED_CODES",
-    "DEPRECATED_LEVELS",
     "IrRenderResult",
     "absorb_pass_bibliography",
     "apply_pass_values",
     "build_pass_context",
-    "demote_deprecated",
-    "deprecated_level",
     "include_search_path",
     "processed_lang",
     "render_ir_document",
     "slot_template_of",
 ]
-
-#: tmark's records for legacy spellings the ``tmark lint --fix`` rewrite removes.
-DEPRECATED_CODES: frozenset[str] = frozenset({"deprecated", "deprecated-frontmatter-key"})
-
-#: ``--deprecated`` / ``press.diagnostics.deprecated``: how those records are reported.
-DEPRECATED_LEVELS: tuple[str, ...] = ("warning", "info", "off")
-
-
-def deprecated_level(front_matter: Mapping[str, Any] | None, explicit: str | None = None) -> str:
-    """The level the deprecation records are reported at (``warning`` by default).
-
-    ``explicit`` is the CLI's ``--deprecated``; without it the front matter's
-    ``press.diagnostics.deprecated`` decides. (``press.features`` is a boolean
-    map in tmark, so the three-valued switch lives beside it.) An unknown
-    value is the default.
-    """
-    for candidate in (explicit, _lookup_deprecated(front_matter)):
-        if isinstance(candidate, str) and candidate.strip().lower() in DEPRECATED_LEVELS:
-            return candidate.strip().lower()
-    return "warning"
-
-
-def _lookup_deprecated(front_matter: Mapping[str, Any] | None) -> str | None:
-    if not isinstance(front_matter, Mapping):
-        return None
-    press = front_matter.get("press")
-    section = press.get("diagnostics") if isinstance(press, Mapping) else None
-    if section is None:
-        section = front_matter.get("diagnostics")
-    if not isinstance(section, Mapping):
-        return None
-    value = section.get("deprecated")
-    if isinstance(value, bool):
-        return "warning" if value else "off"
-    return value if isinstance(value, str) else None
-
-
-def demote_deprecated(record: Diagnostic, level: str) -> Diagnostic | None:
-    """``record`` as ``level`` reports it: unchanged, lowered to ``info`` or dropped (``None``).
-
-    Only the :data:`DEPRECATED_CODES` are touched; every other record passes
-    as is, whatever the level. Applied before the ``--strict`` check, so the
-    legacy spellings the examples still carry do not fail a strict run.
-    """
-    if record.code not in DEPRECATED_CODES or level == "warning":
-        return record
-    if level == "off":
-        return None
-    if record.severity <= Severity.INFO:
-        return record
-    return replace(record, severity=Severity.INFO)
 
 
 @dataclass(slots=True)
