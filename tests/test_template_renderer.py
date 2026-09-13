@@ -564,3 +564,31 @@ def test_two_documents_from_different_directories_render_together(tmp_path: Path
     assert result.main_tex_path.exists()
     rendered = result.main_tex_path.read_text(encoding="utf-8")
     assert "One" in rendered and "Two" in rendered
+
+
+def test_a_later_document_requirement_reaches_the_wrapper(tmp_path: Path) -> None:
+    """The batch's state is a running total, and the wrapper must see all of it.
+
+    This used to work by aliasing: every fragment carried the *same*
+    ``DocumentState`` object, written back field by field after each document,
+    because the renderer read the *first* fragment's. It now reads the last,
+    which is the one the accumulation produced.
+    """
+    plain = tmp_path / "plain.md"
+    plain.write_text("---\ntitle: Same\n---\n\n# Plain\n\nNo code here.\n", encoding="utf-8")
+    with_code = tmp_path / "code.md"
+    with_code.write_text(
+        "---\ntitle: Same\n---\n\n# Code\n\n```python\nprint('x')\n```\n", encoding="utf-8"
+    )
+
+    session = TemplateSession(runtime=load_template_runtime("article"))
+    for path in (plain, with_code):
+        document = Document.from_markdown(path)
+        document.prepare_for_conversion()
+        session.add_document(document)
+
+    result = session.render(tmp_path / "out")
+
+    # The second document is the only one that needs ``ts-code``.
+    assert "ts-code" in result.document_state.required_fragments
+    assert "ts-code" in result.main_tex_path.read_text(encoding="utf-8")

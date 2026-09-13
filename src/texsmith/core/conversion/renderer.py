@@ -267,11 +267,10 @@ class TemplateRenderer:
                     _merge_overrides(template_overrides, fragment_overrides)
 
             if fragment.document_state is not None:
-                if shared_state is None:
-                    shared_state = fragment.document_state
-                else:
-                    # Preserve the last state for other fields while merging script usage.
-                    pass
+                # Each fragment's state was built from the previous one, so
+                # the last fragment carries the whole batch. Font usage is the
+                # exception, set per document and therefore merged below.
+                shared_state = fragment.document_state
                 aggregated_script_usage = merge_script_usage(
                     aggregated_script_usage, getattr(fragment.document_state, "script_usage", [])
                 )

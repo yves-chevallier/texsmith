@@ -3,8 +3,6 @@
 from __future__ import annotations
 
 from collections.abc import Iterable, Mapping, Sequence
-import copy
-import dataclasses
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
@@ -155,14 +153,10 @@ def _render_document(
     # The resolution travels back onto the caller's document: the service
     # publishes its reference inventory from the labels tmark allocated.
     document.resolved = ir_result.document.resolved
+    # ``render_ir_document`` started this state from a copy of the previous
+    # document's and added what this one requires, so it is the running total
+    # of the batch. The renderer reads the last fragment's.
     document_state = ir_result.document_state
-    if initial_state is not None:
-        # A batch of linked fragments shares one state object: the template
-        # wrapper reads the first fragment's state, so what a later document
-        # requires (a ``ts-code`` body, an index, a citation) has to land on the
-        # very object the earlier fragments carry, not on a copy of it.
-        _copy_document_state(initial_state, document_state)
-        document_state = initial_state
     ir_assets = ir_result.assets
 
     default_content = slot_outputs.get(binding.default_slot)
@@ -213,12 +207,6 @@ def _render_document(
         context=context,
         assets_map=asset_map,
     )
-
-
-def _copy_document_state(target: DocumentState, source: DocumentState) -> None:
-    """Synchronise ``target`` in place with a freshly produced ``DocumentState``."""
-    for state_field in dataclasses.fields(DocumentState):
-        setattr(target, state_field.name, copy.deepcopy(getattr(source, state_field.name)))
 
 
 @dataclass(slots=True)
