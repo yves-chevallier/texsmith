@@ -295,7 +295,17 @@ converted document) beside `enable_fragments` / `disable_fragments` (turn a
 renamed for what it is: `embed_documents`, `RenderedDocument`,
 `ConversionBundle.documents`. The MkDocs option follows.
 
-**Still open:** `core/templates` (2 951) is untouched.
+**Done: the `press.frame` parser**, which the debts list assigned here — see
+above.
+
+**`core/templates` (2 951) is untouched, and this pass found no reason to
+touch it.** The one defect the memo pointed at there is trap 2's seven
+`_normalise_*`, and checking them confirms the trap rather than a bug: three
+(`babel_language`, `bcp47_language`, `margin_style`) are invoked by a bundled
+manifest, and the other four (`paper_option`, `orientation`, `callout_style`,
+`code_options`) are registered for template authors and documented in
+`docs/guide/templates/index.md`. None is dead. Restructuring 2 951 lines for
+size alone is churn; give the next pass a demonstrated defect first.
 
 ## Debts posed, deliberately not paid
 
@@ -307,8 +317,11 @@ renamed for what it is: `embed_documents`, `RenderedDocument`,
 - **`.ris`.** `snippet.py` collects it as a bibliography source and nothing
   under `core/bibliography` can parse it; it reaches pybtex and fails there.
   `core/sources.py` says so in a comment.
-- **`press.frame`.** The same parser is duplicated between `fragments/frame`
-  and `snippet.py`. Belongs to step 08.
+- ~~**`press.frame`.**~~ Paid in step 08. The copy in `snippet.py` is gone;
+  asking `FrameConfig` exposed that the grammar disagreed with itself —
+  `press.frame: dogear` was rejected by the error message that lists it,
+  while `{mode: dogear}` worked, because the two branches that read a mode
+  word each spelled `_MODE_WORDS` out again and differently.
 - **`to_template_fragments`.** A DTO translation that survives because
   `ConversionResult` and `TemplateFragment` genuinely carry different things.
 - **Typst without a template** builds no bibliography at all, where LaTeX
