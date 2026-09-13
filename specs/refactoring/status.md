@@ -123,18 +123,64 @@ tracing *those* is what found the snippet bug. Do not collapse the two sinks
 without first deciding whether `convert_documents` should still accept
 documents it did not parse (step 07's contract).
 
+## Step 05 · The CLI — **done**
+
+Branch `refactor/05-cli`, 5 commits. 1 282 tests, parity 196/54/0, ruff clean
+at every commit. `render()` 757 → 721 lines (body 582 → 546); `snippet.py`
+1 505 → 1 449.
+
+**The Typst short-circuit was a bug, not only duplication.**
+`render_typst_document` took four fields of the request as separate arguments
+and built a `ConversionRequest` out of them, so every other field reverted to
+its default and the context took a bare `GenerationStrategy()`. Six options
+were inert under `--format typst` — `--hash-assets`, `--convert-assets`,
+`--no-copy-assets`, `--manifest`, `--http-user-agent`, `--debug-ir` — and
+`--include-path` was worse than inert: the include failed and its text was
+lost, where LaTeX resolved it. **250 recorded renderings did not notice,
+because no corpus entry passes any of those flags.** The baseline is a strong
+ratchet for what it covers; that is its edge.
+
+**The three monkeypatch hooks, and the shadow behind them.**
+`commands/__init__.py` did `from .render import render`, which rebinds the
+package's `render` attribute from the *submodule* to the *function*: the
+dotted path meant one thing to `import` and another to `getattr`. The command
+then hung `shutil` and `run_engine_command` off the function object as a patch
+surface. `render.shutil` was dead — `render.py` calls `copy2` and `rmtree`,
+never `which`, and the eight tests patching `render_cmd.shutil.which` were
+patching the stdlib module, redundantly with the line below each of them.
+`build_pdf` already takes the runner as a parameter.
+
+**`snippet._compile_pdf` was a second copy of `adapters.latex.build.build_pdf`**
+that had drifted: no `if choice.backend == "tectonic"` guard around the
+binary acquisition, and a `getattr(render_result, "template_context", …)`
+probe for a field `TemplateRenderResult` does not have. Verified against the
+real engine, not the mocks: the `snippet` and `docs/examples/snippets` entries
+build through Tectonic in both backends and render identically.
+
+**The flags now argue in one place.** `core/conversion/policy.py` holds the
+four settings a flag and the front matter both claim (`strict_enabled`,
+`declared_template`, `numbered_setting`, `deprecated_level`), each stating its
+own precedence; the `--deprecated` feature moved there whole from
+`conversion/pipeline.py`, which hosted it and used none of it.
+`ui/cli/plan.py` holds the reconciliation between the flags themselves —
+pure, so it is testable without invoking the command. 43 tests where there
+were none.
+
+Two accidental semantics it exposed, both **pinned by a test and left alone**:
+
+- `--attribute x=1` is refused without a template, and the check runs before
+  `-o out.pdf` can imply a build and a build can imply `article` — so
+  `--attribute x=1 -o out.pdf` is an error and `--attribute x=1 --build` is
+  not.
+- `--build` names `article` for **either** backend; a build *inferred* from
+  `-o out.pdf` names one only for LaTeX. The command has two "default the
+  template" lines and only the second carries the `output_format != "typst"`
+  guard. Unifying it changes what `--format typst -o out.pdf` renders, so it
+  needs its own change and its own test.
+
 ## What remains
 
-Four steps, none started.
-
-**05 · The CLI.** `render()` is **764 lines and 46 parameters**. Extract a
-`RequestBuilder` (about 180 lines of business logic leave the CLI, and the
-eight cross-mutations of flags go with them). Close the Typst short-circuit —
-59 lines rebuilding arguments the request already carries. Make `snippet.py`
-(1 489) call `ConversionService.build_pdf`: 44 of its 65 lines are identical
-after de-indenting. Delete the three monkeypatch hooks — one is entirely
-dead, one patches globally while looking local, one works only because a
-re-export shadows a submodule; `service.py:297` already injects properly.
+Three steps, none started.
 
 **06 · The pure passes into tmark** — *two repositories, ADR each.*
 `tmark-lsp/src/outline.rs:101-135` already partitions a block list by heading
@@ -189,6 +235,16 @@ validates.
   twenty converted in step 03 follow the docstring. Unifying the rest is a
   pass over ~25 strings with no structural content; it changes no baseline
   (diagnostics are stderr) so only the tests gate it.
+- **Four API pages render as empty documents.** `docs/api/cli`,
+  `bibliography`, `transformers` and (before it was deleted) `markdown` have
+  nothing in their body but `::: module` mkdocstrings directives, which TMark
+  parses as a run of empty containers: the PDF export of those pages is a
+  title and nothing else. The site renders them correctly — only the export
+  is affected. Either the writers should keep an unknown container's source,
+  or those pages need prose.
+- **The two "default the template" lines of the render command.** See step 05:
+  `--build` names `article` for either backend, a build inferred from
+  `-o out.pdf` only for LaTeX. Pinned by a test, not unified.
 - **The event channel rides on the diagnostics emitter.** `event()` and
   `record_event` report progress (`asset_fetch`, `doi_fetch`,
   `template_attributes`) and have nothing to do with findings, but they are
@@ -209,7 +265,7 @@ a step whose baseline diff you cannot explain line by line is not finished.
 One step, one branch, one readable baseline diff. Changing a page under
 `docs/` changes its baseline: re-record it and let the diff be reviewed.
 
-**Five traps these passes fell into, all caught:**
+**Six traps these passes fell into, all caught:**
 
 1. A grep truncated by `head` declared a live presenter branch dead
    (`template_overrides` is emitted by `renderer.py`, not the CLI). Its test
@@ -228,7 +284,14 @@ One step, one branch, one readable baseline diff. Changing a page under
    and two through `getattr(emitter, "info", None)`, a method no emitter
    defines. Grep for the escape hatches — `warnings.warn`, `print`, a bare
    `logger`, `getattr` on a method name — not only for the API.
-5. **`tests/` is not a package.** A helper in `tests/conftest.py` cannot be
+5. **The parity gate answers one direction only.** It re-renders what the
+   corpus lists and compares; it never asked whether a recorded baseline still
+   has a corpus entry. Two pages deleted during the migration kept their
+   committed `.tex` and `.typ` for twenty-three commits. `baseline --check`
+   now reports `orphaned-baseline` as a failing status. The other half of the
+   same blind spot is still open: a flag no corpus entry passes is not covered
+   at all, which is how six options stayed inert under `--format typst`.
+6. **`tests/` is not a package.** A helper in `tests/conftest.py` cannot be
    imported (`from .conftest import` fails, `from conftest import` resolves
    to `tests/passes/conftest.py`). Shared test classes go in a module with a
    distinct name — `tests/emitters.py` — and the fixture wrapping them in
