@@ -51,7 +51,7 @@ from ..context import DocumentState
 from ..conversion import ConversionRequest
 from texsmith.core.diagnostics import ensure_emitter
 from ..conversion.core import convert_documents, to_template_fragments
-from ..conversion.renderer import TemplateRenderer
+from ..conversion.renderer import TemplateRenderer, TemplateRenderResult
 from ..diagnostics import DiagnosticEmitter
 from ..documents import Document
 from ..fragments import collect_fragment_attribute_defaults
@@ -64,29 +64,6 @@ __all__ = [
     "TemplateSession",
     "get_template",
 ]
-
-
-@dataclass(slots=True)
-class TemplateRenderResult:
-    """Artifacts yielded by a :class:`TemplateSession` render pass."""
-
-    main_tex_path: Path
-    fragment_paths: list[Path]
-    context: dict[str, Any]
-    template_runtime: TemplateRuntime
-    document_state: DocumentState
-    bibliography_path: Path | None
-    template_engine: str | None
-    requires_shell_escape: bool
-    asset_paths: list[Path] = field(default_factory=list)
-    asset_sources: list[Path] = field(default_factory=list)
-    asset_map: dict[str, Path] = field(default_factory=dict)
-    context_attributes: list[dict[str, Any]] = field(default_factory=list)
-
-    @property
-    def has_bibliography(self) -> bool:
-        """Indicate whether a bibliography was generated so callers can choose engines accordingly."""
-        return bool(self.bibliography_path)
 
 
 class TemplateSession:
@@ -209,20 +186,7 @@ class TemplateSession:
             self.emitter.error(message, exc)
             raise
 
-        return TemplateRenderResult(
-            main_tex_path=rendered.main_tex_path,
-            fragment_paths=rendered.fragment_paths,
-            context=rendered.template_context,
-            template_runtime=self.runtime,
-            document_state=rendered.document_state,
-            bibliography_path=rendered.bibliography_path,
-            template_engine=rendered.template_engine,
-            requires_shell_escape=rendered.requires_shell_escape,
-            asset_paths=rendered.asset_paths,
-            asset_sources=rendered.asset_sources,
-            asset_map=rendered.asset_map,
-            context_attributes=rendered.context_attributes,
-        )
+        return rendered
 
 
 def get_template(identifier: str | Path, **kwargs: Any) -> TemplateSession:

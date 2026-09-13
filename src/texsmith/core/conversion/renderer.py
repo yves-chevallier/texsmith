@@ -46,22 +46,26 @@ class TemplateFragment:
 
 
 @dataclass(slots=True)
-class TemplateRendererResult:
-    """Structured artefacts produced after aggregating slot content."""
+class TemplateRenderResult:
+    """Artifacts yielded by a render pass over a batch of documents."""
 
     main_tex_path: Path
     fragment_paths: list[Path]
-    template_context: dict[str, Any]
-    slot_content: dict[str, str]
+    context: dict[str, Any]
+    template_runtime: TemplateRuntime
     document_state: DocumentState
     bibliography_path: Path | None
     template_engine: str | None
     requires_shell_escape: bool
-    template_overrides: dict[str, Any] = field(default_factory=dict)
     asset_paths: list[Path] = field(default_factory=list)
     asset_sources: list[Path] = field(default_factory=list)
     asset_map: dict[str, Path] = field(default_factory=dict)
     context_attributes: list[dict[str, Any]] = field(default_factory=list)
+
+    @property
+    def has_bibliography(self) -> bool:
+        """Whether a bibliography was generated, so a caller can pick an engine."""
+        return bool(self.bibliography_path)
 
 
 #: Where a document came from. These are not template attributes: every
@@ -187,7 +191,7 @@ class TemplateRenderer:
         overrides: Mapping[str, Any] | None = None,
         copy_assets: bool = True,
         embed_fragments: bool = True,
-    ) -> TemplateRendererResult:
+    ) -> TemplateRenderResult:
         if not fragments:
             raise TemplateError("No fragments available for template rendering.")
 
@@ -571,16 +575,15 @@ class TemplateRenderer:
             overrides=template_overrides,
         )
 
-        return TemplateRendererResult(
+        return TemplateRenderResult(
             main_tex_path=main_tex_path,
             fragment_paths=fragment_paths,
-            template_context=template_context or {},
-            slot_content=slot_output_overrides or slot_content,
+            context=template_context or {},
+            template_runtime=self.runtime,
             document_state=shared_state,
             bibliography_path=bibliography_path,
             template_engine=template_engine,
             requires_shell_escape=requires_shell_escape,
-            template_overrides=template_overrides,
             asset_paths=asset_path_list,
             asset_sources=asset_source_list,
             asset_map=asset_map,
@@ -594,4 +597,4 @@ class TemplateRenderer:
         return "main.tex"
 
 
-__all__ = ["TemplateFragment", "TemplateRenderer", "TemplateRendererResult"]
+__all__ = ["TemplateFragment", "TemplateRenderResult", "TemplateRenderer"]
