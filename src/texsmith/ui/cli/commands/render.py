@@ -38,6 +38,7 @@ from texsmith.core.conversion.service import ConversionService
 from texsmith.core.conversion.typst import build_typst_pdf, render_typst_document
 from texsmith.core.front_matter import split_front_matter
 from texsmith.core.metadata import PressMetadataError, normalise_press_metadata
+from texsmith.core.sources import is_front_matter, is_markdown
 from texsmith.core.templates import TemplateError
 from texsmith.core.templates.runtime import coerce_base_level
 from texsmith.diagnostics import Diagnostic
@@ -97,19 +98,6 @@ _SERVICE = ConversionService()
 _REQUEST_DEFAULTS = ConversionRequest()
 
 
-_MARKDOWN_SUFFIXES = {
-    ".md",
-    ".markdown",
-    ".mdown",
-    ".mkd",
-    ".mkdown",
-    ".mdtxt",
-    ".text",
-    ".yml",
-    ".yaml",
-}
-
-
 def _deliver_reference_inventory(main_tex_path: Path, destination: Path) -> None:
     """Copy the reference inventory next to the delivered PDF."""
     from texsmith.core.crossrefs import INVENTORY_SUFFIX, relocate_inventory
@@ -163,8 +151,7 @@ def _read_stdin_document() -> Path | None:
 
 def _load_front_matter(path: Path) -> Mapping[str, Any] | None:
     """Return parsed Markdown front matter when available."""
-    suffix = path.suffix.lower()
-    if suffix not in _MARKDOWN_SUFFIXES:
+    if not (is_markdown(path) or is_front_matter(path)):
         return None
     try:
         metadata, _ = split_front_matter(path.read_text(encoding="utf-8"))

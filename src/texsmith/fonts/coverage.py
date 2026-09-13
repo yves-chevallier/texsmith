@@ -19,6 +19,10 @@ NOTOFONTS_STATE_URL = (
     "https://raw.githubusercontent.com/notofonts/notofonts.github.io/main/state.json"
 )
 GOOGLE_FONTS_CSS = "https://fonts.googleapis.com/css2?family={}&display=swap"
+#: The one place TeXSmith does not send :data:`DEFAULT_USER_AGENT`.
+#: ``fonts.google.com/metadata/fonts`` is not a public API and answers a
+#: browser; a descriptive agent gets nothing back. Replace this the day the
+#: coverage data has a documented endpoint.
 USER_AGENT = (
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
     "(KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"

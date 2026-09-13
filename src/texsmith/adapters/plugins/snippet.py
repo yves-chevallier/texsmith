@@ -18,6 +18,7 @@ from bs4 import BeautifulSoup
 from bs4.element import Tag
 
 from texsmith.core.coerce import coerce_bool
+from texsmith.core.sources import is_markdown
 
 
 try:  # Optional dependency: only needed when generating snippet previews.
@@ -937,7 +938,7 @@ def _build_documents_from_sources(
     documents: list[Document] = []
     for path in sources:
         suffix = path.suffix.lower()
-        if suffix in {".md", ".markdown", ".mkd"}:
+        if is_markdown(path):
             documents.append(
                 Document.from_markdown(
                     path,

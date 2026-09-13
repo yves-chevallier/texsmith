@@ -8,6 +8,8 @@ from pathlib import Path
 from threading import Lock
 from typing import TYPE_CHECKING, Any
 
+from texsmith.core.http import DEFAULT_USER_AGENT
+
 
 if TYPE_CHECKING:  # pragma: no cover - typing only
     from requests import Session as RequestsSession  # type: ignore[import]
@@ -58,7 +60,6 @@ def normalise_doi(value: str) -> str:
 class DoiBibliographyFetcher:
     """Retrieve BibTeX entries for DOIs using content negotiation fallbacks."""
 
-    _DEFAULT_USER_AGENT = "texsmith-bibliography-fetcher"
     _BIBTEX_ACCEPT = "application/x-bibtex"
     _CACHE_NAMESPACE = "bibliography"
 
@@ -75,7 +76,7 @@ class DoiBibliographyFetcher:
         self._session_lock = Lock()
         self._session: RequestsSession | None = session
         self._timeout = timeout
-        self._user_agent = user_agent or self._DEFAULT_USER_AGENT
+        self._user_agent = user_agent or DEFAULT_USER_AGENT
         self._cache: MutableMapping[str, str] = cache or {}
         self._enable_cache = enable_cache
         resolved_cache_dir = self._resolve_cache_dir(cache_dir) if enable_cache else None

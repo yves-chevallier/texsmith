@@ -25,7 +25,7 @@ import warnings
 from texsmith.core.coerce import coerce_bool
 from texsmith.core.conversion.debug import ensure_emitter, record_event
 from texsmith.core.exceptions import TransformerExecutionError
-from texsmith.core.http import open_url
+from texsmith.core.http import DEFAULT_USER_AGENT, open_url
 from texsmith.core.user_dir import get_user_dir
 
 from ..docker import DockerLimits, VolumeMount, run_container
@@ -445,14 +445,14 @@ class FetchImageStrategy(CachedConversionStrategy):
             msg = "requests is required to fetch remote images."
             raise TransformerExecutionError(msg) from exc
 
-        user_agent = None
+        # ``--http-user-agent`` (and its ``TEXSMITH_HTTP_USER_AGENT`` envvar)
+        # already reaches us through the request; there is no second lookup.
         candidate = options.get("user_agent")
-        if isinstance(candidate, str) and candidate.strip():
-            user_agent = candidate.strip()
-        elif os.getenv("TEXSMITH_HTTP_USER_AGENT"):
-            user_agent = os.environ["TEXSMITH_HTTP_USER_AGENT"].strip()
-        else:
-            user_agent = "Mozilla/5.0"
+        user_agent = (
+            candidate.strip()
+            if isinstance(candidate, str) and candidate.strip()
+            else DEFAULT_USER_AGENT
+        )
 
         headers = {"User-Agent": user_agent}
 

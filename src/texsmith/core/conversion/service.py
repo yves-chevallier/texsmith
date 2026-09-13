@@ -30,6 +30,7 @@ from texsmith.adapters.latex.tectonic import (
     select_makeglossaries,
     select_tectonic_binary,
 )
+from texsmith.core.sources import is_bibliography, is_front_matter, is_markdown
 
 from ..diagnostics import DiagnosticEmitter
 from ..documents import Document, TitleStrategy, front_matter_has_title
@@ -114,8 +115,7 @@ class ConversionService:
         front_matter_entries: list[tuple[Path, Mapping[str, Any]]] = []
 
         for candidate in inputs:
-            suffix = candidate.suffix.lower()
-            if suffix in {".bib", ".bibtex"}:
+            if is_bibliography(candidate):
                 inline_bibliography.append(candidate)
                 continue
             loaded_front_matter = _load_front_matter_file(candidate)
@@ -527,15 +527,15 @@ def _collect_press_sources(
 
 def validate_input_source(path: Path) -> None:
     """Reject an input whose suffix names something TeXSmith does not read."""
-    suffix = path.suffix.lower()
-    if suffix in {".md", ".markdown"}:
+    if is_markdown(path):
         return
-    if suffix in {".yaml", ".yml"}:
+    if is_front_matter(path):
         if path.name.lower() in {"mkdocs.yml", "mkdocs.yaml"}:
             raise UnsupportedInputError("MkDocs configuration files are not supported.")
         return
     raise UnsupportedInputError(
-        f"Unsupported input file type '{suffix or '<none>'}'. Provide a Markdown source (.md)."
+        f"Unsupported input file type '{path.suffix.lower() or '<none>'}'. "
+        "Provide a Markdown source (.md)."
     )
 
 

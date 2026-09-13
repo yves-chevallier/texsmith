@@ -9,6 +9,7 @@ import typer
 
 from texsmith.core.conversion import SlotAssignment
 from texsmith.core.conversion.inputs import DOCUMENT_SELECTOR_SENTINEL
+from texsmith.core.sources import is_markdown
 
 
 def determine_output_target(
@@ -52,16 +53,8 @@ def write_output_file(target: Path, content: str) -> None:
 
 
 def looks_like_document_path(candidate: str) -> bool:
-    """Return True when the string has an extension resembling a document."""
-    suffix = Path(candidate).suffix.lower()
-    return bool(suffix) and suffix in {
-        ".md",
-        ".markdown",
-        ".mdown",
-        ".mkd",
-        ".html",
-        ".htm",
-    }
+    """Return True when the string names a source the reader accepts."""
+    return is_markdown(candidate)
 
 
 def normalise_selector(selector: str | None) -> str | None:

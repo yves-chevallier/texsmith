@@ -8,6 +8,14 @@ from typing import Any
 import urllib.error
 import urllib.request
 
+from texsmith.version import get_version
+
+
+#: What TeXSmith calls itself when it fetches. One honest identifier: a
+#: descriptive agent is what Wikimedia and CrossRef ask for, and ``--http-user-agent``
+#: (or ``TEXSMITH_HTTP_USER_AGENT``) overrides it per run.
+DEFAULT_USER_AGENT = f"texsmith/{get_version()}"
+
 
 class TLSCertificateError(RuntimeError):
     """Raised when TLS certificate verification fails during downloads."""
