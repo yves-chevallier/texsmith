@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from texsmith.core.diagnostics import LoggingEmitter
+from texsmith.core.diagnostics import LoggingEmitter, NullEmitter
 from texsmith.core.documents import Document, SlotPlan, TitleStrategy
 from texsmith.diagnostics import DiagnosticSink, FileTable
 from texsmith.ir import model
@@ -142,6 +142,28 @@ def test_parse_diagnostics_reach_the_emitter_with_their_file(tmp_path: Path) -> 
     assert second.ir is not None
     assert second.ir.file == 1
     assert emitter.files.path(1) == tmp_path / "second.md"
+
+
+def test_every_emitter_numbers_a_batch_the_same_way(tmp_path: Path) -> None:
+    """The file a span names must not depend on which emitter the caller passed.
+
+    ``span.file`` is part of ``Diagnostic.key``, the identity the sink
+    deduplicates on. When only some emitters carried a file table, a batch run
+    with a silent one numbered every document 0, so two findings in two files
+    collided; run with a logging one they did not.
+    """
+    first = _write(tmp_path, "# First\n", "first.md")
+    second = _write(tmp_path, "# Second\n", "second.md")
+
+    numbering: dict[str, list[int]] = {}
+    for name, emitter in (("logging", LoggingEmitter()), ("null", NullEmitter())):
+        documents = [Document.from_markdown(path, emitter=emitter) for path in (first, second)]
+        assert all(document.ir is not None for document in documents)
+        assert all(document.files is emitter.sink.files for document in documents)
+        numbering[name] = [document.ir.file for document in documents if document.ir]
+
+    assert numbering["null"] == [0, 1]
+    assert numbering["null"] == numbering["logging"]
 
 
 def test_prepare_for_conversion_reads_headings_from_the_ir(tmp_path: Path) -> None:

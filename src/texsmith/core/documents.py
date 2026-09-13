@@ -319,12 +319,11 @@ class Document:
         # ``\\tsacr{…}``. Appended at the end, so no span of the text above moves.
         text = _append_front_matter_abbreviations(text, emitter)
 
-        # The build's file table is the emitter's when it has one, so every
-        # diagnostic of the batch renders with its file name; a document then
-        # takes the next free id (0 for the first one).
-        files = getattr(emitter, "files", None)
-        if not isinstance(files, FileTable):
-            files = FileTable()
+        # The build's file table is the emitter's sink: every document of a
+        # batch registers in the same one, so a span's ``file`` identifies the
+        # source across the whole run and the second document is id 1, not a
+        # second id 0.
+        files = emitter.sink.files
         file_id = files.add(path, text)
         ir_document, diagnostics = tmark_reader.read(text, file_id=file_id, name=str(path))
         for record in diagnostics:

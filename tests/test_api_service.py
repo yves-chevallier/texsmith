@@ -10,9 +10,11 @@ from texsmith.core.conversion.execution import resolve_conversion_context
 from texsmith.core.conversion.inputs import UnsupportedInputError
 from texsmith.core.conversion.service import ConversionService
 from texsmith.core.conversion.templates import bind_template
+from texsmith.core.diagnostics import SinkEmitter
 from texsmith.core.documents import Document, TitleStrategy
 from texsmith.core.exceptions import ConversionError
 from texsmith.core.templates.runtime import load_template_runtime
+from texsmith.diagnostics import Diagnostic, Severity
 
 
 def _create_template(tmp_path: Path) -> Path:
@@ -348,19 +350,22 @@ Body text.
     assert "mainmatter" in inclusions
 
 
-class RecordingEmitter:
-    debug_enabled = False
+class RecordingEmitter(SinkEmitter):
+    """A presenter that keeps what it is shown.
+
+    Collecting belongs to the sink, so a custom emitter implements only
+    ``render`` and ``event``.
+    """
 
     def __init__(self) -> None:
+        super().__init__()
         self.warnings: list[tuple[str, BaseException | None]] = []
         self.errors: list[tuple[str, BaseException | None]] = []
         self.events: list[tuple[str, dict[str, object]]] = []
 
-    def warning(self, message: str, exc: BaseException | None = None) -> None:
-        self.warnings.append((message, exc))
-
-    def error(self, message: str, exc: BaseException | None = None) -> None:
-        self.errors.append((message, exc))
+    def render(self, diagnostic: Diagnostic, cause: BaseException | None) -> None:
+        target = self.errors if diagnostic.severity is Severity.ERROR else self.warnings
+        target.append((diagnostic.message, cause))
 
     def event(self, name: str, payload: Mapping[str, object]) -> None:
         self.events.append((name, dict(payload)))

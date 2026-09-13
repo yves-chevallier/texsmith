@@ -32,9 +32,17 @@ logger = logging.getLogger(__name__)
 
 @runtime_checkable
 class DiagnosticEmitter(Protocol):
-    """Interface used to surface warnings, errors, and structured events."""
+    """Interface used to surface warnings, errors, and structured events.
+
+    ``sink`` is the run's collector and, through it, the run's
+    :class:`~texsmith.diagnostics.FileTable`. It is part of the interface
+    because the file a span names is decided by the table a record is recorded
+    against: a caller that could not reach it had to number its own files from
+    zero, and two documents then carried the same ``span.file``.
+    """
 
     debug_enabled: bool
+    sink: DiagnosticSink
 
     def warning(self, message: str, exc: BaseException | None = None) -> None: ...
 
@@ -43,24 +51,6 @@ class DiagnosticEmitter(Protocol):
     def event(self, name: str, payload: Mapping[str, Any]) -> None: ...
 
     def diagnostic(self, diagnostic: Diagnostic, cause: BaseException | None = None) -> None: ...
-
-
-class NullEmitter:
-    """Emitter that ignores every diagnostic."""
-
-    debug_enabled: bool = False
-
-    def warning(self, message: str, exc: BaseException | None = None) -> None:
-        return
-
-    def error(self, message: str, exc: BaseException | None = None) -> None:
-        return
-
-    def event(self, name: str, payload: Mapping[str, Any]) -> None:
-        return
-
-    def diagnostic(self, diagnostic: Diagnostic, cause: BaseException | None = None) -> None:
-        return
 
 
 class SinkEmitter:
@@ -142,6 +132,22 @@ class LoggingEmitter(SinkEmitter):
             self._logger.debug("diagnostic event %s: %s", name, dict(payload))
         except Exception:  # pragma: no cover - defensive
             self._logger.debug("failed to log diagnostic event %s", name, exc_info=True)
+
+
+class NullEmitter(SinkEmitter):
+    """Emitter that shows nothing.
+
+    It still collects: silence is a rendering choice, not a reason to lose the
+    records. ``Document.diagnostics`` is filled from this sink and the library
+    caller reads them after the run, which is what ``docs/api/high-level.md``
+    describes.
+    """
+
+    def render(self, diagnostic: Diagnostic, cause: BaseException | None) -> None:
+        return
+
+    def event(self, name: str, payload: Mapping[str, Any]) -> None:
+        return
 
 
 def format_event_message(name: str, payload: Mapping[str, Any]) -> str | None:
