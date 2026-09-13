@@ -3,6 +3,7 @@ from __future__ import annotations
 from collections.abc import Mapping
 from pathlib import Path
 
+from emitters import RecordingEmitter
 import pytest
 
 from texsmith.core.conversion import ConversionRequest, SlotAssignment
@@ -10,11 +11,9 @@ from texsmith.core.conversion.execution import resolve_conversion_context
 from texsmith.core.conversion.inputs import UnsupportedInputError
 from texsmith.core.conversion.service import ConversionService
 from texsmith.core.conversion.templates import bind_template
-from texsmith.core.diagnostics import SinkEmitter
 from texsmith.core.documents import Document, TitleStrategy
 from texsmith.core.exceptions import ConversionError
 from texsmith.core.templates.runtime import load_template_runtime
-from texsmith.diagnostics import Diagnostic, Severity
 
 
 def _create_template(tmp_path: Path) -> Path:
@@ -350,28 +349,9 @@ Body text.
     assert "mainmatter" in inclusions
 
 
-class RecordingEmitter(SinkEmitter):
-    """A presenter that keeps what it is shown.
-
-    Collecting belongs to the sink, so a custom emitter implements only
-    ``render`` and ``event``.
-    """
-
-    def __init__(self) -> None:
-        super().__init__()
-        self.warnings: list[tuple[str, BaseException | None]] = []
-        self.errors: list[tuple[str, BaseException | None]] = []
-        self.events: list[tuple[str, dict[str, object]]] = []
-
-    def render(self, diagnostic: Diagnostic, cause: BaseException | None) -> None:
-        target = self.errors if diagnostic.severity is Severity.ERROR else self.warnings
-        target.append((diagnostic.message, cause))
-
-    def event(self, name: str, payload: Mapping[str, object]) -> None:
-        self.events.append((name, dict(payload)))
-
-
-def test_conversion_service_uses_emitter(tmp_path: Path) -> None:
+def test_conversion_service_uses_emitter(
+    tmp_path: Path, recording_emitter: RecordingEmitter
+) -> None:
     service = ConversionService()
     template_dir = _create_template(tmp_path)
     source = tmp_path / "doc.md"
@@ -390,7 +370,7 @@ Body text.
         encoding="utf-8",
     )
 
-    emitter = RecordingEmitter()
+    emitter = recording_emitter
     request = ConversionRequest(
         documents=[source],
         bibliography_files=[],
@@ -404,7 +384,7 @@ Body text.
 
     assert response.is_template
     assert response.render_result.main_tex_path.exists()
-    assert any("missing" in message for message, _ in emitter.warnings)
+    assert any("missing" in message for message in emitter.warnings)
     assert any(name == "template_overrides" for name, _ in emitter.events)
 
 

@@ -11,6 +11,7 @@ from typing import Any
 from texsmith.adapters.latex.latexmk import build_latexmkrc_content
 from texsmith.core.diagnostics import (
     debug_enabled,
+    emit_diagnostic,
     ensure_emitter,
     raise_conversion_error,
     record_event,
@@ -197,7 +198,12 @@ class TemplateRenderer:
         try:
             latexmkrc_path.write_text(content, encoding="utf-8")
         except OSError as exc:
-            self.emitter.warning(f"Failed to write latexmkrc: {exc}")
+            emit_diagnostic(
+                self.emitter,
+                "engine-config-failed",
+                f"'{latexmkrc_path}' could not be written; latexmk runs with its defaults: {exc}",
+                exc=exc,
+            )
             return None
         return latexmkrc_path
 
@@ -417,7 +423,12 @@ class TemplateRenderer:
         try:
             summary = self._scan_fallback(text)
         except Exception as exc:
-            self.emitter.warning(f"Font fallback scan failed{subject}: {exc}")
+            emit_diagnostic(
+                self.emitter,
+                "font-scan-failed",
+                f"the font coverage scan failed{subject}: {exc}",
+                exc=exc,
+            )
             return script_usage, fallback_summary
         if not summary:
             return script_usage, fallback_summary

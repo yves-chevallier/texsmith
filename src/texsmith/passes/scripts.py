@@ -39,6 +39,7 @@ from __future__ import annotations
 from dataclasses import replace
 from typing import TYPE_CHECKING
 
+from texsmith.diagnostics import NO_SPAN
 from texsmith.fonts.cache import FontCache
 from texsmith.fonts.fallback import merge_fallback_summaries
 from texsmith.fonts.scripts import (
@@ -193,7 +194,9 @@ def run(document: Document, ctx: PassContext) -> Document:
         try:
             summary = detector._ensure_lookup().summary(text)  # noqa: SLF001
         except Exception as exc:
-            ctx.emitter.warning(f"Font fallback scan failed: {exc}")
+            ctx.diagnostics.emit(
+                "font-scan-failed", NO_SPAN, f"the font coverage scan failed: {exc}"
+            )
             summary = []
     if summary:
         usage = merge_script_usage(usage, fallback_summary_to_usage(summary))

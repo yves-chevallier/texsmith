@@ -3,6 +3,7 @@ from pathlib import Path
 import shutil
 import zlib
 
+from emitters import RecordingEmitter
 from PIL import Image  # type: ignore[import]
 import pytest
 
@@ -12,9 +13,16 @@ from texsmith.core.conversion.core import convert_documents
 from texsmith.core.conversion.models import ConversionRequest
 from texsmith.core.documents import Document
 from texsmith.core.exceptions import TransformerExecutionError
+from texsmith.diagnostics import Severity
 
 
-def render_markdown(tmp_path: Path, body: str, **request_options: object) -> tuple[str, dict]:
+def render_markdown(
+    tmp_path: Path,
+    body: str,
+    *,
+    emitter: RecordingEmitter | None = None,
+    **request_options: object,
+) -> tuple[str, dict]:
     """Render ``body`` through the passes and return ``(latex, asset map)``.
 
     The ``assets`` pass drives the converters of this module: it resolves each
@@ -23,10 +31,12 @@ def render_markdown(tmp_path: Path, body: str, **request_options: object) -> tup
     """
     source = tmp_path / "doc.md"
     source.write_text(body, encoding="utf-8")
+    active = emitter if emitter is not None else RecordingEmitter()
     bundle = convert_documents(
-        [Document.from_markdown(source)],
+        [Document.from_markdown(source, emitter=active)],
         output_dir=tmp_path / "build",
         settings=ConversionRequest(documents=[source], **request_options),
+        emitter=active,
     )
     fragment = bundle.fragments[0]
     assert fragment.conversion is not None
@@ -199,7 +209,7 @@ def test_drawio_prefers_local_cli(monkeypatch: pytest.MonkeyPatch, tmp_path: Pat
 
 
 def test_drawio_cli_warns_when_using_hint_path(
-    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, recording_emitter: RecordingEmitter
 ) -> None:
     script_dir = tmp_path / "snap" / "bin"
     script_dir.mkdir(parents=True, exist_ok=True)
@@ -217,8 +227,19 @@ def test_drawio_cli_warns_when_using_hint_path(
 
     monkeypatch.setattr(strategies, "run_container", _fail_docker)
 
-    with pytest.warns(UserWarning, match="drawio"):
-        render_markdown(tmp_path, "![Graph](diagram.drawio)\n", diagrams_backend="local")
+    render_markdown(
+        tmp_path,
+        "![Graph](diagram.drawio)\n",
+        diagrams_backend="local",
+        emitter=recording_emitter,
+    )
+
+    # Using a tool found outside PATH is something done on the caller's behalf,
+    # not a defect in the output: it is an ``info`` record, not a UserWarning
+    # that ``PYTHONWARNINGS=error`` would turn into a failed build.
+    (record,) = [d for d, _ in recording_emitter.rendered if d.code == "tool-not-on-path"]
+    assert record.severity is Severity.INFO
+    assert "drawio" in record.message
 
 
 def test_drawio_cli_failure_falls_back_to_docker(
@@ -329,7 +350,7 @@ def test_mermaid_prefers_local_cli(monkeypatch: pytest.MonkeyPatch, tmp_path: Pa
 
 
 def test_mermaid_cli_warns_when_using_hint_path(
-    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, recording_emitter: RecordingEmitter
 ) -> None:
     script_dir = tmp_path / "snap" / "bin"
     script_dir.mkdir(parents=True, exist_ok=True)
@@ -350,8 +371,19 @@ def test_mermaid_cli_warns_when_using_hint_path(
 
     monkeypatch.setattr(strategies, "run_container", _fail_docker)
 
-    with pytest.warns(UserWarning, match="mmdc"):
-        render_markdown(tmp_path, MERMAID_FENCE, diagrams_backend="local")
+    render_markdown(
+        tmp_path,
+        MERMAID_FENCE,
+        diagrams_backend="local",
+        emitter=recording_emitter,
+    )
+
+    # Using a tool found outside PATH is something done on the caller's behalf,
+    # not a defect in the output: it is an ``info`` record, not a UserWarning
+    # that ``PYTHONWARNINGS=error`` would turn into a failed build.
+    (record,) = [d for d, _ in recording_emitter.rendered if d.code == "tool-not-on-path"]
+    assert record.severity is Severity.INFO
+    assert "mmdc" in record.message
 
 
 def test_mermaid_cli_failure_falls_back_to_docker(

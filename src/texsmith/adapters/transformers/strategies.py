@@ -20,10 +20,9 @@ import threading
 from threading import Lock, Thread
 from typing import Any, ClassVar, TypeVar
 from urllib.parse import unquote, urlparse
-import warnings
 
 from texsmith.core.coerce import coerce_bool
-from texsmith.core.diagnostics import ensure_emitter, record_event
+from texsmith.core.diagnostics import emit_diagnostic, ensure_emitter, record_event
 from texsmith.core.exceptions import TransformerExecutionError
 from texsmith.core.http import DEFAULT_USER_AGENT, open_url
 from texsmith.core.user_dir import get_user_dir
@@ -84,16 +83,8 @@ _PLACEHOLDER_PDF = b"%PDF-1.4\n1 0 obj<<>>\nendobj\nxref\n0 1\n0000000000 65535 
 
 
 def _emit_dependency_warning(emitter: Any, message: str) -> None:
-    """Send a warning through the emitter or fall back to Python warnings."""
-    handled = False
-    if emitter is not None:
-        try:
-            emitter.warning(message)
-            handled = True
-        except Exception:
-            handled = False
-    if not handled:
-        warnings.warn(message, stacklevel=3)
+    """Report a converter's missing dependency and how to install it."""
+    emit_diagnostic(emitter, "transformer-dependency-missing", message)
 
 
 def _playwright_dependency_hint() -> str:
@@ -172,13 +163,14 @@ def _resolve_cli(names: Sequence[str], hints: Sequence[Path]) -> tuple[str | Non
     return None, False
 
 
-def _warn_add_to_path(command: str, path: str) -> None:
-    """Emit a guidance warning when a CLI was found outside $PATH."""
-    message = (
-        f"Found '{command}' at '{path}'. Add this directory to PATH so TeXSmith can "
-        "detect it automatically."
+def _warn_add_to_path(emitter: Any, command: str, path: str) -> None:
+    """Report that a CLI was used from outside $PATH."""
+    emit_diagnostic(
+        emitter,
+        "tool-not-on-path",
+        f"'{command}' was found at '{path}', outside PATH; add that directory so "
+        "TeXSmith detects it without a hint",
     )
-    warnings.warn(message, stacklevel=3)
 
 
 def _script_fallback_command(command: Sequence[str]) -> list[str] | None:
@@ -958,7 +950,7 @@ class MermaidToPdfStrategy(CachedConversionStrategy):
         cli_error: TransformerExecutionError | None = None
         if backend in {"local", "auto"} and not produced.exists() and cli_path:
             if not discovered_via_path:
-                _warn_add_to_path("mmdc", cli_path)
+                _warn_add_to_path(emitter, "mmdc", cli_path)
             try:
                 self._run_local_cli(
                     cli_path,
@@ -1237,7 +1229,7 @@ class DrawioToPdfStrategy(CachedConversionStrategy):
         cli_error: TransformerExecutionError | None = None
         if backend in {"local", "auto"} and not produced.exists() and cli_path:
             if not discovered_via_path:
-                _warn_add_to_path("drawio", cli_path)
+                _warn_add_to_path(emitter, "drawio", cli_path)
             try:
                 self._run_local_cli(
                     cli_path,

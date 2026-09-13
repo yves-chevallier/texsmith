@@ -18,7 +18,7 @@ from texsmith.adapters.transformers import (
     svg2pdf,
 )
 from texsmith.adapters.transformers.strategies import _cairo_dependency_hint, _option_flag
-from texsmith.core.diagnostics import ensure_emitter, record_event
+from texsmith.core.diagnostics import emit_diagnostic, ensure_emitter, record_event
 
 
 if TYPE_CHECKING:  # pragma: no cover - typing only
@@ -251,17 +251,17 @@ def _convert_local_asset(
                     emitter=emitter,
                 )
             except Exception as exc:
-                emitter.warning(
-                    f"Falling back to placeholder PDF for SVG '{source}': {exc}. "
-                    f"{_cairo_dependency_hint()}"
+                emit_diagnostic(
+                    emitter,
+                    "asset-convert-failed",
+                    f"SVG '{source}' could not be converted; a placeholder PDF takes its "
+                    f"place: {exc}. {_cairo_dependency_hint()}",
+                    exc=exc,
                 )
                 placeholder = conversion_root / f"{source.stem}.pdf"
                 return _write_placeholder_pdf(placeholder)
         case ".drawio":
             record_event(emitter, "diagram_generate", {"source": str(source), "kind": "drawio"})
-            emit_info = getattr(emitter, "info", None)
-            if callable(emit_info):
-                emit_info(f"Converting draw.io diagram: {source}")
             backend = context.runtime.get("diagrams_backend")
             return drawio2pdf(
                 source,
@@ -272,9 +272,6 @@ def _convert_local_asset(
             )
         case ".mmd" | ".mermaid":
             record_event(emitter, "diagram_generate", {"source": str(source), "kind": "mermaid"})
-            emit_info = getattr(emitter, "info", None)
-            if callable(emit_info):
-                emit_info(f"Converting Mermaid diagram: {source}")
             backend = context.runtime.get("diagrams_backend")
             mermaid_config = context.runtime.get("mermaid_config")
             return mermaid2pdf(

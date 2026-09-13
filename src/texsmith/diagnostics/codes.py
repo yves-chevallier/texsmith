@@ -94,12 +94,32 @@ _TABLE: tuple[CodeInfo, ...] = (
         "A declared font family is unknown or could not be fetched",
     ),
     CodeInfo(
+        "font-scan-failed",
+        Severity.WARNING,
+        "The Noto coverage lookup failed; the default font set is used",
+    ),
+    CodeInfo(
+        "transformer-dependency-missing",
+        Severity.WARNING,
+        "A diagram or image converter is missing a dependency",
+    ),
+    CodeInfo(
+        "tool-not-on-path",
+        Severity.INFO,
+        "A converter was found outside PATH and used from there",
+    ),
+    CodeInfo(
         "frontmatter-root-overrides-press",
         Severity.INFO,
         "A root key overrides the same key under press",
     ),
     CodeInfo(
         "file-unreadable", Severity.WARNING, "A file exists but cannot be read or decoded as UTF-8"
+    ),
+    CodeInfo(
+        "engine-config-failed",
+        Severity.WARNING,
+        "An engine configuration file could not be written; the engine uses its defaults",
     ),
     CodeInfo("include-missing", Severity.WARNING, "An included file cannot be loaded", tmark=True),
     CodeInfo(
