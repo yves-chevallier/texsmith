@@ -315,6 +315,81 @@ class TemplateRenderer:
             asset_map=asset_map,
         )
 
+    def _materialise_slots(
+        self,
+        fragments: Sequence[TemplateFragment],
+        aggregated_slots: Mapping[str, list[str]],
+        *,
+        output_dir: Path,
+        embed_fragments: bool,
+    ) -> tuple[dict[str, str], list[Path], dict[str, str] | None]:
+        """The text of every slot, and the files it took to get there.
+
+        Embedded, a slot is its chunks joined; otherwise each chunk is written
+        as its own ``.tex`` and the slot becomes the ``\\input`` lines that
+        name them. The rendered text is returned either way — the wrapper
+        writes the real slot bodies from it — with the ``\\input`` form as an
+        override when the fragments are separate files.
+        """
+        default_slot = self.runtime.default_slot
+        render_slot_content: dict[str, str] = {
+            slot: "\n\n".join(chunks for chunks in content if chunks)
+            for slot, content in aggregated_slots.items()
+        }
+        if embed_fragments:
+            return render_slot_content, [], None
+
+        written_fragment_paths: list[Path] = []
+        slot_inputs: dict[str, list[str]] = {}
+        for fragment in fragments:
+            fragment_default_slot = fragment.default_slot or default_slot
+            slot_outputs = dict(fragment.slot_outputs)
+            if fragment_default_slot not in slot_outputs:
+                slot_outputs[fragment_default_slot] = fragment.latex
+
+            for slot_name, latex in slot_outputs.items():
+                if not latex:
+                    continue
+                if slot_name == default_slot or slot_name == fragment.stem:
+                    filename = f"{fragment.stem}.tex"
+                else:
+                    filename = f"{fragment.stem}.{slot_name}.tex"
+                target_path = output_dir / filename
+                try:
+                    target_path.write_text(latex, encoding="utf-8")
+                    written_fragment_paths.append(target_path)
+                    slot_inputs.setdefault(slot_name, []).append(f"\\input{{{target_path.name}}}")
+                except OSError as exc:
+                    raise TemplateError(f"Failed to write fragment '{target_path}': {exc}") from exc
+
+            slot_inclusions = set(fragment.slot_includes or set())
+            if slot_inclusions:
+                for slot_name in slot_inclusions:
+                    if (
+                        slot_name == fragment_default_slot
+                        and fragment_default_slot not in slot_outputs
+                    ):
+                        latex = fragment.latex
+                        if latex:
+                            filename = f"{fragment.stem}.tex"
+                            target_path = output_dir / filename
+                            try:
+                                target_path.write_text(latex, encoding="utf-8")
+                                written_fragment_paths.append(target_path)
+                            except OSError as exc:
+                                raise TemplateError(
+                                    f"Failed to write fragment '{target_path}': {exc}"
+                                ) from exc
+                            slot_inputs.setdefault(slot_name, []).append(
+                                f"\\input{{{target_path.name}}}"
+                            )
+
+        slot_output_overrides = {
+            slot: "\n".join(entries for entries in slot_inputs.get(slot, []))
+            for slot in aggregated_slots
+        }
+        return render_slot_content, written_fragment_paths, slot_output_overrides
+
     def render(
         self,
         fragments: Sequence[TemplateFragment],
@@ -346,74 +421,14 @@ class TemplateRenderer:
         asset_sources = collected.asset_sources
         asset_map = collected.asset_map
 
-        slot_content: dict[str, str] = {}
-        render_slot_content: dict[str, str] = {
-            slot: "\n\n".join(chunks for chunks in content if chunks)
-            for slot, content in aggregated_slots.items()
-        }
-
-        written_fragment_paths: list[Path] = []
-
-        slot_output_overrides: dict[str, str] | None = None
-
-        if embed_fragments:
-            slot_content = dict(render_slot_content)
-        else:
-            slot_inputs: dict[str, list[str]] = {}
-            for fragment in fragments:
-                fragment_default_slot = fragment.default_slot or default_slot
-                slot_outputs = dict(fragment.slot_outputs)
-                if fragment_default_slot not in slot_outputs:
-                    slot_outputs[fragment_default_slot] = fragment.latex
-
-                for slot_name, latex in slot_outputs.items():
-                    if not latex:
-                        continue
-                    if slot_name == default_slot or slot_name == fragment.stem:
-                        filename = f"{fragment.stem}.tex"
-                    else:
-                        filename = f"{fragment.stem}.{slot_name}.tex"
-                    target_path = output_dir / filename
-                    try:
-                        target_path.write_text(latex, encoding="utf-8")
-                        written_fragment_paths.append(target_path)
-                        slot_inputs.setdefault(slot_name, []).append(
-                            f"\\input{{{target_path.name}}}"
-                        )
-                    except OSError as exc:
-                        raise TemplateError(
-                            f"Failed to write fragment '{target_path}': {exc}"
-                        ) from exc
-
-                slot_inclusions = set(fragment.slot_includes or set())
-                if slot_inclusions:
-                    for slot_name in slot_inclusions:
-                        if (
-                            slot_name == fragment_default_slot
-                            and fragment_default_slot not in slot_outputs
-                        ):
-                            latex = fragment.latex
-                            if latex:
-                                filename = f"{fragment.stem}.tex"
-                                target_path = output_dir / filename
-                                try:
-                                    target_path.write_text(latex, encoding="utf-8")
-                                    written_fragment_paths.append(target_path)
-                                except OSError as exc:
-                                    raise TemplateError(
-                                        f"Failed to write fragment '{target_path}': {exc}"
-                                    ) from exc
-                                slot_inputs.setdefault(slot_name, []).append(
-                                    f"\\input{{{target_path.name}}}"
-                                )
-
-            slot_content = {
-                slot: "\n".join(entries for entries in slot_inputs.get(slot, []))
-                for slot in aggregated_slots
-            }
-            slot_output_overrides = dict(slot_content)
-            aggregated_slots.clear()
-            aggregated_slots.update(slot_inputs)
+        render_slot_content, written_fragment_paths, slot_output_overrides = (
+            self._materialise_slots(
+                fragments,
+                aggregated_slots,
+                output_dir=output_dir,
+                embed_fragments=embed_fragments,
+            )
+        )
 
         _validate_slots(self.runtime, render_slot_content)
 
