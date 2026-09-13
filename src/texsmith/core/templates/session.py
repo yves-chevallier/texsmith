@@ -191,7 +191,6 @@ class TemplateSession:
             template=self.runtime.name,
             template_runtime=self.runtime,
             template_overrides=option_overrides or None,
-            wrap_document=False,
             write_fragments=False,
         )
         fragments = to_template_fragments(bundle)

@@ -187,7 +187,7 @@ def test_template_session_conflicting_overrides(tmp_path: Path) -> None:
     session.documents[1].assign_slot("backmatter", include_document=True)
 
     # Simulate conflicting overrides at the fragment layer.
-    bundle = convert_documents(session.documents, wrap_document=False)
+    bundle = convert_documents(session.documents)
     fragments = to_template_fragments(bundle)
     fragments[0].template_overrides = {"press": {"title": "First Title"}}
     fragments[1].template_overrides = {"press": {"title": "Second Title"}}

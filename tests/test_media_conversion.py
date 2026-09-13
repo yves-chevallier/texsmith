@@ -27,7 +27,6 @@ def render_markdown(tmp_path: Path, body: str, **request_options: object) -> tup
         [Document.from_markdown(source)],
         output_dir=tmp_path / "build",
         settings=ConversionRequest(documents=[source], **request_options),
-        wrap_document=False,
     )
     fragment = bundle.fragments[0]
     assert fragment.conversion is not None

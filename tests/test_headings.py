@@ -38,7 +38,6 @@ def _render_headings(
         [document],
         output_dir=tmp_path / "build",
         template=template,
-        wrap_document=False,
     )
     return _heading_levels(bundle.fragments[0].latex)
 
@@ -106,7 +105,6 @@ Text
         [document],
         output_dir=tmp_path / "build",
         template="article",
-        wrap_document=False,
     )
     conversion = bundle.fragments[0].conversion
     assert conversion is not None

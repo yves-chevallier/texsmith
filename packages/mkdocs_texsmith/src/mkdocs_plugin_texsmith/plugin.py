@@ -846,7 +846,6 @@ class LatexPlugin(BasePlugin):
                     template_overrides=overrides,
                     state=document_state,
                     template_runtime=template_runtime,
-                    wrap_document=False,
                     emitter=emitter,
                     preloaded_bibliography=bibliography_collection,
                     seen_bibliography_issues=seen_bibliography_issues,

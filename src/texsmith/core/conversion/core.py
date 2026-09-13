@@ -22,7 +22,6 @@ from texsmith.core.documents import Document
 from texsmith.core.templates import (
     TemplateError,
     TemplateRuntime,
-    wrap_template_document,
 )
 from texsmith.ir.codec import persist_debug_ir
 
@@ -66,7 +65,6 @@ def convert_document(
     template_overrides: Mapping[str, Any] | None = None,
     state: DocumentState | None = None,
     template_runtime: TemplateRuntime | None = None,
-    wrap_document: bool = True,
     emitter: DiagnosticEmitter | None = None,
     preloaded_bibliography: BibliographyCollection | None = None,
     seen_bibliography_issues: set[tuple[str, str | None, str | None]] | None = None,
@@ -115,7 +113,6 @@ def convert_document(
         context=context,
         emitter=emitter,
         initial_state=state,
-        wrap_document=wrap_document,
     )
 
 
@@ -124,14 +121,12 @@ def _render_document(
     context: ConversionContext,
     emitter: DiagnosticEmitter,
     initial_state: DocumentState | None,
-    wrap_document: bool,
 ) -> ConversionResult:
     # Everything the per-document render needs is carried on the context: the
-    # document, the resolved request, and the generation strategy. Derive the
-    # locals here rather than threading them through the signature.
+    # document and the resolved request. Derive the locals here rather than
+    # threading them through the signature.
     document = context.document
     request = context.request
-    strategy = context.generation
 
     if request.persist_debug_ir and document.ir is not None:
         persist_debug_ir(context.output_dir, document.source_path, document.ir)
@@ -197,44 +192,6 @@ def _render_document(
         document_state.requires_shell_escape = (
             document_state.requires_shell_escape or binding.requires_shell_escape
         )
-    template_instance = binding.instance
-    if template_instance is not None and wrap_document:
-        try:
-            wrap_result = wrap_template_document(
-                template=template_instance,
-                default_slot=binding.default_slot,
-                slot_outputs=slot_outputs,
-                document_state=document_state,
-                template_overrides=(
-                    context.template_overrides if context.template_overrides else None
-                ),
-                output_dir=context.output_dir,
-                copy_assets=strategy.copy_assets,
-                output_name=f"{document.source_path.stem}.tex",
-                bibliography_path=bibliography_output,
-                emitter=emitter,
-                fragments=list(
-                    context.template_overrides.get(
-                        "fragments", binding.runtime.extras.get("fragments", [])
-                    )
-                ),
-                template_runtime=binding.runtime,
-            )
-            latex_output = wrap_result.latex_output
-            tex_path = wrap_result.output_path
-        except TemplateError as exc:
-            if debug_enabled(emitter):
-                raise
-            raise_conversion_error(emitter, str(exc), exc)
-        except OSError as exc:
-            if debug_enabled(emitter):
-                raise
-            raise_conversion_error(
-                emitter,
-                f"Failed to write LaTeX output to '{context.output_dir}': {exc}",
-                exc,
-            )
-
     asset_map: dict[str, Path] = dict(ir_assets)
 
     return ConversionResult(
@@ -302,7 +259,6 @@ def convert_documents(
     template: str | None = None,
     template_runtime: TemplateRuntime | None = None,
     template_overrides: Mapping[str, Any] | None = None,
-    wrap_document: bool = True,
     shared_state: DocumentState | None = None,
     write_fragments: bool | None = None,
 ) -> ConversionBundle:
@@ -340,16 +296,14 @@ def convert_documents(
             slot_overrides=slot_overrides or None,
             emitter=active_emitter,
             template_overrides=template_overrides,
-            state=None if wrap_document else state,
+            state=state,
             template_runtime=template_runtime,
-            wrap_document=wrap_document,
             preloaded_bibliography=shared_bibliography,
             seen_bibliography_issues=seen_bibliography_issues,
             resolution=resolution,
         )
 
-        if not wrap_document:
-            state = result.document_state or state
+        state = result.document_state or state
 
         stem = unique_stems[document.source_path]
         fragment = LaTeXFragment(
