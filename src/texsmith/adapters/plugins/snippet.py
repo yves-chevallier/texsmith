@@ -72,7 +72,6 @@ class SnippetBlock:
     sources: list[Path]
     layout: tuple[int, int] | None
     preview_dogear: bool
-    preview_fold_size: float | None
     template_id: str | None
     cwd: Path | None
     caption: str | None
@@ -397,7 +396,6 @@ def _hash_payload(
     drop_title: bool = False,
     suppress_title: bool = False,
     transparent_corner: bool = False,
-    fold_size: float | None = None,
     front_matter: Mapping[str, Any] | None = None,
 ) -> str:
     def _hash_file(path: Path) -> str:
@@ -429,7 +427,6 @@ def _hash_payload(
         "drop_title": drop_title,
         "suppress_title": suppress_title,
         "transparent_corner": transparent_corner,
-        "fold_size": fold_size,
     }
     if front_matter:
         # The keys forwarded to the document itself now reach the body tmark
@@ -516,63 +513,6 @@ def _frame_dogear_enabled(overrides: Mapping[str, Any]) -> bool:
     if fragments_value is None and isinstance(press_section, Mapping):
         fragments_value = press_section.get("fragments")
     return isinstance(fragments_value, list) and any(str(f) == "ts-frame" for f in fragments_value)
-
-
-def _frame_fold_size_px(
-    overrides: Mapping[str, Any], image_size: tuple[int, int], *, default_mm: float = 10.0
-) -> int:
-    """Resolve the frame fold size (in pixels) from press.frame settings."""
-
-    def _parse_length(value: str | None, fallback_mm: float) -> float:
-        if not value:
-            return fallback_mm
-        raw = str(value).strip().lower()
-        if not raw:
-            return fallback_mm
-        unit = "mm"
-        numeric = raw
-        for candidate in ("mm", "cm", "in", "pt"):
-            if raw.endswith(candidate):
-                unit = candidate
-                numeric = raw[: -len(candidate)]
-                break
-        try:
-            mag = float(numeric)
-        except ValueError:
-            return fallback_mm
-        if unit == "cm":
-            mag *= 10.0
-        elif unit == "in":
-            mag *= 25.4
-        elif unit == "pt":
-            mag *= 25.4 / 72.27
-        return max(mag, 0.0)
-
-    press_section = overrides.get("press") if isinstance(overrides, Mapping) else None
-    frame_value = overrides.get("frame")
-    if frame_value is None and isinstance(press_section, Mapping):
-        frame_value = press_section.get("frame")
-
-    fold_spec: str | None = None
-    if isinstance(frame_value, Mapping):
-        fold_spec = (
-            frame_value.get("fold-size")
-            or frame_value.get("fold_size")
-            or frame_value.get("fold")
-            or frame_value.get("foldsize")
-        )
-    elif isinstance(frame_value, (int, float, str)):
-        # When a bare value is supplied, respect it as fold size if it looks like a length.
-        token = str(frame_value).strip().lower()
-        if any(ch.isdigit() for ch in token):
-            fold_spec = token
-
-    fold_mm = _parse_length(fold_spec, default_mm)
-    px_per_mm = 220.0 / 25.4  # match DPI used in _pdf_to_png_grid
-    estimated_px = round(fold_mm * px_per_mm)
-    width, height = image_size
-    max_dim = max(min(width, height) * 0.2, 24)
-    return int(max(12, min(estimated_px, max_dim)))
 
 
 def _load_yaml_mapping(payload: str) -> dict[str, Any]:
@@ -818,9 +758,6 @@ def build_snippet_block(
 
     layout = _resolve_layout_value(layout_literal)
     preview_dogear = _frame_dogear_enabled(template_overrides)
-    preview_fold_size = None
-    if preview_dogear:
-        preview_fold_size = _frame_fold_size_px(template_overrides, (0, 0))
     if template_id is None and press_template:
         template_id = press_template
     if inline_content is not None and not sources and template_id is None:
@@ -839,7 +776,6 @@ def build_snippet_block(
         drop_title=drop_title_value,
         suppress_title=suppress_title_value,
         transparent_corner=preview_dogear,
-        fold_size=preview_fold_size,
         front_matter=document_front_matter,
     )
 
@@ -849,7 +785,6 @@ def build_snippet_block(
         sources=sources,
         layout=layout,
         preview_dogear=preview_dogear,
-        preview_fold_size=preview_fold_size,
         template_id=template_id,
         cwd=base_dir,
         caption=caption,
@@ -1169,7 +1104,6 @@ def _pdf_to_png_grid(
     transparent_corner: bool = False,
     spacing: int | None = None,
     decorate_page: Callable[[Image.Image], Image.Image] | None = None,
-    fold_size: int | None = None,
 ) -> None:
     fitz = _load_pymupdf()
     image_lib, _ = _require_pillow()
@@ -1216,7 +1150,7 @@ def _pdf_to_png_grid(
 
     for idx, img in enumerate(images):
         if transparent_corner:
-            img = _apply_dogear_transparency(img, fold_size=fold_size)
+            img = _apply_dogear_transparency(img)
         if decorate_page is not None:
             img = decorate_page(img)
 
@@ -1230,15 +1164,13 @@ def _pdf_to_png_grid(
     canvas.save(png_path)
 
 
-def _apply_dogear_transparency(image: Image.Image, *, fold_size: int | None = None) -> Image.Image:
+def _apply_dogear_transparency(image: Image.Image) -> Image.Image:
     _, image_draw = _require_pillow()
     rgba = image.convert("RGBA")
     width, height = rgba.size
     if width <= 0 or height <= 0:
         return rgba
     magenta = (255, 0, 255, 255)
-    if fold_size is not None:
-        _ = fold_size  # keep signature meaningful; floodfill is boundary-aware.
     seed_x = width - 2 if width > 1 else 0
     seed_y = 1 if height > 1 else 0
     try:
@@ -1327,13 +1259,6 @@ def ensure_snippet_assets(
     merged_overrides = _merge_fragment_defaults(block.template_overrides, runtime)
     merged_overrides.setdefault("glossary_inline", True)
     dogear_enabled = _frame_dogear_enabled(merged_overrides) or block.preview_dogear
-    preview_fold_px: int | None = None
-    if dogear_enabled:
-        preview_fold_px = _frame_fold_size_px(
-            merged_overrides,
-            (0, 0),
-        )
-
     caches = _resolve_caches()
     template_version = None
     if caches:
@@ -1395,7 +1320,6 @@ def ensure_snippet_assets(
             layout=block.layout,
             transparent_corner=dogear_enabled,
             spacing=None if block.layout else 0,
-            fold_size=preview_fold_px,
         )
         png_missing = False
         _store_in_caches()
@@ -1459,7 +1383,6 @@ def ensure_snippet_assets(
         transparent_corner=dogear_enabled,
         spacing=None if total_cells > 1 else 0,
         decorate_page=None,
-        fold_size=preview_fold_px,
     )
 
     _store_in_caches()

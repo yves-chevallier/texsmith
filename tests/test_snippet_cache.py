@@ -24,7 +24,6 @@ def _build_block(content: str = "print('Hello')") -> snippet.SnippetBlock:
         sources=[],
         layout=None,
         preview_dogear=False,
-        preview_fold_size=None,
         template_id=None,
         cwd=None,
         caption=None,
