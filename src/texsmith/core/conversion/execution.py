@@ -7,6 +7,11 @@ from pathlib import Path
 from typing import Any
 
 from texsmith.core.bibliography.collection import BibliographyCollection
+from texsmith.core.bibliography.inline import (
+    InlineBibliographyValidationError,
+    extract_front_matter_bibliography,
+)
+from texsmith.core.bibliography.loading import load_inline_bibliography
 from texsmith.core.conversion_contexts import ConversionContext, GenerationStrategy
 from texsmith.core.diagnostics import ensure_emitter, raise_conversion_error
 from texsmith.core.documents import Document
@@ -17,7 +22,6 @@ from texsmith.core.templates.runtime import (
     resolve_template_language,
 )
 
-from .inputs import InlineBibliographyValidationError, extract_front_matter_bibliography
 from .models import ConversionRequest
 from .templates import _build_mustache_defaults, _merge_template_overrides
 
@@ -136,9 +140,7 @@ def resolve_conversion_context(
     if inline_bibliography:
         source_label = document.source_path.stem
         output = output_dir or document.source_path.parent
-        from .templates import _load_inline_bibliography
-
-        _load_inline_bibliography(
+        load_inline_bibliography(
             bibliography_collection,
             inline_bibliography,
             source_label=source_label,

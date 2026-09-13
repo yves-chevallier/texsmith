@@ -37,6 +37,7 @@ from pybtex.database import BibliographyData, Entry
 from pybtex.database.input import bibtex
 from pybtex.exceptions import PybtexError
 
+from texsmith.core.bibliography.loading import initialise_doi_cache, write_doi_cache
 from texsmith.diagnostics import Span
 from texsmith.ir import model
 from texsmith.ir.walk import map_tree, walk
@@ -89,11 +90,9 @@ class _Resolver:
     __slots__ = ("cache", "cache_path", "ctx", "dirty", "fetcher")
 
     def __init__(self, ctx: PassContext) -> None:
-        from texsmith.core.conversion.templates import _initialise_doi_cache
-
         self.ctx = ctx
         self.fetcher = ctx.doi_fetcher
-        self.cache, self.cache_path = _initialise_doi_cache(ctx.output_dir)
+        self.cache, self.cache_path = initialise_doi_cache(ctx.output_dir)
         self.dirty = False
 
     def _fetch(self, doi: str) -> str:
@@ -125,9 +124,7 @@ class _Resolver:
 
     def flush_cache(self) -> None:
         if self.dirty and self.cache_path is not None:
-            from texsmith.core.conversion.templates import _write_doi_cache
-
-            _write_doi_cache(self.cache_path, self.cache)
+            write_doi_cache(self.cache_path, self.cache)
 
 
 def _front_matter_dois(ir: model.Document) -> list[_Pending]:

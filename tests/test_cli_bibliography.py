@@ -123,7 +123,7 @@ def test_cli_front_matter_bibliography_fetches_doi(monkeypatch, tmp_path: Path) 
             )
 
     monkeypatch.setattr(
-        "texsmith.core.conversion.templates._resolve_bibliography_fetcher",
+        "texsmith.core.bibliography.loading.resolve_bibliography_fetcher",
         lambda: DummyFetcher(),
     )
 
@@ -188,7 +188,7 @@ def test_cli_front_matter_bibliography_uses_output_cache(monkeypatch, tmp_path: 
             )
 
     monkeypatch.setattr(
-        "texsmith.core.conversion.templates._resolve_bibliography_fetcher",
+        "texsmith.core.bibliography.loading.resolve_bibliography_fetcher",
         lambda: DummyFetcher(),
     )
 

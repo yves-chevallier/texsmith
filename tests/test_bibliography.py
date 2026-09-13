@@ -11,12 +11,12 @@ from texsmith.core.bibliography import (
     DoiLookupError,
     bibliography_data_from_string,
 )
-from texsmith.core.conversion import extract_front_matter_bibliography
-from texsmith.core.conversion.inputs import (
+from texsmith.core.bibliography.inline import (
     InlineBibliographyEntry,
     InlineBibliographyValidationError,
+    extract_front_matter_bibliography,
 )
-from texsmith.core.conversion.templates import _load_inline_bibliography
+from texsmith.core.bibliography.loading import load_inline_bibliography
 from texsmith.core.diagnostics import NullEmitter
 
 
@@ -262,7 +262,7 @@ def test_inline_manual_bibliography_merged_into_collection() -> None:
     entries = extract_front_matter_bibliography(front_matter)
 
     collection = BibliographyCollection()
-    _load_inline_bibliography(
+    load_inline_bibliography(
         collection,
         entries,
         source_label="ai2027",
@@ -309,7 +309,7 @@ def test_bibliography_writer_preserves_url_underscores(tmp_path: Path) -> None:
 
     entries = extract_front_matter_bibliography(front_matter)
     collection = BibliographyCollection()
-    _load_inline_bibliography(
+    load_inline_bibliography(
         collection,
         entries,
         source_label="inline",

@@ -105,11 +105,10 @@ def test_snippet_preview_resolves_a_front_matter_doi(
             fetched.append(value)
             return WADHWANI
 
-    from texsmith.core.bibliography import doi as doi_module
-    from texsmith.core.conversion import templates as templates_module
+    from texsmith.core.bibliography import doi as doi_module, loading as loading_module
 
     monkeypatch.setattr(doi_module, "DoiBibliographyFetcher", FakeFetcher)
-    monkeypatch.setattr(templates_module, "_resolve_bibliography_fetcher", FakeFetcher)
+    monkeypatch.setattr(loading_module, "resolve_bibliography_fetcher", FakeFetcher)
     # No user-level snippet cache: the preview is built, never looked up.
     monkeypatch.setattr(snippet, "_resolve_caches", lambda: [])
     # The work directory is kept so the generated sources can be read back.

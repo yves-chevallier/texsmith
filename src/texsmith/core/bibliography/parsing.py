@@ -8,7 +8,7 @@ from pybtex.database import BibliographyData, Entry, Person
 from pybtex.database.input import bibtex
 from pybtex.exceptions import PybtexError
 
-from texsmith.core.conversion.inputs import InlineBibliographyEntry
+from texsmith.core.bibliography.inline import InlineBibliographyEntry
 
 
 def bibliography_data_from_string(payload: str, key: str) -> BibliographyData:

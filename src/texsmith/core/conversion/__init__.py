@@ -7,7 +7,6 @@ from .inputs import (
     SlotOptions,
     UnsupportedInputError,
     coerce_slot_selector,
-    extract_front_matter_bibliography,
     extract_front_matter_slots,
     parse_slot_mapping,
 )
@@ -21,7 +20,6 @@ __all__ = [
     "SlotOptions",
     "UnsupportedInputError",
     "coerce_slot_selector",
-    "extract_front_matter_bibliography",
     "extract_front_matter_slots",
     "parse_slot_mapping",
 ]

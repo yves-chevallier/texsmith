@@ -22,10 +22,11 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 from texsmith.core.bibliography.collection import BibliographyCollection
-from texsmith.core.conversion.inputs import (
+from texsmith.core.bibliography.inline import (
     InlineBibliographyValidationError,
     extract_front_matter_bibliography,
 )
+from texsmith.core.bibliography.loading import load_inline_bibliography
 from texsmith.core.diagnostics import DiagnosticEmitter, ensure_emitter, raise_conversion_error
 from texsmith.core.metadata import PressMetadataError, normalise_press_metadata
 from texsmith.writers.typst.build import compile_typst
@@ -123,9 +124,7 @@ def _build_bibliography(
         raise_conversion_error(emitter, str(exc), exc)
         inline = {}
     if inline and output_dir is not None:
-        from texsmith.core.conversion.templates import _load_inline_bibliography
-
-        _load_inline_bibliography(
+        load_inline_bibliography(
             collection,
             inline,
             source_label=document.source_path.stem,
