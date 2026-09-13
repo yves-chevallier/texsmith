@@ -180,7 +180,7 @@ Two accidental semantics it exposed, both **pinned by a test and left alone**:
 
 ## What remains
 
-Three steps, none started.
+Two steps untouched, and the rest of 08.
 
 **06 · The pure passes into tmark** — *two repositories, ADR each.*
 `tmark-lsp/src/outline.rs:101-135` already partitions a block list by heading
@@ -201,16 +201,56 @@ typed, it is *finite* — TeXSmith never sees the whole tree — and it is the
 **only** route that drops `ir/` (**2 195 lines, untouched**). Migrating the
 pure passes alone leaves `ir/model.py` and `codec.py` entirely in place.
 
-**08 · Templates and fragments.** 6 332 lines (`core/templates` 2 952,
-`core/fragments` 1 309, `fragments` 2 071). Two complete activation
-mechanisms run in parallel with **opposite** conventions on
-`implied_packages` (one subtracts, one adds). The `Requires` contract never
-replaced the string sniffers it was meant to replace: `callouts` still hunts
-`\begin{callout` through every context value, `extra` scans ~40 LaTeX
-patterns, and `article` walks the whole context character by character **to
-pick the compiler**. "Fragment" means three things and "slot" two, and the
-two senses of "slot" exclude each other — one site raises where the other
-validates.
+**08 · Templates and fragments** — *two of four items done*, branch
+`refactor/08-fragments`.
+
+**Done: the opposite conventions on `implied_packages`.** `apply_requires`
+subtracted every package an active contract loads itself; `inject_requires`,
+three lines down the same call chain, added them all back. Two functions of
+that name, two modules, the identical set by two routes, opposite sign. The
+net was `ts-extra` loading what the fragments had already loaded: `graphicx`
+and `xcolor` twice in the preamble of **68 of the 129** recorded LaTeX
+renderings. A third mechanism sat between them — `FRAGMENT_OWNED_PACKAGES`,
+nine hardcoded names overlapping the sixteen computed ones in three. The rule
+is now stated once, in `extra_packages_from_requires`: what the bodies named,
+less what an active contract provides. Baseline: **707 deletions, no
+insertions**, and the four PDF-baseline entries build identically through
+Tectonic, ink coverage included.
+
+**Done: the two senses of "slot".** Two checks, both reporting on
+"Fragments", with opposite conditions — `core/fragments/__init__.py` raised
+when the slot *was* declared, `conversion/renderer.py` when it was *not*.
+Between them they reject every value; they never fired together only because
+they read different dictionaries. `FragmentPiece.slot` is now
+`FragmentPiece.variable`, which the line under the first check already called
+it: a fragment injects into a template *variable* (`extra_packages`), a
+document is assigned to a *slot* (`mainmatter`).
+
+**Measured, deliberately not changed — the string sniffers are not
+vestigial.** The memo assumed `Requires` had failed to replace them. It has,
+in production: over the whole 250-entry corpus the legacy branch
+(`contract_active(...) is None`) is **never taken**. But it is reachable —
+ten hits in the test suite, all through `wrap_template_document` — because a
+caller that builds a `DocumentState` without running the IR passes, and wraps
+a template around LaTeX it produced itself, has no `Requires` to read. The
+sniffers serve *that* caller. Deleting them is a decision about whether that
+caller is supported, not a cleanup.
+
+Two measurements for whoever takes it:
+
+- `ts-extra`'s ~40 patterns contribute exactly **four** packages beyond what
+  `Requires` names, corpus-wide: `seqsplit` (96×) and `float` (88×), both
+  added *unconditionally* and so not sniffing at all, plus `amsmath` (67×,
+  triggered by any `$` anywhere in any context string — a price in prose
+  fires it) and `tabularx` (1×).
+- `article`'s character-by-character walk of the whole context **is
+  load-bearing**: it switches 25 of 93 renders from pdflatex to lualatex, on
+  Greek, Cyrillic, Arabic, box-drawing and arrow characters. It is not a
+  candidate for deletion, and an IR-derived answer would be incomplete —
+  template attributes and front matter carry text the IR never saw.
+
+**Still open:** "fragment" means three things; `core/templates` (2 951) is
+untouched.
 
 ## Debts posed, deliberately not paid
 
@@ -265,7 +305,7 @@ a step whose baseline diff you cannot explain line by line is not finished.
 One step, one branch, one readable baseline diff. Changing a page under
 `docs/` changes its baseline: re-record it and let the diff be reviewed.
 
-**Six traps these passes fell into, all caught:**
+**Seven traps these passes fell into, all caught:**
 
 1. A grep truncated by `head` declared a live presenter branch dead
    (`template_overrides` is emitted by `renderer.py`, not the CLI). Its test
@@ -291,7 +331,13 @@ One step, one branch, one readable baseline diff. Changing a page under
    now reports `orphaned-baseline` as a failing status. The other half of the
    same blind spot is still open: a flag no corpus entry passes is not covered
    at all, which is how six options stayed inert under `--format typst`.
-6. **`tests/` is not a package.** A helper in `tests/conftest.py` cannot be
+6. **`build/parity/check` used to accumulate.** `_write_diffs` wrote this
+   run's diffs into a directory it never cleared, so a later run that found an
+   entry identical left the earlier run's diff file sitting beside the fresh
+   ones. Reading them together showed changes no run had found — prose edits
+   attributed to a change that touched only LaTeX packages. The directory is
+   cleared per run now; a `.diff` in it is this run's.
+7. **`tests/` is not a package.** A helper in `tests/conftest.py` cannot be
    imported (`from .conftest import` fails, `from conftest import` resolves
    to `tests/passes/conftest.py`). Shared test classes go in a module with a
    distinct name — `tests/emitters.py` — and the fixture wrapping them in
