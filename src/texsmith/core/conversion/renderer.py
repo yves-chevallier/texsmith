@@ -152,6 +152,7 @@ class TemplateRenderer:
     ) -> None:
         self.runtime = runtime
         self.emitter = ensure_emitter(emitter)
+        self._fallback_manager: FallbackManager | None = None
 
     def _write_latexmkrc(
         self,
@@ -390,6 +391,49 @@ class TemplateRenderer:
         }
         return render_slot_content, written_fragment_paths, slot_output_overrides
 
+    def _scan_fallback(self, text: str) -> FallbackPlan:
+        if self._fallback_manager is None:
+            self._fallback_manager = FallbackManager(cache=FontCache(), logger=FontPipelineLogger())
+        return self._fallback_manager.scan_text(text)
+
+    def _merge_font_scan(
+        self,
+        text: str,
+        *,
+        subject: str,
+        state: DocumentState,
+        script_usage: list[dict[str, Any]],
+        fallback_summary: list[dict[str, Any]],
+    ) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+        """Fold the scripts ``text`` uses into the state and the running totals.
+
+        The slot bodies and the document metadata are both scanned this way.
+        ``scan_text`` loads the Noto coverage lookup, which can fail on a cold
+        cache or an IO error: that is a warning, never a failed render — the
+        LaTeX still compiles with the default font set.
+        """
+        if not text:
+            return script_usage, fallback_summary
+        try:
+            summary = self._scan_fallback(text)
+        except Exception as exc:
+            self.emitter.warning(f"Font fallback scan failed{subject}: {exc}")
+            return script_usage, fallback_summary
+        if not summary:
+            return script_usage, fallback_summary
+
+        fallback_summary = merge_fallback_summaries(fallback_summary, summary)
+        usage = fallback_summary_to_usage(summary)
+        if usage:
+            script_usage = merge_script_usage(script_usage, usage)
+            state.script_usage = merge_script_usage(
+                getattr(state, "script_usage", []), script_usage
+            )
+        state.fallback_summary = merge_fallback_summaries(
+            getattr(state, "fallback_summary", []), fallback_summary
+        )
+        return script_usage, fallback_summary
+
     def render(
         self,
         fragments: Sequence[TemplateFragment],
@@ -406,7 +450,6 @@ class TemplateRenderer:
         output_dir.mkdir(parents=True, exist_ok=True)
 
         default_slot = self.runtime.default_slot
-        fallback_manager: FallbackManager | None = None
 
         collected = self._aggregate(fragments)
         aggregated_slots = collected.slots
@@ -432,43 +475,20 @@ class TemplateRenderer:
 
         _validate_slots(self.runtime, render_slot_content)
 
-        def _scan_fallback(text: str) -> FallbackPlan:
-            nonlocal fallback_manager
-            if fallback_manager is None:
-                fallback_manager = FallbackManager(cache=FontCache(), logger=FontPipelineLogger())
-            return fallback_manager.scan_text(text)
-
-        # Compute fallback summary across all slot content for font fragments.
         # On the tmark path the ``scripts`` pass already summarised the IR of
-        # every document (``DocumentState.fonts_scanned``); the LaTeX is not
-        # scanned again.
-        concatenated_text = "".join(render_slot_content.values())
+        # every document (``DocumentState.fonts_scanned``); the LaTeX bodies
+        # are not scanned again.
         scanned_by_passes = bool(fragments) and all(
             getattr(fragment.document_state, "fonts_scanned", False) for fragment in fragments
         )
-        if concatenated_text and not scanned_by_passes:
-            try:
-                raw_summary = _scan_fallback(concatenated_text)
-            except Exception as exc:
-                # ``scan_text`` loads the Noto coverage lookup which can fail on
-                # cold caches or IO errors; emit a warning but never block the
-                # render — downstream LaTeX works with the default font set.
-                self.emitter.warning(f"Font fallback scan failed: {exc}")
-                raw_summary = []
-            if raw_summary:
-                aggregated_fallback_summary = merge_fallback_summaries(
-                    aggregated_fallback_summary, raw_summary
-                )
-                usage = fallback_summary_to_usage(raw_summary)
-                if usage:
-                    aggregated_script_usage = merge_script_usage(aggregated_script_usage, usage)
-                    shared_state.script_usage = merge_script_usage(
-                        getattr(shared_state, "script_usage", []), aggregated_script_usage
-                    )
-                    shared_state.fallback_summary = merge_fallback_summaries(
-                        getattr(shared_state, "fallback_summary", []),
-                        aggregated_fallback_summary,
-                    )
+        if not scanned_by_passes:
+            aggregated_script_usage, aggregated_fallback_summary = self._merge_font_scan(
+                "".join(render_slot_content.values()),
+                subject="",
+                state=shared_state,
+                script_usage=aggregated_script_usage,
+                fallback_summary=aggregated_fallback_summary,
+            )
 
         template_instance = self.runtime.instance
         if template_instance is None:  # pragma: no cover - defensive path
@@ -520,30 +540,13 @@ class TemplateRenderer:
         if template_overrides:
             metadata_strings.extend(_iter_strings(template_overrides))
 
-        metadata_blob = " ".join(part for part in metadata_strings if part.strip())
-        if metadata_blob:
-            try:
-                metadata_raw = _scan_fallback(metadata_blob)
-            except Exception as exc:
-                # Mirror the slot-content scan above: surface a warning, keep
-                # rendering with the default font set.
-                self.emitter.warning(f"Font fallback scan failed on metadata: {exc}")
-                metadata_raw = []
-            if metadata_raw:
-                aggregated_fallback_summary = merge_fallback_summaries(
-                    aggregated_fallback_summary, metadata_raw
-                )
-                metadata_usage = fallback_summary_to_usage(metadata_raw)
-                if metadata_usage:
-                    aggregated_script_usage = merge_script_usage(
-                        aggregated_script_usage, metadata_usage
-                    )
-                    shared_state.script_usage = merge_script_usage(
-                        getattr(shared_state, "script_usage", []), aggregated_script_usage
-                    )
-                shared_state.fallback_summary = merge_fallback_summaries(
-                    getattr(shared_state, "fallback_summary", []), aggregated_fallback_summary
-                )
+        aggregated_script_usage, aggregated_fallback_summary = self._merge_font_scan(
+            " ".join(part for part in metadata_strings if part.strip()),
+            subject=" on metadata",
+            state=shared_state,
+            script_usage=aggregated_script_usage,
+            fallback_summary=aggregated_fallback_summary,
+        )
 
         if aggregated_script_usage or aggregated_fallback_summary:
             template_overrides = template_overrides or {}
