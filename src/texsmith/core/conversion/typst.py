@@ -44,16 +44,20 @@ from texsmith.writers.typst import render_document
 from texsmith.writers.typst.build import compile_typst
 from texsmith.writers.typst.escaper import citation_label
 
-from .bodies import Body, Requires, build_writer_options, write_body
+from .bodies import Body, Requires
 from .models import ConversionRequest
-from .pipeline import apply_pass_values, build_pass_context, processed_lang
+from .pipeline import (
+    apply_pass_values,
+    build_pass_context,
+    processed_lang,
+    write_slot_bodies,
+)
 from .resolution import (
     ResolutionChain,
     bibliography_paths,
     numbering_mode,
     resolve_pass,
     tmark_language,
-    writer_numbering,
 )
 
 
@@ -393,27 +397,14 @@ def render_typst_document(
     )
     assert processed.ir is not None
 
-    bodies: dict[str, Body] = {}
-    requires = Requires()
-    for slot_body in processed.bodies:
-        writer_options = build_writer_options(
-            backend="typst",
-            language=language,
-            base_level=slot_body.base_level,
-            numbered=slot_body.numbered,
-            numbering=writer_numbering(mode),
-        )
-        body = write_body(
-            processed.ir,
-            "typst",
-            writer_options,
-            blocks=slot_body.blocks,
-            loader=ctx.loader,
-            resolved=processed.resolved,
-            sink=ctx.diagnostics,
-        )
-        bodies[slot_body.name] = body
-        requires.merge(body.requires)
+    bodies, _slot_outputs, requires = write_slot_bodies(
+        processed,
+        backend="typst",
+        language=language,
+        mode=mode,
+        loader=ctx.loader,
+        sink=ctx.diagnostics,
+    )
     processed.diagnostics.extend(
         record for record in ctx.diagnostics if record not in processed.diagnostics
     )

@@ -350,6 +350,52 @@ def _declare_glossary(state: DocumentState, resolved: Mapping[str, Any] | None) 
         state.acronym_keys.setdefault(name, name)
 
 
+def write_slot_bodies(
+    processed: Document,
+    *,
+    backend: str,
+    language: str | None,
+    mode: str,
+    loader: Any,
+    sink: Any,
+    code_options: Mapping[str, Any] | None = None,
+    legacy_accents: bool = False,
+) -> tuple[dict[str, Body], dict[str, str], Requires]:
+    """One ``tmark.write`` per slot body, and the union of what they require.
+
+    Both backends do exactly this after ``resolve``; the only thing that
+    differs is what they ask the writer for. The bodies share one ``Resolved``
+    (``processed.resolved``), so numbering does not restart per slot.
+    """
+    assert processed.ir is not None
+    bodies: dict[str, Body] = {}
+    slot_outputs: dict[str, str] = {}
+    requires = Requires()
+    for slot_body in processed.bodies:
+        options = build_writer_options(
+            backend=backend,
+            language=language,
+            code_options=code_options,
+            legacy_accents=legacy_accents,
+            base_level=slot_body.base_level,
+            numbered=slot_body.numbered,
+            numbering=writer_numbering(mode),
+        )
+        body = write_body(
+            processed.ir,
+            backend,
+            options,
+            blocks=slot_body.blocks,
+            loader=loader,
+            resolved=processed.resolved,
+            sink=sink,
+        )
+        bodies[slot_body.name] = body
+        slot_outputs[slot_body.name] = slot_outputs.get(slot_body.name, "") + body.text
+        requires.merge(body.requires)
+    return bodies, slot_outputs, requires
+
+
 def render_ir_document(
     *,
     context: ConversionContext,
@@ -393,31 +439,16 @@ def render_ir_document(
     assert processed.ir is not None
     absorb_pass_bibliography(context, ctx.bibliography)
 
-    slot_outputs: dict[str, str] = {}
-    bodies: dict[str, Body] = {}
-    requires = Requires()
-    for slot_body in processed.bodies:
-        options = build_writer_options(
-            backend=backend,
-            language=language,
-            code_options=code_options,
-            legacy_accents=request.legacy_latex_accents,
-            base_level=slot_body.base_level,
-            numbered=slot_body.numbered,
-            numbering=writer_numbering(mode),
-        )
-        body = write_body(
-            processed.ir,
-            backend,
-            options,
-            blocks=slot_body.blocks,
-            loader=ctx.loader,
-            resolved=processed.resolved,
-            sink=sink,
-        )
-        bodies[slot_body.name] = body
-        slot_outputs[slot_body.name] = slot_outputs.get(slot_body.name, "") + body.text
-        requires.merge(body.requires)
+    bodies, slot_outputs, requires = write_slot_bodies(
+        processed,
+        backend=backend,
+        language=language,
+        mode=mode,
+        loader=ctx.loader,
+        sink=sink,
+        code_options=code_options,
+        legacy_accents=request.legacy_latex_accents,
+    )
 
     if initial_state is not None:
         state = copy.deepcopy(initial_state)
