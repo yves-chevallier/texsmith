@@ -12,7 +12,7 @@ the HTML path for that path only:
 | ts-bibliography | ``Requires.bibliography``; cited keys are ``citations``        |
 | ts-glossary     | ``ts-glossary`` required, entries from ``Document.abbreviations`` |
 | ts-code         | as row one; ``requires_shell_escape`` from ``Requires.shell_escape`` |
-| ts-extra        | packages = ``Requires.packages`` minus the packages the active rows imply |
+| ts-extra        | ``extra_packages_from_requires``: what the bodies named, less what the active rows load |
 | ts-fonts, ts-geometry, ts-frame | unchanged (configuration, not contracts)      |
 
 A ``press.fragments`` entry not in the table renders unconditionally, as today.
@@ -35,14 +35,11 @@ if TYPE_CHECKING:  # pragma: no cover - typing only
 __all__ = [
     "apply_requires",
     "fragment_table",
-    "implied_packages",
     "required_fragment",
 ]
 
 #: Context key listing the contracts the bodies named.
 REQUIRED_FRAGMENTS_KEY = "ts_required_fragments"
-#: Context key listing the packages ``ts-extra`` must load for the bodies.
-REQUIRED_PACKAGES_KEY = "ts_required_packages"
 
 
 @lru_cache(maxsize=1)
@@ -57,18 +54,6 @@ def fragment_table() -> dict[str, dict[str, Any]]:
     except Exception:  # pragma: no cover - defensive
         return {}
     return {str(row["name"]): dict(row) for row in rows if isinstance(row, Mapping)}
-
-
-def implied_packages(fragments: Iterable[str]) -> set[str]:
-    """The LaTeX packages the named contracts load themselves."""
-    table = fragment_table()
-    packages: set[str] = set()
-    for name in fragments:
-        row = table.get(name)
-        if row is None:
-            continue
-        packages.update(str(item) for item in row.get("packages") or ())
-    return packages
 
 
 def required_fragment(context: Mapping[str, Any], name: str) -> bool:
@@ -98,12 +83,10 @@ def apply_requires(
     """
     state.contract_path = True
     state.required_fragments = set(state.required_fragments) | set(requires.fragments)
-    implied = implied_packages(state.required_fragments)
-    state.required_packages = list(
-        dict.fromkeys(
-            pkg for pkg in (*state.required_packages, *requires.packages) if pkg not in implied
-        )
-    )
+    # What the bodies named, as they named it. Which of those ``ts-extra`` has
+    # to load — and which an active contract already loads — is decided once,
+    # by ``extra_packages_from_requires``, where that list is built.
+    state.required_packages = list(dict.fromkeys((*state.required_packages, *requires.packages)))
     state.has_index_entries = bool(state.has_index_entries or requires.index)
     state.index_registries = list(dict.fromkeys((*state.index_registries, *requires.index)))
     state.requires_shell_escape = bool(

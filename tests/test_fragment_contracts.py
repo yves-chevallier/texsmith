@@ -145,14 +145,27 @@ def test_activate_from_requires_follows_the_table() -> None:
     assert activate_from_requires(None) == {"ts-fonts", "ts-extra"}
 
 
-def test_extra_packages_merge_requires_and_implied_rows() -> None:
+def test_extra_loads_what_no_active_contract_provides() -> None:
+    """``ts-extra`` is the fallback, not a second loader.
+
+    A row declares the packages its ``.sty`` loads, with the options it needs;
+    loading one of them again from ``ts-extra`` is at best redundant and at
+    worst an option clash. So the list is what the bodies named *less* what an
+    active contract brings.
+    """
     packages = extra_packages_from_requires(
-        {"packages": ["csquotes", "ulem"], "fragments": ["ts-keystrokes"]}
+        {"packages": ["csquotes", "ulem"], "fragments": ["ts-keystrokes", "ts-critic"]}
     )
-    assert packages[:2] == ["csquotes", "ulem"]
-    assert "tikz" in packages
-    assert "fontspec" in packages  # implied by ts-fonts, always active
-    assert len(packages) == len(set(packages))
+    assert packages == ["csquotes"]  # ts-critic loads ulem with [normalem]
+    # ``tikz`` is ts-keystrokes' and ``fontspec`` is ts-fonts', which is always
+    # active: neither is ``ts-extra``'s to load.
+    assert "tikz" not in packages
+    assert "fontspec" not in packages
+
+
+def test_extra_loads_a_named_package_no_contract_provides() -> None:
+    packages = extra_packages_from_requires({"packages": ["booktabs"], "fragments": []})
+    assert packages == ["booktabs"]
 
 
 def test_inject_requires_populates_the_context() -> None:
@@ -162,7 +175,8 @@ def test_inject_requires_populates_the_context() -> None:
     )
     assert "ts-index" in active
     assert context[ACTIVE_FRAGMENTS_KEY] == sorted(active)
-    assert "fvextra" in context[REQUIRES_PACKAGES_KEY]
+    # ``fvextra`` is ts-code's own, so it is absent from ``ts-extra``'s list.
+    assert "fvextra" not in context[REQUIRES_PACKAGES_KEY]
     assert context["index_registries"] == ["physics"]
     assert context["requires_shell_escape"] is True
     assert contract_active(context, "ts-code") is True
@@ -429,8 +443,14 @@ def test_contract_document_renders_every_fragment(tmp_path: Path) -> None:
             assert f"\\usepackage{{{name}}}" in tex
             assert (tmp_path / f"{name}.sty").exists()
     assert "\\ProvideDocumentCommand{\\textcite}" in tex
-    assert "\\usepackage[normalem]{ulem}" in tex
-    assert "\\usepackage{glossaries}" not in tex  # the fragment loads it with options
+    # A package an active contract loads itself is not loaded a second time by
+    # ``ts-extra``: the fragment gives it options ``ts-extra`` does not know,
+    # and a second bare load is an option clash waiting for an ordering change.
+    assert "\\usepackage{glossaries}" not in tex  # ts-glossary loads it with [acronym]
+    assert "\\usepackage[normalem]{ulem}" not in tex
+    assert "\\usepackage{ulem}" not in tex
+    critic_sty = (tmp_path / "ts-critic.sty").read_text(encoding="utf-8")
+    assert "\\RequirePackage[normalem]{ulem}" in critic_sty  # ts-critic does
     index_sty = (tmp_path / "ts-index.sty").read_text(encoding="utf-8")
     assert "\\makeindex[name=physics" in index_sty
     keys_sty = (tmp_path / "ts-keystrokes.sty").read_text(encoding="utf-8")

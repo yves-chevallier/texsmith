@@ -33,6 +33,7 @@ from texsmith.core.conversion.resolution import (
 from texsmith.core.conversion.service import ConversionService
 from texsmith.core.documents import Document
 from texsmith.core.fragments.activation import apply_requires, required_fragment
+from texsmith.core.fragments.resolution import extra_packages_from_requires
 from texsmith.ir import model
 from texsmith.ui.cli import app
 
@@ -433,7 +434,12 @@ def test_requires_union_and_activation() -> None:
         ),
     )
     assert state.required_fragments == {"ts-glossary", "ts-code"}
-    assert state.required_packages == ["booktabs", "ulem"]  # glossaries is ts-glossary's
+    # The state records what the bodies named, as they named it; which of
+    # those ``ts-extra`` loads is ``extra_packages_from_requires``'s answer.
+    assert state.required_packages == ["booktabs", "glossaries", "ulem"]
+    assert extra_packages_from_requires(
+        {"packages": state.required_packages, "fragments": sorted(state.required_fragments)}
+    ) == ["booktabs", "ulem"]  # glossaries is ts-glossary's; ts-critic is not active
     assert state.has_index_entries is True and state.index_registries == [""]
     assert state.requires_shell_escape is True
     assert state.citations == ["knuth"]

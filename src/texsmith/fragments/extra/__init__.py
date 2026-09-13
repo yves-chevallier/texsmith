@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import Any, ClassVar
 
 from texsmith.core.fragments.base import BaseFragment, FragmentPiece
-from texsmith.core.fragments.contracts import FRAGMENT_OWNED_PACKAGES, PACKAGE_OPTIONS
+from texsmith.core.fragments.contracts import PACKAGE_OPTIONS
 from texsmith.core.fragments.resolution import REQUIRES_PACKAGES_KEY
 
 
@@ -57,10 +57,11 @@ def _contract_packages(context: Mapping[str, object]) -> list[tuple[str, str | N
     """Packages named by a writer's ``Requires`` (fragment-contracts.md §2).
 
     ``None`` when the context carries no ``ts_requires_packages`` (the legacy
-    path, where the string sniffers of :func:`_collect_packages` decide).
-    Packages a contract fragment loads itself with options (``glossaries``,
-    ``imakeidx``, …) or that only exist for some engines (``fontspec``) are
-    left to their fragment; ``ulem`` takes ``normalem`` so ``\\emph`` survives.
+    path, where the string sniffers of :func:`_collect_packages` decide). The
+    list already excludes what an active contract loads itself
+    (``extra_packages_from_requires``); what is left here is the engine and
+    context rules — ``lua-ul`` only under LuaLaTeX, ``babel`` the template's,
+    ``hyperref`` with the options the context carries.
     """
     raw = context.get(REQUIRES_PACKAGES_KEY)
     if raw is None:
@@ -69,8 +70,6 @@ def _contract_packages(context: Mapping[str, object]) -> list[tuple[str, str | N
     engine = str(context.get("latex_engine") or "").lower()
     packages: list[tuple[str, str | None]] = []
     for name in names:
-        if name in FRAGMENT_OWNED_PACKAGES:
-            continue
         if name == "babel":
             # The template loads babel with its language option.
             continue
@@ -216,23 +215,7 @@ def _collect_packages(context: Mapping[str, object]) -> list[tuple[str, str | No
     if tikz_option:
         _maybe_add(True, "tikz", tikz_option)
 
-    # IR path (fragment-contracts.md §2): the packages the bodies' ``Requires``
-    # named, minus what the active contracts load themselves (already removed
-    # by ``core.fragments.activation``). Known packages keep the options the
-    # sniffers above would have given them.
-    required = context.get("ts_required_packages") if hasattr(context, "get") else None
-    if isinstance(required, (list, tuple)):
-        loaded = {name for name, _options in packages}
-        for name in required:
-            if isinstance(name, str) and name and name not in loaded:
-                _maybe_add(True, name, _REQUIRED_PACKAGE_OPTIONS.get(name))
-                loaded.add(name)
-
     return packages
-
-
-#: Options the legacy sniffers attach to a package; kept when the IR path names it.
-_REQUIRED_PACKAGE_OPTIONS: dict[str, str | None] = {"ulem": "normalem", "hyphenat": "htt"}
 
 
 fragment = ExtraFragment()

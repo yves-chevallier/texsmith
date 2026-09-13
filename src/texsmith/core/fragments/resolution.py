@@ -197,20 +197,28 @@ def extra_packages_from_requires(
     requires: Mapping[str, Any] | None,
     active: Iterable[str] | None = None,
 ) -> list[str]:
-    """``Requires.packages`` merged with the packages implied by the active rows.
+    """What ``ts-extra`` must load: the packages the bodies named, less the ones
+    an active contract already loads.
 
-    This is the list ``ts-extra`` loads on the contract path (and the
-    ``tlmgr`` hint list); the order is the writer's, then the table's.
+    A contract row declares the packages its ``.sty`` loads, and
+    :data:`~texsmith.core.fragments.contracts.FRAGMENT_OWNED_PACKAGES` names
+    the ones a fragment loads conditionally, which the table cannot express
+    (``minted`` or ``listings`` depending on the engine). Either way
+    ``ts-extra`` must stay out of it: the fragment loads them with options
+    ``ts-extra`` does not know, and loading a package twice with different
+    options is an option clash.
+
+    The order is the writer's.
     """
-    from texsmith.core.fragments.contracts import implied_packages
+    from texsmith.core.fragments.contracts import FRAGMENT_OWNED_PACKAGES, implied_packages
 
     payload: Mapping[str, Any] = requires or {}
     names = set(active) if active is not None else activate_from_requires(payload)
+    provided = set(implied_packages(names)) | FRAGMENT_OWNED_PACKAGES
     ordered: dict[str, None] = {}
     for package in _clean_strings(payload.get("packages")):
-        ordered.setdefault(package, None)
-    for package in implied_packages(names):
-        ordered.setdefault(package, None)
+        if package not in provided:
+            ordered.setdefault(package, None)
     return list(ordered)
 
 

@@ -46,7 +46,9 @@ class DocumentState:
     fonts_scanned: bool = False
     callouts_used: bool = False
     #: IR path only (``core.fragments.activation``): the contracts the bodies
-    #: named, the packages ``ts-extra`` must load, the index registries used.
+    #: named, the packages they named, the index registries used. Which of
+    #: those packages ``ts-extra`` loads is ``extra_packages_from_requires``'s
+    #: answer, not this list's.
     required_fragments: set[str] = field(default_factory=set)
     required_packages: list[str] = field(default_factory=list)
     index_registries: list[str] = field(default_factory=list)

@@ -15,7 +15,7 @@ from texsmith.core.fragments import (
     inject_fragment_attributes,
     render_fragments,
 )
-from texsmith.core.fragments.activation import REQUIRED_FRAGMENTS_KEY, REQUIRED_PACKAGES_KEY
+from texsmith.core.fragments.activation import REQUIRED_FRAGMENTS_KEY
 from texsmith.core.fragments.resolution import inject_requires
 from texsmith.core.templates import TemplateRuntime
 from texsmith.core.templates.manifest import TemplateError
@@ -143,7 +143,6 @@ def wrap_template_document(
     # IR path: the contracts and packages the bodies named (empty on the HTML
     # path, where the fragments keep sniffing the rendered LaTeX).
     template_context[REQUIRED_FRAGMENTS_KEY] = sorted(document_state.required_fragments)
-    template_context[REQUIRED_PACKAGES_KEY] = list(document_state.required_packages)
     template_context["index_registries"] = list(document_state.index_registries)
     if document_state.contract_path:
         # The contract path: the fragments read ``ts_active_fragments``
