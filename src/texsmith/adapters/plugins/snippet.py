@@ -30,7 +30,7 @@ import yaml
 
 from texsmith.adapters.html_utils import coerce_attribute, gather_classes
 from texsmith.core.conversion import ConversionRequest
-from texsmith.core.diagnostics import DiagnosticEmitter
+from texsmith.core.diagnostics import DiagnosticEmitter, ensure_emitter
 from texsmith.core.documents import (
     Document,
     TitleStrategy,
@@ -798,6 +798,7 @@ def _build_document(
     *,
     host_dir: Path,
     host_name: str,
+    emitter: DiagnosticEmitter,
 ) -> Document | None:
     if not block.content:
         return None
@@ -809,6 +810,7 @@ def _build_document(
         drop_title=block.drop_title,
         suppress_title=block.suppress_title_metadata,
         front_matter=block.front_matter,
+        emitter=emitter,
     )
 
 
@@ -862,6 +864,7 @@ def _build_document_from_markup(
     promote_title: bool,
     drop_title: bool,
     suppress_title: bool,
+    emitter: DiagnosticEmitter,
     front_matter: Mapping[str, Any] | None = None,
 ) -> Document:
     """Parse a fence's inline body as a document of its own.
@@ -870,6 +873,9 @@ def _build_document_from_markup(
     the host document — but it sits in ``base_dir`` so includes and assets
     resolve against the host's directory, as they did when the snippet was a
     nested Markdown render.
+
+    It registers in the run's file table like any other source: the fence is a
+    file the build met, and a diagnostic raised inside it has to name it.
     """
     return Document.from_markdown_text(
         _front_matter_prelude(front_matter) + content,
@@ -881,6 +887,7 @@ def _build_document_from_markup(
         title_strategy=TitleStrategy.DROP if drop_title else None,
         numbered=False,
         front_matter_overrides=front_matter,
+        emitter=emitter,
     )
 
 
@@ -891,6 +898,7 @@ def _build_document_from_yaml(
     promote_title: bool,
     drop_title: bool,
     suppress_title: bool,
+    emitter: DiagnosticEmitter,
 ) -> Document:
     """Create a Document using YAML front matter only (no body)."""
     docs: list[Mapping[str, Any]] = []
@@ -925,6 +933,7 @@ def _build_document_from_yaml(
         title_strategy=title_strategy,
         numbered=False,
         front_matter_overrides=payload,
+        emitter=emitter,
     )
 
 
@@ -934,6 +943,7 @@ def _build_documents_from_sources(
     promote_title: bool,
     drop_title: bool,
     suppress_title: bool,
+    emitter: DiagnosticEmitter,
 ) -> list[Document]:
     documents: list[Document] = []
     for path in sources:
@@ -950,6 +960,7 @@ def _build_documents_from_sources(
                     strip_heading=drop_title,
                     suppress_title=suppress_title,
                     numbered=False,
+                    emitter=emitter,
                 )
             )
             continue
@@ -965,6 +976,7 @@ def _build_documents_from_sources(
                     promote_title=promote_title,
                     drop_title=drop_title,
                     suppress_title=suppress_title,
+                    emitter=emitter,
                 )
             )
             continue
@@ -1221,8 +1233,11 @@ def ensure_snippet_assets(
     host_dir = _resolve_base_dir(block, host_path)
     host_name = host_path.stem or "snippet"
 
+    active_emitter = ensure_emitter(emitter)
     documents: list[Document] = []
-    inline_document = _build_document(block, host_dir=host_dir, host_name=host_name)
+    inline_document = _build_document(
+        block, host_dir=host_dir, host_name=host_name, emitter=active_emitter
+    )
     if inline_document is not None:
         documents.append(inline_document)
 
@@ -1243,6 +1258,7 @@ def ensure_snippet_assets(
                 promote_title=block.promote_title,
                 drop_title=block.drop_title,
                 suppress_title=block.suppress_title_metadata,
+                emitter=active_emitter,
             )
         )
 

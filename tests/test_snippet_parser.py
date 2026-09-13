@@ -8,6 +8,9 @@ from bs4 import BeautifulSoup
 import pytest
 
 from texsmith.adapters.plugins import snippet
+from texsmith.core.diagnostics import LoggingEmitter, NullEmitter
+from texsmith.core.documents import Document
+from texsmith.diagnostics import format_diagnostic
 
 
 WADHWANI = (
@@ -76,7 +79,9 @@ def test_snippet_front_matter_bibliography_reaches_the_ir(tmp_path: Path, declar
         "Cheese exhibits unique melting properties @WADHWANI20111713.\n"
     )
     block = _build_snippet_block(tmp_path, raw.strip())
-    document = snippet._build_document(block, host_dir=tmp_path, host_name="host")
+    document = snippet._build_document(
+        block, host_dir=tmp_path, host_name="host", emitter=NullEmitter()
+    )
 
     assert document is not None
     assert document.ir is not None
@@ -84,6 +89,35 @@ def test_snippet_front_matter_bibliography_reaches_the_ir(tmp_path: Path, declar
     assert declared == {"WADHWANI20111713": "https://doi.org/10.3168/jds.2010-3952"}
     # The preview's own configuration stays out of the document.
     assert "width" not in document.front_matter
+
+
+def test_a_fence_registers_as_a_source_of_the_run(tmp_path: Path) -> None:
+    """A diagnostic raised inside a fence names the fence, not the host page.
+
+    The nested document used to parse against a file table of its own, so its
+    pseudo-source took id 0 — the id the host document already held in the
+    run's table. A finding inside the fence then rendered with the host's path
+    and the fence's line number, which points at an unrelated line.
+    """
+    emitter = LoggingEmitter()
+    host = tmp_path / "host.md"
+    host.write_text("# Host\n\nThe host document.\n", encoding="utf-8")
+    host_document = Document.from_markdown(host, emitter=emitter)
+    assert host_document.ir is not None
+    assert host_document.ir.file == 0
+
+    block = _build_snippet_block(tmp_path, "# Fenced\n\nSee [[nowhere]] inside the fence.\n")
+    nested = snippet._build_document(block, host_dir=tmp_path, host_name="host", emitter=emitter)
+
+    assert nested is not None
+    assert nested.ir is not None
+    assert nested.files is emitter.sink.files
+    assert nested.ir.file != host_document.ir.file
+    assert emitter.sink.files.path(nested.ir.file) != host
+
+    (record,) = [d for d in nested.diagnostics if d.code == "compat-unsupported"]
+    rendered = format_diagnostic(record, emitter.sink.files)
+    assert rendered.startswith(str(emitter.sink.files.path(nested.ir.file)))
 
 
 def test_snippet_preview_resolves_a_front_matter_doi(
