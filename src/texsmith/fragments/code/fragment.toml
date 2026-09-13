@@ -1,3 +1,1 @@
-name = "ts-code"
-description = "Minted-based code listings used by Markdown code blocks."
 entrypoint = "texsmith.fragments.code:fragment"

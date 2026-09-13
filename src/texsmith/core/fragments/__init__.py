@@ -84,6 +84,15 @@ class FragmentDefinition:
 
         entrypoint = payload.get("entrypoint")
         if isinstance(entrypoint, str):
+            # The class the entrypoint names is the definition. A manifest that
+            # also spells ``name`` or ``description`` states them twice, and the
+            # copies drift: the bundled thirteen had all diverged.
+            duplicated = sorted(key for key in ("name", "description") if key in payload)
+            if duplicated:
+                raise TemplateError(
+                    f"Fragment manifest {manifest_path} declares {', '.join(duplicated)} "
+                    "next to 'entrypoint'; the class it names owns them."
+                )
             return _load_entrypoint(entrypoint)
 
         name = payload.get("name") if isinstance(payload.get("name"), str) else None

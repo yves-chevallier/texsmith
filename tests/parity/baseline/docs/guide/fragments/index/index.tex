@@ -39,7 +39,8 @@
 \maketitle
 Fragments are reusable \LaTeX{} snippets injected into template slots. Built-in fragments (e.g., geometry, fonts, glossary, index) and custom ones share the same structure:
 \begin{itemize}
-\item \tscodeinline{fragment.toml} with \tscodeinline{name}, \tscodeinline{description}, and either an \tscodeinline{entrypoint} or a \tscodeinline{files} list.
+\item \tscodeinline{fragment.toml} with either an \tscodeinline{entrypoint} --- the Python class then owns \tscodeinline{name}
+and \tscodeinline{description} --- or a \tscodeinline{files} list, which declares them itself.
 \item Optional \tscodeinline{attributes} section describing fragment-owned attributes (ownership enforced).
 \item A \tscodeinline{provides} list naming the contract macros the fragment defines; a fragment that replaces another must provide every entry of its row.
 \item Optional \tscodeinline{should\_render} logic (via entrypoint) to render only when needed.

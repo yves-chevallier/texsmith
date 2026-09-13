@@ -1,3 +1,1 @@
-name = "ts-frame"
-description = "Optional page frame with an optional folded corner."
 entrypoint = "texsmith.fragments.frame:fragment"

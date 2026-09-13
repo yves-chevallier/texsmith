@@ -1,3 +1,1 @@
-name = "ts-typesetting"
-description = "Paragraph spacing, leading, and line numbering helpers."
 entrypoint = "texsmith.fragments.typesetting:fragment"

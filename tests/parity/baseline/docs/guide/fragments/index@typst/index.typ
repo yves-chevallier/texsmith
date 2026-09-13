@@ -22,7 +22,8 @@ align(center)[#counter(page).get().first()]
 
 Fragments are reusable #ts-logo("LaTeX") snippets injected into template slots. Built-in fragments (e.g., geometry, fonts, glossary, index) and custom ones share the same structure:
 
-- `fragment.toml` with `name`, `description`, and either an `entrypoint` or a `files` list.
+- `fragment.toml` with either an `entrypoint` — the Python class then owns `name`
+and `description` — or a `files` list, which declares them itself.
 - Optional `attributes` section describing fragment-owned attributes (ownership enforced).
 - A `provides` list naming the contract macros the fragment defines; a fragment that replaces another must provide every entry of its row.
 - Optional `should_render` logic (via entrypoint) to render only when needed.

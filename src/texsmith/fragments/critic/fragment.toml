@@ -1,3 +1,1 @@
-name = "ts-critic"
-description = "Critic markup: insertions, deletions, substitutions and comments."
 entrypoint = "texsmith.fragments.critic:fragment"

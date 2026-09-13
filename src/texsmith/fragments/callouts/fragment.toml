@@ -1,3 +1,1 @@
-name = "ts-callouts"
-description = "Reusable callout styles shared by built-in templates."
 entrypoint = "texsmith.fragments.callouts:fragment"

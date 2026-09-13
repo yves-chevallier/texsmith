@@ -1,3 +1,1 @@
-name = "ts-geometry"
-description = "Page layout setup driven by press.paper."
 entrypoint = "texsmith.fragments.geometry:fragment"
