@@ -354,6 +354,7 @@ def test_the_canonical_spelling_wins_over_the_deprecated_one() -> None:
 
 def test_an_invalid_inline_entry_fails_both_backends(tmp_path: Path) -> None:
     """Typst used to build a ``NullEmitter`` and swallow the error LaTeX raises."""
+    from texsmith.core.conversion import ConversionRequest
     from texsmith.core.conversion.typst import render_typst_document
     from texsmith.core.documents import Document
     from texsmith.core.exceptions import ConversionError
@@ -375,4 +376,6 @@ def test_an_invalid_inline_entry_fails_both_backends(tmp_path: Path) -> None:
     document.prepare_for_conversion()
 
     with pytest.raises(ConversionError, match="nonsense_field"):
-        render_typst_document(document, template="article", output_dir=tmp_path / "out")
+        render_typst_document(
+            document, ConversionRequest(template="article"), output_dir=tmp_path / "out"
+        )

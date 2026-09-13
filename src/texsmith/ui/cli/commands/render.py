@@ -866,13 +866,8 @@ def render(
             try:
                 return render_typst_document(
                     doc,
-                    template=template,
-                    bibliography_files=bibliography_files,
+                    request,
                     output_dir=typst_output_dir,
-                    diagrams_backend=(
-                        diagrams_backend.lower() if isinstance(diagrams_backend, str) else None
-                    ),
-                    template_options=attribute_overrides,
                     emitter=emitter,
                 )
             except (ConversionError, TemplateError) as exc:

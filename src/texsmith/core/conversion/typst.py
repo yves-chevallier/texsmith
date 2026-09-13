@@ -309,17 +309,20 @@ def typst_bibliography(
 
 def render_typst_document(
     document: Document,
+    request: ConversionRequest,
     *,
-    template: str | None = None,
-    bibliography_files: Sequence[Path] = (),
     output_dir: Path | None = None,
-    diagrams_backend: str | None = None,
-    template_options: Mapping[str, Any] | None = None,
     emitter: DiagnosticEmitter | None = None,
     chain: ResolutionChain | None = None,
     state: DocumentState | None = None,
 ) -> str:
     """Render a tmark-read document to a ``.typ`` source (standalone or templated).
+
+    ``request`` is the one the caller assembled, not a reconstruction of it:
+    the template, the bibliography, the diagram backend and the template
+    options are read from it, and so are the flags the passes need — the asset
+    strategy and ``include_paths``, which a rebuilt request silently reset to
+    their defaults.
 
     ``state``, when given, receives what the passes computed (script usage,
     fallback summary, ``fonts_scanned``) through ``apply_pass_values``; the
@@ -328,9 +331,11 @@ def render_typst_document(
     if document.ir is None:
         raise ValueError("render_typst_document needs a document parsed into the IR")
     active_emitter = emitter or NullEmitter()
+    template = request.template
+    bibliography_files = list(request.bibliography_files)
     front_matter = _front_matter(document)
     overrides = _press_overrides(dict(front_matter))
-    options = dict(template_options or {})
+    options = dict(request.template_options)
     title = _document_title(document, overrides)
 
     typst_template: TypstTemplate | None = None
@@ -351,20 +356,14 @@ def render_typst_document(
             if getattr(slot, "strip_heading", False):
                 strip.add(name)
 
-    request = ConversionRequest(
-        documents=[document.source_path],
-        bibliography_files=list(bibliography_files),
-        template=template,
-        diagrams_backend=diagrams_backend,
-    )
     context = ConversionContext(
         document=document,
         request=request,
         output_dir=output_dir if output_dir is not None else document.source_path.parent,
         # The LaTeX path resolves the language in ``resolve_conversion_context``;
         # the Typst entry point gets the document straight from ``prepare_documents``.
-        language=document.language or resolve_template_language(None, front_matter),
-        generation=GenerationStrategy(),
+        language=document.language or resolve_template_language(request.language, front_matter),
+        generation=GenerationStrategy.from_request(request),
         template_overrides={**overrides, **options},
         slot_requests=requests,
     )

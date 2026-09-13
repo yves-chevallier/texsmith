@@ -49,12 +49,7 @@ def resolve_conversion_context(
     emitter = ensure_emitter(request.emitter)
     document = document.prepare_for_conversion()
 
-    generation = GenerationStrategy(
-        copy_assets=request.copy_assets,
-        convert_assets=request.convert_assets,
-        hash_assets=request.hash_assets,
-        persist_manifest=request.manifest,
-    )
+    generation = GenerationStrategy.from_request(request)
 
     resolved_language = resolve_template_language(request.language, document.front_matter)
     document.language = resolved_language

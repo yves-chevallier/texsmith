@@ -541,6 +541,43 @@ def test_typst_bibliography_includes_the_doi_pass_entries(tmp_path: Path) -> Non
     assert (out / "inline-doi-doc.bib").is_file()
 
 
+def test_the_typst_backend_honours_the_request_it_is_given(tmp_path: Path) -> None:
+    """``--hash-assets`` and ``--include-path`` reach the Typst passes.
+
+    The entry point used to build a ``ConversionRequest`` of its own out of
+    four arguments — template, bibliography, diagram backend, options — so
+    every other field reverted to its default: assets were never hashed and
+    the include search path was empty, which lost the included text outright
+    while the LaTeX backend resolved it.
+    """
+    from texsmith.core.conversion import ConversionRequest
+    from texsmith.core.conversion.typst import render_typst_document
+    from texsmith.core.documents import Document
+
+    elsewhere = tmp_path / "elsewhere"
+    elsewhere.mkdir()
+    (elsewhere / "part.md").write_text("Included prose.\n", encoding="utf-8")
+    (tmp_path / "figure.png").write_bytes(b"\x89PNG\r\n\x1a\nfake")
+    source = tmp_path / "doc.md"
+    source.write_text(
+        "# Passes\n\n![A figure](figure.png)\n\n{include}(part.md)\n", encoding="utf-8"
+    )
+
+    document = Document.from_markdown(source).prepare_for_conversion()
+    typ = render_typst_document(
+        document,
+        ConversionRequest(hash_assets=True, include_paths=[elsewhere]),
+        output_dir=tmp_path / "out",
+    )
+
+    assert "Included prose." in typ
+    # ``hash_assets`` names an asset by the sha256 of its key, so the stored
+    # name is a 64-hex digest rather than the source's own name.
+    (asset,) = list((tmp_path / "out" / "assets").iterdir())
+    assert asset.suffix == ".png"
+    assert re.fullmatch(r"[0-9a-f]{64}", asset.stem), asset.name
+
+
 def test_typst_assets_and_pass_values(tmp_path: Path, monkeypatch) -> None:
     """Diagrams become PNG for Typst, images land under assets/, the pass values reach the state."""
     from texsmith.adapters.transformers import register_converter, registry
@@ -580,7 +617,9 @@ def test_typst_assets_and_pass_values(tmp_path: Path, monkeypatch) -> None:
     state = DocumentState()
     try:
         document = Document.from_markdown(source).prepare_for_conversion()
-        typ = render_typst_document(document, template="article", output_dir=out, state=state)
+        typ = render_typst_document(
+            document, ConversionRequest(template="article"), output_dir=out, state=state
+        )
     finally:
         register_converter("mermaid", saved)
 

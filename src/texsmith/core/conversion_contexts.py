@@ -27,6 +27,16 @@ class GenerationStrategy:
     hash_assets: bool = False
     persist_manifest: bool = False
 
+    @classmethod
+    def from_request(cls, request: ConversionRequest) -> GenerationStrategy:
+        """The asset flags of a request, as every backend must read them."""
+        return cls(
+            copy_assets=request.copy_assets,
+            convert_assets=request.convert_assets,
+            hash_assets=request.hash_assets,
+            persist_manifest=request.manifest,
+        )
+
 
 @dataclass(slots=True)
 class ConversionContext:
