@@ -10,7 +10,6 @@ from pathlib import Path
 from typing import Any
 
 from texsmith.core.bibliography.collection import BibliographyCollection
-from texsmith.core.code_options import normalise_inline_options
 from texsmith.core.context import DocumentState
 from texsmith.core.conversion_contexts import ConversionContext
 from texsmith.core.diagnostics import (
@@ -21,7 +20,6 @@ from texsmith.core.diagnostics import (
 )
 from texsmith.core.documents import Document
 from texsmith.core.templates import (
-    TemplateBinding,
     TemplateError,
     TemplateRuntime,
     wrap_template_document,
@@ -35,6 +33,7 @@ from .models import ConversionRequest
 from .pipeline import render_ir_document
 from .renderer import TemplateFragment
 from .resolution import ResolutionChain, bibliography_paths
+from .settings import resolve_code_options
 from .templates import bind_template
 
 
@@ -56,89 +55,6 @@ class ConversionResult:
     document: Document | None = None
     context: ConversionContext | None = None
     assets_map: dict[str, Path] = field(default_factory=dict)
-
-
-_EMOJI_SPECIAL_MODES = {"artifact", "symbola", "color", "black", "twemoji"}
-_CODE_ENGINES = {"minted", "listings", "verbatim", "pygments"}
-
-
-def _coerce_emoji_mode(value: Any) -> str | None:
-    if not isinstance(value, str):
-        return None
-    candidate = value.strip()
-    if not candidate:
-        return None
-    lowered = candidate.lower()
-    return lowered if lowered in _EMOJI_SPECIAL_MODES else candidate
-
-
-def _resolve_code_options(
-    binding: TemplateBinding,
-    overrides: Mapping[str, Any] | None,
-) -> dict[str, Any]:
-    """Return the effective code configuration merging defaults and overrides."""
-    default_options: dict[str, Any] = {}
-    instance = binding.instance
-    if instance is not None:
-        try:
-            defaults = instance.info.attribute_defaults()
-        except Exception:
-            defaults = {}
-        code_default = defaults.get("code")
-        if isinstance(code_default, Mapping):
-            default_options.update(code_default)
-
-    merged = dict(default_options)
-    override_sources: list[Any] = []
-    if overrides:
-        if "code" in overrides:
-            override_sources.append(overrides.get("code"))
-        press_section = overrides.get("press")
-        if (
-            isinstance(press_section, Mapping)
-            and "code" in press_section
-            and "code" not in overrides
-        ):
-            override_sources.append(press_section.get("code"))
-
-    for candidate in override_sources:
-        if isinstance(candidate, Mapping):
-            merged.update(candidate)
-        elif isinstance(candidate, str):
-            merged["engine"] = candidate
-
-    engine_value = str(merged.get("engine", "pygments") or "pygments").strip().lower()
-    merged["engine"] = engine_value if engine_value in _CODE_ENGINES else "pygments"
-    style_value = merged.get("style", "bw")
-    if isinstance(style_value, str):
-        style_candidate = style_value.strip()
-    else:
-        style_candidate = str(style_value).strip() if style_value is not None else ""
-    merged["style"] = style_candidate or "bw"
-    merged["inline"] = normalise_inline_options(merged.get("inline"), default_options.get("inline"))
-    return merged
-
-
-def _extract_emoji_mode(mapping: Mapping[str, Any] | None) -> str | None:
-    if not isinstance(mapping, Mapping):
-        return None
-    direct = _coerce_emoji_mode(mapping.get("emoji"))
-    if direct:
-        return direct
-    fonts_section = mapping.get("fonts")
-    if isinstance(fonts_section, Mapping):
-        direct_fonts = _coerce_emoji_mode(fonts_section.get("emoji"))
-        if direct_fonts:
-            return direct_fonts
-    press = mapping.get("press")
-    if isinstance(press, Mapping):
-        press_direct = _coerce_emoji_mode(press.get("emoji"))
-        if press_direct:
-            return press_direct
-        press_fonts = press.get("fonts")
-        if isinstance(press_fonts, Mapping):
-            return _coerce_emoji_mode(press_fonts.get("emoji"))
-    return None
 
 
 def convert_document(
@@ -234,7 +150,7 @@ def _render_document(
             backend="latex",
             chain=context.resolution,
             initial_state=initial_state,
-            code_options=_resolve_code_options(binding, context.template_overrides),
+            code_options=resolve_code_options(binding, context.template_overrides),
         )
     except TemplateError as exc:
         if debug_enabled(emitter):

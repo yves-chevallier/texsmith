@@ -32,6 +32,7 @@ from typing import TYPE_CHECKING
 
 import emoji as _emoji
 
+from texsmith.core.conversion.settings import extract_emoji_mode
 from texsmith.core.exceptions import exception_hint
 from texsmith.ir import model
 from texsmith.ir.walk import map_inlines
@@ -57,10 +58,8 @@ def twemoji_url(cluster: str) -> str:
 
 def resolve_emoji_mode(ctx: PassContext) -> str | None:
     """The explicit ``fonts.emoji`` mode of the first context that sets one."""
-    from texsmith.core.conversion.core import _extract_emoji_mode
-
     for context in ctx.contexts:
-        mode = _extract_emoji_mode(context)
+        mode = extract_emoji_mode(context)
         if mode:
             return mode
     return None
