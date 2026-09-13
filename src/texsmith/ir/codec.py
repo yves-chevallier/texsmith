@@ -31,6 +31,7 @@ from collections.abc import Mapping
 from dataclasses import fields
 import hashlib
 import json
+from pathlib import Path
 from typing import Any, TypeVar
 
 from texsmith.ir import model
@@ -388,3 +389,14 @@ def wheel_schema_mismatch() -> str | None:
         f"but the installed tmark {version} ships schema {actual[:12]}; "
         "rerun scripts/gen_ir_models.py"
     )
+
+
+def persist_debug_ir(output_dir: Path, source: Path, ir_document: model.Document) -> Path:
+    """Persist the tmark IR of a document as ``<stem>.ir.json`` (``--debug-ir``)."""
+    output_dir.mkdir(parents=True, exist_ok=True)
+    debug_path = output_dir / f"{source.stem}.ir.json"
+    debug_path.write_text(
+        json.dumps(encode_document(ir_document), indent=2, ensure_ascii=False) + "\n",
+        encoding="utf-8",
+    )
+    return debug_path

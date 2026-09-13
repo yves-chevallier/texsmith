@@ -6,12 +6,12 @@ from pathlib import Path
 import pytest
 
 from texsmith.core.conversion import ConversionRequest, SlotAssignment
-from texsmith.core.conversion.debug import ConversionError
 from texsmith.core.conversion.execution import resolve_conversion_context
 from texsmith.core.conversion.inputs import UnsupportedInputError
 from texsmith.core.conversion.service import ConversionService
 from texsmith.core.conversion.templates import bind_template
 from texsmith.core.documents import Document, TitleStrategy
+from texsmith.core.exceptions import ConversionError
 from texsmith.core.templates.runtime import load_template_runtime
 
 

@@ -5,13 +5,16 @@ from pathlib import Path
 
 import pytest
 
-from texsmith.core.conversion.debug import format_user_friendly_render_error
 from texsmith.core.diagnostics import (
     DiagnosticEmitter,
     LoggingEmitter,
     NullEmitter,
 )
-from texsmith.core.exceptions import LatexRenderingError, TransformerExecutionError
+from texsmith.core.exceptions import (
+    LatexRenderingError,
+    TransformerExecutionError,
+    format_user_friendly_render_error,
+)
 from texsmith.diagnostics import NO_SPAN, Diagnostic, Severity, Span
 from texsmith.ui.cli.diagnostics import CliEmitter
 from texsmith.ui.cli.state import ensure_rich_compat, set_cli_state

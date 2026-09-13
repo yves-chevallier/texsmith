@@ -11,6 +11,13 @@ from pybtex.exceptions import PybtexError
 from slugify import slugify
 import yaml
 
+from texsmith.core.diagnostics import (
+    debug_enabled,
+    ensure_emitter,
+    raise_conversion_error,
+    record_event,
+)
+
 from ..bibliography.collection import BibliographyCollection
 from ..bibliography.parsing import (
     bibliography_data_from_inline_entry,
@@ -20,7 +27,6 @@ from ..config import BookConfig
 from ..conversion_contexts import ConversionContext
 from ..diagnostics import DiagnosticEmitter
 from ..templates import TemplateBinding, TemplateError, resolve_template_binding
-from .debug import debug_enabled, ensure_emitter, raise_conversion_error, record_event
 from .inputs import InlineBibliographyEntry
 
 

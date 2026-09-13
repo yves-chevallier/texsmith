@@ -70,12 +70,11 @@ from texsmith.core.bibliography import (
 from texsmith.core.config import BookConfig, LaTeXConfig
 from texsmith.core.context import DocumentState
 from texsmith.core.conversion.core import convert_document
-from texsmith.core.conversion.debug import format_rendering_error
 from texsmith.core.conversion.models import ConversionRequest
 from texsmith.core.conversion.resolution import ResolutionChain, bibliography_paths
 from texsmith.core.diagnostics import LoggingEmitter
 from texsmith.core.documents import Document, TitleStrategy
-from texsmith.core.exceptions import LatexRenderingError
+from texsmith.core.exceptions import LatexRenderingError, format_rendering_error
 from texsmith.core.templates import (
     TemplateError,
     TemplateSlot,

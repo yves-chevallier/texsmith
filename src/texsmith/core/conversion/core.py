@@ -13,6 +13,12 @@ from texsmith.core.bibliography.collection import BibliographyCollection
 from texsmith.core.code_options import normalise_inline_options
 from texsmith.core.context import DocumentState
 from texsmith.core.conversion_contexts import ConversionContext
+from texsmith.core.diagnostics import (
+    debug_enabled,
+    ensure_emitter,
+    raise_conversion_error,
+    record_event,
+)
 from texsmith.core.documents import Document
 from texsmith.core.templates import (
     TemplateBinding,
@@ -20,16 +26,10 @@ from texsmith.core.templates import (
     TemplateRuntime,
     wrap_template_document,
 )
+from texsmith.ir.codec import persist_debug_ir
 
 from ..diagnostics import DiagnosticEmitter, NullEmitter
 from ._utils import build_unique_stem_map
-from .debug import (
-    debug_enabled,
-    ensure_emitter,
-    persist_debug_ir,
-    raise_conversion_error,
-    record_event,
-)
 from .execution import resolve_conversion_context
 from .models import ConversionRequest
 from .pipeline import render_ir_document

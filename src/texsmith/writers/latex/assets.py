@@ -18,7 +18,7 @@ from texsmith.adapters.transformers import (
     svg2pdf,
 )
 from texsmith.adapters.transformers.strategies import _cairo_dependency_hint, _option_flag
-from texsmith.core.conversion.debug import ensure_emitter, record_event
+from texsmith.core.diagnostics import ensure_emitter, record_event
 
 
 if TYPE_CHECKING:  # pragma: no cover - typing only

@@ -9,7 +9,7 @@ import re
 from typing import Any
 
 from texsmith.core.callouts import DEFAULT_CALLOUTS, merge_callouts, normalise_callouts
-from texsmith.core.conversion.debug import ensure_emitter
+from texsmith.core.diagnostics import ensure_emitter
 from texsmith.core.diagnostics import DiagnosticEmitter
 from texsmith.core.fragments import (
     inject_fragment_attributes,

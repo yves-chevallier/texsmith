@@ -22,12 +22,11 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 from texsmith.core.bibliography.collection import BibliographyCollection
-from texsmith.core.conversion.debug import ensure_emitter, raise_conversion_error
 from texsmith.core.conversion.inputs import (
     InlineBibliographyValidationError,
     extract_front_matter_bibliography,
 )
-from texsmith.core.diagnostics import DiagnosticEmitter
+from texsmith.core.diagnostics import DiagnosticEmitter, ensure_emitter, raise_conversion_error
 from texsmith.core.metadata import PressMetadataError, normalise_press_metadata
 from texsmith.writers.typst.build import compile_typst
 from texsmith.writers.typst.escaper import citation_label

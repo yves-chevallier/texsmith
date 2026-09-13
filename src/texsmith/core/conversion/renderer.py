@@ -9,6 +9,12 @@ from pathlib import Path
 from typing import Any
 
 from texsmith.adapters.latex.latexmk import build_latexmkrc_content
+from texsmith.core.diagnostics import (
+    debug_enabled,
+    ensure_emitter,
+    raise_conversion_error,
+    record_event,
+)
 from texsmith.fonts import FallbackManager, FontCache, FontPipelineLogger
 from texsmith.fonts.fallback import FallbackPlan, merge_fallback_summaries
 from texsmith.fonts.scripts import fallback_summary_to_usage, merge_script_usage
@@ -17,7 +23,6 @@ from ..context import DocumentState
 from ..diagnostics import DiagnosticEmitter
 from ..templates import TemplateError, TemplateRuntime, wrap_template_document
 from ..templates.context_usage import summarise_context_usage
-from .debug import debug_enabled, ensure_emitter, raise_conversion_error, record_event
 
 
 @dataclass(slots=True)

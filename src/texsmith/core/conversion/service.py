@@ -30,6 +30,8 @@ from texsmith.adapters.latex.tectonic import (
     select_makeglossaries,
     select_tectonic_binary,
 )
+from texsmith.core.diagnostics import ensure_emitter
+from texsmith.core.exceptions import ConversionError
 from texsmith.core.sources import is_bibliography, is_front_matter, is_markdown
 
 from ..diagnostics import DiagnosticEmitter
@@ -37,7 +39,6 @@ from ..documents import Document, TitleStrategy, front_matter_has_title
 from ..front_matter import split_front_matter
 from ..templates.session import TemplateRenderResult, TemplateSession, get_template
 from .core import ConversionBundle, convert_documents
-from .debug import ConversionError, ensure_emitter
 from .inputs import (
     UnsupportedInputError,
     extract_front_matter_slots,

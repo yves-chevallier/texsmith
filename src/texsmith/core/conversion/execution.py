@@ -8,6 +8,7 @@ from typing import Any
 
 from texsmith.core.bibliography.collection import BibliographyCollection
 from texsmith.core.conversion_contexts import ConversionContext, GenerationStrategy
+from texsmith.core.diagnostics import ensure_emitter, raise_conversion_error
 from texsmith.core.documents import Document
 from texsmith.core.fragments.resolution import merge_fragments, parse_modifiers
 from texsmith.core.templates.runtime import (
@@ -16,7 +17,6 @@ from texsmith.core.templates.runtime import (
     resolve_template_language,
 )
 
-from .debug import ensure_emitter, raise_conversion_error
 from .inputs import InlineBibliographyValidationError, extract_front_matter_bibliography
 from .models import ConversionRequest
 from .templates import _build_mustache_defaults, _merge_template_overrides

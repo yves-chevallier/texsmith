@@ -50,13 +50,13 @@ from texsmith.diagnostics import Diagnostic, FileTable
 from texsmith.ir import model as irm
 from texsmith.ir.walk import plain_text
 
-from .conversion.debug import ConversionError
 from .conversion.inputs import (
     DOCUMENT_SELECTOR_SENTINEL,
     SlotOptions,
     extract_front_matter_slots,
 )
 from .diagnostics import DiagnosticEmitter, NullEmitter
+from .exceptions import ConversionError
 from .front_matter import split_front_matter
 from .metadata import PressMetadataError, normalise_press_metadata
 from .templates.runtime import coerce_base_level

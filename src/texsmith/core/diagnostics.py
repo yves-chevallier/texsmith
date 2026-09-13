@@ -24,6 +24,8 @@ from texsmith.diagnostics import (
     format_diagnostic,
 )
 
+from .exceptions import ConversionError
+
 
 logger = logging.getLogger(__name__)
 
@@ -184,6 +186,41 @@ __all__ = [
     "LoggingEmitter",
     "NullEmitter",
     "SinkEmitter",
+    "debug_enabled",
+    "ensure_emitter",
     "format_event_message",
     "legacy_diagnostic",
+    "raise_conversion_error",
+    "record_event",
 ]
+
+
+def ensure_emitter(emitter: DiagnosticEmitter | None) -> DiagnosticEmitter:
+    """Return a usable emitter, defaulting to the null implementation."""
+    return emitter if emitter is not None else NullEmitter()
+
+
+def debug_enabled(emitter: DiagnosticEmitter | None) -> bool:
+    """Return whether debug mode is active for the given emitter."""
+    return bool(emitter and getattr(emitter, "debug_enabled", False))
+
+
+def record_event(
+    emitter: DiagnosticEmitter | None,
+    event: str,
+    payload: Mapping[str, Any],
+) -> None:
+    """Forward a structured diagnostic event."""
+    ensure_emitter(emitter).event(event, payload)
+
+
+def raise_conversion_error(
+    emitter: DiagnosticEmitter | None,
+    message: str,
+    exc: Exception,
+) -> None:
+    """Emit an error diagnostic before raising a conversion failure."""
+    ensure_emitter(emitter).error(message, exc)
+    error = ConversionError(message)
+    error._texsmith_logged = True  # noqa: SLF001
+    raise error from exc

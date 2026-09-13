@@ -10,7 +10,8 @@ from typer.testing import CliRunner
 
 from texsmith.adapters.latex import engines as engine
 from texsmith.adapters.latex.engines import LatexMessage, LatexMessageSeverity
-from texsmith.core.conversion.debug import ConversionError, raise_conversion_error
+from texsmith.core.diagnostics import raise_conversion_error
+from texsmith.core.exceptions import ConversionError
 from texsmith.ui.cli import app
 from texsmith.ui.cli.commands import render as render_cmd
 import texsmith.ui.cli.state as cli_state

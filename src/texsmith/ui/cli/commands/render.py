@@ -26,7 +26,6 @@ from texsmith.adapters.latex.engines import (
 from texsmith.core.bibliography import BibliographyCollection
 from texsmith.core.coerce import coerce_bool
 from texsmith.core.conversion import ConversionRequest
-from texsmith.core.conversion.debug import ConversionError
 from texsmith.core.conversion.inputs import UnsupportedInputError
 from texsmith.core.conversion.pipeline import (
     DEPRECATED_LEVELS,
@@ -36,6 +35,7 @@ from texsmith.core.conversion.pipeline import (
 from texsmith.core.conversion.resolution import NUMBERING_MODES, NUMBERING_OVERRIDE_KEY
 from texsmith.core.conversion.service import ConversionService
 from texsmith.core.conversion.typst import build_typst_pdf, render_typst_document
+from texsmith.core.exceptions import ConversionError
 from texsmith.core.front_matter import split_front_matter
 from texsmith.core.metadata import PressMetadataError, normalise_press_metadata
 from texsmith.core.sources import is_front_matter, is_markdown
