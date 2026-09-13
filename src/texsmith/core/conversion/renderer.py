@@ -124,6 +124,23 @@ def _validate_slots(runtime: TemplateRuntime, aggregated_slots: Mapping[str, Any
         )
 
 
+@dataclass(slots=True)
+class _Aggregate:
+    """What one pass over the fragments collects, before anything is written."""
+
+    slots: dict[str, list[str]]
+    documents: list[dict[str, Any]]
+    overrides: dict[str, Any] | None
+    state: DocumentState
+    script_usage: list[dict[str, Any]]
+    fallback_summary: list[dict[str, Any]]
+    bibliography_path: Path | None
+    requires_shell_escape: bool
+    asset_paths: set[Path]
+    asset_sources: set[Path]
+    asset_map: dict[str, Path]
+
+
 class TemplateRenderer:
     """Aggregate conversion fragments and wrap them with a template."""
 
@@ -183,39 +200,26 @@ class TemplateRenderer:
             return None
         return latexmkrc_path
 
-    def render(
-        self,
-        fragments: Sequence[TemplateFragment],
-        *,
-        output_dir: Path,
-        overrides: Mapping[str, Any] | None = None,
-        copy_assets: bool = True,
-        embed_fragments: bool = True,
-    ) -> TemplateRenderResult:
-        if not fragments:
-            raise TemplateError("No fragments available for template rendering.")
+    def _aggregate(self, fragments: Sequence[TemplateFragment]) -> _Aggregate:
+        """One pass over the fragments, collecting what the render needs.
 
-        output_dir = output_dir.resolve()
-        output_dir.mkdir(parents=True, exist_ok=True)
-
-        aggregated_slots: dict[str, list[str]] = {}
+        Nothing is written here and nothing is decided: the slots are gathered
+        per name, the per-document records built, the overrides merged, the
+        assets indexed. The state is the last fragment's, which carries the
+        batch (see the note at the assignment).
+        """
         default_slot = self.runtime.default_slot
-        aggregated_slots.setdefault(default_slot, [])
-
+        aggregated_slots: dict[str, list[str]] = {default_slot: []}
         template_overrides: dict[str, Any] | None = None
-
         shared_state: DocumentState | None = None
         aggregated_script_usage: list[dict[str, Any]] = []
         aggregated_fallback_summary: list[dict[str, Any]] = []
         bibliography_path: Path | None = None
-        template_engine: str | None = None
         requires_shell_escape = bool(self.runtime.requires_shell_escape)
-
         document_metadata: list[dict[str, Any]] = []
         asset_paths: set[Path] = set()
         asset_sources: set[Path] = set()
         asset_map: dict[str, Path] = {}
-        fallback_manager: FallbackManager | None = None
 
         for fragment in fragments:
             fragment_default_slot = fragment.default_slot or default_slot
@@ -284,8 +288,6 @@ class TemplateRenderer:
                 )
             if fragment.bibliography_path is not None:
                 bibliography_path = fragment.bibliography_path
-            if template_engine is None and fragment.template_engine is not None:
-                template_engine = fragment.template_engine
             requires_shell_escape = requires_shell_escape or fragment.requires_shell_escape
 
         if shared_state is None:
@@ -298,6 +300,51 @@ class TemplateRenderer:
             shared_state.fallback_summary = merge_fallback_summaries(
                 getattr(shared_state, "fallback_summary", []), aggregated_fallback_summary
             )
+
+        return _Aggregate(
+            slots=aggregated_slots,
+            documents=document_metadata,
+            overrides=template_overrides,
+            state=shared_state if shared_state is not None else DocumentState(),
+            script_usage=aggregated_script_usage,
+            fallback_summary=aggregated_fallback_summary,
+            bibliography_path=bibliography_path,
+            requires_shell_escape=requires_shell_escape,
+            asset_paths=asset_paths,
+            asset_sources=asset_sources,
+            asset_map=asset_map,
+        )
+
+    def render(
+        self,
+        fragments: Sequence[TemplateFragment],
+        *,
+        output_dir: Path,
+        overrides: Mapping[str, Any] | None = None,
+        copy_assets: bool = True,
+        embed_fragments: bool = True,
+    ) -> TemplateRenderResult:
+        if not fragments:
+            raise TemplateError("No fragments available for template rendering.")
+
+        output_dir = output_dir.resolve()
+        output_dir.mkdir(parents=True, exist_ok=True)
+
+        default_slot = self.runtime.default_slot
+        fallback_manager: FallbackManager | None = None
+
+        collected = self._aggregate(fragments)
+        aggregated_slots = collected.slots
+        document_metadata = collected.documents
+        template_overrides = collected.overrides
+        shared_state = collected.state
+        aggregated_script_usage = collected.script_usage
+        aggregated_fallback_summary = collected.fallback_summary
+        bibliography_path = collected.bibliography_path
+        requires_shell_escape = collected.requires_shell_escape
+        asset_paths = collected.asset_paths
+        asset_sources = collected.asset_sources
+        asset_map = collected.asset_map
 
         slot_content: dict[str, str] = {}
         render_slot_content: dict[str, str] = {
