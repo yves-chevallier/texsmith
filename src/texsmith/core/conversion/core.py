@@ -39,7 +39,6 @@ class ConversionResult:
     """Artifacts produced during a document conversion."""
 
     latex_output: str
-    tex_path: Path | None
     template_engine: str | None
     template_shell_escape: bool
     language: str
@@ -181,7 +180,6 @@ def _render_document(
             emitter.warning(f"Failed to write bibliography file: {exc}")
             bibliography_output = None
 
-    tex_path: Path | None = None
     if document_state is not None:
         document_state.requires_shell_escape = (
             document_state.requires_shell_escape or binding.requires_shell_escape
@@ -190,7 +188,6 @@ def _render_document(
 
     return ConversionResult(
         latex_output=latex_output,
-        tex_path=tex_path,
         template_engine=binding.engine,
         template_shell_escape=bool(
             binding.requires_shell_escape
