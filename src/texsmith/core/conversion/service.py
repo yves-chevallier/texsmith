@@ -218,7 +218,7 @@ class ConversionService:
     ) -> ConversionResponse:
         """Execute a conversion workflow and return a structured response, routing to template or raw conversion paths as needed."""
         batch = prepared or self.prepare_documents(request)
-        settings = request.copy()
+        settings = request.replace()
         emitter = batch.emitter
 
         if request.template is None:

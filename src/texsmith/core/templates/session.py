@@ -115,7 +115,7 @@ class TemplateSession:
         self._overrides: dict[str, Any] = {}
         self._documents: list[Document] = []
         self._bibliography_files: list[Path] = []
-        self.settings = settings.copy() if settings else ConversionRequest()
+        self.settings = settings.replace() if settings else ConversionRequest()
         self.emitter = ensure_emitter(emitter)
 
     def _prepare_document(self, document: Document) -> Document:

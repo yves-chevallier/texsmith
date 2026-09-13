@@ -254,9 +254,10 @@ def convert_documents(
     if not documents:
         raise ValueError("At least one document is required for conversion.")
 
-    request = settings.copy() if settings is not None else ConversionRequest()
-    request.bibliography_files = list(bibliography_files or [])
-    request.template = template
+    request = (settings if settings is not None else ConversionRequest()).replace(
+        bibliography_files=list(bibliography_files or []),
+        template=template,
+    )
     unique_stems = build_unique_stem_map([doc.source_path for doc in documents])
 
     shared_bibliography: BibliographyCollection | None = None

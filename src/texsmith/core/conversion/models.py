@@ -20,9 +20,13 @@ class SlotAssignment:
     include_document: bool
 
 
-@dataclass(slots=True)
+@dataclass(slots=True, frozen=True)
 class ConversionRequest:
-    """Immutable description of conversion inputs and engine settings."""
+    """Immutable description of conversion inputs and engine settings.
+
+    Frozen, so the docstring holds: a caller that needs a variation asks for
+    one with :meth:`replace`, which deep-copies every field but the emitter.
+    """
 
     documents: Sequence[Path] = field(default_factory=tuple)
     bibliography_files: Sequence[Path] = field(default_factory=list)
@@ -65,13 +69,22 @@ class ConversionRequest:
 
     emitter: DiagnosticEmitter | None = None
 
-    def copy(self) -> ConversionRequest:
-        """Create a deep copy to avoid cross-run mutations."""
+    def replace(self, **changes: Any) -> ConversionRequest:
+        """A deep copy of this request with ``changes`` applied.
+
+        The emitter is shared, not copied: it collects the run's diagnostics
+        and a copy would collect nothing.
+        """
         payload: dict[str, Any] = {}
         for definition in fields(self):
+            if definition.name in changes:
+                payload[definition.name] = changes[definition.name]
+                continue
             value = getattr(self, definition.name)
-            if definition.name == "emitter":
-                payload[definition.name] = value
-            else:
-                payload[definition.name] = copy.deepcopy(value)
+            payload[definition.name] = (
+                value if definition.name == "emitter" else copy.deepcopy(value)
+            )
+        unknown = set(changes) - {definition.name for definition in fields(self)}
+        if unknown:
+            raise TypeError(f"ConversionRequest has no field(s): {', '.join(sorted(unknown))}")
         return ConversionRequest(**payload)
