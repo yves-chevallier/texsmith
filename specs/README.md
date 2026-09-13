@@ -28,3 +28,9 @@ The spec is the source of truth. A syntax change starts as a spec change
 and a conformance fixture in the tmark repository, then reaches the parser,
 the printer, the writers, the bindings and finally TeXSmith. The Python-
 Markdown extensions of TeXSmith are frozen: no new syntax is added to them.
+
+## After the migration
+
+`refactoring/status.md` is the standing note of the SOLID / DRY / SSOT / KISS
+pass that follows it: what it decided, what shipped, what is left, and the
+traps it fell into. Read it before continuing that work.
