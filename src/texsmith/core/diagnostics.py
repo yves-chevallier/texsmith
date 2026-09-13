@@ -3,9 +3,13 @@
 Every emitter collects :class:`~texsmith.diagnostics.Diagnostic` records in a
 :class:`~texsmith.diagnostics.DiagnosticSink` and renders them its own way:
 the CLI prints ``file:line:col: severity code: message``, the logging emitter
-forwards the same line to :mod:`logging`. The legacy ``warning()``/``error()``
-calls build a record with the free-form ``texsmith`` code and no location, so
-engine and network messages share the collector with the passes.
+forwards the same line to :mod:`logging`. An emitter is a *presenter*: it
+implements :meth:`SinkEmitter.render` and :meth:`event`, and the sink it owns
+does the collecting, the deduplication and the file numbering.
+
+:func:`emit_diagnostic` is how a stage that holds an emitter records a finding,
+the counterpart of :meth:`DiagnosticSink.emit` for a stage that holds a
+:class:`~texsmith.passes.PassContext`.
 """
 
 from __future__ import annotations
@@ -15,7 +19,6 @@ import logging
 from typing import Any, Protocol, runtime_checkable
 
 from texsmith.diagnostics import (
-    LEGACY_CODE,
     NO_SPAN,
     Diagnostic,
     DiagnosticSink,
@@ -46,10 +49,6 @@ class DiagnosticEmitter(Protocol):
     debug_enabled: bool
     sink: DiagnosticSink
 
-    def warning(self, message: str, exc: BaseException | None = None) -> None: ...
-
-    def error(self, message: str, exc: BaseException | None = None) -> None: ...
-
     def event(self, name: str, payload: Mapping[str, Any]) -> None: ...
 
     def diagnostic(self, diagnostic: Diagnostic, cause: BaseException | None = None) -> None: ...
@@ -58,12 +57,10 @@ class DiagnosticEmitter(Protocol):
 class SinkEmitter:
     """Base of the emitters that collect: owns the sink, renders each new record.
 
-    Subclasses implement :meth:`render` (and :meth:`event`). ``warning()`` and
-    ``error()`` are the legacy entry points: a record with the ``texsmith``
-    code and no location, the exception kept as rendering context only. They
-    go through :meth:`diagnostic` like every other record, so a subclass that
-    filters there (the render command's ``--deprecated`` level) sees the whole
-    stream and not only the coded half.
+    Subclasses implement :meth:`render` (and :meth:`event`); everything else is
+    the sink's. Every record goes through :meth:`diagnostic`, so a subclass that
+    filters there — the render command's ``--deprecated`` level — sees the whole
+    stream.
     """
 
     debug_enabled: bool
@@ -79,22 +76,11 @@ class SinkEmitter:
     def diagnostic(self, diagnostic: Diagnostic, cause: BaseException | None = None) -> None:
         self.sink.add(diagnostic, cause=cause)
 
-    def warning(self, message: str, exc: BaseException | None = None) -> None:
-        self.diagnostic(legacy_diagnostic(Severity.WARNING, message), exc)
-
-    def error(self, message: str, exc: BaseException | None = None) -> None:
-        self.diagnostic(legacy_diagnostic(Severity.ERROR, message), exc)
-
     def event(self, name: str, payload: Mapping[str, Any]) -> None:
         raise NotImplementedError
 
     def render(self, diagnostic: Diagnostic, cause: BaseException | None) -> None:
         raise NotImplementedError
-
-
-def legacy_diagnostic(severity: Severity, message: str) -> Diagnostic:
-    """The record of a ``warning()``/``error()`` call: free-form code, no location."""
-    return Diagnostic(LEGACY_CODE, severity, NO_SPAN, message)
 
 
 _LOG_LEVELS = {
@@ -201,7 +187,6 @@ __all__ = [
     "emit_diagnostic",
     "ensure_emitter",
     "format_event_message",
-    "legacy_diagnostic",
     "raise_conversion_error",
     "record_event",
 ]
@@ -259,8 +244,8 @@ def raise_conversion_error(
     message: str,
     exc: Exception,
 ) -> None:
-    """Emit an error diagnostic before raising a conversion failure."""
-    ensure_emitter(emitter).error(message, exc)
+    """Record the failure that stops the run, then raise it."""
+    emit_diagnostic(emitter, "conversion-failed", message, exc=exc)
     error = ConversionError(message)
     error._texsmith_logged = True  # noqa: SLF001
     raise error from exc

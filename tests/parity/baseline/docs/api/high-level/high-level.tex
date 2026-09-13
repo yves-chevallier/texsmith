@@ -100,8 +100,7 @@ A third step, \tscodeinline{build\_pdf(render\_result, engine=...)}, hands the r
 
 \PY{n}{service} \PY{o}{=} \PY{n}{ConversionService}\PY{p}{(}\PY{p}{)}
 \PY{n}{request} \PY{o}{=} \PY{n}{ConversionRequest}\PY{p}{(}
-    \PY{n}{documents}\PY{o}{=}\PY{p}{[}\PY{n}{Path}\PY{p}{(}\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{index.html}\PY{l+s+s2}{\PYZdq{}}\PY{p}{)}\PY{p}{]}\PY{p}{,}
-    \PY{n}{selector}\PY{o}{=}\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{article.md\PYZhy{}content\PYZus{}\PYZus{}inner}\PY{l+s+s2}{\PYZdq{}}\PY{p}{,}
+    \PY{n}{documents}\PY{o}{=}\PY{p}{[}\PY{n}{Path}\PY{p}{(}\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{report.md}\PY{l+s+s2}{\PYZdq{}}\PY{p}{)}\PY{p}{]}\PY{p}{,}
     \PY{n}{template}\PY{o}{=}\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{article}\PY{l+s+s2}{\PYZdq{}}\PY{p}{,}
     \PY{n}{render\PYZus{}dir}\PY{o}{=}\PY{n}{Path}\PY{p}{(}\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{build}\PY{l+s+s2}{\PYZdq{}}\PY{p}{)}\PY{p}{,}
     \PY{n}{bibliography\PYZus{}files}\PY{o}{=}\PY{p}{[}\PY{n}{Path}\PY{p}{(}\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{refs.bib}\PY{l+s+s2}{\PYZdq{}}\PY{p}{)}\PY{p}{]}\PY{p}{,}
@@ -119,9 +118,10 @@ A third step, \tscodeinline{build\_pdf(render\_result, engine=...)}, hands the r
 Diagnostics reach a caller two ways: as they happen, through the emitter passed
 on \tscodeinline{ConversionRequest.emitter} (the CLI passes a \tscodeinline{CliEmitter}, libraries get the
 silent \tscodeinline{NullEmitter} by default, \tscodeinline{LoggingEmitter} forwards to \tscodeinline{logging}); and
-afterwards, as the \tscodeinline{Diagnostic} records kept on each \tscodeinline{Document}. \tscodeinline{-\allowbreak{}-\allowbreak{}strict},
-\tscodeinline{-\allowbreak{}-\allowbreak{}deprecated} and \tscodeinline{-\allowbreak{}-\allowbreak{}diagnostics-\allowbreak{}json} are the CLI's own reading of those same
-records, not fields of the request.
+afterwards, as the \tscodeinline{Diagnostic} records kept on each \tscodeinline{Document} --- or all of them
+together on \tscodeinline{request.emitter.sink}, which is what \tscodeinline{-\allowbreak{}-\allowbreak{}strict} and
+\tscodeinline{-\allowbreak{}-\allowbreak{}diagnostics-\allowbreak{}json} read. Those two, and \tscodeinline{-\allowbreak{}-\allowbreak{}deprecated}, are the CLI's own
+reading of the same records, not fields of the request.
 
 \tscodeinline{response.result} is a \tscodeinline{ConversionBundle} without a template and a
 \tscodeinline{TemplateRenderResult} with one; \tscodeinline{response.bundle} and \tscodeinline{response.render\_result}

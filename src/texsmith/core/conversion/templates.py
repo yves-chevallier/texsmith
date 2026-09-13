@@ -9,6 +9,7 @@ from typing import TYPE_CHECKING, Any
 
 from texsmith.core.diagnostics import (
     debug_enabled,
+    emit_diagnostic,
     ensure_emitter,
     raise_conversion_error,
 )
@@ -88,7 +89,7 @@ def bind_template(
             template_runtime=context.template_runtime,
             template_overrides=context.template_overrides,
             slot_requests=context.slot_requests,
-            warn=lambda message: emitter.warning(message),
+            warn=lambda message: emit_diagnostic(emitter, "slot-undeclared", message),
         )
     except TemplateError as exc:
         if debug_enabled(emitter):

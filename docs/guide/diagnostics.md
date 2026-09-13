@@ -20,8 +20,9 @@ report.md:12:5: warning ref-unresolved: Counter reference '@n:missing' has no ma
 | the rest | one sentence naming the construct |
 
 A finding without a position prints the file name only
-(`report.md: warning crossref-inventory-missing: …`), and a message that has no
-file — an engine or network failure — prints as `warning texsmith: …`.
+(`report.md: warning crossref-inventory-missing: …`), and one that belongs to
+no file at all — an engine, a network or a template failure — prints its code
+and message alone (`warning transformer-dependency-missing: …`).
 
 With `-v`, a suggested fix and the related locations (the other definition of
 a duplicate key) follow, indented under the line.
@@ -154,4 +155,7 @@ with their default severity; a few reuse tmark's identifiers on purpose
 (`ref-unresolved`, `label-duplicate`, `crossref-inventory-missing`,
 `crossref-inventory-stale`, `include-missing`, `deprecated-frontmatter-key`)
 because the finding is the one tmark reports once that stage runs in Rust.
-The free-form `texsmith` code carries the messages that predate the codes.
+
+Every finding carries one. There is no free-form code: a message that reaches
+you from the engine, the network or a converter names its own kind, so
+`--diagnostics-json` and a CI filter can tell one from another.

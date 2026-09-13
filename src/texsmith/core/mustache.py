@@ -6,7 +6,7 @@ from collections.abc import Mapping, Sequence
 import re
 from typing import Any
 
-from .diagnostics import DiagnosticEmitter
+from .diagnostics import DiagnosticEmitter, emit_diagnostic
 
 
 _MUSTACHE_RE = re.compile(r"\{\{\s*([^\}\s][^\}]*)\s*\}\}")
@@ -40,8 +40,7 @@ def replace_mustaches(
     """Replace ``{{path.to.value}}`` placeholders in ``text`` using ``contexts``."""
 
     def _warn(message: str) -> None:
-        if emitter:
-            emitter.warning(message)
+        emit_diagnostic(emitter, "var-unresolved", message)
 
     def _replacement(match: re.Match[str]) -> str:
         raw_path = match.group(1).strip()

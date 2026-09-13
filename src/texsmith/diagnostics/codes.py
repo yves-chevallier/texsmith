@@ -14,11 +14,6 @@ from dataclasses import dataclass
 from .model import Severity
 
 
-#: The free-form code of the legacy ``DiagnosticEmitter.warning()``/``error()``
-#: messages: engine, network and template messages that carry no location.
-LEGACY_CODE = "texsmith"
-
-
 @dataclass(frozen=True, slots=True)
 class CodeInfo:
     code: str
@@ -29,7 +24,6 @@ class CodeInfo:
 
 
 _TABLE: tuple[CodeInfo, ...] = (
-    CodeInfo(LEGACY_CODE, Severity.WARNING, "A message without a code (engine, network, template)"),
     CodeInfo(
         "asset-missing",
         Severity.WARNING,
@@ -75,6 +69,11 @@ _TABLE: tuple[CodeInfo, ...] = (
     ),
     CodeInfo("slot-missing", Severity.WARNING, "A slot selector matched no top-level heading"),
     CodeInfo(
+        "slot-undeclared",
+        Severity.WARNING,
+        "A slot was requested that the selected template does not declare",
+    ),
+    CodeInfo(
         "slot-selector-unsupported",
         Severity.WARNING,
         "A slot selector uses a CSS form the IR does not support",
@@ -112,6 +111,26 @@ _TABLE: tuple[CodeInfo, ...] = (
         "frontmatter-root-overrides-press",
         Severity.INFO,
         "A root key overrides the same key under press",
+    ),
+    CodeInfo(
+        "frontmatter-invalid",
+        Severity.WARNING,
+        "A front-matter declaration is malformed and is ignored",
+    ),
+    CodeInfo(
+        "base-level-invalid",
+        Severity.ERROR,
+        "The requested base level names no heading level",
+    ),
+    CodeInfo(
+        "template-failed",
+        Severity.ERROR,
+        "The template could not be resolved or rendered",
+    ),
+    CodeInfo(
+        "conversion-failed",
+        Severity.ERROR,
+        "A conversion stage could not complete; the run stops",
     ),
     CodeInfo(
         "file-unreadable", Severity.WARNING, "A file exists but cannot be read or decoded as UTF-8"
@@ -176,7 +195,6 @@ def reused_tmark_codes() -> frozenset[str]:
 
 __all__ = [
     "CODES",
-    "LEGACY_CODE",
     "CodeInfo",
     "default_severity",
     "own_codes",

@@ -4,6 +4,7 @@ import types
 from typing import Any
 
 import click
+from emitters import RecordingEmitter
 import pytest
 import typer
 from typer.testing import CliRunner
@@ -12,6 +13,7 @@ from texsmith.adapters.latex import engines as engine
 from texsmith.adapters.latex.engines import LatexMessage, LatexMessageSeverity
 from texsmith.core.diagnostics import raise_conversion_error
 from texsmith.core.exceptions import ConversionError
+from texsmith.diagnostics import Severity
 from texsmith.ui.cli import app
 from texsmith.ui.cli.commands import render as render_cmd
 import texsmith.ui.cli.state as cli_state
@@ -58,20 +60,18 @@ def _stub_tectonic_binary(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> Pa
     return binary
 
 
-def test_raise_conversion_error_marks_exception_logged() -> None:
-    class DummyEmitter:
-        def __init__(self) -> None:
-            self.messages: list[tuple[str, Exception]] = []
-
-        def error(self, message: str, exc: Exception) -> None:
-            self.messages.append((message, exc))
-
-    emitter = DummyEmitter()
+def test_raise_conversion_error_marks_exception_logged(
+    recording_emitter: RecordingEmitter,
+) -> None:
+    cause = ValueError("boom")
     with pytest.raises(ConversionError) as excinfo:
-        raise_conversion_error(emitter, "failed", ValueError("boom"))
+        raise_conversion_error(recording_emitter, "failed", cause)
 
     assert getattr(excinfo.value, "_texsmith_logged", False) is True
-    assert emitter.messages and emitter.messages[0][0] == "failed"
+    (record, rendered_cause) = recording_emitter.rendered[0]
+    assert (record.code, record.message) == ("conversion-failed", "failed")
+    assert record.severity is Severity.ERROR
+    assert rendered_cause is cause
 
 
 def test_emit_error_skips_logged_exception(monkeypatch: pytest.MonkeyPatch) -> None:

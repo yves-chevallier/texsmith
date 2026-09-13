@@ -87,8 +87,7 @@ from texsmith.core.diagnostics import LoggingEmitter
 
 service = ConversionService()
 request = ConversionRequest(
-    documents=[Path("index.html")],
-    selector="article.md-content__inner",
+    documents=[Path("report.md")],
     template="article",
     render_dir=Path("build"),
     bibliography_files=[Path("refs.bib")],
@@ -106,9 +105,10 @@ for record in response.documents[0].diagnostics:
 Diagnostics reach a caller two ways: as they happen, through the emitter passed
 on `ConversionRequest.emitter` (the CLI passes a `CliEmitter`, libraries get the
 silent `NullEmitter` by default, `LoggingEmitter` forwards to `logging`); and
-afterwards, as the `Diagnostic` records kept on each `Document`. `–strict`,
-`–deprecated` and `–diagnostics-json` are the CLI's own reading of those same
-records, not fields of the request.
+afterwards, as the `Diagnostic` records kept on each `Document` — or all of them
+together on `request.emitter.sink`, which is what `–strict` and
+`–diagnostics-json` read. Those two, and `–deprecated`, are the CLI's own
+reading of the same records, not fields of the request.
 
 `response.result` is a `ConversionBundle` without a template and a
 `TemplateRenderResult` with one; `response.bundle` and `response.render_result`

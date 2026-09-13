@@ -12,18 +12,24 @@
 
 `texsmith.core.diagnostics` defines the `DiagnosticEmitter` protocol plus a few
 stock implementations. Pass any emitter into `ConversionService`,
-`convert_documents`, or `TemplateSession` to intercept warnings, errors, and
-structured events.
+`convert_documents`, or `TemplateSession` to see the findings as they happen.
+
+An emitter is a **presenter**. It owns a `DiagnosticSink`, and the sink does
+the collecting: it deduplicates, it answers `strict_failed()`, and it owns the
+`FileTable` every document of the run registers in — which is why the emitter
+you parse with must be the emitter you render with, or a span will name the
+wrong file.
 
 | Emitter | Description | Typical usage |
 | ------- | ----------- | ------------- |
 | `CliEmitter` (`texsmith.ui.cli.diagnostics`) | Rich-powered emitter used by the Typer CLI. Respects `-v` and `--debug`, paints warnings as panels, and streams structured events to the diagnostics sidebar. | Default when running `texsmith`. Import it in automation scripts when you want human-friendly output. |
-| `LoggingEmitter` | Forwards `warning`, `error`, and `event` calls to the standard `logging` module. | Daemons, notebooks, or services that rely on existing logging policy. |
-| `NullEmitter` | No-op implementation. Useful when you want silent conversions or plan to capture diagnostics out-of-band. | Unit tests and benchmarking. |
+| `LoggingEmitter` | Renders each record as the `path:line:col: severity code: message` line and logs it at the matching level. | Daemons, notebooks, or services that rely on existing logging policy. |
+| `NullEmitter` | Shows nothing, and still records: the run's diagnostics stay readable on `emitter.sink` and on each `Document`. | Unit tests, benchmarking, and any caller that reads the findings afterwards. |
 
-Emitters expose a `debug_enabled` flag so downstream handlers can decide whether
-to include stack traces or expensive state dumps. Implement your own to route
-diagnostics to metrics systems or structured loggers.
+To write your own, subclass `SinkEmitter` and implement `render(diagnostic,
+cause)` and `event(name, payload)`; everything else is the sink's. Emitters
+expose a `debug_enabled` flag so downstream handlers can decide whether to
+include stack traces or expensive state dumps.
 
 ::: texsmith.core.diagnostics
 

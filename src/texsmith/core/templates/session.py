@@ -49,7 +49,7 @@ from typing import Any
 
 from ..context import DocumentState
 from ..conversion import ConversionRequest
-from texsmith.core.diagnostics import ensure_emitter
+from texsmith.core.diagnostics import emit_diagnostic, ensure_emitter
 from ..conversion.core import convert_documents, to_template_fragments
 from ..conversion.renderer import TemplateRenderer, TemplateRenderResult
 from ..diagnostics import DiagnosticEmitter
@@ -182,8 +182,7 @@ class TemplateSession:
                 embed_fragments=embed_fragments,
             )
         except TemplateError as exc:
-            message = str(exc)
-            self.emitter.error(message, exc)
+            emit_diagnostic(self.emitter, "template-failed", str(exc), exc=exc)
             raise
 
         return rendered

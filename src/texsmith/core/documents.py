@@ -46,7 +46,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 from texsmith.core.coerce import coerce_bool
-from texsmith.diagnostics import Diagnostic, FileTable
+from texsmith.diagnostics import Diagnostic, FileTable, Severity
 from texsmith.ir import model as irm
 from texsmith.ir.walk import plain_text
 
@@ -55,7 +55,7 @@ from .conversion.inputs import (
     SlotOptions,
     extract_front_matter_slots,
 )
-from .diagnostics import DiagnosticEmitter, NullEmitter
+from .diagnostics import DiagnosticEmitter, NullEmitter, emit_diagnostic
 from .exceptions import ConversionError
 from .front_matter import split_front_matter
 from .metadata import PressMetadataError, normalise_press_metadata
@@ -131,8 +131,8 @@ def _coerce_document_base_level(value: int | str, emitter: DiagnosticEmitter) ->
     try:
         resolved = coerce_base_level(value, allow_none=False)
     except Exception as exc:  # pragma: no cover - defensive
-        message = f"Invalid base level '{value}': {exc}"
-        emitter.error(message, exc)
+        message = f"'{value}' names no heading level: {exc}"
+        emit_diagnostic(emitter, "base-level-invalid", message, exc=exc)
         raise ConversionError(message) from exc
     return int(resolved or 0)
 
@@ -179,7 +179,7 @@ def _append_front_matter_abbreviations(text: str, emitter: DiagnosticEmitter) ->
     try:
         glossary = parse_front_matter_glossary(front_matter)
     except GlossaryValidationError as exc:
-        emitter.warning(str(exc))
+        emit_diagnostic(emitter, "frontmatter-invalid", str(exc), exc=exc)
         return text
     if glossary is None or not glossary.has_entries:
         return text
@@ -272,8 +272,8 @@ class Document:
         try:
             text = path.read_text(encoding="utf-8")
         except OSError as exc:
-            message = f"Failed to read Markdown source '{path}': {exc}"
-            emitter.error(message, exc)
+            message = f"'{path}' could not be read: {exc}"
+            emit_diagnostic(emitter, "file-unreadable", message, severity=Severity.ERROR, exc=exc)
             raise ConversionError(message) from exc
 
         return cls.from_markdown_text(

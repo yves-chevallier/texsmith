@@ -9,6 +9,7 @@ from texsmith.core.diagnostics import (
     DiagnosticEmitter,
     LoggingEmitter,
     NullEmitter,
+    emit_diagnostic,
 )
 from texsmith.core.exceptions import (
     LatexRenderingError,
@@ -31,27 +32,30 @@ def _raise_nested_render_error() -> None:
         raise LatexRenderingError("render failed") from exc
 
 
-def test_null_emitter_is_noop(caplog: pytest.LogCaptureFixture) -> None:
+def test_null_emitter_shows_nothing_but_keeps_everything(
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    """Silence is a rendering choice: the records stay available to the caller."""
     emitter = NullEmitter()
     with caplog.at_level(logging.WARNING):
-        emitter.warning("nothing to see")
-        emitter.error("still quiet")
+        emit_diagnostic(emitter, "conversion-failed", "still quiet")
         emitter.diagnostic(Diagnostic("asset-missing", Severity.WARNING, NO_SPAN, "gone"))
     assert not caplog.records
     emitter.event("ignored", {"value": 1})
     assert emitter.debug_enabled is False
     assert isinstance(emitter, DiagnosticEmitter)
+    assert [record.code for record in emitter.sink] == ["conversion-failed", "asset-missing"]
 
 
 def test_logging_emitter_logs_the_rendered_line(caplog: pytest.LogCaptureFixture) -> None:
     emitter = LoggingEmitter(debug_enabled=True)
     with caplog.at_level(logging.ERROR):
-        emitter.error("boom")
-    assert [record.message for record in caplog.records] == ["error texsmith: boom"]
+        emit_diagnostic(emitter, "conversion-failed", "boom")
+    assert [record.message for record in caplog.records] == ["error conversion-failed: boom"]
     assert emitter.debug_enabled is True
-    # The legacy call is a record in the sink like any other.
     (recorded,) = emitter.sink
-    assert recorded.code == "texsmith"
+    assert recorded.code == "conversion-failed"
+    # The severity came from the code table, not from the call site.
     assert recorded.severity is Severity.ERROR
     assert recorded.span == NO_SPAN
 
@@ -60,7 +64,7 @@ def test_logging_emitter_keeps_the_cause_as_exc_info(caplog: pytest.LogCaptureFi
     emitter = LoggingEmitter()
     cause = ValueError("root")
     with caplog.at_level(logging.WARNING):
-        emitter.warning("Heads up", exc=cause)
+        emit_diagnostic(emitter, "asset-missing", "Heads up", exc=cause)
     (record,) = caplog.records
     assert record.levelno == logging.WARNING
     assert record.exc_info is not None
@@ -70,18 +74,17 @@ def test_logging_emitter_keeps_the_cause_as_exc_info(caplog: pytest.LogCaptureFi
 def test_emitter_deduplicates_identical_records(caplog: pytest.LogCaptureFixture) -> None:
     emitter = LoggingEmitter()
     with caplog.at_level(logging.WARNING):
-        emitter.warning("twice")
-        emitter.warning("twice")
+        emit_diagnostic(emitter, "asset-missing", "twice")
+        emit_diagnostic(emitter, "asset-missing", "twice")
     assert len(emitter.sink) == 1
     assert len(caplog.records) == 1
 
 
-def test_a_filtering_subclass_sees_the_free_form_records_too() -> None:
-    """``warning()``/``error()`` go through ``diagnostic()`` like coded records.
+def test_a_filtering_subclass_sees_every_record() -> None:
+    """``emit_diagnostic`` goes through ``diagnostic()``, not straight to the sink.
 
     The render command filters ``--deprecated`` by overriding ``diagnostic``;
-    before, the two legacy entry points reached the sink directly and any such
-    filter saw only half the stream.
+    a helper that reached ``sink.add`` itself would slip past it.
     """
 
     class Dropping(LoggingEmitter):
@@ -91,8 +94,8 @@ def test_a_filtering_subclass_sees_the_free_form_records_too() -> None:
                 super().diagnostic(diagnostic)
 
     emitter = Dropping()
-    emitter.warning("dropped")
-    emitter.error("kept")
+    emit_diagnostic(emitter, "asset-missing", "dropped")
+    emit_diagnostic(emitter, "conversion-failed", "kept")
     emitter.diagnostic(Diagnostic("asset-missing", Severity.WARNING, NO_SPAN, "also dropped"))
 
     assert [record.message for record in emitter.sink] == ["kept"]
@@ -108,7 +111,7 @@ def test_the_cause_survives_the_diagnostic_hop(caplog: pytest.LogCaptureFixture)
     emitter = Passing()
     cause = ValueError("root")
     with caplog.at_level(logging.WARNING):
-        emitter.warning("Heads up", exc=cause)
+        emit_diagnostic(emitter, "asset-missing", "Heads up", exc=cause)
     (record,) = caplog.records
     assert record.exc_info is not None
     assert record.exc_info[1] is cause
@@ -135,13 +138,13 @@ def test_cli_emitter_bridges_state(capsys: pytest.CaptureFixture[str]) -> None:
     state = set_cli_state(verbosity=1, debug=False)
     emitter = CliEmitter(state=state)
 
-    emitter.warning("Heads up", exc=None)
-    emitter.error("Boom", exc=None)
+    emit_diagnostic(emitter, "asset-missing", "Heads up")
+    emit_diagnostic(emitter, "conversion-failed", "Boom")
     emitter.event("custom", {"flag": True})
 
     captured = capsys.readouterr()
-    assert "warning texsmith: Heads up" in captured.err
-    assert "error texsmith: Boom" in captured.err
+    assert "warning asset-missing: Heads up" in captured.err
+    assert "error conversion-failed: Boom" in captured.err
     assert state.consume_events("custom") == [{"flag": True}]
     assert [d.severity for d in emitter.sink] == [Severity.WARNING, Severity.ERROR]
     assert emitter.sink.strict_failed()
@@ -152,10 +155,10 @@ def test_cli_emitter_shows_the_cause_at_verbosity_one(capsys: pytest.CaptureFixt
     state = set_cli_state(verbosity=1, debug=False)
     emitter = CliEmitter(state=state)
 
-    emitter.warning("Fetch failed", exc=OSError("connection refused"))
+    emit_diagnostic(emitter, "asset-missing", "Fetch failed", exc=OSError("connection refused"))
 
     err = capsys.readouterr().err
-    assert "warning texsmith: Fetch failed" in err
+    assert "warning asset-missing: Fetch failed" in err
     assert "connection refused" in err
     assert "type: OSError" in err
 

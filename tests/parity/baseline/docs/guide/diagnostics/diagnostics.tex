@@ -63,8 +63,9 @@ the rest & one sentence naming the construct \\
 \end{tabularx}
 \end{center}
 A finding without a position prints the file name only
-(\tscodeinline{report.md: warning crossref-\allowbreak{}inventory-\allowbreak{}missing: …}), and a message that has no
-file --- an engine or network failure --- prints as \tscodeinline{warning texsmith: …}.
+(\tscodeinline{report.md: warning crossref-\allowbreak{}inventory-\allowbreak{}missing: …}), and one that belongs to
+no file at all --- an engine, a network or a template failure --- prints its code
+and message alone (\tscodeinline{warning transformer-\allowbreak{}dependency-\allowbreak{}missing: …}).
 
 With \tscodeinline{-\allowbreak{}v}, a suggested fix and the related locations (the other definition of
 a duplicate key) follow, indented under the line.
@@ -189,5 +190,8 @@ with their default severity; a few reuse tmark's identifiers on purpose
 (\tscodeinline{ref-\allowbreak{}unresolved}, \tscodeinline{label-\allowbreak{}duplicate}, \tscodeinline{crossref-\allowbreak{}inventory-\allowbreak{}missing},
 \tscodeinline{crossref-\allowbreak{}inventory-\allowbreak{}stale}, \tscodeinline{include-\allowbreak{}missing}, \tscodeinline{deprecated-\allowbreak{}frontmatter-\allowbreak{}key})
 because the finding is the one tmark reports once that stage runs in Rust.
-The free-form \tscodeinline{texsmith} code carries the messages that predate the codes.
+
+Every finding carries one. There is no free-form code: a message that reaches
+you from the engine, the network or a converter names its own kind, so
+\tscodeinline{-\allowbreak{}-\allowbreak{}diagnostics-\allowbreak{}json} and a CI filter can tell one from another.
 \end{document}

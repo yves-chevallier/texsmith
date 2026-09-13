@@ -41,20 +41,26 @@
 \section{Diagnostics emitters}
 \tscodeinline{texsmith.core.diagnostics} defines the \tscodeinline{DiagnosticEmitter} protocol plus a few
 stock implementations. Pass any emitter into \tscodeinline{ConversionService},
-\tscodeinline{convert\_documents}, or \tscodeinline{TemplateSession} to intercept warnings, errors, and
-structured events.
+\tscodeinline{convert\_documents}, or \tscodeinline{TemplateSession} to see the findings as they happen.
+
+An emitter is a \textbf{presenter}. It owns a \tscodeinline{DiagnosticSink}, and the sink does
+the collecting: it deduplicates, it answers \tscodeinline{strict\_failed()}, and it owns the
+\tscodeinline{FileTable} every document of the run registers in --- which is why the emitter
+you parse with must be the emitter you render with, or a span will name the
+wrong file.
 \begin{center}
 \begin{tabularx}{\linewidth}{>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X}
 \toprule
 \textbf{Emitter} & \textbf{Description} & \textbf{Typical usage} \\
 \midrule
 \tscodeinline{CliEmitter} (\tscodeinline{texsmith.ui.cli.diagnostics}) & Rich-powered emitter used by the Typer CLI. Respects \tscodeinline{-\allowbreak{}v} and \tscodeinline{-\allowbreak{}-\allowbreak{}debug}, paints warnings as panels, and streams structured events to the diagnostics sidebar. & Default when running \tscodeinline{texsmith}. Import it in automation scripts when you want human-friendly output. \\
-\tscodeinline{LoggingEmitter} & Forwards \tscodeinline{warning}, \tscodeinline{error}, and \tscodeinline{event} calls to the standard \tscodeinline{logging} module. & Daemons, notebooks, or services that rely on existing logging policy. \\
-\tscodeinline{NullEmitter} & No-op implementation. Useful when you want silent conversions or plan to capture diagnostics out-of-band. & Unit tests and benchmarking. \\
+\tscodeinline{LoggingEmitter} & Renders each record as the \tscodeinline{path:line:col: severity code: message} line and logs it at the matching level. & Daemons, notebooks, or services that rely on existing logging policy. \\
+\tscodeinline{NullEmitter} & Shows nothing, and still records: the run's diagnostics stay readable on \tscodeinline{emitter.sink} and on each \tscodeinline{Document}. & Unit tests, benchmarking, and any caller that reads the findings afterwards. \\
 \bottomrule
 \end{tabularx}
 \end{center}
-Emitters expose a \tscodeinline{debug\_enabled} flag so downstream handlers can decide whether
-to include stack traces or expensive state dumps. Implement your own to route
-diagnostics to metrics systems or structured loggers.
+To write your own, subclass \tscodeinline{SinkEmitter} and implement \tscodeinline{render(diagnostic,
+cause)} and \tscodeinline{event(name, payload)}; everything else is the sink's. Emitters
+expose a \tscodeinline{debug\_enabled} flag so downstream handlers can decide whether to
+include stack traces or expensive state dumps.
 \end{document}
