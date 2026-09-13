@@ -17,6 +17,7 @@ import click
 from click.core import ParameterSource
 import typer
 
+from texsmith.adapters.latex import build as pdf_build
 from texsmith.adapters.latex.engines import (
     EngineResult,
     parse_latex_log,
@@ -1000,7 +1001,7 @@ def render(
         return
 
     # Engine orchestration (binary selection, command/env build, run) lives in
-    # ConversionService.build_pdf; the CLI keeps only presentation, the PDF copy,
+    # adapters.latex.build.build_pdf; the CLI keeps only presentation, the PDF copy,
     # and dependency-file emission. ``run_engine`` is injected so the engine run
     # stays a clean test seam (tests patch this module's ``run_engine_command``).
     # The bodies are written: ``--strict`` decides here, before the engine runs.
@@ -1011,7 +1012,7 @@ def render(
 
     run_engine = getattr(render, "run_engine_command", run_engine_command)
     try:
-        engine_result: EngineResult = _SERVICE.build_pdf(
+        engine_result: EngineResult = pdf_build.build_pdf(
             render_result,
             engine=engine,
             classic_output=classic_output,
