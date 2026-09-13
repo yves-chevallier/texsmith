@@ -83,7 +83,7 @@ A third step, `build_pdf(render_result, engine=...)`, hands the rendered project
 from pathlib import Path
 
 from texsmith import ConversionRequest, ConversionService
-from texsmith.core.diagnostics import LoggingEmitter
+from texsmith.diagnostics import LoggingEmitter
 
 service = ConversionService()
 request = ConversionRequest(

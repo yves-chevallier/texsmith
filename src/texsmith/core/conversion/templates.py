@@ -7,16 +7,16 @@ import copy
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
-from texsmith.core.diagnostics import (
+from texsmith.core.exceptions import raise_conversion_error
+from texsmith.diagnostics import (
+    DiagnosticEmitter,
     debug_enabled,
     emit_diagnostic,
     ensure_emitter,
-    raise_conversion_error,
 )
 
 from ..config import BookConfig
 from ..conversion_contexts import ConversionContext
-from ..diagnostics import DiagnosticEmitter
 from ..templates import TemplateBinding, TemplateError, resolve_template_binding
 
 

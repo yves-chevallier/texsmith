@@ -22,10 +22,10 @@ from typing import Any, ClassVar, TypeVar
 from urllib.parse import unquote, urlparse
 
 from texsmith.core.coerce import coerce_bool
-from texsmith.core.diagnostics import emit_diagnostic, ensure_emitter, record_event
 from texsmith.core.exceptions import TransformerExecutionError
 from texsmith.core.http import DEFAULT_USER_AGENT, open_url
 from texsmith.core.user_dir import get_user_dir
+from texsmith.diagnostics import emit_diagnostic, ensure_emitter, record_event
 
 from ..docker import DockerLimits, VolumeMount, run_container
 from .base import CachedConversionStrategy

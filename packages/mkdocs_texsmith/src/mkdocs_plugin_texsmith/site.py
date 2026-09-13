@@ -34,8 +34,7 @@ from typing import Any
 
 from mkdocs.structure.pages import Page
 from mkdocs.utils.meta import get_data
-from texsmith.core.diagnostics import LoggingEmitter
-from texsmith.diagnostics import Diagnostic, FileTable, from_tmark
+from texsmith.diagnostics import Diagnostic, FileTable, LoggingEmitter, from_tmark
 import tmark
 import yaml
 

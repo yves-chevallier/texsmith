@@ -17,7 +17,7 @@ from texsmith.core.bibliography.inline import (
     extract_front_matter_bibliography,
 )
 from texsmith.core.bibliography.loading import load_inline_bibliography
-from texsmith.core.diagnostics import NullEmitter
+from texsmith.diagnostics import NullEmitter
 
 
 def _write(

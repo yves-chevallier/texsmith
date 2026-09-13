@@ -33,7 +33,7 @@ from texsmith.adapters.plugins.snippet import (
     build_snippet_block,
     ensure_snippet_assets,
 )
-from texsmith.core.diagnostics import DiagnosticEmitter
+from texsmith.diagnostics import DiagnosticEmitter
 from texsmith.ir import model
 from texsmith.ir.walk import map_tree
 from texsmith.passes import PassContext, spec

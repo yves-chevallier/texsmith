@@ -6,7 +6,7 @@ from collections.abc import Mapping, Sequence
 import re
 from typing import Any
 
-from .diagnostics import DiagnosticEmitter, emit_diagnostic
+from texsmith.diagnostics import DiagnosticEmitter, emit_diagnostic
 
 
 _MUSTACHE_RE = re.compile(r"\{\{\s*([^\}\s][^\}]*)\s*\}\}")

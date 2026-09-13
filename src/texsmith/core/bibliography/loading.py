@@ -17,7 +17,7 @@ from pybtex.exceptions import PybtexError
 from slugify import slugify
 import yaml
 
-from texsmith.core.diagnostics import DiagnosticEmitter, emit_diagnostic, record_event
+from texsmith.diagnostics import DiagnosticEmitter, emit_diagnostic, record_event
 
 from .collection import BibliographyCollection
 from .inline import InlineBibliographyEntry

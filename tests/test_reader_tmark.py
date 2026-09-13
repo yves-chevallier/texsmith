@@ -4,9 +4,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from texsmith.core.diagnostics import LoggingEmitter, NullEmitter
 from texsmith.core.documents import Document, SlotPlan, TitleStrategy
-from texsmith.diagnostics import DiagnosticSink, FileTable
+from texsmith.diagnostics import DiagnosticSink, FileTable, LoggingEmitter, NullEmitter
 from texsmith.ir import model
 from texsmith.readers import tmark as tmark_reader
 from texsmith.readers.loader import MemoryLoader, TexsmithLoader, join

@@ -6,8 +6,14 @@ from collections.abc import Mapping
 import sys
 from typing import Any
 
-from texsmith.core.diagnostics import SinkEmitter, format_event_message
-from texsmith.diagnostics import Diagnostic, FileTable, Severity, format_diagnostic
+from texsmith.diagnostics import (
+    Diagnostic,
+    FileTable,
+    Severity,
+    SinkEmitter,
+    format_diagnostic,
+    format_event_message,
+)
 
 from .state import CLIState, exception_details, get_cli_state, render_message
 

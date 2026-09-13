@@ -24,13 +24,12 @@ from typing import TYPE_CHECKING, Any
 from texsmith.core.bibliography.collection import BibliographyCollection
 from texsmith.core.context import DocumentState
 from texsmith.core.fragments.activation import apply_requires
-from texsmith.diagnostics import Diagnostic, DiagnosticSink, Severity
+from texsmith.diagnostics import Diagnostic, DiagnosticEmitter, DiagnosticSink, Severity
 from texsmith.fonts.fallback import merge_fallback_summaries
 from texsmith.fonts.scripts import merge_script_usage
 from texsmith.passes import IdAllocator, PassContext, SlotTemplate, build_pipeline, run_pipeline
 from texsmith.readers.loader import TexsmithLoader
 
-from ..diagnostics import DiagnosticEmitter
 from .bodies import Body, Requires, build_writer_options, write_body
 from .resolution import (
     ResolutionChain,

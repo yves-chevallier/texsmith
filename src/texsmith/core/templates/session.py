@@ -49,10 +49,10 @@ from typing import Any
 
 from ..context import DocumentState
 from ..conversion import ConversionRequest
-from texsmith.core.diagnostics import emit_diagnostic, ensure_emitter
+from texsmith.diagnostics import emit_diagnostic, ensure_emitter
 from ..conversion.core import convert_documents, to_template_fragments
 from ..conversion.renderer import TemplateRenderer, TemplateRenderResult
-from ..diagnostics import DiagnosticEmitter
+from texsmith.diagnostics import DiagnosticEmitter
 from ..documents import Document
 from ..fragments import collect_fragment_attribute_defaults
 from .manifest import TemplateError

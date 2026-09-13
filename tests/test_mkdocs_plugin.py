@@ -6,7 +6,7 @@ from mkdocs_plugin_texsmith.plugin import LatexPlugin, log
 from mkdocs_plugin_texsmith.site import SiteIndex
 import pytest
 
-from texsmith.core.diagnostics import LoggingEmitter
+from texsmith.diagnostics import LoggingEmitter
 
 
 def test_lowering_reports_a_diagnostic_with_the_page_path(

@@ -30,7 +30,6 @@ import yaml
 
 from texsmith.adapters.html_utils import coerce_attribute, gather_classes
 from texsmith.core.conversion import ConversionRequest
-from texsmith.core.diagnostics import DiagnosticEmitter, ensure_emitter
 from texsmith.core.documents import (
     Document,
     TitleStrategy,
@@ -43,6 +42,7 @@ from texsmith.core.metadata import PressMetadataError, normalise_press_metadata
 from texsmith.core.templates import TemplateError, TemplateRuntime, load_template_runtime
 from texsmith.core.templates.session import TemplateSession
 from texsmith.core.user_dir import get_user_dir
+from texsmith.diagnostics import DiagnosticEmitter, ensure_emitter
 
 
 SNIPPET_DIR = "snippets"

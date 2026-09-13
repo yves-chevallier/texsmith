@@ -5,18 +5,21 @@ from pathlib import Path
 
 import pytest
 
-from texsmith.core.diagnostics import (
-    DiagnosticEmitter,
-    LoggingEmitter,
-    NullEmitter,
-    emit_diagnostic,
-)
 from texsmith.core.exceptions import (
     LatexRenderingError,
     TransformerExecutionError,
     format_user_friendly_render_error,
 )
-from texsmith.diagnostics import NO_SPAN, Diagnostic, Severity, Span
+from texsmith.diagnostics import (
+    NO_SPAN,
+    Diagnostic,
+    DiagnosticEmitter,
+    LoggingEmitter,
+    NullEmitter,
+    Severity,
+    Span,
+    emit_diagnostic,
+)
 from texsmith.ui.cli.diagnostics import CliEmitter
 from texsmith.ui.cli.state import ensure_rich_compat, set_cli_state
 

@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from texsmith.diagnostics import DiagnosticEmitter, emit_diagnostic
+
 
 class LatexRenderingError(RuntimeError):
     """Base exception for LaTeX rendering failures."""
@@ -63,3 +65,20 @@ def format_user_friendly_render_error(error: LatexRenderingError) -> str:
     if summary.endswith("."):
         summary = summary.rstrip(".")
     return f"{summary}. Re-run with --debug for technical details."
+
+
+def raise_conversion_error(
+    emitter: DiagnosticEmitter | None,
+    message: str,
+    exc: Exception,
+) -> None:
+    """Record the failure that stops the run, then raise it.
+
+    Lives here rather than with the emitters: it builds a
+    :class:`ConversionError`, and the diagnostics package must not depend on
+    the conversion one.
+    """
+    emit_diagnostic(emitter, "conversion-failed", message, exc=exc)
+    error = ConversionError(message)
+    error._texsmith_logged = True  # noqa: SLF001
+    raise error from exc

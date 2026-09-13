@@ -10,7 +10,7 @@
 
 ## Diagnostics emitters
 
-`texsmith.core.diagnostics` defines the `DiagnosticEmitter` protocol plus a few
+`texsmith.diagnostics` defines the `DiagnosticEmitter` protocol plus a few
 stock implementations. Pass any emitter into `ConversionService`,
 `convert_documents`, or `TemplateSession` to see the findings as they happen.
 
@@ -31,7 +31,7 @@ cause)` and `event(name, payload)`; everything else is the sink's. Emitters
 expose a `debug_enabled` flag so downstream handlers can decide whether to
 include stack traces or expensive state dumps.
 
-::: texsmith.core.diagnostics
+::: texsmith.diagnostics
 
 ::: texsmith.core.exceptions
 

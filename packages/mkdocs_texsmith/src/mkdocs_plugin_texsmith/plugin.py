@@ -72,7 +72,6 @@ from texsmith.core.context import DocumentState
 from texsmith.core.conversion.core import convert_document
 from texsmith.core.conversion.models import ConversionRequest
 from texsmith.core.conversion.resolution import ResolutionChain, bibliography_paths
-from texsmith.core.diagnostics import LoggingEmitter
 from texsmith.core.documents import Document, TitleStrategy
 from texsmith.core.exceptions import LatexRenderingError, format_rendering_error
 from texsmith.core.templates import (
@@ -82,7 +81,7 @@ from texsmith.core.templates import (
     normalise_template_language,
     wrap_template_document,
 )
-from texsmith.diagnostics import FileTable
+from texsmith.diagnostics import FileTable, LoggingEmitter
 import yaml
 
 from .search import SearchTags

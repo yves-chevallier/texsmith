@@ -27,8 +27,7 @@ from dataclasses import dataclass, field, fields
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Literal
 
-from texsmith.core.diagnostics import DiagnosticEmitter, NullEmitter
-from texsmith.diagnostics import DiagnosticSink, FileTable, Span
+from texsmith.diagnostics import DiagnosticEmitter, DiagnosticSink, FileTable, NullEmitter, Span
 from texsmith.ir import model
 from texsmith.readers.loader import MemoryLoader
 

@@ -13,14 +13,15 @@ from texsmith.core.bibliography.inline import (
 )
 from texsmith.core.bibliography.loading import load_inline_bibliography
 from texsmith.core.conversion_contexts import ConversionContext, GenerationStrategy
-from texsmith.core.diagnostics import emit_diagnostic, ensure_emitter, raise_conversion_error
 from texsmith.core.documents import Document
+from texsmith.core.exceptions import raise_conversion_error
 from texsmith.core.fragments.resolution import merge_fragments, parse_modifiers
 from texsmith.core.templates.runtime import (
     TemplateRuntime,
     build_template_overrides,
     resolve_template_language,
 )
+from texsmith.diagnostics import emit_diagnostic, ensure_emitter
 
 from .models import ConversionRequest
 from .templates import _build_mustache_defaults, _merge_template_overrides

@@ -10,21 +10,22 @@ from typing import Any
 from texsmith.core.bibliography.collection import BibliographyCollection
 from texsmith.core.context import DocumentState
 from texsmith.core.conversion_contexts import ConversionContext
-from texsmith.core.diagnostics import (
-    debug_enabled,
-    emit_diagnostic,
-    ensure_emitter,
-    raise_conversion_error,
-    record_event,
-)
 from texsmith.core.documents import Document
+from texsmith.core.exceptions import raise_conversion_error
 from texsmith.core.templates import (
     TemplateError,
     TemplateRuntime,
 )
+from texsmith.diagnostics import (
+    DiagnosticEmitter,
+    NullEmitter,
+    debug_enabled,
+    emit_diagnostic,
+    ensure_emitter,
+    record_event,
+)
 from texsmith.ir.codec import persist_debug_ir
 
-from ..diagnostics import DiagnosticEmitter, NullEmitter
 from ._utils import build_unique_stem_map
 from .execution import resolve_conversion_context
 from .models import ConversionRequest

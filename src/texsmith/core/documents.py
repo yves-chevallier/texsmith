@@ -46,7 +46,14 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 from texsmith.core.coerce import coerce_bool
-from texsmith.diagnostics import Diagnostic, FileTable, Severity
+from texsmith.diagnostics import (
+    Diagnostic,
+    DiagnosticEmitter,
+    FileTable,
+    NullEmitter,
+    Severity,
+    emit_diagnostic,
+)
 from texsmith.ir import model as irm
 from texsmith.ir.walk import plain_text
 
@@ -55,7 +62,6 @@ from .conversion.inputs import (
     SlotOptions,
     extract_front_matter_slots,
 )
-from .diagnostics import DiagnosticEmitter, NullEmitter, emit_diagnostic
 from .exceptions import ConversionError
 from .front_matter import split_front_matter
 from .metadata import PressMetadataError, normalise_press_metadata

@@ -8,9 +8,8 @@ from bs4 import BeautifulSoup
 import pytest
 
 from texsmith.adapters.plugins import snippet
-from texsmith.core.diagnostics import LoggingEmitter, NullEmitter
 from texsmith.core.documents import Document
-from texsmith.diagnostics import format_diagnostic
+from texsmith.diagnostics import LoggingEmitter, NullEmitter, format_diagnostic
 
 
 WADHWANI = (

@@ -22,7 +22,7 @@ align(center)[#counter(page).get().first()]
 
 = Diagnostics emitters
 
-`texsmith.core.diagnostics` defines the `DiagnosticEmitter` protocol plus a few
+`texsmith.diagnostics` defines the `DiagnosticEmitter` protocol plus a few
 stock implementations. Pass any emitter into `ConversionService`,
 `convert_documents`, or `TemplateSession` to see the findings as they happen.
 

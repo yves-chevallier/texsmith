@@ -30,15 +30,15 @@ from texsmith.core.bibliography.inline import (
 from texsmith.core.bibliography.loading import load_inline_bibliography
 from texsmith.core.context import DocumentState
 from texsmith.core.conversion_contexts import ConversionContext, GenerationStrategy
-from texsmith.core.diagnostics import (
-    DiagnosticEmitter,
-    NullEmitter,
-    ensure_emitter,
-    raise_conversion_error,
-)
+from texsmith.core.exceptions import raise_conversion_error
 from texsmith.core.metadata import PressMetadataError, normalise_press_metadata
 from texsmith.core.templates import resolve_template_language
 from texsmith.core.templates.typst import TypstTemplate, load_typst_template
+from texsmith.diagnostics import (
+    DiagnosticEmitter,
+    NullEmitter,
+    ensure_emitter,
+)
 from texsmith.passes import PassContext, SlotTemplate, build_pipeline, run_pipeline
 from texsmith.writers.typst import render_document
 from texsmith.writers.typst.build import compile_typst

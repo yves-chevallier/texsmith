@@ -5,8 +5,7 @@ from __future__ import annotations
 from collections.abc import Mapping
 from typing import Any
 
-from texsmith.core.diagnostics import SinkEmitter
-from texsmith.diagnostics import Diagnostic, Severity
+from texsmith.diagnostics import Diagnostic, Severity, SinkEmitter
 
 
 class RecordingEmitter(SinkEmitter):

@@ -11,11 +11,10 @@ from typing import Any
 
 import yaml
 
-from texsmith.core.diagnostics import ensure_emitter
 from texsmith.core.exceptions import ConversionError
 from texsmith.core.sources import is_bibliography, is_front_matter, is_markdown
+from texsmith.diagnostics import DiagnosticEmitter, ensure_emitter
 
-from ..diagnostics import DiagnosticEmitter
 from ..documents import Document, TitleStrategy, front_matter_has_title
 from ..front_matter import split_front_matter
 from ..templates.session import TemplateRenderResult, TemplateSession, get_template

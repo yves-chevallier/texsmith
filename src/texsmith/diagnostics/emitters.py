@@ -1,4 +1,4 @@
-"""Diagnostic abstractions shared across the conversion pipeline.
+"""The presenters: what a run does with each record as it is collected.
 
 Every emitter collects :class:`~texsmith.diagnostics.Diagnostic` records in a
 :class:`~texsmith.diagnostics.DiagnosticSink` and renders them its own way:
@@ -18,18 +18,10 @@ from collections.abc import Mapping
 import logging
 from typing import Any, Protocol, runtime_checkable
 
-from texsmith.diagnostics import (
-    NO_SPAN,
-    Diagnostic,
-    DiagnosticSink,
-    FileTable,
-    Severity,
-    Span,
-    default_severity,
-    format_diagnostic,
-)
-
-from .exceptions import ConversionError
+from .codes import default_severity
+from .files import FileTable
+from .model import NO_SPAN, Diagnostic, Severity, Span
+from .sink import DiagnosticSink, format_diagnostic
 
 
 logger = logging.getLogger(__name__)
@@ -37,7 +29,7 @@ logger = logging.getLogger(__name__)
 
 @runtime_checkable
 class DiagnosticEmitter(Protocol):
-    """Interface used to surface warnings, errors, and structured events.
+    """What a stage may ask of the object presenting its findings.
 
     ``sink`` is the run's collector and, through it, the run's
     :class:`~texsmith.diagnostics.FileTable`. It is part of the interface
@@ -187,7 +179,6 @@ __all__ = [
     "emit_diagnostic",
     "ensure_emitter",
     "format_event_message",
-    "raise_conversion_error",
     "record_event",
 ]
 
@@ -199,7 +190,7 @@ def ensure_emitter(emitter: DiagnosticEmitter | None) -> DiagnosticEmitter:
 
 def debug_enabled(emitter: DiagnosticEmitter | None) -> bool:
     """Return whether debug mode is active for the given emitter."""
-    return bool(emitter and getattr(emitter, "debug_enabled", False))
+    return emitter is not None and emitter.debug_enabled
 
 
 def record_event(
@@ -237,15 +228,3 @@ def emit_diagnostic(
         ),
         exc,
     )
-
-
-def raise_conversion_error(
-    emitter: DiagnosticEmitter | None,
-    message: str,
-    exc: Exception,
-) -> None:
-    """Record the failure that stops the run, then raise it."""
-    emit_diagnostic(emitter, "conversion-failed", message, exc=exc)
-    error = ConversionError(message)
-    error._texsmith_logged = True  # noqa: SLF001
-    raise error from exc
