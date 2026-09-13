@@ -320,10 +320,10 @@ class _RenderEmitter(CliEmitter):
         super().__init__(**kwargs)
         self.deprecated = deprecated
 
-    def diagnostic(self, diagnostic: Diagnostic) -> None:
+    def diagnostic(self, diagnostic: Diagnostic, cause: BaseException | None = None) -> None:
         record = demote_deprecated(diagnostic, self.deprecated)
         if record is not None:
-            super().diagnostic(record)
+            super().diagnostic(record, cause)
 
 
 def _lookup_bool(mapping: Mapping[str, Any] | None, path: tuple[str, ...]) -> bool | None:

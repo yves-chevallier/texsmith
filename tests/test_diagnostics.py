@@ -76,6 +76,44 @@ def test_emitter_deduplicates_identical_records(caplog: pytest.LogCaptureFixture
     assert len(caplog.records) == 1
 
 
+def test_a_filtering_subclass_sees_the_free_form_records_too() -> None:
+    """``warning()``/``error()`` go through ``diagnostic()`` like coded records.
+
+    The render command filters ``--deprecated`` by overriding ``diagnostic``;
+    before, the two legacy entry points reached the sink directly and any such
+    filter saw only half the stream.
+    """
+
+    class Dropping(LoggingEmitter):
+        def diagnostic(self, diagnostic: Diagnostic, cause: BaseException | None = None) -> None:
+            del cause
+            if diagnostic.severity is not Severity.WARNING:
+                super().diagnostic(diagnostic)
+
+    emitter = Dropping()
+    emitter.warning("dropped")
+    emitter.error("kept")
+    emitter.diagnostic(Diagnostic("asset-missing", Severity.WARNING, NO_SPAN, "also dropped"))
+
+    assert [record.message for record in emitter.sink] == ["kept"]
+
+
+def test_the_cause_survives_the_diagnostic_hop(caplog: pytest.LogCaptureFixture) -> None:
+    """A subclass that forwards through ``diagnostic`` keeps the ``-v`` context."""
+
+    class Passing(LoggingEmitter):
+        def diagnostic(self, diagnostic: Diagnostic, cause: BaseException | None = None) -> None:
+            super().diagnostic(diagnostic, cause)
+
+    emitter = Passing()
+    cause = ValueError("root")
+    with caplog.at_level(logging.WARNING):
+        emitter.warning("Heads up", exc=cause)
+    (record,) = caplog.records
+    assert record.exc_info is not None
+    assert record.exc_info[1] is cause
+
+
 def test_emitter_renders_a_located_record(caplog: pytest.LogCaptureFixture) -> None:
     emitter = LoggingEmitter()
     file_id = emitter.files.add(Path("doc.md"), "a\n\nhello @x\n")

@@ -42,7 +42,7 @@ class DiagnosticEmitter(Protocol):
 
     def event(self, name: str, payload: Mapping[str, Any]) -> None: ...
 
-    def diagnostic(self, diagnostic: Diagnostic) -> None: ...
+    def diagnostic(self, diagnostic: Diagnostic, cause: BaseException | None = None) -> None: ...
 
 
 class NullEmitter:
@@ -59,7 +59,7 @@ class NullEmitter:
     def event(self, name: str, payload: Mapping[str, Any]) -> None:
         return
 
-    def diagnostic(self, diagnostic: Diagnostic) -> None:
+    def diagnostic(self, diagnostic: Diagnostic, cause: BaseException | None = None) -> None:
         return
 
 
@@ -68,7 +68,10 @@ class SinkEmitter:
 
     Subclasses implement :meth:`render` (and :meth:`event`). ``warning()`` and
     ``error()`` are the legacy entry points: a record with the ``texsmith``
-    code and no location, the exception kept as rendering context only.
+    code and no location, the exception kept as rendering context only. They
+    go through :meth:`diagnostic` like every other record, so a subclass that
+    filters there (the render command's ``--deprecated`` level) sees the whole
+    stream and not only the coded half.
     """
 
     debug_enabled: bool
@@ -81,14 +84,14 @@ class SinkEmitter:
     def files(self) -> FileTable:
         return self.sink.files
 
-    def diagnostic(self, diagnostic: Diagnostic) -> None:
-        self.sink.add(diagnostic)
+    def diagnostic(self, diagnostic: Diagnostic, cause: BaseException | None = None) -> None:
+        self.sink.add(diagnostic, cause=cause)
 
     def warning(self, message: str, exc: BaseException | None = None) -> None:
-        self.sink.add(legacy_diagnostic(Severity.WARNING, message), cause=exc)
+        self.diagnostic(legacy_diagnostic(Severity.WARNING, message), exc)
 
     def error(self, message: str, exc: BaseException | None = None) -> None:
-        self.sink.add(legacy_diagnostic(Severity.ERROR, message), cause=exc)
+        self.diagnostic(legacy_diagnostic(Severity.ERROR, message), exc)
 
     def event(self, name: str, payload: Mapping[str, Any]) -> None:
         raise NotImplementedError
