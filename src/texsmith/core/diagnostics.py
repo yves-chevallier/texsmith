@@ -21,6 +21,8 @@ from texsmith.diagnostics import (
     DiagnosticSink,
     FileTable,
     Severity,
+    Span,
+    default_severity,
     format_diagnostic,
 )
 
@@ -196,6 +198,7 @@ __all__ = [
     "NullEmitter",
     "SinkEmitter",
     "debug_enabled",
+    "emit_diagnostic",
     "ensure_emitter",
     "format_event_message",
     "legacy_diagnostic",
@@ -221,6 +224,34 @@ def record_event(
 ) -> None:
     """Forward a structured diagnostic event."""
     ensure_emitter(emitter).event(event, payload)
+
+
+def emit_diagnostic(
+    emitter: DiagnosticEmitter | None,
+    code: str,
+    message: str,
+    *,
+    span: Span = NO_SPAN,
+    severity: Severity | None = None,
+    exc: BaseException | None = None,
+) -> None:
+    """Record a coded finding through ``emitter``.
+
+    The counterpart of :meth:`DiagnosticSink.emit` for the stages that hold an
+    emitter rather than a :class:`~texsmith.passes.PassContext`. It goes
+    through :meth:`DiagnosticEmitter.diagnostic` rather than reaching the sink
+    directly, so an emitter that filters sees these records too; the severity
+    defaults to the one the code table gives the code.
+    """
+    ensure_emitter(emitter).diagnostic(
+        Diagnostic(
+            code=code,
+            severity=severity if severity is not None else default_severity(code),
+            span=span,
+            message=message,
+        ),
+        exc,
+    )
 
 
 def raise_conversion_error(

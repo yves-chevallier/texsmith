@@ -12,6 +12,7 @@ from texsmith.core.context import DocumentState
 from texsmith.core.conversion_contexts import ConversionContext
 from texsmith.core.diagnostics import (
     debug_enabled,
+    emit_diagnostic,
     ensure_emitter,
     raise_conversion_error,
     record_event,
@@ -177,7 +178,12 @@ def _render_document(
         except OSError as exc:
             if debug_enabled(emitter):
                 raise
-            emitter.warning(f"Failed to write bibliography file: {exc}")
+            emit_diagnostic(
+                emitter,
+                "bibliography-write-failed",
+                f"'{bibliography_output}' could not be written: {exc}",
+                exc=exc,
+            )
             bibliography_output = None
 
     if document_state is not None:

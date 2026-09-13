@@ -13,7 +13,7 @@ from texsmith.core.bibliography.inline import (
 )
 from texsmith.core.bibliography.loading import load_inline_bibliography
 from texsmith.core.conversion_contexts import ConversionContext, GenerationStrategy
-from texsmith.core.diagnostics import ensure_emitter, raise_conversion_error
+from texsmith.core.diagnostics import emit_diagnostic, ensure_emitter, raise_conversion_error
 from texsmith.core.documents import Document
 from texsmith.core.fragments.resolution import merge_fragments, parse_modifiers
 from texsmith.core.templates.runtime import (
@@ -155,7 +155,11 @@ def resolve_conversion_context(
             continue
         prefix = f"[{issue.key}] " if issue.key else ""
         source_hint = f" ({issue.source})" if issue.source else ""
-        emitter.warning(f"{prefix}{issue.message}{source_hint}")
+        emit_diagnostic(
+            emitter,
+            "bibliography-entry-invalid",
+            f"{prefix}{issue.message}{source_hint}",
+        )
         issue_signatures.add(signature)
 
     document.bibliography = bibliography_map

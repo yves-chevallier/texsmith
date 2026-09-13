@@ -44,6 +44,21 @@ _TABLE: tuple[CodeInfo, ...] = (
         "doi-fetch-failed", Severity.WARNING, "A DOI could not be resolved to a bibliography entry"
     ),
     CodeInfo(
+        "bibliography-entry-invalid",
+        Severity.WARNING,
+        "A bibliography entry could not be parsed or materialised; it is skipped",
+    ),
+    CodeInfo(
+        "bibliography-entry-incomplete",
+        Severity.WARNING,
+        "A declared bibliography entry provides neither a DOI nor manual fields",
+    ),
+    CodeInfo(
+        "bibliography-write-failed",
+        Severity.WARNING,
+        "The gathered '.bib' could not be written; the document builds without it",
+    ),
+    CodeInfo(
         "snippet-build-failed",
         Severity.WARNING,
         "An executed or rendered snippet failed; the fence is kept as code",

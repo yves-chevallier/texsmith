@@ -17,7 +17,7 @@ from pybtex.exceptions import PybtexError
 from slugify import slugify
 import yaml
 
-from texsmith.core.diagnostics import DiagnosticEmitter, record_event
+from texsmith.core.diagnostics import DiagnosticEmitter, emit_diagnostic, record_event
 
 from .collection import BibliographyCollection
 from .inline import InlineBibliographyEntry
@@ -67,7 +67,12 @@ def load_inline_bibliography(
             try:
                 doi_key = normalise_doi_fn(doi_value)
             except lookup_error_cls as exc:
-                emitter.warning(f"Failed to resolve DOI '{doi_value}' for '{key}': {exc}")
+                emit_diagnostic(
+                    emitter,
+                    "doi-fetch-failed",
+                    f"DOI '{doi_value}' of entry '{key}' is not a DOI: {exc}",
+                    exc=exc,
+                )
                 continue
 
             payload = cache_entries.get(doi_key)
@@ -79,7 +84,12 @@ def load_inline_bibliography(
                 try:
                     payload = resolver.fetch(doi_value)
                 except lookup_error_cls as exc:
-                    emitter.warning(f"Failed to resolve DOI '{doi_value}' for '{key}': {exc}")
+                    emit_diagnostic(
+                        emitter,
+                        "doi-fetch-failed",
+                        f"DOI '{doi_value}' of entry '{key}' could not be resolved: {exc}",
+                        exc=exc,
+                    )
                     continue
                 cache_entries[doi_key] = payload
                 cache_dirty = True
@@ -87,7 +97,12 @@ def load_inline_bibliography(
             try:
                 data = bibliography_data_from_string(payload, key)
             except PybtexError as exc:
-                emitter.warning(f"Failed to parse bibliography entry '{key}': {exc}")
+                emit_diagnostic(
+                    emitter,
+                    "bibliography-entry-invalid",
+                    f"the record resolved for entry '{key}' is not valid BibTeX: {exc}",
+                    exc=exc,
+                )
                 if cache_mode == "doi":
                     cache_entries.pop(doi_key, None)
                 continue
@@ -110,7 +125,12 @@ def load_inline_bibliography(
             try:
                 data = bibliography_data_from_inline_entry(key, entry)
             except (ValueError, PybtexError) as exc:
-                emitter.warning(f"Failed to materialise bibliography entry '{key}': {exc}")
+                emit_diagnostic(
+                    emitter,
+                    "bibliography-entry-invalid",
+                    f"entry '{key}' could not be materialised from its manual fields: {exc}",
+                    exc=exc,
+                )
                 continue
             collection.load_data(data, source=source_path)
             record_event(
@@ -125,8 +145,10 @@ def load_inline_bibliography(
             )
             continue
 
-        emitter.warning(
-            f"Bibliography entry '{key}' does not provide a DOI or manual fields; skipping."
+        emit_diagnostic(
+            emitter,
+            "bibliography-entry-incomplete",
+            f"entry '{key}' provides neither a DOI nor manual fields; it is skipped",
         )
 
     if cache_dirty and cache_path is not None:
