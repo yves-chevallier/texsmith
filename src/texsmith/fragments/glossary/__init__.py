@@ -34,12 +34,12 @@ class GlossaryFragment(BaseFragment[GlossaryConfig]):
         FragmentPiece(
             template_path=Path(__file__).with_name("ts-glossary.jinja.sty"),
             kind="package",
-            slot="extra_packages",
+            variable="extra_packages",
         ),
         FragmentPiece(
             template_path=Path(__file__).with_name("ts-glossary-backmatter.jinja.tex"),
             kind="inline",
-            slot="fragment_backmatter",
+            variable="fragment_backmatter",
         ),
     ]
     attributes: ClassVar[dict[str, Any]] = {}

@@ -925,6 +925,15 @@ def exit_code(reports: Sequence[EntryReport]) -> int:
 
 
 def _write_diffs(reports: Sequence[EntryReport], out_dir: Path) -> None:
+    """Write this run's diffs, and only this run's.
+
+    The directory is cleared first: it used to accumulate, so a later run that
+    reported an entry identical left the previous run's diff file sitting next
+    to the fresh ones, and reading them together showed differences no run had
+    found.
+    """
+    if out_dir.exists():
+        shutil.rmtree(out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
     for report in reports:
         chunks = [f"### {f.name}\n{f.diff}" for f in report.files if f.diff]

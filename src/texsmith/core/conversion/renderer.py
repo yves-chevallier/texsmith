@@ -113,14 +113,20 @@ def _merge_overrides(
         )
 
 
-def _validate_slots(runtime: TemplateRuntime, aggregated_slots: Mapping[str, Any]) -> None:
-    """Ensure that fragments only target declared template slots."""
+def _validate_slots(runtime: TemplateRuntime, slot_bodies: Mapping[str, Any]) -> None:
+    """Every body written must belong to a slot the template declares.
+
+    These are the slots a *document* is assigned to (``mainmatter``,
+    ``abstract``) — not the template variables a fragment injects into
+    (``extra_packages``), which ``render_fragments`` checks and which this
+    function would reject if the two namespaces were ever confused.
+    """
     declared = set(runtime.slots.keys()) | {runtime.default_slot}
-    unknown = sorted(slot for slot in aggregated_slots if slot not in declared)
+    unknown = sorted(slot for slot in slot_bodies if slot not in declared)
     if unknown:
         allowed = ", ".join(sorted(declared))
         raise TemplateError(
-            f"Fragments target unknown slot(s) {', '.join(unknown)} for template '{runtime.name}'. "
+            f"No slot named {', '.join(unknown)} in template '{runtime.name}'. "
             f"Declared slots: {allowed or '(none)'}."
         )
 

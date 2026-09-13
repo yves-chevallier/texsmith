@@ -20,7 +20,7 @@ from texsmith.core.templates.manifest import (
 def _inline_fragment(tmp_path: Path, name: str, attr_name: str) -> str:
     template_path = tmp_path / f"{name}.jinja.tex"
     template_path.write_text("", encoding="utf-8")
-    piece = FragmentPiece(template_path=template_path, kind="inline", slot="extra_packages")
+    piece = FragmentPiece(template_path=template_path, kind="inline", variable="extra_packages")
     fragment = FragmentDefinition(
         name=name,
         pieces=[piece],
@@ -69,7 +69,9 @@ def test_explicit_fragment_owner_conflicts_with_template(tmp_path: Path) -> None
     template_path.write_text("", encoding="utf-8")
     fragment = FragmentDefinition(
         name="frag-explicit-owner",
-        pieces=[FragmentPiece(template_path=template_path, kind="inline", slot="extra_packages")],
+        pieces=[
+            FragmentPiece(template_path=template_path, kind="inline", variable="extra_packages")
+        ],
         attributes={"foo": TemplateAttributeSpec(default="x", owner="custom-owner")},
     )
     register_fragment(fragment)

@@ -99,7 +99,7 @@ class GeometryFragment(BaseFragment[GeometryFragmentConfig]):
         FragmentPiece(
             template_path=Path(__file__).with_name("ts_geometry.tex.jinja"),
             kind="inline",
-            slot="extra_packages",
+            variable="extra_packages",
         )
     ]
     attributes: ClassVar[dict[str, Any]] = {}

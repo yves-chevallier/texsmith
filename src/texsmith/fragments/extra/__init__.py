@@ -41,7 +41,7 @@ class ExtraFragment(BaseFragment[ExtraConfig]):
         FragmentPiece(
             template_path=Path(__file__).with_name("ts-extra.jinja.tex"),
             kind="inline",
-            slot="extra_packages",
+            variable="extra_packages",
         )
     ]
     attributes: ClassVar[dict[str, Any]] = {}

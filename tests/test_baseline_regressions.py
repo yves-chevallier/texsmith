@@ -52,11 +52,11 @@ def test_fragment_slot_validation_blocks_template_slot_targets(tmp_path: Path) -
     template_path = tmp_path / "conflict.jinja.tex"
     template_path.write_text("payload", encoding="utf-8")
 
-    piece = FragmentPiece(template_path=template_path, kind="inline", slot="mainmatter")
+    piece = FragmentPiece(template_path=template_path, kind="inline", variable="mainmatter")
     definition = FragmentDefinition(name="phase1-conflict", pieces=[piece])
     register_fragment(definition)
 
-    with pytest.raises(TemplateError, match="Fragments cannot target slot 'mainmatter'"):
+    with pytest.raises(TemplateError, match="declares as a document slot"):
         render_fragments(
             ["phase1-conflict"],
             context={},

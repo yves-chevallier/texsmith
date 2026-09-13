@@ -34,12 +34,12 @@ class BibliographyFragment(BaseFragment[BibliographyConfig]):
         FragmentPiece(
             template_path=Path(__file__).with_name("ts-bibliography.jinja.tex"),
             kind="inline",
-            slot="extra_packages",
+            variable="extra_packages",
         ),
         FragmentPiece(
             template_path=Path(__file__).with_name("ts-bibliography-backmatter.jinja.tex"),
             kind="inline",
-            slot="fragment_backmatter",
+            variable="fragment_backmatter",
         ),
     ]
     attributes: ClassVar[dict[str, Any]] = {}

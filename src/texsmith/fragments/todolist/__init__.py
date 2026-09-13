@@ -32,7 +32,7 @@ class TodolistFragment(BaseFragment[TodolistConfig]):
         FragmentPiece(
             template_path=Path(__file__).with_name("ts-todolist.jinja.sty"),
             kind="package",
-            slot="extra_packages",
+            variable="extra_packages",
         )
     ]
     attributes: ClassVar[dict[str, Any]] = {}

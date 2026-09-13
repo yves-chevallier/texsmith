@@ -68,14 +68,14 @@ class TypesettingFragment(BaseFragment[TypesettingConfig]):
         FragmentPiece(
             template_path=Path(__file__).with_name("ts-typesetting.jinja.sty"),
             kind="package",
-            slot="extra_packages",
+            variable="extra_packages",
             condition="ts_typesetting_contract",
         ),
         # The paragraph / leading / lineno controls, inline, when configured.
         FragmentPiece(
             template_path=Path(__file__).with_name("ts-typesetting.tex.jinja"),
             kind="inline",
-            slot="extra_packages",
+            variable="extra_packages",
             condition="ts_typesetting_enabled",
         ),
     ]

@@ -18,7 +18,11 @@ class FragmentPiece:
 
     template_path: Path
     kind: FragmentKind = "package"
-    slot: str = "extra_packages"
+    #: The template variable the rendered piece is injected into
+    #: (``extra_packages``, ``fragment_backmatter``). Not a template *slot*:
+    #: a slot is a region a document is assigned to (``mainmatter``), and a
+    #: fragment is forbidden from targeting one.
+    variable: str = "extra_packages"
     output_name: str | None = None
     #: Context key that must be truthy for the piece to render; ``None``
     #: renders the piece whenever the fragment renders.
@@ -56,13 +60,13 @@ class FragmentPiece:
                 f"Unknown fragment file type '{kind_raw}'. Expected one of: package, input, inline."
             )
 
-        slot = str(payload.get("slot", "extra_packages"))
+        variable = str(payload.get("variable", "extra_packages"))
         output_name = payload.get("output") if isinstance(payload.get("output"), str) else None
 
         return cls(
             template_path=resolved_path,
             kind=kind_raw,  # type: ignore[arg-type]
-            slot=slot,
+            variable=variable,
             output_name=output_name,
         )
 

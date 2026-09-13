@@ -119,7 +119,7 @@ class KeystrokesFragment(BaseFragment[KeystrokesConfig]):
         FragmentPiece(
             template_path=Path(__file__).with_name("ts-keystrokes.jinja.sty"),
             kind="package",
-            slot="extra_packages",
+            variable="extra_packages",
         )
     ]
     attributes: ClassVar[dict[str, Any]] = {}

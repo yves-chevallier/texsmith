@@ -83,5 +83,5 @@ def test_renderer_rejects_unknown_slot():
         slot_includes=set(),
     )
 
-    with pytest.raises(TemplateError, match="unknown slot"):
+    with pytest.raises(TemplateError, match="No slot named unknown"):
         renderer.render([fragment], output_dir=pathlib.Path("build"))

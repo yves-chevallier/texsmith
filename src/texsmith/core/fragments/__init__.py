@@ -136,7 +136,7 @@ class FragmentDefinition:
             raise TemplateError(f"Fragment path does not exist: {resolved}")
 
         fragment_name = name or _package_name(resolved.name)
-        piece = FragmentPiece(template_path=resolved, kind="package", slot="extra_packages")
+        piece = FragmentPiece(template_path=resolved, kind="package", variable="extra_packages")
         return cls(name=fragment_name, pieces=[piece], source=resolved, context_defaults={})
 
 
@@ -470,16 +470,20 @@ def render_fragments(
     for fragment in fragments:
         if declared_slots is not None:
             for piece in fragment.pieces:
-                target_slot = piece.slot
-                if target_slot in declared_slots:
+                target = piece.variable
+                if target in declared_slots:
+                    # A slot is a region a *document* is assigned to. A fragment
+                    # injects into a template variable, and the two namespaces
+                    # must not overlap, or a fragment would overwrite a body.
                     raise TemplateError(
-                        f"Fragments cannot target slot '{target_slot}' in template "
-                        f"'{template_name or 'unknown'}'."
+                        f"Fragment '{fragment.name}' targets '{target}', which template "
+                        f"'{template_name or 'unknown'}' declares as a document slot. "
+                        f"A fragment injects into a template variable, not a slot."
                     )
-                if declared_variables is not None and target_slot not in declared_variables:
+                if declared_variables is not None and target not in declared_variables:
                     raise TemplateError(
                         f"Template '{template_name or 'unknown'}' doesn't declare variable "
-                        f"'{target_slot}' required by fragment '{fragment.name}'."
+                        f"'{target}' required by fragment '{fragment.name}'."
                     )
 
         if isinstance(fragment, FragmentDefinition):
@@ -554,12 +558,12 @@ def render_fragments(
             template = env.get_template(piece.template_path.name)
             payload = template.render(**context)
 
-            target_slot = piece.slot
+            target_variable = piece.variable
             if piece.kind == "inline":
                 injection = payload.strip()
                 if injection:
-                    variable_injections.setdefault(target_slot, []).append(injection)
-                    providers.setdefault(target_slot, []).append(fragment.name)
+                    variable_injections.setdefault(target_variable, []).append(injection)
+                    providers.setdefault(target_variable, []).append(fragment.name)
                 continue
 
             output_name = piece.output_filename(fragment.name)
@@ -577,8 +581,8 @@ def render_fragments(
             else:
                 injection = f"\\input{{{Path(output_name).name}}}"
 
-            variable_injections.setdefault(target_slot, []).append(injection)
-            providers.setdefault(target_slot, []).append(fragment.name)
+            variable_injections.setdefault(target_variable, []).append(injection)
+            providers.setdefault(target_variable, []).append(fragment.name)
 
     return FragmentRenderResult(
         packages=rendered_packages,
