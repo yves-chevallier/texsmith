@@ -229,16 +229,36 @@ into Rust, which is the same frontier question step 07 poses properly.
 into 07, which already asks whether a typed contract should carry TeXSmith
 data into the core, and which is the only route that drops `ir/`.
 
-**07 · The request/patch contract** — *two repositories.* The bet.
+**07 · The resolution contract** — *two repositories.* The bet. **Assessed
+and re-scoped**, not started: `specs/refactoring/07-resolution-contract.md`
+here, `design/decisions/0008-resolution-requests.md` in tmark, both proposed.
 
-    tmark    → typed requests   [{node_id, kind, payload}]   media · DOI · link · font
-    texsmith → resolutions       {node_id → patch | literal}  I/O · network · cache · build
-    tmark    → applies the patch and writes
+    core → requests    [{node_id, kind, payload}]      what needs resolving
+    host → patches     {node_id: replacement | drop}   what to put there
+    core → sections    [{node_id, level, id, text,     the top-level outline
+                         first_block, last_block}]
 
-One contract serves four passes (`assets`, `emoji`, `doi`, `snippet`). It is
-typed, it is *finite* — TeXSmith never sees the whole tree — and it is the
-**only** route that drops `ir/` (**2 195 lines, untouched**). Migrating the
-pure passes alone leaves `ir/model.py` and `codec.py` entirely in place.
+Two corrections to the sketch this entry used to carry.
+
+**Four passes is the wrong scope.** They are 990 lines; seven passes remain,
+1 083 lines, and six of them construct `model.*` nodes — so `ir/` (2 195)
+does not go, and a request/patch contract would run *beside* a Python tree
+walk. Two mechanisms in parallel is what step 08 spent three commits removing
+from the fragment activation; it is a new defect, not a half-migration.
+
+**The contract is not limited to I/O passes.** The constraint is per-node
+replacement versus restructuring, and ten of eleven passes are the former —
+`highlight` (`CodeBlock` → `Div` + `RawBlock`), `scripts` (`Str` → a run of
+`Span{script}`), `var`, `title` (a patch that removes), `include` (one node →
+N blocks, and `Loader` exists for it). The eleventh is `slots`, which never
+needs the tree either: it needs an index of the top-level headers to match a
+selector against, and a write of a named block range. Hence `sections`.
+
+**So: design for all eleven, migrate one at a time, delete `ir/` when the
+last lands.** `slots` decides the shape and is the one to design first. The
+prize is not the line count — `ir/model.py` is generated and CI-checked, so
+TeXSmith does not maintain it. The prize is that a node field added in tmark
+stops being a two-repository change.
 
 **08 · Templates and fragments** — *two of four items done*, branch
 `refactor/08-fragments`.
