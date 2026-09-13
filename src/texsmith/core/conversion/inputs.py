@@ -8,6 +8,8 @@ from datetime import date, datetime
 import re
 from typing import Any
 
+from texsmith.core.coerce import coerce_bool
+
 
 DOCUMENT_SELECTOR_SENTINEL = "@document"
 
@@ -44,17 +46,8 @@ class SlotOptions:
 
 
 def _coerce_bool_option(value: Any) -> bool:
-    if isinstance(value, bool):
-        return value
-    if isinstance(value, (int, float)):
-        return bool(value)
-    if isinstance(value, str):
-        token = value.strip().lower()
-        if token in {"true", "yes", "on", "1"}:
-            return True
-        if token in {"false", "no", "off", "0", ""}:
-            return False
-    return False
+    """A slot option is off unless it spells ``True``."""
+    return coerce_bool(value) or False
 
 
 def _extract_slot_options(payload: Any) -> SlotOptions:

@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from texsmith.core.coerce import coerce_bool
+
 from collections.abc import Callable, Mapping, Sequence
 import copy
 from functools import cache
@@ -625,18 +627,11 @@ class TemplateAttributeSpec(BaseModel):
             except (TypeError, ValueError) as exc:
                 raise TemplateError(f"Attribute '{self.name}' expects a numeric value.") from exc
         elif target_type == "boolean":
-            if isinstance(value, bool):
-                result = value
-            elif isinstance(value, str):
-                lowered = value.strip().lower()
-                if lowered in {"true", "yes", "1", "on"}:
-                    result = True
-                elif lowered in {"false", "no", "0", "off"}:
-                    result = False
-                else:
+            if isinstance(value, (bool, int, float, str)):
+                resolved = coerce_bool(value)
+                if resolved is None:
                     raise TemplateError(f"Attribute '{self.name}' expects a boolean value.")
-            elif isinstance(value, (int, float)):
-                result = bool(value)
+                result = resolved
             else:
                 raise TemplateError(f"Attribute '{self.name}' expects a boolean-compatible value.")
         elif target_type == "list":

@@ -35,7 +35,7 @@ import emoji as _emoji
 from texsmith.core.exceptions import exception_hint
 from texsmith.ir import model
 from texsmith.ir.walk import map_inlines
-from texsmith.passes import PassContext, diagnostic_span, spec
+from texsmith.passes import PassContext, spec
 from texsmith.passes.assets import asset_registry
 
 
@@ -100,7 +100,7 @@ def run(document: Document, ctx: PassContext) -> Document:
             except Exception as exc:
                 ctx.diagnostics.emit(
                     "asset-missing",
-                    diagnostic_span(node.span),
+                    node.span,
                     f"emoji artifact for '{cluster}' could not be fetched "
                     f"({exception_hint(exc) or exc}); the character is kept as text",
                 )

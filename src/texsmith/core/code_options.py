@@ -14,6 +14,8 @@ from __future__ import annotations
 from collections.abc import Mapping, Sequence
 from typing import Any
 
+from texsmith.core.coerce import coerce_bool
+
 
 CODE_ENGINES = {"minted", "listings", "verbatim", "pygments"}
 
@@ -27,9 +29,6 @@ ALL_INLINE_BREAKS = "-_./\\:;,|@+=&#%"
 _BREAKS_ALL_ALIASES = {"all", "any", "true", "yes", "on"}
 _BREAKS_NONE_ALIASES = {"none", "off", "false", "no"}
 _BREAKS_DEFAULT_ALIASES = {"default", "auto"}
-
-_TRUE_ALIASES = {"true", "yes", "on", "1"}
-_FALSE_ALIASES = {"false", "no", "off", "0"}
 
 
 def _filter_break_chars(chars: str) -> str:
@@ -71,17 +70,8 @@ def normalise_inline_breaks(value: Any, fallback: str = DEFAULT_INLINE_BREAKS) -
 
 
 def _coerce_bool(value: Any, fallback: bool) -> bool:
-    if isinstance(value, bool):
-        return value
-    if isinstance(value, (int, float)):
-        return bool(value)
-    if isinstance(value, str):
-        candidate = value.strip().lower()
-        if candidate in _TRUE_ALIASES:
-            return True
-        if candidate in _FALSE_ALIASES:
-            return False
-    return fallback
+    resolved = coerce_bool(value)
+    return fallback if resolved is None else resolved
 
 
 def normalise_inline_options(value: Any, fallback: Any = None) -> dict[str, Any]:

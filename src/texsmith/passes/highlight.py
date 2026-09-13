@@ -35,6 +35,7 @@ from typing import TYPE_CHECKING
 
 from texsmith.adapters.latex.pygments import PygmentsLatexHighlighter
 from texsmith.core.code_options import CODE_ENGINES, normalise_inline_options
+from texsmith.core.coerce import coerce_bool
 from texsmith.ir import model
 from texsmith.ir.walk import map_tree
 from texsmith.passes import PassContext, spec
@@ -47,7 +48,6 @@ if TYPE_CHECKING:  # pragma: no cover - typing only
 __all__ = ["code_engine", "highlight_lines", "run"]
 
 _ASCII_ART = frozenset("┌┬─┐│├┼┤└┴┘")
-_LINENUMS_OFF = frozenset({"false", "no", "0"})
 #: ``writer.py``: the first one absent from the text delimits ``\mintinline``.
 _MINTED_DELIMITERS = ("|", "!", ";", ":", "+", "/", "-", "=", "~", "*", "#", "?")
 _RANGE = re.compile(r"^(\d+)(?:-(\d+))?$")
@@ -75,7 +75,8 @@ def highlight_lines(value: str | None) -> list[int]:
 
 
 def _linenums(value: str | None) -> bool:
-    return value is not None and value.strip().lower() not in _LINENUMS_OFF
+    """``linenums`` is on unless it spells a false: a number is a start line."""
+    return value is not None and coerce_bool(value) is not False
 
 
 def _option(attrs: model.Attrs, key: str) -> str | None:

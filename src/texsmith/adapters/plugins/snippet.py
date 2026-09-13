@@ -17,6 +17,8 @@ from typing import Any
 from bs4 import BeautifulSoup
 from bs4.element import Tag
 
+from texsmith.core.coerce import coerce_bool
+
 
 try:  # Optional dependency: only needed when generating snippet previews.
     from PIL import Image, ImageDraw
@@ -46,8 +48,6 @@ SNIPPET_DIR = "snippets"
 #: The fence attributes a snippet reads besides its body (HTML ``data-*`` or info string).
 FENCE_ATTRIBUTES = ("caption", "label", "width", "layout", "config")
 _SNIPPET_PREFIX = "snippet-"
-_TRUE_VALUES = {"1", "true", "on", "yes"}
-_FALSE_VALUES = {"0", "false", "off", "no"}
 _SNIPPET_CACHE_NAMESPACE = "snippets"
 _SNIPPET_CACHE_FILENAME = "metadata.json"
 _SNIPPET_CACHE_VERSION = 3
@@ -442,15 +442,8 @@ def _coerce_bool_option(value: Any, default: bool) -> bool:
         return default
     if isinstance(value, bool):
         return value
-    if isinstance(value, (int, float)):
-        return bool(value)
-    if isinstance(value, str):
-        token = value.strip().lower()
-        if token in _TRUE_VALUES:
-            return True
-        if token in _FALSE_VALUES:
-            return False
-    return default
+    resolved = coerce_bool(value)
+    return default if resolved is None else resolved
 
 
 def _detect_language(element: Tag) -> str | None:
@@ -497,7 +490,7 @@ def _frame_dogear_enabled(overrides: Mapping[str, Any]) -> bool:
                 return False, False
             if token == "border":
                 return True, False
-            if token in {"dogear", "true", "yes", "on", "1"}:
+            if coerce_bool(token):
                 return True, True
         return False, False
 

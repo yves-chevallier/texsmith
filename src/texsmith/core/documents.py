@@ -45,6 +45,7 @@ from enum import Enum
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
+from texsmith.core.coerce import coerce_bool
 from texsmith.diagnostics import Diagnostic, FileTable
 from texsmith.ir import model as irm
 from texsmith.ir.walk import plain_text
@@ -149,21 +150,6 @@ def front_matter_has_title(metadata: Mapping[str, Any] | None) -> bool:
     return bool(isinstance(title, str) and title.strip())
 
 
-def _coerce_bool(value: Any) -> bool | None:
-    """Coerce loose truthy/falsey values from front matter."""
-    if isinstance(value, bool):
-        return value
-    if isinstance(value, (int, float)):
-        return bool(value)
-    if isinstance(value, str):
-        candidate = value.strip().lower()
-        if candidate in {"true", "yes", "on", "1"}:
-            return True
-        if candidate in {"false", "no", "off", "0"}:
-            return False
-    return None
-
-
 def _front_matter_numbered(metadata: Mapping[str, Any] | None) -> bool | None:
     """Extract a numbered flag from normalised front matter."""
     if not isinstance(metadata, Mapping):
@@ -172,7 +158,7 @@ def _front_matter_numbered(metadata: Mapping[str, Any] | None) -> bool | None:
     payload = dict(metadata)
     with contextlib.suppress(PressMetadataError):
         normalise_press_metadata(payload)
-    return _coerce_bool(payload.get("numbered"))
+    return coerce_bool(payload.get("numbered"))
 
 
 def _append_front_matter_abbreviations(text: str, emitter: DiagnosticEmitter) -> str:

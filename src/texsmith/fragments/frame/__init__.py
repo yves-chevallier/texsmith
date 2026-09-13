@@ -6,6 +6,7 @@ from typing import Any, ClassVar
 
 from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_validator, model_validator
 
+from texsmith.core.coerce import coerce_bool
 from texsmith.core.fragments.base import BaseFragment, FragmentPiece
 from texsmith.core.templates.manifest import TemplateAttributeSpec, TemplateError
 
@@ -14,22 +15,17 @@ _DEFAULT_MARGIN = "0pt"
 _DEFAULT_FOLD_SIZE = "10mm"
 
 
+#: The frame's own words for its two modes, resolved before the boolean ones.
+_MODE_WORDS = {"dogear": True, "border": False}
+
+
 def _coerce_bool(value: Any, *, default: bool = False) -> bool:
-    if value is None:
-        return default
-    if isinstance(value, bool):
-        return value
-    if isinstance(value, (int, float)):
-        return bool(value)
     if isinstance(value, str):
-        token = value.strip().lower()
-        if not token:
-            return default
-        if token in {"true", "yes", "on", "1", "dogear"}:
-            return True
-        if token in {"false", "no", "off", "0", "border"}:
-            return False
-    return default
+        mode = _MODE_WORDS.get(value.strip().lower())
+        if mode is not None:
+            return mode
+    resolved = coerce_bool(value)
+    return default if resolved is None else resolved
 
 
 class FrameConfig(BaseModel):
@@ -82,7 +78,7 @@ class FrameConfig(BaseModel):
                 return {"enabled": False}
             if token == "border":
                 return {"enabled": True, "dogear": False}
-            if token in {"dogear", "true", "yes", "on", "1"}:
+            if coerce_bool(token):
                 return {"enabled": True, "dogear": True}
             raise TemplateError("press.frame accepts false, true, 'border', or 'dogear'.")
         raise TemplateError("press.frame must be a boolean, string, or mapping.")

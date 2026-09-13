@@ -22,6 +22,7 @@ from typing import Any, ClassVar, TypeVar
 from urllib.parse import unquote, urlparse
 import warnings
 
+from texsmith.core.coerce import coerce_bool
 from texsmith.core.conversion.debug import ensure_emitter, record_event
 from texsmith.core.exceptions import TransformerExecutionError
 from texsmith.core.http import open_url
@@ -112,20 +113,8 @@ def _cairo_dependency_hint() -> str:
 
 def _option_flag(value: Any, *, default: bool = False) -> bool:
     """Read a boolean option that may reach us as a string from a document attribute."""
-    if value is None:
-        return default
-    if isinstance(value, bool):
-        return value
-    if isinstance(value, str):
-        text = value.strip().lower()
-        if not text:
-            return default
-        if text in {"0", "false", "no", "off"}:
-            return False
-        if text in {"1", "true", "yes", "on"}:
-            return True
-        return default
-    return bool(value)
+    resolved = coerce_bool(value)
+    return default if resolved is None else resolved
 
 
 def _wrap_playwright_error(exc: Exception, emitter: Any = None) -> TransformerExecutionError:

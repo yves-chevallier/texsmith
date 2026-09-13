@@ -65,13 +65,18 @@ class Severity(str, Enum):
 _SEVERITY_ORDER = (Severity.HINT, Severity.INFO, Severity.WARNING, Severity.ERROR)
 
 
-@dataclass(frozen=True, slots=True)
+@dataclass(frozen=True, slots=True, order=True)
 class Span:
-    """A half-open byte range ``start..end`` in ``file``; JSON ``[file, start, end]``."""
+    """A half-open byte range ``start..end`` in ``file``; JSON ``[file, start, end]``.
 
-    file: int
-    start: int
-    end: int
+    The generated IR models import this class rather than defining a second
+    one: the fields carry the defaults ``tmark``'s schema gives them, so
+    ``Span()`` is :data:`NO_SPAN` on both sides.
+    """
+
+    file: int = 0
+    start: int = 0
+    end: int = 0
 
     def to_json(self) -> list[int]:
         return [self.file, self.start, self.end]
@@ -86,7 +91,7 @@ class Span:
 
 #: "No location": the empty span at the start of the main document. Rendered
 #: without a line and column.
-NO_SPAN = Span(0, 0, 0)
+NO_SPAN = Span()
 
 
 @dataclass(frozen=True, slots=True)

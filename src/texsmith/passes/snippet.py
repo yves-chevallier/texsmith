@@ -36,7 +36,7 @@ from texsmith.adapters.plugins.snippet import (
 from texsmith.core.diagnostics import DiagnosticEmitter
 from texsmith.ir import model
 from texsmith.ir.walk import map_tree
-from texsmith.passes import PassContext, diagnostic_span, spec
+from texsmith.passes import PassContext, spec
 
 
 if TYPE_CHECKING:  # pragma: no cover - typing only
@@ -110,7 +110,7 @@ class _Renderer:
     def _failed(self, node: model.CodeBlock, reason: str) -> model.CodeBlock:
         self.ctx.diagnostics.emit(
             "snippet-build-failed",
-            diagnostic_span(node.span),
+            node.span,
             f"snippet build failed: {reason}",
         )
         return node

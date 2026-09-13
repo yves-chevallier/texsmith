@@ -13,6 +13,8 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any, ClassVar, Final, Literal, NamedTuple, TypeAlias
 
+from texsmith.diagnostics.model import NO_SPAN, Span
+
 
 TMARK_VERSION: Final = '0.0.0'
 SCHEMA_HASH: Final = 'b72987141242043c940233fc24a594f0e6ed91b15f01b8d7b98c7714360b9c43'
@@ -33,16 +35,6 @@ class Missing:
 MISSING: Final = Missing()
 
 
-@dataclass(frozen=True, slots=True, order=True)
-class Span:
-    """Byte span ``[file, start, end]``, half-open. ``NO_SPAN`` when unknown."""
-
-    file: int = 0
-    start: int = 0
-    end: int = 0
-
-
-NO_SPAN: Final = Span()
 SubSpan: TypeAlias = Span
 
 

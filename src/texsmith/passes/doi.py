@@ -40,7 +40,7 @@ from pybtex.exceptions import PybtexError
 from texsmith.diagnostics import Span
 from texsmith.ir import model
 from texsmith.ir.walk import map_tree, walk
-from texsmith.passes import PassContext, diagnostic_span, spec
+from texsmith.passes import PassContext, spec
 
 
 if TYPE_CHECKING:  # pragma: no cover - typing only
@@ -135,7 +135,7 @@ def _front_matter_dois(ir: model.Document) -> list[_Pending]:
     declared = ir.front_matter.keys.press.sources.bibliography
     if not isinstance(declared, Mapping):
         return []
-    span = diagnostic_span(ir.front_matter.span)
+    span = ir.front_matter.span
     pending: list[_Pending] = []
     for key, value in declared.items():
         doi: Any = None
@@ -172,7 +172,7 @@ def _pending_dois(ir: model.Document) -> list[_Pending]:
                 continue
             record = by_doi.get(normalised)
             if record is None:
-                record = _Pending(doi=doi, span=diagnostic_span(item.key_span))
+                record = _Pending(doi=doi, span=item.key_span)
                 by_doi[normalised] = record
                 pending.append(record)
             if item.key not in record.items:
@@ -232,7 +232,7 @@ def run(document: Document, ctx: PassContext) -> Document:
         except OSError as exc:
             ctx.diagnostics.emit(
                 "doi-fetch-failed",
-                diagnostic_span(ir.front_matter.span),
+                ir.front_matter.span,
                 f"Failed to write the DOI bibliography '{target}': {exc}",
             )
         else:

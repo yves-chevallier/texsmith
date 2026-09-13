@@ -30,7 +30,7 @@ from texsmith.core.conversion.inputs import DOCUMENT_SELECTOR_SENTINEL, SlotOpti
 from texsmith.diagnostics import NO_SPAN
 from texsmith.ir import model
 from texsmith.ir.walk import plain_text, walk
-from texsmith.passes import PassContext, diagnostic_span, spec
+from texsmith.passes import PassContext, spec
 
 
 if TYPE_CHECKING:  # pragma: no cover - typing only
@@ -137,9 +137,7 @@ def split_slots(
     """Split ``ir_document.blocks`` into bodies; diagnostics go to ``ctx`` when given."""
     options = dict(slot_options or {})
     blocks = ir_document.blocks
-    front_span = (
-        diagnostic_span(ir_document.front_matter.span) if ir_document.front_matter.raw else NO_SPAN
-    )
+    front_span = ir_document.front_matter.span if ir_document.front_matter.raw else NO_SPAN
 
     def emit(code: str, span: object, message: str) -> None:
         if ctx is not None:
@@ -172,7 +170,7 @@ def split_slots(
             if nested is not None:
                 emit(
                     "slot-nested-heading",
-                    diagnostic_span(nested.span),
+                    nested.span,
                     f"slot '{slot_name}': heading '{selector}' is nested in a container; "
                     "only top-level headings form a slot",
                 )

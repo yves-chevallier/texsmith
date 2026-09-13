@@ -5,6 +5,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, ClassVar
 
+from texsmith.core.coerce import coerce_bool
 from texsmith.core.fragments.base import BaseFragment, FragmentPiece
 from texsmith.core.fragments.resolution import contract_active
 from texsmith.core.templates.manifest import TemplateAttributeSpec, TemplateError
@@ -146,10 +147,14 @@ def _normalise_indent(value: Any) -> str | None:
             return None
         if token == "auto":
             return "auto"
-        if token in {"true", "yes", "on", "indent", "indented"}:
+        # ``indent``/``none`` are this fragment's own words for the two states.
+        if token in {"indent", "indented"}:
             return "always"
-        if token in {"false", "no", "off", "none"}:
+        if token == "none":
             return "none"
+        resolved = coerce_bool(token)
+        if resolved is not None:
+            return "always" if resolved else "none"
     raise TemplateError("paragraph.indent must be one of: true, false, auto.")
 
 

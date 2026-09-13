@@ -46,7 +46,7 @@ import tmark
 from texsmith.ir import codec, model
 from texsmith.ir.model import Node, Record
 from texsmith.ir.walk import map_tree
-from texsmith.passes import PassContext, diagnostic_span, highest_id, spec
+from texsmith.passes import PassContext, highest_id, spec
 from texsmith.readers.loader import join, join_dir
 
 
@@ -207,7 +207,7 @@ class _Splicer:
     ) -> tuple[model.Block, ...]:
         rel = include.path
         from_path = join(origin, include.base) if include.base else origin
-        span = diagnostic_span(include.span)
+        span = include.span
 
         found = self._resolve(from_path, rel)
         if found is None:
@@ -251,7 +251,7 @@ class _Splicer:
         if found is None:
             self.ctx.diagnostics.emit(
                 "include-missing",
-                diagnostic_span(block.span),
+                block.span,
                 f"included file `{rel}` not found",
             )
             return replace(block, text=f"[include: {rel} not found]", options=options)

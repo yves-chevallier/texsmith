@@ -17,7 +17,7 @@ from typing import TYPE_CHECKING, Any
 
 from texsmith.ir import model
 from texsmith.ir.walk import map_tree
-from texsmith.passes import PassContext, diagnostic_span, spec
+from texsmith.passes import PassContext, spec
 
 
 if TYPE_CHECKING:  # pragma: no cover - typing only
@@ -55,7 +55,7 @@ def run(document: Document, ctx: PassContext) -> Document:
         if value is _MISSING or value is None or (isinstance(value, str) and not value.strip()):
             ctx.diagnostics.emit(
                 "var-unresolved",
-                diagnostic_span(node.span),
+                node.span,
                 f"unresolved moustache '{moustache}'; left as written",
             )
             return node
@@ -64,7 +64,7 @@ def run(document: Document, ctx: PassContext) -> Document:
         ):
             ctx.diagnostics.emit(
                 "var-not-scalar",
-                diagnostic_span(node.span),
+                node.span,
                 f"moustache '{moustache}' resolves to a {type(value).__name__}, not a scalar",
             )
             return node

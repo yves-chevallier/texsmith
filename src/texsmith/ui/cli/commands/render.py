@@ -24,6 +24,7 @@ from texsmith.adapters.latex.engines import (
     run_engine_command,
 )
 from texsmith.core.bibliography import BibliographyCollection
+from texsmith.core.coerce import coerce_bool
 from texsmith.core.conversion import ConversionRequest
 from texsmith.core.conversion.debug import ConversionError
 from texsmith.core.conversion.inputs import UnsupportedInputError
@@ -346,17 +347,7 @@ def _lookup_bool(mapping: Mapping[str, Any] | None, path: tuple[str, ...]) -> bo
         if not isinstance(cursor, Mapping) or key not in cursor:
             return None
         cursor = cursor[key]
-    if isinstance(cursor, bool):
-        return cursor
-    if isinstance(cursor, (int, float)):
-        return bool(cursor)
-    if isinstance(cursor, str):
-        candidate = cursor.strip().lower()
-        if candidate in {"true", "yes", "on", "1"}:
-            return True
-        if candidate in {"false", "no", "off", "0"}:
-            return False
-    return None
+    return coerce_bool(cursor)
 
 
 def render(

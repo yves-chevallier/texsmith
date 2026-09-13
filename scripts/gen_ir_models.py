@@ -626,7 +626,8 @@ def render(model: Model, version: str, schema_hash: str) -> str:
     w("from __future__ import annotations\n\n")
     w("from dataclasses import dataclass, field\n")
     w("from enum import Enum\n")
-    w("from typing import Any, ClassVar, Final, Literal, NamedTuple, TypeAlias\n\n\n")
+    w("from typing import Any, ClassVar, Final, Literal, NamedTuple, TypeAlias\n\n")
+    w("from texsmith.diagnostics.model import NO_SPAN, Span\n\n\n")
     w(f"TMARK_VERSION: Final = {version!r}\n")
     w(f"SCHEMA_HASH: Final = {schema_hash!r}\n\n")
     w("#: A JSON value the schema leaves untyped (front-matter blobs).\n")
@@ -638,16 +639,9 @@ def render(model: Model, version: str, schema_hash: str) -> str:
     w('        return "MISSING"\n\n\n')
     w("MISSING: Final = Missing()\n\n\n")
 
-    # Span.
+    # Span: defined once, in the diagnostics package. The IR must not emit a
+    # second definition (``texsmith/diagnostics/model.py`` header).
     span = model.span_names[0]
-    w("@dataclass(frozen=True, slots=True, order=True)\n")
-    w(f"class {span}:\n")
-    names = ", ".join(model.span_fields)
-    w(f'    """Byte span ``[{names}]``, half-open. ``NO_SPAN`` when unknown."""\n\n')
-    for name in model.span_fields:
-        w(f"    {name}: int = 0\n")
-    w("\n\n")
-    w(f"NO_SPAN: Final = {span}()\n")
     for alias in model.span_names[1:]:
         w(f"{alias}: TypeAlias = {span}\n")
     w("\n\n")

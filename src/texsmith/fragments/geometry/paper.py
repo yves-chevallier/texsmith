@@ -9,6 +9,7 @@ from typing import Any, Literal
 from pint import DimensionalityError, UndefinedUnitError, UnitRegistry
 from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_validator, model_validator
 
+from texsmith.core.coerce import coerce_bool
 from texsmith.core.templates.manifest import TemplateError
 
 
@@ -504,17 +505,15 @@ def _resolve_margins(
 
 def _coerce_marks_flag(value: Any) -> bool | None:
     """Return a boolean marks flag when the payload resembles one."""
-    if isinstance(value, bool):
-        return value
-    if isinstance(value, (int, float)):
-        return bool(value)
     if isinstance(value, str):
         token = value.strip().lower()
-        if not token or token in {"false", "no", "off", "0", "none"}:
-            return False
-        if token in {"true", "yes", "on", "1", "showframe"}:
+        # ``showframe`` is the geometry package's own spelling; an empty or
+        # ``none`` value means "no marks", not "unset".
+        if token == "showframe":
             return True
-    return None
+        if not token or token == "none":
+            return False
+    return coerce_bool(value)
 
 
 __all__ = [

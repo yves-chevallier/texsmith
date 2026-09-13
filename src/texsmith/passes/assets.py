@@ -50,7 +50,7 @@ from texsmith.core.context import AssetRegistry
 from texsmith.core.exceptions import exception_hint
 from texsmith.ir import model
 from texsmith.ir.walk import iter_child_fields, map_tree
-from texsmith.passes import PassContext, diagnostic_span, spec
+from texsmith.passes import PassContext, spec
 from texsmith.passes.var import _MISSING, lookup
 
 
@@ -171,7 +171,7 @@ class _AssetPass:
         return self.registry.latex_path(stored)
 
     def diagnostic(self, code: str, node: model.Node, message: str) -> None:
-        self.ctx.diagnostics.emit(code, diagnostic_span(node.span), message)
+        self.ctx.diagnostics.emit(code, node.span, message)
 
     def literal(self, node: model.Node, text: str) -> model.Str:
         return model.Str(text=text, id=self.ctx.ids.next(), span=node.span)

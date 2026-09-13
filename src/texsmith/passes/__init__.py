@@ -49,7 +49,6 @@ __all__ = [
     "SlotTemplate",
     "Stage",
     "build_pipeline",
-    "diagnostic_span",
     "highest_id",
     "register",
     "run_pipeline",
@@ -184,13 +183,6 @@ class PassContext:
     #: ``emoji`` pass resolved. Also where a test injects a helper (a fake
     #: ``script_detector``).
     values: dict[str, Any] = field(default_factory=dict)
-
-
-def diagnostic_span(span: model.Span | None) -> Span:
-    """The diagnostics ``Span`` of an IR span (the two packages define their own)."""
-    if span is None:
-        return Span(0, 0, 0)
-    return Span(span.file, span.start, span.end)
 
 
 # ---------------------------------------------------------------------------

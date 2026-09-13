@@ -15,7 +15,6 @@ from texsmith.passes import (
     PassOrderError,
     PassSpec,
     build_pipeline,
-    diagnostic_span,
     run_pipeline,
 )
 
@@ -110,10 +109,13 @@ def test_run_pipeline_runs_resolve_between_stages(harness) -> None:
     assert document.resolved is None  # the input is never mutated
 
 
-def test_diagnostic_span_converts_ir_spans() -> None:
-    span = diagnostic_span(model.Span(2, 10, 20))
-    assert (span.file, span.start, span.end) == (2, 10, 20)
-    assert diagnostic_span(None).to_json() == [0, 0, 0]
+def test_the_ir_and_the_diagnostics_share_one_span() -> None:
+    """One definition: the generated models import it (``diagnostics/model.py``)."""
+    from texsmith.diagnostics.model import NO_SPAN as DIAG_NO_SPAN, Span as DiagSpan
+
+    assert model.Span is DiagSpan
+    assert model.NO_SPAN is DIAG_NO_SPAN
+    assert model.Span(2, 10, 20).to_json() == [2, 10, 20]
 
 
 def test_fixture_inputs_are_fresh() -> None:
