@@ -545,7 +545,7 @@ def test_typst_assets_and_pass_values(tmp_path: Path, monkeypatch) -> None:
     """Diagrams become PNG for Typst, images land under assets/, the pass values reach the state."""
     from texsmith.adapters.transformers import register_converter, registry
     from texsmith.core.context import DocumentState
-    from texsmith.core.conversion.typst_ir import render_typst_from_ir
+    from texsmith.core.conversion.typst import render_typst_document
     from texsmith.core.documents import Document
     from texsmith.fonts.fallback import FallbackEntry, FallbackIndex, FallbackLookup
     from texsmith.fonts.scripts import ScriptDetector
@@ -580,7 +580,7 @@ def test_typst_assets_and_pass_values(tmp_path: Path, monkeypatch) -> None:
     state = DocumentState()
     try:
         document = Document.from_markdown(source).prepare_for_conversion()
-        typ = render_typst_from_ir(document, template="article", output_dir=out, state=state)
+        typ = render_typst_document(document, template="article", output_dir=out, state=state)
     finally:
         register_converter("mermaid", saved)
 
