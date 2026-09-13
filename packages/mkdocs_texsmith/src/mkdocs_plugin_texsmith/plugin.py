@@ -81,7 +81,7 @@ from texsmith.core.templates import (
     normalise_template_language,
     wrap_template_document,
 )
-from texsmith.diagnostics import FileTable, LoggingEmitter
+from texsmith.diagnostics import LoggingEmitter
 import yaml
 
 from .search import SearchTags
@@ -310,7 +310,6 @@ class LatexPlugin(BasePlugin):
         self._diagnostic_emitter = _MkdocsEmitter(
             logger_obj=log,
             debug_enabled=self._is_serve,
-            files=FileTable(),
         )
 
         # -- the site on tmark ------------------------------------------------
@@ -325,6 +324,7 @@ class LatexPlugin(BasePlugin):
             web_options=self._web_options(),
             project_dir=self._project_dir,
             logger=log,
+            emitter=self._diagnostic_emitter,
         )
         if self.config.get("inject_markdown_extensions", True):
             self._inject_markdown_extensions(config)
@@ -382,12 +382,7 @@ class LatexPlugin(BasePlugin):
         lowered = self._site.lower(page, markdown)
         if lowered is None:
             return markdown
-        self._site.report(
-            lowered,
-            emitter=_MkdocsEmitter(
-                logger_obj=log, debug_enabled=self._is_serve, files=lowered.files
-            ),
-        )
+        self._site.report(lowered)
         return lowered.text
 
     def on_page_content(

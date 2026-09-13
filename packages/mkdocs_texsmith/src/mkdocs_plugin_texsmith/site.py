@@ -34,7 +34,7 @@ from typing import Any
 
 from mkdocs.structure.pages import Page
 from mkdocs.utils.meta import get_data
-from texsmith.diagnostics import Diagnostic, FileTable, LoggingEmitter, from_tmark
+from texsmith.diagnostics import Diagnostic, LoggingEmitter, from_tmark
 import tmark
 import yaml
 
@@ -79,7 +79,6 @@ class LoweredPage:
 
     text: str
     diagnostics: list[Diagnostic]
-    files: FileTable
     #: The ``References`` list when citations were lowered inline.
     bibliography: str | None = None
 
@@ -126,12 +125,19 @@ class SiteIndex:
         web_options: Mapping[str, Any] | None = None,
         project_dir: Path | None = None,
         logger: logging.Logger | None = None,
+        emitter: LoggingEmitter | None = None,
     ) -> None:
         self.counters: dict[str, Any] = dict(counters or {})
         self.lang = lang
         self.web_options: dict[str, Any] = dict(web_options or {})
         self.project_dir = project_dir
         self._logger = logger or logging.getLogger("mkdocs.plugins.texsmith")
+        # One emitter for the build: its sink owns the file table every page
+        # registers in, so a page's ``span.file`` identifies it among the
+        # others instead of being 0 in a table of its own.
+        self.emitter = (
+            emitter if emitter is not None else LoggingEmitter(logger_obj=self._logger)
+        )
         self._records: dict[str, PageRecord] = {}
         self._chain: dict[str, int] = {}
 
@@ -237,7 +243,7 @@ class SiteIndex:
         record.lowered = True
 
         padded = "\n" * record.padding + markdown
-        files = FileTable()
+        files = self.emitter.sink.files
         display = self._display_path(record.abs_src_path)
         file_id = int(files.add(display, padded))
         doc = tmark.parse(padded, file=display, file_id=file_id)
@@ -269,19 +275,13 @@ class SiteIndex:
         return LoweredPage(
             text=text,
             diagnostics=diagnostics,
-            files=files,
             bibliography=lowered.get("bibliography"),
         )
 
-    def report(
-        self, lowered: LoweredPage, *, emitter: LoggingEmitter | None = None
-    ) -> None:
+    def report(self, lowered: LoweredPage) -> None:
         """Log the diagnostics of a lowered page with ``path:line:col``."""
-        if not lowered.diagnostics:
-            return
-        active = emitter or LoggingEmitter(logger_obj=self._logger, files=lowered.files)
         for record in lowered.diagnostics:
-            active.diagnostic(record)
+            self.emitter.diagnostic(record)
 
     # -- helpers ---------------------------------------------------------------
 
