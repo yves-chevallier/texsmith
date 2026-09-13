@@ -1,9 +1,9 @@
 # Refactoring status (2026-09-13)
 
 Where the SOLID / DRY / SSOT / KISS pass on `src/texsmith` stands, what it
-decided, and what it has not done. Branch `refactor/00-drop-html-input`, 22
-commits on top of `tmark-migration`. Read this, then `AGENT.md`, then
-`specs/migration/merge-readiness.md`.
+decided, and what it has not done. Branch `refactor/00-drop-html-input` (23
+commits on `tmark-migration`), then `refactor/03-diagnostics` (8 more). Read
+this, then `AGENT.md`, then `specs/migration/merge-readiness.md`.
 
 ## The frontier, as settled
 
@@ -67,17 +67,65 @@ ruff clean — at every commit.
   by object identity, `ConversionRequest` actually frozen, `build_pdf` moved
   to `adapters/latex/build.py`, `render` split 406 → 220 lines.
 
+## Step 03 · One diagnostics system — **done**
+
+Branch `refactor/03-diagnostics`, 8 commits. 1 238 tests, parity 196/54/0,
+ruff clean at every commit. `src/texsmith` 34 986 → 35 141 (+155: the code
+table grew by eleven entries and twenty call sites went from one line to
+five).
+
+`core/diagnostics.py` and `texsmith/diagnostics/` were **not** two
+implementations of one thing — two *layers* of it, cut so the lower could not
+be used without the upper. The emitters are now `diagnostics/emitters.py` and
+the package imports nothing from `core`; `raise_conversion_error` moved to
+`core/exceptions.py`, which is the seam that made the cut possible.
+
+An emitter is a **presenter**: `render` and `event`. The sink collects,
+deduplicates, and owns the `FileTable`. `DiagnosticEmitter.warning`/`error`,
+`legacy_diagnostic` and `LEGACY_CODE` are deleted — every finding carries a
+code, and `emit_diagnostic(emitter, code, message, span=…, exc=…)` is the one
+way a stage that holds an emitter reports one.
+
+**The file table had no owner, and that was a bug, not a smell.** `span.file`
+is a third of `Diagnostic.key`, the identity the sink deduplicates on, so the
+file a finding belonged to was decided by `getattr(emitter, "files", None)`:
+under `LoggingEmitter` a batch numbered 0, 1, 2 and under `NullEmitter` — the
+library default, which had no table — 0, 0, 0. Two findings in two files then
+collided. `NullEmitter` became a `SinkEmitter` that renders nothing, so every
+emitter has a table and the `getattr` is gone.
+
+Three things fell out of it, each with its test:
+
+- **A diagnostic inside a `snippet` fence named the host page.** The nested
+  document parsed against a private table and took id 0 — the id the host
+  already held — so a finding in a fence rendered as the host's path at the
+  fence's line number. A location that exists and is wrong.
+- **The MkDocs plugin built three file tables**, one per page plus a second
+  emitter per page to render against it. Every page was file 0; its
+  long-lived emitter never saw a page record.
+- **`_warn_add_to_path` and half of `_emit_dependency_warning` were not in
+  the diagnostics system at all** — `warnings.warn`, so invisible to
+  `--diagnostics-json` and `--strict`, and fatal under `PYTHONWARNINGS=error`,
+  which `--strict` replaced.
+
+Two dead `getattr(emitter, "info", None)` branches in the LaTeX asset writer
+called a method no emitter defines in either repository.
+
+**A step that was proposed and is wrong: "one sink per run".**
+`pipeline._forwarding_sink` looks like a duplicate collector and is not. It
+is a *scope*: the per-render sink over `document.files`, forwarded to the
+run's emitter. `ctx.files` must stay the document's table, because the
+`include` pass registers included files in it, and `convert_documents`
+legitimately accepts documents parsed separately (`test_template_renderer.py`
+does). Instrumenting every render in the suite settled it: 74 of 183 had a
+document table that was not the emitter's, all of them `NullEmitter` — and
+tracing *those* is what found the snippet bug. Do not collapse the two sinks
+without first deciding whether `convert_documents` should still accept
+documents it did not parse (step 07's contract).
+
 ## What remains
 
-Five steps, none started.
-
-**03 · One diagnostics system.** `core/diagnostics.py` (226) and
-`texsmith/diagnostics/` (709) still coexist; **20 sites** call
-`warning()`/`error()` with no code and no span. The lock is the `FileTable`
-with no owner, carried by `getattr(emitter, "files", None)` — a block
-duplicated verbatim in two places plus an `isinstance` in a third. R4 lifted
-the hard blocker. Pays off immediately: `--diagnostics-json` becomes usable
-by an editor and `--strict` becomes discriminating.
+Four steps, none started.
 
 **05 · The CLI.** `render()` is **764 lines and 46 parameters**. Extract a
 `RequestBuilder` (about 180 lines of business logic leave the CLI, and the
@@ -134,6 +182,19 @@ validates.
   `ConversionResult` and `TemplateFragment` genuinely carry different things.
 - **Typst without a template** builds no bibliography at all, where LaTeX
   writes `texsmith-bibliography.bib`. Found while writing a regression test.
+- **Diagnostic message style.** The `Diagnostic.message` docstring asks for
+  "one sentence, no trailing period, names the construct"; half the sites
+  open with a capital and a verb (`Mermaid diagram '…' not found`) and half
+  lower-case and name the construct first (`unresolved moustache '…'`). The
+  twenty converted in step 03 follow the docstring. Unifying the rest is a
+  pass over ~25 strings with no structural content; it changes no baseline
+  (diagnostics are stderr) so only the tests gate it.
+- **The event channel rides on the diagnostics emitter.** `event()` and
+  `record_event` report progress (`asset_fetch`, `doi_fetch`,
+  `template_attributes`) and have nothing to do with findings, but they are
+  members of `DiagnosticEmitter` and `format_event_message` lives in
+  `diagnostics/emitters.py`. Splitting them belongs with step 05, which owns
+  the CLI's reading of both.
 
 ## How to work on this
 
@@ -148,7 +209,7 @@ a step whose baseline diff you cannot explain line by line is not finished.
 One step, one branch, one readable baseline diff. Changing a page under
 `docs/` changes its baseline: re-record it and let the diff be reviewed.
 
-**Three traps this pass fell into, all caught:**
+**Five traps these passes fell into, all caught:**
 
 1. A grep truncated by `head` declared a live presenter branch dead
    (`template_overrides` is emitted by `renderer.py`, not the CLI). Its test
@@ -161,6 +222,17 @@ One step, one branch, one readable baseline diff. Changing a page under
 3. `--build` is called `build_pdf` in the CLI, so importing a function of
    that name shadowed it with a boolean and ruff then removed the import as
    unused. `'bool' object is not callable`.
+4. **Counting a system's call sites by its own vocabulary misses the sites
+   that bypass it.** Step 03's twenty `warning()`/`error()` calls were the
+   ones that *used* the emitter; two more reported through `warnings.warn`
+   and two through `getattr(emitter, "info", None)`, a method no emitter
+   defines. Grep for the escape hatches — `warnings.warn`, `print`, a bare
+   `logger`, `getattr` on a method name — not only for the API.
+5. **`tests/` is not a package.** A helper in `tests/conftest.py` cannot be
+   imported (`from .conftest import` fails, `from conftest import` resolves
+   to `tests/passes/conftest.py`). Shared test classes go in a module with a
+   distinct name — `tests/emitters.py` — and the fixture wrapping them in
+   `conftest.py`.
 
 ## Before merging
 
