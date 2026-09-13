@@ -38,7 +38,7 @@ def render_markdown(
         settings=ConversionRequest(documents=[source], **request_options),
         emitter=active,
     )
-    fragment = bundle.fragments[0]
+    fragment = bundle.documents[0]
     assert fragment.conversion is not None
     return fragment.latex, dict(fragment.conversion.assets_map)
 

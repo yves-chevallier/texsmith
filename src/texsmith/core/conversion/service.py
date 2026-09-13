@@ -236,7 +236,7 @@ class ConversionService:
             session.add_document(document)
 
         target_dir = (request.render_dir or Path("build")).resolve()
-        render_result = session.render(target_dir, embed_fragments=request.embed_fragments)
+        render_result = session.render(target_dir, embed_documents=request.embed_documents)
         _publish_reference_inventory(
             batch.documents,
             output_dir=render_result.main_tex_path.parent,

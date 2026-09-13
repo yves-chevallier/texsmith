@@ -480,7 +480,7 @@ def test_execute_without_template_returns_bundle(tmp_path: Path) -> None:
 
     assert not response.is_template
     bundle = response.bundle
-    assert bundle.fragments[0].stem == "doc"
+    assert bundle.documents[0].stem == "doc"
 
 
 def test_execute_with_template_returns_render_result(tmp_path: Path) -> None:

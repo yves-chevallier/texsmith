@@ -388,13 +388,13 @@ def render(
     manifest: ManifestOptionWithShort = _REQUEST_DEFAULTS.manifest,
     make_deps: MakefileDepsOption = False,
     template: TemplateOption = None,
-    embed_fragments: Annotated[
+    embed_documents: Annotated[
         bool,
         typer.Option(
             "--embed",
             help="Embed converted documents into the main document instead linking them with \\input.",
         ),
-    ] = _REQUEST_DEFAULTS.embed_fragments,
+    ] = _REQUEST_DEFAULTS.embed_documents,
     enable_fragments: EnableFragmentOption = None,
     disable_fragments: DisableFragmentOption = None,
     template_attributes: TemplateAttributeOption = None,
@@ -737,8 +737,8 @@ def render(
     if template_selected and render_dir_path is None:
         raise typer.BadParameter("Unable to resolve template output directory.")
 
-    if not embed_fragments and template_selected and len(document_paths) == 1:
-        embed_fragments = True
+    if not embed_documents and template_selected and len(document_paths) == 1:
+        embed_documents = True
 
     request_render_dir = render_dir_path
 
@@ -767,7 +767,7 @@ def render(
         template=template,
         render_dir=request_render_dir,
         template_options=attribute_overrides,
-        embed_fragments=embed_fragments,
+        embed_documents=embed_documents,
         enable_fragments=enable_fragments or [],
         disable_fragments=disable_fragments or [],
         emitter=emitter,

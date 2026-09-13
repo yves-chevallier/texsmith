@@ -214,7 +214,7 @@ def _render_document(
 
 
 @dataclass(slots=True)
-class LaTeXFragment:
+class RenderedDocument:
     """Represents a rendered LaTeX fragment."""
 
     document: Document
@@ -232,13 +232,18 @@ class LaTeXFragment:
 
 @dataclass(slots=True)
 class ConversionBundle:
-    """Collection returned by :func:`convert_documents`."""
+    """Collection returned by :func:`convert_documents`.
 
-    fragments: list[LaTeXFragment]
+    ``documents`` are the *converted documents* of the batch, not the ``ts-*``
+    fragments: those are contract packages a body activates, and the word used
+    to name both.
+    """
+
+    documents: list[RenderedDocument]
 
     def combined_output(self) -> str:
-        """Concatenate all fragments separated by blank lines for quick previews."""
-        return "\n\n".join(fragment.latex for fragment in self.fragments if fragment.latex)
+        """Concatenate every body, separated by blank lines, for quick previews."""
+        return "\n\n".join(item.latex for item in self.documents if item.latex)
 
 
 def convert_documents(
@@ -271,7 +276,7 @@ def convert_documents(
         shared_bibliography = BibliographyCollection()
         shared_bibliography.load_files(bibliography_files)
 
-    fragments: list[LaTeXFragment] = []
+    converted: list[RenderedDocument] = []
     should_write_fragments = write_fragments if write_fragments is not None else True
     state = shared_state
     active_emitter = emitter or NullEmitter()
@@ -299,7 +304,7 @@ def convert_documents(
         state = result.document_state or state
 
         stem = unique_stems[document.source_path]
-        fragment = LaTeXFragment(
+        rendered = RenderedDocument(
             document=document,
             latex=result.latex_output,
             stem=stem,
@@ -307,16 +312,16 @@ def convert_documents(
         )
         if output_dir is not None and should_write_fragments:
             target = target_dir / f"{stem}.tex"
-            fragment.write_to(target)
-        fragments.append(fragment)
+            rendered.write_to(target)
+        converted.append(rendered)
 
-    return ConversionBundle(fragments=fragments)
+    return ConversionBundle(documents=converted)
 
 
 def to_template_fragments(bundle: ConversionBundle) -> list[TemplateFragment]:
-    """Convert bundle fragments into the template fragment contract used by the template engine."""
+    """The per-document contract the template renderer consumes."""
     fragments: list[TemplateFragment] = []
-    for fragment in bundle.fragments:
+    for fragment in bundle.documents:
         conversion = fragment.conversion
         if conversion is None:
             raise ValueError("Template rendering requires conversion metadata for each fragment.")
@@ -350,7 +355,7 @@ def to_template_fragments(bundle: ConversionBundle) -> list[TemplateFragment]:
 __all__ = [
     "ConversionBundle",
     "ConversionResult",
-    "LaTeXFragment",
+    "RenderedDocument",
     "convert_document",
     "convert_documents",
     "to_template_fragments",

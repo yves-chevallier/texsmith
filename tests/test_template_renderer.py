@@ -224,7 +224,7 @@ def test_linked_fragments_still_enable_code_fragment(tmp_path: Path) -> None:
     session.add_document(Document.from_markdown(code_path))
 
     build_dir = tmp_path / "linked"
-    result = session.render(build_dir, embed_fragments=False)
+    result = session.render(build_dir, embed_documents=False)
 
     latex = result.main_tex_path.read_text(encoding="utf-8")
     assert "\\usepackage{ts-code}" in latex

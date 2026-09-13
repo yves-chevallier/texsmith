@@ -206,7 +206,7 @@ class LatexPlugin(BasePlugin):
         ("copy_assets", config_options.Type(bool, default=True)),
         ("clean_assets", config_options.Type(bool, default=True)),
         ("save_html", config_options.Type(bool, default=False)),
-        ("embed_fragments", config_options.Type(bool, default=False)),
+        ("embed_documents", config_options.Type(bool, default=False)),
         ("language", config_options.Type((str, type(None)), default=None)),
         ("bibliography", config_options.Type(list, default=[])),
         ("books", config_options.Type(list, default=[])),
@@ -719,7 +719,7 @@ class LatexPlugin(BasePlugin):
         if runtime.config.cover.logo:
             overrides.setdefault("logo", runtime.config.cover.logo)
 
-        embed_fragments = bool(self.config.get("embed_fragments", False))
+        embed_documents = bool(self.config.get("embed_documents", False))
 
         slot_buffers_embed: dict[str, list[str]] = {
             name: [] for name in template_runtime.slots
@@ -919,7 +919,7 @@ class LatexPlugin(BasePlugin):
                 template=template_runtime.instance,
                 default_slot=template_runtime.default_slot,
                 slot_outputs=slot_outputs_embed,
-                slot_output_overrides=None if embed_fragments else slot_outputs_link,
+                slot_output_overrides=None if embed_documents else slot_outputs_link,
                 document_state=final_state,
                 template_overrides=overrides,
                 output_dir=output_root,

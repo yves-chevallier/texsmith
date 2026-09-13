@@ -352,7 +352,7 @@ def test_counter_start_is_chained_across_a_batch(tmp_path: Path) -> None:
         documents=[first, second],
         template="article",
         render_dir=tmp_path / "out",
-        embed_fragments=True,
+        embed_documents=True,
     )
     response = ConversionService().execute(request)
     tex = response.render_result.main_tex_path.read_text(encoding="utf-8")

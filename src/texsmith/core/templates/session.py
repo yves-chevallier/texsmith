@@ -148,7 +148,7 @@ class TemplateSession:
         """Return the registered documents as an immutable tuple to discourage in-place edits."""
         return tuple(self._documents)
 
-    def render(self, output_dir: Path, *, embed_fragments: bool = True) -> TemplateRenderResult:
+    def render(self, output_dir: Path, *, embed_documents: bool = True) -> TemplateRenderResult:
         """Render the registered documents into a LaTeX project, preparing outputs on disk for compilers."""
         if not self._documents:
             raise ValueError("At least one document must be added before rendering.")
@@ -179,7 +179,7 @@ class TemplateSession:
                 output_dir=output_dir,
                 overrides=None,
                 copy_assets=self.settings.copy_assets,
-                embed_fragments=embed_fragments,
+                embed_documents=embed_documents,
             )
         except TemplateError as exc:
             emit_diagnostic(self.emitter, "template-failed", str(exc), exc=exc)

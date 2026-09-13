@@ -14,7 +14,7 @@ from texsmith.core.context import AssetRegistry, DocumentState, RenderContext
 from texsmith.core.conversion import ConversionRequest, SlotAssignment
 from texsmith.core.conversion.core import (
     ConversionBundle,
-    LaTeXFragment,
+    RenderedDocument,
     convert_documents,
 )
 from texsmith.core.conversion.service import (
@@ -67,8 +67,8 @@ __all__ = [
     "DoiBibliographyFetcher",
     "DoiLookupError",
     "LaTeXConfig",
-    "LaTeXFragment",
     "RenderContext",
+    "RenderedDocument",
     "SlotAssignment",
     "TemplateBinding",
     "TemplateError",

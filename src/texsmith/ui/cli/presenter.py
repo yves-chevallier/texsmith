@@ -433,7 +433,7 @@ def present_conversion_summary(
     if output_mode == "file" and output_path is not None:
         rows.append(("LaTeX", _format_path(output_path), _size_details(output_path)))
     elif output_mode == "directory" and bundle is not None:
-        for fragment in bundle.fragments:
+        for fragment in bundle.documents:
             path = fragment.output_path or (
                 output_path / f"{fragment.stem}.tex" if output_path else None
             )

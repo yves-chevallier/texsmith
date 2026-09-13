@@ -334,7 +334,7 @@ class TemplateRenderer:
         aggregated_slots: Mapping[str, list[str]],
         *,
         output_dir: Path,
-        embed_fragments: bool,
+        embed_documents: bool,
     ) -> tuple[dict[str, str], list[Path], dict[str, str] | None]:
         """The text of every slot, and the files it took to get there.
 
@@ -349,7 +349,7 @@ class TemplateRenderer:
             slot: "\n\n".join(chunks for chunks in content if chunks)
             for slot, content in aggregated_slots.items()
         }
-        if embed_fragments:
+        if embed_documents:
             return render_slot_content, [], None
 
         written_fragment_paths: list[Path] = []
@@ -458,7 +458,7 @@ class TemplateRenderer:
         output_dir: Path,
         overrides: Mapping[str, Any] | None = None,
         copy_assets: bool = True,
-        embed_fragments: bool = True,
+        embed_documents: bool = True,
     ) -> TemplateRenderResult:
         if not fragments:
             raise TemplateError("No fragments available for template rendering.")
@@ -486,7 +486,7 @@ class TemplateRenderer:
                 fragments,
                 aggregated_slots,
                 output_dir=output_dir,
-                embed_fragments=embed_fragments,
+                embed_documents=embed_documents,
             )
         )
 

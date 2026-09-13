@@ -53,7 +53,7 @@ class ConversionRequest:
     template: str | None = None
     render_dir: Path | None = None
     template_options: Mapping[str, Any] = field(default_factory=dict)
-    embed_fragments: bool = False
+    embed_documents: bool = False
     enable_fragments: Sequence[str] = field(default_factory=tuple)
     disable_fragments: Sequence[str] = field(default_factory=tuple)
 

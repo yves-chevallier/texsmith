@@ -39,7 +39,7 @@ def _render_headings(
         output_dir=tmp_path / "build",
         template=template,
     )
-    return _heading_levels(bundle.fragments[0].latex)
+    return _heading_levels(bundle.documents[0].latex)
 
 
 def test_headings_align_with_metadata_title(tmp_path: Path) -> None:
@@ -106,7 +106,7 @@ Text
         output_dir=tmp_path / "build",
         template="article",
     )
-    conversion = bundle.fragments[0].conversion
+    conversion = bundle.documents[0].conversion
     assert conversion is not None
     # ``Abstract`` heads the slot and is consumed by it; ``Intro`` moves up a level.
     abstract = conversion.slot_outputs["abstract"]

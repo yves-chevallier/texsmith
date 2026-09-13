@@ -79,7 +79,7 @@ wins over the site's for the same prefix. See
 | `template_overrides` | Template attributes for every book | `{}` |
 | `copy_assets` / `clean_assets` | Copy the referenced assets / prune the unused ones | `true` |
 | `save_html` | Keep a snapshot of each page's rendered HTML | `false` |
-| `embed_fragments` | Inline the page fragments instead of `\input` | `false` |
+| `embed_documents` | Inline each page's body instead of `\input` | `false` |
 
 ## Books
 
