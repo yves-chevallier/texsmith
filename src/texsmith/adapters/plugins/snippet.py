@@ -468,50 +468,39 @@ def _detect_language(element: Tag) -> str | None:
 
 
 def _frame_dogear_enabled(overrides: Mapping[str, Any]) -> bool:
-    """Detect whether the page frame dogear should be shown for a snippet preview."""
+    """Whether the preview draws the page frame's dogear.
 
-    def _coerce_frame(value: Any) -> tuple[bool, bool]:
-        if value is None:
-            return False, False
-        if isinstance(value, Mapping):
-            enabled = _coerce_bool_option(value.get("enabled"), True)
-            mode = value.get("mode")
-            dogear = _coerce_bool_option(value.get("dogear"), True)
-            if isinstance(mode, str):
-                token = mode.strip().lower()
-                if token == "border":
-                    dogear = False
-                    enabled = True
-                elif token in {"dogear", "fold"}:
-                    dogear = True
-                    enabled = True
-            if not enabled:
-                return False, False
-            return True, dogear
-        if isinstance(value, (bool, int, float)):
-            flag = bool(value)
-            return flag, flag
-        if isinstance(value, str):
-            token = value.strip().lower()
-            if not token or token in {"false", "off", "no", "0", "none"}:
-                return False, False
-            if token == "border":
-                return True, False
-            if coerce_bool(token):
-                return True, True
-        return False, False
+    ``press.frame`` has one grammar — a boolean, ``border``/``dogear``, or a
+    mapping with ``mode`` — and :class:`~texsmith.fragments.frame.FrameConfig`
+    is where it is defined. This asks it rather than reading the value again:
+    the second reading agreed with the first on every accepted spelling and
+    disagreed on the rejected ones, silently disabling the frame where the
+    fragment raises.
+
+    A value the grammar rejects still disables the preview's dogear here. The
+    nested build parses the same front matter through the fragment, so the
+    error is reported there, as ``snippet-build-failed`` at the fence.
+    """
+    from pydantic import ValidationError
+
+    from texsmith.fragments.frame import FrameConfig
 
     press_section = overrides.get("press") if isinstance(overrides, Mapping) else None
-    frame_value = overrides.get("frame")
-    if frame_value is None and isinstance(press_section, Mapping):
-        frame_value = press_section.get("frame")
-    enabled, dogear = _coerce_frame(frame_value)
-    if enabled and dogear:
+
+    def _declared(key: str) -> Any:
+        value = overrides.get(key)
+        if value is None and isinstance(press_section, Mapping):
+            value = press_section.get(key)
+        return value
+
+    try:
+        frame = FrameConfig.model_validate(_declared("frame"))
+    except (TemplateError, ValidationError):
+        return False
+    if frame.enabled and frame.dogear:
         return True
 
-    fragments_value = overrides.get("fragments")
-    if fragments_value is None and isinstance(press_section, Mapping):
-        fragments_value = press_section.get("fragments")
+    fragments_value = _declared("fragments")
     return isinstance(fragments_value, list) and any(str(f) == "ts-frame" for f in fragments_value)
 
 

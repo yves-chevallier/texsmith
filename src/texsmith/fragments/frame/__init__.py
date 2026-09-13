@@ -15,8 +15,10 @@ _DEFAULT_MARGIN = "0pt"
 _DEFAULT_FOLD_SIZE = "10mm"
 
 
-#: The frame's own words for its two modes, resolved before the boolean ones.
-_MODE_WORDS = {"dogear": True, "border": False}
+#: The frame's own mode words → whether the mode draws the dogear. One table:
+#: it answers ``press.frame: dogear``, ``press.frame: {mode: fold}`` and a
+#: mode word given where a boolean is expected (``{dogear: border}``).
+_MODE_WORDS = {"dogear": True, "fold": True, "border": False}
 
 
 def _coerce_bool(value: Any, *, default: bool = False) -> bool:
@@ -51,12 +53,9 @@ class FrameConfig(BaseModel):
             mode = payload.get("mode")
             dogear_value = payload.get("dogear")
             if isinstance(mode, str):
-                token = mode.strip().lower()
-                if token == "border":
-                    dogear_value = False
-                    enabled = True
-                elif token in {"dogear", "fold"}:
-                    dogear_value = True
+                resolved = _MODE_WORDS.get(mode.strip().lower())
+                if resolved is not None:
+                    dogear_value = resolved
                     enabled = True
             dogear_flag = _coerce_bool(dogear_value, default=True)
             fold_size = payload.get("fold-size") or payload.get("fold_size") or payload.get("fold")
@@ -76,11 +75,16 @@ class FrameConfig(BaseModel):
             token = data.strip().lower()
             if not token or token in {"false", "off", "no", "0", "none"}:
                 return {"enabled": False}
-            if token == "border":
-                return {"enabled": True, "dogear": False}
+            mode = _MODE_WORDS.get(token)
+            if mode is not None:
+                return {"enabled": True, "dogear": mode}
             if coerce_bool(token):
                 return {"enabled": True, "dogear": True}
-            raise TemplateError("press.frame accepts false, true, 'border', or 'dogear'.")
+            raise TemplateError(
+                "press.frame accepts false, true, or one of "
+                + ", ".join(f"'{word}'" for word in _MODE_WORDS)
+                + "."
+            )
         raise TemplateError("press.frame must be a boolean, string, or mapping.")
 
     @field_validator("margin", "fold_size", mode="before")

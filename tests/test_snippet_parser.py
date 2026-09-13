@@ -186,3 +186,30 @@ def test_snippet_preview_resolves_a_front_matter_doi(
     # conversion absorbed it, so biber has the entry the citation names.
     assert list(work_dir.glob("inline-doi-*.bib"))
     assert "Wadhwani" in (work_dir / "texsmith-bibliography.bib").read_text("utf-8")
+
+
+@pytest.mark.parametrize(
+    ("declared", "dogear"),
+    [
+        ({"frame": True}, True),
+        ({"frame": "dogear"}, True),
+        ({"frame": "fold"}, True),
+        ({"frame": {"mode": "fold"}}, True),
+        ({"frame": "border"}, False),
+        ({"frame": False}, False),
+        ({"frame": {"mode": "dogear"}}, True),
+        ({"frame": {"mode": "border"}}, False),
+        ({"frame": {"enabled": True, "dogear": False}}, False),
+        ({"press": {"frame": "dogear"}}, True),
+        ({"fragments": ["ts-frame"]}, True),
+        ({}, False),
+        # A value the grammar rejects: the preview draws no dogear, and the
+        # nested build reports it, rather than a second reading deciding here.
+        ({"frame": "sideways"}, False),
+        ({"frame": ["not", "a", "frame"]}, False),
+    ],
+)
+def test_the_preview_reads_press_frame_through_the_fragment(
+    declared: dict[str, object], dogear: bool
+) -> None:
+    assert snippet._frame_dogear_enabled(declared) is dogear

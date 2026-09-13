@@ -192,3 +192,41 @@ def test_the_three_margin_words_the_templates_document_all_resolve() -> None:
     assert _normalise_margin("narrow") == "15mm"
     assert _normalise_margin("wide") == "30mm"
     assert _normalise_margin("default") is None
+
+
+@pytest.mark.parametrize(
+    ("declared", "enabled", "dogear"),
+    [
+        ("dogear", True, True),
+        ("fold", True, True),
+        ("border", True, False),
+        ({"mode": "dogear"}, True, True),
+        ({"mode": "fold"}, True, True),
+        ({"mode": "border"}, True, False),
+        (True, True, True),
+        (False, False, False),
+        ("off", False, False),
+    ],
+)
+def test_press_frame_reads_a_mode_word_the_same_way_either_way(
+    declared: object, enabled: bool, dogear: bool
+) -> None:
+    """The word is the word, whether it is the value or the value's ``mode``.
+
+    The two branches each spelled the table out, and differently: the string
+    form knew only ``border``, so ``press.frame: dogear`` — the spelling the
+    error message advertises — was rejected while ``{mode: dogear}`` worked,
+    and ``fold`` was a mapping-only synonym.
+    """
+    from texsmith.fragments.frame import FrameConfig
+
+    config = FrameConfig.model_validate(declared)
+    assert (config.enabled, config.dogear) == (enabled, dogear)
+
+
+def test_press_frame_rejects_a_word_it_does_not_know() -> None:
+    from texsmith.core.templates.manifest import TemplateError
+    from texsmith.fragments.frame import FrameConfig
+
+    with pytest.raises(TemplateError, match="'dogear', 'fold', 'border'"):
+        FrameConfig.model_validate("sideways")
