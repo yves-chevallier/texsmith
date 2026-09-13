@@ -8,7 +8,6 @@ import contextlib
 import os
 from pathlib import Path
 import shutil
-import subprocess
 import sys
 import tempfile
 from typing import Annotated, Any
@@ -577,12 +576,6 @@ def render(
         list_templates()
         raise typer.Exit()
 
-    verbosity_level = state.verbosity
-    if verbosity_level <= 0 and typer_ctx is not None and typer_ctx.parent is not None:
-        verbosity_level = int(typer_ctx.parent.params.get("verbose", 0) or 0)
-        if verbosity_level > 0:
-            state.verbosity = verbosity_level
-
     document_paths = list(inputs or [])
     if input_path is not None:
         if document_paths:
@@ -1129,5 +1122,4 @@ def render(
 
 # Expose runtime dependencies for test monkeypatching
 render.shutil = shutil  # type: ignore[attr-defined]
-render.subprocess = subprocess  # type: ignore[attr-defined]
 render.run_engine_command = run_engine_command  # type: ignore[attr-defined]

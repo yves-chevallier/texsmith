@@ -11,30 +11,6 @@ from texsmith.core.conversion import SlotAssignment
 from texsmith.core.conversion.inputs import DOCUMENT_SELECTOR_SENTINEL
 
 
-def parse_slot_option(values: Iterable[str] | None) -> dict[str, str]:
-    """Parse CLI slot overrides declared as 'slot:Section' pairs."""
-    overrides: dict[str, str] = {}
-    if not values:
-        return overrides
-
-    for raw in values:
-        if not isinstance(raw, str):
-            continue
-        entry = raw.strip()
-        if not entry:
-            continue
-        if ":" not in entry:
-            raise ValueError(f"Invalid slot override '{raw}', expected format 'slot:Section'.")
-        slot_name, selector = entry.split(":", 1)
-        slot_name = slot_name.strip()
-        selector = selector.strip()
-        if not slot_name or not selector:
-            raise ValueError(f"Invalid slot override '{raw}', expected format 'slot:Section'.")
-        overrides[slot_name] = selector
-
-    return overrides
-
-
 def determine_output_target(
     template_selected: bool,
     documents: list[Path],

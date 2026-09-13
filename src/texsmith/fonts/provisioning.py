@@ -12,7 +12,6 @@ from collections.abc import Mapping
 import contextlib
 from pathlib import Path
 import shutil
-import subprocess
 import tempfile
 from typing import Any
 import warnings
@@ -137,22 +136,6 @@ def _normalise_family(raw_value: Any) -> str:
     return "lm"
 
 
-def _sty_available(sty_name: str) -> bool:
-    kpse = shutil.which("kpsewhich")
-    if not kpse:
-        return False
-    try:
-        result = subprocess.run(
-            [kpse, sty_name],
-            check=False,
-            capture_output=True,
-            text=True,
-        )
-    except OSError:
-        return False
-    return result.returncode == 0 and bool(result.stdout.strip())
-
-
 def _download_archive(url: str, destination: Path) -> None:
     destination.parent.mkdir(parents=True, exist_ok=True)
     if destination.exists():
@@ -162,20 +145,6 @@ def _download_archive(url: str, destination: Path) -> None:
             shutil.copyfileobj(response, handle)
     except OSError as exc:
         raise TemplateError(f"Failed to download '{url}': {exc}") from exc
-
-
-def _extract_sty_from_archive(archive: Path, sty_name: str, target: Path) -> Path:
-    with zipfile.ZipFile(archive) as zf:
-        for entry in zf.infolist():
-            if entry.is_dir():
-                continue
-            if Path(entry.filename).name != sty_name:
-                continue
-            target.parent.mkdir(parents=True, exist_ok=True)
-            with zf.open(entry) as src, target.open("wb") as dst:
-                shutil.copyfileobj(src, dst)
-            return target
-    raise TemplateError(f"Could not locate '{sty_name}' inside '{archive.name}'.")
 
 
 def _write_stub_package(package_name: str, family: str, target: Path) -> Path:
@@ -459,8 +428,6 @@ def _slugify(value: str) -> str:
 def _candidate_font_roots(output_dir: Path) -> list[Path]:
     roots: list[Path] = []
     roots.append((output_dir / "fonts").resolve())
-    sandbox_fonts = Path(__file__).resolve().parents[4] / "sandbox" / "fonts"
-    roots.append(sandbox_fonts)
     user_fonts = get_user_dir().data_dir("fonts", create=False)
     roots.append(user_fonts)
     with contextlib.suppress(Exception):

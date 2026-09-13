@@ -11,7 +11,6 @@ from __future__ import annotations
 
 from collections.abc import Iterable, Mapping
 from dataclasses import dataclass
-from typing import Any
 
 
 @dataclass(frozen=True, slots=True)
@@ -136,11 +135,6 @@ def fragment_contract(name: str) -> FragmentContract | None:
     return None
 
 
-def contract_names() -> frozenset[str]:
-    """Names of every contract row."""
-    return frozenset(row.name for row in fragment_contracts())
-
-
 def implied_packages(active: Iterable[str]) -> list[str]:
     """LaTeX packages implied by the active contract rows, first seen first."""
     names = set(active)
@@ -174,28 +168,11 @@ FRAGMENT_OWNED_PACKAGES: frozenset[str] = frozenset(
 PACKAGE_OPTIONS: Mapping[str, str] = {"ulem": "normalem", "hyphenat": "htt"}
 
 
-def missing_provides(name: str, defined: Iterable[str]) -> list[str]:
-    """Return the ``provides`` entries of contract ``name`` absent from ``defined``."""
-    row = fragment_contract(name)
-    if row is None:
-        return []
-    have = set(defined)
-    return [entry for entry in row.provides if entry not in have]
-
-
-def is_contract_fragment(value: Any) -> bool:
-    """Whether ``value`` names a row of the contract table."""
-    return isinstance(value, str) and value in contract_names()
-
-
 __all__ = [
     "FRAGMENT_OWNED_PACKAGES",
     "PACKAGE_OPTIONS",
     "FragmentContract",
-    "contract_names",
     "fragment_contract",
     "fragment_contracts",
     "implied_packages",
-    "is_contract_fragment",
-    "missing_provides",
 ]

@@ -295,75 +295,6 @@ def _resolve_caches() -> list[_SnippetCache]:
     return [cache] if cache is not None else []
 
 
-def _resolve_bibliography_files(
-    files: list[str],
-    cwd: str | Path | None,
-    host_path: Path | None,
-) -> list[Path]:
-    """Resolve bibliography file paths relative to the snippet host document."""
-    if not files:
-        return []
-
-    base_dir: Path | None = None
-    cwd_path = Path(cwd).expanduser() if cwd else None
-    if cwd_path is not None:
-        if cwd_path.is_absolute():
-            base_dir = cwd_path
-        elif host_path is not None:
-            try:
-                base_dir = (host_path.parent / cwd_path).resolve()
-            except OSError:
-                base_dir = host_path.parent
-        else:
-            try:
-                base_dir = cwd_path.resolve()
-            except OSError:
-                base_dir = None
-    elif host_path is not None:
-        base_dir = host_path.parent
-
-    resolved: list[Path] = []
-    for entry in files:
-        candidate = Path(entry)
-        if not candidate.is_absolute():
-            if base_dir is None:
-                try:
-                    base_dir = Path.cwd()
-                except OSError:
-                    base_dir = None
-            if base_dir is not None:
-                candidate = base_dir / candidate
-        with contextlib.suppress(OSError):
-            candidate = candidate.resolve()
-        resolved.append(candidate)
-    return resolved
-
-
-def _resolve_host_path(document_path: Path | str | None, source_dir: Path | None) -> Path | None:
-    """Normalise the host document path to an absolute path when possible."""
-    if document_path is None:
-        return None
-
-    try:
-        candidate = Path(document_path)
-    except TypeError:
-        return None
-
-    if candidate.is_absolute():
-        return candidate
-
-    if source_dir is not None:
-        try:
-            return (Path(source_dir) / candidate).resolve()
-        except OSError:
-            return Path(source_dir) / candidate
-
-    try:
-        return candidate.resolve()
-    except OSError:
-        return candidate
-
-
 def _resolve_base_dir(block: SnippetBlock, host_path: Path | None) -> Path:
     """Resolve the effective base directory for snippet assets."""
     if block.cwd:
@@ -438,15 +369,6 @@ def _resolve_template_runtime(
         raise last_exc
 
     return _resolve_runtime()
-
-
-def _snippet_template_version() -> str | None:
-    runtime = _resolve_runtime()
-    info = getattr(runtime.instance, "info", None)
-    if info is None:
-        return None
-    version = getattr(info, "version", None)
-    return str(version) if version is not None else None
 
 
 def _resolve_snippet_dump_dir() -> Path | None:
@@ -1239,23 +1161,6 @@ def _load_pymupdf() -> object:
     return fitz  # type: ignore[return-value]
 
 
-def _pdf_to_png(pdf_path: Path, png_path: Path, *, transparent_corner: bool = False) -> None:
-    fitz = _load_pymupdf()
-    image_lib, _ = _require_pillow()
-
-    with fitz.open(pdf_path) as document:
-        if document.page_count == 0:
-            raise LatexRenderingError(f"Snippet PDF '{pdf_path}' did not produce any pages.")
-        page = document.load_page(0)
-        pixmap = page.get_pixmap(dpi=220)
-
-    mode = "RGBA" if pixmap.alpha else "RGB"
-    image = image_lib.frombytes(mode, (pixmap.width, pixmap.height), pixmap.samples)
-    if transparent_corner:
-        image = _apply_dogear_transparency(image)
-    image.save(png_path)
-
-
 def _pdf_to_png_grid(
     pdf_path: Path,
     png_path: Path,
@@ -1371,112 +1276,6 @@ def _parse_layout(value: str | None) -> tuple[int, int] | None:
     except ValueError:
         return None
     return (cols, 1)
-
-
-def _overlay_dogear_frame(
-    image: Image.Image,
-    *,
-    margin: int | None = None,
-    dogear: int | None = None,
-    border_width: int | None = None,
-    border_color: tuple[int, int, int, int] = (0, 0, 0, 255),
-    dogear_enabled: bool = True,
-) -> Image.Image:
-    """Draw a frame with a folded corner directly onto the PNG."""
-    image_lib, image_draw = _require_pillow()
-    base = image.convert("RGBA")
-    width, height = base.size
-    if width <= 0 or height <= 0:
-        return base
-
-    size_hint = min(width, height)
-    m = 0 if margin is None else max(margin, 0)
-    fold = dogear if dogear is not None else max(int(size_hint * 0.07), 18)
-    stroke = border_width if border_width is not None else max(int(size_hint * 0.0025), 1)
-
-    x0, y0 = m, m
-    x1, y1 = width - 1 - m, height - 1 - m
-
-    scale = 6
-    overlay = image_lib.new("RGBA", (width * scale, height * scale), (0, 0, 0, 0))
-    draw = image_draw.Draw(overlay)
-    bw = max(1, stroke * scale)
-
-    def sx(val: float) -> int:
-        return round(val * scale)
-
-    def sy(val: float) -> int:
-        return round(val * scale)
-
-    draw.line([(sx(x0), sy(y0)), (sx(x1 - fold), sy(y0))], fill=border_color, width=bw)
-    draw.line([(sx(x1), sy(y0 + fold)), (sx(x1), sy(y1))], fill=border_color, width=bw)
-    draw.line([(sx(x1), sy(y1)), (sx(x0), sy(y1))], fill=border_color, width=bw)
-    draw.line([(sx(x0), sy(y1)), (sx(x0), sy(y0))], fill=border_color, width=bw)
-
-    mask = Image.new("L", overlay.size, color=255)
-    mask_draw = ImageDraw.Draw(mask)
-
-    if dogear_enabled:
-        corner = (x1 - fold, y0 + fold)
-        bdown = (x1, y0 + fold)
-        bleft = (x1 - fold, y0)
-
-        def bezier_points(
-            p0: tuple[float, float],
-            p1: tuple[float, float],
-            p2: tuple[float, float],
-            p3: tuple[float, float],
-            steps: int = 192,
-        ) -> list[tuple[int, int]]:
-            pts = []
-            for i in range(steps + 1):
-                t = i / steps
-                mt = 1 - t
-                x = (
-                    mt * mt * mt * p0[0]
-                    + 3 * mt * mt * t * p1[0]
-                    + 3 * mt * t * t * p2[0]
-                    + t * t * t * p3[0]
-                )
-                y = (
-                    mt * mt * mt * p0[1]
-                    + 3 * mt * mt * t * p1[1]
-                    + 3 * mt * t * t * p2[1]
-                    + t * t * t * p3[1]
-                )
-                pts.append((sx(x), sy(y)))
-            return pts
-
-        spline1 = bezier_points(
-            corner,
-            (corner[0] + 0.3 * fold, corner[1] - 0.1 * fold),
-            (bdown[0] - 0.3 * fold, bdown[1] + 0.1 * fold),
-            bdown,
-        )
-        spline2 = bezier_points(
-            bleft,
-            (bleft[0] + 0.1 * fold, bleft[1] - 0.3 * fold),
-            (corner[0] - 0.1 * fold, corner[1] + 0.3 * fold),
-            corner,
-        )
-
-        draw.line(spline1, fill=border_color, width=bw, joint="curve")
-        draw.line(spline2, fill=border_color, width=bw, joint="curve")
-
-        mask_draw.polygon(
-            [
-                (sx(x1 - fold), sy(y0)),
-                (sx(x1 + 1), sy(y0)),
-                (sx(x1 + 1), sy(y0 + fold + 1)),
-            ],
-            fill=0,
-        )
-
-    composited = Image.alpha_composite(base, overlay.resize(base.size, Image.LANCZOS))
-    if dogear_enabled:
-        mask_small = mask.resize(base.size, Image.LANCZOS)
-        composited.putalpha(mask_small)
-    return composited
 
 
 def ensure_snippet_assets(

@@ -40,7 +40,7 @@ def test_fallback_cache_rebuilds_when_signature_differs(tmp_path, monkeypatch) -
     )
 
     manager = FallbackManager(cache=cache)
-    plan = manager.scan_text("السلام", strategy="by_class")
+    plan = manager.scan_text("السلام")
 
     font_names = {entry["font"]["name"] for entry in plan.summary if entry.get("font")}
     assert "NotoKufiArabic" in font_names
@@ -72,6 +72,6 @@ def test_fallback_uses_cached_index_without_rebuilding(monkeypatch) -> None:
     )
 
     manager = FallbackManager(cache=FontCache(root=None))
-    plan = manager.scan_text("سلام", strategy="by_class")
+    plan = manager.scan_text("سلام")
     names = {entry["font"]["name"] for entry in plan.summary if entry.get("font")}
     assert "CachedFont" in names

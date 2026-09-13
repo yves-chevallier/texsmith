@@ -8,7 +8,6 @@ import re
 import unicodedata
 
 from texsmith.adapters.latex.utils import escape_latex_chars
-from texsmith.core.context import RenderContextLike
 from texsmith.fonts.cache import FontCache
 from texsmith.fonts.fallback import (
     FallbackBuilder,
@@ -17,7 +16,6 @@ from texsmith.fonts.fallback import (
     FallbackLookup,
     FallbackPlan,
     FallbackRepository,
-    merge_fallback_summaries,
 )
 from texsmith.fonts.logging import FontPipelineLogger
 from texsmith.fonts.pipeline import generate_noto_metadata, generate_ucharclasses_data
@@ -411,89 +409,3 @@ def merge_script_usage(
             merged_count = existing_value + update_value
             merged[slug]["count"] = merged_count if merged_count else None
     return list(merged.values())
-
-
-def record_script_usage_for_slug(
-    slug: str,
-    text: str,
-    context: RenderContextLike,
-    *,
-    detector: ScriptDetector | None = None,
-) -> dict[str, str | None]:
-    """Record usage/fallback metadata for a known script slug."""
-    if detector is None:
-        detector_key = "_texsmith_script_detector"
-        detector = context.runtime.get(detector_key)
-        if not isinstance(detector, ScriptDetector):
-            detector = ScriptDetector(cache=FontCache())
-            context.runtime[detector_key] = detector
-
-    group = slug
-    font_name = None
-    try:
-        summary = detector._ensure_lookup().summary(text)  # noqa: SLF001
-    except Exception:
-        summary = []
-
-    if summary:
-        dominant = max(summary, key=lambda entry: entry.get("count", 0) or 0)
-        candidate_group = dominant.get("group") or dominant.get("class")
-        if isinstance(candidate_group, str) and candidate_group.strip():
-            group = candidate_group
-        font_meta = dominant.get("font")
-        if isinstance(font_meta, Mapping):
-            raw_name = font_meta.get("name")
-            if isinstance(raw_name, str):
-                font_name = raw_name
-
-    usage_entry = {
-        "group": group,
-        "slug": slug,
-        "font_name": font_name,
-        "font_command": f"{slug}font",
-        "text_command": f"text{slug}",
-        "count": len(text) if text else None,
-    }
-    state_usage = getattr(context.state, "script_usage", [])
-    context.state.script_usage = merge_script_usage(state_usage, [usage_entry])
-    if summary:
-        existing = getattr(context.state, "fallback_summary", [])
-        context.state.fallback_summary = merge_fallback_summaries(existing, summary)
-    return usage_entry
-
-
-def render_moving_text(
-    text: str | None,
-    context: RenderContextLike,
-    *,
-    include_whitespace: bool = True,
-    legacy_accents: bool | None = None,
-    escape: bool = True,
-    wrap_scripts: bool = False,
-) -> str | None:
-    """Return LaTeX-safe text with script wrappers and record usage in state."""
-    if text is None:
-        return None
-    detector_key = "_texsmith_script_detector"
-    detector = context.runtime.get(detector_key)
-    if not isinstance(detector, ScriptDetector):
-        detector = ScriptDetector(cache=FontCache())
-        context.runtime[detector_key] = detector
-    rendered, usage = detector.render(
-        text,
-        include_whitespace=include_whitespace,
-        legacy_accents=bool(legacy_accents)
-        if legacy_accents is not None
-        else getattr(context.config, "legacy_latex_accents", False),
-        escape=escape,
-        wrap_scripts=wrap_scripts,
-    )
-    state_usage = getattr(context.state, "script_usage", [])
-    context.state.script_usage = merge_script_usage(state_usage, usage)
-    try:
-        summary = detector._ensure_lookup().summary(text)  # noqa: SLF001
-        existing = getattr(context.state, "fallback_summary", [])
-        context.state.fallback_summary = merge_fallback_summaries(existing, summary)
-    except Exception:
-        pass
-    return rendered

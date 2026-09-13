@@ -303,11 +303,6 @@ def wrap_template_document(
                 extra_lines.append(f"\\usepackage{{{package}}}")
     template_context["extra_packages"] = "\n".join(extra_lines)
 
-    if document_state.citations and bibliography_path is not None:
-        template_context["bibliography"] = bibliography_path.stem
-        template_context["bibliography_resource"] = bibliography_path.name
-        template_context.setdefault("bibliography_style", "plain")
-
     latex_output = template.wrap_document(
         main_slot_content,
         context=template_context,

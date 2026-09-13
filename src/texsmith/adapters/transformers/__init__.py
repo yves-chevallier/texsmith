@@ -13,7 +13,6 @@ from .strategies import (
     FetchImageStrategy,
     ImageToPdfStrategy,
     MermaidToPdfStrategy,
-    PdfMetadataStrategy,
     SvgToPdfStrategy,
 )
 
@@ -58,7 +57,6 @@ registry = ConverterRegistry()
 registry.register("svg", SvgToPdfStrategy())
 registry.register("image", ImageToPdfStrategy())
 registry.register("fetch-image", FetchImageStrategy())
-registry.register("pdf-metadata", PdfMetadataStrategy())
 registry.register("drawio", DrawioToPdfStrategy())
 registry.register("mermaid", MermaidToPdfStrategy())
 
@@ -98,14 +96,6 @@ def fetch_image(url: str, output_dir: Path, **options: Any) -> Path:
     return registry.convert("fetch-image", url, output_dir=output_dir, **options)
 
 
-def get_pdf_page_sizes(source: Path | str, **options: Any) -> dict[str, Any]:
-    """Inspect a PDF and return structured metadata."""
-    output_dir = options.pop(
-        "output_dir", Path(source).parent if isinstance(source, Path) else Path.cwd()
-    )
-    return registry.convert("pdf-metadata", source, output_dir=output_dir, **options)
-
-
 __all__ = [
     "ConverterRegistry",
     "ConverterStrategy",
@@ -113,7 +103,6 @@ __all__ = [
     "MermaidToPdfStrategy",
     "drawio2pdf",
     "fetch_image",
-    "get_pdf_page_sizes",
     "has_converter",
     "image2pdf",
     "mermaid2pdf",

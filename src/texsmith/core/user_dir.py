@@ -74,13 +74,6 @@ class TexsmithUserDir:
             target.mkdir(parents=True, exist_ok=True)
         return target
 
-    def data_path(self, *parts: str | Path, create: bool = True) -> Path:
-        """Return a path under the user root, creating parent directories if needed."""
-        target = self.root.joinpath(*parts)
-        if create:
-            target.parent.mkdir(parents=True, exist_ok=True)
-        return target
-
     def cache_path(self, *parts: str | Path, create: bool = True) -> Path:
         """Return a path under the cache root, creating parent directories if needed."""
         target = self.cache_root.joinpath(*parts)

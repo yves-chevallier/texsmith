@@ -588,11 +588,6 @@ def consume_event_diagnostics(state: CLIState) -> list[str]:
             output_lines.append(f"Fetched DOI {value} for entry '{key}'")
 
     if verbosity >= 2:
-        for event in state.events.get("parser_fallback", []):
-            preferred = event.get("preferred", "unknown")
-            fallback = event.get("fallback", "unknown")
-            output_lines.append(f"Parser fallback: {preferred} → {fallback}")
-
         for event in state.events.get("template_overrides", []):
             overrides = event.get("values", {})
             if overrides:
@@ -601,22 +596,13 @@ def consume_event_diagnostics(state: CLIState) -> list[str]:
                     output_lines.append(f"  - {key}: {value}")
 
         for event in state.events.get("conversion_settings", []):
-            parser = event.get("parser", "auto")
-            copy_assets = event.get("copy_assets")
-            manifest = event.get("manifest")
-            fallback_enabled = event.get("fallback_converters_enabled")
             output_lines.append(
-                f"Settings: parser={parser}, copy_assets={copy_assets}, manifest={manifest}, fallback_converters={fallback_enabled}"
+                "Settings: "
+                f"copy_assets={event.get('copy_assets')}, "
+                f"convert_assets={event.get('convert_assets')}, "
+                f"hash_assets={event.get('hash_assets')}, "
+                f"manifest={event.get('manifest')}"
             )
-        for event in state.events.get("font_requirements", []):
-            required = event.get("required", [])
-            missing = event.get("missing", [])
-            present = event.get("present", [])
-            if missing:
-                output_lines.append(f"Font gaps: {', '.join(missing)}")
-            output_lines.append(f"Font fallbacks: {', '.join(required) or '<none>'}")
-            if present:
-                output_lines.append(f"Detected locally: {', '.join(present)}")
 
     state.events.clear()
     return output_lines

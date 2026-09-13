@@ -10,9 +10,6 @@ from texsmith.core.diagnostics import (
     DiagnosticEmitter,
     LoggingEmitter,
     NullEmitter,
-    current_emitter,
-    emit_diagnostic,
-    use_emitter,
 )
 from texsmith.core.exceptions import LatexRenderingError, TransformerExecutionError
 from texsmith.diagnostics import NO_SPAN, Diagnostic, Severity, Span
@@ -138,32 +135,6 @@ def test_cli_emitter_quiet_hides_hints_and_info(capsys: pytest.CaptureFixture[st
     # Hidden is not dropped: the JSON dump and the counts still see them.
     assert len(emitter.sink) == 3
     state.quiet = False
-
-
-def test_emit_diagnostic_reaches_the_installed_emitter() -> None:
-    emitter = LoggingEmitter()
-    with use_emitter(emitter):
-        assert current_emitter() is emitter
-        emit_diagnostic("label-duplicate", "Counter 'n:x' is defined twice", origin="doc.md")
-    (recorded,) = emitter.sink
-    assert recorded.code == "label-duplicate"
-    assert recorded.severity is Severity.WARNING
-    # The origin is registered as a text-less file: the record prints its name.
-    assert emitter.files.path(recorded.span.file) == Path("doc.md")
-    assert recorded.span.start == 0
-
-
-def test_emit_diagnostic_falls_back_to_logging(caplog: pytest.LogCaptureFixture) -> None:
-    with caplog.at_level(logging.WARNING):
-        emit_diagnostic("ref-unresolved", "Counter reference '@n:x' has no matching item")
-    assert caplog.records[0].message == (
-        "warning ref-unresolved: Counter reference '@n:x' has no matching item"
-    )
-
-
-def test_use_emitter_none_installs_nothing() -> None:
-    with use_emitter(None):
-        assert isinstance(current_emitter(), LoggingEmitter)
 
 
 def test_format_user_friendly_render_error_reports_root_cause() -> None:

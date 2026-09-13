@@ -74,12 +74,6 @@ class BaseTemplate:
         self.info = self.manifest.latex.template
         self.environment = _build_environment(self.root)
 
-    def default_context(self) -> dict[str, Any]:
-        """Return a shallow copy of the manifest default attributes."""
-        defaults = self.info.attribute_defaults()
-        defaults.update(self.info.emit_defaults())
-        return defaults
-
     def render_template(self, template_name: str, **context: Any) -> str:
         """Render a template using the configured Jinja environment."""
         try:

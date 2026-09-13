@@ -407,13 +407,6 @@ class LatexStreamResult:
     messages: list[LatexMessage]
 
 
-def _is_library_message(message: LatexMessage) -> bool:
-    if message.severity is not LatexMessageSeverity.INFO:
-        return False
-    summary = message.summary.strip()
-    return summary.startswith("Library (")
-
-
 def _is_quiet_info_message(message: LatexMessage) -> bool:
     if message.severity is not LatexMessageSeverity.INFO:
         return False

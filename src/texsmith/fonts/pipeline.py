@@ -2,9 +2,8 @@
 
 from __future__ import annotations
 
-from collections.abc import Iterable, Sequence
+from collections.abc import Iterable
 from dataclasses import dataclass, field
-from typing import Literal
 
 from texsmith.fonts.cache import FontCache
 from texsmith.fonts.coverage import NotoCoverage, NotoCoverageBuilder
@@ -150,169 +149,9 @@ class FallbackManager:
 
         return _Lookup._merge_ranges(list(codes))  # noqa: SLF001
 
-    def _plan_minimal_fonts(
-        self,
-        text: str,
-        lookup: FallbackLookup,
-        *,
-        prefer_fonts: Sequence[str] = (),
-        allow_cross_group: bool = True,
-    ) -> tuple[list[dict], dict[str, dict], list[int]]:
-        raw_lookup = lookup.lookup(text)
-        coverage_entries = list(self._ensure_coverage())
-
-        prefer_order: dict[str, int] = {}
-        for idx, name in enumerate(prefer_fonts):
-            prefer_order[name] = idx
-
-        group_codepoints: dict[str, set[int]] = {}
-        for data in raw_lookup.values():
-            if not isinstance(data, dict):
-                continue
-            group = data.get("group") or data.get("class")
-            if not isinstance(group, str) or not group.strip():
-                continue
-            target = group_codepoints.setdefault(group, set())
-            for cp in data.get("ranges", []):
-                try:
-                    target.add(int(cp))
-                except Exception:
-                    continue
-
-        fonts_plan: dict[str, dict] = {}
-        group_primary: dict[str, str] = {}
-        uncovered_total: set[int] = set()
-
-        for group, codepoints in group_codepoints.items():
-            if not codepoints:
-                continue
-            uncovered = set(codepoints)
-            if allow_cross_group:
-                for font_data in fonts_plan.values():
-                    covered = font_data.get("codepoints", set())
-                    overlap = uncovered & covered
-                    if overlap and group not in font_data.get("groups", set()):
-                        font_data.setdefault("groups", set()).add(group)
-                    uncovered -= overlap
-                    if overlap and group not in group_primary:
-                        group_primary[group] = font_data["name"]
-                if not uncovered:
-                    continue
-
-            while uncovered:
-                best_meta = None
-                best_hits: set[int] = set()
-                best_score: tuple[int, int, int] = (0, 0, 0)
-
-                for meta in coverage_entries:
-                    hits: set[int] = set()
-                    for cp in uncovered:
-                        for start, end in meta.ranges:
-                            if start <= cp <= end:
-                                hits.add(cp)
-                                break
-                    if not hits:
-                        continue
-                    prefer_value = prefer_order.get(meta.file_base, len(prefer_order) + 1)
-                    total_span = sum(end - start + 1 for start, end in meta.ranges)
-                    score = (len(hits), -prefer_value, -total_span)
-                    if score > best_score:
-                        best_score = score
-                        best_hits = hits
-                        best_meta = meta
-
-                if not best_meta or not best_hits:
-                    uncovered_total.update(uncovered)
-                    break
-
-                name = best_meta.file_base
-                plan_entry = fonts_plan.setdefault(
-                    name,
-                    {
-                        "name": name,
-                        "extension": ".otf",
-                        "styles": list(best_meta.styles or ["regular", "bold"]),
-                        "dir": best_meta.dir_base,
-                        "groups": set(),
-                        "codepoints": set(),
-                    },
-                )
-                plan_entry["groups"].add(group)
-                plan_entry["codepoints"].update(best_hits)
-                if group not in group_primary:
-                    group_primary[group] = name
-                uncovered -= best_hits
-
-        fonts_output: list[dict] = []
-        for data in sorted(fonts_plan.values(), key=lambda entry: entry["name"]):
-            codepoints = data.get("codepoints", set()) or set()
-            fonts_output.append(
-                {
-                    "name": data["name"],
-                    "extension": data.get("extension", ".otf"),
-                    "styles": list(data.get("styles") or []),
-                    "dir": data.get("dir"),
-                    "groups": sorted(data.get("groups", [])),
-                    "ranges": self._merge_range_strings(codepoints),
-                    "count": len(codepoints) if codepoints else None,
-                }
-            )
-
-        group_fonts: dict[str, dict] = {}
-        fonts_by_name = {font["name"]: font for font in fonts_output}
-        for group, name in group_primary.items():
-            font = fonts_by_name.get(name)
-            if font:
-                group_fonts[group] = font
-
-        return fonts_output, group_fonts, sorted(uncovered_total)
-
-    def scan_text(
-        self,
-        text: str,
-        *,
-        strategy: Literal["by_class", "minimal_fonts"] = "by_class",
-        prefer_fonts: Sequence[str] = (),
-        allow_cross_group: bool = True,
-    ) -> FallbackPlan:
+    def scan_text(self, text: str) -> FallbackPlan:
         lookup = self._ensure_lookup()
         summary = lookup.summary(text)
-        inferred_preference = list(prefer_fonts) or [
-            entry["name"]
-            for entry in self._fonts_from_summary(summary)
-            if isinstance(entry, dict) and entry.get("name")
-        ]
-        if strategy == "minimal_fonts":
-            fonts, group_fonts, uncovered = self._plan_minimal_fonts(
-                text,
-                lookup,
-                prefer_fonts=inferred_preference,
-                allow_cross_group=allow_cross_group,
-            )
-            patched_summary: list[dict] = []
-            for entry in summary:
-                if not isinstance(entry, dict):
-                    continue
-                group = entry.get("group") or entry.get("class")
-                chosen = group_fonts.get(group) if group else None
-                if chosen:
-                    entry = dict(entry)
-                    entry["font"] = {
-                        "name": chosen.get("name"),
-                        "extension": chosen.get("extension", ".otf"),
-                        "styles": chosen.get("styles") or [],
-                        "dir": chosen.get("dir"),
-                    }
-                    entry["fonts"] = [chosen.get("name")]
-                patched_summary.append(entry)
-            return FallbackPlan(
-                summary=patched_summary,
-                fonts=fonts,
-                group_fonts=group_fonts,
-                uncovered=uncovered,
-                strategy=strategy,
-            )
-
         fonts = self._fonts_from_summary(summary)
         group_fonts: dict[str, dict] = {}
         for entry in fonts:

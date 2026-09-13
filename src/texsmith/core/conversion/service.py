@@ -61,10 +61,6 @@ class SplitInputsResult:
     front_matter: Mapping[str, Any] | None = None
     front_matter_paths: list[Path] = field(default_factory=list)
 
-    def __iter__(self) -> Iterable[object]:  # pragma: no cover - convenience iterator
-        yield self.documents
-        yield self.bibliography_files
-
 
 @dataclass(slots=True)
 class ConversionResponse:

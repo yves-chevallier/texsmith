@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-import json
 from pathlib import Path
 import re
 import shutil
@@ -152,13 +151,6 @@ class UCharClassesBuilder:
         log_fn = self.logger.info if not had_cached_sty else self.logger.debug
         log_fn(f"{len(ordered)} Unicode classes detected.")
         return ordered
-
-    def export_json(self, target: Path) -> None:
-        """Persist classes to JSON; useful for debugging or downstream tools."""
-        data = [cls.to_dict() for cls in self.build()]
-        target.parent.mkdir(parents=True, exist_ok=True)
-        target.write_text(json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8")
-        self.logger.info("Writing Unicode classes to %s", target)
 
 
 __all__ = ["CTAN_UCHARCLASSES_ZIP", "UCharClass", "UCharClassesBuilder"]

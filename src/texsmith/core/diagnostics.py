@@ -10,11 +10,8 @@ engine and network messages share the collector with the passes.
 
 from __future__ import annotations
 
-from collections.abc import Iterator, Mapping
-from contextlib import contextmanager
-from contextvars import ContextVar
+from collections.abc import Mapping
 import logging
-from pathlib import Path
 from typing import Any, Protocol, runtime_checkable
 
 from texsmith.diagnostics import (
@@ -24,8 +21,6 @@ from texsmith.diagnostics import (
     DiagnosticSink,
     FileTable,
     Severity,
-    Span,
-    default_severity,
     format_diagnostic,
 )
 
@@ -144,65 +139,6 @@ class LoggingEmitter(SinkEmitter):
             self._logger.debug("failed to log diagnostic event %s", name, exc_info=True)
 
 
-_ACTIVE_EMITTER: ContextVar[DiagnosticEmitter | None] = ContextVar(
-    "texsmith_active_emitter", default=None
-)
-
-
-@contextmanager
-def use_emitter(emitter: DiagnosticEmitter | None) -> Iterator[None]:
-    """Make ``emitter`` the target of :func:`emit_diagnostic` for the block.
-
-    ``None`` installs nothing: code running outside a conversion keeps the
-    logging fallback, so an authoring defect never goes unreported.
-    """
-    if emitter is None:
-        yield
-        return
-    token = _ACTIVE_EMITTER.set(emitter)
-    try:
-        yield
-    finally:
-        _ACTIVE_EMITTER.reset(token)
-
-
-def current_emitter() -> DiagnosticEmitter:
-    """The emitter installed by :func:`use_emitter`, else a fresh :class:`LoggingEmitter`."""
-    active = _ACTIVE_EMITTER.get()
-    return active if active is not None else LoggingEmitter()
-
-
-def emit_diagnostic(
-    code: str,
-    message: str,
-    *,
-    span: Span = NO_SPAN,
-    severity: Severity | None = None,
-    origin: Path | str | None = None,
-) -> Diagnostic:
-    """Report a finding from code that holds no emitter (the Markdown extensions).
-
-    ``origin`` names the document a location-less finding belongs to: it is
-    registered in the emitter's file table (without text) so the record prints
-    as ``doc.md: warning code: message``. Emitters that do not collect keep the
-    bare record.
-    """
-    emitter = current_emitter()
-    if origin is not None and span == NO_SPAN and isinstance(emitter, SinkEmitter):
-        file_id = emitter.files.find(origin)
-        if file_id is None:
-            file_id = emitter.files.add(origin, "")
-        span = Span(file_id, 0, 0)
-    diagnostic = Diagnostic(
-        code=code,
-        severity=severity if severity is not None else default_severity(code),
-        span=span,
-        message=message,
-    )
-    emitter.diagnostic(diagnostic)
-    return diagnostic
-
-
 def format_event_message(name: str, payload: Mapping[str, Any]) -> str | None:
     """Return a human-friendly summary for selected diagnostic events."""
     try:
@@ -248,9 +184,6 @@ __all__ = [
     "LoggingEmitter",
     "NullEmitter",
     "SinkEmitter",
-    "current_emitter",
-    "emit_diagnostic",
     "format_event_message",
     "legacy_diagnostic",
-    "use_emitter",
 ]

@@ -96,18 +96,6 @@ class DocumentState:
             suffix += 1
         return candidate
 
-    def remember_glossary(self, key: str, entry: dict[str, Any]) -> None:
-        """Record a glossary entry keyed by its identifier."""
-        self.glossary[key] = entry
-
-    def register_snippet(self, key: str, payload: dict[str, Any]) -> None:
-        """Cache snippet metadata to render later in the pipeline."""
-        self.snippets[key] = payload
-
-    def add_heading(self, *, level: int, text: str, ref: str | None = None) -> None:
-        """Track heading metadata to power table-of-contents generation."""
-        self.headings.append({"level": level, "text": text, "ref": ref})
-
     def next_counter(self, key: str = "default") -> int:
         """Increment and return the named counter."""
         value = self.counters.get(key, 0) + 1

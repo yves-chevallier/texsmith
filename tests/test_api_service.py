@@ -51,19 +51,19 @@ depth = "section"
 def test_split_inputs_separates_sources(tmp_path: Path) -> None:
     service = ConversionService()
     doc_a = tmp_path / "chapter.md"
-    doc_b = tmp_path / "appendix.html"
+    doc_b = tmp_path / "appendix.md"
     bib = tmp_path / "refs.bib"
     for path in (doc_a, doc_b, bib):
         path.write_text("content", encoding="utf-8")
 
-    documents, bibliography = service.split_inputs(
+    result = service.split_inputs(
         [doc_a, bib, doc_b],
         extra_bibliography=[tmp_path / "extra.bib"],
     )
 
-    assert documents == [doc_a, doc_b]
-    assert bibliography[0] == bib
-    assert len(bibliography) == 2
+    assert result.documents == [doc_a, doc_b]
+    assert result.bibliography_files[0] == bib
+    assert len(result.bibliography_files) == 2
 
 
 def test_split_inputs_captures_front_matter(tmp_path: Path) -> None:

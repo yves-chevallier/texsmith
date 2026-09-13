@@ -26,7 +26,7 @@ from .resolution import ResolveOptions
 
 
 if TYPE_CHECKING:  # pragma: no cover - typing only
-    from texsmith.passes.slots import SlotBody
+    pass
 
 
 __all__ = ["Body", "Requires", "build_writer_options", "write_body"]
@@ -206,8 +206,3 @@ def write_body(
     if sink is not None:
         sink.extend_from_tmark(result.get("diagnostics") or ())
     return Body.from_json(result)
-
-
-def body_for_slot(body: SlotBody, ir_document: model.Document) -> model.Document:
-    """The document a slot body is written from: the full document, blocks replaced."""
-    return replace(ir_document, blocks=body.blocks)

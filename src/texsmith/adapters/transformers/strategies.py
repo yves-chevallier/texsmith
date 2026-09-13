@@ -29,7 +29,7 @@ from texsmith.core.user_dir import get_user_dir
 
 from ..docker import DockerLimits, VolumeMount, run_container
 from .base import CachedConversionStrategy
-from .utils import normalise_pdf_version, points_to_mm
+from .utils import normalise_pdf_version
 
 
 _EXPORT3_URL = "https://app.diagrams.net/export3.html"
@@ -126,12 +126,6 @@ def _option_flag(value: Any, *, default: bool = False) -> bool:
             return True
         return default
     return bool(value)
-
-
-def _write_placeholder_pdf(target: Path) -> None:
-    """Write a minimal placeholder PDF when conversion cannot proceed."""
-    target.parent.mkdir(parents=True, exist_ok=True)
-    target.write_bytes(_PLACEHOLDER_PDF)
 
 
 def _wrap_playwright_error(exc: Exception, emitter: Any = None) -> TransformerExecutionError:
@@ -761,60 +755,6 @@ class FetchImageStrategy(CachedConversionStrategy):
             }
         except Exception:
             return None
-
-
-class PdfMetadataStrategy:
-    """Inspect PDF files and expose structural metadata."""
-
-    def __call__(
-        self,
-        source: Path | str,
-        *,
-        output_dir: Path,
-        **options: Any,
-    ) -> dict[str, Any]:
-        pdf_path = Path(source)
-        if not pdf_path.exists():
-            msg = f"PDF file '{pdf_path}' does not exist"
-            raise TransformerExecutionError(msg)
-
-        try:
-            import pypdf  # type: ignore[import]
-        except ImportError as exc:  # pragma: no cover - optional dependency
-            msg = "pypdf is required to inspect PDF metadata."
-            raise TransformerExecutionError(msg) from exc
-
-        reader = pypdf.PdfReader(pdf_path)
-        pages: list[dict[str, Any]] = []
-        for page in reader.pages:
-            media_box = page.mediabox
-            pages.append(
-                {
-                    "width": points_to_mm(float(media_box.width)),
-                    "height": points_to_mm(float(media_box.height)),
-                }
-            )
-        return {"pages": pages}
-
-
-class NotConfiguredStrategy:
-    """Strategy used to signal that a converter must be provided by the host."""
-
-    def __init__(self, name: str) -> None:
-        self.name = name
-
-    def __call__(
-        self,
-        source: Path | str,
-        *,
-        output_dir: Path,
-        **_: Any,
-    ):
-        msg = (
-            f"No converter configured for '{self.name}'. "
-            f"Register a strategy via 'register_converter(\"{self.name}\", strategy)'."
-        )
-        raise TransformerExecutionError(msg)
 
 
 def _read_text(source: Path | str) -> str:

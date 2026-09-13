@@ -141,44 +141,6 @@ def _extract_emoji_mode(mapping: Mapping[str, Any] | None) -> str | None:
     return None
 
 
-def _resolve_active_fragments(
-    binding: TemplateBinding, overrides: Mapping[str, Any] | None
-) -> list[str]:
-    """Return the fragment list, respecting explicit overrides when provided."""
-    if isinstance(overrides, Mapping) and "fragments" in overrides:
-        override_payload = overrides.get("fragments")
-        if isinstance(override_payload, list):
-            return list(override_payload)
-        return []
-
-    runtime = binding.runtime
-    if runtime is not None:
-        fragments = runtime.extras.get("fragments") if runtime.extras else None
-        if isinstance(fragments, list):
-            return list(fragments)
-    return []
-
-
-def _resolve_fragment_source_dir(
-    overrides: Mapping[str, Any] | None, context: ConversionContext
-) -> Path | None:
-    """Infer the base directory used to resolve fragment paths."""
-    candidates = []
-    press_section = overrides.get("press") if isinstance(overrides, Mapping) else None
-    for container in (overrides, press_section):
-        if not isinstance(container, Mapping):
-            continue
-        for key in ("_source_dir", "source_dir"):
-            raw_value = container.get(key)
-            if isinstance(raw_value, str) and raw_value.strip():
-                candidates.append(Path(raw_value))
-    if candidates:
-        return candidates[0]
-    if context.config is not None:
-        return context.config.project_dir
-    return context.document.source_path.parent
-
-
 def convert_document(
     document: Document,
     output_dir: Path,

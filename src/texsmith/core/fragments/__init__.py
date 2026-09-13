@@ -153,14 +153,6 @@ def _load_entrypoint(entrypoint: str) -> BaseFragment[Any] | FragmentDefinition:
     )
 
 
-def _fragment_base_dir(fragment: BaseFragment[Any]) -> Path:
-    if fragment.source is not None:
-        return (fragment.source if fragment.source.is_dir() else fragment.source.parent).resolve()
-    if fragment.pieces:
-        return fragment.pieces[0].template_path.parent
-    return Path().resolve()
-
-
 def _normalise_fragment_attributes(
     fragment: BaseFragment[Any],
 ) -> tuple[dict[str, TemplateAttributeSpec], TemplateAttributeResolver | None]:

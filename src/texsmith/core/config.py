@@ -107,7 +107,6 @@ LaTeXConfig
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 from slugify import slugify
@@ -184,8 +183,3 @@ class LaTeXConfig(CommonConfig):
                 if getattr(book, key) is None:
                     setattr(book, key, getattr(self, key))
         return self
-
-    def add_extra(self, **extra_data: Any) -> None:
-        """Allow consumers to attach additional attributes at runtime."""
-        for key, value in extra_data.items():
-            object.__setattr__(self, key, value)
