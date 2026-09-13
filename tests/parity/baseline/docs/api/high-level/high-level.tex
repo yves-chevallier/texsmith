@@ -90,7 +90,7 @@ If you need the exact orchestration used by the CLI, rely on \tscodeinline{Conve
 \item \tscodeinline{prepare\_documents(request)} splits inputs, parses each one into its IR, applies slot assignments, and returns a prepared batch.
 \item \tscodeinline{execute(request, prepared=...)} runs the passes, resolves once, writes one body per slot, wraps them in the template, and produces a \tscodeinline{ConversionResponse} with the bundle plus emitted diagnostics.
 \end{enumerate}
-A third step, \tscodeinline{build\_pdf(render\_result, engine=...)}, hands the rendered project to Tectonic, latexmk or the Typst compiler.
+Compiling is a step of its own, and not a method of the service: \tscodeinline{texsmith.adapters.latex.build.build\_pdf(render\_result, engine=...)} hands the rendered project to Tectonic or latexmk, and \tscodeinline{texsmith.core.conversion.typst.build\_typst\_pdf(path)} to the Typst compiler.
 \begin{tscode}[lang=python, engine=pygments]
 \begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
 \PY{k+kn}{from}\PY{+w}{ }\PY{n+nn}{pathlib}\PY{+w}{ }\PY{k+kn}{import} \PY{n}{Path}

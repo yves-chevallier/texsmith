@@ -30,13 +30,19 @@ import yaml
 
 from texsmith.adapters.html_utils import coerce_attribute, gather_classes
 from texsmith.core.conversion import ConversionRequest
+from texsmith.core.conversion.renderer import TemplateRenderResult
 from texsmith.core.documents import (
     Document,
     TitleStrategy,
     _resolve_title_strategy,
     front_matter_has_title,
 )
-from texsmith.core.exceptions import AssetMissingError, InvalidNodeError, LatexRenderingError
+from texsmith.core.exceptions import (
+    AssetMissingError,
+    ConversionError,
+    InvalidNodeError,
+    LatexRenderingError,
+)
 from texsmith.core.front_matter import split_front_matter
 from texsmith.core.metadata import PressMetadataError, normalise_press_metadata
 from texsmith.core.templates import TemplateError, TemplateRuntime, load_template_runtime
@@ -986,101 +992,39 @@ def _build_documents_from_sources(
     return documents
 
 
-def _compile_pdf(render_result: Any) -> Path:
-    from texsmith.adapters.latex.engines import (
-        EngineResult,
-        build_engine_command,
-        build_tex_env,
-        compute_features,
-        ensure_command_paths,
-        missing_dependencies,
-        parse_latex_log,
-        resolve_engine,
-        run_engine_command,
-    )
-    from texsmith.adapters.latex.pyxindy import is_available as pyxindy_available
-    from texsmith.adapters.latex.tectonic import (
-        BiberAcquisitionError,
-        MakeglossariesAcquisitionError,
-        TectonicAcquisitionError,
-        select_biber_binary,
-        select_makeglossaries,
-        select_tectonic_binary,
-    )
+def _compile_pdf(render_result: TemplateRenderResult) -> Path:
+    """Build a snippet's nested project through the one LaTeX build there is.
 
-    engine_choice = resolve_engine("tectonic", render_result.template_engine)
-    template_context = getattr(render_result, "template_context", None) or getattr(
-        render_result, "context", None
-    )
-    features = compute_features(
-        requires_shell_escape=render_result.requires_shell_escape,
-        bibliography=render_result.has_bibliography,
-        document_state=render_result.document_state,
-        template_context=template_context,
-    )
-    biber_binary: Path | None = None
-    makeglossaries_binary: Path | None = None
-    bundled_bin: Path | None = None
+    The snippet preview is a LaTeX build like any other — a template, an
+    engine, the bundled binaries — so it runs ``adapters.latex.build.build_pdf``
+    rather than a second copy of it. It differs only in what it asks for:
+    always isolated (the preview must not write into the shared cache), always
+    classic output (there is no console to stream to), and a failure is an
+    asset the fence could not produce.
+    """
+    from texsmith.adapters.latex.build import build_pdf
+    from texsmith.adapters.latex.engines import parse_latex_log
+
     try:
-        selection = select_tectonic_binary(False, console=None)
-        if features.bibliography:
-            biber_binary = select_biber_binary(console=None)
-            bundled_bin = biber_binary.parent
-        if features.has_glossary and not pyxindy_available():
-            glossaries = select_makeglossaries(console=None)
-            makeglossaries_binary = glossaries.path
-            if glossaries.source == "bundled":
-                bundled_bin = bundled_bin or glossaries.path.parent
-    except (TectonicAcquisitionError, BiberAcquisitionError, MakeglossariesAcquisitionError) as exc:
-        raise AssetMissingError(str(exc)) from exc
-    tectonic_binary = selection.path
-
-    available_bins: dict[str, Path] = {}
-    if biber_binary:
-        available_bins["biber"] = biber_binary
-    if makeglossaries_binary:
-        available_bins["makeglossaries"] = makeglossaries_binary
-
-    missing = missing_dependencies(
-        engine_choice,
-        features,
-        use_system_tectonic=False,
-        available_binaries=available_bins or None,
-    )
-    if missing:
-        formatted = ", ".join(sorted(missing))
-        raise AssetMissingError(f"Missing LaTeX tools for snippet rendering: {formatted}")
-
-    command_plan = ensure_command_paths(
-        build_engine_command(
-            engine_choice,
-            features,
-            main_tex_path=render_result.main_tex_path,
-            tectonic_binary=tectonic_binary,
+        result = build_pdf(
+            render_result,
+            engine="tectonic",
+            classic_output=True,
+            isolate_cache=True,
+            console=None,
         )
-    )
-    env = build_tex_env(
-        render_result.main_tex_path.parent,
-        isolate_cache=True,
-        extra_path=bundled_bin,
-        biber_path=biber_binary,
-    )
-    result: EngineResult = run_engine_command(
-        command_plan,
-        backend=engine_choice.backend,
-        workdir=render_result.main_tex_path.parent,
-        env=env,
-        console=None,
-        classic_output=True,
-        features=features,
-    )
+    except ConversionError as exc:
+        raise AssetMissingError(str(exc)) from exc
+
     if result.returncode != 0:
-        log_path = command_plan.log_path
-        messages = result.messages or parse_latex_log(log_path)
-        detail = messages[0].summary if messages else f"{engine_choice.label} failed"
+        log_path = result.log_path
+        messages = result.messages or (parse_latex_log(log_path) if log_path else [])
+        detail = messages[0].summary if messages else "the LaTeX engine failed"
         raise LatexRenderingError(f"Failed to compile snippet: {detail} (log: {log_path})")
 
-    return command_plan.pdf_path
+    if result.pdf_path is None:  # pragma: no cover - a zero return always writes one
+        raise LatexRenderingError("The LaTeX engine reported success without a PDF.")
+    return result.pdf_path
 
 
 def _load_pymupdf() -> object:

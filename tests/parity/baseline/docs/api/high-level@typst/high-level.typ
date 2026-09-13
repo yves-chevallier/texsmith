@@ -77,7 +77,7 @@ If you need the exact orchestration used by the CLI, rely on `ConversionService`
 + `prepare_documents(request)` splits inputs, parses each one into its IR, applies slot assignments, and returns a prepared batch.
 + `execute(request, prepared=...)` runs the passes, resolves once, writes one body per slot, wraps them in the template, and produces a `ConversionResponse` with the bundle plus emitted diagnostics.
 
-A third step, `build_pdf(render_result, engine=...)`, hands the rendered project to Tectonic, latexmk or the Typst compiler.
+Compiling is a step of its own, and not a method of the service: `texsmith.adapters.latex.build.build_pdf(render_result, engine=...)` hands the rendered project to Tectonic or latexmk, and `texsmith.core.conversion.typst.build_typst_pdf(path)` to the Typst compiler.
 
 ```python
 from pathlib import Path
