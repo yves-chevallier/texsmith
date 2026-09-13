@@ -180,15 +180,54 @@ Two accidental semantics it exposed, both **pinned by a test and left alone**:
 
 ## What remains
 
-Two steps untouched, and the rest of 08.
+**07**, the bet — and the rest of 08. **06 is withdrawn**: see below.
 
-**06 · The pure passes into tmark** — *two repositories, ADR each.*
-`tmark-lsp/src/outline.rs:101-135` already partitions a block list by heading
-level: factor it into `tmark-ir::sections`, expose `tmark.split(...)`, and
-`slots` (247) and `headings` (49) go. Then `include` (283, and `IdAllocator`
-with it — the id floor exists only because Python re-parses files that number
-from 1), then `var` and `title` (114) as resolve options, on the model of the
-`glossary` pass that was deleted by typing a front-matter declaration.
+**06 · The pure passes into tmark** — **the premise does not survive the
+spec; do not start it as written.**
+
+The step was stated as: factor `tmark-lsp/src/outline.rs`'s heading
+partition into `tmark-ir::sections`, expose `tmark.split(...)`, "and `slots`
+(247) and `headings` (49) go", then `include` (283), then `var` and `title`
+(114). That is 693 lines claimed. Read against `spec/tmark.md` and the code,
+what can move is **ten**.
+
+`spec/tmark.md` §Header assigns the work by name:
+
+> Headings are relative: **TeXSmith** aligns messy multi-file hierarchies
+> automatically (per-fragment offset from the shallowest heading, plus the
+> template slot base, plus `press.base_level`), and promotes the first
+> heading to the document title […]. **That machinery is a processing
+> concern, not syntax.**
+
+That sentence *is* `headings.py`, line for line — offset from the shallowest
+heading, the template's slot level, `document.base_level` — and it *is*
+`title.py`, which only applies the promotion decision. Neither can move
+without reversing the sentence. `design/00-overview.md` §Non-goals puts
+"Templates, preambles, … build orchestration" on TeXSmith's side too.
+
+Of `slots.py`'s 244 lines, exactly `_section_end` — **10 lines** — is the
+generic partition. The other 234 are the selector grammar (`#id`, bare text,
+`@document`, `*`), matching by id then by text, the nested-header diagnostic,
+the claiming order, `strip_heading` from the manifest and `flatten` from the
+front matter: template machinery, which the frontier assigns here.
+
+So the whole step reduces to sharing a ten-line partition across a repository
+boundary, in two languages, and `~/tmark/AGENTS.md` answers that directly:
+"**DRY across languages, not within reason.** Duplicating three lines is
+fine; duplicating a table of node names between Rust, Python and a grammar is
+not." A new `tmark-ir` module, a new binding, an ADR and a cross-repository
+coupling to delete ten lines of Python is the wrong trade.
+
+`include` (283) is the one piece with a real argument — the splice itself is
+tmark's shape and `Loader` exists for exactly this — but its search path
+(`--include-path`, `press.include_paths`, the site's `pymdownx.snippets`
+base) is TeXSmith's, so what would move is the splice, not the pass. `var`
+(76) could become a resolve option only by shipping the template overrides
+into Rust, which is the same frontier question step 07 poses properly.
+
+**Recommendation:** drop 06 as a step. Fold the `include` splice question
+into 07, which already asks whether a typed contract should carry TeXSmith
+data into the core, and which is the only route that drops `ir/`.
 
 **07 · The request/patch contract** — *two repositories.* The bet.
 
@@ -249,8 +288,14 @@ Two measurements for whoever takes it:
   candidate for deletion, and an IR-derived answer would be incomplete —
   template attributes and front matter carry text the IR never saw.
 
-**Still open:** "fragment" means three things; `core/templates` (2 951) is
-untouched.
+**Done: "fragment" meant two unrelated things**, and they collided on three
+consecutive fields of `ConversionRequest` — `embed_fragments` (inline each
+converted document) beside `enable_fragments` / `disable_fragments` (turn a
+`ts-*` contract package on or off). The sense that is not a `ts-*` package is
+renamed for what it is: `embed_documents`, `RenderedDocument`,
+`ConversionBundle.documents`. The MkDocs option follows.
+
+**Still open:** `core/templates` (2 951) is untouched.
 
 ## Debts posed, deliberately not paid
 
