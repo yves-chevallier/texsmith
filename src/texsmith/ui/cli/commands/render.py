@@ -997,15 +997,14 @@ def render(
 
     # Engine orchestration (binary selection, command/env build, run) lives in
     # adapters.latex.build.build_pdf; the CLI keeps only presentation, the PDF copy,
-    # and dependency-file emission. ``run_engine`` is injected so the engine run
-    # stays a clean test seam (tests patch this module's ``run_engine_command``).
+    # and dependency-file emission. ``build_pdf`` takes the runner as a parameter,
+    # which is the seam a test substitutes.
     # The bodies are written: ``--strict`` decides here, before the engine runs.
     _flush_diagnostics()
 
     engine_choice = resolve_engine(engine, render_result.template_engine)
     state.console.print(f"[bold cyan]Running {engine_choice.label}…[/]")
 
-    run_engine = getattr(render, "run_engine_command", run_engine_command)
     try:
         engine_result: EngineResult = pdf_build.build_pdf(
             render_result,
@@ -1015,7 +1014,7 @@ def render(
             console=state.console,
             verbosity=state.verbosity,
             use_system_tectonic=system_tectonic,
-            run_engine=run_engine,
+            run_engine=run_engine_command,
         )
     except ConversionError as exc:
         emit_error(str(exc), exception=exc)
@@ -1097,8 +1096,3 @@ def render(
 
     if cleanup_render_dir and cleanup_render_dir_path is not None:
         shutil.rmtree(cleanup_render_dir_path, ignore_errors=True)
-
-
-# Expose runtime dependencies for test monkeypatching
-render.shutil = shutil  # type: ignore[attr-defined]
-render.run_engine_command = run_engine_command  # type: ignore[attr-defined]

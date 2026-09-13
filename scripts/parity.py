@@ -63,7 +63,8 @@ DIFFERS = "differs"
 SKIPPED = "skipped"
 ERROR = "error"
 MISSING = "missing-baseline"
-FAILING = frozenset({DIFFERS, ERROR, MISSING})
+ORPHANED = "orphaned-baseline"
+FAILING = frozenset({DIFFERS, ERROR, MISSING, ORPHANED})
 
 
 class ParityError(Exception):
@@ -1049,6 +1050,33 @@ def _check_baseline(entry: Entry, files: dict[str, str]) -> EntryReport:
     return report
 
 
+def _orphaned_baselines(entries: Sequence[Entry]) -> list[EntryReport]:
+    """Recorded renderings whose corpus entry is gone.
+
+    ``--check`` re-renders what the corpus lists, so a baseline left behind by
+    a deleted page is invisible to it: two pages removed with the Markdown
+    extensions kept their committed ``.tex`` and ``.typ`` for the whole
+    migration. Only meaningful over the whole corpus, so a ``--only`` run
+    reports none.
+    """
+    known = {entry.entry_id for entry in entries}
+    reports: list[EntryReport] = []
+    for path in sorted(BASELINE_DIR.rglob("*")):
+        if not path.is_dir() or not any(child.is_file() for child in path.iterdir()):
+            continue
+        entry_id = str(path.relative_to(BASELINE_DIR))
+        if entry_id in known:
+            continue
+        reports.append(
+            EntryReport(
+                Entry(entry_id=entry_id, cwd=".", args=(), backend="latex"),
+                ORPHANED,
+                "no corpus entry renders this; delete it",
+            )
+        )
+    return reports
+
+
 def cmd_baseline(args: argparse.Namespace) -> int:
     entries = select_entries(load_corpus(), args.only)
     runnable, skipped = _partition(entries, without=args.without, ignore=("typst",))
@@ -1073,6 +1101,8 @@ def cmd_baseline(args: argparse.Namespace) -> int:
             _write_baseline(entry, files)
             reports.append(EntryReport(entry, "written", ", ".join(sorted(files))))
     if args.check:
+        if not args.only:
+            reports.extend(_orphaned_baselines(load_corpus()))
         _write_diffs(reports, BUILD_DIR / "check")
         print_table(reports, title="baseline --check (fresh render vs tests/parity/baseline)")
     else:

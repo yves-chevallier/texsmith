@@ -1,14 +1,15 @@
 """CLI command implementations exposed via `texsmith.ui.cli`.
 
-This module exists primarily to make the `texsmith.ui.cli.commands` package
-importable for documentation tools such as mkdocstrings. It re-exports the
-Typer command factories defined in the sibling modules so downstream code can
-import them using dotted paths (e.g. ``texsmith.ui.cli.commands.render``).
+The package holds one module per command. It deliberately re-exports nothing:
+``from .render import render`` would rebind the ``render`` attribute of this
+package from the *submodule* to the *function*, so
+``texsmith.ui.cli.commands.render`` would mean one thing to ``import`` and
+another to ``getattr`` — which is what let a test patch a module global by
+hanging it off a function object. Import the command from its module:
+``from texsmith.ui.cli.commands.render import render``.
 """
 
 from __future__ import annotations
 
-from .render import render
 
-
-__all__ = ["render"]
+__all__: list[str] = []

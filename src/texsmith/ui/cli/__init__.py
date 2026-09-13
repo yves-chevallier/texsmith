@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from .app import app, main
-from .commands import render
+from .commands.render import render
 from .state import debug_enabled, emit_error, emit_warning, ensure_rich_compat, get_cli_state
 
 

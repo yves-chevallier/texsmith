@@ -10,4 +10,4 @@
 
 ::: texsmith.ui.cli.bibliography
 
-::: texsmith.ui.cli.commands
+::: texsmith.ui.cli.commands.render

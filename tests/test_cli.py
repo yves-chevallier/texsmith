@@ -18,7 +18,6 @@ from texsmith.ui.cli.commands import render as render_cmd
 import texsmith.ui.cli.state as cli_state
 
 
-render_module = importlib.import_module("texsmith.ui.cli.commands.render")
 # Engine binary selection lives in adapters.latex.build; tests patch
 # the selectors on the service module rather than the render command.
 build_module = importlib.import_module("texsmith.adapters.latex.build")
@@ -909,7 +908,6 @@ def test_build_without_template_defaults_to_article(tmp_path: Path, monkeypatch:
             pdf_path=pdf_path,
         )
 
-    monkeypatch.setattr(render_cmd.shutil, "which", fake_which)
     monkeypatch.setattr(engine.shutil, "which", fake_which)
     monkeypatch.setattr(render_cmd, "run_engine_command", fake_run)
 
@@ -963,7 +961,6 @@ def test_build_defaults_to_rich_output(tmp_path: Path, monkeypatch: Any) -> None
             pdf_path=pdf_path,
         )
 
-    monkeypatch.setattr(render_cmd.shutil, "which", fake_which)
     monkeypatch.setattr(engine.shutil, "which", fake_which)
     monkeypatch.setattr(render_cmd, "run_engine_command", fake_run_engine)
 
@@ -1023,7 +1020,6 @@ def test_system_flag_prefers_system_tectonic(tmp_path: Path, monkeypatch: Any) -
         )
 
     monkeypatch.setattr(build_module, "select_tectonic_binary", fake_select)
-    monkeypatch.setattr(render_cmd.shutil, "which", fake_which)
     monkeypatch.setattr(engine.shutil, "which", fake_which)
     monkeypatch.setattr(render_cmd, "run_engine_command", fake_run_engine)
 
@@ -1077,7 +1073,6 @@ def test_build_supports_multiple_documents(tmp_path: Path, monkeypatch: Any) -> 
             pdf_path=pdf_path,
         )
 
-    monkeypatch.setattr(render_cmd.shutil, "which", fake_which)
     monkeypatch.setattr(engine.shutil, "which", fake_which)
     monkeypatch.setattr(render_cmd, "run_engine_command", fake_run_engine)
 
@@ -1130,7 +1125,6 @@ def test_build_invokes_latexmk(tmp_path: Path, monkeypatch: Any) -> None:
             pdf_path=pdf_path,
         )
 
-    monkeypatch.setattr(render_cmd.shutil, "which", fake_which)
     monkeypatch.setattr(engine.shutil, "which", fake_which)
     monkeypatch.setattr(render_cmd, "run_engine_command", fake_run)
 
@@ -1197,7 +1191,6 @@ def test_build_with_bibliography_forces_bibtex(tmp_path: Path, monkeypatch: Any)
             pdf_path=pdf_path,
         )
 
-    monkeypatch.setattr(render_cmd.shutil, "which", fake_which)
     monkeypatch.setattr(engine.shutil, "which", fake_which)
     monkeypatch.setattr(render_cmd, "run_engine_command", fake_run)
 
@@ -1252,7 +1245,6 @@ def test_build_respects_shell_escape(tmp_path: Path, monkeypatch: Any) -> None:
             pdf_path=pdf_path,
         )
 
-    monkeypatch.setattr(render_cmd.shutil, "which", fake_which)
     monkeypatch.setattr(engine.shutil, "which", fake_which)
     monkeypatch.setattr(render_cmd, "run_engine_command", fake_run)
 
@@ -1311,7 +1303,6 @@ def test_build_failure_reports_summary(tmp_path: Path, monkeypatch: Any) -> None
             pdf_path=command.pdf_path,
         )
 
-    monkeypatch.setattr(render_cmd.shutil, "which", fake_which)
     monkeypatch.setattr(engine.shutil, "which", fake_which)
     monkeypatch.setattr(render_cmd, "run_engine_command", fake_run)
 
