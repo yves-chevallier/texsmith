@@ -31,9 +31,6 @@ from texsmith.core.conversion.policy import (
     DEPRECATED_LEVELS,
     declared_template,
     demote_deprecated,
-    deprecated_level,
-    numbered_setting,
-    strict_enabled,
 )
 from texsmith.core.conversion.resolution import NUMBERING_MODES, NUMBERING_OVERRIDE_KEY
 from texsmith.core.conversion.service import ConversionService
@@ -43,7 +40,6 @@ from texsmith.core.front_matter import split_front_matter
 from texsmith.core.metadata import PressMetadataError, normalise_press_metadata
 from texsmith.core.sources import is_front_matter, is_markdown
 from texsmith.core.templates import TemplateError
-from texsmith.core.templates.runtime import coerce_base_level
 from texsmith.diagnostics import Diagnostic
 from texsmith.version import get_version
 
@@ -83,6 +79,7 @@ from .._options import (
 from ..bibliography import print_bibliography_overview
 from ..commands.templates import list_templates, scaffold_template, show_template_info
 from ..diagnostics import CliEmitter
+from ..plan import RenderOptionError, resolve_render_plan
 from ..presenter import (
     consume_event_diagnostics,
     present_build_summary,
@@ -520,9 +517,6 @@ def render(
         deprecated = deprecated.strip().lower()
         if deprecated not in DEPRECATED_LEVELS:
             raise typer.BadParameter("--deprecated must be 'warning', 'info' or 'off'.")
-    if print_context:
-        build_pdf = False
-
     if snippet_dump_dir is not None:
         os.environ["TEXSMITH_SNIPPET_DUMP_DIR"] = str(snippet_dump_dir)
 
@@ -589,25 +583,12 @@ def render(
         except PressMetadataError as exc:
             raise typer.BadParameter(str(exc)) from exc
 
-    strict = strict_enabled(primary_front_matter, strict)
-    # The transition knob: ``--deprecated`` over ``press.diagnostics.deprecated``.
-    deprecated = deprecated_level(primary_front_matter, deprecated)
-
+    # The template has to be known before the two flags that report on one and
+    # exit; everything else the flags imply is settled by ``resolve_render_plan``.
     template_param_source = ctx.get_parameter_source("template") if ctx else None
     no_promote_param_source = ctx.get_parameter_source("no_promote_title") if ctx else None
-    if (
-        template_param_source in {None, ParameterSource.DEFAULT}
-        and template is None
-        and primary_front_matter is not None
-    ):
-        metadata_template = declared_template(primary_front_matter)
-        if metadata_template:
-            template = metadata_template
-
-    if template is None and (build_pdf or template_requested):
-        template = "article"
-
-    template_selected = bool(template)
+    if template is None and template_param_source in {None, ParameterSource.DEFAULT}:
+        template = declared_template(primary_front_matter)
 
     if template_requested:
         identifier = template or "article"
@@ -617,55 +598,60 @@ def render(
             scaffold_template(identifier, template_scaffold)
         raise typer.Exit()
 
-    promote_title = not no_promote_title
-
     attribute_overrides = _parse_template_attributes(template_attributes)
+    has_attributes = bool(attribute_overrides)
     if attribute_overrides:
         try:
             normalise_press_metadata(attribute_overrides)
         except PressMetadataError as exc:
             raise typer.BadParameter(str(exc)) from exc
-    if attribute_overrides and not template_selected:
-        raise typer.BadParameter("--attribute can only be used together with --template.")
     if engine:
         attribute_overrides.setdefault("_texsmith_latex_engine", engine)
     if numbering != "backend":
         # Read by both IR backends (``core.conversion.resolution.numbering_mode``).
         attribute_overrides[NUMBERING_OVERRIDE_KEY] = numbering
-    numbered = numbered_setting(fm_payload, attribute_overrides)
+
+    try:
+        plan = resolve_render_plan(
+            front_matter=fm_payload,
+            template=template,
+            build_pdf=build_pdf,
+            output=output,
+            output_format=output_format,
+            print_context=print_context,
+            has_attributes=has_attributes,
+            no_title=no_title,
+            strip_heading=strip_heading,
+            no_promote_title=no_promote_title,
+            no_promote_defaulted=no_promote_param_source in {None, ParameterSource.DEFAULT},
+            base_level=base_level,
+            base_level_defaulted=(ctx.get_parameter_source("base_level") if ctx else None)
+            in {None, ParameterSource.DEFAULT},
+            classic_output=classic_output,
+            open_log=open_log,
+            make_deps=make_deps,
+            strict=strict,
+            deprecated=deprecated,
+            template_options=attribute_overrides,
+            ci_runner=os.environ.get("ACT") == "true",
+        )
+    except RenderOptionError as exc:
+        raise typer.BadParameter(str(exc)) from exc
+
+    template = plan.template
+    template_selected = plan.template_selected
+    build_pdf = plan.build_pdf
+    classic_output = plan.classic_output
+    promote_title = plan.promote_title
+    numbered = plan.numbered
+    strict = plan.strict
+    deprecated = plan.deprecated
+    resolved_base_level = plan.base_level
+    for notice in plan.notices:
+        typer.echo(notice)
+
     if attribute_overrides:
         state.record_event("template_attributes", {"values": attribute_overrides})
-
-    pdf_output_requested = bool(output and output.suffix.lower() == ".pdf")
-    if pdf_output_requested and not build_pdf:
-        typer.echo("Enabling --build to produce PDF output.")
-        build_pdf = True
-
-    if no_title:
-        promote_title = False
-
-    if strip_heading:
-        promote_title = False
-
-    if build_pdf and not template_selected and output_format != "typst":
-        template = "article"
-        template_selected = True
-        # In CI runners like act, prefer classic output to avoid streaming latexmk.
-        if os.environ.get("ACT") == "true":
-            classic_output = True
-
-    if classic_output and not build_pdf:
-        raise typer.BadParameter("--classic-output can only be used together with --build.")
-
-    if open_log and not build_pdf:
-        raise typer.BadParameter("--open-log can only be used together with --build.")
-    if make_deps and not build_pdf:
-        raise typer.BadParameter("--makefile-deps can only be used together with --build.")
-
-    if print_context and not template_selected:
-        raise typer.BadParameter(
-            "--print-context requires a template (front matter or --template)."
-        )
 
     try:
         _, slot_assignments = organise_slot_overrides(slots, document_paths)
@@ -685,24 +671,6 @@ def render(
             )
     if state_slot_rows:
         state.record_event("slot_assignments", {"entries": state_slot_rows})
-
-    base_level_param_source = ctx.get_parameter_source("base_level") if ctx else None
-    base_level_value = base_level
-    if not template_selected and base_level_param_source in {
-        None,
-        ParameterSource.DEFAULT,
-    }:
-        base_level_value = "section"
-    try:
-        resolved_base_level = coerce_base_level(base_level_value, allow_none=False)
-    except TemplateError as exc:
-        raise typer.BadParameter(str(exc)) from exc
-
-    if not template_selected and no_promote_param_source in {
-        None,
-        ParameterSource.DEFAULT,
-    }:
-        promote_title = False
 
     emitter = _RenderEmitter(state=state, debug_enabled=debug_enabled(), deprecated=deprecated)
     presented_diagnostics = 0
