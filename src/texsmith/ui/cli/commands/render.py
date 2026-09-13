@@ -872,8 +872,13 @@ def render(
                         diagrams_backend.lower() if isinstance(diagrams_backend, str) else None
                     ),
                     template_options=attribute_overrides,
+                    emitter=emitter,
                 )
-            except TemplateError as exc:
+            except (ConversionError, TemplateError) as exc:
+                # ``raise_conversion_error`` already put the record in the sink
+                # and marked the exception as logged, so the message reaches the
+                # console only if this exit flushes like every other one.
+                _flush_diagnostics()
                 emit_error(str(exc), exception=exc)
                 raise typer.Exit(code=1) from exc
 

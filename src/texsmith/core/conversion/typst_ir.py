@@ -76,6 +76,7 @@ def typst_bibliography(
     bibliography_files: Sequence[Path],
     pass_files: Sequence[Path],
     output_dir: Path | None,
+    emitter: DiagnosticEmitter | None = None,
 ) -> tuple[BibliographyCollection, str | None]:
     """The ``.bib`` the Typst scaffolding cites, with the passes' entries in it.
 
@@ -89,7 +90,7 @@ def typst_bibliography(
     """
     from .typst import _build_bibliography, _write_label_safe_bibtex
 
-    collection, resource = _build_bibliography(document, bibliography_files, output_dir)
+    collection, resource = _build_bibliography(document, bibliography_files, output_dir, emitter)
     files = [Path(path) for path in pass_files if Path(path).is_file()]
     if not files:
         return collection, resource
@@ -248,7 +249,7 @@ def render_typst_from_ir(
         )
 
     _collection, bib_resource = typst_bibliography(
-        document, bibliography_files, ctx.bibliography, output_dir
+        document, bibliography_files, ctx.bibliography, output_dir, active_emitter
     )
     source_dir = document.source_path.parent
     template_context = dict(typst_template.resolve_attributes(overrides))

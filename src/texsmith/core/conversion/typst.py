@@ -22,11 +22,12 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 from texsmith.core.bibliography.collection import BibliographyCollection
-from texsmith.core.conversion.debug import ensure_emitter
+from texsmith.core.conversion.debug import ensure_emitter, raise_conversion_error
 from texsmith.core.conversion.inputs import (
     InlineBibliographyValidationError,
     extract_front_matter_bibliography,
 )
+from texsmith.core.diagnostics import DiagnosticEmitter
 from texsmith.core.metadata import PressMetadataError, normalise_press_metadata
 from texsmith.writers.typst.build import compile_typst
 from texsmith.writers.typst.escaper import citation_label
@@ -102,20 +103,25 @@ def _build_bibliography(
     document: Document,
     bibliography_files: Sequence[Path],
     output_dir: Path | None,
+    emitter: DiagnosticEmitter | None = None,
 ) -> tuple[BibliographyCollection, str | None]:
     """Build the bibliography collection (files + inline DOI) for ``document``.
 
     Returns the collection and the basename of the ``.bib`` written into
     ``output_dir`` (``None`` when there is nothing to cite or no output dir).
+
+    ``emitter`` is the render's, not a fresh one: an invalid inline entry is
+    an error on this path exactly as it is on the LaTeX path.
     """
-    emitter = ensure_emitter(None)
+    emitter = ensure_emitter(emitter)
     collection = BibliographyCollection()
     if bibliography_files:
         collection.load_files(list(bibliography_files))
 
     try:
         inline = extract_front_matter_bibliography(document.front_matter)
-    except InlineBibliographyValidationError:
+    except InlineBibliographyValidationError as exc:
+        raise_conversion_error(emitter, str(exc), exc)
         inline = {}
     if inline and output_dir is not None:
         from texsmith.core.conversion.templates import _load_inline_bibliography
@@ -179,6 +185,7 @@ def render_typst_document(
     output_dir: Path | None = None,
     diagrams_backend: str | None = None,
     template_options: Mapping[str, Any] | None = None,
+    emitter: DiagnosticEmitter | None = None,
 ) -> str:
     """Render one prepared document's IR to a standalone ``.typ`` source.
 
@@ -196,6 +203,7 @@ def render_typst_document(
         output_dir=output_dir,
         diagrams_backend=diagrams_backend,
         template_options=template_options,
+        emitter=emitter,
     )
 
 

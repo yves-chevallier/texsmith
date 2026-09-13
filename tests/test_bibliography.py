@@ -322,3 +322,57 @@ def test_bibliography_writer_preserves_url_underscores(tmp_path: Path) -> None:
     contents = bib_path.read_text(encoding="utf-8")
     assert "\\_" not in contents
     assert "documents_ia" in contents
+
+
+def test_the_documented_spelling_reaches_the_bibliography() -> None:
+    """``press.sources.bibliography`` is what the guide teaches; it must be read.
+
+    It used to be invisible: the extractor looked at a bare ``bibliography``
+    at the root, which is the spelling ``tmark lint --fix`` rewrites *away*.
+    A manual entry declared the documented way produced no ``.bib`` at all,
+    and the citation rendered as "Missing bibliography entry".
+    """
+    nested = {
+        "press": {"sources": {"bibliography": {"AI2027": {"type": "misc", "title": "AI 2027"}}}}
+    }
+    flattened = {"sources": {"bibliography": {"AI2027": {"type": "misc", "title": "AI 2027"}}}}
+    deprecated = {"bibliography": {"AI2027": {"type": "misc", "title": "AI 2027"}}}
+
+    for front_matter in (nested, flattened, deprecated):
+        entries = extract_front_matter_bibliography(front_matter)
+        assert set(entries) == {"AI2027"}, front_matter
+        assert entries["AI2027"].fields["title"] == "AI 2027"
+
+
+def test_the_canonical_spelling_wins_over_the_deprecated_one() -> None:
+    front_matter = {
+        "press": {"sources": {"bibliography": {"canonical": {"type": "misc", "title": "New"}}}},
+        "bibliography": {"legacy": {"type": "misc", "title": "Old"}},
+    }
+    assert set(extract_front_matter_bibliography(front_matter)) == {"canonical"}
+
+
+def test_an_invalid_inline_entry_fails_both_backends(tmp_path: Path) -> None:
+    """Typst used to build a ``NullEmitter`` and swallow the error LaTeX raises."""
+    from texsmith.core.conversion.debug import ConversionError
+    from texsmith.core.conversion.typst import render_typst_document
+    from texsmith.core.documents import Document
+
+    source = tmp_path / "doc.md"
+    source.write_text(
+        "---\n"
+        "title: T\n"
+        "press:\n"
+        "  sources:\n"
+        "    bibliography:\n"
+        "      Bad:\n"
+        "        type: misc\n"
+        "        nonsense_field: x\n"
+        "---\n\n# T\n\n@Bad\n",
+        encoding="utf-8",
+    )
+    document = Document.from_markdown(source)
+    document.prepare_for_conversion()
+
+    with pytest.raises(ConversionError, match="nonsense_field"):
+        render_typst_document(document, template="article", output_dir=tmp_path / "out")

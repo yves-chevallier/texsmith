@@ -191,6 +191,32 @@ _PERSON_KEYS = {"author", "authors"}
 _RESERVED_KEYS = {"type", *(_PERSON_KEYS)}
 
 
+#: Where a document declares its inline bibliography, most canonical first.
+#: ``press.sources.bibliography`` is the documented spelling;
+#: ``normalise_press_metadata`` also flattens it to ``sources.bibliography``.
+#: A bare ``bibliography`` at the root is the deprecated spelling — tmark
+#: relocates it and emits ``deprecated-frontmatter-key`` itself, so reading it
+#: here needs no second diagnostic.
+_BIBLIOGRAPHY_PATHS = (
+    ("press", "sources", "bibliography"),
+    ("sources", "bibliography"),
+    ("bibliography",),
+)
+
+
+def _bibliography_container(front_matter: Mapping[str, Any]) -> Mapping[str, Any] | None:
+    for path in _BIBLIOGRAPHY_PATHS:
+        cursor: Any = front_matter
+        for key in path:
+            if not isinstance(cursor, Mapping):
+                cursor = None
+                break
+            cursor = cursor.get(key)
+        if isinstance(cursor, Mapping) and cursor:
+            return cursor
+    return None
+
+
 def extract_front_matter_bibliography(
     front_matter: Mapping[str, Any] | None,
 ) -> dict[str, InlineBibliographyEntry]:
@@ -198,14 +224,15 @@ def extract_front_matter_bibliography(
     if not isinstance(front_matter, Mapping):
         return {}
 
+    container = _bibliography_container(front_matter)
+    if container is None:
+        return {}
+
     bibliography: dict[str, InlineBibliographyEntry] = {}
-    container = front_matter.get("bibliography")
-    if isinstance(container, Mapping):
-        for key, value in container.items():
-            if not isinstance(key, str):
-                continue
-            entry = _parse_inline_bibliography_entry(key, value)
-            bibliography[key] = entry
+    for key, value in container.items():
+        if not isinstance(key, str):
+            continue
+        bibliography[key] = _parse_inline_bibliography_entry(key, value)
 
     return bibliography
 
