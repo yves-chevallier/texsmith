@@ -18,23 +18,23 @@ Ordre imposé : tmark merge d'abord, puis texsmith, puis les six lignes
 - [x] **Échappement Typst** : `//` et `/*` cassés, `= + - /` en début de ligne
       et `~` échappés (`crates/tmark-writers/src/typst/escape.rs`), fixture de
       conformance, snapshots relus. Fusionné dans `texsmith-migration` (0424387), vérifié au compilateur typst 0.15.1.
-- [ ] **Sémantique des citations** : un `@key` nu rend la citation courte
+- [x] **Sémantique des citations** : un `@key` nu rend la citation courte
       (`\cite` / `#cite(key)`) par défaut ; une clé de front matter bascule en
       narratif (`\textcite` / `form: "prose"`) ; `@[key]` reste parenthétique ;
       spec §Citations et `12-spec-challenges.md` mis à jour ; fixtures et
-      snapshots. Branche `fix/citations`.
-- [ ] Les deux branches fusionnées dans `texsmith-migration`, `cargo test`,
-      `clippy -D warnings`, `fmt --check`, artefacts générés à jour.
+      snapshots. Fusionné (4593a6b) : feature `press.features: {citations.narrative: true}`, drapeaux `@[+key]` / `@[-key]`, C51.
+- [x] Les deux branches fusionnées dans `texsmith-migration`, `cargo test`
+      (331), `clippy -D warnings`, `fmt --check`, artefacts générés à jour.
 
 ## 1b. Défauts trouvés en vérifiant
 
-- [ ] Le fix `[^key]` → `@key` colle la citation au mot précédent (`sortie@key` reste littéral, 21/29 citations perdues sur bien-air/review). Branche `fix/citations`.
+- [x] Le fix `[^key]` → `@key` colle la citation au mot précédent (`sortie@key` reste littéral, 21/29 citations perdues sur bien-air/review). Corrigé dans 4593a6b : le fixer insère l'espace.
 - [ ] Le sucre `++…++` avale « C++03 … C++ » en prose ; reconnaissance resserrée. Branche `fix/keystroke`.
 
 ## 2. Revue de la spec
 
-- [ ] Revue de conformité indépendante spec ↔ code sur C27–C50
-      (`design/reviews/07-spec-conformance-migration.md`), findings triés.
+- [x] Revue de conformité indépendante spec ↔ code sur C27–C50
+      (`design/reviews/07-spec-conformance-migration.md`) : 0 bloquant, 11 majeurs, 14 mineurs. Correction en cours sur `fix/spec-text` et `fix/spec-code`.
 - [x] Revue de cohérence interne de `spec/tmark.md` comme spécification de
       langage (`design/reviews/08-spec-consistency.md`, 8e8dbce) : 5 bloquants, 15 majeurs, 19 mineurs.
 - [ ] Chaque finding classé : corrigé, reporté avec numéro de challenge, ou
@@ -66,15 +66,15 @@ Ordre imposé : tmark merge d'abord, puis texsmith, puis les six lignes
       avec les mêmes numéros ; documenté dans `docs/syntax/counters.md` (80cbcb0). Vérifié : 47 marqueurs et 140 renvois identiques avant/après fixer.
 - [x] Substitution de fontes XeLaTeX / passe `scripts` : un document CJK +
       grec + arabe se construit avec les mêmes `\tsscript` qu'en 0.6.0. Vérifié : déclarations `\newfontfamily` identiques, texte PDF identique.
-- [ ] Numérotation site-wide et index dans le plugin MkDocs unique, vérifiés
-      sur `examples/mkdocs`.
+- [x] Numérotation site-wide et index dans le plugin MkDocs unique, vérifiés
+      sur `examples/mkdocs`. Vérifié : FW-01/FW-02 continus entre pages, liens inter-pages, `ts-index` + tags de recherche, export PDF identique, alias legacy avec warning.
 
 ## 5. Nettoyage des artefacts de migration
 
-- [ ] tmark : 14 worktrees `~/tmark-wt/*` et leurs branches `wt/*` supprimés
-      une fois vérifiés fusionnés.
-- [ ] texsmith : 24 worktrees `.claude/worktrees/agent-*` et leurs branches
-      `worktree-agent-*` supprimés une fois vérifiés fusionnés.
+- [x] tmark : 14 worktrees `~/tmark-wt/*` et leurs branches `wt/*` supprimés
+      une fois vérifiés fusionnés (tous fusionnés et propres, supprimés le 2026-09-14).
+- [x] texsmith : 24 worktrees `.claude/worktrees/agent-*` et leurs branches
+      `worktree-agent-*` supprimés une fois vérifiés fusionnés (idem, 27 branches).
 - [ ] texsmith : `build-migr/`, `scripts/migrate_examples.py` et les notes
       `specs/migration/*` archivées ou supprimées ; `specs/README.md` mis à jour.
 - [ ] tmark : `design/13-handoff.md` réécrit pour l'état post-merge.
