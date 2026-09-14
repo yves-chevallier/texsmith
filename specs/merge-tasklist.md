@@ -86,8 +86,8 @@ Ordre imposé : tmark merge d'abord, puis texsmith, puis les six lignes
 
 ## 6. Release tmark
 
-- [ ] Nom PyPI décidé (`tmark` est pris par un autre projet) ; `pyproject.toml`,
-      `module-name` et les imports texsmith alignés. **Décision utilisateur.**
+- [x] Nom PyPI décidé : `tmark-core`, import `tmark` inchangé, dépôt GitHub renommé `tmark-core` (2026-09-14) ;
+      `pyproject.toml` des deux dépôts et les `repository:` du CI alignés.
 - [x] Version 0.1.0, `version =` sur chaque dépendance de chemin ou
       `publish = false` explicite (4bd0d0b, ebeff13) ; `Cargo.lock` repointé pour la MSRV (4f22f38). **Tag `v0.1.0` : pas encore posé.**
 - [x] Job CI MSRV 1.80 (dad4f56) ; `cargo +1.80 check --workspace` passe localement.

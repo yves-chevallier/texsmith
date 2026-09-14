@@ -42,7 +42,7 @@ jobs:
       - name: Checkout tmark (the wheel is built from it)
         uses: actions/checkout@v5
         with:
-          repository: yves-chevallier/tmark
+          repository: yves-chevallier/tmark-core
           ref: texsmith-migration
           path: vendor/tmark
 

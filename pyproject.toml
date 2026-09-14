@@ -60,9 +60,10 @@ dependencies = [
     # imported directly: keep even though grep finds no `import pyxindy`.
     "pyxindy>=0.0.7",
     "requests>=2.32.5",
-    # The TMark core (parser, IR, printer, registries, writers). During the
-    # migration it is built from the sibling checkout, see [tool.uv.sources].
-    "tmark",
+    # The TMark core (parser, IR, printer, registries, writers): the PyPI
+    # project `tmark-core`, import name `tmark`. Until its first release it is
+    # built from the sibling checkout, see [tool.uv.sources].
+    "tmark-core",
 ]
 [project.optional-dependencies]
 typst = ["typst>=0.15"]
@@ -134,7 +135,7 @@ members = [
 
 [tool.uv.sources]
 mkdocs-texsmith = { workspace = true }
-tmark = { path = "vendor/tmark/crates/tmark-py", editable = true }
+tmark-core = { path = "vendor/tmark/crates/tmark-py", editable = true }
 
 [tool.pytest.ini_options]
 addopts = []
