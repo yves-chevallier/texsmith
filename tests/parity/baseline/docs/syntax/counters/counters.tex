@@ -78,6 +78,7 @@ Smile in every circumstance (N-01) and do no harm to others (N-02).
 Both \tscodeinline{N-\allowbreak{}01} occurrences are the same PDF anchor: the table cell is the target,
 the parenthesised one is a clickable link.
 \section{One registry for every series}
+\label{one-registry-for-every-series}
 Every referenceable series is an entry of the \textbf{counter registry}, keyed by
 its prefix. The built-in prefixes are simply predeclared entries; there is no
 second mechanism for \enquote{reserved prefixes}.
@@ -252,8 +253,8 @@ HTML & \tscodeinline{<span class="ts-\allowbreak{}counter" data-\allowbreak{}cou
 \tscodeinline{\textbackslash{}phantomsection} is what makes the \tscodeinline{hyperref} anchor land on the item rather
 than on the enclosing section, and it lets \tscodeinline{\textbackslash{}pageref\{n:joy\}} work.
 \section{On a MkDocs site}
-The \tscodeinline{texsmith} MkDocs plugin renders counters on the site.
-One plugin, no Markdown extension to wire:
+The \tscodeinline{texsmith} MkDocs plugin (package \tscodeinline{mkdocs\_texsmith})
+renders counters on the site. One plugin, no Markdown extension to wire:
 \begin{tscode}[lang=yaml, engine=pygments]
 \begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
 \PY{n+nt}{plugins}\PY{p}{:}
@@ -266,6 +267,14 @@ One plugin, no Markdown extension to wire:
 \PY{+w}{            }\PY{n+nt}{start}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{100}
 \end{Verbatim}
 \end{tscode}
+\begin{tscallout}[kind=warning, title={\tscodeinline{texsmith.counters} and \tscodeinline{texsmith.index} are gone}]
+Those two standalone plugins are the 0.6 spelling. They still load --- each
+logs a deprecation warning and does nothing --- but no longer number
+anything; the single \tscodeinline{texsmith} plugin above does both jobs (counters and
+search-index entries) site-wide. Remove them from \tscodeinline{plugins:} in
+\tscodeinline{mkdocs.yml} and move any \tscodeinline{counters:} they declared under
+\tscodeinline{declare.counters}. The entry points disappear in 0.8.
+\end{tscallout}
 Counters declared under \tscodeinline{declare.counters} apply to the whole site; a page may
 declare its own under \tscodeinline{press.declare.counters} in its front matter, and the
 page's declaration wins for the same prefix. Every \emph{item} is visible from every
@@ -281,6 +290,16 @@ same-page ones keep a local anchor (\tscodeinline{<a href="\#fw:watchdog">FW-\al
 The pre-pass parses the page rather than scanning it, so a marker inside a
 fence or a code span is never counted, and \tscodeinline{\#\{user.name\}} in prose stays the
 literal text it is.
+
+A user-declared series such as \tscodeinline{fw:} above is always numbered by tmark itself
+--- no backend knows about it, on the site or in a standalone build. This
+differs from the \emph{predeclared} series of the \hyperref[one-registry-for-every-series]{registry}
+(\tscodeinline{fig}, \tscodeinline{tbl}, \tscodeinline{lst}, \tscodeinline{eq}, \tscodeinline{sec}, ...): a standalone \tscodeinline{texsmith} build lets \LaTeX{}
+or Typst allocate those (\tscodeinline{-\allowbreak{}-\allowbreak{}numbering backend}, the CLI default) or has tmark
+allocate them instead so both backends agree (\tscodeinline{-\allowbreak{}-\allowbreak{}numbering tmark}). The MkDocs
+plugin always resolves every page with tmark numbering every series ---
+equivalent to \tscodeinline{-\allowbreak{}-\allowbreak{}numbering tmark} --- because a number allocated by the \LaTeX{} or
+Typst backend of one page would mean nothing site-wide.
 \section{Citing an item from another document}
 A number allocated here means nothing in a sister document, and a renumbering
 breaks every hard-coded \tscodeinline{FW-\allowbreak{}10} it contains. Publish an inventory and cite it

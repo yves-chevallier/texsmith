@@ -58,7 +58,7 @@ Smile in every circumstance (N-01) and do no harm to others (N-02).
 Both `N-01` occurrences are the same PDF anchor: the table cell is the target,
 the parenthesised one is a clickable link.
 
-= One registry for every series
+= One registry for every series <one-registry-for-every-series>
 
 Every referenceable series is an entry of the *counter registry*, keyed by
 its prefix. The built-in prefixes are simply predeclared entries; there is no
@@ -242,8 +242,8 @@ than on the enclosing section, and it lets `\pageref{n:joy}` work.
 
 = On a MkDocs site
 
-The `texsmith` MkDocs plugin renders counters on the site.
-One plugin, no Markdown extension to wire:
+The `texsmith` MkDocs plugin (package `mkdocs_texsmith`)
+renders counters on the site. One plugin, no Markdown extension to wire:
 
 ```yaml
 plugins:
@@ -255,6 +255,14 @@ plugins:
             format: "REQ-{n:03d}"
             start: 100
 ```
+
+#ts-callout(kind: "warning", title: [`texsmith.counters` and `texsmith.index` are gone])[
+Those two standalone plugins are the 0.6 spelling. They still load — each
+logs a deprecation warning and does nothing — but no longer number
+anything; the single `texsmith` plugin above does both jobs (counters and
+search-index entries) site-wide. Remove them from `plugins:` in
+`mkdocs.yml` and move any `counters:` they declared under
+`declare.counters`. The entry points disappear in 0.8.]
 
 Counters declared under `declare.counters` apply to the whole site; a page may
 declare its own under `press.declare.counters` in its front matter, and the
@@ -271,6 +279,16 @@ same-page ones keep a local anchor (`<a href="#fw:watchdog">FW-01</a>`).
 The pre-pass parses the page rather than scanning it, so a marker inside a
 fence or a code span is never counted, and `#{user.name}` in prose stays the
 literal text it is.
+
+A user-declared series such as `fw:` above is always numbered by tmark itself
+— no backend knows about it, on the site or in a standalone build. This
+differs from the _predeclared_ series of the #link(<one-registry-for-every-series>)[registry]
+(`fig`, `tbl`, `lst`, `eq`, `sec`, …): a standalone `texsmith` build lets #ts-logo("LaTeX")
+or Typst allocate those (`–numbering backend`, the CLI default) or has tmark
+allocate them instead so both backends agree (`–numbering tmark`). The MkDocs
+plugin always resolves every page with tmark numbering every series —
+equivalent to `–numbering tmark` — because a number allocated by the #ts-logo("LaTeX") or
+Typst backend of one page would mean nothing site-wide.
 
 = Citing an item from another document
 
