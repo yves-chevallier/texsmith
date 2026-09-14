@@ -1,0 +1,6 @@
+flowchart LR
+    start(Start) --> pick[Dig up]
+    pick --> if{Cabbages?}
+    if --"No"--> step[Move forward one step]
+    step --> pick
+    if --"Yes"--> stop(End)

@@ -166,7 +166,50 @@ quarter, reopen requests on evidence — with `select` + the existing
 > **A response carries an answer, never a tree.** A path, a key, a font name, a
 > token stream, or a typed failure. The shape of every rewrite lives in Rust.
 
+## What was done, and what the doing changed
+
+**Move 1 · `tmark.ir` ships from the wheel — done.** `src/texsmith/ir/`
+(2 195 lines), `scripts/gen_ir_models.py` (822) and the CI drift check are
+deleted; tmark generates and ships `tmark.ir.{model,codec,walk}`.
+`src/texsmith` 35 141 → 33 061.
+
+The move surfaced one thing the analyses had not: `model.py` imported `Span`
+and `NO_SPAN` *from TeXSmith*, so the mirror could not simply move. `Span` is
+`tmark_ir::span`, and the schema states its wire form — "Byte span as
+[file, start, end]" — yet the Python restatement lived on the host side and the
+generated models imported it back, kept in step by hand. It is generated from
+the schema now, with `to_json`/`from_json`, because that form is the schema's;
+`texsmith.diagnostics` imports it. One definition where there were two halves.
+
+**Move 2 · the outline query — not needed, and the defect fixed without it.**
+The analysis attributed two defects to a missing `outline`. Both were
+TeXSmith's own:
+
+- The `id()` reconciliation at `highlight.py:176` was caused by `slots`
+  storing block *objects*. `SlotBody` now holds **indices** and `blocks_of(ir)`
+  derives the view; `highlight` returns the rebuilt tree and nothing else. No
+  binding, no ADR, no second repository. It also removed a silent failure:
+  `mapping.get(block, block)` fell back to the stale block, so a body that lost
+  identity rendered un-highlighted rather than raising.
+- The per-body re-encode at `bodies.py:194` is **measured at 1.5 ms per slot**
+  on the largest corpus document (`examples/book`, 206 top-level blocks, 81 KB)
+  — about 11 ms for a seven-slot template against a ~1.2 s render. Under 1 %.
+  Left alone: it is a design smell, not a cost.
+
+So move 2 as scoped is closed, and `tmark.outline` is not proposed. The
+remaining argument for it — that TeXSmith should not hold a tree at all — is
+now weaker, because the tree it holds is the one tmark ships.
+
+**Move 3 · id and span custody — the gap is smaller and different than
+stated.** Three passes cite a numbered rule in their docstrings —
+`highlight.py:15` "the ``Div`` keeps the block's id and span (span rule 1)",
+`emoji.py:25` and `var.py:6` "the source span and a fresh id (span rule 2)".
+**Those rules are written down nowhere**, in either repository. The invariant
+is folklore cited by number. Before proposing a binding that enforces it, the
+rules have to exist and be tested.
+
 ## Status
 
-Proposed. ADR 0008 is marked rejected-as-drafted with a pointer here. None of
-the three moves should land before `tmark-migration` merges.
+ADR 0008 is marked rejected-as-drafted in tmark, with what survives it. Moves
+1 and 2 are done; move 3 is reduced to writing the rules down and testing them,
+which is TeXSmith's alone.

@@ -15,9 +15,30 @@ registers a :class:`PassSpec` with ``after=`` and :func:`build_pipeline`
 performs a stable topological sort, raising :class:`PassOrderError` on a
 cycle.
 
-Ids: node ids are unique per file but not dense; the one invariant TeXSmith
-relies on is "every id of every file is below :attr:`IdAllocator.floor`",
-maintained by :meth:`IdAllocator.observe` after each parse.
+Ids and spans. Three passes cite "span rule 1" and "span rule 2" in their
+docstrings; here is what they are citing, written down at last.
+
+**Rule 1 — a node rewritten in place keeps its id and its span.** The
+construct is the one the author wrote; only its content changed. ``highlight``
+turning a ``CodeBlock`` into a ``Div`` is the case: a diagnostic about that
+code still points at the fence.
+
+**Rule 2 — a node synthesised from another takes the source's span and a fresh
+id.** The text is TeXSmith's, the *location* is the author's: a moustache
+resolved by ``var``, a cluster split out by ``emoji``. Reusing the source's id
+would put two nodes at one address; inventing a span would put a diagnostic
+somewhere the author never wrote.
+
+**Rule 3 — ``id`` and ``span`` take no part in equality or hashing**, so a
+rebuilt subtree compares equal to its source when only identity changed
+(``field(compare=False)`` on the generated models).
+
+Ids are unique per file but not dense; the invariant that makes rule 2 safe is
+"every id of every file is below :attr:`IdAllocator.floor`", maintained by
+:meth:`IdAllocator.observe` after each parse.
+
+``tests/passes/test_pass_framework.py`` checks rules 2 and 3 over the corpus:
+no two nodes share an id, and no span names a file the build never registered.
 """
 
 from __future__ import annotations

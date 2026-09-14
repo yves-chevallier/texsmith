@@ -110,7 +110,7 @@ def test_run_pipeline_runs_resolve_between_stages(harness) -> None:
 
 
 def test_the_ir_and_the_diagnostics_share_one_span() -> None:
-    """One definition: the generated models import it (``diagnostics/model.py``)."""
+    """One definition: it is generated from tmark's schema and imported here."""
     from texsmith.diagnostics.model import NO_SPAN as DIAG_NO_SPAN, Span as DiagSpan
 
     assert model.Span is DiagSpan
@@ -128,3 +128,64 @@ def test_fixture_inputs_are_fresh() -> None:
         [sys.executable, str(script), "--check"], capture_output=True, text=True, check=False
     )
     assert result.returncode == 0, result.stderr
+
+
+# ---------------------------------------------------------------------------
+# The id and span rules (``texsmith.passes`` docstring)
+# ---------------------------------------------------------------------------
+
+
+def _cases() -> list[tuple[str, str]]:
+    """Every committed pass fixture, as ``(pass, case)``."""
+    root = Path(__file__).resolve().parent
+    return sorted(
+        (path.parent.name, path.name.removesuffix(".in.json"))
+        for path in root.glob("*/*.in.json")
+        if path.parent.name != "stubs"  # shared inputs, not a pass of their own
+    )
+
+
+@pytest.mark.parametrize(("pass_name", "case"), _cases(), ids=lambda v: v)
+def test_a_pass_never_mints_an_id_twice(harness, pass_name: str, case: str) -> None:
+    """Rule 2: a synthesised node takes a *fresh* id, never the source's.
+
+    Two nodes at one address is not a visible failure — it is a resolution that
+    silently attaches to the wrong one. Nothing enforced this: the rule was
+    cited by number in three docstrings and written down in none.
+    """
+    from collections import Counter
+
+    from tmark.ir.walk import walk
+
+    document = harness.load(pass_name, case)
+    ctx = harness.context(document)
+    out = harness.run(pass_name, document, ctx)
+    if out.ir is None:
+        pytest.skip("the pass produced no IR")
+    ids = [node.id for node in walk(out.ir) if getattr(node, "id", None) is not None]
+    duplicated = sorted(value for value, count in Counter(ids).items() if count > 1)
+    assert not duplicated, f"{pass_name}/{case}: ids used twice: {duplicated[:5]}"
+
+
+@pytest.mark.parametrize(("pass_name", "case"), _cases(), ids=lambda v: v)
+def test_a_pass_never_leaves_a_span_on_an_unregistered_file(
+    harness, pass_name: str, case: str
+) -> None:
+    """Rules 1 and 2: a span is the author's location, so its file must exist.
+
+    A span carrying a file id the ``FileTable`` never registered renders
+    without a path, or with another document's — the bug class step 03 found
+    twice, the snippet fence that named its host page.
+    """
+    from tmark.ir.walk import walk
+
+    document = harness.load(pass_name, case)
+    ctx = harness.context(document)
+    out = harness.run(pass_name, document, ctx)
+    if out.ir is None:
+        pytest.skip("the pass produced no IR")
+    registered = set(range(len(ctx.files)))
+    used = {node.span.file for node in walk(out.ir) if getattr(node, "span", None) is not None}
+    assert used <= registered, (
+        f"{pass_name}/{case}: spans name unregistered files {sorted(used - registered)}"
+    )
