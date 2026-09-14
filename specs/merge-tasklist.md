@@ -82,7 +82,7 @@ Ordre imposé : tmark merge d'abord, puis texsmith, puis les six lignes
       `worktree-agent-*` supprimés une fois vérifiés fusionnés (idem, 27 branches).
 - [x] texsmith : `build-migr/` et `scripts/migrate_examples.py` supprimés (4d5910b) ; les notes
       `specs/migration/*` restent comme archive référencée par le code ; `specs/README.md` mis à jour.
-- [ ] tmark : `design/13-handoff.md` réécrit pour l'état post-merge.
+- [x] tmark : `design/13-handoff.md` réécrit pour l'état post-merge (78e63dd).
 
 ## 6. Release tmark
 
