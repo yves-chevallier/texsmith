@@ -1,10 +1,10 @@
-import types
-
 from texsmith.adapters.transformers.strategies import (
     DrawioToPdfStrategy,
     MermaidToPdfStrategy,
 )
+from texsmith.core.context import AssetRegistry
 from texsmith.writers.latex import assets as _assets
+from texsmith.writers.latex.assets import AssetOptions
 
 
 def _raise(*args, **kwargs):
@@ -77,12 +77,14 @@ def test_diagrams_backend_propagates_to_converters(tmp_path, monkeypatch):
         return target
 
     monkeypatch.setattr(_assets, "drawio2pdf", fake_drawio)
-    context = types.SimpleNamespace(
-        assets=types.SimpleNamespace(output_root=tmp_path),
-        runtime={"diagrams_backend": "docker"},
+    opts = AssetOptions(
+        assets=AssetRegistry(output_root=tmp_path),
+        source_dir=tmp_path,
+        document_path=tmp_path / "doc.md",
+        diagrams_backend="docker",
     )
 
-    _assets._convert_local_asset(context, src, ".drawio")
+    _assets._convert_local_asset(opts, src, ".drawio")
     assert called["backend"] == "docker"
 
 
@@ -147,19 +149,20 @@ def test_drawio_crop_attribute_flows_from_the_image_to_the_converter(tmp_path, m
         return target
 
     monkeypatch.setattr(_assets, "drawio2pdf", fake_drawio)
-    context = types.SimpleNamespace(
-        assets=types.SimpleNamespace(output_root=tmp_path),
-        runtime={},
+    opts = AssetOptions(
+        assets=AssetRegistry(output_root=tmp_path),
+        source_dir=tmp_path,
+        document_path=tmp_path / "doc.md",
     )
 
-    _assets._convert_local_asset(context, src, ".drawio")
-    _assets._convert_local_asset(context, src, ".drawio", {"crop": "false"})
+    _assets._convert_local_asset(opts, src, ".drawio")
+    _assets._convert_local_asset(opts, src, ".drawio", {"crop": "false"})
     assert seen == [True, False]
 
     # A document-wide default still loses against the image attribute.
-    context.runtime["drawio_crop"] = False
-    _assets._convert_local_asset(context, src, ".drawio")
-    _assets._convert_local_asset(context, src, ".drawio", {"crop": "true"})
+    opts.drawio_crop = False
+    _assets._convert_local_asset(opts, src, ".drawio")
+    _assets._convert_local_asset(opts, src, ".drawio", {"crop": "true"})
     assert seen[2:] == [False, True]
 
     assert _assets._asset_key(src, None) != _assets._asset_key(src, {"crop": "false"})

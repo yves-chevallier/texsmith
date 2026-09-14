@@ -6,7 +6,7 @@ from collections.abc import Iterable, MutableMapping
 from dataclasses import dataclass, field
 import os
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Protocol
+from typing import TYPE_CHECKING, Any
 import warnings
 
 from slugify import slugify
@@ -146,28 +146,6 @@ class AssetRegistry:
                 reference = candidate
 
         return reference.as_posix()
-
-
-class RenderContextLike(Protocol):
-    """Structural surface shared by ``RenderContext`` and the writer state.
-
-    The LaTeX writer threads its own ``WriterState`` through helpers that were
-    historically typed against :class:`RenderContext` (font-script rendering,
-    image/asset storage, DOI resolution). Both expose the same attributes, so
-    those helpers depend on this protocol rather than a concrete class.
-    """
-
-    @property
-    def config(self) -> BookConfig: ...
-
-    @property
-    def assets(self) -> AssetRegistry: ...
-
-    @property
-    def state(self) -> DocumentState: ...
-
-    @property
-    def runtime(self) -> dict[str, Any]: ...
 
 
 @dataclass

@@ -35,7 +35,7 @@ assets are handed back as ``ctx.values["assets"]`` (key → path).
 from __future__ import annotations
 
 from collections.abc import Mapping
-from dataclasses import dataclass, field, replace
+from dataclasses import replace
 import hashlib
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
@@ -52,7 +52,8 @@ from texsmith.adapters.transformers.mermaid_detect import (
 from texsmith.core.context import AssetRegistry
 from texsmith.core.exceptions import exception_hint
 from texsmith.passes import PassContext, spec
-from texsmith.passes.var import _MISSING, lookup
+from texsmith.passes.var import MISSING, lookup
+from texsmith.writers.latex.assets import AssetOptions
 
 
 if TYPE_CHECKING:  # pragma: no cover - typing only
@@ -109,24 +110,6 @@ def _without_attrs(attrs: model.Attrs, *names: str) -> model.Attrs:
     return attrs if kv == attrs.kv else replace(attrs, kv=kv)
 
 
-@dataclass(slots=True)
-class _LegacyConfig:
-    """The ``config`` surface ``writers/latex/assets.py`` reads."""
-
-    project_dir: Path | None = None
-    mermaid_config: str | None = None
-    legacy_latex_accents: bool = False
-
-
-@dataclass(slots=True)
-class _LegacyContext:
-    """The ``RenderContextLike`` duck the legacy asset helpers take."""
-
-    runtime: dict[str, Any]
-    assets: AssetRegistry
-    config: _LegacyConfig = field(default_factory=_LegacyConfig)
-
-
 class _AssetPass:
     def __init__(self, document: Document, ctx: PassContext) -> None:
         self.document = document
@@ -138,33 +121,30 @@ class _AssetPass:
         request = ctx.request
         backend = getattr(request, "diagrams_backend", None) or "playwright"
         user_agent = getattr(request, "http_user_agent", None)
-        runtime: dict[str, Any] = {
-            "source_dir": self.source_dir,
-            "document_path": Path(document.source_path),
-            "copy_assets": ctx.copy_assets,
-            "convert_assets": ctx.convert_assets,
-            "hash_assets": ctx.hash_assets,
-            "emitter": ctx.emitter,
-            "diagrams_backend": backend,
-        }
-        if isinstance(user_agent, str) and user_agent.strip():
-            runtime["http_user_agent"] = user_agent.strip()
-        mermaid_config = self._setting("mermaid_config")
-        if mermaid_config:
-            runtime["mermaid_config"] = mermaid_config
-        drawio_crop = self._setting("drawio_crop")
-        if drawio_crop is not None:
-            runtime["drawio_crop"] = drawio_crop
-        self.legacy = _LegacyContext(runtime=runtime, assets=self.registry)
+        self.options = AssetOptions(
+            assets=self.registry,
+            source_dir=self.source_dir,
+            document_path=Path(document.source_path),
+            copy_assets=ctx.copy_assets,
+            convert_assets=ctx.convert_assets,
+            hash_assets=ctx.hash_assets,
+            emitter=ctx.emitter,
+            diagrams_backend=backend,
+            http_user_agent=user_agent.strip()
+            if isinstance(user_agent, str) and user_agent.strip()
+            else None,
+            mermaid_config=self._setting("mermaid_config") or None,
+            drawio_crop=self._setting("drawio_crop"),
+        )
         #: ``Image.id`` → caption text pulled from a ``%%`` line.
         self.captions: dict[int, str] = {}
 
     def _setting(self, name: str) -> Any:
         """A template override or front-matter setting, root or under ``press``."""
         value = lookup((name,), self.ctx.contexts)
-        if value is _MISSING:
+        if value is MISSING:
             value = lookup(("press", name), self.ctx.contexts)
-        return None if value is _MISSING else value
+        return None if value is MISSING else value
 
     # -- helpers ------------------------------------------------------------
 
@@ -249,11 +229,11 @@ class _AssetPass:
             self.diagnostic("asset-convert-failed", node, "the fence is not a Mermaid diagram")
             return self.literal(node, f"[{label} unavailable]")
         options: dict[str, Any] = {
-            "backend": self.legacy.runtime["diagrams_backend"],
+            "backend": self.options.diagrams_backend,
             "emitter": self.ctx.emitter,
         }
-        if self.legacy.runtime.get("mermaid_config") is not None:
-            options["mermaid_config"] = self.legacy.runtime["mermaid_config"]
+        if self.options.mermaid_config is not None:
+            options["mermaid_config"] = self.options.mermaid_config
         if self.backend == "typst":
             options["format"] = "png"
         try:
@@ -284,7 +264,7 @@ class _AssetPass:
         if not self.copy_assets:
             return self.placeholder(node)
         try:
-            stored = store_remote_image_asset(self.legacy, url)
+            stored = store_remote_image_asset(self.options, url)
         except Exception as exc:
             self.diagnostic("asset-convert-failed", node, f"'{url}': {exception_hint(exc) or exc}")
             return self.literal(node, f"[asset: {url}: fetch failed]")
@@ -306,7 +286,7 @@ class _AssetPass:
             else:
                 from texsmith.writers.latex.assets import store_local_image_asset
 
-                stored = store_local_image_asset(self.legacy, resolved, options=options)
+                stored = store_local_image_asset(self.options, resolved, options=options)
         except Exception as exc:
             self.diagnostic("asset-convert-failed", node, f"'{src}': {exception_hint(exc) or exc}")
             return self.literal(node, f"[asset: {src}: conversion failed]")
@@ -315,7 +295,7 @@ class _AssetPass:
     def _store_typst(self, resolved: Path, options: Mapping[str, str]) -> Path:
         """Typst reads PNG/JPEG/SVG natively: only diagrams are converted (to PNG)."""
         from texsmith.adapters.transformers import drawio2pdf, mermaid2pdf
-        from texsmith.adapters.transformers.strategies import _option_flag
+        from texsmith.adapters.transformers.strategies import option_flag
         from texsmith.writers.latex.assets import (
             _asset_key,
             _conversion_cache_root,
@@ -327,25 +307,25 @@ class _AssetPass:
         if existing is not None:
             return existing
         suffix = resolved.suffix.lower()
-        backend = self.legacy.runtime["diagrams_backend"]
+        backend = self.options.diagrams_backend
         if suffix in _DRAWIO_SUFFIXES:
-            default = _option_flag(self.legacy.runtime.get("drawio_crop"), default=True)
+            default = option_flag(self.options.drawio_crop, default=True)
             staged = drawio2pdf(
                 resolved,
-                output_dir=_conversion_cache_root(self.legacy),
+                output_dir=_conversion_cache_root(self.options),
                 format="png",
                 backend=backend,
-                crop=_option_flag(options.get("crop"), default=default),
+                crop=option_flag(options.get("crop"), default=default),
                 emitter=self.ctx.emitter,
             )
             final = ".png"
         elif suffix in MERMAID_FILE_SUFFIXES:
             staged = mermaid2pdf(
                 resolved,
-                output_dir=_conversion_cache_root(self.legacy),
+                output_dir=_conversion_cache_root(self.options),
                 format="png",
                 backend=backend,
-                mermaid_config=self.legacy.runtime.get("mermaid_config"),
+                mermaid_config=self.options.mermaid_config,
                 emitter=self.ctx.emitter,
             )
             final = ".png"
@@ -353,7 +333,7 @@ class _AssetPass:
             staged = resolved
             final = suffix or ".bin"
         return _persist_asset(
-            self.legacy,
+            self.options,
             asset_key=key,
             staged_path=Path(staged),
             suffix=final,

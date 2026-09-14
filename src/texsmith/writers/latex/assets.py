@@ -3,11 +3,12 @@
 from __future__ import annotations
 
 from collections.abc import Mapping
+from dataclasses import dataclass
 import hashlib
 import json
 from pathlib import Path
 import shutil
-from typing import TYPE_CHECKING, Any
+from typing import Any
 from urllib.parse import unquote, urlparse
 
 from texsmith.adapters.transformers import (
@@ -17,12 +18,35 @@ from texsmith.adapters.transformers import (
     mermaid2pdf,
     svg2pdf,
 )
-from texsmith.adapters.transformers.strategies import _cairo_dependency_hint, _option_flag
+from texsmith.adapters.transformers.strategies import cairo_dependency_hint, option_flag
+from texsmith.core.context import AssetRegistry
 from texsmith.diagnostics import emit_diagnostic, ensure_emitter, record_event
 
 
-if TYPE_CHECKING:  # pragma: no cover - typing only
-    from texsmith.core.context import RenderContextLike
+@dataclass(slots=True)
+class AssetOptions:
+    """What the asset helpers need to store or convert one image.
+
+    Built once per document by the ``assets`` pass (``PassContext`` has no
+    single object shaped like this); passed explicitly instead of the
+    ``RenderContextLike`` duck a ``_LegacyContext`` used to fake around a
+    string-keyed ``runtime`` dict.
+    """
+
+    assets: AssetRegistry
+    source_dir: Path
+    document_path: Path
+    copy_assets: bool = True
+    convert_assets: bool = False
+    hash_assets: bool = False
+    emitter: Any = None
+    diagrams_backend: str = "playwright"
+    project_dir: Path | None = None
+    http_user_agent: str | None = None
+    #: A front-matter or template-override value, not yet normalised: ``mermaid2pdf``
+    #: and ``option_flag`` (via :func:`_drawio_crop`) accept the raw front-matter shape.
+    mermaid_config: Any = None
+    drawio_crop: Any = None
 
 
 _NATIVE_IMAGE_SUFFIXES: set[str] = {".png", ".jpg", ".jpeg", ".pdf"}
@@ -61,17 +85,8 @@ _PLACEHOLDER_PDF = (
 )
 
 
-def _resolve_http_user_agent(context: RenderContextLike) -> str | None:
-    candidate = context.runtime.get("http_user_agent")
-    if isinstance(candidate, str):
-        candidate = candidate.strip()
-        if candidate:
-            return candidate
-    return None
-
-
 def store_local_image_asset(
-    context: RenderContextLike,
+    opts: AssetOptions,
     resolved: Path,
     *,
     options: Mapping[str, str] | None = None,
@@ -84,14 +99,14 @@ def store_local_image_asset(
     uncropped is two distinct assets.
     """
     asset_key = _asset_key(resolved, options)
-    existing = context.assets.lookup(asset_key)
+    existing = opts.assets.lookup(asset_key)
     if existing is not None:
         return existing
 
     suffix = resolved.suffix.lower()
-    convert_requested = bool(context.runtime.get("convert_assets", False))
+    convert_requested = opts.convert_assets
     needs_conversion = _requires_conversion(suffix, convert_requested)
-    emitter = ensure_emitter(context.runtime.get("emitter"))
+    emitter = ensure_emitter(opts.emitter)
 
     if needs_conversion:
         record_event(
@@ -103,7 +118,7 @@ def store_local_image_asset(
                 "reason": "requested" if convert_requested else "forced",
             },
         )
-        staged = _convert_local_asset(context, resolved, suffix, options)
+        staged = _convert_local_asset(opts, resolved, suffix, options)
         final_suffix = ".pdf"
     else:
         staged = resolved
@@ -119,7 +134,7 @@ def store_local_image_asset(
         },
     )
     return _persist_asset(
-        context,
+        opts,
         asset_key=asset_key,
         staged_path=staged,
         suffix=final_suffix,
@@ -127,20 +142,20 @@ def store_local_image_asset(
     )
 
 
-def store_remote_image_asset(context: RenderContextLike, url: str) -> Path:
+def store_remote_image_asset(opts: AssetOptions, url: str) -> Path:
     """Fetch a remote asset, mirror it locally, and register it."""
-    existing = context.assets.lookup(url)
+    existing = opts.assets.lookup(url)
     if existing is not None:
         return existing
 
-    convert_requested = bool(context.runtime.get("convert_assets", False))
+    convert_requested = opts.convert_assets
     metadata: dict[str, str] = {}
-    conversion_root = _conversion_cache_root(context)
+    conversion_root = _conversion_cache_root(opts)
     manifest_path = conversion_root / _ASSET_MANIFEST
     manifest, manifest_dirty = _load_asset_manifest(manifest_path)
     url_suffix = _suffix_from_url(url)
     suffix_hint = _normalise_suffix(url_suffix, default="") if url_suffix else ""
-    emitter = ensure_emitter(context.runtime.get("emitter"))
+    emitter = ensure_emitter(opts.emitter)
 
     record_event(
         emitter,
@@ -159,7 +174,7 @@ def store_remote_image_asset(context: RenderContextLike, url: str) -> Path:
         "manifest_dirty": manifest_dirty,
         "emitter": emitter,
     }
-    user_agent = _resolve_http_user_agent(context)
+    user_agent = opts.http_user_agent
     if user_agent:
         fetch_options["user_agent"] = user_agent
     if convert_requested:
@@ -195,7 +210,7 @@ def store_remote_image_asset(context: RenderContextLike, url: str) -> Path:
     if manifest_dirty["dirty"]:
         _save_asset_manifest(manifest_path, manifest)
     return _persist_asset(
-        context,
+        opts,
         asset_key=url,
         staged_path=artefact,
         suffix=final_suffix,
@@ -232,22 +247,21 @@ def _write_placeholder_pdf(target: Path) -> Path:
 
 
 def _convert_local_asset(
-    context: RenderContextLike,
+    opts: AssetOptions,
     source: Path,
     suffix: str,
     options: Mapping[str, str] | None = None,
 ) -> Path:
-    conversion_root = _conversion_cache_root(context)
-    emitter = ensure_emitter(context.runtime.get("emitter"))
+    conversion_root = _conversion_cache_root(opts)
+    emitter = ensure_emitter(opts.emitter)
     match suffix:
         case ".svg":
             record_event(emitter, "diagram_generate", {"source": str(source), "kind": "svg"})
-            backend = context.runtime.get("diagrams_backend")
             try:
                 return svg2pdf(
                     source,
                     output_dir=conversion_root,
-                    backend=backend,
+                    backend=opts.diagrams_backend,
                     emitter=emitter,
                 )
             except Exception as exc:
@@ -255,30 +269,27 @@ def _convert_local_asset(
                     emitter,
                     "asset-convert-failed",
                     f"SVG '{source}' could not be converted; a placeholder PDF takes its "
-                    f"place: {exc}. {_cairo_dependency_hint()}",
+                    f"place: {exc}. {cairo_dependency_hint()}",
                     exc=exc,
                 )
                 placeholder = conversion_root / f"{source.stem}.pdf"
                 return _write_placeholder_pdf(placeholder)
         case ".drawio":
             record_event(emitter, "diagram_generate", {"source": str(source), "kind": "drawio"})
-            backend = context.runtime.get("diagrams_backend")
             return drawio2pdf(
                 source,
                 output_dir=conversion_root,
-                backend=backend,
-                crop=_drawio_crop(context, options),
+                backend=opts.diagrams_backend,
+                crop=_drawio_crop(opts, options),
                 emitter=emitter,
             )
         case ".mmd" | ".mermaid":
             record_event(emitter, "diagram_generate", {"source": str(source), "kind": "mermaid"})
-            backend = context.runtime.get("diagrams_backend")
-            mermaid_config = context.runtime.get("mermaid_config")
             return mermaid2pdf(
                 source,
                 output_dir=conversion_root,
-                backend=backend,
-                mermaid_config=mermaid_config,
+                backend=opts.diagrams_backend,
+                mermaid_config=opts.mermaid_config,
                 emitter=emitter,
             )
         case _:
@@ -286,16 +297,16 @@ def _convert_local_asset(
             return image2pdf(source, output_dir=conversion_root, emitter=emitter)
 
 
-def _drawio_crop(context: RenderContextLike, options: Mapping[str, str] | None) -> bool:
+def _drawio_crop(opts: AssetOptions, options: Mapping[str, str] | None) -> bool:
     """Resolve ``crop`` for a draw.io export: image attribute, else document default."""
-    document_default = _option_flag(context.runtime.get("drawio_crop"), default=True)
+    document_default = option_flag(opts.drawio_crop, default=True)
     if options is None:
         return document_default
-    return _option_flag(options.get("crop"), default=document_default)
+    return option_flag(options.get("crop"), default=document_default)
 
 
-def _conversion_cache_root(context: RenderContextLike) -> Path:
-    root = context.assets.output_root / _CONVERSION_CACHE_DIR
+def _conversion_cache_root(opts: AssetOptions) -> Path:
+    root = opts.assets.output_root / _CONVERSION_CACHE_DIR
     root.mkdir(parents=True, exist_ok=True)
     return root
 
@@ -320,7 +331,7 @@ def _save_asset_manifest(path: Path, manifest: dict[str, dict[str, Any]]) -> Non
 
 
 def _persist_asset(
-    context: RenderContextLike,
+    opts: AssetOptions,
     *,
     asset_key: str,
     staged_path: Path,
@@ -330,7 +341,7 @@ def _persist_asset(
     force_hash: bool = False,
 ) -> Path:
     target = _determine_target_path(
-        context,
+        opts,
         asset_key=asset_key,
         suffix=suffix,
         source_path=source_path,
@@ -343,11 +354,11 @@ def _persist_asset(
         shutil.copy2(staged, target)
     else:
         target.parent.mkdir(parents=True, exist_ok=True)
-    return context.assets.register(asset_key, target)
+    return opts.assets.register(asset_key, target)
 
 
 def _determine_target_path(
-    context: RenderContextLike,
+    opts: AssetOptions,
     *,
     asset_key: str,
     suffix: str,
@@ -355,13 +366,13 @@ def _determine_target_path(
     prefer_name: str | None,
     force_hash: bool,
 ) -> Path:
-    hash_policy = force_hash or bool(context.runtime.get("hash_assets", False))
-    base = context.assets.output_root
+    hash_policy = force_hash or opts.hash_assets
+    base = opts.assets.output_root
 
     if not hash_policy:
         candidate = None
         if source_path is not None:
-            candidate = _relative_path_for_asset(context, source_path)
+            candidate = _relative_path_for_asset(opts, source_path)
         if candidate is None and prefer_name:
             candidate = Path(prefer_name)
         if candidate is None and source_path is not None:
@@ -369,7 +380,7 @@ def _determine_target_path(
         if candidate is not None:
             adjusted = candidate.with_suffix(suffix)
             candidate_path = (base / adjusted).resolve()
-            if not _candidate_conflicts(context, candidate_path, asset_key):
+            if not _candidate_conflicts(opts, candidate_path, asset_key):
                 return candidate_path
 
     digest = hashlib.sha256(asset_key.encode("utf-8")).hexdigest()
@@ -377,34 +388,29 @@ def _determine_target_path(
     return (base / filename).resolve()
 
 
-def _candidate_conflicts(context: RenderContextLike, candidate: Path, asset_key: str) -> bool:
+def _candidate_conflicts(opts: AssetOptions, candidate: Path, asset_key: str) -> bool:
     candidate_resolved = candidate.resolve()
-    for existing_key, stored in context.assets.assets_map.items():
+    for existing_key, stored in opts.assets.assets_map.items():
         stored_path = Path(stored).resolve()
         if stored_path == candidate_resolved:
             return existing_key != asset_key
     return False
 
 
-def _relative_path_for_asset(context: RenderContextLike, source: Path) -> Path | None:
-    project_dir = getattr(context.config, "project_dir", None)
-    if project_dir:
+def _relative_path_for_asset(opts: AssetOptions, source: Path) -> Path | None:
+    if opts.project_dir:
         try:
-            return source.relative_to(Path(project_dir))
+            return source.relative_to(opts.project_dir)
         except ValueError:
             pass
-    document_path = context.runtime.get("document_path")
-    if document_path:
-        try:
-            return source.relative_to(Path(document_path).parent)
-        except ValueError:
-            pass
-    source_dir = context.runtime.get("source_dir")
-    if source_dir:
-        try:
-            return source.relative_to(Path(source_dir))
-        except ValueError:
-            pass
+    try:
+        return source.relative_to(opts.document_path.parent)
+    except ValueError:
+        pass
+    try:
+        return source.relative_to(opts.source_dir)
+    except ValueError:
+        pass
     return None
 
 
@@ -447,4 +453,4 @@ def _detect_file_suffix(path: Path) -> str | None:
     return None
 
 
-__all__ = ["store_local_image_asset", "store_remote_image_asset"]
+__all__ = ["AssetOptions", "store_local_image_asset", "store_remote_image_asset"]
