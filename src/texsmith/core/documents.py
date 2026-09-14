@@ -45,6 +45,9 @@ from enum import Enum
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
+from tmark.ir import model as irm
+from tmark.ir.walk import plain_text
+
 from texsmith.core.coerce import coerce_bool
 from texsmith.diagnostics import (
     Diagnostic,
@@ -54,8 +57,6 @@ from texsmith.diagnostics import (
     Severity,
     emit_diagnostic,
 )
-from texsmith.ir import model as irm
-from texsmith.ir.walk import plain_text
 
 from .conversion.inputs import (
     DOCUMENT_SELECTOR_SENTINEL,

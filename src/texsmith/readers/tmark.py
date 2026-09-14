@@ -1,7 +1,7 @@
-"""The tmark reader: TMark text → ``tmark.parse`` → :mod:`texsmith.ir.model`.
+"""The tmark reader: TMark text → ``tmark.parse`` → :mod:`tmark.ir.model`.
 
 The parser lives in the ``tmark`` wheel; this module is the thin seam that
-turns its JSON into the generated models (:func:`texsmith.ir.codec.decode_document`)
+turns its JSON into the generated models (:func:`tmark.ir.codec.decode_document`)
 and its parse diagnostics into :class:`~texsmith.diagnostics.Diagnostic`
 records with ``origin="tmark"``. Parsing never fails: a malformed text is a
 document plus diagnostics (``specs/migration/python-ir-and-passes.md`` §2).
@@ -13,9 +13,9 @@ from collections.abc import Mapping
 from typing import Any
 
 import tmark
+from tmark.ir import codec, model
 
 from texsmith.diagnostics import Diagnostic, from_tmark
-from texsmith.ir import codec, model
 
 
 __all__ = ["ReadResult", "parse_payload", "read"]

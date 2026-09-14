@@ -4,8 +4,9 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from texsmith.ir import model
-from texsmith.ir.walk import walk
+from tmark.ir import model
+from tmark.ir.walk import walk
+
 from texsmith.passes.emoji import resolve_emoji_mode, twemoji_url
 
 

@@ -2,8 +2,9 @@
 
 from __future__ import annotations
 
-from texsmith.ir import model
-from texsmith.ir.walk import plain_text, walk
+from tmark.ir import model
+from tmark.ir.walk import plain_text, walk
+
 from texsmith.passes.scripts import document_text
 
 

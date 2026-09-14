@@ -4,7 +4,7 @@
 and ``emoji`` (a moustache value is text too; an emoji span is fenced off so
 a cluster is never classified as a script run), before ``resolve``.
 
-Every :class:`~texsmith.ir.model.Str` is segmented with the legacy
+Every :class:`~tmark.ir.model.Str` is segmented with the legacy
 :class:`~texsmith.fonts.scripts.ScriptDetector` rules (``fonts/scripts.py``):
 a character's Unicode block maps to a script group through the
 Noto/ucharclasses fallback index; a run whose group is not one of
@@ -39,6 +39,9 @@ from __future__ import annotations
 from dataclasses import replace
 from typing import TYPE_CHECKING
 
+from tmark.ir import model
+from tmark.ir.walk import map_inlines, walk
+
 from texsmith.diagnostics import NO_SPAN
 from texsmith.fonts.cache import FontCache
 from texsmith.fonts.fallback import merge_fallback_summaries
@@ -51,8 +54,6 @@ from texsmith.fonts.scripts import (
     fallback_summary_to_usage,
     merge_script_usage,
 )
-from texsmith.ir import model
-from texsmith.ir.walk import map_inlines, walk
 from texsmith.passes import PassContext, spec
 
 

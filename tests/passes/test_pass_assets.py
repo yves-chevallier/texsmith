@@ -7,11 +7,11 @@ import shutil
 from typing import Any
 
 import pytest
+from tmark.ir import model
+from tmark.ir.walk import walk
 
 from texsmith.core.conversion.models import ConversionRequest
 from texsmith.core.exceptions import TransformerExecutionError
-from texsmith.ir import model
-from texsmith.ir.walk import walk
 from texsmith.passes.assets import mermaid_caption, strip_theme_variant
 
 

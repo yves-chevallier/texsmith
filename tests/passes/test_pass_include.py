@@ -4,8 +4,9 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from texsmith.ir import model
-from texsmith.ir.walk import plain_text, walk
+from tmark.ir import model
+from tmark.ir.walk import plain_text, walk
+
 from texsmith.passes.include import rebase_path, shift_ids
 from texsmith.readers.loader import MemoryLoader
 

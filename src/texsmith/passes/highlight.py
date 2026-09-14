@@ -3,7 +3,7 @@
 Last before ``write``, LaTeX only, when ``code.engine`` is ``pygments``
 (the default) — or ``minted``, for inline code alone:
 
-* a :class:`~texsmith.ir.model.CodeBlock` becomes ``Div{name="code"}`` with
+* a :class:`~tmark.ir.model.CodeBlock` becomes ``Div{name="code"}`` with
   the fence options as attributes (``lang``, ``title``, ``linenums``,
   ``hl_lines``, ``id``, ``stretch`` — ``0.5`` for box-drawing art, the
   writer's heuristic — plus ``engine=pygments``) and one
@@ -13,7 +13,7 @@ Last before ``write``, LaTeX only, when ``code.engine`` is ``pygments``
   writer serialises the ``tscode`` keys from the ``Div`` exactly as for a
   ``CodeBlock`` and prints the raw body; a ``Listing:`` caption still pairs
   with it. The ``Div`` keeps the block's id and span (span rule 1).
-* a :class:`~texsmith.ir.model.Code` span with a language becomes
+* a :class:`~tmark.ir.model.Code` span with a language becomes
   ``RawInline{latex, "{\\ttfamily …}"}`` with ``\\allowbreak{}`` after each
   ``code.inline.breaks`` character (``add_break_points``); under ``minted`` it
   becomes ``\\mintinline[breaklines=true]{lang}|…|`` with the first delimiter
@@ -33,11 +33,12 @@ from dataclasses import replace
 import re
 from typing import TYPE_CHECKING
 
+from tmark.ir import model
+from tmark.ir.walk import map_tree
+
 from texsmith.adapters.latex.pygments import PygmentsLatexHighlighter
 from texsmith.core.code_options import CODE_ENGINES, normalise_inline_options
 from texsmith.core.coerce import coerce_bool
-from texsmith.ir import model
-from texsmith.ir.walk import map_tree
 from texsmith.passes import PassContext, spec
 
 

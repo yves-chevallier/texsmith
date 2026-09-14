@@ -5,14 +5,14 @@ conversion and fetching; the writer's ``Requires.assets`` is afterwards only
 the list of what it included. Runs after ``include`` (sources are rebased to
 the document's directory) and ``snippet``; independent of ``resolve``.
 
-For each :class:`~texsmith.ir.model.Image`:
+For each :class:`~tmark.ir.model.Image`:
 
 * a **generated** diagram (``Image{src="", generate=mermaid, code=…}`` from a
   ```` ```mermaid ```` fence, a ``.mmd``/``.mermaid`` file, a ``mermaid.live``
   share URL) is rendered through the ``mermaid`` strategy — PDF for LaTeX,
   PNG for Typst as ``writers/typst/diagrams.py`` did — with the diagram
   backend of the request; a ``%% caption`` first line becomes a
-  :class:`~texsmith.ir.model.Caption` after the paragraph when no caption
+  :class:`~tmark.ir.model.Caption` after the paragraph when no caption
   block sits next to it (``media.py:85``);
 * a **remote** URL is fetched through the ``fetch-image`` strategy with the
   ``remote-assets.json`` manifest of ``writers/latex/assets.py``;
@@ -41,6 +41,9 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any
 from urllib.parse import urlparse
 
+from tmark.ir import model
+from tmark.ir.walk import iter_child_fields, map_tree
+
 from texsmith.adapters.transformers.mermaid_detect import (
     MERMAID_FILE_SUFFIXES,
     extract_mermaid_live_diagram,
@@ -48,8 +51,6 @@ from texsmith.adapters.transformers.mermaid_detect import (
 )
 from texsmith.core.context import AssetRegistry
 from texsmith.core.exceptions import exception_hint
-from texsmith.ir import model
-from texsmith.ir.walk import iter_child_fields, map_tree
 from texsmith.passes import PassContext, spec
 from texsmith.passes.var import _MISSING, lookup
 
@@ -178,7 +179,7 @@ class _AssetPass:
 
     @staticmethod
     def alt_text(node: model.Image) -> str:
-        from texsmith.ir.walk import plain_text
+        from tmark.ir.walk import plain_text
 
         return plain_text(node.alt).strip()
 

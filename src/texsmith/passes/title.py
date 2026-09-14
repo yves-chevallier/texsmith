@@ -16,7 +16,8 @@ from __future__ import annotations
 from dataclasses import replace
 from typing import TYPE_CHECKING
 
-from texsmith.ir import model
+from tmark.ir import model
+
 from texsmith.passes import PassContext, spec
 
 

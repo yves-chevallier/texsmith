@@ -26,10 +26,11 @@ from dataclasses import dataclass
 import re
 from typing import TYPE_CHECKING
 
+from tmark.ir import model
+from tmark.ir.walk import plain_text, walk
+
 from texsmith.core.conversion.inputs import DOCUMENT_SELECTOR_SENTINEL, SlotOptions
 from texsmith.diagnostics import NO_SPAN
-from texsmith.ir import model
-from texsmith.ir.walk import plain_text, walk
 from texsmith.passes import PassContext, spec
 
 

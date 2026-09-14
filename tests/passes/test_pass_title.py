@@ -2,8 +2,9 @@
 
 from __future__ import annotations
 
+from tmark.ir import model
+
 from texsmith.core.documents import TitleStrategy
-from texsmith.ir import model
 
 
 def test_promotion_drops_the_unique_first_header(harness) -> None:

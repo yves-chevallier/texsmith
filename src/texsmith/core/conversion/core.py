@@ -7,6 +7,8 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
+from tmark.ir.codec import persist_debug_ir
+
 from texsmith.core.bibliography.collection import BibliographyCollection
 from texsmith.core.context import DocumentState
 from texsmith.core.conversion_contexts import ConversionContext
@@ -24,7 +26,6 @@ from texsmith.diagnostics import (
     ensure_emitter,
     record_event,
 )
-from texsmith.ir.codec import persist_debug_ir
 
 from ._utils import build_unique_stem_map
 from .execution import resolve_conversion_context

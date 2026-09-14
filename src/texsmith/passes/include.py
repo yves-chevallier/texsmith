@@ -3,7 +3,7 @@
 Two forms, both consumed here so that ``tmark.resolve`` sees one document and
 ``Resolved.included`` stays empty:
 
-* ``{include}(file)`` — a :class:`~texsmith.ir.model.Include` block (the
+* ``{include}(file)`` — a :class:`~tmark.ir.model.Include` block (the
   deprecated ``--8<-- "file"`` line parses to the same node). The file is
   loaded through ``ctx.loader`` relative to the including file (``base=``
   names the directory the path is looked up in instead), registered in
@@ -42,10 +42,10 @@ import re
 from typing import TYPE_CHECKING, Any, TypeVar
 
 import tmark
+from tmark.ir import codec, model
+from tmark.ir.model import Node, Record
+from tmark.ir.walk import map_tree
 
-from texsmith.ir import codec, model
-from texsmith.ir.model import Node, Record
-from texsmith.ir.walk import map_tree
 from texsmith.passes import PassContext, highest_id, spec
 from texsmith.readers.loader import join, join_dir
 

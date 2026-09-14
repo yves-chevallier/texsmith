@@ -5,11 +5,11 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
+from tmark.ir import model
+from tmark.ir.walk import walk
 import yaml
 
 from texsmith.core.bibliography.doi import DoiLookupError
-from texsmith.ir import model
-from texsmith.ir.walk import walk
 from texsmith.passes.doi import doi_of_key
 
 

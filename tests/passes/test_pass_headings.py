@@ -4,7 +4,8 @@ from __future__ import annotations
 
 import json
 
-from texsmith.ir import model
+from tmark.ir import model
+
 from texsmith.passes import SlotTemplate
 from texsmith.passes.headings import body_offset
 

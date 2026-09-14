@@ -46,16 +46,6 @@ jobs:
       - name: Ruff format check
         run: uv run ruff format . --check
 
-      # src/texsmith/ir/model.py is generated from tmark's IR schema. The
-      # schema is vendored from the tmark repository by
-      # scripts/refresh_tmark_fixtures.py; phase 2 of the migration replaces
-      # the file by the installed wheel's ``tmark.schema("ir")``.
-      - name: IR models match the vendored tmark schema
-        run: >
-          uv run python scripts/gen_ir_models.py --check
-          --schema tests/fixtures/tmark-ir/ir.json
-          --version "$(cat tests/fixtures/tmark-ir/VERSION)"
-
   tests:
     name: Pytest matrix
     runs-on: ${{ matrix.os }}

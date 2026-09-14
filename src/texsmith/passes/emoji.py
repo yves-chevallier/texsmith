@@ -5,7 +5,7 @@
 ``scripts`` so a cluster is never classified as a script run.
 
 Every grapheme cluster the ``emoji`` library recognises inside a
-:class:`~texsmith.ir.model.Str` (code, math and raw nodes hold no ``Str``)
+:class:`~tmark.ir.model.Str` (code, math and raw nodes hold no ``Str``)
 becomes, per the resolved ``fonts.emoji`` mode:
 
 * **font modes** (``black``, ``color``, ``symbola``, ``twemoji``, a custom
@@ -31,11 +31,11 @@ from dataclasses import replace
 from typing import TYPE_CHECKING
 
 import emoji as _emoji
+from tmark.ir import model
+from tmark.ir.walk import map_inlines
 
 from texsmith.core.conversion.settings import extract_emoji_mode
 from texsmith.core.exceptions import exception_hint
-from texsmith.ir import model
-from texsmith.ir.walk import map_inlines
 from texsmith.passes import PassContext, spec
 from texsmith.passes.assets import asset_registry
 

@@ -14,6 +14,7 @@ import re
 from typing import Any
 
 import pytest
+from tmark.ir import model
 from typer.testing import CliRunner
 
 from texsmith.core.context import DocumentState
@@ -34,7 +35,6 @@ from texsmith.core.conversion.service import ConversionService
 from texsmith.core.documents import Document
 from texsmith.core.fragments.activation import apply_requires, required_fragment
 from texsmith.core.fragments.resolution import extra_packages_from_requires
-from texsmith.ir import model
 from texsmith.ui.cli import app
 
 

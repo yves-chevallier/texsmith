@@ -36,11 +36,11 @@ from typing import TYPE_CHECKING, Any
 from pybtex.database import BibliographyData, Entry
 from pybtex.database.input import bibtex
 from pybtex.exceptions import PybtexError
+from tmark.ir import model
+from tmark.ir.walk import map_tree, walk
 
 from texsmith.core.bibliography.loading import initialise_doi_cache, write_doi_cache
 from texsmith.diagnostics import Span
-from texsmith.ir import model
-from texsmith.ir.walk import map_tree, walk
 from texsmith.passes import PassContext, spec
 
 

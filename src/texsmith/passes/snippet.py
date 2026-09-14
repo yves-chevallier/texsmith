@@ -1,6 +1,6 @@
 """The ``snippet`` pass: a ``.snippet`` fence becomes its rendered preview (``writers-and-passes.md`` §3 row 4).
 
-A :class:`~texsmith.ir.model.CodeBlock` whose info string carries the
+A :class:`~tmark.ir.model.CodeBlock` whose info string carries the
 ``snippet`` class (```` ```markdown {.snippet caption="…" width="60%"} ````,
 a YAML fence naming ``sources``, or a ``config=`` file) is rendered by the
 legacy snippet compiler — :func:`~texsmith.adapters.plugins.snippet.build_snippet_block`
@@ -25,6 +25,9 @@ from __future__ import annotations
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
+from tmark.ir import model
+from tmark.ir.walk import map_tree
+
 from texsmith.adapters.plugins.snippet import (
     FENCE_ATTRIBUTES,
     SNIPPET_DIR,
@@ -34,8 +37,6 @@ from texsmith.adapters.plugins.snippet import (
     ensure_snippet_assets,
 )
 from texsmith.diagnostics import DiagnosticEmitter
-from texsmith.ir import model
-from texsmith.ir.walk import map_tree
 from texsmith.passes import PassContext, spec
 
 

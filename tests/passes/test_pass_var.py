@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from texsmith.ir import model
-from texsmith.ir.walk import plain_text, walk
+from tmark.ir import model
+from tmark.ir.walk import plain_text, walk
 
 
 def test_scalars_become_str_lists_and_missing_paths_are_reported(harness) -> None:

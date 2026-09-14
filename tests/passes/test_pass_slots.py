@@ -4,9 +4,10 @@ from __future__ import annotations
 
 from typing import Any
 
+from tmark.ir import codec, model
+from tmark.ir.walk import plain_text
+
 from texsmith.core.conversion.inputs import SlotOptions
-from texsmith.ir import codec, model
-from texsmith.ir.walk import plain_text
 from texsmith.passes import SlotTemplate
 
 

@@ -4,8 +4,9 @@ from __future__ import annotations
 
 from typing import Any
 
-from texsmith.ir import model
-from texsmith.ir.walk import walk
+from tmark.ir import model
+from tmark.ir.walk import walk
+
 from texsmith.passes.highlight import code_engine, highlight_lines
 
 

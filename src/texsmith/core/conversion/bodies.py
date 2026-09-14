@@ -17,10 +17,10 @@ from dataclasses import dataclass, field, replace
 from typing import TYPE_CHECKING, Any
 
 import tmark
+from tmark.ir import codec, model
 
 from texsmith.core.code_options import normalise_inline_options
 from texsmith.diagnostics import DiagnosticSink
-from texsmith.ir import codec, model
 
 from .resolution import ResolveOptions
 

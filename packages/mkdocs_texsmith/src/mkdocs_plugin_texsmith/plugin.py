@@ -1658,8 +1658,8 @@ def _nav_heading(title: str, *, level: int, numbered: bool, lang: str | None) ->
     headers.
     """
     from texsmith.core.conversion.bodies import build_writer_options
-    from texsmith.ir import codec, model
     import tmark
+    from tmark.ir import codec, model
 
     document = model.Document(
         blocks=(model.Header(level=1, content=(model.Str(text=title),)),)

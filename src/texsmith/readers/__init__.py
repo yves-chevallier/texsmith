@@ -1,6 +1,6 @@
 """Readers: lower an input format into the TeXSmith IR.
 
-One reader produces the generated models (:mod:`texsmith.ir.model`):
+One reader produces the generated models (:mod:`tmark.ir.model`):
 :mod:`texsmith.readers.tmark` parses Markdown with ``tmark.parse``. A reader
 never emits a backend string.
 """

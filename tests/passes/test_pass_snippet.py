@@ -7,10 +7,10 @@ import json
 from pathlib import Path
 
 import pytest
+from tmark.ir import model
+from tmark.ir.walk import walk
 
 from texsmith.adapters.plugins.snippet import SnippetAssets, SnippetBlock
-from texsmith.ir import model
-from texsmith.ir.walk import walk
 from texsmith.passes import REGISTRY, build_pipeline, snippet as snippet_pass
 
 

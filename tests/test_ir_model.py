@@ -22,16 +22,15 @@ for candidate in (PROJECT_ROOT, SRC_ROOT):
     if str(candidate) not in sys.path:
         sys.path.insert(0, str(candidate))
 
-from texsmith import ir  # noqa: E402
-from texsmith.ir import codec, model  # noqa: E402
-from texsmith.ir.codec import (  # noqa: E402
+from tmark.ir import codec, model  # noqa: E402
+from tmark.ir.codec import (  # noqa: E402
     IRDecodeError,
     decode_document,
     encode_document,
     structural,
 )
-from texsmith.ir.model import MISSING, NO_SPAN, Span  # noqa: E402
-from texsmith.ir.walk import NodeVisitor, children, map_tree, plain_text, walk  # noqa: E402
+from tmark.ir.model import MISSING, NO_SPAN, Span  # noqa: E402
+from tmark.ir.walk import NodeVisitor, children, map_tree, plain_text, walk  # noqa: E402
 
 
 FIXTURES = PROJECT_ROOT / "tests" / "fixtures" / "tmark-ir"
@@ -464,7 +463,6 @@ def test_children_and_walk_descend_through_records() -> None:
     texts = [n.text for n in walk(doc) if isinstance(n, model.Str)]
     assert texts == ["Title", "Hello", "w", "one", "two", "cell", "foot"]
     assert children(model.Str("x")) == ()
-    assert list(ir.walk.__wrapped__ if hasattr(ir.walk, "__wrapped__") else []) == []
 
 
 def test_map_tree_rebuilds_records_and_reuses_unchanged_subtrees() -> None:
@@ -542,13 +540,19 @@ def test_plain_text_matches_tmark() -> None:
 # --------------------------------------------------------------------------
 
 
-def test_the_package_exports_the_generated_model_modules() -> None:
-    from texsmith.ir.walk import walk as new_walk
+def test_the_ir_comes_from_the_wheel_not_from_a_local_mirror() -> None:
+    """TeXSmith does not generate the IR; it imports the one tmark ships.
 
-    assert new_walk is walk
-    assert ir.model is model
-    assert ir.codec is codec
-    assert ir.walk.walk is walk  # ``ir.walk`` is the module, not a function
+    ``Span`` is the test that matters: it used to be declared in
+    ``texsmith.diagnostics.model`` and imported *by* the generated models, so a
+    Rust type had a Python restatement kept in step by hand. There is one now.
+    """
+    import texsmith.diagnostics.model as diagnostics
+
+    assert model.__name__ == "tmark.ir.model"
+    assert diagnostics.Span is model.Span
+    assert diagnostics.NO_SPAN is model.NO_SPAN
+    assert not (Path(__file__).resolve().parents[1] / "src" / "texsmith" / "ir").exists()
 
 
 # --------------------------------------------------------------------------

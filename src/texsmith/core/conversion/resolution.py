@@ -29,10 +29,10 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 import tmark
+from tmark.ir import codec
 
 from texsmith.core.templates.languages import _map_bcp47_language
 from texsmith.diagnostics import DiagnosticSink
-from texsmith.ir import codec
 
 
 if TYPE_CHECKING:  # pragma: no cover - typing only

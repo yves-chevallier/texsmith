@@ -5,11 +5,10 @@ python-ir-and-passes.md`` §6) plus ``origin``: ``code`` is a string because
 Rust's ``Code`` is a closed enum and TeXSmith adds its own identifiers
 (:mod:`texsmith.diagnostics.codes`).
 
-``Span``, ``NO_SPAN`` and ``Fix`` are defined **here** and not in the generated
-IR models: the diagnostics package must not depend on the IR (the CLI renders
-records before any IR exists), while the IR models need the same ``Span`` for
-node metadata. ``texsmith.ir.model`` therefore imports ``Span`` and ``NO_SPAN``
-from this module; the generator must not emit a second definition.
+``Span`` and ``NO_SPAN`` come from ``tmark.ir.model``, generated from the
+schema that defines them ("Byte span as [file, start, end]"). They used to be
+declared here and imported by the IR models, which meant a Python restatement
+of a Rust type kept in step by hand. ``Fix`` is TeXSmith's and stays.
 """
 
 from __future__ import annotations
@@ -18,6 +17,8 @@ from collections.abc import Mapping
 from dataclasses import dataclass
 from enum import Enum
 from typing import Any
+
+from tmark.ir.model import NO_SPAN, Span
 
 
 class Severity(str, Enum):
@@ -63,35 +64,6 @@ class Severity(str, Enum):
 
 
 _SEVERITY_ORDER = (Severity.HINT, Severity.INFO, Severity.WARNING, Severity.ERROR)
-
-
-@dataclass(frozen=True, slots=True, order=True)
-class Span:
-    """A half-open byte range ``start..end`` in ``file``; JSON ``[file, start, end]``.
-
-    The generated IR models import this class rather than defining a second
-    one: the fields carry the defaults ``tmark``'s schema gives them, so
-    ``Span()`` is :data:`NO_SPAN` on both sides.
-    """
-
-    file: int = 0
-    start: int = 0
-    end: int = 0
-
-    def to_json(self) -> list[int]:
-        return [self.file, self.start, self.end]
-
-    @classmethod
-    def from_json(cls, payload: Any) -> Span:
-        if not isinstance(payload, (list, tuple)) or len(payload) != 3:
-            raise ValueError(f"a span is a [file, start, end] triple, got {payload!r}")
-        file, start, end = (int(value) for value in payload)
-        return cls(file, start, end)
-
-
-#: "No location": the empty span at the start of the main document. Rendered
-#: without a line and column.
-NO_SPAN = Span()
 
 
 @dataclass(frozen=True, slots=True)

@@ -5,9 +5,9 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
+from tmark.ir import model
 
 from texsmith.core.documents import Document
-from texsmith.ir import model
 from texsmith.passes import (
     DEFAULT_PIPELINE,
     IdAllocator,

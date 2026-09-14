@@ -23,6 +23,7 @@ from pathlib import Path
 from typing import Any
 
 import pytest
+from tmark.ir import codec
 
 from texsmith.adapters.transformers import registry as converter_registry
 from texsmith.core.conversion.inputs import SlotOptions
@@ -31,7 +32,6 @@ from texsmith.core.front_matter import split_front_matter
 from texsmith.diagnostics import DiagnosticSink, FileTable
 from texsmith.fonts.fallback import FallbackEntry, FallbackIndex, FallbackLookup
 from texsmith.fonts.scripts import ScriptDetector
-from texsmith.ir import codec
 from texsmith.passes import REGISTRY, IdAllocator, PassContext, SlotTemplate, build_pipeline
 from texsmith.readers.loader import MemoryLoader
 from texsmith.readers.tmark import parse_payload

@@ -28,8 +28,9 @@ from texsmith.core.context import DocumentState
 
 
 if TYPE_CHECKING:  # pragma: no cover - typing only
+    from tmark.ir import model
+
     from texsmith.core.conversion.bodies import Requires
-    from texsmith.ir import model
 
 
 __all__ = [

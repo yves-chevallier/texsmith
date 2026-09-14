@@ -15,8 +15,9 @@ from __future__ import annotations
 from collections.abc import Mapping, Sequence
 from typing import TYPE_CHECKING, Any
 
-from texsmith.ir import model
-from texsmith.ir.walk import map_tree
+from tmark.ir import model
+from tmark.ir.walk import map_tree
+
 from texsmith.passes import PassContext, spec
 
 

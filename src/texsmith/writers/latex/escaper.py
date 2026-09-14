@@ -5,7 +5,7 @@ The writer owns escaping. This module moves :func:`escape_latex_chars` out of
 backend, and gathers the unicode → LaTeX text transforms (dashes, smart
 quotes, sub/superscript runs, emoji segmentation, math-payload protection)
 that the legacy ``adapters/handlers/inline.py`` PRE phase applied to plain
-text nodes. The IR carries raw text in :class:`~texsmith.ir.Str`; the writer
+text nodes. The IR carries raw text in :class:`~tmark.ir.Str`; the writer
 escapes it here exactly as the old pipeline did, so the produced LaTeX is
 byte-identical.
 """
