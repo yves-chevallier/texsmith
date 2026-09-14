@@ -92,8 +92,11 @@ def test_bodies_are_rewritten_with_the_ir(harness) -> None:
     out = harness.run("highlight", split, ctx)
     assert out.ir is not None
     (body,) = out.bodies
-    assert body.blocks == out.ir.blocks
-    assert all(a is b for a, b in zip(body.blocks, out.ir.blocks, strict=True))
+    # The body selects by index, so it follows the rebuilt tree with nothing to
+    # remap: these are the highlighted blocks, not the pre-highlight ones.
+    assert body.blocks_of(out.ir) == out.ir.blocks
+    assert all(a is b for a, b in zip(body.blocks_of(out.ir), out.ir.blocks, strict=True))
+    assert body.blocks_of(split.ir) != body.blocks_of(out.ir)
 
 
 def test_inline_plain_leaves_code_spans(harness) -> None:

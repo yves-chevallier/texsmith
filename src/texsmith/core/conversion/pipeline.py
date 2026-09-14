@@ -329,7 +329,7 @@ def write_slot_bodies(
             processed.ir,
             backend,
             options,
-            blocks=slot_body.blocks,
+            blocks=slot_body.blocks_of(processed.ir),
             loader=loader,
             resolved=processed.resolved,
             sink=sink,

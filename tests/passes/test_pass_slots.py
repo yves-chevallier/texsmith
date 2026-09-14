@@ -18,7 +18,7 @@ def _bodies_json(document) -> list[dict[str, Any]]:
             "position": body.position,
             "heading_levels": list(body.heading_levels),
             "whole_document": body.whole_document,
-            "blocks": [codec.structural(block) for block in body.blocks],
+            "blocks": [codec.structural(block) for block in body.blocks_of(document.ir)],
         }
         for body in document.bodies
     ]
@@ -37,11 +37,15 @@ def test_sections_are_claimed_by_id_then_text(harness) -> None:
 
     bodies = {body.name: body for body in out.bodies}
     assert [body.name for body in out.bodies] == ["abstract", "appendix", "mainmatter"]
-    assert _titles(bodies["abstract"].blocks) == []  # strip_heading
-    assert len(bodies["abstract"].blocks) == 1
-    assert _titles(bodies["appendix"].blocks) == ["Appendix", "Listings"]
+    assert _titles(bodies["abstract"].blocks_of(document.ir)) == []  # strip_heading
+    assert len(bodies["abstract"].blocks_of(document.ir)) == 1
+    assert _titles(bodies["appendix"].blocks_of(document.ir)) == ["Appendix", "Listings"]
     assert bodies["appendix"].heading_levels == (1, 2)
-    assert _titles(bodies["mainmatter"].blocks) == ["Introduction", "Detail", "Closing"]
+    assert _titles(bodies["mainmatter"].blocks_of(document.ir)) == [
+        "Introduction",
+        "Detail",
+        "Closing",
+    ]
     assert bodies["mainmatter"].heading_levels == (1, 2, 1)
     assert len(ctx.diagnostics) == 0
 
@@ -50,7 +54,7 @@ def test_sections_are_claimed_by_id_then_text(harness) -> None:
     original = next(
         b for b in document.ir.blocks if isinstance(b, model.Header) and b.attrs.id == "appendix"
     )
-    assert bodies["appendix"].blocks[0].id == original.id
+    assert bodies["appendix"].blocks_of(document.ir)[0].id == original.id
     assert document.bodies == ()
     assert _bodies_json(out) == harness.expected("slots", "sections")["bodies"]
 
@@ -62,8 +66,8 @@ def test_flatten_option_drops_the_header(harness) -> None:
     template = SlotTemplate(requests=document.slot_requests)
     out = harness.run("slots", document, template=template)
     bodies = {body.name: body for body in out.bodies}
-    assert _titles(bodies["appendix"].blocks) == ["Listings"]
-    assert _titles(bodies["abstract"].blocks) == ["Abstract"]
+    assert _titles(bodies["appendix"].blocks_of(document.ir)) == ["Listings"]
+    assert _titles(bodies["abstract"].blocks_of(document.ir)) == ["Abstract"]
 
 
 def test_unsupported_nested_and_missing_selectors_are_reported(harness) -> None:
@@ -78,7 +82,7 @@ def test_unsupported_nested_and_missing_selectors_are_reported(harness) -> None:
 
     assert [body.name for body in out.bodies] == ["mainmatter"]
     assert document.ir is not None
-    assert out.bodies[0].blocks == document.ir.blocks
+    assert out.bodies[0].blocks_of(out.ir) == document.ir.blocks
     assert [record.code for record in ctx.diagnostics] == [
         "slot-selector-unsupported",
         "slot-nested-heading",
@@ -103,10 +107,10 @@ def test_wildcard_takes_the_whole_document(harness) -> None:
     names = [body.name for body in out.bodies]
     assert names == ["cover", "extra", "mainmatter"]
     assert document.ir is not None
-    assert out.bodies[0].blocks == document.ir.blocks
+    assert out.bodies[0].blocks_of(out.ir) == document.ir.blocks
     assert out.bodies[0].whole_document is True
-    assert out.bodies[1].blocks == document.ir.blocks
-    assert out.bodies[2].blocks == ()
+    assert out.bodies[1].blocks_of(out.ir) == document.ir.blocks
+    assert out.bodies[2].blocks_of(out.ir) == ()
     assert _bodies_json(out) == harness.expected("slots", "wildcard")["bodies"]
 
 

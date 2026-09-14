@@ -24,7 +24,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 import re
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from tmark.ir import model
 from tmark.ir.walk import plain_text, walk
@@ -46,10 +46,18 @@ _UNSUPPORTED = re.compile(r"^\.|[\[\]>+~]")
 
 @dataclass(slots=True, frozen=True)
 class SlotBody:
-    """The blocks of one template slot and what the writer needs to know about them."""
+    """The blocks of one template slot and what the writer needs to know about them.
+
+    A body is a *selection* of ``Document.ir.blocks``, held as indices rather
+    than as the block objects themselves. A later pass may rebuild the tree —
+    ``highlight`` rewrites every ``CodeBlock`` — and a body holding the old
+    objects would then describe a document that no longer exists. Indices
+    survive a rebuild; object references had to be remapped by ``id()``.
+    """
 
     name: str
-    blocks: tuple[model.Block, ...]
+    #: Positions in ``Document.ir.blocks``, in order.
+    indices: tuple[int, ...]
     position: int
     heading_levels: tuple[int, ...] = ()
     #: ``WriterOptions.headings.base_level`` for this body (the ``headings`` pass).
@@ -57,6 +65,10 @@ class SlotBody:
     numbered: bool = True
     #: The full-document slots (``@document``); the default slot is then empty.
     whole_document: bool = False
+
+    def blocks_of(self, ir_document: model.Document) -> tuple[model.Block, ...]:
+        """The blocks this body selects from ``ir_document``, in order."""
+        return tuple(ir_document.blocks[index] for index in self.indices)
 
 
 def heading_levels(blocks: tuple[model.Block, ...]) -> tuple[int, ...]:
@@ -186,45 +198,36 @@ def split_slots(
             claimed.add(cursor)
         matched[slot_name] = index
 
+    def selected_body(name: str, indices: tuple[int, ...], position: int, **extra: Any) -> SlotBody:
+        chosen = tuple(blocks[index] for index in indices)
+        return SlotBody(
+            name=name,
+            indices=indices,
+            position=position,
+            heading_levels=heading_levels(chosen),
+            **extra,
+        )
+
     bodies: list[SlotBody] = []
+    everything = tuple(range(len(blocks)))
     for offset, slot_name in enumerate(wildcard):
         bodies.append(
-            SlotBody(
-                name=slot_name,
-                blocks=blocks,
-                position=-(len(wildcard) - offset),
-                heading_levels=heading_levels(blocks),
-                whole_document=True,
-            )
+            selected_body(slot_name, everything, -(len(wildcard) - offset), whole_document=True)
         )
 
     for slot_name, index in sorted(matched.items(), key=lambda item: item[1]):
         end = _section_end(blocks, index)
-        section = blocks[index:end]
+        start = index
         flatten = options.get(slot_name, SlotOptions()).flatten
-        if (slot_name in strip_heading or flatten) and section:
-            section = section[1:]
-        bodies.append(
-            SlotBody(
-                name=slot_name,
-                blocks=section,
-                position=index,
-                heading_levels=heading_levels(section),
-            )
-        )
+        if (slot_name in strip_heading or flatten) and end > index:
+            start = index + 1
+        bodies.append(selected_body(slot_name, tuple(range(start, end)), index))
 
-    remainder: tuple[model.Block, ...] = ()
+    remainder: tuple[int, ...] = ()
     if not wildcard:
-        remainder = tuple(block for cursor, block in enumerate(blocks) if cursor not in claimed)
+        remainder = tuple(cursor for cursor in range(len(blocks)) if cursor not in claimed)
     position = max((body.position for body in bodies), default=-1) + 1
-    bodies.append(
-        SlotBody(
-            name=default_slot,
-            blocks=remainder,
-            position=position,
-            heading_levels=heading_levels(remainder),
-        )
-    )
+    bodies.append(selected_body(default_slot, remainder, position))
     bodies.sort(key=lambda body: body.position)
     return tuple(bodies)
 

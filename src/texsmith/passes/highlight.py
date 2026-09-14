@@ -174,10 +174,6 @@ def run(document: Document, ctx: PassContext) -> Document:
     if rebuilt is ir:
         return document
 
-    # The bodies are slices of ``ir.blocks``: rewrite them to the same nodes.
-    mapping = {id(old): new for old, new in zip(ir.blocks, rebuilt.blocks, strict=True)}
-    bodies = tuple(
-        replace(body, blocks=tuple(mapping.get(id(block), block) for block in body.blocks))
-        for body in document.bodies
-    )
-    return document.evolve(ir=rebuilt, bodies=bodies)
+    # The bodies select blocks by index, so a rebuilt tree needs no
+    # reconciliation: they describe the new blocks as they described the old.
+    return document.evolve(ir=rebuilt)
