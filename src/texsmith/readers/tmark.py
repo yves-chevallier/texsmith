@@ -22,11 +22,33 @@ __all__ = ["ReadResult", "parse_payload", "read"]
 
 ReadResult = tuple[model.Document, list[Diagnostic]]
 
+_wheel_schema_checked = False
+
+
+def _ensure_wheel_schema() -> None:
+    """Raise once if the installed ``tmark`` wheel ships an IR schema ``tmark.ir.model``
+    was not generated against.
+
+    Checked here, the seam where TeXSmith first asks the wheel to parse a
+    document: a silently mismatched schema would surface later as a
+    confusing ``decode_document`` failure (an unknown field, or a missing
+    one) far from its cause. ``wheel_schema_mismatch`` itself already names
+    both hashes and versions.
+    """
+    global _wheel_schema_checked
+    if _wheel_schema_checked:
+        return
+    _wheel_schema_checked = True
+    mismatch = codec.wheel_schema_mismatch()
+    if mismatch is not None:
+        raise RuntimeError(mismatch)
+
 
 def parse_payload(
     text: str, *, file_id: int = 0, name: str = "<memory>", profile: str = "default"
 ) -> dict[str, Any]:
     """The raw ``tmark.parse`` JSON of ``text`` (root ``tmark`` and ``diagnostics`` included)."""
+    _ensure_wheel_schema()
     return tmark.parse(text, file=name, file_id=file_id, profile=profile)
 
 

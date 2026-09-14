@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import pytest
 from tmark.ir import model
 
 from texsmith.core.documents import Document, SlotPlan, TitleStrategy
@@ -63,6 +64,41 @@ def test_read_returns_models_and_tmark_diagnostics() -> None:
 def test_read_never_fails_on_odd_input() -> None:
     document, _diagnostics = tmark_reader.read("::: unclosed\n\n# only", name="x.md")
     assert isinstance(document, model.Document)
+
+
+def test_wheel_schema_mismatch_raises_naming_both_hashes(monkeypatch) -> None:
+    monkeypatch.setattr(tmark_reader, "_wheel_schema_checked", False)
+    monkeypatch.setattr(
+        tmark_reader.codec,
+        "wheel_schema_mismatch",
+        lambda: "tmark.ir.model was generated for tmark 0.1.0 (schema abc123), "
+        "but the installed tmark 0.2.0 ships schema def456",
+    )
+    try:
+        with pytest.raises(RuntimeError) as excinfo:
+            tmark_reader.read("# hi", name="x.md")
+        assert "abc123" in str(excinfo.value)
+        assert "def456" in str(excinfo.value)
+    finally:
+        monkeypatch.setattr(tmark_reader, "_wheel_schema_checked", False)
+
+
+def test_wheel_schema_match_checks_once_and_does_not_raise(monkeypatch) -> None:
+    monkeypatch.setattr(tmark_reader, "_wheel_schema_checked", False)
+    calls = 0
+
+    def _no_mismatch() -> str | None:
+        nonlocal calls
+        calls += 1
+        return None
+
+    monkeypatch.setattr(tmark_reader.codec, "wheel_schema_mismatch", _no_mismatch)
+    try:
+        tmark_reader.read("# hi", name="x.md")
+        tmark_reader.read("# hi again", name="x.md")
+        assert calls == 1
+    finally:
+        monkeypatch.setattr(tmark_reader, "_wheel_schema_checked", False)
 
 
 # ---------------------------------------------------------------------------
