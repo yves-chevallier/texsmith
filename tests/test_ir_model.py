@@ -550,9 +550,11 @@ def test_the_ir_comes_from_the_wheel_not_from_a_local_mirror() -> None:
     import texsmith.diagnostics.model as diagnostics
 
     assert model.__name__ == "tmark.ir.model"
+    assert codec.__name__ == "tmark.ir.codec"
     assert diagnostics.Span is model.Span
     assert diagnostics.NO_SPAN is model.NO_SPAN
-    assert not (Path(__file__).resolve().parents[1] / "src" / "texsmith" / "ir").exists()
+    # The wheel's, not a copy of the wheel's sitting under ``src/``.
+    assert "tmark" in Path(model.__file__).parts
 
 
 # --------------------------------------------------------------------------
